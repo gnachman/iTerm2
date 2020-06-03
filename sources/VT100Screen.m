@@ -1434,8 +1434,7 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     [delegate_ screenIncrementBadge];
 }
 
-- (void)setHistory:(NSArray *)history
-{
+- (void)setHistory:(NSArray *)history {
     // This is way more complicated than it should be to work around something dumb in tmux.
     // It pads lines in its history with trailing spaces, which we'd like to trim. More importantly,
     // we need to trim empty lines at the end of the history because that breaks how we move the

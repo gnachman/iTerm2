@@ -766,6 +766,9 @@ backgroundColor:(NSColor *)backgroundColor;
 // impose this restriction because they must belong to the same controller.
 - (BOOL)isCompatibleWith:(PTYSession *)otherSession;
 - (void)setTmuxPane:(int)windowPane;
+- (void)setTmuxHistory:(NSArray<NSData *> *)history
+            altHistory:(NSArray<NSData *> *)altHistory
+                 state:(NSDictionary *)state;
 
 - (void)addNoteAtCursor;
 - (void)addNoteWithText:(NSString *)text inAbsoluteRange:(VT100GridAbsCoordRange)range;

@@ -473,6 +473,7 @@ DEFINE_BOOL(tolerateUnrecognizedTmuxCommands, NO, SECTION_TMUX @"Tolerate unreco
 DEFINE_BOOL(useBlackFillerColorForTmuxInFullScreen, NO, SECTION_TMUX @"Use black for filler area in tmux windows in full screen.");
 DEFINE_SETTABLE_OPTIONAL_BOOL(tmuxWindowsShouldCloseAfterDetach, TmuxWindowsShouldCloseAfterDetach, nil, SECTION_TMUX @"Close tmux windows after detaching?\nThis only takes effect when “Prefs > Profiles > Session > After a session ends” is set to “No Action”.");
 DEFINE_BOOL(disableTmuxWindowPositionRestoration, NO, SECTION_TMUX @"Disable window position restoration in tmux integration.");
+DEFINE_INT(tmuxPauseTime, 30, SECTION_TMUX @"Automatically pause tmux sessions when catch-up time would exceed this many seconds.\nRequires tmux 3.2. You must reattach after changing this setting.");
 
 #pragma mark Warnings
 

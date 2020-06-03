@@ -25,6 +25,7 @@
 #import "NSStringITerm.h"
 #import "PreferencePanel.h"
 #import "PseudoTerminal.h"
+#import "PTYSession.h"
 #import "PTYTab.h"
 #import "RegexKitLite.h"
 #import "TmuxControllerRegistry.h"
@@ -886,6 +887,46 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
 }
 
 - (void)handlePingResponse:(NSString *)ignore {
+}
+
+- (void)enablePauseModeIfPossible:(NSInteger)catchUpTime {
+    [gateway_ sendCommand:[NSString stringWithFormat:@"refresh-client -fpause-after=%@", @(catchUpTime)]
+           responseTarget:self
+         responseSelector:@selector(handleEnablePauseModeResponse:)
+           responseObject:nil
+                    flags:kTmuxGatewayCommandShouldTolerateErrors];
+}
+
+- (void)handleEnablePauseModeResponse:(NSString *)response {
+    _pauseModeEnabled = (response != nil);
+}
+
+- (void)unpausePanes:(NSArray<NSNumber *> *)wps {
+    if (!_pauseModeEnabled) {
+        return;
+    }
+    TmuxWindowOpener *windowOpener = [TmuxWindowOpener windowOpener];
+    windowOpener.ambiguousIsDoubleWidth = ambiguousIsDoubleWidth_;
+    windowOpener.unicodeVersion = self.unicodeVersion;
+    windowOpener.maxHistory =
+        MAX([[gateway_ delegate] tmuxClientSize].height,
+            [[gateway_ delegate] tmuxNumberOfLinesOfScrollbackHistory]);
+    windowOpener.controller = self;
+    windowOpener.gateway = gateway_;
+    windowOpener.target = self;
+    windowOpener.selector = @selector(panesDidUnpause:);
+
+    windowOpener.minimumServerVersion = self.gateway.minimumServerVersion;
+    [windowOpener unpauseWindowPanes:wps];
+}
+
+- (void)panesDidUnpause:(TmuxWindowOpener *)opener {
+    for (NSNumber *wp in opener.unpausingWindowPanes) {
+        PTYSession *session = [self sessionForWindowPane:wp.intValue];
+        [session setTmuxHistory:[opener historyLinesForWindowPane:wp.intValue alternateScreen:NO]
+                     altHistory:[opener historyLinesForWindowPane:wp.intValue alternateScreen:YES]
+                          state:[opener stateForWindowPane:wp.intValue]];
+    }
 }
 
 // Make sure that current tmux options are compatible with iTerm.

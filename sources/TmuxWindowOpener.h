@@ -46,9 +46,15 @@ extern NSString *const kTmuxWindowOpenerWindowOptionStyleValueFullScreen;
 @property (nonatomic, copy) void (^completion)(int windowIndex);
 @property (nonatomic, assign) NSDecimalNumber *minimumServerVersion;
 @property (nonatomic, readonly) NSInteger errorCount;
+@property (nonatomic, readonly) NSArray<NSNumber *> *unpausingWindowPanes;
 
 + (TmuxWindowOpener *)windowOpener;
 - (BOOL)openWindows:(BOOL)initial;
 - (void)updateLayoutInTab:(PTYTab *)term;
+- (void)unpauseWindowPanes:(NSArray<NSNumber *> *)windowPanes;
+
+// These access the results of unpauseWindowPanes:
+- (NSArray<NSData *> *)historyLinesForWindowPane:(int)wp alternateScreen:(BOOL)altScreen;
+- (NSDictionary *)stateForWindowPane:(int)wp;
 
 @end

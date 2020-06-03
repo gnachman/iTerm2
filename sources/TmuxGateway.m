@@ -273,6 +273,15 @@ error:
     [delegate_ tmuxActiveWindowPaneDidChangeInWindow:[components[1] intValue] toWindowPane:[components[2] intValue]];
 }
 
+- (void)parsePauseCommand:(NSString *)command {
+    NSArray<NSString *> *components = [command captureComponentsMatchedByRegex:@"^%pause %([0-9]+)$"];
+    if (components.count != 2) {
+        [self abortWithErrorMessage:[NSString stringWithFormat:@"Malformed command (expected %%pause %%wp): \"%@\"", command]];
+        return;
+    }
+    [delegate_ tmuxWindowPaneDidPause:components[1].intValue];
+}
+
 - (void)forceDetach {
     [self hostDisconnected];
 }
@@ -528,6 +537,11 @@ error:
     } else if ([command hasPrefix:@"%window-pane-changed"]) {
         // New in tmux 2.5
         if (acceptNotifications_) [self parseWindowPaneChangedCommand:command];
+    } else if ([command hasPrefix:@"%pause"]) {
+        // New in tmux 3.2
+        if (acceptNotifications_) [self parsePauseCommand:command];
+    } else if ([command hasPrefix:@"%continue"]) {
+        // New in tmux 3.2. Don't care.
     } else if ([command hasPrefix:@"%window-pane-changed"] ||  // active pane changed
                [command hasPrefix:@"%session-window-changed"] ||  // active window changed
                [command hasPrefix:@"%client-session-changed"] ||  // client is now attached to a new session

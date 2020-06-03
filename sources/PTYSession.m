@@ -266,6 +266,8 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
 // default color from the tmux profile; this tab should have no color."
 static NSString *const iTermTmuxTabColorNone = @"none";
 
+static NSString *PTYSessionAnnouncementIdentifierTmuxPaused = @"tmuxPaused";
+
 // Maps Session GUID to saved contents. Only live between window restoration
 // and the end of startup activities.
 static NSMutableDictionary *gRegisteredSessionContents;
@@ -570,6 +572,7 @@ static const NSUInteger kMaxHosts = 100;
     iTermNaggingController *_naggingController;
     iTermComposerManager *_composerManager;
     NSNumber *_lastLibTickitProfileSetting;
+    BOOL _tmuxPaused;
 }
 
 @synthesize isDivorced = _divorced;
@@ -1227,25 +1230,7 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 
     if (state) {
-        [[aSession screen] setTmuxState:state];
-        NSData *pendingOutput = [state objectForKey:kTmuxWindowOpenerStatePendingOutput];
-        if (pendingOutput && [pendingOutput length]) {
-            [aSession.terminal.parser putStreamData:pendingOutput.bytes
-                                             length:pendingOutput.length];
-        }
-        [[aSession terminal] setInsertMode:[[state objectForKey:kStateDictInsertMode] boolValue]];
-        [[aSession terminal] setCursorMode:[[state objectForKey:kStateDictKCursorMode] boolValue]];
-        [[aSession terminal] setKeypadMode:[[state objectForKey:kStateDictKKeypadMode] boolValue]];
-        if ([[state objectForKey:kStateDictMouseStandardMode] boolValue]) {
-            [[aSession terminal] setMouseMode:MOUSE_REPORTING_NORMAL];
-        } else if ([[state objectForKey:kStateDictMouseButtonMode] boolValue]) {
-            [[aSession terminal] setMouseMode:MOUSE_REPORTING_BUTTON_MOTION];
-        } else if ([[state objectForKey:kStateDictMouseAnyMode] boolValue]) {
-            [[aSession terminal] setMouseMode:MOUSE_REPORTING_ALL_MOTION];
-        } else {
-            [[aSession terminal] setMouseMode:MOUSE_REPORTING_NONE];
-        }
-        [[aSession terminal] setMouseFormat:[[state objectForKey:kStateDictMouseUTF8Mode] boolValue] ? MOUSE_FORMAT_XTERM_EXT : MOUSE_FORMAT_XTERM];
+        [aSession setTmuxState:state];
     }
     NSDictionary *liveArrangement = arrangement[SESSION_ARRANGEMENT_LIVE_SESSION];
     if (liveArrangement) {
@@ -6719,6 +6704,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 - (void)tmuxInitialCommandDidCompleteSuccessfully {
     // This kicks off a chain reaction that leads to windows being opened.
     [_tmuxController ping];
+    [_tmuxController enablePauseModeIfPossible:[iTermAdvancedSettingsModel tmuxPauseTime]];
     [_tmuxController validateOptions];
     [_tmuxController checkForUTF8];
     [_tmuxController loadDefaultTerminal];
@@ -6866,6 +6852,80 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     dispatch_async([[self class] tmuxQueue], ^{
         [handle writeData:data];
     });
+}
+
+- (void)tmuxWindowPaneDidPause:(int)wp {
+    PTYSession *session = [_tmuxController sessionForWindowPane:wp];
+    [session setTmuxPaused:YES];
+}
+
+- (void)setTmuxPaused:(BOOL)paused {
+    if (_tmuxPaused == paused) {
+        return;
+    }
+    _tmuxPaused = paused;
+    if (paused) {
+        [self showTmuxPausedAnnouncement];
+    } else {
+        [self unpauseTmux];
+    }
+}
+
+- (void)showTmuxPausedAnnouncement {
+    if ([self hasAnnouncementWithIdentifier:PTYSessionAnnouncementIdentifierTmuxPaused]) {
+        return;
+    }
+    __weak __typeof(self) weakSelf = self;
+    iTermAnnouncementViewController *announcement =
+    [iTermAnnouncementViewController announcementWithTitle:@"This tmux pane was paused because too much output was buffered."
+                                                     style:kiTermAnnouncementViewStyleWarning
+                                               withActions:@[ @"_Unpause" ]
+                                                completion:^(int selection) {
+        if (selection == 0) {
+            [weakSelf setTmuxPaused:NO];
+        }
+    }];
+    [self removeAnnouncementWithIdentifier:PTYSessionAnnouncementIdentifierTmuxPaused];
+    [self queueAnnouncement:announcement identifier:PTYSessionAnnouncementIdentifierTmuxPaused];
+}
+
+- (void)setTmuxHistory:(NSArray<NSData *> *)history
+             altHistory:(NSArray<NSData *> *)altHistory
+                 state:(NSDictionary *)state {
+    [self.terminal resetForTmuxUnpause];
+    [self clearScrollbackBuffer];
+    [_screen setHistory:history];
+    [_screen setAltScreen:altHistory];
+    [self setTmuxState:state];
+    _view.scrollview.ptyVerticalScroller.userScroll = NO;
+}
+
+- (void)setTmuxState:(NSDictionary *)state {
+    [[self screen] setTmuxState:state];
+    NSData *pendingOutput = [state objectForKey:kTmuxWindowOpenerStatePendingOutput];
+    if (pendingOutput && [pendingOutput length]) {
+        [self.terminal.parser putStreamData:pendingOutput.bytes
+                                         length:pendingOutput.length];
+    }
+    [[self terminal] setInsertMode:[[state objectForKey:kStateDictInsertMode] boolValue]];
+    [[self terminal] setCursorMode:[[state objectForKey:kStateDictKCursorMode] boolValue]];
+    [[self terminal] setKeypadMode:[[state objectForKey:kStateDictKKeypadMode] boolValue]];
+    if ([[state objectForKey:kStateDictMouseStandardMode] boolValue]) {
+        [[self terminal] setMouseMode:MOUSE_REPORTING_NORMAL];
+    } else if ([[state objectForKey:kStateDictMouseButtonMode] boolValue]) {
+        [[self terminal] setMouseMode:MOUSE_REPORTING_BUTTON_MOTION];
+    } else if ([[state objectForKey:kStateDictMouseAnyMode] boolValue]) {
+        [[self terminal] setMouseMode:MOUSE_REPORTING_ALL_MOTION];
+    } else {
+        [[self terminal] setMouseMode:MOUSE_REPORTING_NONE];
+    }
+    [[self terminal] setMouseFormat:[[state objectForKey:kStateDictMouseUTF8Mode] boolValue] ? MOUSE_FORMAT_XTERM_EXT : MOUSE_FORMAT_XTERM];
+}
+
+- (void)unpauseTmux {
+    [self removeAnnouncementWithIdentifier:PTYSessionAnnouncementIdentifierTmuxPaused];
+    [self unzoomIfPossible];
+    [_tmuxController unpausePanes:@[ @(self.tmuxPane) ]];
 }
 
 - (void)tmuxSessionChanged:(NSString *)sessionName sessionId:(int)sessionId
@@ -7109,6 +7169,12 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         if ([_view.currentAnnouncement handleKeyDown:event]) {
             return NO;
         }
+    }
+    if (self.isTmuxClient && _tmuxPaused) {
+        // This ignores the monitor filter and subscriptions because it might be the only way to
+        // unpause.
+        [self setTmuxPaused:NO];
+        return NO;
     }
     if (_keystrokeSubscriptions.count) {
         ITMKeystrokeNotification *keystrokeNotification = [[[ITMKeystrokeNotification alloc] init] autorelease];
@@ -7823,11 +7889,21 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     if (character != 27) {
         return YES;
     }
+
     // Escape exits zoom (pops out one level, since you can zoom repeatedly)
     // The zoomOut: IBAction doesn't get performed by shortcut, I guess because Esc is not a
     // valid shortcut. So we do it here.
-    [[_delegate realParentWindow] replaceSyntheticActiveSessionWithLiveSessionIfNeeded];
     DLog(@"Special handler: ZOOM OUT");
+    return [self unzoomIfPossible];
+}
+
+- (BOOL)unzoomIfPossible {
+    if (![self textViewIsZoomedIn]) {
+        return NO;
+    }
+
+    DLog(@"Unzooming");
+    [[_delegate realParentWindow] replaceSyntheticActiveSessionWithLiveSessionIfNeeded];
     return YES;
 }
 

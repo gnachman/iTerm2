@@ -375,15 +375,25 @@ static const int kMaxScreenRows = 4096;
 }
 
 - (void)resetByUserRequest:(BOOL)userInitiated {
-    if (_columnMode) {
+    [self resetAllowingResize:YES preservePrompt:userInitiated resetParser:userInitiated];
+}
+
+- (void)resetAllowingResize:(BOOL)canResize
+             preservePrompt:(BOOL)preservePrompt
+                resetParser:(BOOL)resetParser {
+    if (canResize && _columnMode) {
         [delegate_ terminalSetWidth:80];
     }
     self.columnMode = NO;
     [self commonReset];
-    if (userInitiated) {
+    if (resetParser) {
         [_parser reset];
     }
-    [delegate_ terminalResetPreservingPrompt:userInitiated];
+    [delegate_ terminalResetPreservingPrompt:preservePrompt];
+}
+
+- (void)resetForTmuxUnpause {
+    [self resetAllowingResize:NO preservePrompt:NO resetParser:YES];
 }
 
 - (void)setWraparoundMode:(BOOL)mode {

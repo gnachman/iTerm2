@@ -65,6 +65,8 @@ extern NSString *const kTmuxControllerDidChangeHiddenWindows;
 @property(nonatomic, readonly) NSString *defaultTerminal;
 @property(nonatomic) NSRect initialWindowHint;
 @property(nonatomic, readonly) BOOL detached;
+@property(nonatomic, readonly) BOOL pauseModeEnabled;
+
 - (instancetype)initWithGateway:(TmuxGateway *)gateway
                      clientName:(NSString *)clientName
                         profile:(Profile *)profile
@@ -116,6 +118,8 @@ extern NSString *const kTmuxControllerDidChangeHiddenWindows;
 - (void)fitLayoutToWindows;
 - (void)validateOptions;
 - (void)ping;
+- (void)enablePauseModeIfPossible:(NSInteger)catchUpTime;
+- (void)unpausePanes:(NSArray<NSNumber *> *)wps;
 
 // Issue tmux commands to infer bounds on the version.
 - (void)guessVersion;

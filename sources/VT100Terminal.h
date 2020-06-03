@@ -114,7 +114,7 @@ typedef struct {
 
 - (void)resetCharset;
 - (void)resetByUserRequest:(BOOL)preservePrompt;
-
+- (void)resetForTmuxUnpause;
 
 - (void)setDisableSmcupRmcup:(BOOL)value;
 
