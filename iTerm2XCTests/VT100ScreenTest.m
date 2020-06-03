@@ -4305,7 +4305,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     screen_char_t line[1];
     screen_char_t continuation;
     continuation.backgroundColor = 5;
-    [lineBuffer appendLine:line length:0 partial:NO width:80 timestamp:0 continuation:continuation];
+    [lineBuffer appendLine:line length:0 partial:NO width:80 timestamp:0 continuation:continuation attachments:nil];
 
     screen_char_t buffer[3];
     [lineBuffer copyLineToBuffer:buffer width:3 lineNum:0 continuation:&continuation];
@@ -4347,7 +4347,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     const int wrapWidth = 200;
     for (int i = 0; i < linesPerBlock * 2; i++) {
         line[0].code = '0' + i;
-        [lineBuffer appendLine:line length:n partial:NO width:wrapWidth timestamp:0 continuation:continuation];
+        [lineBuffer appendLine:line length:n partial:NO width:wrapWidth timestamp:0 continuation:continuation attachments:nil];
     }
     // This tests the regression.
     NSArray *lines = [lineBuffer wrappedLinesFromIndex:linesPerBlock

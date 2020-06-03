@@ -84,6 +84,18 @@ static NSString *const kGridSizeKey = @"Size";
     return [[lines_ objectAtIndex:(screenTop_ + lineNumber) % size_.height] mutableBytes];
 }
 
+- (ScreenCharArray *)screenCharArrayAtLine:(int)lineNumber {
+    assert(lineNumber >= 0);
+    screen_char_t *chars = [[lines_ objectAtIndex:(screenTop_ + lineNumber) % size_.height] mutableBytes];
+    VT100LineInfo *lineInfo = [self lineInfoAtLineNumber:lineNumber];
+    id<iTermScreenCharAttachmentsArray> attachments = lineInfo.attachments;
+    return [[ScreenCharArray alloc] initWithLine:chars
+                                          length:size_.width
+                                    continuation:chars[size_.width]
+                                     attachments:attachments];
+
+}
+
 - (VT100LineInfo *)lineInfoAtLineNumber:(int)lineNumber {
     if (lineNumber >= 0 && lineNumber < size_.height) {
         return [lineInfos_ objectAtIndex:(screenTop_ + lineNumber) % size_.height];
@@ -666,6 +678,20 @@ static NSString *const kGridSizeKey = @"Size";
 
 - (int)scrollRight {
     return VT100GridRangeMax(scrollRegionCols_);
+}
+
+- (void)setAttachment:(iTermScreenCharAttachment *)attachment
+                range:(VT100GridCoordRange)range {
+    int startX = range.start.x;
+    int endX = size_.width;
+    for (int y = range.start.y; y <= range.end.y; y++) {
+        if (y == range.end.y) {
+            endX = range.end.x;
+        }
+        VT100LineInfo *lineInfo = [self lineInfoAtLineNumber:y];
+        [lineInfo setAttachment:attachment range:VT100GridRangeMake(startX, endX - startX)];
+        startX = 0;
+    }
 }
 
 - (int)appendCharsAtCursor:(screen_char_t *)buffer

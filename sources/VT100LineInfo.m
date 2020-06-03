@@ -56,11 +56,13 @@ static NSInteger VT100LineInfoNextGeneration = 1;
         const iTermScreenCharAttachment *attachment = &attachments[idx];
         if (lastIndex == -1 ||  // Always start a run for the first index
             lastIndex + 1 != idx ||  // Start a run if there was a cap
-            memcmp(attachment, &attachments[lastIndex], sizeof(*attachment))) {  // Start a run if the attachment is different than the last
+            memcmp(attachment, &attachments[lastIndex], sizeof(*attachment))) {  // Differs from previous
+            // Start a new run.
             i = count;
             count += 1;
             runs[i].offset = idx;
             runs[i].length = 1;
+            runs[i].attachment = *attachment;
         } else {
             runs[i].length += 1;
         }
@@ -80,6 +82,21 @@ static NSInteger VT100LineInfoNextGeneration = 1;
     }
     _attachmentRunArray = nil;
     return &_attachments.mutableAttachments[x];
+}
+
+- (void)setAttachment:(const iTermScreenCharAttachment *)attachment range:(VT100GridRange)range {
+    if (!attachment) {
+        [_attachments.mutableValidAttachments removeIndexesInRange:NSMakeRange(range.location, range.length)];
+        return;
+    }
+    if (!_attachments) {
+        _attachments = [[iTermMutableScreenCharAttachmentsArray alloc] initWithCount:width_];
+    }
+    [_attachments.mutableValidAttachments addIndexesInRange:NSMakeRange(range.location, range.length)];
+    iTermScreenCharAttachment *dest = _attachments.mutableAttachments;
+    for (int i = 0; i < range.length; i++) {
+        dest[i + range.location] = *attachment;
+    }
 }
 
 - (const iTermScreenCharAttachment *)constAttachmentAt:(int)x {

@@ -23,6 +23,9 @@
 - (BOOL)anyCharIsDirty;
 - (VT100GridRange)dirtyRange;
 - (NSIndexSet *)dirtyIndexes;
+
+- (void)setAttachment:(const iTermScreenCharAttachment *)attachment range:(VT100GridRange)range;
+
 - (iTermScreenCharAttachment *)attachmentAt:(int)x createIfNeeded:(BOOL)createIfNeeded;
 - (const iTermScreenCharAttachment *)constAttachmentAt:(int)x;
 - (void)setAttachmentRuns:(id<iTermScreenCharAttachmentRunArray>)attachments;

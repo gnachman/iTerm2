@@ -36,6 +36,7 @@
 #import "iTermImageInfo.h"
 #import "iTermMalloc.h"
 #import "NSCharacterSet+iTerm.h"
+#import "NSObject+iTerm.h"
 
 static NSString *const kScreenCharComplexCharMapKey = @"Complex Char Map";
 static NSString *const kScreenCharSpacingCombiningMarksKey = @"Spacing Combining Marks";
@@ -146,13 +147,15 @@ iTermTriState iTermTriStateFromBool(BOOL b) {
 
 - (instancetype)initWithLine:(screen_char_t *)line
                       length:(int)length
-                continuation:(screen_char_t)continuation {
+                continuation:(screen_char_t)continuation
+                 attachments:(id<iTermScreenCharAttachmentsArray>)attachments {
     self = [super init];
     if (self) {
         _line = line;
         _length = length;
         _continuation = continuation;
         _eol = continuation.code;
+        _attachments = [attachments retain];
     }
     return self;
 }
@@ -161,7 +164,28 @@ iTermTriState iTermTriStateFromBool(BOOL b) {
     if (_freeLine) {
         free(_line);
     }
+    [_attachments release];
     [super dealloc];
+}
+
+- (NSString *)description {
+    return [NSString stringWithFormat:@"<%@: %p %@ attachments=%@>",
+            NSStringFromClass(self.class),
+            self,
+            ScreenCharArrayToStringDebug(_line, _length),
+            _attachments];
+}
+
+- (BOOL)isEqual:(id)object {
+    ScreenCharArray *other = [ScreenCharArray castFrom:object];
+    if (!other) {
+        return NO;
+    }
+    return (!memcmp(_line, other->_line, sizeof(screen_char_t) * _length) &&
+            _length == other->_length &&
+            _eol == other->_eol &&
+            [NSObject object:_attachments isEqualToObject:other.attachments] &&
+            !memcmp(&_continuation, &other->_continuation, sizeof(_continuation)));
 }
 
 - (BOOL)isEqualToScreenCharArray:(ScreenCharArray *)other {
@@ -171,6 +195,7 @@ iTermTriState iTermTriStateFromBool(BOOL b) {
     return (_line == other->_line &&
             _length == other->_length &&
             _eol == other->_eol &&
+            _attachments == other.attachments &&
             !memcmp(&_continuation, &other->_continuation, sizeof(_continuation)));
 }
 
@@ -180,6 +205,7 @@ iTermTriState iTermTriStateFromBool(BOOL b) {
     screen_char_t *temp = iTermMalloc(size);
     memmove(temp, _line, size);
     _line = temp;
+    _attachments = [[_attachments autorelease] copy];
 }
 
 @end

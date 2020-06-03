@@ -1605,7 +1605,8 @@ do { \
                        partial:i == strings.count - 1
                          width:80
                      timestamp:0
-                  continuation:continuation];
+                  continuation:continuation
+                   attachments:nil];
         i++;
     }
     va_end(args);
@@ -2908,6 +2909,89 @@ do { \
     VT100GridRun expected = VT100GridRunMake(0, 0, 0);
     XCTAssertTrue(VT100GridRunEquals(actual, expected),
                   "actual=%@, expected=%@", VT100GridRunDescription(actual), VT100GridRunDescription(expected));
+}
+
+#pragma mark - Attachments
+
+- (void)testAttachmentsPlacedInLineBuffer {
+    // Create grid with attachments at 1,2 and 4,5
+    VT100Grid *grid = [[[VT100Grid alloc] initWithSize:VT100GridSizeMake(10, 10) delegate:self] autorelease];
+    NSString *string = @"abcdef";
+    screen_char_t *line = [self screenCharLineForString:string];
+    LineBuffer *lineBuffer = [[[LineBuffer alloc] initWithBlockSize:1000] autorelease];
+    [grid appendCharsAtCursor:line
+                       length:[string length]
+      scrollingIntoLineBuffer:lineBuffer
+          unlimitedScrollback:YES
+      useScrollbackWithRegion:NO
+                   wraparound:YES
+                         ansi:NO
+                       insert:NO];
+    iTermScreenCharAttachment attachments[] = {
+        {
+            .underlineRed = 123
+        },
+        {
+            .underlineRed = 222
+        }
+    };
+    [grid setAttachment:&attachments[0] range:VT100GridCoordRangeMake(1, 0, 3, 0)];
+    [grid setAttachment:&attachments[1] range:VT100GridCoordRangeMake(4, 0, 6, 0)];
+    [grid appendLines:1 toLineBuffer:lineBuffer];
+
+    // Get the line out of the line buffer
+    iTermScreenCharAttachmentRunArraySlice *slice = nil;
+    ScreenCharArray *fromBuffer = [lineBuffer wrappedLineAtIndex:0 width:10 attachments:&slice];
+
+    // Asert that it is correct.
+    XCTAssertEqual(fromBuffer.length, string.length);
+    XCTAssertEqual(0, memcmp(line, fromBuffer.line, sizeof(screen_char_t) * string.length));
+    id<iTermScreenCharAttachmentsArray> fullArray = slice.fullArray;
+    NSMutableIndexSet *expectedIndexes = [NSMutableIndexSet indexSet];
+    [expectedIndexes addIndex:1];
+    [expectedIndexes addIndex:2];
+    [expectedIndexes addIndex:4];
+    [expectedIndexes addIndex:5];
+    XCTAssertEqualObjects(fullArray.validAttachments, expectedIndexes);
+    XCTAssertEqual(0, memcmp(&fullArray.attachments[1], &attachments[0], sizeof(*attachments)));
+    XCTAssertEqual(0, memcmp(&fullArray.attachments[2], &attachments[0], sizeof(*attachments)));
+    XCTAssertEqual(0, memcmp(&fullArray.attachments[4], &attachments[1], sizeof(*attachments)));
+    XCTAssertEqual(0, memcmp(&fullArray.attachments[5], &attachments[1], sizeof(*attachments)));
+}
+
+- (void)testAttachmentsRoundTrip {
+    // Create grid with attachments at 1,2 and 4,5
+    VT100Grid *grid = [[[VT100Grid alloc] initWithSize:VT100GridSizeMake(10, 10) delegate:self] autorelease];
+    NSString *string = @"abcdef";
+    screen_char_t *line = [self screenCharLineForString:string];
+    LineBuffer *lineBuffer = [[[LineBuffer alloc] initWithBlockSize:1000] autorelease];
+    [grid appendCharsAtCursor:line
+                       length:[string length]
+      scrollingIntoLineBuffer:lineBuffer
+          unlimitedScrollback:YES
+      useScrollbackWithRegion:NO
+                   wraparound:YES
+                         ansi:NO
+                       insert:NO];
+    iTermScreenCharAttachment attachments[] = {
+        {
+            .underlineRed = 123
+        },
+        {
+            .underlineRed = 222
+        }
+    };
+    [grid setAttachment:&attachments[0] range:VT100GridCoordRangeMake(1, 0, 3, 0)];
+    [grid setAttachment:&attachments[1] range:VT100GridCoordRangeMake(4, 0, 6, 0)];
+    [grid appendLines:1 toLineBuffer:lineBuffer];
+    ScreenCharArray *before = [grid screenCharArrayAtLine:0];
+
+    // Get the line out of the line buffer
+    grid = [[[VT100Grid alloc] initWithSize:VT100GridSizeMake(10, 10) delegate:self] autorelease];
+    screen_char_t defaultScreenChar = { 0 };
+    [grid restoreScreenFromLineBuffer:lineBuffer withDefaultChar:defaultScreenChar maxLinesToRestore:1];
+    ScreenCharArray *after = [grid screenCharArrayAtLine:0];
+    XCTAssertEqualObjects(before, after);
 }
 
 @end

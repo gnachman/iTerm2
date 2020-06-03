@@ -42,6 +42,8 @@ typedef struct {
 @property (nonatomic, readonly) const iTermScreenCharAttachment *attachments;
 @property (nonatomic, readonly) NSUInteger count;
 @property (nonatomic, readonly) id<iTermScreenCharAttachmentRunArray> runArray;
+
+- (BOOL)isEqual:(id)object;
 @end
 
 #pragma mark - iTermScreenCharAttachmentRunArray

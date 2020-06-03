@@ -8,6 +8,43 @@
 #import "iTermScreenCharAttachment.h"
 #import "DebugLogging.h"
 #import "iTermMalloc.h"
+#import "NSObject+iTerm.h"
+
+static NSString *iTermStringForScreenCharAttachment(const iTermScreenCharAttachment *att) {
+    if (!att) {
+        return @"(null)";
+    }
+    return [NSString stringWithFormat:@"ulc=(%d,%d,%d) hasUlc=%d",
+            att->underlineRed, att->underlineGreen, att->underlineBlue, att->hasUnderlineColor];
+}
+
+static NSString *iTermStringForScreenCharAttachmentRun(const iTermScreenCharAttachmentRun *run) {
+    return [NSString stringWithFormat:@"[%d,%d]={%@}", run->offset, run->offset + run->length - 1,
+            iTermStringForScreenCharAttachment(&run->attachment)];
+}
+
+static BOOL iTermScreenCharAttachmentsArrayEqual(id<iTermScreenCharAttachmentsArray> lhs,
+                                                 id<iTermScreenCharAttachmentsArray> object) {
+    if (![object conformsToProtocol:@protocol(iTermScreenCharAttachmentsArray)]) {
+        return NO;
+    }
+    id<iTermScreenCharAttachmentsArray> rhs = (id<iTermScreenCharAttachmentsArray>)object;
+    if (![rhs.validAttachments isEqual:lhs.validAttachments]) {
+        return NO;
+    }
+    __block BOOL result = YES;
+    const iTermScreenCharAttachment *myAttachments = lhs.attachments;
+    const iTermScreenCharAttachment *otherAttachments = rhs.attachments;
+    [lhs.validAttachments enumerateIndexesUsingBlock:^(NSUInteger i, BOOL * _Nonnull stop) {
+        if (memcmp(&myAttachments[i],
+                   &otherAttachments[i],
+                   sizeof(*myAttachments))) {
+            result = NO;
+            *stop = YES;
+        }
+    }];
+    return result;
+}
 
 @implementation iTermScreenCharAttachmentRunArray {
     iTermScreenCharAttachmentRun *_runs;
@@ -40,6 +77,16 @@
 
 - (void)dealloc {
     free(_runs);
+}
+
+- (NSString *)description {
+    NSMutableArray *values = [NSMutableArray array];
+    for (int i = 0; i < _count; i++) {
+        [values addObject:iTermStringForScreenCharAttachmentRun(&_runs[i])];
+    }
+    NSString *summary = [values componentsJoinedByString:@", "];
+    return [NSString stringWithFormat:@"<%@: %p count=%@ %@>",
+            NSStringFromClass(self.class), self, @(_count), summary];
 }
 
 - (NSData *)serialized {
@@ -180,6 +227,16 @@
     return self;
 }
 
+- (NSString *)description {
+    NSMutableArray *values = [NSMutableArray array];
+    for (int i = 0; i < self.count; i++) {
+        [values addObject:iTermStringForScreenCharAttachmentRun(&self.runs[i])];
+    }
+    NSString *summary = [values componentsJoinedByString:@", "];
+    return [NSString stringWithFormat:@"<%@: %p count=%@ %@>",
+            NSStringFromClass(self.class), self, @(self.count), summary];
+}
+
 - (NSUInteger)count {
     return _end - _begin;
 }
@@ -285,12 +342,27 @@ iTermScreenCharAttachmentRunCreate(NSIndexSet *_validAttachments,
     free((void *)_attachments);
 }
 
+- (NSString *)description {
+    NSMutableArray *values = [NSMutableArray array];
+    [_validAttachments enumerateIndexesUsingBlock:^(NSUInteger i, BOOL * _Nonnull stop) {
+        NSString *d = iTermStringForScreenCharAttachment(&self->_attachments[i]);
+        [values addObject:[NSString stringWithFormat:@"%@={%@}", @(i), d]];
+    }];
+    NSString *summary = [values componentsJoinedByString:@", "];
+    return [NSString stringWithFormat:@"<%@: %p %@>",
+            NSStringFromClass(self.class), self, summary];
+}
+
 - (id<iTermScreenCharAttachmentRunArray>)runArray {
     return iTermScreenCharAttachmentRunCreate(_validAttachments, _attachments, _count);
 }
 
 - (id)copyWithZone:(NSZone *)zone {
     return self;
+}
+
+- (BOOL)isEqual:(id)object {
+    return iTermScreenCharAttachmentsArrayEqual(self, object);
 }
 
 @end
@@ -314,6 +386,21 @@ iTermScreenCharAttachmentRunCreate(NSIndexSet *_validAttachments,
 
 - (void)dealloc {
     free(_mutableAttachments);
+}
+
+- (NSString *)description {
+    NSMutableArray *values = [NSMutableArray array];
+    [_mutableValidAttachments enumerateIndexesUsingBlock:^(NSUInteger i, BOOL * _Nonnull stop) {
+        NSString *d = iTermStringForScreenCharAttachment(&self->_mutableAttachments[i]);
+        [values addObject:[NSString stringWithFormat:@"%@={%@}", @(i), d]];
+    }];
+    NSString *summary = [values componentsJoinedByString:@", "];
+    return [NSString stringWithFormat:@"<%@: %p %@>",
+            NSStringFromClass(self.class), self, summary];
+}
+
+- (BOOL)isEqual:(id)object {
+    return iTermScreenCharAttachmentsArrayEqual(self, object);
 }
 
 - (const iTermScreenCharAttachment *)attachments {
