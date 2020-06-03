@@ -6923,7 +6923,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)unpauseTmux {
-    [self removeAnnouncementWithIdentifier:PTYSessionAnnouncementIdentifierTmuxPaused];
+    [self dismissAnnouncementWithIdentifier:PTYSessionAnnouncementIdentifierTmuxPaused];
     [self unzoomIfPossible];
     [_tmuxController unpausePanes:@[ @(self.tmuxPane) ]];
 }

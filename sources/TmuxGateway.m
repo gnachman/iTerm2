@@ -539,7 +539,7 @@ error:
         if (acceptNotifications_) [self parseWindowPaneChangedCommand:command];
     } else if ([command hasPrefix:@"%pause"]) {
         // New in tmux 3.2
-        if (acceptNotifications_) [self parsePauseCommand:command];
+        [self parsePauseCommand:command];
     } else if ([command hasPrefix:@"%continue"]) {
         // New in tmux 3.2. Don't care.
     } else if ([command hasPrefix:@"%window-pane-changed"] ||  // active pane changed

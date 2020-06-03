@@ -125,18 +125,8 @@ NSString *const kTmuxWindowOpenerWindowOptionStyleValueFullScreen = @"FullScreen
     NSMutableArray<NSDictionary *> *commands = [NSMutableArray array];
     for (NSNumber *wp in windowPanes) {
         [self appendRequestsForWindowPane:wp toArray:commands];
-        NSString *command = [NSString stringWithFormat:@"refresh-client -A '%%%@:continue'", wp];
-        [commands addObject:[gateway_ dictionaryForCommand:command
-                                            responseTarget:self
-                                          responseSelector:@selector(continueWindowPaneResponse:)
-                                            responseObject:nil
-                                                     flags:0]];
     }
     [gateway_ sendCommandList:commands];
-}
-
-- (void)continueWindowPaneResponse:(NSString *)response {
-    [self requestDidComplete];
 }
 
 - (void)updateLayoutInTab:(PTYTab *)tab {
@@ -208,9 +198,25 @@ NSString *const kTmuxWindowOpenerWindowOptionStyleValueFullScreen = @"FullScreen
     [cmdList addObject:[self dictForRequestHistoryForWindowPane:wp alt:YES]];
     [cmdList addObject:[self dictForDumpStateForWindowPane:wp]];
     [cmdList addObject:[self dictForGetPendingOutputForWindowPane:wp]];
+    if ([self.minimumServerVersion compare:[NSDecimalNumber decimalNumberWithString:@"3.2"]] != NSOrderedAscending) {
+        [cmdList addObject:[self dictToUnpauseWindowPane:wp]];
+    }
     if (self.minimumServerVersion.doubleValue >= 3) {
         [cmdList addObject:[self dictForGetUserVars:wp]];
     }
+}
+
+- (NSDictionary *)dictToUnpauseWindowPane:(NSNumber *)wp {
+    // If tmux is too old to support pause mode, this does nothing.
+    // If the pane isn't paused, this does nothing.
+    // If we are unpausing the pane at the user's behest, this is obviously important.
+    // The tricky case: if we got unpaused before accepting notifications, this unpauses the pane.
+    NSString *command = [NSString stringWithFormat:@"refresh-client -A '%%%@:continue'", wp];
+    return [gateway_ dictionaryForCommand:command
+                           responseTarget:self
+                         responseSelector:@selector(requestDidComplete)
+                           responseObject:nil
+                                    flags:kTmuxGatewayCommandShouldTolerateErrors];
 }
 
 - (NSDictionary *)dictToToggleZoomForWindow {
