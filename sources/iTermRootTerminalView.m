@@ -109,7 +109,7 @@ typedef struct {
     NSView *_bottomBorderView NS_AVAILABLE_MAC(10_14);
     
     iTermImageView *_backgroundImage NS_AVAILABLE_MAC(10_14);
-    NSView *_wtfBottom, *_wtfTop, *_wtfTabView, *_wtfTabTop;
+    NSView *_wtfBottom, *_wtfTop, *_wtfTabTop;
 }
 
 - (instancetype)initWithFrame:(NSRect)frameRect
@@ -307,16 +307,10 @@ typedef struct {
         }
         _wtfBottom = [[SolidColorView alloc] initWithFrame:NSMakeRect(0, 0, 100, 100) color:[NSColor redColor]];
         _wtfTop = [[SolidColorView alloc] initWithFrame:NSMakeRect(0, 0, 100, 100) color:[NSColor blueColor]];
-        _wtfTabView = [[NSView alloc] init];
-        _wtfTabView.wantsLayer = YES;
-        _wtfTabView.layer = [[CALayer alloc] init];
-        _wtfTabView.layer.borderWidth = 1.0;
-        _wtfTabView.layer.borderColor = [[NSColor yellowColor] CGColor];
         _wtfTabTop = [[SolidColorView alloc] initWithFrame:NSMakeRect(0, 0, 100, 100)
                                                      color:[NSColor orangeColor]];
         [self addSubview:_wtfBottom];
         [self addSubview:_wtfTop];
-        [self addSubview:_wtfTabView];
         [self addSubview:_wtfTabTop];
     }
     return self;
@@ -1472,7 +1466,6 @@ typedef struct {
         [self.tabBarControl updateFlashing];
     }
     DLog(@"repositionWidgets - return.");
-    _wtfTabView.frame = self.tabView.frame;
     _wtfTabTop.frame = NSMakeRect(100, NSMaxY(self.tabView.frame)-100, 100, 100);
 }
 
