@@ -1021,16 +1021,23 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
     return [_mouseHandler acceptsFirstMouse:theEvent];
 }
 
+- (void)releaseAllKeyFocus {
+    DLog(@"Releasing key focus %d times", (int)_keyFocusStolenCount);
+    for (int i = 0; i < _keyFocusStolenCount; i++) {
+        [self releaseKeyFocus];
+    }
+    [[iTermSecureKeyboardEntryController sharedInstance] didReleaseFocus];
+    _keyFocusStolenCount = 0;
+    [self setNeedsDisplay:YES];
+}
+
 - (void)mouseExited:(NSEvent *)event {
     DLog(@"Mouse exited %@", self);
     if (_keyFocusStolenCount) {
-        DLog(@"Releasing key focus %d times", (int)_keyFocusStolenCount);
-        for (int i = 0; i < _keyFocusStolenCount; i++) {
-            [self releaseKeyFocus];
-        }
-        [[iTermSecureKeyboardEntryController sharedInstance] didReleaseFocus];
-        _keyFocusStolenCount = 0;
-        [self setNeedsDisplay:YES];
+        __weak __typeof(self) weakSelf = self;
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [weakSelf releaseAllKeyFocus];
+        });
     }
     if ([NSApp isActive]) {
         [self resetMouseLocationToRefuseFirstResponderAt];
@@ -1041,19 +1048,26 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
     [_delegate textViewShowHoverURL:nil];
 }
 
+- (void)tryToStealKeyFocus {
+    DLog(@"Trying to steal key focus");
+    if ([self stealKeyFocus]) {
+        if (_keyFocusStolenCount == 0) {
+            [[self window] makeFirstResponder:self];
+            [[iTermSecureKeyboardEntryController sharedInstance] didStealFocus];
+        }
+        ++_keyFocusStolenCount;
+        [self setNeedsDisplay:YES];
+    }
+}
+
 - (void)mouseEntered:(NSEvent *)event {
     DLog(@"Mouse entered %@", self);
     if ([iTermAdvancedSettingsModel stealKeyFocus] &&
         [iTermPreferences boolForKey:kPreferenceKeyFocusFollowsMouse]) {
-        DLog(@"Trying to steal key focus");
-        if ([self stealKeyFocus]) {
-            if (_keyFocusStolenCount == 0) {
-                [[self window] makeFirstResponder:self];
-                [[iTermSecureKeyboardEntryController sharedInstance] didStealFocus];
-            }
-            ++_keyFocusStolenCount;
-            [self setNeedsDisplay:YES];
-        }
+        __weak __typeof(self) weakSelf = self;
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [weakSelf tryToStealKeyFocus];
+        });
     }
     [self updateUnderlinedURLs:event];
     if ([iTermPreferences boolForKey:kPreferenceKeyFocusFollowsMouse] &&
