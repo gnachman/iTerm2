@@ -6063,7 +6063,10 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)tabView:(NSTabView *)tabView didSelectTabViewItem:(NSTabViewItem *)tabViewItem {
-    DLog(@"Did select tab view %@", tabViewItem);
+    DLog(@"Did select tab view %@ in tab view %@", tabViewItem, tabView);
+    DLog(@"%@", [_contentView iterm_recursiveDescription]);
+    DLog(@"Selected tab view item is now %@", tabView.selectedTabViewItem);
+
     [_contentView.tabBarControl setFlashing:YES];
 
     if (self.autoCommandHistorySessionGuid) {

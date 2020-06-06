@@ -43,6 +43,11 @@
     return d;
 }
 
+- (void)viewDidMoveToSuperview {
+    DLog(@"%@ did move to superview %@:\n%@", self, self.superview, [NSThread callStackSymbols]);
+    [super viewDidMoveToSuperview];
+}
+
 // NSSplitView, that paragon of quality, does not redraw itself properly
 // on 10.14 (and, who knows, maybe earlier versions) unless you subclass
 // drawRect.

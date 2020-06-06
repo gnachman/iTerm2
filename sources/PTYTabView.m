@@ -26,6 +26,13 @@
 
 #import "PTYTabView.h"
 
+#import "NSView+RecursiveDescription.h"
+#import "DebugLogging.h"
+
+@interface NSTabView(Private)
+- (void)_switchTabViewItem:(id)arg1 oldView:(id)arg2 withTabViewItem:(id)arg3 newView:(id)arg4 initialFirstResponder:(id)arg5 lastKeyView:(id)arg6;
+@end
+
 const NSUInteger kAllModifiers = (NSEventModifierFlagControl |
                                   NSEventModifierFlagCommand |
                                   NSEventModifierFlagOption |
@@ -132,13 +139,33 @@ const NSUInteger kAllModifiers = (NSEventModifierFlagControl |
 }
 
 - (void)selectTabViewItem:(NSTabViewItem *)tabViewItem {
+    DLog(@"Calling [super selectTabViewItem:%@] - i am %@", tabViewItem, self);
+    DLog(@"My tab view items are: %@", self.tabViewItems);
+    DLog(@"The current selected item is: %@", self.selectedTabViewItem);
     [super selectTabViewItem:tabViewItem];
+    DLog(@"Returned from [super selectTabViewItem:%@] - i am %@\n%@", tabViewItem, self, [self iterm_recursiveDescription]);
 
     if (!_isCyclingWithModifierPressed) {
         [_tabViewItemsInMRUOrder removeObject:tabViewItem];
         [_tabViewItemsInMRUOrder insertObject:tabViewItem atIndex:0];
     }
 }
+
+- (void)_switchTabViewItem:(id)arg1 oldView:(id)arg2 withTabViewItem:(id)arg3 newView:(id)arg4 initialFirstResponder:(id)arg5 lastKeyView:(id)arg6 {
+    DLog(@"[%@ _switchTabViewItem:%@ oldView:%@ withTabViewItem:%@ newView:%@ initialFirstResponder:%@ lastKeyView:%@]",
+         self, arg1, arg2, arg3, arg4, arg5,arg6);
+    [super _switchTabViewItem:arg1 oldView:arg2 withTabViewItem:arg3 newView:arg4 initialFirstResponder:arg5 lastKeyView:arg6];
+}
+- (void)replaceSubview:(NSView *)oldView with:(NSView *)newView {
+    DLog(@"%@: replaceSubview%@ with:%@", self, oldView, newView);
+    [super replaceSubview:oldView with:newView];
+}
+
+- (void)addSubview:(NSView *)view {
+    DLog(@"%@: addSubview:%@", self, view);
+    [super addSubview:view];
+}
+
 
 - (void)selectTab:(id)sender {
     [self selectTabViewItemWithIdentifier:[sender representedObject]];
