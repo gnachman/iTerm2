@@ -446,7 +446,8 @@ static NSString *const kGridSizeKey = @"Size";
 
     [self setCharsFrom:VT100GridCoordMake(0, preserveCursorLine ? 1 + additionalLinesToSave : 0)
                     to:VT100GridCoordMake(size_.width - 1, size_.height - 1)
-                toChar:[self defaultChar]];
+                toChar:[self defaultChar]
+            attachment:nil];
 
     return numLinesDropped;
 }
@@ -572,7 +573,10 @@ static NSString *const kGridSizeKey = @"Size";
     }
 }
 
-- (void)setCharsFrom:(VT100GridCoord)from to:(VT100GridCoord)to toChar:(screen_char_t)c {
+- (void)setCharsFrom:(VT100GridCoord)from
+                  to:(VT100GridCoord)to
+              toChar:(screen_char_t)c
+          attachment:(iTermScreenCharAttachment *)maybeAttachment {
     if (from.x > to.x || from.y > to.y) {
         return;
     }
@@ -580,18 +584,24 @@ static NSString *const kGridSizeKey = @"Size";
         screen_char_t *line = [self screenCharsAtLineNumber:y];
         [self erasePossibleDoubleWidthCharInLineNumber:y startingAtOffset:from.x - 1 withChar:c];
         [self erasePossibleDoubleWidthCharInLineNumber:y startingAtOffset:to.x withChar:c];
-        for (int x = MAX(0, from.x); x <= MIN(to.x, size_.width - 1); x++) {
+        const int minX = MAX(0, from.x);
+        const int maxX = MIN(to.x, size_.width - 1);
+        for (int x = minX; x <= maxX; x++) {
             line[x] = c;
         }
         if (c.code == 0 && to.x == size_.width - 1) {
             line[size_.width] = c;
             line[size_.width].code = EOL_HARD;
         }
+        [[self lineInfoAtLineNumber:y] setAttachment:maybeAttachment
+                                               range:VT100GridRangeMake(minX, maxX - minX + 1)];
     }
     [self markCharsDirty:YES inRectFrom:from to:to];
 }
 
-- (void)setCharsInRun:(VT100GridRun)run toChar:(unichar)code {
+- (void)setCharsInRun:(VT100GridRun)run
+               toChar:(unichar)code
+           attachment:(iTermScreenCharAttachment *)maybeAttachment {
     screen_char_t c = [self defaultChar];
     c.code = code;
     c.complexChar = NO;
@@ -601,25 +611,28 @@ static NSString *const kGridSizeKey = @"Size";
 
     if (y == max.y) {
         // Whole run is on one line.
-        [self setCharsFrom:run.origin to:max toChar:c];
+        [self setCharsFrom:run.origin to:max toChar:c attachment:nil];
     } else {
         // Fill partial first line
         [self setCharsFrom:run.origin
                         to:VT100GridCoordMake(size_.width - 1, y)
-                    toChar:c];
+                    toChar:c
+                attachment:maybeAttachment];
         y++;
 
         if (y < max.y) {
             // Fill a bunch of full lines
             [self setCharsFrom:VT100GridCoordMake(0, y)
                             to:VT100GridCoordMake(size_.width - 1, max.y - 1)
-                        toChar:c];
+                        toChar:c
+                    attachment:maybeAttachment];
         }
 
         // Fill possibly-partial last line
         [self setCharsFrom:VT100GridCoordMake(0, max.y)
                         to:VT100GridCoordMake(max.x, max.y)
-                    toChar:c];
+                    toChar:c
+                attachment:maybeAttachment];
     }
 }
 
@@ -657,21 +670,6 @@ static NSString *const kGridSizeKey = @"Size";
     }
 }
 
-- (void)copyCharsFromGrid:(VT100Grid *)otherGrid {
-    if (otherGrid == self) {
-        return;
-    }
-    [self setSize:otherGrid.size];
-    for (int i = 0; i < size_.height; i++) {
-        screen_char_t *dest = [self screenCharsAtLineNumber:i];
-        screen_char_t *source = [otherGrid screenCharsAtLineNumber:i];
-        memmove(dest,
-                source,
-                sizeof(screen_char_t) * (size_.width + 1));
-    }
-    [self markAllCharsDirty:YES];
-}
-
 - (int)scrollLeft {
     return scrollRegionCols_.location;
 }
@@ -694,7 +692,14 @@ static NSString *const kGridSizeKey = @"Size";
     }
 }
 
+- (iTermMutableScreenCharAttachmentsArray *)attachmentArrayOnLine:(int)line
+                                                   createIfNeeded:(BOOL)create {
+    VT100LineInfo *lineInfo = [self lineInfoAtLineNumber:line];
+    return [lineInfo mutableAttachmentsCreatingIfNeeded:create];
+}
+
 - (int)appendCharsAtCursor:(screen_char_t *)buffer
+               attachments:(id<iTermScreenCharAttachmentsArray>)attachments
                     length:(int)len
    scrollingIntoLineBuffer:(LineBuffer *)lineBuffer
        unlimitedScrollback:(BOOL)unlimitedScrollback
@@ -708,7 +713,6 @@ static NSString *const kGridSizeKey = @"Size";
     int charsToInsert;
     int newx;
     int leftMargin, rightMargin;
-    screen_char_t *aLine;
     const int scrollLeft = self.scrollLeft;
     const int scrollRight = self.scrollRight;
 
@@ -881,8 +885,10 @@ static NSString *const kGridSizeKey = @"Size";
             break;
         }
 
-        int lineNumber = cursor_.y;
-        aLine = [self screenCharsAtLineNumber:cursor_.y];
+        const int lineNumber = cursor_.y;
+        screen_char_t *const aLine = [self screenCharsAtLineNumber:cursor_.y];
+        iTermMutableScreenCharAttachmentsArray *lineAttachments =
+            [self attachmentArrayOnLine:cursor_.y createIfNeeded:attachments != nil];
 
         BOOL mayStompSplitDwc = NO;
         if (newx == size_.width) {
@@ -915,11 +921,13 @@ static NSString *const kGridSizeKey = @"Size";
                     src[-1].complexChar = NO;
                     src[0].code = 0;
                     src[0].complexChar = NO;
+                    [lineAttachments removeAttachmentsInRange:NSMakeRange(cursor_.x - 1, 2)];
                 }
                 if (src[elements].code == DWC_RIGHT) {
                     // Moving a DWC on top of its right half. Erase the DWC.
                     src[elements - 1].code = 0;
                     src[elements - 1].complexChar = NO;
+                    [lineAttachments removeAttachmentsInRange:NSMakeRange(cursor_.x + elements - 1, 1)];
                 } else if (src[elements].code == DWC_SKIP &&
                            aLine[size_.width].code == EOL_DWC) {
                     // Stomping on a DWC_SKIP. Join the lines normally.
@@ -927,6 +935,9 @@ static NSString *const kGridSizeKey = @"Size";
                     aLine[size_.width].code = EOL_SOFT;
                 }
                 memmove(dst, src, elements * sizeof(screen_char_t));
+                [lineAttachments copyAttachmentsStartingAtIndex:cursor_.x
+                                                             to:cursor_.x + charsToInsert
+                                                          count:elements];
                 [self markCharsDirty:YES
                           inRectFrom:VT100GridCoordMake(cursor_.x, lineNumber)
                                   to:VT100GridCoordMake(rightMargin - 1, lineNumber)];
@@ -942,9 +953,11 @@ static NSString *const kGridSizeKey = @"Size";
 #endif
             aLine[cursor_.x].code = 0;
             aLine[cursor_.x].complexChar = NO;
+            [lineAttachments removeAttachmentsInRange:NSMakeRange(cursor_.x, 1)];
             if (cursor_.x > 0) {
                 aLine[cursor_.x-1].code = 0;
                 aLine[cursor_.x-1].complexChar = NO;
+                [lineAttachments removeAttachmentsInRange:NSMakeRange(cursor_.x - 1, 1)];
             }
             [self markCharDirty:YES
                              at:VT100GridCoordMake(cursor_.x, lineNumber)
@@ -960,11 +973,17 @@ static NSString *const kGridSizeKey = @"Size";
         // change anything (because the memcmp is really cheap). In particular, this helps vim out because
         // it really likes redrawing pane separators when it doesn't need to.
         if (charsToInsert > 1 ||
-            memcmp(aLine + cursor_.x, buffer + idx, charsToInsert * sizeof(screen_char_t))) {
+            memcmp(aLine + cursor_.x, buffer + idx, charsToInsert * sizeof(screen_char_t)) ||
+            attachments != nil ||
+            lineAttachments != nil) {
             // copy charsToInsert characters into the line and set them dirty.
             memcpy(aLine + cursor_.x,
                    buffer + idx,
                    charsToInsert * sizeof(screen_char_t));
+            [lineAttachments copyAttachmentsFromArray:attachments
+                                           fromOffset:idx
+                                             toOffset:cursor_.x
+                                                count:charsToInsert];
             [self markCharsDirty:YES
                       inRectFrom:VT100GridCoordMake(cursor_.x, lineNumber)
                               to:VT100GridCoordMake(cursor_.x + charsToInsert - 1, lineNumber)];
@@ -976,6 +995,7 @@ static NSString *const kGridSizeKey = @"Size";
                 aLine[cursor_.x + charsToInsert].code = 0;
             }
             aLine[cursor_.x + charsToInsert].complexChar = NO;
+            [lineAttachments removeAttachmentsInRange:NSMakeRange(cursor_.x + charsToInsert, 1)];
         }
         self.cursorX = newx;
         idx += charsToInsert;
@@ -985,6 +1005,7 @@ static NSString *const kGridSizeKey = @"Size";
         if (cursor_.x < size_.width - 1 && aLine[cursor_.x].code == DWC_RIGHT) {
             aLine[cursor_.x].code = 0;
             aLine[cursor_.x].complexChar = NO;
+            [lineAttachments removeAttachmentsInRange:NSMakeRange(cursor_.x, 1)];
         }
 
         if (mayStompSplitDwc &&
@@ -1077,6 +1098,7 @@ static NSString *const kGridSizeKey = @"Size";
                 aLine[rightMargin] = aLine[rightMargin + 1];
                 aLine[rightMargin].complexChar = NO;
                 aLine[rightMargin].code = 0;
+                [[self attachmentArrayOnLine:startCoord.y createIfNeeded:NO] removeAttachmentsInRange:NSMakeRange(rightMargin, 1)];
             }
             if (rightMargin == size_.width - 1 &&
                 aLine[size_.width].code == EOL_DWC) {
@@ -1087,6 +1109,9 @@ static NSString *const kGridSizeKey = @"Size";
             memmove(aLine + startCoord.x,
                     aLine + startCoord.x + n,
                     numCharsToMove * sizeof(screen_char_t));
+            [[self lineInfoAtLineNumber:startCoord.y] copyAttachmentsStartingAtIndex:startCoord.x + n
+                                                                                  to:startCoord.x
+                                                                               count:numCharsToMove];
             [self markCharsDirty:YES
                       inRectFrom:VT100GridCoordMake(startCoord.x, lineNumber)
                               to:VT100GridCoordMake(startCoord.x + numCharsToMove - 1, lineNumber)];
@@ -1094,7 +1119,9 @@ static NSString *const kGridSizeKey = @"Size";
         }
         [self setCharsFrom:VT100GridCoordMake(rightMargin - n + 1, lineNumber)
                         to:VT100GridCoordMake(rightMargin, lineNumber)
-                    toChar:defaultChar];
+                    toChar:defaultChar
+                attachment:nil];
+        [[self attachmentArrayOnLine:startCoord.y createIfNeeded:NO] removeAttachmentsInRange:NSMakeRange(rightMargin - n + 1, n)];
     }
 }
 
@@ -1157,7 +1184,10 @@ static NSString *const kGridSizeKey = @"Size";
             memmove(targetLine + rect.origin.x,
                     sourceLine + rect.origin.x,
                     (rect.size.width + continuation) * sizeof(screen_char_t));
-
+            VT100LineInfo *lineInfo = [self lineInfoAtLineNumber:destIndex];
+            [lineInfo copyAttachmentsInRange:VT100GridRangeMake(rect.origin.x,
+                                                                rect.size.width)
+                                        from:[self lineInfoAtLineNumber:sourceIndex]];
             sourceIndex -= direction;
             destIndex -= direction;
         }
@@ -1203,11 +1233,13 @@ static NSString *const kGridSizeKey = @"Size";
         if (direction > 0) {
             [self setCharsFrom:rect.origin
                             to:VT100GridCoordMake(rightIndex, MIN(bottomIndex, rect.origin.y + distance - 1))
-                        toChar:defaultChar];
+                        toChar:defaultChar
+                    attachment:nil];
         } else {
             [self setCharsFrom:VT100GridCoordMake(rect.origin.x, MAX(rect.origin.y, bottomIndex + distance + 1))
                             to:VT100GridCoordMake(rightIndex, bottomIndex)
-                        toChar:defaultChar];
+                        toChar:defaultChar
+                    attachment:nil];
         }
 
         if ((rect.origin.x == 0) ^ continuation) {
@@ -1232,12 +1264,13 @@ static NSString *const kGridSizeKey = @"Size";
         }
     }
 }
-
+#warning add attachment support to dvr
 - (void)setContentsFromDVRFrame:(screen_char_t*)s info:(DVRFrameInfo)info
 {
     [self setCharsFrom:VT100GridCoordMake(0, 0)
                     to:VT100GridCoordMake(size_.width - 1, size_.height - 1)
-                toChar:[self defaultChar]];
+                toChar:[self defaultChar]
+            attachment:nil];
     int charsToCopyPerLine = MIN(size_.width, info.width);
     if (size_.width == info.width) {
         // Ok to copy continuation mark.
@@ -1250,7 +1283,8 @@ static NSString *const kGridSizeKey = @"Size";
     if (info.height < size_.height || info.width < size_.width) {
         [self setCharsFrom:VT100GridCoordMake(0, 0)
                         to:VT100GridCoordMake(size_.width - 1, size_.height - 1)
-                    toChar:[self defaultChar]];
+                    toChar:[self defaultChar]
+                attachment:nil];
     }
     for (int y = 0; y < MIN(info.height, size_.height); y++) {
         screen_char_t *dest = [self screenCharsAtLineNumber:y];
@@ -1625,6 +1659,9 @@ static NSString *const kGridSizeKey = @"Size";
     memmove(line + pos.x + n,
             line + pos.x,
             charsToMove * sizeof(screen_char_t));
+    [[self lineInfoAtLineNumber:pos.y] copyAttachmentsStartingAtIndex:pos.x
+                                                                   to:pos.x + n
+                                                                count:charsToMove];
 
     // Try to clean up DWC_SKIP+EOL_DWC pair, if needed.
     if (self.rightMargin == size_.width - 1 &&
@@ -1645,7 +1682,7 @@ static NSString *const kGridSizeKey = @"Size";
     [self markCharsDirty:YES
               inRectFrom:VT100GridCoordMake(MIN(self.rightMargin - 1, pos.x), pos.y)
                       to:VT100GridCoordMake(self.rightMargin, pos.y)];
-    [self setCharsFrom:pos to:VT100GridCoordMake(pos.x + n - 1, pos.y) toChar:c];
+    [self setCharsFrom:pos to:VT100GridCoordMake(pos.x + n - 1, pos.y) toChar:c attachment:nil];
 }
 
 - (NSArray *)orderedLines {
@@ -2000,6 +2037,8 @@ static void DumpBuf(screen_char_t* p, int n) {
     if (offset >= 0 && offset < size_.width - 1 && aLine[offset + 1].code == DWC_RIGHT) {
         aLine[offset] = c;
         aLine[offset + 1] = c;
+        [[self lineInfoAtLineNumber:lineNumber] removeAttachmentAt:offset];
+        [[self lineInfoAtLineNumber:lineNumber] removeAttachmentAt:offset + 1];
         [self markCharDirty:YES
                          at:VT100GridCoordMake(offset, lineNumber)
             updateTimestamp:YES];

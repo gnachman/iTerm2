@@ -451,7 +451,8 @@
             // DLog(@"Set character at %@,%@: %@", @(x), @(currentGrid_.cursorY), DebugStringForScreenChar(c));
             [grid setCharsFrom:VT100GridCoordMake(x, grid.cursorY)
                             to:VT100GridCoordMake(x, grid.cursorY)
-                        toChar:c];
+                        toChar:c
+                    attachment:nil];
         }
     }
     grid.cursorX = grid.cursorX + width;

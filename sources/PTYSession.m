@@ -1045,17 +1045,28 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)appendLinesInRange:(NSRange)rangeOfLines fromSession:(PTYSession *)source {
     int width = source.screen.width;
-    for (NSUInteger i = 0; i < rangeOfLines.length; i++) {
-        int row = rangeOfLines.location + i;
-        screen_char_t *theLine = [source.screen getLineAtIndex:row];
-        if (i + 1 == rangeOfLines.length) {
+#warning TODO: Test this
+    [_screen enumerateLinesFromIndex:rangeOfLines.location
+                               count:rangeOfLines.length
+                               block:^(int row,
+                                       ScreenCharArray *sca,
+                                       id<iTermScreenCharAttachmentsArray> attachments,
+                                       BOOL *stop) {
+        screen_char_t *theLine = sca.line;
+        if (row + 1 == rangeOfLines.location + rangeOfLines.length) {
             screen_char_t continuation = { 0 };
             continuation.code = EOL_SOFT;
-            [_screen appendScreenChars:theLine length:width continuation:continuation];
+            [_screen appendScreenChars:theLine
+                           attachments:attachments
+                                length:width
+                          continuation:continuation];
         } else {
-            [_screen appendScreenChars:theLine length:width continuation:theLine[width]];
+            [_screen appendScreenChars:theLine
+                           attachments:attachments
+                                length:width
+                          continuation:theLine[width]];
         }
-    }
+    }];
 }
 
 - (void)setCopyMode:(BOOL)copyMode {

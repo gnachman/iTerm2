@@ -82,7 +82,11 @@ typedef struct {
 
 - (instancetype)initWithValidAttachmentIndexes:(NSIndexSet *)validAttachments
                                    attachments:(const iTermScreenCharAttachment *)attachments
-                                         count:(NSUInteger)count NS_DESIGNATED_INITIALIZER;
+                                         count:(NSUInteger)count;
+
+- (instancetype)initWithRepeatedAttachment:(const iTermScreenCharAttachment *)attachment
+                                     count:(NSUInteger)count;
+
 - (instancetype)init NS_UNAVAILABLE;
 @end
 
@@ -96,6 +100,18 @@ typedef struct {
 - (instancetype)initWithCount:(NSUInteger)count NS_DESIGNATED_INITIALIZER;
 - (instancetype)init NS_UNAVAILABLE;
 - (instancetype)mutableCopy;
+- (void)copyAttachmentsInRange:(NSRange)range from:(id<iTermScreenCharAttachmentsArray>)other;
+- (void)copyAttachmentsStartingAtIndex:(int)sourceIndex
+                                    to:(int)destIndex
+                                 count:(int)count;
+- (void)removeAttachmentsInRange:(NSRange)range;
+- (void)setAttachment:(iTermScreenCharAttachment * _Nullable)attachment
+              inRange:(NSRange)range;
+- (void)copyAttachmentsFromArray:(id<iTermScreenCharAttachmentsArray>)sourceArray
+fromOffset:(int)sourceOffset
+  toOffset:(int)destOffset
+     count:(int)count;
+
 @end
 
 NS_ASSUME_NONNULL_END

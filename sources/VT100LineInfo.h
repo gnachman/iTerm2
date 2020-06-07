@@ -30,6 +30,12 @@
 - (const iTermScreenCharAttachment *)constAttachmentAt:(int)x;
 - (void)setAttachmentRuns:(id<iTermScreenCharAttachmentRunArray>)attachments;
 - (id<iTermScreenCharAttachmentsArray>)attachments;
+- (iTermMutableScreenCharAttachmentsArray *)mutableAttachmentsCreatingIfNeeded:(BOOL)create;
+
 - (void)removeAttachmentAt:(int)x;
+- (void)copyAttachmentsInRange:(VT100GridRange)range from:(VT100LineInfo *)otherLineInfo;
+- (void)copyAttachmentsStartingAtIndex:(int)sourceIndex
+                                    to:(int)destIndex
+                                 count:(int)count;
 
 @end

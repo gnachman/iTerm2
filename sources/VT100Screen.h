@@ -104,8 +104,16 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 - (void)clearScrollbackBuffer;
 
 - (void)appendScreenChars:(screen_char_t *)line
+              attachments:(id<iTermScreenCharAttachmentsArray>)attachments
                    length:(int)length
              continuation:(screen_char_t)continuation;
+
+- (void)enumerateLinesFromIndex:(int)startIndex
+                          count:(int)count
+                          block:(void (^)(int,
+                                          ScreenCharArray *,
+                                          id<iTermScreenCharAttachmentsArray>,
+                                          BOOL *stop))block;
 
 // Append a string to the screen at the current cursor position. The terminal's insert and wrap-
 // around modes are respected, the cursor is advanced, the screen may be scrolled, and the line

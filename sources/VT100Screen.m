@@ -167,6 +167,8 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     // For REP
     screen_char_t _lastCharacter;
     BOOL _lastCharacterIsDoubleWidth;
+    BOOL _lastCharHasAttachment;
+    iTermScreenCharAttachment _lastCharAttachment;
 
     // Initial size before calling -restoreFromDictionary… or -1,-1 if invalid.
     VT100GridSize _initialSize;
@@ -695,7 +697,8 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     primaryGrid_.size = newSize;
     [primaryGrid_ setCharsFrom:VT100GridCoordMake(0, 0)
                             to:VT100GridCoordMake(newSize.width - 1, newSize.height - 1)
-                        toChar:primaryGrid_.savedDefaultChar];
+                        toChar:primaryGrid_.savedDefaultChar
+                    attachment:nil];
     // If the height increased:
     // Growing (avoid pulling in stuff from scrollback. Add blank lines
     // at bottom instead). Note there's a little hack here: we use saved_primary_buffer as the default
@@ -1171,9 +1174,11 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 }
 
 - (void)appendScreenChars:(screen_char_t *)line
+               attachments:(id<iTermScreenCharAttachmentsArray>)attachments
                    length:(int)length
              continuation:(screen_char_t)continuation {
     [self appendScreenCharArrayAtCursor:line
+                            attachments:attachments
                                  length:length
                              shouldFree:NO];
     if (continuation.code == EOL_HARD) {
@@ -1182,8 +1187,7 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     }
 }
 
-- (void)appendAsciiDataAtCursor:(AsciiData *)asciiData
-{
+- (void)appendAsciiDataAtCursor:(AsciiData *)asciiData {
     int len = asciiData->length;
     if (len < 1 || !asciiData) {
         return;
@@ -1219,7 +1223,13 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
         ConvertCharsToGraphicsCharset(buffer, len);
     }
 
+    id<iTermScreenCharAttachmentsArray> attachments = nil;
+    if (terminal_.attachment) {
+        attachments = [[[iTermScreenCharAttachmentsArray alloc] initWithRepeatedAttachment:terminal_.attachment
+                                                                                     count:len] autorelease];
+    }
     [self appendScreenCharArrayAtCursor:buffer
+                             attachments:attachments
                                  length:len
                              shouldFree:NO];
     STOPWATCH_LAP(appendAsciiDataAtCursor);
@@ -1308,7 +1318,12 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     if (dwc) {
         linebuffer_.mayHaveDoubleWidthCharacter = dwc;
     }
+    id<iTermScreenCharAttachmentsArray> attachments = nil;
+    if (terminal_.attachment) {
+        attachments = [[[iTermScreenCharAttachmentsArray alloc] initWithRepeatedAttachment:terminal_.attachment count:len - bufferOffset] autorelease];
+    }
     [self appendScreenCharArrayAtCursor:buffer + bufferOffset
+                            attachments:attachments
                                  length:len - bufferOffset
                              shouldFree:NO];
     if (buffer == dynamicBuffer) {
@@ -1317,6 +1332,7 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 }
 
 - (void)appendScreenCharArrayAtCursor:(screen_char_t *)buffer
+                          attachments:(id<iTermScreenCharAttachmentsArray>)attachments
                                length:(int)len
                            shouldFree:(BOOL)shouldFree {
     if (len >= 1) {
@@ -1326,11 +1342,19 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
             if (len >= 2) {
                 _lastCharacter = buffer[len - 2];
                 _lastCharacterIsDoubleWidth = YES;
+                _lastCharHasAttachment = [attachments.validAttachments containsIndex:len - 2];
+                if (_lastCharHasAttachment) {
+                    _lastCharAttachment = attachments.attachments[len - 2];
+                }
             }
         } else {
             // Record the last character.
             _lastCharacter = buffer[len - 1];
             _lastCharacterIsDoubleWidth = NO;
+            _lastCharHasAttachment = [attachments.validAttachments containsIndex:len - 1];
+            if (_lastCharHasAttachment) {
+                _lastCharAttachment = attachments.attachments[len - 1];
+            }
         }
         LineBuffer *lineBuffer = nil;
         if (currentGrid_ != altGrid_ || saveToScrollbackInAlternateScreen_) {
@@ -1338,6 +1362,7 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
             lineBuffer = linebuffer_;
         }
         [self incrementOverflowBy:[currentGrid_ appendCharsAtCursor:buffer
+                                                        attachments:attachments
                                                              length:len
                                             scrollingIntoLineBuffer:lineBuffer
                                                 unlimitedScrollback:unlimitedScrollback_
@@ -1522,7 +1547,8 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     // Initialize alternate screen to be empty
     [altGrid_ setCharsFrom:VT100GridCoordMake(0, 0)
                         to:VT100GridCoordMake(altGrid_.size.width - 1, altGrid_.size.height - 1)
-                    toChar:[altGrid_ defaultChar]];
+                    toChar:[altGrid_ defaultChar]
+                attachment:nil];
     // Copy the lines back over it
     int o = 0;
     for (int i = 0; o < altGrid_.size.height && i < MIN(lines.count, altGrid_.size.height); i++) {
@@ -1772,7 +1798,8 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
 - (void)enumerateLinesFromIndex:(int)startIndex
                           count:(int)count
-                          block:(void (^)(ScreenCharArray *,
+                          block:(void (^)(int,
+                                          ScreenCharArray *,
                                           id<iTermScreenCharAttachmentsArray>,
                                           BOOL *stop))block {
     screen_char_t *buffer = NULL;
@@ -1794,7 +1821,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
                                                                continuation:chars[self.width]] autorelease];
             VT100LineInfo *lineInfo = [currentGrid_ lineInfoAtLineNumber:lineNumber];
             BOOL stop = NO;
-            block(array, lineInfo.attachments, &stop);
+            block(theIndex, array, lineInfo.attachments, &stop);
             if (stop) {
                 return;
             }
@@ -3163,7 +3190,8 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     [currentGrid_ setCharsFrom:VT100GridCoordMake(0, 0)
                             to:VT100GridCoordMake(currentGrid_.size.width - 1,
                                                   currentGrid_.size.height - 1)
-                        toChar:ch];
+                        toChar:ch
+                    attachment:nil];
     [currentGrid_ resetScrollRegions];
     currentGrid_.cursor = VT100GridCoordMake(0, 0);
 }
@@ -3247,7 +3275,8 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
                                                  VT100GridCoordMake(x2, y2),
                                                  currentGrid_.size.width);
     [currentGrid_ setCharsInRun:theRun
-                         toChar:0];
+                         toChar:0
+                     attachment:nil];
     [delegate_ screenTriggerableChangeDidOccur];
 
 }
@@ -3273,7 +3302,8 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
                                                  VT100GridCoordMake(x2, currentGrid_.cursor.y),
                                                  currentGrid_.size.width);
     [currentGrid_ setCharsInRun:theRun
-                         toChar:0];
+                         toChar:0
+                     attachment:nil];
     [delegate_ screenTriggerableChangeDidOccur];
 }
 
@@ -3419,7 +3449,8 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
         int limit = MIN(currentGrid_.cursorX + j, currentGrid_.size.width);
         [currentGrid_ setCharsFrom:VT100GridCoordMake(currentGrid_.cursorX, currentGrid_.cursorY)
                                 to:VT100GridCoordMake(limit - 1, currentGrid_.cursorY)
-                            toChar:[currentGrid_ defaultChar]];
+                            toChar:[currentGrid_ defaultChar]
+                        attachment:nil];
         // TODO: This used to always set the continuation mark to hard, but I think it should only do that if the last char in the line is erased.
         [delegate_ screenTriggerableChangeDidOccur];
     }
@@ -3955,7 +3986,8 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     [currentGrid_ setCharsFrom:VT100GridCoordMake(0, 0)
                             to:VT100GridCoordMake(currentGrid_.size.width - 1,
                                                   currentGrid_.size.height - 1)
-                        toChar:[currentGrid_ defaultChar]];
+                        toChar:[currentGrid_ defaultChar]
+                    attachment:nil];
 }
 
 - (void)terminalSaveScrollPositionWithArgument:(NSString *)argument {
@@ -4830,10 +4862,18 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
             chars[1].code = DWC_RIGHT;
             chars[1].complexChar = NO;
         }
-
+        id<iTermScreenCharAttachmentsArray> attachments = nil;
+        if (_lastCharHasAttachment) {
+            attachments =
+            [[[iTermScreenCharAttachmentsArray alloc] initWithRepeatedAttachment:&_lastCharAttachment
+                                                                           count:length] autorelease];
+        }
         NSString *string = ScreenCharToStr(chars);
         for (int i = 0; i < times; i++) {
-            [self appendScreenCharArrayAtCursor:chars length:length shouldFree:NO];
+            [self appendScreenCharArrayAtCursor:chars
+                                    attachments:attachments
+                                         length:length
+                                     shouldFree:NO];
             [delegate_ screenDidAppendStringToCurrentLine:string
                                               isPlainText:(_lastCharacter.complexChar ||
                                                            _lastCharacter.code >= ' ')];

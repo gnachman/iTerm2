@@ -151,17 +151,18 @@
 - (void)moveWrappedCursorLineToTopOfGrid;
 
 // Set chars in a rectangle, inclusive of from and to. It will clean up orphaned DWCs.
-- (void)setCharsFrom:(VT100GridCoord)from to:(VT100GridCoord)to toChar:(screen_char_t)c;
+- (void)setCharsFrom:(VT100GridCoord)from
+                  to:(VT100GridCoord)to
+              toChar:(screen_char_t)c
+          attachment:(iTermScreenCharAttachment *)maybeAttachment;
 
 // Same as above, but for runs.
-- (void)setCharsInRun:(VT100GridRun)run toChar:(unichar)c;
-
-// Copy chars and size from another grid.
-- (void)copyCharsFromGrid:(VT100Grid *)otherGrid;
+- (void)setCharsInRun:(VT100GridRun)run toChar:(unichar)c attachment:(iTermScreenCharAttachment *)maybeAttachment;;
 
 // Append a string starting from the cursor's current position.
 // Returns number of scrollback lines dropped from lineBuffer.
 - (int)appendCharsAtCursor:(screen_char_t *)buffer
+               attachments:(id<iTermScreenCharAttachmentsArray>)attachments
                     length:(int)len
    scrollingIntoLineBuffer:(LineBuffer *)lineBuffer
        unlimitedScrollback:(BOOL)unlimitedScrollback

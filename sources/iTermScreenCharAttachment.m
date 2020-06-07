@@ -338,6 +338,24 @@ iTermScreenCharAttachmentRunCreate(NSIndexSet *_validAttachments,
     return self;
 }
 
+- (instancetype)initWithRepeatedAttachment:(const iTermScreenCharAttachment *)attachment
+                                     count:(NSUInteger)count {
+    if (!attachment) {
+        return nil;
+    }
+    self = [super init];
+    if (self) {
+        _validAttachments = [NSIndexSet indexSetWithIndexesInRange:NSMakeRange(0, count)];
+        iTermScreenCharAttachment *mutableArray = iTermMalloc(count * sizeof(*attachment));
+        _attachments = mutableArray;
+        for (NSUInteger i = 0; i < count; i++) {
+            mutableArray[i] = *attachment;
+        }
+        _count = count;
+    }
+    return self;
+}
+
 - (void)dealloc {
     free((void *)_attachments);
 }
@@ -374,10 +392,17 @@ iTermScreenCharAttachmentRunCreate(NSIndexSet *_validAttachments,
 
 @synthesize count = _count;
 
+static iTermScreenCharAttachment gMagicAttachment;
+
 - (instancetype)initWithCount:(NSUInteger)count {
     self = [super init];
     if (self) {
-        _mutableAttachments = iTermCalloc(count, sizeof(iTermScreenCharAttachment));
+        _mutableAttachments = iTermCalloc(count + 1, sizeof(iTermScreenCharAttachment));
+        static dispatch_once_t onceToken;
+        dispatch_once(&onceToken, ^{
+            memset(&gMagicAttachment, 0xcd, sizeof(gMagicAttachment));
+        });
+        _mutableAttachments[count] = gMagicAttachment;
         _count = count;
         _mutableValidAttachments = [NSMutableIndexSet indexSet];
     }
@@ -385,6 +410,7 @@ iTermScreenCharAttachmentRunCreate(NSIndexSet *_validAttachments,
 }
 
 - (void)dealloc {
+    assert(!memcmp(&gMagicAttachment, &_mutableAttachments[_count], sizeof(gMagicAttachment)));
     free(_mutableAttachments);
 }
 
@@ -434,6 +460,74 @@ iTermScreenCharAttachmentRunCreate(NSIndexSet *_validAttachments,
 
 - (id<iTermScreenCharAttachmentRunArray>)runArray {
     return iTermScreenCharAttachmentRunCreate(_mutableValidAttachments, _mutableAttachments, _count);
+}
+
+- (void)copyAttachmentsInRange:(NSRange)rangeToCopy
+                          from:(id<iTermScreenCharAttachmentsArray>)other {
+    assert(self.count == other.count);
+    [_mutableValidAttachments removeIndexesInRange:rangeToCopy];
+    [other.validAttachments enumerateRangesInRange:rangeToCopy
+                                           options:0
+                                        usingBlock:^(NSRange range, BOOL * _Nonnull stop) {
+        [self->_mutableValidAttachments addIndexesInRange:range];
+        memmove(self.mutableAttachments + range.location,
+                other.attachments + range.location,
+                sizeof(iTermScreenCharAttachment) * range.length);
+    }];
+}
+
+- (void)copyAttachmentsStartingAtIndex:(int)sourceIndex
+                                    to:(int)destIndex
+                                 count:(int)count {
+    if (count == 0) {
+        return;
+    }
+    if (sourceIndex == destIndex) {
+        return;
+    }
+    NSMutableIndexSet *additions = [NSMutableIndexSet indexSet];
+    const NSInteger offset = destIndex - sourceIndex;
+    const NSEnumerationOptions opts = sourceIndex < destIndex ? NSEnumerationReverse : 0;
+    [_mutableValidAttachments enumerateRangesInRange:NSMakeRange(sourceIndex, count)
+                                             options:opts
+                                          usingBlock:^(NSRange range, BOOL * _Nonnull stop) {
+        memmove(&self->_mutableAttachments[range.location + offset],
+                &self->_mutableAttachments[range.location],
+                sizeof(iTermScreenCharAttachment) * range.length);
+        [additions addIndexesInRange:NSMakeRange(range.location + offset, range.length)];
+    }];
+    [_mutableValidAttachments removeIndexesInRange:NSMakeRange(destIndex, count)];
+    [_mutableValidAttachments addIndexes:additions];
+}
+
+- (void)removeAttachmentsInRange:(NSRange)range {
+    [_mutableValidAttachments removeIndexesInRange:range];
+}
+
+- (void)setAttachment:(iTermScreenCharAttachment *)attachment
+              inRange:(NSRange)range {
+    if (!attachment) {
+        [_mutableValidAttachments removeIndexesInRange:range];
+        return;
+    }
+    [_mutableValidAttachments addIndexesInRange:range];
+    for (NSInteger i = 0; i < range.length; i++) {
+        _mutableValidAttachments[range.location + i] = *attachment;
+    }
+}
+
+- (void)copyAttachmentsFromArray:(id<iTermScreenCharAttachmentsArray>)sourceArray
+                      fromOffset:(int)sourceOffset
+                        toOffset:(int)destOffset
+                           count:(int)count {
+    assert(sourceOffset >= 0);
+    assert(count >= 0);
+    assert(sourceArray.count == _count);
+    assert(sourceOffset + count <= _count);
+    assert(destOffset + count <= _count);
+
+    [_mutableValidAttachments addIndexesInRange:NSMakeRange(destOffset, count)];
+    memmove(_mutableAttachments, sourceArray.attachments + sourceOffset, count);
 }
 
 @end

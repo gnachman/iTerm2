@@ -11,6 +11,7 @@
 #import "DVRBuffer.h"
 #import "LineBuffer.h"
 #import "VT100Grid.h"
+#import "VT100LineInfo.h"
 
 @interface VT100GridTest : XCTestCase
 @end
@@ -383,6 +384,15 @@ do { \
 }
 
 - (VT100Grid *)gridFromCompactLinesWithContinuationMarks:(NSString *)compact {
+    return [self gridFromCompactLinesWithContinuationMarks:compact attachments:NO];
+}
+
+- (VT100Grid *)gridFromCompactLinesWithContinuationMarksAndAttachments:(NSString *)compact {
+    return [self gridFromCompactLinesWithContinuationMarks:compact attachments:YES];
+}
+
+- (VT100Grid *)gridFromCompactLinesWithContinuationMarks:(NSString *)compact
+                                             attachments:(BOOL)attachments {
     NSArray *lines = [compact componentsSeparatedByString:@"\n"];
     VT100Grid *grid = [[VT100Grid alloc] initWithSize:VT100GridSizeMake([[lines objectAtIndex:0] length] - 1,
                                                                         [lines count])
@@ -397,6 +407,13 @@ do { \
             if (c == '-') c = DWC_RIGHT;
             if (c == '>' && j == [line length] - 2 && [line characterAtIndex:j+1] == '>') c = DWC_SKIP;
             s[j].code = c;
+            if (attachments && c != 0 && c != DWC_RIGHT && c != DWC_SKIP) {
+                iTermScreenCharAttachment attachment = {
+                    .underlineRed = j,
+                    .underlineGreen = i - 1
+                };
+                [grid setAttachment:&attachment range:VT100GridCoordRangeMake(j, i - 1, j + 1, i - 1)];
+            }
         }
         if ([line characterAtIndex:j] == '!') {
             s[j].code = EOL_HARD;
@@ -1689,7 +1706,7 @@ do { \
     x.code = 'x';
     for (NSValue *value in [grid rectsForRun:run]) {
         VT100GridRect rect = [value gridRectValue];
-        [grid setCharsFrom:rect.origin to:VT100GridRectMax(rect) toChar:x];
+        [grid setCharsFrom:rect.origin to:VT100GridRectMax(rect) toChar:x attachment:nil];
     }
 
     XCTAssert([[grid compactLineDump] isEqualToString:
@@ -2994,5 +3011,190 @@ do { \
     XCTAssertEqualObjects(before, after);
 }
 
+- (NSString *)compactLineDumpCheckingAttachments:(VT100Grid *)grid {
+    NSString *unchecked = [grid compactLineDumpWithContinuationMarks];
+    NSArray<NSString *> *parts = [unchecked componentsSeparatedByString:@"\n"];
+    NSMutableString *result = [NSMutableString string];
+    for (int y = 0; y < parts.count; y++) {
+        NSMutableString *line = [parts[y] mutableCopy];
+        NSMutableString *replacement = [NSMutableString string];
+        VT100LineInfo *lineInfo = [grid lineInfoAtLineNumber:y];
+        id<iTermScreenCharAttachmentsArray> attachments = [lineInfo attachments];
+        for (int x = 0; x < grid.size.width; x++) {
+            if ([attachments.validAttachments containsIndex:x]) {
+                iTermScreenCharAttachment attachment = attachments.attachments[x];
+                if (attachment.underlineRed == x) {
+                    if (attachment.underlineGreen == y) {
+                        [replacement appendCharacter:'o'];
+                    } else if (attachment.underlineGreen < y) {
+                        [replacement appendCharacter:'v'];
+                    } else {
+                        [replacement appendCharacter:'^'];
+                    }
+                } else if (attachment.underlineGreen == y) {
+                    if (attachment.underlineRed < x) {
+                        [replacement appendCharacter:'>'];
+                    } else {
+                        [replacement appendCharacter:'<'];
+                    }
+                } else {
+                    [replacement appendCharacter:'?'];
+                }
+            } else if ([line characterAtIndex:0] == '.' ||
+                       [line characterAtIndex:0] == '-' ||
+                       [line characterAtIndex:0] == '>') {
+                [replacement appendCharacter:'.'];
+            } else {
+                [replacement appendCharacter:'#'];
+            }
+            [line replaceCharactersInRange:NSMakeRange(0, 1) withString:@""];
+        }
+        [replacement appendString:line];
+        if (y + 1 < parts.count){
+            [replacement appendString:@"\n"];
+        }
+        [result appendString:replacement];
+    }
+    return result;
+}
+
+- (void)testInsertCharWithAttachments {
+    // Base case
+    VT100Grid *grid = [self gridFromCompactLinesWithContinuationMarksAndAttachments:
+                       @"abcd+\n"
+                       @"efg.!"];
+    screen_char_t c = [grid defaultChar];
+    [grid insertChar:c at:VT100GridCoordMake(1, 0) times:1];
+    XCTAssertEqualObjects([self compactLineDumpCheckingAttachments:grid],
+                          @"o.>>+\n"
+                          @"ooo.!");
+
+    // Insert more chars than there is room for
+    grid = [self gridFromCompactLinesWithContinuationMarksAndAttachments:
+            @"abcd+\n"
+            @"efg.!"];
+    [grid insertChar:c at:VT100GridCoordMake(1, 0) times:100];
+    XCTAssertEqualObjects([self compactLineDumpCheckingAttachments:grid],
+            @"o...!\n"
+            @"ooo.!");
+
+    // Verify that continuation marks are preserved if inserted char is not null.
+    c.code = 'x';
+    grid = [self gridFromCompactLinesWithContinuationMarksAndAttachments:
+            @"abcd+\n"
+            @"efg.!"];
+    [grid insertChar:c at:VT100GridCoordMake(1, 0) times:100];
+    XCTAssertEqualObjects([self compactLineDumpCheckingAttachments:grid],
+            @"o###+\n"
+            @"ooo.!");
+    c.code = 0;
+
+    // Insert 0 chars
+    grid = [self gridFromCompactLinesWithContinuationMarksAndAttachments:
+            @"abcd+\n"
+            @"efg.!"];
+    [grid insertChar:c at:VT100GridCoordMake(1, 0) times:0];
+    XCTAssertEqualObjects([self compactLineDumpCheckingAttachments:grid],
+            @"oooo+\n"
+            @"ooo.!");
+
+    // Insert into middle of dwc, creating two orphans
+    grid = [self gridFromCompactLinesWithContinuationMarksAndAttachments:
+            @"aB-de+\n"
+            @"fghi.!"];
+    c.code = 'x';
+    [grid insertChar:c at:VT100GridCoordMake(2, 0) times:1];
+    XCTAssertEqualObjects([self compactLineDumpCheckingAttachments:grid],
+            @"o.#.>+\n"
+            @"oooo.!");
+    c.code = 0;
+
+    // Shift right one, removing DWC_SKIP, changing EOL_DWC into EOL_SOFT
+    grid = [self gridFromCompactLinesWithContinuationMarksAndAttachments:
+            @"abcd>>\n"
+            @"E-fgh!"];
+    [grid insertChar:c at:VT100GridCoordMake(2, 0) times:1];
+    XCTAssertEqualObjects([self compactLineDumpCheckingAttachments:grid],
+            @"oo.>>+\n"
+            @"o.ooo!");
+
+    // Break DWC_SKIP/EOL_DWC
+    grid = [self gridFromCompactLinesWithContinuationMarksAndAttachments:
+            @"abcd>>\n"
+            @"E-fgh!"];
+    [grid insertChar:c at:VT100GridCoordMake(2, 0) times:2];
+    XCTAssertEqualObjects([self compactLineDumpCheckingAttachments:grid],
+            @"oo..>+\n"
+            @"o.ooo!");
+
+    // Break DWC_SKIP/EOL_DWC, leave null and hard-wrap
+    grid = [self gridFromCompactLinesWithContinuationMarksAndAttachments:
+            @"abC->>\n"
+            @"E-fgh!"];
+    [grid insertChar:c at:VT100GridCoordMake(2, 0) times:2];
+    XCTAssertEqualObjects([self compactLineDumpCheckingAttachments:grid],
+            @"oo...!\n"
+            @"o.ooo!");
+
+    // Scroll region
+    grid = [self gridFromCompactLinesWithContinuationMarksAndAttachments:
+            @"abcdef+"];
+    grid.scrollRegionCols = VT100GridRangeMake(1, 4);
+    grid.useScrollRegionCols = YES;
+    [grid insertChar:c at:VT100GridCoordMake(2, 0) times:1];
+    XCTAssertEqualObjects([self compactLineDumpCheckingAttachments:grid],
+            @"oo.>>o+");
+
+    // Insert more than fits in scroll region
+    grid = [self gridFromCompactLinesWithContinuationMarksAndAttachments:
+            @"abcdef+"];
+    grid.scrollRegionCols = VT100GridRangeMake(1, 4);
+    grid.useScrollRegionCols = YES;
+    [grid insertChar:c at:VT100GridCoordMake(2, 0) times:100];
+    XCTAssertEqualObjects([self compactLineDumpCheckingAttachments:grid],
+            @"oo...o+");
+
+    // Make orphan by inserting into scroll region that overlaps left half of dwc
+    grid = [self gridFromCompactLinesWithContinuationMarksAndAttachments:
+            @"abcD-f+"];
+    grid.scrollRegionCols = VT100GridRangeMake(1, 3);
+    grid.useScrollRegionCols = YES;
+    [grid insertChar:c at:VT100GridCoordMake(1, 0) times:1];
+    XCTAssertEqualObjects([self compactLineDumpCheckingAttachments:grid],
+            @"o.>>.o+");
+
+    // Make orphan by inserting into scroll region that overlaps right half of dec
+    grid = [self gridFromCompactLinesWithContinuationMarksAndAttachments:
+            @"A-cdef+"];
+    grid.scrollRegionCols = VT100GridRangeMake(1, 3);
+    grid.useScrollRegionCols = YES;
+    [grid insertChar:c at:VT100GridCoordMake(1, 0) times:1];
+    XCTAssertEqualObjects([self compactLineDumpCheckingAttachments:grid],
+            @"...>oo+");
+
+    // DWC skip survives with scroll region
+    grid = [self gridFromCompactLinesWithContinuationMarksAndAttachments:
+            @"abC->>\n"
+            @"E-fgh!"];
+    grid.scrollRegionCols = VT100GridRangeMake(0, 2);
+    grid.useScrollRegionCols = YES;
+    [grid insertChar:c at:VT100GridCoordMake(0, 0) times:1];
+    XCTAssertEqualObjects([self compactLineDumpCheckingAttachments:grid],
+            @".>o..>\n"
+            @"o.ooo!");
+
+    // Insert outside scroll region (noop)
+    grid = [self gridFromCompactLinesWithContinuationMarksAndAttachments:
+            @"abC->>\n"
+            @"E-fgh!"];
+    grid.scrollRegionCols = VT100GridRangeMake(0, 2);
+    grid.useScrollRegionCols = YES;
+    [grid insertChar:c at:VT100GridCoordMake(3, 0) times:1];
+    XCTAssertEqualObjects([self compactLineDumpCheckingAttachments:grid],
+            @"ooo..>\n"
+            @"o.ooo!");
+}
+
+Tomorrow: test appending strings with attachments.
 @end
 

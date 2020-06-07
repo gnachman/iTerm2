@@ -136,6 +136,17 @@ static NSInteger VT100LineInfoNextGeneration = 1;
     return _attachments;
 }
 
+- (iTermMutableScreenCharAttachmentsArray *)mutableAttachmentsCreatingIfNeeded:(BOOL)create {
+    if (_attachments) {
+        return _attachments;
+    }
+    if (!create) {
+        return nil;
+    }
+    _attachments = [[iTermMutableScreenCharAttachmentsArray alloc] initWithCount:width_];
+    return _attachments;
+}
+
 - (void)setDirty:(BOOL)dirty inRange:(VT100GridRange)range updateTimestamp:(BOOL)updateTimestamp {
 #ifdef ITERM_DEBUG
     assert(range.location >= 0);
@@ -206,6 +217,26 @@ static NSInteger VT100LineInfoNextGeneration = 1;
     theCopy->timestamp_ = timestamp_;
 
     return theCopy;
+}
+
+- (void)removeAttachmentsInRange:(VT100GridRange)range {
+    [_attachments.mutableValidAttachments removeIndexesInRange:NSMakeRange(range.location, range.length)];
+    _attachmentRunArray = nil;
+}
+
+- (void)copyAttachmentsInRange:(VT100GridRange)range from:(VT100LineInfo *)otherLineInfo {
+    if (!otherLineInfo.attachments) {
+        [self removeAttachmentsInRange:range];
+        return;
+    }
+    [_attachments copyAttachmentsInRange:NSMakeRange(range.location, range.length)
+                                    from:otherLineInfo.attachments];
+}
+
+- (void)copyAttachmentsStartingAtIndex:(int)sourceIndex
+                                    to:(int)destIndex
+                                 count:(int)count {
+    [_attachments copyAttachmentsStartingAtIndex:sourceIndex to:destIndex count:count];
 }
 
 @end
