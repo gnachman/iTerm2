@@ -201,6 +201,13 @@ static const CGFloat kHelpMargin = 5;
     return result;
 }
 
+- (id <NSPasteboardWriting>)tableView:(NSTableView *)tableView pasteboardWriterForRow:(NSInteger)row {
+    NSPasteboardItem *pbItem = [[NSPasteboardItem alloc] init];
+    iTermRecentDirectoryMO *entry = filteredEntries_[row];
+    [pbItem setString:entry.path forType:(NSString *)kUTTypeUTF8PlainText];
+    return pbItem;
+}
+
 - (id)stringOrAttributedStringForColumn:(NSTableColumn *)aTableColumn
                                     row:(NSInteger)rowIndex {
     iTermRecentDirectoryMO *entry = filteredEntries_[rowIndex];

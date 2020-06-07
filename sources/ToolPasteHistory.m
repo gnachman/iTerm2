@@ -169,6 +169,13 @@ static const CGFloat kMargin = 4;
     return result;
 }
 
+- (id <NSPasteboardWriting>)tableView:(NSTableView *)tableView pasteboardWriterForRow:(NSInteger)row {
+    NSPasteboardItem *pbItem = [[NSPasteboardItem alloc] init];
+    PasteboardEntry* entry = pasteHistory_.entries[row];
+    [pbItem setString:entry.mainValue forType:(NSString *)kUTTypeUTF8PlainText];
+    return pbItem;
+}
+
 - (NSAttributedString *)attributedStringForTableColumn:(NSTableColumn *)aTableColumn row:(NSInteger)rowIndex {
     return [[NSAttributedString alloc] initWithString:[self stringForTableColumn:aTableColumn row:rowIndex]
                                            attributes:@{NSFontAttributeName: [NSFont fontWithName:@"Menlo" size:11],
