@@ -28,7 +28,7 @@
 - (int)numberOfLines;
 // This function is dangerous! It writes to an internal buffer and returns a
 // pointer to it. Better to use getLineAtIndex:withBuffer:.
-- (screen_char_t *)getLineAtIndex:(int)theIndex;
+- (const screen_char_t *)getLineAtIndex:(int)theIndex;
 - (long long)totalScrollbackOverflow;
 
 @end
@@ -43,10 +43,10 @@
 - (int)cursorX;
 - (int)cursorY;
 
-- (screen_char_t *)getLineAtScreenIndex:(int)theIndex;
+- (const screen_char_t *)getLineAtScreenIndex:(int)theIndex;
 
 // Provide a buffer as large as sizeof(screen_char_t*) * ([SCREEN width] + 1)
-- (screen_char_t *)getLineAtIndex:(int)theIndex withBuffer:(screen_char_t*)buffer;
+- (const screen_char_t *)getLineAtIndex:(int)theIndex withBuffer:(screen_char_t*)buffer;
 - (NSArray<ScreenCharArray *> *)linesInRange:(NSRange)range;
 - (int)numberOfScrollbackLines;
 - (int)scrollbackOverflow;

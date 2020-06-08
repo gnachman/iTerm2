@@ -158,13 +158,13 @@ do { \
 
 - (void)testLookUpScreenCharsByLineNumber {
     VT100Grid *grid = [self smallGrid];
-    screen_char_t *line = [grid screenCharsAtLineNumber:0];
+    screen_char_t *line = [grid mutableScreenCharsAtLineNumber:0];
     line[0].code = 'a';
-    line = [grid screenCharsAtLineNumber:1];
+    line = [grid mutableScreenCharsAtLineNumber:1];
     line[0].code = 'b';
-    line = [grid screenCharsAtLineNumber:0];
+    line = [grid mutableScreenCharsAtLineNumber:0];
     XCTAssert(line[0].code == 'a');
-    line = [grid screenCharsAtLineNumber:1];
+    line = [grid mutableScreenCharsAtLineNumber:1];
     XCTAssert(line[0].code == 'b');
     XCTAssert([[grid compactLineDump] isEqualToString:@"a.\nb."]);
 }
@@ -364,7 +364,7 @@ do { \
                                              delegate:self];
     int i = 0;
     for (NSString *line in lines) {
-        screen_char_t *s = [grid screenCharsAtLineNumber:i++];
+        screen_char_t *s = [grid mutableScreenCharsAtLineNumber:i++];
         for (int j = 0; j < [line length]; j++) {
             unichar c = [line characterAtIndex:j];;
             if (c == '.') c = 0;
@@ -399,7 +399,7 @@ do { \
                                              delegate:self];
     int i = 0;
     for (NSString *line in lines) {
-        screen_char_t *s = [grid screenCharsAtLineNumber:i++];
+        screen_char_t *s = [grid mutableScreenCharsAtLineNumber:i++];
         int j;
         for (j = 0; j < [line length] - 1; j++) {
             unichar c = [line characterAtIndex:j];
@@ -862,8 +862,8 @@ do { \
 - (void)setLine:(int)lineNumber ofGrid:(VT100Grid *)grid toString:(NSString *)string {
     XCTAssert(grid.size.width == string.length);
     VT100Grid *temp = [self gridFromCompactLines:string];
-    screen_char_t *src = [temp screenCharsAtLineNumber:0];
-    screen_char_t *dst = [grid screenCharsAtLineNumber:lineNumber];
+    const screen_char_t *src = [temp screenCharsAtLineNumber:0];
+    screen_char_t *dst = [grid mutableScreenCharsAtLineNumber:lineNumber];
     memmove(dst, src, sizeof(screen_char_t) * grid.size.width);
 }
 
@@ -1430,7 +1430,7 @@ do { \
     screen_char_t frame[(w + 1) * h];
     int o = 0;
     for (int y = 0; y < h; y++) {
-        screen_char_t *line = [grid screenCharsAtLineNumber:y];
+        const screen_char_t *line = [grid screenCharsAtLineNumber:y];
         memmove(frame + o, line, sizeof(screen_char_t) * (w + 1));
         o += w;
     }
@@ -1514,7 +1514,7 @@ do { \
                           to:VT100GridCoordMake(2, 2)];
 
     for (int y = 0; y < 4; y++) {
-        screen_char_t *line = [grid screenCharsAtLineNumber:y];
+        const screen_char_t *line = [grid screenCharsAtLineNumber:y];
         screen_char_t fg, bg;
         for (int x = 0; x < 4; x++) {
             if ((x == 1 || x == 2) && (y == 1 || y == 2)) {
@@ -1540,7 +1540,7 @@ do { \
                           to:VT100GridCoordMake(3, 3)];
     // Now should be green bg everywhere, red fg in center square
     for (int y = 0; y < 4; y++) {
-        screen_char_t *line = [grid screenCharsAtLineNumber:y];
+        const screen_char_t *line = [grid screenCharsAtLineNumber:y];
         screen_char_t fg;
         for (int x = 0; x < 4; x++) {
             if ((x == 1 || x == 2) && (y == 1 || y == 2)) {
@@ -1563,7 +1563,7 @@ do { \
     // Now should be default on green everywhere
     for (int y = 0; y < 4; y++) {
         for (int x = 0; x < 4; x++) {
-            screen_char_t *line = [grid screenCharsAtLineNumber:y];
+            const screen_char_t *line = [grid screenCharsAtLineNumber:y];
             XCTAssert(ForegroundAttributesEqual(foregroundColor_, line[x]));
             XCTAssert(BackgroundColorsEqual(greenBg, line[x]));
         }
@@ -1575,7 +1575,7 @@ do { \
     VT100Grid *coverage = [[[VT100Grid alloc] initWithSize:grid.size delegate:self] autorelease];
     for (NSValue *value in runs) {
         VT100GridRun run = [value gridRunValue];
-        [coverage setCharsInRun:run toChar:'x'];
+        [coverage setCharsInRun:run toChar:'x' attachment:nil];
     }
     return coverage;
 }
@@ -1684,7 +1684,7 @@ do { \
     XCTAssert(grid.cursorX == 1);
     XCTAssert(grid.cursorY == 0);
 
-    screen_char_t *line = [grid screenCharsAtLineNumber:1];
+    const screen_char_t *line = [grid screenCharsAtLineNumber:1];
     XCTAssert(!BackgroundColorsEqual(dc, line[0]));
     XCTAssert(!BackgroundColorsEqual(dc, line[1]));
 
@@ -1768,6 +1768,7 @@ do { \
     XCTAssert(rect.size.height == 2);
 }
 
+#warning Test attachments here
 - (void)testEraseDwc {
     // Erase a DWC
     VT100Grid *grid = [self gridFromCompactLinesWithContinuationMarks:@"ab-!"];
@@ -2565,6 +2566,8 @@ do { \
     XCTAssert(coord.x == 1);
     XCTAssert(coord.y == 0);
 }
+
+#warning TODO: Test that this handles attachments correctly
 - (void)testDeleteChars {
     // Base case
     VT100Grid *grid = [self gridFromCompactLinesWithContinuationMarks:
@@ -2964,13 +2967,12 @@ do { \
     [grid appendLines:1 toLineBuffer:lineBuffer];
 
     // Get the line out of the line buffer
-    iTermScreenCharAttachmentRunArraySlice *slice = nil;
-    ScreenCharArray *fromBuffer = [lineBuffer wrappedLineAtIndex:0 width:10 attachments:&slice];
+    ScreenCharArray *fromBuffer = [lineBuffer wrappedLineAtIndex:0 width:10];
 
     // Asert that it is correct.
     XCTAssertEqual(fromBuffer.length, string.length);
     XCTAssertEqual(0, memcmp(line, fromBuffer.line, sizeof(screen_char_t) * string.length));
-    id<iTermScreenCharAttachmentsArray> fullArray = slice.fullArray;
+    id<iTermScreenCharAttachmentsArray> fullArray = fromBuffer.attachments;
     NSMutableIndexSet *expectedIndexes = [NSMutableIndexSet indexSet];
     [expectedIndexes addIndex:1];
     [expectedIndexes addIndex:2];
@@ -3638,7 +3640,7 @@ do { \
                                                           appending:@"m"
                                                                  at:VT100GridCoordMake(2, 0)
                                                              expect:
-     @"oo0>>!\n"
+     @"oo0>o!\n"
      @"ooo..!"
                                                        expectCursor:VT100GridCoordMake(3, 0)
                                                    expectLineBuffer:@""
@@ -3745,15 +3747,17 @@ do { \
 
 - (void)testAppendCharsWithAttachmentAtCursor_OverwriteDWCSkipConvertsEOLDWCToEOLSOFT {
     // Overwriting a DWC_SKIP converts EOL_DWC to EOL_SOFT
-    [self doAppendCharsWithAttachmentsAtCursorTestWithInitialBuffer:@"abc>>\n"
+    [self doAppendCharsWithAttachmentsAtCursorTestWithInitialBuffer:
+     @"abc>>\n"
      @"D-..!"
                                                        scrollRegion:VT100GridRectMake(0, 0, -1, -1)
                                             useScrollbackWithRegion:YES
                                                 unlimitedScrollback:NO
                                                           appending:@"d"
                                                                  at:VT100GridCoordMake(3, 0)
-                                                             expect:@"abcd+\n"
-     @"D-..!"
+                                                             expect:
+     @"ooo0+\n"
+     @"o...!"
                                                        expectCursor:VT100GridCoordMake(4, 0)
                                                    expectLineBuffer:@""
                                                       expectDropped:0];

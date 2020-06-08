@@ -48,7 +48,7 @@ typedef struct {
 
 // Try to append a line to the end of the buffer. Returns false if it does not fit. If length > buffer_size it will never succeed.
 // Callers should split such lines into multiple pieces.
-- (BOOL)appendLine:(screen_char_t*)buffer
+- (BOOL)appendLine:(const screen_char_t *)buffer
             length:(int)length
            partial:(BOOL)partial
              width:(int)width

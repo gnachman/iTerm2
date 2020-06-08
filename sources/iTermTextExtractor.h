@@ -156,7 +156,7 @@ extern const NSInteger kLongMaximumWordLength;
 - (int)lengthOfLine:(int)line;
 
 - (void)enumerateCharsInRange:(VT100GridWindowedRange)range
-                    charBlock:(BOOL (^)(screen_char_t *currentLine, screen_char_t theChar, VT100GridCoord coord))charBlock
+                    charBlock:(BOOL (^)(const screen_char_t *currentLine, screen_char_t theChar, VT100GridCoord coord))charBlock
                      eolBlock:(BOOL (^)(unichar code, int numPreceedingNulls, int line))eolBlock;
 
 // Finds text before or at+after |coord|. If |respectHardNewlines|, then the whole wrapped line is

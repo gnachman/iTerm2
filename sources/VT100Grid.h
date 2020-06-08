@@ -55,8 +55,9 @@
 
 - (instancetype)initWithSize:(VT100GridSize)size delegate:(id<VT100GridDelegate>)delegate;
 
-- (screen_char_t *)screenCharsAtLineNumber:(int)lineNumber;
+- (const screen_char_t *)screenCharsAtLineNumber:(int)lineNumber;
 - (ScreenCharArray *)screenCharArrayAtLine:(int)lineNumber;
+- (screen_char_t *)mutableScreenCharsAtLineNumber:(int)lineNumber;
 - (id<iTermScreenCharAttachmentsArray>)attachmentsOnLine:(int)lineNumber;
 
 // Set both x and y coord of cursor at once. Cursor positions are clamped to legal values. The cursor
@@ -178,6 +179,8 @@
 
 - (void)setAttachment:(iTermScreenCharAttachment *)attachment
                 range:(VT100GridCoordRange)range;
+- (void)setAttachments:(id<iTermScreenCharAttachmentsArray>)attachments
+                onLine:(int)line;
 
 // Scroll a rectangular area of the screen down (positive direction) or up (negative direction).
 // Clears the left-over region.

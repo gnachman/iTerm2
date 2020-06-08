@@ -36,7 +36,7 @@ NS_ASSUME_NONNULL_BEGIN
         }
         iTermData *data = [iTermScreenCharData dataOfLength:rowSize];
         screen_char_t *myBuffer = data.mutableBytes;
-        screen_char_t *line = [screen getLineAtIndex:i withBuffer:myBuffer];
+        const screen_char_t *line = [screen getLineAtIndex:i withBuffer:myBuffer];
         _generation = [screen generationForLine:i];
 
         if (line != myBuffer) {

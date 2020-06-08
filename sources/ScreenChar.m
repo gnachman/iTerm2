@@ -145,7 +145,7 @@ iTermTriState iTermTriStateFromBool(BOOL b) {
 @synthesize length = _length;
 @synthesize eol = _eol;
 
-- (instancetype)initWithLine:(screen_char_t *)line
+- (instancetype)initWithLine:(const screen_char_t *)line
                       length:(int)length
                 continuation:(screen_char_t)continuation
                  attachments:(id<iTermScreenCharAttachmentsArray>)attachments {
@@ -162,7 +162,7 @@ iTermTriState iTermTriStateFromBool(BOOL b) {
 
 - (void)dealloc {
     if (_freeLine) {
-        free(_line);
+        free((void *)_line);
     }
     [_attachments release];
     [super dealloc];
@@ -199,13 +199,16 @@ iTermTriState iTermTriStateFromBool(BOOL b) {
             !memcmp(&_continuation, &other->_continuation, sizeof(_continuation)));
 }
 
-- (void)makeCopyOfLine {
+- (screen_char_t *)makeCopyOfLine {
+    assert(!_freeLine);
+
     _freeLine = YES;
     const size_t size = sizeof(screen_char_t) * _length;
     screen_char_t *temp = iTermMalloc(size);
     memmove(temp, _line, size);
     _line = temp;
-    _attachments = [[_attachments autorelease] copy];
+    _attachments = [[_attachments autorelease] copyWithZone:nil];
+    return temp;
 }
 
 @end
@@ -247,7 +250,7 @@ NSString *CharToStr(unichar code, BOOL isComplex) {
     }
 }
 
-int ExpandScreenChar(screen_char_t* sct, unichar* dest) {
+int ExpandScreenChar(const screen_char_t *sct, unichar *dest) {
     NSString* value = nil;
     if (sct->code == UNICODE_REPLACEMENT_CHAR) {
         value = ReplacementString();
@@ -574,7 +577,7 @@ void DumpScreenCharArray(screen_char_t* screenChars, int lineLength) {
     NSLog(@"%@", ScreenCharArrayToStringDebug(screenChars, lineLength));
 }
 
-NSString* ScreenCharArrayToStringDebug(screen_char_t* screenChars,
+NSString* ScreenCharArrayToStringDebug(const screen_char_t* screenChars,
                                        int lineLength) {
     while (lineLength > 0 && screenChars[lineLength - 1].code == 0) {
         --lineLength;

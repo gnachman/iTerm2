@@ -454,7 +454,7 @@ extern "C" int iTermLineBlockNumberOfFullLinesImpl(screen_char_t *buffer,
     return result;
 }
 
-- (BOOL)appendLine:(screen_char_t*)buffer
+- (BOOL)appendLine:(const screen_char_t *)buffer
             length:(int)length
            partial:(BOOL)partial
              width:(int)width

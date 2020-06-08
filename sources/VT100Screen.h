@@ -103,6 +103,7 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 // Clears the scrollback buffer, leaving screen contents alone.
 - (void)clearScrollbackBuffer;
 
+// NOTE: This mutates line for a performance win.
 - (void)appendScreenChars:(screen_char_t *)line
               attachments:(id<iTermScreenCharAttachmentsArray>)attachments
                    length:(int)length
@@ -132,7 +133,7 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 - (void)setHistory:(NSArray *)history;
 
 // Sets the alt grid's contents. |lines| is NSData with screen_char_t's.
-- (void)setAltScreen:(NSArray *)lines;
+- (void)setAltScreen:(NSArray *)lines attachments:(NSArray *)attachments;
 
 // Load state from tmux. The |state| dictionary has keys from the kStateDictXxx values.
 - (void)setTmuxState:(NSDictionary *)state;

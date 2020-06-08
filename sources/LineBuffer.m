@@ -303,7 +303,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     NSLog(@"%@", [self compactLineDumpWithWidth:width andContinuationMarks:NO]);
 }
 
-- (void)appendLine:(screen_char_t*)buffer
+- (void)appendLine:(const screen_char_t *)buffer
             length:(int)length
            partial:(BOOL)partial
              width:(int)width
@@ -518,6 +518,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
                                         continuation:&cont
                                 isStartOfWrappedLine:NULL
                                          attachments:&attachments];
+    result.attachments = [attachments fullArray];
     if (result.line) {
         result.length = length;
         result.eol = eol;
@@ -525,7 +526,6 @@ static int RawNumLines(LineBuffer* buffer, int width) {
         ITAssertWithMessage(result.length <= width, @"Length too long");
         return result;
     }
-    result.attachments = [attachments fullArray];
 
     NSLog(@"Couldn't find line %d", lineNum);
     ITAssertWithMessage(NO, @"Tried to get non-existent line");

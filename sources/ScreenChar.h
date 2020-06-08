@@ -197,18 +197,18 @@ typedef struct screen_char_t
 
 // Typically used to store a single screen line.
 @interface ScreenCharArray : NSObject {
-    screen_char_t *_line;  // Array of chars
+    const screen_char_t *_line;  // Array of chars
     int _length;  // Number of chars in _line
     int _eol;  // EOL_SOFT, EOL_HARD, or EOL_DWC
 }
 
-@property (nonatomic, assign) screen_char_t *line;  // Assume const unless instructed otherwise
+@property (nonatomic, assign) const screen_char_t *line;  // Assume const unless instructed otherwise
 @property (nonatomic, assign) int length;
 @property (nonatomic, assign) int eol;
 @property (nonatomic) screen_char_t continuation;
 @property (nonatomic, strong) id<iTermScreenCharAttachmentsArray> attachments;
 
-- (instancetype)initWithLine:(screen_char_t *)line
+- (instancetype)initWithLine:(const screen_char_t *)line
                       length:(int)length
                 continuation:(screen_char_t)continuation
                  attachments:(id<iTermScreenCharAttachmentsArray>)attachments;
@@ -216,7 +216,9 @@ typedef struct screen_char_t
 // BEWARE! This checks for pointer equivalence only.
 // Use isEqual: for a sane equality compariosn.
 - (BOOL)isEqualToScreenCharArray:(ScreenCharArray *)other;
-- (void)makeCopyOfLine;
+// Copies the internal screen_char_T array and returns a mutable reference to it.
+// This is a safe way to mutate the contents without affecting other references to the same array.
+- (screen_char_t *)makeCopyOfLine;
 @end
 
 // Standard unicode replacement string. Is a double-width character.
@@ -227,7 +229,8 @@ static inline NSString* ReplacementString()
 }
 
 // TODO: hasAttachment
-static inline BOOL ScreenCharacterAttributesEqual(screen_char_t *c1, screen_char_t *c2) {
+static inline BOOL ScreenCharacterAttributesEqual(const screen_char_t *c1,
+                                                  const screen_char_t *c2) {
     return (c1->foregroundColor == c2->foregroundColor &&
             c1->fgGreen == c2->fgGreen &&
             c1->fgBlue == c2->fgBlue &&
@@ -376,7 +379,7 @@ NSString *StringByNormalizingString(NSString *theString, iTermUnicodeNormalizati
 
 // This is a faster version of ScreenCharToStr if what you want is an array of
 // unichars. Returns the number of code points appended to dest.
-int ExpandScreenChar(screen_char_t* sct, unichar* dest);
+int ExpandScreenChar(const screen_char_t *sct, unichar *dest);
 
 // Convert a code into a utf-32 char.
 UTF32Char CharToLongChar(unichar code, BOOL isComplex);
@@ -409,7 +412,7 @@ NSString* ScreenCharArrayToString(screen_char_t* screenChars,
 // Number of chars before a sequence of nuls at the end of the line.
 int EffectiveLineLength(screen_char_t* theLine, int totalLength);
 
-NSString* ScreenCharArrayToStringDebug(screen_char_t* screenChars,
+NSString* ScreenCharArrayToStringDebug(const screen_char_t* screenChars,
                                        int lineLength);
 
 NSString *DebugStringForScreenChar(screen_char_t c);

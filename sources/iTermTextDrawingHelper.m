@@ -370,7 +370,7 @@ typedef struct iTermTextColorContext {
 
 //        NSLog(@"Draw line %d at %f", line, y);
         NSData *matches = [_delegate drawingHelperMatchesOnLine:line];
-        screen_char_t* theLine = [self.delegate drawingHelperLineAtIndex:line];
+        const screen_char_t *theLine = [self.delegate drawingHelperLineAtIndex:line];
         NSIndexSet *selectedIndexes =
             [_selection selectedIndexesIncludingTabFillersInLine:line];
         iTermBackgroundColorRunsInLine *runsInLine =
@@ -1073,7 +1073,7 @@ typedef struct iTermTextColorContext {
                           atY:(CGFloat)y
                backgroundRuns:(NSArray<iTermBoxedBackgroundColorRun *> *)backgroundRuns
                       context:(CGContextRef)ctx {
-    screen_char_t* theLine = [self.delegate drawingHelperLineAtIndex:line];
+    const screen_char_t *theLine = [self.delegate drawingHelperLineAtIndex:line];
     NSData *matches = [_delegate drawingHelperMatchesOnLine:line];
     for (iTermBoxedBackgroundColorRun *box in backgroundRuns) {
         iTermBackgroundColorRun *run = box.valuePointer;
@@ -1093,7 +1093,7 @@ typedef struct iTermTextColorContext {
     }
 }
 
-- (void)constructAndDrawRunsForLine:(screen_char_t *)theLine
+- (void)constructAndDrawRunsForLine:(const screen_char_t *)theLine
                                 row:(int)row
                             inRange:(NSRange)indexRange
                     startingAtPoint:(NSPoint)initialPoint
@@ -2175,7 +2175,7 @@ static BOOL iTermTextDrawingHelperShouldAntiAlias(screen_char_t *c,
     }
 }
 
-- (BOOL)character:(screen_char_t *)c isEquivalentToCharacter:(screen_char_t *)pc {
+- (BOOL)character:(screen_char_t *)c isEquivalentToCharacter:(const screen_char_t *)pc {
     if (c->complexChar != pc->complexChar) {
         return NO;
     }
@@ -2215,7 +2215,7 @@ static BOOL iTermTextDrawingHelperShouldAntiAlias(screen_char_t *c,
             [iTermAdvancedSettingsModel zippyTextDrawing]);
 }
 
-- (NSArray<id<iTermAttributedString>> *)attributedStringsForLine:(screen_char_t *)line
+- (NSArray<id<iTermAttributedString>> *)attributedStringsForLine:(const screen_char_t *)line
                                                            range:(NSRange)indexRange
                                                  hasSelectedText:(BOOL)hasSelectedText
                                                  backgroundColor:(NSColor *)backgroundColor
@@ -2876,7 +2876,7 @@ static BOOL iTermTextDrawingHelperShouldAntiAlias(screen_char_t *c,
 
 - (NSColor *)blockCursorFillColorRespectingSmartSelection {
     if (_useSmartCursorColor) {
-        screen_char_t *theLine;
+        const screen_char_t *theLine;
         if (_cursorCoord.y >= 0) {
             theLine = [self.delegate drawingHelperLineAtScreenIndex:_cursorCoord.y];
         } else {
@@ -2896,7 +2896,7 @@ static BOOL iTermTextDrawingHelperShouldAntiAlias(screen_char_t *c,
 
 - (NSRect)reallyDrawCursor:(iTermCursor *)cursor at:(VT100GridCoord)cursorCoord outline:(BOOL)outline {
     // Get the character that's under the cursor.
-    screen_char_t *theLine;
+    const screen_char_t *theLine;
     if (cursorCoord.y >= 0) {
         theLine = [self.delegate drawingHelperLineAtScreenIndex:cursorCoord.y];
     } else {
@@ -3025,7 +3025,7 @@ static BOOL iTermTextDrawingHelperShouldAntiAlias(screen_char_t *c,
 }
 
 - (screen_char_t)charForCursorAtColumn:(int)column
-                                inLine:(screen_char_t *)theLine
+                                inLine:(const screen_char_t *)theLine
                            doubleWidth:(BOOL *)doubleWidth {
     screen_char_t screenChar = theLine[column];
     int width = _gridSize.width;
@@ -3261,7 +3261,7 @@ static BOOL iTermTextDrawingHelperShouldAntiAlias(screen_char_t *c,
     NSRect innerRect = [self rectForCoordRange:coordRange];
     NSRectClip(innerRect);
 
-    screen_char_t *line = [self.delegate drawingHelperLineAtIndex:row];
+    const screen_char_t *line = [self.delegate drawingHelperLineAtIndex:row];
     [self constructAndDrawRunsForLine:line
                                   row:row
                               inRange:NSMakeRange(0, _gridSize.width)

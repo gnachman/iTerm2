@@ -1051,16 +1051,18 @@ ITERM_WEAKLY_REFERENCEABLE
                                block:^(int row,
                                        ScreenCharArray *sca,
                                        BOOL *stop) {
-        screen_char_t *theLine = sca.line;
+        const screen_char_t *theLine = sca.line;
         if (row + 1 == rangeOfLines.location + rangeOfLines.length) {
             screen_char_t continuation = { 0 };
             continuation.code = EOL_SOFT;
-            [_screen appendScreenChars:theLine
+#warning test this
+            [_screen appendScreenChars:[sca makeCopyOfLine]
                            attachments:sca.attachments
                                 length:width
                           continuation:continuation];
         } else {
-            [_screen appendScreenChars:theLine
+            #warning test this
+            [_screen appendScreenChars:[sca makeCopyOfLine]
                            attachments:sca.attachments
                                 length:width
                           continuation:theLine[width]];
@@ -1146,7 +1148,7 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     history = [arrangement objectForKey:SESSION_ARRANGEMENT_TMUX_ALT_HISTORY];
     if (history) {
-        [[aSession screen] setAltScreen:history];
+        [[aSession screen] setAltScreen:history attachments:nil];
     }
     [aSession.nameController restoreNameFromStateDictionary:arrangement[SESSION_ARRANGEMENT_NAME_CONTROLLER_STATE]];
     if (arrangement[SESSION_ARRANGEMENT_VARIABLES]) {
@@ -11833,7 +11835,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 #pragma mark - API
 
-- (NSString *)stringForLine:(screen_char_t *)screenChars
+- (NSString *)stringForLine:(const screen_char_t *)screenChars
                      length:(int)length
                   cppsArray:(NSMutableArray<ITMCodePointsPerCell *> *)cppsArray {
     unichar *characters = iTermMalloc(sizeof(unichar) * length * kMaxParts + 1);
@@ -11919,7 +11921,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:_screen];
     __block int firstIndex = -1;
     __block int lastIndex = -1;
-    __block screen_char_t *line = nil;
+    __block const screen_char_t *line = nil;
     BOOL (^handleEol)(unichar, int, int) = ^BOOL(unichar code, int numPreceedingNulls, int linenumber) {
         ITMLineContents *lineContents = [[[ITMLineContents alloc] init] autorelease];
         lineContents.text = [self stringForLine:line + firstIndex
@@ -11941,7 +11943,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         return NO;
     };
     [extractor enumerateCharsInRange:range
-                           charBlock:^BOOL(screen_char_t *currentLine, screen_char_t theChar, VT100GridCoord coord) {
+                           charBlock:^BOOL(const screen_char_t *currentLine, screen_char_t theChar, VT100GridCoord coord) {
                                line = currentLine;
                                if (firstIndex < 0) {
                                    firstIndex = coord.x;

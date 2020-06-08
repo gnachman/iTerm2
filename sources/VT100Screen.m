@@ -1299,7 +1299,11 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
                         [delegate_ screenUnicodeVersion]);
     ssize_t bufferOffset = 0;
     if (augmented && len > 0) {
-        screen_char_t *theLine = [self getLineAtScreenIndex:pred.y];
+        // The first character of buffer is a possibly modified version of the character
+        // before the cursor. Usually it is not modified. If the first code point in
+        // `string` is a combining mark, then it would combine with the predecessor. In that
+        // case we need to write it back here.
+        screen_char_t *theLine = [currentGrid_ mutableScreenCharsAtLineNumber:pred.y];
         theLine[pred.x].code = buffer[0].code;
         theLine[pred.x].complexChar = buffer[0].complexChar;
         bufferOffset++;
@@ -1496,8 +1500,7 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     int numberOfConsecutiveEmptyLines = 0;
     for (int i = 0; i < n; i++) {
         ScreenCharArray *line = [temp wrappedLineAtIndex:i
-                                                   width:currentGrid_.size.width
-                                             attachments:NULL];
+                                                   width:currentGrid_.size.width];
         if (line.eol == EOL_HARD) {
             [self stripTrailingSpaceFromLine:line];
             if (line.length == 0) {
@@ -1537,8 +1540,7 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
                                                   currentGrid_.size.height - numberOfConsecutiveEmptyLines)];
 }
 
-- (void)setAltScreen:(NSArray *)lines
-{
+- (void)setAltScreen:(NSArray *)lines attachments:(NSArray *)attachments {
     linebuffer_.mayHaveDoubleWidthCharacter = YES;
     if (!altGrid_) {
         altGrid_ = [primaryGrid_ copy];
@@ -1554,12 +1556,15 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     for (int i = 0; o < altGrid_.size.height && i < MIN(lines.count, altGrid_.size.height); i++) {
         NSData *chars = [lines objectAtIndex:i];
         screen_char_t *line = (screen_char_t *) [chars bytes];
+        id<iTermScreenCharAttachmentsArray> attachmentsArray = attachments[i];
         int length = [chars length] / sizeof(screen_char_t);
 
         do {
             // Add up to altGrid_.size.width characters at a time until they're all used.
-            screen_char_t *dest = [altGrid_ screenCharsAtLineNumber:o];
+            screen_char_t *dest = [altGrid_ mutableScreenCharsAtLineNumber:o];
             memcpy(dest, line, MIN(altGrid_.size.width, length) * sizeof(screen_char_t));
+            [altGrid_ setAttachments:attachmentsArray onLine:o];
+
             const BOOL isPartial = (length > altGrid_.size.width);
             dest[altGrid_.size.width] = dest[altGrid_.size.width - 1];  // TODO: This is probably wrong?
             dest[altGrid_.size.width].code = (isPartial ? EOL_SOFT : EOL_HARD);
@@ -1750,14 +1755,13 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 // Like getLineAtIndex:withBuffer:, but uses dedicated storage for the result.
 // This function is dangerous! It writes to an internal buffer and returns a
 // pointer to it. Better to use getLineAtIndex:withBuffer:.
-- (screen_char_t *)getLineAtIndex:(int)theIndex
-{
+- (const screen_char_t *)getLineAtIndex:(int)theIndex {
     return [self getLineAtIndex:theIndex withBuffer:[currentGrid_ resultLine]];
 }
 
 // theIndex = 0 for first line in history; for sufficiently large values, it pulls from the current
 // grid.
-- (screen_char_t *)getLineAtIndex:(int)theIndex withBuffer:(screen_char_t*)buffer {
+- (const screen_char_t *)getLineAtIndex:(int)theIndex withBuffer:(screen_char_t*)buffer {
     ITBetaAssert(theIndex >= 0, @"Negative index to getLineAtIndex");
     int numLinesInLineBuffer = [linebuffer_ numLinesWithWidth:currentGrid_.size.width];
     if (theIndex >= numLinesInLineBuffer) {
@@ -1791,8 +1795,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 // Gets a line on the screen (0 = top of screen)
-- (screen_char_t *)getLineAtScreenIndex:(int)theIndex
-{
+- (const screen_char_t *)getLineAtScreenIndex:(int)theIndex {
     return [currentGrid_ screenCharsAtLineNumber:theIndex];
 }
 
@@ -1814,7 +1817,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
             }
             // Get a line from the circular screen buffer
             const int lineNumber = (theIndex - numLinesInLineBuffer);
-            screen_char_t *chars = [currentGrid_ screenCharsAtLineNumber:lineNumber];
+            const screen_char_t *chars = [currentGrid_ screenCharsAtLineNumber:lineNumber];
             id<iTermScreenCharAttachmentsArray> attachments =
                 [currentGrid_ attachmentsOnLine:lineNumber];
             ScreenCharArray *array = [[[ScreenCharArray alloc] initWithLine:chars
@@ -1834,7 +1837,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
         ScreenCharArray *array = [linebuffer_ wrappedLineAtIndex:theIndex
                                                            width:currentGrid_.size.width];
         int cont = array ? continuation.code : EOL_HARD;
-        screen_char_t *line = array.line;
+        const screen_char_t *line = array.line;
         if (cont == EOL_SOFT &&
             theIndex == numLinesInLineBuffer - 1 &&
             [currentGrid_ screenCharsAtLineNumber:0][1].code == DWC_RIGHT &&
@@ -1845,9 +1848,10 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
             cont = EOL_DWC;
         }
         if (cont == EOL_DWC) {
-            [array makeCopyOfLine];
-            line[currentGrid_.size.width - 1].code = DWC_SKIP;
-            line[currentGrid_.size.width - 1].complexChar = NO;
+#warning test this
+            screen_char_t *mutableLine = [array makeCopyOfLine];
+            mutableLine[currentGrid_.size.width - 1].code = DWC_SKIP;
+            mutableLine[currentGrid_.size.width - 1].complexChar = NO;
         }
         BOOL stop = NO;
         block(theIndex, array, &stop);
@@ -1862,10 +1866,12 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     const int numLinesInLineBuffer = [linebuffer_ numLinesWithWidth:width];
     NSMutableArray<ScreenCharArray *> *result = [NSMutableArray array];
     for (NSInteger i = range.location; i < NSMaxRange(range); i++) {
-        screen_char_t *line = [currentGrid_ screenCharsAtLineNumber:i - numLinesInLineBuffer];
-        ScreenCharArray *array = [[[ScreenCharArray alloc] initWithLine:line
-                                                                 length:width
-                                                           continuation:line[width]] autorelease];
+        const screen_char_t *line = [currentGrid_ screenCharsAtLineNumber:i - numLinesInLineBuffer];
+        ScreenCharArray *array =
+        [[[ScreenCharArray alloc] initWithLine:line
+                                        length:width
+                                  continuation:line[width]
+                                   attachments:[currentGrid_ attachmentsOnLine:i - numLinesInLineBuffer]] autorelease];
         [result addObject:array];
     }
     return result;
@@ -2865,7 +2871,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     const int kMaxRadius = [iTermAdvancedSettingsModel triggerRadius];
     BOOL foundStart = NO;
     for (i = lineNumber - 1; i >= 0 && i >= lineNumber - kMaxRadius; i--) {
-        screen_char_t *line = [self getLineAtIndex:i];
+        const screen_char_t *line = [self getLineAtIndex:i];
         if (line[self.width].code == EOL_HARD) {
             *startAbsLineNumber = i + self.totalScrollbackOverflow + 1;
             foundStart = YES;
@@ -2880,7 +2886,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     }
     BOOL done = NO;
     for (i = lineNumber; !done && i < self.numberOfLines && i < lineNumber + kMaxRadius; i++) {
-        screen_char_t *line = [self getLineAtIndex:i];
+        const screen_char_t *line = [self getLineAtIndex:i];
         int length = self.width;
         done = line[length].code == EOL_HARD;
         if (done) {
@@ -2982,7 +2988,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
             return NO;
         }
 
-        screen_char_t *line = [self getLineAtScreenIndex:cursorY - 1];
+        const screen_char_t *line = [self getLineAtScreenIndex:cursorY - 1];
         unichar c = line[self.width].code;
         return (c == EOL_SOFT || c == EOL_DWC);
     }
@@ -3012,7 +3018,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)convertHardNewlineToSoftOnGridLine:(int)line {
-    screen_char_t* aLine = [currentGrid_ screenCharsAtLineNumber:line];
+    screen_char_t *aLine = [currentGrid_ mutableScreenCharsAtLineNumber:line];
     if (aLine[currentGrid_.size.width].code == EOL_HARD) {
         aLine[currentGrid_.size.width].code = EOL_SOFT;
     }
@@ -3058,7 +3064,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
             return;
         }
     }
-    screen_char_t* aLine = [currentGrid_ screenCharsAtLineNumber:currentGrid_.cursorY];
+    screen_char_t* aLine = [currentGrid_ mutableScreenCharsAtLineNumber:currentGrid_.cursorY];
     BOOL allNulls = YES;
     for (int i = currentGrid_.cursorX; i < nextTabStop; i++) {
         if (aLine[i].code) {
@@ -3079,6 +3085,12 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
                 aLine[i].complexChar = NO;
                 aLine[i].code = TAB_FILLER;
             }
+#warning TODO: Test this
+            [currentGrid_ setAttachment:nil
+                                  range:VT100GridCoordRangeMake(i,
+                                                                currentGrid_.cursorY,
+                                                                i + 1,
+                                                                currentGrid_.cursorY)];
         }
 
         if (setBackgroundColors) {
@@ -3090,6 +3102,11 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
             aLine[i].complexChar = NO;
             aLine[i].code = '\t';
         }
+        [currentGrid_ setAttachment:nil
+                              range:VT100GridCoordRangeMake(i,
+                                                            currentGrid_.cursorY,
+                                                            i + 1,
+                                                            currentGrid_.cursorY)];
     }
     currentGrid_.cursorX = nextTabStop;
 }
@@ -4663,9 +4680,9 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 - (int)terminalChecksumInRectangle:(VT100GridRect)rect {
     int result = 0;
     for (int y = rect.origin.y; y < rect.origin.y + rect.size.height; y++) {
-        screen_char_t *theLine = [self getLineAtScreenIndex:y];
+        const screen_char_t *theLine = [self getLineAtScreenIndex:y];
         for (int x = rect.origin.x; x < rect.origin.x + rect.size.width && x < self.width; x++) {
-            unichar code = theLine[x].code;
+            const unichar code = theLine[x].code;
             BOOL isPrivate = (code < ITERM2_PRIVATE_BEGIN &&
                               code > ITERM2_PRIVATE_END);
             if (code && !isPrivate) {
@@ -4686,9 +4703,9 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 - (NSArray<NSString *> *)terminalSGRCodesInRectangle:(VT100GridRect)rect {
     NSMutableSet<NSString *> *codes = nil;
     for (int y = rect.origin.y; y < rect.origin.y + rect.size.height; y++) {
-        screen_char_t *theLine = [self getLineAtScreenIndex:y];
+        const screen_char_t *theLine = [self getLineAtScreenIndex:y];
         for (int x = rect.origin.x; x < rect.origin.x + rect.size.width && x < self.width; x++) {
-            screen_char_t c = theLine[x];
+            const screen_char_t c = theLine[x];
             if (c.code == 0 && !c.complexChar && !c.image) {
                 continue;
             }
@@ -5031,7 +5048,7 @@ static void SwapInt(int *a, int *b) {
     int x = result.origin.x;
     int y = result.origin.y;
     ITBetaAssert(y >= 0, @"Negative y to runByTrimmingNullsFromRun");
-    screen_char_t *line = [self getLineAtIndex:y];
+    const screen_char_t *line = [self getLineAtIndex:y];
     int numberOfLines = [self numberOfLines];
     int width = [self width];
     if (x > 0) {
@@ -5132,7 +5149,7 @@ static void SwapInt(int *a, int *b) {
     BOOL endExtends = NO;
     // Use the predecessor of endx,endy so it will have a legal position in the line buffer.
     if (range.end.x == [self width]) {
-        screen_char_t *line = [self getLineAtIndex:range.end.y];
+        const screen_char_t *line = [self getLineAtIndex:range.end.y];
         if (line[range.end.x - 1].code == 0 && line[range.end.x].code == EOL_HARD) {
             // The selection goes all the way to the end of the line and there is a null at the
             // end of the line, so it extends to the end of the line. The linebuffer can't recover
@@ -5347,9 +5364,9 @@ static void SwapInt(int *a, int *b) {
     free(dummy);
 }
 
-- (void)stripTrailingSpaceFromLine:(ScreenCharArray *)line
-{
-    screen_char_t *p = line.line;
+- (void)stripTrailingSpaceFromLine:(ScreenCharArray *)line {
+#warning TODO: Test this
+    screen_char_t *p = [line makeCopyOfLine];
     int len = line.length;
     for (int i = len - 1; i >= 0; i--) {
         if (p[i].code == ' ' && ScreenCharHasDefaultAttributesAndColors(p[i])) {

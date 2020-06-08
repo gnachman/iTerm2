@@ -99,6 +99,15 @@ static NSInteger VT100LineInfoNextGeneration = 1;
     }
 }
 
+- (void)setAttachments:(id<iTermScreenCharAttachmentsArray>)attachments {
+    if (!attachments) {
+        [self removeAllAttachments];
+        return;
+    }
+    assert(attachments.count == width_);
+    _attachments = [attachments copyWithZone:nil];
+}
+
 - (const iTermScreenCharAttachment *)constAttachmentAt:(int)x {
     return &_attachments.attachments[x];
 }

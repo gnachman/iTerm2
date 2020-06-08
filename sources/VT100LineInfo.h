@@ -31,12 +31,13 @@
 - (void)setAttachmentRuns:(id<iTermScreenCharAttachmentRunArray>)attachments;
 - (id<iTermScreenCharAttachmentsArray>)attachments;
 - (iTermMutableScreenCharAttachmentsArray *)mutableAttachmentsCreatingIfNeeded:(BOOL)create;
-
+#warning TOOD: Mutating attachments needs to mark cells dirty
 - (void)removeAttachmentAt:(int)x;
 - (void)removeAllAttachments;
 - (void)copyAttachmentsInRange:(VT100GridRange)range from:(VT100LineInfo *)otherLineInfo;
 - (void)copyAttachmentsStartingAtIndex:(int)sourceIndex
                                     to:(int)destIndex
                                  count:(int)count;
+- (void)setAttachments:(id<iTermScreenCharAttachmentsArray>)attachments;
 
 @end

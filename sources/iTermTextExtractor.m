@@ -38,7 +38,7 @@ const NSInteger kLongMaximumWordLength = 100000;
 
     BOOL _shouldCacheLines;
     int _cachedLineNumber;
-    screen_char_t *_cachedLine;
+    const screen_char_t *_cachedLine;
 }
 
 + (instancetype)textExtractorWithDataSource:(id<iTermTextDataSource>)dataSource {
@@ -128,7 +128,7 @@ const NSInteger kLongMaximumWordLength = 100000;
         [self enumerateCharsInRange:VT100GridWindowedRangeMake(theRange,
                                                                _logicalWindow.location,
                                                                _logicalWindow.length)
-                          charBlock:^BOOL(screen_char_t *currentLine, screen_char_t theChar, VT100GridCoord coord) {
+                          charBlock:^BOOL(const screen_char_t *currentLine, screen_char_t theChar, VT100GridCoord coord) {
                               if (++iterations == maxLength) {
                                   return YES;
                               }
@@ -246,7 +246,7 @@ const NSInteger kLongMaximumWordLength = 100000;
         return 0;
     }
     __block int result = 0;
-    [self enumerateCharsInRange:VT100GridWindowedRangeMake(VT100GridCoordRangeMake(0, line, [_dataSource width], line), _logicalWindow.location, _logicalWindow.length) charBlock:^BOOL(screen_char_t *currentLine, screen_char_t theChar, VT100GridCoord coord) {
+    [self enumerateCharsInRange:VT100GridWindowedRangeMake(VT100GridCoordRangeMake(0, line, [_dataSource width], line), _logicalWindow.location, _logicalWindow.length) charBlock:^BOOL(const screen_char_t *currentLine, screen_char_t theChar, VT100GridCoord coord) {
         if (!theChar.complexChar && (theChar.code == ' ' || theChar.code == '\t' || theChar.code == 0 || theChar.code == TAB_FILLER)) {
             result++;
             return NO;
@@ -361,7 +361,7 @@ const NSInteger kLongMaximumWordLength = 100000;
     [self enumerateCharsInRange:VT100GridWindowedRangeMake(theRange,
                                                            _logicalWindow.location,
                                                            _logicalWindow.length)
-                      charBlock:^BOOL(screen_char_t *currentLine, screen_char_t theChar, VT100GridCoord coord) {
+                      charBlock:^BOOL(const screen_char_t *currentLine, screen_char_t theChar, VT100GridCoord coord) {
                           DLog(@"Character at %@ is '%@'", VT100GridCoordDescription(coord), [self stringForCharacter:theChar]);
                           ++iterations;
                           if (iterations > maximumLength) {
@@ -663,14 +663,14 @@ const NSInteger kLongMaximumWordLength = 100000;
 }
 
 - (NSString *)stringForCharacterAt:(VT100GridCoord)location {
-    screen_char_t *theLine = [_dataSource getLineAtIndex:location.y];
+    const screen_char_t *theLine = [_dataSource getLineAtIndex:location.y];
     unichar temp[kMaxParts];
     int length = ExpandScreenChar(theLine + location.x, temp);
     return [NSString stringWithCharacters:temp length:length];
 }
 
 - (NSIndexSet *)indexesOnLine:(int)line containingCharacter:(unichar)c inRange:(NSRange)range {
-    screen_char_t *theLine;
+    const screen_char_t *theLine;
     theLine = [_dataSource getLineAtIndex:line];
     NSMutableIndexSet *indexes = [NSMutableIndexSet indexSet];
     for (int i = range.location; i < range.location + range.length; i++) {
@@ -1084,7 +1084,7 @@ const NSInteger kLongMaximumWordLength = 100000;
                      forward:(BOOL)forward
   forCharacterMatchingFilter:(BOOL (^)(screen_char_t, VT100GridCoord))block {
     VT100GridCoord coord = start;
-    screen_char_t *theLine;
+    const screen_char_t *theLine;
     int y = coord.y;
     theLine = [_dataSource getLineAtIndex:coord.y];
     while (1) {
@@ -1177,7 +1177,7 @@ const NSInteger kLongMaximumWordLength = 100000;
                                                _logicalWindow.length);
 
     [self enumerateCharsInRange:windowedRange
-                      charBlock:^BOOL(screen_char_t *currentLine, screen_char_t theChar, VT100GridCoord charCoord) {
+                      charBlock:^BOOL(const screen_char_t *currentLine, screen_char_t theChar, VT100GridCoord charCoord) {
                           if (!theChar.code) {
                               return YES;
                           }
@@ -1239,7 +1239,7 @@ const NSInteger kLongMaximumWordLength = 100000;
     [whitespaceCharacterSet addCharactersInRange:NSMakeRange(TAB_FILLER, 1)];
 
     [self enumerateCharsInRange:windowedRange
-                      charBlock:^BOOL(screen_char_t *currentLine, screen_char_t theChar, VT100GridCoord coord) {
+                      charBlock:^BOOL(const screen_char_t *currentLine, screen_char_t theChar, VT100GridCoord coord) {
                           if (theChar.image) {
                               return NO;
                           }
@@ -1331,7 +1331,7 @@ trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
     __block BOOL lineContainsImage = NO;
     __block BOOL copiedImage = NO;
     [self enumerateCharsInRange:windowedRange
-                      charBlock:^BOOL(screen_char_t *currentLine, screen_char_t theChar, VT100GridCoord coord) {
+                      charBlock:^BOOL(const screen_char_t *currentLine, screen_char_t theChar, VT100GridCoord coord) {
                           if (theChar.image) {
                               lineContainsImage = YES;
                           } else {
@@ -1498,7 +1498,7 @@ trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
             VT100GridWindowedRangeMake(localRange, _logicalWindow.location, _logicalWindow.length);
     if (leading) {
         [self enumerateCharsInRange:windowedRange
-                          charBlock:^BOOL(screen_char_t *currentLine, screen_char_t theChar, VT100GridCoord coord) {
+                          charBlock:^BOOL(const screen_char_t *currentLine, screen_char_t theChar, VT100GridCoord coord) {
                               NSString *string = ScreenCharToStr(&theChar);
                               if ([string rangeOfCharacterFromSet:nonWhitespace].location != NSNotFound) {
                                   trimmedRange.start.x = coord.x;
@@ -1623,9 +1623,8 @@ trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
     return i - 1;
 }
 
-- (BOOL)lineHasSoftEol:(int)y respectContinuations:(BOOL)respectContinuations
-{
-    screen_char_t *theLine = [_dataSource getLineAtIndex:y];
+- (BOOL)lineHasSoftEol:(int)y respectContinuations:(BOOL)respectContinuations {
+    const screen_char_t *theLine = [_dataSource getLineAtIndex:y];
     int width = [_dataSource width];
     int xLimit = [self xLimit];
 
@@ -1646,7 +1645,7 @@ trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
     }
 }
 
-- (BOOL)tabFillerAtIndex:(int)index isOrphanInLine:(screen_char_t *)line {
+- (BOOL)tabFillerAtIndex:(int)index isOrphanInLine:(const screen_char_t *)line {
     // A tab filler orphan is a tab filler that is followed by a tab filler orphan or a
     // non-tab character.
     int xLimit = [self xLimit];
@@ -1728,7 +1727,7 @@ trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
 }
 
 - (void)enumerateCharsInRange:(VT100GridWindowedRange)range
-                    charBlock:(BOOL (^)(screen_char_t *currentLine, screen_char_t theChar, VT100GridCoord coord))charBlock
+                    charBlock:(BOOL (^)(const screen_char_t *currentLine, screen_char_t theChar, VT100GridCoord coord))charBlock
                      eolBlock:(BOOL (^)(unichar code, int numPrecedingNulls, int line))eolBlock {
     int width = [_dataSource width];
 
@@ -1751,7 +1750,7 @@ trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
             const int reducedEndX = range.columnWindow.length ? VT100GridWindowedRangeEnd(range).x : range.coordRange.end.x;
             endx = MAX(0, MIN(endx, reducedEndX));
         }
-        screen_char_t *theLine = [_dataSource getLineAtIndex:y];
+        const screen_char_t *theLine = [_dataSource getLineAtIndex:y];
 
         // Count number of nulls at end of line.
         int numNulls = 0;
@@ -1813,7 +1812,7 @@ trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
     for (int y = MIN([_dataSource numberOfLines] - 1, range.coordRange.end.y);
          y >= yLimit;
          y--) {
-        screen_char_t *theLine = [_dataSource getLineAtIndex:y];
+        const screen_char_t *theLine = [_dataSource getLineAtIndex:y];
         int x = initialX;
         int xmin;
         if (y == yLimit) {
@@ -1857,7 +1856,7 @@ trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
 }
 
 - (int)lengthOfLine:(int)line {
-    screen_char_t *theLine = [_dataSource getLineAtIndex:line];
+    const screen_char_t *theLine = [_dataSource getLineAtIndex:line];
     int x;
     for (x = [_dataSource width] - 1; x >= 0; x--) {
         if (theLine[x].code || theLine[x].complexChar) {
@@ -1873,7 +1872,7 @@ trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
         VT100GridCoordRangeMake(0, coord.y, [_dataSource width], coord.y);
     NSCharacterSet *columnDividers = [self columnDividers];
     [self enumerateCharsInRange:VT100GridWindowedRangeMake(theRange, 0, 0)
-                      charBlock:^BOOL(screen_char_t *currentLine, screen_char_t theChar, VT100GridCoord theCoord) {
+                      charBlock:^BOOL(const screen_char_t *currentLine, screen_char_t theChar, VT100GridCoord theCoord) {
                           if (!theChar.complexChar &&
                               [columnDividers characterIsMember:theChar.code]) {
                               [indexes addIndex:theCoord.x];
@@ -1973,7 +1972,7 @@ trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
     if (_shouldCacheLines && coord.y == _cachedLineNumber && _cachedLine != nil) {
         return _cachedLine[coord.x];
     }
-    screen_char_t *theLine = [_dataSource getLineAtIndex:coord.y];
+    const screen_char_t *theLine = [_dataSource getLineAtIndex:coord.y];
     if (_shouldCacheLines) {
         _cachedLineNumber = coord.y;
         _cachedLine = theLine;

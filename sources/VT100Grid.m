@@ -79,7 +79,17 @@ static NSString *const kGridSizeKey = @"Size";
     }
 }
 
-- (screen_char_t *)screenCharsAtLineNumber:(int)lineNumber {
+- (void)setAttachments:(id<iTermScreenCharAttachmentsArray>)attachments onLine:(int)line {
+    VT100LineInfo *lineInfo = [self lineInfoAtLineNumber:line];
+    [lineInfo setAttachments:attachments];
+}
+
+- (const screen_char_t *)screenCharsAtLineNumber:(int)lineNumber {
+    assert(lineNumber >= 0);
+    return [[lines_ objectAtIndex:(screenTop_ + lineNumber) % size_.height] bytes];
+}
+
+- (screen_char_t *)mutableScreenCharsAtLineNumber:(int)lineNumber {
     assert(lineNumber >= 0);
     return [[lines_ objectAtIndex:(screenTop_ + lineNumber) % size_.height] mutableBytes];
 }
@@ -230,7 +240,7 @@ static NSString *const kGridSizeKey = @"Size";
         [allowedCharacters addCharactersInRange:NSMakeRange(DWC_SKIP, 1)];
     }
     for(; numberOfLinesUsed > 0; numberOfLinesUsed--) {
-        screen_char_t *line = [self screenCharsAtLineNumber:numberOfLinesUsed - 1];
+        const screen_char_t *line = [self screenCharsAtLineNumber:numberOfLinesUsed - 1];
         int i;
         for (i = 0; i < size_.width; i++) {
             if (line[i].complexChar || ![allowedCharacters characterIsMember:line[i].code]) {
@@ -264,7 +274,7 @@ static NSString *const kGridSizeKey = @"Size";
         lengthOfNextLine = [self lengthOfLineNumber:0];
     }
     for (i = 0; i < numLines; ++i) {
-        screen_char_t* line = [self screenCharsAtLineNumber:i];
+        screen_char_t *line = [self mutableScreenCharsAtLineNumber:i];
         int currentLineLength = lengthOfNextLine;
         if (i + 1 < size_.height) {
             lengthOfNextLine = [self lengthOfLine:[self screenCharsAtLineNumber:i+1]];
@@ -316,11 +326,11 @@ static NSString *const kGridSizeKey = @"Size";
 }
 
 - (int)lengthOfLineNumber:(int)lineNumber {
-    screen_char_t *line = [self screenCharsAtLineNumber:lineNumber];
+    const screen_char_t *line = [self screenCharsAtLineNumber:lineNumber];
     return [self lengthOfLine:line];
 }
 
-- (int)lengthOfLine:(screen_char_t *)line {
+- (int)lengthOfLine:(const screen_char_t *)line {
     int lineLength = 0;
     // Figure out the line length.
     if (line[size_.width].code == EOL_SOFT) {
@@ -339,7 +349,7 @@ static NSString *const kGridSizeKey = @"Size";
 }
 
 - (int)continuationMarkForLineNumber:(int)lineNumber {
-    screen_char_t *line = [self screenCharsAtLineNumber:lineNumber];
+    const screen_char_t *line = [self screenCharsAtLineNumber:lineNumber];
     return line[size_.width].code;
 }
 
@@ -586,7 +596,7 @@ static NSString *const kGridSizeKey = @"Size";
         return;
     }
     for (int y = MAX(0, from.y); y <= MIN(to.y, size_.height - 1); y++) {
-        screen_char_t *line = [self screenCharsAtLineNumber:y];
+        screen_char_t *line = [self mutableScreenCharsAtLineNumber:y];
         [self erasePossibleDoubleWidthCharInLineNumber:y startingAtOffset:from.x - 1 withChar:c];
         [self erasePossibleDoubleWidthCharInLineNumber:y startingAtOffset:to.x withChar:c];
         const int minX = MAX(0, from.x);
@@ -646,7 +656,7 @@ static NSString *const kGridSizeKey = @"Size";
                 inRectFrom:(VT100GridCoord)from
                         to:(VT100GridCoord)to {
     for (int y = from.y; y <= to.y; y++) {
-        screen_char_t *line = [self screenCharsAtLineNumber:y];
+        screen_char_t *line = [self mutableScreenCharsAtLineNumber:y];
         for (int x = from.x; x <= to.x; x++) {
             if (fg.foregroundColorMode != ColorModeInvalid) {
                 CopyForegroundColor(&line[x], fg);
@@ -665,7 +675,7 @@ static NSString *const kGridSizeKey = @"Size";
         inRectFrom:(VT100GridCoord)from
                 to:(VT100GridCoord)to {
     for (int y = from.y; y <= to.y; y++) {
-        screen_char_t *line = [self screenCharsAtLineNumber:y];
+        screen_char_t *line = [self mutableScreenCharsAtLineNumber:y];
         for (int x = from.x; x <= to.x; x++) {
             line[x].urlCode = code;
         }
@@ -772,7 +782,7 @@ static NSString *const kGridSizeKey = @"Size";
             if (wraparound) {
                 if (leftMargin == 0 && rightMargin == size_.width) {
                     // Set the continuation marker
-                    screen_char_t* prevLine = [self screenCharsAtLineNumber:cursor_.y];
+                    screen_char_t* prevLine = [self mutableScreenCharsAtLineNumber:cursor_.y];
                     BOOL splitDwc = (cursor_.x == size_.width - 1);
                     prevLine[size_.width] = [self defaultChar];
                     prevLine[size_.width].code = (splitDwc ? EOL_DWC : EOL_SOFT);
@@ -807,7 +817,7 @@ static NSString *const kGridSizeKey = @"Size";
                     newCursorX--;
                 }
 
-                screen_char_t *line = [self screenCharsAtLineNumber:cursor_.y];
+                screen_char_t *line = [self mutableScreenCharsAtLineNumber:cursor_.y];
                 if (rightMargin == size_.width) {
                     // Clear the continuation marker
                     line[size_.width].code = EOL_HARD;
@@ -891,7 +901,7 @@ static NSString *const kGridSizeKey = @"Size";
         }
 
         const int lineNumber = cursor_.y;
-        screen_char_t *const aLine = [self screenCharsAtLineNumber:cursor_.y];
+        screen_char_t *const aLine = [self mutableScreenCharsAtLineNumber:cursor_.y];
         iTermMutableScreenCharAttachmentsArray *lineAttachments =
             [self attachmentArrayOnLine:cursor_.y createIfNeeded:attachments != nil];
 
@@ -1074,7 +1084,7 @@ static NSString *const kGridSizeKey = @"Size";
         }
 
         // get the appropriate screen line
-        aLine = [self screenCharsAtLineNumber:startCoord.y];
+        aLine = [self mutableScreenCharsAtLineNumber:startCoord.y];
 
         if (n > 0 && startCoord.x + n <= rightMargin) {
             // Erase a section in the middle of a line. Shift the stuff to the right of the
@@ -1183,8 +1193,8 @@ static NSString *const kGridSizeKey = @"Size";
                                  sourceIndex >= 0 &&
                                  destIndex >= 0);
              iteration++) {
-            screen_char_t *sourceLine = [self screenCharsAtLineNumber:sourceIndex];
-            screen_char_t *targetLine = [self screenCharsAtLineNumber:destIndex];
+            const screen_char_t *sourceLine = [self screenCharsAtLineNumber:sourceIndex];
+            screen_char_t *targetLine = [self mutableScreenCharsAtLineNumber:destIndex];
 
             memmove(targetLine + rect.origin.x,
                     sourceLine + rect.origin.x,
@@ -1209,7 +1219,7 @@ static NSString *const kGridSizeKey = @"Size";
             rect.origin.x == 0) {
             // Affecting continuation marks on line above/below rect.
             screen_char_t *pred =
-                [self screenCharsAtLineNumber:lineNumberAboveScrollRegion];
+                [self mutableScreenCharsAtLineNumber:lineNumberAboveScrollRegion];
             if (pred[size_.width].code == EOL_SOFT) {
                 pred[size_.width].code = EOL_HARD;
             }
@@ -1227,7 +1237,7 @@ static NSString *const kGridSizeKey = @"Size";
             // Affecting continuation mark on first/last line in block
             if (lastLineOfScrollRegion >= 0 && lastLineOfScrollRegion < size_.height) {
                 screen_char_t *lastLine =
-                    [self screenCharsAtLineNumber:lastLineOfScrollRegion];
+                    [self mutableScreenCharsAtLineNumber:lastLineOfScrollRegion];
                 if (lastLine[size_.width].code == EOL_SOFT) {
                     lastLine[size_.width].code = EOL_HARD;
                 }
@@ -1292,8 +1302,8 @@ static NSString *const kGridSizeKey = @"Size";
                 attachment:nil];
     }
     for (int y = 0; y < MIN(info.height, size_.height); y++) {
-        screen_char_t *dest = [self screenCharsAtLineNumber:y];
-        screen_char_t *src = s + ((y + sourceLineOffset) * (info.width + 1));
+        screen_char_t *dest = [self mutableScreenCharsAtLineNumber:y];
+        const screen_char_t *src = s + ((y + sourceLineOffset) * (info.width + 1));
         memmove(dest, src, sizeof(screen_char_t) * charsToCopyPerLine);
         if (size_.width != info.width) {
             // Not copying continuation marks, set them all to hard.
@@ -1324,7 +1334,7 @@ static NSString *const kGridSizeKey = @"Size";
     char dirtyline[1000];
     for (y = 0; y < size_.height; ++y) {
         int ox = 0;
-        screen_char_t* p = [self screenCharsAtLineNumber:y];
+        const screen_char_t* p = [self screenCharsAtLineNumber:y];
         if (y == screenTop_) {
             [result appendString:@"--- top of buffer ---\n"];
         }
@@ -1405,8 +1415,10 @@ static NSString *const kGridSizeKey = @"Size";
     BOOL prevLineStartsWithDoubleWidth = NO;
     int numPopped = 0;
     while (destLineNumber >= 0) {
-        screen_char_t *dest = [self screenCharsAtLineNumber:destLineNumber];
+        screen_char_t *dest = [self mutableScreenCharsAtLineNumber:destLineNumber];
         memcpy(dest, defaultLine, sizeof(screen_char_t) * size_.width);
+        [[self lineInfoAtLineNumber:destLineNumber] removeAllAttachments];
+
         if (!foundCursor) {
             int tempCursor = cursor_.x;
             foundCursor = [lineBuffer getCursorInLastLineWithWidth:size_.width atX:&tempCursor];
@@ -1529,7 +1541,7 @@ static NSString *const kGridSizeKey = @"Size";
 - (NSString *)compactLineDump {
     NSMutableString *dump = [NSMutableString string];
     for (int y = 0; y < size_.height; y++) {
-        screen_char_t *line = [self screenCharsAtLineNumber:y];
+        const screen_char_t *line = [self screenCharsAtLineNumber:y];
         for (int x = 0; x < size_.width; x++) {
             char c = line[x].code;
             if (line[x].code == 0) c = '.';
@@ -1555,7 +1567,7 @@ static NSString *const kGridSizeKey = @"Size";
     [fmt setTimeStyle:NSDateFormatterLongStyle];
 
     for (int y = 0; y < size_.height; y++) {
-        screen_char_t *line = [self screenCharsAtLineNumber:y];
+        const screen_char_t *line = [self screenCharsAtLineNumber:y];
         for (int x = 0; x < size_.width; x++) {
             char c = line[x].code;
             if (line[x].code == 0) c = '.';
@@ -1580,7 +1592,7 @@ static NSString *const kGridSizeKey = @"Size";
 - (NSString *)compactLineDumpWithContinuationMarks {
     NSMutableString *dump = [NSMutableString string];
     for (int y = 0; y < size_.height; y++) {
-        screen_char_t *line = [self screenCharsAtLineNumber:y];
+        const screen_char_t *line = [self screenCharsAtLineNumber:y];
         for (int x = 0; x < size_.width; x++) {
             char c = line[x].code;
             if (line[x].code == 0) c = '.';
@@ -1643,7 +1655,7 @@ static NSString *const kGridSizeKey = @"Size";
         return;
     }
 
-    screen_char_t *line = [self screenCharsAtLineNumber:pos.y];
+    screen_char_t *line = [self mutableScreenCharsAtLineNumber:pos.y];
     int charsToMove = self.rightMargin - pos.x - n + 1;
 
     // Splitting a dwc in half?
@@ -1868,7 +1880,7 @@ static NSString *const kGridSizeKey = @"Size";
     if (!lineBuffer) {
         return 0;
     }
-    screen_char_t *line = [self screenCharsAtLineNumber:0];
+    const screen_char_t *line = [self screenCharsAtLineNumber:0];
     VT100LineInfo *lineInfo = [self lineInfoAtLineNumber:0];
     int len = [self lengthOfLine:line];
     int continuationMark = line[size_.width].code;
@@ -1977,7 +1989,7 @@ static NSString *const kGridSizeKey = @"Size";
         return invalid;
     }
 
-    screen_char_t *line = [self screenCharsAtLineNumber:cy];
+    const screen_char_t *line = [self screenCharsAtLineNumber:cy];
     if (line[cx].code == DWC_RIGHT) {
         if (cx > 0) {
             if (dwc) {
@@ -1996,7 +2008,7 @@ static NSString *const kGridSizeKey = @"Size";
 }
 
 - (NSString *)stringForCharacterAt:(VT100GridCoord)coord {
-    screen_char_t *theLine = [self screenCharsAtLineNumber:coord.y];
+    const screen_char_t *theLine = [self screenCharsAtLineNumber:coord.y];
     if (!theLine) {
         return nil;
     }
@@ -2024,11 +2036,12 @@ static void DumpBuf(screen_char_t* p, int n) {
     if (lineNumber < 0) {
         return;
     }
-    screen_char_t *line = [self screenCharsAtLineNumber:lineNumber];
+    screen_char_t *line = [self mutableScreenCharsAtLineNumber:lineNumber];
     if (line[size_.width].code == EOL_DWC) {
         line[size_.width].code = EOL_HARD;
         if (line[size_.width - 1].code == DWC_SKIP) {  // This really should always be the case.
             line[size_.width - 1].code = 0;
+            [[self lineInfoAtLineNumber:lineNumber] removeAttachmentAt:size_.width - 1];
         } else {
             NSLog(@"Warning! EOL_DWC without DWC_SKIP at line %d", lineNumber);
         }
@@ -2036,14 +2049,14 @@ static void DumpBuf(screen_char_t* p, int n) {
 }
 - (BOOL)erasePossibleDoubleWidthCharInLineNumber:(int)lineNumber
                                 startingAtOffset:(int)offset
-                                        withChar:(screen_char_t)c
-{
-    screen_char_t *aLine = [self screenCharsAtLineNumber:lineNumber];
+                                        withChar:(screen_char_t)c {
+    screen_char_t *aLine = [self mutableScreenCharsAtLineNumber:lineNumber];
     if (offset >= 0 && offset < size_.width - 1 && aLine[offset + 1].code == DWC_RIGHT) {
         aLine[offset] = c;
         aLine[offset + 1] = c;
-        [[self lineInfoAtLineNumber:lineNumber] removeAttachmentAt:offset];
-        [[self lineInfoAtLineNumber:lineNumber] removeAttachmentAt:offset + 1];
+        VT100LineInfo *lineInfo = [self lineInfoAtLineNumber:lineNumber];
+        [lineInfo removeAttachmentAt:offset];
+        [lineInfo removeAttachmentAt:offset + 1];
         [self markCharDirty:YES
                          at:VT100GridCoordMake(offset, lineNumber)
             updateTimestamp:YES];

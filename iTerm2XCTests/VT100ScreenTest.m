@@ -288,8 +288,8 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     VT100Grid *temp = [[[screen currentGrid] copy] autorelease];
     [screen terminalShowAltBuffer];
     for (int y = 0; y < screen.height; y++) {
-        screen_char_t *lineIn = [temp screenCharsAtLineNumber:y];
-        screen_char_t *lineOut = [screen getLineAtScreenIndex:y];
+        const screen_char_t *lineIn = [temp screenCharsAtLineNumber:y];
+        screen_char_t *lineOut = (screen_char_t *)[screen getLineAtScreenIndex:y];
         for (int x = 0; x < screen.width; x++) {
             lineOut[x] = lineIn[x];
             unichar c = lineIn[x].code;
@@ -320,7 +320,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
                                          height:[lines count]];
     int i = 0;
     for (NSString *line in lines) {
-        screen_char_t *s = [screen getLineAtScreenIndex:i++];
+        screen_char_t *s = (screen_char_t *)[screen getLineAtScreenIndex:i++];
         for (int j = 0; j < [line length]; j++) {
             unichar c = [line characterAtIndex:j];;
             if (c == '.') c = 0;
@@ -345,7 +345,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
                                          height:[lines count]];
     int i = 0;
     for (NSString *line in lines) {
-        screen_char_t *s = [screen getLineAtScreenIndex:i++];
+        screen_char_t *s = (screen_char_t *)[screen getLineAtScreenIndex:i++];
         for (int j = 0; j < [line length] - 1; j++) {
             unichar c = [line characterAtIndex:j];;
             if (c == '.') c = 0;
@@ -391,7 +391,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     [selection_ enumerateSelectedRanges:^(VT100GridWindowedRange range, BOOL *stop, BOOL eol) {
         int sx = range.coordRange.start.x;
         for (int y = range.coordRange.start.y; y <= range.coordRange.end.y; y++) {
-            screen_char_t *line = [screen getLineAtIndex:y];
+            const screen_char_t *line = [screen getLineAtIndex:y];
             int x;
             int ex = y == range.coordRange.end.y ? range.coordRange.end.x : [screen width];
             BOOL newline = NO;
@@ -469,7 +469,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     int defaultFg = [terminal_ foregroundColorCode].foregroundColor;
     int defaultBg = [terminal_ foregroundColorCode].backgroundColor;
     for (int i = 0; i < screen.height; i++) {
-        screen_char_t *line = [screen getLineAtScreenIndex:i];
+        const screen_char_t *line = [screen getLineAtScreenIndex:i];
         NSString *expected = expectedHighlights[i];
         for (int j = 0; j < screen.width; j++) {
             if ([expected characterAtIndex:j] == 'h') {
@@ -955,6 +955,33 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     return YES;
 }
 
+- (BOOL)screenConfirmDownloadAllowed:(NSString *)name size:(NSInteger)size displayInline:(BOOL)displayInline promptIfBig:(BOOL *)promptIfBig {
+    return YES;
+}
+
+
+- (void)screenGetCursorType:(ITermCursorType *)cursorTypeOut blinking:(BOOL *)blinking {
+    *cursorTypeOut = CURSOR_BOX;
+    *blinking = NO;
+}
+
+
+- (void)screenRefreshFindOnPageView {
+}
+
+
+- (void)screenResetCursorTypeAndBlink {
+}
+
+
+- (void)screenSetUseCSIu:(int)terminalSetting {
+}
+
+
+- (BOOL)screenShouldClearScrollbackBuffer {
+    return NO;
+}
+
 #pragma mark - iTermSelectionDelegate
 
 - (void)selectionDidChange:(iTermSelection *)selection {
@@ -993,10 +1020,10 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
 - (void)testSetSizeRespectsContinuations {
     VT100Screen *screen;
     screen = [self screenWithWidth:5 height:5];
-    screen_char_t *line = [screen.currentGrid screenCharsAtLineNumber:0];
+    screen_char_t *line = (screen_char_t *)[screen.currentGrid screenCharsAtLineNumber:0];
     line[5].backgroundColor = 5;
     [screen setSize:VT100GridSizeMake(6, 4)];
-    line = [screen.currentGrid screenCharsAtLineNumber:0];
+    line = [screen.currentGrid mutableScreenCharsAtLineNumber:0];
     XCTAssert(line[0].backgroundColor == 5);
 }
 
@@ -1006,7 +1033,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     [screen.terminal setWraparoundMode:NO];
     [screen.terminal setBackgroundColor:5 alternateSemantics:NO];
     [screen appendStringAtCursor:@"0123456789Z"];  // Should become 0123Z
-    screen_char_t *line = [screen.currentGrid screenCharsAtLineNumber:0];
+    screen_char_t *line = [screen.currentGrid mutableScreenCharsAtLineNumber:0];
     XCTAssert(line[5].backgroundColor == 0);
 }
 
@@ -1859,7 +1886,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
                @" worl\n"
                @"d....\n"
                @"....."]);
-    screen_char_t *line = [screen getLineAtScreenIndex:0];
+    const screen_char_t *line = [screen getLineAtScreenIndex:0];
     XCTAssert(line[0].foregroundColor == 5);
     XCTAssert(line[0].foregroundColorMode == ColorModeNormal);
     XCTAssert(line[0].bold);
@@ -1915,7 +1942,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
             unichar c = code.intValue;
             [screen appendStringAtCursor:[NSString stringWithCharacters:&c length:1]];
         }
-        screen_char_t *line = [screen getLineAtScreenIndex:0];
+        const screen_char_t *line = [screen getLineAtScreenIndex:0];
         XCTAssertEqualObjects(ScreenCharToStr(line), tests[i].expected);
 
         if (tests[i].doubleWidth) {
@@ -1964,7 +1991,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
                                                         length:sizeof(chars) / sizeof(unichar)];
     [screen appendStringAtCursor:s];
 
-    screen_char_t *line = [screen getLineAtScreenIndex:0];
+    const screen_char_t *line = [screen getLineAtScreenIndex:0];
     XCTAssert(line[0].foregroundColor == 5);
     XCTAssert(line[0].foregroundColorMode == ColorModeNormal);
     XCTAssert(line[0].bold);
@@ -2106,7 +2133,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
                        [self screenCharLineForString:@"MNOP  "]];
     VT100Screen *screen = [self screenWithWidth:6 height:4];
     [screen terminalShowAltBuffer];
-    [screen setAltScreen:lines];
+    [screen setAltScreen:lines attachments:nil];
     XCTAssert([[screen compactLineDumpWithHistoryAndContinuationMarks] isEqualToString:
                @"abcdef+\n"
                @"ghijkl!\n"
@@ -2145,7 +2172,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     VT100Screen *source = [self fiveByFourScreenWithThreeLinesOneWrapped];
     NSMutableData *data = [NSMutableData data];
     for (int i = 0; i < source.height; i++) {
-        screen_char_t *line = [source getLineAtScreenIndex:i];
+        const screen_char_t *line = [source getLineAtScreenIndex:i];
         [data appendBytes:line length:(sizeof(screen_char_t) * (source.width + 1))];
     }
 
@@ -2352,7 +2379,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
                            @"abcde>\n"
                            @"F-ghi.\n"];
     [screen terminalMoveCursorToX:6 y:2];
-    screen_char_t *line = [screen getLineAtIndex:0];
+    const screen_char_t *line = [screen getLineAtIndex:0];
     XCTAssert(line[0].code == 'a');
     XCTAssert(line[5].code == DWC_SKIP);
     XCTAssert(line[6].code == EOL_DWC);
@@ -2955,7 +2982,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     // Tabbing over all nils replaces them with tab fillers and a tab character at the end
     screen = [self screenWithWidth:20 height:3];
     [screen terminalAppendTabAtCursor:NO];
-    screen_char_t *line = [screen getLineAtScreenIndex:0];
+    const screen_char_t *line = [screen getLineAtScreenIndex:0];
     for (int i = 0; i < 7; i++) {
         XCTAssert(line[i].code == TAB_FILLER);
     }
