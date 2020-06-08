@@ -29,6 +29,7 @@
 // This function is dangerous! It writes to an internal buffer and returns a
 // pointer to it. Better to use getLineAtIndex:withBuffer:.
 - (const screen_char_t *)getLineAtIndex:(int)theIndex;
+- (<iTermScreenCharAttachmentsArray>)attachmentsOnLine:(int)line;
 - (long long)totalScrollbackOverflow;
 
 @end

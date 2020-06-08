@@ -9,14 +9,19 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+typedef NS_ENUM(unsigned int, iTermUnderlineColorMode) {
+    iTermUnderlineColorModeNone = 0,
+    iTermUnderlineColorMode256 = 1,
+    iTermUnderlineColorMode24bit = 2
+};
+
 typedef struct {
-    unsigned int underlineRed : 8;
-    unsigned int underlineGreen : 8;
-    unsigned int underlineBlue : 8;
-    unsigned int hasUnderlineColor: 1;
+    unsigned int underlineRed : 8;  // gives color code is mode is 256
+    unsigned int underlineGreen : 8;  // unused unless mode is 24bit
+    unsigned int underlineBlue : 8;  // unused unless mode is 24bit
+    iTermUnderlineColorMode underlineColorMode : 2;
 
     unsigned int unusedBits: 6;
-    unsigned int valid: 1;
     unsigned char unusedBytes[12];
 } iTermScreenCharAttachment;
 

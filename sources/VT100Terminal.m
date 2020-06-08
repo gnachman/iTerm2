@@ -130,6 +130,8 @@ typedef struct {
     unsigned short _currentURLCode;
 
     BOOL _softAlternateScreenMode;
+    // _attachment is either nil or a pointer to this.
+    iTermScreenCharAttachment _attachmentStorage;
 }
 
 @synthesize delegate = delegate_;
@@ -183,6 +185,8 @@ typedef enum {
 #define VT100CHARATTR_BG_WHITE     (VT100CHARATTR_BG_BASE + COLORCODE_WHITE)
 #define VT100CHARATTR_BG_256       (VT100CHARATTR_BG_BASE + COLORCODE_256)
 #define VT100CHARATTR_BG_DEFAULT   (VT100CHARATTR_BG_BASE + 9)
+
+#define VT100CHARATTR_UNDERLINE_COLOR 58
 
 // Color codes for 16-color mode. Black and white are the limits; other codes can be constructed
 // similarly.
@@ -678,6 +682,18 @@ static const int kMaxScreenRows = 4096;
     memset(&graphicRendition_, 0, sizeof(graphicRendition_));
 }
 
+- (void)setHasAttachment:(BOOL)hasAttachment {
+    if (hasAttachment == (_attachment != nil)) {
+        return;
+    }
+    if (hasAttachment) {
+        memset(&_attachmentStorage, 0, sizeof(_attachmentStorage));
+        _attachment = &_attachmentStorage;
+    } else {
+        _attachment = nil;
+    }
+}
+
 - (void)executeSGR:(VT100Token *)token {
     assert(token->type == VT100CSI_SGR);
     if (token.csi->count == 0) {
@@ -757,7 +773,7 @@ static const int kMaxScreenRows = 4096;
                     graphicRendition_.bgBlue = 0;
                     graphicRendition_.bgColorMode = ColorModeAlternate;
                     break;
-                case VT100CHARATTR_FG_256: {
+                case VT100CHARATTR_FG_256: {  // 38
                     // The actual spec for this is called ITU T.416-199303
                     // You can download it for free! If you prefer to spend money, ISO/IEC 8613-6
                     // is supposedly the same thing.
@@ -845,7 +861,7 @@ static const int kMaxScreenRows = 4096;
                     }
                     break;
                 }
-                case VT100CHARATTR_BG_256: {
+                case VT100CHARATTR_BG_256: {  // 48
                     int subs[VT100CSISUBPARAM_MAX];
                     int numberOfSubparameters = iTermParserGetAllCSISubparametersForParameter(token.csi, i, subs);
                     if (numberOfSubparameters > 0) {
@@ -895,6 +911,58 @@ static const int kMaxScreenRows = 4096;
                     }
                     break;
                 }
+                case VT100CHARATTR_UNDERLINE_COLOR: { // 58
+                    int subs[VT100CSISUBPARAM_MAX];
+                    const int numberOfSubparameters = iTermParserGetAllCSISubparametersForParameter(token.csi, i, subs);
+                    if (numberOfSubparameters > 0) {
+                        // Preferred syntax using colons to delimit subparameters
+                        if (numberOfSubparameters >= 2 && subs[0] == 5) {
+                            // CSI 58:5:P m
+                            [self setHasAttachment:YES];
+                            _attachment->underlineColorMode = iTermUnderlineColorMode256;
+                            _attachment->underlineRed = subs[1];
+                        } else if (numberOfSubparameters >= 4 && subs[0] == 2) {
+                            // 24-bit color
+                            if (numberOfSubparameters >= 5) {
+                                // Spec-compliant. Likely rarely used in 2020.
+                                // CSI 48:2:colorspace:R:G:B m
+                                // TODO: Respect the color space argument. See ITU-T Rec. T.414,
+                                // but good luck actually finding the colour space IDs.
+                                [self setHasAttachment:YES];
+                                _attachment->underlineColorMode = iTermUnderlineColorMode24bit;
+                                _attachment->underlineRed = subs[2];
+                                _attachment->underlineGreen = subs[3];
+                                _attachment->underlineBlue = subs[4];
+                            } else {
+                                // Misinterpretation compliant.
+                                // CSI 48:2:R:G:B m  <- misinterpretation compliant
+                                [self setHasAttachment:YES];
+                                _attachment->underlineColorMode = iTermUnderlineColorMode24bit;
+                                _attachment->underlineRed = subs[1];
+                                _attachment->underlineGreen = subs[2];
+                                _attachment->underlineBlue = subs[3];
+                            }
+                        }
+                    } else if (token.csi->count - i >= 3 && token.csi->p[i + 1] == 5) {
+                        // CSI 58;5;P m
+                        [self setHasAttachment:YES];
+                        _attachment->underlineColorMode = iTermUnderlineColorMode256;
+                        _attachment->underlineRed = token.csi->p[i + 2];
+                        i += 2;
+                    } else if (token.csi->count - i >= 5 && token.csi->p[i + 1] == 2) {
+                        // CSI 58;2;R;G;B m
+                        // Hack for xterm compatibility
+                        // 24-bit color
+                        [self setHasAttachment:YES];
+                        _attachment->underlineColorMode = iTermUnderlineColorMode24bit;
+                        _attachment->underlineRed = token.csi->p[i + 2];
+                        _attachment->underlineGreen = token.csi->p[i + 3];
+                        _attachment->underlineBlue = token.csi->p[i + 4];
+                        i += 4;
+                    }
+                    break;
+                }
+
                 default:
                     // 8 color support
                     if (n >= VT100CHARATTR_FG_BLACK &&

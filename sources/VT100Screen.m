@@ -1759,6 +1759,11 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     return [self getLineAtIndex:theIndex withBuffer:[currentGrid_ resultLine]];
 }
 
+- (<iTermScreenCharAttachmentsArray>)attachmentsOnLine:(int)line {
+TODO: This is going to be really slow when hitting the linebuffer because it'll require a second lookup.
+    It would be better to return a ScreenCharArray.
+}
+
 // theIndex = 0 for first line in history; for sufficiently large values, it pulls from the current
 // grid.
 - (const screen_char_t *)getLineAtIndex:(int)theIndex withBuffer:(screen_char_t*)buffer {

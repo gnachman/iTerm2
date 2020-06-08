@@ -83,6 +83,10 @@ typedef struct {
     BOOL isURL;
     NSInteger ligatureLevel;
     BOOL drawable;
+
+    // This is the underline color as set by control sequence. If nil, use the regular underline
+    // color (which depends on context).
+    NSColor *underlineColor;
 } iTermCharacterAttributes;
 
 enum {
@@ -130,6 +134,16 @@ typedef struct iTermTextColorContext {
     NSColor *previousBackgroundColor;
     CGFloat minimumContrast;
     NSColor *previousForegroundColor;
+
+    // Attachment
+    BOOL havePreviousUnderlineColor;
+    unsigned int previousUnderlineColorRed;
+    unsigned int previousUnderlineColorGreen;
+    unsigned int previousUnderlineColorBlue;
+    iTermUnderlineColorMode previousUnderlineColorMode;
+    NSColor *underlineColor;
+    NSColor *previousUnderlineColor;
+    NSColor *lastUnprocessedUnderlineColor;
 } iTermTextColorContext;
 
 @implementation iTermTextDrawingHelper {
@@ -1074,12 +1088,15 @@ typedef struct iTermTextColorContext {
                backgroundRuns:(NSArray<iTermBoxedBackgroundColorRun *> *)backgroundRuns
                       context:(CGContextRef)ctx {
     const screen_char_t *theLine = [self.delegate drawingHelperLineAtIndex:line];
+    id<iTermScreenCharAttachmentsArray> attachments = [self.delegate drawingHelperAttachmentsOnLine:line];
+
     NSData *matches = [_delegate drawingHelperMatchesOnLine:line];
     for (iTermBoxedBackgroundColorRun *box in backgroundRuns) {
         iTermBackgroundColorRun *run = box.valuePointer;
         NSPoint textOrigin = NSMakePoint([iTermAdvancedSettingsModel terminalMargin] + run->range.location * _cellSize.width,
                                          y);
         [self constructAndDrawRunsForLine:theLine
+                              attachments:attachments
                                       row:line
                                   inRange:run->range
                           startingAtPoint:textOrigin
@@ -1094,6 +1111,7 @@ typedef struct iTermTextColorContext {
 }
 
 - (void)constructAndDrawRunsForLine:(const screen_char_t *)theLine
+                        attachments:(id<iTermScreenCharAttachmentsArray>)attachments
                                 row:(int)row
                             inRange:(NSRange)indexRange
                     startingAtPoint:(NSPoint)initialPoint
@@ -1121,6 +1139,7 @@ typedef struct iTermTextColorContext {
 
     iTermPreciseTimerStatsStartTimer(&_stats[TIMER_STAT_CONSTRUCTION]);
     NSArray<id<iTermAttributedString>> *attributedStrings = [self attributedStringsForLine:theLine
+                                                                               attachments:attachments
                                                                                      range:indexRange
                                                                            hasSelectedText:bgselected
                                                                            backgroundColor:bgColor
@@ -1448,10 +1467,13 @@ typedef struct iTermTextColorContext {
                                    origin.y,
                                    size.width,
                                    size.height);
-    NSColor *underline = [self.colorMap colorForKey:kColorMapUnderline];
+    NSColor *sgrUnderlineColor = cheapString.attributes[NSUnderlineColorAttributeName];
+    NSColor *profileUnderlineColor = [self.colorMap colorForKey:kColorMapUnderline];
     NSColor *underlineColor;
-    if (underline) {
-        underlineColor = underline;
+    if (sgrUnderlineColor) {
+        underlineColor = sgrUnderlineColor;
+    } else if (profileUnderlineColor) {
+        underlineColor = profileUnderlineColor;
     } else {
         CGColorRef cgColor = (CGColorRef)attributes[(NSString *)kCTForegroundColorAttributeName];
         underlineColor = [NSColor colorWithCGColor:cgColor];
@@ -1882,6 +1904,80 @@ typedef struct iTermTextColorContext {
     return maskContext;
 }
 
+// This is only called for nonnil attachment with an actual underline color
+static NSColor *iTermTextDrawingHelperGetUnderlineColor(iTermTextDrawingHelper *self,
+                                                        const iTermScreenCharAttachment *attachment,
+                                                        BOOL faint,
+                                                        BOOL inUnderlinedRange,
+                                                        iTermTextColorContext *context,
+                                                        iTermBackgroundColorRun *colorRun) {
+    if (inUnderlinedRange) {
+        context->havePreviousUnderlineColor = NO;
+        return nil;
+    }
+    const BOOL needsProcessing = context->backgroundColor && (context->minimumContrast > 0.001 ||
+                                                              context->dimmingAmount > 0.001 ||
+                                                              context->mutingAmount > 0.001 ||
+                                                              faint);
+    NSColor *rawColor = nil;
+    if (!context->havePreviousUnderlineColor ||
+        attachment->underlineColorMode != context->previousUnderlineColorMode ||
+        attachment->underlineRed != context->previousUnderlineColorRed ||
+        attachment->underlineGreen != context->previousUnderlineColorGreen ||
+        attachment->underlineBlue != context->previousUnderlineColorBlue ||
+        !context->previousUnderlineColor) {
+        // "Normal" case for uncached underline color. Recompute the unprocessed color from the character.
+        context->havePreviousUnderlineColor = YES;
+        context->previousUnderlineColorMode = attachment->underlineColorMode;
+        context->previousUnderlineColorRed = attachment->underlineRed;
+        context->previousUnderlineColorGreen = attachment->underlineGreen;
+        context->previousUnderlineColorBlue = attachment->underlineBlue;
+
+        ColorMode mode = ColorMode24bit;
+        switch (attachment->underlineColorMode) {
+            case iTermUnderlineColorModeNone:
+                assert(NO);
+            case iTermUnderlineColorMode256:
+                mode = ColorModeNormal;
+                break;
+            case iTermUnderlineColorMode24bit:
+                mode = ColorMode24bit;
+                break;
+        }
+        rawColor = [context->delegate drawingHelperColorForCode:attachment->underlineRed
+                                                          green:attachment->underlineGreen
+                                                           blue:attachment->underlineBlue
+                                                      colorMode:mode
+                                                           bold:NO
+                                                          faint:NO
+                                                   isBackground:NO];
+    } else {
+        // Underline color attributes are just like the last character. There is a cached underlined color.
+        if (needsProcessing && context->backgroundColor != context->previousBackgroundColor) {
+            // Process the text color for the current background color, which has changed since
+            // the last cell.
+            rawColor = context->lastUnprocessedUnderlineColor;
+        } else {
+            // Underline color is unchanged. Either it's independent of the background color or the
+            // background color has not changed.
+            return context->previousUnderlineColor;
+        }
+    }
+
+    context->lastUnprocessedUnderlineColor = rawColor;
+
+    NSColor *result = nil;
+    if (needsProcessing) {
+        result = [context->colorMap processedTextColorForTextColor:rawColor
+                                               overBackgroundColor:context->backgroundColor
+                                            disableMinimumContrast:NO];
+    } else {
+        result = rawColor;
+    }
+    context->previousUnderlineColor = result;
+    return result;
+}
+
 NSColor *iTermTextDrawingHelperGetTextColor(iTermTextDrawingHelper *self,
                                             screen_char_t *c,
                                             BOOL inUnderlinedRange,
@@ -2018,7 +2114,9 @@ static BOOL iTermTextDrawingHelperShouldAntiAlias(screen_char_t *c,
                                           newAttributes->underlineType != previousAttributes->underlineType ||
                                           newAttributes->strikethrough != previousAttributes->strikethrough ||
                                           newAttributes->isURL != previousAttributes->isURL ||
-                                          newAttributes->drawable != previousAttributes->drawable);
+                                          newAttributes->drawable != previousAttributes->drawable ||
+                                          (newAttributes->underlineColor != previousAttributes->underlineColor &&
+                                           ![newAttributes->underlineColor isEqual:previousAttributes->underlineColor]));
         }
         return *combinedAttributesChanged;
     } else if ((imageAttributes == nil) != (previousImageAttributes == nil)) {
@@ -2048,6 +2146,7 @@ static BOOL iTermTextDrawingHelperShouldAntiAlias(screen_char_t *c,
 }
 
 - (void)getAttributesForCharacter:(screen_char_t *)c
+                       attachment:(const iTermScreenCharAttachment *)attachment
                           atIndex:(NSInteger)i
                    forceTextColor:(NSColor *)forceTextColor
                    forceUnderline:(BOOL)inUnderlinedRange
@@ -2118,6 +2217,18 @@ static BOOL iTermTextDrawingHelperShouldAntiAlias(screen_char_t *c,
     attributes->strikethrough = c->strikethrough;
     attributes->isURL = (c->urlCode != 0);
     attributes->drawable = drawable;
+    if (attachment &&
+        !forceTextColor &&  // Because iTermTextDrawingHelperGetTextColor() must be called first for backgroundColor in the textColorContext to be set
+        attachment->underlineColorMode != iTermUnderlineColorModeNone) {
+        attributes->underlineColor = iTermTextDrawingHelperGetUnderlineColor(self,
+                                                                             attachment,
+                                                                             c->faint,
+                                                                             inUnderlinedRange,
+                                                                             textColorContext,
+                                                                             colorRun);
+    } else {
+        attributes->underlineColor = nil;
+    }
 }
 
 - (NSDictionary *)dictionaryForCharacterAttributes:(iTermCharacterAttributes *)attributes {
@@ -2151,17 +2262,23 @@ static BOOL iTermTextDrawingHelperShouldAntiAlias(screen_char_t *c,
         paragraphStyle.tabStops = @[];
         paragraphStyle.baseWritingDirection = NSWritingDirectionLeftToRight;
     });
-    return @{ (NSString *)kCTLigatureAttributeName: @(attributes->ligatureLevel),
-              (NSString *)kCTForegroundColorAttributeName: (id)[attributes->foregroundColor CGColor],
-              NSFontAttributeName: attributes->font,
-              iTermAntiAliasAttribute: @(attributes->shouldAntiAlias),
-              iTermIsBoxDrawingAttribute: @(attributes->boxDrawing),
-              iTermFakeBoldAttribute: @(attributes->fakeBold),
-              iTermBoldAttribute: @(attributes->bold),
-              iTermFakeItalicAttribute: @(attributes->fakeItalic),
-              NSUnderlineStyleAttributeName: @(underlineStyle),
-              NSStrikethroughStyleAttributeName: @(strikethroughStyle),
-              NSParagraphStyleAttributeName: paragraphStyle };
+    NSDictionary *result =
+    @{ (NSString *)kCTLigatureAttributeName: @(attributes->ligatureLevel),
+       (NSString *)kCTForegroundColorAttributeName: (id)[attributes->foregroundColor CGColor],
+       NSFontAttributeName: attributes->font,
+       iTermAntiAliasAttribute: @(attributes->shouldAntiAlias),
+       iTermIsBoxDrawingAttribute: @(attributes->boxDrawing),
+       iTermFakeBoldAttribute: @(attributes->fakeBold),
+       iTermBoldAttribute: @(attributes->bold),
+       iTermFakeItalicAttribute: @(attributes->fakeItalic),
+       NSUnderlineStyleAttributeName: @(underlineStyle),
+       NSStrikethroughStyleAttributeName: @(strikethroughStyle),
+       NSParagraphStyleAttributeName: paragraphStyle };
+
+    if (attributes->underlineColor) {
+        result = [result dictionaryByMergingDictionary:@{ NSUnderlineColorAttributeName: attributes->underlineColor }];
+    }
+    return result;
 }
 
 - (NSDictionary *)imageAttributesForCharacter:(screen_char_t *)c displayColumn:(int)displayColumn {
@@ -2175,7 +2292,10 @@ static BOOL iTermTextDrawingHelperShouldAntiAlias(screen_char_t *c,
     }
 }
 
-- (BOOL)character:(screen_char_t *)c isEquivalentToCharacter:(const screen_char_t *)pc {
+- (BOOL)character:(screen_char_t *)c
+   withAttachment:(const iTermScreenCharAttachment *)attachment
+isEquivalentToCharacter:(const screen_char_t *)pc
+       attachment:(const iTermScreenCharAttachment *)previousAttachment {
     if (c->complexChar != pc->complexChar) {
         return NO;
     }
@@ -2202,7 +2322,7 @@ static BOOL iTermTextDrawingHelperShouldAntiAlias(screen_char_t *c,
             return NO;
         }
     }
-    if (!ScreenCharacterAttributesEqual(c, pc)) {
+    if (!ScreenCharacterAttributesEqual(c, attachment, pc, previousAttachment)) {
         return NO;
     }
 
@@ -2216,6 +2336,7 @@ static BOOL iTermTextDrawingHelperShouldAntiAlias(screen_char_t *c,
 }
 
 - (NSArray<id<iTermAttributedString>> *)attributedStringsForLine:(const screen_char_t *)line
+                                                     attachments:(id<iTermScreenCharAttachmentsArray>)attachments
                                                            range:(NSRange)indexRange
                                                  hasSelectedText:(BOOL)hasSelectedText
                                                  backgroundColor:(NSColor *)backgroundColor
@@ -2249,6 +2370,8 @@ static BOOL iTermTextDrawingHelperShouldAntiAlias(screen_char_t *c,
     int segmentLength = 0;
     BOOL previousDrawable = YES;
     screen_char_t predecessor = { 0 };
+    const iTermScreenCharAttachment *attachmentsArray = nil;
+    const iTermScreenCharAttachment *previousAttachment = nil;
 
     // Only defined if not preferring speed to full ligature support.
     BOOL lastWasNull = NO;
@@ -2256,6 +2379,8 @@ static BOOL iTermTextDrawingHelperShouldAntiAlias(screen_char_t *c,
     for (int i = indexRange.location; i < NSMaxRange(indexRange); i++) {
         iTermPreciseTimerStatsStartTimer(&_stats[TIMER_ATTRS_FOR_CHAR]);
         screen_char_t c = line[i];
+        const iTermScreenCharAttachment *attachment = attachmentsArray ? &attachmentsArray[i] : NULL;
+
         if (!_preferSpeedToFullLigatureSupport) {
             if (c.code == 0) {
                 if (!lastWasNull) {
@@ -2314,7 +2439,7 @@ static BOOL iTermTextDrawingHelperShouldAntiAlias(screen_char_t *c,
         if (likely(underlinedRange.length == 0) &&
             likely(drawable == previousDrawable) &&
             likely(i > indexRange.location) &&
-            [self character:&c isEquivalentToCharacter:&line[i-1]]) {
+            [self character:&c withAttachment:attachment isEquivalentToCharacter:&line[i-1] attachment:previousAttachment]) {
             ++segmentLength;
             iTermPreciseTimerStatsMeasureAndAccumulate(&_stats[TIMER_ATTRS_FOR_CHAR]);
             if (drawable ||
@@ -2332,6 +2457,7 @@ static BOOL iTermTextDrawingHelperShouldAntiAlias(screen_char_t *c,
         previousDrawable = drawable;
 
         [self getAttributesForCharacter:&c
+                             attachment:attachment
                                 atIndex:i
                          forceTextColor:forceTextColor
                          forceUnderline:NSLocationInRange(i, underlinedRange)

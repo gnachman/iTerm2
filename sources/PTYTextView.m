@@ -4968,6 +4968,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     return [_dataSource getLineAtIndex:line];
 }
 
+- (id<iTermScreenCharAttachmentsArray>)drawingHelperAttachmentsOnLine:(int)line {
+    return [_dataSource attachmentsOnLine:line];
+}
+
 - (const screen_char_t *)drawingHelperLineAtScreenIndex:(int)line {
     return [_dataSource getLineAtScreenIndex:line];
 }
