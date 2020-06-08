@@ -109,8 +109,7 @@
 // to modify the screen_char_t's returned, but the ScreenCharArray is otherwise safe to
 // mutate. |continuation| is optional and if set will be filled in with the continuation character.
 - (ScreenCharArray *)wrappedLineAtIndex:(int)lineNum
-                                  width:(int)width
-                            attachments:(iTermScreenCharAttachmentRunArraySlice **)attachments;
+                                  width:(int)width;
 
 
 // This is the fast way to get a bunch of lines at once.

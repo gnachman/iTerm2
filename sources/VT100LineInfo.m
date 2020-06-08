@@ -108,6 +108,11 @@ static NSInteger VT100LineInfoNextGeneration = 1;
     _attachmentRunArray = nil;
 }
 
+- (void)removeAllAttachments {
+    [_attachments.mutableValidAttachments removeAllIndexes];
+}
+
+
 - (void)setAttachmentRuns:(id<iTermScreenCharAttachmentRunArray>)attachments {
     if (!attachments) {
         _attachments = nil;

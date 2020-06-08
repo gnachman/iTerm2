@@ -206,7 +206,7 @@ typedef struct screen_char_t
 @property (nonatomic, assign) int length;
 @property (nonatomic, assign) int eol;
 @property (nonatomic) screen_char_t continuation;
-@property (nonatomic, readonly, strong) id<iTermScreenCharAttachmentsArray> attachments;
+@property (nonatomic, strong) id<iTermScreenCharAttachmentsArray> attachments;
 
 - (instancetype)initWithLine:(screen_char_t *)line
                       length:(int)length

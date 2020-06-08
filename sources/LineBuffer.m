@@ -244,7 +244,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     NSMutableString *s = [NSMutableString string];
     int n = [self numLinesWithWidth:width];
     for (int i = 0; i < n; i++) {
-        ScreenCharArray *line = [self wrappedLineAtIndex:i width:width attachments:nil];
+        ScreenCharArray *line = [self wrappedLineAtIndex:i width:width];
         if (!line) {
             [s appendFormat:@"(nil)"];
             continue;
@@ -276,7 +276,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     int n = [self numLinesWithWidth:width];
     int k = 0;
     for (int i = 0; i < n; i++) {
-        ScreenCharArray *line = [self wrappedLineAtIndex:i width:width attachments:nil];
+        ScreenCharArray *line = [self wrappedLineAtIndex:i width:width];
         [s appendFormat:@"%@", ScreenCharArrayToStringDebug(line.line, line.length)];
         for (int j = line.length; j < width; j++) {
             [s appendString:@"."];
@@ -498,8 +498,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
 }
 
 - (ScreenCharArray *)wrappedLineAtIndex:(int)lineNum
-                                  width:(int)width
-                            attachments:(iTermScreenCharAttachmentRunArraySlice **)attachments {
+                                  width:(int)width {
     int remainder = 0;
     LineBlock *block = [_lineBlocks blockContainingLineNumber:lineNum width:width remainder:&remainder];
     if (!block) {
@@ -510,6 +509,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     int length, eol;
     ScreenCharArray *result = [[[ScreenCharArray alloc] init] autorelease];
     screen_char_t cont = { 0 };
+    iTermScreenCharAttachmentRunArraySlice *attachments = nil;
     result.line = [block getWrappedLineWithWrapWidth:width
                                              lineNum:&remainder
                                           lineLength:&length
@@ -517,7 +517,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
                                              yOffset:NULL
                                         continuation:&cont
                                 isStartOfWrappedLine:NULL
-                                         attachments:attachments];
+                                         attachments:&attachments];
     if (result.line) {
         result.length = length;
         result.eol = eol;
@@ -525,6 +525,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
         ITAssertWithMessage(result.length <= width, @"Length too long");
         return result;
     }
+    result.attachments = [attachments fullArray];
 
     NSLog(@"Couldn't find line %d", lineNum);
     ITAssertWithMessage(NO, @"Tried to get non-existent line");
@@ -940,8 +941,7 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
         // use position.yOffset to disambiguate.
         result.y = MAX(0, [self numLinesWithWidth:width] - 1 - [_lineBlocks.lastBlock numberOfTrailingEmptyLines]);
         ScreenCharArray *lastLine = [self wrappedLineAtIndex:result.y
-                                                       width:width
-                                                 attachments:NULL];
+                                                       width:width];
         result.x = lastLine.length;
         if (position.yOffset > 0) {
             result.x = 0;

@@ -96,6 +96,10 @@ static NSString *const kGridSizeKey = @"Size";
 
 }
 
+- (id<iTermScreenCharAttachmentsArray>)attachmentsOnLine:(int)lineNumber {
+    return [[self lineInfoAtLineNumber:lineNumber] attachments];
+}
+
 - (VT100LineInfo *)lineInfoAtLineNumber:(int)lineNumber {
     if (lineNumber >= 0 && lineNumber < size_.height) {
         return [lineInfos_ objectAtIndex:(screenTop_ + lineNumber) % size_.height];
@@ -367,6 +371,7 @@ static NSString *const kGridSizeKey = @"Size";
     if (lastLineData) {  // This if statement is just to quiet the analyzer.
         [self clearLineData:lastLineData];
     }
+    [[self lineInfoAtLineNumber:size_.height - 1] removeAllAttachments];
 
     if (lineBuffer) {
         // Mark new line at bottom of screen dirty.

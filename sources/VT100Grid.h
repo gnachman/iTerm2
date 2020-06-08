@@ -57,6 +57,7 @@
 
 - (screen_char_t *)screenCharsAtLineNumber:(int)lineNumber;
 - (ScreenCharArray *)screenCharArrayAtLine:(int)lineNumber;
+- (id<iTermScreenCharAttachmentsArray>)attachmentsOnLine:(int)lineNumber;
 
 // Set both x and y coord of cursor at once. Cursor positions are clamped to legal values. The cursor
 // may extend into the right edge (cursorX == size.width is allowed).

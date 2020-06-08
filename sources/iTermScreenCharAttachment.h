@@ -37,7 +37,7 @@ typedef struct {
 - (iTermScreenCharAttachmentRunArray *)makeRunArray;
 @end
 
-@protocol iTermScreenCharAttachmentsArray<NSObject>
+@protocol iTermScreenCharAttachmentsArray<NSCopying, NSObject>
 @property (nonatomic, readonly) NSIndexSet *validAttachments;
 @property (nonatomic, readonly) const iTermScreenCharAttachment *attachments;
 @property (nonatomic, readonly) NSUInteger count;

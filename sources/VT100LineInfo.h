@@ -33,6 +33,7 @@
 - (iTermMutableScreenCharAttachmentsArray *)mutableAttachmentsCreatingIfNeeded:(BOOL)create;
 
 - (void)removeAttachmentAt:(int)x;
+- (void)removeAllAttachments;
 - (void)copyAttachmentsInRange:(VT100GridRange)range from:(VT100LineInfo *)otherLineInfo;
 - (void)copyAttachmentsStartingAtIndex:(int)sourceIndex
                                     to:(int)destIndex

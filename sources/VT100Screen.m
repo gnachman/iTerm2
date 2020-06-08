@@ -1800,7 +1800,6 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
                           count:(int)count
                           block:(void (^)(int,
                                           ScreenCharArray *,
-                                          id<iTermScreenCharAttachmentsArray>,
                                           BOOL *stop))block {
     screen_char_t *buffer = NULL;
 
@@ -1816,12 +1815,14 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
             // Get a line from the circular screen buffer
             const int lineNumber = (theIndex - numLinesInLineBuffer);
             screen_char_t *chars = [currentGrid_ screenCharsAtLineNumber:lineNumber];
+            id<iTermScreenCharAttachmentsArray> attachments =
+                [currentGrid_ attachmentsOnLine:lineNumber];
             ScreenCharArray *array = [[[ScreenCharArray alloc] initWithLine:chars
                                                                      length:self.width
-                                                               continuation:chars[self.width]] autorelease];
-            VT100LineInfo *lineInfo = [currentGrid_ lineInfoAtLineNumber:lineNumber];
+                                                               continuation:chars[self.width]
+                                                                attachments:attachments] autorelease];
             BOOL stop = NO;
-            block(theIndex, array, lineInfo.attachments, &stop);
+            block(theIndex, array, &stop);
             if (stop) {
                 return;
             }
@@ -1830,10 +1831,8 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
         // Get a line from the scrollback buffer.
         screen_char_t continuation;
-        iTermScreenCharAttachmentRunArraySlice *slice = nil;
         ScreenCharArray *array = [linebuffer_ wrappedLineAtIndex:theIndex
-                                                           width:currentGrid_.size.width
-                                                     attachments:&slice];
+                                                           width:currentGrid_.size.width];
         int cont = array ? continuation.code : EOL_HARD;
         screen_char_t *line = array.line;
         if (cont == EOL_SOFT &&
@@ -1851,7 +1850,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
             line[currentGrid_.size.width - 1].complexChar = NO;
         }
         BOOL stop = NO;
-        block(array, slice.fullArray, &stop);
+        block(theIndex, array, &stop);
         if (stop) {
             return;
         }

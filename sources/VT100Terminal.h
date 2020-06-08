@@ -104,6 +104,7 @@ typedef struct {
 
 // If YES, overrides the delegate's -terminalTmuxMode.
 @property(nonatomic) BOOL tmuxMode;
+@property(nonatomic, readonly) iTermScreenCharAttachment *attachment;
 
 - (void)setStateFromDictionary:(NSDictionary *)dict;
 

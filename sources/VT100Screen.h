@@ -112,7 +112,6 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
                           count:(int)count
                           block:(void (^)(int,
                                           ScreenCharArray *,
-                                          id<iTermScreenCharAttachmentsArray>,
                                           BOOL *stop))block;
 
 // Append a string to the screen at the current cursor position. The terminal's insert and wrap-

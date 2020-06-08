@@ -1050,19 +1050,18 @@ ITERM_WEAKLY_REFERENCEABLE
                                count:rangeOfLines.length
                                block:^(int row,
                                        ScreenCharArray *sca,
-                                       id<iTermScreenCharAttachmentsArray> attachments,
                                        BOOL *stop) {
         screen_char_t *theLine = sca.line;
         if (row + 1 == rangeOfLines.location + rangeOfLines.length) {
             screen_char_t continuation = { 0 };
             continuation.code = EOL_SOFT;
             [_screen appendScreenChars:theLine
-                           attachments:attachments
+                           attachments:sca.attachments
                                 length:width
                           continuation:continuation];
         } else {
             [_screen appendScreenChars:theLine
-                           attachments:attachments
+                           attachments:sca.attachments
                                 length:width
                           continuation:theLine[width]];
         }

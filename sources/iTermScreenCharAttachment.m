@@ -512,7 +512,7 @@ static iTermScreenCharAttachment gMagicAttachment;
     }
     [_mutableValidAttachments addIndexesInRange:range];
     for (NSInteger i = 0; i < range.length; i++) {
-        _mutableValidAttachments[range.location + i] = *attachment;
+        _mutableAttachments[range.location + i] = *attachment;
     }
 }
 
@@ -520,14 +520,16 @@ static iTermScreenCharAttachment gMagicAttachment;
                       fromOffset:(int)sourceOffset
                         toOffset:(int)destOffset
                            count:(int)count {
-    assert(sourceOffset >= 0);
     assert(count >= 0);
-    assert(sourceArray.count == _count);
-    assert(sourceOffset + count <= _count);
+    assert(sourceOffset >= 0);
+    assert(sourceOffset + count <= sourceArray.count);
+    assert(destOffset >= 0);
     assert(destOffset + count <= _count);
 
     [_mutableValidAttachments addIndexesInRange:NSMakeRange(destOffset, count)];
-    memmove(_mutableAttachments, sourceArray.attachments + sourceOffset, count);
+    memmove(_mutableAttachments + destOffset,
+            sourceArray.attachments + sourceOffset,
+            count * sizeof(*_mutableAttachments));
 }
 
 @end
