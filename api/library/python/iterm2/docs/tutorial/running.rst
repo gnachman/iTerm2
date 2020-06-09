@@ -89,7 +89,7 @@ code, such as Javascript that's able to escape a web browser's sandbox, from sil
 gaining access to your terminal.
 
 To circumvent the dialog, use the `it2run` script provided in
-`iTerm.app/Contents/MacOS/it2run` to launch it. The `it2run` script uses
+`iTerm.app/Resources/it2run` to launch it. The `it2run` script uses
 `osascript` to ask iTerm2 to launch your Python script. macOS will ask for a
 one-time grant of permission for `osascript` to control iTerm2.
 
@@ -97,7 +97,7 @@ You may also pass command line arguments to it2run that get forwarded to the scr
 For example:
 
 ```
-/Applications/iTerm.app/Contents/MacOS/it2run myscript.py firstarg secondarg thirdarg
+/Applications/iTerm.app/Contents/Resources/it2run myscript.py firstarg secondarg thirdarg
 ```
 
 
