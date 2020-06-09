@@ -473,7 +473,7 @@ or run_forever()
                         path = self._unix_domain_socket_path()
                         exists = os.path.exists(path)
                         if exists:
-                            print(f"If you have downgraded from iTerm2 3.3.11+ to an older version, you must\nmanually delete the file at {path}.\n", file=sys.stderr)
+                            print(f"If you have downgraded from iTerm2 3.3.12+ to an older version, you must\nmanually delete the file at {path}.\n", file=sys.stderr)
                     done = True
                     raise
             finally:
