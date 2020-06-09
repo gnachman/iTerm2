@@ -38,7 +38,12 @@ typedef NS_ENUM(NSUInteger, iTermEchoProbeState) {
                        password:(nonnull NSString *)password {
     _password = [password copy];
     [NSObject cancelPreviousPerformRequestsWithTarget:self selector:@selector(timeout) object:nil];
-    
+
+    if ([iTermAdvancedSettingsModel echoProbeDuration] == 0) {
+        [self enterPassword];
+        return;
+    }
+
     if (backspace) {
         // Try to figure out if we're at a shell prompt. Send a space character and immediately
         // backspace over it. If no output is received within a specified timeout, then go ahead and

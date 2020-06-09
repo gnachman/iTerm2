@@ -280,7 +280,7 @@ DEFINE_STRING(findUrlsRegex,
               @"https?://([a-z0-9A-Z]+(:[a-zA-Z0-9]+)?@)?[a-z0-9A-Z\\-]+(\\.[a-z0-9A-Z\\-]+)*"
               @"((:[0-9]+)?)(/[a-zA-Z0-9;:/\\.\\-_+%~?&amp;@=#\\(\\)]*)?",
               SECTION_TERMINAL @"Regular expression for “Find URLs” command.");
-DEFINE_FLOAT(echoProbeDuration, 0.5, SECTION_TERMINAL @"Amount of time to wait while testing if echo is on (seconds).\nThis is used by the password manager to ensure you're at a password prompt.");
+DEFINE_FLOAT(echoProbeDuration, 0.5, SECTION_TERMINAL @"Amount of time to wait while testing if echo is on (seconds).\nThis is used by the password manager to ensure you're at a password prompt. Set to 0 to disable echo probe.");
 DEFINE_BOOL(disablePasswordManagerAnimations, NO, SECTION_TERMINAL @"Disable animations for showing/hiding password manager.");
 DEFINE_BOOL(optionIsMetaForSpecialChars, YES, SECTION_TERMINAL @"When you press an arrow key or other function key that transmits the modifiers, should ⌥ be translated to Meta?\nIf this is set to No then it will be translated to Alt.");
 DEFINE_BOOL(noSyncSilenceAnnoyingBellAutomatically, NO, SECTION_TERMINAL @"Automatically silence bell when it rings too much.");
