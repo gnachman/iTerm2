@@ -85,7 +85,7 @@ typedef NS_ENUM(NSInteger, VT100DCSState) {
 // Reset to ground state, unhooking if needed.
 - (void)reset;
 
-- (void)startTmuxRecoveryMode;
+- (void)startTmuxRecoveryModeWithID:(NSString *)dcsID;
 
 @end
 

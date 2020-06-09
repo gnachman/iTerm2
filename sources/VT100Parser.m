@@ -245,9 +245,9 @@
     }
 }
 
-- (void)startTmuxRecoveryMode {
+- (void)startTmuxRecoveryModeWithID:(NSString *)dcsID {
     @synchronized(self) {
-        [_controlParser startTmuxRecoveryMode];
+        [_controlParser startTmuxRecoveryModeWithID:dcsID];
         _dcsHooked = YES;
     }
 }

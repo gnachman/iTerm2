@@ -1475,7 +1475,7 @@ ITERM_WEAKLY_REFERENCEABLE
                 if ([arrangement[SESSION_ARRANGEMENT_IS_TMUX_GATEWAY] boolValue]) {
                     DLog(@"Was a tmux gateway. Start recovery mode in parser.");
                     // Before attaching to the server we can put the parser into "tmux recovery mode".
-                    [aSession.terminal.parser startTmuxRecoveryMode];
+                    [aSession.terminal.parser startTmuxRecoveryModeWithID:arrangement[SESSION_ARRANGEMENT_TMUX_DCS_ID]];
                 }
 
                 runCommand = NO;

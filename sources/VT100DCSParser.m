@@ -639,7 +639,7 @@ static NSRange MakeCharacterRange(unsigned char first, unsigned char lastInclusi
     }
 }
 
-- (void)startTmuxRecoveryMode {
+- (void)startTmuxRecoveryModeWithID:(NSString *)dcsID {
     // Put the state machine in the passthrough mode.
     char *fakeControlSequence = "\eP1000p";
     for (int i = 0; fakeControlSequence[i]; i++) {
@@ -648,6 +648,7 @@ static NSRange MakeCharacterRange(unsigned char first, unsigned char lastInclusi
 
     // Replace the hook with one in recovery mode.
     _hook = [[VT100TmuxParser alloc] initInRecoveryMode];
+    _uniqueID = [dcsID copy];
 }
 
 @end

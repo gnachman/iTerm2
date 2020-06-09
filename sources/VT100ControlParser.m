@@ -180,8 +180,8 @@
     }
 }
 
-- (void)startTmuxRecoveryMode {
-    [_dcsParser startTmuxRecoveryMode];
+- (void)startTmuxRecoveryModeWithID:(NSString *)dcsID {
+    [_dcsParser startTmuxRecoveryModeWithID:dcsID];
 }
 
 @end
