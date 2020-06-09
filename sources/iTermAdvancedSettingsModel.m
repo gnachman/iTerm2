@@ -592,6 +592,7 @@ DEFINE_BOOL(useRestorableStateController, YES_IF_BETA_ELSE_NO, SECTION_EXPERIMEN
 DEFINE_BOOL(fixMouseWheel, YES_IF_BETA_ELSE_NO, SECTION_EXPERIMENTAL @"Mouse wheel always scrolls when scroll bars are visible");
 DEFINE_BOOL(oscColorReport16Bits, YES_IF_BETA_ELSE_NO, SECTION_EXPERIMENTAL @"Report 16-bit color values to OSC 4 and 10 through 19.\nWorks around a bug in older vim where they could not properly parse 8-bit values.");
 DEFINE_BOOL(showSearchResultsMinimap, YES_IF_BETA_ELSE_NO, SECTION_EXPERIMENTAL @"Show search result locations in scroll bar.\nChanging this setting will not affect existing sessions until you restart.");
+DEFINE_BOOL(workAroundBrokenTabsBug, NO, SECTION_EXPERIMENTAL @"Work around a bug where switching tabs stops working.");
 
 #pragma mark - Scripting
 #define SECTION_SCRIPTING @"Scripting: "

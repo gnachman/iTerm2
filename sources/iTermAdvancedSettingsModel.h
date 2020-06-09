@@ -331,6 +331,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)workAroundNumericKeypadBug;
 + (CGFloat)verticalBarCursorWidth;
 + (NSString *)viewManPageCommand;
++ (BOOL)workAroundBrokenTabsBug;
 + (BOOL)wrapFocus;
 + (BOOL)zeroWidthSpaceAdvancesCursor;
 + (BOOL)zippyTextDrawing;

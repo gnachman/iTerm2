@@ -6,6 +6,7 @@
 //
 
 #import "iTermFlexibleView.h"
+#import "DebugLogging.h"
 
 @implementation iTermFlexibleView  {
     BOOL _isFlipped;
@@ -50,6 +51,11 @@
     }
     
     [super drawRect:dirtyRect];
+}
+
+- (void)viewDidMoveToSuperview {
+    DLog(@"%@ did move to superview %@:\n%@", self, self.superview, [NSThread callStackSymbols]);
+    [super viewDidMoveToSuperview];
 }
 
 @end

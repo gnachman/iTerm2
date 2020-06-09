@@ -26,6 +26,7 @@
 
 #import "PTYTabView.h"
 
+#import "iTermAdvancedSettingsModel.h"
 #import "NSView+RecursiveDescription.h"
 #import "DebugLogging.h"
 
@@ -138,11 +139,33 @@ const NSUInteger kAllModifiers = (NSEventModifierFlagControl |
     [super insertTabViewItem:tabViewItem atIndex:theIndex];
 }
 
+- (void)workAroundMultipleChildrenBug {
+    if (self.subviews.count != 2) {
+        return;
+    }
+    DLog(@"WORK AROUND MULTIPLE CHILDREN BUG");
+    DLog(@"The view hierarchy before the hack is:\n%@",
+         [self iterm_recursiveDescription]);
+    [self.subviews[0] addSubview:self.subviews[1]];
+    DLog(@"The view hierarchy after the hack is:\n%@",
+         [self iterm_recursiveDescription]);
+}
+
 - (void)selectTabViewItem:(NSTabViewItem *)tabViewItem {
     DLog(@"Calling [super selectTabViewItem:%@] - i am %@", tabViewItem, self);
     DLog(@"My tab view items are: %@", self.tabViewItems);
     DLog(@"The current selected item is: %@", self.selectedTabViewItem);
+    DLog(@"The view hierarchy before the call to [super selectTabViewItem:] is:\n%@",
+         [self iterm_recursiveDescription]);
+
+
     [super selectTabViewItem:tabViewItem];
+    if ([iTermAdvancedSettingsModel workAroundBrokenTabsBug]) {
+        [self workAroundMultipleChildrenBug];
+    } else {
+        DLog(@"FYI workaround multiple children flag is disabled");
+    }
+
     DLog(@"Returned from [super selectTabViewItem:%@] - i am %@\n%@", tabViewItem, self, [self iterm_recursiveDescription]);
 
     if (!_isCyclingWithModifierPressed) {
@@ -154,18 +177,25 @@ const NSUInteger kAllModifiers = (NSEventModifierFlagControl |
 - (void)_switchTabViewItem:(id)arg1 oldView:(id)arg2 withTabViewItem:(id)arg3 newView:(id)arg4 initialFirstResponder:(id)arg5 lastKeyView:(id)arg6 {
     DLog(@"[%@ _switchTabViewItem:%@ oldView:%@ withTabViewItem:%@ newView:%@ initialFirstResponder:%@ lastKeyView:%@]",
          self, arg1, arg2, arg3, arg4, arg5,arg6);
+    DLog(@"The view hierarchy before the call to _switchTabViewItem is:\n%@",
+         [self iterm_recursiveDescription]);
     [super _switchTabViewItem:arg1 oldView:arg2 withTabViewItem:arg3 newView:arg4 initialFirstResponder:arg5 lastKeyView:arg6];
+    DLog(@"The view hierarchy after the call to _switchTabViewItem is:\n%@",
+         [self iterm_recursiveDescription]);
 }
 - (void)replaceSubview:(NSView *)oldView with:(NSView *)newView {
-    DLog(@"%@: replaceSubview%@ with:%@", self, oldView, newView);
+    DLog(@"%@: replaceSubview%@ with:%@\n%@", self, oldView, newView, [self iterm_recursiveDescription]);
     [super replaceSubview:oldView with:newView];
+    DLog(@"The view hierarchy after the call to [super replaceSubview:] is:\n%@",
+         [self iterm_recursiveDescription]);
 }
 
 - (void)addSubview:(NSView *)view {
-    DLog(@"%@: addSubview:%@", self, view);
+    DLog(@"%@: addSubview:%@\n%@", self, view, [self iterm_recursiveDescription]);
     [super addSubview:view];
+    DLog(@"The view hierarchy after the call to [super addSubview:] is:\n%@",
+         [self iterm_recursiveDescription]);
 }
-
 
 - (void)selectTab:(id)sender {
     [self selectTabViewItemWithIdentifier:[sender representedObject]];
