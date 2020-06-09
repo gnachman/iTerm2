@@ -84,7 +84,17 @@ static NSString *const iTermRestorableStateControllerUserDefaultsKeyCount = @"No
     });
 }
 
+- (BOOL)haveWindowsToRestore {
+    NSURL *indexURL = [self urlForIndex];
+    return [[NSFileManager defaultManager] fileExistsAtPath:indexURL.path];
+}
+
 - (void)restoreWindows {
+    NSArray *index = [self indexOfRestorableWindowsFromDisk];
+    if (!index.count) {
+        [self didRestore];
+        return;
+    }
     const NSInteger count = [[NSUserDefaults standardUserDefaults] integerForKey:iTermRestorableStateControllerUserDefaultsKeyCount];
     if (count > 1) {
         const iTermWarningSelection selection =
@@ -97,13 +107,15 @@ static NSString *const iTermRestorableStateControllerUserDefaultsKeyCount = @"No
                                     window:nil];
         if (selection == kiTermWarningSelection1) {
             unlink([self urlForIndex].path.UTF8String);
+            [[NSUserDefaults standardUserDefaults] setInteger:0
+                                                       forKey:iTermRestorableStateControllerUserDefaultsKeyCount];
             return;
         }
     }
     [[NSUserDefaults standardUserDefaults] setInteger:count + 1
                                                forKey:iTermRestorableStateControllerUserDefaultsKeyCount];
     _restoring = YES;
-    [self reallyRestoreWindowsWithCompletion:^{
+    [self reallyRestoreWindows:index withCompletion:^{
         [self didRestore];
     }];
 }
@@ -156,7 +168,13 @@ static NSString *const iTermRestorableStateControllerUserDefaultsKeyCount = @"No
 
 #pragma mark - Restore
 
-- (void)reallyRestoreWindowsWithCompletion:(void (^)(void))completion {
+- (NSArray *)indexOfRestorableWindowsFromDisk {
+    NSURL *indexURL = [self urlForIndex];
+    NSArray *index = [NSArray arrayWithContentsOfURL:indexURL];
+    return index;
+}
+
+- (void)reallyRestoreWindows:(NSArray *)index withCompletion:(void (^)(void))completion {
     // When all windows have finished being restored, mark the restoration as a success.
     dispatch_group_t group = dispatch_group_create();
     dispatch_async(dispatch_get_main_queue(), ^{
@@ -164,12 +182,6 @@ static NSString *const iTermRestorableStateControllerUserDefaultsKeyCount = @"No
             completion();
         });
     });
-
-    NSURL *indexURL = [self urlForIndex];
-    NSArray *index = [NSArray arrayWithContentsOfURL:indexURL];
-    if (!index) {
-        return;
-    }
 
     for (id obj in index) {
         iTermRestorableStateRecord * _Nonnull record = [[iTermRestorableStateRecord alloc] initWithIndexEntry:obj];
