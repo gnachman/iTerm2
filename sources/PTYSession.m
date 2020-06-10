@@ -305,6 +305,7 @@ static const NSUInteger kMaxHosts = 100;
     iTermStandardKeyMapperDelegate,
     iTermStatusBarViewControllerDelegate,
     iTermTermkeyKeyMapperDelegate,
+    iTermTmuxControllerSession,
     iTermUpdateCadenceControllerDelegate,
     iTermWorkingDirectoryPollerDelegate>
 @property(nonatomic, retain) Interval *currentMarkOrNotePosition;
@@ -573,6 +574,9 @@ static const NSUInteger kMaxHosts = 100;
     iTermComposerManager *_composerManager;
     NSNumber *_lastLibTickitProfileSetting;
     BOOL _tmuxPaused;
+    BOOL _tmuxTTLHasThresholds;
+    NSTimeInterval _tmuxTTLLowerThreshold;
+    NSTimeInterval _tmuxTTLUpperThreshold;
 }
 
 @synthesize isDivorced = _divorced;
@@ -6704,7 +6708,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 - (void)tmuxInitialCommandDidCompleteSuccessfully {
     // This kicks off a chain reaction that leads to windows being opened.
     [_tmuxController ping];
-    [_tmuxController enablePauseModeIfPossible:[iTermAdvancedSettingsModel tmuxPauseTime]];
+    [_tmuxController enablePauseModeIfPossible];
     [_tmuxController validateOptions];
     [_tmuxController checkForUTF8];
     [_tmuxController loadDefaultTerminal];
@@ -6828,12 +6832,15 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 // This is called on the main thread when %output is parsed.
-- (void)tmuxReadTask:(NSData *)data {
+- (void)tmuxReadTask:(NSData *)data latency:(NSNumber *)latency {
     if (_exited) {
         return;
     }
     if (!_logging.plainText) {
         [_logging logData:data];
+    }
+    if (latency) {
+        [_tmuxController setCurrentLatency:latency.doubleValue forPane:self.tmuxPane];
     }
 
     // Send the bytes from %output in to the write end of a pipe. The data will come out
@@ -6865,6 +6872,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     }
     _tmuxPaused = paused;
     if (paused) {
+        _tmuxTTLHasThresholds = NO;
+        [self.tmuxController didPausePane:self.tmuxPane];
         [self showTmuxPausedAnnouncement];
     } else {
         [self unpauseTmux];
@@ -6872,19 +6881,26 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)showTmuxPausedAnnouncement {
-    if ([self hasAnnouncementWithIdentifier:PTYSessionAnnouncementIdentifierTmuxPaused]) {
-        return;
-    }
+    NSString *title = @"tmux paused this session because too much output was buffered.";
+
+    [self dismissAnnouncementWithIdentifier:PTYSessionAnnouncementIdentifierTmuxPaused];
     __weak __typeof(self) weakSelf = self;
     iTermAnnouncementViewController *announcement =
-    [iTermAnnouncementViewController announcementWithTitle:@"This tmux pane was paused because too much output was buffered."
+    [iTermAnnouncementViewController announcementWithTitle:title
                                                      style:kiTermAnnouncementViewStyleWarning
-                                               withActions:@[ @"_Unpause" ]
+                                               withActions:@[ @"_Unpause", @"_Settings" ]
                                                 completion:^(int selection) {
-        if (selection == 0) {
-            [weakSelf setTmuxPaused:NO];
+        switch (selection) {
+            case 0:
+                [weakSelf setTmuxPaused:NO];
+                break;
+            case 1:
+                [[PreferencePanel sharedInstance] openToPreferenceWithKey:kPreferenceKeyTmuxPauseModeAgeLimit];
+                [weakSelf showTmuxPausedAnnouncement];
+                break;
         }
     }];
+    [self dismissAnnouncementWithIdentifier:PTYSessionAnnouncementIdentifierTmuxPaused];
     [self removeAnnouncementWithIdentifier:PTYSessionAnnouncementIdentifierTmuxPaused];
     [self queueAnnouncement:announcement identifier:PTYSessionAnnouncementIdentifierTmuxPaused];
 }
@@ -11263,6 +11279,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [_announcements removeObjectForKey:identifier];
 }
 
+- (iTermAnnouncementViewController *)announcementWithIdentifier:(NSString *)identifier {
+    return _announcements[identifier];
+}
+
 #pragma mark - PopupDelegate
 
 - (void)popupIsSearching:(BOOL)searching {
@@ -13016,6 +13036,56 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         [_view.marksMinimap setFirstVisibleLine:_screen.totalScrollbackOverflow
                            numberOfVisibleLines:_screen.numberOfLines];
     }
+}
+
+#pragma mark - iTermTmuxControllerSession
+
+- (void)tmuxControllerSessionSetTTL:(NSTimeInterval)ttl {
+    if (_tmuxPaused) {
+        return;
+    }
+    if (_tmuxTTLHasThresholds) {
+        if (ttl > _tmuxTTLLowerThreshold && ttl < _tmuxTTLUpperThreshold) {
+            return;
+        }
+        if (ttl <= _tmuxTTLLowerThreshold) {
+            _tmuxTTLLowerThreshold = ttl - 1;
+            _tmuxTTLUpperThreshold = ttl + 1.5;
+        } else {
+            _tmuxTTLLowerThreshold = ttl - 1.5;
+            _tmuxTTLUpperThreshold = ttl + 1;
+        }
+    } else {
+        _tmuxTTLLowerThreshold = ttl - 1;
+        _tmuxTTLUpperThreshold = ttl + 1;
+        _tmuxTTLHasThresholds = YES;
+    }
+
+    NSInteger safeTTL = MAX(1, round(ttl));
+    NSString *title = [NSString stringWithFormat:@"This session will pause in about %@ second%@ because it is buffering too much data.", @(safeTTL), safeTTL == 1 ? @"" : @"s"];
+    iTermAnnouncementViewController *announcement = [self announcementWithIdentifier:PTYSessionAnnouncementIdentifierTmuxPaused];
+    if (announcement) {
+        announcement.title = title;
+        [announcement.view setNeedsDisplay:YES];
+        [_view updateAnnouncementFrame];
+        return;
+    }
+    announcement =
+    [iTermAnnouncementViewController announcementWithTitle:title
+                                                     style:kiTermAnnouncementViewStyleWarning
+                                               withActions:@[ @"Don’t Warn", @"_Settings" ]
+                                                completion:^(int selection) {
+        switch (selection) {
+            case 0:
+                [iTermAdvancedSettingsModel setNoSyncDontWarnAboutTmuxPause:YES];
+                break;
+            case 1:
+                [[PreferencePanel sharedInstance] openToPreferenceWithKey:kPreferenceKeyTmuxPauseModeAgeLimit];
+                break;
+        }
+    }];
+    announcement.dismissOnKeyDown = YES;
+    [self queueAnnouncement:announcement identifier:PTYSessionAnnouncementIdentifierTmuxPaused];
 }
 
 @end

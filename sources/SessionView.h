@@ -239,6 +239,7 @@ typedef NS_ENUM(NSUInteger, iTermSessionViewFindDriver) {
 
 // Layout subviews if automatic updates are allowed by the delegate.
 - (void)updateLayout;
+- (void)updateAnnouncementFrame;
 
 // The frame excluding the per-pane titlebar.
 - (NSRect)contentRect;

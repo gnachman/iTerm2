@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="15702" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="15705" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES">
     <dependencies>
         <deployment identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="15702"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="15705"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
@@ -129,7 +129,7 @@
             <windowStyleMask key="styleMask" titled="YES" utility="YES" documentModal="YES"/>
             <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>
             <rect key="contentRect" x="196" y="132" width="451" height="246"/>
-            <rect key="screenRect" x="0.0" y="0.0" width="1536" height="937"/>
+            <rect key="screenRect" x="0.0" y="0.0" width="3008" height="1669"/>
             <view key="contentView" id="6180">
                 <rect key="frame" x="0.0" y="0.0" width="451" height="246"/>
                 <autoresizingMask key="autoresizingMask"/>
@@ -381,7 +381,7 @@ Gw
             <windowStyleMask key="styleMask" titled="YES" closable="YES" miniaturizable="YES"/>
             <windowPositionMask key="initialPositionMask" leftStrut="YES" bottomStrut="YES"/>
             <rect key="contentRect" x="269" y="110" width="924" height="463"/>
-            <rect key="screenRect" x="0.0" y="0.0" width="1536" height="937"/>
+            <rect key="screenRect" x="0.0" y="0.0" width="3008" height="1669"/>
             <view key="contentView" id="1924">
                 <rect key="frame" x="0.0" y="0.0" width="924" height="463"/>
                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
@@ -683,7 +683,7 @@ Gw
             <windowStyleMask key="styleMask" titled="YES" closable="YES" miniaturizable="YES" resizable="YES" utility="YES" documentModal="YES"/>
             <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>
             <rect key="contentRect" x="162" y="123" width="804" height="356"/>
-            <rect key="screenRect" x="0.0" y="0.0" width="1536" height="937"/>
+            <rect key="screenRect" x="0.0" y="0.0" width="3008" height="1669"/>
             <value key="minSize" type="size" width="804" height="356"/>
             <view key="contentView" id="5905">
                 <rect key="frame" x="0.0" y="0.0" width="804" height="356"/>
@@ -856,7 +856,7 @@ DQ
             <windowStyleMask key="styleMask" titled="YES" closable="YES" miniaturizable="YES" resizable="YES" utility="YES" documentModal="YES"/>
             <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>
             <rect key="contentRect" x="162" y="156" width="805" height="358"/>
-            <rect key="screenRect" x="0.0" y="0.0" width="1536" height="937"/>
+            <rect key="screenRect" x="0.0" y="0.0" width="3008" height="1669"/>
             <value key="minSize" type="size" width="805" height="358"/>
             <view key="contentView" id="5911">
                 <rect key="frame" x="0.0" y="0.0" width="805" height="358"/>
@@ -1047,7 +1047,7 @@ DQ
             <windowStyleMask key="styleMask" titled="YES" closable="YES" miniaturizable="YES" resizable="YES" utility="YES" documentModal="YES"/>
             <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>
             <rect key="contentRect" x="162" y="229" width="575" height="295"/>
-            <rect key="screenRect" x="0.0" y="0.0" width="1536" height="937"/>
+            <rect key="screenRect" x="0.0" y="0.0" width="3008" height="1669"/>
             <value key="minSize" type="size" width="575" height="100"/>
             <view key="contentView" id="6275">
                 <rect key="frame" x="0.0" y="0.0" width="575" height="295"/>
@@ -1256,6 +1256,7 @@ DQ
                 <outlet property="_separateWindowTitlePerTab" destination="tVY-OD-hsd" id="ODW-a6-e20"/>
                 <outlet property="_smartPlacement" destination="4570" id="jBA-SY-4Wo"/>
                 <outlet property="_tabView" destination="CuK-St-ACL" id="BwT-A2-44D"/>
+                <outlet property="_tmuxPauseModeAgeLimit" destination="hXw-El-HMF" id="mRQ-0c-gkM"/>
                 <outlet property="_tripleClickSelectsFullLines" destination="GD3-XJ-mYL" id="3nb-ii-SgM"/>
                 <outlet property="_useTmuxProfile" destination="gLU-0J-chc" id="IzY-fx-eIB"/>
                 <outlet property="_useTmuxStatusBar" destination="oHn-bB-rYM" id="GMi-WL-nVq"/>
@@ -2436,7 +2437,7 @@ DQ
                     <rect key="frame" x="440" y="258" width="50" height="17"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Normal" id="2361">
-                        <font key="font" metaFont="system" size="10"/>
+                        <font key="font" metaFont="menu" size="10"/>
                         <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
@@ -2445,7 +2446,7 @@ DQ
                     <rect key="frame" x="505" y="258" width="36" height="17"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Bright" id="2363">
-                        <font key="font" metaFont="system" size="10"/>
+                        <font key="font" metaFont="menu" size="10"/>
                         <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
@@ -4825,7 +4826,7 @@ DQ
                             </view>
                         </tabViewItem>
                         <tabViewItem label="Selection" identifier="" id="3Jf-X1-Drt">
-                            <view key="view" ambiguous="YES" id="aNs-OQ-hfy">
+                            <view key="view" id="aNs-OQ-hfy">
                                 <rect key="frame" x="10" y="33" width="755" height="461"/>
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                 <subviews>
@@ -5069,16 +5070,16 @@ DQ
                             </view>
                         </tabViewItem>
                         <tabViewItem label="tmux" identifier="" id="dpe-So-Ym8">
-                            <view key="view" id="pZ9-bL-Bag">
+                            <view key="view" ambiguous="YES" id="pZ9-bL-Bag">
                                 <rect key="frame" x="10" y="33" width="755" height="461"/>
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                 <subviews>
                                     <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="keM-ww-m44" customClass="iTermPreferencesInnerTabContainerView">
-                                        <rect key="frame" x="80" y="332" width="612" height="136"/>
+                                        <rect key="frame" x="80" y="284" width="612" height="184"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMinY="YES"/>
                                         <subviews>
                                             <textField verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="rci-Sr-fks">
-                                                <rect key="frame" x="75" y="98" width="227" height="18"/>
+                                                <rect key="frame" x="75" y="146" width="227" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="When attaching, restore windows as:" id="OHo-9E-q2w">
                                                     <font key="font" metaFont="system"/>
@@ -5087,7 +5088,7 @@ DQ
                                                 </textFieldCell>
                                             </textField>
                                             <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="gLU-0J-chc">
-                                                <rect key="frame" x="94" y="51" width="407" height="18"/>
+                                                <rect key="frame" x="94" y="99" width="407" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="check" title="Use “tmux” profile rather than profile of the connecting session" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="5Es-9v-v1s">
                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -5098,7 +5099,7 @@ DQ
                                                 </connections>
                                             </button>
                                             <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="6366">
-                                                <rect key="frame" x="94" y="71" width="381" height="18"/>
+                                                <rect key="frame" x="94" y="119" width="381" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="check" title="Automatically bury the tmux client session after connecting" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="6367">
                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -5109,7 +5110,7 @@ DQ
                                                 </connections>
                                             </button>
                                             <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="oHn-bB-rYM">
-                                                <rect key="frame" x="94" y="31" width="424" height="18"/>
+                                                <rect key="frame" x="94" y="79" width="424" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="check" title="Status bar shows tmux status bar content, not native components." bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="ioA-Y9-Zb4">
                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -5120,7 +5121,7 @@ DQ
                                                 </connections>
                                             </button>
                                             <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="H2C-B7-a4o">
-                                                <rect key="frame" x="112" y="18" width="120" height="11"/>
+                                                <rect key="frame" x="112" y="66" width="120" height="11"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <textFieldCell key="cell" controlSize="mini" lineBreakMode="clipping" title="Requires tmux 2.9 or later." id="fKK-ZX-n3u">
                                                     <font key="font" metaFont="label" size="9"/>
@@ -5129,7 +5130,7 @@ DQ
                                                 </textFieldCell>
                                             </textField>
                                             <popUpButton verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="6337">
-                                                <rect key="frame" x="306" y="94" width="237" height="26"/>
+                                                <rect key="frame" x="306" y="142" width="237" height="26"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <string key="toolTip">A tmux server has multiple virtual windows. When you attach to a tmux server, these virtual windows can be presented as windows or tabs. This setting determines how they should appear in iTerm2.</string>
                                                 <popUpButtonCell key="cell" type="push" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" id="6338">
@@ -5147,6 +5148,45 @@ DQ
                                                     <action selector="settingChanged:" target="9Se-ld-UJa" id="sAr-Yo-Bzs"/>
                                                 </connections>
                                             </popUpButton>
+                                            <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="SNR-JO-u3o">
+                                                <rect key="frame" x="112" y="39" width="242" height="16"/>
+                                                <autoresizingMask key="autoresizingMask"/>
+                                                <textFieldCell key="cell" lineBreakMode="clipping" title="Pause a pane if it would take more than" id="IC9-FE-YSw">
+                                                    <font key="font" usesAppearanceFont="YES"/>
+                                                    <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                                                    <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                                </textFieldCell>
+                                            </textField>
+                                            <textField verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="hXw-El-HMF">
+                                                <rect key="frame" x="360" y="37" width="57" height="21"/>
+                                                <autoresizingMask key="autoresizingMask"/>
+                                                <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" borderStyle="bezel" drawsBackground="YES" id="kUm-Z0-4bJ">
+                                                    <font key="font" usesAppearanceFont="YES"/>
+                                                    <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                                                    <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                                </textFieldCell>
+                                                <connections>
+                                                    <action selector="settingChanged:" target="9Se-ld-UJa" id="6ig-Zs-nDO"/>
+                                                </connections>
+                                            </textField>
+                                            <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="xet-Sj-ENm">
+                                                <rect key="frame" x="112" y="25" width="120" height="11"/>
+                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                <textFieldCell key="cell" controlSize="mini" lineBreakMode="clipping" title="Requires tmux 3.2 or later." id="2EN-9v-M1n">
+                                                    <font key="font" metaFont="label" size="9"/>
+                                                    <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                                                    <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                                </textFieldCell>
+                                            </textField>
+                                            <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="015-rP-up4">
+                                                <rect key="frame" x="423" y="40" width="131" height="16"/>
+                                                <autoresizingMask key="autoresizingMask"/>
+                                                <textFieldCell key="cell" lineBreakMode="clipping" title="seconds to catch up." id="o8o-oc-4bB">
+                                                    <font key="font" usesAppearanceFont="YES"/>
+                                                    <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                                                    <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                                </textFieldCell>
+                                            </textField>
                                         </subviews>
                                     </customView>
                                 </subviews>
@@ -6730,7 +6770,7 @@ DQ
         <window title="Filter Alerts" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" restorable="NO" hidesOnDeactivate="YES" releasedWhenClosed="NO" visibleAtLaunch="NO" animationBehavior="default" id="u39-OD-7hu" customClass="NSPanel">
             <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>
             <rect key="contentRect" x="120" y="138" width="406" height="145"/>
-            <rect key="screenRect" x="0.0" y="0.0" width="1536" height="937"/>
+            <rect key="screenRect" x="0.0" y="0.0" width="3008" height="1669"/>
             <view key="contentView" id="dXn-d7-O8o">
                 <rect key="frame" x="0.0" y="0.0" width="406" height="145"/>
                 <autoresizingMask key="autoresizingMask"/>

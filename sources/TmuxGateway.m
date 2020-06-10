@@ -145,7 +145,10 @@ static NSString *kCommandTimestamp = @"timestamp";
     [data appendBytes:"" length:1];
 
     // This one is tricky to parse because the string version of the command could have bogus UTF-8.
-    // %output %<pane id> <data...><newline>
+    // 3.1 and earlier:
+    //   %output %<pane id> <data...><newline>
+    // 3.2 and later, when pause mode is enabled:
+    //   %output %<pane id> <latency> <data...><newline>
     const char *command = [data bytes];
     char *space = strchr(command, ' ');
     if (!space) {
@@ -155,6 +158,8 @@ static NSString *kCommandTimestamp = @"timestamp";
     if (strncmp(outputCommand, command, strlen(outputCommand))) {
         goto error;
     }
+
+    // Pane ID
     const char *paneId = space + 1;
     if (*paneId != '%') {
         goto error;
@@ -170,10 +175,34 @@ static NSString *kCommandTimestamp = @"timestamp";
         goto error;
     }
 
+    // Latency, if available
+    NSNumber *ms = 0;
+    if (_pauseModeEnabled) {
+        const char *latency = space + 1;
+        space = strchr(latency, ' ');
+        if (!space) {
+            goto error;
+        }
+        char *endptr = NULL;
+        ms = @(strtoll(latency, &endptr, 10));
+        ms = @(ms.doubleValue / 1000.0);
+        if (endptr != space) {
+            goto error;
+        }
+    }
+
+    // Payload
     NSData *decodedData = [self decodeEscapedOutput:space + 1];
 
-    TmuxLog(@"Run tmux command: \"%%output \"%%%d\" %.*s", windowPane, (int)[decodedData length], [decodedData bytes]);
-    [[[delegate_ tmuxController] sessionForWindowPane:windowPane] tmuxReadTask:decodedData];
+    if (_pauseModeEnabled) {
+        TmuxLog(@"Run tmux command: \"%%output \"%%%d\" %@ %.*s",
+                windowPane, ms, (int)[decodedData length], [decodedData bytes]);
+    } else {
+        TmuxLog(@"Run tmux command: \"%%output \"%%%d\" %.*s",
+                windowPane, (int)[decodedData length], [decodedData bytes]);
+    }
+    [[[delegate_ tmuxController] sessionForWindowPane:windowPane] tmuxReadTask:decodedData
+                                                                       latency:ms];
 
     return;
 error:

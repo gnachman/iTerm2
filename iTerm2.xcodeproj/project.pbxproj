@@ -1615,6 +1615,8 @@
 		A61F457622FA8C9B00E2054A /* iTermStatusBarUnreadCountController.h in Headers */ = {isa = PBXBuildFile; fileRef = A61F457422FA8C9B00E2054A /* iTermStatusBarUnreadCountController.h */; };
 		A61F457722FA8C9B00E2054A /* iTermStatusBarUnreadCountController.m in Sources */ = {isa = PBXBuildFile; fileRef = A61F457522FA8C9B00E2054A /* iTermStatusBarUnreadCountController.m */; };
 		A61F8E301E62591800D315D0 /* iTermFakeUserDefaults.m in Sources */ = {isa = PBXBuildFile; fileRef = A61F8E2F1E62591800D315D0 /* iTermFakeUserDefaults.m */; };
+		A620041E248B7CFC007D349C /* iTermTmuxBufferSizeMonitor.h in Headers */ = {isa = PBXBuildFile; fileRef = A620041C248B7CFC007D349C /* iTermTmuxBufferSizeMonitor.h */; };
+		A620041F248B7CFC007D349C /* iTermTmuxBufferSizeMonitor.m in Sources */ = {isa = PBXBuildFile; fileRef = A620041D248B7CFC007D349C /* iTermTmuxBufferSizeMonitor.m */; };
 		A621DDA8211D01D50095A399 /* NSAppearance+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A621DDA6211D01D50095A399 /* NSAppearance+iTerm.h */; };
 		A621DDA9211D01D50095A399 /* NSAppearance+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A621DDA7211D01D50095A399 /* NSAppearance+iTerm.m */; };
 		A6232E76202832A900EC0F98 /* iTermData.h in Headers */ = {isa = PBXBuildFile; fileRef = A6232E74202832A900EC0F98 /* iTermData.h */; };
@@ -5003,6 +5005,8 @@
 		A61F457522FA8C9B00E2054A /* iTermStatusBarUnreadCountController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermStatusBarUnreadCountController.m; sourceTree = "<group>"; };
 		A61F8E2E1E62591800D315D0 /* iTermFakeUserDefaults.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermFakeUserDefaults.h; sourceTree = "<group>"; };
 		A61F8E2F1E62591800D315D0 /* iTermFakeUserDefaults.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermFakeUserDefaults.m; sourceTree = "<group>"; };
+		A620041C248B7CFC007D349C /* iTermTmuxBufferSizeMonitor.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermTmuxBufferSizeMonitor.h; sourceTree = "<group>"; };
+		A620041D248B7CFC007D349C /* iTermTmuxBufferSizeMonitor.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermTmuxBufferSizeMonitor.m; sourceTree = "<group>"; };
 		A621DDA6211D01D50095A399 /* NSAppearance+iTerm.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "NSAppearance+iTerm.h"; sourceTree = "<group>"; };
 		A621DDA7211D01D50095A399 /* NSAppearance+iTerm.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "NSAppearance+iTerm.m"; sourceTree = "<group>"; };
 		A6232E74202832A900EC0F98 /* iTermData.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = iTermData.h; path = Metal/Infrastructure/iTermData.h; sourceTree = "<group>"; };
@@ -7568,6 +7572,8 @@
 				A6FF4AED246BBFDB00410BA2 /* iTermTmuxWindowCache.m */,
 				A62C8FC0248033C000E22E95 /* iTermTmuxJobManager.h */,
 				A62C8FC1248033C000E22E95 /* iTermTmuxJobManager.m */,
+				A620041C248B7CFC007D349C /* iTermTmuxBufferSizeMonitor.h */,
+				A620041D248B7CFC007D349C /* iTermTmuxBufferSizeMonitor.m */,
 			);
 			name = tmux;
 			sourceTree = "<group>";
@@ -11118,6 +11124,7 @@
 				A6A4B2AF2426B8D600184EAC /* iTermTouchbarMappings.h in Headers */,
 				A61ED2A520E99DCD0035BECD /* iTermStatusBarClockComponent.h in Headers */,
 				530AB8BC20B3D3D000D2AA08 /* iTermWindowHacks.h in Headers */,
+				A620041E248B7CFC007D349C /* iTermTmuxBufferSizeMonitor.h in Headers */,
 				A65660D42372A4A600DC6744 /* iTermCache.h in Headers */,
 				5365207121433ED2003C58FD /* iTermGitState.h in Headers */,
 				A636C3B12288887600A83E2F /* iTermResourceLimitsHelper.h in Headers */,
@@ -13463,6 +13470,7 @@
 				5370678321C9D2780088D0F3 /* SIGPolicy.m in Sources */,
 				A6A4866A20B6793E00493302 /* iTermKeyMappingViewController.m in Sources */,
 				A663196A22FE5D3D00C502BD /* iTermFileDescriptorMultiClient.m in Sources */,
+				A620041F248B7CFC007D349C /* iTermTmuxBufferSizeMonitor.m in Sources */,
 				A6F3DA9424564598001D50C9 /* iTermScrollWheelStateMachine.m in Sources */,
 				A6A4868120B681A300493302 /* iTermColorPresets.m in Sources */,
 				A6180D7921A883860073F219 /* iTermBroadcastPasswordHelper.m in Sources */,

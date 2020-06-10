@@ -51,6 +51,15 @@
     }];
 }
 
+- (void)setTitle:(NSString *)title {
+    [super setTitle:title];
+    if (!self.isViewLoaded) {
+        return;
+    }
+    iTermAnnouncementView *view = (iTermAnnouncementView *)self.view;
+    view.title = title;
+}
+
 - (void)didInvoke:(int)index {
     DLog(@"Outer completion block invoked for announcement %@", self);
     if (!_dismissing) {

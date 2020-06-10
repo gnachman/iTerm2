@@ -198,7 +198,7 @@ NSString *const kTmuxWindowOpenerWindowOptionStyleValueFullScreen = @"FullScreen
     [cmdList addObject:[self dictForRequestHistoryForWindowPane:wp alt:YES]];
     [cmdList addObject:[self dictForDumpStateForWindowPane:wp]];
     [cmdList addObject:[self dictForGetPendingOutputForWindowPane:wp]];
-    if ([self.minimumServerVersion compare:[NSDecimalNumber decimalNumberWithString:@"3.2"]] != NSOrderedAscending) {
+    if (gateway_.pauseModeEnabled) {
         [cmdList addObject:[self dictToUnpauseWindowPane:wp]];
     }
     if (self.minimumServerVersion.doubleValue >= 3) {

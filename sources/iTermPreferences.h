@@ -84,6 +84,7 @@ extern NSString *const kPreferenceKeyTmuxDashboardLimit;
 extern NSString *const kPreferenceKeyAutoHideTmuxClientSession;
 extern NSString *const kPreferenceKeyUseTmuxProfile;
 extern NSString *const kPreferenceKeyUseTmuxStatusBar;
+extern NSString *const kPreferenceKeyTmuxPauseModeAgeLimit;
 extern NSString *const kPreferenceKeyUseMetal;
 extern NSString *const kPreferenceKeyDisableMetalWhenUnplugged;
 extern NSString *const kPreferenceKeyPreferIntegratedGPU;

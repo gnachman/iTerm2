@@ -43,6 +43,11 @@ extern NSString *const iTermTmuxControllerWillKillWindow;
 // Posted when one or more windows changes hidden status
 extern NSString *const kTmuxControllerDidChangeHiddenWindows;
 
+@protocol iTermTmuxControllerSession<NSObject>
+- (void)tmuxControllerSessionSetTTL:(NSTimeInterval)ttl;
+- (void)revealIfTabSelected;
+@end
+
 @interface TmuxController : NSObject
 
 @property(nonatomic, readonly) TmuxGateway *gateway;
@@ -65,7 +70,7 @@ extern NSString *const kTmuxControllerDidChangeHiddenWindows;
 @property(nonatomic, readonly) NSString *defaultTerminal;
 @property(nonatomic) NSRect initialWindowHint;
 @property(nonatomic, readonly) BOOL detached;
-@property(nonatomic, readonly) BOOL pauseModeEnabled;
+@property(nonatomic, readonly) NSArray<NSNumber *> *windowPaneIDs;
 
 - (instancetype)initWithGateway:(TmuxGateway *)gateway
                      clientName:(NSString *)clientName
@@ -100,12 +105,12 @@ extern NSString *const kTmuxControllerDidChangeHiddenWindows;
 - (void)windowWasRenamedWithId:(int)id to:(NSString *)newName;
 
 // Call `block` when a window pane with `wp` is registered. If one is already registered, it will be called asynchronously.
-- (void)whenPaneRegistered:(int)wp call:(void (^)(PTYSession *))block;
+- (void)whenPaneRegistered:(int)wp call:(void (^)(PTYSession<iTermTmuxControllerSession> *))block;
 
-- (PTYSession *)sessionForWindowPane:(int)windowPane;
+- (PTYSession<iTermTmuxControllerSession> *)sessionForWindowPane:(int)windowPane;
 - (PTYTab *)window:(int)window;
-- (NSArray<PTYSession *> *)sessionsInWindow:(int)window;
-- (void)registerSession:(PTYSession *)aSession
+- (NSArray<PTYSession<iTermTmuxControllerSession> *> *)sessionsInWindow:(int)window;
+- (void)registerSession:(PTYSession<iTermTmuxControllerSession> *)aSession
                withPane:(int)windowPane
                inWindow:(int)window;
 - (void)deregisterWindow:(int)window windowPane:(int)windowPane session:(id)session;
@@ -118,8 +123,9 @@ extern NSString *const kTmuxControllerDidChangeHiddenWindows;
 - (void)fitLayoutToWindows;
 - (void)validateOptions;
 - (void)ping;
-- (void)enablePauseModeIfPossible:(NSInteger)catchUpTime;
+- (void)enablePauseModeIfPossible;
 - (void)unpausePanes:(NSArray<NSNumber *> *)wps;
+- (void)didPausePane:(int)wp;
 
 // Issue tmux commands to infer bounds on the version.
 - (void)guessVersion;
@@ -222,7 +228,7 @@ extern NSString *const kTmuxControllerDidChangeHiddenWindows;
 - (BOOL)windowIsHidden:(int)windowId;
 - (void)setLayoutInWindowPane:(int)windowPane toLayoutNamed:(NSString *)name;
 - (void)setLayoutInWindow:(int)window toLayout:(NSString *)layout;
-- (NSArray<PTYSession *> *)clientSessions;
+- (NSArray<PTYSession<iTermTmuxControllerSession> *> *)clientSessions;
 
 - (void)setSize:(NSSize)size window:(int)window;
 
@@ -232,5 +238,6 @@ extern NSString *const kTmuxControllerDidChangeHiddenWindows;
                           pane:(int)paneID;
 - (NSDictionary<NSString *, NSString *> *)userVarsForPane:(int)paneID;
 - (void)activeWindowPaneDidChangeInWindow:(int)windowID toWindowPane:(int)paneID;
+- (void)setCurrentLatency:(NSTimeInterval)latency forPane:(int)wp;
 
 @end

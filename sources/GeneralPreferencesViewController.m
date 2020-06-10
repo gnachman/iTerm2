@@ -124,6 +124,8 @@ enum {
     IBOutlet NSButton *_useTmuxProfile;
     IBOutlet NSButton *_useTmuxStatusBar;
 
+    IBOutlet NSTextField *_tmuxPauseModeAgeLimit;
+
     IBOutlet NSTabView *_tabView;
 }
 
@@ -482,6 +484,12 @@ enum {
                     key:kPreferenceKeyUseTmuxStatusBar
             relatedView:nil
                    type:kPreferenceInfoTypeCheckbox];
+
+    [self defineControl:_tmuxPauseModeAgeLimit
+                    key:kPreferenceKeyTmuxPauseModeAgeLimit
+            displayName:@"Pause a tmux pane if it would take more than this many seconds to catch up."
+                   type:kPreferenceInfoTypeUnsignedIntegerTextField];
+
     [self updateEnabledState];
     [self commitControls];
 }

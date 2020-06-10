@@ -15,9 +15,11 @@
 #import "iTermInitialDirectory+Tmux.h"
 #import "iTermLSOF.h"
 #import "iTermNotificationController.h"
+#import "iTermPreferenceDidChangeNotification.h"
 #import "iTermPreferences.h"
 #import "iTermProfilePreferences.h"
 #import "iTermShortcut.h"
+#import "iTermTmuxBufferSizeMonitor.h"
 #import "iTermTuple.h"
 #import "NSArray+iTerm.h"
 #import "NSData+iTerm.h"
@@ -67,7 +69,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     "#{window_flags}\t"
     "#{?window_active,1,0}\"";
 
-@interface TmuxController ()
+@interface TmuxController ()<iTermTmuxBufferSizeMonitorDelegate>
 
 @property(nonatomic, copy) NSString *clientName;
 @property(nonatomic, copy, readwrite) NSString *sessionGuid;
@@ -130,10 +132,11 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     int _currentWindowID;  // -1 if undefined
     // Pane -> (Key -> Value)
     NSMutableDictionary<NSNumber *, NSMutableDictionary<NSString *, NSString *> *> *_userVars;
-    NSMutableDictionary<NSNumber *, void (^)(PTYSession *)> *_when;
+    NSMutableDictionary<NSNumber *, void (^)(PTYSession<iTermTmuxControllerSession> *)> *_when;
     NSMutableArray *_listWindowsQueue;
     // If nonnegative, make this pane active after it comes in to being. If negative, invalid.
     int _paneToActivateWhenCreated;
+    iTermTmuxBufferSizeMonitor *_tmuxBufferMonitor;
 }
 
 @synthesize gateway = gateway_;
@@ -180,6 +183,13 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
         [[TmuxControllerRegistry sharedInstance] setController:self forClient:_clientName];
         _listWindowsQueue = [[NSMutableArray alloc] init];
         _paneToActivateWhenCreated = -1;
+        __weak __typeof(self) weakSelf = self;
+        [iTermPreferenceDidChangeNotification subscribe:self
+                                                  block:^(iTermPreferenceDidChangeNotification * _Nonnull notification) {
+            if ([notification.key isEqualToString:kPreferenceKeyTmuxPauseModeAgeLimit]) {
+                [weakSelf enablePauseModeIfPossible];
+            }
+        }];
         DLog(@"Create %@ with gateway=%@", self, gateway_);
     }
     return self;
@@ -607,12 +617,12 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     return [NSNumber numberWithInt:windowPane];
 }
 
-- (PTYSession *)sessionForWindowPane:(int)windowPane
+- (PTYSession<iTermTmuxControllerSession> *)sessionForWindowPane:(int)windowPane
 {
     return [windowPanes_ objectForKey:[self _keyForWindowPane:windowPane]];
 }
 
-- (void)registerSession:(PTYSession *)aSession
+- (void)registerSession:(PTYSession<iTermTmuxControllerSession> *)aSession
                withPane:(int)windowPane
                inWindow:(int)window {
     PTYTab *tab = [aSession.delegate.realParentWindow tabForSession:aSession];
@@ -621,7 +631,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     if (tab) {
         [self retainWindow:window withTab:tab];
         [windowPanes_ setObject:aSession forKey:[self _keyForWindowPane:windowPane]];
-        void (^call)(PTYSession *) = _when[@(windowPane)];
+        void (^call)(PTYSession<iTermTmuxControllerSession> *) = _when[@(windowPane)];
         if (call) {
             dispatch_async(dispatch_get_main_queue(), ^{
                 call(aSession);
@@ -645,8 +655,8 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     }
 }
 
-- (void)whenPaneRegistered:(int)wp call:(void (^)(PTYSession *))block {
-    PTYSession *already = [self sessionForWindowPane:wp];
+- (void)whenPaneRegistered:(int)wp call:(void (^)(PTYSession<iTermTmuxControllerSession> *))block {
+    PTYSession<iTermTmuxControllerSession> *already = [self sessionForWindowPane:wp];
     if (already) {
         dispatch_async(dispatch_get_main_queue(), ^{
             block(already);
@@ -661,7 +671,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     return _windowStates[@(window)].tab;
 }
 
-- (NSArray<PTYSession *> *)sessionsInWindow:(int)window {
+- (NSArray<PTYSession<iTermTmuxControllerSession> *> *)sessionsInWindow:(int)window {
     return [[self window:window] sessions];
 }
 
@@ -689,7 +699,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     [self closeAllPanes];
     [gateway_ release];
     gateway_ = nil;
-    [_when enumerateKeysAndObjectsUsingBlock:^(NSNumber * _Nonnull key, void (^ _Nonnull obj)(PTYSession *), BOOL * _Nonnull stop) {
+    [_when enumerateKeysAndObjectsUsingBlock:^(NSNumber * _Nonnull key, void (^ _Nonnull obj)(PTYSession<iTermTmuxControllerSession> *), BOOL * _Nonnull stop) {
         obj(nil);
     }];
     [_when removeAllObjects];
@@ -889,20 +899,28 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
 - (void)handlePingResponse:(NSString *)ignore {
 }
 
-- (void)enablePauseModeIfPossible:(NSInteger)catchUpTime {
-    [gateway_ sendCommand:[NSString stringWithFormat:@"refresh-client -fpause-after=%@", @(catchUpTime)]
-           responseTarget:self
-         responseSelector:@selector(handleEnablePauseModeResponse:)
-           responseObject:nil
-                    flags:kTmuxGatewayCommandShouldTolerateErrors];
+- (void)enablePauseModeIfPossible {
+    if ([gateway_.minimumServerVersion compare:[NSDecimalNumber decimalNumberWithString:@"3.2"]] == NSOrderedAscending) {
+        return;
+    }
+    NSUInteger catchUpTime= [iTermPreferences unsignedIntegerForKey:kPreferenceKeyTmuxPauseModeAgeLimit];
+    gateway_.pauseModeEnabled = YES;
+    const NSInteger age = MAX(1, round(catchUpTime));
+    [gateway_ sendCommand:[NSString stringWithFormat:@"refresh-client -fpause-after=%@", @(age)]
+           responseTarget:nil
+         responseSelector:nil];
+    [_tmuxBufferMonitor release];
+    _tmuxBufferMonitor = [[iTermTmuxBufferSizeMonitor alloc] initWithController:self
+                                                                       pauseAge:age];
+    _tmuxBufferMonitor.delegate = self;
 }
 
-- (void)handleEnablePauseModeResponse:(NSString *)response {
-    _pauseModeEnabled = (response != nil);
+- (void)didPausePane:(int)wp {
+    [_tmuxBufferMonitor resetPane:wp];
 }
 
 - (void)unpausePanes:(NSArray<NSNumber *> *)wps {
-    if (!_pauseModeEnabled) {
+    if (!gateway_.pauseModeEnabled) {
         return;
     }
     TmuxWindowOpener *windowOpener = [TmuxWindowOpener windowOpener];
@@ -922,7 +940,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
 
 - (void)panesDidUnpause:(TmuxWindowOpener *)opener {
     for (NSNumber *wp in opener.unpausingWindowPanes) {
-        PTYSession *session = [self sessionForWindowPane:wp.intValue];
+        PTYSession<iTermTmuxControllerSession> *session = [self sessionForWindowPane:wp.intValue];
         [session setTmuxHistory:[opener historyLinesForWindowPane:wp.intValue alternateScreen:NO]
                      altHistory:[opener historyLinesForWindowPane:wp.intValue alternateScreen:YES]
                           state:[opener stateForWindowPane:wp.intValue]];
@@ -2050,8 +2068,12 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     [self parseListWindowsResponseAndUpdateLayouts:response];
 }
 
-- (NSArray<PTYSession *> *)clientSessions {
+- (NSArray<PTYSession<iTermTmuxControllerSession> *> *)clientSessions {
     return windowPanes_.allValues;
+}
+
+- (NSArray<NSNumber *> *)windowPaneIDs {
+    return windowPanes_.allKeys;
 }
 
 - (void)activeWindowPaneDidChangeInWindow:(int)windowID toWindowPane:(int)paneID {
@@ -2410,7 +2432,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     // Close all sessions. Iterate over a copy of windowPanes_ because the loop
     // body modifies it by closing sessions.
     for (NSString *key in [[windowPanes_ copy] autorelease]) {
-        PTYSession *session = [windowPanes_ objectForKey:key];
+        PTYSession<iTermTmuxControllerSession> *session = [windowPanes_ objectForKey:key];
         [session tmuxDidDisconnect];
     }
 
@@ -2588,6 +2610,22 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
                          [self encodedString:[self userVarsString:paneID]
                                       prefix:iTermTmuxControllerEncodingPrefixUserVars]];
     [gateway_ sendCommand:command responseTarget:nil responseSelector:nil];
+}
+
+- (void)setCurrentLatency:(NSTimeInterval)latency forPane:(int)wp {
+    [_tmuxBufferMonitor setCurrentLatency:latency forPane:wp];
+}
+
+#pragma mark - iTermTmuxBufferSizeMonitorDelegate
+
+- (void)tmuxBufferSizeMonitor:(iTermTmuxBufferSizeMonitor *)sender
+                   updatePane:(int)wp
+                          ttl:(NSTimeInterval)ttl {
+    PTYSession<iTermTmuxControllerSession> *session = [self sessionForWindowPane:wp];
+    if (!session) {
+        return;
+    }
+    [session tmuxControllerSessionSetTTL:ttl];
 }
 
 @end
