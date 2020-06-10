@@ -7,6 +7,7 @@
 
 #import "iTermTmuxBufferSizeMonitor.h"
 
+#import "DebugLogging.h"
 #import "iTermTmuxOptionMonitor.h"
 #import "NSArray+iTerm.h"
 #import "TmuxController.h"
