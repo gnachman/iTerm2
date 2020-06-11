@@ -11651,7 +11651,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     // send us a new layout.
     if (self.isTmuxClient) {
         // This makes dragging a split pane in a tmux tab look way better.
-        return [_delegate sessionBelongsToTabWhoseSplitsAreBeingDragged];
+        return ![_delegate sessionBelongsToTabWhoseSplitsAreBeingDragged];
     } else {
         return YES;
     }

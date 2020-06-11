@@ -4628,6 +4628,7 @@ typedef struct {
     }
     // Dragging looks a lot better if we turn on resizing subviews temporarily.
     _isDraggingSplitInTmuxTab = YES;
+    [self updateUseMetal];
 }
 
 - (void)splitView:(PTYSplitView *)splitView
@@ -4641,6 +4642,7 @@ typedef struct {
         return;
     }
     _isDraggingSplitInTmuxTab = NO;
+    [self updateUseMetal];
     // Find a session view adjacent to the moved splitter.
     NSArray *subviews = [splitView subviews];
     NSView *theView = [subviews objectAtIndex:splitterIndex];  // the view right of or below the dragged splitter.
@@ -5554,7 +5556,9 @@ typedef struct {
 
     iTermMetalUnavailableReason reason = iTermMetalUnavailableReasonNone;
     BOOL allowed = NO;
-    if ([self.delegate tabAnyDragInProgress:self]) {
+    // Note: we turn off metal when dragging a split in a tmux tab because it's hard to keep the
+    // frame of the MTKView correct without resizing it.
+    if ([self.delegate tabAnyDragInProgress:self] || _isDraggingSplitInTmuxTab) {
         _metalUnavailableReason = iTermMetalUnavailableReasonTabDragInProgress;
     } else if (resizing) {
         _metalUnavailableReason = iTermMetalUnavailableReasonWindowResizing;
