@@ -2125,6 +2125,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 
 - (void)setSize:(NSSize)newSize {
     if ([self isTmuxTab]) {
+        DLog(@"Resizing tabview to %@", NSStringFromSize(newSize));
         [tabView_ setFrameSize:newSize];
     } else {
         PtyLog(@"PTYTab setSize:%fx%f", (float)newSize.width, (float)newSize.height);

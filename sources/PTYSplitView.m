@@ -151,6 +151,21 @@
     [self setNeedsDisplay:YES];
 }
 
+- (void)setFrame:(NSRect)frame {
+    DLog(@"%@: setFrame:%@\n%@", self, NSStringFromRect(frame), [NSThread callStackSymbols]);
+    [super setFrame:frame];
+}
+
+- (void)setFrameSize:(NSSize)newSize {
+    DLog(@"%@: setFrameSize:%@\n%@", self, NSStringFromSize(newSize), [NSThread callStackSymbols]);
+    [super setFrameSize:newSize];
+}
+
+- (void)setFrameOrigin:(NSPoint)newOrigin {
+    DLog(@"%@: setFrameOrigin:%@\n%@", self, NSStringFromPoint(newOrigin), [NSThread callStackSymbols]);
+    [super setFrameOrigin:newOrigin];
+}
+
 @end
 
 

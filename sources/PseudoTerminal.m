@@ -4249,6 +4249,10 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void)tmuxTabLayoutDidChange:(BOOL)nontrivialChange
                            tab:(PTYTab *)tab
             variableWindowSize:(BOOL)variableWindowSize {
+    DLog(@"nontrivialChange=%@ tab=%@ variableWindowSize=%@",
+         @(nontrivialChange),
+         tab,
+         @(variableWindowSize));
     if (liveResize_) {
         if (nontrivialChange) {
             postponedTmuxTabLayoutChange_ = variableWindowSize ? iTermPostponeTmuxTabLayoutChangeStateVariableSizeWindow : iTermPostponeTmuxTabLayoutChangeStateFixedSizeWindow;
@@ -7999,6 +8003,8 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 }
 
 - (void)fitWindowToTabsExcludingTmuxTabs:(BOOL)excludeTmux preservingHeight:(BOOL)preserveHeight {
+    DLog(@"fitWindowToTabsExcludingTmuxTabs:%@ preservingHeight:%@",
+         @(excludeTmux), @(preserveHeight));
     _windowNeedsInitialSize = NO;
     if (togglingFullScreen_) {
         return;
@@ -8032,6 +8038,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     }
     if (NSEqualSizes(NSZeroSize, maxTabSize)) {
         // all tabs are tmux tabs.
+        DLog(@"All tabs are tmux tabs");
         return;
     }
     PtyLog(@"fitWindowToTabs - calling fitWindowToTabSize");
@@ -8050,8 +8057,10 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 // NOTE: The preferred height is respected only if it would be larger than the height the window would
 // otherwise be set to and is less than the max height (self.maxFrame.size.height).
 - (BOOL)fitWindowToTabSize:(NSSize)tabSize preferredHeight:(NSNumber *)preferredHeight {
-    PtyLog(@"fitWindowToTabSize:%@ preferredHeight:%@", NSStringFromSize(tabSize), preferredHeight);
+    PtyLog(@"fitWindowToTabSize:%@ preferredHeight:%@ - %@",
+           NSStringFromSize(tabSize), preferredHeight, self);
     if ([self anyFullScreen]) {
+        DLog(@"Is full screen");
         [self fitTabsToWindow];
         return NO;
     }
