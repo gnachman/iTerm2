@@ -6708,7 +6708,6 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 - (void)tmuxInitialCommandDidCompleteSuccessfully {
     // This kicks off a chain reaction that leads to windows being opened.
     [_tmuxController ping];
-    [_tmuxController enablePauseModeIfPossible];
     [_tmuxController validateOptions];
     [_tmuxController checkForUTF8];
     [_tmuxController loadDefaultTerminal];

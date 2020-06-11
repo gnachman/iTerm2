@@ -1174,6 +1174,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
 
 // Actions to perform after the version number is known.
 - (void)didGuessVersion {
+    [self enablePauseModeIfPossible];
     [self loadServerPID];
     [self loadTitleFormat];
 }
