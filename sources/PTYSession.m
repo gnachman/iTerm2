@@ -6877,6 +6877,13 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     if (paused) {
         _tmuxTTLHasThresholds = NO;
         [self.tmuxController didPausePane:self.tmuxPane];
+        if ([iTermPreferences boolForKey:kPreferenceKeyTmuxUnpauseAutomatically]) {
+            __weak __typeof(self) weakSelf = self;
+            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+                [weakSelf setTmuxPaused:NO];
+            });
+            return;
+        }
         [self showTmuxPausedAnnouncement];
     } else {
         [self unpauseTmux];
@@ -13047,6 +13054,9 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     if (_tmuxPaused) {
         return;
     }
+    if (![iTermPreferences boolForKey:kPreferenceKeyTmuxWarnBeforePausing]) {
+        return;
+    }
     if (_tmuxTTLHasThresholds) {
         if (ttl > _tmuxTTLLowerThreshold && ttl < _tmuxTTLUpperThreshold) {
             return;
@@ -13076,13 +13086,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     announcement =
     [iTermAnnouncementViewController announcementWithTitle:title
                                                      style:kiTermAnnouncementViewStyleWarning
-                                               withActions:@[ @"Don’t Warn", @"_Settings" ]
+                                               withActions:@[ @"_Pause Settings" ]
                                                 completion:^(int selection) {
         switch (selection) {
             case 0:
-                [iTermAdvancedSettingsModel setNoSyncDontWarnAboutTmuxPause:YES];
-                break;
-            case 1:
                 [[PreferencePanel sharedInstance] openToPreferenceWithKey:kPreferenceKeyTmuxPauseModeAgeLimit];
                 break;
         }

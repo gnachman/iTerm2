@@ -63,6 +63,8 @@ NSString *const kPreferenceKeyAutoHideTmuxClientSession = @"AutoHideTmuxClientSe
 NSString *const kPreferenceKeyUseTmuxProfile = @"TmuxUsesDedicatedProfile";
 NSString *const kPreferenceKeyUseTmuxStatusBar = @"UseTmuxStatusBar";
 NSString *const kPreferenceKeyTmuxPauseModeAgeLimit = @"TmuxPauseModeAgeLimit";
+NSString *const kPreferenceKeyTmuxUnpauseAutomatically = @"TmuxUnpauseAutomatically";
+NSString *const kPreferenceKeyTmuxWarnBeforePausing = @"TmuxWarnBeforePausing";
 
 NSString *const kPreferenceKeyUseMetal = @"UseMetal";
 NSString *const kPreferenceKeyDisableMetalWhenUnplugged = @"disableMetalWhenUnplugged";
@@ -325,6 +327,8 @@ static NSString *sPreviousVersion;
                   kPreferenceKeyUseTmuxProfile: @YES,
                   kPreferenceKeyUseTmuxStatusBar: @YES,
                   kPreferenceKeyTmuxPauseModeAgeLimit: @120,
+                  kPreferenceKeyTmuxUnpauseAutomatically: @NO,
+                  kPreferenceKeyTmuxWarnBeforePausing: @YES,
                   kPreferenceKeyUseMetal: @YES,
                   kPreferenceKeyDisableMetalWhenUnplugged: @YES,
                   kPreferenceKeyPreferIntegratedGPU: @YES,
