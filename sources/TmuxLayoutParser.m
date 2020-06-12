@@ -14,6 +14,8 @@
 // layout_array ::= layout,layout_array |
 
 #import "TmuxLayoutParser.h"
+
+#import "DebugLogging.h"
 #import "RegexKitLite.h"
 
 NSString *kLayoutDictChildrenKey = @"children";
@@ -95,6 +97,9 @@ NSString *kLayoutDictTabColorKey = @"x-tab-color";
         if (components.count == 3) {
             tree[kLayoutDictWidthKey] = @([components[1] intValue]);
             tree[kLayoutDictHeightKey] = @([components[2] intValue]);
+            DLog(@"%%layout-change reported window size of %@ x %@",
+                 tree[kLayoutDictWidthKey],
+                 tree[kLayoutDictHeightKey]);
         }
         return [self coalescedTree:tree];
     } else {

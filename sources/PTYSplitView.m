@@ -13,6 +13,30 @@
 #import "NSColor+iTerm.h"
 #import "PTYWindow.h"
 
+@implementation PTYSplitViewDividerInfo
+
+- (instancetype)initWithFrame:(NSRect)frame vertical:(BOOL)vertical {
+    self = [super init];
+    if (self) {
+        _frame = frame;
+        _isVertical = vertical;
+    }
+    return self;
+}
+
+- (NSString *)description {
+    return NSStringFromRect(_frame);
+}
+
+- (NSComparisonResult)compare:(PTYSplitViewDividerInfo *)other {
+    if (_isVertical) {
+        return [@(_frame.origin.x) compare:@(other.frame.origin.x)];
+    }
+    return [@(_frame.origin.y) compare:@(other.frame.origin.y)];
+}
+
+@end
+
 @implementation PTYSplitView {
     BOOL _dead;  // inside superclass's dealloc?
 }
@@ -151,6 +175,57 @@
     [self setNeedsDisplay:YES];
 }
 
+- (void)setFrame:(NSRect)frame {
+    DLog(@"%@: setFrame:%@\n%@", self, NSStringFromRect(frame), [NSThread callStackSymbols]);
+    [super setFrame:frame];
+}
+
+- (void)setFrameSize:(NSSize)newSize {
+    DLog(@"%@: setFrameSize:%@\n%@", self, NSStringFromSize(newSize), [NSThread callStackSymbols]);
+    [super setFrameSize:newSize];
+}
+
+- (void)setFrameOrigin:(NSPoint)newOrigin {
+    DLog(@"%@: setFrameOrigin:%@\n%@", self, NSStringFromPoint(newOrigin), [NSThread callStackSymbols]);
+    [super setFrameOrigin:newOrigin];
+}
+
+- (NSArray<PTYSplitViewDividerInfo *> *)transitiveDividerLocationsVertical:(BOOL)vertical {
+    return [self transitiveDividerLocationsVertical:vertical root:self];
+}
+
+- (NSArray<PTYSplitViewDividerInfo *> *)transitiveDividerLocationsVertical:(BOOL)vertical
+                                                                      root:(PTYSplitView *)root {
+    const NSPoint originPoint = [root convertRect:self.bounds fromView:self].origin;
+
+    NSMutableArray<PTYSplitViewDividerInfo *> *result = [NSMutableArray array];
+    CGFloat offset = 0 + vertical ? originPoint.x : originPoint.y;
+    const CGFloat dividerThickness = self.dividerThickness;
+    const NSInteger count = self.subviews.count;
+    for (NSInteger i = 0; i < count; i++) {
+        const NSSize size = self.subviews[i].frame.size;
+        offset += vertical ? size.width : size.height;
+        if (i + 1 < count && self.isVertical == vertical) {
+            NSRect dividerFrame;
+            if (vertical) {
+                dividerFrame = NSMakeRect(offset, originPoint.y, dividerThickness, self.bounds.size.height);
+            } else {
+                dividerFrame = NSMakeRect(originPoint.x, offset, self.bounds.size.width, dividerThickness);
+            }
+            PTYSplitViewDividerInfo *info = [[PTYSplitViewDividerInfo alloc] initWithFrame:dividerFrame
+                                                                                  vertical:vertical];
+            [result addObject:info];
+        }
+        __kindof NSView *subview = self.subviews[i];
+        if ([subview isKindOfClass:[PTYSplitView class]]) {
+            PTYSplitView *childSplit = subview;
+            [result addObjectsFromArray:[childSplit transitiveDividerLocationsVertical:vertical
+                                                                                  root:root]];
+        }
+        offset += dividerThickness;
+    }
+    return [result sortedArrayUsingSelector:@selector(compare:)];
+}
 @end
 
 

@@ -130,6 +130,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     // Pane -> (Key -> Value)
     NSMutableDictionary<NSNumber *, NSMutableDictionary<NSString *, NSString *> *> *_userVars;
     NSMutableDictionary<NSNumber *, void (^)(PTYSession *)> *_when;
+    NSMutableDictionary<NSNumber *, NSValue *> *_windowSizes;  // window -> NSValue cell size
 }
 
 @synthesize gateway = gateway_;
@@ -173,6 +174,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
         _userVars = [[NSMutableDictionary alloc] init];
         _when = [[NSMutableDictionary alloc] init];
         [[TmuxControllerRegistry sharedInstance] setController:self forClient:_clientName];
+        _windowSizes = [[NSMutableDictionary alloc] init];
         DLog(@"Create %@ with gateway=%@", self, gateway_);
     }
     return self;
@@ -204,6 +206,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     [_defaultTerminal release];
     [_userVars release];
     [_when release];
+    [_windowSizes release];
 
     [super dealloc];
 }
@@ -487,6 +490,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     // it twice, causing chaos. Or two separate instances of iTerm2 attaching
     // simultaneously could also hit this race. The consequence of this race
     // condition is easily recovered from by reattaching.
+    [_windowSizes removeAllObjects];
     NSString *getSessionGuidCommand = [NSString stringWithFormat:@"show -v -q -t $%d @iterm2_id",
                                        sessionId_];
     NSString *setSizeCommand = [NSString stringWithFormat:@"refresh-client -C %d,%d",
@@ -805,6 +809,13 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
         if (size.width < 1 || size.height < 1 || size.width >= 10000 || size.height >= 10000) {
             return nil;
         }
+        DLog(@"Set client size to %@", NSStringFromSize(size));
+        NSValue *sizeValue = [NSValue valueWithSize:size];
+        if ([_windowSizes[@(window.intValue)] isEqual:sizeValue]) {
+            DLog(@"It's already that size. Do nothing.");
+            return nil;
+        }
+        _windowSizes[@(window.intValue)] = sizeValue;
         NSString *command = [NSString stringWithFormat:@"resize-window -x %@ -y %@ -t @%d", @((int)size.width), @((int)size.height), window.intValue];
         NSDictionary *dict = [gateway_ dictionaryForCommand:command
                                              responseTarget:self
@@ -842,6 +853,9 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     NSString *listStr = [NSString stringWithFormat:@"list-windows -F \"#{window_id} #{window_layout} #{window_flags}\""];
     NSString *setSizeCommand = [NSString stringWithFormat:@"set -t $%d @iterm2_size %d,%d",
                                 sessionId_, (int)size.width, (int)size.height];
+    const int height = [self adjustHeightForStatusBar:(int)size.height];
+    ITBetaAssert(height > 0, @"Invalid size");
+    [_windowSizes removeAllObjects];
     NSArray *commands = [NSArray arrayWithObjects:
                          [gateway_ dictionaryForCommand:setSizeCommand
                                          responseTarget:nil
@@ -1296,6 +1310,10 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
                                           [profile[KEY_COLUMNS] intValue] ?: 80),
                                       MIN(iTermMaxInitialSessionSize,
                                           [profile[KEY_ROWS] intValue] ?: 25));
+             ITBetaAssert((int)size.width > 0, @"Invalid size");
+             const int height = [self adjustHeightForStatusBar:size.height];
+             ITBetaAssert(height > 0, @"Invalid size");
+             [_windowSizes removeAllObjects];
              NSString *setSizeCommand = [NSString stringWithFormat:@"refresh-client -C %d,%d",
                                          (int)size.width, [self adjustHeightForStatusBar:size.height]];
              [commands addObject:[gateway_ dictionaryForCommand:setSizeCommand
@@ -1326,6 +1344,10 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
      ^(NSString *command) {
          NSMutableArray *commands = [NSMutableArray array];
          if (variableWindowSize) {
+             ITBetaAssert((int)size.width > 0, @"Invalid size");
+             const int height = [self adjustHeightForStatusBar:size.height];
+             ITBetaAssert(height > 0, @"Invalid size");
+             [_windowSizes removeAllObjects];
              NSString *setSizeCommand = [NSString stringWithFormat:@"refresh-client -C %d,%d",
                                          (int)size.width, [self adjustHeightForStatusBar:size.height]];
              [commands addObject:[gateway_ dictionaryForCommand:setSizeCommand
