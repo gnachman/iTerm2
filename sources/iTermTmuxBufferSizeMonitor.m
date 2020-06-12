@@ -162,7 +162,7 @@ static double TimespecToSeconds(struct timespec* ts) {
         _series[@(wp)] = series;
     }
     if (now - _lastSampleTime < 1) {
-        [series removeLastDataPoint];
+        return;
     } else {
         _lastSampleTime = now;
     }
