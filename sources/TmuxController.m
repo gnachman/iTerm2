@@ -137,6 +137,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     // If nonnegative, make this pane active after it comes in to being. If negative, invalid.
     int _paneToActivateWhenCreated;
     iTermTmuxBufferSizeMonitor *_tmuxBufferMonitor;
+    NSMutableDictionary<NSNumber *, NSValue *> *_windowSizes;  // window -> NSValue cell size
 }
 
 @synthesize gateway = gateway_;
@@ -190,6 +191,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
                 [weakSelf enablePauseModeIfPossible];
             }
         }];
+        _windowSizes = [[NSMutableDictionary alloc] init];
         DLog(@"Create %@ with gateway=%@", self, gateway_);
     }
     return self;
@@ -222,6 +224,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     [_userVars release];
     [_when release];
     [_listWindowsQueue release];
+    [_windowSizes release];
 
     [super dealloc];
 }
@@ -500,6 +503,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     // it twice, causing chaos. Or two separate instances of iTerm2 attaching
     // simultaneously could also hit this race. The consequence of this race
     // condition is easily recovered from by reattaching.
+    [_windowSizes removeAllObjects];
     NSString *getSessionGuidCommand = [NSString stringWithFormat:@"show -v -q -t $%d @iterm2_id",
                                        sessionId_];
     const int height = [self adjustHeightForStatusBar:size.height];
@@ -827,6 +831,13 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
         if (size.width < 1 || size.height < 1 || size.width >= 10000 || size.height >= 10000) {
             return nil;
         }
+        DLog(@"Set client size to %@", NSStringFromSize(size));
+        NSValue *sizeValue = [NSValue valueWithSize:size];
+        if ([_windowSizes[@(window.intValue)] isEqual:sizeValue]) {
+            DLog(@"It's already that size. Do nothing.");
+            return nil;
+        }
+        _windowSizes[@(window.intValue)] = sizeValue;
         NSString *command = [NSString stringWithFormat:@"resize-window -x %@ -y %@ -t @%d", @((int)size.width), @((int)size.height), window.intValue];
         NSDictionary *dict = [gateway_ dictionaryForCommand:command
                                              responseTarget:self
@@ -866,6 +877,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
                                 sessionId_, (int)size.width, (int)size.height];
     const int height = [self adjustHeightForStatusBar:(int)size.height];
     ITBetaAssert(height > 0, @"Invalid size");
+    [_windowSizes removeAllObjects];
     NSArray *commands = [NSArray arrayWithObjects:
                          [gateway_ dictionaryForCommand:setSizeCommand
                                          responseTarget:nil
@@ -1378,6 +1390,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
              ITBetaAssert((int)size.width > 0, @"Invalid size");
              const int height = [self adjustHeightForStatusBar:size.height];
              ITBetaAssert(height > 0, @"Invalid size");
+             [_windowSizes removeAllObjects];
              NSString *setSizeCommand = [NSString stringWithFormat:@"refresh-client -C %d,%d",
                                          (int)size.width, height];
              [commands addObject:[gateway_ dictionaryForCommand:setSizeCommand
@@ -1411,6 +1424,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
              ITBetaAssert((int)size.width > 0, @"Invalid size");
              const int height = [self adjustHeightForStatusBar:size.height];
              ITBetaAssert(height > 0, @"Invalid size");
+             [_windowSizes removeAllObjects];
              NSString *setSizeCommand = [NSString stringWithFormat:@"refresh-client -C %d,%d",
                                          (int)size.width, height];
              [commands addObject:[gateway_ dictionaryForCommand:setSizeCommand

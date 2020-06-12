@@ -21,10 +21,21 @@
 
 @end
 
+@interface PTYSplitViewDividerInfo: NSObject
+@property (nonatomic, readonly) NSRect frame;
+@property (nonatomic, readonly) BOOL isVertical;
+
+- (instancetype)initWithFrame:(NSRect)frame vertical:(BOOL)vertical;
+- (NSComparisonResult)compare:(PTYSplitViewDividerInfo *)other;
+
+@end
+
 /* This extends NSSplitView by adding a delegate method that's called when
  * dragging a splitter finishes. */
 @interface PTYSplitView : NSSplitView
 
 @property (weak) id<PTYSplitViewDelegate> delegate;
+
+- (NSArray<PTYSplitViewDividerInfo *> *)transitiveDividerLocationsVertical:(BOOL)vertical;
 
 @end

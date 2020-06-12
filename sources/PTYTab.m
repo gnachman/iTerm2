@@ -3506,6 +3506,46 @@ typedef struct {
 }
 
 // Returns the size in characters of the window size that fits this tab's contents.
+// Because our dividers+margins+titlebars may be either smaller or larger than tmux's dividers,
+// we need to pick the largest value that fits our window. When you have a tab like this:
+//
+//  ┌───┬───┐
+//  │   │ B │
+//  │ A ├───┤
+//  │   │ C │
+//  └───┴───┘
+//
+// In the following discussion, h = cell height.
+// If the divider between B and C is really thick, then you should report floor((B*h+C*h+1)/h) rows.
+//   In this case, A will have some unused space at the bottom.
+// If the divider between B and C is really thin, then you should report A rows.
+//   In this case, C will have some unused space at the bottom.
+//
+// Let's draw it again with dividers.
+// Suppose a cell is 16 points tall and sessions have 2 point margins.
+// Notation for iTerm2 will be points(cells). Differences are noted with *.
+//
+//  Thin dividers                        Thick dividers
+//  iTerm2             tmux              iTerm2             tmux
+//  ┌──────┬────────┐  ┌──────┬─────┐    ┌──────┬────────┐  ┌──────┬─────┐
+//  │      │672(42) │  │      │ 42  │    │      │652(40) │  │      │ 40  │
+//  │ 1367 ├────1───┤  │  85  ├──1──┤    │ 1367 ├───41───┤  │  82* ├──1──┤
+//  │ (85) │690(43) │  │      │ 42* │    │ (85) │670(41) │  │      │ 41  │
+//  └──────┴────────┘  └──────┴─────┘    └──────┴────────┘  └──────┴─────┘
+//
+// The algorithm employed here is:
+// * Slice the view up into columns. Slices are made at the extents of horizontal dividers and the x
+//   coordinate of vertical dividers. All the sessions in a slice are stacked on top of each other.
+//   There are never two horizontally adjacent in a column.
+// * Vmax = number of horizontal dividers in column with the most horizontal dividers
+// * Cmax = number of rows that would fit in that column
+// * Vmin = number of horizontal dividers in column with the fewest horizontal dividers
+// * Cmin = number of rows that would fit in that column
+// * The height to give tmux is the smalles MIN(Vmin + Cmin, Vmax + Cmax among across all columns
+//   slices.
+//
+// The same applies for width and horizontal splits.
+
 - (NSSize)variableTmuxSize {
     // The size in points we need to get it to (at most). Only the current tab will have the proper
     // frame, but during window creation there might not be a current tab.
@@ -3513,33 +3553,195 @@ typedef struct {
     if (!currentTab) {
         currentTab = self;
     }
+    DLog(@"Calculate variable tmux size for:\n%@", [root_ iterm_recursiveDescription]);
 
-    // Available size in points.
+    // baseTmuxSize is how large the tmux window ought to be for the PTYSplitView.
+    __block NSSize baseTmuxSize = NSZeroSize;
+
+    // Size we will grow to
     const NSSize targetSizePoints = [currentTab->tabView_ frame].size;
+    // Current size
+    const NSSize currentSize = root_.frame.size;
+
+    DLog(@"Target size in points is %@. Current size is %@", NSStringFromSize(targetSizePoints),
+         NSStringFromSize(currentSize));
 
     // The size of a cell.
     NSSize cellSize = [PTYTab cellSizeForBookmark:[self.tmuxController profileForWindow:self.tmuxWindow]];
+    NSArray<SessionView *> *allSessionViews = self.isMaximized ? @[ self.activeSession.view ] : [self sessionViews];
 
-    // Amount of decoration space to reserve.
-    const PTYTabDecorationSize decorationSize = [PTYTab _recursiveDecorationSize:root_];
+    const CGSize margins = NSMakeSize([iTermAdvancedSettingsModel terminalMargin] * 2,
+                                      [iTermAdvancedSettingsModel terminalVMargin] * 2);
+    const CGFloat dividerThickness = root_.dividerThickness;
+    DLog(@"Margins are %@, divider thickness is %@, cell size is %@", NSStringFromSize(margins), @(dividerThickness), NSStringFromSize(cellSize));
 
-    // The most conservative possible estimate of the cell space. This is equal to the number of cells in the
-    // row or column with the smallest number of cells that could possibly fit, ignoring dividers.
-    const NSSize contentSize = NSMakeSize((targetSizePoints.width - decorationSize.points.width) / cellSize.width,
-                                          (targetSizePoints.height - decorationSize.points.height) / cellSize.height);
+    PTYSplitView *root = [PTYSplitView castFrom:root_];
+    assert(root);
 
-    // Augment cell space by decoration space (in cells) to get the window size that we know will fit in this tab view.
-    const NSSize result = NSMakeSize(contentSize.width + decorationSize.cells.width,
-                                     contentSize.height + decorationSize.cells.height);
+    // Get frames of horizontal dividers
+    NSArray<PTYSplitViewDividerInfo *> *horizontalInfos = [root transitiveDividerLocationsVertical:NO];
+    DLog(@"Horizontal divider info: %@", horizontalInfos);
 
-    DLog(@"targetSize=%@ cellSize=%@ decorationSize.points=%@ decorationSize.cells=%@ contentSize=%@ result=%@",
-         NSStringFromSize(targetSizePoints),
-         NSStringFromSize(cellSize),
-         NSStringFromSize(decorationSize.points),
-         VT100GridSizeDescription(decorationSize.cells),
-         NSStringFromSize(contentSize),
-         NSStringFromSize(result));
-    return result;
+    // Get frames of vertical dividers
+    NSArray<PTYSplitViewDividerInfo *> *verticalInfos = [root transitiveDividerLocationsVertical:YES];
+    DLog(@"Vertical infos: %@", verticalInfos);
+
+    // Construct slice points for columns
+    NSMutableIndexSet *columnSlicePoints = [NSMutableIndexSet indexSet];
+    [horizontalInfos enumerateObjectsUsingBlock:^(PTYSplitViewDividerInfo * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+        [columnSlicePoints addIndex:MAX(0, NSMinX(obj.frame))];
+        [columnSlicePoints addIndex:MAX(0, NSMaxX(obj.frame))];
+    }];
+    [verticalInfos enumerateObjectsUsingBlock:^(PTYSplitViewDividerInfo * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+        [columnSlicePoints addIndex:MAX(0, NSMinX(obj.frame))];
+    }];
+    [columnSlicePoints addIndex:0];
+    [columnSlicePoints addIndex:MAX(0, currentSize.width)];
+    DLog(@"Column slice points: %@", columnSlicePoints);
+
+    baseTmuxSize.height = -1;
+    __block NSInteger last = -1;
+    [columnSlicePoints enumerateIndexesUsingBlock:^(NSUInteger point, BOOL * _Nonnull stop) {
+        if (last == -1) {
+            last = point;
+            return;
+        }
+        // Column slice is [last, point).
+        const NSRect columnFrame = NSMakeRect(last, 0, point - last, currentSize.height);
+        DLog(@"Consider column frame %@", NSStringFromRect(columnFrame));
+
+        // Find sessions in this column.
+        NSArray<SessionView *> *sessionViewsInSlice =
+        [allSessionViews filteredArrayUsingBlock:^BOOL(SessionView *view) {
+            const NSRect sessionViewFrame = [root convertRect:view.bounds fromView:view];
+            return NSIntersectsRect(sessionViewFrame, columnFrame);
+        }];
+        DLog(@"Contains these session views: %@", sessionViewsInSlice);
+
+        if (sessionViewsInSlice.count == 0) {
+            return;
+        }
+        const NSInteger numberOfDividers = sessionViewsInSlice.count - 1;
+        DLog(@"Has %@ dividers", @(numberOfDividers));
+
+        NSArray<NSNumber *> *decorationSizes =
+        [sessionViewsInSlice mapWithBlock:^id(SessionView *sessionView) {
+            DLog(@"%@ showTitle=%@ showBototmStatusBar=%@",
+                 sessionView, @(sessionView.showTitle), @(sessionView.showBottomStatusBar));
+            const CGFloat titleBarHeight = sessionView.showTitle ? SessionView.titleHeight : 0;
+            // NOTE: At the time of writing tmux tabs can’t have per-pane status bars. Should that ever
+            // change, this line of code might prevent a bug.
+            const CGFloat statusBarHeight = sessionView.showBottomStatusBar ? iTermStatusBarHeight : 0;
+            return @(titleBarHeight + statusBarHeight + margins.height);
+        }];
+        DLog(@"Decoration sizes are %@", decorationSizes);
+        const CGFloat totalDecorationSize = [decorationSizes sumOfNumbers] + numberOfDividers * dividerThickness;
+        DLog(@"Total decoration size is %@", @(totalDecorationSize));
+        const CGFloat C = floor((currentSize.height - totalDecorationSize) / cellSize.height);
+        const CGFloat rows = numberOfDividers + C;
+        DLog(@"C=%@, rows=%@", @(C), @(rows));
+        if (baseTmuxSize.height < 0 || rows < baseTmuxSize.height) {
+            DLog(@"Reduce height to %@", @(rows));
+            baseTmuxSize.height = rows;
+        }
+
+        last = point;
+    }];
+    assert(baseTmuxSize.height > 0);
+    DLog(@"Resulting height is %@", @(baseTmuxSize.height));
+
+
+    // Construct slice points for rows
+    NSMutableIndexSet *rowSlicePoints = [NSMutableIndexSet indexSet];
+    [verticalInfos enumerateObjectsUsingBlock:^(PTYSplitViewDividerInfo * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+        [rowSlicePoints addIndex:MAX(0, NSMinY(obj.frame))];
+        [rowSlicePoints addIndex:MAX(0, NSMaxY(obj.frame))];
+    }];
+    [horizontalInfos enumerateObjectsUsingBlock:^(PTYSplitViewDividerInfo * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+        [rowSlicePoints addIndex:MAX(0, NSMinY(obj.frame))];
+    }];
+    [rowSlicePoints addIndex:0];
+    [rowSlicePoints addIndex:MAX(0, currentSize.height)];
+
+    [rowSlicePoints addIndex:0];
+    [rowSlicePoints addIndex:currentSize.height];
+    DLog(@"Row slice points: %@", rowSlicePoints);
+
+    baseTmuxSize.width = -1;
+    last = -1;
+    [rowSlicePoints enumerateIndexesUsingBlock:^(NSUInteger point, BOOL * _Nonnull stop) {
+        if (last == -1) {
+            last = point;
+            return;
+        }
+        // Row slice is [last, point).
+        const NSRect rowFrame = NSMakeRect(0, last, currentSize.width, point - last);
+        DLog(@"Row slice frame is %@", NSStringFromRect(rowFrame));
+
+        // Find sessions in this row.
+        NSArray<SessionView *> *sessionViewsInSlice =
+        [allSessionViews filteredArrayUsingBlock:^BOOL(SessionView *view) {
+            const NSRect sessionViewFrame = [root convertRect:view.bounds fromView:view];
+            return NSIntersectsRect(sessionViewFrame, rowFrame);
+        }];
+        DLog(@"Contains sessions: %@", sessionViewsInSlice);
+
+        if (sessionViewsInSlice.count == 0) {
+            return;
+        }
+        const NSInteger numberOfDividers = sessionViewsInSlice.count - 1;
+        DLog(@"Number of dividers is %@", @(numberOfDividers));
+
+        NSArray<NSNumber *> *decorationSizes =
+        [sessionViewsInSlice mapWithBlock:^id(SessionView *sessionView) {
+            const NSSize scrollViewDecorationSize = [NSScrollView frameSizeForContentSize:NSMakeSize(0, 0)
+                                                                  horizontalScrollerClass:nil
+                                                                    verticalScrollerClass:sessionView.scrollview.hasVerticalScroller ? sessionView.scrollview.verticalScroller.class : nil
+                                                                               borderType:sessionView.scrollview.borderType
+                                                                              controlSize:NSControlSizeRegular
+                                                                            scrollerStyle:sessionView.scrollview.scrollerStyle];
+            return @(margins.width + scrollViewDecorationSize.width);
+        }];
+        const CGFloat totalDecorationSize = [decorationSizes sumOfNumbers] + numberOfDividers * dividerThickness;
+        DLog(@"total decoration size is %@", @(totalDecorationSize));
+
+        const CGFloat C = floor((currentSize.width - totalDecorationSize) / cellSize.width);
+        const CGFloat columns = numberOfDividers + C;
+        DLog(@"C=%@, columns=%@", @(C), @(columns));
+        if (baseTmuxSize.width < 0 || columns < baseTmuxSize.width) {
+            DLog(@"Reduce width to %@", @(columns));
+            baseTmuxSize.width = columns;
+        }
+
+        last = point;
+    }];
+    assert(baseTmuxSize.width > 0);
+
+    // Now adjust the result for the growth that is about to happen.
+
+    // The pixel growth (+ for growth, - for shrinkage) needed to attain the target
+    const NSSize sizeDiff = NSMakeSize(targetSizePoints.width - currentSize.width,
+                                       targetSizePoints.height - currentSize.height);
+    DLog(@"sizeDiff=%@", NSStringFromSize(sizeDiff));
+
+    NSInteger (^roundAwayFromZero)(double) = ^NSInteger(double d) {
+        if (d < 0) {
+            return floor(d);
+        }
+        return ceil(d);
+    };
+
+    // The characters growth (+ growth, - shrinkage) needed to attain the target
+    NSSize charsDiff = NSMakeSize(roundAwayFromZero(sizeDiff.width / cellSize.width),
+                                  roundAwayFromZero(sizeDiff.height / cellSize.height));
+    DLog(@"charsDiff=%@", NSStringFromSize(charsDiff));
+
+    // The character size closest to the target.
+    const NSSize tmuxSize = NSMakeSize(floor(baseTmuxSize.width + charsDiff.width),
+                                       floor(baseTmuxSize.height + charsDiff.height));
+    DLog(@"RETURN: tmuxSize = %@ currentSize=%@ targetSize=%@", NSStringFromSize(tmuxSize),
+          NSStringFromSize(currentSize), NSStringFromSize(targetSizePoints));
+    return tmuxSize;
 }
 
 // Returns the size (in characters) of the window size that fits this tab's
@@ -4190,8 +4392,12 @@ typedef struct {
 
 - (BOOL)layoutIsTooLarge {
     if (!flexibleView_) {
+        DLog(@"Not too large because there is no flexible view");
         return NO;
     }
+    DLog(@"root %@ has size %@ vs flexible view %@ with size %@",
+         root_, NSStringFromSize(root_.frame.size),
+         flexibleView_, NSStringFromSize(flexibleView_.frame.size));
     return (root_.frame.size.width > flexibleView_.frame.size.width ||
             root_.frame.size.height > flexibleView_.frame.size.height);
 }
