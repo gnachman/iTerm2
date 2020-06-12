@@ -9072,7 +9072,11 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)toggleTmuxPaused {
-    [self setTmuxPaused:!_tmuxPaused allowAutomaticUnpause:NO];
+    if (_tmuxPaused) {
+        [self setTmuxPaused:NO allowAutomaticUnpause:NO];
+    } else {
+        [self.tmuxController pausePanes:@[ @(self.tmuxPane) ]];
+    }
 }
 
 - (void)bury {

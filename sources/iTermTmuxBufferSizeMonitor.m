@@ -10,6 +10,7 @@
 #import "DebugLogging.h"
 #import "iTermTmuxOptionMonitor.h"
 #import "NSArray+iTerm.h"
+#import "NSTimer+iTerm.h"
 #import "TmuxController.h"
 
 @interface iTermTmuxBufferSizeDataPoint : NSObject
@@ -55,6 +56,7 @@ static double TimespecToSeconds(struct timespec* ts) {
 @property (nonatomic, readonly) NSInteger count;
 @property (nonatomic, readonly) NSInteger capacity;
 @property (nonatomic) double lastTTL;
+@property (nonatomic, readonly) NSTimeInterval lastUpdateTime;
 
 - (instancetype)initWithCapacity:(NSInteger)capacity NS_DESIGNATED_INITIALIZER;
 - (instancetype)init NS_UNAVAILABLE;
@@ -63,7 +65,7 @@ static double TimespecToSeconds(struct timespec* ts) {
 - (BOOL)getLinearRegressionSlope:(double *)slope offset:(double *)offset;
 - (NSTimeInterval)estimatedTimeForAge:(NSTimeInterval)target;
 - (void)removeLastDataPoint;
-
+- (void)removeAllDataPoints;
 @end
 
 @implementation iTermTimeSeries {
@@ -90,6 +92,7 @@ static double TimespecToSeconds(struct timespec* ts) {
 }
 
 - (void)addDataPoint:(iTermTmuxBufferSizeDataPoint *)dataPoint {
+    _lastUpdateTime = dataPoint.t;
     [_data addObject:dataPoint];
     while (_data.count > self.capacity) {
         [_data removeObjectAtIndex:0];
@@ -97,7 +100,13 @@ static double TimespecToSeconds(struct timespec* ts) {
 }
 
 - (void)removeLastDataPoint {
+    _lastUpdateTime = [iTermTmuxBufferSizeDataPoint now];
     [_data removeLastObject];
+}
+
+- (void)removeAllDataPoints {
+    _lastUpdateTime = [iTermTmuxBufferSizeDataPoint now];
+    [_data removeAllObjects];
 }
 
 - (NSTimeInterval)estimatedTimeForAge:(NSTimeInterval)target {
@@ -139,7 +148,7 @@ static double TimespecToSeconds(struct timespec* ts) {
 @end
 @implementation iTermTmuxBufferSizeMonitor {
     NSMutableDictionary<NSNumber *, iTermTimeSeries *> *_series;
-    NSTimeInterval _lastSampleTime;
+    NSTimer *_timer;
 }
 
 - (instancetype)initWithController:(TmuxController *)controller
@@ -149,8 +158,13 @@ static double TimespecToSeconds(struct timespec* ts) {
         _controller = controller;
         _pauseAge = pauseAge;
         _series = [NSMutableDictionary dictionary];
+        _timer = [NSTimer scheduledWeakTimerWithTimeInterval:1 target:self selector:@selector(update:) userInfo:nil repeats:YES];
     }
     return self;
+}
+
+- (void)dealloc {
+    [_timer invalidate];
 }
 
 - (void)setCurrentLatency:(NSTimeInterval)age forPane:(int)wp {
@@ -161,24 +175,34 @@ static double TimespecToSeconds(struct timespec* ts) {
         series.lastTTL = INFINITY;
         _series[@(wp)] = series;
     }
-    if (now - _lastSampleTime < 1) {
-        return;
-    } else {
-        _lastSampleTime = now;
-    }
-    iTermTmuxBufferSizeDataPoint *dataPoint =
-    [[iTermTmuxBufferSizeDataPoint alloc] initWithTime:now
-                                                   age:age];
-    [series addDataPoint:dataPoint];
 
+    if (now - series.lastUpdateTime > 0.5) {
+        iTermTmuxBufferSizeDataPoint *dataPoint =
+        [[iTermTmuxBufferSizeDataPoint alloc] initWithTime:now
+                                                       age:age];
+        [series addDataPoint:dataPoint];
+    }
+}
+
+- (NSTimeInterval)ttlForSeries:(iTermTimeSeries *)series now:(NSTimeInterval)now {
+    if (now - series.lastUpdateTime > 2) {
+        [series removeAllDataPoints];
+        return INFINITY;
+    }
+    const NSTimeInterval time = [series estimatedTimeForAge:_pauseAge];
+    const NSTimeInterval ttl = time - now;
+    DLog(@"%@ -> time=%@ ttl=%@", series, @(time), @(ttl));
+    return ttl;
+}
+
+- (void)update:(NSTimer *)timer {
+    const NSTimeInterval now = [iTermTmuxBufferSizeDataPoint now];
     [_series enumerateKeysAndObjectsUsingBlock:^(NSNumber * _Nonnull wp, iTermTimeSeries * _Nonnull series, BOOL * _Nonnull stop) {
         if (series.count < 4) {
             // Not enough info to make a decision
             return;
         }
-        const NSTimeInterval time = [series estimatedTimeForAge:_pauseAge];
-        const NSTimeInterval ttl = time - now;
-        DLog(@"%@ -> time=%@ ttl=%@", series, @(time), @(ttl));
+        const NSTimeInterval ttl = [self ttlForSeries:series now:now];
         [self maybeWarnPane:wp.intValue ttl:ttl lastTTL:series.lastTTL];
         series.lastTTL = ttl;
     }];
