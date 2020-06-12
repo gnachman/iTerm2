@@ -6831,15 +6831,19 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 // This is called on the main thread when %output is parsed.
-- (void)tmuxReadTask:(NSData *)data latency:(NSNumber *)latency {
+- (void)tmuxReadTask:(NSData *)data windowPane:(int)wp latency:(NSNumber *)latency {
+    if (latency) {
+        [_tmuxController setCurrentLatency:latency.doubleValue forPane:wp];
+    }
+    [[_tmuxController sessionForWindowPane:wp] handleTmuxData:data];
+}
+
+- (void)handleTmuxData:(NSData *)data {
     if (_exited) {
         return;
     }
     if (!_logging.plainText) {
         [_logging logData:data];
-    }
-    if (latency) {
-        [_tmuxController setCurrentLatency:latency.doubleValue forPane:self.tmuxPane];
     }
 
     // Send the bytes from %output in to the write end of a pipe. The data will come out

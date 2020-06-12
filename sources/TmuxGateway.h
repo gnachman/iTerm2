@@ -38,7 +38,7 @@ extern NSString * const kTmuxGatewayErrorDomain;
 - (void)tmuxWindowRenamedWithId:(int)windowId to:(NSString *)newName;
 - (void)tmuxHostDisconnected:(NSString *)dcsID;
 - (void)tmuxWriteString:(NSString *)string;
-- (void)tmuxReadTask:(NSData *)data latency:(NSNumber *)latency;
+- (void)tmuxReadTask:(NSData *)data windowPane:(int)wp latency:(NSNumber *)latency;
 - (void)tmuxSessionChanged:(NSString *)sessionName
 				 sessionId:(int)sessionId;
 - (void)tmuxSessionsChanged;
