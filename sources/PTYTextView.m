@@ -3651,6 +3651,8 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
                        action:@selector(bury:)
                 keyEquivalent:@""];
 
+    [self.delegate textViewAddContextMenuItems:theMenu];
+
     return theMenu;
 }
 

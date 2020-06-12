@@ -357,7 +357,8 @@ error:
         [self abortWithErrorMessage:[NSString stringWithFormat:@"Malformed command (expected %%pause %%wp): \"%@\"", command]];
         return;
     }
-    [delegate_ tmuxWindowPaneDidPause:components[1].intValue];
+    [delegate_ tmuxWindowPaneDidPause:components[1].intValue
+                         notification:YES];
 }
 
 - (void)forceDetach {

@@ -573,7 +573,6 @@ static const NSUInteger kMaxHosts = 100;
     iTermNaggingController *_naggingController;
     iTermComposerManager *_composerManager;
     NSNumber *_lastLibTickitProfileSetting;
-    BOOL _tmuxPaused;
     BOOL _tmuxTTLHasThresholds;
     NSTimeInterval _tmuxTTLLowerThreshold;
     NSTimeInterval _tmuxTTLUpperThreshold;
@@ -6864,12 +6863,12 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     });
 }
 
-- (void)tmuxWindowPaneDidPause:(int)wp {
+- (void)tmuxWindowPaneDidPause:(int)wp notification:(BOOL)notification {
     PTYSession *session = [_tmuxController sessionForWindowPane:wp];
-    [session setTmuxPaused:YES];
+    [session setTmuxPaused:YES allowAutomaticUnpause:notification];
 }
 
-- (void)setTmuxPaused:(BOOL)paused {
+- (void)setTmuxPaused:(BOOL)paused allowAutomaticUnpause:(BOOL)allowAutomaticUnpause {
     if (_tmuxPaused == paused) {
         return;
     }
@@ -6877,21 +6876,26 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     if (paused) {
         _tmuxTTLHasThresholds = NO;
         [self.tmuxController didPausePane:self.tmuxPane];
-        if ([iTermPreferences boolForKey:kPreferenceKeyTmuxUnpauseAutomatically]) {
+        if (allowAutomaticUnpause && [iTermPreferences boolForKey:kPreferenceKeyTmuxUnpauseAutomatically]) {
             __weak __typeof(self) weakSelf = self;
             dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-                [weakSelf setTmuxPaused:NO];
+                [weakSelf setTmuxPaused:NO allowAutomaticUnpause:YES];
             });
             return;
         }
-        [self showTmuxPausedAnnouncement];
+        [self showTmuxPausedAnnouncement:allowAutomaticUnpause];
     } else {
         [self unpauseTmux];
     }
 }
 
-- (void)showTmuxPausedAnnouncement {
-    NSString *title = @"tmux paused this session because too much output was buffered.";
+- (void)showTmuxPausedAnnouncement:(BOOL)notification {
+    NSString *title;
+    if (notification) {
+        title = @"tmux paused this session because too much output was buffered.";
+    } else {
+        title = @"Session paused.";
+    }
 
     [self dismissAnnouncementWithIdentifier:PTYSessionAnnouncementIdentifierTmuxPaused];
     __weak __typeof(self) weakSelf = self;
@@ -6902,11 +6906,11 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                                                 completion:^(int selection) {
         switch (selection) {
             case 0:
-                [weakSelf setTmuxPaused:NO];
+                [weakSelf setTmuxPaused:NO allowAutomaticUnpause:YES];
                 break;
             case 1:
                 [[PreferencePanel sharedInstance] openToPreferenceWithKey:kPreferenceKeyTmuxPauseModeAgeLimit];
-                [weakSelf showTmuxPausedAnnouncement];
+                [weakSelf showTmuxPausedAnnouncement:notification];
                 break;
         }
     }];
@@ -6924,6 +6928,14 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [_screen setAltScreen:altHistory];
     [self setTmuxState:state];
     _view.scrollview.ptyVerticalScroller.userScroll = NO;
+}
+
+- (void)toggleTmuxPausePane {
+    if (_tmuxPaused) {
+        [self setTmuxPaused:NO allowAutomaticUnpause:YES];
+    } else {
+        [_tmuxController pausePanes:@[ @(self.tmuxPane) ]];
+    }
 }
 
 - (void)setTmuxState:(NSDictionary *)state {
@@ -6952,6 +6964,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [self dismissAnnouncementWithIdentifier:PTYSessionAnnouncementIdentifierTmuxPaused];
     [self unzoomIfPossible];
     [_tmuxController unpausePanes:@[ @(self.tmuxPane) ]];
+}
+
+- (void)pauseTmux {
+    [_tmuxController pausePanes:@[ @(self.tmuxPane) ]];
 }
 
 - (void)tmuxSessionChanged:(NSString *)sessionName sessionId:(int)sessionId
@@ -7199,7 +7215,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     if (self.isTmuxClient && _tmuxPaused) {
         // This ignores the monitor filter and subscriptions because it might be the only way to
         // unpause.
-        [self setTmuxPaused:NO];
+        [self setTmuxPaused:NO allowAutomaticUnpause:YES];
         return NO;
     }
     if (_keystrokeSubscriptions.count) {
@@ -9039,6 +9055,24 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 - (id<iTermSwipeHandler>)textViewSwipeHandler {
     return [self.delegate sessionSwipeHandler];
+}
+
+- (void)textViewAddContextMenuItems:(NSMenu *)menu {
+    if (!self.isTmuxClient) {
+        return;
+    }
+    [menu addItem:[NSMenuItem separatorItem]];
+    if (_tmuxPaused) {
+        NSMenuItem *item = [menu addItemWithTitle:@"Unpause tmux Pane" action:@selector(toggleTmuxPaused) keyEquivalent:@""];
+        item.target = self;
+    } else {
+        NSMenuItem *item = [menu addItemWithTitle:@"Pause tmux Pane" action:@selector(toggleTmuxPaused) keyEquivalent:@""];
+        item.target = self;
+    }
+}
+
+- (void)toggleTmuxPaused {
+    [self setTmuxPaused:!_tmuxPaused allowAutomaticUnpause:NO];
 }
 
 - (void)bury {
@@ -13050,7 +13084,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 #pragma mark - iTermTmuxControllerSession
 
-- (void)tmuxControllerSessionSetTTL:(NSTimeInterval)ttl {
+- (void)tmuxControllerSessionSetTTL:(NSTimeInterval)ttl redzone:(BOOL)redzone {
     if (_tmuxPaused) {
         return;
     }
@@ -13074,7 +13108,18 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         _tmuxTTLHasThresholds = YES;
     }
 
-    NSInteger safeTTL = MAX(1, round(ttl));
+    NSTimeInterval rounded = round(ttl);
+    NSInteger safeTTL = 0;
+    if (rounded > NSIntegerMax || rounded != rounded) {
+        safeTTL = NSIntegerMax;
+    } else {
+        safeTTL = MAX(1, rounded);
+    }
+
+    if (!redzone) {
+        [self dismissAnnouncementWithIdentifier:PTYSessionAnnouncementIdentifierTmuxPaused];
+        return;
+    }
     NSString *title = [NSString stringWithFormat:@"This session will pause in about %@ second%@ because it is buffering too much data.", @(safeTTL), safeTTL == 1 ? @"" : @"s"];
     iTermAnnouncementViewController *announcement = [self announcementWithIdentifier:PTYSessionAnnouncementIdentifierTmuxPaused];
     if (announcement) {

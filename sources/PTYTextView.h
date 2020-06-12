@@ -211,6 +211,8 @@ typedef NS_ENUM(NSInteger, PTYCharType) {
 - (CGFloat)textViewBlend;
 - (NSEdgeInsets)textViewExtraMargins;
 - (id<iTermSwipeHandler>)textViewSwipeHandler;
+- (void)textViewAddContextMenuItems:(NSMenu *)menu;
+
 @end
 
 @interface iTermHighlightedRow : NSObject

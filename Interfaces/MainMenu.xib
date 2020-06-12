@@ -260,6 +260,7 @@
                                                 <action selector="forceDetachTmux:" target="-1" id="d8H-zq-jSZ"/>
                                             </connections>
                                         </menuItem>
+                                        <menuItem isSeparatorItem="YES" id="DAw-wn-hTl"/>
                                         <menuItem title="New Tmux Window" alternate="YES" keyEquivalent="N" identifier="tmux.New Tmux Window" id="1455">
                                             <modifierMask key="keyEquivalentModifierMask" control="YES" command="YES"/>
                                             <connections>
@@ -272,6 +273,14 @@
                                                 <action selector="newTmuxTab:" target="-1" id="1453"/>
                                             </connections>
                                         </menuItem>
+                                        <menuItem isSeparatorItem="YES" id="Kge-Ia-xho"/>
+                                        <menuItem title="Pause Pane" alternate="YES" keyEquivalent="P" identifier="tmux.New Tmux Tab" id="Rtn-t8-0OH">
+                                            <modifierMask key="keyEquivalentModifierMask" control="YES" command="YES"/>
+                                            <connections>
+                                                <action selector="toggleTmuxPausePane:" target="-1" id="m3O-yf-6Rt"/>
+                                            </connections>
+                                        </menuItem>
+                                        <menuItem isSeparatorItem="YES" id="R9F-Od-qZO"/>
                                         <menuItem title="Dashboard" alternate="YES" identifier="tmux.Dashboard" id="1461">
                                             <string key="keyEquivalent" base64-UTF8="YES">
 DQ

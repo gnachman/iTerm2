@@ -959,6 +959,24 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     }
 }
 
+- (void)pausePanes:(NSArray<NSNumber *> *)wps {
+    if (!gateway_.pauseModeEnabled) {
+        return;
+    }
+    NSString *adjustments = [[wps mapWithBlock:^id(NSNumber *anObject) {
+        return [NSString stringWithFormat:@"%%%@:pause", anObject];
+    }] componentsJoinedByString:@" "];
+    NSString *command = [NSString stringWithFormat:@"refresh-client -A '%@'", adjustments];
+    [self.gateway sendCommand:command responseTarget:self responseSelector:@selector(didPause:panes:) responseObject:wps flags:0];
+}
+
+- (void)didPause:(NSString *)result panes:(NSArray<NSNumber *> *)wps {
+    for (NSNumber *wp in wps) {
+        [self.gateway.delegate tmuxWindowPaneDidPause:wp.intValue
+                                         notification:NO];
+    }
+}
+
 // Make sure that current tmux options are compatible with iTerm.
 - (void)validateOptions
 {
@@ -2635,12 +2653,13 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
 
 - (void)tmuxBufferSizeMonitor:(iTermTmuxBufferSizeMonitor *)sender
                    updatePane:(int)wp
-                          ttl:(NSTimeInterval)ttl {
+                          ttl:(NSTimeInterval)ttl
+                      redzone:(BOOL)redzone {
     PTYSession<iTermTmuxControllerSession> *session = [self sessionForWindowPane:wp];
     if (!session) {
         return;
     }
-    [session tmuxControllerSessionSetTTL:ttl];
+    [session tmuxControllerSessionSetTTL:ttl redzone:redzone];
 }
 
 @end

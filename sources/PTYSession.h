@@ -541,6 +541,7 @@ backgroundColor:(NSColor *)backgroundColor;
 @property(nonatomic, readonly) NSDictionary *environment;
 @property(nonatomic, readonly) BOOL hasNontrivialJob;
 @property(nonatomic, readonly) iTermExpect *expect;
+@property(nonatomic, readonly) BOOL tmuxPaused;
 
 #pragma mark - methods
 
@@ -769,6 +770,7 @@ backgroundColor:(NSColor *)backgroundColor;
 - (void)setTmuxHistory:(NSArray<NSData *> *)history
             altHistory:(NSArray<NSData *> *)altHistory
                  state:(NSDictionary *)state;
+- (void)toggleTmuxPausePane;
 
 - (void)addNoteAtCursor;
 - (void)addNoteWithText:(NSString *)text inAbsoluteRange:(VT100GridAbsCoordRange)range;

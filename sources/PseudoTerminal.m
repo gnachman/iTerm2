@@ -10074,6 +10074,13 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
         [item action] == @selector(newTmuxTab:) ||
         [item action] == @selector(forceDetachTmux:)) {
         return [[iTermController sharedInstance] haveTmuxConnection];
+    } else if (item.action == @selector(toggleTmuxPausePane:)) {
+        const BOOL ok = (self.currentSession.isTmuxClient &&
+                         self.currentSession.tmuxController.gateway.pauseModeEnabled);
+        if (ok) {
+            item.state = self.currentSession.tmuxPaused ? NSOnState : NSOffState;
+        }
+        return ok;
     } else if ([item action] == @selector(setDefaultToolbeltWidth:)) {
         return _contentView.shouldShowToolbelt;
     } else if ([item action] == @selector(toggleToolbeltVisibility:)) {
@@ -10882,6 +10889,10 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
             }
         }];
     }
+}
+
+- (IBAction)toggleTmuxPausePane:(id)sender {
+    [self.currentSession toggleTmuxPausePane];
 }
 
 #pragma mark - Find

@@ -44,7 +44,7 @@ extern NSString *const iTermTmuxControllerWillKillWindow;
 extern NSString *const kTmuxControllerDidChangeHiddenWindows;
 
 @protocol iTermTmuxControllerSession<NSObject>
-- (void)tmuxControllerSessionSetTTL:(NSTimeInterval)ttl;
+- (void)tmuxControllerSessionSetTTL:(NSTimeInterval)ttl redzone:(BOOL)redzone;
 - (void)revealIfTabSelected;
 @end
 
@@ -125,6 +125,7 @@ extern NSString *const kTmuxControllerDidChangeHiddenWindows;
 - (void)ping;
 - (void)enablePauseModeIfPossible;
 - (void)unpausePanes:(NSArray<NSNumber *> *)wps;
+- (void)pausePanes:(NSArray<NSNumber *> *)wps;
 - (void)didPausePane:(int)wp;
 
 // Issue tmux commands to infer bounds on the version.

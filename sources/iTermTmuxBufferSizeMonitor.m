@@ -189,14 +189,16 @@ static double TimespecToSeconds(struct timespec* ts) {
 }
 
 - (void)maybeWarnPane:(int)wp ttl:(NSTimeInterval)ttl lastTTL:(NSTimeInterval)lastTTL {
-    if (![self shouldWarnPaneWithTTL:ttl lastTTL:lastTTL]) {
+    BOOL redzone = NO;
+    if (![self shouldWarnPaneWithTTL:ttl lastTTL:lastTTL redzone:&redzone]) {
         return;
     }
-    [self.delegate tmuxBufferSizeMonitor:self updatePane:wp ttl:ttl];
+    [self.delegate tmuxBufferSizeMonitor:self updatePane:wp ttl:ttl redzone:redzone];
 }
 
-- (BOOL)shouldWarnPaneWithTTL:(NSTimeInterval)ttl lastTTL:(NSTimeInterval)lastTTL {
+- (BOOL)shouldWarnPaneWithTTL:(NSTimeInterval)ttl lastTTL:(NSTimeInterval)lastTTL redzone:(BOOL *)redzone {
     const BOOL inRedZone = (ttl < _pauseAge / 2);
+    *redzone = inRedZone;
     if (inRedZone) {
         return YES;
     }

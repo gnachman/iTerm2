@@ -15,7 +15,8 @@ NS_ASSUME_NONNULL_BEGIN
 @protocol iTermTmuxBufferSizeMonitorDelegate<NSObject>
 - (void)tmuxBufferSizeMonitor:(iTermTmuxBufferSizeMonitor *)sender
                    updatePane:(int)wp
-                          ttl:(NSTimeInterval)ttl;
+                          ttl:(NSTimeInterval)ttl
+                      redzone:(BOOL)redzone;
 @end
 
 @interface iTermTmuxBufferSizeMonitor : NSObject
