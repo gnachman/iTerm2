@@ -59,9 +59,33 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
 @property (nonatomic, copy) NSString *url;
 @end
 
-@implementation iTermHoverContainerView
+@implementation iTermHoverContainerView {
+    NSVisualEffectView *_vev NS_AVAILABLE_MAC(10_14);
+}
+
+- (instancetype)initWithFrame:(NSRect)frame {
+    self = [super initWithFrame:frame];
+    if (self) {
+        if (@available(macOS 10.14, *)) {
+            const CGFloat radius = 4;
+            _vev = [[NSVisualEffectView alloc] initWithFrame:self.bounds];
+            _vev.wantsLayer = YES;
+            _vev.blendingMode = NSVisualEffectBlendingModeWithinWindow;
+            _vev.material = NSVisualEffectMaterialSheet;
+            _vev.state = NSVisualEffectStateActive;
+            _vev.layer.cornerRadius = radius;
+            [self addSubview:_vev positioned:NSWindowBelow relativeTo:self.subviews.firstObject];
+            _vev.autoresizingMask = (NSViewWidthSizable | NSViewHeightSizable);
+            self.autoresizesSubviews = YES;
+        }
+    }
+    return self;
+}
 
 - (void)drawRect:(NSRect)dirtyRect {
+    if (@available(macOS 10.14, *)) {
+        return;
+    }
     NSBezierPath *path = [NSBezierPath bezierPath];
     NSSize size = self.bounds.size;
     size.width -= 1.5;
@@ -772,6 +796,10 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
         const CGFloat verticalPadding = 4;
         frame.size.width += horizontalPadding * 2;
         frame.size.height += verticalPadding * 2;
+        if (@available(macOS 10.14, *)) {
+            frame.origin.x = 4;
+            frame.origin.y = 4;
+        }
         _hoverURLView.frame = frame;
 
         frame = _hoverURLTextField.frame;
@@ -1214,7 +1242,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
         [_hoverURLTextField setStringValue:url];
         [_hoverURLTextField setAlignment:NSTextAlignmentLeft];
         [_hoverURLTextField setAutoresizingMask:NSViewWidthSizable];
-        [_hoverURLTextField setTextColor:[NSColor headerTextColor]];
+        [_hoverURLTextField setTextColor:[NSColor textColor]];
         _hoverURLTextField.autoresizingMask = NSViewNotSizable;
         [_hoverURLView addSubview:_hoverURLTextField];
         _hoverURLView.frame = _hoverURLTextField.bounds;
