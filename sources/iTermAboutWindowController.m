@@ -73,12 +73,12 @@ static NSString *iTermAboutWindowControllerWhatsNewURLString = @"iterm2://whats-
         [self window];
 
         NSDictionary *versionAttributes = @{ NSForegroundColorAttributeName: [NSColor controlTextColor] };
-        NSAttributedString *bullet = [[[NSAttributedString alloc] initWithString:@" ∙ "
-                                                                      attributes:versionAttributes] autorelease];
+        NSAttributedString *bullet = [[NSAttributedString alloc] initWithString:@" ∙ "
+                                                                     attributes:versionAttributes];
         [_dynamicText setLinkTextAttributes:self.linkTextViewAttributes];
         [[_dynamicText textStorage] deleteCharactersInRange:NSMakeRange(0, [[_dynamicText textStorage] length])];
-        [[_dynamicText textStorage] appendAttributedString:[[[NSAttributedString alloc] initWithString:versionString
-                                                                                            attributes:versionAttributes] autorelease]];
+        [[_dynamicText textStorage] appendAttributedString:[[NSAttributedString alloc] initWithString:versionString
+                                                                                            attributes:versionAttributes]];
         if (whatsNew) {
             [[_dynamicText textStorage] appendAttributedString:whatsNew];
         }
@@ -95,7 +95,7 @@ static NSString *iTermAboutWindowControllerWhatsNewURLString = @"iterm2://whats-
         dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
             NSURL *url = [NSURL URLWithString:@"https://iterm2.com/patrons.txt"];
             NSData *data = [NSData dataWithContentsOfURL:url];
-            NSString *string = [[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding] autorelease];
+            NSString *string = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
             NSArray<NSString *> *patronNames = string.length > 0 ? [string componentsSeparatedByString:@"\n"] : nil;
             patronNames = [patronNames filteredArrayUsingBlock:^BOOL(NSString *name) {
                 return name.length > 0;
@@ -142,8 +142,8 @@ static NSString *iTermAboutWindowControllerWhatsNewURLString = @"iterm2://whats-
 - (NSAttributedString *)defaultPatronsString {
     NSString *string = [NSString stringWithFormat:@"Loading supporters…"];
     NSMutableAttributedString *attributedString =
-        [[[NSMutableAttributedString alloc] initWithString:string
-                                                attributes:self.attributes] autorelease];
+        [[NSMutableAttributedString alloc] initWithString:string
+                                               attributes:self.attributes];
     return attributedString;
 }
 
@@ -153,26 +153,26 @@ static NSString *iTermAboutWindowControllerWhatsNewURLString = @"iterm2://whats-
 
 - (void)setPatrons:(NSArray *)patronNames {
     if (!patronNames.count) {
-        [self setPatronsString:[[[NSAttributedString alloc] initWithString:@"Error loading patrons :("] autorelease] animate:NO];
+        [self setPatronsString:[[NSAttributedString alloc] initWithString:@"Error loading patrons :("
+                                                                attributes:[self attributes]]
+                       animate:NO];
         return;
     }
 
-    NSArray *sortedNames = [patronNames sortedArrayUsingComparator:^NSComparisonResult(id  _Nonnull obj1, id  _Nonnull obj2) {
-        return [[obj1 surname] compare:[obj2 surname]];
-    }];
+    NSArray *sortedNames = [patronNames sortedArrayUsingSelector:@selector(localizedCaseInsensitiveCompare:)];
     NSString *patrons = [sortedNames componentsJoinedWithOxfordComma];
     NSString *string = [NSString stringWithFormat:@"iTerm2 is generously supported by %@ on ", patrons];
     NSDictionary *attributes = [self attributes];
     NSMutableAttributedString *attributedString =
-        [[[NSMutableAttributedString alloc] initWithString:string
-                                                attributes:attributes] autorelease];
+        [[NSMutableAttributedString alloc] initWithString:string
+                                               attributes:attributes];
     NSAttributedString *patreonLink = [self attributedStringWithLinkToURL:@"https://patreon.com/gnachman"
                                                                     title:@"Patreon"];
     [attributedString appendAttributedString:patreonLink];
 
     NSAttributedString *andAttributedString =
-        [[[NSAttributedString alloc] initWithString:@" and "
-                                         attributes:attributes] autorelease];
+        [[NSAttributedString alloc] initWithString:@" and "
+                                        attributes:attributes];
 
     [attributedString appendAttributedString:andAttributedString];
 
@@ -181,7 +181,7 @@ static NSString *iTermAboutWindowControllerWhatsNewURLString = @"iterm2://whats-
     [attributedString appendAttributedString:gitHubSponsorsLink];
 
 
-    NSAttributedString *period = [[[NSAttributedString alloc] initWithString:@"."] autorelease];
+    NSAttributedString *period = [[NSAttributedString alloc] initWithString:@"."];
     [attributedString appendAttributedString:period];
 
     [self setPatronsString:attributedString animate:YES];
@@ -190,8 +190,8 @@ static NSString *iTermAboutWindowControllerWhatsNewURLString = @"iterm2://whats-
 - (NSAttributedString *)attributedStringWithLinkToURL:(NSString *)urlString title:(NSString *)title {
     NSDictionary *linkAttributes = @{ NSLinkAttributeName: [NSURL URLWithString:urlString] };
     NSString *localizedTitle = title;
-    return [[[NSAttributedString alloc] initWithString:localizedTitle
-                                            attributes:linkAttributes] autorelease];
+    return [[NSAttributedString alloc] initWithString:localizedTitle
+                                            attributes:linkAttributes];
 }
 
 #pragma mark - NSTextViewDelegate
