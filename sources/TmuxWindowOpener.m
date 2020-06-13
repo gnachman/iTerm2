@@ -273,7 +273,7 @@ NSString *const kTmuxWindowOpenerWindowOptionStyleValueFullScreen = @"FullScreen
     ++pendingRequests_;
     DLog(@"Increment pending requests to %d", pendingRequests_);
     NSString *maybeN = @"";
-    if ([self.minimumServerVersion compare:[NSDecimalNumber decimalNumberWithString:@"3.1"]] != NSOrderedAscending) {
+    if (self.minimumServerVersion && [self.minimumServerVersion compare:[NSDecimalNumber decimalNumberWithString:@"3.1"]] != NSOrderedAscending) {
         maybeN = @"N";
     }
     NSString *command = [NSString stringWithFormat:@"capture-pane -peqJ%@ %@-t \"%%%d\" -S -%d",

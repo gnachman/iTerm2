@@ -901,7 +901,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
 }
 
 - (void)ping {
-    [gateway_ sendCommand:@"display-message -p -F ."
+    [gateway_ sendCommand:@"refresh-client -fpause-after=0"
            responseTarget:self
          responseSelector:@selector(handlePingResponse:)
            responseObject:nil
