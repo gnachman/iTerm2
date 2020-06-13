@@ -5676,6 +5676,15 @@ ITERM_WEAKLY_REFERENCEABLE
     [self updateForTransparency:self.ptyWindow];
     [self didFinishFullScreenTransitionSuccessfully:YES];
     [self updateVariables];
+    DLog(@"Add dummy view");
+    NSView *dummy = [[[NSView alloc] initWithFrame:NSMakeRect(0, 0, 1, 1)] autorelease];
+    [_contentView addSubview:dummy];
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        DLog(@"Remove dummy view\n%@", [_contentView iterm_recursiveDescription]);
+        [dummy removeFromSuperview];
+        [self repositionWidgets];
+        DLog(@"After removing dummy view\n%@", [_contentView iterm_recursiveDescription]);
+    });
 }
 
 - (void)didFinishFullScreenTransitionSuccessfully:(BOOL)success {
