@@ -517,6 +517,13 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     return root_;
 }
 
+- (NSView *)realRootView {
+    if (flexibleView_) {
+        return flexibleView_;
+    }
+    return root_;
+}
+
 - (BOOL)useSeparateStatusbarsPerPane {
     if (![iTermPreferences boolForKey:kPreferenceKeySeparateStatusBarsPerPane]) {
         return NO;

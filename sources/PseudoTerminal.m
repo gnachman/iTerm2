@@ -11461,14 +11461,14 @@ backgroundColor:(NSColor *)backgroundColor {
 
     NSRect frame = NSZeroRect;
     frame.origin.x = offset;
-    frame.size.width = self.tabs.firstObject.rootView.frame.size.width * self.tabs.count;
-    frame.size.height = self.tabs.firstObject.rootView.frame.size.height;
+    frame.size.width = self.tabs.firstObject.realRootView.frame.size.width * self.tabs.count;
+    frame.size.height = self.tabs.firstObject.realRootView.frame.size.height;
     _swipeContainerView = [[[NSView alloc] initWithFrame:frame] autorelease];
     [self updateUseMetalInAllTabs];
     const CGFloat width = self.swipeHandlerParameters.width;
 
     [self.tabs enumerateObjectsUsingBlock:^(PTYTab * _Nonnull tab, NSUInteger idx, BOOL * _Nonnull stop) {
-        NSView *view = tab.rootView;
+        NSView *view = tab.realRootView;
         NSRect frame = view.frame;
         frame.origin.x = idx * width;
         frame.origin.y = 0;
@@ -11507,8 +11507,8 @@ backgroundColor:(NSColor *)backgroundColor {
 
 - (void)swipeHandlerEndSession:(id)session atIndex:(NSInteger)index {
     self.swipeIdentifier = nil;
-    [_contentView.tabView addSubview:self.currentTab.rootView];
-    self.currentTab.rootView.frame = _contentView.tabView.bounds;
+    [_contentView.tabView addSubview:self.currentTab.realRootView];
+    self.currentTab.realRootView.frame = _contentView.tabView.bounds;
     [_swipeContainerView removeFromSuperview];
     [self updateUseMetalInAllTabs];
     _swipeContainerView = nil;
