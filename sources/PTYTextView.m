@@ -3870,7 +3870,7 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
     NSImage *icon = [imageInfo imageWithCellSize:NSMakeSize(_charWidth, _lineHeight)];
 
     NSData *imageData = imageInfo.data;
-    if (!imageData) {
+    if (!imageData || !icon) {
         return;
     }
 

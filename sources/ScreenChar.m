@@ -281,6 +281,9 @@ void SetDecodedImage(unichar code, iTermImage *image, NSData *data) {
     iTermImageInfo *imageInfo = gImages[@(code)];
     [imageInfo setImageFromImage:image data:data];
     gEncodableImageMap[@(code)] = [imageInfo dictionary];
+    if ([iTermAdvancedSettingsModel restoreWindowContents]) {
+        [NSApp invalidateRestorableState];
+    }
     DLog(@"set decoded image in %@", imageInfo);
 }
 
