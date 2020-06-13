@@ -1682,6 +1682,12 @@ static NSString *const kGridSizeKey = @"Size";
     return self.size;
 }
 
+- (void)setContinuationMarkOnLine:(int)line to:(unichar)code {
+    screen_char_t *chars = [self screenCharsAtLineNumber:line];
+    assert(chars);
+    chars[size_.width].code = code;
+}
+
 #pragma mark - Private
 
 - (NSMutableArray *)linesWithSize:(VT100GridSize)size {

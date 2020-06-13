@@ -3147,8 +3147,25 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     }
 }
 
-- (void)terminalEraseInDisplayBeforeCursor:(BOOL)before afterCursor:(BOOL)after
-{
+
+// Remove soft eol on previous line, provided the cursor is on the first column. This is useful
+// because zsh likes to ED 0 after wrapping around before drawing the prompt. See issue 8938.
+// For consistency, EL uses it, too.
+- (void)removeSoftEOLBeforeCursor {
+    if (currentGrid_.cursor.x != 0) {
+        return;
+    }
+    if (currentGrid_.haveScrollRegion) {
+        return;
+    }
+    if (currentGrid_.cursor.y > 0) {
+        [currentGrid_ setContinuationMarkOnLine:currentGrid_.cursor.y - 1 to:EOL_HARD];
+    } else {
+        [linebuffer_ setPartial:NO];
+    }
+}
+
+- (void)terminalEraseInDisplayBeforeCursor:(BOOL)before afterCursor:(BOOL)after {
     int x1, yStart, x2, y2;
 
     if (before && after) {
@@ -3178,7 +3195,9 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     } else {
         return;
     }
-
+    if (after) {
+        [self removeSoftEOLBeforeCursor];
+    }
     VT100GridRun theRun = VT100GridRunFromCoords(VT100GridCoordMake(x1, yStart),
                                                  VT100GridCoordMake(x2, y2),
                                                  currentGrid_.size.width);
@@ -3203,6 +3222,9 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
         x2 = currentGrid_.size.width - 1;
     } else {
         return;
+    }
+    if (after) {
+        [self removeSoftEOLBeforeCursor];
     }
 
     VT100GridRun theRun = VT100GridRunFromCoords(VT100GridCoordMake(x1, currentGrid_.cursor.y),

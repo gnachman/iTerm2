@@ -957,6 +957,14 @@ int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width, BOOL may
     return is_partial;
 }
 
+- (void)setPartial:(BOOL)partial {
+    if (partial == is_partial) {
+        return;
+    }
+    is_partial = partial;
+    iTermLineBlockDidChange(self);
+}
+
 - (void)shrinkToFit
 {
     [self changeBufferSize: [self rawSpaceUsed]];

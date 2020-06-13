@@ -200,4 +200,6 @@
 - (void)beginResizing;
 - (void)endResizing;
 
+- (void)setPartial:(BOOL)partial;
+
 @end

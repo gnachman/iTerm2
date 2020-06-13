@@ -1233,4 +1233,8 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
     _lineBlocks.resizing = NO;
 }
 
+- (void)setPartial:(BOOL)partial {
+    [_lineBlocks.lastBlock setPartial:partial];
+}
+
 @end
