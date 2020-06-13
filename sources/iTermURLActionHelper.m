@@ -125,7 +125,7 @@
     NSString* escapedString = [trimmedURLString stringByEscapingForURL];
 
     NSURL *url = [NSURL URLWithString:escapedString];
-    [self openURL:url inBackground:background];
+    [self openURL:url inBackground:background workingDirectory:nil];
 }
 
 - (void)downloadFileAtSecureCopyPath:(SCPPath *)scpPath
@@ -200,13 +200,34 @@
 
 // If iTerm2 is the handler for the scheme, then the profile is launched directly.
 // Otherwise it's passed to the OS to launch.
-- (void)openURL:(NSURL *)url inBackground:(BOOL)background {
+- (void)openURL:(NSURL *)url inBackground:(BOOL)background workingDirectory:(NSString *)workingDirectory {
     DLog(@"openURL:%@ inBackground:%@", url, @(background));
 
     Profile *profile = [[iTermLaunchServices sharedInstance] profileForScheme:[url scheme]];
     if (profile) {
         [self.delegate urlActionHelper:self launchProfileInCurrentTerminal:profile withURL:url];
-    } else if (background) {
+        return;
+    }
+    if ([url.scheme isEqualToString:@"file"] && url.fragment) {
+        NSArray<NSString *> *parts = [url.fragment componentsSeparatedByString:@":"];
+        NSString *lineNumber = (parts.count > 0) ? parts[0] : nil;
+        NSString *columnNumber = (parts.count > 1) ? parts[1] : nil;
+        NSDictionary *subs = [self semanticHistorySubstitutionsWithPrefix:@""
+                                                                   suffix:url.path
+                                                                     path:url.path
+                                                         workingDirectory:workingDirectory
+                                                               lineNumber:lineNumber
+                                                             columnNumber:columnNumber];
+        [self.semanticHistoryController openPath:url.path
+                                   orRawFilename:url.path
+                                   substitutions:subs
+                                           scope:[self.delegate urlActionHelperScope:self]
+                                      lineNumber:lineNumber
+                                    columnNumber:columnNumber
+                                      completion:^(BOOL ignore) {}];
+        return;
+    }
+    if (background) {
         [[NSWorkspace sharedWorkspace] openURLs:@[ url ]
                         withAppBundleIdentifier:nil
                                         options:NSWorkspaceLaunchWithoutActivation
@@ -284,7 +305,7 @@
                                            displayName:url.path.lastPathComponent
                                         locationInView:action.range.coordRange];
                 } else {
-                    [self openURL:url inBackground:openInBackground];
+                    [self openURL:url inBackground:openInBackground workingDirectory:action.workingDirectory];
                 }
                 break;
             }

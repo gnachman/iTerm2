@@ -3,6 +3,9 @@ This test originally by Egmont Koblinger. Copied with permission, per https://gi
 [1mTests for ]8;;https://bugzilla.gnome.org/show_bug.cgi?id=779734gnome-terminal #779734]8;; and ]8;;https://gitlab.com/gnachman/iterm2/issues/5158iTerm2 #5158]8;;[m
 ═════════════════════════════════════════════════
 
+File URL:
+]8;;file:///etc/passwd#4:5passwd line 4 column 5]8;;
+
 [33mcommit ]8;;https://git.gnome.org/browse/vte/commit/?id=a9b0b4c75a6dc7282f7cfcaef71413d69f7f0731a9b0b4c75a6dc7282f7cfcaef71413d69f7f0731]8;;[m
 Author: Egmont Koblinger <]8;;mailto:egmont@gmail.comegmont@gmail.com]8;;>
 Date:   Sat Oct 24 00:12:22 2015 +0200

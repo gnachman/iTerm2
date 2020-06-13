@@ -261,6 +261,8 @@ semanticHistoryController:(iTermSemanticHistoryController *)semanticHistoryContr
         DLog(@"Found hypertext url %@", url);
         URLAction *action = [URLAction urlActionToOpenURL:url.absoluteString];
         action.hover = YES;
+        // file: URLs with a fragment go through semantic history and therefore need a workingDirectory.
+        action.workingDirectory = self.workingDirectory;
         action.range = [extractor rangeOfCoordinatesAround:self.coord
                                            maximumDistance:1000
                                                passingTest:^BOOL(screen_char_t *c, VT100GridCoord coord) {
