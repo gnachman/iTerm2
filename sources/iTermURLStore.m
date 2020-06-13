@@ -10,6 +10,8 @@
 
 #import "DebugLogging.h"
 
+#import <Cocoa/Cocoa.h>
+
 @implementation iTermURLStore {
     // { "url": NSURL.absoluteString, "params": NSString } -> @(NSInteger)
     NSMutableDictionary<NSDictionary *, NSNumber *> *_store;
@@ -85,6 +87,7 @@
         _store[key] = number;
         truncatedCode = [iTermURLStore truncatedCodeForCode:number.integerValue];
         _reverseStore[@(truncatedCode)] = @{ @"url": url, @"params": params };
+        [NSApp invalidateRestorableState];
         return truncatedCode;
     } else {
         return [iTermURLStore truncatedCodeForCode:number.integerValue];
