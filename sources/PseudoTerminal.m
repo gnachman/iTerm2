@@ -5858,35 +5858,49 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)windowWillShowInitial {
     PtyLog(@"windowWillShowInitial");
-    iTermTerminalWindow* window = [self ptyWindow];
+    [self assignUniqueNumberToWindow];
+    iTermTerminalWindow *window = [self ptyWindow];
     // If it's a full or top-of-screen window with a screen number preference, always honor that.
     if (_isAnchoredToScreen) {
         PtyLog(@"have screen preference is set");
         NSRect frame = [window frame];
         frame.origin = preferredOrigin_;
         [window setFrame:frame display:NO];
-        return;
     }
     NSUInteger numberOfTerminalWindows = [[[iTermController sharedInstance] terminals] count];
-    if (numberOfTerminalWindows == 1 ||
-        ![iTermPreferences boolForKey:kPreferenceKeySmartWindowPlacement]) {
-        if (!_isAnchoredToScreen &&
-            [iTermAdvancedSettingsModel rememberWindowPositions]) {
-            PtyLog(@"No smart layout");
-            NSRect frame = [window frame];
-            [self assignUniqueNumberToWindow];
-            if ([window setFrameUsingName:[NSString stringWithFormat:kWindowNameFormat, uniqueNumber_]]) {
-                frame.origin = [window frame].origin;
-                frame.origin.y += [window frame].size.height - frame.size.height;
-            } else {
-                frame.origin = preferredOrigin_;
-            }
-            [window setFrame:frame display:NO];
-        }
-    } else {
+    if (numberOfTerminalWindows != 1 &&
+        [iTermPreferences boolForKey:kPreferenceKeySmartWindowPlacement]) {
         PtyLog(@"Invoking smartLayout");
         [window smartLayout];
+        return;
     }
+
+    if (![iTermAdvancedSettingsModel rememberWindowPositions]) {
+        DLog(@"Not remembering window poasitions");
+        return;
+    }
+
+    const int screenNumber = window.screenNumber;
+    [self loadAutoSaveFrame];
+    if (_isAnchoredToScreen && window.screenNumber != screenNumber) {
+        DLog(@"Move window to preferred origin because it moved to another screen.");
+        [window setFrameOrigin:preferredOrigin_];
+    }
+}
+
+- (void)loadAutoSaveFrame {
+    DLog(@"Load auto-save frame");
+    iTermTerminalWindow *window = [self ptyWindow];
+    NSRect frame = [window frame];
+    if ([window setFrameUsingName:[NSString stringWithFormat:kWindowNameFormat, uniqueNumber_]]) {
+        DLog(@"Had an auto save frame of %@", NSStringFromRect(window.frame));
+        frame.origin = [window frame].origin;
+        frame.origin.y += [window frame].size.height - frame.size.height;
+    } else {
+        frame.origin = preferredOrigin_;
+    }
+    DLog(@"Update frame to %@", NSStringFromRect(frame));
+    [window setFrame:frame display:NO];
 }
 
 - (BOOL)sessionInitiatedResize:(PTYSession *)session width:(int)width height:(int)height {
@@ -9985,8 +9999,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 
 // Assign a value to the 'uniqueNumber_' member variable which is used for storing
 // window frame positions between invocations of iTerm.
-- (void)assignUniqueNumberToWindow
-{
+- (void)assignUniqueNumberToWindow {
     uniqueNumber_ = [[TemporaryNumberAllocator sharedInstance] allocateNumber];
 }
 
