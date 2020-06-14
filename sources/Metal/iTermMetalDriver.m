@@ -147,6 +147,7 @@ typedef struct {
     iTermHistogram *_inFlightHistogram;
     MovingAverage *_currentDrawableTime;
     NSInteger _maxFramesInFlight;
+    MTLCaptureDescriptor *_captureDescriptor;
 
     // For client-driven calls through drawAsynchronouslyInView, this will
     // be nonnil and holds the state needed by those calls. Will bet set to nil if the frame will
@@ -230,6 +231,29 @@ typedef struct {
     });
 }
 
+- (void)captureToFile:(NSString *)file
+               device:(nonnull id<MTLDevice>)device NS_AVAILABLE_MAC(10_15) {
+    NSLog(@"Start capture to %@", file);
+    MTLCaptureManager *captureManager = [MTLCaptureManager sharedCaptureManager];
+
+    if (![captureManager supportsDestination: MTLCaptureDestinationGPUTraceDocument]) {
+        NSLog(@"Capture to a GPU trace file is not supported");
+        assert(NO);
+    }
+
+    _captureDescriptor = [[MTLCaptureDescriptor alloc] init];
+    _captureDescriptor.captureObject = device;
+    _captureDescriptor.outputURL = [NSURL fileURLWithPath:file];
+    NSError *error;
+    if (![captureManager startCaptureWithDescriptor:_captureDescriptor error:&error]) {
+        NSLog(@"Failed to start capture: %@", error);
+    }
+    [[NSNotificationCenter defaultCenter] addObserverForName:@"SaveMetalCapture" object:nil queue:nil usingBlock:^(NSNotification * _Nonnull note) {
+        NSLog(@"Stop capture. Save to %@", file);
+        [captureManager stopCapture];
+    }];
+}
+
 - (iTermMetalDriverMainThreadState *)mainThreadState {
     assert([NSThread isMainThread]);
     return &_mainThreadState;
@@ -301,6 +325,12 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
 
 // Called whenever the view needs to render a frame
 - (void)drawInMTKView:(nonnull MTKView *)view {
+    if (!_captureDescriptor) {
+        if (@available(macOS 10.15, *)) {
+            [self captureToFile:[NSString stringWithFormat:@"/tmp/metal-%@.gputrace", [[NSUUID UUID] UUIDString]]
+                         device:view.device];
+        }
+    }
     const NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
     const NSTimeInterval dt = now - _lastFrameStartTime;
     _lastFrameStartTime = now;

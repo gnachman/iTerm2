@@ -937,6 +937,7 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
 }
 
 - (void)mouseDown:(NSEvent *)event {
+    [[NSNotificationCenter defaultCenter] postNotificationName:@"SaveMetalCapture" object:nil];
     [_mouseHandler mouseDown:event superCaller:^{ [super mouseDown:event]; }];
 }
 
