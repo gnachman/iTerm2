@@ -3651,6 +3651,40 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
                        action:@selector(bury:)
                 keyEquivalent:@""];
 
+    // Terminal State
+    [theMenu addItem:[NSMenuItem separatorItem]];
+    NSMenuItem *terminalState = [[[NSMenuItem alloc] initWithTitle:@"Terminal State" action:nil keyEquivalent:@""] autorelease];
+    terminalState.submenu = [[[NSMenu alloc] initWithTitle:@"Terminal State"] autorelease];
+    struct {
+        NSString *title;
+        SEL action;
+    } terminalStateDecls[] = {
+        { @"Alternate Screen", @selector(terminalStateToggleAlternateScreen:) },
+        { nil, nil },
+        { @"Focus Reporting", @selector(terminalStateToggleFocusReporting:) },
+        { @"Mouse Reporting", @selector(terminalStateToggleMouseReporting:) },
+        { @"Paste Bracketing", @selector(terminalStateTogglePasteBracketing:) },
+        { nil, nil },
+        { @"Application Cursor", @selector(terminalStateToggleApplicationCursor:) },
+        { @"Application Keypad", @selector(terminalStateToggleApplicationKeypad:) },
+        { @"Report Modifiers with CSI u", @selector(terminalStateToggleCSIu:) }
+    };
+    NSInteger j = 1;
+    for (size_t i = 0; i < sizeof(terminalStateDecls) / sizeof(*terminalStateDecls); i++) {
+        if (!terminalStateDecls[i].title) {
+            [terminalState.submenu addItem:[NSMenuItem separatorItem]];
+            continue;
+        }
+        NSMenuItem *item = [terminalState.submenu addItemWithTitle:terminalStateDecls[i].title
+                                                            action:terminalStateDecls[i].action
+                                                     keyEquivalent:@""];
+        item.target = self;
+        item.tag = j;
+        j += 1;
+        item.state = [self.delegate textViewTerminalStateForMenuItem:item] ? NSOnState : NSOffState;
+    }
+    [theMenu addItem:terminalState];
+
     [self.delegate textViewAddContextMenuItems:theMenu];
 
     return theMenu;

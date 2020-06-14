@@ -8937,6 +8937,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     return _terminal.softAlternateScreenMode;
 }
 
+// NOTE: Make sure to update both the context menu and the main menu when modifying these.
 - (BOOL)textViewTerminalStateForMenuItem:(NSMenuItem *)menuItem {
     switch (menuItem.tag) {
         case 1:
