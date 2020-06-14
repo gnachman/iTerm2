@@ -150,6 +150,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     iTermFindDriver *_temporaryStatusBarFindDriver;
     iTermGenericStatusBarContainer *_genericStatusBarContainer;
     iTermImageView *_imageView NS_AVAILABLE_MAC(10_14);
+    NSColor *_terminalBackgroundColor;
 
     // For macOS 10.14+ when subpixel AA is turned on and the scroller style is legacy, this draws
     // some blended default background color under the vertical scroller. In all other conditions
@@ -318,6 +319,10 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
 
 - (void)setTerminalBackgroundColor:(NSColor *)color {
     if (@available(macOS 10.14, *)) {
+        if ([NSObject object:_terminalBackgroundColor isEqualToObject:color]) {
+            return;
+        }
+        _terminalBackgroundColor = color;
         [CATransaction begin];
         [CATransaction setDisableActions:YES];
 

@@ -8900,6 +8900,9 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 - (BOOL)textViewShouldDrawRect {
     if (@available(macOS 10.11, *)) {
+        // In issue 8843 we see that sometimes the background color can get out of sync. I can't
+        // figure it out. This patches the problem until I can collect more info.
+        [_view setTerminalBackgroundColor:[self processedBackgroundColor]];
         return !_textview.suppressDrawing;
     } else {
         return YES;
