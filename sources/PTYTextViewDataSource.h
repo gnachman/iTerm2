@@ -26,10 +26,8 @@
 
 - (int)width;
 - (int)numberOfLines;
-// This function is dangerous! It writes to an internal buffer and returns a
-// pointer to it. Better to use getLineAtIndex:withBuffer:.
-- (const screen_char_t *)getLineAtIndex:(int)theIndex;
-- (<iTermScreenCharAttachmentsArray>)attachmentsOnLine:(int)line;
+- (ScreenCharArray *)screenCharArrayOnLine:(int)line;
+- (NSArray<ScreenCharArray *> *)linesInRange:(NSRange)range;
 - (long long)totalScrollbackOverflow;
 
 @end

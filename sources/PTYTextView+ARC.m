@@ -140,7 +140,8 @@ static NSString *const PTYTextViewSmartSelectionActionFailedNotification = @"PTY
         coord.y >= [self.dataSource numberOfLines]) {
         return nil;
     }
-    const screen_char_t *theLine = [self.dataSource getLineAtIndex:coord.y];
+    ScreenCharArray *sca = [self.dataSource screenCharArrayOnLine:coord.y];
+    const screen_char_t *theLine = sca.line;
     if (theLine && theLine[coord.x].image) {
         return GetImageInfo(theLine[coord.x].code);
     } else {

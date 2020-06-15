@@ -205,11 +205,15 @@ NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock)
             metadata_[i].timestamp = [components[j++] doubleValue];
             metadata_[i].number_of_wrapped_lines = 0;
             metadata_[i].generation = LineBlockNextGeneration--;
-            NSData *data = [NSData castFrom:components[j++]];
-            if (data) {
-                metadata_[i].attachments = [[iTermScreenCharAttachmentRunArray alloc] initWithSerialized:data];
+            if (components.count > j) {
+                NSData *data = [NSData castFrom:components[j++]];
+                if (data) {
+                    metadata_[i].attachments = [[iTermScreenCharAttachmentRunArray alloc] initWithSerialized:data];
+                } else {
+                    metadata_[i].attachments = nil;
+                }
             } else {
-                metadata_[i].attachments = NULL;
+                metadata_[i].attachments = nil;
             }
             if (gEnableDoubleWidthCharacterLineCache) {
                 metadata_[i].double_width_characters = nil;

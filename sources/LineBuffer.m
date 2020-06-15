@@ -542,12 +542,15 @@ static int RawNumLines(LineBuffer* buffer, int width) {
                                  width:width
                                  block:
      ^(screen_char_t * _Nonnull chars, int length, int eol, screen_char_t continuation, BOOL * _Nonnull stop) {
-         ScreenCharArray *lineResult = [[[ScreenCharArray alloc] init] autorelease];
-         lineResult.line = chars;
-         lineResult.continuation = continuation;
-         lineResult.length = length;
-         lineResult.eol = eol;
-         [arrays addObject:lineResult];
+        ScreenCharArray *lineResult = [[[ScreenCharArray alloc] init] autorelease];
+        lineResult.line = chars;
+        lineResult.continuation = continuation;
+        lineResult.length = length;
+        if (length < width) {
+            [lineResult padLineToLength:width];
+        }
+        lineResult.eol = eol;
+        [arrays addObject:lineResult];
      }];
     return arrays;
 }

@@ -662,8 +662,12 @@ const NSInteger kLongMaximumWordLength = 100000;
     return [NSString stringWithCharacters:temp length:length];
 }
 
+- (const screen_char_t *)getLineAtIndex:(int)index {
+    return [_dataSource screenCharArrayOnLine:index].line;
+}
+
 - (NSString *)stringForCharacterAt:(VT100GridCoord)location {
-    const screen_char_t *theLine = [_dataSource getLineAtIndex:location.y];
+    const screen_char_t *theLine = [self getLineAtIndex:location.y];
     unichar temp[kMaxParts];
     int length = ExpandScreenChar(theLine + location.x, temp);
     return [NSString stringWithCharacters:temp length:length];
@@ -671,7 +675,7 @@ const NSInteger kLongMaximumWordLength = 100000;
 
 - (NSIndexSet *)indexesOnLine:(int)line containingCharacter:(unichar)c inRange:(NSRange)range {
     const screen_char_t *theLine;
-    theLine = [_dataSource getLineAtIndex:line];
+    theLine = [self getLineAtIndex:line];
     NSMutableIndexSet *indexes = [NSMutableIndexSet indexSet];
     for (int i = range.location; i < range.location + range.length; i++) {
         if (theLine[i].code == c && !theLine[i].complexChar) {
@@ -1086,10 +1090,10 @@ const NSInteger kLongMaximumWordLength = 100000;
     VT100GridCoord coord = start;
     const screen_char_t *theLine;
     int y = coord.y;
-    theLine = [_dataSource getLineAtIndex:coord.y];
+    theLine = [self getLineAtIndex:coord.y];
     while (1) {
         if (y != coord.y) {
-            theLine = [_dataSource getLineAtIndex:coord.y];
+            theLine = [self getLineAtIndex:coord.y];
             y = coord.y;
         }
         BOOL stop = block(theLine[coord.x], coord);
@@ -1624,7 +1628,7 @@ trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
 }
 
 - (BOOL)lineHasSoftEol:(int)y respectContinuations:(BOOL)respectContinuations {
-    const screen_char_t *theLine = [_dataSource getLineAtIndex:y];
+    const screen_char_t *theLine = [self getLineAtIndex:y];
     int width = [_dataSource width];
     int xLimit = [self xLimit];
 
@@ -1750,7 +1754,7 @@ trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
             const int reducedEndX = range.columnWindow.length ? VT100GridWindowedRangeEnd(range).x : range.coordRange.end.x;
             endx = MAX(0, MIN(endx, reducedEndX));
         }
-        const screen_char_t *theLine = [_dataSource getLineAtIndex:y];
+        const screen_char_t *theLine = [self getLineAtIndex:y];
 
         // Count number of nulls at end of line.
         int numNulls = 0;
@@ -1812,7 +1816,7 @@ trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
     for (int y = MIN([_dataSource numberOfLines] - 1, range.coordRange.end.y);
          y >= yLimit;
          y--) {
-        const screen_char_t *theLine = [_dataSource getLineAtIndex:y];
+        const screen_char_t *theLine = [self getLineAtIndex:y];
         int x = initialX;
         int xmin;
         if (y == yLimit) {
@@ -1856,7 +1860,7 @@ trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
 }
 
 - (int)lengthOfLine:(int)line {
-    const screen_char_t *theLine = [_dataSource getLineAtIndex:line];
+    const screen_char_t *theLine = [self getLineAtIndex:line];
     int x;
     for (x = [_dataSource width] - 1; x >= 0; x--) {
         if (theLine[x].code || theLine[x].complexChar) {
@@ -1972,7 +1976,7 @@ trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
     if (_shouldCacheLines && coord.y == _cachedLineNumber && _cachedLine != nil) {
         return _cachedLine[coord.x];
     }
-    const screen_char_t *theLine = [_dataSource getLineAtIndex:coord.y];
+    const screen_char_t *theLine = [self getLineAtIndex:coord.y];
     if (_shouldCacheLines) {
         _cachedLineNumber = coord.y;
         _cachedLine = theLine;

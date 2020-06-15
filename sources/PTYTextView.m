@@ -1792,7 +1792,7 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
         lineEnd = [_dataSource numberOfLines];
     }
     for (int y = lineStart; y < lineEnd; y++) {
-        const screen_char_t *theLine = [_dataSource getLineAtIndex:y];
+        const screen_char_t *theLine = [_dataSource screenCharArrayOnLine:y].line;
         for (int x = 0; x < width; x++) {
             if (theLine[x].blink) {
                 return YES;
@@ -2164,11 +2164,11 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
     VT100GridCoordRange result = range;
     int width = [_dataSource width];
     int lineY = result.start.y;
-    const screen_char_t *line = [_dataSource getLineAtIndex:lineY];
+    const screen_char_t *line = [_dataSource screenCharArrayOnLine:lineY].line;
     while (!VT100GridCoordEquals(result.start, range.end)) {
         if (lineY != result.start.y) {
             lineY = result.start.y;
-            line = [_dataSource getLineAtIndex:lineY];
+            line = [_dataSource screenCharArrayOnLine:lineY].line;
         }
         unichar code = line[result.start.x].code;
         BOOL trim = ((code == 0) ||
@@ -2194,7 +2194,7 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
         }
         if (lineY != y) {
             lineY = y;
-            line = [_dataSource getLineAtIndex:y];
+            line = [_dataSource screenCharArrayOnLine:y].line;
         }
         unichar code = line[x].code;
         BOOL trim = ((code == 0) ||
@@ -3739,7 +3739,7 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
     int firstVisibleLine = [[self enclosingScrollView] documentVisibleRect].origin.y / _lineHeight;
     int width = [_dataSource width];
     for (int y = 0; y < [_dataSource height]; y++) {
-        const screen_char_t *theLine = [_dataSource getLineAtIndex:y + firstVisibleLine];
+        const screen_char_t *theLine = [_dataSource screenCharArrayOnLine:y + firstVisibleLine].line;
         for (int x = 0; x < width; x++) {
             if (theLine && theLine[x].image && GetImageInfo(theLine[x].code) == image) {
                 return YES;
@@ -3879,7 +3879,7 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
 
     VT100GridCoord coord = VT100GridCoordMake((dragPoint.x - [iTermAdvancedSettingsModel terminalMargin]) / _charWidth,
                                               dragPoint.y / _lineHeight);
-    const screen_char_t* theLine = [_dataSource getLineAtIndex:coord.y];
+    const screen_char_t* theLine = [_dataSource screenCharArrayOnLine:coord.y].line;
     if (theLine &&
         coord.x < [_dataSource width] &&
         theLine[coord.x].image &&
@@ -4787,7 +4787,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
             }
         }
 
-        theLine = [_dataSource getLineAtIndex:coord.y];
+        theLine = [_dataSource screenCharArrayOnLine:coord.y].line;
     } while (theLine[coord.x].code == DWC_RIGHT);
     return coord;
 }
@@ -4964,20 +4964,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     return [_dataSource markOnLine:line];
 }
 
-- (const screen_char_t *)drawingHelperLineAtIndex:(int)line {
-    return [_dataSource getLineAtIndex:line];
-}
-
-- (id<iTermScreenCharAttachmentsArray>)drawingHelperAttachmentsOnLine:(int)line {
-    return [_dataSource attachmentsOnLine:line];
-}
-
-- (const screen_char_t *)drawingHelperLineAtScreenIndex:(int)line {
-    return [_dataSource getLineAtScreenIndex:line];
-}
-
-- (const screen_char_t *)drawingHelperCopyLineAtIndex:(int)line toBuffer:(screen_char_t *)buffer {
-    return [_dataSource getLineAtIndex:line withBuffer:buffer];
+- (NSArray<ScreenCharArray *> *)drawingHelperScreenCharArrayInRange:(NSRange)range {
+    return [_dataSource linesInRange:range];
 }
 
 - (iTermTextExtractor *)drawingHelperTextExtractor {
@@ -5287,7 +5275,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (const screen_char_t *)accessibilityHelperLineAtIndex:(int)accessibilityIndex {
-    return [_dataSource getLineAtIndex:[self accessibilityHelperLineNumberForAccessibilityLineNumber:accessibilityIndex]];
+    return [_dataSource screenCharArrayOnLine:[self accessibilityHelperLineNumberForAccessibilityLineNumber:accessibilityIndex]].line;
 }
 
 - (int)accessibilityHelperWidth {

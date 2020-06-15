@@ -14,8 +14,8 @@ static NSString *iTermStringForScreenCharAttachment(const iTermScreenCharAttachm
     if (!att) {
         return @"(null)";
     }
-    return [NSString stringWithFormat:@"ulc=(%d,%d,%d) hasUlc=%d",
-            att->underlineRed, att->underlineGreen, att->underlineBlue, att->hasUnderlineColor];
+    return [NSString stringWithFormat:@"ulc=(%d,%d,%d) ulcMode=%d",
+            att->underlineRed, att->underlineGreen, att->underlineBlue, att->underlineColorMode];
 }
 
 static NSString *iTermStringForScreenCharAttachmentRun(const iTermScreenCharAttachmentRun *run) {
@@ -520,6 +520,10 @@ static iTermScreenCharAttachment gMagicAttachment;
                       fromOffset:(int)sourceOffset
                         toOffset:(int)destOffset
                            count:(int)count {
+    if (!sourceArray) {
+        [_mutableValidAttachments removeIndexesInRange:NSMakeRange(destOffset, count)];
+        return;
+    }
     assert(count >= 0);
     assert(sourceOffset >= 0);
     assert(sourceOffset + count <= sourceArray.count);

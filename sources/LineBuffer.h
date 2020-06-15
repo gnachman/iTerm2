@@ -111,7 +111,6 @@
 - (ScreenCharArray *)wrappedLineAtIndex:(int)lineNum
                                   width:(int)width;
 
-
 // This is the fast way to get a bunch of lines at once.
 - (NSArray<ScreenCharArray *> *)wrappedLinesFromIndex:(int)lineNum
                                                 width:(int)width

@@ -662,7 +662,7 @@ static const NSInteger kUnicodeVersion = 9;
     return _lines.count;
 }
 
-- (screen_char_t *)getLineAtIndex:(int)theIndex {
+- (const screen_char_t *)getLineAtIndex:(int)theIndex {
     if (_buffer) {
         free(_buffer);
     }
@@ -692,5 +692,14 @@ static const NSInteger kUnicodeVersion = 9;
 - (long long)totalScrollbackOverflow {
     return 0;
 }
+
+- (ScreenCharArray *)screenCharArrayOnLine:(int)row {
+    const screen_char_t *line = [self getLineAtIndex:row];
+    return [[[ScreenCharArray alloc] initWithLine:line
+                                           length:self.width
+                                     continuation:line[self.width]
+                                      attachments:nil] autorelease];
+}
+
 
 @end

@@ -211,6 +211,21 @@ iTermTriState iTermTriStateFromBool(BOOL b) {
     return temp;
 }
 
+#warning TEST THIS!!!!!
+- (void)padLineToLength:(int)desiredLength {
+    if (_length >= desiredLength) {
+        return;
+    }
+
+    const size_t size = sizeof(screen_char_t) * (desiredLength + 1);
+    screen_char_t *temp = iTermMalloc(size);
+    memset(temp + _length, 0, sizeof(screen_char_t) * (desiredLength + 1 - _length));
+    memmove(temp, _line, _length * sizeof(screen_char_t));
+    _line = temp;
+    _freeLine = YES;
+    _length = desiredLength;
+}
+
 @end
 
 static void CreateComplexCharMapIfNeeded() {

@@ -137,10 +137,10 @@ static NSInteger VT100LineInfoNextGeneration = 1;
     for (NSUInteger i = 0; i < count; i++) {
         const iTermScreenCharAttachmentRun *run = &runs[i];
         int offset = run->offset;
-        assert(offset + run->length < width_);
+        assert(offset + run->length <= width_);
         // Foreach cell affected by run
         for (int j = 0; j < run->length; j++) {
-            memmove(&outArray[offset + j], &run->attachment, sizeof(run->attachment));
+            outArray[offset + j] = run->attachment;
             [_attachments.mutableValidAttachments addIndex:offset + j];
         }
     }

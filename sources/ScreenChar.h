@@ -219,6 +219,8 @@ typedef struct screen_char_t
 // Copies the internal screen_char_T array and returns a mutable reference to it.
 // This is a safe way to mutate the contents without affecting other references to the same array.
 - (screen_char_t *)makeCopyOfLine;
+- (void)padLineToLength:(int)length;
+
 @end
 
 // Standard unicode replacement string. Is a double-width character.
@@ -232,7 +234,7 @@ static inline NSString* ReplacementString()
 static inline BOOL ScreenCharacterAttributesEqual(const screen_char_t *c1,
                                                   const iTermScreenCharAttachment *a1,
                                                   const screen_char_t *c2,
-                                                  iTermScreenCharAttachment *a2) {
+                                                  const iTermScreenCharAttachment *a2) {
     return (c1->foregroundColor == c2->foregroundColor &&
             c1->fgGreen == c2->fgGreen &&
             c1->fgBlue == c2->fgBlue &&
@@ -250,7 +252,7 @@ static inline BOOL ScreenCharacterAttributesEqual(const screen_char_t *c1,
             c1->strikethrough == c2->strikethrough &&
             !c1->urlCode == !c2->urlCode &&  // Only tests if urlCode is zero/nonzero in both
             c1->image == c2->image &&
-            (a1 == a2) || !(memcmp(a1, a2, sizeof(*a1))));
+            ((a1 == a2) || (a1 != NULL && a2 != NULL && !memcmp(a1, a2, sizeof(*a1)))));
 }
 
 // Copy foreground color from one char to another.

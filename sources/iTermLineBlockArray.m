@@ -9,6 +9,7 @@
 
 #import "DebugLogging.h"
 #import "iTermCumulativeSumCache.h"
+#import "iTermMalloc.h"
 #import "iTermTuple.h"
 #import "LineBlock.h"
 #import "NSArray+iTerm.h"

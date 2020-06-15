@@ -151,7 +151,7 @@ const int kMaxResultContextWords = 4;
 
     int x = [screen cursorX]-2;
     int y = [screen cursorY] + [screen numberOfLines] - [screen height] - 1;
-    const screen_char_t *sct = [screen getLineAtIndex:y];
+    const screen_char_t *sct = [screen screenCharArrayOnLine:y].line;
     [context_ removeAllObjects];
     NSString* charBeforeCursor = ScreenCharToStr(&sct[x]);
     AcLog(@"Char before cursor is '%@'", charBeforeCursor);

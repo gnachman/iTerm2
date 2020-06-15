@@ -925,7 +925,7 @@ static const int kMaxScreenRows = 4096;
                             // 24-bit color
                             if (numberOfSubparameters >= 5) {
                                 // Spec-compliant. Likely rarely used in 2020.
-                                // CSI 48:2:colorspace:R:G:B m
+                                // CSI 58:2:colorspace:R:G:B m
                                 // TODO: Respect the color space argument. See ITU-T Rec. T.414,
                                 // but good luck actually finding the colour space IDs.
                                 [self setHasAttachment:YES];
@@ -935,7 +935,7 @@ static const int kMaxScreenRows = 4096;
                                 _attachment->underlineBlue = subs[4];
                             } else {
                                 // Misinterpretation compliant.
-                                // CSI 48:2:R:G:B m  <- misinterpretation compliant
+                                // CSI 58:2:R:G:B m  <- misinterpretation compliant
                                 [self setHasAttachment:YES];
                                 _attachment->underlineColorMode = iTermUnderlineColorMode24bit;
                                 _attachment->underlineRed = subs[1];

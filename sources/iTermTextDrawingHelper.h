@@ -29,10 +29,7 @@ BOOL CheckFindMatchAtIndex(NSData *findMatches, int index);
 
 - (VT100ScreenMark *)drawingHelperMarkOnLine:(int)line;
 
-- (const screen_char_t *)drawingHelperLineAtIndex:(int)line;
-- (const screen_char_t *)drawingHelperLineAtScreenIndex:(int)line;
-- (const screen_char_t *)drawingHelperCopyLineAtIndex:(int)line toBuffer:(screen_char_t *)buffer;
-- (id<iTermScreenCharAttachmentsArray>)drawingHelperAttachmentsOnLine:(int)line;
+- (NSArray<ScreenCharArray *> *)drawingHelperScreenCharArrayInRange:(NSRange)range;
 
 - (iTermTextExtractor *)drawingHelperTextExtractor;
 

@@ -1759,9 +1759,24 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     return [self getLineAtIndex:theIndex withBuffer:[currentGrid_ resultLine]];
 }
 
-- (<iTermScreenCharAttachmentsArray>)attachmentsOnLine:(int)line {
-TODO: This is going to be really slow when hitting the linebuffer because it'll require a second lookup.
-    It would be better to return a ScreenCharArray.
+- (NSArray<ScreenCharArray *> *)wrappedLinesInRange:(NSRange)range {
+    NSMutableArray<ScreenCharArray *> *result = [NSMutableArray array];
+    const int numLinesInLineBuffer = [linebuffer_ numLinesWithWidth:currentGrid_.size.width];
+    for (NSInteger i = 0; i < range.length; i++) {
+        const int row = (range.location + range.length) - i;
+        if (i >= numLinesInLineBuffer) {
+            [result insertObject:[currentGrid_ screenCharArrayAtLine:row] atIndex:0];
+        } else {
+            NSArray<ScreenCharArray *> *screenCharArrays = [linebuffer_ wrappedLinesFromIndex:range.location
+                                                                                        width:currentGrid_.size.width
+                                                                                        count:range.length - i];
+            NSMutableArray<ScreenCharArray *> *temp = [NSMutableArray array];
+            [temp addObjectsFromArray:screenCharArrays];
+            [temp addObjectsFromArray:result];
+            return temp;
+        }
+    }
+    return result;
 }
 
 // theIndex = 0 for first line in history; for sufficiently large values, it pulls from the current
@@ -1880,6 +1895,10 @@ TODO: This is going to be really slow when hitting the linebuffer because it'll 
         [result addObject:array];
     }
     return result;
+}
+
+- (ScreenCharArray *)screenCharArrayOnLine:(int)line {
+    return [[self linesInRange:NSMakeRange(line, 1)] firstObject];
 }
 
 - (NSArray<ScreenCharArray *> *)historyLinesInRange:(const NSRange)range {

@@ -35,6 +35,7 @@
 #import "NSStringITerm.h"
 #import "PTYFontInfo.h"
 #import "RegexKitLite.h"
+#import "ScreenChar.h"
 #import "VT100ScreenMark.h"
 #import "VT100Terminal.h"  // TODO: Remove this dependency
 
@@ -183,6 +184,8 @@ typedef struct iTermTextColorContext {
     NSMutableDictionary<NSAttributedString *, id> *_replacementLineRefCache;
 
     BOOL _preferSpeedToFullLigatureSupport;
+
+    NSMutableDictionary<NSNumber *, ScreenCharArray *> *_lines;
 }
 
 - (instancetype)init {
@@ -250,6 +253,7 @@ typedef struct iTermTextColorContext {
                         rectCount:(NSInteger)rectCount {
     DLog(@"begin drawRect:%@ in view %@", [NSValue valueWithRect:rect], _delegate);
     iTermPreciseTimerSetEnabled(YES);
+    _lines = [NSMutableDictionary dictionary];
 
     if (_debug) {
         [[NSColor redColor] set];
@@ -279,6 +283,7 @@ typedef struct iTermTextColorContext {
     if (numRowsInRect == 0) {
         return;
     }
+    [self loadScreenCharArraysInRange:NSMakeRange(boundingCoordRange.start.y, numRowsInRect)];
     NSMutableData *store = [NSMutableData dataWithLength:numRowsInRect * sizeof(NSRange)];
     NSRange *ranges = (NSRange *)store.mutableBytes;
     for (int i = 0; i < rectCount; i++) {
@@ -384,7 +389,7 @@ typedef struct iTermTextColorContext {
 
 //        NSLog(@"Draw line %d at %f", line, y);
         NSData *matches = [_delegate drawingHelperMatchesOnLine:line];
-        const screen_char_t *theLine = [self.delegate drawingHelperLineAtIndex:line];
+        const screen_char_t *theLine = [self screenCharsOnLine:line];
         NSIndexSet *selectedIndexes =
             [_selection selectedIndexesIncludingTabFillersInLine:line];
         iTermBackgroundColorRunsInLine *runsInLine =
@@ -1087,8 +1092,9 @@ typedef struct iTermTextColorContext {
                           atY:(CGFloat)y
                backgroundRuns:(NSArray<iTermBoxedBackgroundColorRun *> *)backgroundRuns
                       context:(CGContextRef)ctx {
-    const screen_char_t *theLine = [self.delegate drawingHelperLineAtIndex:line];
-    id<iTermScreenCharAttachmentsArray> attachments = [self.delegate drawingHelperAttachmentsOnLine:line];
+    ScreenCharArray *array = [self screenCharArrayOnLine:line];
+    const screen_char_t *theLine = array.line;
+    id<iTermScreenCharAttachmentsArray> attachments = array.attachments;
 
     NSData *matches = [_delegate drawingHelperMatchesOnLine:line];
     for (iTermBoxedBackgroundColorRun *box in backgroundRuns) {
@@ -2370,7 +2376,7 @@ isEquivalentToCharacter:(const screen_char_t *)pc
     int segmentLength = 0;
     BOOL previousDrawable = YES;
     screen_char_t predecessor = { 0 };
-    const iTermScreenCharAttachment *attachmentsArray = nil;
+    const iTermScreenCharAttachment *attachmentsArray = attachments.attachments;
     const iTermScreenCharAttachment *previousAttachment = nil;
 
     // Only defined if not preferring speed to full ligature support.
@@ -2844,6 +2850,7 @@ isEquivalentToCharacter:(const screen_char_t *)pc
 
             // Draw the characters.
             [self constructAndDrawRunsForLine:buf
+                                  attachments:nil
                                           row:y
                                       inRange:NSMakeRange(i, charsInLine)
                               startingAtPoint:NSMakePoint(x, y)
@@ -3002,12 +3009,8 @@ isEquivalentToCharacter:(const screen_char_t *)pc
 
 - (NSColor *)blockCursorFillColorRespectingSmartSelection {
     if (_useSmartCursorColor) {
-        const screen_char_t *theLine;
-        if (_cursorCoord.y >= 0) {
-            theLine = [self.delegate drawingHelperLineAtScreenIndex:_cursorCoord.y];
-        } else {
-            theLine = [self.delegate drawingHelperLineAtIndex:_cursorCoord.y + _numberOfScrollbackLines];
-        }
+#warning test this with negative and positive cursor coords
+        const screen_char_t *theLine = [self screenCharArrayOnLine:_cursorCoord.y + _numberOfScrollbackLines].line;
         BOOL isDoubleWidth;
         screen_char_t screenChar = [self charForCursorAtColumn:_cursorCoord.x
                                                         inLine:theLine
@@ -3022,12 +3025,8 @@ isEquivalentToCharacter:(const screen_char_t *)pc
 
 - (NSRect)reallyDrawCursor:(iTermCursor *)cursor at:(VT100GridCoord)cursorCoord outline:(BOOL)outline {
     // Get the character that's under the cursor.
-    const screen_char_t *theLine;
-    if (cursorCoord.y >= 0) {
-        theLine = [self.delegate drawingHelperLineAtScreenIndex:cursorCoord.y];
-    } else {
-        theLine = [self.delegate drawingHelperLineAtIndex:cursorCoord.y + _numberOfScrollbackLines];
-    }
+    #warning test this with negative and positive cursor coords
+    const screen_char_t *theLine = [self screenCharsOnLine:_cursorCoord.y + _numberOfScrollbackLines];
     BOOL isDoubleWidth;
     screen_char_t screenChar = [self charForCursorAtColumn:cursorCoord.x
                                                     inLine:theLine
@@ -3324,6 +3323,29 @@ isEquivalentToCharacter:(const screen_char_t *)pc
     }
 }
 
+#pragma mark - Lines
+
+- (const screen_char_t *)screenCharsOnLine:(int)line {
+    ScreenCharArray *array = [self screenCharArrayOnLine:line];
+    return array.line;
+}
+
+- (ScreenCharArray *)screenCharArrayOnLine:(int)line {
+    ScreenCharArray *result = _lines[@(line)];
+    if (result) {
+        return result;
+    }
+    return [[self loadScreenCharArraysInRange:NSMakeRange(line, 1)] firstObject];
+}
+
+- (NSArray<ScreenCharArray *> *)loadScreenCharArraysInRange:(NSRange)range {
+    NSArray<ScreenCharArray *> *arrays = [self.delegate drawingHelperScreenCharArrayInRange:range];
+    [arrays enumerateObjectsUsingBlock:^(ScreenCharArray * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+        self->_lines[@(idx + range.location)] = obj;
+    }];
+    return arrays;
+}
+
 #pragma mark - Other Utility Methods
 
 - (void)updateCachedMetrics {
@@ -3369,8 +3391,8 @@ isEquivalentToCharacter:(const screen_char_t *)pc
     return [iTermSmartCursorColor neighborsForCursorAtCoord:_cursorCoord
                                                    gridSize:_gridSize
                                                  lineSource:^const screen_char_t *(int y) {
-                                                     return [_delegate drawingHelperLineAtScreenIndex:y];
-                                                 }];
+        return [self screenCharsOnLine:y];
+    }];
 }
 
 - (void)cursorDrawCharacterAt:(VT100GridCoord)coord
@@ -3387,8 +3409,9 @@ isEquivalentToCharacter:(const screen_char_t *)pc
     NSRect innerRect = [self rectForCoordRange:coordRange];
     NSRectClip(innerRect);
 
-    const screen_char_t *line = [self.delegate drawingHelperLineAtIndex:row];
-    [self constructAndDrawRunsForLine:line
+    ScreenCharArray *array = [self screenCharArrayOnLine:row];
+    [self constructAndDrawRunsForLine:array.line
+                          attachments:array.attachments
                                   row:row
                               inRange:NSMakeRange(0, _gridSize.width)
                       startingAtPoint:NSMakePoint([iTermAdvancedSettingsModel terminalMargin], row * _cellSize.height)
