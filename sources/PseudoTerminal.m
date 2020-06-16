@@ -5248,17 +5248,19 @@ ITERM_WEAKLY_REFERENCEABLE
         [session updateStatusBarStyle];
     }
     if (@available(macOS 10.14, *)) {
-        if (lionFullScreen_) {
-            [self safelySetStyleMask:self.styleMask | NSWindowStyleMaskFullScreen];
-        } else {
-            NSRect frameBefore = self.window.frame;
-            [self safelySetStyleMask:[self styleMask]];
-            if (!_fullScreen) {
-                // Changing the style mask can cause the frame to change.
-                [self.window setFrame:frameBefore display:YES];
+        if (!togglingLionFullScreen_ && !exitingLionFullscreen_) {
+            if (lionFullScreen_) {
+                [self safelySetStyleMask:self.styleMask | NSWindowStyleMaskFullScreen];
+            } else {
+                NSRect frameBefore = self.window.frame;
+                [self safelySetStyleMask:[self styleMask]];
+                if (!_fullScreen) {
+                    // Changing the style mask can cause the frame to change.
+                    [self.window setFrame:frameBefore display:YES];
+                }
             }
+            [self repositionWidgets];
         }
-        [self repositionWidgets];
     }
     [_contentView invalidateAutomaticTabBarBackingHiding];
 }
