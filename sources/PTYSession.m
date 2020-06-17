@@ -8248,7 +8248,13 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 - (NSEdgeInsets)textViewExtraMargins {
     if (@available(macOS 10.14, *)) {
-        return self.view.extraMargins;
+        NSEdgeInsets margins = self.view.extraMargins;
+        // This is here because of tmux panes. They cause some extra bottom
+        // margins, and the regular -extraMargins code only includes stuff like
+        // the status bar on the bottom. The top margin it produces is still
+        // useful, so we keep that.
+        margins.bottom = _view.scrollview.frame.origin.y;
+        return margins;
     }
     return NSEdgeInsetsZero;
 }
