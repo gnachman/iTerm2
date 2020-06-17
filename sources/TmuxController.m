@@ -1359,7 +1359,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     NSSet<NSString *> *before = state[iTermTmuxControllerSplitStateInitialPanes] ?: [NSSet set];
     NSMutableSet<NSString *> *additions = [[after mutableCopy] autorelease];
     [additions minusSet:before];
-    void (^completion)(BOOL) = state[iTermTmuxControllerSplitStateCompletion];
+    void (^completion)(int) = state[iTermTmuxControllerSplitStateCompletion];
     if (additions.count == 0) {
         completion(-1);
         return;
