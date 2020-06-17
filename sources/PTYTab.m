@@ -3731,16 +3731,13 @@ typedef struct {
                                        targetSizePoints.height - currentSize.height);
     DLog(@"sizeDiff=%@", NSStringFromSize(sizeDiff));
 
-    NSInteger (^roundAwayFromZero)(double) = ^NSInteger(double d) {
-        if (d < 0) {
-            return floor(d);
-        }
-        return ceil(d);
-    };
-
     // The characters growth (+ growth, - shrinkage) needed to attain the target
-    NSSize charsDiff = NSMakeSize(roundAwayFromZero(sizeDiff.width / cellSize.width),
-                                  roundAwayFromZero(sizeDiff.height / cellSize.height));
+    // The rationale for using floor() is this:
+    //  If it needs to grow, we certainly don't want it to be too big. We expect there to be a bit of
+    //  extra margin sometimes.
+    //  If it needs to shrink, we'd rather it shrink too much than to little, for the same reason.
+    NSSize charsDiff = NSMakeSize(floor(sizeDiff.width / cellSize.width),
+                                  floor(sizeDiff.height / cellSize.height));
     DLog(@"charsDiff=%@", NSStringFromSize(charsDiff));
 
     // The character size closest to the target.
