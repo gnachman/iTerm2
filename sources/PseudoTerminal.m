@@ -134,6 +134,7 @@ NSString *const iTermSelectedTabDidChange = @"iTermSelectedTabDidChange";
 NSString *const iTermWindowDidCloseNotification = @"iTermWindowDidClose";
 NSString *const iTermTabDidCloseNotification = @"iTermTabDidClose";
 NSString *const iTermDidCreateTerminalWindowNotification = @"iTermDidCreateTerminalWindowNotification";
+extern NSString *const iTermProcessTypeDidChangeNotification;
 
 static NSString *const kWindowNameFormat = @"iTerm Window %d";
 
@@ -1604,6 +1605,8 @@ ITERM_WEAKLY_REFERENCEABLE
             [aSession terminate];
         }
     }
+    [[NSNotificationCenter defaultCenter] postNotificationName:iTermProcessTypeDidChangeNotification
+    object:nil];
 }
 
 - (PTYTab *)tabForSession:(PTYSession *)session {
@@ -10752,7 +10755,8 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
                 break;
         }
     }
-
+    [[NSNotificationCenter defaultCenter] postNotificationName:iTermProcessTypeDidChangeNotification
+    object:nil];
     return aSession;
 }
 

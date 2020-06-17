@@ -2063,7 +2063,12 @@ static BOOL hasBecomeActive = NO;
 #pragma mark - Private
 
 - (void)updateProcessType {
-    [[iTermApplication sharedApplication] setIsUIElement:[iTermPreferences boolForKey:kPreferenceKeyUIElement]];
+    bool onlyHotKeyWindowsOpen = true;
+    for (PseudoTerminal* term in [self terminals]) {
+        onlyHotKeyWindowsOpen &= [term isHotKeyWindow];
+    }
+    bool isUIElement = [iTermPreferences boolForKey:kPreferenceKeyUIElement];
+    [[iTermApplication sharedApplication] setIsUIElement:isUIElement && onlyHotKeyWindowsOpen];
 }
 
 - (PseudoTerminal *)terminalToOpenFileIn {
