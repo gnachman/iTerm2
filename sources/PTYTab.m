@@ -4394,12 +4394,22 @@ typedef struct {
     }
 }
 
-- (BOOL)layoutIsTooLarge {
+- (BOOL)updatedTmuxLayoutRequiresAdjustment {
     if (!flexibleView_) {
         DLog(@"Not too large because there is no flexible view");
         return NO;
     }
-    DLog(@"root %@ has size %@ vs flexible view %@ with size %@",
+    if ([iTermAdvancedSettingsModel disableTmuxWindowResizing]) {
+        const CGFloat dx = fabs(root_.frame.size.width - flexibleView_.frame.size.width);
+        const CGFloat dy = fabs(root_.frame.size.height - flexibleView_.frame.size.height);
+        const NSSize cellSize = [PTYTab cellSizeForBookmark:[self.tmuxController profileForWindow:self.tmuxWindow]];
+        const BOOL result = dx >= cellSize.width || dy >= cellSize.height;
+        DLog(@"requiresAdjustment=%@ for dx=%@ dy=%@ cellSize=%@ root.frame=%@ flexibleView.frame=%@",
+             @(result), @(dx), @(dy), NSStringFromSize(cellSize), NSStringFromRect(root_.frame),
+             NSStringFromRect(flexibleView_.frame));
+        return result;
+    }
+    DLog(@"Using too-large check only. root %@ has size %@ vs flexible view %@ with size %@",
          root_, NSStringFromSize(root_.frame.size),
          flexibleView_, NSStringFromSize(flexibleView_.frame.size));
     return (root_.frame.size.width > flexibleView_.frame.size.width ||

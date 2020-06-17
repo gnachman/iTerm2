@@ -4349,10 +4349,12 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 
     if (variableWindowSize) {
-        if (tab) {
-            [self fitWindowToTab:tab];
-        } else {
-            [self fitWindowToTabs];
+        if (![iTermAdvancedSettingsModel disableTmuxWindowResizing]) {
+            if (tab) {
+                [self fitWindowToTab:tab];
+            } else {
+                [self fitWindowToTabs];
+            }
         }
     } else {
         [self beginTmuxOriginatedResize];

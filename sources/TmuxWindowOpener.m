@@ -164,7 +164,7 @@ NSString *const kTmuxWindowOpenerWindowOptionStyleValueFullScreen = @"FullScreen
         [tab setTmuxLayout:self.parseTree
             tmuxController:controller_
                     zoomed:_zoomed];
-        if ([tab layoutIsTooLarge]) {
+        if ([tab updatedTmuxLayoutRequiresAdjustment]) {
             DLog(@"layout is too large!");
             // The tab's root splitter is larger than the window's tabview.
             // If there are no outstanding window resizes then setTmuxLayout:tmuxController:
@@ -480,8 +480,8 @@ static int OctalValue(const char *bytes) {
         [tabToUpdate_ setTmuxLayout:parseTree
                      tmuxController:controller_
                              zoomed:@NO];
-        if ([tabToUpdate_ layoutIsTooLarge]) {
-            DLog(@"layout is too large! fit the layout to windows");
+        if ([tabToUpdate_ updatedTmuxLayoutRequiresAdjustment]) {
+            DLog(@"layout requires adjustment! fit the layout to windows");
             [controller_ fitLayoutToWindows];
         }
     } else {

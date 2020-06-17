@@ -209,7 +209,7 @@ extern NSString *const PTYTabVariableTitleOverride;
        tmuxController:(TmuxController *)tmuxController
                zoomed:(NSNumber *)zoomed;
 // Returns true if the tmux layout is too large for the window to accommodate.
-- (BOOL)layoutIsTooLarge;
+- (BOOL)updatedTmuxLayoutRequiresAdjustment;
 - (TmuxController *)tmuxController;
 
 - (void)setTmuxFont:(NSFont *)font
