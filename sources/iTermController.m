@@ -1302,11 +1302,13 @@ static iTermController *gSharedInstance;
 
     [_terminalWindows addObject:terminalWindow];
     [self updateWindowTitles];
+    [[iTermPresentationController sharedInstance] update];
 }
 
 - (void)removeTerminalWindow:(PseudoTerminal *)terminalWindow {
     [_terminalWindows removeObject:terminalWindow];
     [self updateWindowTitles];
+    [[iTermPresentationController sharedInstance] update];
 }
 
 - (PTYSession *)sessionWithGUID:(NSString *)identifier {
