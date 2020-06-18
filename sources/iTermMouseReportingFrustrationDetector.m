@@ -130,4 +130,19 @@ typedef NS_ENUM(NSUInteger, iTermMouseReportingFrustrationDetectorState) {
     }
 }
 
+- (void)didCopyToPasteboardWithControlSequence {
+    switch (_state) {
+        case iTermMouseReportingFrustrationDetectorStatePrimed:
+        case iTermMouseReportingFrustrationDetectorStatePrimedMultiple:
+        case iTermMouseReportingFrustrationDetectorStateMouseDownMultiple:
+        case iTermMouseReportingFrustrationDetectorStateMouseDragged:
+            self.state = iTermMouseReportingFrustrationDetectorStateGround;
+            return;
+
+        case iTermMouseReportingFrustrationDetectorStateGround:
+        case iTermMouseReportingFrustrationDetectorStateMouseDown:
+            break;
+    }
+}
+
 @end

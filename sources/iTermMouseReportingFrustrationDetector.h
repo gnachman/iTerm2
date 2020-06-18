@@ -23,6 +23,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)mouseDragged:(NSEvent *)event reported:(BOOL)reported;
 - (void)otherMouseEvent;
 - (void)keyDown:(NSEvent *)event;
+- (void)didCopyToPasteboardWithControlSequence;
 
 @end
 

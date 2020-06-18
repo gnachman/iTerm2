@@ -745,4 +745,10 @@ static NSString *const PTYTextViewSmartSelectionActionFailedNotification = @"PTY
     }
 }
 
+#pragma mark - Mouse Reporting Frustration Detector
+
+- (void)didCopyToPasteboardWithControlSequence {
+    [_mouseHandler didCopyToPasteboardWithControlSequence];
+}
+
 @end

@@ -83,6 +83,10 @@ iTermURLActionHelperDelegate>
 
 - (IBAction)installShellIntegration:(nullable id)sender;
 
+#pragma mark - Mouse Reporting Frustration Detector
+
+- (void)didCopyToPasteboardWithControlSequence;
+
 @end
 
 NS_ASSUME_NONNULL_END

@@ -11247,6 +11247,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)screenTerminalAttemptedPasteboardAccess {
+    [self.textview didCopyToPasteboardWithControlSequence];
+    if ([iTermPreferences boolForKey:kPreferenceKeyAllowClipboardAccessFromTerminal]) {
+        return;
+    }
     if ([iTermAdvancedSettingsModel noSyncSuppressClipboardAccessDeniedWarning]) {
         return;
     }

@@ -3443,9 +3443,9 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalPasteString:(NSString *)string {
+    [delegate_ screenTerminalAttemptedPasteboardAccess];
     // check the configuration
     if (![iTermPreferences boolForKey:kPreferenceKeyAllowClipboardAccessFromTerminal]) {
-        [delegate_ screenTerminalAttemptedPasteboardAccess];
         return;
     }
 
@@ -4163,11 +4163,10 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalBeginCopyToPasteboard {
+    [delegate_ screenTerminalAttemptedPasteboardAccess];
     if ([iTermPreferences boolForKey:kPreferenceKeyAllowClipboardAccessFromTerminal]) {
         [_copyString release];
         _copyString = [[NSMutableString alloc] init];
-    } else {
-        [delegate_ screenTerminalAttemptedPasteboardAccess];
     }
 }
 

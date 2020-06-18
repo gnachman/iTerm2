@@ -165,6 +165,7 @@ NS_DESIGNATED_INITIALIZER;
 - (void)selectionScrollWillStart;
 - (void)didDragSemanticHistory;
 - (BOOL)mouseReportingAllowedForEvent:(NSEvent *)event;
+- (void)didCopyToPasteboardWithControlSequence;
 
 @end
 

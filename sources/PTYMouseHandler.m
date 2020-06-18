@@ -890,6 +890,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     _semanticHistoryDragged = NO;
 }
 
+- (void)didCopyToPasteboardWithControlSequence {
+    [_mouseReportingFrustrationDetector didCopyToPasteboardWithControlSequence];
+}
+
 #pragma mark - Private
 
 // Emulates a third mouse button event (up or down, based on 'isDown').
