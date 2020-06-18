@@ -901,7 +901,8 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
 }
 
 - (void)ping {
-    [gateway_ sendCommand:@"refresh-client -fpause-after=0"
+    // This command requires tmux 3.2, but if it fails that's OK too.
+    [gateway_ sendCommand:@"refresh-client -fpause-after=0,wait-exit"
            responseTarget:self
          responseSelector:@selector(handlePingResponse:)
            responseObject:nil
@@ -1210,11 +1211,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
 }
 
 - (BOOL)versionAtLeastDecimalNumberWithString:(NSString *)string {
-    NSDecimalNumber *version = [NSDecimalNumber decimalNumberWithString:string];
-    if (gateway_.minimumServerVersion == nil) {
-        return NO;
-    }
-    return ([gateway_.minimumServerVersion compare:version] != NSOrderedAscending);
+    return [gateway_ versionAtLeastDecimalNumberWithString:string];
 }
 
 - (BOOL)recyclingSupported {

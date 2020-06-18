@@ -85,6 +85,8 @@ typedef NS_ENUM(NSInteger, ControlCommand) {
 - (instancetype)initWithDelegate:(id<TmuxGatewayDelegate>)delegate dcsID:(NSString *)dcsID NS_DESIGNATED_INITIALIZER;
 - (instancetype)init NS_UNAVAILABLE;
 
+- (BOOL)versionAtLeastDecimalNumberWithString:(NSString *)string;
+
 // Returns any unconsumed data if tmux mode is exited.
 // The token must be TMUX_xxx.
 - (void)executeToken:(VT100Token *)token;

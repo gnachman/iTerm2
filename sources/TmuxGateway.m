@@ -547,6 +547,14 @@ error:
     }
 }
 
+- (BOOL)versionAtLeastDecimalNumberWithString:(NSString *)string {
+    NSDecimalNumber *version = [NSDecimalNumber decimalNumberWithString:string];
+    if (self.minimumServerVersion == nil) {
+        return NO;
+    }
+    return ([self.minimumServerVersion compare:version] != NSOrderedAscending);
+}
+
 - (void)executeToken:(VT100Token *)token {
     NSString *command = token.string;
     NSData *data = token.savedData;
@@ -645,6 +653,9 @@ error:
         } else if ([command hasPrefix:@"%exit "]) {
             [delegate_ tmuxPrintLine:@"tmux exited unexpectedly."];
             [delegate_ tmuxPrintLine:command];
+        }
+        if ([self versionAtLeastDecimalNumberWithString:@"3.2"]) {
+            [delegate_ tmuxWriteString:NEWLINE];
         }
         [self hostDisconnected];
     } else if ([command hasPrefix:@"%begin"]) {
