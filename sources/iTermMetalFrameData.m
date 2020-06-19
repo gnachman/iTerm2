@@ -465,6 +465,7 @@ static NSInteger gNextFrameDataNumber;
         _cellConfiguration = [[iTermCellRenderConfiguration alloc] initWithViewportSize:self.viewportSize
                                                                                   scale:self.scale
                                                                      hasBackgroundImage:self.hasBackgroundImage
+                                                                           extraMargins:self.extraMargins
                                                                                cellSize:self.cellSize
                                                                               glyphSize:self.glyphSize
                                                                  cellSizeWithoutSpacing:self.cellSizeWithoutSpacing

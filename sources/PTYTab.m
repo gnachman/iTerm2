@@ -4585,6 +4585,7 @@ typedef struct {
     }
     // Dragging looks a lot better if we turn on resizing subviews temporarily.
     _isDraggingSplitInTmuxTab = YES;
+    [self updateUseMetal];
 }
 
 - (void)splitView:(PTYSplitView *)splitView
@@ -4624,6 +4625,7 @@ typedef struct {
                           resizedBy:amount
                        horizontally:[splitView isVertical]];
     }
+    [self updateUseMetal];
 }
 
 // Prevent any session from becoming smaller than its minimum size because of
@@ -5529,6 +5531,8 @@ typedef struct {
         _metalUnavailableReason = reason;
     } else if (_bounceMetal) {
         _metalUnavailableReason = iTermMetalUnavailableReasonScreensChanging;
+    } else if (_isDraggingSplitInTmuxTab) {
+        _metalUnavailableReason = iTermMetalUnavailableReasonSplitPaneBeingDragged;
     } else {
         _metalUnavailableReason = iTermMetalUnavailableReasonNone;
         allowed = YES;

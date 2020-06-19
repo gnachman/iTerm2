@@ -504,8 +504,14 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
         frameData.cellSizeWithoutSpacing = rescale(frameData.perFrameState.cellSizeWithoutSpacing);
         frameData.glyphSize = self.mainThreadState->glyphSize;
         
-        frameData.scale = self.mainThreadState->scale;
+        const CGFloat scale = self.mainThreadState->scale;
+        frameData.scale = scale;
         frameData.hasBackgroundImage = frameData.perFrameState.hasBackgroundImage;
+        const NSEdgeInsets pointInsets = frameData.perFrameState.extraMargins;
+        frameData.extraMargins = NSEdgeInsetsMake(pointInsets.top * scale,
+                                                  pointInsets.left * scale,
+                                                  pointInsets.bottom * scale,
+                                                  pointInsets.right * scale);
     }];
     return frameData;
 }

@@ -202,6 +202,7 @@ typedef NS_ENUM(NSInteger, PTYCharType) {
 - (void)textViewDidUpdateDropTargetVisibility;
 - (void)textViewDidDetectMouseReportingFrustration;
 - (BOOL)textViewCanBury;
+- (NSEdgeInsets)textViewExtraMargins;
 
 @end
 

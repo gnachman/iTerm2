@@ -22,11 +22,13 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @property (nonatomic, readonly) vector_uint2 viewportSize;
 @property (nonatomic, readonly) CGFloat scale;
 @property (nonatomic, readonly) BOOL hasBackgroundImage;
+@property (nonatomic, readonly) NSEdgeInsets extraMargins;
 
 - (instancetype)init NS_UNAVAILABLE;
 - (instancetype)initWithViewportSize:(vector_uint2)viewportSize
                                scale:(CGFloat)scale
-                  hasBackgroundImage:(BOOL)hasBackgroundImage NS_DESIGNATED_INITIALIZER;
+                  hasBackgroundImage:(BOOL)hasBackgroundImage
+                        extraMargins:(NSEdgeInsets)extraMargins NS_DESIGNATED_INITIALIZER;
 @end
 
 NS_CLASS_AVAILABLE(10_11, NA)

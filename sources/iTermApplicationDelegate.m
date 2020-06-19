@@ -2065,6 +2065,8 @@ static BOOL hasBecomeActive = NO;
             return @"the current session has no window (this shouldn't happen).";
         case iTermMetalUnavailableReasonDropTargetsVisible:
             return @"secure copy drop targets are visible.";
+        case iTermMetalUnavailableReasonSplitPaneBeingDragged:
+            return @"a split pane is being dragged.";
     }
 
     return @"of an internal error. Please file a bug report!";

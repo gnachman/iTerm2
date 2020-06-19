@@ -7910,6 +7910,27 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
          includeBottomStatusBar:![iTermPreferences boolForKey:kPreferenceKeySeparateStatusBarsPerPane]];
 }
 
+- (NSEdgeInsets)textViewExtraMargins {
+    if (@available(macOS 10.14, *)) {
+        if (!self.isTmuxClient) {
+            // This is here to minimize risk since 3.3.12 is a bugfix release with minimal beta
+            // exposure. The proper implementation of this thing is on master at
+            // 5f625bd63acd0312eeaf31739df38daf057ca5b7.
+            return NSEdgeInsetsZero;
+        }
+        const NSRect scrollViewFrame = _view.scrollview.frame;
+        const NSRect metalViewFrame = _view.metalView.frame;
+        const CGFloat scrollViewMinY = NSMinY(scrollViewFrame);
+        const CGFloat metalViewMinY = NSMinY(metalViewFrame);
+        // This is here because of tmux panes. They cause some extra bottom
+        // margins, and the regular -extraMargins code only includes stuff like
+        // the status bar on the bottom. The top margin it produces is still
+        // useful, so we keep that.
+        return NSEdgeInsetsMake(0, 0, scrollViewMinY - metalViewMinY, 0);
+    }
+    return NSEdgeInsetsZero;
+}
+
 - (NSImage *)textViewBackgroundImage {
     return _backgroundImage;
 }

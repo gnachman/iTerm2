@@ -31,11 +31,13 @@ NS_CLASS_AVAILABLE(10_11, NA)
 
 - (instancetype)initWithViewportSize:(vector_uint2)viewportSize
                                scale:(CGFloat)scale
-                  hasBackgroundImage:(BOOL)hasBackgroundImage NS_UNAVAILABLE;
+                  hasBackgroundImage:(BOOL)hasBackgroundImage
+                        extraMargins:(NSEdgeInsets)extraMargins NS_UNAVAILABLE;
 
 - (instancetype)initWithViewportSize:(vector_uint2)viewportSize
                                scale:(CGFloat)scale
                   hasBackgroundImage:(BOOL)hasBackgroundImage
+                        extraMargins:(NSEdgeInsets)extraMargins
                             cellSize:(CGSize)cellSize
                            glyphSize:(CGSize)glyphSize
               cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing

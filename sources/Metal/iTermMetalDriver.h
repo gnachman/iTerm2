@@ -69,6 +69,7 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @property (nonatomic, readonly) NSEdgeInsets edgeInsets;
 @property (nonatomic, readonly) BOOL hasBackgroundImage;
 @property (nonatomic, readonly) CGFloat transparencyAlpha;
+@property (nonatomic, readonly) NSEdgeInsets extraMargins;
 
 // Initialize sketchPtr to 0. The number of set bits estimates the unique number of color combinations.
 - (void)metalGetGlyphKeys:(iTermMetalGlyphKey *)glyphKeys
