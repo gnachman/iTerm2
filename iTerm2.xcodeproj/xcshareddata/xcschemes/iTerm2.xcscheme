@@ -85,7 +85,6 @@
       debugXPCServices = "NO"
       migratedStopOnEveryIssue = "YES"
       debugServiceExtension = "internal"
-      enableGPUFrameCaptureMode = "3"
       allowLocationSimulation = "YES"
       GPUProfilerEnabled = "No">
       <BuildableProductRunnable

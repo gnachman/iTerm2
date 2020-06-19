@@ -236,14 +236,14 @@ typedef struct {
     NSLog(@"Start capture to %@", file);
     MTLCaptureManager *captureManager = [MTLCaptureManager sharedCaptureManager];
 
-    if (![captureManager supportsDestination: MTLCaptureDestinationGPUTraceDocument]) {
+    if (![captureManager supportsDestination:MTLCaptureDestinationDeveloperTools]) {
         NSLog(@"Capture to a GPU trace file is not supported");
         assert(NO);
     }
 
     _captureDescriptor = [[MTLCaptureDescriptor alloc] init];
     _captureDescriptor.captureObject = device;
-    _captureDescriptor.outputURL = [NSURL fileURLWithPath:file];
+//    _captureDescriptor.outputURL = [NSURL fileURLWithPath:file];
     NSError *error;
     if (![captureManager startCaptureWithDescriptor:_captureDescriptor error:&error]) {
         NSLog(@"Failed to start capture: %@", error);
