@@ -4889,6 +4889,7 @@ typedef struct {
                           resizedBy:amount
                        horizontally:[splitView isVertical]];
     }
+    [self updateUseMetal];
 }
 
 // Prevent any session from becoming smaller than its minimum size because of
@@ -5802,6 +5803,8 @@ typedef struct {
         _metalUnavailableReason = iTermMetalUnavailableReasonScreensChanging;
     } else if ([self.delegate tabIsSwiping]) {
         _metalUnavailableReason = iTermMetalUnavailableReasonSwipingBetweenTabs;
+    } else if (_isDraggingSplitInTmuxTab) {
+        _metalUnavailableReason = iTermMetalUnavailableReasonSplitPaneBeingDragged;
     } else {
         _metalUnavailableReason = iTermMetalUnavailableReasonNone;
         allowed = YES;

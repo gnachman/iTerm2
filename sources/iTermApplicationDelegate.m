@@ -2029,6 +2029,8 @@ static BOOL hasBecomeActive = NO;
             return @"background images are not per-pane";
         case iTermMetalUnavailableReasonSwipingBetweenTabs:
             return @"swiping between tabs";
+        case iTermMetalUnavailableReasonSplitPaneBeingDragged:
+            return @"a split pane is being dragged.";
     }
 
     return @"of an internal error. Please file a bug report!";
