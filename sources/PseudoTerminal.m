@@ -4645,7 +4645,7 @@ ITERM_WEAKLY_REFERENCEABLE
     NSUInteger styleMask = [PseudoTerminal styleMaskForWindowType:self.windowType
                                                   savedWindowType:self.savedWindowType
                                                  hotkeyWindowType:_hotkeyWindowType];
-    if (self.lionFullScreen) {
+    if (self.lionFullScreen || togglingLionFullScreen_) {
         styleMask |= NSWindowStyleMaskFullScreen;
     }
     DLog(@"Returning style mask of %@", @(styleMask));
