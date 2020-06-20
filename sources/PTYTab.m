@@ -128,6 +128,80 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 @property(nonatomic, strong) NSMapTable<SessionView *, PTYSession *> *viewToSessionMap;
 @end
 
+static NSString* ChangeFlagsToString(CGDisplayChangeSummaryFlags change_flags) {
+    NSString* changeFlagsString = @"ChangeFlags: ";
+
+    if (change_flags & kCGDisplayBeginConfigurationFlag) {
+        changeFlagsString = [changeFlagsString stringByAppendingString:@"kCGDisplayBeginConfigurationFlag "];
+    }
+    if (change_flags & kCGDisplayMovedFlag) {
+        changeFlagsString = [changeFlagsString stringByAppendingString:@"kCGDisplayMovedFlag "];
+    }
+
+    if (change_flags & kCGDisplaySetMainFlag) {
+        changeFlagsString = [changeFlagsString stringByAppendingString:@"kCGDisplaySetMainFlag "];
+    }
+
+    if (change_flags & kCGDisplaySetModeFlag) {
+        changeFlagsString = [changeFlagsString stringByAppendingString:@"kCGDisplaySetModeFlag "];
+    }
+
+    if (change_flags & kCGDisplayAddFlag) {
+        changeFlagsString = [changeFlagsString stringByAppendingString:@"kCGDisplayAddFlag "];
+    }
+
+    if (change_flags & kCGDisplayRemoveFlag) {
+        changeFlagsString = [changeFlagsString stringByAppendingString:@"kCGDisplayRemoveFlag "];
+    }
+
+    if (change_flags & kCGDisplayEnabledFlag) {
+        changeFlagsString = [changeFlagsString stringByAppendingString:@"kCGDisplayEnabledFlag "];
+    }
+
+    if (change_flags & kCGDisplayDisabledFlag) {
+        changeFlagsString = [changeFlagsString stringByAppendingString:@"kCGDisplayDisabledFlag "];
+    }
+
+    if (change_flags & kCGDisplayMirrorFlag) {
+        changeFlagsString = [changeFlagsString stringByAppendingString:@"kCGDisplayMirrorFlag "];
+    }
+
+    if (change_flags & kCGDisplayUnMirrorFlag) {
+        changeFlagsString = [changeFlagsString stringByAppendingString:@"kCGDisplayUnMirrorFlag "];
+    }
+    if (change_flags & kCGDisplayDesktopShapeChangedFlag) {
+        changeFlagsString = [changeFlagsString stringByAppendingString:@"kCGDisplayDesktopShapeChangedFlag "];
+    }
+
+    return changeFlagsString;
+}
+
+static NSNotificationName const iTermScreenParametersDidChangeNontrivally = @"iTermScreenParametersDidChangeNontrivally";
+static BOOL gShouldPostNontrivialScreenParametersChange;
+static void PTYTabDisplayReconfigurationCallback(CGDirectDisplayID display,
+                                                 CGDisplayChangeSummaryFlags flags,
+                                                 void *userInfo) {
+    NSLog(@"CB for displayId: 0x%x - Flags: %@", display, ChangeFlagsToString(flags));
+    const CGDisplayChangeSummaryFlags mask = (kCGDisplaySetModeFlag |
+                                              kCGDisplayAddFlag |
+                                              kCGDisplayRemoveFlag |
+                                              kCGDisplayEnabledFlag |
+                                              kCGDisplayDisabledFlag |
+                                              kCGDisplayMirrorFlag |
+                                              kCGDisplayUnMirrorFlag |
+                                              kCGDisplayDesktopShapeChangedFlag);
+    if (flags & mask) {
+        gShouldPostNontrivialScreenParametersChange = YES;
+        dispatch_async(dispatch_get_main_queue(), ^{
+            if (gShouldPostNontrivialScreenParametersChange) {
+                gShouldPostNontrivialScreenParametersChange = NO;
+                [[NSNotificationCenter defaultCenter] postNotificationName:iTermScreenParametersDidChangeNontrivally
+                                                                    object:nil];
+            }
+        });
+    }
+}
+
 @implementation PTYTab {
     int _activityCounter;
     int _uniqueId;
@@ -439,12 +513,16 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                                                object:nil];
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(screenParametersDidChange:)
-                                                 name:NSApplicationDidChangeScreenParametersNotification
+                                                 name:iTermScreenParametersDidChangeNontrivally
                                                object:nil];
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(tmuxDidFetchSetTitlesStringOption:)
                                                  name:kTmuxControllerDidFetchSetTitlesStringOption
                                                object:nil];
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        CGDisplayRegisterReconfigurationCallback(PTYTabDisplayReconfigurationCallback, nil);
+    });
     [iTermPreferenceDidChangeNotification subscribe:self selector:@selector(preferenceDidChange:)];
     _tabTitleOverrideSwiftyString = [[iTermSwiftyString alloc] initWithScope:self.variablesScope
                                                                   sourcePath:iTermVariableKeyTabTitleOverrideFormat

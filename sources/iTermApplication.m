@@ -76,6 +76,10 @@ static const char *iTermApplicationKVOKey = "iTermApplicationKVOKey";
 @implementation iTermApplication {
     BOOL _it_characterPanelIsOpen;
     BOOL _it_characterPanelShouldOpenSoon;
+    // Are we within one spin of didBecomeActive?
+    BOOL _it_justBecameActive;
+    // Have we received didBecomeActive without a subsequent didResignActive?
+    BOOL _it_active;
 }
 
 - (void)dealloc {
@@ -107,6 +111,10 @@ static const char *iTermApplicationKVOKey = "iTermApplicationKVOKey";
                                                  selector:@selector(it_applicationDidBecomeActive:)
                                                      name:NSApplicationDidBecomeActiveNotification
                                                    object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:sharedApplication
+                                                 selector:@selector(it_applicationDidResignActive:)
+                                                     name:NSApplicationDidResignActiveNotification
+                                                   object:nil];
 
     });
     return sharedApplication;
@@ -131,12 +139,21 @@ static const char *iTermApplicationKVOKey = "iTermApplicationKVOKey";
     }
 }
 
+- (void)it_applicationDidResignActive:(NSNotification *)notification {
+    _it_active = NO;
+}
+
 - (void)it_applicationDidBecomeActive:(NSNotification *)notification {
+    _it_active = YES;
     _it_justBecameActive = YES;
     __weak __typeof(self) weakSelf = self;
     dispatch_async(dispatch_get_main_queue(), ^{
         [weakSelf it_resetJustBecameActive];
     });
+}
+
+- (BOOL)it_justBecameActive {
+    return _it_justBecameActive || (self.isActive && !_it_active);
 }
 
 - (void)it_resetJustBecameActive {
