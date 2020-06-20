@@ -11,6 +11,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 @class iTermPresentationController;
 
+extern NSNotificationName const iTermScreenParametersDidChangeNontrivally;
+
 @protocol iTermPresentationControllerManagedWindowController<NSObject>
 - (BOOL)presentationControllerManagedWindowControllerIsFullScreen:(out BOOL *)lionFullScreen;
 - (NSWindow *)presentationControllerManagedWindowControllerWindow;

@@ -12,6 +12,36 @@
 #import "NSArray+iTerm.h"
 #import "NSScreen+iTerm.h"
 
+// macOS sends a *LOT* of screenParametersDidChange notifications for all kinds of unexpected reasons.
+// For example, changing desktops will do it. So will miniaturizing. I've even seen it simply because
+// the app got activated. We need to destroy and re-create metal views when a display is detached
+// and re-attached. That is rare compared to all the other stuff. This is an attempt to detect
+// screen removal/additions. There are still a lot of false positives, but maybe it will help.
+// This doesn't really belong in this file but I don't have a better place for it yet.
+NSNotificationName const iTermScreenParametersDidChangeNontrivally = @"iTermScreenParametersDidChangeNontrivally";
+static _Atomic int gShouldPostNontrivialScreenParametersChange;
+static void iTermDisplayReconfigurationCallback(CGDirectDisplayID display,
+                                                CGDisplayChangeSummaryFlags flags,
+                                                void *userInfo) {
+    DLog(@"iTermDisplayReconfigurationCallback display=%@ flags=%@", @(display), @(flags));
+    if (gShouldPostNontrivialScreenParametersChange) {
+        return;
+    }
+    const CGDisplayChangeSummaryFlags mask = kCGDisplayAddFlag;
+    if (flags & mask) {
+        gShouldPostNontrivialScreenParametersChange = YES;
+        DLog(@"Set needs iTermScreenParametersDidChangeNontrivally");
+        dispatch_async(dispatch_get_main_queue(), ^{
+            if (gShouldPostNontrivialScreenParametersChange) {
+                gShouldPostNontrivialScreenParametersChange = NO;
+                DLog(@"Post iTermScreenParametersDidChangeNontrivally");
+                [[NSNotificationCenter defaultCenter] postNotificationName:iTermScreenParametersDidChangeNontrivally
+                                                                    object:nil];
+            }
+        });
+    }
+}
+
 @implementation iTermPresentationController {
     NSScreen *_lastScreen;
 
@@ -41,6 +71,10 @@
                                                  selector:@selector(screenParametersDidChange:)
                                                      name:NSApplicationDidChangeScreenParametersNotification
                                                    object:nil];
+        static dispatch_once_t onceToken;
+        dispatch_once(&onceToken, ^{
+            CGDisplayRegisterReconfigurationCallback(iTermDisplayReconfigurationCallback, nil);
+        });
     }
     return self;
 }
