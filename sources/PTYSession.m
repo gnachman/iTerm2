@@ -526,10 +526,6 @@ static const NSUInteger kMaxHosts = 100;
     iTermMetalGlue *_metalGlue NS_AVAILABLE_MAC(10_11);
 
     int _updateCount;
-    BOOL _metalFrameChangePending;
-    int _nextMetalDisabledToken;
-    NSMutableSet *_metalDisabledTokens;
-    BOOL _metalDeviceChanging;
 
     iTermVariables *_userVariables;
     iTermSwiftyString *_badgeSwiftyString;
@@ -716,7 +712,6 @@ static const NSUInteger kMaxHosts = 100;
         _updateSubscriptions = [[NSMutableDictionary alloc] init];
         _promptSubscriptions = [[NSMutableDictionary alloc] init];
         _customEscapeSequenceNotifications = [[NSMutableDictionary alloc] init];
-        _metalDisabledTokens = [[NSMutableSet alloc] init];
         _statusChangedAbsLine = -1;
         _nameController = [[iTermSessionNameController alloc] init];
         _nameController.delegate = self;
@@ -888,7 +883,6 @@ ITERM_WEAKLY_REFERENCEABLE
     [_customEscapeSequenceNotifications release];
 
     [_copyModeHandler release];
-    [_metalDisabledTokens release];
     [_badgeSwiftyString release];
     [_autoNameSwiftyString release];
     [_statusBarViewController release];
@@ -5664,12 +5658,6 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         }
         return NO;
     }
-    if (_metalDeviceChanging) {
-        if (reason) {
-            *reason = iTermMetalUnavailableReasonInitializing;
-        }
-        return NO;
-    }
     if (![self metalViewSizeIsLegal]) {
         if (reason) {
             *reason = iTermMetalUnavailableReasonInvalidSize;
@@ -5682,26 +5670,13 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         }
         return NO;
     }
-    if (_textview.drawingHelper.showDropTargets) {
-        if (reason) {
-            *reason = iTermMetalUnavailableReasonDropTargetsVisible;
-        }
-        return NO;
-    }
-    if ([[iTermController sharedInstance] terminalIsObscured:_delegate.realParentWindow threshold:0.5]) {
+    if (![[iTermApplication sharedApplication] it_justBecameActive] &&
+        [[iTermController sharedInstance] terminalIsObscured:_delegate.realParentWindow threshold:0.5]) {
         if (reason) {
             *reason = iTermMetalUnavailableReasonWindowObscured;
         }
         return NO;
     }
-    if ([PTYNoteViewController anyNoteVisible]) {
-        // When metal is enabled the note's superview (PTYTextView) has alphaValue=0 so it will not be visible.
-        if (reason) {
-            *reason = iTermMetalUnavailableReasonAnnotations;
-        }
-        return NO;
-    }
-    
     if (![iTermPreferences boolForKey:kPreferenceKeyPerPaneBackgroundImage]) {
         if (reason) {
             *reason = iTermMetalUnavailableReasonSharedBackgroundImage;
@@ -5841,7 +5816,6 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
             // wrapper.useMetal becomes YES after the first frame is done drawing
         } else {
             _wrapper.useMetal = NO;
-            [_metalDisabledTokens removeAllObjects];
             if (_metalContext) {
                 // If metal is re-enabled later, it must not use the same context.
                 // It's possible that a metal driver thread has survived this point
@@ -5854,46 +5828,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         [_cadenceController changeCadenceIfNeeded];
 
         if (useMetal) {
-            [self renderTwoMetalFramesAndShowMetalView];
+            [self showMetalViewImmediately];
         } else {
             _view.metalView.enableSetNeedsDisplay = NO;
         }
-    }
-}
-
-- (void)renderTwoMetalFramesAndShowMetalView NS_AVAILABLE_MAC(10_11) {
-    // The first frame will be slow to draw. The second frame will be very
-    // recent to minimize jitter. For reasons I haven't understood yet it seems
-    // the first frame is sometimes transparent. I haven't seen that issue with
-    // the second frame yet.
-    [self renderMetalFramesAndShowMetalView:2];
-}
-
-- (void)renderMetalFramesAndShowMetalView:(NSInteger)count {
-    if (_useMetal) {
-        DLog(@"Begin async draw %@ for %@", @(count), self);
-        [_view.driver drawAsynchronouslyInView:_view.metalView completion:^(BOOL ok) {
-            if (!_useMetal || _exited) {
-                DLog(@"Finished async draw but metal off/exited for %@", self);
-                return;
-            }
-
-            if (!ok) {
-                DLog(@"Finished async draw NOT OK for %@", self);
-                // Wait 10ms to avoid burning CPU if it failed because it's slow to draw the first frame.
-                dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.01 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-                    [self renderMetalFramesAndShowMetalView:count];
-                });
-                return;
-            }
-
-            if (count <= 1) {
-                DLog(@"Finished async draw ok for %@", self);
-                [self showMetalViewImmediately];
-            } else {
-                [self renderMetalFramesAndShowMetalView:count - 1];
-            }
-        }];
     }
 }
 
@@ -5942,6 +5880,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
             _view.scrollview.contentView.alphaValue = 0;
         }
     }
+    [_view drawMetalSynchronously];
     [self setMetalViewAlphaValue:1];
 }
 
@@ -6043,6 +5982,9 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                   asciiOffset:asciiOffset
                         scale:_view.window.screen.backingScaleFactor
                       context:_metalContext];
+    if (_view.metalView) {
+        [_view drawMetalSynchronously];
+    }
 }
 
 - (void)retryMetalAfterContextAllocationFailure {
@@ -11778,121 +11720,6 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 - (void)sessionViewAnnouncementDidChange:(SessionView *)sessionView {
     [self.delegate sessionUpdateMetalAllowed];
-}
-
-- (id)temporarilyDisableMetal NS_AVAILABLE_MAC(10_11) {
-    assert(_useMetal);
-    _wrapper.useMetal = NO;
-    _textview.suppressDrawing = NO;
-    if (@available(macOS 10.14, *)) {
-        if (PTYScrollView.shouldDismember) {
-            _view.scrollview.alphaValue = 1;
-        } else {
-            _view.scrollview.contentView.alphaValue = 1;
-        }
-    }
-    [self setMetalViewAlphaValue:0];
-    id token = @(_nextMetalDisabledToken++);
-    [_metalDisabledTokens addObject:token];
-    DLog(@"temporarilyDisableMetal return new token=%@ %@", token, self);
-    return token;
-}
-
-- (void)drawFrameAndRemoveTemporarilyDisablementOfMetalForToken:(id)token NS_AVAILABLE_MAC(10_11) {
-    DLog(@"drawFrameAndRemoveTemporarilyDisablementOfMetal %@", token);
-    if (!_useMetal) {
-        DLog(@"drawFrameAndRemoveTemporarilyDisablementOfMetal returning early because useMetal is off");
-        return;
-    }
-    if ([_metalDisabledTokens containsObject:token]) {
-        DLog(@"drawFrameAndRemoveTemporarilyDisablementOfMetal: Found token %@", token);
-        if (_metalDisabledTokens.count > 1) {
-            [_metalDisabledTokens removeObject:token];
-            DLog(@"drawFrameAndRemoveTemporarilyDisablementOfMetal: There are still other tokens remaining: %@", _metalDisabledTokens);
-            return;
-        }
-    } else {
-        DLog(@"drawFrameAndRemoveTemporarilyDisablementOfMetal: Bogus token %@", token);
-        return;
-    }
-
-    DLog(@"drawFrameAndRemoveTemporarilyDisablementOfMetal beginning async draw");
-    [_view.driver drawAsynchronouslyInView:_view.metalView completion:^(BOOL ok) {
-        DLog(@"drawFrameAndRemoveTemporarilyDisablementOfMetal drawAsynchronouslyInView finished wtih ok=%@", @(ok));
-        if (![_metalDisabledTokens containsObject:token]) {
-            DLog(@"drawFrameAndRemoveTemporarilyDisablementOfMetal: Token %@ is gone, not proceeding.", token);
-            return;
-        }
-        if (_exited) {
-            DLog(@"drawFrameAndRemoveTemporarilyDisablementOfMetal: Returning because the session is dead");
-            return;
-        }
-        if (!_useMetal) {
-            DLog(@"drawFrameAndRemoveTemporarilyDisablementOfMetal: Returning because useMetal is off");
-            return;
-        }
-        if (!ok) {
-            DLog(@"drawFrameAndRemoveTemporarilyDisablementOfMetal: Schedule drawFrameAndRemoveTemporarilyDisablementOfMetal to run after a spin of the mainloop");
-            if (!_delegate) {
-                [self setUseMetal:NO];
-                return;
-            }
-            dispatch_async(dispatch_get_main_queue(), ^{
-                if (![_metalDisabledTokens containsObject:token]) {
-                    DLog(@"drawFrameAndRemoveTemporarilyDisablementOfMetal: [after a spin of the runloop] Token %@ is gone, not proceeding.", token);
-                    return;
-                }
-                [self drawFrameAndRemoveTemporarilyDisablementOfMetalForToken:token];
-            });
-            return;
-        }
-
-        assert([_metalDisabledTokens containsObject:token]);
-        [_metalDisabledTokens removeObject:token];
-        DLog(@"drawFrameAndRemoveTemporarilyDisablementOfMetal: Remove temporarily disablement. Tokens are now %@", _metalDisabledTokens);
-        if (_metalDisabledTokens.count == 0 && _useMetal) {
-            [self reallyShowMetalViewImmediately];
-        }
-    }];
-}
-
-
-- (void)sessionViewNeedsMetalFrameUpdate {
-    DLog(@"sessionViewNeedsMetalFrameUpdate %@", self);
-    if (@available(macOS 10.11, *)) {
-        if (_metalFrameChangePending) {
-            DLog(@"sessionViewNeedsMetalFrameUpdate frame change pending, return");
-            return;
-        }
-
-        _metalFrameChangePending = YES;
-        id token = [self temporarilyDisableMetal];
-        [self.textview setNeedsDisplay:YES];
-        dispatch_async(dispatch_get_main_queue(), ^{
-            DLog(@"sessionViewNeedsMetalFrameUpdate %@ in dispatch_async", self);
-            _metalFrameChangePending = NO;
-            [_view reallyUpdateMetalViewFrame];
-            DLog(@"sessionViewNeedsMetalFrameUpdate will draw farme and remove disablement");
-            [self drawFrameAndRemoveTemporarilyDisablementOfMetalForToken:token];
-        });
-    }
-}
-
-- (void)sessionViewRecreateMetalView {
-    if (@available(macOS 10.11, *)) {
-        if (_metalDeviceChanging) {
-            return;
-        }
-        DLog(@"sessionViewRecreateMetalView metalDeviceChanging<-YES");
-        _metalDeviceChanging = YES;
-        [self.textview setNeedsDisplay:YES];
-        [_delegate sessionUpdateMetalAllowed];
-        dispatch_async(dispatch_get_main_queue(), ^{
-            _metalDeviceChanging = NO;
-            DLog(@"sessionViewRecreateMetalView metalDeviceChanging<-NO");
-            [_delegate sessionUpdateMetalAllowed];
-        });
-    }
 }
 
 - (void)sessionViewUserScrollDidChange:(BOOL)userScroll {

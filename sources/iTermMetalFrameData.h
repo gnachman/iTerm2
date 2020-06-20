@@ -141,6 +141,7 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @property (nonatomic, strong) id<MTLCommandBuffer> commandBuffer;
 @property (nonatomic, strong) id<MTLRenderCommandEncoder> renderEncoder;
 @property (nonatomic, strong) dispatch_group_t group;  // nonnil implies synchronous
+@property (nonatomic) BOOL leaveGroupAfterPresent;
 @property (nonatomic) BOOL hasManyColorCombos;
 @property (nonatomic) BOOL deferCurrentDrawable;
 #if ENABLE_UNFAMILIAR_TEXTURE_WORKAROUND

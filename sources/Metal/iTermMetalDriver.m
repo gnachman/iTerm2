@@ -42,6 +42,7 @@
 @property (nonatomic, strong) dispatch_group_t group;
 @property (nonatomic) BOOL aborted;
 @property (nonatomic) int count;
+@property (nonatomic) BOOL leaveGroupAfterPresent;
 @end
 
 @implementation iTermMetalDriverAsyncContext
@@ -372,22 +373,31 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     return _maxFramesInFlight;
 }
 
-- (iTermMetalDriverAsyncContext *)newContextForDrawInView:(MTKView *)view count:(int)count {
+- (iTermMetalDriverAsyncContext *)newContextForDrawInView:(MTKView *)view count:(int)count synchronous:(BOOL)sync {
     iTermMetalDriverAsyncContext *context = [[iTermMetalDriverAsyncContext alloc] init];
     _context = context;
     context.count = count;
     context.group = dispatch_group_create();
+    context.leaveGroupAfterPresent = sync;
     dispatch_group_enter(context.group);
     [view draw];
 
     return context;
 }
 
+- (void)drawSynchronouslyInView:(MTKView *)view {
+    static _Atomic int count;
+    int thisCount = atomic_fetch_add_explicit(&count, 1, memory_order_relaxed);
+    DLog(@"Start asynchronous draw of %@ count=%d", view, thisCount);
+    iTermMetalDriverAsyncContext *context = [self newContextForDrawInView:view count:count synchronous:YES];
+    dispatch_group_wait(context.group, DISPATCH_TIME_FOREVER);
+}
+
 - (void)drawAsynchronouslyInView:(MTKView *)view completion:(void (^)(BOOL))completion {
     static _Atomic int count;
     int thisCount = atomic_fetch_add_explicit(&count, 1, memory_order_relaxed);
     DLog(@"Start asynchronous draw of %@ count=%d", view, thisCount);
-    iTermMetalDriverAsyncContext *context = [self newContextForDrawInView:view count:count];
+    iTermMetalDriverAsyncContext *context = [self newContextForDrawInView:view count:count synchronous:NO];
     dispatch_group_notify(context.group, dispatch_get_main_queue(), ^{
         DLog(@"Asynchronous draw of %@ completed count=%d", view, thisCount);
         completion(!context.aborted);
@@ -479,6 +489,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     }
 
     frameData.group = _context.group;
+    frameData.leaveGroupAfterPresent = _context.leaveGroupAfterPresent;
     if (frameData.group) {
         DLog(@"Frame %@ has a group. The context's count is %d", frameData, _context.count);
     }
@@ -1748,7 +1759,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     }
     [frameData measureTimeForStat:iTermMetalFrameDataStatPqEnqueueDrawPresentAndCommit ofBlock:^{
 #if !ENABLE_SYNCHRONOUS_PRESENTATION
-        if (frameData.destinationDrawable) {
+        if (frameData.destinationDrawable && !frameData.leaveGroupAfterPresent) {
             DLog(@"  presentDrawable %@", frameData);
             [commandBuffer presentDrawable:frameData.destinationDrawable];
         }
@@ -1784,6 +1795,13 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
 
         DLog(@"  commit %@", frameData);
         [commandBuffer commit];
+        if (frameData.group && frameData.leaveGroupAfterPresent) {
+            DLog(@"finished draw with group of frame %@", frameData);
+            [commandBuffer waitUntilScheduled];
+            [frameData.destinationDrawable present];
+            dispatch_group_leave(frameData.group);
+        }
+
 #if ENABLE_SYNCHRONOUS_PRESENTATION
         if (frameData.destinationDrawable) {
             dispatch_async(dispatch_get_main_queue(), ^{
@@ -1855,7 +1873,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
         [self scheduleDrawIfNeededInView:frameData.view];
     }];
 
-    if (frameData.group) {
+    if (frameData.group && !frameData.leaveGroupAfterPresent) {
         DLog(@"finished draw with group of frame %@", frameData);
         dispatch_group_leave(frameData.group);
     }

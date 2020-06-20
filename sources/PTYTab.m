@@ -5888,9 +5888,7 @@ typedef struct {
     _bounceMetal = YES;
     [self updateUseMetal];
     _bounceMetal = NO;
-    dispatch_async(dispatch_get_main_queue(), ^{
-        [self updateUseMetal];
-    });
+    [self updateUseMetal];
 }
 
 #pragma mark - PTYSessionDelegate

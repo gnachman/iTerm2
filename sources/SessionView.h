@@ -135,7 +135,6 @@ extern NSString *const SessionViewWasSelectedForInspectionNotification;
 - (void)sessionViewUserScrollDidChange:(BOOL)userScroll;
 
 - (void)sessionViewDidChangeHoverURLVisible:(BOOL)visible;
-- (void)sessionViewNeedsMetalFrameUpdate;
 
 // Please stop using metal and then start again.
 - (void)sessionViewRecreateMetalView;
@@ -197,6 +196,7 @@ typedef NS_ENUM(NSUInteger, iTermSessionViewFindDriver) {
 - (void)showFindUI;
 - (void)findViewDidHide;
 - (void)setUseMetal:(BOOL)useMetal dataSource:(id<iTermMetalDriverDataSource>)dataSource NS_AVAILABLE_MAC(10_11);;
+- (void)drawMetalSynchronously;
 - (void)didChangeMetalViewAlpha;
 - (void)setTransparencyAlpha:(CGFloat)transparencyAlpha
                        blend:(CGFloat)blend;

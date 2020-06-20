@@ -73,7 +73,9 @@ NSString *const iTermWindowOcclusionDidChange = @"iTermWindowOcclusionDidChange"
 
 - (void)invalidateCachedOcclusion:(NSNotification *)notification {
     DLog(@"Invalidate occlusion cache because of notification %@", notification.name);
-    [self invalidateCachedOcclusion];
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [self invalidateCachedOcclusion];
+    });
 }
 
 - (void)invalidateCachedOcclusion {

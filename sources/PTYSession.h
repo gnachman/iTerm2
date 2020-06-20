@@ -844,8 +844,6 @@ backgroundColor:(NSColor *)backgroundColor;
 
 - (void)jumpToLocationWhereCurrentStatusChanged;
 - (void)updateMetalDriver;
-- (id)temporarilyDisableMetal NS_AVAILABLE_MAC(10_11);
-- (void)drawFrameAndRemoveTemporarilyDisablementOfMetalForToken:(id)token NS_AVAILABLE_MAC(10_11);
 
 - (BOOL)willEnableMetal;
 - (BOOL)metalAllowed:(out iTermMetalUnavailableReason *)reason;

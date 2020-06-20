@@ -107,9 +107,7 @@ static NSInteger gNextFrameDataNumber;
 
 @implementation iTermMetalFrameData {
     NSTimeInterval _creation;
-#if ENABLE_STATS
     iTermPreciseTimerStats _stats[iTermMetalFrameDataStatCount];
-#endif
     iTermCellRenderConfiguration *_cellConfiguration;
 }
 
@@ -123,8 +121,8 @@ static NSInteger gNextFrameDataNumber;
         _frameNumber = gNextFrameDataNumber++;
         _framePoolContext = [[iTermMetalBufferPoolContext alloc] init];
         _transientStates = [NSMutableDictionary dictionary];
-#if ENABLE_STATS
         iTermMetalFrameDataStatsBundleInitialize(_stats);
+#if ENABLE_STATS
         _statHistograms = [[NSArray sequenceWithRange:NSMakeRange(0, iTermMetalFrameDataStatCount)] mapWithBlock:^id(NSNumber *anObject) {
             return [[iTermHistogram alloc] init];
         }];
@@ -163,7 +161,12 @@ static NSInteger gNextFrameDataNumber;
     self.status = [NSString stringWithUTF8String:_stats[stat].name];
     iTermPreciseTimerStatsStartTimer(&_stats[stat]);
 #endif
+    const NSTimeInterval start = [NSDate timeIntervalSinceReferenceDate];
     block();
+    const NSTimeInterval end = [NSDate timeIntervalSinceReferenceDate];
+    if (self.leaveGroupAfterPresent) {
+        NSLog(@"%s took %@ms", _stats[stat].name, @(round((end - start) * 1000)));
+    }
 #if ENABLE_STATS
     const double duration = iTermPreciseTimerStatsMeasureAndRecordTimer(&_stats[stat]);
     [_statHistograms[stat] addValue:duration * 1000];

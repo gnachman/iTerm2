@@ -523,6 +523,16 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     return _useMetal;
 }
 
+- (void)drawMetalSynchronously {
+    assert(_metalView);
+    assert(_driver);
+    const NSTimeInterval start = [NSDate timeIntervalSinceReferenceDate];
+    [_driver drawSynchronouslyInView:_metalView];
+    const NSTimeInterval end = [NSDate timeIntervalSinceReferenceDate];
+    NSLog(@"Synchronous draw took %@ ms", @(round((end - start) * 1000)));
+
+}
+
 - (void)setUseMetal:(BOOL)useMetal dataSource:(id<iTermMetalDriverDataSource>)dataSource NS_AVAILABLE_MAC(10_11) {
     if (useMetal != _useMetal) {
         _useMetal = useMetal;
@@ -543,7 +553,9 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
 
 - (void)preferredMetalDeviceDidChange:(NSNotification *)notification NS_AVAILABLE_MAC(10_11) {
     if (_metalView) {
-        [self.delegate sessionViewRecreateMetalView];
+        id<iTermMetalDriverDataSource> datasource = _driver.dataSource;
+        [self removeMetalView];
+        [self installMetalViewWithDataSource:datasource];
     }
 }
 
@@ -825,9 +837,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
 
 - (void)updateMetalViewFrame {
     DLog(@"update metalView frame");
-    // The metal view looks awful while resizing because it insists on scaling
-    // its contents. Just switch off the metal renderer until it catches up.
-    [_delegate sessionViewNeedsMetalFrameUpdate];
+    [self reallyUpdateMetalViewFrame];
 }
 
 - (void)reallyUpdateMetalViewFrame {
