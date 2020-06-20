@@ -7,6 +7,7 @@
 
 #import <Foundation/Foundation.h>
 
+#import "iTermMTKView.h"
 #import "iTermMetalConfig.h"
 #import "iTermPreciseTimer.h"
 #import "VT100GridTypes.h"
@@ -125,7 +126,7 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @property (atomic) CGSize asciiOffset;
 @property (atomic, strong) NSString *status;
 @property (atomic, strong) id<MTLDevice> device;
-@property (atomic, strong, readonly) MTKView *view;
+@property (atomic, strong, readonly) NSView<iTermMTKView> *view;
 @property (nonatomic, readonly) NSInteger frameNumber;
 #if ENABLE_STATS
 @property (nonatomic, readonly) iTermPreciseTimerStats *stats;
@@ -161,7 +162,7 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @property (nonatomic, strong) MTLRenderPassDescriptor *temporaryRenderPassDescriptor NS_DEPRECATED_MAC(10_12, 10_14);
 #endif
 
-- (instancetype)initWithView:(MTKView *)view
+- (instancetype)initWithView:(NSView<iTermMTKView> *)view
          fullSizeTexturePool:(iTermTexturePool *)fullSizeTexturePool NS_DESIGNATED_INITIALIZER;
 - (instancetype)init NS_UNAVAILABLE;
 

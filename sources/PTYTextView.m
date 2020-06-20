@@ -21,6 +21,7 @@
 #import "iTermKeyboardHandler.h"
 #import "iTermLaunchServices.h"
 #import "iTermLocalHostNameGuesser.h"
+#import "iTermMTKView.h"
 #import "iTermMouseCursor.h"
 #import "iTermPreferences.h"
 #import "iTermPrintAccessoryViewController.h"
@@ -635,6 +636,17 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
 }
 
 - (void)keyDown:(NSEvent *)event {
+    /*
+    NSWindow *window = [[NSWindow alloc] initWithContentRect:NSMakeRect(0, 0, 100, 100)
+                                                   styleMask:NSWindowStyleMaskTitled | NSWindowStyleMaskClosable | NSWindowStyleMaskMiniaturizable | NSWindowStyleMaskResizable
+                                                     backing:NSBackingStoreBuffered
+                                                       defer:YES
+                                                      screen:[NSScreen mainScreen]];
+    iTermMTKView *mtkview = [[iTermMTKView alloc] initWithFrame:NSMakeRect(0, 0, 100, 100) device:MTLCreateSystemDefaultDevice()];
+    window.contentView = mtkview;
+    [window makeKeyAndOrderFront:nil];
+*/
+    
     [_mouseHandler keyDown:event];
     [_keyboardHandler keyDown:event inputContext:self.inputContext];
 }

@@ -167,7 +167,11 @@ typedef NS_ENUM(NSUInteger, iTermSessionViewFindDriver) {
 @property(nonatomic, readonly) PTYScrollView *scrollview;
 @property(nonatomic, readonly) PTYScroller *verticalScroller;
 @property(nonatomic, readonly) iTermMetalDriver *driver NS_AVAILABLE_MAC(10_11);
+#if ENABLE_PHONY_MTKVIEW
+@property(nonatomic, readonly) iTermMTKView *metalView NS_AVAILABLE_MAC(10_11);
+#else
 @property(nonatomic, readonly) MTKView *metalView NS_AVAILABLE_MAC(10_11);
+#endif
 @property(nonatomic, readonly) BOOL useMetal NS_AVAILABLE_MAC(10_11);
 
 @property(nonatomic, readonly) BOOL isDropDownSearchVisible;

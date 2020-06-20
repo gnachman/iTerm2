@@ -5856,7 +5856,9 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         if (useMetal) {
             [self renderTwoMetalFramesAndShowMetalView];
         } else {
+#if !ENABLE_PHONY_MTKVIEW
             _view.metalView.enableSetNeedsDisplay = NO;
+#endif
         }
     }
 }
@@ -5926,7 +5928,9 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     DLog(@"reallyShowMetalViewImmediately");
     [_view setNeedsDisplay:YES];
     [self showMetalAndStopDrawingTextView];
+#if !ENABLE_PHONY_MTKVIEW
     _view.metalView.enableSetNeedsDisplay = YES;
+#endif
 }
 
 - (void)showMetalAndStopDrawingTextView NS_AVAILABLE_MAC(10_11) {

@@ -4,6 +4,7 @@
 #import "iTermCursor.h"
 #import "iTermImageRenderer.h"
 #import "iTermIndicatorRenderer.h"
+#import "iTermMTKView.h"
 #import "iTermMarkRenderer.h"
 #import "iTermMetalDebugInfo.h"
 #import "iTermMetalGlyphKey.h"
@@ -139,7 +140,7 @@ NS_CLASS_AVAILABLE(10_11, NA)
 
 // Our platform independent render class
 NS_CLASS_AVAILABLE(10_11, NA)
-@interface iTermMetalDriver : NSObject<MTKViewDelegate>
+@interface iTermMetalDriver : NSObject<MTKViewDelegate, iTermMTKViewDelegate>
 
 @property (nullable, nonatomic, weak) id<iTermMetalDriverDataSource> dataSource;
 @property (nonatomic, readonly) NSString *identifier;
@@ -160,7 +161,8 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
 // block is called.
 // enableSetNeedsDisplay should be NO.
 // The arg to completion is YES on success and NO if the draw was aborted for lack of resources.
-- (void)drawAsynchronouslyInView:(MTKView *)view completion:(void (^)(BOOL))completion;
+- (void)drawAsynchronouslyInView:(NSView<iTermMTKView> *)view completion:(void (^)(BOOL))completion;
+- (void)genericSetDrawableSize:(CGSize)size;
 
 @end
 

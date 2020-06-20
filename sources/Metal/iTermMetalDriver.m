@@ -20,6 +20,7 @@
 #import "iTermHistogram.h"
 #import "iTermImageRenderer.h"
 #import "iTermIndicatorRenderer.h"
+#import "iTermMTKView.h"
 #import "iTermMarginRenderer.h"
 #import "iTermMetalDebugInfo.h"
 #import "iTermMetalFrameData.h"
@@ -87,7 +88,7 @@ typedef struct {
 #endif
 } iTermMetalDriverMainThreadState;
 
-@interface iTermMetalDriver()
+@interface iTermMetalDriver() <iTermMTKViewDelegate>
 // This indicates if a draw call was made while busy. When we stop being busy
 // and this is set, then we must schedule another draw.
 @property (atomic) BOOL needsDraw;
@@ -304,21 +305,39 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     self.mainThreadState->context = context;
 }
 
+#pragma mark - iTermMTKViewDelegate
+
+- (void)it_mtkView:(iTermMTKView *)view drawableSizeWillChange:(CGSize)size {
+    [self genericSetDrawableSize:size];
+}
+
+- (void)it_drawInMTKView:(iTermMTKView *)view {
+    [self genericDrawInView:view];
+}
+
 #pragma mark - MTKViewDelegate
 
 - (void)mtkView:(nonnull MTKView *)view drawableSizeWillChange:(CGSize)size {
+    [self genericSetDrawableSize:size];
+}
+
+- (void)genericSetDrawableSize:(CGSize)size {
     self.mainThreadState->viewportSize.x = size.width;
     self.mainThreadState->viewportSize.y = size.height;
 }
 
 // Called whenever the view needs to render a frame
 - (void)drawInMTKView:(nonnull MTKView *)view {
+    [self genericDrawInView:view];
+}
+
+- (void)genericDrawInView:(NSView<iTermMTKView> *)view {
     const NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
     const NSTimeInterval dt = now - _lastFrameStartTime;
     _lastFrameStartTime = now;
 
     iTermMetalDriverAsyncContext *context = _context;
-    BOOL ok = [self reallyDrawInMTKView:view startToStartTime:dt];
+    BOOL ok = [self reallyDrawInView:view startToStartTime:dt];
     context.aborted = !ok;
     if (_context && context) {
         // Explicit draw call (drawSynchronously or drawAsynchronously) that failed.
@@ -372,7 +391,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     return _maxFramesInFlight;
 }
 
-- (iTermMetalDriverAsyncContext *)newContextForDrawInView:(MTKView *)view count:(int)count {
+- (iTermMetalDriverAsyncContext *)newContextForDrawInView:(NSView<iTermMTKView> *)view count:(int)count {
     iTermMetalDriverAsyncContext *context = [[iTermMetalDriverAsyncContext alloc] init];
     _context = context;
     context.count = count;
@@ -383,7 +402,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     return context;
 }
 
-- (void)drawAsynchronouslyInView:(MTKView *)view completion:(void (^)(BOOL))completion {
+- (void)drawAsynchronouslyInView:(NSView<iTermMTKView> *)view completion:(void (^)(BOOL))completion {
     static _Atomic int count;
     int thisCount = atomic_fetch_add_explicit(&count, 1, memory_order_relaxed);
     DLog(@"Start asynchronous draw of %@ count=%d", view, thisCount);
@@ -394,7 +413,8 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     });
 }
 
-- (BOOL)reallyDrawInMTKView:(nonnull MTKView *)view startToStartTime:(NSTimeInterval)startToStartTime {
+- (BOOL)reallyDrawInView:(nonnull NSView<iTermMTKView> *)view
+        startToStartTime:(NSTimeInterval)startToStartTime {
     @synchronized (self) {
         [_inFlightHistogram addValue:_currentFrames.count];
     }
@@ -505,7 +525,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
 #pragma mark - Draw Helpers
 
 // Called on the main queue
-- (iTermMetalFrameData *)newFrameDataForView:(MTKView *)view {
+- (iTermMetalFrameData *)newFrameDataForView:(NSView<iTermMTKView> *)view {
     if (![_dataSource metalDriverShouldDrawFrame]) {
         DLog(@"Metal driver declined to draw");
         return nil;
@@ -546,7 +566,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
 
 // Runs in private queue
 - (void)performPrivateQueueSetupForFrameData:(iTermMetalFrameData *)frameData
-                                        view:(nonnull MTKView *)view {
+                                        view:(nonnull NSView<iTermMTKView> *)view {
     DLog(@"Begin private queue setup for frame %@", frameData);
     if ([iTermAdvancedSettingsModel showMetalFPSmeter]) {
         [frameData.perFrameState setDebugString:[self fpsMeterStringForFrameNumber:frameData.frameNumber]];
@@ -710,7 +730,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
 }
 
 - (void)createTransientStatesWithFrameData:(iTermMetalFrameData *)frameData
-                                      view:(nonnull MTKView *)view
+                                      view:(nonnull NSView<iTermMTKView> *)view
                              commandBuffer:(id<MTLCommandBuffer>)commandBuffer {
     iTermCellRenderConfiguration *cellConfiguration = frameData.cellConfiguration;
 
@@ -805,7 +825,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
 #endif
 
 // Main thread
-- (void)acquireScarceResources:(iTermMetalFrameData *)frameData view:(MTKView *)view {
+- (void)acquireScarceResources:(iTermMetalFrameData *)frameData view:(NSView<iTermMTKView> *)view {
     if (frameData.debugInfo) {
         [frameData measureTimeForStat:iTermMetalFrameDataStatMtGetRenderPassDescriptor ofBlock:^{
             frameData.renderPassDescriptor = [frameData newRenderPassDescriptorWithLabel:@"Offscreen debug texture"
@@ -1907,7 +1927,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     }
 }
 
-- (void)scheduleDrawIfNeededInView:(MTKView *)view {
+- (void)scheduleDrawIfNeededInView:(NSView<iTermMTKView> *)view {
     if (self.needsDraw) {
         void (^block)(void) = ^{
             if (self.needsDraw) {

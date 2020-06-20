@@ -12,6 +12,7 @@
 #import "iTermIntervalTreeObserver.h"
 #import "iTermMetalClipView.h"
 #import "iTermMetalDeviceProvider.h"
+#import "iTermMTKView.h"
 #import "iTermPreferences.h"
 #import "iTermSearchResultsMinimapView.h"
 #import "iTermStatusBarContainerView.h"
@@ -48,12 +49,6 @@ static const CGFloat iTermGetSessionViewTitleHeight() {
 static NSDate* lastResizeDate_;
 
 NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewWasSelectedForInspectionNotification";
-
-@interface iTermMTKView : MTKView
-@end
-
-@implementation iTermMTKView
-@end
 
 @interface iTermHoverContainerView : NSView
 @property (nonatomic, copy) NSString *url;
@@ -600,10 +595,12 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
 #else
     _metalView.layer.opaque = YES;
 #endif
+#if !ENABLE_PHONY_MTKVIEW
     CGColorSpaceRef colorSpace = CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
     _metalView.colorspace = colorSpace;
     CFRelease(colorSpace);
-    
+#endif
+
     // Tell the clip view about it so it can ask the metalview to draw itself on scroll.
     _metalClipView.metalView = _metalView;
 
@@ -616,8 +613,10 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
 
     // Configure and hide the metal view. It will be shown by PTYSession after it has rendered its
     // first frame. Until then it's just a solid gray rectangle.
+#if !ENABLE_PHONY_MTKVIEW
     _metalView.paused = YES;
     _metalView.enableSetNeedsDisplay = NO;
+#endif
     _metalView.hidden = NO;
     _metalView.alphaValue = 0;
 
@@ -625,7 +624,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     // frame rendering.
     _driver = [[iTermMetalDriver alloc] initWithDevice:_metalView.device];
     _driver.dataSource = dataSource;
-    [_driver mtkView:_metalView drawableSizeWillChange:_metalView.drawableSize];
+    [_driver genericSetDrawableSize:_metalView.drawableSize];
     _metalView.delegate = _driver;
     [self metalViewVisibilityDidChange];
 }
@@ -689,7 +688,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
 - (void)addSubviewBelowFindView:(NSView *)aView {
     if ([aView isKindOfClass:[PTYScrollView class]]) {
         NSInteger i = [self.subviews indexOfObjectPassingTest:^BOOL(__kindof NSView * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-            return [obj isKindOfClass:[MTKView class]];
+            return [obj conformsToProtocol:@protocol(iTermMTKView)];
         }];
         if (i != NSNotFound) {
             // Insert scrollview after metal view
@@ -697,7 +696,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
             return;
         }
     }
-    if ([aView isKindOfClass:[MTKView class]]) {
+    if ([aView conformsToProtocol:@protocol(iTermMTKView)]) {
         NSInteger i = [self.subviews indexOfObjectPassingTest:^BOOL(__kindof NSView * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
             return [obj isKindOfClass:[PTYScrollView class]];
         }];
@@ -840,7 +839,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
         }
         _metalView.frame = [self frameByInsettingForMetal:frame];
     }
-    [_driver mtkView:_metalView drawableSizeWillChange:_metalView.drawableSize];
+    [_driver genericSetDrawableSize:_metalView.drawableSize];
 }
 
 - (NSRect)frameByInsettingForMetal:(NSRect)frame {

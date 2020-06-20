@@ -11096,7 +11096,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 
 - (void)updateContentViewExpectsMetal {
     [_contentView setUseMetal:[self.currentTab.sessions allWithBlock:^BOOL(PTYSession *anObject) {
-        MTKView *metalView = anObject.view.metalView;
+        NSView<iTermMTKView> *metalView = anObject.view.metalView;
         return !metalView.isHidden && metalView.alphaValue == 1;
     }]];
 }
