@@ -81,8 +81,7 @@ static NSTimeInterval DelayInGifProperties(NSDictionary *gifProperties) {
 #if DECODE_IMAGES_IN_PROCESS
     NSLog(@"** WARNING: Decompressing image in-process **");
     return [[iTermImage alloc] initWithData:compressedData];
-#endif
-
+#else
     iTermImageDecoderDriver *driver = [[iTermImageDecoderDriver alloc] init];
     NSData *jsonData = [driver jsonForCompressedImageData:compressedData
                                                      type:@"image/*"];
@@ -91,6 +90,7 @@ static NSTimeInterval DelayInGifProperties(NSDictionary *gifProperties) {
     } else {
         return nil;
     }
+#endif
 }
 
 + (instancetype)imageWithSixelData:(NSData *)sixelData {
