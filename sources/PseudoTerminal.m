@@ -1627,8 +1627,7 @@ ITERM_WEAKLY_REFERENCEABLE
     // In case the last pane just becamse opaque, we can drop the visual effect view in the fake window title bar.
     [_contentView invalidateAutomaticTabBarBackingHiding];
     if (tab == self.currentTab) {
-        // Update the window's background color
-        [self updateTabColors];
+        [self haveTransparentPaneDidChange];
     }
 }
 
@@ -4552,6 +4551,10 @@ ITERM_WEAKLY_REFERENCEABLE
         [[aSession view] setNeedsDisplay:YES];
         [[aSession textview] setNeedsDisplay:YES];
     }
+    [self haveTransparentPaneDidChange];
+}
+
+- (void)haveTransparentPaneDidChange {
     [[self currentTab] recheckBlur];
     [self updateTabColors];  // Updates the window's background color as a side-effect
     [self updateForTransparency:self.ptyWindow];
