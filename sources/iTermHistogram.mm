@@ -13,9 +13,9 @@
 #include <numeric>
 #include <vector>
 
+#if ENABLE_STATS
 static const NSInteger iTermHistogramStringWidth = 20;
 
-#if ENABLE_STATS
 namespace iTerm2 {
     class Sampler {
         std::vector<double> _values;
