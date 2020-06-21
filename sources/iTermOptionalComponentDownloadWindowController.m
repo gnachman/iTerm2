@@ -16,8 +16,8 @@
 // SEE ALSO iTermWebSocketConnectionMinimumPythonLibraryVersion
 // NOTE: This does not affect full-environment scripts.
 #if BETA
-#warning When releasing 3.3.10, make this the minimum for non-betas.
-const int iTermMinimumPythonEnvironmentVersion = 63;
+#warning When releasing 3.3.13, make this the minimum for non-betas.
+const int iTermMinimumPythonEnvironmentVersion = 66;
 #else
 const int iTermMinimumPythonEnvironmentVersion = 53;
 #endif
