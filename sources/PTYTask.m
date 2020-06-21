@@ -840,9 +840,8 @@ static void HandleSigChld(int n) {
 // The bytes in data were just read from the fd.
 - (void)readTask:(char *)buffer length:(int)length {
     if (self.loggingHelper) {
-        [self.loggingHelper logData:[NSData dataWithBytesNoCopy:buffer
-                                                         length:length
-                                                   freeWhenDone:NO]];
+        [self.loggingHelper logData:[NSData dataWithBytes:buffer
+                                                   length:length]];
     }
 
     // The delegate is responsible for parsing VT100 tokens here and sending them off to the
