@@ -98,11 +98,16 @@ typedef struct {
 
     iTermLayerBackedSolidColorView *_titleBackgroundView NS_AVAILABLE_MAC(10_14);
     
-    NSImageView *_topLeftCornerRoundImageView NS_AVAILABLE_MAC(10_14);
-    NSImageView *_topRightCornerRoundImageView NS_AVAILABLE_MAC(10_14);
-    NSImageView *_bottomLeftCornerRoundImageView NS_AVAILABLE_MAC(10_14);
-    NSImageView *_bottomRightCornerRoundImageView NS_AVAILABLE_MAC(10_14);
-    
+    NSImageView *_topLeftCornerHalfRoundImageView NS_AVAILABLE_MAC(10_14);
+    NSImageView *_topRightCornerHalfRoundImageView NS_AVAILABLE_MAC(10_14);
+    NSImageView *_bottomLeftCornerHalfRoundImageView NS_AVAILABLE_MAC(10_14);
+    NSImageView *_bottomRightCornerHalfRoundImageView NS_AVAILABLE_MAC(10_14);
+
+    NSImageView *_topLeftCornerFullRoundImageView NS_AVAILABLE_MAC(10_14);
+    NSImageView *_topRightCornerFullRoundImageView NS_AVAILABLE_MAC(10_14);
+    NSImageView *_bottomLeftCornerFullRoundImageView NS_AVAILABLE_MAC(10_14);
+    NSImageView *_bottomRightCornerFullRoundImageView NS_AVAILABLE_MAC(10_14);
+
     NSView *_leftBorderView NS_AVAILABLE_MAC(10_14);
     NSView *_rightBorderView NS_AVAILABLE_MAC(10_14);
     NSView *_topBorderView NS_AVAILABLE_MAC(10_14);
@@ -234,48 +239,92 @@ typedef struct {
         if (@available(macOS 10.14, *)) {
             NSColor *borderColor = [NSColor colorWithWhite:0.5 alpha:0.75];
             {
-                static NSImage *gTopLeftCornerImage;
-                static NSImage *gTopRightCornerImage;
-                static NSImage *gBottomLeftCornerImage;
-                static NSImage *gBottomRightCornerImage;
+                static NSImage *gTopLeftCornerHalfImage;
+                static NSImage *gTopRightCornerHalfImage;
+                static NSImage *gBottomLeftCornerHalfImage;
+                static NSImage *gBottomRightCornerHalfImage;
+
+                static NSImage *gTopLeftCornerFullImage;
+                static NSImage *gTopRightCornerFullImage;
+                static NSImage *gBottomLeftCornerFullImage;
+                static NSImage *gBottomRightCornerFullImage;
 
                 static dispatch_once_t onceToken;
                 dispatch_once(&onceToken, ^{
-                    gTopLeftCornerImage = [[NSImage it_imageNamed:@"WindowCorner" forClass:self.class] it_verticallyFlippedImage];
-                    gTopRightCornerImage = [gTopLeftCornerImage it_horizontallyFlippedImage];
-                    gBottomLeftCornerImage = [NSImage it_imageNamed:@"WindowCorner" forClass:self.class];
-                    gBottomRightCornerImage = [gBottomLeftCornerImage it_horizontallyFlippedImage];
+                    gTopLeftCornerHalfImage = [[NSImage it_imageNamed:@"WindowCorner" forClass:self.class] it_verticallyFlippedImage];
+                    gTopRightCornerHalfImage = [gTopLeftCornerHalfImage it_horizontallyFlippedImage];
+                    gBottomLeftCornerHalfImage = [NSImage it_imageNamed:@"WindowCorner" forClass:self.class];
+                    gBottomRightCornerHalfImage = [gBottomLeftCornerHalfImage it_horizontallyFlippedImage];
+
+                    gTopLeftCornerFullImage = [[NSImage it_imageNamed:@"WindowCornerFull" forClass:self.class] it_verticallyFlippedImage];
+                    gTopRightCornerFullImage = [gTopLeftCornerFullImage it_horizontallyFlippedImage];
+                    gBottomLeftCornerFullImage = [NSImage it_imageNamed:@"WindowCornerFull" forClass:self.class];
+                    gBottomRightCornerFullImage = [gBottomLeftCornerFullImage it_horizontallyFlippedImage];
                 });
-                NSImage *topLeftCornerImage = gTopLeftCornerImage;
-                NSImage *topRightCornerImage = gTopRightCornerImage;
-                NSImage *bottomLeftCornerImage = gBottomLeftCornerImage;
-                NSImage *bottomRightCornerImage = gBottomRightCornerImage;
+                // Half
+                NSImage *topLeftCornerHalfImage = gTopLeftCornerHalfImage;
+                NSImage *topRightCornerHalfImage = gTopRightCornerHalfImage;
+                NSImage *bottomLeftCornerHalfImage = gBottomLeftCornerHalfImage;
+                NSImage *bottomRightCornerHalfImage = gBottomRightCornerHalfImage;
 
-                _topLeftCornerRoundImageView = [NSImageView imageViewWithImage:topLeftCornerImage];
-                _topLeftCornerRoundImageView.autoresizingMask = NSViewMinYMargin | NSViewMaxXMargin;
-                _topLeftCornerRoundImageView.alphaValue = 0.75;
+                _topLeftCornerHalfRoundImageView = [NSImageView imageViewWithImage:topLeftCornerHalfImage];
+                _topLeftCornerHalfRoundImageView.autoresizingMask = NSViewMinYMargin | NSViewMaxXMargin;
+                _topLeftCornerHalfRoundImageView.alphaValue = 0.75;
 
-                _topRightCornerRoundImageView = [NSImageView imageViewWithImage:topRightCornerImage];
-                _topRightCornerRoundImageView.alphaValue = 0.75;
-                _topRightCornerRoundImageView.autoresizingMask = NSViewMinYMargin | NSViewMinXMargin;
+                _topRightCornerHalfRoundImageView = [NSImageView imageViewWithImage:topRightCornerHalfImage];
+                _topRightCornerHalfRoundImageView.alphaValue = 0.75;
+                _topRightCornerHalfRoundImageView.autoresizingMask = NSViewMinYMargin | NSViewMinXMargin;
 
-                _bottomLeftCornerRoundImageView = [NSImageView imageViewWithImage:bottomLeftCornerImage];
-                _bottomLeftCornerRoundImageView.alphaValue = 0.75;
-                _bottomLeftCornerRoundImageView.autoresizingMask = NSViewMaxYMargin | NSViewMaxXMargin;
+                _bottomLeftCornerHalfRoundImageView = [NSImageView imageViewWithImage:bottomLeftCornerHalfImage];
+                _bottomLeftCornerHalfRoundImageView.alphaValue = 0.75;
+                _bottomLeftCornerHalfRoundImageView.autoresizingMask = NSViewMaxYMargin | NSViewMaxXMargin;
 
-                _bottomRightCornerRoundImageView = [NSImageView imageViewWithImage:bottomRightCornerImage];
-                _bottomRightCornerRoundImageView.alphaValue = 0.75;
-                _bottomRightCornerRoundImageView.autoresizingMask = NSViewMaxYMargin | NSViewMinXMargin;
+                _bottomRightCornerHalfRoundImageView = [NSImageView imageViewWithImage:bottomRightCornerHalfImage];
+                _bottomRightCornerHalfRoundImageView.alphaValue = 0.75;
+                _bottomRightCornerHalfRoundImageView.autoresizingMask = NSViewMaxYMargin | NSViewMinXMargin;
 
-                _topLeftCornerRoundImageView.hidden = YES;
-                _topRightCornerRoundImageView.hidden = YES;
-                _bottomLeftCornerRoundImageView.hidden = YES;
-                _bottomRightCornerRoundImageView.hidden = YES;
+                _topLeftCornerHalfRoundImageView.hidden = YES;
+                _topRightCornerHalfRoundImageView.hidden = YES;
+                _bottomLeftCornerHalfRoundImageView.hidden = YES;
+                _bottomRightCornerHalfRoundImageView.hidden = YES;
 
-                [self addSubview:_topLeftCornerRoundImageView];
-                [self addSubview:_topRightCornerRoundImageView];
-                [self addSubview:_bottomLeftCornerRoundImageView];
-                [self addSubview:_bottomRightCornerRoundImageView];
+                [self addSubview:_topLeftCornerHalfRoundImageView];
+                [self addSubview:_topRightCornerHalfRoundImageView];
+                [self addSubview:_bottomLeftCornerHalfRoundImageView];
+                [self addSubview:_bottomRightCornerHalfRoundImageView];
+
+                // Full
+
+                NSImage *topLeftCornerFullImage = gTopLeftCornerFullImage;
+                NSImage *topRightCornerFullImage = gTopRightCornerFullImage;
+                NSImage *bottomLeftCornerFullImage = gBottomLeftCornerFullImage;
+                NSImage *bottomRightCornerFullImage = gBottomRightCornerFullImage;
+
+                _topLeftCornerFullRoundImageView = [NSImageView imageViewWithImage:topLeftCornerFullImage];
+                _topLeftCornerFullRoundImageView.autoresizingMask = NSViewMinYMargin | NSViewMaxXMargin;
+                _topLeftCornerFullRoundImageView.alphaValue = 0.75;
+
+                _topRightCornerFullRoundImageView = [NSImageView imageViewWithImage:topRightCornerFullImage];
+                _topRightCornerFullRoundImageView.alphaValue = 0.75;
+                _topRightCornerFullRoundImageView.autoresizingMask = NSViewMinYMargin | NSViewMinXMargin;
+
+                _bottomLeftCornerFullRoundImageView = [NSImageView imageViewWithImage:bottomLeftCornerFullImage];
+                _bottomLeftCornerFullRoundImageView.alphaValue = 0.75;
+                _bottomLeftCornerFullRoundImageView.autoresizingMask = NSViewMaxYMargin | NSViewMaxXMargin;
+
+                _bottomRightCornerFullRoundImageView = [NSImageView imageViewWithImage:bottomRightCornerFullImage];
+                _bottomRightCornerFullRoundImageView.alphaValue = 0.75;
+                _bottomRightCornerFullRoundImageView.autoresizingMask = NSViewMaxYMargin | NSViewMinXMargin;
+
+                _topLeftCornerFullRoundImageView.hidden = YES;
+                _topRightCornerFullRoundImageView.hidden = YES;
+                _bottomLeftCornerFullRoundImageView.hidden = YES;
+                _bottomRightCornerFullRoundImageView.hidden = YES;
+
+                [self addSubview:_topLeftCornerFullRoundImageView];
+                [self addSubview:_topRightCornerFullRoundImageView];
+                [self addSubview:_bottomLeftCornerFullRoundImageView];
+                [self addSubview:_bottomRightCornerFullRoundImageView];
             }
             {
                 _leftBorderView = [[NSView alloc] init];
@@ -644,21 +693,30 @@ typedef struct {
         [_titleBackgroundView removeFromSuperview];
     }
 
+    [self updateBorderViews];
+}
+
+- (void)updateBorderViews NS_AVAILABLE_MAC(10_14) {
     const BOOL haveLeft = self.delegate.haveLeftBorder;
     const BOOL haveTop = self.delegate.haveTopBorder;
     const BOOL haveRight = self.delegate.haveRightBorderRegardlessOfScrollBar;
     const BOOL haveBottom = self.delegate.haveBottomBorder;
-
+    const BOOL fullThickness = self.effectiveAppearance.it_isDark || (self.window.backingScaleFactor <= 1);
     const CGFloat radius = iTermWindowBorderRadius;
     {
         const CGFloat top = self.bounds.size.height - radius;
         const CGFloat right = self.bounds.size.width - radius;
         const CGFloat bottom = 0;
         
-        _topLeftCornerRoundImageView.frame = NSMakeRect(0, top, radius, radius);
-        _topRightCornerRoundImageView.frame = NSMakeRect(right, top, radius, radius);
-        _bottomLeftCornerRoundImageView.frame = NSMakeRect(0, bottom, radius, radius);
-        _bottomRightCornerRoundImageView.frame = NSMakeRect(right, bottom, radius, radius);
+        _topLeftCornerHalfRoundImageView.frame = NSMakeRect(0, top, radius, radius);
+        _topRightCornerHalfRoundImageView.frame = NSMakeRect(right, top, radius, radius);
+        _bottomLeftCornerHalfRoundImageView.frame = NSMakeRect(0, bottom, radius, radius);
+        _bottomRightCornerHalfRoundImageView.frame = NSMakeRect(right, bottom, radius, radius);
+
+        _topLeftCornerFullRoundImageView.frame = NSMakeRect(0, top, radius, radius);
+        _topRightCornerFullRoundImageView.frame = NSMakeRect(right, top, radius, radius);
+        _bottomLeftCornerFullRoundImageView.frame = NSMakeRect(0, bottom, radius, radius);
+        _bottomRightCornerFullRoundImageView.frame = NSMakeRect(right, bottom, radius, radius);
     }
     
     {
@@ -672,7 +730,7 @@ typedef struct {
         const CGFloat leftInset = haveLeft ? radius : 0;
         const CGFloat rightInset = haveRight ? radius : 0;
 
-        const CGFloat thickness = self.window.backingScaleFactor > 1 ? 0.5 : 1.0;
+        const CGFloat thickness = fullThickness ? 1 : 0.5;
         _leftBorderView.frame = NSMakeRect(0,
                                          bottomInset,
                                          thickness,
@@ -692,12 +750,16 @@ typedef struct {
                                          self.bounds.size.width - leftInset - rightInset,
                                          thickness);
     }
-    
-    
-    _bottomLeftCornerRoundImageView.hidden = !(haveLeft && haveBottom);
-    _bottomRightCornerRoundImageView.hidden = !(haveRight && haveBottom);
-    _topLeftCornerRoundImageView.hidden = !(haveLeft && haveTop);
-    _topRightCornerRoundImageView.hidden = !(haveRight && haveTop);
+
+    _bottomLeftCornerHalfRoundImageView.hidden = !(haveLeft && haveBottom && !fullThickness);
+    _bottomRightCornerHalfRoundImageView.hidden = !(haveRight && haveBottom && !fullThickness);
+    _topLeftCornerHalfRoundImageView.hidden = !(haveLeft && haveTop && !fullThickness);
+    _topRightCornerHalfRoundImageView.hidden = !(haveRight && haveTop && !fullThickness);
+
+    _bottomLeftCornerFullRoundImageView.hidden = !(haveLeft && haveBottom && fullThickness);
+    _bottomRightCornerFullRoundImageView.hidden = !(haveRight && haveBottom && fullThickness);
+    _topLeftCornerFullRoundImageView.hidden = !(haveLeft && haveTop && fullThickness);
+    _topRightCornerFullRoundImageView.hidden = !(haveRight && haveTop && fullThickness);
 }
 
 - (void)setUseMetal:(BOOL)useMetal {
@@ -727,11 +789,12 @@ typedef struct {
     [self updateDivisionViewAndWindowNumberLabel];
 }
 
-- (void)viewDidChangeEffectiveAppearance {
+- (void)viewDidChangeEffectiveAppearance NS_AVAILABLE_MAC(10_14) {
     // This can be called from within -[NSWindow setStyleMask:]
     dispatch_async(dispatch_get_main_queue(), ^{
         [self.delegate rootTerminalViewDidChangeEffectiveAppearance];
     });
+    [self updateBorderViews];
 }
 
 - (void)windowTitleDidChangeTo:(NSString *)title {
