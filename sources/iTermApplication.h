@@ -66,6 +66,7 @@ extern NSString *const iTermApplicationDidCloseModalWindow;
 @property(nonatomic, readonly) BOOL it_modalWindowOpen;
 @property(nonatomic, readonly) BOOL it_imeOpen;
 @property(nonatomic, readonly) NSWindow *it_windowBecomingKey;
+@property(nonatomic, readonly) BOOL it_justBecameActive;
 
 - (void)sendEvent:(NSEvent *)anEvent;
 - (iTermApplicationDelegate<iTermApplicationDelegate> *)delegate;

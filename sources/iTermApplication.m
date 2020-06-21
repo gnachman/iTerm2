@@ -75,6 +75,10 @@ static const char *iTermApplicationKVOKey = "iTermApplicationKVOKey";
 @implementation iTermApplication {
     BOOL _it_characterPanelIsOpen;
     BOOL _it_characterPanelShouldOpenSoon;
+    // Are we within one spin of didBecomeActive?
+    BOOL _it_justBecameActive;
+    // Have we received didBecomeActive without a subsequent didResignActive?
+    BOOL _it_active;
 }
 
 - (void)dealloc {
@@ -90,6 +94,10 @@ static const char *iTermApplicationKVOKey = "iTermApplicationKVOKey";
     assert([sharedApplication isKindOfClass:[iTermApplication class]]);
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
+        iTermApplication *app = sharedApplication;
+        if (app) {
+            app->_it_active = [sharedApplication isActive];
+        }
         [sharedApplication addObserver:sharedApplication
                             forKeyPath:@"modalWindow"
                                options:NSKeyValueObservingOptionNew | NSKeyValueObservingOptionOld
@@ -102,7 +110,14 @@ static const char *iTermApplicationKVOKey = "iTermApplicationKVOKey";
                                                  selector:@selector(it_windowDidOrderOffScreen:)
                                                      name:@"NSWindowDidOrderOffScreenAndFinishAnimatingNotification"
                                                    object:nil];
-
+        [[NSNotificationCenter defaultCenter] addObserver:sharedApplication
+                                                 selector:@selector(it_applicationDidBecomeActive:)
+                                                     name:NSApplicationDidBecomeActiveNotification
+                                                   object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:sharedApplication
+                                                 selector:@selector(it_applicationDidResignActive:)
+                                                     name:NSApplicationDidResignActiveNotification
+                                                   object:nil];
     });
     return sharedApplication;
 }
@@ -559,6 +574,27 @@ static const char *iTermApplicationKVOKey = "iTermApplicationKVOKey";
         // windows. See issue 6875.
         [[NSRunningApplication currentApplication] activateWithOptions:NSApplicationActivateIgnoringOtherApps];
     }
+}
+
+- (void)it_applicationDidResignActive:(NSNotification *)notification {
+    _it_active = NO;
+}
+
+- (void)it_applicationDidBecomeActive:(NSNotification *)notification {
+    _it_active = YES;
+    _it_justBecameActive = YES;
+    __weak __typeof(self) weakSelf = self;
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [weakSelf it_resetJustBecameActive];
+    });
+}
+
+- (BOOL)it_justBecameActive {
+    return _it_justBecameActive || (self.isActive && !_it_active);
+}
+
+- (void)it_resetJustBecameActive {
+    _it_justBecameActive = NO;
 }
 
 - (BOOL)it_characterPanelIsOpen {
