@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="15705" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="16097" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES">
     <dependencies>
         <deployment identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="15705"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="16097"/>
     </dependencies>
     <objects>
         <customObject id="-2" userLabel="File's Owner" customClass="NSApplication">
@@ -274,7 +274,7 @@
                                             </connections>
                                         </menuItem>
                                         <menuItem isSeparatorItem="YES" id="Kge-Ia-xho"/>
-                                        <menuItem title="Pause Pane" alternate="YES" keyEquivalent="P" identifier="tmux.New Tmux Tab" id="Rtn-t8-0OH">
+                                        <menuItem title="Pause Pane" alternate="YES" keyEquivalent="P" identifier="trmux.Pause Pane" id="Rtn-t8-0OH">
                                             <modifierMask key="keyEquivalentModifierMask" control="YES" command="YES"/>
                                             <connections>
                                                 <action selector="toggleTmuxPausePane:" target="-1" id="m3O-yf-6Rt"/>
@@ -927,7 +927,7 @@ DQ
                                                 <action selector="terminalStateToggleApplicationKeypad:" target="-1" id="vqM-de-PE3"/>
                                             </connections>
                                         </menuItem>
-                                        <menuItem title="Report Modifiers with CSI u" tag="7" identifier="Application Keypad" id="NiW-ZC-qkW">
+                                        <menuItem title="Report Modifiers with CSI u" tag="7" identifier="Reprot Modifiers with CSI u" id="NiW-ZC-qkW">
                                             <modifierMask key="keyEquivalentModifierMask"/>
                                             <connections>
                                                 <action selector="terminalStateToggleApplicationKeypad:" target="-1" id="dEu-4i-avK"/>
