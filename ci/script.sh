@@ -1,9 +1,0 @@
-#!/usr/bin/env bash
-
-set -euo pipefail
-
-xcrun xcodebuild build test \
-  NSUnbufferedIO=YES \
-  -scheme iTerm2 \
-  -sdk macosx \
-  CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY= 2>&1 | sed -e 's,usr/bin/clang .* -c,usr/bin/clang [redacted] -c,' | tail -500
