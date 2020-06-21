@@ -176,7 +176,7 @@ charactersIgnoringModifiers:(NSString *)charactersIgnoringModifiers
 }
 
 - (void)testControlSlash {
-    [self verifyCharacters:[self character:'/'] charactersIgnoringModifiers:@"/" modifiers:0x42100 keycode:44 expected:[self character:0x7f]];
+    [self verifyCharacters:[self character:'/'] charactersIgnoringModifiers:@"?" modifiers:NSEventModifierFlagControl | NSEventModifierFlagShift keycode:44 expected:[self character:0x7f]];
 }
 
 - (void)testControlQuestionMark {
