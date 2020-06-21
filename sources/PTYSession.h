@@ -264,6 +264,7 @@ backgroundColor:(NSColor *)backgroundColor;
     iTermEchoProbeDelegate,
     iTermFindDriverDelegate,
     iTermSubscribable,
+    iTermTmuxControllerSession,
     iTermWeaklyReferenceable,
     PopupDelegate,
     PTYTaskDelegate,
