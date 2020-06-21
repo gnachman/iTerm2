@@ -8,5 +8,6 @@ This site hosts code for <a href="https://iterm2.com">iTerm2</a>.
 <li>Issues are on <a href="https://gitlab.com/gnachman/iterm2/issues">Gitlab</a> because Github doesn't support issue attachments.</li>
 <li><a href="https://gitlab.com/gnachman/iterm2/wikis/HowToBuild">How do I build this thing?</a></li>
 <li><a href="https://iterm2.com/downloads.html">Downloads</a>
+<li>Not enough? Try <a href="https://xscode.com/gnachman/iTerm2">paid support via xscode</a>.
 </ul>
 
