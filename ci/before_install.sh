@@ -8,4 +8,4 @@ set -x
 # https://labs.consol.de/travis/dropbox/2015/11/04/upload-travis-artifacts-to-dropbox.html
 openssl aes-256-cbc -K $encrypted_ac2a5ce6c7ef_key -iv $encrypted_ac2a5ce6c7ef_iv -in tools/.dropbox_uploader.enc -out ~/.dropbox_uploader -d
 
-bundle config build.nokogiri --use-system-libraries --with-xml2-include=/usr/include/libxml2
+#bundle config build.nokogiri --use-system-libraries --with-xml2-include=/usr/include/libxml2
