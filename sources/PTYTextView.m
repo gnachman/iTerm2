@@ -989,24 +989,25 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
 - (void)touchesBeganWithEvent:(NSEvent *)ev {
     _mouseHandler.numTouches = [[ev touchesMatchingPhase:NSTouchPhaseBegan | NSTouchPhaseStationary
                                                   inView:self] count];
-    [threeFingerTapGestureRecognizer_ touchesBeganWithEvent:ev];
     DLog(@"%@ Begin touch. numTouches_ -> %d", self, _mouseHandler.numTouches);
+    [threeFingerTapGestureRecognizer_ touchesBeganWithEvent:ev];
 }
 
 - (void)touchesEndedWithEvent:(NSEvent *)ev {
     _mouseHandler.numTouches = [[ev touchesMatchingPhase:NSTouchPhaseStationary
                                                   inView:self] count];
-    [threeFingerTapGestureRecognizer_ touchesEndedWithEvent:ev];
     DLog(@"%@ End touch. numTouches_ -> %d", self, _mouseHandler.numTouches);
+    [threeFingerTapGestureRecognizer_ touchesEndedWithEvent:ev];
 }
 
 - (void)touchesMovedWithEvent:(NSEvent *)event {
+    DLog(@"%@ Move touch.", self);
     [threeFingerTapGestureRecognizer_ touchesMovedWithEvent:event];
 }
 - (void)touchesCancelledWithEvent:(NSEvent *)event {
     _mouseHandler.numTouches = 0;
-    [threeFingerTapGestureRecognizer_ touchesCancelledWithEvent:event];
     DLog(@"%@ Cancel touch. numTouches_ -> %d", self, _mouseHandler.numTouches);
+    [threeFingerTapGestureRecognizer_ touchesCancelledWithEvent:event];
 }
 
 - (void)swipeWithEvent:(NSEvent *)event {

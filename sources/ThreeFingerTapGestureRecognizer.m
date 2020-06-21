@@ -36,8 +36,9 @@
 - (void)touchesBeganWithEvent:(NSEvent *)ev {
     fired_ = NO;
     DLog(@"fired->NO");
-    int touches = [[ev touchesMatchingPhase:NSTouchPhaseBegan | NSTouchPhaseStationary
-                                     inView:target_] count];
+    const int touches = [[ev touchesMatchingPhase:NSTouchPhaseBegan | NSTouchPhaseStationary
+                                           inView:target_] count];
+    DLog(@"touches=%@, numTouches_=%@", @(touches), @(numTouches_));
     if (numTouches_ == 0 && touches > 0) {
         DLog(@"Set first touch time");
         _moved = NO;
@@ -47,7 +48,7 @@
         DLog(@"Set three touch time");
         threeTouchTime_ = [NSDate timeIntervalSinceReferenceDate];
     }
-    if (numTouches_ > 3) {
+    if (touches > 3) {
         DLog(@"Too many touches!");
         // Not possible to be a three finger tap if more than three fingers were down at any point.
         [self cancel];
