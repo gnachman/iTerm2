@@ -9470,9 +9470,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         [self screenDidAppendStringToCurrentLine:string isPlainText:YES];
     } else {
         if (_logging.enabled && _logging.plainText && !self.isTmuxGateway) {
-            [_logging logData:[NSData dataWithBytesNoCopy:asciiData->buffer
-                                                   length:asciiData->length
-                                             freeWhenDone:NO]];
+            [_logging logData:[NSData dataWithBytes:asciiData->buffer
+                                                   length:asciiData->length]];
         }
     }
 }
