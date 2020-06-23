@@ -4401,14 +4401,23 @@ typedef struct {
         return NO;
     }
     if ([iTermAdvancedSettingsModel disableTmuxWindowResizing]) {
-        const CGFloat dx = fabs(root_.frame.size.width - flexibleView_.frame.size.width);
-        const CGFloat dy = fabs(root_.frame.size.height - flexibleView_.frame.size.height);
+        const CGFloat dx = root_.frame.size.width - flexibleView_.frame.size.width;
+        const CGFloat dy = root_.frame.size.height - flexibleView_.frame.size.height;
         const NSSize cellSize = [PTYTab cellSizeForBookmark:[self.tmuxController profileForWindow:self.tmuxWindow]];
-        const BOOL result = dx >= cellSize.width || dy >= cellSize.height;
-        DLog(@"requiresAdjustment=%@ for dx=%@ dy=%@ cellSize=%@ root.frame=%@ flexibleView.frame=%@",
-             @(result), @(dx), @(dy), NSStringFromSize(cellSize), NSStringFromRect(root_.frame),
+        DLog(@"dx=%@ dy=%@ cellSize=%@ root.frame=%@ flexibleView.frame=%@",
+             @(dx), @(dy), NSStringFromSize(cellSize), NSStringFromRect(root_.frame),
              NSStringFromRect(flexibleView_.frame));
-        return result;
+        if (dx > 0 || fabs(dx) >= cellSize.width) {
+            DLog(@"YES");
+            return YES;
+        }
+        if (dy > 0 || fabs(dy) >= cellSize.height) {
+            DLog(@"YES");
+            return YES;
+        }
+
+        DLog(@"NO");
+        return NO;
     }
     DLog(@"Using too-large check only. root %@ has size %@ vs flexible view %@ with size %@",
          root_, NSStringFromSize(root_.frame.size),
