@@ -7927,6 +7927,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         // margins, and the regular -extraMargins code only includes stuff like
         // the status bar on the bottom. The top margin it produces is still
         // useful, so we keep that.
+        DLog(@"scrollViewMinY=%@", @(scrollViewMinY));
         return NSEdgeInsetsMake(0, 0, scrollViewMinY - metalViewMinY, 0);
     }
     return NSEdgeInsetsZero;

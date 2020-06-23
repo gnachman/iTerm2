@@ -268,4 +268,9 @@
     [super setVerticalScroller:verticalScroller];
 }
 
+- (void)setFrame:(NSRect)frame {
+    DLog(@"setFrame:%@\n%@", NSStringFromRect(frame), [NSThread callStackSymbols]);
+    [super setFrame:frame];
+}
+
 @end

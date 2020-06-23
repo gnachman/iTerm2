@@ -593,9 +593,9 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
         // I don't know if this is right and I can't test it without buying a computer that runs
         // macos 10.13 :(. But if it *is* wrong then it has been wrong for a long time.
         frame = _scrollview.contentView.frame;
-    }
-    if (self.showBottomStatusBar) {
-        frame.origin.y += iTermStatusBarHeight;
+        if (self.showBottomStatusBar) {
+            frame.origin.y += iTermStatusBarHeight;
+        }
     }
     _metalView.frame = [self frameByInsettingForMetal:frame];
     [_driver mtkView:_metalView drawableSizeWillChange:_metalView.drawableSize];
