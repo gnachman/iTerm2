@@ -22,6 +22,7 @@
     NSString *_variableName;
     NSString *_fallbackVariableName;
     void (^_block)(NSString *);
+    iTermTmuxSubscriptionHandle *_subscriptionHandle;
 }
 
 - (instancetype)initWithGateway:(TmuxGateway *)gateway
@@ -40,13 +41,44 @@
         _variableName = [variableName copy];
         _block = [block copy];
         _fallbackVariableName = [fallbackVariableName copy];
+        _interval = 1;
+        if ([_gateway versionAtLeastDecimalNumberWithString:@"3.2"]) {
+            __weak __typeof(self) weakSelf = self;
+            _subscriptionHandle = [_gateway subscribeToFormat:self.escapedFormat
+                                                       target:target
+                                                        block:^(NSString *value,
+                                                                NSArray<NSString *> *args) {
+                [weakSelf didFetch:value];
+            }];
+            [self updateOnce];
+        }
     }
     return self;
 }
 
+- (void)dealloc {
+    [_gateway unsubscribe:_subscriptionHandle];
+}
+
+- (NSString *)description {
+    return [NSString stringWithFormat:@"<%@: %p format=%@ target=%@ sub=%@ scope=%@>",
+            NSStringFromClass(self.class), self, _format, _target, _subscriptionHandle, _scope];
+}
+
+- (void)setInterval:(NSTimeInterval)interval {
+    _interval = interval;
+    if (_timer) {
+        [self startTimer];
+    }
+}
+
 - (void)startTimer {
+    if (_subscriptionHandle.isValid) {
+        DLog(@"Not starting timer because there is a valid subscription for %@", self);
+        return;
+    }
     [_timer invalidate];
-    _timer = [NSTimer scheduledWeakTimerWithTimeInterval:1
+    _timer = [NSTimer scheduledWeakTimerWithTimeInterval:_interval
                                                   target:self
                                                 selector:@selector(update:)
                                                 userInfo:nil
@@ -54,9 +86,11 @@
 }
 
 - (void)invalidate {
+    DLog(@"Invalidate %@", self);
     [_timer invalidate];
     _timer = nil;
     _scope = nil;
+    [_gateway unsubscribe:_subscriptionHandle];
 }
 
 - (NSString *)escapedFormat {
@@ -66,6 +100,11 @@
 
 - (void)update:(NSTimer *)timer {
     [self updateOnce];
+    if (_subscriptionHandle.isValid) {
+        DLog(@"Invalidate timer because subscription for %@ is now valid", self);
+        [_timer invalidate];
+        _timer = nil;
+    }
 }
 
 - (NSString *)command {
@@ -92,7 +131,7 @@
 }
 
 - (void)didFetch:(NSString *)value {
-    DLog(@"%@ -> %@", self.command, value);
+    DLog(@"%@ didFetch:%@", self, value);
     if (!value) {
         // Probably the pane went away and we'll be dealloced soon.
         return;

@@ -16,6 +16,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property (nonatomic, weak) TmuxGateway *gateway;
 @property (nullable, nonatomic, strong) iTermVariableScope *scope;
+@property (nonatomic) NSTimeInterval interval;
 
 - (instancetype)init NS_UNAVAILABLE;
 
