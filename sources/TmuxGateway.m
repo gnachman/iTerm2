@@ -406,81 +406,101 @@ error:
                                             forKey:kCommandFlags] intValue];
 }
 
+- (BOOL)commandIsTmux21Quirk {
+    return ([currentCommandResponse_ hasPrefix:@"bad working directory:"] &&
+            [currentCommand_[kCommandString] hasPrefix:@"new-window"] &&
+            [currentCommand_[kCommandString] containsString:@"-c"] &&
+            [self.maximumServerVersion compare:@2.1] != NSOrderedAscending);
+}
+
+- (void)abortWithErrorForCurrentCommand {
+    if ([self commandIsTmux21Quirk]) {
+        [self abortWithErrorMessage:[NSString stringWithFormat:@"Error: %@.\n\nTmux 2.1 and earlier will refuse to create a new window pane with a nonexistent initial working directory.\n\nInfo:\n%@",
+                                     currentCommandResponse_, currentCommand_]];
+    } else {
+        [self abortWithErrorMessage:[NSString stringWithFormat:@"Error: %@.\n\nInfo:\n%@", currentCommandResponse_, currentCommand_]];
+    }
+}
+
+- (void)invokeCurrentCallbackWithError:(BOOL)withError {
+    id target = [self currentCommandTarget];
+    if (!target) {
+        return;
+    }
+    SEL selector = [self currentCommandSelector];
+    id obj = [self currentCommandObject];
+    if (withError) {
+        [target performSelector:selector
+                     withObject:nil
+                     withObject:obj];
+        return;
+    }
+    if (_tmuxLogging) {
+        [delegate_ tmuxPrintLine:[NSString stringWithFormat:@"[Normal response to “%@”]", currentCommand_[kCommandString]]];
+    }
+    if ([self currentCommandFlags] & kTmuxGatewayCommandWantsData) {
+        [target performSelector:selector
+                     withObject:currentCommandData_
+                     withObject:obj];
+    } else {
+        [target performSelector:selector
+                     withObject:currentCommandResponse_
+                     withObject:obj];
+    }
+}
+
+- (BOOL)shouldAutofailSubsequentCommands {
+    if (![currentCommand_[kCommandIsInList] boolValue]) {
+        return NO;
+    }
+    if ([currentCommand_[kCommandIsLastInList] boolValue]) {
+        return NO;
+    }
+    // Remove subsequent commands belonging to the same list so we can go back to life
+    // as usual.
+    DLog(@"Automatically fail the next command.");
+    return YES;
+}
+
+- (void)performInitializationOnCommandResponseWithError:(BOOL)withError {
+    if ([currentCommand_[kCommandIsInitial] boolValue]) {
+        DLog(@"Begin accepting notifications");
+        acceptNotifications_ = YES;
+    }
+    if (_initialized) {
+        return;
+    }
+    _initialized = YES;
+    if (withError) {
+        [delegate_ tmuxInitialCommandDidFailWithError:currentCommandResponse_];
+    } else {
+        [delegate_ tmuxInitialCommandDidCompleteSuccessfully];
+    }
+}
+
 - (void)currentCommandResponseFinishedWithError:(BOOL)withError {
-    BOOL failNext = NO;
-    do {
-        failNext = NO;
-        id target = [self currentCommandTarget];
-        if (target) {
-            SEL selector = [self currentCommandSelector];
-            id obj = [self currentCommandObject];
-            if (withError) {
-                if (_tmuxLogging) {
-                    [delegate_ tmuxPrintLine:[NSString stringWithFormat:@"[Error “%@” in response to “%@”]",
-                                              currentCommandResponse_, currentCommand_[kCommandString]]];
-                }
-                if ([self currentCommandFlags] & kTmuxGatewayCommandShouldTolerateErrors) {
-                    [target performSelector:selector
-                                 withObject:nil
-                                 withObject:obj];
-                    // Remove subsequent commands belonging to the same list so we can go back to life
-                    // as usual.
-                    if ([currentCommand_[kCommandIsInList] boolValue] && !
-                        [currentCommand_[kCommandIsLastInList] boolValue]) {
-                        DLog(@"Automatically fail the next command.");
-                        failNext = YES;
-                    }
-                } else {
-                    if ([currentCommandResponse_ hasPrefix:@"bad working directory:"] &&
-                        [currentCommand_[kCommandString] hasPrefix:@"new-window"] &&
-                        [currentCommand_[kCommandString] containsString:@"-c"] &&
-                        [self.maximumServerVersion compare:@2.1] != NSOrderedAscending) {
-                        [self abortWithErrorMessage:[NSString stringWithFormat:@"Error: %@.\n\nTmux 2.1 and earlier will refuse to create a new window pane with a nonexistent initial working directory.\n\nInfo:\n%@",
-                                                     currentCommandResponse_, currentCommand_]];
-                    } else {
-                        [self abortWithErrorMessage:[NSString stringWithFormat:@"Error: %@.\n\nInfo:\n%@", currentCommandResponse_, currentCommand_]];
-                    }
-                    return;
-                }
-            } else {
-                if (_tmuxLogging) {
-                    [delegate_ tmuxPrintLine:[NSString stringWithFormat:@"[Normal response to “%@”]", currentCommand_[kCommandString]]];
-                }
-                if ([self currentCommandFlags] & kTmuxGatewayCommandWantsData) {
-                    [target performSelector:selector
-                                 withObject:currentCommandData_
-                                 withObject:obj];
-                } else {
-                    [target performSelector:selector
-                                 withObject:currentCommandResponse_
-                                 withObject:obj];
-                }
+    while (YES) {
+        if (withError) {
+            if (_tmuxLogging) {
+                [delegate_ tmuxPrintLine:[NSString stringWithFormat:@"[Error “%@” in response to “%@”]",
+                                          currentCommandResponse_, currentCommand_[kCommandString]]];
+            }
+            const BOOL shouldTolerateError = ([self currentCommandFlags] & kTmuxGatewayCommandShouldTolerateErrors);
+            if (!shouldTolerateError) {
+                [self abortWithErrorForCurrentCommand];
+                return;
             }
         }
-        if ([[currentCommand_ objectForKey:kCommandIsInitial] boolValue]) {
-            DLog(@"Begin accepting notifications");
-            acceptNotifications_ = YES;
-        }
-        if (!_initialized) {
-            _initialized = YES;
-            if (withError) {
-                [delegate_ tmuxInitialCommandDidFailWithError:currentCommandResponse_];
-            } else {
-                [delegate_ tmuxInitialCommandDidCompleteSuccessfully];
-            }
-        }
+        [self invokeCurrentCallbackWithError:withError];
+        const BOOL failNext = withError && [self shouldAutofailSubsequentCommands];
+        [self performInitializationOnCommandResponseWithError:withError];
+        [self resetCurrentCommand];
 
-        [currentCommand_ release];
-        currentCommand_ = nil;
-        [currentCommandResponse_ release];
-        currentCommandResponse_ = nil;
-        [currentCommandData_ release];
-        currentCommandData_ = nil;
-
-        if (failNext) {
-            [self beginHandlingNextResponseWithID:@"n/a"];
+        if (!failNext) {
+            return;
         }
-    } while (failNext);
+        [self beginHandlingNextResponseWithID:@"n/a"];
+    };
 }
 
 - (void)parseBegin:(NSString *)command {
@@ -523,6 +543,15 @@ error:
             [delegate_ tmuxPrintLine:[NSString stringWithFormat:@"[Begin response for %@]", currentCommand_[kCommandString]]];
         }
     }
+}
+
+- (void)resetCurrentCommand {
+    [currentCommand_ release];
+    currentCommand_ = nil;
+    [currentCommandResponse_ release];
+    currentCommandResponse_ = nil;
+    [currentCommandData_ release];
+    currentCommandData_ = nil;
 }
 
 - (void)beginHandlingNextResponseWithID:(NSString *)commandId {
@@ -845,13 +874,14 @@ error:
     return NO;
 }
 
-- (void)sendCommand:(NSString *)command responseTarget:(id)target responseSelector:(SEL)selector
-{
+- (void)sendCommand:(NSString *)command responseTarget:(id)target responseSelector:(SEL)selector {
+    // We tolerate errors when no target is specifed for bugward compatibility because such errors
+    // used to be ignored purely by accident.
     [self sendCommand:command
        responseTarget:target
      responseSelector:selector
        responseObject:nil
-                flags:0];
+                flags:(target == nil) ? kTmuxGatewayCommandShouldTolerateErrors : 0];
 }
 
 - (void)sendCommand:(NSString *)command

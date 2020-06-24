@@ -6719,8 +6719,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [self printTmuxMessage:[NSString stringWithFormat:@"tmux failed with error: “%@”", error]];
 }
 
-- (void)tmuxPrintLine:(NSString *)line
-{
+- (void)tmuxPrintLine:(NSString *)line {
+    DLog(@"%@", line);
     [_screen appendStringAtCursor:line];
     [_screen crlf];
 }
@@ -9362,6 +9362,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)printTmuxMessage:(NSString *)message {
+    DLog(@"%@", message);
     if (_exited) {
         return;
     }

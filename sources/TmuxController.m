@@ -531,7 +531,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
                                            responseTarget:nil
                                          responseSelector:nil
                                            responseObject:nil
-                                                    flags:0],
+                                                    flags:kTmuxGatewayCommandShouldTolerateErrors],
                            [gateway_ dictionaryForCommand:getHiddenWindowsCommand
                                            responseTarget:self
                                          responseSelector:@selector(getHiddenWindowsResponse:)
@@ -889,7 +889,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
                                          responseTarget:nil
                                        responseSelector:nil
                                          responseObject:nil
-                                                  flags:0],
+                                                  flags:kTmuxGatewayCommandShouldTolerateErrors],
                          [gateway_ dictionaryForCommand:listStr
                                          responseTarget:self
                                        responseSelector:@selector(listWindowsResponse:)
@@ -1412,7 +1412,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
                                                  responseTarget:nil
                                                responseSelector:nil
                                                  responseObject:nil
-                                                          flags:0]];
+                                                          flags:kTmuxGatewayCommandShouldTolerateErrors]];
          }
          [commands addObject:[gateway_ dictionaryForCommand:command
                                              responseTarget:nil
@@ -1446,7 +1446,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
                                                  responseTarget:nil
                                                responseSelector:nil
                                                  responseObject:nil
-                                                          flags:0]];
+                                                          flags:kTmuxGatewayCommandShouldTolerateErrors]];
          }
          [commands addObject:[gateway_ dictionaryForCommand:command
                                              responseTarget:self
@@ -1475,7 +1475,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
            responseTarget:nil
          responseSelector:nil
            responseObject:nil
-                    flags:kTmuxGatewayCommandOfferToDetachIfLaggyDuplicate];
+                    flags:kTmuxGatewayCommandOfferToDetachIfLaggyDuplicate | kTmuxGatewayCommandShouldTolerateErrors];
 }
 
 - (void)unlinkWindowWithId:(int)windowId {
@@ -1483,7 +1483,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
            responseTarget:nil
          responseSelector:nil
            responseObject:nil
-                    flags:0];
+                    flags:kTmuxGatewayCommandShouldTolerateErrors];
 }
 
 - (NSString *)stringByEscapingBackslashesAndRemovingNewlines:(NSString *)name {
@@ -1595,7 +1595,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
            responseTarget:nil
          responseSelector:nil
            responseObject:nil
-                    flags:0];
+                    flags:kTmuxGatewayCommandShouldTolerateErrors];
 }
 
 - (void)sendCommandToSetTabColors {
@@ -1607,7 +1607,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
            responseTarget:nil
          responseSelector:nil
            responseObject:nil
-                    flags:0];
+                    flags:kTmuxGatewayCommandShouldTolerateErrors];
 }
 
 - (NSDictionary *)hotkeyForWindowPane:(int)windowPane {
@@ -1624,7 +1624,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
            responseTarget:nil
          responseSelector:nil
            responseObject:nil
-                    flags:kTmuxGatewayCommandOfferToDetachIfLaggyDuplicate];
+                    flags:kTmuxGatewayCommandOfferToDetachIfLaggyDuplicate | kTmuxGatewayCommandShouldTolerateErrors];
 }
 
 - (NSString *)breakPaneWindowPaneFlag {
@@ -1772,10 +1772,10 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
 - (void)killSessionNumber:(int)sessionNumber {
     NSString *killCommand = [NSString stringWithFormat:@"kill-session -t \"$%d\"", sessionNumber];
     [gateway_ sendCommand:killCommand
-              responseTarget:nil
-            responseSelector:nil
+           responseTarget:nil
+         responseSelector:nil
            responseObject:nil
-                    flags:kTmuxGatewayCommandOfferToDetachIfLaggyDuplicate];
+                    flags:kTmuxGatewayCommandOfferToDetachIfLaggyDuplicate | kTmuxGatewayCommandShouldTolerateErrors];
     [self listSessions];
 }
 
@@ -1857,7 +1857,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
            responseTarget:nil
          responseSelector:nil
            responseObject:nil
-                    flags:0];
+                    flags:kTmuxGatewayCommandShouldTolerateErrors];
 }
 
 - (void)saveWindowOrigins
