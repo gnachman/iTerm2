@@ -2063,14 +2063,12 @@ static BOOL hasBecomeActive = NO;
 #pragma mark - Private
 
 - (void)updateProcessType {
-    bool enableLSUI = [iTermPreferences boolForKey:kPreferenceKeyUIElement];
+    BOOL enableLSUI = [iTermPreferences boolForKey:kPreferenceKeyUIElement];
 
     if ([iTermAdvancedSettingsModel automaticallyToggleLSUI]) {
-        bool onlyHotKeyWindowsOpen = true;
-        for (PseudoTerminal* term in [self terminals]) {
-            onlyHotKeyWindowsOpen &= [term isHotKeyWindow];
-        }
-        enableLSUI &= onlyHotKeyWindowsOpen;
+        const BOOL onlyHotKeyWindowsOpen = [self.terminals allWithBlock:^BOOL(PseudoTerminal *term) { return term.isHotKeyWindow; }];
+
+        enableLSUI = enableLSUI && onlyHotKeyWindowsOpen;
     }
     
     [[iTermApplication sharedApplication] setIsUIElement:enableLSUI];

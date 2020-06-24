@@ -232,7 +232,7 @@ static iTermController *gSharedInstance;
 
 - (void)updateProcessType {
     [[NSNotificationCenter defaultCenter] postNotificationName:iTermProcessTypeDidChangeNotification
-    object:nil];
+                                                        object:nil];
 }
 
 - (BOOL)haveTmuxConnection {
