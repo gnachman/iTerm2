@@ -40,6 +40,12 @@
         _variableName = [variableName copy];
         _block = [block copy];
         _fallbackVariableName = [fallbackVariableName copy];
+        if ([_gateway versionAtLeastDecimalNumberWithString:@"3.2"]) {
+            __weak __typeof(self) weakSelf = self;
+            [_gateway subscribeToFormat:self.escapedFormat block:^(NSString *value) {
+                [weakSelf didFetch:value];
+            }];
+        }
     }
     return self;
 }

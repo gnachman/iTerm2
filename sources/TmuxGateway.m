@@ -37,6 +37,40 @@ static NSString *kCommandIsInList = @"inList";
 static NSString *kCommandIsLastInList = @"lastInList";
 static NSString *kCommandTimestamp = @"timestamp";
 
+@interface iTermTmuxSubscriptionHandle()
+@property (nonatomic, readonly) NSString *identifier;
+@property (nonatomic, readonly) void (^block)(NSString *);
+
+- (instancetype)initWithBlock:(void (^)(NSString *))block NS_DESIGNATED_INITIALIZER;
+- (instancetype)init NS_UNAVAILABLE;
+
+- (void)setValue:(NSString *)value;
+@end
+
+@implementation iTermTmuxSubscriptionHandle
+
+- (instancetype)initWithBlock:(void (^)(NSString *))block {
+    self = [super init];
+    if (self) {
+        static NSInteger next = 1;
+        _identifier = [[NSString stringWithFormat:@"it2_%@", @(next++)] retain];
+        _block = [block copy];
+    }
+    return self;
+}
+
+- (void)dealloc {
+    [_identifier release];
+    [_block release];
+    [super dealloc];
+}
+
+- (void)setValue:(NSString *)value {
+    self.block(value);
+}
+
+@end
+
 @implementation TmuxGateway {
     // Set to YES when the remote host closed the connection. We won't send commands when this is
     // set.
@@ -56,6 +90,7 @@ static NSString *kCommandTimestamp = @"timestamp";
     // When we get the first %begin-%{end,error} we notify the delegate. Until that happens, this is
     // set to NO.
     BOOL _initialized;
+    NSMutableDictionary<NSString *, iTermTmuxSubscriptionHandle *> *_subscriptions;
 }
 
 @synthesize delegate = delegate_;
@@ -68,6 +103,7 @@ static NSString *kCommandTimestamp = @"timestamp";
         delegate_ = delegate;
         commandQueue_ = [[NSMutableArray alloc] init];
         strayMessages_ = [[NSMutableString alloc] init];
+        _subscriptions = [[NSMutableDictionary alloc] init];
         _dcsID = [dcsID copy];
     }
     return self;
@@ -82,6 +118,7 @@ static NSString *kCommandTimestamp = @"timestamp";
     [_minimumServerVersion release];
     [_maximumServerVersion release];
     [_dcsID release];
+    [_subscriptions release];
 
     [super dealloc];
 }
@@ -359,6 +396,17 @@ error:
     }
     [delegate_ tmuxWindowPaneDidPause:components[1].intValue
                          notification:YES];
+}
+
+- (void)parseSubscriptionChangedCommand:(NSString *)command {
+    NSArray<NSString *> *components = [command captureComponentsMatchedByRegex:@"^%subscription-changed ([^ ]+) [^:]*: (.*)$"];
+    if (components.count != 3) {
+        [self abortWithErrorMessage:[NSString stringWithFormat:@"Malformed command (expected %%subscription-changed sid [...] : value): \"%@\"", command]];
+        return;
+    }
+    NSString *sid = components[1];
+    NSString *value = components[2];
+    [_subscriptions[sid] setValue:value];
 }
 
 - (void)forceDetach {
@@ -658,6 +706,9 @@ error:
     } else if ([command hasPrefix:@"%pause"]) {
         // New in tmux 3.2
         [self parsePauseCommand:command];
+    } else if ([command hasPrefix:@"%subscription-changed "]) {
+        // New in tmux 3.2
+        if (acceptNotifications_) [self parseSubscriptionChangedCommand:command];
     } else if ([command hasPrefix:@"%continue"]) {
         // New in tmux 3.2. Don't care.
     } else if ([command hasPrefix:@"%window-pane-changed"] ||  // active pane changed
@@ -947,6 +998,32 @@ error:
 
 - (NSWindowController<iTermWindowController> *)window {
     return [delegate_ tmuxGatewayWindow];
+}
+
+- (iTermTmuxSubscriptionHandle *)subscribeToFormat:(NSString *)format
+                                             block:(void (^)(NSString *))block {
+    iTermTmuxSubscriptionHandle *handle = [[[iTermTmuxSubscriptionHandle alloc] initWithBlock:block] autorelease];
+    NSString *subscribe = [NSString stringWithFormat:@"refresh-client -B '%@:%@'",
+                           handle.identifier,
+                           format];
+    _subscriptions[handle.identifier] = handle;
+    [self sendCommand:subscribe
+       responseTarget:nil
+     responseSelector:nil
+       responseObject:nil
+                flags:kTmuxGatewayCommandShouldTolerateErrors];
+    return handle;
+}
+
+- (void)unsubscribe:(iTermTmuxSubscriptionHandle *)handle {
+    NSString *subscribe = [NSString stringWithFormat:@"refresh-client -B '%@'",
+                           handle.identifier];
+    [_subscriptions removeObjectForKey:handle.identifier];
+    [self sendCommand:subscribe
+       responseTarget:nil
+     responseSelector:nil
+       responseObject:nil
+                flags:kTmuxGatewayCommandShouldTolerateErrors];
 }
 
 @end

@@ -27,6 +27,9 @@ typedef NS_OPTIONS(int, kTmuxGatewayCommandOptions) {
 
 extern NSString * const kTmuxGatewayErrorDomain;
 
+@interface iTermTmuxSubscriptionHandle: NSObject
+@end
+
 @protocol TmuxGatewayDelegate <NSObject>
 
 - (TmuxController *)tmuxController;
@@ -122,5 +125,9 @@ typedef NS_ENUM(NSInteger, ControlCommand) {
 - (void)forceDetach;
 - (void)doubleAttachDetectedForSessionGUID:(NSString *)sessionGuid;
 - (BOOL)havePendingCommandEqualTo:(NSString *)command;
+
+- (iTermTmuxSubscriptionHandle *)subscribeToFormat:(NSString *)format
+                                             block:(void (^)(NSString *))block;
+- (void)unsubscribe:(iTermTmuxSubscriptionHandle *)handle;
 
 @end
