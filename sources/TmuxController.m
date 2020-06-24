@@ -152,6 +152,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
                    profileModel:(ProfileModel *)profileModel {
     self = [super init];
     if (self) {
+        DLog(@"Initialize with profile %@", profile);
         _sharedProfile = [profile copy];
         _profileModel = [profileModel retain];
         _sharedFontOverrides = [iTermTmuxControllerDefaultFontOverridesFromProfile(profile) retain];
@@ -210,14 +211,17 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
 
 - (Profile *)profileForWindow:(int)window {
     if (!_variableWindowSize) {
+        DLog(@"No variable window size: use shared profile");
         return [self sharedProfile];
     }
     Profile *original = _windowStates[@(window)].profile;
     if (!original) {
+        DLog(@"No original profile: use shared profile");
         return [self sharedProfile];
     }
     NSMutableDictionary *temp = [[original mutableCopy] autorelease];
     [temp it_mergeFrom:_windowStates[@(window)].fontOverrides];
+    DLog(@"Merge font overrides from original.");
     return temp;
 }
 
@@ -229,11 +233,14 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
 }
 
 - (NSDictionary *)sharedProfile {
+    DLog(@"Want profile with guid %@", _sharedProfile[KEY_GUID]);
     Profile *profile = [_profileModel bookmarkWithGuid:_sharedProfile[KEY_GUID]] ?: _sharedProfile;
+    DLog(@"profile is %@", profile);
     NSMutableDictionary *temp = [profile mutableCopy];
     [_sharedFontOverrides enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, id  _Nonnull obj, BOOL * _Nonnull stop) {
         temp[key] = obj;
     }];
+    DLog(@"After merging font overrides profile is %@", temp);
     return [temp autorelease];
 }
 
@@ -472,9 +479,13 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
                [scanner scanString:@"," intoString:nil] &&
                [scanner scanInt:&height]);
     if (ok) {
+        DLog(@"Use saved size of %@x%@ from response '%@'", @(width), @(height), response);
         [self openWindowsOfSize:VT100GridSizeMake(width, height)];
     } else {
-        [self openWindowsOfSize:[[gateway_ delegate] tmuxClientSize]];
+        const VT100GridSize clientSize = [[gateway_ delegate] tmuxClientSize];
+        DLog(@"Use tmuxClientSize of %@ gateway=%@ gateway.delegate=%@",
+             VT100GridSizeDescription(clientSize), gateway_, gateway_.delegate);
+        [self openWindowsOfSize:clientSize];
     }
 }
 

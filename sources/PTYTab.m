@@ -5720,10 +5720,15 @@ typedef struct {
 }
 
 - (VT100GridSize)sessionTmuxSizeWithProfile:(Profile *)profile {
+    DLog(@"Calculate tmux size for profile");
     if ([iTermPreferences useTmuxProfile]) {
-        return VT100GridSizeMake([[profile objectForKey:KEY_COLUMNS] intValue],
-                                 [[profile objectForKey:KEY_ROWS] intValue]);
+        const VT100GridSize size = VT100GridSizeMake([[profile objectForKey:KEY_COLUMNS] intValue],
+                                                     [[profile objectForKey:KEY_ROWS] intValue]);
+        DLog(@"Using the tmux profile so just return rows and columns %@",
+             VT100GridSizeDescription(size));
+        return size;
     } else {
+        DLog(@"Not using the tmux profile. Calculate it based on the tabview's frame.\n%@", [tabView_ iterm_recursiveDescription]);
         NSSize frameSize = tabView_.frame.size;
         PTYSession *anySession = self.sessions.firstObject;
 
@@ -5734,8 +5739,16 @@ typedef struct {
                                                        controlSize:NSControlSizeRegular
                                                      scrollerStyle:anySession.view.scrollview.scrollerStyle];
         NSSize cellSize = [PTYTab cellSizeForBookmark:profile];
-        return VT100GridSizeMake((contentSize.width - [iTermAdvancedSettingsModel terminalMargin] * 2) / cellSize.width,
-                                 (contentSize.height - [iTermAdvancedSettingsModel terminalVMargin] * 2) / cellSize.height);
+        const VT100GridSize result =
+        VT100GridSizeMake((contentSize.width - [iTermAdvancedSettingsModel terminalMargin] * 2) / cellSize.width,
+                          (contentSize.height - [iTermAdvancedSettingsModel terminalVMargin] * 2) / cellSize.height);
+        DLog(@"frameSize=%@ contentSize=%@ cellSize=%@ result=%@",
+             NSStringFromSize(frameSize),
+             NSStringFromSize(contentSize),
+             NSStringFromSize(cellSize),
+             VT100GridSizeDescription(result));
+
+        return result;
     }
 }
 

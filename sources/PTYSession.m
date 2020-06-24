@@ -6665,7 +6665,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (VT100GridSize)tmuxClientSize {
-    return [_delegate sessionTmuxSizeWithProfile:[_tmuxController profileForWindow:self.delegate.tmuxWindow]];
+    Profile *profile = [_tmuxController profileForWindow:self.delegate.tmuxWindow];
+    DLog(@"Computing client size for controller %@ _delegate=%@ self.delegate.tmuxWindow=%@ profile=%@",
+         _tmuxController, _delegate, @(self.delegate.tmuxWindow), profile);
+    return [_delegate sessionTmuxSizeWithProfile:profile];
 }
 
 - (NSInteger)tmuxNumberOfLinesOfScrollbackHistory {
