@@ -266,7 +266,7 @@ static NSInteger gNextFrameDataNumber;
         0.0,
         viewportSize.x * 2,
         viewportSize.y * 2,
-        -1.0,
+        0.0,
         1.0
     };
     [renderEncoder setViewport:viewport];

@@ -5593,6 +5593,10 @@ ITERM_WEAKLY_REFERENCEABLE
 
         if (index != NSNotFound) {
             frame.size.height = self.desiredTabBarHeight;
+            if (@available(macOS 10.16, *)) {
+                // TODO: FB7781183
+                frame.size.height += 4;
+            }
             DLog(@"Set frame of tabbar as accessory to %@", NSStringFromRect(frame));
             viewController.view.frame = frame;
         }
@@ -5616,7 +5620,7 @@ ITERM_WEAKLY_REFERENCEABLE
     assert(_contentView.tabBarControlOnLoan);
     
     [self.window removeTitlebarAccessoryViewControllerAtIndex:index];
-    [_contentView returnTabBarControlView:(iTermTabBarControlView *)_titleBarAccessoryTabBarViewController.view];
+    [_contentView returnTabBarControlView:(iTermTabBarControlView *)_titleBarAccessoryTabBarViewController.realView];
     [_titleBarAccessoryTabBarViewController release];
     _titleBarAccessoryTabBarViewController = nil;
     [_contentView layoutSubviews];

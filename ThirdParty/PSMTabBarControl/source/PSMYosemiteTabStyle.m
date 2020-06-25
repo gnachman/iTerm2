@@ -473,7 +473,9 @@
 }
 
 - (NSColor *)bottomLineColorSelected:(BOOL)selected {
-    if (@available(macOS 10.14, *)) {
+    if (@available(macOS 10.16, *)) {
+        return [NSColor colorWithSRGBRed:180.0/255.0 green:180.0/255.0 blue:180.0/255.0 alpha:1];
+    } else if (@available(macOS 10.14, *)) {
         return [NSColor colorWithWhite:0 alpha:0.15];
     } else {
         const BOOL keyMainAndActive = self.windowIsMainAndAppIsActive;
@@ -512,6 +514,20 @@
         return [NSColor colorWithSRGBRed:value green:value blue:value alpha:1];
     }
 }
+- (NSColor *)bigSurBackgroundColorSelected:(BOOL)selected highlightAmount:(CGFloat)highlightAmount NS_AVAILABLE_MAC(10_14) {
+    CGFloat colors[4] = { 0, 0, 0, 0};
+    if (selected) {
+        // clear
+    } else {
+        colors[3] = 0.1 + 0.086 * highlightAmount;
+    }
+
+    return [NSColor colorWithSRGBRed:colors[0]
+                               green:colors[1]
+                                blue:colors[2]
+                               alpha:colors[3]];
+}
+
 - (NSColor *)mojaveBackgroundColorSelected:(BOOL)selected highlightAmount:(CGFloat)highlightAmount NS_AVAILABLE_MAC(10_14) {
     CGFloat colors[3];
     const BOOL keyMainAndActive = self.windowIsMainAndAppIsActive;
@@ -554,7 +570,9 @@
 }
 
 - (NSColor *)backgroundColorSelected:(BOOL)selected highlightAmount:(CGFloat)highlightAmount {
-    if (@available(macOS 10.14, *)) {
+    if (@available(macOS 10.16, *)) {
+        return [self bigSurBackgroundColorSelected:selected highlightAmount:highlightAmount];
+    } else if (@available(macOS 10.14, *)) {
         return [self mojaveBackgroundColorSelected:selected highlightAmount:highlightAmount];
     } else {
         return [self legacyBackgroundColorSelected:selected highlightAmount:highlightAmount];
@@ -654,7 +672,9 @@
 
 - (NSEdgeInsets)backgroundInsetsWithHorizontalOrientation:(BOOL)horizontal {
     NSEdgeInsets insets = NSEdgeInsetsZero;
-    if (@available(macOS 10.14, *)) {
+    if (@available(macOS 10.16, *)) {
+        return insets;
+    } else if (@available(macOS 10.14, *)) {
         insets.top = 1;
         insets.bottom = 1;
         insets.left = 1;
@@ -705,6 +725,9 @@
         }
         // Right line
         CGFloat adjustment = 0;
+        if (@available(macOS 10.16, *)) {
+            adjustment = -1;
+        }
         [[self verticalLineColorSelected:selected] set];
         [self drawVerticalLineInFrame:cellFrame x:NSMaxX(cellFrame) + adjustment];
 
@@ -721,10 +744,12 @@
             }
         }
         // Bottom line
-        const BOOL drawBottomLine = [[_tabBar.delegate tabView:_tabBar valueOfOption:PSMTabBarControlOptionColoredDrawBottomLineForHorizontalTabBar] boolValue];
-        if (drawBottomLine) {
-            [[self bottomLineColorSelected:selected] set];
-            [self drawHorizontalLineInFrame:cellFrame y:NSMaxY(cellFrame) - 1];
+        if (@available(macOS 10.16, *)) { } else {
+            const BOOL drawBottomLine = [[_tabBar.delegate tabView:_tabBar valueOfOption:PSMTabBarControlOptionColoredDrawBottomLineForHorizontalTabBar] boolValue];
+            if (drawBottomLine) {
+                [[self bottomLineColorSelected:selected] set];
+                [self drawHorizontalLineInFrame:cellFrame y:NSMaxY(cellFrame) - 1];
+            }
         }
     } else {
         // Bottom line
@@ -1118,17 +1143,23 @@
         _tabBar = bar;
     }
 
+    // Background to the right of the rightmost tab and left of the leftmost tab.
     [self drawBackgroundInRect:clipRect color:[self tabBarColor] horizontal:horizontal];
-    [[self topLineColorSelected:NO] set];
 
+    // Draw line above tab bar.
+    NSColor *topLineColor = [self topLineColorSelected:NO];
+    [topLineColor set];
     NSRect insetRect;
-    if (@available(macOS 10.14, *)) {
+    if (@available(macOS 10.16, *)) {
+        insetRect = clipRect;
+    } else if (@available(macOS 10.14, *)) {
         insetRect = NSInsetRect(rect, 1, 0);
         insetRect.size.width -= 1;
     } else {
         insetRect = clipRect;
     }
-    [self drawHorizontalLineInFrame:NSIntersectionRect(clipRect, insetRect) y:0];
+    const NSRect insetClipIntersection = NSIntersectionRect(clipRect, insetRect);
+    [self drawHorizontalLineInFrame:insetClipIntersection y:0];
 
     // no tab view == not connected
     if (![bar tabView]) {
@@ -1159,6 +1190,12 @@
             if (![cell isInOverflowMenu] && NSIntersectsRect(NSInsetRect([cell frame], -1, -1), clipRect)) {
                 if (cell.state == stateToDraw) {
                     [cell drawWithFrame:[cell frame] inView:bar];
+                    if (@available(macOS 10.16, *)) {
+                        if (stateToDraw == NSOffState) {
+                            [topLineColor set];
+                            NSRectFill(NSMakeRect(NSMinX(cell.frame) - 1, 0, NSWidth(cell.frame) + 1, 1));
+                        }
+                    }
                     if (stateToDraw == NSOnState) {
                         // Can quit early since only one can be selected
                         break;
@@ -1173,6 +1210,11 @@
             NSRect rightLineRect = rect;
             rightLineRect.origin.y -= 1;
             [self drawVerticalLineInFrame:rightLineRect x:NSMaxX(rect) - 1];
+        } else {
+            if (@available(macOS 10.16, *)) {
+                [[self bottomLineColorSelected:YES] set];
+                NSRectFill(NSMakeRect(0, NSMaxY(rect) - 1, NSWidth(rect), 1));
+            }
         }
     }
     for (PSMTabBarCell *cell in [bar cells]) {
