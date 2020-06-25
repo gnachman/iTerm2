@@ -711,8 +711,6 @@ andEditComponentWithIdentifier:(NSString *)identifier
         _bigSurSearchFieldToolbarItem = [[NSSearchToolbarItem alloc] initWithItemIdentifier:iTermPreferencePanelSearchFieldToolbarItemIdentifier];
         _bigSurSearchFieldToolbarItem.label = @"Search";
         _bigSurSearchFieldToolbarItem.searchField.delegate = self;
-        _bigSurSearchFieldToolbarItem.maxSize = NSMakeSize(32, 32);
-        _bigSurSearchFieldToolbarItem.minSize = NSMakeSize(8, 8);
     }
     return _bigSurSearchFieldToolbarItem;
 }
