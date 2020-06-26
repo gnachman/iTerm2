@@ -10794,10 +10794,27 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     return YES;
 }
 
+- (BOOL)windowRestorationEnabled {
+    if (self.isHotKeyWindow) {
+        // Hotkey windows are restored unconditionally. See -application:didDecodeRestorableState:.
+        // That's not necessarily a good idea, but I don't want to half-break it.
+        return YES;
+    }
+    if ([iTermPreferences boolForKey:kPreferenceKeyOpenArrangementAtStartup] ||
+        [iTermPreferences boolForKey:kPreferenceKeyOpenNoWindowsAtStartup]) {
+        return NO;
+    }
+    return YES;
+}
+
 - (void)window:(NSWindow *)window willEncodeRestorableState:(NSCoder *)state {
     if (doNotSetRestorableState_) {
         // The window has been destroyed beyond recognition at this point and
         // there is nothing to save.
+        return;
+    }
+    if (![self windowRestorationEnabled]) {
+        [[self ptyWindow] setRestoreState:nil];
         return;
     }
     // Don't save and restore the hotkey window. The OS only restores windows that are in the window
