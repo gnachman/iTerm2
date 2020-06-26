@@ -57,6 +57,7 @@ static double TimespecToSeconds(struct timespec* ts) {
 @property (nonatomic, readonly) NSInteger capacity;
 @property (nonatomic) double lastTTL;
 @property (nonatomic, readonly) NSTimeInterval lastUpdateTime;
+@property (nonatomic) NSInteger redZoneCount;
 
 - (instancetype)initWithCapacity:(NSInteger)capacity NS_DESIGNATED_INITIALIZER;
 - (instancetype)init NS_UNAVAILABLE;
@@ -113,7 +114,7 @@ static double TimespecToSeconds(struct timespec* ts) {
     double slope = 0;
     double offset = 0;
     const BOOL ok = [self getLinearRegressionSlope:&slope offset:&offset];
-    if (!ok) {
+    if (!ok || slope <= 0) {
         return INFINITY;
     }
     return (target - offset) / slope;
@@ -203,7 +204,7 @@ static double TimespecToSeconds(struct timespec* ts) {
             return;
         }
         const NSTimeInterval ttl = [self ttlForSeries:series now:now];
-        [self maybeWarnPane:wp.intValue ttl:ttl lastTTL:series.lastTTL];
+        [self maybeWarnPane:wp.intValue ttl:ttl lastTTL:series.lastTTL series:series];
         series.lastTTL = ttl;
     }];
 }
@@ -212,10 +213,26 @@ static double TimespecToSeconds(struct timespec* ts) {
     [_series removeObjectForKey:@(wp)];
 }
 
-- (void)maybeWarnPane:(int)wp ttl:(NSTimeInterval)ttl lastTTL:(NSTimeInterval)lastTTL {
+- (void)maybeWarnPane:(int)wp
+                  ttl:(NSTimeInterval)ttl
+              lastTTL:(NSTimeInterval)lastTTL
+               series:(iTermTimeSeries *)series {
     BOOL redzone = NO;
     if (![self shouldWarnPaneWithTTL:ttl lastTTL:lastTTL redzone:&redzone]) {
+        DLog(@"Not in red zone");
+        series.redZoneCount = 0;
         return;
+    }
+    if (redzone) {
+        series.redZoneCount += 1;
+        DLog(@"In red zone. Increase count to %@", @(series.redZoneCount));
+        if (series.redZoneCount < 5) {
+            DLog(@"Count not high enough to warn yet.");
+            return;
+        }
+    } else {
+        DLog(@"Not in red zone. Reset count.");
+        series.redZoneCount = 0;
     }
     [self.delegate tmuxBufferSizeMonitor:self updatePane:wp ttl:ttl redzone:redzone];
 }
