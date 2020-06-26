@@ -315,7 +315,7 @@ DEFINE_BOOL(dockIconTogglesWindow, NO, SECTION_HOTKEY @"If the only window is a 
 DEFINE_BOOL(hotkeyWindowFloatsAboveOtherWindows, NO, SECTION_HOTKEY @"The hotkey window floats above other windows even when another application is active.\nYou must disable “Prefs > Keys > Hotkey window hides when focus is lost” for this setting to be effective.");
 DEFINE_FLOAT(hotKeyDoubleTapMaxDelay, 0.3, SECTION_HOTKEY @"The maximum amount of time allowed between presses of a modifier key when performing a modifier double-tap.");
 DEFINE_FLOAT(hotKeyDoubleTapMinDelay, 0.01, SECTION_HOTKEY @"The minimum amount of time required between presses of a modifier key when performing a modifier double-tap.");
-DEFINE_BOOL(automaticallyToggleLSUI, YES_IF_BETA_ELSE_NO, SECTION_HOTKEY @"Automatically sets iTerm2 as LSUIElement when the “Exclude iTerm2 from dock and app switcher” setting is enabled AND only Hotkey windows are open. Unsets iTerm2 as LSUIElement when the “Exclude iTerm2 from dock and app switcher” setting is enabled AND at least one non-Hotkey window is open.");
+DEFINE_BOOL(automaticallyToggleLSUI, YES_IF_BETA_ELSE_NO, SECTION_HOTKEY @"Disable “Exclude iTerm2 from Dock and ⌘-Tab App Switcher” when any windows are not hotkey windows.");
 
 #pragma mark General
 
