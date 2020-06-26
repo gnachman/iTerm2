@@ -78,6 +78,8 @@
 - (void)_cycleWindowsReversed:(BOOL)back;
 @end
 
+extern NSString *const iTermProcessTypeDidChangeNotification;
+
 // Pref keys
 static iTermController *gSharedInstance;
 
@@ -226,6 +228,11 @@ static iTermController *gSharedInstance;
             [terminal setWindowTitle];
         }
     }
+}
+
+- (void)updateProcessType {
+    [[NSNotificationCenter defaultCenter] postNotificationName:iTermProcessTypeDidChangeNotification
+                                                        object:nil];
 }
 
 - (BOOL)haveTmuxConnection {
@@ -1302,12 +1309,14 @@ static iTermController *gSharedInstance;
 
     [_terminalWindows addObject:terminalWindow];
     [self updateWindowTitles];
+    [self updateProcessType];
     [[iTermPresentationController sharedInstance] update];
 }
 
 - (void)removeTerminalWindow:(PseudoTerminal *)terminalWindow {
     [_terminalWindows removeObject:terminalWindow];
     [self updateWindowTitles];
+    [self updateProcessType];
     [[iTermPresentationController sharedInstance] update];
 }
 
