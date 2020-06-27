@@ -335,7 +335,7 @@ static iTermPreferencesSearchEngine *gSearchEngine;
     IBOutlet NSTabViewItem *_advancedTabViewItem;
     IBOutlet NSToolbarItem *_flexibleSpaceToolbarItem;
     NSToolbarItem *_searchFieldToolbarItem;
-#if MAC_OS_X_VERSION_MAX_ALLOWED > MAC_OS_X_VERSION_10_15
+#ifdef MAC_OS_X_VERSION_10_16
     NSSearchToolbarItem *_bigSurSearchFieldToolbarItem NS_AVAILABLE_MAC(10_16);
 #endif
     NSDictionary<NSString *, NSString *> *_keywords;
@@ -396,7 +396,7 @@ static iTermPreferencesSearchEngine *gSearchEngine;
     [self.window setCollectionBehavior:NSWindowCollectionBehaviorMoveToActiveSpace];
     [_toolbar setSelectedItemIdentifier:[_globalToolbarItem itemIdentifier]];
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED > MAC_OS_X_VERSION_10_15
+#ifdef MAC_OS_X_VERSION_10_16
     if (@available(macOS 10.16, *)) {
         self.window.toolbarStyle = NSWindowToolbarStylePreference;
         _globalToolbarItem.image = [NSImage imageWithSystemSymbolName:@"gearshape" accessibilityDescription:@"General"];
@@ -709,7 +709,7 @@ andEditComponentWithIdentifier:(NSString *)identifier
     return TRUE;
 }
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED > MAC_OS_X_VERSION_10_15
+#ifdef MAC_OS_X_VERSION_10_16
 - (NSSearchToolbarItem *)bigSurSearchFieldToolbarItem NS_AVAILABLE_MAC(10_16){
     if (!_bigSurSearchFieldToolbarItem) {
         _bigSurSearchFieldToolbarItem = [[NSSearchToolbarItem alloc] initWithItemIdentifier:iTermPreferencePanelSearchFieldToolbarItemIdentifier];
@@ -740,7 +740,7 @@ andEditComponentWithIdentifier:(NSString *)identifier
 }
 
 - (void)createSearchField {
-#if MAC_OS_X_VERSION_MAX_ALLOWED > MAC_OS_X_VERSION_10_15
+#ifdef MAC_OS_X_VERSION_10_16
     if (@available(macOS 10.16, *)) {
         _searchFieldToolbarItem = self.bigSurSearchFieldToolbarItem;
         return;
@@ -933,7 +933,7 @@ andEditComponentWithIdentifier:(NSString *)identifier
 #pragma mark - NSSearchFieldDelegate
 
 - (NSSearchField *)searchField {
-#if MAC_OS_X_VERSION_MAX_ALLOWED > MAC_OS_X_VERSION_10_15
+#ifdef MAC_OS_X_VERSION_10_16
     if (@available(macOS 10.16, *)) {
         if (self.bigSurSearchFieldToolbarItem) {
             return self.bigSurSearchFieldToolbarItem.searchField;
