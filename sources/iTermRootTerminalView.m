@@ -305,13 +305,27 @@ typedef struct {
                 [self addSubview:_bottomBorderView];
             }
         }
-        _wtfBottom = [[SolidColorView alloc] initWithFrame:NSMakeRect(0, 0, 100, 100) color:[NSColor redColor]];
-        _wtfTop = [[SolidColorView alloc] initWithFrame:NSMakeRect(0, 0, 100, 100) color:[NSColor blueColor]];
-        _wtfTabTop = [[SolidColorView alloc] initWithFrame:NSMakeRect(0, 0, 100, 100)
-                                                     color:[NSColor orangeColor]];
-        [self addSubview:_wtfBottom];
-        [self addSubview:_wtfTop];
-        [self addSubview:_wtfTabTop];
+        static int j;
+        j++;
+        if (j & 1) {
+            _wtfBottom = [[SolidColorView alloc] initWithFrame:NSMakeRect(0, 0, 100, 100) color:[NSColor redColor]];
+        }
+        if (j & 2) {
+            _wtfTop = [[SolidColorView alloc] initWithFrame:NSMakeRect(0, 0, 100, 100) color:[NSColor blueColor]];
+        }
+        if (j & 4) {
+            _wtfTabTop = [[SolidColorView alloc] initWithFrame:NSMakeRect(0, 0, 100, 100)
+                                                         color:[NSColor orangeColor]];
+        }
+        if (_wtfBottom) {
+            [self addSubview:_wtfBottom];
+        }
+        if (_wtfTop) {
+            [self addSubview:_wtfTop];
+        }
+        if (_wtfTabTop) {
+            [self addSubview:_wtfTabTop];
+        }
     }
     return self;
 }
