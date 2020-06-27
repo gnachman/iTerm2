@@ -9,6 +9,7 @@
 #import "PSMYosemiteTabStyle.h"
 
 #import "NSColor+PSM.h"
+#import "PSMRolloverButton.h"
 #import "PSMTabBarCell.h"
 #import "PSMTabBarControl.h"
 #import <objc/runtime.h>
@@ -721,15 +722,16 @@
         if (shouldDrawLeftLine) {
             // Left line
             [[self verticalLineColorSelected:selected] set];
+            [[NSColor blueColor] set];
             [self drawVerticalLineInFrame:cellFrame x:NSMinX(cellFrame)];
         }
         // Right line
-        CGFloat adjustment = 0;
-        if (@available(macOS 10.16, *)) {
-            adjustment = -1;
-        }
         [[self verticalLineColorSelected:selected] set];
-        [self drawVerticalLineInFrame:cellFrame x:NSMaxX(cellFrame) + adjustment];
+        CGFloat rightAdjustment = 0;
+        if (@available(macOS 10.16, *)) {
+            rightAdjustment = isLast ? 0 : 1;
+        }
+        [self drawVerticalLineInFrame:cellFrame x:NSMaxX(cellFrame) - rightAdjustment];
 
         // Top line
         [[self topLineColorSelected:selected] set];
@@ -1080,10 +1082,10 @@
     [[self bottomLineColorSelected:NO] set];
     if (_orientation == PSMTabBarHorizontalOrientation) {
         [NSBezierPath strokeLineFromPoint:NSMakePoint(rect.origin.x,
-                                                      rect.origin.y + rect.size.height - 0.5) 
+                                                      rect.origin.y + rect.size.height - 0.5)
                                   toPoint:NSMakePoint(rect.origin.x + rect.size.width,
                                                       rect.origin.y + rect.size.height - 0.5)];
-
+        
         [[self topLineColorSelected:NO] set];
         // this looks ok with tabs on top but doesn't appear w/ tabs on bottom for some reason
         [NSBezierPath strokeLineFromPoint:NSMakePoint(rect.origin.x,
@@ -1158,9 +1160,11 @@
     } else {
         insetRect = clipRect;
     }
-    const NSRect insetClipIntersection = NSIntersectionRect(clipRect, insetRect);
-    [self drawHorizontalLineInFrame:insetClipIntersection y:0];
-
+    if (@available(macOS 10.16, *)) { } else {
+        const NSRect insetClipIntersection = NSIntersectionRect(clipRect, insetRect);
+        [self drawHorizontalLineInFrame:insetClipIntersection y:0];
+    }
+    
     // no tab view == not connected
     if (![bar tabView]) {
         NSRect labelRect = rect;
@@ -1193,7 +1197,7 @@
                     if (@available(macOS 10.16, *)) {
                         if (stateToDraw == NSOffState) {
                             [topLineColor set];
-                            NSRectFill(NSMakeRect(NSMinX(cell.frame) - 1, 0, NSWidth(cell.frame) + 1, 1));
+                            NSRectFill(NSMakeRect(NSMinX(cell.frame), 0, NSWidth(cell.frame), 1));
                         }
                     }
                     if (stateToDraw == NSOnState) {
@@ -1202,6 +1206,14 @@
                     }
                 }
             }
+        }
+    }
+
+    if (@available(macOS 10.16, *)) {
+        if (bar.showAddTabButton) {
+            NSRect frame = bar.addTabButton.frame;
+            [topLineColor set];
+            NSRectFill(NSMakeRect(NSMinX(frame), 0, NSWidth(frame), 1));
         }
     }
     if (@available(macOS 10.14, *)) {

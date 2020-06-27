@@ -139,7 +139,12 @@
 
 - (NSEdgeInsets)backgroundInsetsWithHorizontalOrientation:(BOOL)horizontal {
     NSEdgeInsets insets = NSEdgeInsetsZero;
-    if (@available(macOS 10.14, *)) {
+    if (@available(macOS 10.16, *)) {
+        insets.top = 0;
+        insets.bottom = 0;
+        insets.left = 0;
+        insets.right = 0;
+    } else if (@available(macOS 10.14, *)) {
         insets.top = 1;
         insets.bottom = 0;
         insets.left = 1;
