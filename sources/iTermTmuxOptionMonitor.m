@@ -22,6 +22,7 @@
     NSString *_variableName;
     NSString *_fallbackVariableName;
     void (^_block)(NSString *);
+    iTermTmuxSubscriptionHandle *_subscriptionHandle;
 }
 
 - (instancetype)initWithGateway:(TmuxGateway *)gateway
@@ -40,19 +41,35 @@
         _variableName = [variableName copy];
         _block = [block copy];
         _fallbackVariableName = [fallbackVariableName copy];
+        _interval = 1;
         if ([_gateway versionAtLeastDecimalNumberWithString:@"3.2"]) {
             __weak __typeof(self) weakSelf = self;
-            [_gateway subscribeToFormat:self.escapedFormat block:^(NSString *value) {
+            _subscriptionHandle = [_gateway subscribeToFormat:self.escapedFormat target:target block:^(NSString *value) {
                 [weakSelf didFetch:value];
             }];
+            [self updateOnce];
         }
     }
     return self;
 }
 
+- (void)dealloc {
+    [_gateway unsubscribe:_subscriptionHandle];
+}
+
+- (void)setInterval:(NSTimeInterval)interval {
+    _interval = interval;
+    if (_timer) {
+        [self startTimer];
+    }
+}
+
 - (void)startTimer {
+    if (_subscriptionHandle) {
+        return;
+    }
     [_timer invalidate];
-    _timer = [NSTimer scheduledWeakTimerWithTimeInterval:1
+    _timer = [NSTimer scheduledWeakTimerWithTimeInterval:_interval
                                                   target:self
                                                 selector:@selector(update:)
                                                 userInfo:nil

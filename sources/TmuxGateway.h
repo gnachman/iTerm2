@@ -127,6 +127,7 @@ typedef NS_ENUM(NSInteger, ControlCommand) {
 - (BOOL)havePendingCommandEqualTo:(NSString *)command;
 
 - (iTermTmuxSubscriptionHandle *)subscribeToFormat:(NSString *)format
+                                            target:(NSString *)target
                                              block:(void (^)(NSString *))block;
 - (void)unsubscribe:(iTermTmuxSubscriptionHandle *)handle;
 

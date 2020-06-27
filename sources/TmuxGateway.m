@@ -1001,10 +1001,12 @@ error:
 }
 
 - (iTermTmuxSubscriptionHandle *)subscribeToFormat:(NSString *)format
+                                            target:(NSString *)target
                                              block:(void (^)(NSString *))block {
     iTermTmuxSubscriptionHandle *handle = [[[iTermTmuxSubscriptionHandle alloc] initWithBlock:block] autorelease];
-    NSString *subscribe = [NSString stringWithFormat:@"refresh-client -B '%@:%@'",
+    NSString *subscribe = [NSString stringWithFormat:@"refresh-client -B '%@:%@:%@'",
                            handle.identifier,
+                           target ?: @"",
                            format];
     _subscriptions[handle.identifier] = handle;
     [self sendCommand:subscribe
