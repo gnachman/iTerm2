@@ -21,6 +21,13 @@
                                              selector:@selector(modifiersDidChange:)
                                                  name:kPSMModifierChangedNotification
                                                object:nil];
+    if (@available(macOS 10.16, *)) {
+        NSRect frame = _label.frame;
+        frame.origin.y += 4;
+        frame.size.width -=6;
+        _label.frame = frame;
+        _label.font = [NSFont titleBarFontOfSize:[NSFont systemFontSize]];
+    }
 }
 
 - (void)dealloc {
