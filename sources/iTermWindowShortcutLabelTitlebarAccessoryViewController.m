@@ -40,6 +40,17 @@
     [self updateLabel];
 }
 
+- (void)viewDidLayout {
+    if (@available(macOS 10.16, *)) {
+        // Big sur likes to change the height of this accessory view when the tab bar
+        // is added or removed from being an accessory view. Luckily there's enough
+        // wiggle room to keep it aligned.
+        const CGFloat containerHeight = self.view.frame.size.height;
+        NSRect frame = _label.frame;
+        frame.origin.y = containerHeight - 21;
+        _label.frame = frame;
+    }
+}
 - (void)updateLabel {
     [self view];  // Ensure the label exists.
     BOOL deemphasized;
