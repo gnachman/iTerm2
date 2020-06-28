@@ -125,6 +125,15 @@
     return map[type];
 }
 
++ (NSImage *)it_hamburgerForClass:(Class)theClass {
+#ifdef MAC_OS_X_VERSION_10_16
+    if (@available(macOS 10.16, *)) {
+        return [NSImage imageWithSystemSymbolName:@"ellipsis.circle" accessibilityDescription:@"Menu"];
+    }
+#endif
+    return [NSImage it_imageNamed:@"Hamburger" forClass:self.class];
+}
+
 + (instancetype)it_imageNamed:(NSImageName)name forClass:(Class)theClass {
     return [[NSBundle bundleForClass:theClass] imageForResource:name];
 }

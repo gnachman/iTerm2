@@ -57,7 +57,7 @@
         self.cell = [[iTermHamburgerButtonCell alloc] init];
         self.bezelStyle = NSBezelStyleRegularSquare;
         self.bordered = NO;
-        self.image = [NSImage it_imageNamed:@"Hamburger" forClass:self.class];
+        self.image = [NSImage it_hamburgerForClass:self.class];
         self.imagePosition = NSImageOnly;
         _menuProvider = [menuProvider copy];
     }
