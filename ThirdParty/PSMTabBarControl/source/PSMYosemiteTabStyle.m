@@ -88,9 +88,18 @@
         _closeButtonOver.template = YES;
 
         // Load "new tab" buttons
-        _addTabButtonImage = [[NSImage alloc] initByReferencingFile:[[PSMTabBarControl bundle] pathForImageResource:@"YosemiteAddTab"]];
-        _addTabButtonPressedImage = [[NSImage alloc] initByReferencingFile:[[PSMTabBarControl bundle] pathForImageResource:@"YosemiteAddTab"]];
-        _addTabButtonRolloverImage = [[NSImage alloc] initByReferencingFile:[[PSMTabBarControl bundle] pathForImageResource:@"YosemiteAddTab"]];
+        NSString *addTabImageName = @"YosemiteAddTab";
+        if (@available(macOS 10.16, *)) {
+            addTabImageName = @"BigSurAddTab";
+        }
+        _addTabButtonImage = [[NSImage alloc] initByReferencingFile:[[PSMTabBarControl bundle] pathForImageResource:addTabImageName]];
+        _addTabButtonPressedImage = [[NSImage alloc] initByReferencingFile:[[PSMTabBarControl bundle] pathForImageResource:addTabImageName]];
+        _addTabButtonRolloverImage = [[NSImage alloc] initByReferencingFile:[[PSMTabBarControl bundle] pathForImageResource:addTabImageName]];
+        if (@available(macOS 10.16, *)) {
+            _addTabButtonImage.template = YES;
+            _addTabButtonPressedImage.template = YES;
+            _addTabButtonRolloverImage.template = YES;
+        }
     }
     return self;
 }
@@ -1041,7 +1050,12 @@
 
 - (NSColor *)tabBarColor {
     const BOOL keyMainAndActive = self.windowIsMainAndAppIsActive;
-    if (@available(macOS 10.14, *)) {
+    if (@available(macOS 10.16, *)) {
+        return [NSColor colorWithSRGBRed:225.0 / 255.0
+                                   green:225.0 / 255.0
+                                    blue:225.0 / 255.0
+                                   alpha:1];
+    } else if (@available(macOS 10.14, *)) {
         if (keyMainAndActive) {
             return [NSColor colorWithSRGBRed:188.0 / 255.0
                                        green:188.0 / 255.0
