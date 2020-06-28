@@ -1688,11 +1688,13 @@ static BOOL hasBecomeActive = NO;
 
 - (IBAction)newWindow:(id)sender {
     DLog(@"newWindow: invoked");
+#if 0
     BOOL cancel;
     BOOL tmux = NO;  //[self possiblyTmuxValueForWindow:YES cancel:&cancel];
     if (!cancel) {
         [[iTermController sharedInstance] newWindow:sender possiblyTmux:tmux];
     }
+#endif
 }
 
 - (IBAction)newSessionWithSameProfile:(id)sender
@@ -1702,12 +1704,14 @@ static BOOL hasBecomeActive = NO;
 
 - (IBAction)newSession:(id)sender
 {
+#if 0
     DLog(@"iTermApplicationDelegate newSession:");
     BOOL cancel;
     BOOL tmux = NO; // [self possiblyTmuxValueForWindow:NO cancel:&cancel];
     if (!cancel) {
         [[iTermController sharedInstance] newSession:sender possiblyTmux:tmux];
     }
+#endif
 }
 
 - (IBAction)arrangeHorizontally:(id)sender
