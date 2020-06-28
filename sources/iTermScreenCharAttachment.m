@@ -116,6 +116,7 @@ static BOOL iTermScreenCharAttachmentsArrayEqual(id<iTermScreenCharAttachmentsAr
     if (!other) {
         return;
     }
+    assert(other != self);
     const NSInteger totalCount = _count + other.count;
     _runs = iTermRealloc(_runs, totalCount, sizeof(iTermScreenCharAttachmentRun));
     const int otherCount = other.count;
