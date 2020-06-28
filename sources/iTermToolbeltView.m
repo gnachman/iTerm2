@@ -320,12 +320,16 @@ static NSString *const kDynamicToolURL = @"URL";
 }
 
 - (void)updateColors NS_AVAILABLE_MAC(10_14) {
-    if (self.effectiveAppearance.it_isDark) {
+    if (@available(macOS 10.16, *)) {
         _vev.blendingMode = NSVisualEffectBlendingModeBehindWindow;
     } else {
-        // The chartjunk in table views looks horrible when there is a dark
-        // window behind us, so switch to within window blending in light mode.
-        _vev.blendingMode = NSVisualEffectBlendingModeWithinWindow;
+        if (self.effectiveAppearance.it_isDark) {
+            _vev.blendingMode = NSVisualEffectBlendingModeBehindWindow;
+        } else {
+            // The chartjunk in table views looks horrible when there is a dark
+            // window behind us, so switch to within window blending in light mode.
+            _vev.blendingMode = NSVisualEffectBlendingModeWithinWindow;
+        }
     }
     self.layer.backgroundColor = [[self backgroundColor] CGColor];
 }

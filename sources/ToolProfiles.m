@@ -50,7 +50,7 @@ static NSString *const iTermToolProfilesProfileListViewState = @"iTermToolProfil
         if (@available(macOS 10.16, *)) {
             _openButton.bezelStyle = NSBezelStyleRegularSquare;
             _openButton.bordered = NO;
-            _openButton.image = [NSImage imageWithSystemSymbolName:@"plus" accessibilityDescription:@"Open Profile"];
+            _openButton.image = [NSImage imageWithSystemSymbolName:@"play" accessibilityDescription:@"Open Profile"];
             _openButton.imageScaling = NSImageScaleProportionallyUpOrDown;
             _openButton.imagePosition = NSImageOnly;
         } else {

@@ -25,3 +25,6 @@
 }
 
 @end
+
+@implementation iTermBigSurTableRowView
+@end

@@ -97,6 +97,11 @@ static NSButton *iTermToolActionsNewButton(NSString *imageName, NSString *title,
         _scrollView.drawsBackground = NO;
 
         _tableView = [[NSTableView alloc] initWithFrame:NSMakeRect(0, 0, contentSize.width, contentSize.height)];
+#ifdef MAC_OS_X_VERSION_10_16
+        if (@available(macOS 10.16, *)) {
+            _tableView.style = NSTableViewStyleInset;
+        }
+#endif
         NSTableColumn *col;
         col = [[NSTableColumn alloc] initWithIdentifier:@"contents"];
         [col setEditable:NO];
@@ -140,6 +145,11 @@ static NSButton *iTermToolActionsNewButton(NSString *imageName, NSString *title,
 
 - (void)shutdown {
     [[NSNotificationCenter defaultCenter] removeObserver:self];
+}
+
+- (void)resizeSubviewsWithOldSize:(NSSize)oldSize {
+    [super resizeSubviewsWithOldSize:oldSize];
+    [self relayout];
 }
 
 - (void)relayout {
@@ -349,6 +359,9 @@ static NSButton *iTermToolActionsNewButton(NSString *imageName, NSString *title,
 #pragma mark - NSTableViewDelegate
 
 - (NSTableRowView *)tableView:(NSTableView *)tableView rowViewForRow:(NSInteger)row {
+    if (@available(macOS 10.16, *)) {
+        return [[iTermBigSurTableRowView alloc] initWithFrame:NSZeroRect];
+    }
     return [[iTermCompetentTableRowView alloc] initWithFrame:NSZeroRect];
 }
 

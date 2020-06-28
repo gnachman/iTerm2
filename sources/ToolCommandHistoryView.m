@@ -98,6 +98,11 @@ static const CGFloat kHelpMargin = 5;
         scrollView_.drawsBackground = NO;
 
         tableView_ = [[NSTableView alloc] initWithFrame:NSMakeRect(0, 0, contentSize.width, contentSize.height)];
+#ifdef MAC_OS_X_VERSION_10_16
+        if (@available(macOS 10.16, *)) {
+            tableView_.style = NSTableViewStyleInset;
+        }
+#endif
         NSTableColumn *col = [[NSTableColumn alloc] initWithIdentifier:@"commands"];
         [col setEditable:NO];
         [tableView_ addTableColumn:col];
@@ -147,6 +152,11 @@ static const CGFloat kHelpMargin = 5;
     size.height = [[tableView_ headerView] frame].size.height;
     size.height += [tableView_ numberOfRows] * ([tableView_ rowHeight] + [tableView_ intercellSpacing].height);
     return size;
+}
+
+- (void)resizeSubviewsWithOldSize:(NSSize)oldSize {
+    [super resizeSubviewsWithOldSize:oldSize];
+    [self relayout];
 }
 
 - (void)relayout {
@@ -200,8 +210,12 @@ static const CGFloat kHelpMargin = 5;
     // Table view
     NSSize contentSize = [scrollView_ contentSize];
     NSTableColumn *column = tableView_.tableColumns[0];
-    column.minWidth = contentSize.width;
-    column.maxWidth = contentSize.width;
+    CGFloat fudgeFactor = 0;
+    if (@available(macOS 10.16, *)) {
+        fudgeFactor = 32;
+    }
+    column.minWidth = contentSize.width - fudgeFactor;
+    column.maxWidth = contentSize.width - fudgeFactor;
     [tableView_ sizeToFit];
     [tableView_ reloadData];
 }
@@ -233,6 +247,9 @@ static const CGFloat kHelpMargin = 5;
 }
 
 - (NSTableRowView *)tableView:(NSTableView *)tableView rowViewForRow:(NSInteger)row {
+    if (@available(macOS 10.16, *)) {
+        return [[iTermBigSurTableRowView alloc] initWithFrame:NSZeroRect];
+    }
     return [[iTermCompetentTableRowView alloc] initWithFrame:NSZeroRect];
 }
 

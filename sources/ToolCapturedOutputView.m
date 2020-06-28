@@ -100,6 +100,11 @@ static NSString *const iTermCapturedOutputToolTableViewCellIdentifier = @"ToolCa
         scrollView_.drawsBackground = NO;
 
         tableView_ = [[NSTableView alloc] initWithFrame:NSMakeRect(0, 0, contentSize.width, contentSize.height)];
+#ifdef MAC_OS_X_VERSION_10_16
+        if (@available(macOS 10.16, *)) {
+            tableView_.style = NSTableViewStyleInset;
+        }
+#endif
         NSTableColumn *col;
         col = [[NSTableColumn alloc] initWithIdentifier:@"contents"];
         [col setEditable:NO];
@@ -194,6 +199,11 @@ static NSString *const iTermCapturedOutputToolTableViewCellIdentifier = @"ToolCa
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 }
 
+- (void)resizeSubviewsWithOldSize:(NSSize)oldSize {
+    [super resizeSubviewsWithOldSize:oldSize];
+    [self relayout];
+}
+
 - (void)relayout {
     NSRect frame = self.frame;
 
@@ -237,8 +247,12 @@ static NSString *const iTermCapturedOutputToolTableViewCellIdentifier = @"ToolCa
     // Table view
     NSSize contentSize = [scrollView_ contentSize];
     NSTableColumn *column = tableView_.tableColumns[0];
-    column.minWidth = contentSize.width;
-    column.maxWidth = contentSize.width;
+    CGFloat fudgeFactor = 0;
+    if (@available(macOS 10.16, *)) {
+        fudgeFactor = 32;
+    }
+    column.minWidth = contentSize.width - fudgeFactor;
+    column.maxWidth = contentSize.width - fudgeFactor;
     [tableView_ sizeToFit];
     [tableView_ reloadData];
 }
@@ -303,7 +317,11 @@ static NSString *const iTermCapturedOutputToolTableViewCellIdentifier = @"ToolCa
     if (capturedOutput.state) {
         label = [@"✔ " stringByAppendingString:label];
     } else {
-        label = [@"🔹 " stringByAppendingString:label];
+        if (@available(macOS 10.16, *)) {
+            return label;
+        } else {
+            label = [@"• " stringByAppendingString:label];
+        }
     }
     return label;
 }

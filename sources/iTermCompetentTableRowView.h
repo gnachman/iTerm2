@@ -10,3 +10,7 @@
 @interface iTermCompetentTableRowView : NSTableRowView
 
 @end
+
+@interface iTermBigSurTableRowView : NSTableRowView
+
+@end

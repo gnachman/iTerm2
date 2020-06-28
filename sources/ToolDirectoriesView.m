@@ -169,6 +169,11 @@ static const CGFloat kHelpMargin = 5;
     return size;
 }
 
+- (void)resizeSubviewsWithOldSize:(NSSize)oldSize {
+    [super resizeSubviewsWithOldSize:oldSize];
+    [self relayout];
+}
+
 - (void)relayout {
     if (@available(macOS 10.16, *)) {
         [self relayout_bigSur];
@@ -220,8 +225,12 @@ static const CGFloat kHelpMargin = 5;
     // Table view
     NSSize contentSize = [scrollView_ contentSize];
     NSTableColumn *column = tableView_.tableColumns[0];
-    column.minWidth = contentSize.width;
-    column.maxWidth = contentSize.width;
+    CGFloat fudgeFactor = 0;
+    if (@available(macOS 10.16, *)) {
+        fudgeFactor = 32;
+    }
+    column.minWidth = contentSize.width - fudgeFactor;
+    column.maxWidth = contentSize.width - fudgeFactor;
     [tableView_ sizeToFit];
     [tableView_ reloadData];
 }
@@ -390,6 +399,9 @@ static const CGFloat kHelpMargin = 5;
 }
 
 - (NSTableRowView *)tableView:(NSTableView *)tableView rowViewForRow:(NSInteger)row {
+    if (@available(macOS 10.16, *)) {
+        return [[[iTermBigSurTableRowView alloc] initWithFrame:NSZeroRect] autorelease];
+    }
     return [[[iTermCompetentTableRowView alloc] initWithFrame:NSZeroRect] autorelease];
 }
 

@@ -208,7 +208,7 @@ static const CGFloat kMargin = 4;
         if (@available(macOS 10.16, *)) {
             kill_.bezelStyle = NSBezelStyleRegularSquare;
             kill_.bordered = NO;
-            kill_.image = [NSImage imageWithSystemSymbolName:@"arrow.right.circle.fill" accessibilityDescription:@"Clear"];
+            kill_.image = [NSImage imageWithSystemSymbolName:@"play" accessibilityDescription:@"Clear"];
             kill_.imagePosition = NSImageOnly;
             kill_.frame = NSMakeRect(signal_.frame.size.width + kMargin, 0, 22, 22);
         } else {
@@ -233,6 +233,11 @@ static const CGFloat kMargin = 4;
         scrollView_.drawsBackground = NO;
 
         tableView_ = [[NSTableView alloc] initWithFrame:NSMakeRect(0, 0, contentSize.width, contentSize.height)];
+#ifdef MAC_OS_X_VERSION_10_16
+        if (@available(macOS 10.16, *)) {
+            tableView_.style = NSTableViewStyleInset;
+        }
+#endif
         NSTableColumn *col;
         col = [[NSTableColumn alloc] initWithIdentifier:@"name"];
         [col setEditable:NO];
@@ -280,6 +285,11 @@ static const CGFloat kMargin = 4;
         [self updateTimer:nil];
     }
     return self;
+}
+
+- (void)resizeSubviewsWithOldSize:(NSSize)oldSize {
+    [super resizeSubviewsWithOldSize:oldSize];
+    [self relayout];
 }
 
 - (void)relayout {
@@ -409,6 +419,9 @@ static const CGFloat kMargin = 4;
 }
 
 - (NSTableRowView *)tableView:(NSTableView *)tableView rowViewForRow:(NSInteger)row {
+    if (@available(macOS 10.16, *)) {
+        return [[[iTermBigSurTableRowView alloc] initWithFrame:NSZeroRect] autorelease];
+    }
     return [[[iTermCompetentTableRowView alloc] initWithFrame:NSZeroRect] autorelease];
 }
 

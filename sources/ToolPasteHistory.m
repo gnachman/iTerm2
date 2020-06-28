@@ -74,6 +74,11 @@ static const CGFloat kMargin = 4;
         scrollView_.drawsBackground = NO;
 
         tableView_ = [[NSTableView alloc] initWithFrame:NSMakeRect(0, 0, contentSize.width, contentSize.height)];
+#ifdef MAC_OS_X_VERSION_10_16
+        if (@available(macOS 10.16, *)) {
+            tableView_.style = NSTableViewStyleInset;
+        }
+#endif
         NSTableColumn *col = [[NSTableColumn alloc] initWithIdentifier:@"contents"];
         [col setEditable:NO];
         [tableView_ addTableColumn:col];
@@ -135,6 +140,11 @@ static const CGFloat kMargin = 4;
     return size;
 }
 
+- (void)resizeSubviewsWithOldSize:(NSSize)oldSize {
+    [super resizeSubviewsWithOldSize:oldSize];
+    [self relayout];
+}
+
 - (void)relayout {
     NSRect frame = self.frame;
     if (@available(macOS 10.16, *)){
@@ -162,6 +172,9 @@ static const CGFloat kMargin = 4;
 }
 
 - (NSTableRowView *)tableView:(NSTableView *)tableView rowViewForRow:(NSInteger)row {
+    if (@available(macOS 10.16, *)) {
+        return [[iTermBigSurTableRowView alloc] initWithFrame:NSZeroRect];
+    }
     return [[iTermCompetentTableRowView alloc] initWithFrame:NSZeroRect];
 }
 
