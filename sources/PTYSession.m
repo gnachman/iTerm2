@@ -6262,8 +6262,11 @@ verticalSpacing:(float)verticalSpacing {
 
 // Show advanced paste window.
 - (IBAction)pasteOptions:(id)sender {
+    [self pasteString:[PTYSession pasteboardString] flags:[sender tag]];
+#if 0
     [_pasteHelper showPasteOptionsInWindow:_delegate.realParentWindow.window
                          bracketingEnabled:_terminal.bracketedPasteMode];
+#endif
 }
 
 - (void)textViewFontDidChange
