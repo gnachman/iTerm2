@@ -251,14 +251,22 @@ typedef struct {
 
                 static dispatch_once_t onceToken;
                 dispatch_once(&onceToken, ^{
-                    gTopLeftCornerHalfImage = [[NSImage it_imageNamed:@"WindowCorner" forClass:self.class] it_verticallyFlippedImage];
+                    NSString *halfName = @"WindowCorner";
+                    if (@available(macOS 10.16, *)) {
+                        halfName = @"WindowCorner_BigSur";
+                    }
+                    gTopLeftCornerHalfImage = [[NSImage it_imageNamed:halfName forClass:self.class] it_verticallyFlippedImage];
                     gTopRightCornerHalfImage = [gTopLeftCornerHalfImage it_horizontallyFlippedImage];
-                    gBottomLeftCornerHalfImage = [NSImage it_imageNamed:@"WindowCorner" forClass:self.class];
+                    gBottomLeftCornerHalfImage = [NSImage it_imageNamed:halfName forClass:self.class];
                     gBottomRightCornerHalfImage = [gBottomLeftCornerHalfImage it_horizontallyFlippedImage];
 
-                    gTopLeftCornerFullImage = [[NSImage it_imageNamed:@"WindowCornerFull" forClass:self.class] it_verticallyFlippedImage];
+                    NSString *fullName = @"WindowCornerFull";
+                    if (@available(macOS 10.16, *)) {
+                        halfName = @"WindowCornerFull_BigSur";
+                    }
+                    gTopLeftCornerFullImage = [[NSImage it_imageNamed:fullName forClass:self.class] it_verticallyFlippedImage];
                     gTopRightCornerFullImage = [gTopLeftCornerFullImage it_horizontallyFlippedImage];
-                    gBottomLeftCornerFullImage = [NSImage it_imageNamed:@"WindowCornerFull" forClass:self.class];
+                    gBottomLeftCornerFullImage = [NSImage it_imageNamed:fullName forClass:self.class];
                     gBottomRightCornerFullImage = [gBottomLeftCornerFullImage it_horizontallyFlippedImage];
                 });
                 // Half

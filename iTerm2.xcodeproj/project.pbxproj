@@ -3475,6 +3475,18 @@
 		A6E16C6224A85D5F00C6DB06 /* BigSurAddTab.png in Resources */ = {isa = PBXBuildFile; fileRef = A6E16C5E24A85D5F00C6DB06 /* BigSurAddTab.png */; };
 		A6E16C6324A85D5F00C6DB06 /* BigSurAddTab.png in Resources */ = {isa = PBXBuildFile; fileRef = A6E16C5E24A85D5F00C6DB06 /* BigSurAddTab.png */; };
 		A6E16C6424A85D5F00C6DB06 /* BigSurAddTab.png in Resources */ = {isa = PBXBuildFile; fileRef = A6E16C5E24A85D5F00C6DB06 /* BigSurAddTab.png */; };
+		A6E16C6724A866F300C6DB06 /* WindowCornerFull_BigSur@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A6E16C6524A866F300C6DB06 /* WindowCornerFull_BigSur@2x.png */; };
+		A6E16C6824A866F300C6DB06 /* WindowCornerFull_BigSur@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A6E16C6524A866F300C6DB06 /* WindowCornerFull_BigSur@2x.png */; };
+		A6E16C6924A866F300C6DB06 /* WindowCornerFull_BigSur@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A6E16C6524A866F300C6DB06 /* WindowCornerFull_BigSur@2x.png */; };
+		A6E16C6A24A866F300C6DB06 /* WindowCorner_BigSur@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A6E16C6624A866F300C6DB06 /* WindowCorner_BigSur@2x.png */; };
+		A6E16C6B24A866F300C6DB06 /* WindowCorner_BigSur@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A6E16C6624A866F300C6DB06 /* WindowCorner_BigSur@2x.png */; };
+		A6E16C6C24A866F300C6DB06 /* WindowCorner_BigSur@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A6E16C6624A866F300C6DB06 /* WindowCorner_BigSur@2x.png */; };
+		A6E16C6F24A8696D00C6DB06 /* WindowCornerFull_BigSur.png in Resources */ = {isa = PBXBuildFile; fileRef = A6E16C6D24A8696D00C6DB06 /* WindowCornerFull_BigSur.png */; };
+		A6E16C7024A8696D00C6DB06 /* WindowCornerFull_BigSur.png in Resources */ = {isa = PBXBuildFile; fileRef = A6E16C6D24A8696D00C6DB06 /* WindowCornerFull_BigSur.png */; };
+		A6E16C7124A8696D00C6DB06 /* WindowCornerFull_BigSur.png in Resources */ = {isa = PBXBuildFile; fileRef = A6E16C6D24A8696D00C6DB06 /* WindowCornerFull_BigSur.png */; };
+		A6E16C7224A8696D00C6DB06 /* WindowCorner_BigSur.png in Resources */ = {isa = PBXBuildFile; fileRef = A6E16C6E24A8696D00C6DB06 /* WindowCorner_BigSur.png */; };
+		A6E16C7324A8696D00C6DB06 /* WindowCorner_BigSur.png in Resources */ = {isa = PBXBuildFile; fileRef = A6E16C6E24A8696D00C6DB06 /* WindowCorner_BigSur.png */; };
+		A6E16C7424A8696D00C6DB06 /* WindowCorner_BigSur.png in Resources */ = {isa = PBXBuildFile; fileRef = A6E16C6E24A8696D00C6DB06 /* WindowCorner_BigSur.png */; };
 		A6E180E623D2E182003C4EB1 /* CoreParse.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = 530AB89820AFF21200D2AA08 /* CoreParse.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		A6E180E723D2E2B2003C4EB1 /* CoreParse.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = 530AB89820AFF21200D2AA08 /* CoreParse.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		A6E180EA23D51BFA003C4EB1 /* iTermMouseReportingFrustrationDetector.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E180E823D51BFA003C4EB1 /* iTermMouseReportingFrustrationDetector.h */; };
@@ -6246,6 +6258,10 @@
 		A6DF91B42477B38700FB9F42 /* iTermMissionControlHacks.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermMissionControlHacks.m; sourceTree = "<group>"; };
 		A6E16C5D24A85D5E00C6DB06 /* BigSurAddTab@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "BigSurAddTab@2x.png"; path = "images/BigSurAddTab@2x.png"; sourceTree = SOURCE_ROOT; };
 		A6E16C5E24A85D5F00C6DB06 /* BigSurAddTab.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = BigSurAddTab.png; path = images/BigSurAddTab.png; sourceTree = SOURCE_ROOT; };
+		A6E16C6524A866F300C6DB06 /* WindowCornerFull_BigSur@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "WindowCornerFull_BigSur@2x.png"; path = "images/WindowCornerFull_BigSur@2x.png"; sourceTree = SOURCE_ROOT; };
+		A6E16C6624A866F300C6DB06 /* WindowCorner_BigSur@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "WindowCorner_BigSur@2x.png"; path = "images/WindowCorner_BigSur@2x.png"; sourceTree = SOURCE_ROOT; };
+		A6E16C6D24A8696D00C6DB06 /* WindowCornerFull_BigSur.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = WindowCornerFull_BigSur.png; path = images/WindowCornerFull_BigSur.png; sourceTree = SOURCE_ROOT; };
+		A6E16C6E24A8696D00C6DB06 /* WindowCorner_BigSur.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = WindowCorner_BigSur.png; path = images/WindowCorner_BigSur.png; sourceTree = SOURCE_ROOT; };
 		A6E180E823D51BFA003C4EB1 /* iTermMouseReportingFrustrationDetector.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermMouseReportingFrustrationDetector.h; sourceTree = "<group>"; };
 		A6E180E923D51BFA003C4EB1 /* iTermMouseReportingFrustrationDetector.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermMouseReportingFrustrationDetector.m; sourceTree = "<group>"; };
 		A6E180EC23D5375F003C4EB1 /* pidinfo.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = pidinfo.entitlements; sourceTree = "<group>"; };
@@ -10009,6 +10025,10 @@
 		DD02575509CB93C2008F320C /* images */ = {
 			isa = PBXGroup;
 			children = (
+				A6E16C6E24A8696D00C6DB06 /* WindowCorner_BigSur.png */,
+				A6E16C6D24A8696D00C6DB06 /* WindowCornerFull_BigSur.png */,
+				A6E16C6624A866F300C6DB06 /* WindowCorner_BigSur@2x.png */,
+				A6E16C6524A866F300C6DB06 /* WindowCornerFull_BigSur@2x.png */,
 				A6E16C5E24A85D5F00C6DB06 /* BigSurAddTab.png */,
 				A6E16C5D24A85D5E00C6DB06 /* BigSurAddTab@2x.png */,
 				A63821EE229E50CD005D74BE /* Warning@2x.png */,
@@ -11682,6 +11702,7 @@
 				A63011B520E7EE6B008114B7 /* iTermStatusBarKnobNumericViewController.xib in Resources */,
 				537A1FBE22169B2200FBEE5A /* MinimalPasteView.xib in Resources */,
 				1DA76A261B308AD000CB272A /* iTermTipCardViewController.xib in Resources */,
+				A6E16C6C24A866F300C6DB06 /* WindowCorner_BigSur@2x.png in Resources */,
 				A67D0D551A2EE12A003A8B35 /* GlobalSearch.xib in Resources */,
 				A629F5B823B081DD00C2F16B /* MouseReportingCursorOverlay@1x.png in Resources */,
 				A67D0D911A2EE12A003A8B35 /* TmuxDashboard.xib in Resources */,
@@ -11770,6 +11791,7 @@
 				A65FF3C520F18552008BD0AE /* iTermMiniSearchFieldViewController.xib in Resources */,
 				5308BF92228283CE004BECAC /* StatusBarIconBattery@2x.png in Resources */,
 				A61BB46621CA2D5A0027F47D /* iTerm2Script.icns in Resources */,
+				A6E16C7424A8696D00C6DB06 /* WindowCorner_BigSur.png in Resources */,
 				1D6ED9B519AEA20D005A7799 /* bell.png in Resources */,
 				A6E7AE9A214394DD00DE9F3B /* graphic_code.png in Resources */,
 				A618FFCF224602F800B8FD88 /* StatusBarIconAction@2x.png in Resources */,
@@ -11932,12 +11954,14 @@
 				A6EFF23B1D20F6C000806EEF /* EraseDarkBackground.png in Resources */,
 				1D6ED9E719AEA20D005A7799 /* PrefsKeyboard@2x.png in Resources */,
 				A67D0D8E1A2EE12A003A8B35 /* SplitPanel.xib in Resources */,
+				A6E16C6924A866F300C6DB06 /* WindowCornerFull_BigSur@2x.png in Resources */,
 				A67F613A214395680093940A /* graphic_heroku@2x.png in Resources */,
 				1D6ED9E819AEA20D005A7799 /* PrefsMouse.png in Resources */,
 				A6E7AE8E214394DD00DE9F3B /* graphic_composer@2x.png in Resources */,
 				A6E7AE60214394CA00DE9F3B /* graphic_clojure.png in Resources */,
 				A66F52D52106F6F100571168 /* gitdown@2x.png in Resources */,
 				A6971F3720D8D3CE0075CFD4 /* iTermAdvancedGPUSettingsWindowController.xib in Resources */,
+				A6E16C7124A8696D00C6DB06 /* WindowCornerFull_BigSur.png in Resources */,
 				A66F52CC2106F6F100571168 /* gitup.png in Resources */,
 				1D6ED9EA19AEA20D005A7799 /* PrefsMouse@2x.png in Resources */,
 				1D8BBA7D1B30FD230005A852 /* Later@2x.png in Resources */,
@@ -11991,6 +12015,7 @@
 				1D44D0371CC7F5A600BE5630 /* PTYTextViewTest-golden-testSmartCursorColor_onIsland.png in Resources */,
 				1D44CFCE1CC7F5A600BE5630 /* PTYTextViewTest-golden-nonretina-testSmartCursorColor_allCursorColor.png in Resources */,
 				A67F615C214395990093940A /* graphic_micro.png in Resources */,
+				A6E16C7324A8696D00C6DB06 /* WindowCorner_BigSur.png in Resources */,
 				1D44CFB01CC7F5A600BE5630 /* PTYTextViewTest-golden-nonretina-testDontUseNonAsciiFont.png in Resources */,
 				A6614C78210AE5FD0001EAA3 /* MiniPasteView.xib in Resources */,
 				1DC2A1CF1949165D005769D5 /* Maximized@2x.png in Resources */,
@@ -12073,6 +12098,7 @@
 				1D99C8E51BD59C37001EE1FC /* SearchCursor.png in Resources */,
 				A6E7AEA7214394F600DE9F3B /* graphic_docker.png in Resources */,
 				1D44CF8D1CC7F5A600BE5630 /* PTYTextViewTest-golden-nonretina-testBackgroundImageLowBlending.png in Resources */,
+				A6E16C6B24A866F300C6DB06 /* WindowCorner_BigSur@2x.png in Resources */,
 				1D44CFE51CC7F5A600BE5630 /* PTYTextViewTest-golden-nonretina-testUnderlineHost.png in Resources */,
 				A6E7AEAA214394F600DE9F3B /* graphic_docker@2x.png in Resources */,
 				1D44CF911CC7F5A600BE5630 /* PTYTextViewTest-golden-nonretina-testBackgroundStripes.png in Resources */,
@@ -12234,6 +12260,7 @@
 				1D44D0901CC7F5A600BE5630 /* PTYTextViewTest-golden-travis-testSmartCursorColor_allCursorColor.png in Resources */,
 				1D44CFA81CC7F5A600BE5630 /* PTYTextViewTest-golden-nonretina-testDimmingText.png in Resources */,
 				1D44D0431CC7F5A600BE5630 /* PTYTextViewTest-golden-testTransparency.png in Resources */,
+				A6E16C6824A866F300C6DB06 /* WindowCornerFull_BigSur@2x.png in Resources */,
 				1D8BBA791B30FD230005A852 /* Later.png in Resources */,
 				1D8BBA691B30F5C30005A852 /* Navigate.png in Resources */,
 				A6E7AE59214394CA00DE9F3B /* graphic_bq@2x.png in Resources */,
@@ -12285,6 +12312,7 @@
 				1D44CF9B1CC7F5A600BE5630 /* PTYTextViewTest-golden-nonretina-testBlockCursorDoublyReverseVideo.png in Resources */,
 				1D44CFC01CC7F5A600BE5630 /* PTYTextViewTest-golden-nonretina-testMinimumContrastAndCursorBoost.png in Resources */,
 				A6E7AE56214394CA00DE9F3B /* graphic_bq.png in Resources */,
+				A6E16C7024A8696D00C6DB06 /* WindowCornerFull_BigSur.png in Resources */,
 				A6E7AE99214394DD00DE9F3B /* graphic_code.png in Resources */,
 				A67D0D631A2EE12A003A8B35 /* iTermOpenQuicklyWindowController.xib in Resources */,
 				A629F58423AF2DED00C2F16B /* iterm2_shell_integration.fish in Resources */,
@@ -12682,6 +12710,7 @@
 				A67F6181214395A70093940A /* graphic_nginx.png in Resources */,
 				1D8BBA781B30FD230005A852 /* Later.png in Resources */,
 				1D8C6BF5126592DF00E2744E /* EncodingsWithLowerCase.plist in Resources */,
+				A6E16C6F24A8696D00C6DB06 /* WindowCornerFull_BigSur.png in Resources */,
 				A67F61DE214395D50093940A /* graphic_yarn.png in Resources */,
 				53C5650C21B8CF65002B3167 /* PowerlineLineLeftArrow.pdf in Resources */,
 				A6E7AE92214394DD00DE9F3B /* graphic_coffee.png in Resources */,
@@ -12739,6 +12768,7 @@
 				A697101318DFA7D5007E901D /* closebutton.png in Resources */,
 				A636C3B822891BD900A83E2F /* StatusBarIconNoBattery@2x.png in Resources */,
 				A629F57A23AF2DD900C2F16B /* iterm2_shell_integration.tcsh in Resources */,
+				A6E16C7224A8696D00C6DB06 /* WindowCorner_BigSur.png in Resources */,
 				534690291C94FF0000B7E4E9 /* overflowImagePressed.png in Resources */,
 				A6EFF2371D20F6BE00806EEF /* EraseDarkBackground.png in Resources */,
 				A6C978F124A0194500971AA7 /* WindowCornerFull.psd in Resources */,
@@ -12845,6 +12875,7 @@
 				1D48B28D165F3669000046EE /* TabClose_Front.png in Resources */,
 				A67F61B0214395B70093940A /* graphic_php.png in Resources */,
 				A6E7AE95214394DD00DE9F3B /* graphic_coffee@2x.png in Resources */,
+				A6E16C6A24A866F300C6DB06 /* WindowCorner_BigSur@2x.png in Resources */,
 				1D48B292165F405A000046EE /* important@2x.png in Resources */,
 				1DEF5E6F185F889600300319 /* Alert@2x.png in Resources */,
 				A67D0D381A2EE12A003A8B35 /* AdvancedWorkingDirectoryWindow.xib in Resources */,
@@ -12907,6 +12938,7 @@
 				A69C93392121101B00531438 /* iTermsStatusBarComposerViewController.xib in Resources */,
 				9DB3D6EC176CC47E0071CCF8 /* PrefsMouse.png in Resources */,
 				5308BF9522828A28004BECAC /* StatusBarIconCharging.png in Resources */,
+				A6E16C6724A866F300C6DB06 /* WindowCornerFull_BigSur@2x.png in Resources */,
 				53B93DE121F25E79001EC59C /* iterm2_git_wrapper.sh in Resources */,
 				A665C1FD2440461500F623F0 /* WindowCorner.png in Resources */,
 				53BBA0F8214236AC0074D061 /* iterm2_git_poll.sh in Resources */,
