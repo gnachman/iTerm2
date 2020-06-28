@@ -69,6 +69,11 @@
 
 - (void)awakeFromNib {
     // Initialize the table
+#ifdef MAC_OS_X_VERSION_10_16
+    if (@available(macOS 10.16, *)) {
+        _table.style = NSTableViewStyleInset;
+    }
+#endif
     [_table setDoubleAction:@selector(doubleClick:)];
 
     // Initialize the window's contentView
@@ -302,7 +307,11 @@
 }
 
 - (NSTableRowView *)tableView:(NSTableView *)tableView rowViewForRow:(NSInteger)row {
-    return [[[iTermOpenQuicklyTableRowView alloc] init] autorelease];
+    if (@available(macOS 10.16, *)) {
+        return [[[iTermOpenQuicklyTableRowView_BigSur alloc] init] autorelease];
+    } else {
+        return [[[iTermOpenQuicklyTableRowView alloc] init] autorelease];
+    }
 }
 
 - (void)updateTextColorForAllRows {

@@ -23,3 +23,13 @@
 }
 
 @end
+
+@implementation iTermOpenQuicklyTableRowView_BigSur
+- (BOOL)isEmphasized {
+    if (@available(macOS 10.14, *)) {
+        return YES;
+    }
+    return [super isEmphasized];
+}
+@end
+

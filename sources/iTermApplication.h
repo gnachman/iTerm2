@@ -68,6 +68,9 @@ extern NSString *const iTermApplicationDidCloseModalWindow;
 @property(nonatomic, readonly) NSWindow *it_windowBecomingKey;
 @property(nonatomic, readonly) BOOL it_justBecameActive;
 
+// In big sur, sheets aren't key windows any more. This finds the current sheet for the key window and returns it.
+@property(nonatomic, readonly) NSWindow *it_keyWindow;
+
 - (void)sendEvent:(NSEvent *)anEvent;
 - (iTermApplicationDelegate<iTermApplicationDelegate> *)delegate;
 - (BOOL)routeEventToShortcutInputView:(NSEvent *)event;

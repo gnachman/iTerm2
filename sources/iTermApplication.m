@@ -219,8 +219,19 @@ static const char *iTermApplicationKVOKey = "iTermApplicationKVOKey";
     return event;
 }
 
+- (NSWindow *)it_keyWindow {
+    NSWindow *window = self.keyWindow;
+    if (@available(macOS 10.16, *)) {
+        while (window.sheets.count) {
+            window = window.sheets.lastObject;
+        }
+        return window;
+    }
+    return window;
+}
+
 - (BOOL)routeEventToShortcutInputView:(NSEvent *)event {
-    NSResponder *firstResponder = [[NSApp keyWindow] firstResponder];
+    NSResponder *firstResponder = [[NSApp it_keyWindow] firstResponder];
     if ([firstResponder isKindOfClass:[iTermShortcutInputView class]]) {
         iTermShortcutInputView *shortcutView = (iTermShortcutInputView *)firstResponder;
         if (shortcutView) {

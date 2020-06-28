@@ -272,6 +272,10 @@
 
 - (CGFloat)desiredHeight {
     CGFloat height = [[tableView_ headerView] frame].size.height + MIN(20, [model_ count]) * ([tableView_ rowHeight] + [tableView_ intercellSpacing].height);
+    if (@available(macOS 10.16, *)) {
+        // Fudge factor
+        height += 20;
+    }
     if (footerView_) {
         height += footerView_.frame.size.height;
     }

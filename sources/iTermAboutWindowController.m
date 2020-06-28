@@ -55,7 +55,7 @@ static NSString *iTermAboutWindowControllerWhatsNewURLString = @"iterm2://whats-
         NSString *const versionNumber = myDict[(NSString *)kCFBundleVersionKey];
         NSString *versionString = [NSString stringWithFormat: @"Build %@\n\n", versionNumber];
         NSAttributedString *whatsNew = nil;
-        if ([versionNumber hasPrefix:@"3.3."]) {
+        if ([versionNumber hasPrefix:@"3.3."] || [versionString isEqualToString:@"unknown"]) {
             whatsNew = [self attributedStringWithLinkToURL:iTermAboutWindowControllerWhatsNewURLString
                                                      title:@"What’s New in 3.3?\n"];
         }

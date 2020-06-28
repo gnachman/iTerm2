@@ -44,6 +44,14 @@
     return self;
 }
 
+- (void)awakeFromNib {
+    if (@available(macOS 10.16, *)) {
+#ifdef MAC_OS_X_VERSION_10_16
+        _tableView.style = NSTableViewStyleInset;
+#endif
+    }
+}
+
 - (void)loadRows {
     NSDictionary<NSString *, iTermTuple<id, ITMNotificationRequest *> *> *subs = [[iTermAPIHelper sharedInstance] serverOriginatedRPCSubscriptions];
     _rows = [subs.allKeys mapWithBlock:^id(NSString *signature) {
