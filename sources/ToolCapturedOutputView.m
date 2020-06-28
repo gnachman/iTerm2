@@ -15,6 +15,7 @@
 #import "iTermSearchField.h"
 #import "iTermToolbeltView.h"
 #import "iTermToolWrapper.h"
+#import "NSImage+iTerm.h"
 #import "NSTableColumn+iTerm.h"
 #import "NSTextField+iTerm.h"
 #import "PseudoTerminal.h"
@@ -71,7 +72,7 @@ static NSString *const iTermCapturedOutputToolTableViewCellIdentifier = @"ToolCa
         if (@available(macOS 10.16, *)) {
             _clearButton.bezelStyle = NSBezelStyleRegularSquare;
             _clearButton.bordered = NO;
-            _clearButton.image = [NSImage imageWithSystemSymbolName:@"trash" accessibilityDescription:@"Clear"];
+            _clearButton.image = [NSImage it_imageForSymbolName:@"trash" accessibilityDescription:@"Clear"];
             _clearButton.imagePosition = NSImageOnly;
             _clearButton.frame = NSMakeRect(0, 0, 22, 22);
         } else {

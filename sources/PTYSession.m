@@ -12217,7 +12217,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
             }
         }
     }
-    response.status = ITMSetProfilePropertyResponse_Status_Ok;
+    response.status = ITMGetProfilePropertyResponse_Status_Ok;
     return response;
 }
 

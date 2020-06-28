@@ -13,6 +13,7 @@
 #import "iTermEditKeyActionWindowController.h"
 
 #import "NSArray+iTerm.h"
+#import "NSImage+iTerm.h"
 #import "NSIndexSet+iTerm.h"
 #import "NSTableView+iTerm.h"
 #import "NSTextField+iTerm.h"
@@ -42,12 +43,9 @@ static NSButton *iTermToolActionsNewButton(NSString *imageName, NSString *title,
     NSButton *button = [[NSButton alloc] initWithFrame:NSMakeRect(0, frame.size.height - kButtonHeight, frame.size.width, kButtonHeight)];
     [button setButtonType:NSMomentaryPushInButton];
     if (imageName) {
-#ifdef MAC_OS_X_VERSION_10_16
         if (@available(macOS 10.16, *)) {
-            button.image = [NSImage imageWithSystemSymbolName:imageName accessibilityDescription:title];
-        } else
-#endif
-        {
+            button.image = [NSImage it_imageForSymbolName:imageName accessibilityDescription:title];
+        } else {
             button.image = [NSImage imageNamed:imageName];
         }
     } else {

@@ -12,6 +12,7 @@
 #import "iTermController.h"
 #import "iTermSessionLauncher.h"
 #import "NSEvent+iTerm.h"
+#import "NSImage+iTerm.h"
 #import "ProfileModel.h"
 #import "PseudoTerminal.h"
 
@@ -50,7 +51,7 @@ static NSString *const iTermToolProfilesProfileListViewState = @"iTermToolProfil
         if (@available(macOS 10.16, *)) {
             _openButton.bezelStyle = NSBezelStyleRegularSquare;
             _openButton.bordered = NO;
-            _openButton.image = [NSImage imageWithSystemSymbolName:@"play" accessibilityDescription:@"Open Profile"];
+            _openButton.image = [NSImage it_imageForSymbolName:@"play" accessibilityDescription:@"Open Profile"];
             _openButton.imageScaling = NSImageScaleProportionallyUpOrDown;
             _openButton.imagePosition = NSImageOnly;
         } else {

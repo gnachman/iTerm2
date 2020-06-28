@@ -89,6 +89,7 @@
 #import "NSArray+iTerm.h"
 #import "NSDictionary+iTerm.h"
 #import "NSFileManager+iTerm.h"
+#import "NSImage+iTerm.h"
 #import "NSPopUpButton+iTerm.h"
 #import "NSStringITerm.h"
 #import "NSView+iTerm.h"
@@ -399,13 +400,13 @@ static iTermPreferencesSearchEngine *gSearchEngine;
 #ifdef MAC_OS_X_VERSION_10_16
     if (@available(macOS 10.16, *)) {
         self.window.toolbarStyle = NSWindowToolbarStylePreference;
-        _globalToolbarItem.image = [NSImage imageWithSystemSymbolName:@"gearshape" accessibilityDescription:@"General"];
-        _appearanceToolbarItem.image = [NSImage imageWithSystemSymbolName:@"eye" accessibilityDescription:@"Appearance"];
-        _keyboardToolbarItem.image = [NSImage imageWithSystemSymbolName:@"keyboard" accessibilityDescription:@"Keys"];
-        _arrangementsToolbarItem.image = [NSImage imageWithSystemSymbolName:@"macwindow.on.rectangle" accessibilityDescription:@"Arrangements"];
-        _bookmarksToolbarItem.image = [NSImage imageWithSystemSymbolName:@"person" accessibilityDescription:@"Profiles"];
-        _mouseToolbarItem.image = [NSImage imageWithSystemSymbolName:@"cursorarrow.motionlines" accessibilityDescription:@"Pointer"];
-        _advancedToolbarItem.image = [NSImage imageWithSystemSymbolName:@"gearshape.2" accessibilityDescription:@"Advanced"];
+        _globalToolbarItem.image = [NSImage it_imageForSymbolName:@"gearshape" accessibilityDescription:@"General"];
+        _appearanceToolbarItem.image = [NSImage it_imageForSymbolName:@"eye" accessibilityDescription:@"Appearance"];
+        _keyboardToolbarItem.image = [NSImage it_imageForSymbolName:@"keyboard" accessibilityDescription:@"Keys"];
+        _arrangementsToolbarItem.image = [NSImage it_imageForSymbolName:@"macwindow.on.rectangle" accessibilityDescription:@"Arrangements"];
+        _bookmarksToolbarItem.image = [NSImage it_imageForSymbolName:@"person" accessibilityDescription:@"Profiles"];
+        _mouseToolbarItem.image = [NSImage it_imageForSymbolName:@"cursorarrow.motionlines" accessibilityDescription:@"Pointer"];
+        _advancedToolbarItem.image = [NSImage it_imageForSymbolName:@"gearshape.2" accessibilityDescription:@"Advanced"];
     }
 #endif
     _globalTabViewItem.view = _generalPreferencesViewController.view;

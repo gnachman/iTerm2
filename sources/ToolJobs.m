@@ -208,7 +208,7 @@ static const CGFloat kMargin = 4;
         if (@available(macOS 10.16, *)) {
             kill_.bezelStyle = NSBezelStyleRegularSquare;
             kill_.bordered = NO;
-            kill_.image = [NSImage imageWithSystemSymbolName:@"play" accessibilityDescription:@"Clear"];
+            kill_.image = [NSImage it_imageForSymbolName:@"play" accessibilityDescription:@"Clear"];
             kill_.imagePosition = NSImageOnly;
             kill_.frame = NSMakeRect(signal_.frame.size.width + kMargin, 0, 22, 22);
         } else {

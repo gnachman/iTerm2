@@ -125,12 +125,17 @@
     return map[type];
 }
 
-+ (NSImage *)it_hamburgerForClass:(Class)theClass {
++ (NSImage *)it_imageForSymbolName:(NSString *)name accessibilityDescription:(NSString *)accessibilityDescription NS_AVAILABLE_MAC(10_16) {
 #ifdef MAC_OS_X_VERSION_10_16
-    if (@available(macOS 10.16, *)) {
-        return [NSImage imageWithSystemSymbolName:@"ellipsis.circle" accessibilityDescription:@"Menu"];
-    }
+    return [NSImage imageWithSystemSymbolName:name accessibilityDescription:accessibilityDescription];
 #endif
+    assert(NO);
+}
+
++ (NSImage *)it_hamburgerForClass:(Class)theClass {
+    if (@available(macOS 10.16, *)) {
+        return [self it_imageForSymbolName:@"ellipsis.circle" accessibilityDescription:@"Menu"];
+    }
     return [NSImage it_imageNamed:@"Hamburger" forClass:self.class];
 }
 

@@ -15,6 +15,7 @@
 #import "NSDateFormatterExtras.h"
 #import "NSDate+iTerm.h"
 #import "NSEvent+iTerm.h"
+#import "NSImage+iTerm.h"
 #import "NSTableColumn+iTerm.h"
 #import "NSTextField+iTerm.h"
 #import "PTYSession.h"
@@ -72,7 +73,7 @@ static const CGFloat kHelpMargin = 5;
         if (@available(macOS 10.16, *)) {
             clear_.bezelStyle = NSBezelStyleRegularSquare;
             clear_.bordered = NO;
-            clear_.image = [NSImage imageWithSystemSymbolName:@"trash" accessibilityDescription:@"Clear"];
+            clear_.image = [NSImage it_imageForSymbolName:@"trash" accessibilityDescription:@"Clear"];
             clear_.imagePosition = NSImageOnly;
             clear_.frame = NSMakeRect(0, 0, 22, 22);
         } else {
