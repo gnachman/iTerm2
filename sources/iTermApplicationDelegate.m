@@ -1688,9 +1688,10 @@ static BOOL hasBecomeActive = NO;
 
 - (IBAction)newWindow:(id)sender {
     DLog(@"newWindow: invoked");
+    [[iTermController sharedInstance] newWindow:sender possiblyTmux:NO];
 #if 0
     BOOL cancel;
-    BOOL tmux = NO;  //[self possiblyTmuxValueForWindow:YES cancel:&cancel];
+    BOOL tmux = [self possiblyTmuxValueForWindow:YES cancel:&cancel];
     if (!cancel) {
         [[iTermController sharedInstance] newWindow:sender possiblyTmux:tmux];
     }
@@ -1704,6 +1705,7 @@ static BOOL hasBecomeActive = NO;
 
 - (IBAction)newSession:(id)sender
 {
+   [[iTermController sharedInstance] newSession:sender possiblyTmux:NO];
 #if 0
     DLog(@"iTermApplicationDelegate newSession:");
     BOOL cancel;
