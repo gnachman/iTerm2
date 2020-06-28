@@ -57,11 +57,11 @@ typedef NS_ENUM(NSInteger, iTermScriptFilterControlTag) {
 }
 
 - (void)awakeFromNib {
-    if (@available(macOS 10.16, *)) {
 #ifdef MAC_OS_X_VERSION_10_16
+    if (@available(macOS 10.16, *)) {
         _tableView.style = NSTableViewStyleInset;
-#endif
     }
+#endif
     _callsView.textColor = [NSColor textColor];
     NSScrollView *scrollView = _callsView.enclosingScrollView;
     scrollView.horizontalScrollElasticity = NSScrollElasticityNone;

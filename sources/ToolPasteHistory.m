@@ -39,12 +39,20 @@ static const CGFloat kMargin = 4;
         _paragraphStyle.allowsDefaultTighteningForTruncation = NO;
 
         clear_ = [[NSButton alloc] initWithFrame:NSMakeRect(0, frame.size.height - kButtonHeight, frame.size.width, kButtonHeight)];
-        [clear_ setButtonType:NSMomentaryPushInButton];
-        [clear_ setTitle:@"Clear All"];
+        if (@available(macOS 10.16, *)) {
+            clear_.bezelStyle = NSBezelStyleRegularSquare;
+            clear_.bordered = NO;
+            clear_.image = [NSImage imageWithSystemSymbolName:@"trash" accessibilityDescription:@"Delete All"];
+            clear_.imagePosition = NSImageOnly;
+            clear_.frame = NSMakeRect(0, 0, 22, 22);
+        } else {
+            [clear_ setButtonType:NSMomentaryPushInButton];
+            [clear_ setTitle:@"Clear All"];
+            [clear_ setBezelStyle:NSSmallSquareBezelStyle];
+            [clear_ sizeToFit];
+        }
         [clear_ setTarget:self];
         [clear_ setAction:@selector(clear:)];
-        [clear_ setBezelStyle:NSSmallSquareBezelStyle];
-        [clear_ sizeToFit];
         [clear_ setAutoresizingMask:NSViewMinYMargin];
         [self addSubview:clear_];
 
@@ -129,8 +137,15 @@ static const CGFloat kMargin = 4;
 
 - (void)relayout {
     NSRect frame = self.frame;
-    [clear_ sizeToFit];
-    [clear_ setFrame:NSMakeRect(frame.size.width - clear_.frame.size.width, frame.size.height - kButtonHeight, clear_.frame.size.width, kButtonHeight)];
+    if (@available(macOS 10.16, *)){
+        clear_.frame = NSMakeRect(frame.size.width - clear_.frame.size.width,
+                                  frame.size.height - clear_.frame.size.height,
+                                  clear_.frame.size.width,
+                                  clear_.frame.size.height);
+    } else {
+        [clear_ sizeToFit];
+        [clear_ setFrame:NSMakeRect(frame.size.width - clear_.frame.size.width, frame.size.height - kButtonHeight, clear_.frame.size.width, kButtonHeight)];
+    }
 
     _secureKeyboardEntryWarning.hidden = [iTermAdvancedSettingsModel saveToPasteHistoryWhenSecureInputEnabled] || ![[iTermSecureKeyboardEntryController sharedInstance] isEnabled];
     _secureKeyboardEntryWarning.frame = NSMakeRect(0, 0, frame.size.width, _secureKeyboardEntryWarning.frame.size.height);
@@ -243,9 +258,16 @@ static const CGFloat kMargin = 4;
 }
 
 - (void)clear:(id)sender {
-    [pasteHistory_ eraseHistory];
-    [pasteHistory_ clear];
-    [tableView_ reloadData];
+    NSAlert *alert = [[NSAlert alloc] init];
+    alert.messageText = @"Erase Paste History";
+    alert.informativeText = @"Paste history will be erased. Continue?";
+    [alert addButtonWithTitle:@"OK"];
+    [alert addButtonWithTitle:@"Cancel"];
+    if ([alert runModal] == NSAlertFirstButtonReturn) {
+        [pasteHistory_ eraseHistory];
+        [pasteHistory_ clear];
+        [tableView_ reloadData];
+    }
     // Updating the table data causes the cursor to change into an arrow!
     [self performSelector:@selector(fixCursor) withObject:nil afterDelay:0];
 }

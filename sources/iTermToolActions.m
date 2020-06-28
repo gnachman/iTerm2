@@ -42,13 +42,27 @@ static NSButton *iTermToolActionsNewButton(NSString *imageName, NSString *title,
     NSButton *button = [[NSButton alloc] initWithFrame:NSMakeRect(0, frame.size.height - kButtonHeight, frame.size.width, kButtonHeight)];
     [button setButtonType:NSMomentaryPushInButton];
     if (imageName) {
-        button.image = [NSImage imageNamed:imageName];
+#ifdef MAC_OS_X_VERSION_10_16
+        if (@available(macOS 10.16, *)) {
+            button.image = [NSImage imageWithSystemSymbolName:imageName accessibilityDescription:title];
+        } else
+#endif
+        {
+            button.image = [NSImage imageNamed:imageName];
+        }
     } else {
         button.title = title;
     }
     [button setTarget:target];
     [button setAction:selector];
-    [button setBezelStyle:NSSmallSquareBezelStyle];
+    if (@available(macOS 10.16, *)) {
+        button.bezelStyle = NSBezelStyleRegularSquare;
+        button.bordered = NO;
+        button.imageScaling = NSImageScaleProportionallyUpOrDown;
+        button.imagePosition = NSImageOnly;
+    } else {
+        [button setBezelStyle:NSSmallSquareBezelStyle];
+    }
     [button sizeToFit];
     [button setAutoresizingMask:NSViewMinYMargin];
 
@@ -58,13 +72,20 @@ static NSButton *iTermToolActionsNewButton(NSString *imageName, NSString *title,
 - (instancetype)initWithFrame:(NSRect)frame {
     self = [super initWithFrame:frame];
     if (self) {
-        _applyButton = iTermToolActionsNewButton(nil, @"Apply", self, @selector(apply:), frame);
+        if (@available(macOS 10.16, *)) {
+            _applyButton = iTermToolActionsNewButton(@"play", @"Apply", self, @selector(apply:), frame);
+            _addButton = iTermToolActionsNewButton(@"plus", @"Add", self, @selector(add:), frame);
+            _removeButton = iTermToolActionsNewButton(@"minus", @"Remove", self, @selector(remove:), frame);
+            _editButton = iTermToolActionsNewButton(@"switch.2", @"Edit", self, @selector(edit:), frame);
+        } else {
+            _applyButton = iTermToolActionsNewButton(nil, @"Apply", self, @selector(apply:), frame);
+            _addButton = iTermToolActionsNewButton(NSImageNameAddTemplate, nil, self, @selector(add:), frame);
+            _removeButton = iTermToolActionsNewButton(NSImageNameRemoveTemplate, nil, self, @selector(remove:), frame);
+            _editButton = iTermToolActionsNewButton(nil, @"✐", self, @selector(edit:), frame);
+        }
         [self addSubview:_applyButton];
-        _addButton = iTermToolActionsNewButton(NSImageNameAddTemplate, nil, self, @selector(add:), frame);
         [self addSubview:_addButton];
-        _removeButton = iTermToolActionsNewButton(NSImageNameRemoveTemplate, nil, self, @selector(remove:), frame);
         [self addSubview:_removeButton];
-        _editButton = iTermToolActionsNewButton(nil, @"✐", self, @selector(edit:), frame);
         [self addSubview:_editButton];
 
         _scrollView = [[NSScrollView alloc] initWithFrame:NSMakeRect(0, 0, frame.size.width, frame.size.height - kButtonHeight - kMargin)];
@@ -126,11 +147,21 @@ static NSButton *iTermToolActionsNewButton(NSString *imageName, NSString *title,
     [_applyButton sizeToFit];
     [_applyButton setFrame:NSMakeRect(0, frame.size.height - kButtonHeight, _applyButton.frame.size.width, kButtonHeight)];
 
+    CGFloat margin = -1;
+    if (@available(macOS 10.16, *)) {
+        margin = 2;
+    }
+
     CGFloat x = frame.size.width;
     for (NSButton *button in @[ _addButton, _removeButton, _editButton]) {
         [button sizeToFit];
-        const CGFloat width = MAX(kButtonHeight, button.frame.size.width);
-        x -= width - 1;
+        CGFloat width;
+        if (@available(macOS 10.16, *)) {
+            width = NSWidth(button.frame);
+        } else {
+            width = MAX(kButtonHeight, button.frame.size.width);
+        }
+        x -= width + margin;
         button.frame = NSMakeRect(x,
                                   frame.size.height - kButtonHeight,
                                   width,

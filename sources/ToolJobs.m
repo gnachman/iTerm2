@@ -192,20 +192,7 @@ static const CGFloat kMargin = 4;
     if (self) {
         _processInfos = @[];
 
-        kill_ = [[[NSButton alloc] initWithFrame:NSMakeRect(0,
-                                                            frame.size.height - kButtonHeight,
-                                                            frame.size.width,
-                                                            kButtonHeight)] autorelease];
-        [kill_ setButtonType:NSMomentaryPushInButton];
-        [kill_ setTitle:@"Send Signal"];
-        [kill_ setTarget:self];
-        [kill_ setAction:@selector(kill:)];
-        [kill_ setBezelStyle:NSSmallSquareBezelStyle];
-        [kill_ sizeToFit];
-        [kill_ setAutoresizingMask:NSViewMinYMargin | NSViewMaxXMargin];
-        [self addSubview:kill_];
-        [kill_ bind:@"enabled" toObject:self withKeyPath:@"killable" options:nil];
-        signal_ = [[SignalPicker alloc] initWithFrame:NSMakeRect(kill_.frame.size.width + kMargin,
+        signal_ = [[SignalPicker alloc] initWithFrame:NSMakeRect(0,
                                                                  frame.size.height - kButtonHeight + 1,
                                                                  frame.size.width - kill_.frame.size.width - 2*kMargin,
                                                                  kButtonHeight)];
@@ -213,6 +200,29 @@ static const CGFloat kMargin = 4;
         [signal_ setAutoresizingMask:NSViewMinYMargin | NSViewMaxXMargin];
         [signal_ sizeToFit];
         [self addSubview:signal_];
+
+        kill_ = [[[NSButton alloc] initWithFrame:NSMakeRect(0,
+                                                            frame.size.height - kButtonHeight,
+                                                            frame.size.width,
+                                                            kButtonHeight)] autorelease];
+        if (@available(macOS 10.16, *)) {
+            kill_.bezelStyle = NSBezelStyleRegularSquare;
+            kill_.bordered = NO;
+            kill_.image = [NSImage imageWithSystemSymbolName:@"arrow.right.circle.fill" accessibilityDescription:@"Clear"];
+            kill_.imagePosition = NSImageOnly;
+            kill_.frame = NSMakeRect(signal_.frame.size.width + kMargin, 0, 22, 22);
+        } else {
+            [kill_ setButtonType:NSMomentaryPushInButton];
+            [kill_ setTitle:@"Send Signal"];
+            [kill_ setBezelStyle:NSSmallSquareBezelStyle];
+            [kill_ sizeToFit];
+            kill_.frame = NSMakeRect(signal_.frame.size.width + kMargin, 0, kill_.frame.size.width, kill_.frame.size.height);
+        }
+        [kill_ setTarget:self];
+        [kill_ setAction:@selector(kill:)];
+        [kill_ setAutoresizingMask:NSViewMinYMargin | NSViewMaxXMargin];
+        [self addSubview:kill_];
+        [kill_ bind:@"enabled" toObject:self withKeyPath:@"killable" options:nil];
 
         scrollView_ = [[NSScrollView alloc] initWithFrame:NSMakeRect(0, 0, frame.size.width, frame.size.height - kButtonHeight - kMargin)];
         [scrollView_ setHasVerticalScroller:YES];
@@ -272,16 +282,23 @@ static const CGFloat kMargin = 4;
     return self;
 }
 
-- (void)relayout
-{
+- (void)relayout {
     NSRect frame = self.frame;
-    kill_.frame = NSMakeRect(0, frame.size.height - kButtonHeight, frame.size.width, kButtonHeight);
-    [kill_ sizeToFit];
-    signal_.frame = NSMakeRect(kill_.frame.size.width + kMargin,
+    signal_.frame = NSMakeRect(0,
                                frame.size.height - kButtonHeight + 1,
                                signal_.frame.size.width,
                                kButtonHeight);
     [signal_ sizeToFit];
+
+    if (@available(macOS 10.16, *)) {
+        NSRect rect = kill_.frame;
+        rect.origin.x = NSMaxX(signal_.frame);
+        rect.origin.y = frame.size.height - kButtonHeight + (kButtonHeight - rect.size.height) / 2;
+        kill_.frame = rect;
+    } else {
+        kill_.frame = NSMakeRect(NSMaxX(signal_.frame) + kMargin, frame.size.height - kButtonHeight, frame.size.width, kButtonHeight);
+        [kill_ sizeToFit];
+    }
     scrollView_.frame = NSMakeRect(0, 0, frame.size.width, frame.size.height - kButtonHeight - kMargin);
 }
 

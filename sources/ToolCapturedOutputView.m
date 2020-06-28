@@ -54,6 +54,9 @@ static NSString *const iTermCapturedOutputToolTableViewCellIdentifier = @"ToolCa
         [help_ setBezelStyle:NSHelpButtonBezelStyle];
         [help_ setButtonType:NSMomentaryPushInButton];
         [help_ setBordered:YES];
+        if (@available(macOS 10.16, *)) {
+            help_.controlSize = NSControlSizeSmall;
+        }
         [help_ sizeToFit];
         help_.target = self;
         help_.action = @selector(help:);
@@ -62,13 +65,21 @@ static NSString *const iTermCapturedOutputToolTableViewCellIdentifier = @"ToolCa
         [self addSubview:help_];
 
         _clearButton = [[NSButton alloc] initWithFrame:NSMakeRect(0, frame.size.height - kButtonHeight, frame.size.width, kButtonHeight)];
-        [_clearButton setButtonType:NSMomentaryPushInButton];
-        [_clearButton setTitle:@"Clear"];
         [_clearButton setTarget:self];
         [_clearButton setAction:@selector(clear:)];
-        [_clearButton setBezelStyle:NSSmallSquareBezelStyle];
-        [_clearButton sizeToFit];
         [_clearButton setAutoresizingMask:NSViewMinYMargin];
+        if (@available(macOS 10.16, *)) {
+            _clearButton.bezelStyle = NSBezelStyleRegularSquare;
+            _clearButton.bordered = NO;
+            _clearButton.image = [NSImage imageWithSystemSymbolName:@"trash" accessibilityDescription:@"Clear"];
+            _clearButton.imagePosition = NSImageOnly;
+            _clearButton.frame = NSMakeRect(0, 0, 22, 22);
+        } else {
+            [_clearButton setTitle:@"Clear"];
+            [_clearButton setButtonType:NSMomentaryPushInButton];
+            [_clearButton setBezelStyle:NSSmallSquareBezelStyle];
+            [_clearButton sizeToFit];
+        }
         [self addSubview:_clearButton];
 
         searchField_ = [[iTermSearchField alloc] initWithFrame:CGRectZero];
@@ -194,16 +205,29 @@ static NSString *const iTermCapturedOutputToolTableViewCellIdentifier = @"ToolCa
     searchField_.frame = searchFieldFrame;
 
     // Help button
-    help_.frame = NSMakeRect(frame.size.width - help_.frame.size.width,
-                             1,
-                             help_.frame.size.width,
-                             help_.frame.size.height);
+    {
+        CGFloat fudgeFactor = 1;
+        if (@available(macOS 10.16, *)) {
+            fudgeFactor = 2;
+        }
+        help_.frame = NSMakeRect(frame.size.width - help_.frame.size.width,
+                                 fudgeFactor,
+                                 help_.frame.size.width,
+                                 help_.frame.size.height);
+    }
 
-    _clearButton.frame = NSMakeRect(help_.frame.origin.x - _clearButton.frame.size.width - kMargin,
-                                    1,
-                                    _clearButton.frame.size.width,
-                                    _clearButton.frame.size.height);
-
+    // Clear button
+    {
+        CGFloat fudgeFactor = 1;
+        if (@available(macOS 10.16, *)) {
+            fudgeFactor = 0;
+        }
+        _clearButton.frame = NSMakeRect(help_.frame.origin.x - _clearButton.frame.size.width - kMargin,
+                                        fudgeFactor,
+                                        _clearButton.frame.size.width,
+                                        _clearButton.frame.size.height);
+    }
+    
     // Scroll view
     [scrollView_ setFrame:NSMakeRect(0,
                                      searchFieldFrame.size.height + kMargin,
