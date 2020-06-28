@@ -7,9 +7,6 @@
 
 import AppKit
 
-class WTFTextField : NSTextField {
-
-}
 protocol MouseObservingTableView {
     var shouldDrawSelection: Bool { get }
     var drawSelectionWhenMouseOutside: Bool { get }
@@ -79,7 +76,7 @@ class SearchableComboTableViewController: NSViewController {
         case item(item: SearchableComboViewItem, index: Int)
         var tag: Int? {
             switch self {
-            case .group(_):
+            case .group(group: _, index: _):
                 return nil
             case .item(item: let item, index: _):
                 return item.tag
@@ -101,9 +98,9 @@ class SearchableComboTableViewController: NSViewController {
         }
         var isSelectable: Bool {
             switch self {
-            case .item(_):
+            case .item(_, _):
                 return true
-            case .group(_):
+            case .group(_, _):
                 return false
             }
         }
@@ -111,7 +108,7 @@ class SearchableComboTableViewController: NSViewController {
             switch self {
             case .item(item: let result, index: _):
                 return result
-            case .group(_):
+            case .group(_, _):
                 return nil
             }
         }
@@ -254,7 +251,7 @@ class SearchableComboTableViewController: NSViewController {
     private func itemWithTag(_ tag: Int?) -> SearchableComboViewItem? {
         for row in filteredRows {
             switch row {
-            case .group(_):
+            case .group(_, _):
                 break
             case .item(item: let item, index: _):
                 if item.tag == tag {
@@ -310,7 +307,7 @@ class SearchableComboTableViewController: NSViewController {
         }
 
         switch filteredRows[index] {
-        case .group(_):
+        case .group(_, _):
             return
         case .item(item: let item, _):
             delegate?.searchableComboTableViewController(self, didSelectItem: item)
@@ -339,15 +336,15 @@ class SearchableComboTableViewController: NSViewController {
         return textField
     }
 
-    private func newGroupLabelTextField(_ value: String) -> WTFTextField {
+    private func newGroupLabelTextField(_ value: String) -> NSTextField {
         let identifier = NSUserInterfaceItemIdentifier("SearchableComboViewGroupLabelCell")
         let font = NSFont.systemFont(ofSize: groupLabelFontSize)
-        if let textField = tableView.makeView(withIdentifier: identifier, owner: self) as? WTFTextField {
+        if let textField = tableView.makeView(withIdentifier: identifier, owner: self) as? NSTextField {
             textField.font = font
             textField.stringValue = value
             return textField
         }
-        let textField: WTFTextField = WTFTextField()
+        let textField: NSTextField = NSTextField()
         textField.font = font
         textField.isBezeled = false
         textField.isEditable = false
@@ -441,9 +438,9 @@ extension SearchableComboTableViewController: NSTableViewDataSource {
     @objc(tableView:heightOfRow:)
     public func tableView(_ tableView: NSTableView, heightOfRow row: Int) -> CGFloat {
         switch filteredRows[row] {
-        case .group(_):
+        case .group(_, _):
             return groupRowHeight
-        case .item(_):
+        case .item(_, _):
             return itemRowHeight
         }
     }
