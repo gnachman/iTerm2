@@ -18,6 +18,7 @@ Therm is a fork of iTerm2 done by pancake <pancake@nopcode.org> that aims to:
 * Support CMD+F to toggle foreground (always-on-top)
 * Disabled proprietary escape codes, as well as others with bugs (set-title, ..)
 * Disable force-touch actions that preview URLs (better use a real browser)
+* Disable the smart-paste and print-to-printer anoying features
 
 ![Therm Screenshot](therm.png)
 
