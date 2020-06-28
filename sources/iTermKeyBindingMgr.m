@@ -496,6 +496,7 @@ exit:
         case KEY_FIND_AGAIN_UP:
             actionString = @"Find Again Up";
             break;
+#if 0
         case KEY_ACTION_PASTE_SPECIAL_FROM_SELECTION: {
             NSString *pasteDetails =
                 [iTermPasteSpecialViewController descriptionForCodedSettings:auxText];
@@ -516,6 +517,7 @@ exit:
             }
             break;
         }
+#endif
         case KEY_ACTION_MOVE_END_OF_SELECTION_LEFT:
             actionString = [NSString stringWithFormat:@"Move End of Selection Left %@",
                             [self stringForSelectionMovementUnit:auxText.integerValue]];

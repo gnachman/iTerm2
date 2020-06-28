@@ -5527,8 +5527,10 @@ verticalSpacing:(float)verticalSpacing {
         case KEY_ACTION_FIND_REGEX:
         case KEY_FIND_AGAIN_DOWN:
         case KEY_FIND_AGAIN_UP:
+#if 0
         case KEY_ACTION_PASTE_SPECIAL_FROM_SELECTION:
         case KEY_ACTION_PASTE_SPECIAL:
+#endif
         case KEY_ACTION_TOGGLE_HOTKEY_WINDOW_PINNING:
         case KEY_ACTION_MOVE_END_OF_SELECTION_LEFT:
         case KEY_ACTION_MOVE_END_OF_SELECTION_RIGHT:
@@ -5747,6 +5749,7 @@ verticalSpacing:(float)verticalSpacing {
             [self searchPrevious];
             break;
             
+#if 0
         case KEY_ACTION_PASTE_SPECIAL_FROM_SELECTION: {
             NSString *string = [[iTermController sharedInstance] lastSelection];
             if (string.length) {
@@ -5764,6 +5767,7 @@ verticalSpacing:(float)verticalSpacing {
             }
             break;
         }
+#endif
             
         case KEY_ACTION_TOGGLE_HOTKEY_WINDOW_PINNING: {
             DLog(@"Toggle pinning");
