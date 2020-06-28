@@ -72,9 +72,6 @@ public class TableViewController: NSViewController, FavoritesDataSourceDelegate,
     // MARK:- Initializers
 
     init(tableView: FontListTableView, delegate: TableViewControllerDelegate?) {
-        if #available(macOS 10.16, *) {
-            tableView.style = .fullWidth
-        }
         self.tableView = tableView
         self.delegate = delegate
 
@@ -146,10 +143,10 @@ public class TableViewController: NSViewController, FavoritesDataSourceDelegate,
         let checkmarkWidth = starWidth - 10
         let fudgeFactor: CGFloat
         if #available(macOS 10.16, *) {
-            // Something changed in table view that I haven't figured out yet.
-            fudgeFactor = 12
+            // NSTableView has an .inset style but no way to ask what the inset is, so I guess this is what I'm supposed to do? sigh
+            fudgeFactor = 32
         } else {
-            fudgeFactor = 0;
+            fudgeFactor = 0
         }
         let desiredWidths = [
             starColumnIdentifier: starWidth,
