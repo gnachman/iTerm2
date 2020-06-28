@@ -14,6 +14,23 @@ static CGFloat DegreesToRadians(double radians) {
     return radians / 180.0 * M_PI;
 }
 
+typedef struct {
+    CGFloat outerRadius;
+    CGFloat innerRadius;
+    CGFloat strokeWidth;
+} AMGeometry;
+
+typedef struct {
+    AMGeometry geometry;
+    CGFloat scale;
+    CGRect frame;
+    float size;
+    NSPoint center;
+    CGFloat anglePerStep;
+    CGFloat (^alphaFunction)(NSInteger, NSInteger);
+    BOOL bigSur;
+} AMConfig;
+
 @interface AMIndeterminateProgressIndicator()
 @property(nonatomic, retain) CAKeyframeAnimation *animation;
 @end
@@ -22,6 +39,8 @@ static CGFloat DegreesToRadians(double radians) {
     NSSize _animationSize;
     int _count;
     BOOL _wantsAnimation;
+    AMConfig _config;
+    BOOL _hasConfig;
 }
 
 - (id)initWithFrame:(NSRect)frameRect {
@@ -47,13 +66,6 @@ static CGFloat DegreesToRadians(double radians) {
                                                  object:nil];
   }
   return self;
-}
-
-- (void)dealloc {
-    [[NSNotificationCenter defaultCenter] removeObserver:self];
-    [_animation release];
-    [_color release];
-    [super dealloc];
 }
 
 - (void)windowWillEnterFullScreen:(NSNotification *)notification {
@@ -86,8 +98,7 @@ static CGFloat DegreesToRadians(double radians) {
 
 - (void)setColor:(NSColor *)value {
     if (_color != value) {
-        [_color autorelease];
-        _color = [value retain];
+        _color = value;
         assert([_color alphaComponent] > 0.999);
     }
 }
@@ -113,7 +124,11 @@ static CGFloat DegreesToRadians(double radians) {
         _animationSize = self.physicalSize;
         self.animation = [CAKeyframeAnimation animationWithKeyPath:@"contents"];
         self.animation.calculationMode = kCAAnimationDiscrete;
-        self.animation.duration = 0.5;
+        if (self.useBigSurStyle) {
+            self.animation.duration = 0.8;
+        } else {
+            self.animation.duration = 0.5;
+        }
         self.animation.values = self.images;
         self.animation.repeatCount = INFINITY;
     }
@@ -136,7 +151,7 @@ static CGFloat DegreesToRadians(double radians) {
     NSSize size = self.physicalSize;
 
     for (NSInteger step = 0; step < self.numberOfSteps; step++) {
-        NSImage *image = [[[NSImage alloc] initWithSize:size] autorelease];
+        NSImage *image = [[NSImage alloc] initWithSize:size];
         [image lockFocus];
         [self drawStep:step];
         [image unlockFocus];
@@ -152,13 +167,30 @@ static CGFloat DegreesToRadians(double radians) {
                                                               kCGRenderingIntentDefault);
         CFRelease(provider);
 
-        [frames addObject:(id)cgImage];
+        [frames addObject:(__bridge id)cgImage];
         CFRelease(cgImage);
     }
     return frames;
 }
 
+- (BOOL)useBigSurStyle {
+    if (@available(macOS 10.16, *)) {
+        return YES;
+    }
+    return NO;
+}
+
 - (NSInteger)numberOfSteps {
+    if (self.useBigSurStyle) {
+        return 48;
+    }
+    return 12;
+}
+
+- (NSInteger)numberOfSpokes {
+    if (self.useBigSurStyle) {
+        return 8;
+    }
     return 12;
 }
 
@@ -178,47 +210,121 @@ static CGFloat DegreesToRadians(double radians) {
     [NSBezierPath setDefaultLineWidth:previousLineWidth];
 }
 
-- (void)drawStep:(NSInteger)step {
-    CGRect frame = self.frame;
+- (AMConfig)config {
+    AMConfig config;
+    config.frame = self.frame;
     
     // Scale frame by the layer's contentsScale so we fill it properly.
-    CGFloat scale = self.layer.contentsScale;
-    frame.size.width *= scale;
-    frame.size.height *= scale;
-    frame.origin.x *= scale;
-    frame.origin.y *= scale;
+    config.scale = self.layer.contentsScale;
+    config.frame.size.width *= config.scale;
+    config.frame.size.height *= config.scale;
+    config.frame.origin.x *= config.scale;
+    config.frame.origin.y *= config.scale;
     
-    float size = MIN(frame.size.width, frame.size.height);
-    NSPoint center = NSMakePoint(NSMidX(frame), NSMidY(frame));
+    config.size = MIN(config.frame.size.width, config.frame.size.height);
+    config.center = NSMakePoint(NSMidX(config.frame), NSMidY(config.frame));
+    config.anglePerStep = 360 / self.numberOfSpokes;
     
-    CGFloat outerRadius;
-    CGFloat innerRadius;
-    const CGFloat strokeWidth = size * 0.09;
-    if (size >= 32.0 * scale) {
-        outerRadius = size * 0.38;
-        innerRadius = size * 0.23;
+    if (self.useBigSurStyle) {
+        config.bigSur = YES;
+        config.alphaFunction = [self bigSurAlphaFunction];
+        config.geometry = [self bigSurGeometryForSize:config.size scale:config.scale];
     } else {
-        outerRadius = size * 0.48;
-        innerRadius = size * 0.27;
+        config.bigSur = NO;
+        config.alphaFunction = [self legacyAlphaFunction];
+        config.geometry = [self legacyGeometryForSize:config.size scale:config.scale];
     }
-    
-    NSPoint innerPoint;
-    NSPoint outerPoint;
-    CGFloat anglePerStep = 360 / self.numberOfSteps;
-    CGFloat initialAngle = DegreesToRadians(270 - (step * anglePerStep));
+    return config;
+}
 
-    for (NSInteger i = 0; i < self.numberOfSteps; i++) {
-        CGFloat currentAngle = initialAngle - DegreesToRadians(anglePerStep) * i;
-        [[_color colorWithAlphaComponent:1.0 - sqrt(self.numberOfSteps - 1 - i) * 0.25] set];
+- (void)drawStep:(NSInteger)step {
+    if (!_hasConfig) {
+        _config = [self config];
+        _hasConfig = YES;
+    }
+    CGFloat initialAngle = 0;
+    if (!_config.bigSur) {
+        initialAngle = DegreesToRadians(270 - (step * _config.anglePerStep));
+    }
 
-        outerPoint = NSMakePoint(center.x + cos(currentAngle) * outerRadius,
-                                 center.y + sin(currentAngle) * outerRadius);
+    for (NSInteger i = 0; i < self.numberOfSpokes; i++) {
+        CGFloat currentAngle = initialAngle - DegreesToRadians(_config.anglePerStep) * i;
+        [[_color colorWithAlphaComponent:_config.alphaFunction(i, step)] set];
         
-        innerPoint = NSMakePoint(center.x + cos(currentAngle) * innerRadius,
-                                 center.y + sin(currentAngle) * innerRadius);
-
-        [self drawStrokeFromPoint:innerPoint toPoint:outerPoint strokeWidth:strokeWidth];
+        const NSPoint outerPoint = NSMakePoint(_config.center.x + cos(currentAngle) * _config.geometry.outerRadius,
+                                               _config.center.y + sin(currentAngle) * _config.geometry.outerRadius);
+        
+        const NSPoint innerPoint = NSMakePoint(_config.center.x + cos(currentAngle) * _config.geometry.innerRadius,
+                                               _config.center.y + sin(currentAngle) * _config.geometry.innerRadius);
+        
+        [self drawStrokeFromPoint:innerPoint
+                          toPoint:outerPoint
+                      strokeWidth:_config.geometry.strokeWidth];
     }
+}
+
+- (CGFloat (^)(NSInteger, NSInteger))legacyAlphaFunction {
+    return ^CGFloat(NSInteger i, NSInteger step) {
+        return 1.0 - sqrt(self.numberOfSteps - 1 - i) * 0.25;
+    };
+}
+
+- (AMGeometry)legacyGeometryForSize:(float)size scale:(CGFloat)scale {
+    AMGeometry result;
+    result.strokeWidth = size * 0.09;
+    if (size >= 32.0 * scale) {
+        result.outerRadius = size * 0.38;
+        result.innerRadius = size * 0.23;
+        return result;
+    }
+    result.outerRadius = size * 0.48;
+    result.innerRadius = size * 0.27;
+    return result;
+}
+
+- (CGFloat (^)(NSInteger, NSInteger))bigSurAlphaFunction {
+    const CGFloat numberOfSpokes = self.numberOfSpokes;
+    return ^CGFloat(NSInteger i, NSInteger step) {
+        const CGFloat minAlpha = 0.07;
+        const CGFloat maxAlpha = 0.45;
+        
+        // The fraction of the way around the circle where min alpha begins.
+        const double minAlphaFraction = (double)step / (double)self.numberOfSteps;
+        
+        // The current fraction of the way around the circle.
+        double currentAngle = (double)i / (double)self.numberOfSpokes;
+        if (currentAngle < minAlphaFraction) {
+            currentAngle += 1.0;
+        }
+        // Compute fraction of the way around the circle from minAlpha to i.
+        const CGFloat delta = currentAngle - minAlphaFraction;
+        
+        // The alpha value will be the linear interpolation of the alpha between min and max for the current position between them.
+        CGFloat result;
+        if (delta < (numberOfSpokes - 1) / numberOfSpokes) {
+            // Linear ramp up from delta=0 to delta=7/8 mapping to minAlpha -> maxAlpha
+            const CGFloat normalizedDelta = delta * numberOfSpokes / (numberOfSpokes - 1);  // this goes from 0 to 1
+            result = minAlpha + normalizedDelta * (maxAlpha - minAlpha);
+        } else {
+            // delta between 7/8 and 1
+            const CGFloat normalizedDelta = 1.0 - (delta * numberOfSpokes - (numberOfSpokes - 1));  // this goes from 0 to 1
+            result = minAlpha + normalizedDelta * (maxAlpha - minAlpha);
+        }
+        return result;
+    };
+}
+
+- (AMGeometry)bigSurGeometryForSize:(float)size scale:(CGFloat)scale {
+    AMGeometry result;
+    result.strokeWidth = size * 0.125;
+    if (size >= 32.0 * scale) {
+        result.outerRadius = size * 0.38 - 1;
+        result.innerRadius = size * 0.23 - 0.5;
+        return result;
+    }
+    result.outerRadius = size * 0.48 - 1;
+    result.innerRadius = size * 0.27 - 0.5;
+    return result;
 }
 
 @end

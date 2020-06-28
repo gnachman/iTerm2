@@ -222,6 +222,21 @@
     return result;
 }
 
+- (CGFloat)retinaRoundUpCell:(PSMTabBarCell *)cell value:(CGFloat)value {
+    NSWindow *window = cell.controlView.window;
+    if (!window) {
+        return ceil(value);
+    }
+    CGFloat scale = window.backingScaleFactor;
+    if (!scale) {
+        scale = [[NSScreen mainScreen] backingScaleFactor];
+    }
+    if (!scale) {
+        scale = 1;
+    }
+    return ceil(scale * value) / scale;
+}
+
 - (NSRect)indicatorRectForTabCell:(PSMTabBarCell *)cell {
     NSRect cellFrame = [cell frame];
 
@@ -249,7 +264,7 @@
         return NSZeroRect;
     }
 
-    float countWidth = [[self attributedObjectCountValueForTabCell:cell] size].width;
+    float countWidth = [self retinaRoundUpCell:cell value:[[self attributedObjectCountValueForTabCell:cell] size].width];
     countWidth += (2 * kPSMMetalObjectCounterRadius - 6.0);
     if (countWidth < kPSMMetalCounterMinWidth) {
         countWidth = kPSMMetalCounterMinWidth;
