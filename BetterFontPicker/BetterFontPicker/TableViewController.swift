@@ -72,6 +72,9 @@ public class TableViewController: NSViewController, FavoritesDataSourceDelegate,
     // MARK:- Initializers
 
     init(tableView: FontListTableView, delegate: TableViewControllerDelegate?) {
+        if #available(macOS 10.16, *) {
+            tableView.style = .fullWidth
+        }
         self.tableView = tableView
         self.delegate = delegate
 
@@ -101,7 +104,14 @@ public class TableViewController: NSViewController, FavoritesDataSourceDelegate,
         }
         layOutTableView()
 
-        typicalHeight = newFontNameCell("X").fittingSize.height + 2
+        let fudgeFactor: CGFloat
+        if #available(macOS 10.16, *) {
+            fudgeFactor = 5
+        } else {
+            fudgeFactor = 2
+        }
+        
+        typicalHeight = newFontNameCell("X").fittingSize.height + fudgeFactor
         tableView.delegate = self
         tableView.dataSource = self
     }
@@ -134,10 +144,17 @@ public class TableViewController: NSViewController, FavoritesDataSourceDelegate,
         tableView.frame = frame
         let starWidth = CGFloat(StarTableViewCell.width)
         let checkmarkWidth = starWidth - 10
+        let fudgeFactor: CGFloat
+        if #available(macOS 10.16, *) {
+            // Something changed in table view that I haven't figured out yet.
+            fudgeFactor = 12
+        } else {
+            fudgeFactor = 0;
+        }
         let desiredWidths = [
             starColumnIdentifier: starWidth,
             checkmarkColumnIdentifier: checkmarkWidth,
-            fontnameColumnIdentifier: frame.size.width - starWidth - checkmarkWidth
+            fontnameColumnIdentifier: frame.size.width - starWidth - checkmarkWidth - fudgeFactor
         ]
         for (identifier, width) in desiredWidths {
             if let column = tableView.tableColumn(withIdentifier: identifier) {
