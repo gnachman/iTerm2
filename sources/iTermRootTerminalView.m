@@ -67,11 +67,34 @@ typedef struct {
 
 @end
 
-@interface iTermTabBarBacking : NSVisualEffectView<iTermTabBarControlViewContainer>
+NS_CLASS_AVAILABLE_MAC(10_14)
+@interface iTermTabBarBacking : NSView<iTermTabBarControlViewContainer>
 @property (nonatomic) BOOL hidesWhenTabBarHidden;
 @end
 
 @implementation iTermTabBarBacking
+
+- (instancetype)init {
+    self = [super initWithFrame:NSMakeRect(0, 0, 100, 100)];
+    if (self) {
+        NSView *windowColorView = [[NSView alloc] initWithFrame:self.bounds];
+        windowColorView.wantsLayer = YES;
+        windowColorView.layer = [[CALayer alloc] init];
+        windowColorView.layer.backgroundColor = [[NSColor windowBackgroundColor] CGColor];
+        windowColorView.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
+        [self addSubview:windowColorView];
+
+        NSVisualEffectView *vev = [[NSVisualEffectView alloc] initWithFrame:self.bounds];
+        vev.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
+        vev.blendingMode = NSVisualEffectBlendingModeWithinWindow;
+        vev.material = NSVisualEffectMaterialTitlebar;
+        vev.state = NSVisualEffectStateActive;
+        [self addSubview:vev];
+
+        self.autoresizesSubviews = YES;
+    }
+    return self;
+}
 
 - (void)tabBarControlViewWillHide:(BOOL)hidden {
     if (_hidesWhenTabBarHidden || !hidden) {
@@ -142,9 +165,6 @@ typedef struct {
             _tabBarBacking = [[iTermTabBarBacking alloc] init];
             _tabBarBacking.hidesWhenTabBarHidden = [delegate rootTerminalViewShouldHideTabBarBackingWhenTabBarIsHidden];
             _tabBarBacking.autoresizesSubviews = YES;
-            _tabBarBacking.blendingMode = NSVisualEffectBlendingModeWithinWindow;
-            _tabBarBacking.material = NSVisualEffectMaterialTitlebar;
-            _tabBarBacking.state = NSVisualEffectStateActive;
         }
 
         self.tabBarControl = [[iTermTabBarControlView alloc] initWithFrame:tabBarFrame];
