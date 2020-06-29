@@ -5291,6 +5291,10 @@ ITERM_WEAKLY_REFERENCEABLE
 // Returns whether a permanent (i.e., not flashing) tabbar ought to be drawn while in full screen.
 // It does not check if you're already in full screen.
 - (BOOL)shouldShowPermanentFullScreenTabBar {
+    if (togglingLionFullScreen_) {
+        return YES;
+    }
+
     if (![iTermPreferences boolForKey:kPreferenceKeyShowFullscreenTabBar]) {
         return NO;
     }
@@ -5352,11 +5356,11 @@ ITERM_WEAKLY_REFERENCEABLE
 {
     DLog(@"Window did enter lion fullscreen");
 
+    zooming_ = NO;
+    togglingLionFullScreen_ = NO;
     if (@available(macOS 10.14, *)) {
         [self updateTabBarControlIsTitlebarAccessoryAssumingFullScreen:YES];
     }
-    zooming_ = NO;
-    togglingLionFullScreen_ = NO;
     _fullScreenRetryCount = 0;
     lionFullScreen_ = YES;
     [self didChangeAnyFullScreen];
