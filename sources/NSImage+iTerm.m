@@ -136,7 +136,7 @@
     if (@available(macOS 10.16, *)) {
         return [self it_imageForSymbolName:@"ellipsis.circle" accessibilityDescription:@"Menu"];
     }
-    return [NSImage it_imageNamed:@"Hamburger" forClass:self.class];
+    return [NSImage it_imageNamed:@"Hamburger" forClass:theClass];
 }
 
 + (instancetype)it_imageNamed:(NSImageName)name forClass:(Class)theClass {
