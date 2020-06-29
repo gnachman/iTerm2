@@ -11,6 +11,12 @@
 #import "NSImage+iTerm.h"
 #import "NSObject+iTerm.h"
 
+#ifndef MAC_OS_X_VERSION_10_16
+@interface NSImage(ImageFuture)
++ (NSImage *)imageWithSystemSymbolName:(NSString *)name accessibilityDescription:(NSString *)accessibilityDescription NS_AVAILABLE_MAC(10_16);
+@end
+#endif
+
 @implementation NSImage (iTerm)
 
 - (NSImage *)it_imageFillingSize:(NSSize)size {
@@ -126,10 +132,7 @@
 }
 
 + (NSImage *)it_imageForSymbolName:(NSString *)name accessibilityDescription:(NSString *)accessibilityDescription NS_AVAILABLE_MAC(10_16) {
-#ifdef MAC_OS_X_VERSION_10_16
     return [NSImage imageWithSystemSymbolName:name accessibilityDescription:accessibilityDescription];
-#endif
-    assert(NO);
 }
 
 + (NSImage *)it_hamburgerForClass:(Class)theClass {
