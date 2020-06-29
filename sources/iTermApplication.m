@@ -221,11 +221,8 @@ static const char *iTermApplicationKVOKey = "iTermApplicationKVOKey";
 
 - (NSWindow *)it_keyWindow {
     NSWindow *window = self.keyWindow;
-    if (@available(macOS 10.16, *)) {
-        while (window.sheets.count) {
-            window = window.sheets.lastObject;
-        }
-        return window;
+    while (window.sheets.count) {
+        window = window.sheets.lastObject;
     }
     return window;
 }
