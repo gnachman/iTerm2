@@ -2065,7 +2065,7 @@ static BOOL hasBecomeActive = NO;
 - (void)updateProcessType {
     BOOL enableLSUI = [iTermPreferences boolForKey:kPreferenceKeyUIElement];
 
-    if ([iTermAdvancedSettingsModel automaticallyToggleLSUI]) {
+    if ([iTermPreferences boolForKey:kPreferenceKeyUIElementRequiresHotkeys]) {
         const BOOL onlyHotKeyWindowsOpen = [self.terminals allWithBlock:^BOOL(PseudoTerminal *term) { return term.isHotKeyWindow; }];
 
         enableLSUI = enableLSUI && onlyHotKeyWindowsOpen;

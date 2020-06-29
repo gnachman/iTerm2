@@ -59,6 +59,7 @@ NSString *const iTermProcessTypeDidChangeNotification = @"iTermProcessTypeDidCha
 
     // Exclude from dock and cmd-tab (LSUIElement)
     IBOutlet NSButton *_uiElement;
+    IBOutlet NSButton *_uiElementRequiresHotkeyWindows;
 
     IBOutlet NSButton *_flashTabBarInFullscreenWhenSwitchingTabs;
     IBOutlet NSButton *_showTabBarInFullscreen;
@@ -232,6 +233,19 @@ NSString *const iTermProcessTypeDidChangeNotification = @"iTermProcessTypeDidCha
         }
         [[NSNotificationCenter defaultCenter] postNotificationName:iTermProcessTypeDidChangeNotification
                                                             object:nil];
+        [weakSelf updateHiddenAndEnabled];
+    };
+
+    info = [self defineControl:_uiElementRequiresHotkeyWindows
+                           key:kPreferenceKeyUIElementRequiresHotkeys
+                   relatedView:nil
+                          type:kPreferenceInfoTypeCheckbox];
+    info.shouldBeEnabled = ^BOOL{
+        return [weakSelf boolForKey:kPreferenceKeyUIElement];
+    };
+    info.observer = ^{
+        [[NSNotificationCenter defaultCenter] postNotificationName:iTermProcessTypeDidChangeNotification
+                                                            object:nil];
     };
 
     info = [self defineControl:_flashTabBarInFullscreenWhenSwitchingTabs
@@ -357,6 +371,7 @@ NSString *const iTermProcessTypeDidChangeNotification = @"iTermProcessTypeDidCha
 
     // Can't preserve size if you can't hide the tab bar.
     _preserveWindowSizeWhenTabBarVisibilityChanges.enabled = (_hideTab.state != NSOnState);
+    [self updateEnabledState];
 }
 
 - (NSTabView *)tabView {

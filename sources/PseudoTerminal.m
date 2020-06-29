@@ -4598,7 +4598,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (BOOL)fullScreenWindowFrameShouldBeShiftedDownBelowMenuBarOnScreen:(NSScreen *)screen {
     const BOOL wantToHideMenuBar = [iTermPreferences boolForKey:kPreferenceKeyHideMenuBarInFullscreen];
-    const BOOL canHideMenuBar = ![iTermPreferences boolForKey:kPreferenceKeyUIElement];
+    const BOOL canHideMenuBar = ![[iTermApplication sharedApplication] isUIElement];
     const BOOL menuBarIsHidden = ![[iTermMenuBarObserver sharedInstance] menuBarVisibleOnScreen:screen];
     const BOOL canOverlapMenuBar = [self.window isKindOfClass:[iTermPanel class]];
 

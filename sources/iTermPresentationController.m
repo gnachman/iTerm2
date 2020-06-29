@@ -8,6 +8,7 @@
 #import "iTermPresentationController.h"
 
 #import "DebugLogging.h"
+#import "iTermApplication.h"
 #import "iTermPreferences.h"
 #import "NSArray+iTerm.h"
 #import "NSScreen+iTerm.h"
@@ -339,7 +340,7 @@ static void iTermDisplayReconfigurationCallback(CGDirectDisplayID display,
 
 - (BOOL)shouldHideMenuForWindowController:(id<iTermPresentationControllerManagedWindowController>)windowController {
     DLog(@"Checking if the menu bar should be hidden for this window");
-    if ([iTermPreferences boolForKey:kPreferenceKeyUIElement]) {
+    if ([[iTermApplication sharedApplication] isUIElement]) {
         DLog(@"  NO because I am a UIElement");
         // I can't affect the menu bar
         return NO;
