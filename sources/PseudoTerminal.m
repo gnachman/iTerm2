@@ -5624,6 +5624,7 @@ ITERM_WEAKLY_REFERENCEABLE
         [[NSNotificationCenter defaultCenter] postNotificationName:iTermSwipeHandlerCancelSwipe
                                                             object:self.swipeIdentifier];
     }
+    [_contentView willEnterFullScreen];
     togglingLionFullScreen_ = YES;
     [self didChangeAnyFullScreen];
     [self updateUseMetalInAllTabs];
@@ -5647,6 +5648,7 @@ ITERM_WEAKLY_REFERENCEABLE
     if (@available(macOS 10.14, *)) {
         [self updateTabBarControlIsTitlebarAccessory];
     }
+    [_contentView didEnterFullScreen];
     zooming_ = NO;
     togglingLionFullScreen_ = NO;
     _fullScreenRetryCount = 0;

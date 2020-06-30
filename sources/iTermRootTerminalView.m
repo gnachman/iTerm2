@@ -109,7 +109,7 @@ typedef struct {
     NSView *_bottomBorderView NS_AVAILABLE_MAC(10_14);
     
     iTermImageView *_backgroundImage NS_AVAILABLE_MAC(10_14);
-    NSView *_wtfBottom, *_wtfTop, *_wtfTabTop;
+    NSView *_wtfTop;
 }
 
 - (instancetype)initWithFrame:(NSRect)frameRect
@@ -305,27 +305,9 @@ typedef struct {
                 [self addSubview:_bottomBorderView];
             }
         }
-        static int j;
-        j++;
-        if (j & 1) {
-            _wtfBottom = [[SolidColorView alloc] initWithFrame:NSMakeRect(0, 0, 100, 100) color:[NSColor redColor]];
-        }
-        if (j & 2) {
-            _wtfTop = [[SolidColorView alloc] initWithFrame:NSMakeRect(0, 0, 100, 100) color:[NSColor blueColor]];
-        }
-        if (j & 4) {
-            _wtfTabTop = [[SolidColorView alloc] initWithFrame:NSMakeRect(0, 0, 100, 100)
-                                                         color:[NSColor orangeColor]];
-        }
-        if (_wtfBottom) {
-            [self addSubview:_wtfBottom];
-        }
-        if (_wtfTop) {
-            [self addSubview:_wtfTop];
-        }
-        if (_wtfTabTop) {
-            [self addSubview:_wtfTabTop];
-        }
+        _wtfTop = [[SolidColorView alloc] initWithFrame:NSMakeRect(0, 0, 100, 100) color:[NSColor clearColor]];
+        _wtfTop.hidden = YES;
+        [self addSubview:_wtfTop];
     }
     return self;
 }
@@ -1429,7 +1411,6 @@ typedef struct {
 
 - (void)layoutSubviews {
     DLog(@"layoutSubviews");
-    _wtfBottom.frame = NSMakeRect(0, 0, 100, 100);
     _wtfTop.frame = NSMakeRect(0, self.bounds.size.height - 100, 100, 100);
 
     const BOOL showToolbeltInline = self.shouldShowToolbelt;
@@ -1480,7 +1461,6 @@ typedef struct {
         [self.tabBarControl updateFlashing];
     }
     DLog(@"repositionWidgets - return.");
-    _wtfTabTop.frame = NSMakeRect(100, NSMaxY(self.tabView.frame)-100, 100, 100);
 }
 
 - (CGFloat)minimumTabBarWidth {
@@ -1724,6 +1704,14 @@ typedef struct {
 
 - (NSColor *)genericStatusBarContainerBackgroundColor {
     return [self.delegate rootTerminalViewTabBarBackgroundColorIgnoringTabColor:YES];
+}
+
+- (void)willEnterFullScreen {
+    _wtfTop.hidden = NO;
+}
+
+- (void)didEnterFullScreen {
+    _wtfTop.hidden = YES;
 }
 
 @end
