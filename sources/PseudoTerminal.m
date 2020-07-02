@@ -7661,6 +7661,15 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     [self replaceSyntheticActiveSessionWithLiveSessionIfNeeded];
 }
 
+- (IBAction)filter:(id)sender {
+    PTYSession *session = [self currentSession];
+    NSString *query = [[iTermFindPasteboard sharedInstance] stringValue];
+    if (query) {
+        [self showLinesMatchingQuery:query
+                         fromSession:session];
+    }
+}
+
 - (IBAction)zoomOnSelection:(id)sender {
     PTYSession *session = [self currentSession];
     iTermSelection *selection = session.textview.selection;
@@ -7682,9 +7691,19 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:@"https://iterm2.com/documentation-copymode.html"]];
 }
 
+- (void)showLinesMatchingQuery:(NSString *)query fromSession:(PTYSession *)oldSession {
+    PTYSession *syntheticSession = [self syntheticSessionForSession:oldSession];
+    [syntheticSession divorceAddressBookEntryFromPreferences];
+    [syntheticSession setSessionSpecificProfileValues:@{ KEY_UNLIMITED_SCROLLBACK: @YES }];
+    syntheticSession.screen.unlimitedScrollback = YES;
+    [syntheticSession.screen terminalSetCursorVisible:NO];
+    [syntheticSession appendLinesMatchingQuery:query fromSession:oldSession];
+    [[self tabForSession:oldSession] replaceActiveSessionWithSyntheticSession:syntheticSession];
+}
+
 - (void)showRangeOfLines:(NSRange)rangeOfLines inSession:(PTYSession *)oldSession {
     PTYSession *syntheticSession = [self syntheticSessionForSession:oldSession];
-    syntheticSession.textview.cursorVisible = NO;
+    [syntheticSession.screen terminalSetCursorVisible:NO];
     [syntheticSession appendLinesInRange:rangeOfLines fromSession:oldSession];
     [[self tabForSession:oldSession] replaceActiveSessionWithSyntheticSession:syntheticSession];
 }

@@ -1049,6 +1049,10 @@ ITERM_WEAKLY_REFERENCEABLE
     return [_dvrDecoder timestamp];
 }
 
+- (void)appendLinesMatchingQuery:(NSString *)query fromSession:(PTYSession *)source {
+    [_screen appendLinesMatchingQuery:query from:source.screen mode:self.textview.findContext.mode];
+}
+
 - (void)appendLinesInRange:(NSRange)rangeOfLines fromSession:(PTYSession *)source {
     int width = source.screen.width;
     for (NSUInteger i = 0; i < rangeOfLines.length; i++) {
@@ -1241,12 +1245,12 @@ ITERM_WEAKLY_REFERENCEABLE
         if (@available(macOS 10.11, *)) {
             liveView.driver.dataSource = aSession->_metalGlue;
         }
-        [delegate addHiddenLiveView:liveView];
-        aSession.liveSession = [self sessionFromArrangement:liveArrangement
-                                                      named:nil
-                                                     inView:liveView
-                                               withDelegate:delegate
-                                              forObjectType:objectType];
+        aSession.textview.cursorVisible = NO;
+        [delegate session:aSession setLiveSession:[self sessionFromArrangement:liveArrangement
+                                                                     named:nil
+                                                                    inView:liveView
+                                                              withDelegate:delegate
+                                                             forObjectType:objectType]];
     }
     if (shouldEnterTmuxMode) {
         // Restored a tmux gateway session.
@@ -1449,6 +1453,9 @@ ITERM_WEAKLY_REFERENCEABLE
         DLog(@"No tmux pane ID during session restoration");
         // |contents| will be non-nil when using system window restoration.
         BOOL runCommand = YES;
+        if (arrangement[SESSION_ARRANGEMENT_LIVE_SESSION]) {
+            runCommand = NO;
+        }
         if ([iTermAdvancedSettingsModel runJobsInServers]) {
             DLog(@"Configured to run jobs in servers");
             // iTerm2 is currently configured to run jobs in servers, but we

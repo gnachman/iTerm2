@@ -1389,6 +1389,15 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     [hiddenLiveViews_ addObject:hiddenLiveView];
 }
 
+- (void)session:(PTYSession *)synthetic setLiveSession:(PTYSession *)live {
+    [hiddenLiveViews_ addObject:live.view];
+    synthetic.liveSession = live;
+    [self setFakeParentWindow:[[FakeWindow alloc] initFromRealWindow:realParentWindow_
+                                                             session:live]];
+    [realParentWindow_.window makeFirstResponder:synthetic.textview];
+    [self.viewToSessionMap setObject:live forKey:live.view];
+}
+
 - (void)replaceActiveSessionWithSyntheticSession:(PTYSession *)newSession {
     PtyLog(@"PTYTab setDvrInSession:%p", newSession);
     PTYSession* oldSession = [self activeSession];

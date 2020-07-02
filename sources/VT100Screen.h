@@ -106,6 +106,7 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 - (void)appendScreenChars:(screen_char_t *)line
                    length:(int)length
              continuation:(screen_char_t)continuation;
+- (void)appendLinesMatchingQuery:(NSString *)query from:(VT100Screen *)source mode:(iTermFindMode)mode;
 
 // Append a string to the screen at the current cursor position. The terminal's insert and wrap-
 // around modes are respected, the cursor is advanced, the screen may be scrolled, and the line

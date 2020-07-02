@@ -96,6 +96,7 @@ typedef enum {
 // live views so it will be kept alive. Use -showLiveSession:inPlaceOf: to
 // remove a view from this list.
 - (void)addHiddenLiveView:(SessionView *)hiddenLiveView;
+- (void)session:(PTYSession *)synthetic setLiveSession:(PTYSession *)live;
 
 // Provides a tab number for the ITERM_SESSION_ID environment variable. This
 // may not correspond to the physical tab number because it's immutable for a
@@ -578,6 +579,7 @@ backgroundColor:(NSColor *)backgroundColor;
 // Append a bunch of lines from this (presumably synthetic) session from another (presumably live)
 // session.
 - (void)appendLinesInRange:(NSRange)rangeOfLines fromSession:(PTYSession *)source;
+- (void)appendLinesMatchingQuery:(NSString *)query fromSession:(PTYSession *)source;
 
 // Go forward/back in time. Must call setDvr:liveSession: first.
 - (void)irAdvance:(int)dir;
