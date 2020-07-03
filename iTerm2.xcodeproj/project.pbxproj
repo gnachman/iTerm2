@@ -1832,6 +1832,8 @@
 		A6339DD81D232CEE000BAD78 /* StatusItem@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A6339DD61D232CEE000BAD78 /* StatusItem@2x.png */; };
 		A6339DDB1D232DF2000BAD78 /* StatusItemAlt.png in Resources */ = {isa = PBXBuildFile; fileRef = A6339DD91D232DF2000BAD78 /* StatusItemAlt.png */; };
 		A6339DDC1D232DF2000BAD78 /* StatusItemAlt@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A6339DDA1D232DF2000BAD78 /* StatusItemAlt@2x.png */; };
+		A634817924AFC4AF0003C11B /* iTermFocusablePanel.h in Headers */ = {isa = PBXBuildFile; fileRef = A634817724AFC4AF0003C11B /* iTermFocusablePanel.h */; };
+		A634817A24AFC4AF0003C11B /* iTermFocusablePanel.m in Sources */ = {isa = PBXBuildFile; fileRef = A634817824AFC4AF0003C11B /* iTermFocusablePanel.m */; };
 		A63493E023E661B60047C31B /* iTermPresentationController.h in Headers */ = {isa = PBXBuildFile; fileRef = A63493DE23E661B60047C31B /* iTermPresentationController.h */; };
 		A63493E123E661B60047C31B /* iTermPresentationController.m in Sources */ = {isa = PBXBuildFile; fileRef = A63493DF23E661B60047C31B /* iTermPresentationController.m */; };
 		A63493E423E7AC160047C31B /* iTermStatusBarAutoRainbowController.h in Headers */ = {isa = PBXBuildFile; fileRef = A63493E223E7AC160047C31B /* iTermStatusBarAutoRainbowController.h */; };
@@ -5196,6 +5198,8 @@
 		A6339DDA1D232DF2000BAD78 /* StatusItemAlt@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "StatusItemAlt@2x.png"; path = "images/StatusItemAlt@2x.png"; sourceTree = "<group>"; };
 		A6339DE51D23433A000BAD78 /* iTermWindowImpl.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermWindowImpl.m; sourceTree = "<group>"; };
 		A6339DE61D235AA2000BAD78 /* iTermWindowScriptingImpl.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermWindowScriptingImpl.m; sourceTree = "<group>"; };
+		A634817724AFC4AF0003C11B /* iTermFocusablePanel.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermFocusablePanel.h; sourceTree = "<group>"; };
+		A634817824AFC4AF0003C11B /* iTermFocusablePanel.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermFocusablePanel.m; sourceTree = "<group>"; };
 		A63493DE23E661B60047C31B /* iTermPresentationController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermPresentationController.h; sourceTree = "<group>"; };
 		A63493DF23E661B60047C31B /* iTermPresentationController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermPresentationController.m; sourceTree = "<group>"; };
 		A63493E223E7AC160047C31B /* iTermStatusBarAutoRainbowController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermStatusBarAutoRainbowController.h; sourceTree = "<group>"; };
@@ -9459,6 +9463,8 @@
 				A68A30D9186D1429007F550F /* TransferrableFileMenuItemViewController.m */,
 				A68A30DA186D1429007F550F /* VT100RemoteHost.m */,
 				A68A30DB186D1429007F550F /* VT100WorkingDirectory.m */,
+				A634817724AFC4AF0003C11B /* iTermFocusablePanel.h */,
+				A634817824AFC4AF0003C11B /* iTermFocusablePanel.m */,
 			);
 			name = "File Transfer";
 			sourceTree = "<group>";
@@ -10946,6 +10952,7 @@
 				A63821F4229E644E005D74BE /* iTermStatusIndicatingTextFieldCell.h in Headers */,
 				A65943CB1F83382B00598B1E /* iTermMetalClipView.h in Headers */,
 				A6B6A4FD23CEE6E80016B1AE /* iTermOrderEnforcer.h in Headers */,
+				A634817924AFC4AF0003C11B /* iTermFocusablePanel.h in Headers */,
 				A6257C18217707BB00A8C5BD /* iTermAdjustFontSizeHelper.h in Headers */,
 				53FF982A2093C823008688D7 /* iTermSignatureVerifier.h in Headers */,
 				A629F58A23AF38CA00C2F16B /* iTermClickableTextField.h in Headers */,
@@ -13738,6 +13745,7 @@
 				530AB8A820B1F57E00D2AA08 /* iTermTruncatedQuotedRecognizer.m in Sources */,
 				A69941C82331F7C400C76EF2 /* ToolPasteHistory.m in Sources */,
 				A6F718D42266FDEB0053488E /* iTermSemanticHistoryController.m in Sources */,
+				A634817A24AFC4AF0003C11B /* iTermFocusablePanel.m in Sources */,
 				A6153D4E21F30A9C002976FC /* iTermJobTreeViewController.m in Sources */,
 				A62A1F771E711BC000363EE9 /* iTermHelpMessageViewController.m in Sources */,
 				A6AB55E52173E18900142244 /* iTermCumulativeSumCache.mm in Sources */,
