@@ -55,7 +55,7 @@ typedef struct {
 @property (nonatomic, readonly) id<iTermScreenCharAttachmentRunArray> runArray;
 
 - (BOOL)isEqual:(id)object;
-
+- (const iTermScreenCharAttachment *)attachmentAtIndex:(int)index;
 @end
 
 @interface iTermScreenCharAttachmentsRunArrayBuilder: NSObject

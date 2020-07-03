@@ -480,8 +480,10 @@ static NSString *const PTYTextViewSmartSelectionActionFailedNotification = @"PTY
     [extractor rangeForWordAt:VT100GridCoordMake(clickPoint.x, clickPoint.y)
                 maximumLength:kReasonableMaximumWordLength];
     NSAttributedString *word = [extractor contentInRange:range
-                                       attributeProvider:^NSDictionary *(screen_char_t theChar) {
-                                           return [self charAttributes:theChar];
+                                       attributeProvider:^NSDictionary *(screen_char_t theChar,
+                                                                         const iTermScreenCharAttachment *attachment) {
+                                           return [self charAttributes:theChar
+                                                            attachment:attachment];
                                        }
                                               nullPolicy:kiTermTextExtractorNullPolicyMidlineAsSpaceIgnoreTerminal
                                                      pad:NO
@@ -537,7 +539,8 @@ static NSString *const PTYTextViewSmartSelectionActionFailedNotification = @"PTY
 #pragma mark - Copy to Pasteboard
 
 // Returns a dictionary to pass to NSAttributedString.
-- (NSDictionary *)charAttributes:(screen_char_t)c {
+- (NSDictionary *)charAttributes:(screen_char_t)c
+                      attachment:(const iTermScreenCharAttachment *)maybeAttachment {
     BOOL isBold = c.bold;
     BOOL isFaint = c.faint;
     NSColor *fgColor = [self colorForCode:c.foregroundColor
@@ -589,6 +592,28 @@ static NSString *const PTYTextViewSmartSelectionActionFailedNotification = @"PTY
                                   NSFontAttributeName: font,
                                   NSParagraphStyleAttributeName: paragraphStyle,
                                   NSUnderlineStyleAttributeName: @(underlineStyle) };
+    if (maybeAttachment) {
+        switch (maybeAttachment->underlineColorMode) {
+            case iTermUnderlineColorModeNone:
+                break;
+            case iTermUnderlineColorMode256: {
+                const iTermColorMapKey key = [iTermColorMap keyFor8bitRed:maybeAttachment->underlineRed
+                                                                    green:maybeAttachment->underlineGreen
+                                                                     blue:maybeAttachment->underlineBlue];
+                NSColor *color = [self.colorMap colorForKey:key];
+                attributes = [attributes dictionaryByMergingDictionary:@{ NSUnderlineColorAttributeName: color }];
+                break;
+            }
+            case iTermUnderlineColorMode24bit: {
+                NSColor *color = [NSColor colorWithSRGBRed:maybeAttachment->underlineRed / 255.0
+                                                     green:maybeAttachment->underlineGreen / 255.0
+                                                      blue:maybeAttachment->underlineBlue / 255.0
+                                                     alpha:1];
+                attributes = [attributes dictionaryByMergingDictionary:@{ NSUnderlineColorAttributeName: color }];
+                break;
+            }
+        }
+    }
     if ([iTermAdvancedSettingsModel excludeBackgroundColorsFromCopiedStyle]) {
         attributes = [attributes dictionaryByRemovingObjectForKey:NSBackgroundColorAttributeName];
     }

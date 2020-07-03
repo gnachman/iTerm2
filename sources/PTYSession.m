@@ -11943,7 +11943,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         return NO;
     };
     [extractor enumerateCharsInRange:range
-                           charBlock:^BOOL(const screen_char_t *currentLine, screen_char_t theChar, VT100GridCoord coord) {
+                           charBlock:^BOOL(const screen_char_t *currentLine,
+                                           screen_char_t theChar,
+                                           const iTermScreenCharAttachment *attachment,
+                                           VT100GridCoord coord) {
                                line = currentLine;
                                if (firstIndex < 0) {
                                    firstIndex = coord.x;

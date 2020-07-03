@@ -2293,11 +2293,13 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
     BOOL copyLastNewline = [iTermPreferences boolForKey:kPreferenceKeyCopyLastNewline];
     BOOL trimWhitespace = [iTermAdvancedSettingsModel trimWhitespaceOnCopy];
     id theSelectedText;
-    NSDictionary *(^attributeProvider)(screen_char_t);
+    NSDictionary *(^attributeProvider)(screen_char_t,
+                                       const iTermScreenCharAttachment *);
     if (attributed) {
         theSelectedText = [[[NSMutableAttributedString alloc] init] autorelease];
-        attributeProvider = ^NSDictionary *(screen_char_t theChar) {
-            return [self charAttributes:theChar];
+        attributeProvider = ^NSDictionary *(screen_char_t theChar,
+                                            const iTermScreenCharAttachment *attachment) {
+            return [self charAttributes:theChar attachment:attachment];
         };
     } else {
         theSelectedText = [[[NSMutableString alloc] init] autorelease];
@@ -2681,10 +2683,13 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
                                                            0,
                                                            [_dataSource width],
                                                            [_dataSource numberOfLines] - 1);
-    NSDictionary *(^attributeProvider)(screen_char_t) = nil;
+    NSDictionary *(^attributeProvider)(screen_char_t,
+                                       const iTermScreenCharAttachment *) = nil;
     if (attributes) {
-        attributeProvider =^NSDictionary *(screen_char_t theChar) {
-            return [self charAttributes:theChar];
+        attributeProvider =^NSDictionary *(screen_char_t theChar,
+                                           const iTermScreenCharAttachment *attachment) {
+            return [self charAttributes:theChar
+                             attachment:attachment];
         };
     }
     return [extractor contentInRange:VT100GridWindowedRangeMake(theRange, 0, 0)
@@ -4095,8 +4100,10 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
                                                                      [_dataSource width],
                                                                      lineOffset + numLines - 1);
             [self printContent:[extractor contentInRange:VT100GridWindowedRangeMake(coordRange, 0, 0)
-                                       attributeProvider:^NSDictionary *(screen_char_t theChar) {
-                                           return [self charAttributes:theChar];
+                                       attributeProvider:^NSDictionary *(screen_char_t theChar,
+                                                                         const iTermScreenCharAttachment *attachment) {
+                                           return [self charAttributes:theChar
+                                                            attachment:attachment];
                                        }
                                               nullPolicy:kiTermTextExtractorNullPolicyTreatAsSpace
                                                      pad:NO

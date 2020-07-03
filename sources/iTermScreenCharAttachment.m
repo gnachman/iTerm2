@@ -309,6 +309,14 @@ iTermScreenCharAttachmentRunCreate(NSIndexSet *_validAttachments,
     return iTermScreenCharAttachmentsArrayEqual(self, object);
 }
 
+- (const iTermScreenCharAttachment *)attachmentAtIndex:(int)index {
+    assert(index >= 0);
+    assert(index < _count);
+    if (![_validAttachments containsIndex:index]) {
+        return NULL;
+    }
+    return &self.attachments[index];
+}
 @end
 
 @implementation iTermMutableScreenCharAttachmentsArray {
@@ -502,6 +510,15 @@ static iTermScreenCharAttachment gMagicAttachment;
                                                    _mutableAttachments,
                                                    _count);
     return _runArray;
+}
+
+- (const iTermScreenCharAttachment *)attachmentAtIndex:(int)index {
+    assert(index >= 0);
+    assert(index < _count);
+    if (![_mutableValidAttachments containsIndex:index]) {
+        return NULL;
+    }
+    return &self.attachments[index];
 }
 
 @end
