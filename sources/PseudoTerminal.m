@@ -7337,6 +7337,20 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
             return nil;
         }
         return @([iTermAdvancedSettingsModel customTabBarFontSize]);
+    } else if ([option isEqualToString:PSMTabBarControlOptionDragEdgeHeight]) {
+        iTermPreferencesTabStyle preferredStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
+        switch (preferredStyle) {
+            case TAB_STYLE_MINIMAL:
+                return @12;
+            case TAB_STYLE_COMPACT:
+                return @10;
+            case TAB_STYLE_LIGHT:
+            case TAB_STYLE_DARK:
+            case TAB_STYLE_LIGHT_HIGH_CONTRAST:
+            case TAB_STYLE_DARK_HIGH_CONTRAST:
+            case TAB_STYLE_AUTOMATIC:
+                return @0;
+        }
     }
     return nil;
 }
@@ -7368,7 +7382,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     assert(NO);
 }
 
-- (BOOL)tabViewShouldDragWindow:(NSTabView *)tabView {
+- (BOOL)tabViewShouldDragWindow:(NSTabView *)tabView event:(NSEvent *)event {
     if (([[NSApp currentEvent] modifierFlags] & NSEventModifierFlagOption) != 0) {
         // Pressing option converts drag to window drag.
         return YES;
@@ -7380,8 +7394,19 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
         return NO;
     }
     if (_contentView.tabBarControl.numberOfVisibleTabs > 1) {
-        // Otherwise we won't consider doing it automatically with multiple tabs.
-        return NO;
+        const NSPoint point = [_contentView.tabBarControl convertPoint:event.locationInWindow fromView:nil];
+        const CGFloat height = _contentView.tabBarControl.style.edgeDragHeight;
+        if (height == 0) {
+            return NO;
+        }
+        switch ([iTermPreferences intForKey:kPreferenceKeyTabPosition]) {
+            case PSMTab_LeftTab:
+                return NO;
+            case PSMTab_TopTab:
+                return (point.y < height);
+            case PSMTab_BottomTab:
+                return (_contentView.tabBarControl.height - point.y < height);
+        }
     }
     if (![iTermAdvancedSettingsModel convertTabDragToWindowDragForSolitaryTabInCompactOrMinimalTheme]) {
         // And if the user has disabled it, then we don't do it automatically.

@@ -145,6 +145,11 @@
     return self.tabBar.insets.top;
 }
 
+- (CGFloat)edgeDragHeight {
+    NSNumber *size = [self.tabBar.delegate tabView:self.tabBar valueOfOption:PSMTabBarControlOptionDragEdgeHeight];
+    return size.doubleValue;
+}
+
 #pragma mark - Add Tab Button
 
 - (NSImage *)addTabButtonImage {
@@ -746,7 +751,6 @@
         if (shouldDrawLeftLine) {
             // Left line
             [[self verticalLineColorSelected:selected] set];
-            [[NSColor blueColor] set];
             [self drawVerticalLineInFrame:cellFrame x:NSMinX(cellFrame)];
         }
         // Right line

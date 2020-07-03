@@ -55,6 +55,7 @@ extern PSMTabBarControlOptionKey PSMTabBarControlOptionHighVisibility;  // NSNum
 extern PSMTabBarControlOptionKey PSMTabBarControlOptionColoredDrawBottomLineForHorizontalTabBar;  // NSNumber boolean
 extern PSMTabBarControlOptionKey PSMTabBarControlOptionFontSizeOverride;  // NSNumber double
 extern PSMTabBarControlOptionKey PSMTabBarControlOptionMinimalSelectedTabUnderlineProminence;  // NSNumber double in 0-1
+extern PSMTabBarControlOptionKey PSMTabBarControlOptionDragEdgeHeight;  // NSNumber CGFloat
 
 // Tab views controlled by the tab bar may expect this protocol to be conformed to by their delegate.
 @protocol PSMTabViewDelegate<NSTabViewDelegate>
@@ -139,7 +140,7 @@ extern PSMTabBarControlOptionKey PSMTabBarControlOptionMinimalSelectedTabUnderli
 - (NSTabViewItem *)tabView:(NSTabView *)tabView unknownObjectWasDropped:(id <NSDraggingInfo>)sender;
 - (id)tabView:(PSMTabBarControl *)tabView valueOfOption:(PSMTabBarControlOptionKey)option;
 - (void)tabViewDidClickAddTabButton:(PSMTabBarControl *)tabView;
-- (BOOL)tabViewShouldDragWindow:(NSTabView *)tabView;
+- (BOOL)tabViewShouldDragWindow:(NSTabView *)tabView event:(NSEvent *)event;
 
 @end
 

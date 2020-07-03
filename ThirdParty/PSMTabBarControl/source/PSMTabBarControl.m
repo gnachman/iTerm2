@@ -57,6 +57,7 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionColoredDrawBottomLineForHorizont
 PSMTabBarControlOptionKey PSMTabBarControlOptionFontSizeOverride =
     @"PSMTabBarControlOptionFontSizeOverride";
 PSMTabBarControlOptionKey PSMTabBarControlOptionMinimalSelectedTabUnderlineProminence = @"PSMTabBarControlOptionMinimalSelectedTabUnderlineProminence";
+PSMTabBarControlOptionKey PSMTabBarControlOptionDragEdgeHeight = @"PSMTabBarControlOptionDragEdgeHeight";
 
 @interface PSMTabBarControl ()<PSMTabBarControlProtocol>
 @end
@@ -1399,8 +1400,8 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionMinimalSelectedTabUnderlinePromi
         return;
     }
 
-    if ([self.delegate respondsToSelector:@selector(tabViewShouldDragWindow:)] &&
-        [self.delegate tabViewShouldDragWindow:_tabView]) {
+    if ([self.delegate respondsToSelector:@selector(tabViewShouldDragWindow:event:)] &&
+        [self.delegate tabViewShouldDragWindow:_tabView event:theEvent]) {
         [self.window performWindowDragWithEvent:theEvent];
         return;
     }
@@ -1538,6 +1539,27 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionMinimalSelectedTabUnderlinePromi
     if ([self orientation] == PSMTabBarVerticalOrientation) {
         NSRect frame = [self frame];
         [self addCursorRect:NSMakeRect(frame.size.width - 2, 0, 2, frame.size.height) cursor:[NSCursor resizeLeftRightCursor]];
+    } else {
+        const CGFloat edgeDragHeight = self.style.edgeDragHeight;
+        if (edgeDragHeight == 0) {
+            return;
+        }
+        switch (_tabLocation) {
+            case PSMTab_TopTab:
+                [self addCursorRect:NSMakeRect(0, 0, self.bounds.size.width, edgeDragHeight)
+                             cursor:[NSCursor openHandCursor]];
+                break;
+            case PSMTab_BottomTab:
+                [self addCursorRect:NSMakeRect(0,
+                                               self.bounds.size.height - edgeDragHeight,
+                                               self.bounds.size.width,
+                                               edgeDragHeight)
+                             cursor:[NSCursor openHandCursor]];
+                break;
+
+            case PSMTab_LeftTab:
+                break;
+        }
     }
 }
 
