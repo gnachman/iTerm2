@@ -31,6 +31,7 @@ extern NSString *const iTermStatusBarLayoutKeyAdvancedConfiguration;
 @property (nullable, nonatomic, strong) NSFont *font;
 @property (nonatomic) iTermStatusBarLayoutAlgorithmSetting layoutAlgorithm;
 @property (nonatomic) iTermStatusBarAutoRainbowStyle autoRainbowStyle;
+@property (nonatomic) BOOL removeEmptyComponents;
 
 + (instancetype)advancedConfigurationFromDictionary:(NSDictionary *)dict;
 + (NSFont *)defaultFont;

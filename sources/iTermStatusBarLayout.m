@@ -20,6 +20,7 @@ static NSString *const iTermStatusBarLayoutDictionaryKeySeparatorColor = @"separ
 static NSString *const iTermStatusBarLayoutDictionaryKeyBackgroundColor = @"background color";
 static NSString *const iTermStatusBarLayoutDictionaryKeyDefaultTextColor = @"default text color";
 static NSString *const iTermStatusBarLayoutDictionaryKeyAlgorithm = @"algorithm";
+static NSString *const iTermStatusBarLayoutDictionaryKeyRemoveEmptyComponents = @"remove empty components";
 static NSString *const iTermStatusBarLayoutDictionaryKeyFont = @"font";
 static NSString *const iTermStatusBarLayoutDictionaryKeyAutoRainbowStyle = @"auto-rainbow style";
 
@@ -44,6 +45,7 @@ static NSString *const iTermStatusBarLayoutKeyClass = @"class";
     configuration.layoutAlgorithm = [dict[iTermStatusBarLayoutDictionaryKeyAlgorithm] unsignedIntegerValue];
     configuration.font = [dict[iTermStatusBarLayoutDictionaryKeyFont] fontValue];
     configuration.autoRainbowStyle = [dict[iTermStatusBarLayoutDictionaryKeyAutoRainbowStyle] unsignedIntegerValue];
+    configuration.removeEmptyComponents = [dict[iTermStatusBarLayoutDictionaryKeyRemoveEmptyComponents] boolValue];
 
     return configuration;
 }
@@ -55,6 +57,7 @@ static NSString *const iTermStatusBarLayoutKeyClass = @"class";
         self.backgroundColor = [[aDecoder decodeObjectOfClass:[NSDictionary class] forKey:iTermStatusBarLayoutDictionaryKeyBackgroundColor] colorValue];
         self.defaultTextColor = [[aDecoder decodeObjectOfClass:[NSDictionary class] forKey:iTermStatusBarLayoutDictionaryKeyDefaultTextColor] colorValue];
         self.layoutAlgorithm = [aDecoder decodeIntegerForKey:iTermStatusBarLayoutDictionaryKeyAlgorithm];
+        self.removeEmptyComponents = [aDecoder decodeBoolForKey:iTermStatusBarLayoutDictionaryKeyRemoveEmptyComponents];
         self.font = [[aDecoder decodeObjectOfClass:[NSString class] forKey:iTermStatusBarLayoutDictionaryKeyFont] fontValue];
         self.autoRainbowStyle = [aDecoder decodeIntegerForKey:iTermStatusBarLayoutDictionaryKeyAutoRainbowStyle];
     }
@@ -70,6 +73,7 @@ static NSString *const iTermStatusBarLayoutKeyClass = @"class";
                             iTermStatusBarLayoutDictionaryKeyBackgroundColor: [self.backgroundColor dictionaryValue] ?: [NSNull null],
                             iTermStatusBarLayoutDictionaryKeyDefaultTextColor: [self.defaultTextColor dictionaryValue] ?: [NSNull null],
                             iTermStatusBarLayoutDictionaryKeyAlgorithm: @(self.layoutAlgorithm),
+                            iTermStatusBarLayoutDictionaryKeyRemoveEmptyComponents: @(self.removeEmptyComponents),
                             iTermStatusBarLayoutDictionaryKeyFont: [self.font stringValue] ?: [NSNull null],
                             iTermStatusBarLayoutDictionaryKeyAutoRainbowStyle: @(self.autoRainbowStyle) };
     return [dict dictionaryByRemovingNullValues];
@@ -84,6 +88,7 @@ static NSString *const iTermStatusBarLayoutKeyClass = @"class";
     [aCoder encodeObject:[self.backgroundColor dictionaryValue] forKey:iTermStatusBarLayoutDictionaryKeyBackgroundColor];
     [aCoder encodeObject:[self.defaultTextColor dictionaryValue] forKey:iTermStatusBarLayoutDictionaryKeyDefaultTextColor];
     [aCoder encodeInteger:self.layoutAlgorithm forKey:iTermStatusBarLayoutDictionaryKeyAlgorithm];
+    [aCoder encodeBool:self.removeEmptyComponents forKey:iTermStatusBarLayoutDictionaryKeyRemoveEmptyComponents];
     [aCoder encodeObject:[self.font stringValue] forKey:iTermStatusBarLayoutDictionaryKeyFont];
     [aCoder encodeObject:@(self.autoRainbowStyle) forKey:iTermStatusBarLayoutDictionaryKeyAutoRainbowStyle];
 }

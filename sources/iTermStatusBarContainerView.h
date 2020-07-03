@@ -32,7 +32,6 @@ const CGFloat iTermGetStatusBarHeight(void);
 @property (nonatomic) CGFloat desiredOrigin;
 @property (nonatomic) CGFloat leftMargin;
 @property (nonatomic) CGFloat rightMargin;
-@property (nonatomic) BOOL componentHidden;
 @property (nonatomic, readonly) CGFloat minimumWidthIncludingIcon;
 
 @property (nonatomic, readonly) NSColor *backgroundColor;

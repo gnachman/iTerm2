@@ -69,6 +69,7 @@ NS_ASSUME_NONNULL_BEGIN
     IBOutlet NSTextField *_fontLabel;
     IBOutlet NSPanel *_advancedPanel;
     IBOutlet NSButton *_tightPacking;
+    IBOutlet NSButton *_removeEmptyComponents;
     IBOutlet NSPopUpButton *_autoRainbow;
     NSArray<iTermStatusBarSetupElement *> *_elements;
     iTermStatusBarLayout *_layout;
@@ -172,20 +173,22 @@ NS_ASSUME_NONNULL_BEGIN
                    withAction:@selector(noop:)
                         color:_layout.advancedConfiguration.defaultTextColor
                  alphaAllowed:NO];
-    [self initializeTightPacking];
+    [self initializeUI];
 
     [super awakeFromNib];
 }
 
-- (void)initializeTightPacking {
+- (void)initializeUI {
     switch (_layout.advancedConfiguration.layoutAlgorithm) {
         case iTermStatusBarLayoutAlgorithmSettingStable:
-            _tightPacking.state = NO;
+            _tightPacking.state = NSOffState;
             break;
         case iTermStatusBarLayoutAlgorithmSettingTightlyPacked:
-            _tightPacking.state = YES;
+            _tightPacking.state = NSOnState;
             break;
     }
+
+    _removeEmptyComponents.state = _layout.advancedConfiguration.removeEmptyComponents ? NSOnState : NSOffState;
 }
 
 - (void)initializeColorWell:(CPKColorWell *)colorWell
@@ -324,6 +327,7 @@ NS_ASSUME_NONNULL_BEGIN
     _layout.advancedConfiguration.backgroundColor = _backgroundColorWell.color;
     _layout.advancedConfiguration.defaultTextColor = _defaultTextColorWell.color;
     _layout.advancedConfiguration.layoutAlgorithm = (_tightPacking.state == NSOnState) ? iTermStatusBarLayoutAlgorithmSettingTightlyPacked : iTermStatusBarLayoutAlgorithmSettingStable;
+    _layout.advancedConfiguration.removeEmptyComponents = (_removeEmptyComponents.state == NSOnState);
     _layout.delegate = nil;
 
     _layout = [[iTermStatusBarLayout alloc] initWithDictionary:_layout.dictionaryValue scope:nil];

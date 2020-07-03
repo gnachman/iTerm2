@@ -16,10 +16,12 @@
 
 - (instancetype)initWithContainerViews:(NSArray<iTermStatusBarContainerView *> *)containerViews
                          mandatoryView:(nonnull iTermStatusBarContainerView *)mandatoryView
-                        statusBarWidth:(CGFloat)statusBarWidth {
+                        statusBarWidth:(CGFloat)statusBarWidth
+                 removeEmptyComponents:(BOOL)removeEmptyComponents {
     self = [super initWithContainerViews:containerViews
                            mandatoryView:mandatoryView
-                          statusBarWidth:statusBarWidth];
+                          statusBarWidth:statusBarWidth
+                   removeEmptyComponents:removeEmptyComponents];
     if (self) {
         _statusBarWidth = statusBarWidth;
         _containerViews = [containerViews copy];
@@ -129,10 +131,14 @@
 }
 
 - (NSArray<iTermStatusBarContainerView *> *)unhiddenContainerViews {
+    if (!self.removeEmptyComponents) {
+        return _containerViews;
+    }
+
     return [_containerViews filteredArrayUsingBlock:
             ^BOOL(iTermStatusBarContainerView *view) {
-                return !view.componentHidden;
-            }];
+        return !view.component.statusBarComponentIsEmpty;
+    }];
 }
 
 - (NSArray<iTermStatusBarContainerView *> *)containerViewsSortedByPriority:(NSArray<iTermStatusBarContainerView *> *)eligibleContainerViews {

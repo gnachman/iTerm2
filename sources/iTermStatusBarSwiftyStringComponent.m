@@ -77,6 +77,10 @@ NSString *const iTermStatusBarSwiftyStringComponentExpressionKey = @"expression"
     [self updateTextFieldIfNeeded];
 }
 
+- (BOOL)statusBarComponentIsEmpty {
+    return _value.length == 0;
+}
+
 - (NSTextField *)newTextField {
     NSTextField *textField = [super newTextField];
 

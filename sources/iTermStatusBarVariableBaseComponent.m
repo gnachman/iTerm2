@@ -297,6 +297,10 @@ static NSString *const iTermStatusBarHostnameComponentAbbreviateLocalhost = @"ab
     return YES;
 }
 
+- (BOOL)statusBarComponentIsEmpty {
+    return [[self.fullString stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]] length] == 0;
+}
+
 - (void)statusBarComponentDidClickWithView:(NSView *)view {
     [self openMenuWithView:view];
 }

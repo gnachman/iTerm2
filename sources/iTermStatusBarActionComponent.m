@@ -115,6 +115,10 @@ static NSString *const iTermStatusBarActionKey = @"action";
     return YES;
 }
 
+- (BOOL)statusBarComponentIsEmpty {
+    return NO;
+}
+
 - (void)statusBarComponentDidClickWithView:(NSView *)view {
     if (self.actionDictionary) {
         [self.delegate statusBarComponentPerformAction:self.action];
@@ -160,6 +164,10 @@ static NSString *const iTermStatusBarActionKey = @"action";
 
 - (BOOL)statusBarComponentHandlesClicks {
     return YES;
+}
+
+- (BOOL)statusBarComponentIsEmpty {
+    return [[[iTermActionsModel sharedInstance] actions] count] == 0;
 }
 
 - (void)statusBarComponentDidClickWithView:(NSView *)view {

@@ -140,5 +140,6 @@ static NSString *const iTermStatusBarSharedTextColorKey = @"shared text color";
 - (BOOL)statusBarComponentHandlesMouseDown;
 - (void)statusBarComponentDidClickWithView:(NSView *)view;
 - (void)statusBarComponentMouseDownWithView:(NSView *)view;
+- (BOOL)statusBarComponentIsEmpty;
 
 @end

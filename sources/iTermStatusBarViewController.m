@@ -87,7 +87,8 @@ static const CGFloat iTermStatusBarViewControllerBottomMargin = 0;
     return [iTermStatusBarLayoutAlgorithm layoutAlgorithmWithContainerViews:_containerViews
                                                               mandatoryView:self.mandatoryView
                                                              statusBarWidth:self.view.frame.size.width
-                                                                    setting:_layout.advancedConfiguration.layoutAlgorithm];
+                                                                    setting:_layout.advancedConfiguration.layoutAlgorithm
+                                                      removeEmptyComponents:_layout.advancedConfiguration.removeEmptyComponents];
 }
 
 - (NSArray<NSNumber *> *)desiredSeparatorOffsets {

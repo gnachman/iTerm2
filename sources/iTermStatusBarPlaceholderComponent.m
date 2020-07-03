@@ -53,6 +53,11 @@ NS_ASSUME_NONNULL_BEGIN
     [self.delegate statusBarComponentOpenStatusBarPreferences:self];
 }
 
+- (BOOL)statusBarComponentIsEmpty {
+    // This is used to ensure there is at least one component, so it mustn't be hidden due to emptiness.
+    return NO;
+}
+
 @end
 
 NS_ASSUME_NONNULL_END

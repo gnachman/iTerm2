@@ -376,6 +376,10 @@ static const NSTimeInterval iTermStatusBarGitComponentDefaultCadence = 2;
     return YES;
 }
 
+- (BOOL)statusBarComponentIsEmpty {
+    return (self.currentState.branch.length == 0);
+}
+
 - (void)killSession:(id)sender {
     [[[iTermController sharedInstance] terminalWithSession:_session] closeSessionWithoutConfirmation:_session];
 }

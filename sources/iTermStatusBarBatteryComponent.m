@@ -82,6 +82,10 @@ static NSString *const iTermBatteryComponentKnobKeyShowTime = @"ShowTime";
     return image;
 }
 
+- (BOOL)statusBarComponentIsEmpty {
+    return ![self.class machineHasBattery];
+}
+
 - (NSString *)statusBarComponentShortDescription {
     return @"Battery Level";
 }

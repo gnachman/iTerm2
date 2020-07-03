@@ -364,6 +364,10 @@ const double iTermStatusBarBaseComponentDefaultPriority = 5;
     return NO;
 }
 
+- (BOOL)statusBarComponentIsEmpty {
+    return NO;
+}
+
 - (void)statusBarComponentDidClickWithView:(NSView *)view {
 }
 
