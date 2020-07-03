@@ -53,6 +53,7 @@ Shell > tmux > Detach                                                           
 Shell > tmux > Force Detach                                                             `tmux.Force Detach`                                                           
 Shell > tmux > New Tmux Window                                                          `tmux.New Tmux Window`                                                        
 Shell > tmux > New Tmux Tab                                                             `tmux.New Tmux Tab`                                                           
+Shell > tmux > Pause Pane                                                               `trmux.Pause Pane`                                                            
 Shell > tmux > Dashboard                                                                `tmux.Dashboard`                                                              
 Shell > Page Setup...                                                                   `Page Setup...`                                                               
 Shell > Print > Screen                                                                  `Print.Screen`                                                                
@@ -139,6 +140,7 @@ Session > Terminal State > Mouse Reporting                                      
 Session > Terminal State > Paste Bracketing                                             `Paste Bracketing`                                                            
 Session > Terminal State > Application Cursor                                           `Application Cursor`                                                          
 Session > Terminal State > Application Keypad                                           `Application Keypad`                                                          
+Session > Terminal State > Report Modifiers with CSI u                                  `Reprot Modifiers with CSI u`                                                 
 Session > Terminal State > Reset                                                        `Reset Terminal State`                                                        
 Session > Bury Session                                                                  `Bury Session`                                                                
 Scripts > Manage > New Python Script                                                    `New Python Script`                                                           
