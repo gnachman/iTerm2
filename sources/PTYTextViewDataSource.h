@@ -84,8 +84,6 @@
 - (void)setLineDirtyAtY:(int)y;
 
 // Check if any the character at x,y has been marked dirty.
-- (BOOL)isDirtyAtX:(int)x Y:(int)y;
-- (NSIndexSet *)dirtyIndexesOnLine:(int)line;
 - (void)resetDirty;
 
 // Save the current state to a new frame in the dvr.
@@ -95,9 +93,8 @@
 // when a dirty char is found.
 - (BOOL)shouldSendContentsChangedNotification;
 
-// Smallest range that contains all dirty chars for a line at a screen location.
 // NOTE: y is a grid index and cannot refer to scrollback history.
-- (VT100GridRange)dirtyRangeForLine:(int)y;
+- (BOOL)lineIsDirty:(int)y;
 
 - (BOOL)textViewGetAndResetHasScrolled;
 

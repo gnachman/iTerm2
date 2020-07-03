@@ -66,16 +66,13 @@
 
 // Mark a specific character dirty. If updateTimestamp is set, then the line's last-modified time is
 // set to the current time.
-- (void)markCharDirty:(BOOL)dirty at:(VT100GridCoord)coord updateTimestamp:(BOOL)updateTimestamp;
+- (void)setDirty:(BOOL)dirty line:(int)y;
 
 // Mark chars dirty in a rectangle, inclusive of endpoints.
-- (void)markCharsDirty:(BOOL)dirty inRectFrom:(VT100GridCoord)from to:(VT100GridCoord)to;
+- (void)markCharsDirty:(BOOL)dirty fromLine:(int)fromY toLine:(int)toY;
 - (void)markAllCharsDirty:(BOOL)dirty;
-- (BOOL)isCharDirtyAt:(VT100GridCoord)coord;
+- (BOOL)isLineDirty:(int)y;
 - (BOOL)isAnyCharDirty;
-- (VT100GridRange)dirtyRangeForLine:(int)y;
-// Returns the set of dirty indexes on |line|.
-- (NSIndexSet *)dirtyIndexesOnLine:(int)line;
 
 // Returns the count of lines excluding totally empty lines at the bottom, and always including the
 // line the cursor is on.

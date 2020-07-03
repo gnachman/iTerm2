@@ -47,14 +47,15 @@ static BOOL iTermScreenCharAttachmentsArrayEqual(id<iTermScreenCharAttachmentsAr
 }
 
 @implementation iTermScreenCharAttachmentRunArray {
-    iTermScreenCharAttachmentRun *_runs;
+    const iTermScreenCharAttachmentRun *_runs;
     int _count;
 }
 
 @synthesize runs = _runs;
 
-+ (instancetype)runArrayWithRuns:(iTermScreenCharAttachmentRun *)runs
++ (instancetype)runArrayWithRuns:(const iTermScreenCharAttachmentRun *)runs
                            count:(int)count {
+    assert(runs);
     iTermScreenCharAttachmentRunArray *result = [[iTermScreenCharAttachmentRunArray alloc] init];
     result->_runs = runs;
     result->_count = count;
@@ -68,15 +69,16 @@ static BOOL iTermScreenCharAttachmentsArrayEqual(id<iTermScreenCharAttachmentsAr
             ITBetaAssert(NO, @"Serialized length is %@", @(serialized.length));
             return nil;
         }
-        _runs = iTermMalloc(sizeof(*_runs) * serialized.length);
-        memmove(_runs, serialized.bytes, serialized.length);
+        iTermScreenCharAttachmentRun *runs = iTermMalloc(sizeof(*_runs) * serialized.length);
+        memmove(runs, serialized.bytes, serialized.length);
+        _runs = runs;
         _count = serialized.length / sizeof(*_runs);
     }
     return self;
 }
 
 - (void)dealloc {
-    free(_runs);
+    free((void *)_runs);
 }
 
 - (NSString *)description {
@@ -89,6 +91,28 @@ static BOOL iTermScreenCharAttachmentsArrayEqual(id<iTermScreenCharAttachmentsAr
             NSStringFromClass(self.class), self, @(_count), summary];
 }
 
+- (id<iTermScreenCharAttachmentsArray>)attachmentsArrayOfLength:(int)width {
+    iTermMutableScreenCharAttachmentsArray *attachmentsArray =
+    [[iTermMutableScreenCharAttachmentsArray alloc] initWithCount:width];
+    iTermScreenCharAttachment *outArray = attachmentsArray.mutableAttachments;
+
+    const iTermScreenCharAttachmentRun *runs = self.runs;
+    const NSUInteger count = self.count;
+
+    // Foreach run
+    for (NSUInteger i = 0; i < count; i++) {
+        const iTermScreenCharAttachmentRun *run = &runs[i];
+        int offset = run->offset;
+        assert(offset + run->length <= width);
+        // Foreach cell affected by run
+        for (int j = 0; j < run->length; j++) {
+            outArray[offset + j] = run->attachment;
+        }
+        [attachmentsArray.mutableValidAttachments addIndexesInRange:NSMakeRange(offset, run->length)];
+    }
+    return attachmentsArray;
+}
+
 - (NSData *)serialized {
     return [NSData dataWithBytes:_runs length:_count * sizeof(*_runs)];
 }
@@ -97,194 +121,95 @@ static BOOL iTermScreenCharAttachmentsArrayEqual(id<iTermScreenCharAttachmentsAr
     return MAX(0, MIN(INT_MAX, _count));
 }
 
-- (id)copyWithZone:(NSZone *)zone {
-    const size_t size = sizeof(*_runs) * _count;
-    iTermScreenCharAttachmentRun *copyOfRuns = iTermMalloc(size);
-    memmove(copyOfRuns, _runs, size);
-    return [iTermScreenCharAttachmentRunArray runArrayWithRuns:copyOfRuns count:_count];
-}
-
-- (void)setBaseOffset:(int)baseOffset {
-    const int delta = baseOffset - _baseOffset;
-    for (int i = 0; i < _count; i++) {
-        _runs[i].offset += delta;
-    }
-    _baseOffset = baseOffset;
-}
-
-- (void)append:(id<iTermScreenCharAttachmentRunArray>)other baseOffset:(int)baseOffset {
-    if (!other) {
-        return;
-    }
-    assert(other != self);
-    const NSInteger totalCount = _count + other.count;
-    _runs = iTermRealloc(_runs, totalCount, sizeof(iTermScreenCharAttachmentRun));
-    const int otherCount = other.count;
-    const int offset = _count;
-    const int adjustedBaseOffset = baseOffset - other.baseOffset;
-    const iTermScreenCharAttachmentRun *otherRuns = other.runs;
-    for (int i = 0; i < otherCount; i++) {
-        _runs[i + offset].offset = adjustedBaseOffset + otherRuns[i].offset;
-        _runs[i + offset].length = otherRuns[i].length;
-        _runs[i + offset].attachment = otherRuns[i].attachment;
-    }
-    _count += otherCount;
-}
-
-// Find a run starting before location and ending after it. Break it in to two.
-// Returns the index of the first run starting at or after `location` or -1.
-// TODO: Use a binary search if this becomes a bottleneck
-- (int)sliceAt:(int)location {
-    for (int i = 0; i < _count; i++){
-        const int offset = _runs[i].offset;
-        const int length = _runs[i].length;
-        if (offset + length < location) {
-            continue;
-        }
-        if (offset >= location) {
-            return i;
-        }
-        if (offset < location && offset + length > location) {
-            _runs = iTermRealloc(_runs, _count + 1, sizeof(*_runs));
-            memmove(&_runs[i + 1], &_runs[i], sizeof(*_runs) * (_count - i));
-            _count++;
-            const int leftLength = location - offset;
-            const int rightLength = length - leftLength;
-            _runs[i].length = leftLength;
-            _runs[i+1].offset = location;
-            _runs[i+1].length = rightLength;
-            return i + 1;
-        }
-    }
-    return -1;
-}
-
-// Gives the first index with a run.
-- (int)begin {
-    if (_count == 0) {
-        return 0;
-    }
-    return _runs[0].offset;
-}
-
-// Gives the first index after the last run.
-- (int)end {
-    if (_count == 0) {
-        return 0;
-    }
-    return _runs[_count - 1].offset + _runs[_count - 1].length;
-}
-
-// TODO: Cache these if it would be a win.
-- (iTermScreenCharAttachmentRunArraySlice *)sliceFrom:(int)offset length:(int)sliceLength {
-     return [[iTermScreenCharAttachmentRunArraySlice alloc] initWithRunArray:self
-                                                                      range:NSMakeRange(offset, sliceLength)];
-}
-
-- (iTermScreenCharAttachmentRunArraySlice *)asSlice {
-    return [self sliceFrom:0 length:self.end];
-}
-
-- (void)truncateFrom:(int)offset {
-    if (offset == 0) {
-        _count = 0;
-        return;
-    }
-    const int i = [self sliceAt:offset];
-    if (i != -1) {
-        _count = i + 1;
-    }
-}
-
-- (iTermScreenCharAttachmentRunArray *)makeRunArray {
+- (id)copy {
     return self;
+}
+
+- (id)copyWithZone:(NSZone *)zone {
+    return self;
+}
+
+- (id<iTermScreenCharAttachmentRunArray>)runsInRange:(NSRange)range
+                                        addingOffset:(int)offset {
+    if (self.count == 0) {
+        return [self copy];
+    }
+
+    iTermScreenCharAttachmentsRunArrayBuilder *builder = [[iTermScreenCharAttachmentsRunArrayBuilder alloc] init];
+    for (NSUInteger i = 0; i < self.count; i++) {
+        const NSRange runRange = NSMakeRange(self.runs[i].offset, self.runs[i].length);
+        const NSRange intersection = NSIntersectionRange(runRange, range);
+        if (NSEqualRanges(runRange, intersection)) {
+            [builder appendRuns:&self.runs[i] count:1 addingOffset:offset];
+        } else if (intersection.length > 0 && intersection.location != NSNotFound) {
+            iTermScreenCharAttachmentRun temp = self.runs[i];
+            temp.offset = intersection.location;
+            temp.length = intersection.length;
+            [builder appendRuns:&temp count:1 addingOffset:offset];
+        }
+    }
+    return builder.runArray;
+}
+
+- (id<iTermScreenCharAttachmentRunArray>)appending:(id<iTermScreenCharAttachmentRunArray>)suffix
+                                      addingOffset:(int)offset {
+    iTermScreenCharAttachmentsRunArrayBuilder *builder = [[iTermScreenCharAttachmentsRunArrayBuilder alloc] init];
+    [builder appendRuns:self.runs count:self.count addingOffset:0];
+    [builder appendRuns:suffix.runs count:suffix.count addingOffset:offset];
+    return builder.runArray;
+}
+
+- (id<iTermScreenCharAttachmentRunArray>)runArrayByAddingOffset:(int)offset {
+    iTermScreenCharAttachmentsRunArrayBuilder *builder = [[iTermScreenCharAttachmentsRunArrayBuilder alloc] init];
+    [builder appendRuns:self.runs count:self.count addingOffset:offset];
+    return builder.runArray;
 }
 
 @end
 
-@implementation iTermScreenCharAttachmentRunArraySlice {
-    NSRange _range;
-    int _otherBaseOffset;
-    int _begin;
-    int _end;
-    iTermMutableScreenCharAttachmentsArray *_fullArray;
+@implementation iTermScreenCharAttachmentsRunArrayBuilder {
+    NSUInteger _count;
+    NSUInteger _capacity;
+    iTermScreenCharAttachmentRun *_runs;
 }
 
-- (instancetype)initWithRunArray:(iTermScreenCharAttachmentRunArray *)runArray range:(NSRange)range {
-    self = [super init];
-    if (self) {
-        _range = range;
-        _begin = [runArray sliceAt:range.location];
-        if (_begin < 0) {
-            _begin = runArray.count;
-        }
-        _end = [runArray sliceAt:NSMaxRange(range)];
-        if (_end < 0) {
-            _end = runArray.count;
-        }
-        _otherBaseOffset = runArray.baseOffset;
-        _realArray = runArray;
+- (void)dealloc {
+    if (_runs) {
+        free(_runs);
     }
-    return self;
 }
 
-- (NSString *)description {
-    NSMutableArray *values = [NSMutableArray array];
-    for (int i = 0; i < self.count; i++) {
-        [values addObject:iTermStringForScreenCharAttachmentRun(&self.runs[i])];
-    }
-    NSString *summary = [values componentsJoinedByString:@", "];
-    return [NSString stringWithFormat:@"<%@: %p count=%@ %@>",
-            NSStringFromClass(self.class), self, @(self.count), summary];
+- (void)appendRun:(const iTermScreenCharAttachmentRun *)run {
+    [self appendRuns:run count:1 addingOffset:0];
 }
 
-- (NSUInteger)count {
-    return _end - _begin;
-}
-
-- (int)baseOffset {
-    return _otherBaseOffset + _range.location;
-}
-
-- (const iTermScreenCharAttachmentRun *)runs {
-    return _realArray.runs + _begin;
-}
-
-- (iTermScreenCharAttachmentRunArray *)makeRunArray {
-    return [iTermScreenCharAttachmentRunArray runArrayWithRuns:(iTermScreenCharAttachmentRun *)self.runs
-                                                         count:self.count];
-}
-
-// Number of cells needed to store in its expanded form.
-- (int)width {
-    const NSUInteger count = self.count;
-    if (count == 0) {
-        return 0;
-    }
-    const iTermScreenCharAttachmentRun *lastRun = &_realArray.runs[count - 1];
-    int result = lastRun->offset;
-    result += lastRun->length;
+- (id<iTermScreenCharAttachmentRunArray>)runArray {
+    id<iTermScreenCharAttachmentRunArray> result =
+        [iTermScreenCharAttachmentRunArray runArrayWithRuns:_runs count:_count];
+    _runs = NULL;
     return result;
 }
 
-- (id<iTermScreenCharAttachmentsArray>)fullArray {
-    if (_fullArray) {
-        return _fullArray;
+- (void)appendRuns:(const iTermScreenCharAttachmentRun *)runs
+             count:(NSUInteger)count
+      addingOffset:(int)offset {
+    NSUInteger desiredCount = _count + count;
+    if (!_runs) {
+        _runs = iTermMalloc(sizeof(*runs) * desiredCount);
+        _capacity = desiredCount;
+    } else if (_count == _capacity) {
+        while (_capacity < desiredCount) {
+            _capacity *= 2;
+        }
+        _runs = iTermRealloc(_runs, _capacity, sizeof(*runs));
     }
-    _fullArray = [[iTermMutableScreenCharAttachmentsArray alloc] initWithCount:self.width];
-    iTermScreenCharAttachment *mutableAttachments = _fullArray.mutableAttachments;
-    NSMutableIndexSet *validAttachments = _fullArray.mutableValidAttachments;
-
-    const NSUInteger count = self.count;
-    const iTermScreenCharAttachmentRun *runs = self.runs;
-    for (NSUInteger i = 0; i < count; i++) {
-        const iTermScreenCharAttachmentRun *run = &runs[i];
-        for (int j = 0; j < run->length; j++) {
-            [validAttachments addIndex:run->offset + j];
-            mutableAttachments[run->offset + j] = run->attachment;
+    memmove(_runs + _count, runs, sizeof(*runs) * count);
+    if (offset) {
+        for (NSUInteger i = 0; i < count; i++) {
+            _runs[_count + i].offset += offset;
         }
     }
-    return _fullArray;
+    _count = desiredCount;
 }
 
 @end
@@ -389,6 +314,7 @@ iTermScreenCharAttachmentRunCreate(NSIndexSet *_validAttachments,
 @implementation iTermMutableScreenCharAttachmentsArray {
     iTermScreenCharAttachment *_mutableAttachments;  // has _count elements
     NSMutableIndexSet *_mutableValidAttachments;
+    id<iTermScreenCharAttachmentRunArray> _runArray;
 }
 
 @synthesize count = _count;
@@ -434,11 +360,18 @@ static iTermScreenCharAttachment gMagicAttachment;
     return _mutableAttachments;
 }
 
+- (void)markDirty {
+    _dirty = YES;
+    _runArray = nil;
+}
+
 - (iTermScreenCharAttachment *)mutableAttachments {
+    [self markDirty];
     return _mutableAttachments;
 }
 
 - (NSMutableIndexSet *)mutableValidAttachments {
+    [self markDirty];
     return _mutableValidAttachments;
 }
 
@@ -459,10 +392,6 @@ static iTermScreenCharAttachment gMagicAttachment;
     return copy;
 }
 
-- (id<iTermScreenCharAttachmentRunArray>)runArray {
-    return iTermScreenCharAttachmentRunCreate(_mutableValidAttachments, _mutableAttachments, _count);
-}
-
 - (void)copyAttachmentsInRange:(NSRange)rangeToCopy
                           from:(id<iTermScreenCharAttachmentsArray>)other {
     assert(self.count == other.count);
@@ -475,6 +404,7 @@ static iTermScreenCharAttachment gMagicAttachment;
                 other.attachments + range.location,
                 sizeof(iTermScreenCharAttachment) * range.length);
     }];
+    [self markDirty];
 }
 
 - (void)copyAttachmentsStartingAtIndex:(int)sourceIndex
@@ -499,14 +429,23 @@ static iTermScreenCharAttachment gMagicAttachment;
     }];
     [_mutableValidAttachments removeIndexesInRange:NSMakeRange(destIndex, count)];
     [_mutableValidAttachments addIndexes:additions];
+    [self markDirty];
 }
 
 - (void)removeAttachmentsInRange:(NSRange)range {
     [_mutableValidAttachments removeIndexesInRange:range];
+    [self markDirty];
 }
 
-- (void)setAttachment:(iTermScreenCharAttachment *)attachment
+- (void)removeAllAttachments {
+    [_mutableValidAttachments removeAllIndexes];
+    [self markDirty];
+}
+
+- (void)setAttachment:(const iTermScreenCharAttachment *)attachment
               inRange:(NSRange)range {
+    assert(NSMaxRange(range) <= _count);
+    
     if (!attachment) {
         [_mutableValidAttachments removeIndexesInRange:range];
         return;
@@ -515,6 +454,7 @@ static iTermScreenCharAttachment gMagicAttachment;
     for (NSInteger i = 0; i < range.length; i++) {
         _mutableAttachments[range.location + i] = *attachment;
     }
+    [self markDirty];
 }
 
 - (void)copyAttachmentsFromArray:(id<iTermScreenCharAttachmentsArray>)sourceArray
@@ -535,6 +475,33 @@ static iTermScreenCharAttachment gMagicAttachment;
     memmove(_mutableAttachments + destOffset,
             sourceArray.attachments + sourceOffset,
             count * sizeof(*_mutableAttachments));
+    [self markDirty];
+}
+
+- (void)setFromRuns:(id<iTermScreenCharAttachmentRunArray>)attachments {
+    if (!attachments) {
+        [_mutableValidAttachments removeAllIndexes];
+        return;
+    }
+    for (NSInteger i = 0; i < attachments.count; i++) {
+        [self setAttachment:&attachments.runs[i].attachment
+                    inRange:NSMakeRange(attachments.runs[i].offset,
+                                        attachments.runs[i].length)];
+    }
+    [self markDirty];
+}
+
+- (id<iTermScreenCharAttachmentRunArray>)runArray {
+    if (_runArray) {
+        return _runArray;
+    }
+    if (_mutableValidAttachments.count == 0) {
+        return nil;
+    }
+    _runArray = iTermScreenCharAttachmentRunCreate(_mutableValidAttachments,
+                                                   _mutableAttachments,
+                                                   _count);
+    return _runArray;
 }
 
 @end

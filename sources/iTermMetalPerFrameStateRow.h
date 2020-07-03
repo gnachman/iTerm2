@@ -17,7 +17,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface iTermMetalPerFrameStateRow : NSObject {
 @public
-    NSInteger _generation;
+    NSInteger _generation_xx;
     NSNumber *_markStyle;
     iTermData *_screenCharLine;
     NSIndexSet *_selectedIndexSet;

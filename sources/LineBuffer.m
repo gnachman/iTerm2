@@ -388,9 +388,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
                       attachments:suffixAttachments];
             ITAssertWithMessage(ok, @"append can't fail here");
             free(prefix);
-            iTermScreenCharAttachmentRunArray *combined = [prefixAttachments makeRunArray];
-            [combined append:suffixAttachments baseOffset:prefix_len];
-            attachmentsToAppend = combined;
+            attachmentsToAppend = [prefixAttachments appending:suffixAttachments addingOffset:prefix_len];
         }
         // Finally, append this line to the new block. We know it'll fit because we made
         // enough room for it.
@@ -509,7 +507,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     int length, eol;
     ScreenCharArray *result = [[[ScreenCharArray alloc] init] autorelease];
     screen_char_t cont = { 0 };
-    iTermScreenCharAttachmentRunArraySlice *attachments = nil;
+    iTermScreenCharAttachmentRunArray *attachments = nil;
     result.line = [block getWrappedLineWithWrapWidth:width
                                              lineNum:&remainder
                                           lineLength:&length
@@ -518,7 +516,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
                                         continuation:&cont
                                 isStartOfWrappedLine:NULL
                                          attachments:&attachments];
-    result.attachments = [attachments fullArray];
+    result.attachments = [attachments attachmentsArrayOfLength:width];
     if (result.line) {
         result.length = length;
         result.eol = eol;
@@ -540,12 +538,17 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     NSMutableArray<ScreenCharArray *> *arrays = [NSMutableArray array];
     [_lineBlocks enumerateLinesInRange:NSMakeRange(lineNum, count)
                                  width:width
-                                 block:
-     ^(screen_char_t * _Nonnull chars, int length, int eol, screen_char_t continuation, BOOL * _Nonnull stop) {
+                                 block:^(screen_char_t * _Nonnull chars,
+                                         int length,
+                                         int eol,
+                                         screen_char_t continuation,
+                                         id<iTermScreenCharAttachmentRunArray> attachments,
+                                         BOOL * _Nonnull stop) {
         ScreenCharArray *lineResult = [[[ScreenCharArray alloc] init] autorelease];
         lineResult.line = chars;
         lineResult.continuation = continuation;
         lineResult.length = length;
+        lineResult.attachments = [attachments attachmentsArrayOfLength:width];
         if (length < width) {
             [lineResult padLineToLength:width];
         }
@@ -567,7 +570,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
              includesEndOfLine:(int*)includesEndOfLine
                      timestamp:(NSTimeInterval *)timestampPtr
                   continuation:(screen_char_t *)continuationPtr
-                   attachments:(iTermScreenCharAttachmentRunArraySlice **)attachments {
+                   attachments:(iTermScreenCharAttachmentRunArray **)attachments {
     if ([self numLinesWithWidth: width] == 0) {
         return NO;
     }

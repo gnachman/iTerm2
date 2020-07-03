@@ -2125,9 +2125,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
 - (void)setLineDirtyAtY:(int)y {
     if (y >= 0) {
-        [currentGrid_ markCharsDirty:YES
-                          inRectFrom:VT100GridCoordMake(0, y)
-                                  to:VT100GridCoordMake(self.width - 1, y)];
+        [currentGrid_ setDirty:YES line:y];
     }
 }
 
@@ -2151,30 +2149,12 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
         xToMark = 0;
         yToMark++;
     }
-    if (xToMark < currentGrid_.size.width && yToMark < currentGrid_.size.height) {
-        [currentGrid_ markCharDirty:YES
-                                 at:VT100GridCoordMake(xToMark, yToMark)
-                    updateTimestamp:NO];
-        if (xToMark < currentGrid_.size.width - 1) {
-            // Just in case the cursor was over a double width character
-            [currentGrid_ markCharDirty:YES
-                                     at:VT100GridCoordMake(xToMark + 1, yToMark)
-                        updateTimestamp:NO];
-        }
+    if (yToMark < currentGrid_.size.height) {
+        [currentGrid_ setDirty:YES line:yToMark];
     }
 }
 
-- (BOOL)isDirtyAtX:(int)x Y:(int)y
-{
-    return [currentGrid_ isCharDirtyAt:VT100GridCoordMake(x, y)];
-}
-
-- (NSIndexSet *)dirtyIndexesOnLine:(int)line {
-    return [currentGrid_ dirtyIndexesOnLine:line];
-}
-
-- (void)resetDirty
-{
+- (void)resetDirty {
     [currentGrid_ markAllCharsDirty:NO];
 }
 
@@ -2201,8 +2181,8 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
             [delegate_ screenShouldSendContentsChangedNotification]);
 }
 
-- (VT100GridRange)dirtyRangeForLine:(int)y {
-    return [currentGrid_ dirtyRangeForLine:y];
+- (BOOL)lineIsDirty:(int)y {
+    return [currentGrid_ isLineDirty:y];
 }
 
 - (BOOL)textViewGetAndResetHasScrolled {

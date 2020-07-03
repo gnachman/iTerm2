@@ -100,10 +100,6 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
 - (void)setLineDirtyAtY:(int)y {
 }
 
-- (NSIndexSet *)dirtyIndexesOnLine:(int)line {
-    return nil;
-}
-
 - (BOOL)isRestartable {
     return NO;
 }
@@ -130,8 +126,8 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
 - (void)textViewSelectPreviousPane {
 }
 
-- (VT100GridRange)dirtyRangeForLine:(int)y {
-    return VT100GridRangeMake(0, 0);
+- (BOOL)lineIsDirty:(int)y {
+    return NO;
 }
 
 - (PTYScroller *)textViewVerticalScroller {

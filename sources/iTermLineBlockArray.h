@@ -35,7 +35,12 @@ NS_ASSUME_NONNULL_BEGIN
 - (int)numberOfWrappedLinesForWidth:(int)width;
 - (void)enumerateLinesInRange:(NSRange)range
                         width:(int)width
-                        block:(void (^)(screen_char_t *chars, int length, int eol, screen_char_t continuation, BOOL *stop))block;
+                        block:(void (^)(screen_char_t *chars,
+                                        int length,
+                                        int eol,
+                                        screen_char_t continuation,
+                                        id<iTermScreenCharAttachmentRunArray> attachments,
+                                        BOOL *stop))block;
 - (NSInteger)numberOfRawLines;
 - (NSInteger)rawSpaceUsed;
 - (NSInteger)rawSpaceUsedInRangeOfBlocks:(NSRange)range;

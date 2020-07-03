@@ -312,7 +312,7 @@ NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock)
     metadata_[cll_entries].number_of_wrapped_lines = 0;
     metadata_[cll_entries].generation = LineBlockNextGeneration--;
     [metadata_[cll_entries].attachments autorelease];
-    metadata_[cll_entries].attachments = [[attachments makeRunArray] retain];
+    metadata_[cll_entries].attachments = [attachments retain];
 
     ++cll_entries;
 }
@@ -517,11 +517,14 @@ extern "C" int iTermLineBlockNumberOfFullLinesImpl(screen_char_t *buffer,
         metadata_[cll_entries - 1].generation = LineBlockNextGeneration--;
 
         if (metadata_[cll_entries - 1].attachments) {
-            [metadata_[cll_entries - 1].attachments append:attachments baseOffset:old_length];
+            [metadata_[cll_entries - 1].attachments autorelease];
+            metadata_[cll_entries - 1].attachments =
+                [[metadata_[cll_entries - 1].attachments appending:attachments
+                                                      addingOffset:old_length] retain];
         } else {
-            iTermScreenCharAttachmentRunArray *runArray = [attachments makeRunArray];
-            [runArray setBaseOffset:old_length];
-            metadata_[cll_entries - 1].attachments = [runArray retain];
+            [metadata_[cll_entries - 1].attachments autorelease];
+            metadata_[cll_entries - 1].attachments =
+                [[attachments runArrayByAddingOffset:old_length] retain];
         }
         if (gEnableDoubleWidthCharacterLineCache) {
             // TODO: Would be nice to add on to the index set instead of deleting it.
@@ -750,7 +753,7 @@ int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width, BOOL may
                                       yOffset:(int*)yOffsetPtr
                                  continuation:(screen_char_t *)continuationPtr
                          isStartOfWrappedLine:(BOOL *)isStartOfWrappedLine
-                                  attachments:(iTermScreenCharAttachmentRunArraySlice **)attachments {
+                                  attachments:(id<iTermScreenCharAttachmentRunArray> *)attachments {
     ITBetaAssert(*lineNum >= 0, @"Negative lines to getWrappedLineWithWrapWidth");
     int prev = 0;
     int numEmptyLines = 0;
@@ -841,7 +844,8 @@ int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width, BOOL may
                 *isStartOfWrappedLine = (offset == 0);
             }
             if (attachments) {
-                *attachments = [metadata_[i].attachments sliceFrom:offset length:width];
+                *attachments = [metadata_[i].attachments runsInRange:NSMakeRange(offset, width)
+                                addingOffset:-offset];
             }
             return buffer_start + prev + offset;
         }
@@ -890,18 +894,13 @@ int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width, BOOL may
               upToWidth:(int)width
               timestamp:(NSTimeInterval *)timestampPtr
            continuation:(screen_char_t *)continuationPtr
-            attachments:(iTermScreenCharAttachmentRunArraySlice **)attachments {
+            attachments:(id<iTermScreenCharAttachmentRunArray> *)attachments {
     if (cll_entries == first_entry) {
         // There is no last line to pop.
         return NO;
     }
     _numberOfFullLinesCache.clear();
-    int start;
-    if (cll_entries == first_entry + 1) {
-        start = 0;
-    } else {
-        start = cumulative_line_lengths[cll_entries - 2] - start_offset;
-    }
+    const int start = (cll_entries == first_entry + 1) ? 0 : cumulative_line_lengths[cll_entries - 2] - start_offset;
     if (timestampPtr) {
         *timestampPtr = metadata_[cll_entries - 1].timestamp;
     }
@@ -933,14 +932,18 @@ int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width, BOOL may
             metadata_[cll_entries - 1].double_width_characters = nil;
         }
         if (attachments) {
-            *attachments = [metadata_[cll_entries - 1].attachments sliceFrom:offset_from_start length:width];
+            *attachments = [metadata_[cll_entries - 1].attachments runsInRange:NSMakeRange(offset_from_start, width)
+                                                                  addingOffset:-offset_from_start];
         }
-        [metadata_[cll_entries - 1].attachments truncateFrom:offset_from_start];
+        [metadata_[cll_entries - 1].attachments autorelease];
+        metadata_[cll_entries - 1].attachments =
+            [[metadata_[cll_entries - 1].attachments runsInRange:NSMakeRange(0, offset_from_start)
+                                                    addingOffset:0] retain];
         is_partial = YES;
     } else {
         // The last raw line is not longer than width. Return the whole thing.
         if (attachments) {
-            *attachments = [metadata_[cll_entries - 1].attachments asSlice];
+            *attachments = metadata_[cll_entries - 1].attachments;
         }
         *length = available_len;
         *ptr = buffer_start + start;

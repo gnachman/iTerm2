@@ -98,7 +98,7 @@ static NSString *const kGridSizeKey = @"Size";
     assert(lineNumber >= 0);
     screen_char_t *chars = [[lines_ objectAtIndex:(screenTop_ + lineNumber) % size_.height] mutableBytes];
     VT100LineInfo *lineInfo = [self lineInfoAtLineNumber:lineNumber];
-    id<iTermScreenCharAttachmentsArray> attachments = lineInfo.attachments;
+    id<iTermScreenCharAttachmentsArray> attachments = lineInfo.maybeAttachments;
     return [[ScreenCharArray alloc] initWithLine:chars
                                           length:size_.width
                                     continuation:chars[size_.width]
@@ -107,7 +107,7 @@ static NSString *const kGridSizeKey = @"Size";
 }
 
 - (id<iTermScreenCharAttachmentsArray>)attachmentsOnLine:(int)lineNumber {
-    return [[self lineInfoAtLineNumber:lineNumber] attachments];
+    return [[self lineInfoAtLineNumber:lineNumber] maybeAttachments];
 }
 
 - (VT100LineInfo *)lineInfoAtLineNumber:(int)lineNumber {
@@ -118,29 +118,28 @@ static NSString *const kGridSizeKey = @"Size";
     }
 }
 
-- (void)markCharDirty:(BOOL)dirty at:(VT100GridCoord)coord updateTimestamp:(BOOL)updateTimestamp {
-    DLog(@"Mark %@ dirty=%@ delegate=%@", VT100GridCoordDescription(coord), @(dirty), delegate_);
+- (void)setDirty:(BOOL)dirty line:(int)y {
+    DLog(@"Mark %@ dirty=%@ delegate=%@", @(y), @(dirty), delegate_);
 
     if (!dirty) {
         allDirty_ = NO;
     }
-    VT100LineInfo *lineInfo = [self lineInfoAtLineNumber:coord.y];
-    [lineInfo setDirty:dirty
-               inRange:VT100GridRangeMake(coord.x, 1)
-       updateTimestamp:updateTimestamp];
+    [self lineInfoAtLineNumber:y].dirty = dirty;
 }
 
-- (void)markCharsDirty:(BOOL)dirty inRectFrom:(VT100GridCoord)from to:(VT100GridCoord)to {
-    DLog(@"Mark rect from %@ to %@ dirty=%@ delegate=%@", VT100GridCoordDescription(from), VT100GridCoordDescription(to), @(dirty), delegate_);
-    assert(from.x <= to.x);
+- (void)markDirtyWithoutUpdatingTimestampOnLine:(int)y {
+    [[self lineInfoAtLineNumber:y] markDirtyWithoutUpdatingTimestamp];
+}
+
+- (void)markCharsDirty:(BOOL)dirty fromLine:(int)fromY toLine:(int)toY {
+    DLog(@"Mark dirty from %@ to %@ dirty=%@ delegate=%@", @(fromY),
+         @(toY), @(dirty), delegate_);
     if (!dirty) {
         allDirty_ = NO;
     }
-    for (int y = from.y; y <= to.y; y++) {
+    for (int y = fromY; y <= toY; y++) {
         VT100LineInfo *lineInfo = [self lineInfoAtLineNumber:y];
-        [lineInfo setDirty:dirty
-                   inRange:VT100GridRangeMake(from.x, to.x - from.x + 1)
-           updateTimestamp:YES];
+        lineInfo.dirty = dirty;
     }
 }
 
@@ -149,8 +148,8 @@ static NSString *const kGridSizeKey = @"Size";
 
     allDirty_ = dirty;
     [self markCharsDirty:dirty
-              inRectFrom:VT100GridCoordMake(0, 0)
-                      to:VT100GridCoordMake(size_.width - 1, size_.height - 1)];
+                fromLine:0
+                  toLine:size_.height - 1];
 }
 
 - (void)markCharsDirty:(BOOL)dirty inRun:(VT100GridRun)run {
@@ -161,24 +160,15 @@ static NSString *const kGridSizeKey = @"Size";
     }
     for (NSValue *value in [self rectsForRun:run]) {
         VT100GridRect rect = [value gridRectValue];
-        [self markCharsDirty:dirty inRectFrom:rect.origin to:VT100GridRectMax(rect)];
+        [self markCharsDirty:dirty fromLine:rect.origin.y toLine:VT100GridRectMax(rect).y];
     }
 }
 
-- (BOOL)isCharDirtyAt:(VT100GridCoord)coord {
+- (BOOL)isLineDirty:(int)y {
     if (allDirty_) {
         return YES;
     }
-    VT100LineInfo *lineInfo = [self lineInfoAtLineNumber:coord.y];
-    return [lineInfo isDirtyAtOffset:coord.x];
-}
-
-- (NSIndexSet *)dirtyIndexesOnLine:(int)line {
-    if (allDirty_) {
-        return [NSIndexSet indexSetWithIndexesInRange:NSMakeRange(0, self.size.width)];
-    }
-    VT100LineInfo *lineInfo = [self lineInfoAtLineNumber:line];
-    return [lineInfo dirtyIndexes];
+    return [self lineInfoAtLineNumber:y].isDirty;
 }
 
 - (BOOL)isAnyCharDirty {
@@ -186,17 +176,11 @@ static NSString *const kGridSizeKey = @"Size";
         return YES;
     }
     for (int y = 0; y < size_.height; y++) {
-        VT100LineInfo *lineInfo = [self lineInfoAtLineNumber:y];
-        if ([lineInfo anyCharIsDirty]) {
+        if ([[self lineInfoAtLineNumber:y] isDirty]) {
             return YES;
         }
     }
     return NO;
-}
-
-- (VT100GridRange)dirtyRangeForLine:(int)y {
-    VT100LineInfo *lineInfo = [self lineInfoAtLineNumber:y];
-    return [lineInfo dirtyRange];
 }
 
 - (int)cursorX {
@@ -307,7 +291,7 @@ static NSString *const kGridSizeKey = @"Size";
                          width:size_.width
                      timestamp:info.timestamp
                   continuation:line[size_.width]
-                   attachments:info.attachmentRunArray];
+                   attachments:info.maybeAttachments.runArray];
 #ifdef DEBUG_RESIZEDWIDTH
         NSLog(@"Appended a line. now have %d lines for width %d\n",
               [lineBuffer numLinesWithWidth:size_.width], size_.width);
@@ -366,7 +350,7 @@ static NSString *const kGridSizeKey = @"Size";
     // the cursor is not erased.
     // TODO: I'm not sure this still exists post-refactoring.
     if (cursor_.x < size_.width) {
-      [self markCharDirty:YES at:cursor_ updateTimestamp:YES];
+        [self setDirty:YES line:cursor_.y];
     }
 
     // Add the top line to the scrollback
@@ -381,19 +365,15 @@ static NSString *const kGridSizeKey = @"Size";
     if (lastLineData) {  // This if statement is just to quiet the analyzer.
         [self clearLineData:lastLineData];
     }
-    [[self lineInfoAtLineNumber:size_.height - 1] removeAllAttachments];
+    [[self lineInfoAtLineNumber:size_.height - 1] setAttachments:nil];
 
     if (lineBuffer) {
         // Mark new line at bottom of screen dirty.
-        [self markCharsDirty:YES
-                  inRectFrom:VT100GridCoordMake(0, size_.height - 1)
-                          to:VT100GridCoordMake(size_.width - 1, size_.height - 1)];
+        [self setDirty:YES line:size_.height - 1];
     } else {
         // Mark everything dirty if we're not using the scrollback buffer.
         // TODO: Test what happens when the alt screen scrolls while it has a selection.
-        [self markCharsDirty:YES
-                  inRectFrom:VT100GridCoordMake(0, 0)
-                          to:VT100GridCoordMake(size_.width - 1, size_.height - 1)];
+        [self setAllDirty:YES];
     }
 
     DLog(@"scrolled screen up by 1 line");
@@ -608,10 +588,11 @@ static NSString *const kGridSizeKey = @"Size";
             line[size_.width] = c;
             line[size_.width].code = EOL_HARD;
         }
-        [[self lineInfoAtLineNumber:y] setAttachment:maybeAttachment
-                                               range:VT100GridRangeMake(minX, maxX - minX + 1)];
+        [[[self lineInfoAtLineNumber:y] attachments] setAttachment:maybeAttachment
+                                                           inRange:NSMakeRange(minX,
+                                                                               MAX(0, maxX - minX + 1))];
     }
-    [self markCharsDirty:YES inRectFrom:from to:to];
+    [self markCharsDirty:YES fromLine:from.y toLine:to.y];
 }
 
 - (void)setCharsInRun:(VT100GridRun)run
@@ -665,9 +646,7 @@ static NSString *const kGridSizeKey = @"Size";
                 CopyBackgroundColor(&line[x], bg);
             }
         }
-        [self markCharsDirty:YES
-                  inRectFrom:VT100GridCoordMake(from.x, y)
-                          to:VT100GridCoordMake(to.x, y)];
+        [self setDirty:YES line:y];
     }
 }
 
@@ -679,9 +658,7 @@ static NSString *const kGridSizeKey = @"Size";
         for (int x = from.x; x <= to.x; x++) {
             line[x].urlCode = code;
         }
-        [self markCharsDirty:YES
-                  inRectFrom:VT100GridCoordMake(from.x, y)
-                          to:VT100GridCoordMake(to.x, y)];
+        [self setDirty:YES line:y];
     }
 }
 
@@ -695,14 +672,16 @@ static NSString *const kGridSizeKey = @"Size";
 
 - (void)setAttachment:(iTermScreenCharAttachment *)attachment
                 range:(VT100GridCoordRange)range {
-    int startX = range.start.x;
-    int endX = size_.width;
+    int startX = MAX(0, range.start.x);
+    int endX = MAX(0, size_.width);
     for (int y = range.start.y; y <= range.end.y; y++) {
         if (y == range.end.y) {
             endX = range.end.x;
         }
         VT100LineInfo *lineInfo = [self lineInfoAtLineNumber:y];
-        [lineInfo setAttachment:attachment range:VT100GridRangeMake(startX, endX - startX)];
+        [lineInfo.attachments setAttachment:attachment
+                                    inRange:NSMakeRange(startX,
+                                                        MAX(0, endX - startX))];
         startX = 0;
     }
 }
@@ -710,7 +689,10 @@ static NSString *const kGridSizeKey = @"Size";
 - (iTermMutableScreenCharAttachmentsArray *)attachmentArrayOnLine:(int)line
                                                    createIfNeeded:(BOOL)create {
     VT100LineInfo *lineInfo = [self lineInfoAtLineNumber:line];
-    return [lineInfo mutableAttachmentsCreatingIfNeeded:create];
+    if (!create && !lineInfo.hasAttachments) {
+        return nil;
+    }
+    return lineInfo.attachments;
 }
 
 - (int)appendCharsAtCursor:(screen_char_t *)buffer
@@ -953,9 +935,7 @@ static NSString *const kGridSizeKey = @"Size";
                 [lineAttachments copyAttachmentsStartingAtIndex:cursor_.x
                                                              to:cursor_.x + charsToInsert
                                                           count:elements];
-                [self markCharsDirty:YES
-                          inRectFrom:VT100GridCoordMake(cursor_.x, lineNumber)
-                                  to:VT100GridCoordMake(rightMargin - 1, lineNumber)];
+                [self setDirty:YES line:lineNumber];
             }
         }
 
@@ -974,13 +954,9 @@ static NSString *const kGridSizeKey = @"Size";
                 aLine[cursor_.x-1].complexChar = NO;
                 [lineAttachments removeAttachmentsInRange:NSMakeRange(cursor_.x - 1, 1)];
             }
-            [self markCharDirty:YES
-                             at:VT100GridCoordMake(cursor_.x, lineNumber)
-                updateTimestamp:YES];
+            [self setDirty:YES line:lineNumber];
             if (cursor_.x > 0) {
-                [self markCharDirty:YES
-                                 at:VT100GridCoordMake(cursor_.x - 1, lineNumber)
-                    updateTimestamp:YES];
+                [self setDirty:YES line:lineNumber];
             }
         }
 
@@ -999,9 +975,7 @@ static NSString *const kGridSizeKey = @"Size";
                                            fromOffset:idx
                                              toOffset:cursor_.x
                                                 count:charsToInsert];
-            [self markCharsDirty:YES
-                      inRectFrom:VT100GridCoordMake(cursor_.x, lineNumber)
-                              to:VT100GridCoordMake(cursor_.x + charsToInsert - 1, lineNumber)];
+            [self setDirty:YES line:lineNumber];
         }
         if (wrapDwc) {
             if (cursor_.x + charsToInsert == size_.width - 1) {
@@ -1124,12 +1098,11 @@ static NSString *const kGridSizeKey = @"Size";
             memmove(aLine + startCoord.x,
                     aLine + startCoord.x + n,
                     numCharsToMove * sizeof(screen_char_t));
-            [[self lineInfoAtLineNumber:startCoord.y] copyAttachmentsStartingAtIndex:startCoord.x + n
-                                                                                  to:startCoord.x
-                                                                               count:numCharsToMove];
-            [self markCharsDirty:YES
-                      inRectFrom:VT100GridCoordMake(startCoord.x, lineNumber)
-                              to:VT100GridCoordMake(startCoord.x + numCharsToMove - 1, lineNumber)];
+            VT100LineInfo *lineInfo = [self lineInfoAtLineNumber:startCoord.y];
+            [lineInfo.attachments copyAttachmentsStartingAtIndex:startCoord.x + n
+                                                              to:startCoord.x
+                                                           count:numCharsToMove];
+            [self setDirty:YES line:lineNumber];
             // Erase chars on right side of line.
         }
         [self setCharsFrom:VT100GridCoordMake(rightMargin - n + 1, lineNumber)
@@ -1151,6 +1124,8 @@ static NSString *const kGridSizeKey = @"Size";
         return;
     }
     int direction = (distance > 0) ? 1 : -1;
+    assert(rect.origin.x >= 0);
+    assert(rect.size.width >= 0);
 
     screen_char_t defaultChar = [self defaultChar];
 
@@ -1200,16 +1175,14 @@ static NSString *const kGridSizeKey = @"Size";
                     sourceLine + rect.origin.x,
                     (rect.size.width + continuation) * sizeof(screen_char_t));
             VT100LineInfo *lineInfo = [self lineInfoAtLineNumber:destIndex];
-            [lineInfo copyAttachmentsInRange:VT100GridRangeMake(rect.origin.x,
-                                                                rect.size.width)
-                                        from:[self lineInfoAtLineNumber:sourceIndex]];
+            [lineInfo.attachments copyAttachmentsInRange:NSMakeRange(rect.origin.x,
+                                                                     rect.size.width)
+                                                    from:[self lineInfoAtLineNumber:sourceIndex].attachments];
             sourceIndex -= direction;
             destIndex -= direction;
         }
 
-        [self markCharsDirty:YES
-                  inRectFrom:rect.origin
-                          to:VT100GridCoordMake(rightIndex, bottomIndex)];
+        [self markCharsDirty:YES fromLine:rect.origin.y toLine:bottomIndex];
 
         int lineNumberAboveScrollRegion = rect.origin.y - 1;
         // Fix up broken soft or dwc_skip continuation marks. It could occur on line just above
@@ -1338,8 +1311,9 @@ static NSString *const kGridSizeKey = @"Size";
         if (y == screenTop_) {
             [result appendString:@"--- top of buffer ---\n"];
         }
+        const BOOL lineDirty = [[self lineInfoAtLineNumber:y] isDirty];
         for (x = 0; x < size_.width; ++x, ++ox) {
-            if ([self isCharDirtyAt:VT100GridCoordMake(x, y)]) {
+            if (lineDirty) {
                 dirtyline[ox] = '-';
             } else {
                 dirtyline[ox] = '.';
@@ -1417,7 +1391,7 @@ static NSString *const kGridSizeKey = @"Size";
     while (destLineNumber >= 0) {
         screen_char_t *dest = [self mutableScreenCharsAtLineNumber:destLineNumber];
         memcpy(dest, defaultLine, sizeof(screen_char_t) * size_.width);
-        [[self lineInfoAtLineNumber:destLineNumber] removeAllAttachments];
+        [[self lineInfoAtLineNumber:destLineNumber].maybeAttachments removeAllAttachments];
 
         if (!foundCursor) {
             int tempCursor = cursor_.x;
@@ -1437,7 +1411,7 @@ static NSString *const kGridSizeKey = @"Size";
         NSTimeInterval timestamp;
         screen_char_t continuation;
         ++numPopped;
-        iTermScreenCharAttachmentRunArraySlice *attachments = nil;
+        iTermScreenCharAttachmentRunArray *attachments = nil;
         assert([lineBuffer popAndCopyLastLineInto:dest
                                             width:size_.width
                                 includesEndOfLine:&cont
@@ -1446,7 +1420,7 @@ static NSString *const kGridSizeKey = @"Size";
                                       attachments:&attachments]);
         VT100LineInfo *lineInfo = [self lineInfoAtLineNumber:destLineNumber];
         [lineInfo setTimestamp:timestamp];
-        [lineInfo setAttachmentRuns:attachments];
+        [lineInfo.attachments setFromRuns:attachments];
         if (cont && dest[size_.width - 1].code == 0 && prevLineStartsWithDoubleWidth) {
             // If you pop a soft-wrapped line that's a character short and the
             // line below it starts with a DWC, it's safe to conclude that a DWC
@@ -1629,8 +1603,9 @@ static NSString *const kGridSizeKey = @"Size";
 - (NSString *)compactDirtyDump {
     NSMutableString *dump = [NSMutableString string];
     for (int y = 0; y < size_.height; y++) {
+        const BOOL dirty = [[self lineInfoAtLineNumber:y] isDirty];
         for (int x = 0; x < size_.width; x++) {
-            if ([self isCharDirtyAt:VT100GridCoordMake(x, y)]) {
+            if (dirty) {
                 [dump appendString:@"d"];
             } else {
                 [dump appendString:@"c"];
@@ -1676,9 +1651,9 @@ static NSString *const kGridSizeKey = @"Size";
     memmove(line + pos.x + n,
             line + pos.x,
             charsToMove * sizeof(screen_char_t));
-    [[self lineInfoAtLineNumber:pos.y] copyAttachmentsStartingAtIndex:pos.x
-                                                                   to:pos.x + n
-                                                                count:charsToMove];
+    [[self lineInfoAtLineNumber:pos.y].attachments copyAttachmentsStartingAtIndex:pos.x
+                                                                               to:pos.x + n
+                                                                            count:charsToMove];
 
     // Try to clean up DWC_SKIP+EOL_DWC pair, if needed.
     if (self.rightMargin == size_.width - 1 &&
@@ -1696,9 +1671,7 @@ static NSString *const kGridSizeKey = @"Size";
         line[size_.width].code = EOL_HARD;
     }
 
-    [self markCharsDirty:YES
-              inRectFrom:VT100GridCoordMake(MIN(self.rightMargin - 1, pos.x), pos.y)
-                      to:VT100GridCoordMake(self.rightMargin, pos.y)];
+    [self setDirty:YES line:pos.y];
     [self setCharsFrom:pos to:VT100GridCoordMake(pos.x + n - 1, pos.y) toChar:c attachment:nil];
 }
 
@@ -1893,7 +1866,7 @@ static NSString *const kGridSizeKey = @"Size";
                      width:size_.width
                  timestamp:[[self lineInfoAtLineNumber:0] timestamp]
               continuation:line[size_.width]
-               attachments:lineInfo.attachmentRunArray];
+               attachments:lineInfo.maybeAttachments.runArray];
     int dropped;
     if (!unlimitedScrollback) {
         dropped = [lineBuffer dropExcessLinesWithWidth:size_.width];
@@ -2041,7 +2014,9 @@ static void DumpBuf(screen_char_t* p, int n) {
         line[size_.width].code = EOL_HARD;
         if (line[size_.width - 1].code == DWC_SKIP) {  // This really should always be the case.
             line[size_.width - 1].code = 0;
-            [[self lineInfoAtLineNumber:lineNumber] removeAttachmentAt:size_.width - 1];
+            iTermMutableScreenCharAttachmentsArray *attachments =
+                [self lineInfoAtLineNumber:lineNumber].maybeAttachments;
+            [attachments removeAttachmentsInRange:NSMakeRange(size_.width - 1, 1)];
         } else {
             NSLog(@"Warning! EOL_DWC without DWC_SKIP at line %d", lineNumber);
         }
@@ -2055,14 +2030,9 @@ static void DumpBuf(screen_char_t* p, int n) {
         aLine[offset] = c;
         aLine[offset + 1] = c;
         VT100LineInfo *lineInfo = [self lineInfoAtLineNumber:lineNumber];
-        [lineInfo removeAttachmentAt:offset];
-        [lineInfo removeAttachmentAt:offset + 1];
-        [self markCharDirty:YES
-                         at:VT100GridCoordMake(offset, lineNumber)
-            updateTimestamp:YES];
-        [self markCharDirty:YES
-                         at:VT100GridCoordMake(offset + 1, lineNumber)
-            updateTimestamp:YES];
+        iTermMutableScreenCharAttachmentsArray *attachments = lineInfo.maybeAttachments;
+        [attachments removeAttachmentsInRange:NSMakeRange(offset, 2)];
+        [self setDirty:YES line:lineNumber];
 
         if (offset == 0 && lineNumber > 0) {
             [self erasePossibleSplitDwcAtLineNumber:lineNumber - 1];

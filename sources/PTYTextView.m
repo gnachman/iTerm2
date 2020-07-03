@@ -1883,12 +1883,11 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
     } else {
         const BOOL hasScrolled = [self.dataSource textViewGetAndResetHasScrolled];
         for (int y = lineStart; y < lineEnd; y++) {
-            VT100GridRange range = [_dataSource dirtyRangeForLine:y - lineStart];
-            if (range.length > 0) {
+            if ([_dataSource lineIsDirty:y - lineStart]) {
                 foundDirty = YES;
                 [_findOnPageHelper removeHighlightsInRange:NSMakeRange(y + totalScrollbackOverflow, 1)];
                 [_findOnPageHelper removeSearchResultsInRange:NSMakeRange(y + totalScrollbackOverflow, 1)];
-                [self setNeedsDisplayOnLine:y inRange:range];
+                [self setNeedsDisplayOnLine:y];
             } else if (!hasScrolled) {
                 [cleanLines addIndex:y - lineStart];
             }

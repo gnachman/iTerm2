@@ -124,7 +124,7 @@
              includesEndOfLine:(int*)includesEndOfLine
                      timestamp:(NSTimeInterval *)timestampPtr
                   continuation:(screen_char_t *)continuationPtr
-                   attachments:(iTermScreenCharAttachmentRunArraySlice **)attachments;
+                   attachments:(iTermScreenCharAttachmentRunArray **)attachments;
 
 // Get the number of buffer lines at a given width.
 - (int)numLinesWithWidth:(int)width;

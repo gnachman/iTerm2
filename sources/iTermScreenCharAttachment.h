@@ -26,20 +26,26 @@ typedef struct {
 } iTermScreenCharAttachment;
 
 typedef struct {
-    unsigned short offset;
-    unsigned short length;
+    unsigned int offset;
+    unsigned int length;
     iTermScreenCharAttachment attachment;
 } iTermScreenCharAttachmentRun;
 
+@protocol iTermScreenCharAttachmentsArray;
 @class iTermScreenCharAttachmentRunArray;
-@class iTermScreenCharAttachmentRunArraySlice;
 
 @protocol iTermScreenCharAttachmentRunArray<NSObject>
 @property (nonatomic, readonly) const iTermScreenCharAttachmentRun *runs;
 @property (nonatomic, readonly) NSUInteger count;
-@property (nonatomic, readonly) int baseOffset;
+@property (nonatomic, readonly) NSData *serialized;
 
-- (iTermScreenCharAttachmentRunArray *)makeRunArray;
+- (id<iTermScreenCharAttachmentRunArray>)appending:(id<iTermScreenCharAttachmentRunArray>)suffix
+                                      addingOffset:(int)offset;
+- (id<iTermScreenCharAttachmentRunArray>)runArrayByAddingOffset:(int)offset;
+- (id<iTermScreenCharAttachmentRunArray>)runsInRange:(NSRange)range
+                                        addingOffset:(int)offset;
+- (id<iTermScreenCharAttachmentRunArray>)copy;
+- (id<iTermScreenCharAttachmentsArray>)attachmentsArrayOfLength:(int)width;
 @end
 
 @protocol iTermScreenCharAttachmentsArray<NSCopying, NSObject>
@@ -49,36 +55,27 @@ typedef struct {
 @property (nonatomic, readonly) id<iTermScreenCharAttachmentRunArray> runArray;
 
 - (BOOL)isEqual:(id)object;
+
+@end
+
+@interface iTermScreenCharAttachmentsRunArrayBuilder: NSObject
+@property (nonatomic, readonly) id <iTermScreenCharAttachmentRunArray>runArray;
+
+- (void)appendRun:(const iTermScreenCharAttachmentRun *)run;
+- (void)appendRuns:(const iTermScreenCharAttachmentRun *)run
+             count:(NSUInteger)count
+      addingOffset:(int)offset;
+
 @end
 
 #pragma mark - iTermScreenCharAttachmentRunArray
 
 @interface iTermScreenCharAttachmentRunArray: NSObject<NSCopying, iTermScreenCharAttachmentRunArray>
-@property (nonatomic) int baseOffset;
-@property (nonatomic, readonly) NSData *serialized;
 
-+ (instancetype)runArrayWithRuns:(iTermScreenCharAttachmentRun *)runs
++ (instancetype)runArrayWithRuns:(const iTermScreenCharAttachmentRun *)runs
                            count:(int)count;
 - (instancetype)initWithSerialized:(NSData *)serialized;
-
-- (void)append:(id<iTermScreenCharAttachmentRunArray>)other baseOffset:(int)baseOffset;
-- (iTermScreenCharAttachmentRunArraySlice *)sliceFrom:(int)offset length:(int)sliceLength;
-- (iTermScreenCharAttachmentRunArraySlice *)asSlice;
-
-// Doesn't actually free memory because there might be slices referring to the truncated portion.
-- (void)truncateFrom:(int)offset;
-@end
-
-#pragma mark - iTermScreenCharAttachmentRunArraySlice
-
-@interface iTermScreenCharAttachmentRunArraySlice: NSObject<iTermScreenCharAttachmentRunArray>
-@property (nonatomic, strong, readonly) iTermScreenCharAttachmentRunArray *realArray;
-@property (nonatomic, readonly) int baseOffset;
-@property (nonatomic, readonly) id<iTermScreenCharAttachmentsArray> fullArray;
-
-- (instancetype)initWithRunArray:(iTermScreenCharAttachmentRunArray *)runArray
-                           range:(NSRange)range NS_DESIGNATED_INITIALIZER;
-- (instancetype)init NS_UNAVAILABLE;
+;
 @end
 
 #pragma mark - iTermScreenCharAttachmentsArray
@@ -101,6 +98,9 @@ typedef struct {
 @property (nonatomic, readonly) NSMutableIndexSet *mutableValidAttachments;
 @property (nonatomic, readonly) iTermScreenCharAttachment *mutableAttachments;
 @property (nonatomic, readonly) NSUInteger count;
+@property (nonatomic, readonly) NSUInteger generation;
+@property (nonatomic) BOOL dirty;
+@property (nullable, nonatomic, readonly) id<iTermScreenCharAttachmentRunArray> runArray;
 
 - (instancetype)initWithCount:(NSUInteger)count NS_DESIGNATED_INITIALIZER;
 - (instancetype)init NS_UNAVAILABLE;
@@ -110,13 +110,14 @@ typedef struct {
                                     to:(int)destIndex
                                  count:(int)count;
 - (void)removeAttachmentsInRange:(NSRange)range;
-- (void)setAttachment:(iTermScreenCharAttachment * _Nullable)attachment
+- (void)removeAllAttachments;
+- (void)setAttachment:(const iTermScreenCharAttachment * _Nullable)attachment
               inRange:(NSRange)range;
 - (void)copyAttachmentsFromArray:(id<iTermScreenCharAttachmentsArray>)sourceArray
-fromOffset:(int)sourceOffset
-  toOffset:(int)destOffset
-     count:(int)count;
-
+                      fromOffset:(int)sourceOffset
+                        toOffset:(int)destOffset
+                           count:(int)count;
+- (void)setFromRuns:(id<iTermScreenCharAttachmentRunArray>)attachments;
 @end
 
 NS_ASSUME_NONNULL_END

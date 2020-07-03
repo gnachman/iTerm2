@@ -303,7 +303,12 @@
 
 - (void)enumerateLinesInRange:(NSRange)range
                         width:(int)width
-                        block:(void (^)(screen_char_t * _Nonnull, int, int, screen_char_t, BOOL * _Nonnull))callback {
+                        block:(void (^)(screen_char_t *chars,
+                                        int length,
+                                        int eol,
+                                        screen_char_t continuation,
+                                        id<iTermScreenCharAttachmentRunArray> attachments,
+                                        BOOL *stop))callback {
     int remainder;
     NSInteger startIndex = [self indexOfBlockContainingLineNumber:range.location width:width remainder:&remainder];
     ITAssertWithMessage(startIndex != NSNotFound, @"Line %@ not found", @(range.location));
@@ -328,16 +333,21 @@
             int length, eol;
             screen_char_t continuation;
             int temp = line;
-            screen_char_t *chars = [block getWrappedLineWithWrapWidth:width
-                                                              lineNum:&temp
-                                                           lineLength:&length
-                                                    includesEndOfLine:&eol
-                                                         continuation:&continuation];
+            id<iTermScreenCharAttachmentRunArray> attachments = nil;
+            screen_char_t *chars =
+            [block getWrappedLineWithWrapWidth:width
+                                       lineNum:&temp
+                                    lineLength:&length
+                             includesEndOfLine:&eol
+                                       yOffset:NULL
+                                  continuation:&continuation
+                          isStartOfWrappedLine:NULL
+                                   attachments:&attachments];
             if (chars == NULL) {
                 return;
             }
             ITAssertWithMessage(length <= width, @"Length too long");
-            callback(chars, length, eol, continuation, &stop);
+            callback(chars, length, eol, continuation, attachments, &stop);
             if (stop) {
                 return;
             }

@@ -37,7 +37,7 @@ NS_ASSUME_NONNULL_BEGIN
         iTermData *data = [iTermScreenCharData dataOfLength:rowSize];
         screen_char_t *myBuffer = data.mutableBytes;
         const screen_char_t *line = [screen getLineAtIndex:i withBuffer:myBuffer];
-        _generation = [screen generationForLine:i];
+        _generation_xx = [screen generationForLine:i];
 
         if (line != myBuffer) {
             memcpy(myBuffer, line, rowSize);
