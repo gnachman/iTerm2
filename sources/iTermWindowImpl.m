@@ -144,7 +144,7 @@ ITERM_WEAKLY_REFERENCEABLE
         return;
     }
 
-    CGSConnectionID con = CGSMainConnectionID();
+    CGSConnectionID con = CGSDefaultConnectionForThread();
     if (!con) {
         return;
     }
