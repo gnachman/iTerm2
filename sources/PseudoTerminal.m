@@ -7100,7 +7100,7 @@ ITERM_WEAKLY_REFERENCEABLE
             [self safeSetAppearance:[NSAppearance appearanceNamed:NSAppearanceNameDarkAqua]];
             break;
     }
-    self.window.backgroundColor = self.anyPaneIsTransparent ? [NSColor clearColor] : [NSColor windowBackgroundColor];
+    self.window.backgroundColor = self.anyPaneIsTransparent ? [[NSColor clearColor] colorWithAlphaComponent:0.01] : [NSColor windowBackgroundColor];
     self.window.titlebarAppearsTransparent = [self titleBarShouldAppearTransparent];  // Keep it from showing content from other windows behind it. Issue 7108.
 }
 
