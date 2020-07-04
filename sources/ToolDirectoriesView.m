@@ -16,6 +16,7 @@
 #import "iTermToolWrapper.h"
 #import "NSDateFormatterExtras.h"
 #import "NSEvent+iTerm.h"
+#import "NSImage+iTerm.h"
 #import "NSStringITerm.h"
 #import "NSTableColumn+iTerm.h"
 #import "NSTextField+iTerm.h"

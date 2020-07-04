@@ -12,6 +12,7 @@
 #import "iTermProcessCache.h"
 #import "iTermToolWrapper.h"
 #import "NSArray+iTerm.h"
+#import "NSImage+iTerm.h"
 #import "NSTableColumn+iTerm.h"
 #import "NSTextField+iTerm.h"
 #import "PseudoTerminal.h"

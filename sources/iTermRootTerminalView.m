@@ -1609,7 +1609,7 @@ NS_CLASS_AVAILABLE_MAC(10_14)
 }
 
 - (NSAutoresizingMaskOptions)statusBarContainerAutoresizingMask {
-    switch ([iTermPreferences boolForKey:kPreferenceKeyStatusBarPosition]) {
+    switch ([iTermPreferences unsignedIntegerForKey:kPreferenceKeyStatusBarPosition]) {
         case iTermStatusBarPositionTop:
             return NSViewWidthSizable | NSViewMinYMargin;
 
@@ -1621,7 +1621,7 @@ NS_CLASS_AVAILABLE_MAC(10_14)
 }
 
 - (void)updateDecorationHeightsForStatusBar:(iTermDecorationHeights *)decorationHeights {
-    switch ([iTermPreferences boolForKey:kPreferenceKeyStatusBarPosition]) {
+    switch ([iTermPreferences unsignedIntegerForKey:kPreferenceKeyStatusBarPosition]) {
         case iTermStatusBarPositionTop: {
             decorationHeights->top += iTermGetStatusBarHeight();
             break;

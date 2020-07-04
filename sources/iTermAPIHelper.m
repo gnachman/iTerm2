@@ -3998,7 +3998,7 @@ static BOOL iTermCheckSplitTreesIsomorphic(ITMSplitTreeNode *node1, ITMSplitTree
     ITMInvokeFunctionResponse *response = [[ITMInvokeFunctionResponse alloc] init];
     if (error) {
         if ([error.domain isEqualToString:@"com.iterm2.call"] && error.code == 2) {
-            response.error.status = ITMRPCRegistrationRequest_FieldNumber_Timeout;
+            response.error.status = ITMInvokeFunctionResponse_Status_Timeout;
         } else {
             response.error.status = ITMInvokeFunctionResponse_Status_Failed;
             response.error.errorReason = error.localizedDescription;

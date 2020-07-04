@@ -88,8 +88,42 @@ preview:
 	cp plists/preview-iTerm2.plist plists/iTerm2.plist
 	make Deployment
 
-libsixel:
-	cd submodules/libsixel && ./configure --prefix=${PWD}/ThirdParty/libsixel --without-libcurl --without-jpeg --without-png --disable-python && make && make install
+x86libsixel:
+	cd submodules/libsixel && make clean
+	cd submodules/libsixel && CFLAGS="-target x86_64-apple-macos10.12" ./configure --prefix=${PWD}/ThirdParty/libsixel --without-libcurl --without-jpeg --without-png --disable-python && make && make install
 	rm ThirdParty/libsixel/lib/*dylib* ThirdParty/libsixel/bin/*
+	mv ThirdParty/libsixel/lib/libsixel.a ThirdParty/libsixel/lib/libsixel-x86.a
+
+armsixel:
+	cd submodules/libsixel && make clean
+	cd submodules/libsixel && CFLAGS="-target arm64-apple-macos10.12" ./configure --host=aarch64-apple-darwin14 --prefix=${PWD}/ThirdParty/libsixel-arm --without-libcurl --without-jpeg --without-png --disable-python --disable-shared && CFLAGS="-target arm64-apple-macos10.12" make && make install
+	rm ThirdParty/libsixel-arm/bin/*
+
+# Usage: go to an intel mac and run make x86libsixel and commit it. Go to an arm mac and run make armsixel && make libsixel.
+libsixel:
+	lipo -create -output ThirdParty/libsixel/lib/libsixel.a ThirdParty/libsixel-arm/lib/libsixel.a ThirdParty/libsixel/lib/libsixel-x86.a
+
+armopenssl:
+	cd submodules/openssl && ./Configure darwin64-arm64-cc && make build_generated && make libcrypto.a libssl.a -j4 && mv libcrypto.a libcrypto-arm64.a && mv libssl.a libssl-arm64.a
+
+x86openssl:
+	cd submodules/openssl && ./Configure darwin64-x86_64-cc && make build_generated && make libcrypto.a libssl.a -j4 && mv libcrypto.a libcrypto-x86_64.a && mv libssl.a libssl-x86_64.a
+
+fatopenssl:
+	cd submodules/openssl/ && lipo -create -output libcrypto.a libcrypto-x86_64.a libcrypto-arm64.a
+	cd submodules/openssl/ && lipo -create -output libssl.a libssl-x86_64.a libssl-arm64.a
+
+x86libssh2:
+	mkdir -p submodules/libssh2/build_x86_64
+	cd submodules/libssh2/build_x86_64 && /usr/local/bin/cmake -DOPENSSL_ROOT_DIR=${PWD}/submodules/openssl -DBUILD_EXAMPLES=NO -DBUILD_TESTING=NO -DCMAKE_OSX_ARCHITECTURES=x86_64 -DCRYPTO_BACKEND=OpenSSL .. && make libssh2 -j4
+
+armlibssh2:
+	mkdir -p submodules/libssh2/build_arm64
+	cd submodules/libssh2/build_arm64 && /usr/local/bin/cmake -DOPENSSL_ROOT_DIR=${PWD}/submodules/openssl -DBUILD_EXAMPLES=NO -DBUILD_TESTING=NO -DCMAKE_OSX_ARCHITECTURES=arm64 -DCRYPTO_BACKEND=OpenSSL .. && make libssh2 -j4
+
+fatlibssh2:
+	cd submodules/libssh2 && lipo -create -output libssh2.a build_arm64/src/libssh2.a build_x86_64/src/libssh2.a
+	cp submodules/libssh2/libssh2.a submodules/NMSSH/NMSSH-OSX/Libraries/lib/libssh2.a
+	cp submodules/openssl/libcrypto.a submodules/openssl/libssl.a submodules/NMSSH/NMSSH-OSX/Libraries/lib/
 
 force:

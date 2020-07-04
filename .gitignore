@@ -22,6 +22,9 @@ ColorPicker/ColorPicker.xcodeproj/project.xcworkspace/xcuserdata/
 ColorPicker/ColorPicker.xcodeproj/xcuserdata/
 iTerm2.xcodeproj/project.xcworkspace/contents.xcworkspacedata
 api/library/python/iterm2/docs/_build/
+ThirdParty/libsixel-arm
+ThirdParty/libsixel/lib/libsixel-arm.a
+ThirdParty/libsixel/lib/libsixel-x86.a
 
 # Compiled python modules.
 *.pyc

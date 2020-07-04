@@ -38,7 +38,6 @@
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermBuiltInFunctions.h"
 #import "iTermBuriedSessions.h"
-#import "iTermCPUProfilerUI.h"
 #import "iTermColorPresets.h"
 #import "iTermController.h"
 #import "iTermDependencyEditorWindowController.h"
@@ -1398,19 +1397,6 @@ static BOOL hasBecomeActive = NO;
     NSInteger result = [comparator compareVersion:version toVersion:otherVersion];
     return result == NSOrderedDescending;
 }
-
-/*
- Keeping this around for debugging purposes. Otherwise, just run `sample` from another terminal.
-- (IBAction)createCPUProfile:(id)sender {
-    [iTermCPUProfilerUI createProfileWithCompletion:^(iTermCPUProfile * _Nonnull profile) {
-        NSString *string = [profile stringTree];
-        NSString *path = [NSFileManager pathToSaveFileInFolder:[[NSFileManager defaultManager] desktopDirectory]
-                                                 preferredName:@"iTerm2Sample.txt"];
-        [string writeToURL:[NSURL fileURLWithPath:path] atomically:NO encoding:NSUTF8StringEncoding error:NULL];
-        [[NSWorkspace sharedWorkspace] openFile:path withApplication:@"Finder"];
-    }];
-}
- */
 
 - (IBAction)copyPerformanceStats:(id)sender {
     NSString *copyString = iTermPreciseTimerGetSavedLogs();

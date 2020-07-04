@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>IDESourceControlProjectFavoriteDictionaryKey</key>
+	<false/>
+	<key>IDESourceControlProjectIdentifier</key>
+	<string>5FCEC138-BD89-4E15-965B-903D778E9B1D</string>
+	<key>IDESourceControlProjectName</key>
+	<string>CoreParse</string>
+	<key>IDESourceControlProjectOriginsDictionary</key>
+	<dict>
+		<key>933D72C4-BB34-468B-8A2A-F9A5F6A06A65</key>
+		<string>https://github.com/beelsebob/CoreParse.git</string>
+	</dict>
+	<key>IDESourceControlProjectPath</key>
+	<string>CoreParse.xcodeproj/project.xcworkspace</string>
+	<key>IDESourceControlProjectRelativeInstallPathDictionary</key>
+	<dict>
+		<key>933D72C4-BB34-468B-8A2A-F9A5F6A06A65</key>
+		<string>../..</string>
+	</dict>
+	<key>IDESourceControlProjectURL</key>
+	<string>ssh://github.com/siuying/CSSSelectorConverter.git</string>
+	<key>IDESourceControlProjectVersion</key>
+	<integer>110</integer>
+	<key>IDESourceControlProjectWCCIdentifier</key>
+	<string>933D72C4-BB34-468B-8A2A-F9A5F6A06A65</string>
+	<key>IDESourceControlProjectWCConfigurations</key>
+	<array>
+		<dict>
+			<key>IDESourceControlRepositoryExtensionIdentifierKey</key>
+			<string>public.vcs.git</string>
+			<key>IDESourceControlWCCIdentifierKey</key>
+			<string>933D72C4-BB34-468B-8A2A-F9A5F6A06A65</string>
+			<key>IDESourceControlWCCName</key>
+			<string>CoreParse</string>
+		</dict>
+	</array>
+</dict>
+</plist>

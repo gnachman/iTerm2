@@ -199,7 +199,7 @@
     const NSPoint originPoint = [root convertRect:self.bounds fromView:self].origin;
 
     NSMutableArray<PTYSplitViewDividerInfo *> *result = [NSMutableArray array];
-    CGFloat offset = 0 + vertical ? originPoint.x : originPoint.y;
+    CGFloat offset = vertical ? originPoint.x : originPoint.y;
     const CGFloat dividerThickness = self.dividerThickness;
     const NSInteger count = self.subviews.count;
     for (NSInteger i = 0; i < count; i++) {

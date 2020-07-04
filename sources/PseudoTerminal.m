@@ -6124,7 +6124,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)reallyDisableBlurIfNeeded {
     if (!self.currentTab.blur) {
-        [self.window disableBlur];
+        [self.ptyWindow disableBlur];
     }
 }
 
