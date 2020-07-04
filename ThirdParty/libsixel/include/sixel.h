@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2018 Hayaki Saito
+ * Copyright (c) 2014-2020 Hayaki Saito
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -30,13 +30,22 @@
 # define SIXELAPI
 #endif
 
-#define LIBSIXEL_VERSION "1.8.2"
+#define LIBSIXEL_VERSION "1.8.6"
 #define LIBSIXEL_ABI_VERSION "1:6:0"
 
+typedef unsigned char sixel_index_t;
+
+/* limitations */
 #define SIXEL_OUTPUT_PACKET_SIZE     16384
 #define SIXEL_PALETTE_MIN            2
 #define SIXEL_PALETTE_MAX            256
 #define SIXEL_USE_DEPRECATED_SYMBOLS 1
+#define SIXEL_ALLOCATE_BYTES_MAX     10248UL * 1024UL * 128UL   /* up to 128M */
+#define SIXEL_WIDTH_LIMIT            1000000
+#define SIXEL_HEIGHT_LIMIT           1000000
+
+/* loader settings */
+#define SIXEL_DEFALUT_GIF_DELAY         1
 
 /* return value */
 typedef int SIXELSTATUS;
@@ -60,6 +69,7 @@ typedef int SIXELSTATUS;
 #define SIXEL_BAD_ALLOCATION    (SIXEL_RUNTIME_ERROR | 0x0001)  /* malloc() failed */
 #define SIXEL_BAD_ARGUMENT      (SIXEL_RUNTIME_ERROR | 0x0002)  /* bad argument detected */
 #define SIXEL_BAD_INPUT         (SIXEL_RUNTIME_ERROR | 0x0003)  /* bad input detected */
+#define SIXEL_BAD_INTEGER_OVERFLOW (SIXEL_RUNTIME_ERROR | 0x0004)  /* integer overflow */
 
 #define SIXEL_NOT_IMPLEMENTED   (SIXEL_FEATURE_ERROR | 0x0001)  /* feature not implemented */
 
@@ -688,14 +698,14 @@ sixel_dither_unref(sixel_dither_t *dither); /* dither context object */
 /* initialize internal palette from specified pixel buffer */
 SIXELAPI SIXELSTATUS
 sixel_dither_initialize(
-    sixel_dither_t *dither,          /* dither context object */
-    unsigned char /* in */ *data,    /* sample image */
-    int /* in */ width,              /* image width */
-    int /* in */ height,             /* image height */
-    int /* in */ pixelformat,        /* one of enum pixelFormat */
-    int /* in */ method_for_largest, /* method for finding the largest dimension */
-    int /* in */ method_for_rep,     /* method for choosing a color from the box */
-    int /* in */ quality_mode);      /* quality of histogram processing */
+    sixel_dither_t *dither,                    /* dither context object */
+    unsigned char /* in */ *data,              /* sample image */
+    int           /* in */ width,              /* image width */
+    int           /* in */ height,             /* image height */
+    int           /* in */ pixelformat,        /* one of enum pixelFormat */
+    int           /* in */ method_for_largest, /* method for finding the largest dimension */
+    int           /* in */ method_for_rep,     /* method for choosing a color from the box */
+    int           /* in */ quality_mode);      /* quality of histogram processing */
 
 /* set diffusion type, choose from enum methodForDiffuse */
 SIXELAPI void

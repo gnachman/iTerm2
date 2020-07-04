@@ -88,4 +88,8 @@ preview:
 	cp plists/preview-iTerm2.plist plists/iTerm2.plist
 	make Deployment
 
+libsixel:
+	cd submodules/libsixel && ./configure --prefix=${PWD}/ThirdParty/libsixel --without-libcurl --without-jpeg --without-png --disable-python && make && make install
+	rm ThirdParty/libsixel/lib/*dylib* ThirdParty/libsixel/bin/*
+
 force:
