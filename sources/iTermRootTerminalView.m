@@ -306,7 +306,6 @@ typedef struct {
             }
         }
         _wtfTop = [[SolidColorView alloc] initWithFrame:NSMakeRect(0, 0, 100, 100) color:[NSColor clearColor]];
-        _wtfTop.hidden = YES;
         [self addSubview:_wtfTop];
     }
     return self;
@@ -1707,11 +1706,9 @@ typedef struct {
 }
 
 - (void)willEnterFullScreen {
-    _wtfTop.hidden = NO;
 }
 
 - (void)didEnterFullScreen {
-    _wtfTop.hidden = YES;
 }
 
 @end
