@@ -1343,6 +1343,9 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
 }
 
 - (void)maybeInvalidateWindowShadow {
+    if (@available(macOS 10.16, *)) {
+        return;
+    }
     if (@available(macOS 10.14, *)) {
         const double invalidateFPS = [iTermAdvancedSettingsModel invalidateShadowTimesPerSecond];
         if (invalidateFPS > 0) {

@@ -220,7 +220,6 @@ static BOOL iTermWindowTypeIsCompact(iTermWindowType windowType) {
 @end
 
 @implementation PseudoTerminal {
-    NSTimer *_shadowTimer;
     NSPoint preferredOrigin_;
 
     ////////////////////////////////////////////////////////////////////////////
@@ -5227,7 +5226,8 @@ ITERM_WEAKLY_REFERENCEABLE
         _anyPaneIsTransparent = [self anyPaneIsTransparent];
         [self repositionWidgets];
     }
-    if (@available(macOS 10.14, *)) {
+    if (@available(macOS 10.16, *)) { }
+    else if (@available(macOS 10.14, *)) {
         if ([iTermAdvancedSettingsModel disableWindowShadowWhenTransparencyOnMojave]) {
             [self updateWindowShadowForNonFullScreenWindowDisablingIfAnySessionHasTransparency:window];
             shouldEnableShadow = NO;
@@ -5254,7 +5254,12 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void)updateWindowShadowForNonFullScreenWindowDisablingIfAnySessionHasTransparency:(NSWindow *)window {
     const BOOL haveTransparency = [self anyPaneIsTransparent];
     DLog(@"%@: have transparency = %@ for sessions %@ in tab %@", self, @(haveTransparency), self.currentTab.sessions, self.currentTab);
-    window.hasShadow = !haveTransparency;
+    // Let's try enabling window shadow on 10.16 when there is transparency. Now that I set the
+    // background color to NSColor.clearColor.withAlphaComponent(0.01) maybe shadows will magically
+    // start working again.
+    if (@available(macOS 10.16, *)) {} else {
+        window.hasShadow = !haveTransparency;
+    }
 }
 
 - (void)didChangeCompactness {
@@ -6081,10 +6086,16 @@ ITERM_WEAKLY_REFERENCEABLE
     iTermTerminalWindow *window = [self ptyWindow];
     if (nil != window &&
         [window respondsToSelector:@selector(disableBlur)]) {
-        __weak __typeof(window) weakWindow = window;
+        __weak __typeof(self) weakSelf = self;
         dispatch_async(dispatch_get_main_queue(), ^{
-            [weakWindow disableBlur];
+            [weakSelf reallyDisableBlurIfNeeded];
         });
+    }
+}
+
+- (void)reallyDisableBlurIfNeeded {
+    if (!self.currentTab.blur) {
+        [self.window disableBlur];
     }
 }
 

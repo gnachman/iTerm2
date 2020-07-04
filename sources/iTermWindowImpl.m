@@ -10,9 +10,10 @@ NS_ASSUME_NONNULL_BEGIN
 
 @implementation THE_CLASS
 {
-    int blurFilter;
     double blurRadius_;
-
+    // Hack for a 10.16 issue. Once you set blur from >0 to 0 then it is broken and will never work again.
+    int _minBlur;
+    
     // If set, then windowWillShowInitial is not invoked.
     BOOL _layoutDone;
 
@@ -139,18 +140,18 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)enableBlur:(double)radius {
-    const double kEpsilon = 0.001;
-    if (blurFilter && fabs(blurRadius_ - radius) < kEpsilon) {
-        return;
-    }
-
     CGSConnectionID con = CGSDefaultConnectionForThread();
     if (!con) {
         return;
     }
     CGSSetWindowBackgroundBlurRadiusFunction* function = GetCGSSetWindowBackgroundBlurRadiusFunction();
     if (function) {
-        function(con, [self windowNumber], (int)radius);
+        if (@available(macOS 10.16, *)) {
+            if (radius >= 1) {
+                _minBlur = 1;
+            }
+        }
+        function(con, [self windowNumber], (int)MAX(_minBlur, radius));
     } else {
         NSLog(@"Couldn't get blur function");
     }
@@ -158,18 +159,14 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)disableBlur {
-    CGSConnectionID con = CGSMainConnectionID();
+    CGSConnectionID con = CGSDefaultConnectionForThread();
     if (!con) {
         return;
     }
 
     CGSSetWindowBackgroundBlurRadiusFunction* function = GetCGSSetWindowBackgroundBlurRadiusFunction();
     if (function) {
-        function(con, [self windowNumber], 0);
-    } else if (blurFilter) {
-        CGSRemoveWindowFilter(con, (CGSWindowID)[self windowNumber], blurFilter);
-        CGSReleaseCIFilter(CGSMainConnectionID(), blurFilter);
-        blurFilter = 0;
+        function(con, [self windowNumber], MAX(_minBlur, 0));
     }
 }
 
