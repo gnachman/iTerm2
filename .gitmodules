@@ -7,3 +7,6 @@
 [submodule "submodules/Sparkle"]
 	path = submodules/Sparkle
 	url = https://github.com/gnachman/Sparkle.git
+[submodule "submodules/libsixel"]
+	path = submodules/libsixel
+	url = https://github.com/saitoha/libsixel
