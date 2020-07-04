@@ -420,7 +420,7 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
         return;
     }
 
-    path = [path stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet URLHostAllowedCharacterSet]];
+    path = [path stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet URLPathAllowedCharacterSet]];
     NSURL *url = nil;
     NSString *editorIdentifier = identifier;
     if (lineNumber) {
@@ -669,7 +669,7 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
 
         url = [url stringByPerformingSubstitutions:numericSubstitutions];
         NSString *(^urlEscapeFunction)(NSString *) = ^NSString *(NSString *string) {
-            return [string stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet URLHostAllowedCharacterSet]];
+            return [string stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet URLPathAllowedCharacterSet]];
         };
         iTermParsedExpression *parsedExpression = [iTermExpressionParser parsedExpressionWithInterpolatedString:url
                                                                                                escapingFunction:urlEscapeFunction
