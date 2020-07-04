@@ -4,3 +4,6 @@
 [submodule "submodules/CoreParse"]
 	path = submodules/CoreParse
 	url = https://github.com/beelsebob/CoreParse
+[submodule "submodules/Sparkle"]
+	path = submodules/Sparkle
+	url = https://github.com/gnachman/Sparkle.git
