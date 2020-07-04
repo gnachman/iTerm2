@@ -282,7 +282,7 @@ NS_CLASS_AVAILABLE_MAC(10_14)
 
                     NSString *fullName = @"WindowCornerFull";
                     if (@available(macOS 10.16, *)) {
-                        halfName = @"WindowCornerFull_BigSur";
+                        fullName = @"WindowCornerFull_BigSur";
                     }
                     gTopLeftCornerFullImage = [[NSImage it_imageNamed:fullName forClass:self.class] it_verticallyFlippedImage];
                     gTopRightCornerFullImage = [gTopLeftCornerFullImage it_horizontallyFlippedImage];
@@ -725,6 +725,11 @@ NS_CLASS_AVAILABLE_MAC(10_14)
 }
 
 - (void)updateBorderViews NS_AVAILABLE_MAC(10_14) {
+    if (@available(macOS 10.16, *)) {
+        // Don't need window border on 10.16. And possibly not on earlier versions of macOS?
+        // I think users will be more accepting of the change if it is tied to an OS change.
+        return;
+    }
     const BOOL haveLeft = self.delegate.haveLeftBorder;
     const BOOL haveTop = self.delegate.haveTopBorder;
     const BOOL haveRight = self.delegate.haveRightBorderRegardlessOfScrollBar;
