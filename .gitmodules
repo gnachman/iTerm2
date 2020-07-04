@@ -1,0 +1,3 @@
+[submodule "submodules/NMSSH"]
+	path = submodules/NMSSH
+	url = https://github.com/gnachman/NMSSH.git
