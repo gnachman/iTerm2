@@ -1,3 +1,6 @@
 [submodule "submodules/NMSSH"]
 	path = submodules/NMSSH
 	url = https://github.com/gnachman/NMSSH.git
+[submodule "submodules/CoreParse"]
+	path = submodules/CoreParse
+	url = https://github.com/beelsebob/CoreParse
