@@ -633,11 +633,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [_selectionScrollHelper mouseDraggedTo:locationInTextView coord:VT100GridCoordMake(x, y)];
 
     if (!wasMakingThreeFingerSelection &&
-        _makingThreeFingerSelection &&
-        ![self shouldReportMouseEvent:event
-                                   at:[self.mouseDelegate mouseHandler:self
-                                                     viewCoordForEvent:event
-                                                               clipped:NO]]) {
+        _makingThreeFingerSelection) {
         DLog(@"Just started a three finger selection in mouseDragged (because of macOS bugs)");
         const BOOL shiftPressed = ([event it_modifierFlags] & NSEventModifierFlagShift) != 0;
         const BOOL isExtension = ([self.selection hasSelection] && shiftPressed);
