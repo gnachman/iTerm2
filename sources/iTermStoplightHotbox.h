@@ -9,6 +9,10 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+@protocol iTermHotboxSuppressing<NSObject>
+- (BOOL)supressesHotbox;
+@end
+
 @protocol iTermStoplightHotboxDelegate<NSObject>
 - (BOOL)stoplightHotboxMouseEnter;
 - (void)stoplightHotboxMouseExit;

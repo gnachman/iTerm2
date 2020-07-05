@@ -1762,10 +1762,41 @@ NS_CLASS_AVAILABLE_MAC(10_14)
                      }];
 }
 
-- (BOOL)stoplightHotboxMouseEnter {
+- (BOOL)shouldRevealHotbox {
     if ([[NSApp currentEvent] it_modifierFlags] & NSEventModifierFlagCommand) {
         return NO;
     }
+    if (!self.window.isKeyWindow) {
+        return YES;
+    }
+    if (!NSApp.isActive) {
+        return YES;
+    }
+    NSView *firstResponder = [NSView castFrom:self.window.firstResponder];
+    if (!firstResponder) {
+        return YES;
+    }
+    const NSRect firstResponderFrame = [firstResponder convertRect:firstResponder.bounds toView:nil];
+    const NSRect hotboxFrame = [_stoplightHotbox convertRect:_stoplightHotbox.bounds toView:nil];
+    if (!NSIntersectsRect(firstResponderFrame, hotboxFrame)) {
+        return YES;
+    }
+    if (![firstResponder respondsToSelector:@selector(delegate)]) {
+        return YES;
+    }
+    id delegate = [(id)firstResponder delegate];
+    if (![delegate conformsToProtocol:@protocol(iTermHotboxSuppressing)]) {
+        return YES;
+    }
+    id<iTermHotboxSuppressing> suppressing = delegate;
+    return ![suppressing supressesHotbox];
+}
+
+- (BOOL)stoplightHotboxMouseEnter {
+    if (![self shouldRevealHotbox]) {
+        return NO;
+    }
+
     [_stoplightHotbox setNeedsDisplay:YES];
     _stoplightHotbox.alphaValue = 0;
     _standardWindowButtonsView.alphaValue = 0;

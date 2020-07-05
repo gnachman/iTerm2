@@ -12,6 +12,7 @@
 #import "iTermFindDriver+Internal.h"
 #import "iTermFocusReportingTextField.h"
 #import "iTermSearchFieldCell.h"
+#import "iTermStoplightHotbox.h"
 #import "NSArray+iTerm.h"
 #import "NSColor+iTerm.h"
 #import "NSEvent+iTerm.h"
@@ -21,7 +22,7 @@
 
 @end
 
-@interface iTermMiniSearchField : iTermFocusReportingSearchField
+@interface iTermMiniSearchField : iTermFocusReportingSearchField<iTermHotboxSuppressing>
 @end
 
 @implementation iTermMiniSearchField
@@ -29,6 +30,12 @@
 - (BOOL)becomeFirstResponder {
     [self.window.contentView setNeedsDisplay:YES];
     return [super becomeFirstResponder];
+}
+
+#pragma mark -- iTermHotboxSuppressing
+
+- (BOOL)supressesHotbox {
+    return YES;
 }
 
 @end
