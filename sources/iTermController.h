@@ -71,6 +71,7 @@ typedef NS_ENUM(NSUInteger, iTermHotkeyWindowType) {
 // actions are forwarded from application
 - (IBAction)newWindow:(id)sender;
 - (void)newWindow:(id)sender possiblyTmux:(BOOL)possiblyTmux;
+- (void)newWindowWithSameProfile:(id)sender possiblyTmux:(BOOL)possiblyTmux;
 - (void)newSessionWithSameProfile:(id)sender;
 - (void)newSession:(id)sender possiblyTmux:(BOOL)possiblyTmux;
 - (void)previousTerminal;

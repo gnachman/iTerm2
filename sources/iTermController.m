@@ -275,6 +275,34 @@ static iTermController *gSharedInstance;
     }
 }
 
+- (void)newWindowWithSameProfile:(id)sender possiblyTmux:(BOOL)possiblyTmux {
+    Profile *bookmark = nil;
+    if (_frontTerminalWindowController) {
+        bookmark = [[_frontTerminalWindowController currentSession] profile];
+    }
+    BOOL divorced = ([[ProfileModel sessionsInstance] bookmarkWithGuid:bookmark[KEY_GUID]] != nil);
+    if (divorced) {
+        DLog(@"Creating a new session with a sessions instance guid");
+        NSString *guid = [ProfileModel freshGuid];
+        bookmark = [bookmark dictionaryBySettingObject:guid forKey:KEY_GUID];
+    }
+    if (possiblyTmux &&
+        _frontTerminalWindowController &&
+        [[_frontTerminalWindowController currentSession] isTmuxClient]) {
+        DLog(@"Creating a new tmux window");
+        [_frontTerminalWindowController newTmuxWindow:sender];
+    } else {
+        [iTermSessionLauncher launchBookmark:bookmark
+                                  inTerminal:nil
+                          respectTabbingMode:NO
+                                  completion:^(PTYSession *session) {
+            if (divorced) {
+                [session divorceAddressBookEntryFromPreferences];
+            }
+        }];
+    }
+}
+
 - (void)newSessionInTabAtIndex:(id)sender {
     Profile *bookmark = [[ProfileModel sharedInstance] bookmarkWithGuid:[sender representedObject]];
     if (bookmark) {

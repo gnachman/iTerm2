@@ -1601,6 +1601,15 @@ static BOOL hasBecomeActive = NO;
     }
 }
 
+- (IBAction)newWindowWithSameProfile:(id)sender {
+    DLog(@"newWindowWithSameProfile: invoked");
+    BOOL cancel;
+    BOOL tmux = [self possiblyTmuxValueForWindow:YES cancel:&cancel];
+    if (!cancel) {
+        [[iTermController sharedInstance] newWindowWithSameProfile:sender possiblyTmux:tmux];
+    }
+}
+
 - (IBAction)newSessionWithSameProfile:(id)sender
 {
     [[iTermController sharedInstance] newSessionWithSameProfile:sender];

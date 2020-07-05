@@ -128,9 +128,15 @@
                 <menuItem title="Shell" id="83">
                     <menu key="submenu" title="Shell" id="81">
                         <items>
-                            <menuItem title="New Window" alternate="YES" keyEquivalent="n" identifier="New Window" id="872">
+                            <menuItem title="New Window" keyEquivalent="n" identifier="New Window" id="872">
                                 <connections>
                                     <action selector="newWindow:" target="201" id="873"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem title="New Window with Current Profile" keyEquivalent="N" identifier="New Window with Current Profile" id="hVd-f7-nvC">
+                                <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
+                                <connections>
+                                    <action selector="newWindowWithSameProfile:" target="201" id="Vf0-jd-DF2"/>
                                 </connections>
                             </menuItem>
                             <menuItem title="New Tab" keyEquivalent="t" identifier="New Tab" id="867">
