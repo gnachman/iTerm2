@@ -115,8 +115,11 @@ void *GetPCFromUContext(void *secret) {
     // This bit is x86-64 specific. Have fun fixing this when ARM Macs come out next year :)
     // This might possibly be right: ucp->m_context.ctx.arm_pc
     ucontext_t* uc = (ucontext_t*) secret;
+#if (defined(__arm64))
+    pnt = (void*) uc->uc_mcontext->__ss.__pc ;
+#else
     pnt = (void*) uc->uc_mcontext->__ss.__rip ;
-
+#endif
 
     return pnt;
 }
