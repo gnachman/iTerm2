@@ -28,6 +28,7 @@ typedef NS_OPTIONS(int, kTmuxGatewayCommandOptions) {
 extern NSString * const kTmuxGatewayErrorDomain;
 
 @interface iTermTmuxSubscriptionHandle: NSObject
+@property (nonatomic, readonly) BOOL isValid;
 @end
 
 @protocol TmuxGatewayDelegate <NSObject>

@@ -60,6 +60,11 @@
     [_gateway unsubscribe:_subscriptionHandle];
 }
 
+- (NSString *)description {
+    return [NSString stringWithFormat:@"<%@: %p format=%@ target=%@ sub=%@ scope=%@>",
+            NSStringFromClass(self.class), self, _format, _target, _subscriptionHandle, _scope];
+}
+
 - (void)setInterval:(NSTimeInterval)interval {
     _interval = interval;
     if (_timer) {
@@ -68,7 +73,8 @@
 }
 
 - (void)startTimer {
-    if (_subscriptionHandle) {
+    if (_subscriptionHandle.isValid) {
+        DLog(@"Not starting timer because there is a valid subscription for %@", self);
         return;
     }
     [_timer invalidate];
@@ -80,9 +86,11 @@
 }
 
 - (void)invalidate {
+    DLog(@"Invalidate %@", self);
     [_timer invalidate];
     _timer = nil;
     _scope = nil;
+    [_gateway unsubscribe:_subscriptionHandle];
 }
 
 - (NSString *)escapedFormat {
@@ -92,6 +100,11 @@
 
 - (void)update:(NSTimer *)timer {
     [self updateOnce];
+    if (_subscriptionHandle.isValid) {
+        DLog(@"Invalidate timer because subscription for %@ is now valid", self);
+        [_timer invalidate];
+        _timer = nil;
+    }
 }
 
 - (NSString *)command {
@@ -118,7 +131,7 @@
 }
 
 - (void)didFetch:(NSString *)value {
-    DLog(@"%@ -> %@", self.command, value);
+    DLog(@"%@ didFetch:%@", self, value);
     if (!value) {
         // Probably the pane went away and we'll be dealloced soon.
         return;

@@ -65,8 +65,16 @@ static NSString *kCommandTimestamp = @"timestamp";
     [super dealloc];
 }
 
+- (NSString *)description {
+    return [NSString stringWithFormat:@"<%@: %p id=%@>", NSStringFromClass(self.class), self, _identifier];
+}
+
 - (void)setValue:(NSString *)value arguments:(NSArray<NSString *> *)args {
     self.block(value, args);
+}
+
+- (void)setValid {
+    _isValid = YES;
 }
 
 @end
@@ -1017,14 +1025,23 @@ error:
                            format];
     _subscriptions[handle.identifier] = handle;
     [self sendCommand:subscribe
-       responseTarget:nil
-     responseSelector:nil
-       responseObject:nil
+       responseTarget:self
+     responseSelector:@selector(didSubscribe:handleID:)
+       responseObject:handle.identifier
                 flags:kTmuxGatewayCommandShouldTolerateErrors];
     return handle;
 }
 
+- (void)didSubscribe:(NSString *)result handleID:(NSString *)handleID {
+    if (result) {
+        [_subscriptions[handleID] setValid];
+    }
+}
+
 - (void)unsubscribe:(iTermTmuxSubscriptionHandle *)handle {
+    if (!handle.isValid) {
+        return;
+    }
     NSString *subscribe = [NSString stringWithFormat:@"refresh-client -B '%@'",
                            handle.identifier];
     [_subscriptions removeObjectForKey:handle.identifier];
