@@ -39,17 +39,17 @@ static NSString *kCommandTimestamp = @"timestamp";
 
 @interface iTermTmuxSubscriptionHandle()
 @property (nonatomic, readonly) NSString *identifier;
-@property (nonatomic, readonly) void (^block)(NSString *);
+@property (nonatomic, readonly) void (^block)(NSString *, NSArray<NSString *> *);
 
-- (instancetype)initWithBlock:(void (^)(NSString *))block NS_DESIGNATED_INITIALIZER;
+- (instancetype)initWithBlock:(void (^)(NSString *, NSArray<NSString *> *))block NS_DESIGNATED_INITIALIZER;
 - (instancetype)init NS_UNAVAILABLE;
 
-- (void)setValue:(NSString *)value;
+- (void)setValue:(NSString *)value arguments:(NSArray<NSString *> *)args;
 @end
 
 @implementation iTermTmuxSubscriptionHandle
 
-- (instancetype)initWithBlock:(void (^)(NSString *))block {
+- (instancetype)initWithBlock:(void (^)(NSString *, NSArray<NSString *> *))block {
     self = [super init];
     if (self) {
         static NSInteger next = 1;
@@ -65,8 +65,8 @@ static NSString *kCommandTimestamp = @"timestamp";
     [super dealloc];
 }
 
-- (void)setValue:(NSString *)value {
-    self.block(value);
+- (void)setValue:(NSString *)value arguments:(NSArray<NSString *> *)args {
+    self.block(value, args);
 }
 
 @end
@@ -398,15 +398,21 @@ error:
                          notification:YES];
 }
 
+// %subscription-changed name $a @b x %c : value
+// Where a = session, b = window, x = index, c = pane and any can be - if they are not appropriate
+// to that subscription (so a session subscription will not include b,x,c and a window not
+// include c.
 - (void)parseSubscriptionChangedCommand:(NSString *)command {
-    NSArray<NSString *> *components = [command captureComponentsMatchedByRegex:@"^%subscription-changed ([^ ]+) [^:]*: (.*)$"];
+    NSArray<NSString *> *components = [command captureComponentsMatchedByRegex:@"^%subscription-changed ([^:]+) : (.*)$"];
     if (components.count != 3) {
         [self abortWithErrorMessage:[NSString stringWithFormat:@"Malformed command (expected %%subscription-changed sid [...] : value): \"%@\"", command]];
         return;
     }
-    NSString *sid = components[1];
+    NSString *args = components[1];
     NSString *value = components[2];
-    [_subscriptions[sid] setValue:value];
+    NSArray<NSString *> *parts = [args componentsSeparatedByString:@" "];
+    NSString *sid = parts.firstObject ?: @"";
+    [_subscriptions[sid] setValue:value arguments:parts];
 }
 
 - (void)forceDetach {
@@ -1002,7 +1008,8 @@ error:
 
 - (iTermTmuxSubscriptionHandle *)subscribeToFormat:(NSString *)format
                                             target:(NSString *)target
-                                             block:(void (^)(NSString *))block {
+                                             block:(void (^)(NSString *,
+                                                             NSArray<NSString *> *))block {
     iTermTmuxSubscriptionHandle *handle = [[[iTermTmuxSubscriptionHandle alloc] initWithBlock:block] autorelease];
     NSString *subscribe = [NSString stringWithFormat:@"refresh-client -B '%@:%@:%@'",
                            handle.identifier,

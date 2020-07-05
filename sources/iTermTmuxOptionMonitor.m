@@ -44,7 +44,10 @@
         _interval = 1;
         if ([_gateway versionAtLeastDecimalNumberWithString:@"3.2"]) {
             __weak __typeof(self) weakSelf = self;
-            _subscriptionHandle = [_gateway subscribeToFormat:self.escapedFormat target:target block:^(NSString *value) {
+            _subscriptionHandle = [_gateway subscribeToFormat:self.escapedFormat
+                                                       target:target
+                                                        block:^(NSString *value,
+                                                                NSArray<NSString *> *args) {
                 [weakSelf didFetch:value];
             }];
             [self updateOnce];
