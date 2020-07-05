@@ -2077,6 +2077,9 @@
 		A65D7CB321E1EBCB00E3D81C /* StopStatusIcon@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A63F34D321E1EB1B000C9D52 /* StopStatusIcon@2x.png */; };
 		A65D7CB421E1EBCE00E3D81C /* StopStatusIcon.png in Resources */ = {isa = PBXBuildFile; fileRef = A63F34D221E1EB1B000C9D52 /* StopStatusIcon.png */; };
 		A65D7CB521E1EBCE00E3D81C /* StopStatusIcon@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A63F34D321E1EB1B000C9D52 /* StopStatusIcon@2x.png */; };
+		A65D97BF24B19D2600DF45F9 /* iTermMinimalComposerViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = A65D97BE24B19D2600DF45F9 /* iTermMinimalComposerViewController.xib */; };
+		A65D97C024B19D2600DF45F9 /* iTermMinimalComposerViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = A65D97BE24B19D2600DF45F9 /* iTermMinimalComposerViewController.xib */; };
+		A65D97C124B19D2600DF45F9 /* iTermMinimalComposerViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = A65D97BE24B19D2600DF45F9 /* iTermMinimalComposerViewController.xib */; };
 		A65EC02F1F31800300AC0A6B /* iTermUpdateCadenceController.h in Headers */ = {isa = PBXBuildFile; fileRef = A65EC02D1F31800300AC0A6B /* iTermUpdateCadenceController.h */; };
 		A65EC0301F31800300AC0A6B /* iTermUpdateCadenceController.m in Sources */ = {isa = PBXBuildFile; fileRef = A65EC02E1F31800300AC0A6B /* iTermUpdateCadenceController.m */; };
 		A65EC0331F3181E700AC0A6B /* NSTimer+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A65EC0311F3181E700AC0A6B /* NSTimer+iTerm.h */; };
@@ -2863,9 +2866,6 @@
 		A6A2D6DF24345D4000A4DF5B /* iTermMinimalComposerViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A2D6DB24345D4000A4DF5B /* iTermMinimalComposerViewController.h */; };
 		A6A2D6E024345D4000A4DF5B /* iTermMinimalComposerViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A2D6DB24345D4000A4DF5B /* iTermMinimalComposerViewController.h */; };
 		A6A2D6E424345D4000A4DF5B /* iTermMinimalComposerViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A2D6DC24345D4000A4DF5B /* iTermMinimalComposerViewController.m */; };
-		A6A2D6E524345D4000A4DF5B /* iTermMinimalComposerViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = A6A2D6DD24345D4000A4DF5B /* iTermMinimalComposerViewController.xib */; };
-		A6A2D6E624345D4000A4DF5B /* iTermMinimalComposerViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = A6A2D6DD24345D4000A4DF5B /* iTermMinimalComposerViewController.xib */; };
-		A6A2D6E724345D4000A4DF5B /* iTermMinimalComposerViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = A6A2D6DD24345D4000A4DF5B /* iTermMinimalComposerViewController.xib */; };
 		A6A39EBB24B99AC000A64433 /* iTermGraphicsUtilities.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A39EB924B99AC000A64433 /* iTermGraphicsUtilities.h */; };
 		A6A39EBC24B99AC000A64433 /* iTermGraphicsUtilities.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A39EBA24B99AC000A64433 /* iTermGraphicsUtilities.m */; };
 		A6A39EBF24B9A96B00A64433 /* iTermUnobtrusiveMessage.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A39EBD24B9A96B00A64433 /* iTermUnobtrusiveMessage.h */; };
@@ -5484,6 +5484,7 @@
 		A65B72A81B3285A300F947A7 /* DisableTips@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "DisableTips@2x.png"; path = "images/DisableTips@2x.png"; sourceTree = "<group>"; };
 		A65B72AF1B33C07D00F947A7 /* NextTip.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = NextTip.png; path = images/NextTip.png; sourceTree = "<group>"; };
 		A65B72B01B33C07D00F947A7 /* NextTip@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "NextTip@2x.png"; path = "images/NextTip@2x.png"; sourceTree = "<group>"; };
+		A65D97BE24B19D2600DF45F9 /* iTermMinimalComposerViewController.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; name = iTermMinimalComposerViewController.xib; path = Interfaces/iTermMinimalComposerViewController.xib; sourceTree = "<group>"; };
 		A65EC02D1F31800300AC0A6B /* iTermUpdateCadenceController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermUpdateCadenceController.h; sourceTree = "<group>"; };
 		A65EC02E1F31800300AC0A6B /* iTermUpdateCadenceController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermUpdateCadenceController.m; sourceTree = "<group>"; };
 		A65EC0311F3181E700AC0A6B /* NSTimer+iTerm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSTimer+iTerm.h"; sourceTree = "<group>"; };
@@ -6075,7 +6076,6 @@
 		A6A2D6D8243453BA00A4DF5B /* iTermComposerManager.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermComposerManager.m; sourceTree = "<group>"; };
 		A6A2D6DB24345D4000A4DF5B /* iTermMinimalComposerViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermMinimalComposerViewController.h; sourceTree = "<group>"; };
 		A6A2D6DC24345D4000A4DF5B /* iTermMinimalComposerViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermMinimalComposerViewController.m; sourceTree = "<group>"; };
-		A6A2D6DD24345D4000A4DF5B /* iTermMinimalComposerViewController.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = iTermMinimalComposerViewController.xib; sourceTree = "<group>"; };
 		A6A2D6EE24370C2500A4DF5B /* iTermIntervalTreeObserver.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermIntervalTreeObserver.h; sourceTree = "<group>"; };
 		A6A39EB924B99AC000A64433 /* iTermGraphicsUtilities.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermGraphicsUtilities.h; sourceTree = "<group>"; };
 		A6A39EBA24B99AC000A64433 /* iTermGraphicsUtilities.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermGraphicsUtilities.m; sourceTree = "<group>"; };
@@ -7181,6 +7181,7 @@
 		0464AB22006CD2EC7F000001 /* Interface Builder Files */ = {
 			isa = PBXGroup;
 			children = (
+				A65D97BE24B19D2600DF45F9 /* iTermMinimalComposerViewController.xib */,
 				537A1FBB22169B2200FBEE5A /* MinimalPasteView.xib */,
 				537A1FB722168DF800FBEE5A /* MinimalFindView.xib */,
 				A6614C76210AE5FD0001EAA3 /* MiniPasteView.xib */,
@@ -7219,7 +7220,6 @@
 				A67D0D301A2EE12A003A8B35 /* TmuxDashboard.xib */,
 				A6A2D6DB24345D4000A4DF5B /* iTermMinimalComposerViewController.h */,
 				A6A2D6DC24345D4000A4DF5B /* iTermMinimalComposerViewController.m */,
-				A6A2D6DD24345D4000A4DF5B /* iTermMinimalComposerViewController.xib */,
 			);
 			name = "Interface Builder Files";
 			sourceTree = "<group>";
@@ -12101,7 +12101,6 @@
 				A67F61EC214395D50093940A /* graphic_yarn@2x.png in Resources */,
 				1D8BBA6A1B30F5C30005A852 /* Navigate.png in Resources */,
 				1D6ED9E119AEA20D005A7799 /* broken_image.png in Resources */,
-				A6A2D6E724345D4000A4DF5B /* iTermMinimalComposerViewController.xib in Resources */,
 				A67F61B2214395B70093940A /* graphic_php.png in Resources */,
 				A6E7AE85214394DD00DE9F3B /* graphic_code@2x.png in Resources */,
 				1D6ED9E219AEA20D005A7799 /* PrefsAppearance@2x.png in Resources */,
@@ -12127,6 +12126,7 @@
 				A6E7AE8E214394DD00DE9F3B /* graphic_composer@2x.png in Resources */,
 				A6E7AE60214394CA00DE9F3B /* graphic_clojure.png in Resources */,
 				A66F52D52106F6F100571168 /* gitdown@2x.png in Resources */,
+				A65D97C124B19D2600DF45F9 /* iTermMinimalComposerViewController.xib in Resources */,
 				A6971F3720D8D3CE0075CFD4 /* iTermAdvancedGPUSettingsWindowController.xib in Resources */,
 				A6E16C7124A8696D00C6DB06 /* WindowCornerFull_BigSur.png in Resources */,
 				A66F52CC2106F6F100571168 /* gitup.png in Resources */,
@@ -12159,6 +12159,7 @@
 				A67F61AE214395B70093940A /* graphic_psql.png in Resources */,
 				1D44CFEA1CC7F5A600BE5630 /* PTYTextViewTest-golden-test256Colors.png in Resources */,
 				1D44CFBB1CC7F5A600BE5630 /* PTYTextViewTest-golden-nonretina-testIMEWithAmbiguousIsDoubleWidth.png in Resources */,
+				A65D97C024B19D2600DF45F9 /* iTermMinimalComposerViewController.xib in Resources */,
 				1D44CFBD1CC7F5A600BE5630 /* PTYTextViewTest-golden-nonretina-testIMEWrapsDoubleWidthAtEndOfLine.png in Resources */,
 				A6E7AE6B214394CA00DE9F3B /* graphic_bower.png in Resources */,
 				A6E7AEB9214394F600DE9F3B /* graphic_ethereum.png in Resources */,
@@ -12459,7 +12460,6 @@
 				1D44CFA31CC7F5A600BE5630 /* PTYTextViewTest-golden-nonretina-testCombiningMark.png in Resources */,
 				A67F61E2214395D50093940A /* graphic_zip.png in Resources */,
 				1D44D0351CC7F5A600BE5630 /* PTYTextViewTest-golden-testSmartCursorColor_manyGrayOneWhite.png in Resources */,
-				A6A2D6E624345D4000A4DF5B /* iTermMinimalComposerViewController.xib in Resources */,
 				A6F7A74D213CB143004DE961 /* StatusBarIconComposer@2x.png in Resources */,
 				1D44D0281CC7F5A600BE5630 /* PTYTextViewTest-golden-testRegionStartingWithDWCRight.png in Resources */,
 				A65429B320C4931100CE71B1 /* iTermParameterPanelWindowController.xib in Resources */,
@@ -12884,6 +12884,7 @@
 				1D8C6BF5126592DF00E2744E /* EncodingsWithLowerCase.plist in Resources */,
 				A6E16C6F24A8696D00C6DB06 /* WindowCornerFull_BigSur.png in Resources */,
 				A67F61DE214395D50093940A /* graphic_yarn.png in Resources */,
+				A65D97BF24B19D2600DF45F9 /* iTermMinimalComposerViewController.xib in Resources */,
 				53C5650C21B8CF65002B3167 /* PowerlineLineLeftArrow.pdf in Resources */,
 				A6E7AE92214394DD00DE9F3B /* graphic_coffee.png in Resources */,
 				A623D94B1F8984690011F8C3 /* key.png in Resources */,
@@ -12993,7 +12994,6 @@
 				A67F61E1214395D50093940A /* graphic_zip.png in Resources */,
 				A6F7A73D213CB143004DE961 /* StatusBarIconJobs@2x.png in Resources */,
 				A67F6184214395A70093940A /* graphic_npm@2x.png in Resources */,
-				A6A2D6E524345D4000A4DF5B /* iTermMinimalComposerViewController.xib in Resources */,
 				1DC2A1CE1949165D005769D5 /* Maximized@2x.png in Resources */,
 				A66F52C12106F6F100571168 /* gitdirty@2x.png in Resources */,
 				A65FF3C320F1854F008BD0AE /* iTermMiniSearchFieldViewController.xib in Resources */,
