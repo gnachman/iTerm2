@@ -3248,7 +3248,7 @@ DQ
                 <slider verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="5363">
                     <rect key="frame" x="36" y="283" width="218" height="21"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <sliderCell key="cell" continuous="YES" alignment="left" minValue="0.10000000000000001" maxValue="30" doubleValue="0.10000000000000001" tickMarkPosition="below" sliderType="linear" id="5368"/>
+                    <sliderCell key="cell" continuous="YES" alignment="left" minValue="0.10000000000000001" maxValue="100" doubleValue="25" tickMarkPosition="below" sliderType="linear" id="5368"/>
                     <connections>
                         <action selector="settingChanged:" target="BMA-OA-Kzc" id="AJB-o1-kDf"/>
                         <outlet property="nextKeyView" destination="4973" id="5373"/>
