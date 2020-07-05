@@ -530,7 +530,7 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
 }
 
 - (BOOL)textViewResizeFrameIfNeeded {
-    return YES;
+    return NO;
 }
 
 - (void)textViewDidRefresh {
@@ -2483,7 +2483,7 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
 }
 
 - (NSString *)compactLineDumpWithContinuationMarks {
-    return @"";
+    return @""
 }
 
 - (int)numberOfLines {
@@ -2783,7 +2783,7 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
 }
 
 - (CGFloat)textViewBlend {
-    return 1;
+    return 0;
 }
 
 - (BOOL)textViewCanBury {
@@ -2815,20 +2815,21 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
 }
 
 - (BOOL)textViewReportMouseEvent:(NSEventType)eventType modifiers:(NSUInteger)modifiers button:(MouseButtonNumber)button coordinate:(VT100GridCoord)coord deltaY:(CGFloat)deltaY allowDragBeforeMouseDown:(BOOL)allowDragBeforeMouseDown testOnly:(BOOL)testOnly {
-    return NO;
+}
+
+- (void)textViewSelectionDidChangeToTruncatedString:(NSString *)maybeSelection {
 }
 
 - (id<iTermSwipeHandler>)textViewSwipeHandler {
-    return nil;
 }
 
 - (BOOL)xtermMouseReportingAllowClicksAndDrags {
-    return NO;
 }
 
 - (BOOL)textViewReportMouseEvent:(NSEventType)eventType modifiers:(NSUInteger)modifiers button:(MouseButtonNumber)button coordinate:(VT100GridCoord)coord deltaY:(CGFloat)deltaY allowDragBeforeMouseDown:(BOOL)allowDragBeforeMouseDown {
     return NO;
 }
+
 
 
 - (NSFont *)badgeLabelFontOfSize:(CGFloat)pointSize {

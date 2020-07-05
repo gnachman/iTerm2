@@ -1005,7 +1005,7 @@
     XCTAssert(opened);
     NSString *urlString =
         [NSString stringWithFormat:@"%@://open?url=file://%@&line=%@",
-            expectedScheme, [kExistingFileAbsolutePath stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet alphanumericCharacterSet]], [kLineNumber substringFromIndex:1]];
+            expectedScheme, [kExistingFileAbsolutePath stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet URLPathAllowedCharacterSet]], [kLineNumber substringFromIndex:1]];
     NSURL *expectedURL = [NSURL URLWithString:urlString];
     XCTAssertEqualObjects(_semanticHistoryController.openedURL, expectedURL);
     XCTAssert([_semanticHistoryController.openedEditor isEqual:editorId]);
