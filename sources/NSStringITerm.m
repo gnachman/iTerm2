@@ -1706,10 +1706,13 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
                                                                   options:NSLiteralSearch
                                                                     range:NSMakeRange(range.location + 1, range.length - 1)];
             if (rangeOfFirstException.location != NSNotFound) {
-                range.length = rangeOfFirstException.location - range.location;
-                minimumLocation = NSMaxRange(range);
+                const BOOL precededByZWJ = (rangeOfFirstException.location > 0 &&
+                                            [self characterAtIndex:rangeOfFirstException.location - 1] == 0x200d);
+                if (!precededByZWJ) {
+                    range.length = rangeOfFirstException.location - range.location;
+                    minimumLocation = NSMaxRange(range);
+                }
             }
-
             unichar simple = range.length == 1 ? [self characterAtIndex:range.location] : 0;
             NSString *complexString = range.length == 1 ? nil : [self substringWithRange:range];
             BOOL stop = NO;

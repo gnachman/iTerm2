@@ -1132,7 +1132,10 @@
 
 // This was built from Unicode 12's database using the following commands:
 // wget ftp://ftp.unicode.org/Public/UNIDATA/UnicodeData.txt
+// Prepend this line:
+//    code;charname;gc;ccc;bc;cdm;ddv;dv;nv;m;u1n;comment;upper;lower;title
 // cat UnicodeData.txt | csvgrep -d ";" -c gc -r '^L|^N|^P|^S|^Zs' ~/UnicodeData.txt | csvcut -c code | tail -n +2 | tools/list_to_range.py
+// This gets non-letters, non-numbers, non-punctuation, non-symbols, non-space-separators.
 + (instancetype)baseCharactersForUnicodeVersion:(NSInteger)version {
     assert(version == 12);
     static NSCharacterSet *characterSet;

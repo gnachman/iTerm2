@@ -1926,6 +1926,27 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     }
 }
 
+- (void)testUnicode12Emoji {
+    int32_t codePoints[] = {
+        0x1F468,
+        0x1F3FF,
+        0x200D,
+        0x1F91D,
+        0x200D,
+        0x1F468,
+        0x1F3FB };
+    NSData *expectedData = [NSData dataWithBytes:codePoints length:sizeof(codePoints)];
+    NSString *expectedString = [[NSString alloc] initWithData:expectedData encoding:NSUTF32LittleEndianStringEncoding];
+    VT100Screen *screen = [self screenWithWidth:20 height:2];
+    screen.delegate = (id<VT100ScreenDelegate>)self;
+    [screen appendStringAtCursor:expectedString];
+    screen_char_t *line = [screen getLineAtScreenIndex:0];
+    NSString *actualString = [ScreenCharToStr(line) decomposedStringWithCompatibilityMapping];
+    XCTAssertEqualObjects(expectedString, actualString);
+    NSData *actualData = [actualString dataUsingEncoding:NSUTF32LittleEndianStringEncoding];
+    XCTAssertEqualObjects(expectedData, actualData);
+}
+
 - (void)testAppendStringAtCursorNonAscii {
     // Make sure colors and attrs are set properly
     VT100Screen *screen = [self screenWithWidth:20 height:2];
