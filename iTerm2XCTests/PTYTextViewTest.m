@@ -127,6 +127,9 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
 - (void)selectPaneRightInCurrentTerminal {
 }
 
+- (void)textViewSelectionDidChangeToTruncatedString:(NSString *)maybeSelection {
+}
+
 - (void)textViewSelectPreviousPane {
 }
 
@@ -526,7 +529,8 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
 - (void)textViewThinksUserIsTryingToSendArrowKeysWithScrollWheel:(BOOL)trying {
 }
 
-- (void)textViewResizeFrameIfNeeded {
+- (BOOL)textViewResizeFrameIfNeeded {
+    return YES;
 }
 
 - (void)textViewDidRefresh {
@@ -2478,7 +2482,9 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
     return NO;
 }
 
-
+- (NSString *)compactLineDumpWithContinuationMarks {
+    return @"";
+}
 
 - (int)numberOfLines {
     return 4;
@@ -2510,14 +2516,14 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
                                  fromClass:[NSUserDefaults class]
                                  withBlock:^ id { return fakeDefaults; }
                                   forBlock:^{
-                                      [iTermAdvancedSettingsModel loadAdvancedSettingsFromUserDefaults];
-                                      // When
-                                      [_textView selectAll:nil];
-                                      NSString *selectedText = [_textView selectedText];
+        [iTermAdvancedSettingsModel loadAdvancedSettingsFromUserDefaults];
+        // When
+        [_textView selectAll:nil];
+        NSString *selectedText = [_textView selectedText];
 
-                                      // Then
-                                      XCTAssertEqualObjects(@"123456789\n\n", selectedText);
-                                  }];
+        // Then
+        XCTAssertEqualObjects(@"123456789\n\n", selectedText);
+    }];
 }
 
 - (void)testSelectedTextWrappedLine {
@@ -2534,14 +2540,14 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
                                  fromClass:[NSUserDefaults class]
                                  withBlock:^ id { return fakeDefaults; }
                                   forBlock:^{
-                                      [iTermAdvancedSettingsModel loadAdvancedSettingsFromUserDefaults];
-                                      // When
-                                      [_textView selectAll:nil];
-                                      NSString *selectedText = [_textView selectedText];
+        [iTermAdvancedSettingsModel loadAdvancedSettingsFromUserDefaults];
+        // When
+        [_textView selectAll:nil];
+        NSString *selectedText = [_textView selectedText];
 
-                                      // Then
-                                      XCTAssertEqualObjects([text stringByAppendingString:@"\n"], selectedText);
-                                  }];
+        // Then
+        XCTAssertEqualObjects([text stringByAppendingString:@"\n"], selectedText);
+    }];
 }
 
 - (void)testSelectedTextWrappedAttributedLinesDontGetNewlinesInserted {
@@ -2558,16 +2564,16 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
                                  fromClass:[NSUserDefaults class]
                                  withBlock:^ id { return fakeDefaults; }
                                   forBlock:^{
-                                      [iTermAdvancedSettingsModel loadAdvancedSettingsFromUserDefaults];
-                                      // When
-                                      [_textView selectAll:nil];
-                                      NSAttributedString *selectedAttributedText = [_textView selectedTextAttributed:YES
-                                                                                                        cappedAtSize:0
-                                                                                                   minimumLineNumber:0];
+        [iTermAdvancedSettingsModel loadAdvancedSettingsFromUserDefaults];
+        // When
+        [_textView selectAll:nil];
+        NSAttributedString *selectedAttributedText = [_textView selectedTextAttributed:YES
+                                                                          cappedAtSize:0
+                                                                     minimumLineNumber:0];
 
-                                      // Then
-                                      XCTAssertEqualObjects([text stringByAppendingString:@"\n"], selectedAttributedText.string);
-                                  }];
+        // Then
+        XCTAssertEqualObjects([text stringByAppendingString:@"\n"], selectedAttributedText.string);
+    }];
 }
 
 - (void)testSelectedTextWithSizeCap {
@@ -2594,14 +2600,14 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
                                  fromClass:[NSUserDefaults class]
                                  withBlock:^ id { return fakeDefaults; }
                                   forBlock:^{
-                                      [iTermAdvancedSettingsModel loadAdvancedSettingsFromUserDefaults];
-                                      // When
-                                      [_textView selectAll:nil];
-                                      NSString *selectedText = [_textView selectedTextAttributed:NO cappedAtSize:0 minimumLineNumber:1];
+        [iTermAdvancedSettingsModel loadAdvancedSettingsFromUserDefaults];
+        // When
+        [_textView selectAll:nil];
+        NSString *selectedText = [_textView selectedTextAttributed:NO cappedAtSize:0 minimumLineNumber:1];
 
-                                      // Then
-                                      XCTAssertEqualObjects(@"12345\n", selectedText);
-                                  }];
+        // Then
+        XCTAssertEqualObjects(@"12345\n", selectedText);
+    }];
 }
 
 - (void)testSelectedTextWithSizeCapAndMinimumLine {
@@ -2767,6 +2773,56 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
 }
 
 - (BOOL)textViewTerminalBackgroundColorDeterminesWindowDecorationColor {
+    return NO;
+}
+
+- (void)sendTextSlowly:(NSString *)text {
+}
+
+- (void)textViewAddContextMenuItems:(NSMenu *)menu {
+}
+
+- (CGFloat)textViewBlend {
+    return 1;
+}
+
+- (BOOL)textViewCanBury {
+    return NO;
+}
+
+- (void)textViewDidDetectMouseReportingFrustration {
+}
+
+- (iTermExpect *)textViewExpect {
+    return nil;
+}
+
+- (NSEdgeInsets)textViewExtraMargins {
+    return NSEdgeInsetsZero;
+}
+
+- (void)textViewFindOnPageLocationsDidChange {
+}
+
+- (void)textViewFindOnPageSelectedResultDidChange {
+}
+
+- (void)textViewGetCurrentWorkingDirectoryWithCompletion:(void (^)(NSString *))completion {
+    completion(@"/");
+}
+
+- (void)textViewProcessedBackgroundColorDidChange {
+}
+
+- (BOOL)textViewReportMouseEvent:(NSEventType)eventType modifiers:(NSUInteger)modifiers button:(MouseButtonNumber)button coordinate:(VT100GridCoord)coord deltaY:(CGFloat)deltaY allowDragBeforeMouseDown:(BOOL)allowDragBeforeMouseDown testOnly:(BOOL)testOnly {
+    return NO;
+}
+
+- (id<iTermSwipeHandler>)textViewSwipeHandler {
+    return nil;
+}
+
+- (BOOL)xtermMouseReportingAllowClicksAndDrags {
     return NO;
 }
 

@@ -955,6 +955,28 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     return YES;
 }
 
+- (BOOL)screenConfirmDownloadAllowed:(NSString *)name size:(NSInteger)size displayInline:(BOOL)displayInline promptIfBig:(BOOL *)promptIfBig {
+    return NO;
+}
+
+- (void)screenGetCursorType:(ITermCursorType *)cursorTypeOut blinking:(BOOL *)blinking {
+    *cursorTypeOut = CURSOR_BOX;
+    *blinking = NO;
+}
+
+- (void)screenRefreshFindOnPageView {
+}
+
+- (void)screenResetCursorTypeAndBlink {
+}
+
+- (void)screenSetUseCSIu:(int)terminalSetting {
+}
+
+- (BOOL)screenShouldClearScrollbackBuffer {
+    return YES;
+}
+
 #pragma mark - iTermSelectionDelegate
 
 - (void)selectionDidChange:(iTermSelection *)selection {
