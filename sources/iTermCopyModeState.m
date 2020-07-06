@@ -98,7 +98,7 @@
 - (BOOL)moveToBottomOfVisibleArea {
     BOOL moved = NO;
     VT100GridRange range = [_textView rangeOfVisibleLines];
-    int destination = range.location + range.length;
+    int destination = range.location + range.length - 1;
     int n = MAX(0, destination - _coord.y);
     for (int i = 0; i < n; i++) {
         if ([self moveDown]) {

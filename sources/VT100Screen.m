@@ -814,7 +814,8 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 - (void)didResizeToSize:(VT100GridSize)newSize
               selection:(iTermSelection *)selection
      couldHaveSelection:(BOOL)couldHaveSelection
-          subSelections:(NSArray *)newSubSelections {
+          subSelections:(NSArray *)newSubSelections
+                 newTop:(int)newTop {
     [terminal_ clampSavedCursorToScreenSize:VT100GridSizeMake(newSize.width, newSize.height)];
 
     [primaryGrid_ resetScrollRegions];
@@ -851,7 +852,7 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     }
 
     [self reloadMarkCache];
-    [delegate_ screenSizeDidChange];
+    [delegate_ screenSizeDidChangeWithNewTopLineAt:newTop];
 }
 
 - (LineBuffer *)prepareToResizeInAlternateScreenMode:(NSArray **)altScreenSubSelectionTuplesPtr
@@ -930,7 +931,15 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 }
 
 - (void)reallySetSize:(VT100GridSize)newSize {
+    DLog(@"------------ reallySetSize");
     DLog(@"Set size to %@", VT100GridSizeDescription(newSize));
+
+    const VT100GridRange previouslyVisibleLineRange = [self.delegate screenRangeOfVisibleLines];
+    const VT100GridCoordRange previouslyVisibleLines =
+        VT100GridCoordRangeMake(0,
+                                previouslyVisibleLineRange.location,
+                                0,
+                                previouslyVisibleLineRange.location + 1);
 
     [self sanityCheckIntervalsFrom:currentGrid_.size note:@"pre-hoc"];
     [self.temporaryDoubleBuffer resetExplicitly];
@@ -978,6 +987,13 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
              newHeight:newSize.height];
     DLog(@"History after appending screen to scrollback:\n%@", [linebuffer_ debugString]);
 
+    VT100GridCoordRange convertedRangeOfVisibleLines;
+    const BOOL rangeOfVisibleLinesConvertedCorrectly = [self convertRange:previouslyVisibleLines
+                                                                  toWidth:newSize.width
+                                                                       to:&convertedRangeOfVisibleLines
+                                                             inLineBuffer:linebuffer_
+                                                            tolerateEmpty:YES];
+
     // Contains iTermSubSelection*s updated for the new screen size. Used
     // regardless of whether we were in the alt screen, as it's simply the set
     // of new sub-selections.
@@ -1023,10 +1039,13 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
         [self updateAlternateScreenIntervalTreeForNewSize:newSize];
     }
 
+    const int newTop = rangeOfVisibleLinesConvertedCorrectly ? convertedRangeOfVisibleLines.start.y : -1;
+
     [self didResizeToSize:newSize
                 selection:selection
        couldHaveSelection:couldHaveSelection
-            subSelections:newSubSelections];
+            subSelections:newSubSelections
+                   newTop:newTop];
     [altScreenLineBuffer endResizing];
     [self sanityCheckIntervalsFrom:oldSize note:@"post-hoc"];
     DLog(@"After:\n%@", [currentGrid_ compactLineDumpWithContinuationMarks]);

@@ -882,10 +882,10 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
                          withWidth:width
                            yOffset:&yOffset
                            extends:&extends];
-    if (coord.x == 0 && coord.y == 0 && index == 0 && yOffset == 1) {
+    if (pos == 0 && yOffset == 1) {
         // getPositionOfLine:… will set yOffset to 1 when returning the first cell of a raw line to
         // disambiguate the position. That's the right thing to do except for the very first cell
-        // in the buffer, where the position is unambiguous.
+        // in a block, where the position is unambiguous.
         yOffset = 0;
     }
     if (pos < 0) {

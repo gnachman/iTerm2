@@ -26,7 +26,7 @@
 - (void)screenRefreshFindOnPageView;
 
 // Called when the screen's size changes.
-- (void)screenSizeDidChange;
+- (void)screenSizeDidChangeWithNewTopLineAt:(int)newTop;
 
 // A change was made to the screen's contents which could cause a trigger to fire.
 - (void)screenTriggerableChangeDidOccur;
@@ -282,5 +282,6 @@
                          promptIfBig:(BOOL *)promptIfBig;
 - (BOOL)screenShouldClearScrollbackBuffer;
 - (void)screenSetUseCSIu:(int)terminalSetting;
+- (VT100GridRange)screenRangeOfVisibleLines;
 
 @end

@@ -716,7 +716,6 @@ backgroundColor:(NSColor *)backgroundColor;
 - (void)updateDisplayBecause:(NSString *)reason;
 - (void)doAntiIdle;
 - (NSString*)ansiColorsMatchingForeground:(NSDictionary*)fg andBackground:(NSDictionary*)bg inBookmark:(Profile*)aDict;
-- (void)updateScroll;
 
 - (void)changeFontSizeDirection:(int)dir;
 - (void)setFont:(NSFont*)font

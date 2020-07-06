@@ -768,19 +768,10 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
     [self scrollRectToVisible:aFrame];
 }
 
-- (void)scrollBottomOfRectToBottomOfVisibleArea:(NSRect)rect {
-    NSPoint p = rect.origin;
-    p.y += rect.size.height;
-    NSRect visibleRect = [self visibleContentRect];
-    p.y -= visibleRect.size.height;
-    p.y = MAX(0, p.y);
-    [[[self enclosingScrollView] contentView] scrollToPoint:p];
-}
-
 - (void)scrollLineNumberRangeIntoView:(VT100GridRange)range {
     NSRect visibleRect = [[self enclosingScrollView] documentVisibleRect];
     int firstVisibleLine = visibleRect.origin.y / _lineHeight;
-    int lastVisibleLine = firstVisibleLine + [_dataSource height];
+    int lastVisibleLine = firstVisibleLine + [_dataSource height] - 1;
     if (range.location >= firstVisibleLine && range.location + range.length <= lastVisibleLine) {
       // Already visible
       return;
@@ -788,13 +779,11 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
     if (range.length < [_dataSource height]) {
         [self _scrollToCenterLine:range.location + range.length / 2];
     } else {
-        NSRect aFrame;
-        aFrame.origin.x = 0;
-        aFrame.origin.y = range.location * _lineHeight;
-        aFrame.size.width = [self frame].size.width;
-        aFrame.size.height = range.length * _lineHeight;
-
-        [self scrollBottomOfRectToBottomOfVisibleArea:aFrame];
+        const VT100GridRange rangeOfVisibleLines = [self rangeOfVisibleLines];
+        const int currentBottomLine = rangeOfVisibleLines.location + rangeOfVisibleLines.length;
+        const int desiredBottomLine = range.length + range.location;
+        const int dy = desiredBottomLine - currentBottomLine;
+        [self scrollBy:[self.enclosingScrollView verticalLineScroll] * dy];
     }
     [(PTYScroller*)([[self enclosingScrollView] verticalScroller]) setUserScroll:YES];
 }
@@ -1467,7 +1456,7 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
     NSRect visibleRect = [self visibleContentRect];
     int start = [self coordForPoint:visibleRect.origin allowRightMarginOverflow:NO].y;
     int end = [self coordForPoint:NSMakePoint(0, NSMaxY(visibleRect) - 1) allowRightMarginOverflow:NO].y;
-    return VT100GridRangeMake(start, MAX(0, end - start));
+    return VT100GridRangeMake(start, MAX(0, end - start + 1));
 }
 
 - (long long)firstVisibleAbsoluteLineNumber {

@@ -1813,6 +1813,8 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     self.lastResize = [NSDate timeIntervalSinceReferenceDate];
     DLog(@"Set session %@ to %@", self, VT100GridSizeDescription(size));
+    DLog(@"Before, range of visible lines is %@", VT100GridRangeDescription(_textview.rangeOfVisibleLines));
+
     [_screen setSize:size];
     if (!self.delegate || [self.delegate sessionShouldSendWindowSizeIOCTL:self]) {
         [_shell setSize:size viewSize:_screen.viewSize];
@@ -4770,12 +4772,6 @@ ITERM_WEAKLY_REFERENCEABLE
         return guid;
     } else {
         return arrangement[SESSION_UNIQUE_ID];
-    }
-}
-
-- (void)updateScroll {
-    if (![(PTYScroller*)([_view.scrollview verticalScroller]) userScroll]) {
-        [_textview scrollEnd];
     }
 }
 
@@ -9440,8 +9436,15 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [_view.findDriver.viewController countDidChange];
 }
 
-- (void)screenSizeDidChange {
-    [self updateScroll];
+- (void)screenSizeDidChangeWithNewTopLineAt:(int)newTop {
+    if ([(PTYScroller*)([_view.scrollview verticalScroller]) userScroll] && newTop >= 0) {
+        const VT100GridRange range = VT100GridRangeMake(newTop,
+                                                        _textview.rangeOfVisibleLines.length);
+        [_textview scrollLineNumberRangeIntoView:range];
+    } else {
+        [_textview scrollEnd];
+    }
+
     [_textview updateNoteViewFrames];
     [self.variablesScope setValuesFromDictionary:@{ iTermVariableKeySessionColumns: @(_screen.width),
                                                     iTermVariableKeySessionRows: @(_screen.height) }];
@@ -10624,6 +10627,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
     iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:_screen];
     return [extractor haveNonWhitespaceInFirstLineOfRange:VT100GridWindowedRangeMake(range, 0, 0)];
+}
+
+- (VT100GridRange)screenRangeOfVisibleLines {
+    return [_textview rangeOfVisibleLines];
 }
 
 #pragma mark - FinalTerm
