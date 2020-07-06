@@ -1776,6 +1776,35 @@ ITERM_WEAKLY_REFERENCEABLE
     assert(NO);
 }
 
+- (BOOL)ptyWindowIsDraggable:(id<PTYWindow>)window {
+    if (self.lionFullScreen || togglingLionFullScreen_) {
+        return NO;
+    }
+    switch (_windowType) {
+        case WINDOW_TYPE_LION_FULL_SCREEN:
+        case WINDOW_TYPE_TOP:
+        case WINDOW_TYPE_TOP_PARTIAL:
+        case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
+        case WINDOW_TYPE_BOTTOM:
+        case WINDOW_TYPE_LEFT:
+        case WINDOW_TYPE_RIGHT:
+        case WINDOW_TYPE_BOTTOM_PARTIAL:
+        case WINDOW_TYPE_LEFT_PARTIAL:
+        case WINDOW_TYPE_RIGHT_PARTIAL:
+            return NO;
+
+        case WINDOW_TYPE_MAXIMIZED:
+        case WINDOW_TYPE_COMPACT_MAXIMIZED:
+        case WINDOW_TYPE_NORMAL:
+        case WINDOW_TYPE_NO_TITLE_BAR:
+        case WINDOW_TYPE_COMPACT:
+        case WINDOW_TYPE_ACCESSORY:
+            return YES;
+    }
+
+    assert(NO);
+}
+
 - (void)closeSession:(PTYSession *)aSession {
     [self closeSession:aSession soft:NO];
 }
@@ -7350,6 +7379,9 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
         return @([iTermAdvancedSettingsModel customTabBarFontSize]);
     } else if ([option isEqualToString:PSMTabBarControlOptionDragEdgeHeight]) {
         iTermPreferencesTabStyle preferredStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
+        if (![self ptyWindowIsDraggable:self.ptyWindow]) {
+            return @0;
+        }
         switch (preferredStyle) {
             case TAB_STYLE_MINIMAL:
                 return @12;

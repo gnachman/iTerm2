@@ -249,6 +249,13 @@ const CGFloat iTermGetStatusBarHeight() {
     [self showContextMenuForEvent:event];
 }
 
+- (void)mouseDragged:(NSEvent *)event {
+    if (![_component statusBarComponentHandlesMouseDown]) {
+        [self.window performWindowDragWithEvent:event];
+    } else {
+        [super mouseDragged:event];
+    }
+}
 - (void)showContextMenuForEvent:(NSEvent *)event {
     NSMenu *menu = [[NSMenu alloc] initWithTitle:@"Contextual Menu"];
     if (![_component statusBarComponentIsInternal]) {

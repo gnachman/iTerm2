@@ -32,6 +32,7 @@
 @protocol PSMTabStyle;
 @class PTYTab;
 @class PTYSession;
+@protocol PTYWindow;
 
 // The key used for a window's arrangement in encoding restorable state.
 extern NSString *const kTerminalWindowStateRestorationWindowArrangementKey;
@@ -65,6 +66,8 @@ typedef NS_ENUM(NSUInteger, PTYWindowTitleBarFlavor) {
 };
 
 - (PTYWindowTitleBarFlavor)ptyWindowTitleBarFlavor;
+
+- (BOOL)ptyWindowIsDraggable:(id<PTYWindow>)window;
 @end
 
 // Common methods implemented by terminal windows of both kinds.

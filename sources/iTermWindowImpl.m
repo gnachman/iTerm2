@@ -95,6 +95,12 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
+- (void)performWindowDragWithEvent:(NSEvent *)event {
+    if ([self.ptyDelegate ptyWindowIsDraggable:self]) {
+        [super performWindowDragWithEvent:event];
+    }
+}
+
 - (void)performMiniaturize:(nullable id)sender {
     if ([self.ptyDelegate anyFullScreen]) {
         if (@available(macOS 10.13, *)) {
