@@ -67,6 +67,9 @@ extern NSString *const iTermImageDidLoad;
 // Is there an image yet? one might be coming later
 @property (nonatomic, readonly) BOOL ready;
 
+// During restoration, do we still need to find a mark?
+@property (nonatomic) BOOL provisional;
+
 // Used to create a new instance for a new image. This may remain an empty container until
 // -setImageFromImage: is called.
 - (instancetype)initWithCode:(unichar)code;

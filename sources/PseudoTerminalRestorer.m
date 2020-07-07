@@ -20,6 +20,8 @@
 static NSMutableArray *queuedBlocks;
 typedef void (^VoidBlock)(void);
 static BOOL gWaitingForFullScreen;
+static void (^gPostRestorationCompletionBlock)(void);
+static BOOL gRanQueuedBlocks;
 
 @implementation PseudoTerminalRestorer
 
@@ -43,6 +45,26 @@ static BOOL gWaitingForFullScreen;
     DLog(@"Ran all queued blocks");
     [queuedBlocks release];
     queuedBlocks = nil;
+    gRanQueuedBlocks = YES;
+
+    if (gPostRestorationCompletionBlock) {
+        gPostRestorationCompletionBlock();
+        [gPostRestorationCompletionBlock release];
+        gPostRestorationCompletionBlock = nil;
+    }
+}
+
++ (void)setPostRestorationCompletionBlock:(void (^)(void))postRestorationCompletionBlock {
+    assert(!gPostRestorationCompletionBlock);
+    if (gRanQueuedBlocks) {
+        postRestorationCompletionBlock();
+    } else {
+        gPostRestorationCompletionBlock = [postRestorationCompletionBlock copy];
+    }
+}
+
++ (void (^)(void))postRestorationCompletionBlock {
+    return gPostRestorationCompletionBlock;
 }
 
 + (void)restoreWindowWithIdentifier:(NSString *)identifier

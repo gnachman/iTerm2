@@ -12,6 +12,8 @@
 
 }
 
+@property(class, nonatomic) void (^postRestorationCompletionBlock)(void);
+
 + (void)restoreWindowWithIdentifier:(NSString *)identifier state:(NSCoder *)state completionHandler:(void (^)(NSWindow *, NSError *))completionHandler;
 
 + (BOOL)willOpenWindows;

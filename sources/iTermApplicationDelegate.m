@@ -895,6 +895,9 @@ static BOOL hasBecomeActive = NO;
     if (screenCharState) {
         ScreenCharDecodeRestorableState(screenCharState);
     }
+    [PseudoTerminalRestorer setPostRestorationCompletionBlock:^{
+        ScreenCharGarbageCollectImages();
+    }];
 
     NSDictionary *urlStoreState = [coder decodeObjectForKey:kURLStoreRestorableStateKey];
     if (urlStoreState) {

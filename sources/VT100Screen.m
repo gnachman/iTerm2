@@ -2456,7 +2456,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
         screenMark.sessionGuid = [delegate_ screenSessionGuid];
     }
     long long totalOverflow = [self totalScrollbackOverflow];
-    if (line < totalOverflow || line >= totalOverflow + self.numberOfLines) {
+    if (line < totalOverflow || line > totalOverflow + self.numberOfLines) {
         return nil;
     }
     int nonAbsoluteLine = line - totalOverflow;
@@ -5840,6 +5840,9 @@ static void SwapInt(int *a, int *b) {
                 if (visible) {
                     [delegate_ screenDidAddNote:note];
                 }
+            } else if ([object isKindOfClass:[iTermImageMark class]]) {
+                iTermImageMark *imageMark = (iTermImageMark *)object;
+                ScreenCharClearProvisionalFlagForImageWithCode(imageMark.imageCode.intValue);
             }
         }
     }

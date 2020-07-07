@@ -35,6 +35,7 @@
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermImageInfo.h"
 #import "iTermMalloc.h"
+#import "NSArray+iTerm.h"
 #import "NSCharacterSet+iTerm.h"
 
 static NSString *const kScreenCharComplexCharMapKey = @"Complex Char Map";
@@ -50,7 +51,7 @@ static NSMutableSet<NSNumber *> *spacingCombiningMarkCodeNumbers;
 // Maps strings to codes.
 static NSMutableDictionary* inverseComplexCharMap;
 // Image info. Maps a NSNumber with the image's code to an ImageInfo object.
-static NSMutableDictionary* gImages;
+static NSMutableDictionary<NSNumber *, iTermImageInfo *> *gImages;
 static NSMutableDictionary* gEncodableImageMap;
 // Next available code.
 static int ccmNextKey = 1;
@@ -714,6 +715,19 @@ NSDictionary *ScreenCharEncodedRestorableState(void) {
               kScreenCharHasWrappedKey: @(hasWrapped) };
 }
 
+void ScreenCharGarbageCollectImages(void) {
+    NSArray<NSNumber *> *provisionalKeys = [gImages.allKeys filteredArrayUsingBlock:^BOOL(NSNumber *key) {
+        return gImages[key].provisional;
+    }];
+    DLog(@"Garbage collect: %@", provisionalKeys);
+    [gImages removeObjectsForKeys:provisionalKeys];
+}
+
+void ScreenCharClearProvisionalFlagForImageWithCode(int code) {
+    DLog(@"Clear provisional for %@", @(code));
+    gImages[@(code)].provisional = NO;
+}
+
 void ScreenCharDecodeRestorableState(NSDictionary *state) {
     NSDictionary *stateComplexCharMap = state[kScreenCharComplexCharMapKey];
     CreateComplexCharMapIfNeeded();
@@ -739,6 +753,7 @@ void ScreenCharDecodeRestorableState(NSDictionary *state) {
         gEncodableImageMap[key] = imageMap[key];
         iTermImageInfo *info = [[[iTermImageInfo alloc] initWithDictionary:imageMap[key]] autorelease];
         if (info) {
+            info.provisional = YES;
             gImages[key] = info;
             DLog(@"Decoded restorable state for image %@: %@", key, info);
         }
