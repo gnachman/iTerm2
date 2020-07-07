@@ -2912,10 +2912,8 @@ static const int kMaxScreenRows = 4096;
         case 'B':
             // Sequence marking the start of the command read from the command prompt
             // (FTCS_COMMAND_START)
-            if (!inCommand_) {
-                [delegate_ terminalCommandDidStart];
-                inCommand_ = YES;
-            }
+            [delegate_ terminalCommandDidStart];
+            inCommand_ = YES;
             break;
 
         case 'C':
