@@ -230,7 +230,7 @@ static NSString *const iTermCapturedOutputToolTableViewCellIdentifier = @"ToolCa
     // Clear button
     {
         CGFloat fudgeFactor = 1;
-        if (@available(macOS 10.16, *)) {
+        if (@available(macOS 10.15, *)) {
             fudgeFactor = 0;
         }
         _clearButton.frame = NSMakeRect(help_.frame.origin.x - _clearButton.frame.size.width - kMargin,

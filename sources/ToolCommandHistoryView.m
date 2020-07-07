@@ -230,6 +230,10 @@ static const CGFloat kHelpMargin = 5;
                                 frame.size.height - kButtonHeight,
                                 frame.size.width - help_.frame.size.width - kHelpMargin,
                                 kButtonHeight)];
+    help_.frame = NSMakeRect(NSMaxX(clear_.frame) + kHelpMargin,
+                             NSMinY(clear_.frame) + (NSHeight(clear_.frame) - NSHeight(help_.frame)) / 2.0 + 2,
+                             NSWidth(help_.frame),
+                             NSHeight(help_.frame)) ;
     scrollView_.frame = NSMakeRect(0,
                                    searchField_.frame.size.height + kMargin,
                                    frame.size.width,
