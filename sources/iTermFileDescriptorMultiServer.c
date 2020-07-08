@@ -10,11 +10,15 @@
 #include "iTermCLogging.h"
 #include "iTermFileDescriptorServerShared.h"
 
+#include <Availability.h>
 #include <Carbon/Carbon.h>
 #include <fcntl.h>
+#include <mach/mach.h>
 #include <stdarg.h>
 #include <stdlib.h>
+#include <sys/types.h>
 #include <sys/un.h>
+#include <unistd.h>
 
 #ifndef ITERM_SERVER
 #error ITERM_SERVER not defined. Build process is broken.
@@ -64,6 +68,8 @@ typedef struct {
 
 static iTermMultiServerChild *children;
 static int numberOfChildren;
+static void CheckIfBootstrapPortIsDead(void);
+static void CleanUp(void);
 
 #pragma mark - Signal handlers
 
@@ -682,6 +688,7 @@ static void SelectLoop(int acceptFd, int writeFd, int readFd) {
         int results[fdCount];
         FDLog(LOG_DEBUG, "Calling select()");
         iTermSelect(fds, sizeof(fds) / sizeof(*fds), results, 1 /* wantErrors */);
+        CheckIfBootstrapPortIsDead();
 
         if (results[2]) {
             // readFd
@@ -807,6 +814,7 @@ static void MainLoop(char *path, int acceptFd, int initialWriteFd, int initialRe
             FDLog(LOG_ERR, "iTermMultiServerAccept failed: %s", strerror(errno));
             break;
         }
+        CheckIfBootstrapPortIsDead();
         FDLog(LOG_DEBUG, "Accept returned a valid file descriptor %d", writeFd);
         readFd = MakeAndSendPipe(writeFd);
         MakeBlocking(writeFd);
@@ -908,6 +916,34 @@ static void InitializeLogging(void) {
     setlogmask(LOG_UPTO(LOG_DEBUG));
 }
 
+static void QuitCleanly(void) {
+    FDLog(LOG_ERR, "QuitCleanly");
+    CleanUp();
+    _exit(0);
+}
+
+// NOTE: If I am ever forced to use a CFRunLoop in this process, then I can get a callback when
+// the port is invalidated by using CFMachPortCreateWithPort, CFMachPortSetInvalidationCallBack,
+// CFRunLoopAddSource, and CFRunLoopRun. See TN2050 mirrored at:
+// https://www.fenestrated.net/mirrors/Apple%20Technotes%20(As%20of%202002)/tn/tn2050.html
+static void CheckIfBootstrapPortIsDead(void) {
+    mach_port_t port = 0;
+    if (task_get_bootstrap_port(mach_task_self(), &port) != KERN_SUCCESS) {
+        FDLog(LOG_ERR, "Unable to get the bootstrap port! errno=%d", errno);
+        QuitCleanly();
+    }
+    mach_port_type_t type = 0;
+    if (mach_port_type(mach_task_self(), port, &type) != KERN_SUCCESS) {
+        FDLog(LOG_ERR, "Unable to get the type of the bootstrap port! errno=%d", errno);
+        QuitCleanly();
+    }
+    if (type == MACH_PORT_TYPE_DEAD_NAME) {
+        FDLog(LOG_ERR, "The bootstrap port has type DEAD. This indicates the user's session has died and this process is unusable. This can happen after a logout-login sequence. iTermServer will now terminate.");
+        QuitCleanly();
+    }
+    FDLog(LOG_DEBUG, "Bootstrap port isn't dead yet.");
+}
+
 static int Initialize(char *path) {
     InitializeLogging();
 
@@ -931,9 +967,27 @@ static int Initialize(char *path) {
     return 0;
 }
 
-static int iTermFileDescriptorMultiServerRun(char *path, int socketFd, int writeFD, int readFD) {
-    // TODO: Consider calling daemon() or its equivalent pthread_spawn at this point.
+static int iTermFileDescriptorMultiServerDaemonize(void) {
+    switch (fork()) {
+        case -1:
+            // Error
+            return -1;
+        case 0:
+            // Child
+            break;
+        default:
+            // Parent
+            _exit(0);
+    }
 
+    if (setsid() == -1) {
+        return -1;
+    }
+
+    return 0;
+}
+
+static void iTermFileDescriptorMultiServerConnectToWindowServer(void) {
     // Use GetCurrentProcess() to force a connection to the window server. This gets us killed on
     // log out. Child process become broken because their Aqua namespace session has disappeared.
     // For example, `whoami` will print a number instead of a name. Better to die than live less
@@ -963,6 +1017,29 @@ static int iTermFileDescriptorMultiServerRun(char *path, int socketFd, int write
 
     // Do this to remove the dock icon.
     TransformProcessType(&psn, kProcessTransformToUIElementApplication);
+}
+
+static void CleanUp(void) {
+    FDLog(LOG_DEBUG, "Cleaning up to exit");
+    if (!gPath) {
+        FDLog(LOG_DEBUG, "Don't have a socket path to remove.");
+        return;
+    }
+    FDLog(LOG_DEBUG, "Unlink %s", gPath);
+    unlink(gPath);
+}
+
+static int iTermFileDescriptorMultiServerRun(char *path, int socketFd, int writeFD, int readFD) {
+    // I have turned off connectToWindowServer because it seems to be a bad idea. For one thing,
+    // Activity Monitor shows an iTerm2 process that is not responding. It also might be responsible
+    // for breaking Applescript (issue 9000, 8986).
+    const int connectToWindowServer = 0;
+
+    if (connectToWindowServer) {
+        iTermFileDescriptorMultiServerConnectToWindowServer();
+    } else {
+        iTermFileDescriptorMultiServerDaemonize();
+    }
 
     SetRunningServer();
     // If iTerm2 dies while we're blocked in sendmsg we get a deadly sigpipe.
@@ -974,9 +1051,7 @@ static int iTermFileDescriptorMultiServerRun(char *path, int socketFd, int write
         MainLoop(path, socketFd, writeFD, readFD);
         // MainLoop never returns, except by dying on a signal.
     }
-    FDLog(LOG_DEBUG, "Cleaning up to exit");
-    FDLog(LOG_DEBUG, "Unlink %s", path);
-    unlink(path);
+    CleanUp();
     return 1;
 }
 
