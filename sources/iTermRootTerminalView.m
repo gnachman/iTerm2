@@ -305,7 +305,7 @@ typedef struct {
                 [self addSubview:_bottomBorderView];
             }
         }
-        _wtfTop = [[SolidColorView alloc] initWithFrame:NSMakeRect(0, 0, 100, 100) color:[NSColor clearColor]];
+        _wtfTop = [[SolidColorView alloc] initWithFrame:NSMakeRect(0, 0, 1, 1) color:[NSColor clearColor]];
         [self addSubview:_wtfTop];
     }
     return self;
@@ -1410,7 +1410,7 @@ typedef struct {
 
 - (void)layoutSubviews {
     DLog(@"layoutSubviews");
-    _wtfTop.frame = NSMakeRect(0, self.bounds.size.height - 100, 100, 100);
+    _wtfTop.frame = NSMakeRect(0, self.bounds.size.height - 1, 1, 1);
 
     const BOOL showToolbeltInline = self.shouldShowToolbelt;
     NSWindow *thisWindow = _delegate.window;
