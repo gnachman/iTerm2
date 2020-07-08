@@ -305,7 +305,7 @@ typedef struct {
                 [self addSubview:_bottomBorderView];
             }
         }
-        _wtfTop = [[SolidColorView alloc] initWithFrame:NSMakeRect(0, 0, 100, 100) color:[NSColor clearColor]];
+        _wtfTop = [[iTermLayerBackedSolidColorView alloc] initWithFrame:NSMakeRect(0, 0, 100, 100) color:[NSColor clearColor]];
         [self addSubview:_wtfTop];
     }
     return self;
