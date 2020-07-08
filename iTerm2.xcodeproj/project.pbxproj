@@ -2783,7 +2783,6 @@
 		A6A269901900F95D00437DA9 /* ProfilesTerminalPreferencesViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A2698D1900F95D00437DA9 /* ProfilesTerminalPreferencesViewController.h */; };
 		A6A269971902FA6800437DA9 /* ProfilesKeysPreferencesViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A269951902FA6800437DA9 /* ProfilesKeysPreferencesViewController.h */; };
 		A6A2699C190319A000437DA9 /* ProfilesAdvancedPreferencesViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A2699A190319A000437DA9 /* ProfilesAdvancedPreferencesViewController.h */; };
-		A6A453931FF318D8009FD3B7 /* iTermTexturePageCollection.mm in Sources */ = {isa = PBXBuildFile; fileRef = A6A453921FF318D8009FD3B7 /* iTermTexturePageCollection.mm */; };
 		A6A4865D20B6706700493302 /* ProfilesKeysPreferencesViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A269961902FA6800437DA9 /* ProfilesKeysPreferencesViewController.m */; };
 		A6A4865E20B6758D00493302 /* iTermPreferencesBaseViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E7138818F26445008D94DD /* iTermPreferencesBaseViewController.m */; };
 		A6A4865F20B675DE00493302 /* AdvancedWorkingDirectoryWindowController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E713B118FCB559008D94DD /* AdvancedWorkingDirectoryWindowController.m */; };
@@ -5337,9 +5336,6 @@
 		A66F3CED1FEA2A6C00AA2021 /* iTermPIUArray.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = iTermPIUArray.h; path = Metal/Infrastructure/iTermPIUArray.h; sourceTree = "<group>"; };
 		A66F3CEE1FEA3D9E00AA2021 /* iTermHistogram.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermHistogram.h; sourceTree = "<group>"; };
 		A66F3CEF1FEA3D9E00AA2021 /* iTermHistogram.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = iTermHistogram.mm; sourceTree = "<group>"; };
-		A66F3CF21FED6FB000AA2021 /* iTermTexturePage.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = iTermTexturePage.h; path = Metal/Renderers/iTermTexturePage.h; sourceTree = "<group>"; };
-		A66F3CF31FED709800AA2021 /* iTermGlyphEntry.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = iTermGlyphEntry.h; path = Metal/Renderers/iTermGlyphEntry.h; sourceTree = "<group>"; };
-		A66F3CF41FED713500AA2021 /* iTermTexturePageCollection.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = iTermTexturePageCollection.h; path = Metal/Renderers/iTermTexturePageCollection.h; sourceTree = "<group>"; };
 		A66F3CF51FED741E00AA2021 /* iTermTextRendererTransientState.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = iTermTextRendererTransientState.h; path = Metal/Renderers/iTermTextRendererTransientState.h; sourceTree = "<group>"; };
 		A66F3CF61FED741E00AA2021 /* iTermTextRendererTransientState.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; name = iTermTextRendererTransientState.mm; path = Metal/Renderers/iTermTextRendererTransientState.mm; sourceTree = "<group>"; };
 		A66F3CF91FED75EA00AA2021 /* iTermTextRendererCommon.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = iTermTextRendererCommon.h; path = Metal/Renderers/iTermTextRendererCommon.h; sourceTree = "<group>"; };
@@ -5817,7 +5813,6 @@
 		A6A269961902FA6800437DA9 /* ProfilesKeysPreferencesViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = ProfilesKeysPreferencesViewController.m; sourceTree = "<group>"; tabWidth = 4; };
 		A6A2699A190319A000437DA9 /* ProfilesAdvancedPreferencesViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = ProfilesAdvancedPreferencesViewController.h; sourceTree = "<group>"; tabWidth = 4; };
 		A6A2699B190319A000437DA9 /* ProfilesAdvancedPreferencesViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = ProfilesAdvancedPreferencesViewController.m; sourceTree = "<group>"; tabWidth = 4; };
-		A6A453921FF318D8009FD3B7 /* iTermTexturePageCollection.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; name = iTermTexturePageCollection.mm; path = Metal/Renderers/iTermTexturePageCollection.mm; sourceTree = "<group>"; };
 		A6A51A3F1B45CEA9007891F3 /* VT100DCSParserTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VT100DCSParserTest.m; sourceTree = "<group>"; };
 		A6A5991B1887C63700CB4209 /* ToolCommandHistoryView.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = ToolCommandHistoryView.h; sourceTree = "<group>"; tabWidth = 4; };
 		A6A5991C1887C63700CB4209 /* ToolCommandHistoryView.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = ToolCommandHistoryView.m; sourceTree = "<group>"; tabWidth = 4; };
@@ -8397,7 +8392,6 @@
 				A67960A21F81FC9C008A42BC /* iTermCursorRenderer.m */,
 				A68400AD1FF861A8008D3EE2 /* iTermFullScreenFlashRenderer.h */,
 				A68400AE1FF861A8008D3EE2 /* iTermFullScreenFlashRenderer.m */,
-				A66F3CF31FED709800AA2021 /* iTermGlyphEntry.h */,
 				A6DBC0472005F09100F1466D /* iTermHighlightRowRenderer.h */,
 				A6DBC0482005F09100F1466D /* iTermHighlightRowRenderer.mm */,
 				A6DBC03A2003479400F1466D /* iTermImageRenderer.h */,
@@ -8414,9 +8408,6 @@
 				A66F3CF51FED741E00AA2021 /* iTermTextRendererTransientState.h */,
 				A66F3CF61FED741E00AA2021 /* iTermTextRendererTransientState.mm */,
 				A66F3CFA1FED770100AA2021 /* iTermTextRendererTransientState+Private.h */,
-				A66F3CF21FED6FB000AA2021 /* iTermTexturePage.h */,
-				A66F3CF41FED713500AA2021 /* iTermTexturePageCollection.h */,
-				A6A453921FF318D8009FD3B7 /* iTermTexturePageCollection.mm */,
 				A68400BA1FF98101008D3EE2 /* iTermTimestampsRenderer.h */,
 				A68400BB1FF98101008D3EE2 /* iTermTimestampsRenderer.m */,
 			);
@@ -13056,7 +13047,6 @@
 				532755862387821C00C50732 /* iTermProcessMonitor.m in Sources */,
 				A6A4867420B67B2400493302 /* PreferenceInfo.m in Sources */,
 				A6BF035D21E179BD0097DA86 /* iTermWeakVariables.m in Sources */,
-				A6A453931FF318D8009FD3B7 /* iTermTexturePageCollection.mm in Sources */,
 				A6DBC05220073CBA00F1466D /* NSResponder+iTerm.m in Sources */,
 				A62DBBA820F4852A008B63D1 /* iTermStatusBarFunctionCallComponent.m in Sources */,
 				A6DBC04220049CB100F1466D /* iTermImage.metal in Sources */,

@@ -11,18 +11,14 @@ extern "C" {
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermASCIITexture.h"
 #import "iTermCharacterParts.h"
-#import "iTermGlyphEntry.h"
 #import "iTermMetalBufferPool.h"
 #import "iTermMetalDebugInfo.h"
 #import "iTermPIUArray.h"
 #import "iTermTexture.h"
-#import "iTermTexturePageCollection.h"
 #import "iTermSubpixelModelBuilder.h"
 #import "iTermTextRendererTransientState.h"
 #import "iTermTextRendererTransientState+Private.h"
 #import "iTermTextureArray.h"
-#import "iTermTexturePage.h"
-#import "iTermTexturePageCollection.h"
 #import "NSArray+iTerm.h"
 #import "NSMutableData+iTerm.h"
 #import "NSDictionary+iTerm.h"
@@ -31,13 +27,6 @@ extern "C" {
 #import <set>
 #import <unordered_map>
 #import <vector>
-
-static const NSInteger iTermTextAtlasCapacity = 16;
-
-// This seems like a good number 🤷. It lets you draw this many * iTermTextAtlasCapacity distinct
-// non-ascii characters at one time without having to constantly prune and redraw glyphs. That's
-// 64k chars under the current values of 16 and 4096.
-static const int iTermTextRendererMaximumNumberOfTexturePages = 4096;
 
 // True for macOS 10.14+. Means no subpixel antialiasing, so text blending is very simple.
 static BOOL gMonochromeText;
@@ -70,7 +59,6 @@ static BOOL gMonochromeText;
     id<MTLTexture> _models NS_DEPRECATED_MAC(10_12, 10_14);
     iTermASCIITextureGroup *_asciiTextureGroup;
 
-    iTermTexturePageCollectionSharedPointer *_texturePageCollectionSharedPointer;
     NSMutableArray<iTermTextRendererCachedQuad *> *_quadCache;
     CGSize _cellSizeForQuadCache;
 
@@ -277,24 +265,8 @@ static BOOL gMonochromeText;
 
 - (void)initializeTransientState:(iTermTextRendererTransientState *)tState
                    commandBuffer:(id<MTLCommandBuffer>)commandBuffer {
-    const CGSize currentSize = tState.cellConfiguration.glyphSize;
-    if (_texturePageCollectionSharedPointer != NULL) {
-        const vector_uint2 &oldSize = _texturePageCollectionSharedPointer.object->get_cell_size();
-        if (oldSize.x != currentSize.width || oldSize.y != currentSize.height) {
-            _texturePageCollectionSharedPointer = nil;
-        }
-    }
-    if (!_texturePageCollectionSharedPointer) {
-        iTerm2::TexturePageCollection *collection = new iTerm2::TexturePageCollection(_cellRenderer.device,
-                                                                                      simd_make_uint2(currentSize.width, currentSize.height),
-                                                                                      iTermTextAtlasCapacity,
-                                                                                      iTermTextRendererMaximumNumberOfTexturePages);
-        _texturePageCollectionSharedPointer = [[iTermTexturePageCollectionSharedPointer alloc] initWithObject:collection];
-    }
-
     tState.device = _cellRenderer.device;
     tState.asciiTextureGroup = _asciiTextureGroup;
-    tState.texturePageCollectionSharedPointer = _texturePageCollectionSharedPointer;
     tState.numberOfCells = tState.cellConfiguration.gridSize.width * tState.cellConfiguration.gridSize.height;
     tState.asciiOffset = _asciiOffset;
 }
