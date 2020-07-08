@@ -306,6 +306,7 @@ typedef struct {
             }
         }
         _wtfTop = [[iTermLayerBackedSolidColorView alloc] initWithFrame:NSMakeRect(0, 0, 1, 1) color:[NSColor clearColor]];
+        _wtfTop.alphaValue = 0;
         [self addSubview:_wtfTop];
     }
     return self;
