@@ -2923,6 +2923,10 @@ static BOOL iTermAPIHelperLastApplescriptAuthRequiredSetting;
         case ITMSavedArrangementRequest_Action_Restore:
             [self restoreArrangementNamed:request.name windowID:request.windowId handler:handler];
             return;
+
+        case ITMSavedArrangementRequest_Action_List:
+            [self listSavedArrangementsWithHandler:handler];
+            return;
     }
     ITMSavedArrangementResponse *response = [[ITMSavedArrangementResponse alloc] init];
     response.status = ITMSavedArrangementResponse_Status_RequestMalformed;
@@ -2967,6 +2971,15 @@ static BOOL iTermAPIHelperLastApplescriptAuthRequiredSetting;
         response.status = ITMSavedArrangementResponse_Status_Ok;
     } else {
         response.status = ITMSavedArrangementResponse_Status_ArrangementNotFound;
+    }
+    handler(response);
+}
+
+- (void)listSavedArrangementsWithHandler:(void (^)(ITMSavedArrangementResponse *))handler {
+    ITMSavedArrangementResponse *response = [[ITMSavedArrangementResponse alloc] init];
+    response.status = ITMSavedArrangementResponse_Status_Ok;
+    for (NSString *name in [WindowArrangements allNames]) {
+        [response.namesArray addObject:name];
     }
     handler(response);
 }

@@ -5768,10 +5768,11 @@ GPBEnumDescriptor *ITMSavedArrangementRequest_Action_EnumDescriptor(void) {
   static GPBEnumDescriptor *descriptor = NULL;
   if (!descriptor) {
     static const char *valueNames =
-        "Restore\000Save\000";
+        "Restore\000Save\000List\000";
     static const int32_t values[] = {
         ITMSavedArrangementRequest_Action_Restore,
         ITMSavedArrangementRequest_Action_Save,
+        ITMSavedArrangementRequest_Action_List,
     };
     GPBEnumDescriptor *worker =
         [GPBEnumDescriptor allocDescriptorForName:GPBNSStringifySymbol(ITMSavedArrangementRequest_Action)
@@ -5790,6 +5791,7 @@ BOOL ITMSavedArrangementRequest_Action_IsValidValue(int32_t value__) {
   switch (value__) {
     case ITMSavedArrangementRequest_Action_Restore:
     case ITMSavedArrangementRequest_Action_Save:
+    case ITMSavedArrangementRequest_Action_List:
       return YES;
     default:
       return NO;
@@ -5801,10 +5803,12 @@ BOOL ITMSavedArrangementRequest_Action_IsValidValue(int32_t value__) {
 @implementation ITMSavedArrangementResponse
 
 @dynamic hasStatus, status;
+@dynamic namesArray, namesArray_Count;
 
 typedef struct ITMSavedArrangementResponse__storage_ {
   uint32_t _has_storage_[1];
   ITMSavedArrangementResponse_Status status;
+  NSMutableArray *namesArray;
 } ITMSavedArrangementResponse__storage_;
 
 // This method is threadsafe because it is initially called
@@ -5821,6 +5825,15 @@ typedef struct ITMSavedArrangementResponse__storage_ {
         .offset = (uint32_t)offsetof(ITMSavedArrangementResponse__storage_, status),
         .flags = (GPBFieldFlags)(GPBFieldOptional | GPBFieldHasEnumDescriptor),
         .dataType = GPBDataTypeEnum,
+      },
+      {
+        .name = "namesArray",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMSavedArrangementResponse_FieldNumber_NamesArray,
+        .hasIndex = GPBNoHasBit,
+        .offset = (uint32_t)offsetof(ITMSavedArrangementResponse__storage_, namesArray),
+        .flags = GPBFieldRepeated,
+        .dataType = GPBDataTypeString,
       },
     };
     GPBDescriptor *localDescriptor =

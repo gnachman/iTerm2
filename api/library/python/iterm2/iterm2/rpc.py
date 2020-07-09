@@ -524,6 +524,14 @@ async def async_restore_arrangement(connection, name, window_id=None):
         request.saved_arrangement_request.window_id = window_id
     return await _async_call(connection, request)
 
+async def async_list_arrangements(connection):
+    """
+    Fetch a list of window arrangement names.
+    """
+    request = _alloc_request()
+    request.saved_arrangement_request.action = (
+        iterm2.api_pb2.SavedArrangementRequest.Action.Value("LIST"))
+    return await _async_call(connection, request)
 
 async def async_get_focus_info(connection):
     """

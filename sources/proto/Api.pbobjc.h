@@ -531,6 +531,9 @@ typedef GPB_ENUM(ITMSavedArrangementRequest_Action) {
 
   /** Save windows to a new arrangement with the given name */
   ITMSavedArrangementRequest_Action_Save = 1,
+
+  /** List arrangements */
+  ITMSavedArrangementRequest_Action_List = 2,
 };
 
 GPBEnumDescriptor *ITMSavedArrangementRequest_Action_EnumDescriptor(void);
@@ -2778,6 +2781,7 @@ typedef GPB_ENUM(ITMSavedArrangementRequest_FieldNumber) {
 
 @interface ITMSavedArrangementRequest : GPBMessage
 
+/** Not used for LIST */
 @property(nonatomic, readwrite, copy, null_resettable) NSString *name;
 /** Test to see if @c name has been set. */
 @property(nonatomic, readwrite) BOOL hasName;
@@ -2788,6 +2792,7 @@ typedef GPB_ENUM(ITMSavedArrangementRequest_FieldNumber) {
 /**
  * If given and the action is SAVE then only the tabs in the identified window are saved.
  * If given and the action is RESTORE then the arrangement will be restored as tabs in the identified window.
+ * Not used for LIST
  **/
 @property(nonatomic, readwrite, copy, null_resettable) NSString *windowId;
 /** Test to see if @c windowId has been set. */
@@ -2799,6 +2804,7 @@ typedef GPB_ENUM(ITMSavedArrangementRequest_FieldNumber) {
 
 typedef GPB_ENUM(ITMSavedArrangementResponse_FieldNumber) {
   ITMSavedArrangementResponse_FieldNumber_Status = 1,
+  ITMSavedArrangementResponse_FieldNumber_NamesArray = 2,
 };
 
 @interface ITMSavedArrangementResponse : GPBMessage
@@ -2806,6 +2812,10 @@ typedef GPB_ENUM(ITMSavedArrangementResponse_FieldNumber) {
 @property(nonatomic, readwrite) ITMSavedArrangementResponse_Status status;
 
 @property(nonatomic, readwrite) BOOL hasStatus;
+@property(nonatomic, readwrite, strong, null_resettable) NSMutableArray<NSString*> *namesArray;
+/** The number of items in @c namesArray without causing the array to be created. */
+@property(nonatomic, readonly) NSUInteger namesArray_Count;
+
 @end
 
 #pragma mark - ITMVariableRequest

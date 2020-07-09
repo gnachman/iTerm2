@@ -558,18 +558,24 @@ message FocusResponse {
 }
 
 message SavedArrangementRequest {
+  // Not used for LIST
   optional string name = 1;
+
   enum Action {
     // Restore an existing arrangement with the given name
     RESTORE = 0;
 
     // Save windows to a new arrangement with the given name
     SAVE = 1;
+
+    // List arrangements
+    LIST = 2;
   }
   optional Action action = 2;
 
   // If given and the action is SAVE then only the tabs in the identified window are saved.
   // If given and the action is RESTORE then the arrangement will be restored as tabs in the identified window.
+  // Not used for LIST
   optional string window_id = 3;
 }
 
@@ -581,6 +587,7 @@ message SavedArrangementResponse {
     REQUEST_MALFORMED = 3;
   }
   optional Status status = 1;
+  repeated string names = 2;
 }
 
 message VariableRequest {
