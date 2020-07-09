@@ -562,7 +562,7 @@ DEFINE_BOOL(pidinfoXPC, YES, SECTION_EXPERIMENTAL @"Call proc_pidinfo from an XP
 // Experiments currently under test
 DEFINE_BOOL(tmuxVariableWindowSizesSupported, YES, SECTION_EXPERIMENTAL @"Allow variable window sizes in tmux integration.\nRequres tmux version 2.9 or later.");
 DEFINE_BOOL(aggressiveBaseCharacterDetection, YES, SECTION_EXPERIMENTAL @"Detect base unicode characters with lookup table.\nApple's algorithm for segmenting composed characters makes bad choices, such as for Tamil. Enable this to reduce text overlapping.");
-DEFINE_BOOL(escapeWithQuotes, YES, SECTION_EXPERIMENTAL @"Escape file names with single quotes instead of backslashes.\nThis is intended for users of xonsh, which does not accept backslash escaping.");
+DEFINE_BOOL(escapeWithQuotes, NO, SECTION_EXPERIMENTAL @"Escape file names with single quotes instead of backslashes.\nThis is intended for users of xonsh, which does not accept backslash escaping.");
 DEFINE_STRING(fontsForGenerousRounding, @"consolas", SECTION_EXPERIMENTAL @"List of fonts to use alternate rounding algorithm for line height calculation.\nThis fixes consolas and emulates Terminal.app’s behavior on macOS 10.15. This is a comma-delimited list of font family substrings.");
 
 // Experimental features that are mostly dead:
