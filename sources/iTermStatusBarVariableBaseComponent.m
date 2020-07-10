@@ -145,7 +145,7 @@ static NSString *const iTermStatusBarHostnameComponentAbbreviateLocalhost = @"ab
 }
 
 - (NSImage *)statusBarComponentIcon {
-    return [NSImage it_imageNamed:@"StatusBarIconHost" forClass:[self class]];
+    return [NSImage it_cacheableImageNamed:@"StatusBarIconHost" forClass:[self class]];
 }
 
 - (NSString *)statusBarComponentShortDescription {
@@ -197,7 +197,7 @@ static NSString *const iTermStatusBarHostnameComponentAbbreviateLocalhost = @"ab
 }
 
 - (NSImage *)statusBarComponentIcon {
-    return [NSImage it_imageNamed:@"StatusBarIconUser" forClass:[self class]];
+    return [NSImage it_cacheableImageNamed:@"StatusBarIconUser" forClass:[self class]];
 }
 
 - (NSString *)statusBarComponentShortDescription {
@@ -254,7 +254,7 @@ static NSString *const iTermStatusBarHostnameComponentAbbreviateLocalhost = @"ab
 }
 
 - (NSImage *)statusBarComponentIcon {
-    return [NSImage it_imageNamed:@"StatusBarIconFolder" forClass:[self class]];
+    return [NSImage it_cacheableImageNamed:@"StatusBarIconFolder" forClass:[self class]];
 }
 
 - (CGFloat)statusBarComponentPreferredWidth {

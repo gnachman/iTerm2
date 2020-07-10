@@ -111,7 +111,7 @@ static const NSTimeInterval iTermStatusBarGitComponentDefaultCadence = 2;
 }
 
 - (NSImage *)statusBarComponentIcon {
-    return [NSImage it_imageNamed:@"StatusBarIconGitBranch" forClass:[self class]];
+    return [NSImage it_cacheableImageNamed:@"StatusBarIconGitBranch" forClass:[self class]];
 }
 
 - (NSString *)statusBarComponentShortDescription {

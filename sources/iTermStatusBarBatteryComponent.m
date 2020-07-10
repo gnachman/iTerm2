@@ -74,9 +74,9 @@ static NSString *const iTermBatteryComponentKnobKeyShowTime = @"ShowTime";
     static NSImage *image;
     dispatch_once(&onceToken, ^{
         if ([self.class machineHasBattery]) {
-            image = [NSImage it_imageNamed:@"StatusBarIconBattery" forClass:[self class]];
+            image = [NSImage it_cacheableImageNamed:@"StatusBarIconBattery" forClass:[self class]];
         } else {
-            image = [NSImage it_imageNamed:@"StatusBarIconNoBattery" forClass:[self class]];
+            image = [NSImage it_cacheableImageNamed:@"StatusBarIconNoBattery" forClass:[self class]];
         }
     });
     return image;

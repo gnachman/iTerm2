@@ -108,7 +108,7 @@
 #pragma mark - iTermStatusBarComponent
 
 - (nullable NSImage *)statusBarComponentIcon {
-    return [NSImage it_imageNamed:@"StatusBarIconComposer" forClass:[self class]];
+    return [NSImage it_cacheableImageNamed:@"StatusBarIconComposer" forClass:[self class]];
 }
 
 - (NSView *)statusBarComponentView {

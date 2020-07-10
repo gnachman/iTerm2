@@ -42,7 +42,7 @@ NS_ASSUME_NONNULL_BEGIN
 #pragma mark - iTermStatusBarComponent
 
 - (nullable NSImage *)statusBarComponentIcon {
-    return [NSImage it_imageNamed:@"StatusBarIconPaste" forClass:[self class]];
+    return [NSImage it_cacheableImageNamed:@"StatusBarIconPaste" forClass:[self class]];
 }
 
 

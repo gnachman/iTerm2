@@ -32,7 +32,7 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 - (NSImage *)statusBarComponentIcon {
-    return [NSImage it_imageNamed:@"StatusBarIconCPU" forClass:[self class]];
+    return [NSImage it_cacheableImageNamed:@"StatusBarIconCPU" forClass:[self class]];
 }
 
 - (NSString *)statusBarComponentShortDescription {

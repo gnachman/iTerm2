@@ -29,6 +29,7 @@
 + (NSImage *)it_imageForSymbolName:(NSString *)name accessibilityDescription:(NSString *)description NS_AVAILABLE_MAC(10_16);
 + (NSImage *)it_hamburgerForClass:(Class)theClass;
 + (instancetype)it_imageNamed:(NSImageName)name forClass:(Class)theClass;
++ (instancetype)it_cacheableImageNamed:(NSImageName)name forClass:(Class)theClass;
 
 // Returns an image blurred by repeated box blurs with |radius| iterations.
 - (NSImage *)blurredImageWithRadius:(int)radius;

@@ -146,6 +146,22 @@
     return [[NSBundle bundleForClass:theClass] imageForResource:name];
 }
 
++ (instancetype)it_cacheableImageNamed:(NSImageName)name forClass:(Class)theClass {
+    static NSMutableDictionary<NSString *, NSImage *> *cache;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        cache = [NSMutableDictionary dictionary];
+    });
+    NSString *key = [NSString stringWithFormat:@"%@\n%@", NSStringFromClass(theClass), name];
+    NSImage *cached = cache[key];
+    if (cached) {
+        return cached;
+    }
+    NSImage *image = [self it_imageNamed:name forClass:theClass];
+    cache[key] = image;
+    return image;
+}
+
 - (NSImage *)blurredImageWithRadius:(int)radius {
     // Initially, this used a CIFilter but this doesn't work on some machines for mysterious reasons.
     // Instead, this algorithm implements a really simple box blur. It's quite fast--about 5ms on
