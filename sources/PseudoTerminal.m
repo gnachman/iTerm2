@@ -5700,11 +5700,11 @@ ITERM_WEAKLY_REFERENCEABLE
 
     zooming_ = NO;
     togglingLionFullScreen_ = NO;
+    _fullScreenRetryCount = 0;
+    lionFullScreen_ = YES;
     if (@available(macOS 10.14, *)) {
         [self updateTabBarControlIsTitlebarAccessory];
     }
-    _fullScreenRetryCount = 0;
-    lionFullScreen_ = YES;
     [self didChangeAnyFullScreen];
     [_contentView.tabBarControl setFlashing:YES];
     [_contentView updateToolbeltForWindow:self.window];
@@ -9432,6 +9432,12 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     }
     if ([PseudoTerminal windowTypeHasFullSizeContentView:self.savedWindowType]) {
         DLog(@"YES because saved window type %@ has full size content view", @(self.savedWindowType));
+        if (![iTermAdvancedSettingsModel allowTabbarInTitlebarAccessoryBigSur]) {
+            if (@available(macOS 10.16, *)) {
+                DLog(@"NO because big sur");
+                return NO;
+            }
+        }
         // The tab bar is not a titlebar accessory
         return YES;
     }
