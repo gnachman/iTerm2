@@ -1041,6 +1041,9 @@ error:
 }
 
 - (void)unsubscribe:(iTermTmuxSubscriptionHandle *)handle {
+    if (!handle) {
+        return;
+    }
     if (!handle.isValid && handle.initialized) {
         // This tmux doesn't support subscriptions.
         return;
