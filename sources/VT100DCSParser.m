@@ -26,7 +26,7 @@
 
 // Caps the amount of data to accumulate in _data before returning to the ground state. Prevents
 // a random ESC P from eating output forever by leaving us in the passthrough state until we get
-// an ST.
+// an ST. Note that there's an exception for file downloads wrapped in DCS tmux; … ST
 static const NSUInteger kMaxDataLength = 1024 * 1024;
 
 // Creates a unique-enough encoding of a DCS sequence at compile time so it can
@@ -75,6 +75,10 @@ static NSRange MakeCharacterRange(unsigned char first, unsigned char lastInclusi
     id<VT100DCSParserHook> _hook;
 
     BOOL _support8BitControlCharacters;
+
+    // We periodically check if _data looks like binary garbage. To avoid quadratic runtime we
+    // remember the number of UTF-16 codepoints that have been checked already.
+    NSInteger _checkedCount;
 }
 
 + (NSDictionary *)termcapTerminfoNameDictionary {
@@ -217,6 +221,7 @@ static NSRange MakeCharacterRange(unsigned char first, unsigned char lastInclusi
             strongSelf->_malformed = NO;
             strongSelf->_executed = NO;
             [strongSelf->_data setString:@""];
+            strongSelf->_checkedCount = 0;
             [strongSelf->_parameterString setString:@""];
             [strongSelf->_intermediateString setString:@""];
             [strongSelf->_privateMarkers setString:@""];
@@ -441,8 +446,21 @@ static NSRange MakeCharacterRange(unsigned char first, unsigned char lastInclusi
         [characterSet invert];
         garbageCharacterSet = characterSet;
     });
-    return (_data.length > kMaxDataLength ||
-            [_data rangeOfCharacterFromSet:garbageCharacterSet].location != NSNotFound);
+    NSInteger offset = MAX(0, _checkedCount);
+    const NSInteger limit = _data.length;
+    if (offset > limit) {
+        offset = MAX(0, limit);
+    }
+    _checkedCount = offset + limit;
+    NSInteger maxLength = kMaxDataLength;
+    if ([_data hasPrefix:@"tmux;\e]1337;File="]) {
+        // Allow file downloads to get really big.
+        maxLength = NSIntegerMax;
+    }
+    return (_data.length > maxLength ||
+            [_data rangeOfCharacterFromSet:garbageCharacterSet
+                                   options:0
+                                     range:NSMakeRange(offset, limit - offset)].location != NSNotFound);
 }
 
 - (void)decodeFromContext:(iTermParserContext *)context
