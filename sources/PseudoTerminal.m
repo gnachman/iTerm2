@@ -5613,6 +5613,12 @@ ITERM_WEAKLY_REFERENCEABLE
         case WINDOW_TYPE_NORMAL:
         case WINDOW_TYPE_ACCESSORY:
         case WINDOW_TYPE_MAXIMIZED:
+            if (![iTermAdvancedSettingsModel allowTabbarInTitlebarAccessoryBigSur]) {
+                if (@available(macOS 10.16, *)) {
+                    DLog(@"NO - big sur");
+                    return NO;
+                }
+            }
             DLog(@"YES - normal, accessory, or maximized");
             return YES;
     }
@@ -5631,9 +5637,11 @@ ITERM_WEAKLY_REFERENCEABLE
 
         if (index != NSNotFound) {
             frame.size.height = self.desiredTabBarHeight;
-            if (@available(macOS 10.16, *)) {
-                // TODO: FB7781183
-                frame.size.height += 4;
+            if ([iTermAdvancedSettingsModel allowTabbarInTitlebarAccessoryBigSur]) {
+                if (@available(macOS 10.16, *)) {
+                    // FB7781183
+                    frame.size.height += 4;
+                }
             }
             DLog(@"Set frame of tabbar as accessory to %@", NSStringFromRect(frame));
             viewController.view.frame = frame;

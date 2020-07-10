@@ -6,6 +6,7 @@
 //
 
 #import "iTermTabBarAccessoryViewController.h"
+#import "iTermAdvancedSettingsModel.h"
 
 // TODO: FB7781183
 @interface iTermHackAroundBigSurBugView: NSView
@@ -40,8 +41,10 @@
 - (instancetype)initWithView:(NSView *)view {
     self = [super initWithNibName:nil bundle:nil];
     if (self) {
-        if (@available(macOS 10.16, *)) {
-            _hack = [[iTermHackAroundBigSurBugView alloc] init];
+        if ([iTermAdvancedSettingsModel allowTabbarInTitlebarAccessoryBigSur]) {
+            if (@available(macOS 10.16, *)) {
+                _hack = [[iTermHackAroundBigSurBugView alloc] init];
+            }
         }
         _view = view;
     }

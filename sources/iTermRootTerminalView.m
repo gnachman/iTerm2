@@ -77,23 +77,39 @@ NS_CLASS_AVAILABLE_MAC(10_14)
 - (instancetype)init {
     self = [super initWithFrame:NSMakeRect(0, 0, 100, 100)];
     if (self) {
-        NSView *windowColorView = [[NSView alloc] initWithFrame:self.bounds];
-        windowColorView.wantsLayer = YES;
-        windowColorView.layer = [[CALayer alloc] init];
-        windowColorView.layer.backgroundColor = [[NSColor windowBackgroundColor] CGColor];
-        windowColorView.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
-        [self addSubview:windowColorView];
+        [self addWindowColorView];
 
         NSVisualEffectView *vev = [[NSVisualEffectView alloc] initWithFrame:self.bounds];
         vev.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
+        NSVisualEffectState state = NSVisualEffectStateActive;
+        if (![iTermAdvancedSettingsModel allowTabbarInTitlebarAccessoryBigSur]) {
+            if (@available(macOS 10.16, *)) {
+                state = NSVisualEffectStateFollowsWindowActiveState;
+            }
+        }
+        vev.state = state;
+
         vev.blendingMode = NSVisualEffectBlendingModeWithinWindow;
         vev.material = NSVisualEffectMaterialTitlebar;
-        vev.state = NSVisualEffectStateActive;
         [self addSubview:vev];
 
         self.autoresizesSubviews = YES;
     }
     return self;
+}
+
+- (void)addWindowColorView {
+    if (![iTermAdvancedSettingsModel allowTabbarInTitlebarAccessoryBigSur]) {
+        if (@available(macOS 10.16, *)) {
+            return;
+        }
+    }
+    NSView *windowColorView = [[NSView alloc] initWithFrame:self.bounds];
+    windowColorView.wantsLayer = YES;
+    windowColorView.layer = [[CALayer alloc] init];
+    windowColorView.layer.backgroundColor = [[NSColor windowBackgroundColor] CGColor];
+    windowColorView.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
+    [self addSubview:windowColorView];
 }
 
 - (void)tabBarControlViewWillHide:(BOOL)hidden {
