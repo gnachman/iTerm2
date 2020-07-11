@@ -94,7 +94,7 @@ typedef NS_ENUM(NSInteger, iTermTabBarFlashState) {
 }
 
 - (void)setAlphaValue:(CGFloat)alphaValue animated:(BOOL)animated {
-    if ([self.superview isKindOfClass:[NSVisualEffectView class]]) {
+    if ([self.superview conformsToProtocol:@protocol(iTermTabBarControlViewContainer)]) {
         if (animated) {
             self.superview.animator.alphaValue = alphaValue;
         } else {
