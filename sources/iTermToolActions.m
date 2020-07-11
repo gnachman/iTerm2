@@ -219,7 +219,7 @@ static NSButton *iTermToolActionsNewButton(NSString *imageName, NSString *title,
 }
 
 - (BOOL)performKeyEquivalent:(NSEvent *)event {
-    if (event.keyCode == kVK_Delete) {
+    if (_tableView.window.firstResponder == _tableView && event.keyCode == kVK_Delete) {
         [self remove:nil];
         return YES;
     }
