@@ -71,6 +71,8 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @property (nonatomic, readonly) CGFloat transparencyAlpha;
 @property (nonatomic, readonly) CGFloat blend;
 @property (nonatomic, readonly) NSEdgeInsets extraMargins;
+@property (nonatomic, readonly) BOOL thinStrokesForTimestamps;
+@property (nonatomic, readonly) BOOL asciiAntiAliased;
 
 // Initialize sketchPtr to 0. The number of set bits estimates the unique number of color combinations.
 - (void)metalGetGlyphKeys:(iTermMetalGlyphKey *)glyphKeys

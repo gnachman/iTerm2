@@ -7,6 +7,8 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic) NSColor *backgroundColor;
 @property (nonatomic) NSColor *textColor;
 @property (nonatomic, strong) NSArray<NSDate *> *timestamps;
+@property (nonatomic) BOOL useThinStrokes;
+@property (nonatomic) BOOL antialiased;
 @end
 
 @interface iTermTimestampsRenderer : NSObject<iTermMetalCellRenderer>

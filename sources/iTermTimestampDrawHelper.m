@@ -94,6 +94,9 @@ const CGFloat iTermTimestampGradientWidth = 20;
     if (index == 0) {
         return NO;
     }
+    if (_rows[index - 1].string.length == 0) {
+        return NO;
+    }
     return [_rows[index - 1].string isEqual:_rows[index].string];
 }
 
@@ -136,7 +139,8 @@ const CGFloat iTermTimestampGradientWidth = 20;
         NSRectFill(NSMakeRect(center - 1, NSMinY(frame), 1, _rowHeight));
         NSRectFill(NSMakeRect(center + 1, NSMinY(frame), 1, _rowHeight));
     } else {
-        [s drawAtPoint:NSMakePoint(NSMinX(frame), NSMinY(frame) + offset) withAttributes:attributes];
+        const NSPoint p = NSMakePoint(NSMinX(frame), NSMinY(frame) + offset);
+        [s drawAtPoint:p withAttributes:attributes];
     }
 }
 

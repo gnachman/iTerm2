@@ -1267,6 +1267,25 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
     return _extraMargins;
 }
 
+- (BOOL)thinStrokesForTimestamps {
+    switch (_configuration->_thinStrokes) {
+        case iTermThinStrokesSettingNever:
+            return NO;
+        case iTermThinStrokesSettingAlways:
+            return YES;
+        case iTermThinStrokesSettingRetinaOnly:
+            return _configuration->_isRetina;
+        case iTermThinStrokesSettingDarkBackgroundsOnly:
+            return self.timestampsBackgroundColor.isDark;
+        case iTermThinStrokesSettingRetinaDarkBackgroundsOnly:
+            return _configuration->_isRetina && self.timestampsBackgroundColor.isDark;
+    }
+}
+
+- (BOOL)asciiAntiAliased {
+    return _configuration->_asciiAntialias;
+}
+
 #pragma mark - Color
 
 - (vector_float4)textColorForCharacter:(const screen_char_t *const)c

@@ -1300,6 +1300,8 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
 - (void)populateTimestampsRendererTransientStateWithFrameData:(iTermMetalFrameData *)frameData {
     iTermTimestampsRendererTransientState *tState = [frameData transientStateForRenderer:_timestampsRenderer];
     if (frameData.perFrameState.timestampsEnabled) {
+        tState.useThinStrokes = frameData.perFrameState.thinStrokesForTimestamps;
+        tState.antialiased = frameData.perFrameState.asciiAntiAliased;
         tState.backgroundColor = frameData.perFrameState.timestampsBackgroundColor;
         tState.textColor = frameData.perFrameState.timestampsTextColor;
 
