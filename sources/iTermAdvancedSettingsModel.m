@@ -441,6 +441,7 @@ DEFINE_STRING(autoLogFormat,
 DEFINE_BOOL(autologAppends, YES, SECTION_SESSION @"Automatic session logging appends to existing files.\nWhen set to No, the file will be overwritten instead.");
 DEFINE_BOOL(focusNewSplitPaneWithFocusFollowsMouse, YES, SECTION_SESSION @"When focus follows mouse is enabled, should new split panes automatically be focused?");
 DEFINE_BOOL(NoSyncSuppressRestartSessionConfirmationAlert, NO, SECTION_SESSION @"Suppress restart session confirmation alert.\nDon't ask for a confirmation when manually restarting a session.");
+DEFINE_BOOL(showAutomaticProfileSwitchingBanner, YES, SECTION_SESSION @"Show a “Switched to profile” message when Automatic Profile Switching activates.");
 
 #pragma mark - Windows
 

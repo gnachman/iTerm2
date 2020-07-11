@@ -11589,6 +11589,9 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         }
         [self setSessionSpecificProfileValues:overrides];
     }
+    if ([iTermAdvancedSettingsModel showAutomaticProfileSwitchingBanner]) {
+        [_view showUnobtrusiveMessage:[NSString stringWithFormat:@"Switched to profile “%@”.", underlyingProfile[KEY_NAME]]];
+    }
 }
 
 - (NSArray<NSDictionary *> *)automaticProfileSwitcherAllProfiles {

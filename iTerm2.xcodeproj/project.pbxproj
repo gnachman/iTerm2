@@ -2818,6 +2818,8 @@
 		A6A2D6E724345D4000A4DF5B /* iTermMinimalComposerViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = A6A2D6DD24345D4000A4DF5B /* iTermMinimalComposerViewController.xib */; };
 		A6A39EBB24B99AC000A64433 /* iTermGraphicsUtilities.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A39EB924B99AC000A64433 /* iTermGraphicsUtilities.h */; };
 		A6A39EBC24B99AC000A64433 /* iTermGraphicsUtilities.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A39EBA24B99AC000A64433 /* iTermGraphicsUtilities.m */; };
+		A6A39EBF24B9A96B00A64433 /* iTermUnobtrusiveMessage.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A39EBD24B9A96B00A64433 /* iTermUnobtrusiveMessage.h */; };
+		A6A39EC024B9A96B00A64433 /* iTermUnobtrusiveMessage.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A39EBE24B9A96B00A64433 /* iTermUnobtrusiveMessage.m */; };
 		A6A453931FF318D8009FD3B7 /* iTermTexturePageCollection.mm in Sources */ = {isa = PBXBuildFile; fileRef = A6A453921FF318D8009FD3B7 /* iTermTexturePageCollection.mm */; };
 		A6A4865D20B6706700493302 /* ProfilesKeysPreferencesViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A269961902FA6800437DA9 /* ProfilesKeysPreferencesViewController.m */; };
 		A6A4865E20B6758D00493302 /* iTermPreferencesBaseViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E7138818F26445008D94DD /* iTermPreferencesBaseViewController.m */; };
@@ -5984,6 +5986,8 @@
 		A6A2D6EE24370C2500A4DF5B /* iTermIntervalTreeObserver.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermIntervalTreeObserver.h; sourceTree = "<group>"; };
 		A6A39EB924B99AC000A64433 /* iTermGraphicsUtilities.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermGraphicsUtilities.h; sourceTree = "<group>"; };
 		A6A39EBA24B99AC000A64433 /* iTermGraphicsUtilities.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermGraphicsUtilities.m; sourceTree = "<group>"; };
+		A6A39EBD24B9A96B00A64433 /* iTermUnobtrusiveMessage.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermUnobtrusiveMessage.h; sourceTree = "<group>"; };
+		A6A39EBE24B9A96B00A64433 /* iTermUnobtrusiveMessage.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermUnobtrusiveMessage.m; sourceTree = "<group>"; };
 		A6A453921FF318D8009FD3B7 /* iTermTexturePageCollection.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; name = iTermTexturePageCollection.mm; path = Metal/Renderers/iTermTexturePageCollection.mm; sourceTree = "<group>"; };
 		A6A4B29F240B67A400184EAC /* PTYMouseHandler.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = PTYMouseHandler.h; sourceTree = "<group>"; };
 		A6A4B2A0240B67A400184EAC /* PTYMouseHandler.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = PTYMouseHandler.m; sourceTree = "<group>"; };
@@ -7565,6 +7569,8 @@
 				1DEDC8FC1451F67D004F1615 /* SessionTitleView.m */,
 				1DC38817148E840700B89F7C /* SolidColorView.m */,
 				1D29732A14082A52004C5DBE /* SplitSelectionView.m */,
+				A6A39EBD24B9A96B00A64433 /* iTermUnobtrusiveMessage.h */,
+				A6A39EBE24B9A96B00A64433 /* iTermUnobtrusiveMessage.m */,
 			);
 			name = "Misc. Views";
 			sourceTree = "<group>";
@@ -11094,6 +11100,7 @@
 				A6F718BB226596DB0053488E /* PTYTextView+ARC.h in Headers */,
 				A66F52AD21045B7E00571168 /* iTermStatusBarNetworkUtilizationComponent.h in Headers */,
 				A69C93412121140100531438 /* iTermStatusBarLargeComposerViewController.h in Headers */,
+				A6A39EBF24B9A96B00A64433 /* iTermUnobtrusiveMessage.h in Headers */,
 				5312269A20CB1D3A004831C6 /* iTermBuiltInFunctions.h in Headers */,
 				A63493E023E661B60047C31B /* iTermPresentationController.h in Headers */,
 				A6A39EBB24B99AC000A64433 /* iTermGraphicsUtilities.h in Headers */,
@@ -13760,6 +13767,7 @@
 				A666D5E52219323D00D6184A /* iTermEventTap.m in Sources */,
 				A629F5A623AFF5BA00C2F16B /* iTermShellIntegrationSecondPageViewController.m in Sources */,
 				5379C59823DBE9F100314F23 /* iTermFocusFollowsMouseController.m in Sources */,
+				A6A39EC024B9A96B00A64433 /* iTermUnobtrusiveMessage.m in Sources */,
 				A6A4867D20B67F7E00493302 /* ProfilesWindowPreferencesViewController.m in Sources */,
 				53C2D3A62152CA3900FF6471 /* NSUserDefaults+iTerm.m in Sources */,
 				53E9DFE1220D51D50070C9C0 /* CoprocessTrigger.m in Sources */,

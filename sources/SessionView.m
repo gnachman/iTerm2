@@ -19,6 +19,7 @@
 #import "iTermStatusBarSearchFieldComponent.h"
 #import "iTermStatusBarViewController.h"
 #import "iTermTheme.h"
+#import "iTermUnobtrusiveMessage.h"
 #import "NSAppearance+iTerm.h"
 #import "NSColor+iTerm.h"
 #import "NSView+iTerm.h"
@@ -156,6 +157,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     // some blended default background color under the vertical scroller. In all other conditions
     // its frame is 0x0.
     iTermBackgroundColorView *_legacyScrollerBackgroundView NS_AVAILABLE_MAC(10_14);
+    iTermUnobtrusiveMessage *_unobtrusiveMessage;
 }
 
 + (double)titleHeight {
@@ -1890,6 +1892,19 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     return [self.delegate findDriverNumberOfSearchResults];
 }
 
+- (void)showUnobtrusiveMessage:(NSString *)message {
+    if (_unobtrusiveMessage) {
+        return;
+    }
+    if (@available(macOS 10.14, *)) {
+        _unobtrusiveMessage = [[iTermUnobtrusiveMessage alloc] initWithMessage:message];
+        [self addSubviewBelowFindView:_unobtrusiveMessage];
+        [_unobtrusiveMessage animateFromTopRightWithCompletion:^{
+            [self->_unobtrusiveMessage removeFromSuperview];
+            self->_unobtrusiveMessage = nil;
+        }];
+    }
+}
 
 #pragma mark - iTermGenericStatusBarContainer
 
