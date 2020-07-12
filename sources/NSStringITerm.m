@@ -98,16 +98,18 @@
         return nil;
     }
 
-    NSArray *supportedTypes = @[ NSFilenamesPboardType, NSStringPboardType ];
+    NSArray *supportedTypes = @[ NSPasteboardTypeFileURL, NSPasteboardTypeString ];
     NSString *bestType = [board availableTypeFromArray:supportedTypes];
 
     NSString* info = nil;
     DLog(@"Getting pasteboard string...");
-    if ([bestType isEqualToString:NSFilenamesPboardType]) {
-        NSArray *filenames = [board propertyListForType:NSFilenamesPboardType];
+    if ([bestType isEqualToString:NSPasteboardTypeFileURL]) {
+        NSArray<NSURL *> *urls = [board readObjectsForClasses:@[ [NSURL class] ]
+                                                           options:nil];
         NSMutableArray *escapedFilenames = [NSMutableArray array];
-        DLog(@"Pasteboard has filenames: %@.", filenames);
-        for (NSString *filename in filenames) {
+        DLog(@"Pasteboard has filenames: %@.", urls);
+        for (NSURL *url in urls) {
+            NSString *filename = url.path;
             [escapedFilenames addObject:[filename stringWithEscapedShellCharactersIncludingNewlines:YES]];
         }
         if (escapedFilenames.count > 0) {
@@ -118,7 +120,7 @@
         }
     } else {
         DLog(@"Pasteboard has a string.");
-        info = [board stringForType:NSStringPboardType];
+        info = [board stringForType:NSPasteboardTypeString];
     }
     if (!info) {
         DLog(@"Using fallback technique of iterating pasteboard items %@", [[NSPasteboard generalPasteboard] pasteboardItems]);
@@ -2007,7 +2009,7 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
 }
 
 - (void)it_drawInRect:(CGRect)rect attributes:(NSDictionary *)attributes {
-    CGContextRef ctx = [[NSGraphicsContext currentContext] graphicsPort];
+    CGContextRef ctx = [[NSGraphicsContext currentContext] CGContext];
     CGContextSaveGState(ctx);
 
     for (NSString *part in [self componentsSeparatedByString:@"\n"]) {

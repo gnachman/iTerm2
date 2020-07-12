@@ -284,7 +284,7 @@ const CGFloat iTermGetStatusBarHeight() {
             }
             NSMenuItem *item = [[NSMenuItem alloc] initWithTitle:knob.labelText action:@selector(toggleKnob:) keyEquivalent:@""];
             item.identifier = knob.key;
-            item.state = [[NSNumber castFrom:values[knob.key]] boolValue] ? NSOnState : NSOffState;
+            item.state = [[NSNumber castFrom:values[knob.key]] boolValue] ? NSControlStateValueOn : NSControlStateValueOff;
             [menu addItem:item];
         }
     }];

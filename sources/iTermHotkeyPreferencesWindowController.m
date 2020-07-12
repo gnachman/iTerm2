@@ -78,8 +78,8 @@
     }
     _duplicateWarning.hidden = ![self.descriptorsInUseByOtherProfiles containsObject:self.model.primaryShortcut.descriptor];
     _duplicateWarningForModifierActivation.hidden = ![self.descriptorsInUseByOtherProfiles containsObject:self.modifierActivationDescriptor];
-    _showAutoHiddenWindowOnAppActivation.enabled = (self.model.hotKeyAssigned && _pinned.state == NSOffState);
-    _modifierActivation.enabled = (_activateWithModifier.state == NSOnState);
+    _showAutoHiddenWindowOnAppActivation.enabled = (self.model.hotKeyAssigned && _pinned.state == NSControlStateValueOff);
+    _modifierActivation.enabled = (_activateWithModifier.state == NSControlStateValueOn);
     _editAdditionalButton.enabled = self.model.primaryShortcut.isAssigned;
 }
 
@@ -92,27 +92,27 @@
 }
 
 - (void)modelDidChange {
-    _activateWithModifier.state = _model.hasModifierActivation ? NSOnState : NSOffState;
+    _activateWithModifier.state = _model.hasModifierActivation ? NSControlStateValueOn : NSControlStateValueOff;
     [_modifierActivation selectItemWithTag:_model.modifierActivation];
     [_hotKey setShortcut:_model.primaryShortcut];
 
-    _pinned.state = _model.autoHide ? NSOffState : NSOnState;
+    _pinned.state = _model.autoHide ? NSControlStateValueOff : NSControlStateValueOn;
     _showAutoHiddenWindowOnAppActivation.enabled = _model.autoHide;
-    _showAutoHiddenWindowOnAppActivation.state = _model.showAutoHiddenWindowOnAppActivation ? NSOnState : NSOffState;
-    _animate.state = _model.animate ? NSOnState : NSOffState;
-    _floats.state = _model.floats ? NSOnState : NSOffState;
+    _showAutoHiddenWindowOnAppActivation.state = _model.showAutoHiddenWindowOnAppActivation ? NSControlStateValueOn : NSControlStateValueOff;
+    _animate.state = _model.animate ? NSControlStateValueOn : NSControlStateValueOff;
+    _floats.state = _model.floats ? NSControlStateValueOn : NSControlStateValueOff;
 
     switch (_model.dockPreference) {
         case iTermHotKeyDockPreferenceDoNotShow:
-            _doNotShowOnDockClick.state = NSOnState;
+            _doNotShowOnDockClick.state = NSControlStateValueOn;
             break;
 
         case iTermHotKeyDockPreferenceAlwaysShow:
-            _alwaysShowOnDockClick.state = NSOnState;
+            _alwaysShowOnDockClick.state = NSControlStateValueOn;
             break;
 
         case iTermHotKeyDockPreferenceShowIfNoOtherWindowsOpen:
-            _showIfNoWindowsOpenOnDockClick.state = NSOnState;
+            _showIfNoWindowsOpenOnDockClick.state = NSControlStateValueOn;
             break;
     }
     [self updateViewsEnabled];
@@ -125,17 +125,17 @@
 #pragma mark - Actions
 
 - (IBAction)settingChanged:(id)sender {
-    _model.hasModifierActivation = _activateWithModifier.state == NSOnState;
+    _model.hasModifierActivation = _activateWithModifier.state == NSControlStateValueOn;
     _model.modifierActivation = [_modifierActivation selectedTag];
 
-    _model.autoHide = _pinned.state == NSOffState;
-    _model.showAutoHiddenWindowOnAppActivation = _showAutoHiddenWindowOnAppActivation.state == NSOnState;
-    _model.animate = _animate.state == NSOnState;
-    _model.floats = _floats.state == NSOnState;
+    _model.autoHide = _pinned.state == NSControlStateValueOff;
+    _model.showAutoHiddenWindowOnAppActivation = _showAutoHiddenWindowOnAppActivation.state == NSControlStateValueOn;
+    _model.animate = _animate.state == NSControlStateValueOn;
+    _model.floats = _floats.state == NSControlStateValueOn;
 
-    if (_showIfNoWindowsOpenOnDockClick.state == NSOnState) {
+    if (_showIfNoWindowsOpenOnDockClick.state == NSControlStateValueOn) {
         _model.dockPreference = iTermHotKeyDockPreferenceShowIfNoOtherWindowsOpen;
-    } else if (_alwaysShowOnDockClick.state == NSOnState) {
+    } else if (_alwaysShowOnDockClick.state == NSControlStateValueOn) {
         _model.dockPreference = iTermHotKeyDockPreferenceAlwaysShow;
     } else {
         _model.dockPreference = iTermHotKeyDockPreferenceDoNotShow;

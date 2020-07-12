@@ -102,7 +102,7 @@
         if (!strongSelf) {
             return;
         }
-        strongSelf->_blurRadius.enabled = (strongSelf->_useBlur.state == NSOnState);
+        strongSelf->_blurRadius.enabled = (strongSelf->_useBlur.state == NSControlStateValueOn);
     };
 
     [self defineControl:_blurRadius
@@ -289,7 +289,7 @@
 
 // Opens a file picker and updates views and state.
 - (IBAction)useBackgroundImageDidChange:(id)sender {
-    if ([_useBackgroundImage state] == NSOnState) {
+    if ([_useBackgroundImage state] == NSControlStateValueOn) {
         [self openFilePicker];
     } else {
         [self loadBackgroundImageWithFilename:nil];
@@ -305,7 +305,7 @@
     [panel setAllowedFileTypes:[NSImage imageTypes]];
 
     void (^completion)(NSInteger) = ^(NSInteger result) {
-        if (result == NSFileHandlingPanelOKButton) {
+        if (result == NSModalResponseOK) {
             NSURL *url = [[panel URLs] objectAtIndex:0];
             [self loadBackgroundImageWithFilename:[url path]];
             [self setString:self.backgroundImageFilename forKey:KEY_BACKGROUND_IMAGE_LOCATION];
@@ -336,11 +336,11 @@
     NSImage *anImage = filename.length > 0 ? [[NSImage alloc] initWithContentsOfFile:filename] : nil;
     if (anImage) {
         [_backgroundImagePreview setImage:anImage];
-        [_useBackgroundImage setState:NSOnState];
+        [_useBackgroundImage setState:NSControlStateValueOn];
         self.backgroundImageFilename = filename;
     } else {
         [_backgroundImagePreview setImage:nil];
-        [_useBackgroundImage setState:NSOffState];
+        [_useBackgroundImage setState:NSControlStateValueOff];
         self.backgroundImageFilename = nil;
     }
 }

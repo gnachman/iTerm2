@@ -82,7 +82,7 @@ static const CGFloat PSMRolloverButtonMaxAlpha = 0.25;
     [self setTargetAlpha:PSMRolloverButtonMaxAlpha];
     // set rollover image
     [self setImage:_rolloverImage];
-    [self setNeedsDisplay];
+    [self setNeedsDisplay:YES];
     [[self superview] setNeedsDisplay:YES]; // eliminates a drawing artifact
 }
 
@@ -90,7 +90,7 @@ static const CGFloat PSMRolloverButtonMaxAlpha = 0.25;
     // restore usual image
     [self setTargetAlpha:0];
     [self setImage:_usualImage];
-    [self setNeedsDisplay];
+    [self setNeedsDisplay:YES];
     [[self superview] setNeedsDisplay:YES]; // eliminates a drawing artifact
 }
 

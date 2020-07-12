@@ -100,7 +100,6 @@ static const NSTimeInterval kMaxTimeToRememberDirectories = 60 * 60 * 24 * 90;
     _expandedCache = [[NSMutableDictionary alloc] init];
     _tree = [[iTermDirectoryTree alloc] init];
 
-    [self migrateFromPlistToCoreData];
     [self removeOldData];
     [self loadObjectGraph];
 
@@ -354,99 +353,6 @@ static const NSTimeInterval kMaxTimeToRememberDirectories = 60 * 60 * 24 * 90;
     [_tree release];
     _tree = [[iTermDirectoryTree alloc] init];
     [self loadObjectGraph];
-}
-
-#pragma mark - Migration
-
-// Returns YES if a migration was attempted.
-- (BOOL)migrateFromPlistToCoreData {
-    BOOL migrateCommands = [self shouldMigrateCommands];
-    BOOL migrateDirectories = [self shouldMigrateDirectories];
-    if (migrateCommands || migrateDirectories) {
-        NSMutableDictionary *records = [NSMutableDictionary dictionary];
-        [self loadObjectGraphIntoDictionary:records];
-        if (migrateCommands) {
-            [self migrateCommandHistoryFromPlistToCoreData:records];
-        }
-        if (migrateDirectories) {
-            [self migrateDirectoriesFromPlistToCoreData:records];
-        }
-    }
-    return migrateCommands || migrateDirectories;
-}
-
-- (BOOL)shouldMigrateDirectories {
-    NSString *path = [self pathToDeprecatedDirectoriesPlist];
-    return [[NSFileManager defaultManager] fileExistsAtPath:path isDirectory:nil];
-}
-
-- (BOOL)shouldMigrateCommands {
-    NSString *path = [self pathToDeprecatedCommandHistoryPlist];
-    return [[NSFileManager defaultManager] fileExistsAtPath:path isDirectory:nil];
-}
-
-- (BOOL)migrateDirectoriesFromPlistToCoreData:(NSMutableDictionary *)records {
-    NSString *path = [self pathToDeprecatedDirectoriesPlist];
-    NSDictionary *archive = [NSKeyedUnarchiver unarchiveObjectWithFile:path];
-    for (NSString *host in archive) {
-        NSArray *parts = [host componentsSeparatedByString:@"@"];
-        if (parts.count != 2) {
-            continue;
-        }
-        iTermHostRecordMO *hostRecord = records[host];
-        if (!hostRecord) {
-            hostRecord = [iTermHostRecordMO hostRecordInContext:_managedObjectContext];
-            records[host] = hostRecord;
-        }
-        hostRecord.username = parts[0];
-        hostRecord.hostname = parts[1];
-        for (NSDictionary *dict in archive[host]) {
-            iTermRecentDirectoryMO *directory =
-                [iTermRecentDirectoryMO entryWithDictionary:dict
-                                                  inContext:_managedObjectContext];
-            [hostRecord addDirectoriesObject:directory];
-            directory.remoteHost = hostRecord;
-        }
-    }
-    NSError *error = nil;
-    if (![_managedObjectContext save:&error]) {
-        NSLog(@"Failed to migrate directory history: %@", error);
-    } else {
-        [[NSFileManager defaultManager] removeItemAtPath:path error:NULL];
-    }
-    return YES;
-}
-
-- (BOOL)migrateCommandHistoryFromPlistToCoreData:(NSMutableDictionary *)records {
-    NSString *path = [self pathToDeprecatedCommandHistoryPlist];
-    NSDictionary *archive = [NSKeyedUnarchiver unarchiveObjectWithFile:path];
-    for (NSString *host in archive) {
-        NSArray *parts = [host componentsSeparatedByString:@"@"];
-        if (parts.count != 2) {
-            continue;
-        }
-        iTermHostRecordMO *hostRecord = records[host];
-        if (!hostRecord) {
-            hostRecord = [iTermHostRecordMO hostRecordInContext:_managedObjectContext];
-            records[host] = hostRecord;
-        }
-        hostRecord.username = parts[0];
-        hostRecord.hostname = parts[1];
-        for (NSDictionary *commandDict in archive[host]) {
-            iTermCommandHistoryEntryMO *managedObject =
-                [iTermCommandHistoryEntryMO commandHistoryEntryFromDeprecatedDictionary:commandDict
-                                                                              inContext:_managedObjectContext];
-            managedObject.remoteHost = hostRecord;
-            [hostRecord addEntriesObject:managedObject];
-        }
-    }
-    NSError *error = nil;
-    if (![_managedObjectContext save:&error]) {
-        NSLog(@"Failed to migrate command history: %@", error);
-    } else {
-        [[NSFileManager defaultManager] removeItemAtPath:self.pathToDeprecatedCommandHistoryPlist error:NULL];
-    }
-    return YES;
 }
 
 #pragma mark - APIs

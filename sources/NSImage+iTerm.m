@@ -259,7 +259,7 @@
 }
 
 - (void)saveAsPNGTo:(NSString *)filename {
-    [[self dataForFileOfType:NSPNGFileType] writeToFile:filename atomically:NO];
+    [[self dataForFileOfType:NSBitmapImageFileTypePNG] writeToFile:filename atomically:NO];
 }
 
 // TODO: Should this use -bitmapImageRep?

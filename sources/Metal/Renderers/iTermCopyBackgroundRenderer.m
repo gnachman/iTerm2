@@ -103,7 +103,6 @@
 
 @end
 
-#if ENABLE_USE_TEMPORARY_TEXTURE
 @implementation iTermCopyToDrawableRendererTransientState
 @end
 
@@ -114,4 +113,3 @@
 }
 
 @end
-#endif

@@ -52,6 +52,10 @@ static NSString *const iTermStatusBarRPCRegistrationRequestKey = @"registration 
     // NOTE: If mutable state is added, change copyWithZone:
 }
 
++ (BOOL)supportsSecureCoding {
+    return YES;
+}
+
 - (instancetype)initWithRegistrationRequest:(ITMRPCRegistrationRequest *)registrationRequest {
     self = [super init];
     if (self) {

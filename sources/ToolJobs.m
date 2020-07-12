@@ -213,9 +213,9 @@ static const CGFloat kMargin = 4;
             kill_.imagePosition = NSImageOnly;
             kill_.frame = NSMakeRect(signal_.frame.size.width + kMargin, 0, 22, 22);
         } else {
-            [kill_ setButtonType:NSMomentaryPushInButton];
+            [kill_ setButtonType:NSButtonTypeMomentaryPushIn];
             [kill_ setTitle:@"Send Signal"];
-            [kill_ setBezelStyle:NSSmallSquareBezelStyle];
+            [kill_ setBezelStyle:NSBezelStyleSmallSquare];
             [kill_ sizeToFit];
             kill_.frame = NSMakeRect(signal_.frame.size.width + kMargin, 0, kill_.frame.size.width, kill_.frame.size.height);
         }

@@ -343,8 +343,8 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
 
 - (void)copyString:(NSString *)string {
     NSPasteboard *generalPasteboard = [NSPasteboard generalPasteboard];
-    [generalPasteboard declareTypes:@[ NSStringPboardType ] owner:nil];
-    [generalPasteboard setString:string forType:NSStringPboardType];
+    [generalPasteboard declareTypes:@[ NSPasteboardTypeString ] owner:nil];
+    [generalPasteboard setString:string forType:NSPasteboardTypeString];
 }
 
 #pragma mark - Text Sending

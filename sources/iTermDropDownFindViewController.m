@@ -194,7 +194,7 @@ static const float kAnimationDuration = 0.2;
 #pragma mark - NSViewController
 
 - (BOOL)validateUserInterfaceItem:(NSMenuItem *)item {
-    item.state = (item.tag == self.driver.mode) ? NSOnState : NSOffState;
+    item.state = (item.tag == self.driver.mode) ? NSControlStateValueOn : NSControlStateValueOff;
     return YES;
 }
 

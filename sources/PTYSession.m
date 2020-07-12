@@ -6114,8 +6114,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         _pbtext = [[NSMutableData alloc] init];
     } else {
         NSPasteboard *pboard = [NSPasteboard pasteboardWithName:_pasteboard];
-        [pboard declareTypes:[NSArray arrayWithObject:NSStringPboardType] owner:self];
-        [pboard setData:_pbtext forType:NSStringPboardType];
+        [pboard declareTypes:[NSArray arrayWithObject:NSPasteboardTypeString] owner:self];
+        [pboard setData:_pbtext forType:NSPasteboardTypeString];
 
         [_pasteboard release];
         _pasteboard = nil;
@@ -10014,13 +10014,13 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 - (void)screenSetPasteboard:(NSString *)value {
     if ([iTermPreferences boolForKey:kPreferenceKeyAllowClipboardAccessFromTerminal]) {
         if ([value isEqualToString:@"ruler"]) {
-            [self setPasteboard:NSGeneralPboard];
+            [self setPasteboard:NSPasteboardNameGeneral];
         } else if ([value isEqualToString:@"find"]) {
-            [self setPasteboard:NSFindPboard];
+            [self setPasteboard:NSPasteboardNameFind];
         } else if ([value isEqualToString:@"font"]) {
-            [self setPasteboard:NSFontPboard];
+            [self setPasteboard:NSPasteboardNameFont];
         } else {
-            [self setPasteboard:NSGeneralPboard];
+            [self setPasteboard:NSPasteboardNameGeneral];
         }
     } else {
         XLog(@"Clipboard access denied for CopyToClipboard");
@@ -10117,7 +10117,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
     [NSApp activateIgnoringOtherApps:YES];
     [panel beginSheetModalForWindow:_textview.window completionHandler:^(NSInteger result) {
-        if (result == NSFileHandlingPanelOKButton) {
+        if (result == NSModalResponseOK) {
             [self writeTaskNoBroadcast:@"ok\n" encoding:NSISOLatin1StringEncoding forceEncoding:YES];
             NSFileManager *fileManager = [NSFileManager defaultManager];
             // Get the directories for all the URLs. If a URL was a file, convert it to the containing directory, otherwise leave it alone.

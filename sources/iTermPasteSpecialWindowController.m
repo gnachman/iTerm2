@@ -12,6 +12,7 @@
 #import "iTermPasteSpecialViewController.h"
 #import "iTermPasteHelper.h"
 #import "iTermPreferences.h"
+#import "NSArray+iTerm.h"
 #import "NSData+iTerm.h"
 #import "NSStringITerm.h"
 #import "NSTextField+iTerm.h"
@@ -253,8 +254,10 @@
     }
 
     // Now handle file references.
-    NSArray *filenames = [pasteboard propertyListForType:NSFilenamesPboardType];
-
+    NSArray<NSURL *> *urls = [pasteboard readObjectsForClasses:@[ [NSURL class] ] options:0];
+    NSArray<NSString *> *filenames = [urls mapWithBlock:^id(NSURL *anObject) {
+        return anObject.path;
+    }];
     // Join the filenames to add an item for the names themselves.
     NSMutableArray *modifiedFilenames = [NSMutableArray array];
     if (filenames.count == 1) {

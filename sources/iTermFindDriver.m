@@ -351,7 +351,7 @@ static NSString *gSearchString;
     if (_savedState) {
         return;
     }
-    // Copy into the NSFindPboard
+    // Copy into the NSPasteboardNameFind
     [[iTermFindPasteboard sharedInstance] setStringValue:stringValue];
 }
 

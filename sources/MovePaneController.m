@@ -266,7 +266,7 @@ NSString *const iTermSessionDidChangeTabNotification = @"iTermSessionDidChangeTa
     self.dragFailed = NO;
     NSPasteboard *pboard;
 
-    pboard = [NSPasteboard pasteboardWithName:NSDragPboard];
+    pboard = [NSPasteboard pasteboardWithName:NSPasteboardNameDrag];
     [pboard declareTypes:@[ iTermMovePaneDragType ] owner: nil];
     [pboard setString:@"" forType:iTermMovePaneDragType];
 

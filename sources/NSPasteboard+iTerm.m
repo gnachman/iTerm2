@@ -13,8 +13,9 @@
 
 - (NSArray *)filenamesOnPasteboardWithShellEscaping:(BOOL)escape {
     NSMutableArray *results = [NSMutableArray array];
-    NSArray *propertyList = [self propertyListForType:NSFilenamesPboardType];
-    for (NSString *filename in propertyList) {
+    NSArray<NSURL *> *urls = [self readObjectsForClasses:@[ [NSURL class] ] options:0];
+    for (NSURL *url in urls) {
+        NSString *filename = url.path;
         NSDictionary *filenamesAttributes = [[NSFileManager defaultManager] attributesOfItemAtPath:filename
                                                                                              error:nil];
         if (([filenamesAttributes fileHFSTypeCode] == 'clpt' &&
@@ -33,12 +34,12 @@
 }
 
 - (NSData *)dataForFirstFile {
-    NSString *bestType = [self availableTypeFromArray:@[ NSFilenamesPboardType ]];
+    NSString *bestType = [self availableTypeFromArray:@[ NSPasteboardTypeFileURL ]];
 
-    if ([bestType isEqualToString:NSFilenamesPboardType]) {
-        NSArray *filenames = [self propertyListForType:NSFilenamesPboardType];
-        if (filenames.count > 0) {
-            NSString *filename = filenames[0];
+    if ([bestType isEqualToString:NSPasteboardTypeFileURL]) {
+        NSArray<NSURL *> *urls = [self readObjectsForClasses:@[ [NSURL class] ] options:0];
+        if (urls.count > 0) {
+            NSString *filename = urls.firstObject.path;
             return [NSData dataWithContentsOfFile:filename];
         }
     }

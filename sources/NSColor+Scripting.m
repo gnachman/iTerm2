@@ -14,7 +14,7 @@ static const CGFloat kRGBColorCoefficient = 65535;
 
 - (NSAppleEventDescriptor *)scriptingRGBColorDescriptor {
     // Make it safe to access red, green, and blue components.
-    NSColor *theColor = [self colorUsingColorSpaceName:NSCalibratedRGBColorSpace];
+    NSColor *theColor = [self colorUsingColorSpace:[NSColorSpace genericRGBColorSpace]];
 
     // Convert self to a QuickDraw RGBColor
     RGBColor rgbColor = {

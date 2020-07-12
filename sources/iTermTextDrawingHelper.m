@@ -426,7 +426,7 @@ typedef struct iTermTextColorContext {
     }
 
     // Now iterate over the lines and paint the characters.
-    CGContextRef ctx = (CGContextRef)[[NSGraphicsContext currentContext] graphicsPort];
+    CGContextRef ctx = (CGContextRef)[[NSGraphicsContext currentContext] CGContext];
     if ([self textAppearanceDependsOnBackgroundColor]) {
         [self drawForegroundForBackgroundRunArrays:backgroundRunArrays
                                                ctx:ctx];
@@ -852,7 +852,7 @@ typedef struct iTermTextColorContext {
 
     [self updateCachedMetrics];
 
-    CGContextRef ctx = (CGContextRef)[[NSGraphicsContext currentContext] graphicsPort];
+    CGContextRef ctx = (CGContextRef)[[NSGraphicsContext currentContext] CGContext];
     if (!self.isRetina) {
         CGContextSetShouldSmoothFonts(ctx, NO);
     }
@@ -1451,7 +1451,7 @@ typedef struct iTermTextColorContext {
                                                          atPoint:NSMakePoint(-stringPositions[0], 0)
                                                           origin:VT100GridCoordMake(-1, -1)  // only needed by images
                                                        positions:stringPositions
-                                                       inContext:[[NSGraphicsContext currentContext] graphicsPort]
+                                                       inContext:[[NSGraphicsContext currentContext] CGContext]
                                                  backgroundColor:backgroundColor
                                                            smear:YES];
          CFRelease(colorSpace);
@@ -1540,7 +1540,7 @@ typedef struct iTermTextColorContext {
     _replacementLineRefCache[attributedString] = (id)lineRef;
 
     CFArrayRef runs = CTLineGetGlyphRuns(lineRef);
-    CGContextRef cgContext = (CGContextRef) [ctx graphicsPort];
+    CGContextRef cgContext = (CGContextRef) [ctx CGContext];
     CGContextSetShouldAntialias(cgContext, antiAlias);
     CGContextSetFillColorWithColor(cgContext, cgColor);
     CGContextSetStrokeColorWithColor(cgContext, cgColor);
@@ -1751,7 +1751,7 @@ typedef struct iTermTextColorContext {
     }
 
     NSGraphicsContext *graphicsContext = [NSGraphicsContext currentContext];
-    CGContextRef cgContext = (CGContextRef)[graphicsContext graphicsPort];
+    CGContextRef cgContext = (CGContextRef)[graphicsContext CGContext];
     [self drawInContext:cgContext
                  inRect:rect
               alphaMask:underlineContext->alphaMask
@@ -1798,12 +1798,12 @@ typedef struct iTermTextColorContext {
     underlineContext->maskGraphicsContext = [self newGrayscaleContextOfSize:size];
     [NSGraphicsContext saveGraphicsState];
 
-    [NSGraphicsContext setCurrentContext:[NSGraphicsContext graphicsContextWithGraphicsPort:underlineContext->maskGraphicsContext
-                                                                                    flipped:NO]];
+    [NSGraphicsContext setCurrentContext:[NSGraphicsContext graphicsContextWithCGContext:underlineContext->maskGraphicsContext
+                                                                                 flipped:NO]];
 
     // Draw the background
     [[NSColor whiteColor] setFill];
-    CGContextRef ctx = [[NSGraphicsContext currentContext] graphicsPort];
+    CGContextRef ctx = [[NSGraphicsContext currentContext] CGContext];
     CGContextFillRect(ctx,
                       NSMakeRect(0, 0, size.width, size.height));
 

@@ -41,7 +41,7 @@ static NSString *const iTermToolActionsPasteboardType = @"iTermToolActionsPasteb
 
 static NSButton *iTermToolActionsNewButton(NSString *imageName, NSString *title, id target, SEL selector, NSRect frame) {
     NSButton *button = [[NSButton alloc] initWithFrame:NSMakeRect(0, frame.size.height - kButtonHeight, frame.size.width, kButtonHeight)];
-    [button setButtonType:NSMomentaryPushInButton];
+    [button setButtonType:NSButtonTypeMomentaryPushIn];
     if (imageName) {
         if (@available(macOS 10.16, *)) {
             button.image = [NSImage it_imageForSymbolName:imageName accessibilityDescription:title];
@@ -59,7 +59,7 @@ static NSButton *iTermToolActionsNewButton(NSString *imageName, NSString *title,
         button.imageScaling = NSImageScaleProportionallyUpOrDown;
         button.imagePosition = NSImageOnly;
     } else {
-        [button setBezelStyle:NSSmallSquareBezelStyle];
+        [button setBezelStyle:NSBezelStyleSmallSquare];
     }
     [button sizeToFit];
     [button setAutoresizingMask:NSViewMinYMargin];

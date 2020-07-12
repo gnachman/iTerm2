@@ -139,7 +139,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (BOOL)validateMenuItem:(NSMenuItem *)menuItem {
     NSString *path = menuItem.identifier;
     const BOOL isRunning = path && !![[iTermScriptHistory sharedInstance] runningEntryWithPath:path];
-    menuItem.state = isRunning ? NSOnState : NSOffState;
+    menuItem.state = isRunning ? NSControlStateValueOn : NSControlStateValueOff;
     return YES;
 }
 
@@ -878,7 +878,7 @@ NS_ASSUME_NONNULL_BEGIN
     }
     savePanel.directoryURL = [NSURL fileURLWithPath:[[NSFileManager defaultManager] scriptsPath]];
 
-    if ([savePanel runModal] == NSFileHandlingPanelOKButton) {
+    if ([savePanel runModal] == NSModalResponseOK) {
         NSURL *url = savePanel.URL;
         NSString *filename = [url lastPathComponent];
         NSString *safeFilename = [filename stringByReplacingOccurrencesOfString:@" " withString:@"_"];

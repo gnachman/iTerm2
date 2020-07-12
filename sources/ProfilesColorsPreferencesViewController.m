@@ -475,10 +475,10 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
         if (item.action == @selector(loadColorPreset:)) {
             NSString *name = item.title;
             if (!found && [self currentColorsEqualPreset:allPresets[name]]) {
-                item.state = NSOnState;
+                item.state = NSControlStateValueOn;
                 found = YES;
             } else {
-                item.state = NSOffState;
+                item.state = NSControlStateValueOff;
             }
         }
     }

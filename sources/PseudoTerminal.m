@@ -7885,7 +7885,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     if (mru.count) {
         [coprocessCommand_ addItemsWithObjectValues:mru];
     }
-    [coprocessIgnoreErrors_ setState:[Coprocess shouldIgnoreErrorsFromCommand:coprocessCommand_.stringValue] ? NSOnState : NSOffState];
+    [coprocessIgnoreErrors_ setState:[Coprocess shouldIgnoreErrorsFromCommand:coprocessCommand_.stringValue] ? NSControlStateValueOn : NSControlStateValueOff];
     [NSApp runModalForWindow:coprocesssPanel_];
 
     [self.window endSheet:coprocesssPanel_];
@@ -7901,7 +7901,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
             return;
         }
         [[self currentSession] launchCoprocessWithCommand:[coprocessCommand_ stringValue]];
-        [Coprocess setSilentlyIgnoreErrors:[coprocessIgnoreErrors_ state] == NSOnState fromCommand:[coprocessCommand_ stringValue]];
+        [Coprocess setSilentlyIgnoreErrors:[coprocessIgnoreErrors_ state] == NSControlStateValueOn fromCommand:[coprocessCommand_ stringValue]];
     }
     [NSApp stopModal];
 }
@@ -10204,13 +10204,13 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
         const BOOL ok = (self.currentSession.isTmuxClient &&
                          self.currentSession.tmuxController.gateway.pauseModeEnabled);
         if (ok) {
-            item.state = self.currentSession.tmuxPaused ? NSOnState : NSOffState;
+            item.state = self.currentSession.tmuxPaused ? NSControlStateValueOn : NSControlStateValueOff;
         }
         return ok;
     } else if ([item action] == @selector(setDefaultToolbeltWidth:)) {
         return _contentView.shouldShowToolbelt;
     } else if ([item action] == @selector(toggleToolbeltVisibility:)) {
-        [item setState:_contentView.shouldShowToolbelt ? NSOnState : NSOffState];
+        [item setState:_contentView.shouldShowToolbelt ? NSControlStateValueOn : NSControlStateValueOff];
         return [[iTermToolbeltView configuredTools] count] > 0;
     } else if ([item action] == @selector(moveSessionToWindow:)) {
         result = ([[self allSessions] count] > 1);
@@ -10228,11 +10228,11 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     } else if ([item action] == @selector(toggleBroadcastingToCurrentSession:)) {
         result = ![[self currentSession] exited];
     } else if (item.action == @selector(enableSendInputToAllTabs:)) {
-        item.state = (_broadcastInputHelper.broadcastMode == BROADCAST_TO_ALL_TABS) ? NSOnState : NSOffState;
+        item.state = (_broadcastInputHelper.broadcastMode == BROADCAST_TO_ALL_TABS) ? NSControlStateValueOn : NSControlStateValueOff;
     } else if (item.action == @selector(enableSendInputToAllPanes:)) {
-        item.state = (_broadcastInputHelper.broadcastMode == BROADCAST_TO_ALL_PANES) ? NSOnState : NSOffState;
+        item.state = (_broadcastInputHelper.broadcastMode == BROADCAST_TO_ALL_PANES) ? NSControlStateValueOn : NSControlStateValueOff;
     } else if (item.action == @selector(disableBroadcasting:)) {
-        item.state = (_broadcastInputHelper.broadcastMode == BROADCAST_OFF) ? NSOnState : NSOffState;
+        item.state = (_broadcastInputHelper.broadcastMode == BROADCAST_OFF) ? NSControlStateValueOn : NSControlStateValueOff;
     } else if ([item action] == @selector(runCoprocess:)) {
         result = ![[self currentSession] hasCoprocess];
     } else if ([item action] == @selector(stopCoprocess:)) {
@@ -10240,10 +10240,10 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     } else if ([item action] == @selector(startStopLogging:)) {
         PTYSession *session = self.currentSession;
         if (!session || session.exited) {
-            item.state = NSOffState;
+            item.state = NSControlStateValueOff;
             return NO;
         }
-        item.state = session.logging ? NSOnState : NSOffState;
+        item.state = session.logging ? NSControlStateValueOn : NSControlStateValueOff;
         return YES;
     } else if ([item action] == @selector(irPrev:)) {
         result = ![[self currentSession] liveSession] && [[self currentSession] canInstantReplayPrev];
@@ -10251,24 +10251,24 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
         result = [[self currentSession] canInstantReplayNext];
     } else if ([item action] == @selector(toggleCursorGuide:)) {
         PTYSession *session = [self currentSession];
-        [item setState:session.highlightCursorLine ? NSOnState : NSOffState];
+        [item setState:session.highlightCursorLine ? NSControlStateValueOn : NSControlStateValueOff];
         result = YES;
     } else if ([item action] == @selector(toggleSelectionRespectsSoftBoundaries:)) {
-        [item setState:[[iTermController sharedInstance] selectionRespectsSoftBoundaries] ? NSOnState : NSOffState];
+        [item setState:[[iTermController sharedInstance] selectionRespectsSoftBoundaries] ? NSControlStateValueOn : NSControlStateValueOff];
         result = YES;
     } else if ([item action] == @selector(toggleAutoCommandHistory:)) {
         result = [[iTermShellHistoryController sharedInstance] commandHistoryHasEverBeenUsed];
         if (result) {
             if ([item respondsToSelector:@selector(setState:)]) {
-                [item setState:[iTermPreferences boolForKey:kPreferenceAutoCommandHistory] ? NSOnState : NSOffState];
+                [item setState:[iTermPreferences boolForKey:kPreferenceAutoCommandHistory] ? NSControlStateValueOn : NSControlStateValueOff];
             }
         } else {
-            [item setState:NSOffState];
+            [item setState:NSControlStateValueOff];
         }
     } else if ([item action] == @selector(toggleAlertOnNextMark:)) {
         PTYSession *currentSession = [self currentSession];
         if ([item respondsToSelector:@selector(setState:)]) {
-            [item setState:currentSession.alertOnNextMark ? NSOnState : NSOffState];
+            [item setState:currentSession.alertOnNextMark ? NSControlStateValueOn : NSControlStateValueOff];
         }
         result = (currentSession != nil);
     } else if (item.action == @selector(nextMark:) || item.action == @selector(previousMark:)) {
@@ -10337,7 +10337,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     } else if (item.action == @selector(exportRecording:)) {
         return !self.currentSession.screen.dvr.empty;
     } else if (item.action == @selector(toggleSizeChangesAffectProfile:)) {
-        item.state = [iTermPreferences boolForKey:kPreferenceKeySizeChangesAffectProfile] ? NSOnState : NSOffState;
+        item.state = [iTermPreferences boolForKey:kPreferenceKeySizeChangesAffectProfile] ? NSControlStateValueOn : NSControlStateValueOff;
         return YES;
     } else if (item.action == @selector(performClose:)) {
         return YES;
@@ -11382,7 +11382,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 
 - (void)controlTextDidChange:(NSNotification *)aNotification {
     if ([aNotification object] == coprocessCommand_) {
-        [coprocessIgnoreErrors_ setState:[Coprocess shouldIgnoreErrorsFromCommand:coprocessCommand_.stringValue] ? NSOnState : NSOffState];
+        [coprocessIgnoreErrors_ setState:[Coprocess shouldIgnoreErrorsFromCommand:coprocessCommand_.stringValue] ? NSControlStateValueOn : NSControlStateValueOff];
     }
     if ([[self superclass] instancesRespondToSelector:_cmd]) {
         [super controlTextDidChange:aNotification];

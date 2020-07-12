@@ -101,7 +101,7 @@ static const CGFloat kMargin = 8;
                                                                             closeSize.width,
                                                                             closeSize.height)] autorelease];
         closeButton.autoresizingMask = NSViewMinXMargin;
-        [closeButton setButtonType:NSMomentaryPushInButton];
+        [closeButton setButtonType:NSButtonTypeMomentaryPushIn];
         [closeButton setImage:closeImage];
         [closeButton setTarget:self];
         [closeButton setAction:@selector(close:)];
@@ -171,7 +171,7 @@ static const CGFloat kMargin = 8;
     if (shouldCreatePopup) {
         pullDown = [[NSPopUpButton alloc] initWithFrame:NSMakeRect(0, 0, 0, 0) pullsDown:YES];
         pullDown.autoresizingMask = NSViewMinXMargin;
-        [pullDown setBezelStyle:NSTexturedRoundedBezelStyle];
+        [pullDown setBezelStyle:NSBezelStyleTexturedRounded];
         [pullDown setTarget:self];
         [pullDown setAction:@selector(pullDownItemSelected:)];
         [_internalView addSubview:pullDown];
@@ -193,13 +193,13 @@ static const CGFloat kMargin = 8;
     for (int i = start; i != limit; i += step) {
         NSString *action = actions[i];
         NSButton *button = [[[NSButton alloc] init] autorelease];
-        [button setButtonType:NSMomentaryPushInButton];
+        [button setButtonType:NSButtonTypeMomentaryPushIn];
         [button setTarget:self];
         [button setAction:@selector(buttonPressed:)];
         [button setTag:i];
 
         [button setTitle:[self stringByAddingShortcutInString:action]];
-        [button setBezelStyle:NSTexturedRoundedBezelStyle];
+        [button setBezelStyle:NSBezelStyleTexturedRounded];
         [button sizeToFit];
         button.autoresizingMask = NSViewMinXMargin;
         _buttonWidth += kMargin;

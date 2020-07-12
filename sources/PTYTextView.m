@@ -237,11 +237,10 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
             VT100GridAbsWindowedRangeMake(VT100GridAbsCoordRangeMake(-1, -1, -1, -1), 0, 0);
         _timeOfLastBlink = [NSDate timeIntervalSinceReferenceDate];
 
-        // register for drag and drop
-        [self registerForDraggedTypes: [NSArray arrayWithObjects:
-            NSFilenamesPboardType,
-            NSStringPboardType,
-            nil]];
+        // Register for drag and drop.
+        [self registerForDraggedTypes: @[
+            NSPasteboardTypeFileURL,
+            NSPasteboardTypeString ]];
 
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(useBackgroundIndicatorChanged:)
@@ -271,7 +270,7 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
         _secondaryFont = [[PTYFontInfo alloc] init];
 
         DLog(@"Begin tracking touches in view %@", self);
-        [self setAcceptsTouchEvents:YES];
+        self.allowedTouchTypes = NSTouchTypeMaskIndirect;
         [self setWantsRestingTouches:YES];
         threeFingerTapGestureRecognizer_ =
             [[ThreeFingerTapGestureRecognizer alloc] initWithTarget:self
@@ -388,7 +387,7 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
     if ([item action] == @selector(paste:)) {
         NSPasteboard *pboard = [NSPasteboard generalPasteboard];
         // Check if there is a string type on the pasteboard
-        if ([pboard stringForType:NSStringPboardType] != nil) {
+        if ([pboard stringForType:NSPasteboardTypeString] != nil) {
             return YES;
         }
         return [[[NSPasteboard generalPasteboard] pasteboardItems] anyWithBlock:^BOOL(NSPasteboardItem *item) {
@@ -409,11 +408,11 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
         return YES;
     }
     if ([item action] == @selector(showHideNotes:)) {
-        item.state = [self anyAnnotationsAreVisible] ? NSOnState : NSOffState;
+        item.state = [self anyAnnotationsAreVisible] ? NSControlStateValueOn : NSControlStateValueOff;
         return YES;
     }
     if ([item action] == @selector(toggleShowTimestamps:)) {
-        item.state = _drawingHelper.showTimestamps ? NSOnState : NSOffState;
+        item.state = _drawingHelper.showTimestamps ? NSControlStateValueOn : NSControlStateValueOff;
         return YES;
     }
 
@@ -502,7 +501,7 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
         item.action == @selector(terminalStateToggleApplicationCursor:) ||
         item.action == @selector(terminalStateToggleApplicationKeypad:) ||
         item.action == @selector(terminalStateToggleCSIu:)) {
-        item.state = [self.delegate textViewTerminalStateForMenuItem:item] ? NSOnState : NSOffState;
+        item.state = [self.delegate textViewTerminalStateForMenuItem:item] ? NSControlStateValueOn : NSControlStateValueOff;
         return YES;
     }
     if (item.action == @selector(terminalStateReset:)) {
@@ -1207,7 +1206,7 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
         self.alphaValue = suppressDrawing ? 0 : 1;
     }
     PTYScrollView *scrollView = (PTYScrollView *)self.enclosingScrollView;
-    [scrollView.verticalScroller setNeedsDisplay];
+    [scrollView.verticalScroller setNeedsDisplay:YES];
 }
 
 - (iTermTextDrawingHelper *)drawingHelper {
@@ -2552,8 +2551,8 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
     DLog(@"Have selected text: “%@”. selection=%@", copyString, _selection);
     if (copyString) {
         NSPasteboard *pboard = [NSPasteboard generalPasteboard];
-        [pboard declareTypes:[NSArray arrayWithObject:NSStringPboardType] owner:self];
-        [pboard setString:copyString forType:NSStringPboardType];
+        [pboard declareTypes:[NSArray arrayWithObject:NSPasteboardTypeString] owner:self];
+        [pboard setString:copyString forType:NSPasteboardTypeString];
     }
 
     [[PasteboardHistory sharedInstance] save:copyString];
@@ -2573,7 +2572,7 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
     DLog(@"Have selected text of length %d. selection=%@", (int)[copyAttributedString length], _selection);
     NSMutableArray *types = [NSMutableArray array];
     if (copyAttributedString) {
-        [types addObject:NSRTFPboardType];
+        [types addObject:NSPasteboardTypeRTF];
     }
     [pboard declareTypes:types owner:self];
     if (copyAttributedString) {
@@ -2583,7 +2582,7 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
         [pboard writeObjects:@[ copyAttributedString ]];
     }
     // I used to do
-    //   [pboard setString:[copyAttributedString string] forType:NSStringPboardType]
+    //   [pboard setString:[copyAttributedString string] forType:NSPasteboardTypeString]
     // but this seems to take precedence over the attributed version for
     // pasting sometimes, for example in TextEdit.
     [[PasteboardHistory sharedInstance] save:[copyAttributedString string]];
@@ -2616,7 +2615,7 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
     // Paste string or filenames in.
     NSArray *types = [pasteboard types];
 
-    if ([types containsObject:NSFilenamesPboardType]) {
+    if ([types containsObject:NSPasteboardTypeFileURL]) {
         // Filenames were dragged.
         NSArray *filenames = [pasteboard filenamesOnPasteboardWithShellEscaping:YES];
         if (filenames.count) {
@@ -2648,8 +2647,8 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
         }
     }
 
-    if ([types containsObject:NSStringPboardType]) {
-        NSString *string = [pasteboard stringForType:NSStringPboardType];
+    if ([types containsObject:NSPasteboardTypeString]) {
+        NSString *string = [pasteboard stringForType:NSPasteboardTypeString];
         if (string.length) {
             [_delegate pasteString:string];
             return YES;
@@ -2727,7 +2726,7 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
     // will remember the last path you used.tmp
     [NSSavePanel setDirectoryURL:[NSURL fileURLWithPath:path] onceForID:@"saveDocumentAs:" savePanel:aSavePanel];
     aSavePanel.nameFieldStringValue = nowStr;
-    if ([aSavePanel runModal] == NSFileHandlingPanelOKButton) {
+    if ([aSavePanel runModal] == NSModalResponseOK) {
         if (![aData writeToFile:aSavePanel.URL.path atomically:YES]) {
             DLog(@"Beep: can't write to %@", aSavePanel.URL);
             NSBeep();
@@ -3674,7 +3673,7 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
         item.target = self;
         item.tag = j;
         j += 1;
-        item.state = [self.delegate textViewTerminalStateForMenuItem:item] ? NSOnState : NSOffState;
+        item.state = [self.delegate textViewTerminalStateForMenuItem:item] ? NSControlStateValueOn : NSControlStateValueOff;
     }
     [theMenu addItem:terminalState];
 
@@ -3848,10 +3847,10 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
     SCPPath *dropScpPath = [_dataSource scpPathForFile:@"" onLine:dropLine];
 
     // It's ok to upload if a file is being dragged in and the drop location has a remote host path.
-    BOOL uploadOK = ([types containsObject:NSFilenamesPboardType] && dropScpPath);
+    BOOL uploadOK = ([types containsObject:NSPasteboardTypeFileURL] && dropScpPath);
 
-    // It's ok to paste if the the drag obejct is either a file or a string.
-    BOOL pasteOK = !![[sender draggingPasteboard] availableTypeFromArray:@[ NSFilenamesPboardType, NSStringPboardType ]];
+    // It's ok to paste if the the drag object is either a file or a string.
+    BOOL pasteOK = !![[sender draggingPasteboard] availableTypeFromArray:@[ NSPasteboardTypeFileURL, NSPasteboardTypeString ]];
 
     const BOOL optionPressed = ([NSEvent modifierFlags] & NSEventModifierFlagOption) != 0;
     NSDragOperation sourceMask = [sender draggingSourceOperationMask];
@@ -4065,7 +4064,7 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
     int dropLine = dropPoint.y / _lineHeight;
     SCPPath *dropScpPath = [_dataSource scpPathForFile:@"" onLine:dropLine];
     NSArray *filenames = [pasteboard filenamesOnPasteboardWithShellEscaping:NO];
-    if ([types containsObject:NSFilenamesPboardType] && filenames.count && dropScpPath) {
+    if ([types containsObject:NSPasteboardTypeFileURL] && filenames.count && dropScpPath) {
         // This is all so the mouse cursor will change to a plain arrow instead of the
         // drop target cursor.
         if (![[self window] isKindOfClass:[NSPanel class]]) {
@@ -4502,7 +4501,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 - (id)validRequestorForSendType:(NSString *)sendType returnType:(NSString *)returnType
 {
     NSSet *acceptedReturnTypes = [NSSet setWithArray:@[ (NSString *)kUTTypeUTF8PlainText,
-                                                        NSStringPboardType ]];
+                                                        NSPasteboardTypeString ]];
     NSSet *acceptedSendTypes = nil;
     if ([_selection hasSelection] && [_selection length] <= [_dataSource width] * 10000) {
         acceptedSendTypes = acceptedReturnTypes;
@@ -4525,8 +4524,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         [self selectedTextCappedAtSize:[iTermAdvancedSettingsModel maximumBytesToProvideToServices]];
 
     if (copyString && [copyString length] > 0) {
-        [pboard declareTypes:@[ NSStringPboardType ] owner:self];
-        [pboard setString:copyString forType:NSStringPboardType];
+        [pboard declareTypes:@[ NSPasteboardTypeString ] owner:self];
+        [pboard setString:copyString forType:NSPasteboardTypeString];
         return YES;
     }
 
@@ -4534,7 +4533,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (BOOL)readSelectionFromPasteboard:(NSPasteboard *)pboard {
-    NSString *string = [pboard stringForType:NSStringPboardType];
+    NSString *string = [pboard stringForType:NSPasteboardTypeString];
     if (string.length) {
         [_delegate insertText:string];
         return YES;

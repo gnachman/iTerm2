@@ -403,7 +403,7 @@ static NSString *const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
         [self setBool:NO forKey:kPreferenceKeyHotkeyEnabled];
         if (wasEnabled) {
             [self hotkeyEnabledDidChange];
-            _hotkeyEnabled.state = NSOffState;
+            _hotkeyEnabled.state = NSControlStateValueOff;
         }
     }
 }

@@ -84,8 +84,7 @@ NS_CLASS_AVAILABLE(10_11, NA)
                       row:(int)row
                     width:(int)width
            drawableGlyphs:(int *)drawableGlyphsPtr
-                     date:(out NSDate * _Nonnull * _Nonnull)date
-                     sketch:(out NSUInteger *)sketchPtr;
+                     date:(out NSDate * _Nonnull * _Nonnull)date;
 
 - (iTermCharacterSourceDescriptor *)characterSourceDescriptorForASCIIWithGlyphSize:(CGSize)glyphSize
                                                                        asciiOffset:(CGSize)asciiOffset;

@@ -36,19 +36,19 @@
 
 - (void)setStringValue:(NSString *)stringValue {
     DLog(@"Set string value to %@\n%@", stringValue, [NSThread callStackSymbols]);
-    NSPasteboard *pasteboard = [NSPasteboard pasteboardWithName:NSFindPboard];
+    NSPasteboard *pasteboard = [NSPasteboard pasteboardWithName:NSPasteboardNameFind];
     if (pasteboard) {
-        [pasteboard declareTypes:[NSArray arrayWithObject:NSStringPboardType] owner:nil];
-        [pasteboard setString:stringValue ?: @"" forType:NSStringPboardType];
+        [pasteboard declareTypes:[NSArray arrayWithObject:NSPasteboardTypeString] owner:nil];
+        [pasteboard setString:stringValue ?: @"" forType:NSPasteboardTypeString];
     }
 }
 
 - (NSString *)stringValue {
-    NSPasteboard *findBoard = [NSPasteboard pasteboardWithName:NSFindPboard];
-    if (![[findBoard types] containsObject:NSStringPboardType]) {
+    NSPasteboard *findBoard = [NSPasteboard pasteboardWithName:NSPasteboardNameFind];
+    if (![[findBoard types] containsObject:NSPasteboardTypeString]) {
         return @"";
     }
-    return [findBoard stringForType:NSStringPboardType] ?: @"";
+    return [findBoard stringForType:NSPasteboardTypeString] ?: @"";
 }
 
 - (void)updateObservers {

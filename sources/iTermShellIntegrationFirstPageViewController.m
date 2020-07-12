@@ -41,7 +41,7 @@ static NSString *const iTermShellIntegrationInstallUtilitiesUserDefaultsKey = @"
 - (void)viewDidLoad {
     NSNumber *number = [[NSUserDefaults standardUserDefaults] objectForKey:iTermShellIntegrationInstallUtilitiesUserDefaultsKey];
     BOOL installUtilities = number ? number.boolValue : YES;
-    self.utilities.state = installUtilities ? NSOnState : NSOffState;
+    self.utilities.state = installUtilities ? NSControlStateValueOn : NSControlStateValueOff;
 
     NSMutableAttributedString *attributedString;
     attributedString = [[self attributedStringWithFont:_descriptionLabel.font
@@ -58,11 +58,11 @@ static NSString *const iTermShellIntegrationInstallUtilitiesUserDefaultsKey = @"
 }
 
 - (IBAction)toggleInstallUtilities:(id)sender {
-    [[NSUserDefaults standardUserDefaults] setBool:self.utilities.state == NSOnState forKey:iTermShellIntegrationInstallUtilitiesUserDefaultsKey];
+    [[NSUserDefaults standardUserDefaults] setBool:self.utilities.state == NSControlStateValueOn forKey:iTermShellIntegrationInstallUtilitiesUserDefaultsKey];
 }
 
 - (IBAction)next:(id)sender {
-    [self.shellInstallerDelegate shellIntegrationInstallerSetInstallUtilities:self.utilities.state == NSOnState];
+    [self.shellInstallerDelegate shellIntegrationInstallerSetInstallUtilities:self.utilities.state == NSControlStateValueOn];
     [self.shellInstallerDelegate shellIntegrationInstallerContinue];
 }
 @end

@@ -181,14 +181,14 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)initializeUI {
     switch (_layout.advancedConfiguration.layoutAlgorithm) {
         case iTermStatusBarLayoutAlgorithmSettingStable:
-            _tightPacking.state = NSOffState;
+            _tightPacking.state = NSControlStateValueOff;
             break;
         case iTermStatusBarLayoutAlgorithmSettingTightlyPacked:
-            _tightPacking.state = NSOnState;
+            _tightPacking.state = NSControlStateValueOn;
             break;
     }
 
-    _removeEmptyComponents.state = _layout.advancedConfiguration.removeEmptyComponents ? NSOnState : NSOffState;
+    _removeEmptyComponents.state = _layout.advancedConfiguration.removeEmptyComponents ? NSControlStateValueOn : NSControlStateValueOff;
 }
 
 - (void)initializeColorWell:(CPKColorWell *)colorWell
@@ -223,7 +223,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (NSView *)fontPanelAccessory {
     NSButton *button = [[NSButton alloc] init];
     button.title = @"Reset to System Font";
-    button.buttonType = NSMomentaryPushInButton;
+    button.buttonType = NSButtonTypeMomentaryPushIn;
     button.bezelStyle = NSBezelStyleRounded;
     button.target = self;
     button.action = @selector(resetFont:);
@@ -326,8 +326,8 @@ NS_ASSUME_NONNULL_BEGIN
     _layout.advancedConfiguration.separatorColor = _separatorColorWell.color;
     _layout.advancedConfiguration.backgroundColor = _backgroundColorWell.color;
     _layout.advancedConfiguration.defaultTextColor = _defaultTextColorWell.color;
-    _layout.advancedConfiguration.layoutAlgorithm = (_tightPacking.state == NSOnState) ? iTermStatusBarLayoutAlgorithmSettingTightlyPacked : iTermStatusBarLayoutAlgorithmSettingStable;
-    _layout.advancedConfiguration.removeEmptyComponents = (_removeEmptyComponents.state == NSOnState);
+    _layout.advancedConfiguration.layoutAlgorithm = (_tightPacking.state == NSControlStateValueOn) ? iTermStatusBarLayoutAlgorithmSettingTightlyPacked : iTermStatusBarLayoutAlgorithmSettingStable;
+    _layout.advancedConfiguration.removeEmptyComponents = (_removeEmptyComponents.state == NSControlStateValueOn);
     _layout.delegate = nil;
 
     _layout = [[iTermStatusBarLayout alloc] initWithDictionary:_layout.dictionaryValue scope:nil];

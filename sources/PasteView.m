@@ -15,7 +15,6 @@
 - (void)resetCursorRects {
     NSCursor *arrow = [NSCursor arrowCursor];
     [self addCursorRect:[self bounds] cursor:arrow];
-    [arrow setOnMouseEntered:YES];
 }
 
 - (BOOL)isFlipped {
@@ -65,7 +64,6 @@
 - (void)resetCursorRects {
     NSCursor *arrow = [NSCursor arrowCursor];
     [self addCursorRect:[self bounds] cursor:arrow];
-    [arrow setOnMouseEntered:YES];
 }
 
 - (void)drawRect:(NSRect)dirtyRect {

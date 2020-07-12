@@ -132,19 +132,6 @@
 
 #pragma mark - Accessors
 
-- (void)setPasswordObject:(id<NSCoding>)object {
-	self.passwordData = [NSKeyedArchiver archivedDataWithRootObject:object];
-}
-
-
-- (id<NSCoding>)passwordObject {
-	if ([self.passwordData length]) {
-		return [NSKeyedUnarchiver unarchiveObjectWithData:self.passwordData];
-	}
-	return nil;
-}
-
-
 - (void)setPassword:(NSString *)password {
 	self.passwordData = [password dataUsingEncoding:NSUTF8StringEncoding];
 }

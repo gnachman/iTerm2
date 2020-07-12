@@ -104,7 +104,7 @@ static NSString *const kDeleteKeyString = @"0x7f-0x0";
                           type:kPreferenceInfoTypeCheckbox];
     info.customSettingChangedHandler = ^(id sender) {
         if ([[self stringForKey:KEY_HOTKEY_CHARACTERS_IGNORING_MODIFIERS] length]) {
-            [self setBool:([sender state] == NSOnState) forKey:KEY_HAS_HOTKEY];
+            [self setBool:([sender state] == NSControlStateValueOn) forKey:KEY_HAS_HOTKEY];
         } else {
             [self openHotKeyPanel:nil];
         }
@@ -112,7 +112,7 @@ static NSString *const kDeleteKeyString = @"0x7f-0x0";
     info.observer = ^() {
         __strong __typeof(weakSelf) strongSelf = weakSelf;
         if (strongSelf) {
-            strongSelf->_configureHotKey.enabled = strongSelf->_hasHotkey.state == NSOnState;
+            strongSelf->_configureHotKey.enabled = strongSelf->_hasHotkey.state == NSControlStateValueOn;
         }
     };
 
@@ -210,7 +210,7 @@ static NSString *const kDeleteKeyString = @"0x7f-0x0";
 #pragma mark - Actions
 
 - (void)didToggleLibtickit {
-    if (_useLibTickit.state != NSOnState) {
+    if (_useLibTickit.state != NSControlStateValueOn) {
         return;
     }
     iTermWarning *warning = [[iTermWarning alloc] init];
@@ -293,7 +293,7 @@ static NSString *const kDeleteKeyString = @"0x7f-0x0";
         }
         if (returnCode == NSModalResponseOK) {
             [self setObjectsFromDictionary:model.dictionaryValue];
-            strongSelf->_hasHotkey.state = [strongSelf boolForKey:KEY_HAS_HOTKEY] ? NSOnState : NSOffState;
+            strongSelf->_hasHotkey.state = [strongSelf boolForKey:KEY_HAS_HOTKEY] ? NSControlStateValueOn : NSControlStateValueOff;
         }
         strongSelf->_configureHotKey.enabled = [strongSelf boolForKey:KEY_HAS_HOTKEY];
     }];
@@ -310,7 +310,7 @@ static NSString *const kDeleteKeyString = @"0x7f-0x0";
 - (IBAction)deleteSendsCtrlHDidChange:(id)sender {
     // Resolve any conflict between key mappings and delete sends ^h by
     // modifying key mappings.
-    BOOL sendCtrlH = ([sender state] == NSOnState);
+    BOOL sendCtrlH = ([sender state] == NSControlStateValueOn);
     NSMutableDictionary *mutableProfile =
         [[self.delegate profilePreferencesCurrentProfile] mutableCopy];
     if (sendCtrlH) {
@@ -333,7 +333,7 @@ static NSString *const kDeleteKeyString = @"0x7f-0x0";
     iTermKeyBindingAction *action = [iTermKeyMappings localActionForKeystroke:[iTermKeystroke backspace]
                                                                   keyMappings:profile[KEY_KEYBOARD_MAP]];
     const BOOL sendCH = (action.keyAction == KEY_ACTION_SEND_C_H_BACKSPACE);
-    _deleteSendsCtrlHButton.state = (sendCH ? NSOnState : NSOffState);
+    _deleteSendsCtrlHButton.state = (sendCH ? NSControlStateValueOn : NSControlStateValueOff);
 }
 
 #pragma mark - Option Key Sends

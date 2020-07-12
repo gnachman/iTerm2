@@ -18,7 +18,7 @@
 {
     self = [super initWithFrame:frameRect pullsDown:YES];
         if (self) {
-        [self setBezelStyle:NSRegularSquareBezelStyle];
+        [self setBezelStyle:NSBezelStyleRegularSquare];
         [self setBordered:NO];
         [self setTitle:@""];
         [self setPreferredEdge:NSMaxXEdge];

@@ -317,7 +317,9 @@ const CGFloat kDefaultTagsWidth = 80;
         rowIndex = [rowIndexes indexGreaterThanIndex:rowIndex];
     }
 
-    NSData *data = [NSKeyedArchiver archivedDataWithRootObject:guids];
+    NSData *data = [NSKeyedArchiver archivedDataWithRootObject:guids
+                                         requiringSecureCoding:NO
+                                                         error:nil];
     [pboard declareTypes:[NSArray arrayWithObject:kProfileTableViewDataType] owner:self];
     [pboard setData:data forType:kProfileTableViewDataType];
     return YES;
@@ -353,7 +355,16 @@ const CGFloat kDefaultTagsWidth = 80;
                                         object:[self rowOrder]];
     NSPasteboard* pboard = [info draggingPasteboard];
     NSData* rowData = [pboard dataForType:kProfileTableViewDataType];
-    NSSet* guids = [NSKeyedUnarchiver unarchiveObjectWithData:rowData];
+
+    NSError *error = nil;
+    NSKeyedUnarchiver *unarchiver = [[[NSKeyedUnarchiver alloc] initForReadingFromData:rowData error:&error] autorelease];
+    if (error) {
+        return NO;
+    }
+    NSSet<NSString *> *guids = [unarchiver decodeObjectOfClass:[NSSet class] forKey:NSKeyedArchiveRootObjectKey];
+    if (!guids) {
+        return NO;
+    }
     NSMutableDictionary* map = [[[NSMutableDictionary alloc] init] autorelease];
 
     for (NSString* guid in guids) {

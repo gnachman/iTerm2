@@ -47,9 +47,9 @@ static const CGFloat kMargin = 4;
             clear_.imagePosition = NSImageOnly;
             clear_.frame = NSMakeRect(0, 0, 22, 22);
         } else {
-            [clear_ setButtonType:NSMomentaryPushInButton];
+            [clear_ setButtonType:NSButtonTypeMomentaryPushIn];
             [clear_ setTitle:@"Clear All"];
-            [clear_ setBezelStyle:NSSmallSquareBezelStyle];
+            [clear_ setBezelStyle:NSBezelStyleSmallSquare];
             [clear_ sizeToFit];
         }
         [clear_ setTarget:self];
@@ -264,8 +264,8 @@ static const CGFloat kMargin = 4;
     }
     PasteboardEntry* entry = pasteHistory_.entries[selectedIndex];
     NSPasteboard* thePasteboard = [NSPasteboard generalPasteboard];
-    [thePasteboard declareTypes:[NSArray arrayWithObject:NSStringPboardType] owner:nil];
-    [thePasteboard setString:[entry mainValue] forType:NSStringPboardType];
+    [thePasteboard declareTypes:[NSArray arrayWithObject:NSPasteboardTypeString] owner:nil];
+    [thePasteboard setString:[entry mainValue] forType:NSPasteboardTypeString];
     PTYTextView *textView = [[iTermController sharedInstance] frontTextView];
     [textView paste:nil];
     [textView.window makeFirstResponder:textView];

@@ -355,10 +355,10 @@ static BOOL hasBecomeActive = NO;
             return [[iTermController sharedInstance] hasRestorableSession];
         }
     } else if ([menuItem action] == @selector(enableMarkAlertShowsModalAlert:)) {
-        [menuItem setState:[[self markAlertAction] isEqualToString:kMarkAlertActionModalAlert] ? NSOnState : NSOffState];
+        [menuItem setState:[[self markAlertAction] isEqualToString:kMarkAlertActionModalAlert] ? NSControlStateValueOn : NSControlStateValueOff];
         return YES;
     } else if ([menuItem action] == @selector(enableMarkAlertPostsNotification:)) {
-        [menuItem setState:[[self markAlertAction] isEqualToString:kMarkAlertActionPostNotification] ? NSOnState : NSOffState];
+        [menuItem setState:[[self markAlertAction] isEqualToString:kMarkAlertActionPostNotification] ? NSControlStateValueOn : NSControlStateValueOff];
         return YES;
     } else if ([menuItem action] == @selector(makeDefaultTerminal:)) {
         return ![[iTermLaunchServices sharedInstance] iTermIsDefaultTerminal];
@@ -379,7 +379,7 @@ static BOOL hasBecomeActive = NO;
                [menuItem action] == @selector(newSessionWithSameProfile:)) {
         return [[iTermController sharedInstance] currentTerminal] != nil;
     } else if ([menuItem action] == @selector(toggleFullScreenTabBar:)) {
-        [menuItem setState:[iTermPreferences boolForKey:kPreferenceKeyShowFullscreenTabBar] ? NSOnState : NSOffState];
+        [menuItem setState:[iTermPreferences boolForKey:kPreferenceKeyShowFullscreenTabBar] ? NSControlStateValueOn : NSControlStateValueOff];
         return YES;
     } else if ([menuItem action] == @selector(toggleMultiLinePasteWarning:)) {
         if ([iTermWarning warningHandler]) {
@@ -387,12 +387,12 @@ static BOOL hasBecomeActive = NO;
             return YES;
         }
         if (menuItem.tag == 0) {
-            menuItem.state = ![iTermAdvancedSettingsModel noSyncDoNotWarnBeforeMultilinePaste] ? NSOnState : NSOffState;
+            menuItem.state = ![iTermAdvancedSettingsModel noSyncDoNotWarnBeforeMultilinePaste] ? NSControlStateValueOn : NSControlStateValueOff;
         } else if (menuItem.tag == 1) {
-            menuItem.state = ![iTermAdvancedSettingsModel promptForPasteWhenNotAtPrompt] ? NSOnState : NSOffState;
+            menuItem.state = ![iTermAdvancedSettingsModel promptForPasteWhenNotAtPrompt] ? NSControlStateValueOn : NSControlStateValueOff;
             return ![iTermAdvancedSettingsModel noSyncDoNotWarnBeforeMultilinePaste];
         } else if (menuItem.tag == 2) {
-            menuItem.state = ![iTermAdvancedSettingsModel noSyncDoNotWarnBeforePastingOneLineEndingInNewlineAtShellPrompt] ? NSOnState : NSOffState;
+            menuItem.state = ![iTermAdvancedSettingsModel noSyncDoNotWarnBeforePastingOneLineEndingInNewlineAtShellPrompt] ? NSControlStateValueOn : NSControlStateValueOff;
         }
         return YES;
     } else if ([menuItem action] == @selector(showTipOfTheDay:)) {
@@ -406,25 +406,25 @@ static BOOL hasBecomeActive = NO;
                 menuItem.state = NSControlStateValueMixed;
             }
         } else {
-            menuItem.state = controller.isDesired ? NSOnState : NSOffState;
+            menuItem.state = controller.isDesired ? NSControlStateValueOn : NSControlStateValueOff;
         }
         return YES;
     } else if ([menuItem action] == @selector(togglePinHotkeyWindow:)) {
         iTermProfileHotKey *profileHotkey = self.currentProfileHotkey;
-        menuItem.state = profileHotkey.autoHides ? NSOffState : NSOnState;
+        menuItem.state = profileHotkey.autoHides ? NSControlStateValueOff : NSControlStateValueOn;
         return profileHotkey != nil;
     } else if ([menuItem action] == @selector(clearAllDownloads:)) {
         return downloadsMenu_.submenu.itemArray.count > 2;
     } else if ([menuItem action] == @selector(clearAllUploads:)) {
         return uploadsMenu_.submenu.itemArray.count > 2;
     } else if (menuItem.action == @selector(debugLogging:)) {
-        menuItem.state = gDebugLogging ? NSOnState : NSOffState;
+        menuItem.state = gDebugLogging ? NSControlStateValueOn : NSControlStateValueOff;
         return YES;
     } else if (menuItem.action == @selector(arrangeSplitPanesEvenly:)) {
         PTYTab *tab = [[[iTermController sharedInstance] currentTerminal] currentTab];
         return (tab.sessions.count > 0 && !tab.isMaximized);
     } else if (menuItem.action == @selector(promptToConvertTabsToSpacesWhenPasting:)) {
-        menuItem.state = [iTermPasteHelper promptToConvertTabsToSpacesWhenPasting] ? NSOnState : NSOffState;
+        menuItem.state = [iTermPasteHelper promptToConvertTabsToSpacesWhenPasting] ? NSControlStateValueOn : NSControlStateValueOff;
         return YES;
     } else {
         return YES;
@@ -482,11 +482,11 @@ static BOOL hasBecomeActive = NO;
 }
 
 - (void)updateMaximizePaneMenuItem {
-    [maximizePane setState:[[[[iTermController sharedInstance] currentTerminal] currentTab] hasMaximizedPane] ? NSOnState : NSOffState];
+    [maximizePane setState:[[[[iTermController sharedInstance] currentTerminal] currentTab] hasMaximizedPane] ? NSControlStateValueOn : NSControlStateValueOff];
 }
 
 - (void)updateUseTransparencyMenuItem {
-    [useTransparency setState:[[[iTermController sharedInstance] currentTerminal] useTransparency] ? NSOnState : NSOffState];
+    [useTransparency setState:[[[iTermController sharedInstance] currentTerminal] useTransparency] ? NSControlStateValueOn : NSControlStateValueOff];
 }
 
 - (NSString *)markAlertAction {
@@ -1051,8 +1051,9 @@ static BOOL hasBecomeActive = NO;
     [self updateRestoreWindowArrangementsMenu:windowArrangementsAsTabs_ asTabs:YES];
 
     // register for services
-    [NSApp registerServicesMenuSendTypes:[NSArray arrayWithObjects:NSStringPboardType, nil]
-                                                       returnTypes:[NSArray arrayWithObjects:NSFilenamesPboardType, NSStringPboardType, nil]];
+    [NSApp registerServicesMenuSendTypes:@[ NSPasteboardTypeString ]
+                             returnTypes:@[ NSPasteboardTypeFileURL,
+                                            NSPasteboardTypeString ]];
     // Register our services provider. Registration must happen only when we're
     // ready to accept requests, so I do it after a spin of the runloop.
     dispatch_async(dispatch_get_main_queue(), ^{
@@ -1192,7 +1193,7 @@ static BOOL hasBecomeActive = NO;
     }
     NSMenuItem *menuItem = [toolbeltMenu itemWithTitle:theName];
 
-    NSInteger newState = ([menuItem state] == NSOnState) ? NSOffState : NSOnState;
+    NSInteger newState = ([menuItem state] == NSControlStateValueOn) ? NSControlStateValueOff : NSControlStateValueOn;
     [menuItem setState:newState];
 }
 
@@ -1401,8 +1402,8 @@ static BOOL hasBecomeActive = NO;
 - (IBAction)copyPerformanceStats:(id)sender {
     NSString *copyString = iTermPreciseTimerGetSavedLogs();
     NSPasteboard *pboard = [NSPasteboard generalPasteboard];
-    [pboard declareTypes:[NSArray arrayWithObject:NSStringPboardType] owner:self];
-    [pboard setString:copyString forType:NSStringPboardType];
+    [pboard declareTypes:[NSArray arrayWithObject:NSPasteboardTypeString] owner:self];
+    [pboard setString:copyString forType:NSPasteboardTypeString];
 }
 
 - (IBAction)checkForUpdatesFromMenu:(id)sender {
@@ -1567,7 +1568,7 @@ static BOOL hasBecomeActive = NO;
 }
 
 - (IBAction)toggleToolbeltTool:(NSMenuItem *)menuItem {
-    if ([iTermToolbeltView numberOfVisibleTools] == 1 && [menuItem state] == NSOnState) {
+    if ([iTermToolbeltView numberOfVisibleTools] == 1 && [menuItem state] == NSControlStateValueOn) {
         return;
     }
     [iTermToolbeltView toggleShouldShowTool:[menuItem title]];

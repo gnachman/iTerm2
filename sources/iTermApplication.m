@@ -558,10 +558,10 @@ static const char *iTermApplicationKVOKey = "iTermApplicationKVOKey";
         if ([iTermAdvancedSettingsModel statusBarIcon]) {
             NSImage *image = [NSImage it_imageNamed:@"StatusItem" forClass:self.class];
             self.statusBarItem = [[NSStatusBar systemStatusBar] statusItemWithLength:image.size.width];
-            _statusBarItem.title = @"";
-            _statusBarItem.image = image;
-            _statusBarItem.alternateImage = [NSImage it_imageNamed:@"StatusItemAlt" forClass:self.class];
-            _statusBarItem.highlightMode = YES;
+            _statusBarItem.button.title = @"";
+            _statusBarItem.button.image = image;
+            _statusBarItem.button.alternateImage = [NSImage it_imageNamed:@"StatusItemAlt" forClass:self.class];
+            ((NSButtonCell *)_statusBarItem.button.cell).highlightsBy = NSChangeBackgroundCellMask;
 
             _statusBarItem.menu = [[self delegate] statusBarMenu];
         }

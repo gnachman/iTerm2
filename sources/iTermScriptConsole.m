@@ -343,13 +343,13 @@ typedef NS_ENUM(NSInteger, iTermScriptFilterControlTag) {
 }
 
 - (void)scrollLogsToBottomIfNeeded {
-    if (_scrollToBottomOnUpdate.state == NSOnState && _tabView.selectedTabViewItem.view == _logsView.enclosingScrollView) {
+    if (_scrollToBottomOnUpdate.state == NSControlStateValueOn && _tabView.selectedTabViewItem.view == _logsView.enclosingScrollView) {
         [_logsView scrollRangeToVisible: NSMakeRange(_logsView.string.length, 0)];
     }
 }
 
 - (void)scrollCallsToBottomIfNeeded {
-    if (_scrollToBottomOnUpdate.state == NSOnState && _tabView.selectedTabViewItem.view == _callsView.enclosingScrollView) {
+    if (_scrollToBottomOnUpdate.state == NSControlStateValueOn && _tabView.selectedTabViewItem.view == _callsView.enclosingScrollView) {
         [_callsView scrollRangeToVisible: NSMakeRange(_callsView.string.length, 0)];
     }
 }

@@ -15,7 +15,7 @@
   NSImage *image = [NSImage it_imageNamed:@"NoColor" forClass:self.class];
   static const CGFloat kTopBottomMargin = 8;
   self = [super initWithFrame:NSMakeRect(0, 0, image.size.width, image.size.height + kTopBottomMargin * 2)];
-  [self setButtonType:NSMomentaryPushInButton];
+  [self setButtonType:NSButtonTypeMomentaryPushIn];
   [self setImage:image];
   [self setTarget:nil];
   [self setAction:@selector(noColorChosen:)];

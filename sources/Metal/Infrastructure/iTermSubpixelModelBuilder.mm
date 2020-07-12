@@ -279,7 +279,7 @@ static NSString *const iTermSubpixelModelString = @"O";
                                 colorSpaceName:NSDeviceRGBColorSpace];
     NSString *imageName = [NSString stringWithFormat:@"SubpixelImage.f_%02x.b_%02x.png",
                            static_cast<int>(foregroundComponent * 255), static_cast<int>(backgroundComponent * 255)];
-    [[image dataForFileOfType:NSPNGFileType] writeToFile:[folder stringByAppendingPathComponent:imageName] atomically:NO];
+    [[image dataForFileOfType:NSBitmapImageFileTypePNG] writeToFile:[folder stringByAppendingPathComponent:imageName] atomically:NO];
 }
 
 - (void)dealloc {

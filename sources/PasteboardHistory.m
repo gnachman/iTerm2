@@ -148,20 +148,40 @@
     [[NSFileManager defaultManager] removeItemAtPath:path_ error:NULL];
 }
 
-- (void)_writeHistoryToDisk
-{
+- (void)_writeHistoryToDisk {
     if ([iTermPreferences boolForKey:kPreferenceKeySavePasteAndCommandHistory]) {
-        [NSKeyedArchiver archiveRootObject:[self _entriesToDict] toFile:path_];
+        NSError *error = nil;
+        NSData *data =
+        [NSKeyedArchiver archivedDataWithRootObject:[self _entriesToDict]
+                              requiringSecureCoding:NO
+                                              error:&error];
+        if (error) {
+            DLog(@"Failed to archive command history: %@", error);
+            return;
+        }
+        [data writeToFile:path_ atomically:NO];
         [[NSFileManager defaultManager] setAttributes:@{ NSFilePosixPermissions: @0600 }
                                          ofItemAtPath:path_
                                                 error:nil];
     }
 }
 
-- (void)_loadHistoryFromDisk
-{
+- (void)_loadHistoryFromDisk {
     [entries_ removeAllObjects];
-    [self _addDictToEntries:[NSKeyedUnarchiver unarchiveObjectWithFile:path_]];
+
+    NSData *data = [NSData dataWithContentsOfFile:path_];
+    if (!data) {
+        return;
+    }
+    NSError *error = nil;
+    NSKeyedUnarchiver *unarchiver = [[NSKeyedUnarchiver alloc] initForReadingFromData:data error:&error];
+    if (!unarchiver || error) {
+        return;
+    }
+    unarchiver.requiresSecureCoding = NO;
+    NSDictionary *dict = [unarchiver decodeObjectForKey:NSKeyedArchiveRootObjectKey];
+
+    [self _addDictToEntries:dict];
 }
 
 - (void)save:(NSString*)value
@@ -318,8 +338,8 @@
     if ([table_ selectedRow] >= 0) {
         PasteboardEntry *entry = [[self model] objectAtIndex:[self convertIndex:[table_ selectedRow]]];
         NSPasteboard *thePasteboard = [NSPasteboard generalPasteboard];
-        [thePasteboard declareTypes:[NSArray arrayWithObject:NSStringPboardType] owner:nil];
-        [thePasteboard setString:[entry mainValue] forType:NSStringPboardType];
+        [thePasteboard declareTypes:[NSArray arrayWithObject:NSPasteboardTypeString] owner:nil];
+        [thePasteboard setString:[entry mainValue] forType:NSPasteboardTypeString];
         [[[iTermController sharedInstance] frontTextView] paste:nil];
         [super rowSelected:sender];
     }

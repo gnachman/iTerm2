@@ -171,16 +171,6 @@
     }
 }
 
-- (void)trackScrollButtons:(NSEvent *)theEvent {
-    [super trackScrollButtons:theEvent];
-
-    if ([self floatValue] != 1) {
-        _userScroll = YES;
-    } else {
-        _userScroll = NO;
-    }
-}
-
 - (void)trackKnob:(NSEvent *)theEvent {
     [super trackKnob:theEvent];
 

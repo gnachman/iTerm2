@@ -56,8 +56,8 @@ static const CGFloat kHelpMargin = 5;
         [self addSubview:searchField_];
 
         help_ = [[NSButton alloc] initWithFrame:NSMakeRect(0, 0, 0, 0)];
-        [help_ setBezelStyle:NSHelpButtonBezelStyle];
-        [help_ setButtonType:NSMomentaryPushInButton];
+        [help_ setBezelStyle:NSBezelStyleHelpButton];
+        [help_ setButtonType:NSButtonTypeMomentaryPushIn];
         [help_ setBordered:YES];
         if (@available(macOS 10.16, *)) {
             help_.controlSize = NSControlSizeSmall;
@@ -77,9 +77,9 @@ static const CGFloat kHelpMargin = 5;
             clear_.imagePosition = NSImageOnly;
             clear_.frame = NSMakeRect(0, 0, 22, 22);
         } else {
-            [clear_ setButtonType:NSMomentaryPushInButton];
+            [clear_ setButtonType:NSButtonTypeMomentaryPushIn];
             [clear_ setTitle:@"Clear All"];
-            [clear_ setBezelStyle:NSSmallSquareBezelStyle];
+            [clear_ setBezelStyle:NSBezelStyleSmallSquare];
             [clear_ sizeToFit];
         }
         [clear_ setTarget:self];

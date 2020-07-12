@@ -420,7 +420,7 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
     [panel setAllowedFileTypes:[NSImage imageTypes]];
 
     void (^completion)(NSInteger) = ^(NSInteger result) {
-        if (result == NSFileHandlingPanelOKButton) {
+        if (result == NSModalResponseOK) {
             NSURL *url = [[panel URLs] objectAtIndex:0];
             if (![self loadIconWithFilename:url.path]) {
                 DLog(@"Beep: Failed to load icon at %@", url);
@@ -639,7 +639,7 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
 
 - (BOOL)validateMenuItem:(NSMenuItem *)menuItem {
     if (menuItem.menu == _urlSchemes.menu) {
-        menuItem.state = [self profileHandlesScheme:menuItem.title] ? NSOnState : NSOffState;
+        menuItem.state = [self profileHandlesScheme:menuItem.title] ? NSControlStateValueOn : NSControlStateValueOff;
     }
     return YES;
 }
@@ -970,7 +970,7 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
         } else if (item.tag == -1) {
             selected = NO;
         }
-        item.state = selected ? NSOnState : NSOffState;
+        item.state = selected ? NSControlStateValueOn : NSControlStateValueOff;
         if (selected) {
             [parts addObject:item.title];
         }

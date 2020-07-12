@@ -80,8 +80,6 @@
     }];
     [_basic addTrackingRect:_basic.bounds owner:_basic userData:NULL assumeInside:NO];
     [_pyenv addTrackingRect:_pyenv.bounds owner:_pyenv userData:NULL assumeInside:NO];
-
-    _cursor.onMouseEntered = YES;
 }
 
 - (void)showTemplateView {

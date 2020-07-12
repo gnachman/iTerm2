@@ -157,7 +157,7 @@ typedef struct {
         [image unlockFocus];
         
         NSBitmapImageRep *rep = image.bitmapImageRep;
-        NSData *data = [rep representationUsingType:NSPNGFileType
+        NSData *data = [rep representationUsingType:NSBitmapImageFileTypePNG
                                          properties:@{ NSImageInterlaced: @0,
                                                        NSImageCompressionFactor: @1 }];
         CGDataProviderRef provider = CGDataProviderCreateWithCFData((CFDataRef)data);

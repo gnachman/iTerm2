@@ -7,8 +7,8 @@
 
 #import "iTermStatusBarSetupDestinationCollectionViewController.h"
 
+#import "DebugLogging.h"
 #import "iTermStatusBarSetupCollectionViewItem.h"
-
 #import "iTermStatusBarSetupConfigureComponentWindowController.h"
 #import "iTermStatusBarSetupKnobsViewController.h"
 #import "iTermStatusBarLayout.h"
@@ -332,35 +332,37 @@ draggingImageForItemsAtIndexPaths:(NSSet<NSIndexPath *> *)indexPaths
              indexPath:(NSIndexPath *)indexPath
          dropOperation:(NSCollectionViewDropOperation)dropOperation {
     NSData *data = [draggingInfo.draggingPasteboard dataForType:iTermStatusBarElementPasteboardType];
-    @try {
-        iTermStatusBarSetupElement *element = [NSKeyedUnarchiver unarchiveObjectWithData:data];
-        element.delegate = self;
-        [collectionView.animator performBatchUpdates:^{
-            if (draggingInfo.draggingSource == collectionView) {
-                const NSInteger fromIndex = [self->_draggingIndexPath indexAtPosition:1];
-                const NSInteger toIndex = [indexPath indexAtPosition:1];
-                NSLog(@"Move element from %@ to %@", @(fromIndex), @(toIndex));
-                if (fromIndex >= toIndex) {
-                    [self->_elements removeObjectAtIndex:fromIndex];
-                    [collectionView moveItemAtIndexPath:self->_draggingIndexPath
-                                            toIndexPath:indexPath];
-                }
-                [self->_elements insertObject:element atIndex:toIndex];
-                if (fromIndex < toIndex) {
-                    [self->_elements removeObjectAtIndex:fromIndex];
-                    [collectionView moveItemAtIndexPath:self->_draggingIndexPath
-                                            toIndexPath:[NSIndexPath indexPathForItem:toIndex - 1 inSection:0]];
-                }
-                NSLog(@"Collection move item from %@ to %@", self->_draggingIndexPath, indexPath);
-            } else {
-                [self->_elements insertObject:element atIndex:[indexPath indexAtPosition:1]];
-                [collectionView insertItemsAtIndexPaths:[NSSet setWithObject:indexPath]];
-            }
-        } completionHandler:^(BOOL finished) {}];
-    }
-    @catch (NSException *exception) {
+    NSError *error = nil;
+    NSKeyedUnarchiver *unarchiver = [[NSKeyedUnarchiver alloc] initForReadingFromData:data error:&error];
+    unarchiver.requiresSecureCoding = NO;
+    iTermStatusBarSetupElement *element = [unarchiver decodeObjectForKey:NSKeyedArchiveRootObjectKey];
+    if (error || !element) {
+        DLog(@"Reject drop: %@", error);
         return NO;
     }
+    element.delegate = self;
+    [collectionView.animator performBatchUpdates:^{
+        if (draggingInfo.draggingSource == collectionView) {
+            const NSInteger fromIndex = [self->_draggingIndexPath indexAtPosition:1];
+            const NSInteger toIndex = [indexPath indexAtPosition:1];
+            NSLog(@"Move element from %@ to %@", @(fromIndex), @(toIndex));
+            if (fromIndex >= toIndex) {
+                [self->_elements removeObjectAtIndex:fromIndex];
+                [collectionView moveItemAtIndexPath:self->_draggingIndexPath
+                                        toIndexPath:indexPath];
+            }
+            [self->_elements insertObject:element atIndex:toIndex];
+            if (fromIndex < toIndex) {
+                [self->_elements removeObjectAtIndex:fromIndex];
+                [collectionView moveItemAtIndexPath:self->_draggingIndexPath
+                                        toIndexPath:[NSIndexPath indexPathForItem:toIndex - 1 inSection:0]];
+            }
+            NSLog(@"Collection move item from %@ to %@", self->_draggingIndexPath, indexPath);
+        } else {
+            [self->_elements insertObject:element atIndex:[indexPath indexAtPosition:1]];
+            [collectionView insertItemsAtIndexPaths:[NSSet setWithObject:indexPath]];
+        }
+    } completionHandler:^(BOOL finished) {}];
     [self didChange:YES];
     return YES;
 }

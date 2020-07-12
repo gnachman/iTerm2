@@ -174,7 +174,7 @@ static NSString *const kDynamicToolURL = @"URL";
         NSMenuItem *i = [[[NSMenuItem alloc] initWithTitle:theName
                                                     action:@selector(toggleToolbeltTool:)
                                              keyEquivalent:@""] autorelease];
-        [i setState:[iTermToolbeltView shouldShowTool:theName] ? NSOnState : NSOffState];
+        [i setState:[iTermToolbeltView shouldShowTool:theName] ? NSControlStateValueOn : NSControlStateValueOff];
         [menu addItem:i];
     }
 }
@@ -283,7 +283,7 @@ static NSString *const kDynamicToolURL = @"URL";
             [iTermToolbeltView addToolsToMenu:menu];
             return menu;
         }] autorelease];
-        [_menuButton setButtonType:NSMomentaryPushInButton];
+        [_menuButton setButtonType:NSButtonTypeMomentaryPushIn];
 
         _menuButton.frame = self.menuButtonFrame;
         [self addSubview:_menuButton];

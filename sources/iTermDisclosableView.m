@@ -104,10 +104,10 @@ static const CGFloat iTermDisclosableViewTextViewWidth = 300;
     self = [super initWithFrame:frameRect];
     if (self) {
         _disclosureButton = [[NSButton alloc] initWithFrame:NSMakeRect(0, 2, 24, 24)];
-        [_disclosureButton setButtonType:NSOnOffButton];
-        [_disclosureButton setBezelStyle:NSDisclosureBezelStyle];
+        [_disclosureButton setButtonType:NSButtonTypeOnOff];
+        [_disclosureButton setBezelStyle:NSBezelStyleDisclosure];
         [_disclosureButton setImagePosition:NSImageOnly];
-        [_disclosureButton setState:NSOffState];
+        [_disclosureButton setState:NSControlStateValueOff];
         [_disclosureButton setTarget:self];
         [_disclosureButton setAction:@selector(disclosureButtonPressed:)];
         [_disclosureButton sizeToFit];
@@ -174,8 +174,8 @@ static const CGFloat iTermDisclosableViewTextViewWidth = 300;
 }
 
 - (NSSize)intrinsicContentSize {
-    NSSize size = NSMakeSize(_disclosureButton.state == NSOnState ? MAX(_headerWidth, iTermDisclosableViewTextViewWidth) : _headerWidth,
-                             _disclosureButton.state == NSOnState ? [self heightWhenOpen] : [self heightWhenClosed]);
+    NSSize size = NSMakeSize(_disclosureButton.state == NSControlStateValueOn ? MAX(_headerWidth, iTermDisclosableViewTextViewWidth) : _headerWidth,
+                             _disclosureButton.state == NSControlStateValueOn ? [self heightWhenOpen] : [self heightWhenClosed]);
     size.width += _disclosureButton.frame.size.width;
     return size;
 }
@@ -183,7 +183,7 @@ static const CGFloat iTermDisclosableViewTextViewWidth = 300;
 - (void)disclosureButtonPressed:(id)sender {
     NSRect myFrame = self.frame;
     self.frame = NSMakeRect(NSMinX(myFrame), NSMinY(myFrame), self.intrinsicContentSize.width, self.intrinsicContentSize.height);
-    const BOOL isOpen = (_disclosureButton.state == NSOnState);
+    const BOOL isOpen = (_disclosureButton.state == NSControlStateValueOn);
     _scrollView.hidden = !isOpen;
     _textView.hidden = !isOpen;
     [self callRequestLayout];

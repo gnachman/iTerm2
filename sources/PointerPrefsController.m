@@ -739,10 +739,10 @@ typedef enum {
 
 - (void)setModifierButtons:(int)modMask
 {
-    [editModifiersCommand_ setState:(modMask & NSEventModifierFlagCommand) ? NSOnState : NSOffState];
-    [editModifiersOption_ setState:(modMask & NSEventModifierFlagOption) ? NSOnState : NSOffState];
-    [editModifiersShift_ setState:(modMask & NSEventModifierFlagShift) ? NSOnState : NSOffState];
-    [editModifiersControl_ setState:(modMask & NSEventModifierFlagControl) ? NSOnState : NSOffState];
+    [editModifiersCommand_ setState:(modMask & NSEventModifierFlagCommand) ? NSControlStateValueOn : NSControlStateValueOff];
+    [editModifiersOption_ setState:(modMask & NSEventModifierFlagOption) ? NSControlStateValueOn : NSControlStateValueOff];
+    [editModifiersShift_ setState:(modMask & NSEventModifierFlagShift) ? NSControlStateValueOn : NSControlStateValueOff];
+    [editModifiersControl_ setState:(modMask & NSEventModifierFlagControl) ? NSControlStateValueOn : NSControlStateValueOff];
 }
 
 - (void)setButtonNumber:(int)buttonNumber clickCount:(int)clickCount modifiers:(int)modMask
@@ -904,10 +904,10 @@ typedef enum {
     NSString *currentArg = [PointerPrefsController argumentForKey:key];
     [self updateArgumentFieldsForAction:actionIdent argument:currentArg];
 
-    [editModifiersCommand_ setState:(modMask & NSEventModifierFlagCommand) ? NSOnState : NSOffState];
-    [editModifiersOption_ setState:(modMask & NSEventModifierFlagOption) ? NSOnState : NSOffState];
-    [editModifiersShift_ setState:(modMask & NSEventModifierFlagShift) ? NSOnState : NSOffState];
-    [editModifiersControl_ setState:(modMask & NSEventModifierFlagControl) ? NSOnState : NSOffState];
+    [editModifiersCommand_ setState:(modMask & NSEventModifierFlagCommand) ? NSControlStateValueOn : NSControlStateValueOff];
+    [editModifiersOption_ setState:(modMask & NSEventModifierFlagOption) ? NSControlStateValueOn : NSControlStateValueOff];
+    [editModifiersShift_ setState:(modMask & NSEventModifierFlagShift) ? NSControlStateValueOn : NSControlStateValueOff];
+    [editModifiersControl_ setState:(modMask & NSEventModifierFlagControl) ? NSControlStateValueOn : NSControlStateValueOff];
     [editAction_ selectItemWithTitle:localizedAction];
     BOOL isButton = !key || [PointerPrefsController keyIsButton:key];
     if (isButton) {
@@ -959,10 +959,10 @@ typedef enum {
         [editAction_ selectItemWithTitle:[PointerPrefsController localizedActionForDict:action]];
 
         int modflags = [PointerPrefsController modifiersForKey:key];
-        [editModifiersCommand_ setState:(modflags & NSEventModifierFlagCommand) ? NSOnState : NSOffState];
-        [editModifiersOption_ setState:(modflags & NSEventModifierFlagOption) ? NSOnState : NSOffState];
-        [editModifiersShift_ setState:(modflags & NSEventModifierFlagShift) ? NSOnState : NSOffState];
-        [editModifiersControl_ setState:(modflags & NSEventModifierFlagControl) ? NSOnState : NSOffState];
+        [editModifiersCommand_ setState:(modflags & NSEventModifierFlagCommand) ? NSControlStateValueOn : NSControlStateValueOff];
+        [editModifiersOption_ setState:(modflags & NSEventModifierFlagOption) ? NSControlStateValueOn : NSControlStateValueOff];
+        [editModifiersShift_ setState:(modflags & NSEventModifierFlagShift) ? NSControlStateValueOn : NSControlStateValueOff];
+        [editModifiersControl_ setState:(modflags & NSEventModifierFlagControl) ? NSControlStateValueOn : NSControlStateValueOff];
     }
     editButtonLabel_.labelEnabled = self.hasSelection;
     editModifiersLabel_.labelEnabled = self.hasSelection;
@@ -1021,16 +1021,16 @@ typedef enum {
     }
     NSString *newKey;
     int modMask = 0;
-    if ([editModifiersCommand_ state] == NSOnState) {
+    if ([editModifiersCommand_ state] == NSControlStateValueOn) {
         modMask |= NSEventModifierFlagCommand;
     }
-    if ([editModifiersOption_ state] == NSOnState) {
+    if ([editModifiersOption_ state] == NSControlStateValueOn) {
         modMask |= NSEventModifierFlagOption;
     }
-    if ([editModifiersShift_ state] == NSOnState) {
+    if ([editModifiersShift_ state] == NSControlStateValueOn) {
         modMask |= NSEventModifierFlagShift;
     }
-    if ([editModifiersControl_ state] == NSOnState) {
+    if ([editModifiersControl_ state] == NSControlStateValueOn) {
         modMask |= NSEventModifierFlagControl;
     }
     if ([editButton_ selectedTag] >= kMinGestureTag) {

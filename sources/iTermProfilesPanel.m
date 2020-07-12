@@ -21,13 +21,13 @@ static NSString *kCloseAfterOpening = @"Close After Opening";
 - (void)encodeRestorableStateWithCoder:(NSCoder *)coder {
     [super encodeRestorableStateWithCoder:coder];
     [coder encodeBool:_profileListView.tagsVisible forKey:kTagsOpen];
-    [coder encodeBool:_closeAfterOpening.state == NSOnState forKey:kCloseAfterOpening];
+    [coder encodeBool:_closeAfterOpening.state == NSControlStateValueOn forKey:kCloseAfterOpening];
 }
 
 - (void)restoreStateWithCoder:(NSCoder *)coder {
     [super restoreStateWithCoder:coder];
     [_profileListView setTagsOpen:[coder decodeBoolForKey:kTagsOpen] animated:NO];
-    [_closeAfterOpening setState:[coder decodeBoolForKey:kCloseAfterOpening] ? NSOnState : NSOffState];
+    [_closeAfterOpening setState:[coder decodeBoolForKey:kCloseAfterOpening] ? NSControlStateValueOn : NSControlStateValueOff];
 }
 
 @end

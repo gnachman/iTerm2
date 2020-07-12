@@ -85,7 +85,7 @@
                    displayName:@"Semantic history"
                        phrases:@[ @"cmd click", @"open file", @"open url" ]
                            key:nil];
-    _enableAPSLogging.state = iTermUserDefaults.enableAutomaticProfileSwitchingLogging ? NSOnState : NSOffState;
+    _enableAPSLogging.state = iTermUserDefaults.enableAutomaticProfileSwitchingLogging ? NSControlStateValueOn : NSControlStateValueOff;
 }
 
 - (NSArray *)keysForBulkCopy {
@@ -375,7 +375,7 @@
 #pragma mark - Actions
 
 - (IBAction)didToggleAutomaticProfileSwitchingDebugLogging:(id)sender {
-    iTermUserDefaults.enableAutomaticProfileSwitchingLogging = (_enableAPSLogging.state == NSOnState);
+    iTermUserDefaults.enableAutomaticProfileSwitchingLogging = (_enableAPSLogging.state == NSControlStateValueOn);
 }
 
 @end

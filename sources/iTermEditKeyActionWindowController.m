@@ -533,7 +533,7 @@
         NSMenuItem *theItem = [[button menu] itemWithTitle:selectedValue];
         if (theItem) {
             [button setTitle:selectedValue];
-            [theItem setState:NSOnState];
+            [theItem setState:NSControlStateValueOn];
         }
     }
 }

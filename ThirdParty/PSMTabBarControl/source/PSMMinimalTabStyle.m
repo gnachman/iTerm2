@@ -279,11 +279,11 @@
 }
 
 - (BOOL)firstTabIsSelected {
-    return self.firstVisibleCell.state == NSOnState;
+    return self.firstVisibleCell.state == NSControlStateValueOn;
 }
 
 - (BOOL)lastTabIsSelected {
-    return self.lastVisibleCell.state == NSOnState;
+    return self.lastVisibleCell.state == NSControlStateValueOn;
 }
 
 - (BOOL)treatLeftInsetAsPartOfFirstTab {
@@ -331,7 +331,7 @@
 - (PSMTabBarCell *)selectedVisibleCell {
     PSMTabBarControl *bar = self.tabBar;
     for (PSMTabBarCell *cell in bar.cells.reverseObjectEnumerator) {
-        if (!cell.isInOverflowMenu && cell.state == NSOnState) {
+        if (!cell.isInOverflowMenu && cell.state == NSControlStateValueOn) {
             return cell;
         }
     }
@@ -396,7 +396,7 @@
 
 - (PSMTabBarCell *)selectedCellInTabBarControl:(PSMTabBarControl *)bar {
     for (PSMTabBarCell *cell in bar.cells) {
-        if (cell.state == NSOnState) {
+        if (cell.state == NSControlStateValueOn) {
             return cell;
         }
     }

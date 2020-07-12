@@ -39,7 +39,7 @@
         [_signButton setTarget:self];
         [_signButton setAction:@selector(didToggleSignButton:)];
         _signButton.translatesAutoresizingMaskIntoConstraints = NO;
-        _signButton.buttonType = NSSwitchButton;
+        _signButton.buttonType = NSButtonTypeSwitch;
         _signButton.title = @"Code-sign exported script using identity: ";
         [_signButton sizeToFit];
         [self addSubview:_signButton];
@@ -79,11 +79,11 @@
 
 - (void)didToggleSignButton:(id)sender {
     _identityButton.enabled = (_identities.count > 0 &&
-                               _signButton.state == NSOnState);
+                               _signButton.state == NSControlStateValueOn);
 }
 
 - (SIGIdentity *)selectedSigningIdentity {
-    if (_signButton.state != NSOnState) {
+    if (_signButton.state != NSControlStateValueOn) {
         return nil;
     }
     return _identities[_identityButton.selectedTag];
@@ -123,7 +123,7 @@
 }
 
 - (void)didChooseWithResult:(NSModalResponse)result {
-    if (result != NSFileHandlingPanelOKButton) {
+    if (result != NSModalResponseOK) {
         self.completion(nil, nil);
     } else {
         self.completion(self.panel.URL, _signingAccessoryView.selectedSigningIdentity);

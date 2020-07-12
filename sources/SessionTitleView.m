@@ -55,7 +55,7 @@ static const CGFloat kButtonSize = 17;
                                                                                 (frame.size.height - kButtonSize) / 2,
                                                                                 kButtonSize,
                                                                                 kButtonSize)];
-        [closeButton_ setButtonType:NSMomentaryPushInButton];
+        [closeButton_ setButtonType:NSButtonTypeMomentaryPushIn];
         [closeButton_ setImage:closeImage];
         [closeButton_ setTarget:self];
         [closeButton_ setAction:@selector(close:)];

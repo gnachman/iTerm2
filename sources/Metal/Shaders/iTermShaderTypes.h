@@ -24,7 +24,6 @@ typedef enum iTermTextureIndex {
 
 typedef enum {
     iTermFragmentBufferIndexMarginColor = 0,  // Points at a single float4
-    iTermFragmentBufferIndexColorModels = 1, // Array of 256-byte color tables
     iTermFragmentInputIndexTextureDimensions = 2,  // Points at iTermTextureDimensions
     iTermFragmentBufferIndexIndicatorAlpha = 3, // Points at a single float giving alpha value
     iTermFragmentBufferIndexFullScreenFlashColor = 4, // Points at a float4
@@ -72,9 +71,6 @@ typedef struct iTermTextPIU {
     // Values in 0-1. These will be composited over what's already rendered.
     vector_float4 backgroundColor;
     vector_float4 textColor;
-
-    // Passed through to the solid background color fragment shader.
-    vector_int3 colorModelIndex;  // deprecated for macOS 10.14+
 
     // What kind of underline to draw. The offset is provided in iTermTextureDimensions.
     iTermMetalGlyphAttributesUnderline underlineStyle;

@@ -39,7 +39,7 @@
 
 - (NSImage *)grayscaleImage;
 
-// e.g., NSPNGFileType
+// e.g., NSBitmapImageFileTypePNG
 - (NSData *)dataForFileOfType:(NSBitmapImageFileType)fileType;
 
 - (NSData *)rawPixelsInRGBColorSpace;

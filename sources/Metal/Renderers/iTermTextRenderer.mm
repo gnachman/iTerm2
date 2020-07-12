@@ -67,7 +67,7 @@ static BOOL gMonochromeText;
 
 @implementation iTermTextRenderer {
     iTermMetalCellRenderer *_cellRenderer;
-    id<MTLTexture> _models NS_DEPRECATED_MAC(10_12, 10_14);
+    id<MTLTexture> _models;
     iTermASCIITextureGroup *_asciiTextureGroup;
 
     iTermTexturePageCollectionSharedPointer *_texturePageCollectionSharedPointer;
@@ -79,7 +79,6 @@ static BOOL gMonochromeText;
     iTermMetalBufferPool *_dimensionsPool;
     iTermMetalBufferPool *_textInfoPool;
     iTermMetalMixedSizeBufferPool *_piuPool;
-    iTermMetalMixedSizeBufferPool *_subpixelModelPool NS_DEPRECATED_MAC(10_12, 10_14);
 }
 
 /*
@@ -136,7 +135,7 @@ static BOOL gMonochromeText;
     return output;
 }
 
-+ (void)enumerateGridOfSubpixelModels:(void (^)(float, float, iTermSubpixelModel *))block NS_DEPRECATED_MAC(10_12, 10_14) {
++ (void)enumerateGridOfSubpixelModels:(void (^)(float, float, iTermSubpixelModel *))block {
     // The fragment function assumes we use the value 17 here. It's
     // convenient that 17 evenly divides 255 (17 * 15 = 255).
     float stride = 255.0/17.0;
@@ -149,7 +148,7 @@ static BOOL gMonochromeText;
     }
 }
 
-+ (NSData *)subpixelModelData NS_DEPRECATED_MAC(10_12, 10_14) {
++ (NSData *)subpixelModelData {
     static NSData *subpixelModelData;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
@@ -164,23 +163,6 @@ static BOOL gMonochromeText;
 
 - (iTermMetalFrameDataStat)createTransientStateStat {
     return iTermMetalFrameDataStatPqCreateTextTS;
-}
-
-- (id<MTLBuffer>)subpixelModelsForState:(iTermTextRendererTransientState *)tState NS_DEPRECATED_MAC(10_12, 10_14) {
-    if (tState.colorModels) {
-        if (tState.colorModels.length == 0) {
-            // Blank screen, emoji-only screen, etc. The buffer won't get accessed but it can't be nil.
-            return [_emptyBuffers requestBufferFromContext:tState.poolContext];
-        }
-        // Return a color model with exactly the fg/bg combos on screen.
-        return [_subpixelModelPool requestBufferFromContext:tState.poolContext
-                                                       size:tState.colorModels.length
-                                                      bytes:tState.colorModels.bytes];
-    } else {
-        return [_subpixelModelPool requestBufferFromContext:tState.poolContext
-                                                       size:1
-                                                      bytes:""];
-    }
 }
 
 - (instancetype)initWithDevice:(id<MTLDevice>)device {
@@ -227,9 +209,6 @@ static BOOL gMonochromeText;
                                                                     name:@"text PIU"];
 
         if (iTermTextIsMonochrome()) {} else {
-            _subpixelModelPool = [[iTermMetalMixedSizeBufferPool alloc] initWithDevice:device
-                                                                              capacity:512
-                                                                                  name:@"subpixel PIU"];
             NSData *subpixelModelData = [iTermTextRenderer subpixelModelData];
 
             MTLTextureDescriptor *textureDescriptor =
@@ -356,55 +335,43 @@ static BOOL gMonochromeText;
 }
 
 static NSString *const FragmentFunctionName(const BOOL &underlined,
-                                            const BOOL &blending,
                                             const BOOL &emoji) {
-    static NSArray<NSString *> *names = @[ @"iTermTextFragmentShaderSolidBackground",
-                                           @"iTermTextFragmentShaderSolidBackgroundEmoji",
-                                           @"iTermTextFragmentShaderWithBlending",
-                                           @"iTermTextFragmentShaderWithBlendingEmoji",
-                                           @"iTermTextFragmentShaderSolidBackgroundUnderlined",
-                                           @"iTermTextFragmentShaderSolidBackgroundUnderlinedEmoji",
-                                           @"iTermTextFragmentShaderWithBlendingUnderlined",
-                                           @"iTermTextFragmentShaderWithBlendingUnderlinedEmoji",
-                                           
-                                           @"iTermTextFragmentShaderMonochrome",                  // mono regular text
-                                           @"iTermTextFragmentShaderWithBlendingEmoji",           // mono emoji
-                                           @"iTermTextFragmentShaderMonochrome",                  // mono blending regular text (impossible)
-                                           @"iTermTextFragmentShaderWithBlendingEmoji",           // mono blending emoji (impossible)
-                                           @"iTermTextFragmentShaderMonochromeUnderlined",        // mono underlined regular text
-                                           @"iTermTextFragmentShaderMonochromeUnderlinedEmoji",   // mono underlined emoji
-                                           @"iTermTextFragmentShaderMonochromeUnderlined",        // mono underlined blending regular text (impossible)
-                                           @"iTermTextFragmentShaderMonochromeUnderlinedEmoji"];  // mono underlined blending emoji (impossible)
-    int index = (gMonochromeText ? 8 : 0) | (underlined ? 4 : 0) | (blending ? 2 : 0) | (emoji ? 1 : 0);
+    static NSArray<NSString *> *names = @[
+
+        // Subpixel AA
+        @"iTermTextFragmentShaderWithBlending",
+        @"iTermTextFragmentShaderWithBlendingEmoji",
+        @"iTermTextFragmentShaderWithBlendingUnderlined",
+        @"iTermTextFragmentShaderWithBlendingUnderlinedEmoji",
+
+        // Monochrome
+        @"iTermTextFragmentShaderMonochrome",                  // mono regular text
+        @"iTermTextFragmentShaderWithBlendingEmoji",           // mono emoji
+        @"iTermTextFragmentShaderMonochromeUnderlined",        // mono underlined regular text
+        @"iTermTextFragmentShaderMonochromeUnderlinedEmoji" ]; // mono underlined emoji
+    int index = (gMonochromeText ? 4 : 0) | (underlined ? 2 : 0) | (emoji ? 1 : 0);
     return names[index];
 }
 
 static NSString *const VertexFunctionName(const BOOL &underlined,
-                                          const BOOL &blending,
                                           const BOOL &emoji) {
-    static NSArray<NSString *> *names = @[ @"iTermTextVertexShader",           // solid color regular text
-                                           @"iTermTextVertexShaderEmoji",      // emoji
-                                           @"iTermTextVertexShaderBlending",   // blending regular text
-                                           @"iTermTextVertexShaderEmoji",      // blending emoji
-                                           @"iTermTextVertexShader",           // underlined solid color regular text
-                                           @"iTermTextVertexShader",           // underlined solid color emoji
-                                           @"iTermTextVertexShader",           // underlined blending regular text
-                                           @"iTermTextVertexShader",           // underlined blending emoji
-                                           
-                                           // Monochrome (10.14+)
-                                           @"iTermTextVertexShaderMonochrome",  // mono
-                                           @"iTermTextVertexShaderEmoji",       // mono emoji
-                                           @"iTermTextVertexShaderMonochrome",  // mono blending (impossible)
-                                           @"iTermTextVertexShaderEmoji",       // mono blending emoji (impossible)
-                                           @"iTermTextVertexShader",            // mono underlined
-                                           @"iTermTextVertexShader",            // mono underlined emoji
-                                           @"iTermTextVertexShader",            // mono underlined blending (impossible)
-                                           @"iTermTextVertexShader" ];          // mono underlined blending emoji (impossible)
-    int index = (gMonochromeText ? 8 : 0) | (underlined ? 4 : 0) | (blending ? 2 : 0) | (emoji ? 1 : 0);
+    static NSArray<NSString *> *names = @[
+        // Subpixel AA (blending=1)
+        @"iTermTextVertexShaderBlending",   // regular text
+        @"iTermTextVertexShaderEmoji",      // emoji
+        @"iTermTextVertexShader",           // underlined regular text
+        @"iTermTextVertexShader",           // underlined emoji
+
+        // Monochrome (10.14+) (blending=0)
+        @"iTermTextVertexShaderMonochrome",  // mono
+        @"iTermTextVertexShaderEmoji",       // mono emoji
+        @"iTermTextVertexShader",            // mono underlined
+        @"iTermTextVertexShader" ];          // mono underlined emoji
+    int index = (gMonochromeText ? 4 : 0) | (underlined ? 2 : 0) | (emoji ? 1 : 0);
     return names[index];
 }
 
-- (void)blitFromTemporaryToIntermediateTexture:(iTermMetalFrameData * _Nonnull)frameData NS_DEPRECATED_MAC(10_12, 10_14) {
+- (void)blitFromTemporaryToIntermediateTexture:(iTermMetalFrameData * _Nonnull)frameData {
     [frameData.renderEncoder endEncoding];
     
     id<MTLBlitCommandEncoder> blitter = [frameData.commandBuffer blitCommandEncoder];
@@ -448,25 +415,12 @@ static NSString *const VertexFunctionName(const BOOL &underlined,
     const float scale = tState.cellConfiguration.scale;
     const simd_float2 cellSize = simd_make_float2(frameData.cellConfiguration.cellSize.width,
                                                   frameData.cellConfiguration.cellSize.height);
-    bool blending;
-    if (iTermTextIsMonochrome()) {
-        blending = false;
-    } else {
-        blending = tState.cellConfiguration.usingIntermediatePass || tState.disableIndividualColorModels;
-    }
 
     // The vertex buffer's texture coordinates depend on the texture map's atlas size so it must
     // be initialized after the texture map.
     __block NSInteger totalInstances = 0;
     __block iTermTextureDimensions previousTextureDimensions;
     __block id<MTLBuffer> previousTextureDimensionsBuffer = nil;
-
-    __block id<MTLBuffer> subpixelModelsBuffer NS_DEPRECATED_MAC(10_12, 10_14);
-    if (!iTermTextIsMonochrome()) {
-        [tState measureTimeForStat:iTermTextRendererStatSubpixelModel ofBlock:^{
-            subpixelModelsBuffer = [self subpixelModelsForState:tState];
-        }];
-    }
 
     [tState enumerateDraws:^(const iTermTextPIU *pius,
                              NSInteger instances,
@@ -499,10 +453,9 @@ static NSString *const VertexFunctionName(const BOOL &underlined,
             textures = @{ @(iTermTextureIndexPrimary): texture };
         } else {
             textures = @{ @(iTermTextureIndexPrimary): texture,
-                          @(iTermTextureIndexSubpixelModels): self->_models };
-            if (tState.cellConfiguration.usingIntermediatePass || tState.disableIndividualColorModels) {
-                textures = [textures dictionaryBySettingObject:tState.backgroundTexture forKey:@(iTermTextureIndexBackground)];
-            }
+                          @(iTermTextureIndexSubpixelModels): self->_models,
+                          @(iTermTextureIndexBackground): tState.backgroundTexture,
+            };
         }
 
         __block id<MTLBuffer> textureDimensionsBuffer;
@@ -538,16 +491,11 @@ static NSString *const VertexFunctionName(const BOOL &underlined,
 
         [tState measureTimeForStat:iTermTextRendererStatDraw ofBlock:^{
             // Change the pipeline state just before drawing so we get the right underlined/not underlined state.
-            self->_cellRenderer.fragmentFunctionName = FragmentFunctionName(underlined, blending, emoji);
-            self->_cellRenderer.vertexFunctionName = VertexFunctionName(underlined, blending, emoji);
+            self->_cellRenderer.fragmentFunctionName = FragmentFunctionName(underlined, emoji);
+            self->_cellRenderer.vertexFunctionName = VertexFunctionName(underlined, emoji);
             tState.pipelineState = [self->_cellRenderer pipelineState];
             NSDictionary *fragmentBuffers;
-            if (iTermTextIsMonochrome()) {
-                fragmentBuffers = @{ @(iTermFragmentInputIndexTextureDimensions): textureDimensionsBuffer };
-            } else {
-                fragmentBuffers = @{ @(iTermFragmentBufferIndexColorModels): subpixelModelsBuffer,
-                                     @(iTermFragmentInputIndexTextureDimensions): textureDimensionsBuffer };
-            }
+            fragmentBuffers = @{ @(iTermFragmentInputIndexTextureDimensions): textureDimensionsBuffer };
             [self->_cellRenderer drawWithTransientState:tState
                                           renderEncoder:frameData.renderEncoder
                                        numberOfVertices:6
@@ -565,9 +513,8 @@ static NSString *const VertexFunctionName(const BOOL &underlined,
                          // We don't write to a temporary texture on 10.14.
                          return;
                      } else {
-#if ENABLE_PRETTY_ASCII_OVERLAP
+                         // Needed for pretty ascii overlap.
                          [self blitFromTemporaryToIntermediateTexture:frameData];
-#endif
                      }
                  }
      ];

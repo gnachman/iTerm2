@@ -247,7 +247,7 @@ static NSString *const kBackgroundColorWellIdentifier = @"kBackgroundColorWellId
 - (void)setGuid:(NSString *)guid {
     _guid = [guid copy];
     [_tableView reloadData];
-    _interpolatedStringParameters.state = [iTermProfilePreferences boolForKey:KEY_TRIGGERS_USE_INTERPOLATED_STRINGS inProfile:[self bookmark]] ? NSOnState : NSOffState;
+    _interpolatedStringParameters.state = [iTermProfilePreferences boolForKey:KEY_TRIGGERS_USE_INTERPOLATED_STRINGS inProfile:[self bookmark]] ? NSControlStateValueOn : NSControlStateValueOff;
 }
 
 - (NSTextField *)labelWithString:(NSString *)string origin:(NSPoint)origin {
@@ -283,7 +283,9 @@ static NSString *const kBackgroundColorWellIdentifier = @"kBackgroundColorWellId
         [indexes addObject:@(idx)];
     }];
 
-    NSData *data = [NSKeyedArchiver archivedDataWithRootObject:indexes];
+    NSData *data = [NSKeyedArchiver archivedDataWithRootObject:indexes
+                                         requiringSecureCoding:NO
+                                                         error:nil];
     [pasteboard declareTypes:@[ kiTermTriggerControllerPasteboardType ] owner:self];
     [pasteboard setData:data forType:kiTermTriggerControllerPasteboardType];
     return YES;
@@ -316,7 +318,14 @@ static NSString *const kBackgroundColorWellIdentifier = @"kBackgroundColorWellId
     dropOperation:(NSTableViewDropOperation)operation {
     NSPasteboard *pasteboard = [info draggingPasteboard];
     NSData *rowData = [pasteboard dataForType:kiTermTriggerControllerPasteboardType];
-    NSArray *indexes = [NSKeyedUnarchiver unarchiveObjectWithData:rowData];
+    NSError *error = nil;
+    NSArray *indexes = [NSKeyedUnarchiver unarchivedObjectOfClass:[NSArray class]
+                                                         fromData:rowData
+                                                            error:&error];
+    if (error) {
+        DLog(@"Drop failed: %@", error);
+        return NO;
+    }
 
     // This code assumes you can only select one trigger at a time.
     int sourceRow = [indexes[0] intValue];
@@ -378,9 +387,9 @@ static NSString *const kBackgroundColorWellIdentifier = @"kBackgroundColorWellId
     } else if (tableColumn == _partialLineColumn) {
         NSButton *checkbox = [[NSButton alloc] initWithFrame:NSZeroRect];
         [checkbox sizeToFit];
-        [checkbox setButtonType:NSSwitchButton];
+        [checkbox setButtonType:NSButtonTypeSwitch];
         checkbox.title = @"";
-        checkbox.state = [triggerDictionary[kTriggerPartialLineKey] boolValue] ? NSOnState : NSOffState;
+        checkbox.state = [triggerDictionary[kTriggerPartialLineKey] boolValue] ? NSControlStateValueOn : NSControlStateValueOff;
         checkbox.target = self;
         checkbox.action = @selector(instantDidChange:);
         return checkbox;
@@ -504,7 +513,7 @@ static NSString *const kBackgroundColorWellIdentifier = @"kBackgroundColorWellId
                 _parameterDelegate = [trigger newParameterDelegateWithPassthrough:self];
                 textField.delegate = _parameterDelegate ?: self;
                 if ([textField respondsToSelector:@selector(setPlaceholderString:)]) {
-                    textField.placeholderString = [trigger triggerOptionalParameterPlaceholderWithInterpolation:_interpolatedStringParameters.state == NSOnState];
+                    textField.placeholderString = [trigger triggerOptionalParameterPlaceholderWithInterpolation:_interpolatedStringParameters.state == NSControlStateValueOn];
                 }
                 textField.identifier = kParameterColumnIdentifier;
 
@@ -551,8 +560,8 @@ static NSString *const kBackgroundColorWellIdentifier = @"kBackgroundColorWellId
 }
 
 - (IBAction)toggleUseInterpolatedStrings:(id)sender {
-    _interpolatedStringParameters.state = (![iTermProfilePreferences boolForKey:KEY_TRIGGERS_USE_INTERPOLATED_STRINGS inProfile:[self bookmark]]) ? NSOnState : NSOffState;
-    [self.delegate triggerSetUseInterpolatedStrings:_interpolatedStringParameters.state == NSOnState];
+    _interpolatedStringParameters.state = (![iTermProfilePreferences boolForKey:KEY_TRIGGERS_USE_INTERPOLATED_STRINGS inProfile:[self bookmark]]) ? NSControlStateValueOn : NSControlStateValueOff;
+    [self.delegate triggerSetUseInterpolatedStrings:_interpolatedStringParameters.state == NSControlStateValueOn];
     [_tableView reloadData];
 }
 
@@ -604,7 +613,7 @@ static NSString *const kBackgroundColorWellIdentifier = @"kBackgroundColorWellId
 }
 
 - (void)instantDidChange:(NSButton *)checkbox {
-    NSNumber *newValue = checkbox.state == NSOnState ? @(YES) : @(NO);
+    NSNumber *newValue = checkbox.state == NSControlStateValueOn ? @(YES) : @(NO);
     NSInteger row = [_tableView rowForView:checkbox];
 
     // If a text field is editing, make it save its contents before we get the trigger dictionary.
@@ -638,8 +647,8 @@ static NSString *const kBackgroundColorWellIdentifier = @"kBackgroundColorWellId
     Trigger *triggerObj = [self triggerWithAction:triggerDictionary[kTriggerActionKey]];
     if ([triggerObj paramIsPopupButton]) {
         triggerDictionary[kTriggerParameterKey] = [triggerObj defaultPopupParameterObject];
-    } else if ([triggerObj triggerOptionalDefaultParameterValueWithInterpolation:_interpolatedStringParameters.state == NSOnState]) {
-        triggerDictionary[kTriggerParameterKey] = [triggerObj triggerOptionalDefaultParameterValueWithInterpolation:_interpolatedStringParameters.state == NSOnState];
+    } else if ([triggerObj triggerOptionalDefaultParameterValueWithInterpolation:_interpolatedStringParameters.state == NSControlStateValueOn]) {
+        triggerDictionary[kTriggerParameterKey] = [triggerObj triggerOptionalDefaultParameterValueWithInterpolation:_interpolatedStringParameters.state == NSControlStateValueOn];
     }
     [self setTriggerDictionary:triggerDictionary forRow:rowIndex reloadData:YES];
 }

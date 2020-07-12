@@ -11,7 +11,6 @@
 
 @interface iTermTextRendererTransientState ()
 
-@property (nonatomic, readonly) NSData *colorModels;
 @property (nonatomic, readonly) NSData *piuData;
 @property (nonatomic, strong) id<MTLDevice> device;
 @property (nonatomic, strong) iTermASCIITextureGroup *asciiTextureGroup;

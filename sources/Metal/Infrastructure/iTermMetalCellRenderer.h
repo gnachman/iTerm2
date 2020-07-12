@@ -27,7 +27,7 @@ NS_CLASS_AVAILABLE(10_11, NA)
 // find a better way to pass this info around. The problem is that it's needed
 // early on--before the transient state is created--in order for the text
 // renderer to be able to set its fragment function.
-@property (nonatomic, readonly) BOOL usingIntermediatePass NS_DEPRECATED_MAC(10_12, 10_14);
+@property (nonatomic, readonly) BOOL usingIntermediatePass;
 
 - (instancetype)initWithViewportSize:(vector_uint2)viewportSize
                                scale:(CGFloat)scale

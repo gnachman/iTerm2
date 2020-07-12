@@ -94,13 +94,14 @@ static const char CPShiftReduceParserAssociatedObjectCacheKey;
     if (!data.length) {
         return nil;
     }
-    @try {
-        NSKeyedUnarchiver *unarchiver = [[NSKeyedUnarchiver alloc] initForReadingWithData:data];
-        return [[self alloc] initWithCoder:unarchiver];
-    } @catch (NSException *exception) {
-        XLog(@"Cache at %@ busted, re-creating", file);
+    NSError *error = nil;
+    NSKeyedUnarchiver *unarchiver = [[NSKeyedUnarchiver alloc] initForReadingFromData:data error:&error];
+    unarchiver.requiresSecureCoding = NO;
+    if (!unarchiver) {
+        XLog(@"Cache at %@ busted, re-creating: %@", file, error);
+        return nil;
     }
-    return nil;
+    return [[self alloc] initWithCoder:unarchiver];
 }
 
 + (instancetype)it_parserWithGrammarStart:(NSString *)start bnf:(NSString *)bnf {
@@ -124,12 +125,11 @@ static const char CPShiftReduceParserAssociatedObjectCacheKey;
 }
 
 - (void)it_writeToFile:(NSString *)file {
-    NSMutableData *data = [NSMutableData data];
-    NSKeyedArchiver *coder = [[NSKeyedArchiver alloc] initForWritingWithMutableData:data];
+    NSKeyedArchiver *coder = [[NSKeyedArchiver alloc] initRequiringSecureCoding:NO];
     coder.outputFormat = NSPropertyListBinaryFormat_v1_0;
     [self encodeWithCoder:coder];
     [coder finishEncoding];
-    [data writeToFile:file atomically:NO];
+    [[coder encodedData] writeToFile:file atomically:NO];
 }
 
 @end

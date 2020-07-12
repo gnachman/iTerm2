@@ -20,13 +20,6 @@
 
 #define ENABLE_PER_FRAME_METAL_STATS 0
 
-// When ASCII characters overlap each other, first draw "main" part of characters, tne copy to the
-// intermediate texture, then draw non-main parts using blending to fix it up.
-#define ENABLE_PRETTY_ASCII_OVERLAP 1
-
-// Pretty ASCII overlap requires the use of a temporary texture as a scratchpad.
-#define ENABLE_USE_TEMPORARY_TEXTURE ENABLE_PRETTY_ASCII_OVERLAP
-
 //I've had to disable this feature because it appears to tickle a race condition. It dies saying:
 //"[CAMetalLayerDrawable texture] should not be called after already presenting this drawable. Get a nextDrawable instead"
 //That gets logged when accessing the texture immediately after getting a drawable and before it

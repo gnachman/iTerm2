@@ -16,7 +16,7 @@
     }
 
     NSPasteboard *pasteboard = [draggingInfo draggingPasteboard];
-    NSString *theString = [pasteboard stringForType:NSFilenamesPboardType];
+    NSString *theString = [pasteboard stringForType:NSPasteboardTypeFileURL];
 
     if (theString) {
         NSData *data = [theString dataUsingEncoding:NSUTF8StringEncoding];

@@ -202,7 +202,7 @@ NSString *const iTermProcessTypeDidChangeNotification = @"iTermProcessTypeDidCha
                    relatedView:nil
                           type:kPreferenceInfoTypeCheckbox];
     info.customSettingChangedHandler = ^(id sender) {
-        BOOL isOn = [sender state] == NSOnState;
+        BOOL isOn = [sender state] == NSControlStateValueOn;
         BOOL didChange = NO;
         if (isOn) {
             iTermWarningSelection selection =
@@ -227,7 +227,7 @@ NSString *const iTermProcessTypeDidChangeNotification = @"iTermProcessTypeDidCha
             __strong __typeof(self) strongSelf = weakSelf;
             if (strongSelf) {
                 if (isOn) {
-                    strongSelf->_hideMenuBarInFullscreen.state = NSOffState;
+                    strongSelf->_hideMenuBarInFullscreen.state = NSControlStateValueOff;
                 }
             }
         }
@@ -357,7 +357,7 @@ NSString *const iTermProcessTypeDidChangeNotification = @"iTermProcessTypeDidCha
 
 - (void)showFullscreenTabsSettingDidChange:(NSNotification *)notification {
     _showTabBarInFullscreen.state =
-        [iTermPreferences boolForKey:kPreferenceKeyShowFullscreenTabBar] ? NSOnState : NSOffState;
+        [iTermPreferences boolForKey:kPreferenceKeyShowFullscreenTabBar] ? NSControlStateValueOn : NSControlStateValueOff;
     [self updateHiddenAndEnabled];
 }
 
@@ -370,7 +370,7 @@ NSString *const iTermProcessTypeDidChangeNotification = @"iTermProcessTypeDidCha
          [iTermPreferences boolForKey:kPreferenceKeyHideTabBar]);
 
     // Can't preserve size if you can't hide the tab bar.
-    _preserveWindowSizeWhenTabBarVisibilityChanges.enabled = (_hideTab.state != NSOnState);
+    _preserveWindowSizeWhenTabBarVisibilityChanges.enabled = (_hideTab.state != NSControlStateValueOn);
     [self updateEnabledState];
 }
 

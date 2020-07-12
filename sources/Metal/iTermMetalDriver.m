@@ -117,9 +117,7 @@ typedef struct {
     iTermCopyBackgroundRenderer *_copyBackgroundRenderer;
     iTermCursorRenderer *_keyCursorRenderer;
     iTermImageRenderer *_imageRenderer;
-#if ENABLE_USE_TEMPORARY_TEXTURE
     iTermCopyToDrawableRenderer *_copyToDrawableRenderer;
-#endif
 
     // This one is special because it's debug only
     iTermCopyOffscreenRenderer *_copyOffscreenRenderer;
@@ -193,11 +191,9 @@ typedef struct {
         _copyModeCursorRenderer = [iTermCursorRenderer newCopyModeCursorRendererWithDevice:device];
         _keyCursorRenderer = [iTermCursorRenderer newKeyCursorRendererWithDevice:device];
         _copyBackgroundRenderer = [[iTermCopyBackgroundRenderer alloc] initWithDevice:device];
-#if ENABLE_USE_TEMPORARY_TEXTURE
         if (iTermTextIsMonochrome()) {} else {
             _copyToDrawableRenderer = [[iTermCopyToDrawableRenderer alloc] initWithDevice:device];
         }
-#endif
 
         _commandQueue = [device newCommandQueue];
 #if ENABLE_PRIVATE_QUEUE
@@ -564,14 +560,10 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     // behind text and we need to use the fancy subpixel antialiasing algorithm, create it now.
     // This has to be done before updates so the copyBackgroundRenderer's `enabled` flag can be
     // set properly.
-    if ([self shouldCreateIntermediateRenderPassDescriptor:frameData]) {
+    if (!iTermTextIsMonochrome()) {
         [frameData createIntermediateRenderPassDescriptor];
-    }
-#if ENABLE_USE_TEMPORARY_TEXTURE
-    if (iTermTextIsMonochrome()) {} else {
         [frameData createTemporaryRenderPassDescriptor];
     }
-#endif
 
     // Set properties of the renderers for values that tend not to change very often and which
     // are used to create transient states. This must happen before creating transient states
@@ -621,7 +613,6 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
 }
 
 - (void)addRowDataToFrameData:(iTermMetalFrameData *)frameData {
-    NSUInteger sketch = 0;
     for (int y = 0; y < frameData.gridSize.height; y++) {
         const int columns = frameData.gridSize.width;
         iTermMetalRowData *rowData = [[iTermMetalRowData alloc] init];
@@ -645,8 +636,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
                                                row:y
                                              width:columns
                                     drawableGlyphs:&drawableGlyphs
-                                              date:&date
-                                            sketch:&sketch];
+                                              date:&date];
         rowData.backgroundColorRLEData.length = rles * sizeof(iTermMetalBackgroundColorRLE);
         rowData.date = date;
         rowData.numberOfBackgroundRLEs = rles;
@@ -662,34 +652,10 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
         [frameData.debugInfo addRowData:rowData];
         [rowData.lineData checkForOverrun];
     }
-
-    // On average, this will be true if there are more than 16 unique color combinations.
-    // See tests/sketch_monte_carlo.py
-    frameData.hasManyColorCombos = (__builtin_popcountll(sketch) > 14);
 }
 
 - (BOOL)shouldCreateIntermediateRenderPassDescriptor:(iTermMetalFrameData *)frameData {
-    if (iTermTextIsMonochrome()) {
-        return NO;
-    }
-    if (!_backgroundImageRenderer.rendererDisabled && [frameData.perFrameState metalBackgroundImageGetMode:NULL]) {
-        return YES;
-    }
-    if (!_badgeRenderer.rendererDisabled && [frameData.perFrameState badgeImage]) {
-        return YES;
-    }
-    if (!_broadcastStripesRenderer.rendererDisabled && frameData.perFrameState.showBroadcastStripes) {
-        return YES;
-    }
-    if (!_cursorGuideRenderer.rendererDisabled && frameData.perFrameState.cursorGuideEnabled) {
-        return YES;
-    }
-
-#if ENABLE_PRETTY_ASCII_OVERLAP
-    return YES;
-#endif
-    
-    return NO;
+    return !iTermTextIsMonochrome();
 }
 
 - (void)updateRenderersForNewFrameData:(iTermMetalFrameData *)frameData {
@@ -994,11 +960,9 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
         return;
     }
     _copyBackgroundRenderer.enabled = (frameData.intermediateRenderPassDescriptor != nil);
-#if ENABLE_USE_TEMPORARY_TEXTURE
     if (iTermTextIsMonochrome()) {} else {
         _copyToDrawableRenderer.enabled = YES;
     }
-#endif
 }
 
 - (void)updateBadgeRendererForFrameData:(iTermMetalFrameData *)frameData {
@@ -1047,7 +1011,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
 
 #pragma mark - Populate Transient States
 
-- (void)populateCopyBackgroundRendererTransientStateWithFrameData:(iTermMetalFrameData *)frameData NS_DEPRECATED_MAC(10_12, 10_14) {
+- (void)populateCopyBackgroundRendererTransientStateWithFrameData:(iTermMetalFrameData *)frameData {
     if (_copyBackgroundRenderer.rendererDisabled) {
         return;
     }
@@ -1055,10 +1019,8 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     iTermCopyBackgroundRendererTransientState *copyState = [frameData transientStateForRenderer:_copyBackgroundRenderer];
     copyState.sourceTexture = frameData.intermediateRenderPassDescriptor.colorAttachments[0].texture;
 
-#if ENABLE_USE_TEMPORARY_TEXTURE
     iTermCopyToDrawableRendererTransientState *dState = [frameData transientStateForRenderer:_copyToDrawableRenderer];
     dState.sourceTexture = frameData.temporaryRenderPassDescriptor.colorAttachments[0].texture;
-#endif
 }
 
 - (void)populateCursorRendererTransientStateWithFrameData:(iTermMetalFrameData *)frameData {
@@ -1158,7 +1120,6 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
 
     // Set the background texture if one is available.
     textState.backgroundTexture = frameData.intermediateRenderPassDescriptor.colorAttachments[0].texture;
-    textState.disableIndividualColorModels = frameData.hasManyColorCombos;
 
     // Configure underlines
     iTermMetalUnderlineDescriptor asciiUnderlineDescriptor;
@@ -1481,11 +1442,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     if (iTermTextIsMonochrome()) {
         useTemporaryTexture = NO;
     } else {
-#if ENABLE_USE_TEMPORARY_TEXTURE
         useTemporaryTexture = YES;
-#else
-        useTemporaryTexture = NO;
-#endif
     }
     
     NSArray<MTLRenderPassDescriptor *> *descriptors;
@@ -1704,11 +1661,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
 - (void)finishDrawingWithCommandBuffer:(id<MTLCommandBuffer>)commandBuffer
                              frameData:(iTermMetalFrameData *)frameData {
     DLog(@"Finish drawing frameData %@", frameData);
-#if ENABLE_USE_TEMPORARY_TEXTURE
     BOOL shouldCopyToDrawable = YES;
-#else
-    BOOL shouldCopyToDrawable = NO;
-#endif
 
     if (@available(macOS 10.14, *)) {
         if (iTermTextIsMonochromeOnMojave()) {
@@ -1895,11 +1848,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     if (iTermTextIsMonochrome()) {
         useTemporaryTexture = NO;
     } else {
-#if ENABLE_USE_TEMPORARY_TEXTURE
         useTemporaryTexture = YES;
-#else
-        useTemporaryTexture = NO;
-#endif
     }
     
     if (useTemporaryTexture) {

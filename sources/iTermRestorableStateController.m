@@ -139,13 +139,12 @@ static NSString *const iTermRestorableStateControllerUserDefaultsKeyCount = @"No
 }
 
 - (NSData *)restorableStateForWindow:(NSWindow *)window {
-    NSMutableData *data = [NSMutableData data];
-    NSKeyedArchiver *coder = [[NSKeyedArchiver alloc] initForWritingWithMutableData:data];
+    NSKeyedArchiver *coder = [[NSKeyedArchiver alloc] initRequiringSecureCoding:NO];
     coder.outputFormat = NSPropertyListBinaryFormat_v1_0;
     [self.delegate restorableStateController:self encodeWithCoder:coder window:window];
     [coder finishEncoding];
 
-    return data;
+    return [coder encodedData];
 }
 
 // Runs on _queue
@@ -195,21 +194,24 @@ static NSString *const iTermRestorableStateControllerUserDefaultsKeyCount = @"No
 
 - (void)restoreRecord:(iTermRestorableStateRecord *)record
            completion:(void (^)(void))completion {
-    @try {
-        NSKeyedUnarchiver *unarchiver = [[NSKeyedUnarchiver alloc] initForReadingWithData:record.plaintext];
-        [self.delegate restorableStateController:self
-                                restoreWithCoder:unarchiver
-                                      identifier:record.identifier
-                                      completion:^(NSWindow * _Nonnull window, NSError * _Nonnull error) {
-            if ([window.delegate respondsToSelector:@selector(window:didDecodeRestorableState:)]) {
-                [window.delegate window:window didDecodeRestorableState:unarchiver];
-            }
-            [unarchiver finishDecoding];
-            completion();
-        }];
-    } @catch (NSException *exception) {
-        DLog(@"Restoration failed with %@", exception);
+    NSError *error = nil;
+    NSKeyedUnarchiver *unarchiver = [[NSKeyedUnarchiver alloc] initForReadingFromData:record.plaintext
+                                                                                error:&error];
+    unarchiver.requiresSecureCoding = NO;
+    if (error) {
+        DLog(@"Restoration failed with %@", error);
+        return;
     }
+    [self.delegate restorableStateController:self
+                            restoreWithCoder:unarchiver
+                                  identifier:record.identifier
+                                  completion:^(NSWindow * _Nonnull window, NSError * _Nonnull error) {
+        if ([window.delegate respondsToSelector:@selector(window:didDecodeRestorableState:)]) {
+            [window.delegate window:window didDecodeRestorableState:unarchiver];
+        }
+        [unarchiver finishDecoding];
+        completion();
+    }];
 }
 
 - (void)didRestore {

@@ -147,28 +147,28 @@ NSString *const iTermImageDidLoad = @"iTermImageDidLoad";
 }
 
 - (void)saveToFile:(NSString *)filename {
-    NSBitmapImageFileType fileType = NSPNGFileType;
+    NSBitmapImageFileType fileType = NSBitmapImageFileTypePNG;
     if ([filename hasSuffix:@".bmp"]) {
-        fileType = NSBMPFileType;
+        fileType = NSBitmapImageFileTypeBMP;
     } else if ([filename hasSuffix:@".gif"]) {
-        fileType = NSGIFFileType;
+        fileType = NSBitmapImageFileTypeGIF;
     } else if ([filename hasSuffix:@".jp2"]) {
-        fileType = NSJPEG2000FileType;
+        fileType = NSBitmapImageFileTypeJPEG2000;
     } else if ([filename hasSuffix:@".jpg"] || [filename hasSuffix:@".jpeg"]) {
-        fileType = NSJPEGFileType;
+        fileType = NSBitmapImageFileTypeJPEG;
     } else if ([filename hasSuffix:@".png"]) {
-        fileType = NSPNGFileType;
+        fileType = NSBitmapImageFileTypePNG;
     } else if ([filename hasSuffix:@".tiff"]) {
-        fileType = NSTIFFFileType;
+        fileType = NSBitmapImageFileTypeTIFF;
     }
 
     NSData *data = nil;
-    NSDictionary *universalTypeToCocoaMap = @{ (NSString *)kUTTypeBMP: @(NSBMPFileType),
-                                               (NSString *)kUTTypeGIF: @(NSGIFFileType),
-                                               (NSString *)kUTTypeJPEG2000: @(NSJPEG2000FileType),
-                                               (NSString *)kUTTypeJPEG: @(NSJPEGFileType),
-                                               (NSString *)kUTTypePNG: @(NSPNGFileType),
-                                               (NSString *)kUTTypeTIFF: @(NSTIFFFileType) };
+    NSDictionary *universalTypeToCocoaMap = @{ (NSString *)kUTTypeBMP: @(NSBitmapImageFileTypeBMP),
+                                               (NSString *)kUTTypeGIF: @(NSBitmapImageFileTypeGIF),
+                                               (NSString *)kUTTypeJPEG2000: @(NSBitmapImageFileTypeJPEG2000),
+                                               (NSString *)kUTTypeJPEG: @(NSBitmapImageFileTypeJPEG),
+                                               (NSString *)kUTTypePNG: @(NSBitmapImageFileTypePNG),
+                                               (NSString *)kUTTypeTIFF: @(NSBitmapImageFileTypeTIFF) };
     NSString *imageType = self.imageType;
     if (self.broken) {
         data = self.data;

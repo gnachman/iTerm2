@@ -185,9 +185,9 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionDragEdgeHeight = @"PSMTabBarCont
                 [_addTabButton setRolloverImage:newButtonImage];
             [_addTabButton setTitle:@""];
             [_addTabButton setImagePosition:NSImageOnly];
-            [_addTabButton setButtonType:NSMomentaryChangeButton];
+            [_addTabButton setButtonType:NSButtonTypeMomentaryChange];
             [_addTabButton setBordered:NO];
-            [_addTabButton setBezelStyle:NSShadowlessSquareBezelStyle];
+            [_addTabButton setBezelStyle:NSBezelStyleShadowlessSquare];
             if (_showAddTabButton){
                 [_addTabButton setHidden:NO];
             } else {
@@ -927,7 +927,7 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionDragEdgeHeight = @"PSMTabBarCont
         [self finishUpdateWithRegularWidths:newOrigins widthsWithOverflow:newOrigins];
     }
 
-    [self setNeedsDisplay];
+    [self setNeedsDisplay:YES];
 }
 
 // Tab widths may vary. Calculate the widths and see if this will work. Only allow sizes to
@@ -1074,7 +1074,7 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionDragEdgeHeight = @"PSMTabBarCont
         _animationTimer = nil;
     }
 
-    [self setNeedsDisplay];
+    [self setNeedsDisplay:YES];
 }
 
 - (void)finishUpdateWithRegularWidths:(NSArray *)regularWidths
@@ -1180,7 +1180,7 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionDragEdgeHeight = @"PSMTabBarCont
 
             // selected? set tab states...
             if ([[cell representedObject] isEqualTo:[_tabView selectedTabViewItem]]) {
-                [cell setState:NSOnState];
+                [cell setState:NSControlStateValueOn];
                 tabState |= PSMTab_SelectedMask;
                 // previous cell
                 if (i > 0) {
@@ -1188,10 +1188,10 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionDragEdgeHeight = @"PSMTabBarCont
                 }
                 // next cell - see below
             } else {
-                [cell setState:NSOffState];
+                [cell setState:NSControlStateValueOff];
                 // see if prev cell was selected
                 if (i > 0) {
-                    if ([[_cells objectAtIndex:i-1] state] == NSOnState){
+                    if ([[_cells objectAtIndex:i-1] state] == NSControlStateValueOn){
                         tabState |= PSMTab_LeftIsSelectedMask;
                     }
                 }
@@ -1233,7 +1233,7 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionDragEdgeHeight = @"PSMTabBarCont
             [cell setIsInOverflowMenu:YES];
             [[cell indicator] removeFromSuperview];
             if ([[cell representedObject] isEqualTo:[_tabView selectedTabViewItem]]) {
-                [menuItem setState:NSOnState];
+                [menuItem setState:NSControlStateValueOn];
             }
 
             if ([cell hasIcon]) {
@@ -1361,7 +1361,7 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionDragEdgeHeight = @"PSMTabBarCont
                 }
             }
         }
-        [self setNeedsDisplay];
+        [self setNeedsDisplay:YES];
     }
 }
 
@@ -1417,7 +1417,7 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionDragEdgeHeight = @"PSMTabBarCont
         if (_closeClicked && NSMouseInRect(trackingStartPoint, iconRect, [self isFlipped]) &&
                 ([self allowsBackgroundTabClosing] || [[cell representedObject] isEqualTo:[_tabView selectedTabViewItem]])) {
             [cell setCloseButtonPressed:NSMouseInRect(currentPoint, iconRect, [self isFlipped])];
-            [self setNeedsDisplay];
+            [self setNeedsDisplay:YES];
             return;
         }
 
@@ -1764,25 +1764,25 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionDragEdgeHeight = @"PSMTabBarCont
         [[cell indicator] setAnimate:NO];
         [[cell indicator] setAnimate:YES];
     }
-    [self setNeedsDisplay];
+    [self setNeedsDisplay:YES];
 }
 
 - (void)viewWillStartLiveResize {
     for (PSMTabBarCell *cell in _cells) {
         [[cell indicator] setAnimate:NO];
     }
-    [self setNeedsDisplay];
+    [self setNeedsDisplay:YES];
 }
 
 -(void)viewDidEndLiveResize {
     for (PSMTabBarCell *cell in _cells) {
         [[cell indicator] setAnimate:YES];
     }
-    [self setNeedsDisplay];
+    [self setNeedsDisplay:YES];
 }
 
 - (void)windowDidMove:(NSNotification *)aNotification {
-    [self setNeedsDisplay];
+    [self setNeedsDisplay:YES];
 }
 
 - (void)windowStatusDidChange:(NSNotification *)notification {
@@ -1805,7 +1805,7 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionDragEdgeHeight = @"PSMTabBarCont
                     [partnerView setFrame:NSMakeRect(partnerFrame.origin.x, partnerFrame.origin.y - 21, partnerFrame.size.width, partnerFrame.size.height + 21)];
                 }
                 [partnerView setNeedsDisplay:YES];
-                [self setNeedsDisplay];
+                [self setNeedsDisplay:YES];
             } else {
                 // for window movement
                 NSRect windowFrame = [[self window] frame];
@@ -1827,7 +1827,7 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionDragEdgeHeight = @"PSMTabBarCont
                 }
                 _tabBarWidth = myFrame.size.width;
                 [partnerView setNeedsDisplay:YES];
-                [self setNeedsDisplay];
+                [self setNeedsDisplay:YES];
             } else {
                 // for window movement
                 NSRect windowFrame = [[self window] frame];
@@ -1843,7 +1843,7 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionDragEdgeHeight = @"PSMTabBarCont
         }
     }
 
-    [self setNeedsDisplay];
+    [self setNeedsDisplay:YES];
      _awakenedFromNib = YES;
     [self update];
 }
@@ -2264,7 +2264,7 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionDragEdgeHeight = @"PSMTabBarCont
     for (PSMTabBarCell *cell in _cells) {
         [cell setModifierString:str];
     }
-    [self setNeedsDisplay];
+    [self setNeedsDisplay:YES];
 }
 
 - (void)fillPath:(NSBezierPath*)path {

@@ -98,7 +98,7 @@ static NSString *const kInitialDirectoryKey = @"Initial Directory";
         savePanel.accessoryView = accessoryViewController.view;
     } else if (options & kSavePanelOptionLogPlainTextAccessory) {
         button = [[NSButton alloc] init];
-        button.buttonType = NSSwitchButton;
+        button.buttonType = NSButtonTypeSwitch;
         button.title = @"Log plain text only";
         [button sizeToFit];
 
@@ -165,7 +165,7 @@ static NSString *const kInitialDirectoryKey = @"Initial Directory";
         [[NSUserDefaults standardUserDefaults] setObject:settings forKey:key];
     }
     if (delegate) {
-        delegate->_shoudLogPlainText = (button.state == NSOnState);
+        delegate->_shoudLogPlainText = (button.state == NSControlStateValueOn);
     }
     
     return delegate.path ? delegate : nil;

@@ -50,12 +50,6 @@ typedef NS_ENUM(NSUInteger, SSKeychainQuerySynchronizationMode) {
 @property (nonatomic, copy) NSData *passwordData;
 
 /**
- This property automatically transitions between an object and the value of
- `passwordData` using NSKeyedArchiver and NSKeyedUnarchiver.
- */
-@property (nonatomic, copy) id<NSCoding> passwordObject;
-
-/**
  Convenience accessor for setting and getting a password string. Passes through
  to `passwordData` using UTF-8 string encoding.
  */

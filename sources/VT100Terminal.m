@@ -974,7 +974,7 @@ static const int kMaxScreenRows = 4096;
                                                 green:((double)g)/255.0
                                                  blue:((double)b)/255.0
                                                 alpha:1];
-            NSColor *theColor = [srgb colorUsingColorSpaceName:NSCalibratedRGBColorSpace];
+            NSColor *theColor = [srgb colorUsingColorSpace:[NSColorSpace genericRGBColorSpace]];
             *numberPtr = n;
             return theColor;
         }
@@ -2427,7 +2427,7 @@ static const int kMaxScreenRows = 4096;
                                                     green:components[1].doubleValue
                                                      blue:components[2].doubleValue
                                                     alpha:1];
-                NSColor *theColor = [srgb colorUsingColorSpaceName:NSCalibratedRGBColorSpace];
+                NSColor *theColor = [srgb colorUsingColorSpace:[NSColorSpace genericRGBColorSpace]];
                 [delegate_ terminalSetColorTableEntryAtIndex:theIndex
                                                        color:theColor];
             } else if ([part isEqualToString:@"?"]) {
@@ -2558,7 +2558,7 @@ static const int kMaxScreenRows = 4096;
                                                 green:components[1].doubleValue
                                                  blue:components[2].doubleValue
                                                 alpha:1];
-            NSColor *theColor = [srgb colorUsingColorSpaceName:NSCalibratedRGBColorSpace];
+            NSColor *theColor = [srgb colorUsingColorSpace:[NSColorSpace genericRGBColorSpace]];
             [delegate_ terminalSetColorTableEntryAtIndex:ptyIndex
                                                    color:theColor];
         }

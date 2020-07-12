@@ -9,6 +9,7 @@
 #import "iTermServiceProvider.h"
 #import "iTermController.h"
 #import "iTermSessionLauncher.h"
+#import "NSArray+iTerm.h"
 #import "NSDictionary+iTerm.h"
 #import "PseudoTerminal.h"
 
@@ -23,7 +24,10 @@
 }
 
 - (void)openFilesFromPasteboard:(NSPasteboard *)pasteboard inWindowController:(PseudoTerminal *)windowController allowTabs:(BOOL)allowTabs {
-    NSArray *filePathArray = [pasteboard propertyListForType:NSFilenamesPboardType];
+    NSArray<NSURL *> *urls = [pasteboard readObjectsForClasses:@[ [NSURL class] ] options:0];
+    NSArray<NSString *> *filePathArray = [urls mapWithBlock:^id(NSURL *anObject) {
+        return anObject.path;
+    }];
     for (NSString *path in filePathArray) {
         BOOL isDirectory = NO;
         if ([[NSFileManager defaultManager] fileExistsAtPath:path isDirectory:&isDirectory]) {

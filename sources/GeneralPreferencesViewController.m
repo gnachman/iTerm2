@@ -244,7 +244,7 @@ enum {
         };
     } else {
         _gpuRendering.enabled = NO;
-        _gpuRendering.state = NSOffState;
+        _gpuRendering.state = NSControlStateValueOff;
         [self updateAdvancedGPUEnabled];
     }
 
@@ -260,7 +260,7 @@ enum {
                                                   if ([notification.key isEqualToString:kPreferenceKeyEnableAPIServer]) {
                                                       __typeof(self) strongSelf = weakSelf;
                                                       if (strongSelf) {
-                                                          strongSelf->_enableAPI.state = NSOnState;
+                                                          strongSelf->_enableAPI.state = NSControlStateValueOn;
                                                       }
                                                   }
                                               }];
@@ -362,7 +362,7 @@ enum {
         }
         [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"NoSyncNeverRemindPrefsChangesLostForFile"];
         NSNumber *value;
-        if ([strongSelf->_autoSaveOnQuit state] == NSOnState) {
+        if ([strongSelf->_autoSaveOnQuit state] == NSControlStateValueOn) {
             value = @0;
         } else {
             value = @1;
@@ -379,12 +379,12 @@ enum {
             return NO;
         }
         NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
-        NSCellStateValue state;
+        NSControlStateValue state;
         if ([userDefaults boolForKey:@"NoSyncNeverRemindPrefsChangesLostForFile"] &&
             [userDefaults integerForKey:@"NoSyncNeverRemindPrefsChangesLostForFile_selection"] == 0) {
-            state = NSOnState;
+            state = NSControlStateValueOn;
         } else {
-            state = NSOffState;
+            state = NSControlStateValueOff;
         }
         strongSelf->_autoSaveOnQuit.state = state;
         return YES;
@@ -531,7 +531,7 @@ enum {
 }
 
 - (BOOL)reallyEnableAPISettingDidChange {
-    const BOOL enabled = _enableAPI.state == NSOnState;
+    const BOOL enabled = _enableAPI.state == NSControlStateValueOn;
     if (enabled) {
         // Prompt the user. If they agree, or have permanently agreed, set the user default to YES.
         if ([iTermAPIHelper confirmShouldStartServerAndUpdateUserDefaultsForced:YES]) {
@@ -543,7 +543,7 @@ enum {
         [iTermAPIHelper setEnabled:NO];
     }
     if (enabled && ![iTermAPIHelper isEnabled]) {
-        _enableAPI.state = NSOffState;
+        _enableAPI.state = NSControlStateValueOff;
         return NO;
     }
     return YES;

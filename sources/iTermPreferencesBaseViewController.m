@@ -251,11 +251,11 @@ NSString *const kPreferenceDidChangeFromOtherPanelKeyUserInfoKey = @"key";
     } else {
         switch (info.type) {
             case kPreferenceInfoTypeCheckbox:
-                [self setBool:([sender state] == NSOnState) forKey:info.key];
+                [self setBool:([sender state] == NSControlStateValueOn) forKey:info.key];
                 break;
 
             case kPreferenceInfoTypeInvertedCheckbox:
-                [self setBool:([sender state] == NSOffState) forKey:info.key];
+                [self setBool:([sender state] == NSControlStateValueOff) forKey:info.key];
                 break;
 
             case kPreferenceInfoTypeIntegerTextField:
@@ -579,14 +579,14 @@ NSString *const kPreferenceDidChangeFromOtherPanelKeyUserInfoKey = @"key";
         case kPreferenceInfoTypeCheckbox: {
             assert([info.control isKindOfClass:[NSButton class]]);
             NSButton *button = (NSButton *)info.control;
-            button.state = [self boolForKey:info.key] ? NSOnState : NSOffState;
+            button.state = [self boolForKey:info.key] ? NSControlStateValueOn : NSControlStateValueOff;
             break;
         }
 
         case kPreferenceInfoTypeInvertedCheckbox: {
             assert([info.control isKindOfClass:[NSButton class]]);
             NSButton *button = (NSButton *)info.control;
-            button.state = [self boolForKey:info.key] ? NSOffState : NSOnState;
+            button.state = [self boolForKey:info.key] ? NSControlStateValueOff : NSControlStateValueOn;
             break;
         }
 

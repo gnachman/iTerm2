@@ -65,33 +65,33 @@ static NSString *const INTERCHANGE_TOUCH_BAR_ITEMS = @"Touch Bar Items";
 }
 
 - (void)setHapticFeedbackForEscEnabled:(BOOL)hapticFeedbackForEscEnabled {
-    _hapticFeedbackForEsc.state = hapticFeedbackForEscEnabled ? NSOnState : NSOffState;
+    _hapticFeedbackForEsc.state = hapticFeedbackForEscEnabled ? NSControlStateValueOn : NSControlStateValueOff;
     [iTermPreferences setBool:hapticFeedbackForEscEnabled
                        forKey:kPreferenceKeyEnableHapticFeedbackForEsc];
 }
 
 - (BOOL)hapticFeedbackForEscEnabled {
-    return _hapticFeedbackForEsc.state == NSOnState;
+    return _hapticFeedbackForEsc.state == NSControlStateValueOn;
 }
 
 - (void)setSoundForEscEnabled:(BOOL)enabled {
-    _soundForEsc.state = enabled ? NSOnState : NSOffState;
+    _soundForEsc.state = enabled ? NSControlStateValueOn : NSControlStateValueOff;
     [iTermPreferences setBool:enabled
                        forKey:kPreferenceKeyEnableSoundForEsc];
 }
 
 - (BOOL)soundForEscEnabled {
-    return _soundForEsc.state == NSOnState;
+    return _soundForEsc.state == NSControlStateValueOn;
 }
 
 - (void)setVisualIndicatorForEscEnabled:(BOOL)enabled {
-    _visualIndicatorForEsc.state = enabled ? NSOnState : NSOffState;
+    _visualIndicatorForEsc.state = enabled ? NSControlStateValueOn : NSControlStateValueOff;
     [iTermPreferences setBool:enabled
                        forKey:kPreferenceKeyVisualIndicatorForEsc];
 }
 
 - (BOOL)visualIndicatorForEscEnabled {
-    return _visualIndicatorForEsc.state == NSOnState;
+    return _visualIndicatorForEsc.state == NSControlStateValueOn;
 }
 
 - (void)keyBindingsChanged {
@@ -377,17 +377,17 @@ static NSString *const INTERCHANGE_TOUCH_BAR_ITEMS = @"Touch Bar Items";
 }
 
 - (IBAction)hapticFeedbackToggled:(id)sender {
-    [iTermPreferences setBool:_hapticFeedbackForEsc.state == NSOnState
+    [iTermPreferences setBool:_hapticFeedbackForEsc.state == NSControlStateValueOn
                        forKey:kPreferenceKeyEnableHapticFeedbackForEsc];
 }
 
 - (IBAction)soundForEscToggled:(id)sender {
-    [iTermPreferences setBool:_soundForEsc.state == NSOnState
+    [iTermPreferences setBool:_soundForEsc.state == NSControlStateValueOn
                        forKey:kPreferenceKeyEnableSoundForEsc];
 }
 
 - (IBAction)visualIndicatorForEscToggled:(id)sender {
-    [iTermPreferences setBool:_visualIndicatorForEsc.state == NSOnState
+    [iTermPreferences setBool:_visualIndicatorForEsc.state == NSControlStateValueOn
                        forKey:kPreferenceKeyVisualIndicatorForEsc];
 }
 

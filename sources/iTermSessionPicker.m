@@ -76,9 +76,9 @@
 - (NSStatusItem *)addStatusBarItem {
     NSStatusItem *item = [[NSStatusBar systemStatusBar] statusItemWithLength:22];
     NSImage *image = [NSImage it_imageNamed:@"StopStatusIcon" forClass:self.class];
-    item.title = @"";
-    item.image = image;
-    item.highlightMode = YES;
+    item.button.title = @"";
+    item.button.image = image;
+    ((NSButtonCell *)item.button.cell).highlightsBy = NSChangeBackgroundCellMask;
     item.button.target = self;
     item.button.action = @selector(abort:);
 

@@ -200,7 +200,7 @@
 
     if (screenChar.code) {
         // Draw the character over the cursor.
-        CGContextRef ctx = (CGContextRef)[[NSGraphicsContext currentContext] graphicsPort];
+        CGContextRef ctx = (CGContextRef)[[NSGraphicsContext currentContext] CGContext];
         if (smart && focused) {
             [self drawSmartCursorCharacter:screenChar
                                doubleWidth:doubleWidth

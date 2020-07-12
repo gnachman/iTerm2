@@ -728,7 +728,7 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
                                    samplesPerPixel:3
                                           hasAlpha:NO
                                     colorSpaceName:NSCalibratedRGBColorSpace];
-    NSData *encodedDiffImage = [diffImage dataForFileOfType:NSPNGFileType];
+    NSData *encodedDiffImage = [diffImage dataForFileOfType:NSBitmapImageFileTypePNG];
     [encodedDiffImage writeToFile:diffPath atomically:NO];
 
     return maxDiff < threshold;
@@ -759,7 +759,7 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
                                      size:size];
     NSString *goldenName = [self pathForGoldenWithName:name];
     if (createGolden) {
-        NSData *pngData = [actual dataForFileOfType:NSPNGFileType];
+        NSData *pngData = [actual dataForFileOfType:NSBitmapImageFileTypePNG];
         [pngData writeToFile:goldenName atomically:NO];
         NSLog(@"Wrote to golden file at %@", goldenName);
     } else {
@@ -781,14 +781,14 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
             char *projectDir = STRINGIFY_MACRO(PROJECT_DIR);
             NSString *sourceFolder = [NSString stringWithUTF8String:projectDir];
             if (sourceFolder && ![[[iTermApplication sharedApplication] delegate] isRunningOnTravis]) {
-                NSData *pngData = [actual dataForFileOfType:NSPNGFileType];
+                NSData *pngData = [actual dataForFileOfType:NSBitmapImageFileTypePNG];
                 NSString *sourceName = [[[[sourceFolder stringByAppendingPathComponent:@"tests/Goldens"] stringByAppendingPathComponent:@"PTYTextViewTest-golden-"] stringByAppendingString:name] stringByAppendingString:@".png"];
                 [pngData writeToFile:sourceName atomically:NO];
                 NSLog(@"Wrote to golden file at %@", sourceName);
             }
 
             NSString *failPath = [NSString stringWithFormat:@"/tmp/failed-%@.png", name];
-            [[actual dataForFileOfType:NSPNGFileType] writeToFile:failPath atomically:NO];
+            [[actual dataForFileOfType:NSBitmapImageFileTypePNG] writeToFile:failPath atomically:NO];
             NSLog(@"nTest “%@” about to fail.\nActual output in %@.\nExpected output in %@",
                   name, failPath, goldenName);
             [_script appendFormat:@"echo ----- %@ -----\n", name];

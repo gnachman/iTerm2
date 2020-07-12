@@ -79,7 +79,7 @@
 - (NSColor *)textColorForCharacter:(screen_char_t)screenChar
                   regularTextColor:(NSColor *)proposedForeground
               smartBackgroundColor:(NSColor *)backgroundColor {
-    proposedForeground = [proposedForeground colorUsingColorSpaceName:NSCalibratedRGBColorSpace];
+    proposedForeground = [proposedForeground colorUsingColorSpace:[NSColorSpace genericRGBColorSpace]];
     return [self overrideColorForSmartCursorWithForegroundColor:proposedForeground
                                                 backgroundColor:backgroundColor];
 }

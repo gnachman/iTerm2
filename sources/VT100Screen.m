@@ -3514,8 +3514,8 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
     // set the result to paste board.
     NSPasteboard* thePasteboard = [NSPasteboard generalPasteboard];
-    [thePasteboard declareTypes:[NSArray arrayWithObject:NSStringPboardType] owner:nil];
-    [thePasteboard setString:string forType:NSStringPboardType];
+    [thePasteboard declareTypes:[NSArray arrayWithObject:NSPasteboardTypeString] owner:nil];
+    [thePasteboard setString:string forType:NSPasteboardTypeString];
 }
 
 - (void)terminalInsertEmptyCharsAtCursor:(int)n {
@@ -4251,8 +4251,8 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
             if (string) {
                 NSPasteboard *pboard = [NSPasteboard generalPasteboard];
                 [pboard clearContents];
-                [pboard declareTypes:@[ NSStringPboardType ] owner:self];
-                [pboard setString:string forType:NSStringPboardType];
+                [pboard declareTypes:@[ NSPasteboardTypeString ] owner:self];
+                [pboard setString:string forType:NSPasteboardTypeString];
             }
         }
     }

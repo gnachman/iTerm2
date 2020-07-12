@@ -130,14 +130,13 @@
 }
 
 - (NSDictionary *)dictionaryValue {
-    NSMutableData *data = [NSMutableData data];
-    NSKeyedArchiver *coder = [[NSKeyedArchiver alloc] initForWritingWithMutableData:data];
+    NSKeyedArchiver *coder = [[NSKeyedArchiver alloc] initRequiringSecureCoding:YES];
     coder.outputFormat = NSPropertyListBinaryFormat_v1_0;
     [_referenceCounts encodeWithCoder:coder];
     [coder finishEncoding];
 
     return @{ @"store": _store,
-              @"refcounts": data };
+              @"refcounts": coder.encodedData };
 }
 
 - (void)loadFromDictionary:(NSDictionary *)dictionary {
@@ -167,14 +166,14 @@
         self->_reverseStore[@(truncated)] = @{ @"url": url, @"params": key[@"params"] ?: @"" };
         self->_nextCode = MAX(self->_nextCode, obj.integerValue + 1);
     }];
-
-    @try {
-        NSKeyedUnarchiver *decoder = [[NSKeyedUnarchiver alloc] initForReadingWithData:refcounts];
-        _referenceCounts = [[NSCountedSet alloc] initWithCoder:decoder];
-    }
-    @catch (NSException *exception) {
+    
+    NSError *error = nil;
+    NSKeyedUnarchiver *decoder = [[NSKeyedUnarchiver alloc] initForReadingFromData:refcounts error:&error];
+    if (error) {
         NSLog(@"Failed to decode refcounts from data %@", refcounts);
+        return;
     }
+    _referenceCounts = [[NSCountedSet alloc] initWithCoder:decoder];
 }
 
 @end

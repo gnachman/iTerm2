@@ -17,7 +17,7 @@
 
 - (NSNumber *)value {
     self.view.autoresizesSubviews = NO;
-    return @(_checkbox.state == NSOnState);
+    return @(_checkbox.state == NSControlStateValueOn);
 }
 
 - (void)setDescription:(NSString *)description placeholder:(nonnull NSString *)placeholder {
@@ -31,7 +31,7 @@
 }
 
 - (void)setValue:(id)value {
-    _checkbox.state = [value boolValue] ? NSOnState : NSOffState;
+    _checkbox.state = [value boolValue] ? NSControlStateValueOn : NSControlStateValueOff;
 }
 
 - (void)sizeToFit {

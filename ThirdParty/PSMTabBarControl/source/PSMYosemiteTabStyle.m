@@ -390,7 +390,7 @@
 
 - (NSColor *)textColorForCell:(PSMTabBarCell *)cell {
     DLog(@"cell=%@", cell);
-    const BOOL selected = (cell.state == NSOnState);
+    const BOOL selected = (cell.state == NSControlStateValueOn);
     if ([self anyTabHasColor]) {
         DLog(@"anyTabHasColor. computing tab color brightness.");
         CGFloat cellBrightness = [self tabColorBrightness:cell];
@@ -517,34 +517,7 @@
     }
 }
 
-- (NSColor *)legacyBackgroundColorSelected:(BOOL)selected highlightAmount:(CGFloat)highlightAmount NS_DEPRECATED_MAC(10_12, 10_13) {
-    if (selected) {
-        if (@available(macOS 10.14, *)) {
-            const CGFloat value = 246.0 / 255.0;
-            return [NSColor colorWithSRGBRed:value green:value blue:value alpha:1];
-        }
-        if (_tabBar.window.backgroundColor) {
-            return _tabBar.window.backgroundColor;
-        } else {
-            return [NSColor windowBackgroundColor];
-        }
-    } else {
-        CGFloat value;
-        const BOOL keyMainAndActive = self.windowIsMainAndAppIsActive;
-        if (keyMainAndActive) {
-            value = 190/255.0 - highlightAmount * 0.048;
-        } else {
-            // Make inactive windows' background color lighter
-            if (@available(macOS 10.14, *)) {
-                value = 221/255.0 - highlightAmount * 0.048;
-            } else {
-                value = 236/255.0 - highlightAmount * 0.048;
-            }
-        }
-        return [NSColor colorWithSRGBRed:value green:value blue:value alpha:1];
-    }
-}
-- (NSColor *)bigSurBackgroundColorSelected:(BOOL)selected highlightAmount:(CGFloat)highlightAmount NS_AVAILABLE_MAC(10_14) {
+- (NSColor *)bigSurBackgroundColorSelected:(BOOL)selected highlightAmount:(CGFloat)highlightAmount NS_AVAILABLE_MAC(10_16) {
     CGFloat colors[4] = { 0, 0, 0, 0};
     if (selected) {
         // clear
@@ -602,10 +575,8 @@
 - (NSColor *)backgroundColorSelected:(BOOL)selected highlightAmount:(CGFloat)highlightAmount {
     if (@available(macOS 10.16, *)) {
         return [self bigSurBackgroundColorSelected:selected highlightAmount:highlightAmount];
-    } else if (@available(macOS 10.14, *)) {
+    } else  {
         return [self mojaveBackgroundColorSelected:selected highlightAmount:highlightAmount];
-    } else {
-        return [self legacyBackgroundColorSelected:selected highlightAmount:highlightAmount];
     }
 }
 
@@ -820,7 +791,7 @@
     // TODO: Test hidden control, whose height is less than 2. Maybe it happens while dragging?
     [self drawCellBackgroundAndFrameHorizontallyOriented:(_orientation == PSMTabBarHorizontalOrientation)
                                                   inRect:cell.frame
-                                                selected:([cell state] == NSOnState)
+                                                selected:([cell state] == NSControlStateValueOn)
                                             withTabColor:[cell tabColor]
                                                  isFirst:cell == _tabBar.cells.firstObject
                                                   isLast:cell == _tabBar.cells.lastObject
@@ -830,7 +801,7 @@
 
 - (CGFloat)tabColorBrightness:(PSMTabBarCell *)cell {
     return [[self effectiveBackgroundColorForTabWithTabColor:cell.tabColor
-                                                    selected:(cell.state == NSOnState)
+                                                    selected:(cell.state == NSControlStateValueOn)
                                              highlightAmount:0
                                                       window:cell.controlView.window] it_hspBrightness];
 }
@@ -1222,18 +1193,18 @@
 
     // draw cells
     for (int i = 0; i < 2; i++) {
-        NSInteger stateToDraw = (i == 0 ? NSOnState : NSOffState);
+        NSInteger stateToDraw = (i == 0 ? NSControlStateValueOn : NSControlStateValueOff);
         for (PSMTabBarCell *cell in [bar cells]) {
             if (![cell isInOverflowMenu] && NSIntersectsRect(NSInsetRect([cell frame], -1, -1), clipRect)) {
                 if (cell.state == stateToDraw) {
                     [cell drawWithFrame:[cell frame] inView:bar];
                     if (@available(macOS 10.16, *)) {
-                        if (stateToDraw == NSOffState) {
+                        if (stateToDraw == NSControlStateValueOff) {
                             [topLineColor set];
                             NSRectFill(NSMakeRect(NSMinX(cell.frame), 0, NSWidth(cell.frame), 1));
                         }
                     }
-                    if (stateToDraw == NSOnState) {
+                    if (stateToDraw == NSControlStateValueOn) {
                         // Can quit early since only one can be selected
                         break;
                     }
@@ -1263,7 +1234,7 @@
         }
     }
     for (PSMTabBarCell *cell in [bar cells]) {
-        if (![cell isInOverflowMenu] && NSIntersectsRect([cell frame], clipRect) && cell.state == NSOnState) {
+        if (![cell isInOverflowMenu] && NSIntersectsRect([cell frame], clipRect) && cell.state == NSControlStateValueOn) {
             [cell drawPostHocDecorationsOnSelectedCell:cell tabBarControl:bar];
         }
     }

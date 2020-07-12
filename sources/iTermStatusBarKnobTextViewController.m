@@ -52,8 +52,8 @@
     _helpURL = url;
 
     _helpButton = [[NSButton alloc] initWithFrame:CGRectZero];
-    _helpButton.bezelStyle = NSHelpButtonBezelStyle;
-    _helpButton.buttonType = NSMomentaryPushInButton;
+    _helpButton.bezelStyle = NSBezelStyleHelpButton;
+    _helpButton.buttonType = NSButtonTypeMomentaryPushIn;
     _helpButton.bordered = YES;
     [_helpButton sizeToFit];
     _helpButton.target = self;

@@ -48,25 +48,23 @@ CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     if (!data.length) {
         return nil;
     }
-    @try {
-        NSKeyedUnarchiver *decoder = [[[NSKeyedUnarchiver alloc] initForReadingWithData:data] autorelease];
-        NSColor *color = [[[NSColor alloc] initWithCoder:decoder] autorelease];
-        return color;
-    }
-    @catch (NSException *exception) {
+    NSError *error = nil;
+    NSKeyedUnarchiver *decoder = [[[NSKeyedUnarchiver alloc] initForReadingFromData:data error:&error] autorelease];
+    if (error) {
         NSLog(@"Failed to decode color from string %@", s);
         DLog(@"Failed to decode color from string %@", s);
         return nil;
     }
+    NSColor *color = [[[NSColor alloc] initWithCoder:decoder] autorelease];
+    return color;
 }
 
 - (NSString *)stringValue {
-    NSMutableData *data = [NSMutableData data];
-    NSKeyedArchiver *coder = [[[NSKeyedArchiver alloc] initForWritingWithMutableData:data] autorelease];
+    NSKeyedArchiver *coder = [[[NSKeyedArchiver alloc] initRequiringSecureCoding:YES] autorelease];
     coder.outputFormat = NSPropertyListBinaryFormat_v1_0;
     [self encodeWithCoder:coder];
     [coder finishEncoding];
-    return [data base64EncodedStringWithOptions:0];
+    return [coder.encodedData base64EncodedStringWithOptions:0];
 }
 
 + (NSColor *)colorWith8BitRed:(int)red
@@ -183,7 +181,7 @@ CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
                                         green:g
                                          blue:b
                                         alpha:1];
-    return [srgb colorUsingColorSpaceName:NSCalibratedRGBColorSpace];
+    return [srgb colorUsingColorSpace:[NSColorSpace genericRGBColorSpace]];
 }
 
 + (void)getComponents:(CGFloat *)result
@@ -243,7 +241,7 @@ CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
 }
 
 - (int)nearestIndexIntoAnsi256ColorTable {
-    NSColor *theColor = [self colorUsingColorSpaceName:NSCalibratedRGBColorSpace];
+    NSColor *theColor = [self colorUsingColorSpace:[NSColorSpace genericRGBColorSpace]];
     int r = 5 * [theColor redComponent];
     int g = 5 * [theColor greenComponent];
     int b = 5 * [theColor blueComponent];
@@ -268,7 +266,7 @@ CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
 }
 
 - (CGFloat)perceivedBrightness {
-    NSColor *safeColor = [self colorUsingColorSpaceName:NSCalibratedRGBColorSpace];
+    NSColor *safeColor = [self colorUsingColorSpace:[NSColorSpace genericRGBColorSpace]];
     return PerceivedBrightness([safeColor redComponent],
                                [safeColor greenComponent],
                                [safeColor blueComponent]);

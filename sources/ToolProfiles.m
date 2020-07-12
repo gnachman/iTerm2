@@ -55,9 +55,9 @@ static NSString *const iTermToolProfilesProfileListViewState = @"iTermToolProfil
             _openButton.imageScaling = NSImageScaleProportionallyUpOrDown;
             _openButton.imagePosition = NSImageOnly;
         } else {
-            [_openButton setButtonType:NSMomentaryPushInButton];
+            [_openButton setButtonType:NSButtonTypeMomentaryPushIn];
             [_openButton setTitle:@"Open"];
-            [_openButton setBezelStyle:NSSmallSquareBezelStyle];
+            [_openButton setBezelStyle:NSBezelStyleSmallSquare];
         }
         [_openButton setTarget:self];
         [_openButton setAction:@selector(open:)];

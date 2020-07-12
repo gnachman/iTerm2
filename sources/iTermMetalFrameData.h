@@ -141,7 +141,6 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @property (nonatomic, strong) id<MTLCommandBuffer> commandBuffer;
 @property (nonatomic, strong) id<MTLRenderCommandEncoder> renderEncoder;
 @property (nonatomic, strong) dispatch_group_t group;  // nonnil implies synchronous
-@property (nonatomic) BOOL hasManyColorCombos;
 @property (nonatomic) BOOL deferCurrentDrawable;
 #if ENABLE_UNFAMILIAR_TEXTURE_WORKAROUND
 @property (nonatomic) BOOL textureIsFamiliar;
@@ -153,13 +152,13 @@ NS_CLASS_AVAILABLE(10_11, NA)
 // For debugging. Gives an order to the log files.
 @property (nonatomic) int numberOfRenderersDrawn;
 
-// If nonnil then all draw stages before text draw with encoders from this render pass descriptor.
-// It will have a texture identical to the drawable's texture. Invoke createIntermediateRenderPassDescriptor
-// to create this if it's nil.
-@property (nonatomic, strong) MTLRenderPassDescriptor *intermediateRenderPassDescriptor NS_DEPRECATED_MAC(10_12, 10_14);
-#if ENABLE_USE_TEMPORARY_TEXTURE
-@property (nonatomic, strong) MTLRenderPassDescriptor *temporaryRenderPassDescriptor NS_DEPRECATED_MAC(10_12, 10_14);
-#endif
+// When using subpixel AA, all draw stages prior to Text write to this descriptor.
+@property (nonatomic, strong) MTLRenderPassDescriptor *intermediateRenderPassDescriptor;
+
+// When using subpixel AA, the intermediate rpd's texture is copied to the temporary rpd's texture
+// and then text is rendered to this rpd while sampling from the intermediate rpd's texture.
+// Eventually this gets copied to the drawable.
+@property (nonatomic, strong) MTLRenderPassDescriptor *temporaryRenderPassDescriptor;
 
 - (instancetype)initWithView:(MTKView *)view
          fullSizeTexturePool:(iTermTexturePool *)fullSizeTexturePool NS_DESIGNATED_INITIALIZER;
@@ -169,10 +168,8 @@ NS_CLASS_AVAILABLE(10_11, NA)
 #if ENABLE_PRIVATE_QUEUE
 - (void)dispatchToPrivateQueue:(dispatch_queue_t)queue forPreparation:(void (^)(void))block;
 #endif
-- (void)createIntermediateRenderPassDescriptor NS_DEPRECATED_MAC(10_12, 10_14);
-#if ENABLE_USE_TEMPORARY_TEXTURE
-- (void)createTemporaryRenderPassDescriptor NS_DEPRECATED_MAC(10_12, 10_14);;
-#endif
+- (void)createIntermediateRenderPassDescriptor;
+- (void)createTemporaryRenderPassDescriptor;
 - (void)dispatchToQueue:(dispatch_queue_t)queue forCompletion:(void (^)(void))block;
 - (void)enqueueDrawCallsWithBlock:(void (^)(void))block;
 - (void)didCompleteWithAggregateStats:(iTermPreciseTimerStats *)aggregateStats

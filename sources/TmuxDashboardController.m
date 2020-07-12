@@ -117,7 +117,7 @@
     [windowsTable_ setDelegate:self];
     setting_.integerValue = [iTermPreferences intForKey:kPreferenceKeyTmuxDashboardLimit];
     stepper_.integerValue = setting_.integerValue;
-    _openDashboardIfHiddenWindows.state = iTermUserDefaults.openTmuxDashboardIfHiddenWindows ? NSOnState : NSOffState;
+    _openDashboardIfHiddenWindows.state = iTermUserDefaults.openTmuxDashboardIfHiddenWindows ? NSControlStateValueOn : NSControlStateValueOff;
 }
 
 - (void)didAttachWithHiddenWindows:(BOOL)anyHidden
@@ -169,8 +169,8 @@
 }
 
 - (IBAction)toggleOpenDashboardIfHiddenWindows:(id)sender {
-    iTermUserDefaults.openTmuxDashboardIfHiddenWindows = _openDashboardIfHiddenWindows.state == NSOnState;
-    _openDashboardIfHiddenWindows.state = iTermUserDefaults.openTmuxDashboardIfHiddenWindows ? NSOnState : NSOffState;
+    iTermUserDefaults.openTmuxDashboardIfHiddenWindows = _openDashboardIfHiddenWindows.state == NSControlStateValueOn;
+    _openDashboardIfHiddenWindows.state = iTermUserDefaults.openTmuxDashboardIfHiddenWindows ? NSControlStateValueOn : NSControlStateValueOff;
 }
 
 #pragma mark TmuxSessionsTableProtocol

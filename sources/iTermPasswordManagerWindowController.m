@@ -196,10 +196,10 @@ static NSString *const iTermPasswordManagerAccountNameUserNameSeparator = @"\u20
         case kLAErrorTouchIDNotAvailable:
             return @"touch ID is not available.";
 
-        case LAErrorTouchIDNotEnrolled:
+        case LAErrorBiometryNotEnrolled:
             return @"touch ID doesn't have any fingers enrolled.";
 
-        case LAErrorTouchIDLockout:
+        case LAErrorBiometryLockout:
             return @"there were too many failed Touch ID attempts.";
 
         case LAErrorAppCancel:
@@ -232,7 +232,7 @@ static NSString *const iTermPasswordManagerAccountNameUserNameSeparator = @"\u20
                                                         selector:@selector(instanceScreenDidLock:)
                                                             name:@"com.apple.screenIsLocked"
                                                           object:nil];
-    _broadcastButton.state = NSOffState;
+    _broadcastButton.state = NSControlStateValueOff;
     [_tableView setDoubleAction:@selector(doubleClickOnTableView:)];
     [self reloadAccounts];
     [self update];
@@ -423,7 +423,7 @@ static NSString *const iTermPasswordManagerAccountNameUserNameSeparator = @"\u20
         DLog(@"enterPassword: giving password to delegate");
         NSString *twoFactorCode = [_twoFactorCode.stringValue stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
         [_delegate iTermPasswordManagerEnterPassword:[password stringByAppendingString:twoFactorCode]
-                                           broadcast:_broadcastButton.state == NSOnState];
+                                           broadcast:_broadcastButton.state == NSControlStateValueOn];
         DLog(@"enterPassword: closing sheet");
         [self closeOrEndSheet];
     }
@@ -434,7 +434,7 @@ static NSString *const iTermPasswordManagerAccountNameUserNameSeparator = @"\u20
     NSString *userName = [self selectedUserName];
     if (userName.length > 0) {
         [_delegate iTermPasswordManagerEnterUserName:userName
-                                           broadcast:_broadcastButton.state == NSOnState];
+                                           broadcast:_broadcastButton.state == NSControlStateValueOn];
     }
 }
 
@@ -485,8 +485,8 @@ static NSString *const iTermPasswordManagerAccountNameUserNameSeparator = @"\u20
 
             if ([self runModal:alert] == NSAlertSecondButtonReturn) {
                 NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
-                [pasteboard declareTypes:@[ NSStringPboardType ] owner:self];
-                [pasteboard setString:password forType:NSStringPboardType];
+                [pasteboard declareTypes:@[ NSPasteboardTypeString ] owner:self];
+                [pasteboard setString:password forType:NSPasteboardTypeString];
             }
         }
     }
@@ -494,14 +494,14 @@ static NSString *const iTermPasswordManagerAccountNameUserNameSeparator = @"\u20
 
 - (IBAction)copyPassword:(id)sender {
     NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
-    [pasteboard declareTypes:@[ NSStringPboardType ] owner:self];
-    [pasteboard setString:[self selectedPassword] forType:NSStringPboardType];
+    [pasteboard declareTypes:@[ NSPasteboardTypeString ] owner:self];
+    [pasteboard setString:[self selectedPassword] forType:NSPasteboardTypeString];
 }
 
 
 - (BOOL)validateMenuItem:(NSMenuItem *)menuItem {
     if (menuItem.action == @selector(toggleRequireAuthenticationAfterScreenLocks:)) {
-        menuItem.state = [iTermUserDefaults requireAuthenticationAfterScreenLocks] ? NSOnState : NSOffState;
+        menuItem.state = [iTermUserDefaults requireAuthenticationAfterScreenLocks] ? NSControlStateValueOn : NSControlStateValueOff;
     }
 
     return YES;

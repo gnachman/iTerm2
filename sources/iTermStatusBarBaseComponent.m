@@ -31,6 +31,10 @@ const double iTermStatusBarBaseComponentDefaultPriority = 5;
     // NOTE: If mutable state is added update copyWithZone:
 }
 
++ (BOOL)supportsSecureCoding {
+    return YES;
+}
+
 - (instancetype)initWithClass:(Class)theClass {
     self = [super init];
     if (self) {

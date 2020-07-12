@@ -40,7 +40,7 @@ static NSString *const iTermStatusBarSharedTextColorKey = @"shared text color";
 - (void)statusBarComponentResignFirstResponder:(id<iTermStatusBarComponent>)component;
 @end
 
-@protocol iTermStatusBarComponentFactory<NSCoding, NSCopying, NSObject>
+@protocol iTermStatusBarComponentFactory<NSSecureCoding, NSCopying, NSObject>
 
 - (id<iTermStatusBarComponent>)newComponentWithKnobs:(NSDictionary *)knobs
                                      layoutAlgorithm:(iTermStatusBarLayoutAlgorithmSetting)layoutAlgorithm

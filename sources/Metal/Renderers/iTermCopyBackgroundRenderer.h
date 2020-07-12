@@ -47,14 +47,10 @@ NS_ASSUME_NONNULL_BEGIN
 @interface iTermCopyOffscreenRenderer : iTermCopyRenderer
 @end
 
-#if ENABLE_USE_TEMPORARY_TEXTURE
-NS_CLASS_DEPRECATED_MAC(10_12, 10_14)
 @interface iTermCopyToDrawableRendererTransientState : iTermCopyRendererTransientState
 @end
 
-NS_CLASS_DEPRECATED_MAC(10_12, 10_14)
 @interface iTermCopyToDrawableRenderer : iTermCopyRenderer
 @end
-#endif
 
 NS_ASSUME_NONNULL_END

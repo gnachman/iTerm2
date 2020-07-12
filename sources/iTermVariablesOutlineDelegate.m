@@ -298,18 +298,18 @@ static id iTermVariablesNewProxy(NSString *name, id value, BOOL isAlias, NSStrin
 - (void)copyPath:(id)sender {
     NSOutlineView *outlineView = [[iTermVariablesOutlineMenu castFrom:[sender menu]] outlineView];
     NSPasteboard *pboard = [NSPasteboard generalPasteboard];
-    [pboard declareTypes:@[NSStringPboardType] owner:NSApp];
+    [pboard declareTypes:@[NSPasteboardTypeString] owner:NSApp];
     [pboard setString:[self pathForRow:outlineView.clickedRow outlineView:outlineView]
-              forType:NSStringPboardType];
+              forType:NSPasteboardTypeString];
 }
 
 - (void)copyValue:(id)sender {
     NSOutlineView *outlineView = [[iTermVariablesOutlineMenu castFrom:[sender menu]] outlineView];
     id<iTermVariablesProxy> proxy = [outlineView itemAtRow:outlineView.clickedRow];
     NSPasteboard *pboard = [NSPasteboard generalPasteboard];
-    [pboard declareTypes:@[NSStringPboardType] owner:NSApp];
+    [pboard declareTypes:@[NSPasteboardTypeString] owner:NSApp];
     [pboard setString:proxy.value
-              forType:NSStringPboardType];
+              forType:NSPasteboardTypeString];
 }
 
 #pragma mark - NSOutlineViewDataSource

@@ -45,11 +45,11 @@ NSString *const iTermWebViewErrorDomain = @"com.iterm2.webview";
     CGFloat y;
     if (_backupURL != nil) {
         NSButton *button = [[NSButton alloc] init];
-        [button setButtonType:NSMomentaryPushInButton];
+        [button setButtonType:NSButtonTypeMomentaryPushIn];
         [button setTarget:self];
         [button setAction:@selector(openInBrowserButtonPressed:)];
         [button setTitle:[NSString stringWithFormat:@"Open in %@", [self browserName]]];
-        [button setBezelStyle:NSTexturedRoundedBezelStyle];
+        [button setBezelStyle:NSBezelStyleTexturedRounded];
         [button sizeToFit];
         NSRect frame = button.frame;
         frame.origin.x = self.view.frame.origin.x + 8;

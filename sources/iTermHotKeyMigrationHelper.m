@@ -209,8 +209,8 @@
     [alert addButtonWithTitle:@"Copy to Pasteboard"];
     if ([alert runModal] == NSAlertSecondButtonReturn) {
         NSPasteboard *pasteBoard = [NSPasteboard generalPasteboard];
-        [pasteBoard declareTypes:@[ NSStringPboardType ] owner:self];
-        [pasteBoard setString:lines forType:NSStringPboardType];
+        [pasteBoard declareTypes:@[ NSPasteboardTypeString ] owner:self];
+        [pasteBoard setString:lines forType:NSPasteboardTypeString];
     }
 }
 

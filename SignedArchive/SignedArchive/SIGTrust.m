@@ -57,11 +57,7 @@
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
         BOOL trusted;
         NSError *error = nil;
-        if (@available(macOS 10.14, *)) {
-            trusted = [self evaluateTrust:&error];
-        } else {
-            trusted = [self evaluateTrustPreMojave:&error];
-        }
+        trusted = [self evaluateTrust:&error];
         completion(trusted, error);
     });
 }
@@ -117,19 +113,6 @@
             break;
     }
     return NO;
-}
-
-- (BOOL)evaluateTrustPreMojave:(out NSError **)error NS_DEPRECATED_MAC(10_0, 10_14) {
-    SecTrustResultType result;
-    const OSStatus status = SecTrustEvaluate(self->_secTrust, &result);
-    if (status != noErr) {
-        if (error) {
-            *error = [SIGError errorWithCode:SIGErrorCodeTrustFailed];
-        }
-        return NO;
-    } else {
-        return [self resultIsTrustedPreMojave:result error:error];
-    }
 }
 
 @end

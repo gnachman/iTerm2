@@ -82,25 +82,25 @@ typedef enum {
             continue;
         }
 
-        if ([_copyColors state] == NSOnState) {
+        if ([_copyColors state] == NSControlStateValueOn) {
             [self copyAttributes:BulkCopyColors fromProfileWithGuid:_sourceGuid toProfileWithGuid:destGuid];
         }
-        if ([_copyText state] == NSOnState) {
+        if ([_copyText state] == NSControlStateValueOn) {
             [self copyAttributes:BulkCopyText fromProfileWithGuid:_sourceGuid toProfileWithGuid:destGuid];
         }
-        if ([_copyWindow state] == NSOnState) {
+        if ([_copyWindow state] == NSControlStateValueOn) {
             [self copyAttributes:BulkCopyWindow fromProfileWithGuid:_sourceGuid toProfileWithGuid:destGuid];
         }
-        if ([_copyTerminal state] == NSOnState) {
+        if ([_copyTerminal state] == NSControlStateValueOn) {
             [self copyAttributes:BulkCopyTerminal fromProfileWithGuid:_sourceGuid toProfileWithGuid:destGuid];
         }
-        if ([_copyKeyboard state] == NSOnState) {
+        if ([_copyKeyboard state] == NSControlStateValueOn) {
             [self copyAttributes:BulkCopyKeyboard fromProfileWithGuid:_sourceGuid toProfileWithGuid:destGuid];
         }
-        if ([_copySession state] == NSOnState) {
+        if ([_copySession state] == NSControlStateValueOn) {
             [self copyAttributes:BulkCopySession fromProfileWithGuid:_sourceGuid toProfileWithGuid:destGuid];
         }
-        if ([_copyAdvanced state] == NSOnState) {
+        if ([_copyAdvanced state] == NSControlStateValueOn) {
             [self copyAttributes:BulkCopyAdvanced fromProfileWithGuid:_sourceGuid toProfileWithGuid:destGuid];
         }
     }

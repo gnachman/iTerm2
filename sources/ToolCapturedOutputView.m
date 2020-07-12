@@ -52,8 +52,8 @@ static NSString *const iTermCapturedOutputToolTableViewCellIdentifier = @"ToolCa
     self = [super initWithFrame:frame];
     if (self) {
         help_ = [[NSButton alloc] initWithFrame:CGRectZero];
-        [help_ setBezelStyle:NSHelpButtonBezelStyle];
-        [help_ setButtonType:NSMomentaryPushInButton];
+        [help_ setBezelStyle:NSBezelStyleHelpButton];
+        [help_ setButtonType:NSButtonTypeMomentaryPushIn];
         [help_ setBordered:YES];
         if (@available(macOS 10.16, *)) {
             help_.controlSize = NSControlSizeSmall;
@@ -77,8 +77,8 @@ static NSString *const iTermCapturedOutputToolTableViewCellIdentifier = @"ToolCa
             _clearButton.frame = NSMakeRect(0, 0, 22, 22);
         } else {
             [_clearButton setTitle:@"Clear"];
-            [_clearButton setButtonType:NSMomentaryPushInButton];
-            [_clearButton setBezelStyle:NSSmallSquareBezelStyle];
+            [_clearButton setButtonType:NSButtonTypeMomentaryPushIn];
+            [_clearButton setBezelStyle:NSBezelStyleSmallSquare];
             [_clearButton sizeToFit];
         }
         [self addSubview:_clearButton];

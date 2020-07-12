@@ -3175,7 +3175,7 @@ static BOOL iTermAPIHelperLastApplescriptAuthRequiredSetting;
         handler(response);
         return;
     }
-    response.checked = menuItem.state == NSOnState;
+    response.checked = menuItem.state == NSControlStateValueOn;
     response.enabled = menuItem.isEnabled;
     if (!request.queryOnly) {
         [NSApp sendAction:menuItem.action

@@ -23,7 +23,7 @@ NS_ASSUME_NONNULL_BEGIN
 extern NSString *const iTermStatusBarElementPasteboardType;
 
 // Model for an item in the status bar collection view.
-@interface iTermStatusBarSetupElement : NSObject<NSCopying, NSPasteboardWriting, NSPasteboardReading, NSCoding>
+@interface iTermStatusBarSetupElement : NSObject<NSCopying, NSPasteboardWriting, NSPasteboardReading, NSSecureCoding>
 
 @property (nonatomic, readonly) NSString *shortDescription;
 @property (nonatomic, readonly) NSString *detailedDescription;

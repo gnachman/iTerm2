@@ -24,7 +24,7 @@
 }
 
 - (void)awakeFromNib {
-    [self setAcceptsTouchEvents:YES];
+    self.allowedTouchTypes = NSTouchTypeMaskIndirect;
     [self setWantsRestingTouches:YES];
     _threeFingerTapGestureRecognizer =
         [[ThreeFingerTapGestureRecognizer alloc] initWithTarget:self

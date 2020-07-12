@@ -62,7 +62,7 @@ static const CGFloat kCloseButtonLeftMargin = 2;
 
         NSImage *closeImage = [NSImage it_imageNamed:@"closebutton" forClass:self.class];
         _closeButton = [[NSButton alloc] initWithFrame:NSMakeRect(kCloseButtonLeftMargin, 10, kButtonSize, kButtonSize)];
-        [_closeButton setButtonType:NSMomentaryPushInButton];
+        [_closeButton setButtonType:NSButtonTypeMomentaryPushIn];
         [_closeButton setImage:closeImage];
         [_closeButton setTarget:self];
         [_closeButton setAction:@selector(close:)];

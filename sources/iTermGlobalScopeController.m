@@ -22,27 +22,6 @@ static char iTermGlobalScopeControllerKVOContext;
 - (NSString *)effectiveTheme;
 @end
 
-NS_CLASS_DEPRECATED_MAC(10_12, 10_14)
-@interface iTermGlobalScopeControllerLegacyImpl: iTermGlobalScopeController
-@end
-
-@implementation iTermGlobalScopeControllerLegacyImpl
-
-- (instancetype)init {
-    self = [super init];
-    if (self) {
-        __weak __typeof(self) weakSelf = self;
-        [[NSUserDefaults standardUserDefaults] it_addObserverForKey:@"AppleInterfaceStyle"
-                                                              block:^(id _Nonnull newValue) {
-            [weakSelf themeDidChange];
-        }];
-
-    }
-    return self;
-}
-
-@end
-
 NS_CLASS_AVAILABLE_MAC(10_14)
 @interface iTermGlobalScopeControllerModernImpl: iTermGlobalScopeController
 @end
@@ -86,11 +65,7 @@ NS_CLASS_AVAILABLE_MAC(10_14)
 
 + (instancetype)allocWithZone:(struct _NSZone *)zone {
     if (self == [iTermGlobalScopeController class]) {
-        if (@available(macOS 10.14, *)) {
-            return [iTermGlobalScopeControllerModernImpl allocWithZone:zone];
-        } else {
-            return [iTermGlobalScopeControllerLegacyImpl allocWithZone:zone];
-        }
+        return [iTermGlobalScopeControllerModernImpl allocWithZone:zone];
     }
     return [super allocWithZone:zone];
 }
