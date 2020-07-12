@@ -88,42 +88,63 @@ preview:
 	cp plists/preview-iTerm2.plist plists/iTerm2.plist
 	make Deployment
 
-x86libsixel:
+x86libsixel: force
 	cd submodules/libsixel && make clean
-	cd submodules/libsixel && CFLAGS="-target x86_64-apple-macos10.12" ./configure --prefix=${PWD}/ThirdParty/libsixel --without-libcurl --without-jpeg --without-png --disable-python && make && make install
+	cd submodules/libsixel && CFLAGS="-target x86_64-apple-macos10.14" ./configure --prefix=${PWD}/ThirdParty/libsixel --without-libcurl --without-jpeg --without-png --disable-python && make && make install
 	rm ThirdParty/libsixel/lib/*dylib* ThirdParty/libsixel/bin/*
 	mv ThirdParty/libsixel/lib/libsixel.a ThirdParty/libsixel/lib/libsixel-x86.a
 
-armsixel:
+armsixel: force
 	cd submodules/libsixel && make clean
-	cd submodules/libsixel && CFLAGS="-target arm64-apple-macos10.12" ./configure --host=aarch64-apple-darwin14 --prefix=${PWD}/ThirdParty/libsixel-arm --without-libcurl --without-jpeg --without-png --disable-python --disable-shared && CFLAGS="-target arm64-apple-macos10.12" make && make install
+	cd submodules/libsixel && CFLAGS="-target arm64-apple-macos10.14" ./configure --host=aarch64-apple-darwin --prefix=${PWD}/ThirdParty/libsixel-arm --without-libcurl --without-jpeg --without-png --disable-python --disable-shared && CFLAGS="-target arm64-apple-macos10.14" make && make install
 	rm ThirdParty/libsixel-arm/bin/*
 
 # Usage: go to an intel mac and run make x86libsixel and commit it. Go to an arm mac and run make armsixel && make libsixel.
-libsixel:
+fatlibsixel: force
+	make armsixel
+	make x86libsixel
 	lipo -create -output ThirdParty/libsixel/lib/libsixel.a ThirdParty/libsixel-arm/lib/libsixel.a ThirdParty/libsixel/lib/libsixel-x86.a
 
-armopenssl:
+armopenssl: force
 	cd submodules/openssl && ./Configure darwin64-arm64-cc && make build_generated && make libcrypto.a libssl.a -j4 && mv libcrypto.a libcrypto-arm64.a && mv libssl.a libssl-arm64.a
 
-x86openssl:
+x86openssl: force
 	cd submodules/openssl && ./Configure darwin64-x86_64-cc && make build_generated && make libcrypto.a libssl.a -j4 && mv libcrypto.a libcrypto-x86_64.a && mv libssl.a libssl-x86_64.a
 
-fatopenssl:
+fatopenssl: force
+	make x86openssl
+	make armopenssl
 	cd submodules/openssl/ && lipo -create -output libcrypto.a libcrypto-x86_64.a libcrypto-arm64.a
 	cd submodules/openssl/ && lipo -create -output libssl.a libssl-x86_64.a libssl-arm64.a
 
-x86libssh2:
+x86libssh2: force
 	mkdir -p submodules/libssh2/build_x86_64
 	cd submodules/libssh2/build_x86_64 && /usr/local/bin/cmake -DOPENSSL_ROOT_DIR=${PWD}/submodules/openssl -DBUILD_EXAMPLES=NO -DBUILD_TESTING=NO -DCMAKE_OSX_ARCHITECTURES=x86_64 -DCRYPTO_BACKEND=OpenSSL .. && make libssh2 -j4
 
-armlibssh2:
+armlibssh2: force
 	mkdir -p submodules/libssh2/build_arm64
 	cd submodules/libssh2/build_arm64 && /usr/local/bin/cmake -DOPENSSL_ROOT_DIR=${PWD}/submodules/openssl -DBUILD_EXAMPLES=NO -DBUILD_TESTING=NO -DCMAKE_OSX_ARCHITECTURES=arm64 -DCRYPTO_BACKEND=OpenSSL .. && make libssh2 -j4
 
-fatlibssh2:
+fatlibssh2: force
+	make x86libssh2
+	make armlibssh2
 	cd submodules/libssh2 && lipo -create -output libssh2.a build_arm64/src/libssh2.a build_x86_64/src/libssh2.a
 	cp submodules/libssh2/libssh2.a submodules/NMSSH/NMSSH-OSX/Libraries/lib/libssh2.a
 	cp submodules/openssl/libcrypto.a submodules/openssl/libssl.a submodules/NMSSH/NMSSH-OSX/Libraries/lib/
 
+CoreParse: force
+	rm -rf ThirdParty/CoreParse.framework
+	cd submodules/CoreParse && xcodebuild -target CoreParse -configuration Release CONFIGURATION_BUILD_DIR=../../ThirdParty
+
+NMSSH: force
+	rm -rf ThirdParty/NMSSH.framework
+	cd submodules/NMSSH && xcodebuild -target NMSSH -project NMSSH.xcodeproj -configuration Release CONFIGURATION_BUILD_DIR=../../ThirdParty
+
+deps: force
+	make fatlibsixel
+	make fatopenssl
+	make fatlibssh2
+	make CoreParse
+	make NMSSH
+       
 force:
