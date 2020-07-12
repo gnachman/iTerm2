@@ -949,7 +949,21 @@ static BOOL hasBecomeActive = NO;
     iTermPreciseTimerClearLogs();
 }
 
+- (void)sorry1013 {
+    [iTermWarning showWarningWithTitle:@"I’ve decided that iTerm2 version 3.4 will only support macOS 10.14 and later.\nApple made significant changes in macOS 10.14 that makes supporting both code paths very difficult. Version 3.3.x will continue to receive bug fixes and security updates until Big Sur is released."
+                               actions:@[ @"😢" ]
+                             accessory:nil
+                            identifier:@"RIP1013"
+                           silenceable:kiTermWarningTypePersistent
+                               heading:@"This is the last nightly build that will run on macOS 10.13."
+                                window:nil];
+    _exit(0);
+}
+
 - (void)applicationWillFinishLaunching:(NSNotification *)aNotification {
+    if (@available(macOS 10.14, *)) {} else {
+        [self sorry1013];
+    }
     [iTermMenuBarObserver sharedInstance];
     // Cleanly crash on uncaught exceptions, such as during actions.
     [[NSUserDefaults standardUserDefaults] registerDefaults:@{ @"NSApplicationCrashOnExceptions": @YES }];
