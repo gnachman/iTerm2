@@ -41,10 +41,6 @@ const CGFloat progressIndicatorHeight = 6;
     [super dealloc];
 }
 
-- (void)setFrame:(NSRect)frame {
-    NSLog(@"%@", NSStringFromRect(frame));
-    [super setFrame:frame];
-}
 // Works around an OS bug. If the menu is closed with an item selected and then reopened, the
 // item remains selected. If you then select a different item, the originally selected item won't
 // get redrawn!
