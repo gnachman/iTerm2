@@ -6,30 +6,30 @@
 	<string>English</string>
 	<key>CFBundleDocumentTypes</key>
 	<array>
-                <dict>
-                        <key>CFBundleTypeExtensions</key>
-                        <array>
-                                <string>itr</string>
-                        </array>
-                        <key>CFBundleTypeIconFile</key>
-                        <string>iTerm2.icns</string>
-                        <key>CFBundleTypeName</key>
-                        <string>iTerm2 Recording</string>
-                        <key>CFBundleTypeRole</key>
-                        <string>Editor</string>
-                </dict>
-                <dict>
-                        <key>CFBundleTypeExtensions</key>
-                        <array>
-                                <string>its</string>
-                        </array>
-                        <key>CFBundleTypeIconFile</key>
-                        <string>iTerm2Script.icns</string>
-                        <key>CFBundleTypeName</key>
-                        <string>iTerm2 Script</string>
-                        <key>CFBundleTypeRole</key>
-                        <string>Editor</string>
-                </dict>
+		<dict>
+			<key>CFBundleTypeExtensions</key>
+			<array>
+				<string>itr</string>
+			</array>
+			<key>CFBundleTypeIconFile</key>
+			<string>iTerm2.icns</string>
+			<key>CFBundleTypeName</key>
+			<string>iTerm2 Recording</string>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+		</dict>
+		<dict>
+			<key>CFBundleTypeExtensions</key>
+			<array>
+				<string>its</string>
+			</array>
+			<key>CFBundleTypeIconFile</key>
+			<string>iTerm2Script.icns</string>
+			<key>CFBundleTypeName</key>
+			<string>iTerm2 Script</string>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+		</dict>
 		<dict>
 			<key>CFBundleTypeExtensions</key>
 			<array>
@@ -48,14 +48,14 @@
 			<string>Editor</string>
 		</dict>
 		<dict>
-                        <key>CFBundleTypeName</key>
-                        <string>Folder</string>
-                        <key>CFBundleTypeRole</key>
-                        <string>Editor</string>
-                        <key>LSItemContentTypes</key>
-                        <array>
-                            <string>public.folder</string>
-                        </array>
+			<key>CFBundleTypeName</key>
+			<string>Folder</string>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>LSItemContentTypes</key>
+			<array>
+				<string>public.folder</string>
+			</array>
 		</dict>
 		<dict>
 			<key>CFBundleTypeExtensions</key>
@@ -77,41 +77,41 @@
 				<string>public.unix-executable</string>
 			</array>
 		</dict>
-                <dict>
-                        <key>CFBundleTypeExtensions</key>
-                        <array>
-                                <string>itermscript</string>
-                        </array>
-                        <key>CFBundleTypeIconFile</key>
-                        <string>iTerm2Script.icns</string>
-                        <key>CFBundleTypeName</key>
-                        <string>iTerm2 Script</string>
-                        <key>CFBundleTypeRole</key>
-                        <string>Viewer</string>
-                        <key>LSItemContentTypes</key>
-                        <array>
-                          <string>public.data</string>
-                        </array>
-                        <key>LSHandlerRank</key>
-                        <string>Owner</string>
-                </dict>
+		<dict>
+			<key>CFBundleTypeExtensions</key>
+			<array>
+				<string>itermscript</string>
+			</array>
+			<key>CFBundleTypeIconFile</key>
+			<string>iTerm2Script.icns</string>
+			<key>CFBundleTypeName</key>
+			<string>iTerm2 Script</string>
+			<key>CFBundleTypeRole</key>
+			<string>Viewer</string>
+			<key>LSItemContentTypes</key>
+			<array>
+				<string>public.data</string>
+			</array>
+			<key>LSHandlerRank</key>
+			<string>Owner</string>
+		</dict>
 	</array>
-        <key>NSCalendarsUsageDescription</key>
-        <string>An application in iTerm2 wants to use Calendar data.</string>
-        <key>NSCameraUsageDescription</key>
-        <string>An application in iTerm2 wants to use the camera.</string>
-        <key>NSContactsUsageDescription</key>
-        <string>An application in iTerm2 wants to use your contacts.</string>
-        <key>NSLocationAlwaysUsageDescription</key>
-        <string>An application in iTerm2 wants to use your location information, even in the background.</string>
-        <key>NSLocationUsageDescription</key>
-        <string>An application in iTerm2 wants to use your location information.</string>
-        <key>NSLocationWhenInUseUsageDescription</key>
-        <string>An application in iTerm2 wants to use your location information while active.</string>
-        <key>NSMicrophoneUsageDescription</key>
-        <string>An application in iTerm2 wants to use your microphone.</string>
-        <key>NSRemindersUsageDescription</key>
-        <string>An application in iTerm2 wants to use your reminders.</string>
+	<key>NSCalendarsUsageDescription</key>
+	<string>An application in iTerm2 wants to use Calendar data.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>An application in iTerm2 wants to use the camera.</string>
+	<key>NSContactsUsageDescription</key>
+	<string>An application in iTerm2 wants to use your contacts.</string>
+	<key>NSLocationAlwaysUsageDescription</key>
+	<string>An application in iTerm2 wants to use your location information, even in the background.</string>
+	<key>NSLocationUsageDescription</key>
+	<string>An application in iTerm2 wants to use your location information.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>An application in iTerm2 wants to use your location information while active.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>An application in iTerm2 wants to use your microphone.</string>
+	<key>NSRemindersUsageDescription</key>
+	<string>An application in iTerm2 wants to use your reminders.</string>
 	<key>NSServices</key>
 	<array>
 		<dict>
@@ -294,7 +294,5 @@
 	<string>iTerm2.sdef</string>
 	<key>SUFeedURLForTesting</key>
 	<string>https://iterm2.com/appcasts/testing.xml</string>
-	<key>SUPublicDSAKeyFile</key>
-	<string>dsa_pub.pem</string>
 </dict>
 </plist>
