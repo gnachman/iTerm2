@@ -8394,7 +8394,6 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     }
 }
 
-#warning TODO: Any callers pass nil for completion? If so that implies that attachOrLaunch was synchronous but that is no longer the case.
 - (PTYSession *)splitVertically:(BOOL)isVertical
                          before:(BOOL)before
                         profile:(Profile *)theBookmark
