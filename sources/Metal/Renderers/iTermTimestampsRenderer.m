@@ -146,7 +146,6 @@
             blending = [iTermMetalBlending premultipliedCompositing];
         }
 #endif
-#warning DNS
         _cellRenderer = [[iTermMetalCellRenderer alloc] initWithDevice:device
                                                     vertexFunctionName:@"iTermTimestampsVertexShader"
                                                   fragmentFunctionName:@"iTermTimestampsFragmentShader"
