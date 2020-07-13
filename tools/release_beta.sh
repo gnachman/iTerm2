@@ -107,19 +107,12 @@ function Build {
   shasum -a256 iTerm2-${NAME}.zip | awk '{print $1}' >> $SVNDIR/downloads/beta/iTerm2-${NAME}.changelog
   vi $SVNDIR/downloads/beta/iTerm2-${NAME}.changelog
   pushd $SVNDIR
-  git add downloads/beta/iTerm2-${NAME}.summary downloads/beta/iTerm2-${NAME}.description downloads/beta/iTerm2-${NAME}.changelog downloads/beta/iTerm2-${NAME}.zip source/appcasts/testing3_new.xml source/appcasts/testing3_modern.xml source/appcasts/testing3.xml source/appcasts/testing_changes3.txt
+  git add downloads/beta/iTerm2-${NAME}.summary downloads/beta/iTerm2-${NAME}.description downloads/beta/iTerm2-${NAME}.changelog downloads/beta/iTerm2-${NAME}.zip source/appcasts/testing3_modern.xml
   popd
 
-  # Legacy
-  SparkleSign ${SPARKLE_PREFIX}testing3.xml ${SPARKLE_PREFIX}template3.xml
-  # Transitional
-  SparkleSign ${SPARKLE_PREFIX}testing3_new.xml ${SPARKLE_PREFIX}template3_new.xml
-  # Modern
   SparkleSign ${SPARKLE_PREFIX}testing3_modern.xml ${SPARKLE_PREFIX}template3_modern.xml
 
   # Copy experiment to control
-  cp $SVNDIR/source/appcasts/${SPARKLE_PREFIX}testing3.xml        $SVNDIR/source/appcasts/${SPARKLE_PREFIX}testing.xml
-  cp $SVNDIR/source/appcasts/${SPARKLE_PREFIX}testing3_new.xml    $SVNDIR/source/appcasts/${SPARKLE_PREFIX}testing_new.xml
   cp $SVNDIR/source/appcasts/${SPARKLE_PREFIX}testing3_modern.xml $SVNDIR/source/appcasts/${SPARKLE_PREFIX}testing_modern.xml
 
   popd
