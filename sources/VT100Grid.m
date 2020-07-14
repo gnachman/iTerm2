@@ -572,6 +572,8 @@ static NSString *const kGridSizeKey = @"Size";
                   to:(VT100GridCoord)to
               toChar:(screen_char_t)c
           attachment:(iTermScreenCharAttachment *)maybeAttachment {
+    assert(!!c.hasAttachment == (maybeAttachment != nil));
+
     if (from.x > to.x || from.y > to.y) {
         return;
     }
@@ -601,13 +603,14 @@ static NSString *const kGridSizeKey = @"Size";
     screen_char_t c = [self defaultChar];
     c.code = code;
     c.complexChar = NO;
+    c.hasAttachment = (maybeAttachment != nil);
 
     VT100GridCoord max = VT100GridRunMax(run, size_.width);
     int y = run.origin.y;
 
     if (y == max.y) {
         // Whole run is on one line.
-        [self setCharsFrom:run.origin to:max toChar:c attachment:nil];
+        [self setCharsFrom:run.origin to:max toChar:c attachment:maybeAttachment];
     } else {
         // Fill partial first line
         [self setCharsFrom:run.origin
@@ -695,7 +698,7 @@ static NSString *const kGridSizeKey = @"Size";
     return lineInfo.attachments;
 }
 
-- (int)appendCharsAtCursor:(screen_char_t *)buffer
+- (int)appendCharsAtCursor:(const screen_char_t *)buffer
                attachments:(id<iTermScreenCharAttachmentsArray>)attachments
                     length:(int)len
    scrollingIntoLineBuffer:(LineBuffer *)lineBuffer
@@ -722,12 +725,6 @@ static NSString *const kGridSizeKey = @"Size";
         NSLog(@"Begin inserting line. cursor_.x=%d, WIDTH=%d", cursor_.x, WIDTH);
 #endif
 
-        if (buffer[idx].code == DWC_SKIP) {
-            // I'm pretty sure this can never happen and that this code is just a historical leftover.
-            // This is an invalid unicode character that iTerm2 has appropriated
-            // for internal use. Change it to something invalid but safe.
-            buffer[idx].code = BOGUS_CHAR;
-        }
         int widthOffset;
         if (idx + 1 < len && buffer[idx + 1].code == DWC_RIGHT) {
             // If we're about to insert a double width character then reduce the
@@ -948,16 +945,15 @@ static NSString *const kGridSizeKey = @"Size";
 #endif
             aLine[cursor_.x].code = 0;
             aLine[cursor_.x].complexChar = NO;
+            aLine[cursor_.x].hasAttachment = NO;
             [lineAttachments removeAttachmentsInRange:NSMakeRange(cursor_.x, 1)];
             if (cursor_.x > 0) {
                 aLine[cursor_.x-1].code = 0;
                 aLine[cursor_.x-1].complexChar = NO;
+                aLine[cursor_.x-1].hasAttachment = NO;
                 [lineAttachments removeAttachmentsInRange:NSMakeRange(cursor_.x - 1, 1)];
             }
             [self setDirty:YES line:lineNumber];
-            if (cursor_.x > 0) {
-                [self setDirty:YES line:lineNumber];
-            }
         }
 
         // This is an ugly little optimization--if we're inserting just one character, see if it would
@@ -984,6 +980,7 @@ static NSString *const kGridSizeKey = @"Size";
                 aLine[cursor_.x + charsToInsert].code = 0;
             }
             aLine[cursor_.x + charsToInsert].complexChar = NO;
+            aLine[cursor_.x + charsToInsert].hasAttachment = NO;
             [lineAttachments removeAttachmentsInRange:NSMakeRange(cursor_.x + charsToInsert, 1)];
         }
         self.cursorX = newx;
@@ -994,6 +991,7 @@ static NSString *const kGridSizeKey = @"Size";
         if (cursor_.x < size_.width - 1 && aLine[cursor_.x].code == DWC_RIGHT) {
             aLine[cursor_.x].code = 0;
             aLine[cursor_.x].complexChar = NO;
+            aLine[cursor_.x].hasAttachment = NO;
             [lineAttachments removeAttachmentsInRange:NSMakeRange(cursor_.x, 1)];
         }
 
@@ -1087,6 +1085,7 @@ static NSString *const kGridSizeKey = @"Size";
                 aLine[rightMargin] = aLine[rightMargin + 1];
                 aLine[rightMargin].complexChar = NO;
                 aLine[rightMargin].code = 0;
+                aLine[rightMargin].hasAttachment = NO;
                 [[self attachmentArrayOnLine:startCoord.y createIfNeeded:NO] removeAttachmentsInRange:NSMakeRange(rightMargin, 1)];
             }
             if (rightMargin == size_.width - 1 &&
@@ -1109,7 +1108,6 @@ static NSString *const kGridSizeKey = @"Size";
                         to:VT100GridCoordMake(rightMargin, lineNumber)
                     toChar:defaultChar
                 attachment:nil];
-        [[self attachmentArrayOnLine:startCoord.y createIfNeeded:NO] removeAttachmentsInRange:NSMakeRange(rightMargin - n + 1, n)];
     }
 }
 
@@ -1253,8 +1251,7 @@ static NSString *const kGridSizeKey = @"Size";
     }
 }
 #warning add attachment support to dvr
-- (void)setContentsFromDVRFrame:(screen_char_t*)s info:(DVRFrameInfo)info
-{
+- (void)setContentsFromDVRFrame:(screen_char_t*)s info:(DVRFrameInfo)info {
     [self setCharsFrom:VT100GridCoordMake(0, 0)
                     to:VT100GridCoordMake(size_.width - 1, size_.height - 1)
                 toChar:[self defaultChar]
@@ -1619,6 +1616,8 @@ static NSString *const kGridSizeKey = @"Size";
 }
 
 - (void)insertChar:(screen_char_t)c at:(VT100GridCoord)pos times:(int)n {
+    assert(!c.hasAttachment);
+
     if (pos.x > self.rightMargin ||  // TODO: Test right-margin boundary case
         pos.x < self.leftMargin) {
         return;
@@ -1758,7 +1757,7 @@ static NSString *const kGridSizeKey = @"Size";
     }
     return dirty;
 }
-
+#warning TODO: Track down call sites and check that the mutable attachments array is updated correctly
 - (screen_char_t)defaultChar {
     assert(delegate_);
     screen_char_t c = { 0 };

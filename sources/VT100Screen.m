@@ -1173,7 +1173,7 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     [delegate_ screenRefreshFindOnPageView];
 }
 
-- (void)appendScreenChars:(screen_char_t *)line
+- (void)appendScreenChars:(const screen_char_t *)line
                attachments:(id<iTermScreenCharAttachmentsArray>)attachments
                    length:(int)length
              continuation:(screen_char_t)continuation {
@@ -1335,7 +1335,7 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     }
 }
 
-- (void)appendScreenCharArrayAtCursor:(screen_char_t *)buffer
+- (void)appendScreenCharArrayAtCursor:(const screen_char_t *)buffer
                           attachments:(id<iTermScreenCharAttachmentsArray>)attachments
                                length:(int)len
                            shouldFree:(BOOL)shouldFree {
@@ -1377,7 +1377,7 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     }
 
     if (shouldFree) {
-        free(buffer);
+        free((void *)buffer);
     }
 
     if (commandStartX_ != -1) {
@@ -1853,10 +1853,10 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
         }
 
         // Get a line from the scrollback buffer.
-        screen_char_t continuation;
         ScreenCharArray *array = [linebuffer_ wrappedLineAtIndex:theIndex
                                                            width:currentGrid_.size.width];
-        int cont = array ? continuation.code : EOL_HARD;
+        [array padLineToLength:currentGrid_.size.width];
+        int cont = array ? array.continuation.code : EOL_HARD;
         const screen_char_t *line = array.line;
         if (cont == EOL_SOFT &&
             theIndex == numLinesInLineBuffer - 1 &&
@@ -1868,11 +1868,13 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
             cont = EOL_DWC;
         }
         if (cont == EOL_DWC) {
-#warning test this
-            screen_char_t *mutableLine = [array makeCopyOfLine];
-            mutableLine[currentGrid_.size.width - 1].code = DWC_SKIP;
-            mutableLine[currentGrid_.size.width - 1].complexChar = NO;
+            [array mutate:^(screen_char_t *mutableLine) {
+                mutableLine[currentGrid_.size.width - 1].code = DWC_SKIP;
+                mutableLine[currentGrid_.size.width - 1].complexChar = NO;
+            }];
         }
+        array.continuationCode = cont;
+
         BOOL stop = NO;
         block(theIndex, array, &stop);
         if (stop) {
@@ -4887,6 +4889,9 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
             attachments =
             [[[iTermScreenCharAttachmentsArray alloc] initWithRepeatedAttachment:&_lastCharAttachment
                                                                            count:length] autorelease];
+        }
+        for (int i = 0; i < length; i++) {
+            chars[i].hasAttachment = [attachments.validAttachments containsIndex:i];
         }
         NSString *string = ScreenCharToStr(chars);
         for (int i = 0; i < times; i++) {

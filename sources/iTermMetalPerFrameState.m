@@ -508,6 +508,7 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
                 // Bump DWC to start of next line instead of splitting it
                 c.code = ' ';
                 c.complexChar = NO;
+                c.hasAttachment = NO;
                 i--;
             } else {
                 if (!foundStart) {

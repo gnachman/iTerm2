@@ -220,6 +220,9 @@ typedef struct screen_char_t
 // This is a safe way to mutate the contents without affecting other references to the same array.
 - (screen_char_t *)makeCopyOfLine;
 - (void)padLineToLength:(int)length;
+- (void)setContinuationCode:(int)code;
+// TODO: This is a mess. Make the class really immutable.
+- (void)mutate:(void (^ NS_NOESCAPE)(screen_char_t *))block;
 
 @end
 

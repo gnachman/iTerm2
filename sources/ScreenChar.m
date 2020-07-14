@@ -139,6 +139,7 @@ iTermTriState iTermTriStateFromBool(BOOL b) {
 
 @implementation ScreenCharArray {
     BOOL _freeLine;
+    BOOL _mutating;
 }
 
 @synthesize line = _line;
@@ -199,6 +200,19 @@ iTermTriState iTermTriStateFromBool(BOOL b) {
             !memcmp(&_continuation, &other->_continuation, sizeof(_continuation)));
 }
 
+- (void)mutate:(void (^ NS_NOESCAPE)(screen_char_t *))block {
+    assert(!_mutating);
+    screen_char_t *mutable = NULL;
+    if (!_freeLine) {
+        mutable = [self makeCopyOfLine];
+    } else {
+        mutable = (screen_char_t *)_line;
+    }
+    _mutating = YES;
+    block(mutable);
+    _mutating = NO;
+}
+
 - (screen_char_t *)makeCopyOfLine {
     assert(!_freeLine);
 
@@ -224,6 +238,10 @@ iTermTriState iTermTriStateFromBool(BOOL b) {
     _line = temp;
     _freeLine = YES;
     _length = desiredLength;
+}
+
+- (void)setContinuationCode:(int)code {
+    _continuation.code = code;
 }
 
 @end

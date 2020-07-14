@@ -943,7 +943,9 @@ int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width, BOOL may
     } else {
         // The last raw line is not longer than width. Return the whole thing.
         if (attachments) {
-            *attachments = metadata_[cll_entries - 1].attachments;
+            // When there's a DWC_SKIP the arrangements array could be longer than available_len.
+            *attachments = [metadata_[cll_entries - 1].attachments runsInRange:NSMakeRange(0, width)
+                                                                  addingOffset:0];
         }
         *length = available_len;
         *ptr = buffer_start + start;

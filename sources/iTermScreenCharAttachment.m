@@ -134,7 +134,11 @@ static BOOL iTermScreenCharAttachmentsArrayEqual(id<iTermScreenCharAttachmentsAr
     if (self.count == 0) {
         return [self copy];
     }
-
+    const size_t lastIndex = _count - 1;
+    if (_runs[0].offset >= range.location &&
+        _runs[lastIndex].offset + _runs[lastIndex].length <= NSMaxRange(range)) {
+        return self;
+    }
     iTermScreenCharAttachmentsRunArrayBuilder *builder = [[iTermScreenCharAttachmentsRunArrayBuilder alloc] init];
     for (NSUInteger i = 0; i < self.count; i++) {
         const NSRange runRange = NSMakeRange(self.runs[i].offset, self.runs[i].length);
@@ -184,6 +188,9 @@ static BOOL iTermScreenCharAttachmentsArrayEqual(id<iTermScreenCharAttachmentsAr
 }
 
 - (id<iTermScreenCharAttachmentRunArray>)runArray {
+    if (!_runs) {
+        return nil;
+    }
     id<iTermScreenCharAttachmentRunArray> result =
         [iTermScreenCharAttachmentRunArray runArrayWithRuns:_runs count:_count];
     _runs = NULL;
@@ -399,7 +406,7 @@ static iTermScreenCharAttachment gMagicAttachment;
     [copy->_mutableValidAttachments addIndexes:_mutableValidAttachments];
     return copy;
 }
-
+#warning TODO: Track down call sites and check that hasAttachment is set properly on the screen_char_t.
 - (void)copyAttachmentsInRange:(NSRange)rangeToCopy
                           from:(id<iTermScreenCharAttachmentsArray>)other {
     assert(self.count == other.count);
@@ -414,7 +421,7 @@ static iTermScreenCharAttachment gMagicAttachment;
     }];
     [self markDirty];
 }
-
+#warning TODO: Track down call sites and check that hasAttachment is set properly on the screen_char_t.
 - (void)copyAttachmentsStartingAtIndex:(int)sourceIndex
                                     to:(int)destIndex
                                  count:(int)count {
@@ -439,17 +446,17 @@ static iTermScreenCharAttachment gMagicAttachment;
     [_mutableValidAttachments addIndexes:additions];
     [self markDirty];
 }
-
+#warning TODO: Track down call sites and check that hasAttachment is set properly on the screen_char_t.
 - (void)removeAttachmentsInRange:(NSRange)range {
     [_mutableValidAttachments removeIndexesInRange:range];
     [self markDirty];
 }
-
+#warning TODO: Track down call sites and check that hasAttachment is set properly on the screen_char_t.
 - (void)removeAllAttachments {
     [_mutableValidAttachments removeAllIndexes];
     [self markDirty];
 }
-
+#warning TODO: Track down call sites and check that hasAttachment is set properly on the screen_char_t.
 - (void)setAttachment:(const iTermScreenCharAttachment *)attachment
               inRange:(NSRange)range {
     assert(NSMaxRange(range) <= _count);
@@ -464,7 +471,7 @@ static iTermScreenCharAttachment gMagicAttachment;
     }
     [self markDirty];
 }
-
+#warning TODO: Track down call sites and check that hasAttachment is set properly on the screen_char_t.
 - (void)copyAttachmentsFromArray:(id<iTermScreenCharAttachmentsArray>)sourceArray
                       fromOffset:(int)sourceOffset
                         toOffset:(int)destOffset
@@ -485,7 +492,7 @@ static iTermScreenCharAttachment gMagicAttachment;
             count * sizeof(*_mutableAttachments));
     [self markDirty];
 }
-
+#warning TODO: Track down call sites and check that hasAttachment is set properly on the screen_char_t.
 - (void)setFromRuns:(id<iTermScreenCharAttachmentRunArray>)attachments {
     if (!attachments) {
         [_mutableValidAttachments removeAllIndexes];

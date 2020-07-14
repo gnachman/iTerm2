@@ -1046,7 +1046,7 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void)appendLinesInRange:(NSRange)rangeOfLines fromSession:(PTYSession *)source {
     int width = source.screen.width;
 #warning TODO: Test this
-    [_screen enumerateLinesFromIndex:rangeOfLines.location
+    [source.screen enumerateLinesFromIndex:rangeOfLines.location
                                count:rangeOfLines.length
                                block:^(int row,
                                        ScreenCharArray *sca,
@@ -1056,13 +1056,13 @@ ITERM_WEAKLY_REFERENCEABLE
             screen_char_t continuation = { 0 };
             continuation.code = EOL_SOFT;
 #warning test this
-            [_screen appendScreenChars:[sca makeCopyOfLine]
+            [_screen appendScreenChars:sca.line
                            attachments:sca.attachments
                                 length:width
                           continuation:continuation];
         } else {
             #warning test this
-            [_screen appendScreenChars:[sca makeCopyOfLine]
+            [_screen appendScreenChars:sca.line
                            attachments:sca.attachments
                                 length:width
                           continuation:theLine[width]];
