@@ -299,6 +299,7 @@ const CGFloat kDefaultTagsWidth = 80;
 
 - (void)forceOverlayScroller {
     scrollView_.scrollerStyle = NSScrollerStyleOverlay;
+    tagsView_.scrollView.scrollerStyle = NSScrollerStyleOverlay;
 }
 
 - (void)focusSearchField
