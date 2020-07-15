@@ -129,7 +129,15 @@ typedef struct {
         } else {
             self.animation.duration = 0.5;
         }
-        self.animation.values = self.images;
+        NSArray *images = self.images;
+        static CFTimeInterval epoch;
+        static dispatch_once_t onceToken;
+        dispatch_once(&onceToken, ^{
+            epoch = CACurrentMediaTime();
+        });
+        // This causes animations to all show the same frame at the same time.
+        self.animation.beginTime = epoch;
+        self.animation.values = images;
         self.animation.repeatCount = INFINITY;
     }
     [self.layer removeAllAnimations];
