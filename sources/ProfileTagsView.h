@@ -20,6 +20,7 @@
 
 @property(nonatomic, assign) id<ProfileTagsViewDelegate> delegate;
 @property(nonatomic, readonly) NSArray *selectedTags;
+@property(nonatomic, readonly, retain) NSScrollView *scrollView;
 
 - (void)setFont:(NSFont *)font;
 

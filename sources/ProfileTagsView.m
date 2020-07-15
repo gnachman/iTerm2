@@ -12,7 +12,7 @@
 #import "ProfileModel.h"
 
 @interface ProfileTagsView ()
-@property(nonatomic, retain) NSScrollView *scrollView;
+@property(nonatomic, readwrite, retain) NSScrollView *scrollView;
 @property(nonatomic, retain) NSTableView *tableView;
 @property(nonatomic, retain) NSTableColumn *tagsColumn;
 @property(nonatomic, retain) NSTableHeaderView *headerView;
