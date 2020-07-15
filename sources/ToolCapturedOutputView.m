@@ -95,7 +95,12 @@ static NSString *const iTermCapturedOutputToolTableViewCellIdentifier = @"ToolCa
         scrollView_ = [[NSScrollView alloc] initWithFrame:CGRectZero];
         [scrollView_ setHasVerticalScroller:YES];
         [scrollView_ setHasHorizontalScroller:NO];
-        [scrollView_ setBorderType:NSBezelBorder];
+        if (@available(macOS 10.16, *)) {
+            [scrollView_ setBorderType:NSLineBorder];
+            scrollView_.scrollerStyle = NSScrollerStyleOverlay;
+        } else {
+            [scrollView_ setBorderType:NSBezelBorder];
+        }
         NSSize contentSize = [scrollView_ contentSize];
         [scrollView_ setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
         scrollView_.drawsBackground = NO;
@@ -243,7 +248,7 @@ static NSString *const iTermCapturedOutputToolTableViewCellIdentifier = @"ToolCa
     [scrollView_ setFrame:NSMakeRect(0,
                                      searchFieldFrame.size.height + kMargin,
                                      frame.size.width,
-                                     frame.size.height - 2 * kMargin)];
+                                     frame.size.height - kMargin - (searchFieldFrame.size.height + kMargin))];
 
     // Table view
     NSSize contentSize = [scrollView_ contentSize];

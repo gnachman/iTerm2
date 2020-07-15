@@ -89,7 +89,12 @@ static NSButton *iTermToolActionsNewButton(NSString *imageName, NSString *title,
         _scrollView = [[NSScrollView alloc] initWithFrame:NSMakeRect(0, 0, frame.size.width, frame.size.height - kButtonHeight - kMargin)];
         _scrollView.hasVerticalScroller = YES;
         _scrollView.hasHorizontalScroller = NO;
-        _scrollView.borderType = NSBezelBorder;
+        if (@available(macOS 10.16, *)) {
+            _scrollView.borderType = NSLineBorder;
+            _scrollView.scrollerStyle = NSScrollerStyleOverlay;
+        } else {
+            _scrollView.borderType = NSBezelBorder;
+        }
         NSSize contentSize = [_scrollView contentSize];
         [_scrollView setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
         _scrollView.drawsBackground = NO;
