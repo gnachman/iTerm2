@@ -1191,6 +1191,7 @@
         return;
     }
 
+    const BOOL attachedToTitleBar = [[bar.delegate tabView:bar valueOfOption:PSMTabBarControlOptionAttachedToTitleBar] boolValue];
     // draw cells
     for (int i = 0; i < 2; i++) {
         NSInteger stateToDraw = (i == 0 ? NSControlStateValueOn : NSControlStateValueOff);
@@ -1199,7 +1200,7 @@
                 if (cell.state == stateToDraw) {
                     [cell drawWithFrame:[cell frame] inView:bar];
                     if (@available(macOS 10.16, *)) {
-                        if (stateToDraw == NSControlStateValueOff) {
+                        if ([self shouldDrawTopLineSelected:(stateToDraw == NSControlStateValueOn) attached:attachedToTitleBar position:bar.tabLocation]) {
                             [topLineColor set];
                             NSRectFill(NSMakeRect(NSMinX(cell.frame), 0, NSWidth(cell.frame), 1));
                         }
@@ -1214,7 +1215,7 @@
     }
 
     if (@available(macOS 10.16, *)) {
-        if (bar.showAddTabButton) {
+        if (bar.showAddTabButton && attachedToTitleBar) {
             NSRect frame = bar.addTabButton.frame;
             [topLineColor set];
             NSRectFill(NSMakeRect(NSMinX(frame), 0, NSWidth(frame), 1));
@@ -1228,6 +1229,7 @@
             [self drawVerticalLineInFrame:rightLineRect x:NSMaxX(rect) - 1];
         } else {
             if (@available(macOS 10.16, *)) {
+                // Bottom line
                 [[self bottomLineColorSelected:YES] set];
                 NSRectFill(NSMakeRect(0, NSMaxY(rect) - 1, NSWidth(rect), 1));
             }
@@ -1237,6 +1239,27 @@
         if (![cell isInOverflowMenu] && NSIntersectsRect([cell frame], clipRect) && cell.state == NSControlStateValueOn) {
             [cell drawPostHocDecorationsOnSelectedCell:cell tabBarControl:bar];
         }
+    }
+}
+
+- (BOOL)shouldDrawTopLineSelected:(BOOL)selected
+                         attached:(BOOL)attached
+                         position:(PSMTabPosition)position NS_AVAILABLE_MAC(10_16) {
+    switch (position) {
+        case PSMTab_BottomTab:
+        case PSMTab_LeftTab:
+            return YES;
+
+        case PSMTab_TopTab:
+            if (!attached) {
+                return NO;
+            }
+            if (!selected) {
+                return YES;
+            }
+            // Leave out the line on the selected tab when it's attached to the tabbar so it looks like
+            // it's the same surface.
+            return NO;
     }
 }
 

@@ -7402,6 +7402,32 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
             case TAB_STYLE_AUTOMATIC:
                 return @0;
         }
+    } else if ([option isEqualToString:PSMTabBarControlOptionAttachedToTitleBar]) {
+        if (@available(macOS 10.16, *)) {
+            iTermPreferencesTabStyle preferredStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
+            switch (preferredStyle) {
+                case TAB_STYLE_COMPACT:
+                    switch ([iTermPreferences intForKey:kPreferenceKeyTabPosition]) {
+                        case PSMTab_TopTab:
+                            return @NO;
+                        case PSMTab_LeftTab:
+                        case PSMTab_BottomTab:
+                            return @YES;
+                    }
+                    assert(NO);
+                    break;
+
+                case TAB_STYLE_MINIMAL:
+                    return @YES;
+
+                case TAB_STYLE_LIGHT:
+                case TAB_STYLE_DARK:
+                case TAB_STYLE_LIGHT_HIGH_CONTRAST:
+                case TAB_STYLE_DARK_HIGH_CONTRAST:
+                case TAB_STYLE_AUTOMATIC:
+                    return @YES;
+            }
+        }
     }
     return nil;
 }
