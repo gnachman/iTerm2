@@ -72,6 +72,8 @@
 #ifdef MAC_OS_X_VERSION_10_16
     if (@available(macOS 10.16, *)) {
         _table.style = NSTableViewStyleInset;
+        // Possibly a 10.16 beta bug? Using intercell spacing clips the selection rect.
+        _table.intercellSpacing = NSZeroSize;
     }
 #endif
     [_table setDoubleAction:@selector(doubleClick:)];
