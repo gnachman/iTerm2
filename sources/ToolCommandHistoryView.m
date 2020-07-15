@@ -93,7 +93,12 @@ static const CGFloat kHelpMargin = 5;
                                                                      frame.size.height - kButtonHeight - 2 * kMargin - searchField_.frame.size.height)];
         [scrollView_ setHasVerticalScroller:YES];
         [scrollView_ setHasHorizontalScroller:NO];
-        [scrollView_ setBorderType:NSBezelBorder];
+        if (@available(macOS 10.16, *)) {
+            [scrollView_ setBorderType:NSLineBorder];
+            scrollView_.scrollerStyle = NSScrollerStyleOverlay;
+        } else {
+            [scrollView_ setBorderType:NSBezelBorder];
+        }
         NSSize contentSize = [self contentSize];
         [scrollView_ setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
         scrollView_.drawsBackground = NO;

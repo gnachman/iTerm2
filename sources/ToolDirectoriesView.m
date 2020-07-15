@@ -93,7 +93,12 @@ static const CGFloat kHelpMargin = 5;
         [scrollView_ setHasVerticalScroller:YES];
         [scrollView_ setHasHorizontalScroller:NO];
         [scrollView_ setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
-        [scrollView_ setBorderType:NSBezelBorder];
+        if (@available(macOS 10.16, *)) {
+            [scrollView_ setBorderType:NSLineBorder];
+            scrollView_.scrollerStyle = NSScrollerStyleOverlay;
+        } else {
+            [scrollView_ setBorderType:NSBezelBorder];
+        }
         scrollView_.drawsBackground = NO;
 
         tableView_ = [[NSTableView alloc] initWithFrame:NSMakeRect(0, 0, 0, 0)];
