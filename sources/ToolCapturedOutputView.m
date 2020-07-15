@@ -122,9 +122,11 @@ static NSString *const iTermCapturedOutputToolTableViewCellIdentifier = @"ToolCa
         [tableView_ setHeaderView:nil];
         [tableView_ setDataSource:self];
         [tableView_ setDelegate:self];
-        NSSize spacing = tableView_.intercellSpacing;
-        spacing.height += 5;
-        tableView_.intercellSpacing = spacing;
+        if (@available(macOS 10.16, *)) { } else {
+            NSSize spacing = tableView_.intercellSpacing;
+            spacing.height += 5;
+            tableView_.intercellSpacing = spacing;
+        }
 
         [tableView_ setDoubleAction:@selector(doubleClickOnTableView:)];
         [tableView_ setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
@@ -323,11 +325,7 @@ static NSString *const iTermCapturedOutputToolTableViewCellIdentifier = @"ToolCa
     if (capturedOutput.state) {
         label = [@"✔ " stringByAppendingString:label];
     } else {
-        if (@available(macOS 10.16, *)) {
-            return label;
-        } else {
-            label = [@"• " stringByAppendingString:label];
-        }
+        label = [@"• " stringByAppendingString:label];
     }
     return label;
 }
