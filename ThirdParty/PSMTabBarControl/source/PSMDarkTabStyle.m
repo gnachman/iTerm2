@@ -57,6 +57,13 @@
 
 - (NSColor *)bottomLineColorSelected:(BOOL)selected {
     if (@available(macOS 10.14, *)) {
+        if (@available(macOS 10.16, *)) {
+            const BOOL attachedToTitleBar = [[self.tabBar.delegate tabView:self.tabBar valueOfOption:PSMTabBarControlOptionAttachedToTitleBar] boolValue];
+            if (!attachedToTitleBar || self.tabBar.tabLocation != PSMTab_TopTab) {
+                NSColor *color = [self topLineColorSelected:NO];
+                return [color colorWithAlphaComponent:color.alphaComponent * 0.3];
+            }
+        }
         return [NSColor colorWithWhite:0 alpha:0.1];
     } else {
         return [NSColor colorWithCalibratedWhite:0.00 alpha:1.00];
