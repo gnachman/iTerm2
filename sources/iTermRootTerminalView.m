@@ -260,12 +260,18 @@ NS_CLASS_AVAILABLE_MAC(10_14)
         [self updateToolbeltForWindow:nil];
 
         _windowNumberLabel = [NSTextField newLabelStyledTextField];
+        if (@available(macOS 10.16, *)) {
+            _windowNumberLabel.font = [NSFont titleBarFontOfSize:[NSFont systemFontSize]];
+        }
         _windowNumberLabel.alphaValue = 0.75;
         _windowNumberLabel.hidden = YES;
         _windowNumberLabel.autoresizingMask = (NSViewMaxXMargin | NSViewMinYMargin);
         [self addSubview:_windowNumberLabel];
 
         _windowTitleLabel = [iTermFakeWindowTitleLabel newLabelStyledTextField];
+        if (@available(macOS 10.16, *)) {
+            _windowTitleLabel.font = [NSFont titleBarFontOfSize:[NSFont systemFontSize]];
+        }
         _windowTitleLabel.alphaValue = 1;
         _windowTitleLabel.alignment = NSTextAlignmentCenter;
         _windowTitleLabel.hidden = YES;
@@ -1147,9 +1153,17 @@ NS_CLASS_AVAILABLE_MAC(10_14)
 
 - (void)updateWindowNumberFont {
     if ([self tabBarShouldBeVisible]) {
-        _windowNumberLabel.font = [NSFont systemFontOfSize:[NSFont smallSystemFontSize]];
+        if (@available(macOS 10.16, *)) {
+            _windowNumberLabel.font = [NSFont titleBarFontOfSize:[NSFont smallSystemFontSize]];
+        } else {
+            _windowNumberLabel.font = [NSFont systemFontOfSize:[NSFont smallSystemFontSize]];
+        }
     } else {
-        _windowNumberLabel.font = [NSFont systemFontOfSize:[NSFont systemFontSize]];
+        if (@available(macOS 10.16, *)) {
+            _windowNumberLabel.font = [NSFont titleBarFontOfSize:[NSFont systemFontSize]];
+        } else {
+            _windowNumberLabel.font = [NSFont systemFontOfSize:[NSFont systemFontSize]];
+        }
     }
 }
 
