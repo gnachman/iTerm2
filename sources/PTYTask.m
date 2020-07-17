@@ -496,6 +496,7 @@ static void HandleSigChld(int n) {
 
 - (void)setJobManagerType:(iTermGeneralServerConnectionType)type {
     assert([self canAttach]);
+    assert([NSThread isMainThread]);
     switch (type) {
         case iTermGeneralServerConnectionTypeMono:
             if ([self.jobManager isKindOfClass:[iTermMonoServerJobManager class]]) {
@@ -503,7 +504,7 @@ static void HandleSigChld(int n) {
             }
             DLog(@"Replace jobmanager %@ with monoserver instance", self.jobManager);
             self.jobManager = [[iTermMonoServerJobManager alloc] initWithQueue:self->_jobManagerQueue];
-            break;
+            return;
 
         case iTermGeneralServerConnectionTypeMulti:
             if ([self.jobManager isKindOfClass:[iTermMultiServerJobManager class]]) {
@@ -511,8 +512,9 @@ static void HandleSigChld(int n) {
             }
             DLog(@"Replace jobmanager %@ with multiserver instance", self.jobManager);
             self.jobManager = [[iTermMultiServerJobManager alloc] initWithQueue:self->_jobManagerQueue];
-            break;
+            return;
     }
+    ITAssertWithMessage(NO, @"Unrecognized job type %@", @(type));
 }
 
 // This works for any kind of connection. It finishes the process of attaching a PTYTask to a child
