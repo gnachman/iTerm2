@@ -12,6 +12,7 @@
 #import "CVector.h"
 #import "DebugLogging.h"
 #import "iTermAdvancedSettingsModel.h"
+#import "iTermAttributedStringProxy.h"
 #import "iTermBackgroundColorRun.h"
 #import "iTermBoxDrawingBezierCurveFactory.h"
 #import "iTermColorMap.h"
@@ -164,10 +165,10 @@ typedef struct iTermTextColorContext {
     CGFloat _baselineOffset;
 
     // The cache we're using now.
-    NSMutableDictionary<NSAttributedString *, id> *_lineRefCache;
+    NSMutableDictionary<iTermAttributedStringProxy *, id> *_lineRefCache;
 
     // The cache we'll use next time.
-    NSMutableDictionary<NSAttributedString *, id> *_replacementLineRefCache;
+    NSMutableDictionary<iTermAttributedStringProxy *, id> *_replacementLineRefCache;
 
     BOOL _preferSpeedToFullLigatureSupport;
 }
@@ -1531,13 +1532,14 @@ typedef struct iTermTextColorContext {
     // rendering available.
 
     CTLineRef lineRef;
-    lineRef = (CTLineRef)_lineRefCache[attributedString];
+    iTermAttributedStringProxy *proxy = [iTermAttributedStringProxy withAttributedString:attributedString];
+    lineRef = (CTLineRef)_lineRefCache[proxy];
     if (lineRef == nil) {
         lineRef = CTLineCreateWithAttributedString((CFAttributedStringRef)attributedString);
-        _lineRefCache[attributedString] = (id)lineRef;
+        _lineRefCache[proxy] = (id)lineRef;
         CFRelease(lineRef);
     }
-    _replacementLineRefCache[attributedString] = (id)lineRef;
+    _replacementLineRefCache[proxy] = (id)lineRef;
 
     CFArrayRef runs = CTLineGetGlyphRuns(lineRef);
     CGContextRef cgContext = (CGContextRef) [ctx CGContext];
