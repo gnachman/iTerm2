@@ -12556,7 +12556,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     }
 
     iTermAnnouncementViewController *announcement =
-    [iTermAnnouncementViewController announcementWithTitle:[NSString stringWithFormat:@"You seem frustrated. Would you like the %@ option to key send esc+keystroke?", leftOrRight]
+    [iTermAnnouncementViewController announcementWithTitle:[NSString stringWithFormat:@"You seem frustrated. Would you like the %@ option key to send esc+keystroke?", leftOrRight]
                                                      style:kiTermAnnouncementViewStyleWarning
                                                withActions:actions
                                                 completion:^(int selection) {
