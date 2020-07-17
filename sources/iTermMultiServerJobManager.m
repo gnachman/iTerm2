@@ -296,6 +296,7 @@ typedef struct {
          withProcessID:(NSNumber *)thePid
                   task:(id<iTermTask>)task
             completion:(void (^)(iTermJobManagerAttachResults))completion {
+    assert(serverConnection.type == iTermGeneralServerConnectionTypeMulti);
     DLog(@"(async) Attach to server on socket number %@ for pid %@\n%@", @(serverConnection.multi.number),
          @(serverConnection.multi.pid), [NSThread callStackSymbols]);
     void (^finish)(iTermFileDescriptorMultiClientChild *) = ^(iTermFileDescriptorMultiClientChild *child) {
@@ -322,6 +323,7 @@ typedef struct {
 - (iTermJobManagerAttachResults)attachToServer:(iTermGeneralServerConnection)serverConnection
                                  withProcessID:(NSNumber *)thePid
                                           task:(id<iTermTask>)task {
+    assert(serverConnection.type == iTermGeneralServerConnectionTypeMulti);
     DLog(@"(sync) Attach to server on socket number %@ for pid %@\n%@", @(serverConnection.multi.number),
          @(serverConnection.multi.pid), [NSThread callStackSymbols]);
     __block struct {
@@ -367,6 +369,7 @@ typedef struct {
               withProcessID:(NSNumber *)thePid
                        task:(id<iTermTask>)task
                  completion:(void (^)(iTermFileDescriptorMultiClientChild *))completion {
+    assert(serverConnection.type == iTermGeneralServerConnectionTypeMulti);
     DLog(@"begin attaching to server on socket %@ with pid %@", @(serverConnection.multi.number), @(serverConnection.multi.pid));
     [self.thread dispatchAsync:^(iTermMultiServerJobManagerState * _Nullable state) {
         assert(state.child == nil);
