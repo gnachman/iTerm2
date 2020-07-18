@@ -41,6 +41,9 @@ static NSString *const iTermToolProfilesProfileListViewState = @"iTermToolProfil
         [listView_ allowMultipleSelections];
         [listView_.tableView setHeaderView:nil];
         listView_.tableView.enclosingScrollView.drawsBackground = NO;
+        if (@available(macOS 10.16, *)) {
+            [listView_ forceOverlayScroller];
+        }
         if (@available(macOS 10.14, *)) {
             listView_.tableView.backgroundColor = [NSColor clearColor];
         }

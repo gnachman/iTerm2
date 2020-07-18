@@ -462,7 +462,6 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
                            layout:[doc valueInRecord:record forField:@"window_layout"]
                        affinities:[self savedAffinitiesForWindow:[NSString stringWithInt:wid]]
                       windowFlags:[doc valueInRecord:record forField:@"window_flags"]
-#warning TODO: Save profiles in the tmux server
                           profile:[self sharedProfile]
                           initial:YES];
     }

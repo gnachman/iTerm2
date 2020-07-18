@@ -58,6 +58,7 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionFontSizeOverride =
     @"PSMTabBarControlOptionFontSizeOverride";
 PSMTabBarControlOptionKey PSMTabBarControlOptionMinimalSelectedTabUnderlineProminence = @"PSMTabBarControlOptionMinimalSelectedTabUnderlineProminence";
 PSMTabBarControlOptionKey PSMTabBarControlOptionDragEdgeHeight = @"PSMTabBarControlOptionDragEdgeHeight";
+PSMTabBarControlOptionKey PSMTabBarControlOptionAttachedToTitleBar = @"PSMTabBarControlOptionAttachedToTitleBar";
 
 @interface PSMTabBarControl ()<PSMTabBarControlProtocol>
 @end

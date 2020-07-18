@@ -12,7 +12,7 @@
 #import "ProfileModel.h"
 
 @interface ProfileTagsView ()
-@property(nonatomic, retain) NSScrollView *scrollView;
+@property(nonatomic, readwrite, retain) NSScrollView *scrollView;
 @property(nonatomic, retain) NSTableView *tableView;
 @property(nonatomic, retain) NSTableColumn *tagsColumn;
 @property(nonatomic, retain) NSTableHeaderView *headerView;
@@ -56,7 +56,11 @@
         [_tableView addTableColumn:_tagsColumn];
 
         [_scrollView setDocumentView:_tableView];
-        [_scrollView setBorderType:NSBezelBorder];
+        if (@available(macOS 10.16, *)) {
+            _scrollView.borderType = NSLineBorder;
+        } else {
+            [_scrollView setBorderType:NSBezelBorder];
+        }
 
         _tableView.delegate = self;
         _tableView.dataSource = self;

@@ -12,7 +12,6 @@ if [ $# -ne 1 ]; then
    exit 1
 fi
 
-test -f "$PRIVKEY" || die "Set PRIVKEY environment variable to point at a valid private key (not set or nonexistent)"
 echo Enter the EdDSA private key
 read -s EDPRIVKEY
 
@@ -22,19 +21,11 @@ read -s NOTPASS
 # Usage: SparkleSign testing.xml template.xml
 function SparkleSign {
     LENGTH=$(ls -l iTerm2-${NAME}.zip | awk '{print $5}')
-    ruby "../../ThirdParty/SparkleSigningTools/sign_update.rb" iTerm2-${NAME}.zip $PRIVKEY > /tmp/sig.txt || die SparkleSign
-    echo "Signature is "
-    cat /tmp/sig.txt
-    actualsize=$(wc -c < /tmp/sig.txt)
-    if (( $actualsize < 60)); then
-        die "signature file too small"
-    fi
 
     ../../tools/sign_update iTerm2-${NAME}.zip "$EDPRIVKEY" > /tmp/newsig.txt || die SparkleSignNew
     echo "New signature is"
     cat /tmp/newsig.txt
 
-    SIG=$(cat /tmp/sig.txt)
     NEWSIG=$(cat /tmp/newsig.txt)
     DATE=$(date +"%a, %d %b %Y %H:%M:%S %z")
     XML=$1
@@ -46,7 +37,6 @@ function SparkleSign {
     sed -e "s/%DATE%/${DATE}/" | \
     sed -e "s/%NAME%/${NAME}/" | \
     sed -e "s/%LENGTH%/$LENGTH/" | \
-    sed -e "s,%SIG%,${SIG}," | \
     sed -e "s,%NEWSIG%,${NEWSIG}," > $SVNDIR/source/appcasts/$1
 
     echo "Updated appcasts file $SVNDIR/source/appcasts/$1"
@@ -107,18 +97,15 @@ function Build {
   shasum -a256 iTerm2-${NAME}.zip | awk '{print $1}' >> $SVNDIR/downloads/beta/iTerm2-${NAME}.changelog
   vi $SVNDIR/downloads/beta/iTerm2-${NAME}.changelog
   pushd $SVNDIR
-  git add downloads/beta/iTerm2-${NAME}.summary downloads/beta/iTerm2-${NAME}.description downloads/beta/iTerm2-${NAME}.changelog downloads/beta/iTerm2-${NAME}.zip source/appcasts/testing3_new.xml source/appcasts/testing3_modern.xml source/appcasts/testing3.xml source/appcasts/testing_changes3.txt
+  git add downloads/beta/iTerm2-${NAME}.summary downloads/beta/iTerm2-${NAME}.description downloads/beta/iTerm2-${NAME}.changelog downloads/beta/iTerm2-${NAME}.zip source/appcasts/testing3_new.xml source/appcasts/testing3_modern.xml source/appcasts/testing_changes3.txt
   popd
 
-  # Legacy
-  SparkleSign ${SPARKLE_PREFIX}testing3.xml ${SPARKLE_PREFIX}template3.xml
   # Transitional
   SparkleSign ${SPARKLE_PREFIX}testing3_new.xml ${SPARKLE_PREFIX}template3_new.xml
   # Modern
   SparkleSign ${SPARKLE_PREFIX}testing3_modern.xml ${SPARKLE_PREFIX}template3_modern.xml
 
   # Copy experiment to control
-  cp $SVNDIR/source/appcasts/${SPARKLE_PREFIX}testing3.xml        $SVNDIR/source/appcasts/${SPARKLE_PREFIX}testing.xml
   cp $SVNDIR/source/appcasts/${SPARKLE_PREFIX}testing3_new.xml    $SVNDIR/source/appcasts/${SPARKLE_PREFIX}testing_new.xml
   cp $SVNDIR/source/appcasts/${SPARKLE_PREFIX}testing3_modern.xml $SVNDIR/source/appcasts/${SPARKLE_PREFIX}testing_modern.xml
 

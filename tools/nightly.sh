@@ -8,9 +8,7 @@ function die {
 # Usage: SparkleSign testing.xml template.xml signingkey
 function SparkleSign {
     LENGTH=$(ls -l iTerm2-${NAME}.zip | awk '{print $5}')
-    ruby "../../ThirdParty/SparkleSigningTools/sign_update.rb" iTerm2-${NAME}.zip $PRIVKEY > /tmp/sig.txt || die "Signing failed"
     ../../tools/sign_update iTerm2-${NAME}.zip "$3" > /tmp/newsig.txt || die SparkleSignNew
-    SIG=$(cat /tmp/sig.txt)
     NEWSIG=$(cat /tmp/newsig.txt)
     DATE=$(date +"%a, %d %b %Y %H:%M:%S %z")
     XML=$1
@@ -22,7 +20,6 @@ function SparkleSign {
     sed -e "s/%DATE%/${DATE}/" | \
     sed -e "s/%NAME%/${NAME}/" | \
     sed -e "s/%LENGTH%/$LENGTH/" | \
-    sed -e "s,%SIG%,${SIG}," | \
     sed -e "s,%NEWSIG%,${NEWSIG}," > $SVNDIR/source/appcasts/$1
     cp iTerm2-${NAME}.zip ~/iterm2-website/downloads/beta/
 }
@@ -71,10 +68,6 @@ zip -ry $NOTARIZED_ZIP iTerm.app
 
 # Modern
 SparkleSign nightly_modern.xml nightly_modern_template.xml "$SIGNING_KEY"
-# Transitional
-SparkleSign nightly_new.xml nightly_new_template.xml "$SIGNING_KEY"
-# Legacy
-SparkleSign nightly.xml nightly_template.xml "$SIGNING_KEY"
 
 #https://github.com/Homebrew/homebrew-cask-versions/pull/6965
 #cask-repair --cask-url https://www.iterm2.com/nightly/latest -b --cask-version $CASK_VERSION iterm2-nightly < /dev/null
@@ -82,7 +75,7 @@ SparkleSign nightly.xml nightly_template.xml "$SIGNING_KEY"
 cp iTerm2-${NAME}.zip ~/Dropbox/NightlyBuilds/
 scp  -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no iTerm2-${NAME}.zip gnachman@iterm2.com:iterm2.com/nightly/iTerm2-${NAME}.zip || die "scp zip"
 ssh  -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no gnachman@iterm2.com "./newnightly.sh iTerm2-${NAME}.zip" || die "ssh"
-scp  -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no $SVNDIR/source/appcasts/nightly_changes.txt $SVNDIR/source/appcasts/nightly.xml $SVNDIR/source/appcasts/nightly_new.xml $SVNDIR/source/appcasts/nightly_modern.xml gnachman@iterm2.com:iterm2.com/appcasts/ || die "scp appcasts"
+scp  -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no $SVNDIR/source/appcasts/nightly_changes.txt $SVNDIR/source/appcasts/nightly_modern.xml gnachman@iterm2.com:iterm2.com/appcasts/ || die "scp appcasts"
 
 cd $SVNDIR
 git add source/appcasts/nightly_changes.txt

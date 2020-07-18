@@ -72,6 +72,8 @@
 #ifdef MAC_OS_X_VERSION_10_16
     if (@available(macOS 10.16, *)) {
         _table.style = NSTableViewStyleInset;
+        // Possibly a 10.16 beta bug? Using intercell spacing clips the selection rect.
+        _table.intercellSpacing = NSZeroSize;
     }
 #endif
     [_table setDoubleAction:@selector(doubleClick:)];
@@ -172,6 +174,9 @@
         NSRect frameOfLastVisibleCell = [_table frameOfCellAtColumn:0
                                                                 row:numberOfVisibleRowsDesired - 1];
         contentSize.height += NSMaxY(frameOfLastVisibleCell);
+        if (@available(macOS 10.16, *)) {
+            contentSize.height += 10;
+        }
     }
     frame.size.height = contentSize.height;
 

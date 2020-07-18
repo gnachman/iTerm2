@@ -153,6 +153,7 @@ NS_CLASS_AVAILABLE_MAC(10_14)
     NSView *_bottomBorderView NS_AVAILABLE_MAC(10_14);
     
     iTermImageView *_backgroundImage NS_AVAILABLE_MAC(10_14);
+    NSView *_workaroundView;  // 10.14 only. See issue 8701.
 }
 
 - (instancetype)initWithFrame:(NSRect)frameRect
@@ -260,12 +261,18 @@ NS_CLASS_AVAILABLE_MAC(10_14)
         [self updateToolbeltForWindow:nil];
 
         _windowNumberLabel = [NSTextField newLabelStyledTextField];
+        if (@available(macOS 10.16, *)) {
+            _windowNumberLabel.font = [NSFont titleBarFontOfSize:[NSFont systemFontSize]];
+        }
         _windowNumberLabel.alphaValue = 0.75;
         _windowNumberLabel.hidden = YES;
         _windowNumberLabel.autoresizingMask = (NSViewMaxXMargin | NSViewMinYMargin);
         [self addSubview:_windowNumberLabel];
 
         _windowTitleLabel = [iTermFakeWindowTitleLabel newLabelStyledTextField];
+        if (@available(macOS 10.16, *)) {
+            _windowTitleLabel.font = [NSFont titleBarFontOfSize:[NSFont systemFontSize]];
+        }
         _windowTitleLabel.alphaValue = 1;
         _windowTitleLabel.alignment = NSTextAlignmentCenter;
         _windowTitleLabel.hidden = YES;
@@ -396,6 +403,12 @@ NS_CLASS_AVAILABLE_MAC(10_14)
                 [self addSubview:_topBorderView];
                 [self addSubview:_bottomBorderView];
             }
+        }
+
+        if (@available(macOS 10.15, *)) {} else {
+            // 10.14 only
+            _workaroundView = [[SolidColorView alloc] initWithFrame:NSMakeRect(0, 0, 1, 1) color:[NSColor clearColor]];
+            [self addSubview:_workaroundView];
         }
     }
     return self;
@@ -1147,9 +1160,17 @@ NS_CLASS_AVAILABLE_MAC(10_14)
 
 - (void)updateWindowNumberFont {
     if ([self tabBarShouldBeVisible]) {
-        _windowNumberLabel.font = [NSFont systemFontOfSize:[NSFont smallSystemFontSize]];
+        if (@available(macOS 10.16, *)) {
+            _windowNumberLabel.font = [NSFont titleBarFontOfSize:[NSFont smallSystemFontSize]];
+        } else {
+            _windowNumberLabel.font = [NSFont systemFontOfSize:[NSFont smallSystemFontSize]];
+        }
     } else {
-        _windowNumberLabel.font = [NSFont systemFontOfSize:[NSFont systemFontSize]];
+        if (@available(macOS 10.16, *)) {
+            _windowNumberLabel.font = [NSFont titleBarFontOfSize:[NSFont systemFontSize]];
+        } else {
+            _windowNumberLabel.font = [NSFont systemFontOfSize:[NSFont systemFontSize]];
+        }
     }
 }
 
@@ -1519,7 +1540,9 @@ NS_CLASS_AVAILABLE_MAC(10_14)
 
 - (void)layoutSubviews {
     DLog(@"layoutSubviews");
-
+    if (@available(macOS 10.15, *)) { } else {
+        _workaroundView.frame = NSMakeRect(0, self.bounds.size.height - 1, 1, 1);
+    }
     const BOOL showToolbeltInline = self.shouldShowToolbelt;
     NSWindow *thisWindow = _delegate.window;
     if (!_tabBarControlOnLoan) {

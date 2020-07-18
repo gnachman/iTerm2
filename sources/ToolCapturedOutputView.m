@@ -95,7 +95,12 @@ static NSString *const iTermCapturedOutputToolTableViewCellIdentifier = @"ToolCa
         scrollView_ = [[NSScrollView alloc] initWithFrame:CGRectZero];
         [scrollView_ setHasVerticalScroller:YES];
         [scrollView_ setHasHorizontalScroller:NO];
-        [scrollView_ setBorderType:NSBezelBorder];
+        if (@available(macOS 10.16, *)) {
+            [scrollView_ setBorderType:NSLineBorder];
+            scrollView_.scrollerStyle = NSScrollerStyleOverlay;
+        } else {
+            [scrollView_ setBorderType:NSBezelBorder];
+        }
         NSSize contentSize = [scrollView_ contentSize];
         [scrollView_ setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
         scrollView_.drawsBackground = NO;
@@ -117,9 +122,11 @@ static NSString *const iTermCapturedOutputToolTableViewCellIdentifier = @"ToolCa
         [tableView_ setHeaderView:nil];
         [tableView_ setDataSource:self];
         [tableView_ setDelegate:self];
-        NSSize spacing = tableView_.intercellSpacing;
-        spacing.height += 5;
-        tableView_.intercellSpacing = spacing;
+        if (@available(macOS 10.16, *)) { } else {
+            NSSize spacing = tableView_.intercellSpacing;
+            spacing.height += 5;
+            tableView_.intercellSpacing = spacing;
+        }
 
         [tableView_ setDoubleAction:@selector(doubleClickOnTableView:)];
         [tableView_ setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
@@ -243,7 +250,7 @@ static NSString *const iTermCapturedOutputToolTableViewCellIdentifier = @"ToolCa
     [scrollView_ setFrame:NSMakeRect(0,
                                      searchFieldFrame.size.height + kMargin,
                                      frame.size.width,
-                                     frame.size.height - 2 * kMargin)];
+                                     frame.size.height - kMargin - (searchFieldFrame.size.height + kMargin))];
 
     // Table view
     NSSize contentSize = [scrollView_ contentSize];
@@ -318,11 +325,7 @@ static NSString *const iTermCapturedOutputToolTableViewCellIdentifier = @"ToolCa
     if (capturedOutput.state) {
         label = [@"✔ " stringByAppendingString:label];
     } else {
-        if (@available(macOS 10.16, *)) {
-            return label;
-        } else {
-            label = [@"• " stringByAppendingString:label];
-        }
+        label = [@"• " stringByAppendingString:label];
     }
     return label;
 }

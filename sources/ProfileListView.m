@@ -230,7 +230,11 @@ const CGFloat kDefaultTagsWidth = 80;
         [tableView_ addTableColumn:tableColumn_];
 
         [scrollView_ setDocumentView:tableView_];
-        [scrollView_ setBorderType:NSBezelBorder];
+        if (@available(macOS 10.16, *)) {
+            scrollView_.borderType = NSLineBorder;
+        } else {
+            [scrollView_ setBorderType:NSBezelBorder];
+        }
 
         selectedGuids_ = [[NSMutableSet alloc] init];
 
@@ -291,6 +295,11 @@ const CGFloat kDefaultTagsWidth = 80;
     BOOL result = [super performKeyEquivalent:event];
     DLog(@"ProfileListView: performKeyEquivalent: returns %@", @(result));
     return result;
+}
+
+- (void)forceOverlayScroller {
+    scrollView_.scrollerStyle = NSScrollerStyleOverlay;
+    tagsView_.scrollView.scrollerStyle = NSScrollerStyleOverlay;
 }
 
 - (void)focusSearchField

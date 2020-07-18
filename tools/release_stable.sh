@@ -12,7 +12,6 @@ if [ $# -ne 1 ]; then
    exit 1
 fi
 
-test -f "$PRIVKEY" || die "Set PRIVKEY environment variable to point at a valid private key (not set or nonexistent)"
 echo Enter the EdDSA private key
 read -s EDPRIVKEY
 
@@ -22,19 +21,11 @@ read -s NOTPASS
 # Usage: SparkleSign final.xml final_template.xml
 function SparkleSign {
     LENGTH=$(ls -l iTerm2-${NAME}.zip | awk '{print $5}')
-    ruby "../../ThirdParty/SparkleSigningTools/sign_update.rb" iTerm2-${NAME}.zip $PRIVKEY > /tmp/sig.txt || die SparkleSign
-    echo "Signature is "
-    cat /tmp/sig.txt
-    actualsize=$(wc -c < /tmp/sig.txt)
-    if (( $actualsize < 60)); then
-        die "signature file too small"
-    fi
 
     ../../tools/sign_update iTerm2-${NAME}.zip "$EDPRIVKEY" > /tmp/newsig.txt || die SparkleSignNew
     echo "New signature is"
     cat /tmp/newsig.txt
 
-    SIG=$(cat /tmp/sig.txt)
     NEWSIG=$(cat /tmp/newsig.txt)
     DATE=$(date +"%a, %d %b %Y %H:%M:%S %z")
     XML=$1
@@ -46,7 +37,6 @@ function SparkleSign {
     sed -e "s/%DATE%/${DATE}/" | \
     sed -e "s/%NAME%/${NAME}/" | \
     sed -e "s/%LENGTH%/$LENGTH/" | \
-    sed -e "s,%SIG%,${SIG}," | \
     sed -e "s,%NEWSIG%,${NEWSIG}," > $SVNDIR/source/appcasts/$1
 
     echo "Updated appcasts file $SVNDIR/source/appcasts/$1"
@@ -111,14 +101,9 @@ function Build {
   echo 'Options +FollowSymlinks' > ~/iterm2-website/downloads/stable/.htaccess
   echo 'Redirect 302 /downloads/stable/latest https://iterm2.com/downloads/stable/iTerm2-'${NAME}'.zip' >> ~/iterm2-website/downloads/stable/.htaccess
 
-  git add downloads/stable/iTerm2-${NAME}.summary downloads/stable/iTerm2-${NAME}.description downloads/stable/iTerm2-${NAME}.changelog downloads/stable/iTerm2-${NAME}.zip source/appcasts/final.xml source/appcasts/final_new.xml source/appcasts/final_modern.xml source/appcasts/full_changes.txt downloads/stable/.htaccess
+  git add downloads/stable/iTerm2-${NAME}.summary downloads/stable/iTerm2-${NAME}.description downloads/stable/iTerm2-${NAME}.changelog downloads/stable/iTerm2-${NAME}.zip source/appcasts/final_modern.xml source/appcasts/full_changes.txt downloads/stable/.htaccess
   popd
 
-  # Legacy
-  SparkleSign ${SPARKLE_PREFIX}final.xml ${SPARKLE_PREFIX}final_template.xml
-  # Transitional
-  SparkleSign ${SPARKLE_PREFIX}final_new.xml ${SPARKLE_PREFIX}final_template_new.xml
-  # Modern
   SparkleSign ${SPARKLE_PREFIX}final_modern.xml ${SPARKLE_PREFIX}final_template_modern.xml
 
   popd
