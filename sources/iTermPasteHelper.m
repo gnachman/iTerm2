@@ -573,6 +573,9 @@ const NSInteger iTermQuickPasteBytesPerCallDefaultValue = 768;
             }
         }
     }
+    if (pasteEvent.flags & kPasteFlagsRemovingNewlines) {
+        return YES;
+    }
 
     NSCharacterSet *newlineCharacterSet =
         [NSCharacterSet characterSetWithCharactersInString:@"\r\n"];
