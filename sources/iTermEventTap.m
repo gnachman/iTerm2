@@ -65,11 +65,13 @@ NSString *const iTermEventTapEventTappedNotification = @"iTermEventTapEventTappe
 }
 
 - (void)addObserver:(id<iTermEventTapObserver>)observer {
+    DLog(@"Add observer %@", observer);
     [_observers addObject:observer.weakSelf];
     [self setEnabled:[self shouldBeEnabled]];
 }
 
 - (void)removeObserver:(id<iTermEventTapObserver>)observer {
+    DLog(@"Remove observer %@", observer);
     [_observers removeObject:observer];
     [self setEnabled:[self shouldBeEnabled]];
 }
@@ -77,7 +79,7 @@ NSString *const iTermEventTapEventTappedNotification = @"iTermEventTapEventTappe
 #pragma mark - Accessors
 
 - (void)setEnabled:(BOOL)enabled {
-    DLog(@"iTermEventTap setEnabled:%@", @(enabled));
+    DLog(@"iTermEventTap setEnabled:%@\n%@", @(enabled), [NSThread callStackSymbols]);
     if (enabled && !self.isEnabled) {
         [self startEventTap];
     } else if (!enabled && self.isEnabled) {
@@ -92,16 +94,12 @@ NSString *const iTermEventTapEventTappedNotification = @"iTermEventTapEventTappe
 #pragma mark - Private
 
 - (BOOL)shouldBeEnabled {
+    DLog(@"Before pruning observers are %@", self.observers);
     [self pruneReleasedObservers];
+    DLog(@"%@ remappingDelegate=%@ observers=%@", self, self.remappingDelegate, self.observers);
     if (![self allowedByEventTap]) {
         DLog(@"Event tap %@ not allowed by secure input", self.class);
         return NO;
-    }
-    if (@available(macOS 10.13, *)) { } else {
-        if (IsSecureEventInputEnabled()) {
-            DLog(@"macOS 10.12 - returning NO because secure keyboard entry enabled");
-            return NO;
-        }
     }
     return (self.remappingDelegate != nil) || (self.observers.count > 0);
 }
@@ -313,6 +311,7 @@ error:
     if (remappingDelegate == nil) {
         remappingDelegate = self;
     }
+    DLog(@"Set remapping delegate to %@\n%@", remappingDelegate, [NSThread callStackSymbols]);
     [super setRemappingDelegate:remappingDelegate];
 }
 
@@ -340,12 +339,7 @@ error:
 }
 
 - (BOOL)allowedByEventTap {
-    if (@available(macOS 10.13, *)) {
-        return YES;
-    }
-    // I can't test 10.12 easily and don't want to risk introducing a bug. It
-    // might be OK to return YES here.
-    return [super allowedByEventTap];
+    return YES;
 }
 
 #pragma mark - iTermEventTapRemappingDelegate
