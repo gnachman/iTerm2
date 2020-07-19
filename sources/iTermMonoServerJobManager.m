@@ -298,7 +298,7 @@
         if (_serverPid < 0) {
             return;
         }
-        DLog(@"Sending signal to server %@", @(_serverPid));
+        DLog(@"Sending signal %@ to server %@", @(signo), @(_serverPid));
         kill(_serverPid, signo);
         return;
     }
@@ -306,6 +306,7 @@
         return;
     }
     [[iTermProcessCache sharedInstance] unregisterTrackedPID:_serverChildPid];
+    DLog(@"Sending signal %@ to child %@", @(signo), @(_serverChildPid));
     kill(_serverChildPid, signo);
 }
 
@@ -317,6 +318,7 @@
             return;
         }
         // This makes the server unlink its socket and exit immediately.
+        DLog(@"Sending SIGUSR1 to server %@", @(_serverChildPid));
         kill(_serverPid, SIGUSR1);
         serverPid = _serverPid;
         // Don't want to leak these. They exist to let the server know when iTerm2 crashes, but if
@@ -332,6 +334,7 @@
 }
 
 - (void)killWithMode:(iTermJobManagerKillingMode)mode {
+    DLog(@"%@ killWithMode:%@", self, @(mode));
     switch (mode) {
         case iTermJobManagerKillingModeRegular:
             [self sendSignal:SIGHUP toServer:NO];

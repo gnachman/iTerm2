@@ -8,6 +8,7 @@
 
 #import "ToolJobs.h"
 
+#import "DebugLogging.h"
 #import "iTermCompetentTableRowView.h"
 #import "iTermProcessCache.h"
 #import "iTermToolWrapper.h"
@@ -476,6 +477,7 @@ static const CGFloat kMargin = 4;
 - (void)kill:(id)sender {
     pid_t p = _processInfos[tableView_.selectedRow].processID;
     if (p > 0) {
+        DLog(@"Send signal %@ to %@", signal_, @(p));
         kill(p, [signal_ intValue]);
     }
 }

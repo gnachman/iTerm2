@@ -101,6 +101,7 @@
         iTermJobProxy *job = [self->_outlineView itemAtRow:idx];
         pid_t pid = job.pid;
         if (pid) {
+            DLog(@"Send SIGKILL to %@", @(pid));
             kill(pid, SIGKILL);
         }
     }];

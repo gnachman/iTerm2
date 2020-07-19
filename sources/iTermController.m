@@ -1249,6 +1249,7 @@ static iTermController *gSharedInstance;
 }
 
 - (void)killRestorableSessions {
+    DLog(@"killRestorableSessions");
     assert([iTermAdvancedSettingsModel runJobsInServers]);
     for (iTermRestorableSession *restorableSession in _restorableSessions) {
         for (PTYSession *aSession in restorableSession.sessions) {

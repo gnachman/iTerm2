@@ -2334,6 +2334,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)restartSession {
+    DLog(@"Restart session %@", self);
     assert(self.isRestartable);
     [_naggingController willRecycleSession];
     if (_exited) {
@@ -3066,7 +3067,7 @@ ITERM_WEAKLY_REFERENCEABLE
 // Called when the file descriptor closes. If -terminate was already called this does nothing.
 // Otherwise, you can call replaceTerminatedShellWithNewInstance after this to restart the session.
 - (void)brokenPipe {
-    DLog(@"  brokenPipe");
+    DLog(@"  brokenPipe %@ task=%@", self, self.shell);
     if (_exited) {
         DLog(@"  brokenPipe: Already exited");
         return;

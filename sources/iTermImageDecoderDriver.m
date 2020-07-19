@@ -110,6 +110,7 @@ static void ExecImageDecoder(char *executable, char *type, char *sandbox, int js
     }
     close(readFD);
     if (!ok) {
+        DLog(@"Send SIGKILL to %@", @(pid));
         kill(pid, SIGKILL);
     }
     [self reapProcessID:pid];

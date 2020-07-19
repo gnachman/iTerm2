@@ -156,13 +156,17 @@
     }
     [[iTermProcessCache sharedInstance] unregisterTrackedPID:self.childPid];
     if (toProcessGroup) {
+        DLog(@"Kill process group %@ with signal %@", @(self.childPid), @(signo));
         killpg(self.childPid, signo);
     } else {
+        DLog(@"Kill process %@ with signal %@", @(self.childPid), @(signo));
         kill(self.childPid, signo);
     }
+    DLog(@"%@", [NSThread callStackSymbols]);
 }
 
 - (void)killWithMode:(iTermJobManagerKillingMode)mode {
+    DLog(@"%@ killWithMode:%@", self, @(mode));
     switch (mode) {
         case iTermJobManagerKillingModeRegular:
             [self sendSignal:SIGHUP toProcessGroup:NO];

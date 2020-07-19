@@ -472,10 +472,12 @@ typedef struct {
         return;
     }
     [[iTermProcessCache sharedInstance] unregisterTrackedPID:state.child.pid];
+    DLog(@"Send signal %@ to %@\n%@", @(signo), @(state.child.pid), [NSThread callStackSymbols]);
     killpg(state.child.pid, signo);
 }
 
 - (void)killWithMode:(iTermJobManagerKillingMode)mode {
+    DLog(@"%@ killWithMode:%@", self, @(mode));
     [self.thread dispatchRecursiveSync:^(iTermMultiServerJobManagerState * _Nullable state) {
         [self killWithMode:mode state:state];
     }];

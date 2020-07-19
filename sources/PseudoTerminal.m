@@ -2189,6 +2189,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (IBAction)restartSession:(id)sender {
+    DLog(@"restartSession");
     [self restartSessionWithConfirmation:self.currentSession];
 }
 

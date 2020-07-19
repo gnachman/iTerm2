@@ -2769,6 +2769,7 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
 }
 
 - (void)restartTextViewSession:(id)sender {
+    DLog(@"restartTextViewSession");
     [_delegate textViewRestartWithConfirmation];
 }
 

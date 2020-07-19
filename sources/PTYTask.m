@@ -98,6 +98,7 @@ static void HandleSigChld(int n) {
 }
 
 - (void)dealloc {
+    DLog(@"Dealloc PTYTask %p", self);
     // TODO: The use of killpg seems pretty sketchy. It takes a pgid_t, not a
     // pid_t. Are they guaranteed to always be the same for process group
     // leaders? It is not clear from git history why killpg is used here and
@@ -394,6 +395,7 @@ static void HandleSigChld(int n) {
 }
 
 - (void)stop {
+    DLog(@"stop %@", self);
     self.paused = NO;
     [self.loggingHelper stop];
     [self killWithMode:iTermJobManagerKillingModeRegular];
@@ -406,6 +408,7 @@ static void HandleSigChld(int n) {
 }
 
 - (void)brokenPipe {
+    DLog(@"brokenPipe %@", self);
     @synchronized(self) {
         brokenPipe_ = YES;
     }
@@ -691,6 +694,7 @@ static void HandleSigChld(int n) {
 
     [self setCommand:progpath];
     if (customShell) {
+        DLog(@"Use custom shell");
         env = [env dictionaryBySettingObject:customShell forKey:@"SHELL"];
     } else {
         env = [self environmentBySettingShell:env];

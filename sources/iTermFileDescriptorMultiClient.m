@@ -17,6 +17,7 @@
 #import "iTermMultiServerMessageBuilder.h"
 #import "iTermResult.h"
 #import "iTermThreadSafety.h"
+#import "iTermWarning.h"
 #import "NSArray+iTerm.h"
 #import "NSData+iTerm.h"
 #import "NSObject+iTerm.h"
@@ -695,6 +696,21 @@ static unsigned long long MakeUniqueID(void) {
     assert(state.readFD < 0);
 
     NSString *executable = [[NSBundle bundleForClass:self.class] pathForAuxiliaryExecutable:@"iTermServer"];
+    if ([executable containsString:@"A Document Being Saved By Autoupdate"]) {
+        static dispatch_once_t onceToken;
+        dispatch_once(&onceToken, ^{
+            dispatch_async(dispatch_get_main_queue(), ^{
+                [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"The path to the iTermServer daemon is an unusable temporary directory. This may have been caused by a crash in the auto-updater. Relaunch iTerm2 and try again. The path is:\n%@", executable]
+                                           actions:@[ @"OK" ]
+                                         accessory:nil
+                                        identifier:@"BadPathToDaemon"
+                                       silenceable:kiTermWarningTypePersistent
+                                           heading:@"Can’t Launch Daemon"
+                                            window:nil];
+            });
+        });
+        return NO;
+    }
     assert(executable);
 
     int readFD = -1;
