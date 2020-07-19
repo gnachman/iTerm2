@@ -98,6 +98,7 @@
 }
 
 - (void)launchWithCompletion:(void (^ _Nullable)(PTYSession *session, BOOL ok))completion {
+    NSLog(@"launchWithCompletion");
     assert(!_launched);
     _launched = YES;
 
@@ -120,6 +121,8 @@
                 windowController:windowController
                       completion:
      ^(PTYSession *session, BOOL willCallCompletionBlock) {
+        NSLog(@"makeSessionWithProfile completion block run");
+
          DLog(@"session=%@ willCallCompletionBlock=%@", session, @(willCallCompletionBlock));
          if (!session && windowController.numberOfTabs == 0) {
              DLog(@"abort");
@@ -141,6 +144,8 @@
              [weakSelf setFinishedWithSuccess:YES];
          }
          [self setSession:session withSideEffects:YES];
+
+        NSLog(@"All done.");
      }];
 }
 

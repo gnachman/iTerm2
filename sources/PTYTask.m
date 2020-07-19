@@ -55,6 +55,7 @@ static void HandleSigChld(int n) {
 @end
 
 @implementation PTYTask {
+    BOOL _haveRead;
     int status;
     NSString* path;
     BOOL hasOutput;
@@ -253,7 +254,7 @@ static void HandleSigChld(int n) {
               viewSize:(NSSize)viewSize
                 isUTF8:(BOOL)isUTF8
             completion:(void (^)(void))completion {
-    DLog(@"launchWithPath:%@ args:%@ env:%@ grisSize:%@ isUTF8:%@",
+    NSLog(@"launchWithPath:%@ args:%@ env:%@ grisSize:%@ isUTF8:%@",
          progpath, args, env, VT100GridSizeDescription(gridSize), @(isUTF8));
 
     if ([iTermAdvancedSettingsModel runJobsInServers] && ![iTermAdvancedSettingsModel multiserver]) {
@@ -639,7 +640,9 @@ static void HandleSigChld(int n) {
 }
 
 - (NSDictionary *)environmentBySettingShell:(NSDictionary *)originalEnvironment {
+    NSLog(@"environmentBySettingShell");
     NSString *shell = [iTermOpenDirectory userShell];
+    NSLog(@"open directory says shell is %@", shell);
     if (!shell) {
         return originalEnvironment;
     }
@@ -680,7 +683,7 @@ static void HandleSigChld(int n) {
                     viewSize:(NSSize)viewSize
                       isUTF8:(BOOL)isUTF8
                   completion:(void (^)(void))completion {
-    DLog(@"reallyLaunchWithPath:%@ args:%@ env:%@ gridSize:%@ viewSize:%@ isUTF8:%@",
+    NSLog(@"reallyLaunchWithPath:%@ args:%@ env:%@ gridSize:%@ viewSize:%@ isUTF8:%@",
          progpath, args, env,VT100GridSizeDescription(gridSize), NSStringFromSize(viewSize), @(isUTF8));
 
     __block iTermTTYState ttyState;
@@ -688,15 +691,17 @@ static void HandleSigChld(int n) {
                       iTermTTYCellSizeMake(gridSize.width, gridSize.height),
                       iTermTTYPixelSizeMake(viewSize.width, viewSize.height),
                       isUTF8);
-
+    NSLog(@"tty initialized");
     [self setCommand:progpath];
+    NSLog(@"command set");
     if (customShell) {
+        NSLog("Use custom shell");
         env = [env dictionaryBySettingObject:customShell forKey:@"SHELL"];
     } else {
         env = [self environmentBySettingShell:env];
     }
 
-    DLog(@"After setting shell environment is %@", env);
+    NSLog(@"After setting shell environment is %@", env);
     path = [progpath copy];
     NSString *commandToExec = [progpath stringByStandardizingPath];
 
@@ -716,13 +721,14 @@ static void HandleSigChld(int n) {
     [argv addObject:[progpath stringByStandardizingPath]];
     [argv addObjectsFromArray:args];
 
-    DLog(@"Preparing to launch a job. Command is %@ and args are %@", commandToExec, args);
+    NSLog(@"Preparing to launch a job. Command is %@ and args are %@", commandToExec, args);
     DLog(@"Environment is\n%@", env);
     NSArray<NSString *> *newEnviron = [self environWithOverrides:env];
 
     // Note: stringByStandardizingPath will automatically call stringByExpandingTildeInPath.
     NSString *initialPwd = [[env objectForKey:@"PWD"] stringByStandardizingPath];
-    DLog(@"initialPwd=%@", initialPwd);
+    NSLog(@"initialPwd=%@", initialPwd);
+    NSLog(@"Will fork");
     [self.jobManager forkAndExecWithTtyState:ttyState
                                      argpath:commandToExec
                                         argv:argv
@@ -731,6 +737,7 @@ static void HandleSigChld(int n) {
                                         task:self
                                   completion:
      ^(iTermJobManagerForkAndExecStatus status) {
+        NSLog(@"Did fork");
         dispatch_async(dispatch_get_main_queue(), ^{
             [self didForkAndExec:progpath
                       withStatus:status
@@ -809,6 +816,10 @@ static void HandleSigChld(int n) {
 
 // The bytes in data were just read from the fd.
 - (void)readTask:(char *)buffer length:(int)length {
+    if (!_haveRead) {
+        _haveRead = YES;
+        NSLog(@"Read first time! Got %@ bytes", @(length));
+    }
     if (self.loggingHelper) {
         [self.loggingHelper logData:[NSData dataWithBytes:buffer
                                                    length:length]];

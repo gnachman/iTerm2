@@ -367,13 +367,15 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                    parentWindow:(NSWindowController<iTermWindowController> *)parentWindow {
     self = [super init];
     if (self) {
-        PtyLog(@"PTYTab initWithSession %p", self);
+        NSLog(@"PTYTab initWithSession %p", self);
         [self commonInit];
+        NSLog(@"Done with commonInit");
         activeSession_ = session;
         [session setActivityCounter:@(_activityCounter++)];
         [[session view] setDimmed:NO];
         [self setRoot:[[PTYSplitView alloc] init]];
         PTYTab *oldTab = (PTYTab *)[session delegate];
+        NSLog(@"tab 1");
         if (oldTab && [oldTab tmuxWindow] >= 0) {
             self.tmuxWindow = [oldTab tmuxWindow];
             tmuxController_ = [oldTab tmuxController];
@@ -381,12 +383,17 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
             [tmuxController_ changeWindow:self.tmuxWindow tabTo:self];
             [self updateTmuxTitleMonitor];
         }
+        NSLog(@"tab 2");
         if (parentWindow) {
             [self setParentWindow:parentWindow];
         }
+        NSLog(@"tab 3");
         session.delegate = self;
+        NSLog(@"tab 4");
         [root_ addSubview:[session view]];
+        NSLog(@"tab 5");
         [self.viewToSessionMap setObject:session forKey:session.view];
+        NSLog(@"tab 6");
     }
     return self;
 }
@@ -5769,6 +5776,7 @@ typedef struct {
 
 // Note this is a notification handler
 - (void)updateUseMetal NS_AVAILABLE_MAC(10_11) {
+    NSLog(@"updateUseMetal");
     const BOOL resizing = self.realParentWindow.windowIsResizing;
     const BOOL powerOK = [[iTermPowerManager sharedInstance] metalAllowed];
     __block iTermMetalUnavailableReason sessionReason = iTermMetalUnavailableReasonNone;
@@ -5780,6 +5788,7 @@ typedef struct {
         }
         return session == self.activeSession;
     }];
+    NSLog(@"updateUseMetal 1");
     const BOOL allSessionsAllowMetal = [nonHiddenSessions allWithBlock:^BOOL(PTYSession *anObject) {
         return [anObject metalAllowed:&sessionReason];
     }];
@@ -5789,6 +5798,7 @@ typedef struct {
         return anObject.idleForMetal;
     }]);
 
+    NSLog(@"updateUseMetal 2");
     // Limit the number of split panes using metal because each gets its own thread and I've seen
     // some crazy stuff where people have over 50 split panes.
     const NSInteger maxNumberOfSplitPanesForMetal = 6;
@@ -5848,14 +5858,19 @@ typedef struct {
             _metalUnavailableReason = iTermMetalUnavailableReasonContextAllocationFailure;
         }
     }
+    NSLog(@"updateUseMetal 3");
     [self.sessions enumerateObjectsUsingBlock:^(PTYSession * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
         if (self->isMaximized_) {
             obj.useMetal = useMetal && (obj == self.activeSession);
             return;
         }
+        NSLog(@"set metal=%@", @(useMetal));
         obj.useMetal = useMetal;
+        NSLog(@"done setting metal");
     }];
+    NSLog(@"call didSetMetalEnabled");
     [_delegate tab:self didSetMetalEnabled:useMetal];
+    NSLog(@"updateUseMetal done");
 }
 
 - (void)metalSettingsDidChange:(NSNotification *)notification {

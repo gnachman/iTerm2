@@ -6097,6 +6097,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)tabView:(NSTabView *)tabView willSelectTabViewItem:(NSTabViewItem *)tabViewItem
 {
+    NSLog(@"tabView:willSelectTabViewItem:");
     if (![[self currentSession] exited]) {
         [[self currentSession] setNewOutput:NO];
     }
@@ -6107,6 +6108,7 @@ ITERM_WEAKLY_REFERENCEABLE
     if ([[autocompleteView window] isVisible]) {
         [autocompleteView close];
     }
+    NSLog(@"return from tabView:willSelectTabViewItem:");
 }
 
 - (void)enableBlur:(double)radius
@@ -6137,62 +6139,88 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)tabView:(NSTabView *)tabView didSelectTabViewItem:(NSTabViewItem *)tabViewItem {
-    DLog(@"Did select tab view %@", tabViewItem);
+    NSLog(@"Did select tab view %@", tabViewItem);
     [_contentView.tabBarControl setFlashing:YES];
-
+    NSLog(@"dstvi 1");
     if (self.autoCommandHistorySessionGuid) {
         [self hideAutoCommandHistory];
     }
+    NSLog(@"dstvi 2");
     PTYTab *tab = [tabViewItem identifier];
     for (PTYSession* aSession in [tab sessions]) {
+        NSLog(@"dstvi 3");
         [aSession setNewOutput:NO];
+        NSLog(@"dstvi 3.1");
 
         // Background tabs' timers run infrequently so make sure the display is
         // up to date to avoid a jump when it's shown.
         [[aSession textview] setNeedsDisplay:YES];
+        NSLog(@"dstvi 3.2");
         [aSession updateDisplayBecause:@"tabView:didSelectTabViewItem:"];
+        NSLog(@"dstvi 3.3");
         aSession.active = YES;
+        NSLog(@"dstvi 3.4");
         [self setDimmingForSession:aSession];
+        NSLog(@"dstvi 3.5");
         [[aSession view] setBackgroundDimmed:![[self window] isKeyWindow]];
+        NSLog(@"dstvi 3.6");
         [[aSession view] didBecomeVisible];
+        NSLog(@"dstvi 4");
     }
 
+    NSLog(@"dstvi 5");
     for (PTYSession *session in [self allSessions]) {
         if ([[session textview] isFindingCursor]) {
             [[session textview] endFindCursor];
         }
     }
+    NSLog(@"dstvi 6");
     if (!_fullScreen) {
         [tab updateLabelAttributes];
         [self setWindowTitle];
     }
+    NSLog(@"dstvi 7");
 
     [[self window] makeFirstResponder:[[[tabViewItem identifier] activeSession] textview]];
     if ([tab blur]) {
+        NSLog(@"dstvi 7.1");
         [self enableBlur:[tab blurRadius]];
     } else {
+        NSLog(@"dstvi 7.2");
         [self disableBlur];
     }
+    NSLog(@"dstvi 8");
 
     [_instantReplayWindowController updateInstantReplayView];
+    NSLog(@"dstvi 9");
     // Post notifications
     [[NSNotificationCenter defaultCenter] postNotificationName:iTermSessionBecameKey
                                                         object:[[tabViewItem identifier] activeSession]];
+    NSLog(@"dstvi 10");
 
     PTYSession *activeSession = [self currentSession];
     for (PTYSession *s in [self allSessions]) {
         [s setFocused:(s == activeSession)];
     }
+    NSLog(@"dstvi 11");
     [self showOrHideInstantReplayBar];
+    NSLog(@"dstvi 11.1");
     [self refreshTools];
+    NSLog(@"dstvi 11.2");
     [self updateTabColors];
+    NSLog(@"dstvi 11.3");
     [self updateToolbeltAppearance];
+    NSLog(@"dstvi 12");
     [[NSNotificationCenter defaultCenter] postNotificationName:kCurrentSessionDidChange object:nil];
     [self notifyTmuxOfTabChange];
+    NSLog(@"dstvi 13");
     if ([[PreferencePanel sessionsInstance] isWindowLoaded] && ![iTermAdvancedSettingsModel pinEditSession]) {
+        NSLog(@"dstvi 14");
         [self editSession:self.currentSession makeKey:NO];
     }
+    NSLog(@"dstvi 15");
     [self updateTouchBarIfNeeded:NO];
+    NSLog(@"dstvi 16");
 
     NSInteger darkCount = 0;
     NSInteger lightCount = 0;
@@ -6203,24 +6231,37 @@ ITERM_WEAKLY_REFERENCEABLE
             lightCount++;
         }
     }
+    NSLog(@"dstvi 17");
     if (lightCount > darkCount) {
         // Matches bottom line color for tab bar
         _contentView.color = [NSColor colorWithSRGBRed:170/255.0 green:167/255.0 blue:170/255.0 alpha:1];
     } else {
         _contentView.color = [NSColor windowBackgroundColor];
     }
+    NSLog(@"dstvi 18");
     [self updateProxyIcon];
+    NSLog(@"dstvi 19");
     [_contentView layoutIfStatusBarChanged];
+    NSLog(@"dstvi 20");
     if ([iTermAdvancedSettingsModel clearBellIconAggressively]) {
+        NSLog(@"dstvi 21");
         [self.currentSession setBell:NO];
     }
+    NSLog(@"dstvi 22");
     [self updateUseMetalInAllTabs];
+    NSLog(@"dstvi 23");
     [self.scope setValue:self.currentTab.variables forVariableNamed:iTermVariableKeyWindowCurrentTab];
+    NSLog(@"dstvi 24");
     [self updateForTransparency:self.ptyWindow];
+    NSLog(@"dstvi 25");
     [self updateDocumentEdited];
+    NSLog(@"dstvi 26");
     [[iTermFindPasteboard sharedInstance] updateObservers];
+    NSLog(@"dstvi 27");
     [self updateBackgroundImage];
+    NSLog(@"dstvi 28");
     [[NSNotificationCenter defaultCenter] postNotificationName:iTermSelectedTabDidChange object:tab];
+    NSLog(@"Did select tab view delegate returning");
 }
 
 - (void)updateUseMetalInAllTabs {
@@ -9909,6 +9950,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 // an open tab, or its bookmark's preference if it's the first session in the window.
 - (void)setupSession:(PTYSession *)aSession
             withSize:(NSSize*)size {
+    NSLog(@"setupSession");
     NSDictionary *profile;
     NSParameterAssert(aSession != nil);
 
@@ -9937,6 +9979,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
                                        reason:@"No usable font could be found"
                                      userInfo:nil];
     }
+    NSLog(@"Compute char size");
     NSSize charSize = [PTYTextView charSizeForFont:[ITAddressBookMgr fontWithDesc:[profile objectForKey:KEY_NORMAL_FONT]]
                                  horizontalSpacing:[[profile objectForKey:KEY_HORIZONTAL_SPACING] floatValue]
                                    verticalSpacing:[[profile objectForKey:KEY_VERTICAL_SPACING] floatValue]];
@@ -9963,15 +10006,16 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     } else {
         sessionRect = NSMakeRect(0, 0, columns * charSize.width + [iTermAdvancedSettingsModel terminalMargin] * 2, rows * charSize.height + [iTermAdvancedSettingsModel terminalVMargin] * 2);
     }
-
+    NSLog(@"will setScreenSize");
     if ([aSession setScreenSize:sessionRect parent:self]) {
-        PtyLog(@"setupSession - call safelySetSessionSize");
+        NSLog(@"setupSession - call safelySetSessionSize");
         [self safelySetSessionSize:aSession rows:rows columns:columns];
         PtyLog(@"setupSession - call setPreferencesFromAddressBookEntry");
         [aSession setPreferencesFromAddressBookEntry:profile];
         [aSession loadInitialColorTable];
         [aSession.screen resetTimestamps];
     }
+    NSLog(@"setupSession done");
 }
 
 - (void)moveSessionToWindow:(id)sender {
@@ -10058,20 +10102,25 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 
 // Add a tab to the tabview.
 - (void)insertTab:(PTYTab*)aTab atIndex:(int)anIndex {
-    PtyLog(@"insertTab:atIndex:%d", anIndex);
+    NSLog(@"insertTab:atIndex:%d", anIndex);
     assert(aTab);
     if ([_contentView.tabView indexOfTabViewItemWithIdentifier:aTab] == NSNotFound) {
+        NSLog(@"Tab is new");
         for (PTYSession* aSession in [aTab sessions]) {
             [aSession setIgnoreResizeNotifications:YES];
         }
+        NSLog(@"Create tab view item");
         NSTabViewItem* aTabViewItem = [[NSTabViewItem alloc] initWithIdentifier:(id)aTab];
         [aTabViewItem setLabel:@""];
         assert(aTabViewItem);
         [aTab setTabViewItem:aTabViewItem];
-        PtyLog(@"insertTab:atIndex - calling [_contentView.tabView insertTabViewItem:atIndex]");
+        NSLog(@"insertTab:atIndex - calling [_contentView.tabView insertTabViewItem:atIndex]");
         [_contentView.tabView insertTabViewItem:aTabViewItem atIndex:anIndex];
+        NSLog(@"OK inserted");
         [aTabViewItem release];
+        NSLog(@"Calling selectTabViewItem");
         [_contentView.tabView selectTabViewItemAtIndex:anIndex];
+        NSLog(@"OK selected");
         if (self.windowInitialized && !_restoringWindow) {
             if (self.tabs.count == 1) {
                 // It's important to do this before makeKeyAndOrderFront because API clients need
@@ -10080,12 +10129,16 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
             }
         }
         if (self.windowInitialized && !_fullScreen && !_restoringWindow) {
+            NSLog(@"makeKeyAndOrderFront");
             [[self window] makeKeyAndOrderFront:self];
+            NSLog(@"OK made key");
         } else {
-            PtyLog(@"window not initialized, is fullscreen, or is being restored. Stack:\n%@", [NSThread callStackSymbols]);
+            NSLog(@"window not initialized, is fullscreen, or is being restored. Stack:\n%@", [NSThread callStackSymbols]);
         }
         if (!_suppressMakeCurrentTerminal) {
+            NSLog(@"setCurrentTerminal");
             [[iTermController sharedInstance] setCurrentTerminal:self];
+            NSLog(@"OK current");
         }
     }
 }
@@ -10100,7 +10153,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 }
 // Add a session to the tab view.
 - (PTYTab *)insertSession:(PTYSession *)aSession atIndex:(int)anIndex {
-    PtyLog(@"-[PseudoTerminal insertSession: %p atIndex: %d]", aSession, anIndex);
+    NSLog(@"-[PseudoTerminal insertSession: %p atIndex: %d]", aSession, anIndex);
 
     if (aSession == nil) {
         return nil;
@@ -10110,13 +10163,17 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
         return [self tabForSession:aSession];
     }
     // create a new tab
+    NSLog(@"Create PTYTab");
     PTYTab *aTab = [[PTYTab alloc] initWithSession:aSession
                                       parentWindow:self];
+    NSLog(@"Done creating PTYTab");
     [aSession setIgnoreResizeNotifications:YES];
     if ([self numberOfTabs] == 0) {
         [aTab setReportIdealSizeAsCurrent:YES];
     }
+    NSLog(@"insertTab:atIndex:");
     [self insertTab:aTab atIndex:anIndex];
+    NSLog(@"setReportIdealSizeAsCurrent:");
     [aTab setReportIdealSizeAsCurrent:NO];
     [aTab release];
     return aTab;
@@ -10796,6 +10853,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
                       environment:(NSDictionary *)environment
                    didMakeSession:(void (^)(PTYSession *session))didMakeSession
                        completion:(void (^)(PTYSession *, BOOL ok))completion {
+    NSLog(@"asyncCreateTabWithProfile starting");
     PTYSession *currentSession = [self sessionForDirectoryRecycling];
     if (!currentSession) {
         PTYSession *newSession = [self createTabWithProfile:profile
@@ -10811,7 +10869,9 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     }
 
     __weak __typeof(self) weakSelf = self;
+    NSLog(@"Request cwd asynchronously");
     [currentSession asyncCurrentLocalWorkingDirectoryOrInitialDirectory:^(NSString *pwd) {
+        NSLog(@"Got cwd");
         DLog(@"Got local pwd so I can create a tab: %@", pwd);
         PseudoTerminal *strongSelf = [[weakSelf retain] autorelease];
         if (!strongSelf) {
@@ -10835,6 +10895,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
                    previousDirectory:(NSString *)previousDirectory
                               parent:(PTYSession *)parent
                           completion:(void (^)(PTYSession *, BOOL ok))completion {
+    NSLog(@"createTabWithProfile starting");
     iTermObjectType objectType;
     if ([_contentView.tabView numberOfTabViewItems] == 0) {
         objectType = iTermWindowObject;
@@ -10849,12 +10910,15 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     }
 
     // Initialize a new session
+    NSLog(@"Alloc a new session");
     PTYSession *aSession = [[self.sessionFactory newSessionWithProfile:profile
                                                                 parent:parent] autorelease];
 
     // Add this session to our term and make it current
+    NSLog(@"Add to tab");
     [self addSessionInNewTab:aSession];
 
+    NSLog(@"Create launch request");
     iTermSessionAttachOrLaunchRequest *launchRequest =
     [iTermSessionAttachOrLaunchRequest launchRequestWithSession:aSession
                                                       canPrompt:YES
@@ -10872,6 +10936,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
                                                windowController:self
                                                           ready:nil
                                                      completion:^(PTYSession * _Nullable newSession, BOOL ok) {
+        NSLog(@"Launch request completed");
         if (completion) {
             completion(newSession, ok);
         }
@@ -10987,6 +11052,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 }
 
 - (void)addSessionInNewTab:(PTYSession *)session {
+    NSLog(@"addSessionInNewTab:");
     if (![iTermSessionLauncher profileIsWellFormed:session.profile]) {
         return;
     }
@@ -10994,21 +11060,27 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     // Increment tabViewItemsBeingAdded so that the maximum content size will
     // be calculated with the tab bar if it's about to open.
     ++tabViewItemsBeingAdded;
+    NSLog(@"setupSession:withSize:");
     [self setupSession:session withSize:nil];
+    NSLog(@"Decrement tabViewItemsBeingAdded");
     tabViewItemsBeingAdded--;
     if ([session screen]) {  // screen initialized ok
         PTYTab *tab = nil;
+        NSLog(@"insertSession");
         if ([iTermAdvancedSettingsModel addNewTabAtEndOfTabs] || ![self currentTab]) {
             tab = [self insertSession:session atIndex:[_contentView.tabView numberOfTabViewItems]];
         } else {
             tab = [self insertSession:session atIndex:[self indexOfTab:[self currentTab]] + 1];
         }
+        NSLog(@"done with insertSession");
         if (!tab.tmuxTab &&
             [iTermProfilePreferences boolForKey:KEY_USE_CUSTOM_TAB_TITLE inProfile:session.profile]) {
+            NSLog(@"setTitleOverride:");
             [tab setTitleOverride:[iTermProfilePreferences stringForKey:KEY_CUSTOM_TAB_TITLE
                                                                inProfile:session.profile]];
         }
     }
+    NSLog(@"numberOfSessionsDidChange");
     [[self currentTab] numberOfSessionsDidChange];
 }
 

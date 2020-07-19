@@ -470,7 +470,7 @@ static unsigned long long MakeUniqueID(void) {
     };
     iTermMultiServerClientOriginatedMessage messageCopy = [self copyLaunchRequest:message];
 
-    DLog(@"Add pending launch %@ for %@", @(message.payload.launch.uniqueId), _socketPath);
+    NSLog(@"Add pending launch %@ for %@", @(message.payload.launch.uniqueId), _socketPath);
     state.pendingLaunches[@(message.payload.launch.uniqueId)] =
         [[iTermFileDescriptorMultiClientPendingLaunch alloc] initWithRequest:messageCopy.payload.launch
                                                                     callback:callback
@@ -480,7 +480,7 @@ static unsigned long long MakeUniqueID(void) {
                                                                              NSNumber *result) {
         const BOOL ok = result.boolValue;
         if (ok) {
-            DLog(@"Wrote launch request successfully.");
+            NSLog(@"Wrote launch request successfully.");
             return;
         }
 
@@ -816,14 +816,17 @@ static unsigned long long MakeUniqueID(void) {
     }
     switch (decoded->type) {
         case iTermMultiServerRPCTypeWait:
+            NSLog(@"dispatch wait");
             [self handleWait:decoded->payload.wait state:state];
             break;
 
         case iTermMultiServerRPCTypeLaunch:
+            NSLog(@"dispatch launch");
             [self handleLaunch:decoded->payload.launch state:state];
             break;
 
         case iTermMultiServerRPCTypeTermination:
+            NSLog(@"Dispatch termination");
             [self handleTermination:decoded->payload.termination state:state];
             break;
 
@@ -877,7 +880,7 @@ static unsigned long long MakeUniqueID(void) {
     // First, read the length of the forthcoming message.
     __weak __typeof(self) weakSelf = self;
     NSString *socketPath = [_socketPath copy];
-    DLog(@"Read length of next message from %@", socketPath);
+    NSLog(@"Read length of next message from %@", socketPath);
     [self readWithState:state
                  length:sizeof(size_t)
                callback:[_thread newCallbackWithBlock:^(iTermFileDescriptorMultiClientState *_Nonnull state,
@@ -894,7 +897,7 @@ static unsigned long long MakeUniqueID(void) {
             assert(lengthMessage.data.length == sizeof(size_t));
             size_t length;
             memmove(&length, lengthMessage.data.bytes, sizeof(size_t));
-            DLog(@"Next message length is %@. %@", @(length), socketPath);
+            NSLog(@"Next message length is %@. %@", @(length), socketPath);
             static const NSInteger MAX_MESSAGE_SIZE = 1024 * 1024;
             if (length > MAX_MESSAGE_SIZE) {
                 DLog(@"Max length exceeded, return io error %@", socketPath);
@@ -902,7 +905,7 @@ static unsigned long long MakeUniqueID(void) {
                 return;
             }
 
-            DLog(@"Will read payload of length %@. %@", @(length), socketPath);
+            NSLog(@"Will read payload of length %@. %@", @(length), socketPath);
             // Now read the payload including a possible file descriptor.
             [weakSelf readWithState:state
                              length:length
@@ -945,6 +948,7 @@ static unsigned long long MakeUniqueID(void) {
                length:(NSInteger)length
              callback:(iTermCallback<id, iTermResult<iTermMultiServerMessage *> *> *)callback {
     iTermMultiServerMessageBuilder *builder = [[iTermMultiServerMessageBuilder alloc] init];
+    NSLog(@"Want to read");
     [state whenReadable:^(iTermFileDescriptorMultiClientState *state) {
         [self partialReadWithState:state totalLength:length builder:builder callback:callback];
     }];
@@ -970,7 +974,7 @@ static unsigned long long MakeUniqueID(void) {
     ssize_t bytesRead = iTermMultiServerReadMessage(state.readFD, &message, totalLength - builder.length);
     if (bytesRead < 0) {
         if (errno == EAGAIN) {
-            DLog(@"Nothing to read %@. Will wait for the socket to become readable and try again later.", _socketPath);
+            NSLog(@"Nothing to read %@. Will wait for the socket to become readable and try again later.", _socketPath);
             __weak __typeof(self) weakSelf = self;
             [state whenReadable:^(iTermFileDescriptorMultiClientState *state) {
                 [weakSelf partialReadWithState:state
@@ -984,6 +988,7 @@ static unsigned long long MakeUniqueID(void) {
         [callback invokeWithObject:[iTermResult withError:self.ioError]];
         return;
     }
+    NSLog(@"Did read %@ bytes", @(bytesRead));
     if (message.controlBuffer.cm.cmsg_len == CMSG_LEN(sizeof(int)) &&
         message.controlBuffer.cm.cmsg_level == SOL_SOCKET &&
         message.controlBuffer.cm.cmsg_type == SCM_RIGHTS) {
@@ -1006,12 +1011,12 @@ static unsigned long long MakeUniqueID(void) {
 
     assert(builder.length <= totalLength);
     if (builder.length == totalLength) {
-        DLog(@"Read complete from %@", _socketPath);
+        NSLog(@"Read complete from %@", _socketPath);
         [callback invokeWithObject:[iTermResult withObject:builder.message]];
         return;
     }
     __weak __typeof(self) weakSelf = self;
-    DLog(@"Have read %@/%@ from %@. Wait for socket to be readable again.", @(builder.length), @(totalLength), _socketPath);
+    NSLog(@"Have read %@/%@ from %@. Wait for socket to be readable again.", @(builder.length), @(totalLength), _socketPath);
     [state whenReadable:^(iTermFileDescriptorMultiClientState *state) {
         [weakSelf partialReadWithState:state
                            totalLength:totalLength
@@ -1109,7 +1114,7 @@ static void HexDump(NSData *data) {
     const ssize_t bytesWritten = iTermFileDescriptorClientWrite(state.writeFD,
                                                                 data.bytes,
                                                                 data.length);
-    DLog(@"Wrote %@/%@", @(bytesWritten), @(data.length));
+    NSLog(@"Wrote %@/%@", @(bytesWritten), @(data.length));
     if (bytesWritten < 0) {
         DLog(@"Write failed to %@: %s", _socketPath, strerror(errno));
         [callback invokeWithObject:@NO];

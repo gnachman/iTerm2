@@ -622,6 +622,7 @@ static const NSUInteger kMaxHosts = 100;
 - (instancetype)initSynthetic:(BOOL)synthetic {
     self = [super init];
     if (self) {
+        NSLog(@"1");
         _autoLogId = arc4random();
         _useAdaptiveFrameRate = [iTermAdvancedSettingsModel useAdaptiveFrameRate];
         _adaptiveFrameRateThroughputThreshold = [iTermAdvancedSettingsModel adaptiveFrameRateThroughputThreshold];
@@ -639,6 +640,7 @@ static const NSUInteger kMaxHosts = 100;
         // TODO: How do slower machines fare?
         static const int kMaxOutstandingExecuteCalls = 4;
         _executionSemaphore = dispatch_semaphore_create(kMaxOutstandingExecuteCalls);
+        NSLog(@"2");
 
         _lastOutputIgnoringOutputAfterResizing = _lastInput;
         _lastUpdate = _lastInput;
@@ -652,6 +654,7 @@ static const NSUInteger kMaxHosts = 100;
             [iTermAdvancedSettingsModel optionIsMetaForSpecialChars];
         _screen = [[VT100Screen alloc] initWithTerminal:_terminal];
         NSParameterAssert(_shell != nil && _terminal != nil && _screen != nil);
+        NSLog(@"3");
 
         _overriddenFields = [[NSMutableSet alloc] init];
         // Allocate a guid. If we end up restoring from a session during startup this will be replaced.
@@ -665,6 +668,7 @@ static const NSUInteger kMaxHosts = 100;
         _userVariables = [[iTermVariables alloc] initWithContext:iTermVariablesSuggestionContextNone
                                                            owner:self];
         [self.variablesScope setValue:_userVariables forVariableNamed:@"user"];
+        NSLog(@"4");
 
         _creationDate = [[NSDate date] retain];
         NSDateFormatter *dateFormatter = [[[NSDateFormatter alloc] init] autorelease];
@@ -682,6 +686,7 @@ static const NSUInteger kMaxHosts = 100;
         _jobPidRef.onChangeBlock = ^{
             [weakSelf jobPidDidChange];
         };
+        NSLog(@"5");
 
         [_autoNameSwiftyString invalidate];
         [_autoNameSwiftyString autorelease];
@@ -694,6 +699,7 @@ static const NSUInteger kMaxHosts = 100;
             }
             return newValue;
         };
+        NSLog(@"6");
 
         _tmuxSecureLogging = NO;
         _tailFindContext = [[FindContext alloc] init];
@@ -710,6 +716,7 @@ static const NSUInteger kMaxHosts = 100;
         _throughputEstimator = [[iTermThroughputEstimator alloc] initWithHistoryOfDuration:5.0 / 30.0 secondsPerBucket:1 / 30.0];
         _cadenceController = [[iTermUpdateCadenceController alloc] initWithThroughputEstimator:_throughputEstimator];
         _cadenceController.delegate = self;
+        NSLog(@"7");
 
         _keystrokeSubscriptions = [[NSMutableDictionary alloc] init];
         _keyboardFilterSubscriptions = [[NSMutableDictionary alloc] init];
@@ -732,6 +739,7 @@ static const NSUInteger kMaxHosts = 100;
         _pwdPoller = [[iTermWorkingDirectoryPoller alloc] init];
         _pwdPoller.delegate = self;
         _graphicSource = [[iTermGraphicSource alloc] init];
+        NSLog(@"8");
 
         // This is a placeholder. When the profile is set it will get updated.
         iTermStandardKeyMapper *standardKeyMapper = [[iTermStandardKeyMapper alloc] init];
@@ -798,15 +806,19 @@ static const NSUInteger kMaxHosts = 100;
                                                  selector:@selector(tmuxWillKillWindow:)
                                                      name:iTermTmuxControllerWillKillWindow
                                                    object:nil];
+        NSLog(@"9");
+
         [[iTermFindPasteboard sharedInstance] addObserver:self block:^(NSString * _Nonnull newValue) {
             if (weakSelf.view.window.isKeyWindow) {
                 [weakSelf useStringForFind:newValue];
             }
         }];
+        NSLog(@"10");
 
         if (!synthetic) {
             [[NSNotificationCenter defaultCenter] postNotificationName:PTYSessionCreatedNotification object:self];
         }
+        NSLog(@"11");
     }
     return self;
 }
@@ -2177,7 +2189,7 @@ ITERM_WEAKLY_REFERENCEABLE
               isUTF8:(BOOL)isUTF8
        substitutions:(NSDictionary *)substitutions
           completion:(void (^)(BOOL))completion {
-   DLog(@"startProgram:%@ environment:%@ isUTF8:%@ substitutions:%@",
+   NSLog(@"startProgram:%@ environment:%@ isUTF8:%@ substitutions:%@",
          command, environment, @(isUTF8), substitutions);
     self.program = command;
     self.customShell = customShell;
@@ -2185,15 +2197,17 @@ ITERM_WEAKLY_REFERENCEABLE
     self.isUTF8 = isUTF8;
     self.substitutions = substitutions ?: @{};
     [self computeArgvForCommand:command substitutions:substitutions completion:^(NSArray<NSString *> *argv) {
-        DLog(@"argv=%@", argv);
+        NSLog(@"argv=%@", argv);
         [self computeEnvironmentForNewJobFromEnvironment:environment ?: @{} substitutions:substitutions completion:^(NSDictionary *env) {
+            NSLog(@"env=%@", env);
             [self fetchAutoLogFilenameWithCompletion:^(NSString * _Nonnull autoLogFilename) {
+                NSLog(@"autoLogFilename=%@", autoLogFilename);
                 [[self loggingHelper] setPath:autoLogFilename
                                       enabled:autoLogFilename != nil
                                     plainText:[iTermProfilePreferences boolForKey:KEY_PLAIN_TEXT_LOGGING
                                                                         inProfile:self.profile]
                                        append:nil];
-
+                NSLog(@"launchWithPath:...");
                 [_shell launchWithPath:argv[0]
                              arguments:[argv subarrayFromIndex:1]
                            environment:env

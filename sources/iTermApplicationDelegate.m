@@ -1612,6 +1612,8 @@ static BOOL hasBecomeActive = NO;
 
 - (IBAction)newSession:(id)sender
 {
+    NSLog(@"-[iTermApplicationDelegate newSession:] - begin");
+
     DLog(@"iTermApplicationDelegate newSession:");
     BOOL cancel;
     BOOL tmux = [self possiblyTmuxValueForWindow:NO cancel:&cancel];
@@ -1620,6 +1622,7 @@ static BOOL hasBecomeActive = NO;
         return;
     }
     [[iTermController sharedInstance] newSession:sender possiblyTmux:tmux];
+    NSLog(@"-[iTermApplicationDelegate newSession:] - synchronous part finished");
 }
 
 - (IBAction)arrangeHorizontally:(id)sender

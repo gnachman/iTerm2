@@ -154,15 +154,18 @@ typedef struct {
 
     iTermCallback *callback = [self.thread newCallbackWithBlock:^(iTermMultiServerJobManagerState *state,
                                                                   iTermResult<iTermFileDescriptorMultiClientChild *> *result) {
+        NSLog(@"In launch callback");
         [result handleObject:
          ^(iTermFileDescriptorMultiClientChild * _Nonnull child) {
             state.child = child;
             // Happy path
             dispatch_async(dispatch_get_main_queue(), ^{
+                NSLog(@"Back in main queue");
                 [[iTermProcessCache sharedInstance] registerTrackedPID:child.pid];
                 DLog(@"Register %@ after server successfully execs job", @(child.pid));
                 [[TaskNotifier sharedInstance] registerTask:task];
                 [[iTermProcessCache sharedInstance] setNeedsUpdate:YES];
+                NSLog(@"All registered");
                 completion(iTermJobManagerForkAndExecStatusSuccess);
             });
         } error:

@@ -294,16 +294,21 @@ NS_ASSUME_NONNULL_BEGIN
     PTYSession *aSession;
 
     // Initialize a new session
+    NSLog(@"initSynthetic");
     aSession = [[PTYSession alloc] initSynthetic:NO];
-
+    NSLog(@"setUnlimitedScrollback:");
     [[aSession screen] setUnlimitedScrollback:[profile[KEY_UNLIMITED_SCROLLBACK] boolValue]];
+    NSLog(@"setMaxScrollbackLines:");
     [[aSession screen] setMaxScrollbackLines:[profile[KEY_SCROLLBACK_LINES] intValue]];
 
     // set our preferences
+    NSLog(@"setProfile:");
     [aSession setProfile:profile];
     if (parent) {
+        NSLog(@"setParentScope");
         [aSession setParentScope:parent.variablesScope];
     }
+    NSLog(@"done with newSession");
     return aSession;
 }
 
@@ -355,12 +360,14 @@ NS_ASSUME_NONNULL_BEGIN
 // Execute the given program and set the window title if it is uninitialized.
 - (void)startProgramForRequest:(iTermSessionAttachOrLaunchRequest *)request
                     completion:(void (^)(BOOL))completion {
+    NSLog(@"Call startProgram");
     [request.session startProgram:request.computedCommand
                       environment:request.environment
                       customShell:request.customShell
                            isUTF8:request.isUTF8
                     substitutions:request.substitutions
                        completion:^(BOOL ok) {
+        NSLog(@"Program start completed");
         [request.windowController setWindowTitle];
         if (completion) {
             completion(ok);
