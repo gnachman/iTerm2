@@ -1006,7 +1006,7 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
         }
         return findContext.offset + droppedChars + [_lineBlocks rawSpaceUsedInRangeOfBlocks:NSMakeRange(0, _lineBlocks.count)];
     }
-    int numBlocks = findContext.absBlockNum - num_dropped_blocks;
+    const int numBlocks = MIN(_lineBlocks.count, findContext.absBlockNum - num_dropped_blocks);
     const NSInteger rawSpaceUsed = numBlocks > 0 ? [_lineBlocks rawSpaceUsedInRangeOfBlocks:NSMakeRange(0, numBlocks)] : 0;
     return droppedChars + rawSpaceUsed + findContext.offset;
 }

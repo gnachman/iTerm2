@@ -44,6 +44,9 @@ extern "C" {
     if (highIndex < lowIndex) {
         return 0;
     }
+    assert(highIndex < _sums.size());
+    assert(lowIndex < _sums.size());
+    assert(lowIndex < _values.size());
     return _sums[highIndex] - _sums[lowIndex] + _values[lowIndex];
 }
 
