@@ -159,6 +159,7 @@ extern NSString *const kPreferenceKeyThreeFingerEmulatesMiddle;
 extern NSString *const kPreferenceKeyFocusFollowsMouse;
 extern NSString *const kPreferenceKeyTripleClickSelectsFullWrappedLines;
 extern NSString *const kPreferenceKeyDoubleClickPerformsSmartSelection;
+extern NSString *const kPreferenceKeyEnterCopyModeAutomatically;
 extern NSString *const kPreferenceKeyFocusOnRightOrMiddleClick;
 
 // Not in prefs

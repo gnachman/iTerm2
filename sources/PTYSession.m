@@ -7189,15 +7189,14 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     const BOOL accept = ![self keystrokeIsFilteredByMonitor:event];
 
     if (accept) {
+        if ([_copyModeHandler shouldAutoEnterWithEvent:event]) {
+            _copyModeHandler.enabled = YES;
+            [_copyModeHandler handleAutoEnteringEvent:event];
+            return NO;
+        }
         if (_copyModeHandler.enabled) {
-            if ([_copyModeHandler handleEvent:event]) {
-                return NO;
-            } else {
-                if ([self hasActionableKeyMappingForEvent:event] &&
-                    ![self hasTextSendingKeyMappingForEvent:event]) {
-                    return YES;
-                }
-            }
+            [_copyModeHandler handleEvent:event];
+            return NO;
         }
         if (event.keyCode == kVK_Return && _fakePromptDetectedAbsLine >= 0) {
             [self didInferEndOfCommand];
@@ -8053,6 +8052,9 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (BOOL)hasActionableKeyMappingForEvent:(NSEvent *)event {
+    if ([_copyModeHandler shouldAutoEnterWithEvent:event]) {
+        return NO;
+    }
     return [[self _keyBindingActionForEvent:event] isActionable];
 }
 

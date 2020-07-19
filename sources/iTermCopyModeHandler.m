@@ -9,6 +9,7 @@
 
 #import "iTermCopyModeState.h"
 #import "iTermNotificationController.h"
+#import "iTermPreferences.h"
 #import "NSEvent+iTerm.h"
 
 #import <Cocoa/Cocoa.h>
@@ -80,6 +81,66 @@ static const NSEventModifierFlags sCopyModeEventModifierMask = (NSEventModifierF
     // so that's safe.
     return ([self actionForEvent:event] != iTermCopyModeActionNone ||
             (event.it_modifierFlags & NSEventModifierFlagCommand) == 0);
+}
+
+- (NSInteger)autoEnterEventDirection:(NSEvent *)event {
+    NSString *const string = event.charactersIgnoringModifiers;
+    const unichar code = [string length] > 0 ? [string characterAtIndex:0] : 0;
+    switch (code) {
+        case NSPageUpFunctionKey:
+        case NSLeftArrowFunctionKey:
+        case NSUpArrowFunctionKey:
+        case NSHomeFunctionKey:
+            return -1;
+
+        case NSPageDownFunctionKey:
+        case NSDownArrowFunctionKey:
+        case NSRightArrowFunctionKey:
+        case NSEndFunctionKey:
+            return 1;
+
+        default:
+            return 0;
+
+    }
+}
+
+- (BOOL)shouldAutoEnterWithEvent:(NSEvent *)event {
+    if (self.enabled) {
+        return NO;
+    }
+    if (![iTermPreferences boolForKey:kPreferenceKeyEnterCopyModeAutomatically]) {
+        return NO;
+    }
+    if ([self autoEnterEventDirection:event] == 0) {
+        return NO;
+    }
+    const NSEventModifierFlags masks[] = {
+        NSEventModifierFlagShift,
+        NSEventModifierFlagShift | NSEventModifierFlagOption,
+        NSEventModifierFlagShift | NSEventModifierFlagControl,  // in xcode this moves by CamelCaseWord
+        NSEventModifierFlagShift | NSEventModifierFlagCommand
+    };
+    const NSEventModifierFlags mask = (NSEventModifierFlagCommand |
+                                       NSEventModifierFlagShift |
+                                       NSEventModifierFlagControl |
+                                       NSEventModifierFlagOption);
+    for (size_t i = 0; i < sizeof(masks) / sizeof(*masks); i++) {
+        if ((event.modifierFlags & mask) == masks[i]) {
+            return YES;
+        }
+    }
+    return NO;
+}
+
+- (void)handleAutoEnteringEvent:(NSEvent *)event {
+    const NSInteger direction = [self autoEnterEventDirection:event];
+    assert(direction != 0);
+    self.enabled = YES;
+    if (direction < 0) {
+        [_state swap];
+    }
+    [self handleEvent:event];
 }
 
 - (BOOL)handleEvent:(NSEvent *)event {
@@ -215,6 +276,21 @@ static const NSEventModifierFlags sCopyModeEventModifierMask = (NSEventModifierF
         }
         return iTermCopyModeActionNone;
     }
+    if ((event.it_modifierFlags & sCopyModeEventModifierMask) == NSEventModifierFlagCommand) {
+        switch (code) {
+            case NSHomeFunctionKey:
+            case NSUpArrowFunctionKey:
+                return iTermCopyModeActionMoveToStart;
+            case NSEndFunctionKey:
+            case NSDownArrowFunctionKey:
+                return iTermCopyModeActionMoveToEnd;
+            case NSLeftArrowFunctionKey:
+                return iTermCopyModeActionMoveToStartOfLine;
+            case NSRightArrowFunctionKey:
+                return iTermCopyModeActionMoveToEndOfLine;
+        }
+        return iTermCopyModeActionNone;
+    }
     if ((event.it_modifierFlags & sCopyModeEventModifierMask) == 0) {
         switch (code) {
             case NSPageUpFunctionKey:
@@ -245,6 +321,7 @@ static const NSEventModifierFlags sCopyModeEventModifierMask = (NSEventModifierF
             case 'H':
                 return iTermCopyModeActionMoveToTopOfVisibleArea;
             case 'G':
+            case NSEndFunctionKey:
                 return iTermCopyModeActionMoveToEnd;
             case 'L':
                 return iTermCopyModeActionMoveToBottomOfVisibleArea;
@@ -253,6 +330,7 @@ static const NSEventModifierFlags sCopyModeEventModifierMask = (NSEventModifierF
             case 'V':
                 return iTermCopyModeActionToggleLineSelection;
             case 'g':
+            case NSHomeFunctionKey:
                 return iTermCopyModeActionMoveToStart;
             case 'h':
             case NSLeftArrowFunctionKey:

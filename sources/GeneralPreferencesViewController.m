@@ -129,6 +129,8 @@ enum {
     IBOutlet NSButton *_tmuxWarnBeforePausing;
 
     IBOutlet NSTabView *_tabView;
+
+    IBOutlet NSButton *_enterCopyModeAutomatically;
 }
 
 - (instancetype)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil {
@@ -441,6 +443,10 @@ enum {
         strongSelf->_wordChars.enabled = ![strongSelf boolForKey:kPreferenceKeyDoubleClickPerformsSmartSelection];
         strongSelf->_wordCharsLabel.labelEnabled = ![strongSelf boolForKey:kPreferenceKeyDoubleClickPerformsSmartSelection];
     };
+    [self defineControl:_enterCopyModeAutomatically
+                    key:kPreferenceKeyEnterCopyModeAutomatically
+            relatedView:nil
+                   type:kPreferenceInfoTypeCheckbox];
 
     [self defineControl:_smartPlacement
                     key:kPreferenceKeySmartWindowPlacement

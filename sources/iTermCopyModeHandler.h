@@ -38,7 +38,9 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nullable, nonatomic, readonly) iTermCopyModeState *state;
 
 - (BOOL)handleEvent:(NSEvent *)event;
+- (void)handleAutoEnteringEvent:(NSEvent *)event;
 - (BOOL)wouldHandleEvent:(NSEvent *)event;
+- (BOOL)shouldAutoEnterWithEvent:(NSEvent *)event;
 
 @end
 
