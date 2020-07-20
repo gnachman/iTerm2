@@ -618,22 +618,19 @@ static unsigned long long MakeUniqueID(void) {
                                                                              NSNumber *value) {
         [weakSelf didWriteWaitRequestWithStatus:value.boolValue
                                           child:child
-                                          state:state
-                                       callback:callback];
+                                          state:state];
     }]];
 }
 
 - (void)didWriteWaitRequestWithStatus:(BOOL)sendOK
                                 child:(iTermFileDescriptorMultiClientChild *)child
-                                state:(iTermFileDescriptorMultiClientState *)state
-                             callback:(iTermCallback<id, iTermResult<NSNumber *> *> *)callback {
+                                state:(iTermFileDescriptorMultiClientState *)state {
     if (sendOK) {
         return;
     }
     [child invokeAllWaitCallbacks:[iTermResult withError:self.ioError]];
     DLog(@"Close client for %@ because of failed write", _socketPath);
     [self closeWithState:state];
-    [callback invokeWithObject:[iTermResult withError:[self connectionLostError]]];
 }
 
 // Handle a wait response from the daemon, giving the child's exit code.
