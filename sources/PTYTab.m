@@ -460,6 +460,11 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     };
 }
 
+- (void)encodeWithCoder:(NSCoder *)coder {
+    // NSTabViewItem called this in one crash. We don't have a decoder, but at least we can
+    // avoid dying by implementing a do-nothing method. It doesn't seem to be common.
+}
+
 - (void)dealloc {
     // Post a notification
     [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermTabClosing"
