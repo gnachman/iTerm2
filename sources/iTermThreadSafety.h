@@ -107,6 +107,8 @@ NS_ASSUME_NONNULL_BEGIN
 // implementation's block not returning iTermSynchronizedState<T> 🙄
 typedef iTermSynchronizedState<T> * _Nonnull (^iTermThreadStateFactoryBlockType)(dispatch_queue_t queue);
 
++ (iTermThread *)currentThread;
+
 + (iTermThread<iTermMainThreadState *> *)main;
 + (instancetype)withLabel:(NSString *)label
              stateFactory:(iTermThreadStateFactoryBlockType)stateFactory;

@@ -80,6 +80,7 @@ static void HandleSigChld(int n) {
 - (instancetype)init {
     self = [super init];
     if (self) {
+#warning TODO: it's crazy for each job to have a queue. Can they share?
         _jobManagerQueue = dispatch_queue_create("com.iterm2.job-manager", DISPATCH_QUEUE_SERIAL);
         writeBuffer = [[NSMutableData alloc] init];
         writeLock = [[NSLock alloc] init];

@@ -80,6 +80,11 @@ static void Check(iTermSynchronizedState *self) {
 }
 @end
 
+#if BETA
+// Weak references to all iTermThread objects.
+NSPointerArray *gThreads;
+#endif
+
 @implementation iTermThread {
     iTermSynchronizedState *_state;
 #if BETA
@@ -105,6 +110,21 @@ static void Check(iTermSynchronizedState *self) {
     return [[self alloc] initWithLabel:label stateFactory:stateFactory];
 }
 
++ (iTermThread *)currentThread {
+    const char *currentLabel = dispatch_queue_get_label(DISPATCH_CURRENT_QUEUE_LABEL);
+    @synchronized (gThreads) {
+        for (iTermThread *thread in gThreads) {
+            if ([[thread retain] autorelease] == nil) {
+                continue;
+            }
+            if (dispatch_queue_get_label(thread->_queue) == currentLabel) {
+                return thread;
+            }
+        }
+    }
+    return nil;
+}
+
 - (instancetype)initWithQueue:(dispatch_queue_t)queue
                  stateFactory:(iTermThreadStateFactoryBlockType)stateFactory {
     self = [super init];
@@ -115,6 +135,13 @@ static void Check(iTermSynchronizedState *self) {
         _state.ready = YES;
 #if BETA
         _stacks = [@[] retain];
+        static dispatch_once_t onceToken;
+        dispatch_once(&onceToken, ^{
+            gThreads = [[NSPointerArray weakObjectsPointerArray] retain];
+        });
+        @synchronized (gThreads) {
+            [gThreads addPointer:self];
+        }
 #endif
     }
     return self;
@@ -122,7 +149,10 @@ static void Check(iTermSynchronizedState *self) {
 
 - (instancetype)initWithLabel:(NSString *)label
                  stateFactory:(iTermThreadStateFactoryBlockType)stateFactory {
-    return [self initWithQueue:dispatch_queue_create(label.UTF8String, DISPATCH_QUEUE_SERIAL)
+    static _Atomic int threadNumber;
+    int i = threadNumber++;
+    const char *cstr = [NSString stringWithFormat:@"%@.%d", label, i].UTF8String;
+    return [self initWithQueue:dispatch_queue_create(cstr, DISPATCH_QUEUE_SERIAL)
                   stateFactory:stateFactory];
 }
 
@@ -133,13 +163,24 @@ static void Check(iTermSynchronizedState *self) {
     [super dealloc];
 }
 
+- (NSString *)description {
+    return [NSString stringWithFormat:@"<%@: %p queue=%@>",
+            NSStringFromClass(self.class), self, _queue];
+}
+
+- (NSString *)label {
+    return [NSString stringWithUTF8String:dispatch_queue_get_label(_queue)];
+}
+
 #if BETA
 - (NSString *)stack {
     return [_stacks componentsJoinedByString:@"\n\n"];
 }
 
 - (NSArray<NSString *> *)currentStacks {
-    NSString *stack = [[[NSThread callStackSymbols] subarrayFromIndex:1] componentsJoinedByString:@"\n"];
+    NSArray *frames = [[NSThread callStackSymbols] subarrayFromIndex:1];
+    frames = [@[ self.label ] arrayByAddingObjectsFromArray:frames];
+    NSString *stack = [frames componentsJoinedByString:@"\n"];
     return [@[stack] arrayByAddingObjectsFromArray:_stacks];
 }
 
@@ -151,7 +192,7 @@ static void Check(iTermSynchronizedState *self) {
 - (void)dispatchAsync:(void (^)(id))block {
     [self retain];
 #if BETA
-    NSArray *stacks = [self.currentStacks retain];
+    NSArray *stacks = [[[iTermThread currentThread] currentStacks] ?: @[ [[NSThread callStackSymbols]  componentsJoinedByString:@"\n"] ] retain];
 #endif
     dispatch_async(_queue, ^{
 #if BETA
@@ -247,11 +288,11 @@ static void Check(iTermSynchronizedState *self) {
     void (^block)(id, id) = [_block retain];
     [self retain];
 #if BETA
-    NSString *stack = [[_thread currentStack] retain];
+    NSString *stack = [[[iTermThread currentThread] currentStack] retain];
 #endif
     [_thread dispatchAsync:^(iTermSynchronizedState *state) {
 #if BETA
-        ITBetaAssert(!self->_invokeStack, @"Previously invoked from %@. Now invoked from %@. Created from %@.",
+        ITBetaAssert(!self->_invokeStack, @"Previously invoked from:\n%@\n\nNow invoked from:\n%@\n\nCreated from:\n%@",
                      _invokeStack, stack, _creationStack);
         _invokeStack = [stack copy];
         [stack release];
@@ -271,8 +312,9 @@ static void Check(iTermSynchronizedState *self) {
 #endif
     [_thread dispatchRecursiveSync:^(iTermSynchronizedState *state) {
 #if BETA
-        ITBetaAssert(!self->_invokeStack, @"Previously invoked from %@. Now invoked from %@. Created from %@.",
+        ITBetaAssert(!self->_invokeStack, @"Previously invoked from:\n%@\n\nNow invoked from:\n%@\n\nCreated from:\n%@",
                      _invokeStack, stack, _creationStack);
+
         _invokeStack = [stack copy];
         [stack release];
 #endif
