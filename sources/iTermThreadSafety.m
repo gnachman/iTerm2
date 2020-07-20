@@ -147,11 +147,15 @@ NSPointerArray *gThreads;
     return self;
 }
 
-- (instancetype)initWithLabel:(NSString *)label
-                 stateFactory:(iTermThreadStateFactoryBlockType)stateFactory {
++ (NSString *)uniqueQueueLabelWithName:(NSString *)label {
     static _Atomic int threadNumber;
     int i = threadNumber++;
-    const char *cstr = [NSString stringWithFormat:@"%@.%d", label, i].UTF8String;
+    return [NSString stringWithFormat:@"%@.%d", label, i];
+}
+
+- (instancetype)initWithLabel:(NSString *)label
+                 stateFactory:(iTermThreadStateFactoryBlockType)stateFactory {
+    const char *cstr = [iTermThread uniqueQueueLabelWithName:label].UTF8String;
     return [self initWithQueue:dispatch_queue_create(cstr, DISPATCH_QUEUE_SERIAL)
                   stateFactory:stateFactory];
 }

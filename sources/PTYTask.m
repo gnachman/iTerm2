@@ -18,6 +18,7 @@
 #import "iTermMultiServerJobManager.h"
 #import "iTermOpenDirectory.h"
 #import "iTermOrphanServerAdopter.h"
+#import "iTermThreadSafety.h"
 #import "iTermTmuxJobManager.h"
 #import "NSDictionary+iTerm.h"
 
@@ -80,8 +81,8 @@ static void HandleSigChld(int n) {
 - (instancetype)init {
     self = [super init];
     if (self) {
-#warning TODO: it's crazy for each job to have a queue. Can they share?
-        _jobManagerQueue = dispatch_queue_create("com.iterm2.job-manager", DISPATCH_QUEUE_SERIAL);
+        const char *label = [iTermThread uniqueQueueLabelWithName:@"com.iterm2.job-manager"].UTF8String;
+        _jobManagerQueue = dispatch_queue_create(label, DISPATCH_QUEUE_SERIAL);
         writeBuffer = [[NSMutableData alloc] init];
         writeLock = [[NSLock alloc] init];
         if ([iTermAdvancedSettingsModel runJobsInServers]) {
