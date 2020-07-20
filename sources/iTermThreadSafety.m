@@ -7,6 +7,8 @@
 
 #import "iTermThreadSafety.h"
 
+#import "DebugLogging.h"
+#import "NSArray+iTerm.h"
 #import "NSObject+iTerm.h"
 
 @interface iTermSynchronizedState()
@@ -80,6 +82,9 @@ static void Check(iTermSynchronizedState *self) {
 
 @implementation iTermThread {
     iTermSynchronizedState *_state;
+#if BETA
+    NSArray<NSString *> *_stacks;
+#endif
 }
 
 + (instancetype)main {
@@ -108,6 +113,9 @@ static void Check(iTermSynchronizedState *self) {
         dispatch_retain(_queue);
         _state = [stateFactory(_queue) retain];
         _state.ready = YES;
+#if BETA
+        _stacks = [@[] retain];
+#endif
     }
     return self;
 }
@@ -121,13 +129,41 @@ static void Check(iTermSynchronizedState *self) {
 - (void)dealloc {
     dispatch_release(_queue);
     [_state release];
+    [_stacks release];
     [super dealloc];
 }
 
+#if BETA
+- (NSString *)stack {
+    return [_stacks componentsJoinedByString:@"\n\n"];
+}
+
+- (NSArray<NSString *> *)currentStacks {
+    NSString *stack = [[[NSThread callStackSymbols] subarrayFromIndex:1] componentsJoinedByString:@"\n"];
+    return [@[stack] arrayByAddingObjectsFromArray:_stacks];
+}
+
+- (NSString *)currentStack {
+    return [self.currentStacks componentsJoinedByString:@"\n\n"];
+}
+#endif
+
 - (void)dispatchAsync:(void (^)(id))block {
     [self retain];
+#if BETA
+    NSArray *stacks = [self.currentStacks retain];
+#endif
     dispatch_async(_queue, ^{
+#if BETA
+        NSArray *saved = [_stacks retain];
+        _stacks = stacks;
+#endif
         block(self->_state);
+#if BETA
+        _stacks = saved;
+        [stacks release];
+        [saved release];
+#endif
         [self release];
     });
 }
@@ -172,6 +208,10 @@ static void Check(iTermSynchronizedState *self) {
 @implementation iTermCallback {
     void (^_block)(id, id);
     dispatch_group_t _group;
+#if BETA
+    NSString *_invokeStack;
+    NSString *_creationStack;
+#endif
 }
 
 + (instancetype)onThread:(iTermThread *)thread block:(void (^)(id, id))block {
@@ -185,6 +225,9 @@ static void Check(iTermSynchronizedState *self) {
         _block = [block copy];
         _group = dispatch_group_create();
         dispatch_group_enter(_group);
+#if BETA
+        _creationStack = [[[NSThread callStackSymbols] componentsJoinedByString:@"\n"] copy];
+#endif
     }
     return self;
 }
@@ -192,6 +235,10 @@ static void Check(iTermSynchronizedState *self) {
 - (void)dealloc {
     [_thread release];
     [_block release];
+#if BETA
+    [_invokeStack release];
+    [_creationStack release];
+#endif
     dispatch_release(_group);
     [super dealloc];
 }
@@ -199,7 +246,16 @@ static void Check(iTermSynchronizedState *self) {
 - (void)invokeWithObject:(id)object {
     void (^block)(id, id) = [_block retain];
     [self retain];
+#if BETA
+    NSString *stack = [[_thread currentStack] retain];
+#endif
     [_thread dispatchAsync:^(iTermSynchronizedState *state) {
+#if BETA
+        ITBetaAssert(!self->_invokeStack, @"Previously invoked from %@. Now invoked from %@. Created from %@.",
+                     _invokeStack, stack, _creationStack);
+        _invokeStack = [stack copy];
+        [stack release];
+#endif
         block(state, object);
         [block release];
         dispatch_group_leave(_group);
@@ -210,7 +266,16 @@ static void Check(iTermSynchronizedState *self) {
 - (void)invokeMaybeImmediatelyWithObject:(id)object {
     void (^block)(id, id) = [_block retain];
     [self retain];
+#if BETA
+    NSString *stack = [[_thread currentStack] retain];
+#endif
     [_thread dispatchRecursiveSync:^(iTermSynchronizedState *state) {
+#if BETA
+        ITBetaAssert(!self->_invokeStack, @"Previously invoked from %@. Now invoked from %@. Created from %@.",
+                     _invokeStack, stack, _creationStack);
+        _invokeStack = [stack copy];
+        [stack release];
+#endif
         block(state, object);
         [block release];
         dispatch_group_leave(_group);
