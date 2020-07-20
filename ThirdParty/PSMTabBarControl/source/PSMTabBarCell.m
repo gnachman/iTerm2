@@ -276,14 +276,14 @@ static NSRect PSMConvertAccessibilityFrameToScreen(NSView *view, NSRect frame) {
         return [obj.inputs isEqual:inputs];
     }];
     if (index != NSNotFound) {
-        PSMCachedTitle *title = _titleCache[index];
+        PSMCachedTitle *title = [[_titleCache[index] retain] autorelease];
         if (index > 0) {
             [_titleCache removeObjectAtIndex:index];
             [_titleCache insertObject:title atIndex:0];
         }
         return title;
     }
-    PSMCachedTitle *title = [[PSMCachedTitle alloc] initWith:inputs];
+    PSMCachedTitle *title = [[[PSMCachedTitle alloc] initWith:inputs] autorelease];
     [_titleCache insertObject:title atIndex:0];
     while (_titleCache.count > 2) {
         [_titleCache removeLastObject];
