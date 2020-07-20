@@ -23,16 +23,11 @@
     }
     self = [super init];
     if (self) {
-        _image = [image retain];
+        _image = image;
         _maxDelay = [_image.delays.lastObject doubleValue];
         _creationTime = [NSDate timeIntervalSinceReferenceDate];
     }
     return self;
-}
-
-- (void)dealloc {
-    [_image release];
-    [super dealloc];
 }
 
 - (void)setPaused:(BOOL)paused {

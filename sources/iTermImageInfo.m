@@ -109,6 +109,7 @@ NSString *const iTermImageDidLoad = @"iTermImageDidLoad";
             [image autorelease];
             [_queuedBlock release];
             _queuedBlock = nil;
+            [_animatedImage autorelease];
             _animatedImage = [[iTermAnimatedImageInfo alloc] initWithImage:image];
             if (!_animatedImage) {
                 _image = [image retain];

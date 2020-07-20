@@ -3179,7 +3179,6 @@
 		A6C763091B45C52B00E3C992 /* iTermCommandHistoryCommandUseMO+Additions.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E7474C188C6394005355CF /* iTermCommandHistoryCommandUseMO+Additions.m */; };
 		A6C7630A1B45C52B00E3C992 /* FindContext.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D53FD14181C4B4B00524D4F /* FindContext.m */; };
 		A6C7630B1B45C52B00E3C992 /* FontSizeEstimator.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DA8117D13CEA30A00CCA89A /* FontSizeEstimator.m */; };
-		A6C7630D1B45C52B00E3C992 /* iTermAnimatedImageInfo.m in Sources */ = {isa = PBXBuildFile; fileRef = A67F57BD1B01A08800B4F135 /* iTermAnimatedImageInfo.m */; };
 		A6C7630E1B45C52B00E3C992 /* iTermBackgroundColorRun.m in Sources */ = {isa = PBXBuildFile; fileRef = A61D16FB1AAFD5530013FCCA /* iTermBackgroundColorRun.m */; };
 		A6C7630F1B45C52B00E3C992 /* iTermColorMap.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A13AA118C2D23300B241ED /* iTermColorMap.m */; };
 		A6C763101B45C52B00E3C992 /* iTermFindOnPageHelper.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E77F801A23F484009B1CB6 /* iTermFindOnPageHelper.m */; };
@@ -3491,6 +3490,7 @@
 		A6E34BD12118097A00F147DD /* iTermBackgroundDrawingHelper.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E34BCF2118097A00F147DD /* iTermBackgroundDrawingHelper.m */; };
 		A6E5110D24C1729E00D6552D /* iTermAttributedStringProxy.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E5110B24C1729E00D6552D /* iTermAttributedStringProxy.h */; };
 		A6E5110E24C1729E00D6552D /* iTermAttributedStringProxy.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E5110C24C1729E00D6552D /* iTermAttributedStringProxy.m */; };
+		A6E5110F24C576B300D6552D /* iTermAnimatedImageInfo.m in Sources */ = {isa = PBXBuildFile; fileRef = A67F57BD1B01A08800B4F135 /* iTermAnimatedImageInfo.m */; };
 		A6E525DD1A9C5730007B898E /* VT100StateMachine.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E525DA1A9C5730007B898E /* VT100StateMachine.h */; };
 		A6E525DE1A9C5730007B898E /* VT100StateMachine.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E525DA1A9C5730007B898E /* VT100StateMachine.h */; };
 		A6E525DF1A9C5730007B898E /* VT100StateTransition.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E525DB1A9C5730007B898E /* VT100StateTransition.h */; };
@@ -13528,6 +13528,7 @@
 				A6A4867E20B67FD100493302 /* SmartSelectionController.m in Sources */,
 				53AFFC8E1DD2A04100E6CEC6 /* iTermLSOF.m in Sources */,
 				A6BA7D25247637B700407C4D /* VT100InlineImageHelper.m in Sources */,
+				A6E5110F24C576B300D6552D /* iTermAnimatedImageInfo.m in Sources */,
 				530AB89720AFDF5000D2AA08 /* iTermScriptFunctionCall.m in Sources */,
 				A6A4867520B67B8500493302 /* PreferencePanel.m in Sources */,
 				A69CCB19211BC296008ADA71 /* NSData+GZIP.m in Sources */,
@@ -14049,7 +14050,6 @@
 				A6C763451B45C52B00E3C992 /* iTermNoColorAccessoryButton.m in Sources */,
 				A6FEA2751CF2C9D400376F28 /* iTermAppHotKey.m in Sources */,
 				A62C3B3B1BD40D2400B5629D /* iTermMark.m in Sources */,
-				A6C7630D1B45C52B00E3C992 /* iTermAnimatedImageInfo.m in Sources */,
 				A6CEC07D1DCE80C9009F4FD2 /* Struct.pbobjc.m in Sources */,
 				A6C763151B45C52B00E3C992 /* iTermLogoGenerator.m in Sources */,
 				A6C762FF1B45C52B00E3C992 /* TransferrableFile.m in Sources */,
