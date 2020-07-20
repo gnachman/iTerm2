@@ -3669,7 +3669,10 @@ typedef struct {
 
         last = point;
     }];
-    assert(baseTmuxSize.height > 0);
+    if (baseTmuxSize.height < 0) {
+        DLog(@"Bump height to 0");
+        baseTmuxSize.height = 0;
+    }
     DLog(@"Resulting height is %@", @(baseTmuxSize.height));
 
 
@@ -3737,7 +3740,10 @@ typedef struct {
 
         last = point;
     }];
-    assert(baseTmuxSize.width > 0);
+    if (baseTmuxSize.width < 0) {
+        DLog(@"Bump width");
+        baseTmuxSize.width = 0;
+    }
 
     // Now adjust the result for the growth that is about to happen.
 
