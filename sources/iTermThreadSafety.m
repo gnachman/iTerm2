@@ -110,6 +110,7 @@ NSPointerArray *gThreads;
     return [[self alloc] initWithLabel:label stateFactory:stateFactory];
 }
 
+#if BETA
 + (iTermThread *)currentThread {
     const char *currentLabel = dispatch_queue_get_label(DISPATCH_CURRENT_QUEUE_LABEL);
     @synchronized (gThreads) {
@@ -124,6 +125,7 @@ NSPointerArray *gThreads;
     }
     return nil;
 }
+#endif
 
 - (instancetype)initWithQueue:(dispatch_queue_t)queue
                  stateFactory:(iTermThreadStateFactoryBlockType)stateFactory {
@@ -163,7 +165,9 @@ NSPointerArray *gThreads;
 - (void)dealloc {
     dispatch_release(_queue);
     [_state release];
+#if BETA
     [_stacks release];
+#endif
     [super dealloc];
 }
 
