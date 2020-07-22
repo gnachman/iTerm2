@@ -399,6 +399,48 @@
     }];
 }
 
+static NSBitmapImageRep * iTermCreateBitmapRep(NSSize size,
+                                               NSImage *sourceImage) {
+    NSBitmapImageRep *rep = [[NSBitmapImageRep alloc]
+              initWithBitmapDataPlanes:NULL
+                            pixelsWide:size.width
+                            pixelsHigh:size.height
+                         bitsPerSample:8
+                       samplesPerPixel:4
+                              hasAlpha:YES
+                              isPlanar:NO
+                             colorSpaceName:sourceImage.bitmapImageRep.colorSpaceName
+                           bytesPerRow:0
+                          bitsPerPixel:0];
+    rep.size = size;
+
+    [NSGraphicsContext saveGraphicsState];
+    [NSGraphicsContext setCurrentContext:[NSGraphicsContext graphicsContextWithBitmapImageRep:rep]];
+    [sourceImage drawInRect:NSMakeRect(0, 0, size.width, size.height)
+                   fromRect:NSZeroRect
+                  operation:NSCompositingOperationCopy
+                   fraction:1.0];
+    [NSGraphicsContext restoreGraphicsState];
+
+    return rep;
+}
+
++ (NSImage *)it_imageWithScaledBitmapFromFile:(NSString *)file pointSize:(NSSize)pointSize {
+    NSImage *sourceImage = [[NSImage alloc] initWithContentsOfFile:file];
+    if (!sourceImage.isValid) {
+        return nil;
+    }
+    NSBitmapImageRep *lowdpi = iTermCreateBitmapRep(pointSize, sourceImage);
+    const NSSize retinaPixelSize = NSMakeSize(pointSize.width * 2,
+                                              pointSize.height * 2);
+    NSBitmapImageRep *hidpi = iTermCreateBitmapRep(retinaPixelSize, sourceImage);
+
+    NSImage *image = [[NSImage alloc] initWithSize:pointSize];
+    [image addRepresentation:lowdpi];
+    [image addRepresentation:hidpi];
+    return image;
+}
+
 - (CGImageRef)CGImage {
     return [self CGImageForProposedRect:nil context:nil hints:nil];
 }

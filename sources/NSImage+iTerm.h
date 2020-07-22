@@ -23,6 +23,10 @@
                         hasAlpha:(BOOL)hasAlpha
                   colorSpaceName:(NSString *)colorSpaceName;  // e.g., NSCalibratedRGBColorSpace
 
+// Load a file and create a low DPI version by downscaling it and use the file itself as the
+// high DPI representation.
++ (NSImage *)it_imageWithScaledBitmapFromFile:(NSString *)file pointSize:(NSSize)pointSize;
+
 // Returns "gif", "png", etc., or nil.
 + (NSString *)extensionForUniformType:(NSString *)type;
 

@@ -11,7 +11,9 @@
 #import "iTermTextExtractor.h"
 #import "NSColor+iTerm.h"
 #import "NSDictionary+iTerm.h"
+#import "NSFileManager+iTerm.h"
 #import "NSImage+iTerm.h"
+#import "NSObject+iTerm.h"
 #import "NSStringITerm.h"
 
 static NSDictionary *sGraphicColorMap;
@@ -48,12 +50,26 @@ static NSDictionary *sGraphicIconMap;
             if (data) {
                 sGraphicColorMap = [NSJSONSerialization JSONObjectWithData:data options:0 error:nil];
             }
-            
+
+            NSString *const appSupport = [[NSFileManager defaultManager] applicationSupportDirectory];
+            path = [appSupport stringByAppendingPathComponent:@"graphic_colors.json"];
+            data = [NSData dataWithContentsOfFile:path options:0 error:nil];
+            if (data) {
+                NSDictionary *dict = [NSDictionary castFrom:[NSJSONSerialization JSONObjectWithData:data options:0 error:nil]];
+                sGraphicColorMap = [sGraphicColorMap dictionaryByMergingDictionary:dict];
+            }
+
             path = [[NSBundle bundleForClass:[self class]] pathForResource:@"graphic_icons"
                                                                     ofType:@"json"];
             data = [NSData dataWithContentsOfFile:path options:0 error:nil];
             if (data) {
                 sGraphicIconMap = [[NSJSONSerialization JSONObjectWithData:data options:0 error:nil] it_invertedGraphicDictionary];
+            }
+            path = [appSupport stringByAppendingPathComponent:@"graphic_icons.json"];
+            data = [NSData dataWithContentsOfFile:path options:0 error:nil];
+            if (data) {
+                NSDictionary *dict = [[NSDictionary castFrom:[NSJSONSerialization JSONObjectWithData:data options:0 error:nil]] it_invertedGraphicDictionary];
+                sGraphicIconMap = [sGraphicIconMap dictionaryByMergingDictionary:dict];
             }
         });
     }
@@ -99,6 +115,11 @@ static NSDictionary *sGraphicIconMap;
         return image;
     }
     image = [NSImage it_imageNamed:iconName forClass:[self class]];
+    if (!image) {
+        NSString *const appSupport = [[NSFileManager defaultManager] applicationSupportDirectory];
+        NSString *path = [appSupport stringByAppendingPathComponent:[iconName stringByAppendingPathExtension:@"png"]];
+        image = [NSImage it_imageWithScaledBitmapFromFile:path pointSize:NSMakeSize(16, 16)];
+    }
     if (@available(macOS 10.15, *)) {
     } else {
         image = [image it_verticallyFlippedImage];
