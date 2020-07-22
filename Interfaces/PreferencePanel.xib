@@ -5771,6 +5771,9 @@ DQ
                                                             <menuItem title="⌘ Number" tag="4" id="4133">
                                                                 <modifierMask key="keyEquivalentModifierMask"/>
                                                             </menuItem>
+                                                            <menuItem title="^ Number" tag="1" id="4135">
+                                                                <modifierMask key="keyEquivalentModifierMask"/>
+                                                            </menuItem>
                                                             <menuItem title="⌥⌘ Number" state="on" tag="6" id="4137">
                                                                 <modifierMask key="keyEquivalentModifierMask"/>
                                                             </menuItem>

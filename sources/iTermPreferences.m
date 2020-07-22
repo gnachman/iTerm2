@@ -620,6 +620,9 @@ static NSString *sPreviousVersion;
 
 + (NSUInteger)maskForModifierTag:(iTermPreferencesModifierTag)tag {
     switch (tag) {
+        case kPreferencesModifierTagControl:
+            return NSEventModifierFlagControl;
+
         case kPreferencesModifierTagEitherCommand:
             return NSEventModifierFlagCommand;
 
