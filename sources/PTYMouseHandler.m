@@ -82,6 +82,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     BOOL _haveSeenScrollWheelEvent;
 
     iTermSwipeTracker *_swipeTracker;
+    BOOL _scrolling;
 }
 
 - (instancetype)initWithSelectionScrollHelper:(iTermSelectionScrollHelper *)selectionScrollHelper
@@ -765,6 +766,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 #pragma mark - Responder
 
 - (void)didResignFirstResponder {
+    _scrolling = NO;
     [_altScreenMouseScrollInferrer firstResponderDidChange];
 }
 
@@ -775,6 +777,13 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 #pragma mark - Misc mouse
 
 - (BOOL)scrollWheel:(NSEvent *)event pointInView:(NSPoint)point {
+    if (event.momentumPhase == NSEventPhaseBegan) {
+        _scrolling = YES;
+    } else if (event.momentumPhase == NSEventPhaseEnded |
+               event.momentumPhase == NSEventPhaseCancelled ||
+               event.momentumPhase == NSEventPhaseStationary) {
+        _scrolling = NO;
+    }
     [_threeFingerTapGestureRecognizer scrollWheel];
 
     if (!_haveSeenScrollWheelEvent) {
@@ -888,6 +897,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (void)didCopyToPasteboardWithControlSequence {
     [_mouseReportingFrustrationDetector didCopyToPasteboardWithControlSequence];
+}
+
+- (BOOL)wantsScrollWheelMomentumEvents {
+    return _scrolling;
 }
 
 #pragma mark - Private

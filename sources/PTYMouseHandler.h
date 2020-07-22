@@ -166,6 +166,7 @@ NS_DESIGNATED_INITIALIZER;
 - (void)didDragSemanticHistory;
 - (BOOL)mouseReportingAllowedForEvent:(NSEvent *)event;
 - (void)didCopyToPasteboardWithControlSequence;
+- (BOOL)wantsScrollWheelMomentumEvents;
 
 @end
 

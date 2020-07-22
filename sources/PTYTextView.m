@@ -1103,7 +1103,7 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
 }
 
 - (BOOL)it_wantsScrollWheelMomentumEvents {
-    return YES;
+    return [_mouseHandler wantsScrollWheelMomentumEvents];
 }
 
 - (void)it_scrollWheelMomentum:(NSEvent *)event {
