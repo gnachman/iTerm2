@@ -100,7 +100,7 @@ charactersIgnoringModifiers:(NSString *)charactersIgnoringModifiers
 - (NSString *)reallySpecial:(unichar)code modifier:(int)modifier {
     if (modifier == 1) {
         // CSI 1;[non-1 modifier] {ABCDFHPQRS}
-        return [NSString stringWithFormat:@"%c[%C", 27, code];
+        return [NSString stringWithFormat:@"%cO%C", 27, code];
     } else {
         // CSI {ABCDFHPQRS}
         return [NSString stringWithFormat:@"%c[1;%d%C", 27, modifier, code];
