@@ -9752,7 +9752,16 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     if ([self shouldPlaceStatusBarOutsideTabview]) {
         decorationSize.height += iTermGetStatusBarHeight();
     }
-    return [[self window] frameRectForContentRect:NSMakeRect(0, 0, decorationSize.width, decorationSize.height)].size;
+    NSSize result = [[self window] frameRectForContentRect:NSMakeRect(0, 0, decorationSize.width, decorationSize.height)].size;
+    if (!self.tabBarShouldBeAccessory && _contentView.tabBarControlOnLoan) {
+        // Tab bar is currently an accessory but is about to go away and should not be included.
+        // We can't remove it before measuring in this case because then the tabview grows to fill
+        // the space, causing -fitWindowToTabs to keep the window the same size instead of shrinking
+        // it by the height of the tab bar. This code path should only be taken when the last tab
+        // disappears and tabView:didChangeNumberOfTabViewItems: calls -fitWindowToSize.
+        result.height -= _contentView.tabBarControl.frame.size.height;
+    }
+    return result;
 }
 
 - (void)flagsChanged:(NSEvent *)theEvent
