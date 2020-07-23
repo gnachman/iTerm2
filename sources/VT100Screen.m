@@ -918,20 +918,9 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     [self reallySetSize:newSize];
     [linebuffer_ endResizing];
 
-    if (gDebugLogging) {
-        DLog(@"Notes after resizing to width=%@", @(self.width));
-        for (PTYNoteViewController *note in intervalTree_.allObjects) {
-            if (![note isKindOfClass:[PTYNoteViewController class]]) {
-                continue;
-            }
-            DLog(@"Note has coord range %@", VT100GridCoordRangeDescription([self coordRangeForInterval:note.entry.interval]));
-        }
-        DLog(@"------------ end -----------");
-    }
 }
 
 - (void)reallySetSize:(VT100GridSize)newSize {
-    DLog(@"------------ reallySetSize");
     DLog(@"Set size to %@", VT100GridSizeDescription(newSize));
 
     const VT100GridRange previouslyVisibleLineRange = [self.delegate screenRangeOfVisibleLines];
@@ -985,7 +974,6 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
           toScrollback:linebuffer_
         withUsedHeight:[primaryGrid_ numberOfLinesUsed]
              newHeight:newSize.height];
-    DLog(@"History after appending screen to scrollback:\n%@", [linebuffer_ debugString]);
 
     VT100GridCoordRange convertedRangeOfVisibleLines;
     const BOOL rangeOfVisibleLinesConvertedCorrectly = [self convertRange:previouslyVisibleLines
@@ -1011,7 +999,6 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     [currentGrid_ restoreScreenFromLineBuffer:wasShowingAltScreen ? altScreenLineBuffer : linebuffer_
                               withDefaultChar:[currentGrid_ defaultChar]
                             maxLinesToRestore:[wasShowingAltScreen ? altScreenLineBuffer : linebuffer_ numLinesWithWidth:currentGrid_.size.width]];
-    DLog(@"After restoring screen from line buffer:\n%@", [self compactLineDumpWithHistoryAndContinuationMarksAndLineNumbers]);
 
     if (wasShowingAltScreen) {
         // If we're in the alternate screen, restore its contents from the temporary
@@ -1048,8 +1035,6 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
                    newTop:newTop];
     [altScreenLineBuffer endResizing];
     [self sanityCheckIntervalsFrom:oldSize note:@"post-hoc"];
-    DLog(@"After:\n%@", [currentGrid_ compactLineDumpWithContinuationMarks]);
-    DLog(@"Cursor at %d,%d", currentGrid_.cursorX, currentGrid_.cursorY);
 }
 
 - (void)sanityCheckIntervalsFrom:(VT100GridSize)oldSize note:(NSString *)note {
