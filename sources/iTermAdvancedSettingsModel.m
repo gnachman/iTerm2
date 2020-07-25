@@ -116,8 +116,6 @@ DEFINE_BOILERPLATE(name, podtype, type, default, description, transformation, in
 + (void)set##capitalizedName :(podtype)newValue { \
     sAdvancedSetting_##name = inverseTransformation(newValue); \
     [[NSUserDefaults standardUserDefaults] setObject:sAdvancedSetting_##name forKey:@#capitalizedName]; \
-    [[NSNotificationCenter defaultCenter] postNotificationName:iTermAdvancedSettingsDidChange \
-                                                        object:nil]; \
 }
 
 #define DEFINE_BOOL(name, theDefault, theDescription) \
@@ -616,6 +614,7 @@ DEFINE_SETTABLE_BOOL(setCookie, SetCookie, NO, SECTION_SCRIPTING @"Set ITERM2_CO
 
                 [observer observeKey:identifier block:^{
                     impl(self, selector);
+                    [[NSNotificationCenter defaultCenter] postNotificationName:iTermAdvancedSettingsDidChange object:nil];
                 }];
             }
         }];

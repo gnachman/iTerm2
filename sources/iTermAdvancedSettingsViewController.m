@@ -146,6 +146,7 @@ static NSDictionary *gIntrospection;
     IBOutlet NSTableColumn *_valueColumn;
     IBOutlet NSSearchField *_searchField;
     IBOutlet NSTableView *_tableView;
+    IBOutlet NSButton *_excludeDefaults;
 
     NSArray *_filteredAdvancedSettings;
     NSArray<iTermPreferencesSearchDocument *> *_docs;
@@ -164,7 +165,7 @@ static NSDictionary *gIntrospection;
     return settings;
 }
 
-+ (NSArray *)sortedAdvancedSettings {
++ (NSArray<NSDictionary *> *)sortedAdvancedSettings {
     static NSArray *sortedAdvancedSettings;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
@@ -193,7 +194,7 @@ static NSDictionary *gIntrospection;
     return result;
 }
 
-+ (NSArray *)advancedSettings {
++ (NSArray<NSDictionary *> *)advancedSettings {
     static NSMutableArray *settings;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
@@ -399,7 +400,21 @@ static NSDictionary *gIntrospection;
 
             settings = result;
         }
-
+        if (_excludeDefaults.state == NSControlStateValueOn) {
+            settings = [settings filteredArrayUsingBlock:^BOOL(id obj) {
+                NSDictionary *dict = [NSDictionary castFrom:obj];
+                if (!dict) {
+                    return YES;
+                }
+                id defaultValue = dict[kAdvancedSettingDefaultValue];
+                NSString *identifier = dict[kAdvancedSettingIdentifier];
+                NSObject *value = [[NSUserDefaults standardUserDefaults] objectForKey:identifier];
+                if (value == nil || [NSObject object:defaultValue isApproximatelyEqualToObject:value epsilon:0.0001]) {
+                    return NO;
+                }
+                return YES;
+            }];
+        }
         _filteredAdvancedSettings = [[self class] groupedSettingsArrayFromSortedArray:settings];
     }
 
@@ -407,6 +422,20 @@ static NSDictionary *gIntrospection;
 }
 
 - (void)advancedSettingsDidChange:(NSNotification *)notification {
+    id firstResponder = self.view.window.firstResponder;
+    if ([firstResponder isKindOfClass:[NSTextView class]]) {
+        if ([[firstResponder delegate] isKindOfClass:[iTermTableViewTextField class]]) {
+            return;
+        }
+    }
+    _filteredAdvancedSettings = nil;
+    [_tableView reloadData];
+}
+
+#pragma mark - Actions
+
+- (IBAction)toggleExcludeDefaults:(id)sender {
+    _filteredAdvancedSettings = nil;
     [_tableView reloadData];
 }
 
@@ -637,6 +666,10 @@ static NSDictionary *gIntrospection;
     if (rowView) {
         textField.backgroundStyle = [rowView interiorBackgroundStyle];
     }
+    if (_excludeDefaults.state == NSControlStateValueOn) {
+        _filteredAdvancedSettings = nil;
+        [_tableView reloadData];
+    }
 }
 
 #pragma mark - iTermSearchableViewController
@@ -676,6 +709,7 @@ static NSDictionary *gIntrospection;
     if (index == NSNotFound) {
         // Remove the existing search query and try again
         _filteredAdvancedSettings = nil;
+        _excludeDefaults.state = NSControlStateValueOff;
         [_tableView reloadData];
         index = [self indexOfIdentifier:document.identifier];
         
