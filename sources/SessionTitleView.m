@@ -211,6 +211,10 @@ static const CGFloat kButtonSize = 17;
         case kPreferencesModifierTagCommandAndOption:
             prefix = [NSString stringForModifiersWithMask:(NSEventModifierFlagCommand | NSEventModifierFlagOption)];
             break;
+
+        case kPreferencesModifierTagControl:
+            prefix = [NSString stringForModifiersWithMask:NSEventModifierFlagControl];
+            break;
     }
     return [NSString stringWithFormat:@"%@%@   %@", prefix, @(_ordinal), title_];
 }

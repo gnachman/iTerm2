@@ -86,19 +86,18 @@
     switch ([iTermPreferences intForKey:kPreferenceKeySwitchWindowModifier]) {
         case kPreferenceModifierTagNone:
             return nil;
-            break;
 
         case kPreferencesModifierTagEitherCommand:
             return [NSString stringForModifiersWithMask:NSEventModifierFlagCommand];
-            break;
 
         case kPreferencesModifierTagEitherOption:
             return [NSString stringForModifiersWithMask:NSEventModifierFlagOption];
-            break;
 
         case kPreferencesModifierTagCommandAndOption:
             return [NSString stringForModifiersWithMask:(NSEventModifierFlagCommand | NSEventModifierFlagOption)];
-            break;
+
+        case kPreferencesModifierTagControl:
+            return [NSString stringForModifiersWithMask:NSEventModifierFlagControl];
     }
 
     return @"";
