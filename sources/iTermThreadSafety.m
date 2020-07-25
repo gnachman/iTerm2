@@ -289,6 +289,7 @@ NSPointerArray *gThreads;
     [_creationStack release];
 #endif
     dispatch_release(_group);
+    _block = nil;
     _group = nil;
     [super dealloc];
 }
