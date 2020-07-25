@@ -260,6 +260,7 @@ NSPointerArray *gThreads;
 #if BETA
     NSString *_invokeStack;
     NSString *_creationStack;
+    int _magic;
 #endif
 }
 
@@ -275,6 +276,7 @@ NSPointerArray *gThreads;
         _group = dispatch_group_create();
         dispatch_group_enter(_group);
 #if BETA
+        _magic = 0xdeadbeef;
         _creationStack = [[[NSThread callStackSymbols] componentsJoinedByString:@"\n"] copy];
 #endif
     }
@@ -285,12 +287,14 @@ NSPointerArray *gThreads;
     [_thread release];
     [_block release];
 #if BETA
+    assert(_magic == 0xdeadbeef);
     [_invokeStack release];
     [_creationStack release];
 #endif
     dispatch_release(_group);
     _block = nil;
     _group = nil;
+    _magic = 0;
     [super dealloc];
 }
 
