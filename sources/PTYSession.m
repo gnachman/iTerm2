@@ -74,6 +74,7 @@
 #import "iTermRule.h"
 #import "iTermSavePanel.h"
 #import "iTermScriptFunctionCall.h"
+#import "iTermSecureKeyboardEntryController.h"
 #import "iTermSelection.h"
 #import "iTermSemanticHistoryController.h"
 #import "iTermSessionFactory.h"
@@ -4844,7 +4845,11 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 
     [self checkPartialLineTriggers];
-    _passwordInput = _shell.passwordInput;
+    const BOOL passwordInput = _shell.passwordInput;
+    if (passwordInput != _passwordInput) {
+        _passwordInput = _shell.passwordInput;
+        [[iTermSecureKeyboardEntryController sharedInstance] update];
+    }
     _timerRunning = NO;
 }
 

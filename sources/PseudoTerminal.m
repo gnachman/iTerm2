@@ -52,6 +52,7 @@
 #import "iTermRootTerminalView.h"
 #import "iTermSavePanel.h"
 #import "iTermScriptFunctionCall.h"
+#import "iTermSecureKeyboardEntryController.h"
 #import "iTermSelection.h"
 #import "iTermSessionFactory.h"
 #import "iTermSessionLauncher.h"
@@ -3565,6 +3566,7 @@ ITERM_WEAKLY_REFERENCEABLE
     if (@available(macOS 10.14, *)) {
         [_contentView updateTitleAndBorderViews];
     }
+    [[iTermSecureKeyboardEntryController sharedInstance] update];
 }
 
 - (void)makeCurrentSessionFirstResponder {
@@ -4004,6 +4006,7 @@ ITERM_WEAKLY_REFERENCEABLE
     if (@available(macOS 10.14, *)) {
         [_contentView updateTitleAndBorderViews];
     }
+    [[iTermSecureKeyboardEntryController sharedInstance] update];
 }
 
 - (void)windowDidBecomeMain:(NSNotification *)notification {

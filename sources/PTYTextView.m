@@ -106,7 +106,7 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
 
 @end
 
-@interface PTYTextView(MouseHandler)<PTYMouseHandlerDelegate>
+@interface PTYTextView(MouseHandler)<iTermSecureInputRequesting, PTYMouseHandlerDelegate>
 @end
 
 @implementation PTYTextView {
@@ -528,6 +528,9 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
     } else {
         DLog(@"%@ ignoring first responder changes in resignFirstResponder", self);
     }
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [[iTermSecureKeyboardEntryController sharedInstance] update];
+    });
     return YES;
 }
 
@@ -540,6 +543,7 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
     } else {
         DLog(@"%@ ignoring first responder changes in becomeFirstResponder", self);
     }
+    [[iTermSecureKeyboardEntryController sharedInstance] update];
     return YES;
 }
 
@@ -5738,6 +5742,12 @@ dragSemanticHistoryWithEvent:(NSEvent *)event
                                 forEvent:(NSEvent *)event {
     return [_scrollAccumulator deltaYForEvent:event
                                    lineHeight:self.enclosingScrollView.verticalLineScroll];
+}
+
+#pragma mark - iTermSecureInputRequesting
+
+- (BOOL)isRequestingSecureInput {
+    return [self.delegate textViewPasswordInput];
 }
 
 @end

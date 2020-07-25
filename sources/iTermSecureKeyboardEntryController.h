@@ -11,9 +11,13 @@ NS_ASSUME_NONNULL_BEGIN
 
 extern NSString *const iTermDidToggleSecureInputNotification;
 
+@protocol iTermSecureInputRequesting<NSObject>
+- (BOOL)isRequestingSecureInput;
+@end
+
 @interface iTermSecureKeyboardEntryController : NSObject
 
-@property (nonatomic, getter=isDesired) BOOL desired;
+@property (nonatomic, readonly) BOOL isDesired;
 @property (nonatomic, readonly, getter=isEnabled) BOOL enabled;
 
 + (instancetype)sharedInstance;
@@ -21,6 +25,7 @@ extern NSString *const iTermDidToggleSecureInputNotification;
 - (void)toggle;
 - (void)didStealFocus;
 - (void)didReleaseFocus;
+- (void)update;
 
 @end
 

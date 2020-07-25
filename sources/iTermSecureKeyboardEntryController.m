@@ -17,6 +17,7 @@ NSString *const iTermDidToggleSecureInputNotification = @"iTermDidToggleSecureIn
 @implementation iTermSecureKeyboardEntryController {
     int _count;
     BOOL _focusStolen;
+    BOOL _enabledByUserDefault;
 }
 
 + (instancetype)sharedInstance {
@@ -31,7 +32,7 @@ NSString *const iTermDidToggleSecureInputNotification = @"iTermDidToggleSecureIn
 - (instancetype)init {
     self = [super init];
     if (self) {
-        _desired = iTermUserDefaults.secureKeyboardEntry;
+        _enabledByUserDefault = iTermUserDefaults.secureKeyboardEntry;
 
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(applicationDidResignActive:)
@@ -52,14 +53,14 @@ NSString *const iTermDidToggleSecureInputNotification = @"iTermDidToggleSecureIn
 
 - (void)toggle {
     // Set _desired to the opposite of the current state.
-    _desired = !_desired;
-    DLog(@"toggle called. Setting desired to %@", @(_desired));
+    _enabledByUserDefault = !_enabledByUserDefault;
+    DLog(@"toggle called. Setting desired to %@", @(_enabledByUserDefault));
 
     // Try to set the system's state of secure input to the desired state.
     [self update];
 
     // Save the preference, independent of whether it succeeded or not.
-    iTermUserDefaults.secureKeyboardEntry = _desired;
+    iTermUserDefaults.secureKeyboardEntry = _enabledByUserDefault;
 }
 
 - (void)didStealFocus {
@@ -76,23 +77,42 @@ NSString *const iTermDidToggleSecureInputNotification = @"iTermDidToggleSecureIn
     return !!IsSecureEventInputEnabled();
 }
 
+- (void)setDesired:(BOOL)desired {
+    _enabledByUserDefault = desired;
+}
+
+- (BOOL)isDesired {
+    return _enabledByUserDefault || [self currentSessionAtPasswordPrompt];
+}
+
 #pragma mark - Notifications
 
 - (void)applicationDidResignActive:(NSNotification *)notification {
-    if (_desired) {
+    if (_count > 0) {
         DLog(@"Application resigning active.");
         [self update];
     }
 }
 
 - (void)applicationDidBecomeActive:(NSNotification *)notification {
-    if (_desired) {
+    if (self.isDesired) {
         DLog(@"Application became active.");
         [self update];
     }
 }
 
 #pragma mark - Private
+
+- (BOOL)currentSessionAtPasswordPrompt {
+    NSResponder *firstResponder = [[NSApp keyWindow] firstResponder];
+    if (![firstResponder conformsToProtocol:@protocol(iTermSecureInputRequesting)]) {
+        return NO;
+    }
+    id<iTermSecureInputRequesting> requesting = (id<iTermSecureInputRequesting>)firstResponder;
+    const BOOL result = [requesting isRequestingSecureInput];
+    DLog(@"Current session at password prompt=%@", @(result));
+    return result;
+}
 
 - (BOOL)allowed {
     if ([NSApp isActive]) {
@@ -103,8 +123,8 @@ NSString *const iTermDidToggleSecureInputNotification = @"iTermDidToggleSecureIn
 
 - (void)update {
     DLog(@"Update secure keyboard entry. desired=%@ active=%@ focusStolen=%@",
-         @(_desired), @([NSApp isActive]), @(_focusStolen));
-    const BOOL secure = _desired && [self allowed];
+         @(self.isDesired), @([NSApp isActive]), @(_focusStolen));
+    const BOOL secure = self.isDesired && [self allowed];
 
     if (secure && _count > 0) {
         DLog(@"Want to turn on secure input but it's already on");
