@@ -21,7 +21,8 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, strong) PTYSession *session;
 @property (nonatomic) BOOL canPrompt;
 @property (nonatomic) iTermObjectType objectType;
-@property (nullable, nonatomic) iTermGeneralServerConnection *serverConnection;
+@property (nonatomic) BOOL hasServerConnection;
+@property (nonatomic) iTermGeneralServerConnection xx_serverConnection;
 @property (nonatomic, nullable, copy) NSString *urlString;
 @property (nonatomic) BOOL allowURLSubs;
 @property (nonatomic, nullable, copy) NSDictionary *environment;
@@ -38,7 +39,8 @@ NS_ASSUME_NONNULL_BEGIN
 + (instancetype)launchRequestWithSession:(PTYSession *)aSession
                                canPrompt:(BOOL)canPrompt
                               objectType:(iTermObjectType)objectType
-                        serverConnection:(iTermGeneralServerConnection * _Nullable)serverConnection
+                     hasServerConnection:(BOOL)hasServerConnection
+                        serverConnection:(iTermGeneralServerConnection)serverConnection
                                urlString:(nullable NSString *)urlString
                             allowURLSubs:(BOOL)allowURLSubs
                              environment:(nullable NSDictionary *)environment

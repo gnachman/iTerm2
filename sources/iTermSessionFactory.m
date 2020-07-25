@@ -43,7 +43,8 @@ NS_ASSUME_NONNULL_BEGIN
 + (instancetype)launchRequestWithSession:(PTYSession *)aSession
                                canPrompt:(BOOL)canPrompt
                               objectType:(iTermObjectType)objectType
-                        serverConnection:(iTermGeneralServerConnection * _Nullable)serverConnection
+                        hasServerConnection:(BOOL)hasServerConnection
+                        serverConnection:(iTermGeneralServerConnection)serverConnection
                                urlString:(nullable NSString *)urlString
                             allowURLSubs:(BOOL)allowURLSubs
                              environment:(nullable NSDictionary *)environment
@@ -60,7 +61,8 @@ NS_ASSUME_NONNULL_BEGIN
     request.session = aSession;
     request.canPrompt = canPrompt;
     request.objectType = objectType;
-    request.serverConnection = serverConnection;
+    request.hasServerConnection = hasServerConnection;
+    request.xx_serverConnection = serverConnection;
     request.urlString = urlString;
     request.allowURLSubs = allowURLSubs;
     request.environment = environment;
@@ -93,13 +95,13 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 - (NSString *)description {
-    return [NSString stringWithFormat:@"<%@: %p session=%@ canPrompt=%@ objectType=%@ serverConnection=%p urlString=%@ allowURLSubs=%@ environment=%@ customShell=%@ oldCWD=%@ forceUseOldCWD=%@ command=%@ isUTF8=%@ substitutions=%@ windowController=%@>",
+    return [NSString stringWithFormat:@"<%@: %p session=%@ canPrompt=%@ objectType=%@ serverConnection=%@ urlString=%@ allowURLSubs=%@ environment=%@ customShell=%@ oldCWD=%@ forceUseOldCWD=%@ command=%@ isUTF8=%@ substitutions=%@ windowController=%@>",
             NSStringFromClass(self.class),
             self,
             self.session,
             @(self.canPrompt),
             @(self.objectType),
-            self.serverConnection,
+            self.hasServerConnection ? @(self.xx_serverConnection.type) : @"none",
             self.urlString,
             @(self.allowURLSubs),
             self.environment,
@@ -327,10 +329,10 @@ NS_ASSUME_NONNULL_BEGIN
                    completion:(void (^)(BOOL))completion {
     DLog(@"handleRealizedRequest:%@", request);
 
-    if (request.serverConnection) {
+    if (request.hasServerConnection) {
         // Attach to running server, if possible.
         assert([iTermAdvancedSettingsModel runJobsInServers]);
-        [request.session attachToServer:*request.serverConnection completion:^{
+        [request.session attachToServer:request.xx_serverConnection completion:^{
             if (completion) {
                 completion(YES);
             }

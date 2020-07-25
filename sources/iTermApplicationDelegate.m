@@ -2292,7 +2292,8 @@ static BOOL hasBecomeActive = NO;
     [iTermSessionAttachOrLaunchRequest launchRequestWithSession:session
                                                       canPrompt:NO
                                                      objectType:iTermWindowObject
-                                               serverConnection:&temp
+                                            hasServerConnection:YES
+                                               serverConnection:temp
                                                       urlString:nil
                                                    allowURLSubs:NO
                                                     environment:@{}

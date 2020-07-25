@@ -8475,7 +8475,8 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     [iTermSessionAttachOrLaunchRequest launchRequestWithSession:newSession
                                                       canPrompt:YES
                                                      objectType:iTermPaneObject
-                                               serverConnection:nil
+                                            hasServerConnection:NO
+                                               serverConnection:(iTermGeneralServerConnection){}
                                                       urlString:nil
                                                    allowURLSubs:NO
                                                     environment:@{}
@@ -10869,7 +10870,8 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     [iTermSessionAttachOrLaunchRequest launchRequestWithSession:aSession
                                                       canPrompt:YES
                                                      objectType:objectType
-                                               serverConnection:nil
+                                               hasServerConnection:NO
+                                                  serverConnection:(iTermGeneralServerConnection){}
                                                       urlString:nil
                                                    allowURLSubs:NO
                                                     environment:environment

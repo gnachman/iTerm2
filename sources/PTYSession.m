@@ -1566,7 +1566,8 @@ ITERM_WEAKLY_REFERENCEABLE
                 [iTermSessionAttachOrLaunchRequest launchRequestWithSession:aSession
                                                                   canPrompt:NO
                                                                  objectType:objectType
-                                                           serverConnection:nil
+                                                           hasServerConnection:NO
+                                                              serverConnection:(iTermGeneralServerConnection){}
                                                                   urlString:nil
                                                                allowURLSubs:NO
                                                                 environment:environmentArg

@@ -234,7 +234,8 @@
     [iTermSessionAttachOrLaunchRequest launchRequestWithSession:session
                                                       canPrompt:YES
                                                      objectType:self.objectType
-                                               serverConnection:nil
+                                            hasServerConnection:NO
+                                               serverConnection:(iTermGeneralServerConnection){}
                                                       urlString:_url
                                                    allowURLSubs:YES
                                                     environment:@{}
