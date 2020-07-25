@@ -52,6 +52,10 @@
     return theCopy;
 }
 
+- (NSString *)dumpForCrashlog {
+    return [_caches debugDescription];
+}
+
 - (void)setCapacity:(int)capacity {
     _capacity = capacity;
     [self evictIfNeeded];
@@ -156,6 +160,10 @@
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
         [blocks removeAllObjects];
     });
+}
+
+- (NSString *)dumpForCrashlog {
+    return [_numLinesCaches dumpForCrashlog];
 }
 
 #pragma mark - High level methods

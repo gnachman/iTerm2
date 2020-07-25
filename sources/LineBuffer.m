@@ -35,6 +35,7 @@
 #import "iTermLineBlockArray.h"
 #import "iTermMalloc.h"
 #import "LineBlock.h"
+#import "NSData+iTerm.h"
 #import "RegexKitLite.h"
 
 static NSString *const kLineBufferVersionKey = @"Version";
@@ -494,7 +495,8 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     int remainder = 0;
     LineBlock *block = [_lineBlocks blockContainingLineNumber:lineNum width:width remainder:&remainder];
     if (!block) {
-        ITAssertWithMessage(NO, @"Failed to find line %@ with width %@", @(lineNum), @(width));
+        ITAssertWithMessage(NO, @"Failed to find line %@ with width %@. Cache is: %@", @(lineNum), @(width),
+                            [[[[_lineBlocks dumpForCrashlog] dataUsingEncoding:NSUTF8StringEncoding] it_compressedData] it_hexEncoded]);
         return nil;
     }
 

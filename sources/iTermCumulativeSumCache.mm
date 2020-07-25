@@ -30,6 +30,20 @@ extern "C" {
     }
 }
 
+- (NSString *)description {
+    NSMutableString *result = [NSMutableString string];
+    int i = 0;
+    for (auto sum_i : _sums) {
+        [result appendFormat:@"_sums[%@] = %@\n", @(i++), @(sum_i)];
+    }
+
+    i = 0;
+    for (auto value_i : _values) {
+        [result appendFormat:@"_values[%@] = %@\n", @(i++), @(value_i)];
+    }
+    return result;
+}
+
 - (NSInteger)sumOfValuesInRange:(NSRange)range {
     assert(range.location < NSIntegerMax);
     const NSInteger location = range.location;

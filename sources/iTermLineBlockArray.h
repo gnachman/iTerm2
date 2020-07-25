@@ -18,6 +18,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) NSUInteger count;
 @property (nonatomic, readonly) LineBlock *lastBlock;
 @property (nonatomic) BOOL resizing;
+@property (nonatomic, readonly) NSString *dumpForCrashlog;
 
 // NOTE: Update -copyWithZone: if you add properties.
 
