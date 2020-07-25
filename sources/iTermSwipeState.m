@@ -327,7 +327,6 @@ static const CGFloat gSwipeFriction = 0.1;
                     [self retire];
                     break;
                 case iTermScrollWheelStateMachineStateTouchAndHold:
-                    [self badStateTransition:transition event:event];
                     break;
             }
             break;
