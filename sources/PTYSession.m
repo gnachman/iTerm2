@@ -8053,8 +8053,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (BOOL)hasActionableKeyMappingForEvent:(NSEvent *)event {
-    if ([_copyModeHandler shouldAutoEnterWithEvent:event]) {
-        return NO;
+    if (_textview.selection.hasSelection) {
+        if ([_copyModeHandler shouldAutoEnterWithEvent:event]) {
+            return NO;
+        }
     }
     return [[self _keyBindingActionForEvent:event] isActionable];
 }
