@@ -5482,6 +5482,7 @@ static void SwapInt(int *a, int *b) {
 - (void)noteDidRequestRemoval:(PTYNoteViewController *)note {
     if ([intervalTree_ containsObject:note]) {
         self.lastCommandMark = nil;
+        [[note retain] autorelease];
         [intervalTree_ removeObject:note];
         [_intervalTreeObserver intervalTreeDidRemoveObjectOfType:[self intervalTreeObserverTypeForObject:note]
                                                           onLine:[self coordRangeForInterval:note.entry.interval].start.y + self.totalScrollbackOverflow];
