@@ -2910,5 +2910,15 @@ do { \
                   "actual=%@, expected=%@", VT100GridRunDescription(actual), VT100GridRunDescription(expected));
 }
 
+- (void)testSingleColumnLineBuffer {
+    VT100Grid *grid = [[VT100Grid alloc] initWithSize:VT100GridSizeMake(1, 24) delegate:self];
+    LineBuffer *lineBuffer = [[[LineBuffer alloc] initWithBlockSize:1000] autorelease];
+    [grid appendLines:5 toLineBuffer:lineBuffer];
+    screen_char_t c;
+    ScreenCharArray *sca = [lineBuffer wrappedLineAtIndex:0 width:1 continuation:&c];
+    XCTAssertNotNil(sca);
+    XCTAssertEqual(sca.length, 0);
+}
+
 @end
 

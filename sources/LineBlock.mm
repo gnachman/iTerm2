@@ -401,7 +401,8 @@ extern "C" int iTermLineBlockNumberOfFullLinesImpl(screen_char_t *buffer,
         }
         return fullLines;
     } else {
-        return (length - 1) / width;
+        // Need to use max(0) because otherwise we get -1 for length=0 width=1.
+        return MAX(0, length - 1) / width;
     }
 }
 
