@@ -22,6 +22,7 @@ typedef void (^VoidBlock)(void);
 static BOOL gWaitingForFullScreen;
 static void (^gPostRestorationCompletionBlock)(void);
 static BOOL gRanQueuedBlocks;
+static BOOL gShouldIgnoreOpenUntitledFile;
 
 @implementation PseudoTerminalRestorer
 
@@ -70,6 +71,28 @@ static BOOL gRanQueuedBlocks;
 + (void)restoreWindowWithIdentifier:(NSString *)identifier
                               state:(NSCoder *)state
                   completionHandler:(void (^)(NSWindow *, NSError *))completionHandler {
+    [self restoreWindowWithIdentifier:identifier
+                                state:state
+                               system:YES
+                    completionHandler:completionHandler];
+}
+
++ (BOOL)shouldIgnoreOpenUntitledFile {
+    return gShouldIgnoreOpenUntitledFile;
+}
+
++ (void)restoreWindowWithIdentifier:(NSString *)identifier
+                              state:(NSCoder *)state
+                             system:(BOOL)system
+                  completionHandler:(void (^)(NSWindow *, NSError *))completionHandler {
+    if (system && [iTermAdvancedSettingsModel useRestorableStateController]) {
+        DLog(@"Ignore system window restoration because we're using our own restorable state controller.");
+        gShouldIgnoreOpenUntitledFile = YES;
+        completionHandler(nil, nil);
+        gShouldIgnoreOpenUntitledFile = NO;
+        DLog(@"Return");
+        return;
+    }
     if ([[NSApplication sharedApplication] isRunningUnitTests]) {
         completionHandler(nil, nil);
         return;

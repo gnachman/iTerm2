@@ -89,6 +89,13 @@
               @"key": self.key };
 }
 
+- (iTermRestorableStateRecord *)withPlaintext:(NSData *)newPlaintext {
+    return [[iTermRestorableStateRecord alloc] initWithWindowNumber:_windowNumber
+                                                         identifier:_identifier
+                                                                key:_key
+                                                          plaintext:newPlaintext];
+}
+
 #pragma mark - Saving
 
 // You might wonder why we bother to encrypt the file and then save the key in the
@@ -148,7 +155,7 @@
 #pragma mark - Common
 
 - (NSURL *)url {
-    NSString *appSupport = [[NSFileManager defaultManager] applicationSupportDirectoryWithoutSpacesWithoutCreatingSymlink];
+    NSString *appSupport = [[NSFileManager defaultManager] applicationSupportDirectory];
     NSString *savedState = [appSupport stringByAppendingPathComponent:@"SavedState"];
     [[NSFileManager defaultManager] createDirectoryAtPath:savedState
                               withIntermediateDirectories:YES
@@ -156,7 +163,8 @@
                                                     error:nil];
     NSURL *url = [NSURL fileURLWithPath:savedState];
     [url setResourceValue:@YES forKey:NSURLIsExcludedFromBackupKey error:nil];
-    return [url URLByAppendingPathComponent:[NSString stringWithFormat:@"%@.data", @(self.windowNumber)]];
+    url = [url URLByAppendingPathComponent:[NSString stringWithFormat:@"%@.data", @(self.windowNumber)]];
+    return [url URLByResolvingSymlinksInPath];
 }
 
 - (NSData *)magic {

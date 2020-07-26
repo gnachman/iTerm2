@@ -809,6 +809,11 @@ static BOOL hasBecomeActive = NO;
 
 - (BOOL)applicationOpenUntitledFile:(NSApplication *)theApplication {
     DLog(@"Open untitled file");
+    if ([PseudoTerminalRestorer shouldIgnoreOpenUntitledFile] &&
+        _restorableStateController.numberOfWindowsRestored > 0) {
+        DLog(@"Already restored one of our own windows so not opening an untitled file during window state restoration.");
+        return NO;
+    }
     if ([self isAppleScriptTestApp]) {
         DLog(@"Nope, am applescript test app");
         // Don't want to do this for applescript testing so we have a blank slate.
@@ -2312,40 +2317,18 @@ static BOOL hasBecomeActive = NO;
 #pragma mark - iTermRestorableStateControllerDelegate
 
 - (NSArray<NSWindow *> *)restorableStateControllerWindows:(iTermRestorableStateController *)restorableStateController {
-    // For inscrutable reasons, traditional full screen windows in minimal and compact
-    // themes do not enjoy window restoration. It's probably because of the wacky hijinx
-    // with NSWindow subclasses and such. At any rate, this is a baby step toward replacing
-    // more of the OS's window restoration with something reliable.
-    iTermPreferencesTabStyle preferredStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
-    switch (preferredStyle) {
-        case TAB_STYLE_DARK:
-        case TAB_STYLE_LIGHT:
-        case TAB_STYLE_AUTOMATIC:
-        case TAB_STYLE_DARK_HIGH_CONTRAST:
-        case TAB_STYLE_LIGHT_HIGH_CONTRAST:
-            return @[];
-        case TAB_STYLE_COMPACT:
-        case TAB_STYLE_MINIMAL:
-            break;
-    }
-
     return [[[iTermController sharedInstance] terminals] mapWithBlock:^id(PseudoTerminal *term) {
-        if (!term.fullScreen) {
-            return nil;
-        }
-        if (term.lionFullScreen) {
-            return nil;
-        }
-        if (![term getAndResetRestorableState]) {
-            return nil;
-        }
         return term.window;
     }];
 }
 
 - (BOOL)restorableStateController:(iTermRestorableStateController *)restorableStateController
            windowNeedsRestoration:(NSWindow *)window {
-    return YES;
+    PseudoTerminal *term = [PseudoTerminal castFrom:window.delegate];
+    if (!term) {
+        return NO;
+    }
+    return [term getAndResetRestorableState];
 }
 
 - (void)restorableStateController:(iTermRestorableStateController *)restorableStateController
@@ -2354,6 +2337,7 @@ static BOOL hasBecomeActive = NO;
                        completion:(void (^)(NSWindow * _Nonnull, NSError * _Nonnull))completion {
     [PseudoTerminalRestorer restoreWindowWithIdentifier:identifier
                                                   state:coder
+                                                 system:NO
                                       completionHandler:completion];
 }
 

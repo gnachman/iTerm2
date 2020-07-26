@@ -23,4 +23,10 @@
 
 + (void)runQueuedBlocks;
 
++ (void)restoreWindowWithIdentifier:(NSString *)identifier
+                              state:(NSCoder *)state
+                             system:(BOOL)system
+                  completionHandler:(void (^)(NSWindow *, NSError *))completionHandler;
++ (BOOL)shouldIgnoreOpenUntitledFile;
+
 @end

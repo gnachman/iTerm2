@@ -588,7 +588,7 @@ DEFINE_BOOL(clearBellIconAggressively, YES, SECTION_EXPERIMENTAL @"Clear bell ic
 DEFINE_BOOL(workAroundNumericKeypadBug, YES, SECTION_EXPERIMENTAL @"Treat the equals sign on the numeric keypad as a key on the numeric keypad.\nFor mysterious reasons, macOS does not treat this key as belonging to the numeric keypad. Enable this setting to work around the bug.");
 DEFINE_BOOL(accelerateUploads, YES, SECTION_EXPERIMENTAL @"Make uploads with it2ul really fast.");
 DEFINE_BOOL(multiserver, YES, SECTION_EXPERIMENTAL @"Enable multi-server daemon.\nA new implementation of session restoration that combines daemon processes.");
-DEFINE_BOOL(useRestorableStateController, YES, SECTION_EXPERIMENTAL @"Enable restorable state controller?\nThis enables restoring full screen windows in the Compact and Minimal themes.");
+DEFINE_BOOL(useRestorableStateController, YES, SECTION_EXPERIMENTAL @"Enable restorable state controller?\nThis makes window restoration more reliable.");
 DEFINE_BOOL(fixMouseWheel, YES, SECTION_EXPERIMENTAL @"Mouse wheel always scrolls when scroll bars are visible");
 DEFINE_BOOL(oscColorReport16Bits, YES, SECTION_EXPERIMENTAL @"Report 16-bit color values to OSC 4 and 10 through 19.\nWorks around a bug in older vim where they could not properly parse 8-bit values.");
 DEFINE_BOOL(showSearchResultsMinimap, YES, SECTION_EXPERIMENTAL @"Show search result locations in scroll bar.\nChanging this setting will not affect existing sessions until you restart.");

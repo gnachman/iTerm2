@@ -33,6 +33,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface iTermRestorableStateController : NSObject
 @property (nonatomic, weak) id<iTermRestorableStateControllerDelegate> delegate;
+@property (nonatomic) NSInteger numberOfWindowsRestored;
 
 - (void)saveRestorableState;
 - (void)restoreWindows;
