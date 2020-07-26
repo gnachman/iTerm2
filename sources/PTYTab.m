@@ -1825,6 +1825,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 - (void)adjustSubviewsOf:(NSSplitView *)split {
     PtyLog(@"--- adjust ---");
     [split adjustSubviews];
+    [self splitView:split resizeSubviewsWithOldSize:split.frame.size];
     PtyLog(@">>AFTER:");
     [self dumpSubviewsOf:split];
     PtyLog(@"<<<<<<<< end dump");
