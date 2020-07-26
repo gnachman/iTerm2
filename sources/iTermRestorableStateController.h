@@ -6,6 +6,8 @@
 //
 
 #import <Foundation/Foundation.h>
+#import "iTermRestorableStateRestorer.h"
+#import "iTermRestorableStateSaver.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -13,27 +15,12 @@ NS_ASSUME_NONNULL_BEGIN
 @class NSCoding;
 @class NSWindow;
 
-@protocol iTermRestorableStateControllerDelegate<NSObject>
-
-- (NSArray<NSWindow *> *)restorableStateControllerWindows:(iTermRestorableStateController *)restorableStateController;
-
-- (void)restorableStateController:(iTermRestorableStateController *)restorableStateController
-                 restoreWithCoder:(NSCoder *)coder
-                       identifier:(NSString *)identifier
-                       completion:(void (^)(NSWindow *, NSError *))completion;
-
-- (BOOL)restorableStateController:(iTermRestorableStateController *)restorableStateController
-           windowNeedsRestoration:(NSWindow *)window;
-
-- (void)restorableStateController:(iTermRestorableStateController *)restorableStateController
-                  encodeWithCoder:(NSCoder *)coder
-                           window:(NSWindow *)window;
-
+@protocol iTermRestorableStateControllerDelegate<iTermRestorableStateSaving, iTermRestorableStateRestoring>
 @end
 
 @interface iTermRestorableStateController : NSObject
 @property (nonatomic, weak) id<iTermRestorableStateControllerDelegate> delegate;
-@property (nonatomic) NSInteger numberOfWindowsRestored;
+@property (nonatomic, readonly) NSInteger numberOfWindowsRestored;
 
 - (void)saveRestorableState;
 - (void)restoreWindows;

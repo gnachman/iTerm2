@@ -2316,14 +2316,13 @@ static BOOL hasBecomeActive = NO;
 
 #pragma mark - iTermRestorableStateControllerDelegate
 
-- (NSArray<NSWindow *> *)restorableStateControllerWindows:(iTermRestorableStateController *)restorableStateController {
+- (NSArray<NSWindow *> *)restorableStateWindows {
     return [[[iTermController sharedInstance] terminals] mapWithBlock:^id(PseudoTerminal *term) {
         return term.window;
     }];
 }
 
-- (BOOL)restorableStateController:(iTermRestorableStateController *)restorableStateController
-           windowNeedsRestoration:(NSWindow *)window {
+- (BOOL)restorableStateWindowNeedsRestoration:(NSWindow *)window {
     PseudoTerminal *term = [PseudoTerminal castFrom:window.delegate];
     if (!term) {
         return NO;
@@ -2331,19 +2330,17 @@ static BOOL hasBecomeActive = NO;
     return [term getAndResetRestorableState];
 }
 
-- (void)restorableStateController:(iTermRestorableStateController *)restorableStateController
-                 restoreWithCoder:(NSCoder *)coder
-                       identifier:(NSString *)identifier
-                       completion:(void (^)(NSWindow * _Nonnull, NSError * _Nonnull))completion {
+- (void)restorableStateRestoreWithCoder:(NSCoder *)coder
+                             identifier:(NSString *)identifier
+                             completion:(void (^)(NSWindow * _Nonnull, NSError * _Nonnull))completion {
     [PseudoTerminalRestorer restoreWindowWithIdentifier:identifier
                                                   state:coder
                                                  system:NO
                                       completionHandler:completion];
 }
 
-- (void)restorableStateController:(iTermRestorableStateController *)restorableStateController
-                  encodeWithCoder:(NSCoder *)coder
-                           window:(NSWindow *)window {
+- (void)restorableStateEncodeWithCoder:(NSCoder *)coder
+                                window:(NSWindow *)window {
     PseudoTerminal *term = [PseudoTerminal castFrom:window.delegate];
     if (!term) {
         return;
