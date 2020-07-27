@@ -276,6 +276,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (double)statusBarHeight;
 + (BOOL)statusBarIcon;
 + (BOOL)stealKeyFocus;
++ (BOOL)storeStateInSqlite;
 + (BOOL)supportREPCode;
 + (BOOL)suppressMultilinePasteWarningWhenNotAtShellPrompt;
 + (BOOL)suppressMultilinePasteWarningWhenPastingOneLineWithTerminalNewline;

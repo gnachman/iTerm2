@@ -7,26 +7,30 @@
 
 #import <Cocoa/Cocoa.h>
 
+#import "iTermRestorableStateDriver.h"
+
 NS_ASSUME_NONNULL_BEGIN
 
+@class iTermEncoderGraphRecord;
+
 @protocol iTermRestorableStateRestoring<NSObject>
+- (void)restorableStateRestoreWithRecord:(iTermEncoderGraphRecord *)record
+                              identifier:(NSString *)identifier
+                              completion:(void (^)(NSWindow * _Nullable, NSError * _Nullable))completion;
+
+- (void)restorableStateRestoreApplicationStateWithRecord:(iTermEncoderGraphRecord *)record;
+
 - (void)restorableStateRestoreWithCoder:(NSCoder *)coder
                              identifier:(NSString *)identifier
-                             completion:(void (^)(NSWindow *, NSError *))completion;
+                             completion:(void (^)(NSWindow * _Nullable, NSError * _Nullable))completion;
 @end
 
-@interface iTermRestorableStateRestorer : NSObject
+@interface iTermRestorableStateRestorer : NSObject<iTermRestorableStateRestorer>
 @property (nonatomic, weak) id<iTermRestorableStateRestoring> delegate;
-@property (nonatomic, readonly) dispatch_queue_t queue;
 @property (nonatomic, readonly) NSURL *indexURL;
-@property (nonatomic, readonly) NSInteger numberOfWindowsRestored;
-@property (nonatomic, readonly) BOOL restoring;
 
-- (instancetype)initWithQueue:(dispatch_queue_t)queue
-                     indexURL:(NSURL *)indexURL NS_DESIGNATED_INITIALIZER;
+- (instancetype)initWithIndexURL:(NSURL *)indexURL erase:(BOOL)erase NS_DESIGNATED_INITIALIZER;
 - (instancetype)init NS_UNAVAILABLE;
-
-- (void)restoreWithCompletion:(void (^)(void))completion;
 
 @end
 

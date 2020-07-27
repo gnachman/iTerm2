@@ -7,6 +7,7 @@
 //
 
 #import <Foundation/Foundation.h>
+#import "iTermEncoderAdapter.h"
 #import "iTermFindViewController.h"
 #import "ScreenChar.h"
 
@@ -32,7 +33,7 @@ typedef struct {
 
 // LineBlock represents an ordered collection of lines of text. It stores them contiguously
 // in a buffer.
-@interface LineBlock : NSObject <NSCopying>
+@interface LineBlock : NSObject <NSCopying, iTermUniquelyIdentifiable>
 
 // Once this is set to true, it stays true. If double width characters are
 // possibly present then a slower algorithm is used to count the number of
@@ -40,6 +41,7 @@ typedef struct {
 // that get wrapped to the next line.
 @property(nonatomic, assign) BOOL mayHaveDoubleWidthCharacter;
 @property(nonatomic, readonly) int numberOfCharacters;
+@property(nonatomic, readonly) NSInteger generation;
 
 + (instancetype)blockWithDictionary:(NSDictionary *)dictionary;
 

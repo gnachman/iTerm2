@@ -593,6 +593,7 @@ DEFINE_BOOL(fixMouseWheel, YES, SECTION_EXPERIMENTAL @"Mouse wheel always scroll
 DEFINE_BOOL(oscColorReport16Bits, YES, SECTION_EXPERIMENTAL @"Report 16-bit color values to OSC 4 and 10 through 19.\nWorks around a bug in older vim where they could not properly parse 8-bit values.");
 DEFINE_BOOL(showSearchResultsMinimap, YES, SECTION_EXPERIMENTAL @"Show search result locations in scroll bar.\nChanging this setting will not affect existing sessions until you restart.");
 DEFINE_BOOL(allowTabbarInTitlebarAccessoryBigSur, NO, SECTION_EXPERIMENTAL @"Make the tab bar a titlebar accessory view in Big Sur?");
+DEFINE_BOOL(storeStateInSqlite, YES, SECTION_EXPERIMENTAL @"Store window restoration state in SQLite");
 
 #pragma mark - Scripting
 #define SECTION_SCRIPTING @"Scripting: "

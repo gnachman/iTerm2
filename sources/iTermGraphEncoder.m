@@ -1,0 +1,265 @@
+//
+//  iTermGraphEncoder.m
+//  iTerm2SharedARC
+//
+//  Created by George Nachman on 7/26/20.
+//
+
+#import "iTermGraphEncoder.h"
+
+#import "DebugLogging.h"
+#import "NSArray+iTerm.h"
+#import "NSData+iTerm.h"
+#import "NSDictionary+iTerm.h"
+#import "NSObject+iTerm.h"
+#import "iTermTuple.h"
+
+NSInteger iTermGenerationAlwaysEncode = NSIntegerMax;
+
+@implementation iTermGraphEncoder {
+    NSMutableDictionary<NSString *, id> *_pod;
+    NSString *_identifier;
+    NSInteger _generation;
+    NSString *_key;
+    NSMutableArray<iTermEncoderGraphRecord *> *_children;
+    NSNumber *_Nullable _rowid;
+    iTermEncoderGraphRecord *_record;
+}
+
+- (instancetype)initWithKey:(NSString *)key
+                 identifier:(NSString *)identifier
+                 generation:(NSInteger)generation {
+    return [self initWithKey:key identifier:identifier generation:generation rowid:nil];
+}
+
+- (instancetype)initWithKey:(NSString *)key
+                 identifier:(NSString *)identifier
+                 generation:(NSInteger)generation
+                      rowid:(NSNumber * _Nullable)rowid {
+    assert(identifier);
+    self = [super init];
+    if (self) {
+        _key = key;
+        _identifier = identifier;
+        if (generation != iTermGenerationAlwaysEncode) {
+            _generation = generation;
+        } else {
+            _generation = 0;
+        }
+        _pod = [NSMutableDictionary dictionary];
+        _children = [NSMutableArray array];
+        _state = iTermGraphEncoderStateLive;
+        _rowid = rowid;
+    }
+    return self;
+}
+
+- (instancetype)initWithRecord:(iTermEncoderGraphRecord *)record {
+    iTermGraphEncoder *encoder = [self initWithKey:record.key
+                                        identifier:record.identifier
+                                        generation:record.generation
+                                             rowid:nil];
+    if (!encoder) {
+        return nil;
+    }
+    encoder->_pod = [record.pod mutableCopy];
+    encoder->_children = [record.graphRecords mutableCopy];
+    return encoder;
+}
+
+- (void)encodeString:(NSString *)string forKey:(NSString *)key {
+    assert(_state == iTermGraphEncoderStateLive);
+    _pod[key] = string.copy;
+}
+
+- (void)encodeNumber:(NSNumber *)number forKey:(NSString *)key {
+    assert(_state == iTermGraphEncoderStateLive);
+    _pod[key] = number;
+}
+
+- (void)encodeData:(NSData *)data forKey:(NSString *)key {
+    assert(_state == iTermGraphEncoderStateLive);
+    _pod[key] = data.copy;
+}
+
+- (BOOL)encodePropertyList:(id)plist withKey:(NSString *)key {
+    assert(_state == iTermGraphEncoderStateLive);
+    NSError *error;
+    NSData *data = [NSData it_dataWithSecurelyArchivedObject:plist error:&error];
+    if (error) {
+        DLog(@"Failed to serialize property list %@: %@", plist, error);
+        return NO;
+    }
+    _pod[key] = data;
+    return YES;
+}
+
+- (void)encodeDate:(NSDate *)date forKey:(NSString *)key {
+    assert(_state == iTermGraphEncoderStateLive);
+    _pod[key] = date;
+}
+
+- (void)encodeNullForKey:(NSString *)key {
+    assert(_state == iTermGraphEncoderStateLive);
+    _pod[key] = [NSNull null];
+}
+
+- (BOOL)encodeObject:(id)obj key:(NSString *)key {
+    if ([obj conformsToProtocol:@protocol(iTermGraphEncodable)] &&
+        [(id<iTermGraphEncodable>)obj graphEncoderShouldIgnore]) {
+        return NO;
+    }
+    if ([obj isKindOfClass:[NSString class]]) {
+        [self encodeString:obj forKey:key];
+        return YES;
+    }
+    if ([obj isKindOfClass:[NSData class]]) {
+        [self encodeData:obj forKey:key];
+        return YES;
+    }
+    if ([obj isKindOfClass:[NSDate class]]) {
+        [self encodeData:obj forKey:key];
+        return YES;
+    }
+    if ([obj isKindOfClass:[NSNumber class]]) {
+        [self encodeNumber:obj forKey:key];
+        return YES;
+    }
+    if ([obj isKindOfClass:[NSNull class]]) {
+        [self encodeNullForKey:key];
+        return YES;
+    }
+    NSError *error = nil;
+    [NSData it_dataWithSecurelyArchivedObject:obj error:&error];
+    if (!error) {
+        _pod[key] = obj;
+        return YES;
+    }
+    if ([obj isKindOfClass:[NSArray class]]) {
+        NSArray *array = obj;
+        [self encodeArrayWithKey:key
+                      generation:_generation
+                     identifiers:[NSArray stringSequenceWithRange:NSMakeRange(0, array.count)]
+                         options:0
+                           block:^BOOL (NSString * _Nonnull identifier,
+                                   NSInteger index,
+                                   iTermGraphEncoder * _Nonnull subencoder) {
+            [subencoder encodeObject:array[index] key:@"__arrayValue"];
+            return YES;
+        }];
+        return YES;
+    }
+    if ([obj isKindOfClass:[NSDictionary class]]) {
+        NSDictionary *dict = obj;
+        [self encodeDictionary:dict withKey:key generation:_generation];
+        return YES;
+    }
+    assert(NO);
+}
+
+- (void)encodeDictionary:(NSDictionary *)dict
+                 withKey:(NSString *)key
+              generation:(NSInteger)generation {
+    [self encodeChildWithKey:@"__dict"
+                  identifier:key
+                  generation:generation
+                       block:^BOOL(iTermGraphEncoder * _Nonnull subencoder) {
+        [dict enumerateKeysAndObjectsUsingBlock:^(NSString * _Nonnull key, id  _Nonnull obj, BOOL * _Nonnull stop) {
+            [subencoder encodeObject:obj key:key];
+        }];
+        return YES;
+    }];
+}
+
+- (void)encodeGraph:(iTermEncoderGraphRecord *)record {
+    assert(_state == iTermGraphEncoderStateLive);
+    [_children addObject:record];
+}
+
+- (void)mergeDictionary:(NSDictionary *)dictionary {
+    [_pod it_mergeFrom:dictionary];
+}
+
+- (BOOL)encodeChildWithKey:(NSString *)key
+                identifier:(NSString *)identifier
+                generation:(NSInteger)generation
+                     block:(BOOL (^ NS_NOESCAPE)(iTermGraphEncoder *subencoder))block {
+    assert(_state == iTermGraphEncoderStateLive);
+    iTermGraphEncoder *encoder = [[iTermGraphEncoder alloc] initWithKey:key
+                                                             identifier:identifier
+                                                             generation:generation];
+    if (!block(encoder)) {
+        return NO;
+    }
+    [self encodeGraph:encoder.record];
+    return YES;
+}
+
+- (void)encodeArrayWithKey:(NSString *)key
+                generation:(NSInteger)generation
+               identifiers:(NSArray<NSString *> *)identifiers
+                   options:(iTermGraphEncoderArrayOptions)options
+                     block:(BOOL (^ NS_NOESCAPE)(NSString *identifier,
+                                                 NSInteger index,
+                                                 iTermGraphEncoder *subencoder))block {
+    [self encodeChildWithKey:@"__array"
+                  identifier:key
+                  generation:generation
+                       block:^BOOL(iTermGraphEncoder * _Nonnull subencoder) {
+        [identifiers enumerateObjectsUsingBlock:^(NSString * _Nonnull identifier,
+                                                  NSUInteger idx,
+                                                  BOOL * _Nonnull stop) {
+            [subencoder transaction:^BOOL {
+                return [subencoder encodeChildWithKey:@"" identifier:identifier generation:iTermGenerationAlwaysEncode block:^BOOL(iTermGraphEncoder * _Nonnull subencoder) {
+                    return block(identifier, idx, subencoder);
+                }];
+            }];
+        }];
+        NSArray<NSString *> *orderedIdentifiers = identifiers;
+        if (options & iTermGraphEncoderArrayOptionsReverse) {
+            orderedIdentifiers = orderedIdentifiers.reversed;
+        }
+        [subencoder encodeString:[orderedIdentifiers componentsJoinedByString:@"\t"] forKey:@"__order"];
+        return YES;
+    }];
+}
+
+- (iTermEncoderGraphRecord *)record {
+    switch (_state) {
+        case iTermGraphEncoderStateLive:
+            _record = [iTermEncoderGraphRecord withPODs:_pod
+                                                 graphs:_children
+                                             generation:_generation
+                                                    key:_key
+                                             identifier:_identifier
+                                                  rowid:_rowid];
+            _state = iTermGraphEncoderStateCommitted;
+            return _record;
+
+        case iTermGraphEncoderStateCommitted:
+            return _record;
+
+        case iTermGraphEncoderStateRolledBack:
+            return nil;
+    }
+}
+
+- (void)rollback {
+    assert(_state == iTermGraphEncoderStateLive);
+    [_pod removeAllObjects];
+    [_children removeAllObjects];
+    _state = iTermGraphEncoderStateRolledBack;
+}
+
+- (void)transaction:(BOOL (^)(void))block {
+    NSMutableDictionary<NSString *, id> *savedPOD = [_pod mutableCopy];
+    NSMutableArray<iTermEncoderGraphRecord *> *savedChildren = [_children mutableCopy];
+    const BOOL commit = block();
+    if (commit) {
+        return;
+    }
+    _pod = savedPOD;
+    _children = savedChildren;
+}
+
+@end

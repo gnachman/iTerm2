@@ -7,6 +7,7 @@
 
 #import "iTermRestorableStateRecord.h"
 
+#import "DebugLogging.h"
 #import "NSData+iTerm.h"
 #import "NSFileManager+iTerm.h"
 #import "NSObject+iTerm.h"
@@ -75,6 +76,12 @@
         }
     }
     return self;
+}
+
+#pragma mark - iTermRestorableStateRecord
+
+- (void)didFinishRestoring {
+    unlink(self.url.path.UTF8String);
 }
 
 #pragma mark - APIs
@@ -157,10 +164,7 @@
 - (NSURL *)url {
     NSString *appSupport = [[NSFileManager defaultManager] applicationSupportDirectory];
     NSString *savedState = [appSupport stringByAppendingPathComponent:@"SavedState"];
-    [[NSFileManager defaultManager] createDirectoryAtPath:savedState
-                              withIntermediateDirectories:YES
-                                               attributes:@{ NSFilePosixPermissions: @(0700) }
-                                                    error:nil];
+
     NSURL *url = [NSURL fileURLWithPath:savedState];
     [url setResourceValue:@YES forKey:NSURLIsExcludedFromBackupKey error:nil];
     url = [url URLByAppendingPathComponent:[NSString stringWithFormat:@"%@.data", @(self.windowNumber)]];
@@ -184,6 +188,25 @@
         w >>= 8;
     }
     return [NSData dataWithBytes:temp length:sizeof(temp)];
+}
+
+- (NSKeyedUnarchiver *)unarchiver {
+    DLog(@"Restore %@", @(self.windowNumber));
+    NSError *error = nil;
+    NSKeyedUnarchiver *unarchiver = [[NSKeyedUnarchiver alloc] initForReadingFromData:self.plaintext
+                                                                                error:&error];
+    unarchiver.requiresSecureCoding = NO;
+    if (error) {
+        DLog(@"Restoration failed with %@", error);
+        unlink(self.url.path.UTF8String);
+        return nil;
+    }
+
+    return unarchiver;
+}
+
+- (nonnull id<iTermRestorableStateRecord>)recordWithPayload:(nonnull id)payload {
+    return [self withPlaintext:payload];
 }
 
 @end

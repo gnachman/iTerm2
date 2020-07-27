@@ -41,7 +41,7 @@ static NSString *const kArrangement = @"Arrangement";
 
 @interface iTermProfileHotKey()
 @property(nonatomic, copy) NSString *profileGuid;
-@property(nonatomic, retain) NSDictionary *restorableState;
+@property(nonatomic, retain) NSDictionary *restorableState;  // non-sqlite legacy
 @property(nonatomic, readwrite) BOOL rollingIn;
 @property(nonatomic) BOOL birthingWindow;
 @property(nonatomic, retain) NSWindowController *windowControllerBeingBorn;
@@ -639,10 +639,11 @@ static NSString *const kArrangement = @"Arrangement";
     }
 }
 
+// Non-sqlite legacy code path
 - (void)saveHotKeyWindowState {
     if (self.windowController.weaklyReferencedObject && self.profileGuid) {
         DLog(@"Saving hotkey window state for %@", self);
-        BOOL includeContents = [iTermAdvancedSettingsModel restoreWindowContents];
+        const BOOL includeContents = [iTermAdvancedSettingsModel restoreWindowContents];
         NSDictionary *arrangement = [self.windowController arrangementExcludingTmuxTabs:YES
                                                                       includingContents:includeContents];
         if (arrangement) {
@@ -657,15 +658,28 @@ static NSString *const kArrangement = @"Arrangement";
     }
 }
 
-- (void)setLegacyState:(NSDictionary *)state {
-    if (self.profileGuid && state) {
-        self.restorableState = @{ kGUID: self.profileGuid,
-                                  kArrangement: state };
-    } else {
-        DLog(@"Not setting legacy state. profileGuid=%@, state=%@", self.profileGuid, state);
+- (BOOL)encodeGraphWithEncoder:(iTermGraphEncoder *)encoder {
+    if (!self.windowController.weaklyReferencedObject || !self.profileGuid) {
+        DLog(@"Not encoding hotkey window state for %@", self);
+        return NO;
     }
+    if (![self.windowController conformsToProtocol:@protocol(iTermGraphCodable)]) {
+        XLog(@"Window controller %@ does not conform to iTermGraphCodable", self.windowController);
+        return NO;
+    }
+    id<iTermGraphCodable> codable = (id<iTermGraphCodable>)self.windowController;
+
+    [encoder encodeString:self.profileGuid forKey:kGUID];
+    [encoder encodeChildWithKey:kArrangement
+                     identifier:@""
+                     generation:iTermGenerationAlwaysEncode
+                          block:^BOOL(iTermGraphEncoder * _Nonnull subencoder) {
+        return [codable encodeGraphWithEncoder:subencoder];
+    }];
+    return YES;
 }
 
+// Non-sqlite legacy code path
 - (BOOL)loadRestorableStateFromArray:(NSArray *)states {
     for (NSDictionary *state in states) {
         if ([state[kGUID] isEqualToString:self.profileGuid]) {

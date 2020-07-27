@@ -977,6 +977,15 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     return YES;
 }
 
+- (VT100GridRange)screenRangeOfVisibleLines {
+    return VT100GridRangeMake(0, 1);
+}
+
+
+- (void)screenSizeDidChangeWithNewTopLineAt:(int)newTop {
+}
+
+
 #pragma mark - iTermSelectionDelegate
 
 - (void)selectionDidChange:(iTermSelection *)selection {
@@ -4190,7 +4199,10 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
                @"....."]);
     PTYNoteViewController *note = [[[PTYNoteViewController alloc] init] autorelease];
     [screen addNote:note inRange:range];
-    NSDictionary *state = screen.contentsDictionary;
+    iTermMutableDictionaryEncoderAdapter *encoder = [iTermMutableDictionaryEncoderAdapter encoder];
+    int linesDropped = 0;
+    [screen encodeContents:encoder linesDropped:&linesDropped];
+    NSDictionary *state = encoder.mutableDictionary;
 
     screen = [self screenWithWidth:3 height:4];
     [screen restoreFromDictionary:state includeRestorationBanner:NO knownTriggers:@[] reattached:NO];
@@ -4296,7 +4308,10 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     [self appendLines:@[@"", @"", @"", @"Georges-iMac:/Users/gnachman% xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"] toScreen:screen];
     PTYNoteViewController *note = [[[PTYNoteViewController alloc] init] autorelease];
     [screen addNote:note inRange:range1];
-    NSDictionary *state = screen.contentsDictionary;
+    iTermMutableDictionaryEncoderAdapter *encoder = [iTermMutableDictionaryEncoderAdapter encoder];
+    int linesDropped = 0;
+    [screen encodeContents:encoder linesDropped:&linesDropped];
+    NSDictionary *state = encoder.mutableDictionary;
 
     screen = [self screenWithWidth:80 height:25];
     [screen restoreFromDictionary:state includeRestorationBanner:NO knownTriggers:@[] reattached:YES];

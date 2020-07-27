@@ -141,7 +141,7 @@ static const double kFloatingPointTolerance = 0.00001;
 
 - (void)testSanitizeEscapeSpecialCharacters {
     [self sanitizeString:kTestString
-                  expect:@"'a (\t\r\r\n" @"\x16" @"“”‘’–—b'"
+                  expect:@"a\\ \\(\\\t\r\r\n" @"\x16" @"“”‘’–—b"
                    flags:kPasteFlagsEscapeSpecialCharacters
             tabTransform:kTabTransformNone
             spacesPerTab:0];
@@ -188,7 +188,7 @@ static const double kFloatingPointTolerance = 0.00001;
 }
 
 - (void)testSanitizeAllFlagsOn {
-    NSString *expectedString = @"'a (\t\r\r\"\"\\'\\'--b'";
+    NSString *expectedString = @"a\\ \\(\\\t\r\r\\\"\\\"\\'\\'--b";
     NSData *data = [expectedString dataUsingEncoding:NSUTF8StringEncoding];
     NSString *expected = [data stringWithBase64EncodingWithLineBreak:@"\r"];
     [self sanitizeString:kTestString
@@ -252,7 +252,7 @@ static const double kFloatingPointTolerance = 0.00001;
             tabTransform:kTabTransformConvertToSpaces
             spacesPerTab:4];
     [self runTimer];
-    NSString *expected = @"'    '";
+    NSString *expected = @"\\ \\ \\ \\ ";
     XCTAssertEqualObjects(_writeBuffer, expected);
 }
 
@@ -276,7 +276,7 @@ static const double kFloatingPointTolerance = 0.00001;
             tabTransform:kTabTransformConvertToSpaces
             spacesPerTab:4];
     [self runTimer];
-    NSString *expected = @"'a (    \r\r“”‘’–—b'";
+    NSString *expected = @"a\\ \\(\\ \\ \\ \\ \r\r“”‘’–—b";
     XCTAssertEqualObjects(_writeBuffer, expected);
 }
 

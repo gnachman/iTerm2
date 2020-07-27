@@ -30,6 +30,7 @@ NS_ASSUME_NONNULL_BEGIN
 
     NSTimeInterval _timeOfLastWindowTitleChange;
     BOOL _needsInvalidateShadow;
+    BOOL _it_restorableStateInvalid;
 }
 
 @synthesize it_openingSheet;
@@ -135,7 +136,26 @@ ITERM_WEAKLY_REFERENCEABLE
     return [NSString stringWithFormat:@"window-%ld", (long)_uniqueNumber];
 }
 
+- (void)setIt_restorableStateInvalid:(BOOL)it_restorableStateInvalid {
+    _it_restorableStateInvalid = NO;
+}
+
+- (BOOL)it_restorableStateInvalid {
+    return _it_restorableStateInvalid;
+}
+
+- (void)invalidateRestorableState {
+    self.it_restorableStateInvalid = YES;
+    [super invalidateRestorableState];
+}
+
+- (void)encodeRestorableStateWithCoder:(NSCoder *)coder backgroundQueue:(NSOperationQueue *)queue {
+    self.it_restorableStateInvalid = NO;
+    [super encodeRestorableStateWithCoder:coder backgroundQueue:queue];
+}
+
 - (void)encodeRestorableStateWithCoder:(NSCoder *)coder {
+    self.it_restorableStateInvalid = NO;
     [super encodeRestorableStateWithCoder:coder];
     [coder encodeObject:restoreState_ forKey:kTerminalWindowStateRestorationWindowArrangementKey];
 }

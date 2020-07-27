@@ -45,6 +45,8 @@ static NSString *const kScreenCharImageMapKey = @"Image Map";
 static NSString *const kScreenCharCCMNextKeyKey = @"Next Key";
 static NSString *const kScreenCharHasWrappedKey = @"Has Wrapped";
 
+static NSInteger gScreenCharGeneration;
+
 // Maps codes to strings
 static NSMutableDictionary* complexCharMap;
 static NSMutableSet<NSNumber *> *spacingCombiningMarkCodeNumbers;
@@ -172,6 +174,7 @@ static void CreateComplexCharMapIfNeeded() {
         complexCharMap = [[NSMutableDictionary alloc] initWithCapacity:1000];
         spacingCombiningMarkCodeNumbers = [[NSMutableSet alloc] initWithCapacity:1000];
         inverseComplexCharMap = [[NSMutableDictionary alloc] initWithCapacity:1000];
+        gScreenCharGeneration++;
     }
 }
 
@@ -242,6 +245,7 @@ static void AllocateImageMapsIfNeeded(void) {
     if (!gImages) {
         gImages = [[NSMutableDictionary alloc] init];
         gEncodableImageMap = [[NSMutableDictionary alloc] init];
+        gScreenCharGeneration++;
     }
 }
 
@@ -267,6 +271,7 @@ screen_char_t ImageCharForNewImage(NSString *name,
     imageInfo.size = NSMakeSize(width, height);
     imageInfo.inset = inset;
     gImages[@(c.code)] = imageInfo;
+    gScreenCharGeneration++;
     DLog(@"Assign %@ to image code %@", imageInfo, @(c.code));
 
     return c;
@@ -282,6 +287,7 @@ void SetDecodedImage(unichar code, iTermImage *image, NSData *data) {
     iTermImageInfo *imageInfo = gImages[@(code)];
     [imageInfo setImageFromImage:image data:data];
     gEncodableImageMap[@(code)] = [imageInfo dictionary];
+    gScreenCharGeneration++;
     if ([iTermAdvancedSettingsModel restoreWindowContents]) {
         [NSApp invalidateRestorableState];
     }
@@ -292,6 +298,7 @@ void ReleaseImage(unichar code) {
     DLog(@"ReleaseImage(%@)", @(code));
     [gImages removeObjectForKey:@(code)];
     [gEncodableImageMap removeObjectForKey:@(code)];
+    gScreenCharGeneration++;
 }
 
 iTermImageInfo *GetImageInfo(unichar code) {
@@ -311,6 +318,7 @@ int GetOrSetComplexChar(NSString *str,
         return [number intValue];
     }
 
+    gScreenCharGeneration++;
     int newKey;
     do {
         newKey = ccmNextKey++;
@@ -704,6 +712,10 @@ void ConvertCharsToGraphicsCharset(screen_char_t *s, int len)
         s[i].complexChar = NO;
         s[i].code = charmap[(int)(s[i].code)];
     }
+}
+
+NSInteger ScreenCharGeneration(void) {
+    return gScreenCharGeneration;
 }
 
 NSDictionary *ScreenCharEncodedRestorableState(void) {

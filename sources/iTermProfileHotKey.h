@@ -1,4 +1,5 @@
 #import "iTermBaseHotKey.h"
+#import "iTermGraphEncoder.h"
 #import "iTermWeakReference.h"
 #import "NSDictionary+iTerm.h"
 #import "ProfileModel.h"
@@ -6,7 +7,7 @@
 
 @class PseudoTerminal;
 
-@interface iTermProfileHotKey : iTermBaseHotKey
+@interface iTermProfileHotKey : iTermBaseHotKey<iTermGraphCodable>
 
 // Hotkey windows' restorable state is saved in the application delegate because these windows are
 // often ordered out, and ordered-out windows are not saved. This is assigned to when the app state
@@ -47,6 +48,7 @@
 
 // This is computed based on the current settings of the profile we were created with.
 @property(nonatomic, readonly) iTermHotkeyWindowType hotkeyWindowType;
+@property(nonatomic, readonly) NSString *profileGuid;
 
 - (instancetype)initWithShortcuts:(NSArray<iTermShortcut *> *)shortcuts
             hasModifierActivation:(BOOL)hasModifierActivation
@@ -84,6 +86,5 @@
 - (BOOL)showHotKeyWindowCreatingWithURLIfNeeded:(NSURL *)url;
 - (void)saveHotKeyWindowState;
 - (BOOL)loadRestorableStateFromArray:(NSArray *)states;
-- (void)setLegacyState:(NSDictionary *)state;
 
 @end

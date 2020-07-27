@@ -34,7 +34,9 @@
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermLineBlockArray.h"
 #import "iTermMalloc.h"
+#import "iTermOrderedDictionary.h"
 #import "LineBlock.h"
+#import "NSArray+iTerm.h"
 #import "NSData+iTerm.h"
 #import "RegexKitLite.h"
 
@@ -48,6 +50,7 @@ static NSString *const kLineBufferNumDroppedBlocksKey = @"Num Dropped Blocks";
 static NSString *const kLineBufferDroppedCharsKey = @"Dropped Chars";
 static NSString *const kLineBufferTruncatedKey = @"Truncated";
 static NSString *const kLineBufferMayHaveDWCKey = @"May Have Double Width Character";
+static NSString *const kLineBufferBlockWrapperKey = @"Block Wrapper";
 
 static const int kLineBufferVersion = 1;
 static const NSInteger kUnicodeVersion = 9;
@@ -135,7 +138,11 @@ static const NSInteger kUnicodeVersion = 9;
         max_lines = [dictionary[kLineBufferMaxLinesKey] intValue];
         num_dropped_blocks = [dictionary[kLineBufferNumDroppedBlocksKey] intValue];
         droppedChars = [dictionary[kLineBufferDroppedCharsKey] longLongValue];
-        for (NSDictionary *blockDictionary in dictionary[kLineBufferBlocksKey]) {
+        for (NSDictionary *maybeWrapper in dictionary[kLineBufferBlocksKey]) {
+            NSDictionary *blockDictionary = maybeWrapper;
+            if (maybeWrapper[kLineBufferBlockWrapperKey]) {
+                blockDictionary = maybeWrapper[kLineBufferBlockWrapperKey];
+            }
             LineBlock *block = [LineBlock blockWithDictionary:blockDictionary];
             if (!block) {
                 [self autorelease];
@@ -1088,36 +1095,58 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
     return _lineBlocks.count + num_dropped_blocks;
 }
 
-- (NSArray *)codedBlocks:(BOOL *)truncated {
-    *truncated = NO;
-    NSMutableArray *codedBlocks = [NSMutableArray array];
-    int numLines = 0;
-    for (LineBlock *block in [_lineBlocks.blocks reverseObjectEnumerator]) {
-        [codedBlocks insertObject:[block dictionary] atIndex:0];
+// Returns whether we truncated lines.
+- (BOOL)encodeBlocks:(id<iTermEncoderAdapter>)encoder {
+    __block BOOL truncated = NO;
+    __block NSInteger numLines = 0;
 
-        // This caps the amount of data at a reasonable but arbitrary size.
-        numLines += [block getNumLinesWithWrapWidth:80];
-        if (numLines >= 10000) {
-            *truncated = YES;
-            break;
-        }
-    }
-    return codedBlocks;
+    iTermOrderedDictionary<NSString *, LineBlock *> *index =
+    [iTermOrderedDictionary byMappingEnumerator:_lineBlocks.blocks.reverseObjectEnumerator
+                                          block:^id _Nonnull(NSUInteger index,
+                                                             LineBlock *_Nonnull block) {
+        return block.stringUniqueIdentifier;
+    }];
+    [encoder encodeArrayWithKey:kLineBufferBlocksKey
+                    identifiers:index.keys
+                     generation:iTermGenerationAlwaysEncode
+                        options:iTermGraphEncoderArrayOptionsReverse
+                          block:^BOOL(id<iTermEncoderAdapter> _Nonnull encoder,
+                                      NSInteger i,
+                                      NSString * _Nonnull identifier) {
+        LineBlock *block = index[identifier];
+        DLog(@"Encode %@ with identifier %@ and generation %@", block, identifier, @(block.generation));
+        return [encoder encodeDictionaryWithKey:kLineBufferBlockWrapperKey
+                                     generation:block.generation
+                                          block:^BOOL(id<iTermEncoderAdapter>  _Nonnull encoder) {
+            if (truncated) {
+                return NO;
+            }
+            [encoder mergeDictionary:block.dictionary];
+            // This caps the amount of data at a reasonable but arbitrary size.
+            numLines += [block getNumLinesWithWrapWidth:80];
+            if (numLines >= 10000) {
+                truncated = YES;
+            }
+            return YES;
+        }];
+    }];
+
+    return truncated;
 }
 
-- (NSDictionary *)dictionary {
-    BOOL truncated;
-    NSArray *codedBlocks = [self codedBlocks:&truncated];
-    return @{ kLineBufferVersionKey: @(kLineBufferVersion),
-              kLineBufferBlocksKey: codedBlocks,
-              kLineBufferTruncatedKey: @(truncated),
-              kLineBufferBlockSizeKey: @(block_size),
-              kLineBufferCursorXKey: @(cursor_x),
-              kLineBufferCursorRawlineKey: @(cursor_rawline),
-              kLineBufferMaxLinesKey: @(max_lines),
-              kLineBufferNumDroppedBlocksKey: @(num_dropped_blocks),
-              kLineBufferDroppedCharsKey: @(droppedChars),
-              kLineBufferMayHaveDWCKey: @(_mayHaveDoubleWidthCharacter) };
+- (void)encode:(id<iTermEncoderAdapter>)encoder {
+    const BOOL truncated = [self encodeBlocks:encoder];
+
+    [encoder mergeDictionary:
+     @{ kLineBufferVersionKey: @(kLineBufferVersion),
+        kLineBufferTruncatedKey: @(truncated),
+        kLineBufferBlockSizeKey: @(block_size),
+        kLineBufferCursorXKey: @(cursor_x),
+        kLineBufferCursorRawlineKey: @(cursor_rawline),
+        kLineBufferMaxLinesKey: @(max_lines),
+        kLineBufferNumDroppedBlocksKey: @(num_dropped_blocks),
+        kLineBufferDroppedCharsKey: @(droppedChars),
+        kLineBufferMayHaveDWCKey: @(_mayHaveDoubleWidthCharacter) }];
 }
 
 - (void)appendMessage:(NSString *)message {

@@ -4,6 +4,7 @@
 #import "DVR.h"
 #import "iTermAPIHelper.h"
 #import "iTermEchoProbe.h"
+#import "iTermEncoderAdapter.h"
 #import "iTermFindDriver.h"
 #import "iTermFileDescriptorClient.h"
 #import "iTermMetalUnavailableReason.h"
@@ -266,6 +267,7 @@ backgroundColor:(NSColor *)backgroundColor;
     iTermFindDriverDelegate,
     iTermSubscribable,
     iTermTmuxControllerSession,
+    iTermUniquelyIdentifiable,
     iTermWeaklyReferenceable,
     PopupDelegate,
     PTYTaskDelegate,
@@ -402,8 +404,6 @@ backgroundColor:(NSColor *)backgroundColor;
 
 // Is bell currently in ringing state?
 @property(nonatomic, assign) BOOL bell;
-
-@property(nonatomic, readonly) NSDictionary *arrangement;
 
 @property(nonatomic, readonly) int columns;
 @property(nonatomic, readonly) int rows;
@@ -798,7 +798,8 @@ backgroundColor:(NSColor *)backgroundColor;
 
 - (void)tryToRunShellIntegrationInstallerWithPromptCheck:(BOOL)promptCheck;
 
-- (NSDictionary *)arrangementWithContents:(BOOL)includeContents;
+- (BOOL)encodeArrangementWithContents:(BOOL)includeContents
+                              encoder:(id<iTermEncoderAdapter>)encoder;
 
 - (void)toggleTmuxZoom;
 - (void)forceTmuxDetach;

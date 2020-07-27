@@ -1,4 +1,5 @@
 #import <Cocoa/Cocoa.h>
+#import "iTermEncoderAdapter.h"
 #import "iTermIntervalTreeObserver.h"
 #import "PTYNoteViewController.h"
 #import "PTYTextViewDataSource.h"
@@ -211,7 +212,8 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 - (VT100RemoteHost *)remoteHostOnLine:(int)line;
 - (VT100ScreenMark *)lastCommandMark;  // last mark representing a command
 
-- (NSDictionary *)contentsDictionary;
+- (BOOL)encodeContents:(id<iTermEncoderAdapter>)encoder
+          linesDropped:(int *)linesDroppedOut;
 
 // WARNING: This may change the screen size! Use -restoreInitialSize to restore it.
 // This is useful for restoring other stuff that depends on the screen having its original size

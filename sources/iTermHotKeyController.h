@@ -1,7 +1,9 @@
 #import "ProfileModel.h"
 
-#import "iTermProfileHotKey.h"
 #import "iTermAppHotKey.h"
+#import "iTermEncoderAdapter.h"
+#import "iTermGraphEncoder.h"
+#import "iTermProfileHotKey.h"
 #import "NSDictionary+iTerm.h"
 #import "PseudoTerminal.h"
 
@@ -16,7 +18,7 @@
 // restoring legacy hotkey window state.
 extern NSString *const TERMINAL_ARRANGEMENT_PROFILE_GUID;
 
-@interface iTermHotKeyController : NSObject
+@interface iTermHotKeyController : NSObject<iTermGraphCodable>
 
 // Returns the designated hotkey window or nil if there is none.
 @property(nonatomic, readonly) NSArray<PseudoTerminal *> *hotKeyWindowControllers;
@@ -53,7 +55,11 @@ extern NSString *const TERMINAL_ARRANGEMENT_PROFILE_GUID;
 
 - (iTermProfileHotKey *)profileHotKeyForWindowController:(PseudoTerminal *)windowController;
 
-- (NSInteger)createHiddenWindowsFromRestorableStates:(NSArray *)states;
+- (NSInteger)createHiddenWindowsFromRestorableStates:(NSArray *)states;  // legacy
+- (BOOL)createHiddenWindowsByDecoding:(iTermEncoderGraphRecord *)record;  // sqlite
+
+// Resets invalidation state.
+- (BOOL)anyProfileHotkeyWindowHasInvalidState;
 
 // Auto hide all hotkey windows, if needed and possible.
 - (void)autoHideHotKeyWindows;

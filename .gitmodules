@@ -16,3 +16,6 @@
 [submodule "submodules/libssh2"]
 	path = submodules/libssh2
 	url = https://github.com/libssh2/libssh2
+[submodule "submodules/fmdb"]
+	path = submodules/fmdb
+	url = https://github.com/ccgus/fmdb

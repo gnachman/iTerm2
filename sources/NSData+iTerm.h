@@ -38,6 +38,10 @@
 
 + (NSData *)it_dataWithArchivedObject:(id<NSCoding>)object;
 - (id)it_unarchivedObjectOfClasses:(NSArray<Class> *)allowedClasses;
+
++ (NSData *)it_dataWithSecurelyArchivedObject:(id<NSCoding>)object error:(NSError **)error;
+- (id)it_unarchivedObjectOfBasicClassesWithError:(NSError **)error;
+
 - (BOOL)isEqualToByte:(unsigned char)byte;
 - (NSData *)it_sha256;
 - (NSString *)it_hexEncoded;

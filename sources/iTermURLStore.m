@@ -50,10 +50,14 @@
 }
 
 - (void)retainCode:(unsigned short)code {
+    _generation++;
+    [NSApp invalidateRestorableState];
     [_referenceCounts addObject:@(code)];
 }
 
 - (void)releaseCode:(unsigned short)code {
+    _generation++;
+    [NSApp invalidateRestorableState];
     [_referenceCounts removeObject:@(code)];
     if (![_referenceCounts containsObject:@(code)]) {
         NSDictionary *dict = _reverseStore[@(code)];
@@ -88,6 +92,7 @@
         truncatedCode = [iTermURLStore truncatedCodeForCode:number.integerValue];
         _reverseStore[@(truncatedCode)] = @{ @"url": url, @"params": params };
         [NSApp invalidateRestorableState];
+        _generation++;
         return truncatedCode;
     } else {
         return [iTermURLStore truncatedCodeForCode:number.integerValue];

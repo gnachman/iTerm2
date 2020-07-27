@@ -27,6 +27,7 @@
 @class iTermToolbeltView;
 @protocol iTermWindowScope;
 @class iTermController;
+@class PseudoTerminalState;
 @class TmuxController;
 
 // Posted when a new window controller is created. It's not ready to use at this point, though.
@@ -373,6 +374,7 @@ extern NSString *const iTermDidCreateTerminalWindowNotification;
 
 - (PseudoTerminal *)it_moveTabToNewWindow:(PTYTab *)aTab;
 - (BOOL)getAndResetRestorableState;
+- (void)restoreState:(PseudoTerminalState *)state;
 
 @end
 

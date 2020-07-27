@@ -5529,7 +5529,8 @@ static void SwapInt(int *a, int *b) {
     }
 }
 
-- (NSDictionary *)contentsDictionary {
+- (BOOL)encodeContents:(id<iTermEncoderAdapter>)encoder
+          linesDropped:(int *)linesDroppedOut {
     // We want 10k lines of history at 80 cols, and fewer for small widths, to keep the size
     // reasonable.
     int maxArea = 10000 * 80;
@@ -5563,8 +5564,11 @@ static void SwapInt(int *a, int *b) {
         }
     }
 
-    NSMutableDictionary *dict = [[[temp dictionary] mutableCopy] autorelease];
-    dict[kScreenStateKey] =
+    [temp encode:encoder];
+    [encoder encodeDictionaryWithKey:kScreenStateKey
+                          generation:iTermGenerationAlwaysEncode
+                               block:^BOOL(id<iTermEncoderAdapter>  _Nonnull encoder) {
+        NSDictionary *dict =
         [@{ kScreenStateTabStopsKey: [tabStops_ allObjects] ?: @[],
             kScreenStateTerminalKey: [terminal_ stateDictionary] ?: @{},
             kScreenStateLineDrawingModeKey: @[ @(charsetUsesLineDrawingMode_[0]),
@@ -5587,8 +5591,14 @@ static void SwapInt(int *a, int *b) {
             kScreenStateAlternateGridStateKey: altGrid_.dictionaryValue ?: [NSNull null],
             kScreenStateNumberOfLinesDroppedKey: @(linesDroppedForBrevity),
             kScreenStateCursorCoord: VT100GridCoordToDictionary(primaryGrid_.cursor),
-            } dictionaryByRemovingNullValues];
-    return dict;
+        } dictionaryByRemovingNullValues];
+        [encoder mergeDictionary:dict];
+        return YES;
+    }];
+    if (linesDroppedOut) {
+        *linesDroppedOut = linesDroppedForBrevity;
+    }
+    return YES;
 }
 
 - (NSDictionary *)contentsOfNonCurrentGrid {
@@ -5603,7 +5613,9 @@ static void SwapInt(int *a, int *b) {
         return @{};
     }
     [grid appendLines:grid.size.height toLineBuffer:temp];
-    return [temp dictionary];
+    iTermMutableDictionaryEncoderAdapter *encoder = [[iTermMutableDictionaryEncoderAdapter alloc] init];
+    [temp encode:encoder];
+    return encoder.mutableDictionary;
 }
 
 - (void)appendSessionRestoredBanner {

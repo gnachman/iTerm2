@@ -102,6 +102,7 @@ extern NSString *const iTermVariableKeyWindowNumber;
 
 @property (nonatomic, readonly, weak) id<iTermObject> owner;
 @property (nonatomic, readonly) NSDictionary *dictionaryValue;
+@property (nonatomic, readonly) NSDictionary *encodableDictionaryValue;
 @property (nonatomic, readonly) NSDictionary<NSString *,NSString *> *stringValuedDictionary;
 @property (nonatomic, readonly) NSArray<NSString *> *allNames;
 @property (nonatomic, readonly) NSString *debugInfo;

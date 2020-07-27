@@ -7,6 +7,7 @@
 #import "iTermApplicationDelegate.h"
 #import "iTermCarbonHotKeyController.h"
 #import "iTermController.h"
+#import "iTermOrderedDictionary.h"
 #import "iTermPreferences.h"
 #import "iTermPreviousState.h"
 #import "iTermProfilePreferences.h"
@@ -159,6 +160,57 @@ NSString *const TERMINAL_ARRANGEMENT_PROFILE_GUID = @"Hotkey Profile GUID";
         }
     }
     return count;
+}
+
+- (BOOL)createHiddenWindowsByDecoding:(iTermEncoderGraphRecord *)record {
+    iTermOrderedDictionary<NSString *, iTermProfileHotKey *> *index = [self profileHotkeyWindowsIndex];
+    NSMutableArray<NSDictionary *> *restorableStates = [NSMutableArray array];
+
+    [record enumerateArrayWithKey:@"windows" block:^(NSString * _Nonnull guid,
+                                                     NSInteger i,
+                                                     id obj,
+                                                     BOOL * _Nonnull stop) {
+        iTermProfileHotKey *profileHotKey = index[guid];
+        if (!profileHotKey) {
+            return;
+        }
+        [restorableStates addObject:obj];
+    }];
+
+    return [self createHiddenWindowsFromRestorableStates:restorableStates] > 0;
+}
+
+- (iTermOrderedDictionary<NSString *, iTermProfileHotKey *> *)profileHotkeyWindowsIndex {
+    return [iTermOrderedDictionary byMapping:_hotKeys block:^id _Nullable(NSUInteger index, __kindof iTermBaseHotKey *hotkey) {
+        iTermProfileHotKey *profileHotKey = [iTermProfileHotKey castFrom:hotkey];
+        if (!profileHotKey) {
+            return nil;
+        }
+        return profileHotKey.profileGuid;
+    }];
+}
+
+- (BOOL)encodeGraphWithEncoder:(iTermGraphEncoder *)encoder {
+    iTermOrderedDictionary<NSString *, iTermProfileHotKey *> *index = [self profileHotkeyWindowsIndex];
+    [encoder encodeArrayWithKey:@"windows"
+                     generation:iTermGenerationAlwaysEncode
+                    identifiers:index.keys
+                        options:0
+                          block:^BOOL(NSString * _Nonnull identifier,
+                                      NSInteger i,
+                                      iTermGraphEncoder * _Nonnull subencoder) {
+        iTermProfileHotKey *profileHotKey = index[identifier];
+        return [profileHotKey encodeGraphWithEncoder:subencoder];
+    }];
+    return YES;
+}
+
+- (BOOL)anyProfileHotkeyWindowHasInvalidState {
+    return [[[self profileHotkeyWindowsIndex] values] filteredArrayUsingBlock:^BOOL(iTermProfileHotKey *obj) {
+        const BOOL result = obj.windowController.ptyWindow.it_restorableStateInvalid;
+        obj.windowController.ptyWindow.it_restorableStateInvalid = NO;
+        return result;
+    }].count == 0;
 }
 
 - (NSArray *)restorableStates {

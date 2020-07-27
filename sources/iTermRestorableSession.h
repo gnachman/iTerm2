@@ -20,11 +20,11 @@ typedef NS_ENUM(NSInteger, iTermRestorableSessionGroup) {
 
 @interface iTermRestorableSession : NSObject
 
-@property(nonatomic, retain) NSArray *sessions;
+@property(nonatomic, strong) NSArray *sessions;
 @property(nonatomic, copy) NSString *terminalGuid;
 @property(nonatomic, assign) int tabUniqueId;
-@property(nonatomic, retain) NSDictionary *arrangement;
-@property(nonatomic, assign) iTermRestorableSessionGroup group;
+@property(nonatomic, strong) NSDictionary *arrangement;
+@property(nonatomic) iTermRestorableSessionGroup group;
 @property(nonatomic) iTermWindowType windowType;
 @property(nonatomic) iTermWindowType savedWindowType;
 @property(nonatomic) int screen;
