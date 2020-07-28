@@ -134,6 +134,7 @@ typedef iTermSynchronizedState<T> * _Nonnull (^iTermThreadStateFactoryBlockType)
 // Will call [target selectorWithState:state value:value userInfo:userInfo];
 // Does not retain target.
 - (iTermCallback<T, id> *)newCallbackWithWeakTarget:(id)target selector:(SEL)selector userInfo:(id _Nullable)userInfo;
+- (void)performDeferredBlocksAfter:(void (^ NS_NOESCAPE)(void))block;
 
 @end
 

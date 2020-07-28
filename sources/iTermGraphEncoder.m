@@ -11,6 +11,7 @@
 #import "NSArray+iTerm.h"
 #import "NSDictionary+iTerm.h"
 #import "NSObject+iTerm.h"
+#import "iTermTuple.h"
 
 static NSString *iTermEncoderRecordTypeToString(iTermEncoderRecordType type)  {
     switch (type) {
@@ -30,6 +31,44 @@ static NSString *iTermEncoderRecordTypeToString(iTermEncoderRecordType type)  {
 
 
 @implementation iTermEncoderPODRecord
+
++ (instancetype)withData:(NSData *)data type:(iTermEncoderRecordType)type key:(NSString *)key {
+    id obj = nil;
+    switch (type) {
+        case iTermEncoderRecordTypeString:
+            obj = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
+            break;
+        case iTermEncoderRecordTypeNumber: {
+            double d;
+            if (data.length == sizeof(d)) {
+                memmove(&d, data.bytes, sizeof(d));
+                obj = @(d);
+            }
+            break;
+        }
+        case iTermEncoderRecordTypeData:
+            obj = data;
+            break;
+        case iTermEncoderRecordTypeDate: {
+            NSTimeInterval d;
+            if (data.length == sizeof(d)) {
+                memmove(&d, data.bytes, sizeof(d));
+                obj = [NSDate dateWithTimeIntervalSince1970:d];
+            }
+            break;
+        }
+        case iTermEncoderRecordTypeGraph:
+            DLog(@"Unexpected graph POD");
+            assert(NO);
+            break;
+    }
+    if (!obj) {
+        return nil;
+    }
+    return [[self alloc] initWithType:type
+                                  key:key
+                                value:obj];
+}
 
 + (instancetype)withString:(NSString *)string key:(NSString *)key {
     if (!string) {
@@ -101,6 +140,24 @@ static NSString *iTermEncoderRecordTypeToString(iTermEncoderRecordType type)  {
             [other.value isEqual:self.value]);
 }
 
+- (NSData *)data {
+    switch (_type) {
+        case iTermEncoderRecordTypeData:
+            return _value;
+        case iTermEncoderRecordTypeDate: {
+            NSTimeInterval timeInterval = [(NSDate *)_value timeIntervalSince1970];
+            return [NSData dataWithBytes:&timeInterval length:sizeof(timeInterval)];
+        }
+        case iTermEncoderRecordTypeNumber: {
+            const double d = [_value doubleValue];
+            return [NSData dataWithBytes:&d length:sizeof(d)];
+        }
+        case iTermEncoderRecordTypeString:
+            return [(NSString *)_value dataUsingEncoding:NSUTF8StringEncoding];
+        case iTermEncoderRecordTypeGraph:
+            assert(NO);
+    }
+}
 @end
 
 @implementation iTermEncoderGraphRecord
@@ -152,6 +209,14 @@ static NSString *iTermEncoderRecordTypeToString(iTermEncoderRecordType type)  {
             self.graphRecords];
 }
 
+- (iTermEncoderGraphRecord *)copyWithIdentifier:(NSString *)identifier {
+    return [[iTermEncoderGraphRecord alloc] initWithPODs:_podRecords.allValues
+                                                  graphs:_graphRecords
+                                              generation:_generation
+                                                     key:_key
+                                              identifier:identifier];
+}
+
 - (NSComparisonResult)compareGraphRecord:(iTermEncoderGraphRecord *)other {
     NSComparisonResult result = [self.key compare:other.key];
     if (result != NSOrderedSame) {
@@ -195,6 +260,51 @@ static NSString *iTermEncoderRecordTypeToString(iTermEncoderRecordType type)  {
         return NO;
     }
     return YES;
+}
+
+NSString *iTermGraphContext(NSString *context, NSString *key, NSString *identifier) {
+    NSMutableString *result = [NSMutableString string];
+    if (context.length) {
+        [result appendString:context];
+        [result appendString:@"."];
+    }
+    [result appendString:key];
+    if (identifier.length) {
+        [result appendFormat:@"[%@]", identifier];
+    }
+    return result;
+}
+
+static iTermTuple<NSString *, NSString *> *iTermSplitLastCharacter(NSString *string, NSString *c) {
+    const NSRange range = [string rangeOfString:c options:NSBackwardsSearch];
+    if (range.location == NSNotFound) {
+        return [iTermTuple tupleWithObject:@"" andObject:string];
+    }
+    return [iTermTuple tupleWithObject:[string substringToIndex:range.location]
+                             andObject:[string substringFromIndex:NSMaxRange(range)]];
+}
+
+iTermGraphExplodedContext iTermGraphExplodeContext(NSString *context) {
+    iTermTuple<NSString *, NSString *> *parentTail = iTermSplitLastCharacter(context, @".");
+    NSString *key;
+    NSString *identifier = @"";
+    if ([context hasSuffix:@"]"]) {
+        iTermTuple<NSString *, NSString *> *keyTail = iTermSplitLastCharacter(parentTail.secondObject, @"[");
+        key = keyTail.firstObject;
+        iTermTuple<NSString *, NSString *> *identifierTail = iTermSplitLastCharacter(keyTail.secondObject, @"]");
+        identifier = identifierTail.firstObject;
+    } else {
+        key = parentTail.secondObject;
+    }
+    return (iTermGraphExplodedContext) {
+        .context = parentTail.firstObject,
+        .key = key,
+        .identifier = identifier
+    };
+}
+
+- (NSString *)contextWithContext:(NSString *)context {
+    return iTermGraphContext(context, self.key, self.identifier);
 }
 
 - (iTermEncoderGraphRecord * _Nullable)childRecordWithKey:(NSString *)key
@@ -280,6 +390,18 @@ static NSString *iTermEncoderRecordTypeToString(iTermEncoderRecordType type)  {
     [self encodeGraph:encoder.record];
 }
 
+- (void)encodeArrayWithKey:(NSString *)key
+                generation:(NSInteger)generation
+               identifiers:(NSArray<NSString *> *)identifiers
+                     block:(void (^ NS_NOESCAPE)(NSString *identifier, NSInteger index, iTermGraphEncoder *subencoder))block {
+    [self encodeChildWithKey:@"__array" identifier:key generation:generation block:^(iTermGraphEncoder * _Nonnull subencoder) {
+        [identifiers enumerateObjectsUsingBlock:^(NSString * _Nonnull identifier, NSUInteger idx, BOOL * _Nonnull stop) {
+            block(identifier, idx, subencoder);
+        }];
+        [subencoder encodeString:[identifiers componentsJoinedByString:@","] forKey:@"__order"];
+    }];
+}
+
 - (iTermEncoderGraphRecord *)record {
     if (!_committed) {
         _committed = YES;
@@ -293,33 +415,6 @@ static NSString *iTermEncoderRecordTypeToString(iTermEncoderRecordType type)  {
 }
 
 @end
-
-static NSDictionary *iTermGraphEncoderNodeIDFromString(NSString *string) {
-    assert(string);
-    if (string.length == 0) {
-        return @{};
-    }
-    NSArray<NSString *> *parts = [string componentsSeparatedByString:@","];
-    assert(parts.count == 3);
-    return @{ @"key": parts[0],
-              @"identifier": parts[1],
-              @"generation": @([parts[2] integerValue]) };
-}
-
-static iTermEncoderGraphRecord *iTermGraphDeltaEncoderMakeGraphRecord(NSDictionary *nodeID,
-                                                                      NSDictionary *nodes) {
-    NSDictionary *nodeDict = nodes[nodeID];
-    NSArray<NSDictionary *> *childNodeIDs = nodeDict[@"children"];
-    NSArray<iTermEncoderGraphRecord *> *childGraphRecords =
-    [childNodeIDs mapWithBlock:^id(NSDictionary *childNodeID) {
-        return iTermGraphDeltaEncoderMakeGraphRecord(childNodeID, nodes);
-    }];
-    return [iTermEncoderGraphRecord withPODs:[nodeDict[@"pod"] allValues]
-                                      graphs:childGraphRecords
-                                  generation:[nodeID[@"generation"] integerValue]
-                                         key:nodeID[@"key"]
-                                  identifier:nodeID[@"identifier"]];
-};
 
 @implementation iTermGraphDeltaEncoder
 
@@ -413,151 +508,6 @@ static iTermEncoderGraphRecord *iTermGraphDeltaEncoderMakeGraphRecord(NSDictiona
 
 @end
 
-@implementation iTermGraphTableTransformer {
-    iTermEncoderGraphRecord *_record;
-}
-
-- (instancetype)initWithNodeRows:(NSArray *)nodeRows
-                       valueRows:(NSArray *)valueRows {
-    self = [super init];
-    if (self) {
-        _nodeRows = nodeRows;
-        _valueRows = valueRows;
-    }
-    return self;
-}
-
-- (iTermEncoderGraphRecord * _Nullable)root {
-    if (!_record) {
-        _record = [self transform];
-    }
-    return _record;
-}
-
-- (NSDictionary<NSDictionary *, NSMutableDictionary *> *)nodes:(out NSDictionary **)rootNodeIDOut {
-    // Create nodes
-    NSMutableDictionary<NSDictionary *, NSMutableDictionary *> *nodes = [NSMutableDictionary dictionary];
-    for (NSArray *row in _nodeRows) {
-        NSString *key = [NSString castFrom:row[0]];
-        NSString *identifier = [NSString castFrom:row[1] ?: @""];
-        NSString *parent = [NSString castFrom:row[2]];
-        NSNumber *generation = [NSNumber castFrom:row[3]];
-        if (!row || !key || !identifier || !parent || !generation) {
-            DLog(@"Bad row: %@", row);
-            return nil;
-        }
-        NSDictionary *nodeid = @{ @"key": key,
-                                  @"identifier": identifier,
-                                  @"generation": generation };
-        if (parent.length == 0) {
-            if (*rootNodeIDOut) {
-                DLog(@"Two roots found");
-                return nil;
-            }
-            *rootNodeIDOut = nodeid;
-        }
-        nodes[nodeid] = [@{ @"pod": [NSMutableDictionary dictionary],
-                            @"parent": parent,
-                            @"children": [NSMutableArray array] } mutableCopy];
-    }
-    return nodes;
-}
-
-- (BOOL)attachValuesToNodes:(NSDictionary<NSDictionary *, NSMutableDictionary *> *)nodes {
-    for (NSArray *row in _valueRows) {
-        NSString *nodeidString = [NSString castFrom:row[0]];
-        NSString *key = [NSString castFrom:row[1]];
-        NSNumber *type = [NSNumber castFrom:row[3]];
-        if (!nodeidString || !key || !type) {
-            DLog(@"Bogus row: %@", row);
-            return NO;
-        }
-        iTermEncoderPODRecord *record = nil;
-        switch ((iTermEncoderRecordType)type.unsignedIntegerValue) {
-            case iTermEncoderRecordTypeString:
-                record = [iTermEncoderPODRecord withString:[NSString castFrom:row[2]] key:key];
-                break;
-            case iTermEncoderRecordTypeNumber:
-                record = [iTermEncoderPODRecord withNumber:[NSNumber castFrom:row[2]] key:key];
-                break;
-            case iTermEncoderRecordTypeData:
-                record = [iTermEncoderPODRecord withData:[NSData castFrom:row[2]] key:key];
-                break;
-            case iTermEncoderRecordTypeDate:
-                record = [iTermEncoderPODRecord withDate:[NSDate castFrom:row[2]] key:key];
-                break;
-            case iTermEncoderRecordTypeGraph:
-                DLog(@"Unexpected graph POD");
-                return NO;
-        }
-        if (!record) {
-            DLog(@"Bogus value with type %@: %@", type, row[2]);
-            return NO;
-        }
-        NSDictionary *nodeid = iTermGraphEncoderNodeIDFromString(nodeidString);
-        if (!nodeid) {
-            DLog(@"Bad node ID: %@", nodeidString);
-            return NO;
-        }
-        NSMutableDictionary *nodeDict = nodes[nodeid];
-        if (!nodeDict) {
-            DLog(@"No such node: %@", nodeid);
-            return NO;
-        }
-        NSMutableDictionary *pod = nodeDict[@"pod"];
-        pod[key] = record;
-    }
-    return YES;
-}
-
-- (BOOL)attachChildrenToParents:(NSDictionary<NSDictionary *, NSMutableDictionary *> *)nodes {
-    __block BOOL ok = YES;
-    [nodes enumerateKeysAndObjectsUsingBlock:^(NSDictionary * _Nonnull nodeid,
-                                               NSMutableDictionary * _Nonnull nodeDict,
-                                               BOOL * _Nonnull stop) {
-        NSDictionary *parentID = iTermGraphEncoderNodeIDFromString(nodeDict[@"parent"]);
-        if (parentID.count == 0) {
-            // This is the root.
-            return;
-        }
-        NSMutableDictionary *parentDict = nodes[parentID];
-        if (!parentDict) {
-            ok = NO;
-            DLog(@"Dangling parent pointer %@ from %@", parentID, nodeid);
-            *stop = YES;
-        }
-        NSMutableArray *children = parentDict[@"children"];
-        [children addObject:nodeid];
-    }];
-    return ok;
-}
-
-- (iTermEncoderGraphRecord * _Nullable)transform {
-    NSDictionary *rootNodeID = nil;
-    NSDictionary<NSDictionary *, NSMutableDictionary *> *nodes = [self nodes:&rootNodeID];
-    if (!nodes) {
-        DLog(@"nodes: returned nil");
-        return nil;
-    }
-    if (!rootNodeID) {
-        DLog(@"No root found");
-        return nil;
-    }
-    if (![self attachValuesToNodes:nodes]) {
-        DLog(@"Failed to attach values to nodes");
-        return nil;
-    }
-    if (![self attachChildrenToParents:nodes]) {
-        DLog(@"Failed to attach children to parents");
-        return nil;
-    }
-
-    // Finally, we can construct a record.
-    return iTermGraphDeltaEncoderMakeGraphRecord(rootNodeID, nodes);
-}
-
-@end
-
 @implementation iTermGraphSQLEncoder
 
 - (instancetype)initWithRecord:(iTermEncoderGraphRecord *)record {
@@ -581,3 +531,5 @@ static iTermEncoderGraphRecord *iTermGraphDeltaEncoderMakeGraphRecord(NSDictiona
 }
 
 @end
+
+

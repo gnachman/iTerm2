@@ -87,6 +87,7 @@ NSPointerArray *gThreads;
 
 @implementation iTermThread {
     iTermSynchronizedState *_state;
+    NSMutableArray *_deferred;
 #if BETA
     NSArray<NSString *> *_stacks;
 #endif
@@ -164,6 +165,7 @@ NSPointerArray *gThreads;
 
 - (void)dealloc {
     dispatch_release(_queue);
+    assert(!_deferred);
     [_state release];
 #if BETA
     [_stacks release];
@@ -197,11 +199,41 @@ NSPointerArray *gThreads;
 }
 #endif
 
+- (void)performDeferredBlocksAfter:(void (^ NS_NOESCAPE)(void))block {
+    @synchronized(self) {
+        assert(!_deferred);
+        _deferred = [NSMutableArray array];
+    }
+    block();
+    while (YES) {
+        NSArray *blocks = nil;
+        @synchronized (self) {
+            blocks = [[_deferred copy] autorelease];
+            [_deferred removeAllObjects];
+            if (blocks.count == 0) {
+                _deferred = nil;
+                break;
+            }
+        }
+        for (void (^block)(id) in blocks) {
+            [self dispatchSync:^(id  _Nullable state) {
+                block(state);
+            }];
+        }
+    }
+}
+
 - (void)dispatchAsync:(void (^)(id))block {
     [self retain];
 #if BETA
     NSArray *stacks = [[[iTermThread currentThread] currentStacks] ?: @[ [[NSThread callStackSymbols]  componentsJoinedByString:@"\n"] ] retain];
 #endif
+    @synchronized (self) {
+        if (_deferred) {
+            [_deferred addObject:[[block copy] autorelease]];
+            return;
+        }
+    }
     dispatch_async(_queue, ^{
 #if BETA
         NSArray *saved = [_stacks retain];

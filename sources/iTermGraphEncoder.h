@@ -20,11 +20,24 @@ typedef NS_ENUM(NSUInteger, iTermEncoderRecordType) {
 // Encodes plain old data, not graphs.
 @interface iTermEncoderPODRecord: NSObject
 
+// Context + key + [identifier] -> combined context
+// Like: root.intermediate.child[index]
+NSString *iTermGraphContext(NSString *context, NSString *key, NSString *identifier);
+typedef struct {
+    NSString *context;
+    NSString *key;
+    NSString *identifier;
+} iTermGraphExplodedContext;
+
+iTermGraphExplodedContext iTermGraphExplodeContext(NSString *context);
+
 // type won't be graph
 @property (nonatomic, readonly) iTermEncoderRecordType type;
 @property (nonatomic, readonly) NSString *key;
 @property (nonatomic, readonly) __kindof NSObject *value;
+@property (nonatomic, readonly) NSData *data;
 
++ (instancetype)withData:(NSData *)data type:(iTermEncoderRecordType)type key:(NSString *)key;
 + (instancetype)withString:(NSString *)string key:(NSString *)key;
 + (instancetype)withNumber:(NSNumber *)number key:(NSString *)key;
 + (instancetype)withData:(NSData *)data key:(NSString *)key;
@@ -49,6 +62,10 @@ typedef NS_ENUM(NSUInteger, iTermEncoderRecordType) {
 - (void)enumerateValuesVersus:(iTermEncoderGraphRecord * _Nullable)other
                         block:(void (^)(iTermEncoderPODRecord * _Nullable mine,
                                         iTermEncoderPODRecord * _Nullable theirs))block;
+
+- (iTermEncoderGraphRecord *)copyWithIdentifier:(NSString *)identifier;
+- (NSString *)contextWithContext:(NSString *)context;
+
 @end
 
 @interface iTermGraphEncoder : NSObject
@@ -70,6 +87,12 @@ typedef NS_ENUM(NSUInteger, iTermEncoderRecordType) {
                 generation:(NSInteger)generation
                      block:(void (^ NS_NOESCAPE)(iTermGraphEncoder *subencoder))block;
 
+// Return nil from block to stop adding elements. Otherwise, return identifier.
+- (void)encodeArrayWithKey:(NSString *)key
+                generation:(NSInteger)generation
+               identifiers:(NSArray<NSString *> *)identifiers
+                     block:(void (^ NS_NOESCAPE)(NSString *identifier, NSInteger index, iTermGraphEncoder *subencoder))block;
+
 - (instancetype)initWithKey:(NSString *)key
                  identifier:(NSString * _Nullable)identifier
                  generation:(NSInteger)generation NS_DESIGNATED_INITIALIZER;
@@ -89,24 +112,6 @@ typedef NS_ENUM(NSUInteger, iTermEncoderRecordType) {
 - (void)enumerateRecords:(void (^)(iTermEncoderGraphRecord * _Nullable before,
                                    iTermEncoderGraphRecord * _Nullable after,
                                    NSString *context))block;
-
-@end
-
-// Converts a table from a db into a graph record.
-@interface iTermGraphTableTransformer: NSObject
-@property (nonatomic, readonly, nullable) iTermEncoderGraphRecord *root;
-@property (nonatomic, readonly) NSArray *nodeRows;
-@property (nonatomic, readonly) NSArray *valueRows;
-
-- (instancetype)initWithNodeRows:(NSArray *)nodeRows
-                       valueRows:(NSArray *)valueRows NS_DESIGNATED_INITIALIZER;
-- (instancetype)init NS_UNAVAILABLE;
-
-#pragma mark - Private - for tests only
-
-- (NSDictionary<NSDictionary *, NSMutableDictionary *> *)nodes:(out NSDictionary **)rootNodeIDOut;
-- (BOOL)attachValuesToNodes:(NSDictionary<NSDictionary *, NSMutableDictionary *> *)nodes;
-- (BOOL)attachChildrenToParents:(NSDictionary<NSDictionary *, NSMutableDictionary *> *)nodes;
 
 @end
 

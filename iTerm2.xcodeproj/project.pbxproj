@@ -1957,7 +1957,21 @@
 		A653F66824CD6A8C0062377E /* iTermRestorableStateRestorer.m in Sources */ = {isa = PBXBuildFile; fileRef = A653F66624CD6A8C0062377E /* iTermRestorableStateRestorer.m */; };
 		A653F66B24CE7CE30062377E /* iTermGraphEncoder.h in Headers */ = {isa = PBXBuildFile; fileRef = A653F66924CE7CE30062377E /* iTermGraphEncoder.h */; };
 		A653F66C24CE7CE30062377E /* iTermGraphEncoder.m in Sources */ = {isa = PBXBuildFile; fileRef = A653F66A24CE7CE30062377E /* iTermGraphEncoder.m */; };
-		A653F66E24CE81740062377E /* iTermCoding.m in Sources */ = {isa = PBXBuildFile; fileRef = A653F66D24CE81740062377E /* iTermCoding.m */; };
+		A653F66E24CE81740062377E /* iTermCodingTests.m in Sources */ = {isa = PBXBuildFile; fileRef = A653F66D24CE81740062377E /* iTermCodingTests.m */; };
+		A653F67E24CF4EC70062377E /* FMDatabaseQueue.m in Sources */ = {isa = PBXBuildFile; fileRef = A653F67324CF4EC50062377E /* FMDatabaseQueue.m */; };
+		A653F67F24CF4EC70062377E /* FMDatabasePool.m in Sources */ = {isa = PBXBuildFile; fileRef = A653F67424CF4EC50062377E /* FMDatabasePool.m */; };
+		A653F68024CF4EC70062377E /* FMDatabaseAdditions.h in Headers */ = {isa = PBXBuildFile; fileRef = A653F67524CF4EC50062377E /* FMDatabaseAdditions.h */; };
+		A653F68124CF4EC70062377E /* FMDatabaseQueue.h in Headers */ = {isa = PBXBuildFile; fileRef = A653F67624CF4EC60062377E /* FMDatabaseQueue.h */; };
+		A653F68224CF4EC70062377E /* FMDB.h in Headers */ = {isa = PBXBuildFile; fileRef = A653F67724CF4EC60062377E /* FMDB.h */; };
+		A653F68324CF4EC70062377E /* FMDatabase.h in Headers */ = {isa = PBXBuildFile; fileRef = A653F67824CF4EC60062377E /* FMDatabase.h */; };
+		A653F68424CF4EC70062377E /* FMResultSet.h in Headers */ = {isa = PBXBuildFile; fileRef = A653F67924CF4EC60062377E /* FMResultSet.h */; };
+		A653F68524CF4EC70062377E /* FMResultSet.m in Sources */ = {isa = PBXBuildFile; fileRef = A653F67A24CF4EC60062377E /* FMResultSet.m */; };
+		A653F68624CF4EC70062377E /* FMDatabase.m in Sources */ = {isa = PBXBuildFile; fileRef = A653F67B24CF4EC60062377E /* FMDatabase.m */; };
+		A653F68724CF4EC70062377E /* FMDatabaseAdditions.m in Sources */ = {isa = PBXBuildFile; fileRef = A653F67C24CF4EC70062377E /* FMDatabaseAdditions.m */; };
+		A653F68824CF4EC70062377E /* FMDatabasePool.h in Headers */ = {isa = PBXBuildFile; fileRef = A653F67D24CF4EC70062377E /* FMDatabasePool.h */; };
+		A653F68B24CF4FE60062377E /* iTermGraphDatabase.h in Headers */ = {isa = PBXBuildFile; fileRef = A653F68924CF4FE60062377E /* iTermGraphDatabase.h */; };
+		A653F68C24CF4FE60062377E /* iTermGraphDatabase.m in Sources */ = {isa = PBXBuildFile; fileRef = A653F68A24CF4FE60062377E /* iTermGraphDatabase.m */; };
+		A653F68D24CF4FE60062377E /* iTermGraphDatabase.m in Sources */ = {isa = PBXBuildFile; fileRef = A653F68A24CF4FE60062377E /* iTermGraphDatabase.m */; };
 		A65429A020BE71E400CE71B1 /* iTermOpenQuicklyModel.m in Sources */ = {isa = PBXBuildFile; fileRef = A69B45AD19731D3200F5444D /* iTermOpenQuicklyModel.m */; };
 		A65429A320BE7ECA00CE71B1 /* ScriptIcon.png in Resources */ = {isa = PBXBuildFile; fileRef = A65429A120BE7ECA00CE71B1 /* ScriptIcon.png */; };
 		A65429A420BE7ECA00CE71B1 /* ScriptIcon@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A65429A220BE7ECA00CE71B1 /* ScriptIcon@2x.png */; };
@@ -5347,7 +5361,20 @@
 		A653F66624CD6A8C0062377E /* iTermRestorableStateRestorer.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermRestorableStateRestorer.m; sourceTree = "<group>"; };
 		A653F66924CE7CE30062377E /* iTermGraphEncoder.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermGraphEncoder.h; sourceTree = "<group>"; };
 		A653F66A24CE7CE30062377E /* iTermGraphEncoder.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermGraphEncoder.m; sourceTree = "<group>"; };
-		A653F66D24CE81740062377E /* iTermCoding.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermCoding.m; sourceTree = "<group>"; };
+		A653F66D24CE81740062377E /* iTermCodingTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermCodingTests.m; sourceTree = "<group>"; };
+		A653F67324CF4EC50062377E /* FMDatabaseQueue.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = FMDatabaseQueue.m; path = fmdb/FMDatabaseQueue.m; sourceTree = "<group>"; };
+		A653F67424CF4EC50062377E /* FMDatabasePool.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = FMDatabasePool.m; path = fmdb/FMDatabasePool.m; sourceTree = "<group>"; };
+		A653F67524CF4EC50062377E /* FMDatabaseAdditions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = FMDatabaseAdditions.h; path = fmdb/FMDatabaseAdditions.h; sourceTree = "<group>"; };
+		A653F67624CF4EC60062377E /* FMDatabaseQueue.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = FMDatabaseQueue.h; path = fmdb/FMDatabaseQueue.h; sourceTree = "<group>"; };
+		A653F67724CF4EC60062377E /* FMDB.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = FMDB.h; path = fmdb/FMDB.h; sourceTree = "<group>"; };
+		A653F67824CF4EC60062377E /* FMDatabase.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = FMDatabase.h; path = fmdb/FMDatabase.h; sourceTree = "<group>"; };
+		A653F67924CF4EC60062377E /* FMResultSet.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = FMResultSet.h; path = fmdb/FMResultSet.h; sourceTree = "<group>"; };
+		A653F67A24CF4EC60062377E /* FMResultSet.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = FMResultSet.m; path = fmdb/FMResultSet.m; sourceTree = "<group>"; };
+		A653F67B24CF4EC60062377E /* FMDatabase.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = FMDatabase.m; path = fmdb/FMDatabase.m; sourceTree = "<group>"; };
+		A653F67C24CF4EC70062377E /* FMDatabaseAdditions.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = FMDatabaseAdditions.m; path = fmdb/FMDatabaseAdditions.m; sourceTree = "<group>"; };
+		A653F67D24CF4EC70062377E /* FMDatabasePool.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = FMDatabasePool.h; path = fmdb/FMDatabasePool.h; sourceTree = "<group>"; };
+		A653F68924CF4FE60062377E /* iTermGraphDatabase.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermGraphDatabase.h; sourceTree = "<group>"; };
+		A653F68A24CF4FE60062377E /* iTermGraphDatabase.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermGraphDatabase.m; sourceTree = "<group>"; };
 		A65429A120BE7ECA00CE71B1 /* ScriptIcon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = ScriptIcon.png; path = images/ScriptIcon.png; sourceTree = "<group>"; };
 		A65429A220BE7ECA00CE71B1 /* ScriptIcon@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "ScriptIcon@2x.png"; path = "images/ScriptIcon@2x.png"; sourceTree = "<group>"; };
 		A65429A920C4880300CE71B1 /* iTermSessionFactory.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermSessionFactory.h; sourceTree = "<group>"; };
@@ -7195,6 +7222,7 @@
 		1D03D42519144B8E0049EB8F /* ThirdParty */ = {
 			isa = PBXGroup;
 			children = (
+				A653F67224CF4EBA0062377E /* fmdb */,
 				A6EB203F223EC53F00E928C3 /* ini */,
 				A6A7A94D214393F1000DA2D4 /* hyper-tab-icons-plus */,
 				A69CCB13211BC284008ADA71 /* GZIP */,
@@ -8608,6 +8636,24 @@
 			name = Notifications;
 			sourceTree = "<group>";
 		};
+		A653F67224CF4EBA0062377E /* fmdb */ = {
+			isa = PBXGroup;
+			children = (
+				A653F67824CF4EC60062377E /* FMDatabase.h */,
+				A653F67B24CF4EC60062377E /* FMDatabase.m */,
+				A653F67524CF4EC50062377E /* FMDatabaseAdditions.h */,
+				A653F67C24CF4EC70062377E /* FMDatabaseAdditions.m */,
+				A653F67D24CF4EC70062377E /* FMDatabasePool.h */,
+				A653F67424CF4EC50062377E /* FMDatabasePool.m */,
+				A653F67624CF4EC60062377E /* FMDatabaseQueue.h */,
+				A653F67324CF4EC50062377E /* FMDatabaseQueue.m */,
+				A653F67724CF4EC60062377E /* FMDB.h */,
+				A653F67924CF4EC60062377E /* FMResultSet.h */,
+				A653F67A24CF4EC60062377E /* FMResultSet.m */,
+			);
+			name = fmdb;
+			sourceTree = "<group>";
+		};
 		A65871661D85E6660061CEEE /* LetsMove */ = {
 			isa = PBXGroup;
 			children = (
@@ -9671,6 +9717,8 @@
 				A653F66624CD6A8C0062377E /* iTermRestorableStateRestorer.m */,
 				A653F66924CE7CE30062377E /* iTermGraphEncoder.h */,
 				A653F66A24CE7CE30062377E /* iTermGraphEncoder.m */,
+				A653F68924CF4FE60062377E /* iTermGraphDatabase.h */,
+				A653F68A24CF4FE60062377E /* iTermGraphDatabase.m */,
 			);
 			name = StateRestoration;
 			sourceTree = "<group>";
@@ -9787,7 +9835,7 @@
 				A65660DC2372ADEA00DC6744 /* iTermCacheTests.m */,
 				A6F22AC12396374500C5D1A9 /* iTermSyntheticConfParserTests.m */,
 				A63493FA23F2741D0047C31B /* iTermPromiseTests.m */,
-				A653F66D24CE81740062377E /* iTermCoding.m */,
+				A653F66D24CE81740062377E /* iTermCodingTests.m */,
 			);
 			path = iTerm2XCTests;
 			sourceTree = "<group>";
@@ -10843,10 +10891,12 @@
 				A66719101DCE36C3000CE608 /* iTermCapturedOutputMark.h in Headers */,
 				A630118320E6A613008114B7 /* iTermStatusBarSetupViewController.h in Headers */,
 				A62DBBA720F4852A008B63D1 /* iTermStatusBarFunctionCallComponent.h in Headers */,
+				A653F68824CF4EC70062377E /* FMDatabasePool.h in Headers */,
 				A675271D213DB6E800035F2B /* NSImageView+iTerm.h in Headers */,
 				A618FFBD22409DF900B8FD88 /* iTermTheme.h in Headers */,
 				A66719111DCE36C3000CE608 /* iTermCommandHistoryCommandUseMO.h in Headers */,
 				537BFDD12101AD9F0098C91F /* iTermCPUUtilization.h in Headers */,
+				A653F68124CF4EC70062377E /* FMDatabaseQueue.h in Headers */,
 				537BFDDE2102B4060098C91F /* iTermPublisher.h in Headers */,
 				A63011A920E7EDFC008114B7 /* iTermStatusBarKnobCheckboxViewController.h in Headers */,
 				A66719121DCE36C3000CE608 /* iTermAltScreenMouseScrollInferrer.h in Headers */,
@@ -10945,6 +10995,7 @@
 				A6352256238CA38A00FED5BC /* iTermMultiServerJobManager.h in Headers */,
 				A66719231DCE36C3000CE608 /* QLPreviewPanel+iTerm.h in Headers */,
 				A66719241DCE36C3000CE608 /* iTermCommandHistoryCommandUseMO+CoreDataProperties.h in Headers */,
+				A653F68024CF4EC70062377E /* FMDatabaseAdditions.h in Headers */,
 				A66719251DCE36C3000CE608 /* iTermBoxDrawingBezierCurveFactory.h in Headers */,
 				A666D5E8221A191600D6184A /* iTermVariableScope+Session.h in Headers */,
 				A63011C420E85132008114B7 /* iTermStatusBarBaseComponent.h in Headers */,
@@ -10979,6 +11030,7 @@
 				A6BF8D1721EB188E003CF805 /* iTermDependencyEditorWindowController.h in Headers */,
 				A6E5D20F1FA3C57900EDD002 /* iTermMetalFrameData.h in Headers */,
 				53FF84E2217A3F790064FE54 /* iTermSessionTitleBuiltInFunction.h in Headers */,
+				A653F68224CF4EC70062377E /* FMDB.h in Headers */,
 				A667192A1DCE36C3000CE608 /* iTermRecentDirectoryMO+Additions.h in Headers */,
 				A667192B1DCE36C3000CE608 /* iTermRoundedCornerScrollView.h in Headers */,
 				A666D5EC221A1D9D00D6184A /* iTermVariableScope+Tab.h in Headers */,
@@ -11095,6 +11147,7 @@
 				A63011B920E83000008114B7 /* iTermStatusBarKnobTextViewController.h in Headers */,
 				537BFDC920FFB2590098C91F /* iTermProcessCache.h in Headers */,
 				A66719411DCE36C3000CE608 /* iTermSystemVersion.h in Headers */,
+				A653F68B24CF4FE60062377E /* iTermGraphDatabase.h in Headers */,
 				A663196F22FE651D00C502BD /* iTermFileDescriptorMultiClient+MRR.h in Headers */,
 				A631FCA120EF0BCC00EB824F /* iTermStatusBarKnobColorViewController.h in Headers */,
 				A62EEDA620E025F300943DE3 /* iTermSetupCfgParser.h in Headers */,
@@ -11146,6 +11199,7 @@
 				A65EC02F1F31800300AC0A6B /* iTermUpdateCadenceController.h in Headers */,
 				5365207921433F7A003C58FD /* iTermGitPoller.h in Headers */,
 				A6B41405211A579300D28207 /* iTermStoplightHotbox.h in Headers */,
+				A653F68324CF4EC70062377E /* FMDatabase.h in Headers */,
 				530AB8C420B5284A00D2AA08 /* iTermFocusReportingTextField.h in Headers */,
 				A6EC47BF21EC623D000E1321 /* iTermOnboardingWindowController.h in Headers */,
 				A653F03223AB32F800D7979A /* iTermShellIntegrationWindowController.h in Headers */,
@@ -11163,6 +11217,7 @@
 				A60C03642089897400FE2F1F /* iTermScriptConsole.h in Headers */,
 				A653F66724CD6A8C0062377E /* iTermRestorableStateRestorer.h in Headers */,
 				530AB8B420B2098000D2AA08 /* iTermVariables.h in Headers */,
+				A653F68424CF4EC70062377E /* FMResultSet.h in Headers */,
 				A667194D1DCE36C3000CE608 /* iTermWebSocketConnection.h in Headers */,
 				5370679D21C9D2780088D0F3 /* SIGKey.h in Headers */,
 				5370679B21C9D2780088D0F3 /* SIGVerificationAlgorithm.h in Headers */,
@@ -13511,6 +13566,7 @@
 				5370678D21C9D2780088D0F3 /* SIGArchiveVerifier.m in Sources */,
 				A67960D21F81FCBB008A42BC /* iTermBadgeRenderer.m in Sources */,
 				A621DDA9211D01D50095A399 /* NSAppearance+iTerm.m in Sources */,
+				A653F68D24CF4FE60062377E /* iTermGraphDatabase.m in Sources */,
 				532755862387821C00C50732 /* iTermProcessMonitor.m in Sources */,
 				A6758565245AA23400827C25 /* iTermSwipeState.m in Sources */,
 				A6A4867420B67B2400493302 /* PreferenceInfo.m in Sources */,
@@ -13562,6 +13618,7 @@
 				A6A4866B20B679AB00493302 /* iTermPreferences.m in Sources */,
 				A6F718BC226596DB0053488E /* PTYTextView+ARC.m in Sources */,
 				53FF984C20967806008688D7 /* iTermMetalDeviceProvider.m in Sources */,
+				A653F68624CF4EC70062377E /* FMDatabase.m in Sources */,
 				A6725AD723D63B7A001CA48A /* iTermProfileModelJournal.m in Sources */,
 				A6B41406211A579300D28207 /* iTermStoplightHotbox.m in Sources */,
 				A62C8FC3248033C000E22E95 /* iTermTmuxJobManager.m in Sources */,
@@ -13606,6 +13663,7 @@
 				A6614C75210AE3FD0001EAA3 /* iTermStatusBarProgressComponent.m in Sources */,
 				A6905555241D48080020EA6A /* iTermSearchResultsMinimapView.m in Sources */,
 				5370679721C9D2780088D0F3 /* SIGArchiveBuilder.m in Sources */,
+				A653F68524CF4EC70062377E /* FMResultSet.m in Sources */,
 				A6F385DF1FA55E2000739939 /* iTermSmartCursorColor.m in Sources */,
 				A629F5AF23AFF65600C2F16B /* iTermShellIntegrationPasteShellCommandsViewController.m in Sources */,
 				A629F58B23AF38CA00C2F16B /* iTermClickableTextField.m in Sources */,
@@ -13639,6 +13697,7 @@
 				A6D4C27521E1A75B009CF11B /* iTermRegisteredFunctionsTableViewDelegate.m in Sources */,
 				A67960D31F81FCBB008A42BC /* iTermBroadcastStripesRenderer.m in Sources */,
 				5387013E23629EE8005FDB65 /* iTermPasswordManagerWindowController.m in Sources */,
+				A653F67E24CF4EC70062377E /* FMDatabaseQueue.m in Sources */,
 				A6A4B2A72425D18D00184EAC /* iTermKeystroke.m in Sources */,
 				A630119520E70C0A008114B7 /* iTermStatusBarSetupDestinationCollectionViewController.m in Sources */,
 				A6481655228FD511008E7E0C /* iTermVariablesIndex.m in Sources */,
@@ -13652,6 +13711,7 @@
 				5370678721C9D2780088D0F3 /* SIGPartialInputStream.m in Sources */,
 				A6153D6121F4EFA1002976FC /* iTermStatusBarStableLayoutAlgorithm.m in Sources */,
 				A6A4868220B685F000493302 /* iTermHotkeyPreferencesWindowController.m in Sources */,
+				A653F68724CF4EC70062377E /* FMDatabaseAdditions.m in Sources */,
 				A666D5E9221A191600D6184A /* iTermVariableScope+Session.m in Sources */,
 				A666D5ED221A1D9D00D6184A /* iTermVariableScope+Tab.m in Sources */,
 				A668E8A31E7EFEA5005F8758 /* iTermURLStore.m in Sources */,
@@ -13686,6 +13746,7 @@
 				A69C9333212108BC00531438 /* iTermStatusBarComposerComponent.m in Sources */,
 				A67960E41F8201A1008A42BC /* iTermMetalDriver.m in Sources */,
 				A638D29E22222B5D001CD688 /* iTermSwiftyStringGraph.m in Sources */,
+				A653F67F24CF4EC70062377E /* FMDatabasePool.m in Sources */,
 				A6180D7A21B399AA0073F219 /* NSFileManager+iTerm.m in Sources */,
 				A6F14ED9217EDAD000047D2F /* iTermWindowOcclusionChangeMonitor.m in Sources */,
 				A614F2671FE4B16400EEE919 /* iTermCharacterParts.m in Sources */,
@@ -14292,7 +14353,7 @@
 				A608CD0D214DE7C1007A7B87 /* iTermFunctionCallSuggesterTest.m in Sources */,
 				A6F22AC22396374500C5D1A9 /* iTermSyntheticConfParserTests.m in Sources */,
 				A608CD01214DE7C1007A7B87 /* VT100CSIParserTest.m in Sources */,
-				A653F66E24CE81740062377E /* iTermCoding.m in Sources */,
+				A653F66E24CE81740062377E /* iTermCodingTests.m in Sources */,
 				A61F8E301E62591800D315D0 /* iTermFakeUserDefaults.m in Sources */,
 				A608CD00214DE7C1007A7B87 /* PTYTextViewTest.m in Sources */,
 				A608CCFB214DE7C1007A7B87 /* iTermNSStringCategoryTest.m in Sources */,
@@ -14311,6 +14372,7 @@
 				A608CCF7214DE7C1007A7B87 /* iTermProcessCollectionTest.m in Sources */,
 				A608CD06214DE7C1007A7B87 /* iTermRuleTest.m in Sources */,
 				A608CD27214E09E1007A7B87 /* Model.xcdatamodeld in Sources */,
+				A653F68C24CF4FE60062377E /* iTermGraphDatabase.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
