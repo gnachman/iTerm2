@@ -60,7 +60,7 @@ static iTermEncoderGraphRecord *iTermGraphDeltaEncoderMakeGraphRecord(NSString *
     NSMutableDictionary<NSString *, NSMutableDictionary *> *nodes = [NSMutableDictionary dictionary];
     for (NSArray *row in _nodeRows) {
         NSString *key = [NSString castFrom:row[0]];
-        NSString *identifier = [NSString castFrom:row[1] ?: @""];
+        NSString *identifier = [NSString castFrom:row[1]];
         NSString *parent = [NSString castFrom:row[2]];
         NSNumber *generation = [NSNumber castFrom:row[3]];
         if (!row || !key || !identifier || !parent || !generation) {
@@ -246,7 +246,7 @@ static iTermEncoderGraphRecord *iTermGraphDeltaEncoderMakeGraphRecord(NSString *
                                 NSString *context) {
         if (before && !after) {
             [state.db executeUpdate:@"delete from Node where key=? and identifier=? and context=?",
-             before.key, before.identifier ?: @"", context];
+             before.key, before.identifier, context];
             [before enumerateValuesVersus:nil block:^(iTermEncoderPODRecord * _Nullable mine,
                                                       iTermEncoderPODRecord * _Nullable theirs) {
                 [state.db executeUpdate:@"delete from Value where key=? and context=?",
@@ -254,7 +254,7 @@ static iTermEncoderGraphRecord *iTermGraphDeltaEncoderMakeGraphRecord(NSString *
             }];
         } else if (!before && after) {
             [state.db executeUpdate:@"insert into Node (key, identifier, context, generation) values (?, ?, ?, ?)",
-             after.key, after.identifier ?: @"", context, @(after.generation)];
+             after.key, after.identifier, context, @(after.generation)];
             [after enumerateValuesVersus:nil block:^(iTermEncoderPODRecord * _Nullable record,
                                                      iTermEncoderPODRecord * _Nullable na) {
                 [state.db executeUpdate:@"insert into Value (key, value, context, type) values (?, ?, ?, ?)",

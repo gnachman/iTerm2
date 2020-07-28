@@ -135,9 +135,16 @@ static NSString *iTermEncoderRecordTypeToString(iTermEncoderRecordType type)  {
     if (!other) {
         return NO;
     }
-    return (other.type == self.type &&
-            [other.key isEqual:self.key] &&
-            [other.value isEqual:self.value]);
+    if (other.type != self.type) {
+        return NO;
+    }
+    if (![other.key isEqual:self.key]) {
+        return NO;
+    }
+    if (![other.value isEqual:self.value]) {
+        return NO;
+    }
+    return YES;
 }
 
 - (NSData *)data {
@@ -166,7 +173,8 @@ static NSString *iTermEncoderRecordTypeToString(iTermEncoderRecordType type)  {
                   graphs:(NSArray<iTermEncoderGraphRecord *> *)graphRecords
               generation:(NSInteger)generation
                      key:(NSString *)key
-              identifier:(NSString * _Nullable)identifier {
+              identifier:(NSString *)identifier {
+    assert(identifier);
     return [[self alloc] initWithPODs:podRecords
                                graphs:graphRecords
                            generation:generation
@@ -178,7 +186,7 @@ static NSString *iTermEncoderRecordTypeToString(iTermEncoderRecordType type)  {
                       graphs:(NSArray<iTermEncoderGraphRecord *> *)graphRecords
                   generation:(NSInteger)generation
                          key:(NSString *)key
-                  identifier:(NSString * _Nullable)identifier {
+                  identifier:(NSString *)identifier {
     assert(key);
     self = [super init];
     if (self) {
@@ -226,7 +234,7 @@ static NSString *iTermEncoderRecordTypeToString(iTermEncoderRecordType type)  {
     if (result != NSOrderedSame) {
         return result;
     }
-    result = [self.identifier ?: @"" compare:other.identifier ?: @""];
+    result = [self.identifier compare:other.identifier];
     if (result != NSOrderedSame) {
         return result;
     }
@@ -256,7 +264,7 @@ static NSString *iTermEncoderRecordTypeToString(iTermEncoderRecordType type)  {
     if (other.generation != self.generation) {
         return NO;
     }
-    if (![NSObject object:other.identifier ?: @"" isEqualToObject:self.identifier ?: @""]) {
+    if (![NSObject object:other.identifier isEqualToObject:self.identifier]) {
         return NO;
     }
     return YES;
@@ -308,15 +316,15 @@ iTermGraphExplodedContext iTermGraphExplodeContext(NSString *context) {
 }
 
 - (iTermEncoderGraphRecord * _Nullable)childRecordWithKey:(NSString *)key
-                                               identifier:(NSString * _Nullable)identifier {
+                                               identifier:(NSString *)identifier {
     return [_graphRecords objectPassingTest:^BOOL(iTermEncoderGraphRecord *element, NSUInteger index, BOOL *stop) {
         return ([element.key isEqualToString:key] &&
-                [(identifier ?: @"") isEqualToString:(element.identifier ?: @"")]);
+                [identifier isEqualToString:element.identifier]);
     }];
 }
 
 - (NSString *)nodeid {
-    return [NSString stringWithFormat:@"%@,%@,%@", self.key, self.identifier ?: @"", @(self.generation)];
+    return [NSString stringWithFormat:@"%@,%@,%@", self.key, self.identifier, @(self.generation)];
 }
 
 - (void)enumerateValuesVersus:(iTermEncoderGraphRecord * _Nullable)other
@@ -332,7 +340,7 @@ iTermGraphExplodedContext iTermGraphExplodeContext(NSString *context) {
 
 @implementation iTermGraphEncoder {
     NSMutableDictionary<NSString *, iTermEncoderPODRecord *> *_pod;
-    NSString * _Nullable _identifier;
+    NSString *_identifier;
     NSInteger _generation;
     NSString *_key;
     NSMutableArray<iTermEncoderGraphRecord *> *_children;
@@ -341,8 +349,9 @@ iTermGraphExplodedContext iTermGraphExplodeContext(NSString *context) {
 }
 
 - (instancetype)initWithKey:(NSString *)key
-                 identifier:(NSString * _Nullable)identifier
+                 identifier:(NSString *)identifier
                  generation:(NSInteger)generation {
+    assert(identifier);
     self = [super init];
     if (self) {
         _key = key;
@@ -381,11 +390,13 @@ iTermGraphExplodedContext iTermGraphExplodeContext(NSString *context) {
 }
 
 - (void)encodeChildWithKey:(NSString *)key
-                identifier:(NSString * _Nullable)identifier
+                identifier:(NSString *)identifier
                 generation:(NSInteger)generation
                      block:(void (^ NS_NOESCAPE)(iTermGraphEncoder *subencoder))block {
     assert(!_committed);
-    iTermGraphEncoder *encoder = [[iTermGraphEncoder alloc] initWithKey:key identifier:identifier generation:generation];
+    iTermGraphEncoder *encoder = [[iTermGraphEncoder alloc] initWithKey:key
+                                                             identifier:identifier
+                                                             generation:generation];
     block(encoder);
     [self encodeGraph:encoder.record];
 }
@@ -420,15 +431,16 @@ iTermGraphExplodedContext iTermGraphExplodeContext(NSString *context) {
 
 - (instancetype)initWithPreviousRevision:(iTermEncoderGraphRecord * _Nullable)previousRevision {
     return [self initWithKey:@""
-                  identifier:nil
+                  identifier:@""
                   generation:previousRevision.generation + 1
             previousRevision:previousRevision];
 }
 
 - (instancetype)initWithKey:(NSString *)key
-                 identifier:(NSString * _Nullable)identifier
+                 identifier:(NSString *)identifier
                  generation:(NSInteger)generation
            previousRevision:(iTermEncoderGraphRecord * _Nullable)previousRevision {
+    assert(identifier);
     self = [super initWithKey:key identifier:identifier generation:generation];
     if (self) {
         _previousRevision = previousRevision;
@@ -437,7 +449,7 @@ iTermGraphExplodedContext iTermGraphExplodeContext(NSString *context) {
 }
 
 - (void)encodeChildWithKey:(NSString *)key
-                identifier:(NSString * _Nullable)identifier
+                identifier:(NSString *)identifier
                 generation:(NSInteger)generation
                      block:(void (^ NS_NOESCAPE)(iTermGraphEncoder *subencoder))block {
     iTermEncoderGraphRecord *record = [_previousRevision childRecordWithKey:key
@@ -477,11 +489,11 @@ iTermGraphExplodedContext iTermGraphExplodeContext(NSString *context) {
                                   NSString *context))block {
     NSDictionary<NSDictionary *, NSArray<iTermEncoderGraphRecord *> *> *before = [preRecord.graphRecords classifyWithBlock:^id(iTermEncoderGraphRecord *record) {
         return @{ @"key": record.key,
-                  @"identifier": record.identifier ?: @"" };
+                  @"identifier": record.identifier };
     }];
     NSDictionary<NSDictionary *, NSArray<iTermEncoderGraphRecord *> *> *after = [postRecord.graphRecords classifyWithBlock:^id(iTermEncoderGraphRecord *record) {
         return @{ @"key": record.key,
-                  @"identifier": record.identifier ?: @"" };
+                  @"identifier": record.identifier };
     }];
     NSSet<NSDictionary *> *allKeys = [NSSet setWithArray:[before.allKeys ?: @[] arrayByAddingObjectsFromArray:after.allKeys ?: @[] ]];
     [allKeys enumerateObjectsUsingBlock:^(NSDictionary * _Nonnull keyId, BOOL * _Nonnull stop) {

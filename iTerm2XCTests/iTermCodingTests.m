@@ -6,6 +6,8 @@
 //
 
 #import <XCTest/XCTest.h>
+
+#import "NSData+iTerm.h"
 #import "iTermGraphEncoder.h"
 #import "iTermGraphDatabase.h"
 #import "iTermThreadSafety.h"
@@ -140,6 +142,18 @@
     NSInteger index = [string rangeOfString:@"?"].location;
     while (index != NSNotFound) {
         id obj = va_arg(args, id);
+        if ([obj isKindOfClass:[NSData class]]) {
+            NSString *string = [[NSString alloc] initWithData:obj encoding:NSUTF8StringEncoding];
+            if (string) {
+                obj = string;
+            } else if ([(NSData *)obj length] == 8) {
+                double d;
+                memmove(&d, [(NSData *)obj bytes], sizeof(d));
+                obj = @(d);
+            } else {
+                obj = [(NSData *)obj it_hexEncoded];
+            }
+        }
         [string replaceCharactersInRange:NSMakeRange(index, 1) withString:[obj description]];
         index = [string rangeOfString:@"?"].location;
     }
@@ -200,7 +214,7 @@
     XCTAssertEqualObjects(record.key, @"k");
     XCTAssertEqualObjects(record.value, data);
 
-    NSDate *date = [NSDate date];
+    NSDate *date = [NSDate dateWithTimeIntervalSince1970:1000000000];
     record = [iTermEncoderPODRecord withDate:date key:@"k"];
     XCTAssertEqual(record.type, iTermEncoderRecordTypeDate);
     XCTAssertEqualObjects(record.key, @"k");
@@ -218,7 +232,7 @@
                                         graphs:graphs
                                     generation:3
                                            key:@"root"
-                                    identifier:nil];
+                                    identifier:@""];
 
     NSDictionary<NSString *, iTermEncoderPODRecord *> *expectedRecords =
     @{ @"one": pods[0],
@@ -227,7 +241,7 @@
     XCTAssertEqualObjects(@[], record.graphRecords);
     XCTAssertEqual(3, record.generation);
     XCTAssertEqualObjects(@"root", record.key);
-    XCTAssertNil(record.identifier);
+    XCTAssertEqualObjects(@"", record.identifier);
 }
 
 - (void)testGraphRecord {
@@ -239,7 +253,7 @@
        [iTermEncoderPODRecord withString:@"y" key:@"letter"] ];
     NSData *data = [NSData dataWithBytes:"xyz" length:3];
     NSArray<iTermEncoderPODRecord *> *pods3 =
-    @[ [iTermEncoderPODRecord withDate:[NSDate date] key:@"now"],
+    @[ [iTermEncoderPODRecord withDate:[NSDate dateWithTimeIntervalSince1970:1000000000] key:@"now"],
        [iTermEncoderPODRecord withData:data key:@"data"] ];
 
     NSArray<iTermEncoderGraphRecord *> *graphs =
@@ -252,7 +266,7 @@
                                         graphs:graphs
                                     generation:7
                                            key:@"root"
-                                    identifier:nil];
+                                    identifier:@""];
 
     NSDictionary<NSString *, iTermEncoderPODRecord *> *expectedPODRecords =
     @{ @"now": pods3[0],
@@ -261,19 +275,19 @@
     XCTAssertEqualObjects(graphs, record.graphRecords);
     XCTAssertEqual(7, record.generation);
     XCTAssertEqualObjects(record.key, @"root");
-    XCTAssertNil(record.identifier);
+    XCTAssertEqualObjects(@"", record.identifier);
 }
 
 - (void)testGraphEncoder {
     iTermGraphEncoder *encoder = [[iTermGraphEncoder alloc] initWithKey:@"root"
-                                                             identifier:nil
+                                                             identifier:@""
                                                              generation:1];
     [encoder encodeString:@"red" forKey:@"color"];
     [encoder encodeNumber:@1 forKey:@"count"];
-    [encoder encodeChildWithKey:@"left" identifier:nil generation:2 block:^(iTermGraphEncoder * _Nonnull subencoder) {
+    [encoder encodeChildWithKey:@"left" identifier:@"" generation:2 block:^(iTermGraphEncoder * _Nonnull subencoder) {
         [subencoder encodeString:@"bob" forKey:@"name"];
     }];
-    [encoder encodeChildWithKey:@"right" identifier:nil generation:3 block:^(iTermGraphEncoder * _Nonnull subencoder) {
+    [encoder encodeChildWithKey:@"right" identifier:@"" generation:3 block:^(iTermGraphEncoder * _Nonnull subencoder) {
         [subencoder encodeNumber:@23 forKey:@"age"];
     }];
 
@@ -284,13 +298,13 @@
     iTermEncoderPODRecord *name = [iTermEncoderPODRecord withString:@"bob" key:@"name"];
     iTermEncoderPODRecord *age = [iTermEncoderPODRecord withNumber:@23 key:@"age"];
     NSArray *expectedGraphs =
-    @[ [iTermEncoderGraphRecord withPODs:@[ name ] graphs:@[] generation:2 key:@"left" identifier:nil],
-       [iTermEncoderGraphRecord withPODs:@[ age ] graphs:@[] generation:3 key:@"right" identifier:nil] ];
+    @[ [iTermEncoderGraphRecord withPODs:@[ name ] graphs:@[] generation:2 key:@"left" identifier:@""],
+       [iTermEncoderGraphRecord withPODs:@[ age ] graphs:@[] generation:3 key:@"right" identifier:@""] ];
     iTermEncoderGraphRecord *expected = [iTermEncoderGraphRecord withPODs:expectedPODs
                                                                    graphs:expectedGraphs
                                                                generation:1
                                                                       key:@"root"
-                                                               identifier:nil];
+                                                               identifier:@""];
     XCTAssertEqualObjects(actual, expected);
 }
 
@@ -312,7 +326,7 @@
     ];
 
     NSData *data = [NSData dataWithBytes:"xyz" length:3];
-    NSDate *date = [NSDate date];
+    NSDate *date = [NSDate dateWithTimeIntervalSince1970:1000000000];
     NSData *(^d)(id) = ^NSData *(id obj) {
         if ([obj isKindOfClass:[NSString class]]) {
             return [iTermEncoderPODRecord withString:obj key:@""].data;
@@ -360,7 +374,7 @@
                                    graphs:@[]
                                generation:1
                                       key:@"k5"
-                               identifier:nil],
+                               identifier:@""],
     ];
     NSArray<iTermEncoderGraphRecord *> *expectedK2Children = @[
         [iTermEncoderGraphRecord withPODs:@[]
@@ -379,15 +393,15 @@
                                    graphs:expectedK2Children
                                generation:1
                                       key:@"k2"
-                               identifier:nil],
+                               identifier:@""],
 
     ];
     iTermEncoderGraphRecord *expected =
     [iTermEncoderGraphRecord withPODs:expectedRootPODs
                                graphs:expectedRootGraphs
                            generation:1
-                                  key:@"k1"
-                           identifier:nil];
+                                  key:@""
+                           identifier:@""];
 
     iTermEncoderGraphRecord *actual = transformer.root;
     XCTAssertEqualObjects(expected, actual);
@@ -395,14 +409,14 @@
 
 - (void)testDeltaEncoder_UpdateValue {
     iTermGraphDeltaEncoder *encoder = [[iTermGraphDeltaEncoder alloc] initWithPreviousRevision:nil];
-    [encoder encodeChildWithKey:@"root" identifier:nil generation:1 block:^(iTermGraphEncoder * _Nonnull subencoder) {
-        [subencoder encodeChildWithKey:@"leaf" identifier:nil generation:1 block:^(iTermGraphEncoder * _Nonnull subencoder) {
+    [encoder encodeChildWithKey:@"root" identifier:@"" generation:1 block:^(iTermGraphEncoder * _Nonnull subencoder) {
+        [subencoder encodeChildWithKey:@"leaf" identifier:@"" generation:1 block:^(iTermGraphEncoder * _Nonnull subencoder) {
             [subencoder encodeString:@"value1" forKey:@"key"];
         }];
     }];
     encoder = [[iTermGraphDeltaEncoder alloc] initWithPreviousRevision:encoder.record];
-    [encoder encodeChildWithKey:@"root" identifier:nil generation:2 block:^(iTermGraphEncoder * _Nonnull subencoder) {
-        [subencoder encodeChildWithKey:@"leaf" identifier:nil generation:2 block:^(iTermGraphEncoder * _Nonnull subencoder) {
+    [encoder encodeChildWithKey:@"root" identifier:@"" generation:2 block:^(iTermGraphEncoder * _Nonnull subencoder) {
+        [subencoder encodeChildWithKey:@"leaf" identifier:@"" generation:2 block:^(iTermGraphEncoder * _Nonnull subencoder) {
             [subencoder encodeString:@"value2" forKey:@"key"];
         }];
     }];
@@ -425,14 +439,14 @@
 
 - (void)testDeltaEncoder_DeleteValue {
     iTermGraphDeltaEncoder *encoder = [[iTermGraphDeltaEncoder alloc] initWithPreviousRevision:nil];
-    [encoder encodeChildWithKey:@"root" identifier:nil generation:1 block:^(iTermGraphEncoder * _Nonnull subencoder) {
-        [subencoder encodeChildWithKey:@"leaf" identifier:nil generation:1 block:^(iTermGraphEncoder * _Nonnull subencoder) {
+    [encoder encodeChildWithKey:@"root" identifier:@"" generation:1 block:^(iTermGraphEncoder * _Nonnull subencoder) {
+        [subencoder encodeChildWithKey:@"leaf" identifier:@"" generation:1 block:^(iTermGraphEncoder * _Nonnull subencoder) {
             [subencoder encodeString:@"value1" forKey:@"key"];
         }];
     }];
     encoder = [[iTermGraphDeltaEncoder alloc] initWithPreviousRevision:encoder.record];
-    [encoder encodeChildWithKey:@"root" identifier:nil generation:2 block:^(iTermGraphEncoder * _Nonnull subencoder) {
-        [subencoder encodeChildWithKey:@"leaf" identifier:nil generation:2 block:^(iTermGraphEncoder * _Nonnull subencoder) {
+    [encoder encodeChildWithKey:@"root" identifier:@"" generation:2 block:^(iTermGraphEncoder * _Nonnull subencoder) {
+        [subencoder encodeChildWithKey:@"leaf" identifier:@"" generation:2 block:^(iTermGraphEncoder * _Nonnull subencoder) {
         }];
     }];
     __block BOOL done = NO;
@@ -454,13 +468,13 @@
 
 - (void)testDeltaEncoder_InsertValue {
     iTermGraphDeltaEncoder *encoder = [[iTermGraphDeltaEncoder alloc] initWithPreviousRevision:nil];
-    [encoder encodeChildWithKey:@"root" identifier:nil generation:1 block:^(iTermGraphEncoder * _Nonnull subencoder) {
-        [subencoder encodeChildWithKey:@"leaf" identifier:nil generation:1 block:^(iTermGraphEncoder * _Nonnull subencoder) {
+    [encoder encodeChildWithKey:@"root" identifier:@"" generation:1 block:^(iTermGraphEncoder * _Nonnull subencoder) {
+        [subencoder encodeChildWithKey:@"leaf" identifier:@"" generation:1 block:^(iTermGraphEncoder * _Nonnull subencoder) {
         }];
     }];
     encoder = [[iTermGraphDeltaEncoder alloc] initWithPreviousRevision:encoder.record];
-    [encoder encodeChildWithKey:@"root" identifier:nil generation:2 block:^(iTermGraphEncoder * _Nonnull subencoder) {
-        [subencoder encodeChildWithKey:@"leaf" identifier:nil generation:2 block:^(iTermGraphEncoder * _Nonnull subencoder) {
+    [encoder encodeChildWithKey:@"root" identifier:@"" generation:2 block:^(iTermGraphEncoder * _Nonnull subencoder) {
+        [subencoder encodeChildWithKey:@"leaf" identifier:@"" generation:2 block:^(iTermGraphEncoder * _Nonnull subencoder) {
             [subencoder encodeString:@"value1" forKey:@"key"];
         }];
     }];
@@ -483,13 +497,13 @@
 
 - (void)testDeltaEncoder_DeleteNode {
     iTermGraphDeltaEncoder *encoder = [[iTermGraphDeltaEncoder alloc] initWithPreviousRevision:nil];
-    [encoder encodeChildWithKey:@"root" identifier:nil generation:1 block:^(iTermGraphEncoder * _Nonnull subencoder) {
-        [subencoder encodeChildWithKey:@"leaf" identifier:nil generation:1 block:^(iTermGraphEncoder * _Nonnull subencoder) {
+    [encoder encodeChildWithKey:@"root" identifier:@"" generation:1 block:^(iTermGraphEncoder * _Nonnull subencoder) {
+        [subencoder encodeChildWithKey:@"leaf" identifier:@"" generation:1 block:^(iTermGraphEncoder * _Nonnull subencoder) {
             [subencoder encodeString:@"value1" forKey:@"key"];
         }];
     }];
     encoder = [[iTermGraphDeltaEncoder alloc] initWithPreviousRevision:encoder.record];
-    [encoder encodeChildWithKey:@"root" identifier:nil generation:2 block:^(iTermGraphEncoder * _Nonnull subencoder) {
+    [encoder encodeChildWithKey:@"root" identifier:@"" generation:2 block:^(iTermGraphEncoder * _Nonnull subencoder) {
     }];
     __block BOOL done = NO;
     [encoder enumerateRecords:^(iTermEncoderGraphRecord * _Nullable before,
@@ -510,11 +524,11 @@
 
 - (void)testDeltaEncoder_InsertNode {
     iTermGraphDeltaEncoder *encoder = [[iTermGraphDeltaEncoder alloc] initWithPreviousRevision:nil];
-    [encoder encodeChildWithKey:@"root" identifier:nil generation:1 block:^(iTermGraphEncoder * _Nonnull subencoder) {
+    [encoder encodeChildWithKey:@"root" identifier:@"" generation:1 block:^(iTermGraphEncoder * _Nonnull subencoder) {
     }];
     encoder = [[iTermGraphDeltaEncoder alloc] initWithPreviousRevision:encoder.record];
-    [encoder encodeChildWithKey:@"root" identifier:nil generation:2 block:^(iTermGraphEncoder * _Nonnull subencoder) {
-        [subencoder encodeChildWithKey:@"leaf" identifier:nil generation:1 block:^(iTermGraphEncoder * _Nonnull subencoder) {
+    [encoder encodeChildWithKey:@"root" identifier:@"" generation:2 block:^(iTermGraphEncoder * _Nonnull subencoder) {
+        [subencoder encodeChildWithKey:@"leaf" identifier:@"" generation:1 block:^(iTermGraphEncoder * _Nonnull subencoder) {
             [subencoder encodeString:@"value1" forKey:@"key"];
         }];
     }];
@@ -776,10 +790,10 @@
      */
     iTermGraphDeltaEncoder *encoder = [[iTermGraphDeltaEncoder alloc] initWithPreviousRevision:nil];
     [encoder encodeString:@"k1_v1" forKey:@"k1"];
-    [encoder encodeChildWithKey:@"k2" identifier:nil generation:1 block:^(iTermGraphEncoder * _Nonnull subencoder) {
+    [encoder encodeChildWithKey:@"k2" identifier:@"" generation:1 block:^(iTermGraphEncoder * _Nonnull subencoder) {
         [subencoder encodeString:@"k3_v1" forKey:@"k3"];
 
-        [subencoder encodeChildWithKey:@"k4" identifier:nil generation:1 block:^(iTermGraphEncoder * _Nonnull subencoder) {
+        [subencoder encodeChildWithKey:@"k4" identifier:@"" generation:1 block:^(iTermGraphEncoder * _Nonnull subencoder) {
             [subencoder encodeString:@"k5_v1" forKey:@"k5"];
         }];
         [subencoder encodeChildWithKey:@"k6" identifier:@"i1" generation:1 block:^(iTermGraphEncoder * _Nonnull subencoder) {
@@ -804,9 +818,9 @@
      */
     encoder = [[iTermGraphDeltaEncoder alloc] initWithPreviousRevision:encoder.record];
     [encoder encodeString:@"k1_v2" forKey:@"k1"];
-    [encoder encodeChildWithKey:@"k2" identifier:nil generation:2 block:^(iTermGraphEncoder * _Nonnull subencoder) {
+    [encoder encodeChildWithKey:@"k2" identifier:@"" generation:2 block:^(iTermGraphEncoder * _Nonnull subencoder) {
         // Omit k3
-        [subencoder encodeChildWithKey:@"k4" identifier:nil generation:1 block:^(iTermGraphEncoder * _Nonnull subencoder) {
+        [subencoder encodeChildWithKey:@"k4" identifier:@"" generation:1 block:^(iTermGraphEncoder * _Nonnull subencoder) {
             XCTFail(@"Shouldn't reach this because generation is unchanged.");
         }];
         // omit k6.i1
@@ -852,7 +866,7 @@
     XCTAssertNil(gdb.record);
     [gdb.thread performDeferredBlocksAfter:^{
         [gdb update:^(iTermGraphEncoder * _Nonnull encoder) {
-            [encoder encodeChildWithKey:@"mynode" identifier:nil generation:1 block:^(iTermGraphEncoder * _Nonnull subencoder) {
+            [encoder encodeChildWithKey:@"mynode" identifier:@"" generation:1 block:^(iTermGraphEncoder * _Nonnull subencoder) {
                 [subencoder encodeString:@"red" forKey:@"color"];
                 [subencoder encodeNumber:@123 forKey:@"number"];
             }];
@@ -912,13 +926,13 @@
                                    graphs:@[]
                                generation:1
                                       key:@"mynode"
-                               identifier:nil];
+                               identifier:@""];
     iTermEncoderGraphRecord *expectedRecord =
     [iTermEncoderGraphRecord withPODs:@[]
                                graphs:@[ mynode ]
                            generation:1
                                   key:@""
-                           identifier:nil];
+                           identifier:@""];
 
     XCTAssertEqualObjects(gdb.record, expectedRecord);
 }

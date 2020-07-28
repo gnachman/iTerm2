@@ -49,7 +49,7 @@ iTermGraphExplodedContext iTermGraphExplodeContext(NSString *context);
 @property (nonatomic, readonly) NSDictionary<NSString *, iTermEncoderPODRecord *> *podRecords;
 @property (nonatomic, readonly) NSArray<iTermEncoderGraphRecord *> *graphRecords;
 @property (nonatomic, readonly) NSInteger generation;
-@property (nonatomic, readonly, nullable) NSString *identifier;
+@property (nonatomic, readonly) NSString *identifier;
 @property (nonatomic, readonly) NSString *key;
 @property (nonatomic, readonly, weak) iTermEncoderGraphRecord *parent;
 
@@ -57,7 +57,7 @@ iTermGraphExplodedContext iTermGraphExplodeContext(NSString *context);
                   graphs:(NSArray<iTermEncoderGraphRecord *> *)graphRecords
               generation:(NSInteger)generation
                      key:(NSString *)key
-              identifier:(NSString * _Nullable)identifier;
+              identifier:(NSString *)identifier;
 
 - (void)enumerateValuesVersus:(iTermEncoderGraphRecord * _Nullable)other
                         block:(void (^)(iTermEncoderPODRecord * _Nullable mine,
@@ -83,7 +83,7 @@ iTermGraphExplodedContext iTermGraphExplodeContext(NSString *context);
 // can see that obj2 and obj3 don't need to be re-encoded if their generation is unchanged and
 // that it can delete obj1.
 - (void)encodeChildWithKey:(NSString *)key
-                identifier:(NSString * _Nullable)identifier
+                identifier:(NSString *)identifier
                 generation:(NSInteger)generation
                      block:(void (^ NS_NOESCAPE)(iTermGraphEncoder *subencoder))block;
 
@@ -94,7 +94,7 @@ iTermGraphExplodedContext iTermGraphExplodeContext(NSString *context);
                      block:(void (^ NS_NOESCAPE)(NSString *identifier, NSInteger index, iTermGraphEncoder *subencoder))block;
 
 - (instancetype)initWithKey:(NSString *)key
-                 identifier:(NSString * _Nullable)identifier
+                 identifier:(NSString *)identifier
                  generation:(NSInteger)generation NS_DESIGNATED_INITIALIZER;
 - (instancetype)init NS_UNAVAILABLE;
 
@@ -104,7 +104,7 @@ iTermGraphExplodedContext iTermGraphExplodeContext(NSString *context);
 @property (nonatomic, readonly, nullable) iTermEncoderGraphRecord *previousRevision;
 
 - (instancetype)initWithKey:(NSString *)key
-                 identifier:(NSString * _Nullable)identifier
+                 identifier:(NSString *)identifier
                  generation:(NSInteger)generation NS_UNAVAILABLE;
 
 - (instancetype)initWithPreviousRevision:(iTermEncoderGraphRecord * _Nullable)previousRevision;
