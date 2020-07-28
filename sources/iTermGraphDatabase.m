@@ -29,7 +29,7 @@ static iTermEncoderGraphRecord *iTermGraphDeltaEncoderMakeGraphRecord(NSString *
     iTermGraphExplodedContext exploded = iTermGraphExplodeContext(nodeID);
     return [iTermEncoderGraphRecord withPODs:[nodeDict[@"pod"] allValues]
                                       graphs:childGraphRecords
-                                  generation:[nodeDict[@"generation"] integerValue]
+                                  generation:0
                                          key:exploded.key
                                   identifier:exploded.identifier];
 }
@@ -59,7 +59,7 @@ static iTermEncoderGraphRecord *iTermGraphDeltaEncoderMakeGraphRecord(NSString *
     // Create nodes
     NSMutableDictionary<NSString *, NSMutableDictionary *> *nodes = [NSMutableDictionary dictionary];
     for (NSArray *row in _nodeRows) {
-        if (row.count != 4) {
+        if (row.count != 3) {
             DLog(@"Wrong number of items in row: %@", row);
             _lastError = [NSError errorWithDomain:@"com.iterm2.graph-transformer"
                                              code:1
@@ -69,8 +69,7 @@ static iTermEncoderGraphRecord *iTermGraphDeltaEncoderMakeGraphRecord(NSString *
         NSString *key = [NSString castFrom:row[0]];
         NSString *identifier = [NSString castFrom:row[1]];
         NSString *parent = [NSString castFrom:row[2]];
-        NSNumber *generation = [NSNumber castFrom:row[3]];
-        if (!row || !key || !identifier || !parent || !generation) {
+        if (!row || !key || !identifier || !parent) {
             DLog(@"Bad row: %@", row);
             _lastError = [NSError errorWithDomain:@"com.iterm2.graph-transformer"
                                              code:1
@@ -90,7 +89,6 @@ static iTermEncoderGraphRecord *iTermGraphDeltaEncoderMakeGraphRecord(NSString *
         }
         nodes[nodeid] = [@{ @"pod": [NSMutableDictionary dictionary],
                             @"parent": parent,
-                            @"generation": generation,
                             @"children": [NSMutableArray array] } mutableCopy];
     }
     return nodes;
@@ -275,18 +273,14 @@ static iTermEncoderGraphRecord *iTermGraphDeltaEncoderMakeGraphRecord(NSString *
                  mine.key, [self valueContextInGraph:before context:context]];
             }];
         } else if (!before && after) {
-            [state.db executeUpdate:@"insert into Node (key, identifier, context, generation) values (?, ?, ?, ?)",
-             after.key, after.identifier, context, @(after.generation)];
+            [state.db executeUpdate:@"insert into Node (key, identifier, context) values (?, ?, ?)",
+             after.key, after.identifier, context];
             [after enumerateValuesVersus:nil block:^(iTermEncoderPODRecord * _Nullable record,
                                                      iTermEncoderPODRecord * _Nullable na) {
                 [state.db executeUpdate:@"insert into Value (key, value, context, type) values (?, ?, ?, ?)",
                  record.key, record.data, [self valueContextInGraph:after context:context], @(record.type)];
             }];
         } else if (before && after) {
-            if (![before isEqual:after]) {
-                [state.db executeUpdate:@"update Node set generation=? where key=? and identifier=? and context=?",
-                 @(after.generation), before.key, before.identifier, context];
-            }
             [before enumerateValuesVersus:after block:^(iTermEncoderPODRecord * _Nullable mine,
                                                         iTermEncoderPODRecord * _Nullable theirs) {
                 if (mine && theirs) {
@@ -320,7 +314,7 @@ static iTermEncoderGraphRecord *iTermGraphDeltaEncoderMakeGraphRecord(NSString *
     }
     _ok = YES;
 
-    [state.db executeUpdate:@"create table Node (key text, identifier text, context text, generation integer)"];
+    [state.db executeUpdate:@"create table Node (key text, identifier text, context text)"];
     [state.db executeUpdate:@"create table Value (key text, context text, value blob, type integer)"];
 
     NSMutableArray<NSArray *> *nodes = [NSMutableArray array];
@@ -330,8 +324,7 @@ static iTermEncoderGraphRecord *iTermGraphDeltaEncoderMakeGraphRecord(NSString *
         while ([rs next]) {
             [nodes addObject:@[ [rs stringForColumn:@"key"],
                                 [rs stringForColumn:@"identifier"],
-                                [rs stringForColumn:@"context"],
-                                @([rs longLongIntForColumn:@"generation"]) ]];
+                                [rs stringForColumn:@"context"] ]];
         }
         [rs close];
     }
