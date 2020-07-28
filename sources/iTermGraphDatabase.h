@@ -66,6 +66,9 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) NSURL *url;
 @property (nonatomic, readonly) iTermThread *thread;
 
+// Tests only!
+@property (nonatomic, readonly) id<iTermDatabase> db;
+
 - (instancetype)initWithURL:(NSURL *)url
             databaseFactory:(id<iTermDatabaseFactory>)databaseFactory NS_DESIGNATED_INITIALIZER;
 - (instancetype)init NS_UNAVAILABLE;

@@ -59,6 +59,13 @@ static iTermEncoderGraphRecord *iTermGraphDeltaEncoderMakeGraphRecord(NSString *
     // Create nodes
     NSMutableDictionary<NSString *, NSMutableDictionary *> *nodes = [NSMutableDictionary dictionary];
     for (NSArray *row in _nodeRows) {
+        if (row.count != 4) {
+            DLog(@"Wrong number of items in row: %@", row);
+            _lastError = [NSError errorWithDomain:@"com.iterm2.graph-transformer"
+                                             code:1
+                                         userInfo:@{ NSLocalizedDescriptionKey: [NSString stringWithFormat:@"Wrong number of items in row: %@", row] }];
+            return nil;
+        }
         NSString *key = [NSString castFrom:row[0]];
         NSString *identifier = [NSString castFrom:row[1]];
         NSString *parent = [NSString castFrom:row[2]];
@@ -91,6 +98,13 @@ static iTermEncoderGraphRecord *iTermGraphDeltaEncoderMakeGraphRecord(NSString *
 
 - (BOOL)attachValuesToNodes:(NSDictionary<NSString *, NSMutableDictionary *> *)nodes {
     for (NSArray *row in _valueRows) {
+        if (row.count != 4) {
+            DLog(@"Wrong number of fields in row: %@", row);
+            _lastError = [NSError errorWithDomain:@"com.iterm2.graph-transformer"
+                                             code:1
+                                         userInfo:@{ NSLocalizedDescriptionKey: [NSString stringWithFormat:@"Wrong number of fields in row: %@", row] }];
+            return NO;
+        }
         NSString *nodeid = [NSString castFrom:row[0]];
         NSString *key = [NSString castFrom:row[1]];
         NSNumber *type = [NSNumber castFrom:row[3]];
@@ -217,6 +231,14 @@ static iTermEncoderGraphRecord *iTermGraphDeltaEncoderMakeGraphRecord(NSString *
     _record = encoder.record;
 }
 
+- (id<iTermDatabase>)db {
+    __block id<iTermDatabase> db = nil;
+    [_thread dispatchSync:^(iTermGraphDatabaseState *state) {
+        db = state.db;
+    }];
+    return db;
+}
+
 #pragma mark - Private
 
 - (void)save:(iTermGraphDeltaEncoder *)encoder
@@ -261,6 +283,10 @@ static iTermEncoderGraphRecord *iTermGraphDeltaEncoderMakeGraphRecord(NSString *
                  record.key, record.data, [self valueContextInGraph:after context:context], @(record.type)];
             }];
         } else if (before && after) {
+            if (![before isEqual:after]) {
+                [state.db executeUpdate:@"update Node set generation=? where key=? and identifier=? and context=?",
+                 @(after.generation), before.key, before.identifier, context];
+            }
             [before enumerateValuesVersus:after block:^(iTermEncoderPODRecord * _Nullable mine,
                                                         iTermEncoderPODRecord * _Nullable theirs) {
                 if (mine && theirs) {
@@ -290,15 +316,7 @@ static iTermEncoderGraphRecord *iTermGraphDeltaEncoderMakeGraphRecord(NSString *
                                     factory:(id<iTermDatabaseFactory>)databaseFactory {
     state.db = [databaseFactory withURL:_url];
     if (![state.db open]) {
-        NSFileManager *fileManager = [NSFileManager defaultManager];
-        NSError *error = nil;
-        [fileManager removeItemAtPath:_url.path error:&error];
-        DLog(@"Remove %@: error=%@", _url.path, error);
-        if (![state.db open]) {
-            DLog(@"Failed to open db after deletion: %@", state.db.lastError);
-            state.db = nil;
-            return nil;
-        }
+        return nil;
     }
     _ok = YES;
 
@@ -380,7 +398,23 @@ static iTermEncoderGraphRecord *iTermGraphDeltaEncoderMakeGraphRecord(NSString *
 }
 
 - (BOOL)open {
-    return [_db open];
+    const BOOL ok = [_db open];
+    if (ok) {
+        return YES;
+    }
+    DLog(@"Failed to open db: %@", _db.lastError);
+
+    // Delete and re-open.
+    NSFileManager *fileManager = [NSFileManager defaultManager];
+    NSError *error = nil;
+    NSURL *url = [NSURL fileURLWithPath:[_db databasePath]];
+    [fileManager removeItemAtPath:url.path error:&error];
+    DLog(@"Remove %@: error=%@", url.path, error);
+    if ([_db open]) {
+        return YES;
+    }
+    DLog(@"Failed to open db after deletion: %@", _db.lastError);
+    return NO;
 }
 
 - (NSError *)lastError {

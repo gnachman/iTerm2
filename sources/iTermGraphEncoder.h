@@ -63,8 +63,8 @@ iTermGraphExplodedContext iTermGraphExplodeContext(NSString *context);
                         block:(void (^)(iTermEncoderPODRecord * _Nullable mine,
                                         iTermEncoderPODRecord * _Nullable theirs))block;
 
-- (iTermEncoderGraphRecord *)copyWithIdentifier:(NSString *)identifier;
 - (NSString *)contextWithContext:(NSString *)context;
+- (NSComparisonResult)compareGraphRecord:(iTermEncoderGraphRecord *)other;
 
 @end
 

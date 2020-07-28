@@ -217,14 +217,6 @@ static NSString *iTermEncoderRecordTypeToString(iTermEncoderRecordType type)  {
             self.graphRecords];
 }
 
-- (iTermEncoderGraphRecord *)copyWithIdentifier:(NSString *)identifier {
-    return [[iTermEncoderGraphRecord alloc] initWithPODs:_podRecords.allValues
-                                                  graphs:_graphRecords
-                                              generation:_generation
-                                                     key:_key
-                                              identifier:identifier];
-}
-
 - (NSComparisonResult)compareGraphRecord:(iTermEncoderGraphRecord *)other {
     NSComparisonResult result = [self.key compare:other.key];
     if (result != NSOrderedSame) {
@@ -321,10 +313,6 @@ iTermGraphExplodedContext iTermGraphExplodeContext(NSString *context) {
         return ([element.key isEqualToString:key] &&
                 [identifier isEqualToString:element.identifier]);
     }];
-}
-
-- (NSString *)nodeid {
-    return [NSString stringWithFormat:@"%@,%@,%@", self.key, self.identifier, @(self.generation)];
 }
 
 - (void)enumerateValuesVersus:(iTermEncoderGraphRecord * _Nullable)other
