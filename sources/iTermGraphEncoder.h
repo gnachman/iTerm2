@@ -52,6 +52,7 @@ iTermGraphExplodedContext iTermGraphExplodeContext(NSString *context);
 @property (nonatomic, readonly) NSString *identifier;
 @property (nonatomic, readonly) NSString *key;
 @property (nonatomic, readonly, weak) iTermEncoderGraphRecord *parent;
+@property (nonatomic, readonly) id propertyListValue;
 
 + (instancetype)withPODs:(NSArray<iTermEncoderPODRecord *> *)podRecords
                   graphs:(NSArray<iTermEncoderGraphRecord *> *)graphRecords
@@ -88,10 +89,15 @@ iTermGraphExplodedContext iTermGraphExplodeContext(NSString *context);
                      block:(void (^ NS_NOESCAPE)(iTermGraphEncoder *subencoder))block;
 
 // Return nil from block to stop adding elements. Otherwise, return identifier.
+// The block should use `identifier` as the key for the POD/graph it encodes.
 - (void)encodeArrayWithKey:(NSString *)key
                 generation:(NSInteger)generation
                identifiers:(NSArray<NSString *> *)identifiers
                      block:(void (^ NS_NOESCAPE)(NSString *identifier, NSInteger index, iTermGraphEncoder *subencoder))block;
+
+- (void)encodeDictionary:(NSDictionary *)dict
+                 withKey:(NSString *)key
+              generation:(NSInteger)generation;
 
 - (instancetype)initWithKey:(NSString *)key
                  identifier:(NSString *)identifier

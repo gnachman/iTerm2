@@ -8,6 +8,7 @@
 #import <XCTest/XCTest.h>
 
 #import "NSData+iTerm.h"
+#import "NSObject+iTerm.h"
 #import "iTermGraphEncoder.h"
 #import "iTermGraphDatabase.h"
 #import "iTermThreadSafety.h"
@@ -368,6 +369,50 @@
                                                                       key:@"root"
                                                                identifier:@""];
     XCTAssertEqualObjects(actual, expected);
+}
+
+- (void)testGraphEncoderDictionary {
+    iTermGraphEncoder *encoder = [[iTermGraphEncoder alloc] initWithKey:@"root"
+                                                             identifier:@""
+                                                             generation:1];
+    NSDate *date = [NSDate dateWithTimeIntervalSince1970:1000000000];
+    NSDictionary *dict = @{
+        @"string": @"STRING",
+        @"number": @123,
+        @"data": [NSData dataWithBytes:"123" length:3],
+        @"date": date,
+        @"array": @[
+                @"string1",
+                @"string2",
+                @"date",
+                @{
+                    @"foo": @"bar"
+                },
+                @[ @1, @2, @3 ]
+        ]
+    };
+    [encoder encodeDictionary:dict withKey:@"root" generation:1];
+    iTermEncoderGraphRecord *record = encoder.record;
+
+    NSDictionary *plist = [NSDictionary castFrom:record.propertyListValue];
+    XCTAssertEqualObjects(plist[@"root"], dict);
+}
+
+- (void)testImplicitDictionaryValue {
+    iTermGraphEncoder *encoder = [[iTermGraphEncoder alloc] initWithKey:@"ignored"
+                                                             identifier:@""
+                                                             generation:1];
+    [encoder encodeString:@"string" forKey:@"key"];
+    [encoder encodeChildWithKey:@"dict" identifier:@"" generation:1 block:^(iTermGraphEncoder * _Nonnull subencoder) {
+        [subencoder encodeString:@"foo" forKey:@"bar"];
+    }];
+    NSDictionary *expected = @{
+        @"key": @"string",
+        @"dict": @{
+                @"bar": @"foo"
+        }
+    };
+    XCTAssertEqualObjects(expected, encoder.record.propertyListValue);
 }
 
 - (void)testCompareGraphRecordUsesGeneration {
@@ -851,7 +896,7 @@
             @"insert value key=k_i2, value=value1_i2_1, node=__array.a, context=",
             @"insert value key=k_i3, value=value1_i3_2, node=__array.a, context=",
             @"insert value key=k_i1, value=value1_i1_0, node=__array.a, context=",
-            @"insert value key=__order, value=i1,i2,i3, node=__array.a, context=",
+            @"insert value key=__order, value=i1\ti2\ti3, node=__array.a, context=",
         ]];
         XCTAssertEqualObjects(actual, expected);
     }
@@ -903,7 +948,7 @@
             @"insert value key=k_i2, value=value1_i2_1, node=container.i2, context=__array[a]",
             @"insert node key=container.i3, context=__array[a]",
             @"insert value key=k_i3, value=value1_i3_2, node=container.i3, context=__array[a]",
-            @"insert value key=__order, value=i1,i2,i3, node=__array.a, context=",
+            @"insert value key=__order, value=i1\ti2\ti3, node=__array.a, context=",
         ]];
         XCTAssertEqualObjects(actual, expected);
     }
@@ -926,7 +971,7 @@
     {
         NSArray<NSString *> *actual = [self pseudoSQLFromEncoder:encoder];
         NSArray<NSString *> *expected = @[
-            @"update value where key=__order, node=__array.a, context= value=i2,i3",
+            @"update value where key=__order, node=__array.a, context= value=i2\ti3",
             @"delete node where key=container.i1, context=__array[a]",
             @"delete value where key=k_i1, node=container.i1, context=__array[a]",
         ];
@@ -961,7 +1006,7 @@
             @"insert value key=k_i2, value=value1_i2_1, node=container.i2, context=__array[a]",
             @"insert node key=container.i3, context=__array[a]",
             @"insert value key=k_i3, value=value1_i3_2, node=container.i3, context=__array[a]",
-            @"insert value key=__order, value=i1,i2,i3, node=__array.a, context=",
+            @"insert value key=__order, value=i1\ti2\ti3, node=__array.a, context=",
         ]];
         XCTAssertEqualObjects(actual, expected);
     }
@@ -986,7 +1031,7 @@
     {
         NSArray<NSString *> *actual = [self pseudoSQLFromEncoder:encoder];
         NSArray<NSString *> *expected = @[
-            @"update value where key=__order, node=__array.a, context= value=i1,i2,i3,i4",
+            @"update value where key=__order, node=__array.a, context= value=i1\ti2\ti3\ti4",
             @"insert node key=container.i4, context=__array[a]",
             @"insert value key=k_i4, value=value1_i4_3, node=container.i4, context=__array[a]",
         ];

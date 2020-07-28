@@ -36,6 +36,14 @@
     return temp;
 }
 
++ (NSArray<NSString *> *)stringSequenceWithRange:(NSRange)range {
+    NSMutableArray<NSString *> *temp = [NSMutableArray array];
+    for (NSUInteger i = 0; i < range.length; i++) {
+        [temp addObject:[@(i + range.location) stringValue]];
+    }
+    return temp;
+}
+
 - (NSArray *)it_arrayByRemovingObjectsAtIndexes:(NSIndexSet *)indexes {
     NSMutableArray *result = [self mutableCopy];
     [result removeObjectsAtIndexes:indexes];

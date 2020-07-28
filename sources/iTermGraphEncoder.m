@@ -324,6 +324,74 @@ iTermGraphExplodedContext iTermGraphExplodeContext(NSString *context) {
     }];
 }
 
+- (NSArray *)arrayValue {
+    assert([self.key isEqualToString:@"__array"]);
+    NSArray<NSString *> *order = [[NSString castFrom:[self.podRecords[@"__order"] value]] componentsSeparatedByString:@"\t"] ?: @[];
+    NSDictionary *items = [[self.graphRecords classifyWithBlock:^id(iTermEncoderGraphRecord *itemRecord) {
+        return itemRecord.identifier;
+    }] mapValuesWithBlock:^id(id key, NSArray<iTermEncoderGraphRecord *> *object) {
+        return object.firstObject.propertyListValue;
+    }];
+    NSArray *array = [order mapWithBlock:^id(NSString *key) {
+        return items[key] ?: _podRecords[key].value;
+    }];
+    return array;
+}
+
+- (NSDictionary *)dictionaryValue {
+    assert([self.key isEqualToString:@"__dict"]);
+    NSMutableDictionary *dict = [NSMutableDictionary dictionary];
+    [self.podRecords enumerateKeysAndObjectsUsingBlock:^(NSString * _Nonnull key, iTermEncoderPODRecord * _Nonnull pod, BOOL * _Nonnull stop) {
+        dict[key] = pod.value;
+    }];
+    for (iTermEncoderGraphRecord *graph in self.graphRecords) {
+        if ([graph.key isEqualToString:@"__array"] || [graph.key isEqualToString:@"__dict"]) {
+            dict[graph.identifier] = graph.propertyListValue;
+        } else {
+            dict[graph.key] = graph.propertyListValue;
+        }
+    }
+    return dict;
+}
+
+// Was not originally encoded as a dictionary, but we can make one from it nonetheless.
+// This is meant as a fallback and may lose information because it ignores identifiers.
+- (NSDictionary *)implicitDictionaryValue {
+    NSMutableDictionary *result = [NSMutableDictionary dictionary];
+    [self.podRecords enumerateKeysAndObjectsUsingBlock:^(NSString * _Nonnull key, iTermEncoderPODRecord * _Nonnull obj, BOOL * _Nonnull stop) {
+        result[key] = obj.value;
+    }];
+    [self.graphRecords enumerateObjectsUsingBlock:^(iTermEncoderGraphRecord * _Nonnull child,
+                                                    NSUInteger idx,
+                                                    BOOL * _Nonnull stop) {
+        if (child.identifier.length == 0) {
+            result[child.key] = child.dictionaryValue;
+            return;
+        }
+        if ([child.key isEqualToString:@"__array"]) {
+            result[child.identifier] = [child arrayValue];
+        } else if ([child.key isEqualToString:@"__dict"]) {
+            result[child.identifier] = [child dictionaryValue];
+        } else {
+            result[child.key] = [child propertyListValue];
+        }
+    }];
+    return result;
+}
+
+- (id)propertyListValue {
+    if (self.podRecords.count == 0 && self.graphRecords.count == 0) {
+        return nil;
+    }
+    if ([self.key isEqualToString:@"__dict"]) {
+        return [self dictionaryValue];
+    }
+    if ([self.key isEqualToString:@"__array"] && self.podRecords[@"__order"]) {
+        return [self arrayValue];
+    }
+    return [self implicitDictionaryValue];
+}
+
 @end
 
 @implementation iTermGraphEncoder {
@@ -351,7 +419,6 @@ iTermGraphExplodedContext iTermGraphExplodeContext(NSString *context) {
     return self;
 }
 
-
 - (void)encodeString:(NSString *)string forKey:(NSString *)key {
     assert(!_committed);
     _pod[key] = [iTermEncoderPODRecord withString:string key:key];
@@ -370,6 +437,56 @@ iTermGraphExplodedContext iTermGraphExplodeContext(NSString *context) {
 - (void)encodeDate:(NSDate *)date forKey:(NSString *)key {
     assert(!_committed);
     _pod[key] = [iTermEncoderPODRecord withDate:date key:key];
+}
+
+- (void)encodeObject:(id)obj key:(NSString *)key {
+    if ([obj isKindOfClass:[NSString class]]) {
+        [self encodeString:obj forKey:key];
+        return;
+    }
+    if ([obj isKindOfClass:[NSData class]]) {
+        [self encodeData:obj forKey:key];
+        return;
+    }
+    if ([obj isKindOfClass:[NSDate class]]) {
+        [self encodeData:obj forKey:key];
+        return;
+    }
+    if ([obj isKindOfClass:[NSNumber class]]) {
+        [self encodeNumber:obj forKey:key];
+        return;
+    }
+    if ([obj isKindOfClass:[NSArray class]]) {
+        NSArray *array = obj;
+        [self encodeArrayWithKey:key
+                      generation:_generation
+                     identifiers:[NSArray stringSequenceWithRange:NSMakeRange(0, array.count)]
+                           block:^(NSString * _Nonnull identifier,
+                                   NSInteger index,
+                                   iTermGraphEncoder * _Nonnull subencoder) {
+            [subencoder encodeObject:array[index] key:identifier];
+        }];
+        return;
+    }
+    if ([obj isKindOfClass:[NSDictionary class]]) {
+        NSDictionary *dict = obj;
+        [self encodeDictionary:dict withKey:key generation:_generation];
+        return;
+    }
+    assert(NO);
+}
+
+- (void)encodeDictionary:(NSDictionary *)dict
+                 withKey:(NSString *)key
+              generation:(NSInteger)generation {
+    [self encodeChildWithKey:@"__dict"
+                  identifier:key
+                  generation:generation
+                       block:^(iTermGraphEncoder * _Nonnull subencoder) {
+        [dict enumerateKeysAndObjectsUsingBlock:^(NSString * _Nonnull key, id  _Nonnull obj, BOOL * _Nonnull stop) {
+            [subencoder encodeObject:obj key:key];
+        }];
+    }];
 }
 
 - (void)encodeGraph:(iTermEncoderGraphRecord *)record {
@@ -397,7 +514,7 @@ iTermGraphExplodedContext iTermGraphExplodeContext(NSString *context) {
         [identifiers enumerateObjectsUsingBlock:^(NSString * _Nonnull identifier, NSUInteger idx, BOOL * _Nonnull stop) {
             block(identifier, idx, subencoder);
         }];
-        [subencoder encodeString:[identifiers componentsJoinedByString:@","] forKey:@"__order"];
+        [subencoder encodeString:[identifiers componentsJoinedByString:@"\t"] forKey:@"__order"];
     }];
 }
 
