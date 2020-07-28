@@ -8,55 +8,9 @@
 #import <Foundation/Foundation.h>
 
 #import "iTermGraphEncoder.h"
+#import "iTermDatabase.h"
 
 NS_ASSUME_NONNULL_BEGIN
-
-// Converts a table from a db into a graph record.
-@interface iTermGraphTableTransformer: NSObject
-@property (nonatomic, readonly, nullable) iTermEncoderGraphRecord *root;
-@property (nonatomic, readonly) NSArray *nodeRows;
-@property (nonatomic, readonly) NSArray *valueRows;
-@property (nonatomic, readonly, nullable) NSError *lastError;
-
-- (instancetype)initWithNodeRows:(NSArray *)nodeRows
-                       valueRows:(NSArray *)valueRows NS_DESIGNATED_INITIALIZER;
-- (instancetype)init NS_UNAVAILABLE;
-
-#pragma mark - Private - for tests only
-
-- (NSDictionary<NSDictionary *, NSMutableDictionary *> *)nodes:(out NSString **)rootNodeIDOut;
-- (BOOL)attachValuesToNodes:(NSDictionary<NSDictionary *, NSMutableDictionary *> *)nodes;
-- (BOOL)attachChildrenToParents:(NSDictionary<NSDictionary *, NSMutableDictionary *> *)nodes;
-
-@end
-
-@class FMResultSet;
-
-@protocol iTermDatabaseResultSet<NSObject>
-- (BOOL)next;
-- (void)close;
-- (NSString *)stringForColumn:(NSString *)columnName;
-- (long long)longLongIntForColumn:(NSString *)columnName;
-- (NSData *)dataForColumn:(NSString *)columnName;
-- (NSDate *)dateForColumn:(NSString *)columnName;
-@end
-
-@protocol iTermDatabase<NSObject>
-- (BOOL)executeUpdate:(NSString*)sql, ...;
-- (id<iTermDatabaseResultSet> _Nullable)executeQuery:(NSString*)sql, ...;
-- (BOOL)open;
-- (NSError *)lastError;
-// Return YES to commit, no to cancel
-- (BOOL)transaction:(BOOL (^ NS_NOESCAPE)(void))block;
-@end
-
-@protocol iTermDatabaseFactory<NSObject>
-- (nullable id<iTermDatabase>)withURL:(NSURL *)url;
-@end
-
-@interface iTermSqliteDatabaseFactory<iTermDatabaseFactory>: NSObject
-- (instancetype)init NS_UNAVAILABLE;
-@end
 
 @class iTermThread;
 

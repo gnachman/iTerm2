@@ -9,8 +9,12 @@
 
 #import "NSData+iTerm.h"
 #import "NSObject+iTerm.h"
+#import "NSStringITerm.h"
+#import "NSWorkspace+iTerm.h"
 #import "iTermGraphEncoder.h"
 #import "iTermGraphDatabase.h"
+#import "iTermGraphDeltaEncoder.h"
+#import "iTermGraphTableTransformer.h"
 #import "iTermThreadSafety.h"
 
 @interface NSObject(Coding)
@@ -188,6 +192,11 @@
         _open = YES;
     }
     return _shouldOpen;
+}
+
+- (BOOL)close {
+    _open = NO;
+    return YES;
 }
 
 - (BOOL)transaction:(BOOL (^ NS_NOESCAPE)(void))block {
@@ -388,7 +397,8 @@
                 @{
                     @"foo": @"bar"
                 },
-                @[ @1, @2, @3 ]
+                @[ @1, @2, @3 ],
+                [NSNull null]
         ]
     };
     [encoder encodeDictionary:dict withKey:@"root" generation:1];
@@ -1519,6 +1529,72 @@
         @"delete from Value where key=World and context=wrapper.mynode"
     ];
     XCTAssertEqualObjects(db.commands, expectedCommands);
+}
+
+- (void)testSQLiteRoundTripPropertyList {
+    NSString *file = [[NSWorkspace sharedWorkspace] temporaryFileNameWithPrefix:@"test" suffix:@"db"];
+    NSURL *url = [NSURL fileURLWithPath:file];
+    iTermGraphDatabase *db =
+    [[iTermGraphDatabase alloc] initWithURL:url
+                            databaseFactory:[[iTermSqliteDatabaseFactory alloc] init]];
+    NSDictionary *dict = @{
+        @"root": @{
+            @"key": @"value",
+            @"nothing": [NSNull null],
+            @"array": @[ @3, @2, @1 ]
+        }
+    };
+    [db update:^(iTermGraphEncoder * _Nonnull encoder) {
+        [encoder encodeDictionary:dict[@"root"] withKey:@"root" generation:1];
+    }];
+    [db.db close];
+
+    db = [[iTermGraphDatabase alloc] initWithURL:url
+                            databaseFactory:[[iTermSqliteDatabaseFactory alloc] init]];
+    XCTAssertEqualObjects(db.record.propertyListValue, dict);
+
+}
+
+- (void)testSQLiteRoundTripManual {
+    NSString *file = [[NSWorkspace sharedWorkspace] temporaryFileNameWithPrefix:@"test" suffix:@"db"];
+    NSURL *url = [NSURL fileURLWithPath:file];
+    iTermGraphDatabase *db =
+    [[iTermGraphDatabase alloc] initWithURL:url
+                            databaseFactory:[[iTermSqliteDatabaseFactory alloc] init]];
+    [db update:^(iTermGraphEncoder * _Nonnull encoder) {
+        [encoder encodeChildWithKey:@"root" identifier:@"" generation:1 block:^(iTermGraphEncoder * _Nonnull subencoder) {
+            [subencoder encodeString:@"string" forKey:@"STRING"];
+            [subencoder encodeArrayWithKey:@"values" generation:1 identifiers:@[ @"i1", @"i2" ] block:^(NSString * _Nonnull identifier, NSInteger index, iTermGraphEncoder * _Nonnull subencoder) {
+                [subencoder encodeChildWithKey:@"" identifier:identifier generation:1 block:^(iTermGraphEncoder * _Nonnull subencoder) {
+                    [subencoder encodeString:[identifier stringRepeatedTimes:10] forKey:identifier];
+                }];
+            }];
+        }];
+    }];
+    [db.db close];
+
+    db = [[iTermGraphDatabase alloc] initWithURL:url
+                            databaseFactory:[[iTermSqliteDatabaseFactory alloc] init]];
+    [db update:^(iTermGraphEncoder * _Nonnull encoder) {
+        [encoder encodeChildWithKey:@"root" identifier:@"" generation:2 block:^(iTermGraphEncoder * _Nonnull subencoder) {
+            [subencoder encodeString:@"string" forKey:@"STRING"];
+            [subencoder encodeArrayWithKey:@"values" generation:2 identifiers:@[ @"i2", @"i3" ] block:^(NSString * _Nonnull identifier, NSInteger index, iTermGraphEncoder * _Nonnull subencoder) {
+                [subencoder encodeChildWithKey:@"" identifier:identifier generation:1 block:^(iTermGraphEncoder * _Nonnull subencoder) {
+                    [subencoder encodeString:[identifier stringRepeatedTimes:10] forKey:identifier];
+                }];
+            }];
+        }];
+    }];
+
+    NSDictionary *expected = @{
+        @"root": @{
+                @"STRING": @"string",
+                @"values": @[
+                        @{ @"i2": @"i2i2i2i2i2i2i2i2i2i2" },
+                        @{ @"i3": @"i3i3i3i3i3i3i3i3i3i3" }]
+        }
+    };
+    XCTAssertEqualObjects(expected, db.record.propertyListValue);
 }
 
 @end
