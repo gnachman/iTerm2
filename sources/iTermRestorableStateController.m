@@ -9,10 +9,15 @@
 
 #import "DebugLogging.h"
 #import "NSFileManager+iTerm.h"
+#import "iTermRestorableStateDriver.h"
+
+@interface iTermRestorableStateController()<iTermRestorableStateRestoring>
+@end
 
 @implementation iTermRestorableStateController {
-    iTermRestorableStateSaver *_saver;
-    iTermRestorableStateRestorer *_restorer;
+    id<iTermRestorableStateSaver> _saver;
+    id<iTermRestorableStateRestorer> _restorer;
+    iTermRestorableStateDriver *_driver;
 }
 
 - (instancetype)init {
@@ -23,7 +28,11 @@
         NSString *savedState = [appSupport stringByAppendingPathComponent:@"SavedState"];
         NSURL *indexURL = [NSURL fileURLWithPath:[savedState stringByAppendingPathComponent:@"Index.plist"]];
         _saver = [[iTermRestorableStateSaver alloc] initWithQueue:queue indexURL:indexURL];
-        _restorer = [[iTermRestorableStateRestorer alloc] initWithQueue:queue indexURL:indexURL];
+        iTermRestorableStateRestorer *restorer = [[iTermRestorableStateRestorer alloc] initWithIndexURL:indexURL];
+        restorer.delegate = self;
+        _restorer = restorer;
+        _driver = [[iTermRestorableStateDriver alloc] init];
+        _driver.restorer = _restorer;
     }
     return self;
 }
@@ -33,15 +42,14 @@
 - (void)setDelegate:(id<iTermRestorableStateControllerDelegate>)delegate {
     _delegate = delegate;
     _saver.delegate = delegate;
-    _restorer.delegate = delegate;
 }
 
 - (NSInteger)numberOfWindowsRestored {
-    return _restorer.numberOfWindowsRestored;
+    return _driver.numberOfWindowsRestored;
 }
 
 - (void)saveRestorableState {
-    if (_restorer.restoring) {
+    if (_driver.restoring) {
         DLog(@"Currently restoring. Set needsSave.");
         _saver.needsSave = YES;
         return;
@@ -51,7 +59,7 @@
 
 - (void)restoreWindows {
     __weak __typeof(self) weakSelf = self;
-    [_restorer restoreWithCompletion:^{
+    [_driver restoreWithCompletion:^{
         [weakSelf didRestore];
     }];
 }
@@ -63,5 +71,16 @@
         [_saver save];
     }
 }
+
+#pragma mark - iTermRestorableStateRestoring
+
+- (void)restorableStateRestoreWithCoder:(NSCoder *)coder
+                             identifier:(NSString *)identifier
+                             completion:(void (^)(NSWindow *, NSError *))completion {
+    [self.delegate restorableStateRestoreWithCoder:coder
+                                        identifier:identifier
+                                        completion:completion];
+}
+
 
 @end

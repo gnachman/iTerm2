@@ -7,6 +7,8 @@
 
 #import <Cocoa/Cocoa.h>
 
+#import "iTermRestorableStateDriver.h"
+
 NS_ASSUME_NONNULL_BEGIN
 
 @protocol iTermRestorableStateRestoring<NSObject>
@@ -15,18 +17,12 @@ NS_ASSUME_NONNULL_BEGIN
                              completion:(void (^)(NSWindow *, NSError *))completion;
 @end
 
-@interface iTermRestorableStateRestorer : NSObject
+@interface iTermRestorableStateRestorer : NSObject<iTermRestorableStateRestorer>
 @property (nonatomic, weak) id<iTermRestorableStateRestoring> delegate;
-@property (nonatomic, readonly) dispatch_queue_t queue;
 @property (nonatomic, readonly) NSURL *indexURL;
-@property (nonatomic, readonly) NSInteger numberOfWindowsRestored;
-@property (nonatomic, readonly) BOOL restoring;
 
-- (instancetype)initWithQueue:(dispatch_queue_t)queue
-                     indexURL:(NSURL *)indexURL NS_DESIGNATED_INITIALIZER;
+- (instancetype)initWithIndexURL:(NSURL *)indexURL NS_DESIGNATED_INITIALIZER;
 - (instancetype)init NS_UNAVAILABLE;
-
-- (void)restoreWithCompletion:(void (^)(void))completion;
 
 @end
 

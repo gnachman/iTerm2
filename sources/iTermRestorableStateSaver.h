@@ -18,7 +18,13 @@ NS_ASSUME_NONNULL_BEGIN
                                 window:(NSWindow *)window;
 @end
 
-@interface iTermRestorableStateSaver : NSObject
+@protocol iTermRestorableStateSaver<NSObject>
+@property (nonatomic, weak) id<iTermRestorableStateSaving> delegate;
+@property (nonatomic) BOOL needsSave;
+- (void)save;
+@end
+
+@interface iTermRestorableStateSaver : NSObject<iTermRestorableStateSaver>
 @property (nonatomic) BOOL needsSave;
 @property (nonatomic, weak) id<iTermRestorableStateSaving> delegate;
 @property (nonatomic, readonly) dispatch_queue_t queue;

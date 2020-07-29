@@ -7,6 +7,7 @@
 
 #import "iTermRestorableStateRecord.h"
 
+#import "DebugLogging.h"
 #import "NSData+iTerm.h"
 #import "NSFileManager+iTerm.h"
 #import "NSObject+iTerm.h"
@@ -75,6 +76,12 @@
         }
     }
     return self;
+}
+
+#pragma mark - iTermRestorableStateRecord
+
+- (void)unlink {
+    unlink(self.url.path.UTF8String);
 }
 
 #pragma mark - APIs
@@ -184,6 +191,21 @@
         w >>= 8;
     }
     return [NSData dataWithBytes:temp length:sizeof(temp)];
+}
+
+- (NSKeyedUnarchiver *)unarchiver {
+    DLog(@"Restore %@", @(self.windowNumber));
+    NSError *error = nil;
+    NSKeyedUnarchiver *unarchiver = [[NSKeyedUnarchiver alloc] initForReadingFromData:self.plaintext
+                                                                                error:&error];
+    unarchiver.requiresSecureCoding = NO;
+    if (error) {
+        DLog(@"Restoration failed with %@", error);
+        unlink(self.url.path.UTF8String);
+        return nil;
+    }
+
+    return unarchiver;
 }
 
 @end

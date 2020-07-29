@@ -6,10 +6,11 @@
 //
 
 #import <Foundation/Foundation.h>
+#import "iTermRestorableStateDriver.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface iTermRestorableStateRecord : NSObject
+@interface iTermRestorableStateRecord : NSObject<iTermRestorableStateRecord>
 
 // Crypto key for the saved state.
 @property (nonatomic, readonly) NSData *key;
@@ -44,6 +45,7 @@ NS_ASSUME_NONNULL_BEGIN
 // Write record to disk. Blocks.
 - (void)save;
 - (iTermRestorableStateRecord *)withPlaintext:(NSData *)newPlaintext;
+- (NSKeyedUnarchiver *)unarchiver;
 
 @end
 

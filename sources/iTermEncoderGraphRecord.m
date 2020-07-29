@@ -169,6 +169,27 @@ iTermGraphExplodedContext iTermGraphExplodeContext(NSString *context) {
     }];
 }
 
+#warning TODO: Test this
+- (void)enumerateArrayWithKey:(NSString *)key
+                        block:(void (^NS_NOESCAPE)(NSString *identifier,
+                                                   NSInteger index,
+                                                   iTermEncoderGraphRecord *obj,
+                                                   BOOL *stop))block {
+    if (![self.key isEqualToString:@"__array"]) {
+        return;
+    }
+    NSArray<NSString *> *order = [[NSString castFrom:[self.podRecords[@"__order"] value]] componentsSeparatedByString:@"\t"] ?: @[];
+    NSDictionary *items = [[self.graphRecords classifyWithBlock:^id(iTermEncoderGraphRecord *itemRecord) {
+        return itemRecord.identifier;
+    }] mapValuesWithBlock:^id(id key, NSArray<iTermEncoderGraphRecord *> *object) {
+        return object.firstObject.propertyListValue;
+    }];
+    [order enumerateObjectsUsingBlock:^(NSString * _Nonnull key, NSUInteger idx, BOOL * _Nonnull stop) {
+        id item = items[key] ?: self->_podRecords[key].value;
+        block(key, idx, item, stop);
+    }];
+}
+
 - (NSArray *)arrayValue {
     assert([self.key isEqualToString:@"__array"]);
     NSArray<NSString *> *order = [[NSString castFrom:[self.podRecords[@"__order"] value]] componentsSeparatedByString:@"\t"] ?: @[];

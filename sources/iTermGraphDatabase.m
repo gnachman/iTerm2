@@ -42,6 +42,7 @@
         }];
 
         _url = url;
+#warning TODO: Make this async
         [_thread dispatchSync:^(iTermGraphDatabaseState *state) {
             _record = [self load:state factory:databaseFactory];
         }];

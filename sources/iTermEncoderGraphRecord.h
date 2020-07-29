@@ -35,6 +35,11 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (iTermEncoderGraphRecord * _Nullable)childRecordWithKey:(NSString *)key
                                                identifier:(NSString *)identifier;
+- (void)enumerateArrayWithKey:(NSString *)key
+                        block:(void (^NS_NOESCAPE)(NSString *identifier,
+                                                   NSInteger index,
+                                                   iTermEncoderGraphRecord *obj,
+                                                   BOOL *stop))block;
 
 @end
 
