@@ -33,7 +33,7 @@
 - (void)encodeChildWithKey:(NSString *)key
                 identifier:(NSString *)identifier
                 generation:(NSInteger)generation
-                     block:(void (^ NS_NOESCAPE)(iTermGraphEncoder *subencoder))block {
+                     block:(BOOL (^ NS_NOESCAPE)(iTermGraphEncoder *subencoder))block {
     iTermEncoderGraphRecord *record = [_previousRevision childRecordWithKey:key
                                                                  identifier:identifier];
     if (!record) {
@@ -52,8 +52,9 @@
                                                                   identifier:identifier
                                                                   generation:generation
                                                             previousRevision:record];
-    block(encoder);
-    [self encodeGraph:encoder.record];
+    if (block(encoder)) {
+        [self encodeGraph:encoder.record];
+    }
 }
 
 - (void)enumerateRecords:(void (^)(iTermEncoderGraphRecord * _Nullable before,

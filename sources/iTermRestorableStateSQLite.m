@@ -11,6 +11,7 @@
 #import "iTermGraphSQLEncoder.h"
 #import "iTermGraphDatabase.h"
 #import "iTermThreadSafety.h"
+#import "NSArray+iTerm.h"
 #import "NSObject+iTerm.h"
 
 @interface iTermRestorableStateSQLiteRecord: NSObject<iTermRestorableStateRecord>
@@ -111,6 +112,7 @@
 
 @implementation iTermRestorableStateSQLite {
     iTermGraphDatabase *_db;
+    NSInteger _generation;
 }
 
 - (instancetype)initWithURL:(NSURL *)url {
@@ -143,7 +145,8 @@
     iTermRestorableStateSQLiteIndex *windowIndex =
         [[iTermRestorableStateSQLiteIndex alloc] initWithGraphRecord:_db.record];
     iTermEncoderGraphRecord *windowRecord = windowIndex[i];
-    NSString *identifier = [windowRecord stringWithKey:@"identifier"];
+    NSString *identifier = windowRecord.identifier;
+    assert(identifier.length > 0);
     [self.delegate restorableStateRestoreWithRecord:windowRecord
                                          identifier:identifier
                                          completion:^(NSWindow * _Nonnull window,
@@ -155,13 +158,30 @@
 #pragma mark - iTermRestorableStateSaver
 
 - (void)saveWithCompletion:(void (^)(void))completion {
-    void (^update)(iTermGraphEncoder * _Nonnull) = ^(iTermGraphEncoder * _Nonnull encoder) {
-        for (NSWindow *window in [self.delegate restorableStateWindows]) {
-            if ([window.delegate conformsToProtocol:@protocol(iTermGraphCodable)]) {
-                id<iTermGraphCodable> codable = (id<iTermGraphCodable>)window.delegate;
-                [codable encodeGraphWithEncoder:encoder];
-            }
+    _generation += 1;
+    const NSInteger generation = _generation;
+    NSArray<NSWindow *> *windows = [self.delegate restorableStateWindows];
+    NSArray<NSString *> *identifiers = [windows mapWithBlock:^id(NSWindow *window) {
+        if (![window.delegate conformsToProtocol:@protocol(iTermGraphCodable)]) {
+            return nil;
         }
+        if (![window.delegate conformsToProtocol:@protocol(iTermUniquelyIdentifiable)]) {
+            return nil;
+        }
+        id<iTermUniquelyIdentifiable> identifiable = (id<iTermUniquelyIdentifiable>)window.delegate;
+        return identifiable.stringUniqueIdentifier;
+    }];
+    void (^update)(iTermGraphEncoder * _Nonnull) = ^(iTermGraphEncoder * _Nonnull encoder) {
+        [encoder encodeArrayWithKey:@"windows"
+                         generation:generation
+                        identifiers:identifiers
+                              block:^BOOL(NSString * _Nonnull identifier,
+                                          NSInteger index,
+                                          iTermGraphEncoder * _Nonnull subencoder) {
+            NSWindow *window = windows[index];
+            id<iTermGraphCodable> codable = (id<iTermGraphCodable>)window.delegate;
+            return [codable encodeGraphWithEncoder:subencoder];
+        }];
     };
 
     iTermCallback *callback =

@@ -26,11 +26,13 @@
 #import "iTermColorPresets.h"
 #import "iTermCommandHistoryEntryMO+Additions.h"
 #import "iTermController.h"
+#import "iTermEncoderAdapter.h"
 #import "iTermFindCursorView.h"
 #import "iTermFindDriver.h"
 #import "iTermFindPasteboard.h"
 #import "iTermFontPanel.h"
 #import "iTermFunctionCallTextFieldDelegate.h"
+#import "iTermGraphEncoder.h"
 #import "iTermImageView.h"
 #import "iTermNotificationCenter.h"
 #import "iTermNotificationController.h"
@@ -193,9 +195,11 @@ static BOOL iTermWindowTypeIsCompact(iTermWindowType windowType) {
 
 @interface PseudoTerminal () <
     iTermBroadcastInputHelperDelegate,
+    iTermGraphCodable,
     iTermObject,
     iTermTabBarControlViewDelegate,
     iTermPasswordManagerDelegate,
+    iTermUniquelyIdentifiable,
     PTYTabDelegate,
     iTermRootTerminalViewDelegate,
     iTermToolbeltViewDelegate,
@@ -3158,9 +3162,8 @@ ITERM_WEAKLY_REFERENCEABLE
     return YES;
 }
 
-- (NSDictionary *)arrangementExcludingTmuxTabs:(BOOL)excludeTmux
-                             includingContents:(BOOL)includeContents {
-    NSArray<PTYTab *> *tabs = [self.tabs filteredArrayUsingBlock:^BOOL(PTYTab *theTab) {
+- (NSArray<PTYTab *> *)tabsToEncodeExcludingTmux:(BOOL)excludeTmux {
+    return [self.tabs filteredArrayUsingBlock:^BOOL(PTYTab *theTab) {
         if (theTab.sessions.count == 0) {
             return NO;
         }
@@ -3169,7 +3172,11 @@ ITERM_WEAKLY_REFERENCEABLE
         }
         return YES;
     }];
+}
 
+- (NSDictionary *)arrangementExcludingTmuxTabs:(BOOL)excludeTmux
+                             includingContents:(BOOL)includeContents {
+    NSArray<PTYTab *> *tabs = [self tabsToEncodeExcludingTmux:excludeTmux];
     return [self arrangementWithTabs:tabs includingContents:includeContents];
 }
 
@@ -3179,7 +3186,20 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (NSDictionary *)arrangementWithTabs:(NSArray<PTYTab *> *)tabs
                              includingContents:(BOOL)includeContents {
-    NSMutableDictionary* result = [NSMutableDictionary dictionaryWithCapacity:7];
+    NSMutableDictionary *result = [NSMutableDictionary dictionaryWithCapacity:7];
+    const BOOL commit =
+    [self populateArrangementWithTabs:tabs
+                    includingContents:includeContents
+                              encoder:[[iTermMutableDictionaryEncoderAdapter alloc] initWithMutableDictionary:result]];
+    if (!commit) {
+        return nil;
+    }
+    return result;
+}
+
+- (BOOL)populateArrangementWithTabs:(NSArray<PTYTab *> *)tabs
+                  includingContents:(BOOL)includeContents
+                            encoder:(id<iTermEncoderAdapter>)result {
     NSRect rect = [[self window] frame];
     int screenNumber = 0;
     for (NSScreen* screen in [NSScreen screens]) {
@@ -3235,7 +3255,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
     // Save tabs.
     if ([tabs count] == 0) {
-        return nil;
+        return NO;
     }
     result[TERMINAL_ARRANGEMENT_TABS] = [tabs mapWithBlock:^id(PTYTab *theTab) {
         return [theTab arrangementWithContents:includeContents];
@@ -3250,7 +3270,7 @@ ITERM_WEAKLY_REFERENCEABLE
         result[TERMINAL_ARRANGEMENT_PROFILE_GUID] = profileGuid;
     }
 
-    return result;
+    return YES;
 }
 
 - (NSDictionary*)arrangement {
@@ -10952,30 +10972,41 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     return YES;
 }
 
-- (void)window:(NSWindow *)window willEncodeRestorableState:(NSCoder *)state {
+- (BOOL)shouldSaveRestorableState {
     if (doNotSetRestorableState_) {
         // The window has been destroyed beyond recognition at this point and
         // there is nothing to save.
-        return;
+        return NO;
     }
     if (![self windowRestorationEnabled]) {
         [[self ptyWindow] setRestoreState:nil];
-        return;
+        return NO;
     }
     // Don't save and restore the hotkey window. The OS only restores windows that are in the window
     // order, and hotkey windows may be ordered in or out, depending on whether they were in use. So
     // they get a special path for restoration where the arrangement is saved in user defaults.
     if ([self isHotKeyWindow]) {
-        [[self ptyWindow] setRestoreState:nil];
-        [[[iTermHotKeyController sharedInstance] profileHotKeyForWindowController:self] saveHotKeyWindowState];
-        return;
+        return NO;
     }
 
     // Don't restore tmux windows since their canonical state is on the server.
     if ([self allTabsAreTmuxTabs]) {
         [[self ptyWindow] setRestoreState:nil];
+        return NO;
+    }
+
+    return YES;
+}
+
+- (void)window:(NSWindow *)window willEncodeRestorableState:(NSCoder *)state {
+    if (![self shouldSaveRestorableState]) {
+        [[self ptyWindow] setRestoreState:nil];
+        if ([self isHotKeyWindow]) {
+            [[[iTermHotKeyController sharedInstance] profileHotKeyForWindowController:self] saveHotKeyWindowState];
+        }
         return;
     }
+
     if (_wellFormed) {
         [lastArrangement_ release];
         NSTimeInterval start = [NSDate timeIntervalSinceReferenceDate];
@@ -11706,6 +11737,29 @@ backgroundColor:(NSColor *)backgroundColor {
     }
     [[self window] makeFirstResponder:[[self currentSession] textview]];
     [[self currentTab] recheckBlur];
+}
+
+#pragma mark - iTermGraphCodable
+
+- (BOOL)encodeGraphWithEncoder:(iTermGraphEncoder *)encoder {
+    // NOTE: The well-formedness check is not in -shouldSaveRestorableState because I'm afraid of
+    // breaking something in the legacy code. Once it is gone, it can move in.
+    if (![self shouldSaveRestorableState] || !_wellFormed) {
+        return NO;
+    }
+    NSArray<PTYTab *> *tabs = [self tabsToEncodeExcludingTmux:YES];
+    const BOOL includeContents = [iTermAdvancedSettingsModel restoreWindowContents];
+    iTermGraphEncoderAdapter *adapter = [[iTermGraphEncoderAdapter alloc] initWithGraphEncoder:encoder];
+    const BOOL commit = [self populateArrangementWithTabs:tabs
+                                        includingContents:includeContents
+                                                  encoder:adapter];
+    return commit;
+}
+
+#pragma mark - iTermUniquelyIdentifiable
+
+- (NSString *)stringUniqueIdentifier {
+    return self.terminalGuid;
 }
 
 @end
