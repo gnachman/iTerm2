@@ -6,10 +6,15 @@
 //
 
 #import <Foundation/Foundation.h>
+#import "iTermGraphEncoder.h"
 #import "iTermRestorableStateRestorer.h"
 #import "iTermRestorableStateSaver.h"
 
 NS_ASSUME_NONNULL_BEGIN
+
+@protocol iTermGraphCodable<NSObject>
+- (void)encodeGraphWithEncoder:(iTermGraphEncoder *)encoder;
+@end
 
 @interface iTermRestorableStateSQLite : NSObject<iTermRestorableStateRestorer, iTermRestorableStateSaver>
 

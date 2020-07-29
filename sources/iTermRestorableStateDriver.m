@@ -9,10 +9,41 @@
 
 #import "DebugLogging.h"
 #import "iTermWarning.h"
+#import "NSArray+iTerm.h"
 
 static NSString *const iTermRestorableStateControllerUserDefaultsKeyCount = @"NoSyncRestoreWindowsCount";
 
-@implementation iTermRestorableStateDriver
+@implementation iTermRestorableStateDriver {
+    BOOL _saving;
+}
+
+#pragma mark - Save
+
+- (void)save {
+    DLog(@"save");
+    if (_saving) {
+        DLog(@"Currently saving. Set needsSave.");
+        _needsSave = YES;
+        return;
+    }
+    _needsSave = NO;
+    __weak __typeof(self) weakSelf;
+    [_saver saveWithCompletion:^{
+        [weakSelf didSave];
+    }];
+}
+
+// Main queue
+- (void)didSave {
+    DLog(@"didSave");
+    _saving = NO;
+    if (_needsSave) {
+        DLog(@"needsSave was YES");
+        [self save];
+    }
+}
+
+#pragma mark - Restore
 
 - (void)restoreWithCompletion:(void (^)(void))completion {
     DLog(@"restoreWindows");

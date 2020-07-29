@@ -11,7 +11,7 @@
 #import "NSFileManager+iTerm.h"
 #import "iTermRestorableStateDriver.h"
 
-@interface iTermRestorableStateController()<iTermRestorableStateRestoring>
+@interface iTermRestorableStateController()<iTermRestorableStateRestoring, iTermRestorableStateSaving>
 @end
 
 @implementation iTermRestorableStateController {
@@ -27,22 +27,21 @@
         NSString *appSupport = [[NSFileManager defaultManager] applicationSupportDirectory];
         NSString *savedState = [appSupport stringByAppendingPathComponent:@"SavedState"];
         NSURL *indexURL = [NSURL fileURLWithPath:[savedState stringByAppendingPathComponent:@"Index.plist"]];
-        _saver = [[iTermRestorableStateSaver alloc] initWithQueue:queue indexURL:indexURL];
+        iTermRestorableStateSaver *saver = [[iTermRestorableStateSaver alloc] initWithQueue:queue indexURL:indexURL];
+        _saver = saver;
+        saver.delegate = self;
+
         iTermRestorableStateRestorer *restorer = [[iTermRestorableStateRestorer alloc] initWithIndexURL:indexURL];
         restorer.delegate = self;
         _restorer = restorer;
         _driver = [[iTermRestorableStateDriver alloc] init];
         _driver.restorer = _restorer;
+        _driver.saver = saver;
     }
     return self;
 }
 
 #pragma mark - APIs
-
-- (void)setDelegate:(id<iTermRestorableStateControllerDelegate>)delegate {
-    _delegate = delegate;
-    _saver.delegate = delegate;
-}
 
 - (NSInteger)numberOfWindowsRestored {
     return _driver.numberOfWindowsRestored;
@@ -51,10 +50,10 @@
 - (void)saveRestorableState {
     if (_driver.restoring) {
         DLog(@"Currently restoring. Set needsSave.");
-        _saver.needsSave = YES;
+        _driver.needsSave = YES;
         return;
     }
-    [_saver save];
+    [_driver save];
 }
 
 - (void)restoreWindows {
@@ -67,8 +66,8 @@
 #pragma mark - Private
 
 - (void)didRestore {
-    if (_saver.needsSave) {
-        [_saver save];
+    if (_driver.needsSave) {
+        [_driver save];
     }
 }
 
@@ -82,5 +81,29 @@
                                         completion:completion];
 }
 
+- (void)restorableStateRestoreWithRecord:(nonnull iTermEncoderGraphRecord *)record
+                              identifier:(nonnull NSString *)identifier
+                              completion:(nonnull void (^)(NSWindow * _Nonnull,
+                                                           NSError * _Nonnull))completion {
+    [self.delegate restorableStateRestoreWithRecord:record
+                                         identifier:identifier
+                                         completion:completion];
+}
+
+
+#pragma mark - iTermRestorableStateSaving
+
+- (NSArray<NSWindow *> *)restorableStateWindows {
+    return [self.delegate restorableStateWindows];
+}
+
+- (BOOL)restorableStateWindowNeedsRestoration:(NSWindow *)window {
+    return [self.delegate restorableStateWindowNeedsRestoration:window];
+}
+
+- (void)restorableStateEncodeWithCoder:(NSCoder *)coder
+                                window:(NSWindow *)window {
+    return [self.delegate restorableStateEncodeWithCoder:coder window:window];
+}
 
 @end

@@ -7,34 +7,18 @@
 
 #import <Cocoa/Cocoa.h>
 
+#import "iTermRestorableStateDriver.h"
+
 NS_ASSUME_NONNULL_BEGIN
-
-@protocol iTermRestorableStateSaving<NSObject>
-- (NSArray<NSWindow *> *)restorableStateWindows;
-
-- (BOOL)restorableStateWindowNeedsRestoration:(NSWindow *)window;
-
-- (void)restorableStateEncodeWithCoder:(NSCoder *)coder
-                                window:(NSWindow *)window;
-@end
-
-@protocol iTermRestorableStateSaver<NSObject>
-@property (nonatomic, weak) id<iTermRestorableStateSaving> delegate;
-@property (nonatomic) BOOL needsSave;
-- (void)save;
-@end
 
 @interface iTermRestorableStateSaver : NSObject<iTermRestorableStateSaver>
 @property (nonatomic) BOOL needsSave;
-@property (nonatomic, weak) id<iTermRestorableStateSaving> delegate;
 @property (nonatomic, readonly) dispatch_queue_t queue;
 @property (nonatomic, readonly) NSURL *indexURL;
 
 - (instancetype)initWithQueue:(dispatch_queue_t)queue
                      indexURL:(NSURL *)indexURL NS_DESIGNATED_INITIALIZER;
 - (instancetype)init NS_UNAVAILABLE;
-
-- (void)save;
 
 @end
 

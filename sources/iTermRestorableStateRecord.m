@@ -208,4 +208,8 @@
     return unarchiver;
 }
 
+- (nonnull id<iTermRestorableStateRecord>)recordWithPayload:(nonnull id)payload {
+    return [self withPlaintext:payload];
+}
+
 @end

@@ -10,6 +10,9 @@
 #import "DebugLogging.h"
 #import "FMDatabase.h"
 
+@interface FMResultSet (iTerm)<iTermDatabaseResultSet>
+@end
+
 @interface iTermSqliteDatabaseImpl: NSObject<iTermDatabase>
 - (instancetype)initWithDatabase:(FMDatabase *)db NS_DESIGNATED_INITIALIZER;
 - (instancetype)init NS_UNAVAILABLE;

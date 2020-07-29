@@ -2339,6 +2339,13 @@ static BOOL hasBecomeActive = NO;
                                       completionHandler:completion];
 }
 
+- (void)restorableStateRestoreWithRecord:(nonnull iTermEncoderGraphRecord *)record
+                              identifier:(nonnull NSString *)identifier
+                              completion:(nonnull void (^)(NSWindow * _Nonnull, NSError * _Nonnull))completion {
+    // TODO
+}
+
+
 - (void)restorableStateEncodeWithCoder:(NSCoder *)coder
                                 window:(NSWindow *)window {
     PseudoTerminal *term = [PseudoTerminal castFrom:window.delegate];

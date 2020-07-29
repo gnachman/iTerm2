@@ -14,30 +14,25 @@
 #import "NSFileManager+iTerm.h"
 
 @implementation iTermRestorableStateSaver {
-    BOOL _saving;
-    NSArray<iTermRestorableStateRecord *> *_records;
+    NSArray<id<iTermRestorableStateRecord>> *_records;
 }
+
+@synthesize delegate;
 
 - (instancetype)initWithQueue:(dispatch_queue_t)queue
                      indexURL:(NSURL *)indexURL {
     self = [super init];
     if (self) {
         _queue = queue;
-        _records = @[];
         _indexURL = [indexURL copy];
+        _records = @[];
     }
     return self;
 }
 
-- (void)save {
-    DLog(@"saveRestorableState");
-    if (_saving) {
-        DLog(@"Currently saving. Set needsSave.");
-        _needsSave = YES;
-        return;
-    }
-    _needsSave = NO;
+#pragma mark - iTermRestorableStateSaver
 
+- (void)saveWithCompletion:(void (^)(void))completion {
     NSMutableArray<iTermRestorableStateRecord *> *recordsToKeepUnchanged = [NSMutableArray array];
     NSMutableArray<iTermRestorableStateRecord *> *recordsNeedingNewContent = [NSMutableArray array];
     if ([[NSUserDefaults standardUserDefaults] boolForKey:@"NSQuitAlwaysKeepsWindows"]) {
@@ -77,13 +72,16 @@
     _records = [recordsNeedingNewContent arrayByAddingObjectsFromArray:recordsToKeepUnchanged];
     __weak __typeof(self) weakSelf = self;
     dispatch_async(_queue, ^{
-        [weakSelf writeUnchanged:recordsToKeepUnchanged update:recordsNeedingNewContent];
+        [weakSelf writeUnchanged:recordsToKeepUnchanged
+                          update:recordsNeedingNewContent
+                      completion:completion];
     });
 }
 
-// _queue
+// queue
 - (void)writeUnchanged:(NSArray<iTermRestorableStateRecord *> *)recordsToKeepUnchanged
-                update:(NSArray<iTermRestorableStateRecord *> *)recordsNeedingNewContent {
+                update:(NSArray<iTermRestorableStateRecord *> *)recordsNeedingNewContent
+            completion:(void (^)(void))completion {
     NSArray<NSURL *> *fileURLsToKeep = [[recordsToKeepUnchanged arrayByAddingObjectsFromArray:recordsNeedingNewContent] mapWithBlock:^id(iTermRestorableStateRecord *record) {
         return record.url;
     }];
@@ -93,23 +91,10 @@
     [self encryptAndSaveUnchangedRecords:recordsToKeepUnchanged
                           updatedRecords:recordsNeedingNewContent];
 
-    __weak __typeof(self) weakSelf = self;
     dispatch_async(dispatch_get_main_queue(), ^{
-        [weakSelf didSave];
+        completion();
     });
 }
-
-// Main queue
-- (void)didSave {
-    DLog(@"didSave");
-    _saving = NO;
-    if (_needsSave) {
-        DLog(@"needsSave was YES");
-        [self save];
-    }
-}
-
-#pragma mark - Save
 
 // _queue
 - (void)eraseFilesExcept:(NSArray<NSURL *> *)fileURLsToKeep {

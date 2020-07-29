@@ -12,6 +12,7 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+@class iTermCallback;
 @class iTermThread;
 
 // Manages a SQLite database that holds an encoded graph. Loads it and updates it incrementally.
@@ -27,7 +28,8 @@ NS_ASSUME_NONNULL_BEGIN
             databaseFactory:(id<iTermDatabaseFactory>)databaseFactory NS_DESIGNATED_INITIALIZER;
 - (instancetype)init NS_UNAVAILABLE;
 
-- (void)update:(void (^ NS_NOESCAPE)(iTermGraphEncoder *encoder))block;
+- (void)update:(void (^ NS_NOESCAPE)(iTermGraphEncoder * _Nonnull))block
+    completion:(nullable iTermCallback *)completion;
 
 @end
 

@@ -190,6 +190,38 @@ iTermGraphExplodedContext iTermGraphExplodeContext(NSString *context) {
     }];
 }
 
+- (NSArray *)arrayWithKey:(NSString *)key {
+    NSMutableArray *result = [NSMutableArray array];
+    [self enumerateArrayWithKey:key block:^(NSString * _Nonnull identifier, NSInteger index, iTermEncoderGraphRecord * _Nonnull obj, BOOL * _Nonnull stop) {
+        [result addObject:obj];
+    }];
+    return result;
+}
+
+- (NSInteger)integerWithKey:(NSString *)key error:(out NSError *__autoreleasing  _Nullable * _Nullable)error {
+    iTermEncoderPODRecord *record = _podRecords[key];
+    if (!record) {
+        *error = [[NSError alloc] initWithDomain:@"com.iterm2.graph-record" code:1 userInfo:@{ NSLocalizedDescriptionKey: @"No such record" }];
+        return 0;
+    }
+    if (record.type != iTermEncoderRecordTypeNumber) {
+        *error = [[NSError alloc] initWithDomain:@"com.iterm2.graph-record" code:1 userInfo:@{ NSLocalizedDescriptionKey: [NSString stringWithFormat:@"Type mismatch. Record is %@", record] }];
+        return 0;
+    }
+    return [[record value] integerValue];
+}
+
+- (NSString *)stringWithKey:(NSString *)key {
+    iTermEncoderPODRecord *record = _podRecords[key];
+    if (!record) {
+        return nil;
+    }
+    if (record.type != iTermEncoderRecordTypeString) {
+        return nil;
+    }
+    return [record value];
+}
+
 - (NSArray *)arrayValue {
     assert([self.key isEqualToString:@"__array"]);
     NSArray<NSString *> *order = [[NSString castFrom:[self.podRecords[@"__order"] value]] componentsSeparatedByString:@"\t"] ?: @[];

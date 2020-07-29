@@ -18,9 +18,6 @@
 
 @class iTermGraphDatabaseState;
 
-@interface FMResultSet (iTerm)<iTermDatabaseResultSet>
-@end
-
 @interface iTermGraphDatabaseState: iTermSynchronizedState<iTermGraphDatabaseState *>
 @property (nonatomic, strong) id<iTermDatabase> db;
 @end
@@ -53,11 +50,13 @@
     return self;
 }
 
-- (void)update:(void (^ NS_NOESCAPE)(iTermGraphEncoder * _Nonnull))block {
+- (void)update:(void (^ NS_NOESCAPE)(iTermGraphEncoder * _Nonnull))block
+    completion:(iTermCallback *)completion {
     iTermGraphDeltaEncoder *encoder = [[iTermGraphDeltaEncoder alloc] initWithPreviousRevision:_record];
     block(encoder);
     [_thread dispatchAsync:^(iTermGraphDatabaseState *state) {
         [self save:encoder state:state];
+        [completion invokeWithObject:nil];
     }];
     _record = encoder.record;
 }

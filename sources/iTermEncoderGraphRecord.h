@@ -40,6 +40,9 @@ NS_ASSUME_NONNULL_BEGIN
                                                    NSInteger index,
                                                    iTermEncoderGraphRecord *obj,
                                                    BOOL *stop))block;
+- (NSArray *)arrayWithKey:(NSString *)key;
+- (NSInteger)integerWithKey:(NSString *)key error:(out NSError **)error;
+- (NSString *)stringWithKey:(NSString *)key;
 
 @end
 
