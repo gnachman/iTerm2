@@ -6,7 +6,7 @@
 //
 
 #import <Foundation/Foundation.h>
-#import "iTermGraphEncoder.h"
+#import "iTermGraphDeltaEncoder.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -21,15 +21,26 @@ NS_ASSUME_NONNULL_BEGIN
 @protocol iTermEncoderAdapter<NSObject>
 - (void)setObject:(id)obj forKeyedSubscript:(NSString *)key;
 - (void)setObject:(id)obj forKey:(NSString *)key;
+- (void)mergeDictionary:(NSDictionary *)dictionary;
 
-- (void)encodeDictionaryWithKey:(NSString *)key
+- (BOOL)encodeDictionaryWithKey:(NSString *)key
                      generation:(NSInteger)generation
-                          block:(BOOL (^)(id<iTermEncoderAdapter> encoder))block;
+                          block:(BOOL (^ NS_NOESCAPE)(id<iTermEncoderAdapter> encoder))block;
 
 - (void)encodeArrayWithKey:(NSString *)key
                identifiers:(NSArray<NSString *> *)identifiers
                 generation:(NSInteger)generation
-                     block:(BOOL (^)(id<iTermEncoderAdapter> encoder, NSString *identifier))block;
+                     block:(BOOL (^ NS_NOESCAPE)(id<iTermEncoderAdapter> encoder,
+                                                 NSInteger i,
+                                                 NSString *identifier))block;
+
+- (void)encodeArrayWithKey:(NSString *)key
+               identifiers:(NSArray<NSString *> *)identifiers
+                generation:(NSInteger)generation
+                   options:(iTermGraphEncoderArrayOptions)options
+                     block:(BOOL (^ NS_NOESCAPE)(id<iTermEncoderAdapter> encoder,
+                                                 NSInteger i,
+                                                 NSString *identifier))block;
 
 @end
 
@@ -45,7 +56,6 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) NSMutableDictionary<NSString *, id> *mutableDictionary;
 
 - (instancetype)initWithMutableDictionary:(NSMutableDictionary *)mutableDictionary NS_DESIGNATED_INITIALIZER;
-- (instancetype)init NS_UNAVAILABLE;
 
 @end
 

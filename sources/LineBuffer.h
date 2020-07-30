@@ -28,6 +28,7 @@
 
 #import <Cocoa/Cocoa.h>
 #import "FindContext.h"
+#import "iTermEncoderAdapter.h"
 #import "iTermFindDriver.h"
 #import "ScreenChar.h"
 #import "LineBufferPosition.h"
@@ -187,7 +188,8 @@
 // Returns a dictionary with the contents of the line buffer. If it is more than 10k lines @ 80 columns
 // then it is truncated. The data is a weak reference and will be invalid if the line buffer is
 // changed.
-- (NSDictionary *)dictionary;
+//- (NSDictionary *)dictionary;
+- (void)encode:(id<iTermEncoderAdapter>)encoder;
 
 // Append text in reverse video to the end of the line buffer.
 - (void)appendMessage:(NSString *)message;

@@ -4599,10 +4599,6 @@ ITERM_WEAKLY_REFERENCEABLE
     [_nameController setNeedsUpdate];
 }
 
-- (NSDictionary *)arrangement {
-    return [self arrangementWithContents:NO];
-}
-
 - (NSString *)programType {
     if ([self.program isEqualToString:[ITAddressBookMgr shellLauncherCommandWithCustomShell:self.customShell]]) {
         if (self.customShell.length) {
@@ -4613,9 +4609,9 @@ ITERM_WEAKLY_REFERENCEABLE
     return kProgramTypeCommand;
 }
 
-- (NSDictionary *)arrangementWithContents:(BOOL)includeContents {
+- (BOOL)encodeArrangementWithContents:(BOOL)includeContents
+                              encoder:(id<iTermEncoderAdapter>)result {
     DLog(@"Construct arrangement for session %@", self);
-    NSMutableDictionary* result = [NSMutableDictionary dictionaryWithCapacity:3];
     result[SESSION_ARRANGEMENT_COLUMNS] = @(_screen.width);
     result[SESSION_ARRANGEMENT_ROWS] = @(_screen.height);
     result[SESSION_ARRANGEMENT_BOOKMARK] = _profile;
@@ -4654,10 +4650,12 @@ ITERM_WEAKLY_REFERENCEABLE
 
     result[SESSION_ARRANGEMENT_NAME_CONTROLLER_STATE] = [_nameController stateDictionary];
     if (includeContents) {
-        NSDictionary *contentsDictionary = [_screen contentsDictionary];
-        result[SESSION_ARRANGEMENT_CONTENTS] = contentsDictionary;
-        int numberOfLinesDropped =
-            [contentsDictionary[kScreenStateKey][kScreenStateNumberOfLinesDroppedKey] intValue];
+        __block int numberOfLinesDropped = 0;
+        [result encodeDictionaryWithKey:SESSION_ARRANGEMENT_CONTENTS
+                             generation:iTermGenerationAlwaysEncode
+                                  block:^BOOL(id<iTermEncoderAdapter>  _Nonnull encoder) {
+            return [_screen encodeContents:encoder linesDropped:&numberOfLinesDropped];
+        }];
         result[SESSION_ARRANGEMENT_VARIABLES] = _variables.dictionaryValue;
         VT100GridCoordRange range = _commandRange;
         range.start.y -= numberOfLinesDropped;
@@ -4680,8 +4678,12 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     result[SESSION_ARRANGEMENT_GUID] = _guid;
     if (_liveSession && includeContents && !_dvr) {
-        result[SESSION_ARRANGEMENT_LIVE_SESSION] =
-            [_liveSession arrangementWithContents:includeContents];
+        [result encodeDictionaryWithKey:SESSION_ARRANGEMENT_LIVE_SESSION
+                             generation:iTermGenerationAlwaysEncode
+                                  block:^BOOL(id<iTermEncoderAdapter>  _Nonnull encoder) {
+            return [_liveSession encodeArrangementWithContents:includeContents
+                                                       encoder:encoder];
+        }];
     }
     if (includeContents && !self.isTmuxClient) {
         // These values are used for restoring sessions after a crash. It's only saved when contents
@@ -4722,13 +4724,14 @@ ITERM_WEAKLY_REFERENCEABLE
     result[SESSION_ARRANGEMENT_WORKING_DIRECTORY_POLLER_DISABLED] = @(_workingDirectoryPollerDisabled);
     result[SESSION_ARRANGEMENT_COMMANDS] = _commands;
     result[SESSION_ARRANGEMENT_DIRECTORIES] = _directories;
+#warning TODO: Encode this efficiently
     result[SESSION_ARRANGEMENT_HOSTS] = [_hosts mapWithBlock:^id(id anObject) {
         return [(VT100RemoteHost *)anObject dictionaryValue];
     }];
 
     NSString *pwd = [self currentLocalWorkingDirectory];
     result[SESSION_ARRANGEMENT_WORKING_DIRECTORY] = pwd ? pwd : @"";
-    return result;
+    return YES;
 }
 
 + (NSDictionary *)arrangementFromTmuxParsedLayout:(NSDictionary *)parseNode
@@ -13188,6 +13191,12 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     }];
     announcement.dismissOnKeyDown = YES;
     [self queueAnnouncement:announcement identifier:PTYSessionAnnouncementIdentifierTmuxPaused];
+}
+
+#pragma mark - iTermUniquelyIdentifiable
+
+- (NSString *)stringUniqueIdentifier {
+    return self.guid;
 }
 
 @end

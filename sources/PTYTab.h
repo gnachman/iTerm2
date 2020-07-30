@@ -3,6 +3,7 @@
 
 #import <Cocoa/Cocoa.h>
 #import "FutureMethods.h"
+#import "iTermEncoderAdapter.h"
 #import "PSMTabBarControl.h"
 #import "PTYSession.h"
 #import "PTYSplitView.h"
@@ -29,6 +30,7 @@ extern NSString *const PTYTabVariableTitleOverride;
 @interface PTYTab : NSObject <
   NSCopying,
   NSSplitViewDelegate,
+  iTermUniquelyIdentifiable,
   PTYSessionDelegate,
   PTYSplitViewDelegate,
   PSMTabBarControlRepresentedObjectIdentifierProtocol>
@@ -228,6 +230,8 @@ extern NSString *const PTYTabVariableTitleOverride;
 - (void)replaceWithContentsOfTab:(PTYTab *)tabToGut;
 
 - (NSDictionary*)arrangementWithContents:(BOOL)contents;
+- (BOOL)encodeWithContents:(BOOL)contents
+                   encoder:(id<iTermEncoderAdapter>)encoder;
 
 // Update the tab's title from the active session's name. Needed for initializing the tab's title
 // after setting up tmux tabs.

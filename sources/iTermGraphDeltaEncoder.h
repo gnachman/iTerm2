@@ -11,6 +11,8 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+extern NSInteger iTermGenerationAlwaysEncode;
+
 @interface iTermGraphDeltaEncoder: iTermGraphEncoder
 @property (nonatomic, readonly, nullable) iTermEncoderGraphRecord *previousRevision;
 

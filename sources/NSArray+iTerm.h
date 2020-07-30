@@ -23,6 +23,7 @@
 
 // Returns an array where each object in self is replaced with block(object).
 - (NSArray *)mapWithBlock:(id (^NS_NOESCAPE)(ObjectType anObject))block;
+- (NSArray *)mapEnumeratedWithBlock:(id (^NS_NOESCAPE)(NSUInteger i, id object))block;
 - (NSArray *)flatMapWithBlock:(NSArray *(^)(ObjectType anObject))block;
 
 - (NSArray<ObjectType> *)flattenedArray;
@@ -101,6 +102,7 @@
 
 - (NSArray<iTermTuple *> *)tuplesWithFirstObjectEqualTo:(id)firstObject;
 - (NSDictionary<id, NSArray<ObjectType> *> *)classifyWithBlock:(id (^)(ObjectType))block;
+- (NSDictionary<id, ObjectType> *)classifyUniquelyWithBlock:(id (^)(ObjectType))block;
 - (ObjectType)uncheckedObjectAtIndex:(NSInteger)index;
 
 - (NSUInteger)indexOfMaxWithBlock:(NSComparisonResult (^)(ObjectType obj1, ObjectType obj2))block;
@@ -120,6 +122,7 @@
 - (double)sumOfNumbers;
 - (NSArray *)it_arrayByReplacingOccurrencesOf:(id)pattern with:(id)replacement;
 - (const char **)nullTerminatedCStringArray;
+- (NSArray<ObjectType> *)reversed;
 
 @end
 

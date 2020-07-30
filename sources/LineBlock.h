@@ -40,6 +40,7 @@ typedef struct {
 // that get wrapped to the next line.
 @property(nonatomic, assign) BOOL mayHaveDoubleWidthCharacter;
 @property(nonatomic, readonly) int numberOfCharacters;
+@property(nonatomic, readonly) NSInteger generation;
 
 + (instancetype)blockWithDictionary:(NSDictionary *)dictionary;
 

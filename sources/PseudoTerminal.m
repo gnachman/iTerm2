@@ -3257,8 +3257,14 @@ ITERM_WEAKLY_REFERENCEABLE
     if ([tabs count] == 0) {
         return NO;
     }
-    result[TERMINAL_ARRANGEMENT_TABS] = [tabs mapWithBlock:^id(PTYTab *theTab) {
-        return [theTab arrangementWithContents:includeContents];
+    [result encodeArrayWithKey:TERMINAL_ARRANGEMENT_TABS
+                   identifiers:[tabs mapWithBlock:^id(PTYTab *tab) { return tab.stringUniqueIdentifier; }]
+                    generation:iTermGenerationAlwaysEncode
+                         block:^BOOL(id<iTermEncoderAdapter>  _Nonnull encoder,
+                                     NSInteger index,
+                                     NSString * _Nonnull identifier) {
+        return [tabs[index] encodeWithContents:includeContents
+                                       encoder:encoder];
     }];
 
     // Save index of selected tab.

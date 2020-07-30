@@ -38,10 +38,43 @@
 @end
 
 @implementation PTYSplitView {
+    NSString *_stringUniqueIdentifier;
     BOOL _dead;  // inside superclass's dealloc?
 }
 
 @dynamic delegate;
+
+- (instancetype)initWithFrame:(NSRect)frame uniqueIdentifier:(NSString *)identifier {
+    self = [super initWithFrame:frame];
+    if (self) {
+        _stringUniqueIdentifier = identifier ?: [[NSUUID UUID] UUIDString];
+    }
+    return self;
+}
+
+- (instancetype)initWithUniqueIdentifier:(NSString *)identifier {
+    self = [super init];
+    if (self) {
+        _stringUniqueIdentifier = identifier ?: [[NSUUID UUID] UUIDString];
+    }
+    return self;
+}
+
+- (instancetype)init {
+    self = [super init];
+    if (self) {
+        _stringUniqueIdentifier = [[NSUUID UUID] UUIDString];
+    }
+    return self;
+}
+
+- (instancetype)initWithFrame:(NSRect)frameRect {
+    self = [super initWithFrame:frameRect];
+    if (self) {
+        _stringUniqueIdentifier = [[NSUUID UUID] UUIDString];
+    }
+    return self;
+}
 
 - (void)dealloc {
     _dead = YES;
@@ -226,6 +259,13 @@
     }
     return [result sortedArrayUsingSelector:@selector(compare:)];
 }
+
+#pragma mark - iTermUniquelyIdentifiable
+
+- (NSString *)stringUniqueIdentifier {
+    return _stringUniqueIdentifier;
+}
+
 @end
 
 

@@ -74,6 +74,17 @@
     return result;
 }
 
+- (NSArray *)mapEnumeratedWithBlock:(id (^NS_NOESCAPE)(NSUInteger, id anObject))block {
+    NSMutableArray *temp = [NSMutableArray array];
+    [self enumerateObjectsUsingBlock:^(id  _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+        id mappedObject = block(idx, obj);
+        if (mappedObject) {
+            [temp addObject:mappedObject];
+        }
+    }];
+    return temp;
+}
+
 - (NSArray *)mapWithBlock:(id (^NS_NOESCAPE)(id anObject))block {
     NSMutableArray *temp = [NSMutableArray array];
     for (id anObject in self) {
@@ -443,6 +454,18 @@
     return dict;
 }
 
+- (NSDictionary<id, NSArray *> *)classifyUniquelyWithBlock:(id (^)(id))block {
+    NSMutableDictionary *dict = [NSMutableDictionary dictionary];
+    [self enumerateObjectsUsingBlock:^(id  _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+        id theClass = block(obj);
+        if (theClass) {
+            assert(!dict[theClass]);
+            dict[theClass] = obj;
+        }
+    }];
+    return dict;
+}
+
 - (id)uncheckedObjectAtIndex:(NSInteger)index {
     if (index < 0 || index >= self.count) {
         return nil;
@@ -607,6 +630,15 @@ void iTermFreeeNullTerminatedCStringArray(const char **array) {
     free(array);
 }
 
+- (NSArray *)reversed {
+    const NSUInteger count = self.count;
+    if (count < 2) {
+        return self;
+    }
+    return [self mapEnumeratedWithBlock:^id(NSUInteger i, id object) {
+        return self[count - i - 1];
+    }];
+}
 @end
 
 @implementation NSMutableArray (iTerm)

@@ -9,6 +9,8 @@
 
 #import "NSArray+iTerm.h"
 
+NSInteger iTermGenerationAlwaysEncode = NSIntegerMax;
+
 @implementation iTermGraphDeltaEncoder
 
 - (instancetype)initWithPreviousRevision:(iTermEncoderGraphRecord * _Nullable)previousRevision {
@@ -30,7 +32,7 @@
     return self;
 }
 
-- (void)encodeChildWithKey:(NSString *)key
+- (BOOL)encodeChildWithKey:(NSString *)key
                 identifier:(NSString *)identifier
                 generation:(NSInteger)generation
                      block:(BOOL (^ NS_NOESCAPE)(iTermGraphEncoder *subencoder))block {
@@ -39,22 +41,28 @@
     if (!record) {
         // A wholly new key+identifier
         [super encodeChildWithKey:key identifier:identifier generation:generation block:block];
-        return;
+        return YES;
     }
     if (record.generation == generation) {
         // No change to generation
         [self encodeGraph:record];
-        return;
+        return YES;
     }
     // Same key+id, new generation.
+    NSInteger realGeneration = generation;
+    if (generation == iTermGenerationAlwaysEncode) {
+        realGeneration = record.generation + 1;
+    }
     assert(record.generation < generation);
     iTermGraphEncoder *encoder = [[iTermGraphDeltaEncoder alloc] initWithKey:key
                                                                   identifier:identifier
-                                                                  generation:generation
+                                                                  generation:realGeneration
                                                             previousRevision:record];
-    if (block(encoder)) {
-        [self encodeGraph:encoder.record];
+    if (!block(encoder)) {
+        return NO;
     }
+    [self encodeGraph:encoder.record];
+    return YES;
 }
 
 - (void)enumerateRecords:(void (^)(iTermEncoderGraphRecord * _Nullable before,

@@ -17,6 +17,11 @@ typedef NS_ENUM(NSUInteger, iTermGraphEncoderState) {
     iTermGraphEncoderStateRolledBack
 };
 
+typedef NS_OPTIONS(NSUInteger, iTermGraphEncoderArrayOptions) {
+    iTermGraphEncoderArrayOptionsNone = 0,
+    iTermGraphEncoderArrayOptionsReverse = (1 << 0)
+};
+
 @interface iTermGraphEncoder : NSObject
 // nil if rolled back.
 @property (nullable, nonatomic, readonly) iTermEncoderGraphRecord *record;
@@ -37,7 +42,7 @@ typedef NS_ENUM(NSUInteger, iTermGraphEncoderState) {
 // that it can delete obj1.
 //
 // The block can return NO to rollback any changes it has made.
-- (void)encodeChildWithKey:(NSString *)key
+- (BOOL)encodeChildWithKey:(NSString *)key
                 identifier:(NSString *)identifier
                 generation:(NSInteger)generation
                      block:(BOOL (^ NS_NOESCAPE)(iTermGraphEncoder *subencoder))block;
@@ -48,7 +53,10 @@ typedef NS_ENUM(NSUInteger, iTermGraphEncoderState) {
 - (void)encodeArrayWithKey:(NSString *)key
                 generation:(NSInteger)generation
                identifiers:(NSArray<NSString *> *)identifiers
-                     block:(BOOL (^ NS_NOESCAPE)(NSString *identifier, NSInteger index, iTermGraphEncoder *subencoder))block;
+                   options:(iTermGraphEncoderArrayOptions)options
+                     block:(BOOL (^ NS_NOESCAPE)(NSString *identifier,
+                                                 NSInteger i,
+                                                 iTermGraphEncoder *subencoder))block;
 
 - (void)encodeDictionary:(NSDictionary *)dict
                  withKey:(NSString *)key

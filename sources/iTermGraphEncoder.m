@@ -89,6 +89,7 @@
         [self encodeArrayWithKey:key
                       generation:_generation
                      identifiers:[NSArray stringSequenceWithRange:NSMakeRange(0, array.count)]
+                         options:0
                            block:^BOOL (NSString * _Nonnull identifier,
                                    NSInteger index,
                                    iTermGraphEncoder * _Nonnull subencoder) {
@@ -124,7 +125,7 @@
     [_children addObject:record];
 }
 
-- (void)encodeChildWithKey:(NSString *)key
+- (BOOL)encodeChildWithKey:(NSString *)key
                 identifier:(NSString *)identifier
                 generation:(NSInteger)generation
                      block:(BOOL (^ NS_NOESCAPE)(iTermGraphEncoder *subencoder))block {
@@ -132,15 +133,20 @@
     iTermGraphEncoder *encoder = [[iTermGraphEncoder alloc] initWithKey:key
                                                              identifier:identifier
                                                              generation:generation];
-    if (block(encoder)) {
-        [self encodeGraph:encoder.record];
+    if (!block(encoder)) {
+        return NO;
     }
+    [self encodeGraph:encoder.record];
+    return YES;
 }
 
 - (void)encodeArrayWithKey:(NSString *)key
                 generation:(NSInteger)generation
                identifiers:(NSArray<NSString *> *)identifiers
-                     block:(BOOL (^ NS_NOESCAPE)(NSString *identifier, NSInteger index, iTermGraphEncoder *subencoder))block {
+                   options:(iTermGraphEncoderArrayOptions)options
+                     block:(BOOL (^ NS_NOESCAPE)(NSString *identifier,
+                                                 NSInteger index,
+                                                 iTermGraphEncoder *subencoder))block {
     [self encodeChildWithKey:@"__array"
                   identifier:key
                   generation:generation
@@ -152,7 +158,11 @@
                 return block(identifier, idx, subencoder);
             }];
         }];
-        [subencoder encodeString:[identifiers componentsJoinedByString:@"\t"] forKey:@"__order"];
+        NSArray<NSString *> *orderedIdentifiers = identifiers;
+        if (options & iTermGraphEncoderArrayOptionsReverse) {
+            orderedIdentifiers = orderedIdentifiers.reversed;
+        }
+        [subencoder encodeString:[orderedIdentifiers componentsJoinedByString:@"\t"] forKey:@"__order"];
         return YES;
     }];
 }

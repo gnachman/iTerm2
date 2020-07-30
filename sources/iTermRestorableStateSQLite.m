@@ -175,6 +175,7 @@
         [encoder encodeArrayWithKey:@"windows"
                          generation:generation
                         identifiers:identifiers
+                            options:0
                               block:^BOOL(NSString * _Nonnull identifier,
                                           NSInteger index,
                                           iTermGraphEncoder * _Nonnull subencoder) {

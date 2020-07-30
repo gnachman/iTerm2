@@ -112,6 +112,7 @@ struct iTermNumFullLinesCacheKeyHasher {
 }
 
 NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock) {
+    lineBlock->_generation += 1;
     for (auto &observer : lineBlock->_observers) {
         __unsafe_unretained id<iTermLineBlockObserver> obj = static_cast<id<iTermLineBlockObserver> >(observer);
         [obj lineBlockDidChange:lineBlock];

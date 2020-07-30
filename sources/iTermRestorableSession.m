@@ -13,14 +13,6 @@
 
 @implementation iTermRestorableSession
 
-- (void)dealloc {
-    [_sessions release];
-    [_terminalGuid release];
-    [_arrangement release];
-    [_predecessors release];
-    [super dealloc];
-}
-
 - (instancetype)initWithRestorableState:(NSDictionary *)restorableState {
     self = [super init];
     if (self) {
@@ -29,7 +21,7 @@
             NSDictionary *arrangement = tuple[1];
             return [PTYSession sessionFromArrangement:arrangement
                                                 named:nil
-                                               inView:[[[SessionView alloc] initWithFrame:frame] autorelease]
+                                               inView:[[SessionView alloc] initWithFrame:frame]
                                          withDelegate:nil
                                         forObjectType:iTermPaneObject];
         }];
@@ -44,7 +36,15 @@
 }
 
 - (NSDictionary *)restorableState {
-    return @{ @"sessionFrameTuples": [_sessions mapWithBlock:^id(PTYSession *session) { return @[ [NSValue valueWithRect:session.view.frame], [session arrangementWithContents:YES] ]; }] ?: @[],
+    NSArray *maybeSessionFrameTuples =
+    [_sessions mapWithBlock:^id(PTYSession *session) {
+        NSMutableDictionary *dict = [NSMutableDictionary dictionary];;
+        iTermMutableDictionaryEncoderAdapter *encoder =
+            [[iTermMutableDictionaryEncoderAdapter alloc] initWithMutableDictionary:dict];
+        [session encodeArrangementWithContents:YES encoder:encoder];
+        return @[ [NSValue valueWithRect:session.view.frame], dict ];
+    }];
+    return @{ @"sessionFrameTuples": maybeSessionFrameTuples ?: @[],
               @"terminalGuid": _terminalGuid ?: @"",
               @"arrangement": _arrangement ?: @{},
               @"predecessors": _predecessors ?: @[],

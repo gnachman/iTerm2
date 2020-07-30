@@ -1,0 +1,25 @@
+//
+//  iTermOrderedDictionary.h
+//  iTerm2SharedARC
+//
+//  Created by George Nachman on 7/29/20.
+//
+
+#import <Foundation/Foundation.h>
+
+NS_ASSUME_NONNULL_BEGIN
+
+@interface iTermOrderedDictionary<__covariant KeyType, __covariant ObjectType> : NSObject
+
++ (instancetype)byMapping:(NSArray<ObjectType> *)array
+                    block:(nullable KeyType (^NS_NOESCAPE)(NSUInteger index, ObjectType object))block;
++ (instancetype)byMappingEnumerator:(NSEnumerator<ObjectType> *)array
+                              block:(nullable KeyType (^NS_NOESCAPE)(NSUInteger index, ObjectType object))block;
+
+- (NSArray<KeyType> *)keys;
+- (NSArray<ObjectType> *)values;
+- (nullable ObjectType)objectForKeyedSubscript:(KeyType)key;
+
+@end
+
+NS_ASSUME_NONNULL_END

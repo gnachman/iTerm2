@@ -7,6 +7,7 @@
 
 #import <AppKit/AppKit.h>
 #import "FutureMethods.h"
+#import "iTermEncoderAdapter.h"
 
 @class PTYSplitView;
 
@@ -32,10 +33,13 @@
 
 /* This extends NSSplitView by adding a delegate method that's called when
  * dragging a splitter finishes. */
-@interface PTYSplitView : NSSplitView
+@interface PTYSplitView : NSSplitView<iTermUniquelyIdentifiable>
 
 @property (weak) id<PTYSplitViewDelegate> delegate;
 
 - (NSArray<PTYSplitViewDividerInfo *> *)transitiveDividerLocationsVertical:(BOOL)vertical;
+
+- (instancetype)initWithFrame:(NSRect)frame uniqueIdentifier:(NSString *)identifier;
+- (instancetype)initWithUniqueIdentifier:(NSString *)identifier;
 
 @end
