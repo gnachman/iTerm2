@@ -21,17 +21,6 @@ typedef NS_ENUM(NSUInteger, iTermEncoderRecordType) {
 // Encodes plain old data, not graphs.
 @interface iTermEncoderPODRecord: NSObject
 
-// Context + key + [identifier] -> combined context
-// Like: root.intermediate.child[index]
-NSString *iTermGraphContext(NSString *context, NSString *key, NSString *identifier);
-typedef struct {
-    NSString *context;
-    NSString *key;
-    NSString *identifier;
-} iTermGraphExplodedContext;
-
-iTermGraphExplodedContext iTermGraphExplodeContext(NSString *context);
-
 // type won't be graph
 @property (nonatomic, readonly) iTermEncoderRecordType type;
 @property (nonatomic, readonly) NSString *key;

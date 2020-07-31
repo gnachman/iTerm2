@@ -22,6 +22,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @protocol iTermDatabase<NSObject>
 - (BOOL)executeUpdate:(NSString*)sql, ...;
+- (NSNumber * _Nullable)lastInsertRowId;
 - (id<iTermDatabaseResultSet> _Nullable)executeQuery:(NSString*)sql, ...;
 - (BOOL)open;
 - (BOOL)close;

@@ -11,20 +11,20 @@
 #import "NSArray+iTerm.h"
 #import "NSObject+iTerm.h"
 
-static iTermEncoderGraphRecord *iTermGraphDeltaEncoderMakeGraphRecord(NSString *nodeID,
+static iTermEncoderGraphRecord *iTermGraphDeltaEncoderMakeGraphRecord(NSNumber *nodeID,
                                                                       NSDictionary *nodes) {
     NSDictionary *nodeDict = nodes[nodeID];
-    NSArray<NSString *> *childNodeIDs = nodeDict[@"children"];
+    NSArray<NSNumber *> *childNodeIDs = nodeDict[@"children"];
     NSArray<iTermEncoderGraphRecord *> *childGraphRecords =
-    [childNodeIDs mapWithBlock:^id(NSString *childNodeID) {
+    [childNodeIDs mapWithBlock:^id(NSNumber *childNodeID) {
         return iTermGraphDeltaEncoderMakeGraphRecord(childNodeID, nodes);
     }];
-    iTermGraphExplodedContext exploded = iTermGraphExplodeContext(nodeID);
     return [iTermEncoderGraphRecord withPODs:[nodeDict[@"pod"] allValues]
                                       graphs:childGraphRecords
                                   generation:0
-                                         key:exploded.key
-                                  identifier:exploded.identifier];
+                                         key:nodeDict[@"key"]
+                                  identifier:nodeDict[@"identifier"]
+                                       rowid:nodeDict[@"rowid"]];
 }
 
 @implementation iTermGraphTableTransformer {
@@ -48,11 +48,11 @@ static iTermEncoderGraphRecord *iTermGraphDeltaEncoderMakeGraphRecord(NSString *
     return _record;
 }
 
-- (NSDictionary<NSString *, NSMutableDictionary *> *)nodes:(out NSString **)rootNodeIDOut {
+- (NSDictionary<NSNumber *, NSMutableDictionary *> *)nodes:(out NSNumber **)rootNodeIDOut {
     // Create nodes
-    NSMutableDictionary<NSString *, NSMutableDictionary *> *nodes = [NSMutableDictionary dictionary];
+    NSMutableDictionary<NSNumber *, NSMutableDictionary *> *nodes = [NSMutableDictionary dictionary];
     for (NSArray *row in _nodeRows) {
-        if (row.count != 3) {
+        if (row.count != 4) {
             DLog(@"Wrong number of items in row: %@", row);
             _lastError = [NSError errorWithDomain:@"com.iterm2.graph-transformer"
                                              code:1
@@ -61,7 +61,8 @@ static iTermEncoderGraphRecord *iTermGraphDeltaEncoderMakeGraphRecord(NSString *
         }
         NSString *key = [NSString castFrom:row[0]];
         NSString *identifier = [NSString castFrom:row[1]];
-        NSString *parent = [NSString castFrom:row[2]];
+        NSNumber *parent = [NSNumber castFrom:row[2]];
+        NSNumber *rowid = [NSNumber castFrom:row[3]];
         if (!row || !key || !identifier || !parent) {
             DLog(@"Bad row: %@", row);
             _lastError = [NSError errorWithDomain:@"com.iterm2.graph-transformer"
@@ -69,8 +70,7 @@ static iTermEncoderGraphRecord *iTermGraphDeltaEncoderMakeGraphRecord(NSString *
                                          userInfo:@{ NSLocalizedDescriptionKey: [NSString stringWithFormat:@"Bad row: %@", row] }];
             return nil;
         }
-        NSString *nodeid = iTermGraphContext(parent, key, identifier);
-        if (parent.length == 0 && key.length == 0) {
+        if (rowid.integerValue == 0 && key.length == 0) {
             if (*rootNodeIDOut) {
                 DLog(@"Two roots found");
                 _lastError = [NSError errorWithDomain:@"com.iterm2.graph-transformer"
@@ -78,16 +78,19 @@ static iTermEncoderGraphRecord *iTermGraphDeltaEncoderMakeGraphRecord(NSString *
                                              userInfo:@{ NSLocalizedDescriptionKey: [NSString stringWithFormat:@"Two roots found"] }];
                 return nil;
             }
-            *rootNodeIDOut = nodeid;
+            *rootNodeIDOut = rowid;
         }
-        nodes[nodeid] = [@{ @"pod": [NSMutableDictionary dictionary],
-                            @"parent": parent,
-                            @"children": [NSMutableArray array] } mutableCopy];
+        nodes[row] = [@{ @"pod": [NSMutableDictionary dictionary],
+                         @"key": key,
+                         @"identifier": identifier,
+                         @"parent": parent,
+                         @"children": [NSMutableArray array],
+                         @"rowid": rowid } mutableCopy];
     }
     return nodes;
 }
 
-- (BOOL)attachValuesToNodes:(NSDictionary<NSString *, NSMutableDictionary *> *)nodes {
+- (BOOL)attachValuesToNodes:(NSDictionary<NSNumber *, NSMutableDictionary *> *)nodes {
     for (NSArray *row in _valueRows) {
         if (row.count != 4) {
             DLog(@"Wrong number of fields in row: %@", row);
@@ -96,7 +99,7 @@ static iTermEncoderGraphRecord *iTermGraphDeltaEncoderMakeGraphRecord(NSString *
                                          userInfo:@{ NSLocalizedDescriptionKey: [NSString stringWithFormat:@"Wrong number of fields in row: %@", row] }];
             return NO;
         }
-        NSString *nodeid = [NSString castFrom:row[0]];
+        NSNumber *nodeid = [NSNumber castFrom:row[0]];
         NSString *key = [NSString castFrom:row[1]];
         NSNumber *type = [NSNumber castFrom:row[3]];
         if (!nodeid || !key || !type) {
@@ -136,12 +139,7 @@ static iTermEncoderGraphRecord *iTermGraphDeltaEncoderMakeGraphRecord(NSString *
     [nodes enumerateKeysAndObjectsUsingBlock:^(NSString * _Nonnull nodeid,
                                                NSMutableDictionary * _Nonnull nodeDict,
                                                BOOL * _Nonnull stop) {
-        iTermGraphExplodedContext exploded = iTermGraphExplodeContext(nodeid);
-        if (exploded.context.length == 0 && exploded.key.length == 0) {
-            // This is the root.
-            return;
-        }
-        NSMutableDictionary *parentDict = nodes[exploded.context];
+        NSMutableDictionary<NSString *, id> *parentDict = nodes[nodeDict[@"parent"]];
         if (!parentDict) {
             ok = NO;
             DLog(@"Dangling parent pointer %@ from %@", nodeDict[@"parent"], nodeid);
@@ -157,8 +155,8 @@ static iTermEncoderGraphRecord *iTermGraphDeltaEncoderMakeGraphRecord(NSString *
 }
 
 - (iTermEncoderGraphRecord * _Nullable)transform {
-    NSString *rootNodeID = nil;
-    NSDictionary<NSDictionary *, NSMutableDictionary *> *nodes = [self nodes:&rootNodeID];
+    NSNumber *rootNodeID = nil;
+    NSDictionary<NSNumber *, NSMutableDictionary *> *nodes = [self nodes:&rootNodeID];
     if (!nodes) {
         DLog(@"nodes: returned nil");
         return nil;

@@ -1981,8 +1981,6 @@
 		A653F69D24D00C960062377E /* iTermEncoderGraphRecord.m in Sources */ = {isa = PBXBuildFile; fileRef = A653F69B24D00C960062377E /* iTermEncoderGraphRecord.m */; };
 		A653F6A024D00CE30062377E /* iTermGraphDeltaEncoder.h in Headers */ = {isa = PBXBuildFile; fileRef = A653F69E24D00CE30062377E /* iTermGraphDeltaEncoder.h */; };
 		A653F6A124D00CE30062377E /* iTermGraphDeltaEncoder.m in Sources */ = {isa = PBXBuildFile; fileRef = A653F69F24D00CE30062377E /* iTermGraphDeltaEncoder.m */; };
-		A653F6A424D00D1E0062377E /* iTermGraphSQLEncoder.h in Headers */ = {isa = PBXBuildFile; fileRef = A653F6A224D00D1E0062377E /* iTermGraphSQLEncoder.h */; };
-		A653F6A524D00D1E0062377E /* iTermGraphSQLEncoder.m in Sources */ = {isa = PBXBuildFile; fileRef = A653F6A324D00D1E0062377E /* iTermGraphSQLEncoder.m */; };
 		A653F6A824D00FFE0062377E /* iTermRestorableStateSQLite.h in Headers */ = {isa = PBXBuildFile; fileRef = A653F6A624D00FFE0062377E /* iTermRestorableStateSQLite.h */; };
 		A653F6A924D00FFE0062377E /* iTermRestorableStateSQLite.m in Sources */ = {isa = PBXBuildFile; fileRef = A653F6A724D00FFE0062377E /* iTermRestorableStateSQLite.m */; };
 		A653F6AC24D122440062377E /* iTermRestorableStateDriver.h in Headers */ = {isa = PBXBuildFile; fileRef = A653F6AA24D122440062377E /* iTermRestorableStateDriver.h */; };
@@ -5404,8 +5402,6 @@
 		A653F69B24D00C960062377E /* iTermEncoderGraphRecord.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermEncoderGraphRecord.m; sourceTree = "<group>"; };
 		A653F69E24D00CE30062377E /* iTermGraphDeltaEncoder.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermGraphDeltaEncoder.h; sourceTree = "<group>"; };
 		A653F69F24D00CE30062377E /* iTermGraphDeltaEncoder.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermGraphDeltaEncoder.m; sourceTree = "<group>"; };
-		A653F6A224D00D1E0062377E /* iTermGraphSQLEncoder.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermGraphSQLEncoder.h; sourceTree = "<group>"; };
-		A653F6A324D00D1E0062377E /* iTermGraphSQLEncoder.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermGraphSQLEncoder.m; sourceTree = "<group>"; };
 		A653F6A624D00FFE0062377E /* iTermRestorableStateSQLite.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermRestorableStateSQLite.h; sourceTree = "<group>"; };
 		A653F6A724D00FFE0062377E /* iTermRestorableStateSQLite.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermRestorableStateSQLite.m; sourceTree = "<group>"; };
 		A653F6AA24D122440062377E /* iTermRestorableStateDriver.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermRestorableStateDriver.h; sourceTree = "<group>"; };
@@ -9760,8 +9756,6 @@
 				A653F69F24D00CE30062377E /* iTermGraphDeltaEncoder.m */,
 				A653F66924CE7CE30062377E /* iTermGraphEncoder.h */,
 				A653F66A24CE7CE30062377E /* iTermGraphEncoder.m */,
-				A653F6A224D00D1E0062377E /* iTermGraphSQLEncoder.h */,
-				A653F6A324D00D1E0062377E /* iTermGraphSQLEncoder.m */,
 				A653F68E24D00B9E0062377E /* iTermGraphTableTransformer.h */,
 				A653F68F24D00B9E0062377E /* iTermGraphTableTransformer.m */,
 				A6AFE92E23FCFF8C00D489C7 /* iTermRestorableStateController.h */,
@@ -11323,7 +11317,6 @@
 				A6E632C723C31BD9008F60F0 /* iTermCLogging.h in Headers */,
 				A62EED9E20E010C000943DE3 /* iTermScriptImporter.h in Headers */,
 				A66719531DCE36C3000CE608 /* iTermSocketAddress.h in Headers */,
-				A653F6A424D00D1E0062377E /* iTermGraphSQLEncoder.h in Headers */,
 				A629F5AE23AFF65600C2F16B /* iTermShellIntegrationPasteShellCommandsViewController.h in Headers */,
 				A66F52B52105AC5B00571168 /* iTermStatusBarGitComponent.h in Headers */,
 				A6C93DD4238A447900F21E0D /* iTermLogicalMovementHelper.h in Headers */,
@@ -13820,7 +13813,6 @@
 				A69C9333212108BC00531438 /* iTermStatusBarComposerComponent.m in Sources */,
 				A67960E41F8201A1008A42BC /* iTermMetalDriver.m in Sources */,
 				A638D29E22222B5D001CD688 /* iTermSwiftyStringGraph.m in Sources */,
-				A653F6A524D00D1E0062377E /* iTermGraphSQLEncoder.m in Sources */,
 				A653F67F24CF4EC70062377E /* FMDatabasePool.m in Sources */,
 				A6180D7A21B399AA0073F219 /* NSFileManager+iTerm.m in Sources */,
 				A6F14ED9217EDAD000047D2F /* iTermWindowOcclusionChangeMonitor.m in Sources */,

@@ -182,7 +182,8 @@ NSInteger iTermGenerationAlwaysEncode = NSIntegerMax;
                                                  graphs:_children
                                              generation:_generation
                                                     key:_key
-                                             identifier:_identifier];
+                                             identifier:_identifier
+                                                  rowid:nil];
             _state = iTermGraphEncoderStateCommitted;
             return _record;
 

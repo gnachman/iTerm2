@@ -18,20 +18,23 @@
                   graphs:(NSArray<iTermEncoderGraphRecord *> *)graphRecords
               generation:(NSInteger)generation
                      key:(NSString *)key
-              identifier:(NSString *)identifier {
+              identifier:(NSString *)identifier
+                   rowid:(NSNumber *)rowid {
     assert(identifier);
     return [[self alloc] initWithPODs:podRecords
                                graphs:graphRecords
                            generation:generation
                                   key:key
-                           identifier:identifier];
+                           identifier:identifier
+                                rowid:rowid];
 }
 
 - (instancetype)initWithPODs:(NSArray<iTermEncoderPODRecord *> *)podRecords
                       graphs:(NSArray<iTermEncoderGraphRecord *> *)graphRecords
                   generation:(NSInteger)generation
                          key:(NSString *)key
-                  identifier:(NSString *)identifier {
+                  identifier:(NSString *)identifier
+                       rowid:(NSNumber *)rowid {
     assert(key);
     self = [super init];
     if (self) {
@@ -49,6 +52,7 @@
         _generation = generation;
         _identifier = identifier;
         _key = key;
+        _rowid = rowid;
     }
     return self;
 }
@@ -60,8 +64,14 @@
             self.identifier,
             self.podRecords,
             [[self.graphRecords mapWithBlock:^id(iTermEncoderGraphRecord *anObject) {
-        return [NSString stringWithFormat:@"<graph key=%@ id=%@>", anObject.key, anObject.identifier];
+        return [NSString stringWithFormat:@"<graph rowid=%@ key=%@ id=%@>",
+                anObject.rowid, anObject.key, anObject.identifier];
     }] componentsJoinedByString:@", "]];
+}
+
+- (void)setRowid:(NSNumber *)rowid {
+    assert(_rowid == nil);
+    _rowid = rowid;
 }
 
 - (NSComparisonResult)compareGraphRecord:(iTermEncoderGraphRecord *)other {
@@ -107,51 +117,6 @@
         return NO;
     }
     return YES;
-}
-
-NSString *iTermGraphContext(NSString *context, NSString *key, NSString *identifier) {
-    NSMutableString *result = [NSMutableString string];
-    if (context.length) {
-        [result appendString:context];
-        [result appendString:@"."];
-    }
-    [result appendString:key];
-    if (identifier.length) {
-        [result appendFormat:@"[%@]", identifier];
-    }
-    return result;
-}
-
-static iTermTuple<NSString *, NSString *> *iTermSplitLastCharacter(NSString *string, NSString *c) {
-    const NSRange range = [string rangeOfString:c options:NSBackwardsSearch];
-    if (range.location == NSNotFound) {
-        return [iTermTuple tupleWithObject:@"" andObject:string];
-    }
-    return [iTermTuple tupleWithObject:[string substringToIndex:range.location]
-                             andObject:[string substringFromIndex:NSMaxRange(range)]];
-}
-
-iTermGraphExplodedContext iTermGraphExplodeContext(NSString *context) {
-    iTermTuple<NSString *, NSString *> *parentTail = iTermSplitLastCharacter(context, @".");
-    NSString *key;
-    NSString *identifier = @"";
-    if ([context hasSuffix:@"]"]) {
-        iTermTuple<NSString *, NSString *> *keyTail = iTermSplitLastCharacter(parentTail.secondObject, @"[");
-        key = keyTail.firstObject;
-        iTermTuple<NSString *, NSString *> *identifierTail = iTermSplitLastCharacter(keyTail.secondObject, @"]");
-        identifier = identifierTail.firstObject;
-    } else {
-        key = parentTail.secondObject;
-    }
-    return (iTermGraphExplodedContext) {
-        .context = parentTail.firstObject,
-        .key = key,
-        .identifier = identifier
-    };
-}
-
-- (NSString *)contextWithContext:(NSString *)context {
-    return iTermGraphContext(context, self.key, self.identifier);
 }
 
 - (iTermEncoderGraphRecord * _Nullable)childRecordWithKey:(NSString *)key

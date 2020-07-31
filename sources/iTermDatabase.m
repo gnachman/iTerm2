@@ -54,6 +54,14 @@
     return result;
 }
 
+- (NSNumber *)lastInsertRowId {
+    const int64_t rowid = _db.lastInsertRowId;
+    if (!rowid) {
+        return nil;
+    }
+    return @(rowid);
+}
+
 - (void)logStatement:(NSString *)format vaList:(va_list)args {
     if (!gDebugLogging) {
         return;

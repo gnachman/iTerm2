@@ -8,7 +8,6 @@
 #import "iTermRestorableStateSQLite.h"
 
 #import "DebugLogging.h"
-#import "iTermGraphSQLEncoder.h"
 #import "iTermGraphDatabase.h"
 #import "iTermThreadSafety.h"
 #import "NSArray+iTerm.h"

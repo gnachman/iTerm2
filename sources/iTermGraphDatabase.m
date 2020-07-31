@@ -86,48 +86,43 @@
     }
 }
 
-- (NSString *)valueContextInGraph:(iTermEncoderGraphRecord *)record
-                          context:(NSString *)context {
-    return [record contextWithContext:context];
-}
-
 - (void)reallySave:(iTermGraphDeltaEncoder *)encoder
              state:(iTermGraphDatabaseState *)state {
     [encoder enumerateRecords:^(iTermEncoderGraphRecord * _Nullable before,
                                 iTermEncoderGraphRecord * _Nullable after,
-                                NSString *context) {
+                                NSNumber *parent) {
+        if (before) {
+            assert(before.rowid);
+        }
         if (before && !after) {
-            [state.db executeUpdate:@"delete from Node where key=? and identifier=? and context=?",
-             before.key, before.identifier, context];
-            [before enumerateValuesVersus:nil block:^(iTermEncoderPODRecord * _Nullable mine,
-                                                      iTermEncoderPODRecord * _Nullable theirs) {
-                [state.db executeUpdate:@"delete from Value where key=? and context=?",
-                 mine.key, [self valueContextInGraph:before context:context]];
-            }];
+            [state.db executeUpdate:@"delete from Node where rowid=?", before.rowid];
+            [state.db executeUpdate:@"delete from Value node=?", before.rowid];
         } else if (!before && after) {
-            [state.db executeUpdate:@"insert into Node (key, identifier, context) values (?, ?, ?)",
-             after.key, after.identifier, context];
+            [state.db executeUpdate:@"insert into Node (key, identifier, parent) values (?, ?, ?)",
+             after.key, after.identifier, parent];
+            NSNumber *lastInsertRowID = state.db.lastInsertRowId;
+            assert(lastInsertRowID);  // TODO
+            after.rowid = lastInsertRowID;
             [after enumerateValuesVersus:nil block:^(iTermEncoderPODRecord * _Nullable record,
                                                      iTermEncoderPODRecord * _Nullable na) {
-                [state.db executeUpdate:@"insert into Value (key, value, context, type) values (?, ?, ?, ?)",
-                 record.key, record.data, [self valueContextInGraph:after context:context], @(record.type)];
+                [state.db executeUpdate:@"insert into Value (key, value, node, type) values (?, ?, ?, ?)",
+                 record.key, record.data, lastInsertRowID, @(record.type)];
             }];
         } else if (before && after) {
+            assert(before.rowid.longLongValue == after.rowid.longLongValue);
             [before enumerateValuesVersus:after block:^(iTermEncoderPODRecord * _Nullable mine,
                                                         iTermEncoderPODRecord * _Nullable theirs) {
                 if (mine && theirs) {
                     if (![mine isEqual:theirs]) {
-                        [state.db executeUpdate:@"update Value set value=?, type=? where key=? and context=?",
-                         theirs.data, @(theirs.type), mine.key,
-                         [self valueContextInGraph:before context:context]];
+                        [state.db executeUpdate:@"update Value set value=?, type=? where key=? and node=?",
+                         theirs.data, @(theirs.type), mine.key, before.rowid];
                     }
                 } else if (!mine && theirs) {
-                    [state.db executeUpdate:@"insert into Value (key, value, context, type) values (?, ?, ?, ?)",
-                     theirs.key, theirs.data, [self valueContextInGraph:after context:context],
-                     @(theirs.type)];
+                    [state.db executeUpdate:@"insert into Value (key, value, node, type) values (?, ?, ?, ?)",
+                     theirs.key, theirs.data, before.rowid, @(theirs.type)];
                 } else if (mine && !theirs) {
-                    [state.db executeUpdate:@"delete from Value where key=? and context=?",
-                     mine.key, [self valueContextInGraph:before context:context]];
+                    [state.db executeUpdate:@"delete from Value where key=? and node=?",
+                     mine.key, before.rowid];
                 } else {
                     assert(NO);
                 }
@@ -146,8 +141,8 @@
     }
     _ok = YES;
 
-    [state.db executeUpdate:@"create table Node (key text, identifier text, context text)"];
-    [state.db executeUpdate:@"create table Value (key text, context text, value blob, type integer)"];
+    [state.db executeUpdate:@"create table Node (key text, identifier text, parent integer)"];
+    [state.db executeUpdate:@"create table Value (key text, node integer, value blob, type integer)"];
 
     NSMutableArray<NSArray *> *nodes = [NSMutableArray array];
     NSMutableArray<NSArray *> *values = [NSMutableArray array];
@@ -156,7 +151,8 @@
         while ([rs next]) {
             [nodes addObject:@[ [rs stringForColumn:@"key"],
                                 [rs stringForColumn:@"identifier"],
-                                [rs stringForColumn:@"context"] ]];
+                                [rs stringForColumn:@"parent"],
+                                @([rs longLongIntForColumn:@"rowid"])]];
         }
         [rs close];
     }
@@ -164,7 +160,7 @@
         FMResultSet *rs = [state.db executeQuery:@"select * from Value"];
         while ([rs next]) {
             [values addObject:@[
-                [rs stringForColumn:@"context"],
+                @([rs longLongIntForColumn:@"node"]),
                 [rs stringForColumn:@"key"],
                 [rs dataForColumn:@"value"] ?: [NSData data],
                 @([rs longLongIntForColumn:@"type"])

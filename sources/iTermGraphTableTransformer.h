@@ -24,9 +24,9 @@ NS_ASSUME_NONNULL_BEGIN
 
 #pragma mark - Private - for tests only
 
-- (NSDictionary<NSDictionary *, NSMutableDictionary *> *)nodes:(out NSString **)rootNodeIDOut;
-- (BOOL)attachValuesToNodes:(NSDictionary<NSDictionary *, NSMutableDictionary *> *)nodes;
-- (BOOL)attachChildrenToParents:(NSDictionary<NSDictionary *, NSMutableDictionary *> *)nodes;
+- (NSDictionary<NSNumber *, NSMutableDictionary *> *)nodes:(out NSNumber **)rootNodeIDOut;
+- (BOOL)attachValuesToNodes:(NSDictionary<NSNumber *, NSMutableDictionary *> *)nodes;
+- (BOOL)attachChildrenToParents:(NSDictionary<NSNumber *, NSMutableDictionary *> *)nodes;
 
 @end
 

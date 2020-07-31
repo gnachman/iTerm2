@@ -19,18 +19,19 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) NSString *key;
 @property (nonatomic, readonly, weak) iTermEncoderGraphRecord *parent;
 @property (nonatomic, readonly) id propertyListValue;
+@property (nonatomic, strong) NSNumber *rowid;
 
 + (instancetype)withPODs:(NSArray<iTermEncoderPODRecord *> *)podRecords
                   graphs:(NSArray<iTermEncoderGraphRecord *> *)graphRecords
               generation:(NSInteger)generation
                      key:(NSString *)key
-              identifier:(NSString *)identifier;
+              identifier:(NSString *)identifier
+                   rowid:(NSNumber *_Nullable)rowid;
 
 - (void)enumerateValuesVersus:(iTermEncoderGraphRecord * _Nullable)other
                         block:(void (^)(iTermEncoderPODRecord * _Nullable mine,
                                         iTermEncoderPODRecord * _Nullable theirs))block;
 
-- (NSString *)contextWithContext:(NSString *)context;
 - (NSComparisonResult)compareGraphRecord:(iTermEncoderGraphRecord *)other;
 
 // You probably want to use arrayWithKey or dictionaryWithKey. This is very low level.

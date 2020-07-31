@@ -65,17 +65,17 @@
 
 - (void)enumerateRecords:(void (^)(iTermEncoderGraphRecord * _Nullable before,
                                    iTermEncoderGraphRecord * _Nullable after,
-                                   NSString *context))block {
-    block(_previousRevision, self.record, @"");
-    [self enumerateBefore:_previousRevision after:self.record context:@"" block:block];
+                                   NSNumber *parent))block {
+    block(_previousRevision, self.record, @0);
+    [self enumerateBefore:_previousRevision after:self.record parent:@0 block:block];
 }
 
 - (void)enumerateBefore:(iTermEncoderGraphRecord *)preRecord
                   after:(iTermEncoderGraphRecord *)postRecord
-                context:(NSString *)context
+                 parent:(NSNumber *)parent
                   block:(void (^)(iTermEncoderGraphRecord * _Nullable before,
                                   iTermEncoderGraphRecord * _Nullable after,
-                                  NSString *context))block {
+                                  NSNumber *parent))block {
     NSDictionary<NSDictionary *, NSArray<iTermEncoderGraphRecord *> *> *before = [preRecord.graphRecords classifyWithBlock:^id(iTermEncoderGraphRecord *record) {
         return @{ @"key": record.key,
                   @"identifier": record.identifier };
@@ -87,21 +87,12 @@
     NSSet<NSDictionary *> *allKeys = [NSSet setWithArray:[before.allKeys ?: @[] arrayByAddingObjectsFromArray:after.allKeys ?: @[] ]];
     [allKeys enumerateObjectsUsingBlock:^(NSDictionary * _Nonnull keyId, BOOL * _Nonnull stop) {
         // Run the block for this pair of nodes
-        block(before[keyId].firstObject, after[keyId].firstObject, context);
+        block(before[keyId].firstObject, after[keyId].firstObject, parent);
 
         // Now recurse for their descendants.
-        NSMutableString *newContext = [context mutableCopy];
-        if (context.length > 0) {
-            [newContext appendString:@"."];
-        }
-        [newContext appendString:keyId[@"key"]];
-        NSString *identifier = keyId[@"identifier"];
-        if (identifier.length) {
-            [newContext appendFormat:@"[%@]", identifier];
-        }
         [self enumerateBefore:before[keyId].firstObject
                         after:after[keyId].firstObject
-                      context:newContext
+                       parent:preRecord ? preRecord.rowid : postRecord.rowid
                         block:block];
     }];
 }
