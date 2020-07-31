@@ -7,7 +7,12 @@
 
 #import "iTermWeakVariables.h"
 
+#import "iTermGraphEncoder.h"
+
 NS_ASSUME_NONNULL_BEGIN
+
+@interface iTermWeakVariables()<iTermGraphEncodable>
+@end
 
 @implementation iTermWeakVariables
 
@@ -40,6 +45,10 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (id)copyWithZone:(nullable NSZone *)zone {
     return self;
+}
+
+- (BOOL)graphEncoderShouldIgnore {
+    return YES;
 }
 
 @end

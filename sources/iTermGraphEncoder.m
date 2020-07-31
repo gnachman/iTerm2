@@ -13,6 +13,8 @@
 #import "NSObject+iTerm.h"
 #import "iTermTuple.h"
 
+NSInteger iTermGenerationAlwaysEncode = NSIntegerMax;
+
 @implementation iTermGraphEncoder {
     NSMutableDictionary<NSString *, iTermEncoderPODRecord *> *_pod;
     NSString *_identifier;
@@ -63,26 +65,30 @@
     _pod[key] = [iTermEncoderPODRecord withNullForKey:key];
 }
 
-- (void)encodeObject:(id)obj key:(NSString *)key {
+- (BOOL)encodeObject:(id)obj key:(NSString *)key {
+    if ([obj conformsToProtocol:@protocol(iTermGraphEncodable)] &&
+        [(id<iTermGraphEncodable>)obj graphEncoderShouldIgnore]) {
+        return NO;
+    }
     if ([obj isKindOfClass:[NSString class]]) {
         [self encodeString:obj forKey:key];
-        return;
+        return YES;
     }
     if ([obj isKindOfClass:[NSData class]]) {
         [self encodeData:obj forKey:key];
-        return;
+        return YES;
     }
     if ([obj isKindOfClass:[NSDate class]]) {
         [self encodeData:obj forKey:key];
-        return;
+        return YES;
     }
     if ([obj isKindOfClass:[NSNumber class]]) {
         [self encodeNumber:obj forKey:key];
-        return;
+        return YES;
     }
     if ([obj isKindOfClass:[NSNull class]]) {
         [self encodeNullForKey:key];
-        return;
+        return YES;
     }
     if ([obj isKindOfClass:[NSArray class]]) {
         NSArray *array = obj;
@@ -96,12 +102,12 @@
             [subencoder encodeObject:array[index] key:identifier];
             return YES;
         }];
-        return;
+        return YES;
     }
     if ([obj isKindOfClass:[NSDictionary class]]) {
         NSDictionary *dict = obj;
         [self encodeDictionary:dict withKey:key generation:_generation];
-        return;
+        return YES;
     }
     assert(NO);
 }
@@ -155,7 +161,9 @@
                                                   NSUInteger idx,
                                                   BOOL * _Nonnull stop) {
             [subencoder transaction:^BOOL {
-                return block(identifier, idx, subencoder);
+                return [subencoder encodeChildWithKey:@"" identifier:identifier generation:iTermGenerationAlwaysEncode block:^BOOL(iTermGraphEncoder * _Nonnull subencoder) {
+                    return block(identifier, idx, subencoder);
+                }];
             }];
         }];
         NSArray<NSString *> *orderedIdentifiers = identifiers;
@@ -194,14 +202,14 @@
 }
 
 - (void)transaction:(BOOL (^)(void))block {
-    NSMutableDictionary<NSString *, iTermEncoderPODRecord *> *pod = [_pod mutableCopy];
-    NSMutableArray<iTermEncoderGraphRecord *> *children = [_children mutableCopy];
+    NSMutableDictionary<NSString *, iTermEncoderPODRecord *> *savedPOD = [_pod mutableCopy];
+    NSMutableArray<iTermEncoderGraphRecord *> *savedChildren = [_children mutableCopy];
     const BOOL commit = block();
     if (commit) {
         return;
     }
-    _pod = pod;
-    _children = children;
+    _pod = savedPOD;
+    _children = savedChildren;
 }
 
 @end

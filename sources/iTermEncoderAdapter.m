@@ -19,10 +19,16 @@
 }
 
 - (void)setObject:(id)obj forKeyedSubscript:(NSString *)key {
+    if (!obj) {
+        return;
+    }
     [_encoder encodeObject:obj key:key];
 }
 
 - (void)setObject:(id)obj forKey:(NSString *)key {
+    if (!obj) {
+        return;
+    }
     [_encoder encodeObject:obj key:key];
 }
 
@@ -88,10 +94,16 @@
 }
 
 - (void)setObject:(id)obj forKeyedSubscript:(NSString *)key {
+    if (!obj) {
+        return;
+    }
     _mutableDictionary[key] = obj;
 }
 
 - (void)setObject:(id)obj forKey:(NSString *)key {
+    if (!obj) {
+        return;
+    }
     _mutableDictionary[key] = obj;
 }
 

@@ -9,7 +9,9 @@
 
 #import "DebugLogging.h"
 #import "NSFileManager+iTerm.h"
+#import "iTermAdvancedSettingsModel.h"
 #import "iTermRestorableStateDriver.h"
+#import "iTermRestorableStateSQLite.h"
 
 @interface iTermRestorableStateController()<iTermRestorableStateRestoring, iTermRestorableStateSaving>
 @end
@@ -26,17 +28,26 @@
         dispatch_queue_t queue = dispatch_queue_create("com.iterm2.restorable-state", DISPATCH_QUEUE_SERIAL);
         NSString *appSupport = [[NSFileManager defaultManager] applicationSupportDirectory];
         NSString *savedState = [appSupport stringByAppendingPathComponent:@"SavedState"];
-        NSURL *indexURL = [NSURL fileURLWithPath:[savedState stringByAppendingPathComponent:@"Index.plist"]];
-        iTermRestorableStateSaver *saver = [[iTermRestorableStateSaver alloc] initWithQueue:queue indexURL:indexURL];
-        _saver = saver;
-        saver.delegate = self;
 
-        iTermRestorableStateRestorer *restorer = [[iTermRestorableStateRestorer alloc] initWithIndexURL:indexURL];
-        restorer.delegate = self;
-        _restorer = restorer;
+        if ([iTermAdvancedSettingsModel storeStateInSqlite]) {
+            NSURL *url = [NSURL fileURLWithPath:[savedState stringByAppendingPathComponent:@"restorable-state.sqlite"]];
+            iTermRestorableStateSQLite *sqlite = [[iTermRestorableStateSQLite alloc] initWithURL:url];
+            sqlite.delegate = self;
+            _saver = sqlite;
+            _restorer = sqlite;
+        } else {
+            NSURL *indexURL = [NSURL fileURLWithPath:[savedState stringByAppendingPathComponent:@"Index.plist"]];
+            iTermRestorableStateSaver *saver = [[iTermRestorableStateSaver alloc] initWithQueue:queue indexURL:indexURL];
+            _saver = saver;
+            saver.delegate = self;
+
+            iTermRestorableStateRestorer *restorer = [[iTermRestorableStateRestorer alloc] initWithIndexURL:indexURL];
+            restorer.delegate = self;
+            _restorer = restorer;
+        }
         _driver = [[iTermRestorableStateDriver alloc] init];
         _driver.restorer = _restorer;
-        _driver.saver = saver;
+        _driver.saver = _saver;
     }
     return self;
 }

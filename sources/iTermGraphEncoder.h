@@ -9,6 +9,8 @@
 
 #import "iTermEncoderGraphRecord.h"
 
+extern NSInteger iTermGenerationAlwaysEncode;
+
 NS_ASSUME_NONNULL_BEGIN
 
 typedef NS_ENUM(NSUInteger, iTermGraphEncoderState) {
@@ -22,6 +24,10 @@ typedef NS_OPTIONS(NSUInteger, iTermGraphEncoderArrayOptions) {
     iTermGraphEncoderArrayOptionsReverse = (1 << 0)
 };
 
+@protocol iTermGraphEncodable<NSObject>
+- (BOOL)graphEncoderShouldIgnore;
+@end
+
 @interface iTermGraphEncoder : NSObject
 // nil if rolled back.
 @property (nullable, nonatomic, readonly) iTermEncoderGraphRecord *record;
@@ -32,7 +38,7 @@ typedef NS_OPTIONS(NSUInteger, iTermGraphEncoderArrayOptions) {
 - (void)encodeData:(NSData *)data forKey:(NSString *)key;
 - (void)encodeDate:(NSDate *)date forKey:(NSString *)key;
 - (void)encodeNullForKey:(NSString *)key;
-- (void)encodeObject:(id)obj key:(NSString *)key;
+- (BOOL)encodeObject:(id)obj key:(NSString *)key;
 - (void)encodeGraph:(iTermEncoderGraphRecord *)record;
 
 // When encoding an array where all elements have the same key, use the identifer to distinguish

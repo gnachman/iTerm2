@@ -59,7 +59,9 @@
             @(self.generation),
             self.identifier,
             self.podRecords,
-            self.graphRecords];
+            [[self.graphRecords mapWithBlock:^id(iTermEncoderGraphRecord *anObject) {
+        return [NSString stringWithFormat:@"<graph key=%@ id=%@>", anObject.key, anObject.identifier];
+    }] componentsJoinedByString:@", "]];
 }
 
 - (NSComparisonResult)compareGraphRecord:(iTermEncoderGraphRecord *)other {
@@ -160,6 +162,14 @@ iTermGraphExplodedContext iTermGraphExplodeContext(NSString *context) {
     }];
 }
 
+- (iTermEncoderGraphRecord * _Nullable)childArrayWithKey:(NSString *)key {
+    return [self childRecordWithKey:@"__array" identifier:key];
+}
+
+- (iTermEncoderGraphRecord * _Nullable)childDictionaryWithKey:(NSString *)key {
+    return [self childRecordWithKey:@"__dict" identifier:key];
+}
+
 - (void)enumerateValuesVersus:(iTermEncoderGraphRecord * _Nullable)other
                         block:(void (^)(iTermEncoderPODRecord * _Nullable mine,
                                         iTermEncoderPODRecord * _Nullable theirs))block {
@@ -175,17 +185,19 @@ iTermGraphExplodedContext iTermGraphExplodeContext(NSString *context) {
                                                    NSInteger index,
                                                    iTermEncoderGraphRecord *obj,
                                                    BOOL *stop))block {
-    if (![self.key isEqualToString:@"__array"]) {
+    iTermEncoderGraphRecord *record = [self childArrayWithKey:key];
+    if (!record) {
         return;
     }
-    NSArray<NSString *> *order = [[NSString castFrom:[self.podRecords[@"__order"] value]] componentsSeparatedByString:@"\t"] ?: @[];
-    NSDictionary *items = [[self.graphRecords classifyWithBlock:^id(iTermEncoderGraphRecord *itemRecord) {
+
+    NSArray<NSString *> *order = [[NSString castFrom:[record.podRecords[@"__order"] value]] componentsSeparatedByString:@"\t"] ?: @[];
+    NSDictionary *items = [[record.graphRecords classifyWithBlock:^id(iTermEncoderGraphRecord *itemRecord) {
         return itemRecord.identifier;
     }] mapValuesWithBlock:^id(id key, NSArray<iTermEncoderGraphRecord *> *object) {
         return object.firstObject.propertyListValue;
     }];
     [order enumerateObjectsUsingBlock:^(NSString * _Nonnull key, NSUInteger idx, BOOL * _Nonnull stop) {
-        id item = items[key] ?: self->_podRecords[key].value;
+        id item = items[key] ?: record->_podRecords[key].value;
         block(key, idx, item, stop);
     }];
 }

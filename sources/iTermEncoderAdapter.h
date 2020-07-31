@@ -19,8 +19,8 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 @protocol iTermEncoderAdapter<NSObject>
-- (void)setObject:(id)obj forKeyedSubscript:(NSString *)key;
-- (void)setObject:(id)obj forKey:(NSString *)key;
+- (void)setObject:(id _Nullable)obj forKeyedSubscript:(NSString *)key;
+- (void)setObject:(id _Nullable)obj forKey:(NSString *)key;
 - (void)mergeDictionary:(NSDictionary *)dictionary;
 
 - (BOOL)encodeDictionaryWithKey:(NSString *)key

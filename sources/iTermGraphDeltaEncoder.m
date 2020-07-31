@@ -9,8 +9,6 @@
 
 #import "NSArray+iTerm.h"
 
-NSInteger iTermGenerationAlwaysEncode = NSIntegerMax;
-
 @implementation iTermGraphDeltaEncoder
 
 - (instancetype)initWithPreviousRevision:(iTermEncoderGraphRecord * _Nullable)previousRevision {

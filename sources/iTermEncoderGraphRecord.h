@@ -33,8 +33,10 @@ NS_ASSUME_NONNULL_BEGIN
 - (NSString *)contextWithContext:(NSString *)context;
 - (NSComparisonResult)compareGraphRecord:(iTermEncoderGraphRecord *)other;
 
+// You probably want to use arrayWithKey or dictionaryWithKey. This is very low level.
 - (iTermEncoderGraphRecord * _Nullable)childRecordWithKey:(NSString *)key
                                                identifier:(NSString *)identifier;
+
 - (void)enumerateArrayWithKey:(NSString *)key
                         block:(void (^NS_NOESCAPE)(NSString *identifier,
                                                    NSInteger index,
