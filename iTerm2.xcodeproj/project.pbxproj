@@ -1955,6 +1955,7 @@
 		A653F66424CD6A7E0062377E /* iTermRestorableStateSaver.m in Sources */ = {isa = PBXBuildFile; fileRef = A653F66224CD6A7E0062377E /* iTermRestorableStateSaver.m */; };
 		A653F66724CD6A8C0062377E /* iTermRestorableStateRestorer.h in Headers */ = {isa = PBXBuildFile; fileRef = A653F66524CD6A8C0062377E /* iTermRestorableStateRestorer.h */; };
 		A653F66824CD6A8C0062377E /* iTermRestorableStateRestorer.m in Sources */ = {isa = PBXBuildFile; fileRef = A653F66624CD6A8C0062377E /* iTermRestorableStateRestorer.m */; };
+		A653F6BB24D4C9B50062377E /* iTermKeyLabels.m in Sources */ = {isa = PBXBuildFile; fileRef = A673BFDD1E16C54500FA2386 /* iTermKeyLabels.m */; };
 		A65429A020BE71E400CE71B1 /* iTermOpenQuicklyModel.m in Sources */ = {isa = PBXBuildFile; fileRef = A69B45AD19731D3200F5444D /* iTermOpenQuicklyModel.m */; };
 		A65429A320BE7ECA00CE71B1 /* ScriptIcon.png in Resources */ = {isa = PBXBuildFile; fileRef = A65429A120BE7ECA00CE71B1 /* ScriptIcon.png */; };
 		A65429A420BE7ECA00CE71B1 /* ScriptIcon@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A65429A220BE7ECA00CE71B1 /* ScriptIcon@2x.png */; };
@@ -2283,7 +2284,6 @@
 		A673A62A23A2096B00869A95 /* iTermNaggingController.h in Headers */ = {isa = PBXBuildFile; fileRef = A673A62823A2096B00869A95 /* iTermNaggingController.h */; };
 		A673A62B23A2096B00869A95 /* iTermNaggingController.m in Sources */ = {isa = PBXBuildFile; fileRef = A673A62923A2096B00869A95 /* iTermNaggingController.m */; };
 		A673BFDE1E16C54500FA2386 /* iTermKeyLabels.h in Headers */ = {isa = PBXBuildFile; fileRef = A673BFDC1E16C54500FA2386 /* iTermKeyLabels.h */; };
-		A673BFDF1E16C54500FA2386 /* iTermKeyLabels.m in Sources */ = {isa = PBXBuildFile; fileRef = A673BFDD1E16C54500FA2386 /* iTermKeyLabels.m */; };
 		A673BFE21E176AA300FA2386 /* PTYTextViewTest-golden-travis-testCustomUnderline.png in Resources */ = {isa = PBXBuildFile; fileRef = A673BFE01E1743F400FA2386 /* PTYTextViewTest-golden-travis-testCustomUnderline.png */; };
 		A673BFE31E176AA300FA2386 /* PTYTextViewTest-golden-travis-testUnderline.png in Resources */ = {isa = PBXBuildFile; fileRef = A673BFE11E1743F400FA2386 /* PTYTextViewTest-golden-travis-testUnderline.png */; };
 		A673BFE41E176AA400FA2386 /* PTYTextViewTest-golden-travis-testCustomUnderline.png in Resources */ = {isa = PBXBuildFile; fileRef = A673BFE01E1743F400FA2386 /* PTYTextViewTest-golden-travis-testCustomUnderline.png */; };
@@ -13430,6 +13430,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A653F6BB24D4C9B50062377E /* iTermKeyLabels.m in Sources */,
 				53D0FD52237DCB5A00DAFA8A /* NSTableView+iTerm.m in Sources */,
 				A6153D5121F30FF4002976FC /* iTermStatusBarJobComponent.m in Sources */,
 				537BFDDF2102B4060098C91F /* iTermPublisher.m in Sources */,
@@ -13997,7 +13998,6 @@
 				A6C763941B45C52B00E3C992 /* iTermFileDescriptorSocketPath.c in Sources */,
 				A6C763971B45C52B00E3C992 /* TmuxController.m in Sources */,
 				A6C7633F1B45C52B00E3C992 /* iTermAnnouncementView.m in Sources */,
-				A673BFDF1E16C54500FA2386 /* iTermKeyLabels.m in Sources */,
 				A6C763031B45C52B00E3C992 /* VT100WorkingDirectory.m in Sources */,
 				A62C3B281BCC24AB00B5629D /* iTermHostRecordMO+CoreDataProperties.m in Sources */,
 				A6C763461B45C52B00E3C992 /* iTermProgressIndicator.m in Sources */,

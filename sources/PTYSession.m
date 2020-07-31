@@ -241,6 +241,8 @@ static NSString *const SESSION_ARRANGEMENT_APS = @"Automatic Profile Switching";
 
 static NSString *const SESSION_ARRANGEMENT_PROGRAM = @"Program";  // Dictionary. See kProgram constants below.
 static NSString *const SESSION_ARRANGEMENT_ENVIRONMENT = @"Environment";  // Dictionary of environment vars program was run in
+static NSString *const SESSION_ARRANGEMENT_KEYLABELS = @"Key Labels";  // Dictionary string -> string
+static NSString *const SESSION_ARRANGEMENT_KEYLABELS_STACK = @"Key Labels Stack";  // Array of encoded iTermKeyLables dicts
 static NSString *const SESSION_ARRANGEMENT_IS_UTF_8 = @"Is UTF-8";  // TTY is in utf-8 mode
 static NSString *const SESSION_ARRANGEMENT_HOTKEY = @"Session Hotkey";  // NSDictionary iTermShortcut dictionaryValue
 static NSString *const SESSION_ARRANGEMENT_FONT_OVERRIDES = @"Font Overrides";  // Not saved; just used internally when creating a new tmux session.
@@ -1530,6 +1532,18 @@ ITERM_WEAKLY_REFERENCEABLE
                                  includeRestorationBanner:runCommand
                                                reattached:attachedToServer];
             // NOTE: THE SCREEN SIZE IS NOW OUT OF SYNC WITH THE VIEW SIZE. IT MUST BE FIXED!
+        }
+        if (arrangement[SESSION_ARRANGEMENT_KEYLABELS]) {
+            // restoreKeyLabels wants the cursor position to be set so do it after restoring contents.
+            [aSession restoreKeyLabels:[NSDictionary castFrom:arrangement[SESSION_ARRANGEMENT_KEYLABELS]]
+               updateStatusChangedLine:restoreContents];
+            NSArray *labels = arrangement[SESSION_ARRANGEMENT_KEYLABELS_STACK];
+            if (labels) {
+                [aSession->_keyLabelsStack release];
+                aSession->_keyLabelsStack = [[labels mapWithBlock:^id(id anObject) {
+                    return [[[iTermKeyLabels alloc] initWithDictionary:anObject] autorelease];
+                }] mutableCopy];
+            }
         }
 
         if (runCommand) {
@@ -4640,6 +4654,10 @@ ITERM_WEAKLY_REFERENCEABLE
         result[SESSION_ARRANGEMENT_PROGRAM] = @{ kProgramType: kProgramTypeCommand,
                                                  kProgramCommand: self.program };
     }
+    result[SESSION_ARRANGEMENT_KEYLABELS] = _keyLabels ?: @{};
+    result[SESSION_ARRANGEMENT_KEYLABELS_STACK] = [_keyLabelsStack mapWithBlock:^id(iTermKeyLabels *anObject) {
+        return anObject.dictionaryValue;
+    }];
     result[SESSION_ARRANGEMENT_ENVIRONMENT] = self.environment ?: @{};
     result[SESSION_ARRANGEMENT_IS_UTF_8] = @(self.isUTF8);
     result[SESSION_ARRANGEMENT_SHORT_LIVED_SINGLE_USE] = @(self.shortLivedSingleUse);
@@ -11221,6 +11239,28 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     }
 }
 
+- (void)updateStatusChangedLine {
+    _statusChangedAbsLine = _screen.cursorY - 1 + _screen.numberOfScrollbackLines + _screen.totalScrollbackOverflow;
+}
+
+- (void)restoreKeyLabels:(NSDictionary *)labels updateStatusChangedLine:(BOOL)updateStatusChangedLine {
+    if (labels.count == 0) {
+        return;
+    }
+    if (!_keyLabels) {
+        _keyLabels = [[NSMutableDictionary alloc] init];
+    }
+    [labels enumerateKeysAndObjectsUsingBlock:^(NSString *_Nonnull name, NSString *_Nonnull value, BOOL * _Nonnull stop) {
+        if (value.length == 0) {
+            return;
+        }
+        _keyLabels[name] = [value copy];
+        if ([name isEqualToString:@"status"] && updateStatusChangedLine) {
+            [self updateStatusChangedLine];
+        }
+    }];
+}
+
 - (void)screenSetLabel:(NSString *)label forKey:(NSString *)keyName {
     if (!_keyLabels) {
         _keyLabels = [[NSMutableDictionary alloc] init];
@@ -11232,7 +11272,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         _keyLabels[keyName] = [[label copy] autorelease];
     }
     if ([keyName isEqualToString:@"status"] && changed) {
-        _statusChangedAbsLine = _screen.cursorY - 1 + _screen.numberOfScrollbackLines + _screen.totalScrollbackOverflow;
+        [self updateStatusChangedLine];
     }
     [_delegate sessionKeyLabelsDidChange:self];
 }

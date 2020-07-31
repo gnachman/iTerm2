@@ -10,10 +10,18 @@
 
 @implementation iTermKeyLabels
 
-- (void)dealloc {
-    [_map release];
-    [_name release];
-    [super dealloc];
+- (instancetype)initWithDictionary:(NSDictionary *)dict {
+    self = [super init];
+    if (self) {
+        _map = [(dict[@"map"] ?: @{}) mutableCopy];
+        _name = dict[@"name"] ?: @"";
+    }
+    return self;
+}
+
+- (NSDictionary *)dictionaryValue {
+    return @{ @"map": _map ?: @{},
+              @"name": _name ?: @"" };
 }
 
 @end

@@ -3130,6 +3130,7 @@ ITERM_WEAKLY_REFERENCEABLE
         [session.screen.currentGrid restorePreferredCursorPositionIfPossible];
     }
     [_contentView updateToolbeltForWindow:self.window];
+    [self updateTouchBarFunctionKeyLabels];
     return YES;
 }
 
@@ -11227,6 +11228,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 
 - (void)tabKeyLabelsDidChangeForSession:(PTYSession *)session {
     [self updateTouchBarFunctionKeyLabels];
+    [self invalidateRestorableState];
 }
 
 - (void)tabSessionDidChangeBackgroundColor:(PTYTab *)tab {
