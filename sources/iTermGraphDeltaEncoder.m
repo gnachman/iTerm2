@@ -8,6 +8,7 @@
 #import "iTermGraphDeltaEncoder.h"
 
 #import "NSArray+iTerm.h"
+#import "iTermOrderedDictionary.h"
 
 @implementation iTermGraphDeltaEncoder
 
@@ -67,7 +68,7 @@
                                    iTermEncoderGraphRecord * _Nullable after,
                                    NSNumber *parent))block {
     block(_previousRevision, self.record, @0);
-    [self enumerateBefore:_previousRevision after:self.record parent:@0 block:block];
+    [self enumerateBefore:_previousRevision after:self.record parent:self.record.rowid block:block];
 }
 
 - (void)enumerateBefore:(iTermEncoderGraphRecord *)preRecord
@@ -76,24 +77,40 @@
                   block:(void (^)(iTermEncoderGraphRecord * _Nullable before,
                                   iTermEncoderGraphRecord * _Nullable after,
                                   NSNumber *parent))block {
-    NSDictionary<NSDictionary *, NSArray<iTermEncoderGraphRecord *> *> *before = [preRecord.graphRecords classifyWithBlock:^id(iTermEncoderGraphRecord *record) {
+    iTermOrderedDictionary<NSDictionary *, iTermEncoderGraphRecord *> *beforeDict =
+    [iTermOrderedDictionary byMapping:preRecord.graphRecords block:^id _Nonnull(NSUInteger index,
+                                                                                iTermEncoderGraphRecord * _Nonnull record) {
         return @{ @"key": record.key,
                   @"identifier": record.identifier };
     }];
-    NSDictionary<NSDictionary *, NSArray<iTermEncoderGraphRecord *> *> *after = [postRecord.graphRecords classifyWithBlock:^id(iTermEncoderGraphRecord *record) {
+    iTermOrderedDictionary<NSDictionary *, iTermEncoderGraphRecord *> *afterDict =
+    [iTermOrderedDictionary byMapping:postRecord.graphRecords block:^id _Nonnull(NSUInteger index,
+                                                                                iTermEncoderGraphRecord * _Nonnull record) {
         return @{ @"key": record.key,
                   @"identifier": record.identifier };
     }];
-    NSSet<NSDictionary *> *allKeys = [NSSet setWithArray:[before.allKeys ?: @[] arrayByAddingObjectsFromArray:after.allKeys ?: @[] ]];
-    [allKeys enumerateObjectsUsingBlock:^(NSDictionary * _Nonnull keyId, BOOL * _Nonnull stop) {
-        // Run the block for this pair of nodes
-        block(before[keyId].firstObject, after[keyId].firstObject, parent);
 
+    void (^handle)(NSDictionary *, iTermEncoderGraphRecord *) = ^(NSDictionary *key,
+                                                                  iTermEncoderGraphRecord *record) {
+        iTermEncoderGraphRecord *before = beforeDict[key];
+        iTermEncoderGraphRecord *after = afterDict[key];
+        block(before, after, parent);
         // Now recurse for their descendants.
-        [self enumerateBefore:before[keyId].firstObject
-                        after:after[keyId].firstObject
-                       parent:preRecord ? preRecord.rowid : postRecord.rowid
+        [self enumerateBefore:before
+                        after:after
+                       parent:before ? before.rowid : after.rowid
                         block:block];
+    };
+    NSMutableSet<NSDictionary *> *seenKeys = [NSMutableSet set];
+    [beforeDict.keys enumerateObjectsUsingBlock:^(NSDictionary * _Nonnull key, NSUInteger idx, BOOL * _Nonnull stop) {
+        handle(key, beforeDict[key]);
+        [seenKeys addObject:key];
+    }];
+    [afterDict.keys enumerateObjectsUsingBlock:^(NSDictionary * _Nonnull key, NSUInteger idx, BOOL * _Nonnull stop) {
+        if ([seenKeys containsObject:key]) {
+            return;
+        }
+        handle(key, afterDict[key]);
     }];
 }
 

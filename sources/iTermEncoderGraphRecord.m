@@ -58,7 +58,8 @@
 }
 
 - (NSString *)description {
-    return [NSString stringWithFormat:@"<iTermEncoderGraphRecord: key=%@ gen=%@ id=%@ pod=%@ graphs=%@>",
+    return [NSString stringWithFormat:@"<iTermEncoderGraphRecord: rowid=%@ key=%@ gen=%@ id=%@ pod=%@ graphs=%@>",
+            self.rowid,
             self.key,
             @(self.generation),
             self.identifier,
@@ -114,6 +115,9 @@
         return NO;
     }
     if (![NSObject object:other.identifier isEqualToObject:self.identifier]) {
+        return NO;
+    }
+    if (![NSObject object:other.rowid isEqualToObject:self.rowid]) {
         return NO;
     }
     return YES;

@@ -96,7 +96,7 @@
         }
         if (before && !after) {
             [state.db executeUpdate:@"delete from Node where rowid=?", before.rowid];
-            [state.db executeUpdate:@"delete from Value node=?", before.rowid];
+            [state.db executeUpdate:@"delete from Value where node=?", before.rowid];
         } else if (!before && after) {
             [state.db executeUpdate:@"insert into Node (key, identifier, parent) values (?, ?, ?)",
              after.key, after.identifier, parent];
@@ -109,6 +109,9 @@
                  record.key, record.data, lastInsertRowID, @(record.type)];
             }];
         } else if (before && after) {
+            if (after.rowid == nil) {
+                after.rowid = before.rowid;
+            }
             assert(before.rowid.longLongValue == after.rowid.longLongValue);
             [before enumerateValuesVersus:after block:^(iTermEncoderPODRecord * _Nullable mine,
                                                         iTermEncoderPODRecord * _Nullable theirs) {
@@ -141,8 +144,8 @@
     }
     _ok = YES;
 
-    [state.db executeUpdate:@"create table Node (key text, identifier text, parent integer)"];
-    [state.db executeUpdate:@"create table Value (key text, node integer, value blob, type integer)"];
+    [state.db executeUpdate:@"create table if not exists Node (key text, identifier text, parent integer)"];
+    [state.db executeUpdate:@"create table if not exists Value (key text, node integer, value blob, type integer)"];
 
     NSMutableArray<NSArray *> *nodes = [NSMutableArray array];
     NSMutableArray<NSArray *> *values = [NSMutableArray array];
@@ -151,7 +154,7 @@
         while ([rs next]) {
             [nodes addObject:@[ [rs stringForColumn:@"key"],
                                 [rs stringForColumn:@"identifier"],
-                                [rs stringForColumn:@"parent"],
+                                @([rs longLongIntForColumn:@"parent"]),
                                 @([rs longLongIntForColumn:@"rowid"])]];
         }
         [rs close];

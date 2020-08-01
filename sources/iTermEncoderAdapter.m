@@ -81,6 +81,10 @@
 
 @implementation iTermMutableDictionaryEncoderAdapter: NSObject
 
++ (instancetype)encoder {
+    return [[self alloc] initWithMutableDictionary:[NSMutableDictionary dictionary]];
+}
+
 - (instancetype)initWithMutableDictionary:(NSMutableDictionary *)mutableDictionary {
     self = [super init];
     if (self) {

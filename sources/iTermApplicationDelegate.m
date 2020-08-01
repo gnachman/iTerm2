@@ -235,7 +235,8 @@ static BOOL hasBecomeActive = NO;
     if (self) {
         _untitledWindowStateMachine = [[iTermUntitledWindowStateMachine alloc] init];
         _untitledWindowStateMachine.delegate = self;
-        if ([iTermAdvancedSettingsModel useRestorableStateController]) {
+        if ([iTermAdvancedSettingsModel useRestorableStateController] &&
+            ![[NSApplication sharedApplication] isRunningUnitTests]) {
             _restorableStateController = [[iTermRestorableStateController alloc] init];
             _restorableStateController.delegate = self;
         }

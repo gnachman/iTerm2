@@ -55,6 +55,7 @@ NS_ASSUME_NONNULL_BEGIN
 @interface iTermMutableDictionaryEncoderAdapter: NSObject<iTermEncoderAdapter>
 @property (nonatomic, readonly) NSMutableDictionary<NSString *, id> *mutableDictionary;
 
++ (instancetype)encoder;
 - (instancetype)initWithMutableDictionary:(NSMutableDictionary *)mutableDictionary NS_DESIGNATED_INITIALIZER;
 
 @end

@@ -70,7 +70,7 @@ static iTermEncoderGraphRecord *iTermGraphDeltaEncoderMakeGraphRecord(NSNumber *
                                          userInfo:@{ NSLocalizedDescriptionKey: [NSString stringWithFormat:@"Bad row: %@", row] }];
             return nil;
         }
-        if (rowid.integerValue == 0 && key.length == 0) {
+        if (parent.integerValue == 0 && key.length == 0) {
             if (*rootNodeIDOut) {
                 DLog(@"Two roots found");
                 _lastError = [NSError errorWithDomain:@"com.iterm2.graph-transformer"
@@ -80,12 +80,12 @@ static iTermEncoderGraphRecord *iTermGraphDeltaEncoderMakeGraphRecord(NSNumber *
             }
             *rootNodeIDOut = rowid;
         }
-        nodes[row] = [@{ @"pod": [NSMutableDictionary dictionary],
-                         @"key": key,
-                         @"identifier": identifier,
-                         @"parent": parent,
-                         @"children": [NSMutableArray array],
-                         @"rowid": rowid } mutableCopy];
+        nodes[rowid] = [@{ @"pod": [NSMutableDictionary dictionary],
+                           @"key": key,
+                           @"identifier": identifier,
+                           @"parent": parent,
+                           @"children": [NSMutableArray array],
+                           @"rowid": rowid } mutableCopy];
     }
     return nodes;
 }
@@ -134,11 +134,15 @@ static iTermEncoderGraphRecord *iTermGraphDeltaEncoderMakeGraphRecord(NSNumber *
     return YES;
 }
 
-- (BOOL)attachChildrenToParents:(NSDictionary<NSString *, NSMutableDictionary *> *)nodes {
+- (BOOL)attachChildrenToParents:(NSDictionary<NSNumber *, NSMutableDictionary *> *)nodes
+              ignoringRootRowID:(NSNumber *)rootRowID {
     __block BOOL ok = YES;
-    [nodes enumerateKeysAndObjectsUsingBlock:^(NSString * _Nonnull nodeid,
+    [nodes enumerateKeysAndObjectsUsingBlock:^(NSNumber * _Nonnull nodeid,
                                                NSMutableDictionary * _Nonnull nodeDict,
                                                BOOL * _Nonnull stop) {
+        if ([nodeid isEqualToNumber:rootRowID]) {
+            return;
+        }
         NSMutableDictionary<NSString *, id> *parentDict = nodes[nodeDict[@"parent"]];
         if (!parentDict) {
             ok = NO;
@@ -169,7 +173,7 @@ static iTermEncoderGraphRecord *iTermGraphDeltaEncoderMakeGraphRecord(NSNumber *
         DLog(@"Failed to attach values to nodes");
         return nil;
     }
-    if (![self attachChildrenToParents:nodes]) {
+    if (![self attachChildrenToParents:nodes ignoringRootRowID:rootNodeID]) {
         DLog(@"Failed to attach children to parents");
         return nil;
     }
