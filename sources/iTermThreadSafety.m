@@ -290,11 +290,11 @@ NSPointerArray *gThreads;
     assert(_magic == 0xdeadbeef);
     [_invokeStack release];
     [_creationStack release];
+    _magic = 0;
 #endif
     dispatch_release(_group);
     _block = nil;
     _group = nil;
-    _magic = 0;
     [super dealloc];
 }
 
