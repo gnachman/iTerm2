@@ -9,6 +9,7 @@
 #import "iTermTipCardActionButton.h"
 
 #import "NSBezierPath+iTerm.h"
+#import "NSView+iTerm.h"
 #import "SolidColorView.h"
 #import <QuartzCore/QuartzCore.h>
 
@@ -153,6 +154,7 @@ static const CGFloat kStandardButtonHeight = 34;
     [_textField sizeToFit];
     NSRect rect = _textField.frame;
     rect.size.width = width;
+    rect.origin.y = [self retinaRound:(NSHeight(_textField.superview.frame) - NSHeight(rect)) / 2.0];
     _textField.frame = rect;
 }
 
