@@ -77,6 +77,8 @@ typedef NS_OPTIONS(NSUInteger, iTermGraphEncoderArrayOptions) {
                  identifier:(NSString *)identifier
                  generation:(NSInteger)generation;
 
+- (instancetype)initWithRecord:(iTermEncoderGraphRecord *)record;
+
 - (instancetype)init NS_UNAVAILABLE;
 
 - (void)rollback;

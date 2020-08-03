@@ -29,6 +29,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (NSError *)lastError;
 // Return YES to commit, no to cancel
 - (BOOL)transaction:(BOOL (^ NS_NOESCAPE)(void))block;
+- (void)unlink;
 @end
 
 @protocol iTermDatabaseFactory<NSObject>

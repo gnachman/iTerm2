@@ -10934,16 +10934,24 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     return aSession;
 }
 
+- (void)restoreState:(PseudoTerminalState *)state {
+    [self restoreArrangement:state.arrangement];
+}
+
+- (void)restoreArrangement:(NSDictionary *)arrangement {
+    [self loadArrangement:arrangement
+                    named:nil
+                 sessions:nil];
+    self.restorableStateDecodePending = NO;
+}
+
 - (void)window:(NSWindow *)window didDecodeRestorableState:(NSCoder *)state {
     NSDictionary *arrangement = [state decodeObjectForKey:kTerminalWindowStateRestorationWindowArrangementKey];
     if ([iTermAdvancedSettingsModel logRestorableStateSize]) {
         NSString *log = [arrangement sizeInfo];
         [log writeToFile:[NSString stringWithFormat:@"/tmp/statesize.window-%p.txt", self] atomically:NO encoding:NSUTF8StringEncoding error:nil];
     }
-    [self loadArrangement:arrangement
-                    named:nil
-                 sessions:nil];
-    self.restorableStateDecodePending = NO;
+    [self restoreArrangement:arrangement];
 }
 
 - (void)setRestorableStateDecodePending:(BOOL)restorableStateDecodePending {

@@ -8,13 +8,19 @@
 
 #import <Cocoa/Cocoa.h>
 
-@interface PseudoTerminalRestorer : NSObject {
+@interface PseudoTerminalState: NSObject
+@property (nonatomic, readonly) NSDictionary *arrangement;
+- (instancetype)initWithCoder:(NSCoder *)coder;
+- (instancetype)initWithDictionary:(NSDictionary *)arrangement;
+@end
 
-}
+@interface PseudoTerminalRestorer : NSObject
 
 @property(class, nonatomic) void (^postRestorationCompletionBlock)(void);
 
-+ (void)restoreWindowWithIdentifier:(NSString *)identifier state:(NSCoder *)state completionHandler:(void (^)(NSWindow *, NSError *))completionHandler;
++ (void)restoreWindowWithIdentifier:(NSString *)identifier
+                              state:(NSCoder *)state
+                  completionHandler:(void (^)(NSWindow *, NSError *))completionHandler;
 
 + (BOOL)willOpenWindows;
 
@@ -24,7 +30,7 @@
 + (void)runQueuedBlocks;
 
 + (void)restoreWindowWithIdentifier:(NSString *)identifier
-                              state:(NSCoder *)state
+                pseudoTerminalState:(PseudoTerminalState *)state
                              system:(BOOL)system
                   completionHandler:(void (^)(NSWindow *, NSError *))completionHandler;
 + (BOOL)shouldIgnoreOpenUntitledFile;

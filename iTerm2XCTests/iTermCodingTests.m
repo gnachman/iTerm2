@@ -11,6 +11,7 @@
 #import "NSObject+iTerm.h"
 #import "NSStringITerm.h"
 #import "NSWorkspace+iTerm.h"
+#import "iTermEncoderAdapter.h"
 #import "iTermGraphEncoder.h"
 #import "iTermGraphDatabase.h"
 #import "iTermGraphDeltaEncoder.h"
@@ -390,14 +391,14 @@
     iTermEncoderPODRecord *name = [iTermEncoderPODRecord withString:@"bob" key:@"name"];
     iTermEncoderPODRecord *age = [iTermEncoderPODRecord withNumber:@23 key:@"age"];
     NSArray *expectedGraphs =
-    @[ [iTermEncoderGraphRecord withPODs:@[ name ] graphs:@[] generation:2 key:@"left" identifier:@"" rowid:@2],
-       [iTermEncoderGraphRecord withPODs:@[ age ] graphs:@[] generation:3 key:@"right" identifier:@"" rowid:@3] ];
+    @[ [iTermEncoderGraphRecord withPODs:@[ name ] graphs:@[] generation:2 key:@"left" identifier:@"" rowid:nil],
+       [iTermEncoderGraphRecord withPODs:@[ age ] graphs:@[] generation:3 key:@"right" identifier:@"" rowid:nil] ];
     iTermEncoderGraphRecord *expected = [iTermEncoderGraphRecord withPODs:expectedPODs
                                                                    graphs:expectedGraphs
                                                                generation:1
                                                                       key:@"root"
                                                                identifier:@""
-                                                                    rowid:@1];
+                                                                    rowid:nil];
     XCTAssertEqualObjects(actual, expected);
 }
 
@@ -543,12 +544,12 @@
  */
 - (void)testGraphTableTransformer_HappyPath {
     NSArray *nodes = @[
-        // key, identifier, parent
-        @[ @"k5", @"",   @"k2.k4[i2]" ],
-        @[ @"k4", @"i2", @"k2",       ],
-        @[ @"k4", @"i1", @"k2",       ],
-        @[ @"k2", @"",   @"",         ],
-        @[ @"",   @"",   @"",         ],  // Root
+        // key, identifier, parent, rowid
+        @[ @"k5", @"",   @3, @5 ],
+        @[ @"k4", @"i1", @2, @4 ],
+        @[ @"k4", @"i2", @2, @3 ],
+        @[ @"k2", @"",   @1, @2 ],
+        @[ @"",   @"",   @0, @1 ],
     ];
 
     NSData *data = [NSData dataWithBytes:"xyz" length:3];
@@ -570,12 +571,11 @@
     };
     // nodeid, key, value, type
     NSArray *values = @[
-        @[ @"", @"vk1", d(@"vv1"), @(iTermEncoderRecordTypeString) ],
-        @[ @"", @"vk2", d(@123), @(iTermEncoderRecordTypeNumber) ],
-        @[ @"", @"vk3", d(date), @(iTermEncoderRecordTypeDate) ],
-        @[ @"", @"vk4", d(data), @(iTermEncoderRecordTypeData) ],
-
-        @[ @"k2.k4[i2].k5", @"vk5", d(@"vv2"), @(iTermEncoderRecordTypeString) ]
+        @[ @1, @"vk1", d(@"vv1"), @(iTermEncoderRecordTypeString) ],
+        @[ @1, @"vk2", d(@123), @(iTermEncoderRecordTypeNumber) ],
+        @[ @1, @"vk3", d(date), @(iTermEncoderRecordTypeDate) ],
+        @[ @1, @"vk4", d(data), @(iTermEncoderRecordTypeData) ],
+        @[ @5, @"vk5", d(@"vv2"), @(iTermEncoderRecordTypeString) ]
     ];
 
     iTermGraphTableTransformer *transformer =
@@ -1256,7 +1256,7 @@
 
 - (iTermGraphDatabase *)graphDatabaseAfterInitialAdd {
     NSMutableDictionary<NSString *,id<iTermDatabaseResultSet>> *results = [NSMutableDictionary dictionary];
-    results[@"select * from Node"] = [iTermMockDatabaseResultSet withRows:@[]];
+    results[@"select key, identifier, parent, rowid from Node"] = [iTermMockDatabaseResultSet withRows:@[]];
     results[@"select * from Value"] = [iTermMockDatabaseResultSet withRows:@[]];
 
     iTermMockDatabaseFactory *mockDB = [[iTermMockDatabaseFactory alloc] initWithResults:results
@@ -1298,7 +1298,7 @@
 
 - (void)testGraphDatabase_Load {
     NSMutableDictionary<NSString *,id<iTermDatabaseResultSet>> *results = [NSMutableDictionary dictionary];
-    results[@"select * from Node"] = [iTermMockDatabaseResultSet withRows:@[
+    results[@"select key, identifier, parent, rowid from Node"] = [iTermMockDatabaseResultSet withRows:@[
         @{ @"key": @"",
            @"identifier": @"",
            @"parent": @0,
@@ -1368,7 +1368,7 @@
 
 - (void)testGraphDatabase_DeleteNode {
     NSMutableDictionary<NSString *,id<iTermDatabaseResultSet>> *results = [NSMutableDictionary dictionary];
-    results[@"select * from Node"] = [iTermMockDatabaseResultSet withRows:@[]];
+    results[@"select key, identifier, parent, rowid from Node"] = [iTermMockDatabaseResultSet withRows:@[]];
     results[@"select * from Value"] = [iTermMockDatabaseResultSet withRows:@[]];
 
     iTermMockDatabaseFactory *mockDB = [[iTermMockDatabaseFactory alloc] initWithResults:results
@@ -1427,7 +1427,7 @@
 
 - (void)testGraphDatabase_InsertNode {
     NSMutableDictionary<NSString *,id<iTermDatabaseResultSet>> *results = [NSMutableDictionary dictionary];
-    results[@"select * from Node"] = [iTermMockDatabaseResultSet withRows:@[]];
+    results[@"select key, identifier, parent, rowid from Node"] = [iTermMockDatabaseResultSet withRows:@[]];
     results[@"select * from Value"] = [iTermMockDatabaseResultSet withRows:@[]];
 
     iTermMockDatabaseFactory *mockDB = [[iTermMockDatabaseFactory alloc] initWithResults:results
@@ -1499,7 +1499,7 @@
 
 - (void)testGraphDatabase_UpdateValue {
     NSMutableDictionary<NSString *,id<iTermDatabaseResultSet>> *results = [NSMutableDictionary dictionary];
-    results[@"select * from Node"] = [iTermMockDatabaseResultSet withRows:@[]];
+    results[@"select key, identifier, parent, rowid from Node"] = [iTermMockDatabaseResultSet withRows:@[]];
     results[@"select * from Value"] = [iTermMockDatabaseResultSet withRows:@[]];
 
     iTermMockDatabaseFactory *mockDB = [[iTermMockDatabaseFactory alloc] initWithResults:results
@@ -1526,6 +1526,15 @@
         }
          completion:nil];
     }];
+    NSArray<NSString *> *expectedCommands = @[
+        @"create table if not exists Node (key text, identifier text, parent integer)",
+        @"create table if not exists Value (key text, node integer, value blob, type integer)",
+        @"insert into Node (key, identifier, parent) values (, , 0)",
+        @"insert into Node (key, identifier, parent) values (wrapper, , 1)",
+        @"insert into Node (key, identifier, parent) values (mynode, , 2)",
+        @"insert into Value (key, value, node, type) values (World, Hello, 3, 0)",
+    ];
+    XCTAssertEqualObjects(db.commands, expectedCommands);
     [db.commands removeAllObjects];
 
     [gdb.thread performDeferredBlocksAfter:^{
@@ -1546,15 +1555,15 @@
          completion:nil];
     }];
 
-    NSArray<NSString *> *expectedCommands = @[
-        @"update Value set value=Goodbye, type=0 where key=World and context=wrapper.mynode"
+    expectedCommands = @[
+        @"update Value set value=Goodbye, type=0 where key=World and node=3"
     ];
     XCTAssertEqualObjects(db.commands, expectedCommands);
 }
 
 - (void)testGraphDatabase_InsertValue {
     NSMutableDictionary<NSString *,id<iTermDatabaseResultSet>> *results = [NSMutableDictionary dictionary];
-    results[@"select * from Node"] = [iTermMockDatabaseResultSet withRows:@[]];
+    results[@"select key, identifier, parent, rowid from Node"] = [iTermMockDatabaseResultSet withRows:@[]];
     results[@"select * from Value"] = [iTermMockDatabaseResultSet withRows:@[]];
 
     iTermMockDatabaseFactory *mockDB = [[iTermMockDatabaseFactory alloc] initWithResults:results
@@ -1619,7 +1628,7 @@
 
 - (void)testGraphDatabase_DeleteValue {
     NSMutableDictionary<NSString *,id<iTermDatabaseResultSet>> *results = [NSMutableDictionary dictionary];
-    results[@"select * from Node"] = [iTermMockDatabaseResultSet withRows:@[]];
+    results[@"select key, identifier, parent, rowid from Node"] = [iTermMockDatabaseResultSet withRows:@[]];
     results[@"select * from Value"] = [iTermMockDatabaseResultSet withRows:@[]];
 
     iTermMockDatabaseFactory *mockDB = [[iTermMockDatabaseFactory alloc] initWithResults:results
@@ -1715,10 +1724,8 @@
         [encoder encodeChildWithKey:@"root" identifier:@"" generation:1 block:^BOOL (iTermGraphEncoder * _Nonnull subencoder) {
             [subencoder encodeString:@"string" forKey:@"STRING"];
             [subencoder encodeArrayWithKey:@"values" generation:1 identifiers:@[ @"i1", @"i2" ] options:0 block:^BOOL (NSString * _Nonnull identifier, NSInteger index, iTermGraphEncoder * _Nonnull subencoder) {
-                return [subencoder encodeChildWithKey:@"" identifier:identifier generation:1 block:^BOOL(iTermGraphEncoder * _Nonnull subencoder) {
-                    [subencoder encodeString:[identifier stringRepeatedTimes:10] forKey:identifier];
-                    return YES;
-                }];
+                [subencoder encodeString:[identifier stringRepeatedTimes:10] forKey:identifier];
+                return YES;
             }];
             return YES;
         }];
@@ -1732,10 +1739,8 @@
         [encoder encodeChildWithKey:@"root" identifier:@"" generation:2 block:^BOOL(iTermGraphEncoder * _Nonnull subencoder) {
             [subencoder encodeString:@"string" forKey:@"STRING"];
             [subencoder encodeArrayWithKey:@"values" generation:2 identifiers:@[ @"i2", @"i3" ] options:0 block:^BOOL (NSString * _Nonnull identifier, NSInteger index, iTermGraphEncoder * _Nonnull subencoder) {
-                return [subencoder encodeChildWithKey:@"" identifier:identifier generation:1 block:^BOOL(iTermGraphEncoder * _Nonnull subencoder) {
-                    [subencoder encodeString:[identifier stringRepeatedTimes:10] forKey:identifier];
-                    return YES;
-                }];
+                [subencoder encodeString:[identifier stringRepeatedTimes:10] forKey:identifier];
+                return YES;
             }];
             return YES;
         }];
@@ -1751,6 +1756,98 @@
         }
     };
     XCTAssertEqualObjects(expected, db.record.propertyListValue);
+}
+
+- (void)testAdapterArray {
+    NSString *file = [[NSWorkspace sharedWorkspace] temporaryFileNameWithPrefix:@"test" suffix:@"db"];
+    NSURL *url = [NSURL fileURLWithPath:file];
+    iTermGraphDatabase *db =
+    [[iTermGraphDatabase alloc] initWithURL:url
+                            databaseFactory:[[iTermSqliteDatabaseFactory alloc] init]];
+    NSArray *myArray = @[ @2, @4, @6, @8 ];
+    NSArray *arrayOfDicts = @[ @{ @"x": @"X" },
+                               @{ @"y": @"Y" }];
+    [db update:^(iTermGraphEncoder * _Nonnull encoder) {
+        iTermGraphEncoderAdapter *adapter = [[iTermGraphEncoderAdapter alloc] initWithGraphEncoder:encoder];
+        adapter[@"myArray"] = myArray;
+        adapter[@"arrayOfDicts"] = arrayOfDicts;
+    }
+    completion:nil];
+    [db.db close];
+
+    db =
+    [[iTermGraphDatabase alloc] initWithURL:url
+                            databaseFactory:[[iTermSqliteDatabaseFactory alloc] init]];
+    NSDictionary *plist = db.record.propertyListValue;
+    XCTAssertEqualObjects(plist[@"myArray"], myArray);
+    XCTAssertEqualObjects(plist[@"arrayOfDicts"], arrayOfDicts);
+}
+
+- (void)testDictWithArrays {
+    NSString *file = [[NSWorkspace sharedWorkspace] temporaryFileNameWithPrefix:@"test" suffix:@"db"];
+    NSURL *url = [NSURL fileURLWithPath:file];
+    iTermGraphDatabase *db =
+    [[iTermGraphDatabase alloc] initWithURL:url
+                            databaseFactory:[[iTermSqliteDatabaseFactory alloc] init]];
+    [db update:^(iTermGraphEncoder * _Nonnull encoder) {
+        iTermGraphEncoderAdapter *adapter = [[iTermGraphEncoderAdapter alloc] initWithGraphEncoder:encoder];
+        [adapter encodeArrayWithKey:@"Tabs"
+                        identifiers:@[ @"tab1" ]
+                         generation:iTermGenerationAlwaysEncode
+                              block:^BOOL(id<iTermEncoderAdapter>  _Nonnull encoder, NSInteger i, NSString * _Nonnull identifier) {
+            return [encoder encodeDictionaryWithKey:@"Root"
+                                         generation:iTermGenerationAlwaysEncode
+                                              block:^BOOL(id<iTermEncoderAdapter>  _Nonnull encoder) {
+                [encoder encodeArrayWithKey:@"Subviews"
+                                identifiers:@[ @"view1" ]
+                                 generation:iTermGenerationAlwaysEncode
+                                      block:^BOOL(id<iTermEncoderAdapter>  _Nonnull encoder, NSInteger i, NSString * _Nonnull identifier) {
+                    return [encoder encodeDictionaryWithKey:@"session"
+                                                 generation:iTermGenerationAlwaysEncode
+                                                      block:^BOOL(id<iTermEncoderAdapter>  _Nonnull encoder) {
+                        return [encoder encodeDictionaryWithKey:@"contents"
+                                                     generation:iTermGenerationAlwaysEncode
+                                                          block:^BOOL(id<iTermEncoderAdapter>  _Nonnull encoder) {
+                            [encoder mergeDictionary:@{
+                                @"cll": @[ @2, @4, @6, @8 ],
+                                @"metadata": @[ @1, @"foo" ]
+                            }];
+                            return YES;
+                        }];
+                    }];
+                }];
+                return YES;
+            }];
+        }];
+    }
+    completion:nil];
+    [db.db close];
+
+    db =
+    [[iTermGraphDatabase alloc] initWithURL:url
+                            databaseFactory:[[iTermSqliteDatabaseFactory alloc] init]];
+    NSDictionary *plist = db.record.propertyListValue;
+    NSArray *tabs = plist[@"Tabs"];
+    XCTAssertNotNil(tabs);
+    NSDictionary *tab = tabs[0];
+    XCTAssertNotNil(tab);
+    NSDictionary *root = tab[@"Root"];
+    XCTAssertNotNil(root);
+    NSArray *subviews = root[@"Subviews"];
+    XCTAssertNotNil(subviews);
+    NSDictionary *subview = subviews[0];
+    XCTAssertNotNil(subview);
+    NSDictionary *session = subview[@"session"];
+    XCTAssertNotNil(session);
+    NSDictionary *contents = session[@"contents"];
+    XCTAssertNotNil(contents);
+    NSArray *cll = contents[@"cll"];
+    NSArray *expected = @[ @2, @4, @6, @8 ];
+    XCTAssertEqualObjects(cll, expected);
+
+    NSArray *metadata = contents[@"metadata"];
+    expected = @[ @1, @"foo" ];
+    XCTAssertEqualObjects(metadata, expected);
 }
 
 @end

@@ -29,6 +29,7 @@
 
 @implementation iTermSqliteDatabaseImpl {
     FMDatabase *_db;
+    NSInteger _commandCount;
 }
 
 - (instancetype)initWithDatabase:(FMDatabase *)db {
@@ -37,6 +38,15 @@
         _db = db;
     }
     return self;
+}
+
+- (void)unlink {
+    assert(!_db.isOpen);
+    NSError *error = nil;
+    if (![[NSFileManager defaultManager] removeItemAtURL:_db.databaseURL
+                                                   error:&error]) {
+        DLog(@"Failed to unlink %@: %@", _db.databaseURL.path, error);
+    }
 }
 
 - (BOOL)executeUpdate:(NSString *)sql, ... {
@@ -50,7 +60,7 @@
         [self logStatement:sql vaList:args];
         va_end(args);
     }
-
+    [self incrementCount];
     return result;
 }
 
@@ -85,8 +95,16 @@
         [self logStatement:sql vaList:args];
         va_end(args);
     }
+    [self incrementCount];
 
     return result;
+}
+
+- (void)incrementCount {
+    _commandCount += 1;
+    if (_commandCount % 1000 == 0) {
+        NSLog(@"Command count reached %@", @(_commandCount));
+    }
 }
 
 - (BOOL)open {

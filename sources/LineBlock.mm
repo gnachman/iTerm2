@@ -32,6 +32,7 @@ NSString *const kLineBlockCLLKey = @"Cumulative Line Lengths";
 NSString *const kLineBlockIsPartialKey = @"Is Partial";
 NSString *const kLineBlockMetadataKey = @"Metadata";
 NSString *const kLineBlockMayHaveDWCKey = @"May Have Double Width Character";
+NSString *const kLineBlockGuid = @"GUID";
 
 static NSInteger LineBlockNextGeneration = -1;
 
@@ -109,6 +110,7 @@ struct iTermNumFullLinesCacheKeyHasher {
     std::unordered_map<iTermNumFullLinesCacheKey, int, iTermNumFullLinesCacheKeyHasher> _numberOfFullLinesCache;
 
     std::vector<void *> _observers;
+    NSString *_guid;
 }
 
 NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock) {
@@ -151,6 +153,7 @@ NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock)
         }
     });
 
+    _guid = [[[NSUUID UUID] UUIDString] retain];
     cached_numlines_width = -1;
     if (cll_capacity > 0) {
         metadata_ = (LineBlockMetadata *)iTermCalloc(sizeof(LineBlockMetadata), cll_capacity);
@@ -186,7 +189,10 @@ NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock)
         buffer_start = raw_buffer + [dictionary[kLineBlockBufferStartOffsetKey] intValue];
         start_offset = [dictionary[kLineBlockStartOffsetKey] intValue];
         first_entry = [dictionary[kLineBlockFirstEntryKey] intValue];
-
+        if (dictionary[kLineBlockGuid]) {
+            [_guid release];
+            _guid = dictionary[kLineBlockGuid];
+        }
         NSArray *cllArray = dictionary[kLineBlockCLLKey];
         cll_capacity = [cllArray count];
         cumulative_line_lengths = (int*)iTermMalloc(sizeof(int) * cll_capacity);
@@ -234,6 +240,7 @@ NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock)
         }
         free(metadata_);
     }
+    [_guid release];
     [super dealloc];
 }
 
@@ -263,7 +270,8 @@ NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock)
     theCopy->is_partial = is_partial;
     theCopy->cached_numlines = cached_numlines;
     theCopy->cached_numlines_width = cached_numlines_width;
-
+    theCopy->_generation = _generation;
+    
     return theCopy;
 }
 
@@ -1577,7 +1585,8 @@ static int Search(NSString* needle,
               kLineBlockCLLKey: [self cumulativeLineLengthsArray],
               kLineBlockIsPartialKey: @(is_partial),
               kLineBlockMetadataKey: [self metadataArray],
-              kLineBlockMayHaveDWCKey: @(_mayHaveDoubleWidthCharacter) };
+              kLineBlockMayHaveDWCKey: @(_mayHaveDoubleWidthCharacter),
+              kLineBlockGuid: _guid };
 }
 
 - (int)numberOfCharacters {
@@ -1620,6 +1629,12 @@ static int Search(NSString* needle,
     void *voidptr = static_cast<void *>(observer);
     auto it = std::find(_observers.begin(), _observers.end(), voidptr);
     return it != _observers.end();
+}
+
+#pragma mark - iTermUniquelyIdentifiable
+
+- (NSString *)stringUniqueIdentifier {
+    return _guid;
 }
 
 @end

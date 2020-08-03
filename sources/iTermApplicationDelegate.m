@@ -2335,7 +2335,7 @@ static BOOL hasBecomeActive = NO;
                              identifier:(NSString *)identifier
                              completion:(void (^)(NSWindow * _Nonnull, NSError * _Nonnull))completion {
     [PseudoTerminalRestorer restoreWindowWithIdentifier:identifier
-                                                  state:coder
+                                    pseudoTerminalState:[[[PseudoTerminalState alloc] initWithCoder:coder] autorelease]
                                                  system:NO
                                       completionHandler:completion];
 }
@@ -2343,7 +2343,31 @@ static BOOL hasBecomeActive = NO;
 - (void)restorableStateRestoreWithRecord:(nonnull iTermEncoderGraphRecord *)record
                               identifier:(nonnull NSString *)identifier
                               completion:(nonnull void (^)(NSWindow * _Nonnull, NSError * _Nonnull))completion {
-    // TODO
+    NSDictionary *dict = [NSDictionary castFrom:record.propertyListValue];
+    if (!dict) {
+        NSError *error = [[[NSError alloc] initWithDomain:@"com.iterm2.app-delegate" code:1 userInfo:nil] autorelease];
+        completion(nil, error);
+        return;
+    }
+
+    PseudoTerminalState *state = [[PseudoTerminalState alloc] initWithDictionary:dict];
+    [PseudoTerminalRestorer restoreWindowWithIdentifier:identifier
+                                    pseudoTerminalState:state
+                                                 system:NO
+                                      completionHandler:^(NSWindow *window, NSError *error) {
+        [state autorelease];
+        if (error || !window) {
+            completion(window, error);
+            return;
+        }
+        PseudoTerminal *term = [PseudoTerminal castFrom:window.delegate];
+        if (!term) {
+            completion(window, error);
+            return;
+        }
+        [term restoreState:state];
+        completion(window, error);
+    }];
 }
 
 

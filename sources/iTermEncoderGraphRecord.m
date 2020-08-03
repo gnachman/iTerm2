@@ -57,6 +57,20 @@
     return self;
 }
 
+- (void)dump {
+    [self dumpWithIndent:@""];
+}
+
+- (void)dumpWithIndent:(NSString *)indent {
+    NSLog(@"%@%@[%@] rowid=%@ %@", indent, self.key, self.identifier, self.rowid,
+          [[self.podRecords.allKeys mapWithBlock:^id(NSString *key) {
+        return [NSString stringWithFormat:@"%@=%@", key, self.podRecords[key]];
+    }] componentsJoinedByString:@", "]);
+    for (iTermEncoderGraphRecord *child in _graphRecords) {
+        [child dumpWithIndent:[@"  " stringByAppendingString:indent]];
+    }
+}
+
 - (NSString *)description {
     return [NSString stringWithFormat:@"<iTermEncoderGraphRecord: rowid=%@ key=%@ gen=%@ id=%@ pod=%@ graphs=%@>",
             self.rowid,
@@ -139,13 +153,19 @@
     return [self childRecordWithKey:@"__dict" identifier:key];
 }
 
-- (void)enumerateValuesVersus:(iTermEncoderGraphRecord * _Nullable)other
+- (BOOL)enumerateValuesVersus:(iTermEncoderGraphRecord * _Nullable)other
                         block:(void (^)(iTermEncoderPODRecord * _Nullable mine,
-                                        iTermEncoderPODRecord * _Nullable theirs))block {
+                                        iTermEncoderPODRecord * _Nullable theirs,
+                                        BOOL *stop))block {
     NSSet<NSString *> *keys = [NSSet setWithArray:[_podRecords.allKeys ?: @[] arrayByAddingObjectsFromArray:other.podRecords.allKeys ?: @[]]];
+    __block BOOL ok = YES;
     [keys enumerateObjectsUsingBlock:^(NSString * _Nonnull key, BOOL * _Nonnull stop) {
-        block(self.podRecords[key], other.podRecords[key]);
+        block(self.podRecords[key], other.podRecords[key], stop);
+        if (*stop) {
+            ok = NO;
+        }
     }];
+    return ok;
 }
 
 #warning TODO: Test this
@@ -177,6 +197,23 @@
         [result addObject:obj];
     }];
     return result;
+}
+
+- (NSArray<iTermEncoderGraphRecord *> * _Nullable)recordArrayWithKey:(NSString *)key {
+    iTermEncoderGraphRecord *record = [self childArrayWithKey:key];
+    if (!record) {
+        return nil;
+    }
+
+    NSDictionary *items = [[record.graphRecords classifyWithBlock:^id(iTermEncoderGraphRecord *itemRecord) {
+        return itemRecord.identifier;
+    }] mapValuesWithBlock:^id(id key, NSArray<iTermEncoderGraphRecord *> *object) {
+        return object.firstObject;
+    }];
+    NSArray<NSString *> *order = [[NSString castFrom:[record.podRecords[@"__order"] value]] componentsSeparatedByString:@"\t"] ?: @[];
+    return [order mapWithBlock:^id(NSString *key) {
+        return items[key];
+    }];
 }
 
 - (NSInteger)integerWithKey:(NSString *)key error:(out NSError *__autoreleasing  _Nullable * _Nullable)error {
@@ -212,7 +249,8 @@
         return object.firstObject.propertyListValue;
     }];
     NSArray *array = [order mapWithBlock:^id(NSString *key) {
-        return items[key] ?: _podRecords[key].value;
+        // Arrays encoded using `-[iTermGraphEncoder encodeObject:key:]` use __arrayValue for their key in the POD.
+        return items[key][@"__arrayValue"] ?: items[key];
     }];
     return array;
 }

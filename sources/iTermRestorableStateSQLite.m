@@ -77,7 +77,7 @@
     self = [super init];
     if (self) {
         _record = record;
-        _windows = [_record arrayWithKey:@"windows"];
+        _windows = [_record recordArrayWithKey:@"windows"];
     }
     return self;
 }
@@ -91,9 +91,9 @@
 }
 
 - (id<iTermRestorableStateRecord>)restorableStateRecordAtIndex:(NSUInteger)i {
-    NSString *identifier = [_windows[i] stringWithKey:@"identifier"];
+    NSString *identifier = [_windows[i] stringWithKey:@"__identifier"];
     NSError *error = nil;
-    NSInteger windowNumber = [_windows[i] integerWithKey:@"windowNumber" error:&error];
+    NSInteger windowNumber = [_windows[i] integerWithKey:@"__windowNumber" error:&error];
     if (error || !identifier) {
         DLog(@"identifier=%@, error=%@", identifier, error);
         return nil;
@@ -104,6 +104,9 @@
 }
 
 - (id)objectAtIndexedSubscript:(NSUInteger)idx {
+    if (idx >= _windows.count) {
+        return nil;
+    }
     return _windows[idx];
 }
 
@@ -144,6 +147,10 @@
     iTermRestorableStateSQLiteIndex *windowIndex =
         [[iTermRestorableStateSQLiteIndex alloc] initWithGraphRecord:_db.record];
     iTermEncoderGraphRecord *windowRecord = windowIndex[i];
+    if (!windowRecord) {
+        completion();
+        return;
+    }
     NSString *identifier = windowRecord.identifier;
     assert(identifier.length > 0);
     [self.delegate restorableStateRestoreWithRecord:windowRecord
@@ -179,6 +186,8 @@
                                           NSInteger index,
                                           iTermGraphEncoder * _Nonnull subencoder) {
             NSWindow *window = windows[index];
+            [subencoder encodeString:identifier forKey:@"__identifier"];
+            [subencoder encodeNumber:@(window.windowNumber) forKey:@"__windowNumber"];
             id<iTermGraphCodable> codable = (id<iTermGraphCodable>)window.delegate;
             return [codable encodeGraphWithEncoder:subencoder];
         }];

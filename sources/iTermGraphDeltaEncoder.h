@@ -20,9 +20,10 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (instancetype)initWithPreviousRevision:(iTermEncoderGraphRecord * _Nullable)previousRevision;
 
-- (void)enumerateRecords:(void (^)(iTermEncoderGraphRecord * _Nullable before,
+- (BOOL)enumerateRecords:(void (^)(iTermEncoderGraphRecord * _Nullable before,
                                    iTermEncoderGraphRecord * _Nullable after,
-                                   NSNumber *parent))block;
+                                   NSNumber *parent,
+                                   BOOL *stop))block;
 
 @end
 

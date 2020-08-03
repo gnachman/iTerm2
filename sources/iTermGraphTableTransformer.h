@@ -26,8 +26,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (NSDictionary<NSNumber *, NSMutableDictionary *> *)nodes:(out NSNumber **)rootNodeIDOut;
 - (BOOL)attachValuesToNodes:(NSDictionary<NSNumber *, NSMutableDictionary *> *)nodes;
-- (BOOL)attachChildrenToParents:(NSDictionary<NSNumber *, NSMutableDictionary *> *)nodes;
-
+- (BOOL)attachChildrenToParents:(NSDictionary<NSNumber *, NSMutableDictionary *> *)nodes
+              ignoringRootRowID:(NSNumber *)rootRowID;
 @end
 
 NS_ASSUME_NONNULL_END

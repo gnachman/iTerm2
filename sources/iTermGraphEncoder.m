@@ -53,6 +53,19 @@ NSInteger iTermGenerationAlwaysEncode = NSIntegerMax;
     return self;
 }
 
+- (instancetype)initWithRecord:(iTermEncoderGraphRecord *)record {
+    iTermGraphEncoder *encoder = [self initWithKey:record.key
+                                        identifier:record.identifier
+                                        generation:record.generation
+                                             rowid:nil];
+    if (!encoder) {
+        return nil;
+    }
+    encoder->_pod = [record.podRecords mutableCopy];
+    encoder->_children = [record.graphRecords mutableCopy];
+    return encoder;
+}
+
 - (void)encodeString:(NSString *)string forKey:(NSString *)key {
     assert(_state == iTermGraphEncoderStateLive);
     _pod[key] = [iTermEncoderPODRecord withString:string key:key];
@@ -112,7 +125,7 @@ NSInteger iTermGenerationAlwaysEncode = NSIntegerMax;
                            block:^BOOL (NSString * _Nonnull identifier,
                                    NSInteger index,
                                    iTermGraphEncoder * _Nonnull subencoder) {
-            [subencoder encodeObject:array[index] key:identifier];
+            [subencoder encodeObject:array[index] key:@"__arrayValue"];
             return YES;
         }];
         return YES;

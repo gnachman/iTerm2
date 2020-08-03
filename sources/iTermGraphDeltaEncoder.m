@@ -64,19 +64,25 @@
     return YES;
 }
 
-- (void)enumerateRecords:(void (^)(iTermEncoderGraphRecord * _Nullable before,
+- (BOOL)enumerateRecords:(void (^)(iTermEncoderGraphRecord * _Nullable before,
                                    iTermEncoderGraphRecord * _Nullable after,
-                                   NSNumber *parent))block {
-    block(_previousRevision, self.record, @0);
-    [self enumerateBefore:_previousRevision after:self.record parent:self.record.rowid block:block];
+                                   NSNumber *parent,
+                                   BOOL *stop))block {
+    BOOL stop = NO;
+    block(_previousRevision, self.record, @0, &stop);
+    if (stop) {
+        return NO;
+    }
+    return [self enumerateBefore:_previousRevision after:self.record parent:self.record.rowid block:block];
 }
 
-- (void)enumerateBefore:(iTermEncoderGraphRecord *)preRecord
+- (BOOL)enumerateBefore:(iTermEncoderGraphRecord *)preRecord
                   after:(iTermEncoderGraphRecord *)postRecord
                  parent:(NSNumber *)parent
                   block:(void (^)(iTermEncoderGraphRecord * _Nullable before,
                                   iTermEncoderGraphRecord * _Nullable after,
-                                  NSNumber *parent))block {
+                                  NSNumber *parent,
+                                  BOOL *stop))block {
     iTermOrderedDictionary<NSDictionary *, iTermEncoderGraphRecord *> *beforeDict =
     [iTermOrderedDictionary byMapping:preRecord.graphRecords block:^id _Nonnull(NSUInteger index,
                                                                                 iTermEncoderGraphRecord * _Nonnull record) {
@@ -89,29 +95,36 @@
         return @{ @"key": record.key,
                   @"identifier": record.identifier };
     }];
-
-    void (^handle)(NSDictionary *, iTermEncoderGraphRecord *) = ^(NSDictionary *key,
-                                                                  iTermEncoderGraphRecord *record) {
+    __block BOOL ok = YES;
+    void (^handle)(NSDictionary *,
+                   iTermEncoderGraphRecord *,
+                   BOOL *) = ^(NSDictionary *key,
+                               iTermEncoderGraphRecord *record,
+                               BOOL *stop) {
         iTermEncoderGraphRecord *before = beforeDict[key];
         iTermEncoderGraphRecord *after = afterDict[key];
-        block(before, after, parent);
+        block(before, after, parent, stop);
         // Now recurse for their descendants.
-        [self enumerateBefore:before
-                        after:after
-                       parent:before ? before.rowid : after.rowid
-                        block:block];
+        ok = [self enumerateBefore:before
+                             after:after
+                            parent:before ? before.rowid : after.rowid
+                             block:block];
     };
     NSMutableSet<NSDictionary *> *seenKeys = [NSMutableSet set];
     [beforeDict.keys enumerateObjectsUsingBlock:^(NSDictionary * _Nonnull key, NSUInteger idx, BOOL * _Nonnull stop) {
-        handle(key, beforeDict[key]);
+        handle(key, beforeDict[key], stop);
         [seenKeys addObject:key];
     }];
+    if (!ok) {
+        return NO;
+    }
     [afterDict.keys enumerateObjectsUsingBlock:^(NSDictionary * _Nonnull key, NSUInteger idx, BOOL * _Nonnull stop) {
         if ([seenKeys containsObject:key]) {
             return;
         }
-        handle(key, afterDict[key]);
+        handle(key, afterDict[key], stop);
     }];
+    return ok;
 }
 
 

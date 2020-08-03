@@ -16,11 +16,11 @@ NS_ASSUME_NONNULL_BEGIN
 @protocol iTermRestorableStateRestoring<NSObject>
 - (void)restorableStateRestoreWithRecord:(iTermEncoderGraphRecord *)record
                               identifier:(NSString *)identifier
-                              completion:(void (^)(NSWindow *, NSError *))completion;
+                              completion:(void (^)(NSWindow * _Nullable, NSError * _Nullable))completion;
 
 - (void)restorableStateRestoreWithCoder:(NSCoder *)coder
                              identifier:(NSString *)identifier
-                             completion:(void (^)(NSWindow *, NSError *))completion;
+                             completion:(void (^)(NSWindow * _Nullable, NSError * _Nullable))completion;
 @end
 
 @interface iTermRestorableStateRestorer : NSObject<iTermRestorableStateRestorer>

@@ -28,9 +28,10 @@ NS_ASSUME_NONNULL_BEGIN
               identifier:(NSString *)identifier
                    rowid:(NSNumber *_Nullable)rowid;
 
-- (void)enumerateValuesVersus:(iTermEncoderGraphRecord * _Nullable)other
+- (BOOL)enumerateValuesVersus:(iTermEncoderGraphRecord * _Nullable)other
                         block:(void (^)(iTermEncoderPODRecord * _Nullable mine,
-                                        iTermEncoderPODRecord * _Nullable theirs))block;
+                                        iTermEncoderPODRecord * _Nullable theirs,
+                                        BOOL *stop))block;
 
 - (NSComparisonResult)compareGraphRecord:(iTermEncoderGraphRecord *)other;
 
@@ -43,6 +44,7 @@ NS_ASSUME_NONNULL_BEGIN
                                                    NSInteger index,
                                                    iTermEncoderGraphRecord *obj,
                                                    BOOL *stop))block;
+- (NSArray<iTermEncoderGraphRecord *> * _Nullable)recordArrayWithKey:(NSString *)key;
 - (NSArray *)arrayWithKey:(NSString *)key;
 - (NSInteger)integerWithKey:(NSString *)key error:(out NSError **)error;
 - (NSString *)stringWithKey:(NSString *)key;

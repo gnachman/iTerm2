@@ -15,6 +15,7 @@
 #import "iTermOrphanServerAdopter.h"
 #import "iTermPreferences.h"
 #import "NSApplication+iTerm.h"
+#import "NSObject+iTerm.h"
 #import "PseudoTerminal.h"
 
 static NSMutableArray *queuedBlocks;
@@ -23,6 +24,27 @@ static BOOL gWaitingForFullScreen;
 static void (^gPostRestorationCompletionBlock)(void);
 static BOOL gRanQueuedBlocks;
 static BOOL gShouldIgnoreOpenUntitledFile;
+
+@implementation PseudoTerminalState
+
+- (instancetype)initWithCoder:(NSCoder *)coder {
+    return [self initWithDictionary:[NSDictionary castFrom:[coder decodeObjectForKey:kTerminalWindowStateRestorationWindowArrangementKey]]];
+}
+
+- (instancetype)initWithDictionary:(NSDictionary *)arrangement {
+    self = [super init];
+    if (self) {
+        _arrangement = [arrangement retain];
+    }
+    return self;
+}
+
+- (void)dealloc {
+    [_arrangement release];
+    [super dealloc];
+}
+
+@end
 
 @implementation PseudoTerminalRestorer
 
@@ -72,7 +94,7 @@ static BOOL gShouldIgnoreOpenUntitledFile;
                               state:(NSCoder *)state
                   completionHandler:(void (^)(NSWindow *, NSError *))completionHandler {
     [self restoreWindowWithIdentifier:identifier
-                                state:state
+                  pseudoTerminalState:[[[PseudoTerminalState alloc] initWithCoder:state] autorelease]
                                system:YES
                     completionHandler:completionHandler];
 }
@@ -82,7 +104,7 @@ static BOOL gShouldIgnoreOpenUntitledFile;
 }
 
 + (void)restoreWindowWithIdentifier:(NSString *)identifier
-                              state:(NSCoder *)state
+                pseudoTerminalState:(PseudoTerminalState *)state
                              system:(BOOL)system
                   completionHandler:(void (^)(NSWindow *, NSError *))completionHandler {
     if (system && [iTermAdvancedSettingsModel useRestorableStateController]) {
@@ -116,8 +138,7 @@ static BOOL gShouldIgnoreOpenUntitledFile;
 
     if ([iTermPreferences boolForKey:kPreferenceKeyOpenArrangementAtStartup]) {
         DLog(@"Abort because opening arrangement at startup");
-        NSDictionary *arrangement =
-            [state decodeObjectForKey:kTerminalWindowStateRestorationWindowArrangementKey];
+        NSDictionary *arrangement = state.arrangement;
         if (arrangement) {
             [PseudoTerminal registerSessionsInArrangement:arrangement];
         }
@@ -133,7 +154,7 @@ static BOOL gShouldIgnoreOpenUntitledFile;
         DLog(@"This is the first run of PseudoTerminalRestorer");
         queuedBlocks = [[NSMutableArray alloc] init];
     }
-    NSDictionary *arrangement = [state decodeObjectForKey:kTerminalWindowStateRestorationWindowArrangementKey];
+    NSDictionary *arrangement = [state.arrangement retain];
     if (arrangement) {
         DLog(@"Have an arrangement");
         VoidBlock theBlock = ^{
@@ -141,6 +162,7 @@ static BOOL gShouldIgnoreOpenUntitledFile;
             DLog(@"Creating term");
             PseudoTerminal *term = [PseudoTerminal bareTerminalWithArrangement:arrangement
                                                       forceOpeningHotKeyWindow:NO];
+            [arrangement autorelease];
             DLog(@"Create a new terminal %@", term);
             if (!term) {
                 DLog(@"Failed to create term");
