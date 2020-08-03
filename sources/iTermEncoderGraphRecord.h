@@ -7,12 +7,10 @@
 
 #import <Foundation/Foundation.h>
 
-#import "iTermEncoderPODRecord.h"
-
 NS_ASSUME_NONNULL_BEGIN
 
 @interface iTermEncoderGraphRecord: NSObject
-@property (nonatomic, readonly) NSDictionary<NSString *, iTermEncoderPODRecord *> *podRecords;
+@property (nonatomic, readonly) NSDictionary<NSString *, id> *pod;
 @property (nonatomic, readonly) NSArray<iTermEncoderGraphRecord *> *graphRecords;
 @property (nonatomic, readonly) NSInteger generation;
 @property (nonatomic, readonly) NSString *identifier;
@@ -20,18 +18,14 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly, weak) iTermEncoderGraphRecord *parent;
 @property (nonatomic, readonly) id propertyListValue;
 @property (nonatomic, strong) NSNumber *rowid;
+@property (nonatomic, readonly) NSData *data;  // encoded pod
 
-+ (instancetype)withPODs:(NSArray<iTermEncoderPODRecord *> *)podRecords
++ (instancetype)withPODs:(NSDictionary<NSString *, id> *)pod
                   graphs:(NSArray<iTermEncoderGraphRecord *> *)graphRecords
               generation:(NSInteger)generation
                      key:(NSString *)key
               identifier:(NSString *)identifier
                    rowid:(NSNumber *_Nullable)rowid;
-
-- (BOOL)enumerateValuesVersus:(iTermEncoderGraphRecord * _Nullable)other
-                        block:(void (^)(iTermEncoderPODRecord * _Nullable mine,
-                                        iTermEncoderPODRecord * _Nullable theirs,
-                                        BOOL *stop))block;
 
 - (NSComparisonResult)compareGraphRecord:(iTermEncoderGraphRecord *)other;
 

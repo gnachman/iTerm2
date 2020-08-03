@@ -29,7 +29,6 @@
 
 @implementation iTermSqliteDatabaseImpl {
     FMDatabase *_db;
-    NSInteger _commandCount;
 }
 
 - (instancetype)initWithDatabase:(FMDatabase *)db {
@@ -43,9 +42,16 @@
 - (void)unlink {
     assert(!_db.isOpen);
     NSError *error = nil;
-    if (![[NSFileManager defaultManager] removeItemAtURL:_db.databaseURL
-                                                   error:&error]) {
-        DLog(@"Failed to unlink %@: %@", _db.databaseURL.path, error);
+    NSArray<NSURL *> *urls = @[
+        _db.databaseURL,
+        [_db.databaseURL.URLByDeletingPathExtension URLByAppendingPathExtension:@"sqlite-shm"],
+        [_db.databaseURL.URLByDeletingPathExtension URLByAppendingPathExtension:@"sqlite-wal"],
+    ];
+    for (NSURL *url in urls) {
+        if (![[NSFileManager defaultManager] removeItemAtURL:url
+                                                       error:&error]) {
+            DLog(@"Failed to unlink %@: %@", url.path, error);
+        }
     }
 }
 
@@ -55,12 +61,16 @@
     const BOOL result = [_db executeUpdate:sql withVAList:args];
     va_end(args);
 
+#warning DNS
+    va_start(args, sql);
+    NSLog(@"%@", [self formatSQL:sql vaList:args]);
+    va_end(args);
+
     if (gDebugLogging) {
         va_start(args, sql);
         [self logStatement:sql vaList:args];
         va_end(args);
     }
-    [self incrementCount];
     return result;
 }
 
@@ -72,16 +82,21 @@
     return @(rowid);
 }
 
-- (void)logStatement:(NSString *)format vaList:(va_list)args {
+- (NSString *)formatSQL:(NSString *)sql vaList:(va_list)args {
+    NSString *fmt = [sql stringByReplacingOccurrencesOfString:@"?" withString:@"“%@”"];
+    return [[NSString alloc] initWithFormat:fmt arguments:args];
+}
+
+- (void)logStatement:(NSString *)sql vaList:(va_list)args {
     if (!gDebugLogging) {
         return;
     }
-    NSString *fmt = [format stringByReplacingOccurrencesOfString:@"?" withString:@"%@"];
-    fmt = [@"SQLITE: " stringByAppendingString:fmt];
+    NSString *statement = [self formatSQL:sql vaList:args];
+    NSLog(@"%@", statement);
     DebugLogImpl(__FILE__,
                  __LINE__,
                  __FUNCTION__,
-                 [[NSString alloc] initWithFormat:fmt arguments:args]);
+                 statement);
 }
 
 - (id<iTermDatabaseResultSet> _Nullable)executeQuery:(NSString*)sql, ... {
@@ -95,16 +110,8 @@
         [self logStatement:sql vaList:args];
         va_end(args);
     }
-    [self incrementCount];
 
     return result;
-}
-
-- (void)incrementCount {
-    _commandCount += 1;
-    if (_commandCount % 1000 == 0) {
-        NSLog(@"Command count reached %@", @(_commandCount));
-    }
 }
 
 - (BOOL)open {

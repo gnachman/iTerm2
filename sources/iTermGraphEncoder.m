@@ -17,7 +17,7 @@
 NSInteger iTermGenerationAlwaysEncode = NSIntegerMax;
 
 @implementation iTermGraphEncoder {
-    NSMutableDictionary<NSString *, iTermEncoderPODRecord *> *_pod;
+    NSMutableDictionary<NSString *, id> *_pod;
     NSString *_identifier;
     NSInteger _generation;
     NSString *_key;
@@ -62,48 +62,49 @@ NSInteger iTermGenerationAlwaysEncode = NSIntegerMax;
     if (!encoder) {
         return nil;
     }
-    encoder->_pod = [record.podRecords mutableCopy];
+    encoder->_pod = [record.pod mutableCopy];
     encoder->_children = [record.graphRecords mutableCopy];
     return encoder;
 }
 
 - (void)encodeString:(NSString *)string forKey:(NSString *)key {
     assert(_state == iTermGraphEncoderStateLive);
-    _pod[key] = [iTermEncoderPODRecord withString:string key:key];
+    _pod[key] = string.copy;
 }
 
 - (void)encodeNumber:(NSNumber *)number forKey:(NSString *)key {
     assert(_state == iTermGraphEncoderStateLive);
-    _pod[key] = [iTermEncoderPODRecord withNumber:number key:key];
+    _pod[key] = number;
 }
 
 - (void)encodeData:(NSData *)data forKey:(NSString *)key {
     assert(_state == iTermGraphEncoderStateLive);
-    _pod[key] = [iTermEncoderPODRecord withData:data key:key];
+    _pod[key] = data.copy;
 }
 
-- (void)encodePropertyList:(id)plist withKey:(NSString *)key {
+- (BOOL)encodePropertyList:(id)plist withKey:(NSString *)key {
     assert(_state == iTermGraphEncoderStateLive);
     NSError *error;
     NSData *data = [NSPropertyListSerialization dataWithPropertyList:plist
                                                               format:NSPropertyListBinaryFormat_v1_0
                                                              options:0
                                                                error:&error];
-    if (!error) {
+    if (error) {
         DLog(@"Failed to serialize property list %@: %@", plist, error);
-        return;
+        return NO;
     }
-    _pod[key] = [iTermEncoderPODRecord withPropertyListData:data key:key];
+    _pod[key] = data;
+    return YES;
 }
 
 - (void)encodeDate:(NSDate *)date forKey:(NSString *)key {
     assert(_state == iTermGraphEncoderStateLive);
-    _pod[key] = [iTermEncoderPODRecord withDate:date key:key];
+    _pod[key] = date;
 }
 
 - (void)encodeNullForKey:(NSString *)key {
     assert(_state == iTermGraphEncoderStateLive);
-    _pod[key] = [iTermEncoderPODRecord withNullForKey:key];
+    _pod[key] = [NSNull null];
 }
 
 - (BOOL)encodeObject:(id)obj key:(NSString *)key {
@@ -129,6 +130,10 @@ NSInteger iTermGenerationAlwaysEncode = NSIntegerMax;
     }
     if ([obj isKindOfClass:[NSNull class]]) {
         [self encodeNullForKey:key];
+        return YES;
+    }
+    if ([NSPropertyListSerialization propertyList:obj isValidForFormat:NSPropertyListBinaryFormat_v1_0]) {
+        _pod[key] = obj;
         return YES;
     }
     if ([obj isKindOfClass:[NSArray class]]) {
@@ -170,6 +175,10 @@ NSInteger iTermGenerationAlwaysEncode = NSIntegerMax;
 - (void)encodeGraph:(iTermEncoderGraphRecord *)record {
     assert(_state == iTermGraphEncoderStateLive);
     [_children addObject:record];
+}
+
+- (void)mergeDictionary:(NSDictionary *)dictionary {
+    [_pod it_mergeFrom:dictionary];
 }
 
 - (BOOL)encodeChildWithKey:(NSString *)key
@@ -219,7 +228,7 @@ NSInteger iTermGenerationAlwaysEncode = NSIntegerMax;
 - (iTermEncoderGraphRecord *)record {
     switch (_state) {
         case iTermGraphEncoderStateLive:
-            _record = [iTermEncoderGraphRecord withPODs:_pod.allValues
+            _record = [iTermEncoderGraphRecord withPODs:_pod
                                                  graphs:_children
                                              generation:_generation
                                                     key:_key
@@ -244,7 +253,7 @@ NSInteger iTermGenerationAlwaysEncode = NSIntegerMax;
 }
 
 - (void)transaction:(BOOL (^)(void))block {
-    NSMutableDictionary<NSString *, iTermEncoderPODRecord *> *savedPOD = [_pod mutableCopy];
+    NSMutableDictionary<NSString *, id> *savedPOD = [_pod mutableCopy];
     NSMutableArray<iTermEncoderGraphRecord *> *savedChildren = [_children mutableCopy];
     const BOOL commit = block();
     if (commit) {

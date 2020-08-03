@@ -40,8 +40,9 @@ typedef NS_OPTIONS(NSUInteger, iTermGraphEncoderArrayOptions) {
 - (void)encodeNullForKey:(NSString *)key;
 - (BOOL)encodeObject:(id)obj key:(NSString *)key;
 - (void)encodeGraph:(iTermEncoderGraphRecord *)record;
-- (void)encodePropertyList:(id)plist withKey:(NSString *)key;
+- (BOOL)encodePropertyList:(id)plist withKey:(NSString *)key;
 
+- (void)mergeDictionary:(NSDictionary *)dictionary;
 
 // When encoding an array where all elements have the same key, use the identifer to distinguish
 // array elements. For example, if you have an array of [obj1, obj2, obj3] whose identifiers are

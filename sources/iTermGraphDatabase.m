@@ -11,7 +11,6 @@
 #import "FMDatabase.h"
 #import "NSArray+iTerm.h"
 #import "NSObject+iTerm.h"
-#import "iTermEncoderPODRecord.h"
 #import "iTermGraphDeltaEncoder.h"
 #import "iTermGraphTableTransformer.h"
 #import "iTermThreadSafety.h"
@@ -132,71 +131,31 @@
                 *stop = YES;
                 return;
             }
-            if (![state.db executeUpdate:@"delete from Value where node=?", before.rowid]) {
-                *stop = YES;
-                return;
-            }
             return;
         }
         if (!before && after) {
-            if (![state.db executeUpdate:@"insert into Node (key, identifier, parent) values (?, ?, ?)",
-                  after.key, after.identifier, parent]) {
+            if (![state.db executeUpdate:@"insert into Node (key, identifier, parent, data) values (?, ?, ?, ?)",
+                  after.key, after.identifier, parent, after.data ?: [NSData data]]) {
                 *stop = YES;
                 return;
             }
             NSNumber *lastInsertRowID = state.db.lastInsertRowId;
-            assert(lastInsertRowID);  // TODO
+            assert(lastInsertRowID);
             after.rowid = lastInsertRowID;
-            const BOOL ok =
-            [after enumerateValuesVersus:nil block:^(iTermEncoderPODRecord * _Nullable record,
-                                                     iTermEncoderPODRecord * _Nullable na,
-                                                     BOOL *stop) {
-                if (![state.db executeUpdate:@"insert into Value (key, value, node, type) values (?, ?, ?, ?)",
-                      record.key, record.data, lastInsertRowID, @(record.type)]) {
-                    *stop = YES;
-                    return;
-                }
-            }];
-            if (!ok) {
-                *stop = YES;
-            }
             return;
         }
         if (before && after) {
             if (after.rowid == nil) {
                 after.rowid = before.rowid;
+            } else {
+                if (before.generation == after.generation &&
+                    after.generation != iTermGenerationAlwaysEncode) {
+                    NSLog(@"Don't update rowid %@ %@[%@] because it is unchanged", before.rowid, after.key, after.identifier);
+                    return;
+                }
             }
             assert(before.rowid.longLongValue == after.rowid.longLongValue);
-            const BOOL ok =
-            [before enumerateValuesVersus:after block:^(iTermEncoderPODRecord * _Nullable mine,
-                                                        iTermEncoderPODRecord * _Nullable theirs,
-                                                        BOOL *stop) {
-                if (mine && theirs) {
-                    if (![mine isEqual:theirs]) {
-                        if (![state.db executeUpdate:@"update Value set value=?, type=? where key=? and node=?",
-                              theirs.data, @(theirs.type), mine.key, before.rowid]) {
-                            *stop = YES;
-                        }
-                    }
-                    return;
-                }
-                if (!mine && theirs) {
-                    if (![state.db executeUpdate:@"insert into Value (key, value, node, type) values (?, ?, ?, ?)",
-                          theirs.key, theirs.data, before.rowid, @(theirs.type)]) {
-                        *stop = YES;
-                    }
-                    return;
-                }
-                if (mine && !theirs) {
-                    if (![state.db executeUpdate:@"delete from Value where key=? and node=?",
-                          mine.key, before.rowid]) {
-                        *stop = YES;
-                    }
-                    return;
-                }
-                assert(NO);
-            }];
-            if (!ok) {
+            if (![state.db executeUpdate:@"update Node set data=? where rowid=?", after.data, before.rowid]) {
                 *stop = YES;
             }
             return;
@@ -208,6 +167,16 @@
     return ok;
 }
 
+- (BOOL)createTables:(iTermGraphDatabaseState *)state {
+    [state.db executeUpdate:@"PRAGMA journal_mode=WAL"];
+
+    if (![state.db executeUpdate:@"create table if not exists Node (key text not null, identifier text not null, parent integer not null, data blob)"]) {
+        return NO;
+    }
+
+    return YES;
+}
+
 - (BOOL)createDatabase:(iTermGraphDatabaseState *)state
                factory:(id<iTermDatabaseFactory>)databaseFactory {
     state.db = [databaseFactory withURL:_url];
@@ -215,10 +184,7 @@
         return NO;
     }
 
-    [state.db executeUpdate:@"PRAGMA journal_mode=WAL;"];
-
-    if (![state.db executeUpdate:@"create table if not exists Node (key text, identifier text, parent integer)"] ||
-        ![state.db executeUpdate:@"create table if not exists Value (key text, node integer, value blob, type integer)"]) {
+    if (![self createTables:state]) {
         DLog(@"Create table failed: %@", state.db.lastError);
         return NO;
     }
@@ -232,36 +198,22 @@
     }
     _ok = YES;
 
-    [state.db executeUpdate:@"create table if not exists Node (key text, identifier text, parent integer)"];
-    [state.db executeUpdate:@"create table if not exists Value (key text, node integer, value blob, type integer)"];
+    [self createTables:state];
 
     NSMutableArray<NSArray *> *nodes = [NSMutableArray array];
-    NSMutableArray<NSArray *> *values = [NSMutableArray array];
     {
-        FMResultSet *rs = [state.db executeQuery:@"select key, identifier, parent, rowid from Node"];
+        FMResultSet *rs = [state.db executeQuery:@"select key, identifier, parent, rowid, data from Node"];
         while ([rs next]) {
             [nodes addObject:@[ [rs stringForColumn:@"key"],
                                 [rs stringForColumn:@"identifier"],
                                 @([rs longLongIntForColumn:@"parent"]),
-                                @([rs longLongIntForColumn:@"rowid"])]];
-        }
-        [rs close];
-    }
-    {
-        FMResultSet *rs = [state.db executeQuery:@"select * from Value"];
-        while ([rs next]) {
-            [values addObject:@[
-                @([rs longLongIntForColumn:@"node"]),
-                [rs stringForColumn:@"key"],
-                [rs dataForColumn:@"value"] ?: [NSData data],
-                @([rs longLongIntForColumn:@"type"])
-            ]];
+                                @([rs longLongIntForColumn:@"rowid"]),
+                                [rs dataForColumn:@"data"] ?: [NSData data] ]];
         }
         [rs close];
     }
 
-    iTermGraphTableTransformer *transformer = [[iTermGraphTableTransformer alloc] initWithNodeRows:nodes
-                                                                                         valueRows:values];
+    iTermGraphTableTransformer *transformer = [[iTermGraphTableTransformer alloc] initWithNodeRows:nodes];
     return transformer.root;
 }
 

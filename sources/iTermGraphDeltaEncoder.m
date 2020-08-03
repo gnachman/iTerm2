@@ -44,6 +44,7 @@
     }
     if (record.generation == generation) {
         // No change to generation
+        NSLog(@"Record %@[%@] at generation %@ didn't change", key, identifier, @(generation));
         [self encodeGraph:record];
         return YES;
     }

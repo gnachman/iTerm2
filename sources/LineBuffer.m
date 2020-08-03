@@ -1115,7 +1115,7 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
                                       NSInteger i,
                                       NSString * _Nonnull identifier) {
         LineBlock *block = index[identifier];
-        NSLog(@"Encode %@ with identifier %@ and generation %@", block, identifier, @(block.generation));
+        DLog(@"Encode %@ with identifier %@ and generation %@", block, identifier, @(block.generation));
         return [encoder encodeDictionaryWithKey:kLineBufferBlockWrapperKey
                                      generation:block.generation
                                           block:^BOOL(id<iTermEncoderAdapter>  _Nonnull encoder) {

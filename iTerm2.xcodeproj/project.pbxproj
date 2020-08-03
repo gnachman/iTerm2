@@ -1975,8 +1975,6 @@
 		A653F69124D00B9E0062377E /* iTermGraphTableTransformer.m in Sources */ = {isa = PBXBuildFile; fileRef = A653F68F24D00B9E0062377E /* iTermGraphTableTransformer.m */; };
 		A653F69424D00BD80062377E /* iTermDatabase.h in Headers */ = {isa = PBXBuildFile; fileRef = A653F69224D00BD80062377E /* iTermDatabase.h */; };
 		A653F69524D00BD80062377E /* iTermDatabase.m in Sources */ = {isa = PBXBuildFile; fileRef = A653F69324D00BD80062377E /* iTermDatabase.m */; };
-		A653F69824D00C590062377E /* iTermEncoderPODRecord.h in Headers */ = {isa = PBXBuildFile; fileRef = A653F69624D00C590062377E /* iTermEncoderPODRecord.h */; };
-		A653F69924D00C590062377E /* iTermEncoderPODRecord.m in Sources */ = {isa = PBXBuildFile; fileRef = A653F69724D00C590062377E /* iTermEncoderPODRecord.m */; };
 		A653F69C24D00C960062377E /* iTermEncoderGraphRecord.h in Headers */ = {isa = PBXBuildFile; fileRef = A653F69A24D00C960062377E /* iTermEncoderGraphRecord.h */; };
 		A653F69D24D00C960062377E /* iTermEncoderGraphRecord.m in Sources */ = {isa = PBXBuildFile; fileRef = A653F69B24D00C960062377E /* iTermEncoderGraphRecord.m */; };
 		A653F6A024D00CE30062377E /* iTermGraphDeltaEncoder.h in Headers */ = {isa = PBXBuildFile; fileRef = A653F69E24D00CE30062377E /* iTermGraphDeltaEncoder.h */; };
@@ -5396,8 +5394,6 @@
 		A653F68F24D00B9E0062377E /* iTermGraphTableTransformer.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermGraphTableTransformer.m; sourceTree = "<group>"; };
 		A653F69224D00BD80062377E /* iTermDatabase.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermDatabase.h; sourceTree = "<group>"; };
 		A653F69324D00BD80062377E /* iTermDatabase.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermDatabase.m; sourceTree = "<group>"; };
-		A653F69624D00C590062377E /* iTermEncoderPODRecord.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermEncoderPODRecord.h; sourceTree = "<group>"; };
-		A653F69724D00C590062377E /* iTermEncoderPODRecord.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermEncoderPODRecord.m; sourceTree = "<group>"; };
 		A653F69A24D00C960062377E /* iTermEncoderGraphRecord.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermEncoderGraphRecord.h; sourceTree = "<group>"; };
 		A653F69B24D00C960062377E /* iTermEncoderGraphRecord.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermEncoderGraphRecord.m; sourceTree = "<group>"; };
 		A653F69E24D00CE30062377E /* iTermGraphDeltaEncoder.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermGraphDeltaEncoder.h; sourceTree = "<group>"; };
@@ -9748,8 +9744,6 @@
 				A653F69324D00BD80062377E /* iTermDatabase.m */,
 				A653F69A24D00C960062377E /* iTermEncoderGraphRecord.h */,
 				A653F69B24D00C960062377E /* iTermEncoderGraphRecord.m */,
-				A653F69624D00C590062377E /* iTermEncoderPODRecord.h */,
-				A653F69724D00C590062377E /* iTermEncoderPODRecord.m */,
 				A653F68924CF4FE60062377E /* iTermGraphDatabase.h */,
 				A653F68A24CF4FE60062377E /* iTermGraphDatabase.m */,
 				A653F69E24D00CE30062377E /* iTermGraphDeltaEncoder.h */,
@@ -10968,7 +10962,6 @@
 				A66719141DCE36C3000CE608 /* iTermAutoMasterParser.h in Headers */,
 				A62C8FC2248033C000E22E95 /* iTermTmuxJobManager.h in Headers */,
 				A6614A2320958ED400A10D97 /* iTermBuildingScriptWindowController.h in Headers */,
-				A653F69824D00C590062377E /* iTermEncoderPODRecord.h in Headers */,
 				A66719151DCE36C3000CE608 /* iTermAppHotKeyProvider.h in Headers */,
 				A66F52B12105ABCA00571168 /* iTermStatusBarAttributedTextComponent.h in Headers */,
 				A69CCB18211BC296008ADA71 /* NSData+GZIP.h in Headers */,
@@ -13713,7 +13706,6 @@
 				A6A4866920B6792900493302 /* iTermEditKeyActionWindowController.m in Sources */,
 				A6D4C27121E19959009CF11B /* iTermVariablesOutlineDelegate.m in Sources */,
 				A614F2631FE47D8600EEE919 /* iTermCharacterBitmap.m in Sources */,
-				A653F69924D00C590062377E /* iTermEncoderPODRecord.m in Sources */,
 				A6A4865F20B675DE00493302 /* AdvancedWorkingDirectoryWindowController.m in Sources */,
 				537C4FD9227BE18B00B292E2 /* iTermSecureKeyboardEntryController.m in Sources */,
 				A692666D210A364900A980C7 /* PTYTextViewDataSource.m in Sources */,

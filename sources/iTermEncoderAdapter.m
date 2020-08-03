@@ -32,6 +32,10 @@
     [_encoder encodeObject:obj key:key];
 }
 
+- (BOOL)encodePropertyList:(id)plist withKey:(NSString *)key {
+    return [_encoder encodePropertyList:plist withKey:key];
+}
+
 - (BOOL)encodeDictionaryWithKey:(NSString *)key
                      generation:(NSInteger)generation
                           block:(BOOL (^ NS_NOESCAPE)(id<iTermEncoderAdapter> encoder))block {
@@ -72,9 +76,7 @@
 }
 
 - (void)mergeDictionary:(NSDictionary *)dictionary {
-    [dictionary enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, id  _Nonnull obj, BOOL * _Nonnull stop) {
-        self[key] = obj;
-    }];
+    [_encoder mergeDictionary:dictionary];
 }
 
 @end
@@ -109,6 +111,11 @@
         return;
     }
     _mutableDictionary[key] = obj;
+}
+
+- (BOOL)encodePropertyList:(id)plist withKey:(NSString *)key {
+    _mutableDictionary[key] = plist;
+    return YES;
 }
 
 - (BOOL)encodeDictionaryWithKey:(NSString *)key

@@ -7,6 +7,7 @@
 
 #import "iTermEncoderGraphRecord.h"
 
+#import "DebugLogging.h"
 #import "iTermTuple.h"
 #import "NSArray+iTerm.h"
 #import "NSDictionary+iTerm.h"
@@ -14,14 +15,14 @@
 
 @implementation iTermEncoderGraphRecord
 
-+ (instancetype)withPODs:(NSArray<iTermEncoderPODRecord *> *)podRecords
++ (instancetype)withPODs:(NSDictionary<NSString *, id> *)pod
                   graphs:(NSArray<iTermEncoderGraphRecord *> *)graphRecords
               generation:(NSInteger)generation
                      key:(NSString *)key
               identifier:(NSString *)identifier
-                   rowid:(NSNumber *)rowid {
+                   rowid:(NSNumber *_Nullable)rowid {
     assert(identifier);
-    return [[self alloc] initWithPODs:podRecords
+    return [[self alloc] initWithPODs:pod
                                graphs:graphRecords
                            generation:generation
                                   key:key
@@ -29,7 +30,7 @@
                                 rowid:rowid];
 }
 
-- (instancetype)initWithPODs:(NSArray<iTermEncoderPODRecord *> *)podRecords
+- (instancetype)initWithPODs:(NSDictionary<NSString *, id> *)pods
                       graphs:(NSArray<iTermEncoderGraphRecord *> *)graphRecords
                   generation:(NSInteger)generation
                          key:(NSString *)key
@@ -38,13 +39,7 @@
     assert(key);
     self = [super init];
     if (self) {
-        _podRecords = [[podRecords classifyWithBlock:^id(iTermEncoderPODRecord *record) {
-            return record.key;
-        }] mapValuesWithBlock:^iTermEncoderPODRecord *(NSString * key,
-                                                       NSArray<iTermEncoderPODRecord *> *object) {
-            return object.firstObject;
-        }];
-        assert(_podRecords.count == podRecords.count);
+        _pod = pods;
         _graphRecords = graphRecords ?: @[];
         [graphRecords enumerateObjectsUsingBlock:^(iTermEncoderGraphRecord * _Nonnull child, NSUInteger idx, BOOL * _Nonnull stop) {
             child->_parent = self;
@@ -63,8 +58,8 @@
 
 - (void)dumpWithIndent:(NSString *)indent {
     NSLog(@"%@%@[%@] rowid=%@ %@", indent, self.key, self.identifier, self.rowid,
-          [[self.podRecords.allKeys mapWithBlock:^id(NSString *key) {
-        return [NSString stringWithFormat:@"%@=%@", key, self.podRecords[key]];
+          [[self.pod.allKeys mapWithBlock:^id(NSString *key) {
+        return [NSString stringWithFormat:@"%@=%@", key, self.pod[key]];
     }] componentsJoinedByString:@", "]);
     for (iTermEncoderGraphRecord *child in _graphRecords) {
         [child dumpWithIndent:[@"  " stringByAppendingString:indent]];
@@ -77,7 +72,7 @@
             self.key,
             @(self.generation),
             self.identifier,
-            self.podRecords,
+            self.pod,
             [[self.graphRecords mapWithBlock:^id(iTermEncoderGraphRecord *anObject) {
         return [NSString stringWithFormat:@"<graph rowid=%@ key=%@ id=%@>",
                 anObject.rowid, anObject.key, anObject.identifier];
@@ -119,7 +114,7 @@
     if (![other.key isEqual:self.key]) {
         return NO;
     }
-    if (![other.podRecords isEqual:self.podRecords]) {
+    if (![other.pod isEqual:self.pod]) {
         return NO;
     }
     if (![[other.graphRecords sortedArrayUsingSelector:@selector(compareGraphRecord:)] isEqual:[self.graphRecords  sortedArrayUsingSelector:@selector(compareGraphRecord:)]]) {
@@ -153,21 +148,6 @@
     return [self childRecordWithKey:@"__dict" identifier:key];
 }
 
-- (BOOL)enumerateValuesVersus:(iTermEncoderGraphRecord * _Nullable)other
-                        block:(void (^)(iTermEncoderPODRecord * _Nullable mine,
-                                        iTermEncoderPODRecord * _Nullable theirs,
-                                        BOOL *stop))block {
-    NSSet<NSString *> *keys = [NSSet setWithArray:[_podRecords.allKeys ?: @[] arrayByAddingObjectsFromArray:other.podRecords.allKeys ?: @[]]];
-    __block BOOL ok = YES;
-    [keys enumerateObjectsUsingBlock:^(NSString * _Nonnull key, BOOL * _Nonnull stop) {
-        block(self.podRecords[key], other.podRecords[key], stop);
-        if (*stop) {
-            ok = NO;
-        }
-    }];
-    return ok;
-}
-
 #warning TODO: Test this
 - (void)enumerateArrayWithKey:(NSString *)key
                         block:(void (^NS_NOESCAPE)(NSString *identifier,
@@ -179,14 +159,14 @@
         return;
     }
 
-    NSArray<NSString *> *order = [[NSString castFrom:[record.podRecords[@"__order"] value]] componentsSeparatedByString:@"\t"] ?: @[];
+    NSArray<NSString *> *order = [[NSString castFrom:record.pod[@"__order"]] componentsSeparatedByString:@"\t"] ?: @[];
     NSDictionary *items = [[record.graphRecords classifyWithBlock:^id(iTermEncoderGraphRecord *itemRecord) {
         return itemRecord.identifier;
     }] mapValuesWithBlock:^id(id key, NSArray<iTermEncoderGraphRecord *> *object) {
         return object.firstObject.propertyListValue;
     }];
     [order enumerateObjectsUsingBlock:^(NSString * _Nonnull key, NSUInteger idx, BOOL * _Nonnull stop) {
-        id item = items[key] ?: record->_podRecords[key].value;
+        id item = items[key] ?: record->_pod[key];
         block(key, idx, item, stop);
     }];
 }
@@ -210,39 +190,33 @@
     }] mapValuesWithBlock:^id(id key, NSArray<iTermEncoderGraphRecord *> *object) {
         return object.firstObject;
     }];
-    NSArray<NSString *> *order = [[NSString castFrom:[record.podRecords[@"__order"] value]] componentsSeparatedByString:@"\t"] ?: @[];
+    NSArray<NSString *> *order = [[NSString castFrom:record.pod[@"__order"]] componentsSeparatedByString:@"\t"] ?: @[];
     return [order mapWithBlock:^id(NSString *key) {
         return items[key];
     }];
 }
 
+- (id)objectWithKey:(NSString *)key class:(Class)desiredClass error:(out NSError *__autoreleasing  _Nullable * _Nullable)error {
+    id instance = [desiredClass castFrom:_pod[key]];
+    if (!instance) {
+        *error = [[NSError alloc] initWithDomain:@"com.iterm2.graph-record" code:1 userInfo:@{ NSLocalizedDescriptionKey: @"No such record or wrong type" }];
+        return nil;
+    }
+    return instance;
+}
+
 - (NSInteger)integerWithKey:(NSString *)key error:(out NSError *__autoreleasing  _Nullable * _Nullable)error {
-    iTermEncoderPODRecord *record = _podRecords[key];
-    if (!record) {
-        *error = [[NSError alloc] initWithDomain:@"com.iterm2.graph-record" code:1 userInfo:@{ NSLocalizedDescriptionKey: @"No such record" }];
-        return 0;
-    }
-    if (record.type != iTermEncoderRecordTypeNumber) {
-        *error = [[NSError alloc] initWithDomain:@"com.iterm2.graph-record" code:1 userInfo:@{ NSLocalizedDescriptionKey: [NSString stringWithFormat:@"Type mismatch. Record is %@", record] }];
-        return 0;
-    }
-    return [[record value] integerValue];
+    NSNumber *number = [self objectWithKey:key class:[NSNumber class] error:error];
+    return number.integerValue;
 }
 
 - (NSString *)stringWithKey:(NSString *)key {
-    iTermEncoderPODRecord *record = _podRecords[key];
-    if (!record) {
-        return nil;
-    }
-    if (record.type != iTermEncoderRecordTypeString) {
-        return nil;
-    }
-    return [record value];
+    return [self objectWithKey:key class:[NSString class] error:nil];
 }
 
 - (NSArray *)arrayValue {
     assert([self.key isEqualToString:@"__array"]);
-    NSArray<NSString *> *order = [[NSString castFrom:[self.podRecords[@"__order"] value]] componentsSeparatedByString:@"\t"] ?: @[];
+    NSArray<NSString *> *order = [[NSString castFrom:self.pod[@"__order"]] componentsSeparatedByString:@"\t"] ?: @[];
     NSDictionary *items = [[self.graphRecords classifyWithBlock:^id(iTermEncoderGraphRecord *itemRecord) {
         return itemRecord.identifier;
     }] mapValuesWithBlock:^id(id key, NSArray<iTermEncoderGraphRecord *> *object) {
@@ -257,10 +231,10 @@
 
 - (NSDictionary *)dictionaryValue {
     assert([self.key isEqualToString:@"__dict"]);
-    NSMutableDictionary *dict = [NSMutableDictionary dictionary];
-    [self.podRecords enumerateKeysAndObjectsUsingBlock:^(NSString * _Nonnull key, iTermEncoderPODRecord * _Nonnull pod, BOOL * _Nonnull stop) {
-        dict[key] = pod.value;
-    }];
+    if (self.graphRecords.count == 0) {
+        return self.pod;
+    }
+    NSMutableDictionary *dict = [self.pod mutableCopy];
     for (iTermEncoderGraphRecord *graph in self.graphRecords) {
         if ([graph.key isEqualToString:@"__array"] || [graph.key isEqualToString:@"__dict"]) {
             dict[graph.identifier] = graph.propertyListValue;
@@ -274,10 +248,10 @@
 // Was not originally encoded as a dictionary, but we can make one from it nonetheless.
 // This is meant as a fallback and may lose information because it ignores identifiers.
 - (NSDictionary *)implicitDictionaryValue {
-    NSMutableDictionary *result = [NSMutableDictionary dictionary];
-    [self.podRecords enumerateKeysAndObjectsUsingBlock:^(NSString * _Nonnull key, iTermEncoderPODRecord * _Nonnull obj, BOOL * _Nonnull stop) {
-        result[key] = obj.value;
-    }];
+    if (self.graphRecords.count == 0) {
+        return self.pod;
+    }
+    NSMutableDictionary *result = [self.pod ?: @{} mutableCopy];
     [self.graphRecords enumerateObjectsUsingBlock:^(iTermEncoderGraphRecord * _Nonnull child,
                                                     NSUInteger idx,
                                                     BOOL * _Nonnull stop) {
@@ -297,16 +271,32 @@
 }
 
 - (id)propertyListValue {
-    if (self.podRecords.count == 0 && self.graphRecords.count == 0) {
+    if (self.pod.count == 0 && self.graphRecords.count == 0) {
         return nil;
+    }
+    if (self.graphRecords.count == 0) {
+        return self.pod;
     }
     if ([self.key isEqualToString:@"__dict"]) {
         return [self dictionaryValue];
     }
-    if ([self.key isEqualToString:@"__array"] && self.podRecords[@"__order"]) {
+    if ([self.key isEqualToString:@"__array"] && self.pod[@"__order"]) {
         return [self arrayValue];
     }
     return [self implicitDictionaryValue];
+}
+
+- (NSData *)data {
+    NSError *error = nil;
+    NSData *data =
+    [NSPropertyListSerialization dataWithPropertyList:self.pod
+                                               format:NSPropertyListBinaryFormat_v1_0
+                                              options:0
+                                                error:&error];
+    if (error) {
+        DLog(@"Failed to serialize pod %@: %@", self.pod, error);
+    }
+    return data;
 }
 
 @end

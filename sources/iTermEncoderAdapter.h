@@ -23,6 +23,8 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)setObject:(id _Nullable)obj forKey:(NSString *)key;
 - (void)mergeDictionary:(NSDictionary *)dictionary;
 
+- (BOOL)encodePropertyList:(id)plist withKey:(NSString *)key;
+
 - (BOOL)encodeDictionaryWithKey:(NSString *)key
                      generation:(NSInteger)generation
                           block:(BOOL (^ NS_NOESCAPE)(id<iTermEncoderAdapter> encoder))block;

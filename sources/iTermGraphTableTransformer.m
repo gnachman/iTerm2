@@ -19,7 +19,14 @@ static iTermEncoderGraphRecord *iTermGraphDeltaEncoderMakeGraphRecord(NSNumber *
     [childNodeIDs mapWithBlock:^id(NSNumber *childNodeID) {
         return iTermGraphDeltaEncoderMakeGraphRecord(childNodeID, nodes);
     }];
-    return [iTermEncoderGraphRecord withPODs:[nodeDict[@"pod"] allValues]
+    NSDictionary<NSString *, id> *pod;
+    NSData *data = nodeDict[@"data"];
+    if (data.length) {
+        pod = [NSPropertyListSerialization propertyListWithData:data options:NSPropertyListImmutable format:nil error:nil];
+    } else {
+        pod = @{};
+    }
+    return [iTermEncoderGraphRecord withPODs:pod
                                       graphs:childGraphRecords
                                   generation:0
                                          key:nodeDict[@"key"]
@@ -31,12 +38,10 @@ static iTermEncoderGraphRecord *iTermGraphDeltaEncoderMakeGraphRecord(NSNumber *
     iTermEncoderGraphRecord *_record;
 }
 
-- (instancetype)initWithNodeRows:(NSArray *)nodeRows
-                       valueRows:(NSArray *)valueRows {
+- (instancetype)initWithNodeRows:(NSArray *)nodeRows {
     self = [super init];
     if (self) {
         _nodeRows = nodeRows;
-        _valueRows = valueRows;
     }
     return self;
 }
@@ -52,7 +57,7 @@ static iTermEncoderGraphRecord *iTermGraphDeltaEncoderMakeGraphRecord(NSNumber *
     // Create nodes
     NSMutableDictionary<NSNumber *, NSMutableDictionary *> *nodes = [NSMutableDictionary dictionary];
     for (NSArray *row in _nodeRows) {
-        if (row.count != 4) {
+        if (row.count != 5) {
             DLog(@"Wrong number of items in row: %@", row);
             _lastError = [NSError errorWithDomain:@"com.iterm2.graph-transformer"
                                              code:1
@@ -63,7 +68,8 @@ static iTermEncoderGraphRecord *iTermGraphDeltaEncoderMakeGraphRecord(NSNumber *
         NSString *identifier = [NSString castFrom:row[1]];
         NSNumber *parent = [NSNumber castFrom:row[2]];
         NSNumber *rowid = [NSNumber castFrom:row[3]];
-        if (!row || !key || !identifier || !parent) {
+        NSData *data = [NSData castFrom:row[4]];
+        if (!row || !key || !identifier || !parent || !data) {
             DLog(@"Bad row: %@", row);
             _lastError = [NSError errorWithDomain:@"com.iterm2.graph-transformer"
                                              code:1
@@ -85,53 +91,10 @@ static iTermEncoderGraphRecord *iTermGraphDeltaEncoderMakeGraphRecord(NSNumber *
                            @"identifier": identifier,
                            @"parent": parent,
                            @"children": [NSMutableArray array],
-                           @"rowid": rowid } mutableCopy];
+                           @"rowid": rowid,
+                           @"data": data } mutableCopy];
     }
     return nodes;
-}
-
-- (BOOL)attachValuesToNodes:(NSDictionary<NSNumber *, NSMutableDictionary *> *)nodes {
-    for (NSArray *row in _valueRows) {
-        if (row.count != 4) {
-            DLog(@"Wrong number of fields in row: %@", row);
-            _lastError = [NSError errorWithDomain:@"com.iterm2.graph-transformer"
-                                             code:1
-                                         userInfo:@{ NSLocalizedDescriptionKey: [NSString stringWithFormat:@"Wrong number of fields in row: %@", row] }];
-            return NO;
-        }
-        NSNumber *nodeid = [NSNumber castFrom:row[0]];
-        NSString *key = [NSString castFrom:row[1]];
-        NSNumber *type = [NSNumber castFrom:row[3]];
-        if (!nodeid || !key || !type) {
-            DLog(@"Bogus row: %@", row);
-            _lastError = [NSError errorWithDomain:@"com.iterm2.graph-transformer"
-                                             code:1
-                                         userInfo:@{ NSLocalizedDescriptionKey: [NSString stringWithFormat:@"Bogus row: %@", row] }];
-            return NO;
-        }
-        iTermEncoderPODRecord *record = nil;
-        record = [iTermEncoderPODRecord withData:row[2]
-                                            type:(iTermEncoderRecordType)type.unsignedIntegerValue
-                                             key:key];
-        if (!record) {
-            DLog(@"Bogus value with type %@: %@", type, row[2]);
-            _lastError = [NSError errorWithDomain:@"com.iterm2.graph-transformer"
-                                             code:1
-                                         userInfo:@{ NSLocalizedDescriptionKey: [NSString stringWithFormat:@"Bogus value with type %@: %@", type, row[2]] }];
-            return NO;
-        }
-        NSMutableDictionary *nodeDict = nodes[nodeid];
-        if (!nodeDict) {
-            DLog(@"No such node: %@", nodeid);
-            _lastError = [NSError errorWithDomain:@"com.iterm2.graph-transformer"
-                                             code:1
-                                         userInfo:@{ NSLocalizedDescriptionKey: [NSString stringWithFormat:@"No such node: %@", nodeid] }];
-            return NO;
-        }
-        NSMutableDictionary *pod = nodeDict[@"pod"];
-        pod[key] = record;
-    }
-    return YES;
 }
 
 - (BOOL)attachChildrenToParents:(NSDictionary<NSNumber *, NSMutableDictionary *> *)nodes
@@ -167,10 +130,6 @@ static iTermEncoderGraphRecord *iTermGraphDeltaEncoderMakeGraphRecord(NSNumber *
     }
     if (!rootNodeID) {
         DLog(@"No root found");
-        return nil;
-    }
-    if (![self attachValuesToNodes:nodes]) {
-        DLog(@"Failed to attach values to nodes");
         return nil;
     }
     if (![self attachChildrenToParents:nodes ignoringRootRowID:rootNodeID]) {

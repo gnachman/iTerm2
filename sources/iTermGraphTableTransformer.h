@@ -18,14 +18,12 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) NSArray *valueRows;
 @property (nonatomic, readonly, nullable) NSError *lastError;
 
-- (instancetype)initWithNodeRows:(NSArray *)nodeRows
-                       valueRows:(NSArray *)valueRows NS_DESIGNATED_INITIALIZER;
+- (instancetype)initWithNodeRows:(NSArray *)nodeRows NS_DESIGNATED_INITIALIZER;
 - (instancetype)init NS_UNAVAILABLE;
 
 #pragma mark - Private - for tests only
 
 - (NSDictionary<NSNumber *, NSMutableDictionary *> *)nodes:(out NSNumber **)rootNodeIDOut;
-- (BOOL)attachValuesToNodes:(NSDictionary<NSNumber *, NSMutableDictionary *> *)nodes;
 - (BOOL)attachChildrenToParents:(NSDictionary<NSNumber *, NSMutableDictionary *> *)nodes
               ignoringRootRowID:(NSNumber *)rootRowID;
 @end
