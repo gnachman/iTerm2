@@ -7,6 +7,7 @@
 
 #import <XCTest/XCTest.h>
 
+#import "NSArray+iTerm.h"
 #import "NSData+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "NSStringITerm.h"
@@ -17,6 +18,75 @@
 #import "iTermGraphDeltaEncoder.h"
 #import "iTermGraphTableTransformer.h"
 #import "iTermThreadSafety.h"
+
+@interface NSString(Coding)
+@end
+@implementation NSString(Coding)
+- (NSString *)compactDescription {
+    return self;
+}
+@end
+
+@interface NSData(Coding)
+@end
+@implementation NSData(Coding)
+- (NSString *)compactDescription {
+    NSString *string = [[NSString alloc] initWithData:self encoding:NSUTF8StringEncoding];
+    if (string) {
+        return string;
+    }
+    return [self it_hexEncoded];
+}
+@end
+
+@interface NSDate(Coding)
+@end
+@implementation NSDate(Coding)
+- (NSString *)compactDescription {
+    return [@(self.timeIntervalSince1970) stringValue];
+}
+@end
+
+@interface NSNull(Coding)
+@end
+@implementation NSNull(Coding)
+- (NSString *)compactDescription {
+    return @"{null}";
+}
+@end
+
+@interface NSArray(Coding)
+@end
+@implementation NSArray(Coding)
+- (NSString *)compactDescription {
+    return [NSString stringWithFormat:@"[%@]",
+            [[self mapWithBlock:^id(id anObject) {
+        return [anObject compactDescription];
+    }] componentsJoinedByString:@", "]];
+}
+@end
+
+@interface NSDictionary(Coding)
+@end
+@implementation NSDictionary(Coding)
+- (NSString *)compactDescription {
+    NSString *kvps = [[self.allKeys mapWithBlock:^id(id anObject) {
+        return [NSString stringWithFormat:@"%@=%@", [anObject compactDescription], [self[anObject] compactDescription]];
+    }] componentsJoinedByString:@", "];
+    return [NSString stringWithFormat:@"{%@}", kvps];
+}
+@end
+
+@interface iTermEncoderGraphRecord (Testing)
+@end
+
+@implementation iTermEncoderGraphRecord (Testing)
+- (NSString *)formattedData {
+    return [[self.pod.allKeys mapWithBlock:^id(NSString *key) {
+        return [NSString stringWithFormat:@"%@=%@", [self.pod[key] compactDescription]];
+    }] componentsJoinedByString:@" "];
+}
+@end
 
 @interface NSObject(Coding)
 + (instancetype)force:(id)obj;
@@ -215,6 +285,11 @@
     return @(_lastRowID);
 }
 
+- (void)unlink {
+    assert(!_open);
+}
+
+
 
 @end
 
@@ -222,105 +297,20 @@
     NSInteger _rowid;
 }
 
-- (void)testPODRecord {
-    iTermEncoderPODRecord *record;
-
-    record = [iTermEncoderPODRecord withString:@"xyz" key:@"k"];
-    XCTAssertEqual(record.type, iTermEncoderRecordTypeString);
-    XCTAssertEqualObjects(record.key, @"k");
-    XCTAssertEqualObjects(record.value, @"xyz");
-
-    record = [iTermEncoderPODRecord withNumber:@123 key:@"k"];
-    XCTAssertEqual(record.type, iTermEncoderRecordTypeNumber);
-    XCTAssertEqualObjects(record.key, @"k");
-    XCTAssertEqualObjects(record.value, @123);
-
-    NSData *data = [NSData dataWithBytes:"xyz" length:3];
-    record = [iTermEncoderPODRecord withData:data key:@"k"];
-    XCTAssertEqual(record.type, iTermEncoderRecordTypeData);
-    XCTAssertEqualObjects(record.key, @"k");
-    XCTAssertEqualObjects(record.value, data);
-
-    NSDate *date = [NSDate dateWithTimeIntervalSince1970:1000000000];
-    record = [iTermEncoderPODRecord withDate:date key:@"k"];
-    XCTAssertEqual(record.type, iTermEncoderRecordTypeDate);
-    XCTAssertEqualObjects(record.key, @"k");
-    XCTAssertEqualObjects(record.value, date);
-}
-
-- (void)testInvalidDataForPODRecord {
-    iTermEncoderPODRecord *record;
-    record = [iTermEncoderPODRecord withData:[NSData dataWithBytes:"\xff\xff" length:1]
-                                        type:iTermEncoderRecordTypeString
-                                         key:@""];
-    XCTAssertNil(record);
-
-    record = [iTermEncoderPODRecord withData:[NSData dataWithBytes:"0" length:1]
-                                        type:iTermEncoderRecordTypeNumber
-                                         key:@""];
-    XCTAssertNil(record);
-
-    record = [iTermEncoderPODRecord withData:[NSData dataWithBytes:"0" length:1]
-                                        type:iTermEncoderRecordTypeDate
-                                         key:@""];
-    XCTAssertNil(record);
-}
-
-- (void)testPODRecordIgnoresNils {
-    XCTAssertNil([iTermEncoderPODRecord withString:(id _Nonnull)nil key:@""]);
-    XCTAssertNil([iTermEncoderPODRecord withNumber:(id _Nonnull)nil key:@""]);
-    XCTAssertNil([iTermEncoderPODRecord withData:(id _Nonnull)nil key:@""]);
-    XCTAssertNil([iTermEncoderPODRecord withDate:(id _Nonnull)nil key:@""]);
-}
-
-- (void)testPODRecordCrossTypeComparison {
-    NSString *string = @"abc";
-    NSData *data = [string dataUsingEncoding:NSUTF8StringEncoding];
-    iTermEncoderPODRecord *lhs = [iTermEncoderPODRecord withString:string key:@""];
-    iTermEncoderPODRecord *rhs = [iTermEncoderPODRecord withData:data key:@""];
-    XCTAssertNotEqualObjects(lhs, rhs);
-}
-
-- (void)testPODRecordKeyComparison {
-    iTermEncoderPODRecord *lhs = [iTermEncoderPODRecord withString:@"X" key:@"1"];
-    iTermEncoderPODRecord *rhs = [iTermEncoderPODRecord withString:@"X" key:@"2"];
-    XCTAssertNotEqualObjects(lhs, rhs);
-}
-
-- (void)testPODRecordNilComparison {
-    iTermEncoderPODRecord *lhs = [iTermEncoderPODRecord withString:@"X" key:@"1"];
-    XCTAssertFalse([lhs isEqual:nil]);
-}
-
-- (void)testPODRecordSelfComparison {
-    iTermEncoderPODRecord *record = [iTermEncoderPODRecord withString:@"X" key:@"1"];
-    XCTAssertEqualObjects(record, record);
-}
-
-- (void)testPODRecordDataRoundTrips {
-    NSData *data = [NSData dataWithBytes:"abc" length:3];
-    iTermEncoderPODRecord *record = [iTermEncoderPODRecord withData:data key:@"1"];
-    XCTAssertEqualObjects(data, record.data);
-}
-
 - (void)testGraphRecord_OnlyPOD {
-    NSArray<iTermEncoderPODRecord *> *pods =
-    @[ [iTermEncoderPODRecord withNumber:@1 key:@"one"],
-       [iTermEncoderPODRecord withString:@"x" key:@"letter"] ];
-
     NSArray<iTermEncoderGraphRecord *> *graphs = nil;
     iTermEncoderGraphRecord *record;
-    record = [iTermEncoderGraphRecord withPODs:pods
+    record = [iTermEncoderGraphRecord withPODs:@{ @"one": @1, @"letter": @"x"}
                                         graphs:graphs
                                     generation:3
                                            key:@"root"
                                     identifier:@""
                                          rowid:@1];
 
-    NSDictionary<NSString *, iTermEncoderPODRecord *> *expectedRecords =
-    @{ @"one": pods[0],
-       @"letter": pods[1] };
-    XCTAssertEqualObjects(expectedRecords, record.podRecords);
+    NSDictionary<NSString *, id> *expectedPOD =
+    @{ @"one": @1,
+       @"letter": @"x" };
+    XCTAssertEqualObjects(expectedPOD, record.pod);
     XCTAssertEqualObjects(@[], record.graphRecords);
     XCTAssertEqual(3, record.generation);
     XCTAssertEqualObjects(@"root", record.key);
@@ -329,17 +319,11 @@
 }
 
 - (void)testGraphRecord {
-    NSArray<iTermEncoderPODRecord *> *pods1 =
-    @[ [iTermEncoderPODRecord withNumber:@1 key:@"one"],
-       [iTermEncoderPODRecord withString:@"x" key:@"letter"] ];
-    NSArray<iTermEncoderPODRecord *> *pods2 =
-    @[ [iTermEncoderPODRecord withNumber:@2 key:@"one"],
-       [iTermEncoderPODRecord withString:@"y" key:@"letter"] ];
+    NSDictionary *pods1 = @{ @"one": @1, @"letter": @"x" };
+    NSDictionary *pods2 = @{ @"one": @2, @"letter": @"y" };
     NSData *data = [NSData dataWithBytes:"xyz" length:3];
-    NSArray<iTermEncoderPODRecord *> *pods3 =
-    @[ [iTermEncoderPODRecord withDate:[NSDate dateWithTimeIntervalSince1970:1000000000] key:@"now"],
-       [iTermEncoderPODRecord withData:data key:@"data"] ];
-
+    NSDictionary *pods3 = @{ @"now": [NSDate dateWithTimeIntervalSince1970:1000000000],
+                             @"data": data };
     NSArray<iTermEncoderGraphRecord *> *graphs =
     @[
         [iTermEncoderGraphRecord withPODs:pods1 graphs:@[] generation:3 key:@"k" identifier:@"id1" rowid:@2],
@@ -353,10 +337,7 @@
                                     identifier:@""
                                          rowid:@1];
 
-    NSDictionary<NSString *, iTermEncoderPODRecord *> *expectedPODRecords =
-    @{ @"now": pods3[0],
-       @"data": pods3[1] };
-    XCTAssertEqualObjects(expectedPODRecords, record.podRecords);
+    XCTAssertEqualObjects(pods3, record.pod);
     XCTAssertEqualObjects(graphs, record.graphRecords);
     XCTAssertEqual(7, record.generation);
     XCTAssertEqualObjects(record.key, @"root");
@@ -384,15 +365,15 @@
 
     iTermEncoderGraphRecord *actual = encoder.record;
 
-    NSArray *expectedPODs = @[ [iTermEncoderPODRecord withString:@"red" key:@"color"],
-                               [iTermEncoderPODRecord withNumber:@1 key:@"count"],
-                               [iTermEncoderPODRecord withData:[NSData dataWithBytes:"abc" length:3] key:@"blob"],
-                               [iTermEncoderPODRecord withDate:date key:@"date"] ];
-    iTermEncoderPODRecord *name = [iTermEncoderPODRecord withString:@"bob" key:@"name"];
-    iTermEncoderPODRecord *age = [iTermEncoderPODRecord withNumber:@23 key:@"age"];
+    NSDictionary *expectedPODs = @{
+        @"color": @"red",
+        @"count": @1,
+        @"blob": [NSData dataWithBytes:"abc" length:3],
+        @"date": date,
+    };
     NSArray *expectedGraphs =
-    @[ [iTermEncoderGraphRecord withPODs:@[ name ] graphs:@[] generation:2 key:@"left" identifier:@"" rowid:nil],
-       [iTermEncoderGraphRecord withPODs:@[ age ] graphs:@[] generation:3 key:@"right" identifier:@"" rowid:nil] ];
+    @[ [iTermEncoderGraphRecord withPODs:@{ @"name": @"bob" } graphs:@[] generation:2 key:@"left" identifier:@"" rowid:nil],
+       [iTermEncoderGraphRecord withPODs:@{ @"age": @23 } graphs:@[] generation:3 key:@"right" identifier:@"" rowid:nil] ];
     iTermEncoderGraphRecord *expected = [iTermEncoderGraphRecord withPODs:expectedPODs
                                                                    graphs:expectedGraphs
                                                                generation:1
@@ -449,13 +430,13 @@
 }
 
 - (void)testCompareGraphRecordUsesGeneration {
-    iTermEncoderGraphRecord *lhs = [iTermEncoderGraphRecord withPODs:@[]
+    iTermEncoderGraphRecord *lhs = [iTermEncoderGraphRecord withPODs:@{}
                                                               graphs:@[]
                                                           generation:1
                                                                  key:@""
                                                           identifier:@""
                                                                rowid:@2];
-    iTermEncoderGraphRecord *rhs = [iTermEncoderGraphRecord withPODs:@[]
+    iTermEncoderGraphRecord *rhs = [iTermEncoderGraphRecord withPODs:@{}
                                                               graphs:@[]
                                                           generation:2
                                                                  key:@""
@@ -464,7 +445,7 @@
     NSComparisonResult comp = [lhs compareGraphRecord:rhs];
     XCTAssertEqual(comp, NSOrderedAscending);
 
-    rhs = [iTermEncoderGraphRecord withPODs:@[]
+    rhs = [iTermEncoderGraphRecord withPODs:@{}
                                      graphs:@[]
                                  generation:1
                                         key:@""
@@ -475,7 +456,7 @@
 }
 
 - (void)testGraphRecordEquality {
-    iTermEncoderGraphRecord *lhs = [iTermEncoderGraphRecord withPODs:@[]
+    iTermEncoderGraphRecord *lhs = [iTermEncoderGraphRecord withPODs:@{}
                                                               graphs:@[]
                                                           generation:1
                                                                  key:@""
@@ -485,7 +466,7 @@
     XCTAssertEqualObjects(lhs, lhs);
     XCTAssertNotEqualObjects(lhs, @123);
 
-    iTermEncoderGraphRecord *rhs = [iTermEncoderGraphRecord withPODs:@[]
+    iTermEncoderGraphRecord *rhs = [iTermEncoderGraphRecord withPODs:@{}
                                                               graphs:@[]
                                                           generation:1
                                                                  key:@"x"
@@ -493,8 +474,7 @@
                                                                rowid:@1];
     XCTAssertNotEqualObjects(lhs, rhs);
 
-    iTermEncoderPODRecord *x = [iTermEncoderPODRecord withString:@"xv" key:@"xk"];
-    rhs = [iTermEncoderGraphRecord withPODs:@[x]
+    rhs = [iTermEncoderGraphRecord withPODs:@{ @"xk": @"xy" }
                                      graphs:@[]
                                  generation:1
                                         key:@"x"
@@ -502,7 +482,7 @@
                                       rowid:@1];
     XCTAssertNotEqualObjects(lhs, rhs);
 
-    rhs = [iTermEncoderGraphRecord withPODs:@[]
+    rhs = [iTermEncoderGraphRecord withPODs:@{}
                                      graphs:@[lhs]
                                  generation:1
                                         key:@""
@@ -510,7 +490,7 @@
                                       rowid:@1];
     XCTAssertNotEqualObjects(lhs, rhs);
 
-    rhs = [iTermEncoderGraphRecord withPODs:@[]
+    rhs = [iTermEncoderGraphRecord withPODs:@{}
                                      graphs:@[]
                                  generation:2
                                         key:@""
@@ -518,7 +498,7 @@
                                       rowid:@1];
     XCTAssertNotEqualObjects(lhs, rhs);
 
-    rhs = [iTermEncoderGraphRecord withPODs:@[]
+    rhs = [iTermEncoderGraphRecord withPODs:@{}
                                      graphs:@[]
                                  generation:1
                                         key:@""
@@ -526,7 +506,7 @@
                                       rowid:@1];
     XCTAssertNotEqualObjects(lhs, rhs);
 
-    rhs = [iTermEncoderGraphRecord withPODs:@[]
+    rhs = [iTermEncoderGraphRecord withPODs:@{}
                                      graphs:@[]
                                  generation:1
                                         key:@"x"
@@ -543,60 +523,30 @@
        <k5 vv2=vk5>
  */
 - (void)testGraphTableTransformer_HappyPath {
-    NSArray *nodes = @[
-        // key, identifier, parent, rowid
-        @[ @"k5", @"",   @3, @5 ],
-        @[ @"k4", @"i1", @2, @4 ],
-        @[ @"k4", @"i2", @2, @3 ],
-        @[ @"k2", @"",   @1, @2 ],
-        @[ @"",   @"",   @0, @1 ],
-    ];
-
+    NSData *(^ser)(NSDictionary *) = ^NSData *(NSDictionary *dict) {
+        return [NSPropertyListSerialization dataWithPropertyList:dict format:NSPropertyListBinaryFormat_v1_0 options:0 error:nil];
+    };
     NSData *data = [NSData dataWithBytes:"xyz" length:3];
     NSDate *date = [NSDate dateWithTimeIntervalSince1970:1000000000];
-    NSData *(^d)(id) = ^NSData *(id obj) {
-        if ([obj isKindOfClass:[NSString class]]) {
-            return [iTermEncoderPODRecord withString:obj key:@""].data;
-        }
-        if ([obj isKindOfClass:[NSData class]]) {
-            return obj;
-        }
-        if ([obj isKindOfClass:[NSDate class]]) {
-            return [iTermEncoderPODRecord withDate:obj key:@""].data;
-        }
-        if ([obj isKindOfClass:[NSNumber class]]) {
-            return [iTermEncoderPODRecord withNumber:obj key:@""].data;
-        }
-        assert(NO);
-    };
-    // nodeid, key, value, type
-    NSArray *values = @[
-        @[ @1, @"vk1", d(@"vv1"), @(iTermEncoderRecordTypeString) ],
-        @[ @1, @"vk2", d(@123), @(iTermEncoderRecordTypeNumber) ],
-        @[ @1, @"vk3", d(date), @(iTermEncoderRecordTypeDate) ],
-        @[ @1, @"vk4", d(data), @(iTermEncoderRecordTypeData) ],
-        @[ @5, @"vk5", d(@"vv2"), @(iTermEncoderRecordTypeString) ]
+    NSDictionary *rootPOD = @{ @"vk1": @"vv1", @"vk2": @123, @"vk3": date, @"vk4": data };
+    NSDictionary *k5POD = @{ @"vv2": @"vk5" };
+    NSArray *nodes = @[
+        // key, identifier, parent, rowid, data
+        @[ @"k5", @"",   @3, @5, ser(k5POD) ],
+        @[ @"k4", @"i1", @2, @4, [NSData data] ],
+        @[ @"k4", @"i2", @2, @3, [NSData data] ],
+        @[ @"k2", @"",   @1, @2, [NSData data] ],
+        @[ @"",   @"",   @0, @1, ser(rootPOD) ],
     ];
 
     iTermGraphTableTransformer *transformer =
-    [[iTermGraphTableTransformer alloc] initWithNodeRows:nodes
-                                               valueRows:values];
+    [[iTermGraphTableTransformer alloc] initWithNodeRows:nodes];
 
     iTermEncoderGraphRecord *record = transformer.root;
     XCTAssertNotNil(record);
 
-    NSArray<iTermEncoderPODRecord *> *expectedRootPODs = @[
-        [iTermEncoderPODRecord withString:@"vv1" key:@"vk1"],
-        [iTermEncoderPODRecord withNumber:@123 key:@"vk2"],
-        [iTermEncoderPODRecord withDate:date key:@"vk3"],
-        [iTermEncoderPODRecord withData:data key:@"vk4"],
-    ];
-    NSArray<iTermEncoderPODRecord *> *expectedK5PODs = @[
-        [iTermEncoderPODRecord withString:@"vv2" key:@"vk5"],
-    ];
-
     NSArray<iTermEncoderGraphRecord *> *expectedK4Children = @[
-        [iTermEncoderGraphRecord withPODs:expectedK5PODs
+        [iTermEncoderGraphRecord withPODs:k5POD
                                    graphs:@[]
                                generation:0
                                       key:@"k5"
@@ -604,13 +554,13 @@
                                     rowid:@5],
     ];
     NSArray<iTermEncoderGraphRecord *> *expectedK2Children = @[
-        [iTermEncoderGraphRecord withPODs:@[]
+        [iTermEncoderGraphRecord withPODs:@{}
                                    graphs:expectedK4Children
                                generation:0
                                       key:@"k4"
                                identifier:@"i2"
                                     rowid:@3],
-        [iTermEncoderGraphRecord withPODs:@[]
+        [iTermEncoderGraphRecord withPODs:@{}
                                    graphs:@[]
                                generation:0
                                       key:@"k4"
@@ -618,7 +568,7 @@
                                     rowid:@4],
     ];
     NSArray<iTermEncoderGraphRecord *> *expectedRootGraphs = @[
-        [iTermEncoderGraphRecord withPODs:@[]
+        [iTermEncoderGraphRecord withPODs:@{}
                                    graphs:expectedK2Children
                                generation:0
                                       key:@"k2"
@@ -627,7 +577,7 @@
 
     ];
     iTermEncoderGraphRecord *expected =
-    [iTermEncoderGraphRecord withPODs:expectedRootPODs
+    [iTermEncoderGraphRecord withPODs:rootPOD
                                graphs:expectedRootGraphs
                            generation:0
                                   key:@""
@@ -640,14 +590,12 @@
 
 - (void)testGraphTableTransformer_MissingFieldInNodeRow {
     NSArray *nodes = @[
-        // key, identifier, parent, generation
-        @[ @"",   @"" ],
+        // key, identifier, parent, rowid, data
+        @[ @"",  @"" ],
     ];
-    NSArray *values = @[];
 
     iTermGraphTableTransformer *transformer =
-    [[iTermGraphTableTransformer alloc] initWithNodeRows:nodes
-                                               valueRows:values];
+    [[iTermGraphTableTransformer alloc] initWithNodeRows:nodes];
 
     iTermEncoderGraphRecord *record = transformer.root;
     XCTAssertNil(record);
@@ -655,14 +603,12 @@
 
 - (void)testGraphTableTransformer_MistypedFieldInNodeRow {
     NSArray *nodes = @[
-        // key, identifier, parent
-        @[ @"",   @666,   @"" ],
+        // key, identifier, parent, rowid, data
+        @[ @666, @"", @1, @2, [NSData data] ],
     ];
-    NSArray *values = @[];
 
     iTermGraphTableTransformer *transformer =
-    [[iTermGraphTableTransformer alloc] initWithNodeRows:nodes
-                                               valueRows:values];
+    [[iTermGraphTableTransformer alloc] initWithNodeRows:nodes];
 
     iTermEncoderGraphRecord *record = transformer.root;
     XCTAssertNil(record);
@@ -670,99 +616,28 @@
 
 - (void)testGraphTableTransformer_TwoRoots {
     NSArray *nodes = @[
-        // key, identifier, parent
-        @[ @"",   @"",   @"" ],
-        @[ @"",   @"",   @"" ],
+        // key, identifier, parent, rowid, data
+        @[ @"",  @"", @0, @1, [NSData data] ],
+        @[ @"",  @"", @0, @2, [NSData data] ],
     ];
-    NSArray *values = @[];
 
     iTermGraphTableTransformer *transformer =
-    [[iTermGraphTableTransformer alloc] initWithNodeRows:nodes
-                                               valueRows:values];
+    [[iTermGraphTableTransformer alloc] initWithNodeRows:nodes];
 
     iTermEncoderGraphRecord *record = transformer.root;
     XCTAssertNil(record);
 }
 
 - (void)testGraphTableTransformer_ChildWithBadParent {
+    NSData *data = [NSData data];
     NSArray *nodes = @[
-        // key, identifier, parent, generation
-        @[ @"",   @"",   @"" ],
-        @[ @"child",   @"",   @"bogus" ],
-    ];
-    NSArray *values = @[];
-
-    iTermGraphTableTransformer *transformer =
-    [[iTermGraphTableTransformer alloc] initWithNodeRows:nodes
-                                               valueRows:values];
-
-    iTermEncoderGraphRecord *record = transformer.root;
-    XCTAssertNil(record);
-}
-
-- (void)testGraphTableTransformer_MissingFieldInValueRow {
-    NSArray *nodes = @[
-        // key, identifier, parent, generation
-        @[ @"",   @"",   @"" ],
-    ];
-    NSArray *values = @[
-        @[ /* no key */ @"vk4", [NSData dataWithBytes:"123" length:3], @(iTermEncoderRecordTypeData) ]
+        // key, identifier, parent, rowid, data
+        @[ @"",      @"", @0,   @1,   data ],
+        @[ @"child", @"", @666, @2, data ],
     ];
 
     iTermGraphTableTransformer *transformer =
-    [[iTermGraphTableTransformer alloc] initWithNodeRows:nodes
-                                               valueRows:values];
-
-    iTermEncoderGraphRecord *record = transformer.root;
-    XCTAssertNil(record);
-}
-
-- (void)testGraphTableTransformer_MistypedFieldInValueRow {
-    NSArray *nodes = @[
-        // key, identifier, parent, generation
-        @[ @"",   @"",   @"" ],
-    ];
-    NSArray *values = @[
-        @[ @666, @"vk4", [NSData dataWithBytes:"123" length:3], @(iTermEncoderRecordTypeData) ]
-    ];
-
-    iTermGraphTableTransformer *transformer =
-    [[iTermGraphTableTransformer alloc] initWithNodeRows:nodes
-                                               valueRows:values];
-
-    iTermEncoderGraphRecord *record = transformer.root;
-    XCTAssertNil(record);
-}
-
-- (void)testGraphTableTransformer_CorruptTypeFieldInValueRow {
-    NSArray *nodes = @[
-        // key, identifier, parent, generation
-        @[ @"",   @"",   @"" ],
-    ];
-    NSArray *values = @[
-        @[ @"", @"vk4", [NSData dataWithBytes:"123" length:3], @99 ]
-    ];
-
-    iTermGraphTableTransformer *transformer =
-    [[iTermGraphTableTransformer alloc] initWithNodeRows:nodes
-                                               valueRows:values];
-
-    iTermEncoderGraphRecord *record = transformer.root;
-    XCTAssertNil(record);
-}
-
-- (void)testGraphTableTransformer_ReferenceToBogusNodeInValueRow {
-    NSArray *nodes = @[
-        // key, identifier, parent, generation
-        @[ @"",   @"",   @"" ],
-    ];
-    NSArray *values = @[
-        @[ @"bogus", @"vk4", [NSData dataWithBytes:"123" length:3], @(iTermEncoderRecordTypeData) ]
-    ];
-
-    iTermGraphTableTransformer *transformer =
-    [[iTermGraphTableTransformer alloc] initWithNodeRows:nodes
-                                               valueRows:values];
+    [[iTermGraphTableTransformer alloc] initWithNodeRows:nodes];
 
     iTermEncoderGraphRecord *record = transformer.root;
     XCTAssertNil(record);
@@ -786,16 +661,20 @@
     __block BOOL done = NO;
     [encoder enumerateRecords:^(iTermEncoderGraphRecord * _Nullable before,
                                 iTermEncoderGraphRecord * _Nullable after,
-                                NSNumber *rowid) {
+                                NSNumber * _Nonnull parent,
+                                BOOL * _Nonnull stop) {
         XCTAssertFalse(done);
         XCTAssertNotNil(before);
         XCTAssertNotNil(after);
-        [before enumerateValuesVersus:after block:^(iTermEncoderPODRecord * _Nullable mine,
-                                                    iTermEncoderPODRecord * _Nullable theirs) {
-            XCTAssertEqualObjects(mine.value, @"value1");
-            XCTAssertEqualObjects(theirs.value, @"value2");
+
+        if ([before.key isEqualToString:@"leaf"]) {
+            NSDictionary *expectedBeforePOD = @{ @"key": @"value1" };
+            XCTAssertEqualObjects(before.pod, expectedBeforePOD);
+
+            NSDictionary *expectedAfterPOD = @{ @"key": @"value2" };
+            XCTAssertEqualObjects(after.pod, expectedAfterPOD);
             done = YES;
-        }];
+        }
     }];
     XCTAssertTrue(done);
 }
@@ -817,16 +696,20 @@
     __block BOOL done = NO;
     [encoder enumerateRecords:^(iTermEncoderGraphRecord * _Nullable before,
                                 iTermEncoderGraphRecord * _Nullable after,
-                                NSNumber *parent) {
+                                NSNumber * _Nonnull parent,
+                                BOOL * _Nonnull stop) {
         XCTAssertFalse(done);
         XCTAssertNotNil(before);
         XCTAssertNotNil(after);
-        [before enumerateValuesVersus:after block:^(iTermEncoderPODRecord * _Nullable mine,
-                                                    iTermEncoderPODRecord * _Nullable theirs) {
-            XCTAssertEqualObjects(mine.value, @"value1");
-            XCTAssertNil(theirs);
+
+        if ([before.key isEqualToString:@"leaf"]) {
+            NSDictionary *expectedBeforePOD = @{ @"key": @"value1" };
+            XCTAssertEqualObjects(before.pod, expectedBeforePOD);
+
+            NSDictionary *expectedAfterPOD = @{ };
+            XCTAssertEqualObjects(after.pod, expectedAfterPOD);
             done = YES;
-        }];
+        }
     }];
     XCTAssertTrue(done);
 }
@@ -848,16 +731,20 @@
     __block BOOL done = NO;
     [encoder enumerateRecords:^(iTermEncoderGraphRecord * _Nullable before,
                                 iTermEncoderGraphRecord * _Nullable after,
-                                NSNumber *rowid) {
+                                NSNumber * _Nonnull parent,
+                                BOOL * _Nonnull stop) {
         XCTAssertFalse(done);
         XCTAssertNotNil(before);
         XCTAssertNotNil(after);
-        [before enumerateValuesVersus:after block:^(iTermEncoderPODRecord * _Nullable mine,
-                                                    iTermEncoderPODRecord * _Nullable theirs) {
-            XCTAssertEqualObjects(theirs.value, @"value1");
-            XCTAssertNil(mine);
+
+        if ([before.key isEqualToString:@"leaf"]) {
+            NSDictionary *expectedBeforePOD = @{ };
+            XCTAssertEqualObjects(before.pod, expectedBeforePOD);
+
+            NSDictionary *expectedAfterPOD = @{ @"key": @"value1" };
+            XCTAssertEqualObjects(after.pod, expectedAfterPOD);
             done = YES;
-        }];
+        }
     }];
     XCTAssertTrue(done);
 }
@@ -877,15 +764,13 @@
     __block BOOL done = NO;
     [encoder enumerateRecords:^(iTermEncoderGraphRecord * _Nullable before,
                                 iTermEncoderGraphRecord * _Nullable after,
-                                NSNumber *rowid) {
+                                NSNumber * _Nonnull parent,
+                                BOOL * _Nonnull stop) {
         if ([before.key isEqualToString:@"leaf"]) {
             XCTAssertNil(after);
-            [before enumerateValuesVersus:after block:^(iTermEncoderPODRecord * _Nullable mine,
-                                                        iTermEncoderPODRecord * _Nullable theirs) {
-                XCTAssertEqualObjects(mine.value, @"value1");
-                XCTAssertNil(theirs);
-                done = YES;
-            }];
+            NSDictionary *expectedBeforePOD = @{ @"key": @"value1" };
+            XCTAssertEqualObjects(before.pod, expectedBeforePOD);
+            done = YES;
         }
     }];
     XCTAssertTrue(done);
@@ -906,15 +791,14 @@
     __block BOOL done = NO;
     [encoder enumerateRecords:^(iTermEncoderGraphRecord * _Nullable before,
                                 iTermEncoderGraphRecord * _Nullable after,
-                                NSNumber *rowid) {
+                                NSNumber * _Nonnull parent,
+                                BOOL * _Nonnull stop) {
         if ([after.key isEqualToString:@"leaf"]) {
             XCTAssertNil(before);
-            [after enumerateValuesVersus:before block:^(iTermEncoderPODRecord * _Nullable mine,
-                                                        iTermEncoderPODRecord * _Nullable theirs) {
-                XCTAssertNil(theirs);
-                XCTAssertEqualObjects(mine.value, @"value1");
-                done = YES;
-            }];
+
+            NSDictionary *expectedAfterPOD = @{ @"key": @"value1" };
+            XCTAssertEqualObjects(after.pod, expectedAfterPOD);
+            done = YES;
         }
     }];
     XCTAssertTrue(done);
@@ -966,15 +850,11 @@
     {
         NSArray<NSString *> *actual = [self pseudoSQLFromEncoder:encoder];
         NSArray<NSString *> *expected = @[
-            @"insert node key=, identifier=, parent=0 -> 1",  // root
-            @"insert node key=__array, identifier=a, parent=1 -> 2",
-            @"insert value key=__order, value=i1\ti2\ti3, node=2, type=0",
-            @"insert node key=, identifier=i1, parent=2 -> 3",
-            @"insert value key=k_i1, value=value1_i1_0, node=3, type=0",
-            @"insert node key=, identifier=i2, parent=2 -> 4",
-            @"insert value key=k_i2, value=value1_i2_1, node=4, type=0",
-            @"insert node key=, identifier=i3, parent=2 -> 5",
-            @"insert value key=k_i3, value=value1_i3_2, node=5, type=0",
+            @"insert node key=, identifier=, parent=0, data={} -> 1",
+            @"insert node key=__array, identifier=a, parent=1, data={__order=i1\ti2\ti3} -> 2",
+            @"insert node key=, identifier=i1, parent=2, data={k_i1=value1_i1_0} -> 3",
+            @"insert node key=, identifier=i2, parent=2, data={k_i2=value1_i2_1} -> 4",
+            @"insert node key=, identifier=i3, parent=2, data={k_i3=value1_i3_2} -> 5"
         ];
         XCTAssertEqualObjects(actual, expected);
     }
@@ -993,9 +873,9 @@
     {
         NSArray<NSString *> *actual = [self pseudoSQLFromEncoder:encoder];
         NSArray<NSString *> *expected = @[
-            @"update value where key=k_i1 and node=3 set value=value2_i1_0",
-            @"update value where key=k_i2 and node=4 set value=value2_i2_1",
-            @"update value where key=k_i3 and node=5 set value=value2_i3_2",
+            @"update node where rowid=3 set data={k_i1=value2_i1_0}",
+            @"update node where rowid=4 set data={k_i2=value2_i2_1}",
+            @"update node where rowid=5 set data={k_i3=value2_i3_2}"
         ];
         XCTAssertEqualObjects(actual, expected);
     }
@@ -1017,15 +897,11 @@
     {
         NSArray<NSString *> *actual = [self pseudoSQLFromEncoder:encoder];
         NSArray<NSString *> *expected = @[
-            @"insert node key=, identifier=, parent=0 -> 1",  // root
-            @"insert node key=__array, identifier=a, parent=1 -> 2",
-            @"insert value key=__order, value=i1\ti2\ti3, node=2, type=0",
-            @"insert node key=, identifier=i1, parent=2 -> 3",
-            @"insert value key=k_i1, value=value1_i1_0, node=3, type=0",
-            @"insert node key=, identifier=i2, parent=2 -> 4",
-            @"insert value key=k_i2, value=value1_i2_1, node=4, type=0",
-            @"insert node key=, identifier=i3, parent=2 -> 5",
-            @"insert value key=k_i3, value=value1_i3_2, node=5, type=0",
+            @"insert node key=, identifier=, parent=0, data={} -> 1",
+            @"insert node key=__array, identifier=a, parent=1, data={__order=i1\ti2\ti3} -> 2",
+            @"insert node key=, identifier=i1, parent=2, data={k_i1=value1_i1_0} -> 3",
+            @"insert node key=, identifier=i2, parent=2, data={k_i2=value1_i2_1} -> 4",
+            @"insert node key=, identifier=i3, parent=2, data={k_i3=value1_i3_2} -> 5"
         ];
         XCTAssertEqualObjects(actual, expected);
     }
@@ -1044,11 +920,10 @@
     {
         NSArray<NSString *> *actual = [self pseudoSQLFromEncoder:encoder];
         NSArray<NSString *> *expected = @[
-            @"update value where key=__order and node=2 set value=i2\ti3",
+            @"update node where rowid=2 set data={__order=i2\ti3}",
             @"delete node where rowid=3",
-            @"delete value where node=3",
-            @"update value where key=k_i2 and node=4 set value=value2_i2_0",
-            @"update value where key=k_i3 and node=5 set value=value2_i3_1",
+            @"update node where rowid=4 set data={k_i2=value2_i2_0}",
+            @"update node where rowid=5 set data={k_i3=value2_i3_1}"
         ];
         XCTAssertEqualObjects(actual, expected);
     }
@@ -1070,15 +945,11 @@
     {
         NSArray<NSString *> *actual = [self pseudoSQLFromEncoder:encoder];
         NSArray<NSString *> *expected = @[
-            @"insert node key=, identifier=, parent=0 -> 1",  // root
-            @"insert node key=__array, identifier=a, parent=1 -> 2",
-            @"insert value key=__order, value=i1\ti2\ti3, node=2, type=0",
-            @"insert node key=, identifier=i1, parent=2 -> 3",
-            @"insert value key=k_i1, value=value1_i1_0, node=3, type=0",
-            @"insert node key=, identifier=i2, parent=2 -> 4",
-            @"insert value key=k_i2, value=value1_i2_1, node=4, type=0",
-            @"insert node key=, identifier=i3, parent=2 -> 5",
-            @"insert value key=k_i3, value=value1_i3_2, node=5, type=0",
+            @"insert node key=, identifier=, parent=0, data={} -> 1",
+            @"insert node key=__array, identifier=a, parent=1, data={__order=i1\ti2\ti3} -> 2",
+            @"insert node key=, identifier=i1, parent=2, data={k_i1=value1_i1_0} -> 3",
+            @"insert node key=, identifier=i2, parent=2, data={k_i2=value1_i2_1} -> 4",
+            @"insert node key=, identifier=i3, parent=2, data={k_i3=value1_i3_2} -> 5"
         ];
         XCTAssertEqualObjects(actual, expected);
     }
@@ -1097,9 +968,8 @@
     {
         NSArray<NSString *> *actual = [self pseudoSQLFromEncoder:encoder];
         NSArray<NSString *> *expected = @[
-            @"update value where key=__order and node=2 set value=i1\ti2\ti3\ti4",
-            @"insert node key=, identifier=i4, parent=2 -> 6",
-            @"insert value key=k_i4, value=value1_i4_3, node=6, type=0",
+            @"update node where rowid=2 set data={__order=i1\ti2\ti3\ti4}",
+            @"insert node key=, identifier=i4, parent=2, data={k_i4=value1_i4_3} -> 6"
         ];
         XCTAssertEqualObjects(actual, expected);
     }
@@ -1109,41 +979,20 @@
     NSMutableArray<NSString *> *statements = [NSMutableArray array];
     [encoder enumerateRecords:^(iTermEncoderGraphRecord * _Nullable before,
                                 iTermEncoderGraphRecord * _Nullable after,
-                                NSNumber *parentRowID) {
+                                NSNumber * _Nonnull parent,
+                                BOOL * _Nonnull stop) {
         if (before && !after) {
             [statements addObject:[NSString stringWithFormat:@"delete node where rowid=%@", before.rowid]];
-            [before enumerateValuesVersus:nil block:^(iTermEncoderPODRecord * _Nullable mine,
-                                                      iTermEncoderPODRecord * _Nullable theirs) {
-                [statements addObject:[NSString stringWithFormat:@"delete value where node=%@", before.rowid]];
-            }];
         } else if (!before && after) {
             after.rowid = @(++_rowid);
-            [statements addObject:[NSString stringWithFormat:@"insert node key=%@, identifier=%@, parent=%@ -> %@",
-                                   after.key, after.identifier, parentRowID ?: @0, after.rowid]];
-            [after enumerateValuesVersus:nil block:^(iTermEncoderPODRecord * _Nullable record,
-                                                     iTermEncoderPODRecord * _Nullable na) {
-                [statements addObject:[NSString stringWithFormat:@"insert value key=%@, value=%@, node=%@, type=%@",
-                                       record.key, record.value, after.rowid, @(record.type)]];
-            }];
+            [statements addObject:[NSString stringWithFormat:@"insert node key=%@, identifier=%@, parent=%@, data=%@ -> %@",
+                                   after.key, after.identifier, parent ?: @0, after.pod.compactDescription, after.rowid]];
         } else if (before && after) {
-            [before enumerateValuesVersus:after block:^(iTermEncoderPODRecord * _Nullable mine,
-                                                        iTermEncoderPODRecord * _Nullable theirs) {
-                if (mine && theirs) {
-                    if (![mine isEqual:theirs]) {
-                        assert(before.rowid);
-                        [statements addObject:[NSString stringWithFormat:@"update value where key=%@ and node=%@ set value=%@",
-                                               mine.key, before.rowid, theirs.value]];
-                    }
-                } else if (!mine && theirs) {
-                    [statements addObject:[NSString stringWithFormat:@"insert value key=%@, value=%@, type=%@, node=%@",
-                                           theirs.key, theirs.value, @(theirs.type), before.rowid]];
-                } else if (mine && !theirs) {
-                    [statements addObject:[NSString stringWithFormat:@"delete value where key=%@, node=%@",
-                                           mine.key, before.rowid]];
-                } else {
-                    XCTFail(@"At least one of before/after should be nonnil");
-                }
-            }];
+            if ([before.pod isEqual:after.pod]) {
+                return;
+            }
+            [statements addObject:[NSString stringWithFormat:@"update node where rowid=%@ set data=%@",
+                                   before.rowid, after.pod.compactDescription]];
         } else {
             XCTFail(@"At least one of before/after should be nonnil");
         }
@@ -1189,19 +1038,12 @@
     // be correct.
     NSArray<NSString *> *actual = [self pseudoSQLFromEncoder:encoder];
     NSArray<NSString *> *expected = @[
-        @"insert node key=, identifier=, parent=0 -> 1",
-        @"insert value key=k1, value=k1_v1, node=1, type=0",
-        @"insert node key=k2, identifier=, parent=1 -> 2",
-        @"insert value key=k3, value=k3_v1, node=2, type=0",
-        @"insert node key=k4, identifier=, parent=2 -> 3",
-        @"insert value key=k5, value=k5_v1, node=3, type=0",
-        @"insert node key=k6, identifier=i1, parent=2 -> 4",
-        @"insert value key=k7, value=k7_v1, node=4, type=0",
-        @"insert node key=k6, identifier=i2, parent=2 -> 5",
-        @"insert value key=k9, value=k9_v1, node=5, type=0",
-        @"insert value key=k9a, value=k9a_v1, node=5, type=0",
-        @"insert node key=k6, identifier=i3, parent=2 -> 6",
-        @"insert value key=k10, value=k10_v1, node=6, type=0",
+        @"insert node key=, identifier=, parent=0, data={k1=k1_v1} -> 1",
+        @"insert node key=k2, identifier=, parent=1, data={k3=k3_v1} -> 2",
+        @"insert node key=k4, identifier=, parent=2, data={k5=k5_v1} -> 3",
+        @"insert node key=k6, identifier=i1, parent=2, data={k7=k7_v1} -> 4",
+        @"insert node key=k6, identifier=i2, parent=2, data={k9=k9_v1, k9a=k9a_v1} -> 5",
+        @"insert node key=k6, identifier=i3, parent=2, data={k10=k10_v1} -> 6"
     ];
     XCTAssertEqualObjects(actual, expected);
 
@@ -1242,86 +1084,63 @@
 
     actual = [self pseudoSQLFromEncoder:encoder];
     expected = @[
-        @"update value where key=k1 and node=1 set value=k1_v2",
-        @"delete value where key=k3, node=2",
+        @"update node where rowid=1 set data={k1=k1_v2}",
+        @"update node where rowid=2 set data={}",
         @"delete node where rowid=4",
-        @"delete value where node=4",
-        @"update value where key=k9 and node=5 set value=k9_v2",
-        @"insert value key=k9b, value=k9b_v1, type=0, node=5",
-        @"insert node key=k6, identifier=i4, parent=2 -> 7",
-        @"insert value key=k11, value=k11_v1, node=7, type=0"
+        @"update node where rowid=5 set data={k9=k9_v2, k9a=k9a_v1, k9b=k9b_v1}",
+        @"insert node key=k6, identifier=i4, parent=2, data={k11=k11_v1} -> 7"
     ];
     XCTAssertEqualObjects(actual, expected);
 }
 
-- (iTermGraphDatabase *)graphDatabaseAfterInitialAdd {
-    NSMutableDictionary<NSString *,id<iTermDatabaseResultSet>> *results = [NSMutableDictionary dictionary];
-    results[@"select key, identifier, parent, rowid from Node"] = [iTermMockDatabaseResultSet withRows:@[]];
-    results[@"select * from Value"] = [iTermMockDatabaseResultSet withRows:@[]];
+- (NSString *)hexified:(id)pod {
+    NSData *data =
+    [NSPropertyListSerialization dataWithPropertyList:pod
+                                               format:NSPropertyListBinaryFormat_v1_0
+                                              options:0
+                                                error:nil];
+    NSString *hex = data.it_hexEncoded;
+    return hex;
+}
 
-    iTermMockDatabaseFactory *mockDB = [[iTermMockDatabaseFactory alloc] initWithResults:results
+- (void)testGraphDatabase_Initialization {
+    NSDictionary *results = @{
+        @"select key, identifier, parent, rowid, data from Node": [iTermMockDatabaseResultSet withRows:@[]]
+    };
+
+    iTermMockDatabaseFactory *mockDB = [[iTermMockDatabaseFactory alloc] initWithResults:[results mutableCopy]
                                                                                 database:nil];
     iTermGraphDatabase *gdb = [[iTermGraphDatabase alloc] initWithURL:[NSURL fileURLWithPath:@"/db"]
                                                       databaseFactory:mockDB];
-    XCTAssertNotNil(gdb);
-    iTermMockDatabase *db = mockDB.database;
-    XCTAssertNotNil(db);
-
-    XCTAssertNil(gdb.record);
-    [gdb.thread performDeferredBlocksAfter:^{
-        [gdb update:^(iTermGraphEncoder * _Nonnull encoder) {
-            [encoder encodeChildWithKey:@"mynode" identifier:@"" generation:1 block:^BOOL (iTermGraphEncoder * _Nonnull subencoder) {
-                [subencoder encodeString:@"red" forKey:@"color"];
-                [subencoder encodeNumber:@123 forKey:@"number"];
-                return YES;
-            }];
-        }
-         completion:nil];
-    }];
-    return gdb;
-}
-
-- (void)testGraphDatabase_InitialAdd {
-    iTermGraphDatabase *gdb = [self graphDatabaseAfterInitialAdd];
-    iTermMockDatabase *db = (iTermMockDatabase *)gdb.db;
 
     NSArray<NSString *> *expectedCommands = @[
-        @"create table if not exists Node (key text, identifier text, parent integer)",
-        @"create table if not exists Value (key text, node integer, value blob, type integer)",
-        @"insert into Node (key, identifier, parent) values (, , 0)",
-        @"insert into Node (key, identifier, parent) values (mynode, , 1)",
-        @"insert into Value (key, value, node, type) values (color, red, 2, 0)",
-        @"insert into Value (key, value, node, type) values (number, 123, 2, 1)",
+        @"PRAGMA journal_mode=WAL",
+        @"create table if not exists Node (key text not null, identifier text not null, parent integer not null, data blob)",
     ];
+    iTermMockDatabase *db = (iTermMockDatabase *)gdb.db;
     XCTAssertEqualObjects(db.commands, expectedCommands);
 }
 
 - (void)testGraphDatabase_Load {
+    NSDictionary *pod = @{
+        @"color": @"red",
+        @"number": @123
+    };
     NSMutableDictionary<NSString *,id<iTermDatabaseResultSet>> *results = [NSMutableDictionary dictionary];
-    results[@"select key, identifier, parent, rowid from Node"] = [iTermMockDatabaseResultSet withRows:@[
+    results[@"select key, identifier, parent, rowid, data from Node"] = [iTermMockDatabaseResultSet withRows:@[
         @{ @"key": @"",
            @"identifier": @"",
            @"parent": @0,
-           @"rowid": @1
+           @"rowid": @1,
+           @"data": [NSPropertyListSerialization dataWithPropertyList:@{} format:NSPropertyListBinaryFormat_v1_0 options:0 error:nil]
         },
 
         @{ @"key": @"mynode",
            @"identifier": @"",
            @"parent": @1,
-           @"rowid": @2
+           @"rowid": @2,
+           @"data": [NSPropertyListSerialization dataWithPropertyList:pod format:NSPropertyListBinaryFormat_v1_0 options:0 error:nil]
         },
-    ]];
-    const double d = 123;
-    results[@"select * from Value"] = [iTermMockDatabaseResultSet withRows:@[
-        @{ @"key": @"color",
-           @"value": [@"red" dataUsingEncoding:NSUTF8StringEncoding],
-           @"node": @2,
-           @"type": @0 },
-
-        @{ @"key": @"number",
-           @"value": [NSData dataWithBytes:&d length:sizeof(d)],
-           @"node": @2,
-           @"type": @1 },
     ]];
 
     iTermMockDatabaseFactory *mockDB = [[iTermMockDatabaseFactory alloc] initWithResults:results
@@ -1332,10 +1151,10 @@
     iTermMockDatabase *db = mockDB.database;
     XCTAssertNotNil(db);
 
-    NSArray<iTermEncoderPODRecord *> *pods = @[
-        [iTermEncoderPODRecord withString:@"red" key:@"color"],
-        [iTermEncoderPODRecord withNumber:@123 key:@"number"]
-    ];
+    NSDictionary *pods = @{
+        @"color": @"red",
+        @"number": @123 ,
+    };
     iTermEncoderGraphRecord *mynode =
         [iTermEncoderGraphRecord withPODs:pods
                                    graphs:@[]
@@ -1344,7 +1163,7 @@
                                identifier:@""
                                     rowid:@2];
     iTermEncoderGraphRecord *expectedRecord =
-    [iTermEncoderGraphRecord withPODs:@[]
+    [iTermEncoderGraphRecord withPODs:@{}
                                graphs:@[ mynode ]
                            generation:0
                                   key:@""
@@ -1368,8 +1187,7 @@
 
 - (void)testGraphDatabase_DeleteNode {
     NSMutableDictionary<NSString *,id<iTermDatabaseResultSet>> *results = [NSMutableDictionary dictionary];
-    results[@"select key, identifier, parent, rowid from Node"] = [iTermMockDatabaseResultSet withRows:@[]];
-    results[@"select * from Value"] = [iTermMockDatabaseResultSet withRows:@[]];
+    results[@"select key, identifier, parent, rowid, data from Node"] = [iTermMockDatabaseResultSet withRows:@[]];
 
     iTermMockDatabaseFactory *mockDB = [[iTermMockDatabaseFactory alloc] initWithResults:results
                                                                                 database:nil];
@@ -1395,13 +1213,13 @@
         }
          completion:nil];
     }];
+    NSString *hex = [self hexified:@{ @"World": @"Hello" }];
     NSArray<NSString *> *expectedCommands = @[
-        @"create table if not exists Node (key text, identifier text, parent integer)",
-        @"create table if not exists Value (key text, node integer, value blob, type integer)",
-        @"insert into Node (key, identifier, parent) values (, , 0)",
-        @"insert into Node (key, identifier, parent) values (wrapper, , 1)",
-        @"insert into Node (key, identifier, parent) values (mynode, , 2)",
-        @"insert into Value (key, value, node, type) values (World, Hello, 3, 0)",
+        @"PRAGMA journal_mode=WAL",
+        @"create table if not exists Node (key text not null, identifier text not null, parent integer not null, data blob)",
+        @"insert into Node (key, identifier, parent, data) values (, , 0, )",
+        @"insert into Node (key, identifier, parent, data) values (wrapper, , 1, )",
+        [NSString stringWithFormat:@"insert into Node (key, identifier, parent, data) values (mynode, , 2, %@)", hex]
     ];
     XCTAssertEqualObjects(db.commands, expectedCommands);
     [db.commands removeAllObjects];
@@ -1419,16 +1237,14 @@
     }];
 
     expectedCommands = @[
-        @"delete from Node where rowid=3",
-        @"delete from Value where node=3"
+        @"delete from Node where rowid=3"
     ];
     XCTAssertEqualObjects(db.commands, expectedCommands);
 }
 
 - (void)testGraphDatabase_InsertNode {
     NSMutableDictionary<NSString *,id<iTermDatabaseResultSet>> *results = [NSMutableDictionary dictionary];
-    results[@"select key, identifier, parent, rowid from Node"] = [iTermMockDatabaseResultSet withRows:@[]];
-    results[@"select * from Value"] = [iTermMockDatabaseResultSet withRows:@[]];
+    results[@"select key, identifier, parent, rowid, data from Node"] = [iTermMockDatabaseResultSet withRows:@[]];
 
     iTermMockDatabaseFactory *mockDB = [[iTermMockDatabaseFactory alloc] initWithResults:results
                                                                                 database:nil];
@@ -1454,13 +1270,13 @@
         }
          completion:nil];
     }];
+    NSString *hex = [self hexified:@{ @"World": @"Hello" }];
     NSArray<NSString *> *expectedCommands = @[
-        @"create table if not exists Node (key text, identifier text, parent integer)",
-        @"create table if not exists Value (key text, node integer, value blob, type integer)",
-        @"insert into Node (key, identifier, parent) values (, , 0)",
-        @"insert into Node (key, identifier, parent) values (wrapper, , 1)",
-        @"insert into Node (key, identifier, parent) values (mynode, , 2)",
-        @"insert into Value (key, value, node, type) values (World, Hello, 3, 0)",
+        @"PRAGMA journal_mode=WAL",
+        @"create table if not exists Node (key text not null, identifier text not null, parent integer not null, data blob)",
+        @"insert into Node (key, identifier, parent, data) values (, , 0, )",
+        @"insert into Node (key, identifier, parent, data) values (wrapper, , 1, )",
+        [NSString stringWithFormat:@"insert into Node (key, identifier, parent, data) values (mynode, , 2, %@)", hex]
     ];
     XCTAssertEqualObjects(db.commands, expectedCommands);
     [db.commands removeAllObjects];
@@ -1491,16 +1307,15 @@
     }];
 
     expectedCommands = @[
-        @"insert into Node (key, identifier, parent) values (othernode, , 2)",
-        @"insert into Value (key, value, node, type) values (Everybody, Goodbye, 5, 0)"
+        [NSString stringWithFormat:@"insert into Node (key, identifier, parent, data) values (othernode, , 2, %@)",
+         [self hexified:@{ @"Everybody": @"Goodbye" }]]
     ];
     XCTAssertEqualObjects(db.commands, expectedCommands);
 }
 
 - (void)testGraphDatabase_UpdateValue {
     NSMutableDictionary<NSString *,id<iTermDatabaseResultSet>> *results = [NSMutableDictionary dictionary];
-    results[@"select key, identifier, parent, rowid from Node"] = [iTermMockDatabaseResultSet withRows:@[]];
-    results[@"select * from Value"] = [iTermMockDatabaseResultSet withRows:@[]];
+    results[@"select key, identifier, parent, rowid, data from Node"] = [iTermMockDatabaseResultSet withRows:@[]];
 
     iTermMockDatabaseFactory *mockDB = [[iTermMockDatabaseFactory alloc] initWithResults:results
                                                                                 database:nil];
@@ -1526,13 +1341,13 @@
         }
          completion:nil];
     }];
+    NSString *hex = [self hexified:@{ @"World": @"Hello" }];
     NSArray<NSString *> *expectedCommands = @[
-        @"create table if not exists Node (key text, identifier text, parent integer)",
-        @"create table if not exists Value (key text, node integer, value blob, type integer)",
-        @"insert into Node (key, identifier, parent) values (, , 0)",
-        @"insert into Node (key, identifier, parent) values (wrapper, , 1)",
-        @"insert into Node (key, identifier, parent) values (mynode, , 2)",
-        @"insert into Value (key, value, node, type) values (World, Hello, 3, 0)",
+        @"PRAGMA journal_mode=WAL",
+        @"create table if not exists Node (key text not null, identifier text not null, parent integer not null, data blob)",
+        @"insert into Node (key, identifier, parent, data) values (, , 0, )",
+        @"insert into Node (key, identifier, parent, data) values (wrapper, , 1, )",
+        [NSString stringWithFormat:@"insert into Node (key, identifier, parent, data) values (mynode, , 2, %@)", hex]
     ];
     XCTAssertEqualObjects(db.commands, expectedCommands);
     [db.commands removeAllObjects];
@@ -1556,15 +1371,15 @@
     }];
 
     expectedCommands = @[
-        @"update Value set value=Goodbye, type=0 where key=World and node=3"
+        [NSString stringWithFormat:@"update Node set data=%@ where rowid=3",
+         [self hexified:@{ @"World": @"Goodbye" }]]
     ];
     XCTAssertEqualObjects(db.commands, expectedCommands);
 }
 
 - (void)testGraphDatabase_InsertValue {
     NSMutableDictionary<NSString *,id<iTermDatabaseResultSet>> *results = [NSMutableDictionary dictionary];
-    results[@"select key, identifier, parent, rowid from Node"] = [iTermMockDatabaseResultSet withRows:@[]];
-    results[@"select * from Value"] = [iTermMockDatabaseResultSet withRows:@[]];
+    results[@"select key, identifier, parent, rowid, data from Node"] = [iTermMockDatabaseResultSet withRows:@[]];
 
     iTermMockDatabaseFactory *mockDB = [[iTermMockDatabaseFactory alloc] initWithResults:results
                                                                                 database:nil];
@@ -1590,13 +1405,13 @@
         }
          completion:nil];
     }];
+    NSString *hex = [self hexified:@{ @"World": @"Hello" }];
     NSArray<NSString *> *expectedCommands = @[
-        @"create table if not exists Node (key text, identifier text, parent integer)",
-        @"create table if not exists Value (key text, node integer, value blob, type integer)",
-        @"insert into Node (key, identifier, parent) values (, , 0)",
-        @"insert into Node (key, identifier, parent) values (wrapper, , 1)",
-        @"insert into Node (key, identifier, parent) values (mynode, , 2)",
-        @"insert into Value (key, value, node, type) values (World, Hello, 3, 0)",
+        @"PRAGMA journal_mode=WAL",
+        @"create table if not exists Node (key text not null, identifier text not null, parent integer not null, data blob)",
+        @"insert into Node (key, identifier, parent, data) values (, , 0, )",
+        @"insert into Node (key, identifier, parent, data) values (wrapper, , 1, )",
+        [NSString stringWithFormat:@"insert into Node (key, identifier, parent, data) values (mynode, , 2, %@)", hex]
     ];
     XCTAssertEqualObjects(db.commands, expectedCommands);
     [db.commands removeAllObjects];
@@ -1621,15 +1436,16 @@
     }];
 
     expectedCommands = @[
-        @"insert into Value (key, value, node, type) values (Everybody, Goodbye, 3, 0)"
+        [NSString stringWithFormat:@"update Node set data=%@ where rowid=3",
+         [self hexified:@{ @"World": @"Hello",
+                           @"Everybody": @"Goodbye" }]]
     ];
     XCTAssertEqualObjects(db.commands, expectedCommands);
 }
 
 - (void)testGraphDatabase_DeleteValue {
     NSMutableDictionary<NSString *,id<iTermDatabaseResultSet>> *results = [NSMutableDictionary dictionary];
-    results[@"select key, identifier, parent, rowid from Node"] = [iTermMockDatabaseResultSet withRows:@[]];
-    results[@"select * from Value"] = [iTermMockDatabaseResultSet withRows:@[]];
+    results[@"select key, identifier, parent, rowid, data from Node"] = [iTermMockDatabaseResultSet withRows:@[]];
 
     iTermMockDatabaseFactory *mockDB = [[iTermMockDatabaseFactory alloc] initWithResults:results
                                                                                 database:nil];
@@ -1655,13 +1471,13 @@
         }
          completion:nil];
     }];
+    NSString *hex = [self hexified:@{ @"World": @"Hello" }];
     NSArray<NSString *> *expectedCommands = @[
-        @"create table if not exists Node (key text, identifier text, parent integer)",
-        @"create table if not exists Value (key text, node integer, value blob, type integer)",
-        @"insert into Node (key, identifier, parent) values (, , 0)",
-        @"insert into Node (key, identifier, parent) values (wrapper, , 1)",
-        @"insert into Node (key, identifier, parent) values (mynode, , 2)",
-        @"insert into Value (key, value, node, type) values (World, Hello, 3, 0)",
+        @"PRAGMA journal_mode=WAL",
+        @"create table if not exists Node (key text not null, identifier text not null, parent integer not null, data blob)",
+        @"insert into Node (key, identifier, parent, data) values (, , 0, )",
+        @"insert into Node (key, identifier, parent, data) values (wrapper, , 1, )",
+        [NSString stringWithFormat:@"insert into Node (key, identifier, parent, data) values (mynode, , 2, %@)", hex]
     ];
     XCTAssertEqualObjects(db.commands, expectedCommands);
     [db.commands removeAllObjects];
@@ -1684,7 +1500,7 @@
     }];
 
     expectedCommands = @[
-        @"delete from Value where key=World and node=3"
+        @"update Node set data= where rowid=3"
     ];
     XCTAssertEqualObjects(db.commands, expectedCommands);
 }
@@ -1698,7 +1514,6 @@
     NSDictionary *dict = @{
         @"root": @{
             @"key": @"value",
-            @"nothing": [NSNull null],
             @"array": @[ @3, @2, @1 ]
         }
     };
