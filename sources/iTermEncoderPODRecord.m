@@ -24,6 +24,8 @@ static NSString *iTermEncoderRecordTypeToString(iTermEncoderRecordType type)  {
             return @"string";
         case iTermEncoderRecordTypeNull:
             return @"null";
+        case iTermEncoderRecordTypePropertyListData:
+            return @"plistData";
     }
     return [@(type) stringValue];
 }
@@ -59,6 +61,18 @@ static NSString *iTermEncoderRecordTypeToString(iTermEncoderRecordType type)  {
         case iTermEncoderRecordTypeNull:
             obj = [NSNull null];
             break;
+        case iTermEncoderRecordTypePropertyListData: {
+            NSError *error = nil;
+            NSData *data = [NSData castFrom:obj];
+            obj = [NSPropertyListSerialization propertyListWithData:data
+                                                            options:NSPropertyListImmutable
+                                                             format:nil
+                                                              error:&error];
+            if (error) {
+                DLog(@"Failed to decode property list: %@", error);
+            }
+            break;
+        }
         case iTermEncoderRecordTypeGraph:
             DLog(@"Unexpected graph POD");
             assert(NO);
@@ -100,6 +114,14 @@ static NSString *iTermEncoderRecordTypeToString(iTermEncoderRecordType type)  {
                                 value:data];
 }
 
++ (instancetype)withPropertyListData:(NSData *)data key:(NSString *)key {
+    if (!data) {
+        return nil;
+    }
+    return [[self alloc] initWithType:iTermEncoderRecordTypePropertyListData
+                                  key:key
+                                value:data];
+}
 
 + (instancetype)withDate:(NSDate *)date key:(NSString *)key {
     if (!date) {
@@ -171,6 +193,8 @@ static NSString *iTermEncoderRecordTypeToString(iTermEncoderRecordType type)  {
             return [(NSString *)_value dataUsingEncoding:NSUTF8StringEncoding];
         case iTermEncoderRecordTypeNull:
             return [NSData data];
+        case iTermEncoderRecordTypePropertyListData:
+            return _value;
         case iTermEncoderRecordTypeGraph:
             assert(NO);
     }

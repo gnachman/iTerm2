@@ -15,6 +15,7 @@ typedef NS_ENUM(NSUInteger, iTermEncoderRecordType) {
     iTermEncoderRecordTypeData,
     iTermEncoderRecordTypeDate,
     iTermEncoderRecordTypeNull,
+    iTermEncoderRecordTypePropertyListData,
     iTermEncoderRecordTypeGraph,
 };
 
@@ -33,6 +34,7 @@ typedef NS_ENUM(NSUInteger, iTermEncoderRecordType) {
 + (instancetype)withData:(NSData *)data key:(NSString *)key;
 + (instancetype)withDate:(NSDate *)date key:(NSString *)key;
 + (instancetype)withNullForKey:(NSString *)key;
++ (instancetype)withPropertyListData:(NSData *)data key:(NSString *)key;
 
 @end
 

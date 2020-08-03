@@ -9,6 +9,7 @@
 
 #import "DebugLogging.h"
 #import "NSArray+iTerm.h"
+#import "NSData+iTerm.h"
 #import "NSDictionary+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "iTermTuple.h"
@@ -79,6 +80,20 @@ NSInteger iTermGenerationAlwaysEncode = NSIntegerMax;
 - (void)encodeData:(NSData *)data forKey:(NSString *)key {
     assert(_state == iTermGraphEncoderStateLive);
     _pod[key] = [iTermEncoderPODRecord withData:data key:key];
+}
+
+- (void)encodePropertyList:(id)plist withKey:(NSString *)key {
+    assert(_state == iTermGraphEncoderStateLive);
+    NSError *error;
+    NSData *data = [NSPropertyListSerialization dataWithPropertyList:plist
+                                                              format:NSPropertyListBinaryFormat_v1_0
+                                                             options:0
+                                                               error:&error];
+    if (!error) {
+        DLog(@"Failed to serialize property list %@: %@", plist, error);
+        return;
+    }
+    _pod[key] = [iTermEncoderPODRecord withPropertyListData:data key:key];
 }
 
 - (void)encodeDate:(NSDate *)date forKey:(NSString *)key {
