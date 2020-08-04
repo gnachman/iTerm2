@@ -159,7 +159,11 @@
         }
         return dict;
     }];
-    _mutableDictionary[key] = [array reversed];
+    if (options & iTermGraphEncoderArrayOptionsReverse) {
+        _mutableDictionary[key] = [array reversed];
+    } else {
+        _mutableDictionary[key] = array;
+    }
 }
 
 - (void)mergeDictionary:(NSDictionary *)dictionary {

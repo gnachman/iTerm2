@@ -9,6 +9,7 @@
 
 #import "DebugLogging.h"
 #import "NSArray+iTerm.h"
+#import "NSData+iTerm.h"
 #import "NSObject+iTerm.h"
 
 static iTermEncoderGraphRecord *iTermGraphDeltaEncoderMakeGraphRecord(NSNumber *nodeID,
@@ -22,7 +23,11 @@ static iTermEncoderGraphRecord *iTermGraphDeltaEncoderMakeGraphRecord(NSNumber *
     NSDictionary<NSString *, id> *pod;
     NSData *data = nodeDict[@"data"];
     if (data.length) {
-        pod = [NSPropertyListSerialization propertyListWithData:data options:NSPropertyListImmutable format:nil error:nil];
+        NSError *error;
+        pod = [data it_unarchivedObjectOfBasicClassesWithError:&error];
+        if (error) {
+            DLog(@"Failed to unarchive data for node %@: %@", nodeDict, error);
+        }
     } else {
         pod = @{};
     }

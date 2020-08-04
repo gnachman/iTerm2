@@ -50,15 +50,36 @@
     return self;
 }
 
+- (void)updateSynchronously:(void (^ NS_NOESCAPE)(iTermGraphEncoder * _Nonnull))block
+                 completion:(nullable iTermCallback *)completion {
+    [self updateSynchronously:YES
+                        block:block
+                   completion:completion];
+}
+
 - (void)update:(void (^ NS_NOESCAPE)(iTermGraphEncoder * _Nonnull))block
     completion:(iTermCallback *)completion {
+    [self updateSynchronously:NO
+                        block:block
+                   completion:completion];
+}
+
+- (void)updateSynchronously:(BOOL)sync
+                      block:(void (^ NS_NOESCAPE)(iTermGraphEncoder * _Nonnull))block
+                 completion:(nullable iTermCallback *)completion {
     iTermGraphDeltaEncoder *encoder = [[iTermGraphDeltaEncoder alloc] initWithPreviousRevision:_record];
     block(encoder);
     __weak __typeof(self) weakSelf = self;
-    [_thread dispatchAsync:^(iTermGraphDatabaseState *state) {
+
+    void (^perform)(iTermGraphDatabaseState *) = ^(iTermGraphDatabaseState *state) {
         [weakSelf trySaveEncoder:encoder state:state];
         [completion invokeWithObject:nil];
-    }];
+    };
+    if (sync) {
+        [_thread dispatchSync:perform];
+    } else {
+        [_thread dispatchAsync:perform];
+    }
     _record = encoder.record;
 }
 

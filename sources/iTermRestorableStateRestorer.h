@@ -18,6 +18,8 @@ NS_ASSUME_NONNULL_BEGIN
                               identifier:(NSString *)identifier
                               completion:(void (^)(NSWindow * _Nullable, NSError * _Nullable))completion;
 
+- (void)restorableStateRestoreApplicationStateWithRecord:(iTermEncoderGraphRecord *)record;
+
 - (void)restorableStateRestoreWithCoder:(NSCoder *)coder
                              identifier:(NSString *)identifier
                              completion:(void (^)(NSWindow * _Nullable, NSError * _Nullable))completion;
@@ -27,7 +29,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, weak) id<iTermRestorableStateRestoring> delegate;
 @property (nonatomic, readonly) NSURL *indexURL;
 
-- (instancetype)initWithIndexURL:(NSURL *)indexURL NS_DESIGNATED_INITIALIZER;
+- (instancetype)initWithIndexURL:(NSURL *)indexURL erase:(BOOL)erase NS_DESIGNATED_INITIALIZER;
 - (instancetype)init NS_UNAVAILABLE;
 
 @end

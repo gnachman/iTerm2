@@ -602,6 +602,15 @@ NSString *const iTermVariableKeyWindowNumber = @"number";
     return [self dictionaryInScope:nil];
 }
 
+- (NSDictionary *)encodableDictionaryValue {
+    return [self.dictionaryValue filteredWithBlock:^BOOL(id key, id value) {
+        if ([value isKindOfClass:[iTermWeakVariables class]]) {
+            return NO;
+        }
+        return YES;
+    }];
+}
+
 @end
 
 

@@ -34,7 +34,7 @@
     return self;
 }
 
-- (void)unlink {
+- (void)didFinishRestoring {
     // Does nothing because the point of this thing is to not redo unnecessary work.
 }
 
@@ -117,9 +117,17 @@
     NSInteger _generation;
 }
 
-- (instancetype)initWithURL:(NSURL *)url {
++ (void)unlinkDatabaseAtURL:(NSURL *)url {
+    [[[[iTermSqliteDatabaseFactory alloc] init] withURL:url] unlink];
+}
+
+- (instancetype)initWithURL:(NSURL *)url erase:(BOOL)erase {
     self = [super init];
     if (self) {
+        if (erase) {
+            [self.class unlinkDatabaseAtURL:url];
+        }
+
         _db = [[iTermGraphDatabase alloc] initWithURL:url
                                       databaseFactory:[[iTermSqliteDatabaseFactory alloc] init]];
     }
@@ -155,15 +163,28 @@
     assert(identifier.length > 0);
     [self.delegate restorableStateRestoreWithRecord:windowRecord
                                          identifier:identifier
-                                         completion:^(NSWindow * _Nonnull window,
-                                                      NSError * _Nonnull error) {
+                                         completion:^(NSWindow *window,
+                                                      NSError *error) {
         completion();
     }];
 }
 
+- (void)restoreApplicationState {
+    if (!_db.record) {
+        return;
+    }
+    [self.delegate restorableStateRestoreApplicationStateWithRecord:_db.record];
+}
+
+- (void)eraseStateRestorationData {
+    [_db.db close];
+    [self.class unlinkDatabaseAtURL:_db.url];
+    _db = nil;
+}
+
 #pragma mark - iTermRestorableStateSaver
 
-- (void)saveWithCompletion:(void (^)(void))completion {
+- (void)saveSynchronously:(BOOL)sync withCompletion:(void (^)(void))completion {
     _generation += 1;
     const NSInteger generation = _generation;
     NSArray<NSWindow *> *windows = [self.delegate restorableStateWindows];
@@ -178,6 +199,7 @@
         return identifiable.stringUniqueIdentifier;
     }];
     void (^update)(iTermGraphEncoder * _Nonnull) = ^(iTermGraphEncoder * _Nonnull encoder) {
+        // Encode state for each window.
         [encoder encodeArrayWithKey:@"windows"
                          generation:generation
                         identifiers:identifiers
@@ -191,6 +213,13 @@
             id<iTermGraphCodable> codable = (id<iTermGraphCodable>)window.delegate;
             return [codable encodeGraphWithEncoder:subencoder];
         }];
+
+        // Encode app-global state
+        id<NSApplicationDelegate> appDelegate = [NSApp delegate];
+        if ([appDelegate conformsToProtocol:@protocol(iTermGraphCodable)]) {
+            id<iTermGraphCodable> codable = (id<iTermGraphCodable>)appDelegate;
+            [codable encodeGraphWithEncoder:encoder];
+        }
     };
 
     iTermCallback *callback =
@@ -199,7 +228,7 @@
         completion();
     }];
 
-    [_db update:update completion:callback];
+    [_db updateSynchronously:sync block:update completion:callback];
 }
 
 @end

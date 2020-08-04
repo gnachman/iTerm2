@@ -10,6 +10,7 @@
 #import "DebugLogging.h"
 #import "iTermTuple.h"
 #import "NSArray+iTerm.h"
+#import "NSData+iTerm.h"
 #import "NSDictionary+iTerm.h"
 #import "NSObject+iTerm.h"
 
@@ -291,11 +292,7 @@
         return [NSData data];
     }
     NSError *error = nil;
-    NSData *data =
-    [NSPropertyListSerialization dataWithPropertyList:self.pod
-                                               format:NSPropertyListBinaryFormat_v1_0
-                                              options:0
-                                                error:&error];
+    NSData *data = [NSData it_dataWithSecurelyArchivedObject:self.pod error:&error];
     if (error) {
         DLog(@"Failed to serialize pod %@ in %@: %@", self.pod, self, error);
     }

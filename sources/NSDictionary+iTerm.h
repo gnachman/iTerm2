@@ -52,6 +52,7 @@
 - (NSDictionary *)dictionaryBySettingObject:(ObjectType)object forKey:(KeyType)key;
 - (NSDictionary *)dictionaryByRemovingObjectForKey:(KeyType)key;
 - (NSDictionary<KeyType, ObjectType> *)dictionaryKeepingOnlyKeys:(NSArray<KeyType> *)keys;
+- (NSDictionary<KeyType, ObjectType> *)filteredWithBlock:(BOOL (^NS_NOESCAPE)(KeyType key, ObjectType value))block;
 
 - (NSData *)propertyListData;
 - (NSString *)sizeInfo;

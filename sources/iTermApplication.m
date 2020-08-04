@@ -637,5 +637,10 @@ static const char *iTermApplicationKVOKey = "iTermApplicationKVOKey";
     self.it_windowBecomingKey = [saved autorelease];
 }
 
+- (void)invalidateRestorableState {
+    [super invalidateRestorableState];
+    _it_restorableStateInvalid = YES;
+}
+
 @end
 

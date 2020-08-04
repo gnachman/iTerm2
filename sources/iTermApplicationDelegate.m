@@ -156,6 +156,7 @@ static NSString *LEGACY_DEFAULT_ARRANGEMENT_NAME = @"Default";
 static BOOL hasBecomeActive = NO;
 
 @interface iTermApplicationDelegate () <
+    iTermGraphCodable,
     iTermOrphanServerAdopterDelegate,
     iTermPasswordManagerDelegate,
     iTermRestorableStateControllerDelegate,
@@ -802,7 +803,9 @@ static BOOL hasBecomeActive = NO;
 
 - (void)applicationWillTerminate:(NSNotification *)aNotification {
     DLog(@"applicationWillTerminate called");
-    [_restorableStateController saveRestorableState];
+    if ([iTermController sharedInstance]) {
+        [_restorableStateController saveRestorableState];
+    }
     [[iTermModifierRemapper sharedInstance] setRemapModifiers:NO];
     DLog(@"applicationWillTerminate returning");
     TurnOffDebugLoggingSilently();
@@ -871,6 +874,14 @@ static BOOL hasBecomeActive = NO;
 }
 
 - (void)application:(NSApplication *)app willEncodeRestorableState:(NSCoder *)coder {
+    // ********
+    // * NOTE *
+    // ********
+    // If you change this also change -restorableStateEncoderAppStateWithEncoder.
+    if ([iTermAdvancedSettingsModel storeStateInSqlite]) {
+        DLog(@"Using sqlite-based restoration so not saving anything.");
+        return;
+    }
     DLog(@"app encoding restorable state");
     NSTimeInterval start = [NSDate timeIntervalSinceReferenceDate];
     [coder encodeObject:ScreenCharEncodedRestorableState() forKey:kScreenCharRestorableStateKey];
@@ -892,6 +903,10 @@ static BOOL hasBecomeActive = NO;
 
 - (void)application:(NSApplication *)app didDecodeRestorableState:(NSCoder *)coder {
     DLog(@"application:didDecodeRestorableState: starting");
+    if ([iTermAdvancedSettingsModel storeStateInSqlite]) {
+        DLog(@"Using sqlite-based restoration so not restoring anything.");
+        return;
+    }
     if (self.isAppleScriptTestApp) {
         DLog(@"Is applescript test app");
         return;
@@ -2342,7 +2357,7 @@ static BOOL hasBecomeActive = NO;
 
 - (void)restorableStateRestoreWithRecord:(nonnull iTermEncoderGraphRecord *)record
                               identifier:(nonnull NSString *)identifier
-                              completion:(nonnull void (^)(NSWindow * _Nonnull, NSError * _Nonnull))completion {
+                              completion:(nonnull void (^)(NSWindow *, NSError *))completion {
     NSDictionary *dict = [NSDictionary castFrom:record.propertyListValue];
     if (!dict) {
         NSError *error = [[[NSError alloc] initWithDomain:@"com.iterm2.app-delegate" code:1 userInfo:nil] autorelease];
@@ -2379,6 +2394,87 @@ static BOOL hasBecomeActive = NO;
     }
     [term window:window willEncodeRestorableState:coder];
     [window encodeRestorableStateWithCoder:coder];
+}
+
+// ********
+// * NOTE *
+// ********
+// If you change this also change -application:willEncodeRestorableState:.
+- (BOOL)encodeGraphWithEncoder:(iTermGraphEncoder *)encoder {
+    static NSInteger generation;
+    if ([[iTermApplication sharedApplication] it_restorableStateInvalid]) {
+        ++generation;
+    }
+    [iTermApplication sharedApplication].it_restorableStateInvalid = NO;
+    return [encoder encodeChildWithKey:@"app"
+                            identifier:@""
+                            generation:generation
+                                 block:^BOOL(iTermGraphEncoder * _Nonnull encoder) {
+        DLog(@"app encoding restorable state");
+        NSTimeInterval start = [NSDate timeIntervalSinceReferenceDate];
+        [encoder encodeChildWithKey:kScreenCharRestorableStateKey
+                         identifier:@""
+                         generation:ScreenCharGeneration()
+                              block:^BOOL(iTermGraphEncoder * _Nonnull subencoder) {
+            [subencoder mergeDictionary:ScreenCharEncodedRestorableState()];
+            return YES;
+        }];
+
+        [encoder encodeChildWithKey:kURLStoreRestorableStateKey
+                         identifier:@""
+                         generation:[[iTermURLStore sharedInstance] generation]
+                              block:^BOOL(iTermGraphEncoder * _Nonnull subencoder) {
+            [subencoder mergeDictionary:[[iTermURLStore sharedInstance] dictionaryValue]];
+            return YES;
+        }];
+
+        // Hotkey windows are encoded like normal windows.
+
+        if ([[[iTermBuriedSessions sharedInstance] buriedSessions] count]) {
+            // TODO: Why doesn't this encode window content?
+            [encoder encodeObject:[[iTermBuriedSessions sharedInstance] restorableState] key:iTermBuriedSessionState];
+        }
+        DLog(@"Time to save app restorable state: %@",
+             @([NSDate timeIntervalSinceReferenceDate] - start));
+        return YES;
+    }];
+}
+
+- (void)restorableStateRestoreApplicationStateWithRecord:(iTermEncoderGraphRecord *)record {
+    if (self.isAppleScriptTestApp) {
+        DLog(@"Is applescript test app");
+        return;
+    }
+    iTermEncoderGraphRecord *app = [record childRecordWithKey:@"app" identifier:@""];
+    if (!app) {
+        DLog(@"No app record");
+        return;
+    }
+    NSDictionary *screenCharState = [NSDictionary castFrom:[[app childRecordWithKey:kScreenCharRestorableStateKey identifier:@""] propertyListValue]];
+    if (screenCharState) {
+        ScreenCharDecodeRestorableState(screenCharState);
+    }
+    [PseudoTerminalRestorer setPostRestorationCompletionBlock:^{
+        ScreenCharGarbageCollectImages();
+    }];
+
+    NSDictionary *urlStoreState = [NSDictionary castFrom:[[app childRecordWithKey:kURLStoreRestorableStateKey identifier:@""] propertyListValue]];
+    if (urlStoreState) {
+        [[iTermURLStore sharedInstance] loadFromDictionary:urlStoreState];
+    }
+
+    _buriedSessionsState = [[NSArray castFrom:[[app childRecordWithKey:iTermBuriedSessionState identifier:@""] propertyListValue]] retain];
+    if (finishedLaunching_) {
+        [self restoreBuriedSessionsState];
+    }
+    if ([iTermAdvancedSettingsModel logRestorableStateSize]) {
+        NSDictionary *dict = @{ kScreenCharRestorableStateKey: screenCharState ?: @{},
+                                kURLStoreRestorableStateKey: urlStoreState ?: @{},
+                                iTermBuriedSessionState: _buriedSessionsState ?: @[] };
+        NSString *log = [dict sizeInfo];
+        [log writeToFile:[NSString stringWithFormat:@"/tmp/statesize.app-%p.txt", self] atomically:NO encoding:NSUTF8StringEncoding error:nil];
+    }
+    DLog(@"restorableStateRestoreApplicationStateWithRecord: finished");
 }
 
 #pragma mark - iTermUntitledWindowStateMachineDelegate

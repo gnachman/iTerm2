@@ -19,7 +19,8 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, weak) id<iTermRestorableStateRestoring, iTermRestorableStateSaving> delegate;
 @property (nonatomic) BOOL needsSave;
 
-- (instancetype)initWithURL:(NSURL *)url NS_DESIGNATED_INITIALIZER;
+- (instancetype)initWithURL:(NSURL *)url
+                      erase:(BOOL)erase NS_DESIGNATED_INITIALIZER;
 - (instancetype)init NS_UNAVAILABLE;
 
 @end

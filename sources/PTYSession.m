@@ -4656,7 +4656,7 @@ ITERM_WEAKLY_REFERENCEABLE
                                   block:^BOOL(id<iTermEncoderAdapter>  _Nonnull encoder) {
             return [_screen encodeContents:encoder linesDropped:&numberOfLinesDropped];
         }];
-        result[SESSION_ARRANGEMENT_VARIABLES] = _variables.dictionaryValue;
+        result[SESSION_ARRANGEMENT_VARIABLES] = _variables.encodableDictionaryValue;
         VT100GridCoordRange range = _commandRange;
         range.start.y -= numberOfLinesDropped;
         range.end.y -= numberOfLinesDropped;

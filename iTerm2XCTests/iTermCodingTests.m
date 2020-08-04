@@ -524,7 +524,7 @@
  */
 - (void)testGraphTableTransformer_HappyPath {
     NSData *(^ser)(NSDictionary *) = ^NSData *(NSDictionary *dict) {
-        return [NSPropertyListSerialization dataWithPropertyList:dict format:NSPropertyListBinaryFormat_v1_0 options:0 error:nil];
+        return [NSData it_dataWithSecurelyArchivedObject:dict error:nil];
     };
     NSData *data = [NSData dataWithBytes:"xyz" length:3];
     NSDate *date = [NSDate dateWithTimeIntervalSince1970:1000000000];
@@ -1094,11 +1094,7 @@
 }
 
 - (NSString *)hexified:(id)pod {
-    NSData *data =
-    [NSPropertyListSerialization dataWithPropertyList:pod
-                                               format:NSPropertyListBinaryFormat_v1_0
-                                              options:0
-                                                error:nil];
+    NSData *data = [NSData it_dataWithSecurelyArchivedObject:pod error:nil];
     NSString *hex = data.it_hexEncoded;
     return hex;
 }
@@ -1132,14 +1128,14 @@
            @"identifier": @"",
            @"parent": @0,
            @"rowid": @1,
-           @"data": [NSPropertyListSerialization dataWithPropertyList:@{} format:NSPropertyListBinaryFormat_v1_0 options:0 error:nil]
+           @"data": [NSData it_dataWithSecurelyArchivedObject:@{} error:nil]
         },
 
         @{ @"key": @"mynode",
            @"identifier": @"",
            @"parent": @1,
            @"rowid": @2,
-           @"data": [NSPropertyListSerialization dataWithPropertyList:pod format:NSPropertyListBinaryFormat_v1_0 options:0 error:nil]
+           @"data": [NSData it_dataWithSecurelyArchivedObject:pod error:nil]
         },
     ]];
 

@@ -41,6 +41,9 @@
 
 - (void)unlink {
     assert(!_db.isOpen);
+    if (!_db.databaseURL) {
+        return;
+    }
     NSError *error = nil;
     NSArray<NSURL *> *urls = @[
         _db.databaseURL,

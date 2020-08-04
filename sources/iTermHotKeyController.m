@@ -7,6 +7,7 @@
 #import "iTermApplicationDelegate.h"
 #import "iTermCarbonHotKeyController.h"
 #import "iTermController.h"
+#import "iTermOrderedDictionary.h"
 #import "iTermPreferences.h"
 #import "iTermPreviousState.h"
 #import "iTermProfilePreferences.h"

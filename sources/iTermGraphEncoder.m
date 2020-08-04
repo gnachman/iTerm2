@@ -85,10 +85,7 @@ NSInteger iTermGenerationAlwaysEncode = NSIntegerMax;
 - (BOOL)encodePropertyList:(id)plist withKey:(NSString *)key {
     assert(_state == iTermGraphEncoderStateLive);
     NSError *error;
-    NSData *data = [NSPropertyListSerialization dataWithPropertyList:plist
-                                                              format:NSPropertyListBinaryFormat_v1_0
-                                                             options:0
-                                                               error:&error];
+    NSData *data = [NSData it_dataWithSecurelyArchivedObject:plist error:&error];
     if (error) {
         DLog(@"Failed to serialize property list %@: %@", plist, error);
         return NO;
@@ -132,7 +129,9 @@ NSInteger iTermGenerationAlwaysEncode = NSIntegerMax;
         [self encodeNullForKey:key];
         return YES;
     }
-    if ([NSPropertyListSerialization propertyList:obj isValidForFormat:NSPropertyListBinaryFormat_v1_0]) {
+    NSError *error = nil;
+    [NSData it_dataWithSecurelyArchivedObject:obj error:&error];
+    if (!error) {
         _pod[key] = obj;
         return YES;
     }

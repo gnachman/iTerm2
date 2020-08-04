@@ -28,6 +28,11 @@ NS_ASSUME_NONNULL_BEGIN
             databaseFactory:(id<iTermDatabaseFactory>)databaseFactory NS_DESIGNATED_INITIALIZER;
 - (instancetype)init NS_UNAVAILABLE;
 
+
+- (void)updateSynchronously:(BOOL)sync
+                      block:(void (^ NS_NOESCAPE)(iTermGraphEncoder * _Nonnull))block
+                 completion:(nullable iTermCallback *)completion;
+
 - (void)update:(void (^ NS_NOESCAPE)(iTermGraphEncoder * _Nonnull))block
     completion:(nullable iTermCallback *)completion;
 

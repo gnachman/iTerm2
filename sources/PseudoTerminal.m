@@ -11013,6 +11013,9 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 }
 
 - (void)window:(NSWindow *)window willEncodeRestorableState:(NSCoder *)state {
+    if ([iTermAdvancedSettingsModel storeStateInSqlite]) {
+        return;
+    }
     if (![self shouldSaveRestorableState]) {
         [[self ptyWindow] setRestoreState:nil];
         if ([self isHotKeyWindow]) {

@@ -20,6 +20,14 @@ static NSString *const iTermRestorableStateControllerUserDefaultsKeyCount = @"No
 #pragma mark - Save
 
 - (void)save {
+    [self saveSynchronously:NO];
+}
+
+- (void)saveSynchronously {
+    [self saveSynchronously:YES];
+}
+
+- (void)saveSynchronously:(BOOL)sync {
     DLog(@"save");
     if (_saving) {
         DLog(@"Currently saving. Set needsSave.");
@@ -28,7 +36,7 @@ static NSString *const iTermRestorableStateControllerUserDefaultsKeyCount = @"No
     }
     _needsSave = NO;
     __weak __typeof(self) weakSelf;
-    [_saver saveWithCompletion:^{
+    [_saver saveSynchronously:sync withCompletion:^{
         [weakSelf didSave];
     }];
 }
@@ -96,6 +104,8 @@ static NSString *const iTermRestorableStateControllerUserDefaultsKeyCount = @"No
 // Main queue
 - (void)reallyRestoreWindows:(id<iTermRestorableStateIndex>)index
               withCompletion:(void (^)(void))completion {
+    [self.restorer restoreApplicationState];
+
     const NSInteger count = [index restorableStateIndexNumberOfWindows];
 
     // When all windows have finished being restored, mark the restoration as a success.
@@ -103,7 +113,7 @@ static NSString *const iTermRestorableStateControllerUserDefaultsKeyCount = @"No
     dispatch_async(dispatch_get_main_queue(), ^{
         dispatch_group_notify(group, dispatch_get_main_queue(), ^{
             for (NSInteger i = 0; i < count; i++) {
-                [[index restorableStateRecordAtIndex:i] unlink];
+                [[index restorableStateRecordAtIndex:i] didFinishRestoring];
             }
             completion();
         });
@@ -119,5 +129,10 @@ static NSString *const iTermRestorableStateControllerUserDefaultsKeyCount = @"No
     }
 }
 
+#pragma mark - Erase
+
+- (void)erase {
+    [self.restorer eraseStateRestorationData];
+}
 
 @end

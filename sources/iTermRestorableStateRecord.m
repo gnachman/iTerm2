@@ -80,7 +80,7 @@
 
 #pragma mark - iTermRestorableStateRecord
 
-- (void)unlink {
+- (void)didFinishRestoring {
     unlink(self.url.path.UTF8String);
 }
 

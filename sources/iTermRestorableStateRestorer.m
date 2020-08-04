@@ -45,10 +45,13 @@
 
 @implementation iTermRestorableStateRestorer
 
-- (instancetype)initWithIndexURL:(NSURL *)indexURL {
+- (instancetype)initWithIndexURL:(NSURL *)indexURL erase:(BOOL)erase {
     self = [super init];
     if (self) {
         _indexURL = [indexURL copy];
+        if (erase) {
+            [self eraseStateRestorationData];
+        }
     }
     return self;
 }
@@ -71,6 +74,15 @@
         [unarchiver finishDecoding];
         completion();
     }];
+}
+
+- (void)restoreApplicationState {
+    // This goes through the regular mechanism.
+}
+
+- (void)eraseStateRestorationData {
+#warning TOOD: Also delete all the raw data
+    [[NSFileManager defaultManager] removeItemAtURL:_indexURL error:nil];
 }
 
 @end

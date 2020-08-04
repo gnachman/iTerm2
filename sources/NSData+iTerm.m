@@ -216,6 +216,40 @@
     return [unarchiver decodeObjectOfClasses:[NSSet setWithArray:allowedClasses] forKey:@"object"];
 }
 
++ (NSData *)it_dataWithSecurelyArchivedObject:(id<NSCoding>)object error:(NSError **)error {
+    NSError *innerError = nil;
+    NSData *data = [NSKeyedArchiver archivedDataWithRootObject:object requiringSecureCoding:YES error:&innerError];
+    if (innerError) {
+        XLog(@"Error %@ encoding\n%@", innerError, object);
+    }
+    if (error) {
+        *error = innerError;
+    }
+    return data;
+}
+
+- (id)it_unarchivedObjectOfBasicClassesWithError:(NSError **)error {
+    NSArray<Class> *classes = @[ [NSDictionary class],
+                                 [NSNumber class],
+                                 [NSString class],
+                                 [NSDate class],
+                                 [NSData class],
+                                 [NSArray class],
+                                 [NSNull class],
+                                 [NSValue class] ];
+    NSError *innerError = nil;
+    id obj = [NSKeyedUnarchiver unarchivedObjectOfClasses:[NSSet setWithArray:classes]
+                                                 fromData:self
+                                                    error:&innerError];
+    if (innerError) {
+        XLog(@"Error %@ decoding %@", innerError, self);
+    }
+    if (error) {
+        *error = innerError;
+    }
+    return obj;
+}
+
 - (BOOL)isEqualToByte:(unsigned char)byte {
     if (self.length != 1) {
         return NO;

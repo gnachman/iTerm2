@@ -32,7 +32,7 @@
 
 #pragma mark - iTermRestorableStateSaver
 
-- (void)saveWithCompletion:(void (^)(void))completion {
+- (void)saveSynchronously:(BOOL)synchronously withCompletion:(void (^)(void))completion {
     NSMutableArray<iTermRestorableStateRecord *> *recordsToKeepUnchanged = [NSMutableArray array];
     NSMutableArray<iTermRestorableStateRecord *> *recordsNeedingNewContent = [NSMutableArray array];
     if ([[NSUserDefaults standardUserDefaults] boolForKey:@"NSQuitAlwaysKeepsWindows"]) {
@@ -71,11 +71,19 @@
     }
     _records = [recordsNeedingNewContent arrayByAddingObjectsFromArray:recordsToKeepUnchanged];
     __weak __typeof(self) weakSelf = self;
-    dispatch_async(_queue, ^{
-        [weakSelf writeUnchanged:recordsToKeepUnchanged
-                          update:recordsNeedingNewContent
-                      completion:completion];
-    });
+    if (synchronously) {
+        dispatch_sync(_queue, ^{
+            [weakSelf writeUnchanged:recordsToKeepUnchanged
+                              update:recordsNeedingNewContent
+                          completion:completion];
+        });
+    } else {
+        dispatch_async(_queue, ^{
+            [weakSelf writeUnchanged:recordsToKeepUnchanged
+                              update:recordsNeedingNewContent
+                          completion:completion];
+        });
+    }
 }
 
 // queue
@@ -136,6 +144,7 @@
         [plist addObject:record.indexEntry];
     }];
     DLog(@"Save index:\n%@", plist);
+#warning TODO: Don't use property list serialization because it can't deal with nonstring dictionary keys. Use NSKeyedArchiver archivedDataWithRootObject.
     NSData *plistData = [NSPropertyListSerialization dataWithPropertyList:plist
                                                                    format:NSPropertyListXMLFormat_v1_0
                                                                   options:NSPropertyListImmutable

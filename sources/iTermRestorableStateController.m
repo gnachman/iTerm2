@@ -13,6 +13,8 @@
 #import "iTermRestorableStateDriver.h"
 #import "iTermRestorableStateSQLite.h"
 
+extern NSString *const iTermApplicationWillTerminate;
+
 @interface iTermRestorableStateController()<iTermRestorableStateRestoring, iTermRestorableStateSaving>
 @end
 
@@ -22,6 +24,10 @@
     iTermRestorableStateDriver *_driver;
 }
 
++ (BOOL)stateRestorationEnabled {
+    return [[NSUserDefaults standardUserDefaults] boolForKey:@"NSQuitAlwaysKeepsWindows"];
+}
+
 - (instancetype)init {
     self = [super init];
     if (self) {
@@ -29,9 +35,11 @@
         NSString *appSupport = [[NSFileManager defaultManager] applicationSupportDirectory];
         NSString *savedState = [appSupport stringByAppendingPathComponent:@"SavedState"];
 
+        const BOOL erase = ![iTermRestorableStateController stateRestorationEnabled];
         if ([iTermAdvancedSettingsModel storeStateInSqlite]) {
             NSURL *url = [NSURL fileURLWithPath:[savedState stringByAppendingPathComponent:@"restorable-state.sqlite"]];
-            iTermRestorableStateSQLite *sqlite = [[iTermRestorableStateSQLite alloc] initWithURL:url];
+            iTermRestorableStateSQLite *sqlite = [[iTermRestorableStateSQLite alloc] initWithURL:url
+                                                                                           erase:erase];
             sqlite.delegate = self;
             _saver = sqlite;
             _restorer = sqlite;
@@ -41,10 +49,16 @@
             _saver = saver;
             saver.delegate = self;
 
-            iTermRestorableStateRestorer *restorer = [[iTermRestorableStateRestorer alloc] initWithIndexURL:indexURL];
+            iTermRestorableStateRestorer *restorer = [[iTermRestorableStateRestorer alloc] initWithIndexURL:indexURL
+                                                                                                      erase:erase];
             restorer.delegate = self;
             _restorer = restorer;
         }
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(applicationWillTerminate:)
+                                                     name:iTermApplicationWillTerminate
+                                                   object:nil];
+
         _driver = [[iTermRestorableStateDriver alloc] init];
         _driver.restorer = _restorer;
         _driver.saver = _saver;
@@ -59,6 +73,9 @@
 }
 
 - (void)saveRestorableState {
+    if (![iTermRestorableStateController stateRestorationEnabled]) {
+        return;
+    }
     if (_driver.restoring) {
         DLog(@"Currently restoring. Set needsSave.");
         _driver.needsSave = YES;
@@ -68,6 +85,9 @@
 }
 
 - (void)restoreWindows {
+    if (![iTermRestorableStateController stateRestorationEnabled]) {
+        return;
+    }
     __weak __typeof(self) weakSelf = self;
     [_driver restoreWithCompletion:^{
         [weakSelf didRestore];
@@ -76,7 +96,21 @@
 
 #pragma mark - Private
 
+- (void)applicationWillTerminate:(NSNotification *)notification {
+    if (![iTermRestorableStateController stateRestorationEnabled]) {
+        [_driver erase];
+        return;
+    }
+    if (!_driver.restoring) {
+        [_driver saveSynchronously];
+        _driver = nil;
+    }
+}
+ 
 - (void)didRestore {
+    if (![iTermRestorableStateController stateRestorationEnabled]) {
+        return;
+    }
     if (_driver.needsSave) {
         [_driver save];
     }
@@ -94,13 +128,16 @@
 
 - (void)restorableStateRestoreWithRecord:(nonnull iTermEncoderGraphRecord *)record
                               identifier:(nonnull NSString *)identifier
-                              completion:(nonnull void (^)(NSWindow * _Nonnull,
-                                                           NSError * _Nonnull))completion {
+                              completion:(nonnull void (^)(NSWindow *,
+                                                           NSError *))completion {
     [self.delegate restorableStateRestoreWithRecord:record
                                          identifier:identifier
                                          completion:completion];
 }
 
+- (void)restorableStateRestoreApplicationStateWithRecord:(nonnull iTermEncoderGraphRecord *)record {
+    [self.delegate restorableStateRestoreApplicationStateWithRecord:record];
+}
 
 #pragma mark - iTermRestorableStateSaving
 

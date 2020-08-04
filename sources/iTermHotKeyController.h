@@ -1,5 +1,6 @@
 #import "ProfileModel.h"
 
+#import "iTermGraphEncoder.h"
 #import "iTermProfileHotKey.h"
 #import "iTermAppHotKey.h"
 #import "NSDictionary+iTerm.h"

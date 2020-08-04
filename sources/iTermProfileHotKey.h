@@ -47,6 +47,7 @@
 
 // This is computed based on the current settings of the profile we were created with.
 @property(nonatomic, readonly) iTermHotkeyWindowType hotkeyWindowType;
+@property(nonatomic, readonly) NSString *profileGuid;
 
 - (instancetype)initWithShortcuts:(NSArray<iTermShortcut *> *)shortcuts
             hasModifierActivation:(BOOL)hasModifierActivation
@@ -84,6 +85,5 @@
 - (BOOL)showHotKeyWindowCreatingWithURLIfNeeded:(NSURL *)url;
 - (void)saveHotKeyWindowState;
 - (BOOL)loadRestorableStateFromArray:(NSArray *)states;
-- (void)setLegacyState:(NSDictionary *)state;
 
 @end
