@@ -155,6 +155,9 @@
                 }
             }
             assert(before.rowid.longLongValue == after.rowid.longLongValue);
+            if ([before.data isEqual:after.data]) {
+                return;
+            }
             if (![state.db executeUpdate:@"update Node set data=? where rowid=?", after.data, before.rowid]) {
                 *stop = YES;
             }
@@ -197,8 +200,6 @@
         return nil;
     }
     _ok = YES;
-
-    [self createTables:state];
 
     NSMutableArray<NSArray *> *nodes = [NSMutableArray array];
     {

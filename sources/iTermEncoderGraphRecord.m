@@ -287,6 +287,9 @@
 }
 
 - (NSData *)data {
+    if (self.pod.count == 0) {
+        return [NSData data];
+    }
     NSError *error = nil;
     NSData *data =
     [NSPropertyListSerialization dataWithPropertyList:self.pod
@@ -294,7 +297,7 @@
                                               options:0
                                                 error:&error];
     if (error) {
-        DLog(@"Failed to serialize pod %@: %@", self.pod, error);
+        DLog(@"Failed to serialize pod %@ in %@: %@", self.pod, self, error);
     }
     return data;
 }
