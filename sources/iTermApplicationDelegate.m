@@ -809,6 +809,7 @@ static BOOL hasBecomeActive = NO;
     [[iTermModifierRemapper sharedInstance] setRemapModifiers:NO];
     DLog(@"applicationWillTerminate returning");
     TurnOffDebugLoggingSilently();
+    [iTermUserDefaults setIgnoreSystemWindowRestoration:[iTermAdvancedSettingsModel useRestorableStateController]];
 }
 
 - (BOOL)applicationOpenUntitledFile:(NSApplication *)theApplication {
@@ -956,6 +957,7 @@ static BOOL hasBecomeActive = NO;
 - (void)applicationDidResignActive:(NSNotification *)aNotification {
     DLog(@"******** Resign Active\n%@", [NSThread callStackSymbols]);
     [_restorableStateController saveRestorableState];
+    [iTermUserDefaults setIgnoreSystemWindowRestoration:[iTermAdvancedSettingsModel useRestorableStateController]];
 }
 
 - (void)applicationWillHide:(NSNotification *)aNotification {
@@ -1148,6 +1150,7 @@ static BOOL hasBecomeActive = NO;
     }
     // This causes it to enable secure keyboard entry if needed.
     [iTermSecureKeyboardEntryController sharedInstance];
+    [iTermUserDefaults setIgnoreSystemWindowRestoration:[iTermAdvancedSettingsModel useRestorableStateController]];
 }
 
 - (NSMenu *)statusBarMenu {

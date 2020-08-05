@@ -14,6 +14,7 @@
 #import "iTermController.h"
 #import "iTermOrphanServerAdopter.h"
 #import "iTermPreferences.h"
+#import "iTermUserDefaults.h"
 #import "NSApplication+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "PseudoTerminal.h"
@@ -107,7 +108,7 @@ static BOOL gShouldIgnoreOpenUntitledFile;
                 pseudoTerminalState:(PseudoTerminalState *)state
                              system:(BOOL)system
                   completionHandler:(void (^)(NSWindow *, NSError *))completionHandler {
-    if (system && [iTermAdvancedSettingsModel useRestorableStateController]) {
+    if (system && [iTermUserDefaults ignoreSystemWindowRestoration]) {
         DLog(@"Ignore system window restoration because we're using our own restorable state controller.");
         gShouldIgnoreOpenUntitledFile = YES;
         completionHandler(nil, nil);
