@@ -2931,9 +2931,15 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 - (BOOL)encodeArrangementNodeWithContents:(BOOL)includeContents
                       fromArrangementNode:(NSDictionary *)node
                                   encoder:(id<iTermEncoderAdapter>)encoder {
-    NSMutableDictionary *result = [node mutableCopy];
     if ([node[TAB_ARRANGEMENT_VIEW_TYPE] isEqual:VIEW_TYPE_SPLITTER]) {
-#warning TODO: Make sure we do something sane with backward compatibility here.
+        // Add everything in node except SUBVIEWS
+        [node enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, id  _Nonnull obj, BOOL * _Nonnull stop) {
+            if ([key isEqual:SUBVIEWS]) {
+                return;
+            }
+            encoder[key] = obj;
+        }];
+
         iTermOrderedDictionary<NSString *, NSDictionary *> *index =
         [iTermOrderedDictionary byMapping:node[SUBVIEWS]
                                     block:^id _Nonnull(NSUInteger i,
@@ -2944,6 +2950,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                 return [PTYSession guidInArrangement:subnode[TAB_ARRANGEMENT_SESSION]] ?: [@(i) stringValue];
             }
         }];
+        __block BOOL ok = YES;
         [encoder encodeArrayWithKey:SUBVIEWS
                         identifiers:index.keys
                          generation:iTermGenerationAlwaysEncode
@@ -2951,17 +2958,32 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                                           NSInteger i,
                                           NSString * _Nonnull identifier) {
             NSDictionary *subnode = index[identifier];
-            return [self encodeArrangementNodeWithContents:includeContents
-                                       fromArrangementNode:subnode
-                                                   encoder:encoder];
+            if (![self encodeArrangementNodeWithContents:includeContents
+                                     fromArrangementNode:subnode
+                                                 encoder:encoder]) {
+                // If one leaf fails to encode, toss the whole tab out because it'll be a disaster
+                // trying to restore it.
+                ok = NO;
+                return NO;
+            }
+            return YES;
         }];
-        return YES;
+        return ok;
     }
+
+    // Leaf node case.
+    // Add everything in node except TAB_ARRANGEMENT_SESSION.
+    [node enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, id  _Nonnull obj, BOOL * _Nonnull stop) {
+        if ([key isEqual:TAB_ARRANGEMENT_SESSION]) {
+            return;
+        }
+        encoder[key] = obj;
+    }];
 
 #warning Test all the code paths below
     // If something should go wrong, it's better to do nothing than to
     // assert. Bad inputs are always possible.
-    NSNumber *sessionId = result[TAB_ARRANGEMENT_ID];
+    NSNumber *sessionId = node[TAB_ARRANGEMENT_ID];
     if (!sessionId) {
         XLog(@"No session ID in arrangement node %@", node);
         return NO;
