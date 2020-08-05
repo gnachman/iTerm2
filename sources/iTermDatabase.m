@@ -82,10 +82,11 @@
     const BOOL result = [_db executeUpdate:sql withVAList:args];
     va_end(args);
 
-#warning DNS
+#if DEBUG
     va_start(args, sql);
     NSLog(@"%@", [self formatSQL:sql vaList:args]);
     va_end(args);
+#endif
 
     if (gDebugLogging) {
         va_start(args, sql);

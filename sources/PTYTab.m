@@ -3056,7 +3056,6 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
         return [encoder encodeDictionaryWithKey:TAB_ARRANGEMENT_ROOT
                                      generation:iTermGenerationAlwaysEncode
                                           block:^BOOL(id<iTermEncoderAdapter>  _Nonnull encoder) {
-#warning TEST THIS
             return [self encodeArrangementNodeWithContents:contents
                                        fromArrangementNode:mutableRootNode
                                                    encoder:encoder];
@@ -3067,7 +3066,6 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     if (constructIdMap) {
         assert(idMap_);
     }
-#warning TEST THIS
     return [encoder encodeDictionaryWithKey:TAB_ARRANGEMENT_ROOT
                                  generation:iTermGenerationAlwaysEncode
                                       block:^BOOL(id<iTermEncoderAdapter>  _Nonnull encoder) {

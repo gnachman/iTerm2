@@ -149,7 +149,6 @@
     return [self childRecordWithKey:@"__dict" identifier:key];
 }
 
-#warning TODO: Test this
 - (void)enumerateArrayWithKey:(NSString *)key
                         block:(void (^NS_NOESCAPE)(NSString *identifier,
                                                    NSInteger index,

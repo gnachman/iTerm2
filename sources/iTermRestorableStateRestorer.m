@@ -81,7 +81,6 @@
 }
 
 - (void)eraseStateRestorationData {
-#warning TOOD: Also delete all the raw data
     [[NSFileManager defaultManager] removeItemAtURL:_indexURL error:nil];
 }
 

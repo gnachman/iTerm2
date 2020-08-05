@@ -144,7 +144,8 @@
         [plist addObject:record.indexEntry];
     }];
     DLog(@"Save index:\n%@", plist);
-#warning TODO: Don't use property list serialization because it can't deal with nonstring dictionary keys. Use NSKeyedArchiver archivedDataWithRootObject.
+    // This is broken because it won't work with things like NSValue. But it doesn't matter because
+    // this code is all but dead.
     NSData *plistData = [NSPropertyListSerialization dataWithPropertyList:plist
                                                                    format:NSPropertyListXMLFormat_v1_0
                                                                   options:NSPropertyListImmutable

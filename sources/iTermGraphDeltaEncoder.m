@@ -7,6 +7,7 @@
 
 #import "iTermGraphDeltaEncoder.h"
 
+#import "DebugLogging.h"
 #import "NSArray+iTerm.h"
 #import "iTermOrderedDictionary.h"
 
@@ -44,7 +45,7 @@
     }
     if (record.generation == generation) {
         // No change to generation
-        NSLog(@"Record %@[%@] at generation %@ didn't change", key, identifier, @(generation));
+        DLog(@"Record %@[%@] at generation %@ didn't change", key, identifier, @(generation));
         [self encodeGraph:record];
         return YES;
     }

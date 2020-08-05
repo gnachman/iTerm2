@@ -139,7 +139,6 @@ static const NSInteger kUnicodeVersion = 9;
         num_dropped_blocks = [dictionary[kLineBufferNumDroppedBlocksKey] intValue];
         droppedChars = [dictionary[kLineBufferDroppedCharsKey] longLongValue];
         for (NSDictionary *maybeWrapper in dictionary[kLineBufferBlocksKey]) {
-#warning TEST THIS, both with new and legacy dict
             NSDictionary *blockDictionary = maybeWrapper;
             if (maybeWrapper[kLineBufferBlockWrapperKey]) {
                 blockDictionary = maybeWrapper[kLineBufferBlockWrapperKey];

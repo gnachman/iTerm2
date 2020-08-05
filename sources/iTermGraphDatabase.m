@@ -137,7 +137,7 @@
 
 - (BOOL)reallySave:(iTermGraphDeltaEncoder *)encoder
              state:(iTermGraphDatabaseState *)state {
-    NSLog(@"Start saving");
+    DLog(@"Start saving");
     NSDate *start = [NSDate date];
     const BOOL ok =
     [encoder enumerateRecords:^(iTermEncoderGraphRecord * _Nullable before,
@@ -187,7 +187,7 @@
         assert(NO);
     }];
     NSDate *end = [NSDate date];
-    NSLog(@"Save duration: %f0.1ms", (end.timeIntervalSinceNow - start.timeIntervalSinceNow) * 1000);
+    DLog(@"Save duration: %f0.1ms", (end.timeIntervalSinceNow - start.timeIntervalSinceNow) * 1000);
     return ok;
 }
 

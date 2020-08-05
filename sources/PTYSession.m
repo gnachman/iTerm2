@@ -4724,7 +4724,8 @@ ITERM_WEAKLY_REFERENCEABLE
     result[SESSION_ARRANGEMENT_WORKING_DIRECTORY_POLLER_DISABLED] = @(_workingDirectoryPollerDisabled);
     result[SESSION_ARRANGEMENT_COMMANDS] = _commands;
     result[SESSION_ARRANGEMENT_DIRECTORIES] = _directories;
-#warning TODO: Encode this efficiently
+    // If this is slow, it could be encoded more efficiently by using encodeArrayWithKey:...
+    // but that would require coming up with a good unique identifier.
     result[SESSION_ARRANGEMENT_HOSTS] = [_hosts mapWithBlock:^id(id anObject) {
         return [(VT100RemoteHost *)anObject dictionaryValue];
     }];
