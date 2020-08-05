@@ -36,13 +36,19 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)enumerateArrayWithKey:(NSString *)key
                         block:(void (^NS_NOESCAPE)(NSString *identifier,
                                                    NSInteger index,
-                                                   iTermEncoderGraphRecord *obj,
+                                                   id obj,  // could be POD or plist
                                                    BOOL *stop))block;
 - (NSArray<iTermEncoderGraphRecord *> * _Nullable)recordArrayWithKey:(NSString *)key;
+// Note: this doesn't work for arrays encoded as property lists.
 - (NSArray *)arrayWithKey:(NSString *)key;
 - (NSInteger)integerWithKey:(NSString *)key error:(out NSError **)error;
 - (NSString *)stringWithKey:(NSString *)key;
+- (nullable id)objectWithKey:(NSString *)key class:(Class)theClass;
 
+@end
+
+@interface NSObject (iTermEncoderGraphRecord)
++ (nullable instancetype)fromGraphRecord:(iTermEncoderGraphRecord *)record withKey:(NSString *)key;
 @end
 
 NS_ASSUME_NONNULL_END

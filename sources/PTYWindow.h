@@ -82,6 +82,7 @@ typedef NS_ENUM(NSUInteger, PTYWindowTitleBarFlavor) {
 @property(nonatomic) NSInteger it_openingSheet;
 @property (nonatomic) BOOL it_becomingKey;
 @property (nonatomic) NSInteger it_accessibilityResizing;
+@property(nonatomic) BOOL it_restorableStateInvalid;
 
 - (NSColor *)it_terminalWindowDecorationBackgroundColor;
 - (NSColor *)it_terminalWindowDecorationTextColorForBackgroundColor:(NSColor *)backgroundColor;

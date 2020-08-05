@@ -2334,6 +2334,9 @@ static BOOL hasBecomeActive = NO;
 
 - (NSArray<NSWindow *> *)restorableStateWindows {
     return [[[iTermController sharedInstance] terminals] mapWithBlock:^id(PseudoTerminal *term) {
+        if (term.isHotKeyWindow) {
+            return nil;
+        }
         return term.window;
     }];
 }
@@ -2402,7 +2405,8 @@ static BOOL hasBecomeActive = NO;
 // If you change this also change -application:willEncodeRestorableState:.
 - (BOOL)encodeGraphWithEncoder:(iTermGraphEncoder *)encoder {
     static NSInteger generation;
-    if ([[iTermApplication sharedApplication] it_restorableStateInvalid]) {
+    if ([[iTermApplication sharedApplication] it_restorableStateInvalid] ||
+        [[iTermHotKeyController sharedInstance] anyProfileHotkeyWindowHasInvalidState]) {
         ++generation;
     }
     [iTermApplication sharedApplication].it_restorableStateInvalid = NO;
@@ -2428,7 +2432,12 @@ static BOOL hasBecomeActive = NO;
             return YES;
         }];
 
-        // Hotkey windows are encoded like normal windows.
+        [encoder encodeChildWithKey:kHotkeyWindowsRestorableStates
+                         identifier:@""
+                         generation:iTermGenerationAlwaysEncode
+                              block:^BOOL(iTermGraphEncoder * _Nonnull subencoder) {
+            return [[iTermHotKeyController sharedInstance] encodeGraphWithEncoder:subencoder];
+        }];
 
         if ([[[iTermBuriedSessions sharedInstance] buriedSessions] count]) {
             // TODO: Why doesn't this encode window content?
@@ -2450,7 +2459,9 @@ static BOOL hasBecomeActive = NO;
         DLog(@"No app record");
         return;
     }
-    NSDictionary *screenCharState = [NSDictionary castFrom:[[app childRecordWithKey:kScreenCharRestorableStateKey identifier:@""] propertyListValue]];
+    NSDictionary *screenCharState = [app objectWithKey:kScreenCharRestorableStateKey
+                                                 class:[NSDictionary class]];
+    [NSDictionary castFrom:[[app childRecordWithKey:kScreenCharRestorableStateKey identifier:@""] propertyListValue]];
     if (screenCharState) {
         ScreenCharDecodeRestorableState(screenCharState);
     }
@@ -2463,7 +2474,20 @@ static BOOL hasBecomeActive = NO;
         [[iTermURLStore sharedInstance] loadFromDictionary:urlStoreState];
     }
 
-    _buriedSessionsState = [[NSArray castFrom:[[app childRecordWithKey:iTermBuriedSessionState identifier:@""] propertyListValue]] retain];
+    if ([[NSUserDefaults standardUserDefaults] boolForKey:@"NSQuitAlwaysKeepsWindows"]) {
+        iTermEncoderGraphRecord *hotkeyWindowsStates = [app childRecordWithKey:kHotkeyWindowsRestorableStates identifier:@""];
+        if (hotkeyWindowsStates) {
+            // We have to create the hotkey window now because we need to attach to servers before
+            // launch finishes; otherwise any running hotkey window jobs will be treated as orphans.
+            const BOOL createdAny = [[iTermHotKeyController sharedInstance] createHiddenWindowsByDecoding:hotkeyWindowsStates];
+            if (createdAny) {
+                [_untitledWindowStateMachine didRestoreHotkeyWindows];
+            }
+        }
+    }
+
+    _buriedSessionsState = [[NSArray fromGraphRecord:app withKey:iTermBuriedSessionState] retain];
+
     if (finishedLaunching_) {
         [self restoreBuriedSessionsState];
     }

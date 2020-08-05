@@ -61,11 +61,7 @@ static NSString *const iTermRestorableStateControllerUserDefaultsKeyCount = @"No
         return;
     }
     id<iTermRestorableStateIndex> index = [self.restorer restorableStateIndex];
-    if ([index restorableStateIndexNumberOfWindows] == 0) {
-        [self didRestoreFromIndex:nil];
-        completion();
-        return;
-    }
+
     const NSInteger count = [[NSUserDefaults standardUserDefaults] integerForKey:iTermRestorableStateControllerUserDefaultsKeyCount];
     if (count > 1) {
         const iTermWarningSelection selection =

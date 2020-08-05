@@ -10986,7 +10986,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     return YES;
 }
 
-- (BOOL)shouldSaveRestorableState {
+- (BOOL)shouldSaveRestorableStateLegacy:(BOOL)legacy {
     if (doNotSetRestorableState_) {
         // The window has been destroyed beyond recognition at this point and
         // there is nothing to save.
@@ -10999,7 +10999,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     // Don't save and restore the hotkey window. The OS only restores windows that are in the window
     // order, and hotkey windows may be ordered in or out, depending on whether they were in use. So
     // they get a special path for restoration where the arrangement is saved in user defaults.
-    if ([self isHotKeyWindow]) {
+    if (legacy && [self isHotKeyWindow]) {
         return NO;
     }
 
@@ -11016,7 +11016,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     if ([iTermAdvancedSettingsModel storeStateInSqlite]) {
         return;
     }
-    if (![self shouldSaveRestorableState]) {
+    if (![self shouldSaveRestorableStateLegacy:YES]) {
         [[self ptyWindow] setRestoreState:nil];
         if ([self isHotKeyWindow]) {
             [[[iTermHotKeyController sharedInstance] profileHotKeyForWindowController:self] saveHotKeyWindowState];
@@ -11761,7 +11761,7 @@ backgroundColor:(NSColor *)backgroundColor {
 - (BOOL)encodeGraphWithEncoder:(iTermGraphEncoder *)encoder {
     // NOTE: The well-formedness check is not in -shouldSaveRestorableState because I'm afraid of
     // breaking something in the legacy code. Once it is gone, it can move in.
-    if (![self shouldSaveRestorableState] || !_wellFormed) {
+    if (![self shouldSaveRestorableStateLegacy:NO] || !_wellFormed) {
         return NO;
     }
     NSArray<PTYTab *> *tabs = [self tabsToEncodeExcludingTmux:YES];

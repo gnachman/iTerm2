@@ -153,7 +153,7 @@
 - (void)enumerateArrayWithKey:(NSString *)key
                         block:(void (^NS_NOESCAPE)(NSString *identifier,
                                                    NSInteger index,
-                                                   iTermEncoderGraphRecord *obj,
+                                                   id obj,
                                                    BOOL *stop))block {
     iTermEncoderGraphRecord *record = [self childArrayWithKey:key];
     if (!record) {
@@ -168,13 +168,15 @@
     }];
     [order enumerateObjectsUsingBlock:^(NSString * _Nonnull key, NSUInteger idx, BOOL * _Nonnull stop) {
         id item = items[key] ?: record->_pod[key];
-        block(key, idx, item, stop);
+        if (item) {
+            block(key, idx, item, stop);
+        }
     }];
 }
 
 - (NSArray *)arrayWithKey:(NSString *)key {
     NSMutableArray *result = [NSMutableArray array];
-    [self enumerateArrayWithKey:key block:^(NSString * _Nonnull identifier, NSInteger index, iTermEncoderGraphRecord * _Nonnull obj, BOOL * _Nonnull stop) {
+    [self enumerateArrayWithKey:key block:^(NSString * _Nonnull identifier, NSInteger index, id _Nonnull obj, BOOL * _Nonnull stop) {
         [result addObject:obj];
     }];
     return result;
@@ -213,6 +215,15 @@
 
 - (NSString *)stringWithKey:(NSString *)key {
     return [self objectWithKey:key class:[NSString class] error:nil];
+}
+
+- (id)objectWithKey:(NSString *)key class:(Class)theClass {
+    id obj = self.pod[key];
+    if (obj) {
+        return [theClass castFrom:obj];
+    }
+    iTermEncoderGraphRecord *record = [self childRecordWithKey:key identifier:@""];
+    return [theClass castFrom:record.propertyListValue];
 }
 
 - (NSArray *)arrayValue {
@@ -301,3 +312,8 @@
 
 @end
 
+@implementation NSObject (iTermEncoderGraphRecord)
++ (nullable instancetype)fromGraphRecord:(iTermEncoderGraphRecord *)record withKey:(NSString *)key {
+    return [record objectWithKey:key class:self];
+}
+@end

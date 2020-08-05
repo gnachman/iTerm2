@@ -80,6 +80,7 @@ static const char *iTermApplicationKVOKey = "iTermApplicationKVOKey";
     BOOL _it_justBecameActive;
     // Have we received didBecomeActive without a subsequent didResignActive?
     BOOL _it_active;
+    BOOL _it_restorableStateInvalid;
 }
 
 - (void)dealloc {
