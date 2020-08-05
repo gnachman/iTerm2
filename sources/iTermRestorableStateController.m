@@ -34,6 +34,13 @@ extern NSString *const iTermApplicationWillTerminate;
         dispatch_queue_t queue = dispatch_queue_create("com.iterm2.restorable-state", DISPATCH_QUEUE_SERIAL);
         NSString *appSupport = [[NSFileManager defaultManager] applicationSupportDirectory];
         NSString *savedState = [appSupport stringByAppendingPathComponent:@"SavedState"];
+        [[NSFileManager defaultManager] createDirectoryAtPath:savedState
+                                  withIntermediateDirectories:YES
+                                                   attributes:@{ NSFilePosixPermissions: @(01700) }
+                                                        error:nil];
+        [[NSFileManager defaultManager] setAttributes:@{ NSFilePosixPermissions: @(01700) }
+                                         ofItemAtPath:savedState
+                                                error:nil];
 
         const BOOL erase = ![iTermRestorableStateController stateRestorationEnabled];
         if ([iTermAdvancedSettingsModel storeStateInSqlite]) {

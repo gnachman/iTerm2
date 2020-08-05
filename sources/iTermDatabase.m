@@ -14,13 +14,27 @@
 @end
 
 @interface iTermSqliteDatabaseImpl: NSObject<iTermDatabase>
++ (NSArray<NSURL *> *)allURLsForDatabaseAt:(NSURL *)url;
 - (instancetype)initWithDatabase:(FMDatabase *)db NS_DESIGNATED_INITIALIZER;
 - (instancetype)init NS_UNAVAILABLE;
 @end
 
 @implementation iTermSqliteDatabaseFactory
 
+- (void)touchWithPrivateUnixPermissions:(NSURL *)url {
+    int fd;
+    do {
+        fd = open(url.path.UTF8String, O_WRONLY | O_CREAT, 0600);
+    } while (fd == -1 && (errno == EAGAIN || errno == EINTR));
+    if (fd >= 0) {
+        close(fd);
+    }
+}
+
 - (nullable id<iTermDatabase>)withURL:(NSURL *)url {
+    for (NSURL *fileURL in [iTermSqliteDatabaseImpl allURLsForDatabaseAt:url]) {
+        [self touchWithPrivateUnixPermissions:fileURL];
+    }
     FMDatabase *db = [FMDatabase databaseWithPath:url.path];
     return [[iTermSqliteDatabaseImpl alloc] initWithDatabase:db];
 }
@@ -29,6 +43,14 @@
 
 @implementation iTermSqliteDatabaseImpl {
     FMDatabase *_db;
+}
+
++ (NSArray<NSURL *> *)allURLsForDatabaseAt:(NSURL *)url {
+    return @[
+        url,
+        [url.URLByDeletingPathExtension URLByAppendingPathExtension:@"sqlite-shm"],
+        [url.URLByDeletingPathExtension URLByAppendingPathExtension:@"sqlite-wal"],
+    ];
 }
 
 - (instancetype)initWithDatabase:(FMDatabase *)db {
@@ -45,11 +67,7 @@
         return;
     }
     NSError *error = nil;
-    NSArray<NSURL *> *urls = @[
-        _db.databaseURL,
-        [_db.databaseURL.URLByDeletingPathExtension URLByAppendingPathExtension:@"sqlite-shm"],
-        [_db.databaseURL.URLByDeletingPathExtension URLByAppendingPathExtension:@"sqlite-wal"],
-    ];
+    NSArray<NSURL *> *urls = [iTermSqliteDatabaseImpl allURLsForDatabaseAt:_db.databaseURL];
     for (NSURL *url in urls) {
         if (![[NSFileManager defaultManager] removeItemAtURL:url
                                                        error:&error]) {

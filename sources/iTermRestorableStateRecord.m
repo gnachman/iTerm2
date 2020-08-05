@@ -164,10 +164,7 @@
 - (NSURL *)url {
     NSString *appSupport = [[NSFileManager defaultManager] applicationSupportDirectory];
     NSString *savedState = [appSupport stringByAppendingPathComponent:@"SavedState"];
-    [[NSFileManager defaultManager] createDirectoryAtPath:savedState
-                              withIntermediateDirectories:YES
-                                               attributes:@{ NSFilePosixPermissions: @(0700) }
-                                                    error:nil];
+
     NSURL *url = [NSURL fileURLWithPath:savedState];
     [url setResourceValue:@YES forKey:NSURLIsExcludedFromBackupKey error:nil];
     url = [url URLByAppendingPathComponent:[NSString stringWithFormat:@"%@.data", @(self.windowNumber)]];
