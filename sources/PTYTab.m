@@ -2980,7 +2980,6 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
         encoder[key] = obj;
     }];
 
-#warning Test all the code paths below
     // If something should go wrong, it's better to do nothing than to
     // assert. Bad inputs are always possible.
     NSNumber *sessionId = node[TAB_ARRANGEMENT_ID];
@@ -3054,32 +3053,30 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
         mutableRootNode[TAB_ARRANGEMENT_IS_MAXIMIZED] = @YES;
 
         // Fill in the contents.
-        [encoder encodeDictionaryWithKey:TAB_ARRANGEMENT_ROOT
-                              generation:iTermGenerationAlwaysEncode
-                                   block:^BOOL(id<iTermEncoderAdapter>  _Nonnull encoder) {
+        return [encoder encodeDictionaryWithKey:TAB_ARRANGEMENT_ROOT
+                                     generation:iTermGenerationAlwaysEncode
+                                          block:^BOOL(id<iTermEncoderAdapter>  _Nonnull encoder) {
 #warning TEST THIS
             return [self encodeArrangementNodeWithContents:contents
                                        fromArrangementNode:mutableRootNode
                                                    encoder:encoder];
         }];
-    } else {
-        // Build a new arrangement. If |constructIdMap| is set then pass in
-        // idMap_, and it will get filled in with number->SessionView entries.
-        if (constructIdMap) {
-            assert(idMap_);
-        }
-#warning TEST THIS
-        [encoder encodeDictionaryWithKey:TAB_ARRANGEMENT_ROOT
-                              generation:iTermGenerationAlwaysEncode
-                                   block:^BOOL(id<iTermEncoderAdapter>  _Nonnull encoder) {
-            return [self _recursiveEncodeArrangementForView:root_
-                                              idMap:constructIdMap ? idMap_ : nil
-                                        isMaximized:NO
-                                           contents:contents
-                                            encoder:encoder];
-        }];
     }
-    return YES;
+    // Build a new arrangement. If |constructIdMap| is set then pass in
+    // idMap_, and it will get filled in with number->SessionView entries.
+    if (constructIdMap) {
+        assert(idMap_);
+    }
+#warning TEST THIS
+    return [encoder encodeDictionaryWithKey:TAB_ARRANGEMENT_ROOT
+                                 generation:iTermGenerationAlwaysEncode
+                                      block:^BOOL(id<iTermEncoderAdapter>  _Nonnull encoder) {
+        return [self _recursiveEncodeArrangementForView:root_
+                                                  idMap:constructIdMap ? idMap_ : nil
+                                            isMaximized:NO
+                                               contents:contents
+                                                encoder:encoder];
+    }];
 }
 
 

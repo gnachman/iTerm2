@@ -3145,6 +3145,7 @@ ITERM_WEAKLY_REFERENCEABLE
 - (BOOL)restoreTabsFromArrangement:(NSDictionary *)arrangement
                              named:(NSString *)arrangementName
                           sessions:(NSArray<PTYSession *> *)sessions {
+    BOOL openedAny = NO;
     for (NSDictionary *tabArrangement in arrangement[TERMINAL_ARRANGEMENT_TABS]) {
         NSDictionary<NSString *, PTYSession *> *sessionMap = nil;
         if (sessions) {
@@ -3157,6 +3158,10 @@ ITERM_WEAKLY_REFERENCEABLE
                                  sessionMap:sessionMap]) {
             return NO;
         }
+        openedAny = YES;
+    }
+    if (!openedAny) {
+        return NO;
     }
     [self updateUseTransparency];
     return YES;
