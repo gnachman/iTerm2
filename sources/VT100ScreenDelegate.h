@@ -272,6 +272,7 @@
 - (void)screenTerminalAttemptedPasteboardAccess;
 - (NSString *)screenValueOfVariableNamed:(NSString *)name;
 - (void)screenReportFocusWillChangeTo:(BOOL)reportFocus;
+- (void)screenReportPasteBracketingWillChangeTo:(BOOL)bracket;
 - (void)screenDidReceiveLineFeed;
 - (void)screenSoftAlternateScreenModeDidChange;
 - (void)screenReportKeyUpDidChange:(BOOL)reportKeyUp;

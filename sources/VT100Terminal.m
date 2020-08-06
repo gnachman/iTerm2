@@ -677,9 +677,8 @@ static const int kMaxScreenRows = 4096;
 
             case 2004:
                 // Set bracketed paste mode
-                self.bracketedPasteMode = mode && self.allowPasteBracketing;
+                [self setBracketedPasteMode:mode && self.allowPasteBracketing withSideEffects:YES];
                 break;
-
         }
     }
 }
@@ -1217,6 +1216,17 @@ static const int kMaxScreenRows = 4096;
 - (void)setReportFocus:(BOOL)reportFocus {
     [self.delegate terminalReportFocusWillChangeTo:reportFocus];
     _reportFocus = reportFocus;
+}
+
+- (void)setBracketedPasteMode:(BOOL)bracketedPasteMode {
+    [self setBracketedPasteMode:bracketedPasteMode withSideEffects:NO];
+}
+
+- (void)setBracketedPasteMode:(BOOL)bracketedPasteMode withSideEffects:(BOOL)sideEffects {
+    if (sideEffects) {
+        [delegate_ terminalPasteBracketingWillChangeTo:bracketedPasteMode];
+    }
+    _bracketedPasteMode = bracketedPasteMode;
 }
 
 - (void)resetSavedCursorPositions {

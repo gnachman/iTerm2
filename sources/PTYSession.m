@@ -11367,6 +11367,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [self dismissAnnouncementWithIdentifier:kTurnOffFocusReportingOnHostChangeAnnouncementIdentifier];
 }
 
+- (void)screenReportPasteBracketingWillChangeTo:(BOOL)bracket {
+    [self dismissAnnouncementWithIdentifier:kTurnOffBracketedPasteOnHostChangeAnnouncementIdentifier];
+}
+
 - (void)screenDidReceiveLineFeed {
     [_pwdPoller didReceiveLineFeed];
     if (_logging.enabled && _logging.plainText && !self.isTmuxGateway) {

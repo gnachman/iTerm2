@@ -4865,6 +4865,10 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     [self.delegate screenReportFocusWillChangeTo:reportFocus];
 }
 
+- (void)terminalPasteBracketingWillChangeTo:(BOOL)bracket {
+    [self.delegate screenReportPasteBracketingWillChangeTo:bracket];
+}
+
 - (void)terminalSoftAlternateScreenModeDidChange {
     [self.delegate screenSoftAlternateScreenModeDidChange];
 }

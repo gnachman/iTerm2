@@ -900,6 +900,8 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
 - (void)screenReportFocusWillChangeTo:(BOOL)reportFocus {
 }
 
+- (void)screenReportPasteBracketingWillChangeTo:(BOOL)bracket {
+}
 
 - (void)screenSoftAlternateScreenModeDidChange {
 }

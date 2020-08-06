@@ -10,6 +10,7 @@
 NS_ASSUME_NONNULL_BEGIN
 
 extern NSString *const kTurnOffBracketedPasteOnHostChangeUserDefaultsKey;
+extern NSString *const kTurnOffBracketedPasteOnHostChangeAnnouncementIdentifier;
 
 @protocol iTermNaggingControllerDelegate<NSObject>
 - (BOOL)naggingControllerCanShowMessageWithIdentifier:(NSString *)identifier;
