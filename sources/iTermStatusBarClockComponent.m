@@ -37,13 +37,14 @@ static NSString *const iTermStatusBarClockComponentLocalizeKey = @"localize";
                                                    placeholder:@"Date Format (Unicode TR 35)"
                                                   defaultValue:self.class.statusBarComponentDefaultKnobs[iTermStatusBarClockComponentFormatKey]
                                                            key:iTermStatusBarClockComponentFormatKey];
-    formatKnob.helpURL = [NSURL URLWithString:@"http://www.unicode.org/reports/tr35/tr35-31/tr35-dates.html#Date_Format_Patterns"];
+    formatKnob.helpURL = [NSURL URLWithString:@"https://iterm2.com/clock-status-bar-component-help"];
     iTermStatusBarComponentKnob *dateFormatIsTemplate =
         [[iTermStatusBarComponentKnob alloc] initWithLabelText:@"Localize Date Format"
                                                           type:iTermStatusBarComponentKnobTypeCheckbox
                                                    placeholder:nil
                                                   defaultValue:@YES
                                                            key:iTermStatusBarClockComponentLocalizeKey];
+
     return [@[ formatKnob, dateFormatIsTemplate ] arrayByAddingObjectsFromArray:[super statusBarComponentKnobs]];
 }
 
