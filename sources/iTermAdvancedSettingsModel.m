@@ -571,7 +571,7 @@ DEFINE_BOOL(experimentalKeyHandling, NO, SECTION_EXPERIMENTAL @"Improved support
 DEFINE_BOOL(disableMetalWhenIdle, NO, SECTION_EXPERIMENTAL @"Disable metal renderer when idle to save CPU utilization?\nRequires Metal renderer");
 // This never proved itself.
 DEFINE_BOOL(metalDeferCurrentDrawable, NO, SECTION_EXPERIMENTAL @"Defer invoking currentDrawable.\nThis may improve overall performance at the cost of a lower frame rate.");
-DEFINE_BOOL(dismemberScrollView, NO, SECTION_EXPERIMENTAL @"Dismember scroll view for better GPU performance?\nThis was a dangerous hack that was necessary in 10.14 for performance but seems not to be needed in 10.15. This setting only affects macOS 10.15 and later.");
+DEFINE_BOOL(dismemberScrollView, NO, SECTION_EXPERIMENTAL @"Dismember scroll view for better GPU performance?\nThis enables a dangerous hack that might improve drawing performance on macOS 10.14 only.");
 
 // Experimental features that have graduated:
 DEFINE_BOOL(supportREPCode, YES, SECTION_EXPERIMENTAL @"Enable support for REP (Repeat previous character) escape sequence?");

@@ -194,10 +194,7 @@
 }
 
 + (BOOL)shouldDismember NS_AVAILABLE_MAC(10_14) {
-    if (@available(macOS 10.15, *)) {
-        return [iTermAdvancedSettingsModel dismemberScrollView];
-    }
-    return YES;
+    return [iTermAdvancedSettingsModel dismemberScrollView];
 }
 
 + (BOOL)isCompatibleWithResponsiveScrolling {
