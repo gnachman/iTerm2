@@ -50,7 +50,10 @@ extern NSString *const kTmuxWindowOpenerWindowOptionStyleValueFullScreen;
 
 + (TmuxWindowOpener *)windowOpener;
 - (BOOL)openWindows:(BOOL)initial;
-- (void)updateLayoutInTab:(PTYTab *)term;
+
+// Returns YES if the tab's layout was updated.
+- (BOOL)updateLayoutInTab:(PTYTab *)term;
+
 - (void)unpauseWindowPanes:(NSArray<NSNumber *> *)windowPanes;
 
 // These access the results of unpauseWindowPanes:

@@ -129,25 +129,25 @@ NSString *const kTmuxWindowOpenerWindowOptionStyleValueFullScreen = @"FullScreen
     [gateway_ sendCommandList:commands];
 }
 
-- (void)updateLayoutInTab:(PTYTab *)tab {
+- (BOOL)updateLayoutInTab:(PTYTab *)tab {
     if (!self.layout) {
         DLog(@"Bad layout");
-        return;
+        return NO;
     }
     if (!self.controller) {
         DLog(@"No controller");
-        return;
+        return NO;
     }
     if (!self.gateway) {
         DLog(@"No gateway");
-        return;
+        return NO;
     }
 
     TmuxLayoutParser *parser = [TmuxLayoutParser sharedInstance];
     self.parseTree = [parser parsedLayoutFromString:self.layout];
     if (!self.parseTree) {
         [gateway_ abortWithErrorMessage:[NSString stringWithFormat:@"Error parsing layout %@", self.layout]];
-        return;
+        return NO;
     }
     NSSet *oldPanes = [NSSet setWithArray:[tab windowPanes]];
     NSMutableArray *cmdList = [NSMutableArray array];
@@ -160,26 +160,12 @@ NSString *const kTmuxWindowOpenerWindowOptionStyleValueFullScreen = @"FullScreen
     if (cmdList.count) {
         tabToUpdate_ = [tab retain];
         [gateway_ sendCommandList:cmdList];
-    } else {
-        [tab setTmuxLayout:self.parseTree
-            tmuxController:controller_
-                    zoomed:_zoomed];
-        if ([tab updatedTmuxLayoutRequiresAdjustment]) {
-            DLog(@"layout is too large!");
-            // The tab's root splitter is larger than the window's tabview.
-            // If there are no outstanding window resizes then setTmuxLayout:tmuxController:
-            // has called fitWindowToTabs:, and it's still too big, so shrink
-            // the layout.
-            for (TmuxController *controller in [[tab realParentWindow] uniqueTmuxControllers]) {
-                if ([controller hasOutstandingWindowResize]) {
-                    DLog(@"Found a controller with an outstanding window resize. Don't update layouts.");
-                    return;
-                }
-            }
-            DLog(@"Tab's root splitter is oversize. Fit layout to windows");
-            [controller_ fitLayoutToWindows];
-        }
+        return NO;
     }
+    [tab setTmuxLayout:self.parseTree
+        tmuxController:controller_
+                zoomed:_zoomed];
+    return YES;
 }
 
 #pragma mark - Private

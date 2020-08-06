@@ -317,7 +317,8 @@ error:
     NSString *layout = [components objectAtIndex:2];
     [delegate_ tmuxUpdateLayoutForWindow:window
                                   layout:layout
-                                  zoomed:nil];
+                                  zoomed:nil
+                                    only:YES];
 }
 
 - (void)broadcastWindowChange

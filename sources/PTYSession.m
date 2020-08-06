@@ -6704,13 +6704,19 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     }
 }
 
-- (void)tmuxUpdateLayoutForWindow:(int)windowId
+- (BOOL)tmuxUpdateLayoutForWindow:(int)windowId
                            layout:(NSString *)layout
-                           zoomed:(NSNumber *)zoomed {
+                           zoomed:(NSNumber *)zoomed
+                             only:(BOOL)only {
     PTYTab *tab = [_tmuxController window:windowId];
-    if (tab) {
-        [_tmuxController setLayoutInTab:tab toLayout:layout zoomed:zoomed];
+    if (!tab) {
+        return NO;
     }
+    const BOOL result = [_tmuxController setLayoutInTab:tab toLayout:layout zoomed:zoomed];
+    if (result && only) {
+        [_tmuxController adjustWindowSizeIfNeededForTabs:@[ tab ]];
+    }
+    return result;
 }
 
 - (void)tmuxWindowAddedWithId:(int)windowId {

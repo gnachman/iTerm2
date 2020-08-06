@@ -95,9 +95,12 @@ extern NSString *const kTmuxControllerDidChangeHiddenWindows;
 - (void)hideWindow:(int)windowId;
 
 // Modifies a native tab to match the given server layout.
-- (void)setLayoutInTab:(PTYTab *)tab
+// Returns YES if you should call adjustWindowSizeIfNeededForTabs: after all tabs have been updated.
+- (BOOL)setLayoutInTab:(PTYTab *)tab
               toLayout:(NSString *)layout
                 zoomed:(NSNumber *)zoomed;
+- (void)adjustWindowSizeIfNeededForTabs:(NSArray<PTYTab *> *)tabs;
+
 - (void)sessionChangedTo:(NSString *)newSessionName sessionId:(int)sessionid;
 - (void)sessionsChanged;
 - (void)session:(int)sessionId renamedTo:(NSString *)newName;

@@ -34,9 +34,10 @@ extern NSString * const kTmuxGatewayErrorDomain;
 @protocol TmuxGatewayDelegate <NSObject>
 
 - (TmuxController *)tmuxController;
-- (void)tmuxUpdateLayoutForWindow:(int)windowId
+- (BOOL)tmuxUpdateLayoutForWindow:(int)windowId
                            layout:(NSString *)layout
-                           zoomed:(NSNumber *)zoomed;
+                           zoomed:(NSNumber *)zoomed
+                             only:(BOOL)only;
 - (void)tmuxWindowAddedWithId:(int)windowId;
 - (void)tmuxWindowClosedWithId:(int)windowId;
 - (void)tmuxWindowRenamedWithId:(int)windowId to:(NSString *)newName;

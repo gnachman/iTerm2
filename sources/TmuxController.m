@@ -311,7 +311,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     }
 }
 
-- (void)setLayoutInTab:(PTYTab *)tab
+- (BOOL)setLayoutInTab:(PTYTab *)tab
               toLayout:(NSString *)layout
                 zoomed:(NSNumber *)zoomed {
     DLog(@"setLayoutInTab:%@ toLayout:%@ zoomed:%@", tab, layout, zoomed);
@@ -332,7 +332,32 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     windowOpener.tabColors = _tabColors;
     windowOpener.profile = [self profileForWindow:tab.tmuxWindow];
     windowOpener.minimumServerVersion = self.gateway.minimumServerVersion;
-    [windowOpener updateLayoutInTab:tab];
+    return [windowOpener updateLayoutInTab:tab];
+}
+
+- (void)adjustWindowSizeIfNeededForTabs:(NSArray<PTYTab *> *)tabs {
+    if (![tabs anyWithBlock:^BOOL(PTYTab *tab) { return [tab updatedTmuxLayoutRequiresAdjustment]; }]) {
+        DLog(@"Layouts fit among %@", tabs);
+        return;
+    }
+    DLog(@"layout is too large among at least one of: %@", tabs);
+    // The tab's root splitter is larger than the window's tabview.
+    const BOOL outstandingResize =
+    [tabs anyWithBlock:^BOOL(PTYTab *tab) {
+        return [[[tab realParentWindow] uniqueTmuxControllers] anyWithBlock:^BOOL(TmuxController *controller) {
+            return [controller hasOutstandingWindowResize];
+        }];
+    }];
+    if (outstandingResize) {
+        DLog(@"One of the tabs has a tmux controller with an outstanding window resize. Don't update layouts.");
+        return;
+    }
+    // If there are no outstanding window resizes then setTmuxLayout:tmuxController:
+    // has called fitWindowToTabs:, and it's still too big, so shrink
+    // the layout.
+
+    DLog(@"Tab's root splitter is oversize. Fit layout to windows");
+    [self fitLayoutToWindows];
 }
 
 - (void)sessionChangedTo:(NSString *)newSessionName sessionId:(int)sessionid {
@@ -2387,6 +2412,8 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
 
 - (void)parseListWindowsResponseAndUpdateLayouts:(NSString *)response {
     NSArray *layoutStrings = [response componentsSeparatedByString:@"\n"];
+    BOOL windowMightNeedAdjustment = NO;
+    NSMutableArray<PTYTab *> *tabs = [NSMutableArray array];
     for (NSString *layoutString in layoutStrings) {
         NSArray *components = [layoutString captureComponentsMatchedByRegex:@"^@([0-9]+) ([^ ]+)(?: ([^ ]+))?"];
         if ([components count] < 3) {
@@ -2396,12 +2423,21 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
             NSString *layout = [components objectAtIndex:2];
             PTYTab *tab = [self window:window];
             if (tab) {
+                [tabs addObject:tab];
                 NSNumber *zoomed = components.count > 3 ? @([components[3] containsString:@"Z"]) : nil;
+                const BOOL adjust =
                 [[gateway_ delegate] tmuxUpdateLayoutForWindow:window
                                                         layout:layout
-                                                        zoomed:zoomed];
+                                                        zoomed:zoomed
+                                                          only:NO];
+                if (adjust) {
+                    windowMightNeedAdjustment = YES;
+                }
             }
         }
+    }
+    if (windowMightNeedAdjustment) {
+        [self adjustWindowSizeIfNeededForTabs:tabs];
     }
 }
 
