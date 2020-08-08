@@ -442,9 +442,9 @@ static NSMutableArray<NSString *> *_combinedLog;
         [self setDefaultByGuid:[bookmark objectForKey:KEY_GUID]];
     }
     [self postChangeNotification];
-    [[self debugHistoryForGuid:bookmark[KEY_GUID]] addObject:[NSString stringWithFormat:@"%@: Add bookmark with guid %@ from\n%@",
+    [[self debugHistoryForGuid:bookmark[KEY_GUID]] addObject:[NSString stringWithFormat:@"%@: Add bookmark with guid %@",
                                                               self,
-                                                              bookmark[KEY_GUID], [NSThread trimCallStackSymbols]]];
+                                                              bookmark[KEY_GUID]]];
 }
 
 - (void)addGuidToDebug:(NSString *)guid {
@@ -481,10 +481,9 @@ static NSMutableArray<NSString *> *_combinedLog;
         assert(i >= 0);
 
         [journal_ addObject:[BookmarkJournalEntry journalWithAction:JOURNAL_REMOVE bookmark:[bookmarks_ objectAtIndex:i] model:self]];
-        [[self debugHistoryForGuid:bookmarks_[i][KEY_GUID]] addObject:[NSString stringWithFormat:@"%@: Remove bookmark with guid %@ from\n%@",
+        [[self debugHistoryForGuid:bookmarks_[i][KEY_GUID]] addObject:[NSString stringWithFormat:@"%@: Remove bookmark with guid %@",
                                                                        self,
-                                                                       bookmarks_[i][KEY_GUID],
-                                                                       [NSThread trimCallStackSymbols]]];
+                                                                       bookmarks_[i][KEY_GUID]]];
         [bookmarks_ removeObjectAtIndex:i];
         if (![self defaultBookmark] && [bookmarks_ count]) {
             [self setDefaultByGuid:[[bookmarks_ objectAtIndex:0] objectForKey:KEY_GUID]];
@@ -497,10 +496,9 @@ static NSMutableArray<NSString *> *_combinedLog;
     DLog(@"Remove profile at index %d", i);
     assert(i >= 0);
     [journal_ addObject:[BookmarkJournalEntry journalWithAction:JOURNAL_REMOVE bookmark:[bookmarks_ objectAtIndex:i] model:self]];
-    [[self debugHistoryForGuid:bookmarks_[i][KEY_GUID]] addObject:[NSString stringWithFormat:@"%@: Remove bookmark with guid %@ from\n%@",
+    [[self debugHistoryForGuid:bookmarks_[i][KEY_GUID]] addObject:[NSString stringWithFormat:@"%@: Remove bookmark with guid %@",
                                                                    self,
-                                                                   bookmarks_[i][KEY_GUID],
-                                                                   [NSThread trimCallStackSymbols]]];
+                                                                   bookmarks_[i][KEY_GUID]]];
     [bookmarks_ removeObjectAtIndex:i];
     DLog(@"Number of profiles is now %d", (int)bookmarks_.count);
     if (![self defaultBookmark] && [bookmarks_ count]) {
@@ -553,12 +551,11 @@ static NSMutableArray<NSString *> *_combinedLog;
     if (needJournal) {
         [journal_ addObject:[BookmarkJournalEntry journalWithAction:JOURNAL_REMOVE bookmark:[bookmarks_ objectAtIndex:i] model:self]];
     }
-    [[self debugHistoryForGuid:bookmark[KEY_GUID]] addObject:[NSString stringWithFormat:@"%@: Replace bookmark at index %@ (%@) with %@\n%@",
+    [[self debugHistoryForGuid:bookmark[KEY_GUID]] addObject:[NSString stringWithFormat:@"%@: Replace bookmark at index %@ (%@) with %@",
                                                               self,
                                                               @(i),
                                                               bookmarks_[i][KEY_GUID],
-                                                              bookmark[KEY_GUID],
-                                                              [NSThread trimCallStackSymbols]]];
+                                                              bookmark[KEY_GUID]]];
     [bookmarks_ replaceObjectAtIndex:i withObject:bookmark];
     if (needJournal) {
         BookmarkJournalEntry* e = [BookmarkJournalEntry journalWithAction:JOURNAL_ADD
@@ -585,9 +582,8 @@ static NSMutableArray<NSString *> *_combinedLog;
 
 - (void)removeAllBookmarks
 {
-    [[self debugHistoryForGuid:@"na"] addObject:[NSString stringWithFormat:@"%@: Remove all bookmarks\n%@",
-                                                 self,
-                                                 [NSThread trimCallStackSymbols]]];
+    [[self debugHistoryForGuid:@"na"] addObject:[NSString stringWithFormat:@"%@: Remove all bookmarks",
+                                                 self]];
     [bookmarks_ removeAllObjects];
     defaultBookmarkGuid_ = @"";
     [journal_ addObject:[BookmarkJournalEntry journalWithAction:JOURNAL_REMOVE_ALL bookmark:nil model:self]];
@@ -607,10 +603,9 @@ static NSMutableArray<NSString *> *_combinedLog;
             [self addBookmark:profile];
         }
     }
-    [[self debugHistoryForGuid:@"na"] addObject:[NSString stringWithFormat:@"%@: Load bookmarks. Now have %@.\n%@",
+    [[self debugHistoryForGuid:@"na"] addObject:[NSString stringWithFormat:@"%@: Load bookmarks. Now have %@.",
                                                  self,
-                                                 [self guids],
-                                                 [NSThread trimCallStackSymbols]]];
+                                                 [self guids]]];
 }
 
 + (NSString*)freshGuid {
@@ -772,21 +767,19 @@ static NSMutableArray<NSString *> *_combinedLog;
     }
     Profile* bookmark = [bookmarks_ objectAtIndex:sourceRow];
     [bookmark retain];
-    [[self debugHistoryForGuid:bookmark[KEY_GUID]] addObject:[NSString stringWithFormat:@"%@: Moving guid %@ to row %@. First, remove it from row %@\n%@",
+    [[self debugHistoryForGuid:bookmark[KEY_GUID]] addObject:[NSString stringWithFormat:@"%@: Moving guid %@ to row %@. First, remove it from row %@",
                                                               self,
                                                               guid,
                                                               @(destinationRow),
-                                                              @(sourceRow),
-                                                              [NSThread trimCallStackSymbols]]];
+                                                              @(sourceRow)]];
     [bookmarks_ removeObjectAtIndex:sourceRow];
     if (sourceRow < destinationRow) {
         destinationRow--;
     }
-    [[self debugHistoryForGuid:bookmark[KEY_GUID]] addObject:[NSString stringWithFormat:@"%@: Now insert it %@ at row %@\n%@",
+    [[self debugHistoryForGuid:bookmark[KEY_GUID]] addObject:[NSString stringWithFormat:@"%@: Now insert it %@ at row %@",
                                                               self,
                                                               guid,
-                                                              @(destinationRow),
-                                                              [NSThread trimCallStackSymbols]]];
+                                                              @(destinationRow)]];
     [bookmarks_ insertObject:bookmark atIndex:destinationRow];
     [bookmark release];
 }
