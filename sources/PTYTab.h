@@ -239,6 +239,7 @@ extern NSString *const PTYTabVariableTitleOverride;
 - (void)checkInvariants:(NSString *)when;
 - (void)setTmuxWindowName:(NSString *)tmuxWindowName;
 
+- (void)performBlockWithoutMetal:(void (^ NS_NOESCAPE)(void))block;
 - (void)updateUseMetal NS_AVAILABLE_MAC(10_11);
 - (ITMSplitTreeNode *)rootSplitTreeNode;
 

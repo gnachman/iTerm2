@@ -1861,6 +1861,15 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
              newSession:(PTYSession *)newSession
                  before:(BOOL)before
           targetSession:(PTYSession *)targetSession  {
+    [self performBlockWithoutMetal:^{
+        [self reallySplitVertically:isVertical newSession:newSession before:before targetSession:targetSession];
+    }];
+}
+
+- (void)reallySplitVertically:(BOOL)isVertical
+                   newSession:(PTYSession *)newSession
+                       before:(BOOL)before
+                targetSession:(PTYSession *)targetSession  {
     if (isMaximized_) {
         [self unmaximize];
     }
@@ -5748,6 +5757,18 @@ typedef struct {
     }
 }
 
+- (void)performBlockWithoutMetal:(void (^ NS_NOESCAPE)(void))block {
+    if (![self.sessions anyWithBlock:^BOOL(PTYSession *session) {
+        return session.useMetal;
+    }]) {
+        block();
+        return;
+    }
+    [self setUseMetal:NO];
+    block();
+    [self updateUseMetal];
+}
+
 // Note this is a notification handler
 - (void)updateUseMetal NS_AVAILABLE_MAC(10_11) {
     const BOOL resizing = self.realParentWindow.windowIsResizing;
@@ -5829,6 +5850,10 @@ typedef struct {
             _metalUnavailableReason = iTermMetalUnavailableReasonContextAllocationFailure;
         }
     }
+    [self setUseMetal:useMetal];
+}
+
+- (void)setUseMetal:(BOOL)useMetal {
     [self.sessions enumerateObjectsUsingBlock:^(PTYSession * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
         if (self->isMaximized_) {
             obj.useMetal = useMetal && (obj == self.activeSession);
