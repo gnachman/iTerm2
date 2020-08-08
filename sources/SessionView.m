@@ -603,6 +603,8 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     // Allocate a new metal view
     _metalView = [[iTermMTKView alloc] initWithFrame:_scrollview.contentView.frame
                                               device:[self metalDevice]];
+    _metalView.layerContentsPlacement = NSViewLayerContentsPlacementTopLeft;
+
     if (iTermTextIsMonochrome()) {
         _metalView.layer.opaque = NO;
     } else {
