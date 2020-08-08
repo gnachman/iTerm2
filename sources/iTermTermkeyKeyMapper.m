@@ -461,12 +461,6 @@
         case '-':
         case '_':  // Intentional deviation from the CSI u spec for emacs users.
             return [self stringWithCharacter:31];
-
-        case '?':  // Intentional deviation from the CSI u spec for the sake of tradition.
-            if (!shiftPressed) {
-                return nil;
-            }
-            return [self stringWithCharacter:0x7f];
     }
 
     if (codePoint < 'a') {
