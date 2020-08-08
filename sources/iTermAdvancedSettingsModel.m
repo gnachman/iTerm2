@@ -571,7 +571,6 @@ DEFINE_BOOL(experimentalKeyHandling, NO, SECTION_EXPERIMENTAL @"Improved support
 // This is just a bad idea because of the latency it adds. It was also maybe related to crashes, but I never did figure it out.
 DEFINE_BOOL(disableMetalWhenIdle, NO, SECTION_EXPERIMENTAL @"Disable metal renderer when idle to save CPU utilization?\nRequires Metal renderer");
 // This never proved itself.
-DEFINE_BOOL(metalDeferCurrentDrawable, NO, SECTION_EXPERIMENTAL @"Defer invoking currentDrawable.\nThis may improve overall performance at the cost of a lower frame rate.");
 
 // Experimental features that have graduated:
 DEFINE_BOOL(supportREPCode, YES, SECTION_EXPERIMENTAL @"Enable support for REP (Repeat previous character) escape sequence?");

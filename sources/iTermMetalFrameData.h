@@ -143,7 +143,6 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @property (nonatomic, strong) dispatch_group_t group;  // nonnil implies synchronous
 @property (nonatomic) BOOL leaveGroupAfterPresent;
 @property (nonatomic) BOOL hasManyColorCombos;
-@property (nonatomic) BOOL deferCurrentDrawable;
 #if ENABLE_UNFAMILIAR_TEXTURE_WORKAROUND
 @property (nonatomic) BOOL textureIsFamiliar;
 #endif  // ENABLE_UNFAMILIAR_TEXTURE_WORKAROUND

@@ -449,12 +449,10 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
         [_startToStartHistogram addValue:startToStartTime * 1000];
     }
     [self acquireScarceResources:frameData view:view];
-    if (!frameData.deferCurrentDrawable) {
-        if (frameData.destinationTexture == nil || frameData.renderPassDescriptor == nil) {
-            DLog(@"  abort: failed to get drawable or RPD");
-            self.needsDraw = YES;
-            return NO;
-        }
+    if (frameData.destinationTexture == nil || frameData.renderPassDescriptor == nil) {
+        DLog(@"  abort: failed to get drawable or RPD");
+        self.needsDraw = YES;
+        return NO;
     }
 #if ENABLE_UNFAMILIAR_TEXTURE_WORKAROUND
     if (!frameData.textureIsFamiliar) {
@@ -780,53 +778,57 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
 #endif
 
 // Main thread
+- (void)debugAcquireScarceResources:(iTermMetalFrameData *)frameData view:(MTKView *)view {
+    [frameData measureTimeForStat:iTermMetalFrameDataStatMtGetRenderPassDescriptor ofBlock:^{
+        frameData.renderPassDescriptor = [frameData newRenderPassDescriptorWithLabel:@"Offscreen debug texture"
+                                                                                fast:NO];
+        frameData.debugRealRenderPassDescriptor = view.currentRenderPassDescriptor;
+    }];
+    [frameData measureTimeForStat:iTermMetalFrameDataStatMtGetCurrentDrawable ofBlock:^{
+        frameData.destinationDrawable = view.currentDrawable;
+        frameData.destinationTexture = frameData.renderPassDescriptor.colorAttachments[0].texture;
+    }];
+}
+
+// Main thread
 - (void)acquireScarceResources:(iTermMetalFrameData *)frameData view:(MTKView *)view {
     if (frameData.debugInfo) {
-        [frameData measureTimeForStat:iTermMetalFrameDataStatMtGetRenderPassDescriptor ofBlock:^{
-            frameData.renderPassDescriptor = [frameData newRenderPassDescriptorWithLabel:@"Offscreen debug texture"
-                                                                                    fast:NO];
-            frameData.debugRealRenderPassDescriptor = view.currentRenderPassDescriptor;
-        }];
-        [frameData measureTimeForStat:iTermMetalFrameDataStatMtGetCurrentDrawable ofBlock:^{
-            frameData.destinationDrawable = view.currentDrawable;
-            frameData.destinationTexture = frameData.renderPassDescriptor.colorAttachments[0].texture;
-        }];
+        [self debugAcquireScarceResources:frameData view:view];
         return;
     }
 
-    frameData.deferCurrentDrawable = NO;
-    if (!frameData.deferCurrentDrawable) {
-        NSTimeInterval duration = [frameData measureTimeForStat:iTermMetalFrameDataStatMtGetCurrentDrawable ofBlock:^{
-            frameData.destinationDrawable = view.currentDrawable;
-            frameData.destinationTexture = [self destinationTextureForFrameData:frameData];
+    NSTimeInterval duration = [frameData measureTimeForStat:iTermMetalFrameDataStatMtGetCurrentDrawable ofBlock:^{
+        frameData.destinationDrawable = view.currentDrawable;
+        frameData.destinationTexture = [self destinationTextureForFrameData:frameData];
 #if ENABLE_UNFAMILIAR_TEXTURE_WORKAROUND
-            frameData.textureIsFamiliar = [self textureIsFamiliar:frameData.destinationDrawable.texture];
-            if (!frameData.textureIsFamiliar) {
-                [_familiarTextures addPointer:(__bridge void *)frameData.destinationDrawable.texture];
-            }
-            while (_familiarTextures.count > _maxFramesInFlight) {
-                [_familiarTextures removePointerAtIndex:0];
-            }
+        [self updateFamiliarTextures:frameData];
 #endif
-        }];
-        [_currentDrawableTime addValue:duration];
-        if (frameData.destinationDrawable == nil) {
-            DLog(@"YIKES! Failed to get a drawable. %@/%@", self, frameData);
-            return;
-        }
+    }];
+    [_currentDrawableTime addValue:duration];
+    if (frameData.destinationDrawable == nil) {
+        DLog(@"YIKES! Failed to get a drawable. %@/%@", self, frameData);
+        return;
     }
 
     [frameData measureTimeForStat:iTermMetalFrameDataStatMtGetRenderPassDescriptor ofBlock:^{
-        if (frameData.deferCurrentDrawable) {
-            frameData.renderPassDescriptor = [frameData newRenderPassDescriptorWithLabel:@"RPD for deferred draw" fast:YES];
-        } else {
-            frameData.renderPassDescriptor = view.currentRenderPassDescriptor;
-        }
+        frameData.renderPassDescriptor = view.currentRenderPassDescriptor;
     }];
     if (frameData.renderPassDescriptor == nil) {
         DLog(@"YIKES! Failed to get an RPD. %@/%@", self, frameData);
     }
 }
+
+#if ENABLE_UNFAMILIAR_TEXTURE_WORKAROUND
+- (void)updateFamiliarTextures:(iTermMetalFrameData *)frameData {
+    frameData.textureIsFamiliar = [self textureIsFamiliar:frameData.destinationDrawable.texture];
+    if (!frameData.textureIsFamiliar) {
+        [_familiarTextures addPointer:(__bridge void *)frameData.destinationDrawable.texture];
+    }
+    while (_familiarTextures.count > _maxFramesInFlight) {
+        [_familiarTextures removePointerAtIndex:0];
+    }
+}
+#endif
 
 - (void)enqueueDrawCallsForFrameData:(iTermMetalFrameData *)frameData
                        commandBuffer:(id<MTLCommandBuffer>)commandBuffer {
