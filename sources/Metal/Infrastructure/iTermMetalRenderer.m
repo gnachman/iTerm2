@@ -30,8 +30,6 @@ const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 3;
     return blending;
 }
 
-#if ENABLE_TRANSPARENT_METAL_WINDOWS
-
 // See https://en.wikipedia.org/wiki/Alpha_compositing
 + (instancetype)premultipliedCompositing {
     iTermMetalBlending *blending = [[iTermMetalBlending alloc] init];
@@ -45,8 +43,6 @@ const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 3;
     
     return blending;
 }
-
-#endif
 
 - (instancetype)init {
     self = [super init];

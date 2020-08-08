@@ -18,10 +18,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 @implementation iTermMarginRenderer {
     iTermMetalCellRenderer *_blendingRenderer;
-#if ENABLE_TRANSPARENT_METAL_WINDOWS
     iTermMetalCellRenderer *_nonblendingRenderer NS_AVAILABLE_MAC(10_14);
     iTermMetalCellRenderer *_compositeOverRenderer NS_AVAILABLE_MAC(10_14);
-#endif
     iTermMetalBufferPool *_colorPool;
     iTermMetalBufferPool *_verticesPool;
 }
@@ -29,7 +27,6 @@ NS_ASSUME_NONNULL_BEGIN
 - (nullable instancetype)initWithDevice:(id<MTLDevice>)device {
     self = [super init];
     if (self) {
-#if ENABLE_TRANSPARENT_METAL_WINDOWS
         if (iTermTextIsMonochrome()) {
             _nonblendingRenderer = [[iTermMetalCellRenderer alloc] initWithDevice:device
                                                                vertexFunctionName:@"iTermMarginVertexShader"
@@ -44,7 +41,6 @@ NS_ASSUME_NONNULL_BEGIN
                                                                      piuElementSize:0
                                                                 transientStateClass:[iTermMarginRendererTransientState class]];
         }
-#endif
         _blendingRenderer = [[iTermMetalCellRenderer alloc] initWithDevice:device
                                                         vertexFunctionName:@"iTermMarginVertexShader"
                                                       fragmentFunctionName:@"iTermMarginFragmentShader"
@@ -62,7 +58,6 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 - (iTermMetalCellRenderer *)rendererForConfiguration:(iTermCellRenderConfiguration *)configuration {
-#if ENABLE_TRANSPARENT_METAL_WINDOWS
     if (iTermTextIsMonochrome()) {
         if (configuration.hasBackgroundImage) {
             return _compositeOverRenderer;
@@ -70,7 +65,6 @@ NS_ASSUME_NONNULL_BEGIN
             return _nonblendingRenderer;
         }
     }
-#endif
     return _blendingRenderer;
 }
 

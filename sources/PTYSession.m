@@ -5685,13 +5685,11 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     }
     if (_textview.transparencyAlpha < 1) {
         BOOL transparencyAllowed = NO;
-#if ENABLE_TRANSPARENT_METAL_WINDOWS
         if (@available(macOS 10.14, *)) {
             if (iTermTextIsMonochrome()) {
                 transparencyAllowed = YES;
             }
         }
-#endif
         if (!transparencyAllowed && _textview.transparencyAlpha < 1) {
             if (reason) {
                 *reason = iTermMetalUnavailableReasonTransparency;

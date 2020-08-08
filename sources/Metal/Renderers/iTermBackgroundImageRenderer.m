@@ -38,9 +38,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @implementation iTermBackgroundImageRenderer {
     iTermMetalRenderer *_metalRenderer;
-#if ENABLE_TRANSPARENT_METAL_WINDOWS
     iTermMetalBufferPool *_alphaPool;
-#endif
     iTermMetalBufferPool *_colorPool;
     iTermMetalBufferPool *_box1Pool;
     iTermMetalBufferPool *_box2Pool;
@@ -60,11 +58,9 @@ NS_ASSUME_NONNULL_BEGIN
                                                fragmentFunctionName:@"iTermBackgroundImageClampFragmentShader"
                                                            blending:nil
                                                 transientStateClass:[iTermBackgroundImageRendererTransientState class]];
-#if ENABLE_TRANSPARENT_METAL_WINDOWS
         if (iTermTextIsMonochrome()) {
             _alphaPool = [[iTermMetalBufferPool alloc] initWithDevice:device bufferSize:sizeof(float)];
         }
-#endif
         _box1Pool = [[iTermMetalBufferPool alloc] initWithDevice:device bufferSize:sizeof(iTermVertex) * 6];
         _box2Pool = [[iTermMetalBufferPool alloc] initWithDevice:device bufferSize:sizeof(iTermVertex) * 6];
         _colorPool = [[iTermMetalBufferPool alloc] initWithDevice:device bufferSize:sizeof(vector_float4)];
@@ -96,7 +92,6 @@ NS_ASSUME_NONNULL_BEGIN
     _mode = mode;
 }
 
-#if ENABLE_TRANSPARENT_METAL_WINDOWS
 - (id<MTLBuffer>)alphaBufferWithValue:(float)value
                           poolContext:(iTermMetalBufferPoolContext *)poolContext {
     return [_alphaPool requestBufferFromContext:poolContext
@@ -104,7 +99,6 @@ NS_ASSUME_NONNULL_BEGIN
                                  checkIfChanged:YES];
     
 }
-#endif
 
 - (id<MTLBuffer>)colorBufferWithColor:(vector_float4)color
                                 alpha:(CGFloat)alpha
@@ -141,7 +135,6 @@ NS_ASSUME_NONNULL_BEGIN
     [self loadVertexBuffer:tState];
     
     NSDictionary *fragmentBuffers = nil;
-#if ENABLE_TRANSPARENT_METAL_WINDOWS
     float alpha = tState.computedAlpha;
     if (alpha < 1) {
         _metalRenderer.fragmentFunctionName = tState.repeat ? @"iTermBackgroundImageWithAlphaRepeatFragmentShader" : @"iTermBackgroundImageWithAlphaClampFragmentShader";
@@ -151,11 +144,6 @@ NS_ASSUME_NONNULL_BEGIN
         _metalRenderer.fragmentFunctionName = tState.repeat ? @"iTermBackgroundImageRepeatFragmentShader" : @"iTermBackgroundImageClampFragmentShader";
         fragmentBuffers = @{};
     }
-#else
-    float alpha = 1;
-    _metalRenderer.fragmentFunctionName = tState.repeat ? @"iTermBackgroundImageRepeatFragmentShader" : @"iTermBackgroundImageClampFragmentShader";
-    fragmentBuffers = @{};
-#endif
     
     tState.pipelineState = [_metalRenderer pipelineState];
 

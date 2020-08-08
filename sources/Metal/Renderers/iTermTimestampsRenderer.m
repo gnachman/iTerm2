@@ -134,11 +134,9 @@
     if (self) {
         _texturePool = [[iTermTexturePool alloc] init];
         iTermMetalBlending *blending = [[iTermMetalBlending alloc] init];
-#if ENABLE_TRANSPARENT_METAL_WINDOWS
         if (iTermTextIsMonochrome()) {
             blending = [iTermMetalBlending premultipliedCompositing];
         }
-#endif
         _cellRenderer = [[iTermMetalCellRenderer alloc] initWithDevice:device
                                                     vertexFunctionName:@"iTermTimestampsVertexShader"
                                                   fragmentFunctionName:@"iTermTimestampsFragmentShader"

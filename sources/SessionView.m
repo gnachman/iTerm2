@@ -603,15 +603,11 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     // Allocate a new metal view
     _metalView = [[iTermMTKView alloc] initWithFrame:_scrollview.contentView.frame
                                               device:[self metalDevice]];
-#if ENABLE_TRANSPARENT_METAL_WINDOWS
     if (iTermTextIsMonochrome()) {
         _metalView.layer.opaque = NO;
     } else {
         _metalView.layer.opaque = YES;
     }
-#else
-    _metalView.layer.opaque = YES;
-#endif
     CGColorSpaceRef colorSpace = CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
     _metalView.colorspace = colorSpace;
     CFRelease(colorSpace);

@@ -565,9 +565,7 @@ static NSString *const VertexFunctionName(const BOOL &underlined,
                          // We don't write to a temporary texture on 10.14.
                          return;
                      } else {
-#if ENABLE_PRETTY_ASCII_OVERLAP
                          [self blitFromTemporaryToIntermediateTexture:frameData];
-#endif
                      }
                  }
      ];

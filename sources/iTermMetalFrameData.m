@@ -324,7 +324,6 @@ static NSInteger gNextFrameDataNumber;
     }];
 }
 
-#if ENABLE_USE_TEMPORARY_TEXTURE
 - (void)createTemporaryRenderPassDescriptor {
     [self measureTimeForStat:iTermMetalFrameDataStatPqCreateTemporary ofBlock:^{
         assert(!self.temporaryRenderPassDescriptor);
@@ -335,7 +334,6 @@ static NSInteger gNextFrameDataNumber;
         [self->_debugInfo setTemporaryRenderPassDescriptor:self.temporaryRenderPassDescriptor];
     }];
 }
-#endif
 
 - (void)didCompleteWithAggregateStats:(iTermPreciseTimerStats *)aggregateStats
                            histograms:(NSArray<iTermHistogram *> *)aggregateHistograms
@@ -344,11 +342,9 @@ static NSInteger gNextFrameDataNumber;
     if (self.intermediateRenderPassDescriptor) {
         [self.fullSizeTexturePool returnTexture:self.intermediateRenderPassDescriptor.colorAttachments[0].texture];
     }
-#if ENABLE_USE_TEMPORARY_TEXTURE
     if (self.temporaryRenderPassDescriptor) {
         [self.fullSizeTexturePool returnTexture:self.temporaryRenderPassDescriptor.colorAttachments[0].texture];
     }
-#endif
 #if ENABLE_STATS
     double duration;
 
@@ -452,14 +448,7 @@ static NSInteger gNextFrameDataNumber;
 #endif
 
 - (void)enqueueDrawCallsWithBlock:(void (^)(void))block {
-#if ENABLE_DISPATCH_TO_MAIN_QUEUE_FOR_ENQUEUEING_DRAW_CALLS
-    [self dispatchToMainQueueForDrawing:^{
-        block();
-        [self willHandOffToGPU];
-    }];
-#else
     [self measureTimeForStat:iTermMetalFrameDataStatPqEnqueueDrawCalls ofBlock:block];
-#endif
     [self willHandOffToGPU];
 }
 

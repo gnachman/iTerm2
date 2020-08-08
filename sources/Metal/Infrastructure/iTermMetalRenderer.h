@@ -85,9 +85,7 @@ NS_CLASS_AVAILABLE(10_11, NA)
 // Use this for premultiplied blending.
 + (instancetype)compositeSourceOver;
 
-#if ENABLE_TRANSPARENT_METAL_WINDOWS
 + (instancetype)premultipliedCompositing;
-#endif
 
 @end
 

@@ -62,16 +62,13 @@
     iTermMetalCellRenderer *_blendingRenderer;
     iTermMetalCellRenderer *_nonblendingRenderer NS_AVAILABLE_MAC(10_14);
 
-#if ENABLE_TRANSPARENT_METAL_WINDOWS
     iTermMetalCellRenderer *_compositeOverRenderer NS_AVAILABLE_MAC(10_14);
-#endif
     iTermMetalMixedSizeBufferPool *_piuPool;
 }
 
 - (instancetype)initWithDevice:(id<MTLDevice>)device {
     self = [super init];
     if (self) {
-#if ENABLE_TRANSPARENT_METAL_WINDOWS
         if (iTermTextIsMonochrome()) {
             _nonblendingRenderer = [[iTermMetalCellRenderer alloc] initWithDevice:device
                                                         vertexFunctionName:@"iTermBackgroundColorVertexShader"
@@ -89,7 +86,6 @@
                                                        transientStateClass:[iTermBackgroundColorRendererTransientState class]];
             _compositeOverRenderer.formatterDelegate = self;
         }
-#endif
         _blendingRenderer = [[iTermMetalCellRenderer alloc] initWithDevice:device
                                                         vertexFunctionName:@"iTermBackgroundColorVertexShader"
                                                       fragmentFunctionName:@"iTermBackgroundColorFragmentShader"
@@ -114,7 +110,6 @@
 }
 
 - (iTermMetalCellRenderer *)rendererForConfiguration:(iTermCellRenderConfiguration *)configuration {
-#if ENABLE_TRANSPARENT_METAL_WINDOWS
     if (iTermTextIsMonochrome()) {
         if (configuration.hasBackgroundImage) {
             return _compositeOverRenderer;
@@ -122,7 +117,6 @@
             return _nonblendingRenderer;
         }
     }
-#endif
     return _blendingRenderer;
 }
 
