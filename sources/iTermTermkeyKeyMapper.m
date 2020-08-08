@@ -418,49 +418,10 @@
 }
 
 // Only control pressed
-- (NSString *)modifiedUnicodeStringForControlCharacter:(unichar)codePoint
-                                          shiftPressed:(BOOL)shiftPressed {
+- (NSString *)modifiedUnicodeStringForControlCharacter:(unichar)codePoint {
     switch (codePoint) {
-        case 'i':
-        case 'm':
-            return nil;
-
-        case '[':
-            // Intentional deviation from the CSI u spec because of the stupid touch bar.
-            if (shiftPressed) {
-                return nil;
-            }
-            return [self stringWithCharacter:27];
-
         case ' ':
-            if (shiftPressed) {
-                return nil;
-            }
             return [self stringWithCharacter:0];
-
-        case '2':
-        case '@':  // Intentional deviation from the CSI u spec because control+number changes desktops.
-            return [self stringWithCharacter:0];
-
-        case '\\':
-            if (shiftPressed) {
-                return nil;
-            }
-            return [self stringWithCharacter:28];
-
-        case ']':
-            if (shiftPressed) {
-                return nil;
-            }
-            return [self stringWithCharacter:29];
-
-        case '^':  // Intentional deviation from the CSI u spec because control+number changes desktops.
-        case '6':
-            return [self stringWithCharacter:30];
-
-        case '-':
-        case '_':  // Intentional deviation from the CSI u spec for emacs users.
-            return [self stringWithCharacter:31];
     }
 
     if (codePoint < 'a') {
@@ -510,17 +471,17 @@ static BOOL CodePointInPrivateUseArea(unichar c) {
     }
 
     // Modified unicode - control
-    const NSEventModifierFlags allEventModifierFlagsExShift = (NSEventModifierFlagControl |
-                                                               NSEventModifierFlagOption |
-                                                               maybeFunction);
-    if ((eventModifiers & allEventModifierFlagsExShift) == NSEventModifierFlagControl) {
-        NSString *string = [self modifiedUnicodeStringForControlCharacter:codePoint shiftPressed:!!(eventModifiers & NSEventModifierFlagShift)];
+    if ((eventModifiers & allEventModifierFlags) == NSEventModifierFlagControl) {
+        NSString *string = [self modifiedUnicodeStringForControlCharacter:codePoint];
         if (string) {
             return string;
         }
     }
 
     // Modified Unicode - option
+    const NSEventModifierFlags allEventModifierFlagsExShift = (NSEventModifierFlagControl |
+                                                               NSEventModifierFlagOption |
+                                                               maybeFunction);
     if ((eventModifiers & allEventModifierFlagsExShift) == NSEventModifierFlagOption) {
         // Legacy code path: option-letter, for the "simplest form of these keys." Not sure what
         // he meant exactly, but anything that's not a function key seems simple to me. ¯\_(ツ)_/¯
