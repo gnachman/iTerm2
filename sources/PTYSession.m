@@ -5980,6 +5980,9 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                   asciiOffset:asciiOffset
                         scale:_view.window.screen.backingScaleFactor
                       context:_metalContext];
+    if (_view.metalView.layer.contentsScale != _view.window.backingScaleFactor) {
+        _view.metalView.layer.contentsScale = _view.window.backingScaleFactor;
+    }
     if (_view.metalView) {
         [_view drawMetalSynchronously];
     }
