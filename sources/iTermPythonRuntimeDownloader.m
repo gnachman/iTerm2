@@ -530,7 +530,13 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
             completion(NO);
             return;
         }
-        NSDictionary<NSString *, NSString *> *subs = @{ sourceURL.path: finalDestination.path };
+        NSString *searchFor1 = [NSString stringWithFormat:@"/iterm2env-%@/", @(latestFullComponent)];
+        NSString *replaceWith1 = [NSString stringWithFormat:@"/iterm2env-%@/", @(runtimeVersion)];
+        NSString *searchFor2 = [NSString stringWithFormat:@"/iterm2env-%@\"", @(latestFullComponent)];
+        NSString *replaceWith2 = [NSString stringWithFormat:@"/iterm2env-%@\"", @(runtimeVersion)];
+        NSDictionary<NSString *, NSDictionary<NSString *, NSString *> *> *subs =
+        @{ @"": @{ searchFor1: replaceWith1,
+                   searchFor2: replaceWith2 } };
         [self performSubstitutions:subs inFilesUnderFolder:tempDestination];
         [self unzip:[NSURL fileURLWithPath:zip] to:tempDestination completion:^(BOOL ok) {
             if (!ok) {
@@ -576,6 +582,9 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
                 @"*.la": @{ @"__ITERM2_ENV__": backslashEscaped },
                 @"Makefile": @{ @"__ITERM2_ENV__": backslashEscaped },
                 @"": @{
+                        // NOTE: If you change how this is escaped you must also update
+                        // installSitePackagesFromZip:runtimeVersion:latestFullComponent:completion:
+                        // because it does a search-and-replace on the iterm2env-XX part.
                         @"#!__ITERM2_ENV__": [NSString stringWithFormat:@"#!/usr/bin/env -S \"%@\"", finalDestination.path.it_escapedForEnv],
                         @"__ITERM2_ENV__": finalDestination.path,
                         @"__ITERM2_PYENV__": [finalDestination.path stringByAppendingPathComponent:@"pyenv"] }
@@ -701,6 +710,9 @@ static NSArray<NSString *> *iTermConvertThreePartVersionNumbersToTwoPart(NSArray
 
             // Replace the shebang in pip3 to point at the right version of python.
             NSString *envEscapedPathToPython = [pathToPython it_escapedForEnv];
+            // NOTE: If you change how this is escaped you must also update
+            // installSitePackagesFromZip:runtimeVersion:latestFullComponent:completion:
+            // because it does a search-and-replace on the iterm2env-XX part.
             [self replaceShebangInScriptAtPath:pip3 with:[NSString stringWithFormat:@"#!/usr/bin/env -S \"%@\"", envEscapedPathToPython]];
 
             [self installDependencies:dependencies to:container pythonVersion:pythonVersion completion:^(NSArray<NSString *> *failures, NSArray<NSData *> *outputs) {
