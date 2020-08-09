@@ -57,6 +57,14 @@
 }
 
 - (CGPathRef)iterm_CGPath {
+    return [self iterm_cgPathOpen:NO];
+}
+
+- (CGPathRef)iterm_openCGPath {
+    return [self iterm_cgPathOpen:YES];
+}
+
+- (CGPathRef)iterm_cgPathOpen:(BOOL)open {
     if (self.elementCount == 0) {
         return NULL;
     }
@@ -87,12 +95,14 @@
 
             case NSClosePathBezierPathElement:
                 closed = YES;
-                CGPathCloseSubpath(path);
+                if (!open) {
+                    CGPathCloseSubpath(path);
+                }
                 break;
         }
     }
 
-    if (!closed) {
+    if (!closed && !open) {
         CGPathCloseSubpath(path);
     }
 

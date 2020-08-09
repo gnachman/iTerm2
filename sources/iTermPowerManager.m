@@ -41,6 +41,7 @@ NSString *const iTermPowerManagerMetalAllowedDidChangeNotification = @"iTermPowe
     BOOL _metalAllowed;
     iTermPublisher<iTermPowerState *> *_publisher;
     NSTimer *_timer;
+    NSNumber *_hasBatteryNumber;
 }
 
 static BOOL iTermPowerManagerIsConnectedToPower(void) {
@@ -145,17 +146,28 @@ static void iTermPowerManagerSourceDidChange(void *context) {
     return result;
 }
 
+- (NSDictionary *)infoForFirstBatteryInPowerSourcesList:(CFArrayRef)powerSourcesList
+                                                   info:(CFTypeRef)powerSourcesInfo {
+    for (NSInteger i = 0; i < CFArrayGetCount(powerSourcesList); i++) {
+        CFTypeRef powerSource = CFArrayGetValueAtIndex(powerSourcesList, i);
+        NSDictionary *dict = (__bridge NSDictionary *)IOPSGetPowerSourceDescription(powerSourcesInfo, powerSource);
+        NSString *type = dict[(__bridge NSString *)CFSTR(kIOPSTypeKey)];
+        if ([type isEqualToString:(__bridge NSString *)CFSTR(kIOPSInternalBatteryType)] ||
+            [type isEqualToString:(__bridge NSString *)CFSTR(kIOPSUPSType)]) {
+            return dict;
+        }
+    }
+    return nil;
+}
+
 - (iTermPowerState *)computedPowerStateWithList:(CFArrayRef)powerSourcesList
                                            info:(CFTypeRef)powerSourcesInfo {
-    CFDictionaryRef info;
-    if (powerSourcesList && CFArrayGetCount(powerSourcesList)) {
-        info = IOPSGetPowerSourceDescription(powerSourcesInfo, CFArrayGetValueAtIndex(powerSourcesList, 0));
-    } else {
+    CFDictionaryRef info = (__bridge CFDictionaryRef)[self infoForFirstBatteryInPowerSourcesList:powerSourcesList info:powerSourcesInfo];
+    if (!info) {
         return nil;
     }
-    CFNumberRef number;
 
-    number = (CFNumberRef)CFDictionaryGetValue(info, CFSTR(kIOPSCurrentCapacityKey));
+    CFNumberRef number = (CFNumberRef)CFDictionaryGetValue(info, CFSTR(kIOPSCurrentCapacityKey));
     int percentage = -1;
     if (number) {
         CFNumberGetValue(number, kCFNumberIntType, &percentage);
@@ -187,10 +199,18 @@ static void iTermPowerManagerSourceDidChange(void *context) {
 - (void)updateBatteryState {
     iTermPowerState *state = [self computedPowerState];
     if (state) {
+        _hasBatteryNumber = @YES;
         [_publisher publish:state];
     } else {
-        _hasBattery = NO;
+        _hasBatteryNumber = @NO;
     }
+}
+
+- (BOOL)hasBattery {
+    if (!_hasBatteryNumber) {
+        [self updateBatteryState];
+    }
+    return _hasBatteryNumber.boolValue;
 }
 
 - (void)addPowerStateSubscriber:(id)subscriber block:(void (^)(iTermPowerState *))block {

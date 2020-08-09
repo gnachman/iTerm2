@@ -57,10 +57,6 @@ NS_ASSUME_NONNULL_BEGIN
     return NO;
 }
 
-- (NSTimeInterval)statusBarComponentUpdateCadence {
-    return 1;
-}
-
 - (CGFloat)statusBarComponentMinimumWidth {
     return iTermNetworkUtilizationWidth;
 }
@@ -69,14 +65,28 @@ NS_ASSUME_NONNULL_BEGIN
     return iTermNetworkUtilizationWidth;
 }
 
-- (NSArray *)values {
-    return [[[iTermNetworkUtilization sharedInstance] samples] mapWithBlock:^id(iTermNetworkUtilizationSample *sample) {
-        return @[ @(sample.bytesPerSecondRead), @(sample.bytesPerSecondWrite) ];
-    }];
-}
+- (iTermStatusBarSparklinesModel *)sparklinesModel {
+    NSArray<iTermNetworkUtilizationSample *> *samples =
+    [[iTermNetworkUtilization sharedInstance] samples];
 
-- (NSInteger)numberOfTimeSeries {
-    return 2;
+    NSArray<NSNumber *> *readValues = [samples mapWithBlock:^id(iTermNetworkUtilizationSample *anObject) {
+        return @(anObject.bytesPerSecondRead);
+    }];
+    iTermStatusBarTimeSeries *readTimeSeries = [[iTermStatusBarTimeSeries alloc] initWithValues:readValues];
+    iTermStatusBarTimeSeriesRendition *readRendition =
+    [[iTermStatusBarTimeSeriesRendition alloc] initWithTimeSeries:readTimeSeries
+                                                            color:[NSColor blueColor]];
+
+    NSArray<NSNumber *> *writeValues = [samples mapWithBlock:^id(iTermNetworkUtilizationSample *anObject) {
+        return @(anObject.bytesPerSecondWrite);
+    }];
+    iTermStatusBarTimeSeries *writeTimeSeries = [[iTermStatusBarTimeSeries alloc] initWithValues:writeValues];
+    iTermStatusBarTimeSeriesRendition *writeRendition =
+    [[iTermStatusBarTimeSeriesRendition alloc] initWithTimeSeries:writeTimeSeries
+                                                            color:[NSColor redColor]];
+
+    return [[iTermStatusBarSparklinesModel alloc] initWithDictionary:@{ @"read": readRendition,
+                                                                        @"write": writeRendition  }];
 }
 
 - (double)ceiling {
@@ -89,41 +99,6 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (double)upThroughput {
     return [[[[iTermNetworkUtilization sharedInstance] samples] lastObject] bytesPerSecondWrite];
-}
-
-- (void)drawTextWithRect:(NSRect)rect
-                    left:(NSString *)left
-                   right:(NSString *)right
-               rightSize:(CGSize)rightSize {
-    NSRect textRect = rect;
-    textRect.size.height = rightSize.height;
-    textRect.origin.y = [self textOffset];
-    [left drawInRect:textRect withAttributes:[self.leftAttributes it_attributesDictionaryWithAppearance:self.view.effectiveAppearance]];
-    [right drawInRect:textRect withAttributes:[self.rightAttributes it_attributesDictionaryWithAppearance:self.view.effectiveAppearance]];
-}
-
-- (CGFloat)textOffset {
-    NSFont *font = self.advancedConfiguration.font ?: [iTermStatusBarAdvancedConfiguration defaultFont];
-    const CGFloat containerHeight = self.view.superview.bounds.size.height;
-    const CGFloat capHeight = font.capHeight;
-    const CGFloat descender = font.descender - font.leading;  // negative (distance from bottom of bounding box to baseline)
-    const CGFloat frameY = (containerHeight - self.view.frame.size.height) / 2;
-    const CGFloat origin = containerHeight / 2.0 - frameY + descender - capHeight / 2.0;
-    return origin;
-}
-
-- (NSRect)graphRectForRect:(NSRect)rect
-                  leftSize:(CGSize)leftSize
-                 rightSize:(CGSize)rightSize {
-    NSRect graphRect = rect;
-    const CGFloat margin = 4;
-    CGFloat rightWidth = rightSize.width + margin;
-    CGFloat leftWidth = leftSize.width + margin;
-    graphRect.origin.x += leftWidth;
-    graphRect.size.width -= (leftWidth + rightWidth);
-    graphRect = NSInsetRect(graphRect, 0, [self.view retinaRound:-self.font.descender] + self.statusBarComponentVerticalOffset);
-
-    return graphRect;
 }
 
 - (NSFont *)font {
@@ -151,45 +126,29 @@ NS_ASSUME_NONNULL_BEGIN
               NSForegroundColorAttributeName: self.textColor };
 }
 
-- (NSString *)leftText {
+- (NSString * _Nullable)leftText {
     return [NSString stringWithFormat:@"%@↓", [NSString it_formatBytesCompact:self.downThroughput]];
 }
 
-- (NSString *)rightText {
+- (NSString * _Nullable)rightText {
     return [NSString stringWithFormat:@"%@↑", [NSString it_formatBytesCompact:self.upThroughput]];
 }
 
 - (CGSize)rightSize {
-    return [self.rightText sizeWithAttributes:self.rightAttributes];
+    NSString *longest = @"123.0 TB↑";
+    return [longest sizeWithAttributes:self.rightAttributes];
 }
 
 - (CGSize)leftSize {
-    return [self.leftText sizeWithAttributes:self.leftAttributes];
-}
-
-- (void)drawRect:(NSRect)rect {
-    CGSize rightSize = self.rightSize;
-
-    [self drawTextWithRect:rect
-                      left:self.leftText
-                     right:self.rightText
-                 rightSize:rightSize];
-
-    NSRect graphRect = [self graphRectForRect:rect
-                                     leftSize:self.leftSize
-                                    rightSize:rightSize];
-
-    [super drawRect:graphRect];
+    NSString *longest = @"123.0 TB↓";
+    return [longest sizeWithAttributes:self.leftAttributes];
 }
 
 #pragma mark - Private
 
 - (void)updateWithDown:(double)down up:(double)up {
-    _ceiling = [[[self.values flatMapWithBlock:^NSArray *(NSArray<NSNumber *> *anObject) {
-        return anObject;
-    }] maxWithBlock:^NSComparisonResult(NSNumber *n1, NSNumber *n2) {
-        return [n1 compare:n2];
-    }] doubleValue];
+    _ceiling = self.sparklinesModel.maximumValue.doubleValue;
+    [self invalidate];
 }
 
 @end

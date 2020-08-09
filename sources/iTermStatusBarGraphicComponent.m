@@ -20,8 +20,6 @@
     self = [super initWithFrame:frameRect];
     if (self) {
         self.wantsLayer = YES;
-        _imageView = [[NSImageView alloc] initWithFrame:self.bounds];
-        [self addSubview:_imageView];
         self.layer.backgroundColor = [[NSColor clearColor] CGColor];
     }
     return self;
@@ -37,15 +35,22 @@
 
 - (void)resizeSubviewsWithOldSize:(NSSize)oldSize {
     [super resizeSubviewsWithOldSize:oldSize];
-    _imageView.frame = self.bounds;
+    _contentView.frame = self.bounds;
 }
 
+- (void)setContentView:(NSView *)contentView {
+    [_contentView removeFromSuperview];
+    _contentView = contentView;
+    [self addSubview:contentView];
+    contentView.frame = self.bounds;
+}
 @end
 
 @implementation iTermStatusBarGraphicComponent {
     CGFloat _preferredWidth;
     CGFloat _renderedWidth;
     iTermStatusBarImageComponentView *_view;
+    CGFloat _previousWidth;
 }
 
 - (NSColor *)textColor {
@@ -129,7 +134,7 @@
     return NO;
 }
 
-- (void)updateViewIfNeeded {
+- (void)updateViewIfNeededAnimated:(BOOL)animated {
     CGFloat preferredWidth = 0;
     NSObject *newPreferred = [self widestModel:&preferredWidth];
 
@@ -142,28 +147,12 @@
 
     const CGFloat viewWidth = self.view.frame.size.width;
     if ([self shouldUpdateValue:proposedForCurrentWidth] || viewWidth != _renderedWidth) {
-        [self redraw];
+        [self redrawAnimated:animated];
         _renderedWidth = viewWidth;
     }
 
     _model = proposedForCurrentWidth;
     _preferredModel = newPreferred;
-}
-
-- (void)redraw {
-    NSSize size = NSMakeSize(self.view.frame.size.width, iTermGetStatusBarHeight());
-    if (size.width > 0) {
-        NSImage *image = [NSImage imageOfSize:size drawBlock:^{
-            [[NSColor clearColor] set];
-            NSRect rect = NSMakeRect(0, 0, size.width, size.height);
-            NSRectFill(rect);
-            [self drawRect:rect];
-        }];
-        self.view.imageView.image = image;
-    }
-    NSRect frame = self.view.frame;
-    frame.size = size;
-    self.view.frame = frame;
 }
 
 - (NSObject *)modelForCurrentWidth {
@@ -196,15 +185,19 @@
 }
 
 - (void)statusBarComponentUpdate {
-    [self updateViewIfNeeded];
+//    [self updateViewIfNeededAnimated:YES];
 }
 
 - (void)statusBarComponentWidthDidChangeTo:(CGFloat)newWidth {
-    [self updateViewIfNeeded];
+    if (newWidth == _previousWidth) {
+        return;
+    }
+    _previousWidth = newWidth;
+    [self updateViewIfNeededAnimated:NO];
 }
 
 - (void)statusBarDefaultTextColorDidChange {
-    [self updateViewIfNeeded];
+    [self updateViewIfNeededAnimated:NO];
 }
 
 #pragma mark - Required overrides
@@ -214,137 +207,15 @@
     return @{};
 }
 
-- (void)drawRect:(NSRect)rect {
-    [self doesNotRecognizeSelector:_cmd];
+- (void)redraw {
+    [self redrawAnimated:NO];
+}
+
+- (void)redrawAnimated:(BOOL)animated {
+    NSRect frame = self.view.frame;
+    frame.size.height = iTermGetStatusBarHeight();
+    self.view.frame = frame;
 }
 
 @end
 
-static const CGFloat iTermStatusBarSparklineBottomMargin = 2;
-
-@implementation iTermStatusBarSparklinesComponent {
-    NSInteger _currentCount;
-}
-
-- (BOOL)shouldHaveTextColorKnob {
-    return YES;
-}
-
-- (NSColor *)lineColor {
-    return [NSColor blackColor];
-}
-
-- (NSInteger)numberOfTimeSeries {
-    return 1;
-}
-
-- (double)ceiling {
-    return 1.0;
-}
-
-- (NSInteger)maximumNumberOfValues {
-    return 60;
-}
-
-- (NSObject *)modelForWidth:(CGFloat)maximumWidth width:(out CGFloat *)preferredWidth {
-    if (maximumWidth <= 0) {
-        if (preferredWidth != nil) {
-            *preferredWidth = 0;
-        }
-        return @[];
-    }
-
-    NSArray *model = self.values;
-    if (model.count > maximumWidth) {
-        NSInteger minimum = (CGFloat)model.count - MAX(0, maximumWidth);
-
-        model = [model subarrayWithRange:NSMakeRange(MAX(0, minimum),
-                                                     MAX(0, maximumWidth))];
-    }
-    if (preferredWidth) {
-        *preferredWidth = model.count;
-    }
-    return model;
-}
-
-- (void)drawRect:(NSRect)rect {
-    NSArray<NSNumber *> *values = self.model;
-    if (values.count == 0) {
-        return;
-    }
-
-    // Draw baseline
-    NSColor *baseColor = [self statusBarTextColor];
-    [[baseColor colorWithAlphaComponent:baseColor.alphaComponent * 0.5] set];
-    const NSRect baselineRect = NSMakeRect(NSMinX(rect),
-                                           rect.origin.y + iTermStatusBarSparklineBottomMargin,
-                                           NSWidth(rect),
-                                           1);
-    NSRectFillUsingOperation(baselineRect, NSCompositingOperationSourceOver);
-
-    if (self.numberOfTimeSeries == 1) {
-        NSBezierPath *path = [self bezierPathWithValues:[self.values it_arrayByKeepingLastN:self.maximumNumberOfValues]
-                                                 inRect:rect];
-        [self drawBezierPath:path forTimeSeries:0];
-    } else {
-        for (NSInteger i = 0; i < self.numberOfTimeSeries; i++) {
-            NSArray *rawValues = [[self values] it_arrayByKeepingLastN:self.maximumNumberOfValues];
-            NSArray<NSNumber *> *values = [rawValues mapWithBlock:^id(id anObject) {
-                return [[NSArray castFrom:anObject] objectAtIndex:i];
-            }];
-            NSBezierPath *path = [self bezierPathWithValues:values inRect:rect];
-            [self drawBezierPath:path forTimeSeries:i];
-        }
-    }
-}
-
-- (void)drawBezierPath:(NSBezierPath *)bezierPath forTimeSeries:(NSInteger)timeSeriesIndex {
-    if (self.numberOfTimeSeries == 1) {
-        [[self statusBarTextColor] set];
-        [bezierPath stroke];
-    } else if (self.numberOfTimeSeries == 2) {
-        if (timeSeriesIndex == 0) {
-            [[[NSColor blueColor] colorWithAlphaComponent:1] set];
-        } else {
-            [[[NSColor redColor] colorWithAlphaComponent:1] set];
-        }
-        [bezierPath stroke];
-    }
-}
-
-- (NSBezierPath *)bezierPathWithValues:(NSArray<NSNumber *> *)values
-                                inRect:(NSRect)rect {
-    if (self.maximumNumberOfValues == 0) {
-        return nil;
-    }
-    const CGFloat barWidth = rect.size.width / (self.maximumNumberOfValues - 1);
-    if (barWidth == 0) {
-        return nil;
-    }
-
-    NSInteger segments = MAX(0, ((NSInteger)values.count) - 1);
-    const CGFloat x0 = NSMaxX(rect) - segments * barWidth;
-    const CGFloat y = iTermStatusBarSparklineBottomMargin + rect.origin.y + 0.5;
-    NSBezierPath *path = [[NSBezierPath alloc] init];
-    path.miterLimit = 1;
-    const double ceiling = MAX(1, self.ceiling);
-    int i = 0;
-    for (NSNumber *n in values) {
-        const CGFloat height = n.doubleValue * (rect.size.height - iTermStatusBarSparklineBottomMargin * 2) / ceiling;
-        const CGFloat x = x0 + i * barWidth;
-        const NSPoint point = NSMakePoint(x, y + height);
-        if (i == 0) {
-            [path moveToPoint:point];
-        } else {
-            [path lineToPoint:point];
-        }
-        i++;
-    }
-    return path;
-}
-
-- (void)invalidate {
-    [self updateViewIfNeeded];
-}
-
-@end

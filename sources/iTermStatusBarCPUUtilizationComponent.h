@@ -5,7 +5,7 @@
 //  Created by George Nachman on 7/19/18.
 //
 
-#import "iTermStatusBarGraphicComponent.h"
+#import "iTermStatusBarSparklinesComponent.h"
 
 @interface iTermStatusBarCPUUtilizationComponent : iTermStatusBarSparklinesComponent
 

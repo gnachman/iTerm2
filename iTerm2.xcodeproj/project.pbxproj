@@ -3540,6 +3540,8 @@
 		A6E20AF921FF9E1600D7CB3E /* iTermInstantReplayWindowController.m in Sources */ = {isa = PBXBuildFile; fileRef = A61B66CE18D51EAC009AC9D5 /* iTermInstantReplayWindowController.m */; };
 		A6E20BB51AC10A60000B18ED /* DefaultBookmark.plist in Resources */ = {isa = PBXBuildFile; fileRef = 1DCF3EC51224D03D00AD56F1 /* DefaultBookmark.plist */; };
 		A6E21CF92255CA4A0036C49D /* NSMutableAttributedString+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A60014F518550F3900CE38D8 /* NSMutableAttributedString+iTerm.m */; };
+		A6E2CC0B24E0950600CBD957 /* iTermStatusBarSparklinesComponent.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E2CC0924E0950600CBD957 /* iTermStatusBarSparklinesComponent.h */; };
+		A6E2CC0C24E0950600CBD957 /* iTermStatusBarSparklinesComponent.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E2CC0A24E0950600CBD957 /* iTermStatusBarSparklinesComponent.m */; };
 		A6E34BD02118097A00F147DD /* iTermBackgroundDrawingHelper.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E34BCE2118097A00F147DD /* iTermBackgroundDrawingHelper.h */; };
 		A6E34BD12118097A00F147DD /* iTermBackgroundDrawingHelper.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E34BCF2118097A00F147DD /* iTermBackgroundDrawingHelper.m */; };
 		A6E5110D24C1729E00D6552D /* iTermAttributedStringProxy.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E5110B24C1729E00D6552D /* iTermAttributedStringProxy.h */; };
@@ -6352,6 +6354,8 @@
 		A6E180E823D51BFA003C4EB1 /* iTermMouseReportingFrustrationDetector.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermMouseReportingFrustrationDetector.h; sourceTree = "<group>"; };
 		A6E180E923D51BFA003C4EB1 /* iTermMouseReportingFrustrationDetector.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermMouseReportingFrustrationDetector.m; sourceTree = "<group>"; };
 		A6E180EC23D5375F003C4EB1 /* pidinfo.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = pidinfo.entitlements; sourceTree = "<group>"; };
+		A6E2CC0924E0950600CBD957 /* iTermStatusBarSparklinesComponent.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermStatusBarSparklinesComponent.h; sourceTree = "<group>"; };
+		A6E2CC0A24E0950600CBD957 /* iTermStatusBarSparklinesComponent.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermStatusBarSparklinesComponent.m; sourceTree = "<group>"; };
 		A6E34BCE2118097A00F147DD /* iTermBackgroundDrawingHelper.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermBackgroundDrawingHelper.h; sourceTree = "<group>"; };
 		A6E34BCF2118097A00F147DD /* iTermBackgroundDrawingHelper.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermBackgroundDrawingHelper.m; sourceTree = "<group>"; };
 		A6E5110B24C1729E00D6552D /* iTermAttributedStringProxy.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermAttributedStringProxy.h; sourceTree = "<group>"; };
@@ -8488,6 +8492,8 @@
 				5308BF8822828268004BECAC /* iTermStatusBarBatteryComponent.m */,
 				A6AAD5EC22F4A1DD002DD12C /* iTermCommandRunnerPool.h */,
 				A6AAD5ED22F4A1DD002DD12C /* iTermCommandRunnerPool.m */,
+				A6E2CC0924E0950600CBD957 /* iTermStatusBarSparklinesComponent.h */,
+				A6E2CC0A24E0950600CBD957 /* iTermStatusBarSparklinesComponent.m */,
 			);
 			name = Components;
 			sourceTree = "<group>";
@@ -11104,6 +11110,7 @@
 				531E71F42229A54500915960 /* iTermParsedExpression.h in Headers */,
 				A629F5AA23AFF5EC00C2F16B /* iTermShellIntegrationDownloadAndRunViewController.h in Headers */,
 				A6180D7421A36F730073F219 /* iTermMetalPerFrameStateRow.h in Headers */,
+				A6E2CC0B24E0950600CBD957 /* iTermStatusBarSparklinesComponent.h in Headers */,
 				A6BF8D1721EB188E003CF805 /* iTermDependencyEditorWindowController.h in Headers */,
 				A6E5D20F1FA3C57900EDD002 /* iTermMetalFrameData.h in Headers */,
 				53FF84E2217A3F790064FE54 /* iTermSessionTitleBuiltInFunction.h in Headers */,
@@ -13691,6 +13698,7 @@
 				A666D5F1221A1EF100D6184A /* iTermVariableScope+Window.m in Sources */,
 				A6A4867220B67AB800493302 /* PointerPreferencesViewController.m in Sources */,
 				A67C44E8211E24F6004EDB1C /* PSMMinimalTabStyle.m in Sources */,
+				A6E2CC0C24E0950600CBD957 /* iTermStatusBarSparklinesComponent.m in Sources */,
 				53E9DFE7220D53230070C9C0 /* Trigger.m in Sources */,
 				A64DE9AB237A8555002E390C /* iTermFakeWindowTitleLabel.m in Sources */,
 				A665C1D1243A606C00F623F0 /* iTermRequestCookieCommand.m in Sources */,

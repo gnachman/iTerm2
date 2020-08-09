@@ -53,10 +53,6 @@ NS_ASSUME_NONNULL_BEGIN
     return NO;
 }
 
-- (NSTimeInterval)statusBarComponentUpdateCadence {
-    return 1;
-}
-
 - (CGFloat)statusBarComponentMinimumWidth {
     return iTermMemoryUtilizationWidth;
 }
@@ -65,48 +61,18 @@ NS_ASSUME_NONNULL_BEGIN
     return iTermMemoryUtilizationWidth;
 }
 
-- (NSArray<NSNumber *> *)values {
-    return [[iTermMemoryUtilization sharedInstance] samples];
+- (iTermStatusBarSparklinesModel *)sparklinesModel {
+    NSArray<NSNumber *> *values = [[iTermMemoryUtilization sharedInstance] samples];
+    iTermStatusBarTimeSeries *timeSeries = [[iTermStatusBarTimeSeries alloc] initWithValues:values];
+    iTermStatusBarTimeSeriesRendition *rendition =
+    [[iTermStatusBarTimeSeriesRendition alloc] initWithTimeSeries:timeSeries
+                                                            color:[self statusBarTextColor]];
+    return [[iTermStatusBarSparklinesModel alloc] initWithDictionary:@{ @"main": rendition}];
 }
 
 - (long long)currentEstimate {
-    NSNumber *last = self.values.lastObject;
+    NSNumber *last = [[iTermMemoryUtilization sharedInstance] samples].lastObject;
     return  last.doubleValue * [[iTermMemoryUtilization sharedInstance] availableMemory];
-}
-
-- (void)drawTextWithRect:(NSRect)rect
-                    left:(NSString *)left
-                   right:(NSString *)right
-               rightSize:(CGSize)rightSize {
-    NSRect textRect = rect;
-    textRect.size.height = rightSize.height;
-    textRect.origin.y = [self textOffset];
-    [left drawInRect:textRect withAttributes:[self.leftAttributes it_attributesDictionaryWithAppearance:self.view.effectiveAppearance]];
-    [right drawInRect:textRect withAttributes:[self.rightAttributes it_attributesDictionaryWithAppearance:self.view.effectiveAppearance]];
-}
-
-- (CGFloat)textOffset {
-    NSFont *font = self.advancedConfiguration.font ?: [iTermStatusBarAdvancedConfiguration defaultFont];
-    const CGFloat containerHeight = self.view.superview.bounds.size.height;
-    const CGFloat capHeight = font.capHeight;
-    const CGFloat descender = font.descender - font.leading;  // negative (distance from bottom of bounding box to baseline)
-    const CGFloat frameY = (containerHeight - self.view.frame.size.height) / 2;
-    const CGFloat origin = containerHeight / 2.0 - frameY + descender - capHeight / 2.0;
-    return origin;
-}
-
-- (NSRect)graphRectForRect:(NSRect)rect
-                  leftSize:(CGSize)leftSize
-                 rightSize:(CGSize)rightSize {
-    NSRect graphRect = rect;
-    const CGFloat margin = 4;
-    CGFloat rightWidth = rightSize.width + margin;
-    CGFloat leftWidth = leftSize.width + margin;
-    graphRect.origin.x += leftWidth;
-    graphRect.size.width -= (leftWidth + rightWidth);
-    graphRect = NSInsetRect(graphRect, 0, [self.view retinaRound:-self.font.descender] + self.statusBarComponentVerticalOffset);
-
-    return graphRect;
 }
 
 - (NSFont *)font {
@@ -138,7 +104,13 @@ NS_ASSUME_NONNULL_BEGIN
     return [self.rightText sizeWithAttributes:self.rightAttributes];
 }
 
-- (NSString *)leftText {
+- (CGSize)leftSize {
+    CGSize size = [self.leftText sizeWithAttributes:self.leftAttributes];
+    size.width += 4;
+    return size;
+}
+
+- (NSString * _Nullable)leftText {
     const long long estimate = self.currentEstimate;
     if (estimate == 0) {
         return @"";
@@ -146,23 +118,8 @@ NS_ASSUME_NONNULL_BEGIN
     return [NSString it_formatBytes:estimate];
 }
 
-- (NSString *)rightText {
+- (NSString * _Nullable)rightText {
     return @"";
-}
-
-- (void)drawRect:(NSRect)rect {
-    CGSize rightSize = self.rightSize;
-
-    [self drawTextWithRect:rect
-                      left:self.leftText
-                     right:self.rightText
-                 rightSize:rightSize];
-
-    NSRect graphRect = [self graphRectForRect:rect
-                                     leftSize:[self.leftText sizeWithAttributes:self.leftAttributes]
-                                    rightSize:rightSize];
-
-    [super drawRect:graphRect];
 }
 
 #pragma mark - Private

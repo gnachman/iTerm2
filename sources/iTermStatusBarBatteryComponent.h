@@ -5,7 +5,7 @@
 //  Created by George Nachman on 5/7/19.
 //
 
-#import "iTermStatusBarGraphicComponent.h"
+#import "iTermStatusBarSparklinesComponent.h"
 
 NS_ASSUME_NONNULL_BEGIN
 

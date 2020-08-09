@@ -52,10 +52,6 @@ NS_ASSUME_NONNULL_BEGIN
     return NO;
 }
 
-- (NSTimeInterval)statusBarComponentUpdateCadence {
-    return 1;
-}
-
 - (CGFloat)statusBarComponentMinimumWidth {
     return iTermCPUUtilizationWidth;
 }
@@ -64,13 +60,18 @@ NS_ASSUME_NONNULL_BEGIN
     return iTermCPUUtilizationWidth;
 }
 
-- (NSArray<NSNumber *> *)values {
-    return [[iTermCPUUtilization sharedInstance] samples];
+- (iTermStatusBarSparklinesModel *)sparklinesModel {
+    NSArray<NSNumber *> *values = [[iTermCPUUtilization sharedInstance] samples];
+    iTermStatusBarTimeSeries *timeSeries = [[iTermStatusBarTimeSeries alloc] initWithValues:values];
+    iTermStatusBarTimeSeriesRendition *rendition =
+    [[iTermStatusBarTimeSeriesRendition alloc] initWithTimeSeries:timeSeries
+                                                            color:[self statusBarTextColor]];
+    return [[iTermStatusBarSparklinesModel alloc] initWithDictionary:@{ @"main": rendition}];
 }
 
 - (int)currentEstimate {
     double alpha = 0.7;
-    NSArray<NSNumber *> *const samples = self.values;
+    NSArray<NSNumber *> *const samples = [[iTermCPUUtilization sharedInstance] samples];
     NSArray<NSNumber *> *lastSamples = samples;
     const NSInteger maxSamplesToUse = 4;
     double x = samples.lastObject.doubleValue;
@@ -83,31 +84,6 @@ NS_ASSUME_NONNULL_BEGIN
         x += number.doubleValue * alpha;
     }
     return x * 100;
-}
-
-- (void)drawTextWithRect:(NSRect)rect
-                    left:(NSString *)left
-                   right:(NSString *)right
-               rightSize:(CGSize)rightSize {
-    NSRect textRect = rect;
-    textRect.size.height = rightSize.height;
-    textRect.origin.y = [self textOffset];
-    [left drawInRect:textRect withAttributes:[self.leftAttributes it_attributesDictionaryWithAppearance:self.view.effectiveAppearance]];
-    [right drawInRect:textRect withAttributes:[self.rightAttributes it_attributesDictionaryWithAppearance:self.view.effectiveAppearance]];
-}
-
-- (NSRect)graphRectForRect:(NSRect)rect
-                  leftSize:(CGSize)leftSize
-                 rightSize:(CGSize)rightSize {
-    NSRect graphRect = rect;
-    const CGFloat margin = 4;
-    CGFloat rightWidth = rightSize.width + margin;
-    CGFloat leftWidth = leftSize.width + margin;
-    graphRect.origin.x += leftWidth;
-    graphRect.size.width -= (leftWidth + rightWidth);
-    graphRect = NSInsetRect(graphRect, 0, [self.view retinaRound:-self.font.descender] + self.statusBarComponentVerticalOffset);
-
-    return graphRect;
 }
 
 - (NSFont *)font {
@@ -135,16 +111,6 @@ NS_ASSUME_NONNULL_BEGIN
               NSForegroundColorAttributeName: self.textColor };
 }
 
-- (CGFloat)textOffset {
-    NSFont *font = self.advancedConfiguration.font ?: [iTermStatusBarAdvancedConfiguration defaultFont];
-    const CGFloat containerHeight = self.view.superview.bounds.size.height;
-    const CGFloat capHeight = font.capHeight;
-    const CGFloat descender = font.descender - font.leading;  // negative (distance from bottom of bounding box to baseline)
-    const CGFloat frameY = (containerHeight - self.view.frame.size.height) / 2;
-    const CGFloat origin = containerHeight / 2.0 - frameY + descender - capHeight / 2.0;
-    return origin;
-}
-
 - (NSSize)leftSize {
     NSString *longestPercentage = @"100%";
     return [longestPercentage sizeWithAttributes:self.leftAttributes];
@@ -154,25 +120,12 @@ NS_ASSUME_NONNULL_BEGIN
     return [self.rightText sizeWithAttributes:self.rightAttributes];
 }
 
-- (NSString *)leftText {
+- (NSString * _Nullable)leftText {
     return [NSString stringWithFormat:@"%d%%", self.currentEstimate];
 }
 
-- (NSString *)rightText {
+- (NSString * _Nullable)rightText {
     return @"";
-}
-
-- (void)drawRect:(NSRect)rect {
-    CGSize rightSize = self.rightSize;
-    
-    [self drawTextWithRect:rect
-                      left:self.leftText
-                     right:self.rightText
-                 rightSize:rightSize];
-
-    NSRect graphRect = [self graphRectForRect:rect leftSize:self.leftSize rightSize:rightSize];
-
-    [super drawRect:graphRect];
 }
 
 #pragma mark - Private
