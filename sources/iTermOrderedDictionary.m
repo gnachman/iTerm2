@@ -6,7 +6,9 @@
 //
 
 #import "iTermOrderedDictionary.h"
+
 #import "NSArray+iTerm.h"
+#import "NSDictionary+iTerm.h"
 
 @implementation iTermOrderedDictionary {
     NSArray *_orderedKeys;
@@ -37,6 +39,16 @@
     return [[self alloc] initWithArray:keys dictionary:dictionary];
 }
 
++ (instancetype)withTuples:(NSArray<iTermTuple *> *)tuples {
+    NSArray *orderedKeys = [tuples mapWithBlock:^id(iTermTuple *tuple) {
+        return tuple.firstObject;
+    }];
+    NSDictionary *dictionary = [tuples keyValuePairsWithBlock:^iTermTuple *(iTermTuple *object) {
+        return object;
+    }];
+    return [[self alloc] initWithArray:orderedKeys
+                            dictionary:dictionary];
+}
 
 - (instancetype)initWithArray:(NSArray *)array dictionary:(NSDictionary *)dictionary {
     self = [super init];

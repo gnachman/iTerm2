@@ -39,7 +39,7 @@ typedef NS_ENUM(NSUInteger, iTermPythonRuntimeDownloaderStatus) {
 
 + (NSString *)latestPythonVersion;
 
-- (NSString *)pathToStandardPyenvWithVersion:(NSString *)pythonVersion creatingSymlinkIfNeeded:(BOOL)createSymlink;
+- (NSString *)pathToStandardPyenvWithVersion:(NSString *)pythonVersion;
 
 + (instancetype)sharedInstance;
 + (NSArray<NSString *> *)pythonVersionsAt:(NSString *)path;

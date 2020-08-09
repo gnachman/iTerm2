@@ -171,9 +171,12 @@ typedef NS_OPTIONS(NSUInteger, iTermSingleUseWindowOptions) {
     // Bury it immediately?
     iTermSingleUseWindowOptionsInitiallyBuried = (1 << 2),
     // Don't escape arguments
-    iTermSingleUseWindowOptionsDoNotEscapeArguments = (1 << 3)
+    iTermSingleUseWindowOptionsDoNotEscapeArguments = (1 << 3),
+    // Command is not a swifty string
+    iTermSingleUseWindowOptionsCommandNotSwiftyString = (1 << 4)
 };
 
+// Note that `command` is a Swifty string.
 - (void)openSingleUseWindowWithCommand:(NSString *)command
                              arguments:(NSArray<NSString *> *)arguments
                                 inject:(NSData *)injection
@@ -183,6 +186,7 @@ typedef NS_OPTIONS(NSUInteger, iTermSingleUseWindowOptions) {
                         didMakeSession:(void (^)(PTYSession *session))didMakeSession
                             completion:(void (^)(void))completion;
 
+// Note that `rawCommand` is a plain old string, not a Swifty string.
 - (void)openSingleUseWindowWithCommand:(NSString *)rawCommand
                                 inject:(NSData *)injection
                            environment:(NSDictionary *)environment

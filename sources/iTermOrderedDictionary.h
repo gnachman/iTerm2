@@ -6,6 +6,7 @@
 //
 
 #import <Foundation/Foundation.h>
+#import "iTermTuple.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -15,6 +16,7 @@ NS_ASSUME_NONNULL_BEGIN
                     block:(nullable KeyType _Nullable (^NS_NOESCAPE)(NSUInteger index, ObjectType object))block;
 + (instancetype)byMappingEnumerator:(NSEnumerator<ObjectType> *)array
                               block:(nullable KeyType (^NS_NOESCAPE)(NSUInteger index, ObjectType object))block;
++ (instancetype)withTuples:(NSArray<iTermTuple<KeyType, ObjectType> *> *)tuples;
 
 - (NSArray<KeyType> *)keys;
 - (NSArray<ObjectType> *)values;

@@ -1420,9 +1420,12 @@ static iTermController *gSharedInstance;
                                                 profile:windowProfile] autorelease];
     [self addTerminalWindow:term];
 
-    NSString *const command = [self shCommandLineWithCommand:rawCommand
-                                                   arguments:arguments ?: @[]
-                                             escapeArguments:!(options & iTermSingleUseWindowOptionsDoNotEscapeArguments)];
+    NSString *command = [self shCommandLineWithCommand:rawCommand
+                                             arguments:arguments ?: @[]
+                                       escapeArguments:!(options & iTermSingleUseWindowOptionsDoNotEscapeArguments)];
+    if (options & iTermSingleUseWindowOptionsCommandNotSwiftyString) {
+        command = [command stringByReplacingOccurrencesOfString:@"\\" withString:@"\\\\"];
+    }
     DLog(@"Open single-use window with command: %@", command);
     void (^makeSession)(Profile *, PseudoTerminal *, void (^)(PTYSession *)) =
     ^(Profile *profile, PseudoTerminal *term, void (^makeSessionCompletion)(PTYSession *))  {

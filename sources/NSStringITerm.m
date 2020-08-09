@@ -2313,6 +2313,31 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
     return d;
 }
 
+- (NSString *)it_escapedForEnv {
+    NSArray<iTermTuple<NSString *, NSString *> *> *substitutions =
+    @[
+        [iTermTuple tupleWithObject:@"\\" andObject:@"\\\\"],
+        [iTermTuple tupleWithObject:@"\f" andObject:@"\\f"],
+        [iTermTuple tupleWithObject:@"\n" andObject:@"\\n"],
+        [iTermTuple tupleWithObject:@"\r" andObject:@"\\r"],
+        [iTermTuple tupleWithObject:@"\t" andObject:@"\\t"],
+        [iTermTuple tupleWithObject:@"\v" andObject:@"\\v"],
+        [iTermTuple tupleWithObject:@"#" andObject:@"\\#"],
+        [iTermTuple tupleWithObject:@"$" andObject:@"\\$"],
+        [iTermTuple tupleWithObject:@" " andObject:@"\\_"],
+        [iTermTuple tupleWithObject:@"\"" andObject:@"\\\""],
+        [iTermTuple tupleWithObject:@"'" andObject:@"\\'"],
+    ];
+    return [self stringByPerformingOrderedSubstitutions:[iTermOrderedDictionary withTuples:substitutions]];
+}
+
+- (NSString *)stringByPerformingOrderedSubstitutions:(iTermOrderedDictionary<NSString *, NSString *> *)substitutions {
+    return [substitutions.keys reduceWithFirstValue:self block:^NSString *(NSString *accumulator, NSString *key) {
+        NSString *replacement = substitutions[key];
+        return [accumulator stringByReplacingOccurrencesOfString:key withString:replacement];
+    }];
+}
+
 @end
 
 @implementation NSMutableString (iTerm)

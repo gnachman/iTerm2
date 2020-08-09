@@ -242,7 +242,7 @@ NSString *const iTermScriptMetadataName = @"metadata.json";
     if ([self shouldAutoLaunchWhenTrusted:trusted offerAutoLaunch:offerAutoLaunch]) {
         containingFolder = [[NSFileManager defaultManager] autolaunchScriptPath];
     } else {
-        containingFolder = [[NSFileManager defaultManager] scriptsPathWithoutSpaces];
+        containingFolder = [[NSFileManager defaultManager] scriptsPath];
     }
     [[NSFileManager defaultManager] createDirectoryAtPath:containingFolder
                               withIntermediateDirectories:YES

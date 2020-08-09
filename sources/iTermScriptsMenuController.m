@@ -190,7 +190,7 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 - (NSArray<iTermScriptItem *> *)scriptItems {
-    iTermScriptItem *root = [[iTermScriptItem alloc] initFolderWithPath:[[NSFileManager defaultManager] scriptsPathWithoutSpaces] parent:nil];
+    iTermScriptItem *root = [[iTermScriptItem alloc] initFolderWithPath:[[NSFileManager defaultManager] scriptsPath] parent:nil];
     [self populateScriptItem:root];
     return root.children;
 }
@@ -724,7 +724,7 @@ NS_ASSUME_NONNULL_BEGIN
     NSPopUpButton *popUpButton = [[NSPopUpButton alloc] initWithFrame:NSMakeRect(10, 0, 50, 50)];
 
     NSArray<NSString *> *components = @[ @"iterm2env", @"versions" ];
-    NSString *path = [[NSFileManager defaultManager] applicationSupportDirectoryWithoutSpaces];
+    NSString *path = [[NSFileManager defaultManager] applicationSupportDirectory];
     for (NSString *part in components) {
         path = [path stringByAppendingPathComponent:part];
     }
@@ -936,7 +936,7 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 - (NSString *)folderForFullEnvironmentSavePanelURL:(NSURL *)url {
-    NSString *noSpacesScriptsRoot = [[NSFileManager defaultManager] scriptsPathWithoutSpaces];
+    NSString *noSpacesScriptsRoot = [[NSFileManager defaultManager] scriptsPath];
     NSString *scriptsRoot = [[[NSURL fileURLWithPath:noSpacesScriptsRoot] URLByResolvingSymlinksInPath] path];
     NSString *selectedPath = [url URLByResolvingSymlinksInPath].path;
     NSString *relative = [self relativePathFrom:scriptsRoot
@@ -957,10 +957,10 @@ NS_ASSUME_NONNULL_BEGIN
         NSString *name = url.path.lastPathComponent;
         // For a path like foo/bar this returns foo/bar/bar/bar.py
         // So the hierarchy looks like
-        // ~/Library/ApplicationSupport/iTerm2/Scripts/foo/bar/setup.cfg
-        // ~/Library/ApplicationSupport/iTerm2/Scripts/foo/bar/iterm2env
-        // ~/Library/ApplicationSupport/iTerm2/Scripts/foo/bar/bar/
-        // ~/Library/ApplicationSupport/iTerm2/Scripts/foo/bar/bar/bar.py
+        // ~/Library/Application Support/iTerm2/Scripts/foo/bar/setup.cfg
+        // ~/Library/Application Support/iTerm2/Scripts/foo/bar/iterm2env
+        // ~/Library/Application Support/iTerm2/Scripts/foo/bar/bar/
+        // ~/Library/Application Support/iTerm2/Scripts/foo/bar/bar/bar.py
         return [[folder stringByAppendingPathComponent:name] stringByAppendingPathComponent:[url.path.lastPathComponent stringByAppendingPathExtension:@"py"]];
     } else {
         return url.path;

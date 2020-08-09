@@ -18,6 +18,7 @@
 #import "iTermSetupCfgParser.h"
 #import "iTermSignatureVerifier.h"
 #import "NSArray+iTerm.h"
+#import "NSDictionary+iTerm.h"
 #import "NSFileManager+iTerm.h"
 #import "NSMutableData+iTerm.h"
 #import "NSObject+iTerm.h"
@@ -99,19 +100,12 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
 }
 
 - (NSString *)pathToStandardPyenvPythonWithPythonVersion:(NSString *)pythonVersion {
-    return [self pyenvAt:[self pathToStandardPyenvWithVersion:pythonVersion
-                                      creatingSymlinkIfNeeded:NO]
+    return [self pyenvAt:[self pathToStandardPyenvWithVersion:pythonVersion]
            pythonVersion:pythonVersion];
 }
 
-- (NSString *)pathToStandardPyenvWithVersion:(NSString *)pythonVersion
-                           creatingSymlinkIfNeeded:(BOOL)createSymlink {
-    NSString *appsupport;
-    if (createSymlink) {
-        appsupport = [[NSFileManager defaultManager] applicationSupportDirectoryWithoutSpaces];
-    } else {
-        appsupport = [[NSFileManager defaultManager] applicationSupportDirectoryWithoutSpacesWithoutCreatingSymlink];
-    }
+- (NSString *)pathToStandardPyenvWithVersion:(NSString *)pythonVersion {
+    NSString *appsupport = [[NSFileManager defaultManager] applicationSupportDirectory];
     if (pythonVersion) {
         return [appsupport stringByAppendingPathComponent:[NSString stringWithFormat:@"iterm2env-%@", pythonVersion]];
     } else {
@@ -120,14 +114,14 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
 }
 
 - (NSURL *)pathToMetadataWithPythonVersion:(NSString *)pythonVersion {
-    NSString *path = [self pathToStandardPyenvWithVersion:pythonVersion creatingSymlinkIfNeeded:NO];
+    NSString *path = [self pathToStandardPyenvWithVersion:pythonVersion];
     path = [path stringByAppendingPathComponent:@"iterm2env-metadata.json"];
     return [NSURL fileURLWithPath:path];
 }
 
 // Parent directory of standard pyenv folder
 - (NSURL *)urlOfStandardEnvironmentContainerCreatingSymlinkForVersion:(NSString *)pythonVersion {
-    NSString *path = [self pathToStandardPyenvWithVersion:pythonVersion creatingSymlinkIfNeeded:YES];
+    NSString *path = [self pathToStandardPyenvWithVersion:pythonVersion];
     path = [path stringByDeletingLastPathComponent];
     return [NSURL fileURLWithPath:path];
 }
@@ -493,7 +487,7 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
 
 + (NSString *)latestPythonVersion {
     NSArray<NSString *> *components = @[ @"iterm2env", @"versions" ];
-    NSString *path = [[NSFileManager defaultManager] applicationSupportDirectoryWithoutSpaces];
+    NSString *path = [[NSFileManager defaultManager] applicationSupportDirectory];
     for (NSString *part in components) {
         path = [path stringByAppendingPathComponent:part];
     }
@@ -501,8 +495,7 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
 }
 
 - (NSSet<NSString *> *)twoPartPythonVersionsInRuntimeVersion:(NSInteger)pythonVersion {
-    NSString *const path = [self pathToStandardPyenvWithVersion:[@(pythonVersion) stringValue]
-                                        creatingSymlinkIfNeeded:NO];
+    NSString *const path = [self pathToStandardPyenvWithVersion:[@(pythonVersion) stringValue]];
     NSString *versionsPath = [path stringByAppendingPathComponent:@"versions"];
     NSArray<NSString *> *versions = [iTermPythonRuntimeDownloader pythonVersionsAt:versionsPath];
     NSArray<NSString *> *twoPartVersions = iTermConvertThreePartVersionNumbersToTwoPart(versions);
@@ -515,14 +508,12 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
                latestFullComponent:(NSInteger)latestFullComponent
                         completion:(void (^)(BOOL))completion {
     NSURL *const finalDestination =
-    [NSURL fileURLWithPath:[self pathToStandardPyenvWithVersion:[@(runtimeVersion) stringValue]
-                                        creatingSymlinkIfNeeded:YES]];
+    [NSURL fileURLWithPath:[self pathToStandardPyenvWithVersion:[@(runtimeVersion) stringValue]]];
     NSURL *const tempDestination =
-    [NSURL fileURLWithPath:[[[NSFileManager defaultManager] applicationSupportDirectoryWithoutSpaces] stringByAppendingPathComponent:[[NSUUID UUID] UUIDString]]];
+    [NSURL fileURLWithPath:[[[NSFileManager defaultManager] applicationSupportDirectory] stringByAppendingPathComponent:[[NSUUID UUID] UUIDString]]];
 
     NSURL *const sourceURL =
-    [NSURL fileURLWithPath:[self pathToStandardPyenvWithVersion:[@(latestFullComponent) stringValue]
-                                        creatingSymlinkIfNeeded:NO]];
+    [NSURL fileURLWithPath:[self pathToStandardPyenvWithVersion:[@(latestFullComponent) stringValue]]];
     [[NSFileManager defaultManager] removeItemAtPath:finalDestination.path error:nil];
     NSURL *overwritableURL = [tempDestination URLByAppendingPathComponent:@"iterm2env"];
     NSError *error = nil;
@@ -573,16 +564,24 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
                          runtimeVersion:(int)runtimeVersion
                          pythonVersions:(NSArray<NSString *> *)pythonVersions
                              completion:(void (^)(BOOL))completion {
-    NSURL *finalDestination = [NSURL fileURLWithPath:[self pathToStandardPyenvWithVersion:[@(runtimeVersion) stringValue]
-                                                                  creatingSymlinkIfNeeded:YES]];
-    NSURL *tempDestination = [NSURL fileURLWithPath:[[[NSFileManager defaultManager] applicationSupportDirectoryWithoutSpaces] stringByAppendingPathComponent:[[NSUUID UUID] UUIDString]]];
+    NSURL *finalDestination = [NSURL fileURLWithPath:[self pathToStandardPyenvWithVersion:[@(runtimeVersion) stringValue]]];
+    NSURL *tempDestination = [NSURL fileURLWithPath:[[[NSFileManager defaultManager] applicationSupportDirectory] stringByAppendingPathComponent:[[NSUUID UUID] UUIDString]]];
 
     [[NSFileManager defaultManager] removeItemAtPath:finalDestination.path error:nil];
     [self unzip:[NSURL fileURLWithPath:zip] to:tempDestination completion:^(BOOL unzipOk) {
         if (unzipOk) {
-            NSDictionary<NSString *, NSString *> *subs = @{ @"__ITERM2_ENV__": finalDestination.path,
-                                                            @"__ITERM2_PYENV__": [finalDestination.path stringByAppendingPathComponent:@"pyenv"] };
-            [self performSubstitutions:subs inFilesUnderFolder:tempDestination];
+            NSString *backslashEscaped = [finalDestination.path stringByReplacingOccurrencesOfString:@" " withString:@"\\ "];
+            NSDictionary<NSString *, NSDictionary *> *subs = @{
+                @"*.pc": @{ @"__ITERM2_ENV__": backslashEscaped },
+                @"*.la": @{ @"__ITERM2_ENV__": backslashEscaped },
+                @"Makefile": @{ @"__ITERM2_ENV__": backslashEscaped },
+                @"": @{
+                        @"#!__ITERM2_ENV__": [NSString stringWithFormat:@"#!/usr/bin/env -S \"%@\"", finalDestination.path.it_escapedForEnv],
+                        @"__ITERM2_ENV__": finalDestination.path,
+                        @"__ITERM2_PYENV__": [finalDestination.path stringByAppendingPathComponent:@"pyenv"] }
+            };
+            [self performSubstitutions:subs
+                    inFilesUnderFolder:tempDestination];
             [self finishInstallingRuntimeVersion:runtimeVersion
                                   pythonVersions:pythonVersions
                                  tempDestination:tempDestination
@@ -631,8 +630,7 @@ static NSArray<NSString *> *iTermConvertThreePartVersionNumbersToTwoPart(NSArray
                 // so keep it around.
                 continue;
             }
-            [[NSFileManager defaultManager] removeItemAtPath:[self pathToStandardPyenvWithVersion:[@(i) stringValue]
-                                                                          creatingSymlinkIfNeeded:NO]
+            [[NSFileManager defaultManager] removeItemAtPath:[self pathToStandardPyenvWithVersion:[@(i) stringValue]]
                                                        error:nil];
         }
         [[NSFileManager defaultManager] removeItemAtURL:tempDestination error:nil];
@@ -645,8 +643,7 @@ static NSArray<NSString *> *iTermConvertThreePartVersionNumbersToTwoPart(NSArray
 - (void)createDeepLinkTo:(NSString *)container pythonVersion:(NSString *)pythonVersion runtimeVersion:(int)runtimeVersion {
     const int existingVersion = [self installedVersionWithPythonVersion:pythonVersion];
     if (runtimeVersion > existingVersion) {
-        NSString *pathToVersionedEnvironment = [self pathToStandardPyenvWithVersion:pythonVersion
-                                                            creatingSymlinkIfNeeded:NO];
+        NSString *pathToVersionedEnvironment = [self pathToStandardPyenvWithVersion:pythonVersion];
         [[NSFileManager defaultManager] removeItemAtPath:pathToVersionedEnvironment
                                                    error:nil];
         NSError *error = nil;
@@ -671,8 +668,7 @@ static NSArray<NSString *> *iTermConvertThreePartVersionNumbersToTwoPart(NSArray
                       dependencies:(NSArray<NSString *> *)dependencies
                     createSetupCfg:(BOOL)createSetupCfg
                         completion:(void (^)(iTermInstallPythonStatus))completion {
-    NSString *source = [self pathToStandardPyenvWithVersion:pythonVersion
-                                    creatingSymlinkIfNeeded:NO];
+    NSString *source = [self pathToStandardPyenvWithVersion:pythonVersion];
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
         NSError *error = nil;
         NSString *destination = [container URLByAppendingPathComponent:@"iterm2env"].path;
@@ -704,7 +700,8 @@ static NSArray<NSString *> *iTermConvertThreePartVersionNumbersToTwoPart(NSArray
 
 
             // Replace the shebang in pip3 to point at the right version of python.
-            [self replaceShebangInScriptAtPath:pip3 with:[NSString stringWithFormat:@"#!%@", pathToPython]];
+            NSString *envEscapedPathToPython = [pathToPython it_escapedForEnv];
+            [self replaceShebangInScriptAtPath:pip3 with:[NSString stringWithFormat:@"#!/usr/bin/env -S \"%@\"", envEscapedPathToPython]];
 
             [self installDependencies:dependencies to:container pythonVersion:pythonVersion completion:^(NSArray<NSString *> *failures, NSArray<NSData *> *outputs) {
                 if (failures.count) {
@@ -882,16 +879,30 @@ static NSArray<NSString *> *iTermConvertThreePartVersionNumbersToTwoPart(NSArray
     return ok;
 }
 
-- (void)performSubstitutions:(NSDictionary *)subs inFilesUnderFolder:(NSURL *)folderURL {
-    NSMutableDictionary *dataSubs = [NSMutableDictionary dictionary];
-    [subs enumerateKeysAndObjectsUsingBlock:^(NSString *  _Nonnull key, NSString *  _Nonnull obj, BOOL * _Nonnull stop) {
-        NSData *dataKey = [key dataUsingEncoding:NSUTF8StringEncoding];
-        NSData *valueKey = [obj dataUsingEncoding:NSUTF8StringEncoding];
-        dataSubs[dataKey] = valueKey;
+// Keys in `subs` can be like *.ext, Filename.txt, or "" (empty string). If neither the extension nor
+// exact file name match, the empty string dict is used as a fallback.
+- (void)performSubstitutions:(NSDictionary<NSString *, NSDictionary<NSString *, NSString *> *> *)subs
+          inFilesUnderFolder:(NSURL *)folderURL {
+    NSDictionary<NSString *, NSDictionary<NSData *, NSData *> *> *dataSubs
+    = [subs mapValuesWithBlock:^id(NSString *key, NSDictionary<NSString *,NSString *> *object) {
+        return [object mapWithBlock:^iTermTuple *(NSString *key, NSString *object) {
+            return [iTermTuple tupleWithObject:[key dataUsingEncoding:NSUTF8StringEncoding]
+                                     andObject:[object dataUsingEncoding:NSUTF8StringEncoding]];
+        }];
     }];
     NSDirectoryEnumerator *directoryEnumerator = [[NSFileManager defaultManager] enumeratorAtPath:folderURL.path];
     for (NSString *file in directoryEnumerator) {
-        [self performSubstitutions:dataSubs inFile:[folderURL.path stringByAppendingPathComponent:file]];
+        NSString *fullPath = [folderURL.path stringByAppendingPathComponent:file];
+        NSDictionary<NSData *, NSData *> *rules;
+        rules = dataSubs[ [@"*." stringByAppendingString:file.pathExtension] ];
+        if (!rules) {
+            rules = dataSubs[file.lastPathComponent];
+        }
+        if (!rules) {
+            rules = dataSubs[@""];
+        }
+        assert(rules);
+        [self performSubstitutions:rules inFile:fullPath];
     }
 }
 

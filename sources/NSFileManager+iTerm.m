@@ -123,20 +123,6 @@ NSString * const DirectoryLocationDomain = @"DirectoryLocationDomain";
     return result;
 }
 
-- (NSString *)applicationSupportDirectoryWithoutSpacesWithoutCreatingSymlink {
-    NSError *error;
-    NSString *realAppSupport = [self findOrCreateDirectory:NSApplicationSupportDirectory
-                                                  inDomain:NSUserDomainMask
-                                       appendPathComponent:nil
-                                                     error:&error];
-    NSString *nospaces = [realAppSupport stringByReplacingOccurrencesOfString:@"Application Support"
-                                                                   withString:[iTermAdvancedSettingsModel spacelessApplicationSupport]];
-    NSString *executableName =
-        [[[NSBundle mainBundle] infoDictionary] objectForKey:(id)kCFBundleExecutableKey];
-    return [nospaces stringByAppendingPathComponent:executableName];
-    return nospaces;
-}
-
 - (NSString *)libraryDirectoryFor:(NSString *)app {
     NSError *error;
     NSString *result = [self findOrCreateDirectory:NSLibraryDirectory
@@ -147,29 +133,6 @@ NSString * const DirectoryLocationDomain = @"DirectoryLocationDomain";
         ELog(@"Unable to find or create application support directory:\n%@", error);
     }
     return result;
-}
-
-- (NSString *)applicationSupportDirectoryWithoutSpaces {
-    NSError *error;
-    NSString *realAppSupport = [self findOrCreateDirectory:NSApplicationSupportDirectory
-                                                  inDomain:NSUserDomainMask
-                                       appendPathComponent:nil
-                                                     error:&error];
-    NSString *linkName = [iTermAdvancedSettingsModel spacelessApplicationSupport];
-    linkName = [linkName stringByReplacingOccurrencesOfRegex:@"\\s" withString:@""];
-    if (!linkName.length) {
-        linkName = @"ApplicationSupport";
-    }
-
-    NSString *nospaces = [realAppSupport stringByReplacingOccurrencesOfString:@"Application Support"
-                                                                   withString:linkName];
-    if (linkName.length) {
-        [[NSFileManager defaultManager] createSymbolicLinkAtPath:nospaces withDestinationPath:realAppSupport error:nil];
-    }
-
-    NSString *executableName =
-        [[[NSBundle mainBundle] infoDictionary] objectForKey:(id)kCFBundleExecutableKey];
-    return [nospaces stringByAppendingPathComponent:executableName];
 }
 
 - (NSString *)legacyApplicationSupportDirectory {
@@ -192,17 +155,12 @@ NSString * const DirectoryLocationDomain = @"DirectoryLocationDomain";
     return [[self applicationSupportDirectory] stringByAppendingPathComponent:@"Scripts"];
 }
 
-- (NSString *)scriptsPathWithoutSpaces {
-    NSString *modernPath = [[self applicationSupportDirectoryWithoutSpacesWithoutCreatingSymlink] stringByAppendingPathComponent:@"Scripts"];
-    return modernPath;
-}
-
 - (NSString *)legacyAutolaunchScriptPath {
     return [[self scriptsPath] stringByAppendingPathComponent:@"AutoLaunch.scpt"];
 }
 
 - (NSString *)autolaunchScriptPath {
-    return [[self scriptsPathWithoutSpaces] stringByAppendingPathComponent:@"AutoLaunch"];
+    return [[self scriptsPath] stringByAppendingPathComponent:@"AutoLaunch"];
 }
 
 - (NSString *)quietFilePath {

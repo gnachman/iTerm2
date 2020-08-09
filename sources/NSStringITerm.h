@@ -34,6 +34,7 @@
 
 #import <Cocoa/Cocoa.h>
 
+#import "iTermOrderedDictionary.h"
 #import "iTermTuple.h"
 
 @class iTermVariableScope;
@@ -321,6 +322,15 @@ int decode_utf8_char(const unsigned char * restrict datap,
 - (NSString *)it_substringToIndex:(NSInteger)index;
 - (NSString *)it_escapedForRegex;
 - (NSString *)it_compressedString;
+
+// Use this in #!/usr/bin/env -S "%@"
+// Important! It assumes you put the value in double quotes. Amusingly, the man page for env
+// trolls you by explaining that single-quoted values only need to escape ' and \ but neglects to
+// mention that other characters simple won't work at all, escaped or otherwise.
+- (NSString *)it_escapedForEnv;
+
+// Perform substitutions in order.
+- (NSString *)stringByPerformingOrderedSubstitutions:(iTermOrderedDictionary<NSString *, NSString *> *)substitutions;
 @end
 
 @interface NSMutableString (iTerm)

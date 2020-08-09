@@ -292,12 +292,13 @@
     if (selection == kiTermWarningSelection1) {
         return;
     }
+    // Escape the path to pip3 because it gets evaluated as a swifty string.
     [[iTermController sharedInstance] openSingleUseWindowWithCommand:pip3
                                                            arguments:arguments
                                                               inject:nil
                                                          environment:nil
                                                                  pwd:nil
-                                                             options:0
+                                                             options:iTermSingleUseWindowOptionsCommandNotSwiftyString
                                                       didMakeSession:nil
                                                           completion:^{
                                                               completion();
