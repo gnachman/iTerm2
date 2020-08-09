@@ -601,13 +601,13 @@ static unsigned long long MakeUniqueID(void) {
                                                          iTermResult<NSNumber *> *waitResult) {
         [waitResult handleObject:
          ^(NSNumber * _Nonnull statusNumber) {
-            DLog(@"wait for %@ returned termination status %@", @(child.pid), statusNumber);
+            DLog(@"wait for %@ returned termination status %@", @(weakChild.pid), statusNumber);
             [weakChild setTerminationStatus:statusNumber.intValue];
             [callback invokeWithObject:waitResult];
         }
                            error:
          ^(NSError * _Nonnull error) {
-            DLog(@"wait for %@ returned error %@", @(child.pid), error);
+            DLog(@"wait for %@ returned error %@", @(weakChild.pid), error);
             [callback invokeWithObject:waitResult];
         }];
     }];
