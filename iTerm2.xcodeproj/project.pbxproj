@@ -1955,7 +1955,6 @@
 		A653F66424CD6A7E0062377E /* iTermRestorableStateSaver.m in Sources */ = {isa = PBXBuildFile; fileRef = A653F66224CD6A7E0062377E /* iTermRestorableStateSaver.m */; };
 		A653F66724CD6A8C0062377E /* iTermRestorableStateRestorer.h in Headers */ = {isa = PBXBuildFile; fileRef = A653F66524CD6A8C0062377E /* iTermRestorableStateRestorer.h */; };
 		A653F66824CD6A8C0062377E /* iTermRestorableStateRestorer.m in Sources */ = {isa = PBXBuildFile; fileRef = A653F66624CD6A8C0062377E /* iTermRestorableStateRestorer.m */; };
-		A653F6BB24D4C9B50062377E /* iTermKeyLabels.m in Sources */ = {isa = PBXBuildFile; fileRef = A673BFDD1E16C54500FA2386 /* iTermKeyLabels.m */; };
 		A653F66B24CE7CE30062377E /* iTermGraphEncoder.h in Headers */ = {isa = PBXBuildFile; fileRef = A653F66924CE7CE30062377E /* iTermGraphEncoder.h */; };
 		A653F66C24CE7CE30062377E /* iTermGraphEncoder.m in Sources */ = {isa = PBXBuildFile; fileRef = A653F66A24CE7CE30062377E /* iTermGraphEncoder.m */; };
 		A653F66E24CE81740062377E /* iTermCodingTests.m in Sources */ = {isa = PBXBuildFile; fileRef = A653F66D24CE81740062377E /* iTermCodingTests.m */; };
@@ -1989,6 +1988,7 @@
 		A653F6B824D291D00062377E /* iTermOrderedDictionary.h in Headers */ = {isa = PBXBuildFile; fileRef = A653F6B624D291D00062377E /* iTermOrderedDictionary.h */; };
 		A653F6B924D291D00062377E /* iTermOrderedDictionary.m in Sources */ = {isa = PBXBuildFile; fileRef = A653F6B724D291D00062377E /* iTermOrderedDictionary.m */; };
 		A653F6BA24D2ACA90062377E /* iTermRestorableSession.m in Sources */ = {isa = PBXBuildFile; fileRef = A6C537C21939507100A08C18 /* iTermRestorableSession.m */; };
+		A653F6BB24D4C9B50062377E /* iTermKeyLabels.m in Sources */ = {isa = PBXBuildFile; fileRef = A673BFDD1E16C54500FA2386 /* iTermKeyLabels.m */; };
 		A65429A020BE71E400CE71B1 /* iTermOpenQuicklyModel.m in Sources */ = {isa = PBXBuildFile; fileRef = A69B45AD19731D3200F5444D /* iTermOpenQuicklyModel.m */; };
 		A65429A320BE7ECA00CE71B1 /* ScriptIcon.png in Resources */ = {isa = PBXBuildFile; fileRef = A65429A120BE7ECA00CE71B1 /* ScriptIcon.png */; };
 		A65429A420BE7ECA00CE71B1 /* ScriptIcon@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A65429A220BE7ECA00CE71B1 /* ScriptIcon@2x.png */; };
@@ -2259,6 +2259,24 @@
 		A66A1FAE1A3A230A00F4A3A7 /* iTermWindowShortcutAccessoryView.xib in Resources */ = {isa = PBXBuildFile; fileRef = A66A1FAD1A3A230A00F4A3A7 /* iTermWindowShortcutAccessoryView.xib */; };
 		A66A1FAF1A3A230A00F4A3A7 /* iTermWindowShortcutAccessoryView.xib in Resources */ = {isa = PBXBuildFile; fileRef = A66A1FAD1A3A230A00F4A3A7 /* iTermWindowShortcutAccessoryView.xib */; };
 		A66A1FB01A3A230A00F4A3A7 /* iTermWindowShortcutAccessoryView.xib in Resources */ = {isa = PBXBuildFile; fileRef = A66A1FAD1A3A230A00F4A3A7 /* iTermWindowShortcutAccessoryView.xib */; };
+		A66A882224DFCCC30043728B /* graphic_elixir.png in Resources */ = {isa = PBXBuildFile; fileRef = A66A881C24DFCCC20043728B /* graphic_elixir.png */; };
+		A66A882324DFCCC30043728B /* graphic_elixir.png in Resources */ = {isa = PBXBuildFile; fileRef = A66A881C24DFCCC20043728B /* graphic_elixir.png */; };
+		A66A882424DFCCC30043728B /* graphic_elixir.png in Resources */ = {isa = PBXBuildFile; fileRef = A66A881C24DFCCC20043728B /* graphic_elixir.png */; };
+		A66A882524DFCCC30043728B /* graphic_erlang.png in Resources */ = {isa = PBXBuildFile; fileRef = A66A881D24DFCCC20043728B /* graphic_erlang.png */; };
+		A66A882624DFCCC30043728B /* graphic_erlang.png in Resources */ = {isa = PBXBuildFile; fileRef = A66A881D24DFCCC20043728B /* graphic_erlang.png */; };
+		A66A882724DFCCC30043728B /* graphic_erlang.png in Resources */ = {isa = PBXBuildFile; fileRef = A66A881D24DFCCC20043728B /* graphic_erlang.png */; };
+		A66A882824DFCCC30043728B /* graphic_erlang@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A66A881E24DFCCC20043728B /* graphic_erlang@2x.png */; };
+		A66A882924DFCCC30043728B /* graphic_erlang@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A66A881E24DFCCC20043728B /* graphic_erlang@2x.png */; };
+		A66A882A24DFCCC30043728B /* graphic_erlang@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A66A881E24DFCCC20043728B /* graphic_erlang@2x.png */; };
+		A66A882B24DFCCC30043728B /* graphic_postgres.png in Resources */ = {isa = PBXBuildFile; fileRef = A66A881F24DFCCC30043728B /* graphic_postgres.png */; };
+		A66A882C24DFCCC30043728B /* graphic_postgres.png in Resources */ = {isa = PBXBuildFile; fileRef = A66A881F24DFCCC30043728B /* graphic_postgres.png */; };
+		A66A882D24DFCCC30043728B /* graphic_postgres.png in Resources */ = {isa = PBXBuildFile; fileRef = A66A881F24DFCCC30043728B /* graphic_postgres.png */; };
+		A66A882E24DFCCC30043728B /* graphic_postgres@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A66A882024DFCCC30043728B /* graphic_postgres@2x.png */; };
+		A66A882F24DFCCC30043728B /* graphic_postgres@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A66A882024DFCCC30043728B /* graphic_postgres@2x.png */; };
+		A66A883024DFCCC30043728B /* graphic_postgres@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A66A882024DFCCC30043728B /* graphic_postgres@2x.png */; };
+		A66A883124DFCCC30043728B /* graphic_elixir@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A66A882124DFCCC30043728B /* graphic_elixir@2x.png */; };
+		A66A883224DFCCC30043728B /* graphic_elixir@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A66A882124DFCCC30043728B /* graphic_elixir@2x.png */; };
+		A66A883324DFCCC30043728B /* graphic_elixir@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A66A882124DFCCC30043728B /* graphic_elixir@2x.png */; };
 		A66BFADC1CD072DB00DA2346 /* iTermThroughputEstimator.h in Headers */ = {isa = PBXBuildFile; fileRef = A66BFADA1CD072DB00DA2346 /* iTermThroughputEstimator.h */; };
 		A66BFADD1CD072DB00DA2346 /* iTermThroughputEstimator.m in Sources */ = {isa = PBXBuildFile; fileRef = A66BFADB1CD072DB00DA2346 /* iTermThroughputEstimator.m */; };
 		A66DABFF20867749006391A3 /* iTermTextViewAccessibilityHelper.m in Sources */ = {isa = PBXBuildFile; fileRef = A60BD9121B3913F6007D7F11 /* iTermTextViewAccessibilityHelper.m */; };
@@ -5528,6 +5546,12 @@
 		A66A1FA61A3A207900F4A3A7 /* iTermWindowShortcutLabelTitlebarAccessoryViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermWindowShortcutLabelTitlebarAccessoryViewController.h; sourceTree = "<group>"; };
 		A66A1FA71A3A207900F4A3A7 /* iTermWindowShortcutLabelTitlebarAccessoryViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermWindowShortcutLabelTitlebarAccessoryViewController.m; sourceTree = "<group>"; };
 		A66A1FAD1A3A230A00F4A3A7 /* iTermWindowShortcutAccessoryView.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; name = iTermWindowShortcutAccessoryView.xib; path = Interfaces/iTermWindowShortcutAccessoryView.xib; sourceTree = "<group>"; };
+		A66A881C24DFCCC20043728B /* graphic_elixir.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = graphic_elixir.png; path = "hyper-tab-icons-plus/png/graphic_elixir.png"; sourceTree = "<group>"; };
+		A66A881D24DFCCC20043728B /* graphic_erlang.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = graphic_erlang.png; path = "hyper-tab-icons-plus/png/graphic_erlang.png"; sourceTree = "<group>"; };
+		A66A881E24DFCCC20043728B /* graphic_erlang@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "graphic_erlang@2x.png"; path = "hyper-tab-icons-plus/png/graphic_erlang@2x.png"; sourceTree = "<group>"; };
+		A66A881F24DFCCC30043728B /* graphic_postgres.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = graphic_postgres.png; path = "hyper-tab-icons-plus/png/graphic_postgres.png"; sourceTree = "<group>"; };
+		A66A882024DFCCC30043728B /* graphic_postgres@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "graphic_postgres@2x.png"; path = "hyper-tab-icons-plus/png/graphic_postgres@2x.png"; sourceTree = "<group>"; };
+		A66A882124DFCCC30043728B /* graphic_elixir@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "graphic_elixir@2x.png"; path = "hyper-tab-icons-plus/png/graphic_elixir@2x.png"; sourceTree = "<group>"; };
 		A66B71211C826F4500D461E2 /* iTermTextExtractorTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermTextExtractorTest.m; sourceTree = "<group>"; };
 		A66BFADA1CD072DB00DA2346 /* iTermThroughputEstimator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermThroughputEstimator.h; sourceTree = "<group>"; };
 		A66BFADB1CD072DB00DA2346 /* iTermThroughputEstimator.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermThroughputEstimator.m; sourceTree = "<group>"; };
@@ -9649,6 +9673,12 @@
 		A6A7A94D214393F1000DA2D4 /* hyper-tab-icons-plus */ = {
 			isa = PBXGroup;
 			children = (
+				A66A881C24DFCCC20043728B /* graphic_elixir.png */,
+				A66A882124DFCCC30043728B /* graphic_elixir@2x.png */,
+				A66A881D24DFCCC20043728B /* graphic_erlang.png */,
+				A66A881E24DFCCC20043728B /* graphic_erlang@2x.png */,
+				A66A881F24DFCCC30043728B /* graphic_postgres.png */,
+				A66A882024DFCCC30043728B /* graphic_postgres@2x.png */,
 				A67F61F32143976E0093940A /* graphic_colors.json */,
 				A67F61F42143976E0093940A /* graphic_icons.json */,
 				A6E7AE54214394CA00DE9F3B /* graphic_atom.png */,
@@ -11802,6 +11832,7 @@
 				A6F7A736213CB143004DE961 /* StatusBarIconLoupe@2x.png in Resources */,
 				A67D0D8B1A2EE12A003A8B35 /* PseudoTerminal.xib in Resources */,
 				1DEDF56E19C917FD005B023A /* new-tab@2x.png in Resources */,
+				A66A882A24DFCCC30043728B /* graphic_erlang@2x.png in Resources */,
 				A6F7A748213CB143004DE961 /* StatusBarIconPaste@2x.png in Resources */,
 				A6F7A742213CB143004DE961 /* StatusBarIconHost@2x.png in Resources */,
 				A6E7AEAB214394F600DE9F3B /* graphic_docker@2x.png in Resources */,
@@ -11837,6 +11868,7 @@
 				A636C3B722891BD900A83E2F /* StatusBarIconNoBattery.png in Resources */,
 				A67F6149214395870093940A /* graphic_less@2x.png in Resources */,
 				53B93E0121F640BD001EC59C /* iTermBadgeConfigurationWindowController.xib in Resources */,
+				A66A882724DFCCC30043728B /* graphic_erlang.png in Resources */,
 				5376CB3E220D2E4300FE7476 /* git.sb in Resources */,
 				536EF5BA23F6684D00B81875 /* it2run in Resources */,
 				A67F61C3214395C60093940A /* graphic_read.png in Resources */,
@@ -11876,6 +11908,7 @@
 				A6EFF2341D2049A400806EEF /* Erase@2x.png in Resources */,
 				A65B72AE1B3285A300F947A7 /* DisableTips@2x.png in Resources */,
 				A67F61C6214395C60093940A /* graphic_search@2x.png in Resources */,
+				A66A882D24DFCCC30043728B /* graphic_postgres.png in Resources */,
 				A6E7AE91214394DD00DE9F3B /* graphic_composer.png in Resources */,
 				A67D0D5B1A2EE12A003A8B35 /* iTerm.strings in Resources */,
 				A6C4352321D1C64800346910 /* iterm2Invoke.js in Resources */,
@@ -11891,6 +11924,7 @@
 				A67F6172214395990093940A /* graphic_mysql.png in Resources */,
 				A67F6192214395A70093940A /* graphic_npm.png in Resources */,
 				A67F618F214395A70093940A /* graphic_nodejs@2x.png in Resources */,
+				A66A883024DFCCC30043728B /* graphic_postgres@2x.png in Resources */,
 				A67F61DD214395D50093940A /* graphic_yo.png in Resources */,
 				53FF981E20927F1E008688D7 /* template_pyenv_simple.py in Resources */,
 				1D6ED9A319AEA20D005A7799 /* DefaultBookmark.plist in Resources */,
@@ -12005,6 +12039,7 @@
 				A6E16C6424A85D5F00C6DB06 /* BigSurAddTab.png in Resources */,
 				A60BB3881EB54BD300D76C09 /* CopyMode.png in Resources */,
 				A67F6166214395990093940A /* graphic_monitor.png in Resources */,
+				A66A882424DFCCC30043728B /* graphic_elixir.png in Resources */,
 				A66F52C32106F6F100571168 /* gitdirty@2x.png in Resources */,
 				1D6ED9C919AEA20D005A7799 /* IBarCursor@2x.png in Resources */,
 				A62DBB9B20F47CFA008B63D1 /* GoBack.png in Resources */,
@@ -12069,6 +12104,7 @@
 				A629F57F23AF2DE100C2F16B /* iterm2_shell_integration.bash in Resources */,
 				A63011BD20E83083008114B7 /* iTermStatusBarKnobTextViewController.xib in Resources */,
 				A6F7A730213CB143004DE961 /* StatusBarIconLoupe.png in Resources */,
+				A66A883324DFCCC30043728B /* graphic_elixir@2x.png in Resources */,
 				1D6ED9E419AEA20D005A7799 /* PrefsProfile.png in Resources */,
 				1D6ED9E519AEA20D005A7799 /* PrefsProfile@2x.png in Resources */,
 				1D6ED9E619AEA20D005A7799 /* PrefsKeyboard.png in Resources */,
@@ -12142,6 +12178,7 @@
 				A6E16C7324A8696D00C6DB06 /* WindowCorner_BigSur.png in Resources */,
 				1D44CFB01CC7F5A600BE5630 /* PTYTextViewTest-golden-nonretina-testDontUseNonAsciiFont.png in Resources */,
 				A6614C78210AE5FD0001EAA3 /* MiniPasteView.xib in Resources */,
+				A66A882C24DFCCC30043728B /* graphic_postgres.png in Resources */,
 				1DC2A1CF1949165D005769D5 /* Maximized@2x.png in Resources */,
 				1D44CF961CC7F5A600BE5630 /* PTYTextViewTest-golden-nonretina-testBlinkingCursorHidden.png in Resources */,
 				1D44D03A1CC7F5A600BE5630 /* PTYTextViewTest-golden-testSmartCursorColor_reverseVideoNondefaultBackgroundOnlyUnderCursor.png in Resources */,
@@ -12163,6 +12200,7 @@
 				A60BB38A1EB54BD800D76C09 /* CopyMode@2x.png in Resources */,
 				A6E7AEB6214394F600DE9F3B /* graphic_database@2x.png in Resources */,
 				1D44CFCD1CC7F5A600BE5630 /* PTYTextViewTest-golden-nonretina-testSmartCursorColor_allBlack.png in Resources */,
+				A66A882324DFCCC30043728B /* graphic_elixir.png in Resources */,
 				1D44D0741CC7F5A600BE5630 /* PTYTextViewTest-golden-travis-testEmoji.png in Resources */,
 				A6F7A70E213CB143004DE961 /* StatusBarIconJobs.png in Resources */,
 				A67F6162214395990093940A /* graphic_mysql@2x.png in Resources */,
@@ -12352,6 +12390,7 @@
 				A67F6188214395A70093940A /* graphic_perl@2x.png in Resources */,
 				1D44D0331CC7F5A600BE5630 /* PTYTextViewTest-golden-testSmartCursorColor_frameAllCursorColor.png in Resources */,
 				1D44D01F1CC7F5A600BE5630 /* PTYTextViewTest-golden-testMark.png in Resources */,
+				A66A882624DFCCC30043728B /* graphic_erlang.png in Resources */,
 				1D44CF931CC7F5A600BE5630 /* PTYTextViewTest-golden-nonretina-testBarCursor.png in Resources */,
 				1D44D08F1CC7F5A600BE5630 /* PTYTextViewTest-golden-travis-testSmartCursorColor_allBlack.png in Resources */,
 				A63011B420E7EE69008114B7 /* iTermStatusBarKnobNumericViewController.xib in Resources */,
@@ -12393,6 +12432,7 @@
 				A6F7A74A213CB143004DE961 /* StatusBarIconRAM.png in Resources */,
 				1D44D0031CC7F5A600BE5630 /* PTYTextViewTest-golden-testCharacterSelectionTextviewIsFirstResponder.png in Resources */,
 				5376CB3D220D2E4300FE7476 /* git.sb in Resources */,
+				A66A882F24DFCCC30043728B /* graphic_postgres@2x.png in Resources */,
 				A67F61EB214395D50093940A /* graphic_yarn@2x.png in Resources */,
 				1D44CFD21CC7F5A600BE5630 /* PTYTextViewTest-golden-nonretina-testSmartCursorColor_frameAllCursorColor.png in Resources */,
 				A686C1991ADF62F200906FAE /* Zoomed@2x.png in Resources */,
@@ -12449,6 +12489,7 @@
 				1D44D0521CC7F5A600BE5630 /* PTYTextViewTest-golden-travis-testBackgroundImageWithTransparency.png in Resources */,
 				A67D0D331A2EE12A003A8B35 /* AboutWindow.xib in Resources */,
 				1D44CFE01CC7F5A600BE5630 /* PTYTextViewTest-golden-nonretina-testSurrogatePairWithCombiningMark.png in Resources */,
+				A66A883224DFCCC30043728B /* graphic_elixir@2x.png in Resources */,
 				A6CEDA6219988A7300BB57EC /* LogoShadow.png in Resources */,
 				1D44D0A91CC7F5A600BE5630 /* PTYTextViewTest-golden-travis-testVerticalSpacing.png in Resources */,
 				A67D0D781A2EE12A003A8B35 /* PasteboardHistory.xib in Resources */,
@@ -12464,6 +12505,7 @@
 				1D44CFB51CC7F5A600BE5630 /* PTYTextViewTest-golden-nonretina-testFindMatches.png in Resources */,
 				A65FF3C420F18550008BD0AE /* iTermMiniSearchFieldViewController.xib in Resources */,
 				A67F61C5214395C60093940A /* graphic_search@2x.png in Resources */,
+				A66A882924DFCCC30043728B /* graphic_erlang@2x.png in Resources */,
 				53AA764A237E35A50094D75A /* OpenQuicklyActionIcon.png in Resources */,
 				1DEF5E6E185F889600300319 /* Alert.png in Resources */,
 				1D44CFBA1CC7F5A600BE5630 /* PTYTextViewTest-golden-nonretina-testIME.png in Resources */,
@@ -12854,6 +12896,7 @@
 				A6F7A737213CB143004DE961 /* StatusBarIconGitBranch@2x.png in Resources */,
 				A6EC47C421EC682B000E1321 /* CompactMinimalWindowScreenshot.png in Resources */,
 				A65B72A91B3285A300F947A7 /* DisableTips.png in Resources */,
+				A66A882524DFCCC30043728B /* graphic_erlang.png in Resources */,
 				530098532259AAEF00A69348 /* keyclick.m4a in Resources */,
 				5376CB3C220D2E4300FE7476 /* git.sb in Resources */,
 				A66DB80F1C8E182B00233E88 /* Info@2x.png in Resources */,
@@ -12885,6 +12928,7 @@
 				A68E33341DE746F5003F1D8E /* Add Mark Touch Bar Icon@2x.png in Resources */,
 				A67D0D6E1A2EE12A003A8B35 /* MainMenu.strings in Resources */,
 				A67D0D771A2EE12A003A8B35 /* PasteboardHistory.xib in Resources */,
+				A66A882224DFCCC30043728B /* graphic_elixir.png in Resources */,
 				1D395913134E75B5005A8021 /* SmartSelectionRules.plist in Resources */,
 				5308BF8D228283CE004BECAC /* StatusBarIconBattery.png in Resources */,
 				1DB40A401B1FDC75005B83C7 /* NoColor.png in Resources */,
@@ -12900,6 +12944,8 @@
 				A60BB3891EB54BD700D76C09 /* CopyMode@2x.png in Resources */,
 				A67F616D214395990093940A /* graphic_nano@2x.png in Resources */,
 				1D8F396B13EB7A2C0025B80B /* BroadcastInput.png in Resources */,
+				A66A882B24DFCCC30043728B /* graphic_postgres.png in Resources */,
+				A66A882824DFCCC30043728B /* graphic_erlang@2x.png in Resources */,
 				A6F7A746213CB143004DE961 /* StatusBarIconPaste@2x.png in Resources */,
 				1D44CCDC1CC6A1DE00BE5630 /* Loupe@2x.png in Resources */,
 				A67D0D501A2EE12A003A8B35 /* FindView.xib in Resources */,
@@ -13050,6 +13096,7 @@
 				A6FE8D15209541BC00B5C648 /* rsa_pub.pem in Resources */,
 				A67F6167214395990093940A /* graphic_nano.png in Resources */,
 				A6E7AE7D214394DD00DE9F3B /* graphic_compile@2x.png in Resources */,
+				A66A882E24DFCCC30043728B /* graphic_postgres@2x.png in Resources */,
 				A67F61ED214395D50093940A /* graphic_vim@2x.png in Resources */,
 				1DEF5E6D185F889600300319 /* Alert.png in Resources */,
 				9DB3D6E4176CB4D80071CCF8 /* PrefsProfile.png in Resources */,
@@ -13061,6 +13108,7 @@
 				A69C93392121101B00531438 /* iTermsStatusBarComposerViewController.xib in Resources */,
 				9DB3D6EC176CC47E0071CCF8 /* PrefsMouse.png in Resources */,
 				5308BF9522828A28004BECAC /* StatusBarIconCharging.png in Resources */,
+				A66A883124DFCCC30043728B /* graphic_elixir@2x.png in Resources */,
 				A6E16C6724A866F300C6DB06 /* WindowCornerFull_BigSur@2x.png in Resources */,
 				53B93DE121F25E79001EC59C /* iterm2_git_wrapper.sh in Resources */,
 				A665C1FD2440461500F623F0 /* WindowCorner.png in Resources */,

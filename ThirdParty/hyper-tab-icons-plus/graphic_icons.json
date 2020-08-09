@@ -26,9 +26,7 @@
     "pg_restore",
     "pg_upgrade",
     "pgbench",
-    "postgres",
     "postmaster",
-    "psql",
     "redis-benchmark",
     "redis-check-aof",
     "redis-check-rdb",
@@ -106,6 +104,10 @@
     "composer",
     "composer.phar",
     "php"
+  ],
+  "postgres": [
+    "postgres",
+    "psql"
   ],
   "ruby": [
     "irb",
