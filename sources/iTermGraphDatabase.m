@@ -171,7 +171,7 @@
             } else {
                 if (before.generation == after.generation &&
                     after.generation != iTermGenerationAlwaysEncode) {
-                    NSLog(@"Don't update rowid %@ %@[%@] because it is unchanged", before.rowid, after.key, after.identifier);
+                    DLog(@"Don't update rowid %@ %@[%@] because it is unchanged", before.rowid, after.key, after.identifier);
                     return;
                 }
             }
