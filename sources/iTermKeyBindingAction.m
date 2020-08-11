@@ -318,6 +318,8 @@ static NSString *GetProfileName(NSString *guid) {
         case KEY_ACTION_RUN_COPROCESS:
         case KEY_ACTION_SEND_C_H_BACKSPACE:
         case KEY_ACTION_SEND_C_QM_BACKSPACE:
+        case KEY_ACTION_PASTE_SPECIAL:
+        case KEY_ACTION_PASTE_SPECIAL_FROM_SELECTION:
             return YES;
             
         case KEY_ACTION_IGNORE:
@@ -355,8 +357,6 @@ static NSString *GetProfileName(NSString *guid) {
         case KEY_ACTION_SET_PROFILE:
         case KEY_ACTION_PREVIOUS_MRU_TAB:
         case KEY_ACTION_LOAD_COLOR_PRESET:
-        case KEY_ACTION_PASTE_SPECIAL:
-        case KEY_ACTION_PASTE_SPECIAL_FROM_SELECTION:
         case KEY_ACTION_TOGGLE_HOTKEY_WINDOW_PINNING:
         case KEY_ACTION_UNDO:
         case KEY_ACTION_MOVE_END_OF_SELECTION_LEFT:
