@@ -4138,6 +4138,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
                                                            widthUnits:widthUnits
                                                                height:height
                                                           heightUnits:heightUnits
+                                                          scaleFactor:[delegate_ screenBackingScaleFactor]
                                                   preserveAspectRatio:preserveAspectRatio
                                                                 inset:inset
                                                          preconfirmed:!promptIfBig];
@@ -4147,7 +4148,8 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
 - (void)appendNativeImageAtCursorWithName:(NSString *)name width:(int)width {
     VT100InlineImageHelper *helper = [[[VT100InlineImageHelper alloc] initWithNativeImageNamed:name
-                                                                                 spanningWidth:width] autorelease];
+                                                                                 spanningWidth:width
+                                                                                   scaleFactor:[delegate_ screenBackingScaleFactor]] autorelease];
     helper.delegate = self;
     [helper writeToGrid:currentGrid_];
 }
@@ -4171,7 +4173,8 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalAppendSixelData:(NSData *)data {
-    VT100InlineImageHelper *helper = [[[VT100InlineImageHelper alloc] initWithSixelData:data] autorelease];
+    VT100InlineImageHelper *helper = [[[VT100InlineImageHelper alloc] initWithSixelData:data
+                                                                            scaleFactor:[delegate_ screenBackingScaleFactor]] autorelease];
     helper.delegate = self;
     [helper writeToGrid:currentGrid_];
 }
@@ -5918,10 +5921,6 @@ static void SwapInt(int *a, int *b) {
     [self confirmBigDownloadWithBeforeSize:lengthBefore
                                  afterSize:lengthAfter
                                       name:name];
-}
-
-- (CGFloat)inlineImageBackingScaleFactor {
-    return [delegate_ screenBackingScaleFactor];
 }
 
 - (NSSize)inlineImageCellSize {

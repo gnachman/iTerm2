@@ -81,6 +81,7 @@
 @property (nullable, nonatomic, strong) NSMutableString *base64String;
 @property (nullable, nonatomic, strong) NSData *sixelData;
 @property (nullable, nonatomic, strong) NSImage *nativeImage;
+@property (nonatomic) CGFloat scaleFactor;
 @end
 
 @implementation VT100InlineImageHelper
@@ -90,6 +91,7 @@
                   widthUnits:(VT100TerminalUnits)widthUnits
                       height:(int)height
                  heightUnits:(VT100TerminalUnits)heightUnits
+                 scaleFactor:(CGFloat)scaleFactor
          preserveAspectRatio:(BOOL)preserveAspectRatio
                        inset:(NSEdgeInsets)inset
                 preconfirmed:(BOOL)preconfirmed {
@@ -102,17 +104,24 @@
         _heightUnits = heightUnits;
         _preserveAspectRatio = preserveAspectRatio;
         _inset = inset;
+        if ([iTermAdvancedSettingsModel retinaInlineImages]) {
+            _scaleFactor = scaleFactor;
+        } else {
+            _scaleFactor = 1;
+        }
         _base64String = [NSMutableString string];
     }
     return self;
 }
 
-- (instancetype)initWithSixelData:(NSData *)data {
+- (instancetype)initWithSixelData:(NSData *)data
+                      scaleFactor:(CGFloat)scaleFactor {
     self = [self initWithName:@"Sixel Image"
                         width:0
                    widthUnits:kVT100TerminalUnitsAuto
                        height:0
                   heightUnits:kVT100TerminalUnitsAuto
+                  scaleFactor:scaleFactor
           preserveAspectRatio:YES
                         inset:NSEdgeInsetsZero
                  preconfirmed:YES];
@@ -123,12 +132,14 @@
 }
 
 - (instancetype)initWithNativeImageNamed:(NSString *)name
-                           spanningWidth:(int)width {
+                           spanningWidth:(int)width
+                             scaleFactor:(CGFloat)scaleFactor {
     self = [self initWithName:name
                         width:width
                    widthUnits:kVT100TerminalUnitsCells
                        height:1
                   heightUnits:kVT100TerminalUnitsCells
+                  scaleFactor:scaleFactor
           preserveAspectRatio:NO
                         inset:NSEdgeInsetsZero
                  preconfirmed:YES];
@@ -200,14 +211,8 @@
 
 - (NSSize)scaledSizeForDecodedImage:(VT100DecodedImage *)decodedImage {
     NSSize scaledSize = decodedImage.image.size;
-    CGFloat scale;
-    if ([iTermAdvancedSettingsModel retinaInlineImages]) {
-        scale = MAX(1, [self.delegate inlineImageBackingScaleFactor]);
-    } else {
-        scale = 1;
-    }
-    scaledSize.width /= scale;
-    scaledSize.height /= scale;
+    scaledSize.width /= _scaleFactor;
+    scaledSize.height /= _scaleFactor;
     return scaledSize;
 }
 
@@ -219,8 +224,8 @@
     const VT100GridSize gridSize = grid.sizeRespectingRegionConditionally;
     switch (_widthUnits) {
         case kVT100TerminalUnitsPixels:
-            *widthPtr = ceil((double)_width / cellSize.width);
-            *requestedWidthInPointsPtr = _width;
+            *widthPtr = ceil((double)_width / (cellSize.width * _scaleFactor));
+            *requestedWidthInPointsPtr = _width / _scaleFactor;
             return NO;
 
         case kVT100TerminalUnitsPercentage: {
@@ -250,13 +255,13 @@
 - (void)getRequestedHeightInPoints:(CGFloat *)requestedHeightInPointsPtr
                             height:(int *)heightPtr
                              grid:(VT100Grid *)grid
-                             width:(int)width
+                       widthPoints:(CGFloat)widthPoints
                         scaledSize:(NSSize)scaledSize
                           cellSize:(NSSize)cellSize {
     switch (_heightUnits) {
         case kVT100TerminalUnitsPixels:
-            *heightPtr = ceil((double)_height / cellSize.height);
-            *requestedHeightInPointsPtr = _height;
+            *heightPtr = ceil((double)_height / (cellSize.height * _scaleFactor));
+            *requestedHeightInPointsPtr = _height / _scaleFactor;
             break;
 
         case kVT100TerminalUnitsPercentage: {
@@ -276,8 +281,9 @@
                 *requestedHeightInPointsPtr = scaledSize.height;
             } else {
                 double aspectRatio = scaledSize.width / scaledSize.height;
-                *heightPtr = ((double)(width * cellSize.width) / aspectRatio) / cellSize.height;
-                *requestedHeightInPointsPtr = *heightPtr * cellSize.height;
+                const CGFloat heightPoints = widthPoints / aspectRatio;
+                *heightPtr = ceil(heightPoints / cellSize.height);
+                *requestedHeightInPointsPtr = heightPoints;
             }
             break;
     }
@@ -309,7 +315,7 @@
     [self getRequestedHeightInPoints:requestedHeightInPointsPtr
                               height:heightPtr
                                 grid:grid
-                               width:*widthPtr
+                         widthPoints:*requestedWidthInPointsPtr
                           scaledSize:scaledSize
                             cellSize:cellSize];
 

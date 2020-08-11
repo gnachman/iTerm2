@@ -22,7 +22,6 @@ typedef NS_ENUM(NSInteger, VT100TerminalUnits) {
 - (void)inlineImageConfirmBigDownloadWithBeforeSize:(NSInteger)lengthBefore
                                           afterSize:(NSInteger)lengthAfter
                                                name:(NSString *)name;
-- (CGFloat)inlineImageBackingScaleFactor;
 - (NSSize)inlineImageCellSize;
 - (void)inlineImageAppendLinefeed;
 - (void)inlineImageSetMarkOnScreenLine:(NSInteger)line
@@ -41,14 +40,17 @@ typedef NS_ENUM(NSInteger, VT100TerminalUnits) {
                   widthUnits:(VT100TerminalUnits)widthUnits
                       height:(int)height
                  heightUnits:(VT100TerminalUnits)heightUnits
+                 scaleFactor:(CGFloat)scaleFactor
          preserveAspectRatio:(BOOL)preserveAspectRatio
                        inset:(NSEdgeInsets)inset
                 preconfirmed:(BOOL)preconfirmed;
 
-- (instancetype)initWithSixelData:(NSData *)data;
+- (instancetype)initWithSixelData:(NSData *)data
+                      scaleFactor:(CGFloat)scaleFactor;
 
 - (instancetype)initWithNativeImageNamed:(NSString *)name
-                           spanningWidth:(int)width;
+                           spanningWidth:(int)width
+                             scaleFactor:(CGFloat)scaleFactor;
 
 - (instancetype)init NS_UNAVAILABLE;
 
