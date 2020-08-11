@@ -5992,7 +5992,7 @@ typedef struct {
 }
 
 - (void)screenParametersDidChange:(NSNotification *)notification {
-    [self bounceMetal];
+//    [self bounceMetal];
 }
 
 - (void)tmuxDidFetchSetTitlesStringOption:(NSNotification *)notification {
