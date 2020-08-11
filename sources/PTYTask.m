@@ -71,6 +71,7 @@ static void HandleSigChld(int n) {
     BOOL _paused;
 
     PTYTaskSize _desiredSize;
+    PTYTaskSize _lastSize;
     NSTimeInterval _timeOfLastSizeChange;
     BOOL _rateLimitedSetSizeToDesiredSizePending;
     BOOL _haveBumpedProcessCache;
@@ -83,6 +84,10 @@ static void HandleSigChld(int n) {
     if (self) {
         const char *label = [iTermThread uniqueQueueLabelWithName:@"com.iterm2.job-manager"].UTF8String;
         _jobManagerQueue = dispatch_queue_create(label, DISPATCH_QUEUE_SERIAL);
+        _lastSize = (PTYTaskSize) {
+            .cellSize = iTermTTYCellSizeMake(INFINITY, INFINITY),
+            .pixelSize = iTermTTYPixelSizeMake(INFINITY, INFINITY)
+        };
         writeBuffer = [[NSMutableData alloc] init];
         writeLock = [[NSLock alloc] init];
         if ([iTermAdvancedSettingsModel runJobsInServers]) {
@@ -384,15 +389,20 @@ static void HandleSigChld(int n) {
     }
 }
 
-- (void)setSize:(VT100GridSize)size viewSize:(NSSize)viewSize {
+- (void)setSize:(VT100GridSize)size viewSize:(NSSize)viewSize scaleFactor:(CGFloat)scaleFactor {
     DLog(@"Set terminal size to %@", VT100GridSizeDescription(size));
     if (self.fd == -1) {
         return;
     }
 
     _desiredSize.cellSize = iTermTTYCellSizeMake(size.width, size.height);
-    _desiredSize.pixelSize = iTermTTYPixelSizeMake(viewSize.width, viewSize.height);
+    _desiredSize.pixelSize = iTermTTYPixelSizeMake(viewSize.width * scaleFactor,
+                                                   viewSize.height * scaleFactor);
 
+    if (PTYTaskSizeEqual(_lastSize, _desiredSize)) {
+        DLog(@"Size didn't change");
+        return;
+    }
     [self rateLimitedSetSizeToDesiredSize];
 }
 
@@ -870,6 +880,7 @@ static void HandleSigChld(int n) {
          @(_desiredSize.pixelSize.width),
          @(_desiredSize.pixelSize.height));
     _timeOfLastSizeChange = [NSDate timeIntervalSinceReferenceDate];
+    _lastSize = _desiredSize;
 
     iTermSetTerminalSize(self.fd, _desiredSize);
 }

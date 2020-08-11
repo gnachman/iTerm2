@@ -146,3 +146,9 @@ iTermTTYCellSize iTermTTYCellSizeMake(double width, double height) {
     return result;
 }
 
+int PTYTaskSizeEqual(PTYTaskSize lhs, PTYTaskSize rhs) {
+    return (lhs.pixelSize.width == rhs.pixelSize.width &&
+            lhs.pixelSize.height == rhs.pixelSize.height &&
+            lhs.cellSize.width == rhs.cellSize.width &&
+            lhs.cellSize.height == rhs.cellSize.height);
+}

@@ -4471,6 +4471,7 @@ ITERM_WEAKLY_REFERENCEABLE
         for (PTYSession *session in self.allSessions) {
             [session updateMetalDriver];
             [session.textview setNeedsDisplay:YES];
+            [session didChangeScreen];
         }
     }
     DLog(@"Returning from windowDidChangeScreen:.");

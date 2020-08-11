@@ -163,7 +163,7 @@ typedef NS_OPTIONS(NSUInteger, iTermJobManagerAttachResults) {
 
 // Cause the slave to receive a SIGWINCH and change the tty's window size. If `size` equals the
 // tty's current window size then no action is taken.
-- (void)setSize:(VT100GridSize)size viewSize:(NSSize)viewSize;
+- (void)setSize:(VT100GridSize)size viewSize:(NSSize)viewSize scaleFactor:(CGFloat)scaleFactor;
 
 - (void)stop;
 

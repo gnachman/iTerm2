@@ -38,3 +38,5 @@ void iTermTTYStateInit(iTermTTYState *ttyState,
                        int isUTF8);
 
 void iTermSetTerminalSize(int fd, PTYTaskSize taskSize);
+int PTYTaskSizeEqual(PTYTaskSize lhs, PTYTaskSize rhs);
+
