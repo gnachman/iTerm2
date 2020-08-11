@@ -238,7 +238,7 @@
         case kVT100TerminalUnitsAuto:
             if (_heightUnits == kVT100TerminalUnitsAuto) {
                 *widthPtr = ceil((double)scaledSize.width / cellSize.width);
-                *requestedWidthInPointsPtr = *widthPtr * cellSize.width;
+                *requestedWidthInPointsPtr = scaledSize.width;
                 return NO;
             }
             *requestedWidthInPointsPtr = 0;
@@ -273,30 +273,31 @@
         case kVT100TerminalUnitsAuto:
             if (_widthUnits == kVT100TerminalUnitsAuto) {
                 *heightPtr = ceil((double)scaledSize.height / cellSize.height);
+                *requestedHeightInPointsPtr = scaledSize.height;
             } else {
                 double aspectRatio = scaledSize.width / scaledSize.height;
                 *heightPtr = ((double)(width * cellSize.width) / aspectRatio) / cellSize.height;
+                *requestedHeightInPointsPtr = *heightPtr * cellSize.height;
             }
-            *requestedHeightInPointsPtr = *heightPtr * cellSize.height;
             break;
     }
 }
 
 - (void)getRequestedWidthInPoints:(CGFloat *)requestedWidthInPointsPtr
                    automaticWidth:(int *)widthPtr
-                        forHeight:(int)height
+                        forHeight:(CGFloat)heightPoints
                        scaledSize:(NSSize)scaledSize
                          cellSize:(NSSize)cellSize {
     const CGFloat aspectRatio = scaledSize.width / scaledSize.height;
-    *widthPtr = ((CGFloat)(height * cellSize.height) * aspectRatio) / cellSize.width;
-    *requestedWidthInPointsPtr = *widthPtr * cellSize.width;
+    const CGFloat widthInPoints = ((CGFloat)heightPoints * aspectRatio);
+    *widthPtr = round(widthInPoints / cellSize.width);
+    *requestedWidthInPointsPtr = widthInPoints;
 }
 
 - (void)getRequestedWidthInPoints:(CGFloat *)requestedWidthInPointsPtr
                             width:(int *)widthPtr
           requestedHeightInPoints:(CGFloat *)requestedHeightInPointsPtr
                            height:(int *)heightPtr
-                         fullAuto:(BOOL *)fullAutoPtr
                              grid:(VT100Grid *)grid
                        scaledSize:(NSSize)scaledSize
                          cellSize:(NSSize)cellSize {
@@ -316,15 +317,10 @@
     if (needsWidth) {
         [self getRequestedWidthInPoints:requestedWidthInPointsPtr
                          automaticWidth:widthPtr
-                              forHeight:*heightPtr
+                              forHeight:*requestedHeightInPointsPtr
                              scaledSize:scaledSize
                                cellSize:cellSize];
     }
-
-    *fullAutoPtr = (_widthUnits == kVT100TerminalUnitsAuto &&
-                    _heightUnits == kVT100TerminalUnitsAuto &&
-                    *widthPtr >= 1 &&
-                    *heightPtr >= 1);
 
     *widthPtr = MAX(1, *widthPtr);
     *heightPtr = MAX(1, *heightPtr);
@@ -336,7 +332,6 @@
         *widthPtr = grid.sizeRespectingRegionConditionally.width;
         *heightPtr *= scale;
         *heightPtr = MAX(1, *heightPtr);
-        *fullAutoPtr = NO;
         *requestedWidthInPointsPtr = *widthPtr * cellSize.width;
         *requestedHeightInPointsPtr = *heightPtr * cellSize.height;
     }
@@ -349,7 +344,6 @@
         *heightPtr = maxHeight;
         *widthPtr *= scale;
         *widthPtr = MAX(1, *widthPtr);
-        *fullAutoPtr = NO;
         *requestedWidthInPointsPtr = *widthPtr * cellSize.width;
         *requestedHeightInPointsPtr = *heightPtr * cellSize.height;
     }
@@ -376,30 +370,16 @@
 }
 
 - (NSEdgeInsets)fractionalInsetForInset:(NSEdgeInsets)inset
-                               scaledSize:(NSSize)scaledSize
+                            desiredSize:(NSSize)desiredSize
                                cellSize:(NSSize)cellSize
                            decodedImage:(VT100DecodedImage *)decodedImage
-                               fullAuto:(BOOL)fullAuto
                                   width:(int)width
                                  height:(int)height {
-    if (self.shouldRoundUp || !fullAuto) {
-        NSEdgeInsets fractionalInset = {
-            .left = MAX(inset.left / cellSize.width, 0),
-            .top = MAX(inset.top / cellSize.height, 0),
-            .right = MAX(inset.right / cellSize.width, 0),
-            .bottom = MAX(inset.bottom / cellSize.height, 0)
-        };
-        return fractionalInset;
-    }
     // Pick an inset that preserves the exact dimensions of the original image.
-    return [iTermImageInfo fractionalInsetsForPreservedAspectRatioWithDesiredSize:scaledSize
-                                                                                forImageSize:decodedImage.image.size
-                                                                                    cellSize:cellSize
-                                                                               numberOfCells:NSMakeSize(width, height)];
-}
-
-- (BOOL)shouldRoundUp {
-    return (_sixelData == nil);
+    return [iTermImageInfo fractionalInsetsForPreservedAspectRatioWithDesiredSize:desiredSize
+                                                                     forImageSize:decodedImage.image.size
+                                                                         cellSize:cellSize
+                                                                    numberOfCells:NSMakeSize(width, height)];
 }
 
 #pragma mark - Grid Twiddling
@@ -408,20 +388,18 @@
                                     widthInCells:(int)width
                                   heightInPoints:(CGFloat)requestedHeightInPoints
                                    heightInCells:(int)height
-                                      scaledSize:(NSSize)scaledSize
                                         cellSize:(NSSize)cellSize
-                                    decodedImage:(VT100DecodedImage *)decodedImage
-                                        fullAuto:(BOOL)fullAuto {
+                                    decodedImage:(VT100DecodedImage *)decodedImage {
     const NSEdgeInsets inset = [self insetsForWidthInPoints:requestedWidthInPoints
                                                widthInCells:width
                                              heightInPoints:requestedHeightInPoints
                                               heightInCells:height
                                                    cellSize:cellSize];
     const NSEdgeInsets fractionalInset = [self fractionalInsetForInset:inset
-                                                            scaledSize:scaledSize
+                                                           desiredSize:NSMakeSize(requestedWidthInPoints,
+                                                                                  requestedHeightInPoints)
                                                               cellSize:cellSize
                                                           decodedImage:decodedImage
-                                                              fullAuto:fullAuto
                                                                  width:width
                                                                 height:height];
     return ImageCharForNewImage(_name,
@@ -469,12 +447,10 @@
     int width = _width;
     CGFloat requestedHeightInPoints = 0;
     int height = _height;
-    BOOL fullAuto = NO;
     [self getRequestedWidthInPoints:&requestedWidthInPoints
                               width:&width
             requestedHeightInPoints:&requestedHeightInPoints
                              height:&height
-                           fullAuto:&fullAuto
                                grid:grid
                          scaledSize:scaledSize
                            cellSize:cellSize];
@@ -485,10 +461,8 @@
                                                widthInCells:width
                                              heightInPoints:requestedHeightInPoints
                                               heightInCells:height
-                                                 scaledSize:scaledSize
                                                    cellSize:cellSize
-                                               decodedImage:decodedImage
-                                                   fullAuto:fullAuto];
+                                               decodedImage:decodedImage];
     *cPtr = c;
     *widthPtr = width;
     *heightPtr = height;
