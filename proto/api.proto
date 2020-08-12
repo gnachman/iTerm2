@@ -114,6 +114,16 @@ message InvokeFunctionRequest {
   message App {
   }
   message Method {
+    // The following methods are defined:
+    // window.set_title(title: String)
+    // session.set_name(name: String)
+    // session.run_tmux_command(command: String) throws  // Throws an exception if this is not a tmux session
+    // session.set_status_bar_component_unread_count(identifier: String, count: Int)
+    // session.stop_coprocess() -> Bool  // returns whether there was a coprocess to stop
+    // session.get_coprocess() -> String?  // returns the name of the command, or nil
+    // session.run_coprocess(commandLine: String, mute: Bool) -> Bool  // returns whether it attempted to start the coprocess. It'll fail only if there is already a coprocess.
+    // tab.set_title(title: String)
+    // tab.select_pane_in_direction(direction: String) throws -> String  // direction is 'left', 'right', 'above', or 'below'. If successful, it will return the ID of the newly active session. If you can't go that way, it returns null. Throws an exception if the direction is invalid.
     optional string receiver = 1;
   }
   oneof context {
