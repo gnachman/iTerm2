@@ -278,6 +278,27 @@ static NSInteger gNextFrameDataNumber;
     MTLRenderPassDescriptor *renderPassDescriptor = [MTLRenderPassDescriptor renderPassDescriptor];
     MTLRenderPassColorAttachmentDescriptor *colorAttachment = renderPassDescriptor.colorAttachments[0];
     colorAttachment.storeAction = MTLStoreActionStore;
+    // FB8143283
+    // .load is important because we re-use textures.
+    //
+    // For example, drawing antialiased text requires multiple passes when text overlaps text.
+    // We follow these steps:
+    // 1. Draw background to to Temporary texture
+    // 2. Copy Temporary to Intermediate
+    // 3. Draw text to Temporary, sampling from Intermediate to blend.
+    // 4. GOTO 2
+    // 5. Copy Temporary to Drawable
+    //
+    // If the loadAction is anything other than .load, the temporary texture's contents are
+    // destroyed between step 2 and 3.
+    //
+    // The documentation for MTLLoadActionLoad says "The GPU preserves the existing contents
+    // of the attachment at the start of the render pass." The reason this affects step 2 is
+    // that it creates a MTLBlitCommandEncoder, encodes the copy command, and invokes -endEncoding.
+    // At the time -endEncoding is called, the render pass ends. My interpretation is that
+    // at the beginning of the render pass to draw text in step 3, the load action is executed.
+    // By setting it to .load, the Temporary texture's contents survives.
+    colorAttachment.loadAction = MTLLoadActionLoad;
     colorAttachment.texture = fast ? [self.fullSizeTexturePool requestTextureOfSize:self.viewportSize] : nil;
     if (!colorAttachment.texture) {
         // Allocate a new texture.
