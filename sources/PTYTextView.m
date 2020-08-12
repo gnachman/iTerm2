@@ -1118,6 +1118,8 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
 #pragma mark - NSView Drawing
 
 - (void)drawRect:(NSRect)rect {
+    [[NSColor redColor] set];
+    NSRectFill(rect);
     if (![_delegate textViewShouldDrawRect]) {
         // Metal code path in use
         [super drawRect:rect];
