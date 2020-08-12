@@ -34,6 +34,10 @@ typedef NS_ENUM(NSUInteger, iTermPythonRuntimeDownloaderStatus) {
 
 @property (nonatomic, readonly) BOOL isPythonRuntimeInstalled;
 
+// When busy, lots of filesystem operations are going and watching paths under the Scripts folder is
+// a bad idea.
+@property (nonatomic, readonly) BOOL busy;
+
 // Returns the path of the standard python binary.
 - (NSString *)pathToStandardPyenvPythonWithPythonVersion:(NSString *)pythonVersion;
 
@@ -68,7 +72,13 @@ typedef NS_ENUM(NSUInteger, iTermInstallPythonStatus) {
     iTermInstallPythonStatusGeneralFailure
 };
 
-// Install a copy of the current environment somewhere.
+// Installs the environment somewhere and shows a please wait window. Higher level API.
+- (void)installPythonEnvironmentTo:(NSURL *)folder
+                      dependencies:(NSArray<NSString *> *)dependencies
+                     pythonVersion:(nullable NSString *)pythonVersion
+                        completion:(void (^)(BOOL ok))completion;
+
+// Install a copy of the current environment somewhere. Lower level API. No UI.
 - (void)installPythonEnvironmentTo:(NSURL *)container
                   eventualLocation:(NSURL *)eventualLocation
                      pythonVersion:(NSString *)pythonVersion
@@ -84,5 +94,9 @@ typedef NS_ENUM(NSUInteger, iTermInstallPythonStatus) {
 
 // Max environment version for the given optional pythonVersion.
 - (int)installedVersionWithPythonVersion:(NSString *)pythonVersion;
+
+// Given a path to an iterm2env-metadata.json, what version number does it contain? Returns 0
+// if something goes wrong.
+- (int)versionInMetadataAtURL:(NSURL *)metadataURL;
 
 @end

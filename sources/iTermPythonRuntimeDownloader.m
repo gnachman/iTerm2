@@ -9,6 +9,7 @@
 
 #import "DebugLogging.h"
 #import "iTermAdvancedSettingsModel.h"
+#import "iTermBuildingScriptWindowController.h"
 #import "iTermCommandRunner.h"
 #import "iTermDisclosableView.h"
 #import "iTermNotificationController.h"
@@ -35,6 +36,7 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
     iTermPythonRuntimeDownloaderStatus _status;  // Set when _downloadGroup notified.
     dispatch_queue_t _queue;  // Used to serialize installs
     iTermPersistentRateLimitedUpdate *_checkForUpdateRateLimit;
+    NSInteger _busy;
 }
 
 + (instancetype)sharedInstance {
@@ -136,9 +138,8 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
                                   minimumEnvironmentVersion:0];
 }
 
-// Returns 0 if no version is installed, otherwise returns the installed version of the python runtime.
-- (int)installedVersionWithPythonVersion:(NSString *)pythonVersion {
-    NSData *data = [NSData dataWithContentsOfURL:[self pathToMetadataWithPythonVersion:pythonVersion]];
+- (int)versionInMetadataAtURL:(NSURL *)metadataURL {
+    NSData *data = [NSData dataWithContentsOfURL:metadataURL];
     if (!data) {
         return 0;
     }
@@ -154,6 +155,11 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
     }
 
     return version.intValue;
+}
+
+// Returns 0 if no version is installed, otherwise returns the installed version of the python runtime.
+- (int)installedVersionWithPythonVersion:(NSString *)pythonVersion {
+    return [self versionInMetadataAtURL:[self pathToMetadataWithPythonVersion:pythonVersion]];
 }
 
 - (void)upgradeIfPossible {
@@ -668,6 +674,37 @@ static NSArray<NSString *> *iTermConvertThreePartVersionNumbersToTwoPart(NSArray
     for (NSString *pythonVersion in pythonVersions) {
         [self createDeepLinkTo:container pythonVersion:pythonVersion runtimeVersion:runtimeVersion];
     }
+}
+
+- (BOOL)busy {
+    return _busy > 0;
+}
+
+- (void)installPythonEnvironmentTo:(NSURL *)folder
+                      dependencies:(NSArray<NSString *> *)dependencies
+                     pythonVersion:(nullable NSString *)pythonVersion
+                        completion:(void (^)(BOOL ok))completion {
+    iTermBuildingScriptWindowController *pleaseWait = [iTermBuildingScriptWindowController newPleaseWaitWindowController];
+    id token = [[NSNotificationCenter defaultCenter] addObserverForName:NSApplicationDidBecomeActiveNotification
+                                                                 object:nil
+                                                                  queue:nil
+                                                             usingBlock:^(NSNotification * _Nonnull note) {
+                                                                 [pleaseWait.window makeKeyAndOrderFront:nil];
+                                                             }];
+    _busy++;
+    [[iTermPythonRuntimeDownloader sharedInstance] installPythonEnvironmentTo:folder
+                                                             eventualLocation:folder
+                                                                pythonVersion:pythonVersion
+                                                           environmentVersion:[[iTermPythonRuntimeDownloader sharedInstance] installedVersionWithPythonVersion:pythonVersion]
+                                                                 dependencies:dependencies
+                                                               createSetupCfg:YES
+                                                                   completion:
+     ^(iTermInstallPythonStatus status) {
+         [[NSNotificationCenter defaultCenter] removeObserver:token];
+         [pleaseWait.window close];
+        self->_busy--;
+        completion(status == iTermInstallPythonStatusOK);
+    }];
 }
 
 - (void)installPythonEnvironmentTo:(NSURL *)container

@@ -11,7 +11,6 @@
 #import "iTermAPIHelper.h"
 #import "iTermAPIScriptLauncher.h"
 #import "iTermAdvancedSettingsModel.h"
-#import "iTermBuildingScriptWindowController.h"
 #import "iTermCommandRunner.h"
 #import "iTermPythonRuntimeDownloader.h"
 #import "iTermScriptChooser.h"
@@ -111,7 +110,6 @@ NS_ASSUME_NONNULL_BEGIN
     BOOL _ranAutoLaunchScript;
     SCEvents *_events;
     NSArray<NSString *> *_allScripts;
-    NSInteger _disablePathWatcher;
 }
 
 - (instancetype)initWithMenu:(NSMenu *)menu {
@@ -211,9 +209,11 @@ NS_ASSUME_NONNULL_BEGIN
         BOOL isDirectory = NO;
         [[NSFileManager defaultManager] fileExistsAtPath:path isDirectory:&isDirectory];
         if (isDirectory) {
-            [directoryEnumerator skipDescendents];
+            [directoryEnumerator skipDescendants];
             if ([workspace isFilePackageAtPath:path] ||
-                [iTermAPIScriptLauncher environmentForScript:path checkForMain:NO]) {
+                [iTermAPIScriptLauncher environmentForScript:path
+                                                checkForMain:NO
+                                               checkForSaved:YES]) {
                 [parentFolderItem addChild:[[iTermScriptItem alloc] initFullEnvironmentWithPath:path parent:parentFolderItem]];
                 continue;
             }
@@ -483,7 +483,9 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)launchScriptWithAbsolutePath:(NSString *)fullPath
                            arguments:(NSArray<NSString *> *)arguments
                   explicitUserAction:(BOOL)explicitUserAction {
-    NSString *venv = [iTermAPIScriptLauncher environmentForScript:fullPath checkForMain:YES];
+    NSString *venv = [iTermAPIScriptLauncher environmentForScript:fullPath
+                                                     checkForMain:YES
+                                                    checkForSaved:YES];
     if (venv) {
         if (!explicitUserAction && ![iTermAPIHelper isEnabled]) {
             DLog(@"Not launching %@ because the API is not enabled", fullPath);
@@ -552,7 +554,9 @@ NS_ASSUME_NONNULL_BEGIN
     if (![[NSFileManager defaultManager] fileExistsAtPath:fullPath]) {
         return NO;
     }
-    NSString *venv = [iTermAPIScriptLauncher environmentForScript:fullPath checkForMain:YES];
+    NSString *venv = [iTermAPIScriptLauncher environmentForScript:fullPath
+                                                     checkForMain:YES
+                                                    checkForSaved:YES];
     if (venv) {
         return YES;
     }
@@ -654,25 +658,11 @@ NS_ASSUME_NONNULL_BEGIN
         NSURL *folder = [NSURL fileURLWithPath:[self folderForFullEnvironmentSavePanelURL:url]];
         NSURL *existingEnv = [folder URLByAppendingPathComponent:@"iterm2env"];
         [[NSFileManager defaultManager] removeItemAtURL:existingEnv error:nil];
-        iTermBuildingScriptWindowController *pleaseWait = [iTermBuildingScriptWindowController newPleaseWaitWindowController];
-        id token = [[NSNotificationCenter defaultCenter] addObserverForName:NSApplicationDidBecomeActiveNotification
-                                                                     object:nil
-                                                                      queue:nil
-                                                                 usingBlock:^(NSNotification * _Nonnull note) {
-                                                                     [pleaseWait.window makeKeyAndOrderFront:nil];
-                                                                 }];
-        _disablePathWatcher++;
         [[iTermPythonRuntimeDownloader sharedInstance] installPythonEnvironmentTo:folder
-                                                                 eventualLocation:folder
-                                                                    pythonVersion:pythonVersion
-                                                               environmentVersion:[[iTermPythonRuntimeDownloader sharedInstance] installedVersionWithPythonVersion:pythonVersion]
                                                                      dependencies:dependencies
-                                                                   createSetupCfg:YES
-                                                                       completion:
-         ^(iTermInstallPythonStatus status) {
-             [[NSNotificationCenter defaultCenter] removeObserver:token];
-             [pleaseWait.window close];
-             if (status != iTermInstallPythonStatusOK) {
+                                                                    pythonVersion:pythonVersion
+                                                                       completion:^(BOOL ok) {
+            if (!ok) {
                  NSAlert *alert = [[NSAlert alloc] init];
                  alert.messageText = @"Installation Failed";
                  alert.informativeText = @"Remove ~/Library/Application Support/iTerm2/iterm2env and try again.";
@@ -680,7 +670,6 @@ NS_ASSUME_NONNULL_BEGIN
                  return;
              }
              [self finishInstallingNewPythonScriptForPicker:picker url:url];
-             self->_disablePathWatcher--;
              [self build];
          }];
     } else {
@@ -1067,7 +1056,7 @@ NS_ASSUME_NONNULL_BEGIN
 #pragma mark - SCEventListenerProtocol
 
 - (void)pathWatcher:(SCEvents *)pathWatcher eventOccurred:(SCEvent *)event {
-    if (_disablePathWatcher) {
+    if ([[iTermPythonRuntimeDownloader sharedInstance] busy]) {
         return;
     }
     DLog(@"Path watcher noticed a change to scripts directory");

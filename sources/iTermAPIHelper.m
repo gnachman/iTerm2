@@ -10,7 +10,6 @@
 #import "CVector.h"
 #import "DebugLogging.h"
 #import "iTermAdvancedSettingsModel.h"
-#import "iTermProcessInspector.h"
 #import "iTermBuriedSessions.h"
 #import "iTermBuiltInFunctions.h"
 #import "iTermColorPresets.h"
@@ -1331,17 +1330,11 @@ static BOOL iTermAPIHelperLastApplescriptAuthRequiredSetting;
 
 - (BOOL)apiServerAuthorizeProcesses:(NSArray<NSNumber *> *)pids
                       preauthorized:(BOOL)preauthorized
-                               unix:(BOOL)unix
                       disableAuthUI:(BOOL)disableAuthUI
                        advisoryName:(NSString *)advisoryName
                              reason:(out NSString *__autoreleasing *)reason
                         displayName:(out NSString *__autoreleasing *)displayName {
-    if (unix) {
-        *displayName = advisoryName ? [@"≈" stringByAppendingString:advisoryName] : @"Unknown";
-    } else {
-        iTermProcessInspector *controller = [[iTermProcessInspector alloc] initWithProcessIDs:pids];
-        *displayName = controller.humanReadableName ?: @"Unknown";
-    }
+    *displayName = advisoryName ? [@"≈" stringByAppendingString:advisoryName] : @"Unknown";
 
     if (preauthorized) {
         *reason = @"Script launched by user action";
@@ -1356,23 +1349,8 @@ static BOOL iTermAPIHelperLastApplescriptAuthRequiredSetting;
         return NO;
     }
 
-    NSString *message;
-    if (unix) {
-        message = @"Another process is trying to use the iTerm2 API. The API allows a script to control iTerm2 and view and modify its contents. Allow the connection?";
-    } else {
-        if (pids.count == 0) {
-            *reason = @"Could not find process ID of peer";
-            return NO;
-        }
-
-        if (pids.count == 1) {
-            const pid_t pid = pids.firstObject.intValue;
-            message = [NSString stringWithFormat:@"Process ID %@ is trying to use the iTerm2 API. The API allows a script to control iTerm2 and view and modify its contents. Allow the connection?", @(pid)];
-        } else {
-          message = [NSString stringWithFormat:@"A process is trying to use the iTerm2 API. The process ID is one of: %@. The API allows a script to control iTerm2 and view and modify its contents. Allow the connection?",
-                     [pids componentsJoinedWithOxfordCommaAndConjunction:@"or"]];
-        }
-    }
+    NSString *message =
+        @"Another process is trying to use the iTerm2 API. The API allows a script to control iTerm2 and view and modify its contents. Allow the connection?";
 
     if ([iTermAdvancedSettingsModel setCookie]) {
         message = [NSString stringWithFormat:@"%@\n\nAlthough you have chosen to allow connections automatically, this script has not presented a valid cookie.", message];

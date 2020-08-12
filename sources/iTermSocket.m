@@ -18,10 +18,6 @@
     int _addressFamily;
 }
 
-+ (instancetype)tcpIPV4Socket {
-    return [[self alloc] initWithAddressFamily:AF_INET socketType:SOCK_STREAM];
-}
-
 + (instancetype)unixDomainSocket {
     return [[self alloc] initWithAddressFamily:AF_UNIX socketType:SOCK_STREAM];
 }

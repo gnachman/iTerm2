@@ -21,7 +21,9 @@
         setupCfgPath:(NSString *)setupCfgPath
   explicitUserAction:(BOOL)explicitUserAction;
 
-+ (NSString *)environmentForScript:(NSString *)path checkForMain:(BOOL)checkForMain;
++ (NSString *)environmentForScript:(NSString *)path
+                      checkForMain:(BOOL)checkForMain
+                     checkForSaved:(BOOL)checkForSaved;
 + (NSString *)prospectivePythonPathForPyenvScriptNamed:(NSString *)name;
 
 @end

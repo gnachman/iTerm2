@@ -16,8 +16,7 @@
 #import "iTermWebSocketConnection.h"
 #import "iTermWebSocketFrame.h"
 #import "iTermSocket.h"
-#import "iTermIPV4Address.h"
-#import "iTermSocketIPV4Address.h"
+#import "iTermSocketAddress.h"
 #import "NSArray+iTerm.h"
 #import "NSFileManager+iTerm.h"
 #import "NSObject+iTerm.h"
@@ -130,7 +129,6 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
 @end
 
 @implementation iTermAPIServer {
-    iTermSocket *_tcpSocket;  // will be deprecated. See plan in https://gitlab.com/gnachman/iterm2/-/issues/8714#note_330673495
     iTermSocket *_unixSocket;
     NSMutableDictionary<id, iTermWebSocketConnection *> *_connections;  // _queue
     dispatch_queue_t _executionQueue;
@@ -164,45 +162,15 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
             XLog(@"Failed to create unix socket");
             return nil;
         }
-        _tcpSocket = [iTermSocket tcpIPV4Socket];
-        if (!_tcpSocket) {
-            XLog(@"Failed to create TCP socket");
-            return nil;
-        }
         _pendingConnections = [NSMutableArray array];
         _queue = dispatch_queue_create("com.iterm2.apisockets", NULL);
         _executionQueue = dispatch_queue_create("com.iterm2.apiexec", DISPATCH_QUEUE_SERIAL);
 
-        if (![self listenOnTCPSocket]) {
-            return nil;
-        }
         if (![self listenOnUnixSocket]) {
             return nil;
         }
     }
     return self;
-}
-
-- (BOOL)listenOnTCPSocket {
-    iTermSocketAddress *socketAddress = nil;
-    iTermIPV4Address *loopback = [[iTermIPV4Address alloc] initWithLoopback];
-    socketAddress = [iTermSocketAddress socketAddressWithIPV4Address:loopback
-                                                                port:1912];
-    [_tcpSocket setReuseAddr:YES];
-    if (![_tcpSocket bindToAddress:socketAddress]) {
-        XLog(@"Failed to bind");
-        return NO;
-    }
-
-    BOOL ok = [_tcpSocket listenWithBacklog:5 accept:^(int fd, iTermSocketAddress *clientAddress, NSNumber *euid) {
-        [self didAcceptConnectionOnFileDescriptor:fd fromAddress:clientAddress euid:euid retries:1];
-    }];
-    if (!ok) {
-        XLog(@"Failed to listen");
-        return NO;
-    }
-
-    return YES;
 }
 
 - (BOOL)listenOnUnixSocket {
@@ -246,8 +214,6 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
 
 - (void)stop {
     self.delegate = nil;
-    [_tcpSocket close];
-    _tcpSocket = nil;
     [_unixSocket close];
     _unixSocket = nil;
     dispatch_sync(_queue, ^{
@@ -295,16 +261,6 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
 - (void)reallyDidAcceptConnection:(iTermHTTPConnection *)connection
                           retries:(NSInteger)retries {
     DLog(@"reallyDidAcceptConnection with retries=%@", @(retries));
-    if (connection.clientAddress.addressFamily == AF_UNIX) {
-        [self reallyDidAcceptUnixConnection:connection retries:retries];
-        return;
-    }
-    [self reallyDidAcceptTCPConnection:connection retries:retries];
-}
-
-// run on _queue
-- (void)reallyDidAcceptUnixConnection:(iTermHTTPConnection *)connection
-                              retries:(NSInteger)retries {
     if (!connection.euid || connection.euid.unsignedIntValue != geteuid()) {
         DLog(@"Deny bad euid %@ != mine of %@", connection.euid, @(geteuid()));
         dispatch_async(connection.queue, ^{
@@ -326,51 +282,6 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
                 [connection unauthorized];
             });
         }
-    }];
-}
-
-// run on _queue
-- (void)reallyDidAcceptTCPConnection:(iTermHTTPConnection *)connection
-                             retries:(NSInteger)retries {
-    dispatch_queue_t queue = _queue;
-    [iTermLSOF getProcessIDsWithConnectionFromAddress:connection.clientAddress
-                                                queue:queue
-                                           completion:^(NSArray<NSNumber *> *pids) {
-        if (!pids.count) {
-            DLog(@"Failed to get process IDs for the connection. retries=%@", @(retries));
-            if (retries > 0) {
-                // There seems to be a race where the kernel doesn't always
-                // report that a process ID has a file descriptor matching this
-                // address. Wait a bit and try again. Issue 8684.
-                DLog(@"Will try again in .25 sec");
-                dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.25 * NSEC_PER_SEC)), queue, ^{
-                    DLog(@"Trying again");
-                    [self reallyDidAcceptConnection:connection
-                                            retries:retries - 1];
-                });
-                return;
-            }
-            XLog(@"Reject connection from unidentifiable process with address %@", connection.clientAddress);
-            dispatch_async(dispatch_get_main_queue(), ^{
-                [[NSNotificationCenter defaultCenter] postNotificationName:iTermAPIServerConnectionRejected
-                                                                    object:nil
-                                                                  userInfo:@{ @"reason": [NSString stringWithFormat:@"Could not get process ID for connection from port %@", @(connection.clientAddress.port)] }];
-            });
-            dispatch_async(connection.queue, ^{
-                [connection unauthorized];
-            });
-            return;
-        }
-
-        [self startRequestOnConnection:connection pids:pids completion:^(BOOL ok, NSString *reason) {
-            [self->_pendingConnections removeObject:connection];
-            if (!ok) {
-                XLog(@"Reject unauthenticated process (pids %@): %@", pids, reason);
-                dispatch_async(connection.queue, ^{
-                    [connection unauthorized];
-                });
-            }
-        }];
     }];
 }
 
@@ -426,10 +337,9 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
             NSString *reason = nil;
             NSString *displayName = nil;
             const BOOL disableAuthUI = request.allHTTPHeaderFields[@"x-iterm2-disable-auth-ui"] != nil;
-            const BOOL connectionOnUnixDomainSocket = (connection.clientAddress.addressFamily == AF_UNIX);
+            assert(connection.clientAddress.addressFamily == AF_UNIX);
             const BOOL ok = [self.delegate apiServerAuthorizeProcesses:pids
                                                          preauthorized:webSocketConnection.preauthorized
-                                                                  unix:connectionOnUnixDomainSocket
                                                          disableAuthUI:disableAuthUI
                                                           advisoryName:webSocketConnection.advisoryName
                                                                 reason:&reason

@@ -14,7 +14,6 @@
 @interface iTermSocket : NSObject
 @property (nonatomic, readonly) int fd;
 
-+ (instancetype)tcpIPV4Socket;
 + (instancetype)unixDomainSocket;
 
 - (void)setReuseAddr:(BOOL)reuse;

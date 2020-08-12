@@ -19,7 +19,6 @@ extern NSString *const iTermAPIServerConnectionClosed;
 @protocol iTermAPIServerDelegate<NSObject>
 - (BOOL)apiServerAuthorizeProcesses:(NSArray<NSNumber *> *)pids
                       preauthorized:(BOOL)preauthorized
-                               unix:(BOOL)unix
                       disableAuthUI:(BOOL)disableAuthUI
                        advisoryName:(NSString *)advisoryName
                              reason:(out NSString **)reason
