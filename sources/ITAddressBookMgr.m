@@ -387,7 +387,8 @@ iTermWindowType iTermThemedWindowType(iTermWindowType windowType) {
 - (void)_addBonjourHostProfileWithName:(NSString *)serviceName
                        ipAddressString:(NSString *)ipAddressString
                                   port:(int)port
-                           serviceType:(NSString *)serviceType {
+                           serviceType:(NSString *)serviceType
+                              userName:(NSString *)username {
     NSMutableDictionary *newBookmark;
     Profile* prototype = [[ProfileModel sharedInstance] defaultBookmark];
     if (prototype) {
@@ -404,7 +405,11 @@ iTermWindowType iTermThemedWindowType(iTermWindowType windowType) {
     if ([serviceType isEqualToString:@"ssh"] && port != 22) {
         optionalPortArg = [NSString stringWithFormat:@"-p %d ", port];
     }
-    [newBookmark setObject:[NSString stringWithFormat:@"%@ %@%@", serviceType, optionalPortArg, ipAddressString]
+    NSString *userNameArg = @"";
+    if ([serviceType isEqualToString:@"ssh"] && username && ![username isEqualToString:@""]) {
+        userNameArg = [NSString stringWithFormat:@"-l %@ ",username];
+    }
+    [newBookmark setObject:[NSString stringWithFormat:@"%@ %@%@%@", serviceType, userNameArg, optionalPortArg, ipAddressString]
                     forKey:KEY_COMMAND_LINE];
     [newBookmark setObject:@"" forKey:KEY_WORKING_DIRECTORY];
     [newBookmark setObject:kProfilePreferenceCommandTypeCustomValue forKey:KEY_CUSTOM_COMMAND];
@@ -490,10 +495,34 @@ iTermWindowType iTermThemedWindowType(iTermWindowType windowType) {
         if ([self verbose]) {
             NSLog(@"netServiceDidResolveAddress add profile with address %s", strAddr);
         }
+        
+        NSString *username=@"";
+        // extract username from txt-records, if they exist
+        // look for keys such as u= or username=
+        NSData *txt=[sender TXTRecordData];
+        NSDictionary <NSString *,NSData *> *d=[NSNetService dictionaryFromTXTRecordData:txt];
+        for (NSString *k in d.allKeys)
+        {
+            if (k
+                && ([k caseInsensitiveCompare:@"u"]!=NSOrderedSame)
+                && ([k caseInsensitiveCompare:@"username"]!=NSOrderedSame)
+                )
+            { continue; }
+            
+            NSData *val=[d valueForKey:k];
+            if (!val) { continue; }
+            NSString *s2=[[NSString alloc] initWithUTF8DataIgnoringErrors:val];
+            if (!s2) { continue; }
+            
+            username=s2;
+        }
+        
+
         [self _addBonjourHostProfileWithName:serviceName
                              ipAddressString:[NSString stringWithFormat:@"%s", strAddr]
                                         port:[self portFromSockaddr:socketAddress]
-                                 serviceType:serviceType];
+                                 serviceType:serviceType
+                                    userName:username];
 
         // remove from array now that resolving is done
         if ([bonjourServices containsObject:sender]) {
