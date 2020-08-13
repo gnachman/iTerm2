@@ -550,6 +550,9 @@ backgroundColor:(NSColor *)backgroundColor;
 + (NSDictionary *)repairedArrangement:(NSDictionary *)arrangement
              replacingProfileWithGUID:(NSString *)badGuid
                           withProfile:(Profile *)goodProfile;
++ (NSDictionary *)repairedArrangement:(NSDictionary *)arrangement
+     replacingOldCWDOfSessionWithGUID:(NSString *)guid
+                           withOldCWD:(NSString *)replacementOldCWD;
 
 + (BOOL)handleShortcutWithoutTerminal:(NSEvent*)event;
 + (void)selectMenuItem:(NSString*)theName;
@@ -604,6 +607,7 @@ backgroundColor:(NSColor *)backgroundColor;
                                    tmuxController:(TmuxController *)tmuxController
                                            window:(int)window;
 + (NSString *)guidInArrangement:(NSDictionary *)arrangement;
++ (NSString *)initialWorkingDirectoryFromArrangement:(NSDictionary *)arrangement;
 
 - (void)textViewFontDidChange;
 
@@ -615,6 +619,7 @@ backgroundColor:(NSColor *)backgroundColor;
          customShell:(NSString *)customShell
               isUTF8:(BOOL)isUTF8
        substitutions:(NSDictionary *)substitutions
+         arrangement:(NSString *)arrangement
           completion:(void (^)(BOOL))completion;
 
 // This is an alternative to runCommandWithOldCwd and startProgram. It attaches

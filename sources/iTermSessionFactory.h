@@ -35,6 +35,8 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, strong) PseudoTerminal *windowController;
 @property (nonatomic, nullable, copy) void (^ready)(BOOL ok);
 @property (nonatomic, nullable, copy) void (^completion)(PTYSession * _Nullable session, BOOL ok);  // If nonnil, attachorLaunch may be async
+// Name of the arrangement from which this request originated.
+@property (nullable, nonatomic, copy) NSString *arrangementName;
 
 + (instancetype)launchRequestWithSession:(PTYSession *)aSession
                                canPrompt:(BOOL)canPrompt

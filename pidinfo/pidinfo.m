@@ -40,6 +40,54 @@
                               size:(NSNumber *)size
                              reqid:(int)reqid
                          withReply:(void (^)(NSNumber *, NSData *))reply {
+    [self performRiskyBlock:^(BOOL shouldPerform, BOOL (^completion)(void)) {
+        if (!shouldPerform) {
+            reply(@-1, [NSData data]);
+            syslog(LOG_WARNING,
+                   "pidinfo %d detected wedged proc_pidinfo for process ID %d, flavor %d. Count is %d.",
+                   reqid, pid.intValue, flavor.intValue, self->_numWedged);
+            return;
+        }
+        [self reallyGetProcessInfoForProcessID:pid flavor:flavor arg:arg size:size reqid:reqid withReply:^(NSNumber *number, NSData *data) {
+            if (!completion()) {
+                syslog(LOG_INFO, "pidinfo reqid %d finished after timing out", reqid);
+                return;
+            }
+            reply(number, data);
+        }];
+    }];
+}
+
+- (void)checkIfDirectoryExists:(NSString *)directory withReply:(void (^)(NSNumber * _Nullable))reply {
+    [self performRiskyBlock:^(BOOL shouldPerform, BOOL (^ _Nullable completion)(void)) {
+        if (!shouldPerform) {
+            reply(nil);
+            return;
+        }
+        BOOL isDirectory = NO;
+        const BOOL exists = [[NSFileManager defaultManager] fileExistsAtPath:directory isDirectory:&isDirectory];
+        if (!completion()) {
+            return;
+        }
+        NSNumber *result = @(exists && isDirectory);
+        reply(result);
+    }];
+}
+
+// Usage:
+// [self performRiskyBlock:^(BOOL shouldPerform, BOOL (^completion)(void)) {
+//   if (!shouldPerform) {
+//     reply(FAILURE);
+//     return;
+//   }
+//   [self doSlowOperationWithCompletion:^{
+//     if (!completion()) {
+//       return;
+//     }
+//     reply(SUCCESS);
+//   }];
+// }];
+- (void)performRiskyBlock:(void (^)(BOOL shouldPerform, BOOL (^ _Nullable completion)(void)))block {
     const NSTimeInterval timeout = 10;
     __block _Atomic BOOL done = NO;
     __block _Atomic BOOL wedged = NO;
@@ -51,31 +99,28 @@
             return;
         }
         wedged = YES;
-        reply(@-1, [NSData data]);
+        block(NO, nil);
         self->_numWedged++;
-        syslog(LOG_WARNING,
-               "pidinfo %d detected wedged proc_pidinfo for process ID %d, flavor %d. Count is %d.",
-               reqid, pid.intValue, flavor.intValue, self->_numWedged);
 
         if (self->_numWedged > 128) {
-            syslog(LOG_ERR, "pidinfo %d has more than 128 wedged threads. Restarting.", reqid);
+            syslog(LOG_ERR, "There are more than 128 wedged threads. Restarting.");
             _exit(0);
         }
     });
     dispatch_async(_queue, ^{
-        [self reallyGetProcessInfoForProcessID:pid flavor:flavor arg:arg size:size reqid:reqid withReply:^(NSNumber *number, NSData *data) {
+        block(YES, ^{
             self->_count--;
             if (wedged) {
               // Finished after timeout.
               self->_numWedged--;
               syslog(LOG_INFO,
-                     "pidinfo %d detected slow but not wedged proc_pidinfo. Count is now %d.",
-                     reqid, self->_numWedged);
-                return;
+                     "pidinfo detected slow but not wedged proc_pidinfo. Count is now %d.",
+                     self->_numWedged);
+                return NO;
             }
             done = YES;
-            reply(number, data);
-        }]; 
+            return YES;
+        });
     });
 }
 

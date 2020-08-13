@@ -105,6 +105,40 @@ static NSString *const iTermNaggingControllerDidChangeTmuxWindowsShouldCloseAfte
     }];
 }
 
+- (void)arrangementWithName:(NSString *)arrangementName
+              hasInvalidPWD:(NSString *)badPWD
+         forSessionWithGuid:(NSString *)sessionGUID {
+    DLog(@"Arrangement %@ has bad pwd of %@ for session guid %@", arrangementName, badPWD, sessionGUID);
+    if ([iTermAdvancedSettingsModel noSyncSuppressBadPWDInArrangementWarning]) {
+        return;
+    }
+    NSString *notice = [NSString stringWithFormat:@"The saved arrangement “%@” has a bad initial directory of “%@” for this session.", arrangementName, badPWD];
+
+    [self.delegate naggingControllerShowMessage:notice
+                                     isQuestion:NO
+                                      important:NO
+                                     identifier:iTermNaggingControllerArrangementProfileMissingIdentifier
+                                        options:@[ @"Don’t Warn Again", @"Repair" ]
+                                     completion:^(int selection) {
+        [self handleCompletionForInvalidPWDInArrangementWithName:arrangementName
+                                                            guid:sessionGUID
+                                                       selection:selection];
+    }];
+}
+
+- (void)handleCompletionForInvalidPWDInArrangementWithName:(NSString *)arrangementName
+                                                      guid:(NSString *)guid
+                                                 selection:(int)selection {
+    if (selection == 0) {
+        [iTermAdvancedSettingsModel setNoSyncSuppressBadPWDInArrangementWarning:YES];
+        return;
+    }
+    if (selection == 1) {
+        [self.delegate naggingControllerRepairInitialWorkingDirectoryOfSessionWithGUID:guid
+                                                                 inArrangementWithName:arrangementName];
+    }
+}
+
 - (void)didRestoreOrphan {
     [self.delegate naggingControllerShowMessage:@"This already-running session was restored but its contents were not saved."
                                      isQuestion:YES

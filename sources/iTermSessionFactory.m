@@ -362,6 +362,7 @@ NS_ASSUME_NONNULL_BEGIN
                       customShell:request.customShell
                            isUTF8:request.isUTF8
                     substitutions:request.substitutions
+                      arrangement:request.arrangementName
                        completion:^(BOOL ok) {
         [request.windowController setWindowTitle];
         if (completion) {

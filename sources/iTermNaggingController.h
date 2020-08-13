@@ -34,6 +34,8 @@ extern NSString *const kTurnOffBracketedPasteOnHostChangeAnnouncementIdentifier;
 - (void)naggingControllerDisableMouseReportingPermanently:(BOOL)permanently;
 - (void)naggingControllerDisableBracketedPasteMode;
 - (void)naggingControllerCloseSession;
+- (void)naggingControllerRepairInitialWorkingDirectoryOfSessionWithGUID:(NSString *)guid
+                                                  inArrangementWithName:(NSString *)arrangementName;
 @end
 
 @interface iTermNaggingController : NSObject
@@ -72,6 +74,10 @@ extern NSString *const kTurnOffBracketedPasteOnHostChangeAnnouncementIdentifier;
 - (void)askAboutClearingScrollbackHistory;
 - (BOOL)terminalCanChangeProfile;
 - (BOOL)tmuxWindowsShouldCloseAfterDetach;
+- (void)arrangementWithName:(NSString *)arrangementName
+              hasInvalidPWD:(NSString *)badPWD
+         forSessionWithGuid:(NSString *)sessionGUID;
+
 
 @end
 

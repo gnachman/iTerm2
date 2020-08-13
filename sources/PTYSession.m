@@ -86,6 +86,7 @@
 #import "iTermShellHistoryController.h"
 #import "iTermShortcut.h"
 #import "iTermShortcutInputView.h"
+#import "iTermSlowOperationGateway.h"
 #import "iTermStatusBarLayout.h"
 #import "iTermStatusBarLayout+tmux.h"
 #import "iTermStatusBarViewController.h"
@@ -155,6 +156,7 @@
 #import "VT100ScreenMark.h"
 #import "VT100Terminal.h"
 #import "VT100Token.h"
+#import "WindowArrangements.h"
 #import "WindowControllerInterface.h"
 #import <apr-1/apr_base64.h>
 #include <stdlib.h>
@@ -579,6 +581,10 @@ static const NSUInteger kMaxHosts = 100;
     BOOL _tmuxTTLHasThresholds;
     NSTimeInterval _tmuxTTLLowerThreshold;
     NSTimeInterval _tmuxTTLUpperThreshold;
+    // If nonnil, gives the GUID of the session from the arrangement that created it. Often this
+    // will differ from its real GUID. It only serves to find the session in the arrangement to
+    // make repairs.
+    NSString *_arrangementGUID;
 }
 
 @synthesize isDivorced = _divorced;
@@ -942,6 +948,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_composerManager release];
     [_lastLibTickitProfileSetting release];
     [_tmuxClientWritePipe release];
+    [_arrangementGUID release];
 
     [super dealloc];
 }
@@ -1115,6 +1122,16 @@ ITERM_WEAKLY_REFERENCEABLE
     } else {
         return arrangement;
     }
+}
+
++ (NSDictionary *)repairedArrangement:(NSDictionary *)arrangement
+     replacingOldCWDOfSessionWithGUID:(NSString *)guid
+                           withOldCWD:(NSString *)replacementOldCWD {
+    if ([arrangement[SESSION_ARRANGEMENT_GUID] isEqualToString:guid]) {
+        return [arrangement dictionaryBySettingObject:replacementOldCWD
+                                               forKey:SESSION_ARRANGEMENT_WORKING_DIRECTORY];
+    }
+    return arrangement;
 }
 
 + (void)finishInitializingArrangementOriginatedSession:(PTYSession *)aSession
@@ -1505,6 +1522,7 @@ ITERM_WEAKLY_REFERENCEABLE
         if (arrangement[SESSION_ARRANGEMENT_GUID]) {
             DLog(@"The session arrangement has a GUID");
             NSString *guid = arrangement[SESSION_ARRANGEMENT_GUID];
+            aSession->_arrangementGUID = [guid copy];
             if (guid && gRegisteredSessionContents[guid]) {
                 DLog(@"The GUID is registered");
                 // There was a registered session with this guid. This session was created by
@@ -1596,6 +1614,7 @@ ITERM_WEAKLY_REFERENCEABLE
                                                                       ready:nil
                                                                  completion:completion];
                 iTermSessionFactory *factory = [[[iTermSessionFactory alloc] init] autorelease];
+                launchRequest.arrangementName = arrangementName;
                 [factory attachOrLaunchWithRequest:launchRequest];
             };
         }
@@ -2193,11 +2212,24 @@ ITERM_WEAKLY_REFERENCEABLE
     completion(env);
 }
 
+- (void)arrangementWithName:(NSString *)arrangementName hasBadPWD:(NSString *)pwd {
+    if (![[iTermController sharedInstance] arrangementWithName:arrangementName
+                                            hasSessionWithGUID:_arrangementGUID
+                                                           pwd:pwd]) {
+        return;
+    }
+
+    [self.naggingController arrangementWithName:arrangementName
+                                  hasInvalidPWD:pwd
+                             forSessionWithGuid:_arrangementGUID];
+}
+
 - (void)startProgram:(NSString *)command
          environment:(NSDictionary *)environment
          customShell:(NSString *)customShell
               isUTF8:(BOOL)isUTF8
        substitutions:(NSDictionary *)substitutions
+         arrangement:(NSString *)arrangementName
           completion:(void (^)(BOOL))completion {
    DLog(@"startProgram:%@ environment:%@ isUTF8:%@ substitutions:%@",
          command, environment, @(isUTF8), substitutions);
@@ -2215,7 +2247,17 @@ ITERM_WEAKLY_REFERENCEABLE
                                     plainText:[iTermProfilePreferences boolForKey:KEY_PLAIN_TEXT_LOGGING
                                                                         inProfile:self.profile]
                                        append:nil];
-
+                if (env[PWD_ENVNAME] && arrangementName && _arrangementGUID) {
+                    __weak __typeof(self) weakSelf = self;
+                    [[iTermSlowOperationGateway sharedInstance] checkIfDirectoryExists:env[PWD_ENVNAME]
+                                                                            completion:^(BOOL exists) {
+                        if (exists) {
+                            return;
+                        }
+                        [weakSelf arrangementWithName:arrangementName
+                                            hasBadPWD:env[PWD_ENVNAME]];
+                    }];
+                }
                 [_shell launchWithPath:argv[0]
                              arguments:[argv subarrayFromIndex:1]
                            environment:env
@@ -3196,6 +3238,7 @@ ITERM_WEAKLY_REFERENCEABLE
            customShell:_customShell
                 isUTF8:_isUTF8
          substitutions:_substitutions
+           arrangement:nil
             completion:nil];
     [_naggingController willRecycleSession];
     DLog(@"  replaceTerminatedShellWithNewInstance: return with terminal=%@", _screen.terminal);
@@ -4804,6 +4847,10 @@ ITERM_WEAKLY_REFERENCEABLE
     } else {
         return arrangement[SESSION_UNIQUE_ID];
     }
+}
+
++ (NSString *)initialWorkingDirectoryFromArrangement:(NSDictionary *)arrangement {
+    return arrangement[SESSION_ARRANGEMENT_WORKING_DIRECTORY];
 }
 
 - (BOOL)shouldUpdateTitles:(NSTimeInterval)now {
@@ -13103,6 +13150,24 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 - (void)naggingControllerCloseSession {
     [_delegate closeSession:self];
+}
+
+- (void)naggingControllerRepairInitialWorkingDirectoryOfSessionWithGUID:(NSString *)guid
+                                                  inArrangementWithName:(NSString *)arrangementName {
+    NSOpenPanel* panel = [NSOpenPanel openPanel];
+    panel.canChooseFiles = NO;
+    panel.canChooseDirectories = YES;
+    panel.allowsMultipleSelection = NO;
+
+    if ([panel runModal] != NSModalResponseOK) {
+        return;
+    }
+    if (!panel.directoryURL.path) {
+        return;
+    }
+    [[iTermController sharedInstance] repairSavedArrangementNamed:arrangementName
+                        replaceInitialDirectoryForSessionWithGUID:guid
+                                                             with:panel.directoryURL.path];
 }
 
 #pragma mark - iTermComposerManagerDelegate

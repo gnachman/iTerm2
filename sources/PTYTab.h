@@ -121,6 +121,13 @@ extern NSString *const PTYTabVariableTitleOverride;
              replacingProfileWithGUID:(NSString *)badGuid
                           withProfile:(Profile *)goodProfile;
 
++ (NSDictionary *)repairedArrangement:(NSDictionary *)arrangement
+     replacingOldCWDOfSessionWithGUID:(NSString *)guid
+                           withOldCWD:(NSString *)replacementOldCWD;
+
++ (NSDictionary *)arrangementForSessionWithGUID:(NSString *)sessionGUID
+                                  inArrangement:(NSDictionary *)arrangement;
+
 // init/dealloc
 - (instancetype)initWithSession:(PTYSession *)session
                    parentWindow:(NSWindowController<iTermWindowController> *)parentWindow;

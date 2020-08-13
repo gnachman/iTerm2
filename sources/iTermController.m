@@ -413,6 +413,36 @@ static iTermController *gSharedInstance;
     }
 }
 
+- (BOOL)arrangementWithName:(NSString *)arrangementName
+         hasSessionWithGUID:(NSString *)guid
+                        pwd:(NSString *)pwd {
+    NSArray *windowArrangements = [WindowArrangements arrangementWithName:arrangementName];
+    if (!windowArrangements) {
+        return NO;
+    }
+    return [windowArrangements anyWithBlock:^BOOL(id anObject) {
+        NSDictionary *dict = [PseudoTerminal arrangementForSessionWithGUID:guid inWindowArrangement:anObject];
+        if (!dict) {
+            return NO;
+        }
+        NSString *actualPWD = [PTYSession initialWorkingDirectoryFromArrangement:dict];
+        return [actualPWD isEqual:pwd];
+    }];
+}
+
+- (void)repairSavedArrangementNamed:(NSString *)arrangementName
+replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
+                               with:(NSString *)replacementOldCWD {
+    NSArray *terminalArrangements = [WindowArrangements arrangementWithName:arrangementName];
+    NSArray *repairedArrangements = [terminalArrangements mapWithBlock:^id(NSDictionary *terminalArrangement) {
+        return [PseudoTerminal repairedArrangement:terminalArrangement
+                  replacingOldCWDOfSessionWithGUID:guid
+                                        withOldCWD:replacementOldCWD];
+    }];
+    [WindowArrangements setArrangement:repairedArrangements
+                              withName:arrangementName];
+}
+
 - (void)saveWindowArrangement:(BOOL)allWindows {
     NSString *name = [WindowArrangements nameForNewArrangement];
     if (!name) {

@@ -2705,6 +2705,44 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     }
 }
 
++ (NSDictionary *)recursiveRepairedArrangementNode:(NSDictionary *)arrangement
+                  replacingOldCWDOfSessionWithGUID:(NSString *)guid
+                                        withOldCWD:(NSString *)replacementOldCWD {
+    if ([arrangement[TAB_ARRANGEMENT_VIEW_TYPE] isEqualToString:VIEW_TYPE_SPLITTER]) {
+        NSArray *subviews = arrangement[SUBVIEWS];
+        NSArray *repairedSubviews = [subviews mapWithBlock:^id(NSDictionary<NSString *, id> *subArrangement) {
+            return [PTYTab recursiveRepairedArrangementNode:subArrangement
+                           replacingOldCWDOfSessionWithGUID:guid
+                                                 withOldCWD:replacementOldCWD];
+        }];
+        return [arrangement dictionaryBySettingObject:repairedSubviews forKey:SUBVIEWS];
+    }
+
+    return [arrangement dictionaryBySettingObject:[PTYSession repairedArrangement:arrangement[TAB_ARRANGEMENT_SESSION]
+                                                 replacingOldCWDOfSessionWithGUID:guid
+                                                                       withOldCWD:replacementOldCWD]
+                                           forKey:TAB_ARRANGEMENT_SESSION];
+}
+
++ (NSDictionary *)recursiveFindSessionArrangementWithGUID:(NSString *)sessionGUID
+                                                     node:(NSDictionary *)arrangement {
+    if ([[arrangement objectForKey:TAB_ARRANGEMENT_VIEW_TYPE] isEqualToString:VIEW_TYPE_SPLITTER]) {
+        for (NSDictionary<NSString *, id> *subArrangement in arrangement[SUBVIEWS]) {
+            NSDictionary *result = [PTYTab recursiveFindSessionArrangementWithGUID:sessionGUID node:subArrangement];
+            if (result) {
+                return result;
+            }
+        }
+        return nil;
+    }
+    NSString *guid = [PTYSession guidInArrangement:arrangement[TAB_ARRANGEMENT_SESSION]];
+    if (!guid) {
+        return nil;
+    }
+    return [sessionGUID isEqualToString:guid] ? arrangement[TAB_ARRANGEMENT_SESSION] : nil;
+}
+
+
 - (PTYSession *)_recursiveRestoreSessions:(NSDictionary<NSString *, id> *)arrangement
                                     named:(NSString *)arrangementName
                                    atNode:(__kindof NSView *)view
@@ -2902,6 +2940,23 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     return result;
 }
 
++ (NSDictionary *)repairedArrangement:(NSDictionary *)arrangement
+     replacingOldCWDOfSessionWithGUID:(NSString *)guid
+                           withOldCWD:(NSString *)replacementOldCWD {
+    NSDictionary *newRoot = [PTYTab recursiveRepairedArrangementNode:arrangement[TAB_ARRANGEMENT_ROOT]
+                                    replacingOldCWDOfSessionWithGUID:guid
+                                                          withOldCWD:replacementOldCWD];
+    NSMutableDictionary *result = [arrangement mutableCopy];
+    result[TAB_ARRANGEMENT_ROOT] = newRoot;
+    return result;
+}
+
++ (NSDictionary *)arrangementForSessionWithGUID:(NSString *)sessionGUID
+                                  inArrangement:(NSDictionary *)arrangement {
+    return [PTYTab recursiveFindSessionArrangementWithGUID:sessionGUID
+                                                      node:arrangement[TAB_ARRANGEMENT_ROOT]];
+}
+
 // This can only be used in conjunction with
 // +[tabWithArrangement:inTerminal:hasFlexibleView:viewMap:].
 - (void)didAddToTerminal:(NSWindowController<iTermWindowController> *)term
@@ -3033,7 +3088,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
             constructIdMap:(BOOL)constructIdMap
                    encoder:(id<iTermEncoderAdapter>)encoder {
     encoder[TAB_GUID] = _guid;
-    encoder[TAB_ARRANGEMENT_TITLE_OVERRIDE] = self.titleOverride.length ? self.titleOverride : [NSNull null];
+    encoder[TAB_ARRANGEMENT_TITLE_OVERRIDE] = self.titleOverride.length ? self.titleOverride : nil;
 
     if (isMaximized_) {
         // We never construct id map in this case because it must already exist.

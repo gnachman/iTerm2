@@ -3029,6 +3029,31 @@ ITERM_WEAKLY_REFERENCEABLE
     return mutableArrangement;
 }
 
++ (NSDictionary *)repairedArrangement:(NSDictionary *)arrangement
+     replacingOldCWDOfSessionWithGUID:(NSString *)guid
+                           withOldCWD:(NSString *)replacementOldCWD {
+    NSMutableDictionary *result = [[arrangement mutableCopy] autorelease];
+    NSArray *tabs = result[TERMINAL_ARRANGEMENT_TABS];
+    result[TERMINAL_ARRANGEMENT_TABS] = [tabs mapWithBlock:^id(NSDictionary *tabArrangement) {
+        return [PTYTab repairedArrangement:tabArrangement
+          replacingOldCWDOfSessionWithGUID:guid
+                                withOldCWD:replacementOldCWD];
+    }];
+    return result;
+}
+
++ (NSDictionary *)arrangementForSessionWithGUID:(NSString *)sessionGUID
+                            inWindowArrangement:(NSDictionary *)arrangement {
+    for (NSDictionary *tabArrangement in arrangement[TERMINAL_ARRANGEMENT_TABS]) {
+        NSDictionary *dict = [PTYTab arrangementForSessionWithGUID:sessionGUID
+                                                     inArrangement:tabArrangement];
+        if (dict) {
+            return dict;
+        }
+    }
+    return nil;
+}
+
 - (BOOL)loadArrangement:(NSDictionary *)arrangement named:(NSString *)arrangementName {
     return [self loadArrangement:arrangement named:arrangementName sessions:nil];
 }
