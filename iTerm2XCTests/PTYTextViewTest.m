@@ -2483,7 +2483,7 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
 }
 
 - (NSString *)compactLineDumpWithContinuationMarks {
-    return @""
+    return @"";
 }
 
 - (int)numberOfLines {
@@ -2815,22 +2815,20 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
 }
 
 - (BOOL)textViewReportMouseEvent:(NSEventType)eventType modifiers:(NSUInteger)modifiers button:(MouseButtonNumber)button coordinate:(VT100GridCoord)coord deltaY:(CGFloat)deltaY allowDragBeforeMouseDown:(BOOL)allowDragBeforeMouseDown testOnly:(BOOL)testOnly {
-}
-
-- (void)textViewSelectionDidChangeToTruncatedString:(NSString *)maybeSelection {
+    return YES;
 }
 
 - (id<iTermSwipeHandler>)textViewSwipeHandler {
+    return nil;
 }
 
 - (BOOL)xtermMouseReportingAllowClicksAndDrags {
+    return YES;
 }
 
 - (BOOL)textViewReportMouseEvent:(NSEventType)eventType modifiers:(NSUInteger)modifiers button:(MouseButtonNumber)button coordinate:(VT100GridCoord)coord deltaY:(CGFloat)deltaY allowDragBeforeMouseDown:(BOOL)allowDragBeforeMouseDown {
     return NO;
 }
-
-
 
 - (NSFont *)badgeLabelFontOfSize:(CGFloat)pointSize {
     return [NSFont systemFontOfSize:[NSFont systemFontSize]];
