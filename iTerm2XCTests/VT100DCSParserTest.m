@@ -371,4 +371,32 @@
     XCTAssertEqualObjects(token.string, @" q");
 }
 
+- (void)testIssue9070 {
+    VT100Parser *parser = [[[VT100Parser alloc] init] autorelease];
+    parser.encoding = NSUTF8StringEncoding;
+    unsigned char preambleBytes[8] = {
+        0x1B, 0x50, 0x30, 0x3B, 0x30, 0x3B, 0x38, 0x71
+    };
+    NSMutableData *data = [NSMutableData dataWithBytes:preambleBytes length:8];
+    for (int i = 0; i < 4453 * 43; i++) {
+        [data appendBytes:"" length:1];
+    }
+    [data appendBytes:"\x1b\x5c" length:2];
+    CVector v;
+    CVectorCreate(&v, 10);
+    while (data.length > 0) {
+        NSInteger count = MIN(1024, data.length);
+        [parser putStreamData:data.bytes length:count];
+        [parser addParsedTokensToVector:&v];
+        [data replaceBytesInRange:NSMakeRange(0, count) withBytes:"" length:0];
+    }
+    XCTAssert(CVectorCount(&v) == 2);
+
+    VT100Token *token = CVectorGetObject(&v, 0);
+    XCTAssert(token->type == VT100_SKIP);
+
+    token = CVectorGetObject(&v, 1);
+    XCTAssert(token->type == DCS_SIXEL);
+}
+
 @end

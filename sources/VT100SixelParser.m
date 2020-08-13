@@ -10,6 +10,7 @@
 @implementation VT100SixelParser {
     NSMutableData *_accumulator;
     NSArray<NSString *> *_parameters;
+    BOOL _esc;
 }
 
 - (instancetype)initWithParameters:(NSArray *)parameters {
@@ -47,6 +48,9 @@ support8BitControlCharacters:(BOOL)support8BitControlCharacters
     if (!iTermParserCanAdvance(context)) {
         result->type = VT100_WAIT;
         return NO;
+    }
+    if (_esc) {
+        return [self handleInputAfterESC:context token:result];
     }
 
     while (iTermParserCanAdvance(context)) {
@@ -89,17 +93,23 @@ support8BitControlCharacters:(BOOL)support8BitControlCharacters
     return NO;
 }
 
-// Return YES to leave sixel mode.
 - (BOOL)handleInputBeginningWithEsc:(iTermParserContext *)context
                               token:(VT100Token *)result {
     iTermParserConsume(context);
+    _esc = YES;
+    return [self handleInputAfterESC:context token:result];
+}
+
+// Return YES to leave sixel mode.
+- (BOOL)handleInputAfterESC:(iTermParserContext *)context
+                      token:(VT100Token *)result {
     unsigned char c;
     const BOOL consumed = iTermParserTryConsume(context, &c);
     if (!consumed) {
-        iTermParserBacktrack(context);
         result->type = VT100_WAIT;
         return NO;
     }
+    _esc = NO;
     if (c != '\\') {
         // esc + something unexpected. Broken sequence.
         result->type = VT100_NOTSUPPORT;
