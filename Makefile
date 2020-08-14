@@ -106,10 +106,10 @@ fatlibsixel: force
 	lipo -create -output ThirdParty/libsixel/lib/libsixel.a ThirdParty/libsixel-arm/lib/libsixel.a ThirdParty/libsixel/lib/libsixel-x86.a
 
 armopenssl: force
-	cd submodules/openssl && ./Configure darwin64-arm64-cc && make build_generated && make libcrypto.a libssl.a -j4 && mv libcrypto.a libcrypto-arm64.a && mv libssl.a libssl-arm64.a
+	cd submodules/openssl && ./Configure darwin64-arm64-cc && make clean && make build_generated && make libcrypto.a libssl.a -j4 && mv libcrypto.a libcrypto-arm64.a && mv libssl.a libssl-arm64.a
 
 x86openssl: force
-	cd submodules/openssl && ./Configure darwin64-x86_64-cc && make build_generated && make libcrypto.a libssl.a -j4 && mv libcrypto.a libcrypto-x86_64.a && mv libssl.a libssl-x86_64.a
+	cd submodules/openssl && ./Configure darwin64-x86_64-cc && make clean && make build_generated && make libcrypto.a libssl.a -j4 && mv libcrypto.a libcrypto-x86_64.a && mv libssl.a libssl-x86_64.a
 
 fatopenssl: force
 	make x86openssl
@@ -125,7 +125,7 @@ armlibssh2: force
 	mkdir -p submodules/libssh2/build_arm64
 	cd submodules/libssh2/build_arm64 && /usr/local/bin/cmake -DOPENSSL_ROOT_DIR=${PWD}/submodules/openssl -DBUILD_EXAMPLES=NO -DBUILD_TESTING=NO -DCMAKE_OSX_ARCHITECTURES=arm64 -DCRYPTO_BACKEND=OpenSSL .. && make libssh2 -j4
 
-fatlibssh2: force
+fatlibssh2: force fatopenssl
 	make x86libssh2
 	make armlibssh2
 	cd submodules/libssh2 && lipo -create -output libssh2.a build_arm64/src/libssh2.a build_x86_64/src/libssh2.a
@@ -136,7 +136,7 @@ CoreParse: force
 	rm -rf ThirdParty/CoreParse.framework
 	cd submodules/CoreParse && xcodebuild -target CoreParse -configuration Release CONFIGURATION_BUILD_DIR=../../ThirdParty
 
-NMSSH: force
+NMSSH: force fatlibssh2
 	rm -rf ThirdParty/NMSSH.framework
 	cd submodules/NMSSH && xcodebuild -target NMSSH -project NMSSH.xcodeproj -configuration Release CONFIGURATION_BUILD_DIR=../../ThirdParty
 
