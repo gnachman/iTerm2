@@ -182,6 +182,9 @@ typedef NS_ENUM(NSInteger, NMSSHKnownHostStatus) {
  */
 @property (nonatomic, readonly, getter = isConnected) BOOL connected;
 
+/** SSH_AUTH_SOCK replacement. Gives path to ssh-agent unix domain socket. */
+@property (nonatomic, nullable, copy) NSString *authSock;
+
 /**
  Connect to the server using the default timeout (10 seconds)
 
