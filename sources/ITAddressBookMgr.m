@@ -453,7 +453,7 @@ iTermWindowType iTermThemedWindowType(iTermWindowType windowType) {
 - (void)netServiceDidResolveAddress:(NSNetService *)sender
 {
     //NSLog(@"%s: %@", __PRETTY_FUNCTION__, sender);
-
+    DLog(@"txt record has: %@", [NSNetService dictionaryFromTXTRecordData:[sender TXTRecordData]]);
     // cancel the resolution
     [sender stop];
 
