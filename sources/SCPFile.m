@@ -71,6 +71,7 @@ static NSError *SCPFileError(NSString *description) {
     }
     if (request) {
         dispatch_group_enter(group);
+        DLog(@"Try to get the value of $SSH_AUTH_SOCK");
         [[iTermSlowOperationGateway sharedInstance] exfiltrateEnvironmentVariableNamed:@"SSH_AUTH_SOCK"
                                                                                  shell:shell
                                                                             completion:^(NSString * _Nonnull value) {
@@ -78,11 +79,13 @@ static NSError *SCPFileError(NSString *description) {
                 self->_authSock = value;
             }
             dispatch_group_leave(group);
+            DLog(@"Value is %@", value);
         }];
     }
     dispatch_group_wait(group, dispatch_time(DISPATCH_TIME_NOW,
                                              0.5 * NSEC_PER_SEC));
     @synchronized(self) {
+        DLog(@"Return %@", _authSock);
         return _authSock;
     }
 }
