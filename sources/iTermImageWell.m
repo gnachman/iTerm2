@@ -39,7 +39,7 @@
 }
 
 - (void)mouseUp:(NSEvent *)theEvent {
-    if (theEvent.clickCount == 2) {
+    if (theEvent.clickCount == 1) {
         [_delegate imageWellDidClick:self];
     }
 }
