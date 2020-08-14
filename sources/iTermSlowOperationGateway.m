@@ -8,6 +8,9 @@
 #import "iTermSlowOperationGateway.h"
 
 #import "DebugLogging.h"
+#import "ITAddressBookMgr.h"
+#import "iTermOpenDirectory.h"
+#import "ProfileModel.h"
 #import "pidinfo.h"
 #include <stdatomic.h>
 
@@ -76,6 +79,18 @@
             return;
         }
         completion(exists.boolValue);
+    }];
+}
+
+- (void)exfiltrateEnvironmentVariableNamed:(NSString *)name
+                                     shell:(NSString *)shell
+                                completion:(void (^)(NSString * _Nonnull))completion {
+    [[_connectionToService remoteObjectProxy] runShellScript:[NSString stringWithFormat:@"echo $%@", name]
+                                                       shell:shell
+                                                   withReply:^(NSData * _Nullable data,
+                                                               NSData * _Nullable error,
+                                                               int status) {
+        completion(status == 0 ? [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding] : nil);
     }];
 }
 

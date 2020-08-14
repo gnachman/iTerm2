@@ -15,20 +15,20 @@
 #include <unistd.h>
 
 static inline void CDLogImpl(const int level, const char *func, const char *file, int line, const char *format, ...) {
-#if !ITERM_SERVER
+#if !ITERM_SERVER && !ITERM_XPC
 #if DEBUG
     // Because xcode is hot garbage, syslog(LOG_DEBUG) goes to its console so we turn that off for debug builds.
     if (level >= LOG_DEBUG) {
         return;
     }
-#endif
+#endif  // DEBUG
 #ifndef __OBJC__
     extern char gDebugLogging;
-#endif
+#endif  // OBJC
     if (!gDebugLogging) {
         return;
     }
-#endif
+#endif  // !ITERM_SERVER && !ITERM_XPC
     va_list args;
     va_start(args, format);
     char *temp = NULL;
@@ -36,11 +36,14 @@ static inline void CDLogImpl(const int level, const char *func, const char *file
     extern const char *gMultiServerSocketPath;
     asprintf(&temp, "iTermServer(pid=%d, path=%s) %s:%d %s: %s", getpid(), gMultiServerSocketPath, file, line, func, format);
     vsyslog(level, temp, args);
-#else
+#elif ITERM_XPC
+    asprintf(&temp, "pidinfo(pid=%d) %s:%d %s: %s", getpid(), file, line, func, format);
+    vsyslog(level, temp, args);
+#else  // ITERM_SERVER
     extern void DLogC(const char *format, va_list args);
     asprintf(&temp, "iTermClient(pid=%d) %s:%d %s: %s", getpid(), file, line, func, format);
     DLogC(temp, args);
-#endif
+#endif  // ITERM_SERVER
     va_end(args);
     free(temp);
 }

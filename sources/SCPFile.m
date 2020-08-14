@@ -13,10 +13,14 @@
 #import <NMSSH/libssh2.h>
 
 #import "DebugLogging.h"
+#import "ITAddressBookMgr.h"
+#import "iTermSlowOperationGateway.h"
+#import "iTermOpenDirectory.h"
 #import "iTermWarning.h"
 #import "NSFileManager+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "NSStringITerm.h"
+#import "ProfileModel.h"
 
 @interface NMSSHSession(iTerm)
 @property (atomic, readonly) void *agent;
@@ -30,6 +34,60 @@ static NSError *SCPFileError(NSString *description) {
                                code:1
                            userInfo:@{ NSLocalizedDescriptionKey: description }];
 }
+
+@interface iTermAuthSock: NSObject
+@property (nonatomic, readonly) NSString *authSock;
++ (instancetype)sharedInstance;
+@end
+
+@implementation iTermAuthSock {
+    NSString *_authSock;
+    dispatch_group_t _group;
+}
+
++ (instancetype)sharedInstance {
+    static iTermAuthSock *instance;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        instance = [[self alloc] init];
+    });
+    return instance;
+}
+
+- (NSString *)authSock {
+    Profile *profile = [[ProfileModel sharedInstance] defaultBookmark];
+    NSString *shell = [ITAddressBookMgr customShellForProfile:profile] ?: [iTermOpenDirectory userShell] ?:  @"/bin/bash";
+    dispatch_group_t group;
+    BOOL request = NO;
+    @synchronized(self) {
+        if (_authSock) {
+            return _authSock;
+        }
+        if (!_group) {
+            _group = dispatch_group_create();
+            request = YES;
+        }
+        group = _group;
+    }
+    if (request) {
+        dispatch_group_enter(group);
+        [[iTermSlowOperationGateway sharedInstance] exfiltrateEnvironmentVariableNamed:@"SSH_AUTH_SOCK"
+                                                                                 shell:shell
+                                                                            completion:^(NSString * _Nonnull value) {
+            @synchronized(self) {
+                self->_authSock = value;
+            }
+            dispatch_group_leave(group);
+        }];
+    }
+    dispatch_group_wait(group, dispatch_time(DISPATCH_TIME_NOW,
+                                             0.5 * NSEC_PER_SEC));
+    @synchronized(self) {
+        return _authSock;
+    }
+}
+
+@end
 
 @interface SCPFile () <NMSSHSessionDelegate>
 @property(atomic, strong) NMSSHSession *session;
@@ -313,6 +371,7 @@ static NSError *SCPFileError(NSString *description) {
 
     BOOL didConnectToAgent = NO;
     if (agentAllowed && !self.hasPredecessor) {
+        self.session.authSock = [[iTermAuthSock sharedInstance] authSock];
         [self.session connectToAgent];
         // Check a private property to see if the connection to the agent was made.
         if ([self.session respondsToSelector:@selector(agent)]) {

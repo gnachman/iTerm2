@@ -35,6 +35,12 @@ NS_ASSUME_NONNULL_BEGIN
                     buffersize:(int)buffersize
                          reqid:(int)reqid
                     completion:(void (^)(int rc, NSData *buffer))completion;
+
+// Get the value of an environment variable from the user's shell.
+- (void)exfiltrateEnvironmentVariableNamed:(NSString *)name
+                                     shell:(NSString *)shell
+                                completion:(void (^)(NSString *value))completion;
+
 @end
 
 NS_ASSUME_NONNULL_END
