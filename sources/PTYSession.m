@@ -5726,13 +5726,6 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         }
         return NO;
     }
-    if (![[iTermApplication sharedApplication] it_justBecameActive] &&
-        [[iTermController sharedInstance] terminalIsObscured:_delegate.realParentWindow threshold:0.5]) {
-        if (reason) {
-            *reason = iTermMetalUnavailableReasonWindowObscured;
-        }
-        return NO;
-    }
     if ([PTYNoteViewController anyNoteVisible]) {
         // When metal is enabled the note's superview (PTYTextView) has alphaValue=0 so it will not be visible.
         if (reason) {
