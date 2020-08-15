@@ -373,7 +373,6 @@ static NSButton *iTermToolSnippetsNewButton(NSString *imageName, NSString *title
 #pragma mark - NSTableViewDelegate
 
 - (NSTableRowView *)tableView:(NSTableView *)tableView rowViewForRow:(NSInteger)row {
-    NSTableRowView<iTermTableRowView> *view;
     if (@available(macOS 10.16, *)) {
         return [[iTermBigSurTableRowView alloc] initWithFrame:NSZeroRect];
     }
