@@ -695,7 +695,7 @@ static void HandleSigChld(int n) {
     [self setCommand:progpath];
     NSLog(@"command set");
     if (customShell) {
-        NSLog("Use custom shell");
+        NSLog(@"Use custom shell");
         env = [env dictionaryBySettingObject:customShell forKey:@"SHELL"];
     } else {
         env = [self environmentBySettingShell:env];
