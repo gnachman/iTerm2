@@ -20,6 +20,7 @@
 #import "iTermWarning.h"
 #import "NSArray+iTerm.h"
 #import "NSData+iTerm.h"
+#import "NSFileManager+iTerm.h"
 #import "NSObject+iTerm.h"
 
 #include <syslog.h>
@@ -688,27 +689,81 @@ static unsigned long long MakeUniqueID(void) {
     [self handshakeWithState:state callback:callback];
 }
 
+- (NSString *)serverPath {
+    NSDictionary *infoDictionary = [[NSBundle bundleForClass:[self class]] infoDictionary];
+    NSString *versionNumber = infoDictionary[(NSString *)kCFBundleVersionKey];
+    NSString *filename = [NSString stringWithFormat:@"iTermServer-%@", versionNumber];
+    return [[[NSFileManager defaultManager] applicationSupportDirectory] stringByAppendingPathComponent:filename];
+}
+
+- (void)showError:(NSError *)error message:(NSString *)message {
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"%@: %@", message, error.localizedDescription]
+                                   actions:@[ @"OK" ]
+                                 accessory:nil
+                                identifier:@"DaemonSetupError"
+                               silenceable:kiTermWarningTypePersistent
+                                   heading:@"Problem Initializing iTerm2 Daemon"
+                                    window:nil];
+    });
+}
+
+// Copy iTermServer to a safe location where Autoupdate won't delete it. See issue 9022 for
+// wild speculation on why this is important.
+- (NSString *)serverPathCopyingIfNeeded {
+    NSString *desiredPath = [self serverPath];
+    NSFileManager *fileManager = [NSFileManager defaultManager];
+
+    // Does the server already exist where we need it to be?
+    if (![fileManager fileExistsAtPath:desiredPath]) {
+        NSString *sourcePath = [[NSBundle bundleForClass:self.class] pathForAuxiliaryExecutable:@"iTermServer"];
+        NSError *error = nil;
+        [[NSFileManager defaultManager] copyItemAtPath:sourcePath
+                                                toPath:desiredPath
+                                                 error:&error];
+        if (error) {
+            [self showError:error message:[NSString stringWithFormat:@"Could not copy %@ to %@", sourcePath, desiredPath]];
+            return nil;
+        }
+    }
+
+    // Is it executable?
+    {
+        NSError *error = nil;
+        NSDictionary *attributes = [fileManager attributesOfItemAtPath:desiredPath error:&error];
+        if (error) {
+            [self showError:error message:[NSString stringWithFormat:@"Could not check permissions on %@", desiredPath]];
+            return nil;
+        }
+        NSNumber *permissions = attributes[NSFilePosixPermissions];
+        if ((permissions.intValue & 0700) == 0700) {
+            return desiredPath;
+        }
+    }
+
+    // Make it executable.
+    {
+        NSError *error = nil;
+        [[NSFileManager defaultManager] setAttributes:@{ NSFilePosixPermissions: @(0700) }
+                                         ofItemAtPath:desiredPath
+                                                error:&error];
+        if (error) {
+            [self showError:error message:[NSString stringWithFormat:@"Could not set 0700 permissions on %@", desiredPath]];
+            return nil;
+        }
+    }
+
+    return desiredPath;
+}
+
 // Launch a daemon synchronously.
 - (BOOL)launchNewDaemonWithState:(iTermFileDescriptorMultiClientState *)state {
     assert(state.readFD < 0);
 
-    NSString *executable = [[NSBundle bundleForClass:self.class] pathForAuxiliaryExecutable:@"iTermServer"];
-    if ([executable containsString:@"A Document Being Saved By Autoupdate"]) {
-        static dispatch_once_t onceToken;
-        dispatch_once(&onceToken, ^{
-            dispatch_async(dispatch_get_main_queue(), ^{
-                [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"The path to the iTermServer daemon is an unusable temporary directory. This may have been caused by a crash in the auto-updater. Relaunch iTerm2 and try again. The path is:\n%@", executable]
-                                           actions:@[ @"OK" ]
-                                         accessory:nil
-                                        identifier:@"BadPathToDaemon"
-                                       silenceable:kiTermWarningTypePersistent
-                                           heading:@"Can’t Launch Daemon"
-                                            window:nil];
-            });
-        });
+    NSString *executable = [self serverPathCopyingIfNeeded];
+    if (!executable) {
         return NO;
     }
-    assert(executable);
 
     int readFD = -1;
     int writeFD = -1;
