@@ -466,4 +466,11 @@
     return [self subdataWithRange:NSMakeRange(offset, self.length - offset)];
 }
 
+- (NSString *)tastefulDescription {
+    if (self.length < 10) {
+        return [self description];
+    }
+    return [[self subdataWithRange:NSMakeRange(0, 10)] description];
+}
+
 @end

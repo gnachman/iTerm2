@@ -96,5 +96,6 @@ NS_INLINE NSUInteger iTermCombineHash(NSUInteger hash1, NSUInteger hash2) {
 - (BOOL)it_isSafeForPlist;
 - (NSString *)it_invalidPathInPlist;
 - (instancetype)it_weakProxy;
+- (NSString *)tastefulDescription;
 
 @end

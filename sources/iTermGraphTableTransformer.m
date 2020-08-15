@@ -31,6 +31,9 @@ static iTermEncoderGraphRecord *iTermGraphDeltaEncoderMakeGraphRecord(NSNumber *
     } else {
         pod = @{};
     }
+
+    DLog(@"key=%@ id=%@ rowid=%@ children=%@ pod=%@", nodeDict[@"key"], nodeDict[@"identifier"],
+          nodeDict[@"rowid"], childNodeIDs, [pod tastefulDescription] );
     return [iTermEncoderGraphRecord withPODs:pod
                                       graphs:childGraphRecords
                                   generation:0

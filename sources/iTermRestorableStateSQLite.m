@@ -41,7 +41,7 @@
 - (NSKeyedUnarchiver *)unarchiver {
     NSKeyedArchiver *archiver = [[NSKeyedArchiver alloc] initRequiringSecureCoding:NO];
     archiver.requiresSecureCoding = NO;
-    [archiver encodeObject:@(_index) forKey:@"index"];
+    [archiver encodeInteger:_index forKey:@"index"];
     [archiver finishEncoding];
 
     NSKeyedUnarchiver *unarchiver = [[NSKeyedUnarchiver alloc] initForReadingFromData:archiver.encodedData

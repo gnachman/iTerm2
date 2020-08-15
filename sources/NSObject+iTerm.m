@@ -309,4 +309,8 @@
     return (id)[[iTermWeakProxy alloc] initWithObject:self];
 }
 
+- (NSString *)tastefulDescription {
+    return [self description];
+}
+
 @end
