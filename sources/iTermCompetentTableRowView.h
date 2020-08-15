@@ -8,9 +8,7 @@
 #import <Cocoa/Cocoa.h>
 
 @interface iTermCompetentTableRowView : NSTableRowView
-
 @end
 
 @interface iTermBigSurTableRowView : NSTableRowView
-
 @end

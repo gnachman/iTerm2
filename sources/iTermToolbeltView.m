@@ -9,6 +9,7 @@
 #import "iTermPreferences.h"
 #import "iTermSystemVersion.h"
 #import "iTermToolActions.h"
+#import "iTermToolSnippets.h"
 #import "iTermToolWrapper.h"
 #import "iTermToolbeltSplitView.h"
 #import "iTermTuple.h"
@@ -34,6 +35,7 @@ NSString *const kJobsToolName = @"Jobs";
 NSString *const kNotesToolName = @"Notes";
 NSString *const kPasteHistoryToolName = @"Paste History";
 NSString *const kProfilesToolName = @"Profiles";
+NSString *const kSnippetsToolName = @"Snippets";
 
 NSString *const kToolbeltShouldHide = @"kToolbeltShouldHide";
 
@@ -80,6 +82,7 @@ static NSString *const kDynamicToolURL = @"URL";
     [iTermToolbeltView registerToolWithName:kNotesToolName withClass:[ToolNotes class]];
     [iTermToolbeltView registerToolWithName:kPasteHistoryToolName withClass:[ToolPasteHistory class]];
     [iTermToolbeltView registerToolWithName:kProfilesToolName withClass:[ToolProfiles class]];
+    [iTermToolbeltView registerToolWithName:kSnippetsToolName withClass:[iTermToolSnippets class]];
 
     NSDictionary<NSString *, NSDictionary *> *dynamicTools = [[NSUserDefaults standardUserDefaults] objectForKey:kDynamicToolsKey];
     [dynamicTools enumerateKeysAndObjectsUsingBlock:^(NSString * _Nonnull identifier, NSDictionary * _Nonnull dict, BOOL * _Nonnull stop) {

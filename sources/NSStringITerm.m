@@ -1536,9 +1536,9 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
 }
 
 - (NSString *)ellipsizedDescriptionNoLongerThan:(int)maxLength {
-    NSString *noNewlineSelf = [self stringByReplacingOccurrencesOfString:@"\n" withString:@" "];
+    NSString *noNewlineSelf = [self stringByReplacingOccurrencesOfRegex:@"[\\r\\n]" withString:@" "];
     if (noNewlineSelf.length <= maxLength) {
-        return noNewlineSelf;
+        return [noNewlineSelf stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
     }
     NSCharacterSet *whitespace = [NSCharacterSet whitespaceAndNewlineCharacterSet];
     NSRange firstNonWhitespaceRange = [noNewlineSelf rangeOfCharacterFromSet:[whitespace invertedSet]];
@@ -1546,12 +1546,20 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
         return @"";
     }
     int length = noNewlineSelf.length - firstNonWhitespaceRange.location;
+    NSString *prefix;
+    BOOL truncated = NO;
     if (length < maxLength) {
-        return [noNewlineSelf substringFromIndex:firstNonWhitespaceRange.location];
+        prefix = [noNewlineSelf substringFromIndex:firstNonWhitespaceRange.location];
     } else {
-        NSString *prefix = [noNewlineSelf substringWithRange:NSMakeRange(firstNonWhitespaceRange.location, maxLength - 1)];
-        return [prefix stringByAppendingString:@"…"];
+        prefix = [noNewlineSelf substringWithRange:NSMakeRange(firstNonWhitespaceRange.location, maxLength - 1)];
+        truncated = YES;
     }
+    prefix = [prefix stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
+    NSString *result = prefix;
+    if (truncated) {
+        result = [result stringByAppendingString:@"…"];
+    }
+    return result;
 }
 
 - (NSString *)stringWithFirstLetterCapitalized {
