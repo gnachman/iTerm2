@@ -45,7 +45,7 @@ const NSInteger iTermQuickPasteBytesPerCallDefaultValue = 768;
 }
 
 + (NSMutableCharacterSet *)unsafeControlCodeSet {
-    NSMutableCharacterSet *controlSet = [[[NSMutableCharacterSet alloc] init] autorelease];
+    NSMutableCharacterSet *controlSet = [[NSMutableCharacterSet alloc] init];
     [controlSet addCharactersInRange:NSMakeRange(0, 32)];
     [controlSet removeCharactersInRange:NSMakeRange(9, 2)];  // Tab and line feed
     [controlSet removeCharactersInRange:NSMakeRange(12, 2)];  // Form feed and carriage return
@@ -73,17 +73,6 @@ const NSInteger iTermQuickPasteBytesPerCallDefaultValue = 768;
         _pasteViewManager.delegate = self;
     }
     return self;
-}
-
-- (void)dealloc {
-    [_eventQueue release];
-    [_pasteContext release];
-    [_buffer release];
-    [_pasteViewManager release];
-    if (_timer) {
-        [_timer invalidate];
-    }
-    [super dealloc];
 }
 
 - (void)showPasteOptionsInWindow:(NSWindow *)window bracketingEnabled:(BOOL)bracketingEnabled {
@@ -119,10 +108,8 @@ const NSInteger iTermQuickPasteBytesPerCallDefaultValue = 768;
             [_eventQueue removeAllObjects];
         }
     }
-    [_buffer release];
     _buffer = [[NSMutableString alloc] init];
     [self hidePasteIndicator];
-    [_pasteContext release];
     _pasteContext = nil;
     if (!cancel) {
         [self dequeueEvents];
@@ -405,7 +392,7 @@ const NSInteger iTermQuickPasteBytesPerCallDefaultValue = 768;
 - (void)dequeueEvents {
     DLog(@"Dequeueing paste events...");
     while (_eventQueue.count) {
-        NSEvent *event = [[[_eventQueue firstObject] retain] autorelease];
+        NSEvent *event = [_eventQueue firstObject];
         [_eventQueue removeObjectAtIndex:0];
         if ([event isKindOfClass:[PasteEvent class]]) {
             DLog(@"Found a queued paste event");
@@ -484,7 +471,6 @@ const NSInteger iTermQuickPasteBytesPerCallDefaultValue = 768;
         DLog(@"Done pasting");
         _timer = nil;
         [self hidePasteIndicator];
-        [_pasteContext release];
         _pasteContext = nil;
         [self dequeueEvents];
     }
@@ -517,7 +503,6 @@ const NSInteger iTermQuickPasteBytesPerCallDefaultValue = 768;
 - (void)pasteLiteralEventUnconditionallyImmediately:(PasteEvent *)pasteEvent {
     [_buffer appendString:pasteEvent.string];
 
-    [_pasteContext release];
     _pasteContext = [[PasteContext alloc] initWithPasteEvent:pasteEvent];
     const int kPasteBytesPerSecond = 10000;  // This is a wild-ass guess.
     const NSTimeInterval sumOfDelays =
@@ -550,7 +535,7 @@ const NSInteger iTermQuickPasteBytesPerCallDefaultValue = 768;
     const int limit = [iTermAdvancedSettingsModel alwaysWarnBeforePastingOverSize];
     if (limit >= 0) {
         if (pasteEvent.string.length > limit) {
-            NSNumberFormatter *numberFormatter = [[[NSNumberFormatter alloc] init] autorelease];
+            NSNumberFormatter *numberFormatter = [[NSNumberFormatter alloc] init];
             numberFormatter.numberStyle = NSNumberFormatterDecimalStyle;
             const iTermWarningSelection selection =
             [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"OK to paste %@ characters?", [numberFormatter stringFromNumber:@(pasteEvent.string.length)]]
@@ -649,7 +634,7 @@ const NSInteger iTermQuickPasteBytesPerCallDefaultValue = 768;
         [self showAdvancedPasteWithFlags:flags];
         result = NO;
     }]];
-    iTermWarning *warning = [[[iTermWarning alloc] init] autorelease];
+    iTermWarning *warning = [[iTermWarning alloc] init];
     warning.title = theTitle;
     warning.warningActions = actions;
     warning.identifier = identifier;
@@ -668,7 +653,7 @@ const NSInteger iTermQuickPasteBytesPerCallDefaultValue = 768;
                                                tabTransform:kTabTransformNone
                                                spacesPerTab:4
                                                    progress:nil];
-    PasteContext *temporaryContext = [[[PasteContext alloc] initWithPasteEvent:temporaryEvent] autorelease];
+    PasteContext *temporaryContext = [[PasteContext alloc] initWithPasteEvent:temporaryEvent];
     [iTermPasteSpecialWindowController showAsPanelInWindow:self.delegate.pasteHelperViewForIndicator.window
                                                  chunkSize:temporaryContext.bytesPerCall
                                         delayBetweenChunks:temporaryContext.delayBetweenCalls
@@ -686,7 +671,7 @@ const NSInteger iTermQuickPasteBytesPerCallDefaultValue = 768;
 - (int)numberOfSpacesToConvertTabsTo:(NSString *)source {
     if ([source rangeOfString:@"\t"].location != NSNotFound) {
         iTermNumberOfSpacesAccessoryViewController *accessoryController =
-            [[[iTermNumberOfSpacesAccessoryViewController alloc] init] autorelease];
+            [[iTermNumberOfSpacesAccessoryViewController alloc] init];
 
         iTermWarningSelection selection =
             [iTermWarning showWarningWithTitle:@"You're about to paste a string with tabs."

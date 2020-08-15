@@ -53,7 +53,7 @@ extern const NSInteger iTermQuickPasteBytesPerCallDefaultValue;
 
 @interface iTermPasteHelper : NSObject
 
-@property(nonatomic, assign) id<iTermPasteHelperDelegate> delegate;
+@property(nonatomic, weak) id<iTermPasteHelperDelegate> delegate;
 @property(nonatomic, readonly) BOOL isPasting;
 @property(nonatomic, readonly) BOOL dropDownPasteViewIsVisible;
 @property(nonatomic, readonly) BOOL isWaitingForPrompt;
