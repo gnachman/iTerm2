@@ -384,11 +384,23 @@ iTermWindowType iTermThemedWindowType(iTermWindowType windowType) {
     [aDict setObject:NSHomeDirectory() forKey: KEY_WORKING_DIRECTORY];
 }
 
+- (BOOL)usernameIsSafe:(NSString *)username {
+    NSCharacterSet *unsafeSet = [[NSCharacterSet characterSetWithCharactersInString:@"abcdefghijklmnopqrstuvwxyz_1234567890"] invertedSet];
+    const NSRange range = [username rangeOfCharacterFromSet:unsafeSet
+                                                    options:NSCaseInsensitiveSearch];
+    return range.location == NSNotFound;
+}
+
 - (void)_addBonjourHostProfileWithName:(NSString *)serviceName
-                       ipAddressString:(NSString *)ipAddressString
+                       ipAddressString:(NSString *)address
                                   port:(int)port
                            serviceType:(NSString *)serviceType
                               userName:(NSString *)username {
+    NSArray<NSString *> *allowedServices = @[ @"ssh", @"scp", @"sftp" ];
+    if (![allowedServices containsObject:serviceType]) {
+        return;
+    }
+
     NSMutableDictionary *newBookmark;
     Profile* prototype = [[ProfileModel sharedInstance] defaultBookmark];
     if (prototype) {
@@ -406,16 +418,21 @@ iTermWindowType iTermThemedWindowType(iTermWindowType windowType) {
         optionalPortArg = [NSString stringWithFormat:@"-p %d ", port];
     }
     NSString *userNameArg = @"";
-    if ([serviceType isEqualToString:@"ssh"] && username && ![username isEqualToString:@""]) {
-        userNameArg = [NSString stringWithFormat:@"-l %@ ",username];
+    NSString *destination = address;
+    if (username.length > 0 && [self usernameIsSafe:username]) {
+        if ([serviceType isEqualToString:@"ssh"]) {
+            userNameArg = [NSString stringWithFormat:@"-l %@ ", username];
+        } else {
+            destination = [NSString stringWithFormat:@"%@@%@", username, address];
+        }
     }
-    [newBookmark setObject:[NSString stringWithFormat:@"%@ %@%@%@", serviceType, userNameArg, optionalPortArg, ipAddressString]
+    [newBookmark setObject:[NSString stringWithFormat:@"%@ %@%@%@", serviceType, userNameArg, optionalPortArg, destination]
                     forKey:KEY_COMMAND_LINE];
     [newBookmark setObject:@"" forKey:KEY_WORKING_DIRECTORY];
     [newBookmark setObject:kProfilePreferenceCommandTypeCustomValue forKey:KEY_CUSTOM_COMMAND];
     [newBookmark setObject:kProfilePreferenceInitialDirectoryHomeValue
                     forKey:KEY_CUSTOM_DIRECTORY];
-    [newBookmark setObject:ipAddressString forKey:KEY_BONJOUR_SERVICE_ADDRESS];
+    [newBookmark setObject:destination forKey:KEY_BONJOUR_SERVICE_ADDRESS];
     [newBookmark setObject:[NSArray arrayWithObjects:@"bonjour",nil] forKey:KEY_TAGS];
     [newBookmark setObject:[ProfileModel freshGuid] forKey:KEY_GUID];
     [newBookmark setObject:@"No" forKey:KEY_DEFAULT_BOOKMARK];
@@ -452,6 +469,14 @@ iTermWindowType iTermThemedWindowType(iTermWindowType windowType) {
         // Assume ipv6
         return htons(((struct sockaddr_in6*)sa)->sin6_port);
     }
+}
+
+- (NSString *)usernameFromTXTRecord:(NSData *)txtData {
+    NSDictionary<NSString *, NSData *> *txtFields = [NSNetService dictionaryFromTXTRecordData:txtData];
+    // https://kodi.wiki/view/Avahi_Zeroconf
+    NSData *usernameData = txtFields[@"u"] ?: txtFields[@"username"];
+    NSString *usernameString = [[NSString alloc] initWithData:usernameData encoding:NSUTF8StringEncoding];
+    return usernameString;
 }
 
 // NSNetService delegate
@@ -496,28 +521,7 @@ iTermWindowType iTermThemedWindowType(iTermWindowType windowType) {
             NSLog(@"netServiceDidResolveAddress add profile with address %s", strAddr);
         }
         
-        NSString *username=@"";
-        // extract username from txt-records, if they exist
-        // look for keys such as u= or username=
-        NSData *txt=[sender TXTRecordData];
-        NSDictionary <NSString *,NSData *> *d=[NSNetService dictionaryFromTXTRecordData:txt];
-        for (NSString *k in d.allKeys)
-        {
-            if (k
-                && ([k caseInsensitiveCompare:@"u"]!=NSOrderedSame)
-                && ([k caseInsensitiveCompare:@"username"]!=NSOrderedSame)
-                )
-            { continue; }
-            
-            NSData *val=[d valueForKey:k];
-            if (!val) { continue; }
-            NSString *s2=[[NSString alloc] initWithUTF8DataIgnoringErrors:val];
-            if (!s2) { continue; }
-            
-            username=s2;
-        }
-        
-
+        NSString *username = [self usernameFromTXTRecord:sender.TXTRecordData];
         [self _addBonjourHostProfileWithName:serviceName
                              ipAddressString:[NSString stringWithFormat:@"%s", strAddr]
                                         port:[self portFromSockaddr:socketAddress]
