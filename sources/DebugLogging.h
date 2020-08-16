@@ -108,6 +108,12 @@ extern BOOL gDebugLogging;
     } \
   } while (0)
 
+#if __has_feature(objc_arc)
+#define ITCriticalErrorCreateAlert [[NSAlert alloc] init]
+#else
+#define ITCriticalErrorCreateAlert [[[NSAlert alloc] init] autorelease]
+#endif
+
 #define ITCriticalError(condition, args...) \
   do { \
     if (!(condition)) { \
@@ -123,7 +129,7 @@ extern BOOL gDebugLogging;
       ELog(args); \
       if (TurnOffDebugLoggingSilently()) { \
         dispatch_async(dispatch_get_main_queue(), ^{ \
-          NSAlert *alert = [[NSAlert alloc] init]; \
+          NSAlert *alert = ITCriticalErrorCreateAlert; \
           alert.messageText = @"Critical Error"; \
           alert.informativeText =  @"A critical error occurred and a debug log was created. Please send /tmp/debuglog.txt to the developers."; \
           [alert addButtonWithTitle:@"OK"]; \

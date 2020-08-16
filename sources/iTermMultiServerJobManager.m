@@ -347,6 +347,7 @@ typedef struct {
         result.pid = child.pid;
         dispatch_group_leave(group);
     }];
+#warning TODO: Time out somehow.
     dispatch_group_wait(group, DISPATCH_TIME_FOREVER);
 
     if (result.shouldRegister) {

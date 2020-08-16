@@ -633,7 +633,7 @@ static int ReadAndHandleRequest(int readFd, int writeFd) {
             break;
     }
     iTermMultiServerClientOriginatedMessageFree(&request);
-    return 0;
+    return result;
 }
 
 #pragma mark - Core

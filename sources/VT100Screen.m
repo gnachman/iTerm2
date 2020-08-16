@@ -1195,7 +1195,7 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
                                              toLineBuffer:source->linebuffer_];
 
     LineBufferPosition *startPos = source->linebuffer_.firstPosition;
-    FindContext *context = [[FindContext alloc] init];
+    FindContext *context = [[[FindContext alloc] init] autorelease];
     [source->linebuffer_ prepareToSearchFor:query
                                  startingAt:startPos
                                     options:FindMultipleResults
@@ -5620,7 +5620,7 @@ static void SwapInt(int *a, int *b) {
         return @{};
     }
     [grid appendLines:grid.size.height toLineBuffer:temp];
-    iTermMutableDictionaryEncoderAdapter *encoder = [[iTermMutableDictionaryEncoderAdapter alloc] init];
+    iTermMutableDictionaryEncoderAdapter *encoder = [[[iTermMutableDictionaryEncoderAdapter alloc] init] autorelease];
     [temp encode:encoder];
     return encoder.mutableDictionary;
 }

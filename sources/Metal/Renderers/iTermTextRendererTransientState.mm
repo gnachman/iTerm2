@@ -488,7 +488,6 @@ static inline int iTermOuterPIUIndex(const bool &annotation, const bool &underli
         underlineStyle = iTermMetalGlyphAttributesUnderlineSingle;
     }
 
-    iTermTextPIU *piu;
     if (iTermTextIsMonochrome()) {
         // There is only a center part for ASCII on Mojave because the glyph size is increased to contain the largest ASCII glyph.
         iTermTextRendererTransientStateAddASCIIPart(_asciiPIUArrays[outerPIUIndex][asciiAttrs].get_next(),
@@ -512,84 +511,84 @@ static inline int iTermOuterPIUIndex(const bool &annotation, const bool &underli
     if (parts & iTermASCIITexturePartsLeft) {
         if (x > 0) {
             // Normal case
-            piu = iTermTextRendererTransientStateAddASCIIPart(_asciiOverflowArrays[outerPIUIndex][asciiAttrs].get_next(),
-                                                              code,
-                                                              w,
-                                                              h,
-                                                              texture,
-                                                              cellWidth,
-                                                              x - 1,
-                                                              asciiOffset,
-                                                              iTermASCIITextureOffsetLeft,
-                                                              textColor,
-                                                              attributes[x - 1].backgroundColor,
-                                                              iTermMetalGlyphAttributesUnderlineNone,
-                                                              underlineColor);
+            iTermTextRendererTransientStateAddASCIIPart(_asciiOverflowArrays[outerPIUIndex][asciiAttrs].get_next(),
+                                                        code,
+                                                        w,
+                                                        h,
+                                                        texture,
+                                                        cellWidth,
+                                                        x - 1,
+                                                        asciiOffset,
+                                                        iTermASCIITextureOffsetLeft,
+                                                        textColor,
+                                                        attributes[x - 1].backgroundColor,
+                                                        iTermMetalGlyphAttributesUnderlineNone,
+                                                        underlineColor);
         } else {
             // Intrusion into left margin
-            piu = iTermTextRendererTransientStateAddASCIIPart(_asciiOverflowArrays[outerPIUIndex][asciiAttrs].get_next(),
-                                                              code,
-                                                              w,
-                                                              h,
-                                                              texture,
-                                                              cellWidth,
-                                                              x - 1,
-                                                              asciiOffset,
-                                                              iTermASCIITextureOffsetLeft,
-                                                              textColor,
-                                                              _defaultBackgroundColor,
-                                                              iTermMetalGlyphAttributesUnderlineNone,
-                                                              underlineColor);
+            iTermTextRendererTransientStateAddASCIIPart(_asciiOverflowArrays[outerPIUIndex][asciiAttrs].get_next(),
+                                                        code,
+                                                        w,
+                                                        h,
+                                                        texture,
+                                                        cellWidth,
+                                                        x - 1,
+                                                        asciiOffset,
+                                                        iTermASCIITextureOffsetLeft,
+                                                        textColor,
+                                                        _defaultBackgroundColor,
+                                                        iTermMetalGlyphAttributesUnderlineNone,
+                                                        underlineColor);
         }
     }
 
     // Add PIU for center part, which is always present
-    piu = iTermTextRendererTransientStateAddASCIIPart(_asciiPIUArrays[outerPIUIndex][asciiAttrs].get_next(),
-                                                      code,
-                                                      w,
-                                                      h,
-                                                      texture,
-                                                      cellWidth,
-                                                      x,
-                                                      asciiOffset,
-                                                      iTermASCIITextureOffsetCenter,
-                                                      textColor,
-                                                      attributes[x].backgroundColor,
-                                                      underlineStyle,
-                                                      underlineColor);
+    iTermTextRendererTransientStateAddASCIIPart(_asciiPIUArrays[outerPIUIndex][asciiAttrs].get_next(),
+                                                code,
+                                                w,
+                                                h,
+                                                texture,
+                                                cellWidth,
+                                                x,
+                                                asciiOffset,
+                                                iTermASCIITextureOffsetCenter,
+                                                textColor,
+                                                attributes[x].backgroundColor,
+                                                underlineStyle,
+                                                underlineColor);
     // Add PIU for right overflow
     if (parts & iTermASCIITexturePartsRight) {
         const int lastColumn = self.cellConfiguration.gridSize.width - 1;
         if (x < lastColumn) {
             // Normal case
-            piu = iTermTextRendererTransientStateAddASCIIPart(_asciiOverflowArrays[outerPIUIndex][asciiAttrs].get_next(),
-                                                              code,
-                                                              w,
-                                                              h,
-                                                              texture,
-                                                              cellWidth,
-                                                              x + 1,
-                                                              asciiOffset,
-                                                              iTermASCIITextureOffsetRight,
-                                                              attributes[x].foregroundColor,
-                                                              attributes[x + 1].backgroundColor,
-                                                              iTermMetalGlyphAttributesUnderlineNone,
-                                                              underlineColor);
+            iTermTextRendererTransientStateAddASCIIPart(_asciiOverflowArrays[outerPIUIndex][asciiAttrs].get_next(),
+                                                        code,
+                                                        w,
+                                                        h,
+                                                        texture,
+                                                        cellWidth,
+                                                        x + 1,
+                                                        asciiOffset,
+                                                        iTermASCIITextureOffsetRight,
+                                                        attributes[x].foregroundColor,
+                                                        attributes[x + 1].backgroundColor,
+                                                        iTermMetalGlyphAttributesUnderlineNone,
+                                                        underlineColor);
         } else {
             // Intrusion into right margin
-            piu = iTermTextRendererTransientStateAddASCIIPart(_asciiOverflowArrays[outerPIUIndex][asciiAttrs].get_next(),
-                                                              code,
-                                                              w,
-                                                              h,
-                                                              texture,
-                                                              cellWidth,
-                                                              x + 1,
-                                                              asciiOffset,
-                                                              iTermASCIITextureOffsetRight,
-                                                              attributes[x].foregroundColor,
-                                                              _defaultBackgroundColor,
-                                                              iTermMetalGlyphAttributesUnderlineNone,
-                                                              underlineColor);
+            iTermTextRendererTransientStateAddASCIIPart(_asciiOverflowArrays[outerPIUIndex][asciiAttrs].get_next(),
+                                                        code,
+                                                        w,
+                                                        h,
+                                                        texture,
+                                                        cellWidth,
+                                                        x + 1,
+                                                        asciiOffset,
+                                                        iTermASCIITextureOffsetRight,
+                                                        attributes[x].foregroundColor,
+                                                        _defaultBackgroundColor,
+                                                        iTermMetalGlyphAttributesUnderlineNone,
+                                                        underlineColor);
         }
     }
 }

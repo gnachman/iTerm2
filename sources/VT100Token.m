@@ -27,7 +27,7 @@
     return [[[VT100Token alloc] init] autorelease];
 }
 
-+ (instancetype)tokenForControlCharacter:(unsigned char)controlCharacter {
++ (instancetype)newTokenForControlCharacter:(unsigned char)controlCharacter {
     VT100Token *token = [[VT100Token alloc] init];
     token->type = controlCharacter;
     return token;

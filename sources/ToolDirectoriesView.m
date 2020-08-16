@@ -87,7 +87,6 @@ static const CGFloat kHelpMargin = 5;
         [clear_ setAction:@selector(clear:)];
         [clear_ setAutoresizingMask:NSViewMinYMargin | NSViewMinXMargin];
         [self addSubview:clear_];
-        [clear_ release];
 
         scrollView_ = [[NSScrollView alloc] initWithFrame:NSMakeRect(0, 0, 0, 0)];
         [scrollView_ setHasVerticalScroller:YES];
@@ -108,7 +107,7 @@ static const CGFloat kHelpMargin = 5;
         }
 #endif
         NSTableColumn *col;
-        col = [[[NSTableColumn alloc] initWithIdentifier:@"directories"] autorelease];
+        col = [[NSTableColumn alloc] initWithIdentifier:@"directories"];
         [[col dataCell] setFont:[NSFont fontWithName:@"Menlo" size:11]];
         [col setEditable:NO];
         [tableView_ addTableColumn:col];
@@ -132,7 +131,7 @@ static const CGFloat kHelpMargin = 5;
         [tableView_ sizeToFit];
         [tableView_ setColumnAutoresizingStyle:NSTableViewSequentialColumnAutoresizingStyle];
 
-        tableView_.menu = [[[NSMenu alloc] init] autorelease];
+        tableView_.menu = [[NSMenu alloc] init];
         tableView_.menu.delegate = self;
         NSMenuItem *item;
         item = [[NSMenuItem alloc] initWithTitle:@"Toggle Star"
@@ -154,13 +153,6 @@ static const CGFloat kHelpMargin = 5;
                                                    object:nil];
     }
     return self;
-}
-
-- (void)dealloc {
-    [[NSNotificationCenter defaultCenter] removeObserver:self];
-    [tableView_ release];
-    [scrollView_ release];
-    [super dealloc];
 }
 
 - (void)shutdown {
@@ -310,13 +302,13 @@ static const CGFloat kHelpMargin = 5;
 }
 
 - (void)updateDirectories {
-    [entries_ autorelease];
+    entries_ = nil;
     iTermToolWrapper *wrapper = self.toolWrapper;
     VT100RemoteHost *host = [wrapper.delegate.delegate toolbeltCurrentHost];
     NSArray<iTermRecentDirectoryMO *> *entries =
         [[iTermShellHistoryController sharedInstance] directoriesSortedByScoreOnHost:host];
     NSArray<iTermRecentDirectoryMO *> *reversed = [[entries reverseObjectEnumerator] allObjects];
-    entries_ = [reversed retain];
+    entries_ = reversed;
     [tableView_ reloadData];
 
     [self computeFilteredEntries];
@@ -358,7 +350,7 @@ static const CGFloat kHelpMargin = 5;
 }
 
 - (void)clear:(id)sender {
-    NSAlert *alert = [[[NSAlert alloc] init] autorelease];
+    NSAlert *alert = [[NSAlert alloc] init];
     alert.messageText = @"Erase Saved Directories?";
     [alert addButtonWithTitle:@"OK"];
     [alert addButtonWithTitle:@"Cancel"];
@@ -368,9 +360,9 @@ static const CGFloat kHelpMargin = 5;
 }
 
 - (void)computeFilteredEntries {
-    [filteredEntries_ release];
+    filteredEntries_ = nil;
     if (searchField_.stringValue.length == 0) {
-        filteredEntries_ = [entries_ retain];
+        filteredEntries_ = entries_;
     } else {
         NSMutableArray *array = [NSMutableArray array];
         for (iTermRecentDirectoryMO *entry in entries_) {
@@ -379,7 +371,7 @@ static const CGFloat kHelpMargin = 5;
                 [array addObject:entry];
             }
         }
-        filteredEntries_ = [array retain];
+        filteredEntries_ = array;
     }
     [tableView_ reloadData];
 }
@@ -406,9 +398,9 @@ static const CGFloat kHelpMargin = 5;
 
 - (NSTableRowView *)tableView:(NSTableView *)tableView rowViewForRow:(NSInteger)row {
     if (@available(macOS 10.16, *)) {
-        return [[[iTermBigSurTableRowView alloc] initWithFrame:NSZeroRect] autorelease];
+        return [[iTermBigSurTableRowView alloc] initWithFrame:NSZeroRect];
     }
-    return [[[iTermCompetentTableRowView alloc] initWithFrame:NSZeroRect] autorelease];
+    return [[iTermCompetentTableRowView alloc] initWithFrame:NSZeroRect];
 }
 
 - (void)toggleStar:(id)sender {

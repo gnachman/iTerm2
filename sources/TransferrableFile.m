@@ -187,7 +187,7 @@ static NSMutableSet<NSString *> *iTermTransferrableFileLockedFileNames(void) {
 - (BOOL)quarantine:(NSString *)path sourceURL:(NSURL *)sourceURL {
     NSURL *url = [NSURL fileURLWithPath:path];
 
-    NSMutableDictionary *properties = [NSMutableDictionary dictionary];
+    NSMutableDictionary *properties = nil;
     {
         NSError *error = nil;
         NSDictionary *temp;

@@ -851,8 +851,6 @@ static BOOL hasBecomeActive = NO;
 - (NSMenu *)applicationDockMenu:(NSApplication *)sender {
     NSMenu* aMenu = [[NSMenu alloc] initWithTitle: @"Dock Menu"];
 
-    PseudoTerminal *frontTerminal;
-    frontTerminal = [[iTermController sharedInstance] currentTerminal];
     [aMenu addItemWithTitle:@"New Window (Default Profile)"
                      action:@selector(newWindow:)
               keyEquivalent:@""];
@@ -1909,10 +1907,10 @@ static BOOL hasBecomeActive = NO;
         NSString *cookie = [[iTermWebSocketCookieJar sharedInstance] randomStringForCookie];
         NSString *key = [[NSUUID UUID] UUIDString];
         NSString *identifier = [[iTermAPIConnectionIdentifierController sharedInstance] identifierForKey:key];
-        iTermScriptHistoryEntry *entry = [[iTermScriptHistoryEntry alloc] initWithName:@"REPL"
-                                                                              fullPath:nil
-                                                                            identifier:identifier
-                                                                              relaunch:nil];
+        iTermScriptHistoryEntry *entry = [[[iTermScriptHistoryEntry alloc] initWithName:@"REPL"
+                                                                               fullPath:nil
+                                                                             identifier:identifier
+                                                                              relaunch:nil] autorelease];
         [[iTermScriptHistory sharedInstance] addHistoryEntry:entry];
         NSDictionary *environment = @{ @"ITERM2_COOKIE": cookie,
                                        @"ITERM2_KEY": key };

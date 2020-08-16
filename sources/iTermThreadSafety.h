@@ -108,7 +108,7 @@ NS_ASSUME_NONNULL_BEGIN
 typedef iTermSynchronizedState<T> * _Nonnull (^iTermThreadStateFactoryBlockType)(dispatch_queue_t queue);
 
 #if BETA
-+ (iTermThread *)currentThread;
++ (iTermThread * _Nullable)currentThread;
 #endif
 + (NSString *)uniqueQueueLabelWithName:(NSString *)label;
 

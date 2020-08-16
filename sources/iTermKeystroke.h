@@ -33,8 +33,8 @@ NS_ASSUME_NONNULL_BEGIN
                              character:(unsigned int)character NS_DESIGNATED_INITIALIZER;
 - (instancetype)init NS_UNAVAILABLE;
 
-- (NSString *)keyInBindingDictionary:(NSDictionary<NSString *, NSDictionary *> *)dict;
-- (NSDictionary *)valueInBindingDictionary:(NSDictionary<NSString *, NSDictionary *> *)dict;
+- (NSString * _Nullable)keyInBindingDictionary:(NSDictionary<NSString *, NSDictionary *> *)dict;
+- (NSDictionary * _Nullable)valueInBindingDictionary:(NSDictionary<NSString *, NSDictionary *> *)dict;
 - (iTermKeystroke *)keystrokeWithoutVirtualKeyCode;
 
 @end

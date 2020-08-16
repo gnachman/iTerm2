@@ -23,7 +23,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 #pragma mark - Private - for tests only
 
-- (NSDictionary<NSNumber *, NSMutableDictionary *> *)nodes:(out NSNumber **)rootNodeIDOut;
+- (NSDictionary<NSNumber *, NSMutableDictionary *> * _Nullable)nodes:(out NSNumber **)rootNodeIDOut;
 - (BOOL)attachChildrenToParents:(NSDictionary<NSNumber *, NSMutableDictionary *> *)nodes
               ignoringRootRowID:(NSNumber *)rootRowID;
 @end

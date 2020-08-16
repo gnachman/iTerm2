@@ -421,19 +421,9 @@
     // Create it exclusively. If another instance of iTerm2 is trying to create it, back off.
     int fd = -1;
     do {
-        fd = open(url.path.UTF8String, O_CREAT | O_WRONLY | O_TRUNC | O_CLOEXEC | O_EXCL);
+        fd = open(url.path.UTF8String, O_CREAT | O_WRONLY | O_TRUNC | O_CLOEXEC | O_EXCL, 0600);
     } while (fd == -1 && errno == EINTR);
     if (fd == -1) {
-        return;
-    }
-    
-    // Set the permissions before continuing.
-    int rc = -1;
-    do {
-        rc = fchmod(fd, 0600);
-    } while (rc == -1 && errno == EINTR);
-    if (rc == -1) {
-        close(fd);
         return;
     }
     

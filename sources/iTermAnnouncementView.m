@@ -30,7 +30,7 @@ static const CGFloat kMargin = 8;
                                                  blue:212.0 / 255.0
                                                 alpha:1];
     NSGradient *gradient =
-            [[[NSGradient alloc] initWithStartingColor:color1 endingColor:color2] autorelease];
+        [[NSGradient alloc] initWithStartingColor:color1 endingColor:color2];
     [gradient drawInRect:self.bounds angle:90];
 
     NSColor *lightBorderColor = [NSColor colorWithCalibratedRed:250.0 / 255.0
@@ -72,7 +72,7 @@ static const CGFloat kMargin = 8;
                            style:(iTermAnnouncementViewStyle)style
                         actions:(NSArray *)actions
                           block:(void (^)(int index))block {
-    iTermAnnouncementView *view = [[[self alloc] initWithFrame:NSMakeRect(0, 0, 1000, 44)] autorelease];
+    iTermAnnouncementView *view = [[self alloc] initWithFrame:NSMakeRect(0, 0, 1000, 44)];
     view.style = style;
     [view setTitle:title];
     [view createButtonsFromActions:actions block:block];
@@ -89,17 +89,17 @@ static const CGFloat kMargin = 8;
         frameRect.size.height -= 10;
         frameRect.origin.y = 10;
         frameRect.origin.x = 0;
-        _internalView = [[[iTermAnnouncementInternalView alloc] initWithFrame:frameRect] autorelease];
+        _internalView = [[iTermAnnouncementInternalView alloc] initWithFrame:frameRect];
         _internalView.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
         [self addSubview:_internalView];
 
         NSImage *closeImage = [NSImage it_imageNamed:@"closebutton" forClass:self.class];
         NSSize closeSize = closeImage.size;
         _buttonWidth = ceil(closeSize.width + kMargin);
-        NSButton *closeButton = [[[NSButton alloc] initWithFrame:NSMakeRect(frameRect.size.width - _buttonWidth,
-                                                                            floor((frameRect.size.height - closeSize.height) / 2),
-                                                                            closeSize.width,
-                                                                            closeSize.height)] autorelease];
+        NSButton *closeButton = [[NSButton alloc] initWithFrame:NSMakeRect(frameRect.size.width - _buttonWidth,
+                                                                           floor((frameRect.size.height - closeSize.height) / 2),
+                                                                           closeSize.width,
+                                                                           closeSize.height)];
         closeButton.autoresizingMask = NSViewMinXMargin;
         [closeButton setButtonType:NSButtonTypeMomentaryPushIn];
         [closeButton setImage:closeImage];
@@ -108,7 +108,7 @@ static const CGFloat kMargin = 8;
         [closeButton setBordered:NO];
         [[closeButton cell] setHighlightsBy:NSContentsCellMask];
         [closeButton setTitle:@""];
-        _closeButton = [closeButton retain];
+        _closeButton = closeButton;
 
         [_internalView addSubview:closeButton];
 
@@ -123,16 +123,6 @@ static const CGFloat kMargin = 8;
     return self;
 }
 
-- (void)dealloc {
-    [[NSNotificationCenter defaultCenter] removeObserver:self];
-    [_block release];
-    [_textView release];
-    [_icon release];
-    [_closeButton release];
-    [_actionButtons release];
-    [super dealloc];
-}
-
 - (void)close:(id)sender {
     if (_block) {
         _block(-1);
@@ -140,8 +130,6 @@ static const CGFloat kMargin = 8;
 }
 
 - (void)willDismiss {
-    // Blocks might want to do something after calling -dismiss so autorelease.
-    [_block autorelease];
     _block = nil;
 }
 
@@ -192,7 +180,7 @@ static const CGFloat kMargin = 8;
 
     for (int i = start; i != limit; i += step) {
         NSString *action = actions[i];
-        NSButton *button = [[[NSButton alloc] init] autorelease];
+        NSButton *button = [[NSButton alloc] init];
         [button setButtonType:NSButtonTypeMomentaryPushIn];
         [button setTarget:self];
         [button setAction:@selector(buttonPressed:)];
@@ -261,7 +249,7 @@ static const CGFloat kMargin = 8;
     NSSize size = [iconString sizeWithAttributes:attributes];
     // This is a better estimate of the height. Maybe it doesn't include leading?
     size.height = [emojiFont ascender] - [emojiFont descender];
-    NSImage *iconImage = [[[NSImage alloc] initWithSize:size] autorelease];
+    NSImage *iconImage = [[NSImage alloc] initWithSize:size];
     [iconImage lockFocus];
     [iconString drawAtPoint:NSMakePoint(0, 0) withAttributes:attributes];
     [iconImage unlockFocus];
@@ -270,14 +258,12 @@ static const CGFloat kMargin = 8;
 }
 
 - (void)setTitle:(NSString *)title {
-    [_title autorelease];
     _title = [title copy];
     NSImage *iconImage = [self iconImage];
 
     CGFloat y = floor((_internalView.frame.size.height - iconImage.size.height) / 2);
     {
         [_icon removeFromSuperview];
-        [_icon autorelease];
         _icon = [[NSImageView alloc] initWithFrame:NSMakeRect(kMargin,
                                                               y,
                                                               iconImage.size.width,
@@ -292,10 +278,10 @@ static const CGFloat kMargin = 8;
         rect.size.width -= rect.origin.x;
 
         rect.size.width -= _buttonWidth;
-        NSTextView *textView = [[[NSTextView alloc] initWithFrame:rect] autorelease];
+        NSTextView *textView = [[NSTextView alloc] initWithFrame:rect];
         NSDictionary *attributes = @{ NSFontAttributeName: [NSFont systemFontOfSize:12] };
-        NSAttributedString *attributedString = [[[NSAttributedString alloc] initWithString:title
-                                                                                attributes:attributes] autorelease];
+        NSAttributedString *attributedString = [[NSAttributedString alloc] initWithString:title
+                                                                               attributes:attributes];
         textView.textStorage.attributedString = attributedString;
         [textView setEditable:NO];
         textView.autoresizingMask = NSViewWidthSizable | NSViewMaxXMargin;
@@ -304,8 +290,7 @@ static const CGFloat kMargin = 8;
         [textView setSelectable:NO];
 
         [_textView removeFromSuperview];
-        [_textView autorelease];
-        _textView = [textView retain];
+        _textView = textView;
 
         CGFloat height = [title heightWithAttributes:attributes
                                   constrainedToWidth:rect.size.width];
@@ -327,10 +312,10 @@ static const CGFloat kMargin = 8;
             [self removeTrackingArea:self.trackingAreas[0]];
         }
         NSTrackingArea *trackingArea =
-            [[[NSTrackingArea alloc] initWithRect:_internalView.frame
-                                          options:NSTrackingInVisibleRect | NSTrackingActiveInKeyWindow | NSTrackingCursorUpdate
-                                            owner:self
-                                         userInfo:nil] autorelease];
+        [[NSTrackingArea alloc] initWithRect:_internalView.frame
+                                     options:NSTrackingInVisibleRect | NSTrackingActiveInKeyWindow | NSTrackingCursorUpdate
+                                       owner:self
+                                    userInfo:nil];
         [self addTrackingArea:trackingArea];
     }
 }
@@ -428,11 +413,11 @@ static const CGFloat kMargin = 8;
 }
 
 - (void)addDismissOnKeyDownLabel {
-    NSMutableAttributedString *string = [[_textView.attributedString mutableCopy] autorelease];
+    NSMutableAttributedString *string = [_textView.attributedString mutableCopy];
     NSDictionary *attributes = @{ NSFontAttributeName: [NSFont systemFontOfSize:10],
                                   NSForegroundColorAttributeName: [NSColor darkGrayColor] };
-    NSAttributedString *notice = [[[NSAttributedString alloc] initWithString:@"\nPress any key to dismiss this message."
-                                                                  attributes:attributes] autorelease];
+    NSAttributedString *notice = [[NSAttributedString alloc] initWithString:@"\nPress any key to dismiss this message."
+                                                                 attributes:attributes];
     [string appendAttributedString:notice];
     _textView.textStorage.attributedString = string;
 }

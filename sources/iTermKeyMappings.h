@@ -29,11 +29,11 @@ NS_ASSUME_NONNULL_BEGIN
 
 // Return the action for a given keycode and modifiers, searching only the
 // specified keymappings dictionary.
-+ (iTermKeyBindingAction *)localActionForKeystroke:(iTermKeystroke *)keystroke
-                                       keyMappings:(NSDictionary *)keyMappings;
++ (iTermKeyBindingAction * _Nullable)localActionForKeystroke:(iTermKeystroke *)keystroke
+                                                 keyMappings:(NSDictionary *)keyMappings;
 
 // Return anaction at a given index from the global key mappings.
-+ (iTermKeyBindingAction *)globalActionAtIndex:(NSInteger)rowIndex;
++ (iTermKeyBindingAction * _Nullable)globalActionAtIndex:(NSInteger)rowIndex;
 
 #pragma mark Keystroke-Returning
 
@@ -58,10 +58,10 @@ NS_ASSUME_NONNULL_BEGIN
 + (NSArray<iTermKeystroke *> *)sortedKeystrokesForProfile:(Profile *)profile;
 
 // Return a keystroke by index from a profile.
-+ (iTermKeystroke *)keystrokeAtIndex:(int)rowIndex inprofile:(Profile *)profile;
++ (iTermKeystroke * _Nullable)keystrokeAtIndex:(int)rowIndex inprofile:(Profile *)profile;
 
 // Return a shortcut (0xKeycode-0xModifier) from the global keymappings.
-+ (iTermKeystroke *)globalKeystrokeAtIndex:(int)rowIndex;
++ (iTermKeystroke * _Nullable)globalKeystrokeAtIndex:(int)rowIndex;
 
 + (NSArray<iTermKeystroke *> *)sortedKeystrokesForKeyMappingsInProfile:(Profile *)profile;
 
@@ -119,7 +119,7 @@ NS_ASSUME_NONNULL_BEGIN
 + (iTermKeystroke *)keystrokeForMappingReferencingProfileWithGuid:(NSString *)guid
 inProfile:(Profile *)profile;
 
-+ (Profile *)removeKeyMappingsReferencingGuid:(NSString *)guid
++ (Profile * _Nullable)removeKeyMappingsReferencingGuid:(NSString *)guid
 fromProfile:(nullable Profile *)profile;
 
 @end

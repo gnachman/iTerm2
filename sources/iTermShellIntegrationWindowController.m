@@ -313,19 +313,12 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
     NSString *shell_and = @"&&";
     NSString *shell_or = @"||";
     NSString *quote = @"";
-    NSString *script = nil;
     switch (self.shell) {
         case iTermShellIntegrationShellTcsh:
-            script = @"~/.login";
-            break;
         case iTermShellIntegrationShellZsh:
-            script = [self.dotdir stringByAppendingPathComponent:@".zshrc"];
-            break;
         case iTermShellIntegrationShellBash:
-            script = bashDotFile;
             break;
         case iTermShellIntegrationShellFish:
-            script = @"~/.config/fish/config.fish";
             shell_and=@"; and";
             shell_or=@"; or";
             break;

@@ -85,7 +85,7 @@ const NSEventModifierFlags kHotKeyModifierMask = (NSEventModifierFlagCommand |
 }
 
 + (NSArray<iTermShortcut *> *)shortcutsForProfile:(Profile *)profile {
-    iTermShortcut *main = [[[iTermShortcut alloc] init] autorelease];
+    iTermShortcut *main = [[iTermShortcut alloc] init];
     main.keyCode = [iTermProfilePreferences unsignedIntegerForKey:KEY_HOTKEY_KEY_CODE inProfile:profile];
     main.modifiers = [iTermProfilePreferences unsignedIntegerForKey:KEY_HOTKEY_MODIFIER_FLAGS inProfile:profile];
     main.characters = [iTermProfilePreferences stringForKey:KEY_HOTKEY_CHARACTERS inProfile:profile];
@@ -107,7 +107,7 @@ const NSEventModifierFlags kHotKeyModifierMask = (NSEventModifierFlagCommand |
     if (!dictionary || !dictionary.count) {
         return nil;
     }
-    iTermShortcut *shortcut = [[[iTermShortcut alloc] init] autorelease];
+    iTermShortcut *shortcut = [[iTermShortcut alloc] init];
     shortcut.keyCode = [dictionary[kKeyCode] unsignedIntegerValue];
     shortcut.modifiers = [dictionary[kModifiers] unsignedIntegerValue];
     shortcut.characters = dictionary[kCharacters];
@@ -116,10 +116,10 @@ const NSEventModifierFlags kHotKeyModifierMask = (NSEventModifierFlagCommand |
 }
 
 + (instancetype)shortcutWithEvent:(NSEvent *)event {
-    return [[[self alloc] initWithKeyCode:event.keyCode
-                                modifiers:event.it_modifierFlags
-                               characters:event.characters
-              charactersIgnoringModifiers:event.charactersIgnoringModifiers] autorelease];
+    return [[self alloc] initWithKeyCode:event.keyCode
+                               modifiers:event.it_modifierFlags
+                              characters:event.characters
+             charactersIgnoringModifiers:event.charactersIgnoringModifiers];
 }
 
 - (instancetype)init {
@@ -138,12 +138,6 @@ const NSEventModifierFlags kHotKeyModifierMask = (NSEventModifierFlagCommand |
         _charactersIgnoringModifiers = [charactersIgnoringModifiers copy];
     }
     return self;
-}
-
-- (void)dealloc {
-    [_characters release];
-    [_charactersIgnoringModifiers release];
-    [super dealloc];
 }
 
 - (NSString *)description {

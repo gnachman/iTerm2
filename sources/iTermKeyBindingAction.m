@@ -68,7 +68,7 @@ static NSString *GetProfileName(NSString *guid) {
     if (self) {
         _keyAction = [dictionary[iTermKeyBindingDictionaryKeyAction] intValue];
         _parameter = [dictionary[iTermKeyBindingDictionaryKeyParameter] ?: @"" copy];
-        _label = [dictionary[iTermKeyBindingDictionaryKeyLabel] copy];
+        _label = [dictionary[iTermKeyBindingDictionaryKeyLabel] ?: @"" copy];
     }
     return self;
 }

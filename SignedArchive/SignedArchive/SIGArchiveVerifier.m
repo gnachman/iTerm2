@@ -367,7 +367,9 @@ static NSInteger SIGArchiveVerifiedLowestSupportedVersion = 2;
                               publicKey:_certificates.firstObject.publicKey.secKey
                                   error:error];
 #else
-    *error = [SIGError errorWithCode:SIGErrorCodeNoSignature];
+    if (error) {
+        *error = [SIGError errorWithCode:SIGErrorCodeNoSignature];
+    }
     return NO;
 #endif
 }

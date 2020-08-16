@@ -24,7 +24,7 @@ NSString *const iTermTmuxWindowCacheDidChange = @"iTermTmuxWindowCacheDidChange"
 
 @interface iTermTmuxCacheSession: NSObject
 @property (nonatomic, strong) iTermTmuxSessionObject *sessionObject;
-@property (nonatomic, copy) NSMutableArray<iTermTmuxCacheWindow *> *mutableWindows;
+@property (nonatomic, strong) NSMutableArray<iTermTmuxCacheWindow *> *mutableWindows;
 @end
 
 @implementation iTermTmuxCacheSession
@@ -35,7 +35,7 @@ NSString *const iTermTmuxWindowCacheDidChange = @"iTermTmuxWindowCacheDidChange"
 
 @interface iTermTmuxCacheClient: NSObject
 @property (nonatomic, copy) NSString *identifier;
-@property (nonatomic, copy) NSMutableArray<iTermTmuxCacheSession *> *sessions;
+@property (nonatomic, copy) NSArray<iTermTmuxCacheSession *> *sessions;
 @end
 
 @implementation iTermTmuxCacheClient

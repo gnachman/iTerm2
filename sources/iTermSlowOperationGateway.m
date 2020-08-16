@@ -78,7 +78,9 @@
         if (!exists) {
             return;
         }
-        completion(exists.boolValue);
+        dispatch_async(dispatch_get_main_queue(), ^{
+            completion(exists.boolValue);
+        });
     }];
 }
 

@@ -225,15 +225,16 @@ NSPointerArray *gThreads;
 
 - (void)dispatchAsync:(void (^)(id))block {
     [self retain];
-#if BETA
-    NSArray *stacks = [[[iTermThread currentThread] currentStacks] ?: @[ [[NSThread callStackSymbols]  componentsJoinedByString:@"\n"] ] retain];
-#endif
     @synchronized (self) {
         if (_deferred) {
             [_deferred addObject:[[block copy] autorelease]];
             return;
         }
     }
+#if BETA
+    NSArray *stacks = [[iTermThread currentThread] currentStacks] ?: @[ [[NSThread callStackSymbols]  componentsJoinedByString:@"\n"] ];
+    [stacks retain];
+#endif
     dispatch_async(_queue, ^{
 #if BETA
         NSArray *saved = [_stacks retain];

@@ -202,6 +202,13 @@ int iTermCreateConnectedUnixDomainSocket(const char *path,
         case -1:
             // error
             iTermFileDescriptorServerLog("Fork failed: %s", strerror(errno));
+            close(listenFd);
+            close(acceptedFd);
+            close(forkState.deadMansPipe[1]);
+            Free2DArray(cargv, argv.count);
+            close(pipeFds[0]);
+            *writeFDOut = pipeFds[1];
+            Free2DArray((char **)cenv, 0);
             return forkState;
 
         case 0: {

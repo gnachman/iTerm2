@@ -6817,7 +6817,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)tmuxGatewayDidTimeOut {
-    NSAlert *alert = [[NSAlert alloc] init];
+    NSAlert *alert = [[[NSAlert alloc] init] autorelease];
     alert.messageText = @"Force Detach?";
     alert.informativeText = @"Tmux is not responding. Would you like to force detach?";
     [alert addButtonWithTitle:@"Detach"];
@@ -6839,7 +6839,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (BOOL)tmuxGatewayShouldForceDetach {
-    NSAlert *alert = [[NSAlert alloc] init];
+    NSAlert *alert = [[[NSAlert alloc] init] autorelease];
     alert.messageText = @"Force Detach?";
     alert.informativeText = @"A previous detach request has not yet been honored. Force detach?";
     [alert addButtonWithTitle:@"OK"];
@@ -11317,7 +11317,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         if (value.length == 0) {
             return;
         }
-        _keyLabels[name] = [value copy];
+        _keyLabels[name] = [[value copy] autorelease];
         if ([name isEqualToString:@"status"] && updateStatusChangedLine) {
             [self updateStatusChangedLine];
         }

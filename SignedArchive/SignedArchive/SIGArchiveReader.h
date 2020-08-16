@@ -29,7 +29,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (nullable NSData *)signature:(out NSError **)error;
 #endif
 
-- (NSData *)signature2:(out NSError * _Nullable __autoreleasing *)error;
+- (NSData * _Nullable)signature2:(out NSError * _Nullable __autoreleasing *)error;
 
 
 - (nullable NSInputStream *)payloadInputStream:(out NSError **)error;

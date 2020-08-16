@@ -266,7 +266,7 @@ typedef struct {
 @property(nonatomic, readonly) AsciiData *asciiData;
 
 + (instancetype)token;
-+ (instancetype)tokenForControlCharacter:(unsigned char)controlCharacter;
++ (instancetype)newTokenForControlCharacter:(unsigned char)controlCharacter;
 
 - (void)setAsciiBytes:(char *)bytes length:(int)length;
 

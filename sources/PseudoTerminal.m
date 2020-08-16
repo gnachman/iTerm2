@@ -3216,12 +3216,14 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (NSDictionary *)arrangementWithTabs:(NSArray<PTYTab *> *)tabs
-                             includingContents:(BOOL)includeContents {
+                    includingContents:(BOOL)includeContents {
     NSMutableDictionary *result = [NSMutableDictionary dictionaryWithCapacity:7];
+    iTermMutableDictionaryEncoderAdapter *adapter =
+        [[[iTermMutableDictionaryEncoderAdapter alloc] initWithMutableDictionary:result] autorelease];
     const BOOL commit =
-    [self populateArrangementWithTabs:tabs
-                    includingContents:includeContents
-                              encoder:[[iTermMutableDictionaryEncoderAdapter alloc] initWithMutableDictionary:result]];
+        [self populateArrangementWithTabs:tabs
+                        includingContents:includeContents
+                                  encoder:adapter];
     if (!commit) {
         return nil;
     }
@@ -11799,7 +11801,7 @@ backgroundColor:(NSColor *)backgroundColor {
     }
     NSArray<PTYTab *> *tabs = [self tabsToEncodeExcludingTmux:YES];
     const BOOL includeContents = [iTermAdvancedSettingsModel restoreWindowContents];
-    iTermGraphEncoderAdapter *adapter = [[iTermGraphEncoderAdapter alloc] initWithGraphEncoder:encoder];
+    iTermGraphEncoderAdapter *adapter = [[[iTermGraphEncoderAdapter alloc] initWithGraphEncoder:encoder] autorelease];
     const BOOL commit = [self populateArrangementWithTabs:tabs
                                         includingContents:includeContents
                                                   encoder:adapter];

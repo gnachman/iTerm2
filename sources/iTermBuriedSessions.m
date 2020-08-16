@@ -45,11 +45,6 @@ NSString *const iTermSessionBuriedStateChangeTabNotification = @"iTermSessionBur
     return self;
 }
 
-- (void)dealloc {
-    [_array release];
-    [super dealloc];
-}
-
 - (void)addBuriedSession:(PTYSession *)sessionToBury {
     id<iTermWindowController> windowController = (PseudoTerminal *)sessionToBury.delegate.parentWindow;
     iTermRestorableSession *restorableSession = [windowController restorableSessionForSession:sessionToBury];
@@ -73,7 +68,6 @@ NSString *const iTermSessionBuriedStateChangeTabNotification = @"iTermSessionBur
     if (!restorableSession) {
         return;
     }
-    [[restorableSession retain] autorelease];
     [_array removeObject:restorableSession];
     [session disinter];
     PseudoTerminal *term = [[iTermController sharedInstance] terminalWithGuid:restorableSession.terminalGuid];
@@ -92,11 +86,11 @@ NSString *const iTermSessionBuriedStateChangeTabNotification = @"iTermSessionBur
         }
     } else {
         // Create a new term and add the session to it.
-        term = [[[PseudoTerminal alloc] initWithSmartLayout:YES
-                                                 windowType:restorableSession.windowType
-                                            savedWindowType:restorableSession.savedWindowType
-                                                     screen:restorableSession.screen
-                                                    profile:nil] autorelease];
+        term = [[PseudoTerminal alloc] initWithSmartLayout:YES
+                                                windowType:restorableSession.windowType
+                                           savedWindowType:restorableSession.savedWindowType
+                                                    screen:restorableSession.screen
+                                                   profile:nil];
         if (term) {
             [[iTermController sharedInstance] addTerminalWindow:term];
             term.terminalGuid = restorableSession.terminalGuid;
@@ -127,7 +121,7 @@ NSString *const iTermSessionBuriedStateChangeTabNotification = @"iTermSessionBur
 
 - (void)restoreFromState:(NSArray<NSDictionary *> *)state {
     for (NSDictionary *dict in state) {
-        iTermRestorableSession *restorable = [[[iTermRestorableSession alloc] initWithRestorableState:dict] autorelease];
+        iTermRestorableSession *restorable = [[iTermRestorableSession alloc] initWithRestorableState:dict];
         if (restorable) {
             [_array addObject:restorable];
         }
@@ -154,7 +148,7 @@ NSString *const iTermSessionBuriedStateChangeTabNotification = @"iTermSessionBur
     BOOL needsSeparator = NO;
     [menu removeAllItems];
     for (PTYSession *session in [[iTermBuriedSessions sharedInstance] buriedSessions]) {
-        NSMenuItem *item = [[[NSMenuItem alloc] initWithTitle:session.name action:@selector(disinter:) keyEquivalent:@""] autorelease];
+        NSMenuItem *item = [[NSMenuItem alloc] initWithTitle:session.name action:@selector(disinter:) keyEquivalent:@""];
         item.representedObject = session;
         item.target = self;
         [menu addItem:item];
@@ -172,9 +166,9 @@ NSString *const iTermSessionBuriedStateChangeTabNotification = @"iTermSessionBur
             clientName = @"tmux";
         }
         NSString *title = [NSString stringWithFormat:@"↣ %@ — %@", clientName, window.name];
-        NSMenuItem *item = [[[NSMenuItem alloc] initWithTitle:title
-                                                       action:@selector(disinterTmuxWindow:)
-                                                keyEquivalent:@""] autorelease];
+        NSMenuItem *item = [[NSMenuItem alloc] initWithTitle:title
+                                                      action:@selector(disinterTmuxWindow:)
+                                               keyEquivalent:@""];
         item.target = self;
         item.representedObject = window;
         [menu addItem:item];

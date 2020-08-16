@@ -201,7 +201,9 @@
 - (id)objectWithKey:(NSString *)key class:(Class)desiredClass error:(out NSError *__autoreleasing  _Nullable * _Nullable)error {
     id instance = [desiredClass castFrom:_pod[key]];
     if (!instance) {
-        *error = [[NSError alloc] initWithDomain:@"com.iterm2.graph-record" code:1 userInfo:@{ NSLocalizedDescriptionKey: @"No such record or wrong type" }];
+        if (error) {
+            *error = [[NSError alloc] initWithDomain:@"com.iterm2.graph-record" code:1 userInfo:@{ NSLocalizedDescriptionKey: @"No such record or wrong type" }];
+        }
         return nil;
     }
     return instance;
