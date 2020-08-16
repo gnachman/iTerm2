@@ -449,10 +449,6 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                                                  name:iTermMetalSettingsDidChangeNotification
                                                object:nil];
     [[NSNotificationCenter defaultCenter] addObserver:self
-                                             selector:@selector(screenParametersDidChange:)
-                                                 name:iTermScreenParametersDidChangeNontrivally
-                                               object:nil];
-    [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(tmuxDidFetchSetTitlesStringOption:)
                                                  name:kTmuxControllerDidFetchSetTitlesStringOption
                                                object:nil];
@@ -6032,6 +6028,7 @@ typedef struct {
             _metalUnavailableReason = iTermMetalUnavailableReasonContextAllocationFailure;
         }
     }
+    DLog(@"_metalUnavailableReason = %@", iTermMetalUnavailableReasonDescription(_metalUnavailableReason));
     [self.sessions enumerateObjectsUsingBlock:^(PTYSession * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
         if (self->isMaximized_) {
             obj.useMetal = useMetal && (obj == self.activeSession);
@@ -6043,10 +6040,6 @@ typedef struct {
 }
 
 - (void)metalSettingsDidChange:(NSNotification *)notification {
-    [self bounceMetal];
-}
-
-- (void)screenParametersDidChange:(NSNotification *)notification {
     [self bounceMetal];
 }
 

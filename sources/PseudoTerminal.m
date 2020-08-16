@@ -466,6 +466,7 @@ static BOOL iTermWindowTypeIsCompact(iTermWindowType windowType) {
     BOOL _deferSetAppearance;
     BOOL _haveDesiredAppearance;
     NSAppearance *_desiredAppearance;
+    CGFloat _backingScaleFactor;
 }
 
 @synthesize scope = _scope;
@@ -860,7 +861,7 @@ static BOOL iTermWindowTypeIsCompact(iTermWindowType windowType) {
            windowTypeForStyleMask:(windowType == WINDOW_TYPE_TRADITIONAL_FULL_SCREEN) ? windowType : savedWindowType
                  hotkeyWindowType:hotkeyWindowType
                      initialFrame:initialFrame];
-
+    _backingScaleFactor = self.window.backingScaleFactor;
     _fullScreen = (windowType == WINDOW_TYPE_TRADITIONAL_FULL_SCREEN);
     _contentView =
         [[[iTermRootTerminalView alloc] initWithFrame:[self.window.contentView frame]
@@ -3963,10 +3964,13 @@ ITERM_WEAKLY_REFERENCEABLE
     return NSZeroRect;
 }
 
-- (void)screenParametersDidChange
-{
+- (void)screenParametersDidChange {
     PtyLog(@"Screen parameters changed.");
     [self canonicalizeWindowFrame];
+    if (self.window.backingScaleFactor != _backingScaleFactor) {
+        _backingScaleFactor = self.window.backingScaleFactor;
+        [self.currentTab bounceMetal];
+    }
 }
 
 - (void)windowOcclusionDidChange:(NSNotification *)notification {
