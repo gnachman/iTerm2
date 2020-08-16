@@ -197,7 +197,22 @@
     if (![state.db executeUpdate:@"create table if not exists Node (key text not null, identifier text not null, parent integer not null, data blob)"]) {
         return NO;
     }
+    [state.db executeUpdate:@"create index if not exists parent_index on Node (parent)"];
 
+    // Delete nodes without parents.
+    [state.db executeUpdate:
+     @"delete from Node where "
+     @"  rowid in ("
+     @"    select child.rowid as id "
+     @"      from "
+     @"        Node as child"
+     @"        left join "
+     @"          Node as parentNode "
+     @"          on parentNode.rowid = child.parent "
+     @"      where "
+     @"        parentNode.rowid is NULL and "
+     @"        child.parent != 0"
+     @"  )"];
     return YES;
 }
 

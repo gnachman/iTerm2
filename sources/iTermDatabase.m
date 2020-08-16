@@ -141,7 +141,13 @@
     const BOOL ok = [_db open];
     if (ok) {
         DLog(@"OK");
-        return YES;
+        NSString *checkType = arc4random_uniform(100) == 0 ? @"integrity_check" : @"quick_check";
+        FMResultSet *results = [_db executeQuery:[NSString stringWithFormat:@"pragma %@", checkType]];
+        if ([results next] && [[results stringForColumn:checkType] isEqualToString:@"ok"]) {
+            return YES;
+        }
+        [_db close];
+        DLog(@"%@ check failed", checkType);
     }
     DLog(@"Failed to open db: %@", _db.lastError);
 
