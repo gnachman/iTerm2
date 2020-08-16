@@ -114,6 +114,8 @@ extern BOOL gDebugLogging;
 #define ITCriticalErrorCreateAlert [[[NSAlert alloc] init] autorelease]
 #endif
 
+void LeakLog(NSString *format, ...);
+
 #define ITCriticalError(condition, args...) \
   do { \
     if (!(condition)) { \

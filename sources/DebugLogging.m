@@ -22,6 +22,23 @@ static NSMutableString* gDebugLogStr = nil;
 static NSMutableDictionary *gPinnedMessages;
 BOOL gDebugLogging = NO;
 
+void LeakLog(NSString *format, ...) {
+    va_list args;
+    va_start(args, format);
+    NSString *s = [[[NSString alloc] initWithFormat:format arguments:args] autorelease];
+    s = [s stringByAppendingString:@"\n"];
+    va_end(args);
+    static NSFileHandle *handle;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        int fd = open("/tmp/leaks.log", O_WRONLY | O_CREAT | O_TRUNC, 0600);
+        assert(fd >= 0);
+        handle = [[NSFileHandle alloc] initWithFileDescriptor:fd closeOnDealloc:YES];
+    });
+    [handle writeData:[s dataUsingEncoding:NSUTF8StringEncoding]];
+    [handle synchronizeFile];
+}
+
 static NSRecursiveLock *GetDebugLogLock(void) {
     static NSRecursiveLock *gDebugLogLock = nil;
     static dispatch_once_t onceToken;

@@ -585,6 +585,7 @@ static const NSUInteger kMaxHosts = 100;
     // will differ from its real GUID. It only serves to find the session in the arrangement to
     // make repairs.
     NSString *_arrangementGUID;
+    NSObject *_observationInfoContainer;
 }
 
 @synthesize isDivorced = _divorced;
@@ -631,6 +632,8 @@ static const NSUInteger kMaxHosts = 100;
 - (instancetype)initSynthetic:(BOOL)synthetic {
     self = [super init];
     if (self) {
+        LeakLog(@"Session %p initialized from %@", self, [NSThread callStackSymbols]);
+        _observationInfoContainer = [[NSObject alloc] init];
         _autoLogId = arc4random();
         _useAdaptiveFrameRate = [iTermAdvancedSettingsModel useAdaptiveFrameRate];
         _adaptiveFrameRateThroughputThreshold = [iTermAdvancedSettingsModel adaptiveFrameRateThroughputThreshold];
@@ -823,6 +826,7 @@ static const NSUInteger kMaxHosts = 100;
 ITERM_WEAKLY_REFERENCEABLE
 
 - (void)iterm_dealloc {
+    LeakLog(@"Session %p:%@ dealloced", self, _guid);
     if (_textview.delegate == self) {
         _textview.delegate = nil;
     }
@@ -949,6 +953,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_lastLibTickitProfileSetting release];
     [_tmuxClientWritePipe release];
     [_arrangementGUID release];
+    [_observationInfoContainer release];
 
     [super dealloc];
 }
@@ -972,6 +977,15 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
+- (void)setObservationInfo:(void *)observationInfo {
+    LeakLog(@"Session %p:%@ setObserverationInfo from %@", self, self.guid, [NSThread callStackSymbols]);
+    _observationInfoContainer.observationInfo = observationInfo;
+}
+
+- (void *)observationInfo {
+    return _observationInfoContainer.observationInfo;
+}
+
 - (void)didGuessLocalHostName:(NSString *)name {
     if ([self.variablesScope valueForVariableName:iTermVariableKeySessionHostname] == nil) {
         [self.variablesScope setValue:name forVariableNamed:iTermVariableKeySessionHostname];
@@ -982,6 +996,7 @@ ITERM_WEAKLY_REFERENCEABLE
     if ([NSObject object:guid isEqualToObject:_guid]) {
         return;
     }
+    LeakLog(@"Session %p:%@ renamed to %@", self, self.guid, guid);
     if (_guid) {
         [[PTYSession sessionMap] removeObjectForKey:_guid];
     }
@@ -2422,6 +2437,7 @@ ITERM_WEAKLY_REFERENCEABLE
 // Request that the session close. It may or may not be undoable. Only undoable terminations support
 // "restart", which is done by first calling revive and then replaceTerminatedShellWithNewInstance.
 - (void)terminate {
+    LeakLog(@"Session %p:%@ terminated from %@", self, self.guid, [NSThread callStackSymbols]);
     DLog(@"terminate called from %@", [NSThread callStackSymbols]);
 
     if ([[self textview] isFindingCursor]) {
@@ -2562,11 +2578,13 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)disinter {
+    LeakLog(@"Session %p:%@ disintered", self, self.guid);
     _textview.dataSource = _screen;
     _textview.delegate = self;
 }
 
 - (BOOL)revive {
+    LeakLog(@"Session %p:%@ revived", self, self.guid);
     if (_shell.paused) {
         [NSObject cancelPreviousPerformRequestsWithTarget:self
                                                  selector:@selector(hardStop)
@@ -3131,6 +3149,7 @@ ITERM_WEAKLY_REFERENCEABLE
 // Called when the file descriptor closes. If -terminate was already called this does nothing.
 // Otherwise, you can call replaceTerminatedShellWithNewInstance after this to restart the session.
 - (void)brokenPipe {
+    LeakLog(@"Session %p:%@ broken pipe", self, self.guid);
     DLog(@"  brokenPipe %@ task=%@", self, self.shell);
     if (_exited) {
         DLog(@"  brokenPipe: Already exited");
@@ -4161,6 +4180,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)setDelegate:(id<PTYSessionDelegate>)delegate {
+    LeakLog(@"Session %p:%@ setDelgate:%@ from %@", self, self.guid, delegate, [NSThread callStackSymbols]);
     if ([self isTmuxClient]) {
         [_tmuxController deregisterWindow:[_delegate tmuxWindow]
                                windowPane:self.tmuxPane
@@ -9179,6 +9199,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)bury {
+    LeakLog(@"Session %p:%@ buried", self, self.guid);
     if (_synthetic) {
         DLog(@"Attempt to bury while synthetic");
         return;
