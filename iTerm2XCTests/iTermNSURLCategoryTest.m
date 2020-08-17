@@ -65,6 +65,72 @@
     XCTAssertNil(url);
 }
 
+#pragma mark - URLWithUserSuppliedString
+
+- (void)testURLWithUserSuppliedString_NonAsciiPath {
+    NSString *string = @"http://wiki.teamliquid.net/commons/images/thumb/a/af/Torbjörn-Barbarossa.jpg/580px-Torbjörn-Barbarossa.jpg";
+    NSURL *url = [NSURL URLWithString:string];
+    XCTAssertNil(url);
+
+    url = [NSURL URLWithUserSuppliedString:string];
+    XCTAssertEqualObjects(url.absoluteString, @"http://wiki.teamliquid.net/commons/images/thumb/a/af/Torbj%C3%B6rn-Barbarossa.jpg/580px-Torbj%C3%B6rn-Barbarossa.jpg");
+}
+
+- (void)testURLWithUserSuppliedString_NonAsciiFragment {
+    NSString *string = @"http://example.com/path?a=b&c=d#Torbjörn";
+    NSURL *url = [NSURL URLWithString:string];
+    XCTAssertNil(url);
+
+    url = [NSURL URLWithUserSuppliedString:string];
+    XCTAssertEqualObjects(url.absoluteString, @"http://example.com/path?a=b&c=d#Torbj%C3%B6rn");
+}
+
+- (void)testURLWithUserSuppliedString_IDN {
+    NSString *string = @"http://中国.icom.museum/";
+    NSURL *url = [NSURL URLWithString:string];
+    XCTAssertNil(url);
+
+    url = [NSURL URLWithUserSuppliedString:string];
+    XCTAssertEqualObjects(url.absoluteString, @"http://xn--fiqs8s.icom.museum/");
+}
+
+- (void)testURLWithUserSuppliedString_Acid {
+    NSString *scheme = @"a1+-.";
+    NSString *user = @"%20;";
+    NSString *password = @"&=+$,é%20;&=+$,";
+    NSString *host = @"á中国.%20.icom.museum";
+    NSString *port = @"1";
+    NSString *path = @"%20Torbjörn";
+    NSString *query = @"%20国=%20中&ö";
+    NSString *fragment = @"%20é./?:~ñ";
+    NSString *urlString = [NSString stringWithFormat:@"%@://%@:%@@%@:%@/%@?%@#%@",
+                           scheme,
+                           user,
+                           password,
+                           host,
+                           port,
+                           path,
+                           query,
+                           fragment];
+    NSURL *url = [NSURL URLWithUserSuppliedString:urlString];
+    host = @"xn--1ca0960bnsf.%20.icom.museum";
+    password = @"&=+$,%C3%A9%20;&=+$,";
+    path = @"%20Torbj%C3%B6rn";
+    query = @"%20%E5%9B%BD=%20%E4%B8%AD&%C3%B6";
+    fragment = @"%20%C3%A9./?:~%C3%B1";
+    urlString = [NSString stringWithFormat:@"%@://%@:%@@%@:%@/%@?%@#%@",
+                 scheme,
+                 user,
+                 password,
+                 host,
+                 port,
+                 path,
+                 query,
+                 fragment];
+
+    XCTAssertEqualObjects(url.absoluteString, urlString);
+}
+
 #pragma mark - URLByRemovingFragment
 
 - (void)testURLByRemovingFragment_noFragment {

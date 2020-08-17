@@ -328,6 +328,9 @@ int decode_utf8_char(const unsigned char * restrict datap,
 
 // Perform substitutions in order.
 - (NSString *)stringByPerformingOrderedSubstitutions:(iTermOrderedDictionary<NSString *, NSString *> *)substitutions;
+- (NSString *)stringByReplacingCharactersAtIndices:(NSIndexSet *)indexSet
+                               withStringFromBlock:(NSString *(^ NS_NOESCAPE)(void))replacement;
+
 @end
 
 @interface NSMutableString (iTerm)

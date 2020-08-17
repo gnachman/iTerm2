@@ -8,6 +8,11 @@
 
 #import "NSURL+iTerm.h"
 
+#import "DebugLogging.h"
+#import "NSArray+iTerm.h"
+#import "NSStringITerm.h"
+#import "NSURL+IDN.h"
+
 NS_ASSUME_NONNULL_BEGIN
 
 @implementation NSURL(iTerm)
@@ -149,22 +154,135 @@ NS_ASSUME_NONNULL_BEGIN
     return [NSURL URLWithString:string];
 }
 
+// This takes a string that has a combination of well-encoded characters and totally
+// illegal-in-a-URL characters, and turns it into a proper URL.
+//
+// Nobody wants to write code to parse a URL. So we don't!
+//
+// This algorithm replaces any sequence of characters that aren't part of the structure of a URL and
+// replaces them with a nice safe ASCII string, mostly numbers. So for example:
+//
+//   https://user:password@example.com:8080/path/to/file?query=value&query=value#fragment
+//
+// Gets turned in to:
+//
+//   x12://11@10:9/8/7/6?5=4&3=2#1
+//
+// If what the user gave is us is roughly URL shaped this can be turned in to NSURLComponents.
+// It appears to have a competent URL parser, but it does want reasonably well-formed input.
+//
+// Then we replace each component with its original value. So x12 -> https, 11 -> user, etc.
+//
+// Note that NSURLComponents likes its values to be unencoded, so it can have all the crazy stuff
+// the user gave us and it can (mostly) turn it in to a URL.
+//
+// The reason there was a mostly is because it doesn't know about IDN. So we IDN-encode the
+// hostname before generating a URL.
 + (NSURL *)URLWithUserSuppliedString:(NSString *)string {
-    NSCharacterSet *nonAsciiCharacterSet = [NSCharacterSet characterSetWithRange:NSMakeRange(128, 0x10FFFF - 128)];
-    if ([string rangeOfCharacterFromSet:nonAsciiCharacterSet].location != NSNotFound) {
-        NSUInteger fragmentIndex = [string rangeOfString:@"#"].location;
-        if (fragmentIndex != NSNotFound) {
-            // Don't want to percent encode a #.
-            NSString *before = [[string substringToIndex:fragmentIndex] stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet URLFragmentAllowedCharacterSet]];
-            NSString *after = [[string substringFromIndex:fragmentIndex + 1] stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet URLFragmentAllowedCharacterSet]];
-            NSString *combined = [NSString stringWithFormat:@"%@#%@", before, after];
-            return [NSURL URLWithString:combined];
-        } else {
-            return [NSURL URLWithString:[string stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet URLFragmentAllowedCharacterSet]]];
+    DLog(@"Trying to make a proper URL out of: %@", string);
+
+    // Convert all sequences of non-reserved symbols into numbers 0, 1, 2, ...
+    NSCharacterSet *reservedSymbols = [NSCharacterSet characterSetWithCharactersInString:@":/@:.#?&="];
+    NSIndexSet *nonReservedSymbolIndices = [string indicesOfCharactersInSet:[reservedSymbols invertedSet]];
+    __block NSInteger count;
+    NSMutableString *stringWithPlaceholders = [string mutableCopy];
+    NSMutableDictionary *map = [NSMutableDictionary dictionary];
+    [nonReservedSymbolIndices enumerateRangesWithOptions:NSEnumerationReverse
+                                              usingBlock:^(NSRange range, BOOL * _Nonnull stop) {
+        NSString *number = [@(count++) stringValue];
+        if (range.location == 0) {
+            // Schemes can't start with a number. In case the first thing is a scheme, start it
+            // with a letter. This is safe because ports are the only thing that must be a number
+            // but they can't come first!
+            number = [@"x" stringByAppendingString:number];
         }
-    } else {
-        return [NSURL URLWithString:string];
+        [stringWithPlaceholders replaceCharactersInRange:range withString:number];
+        // We have to remove percent encoding here or it gets double-encoded. This does make the
+        // assumption that the URL is percent encoded and doesn't have random percent signs in it,
+        // but that's pretty reasonable because such a URL doesn't stand a snowball's chance of
+        // working.
+        map[number] = [[string substringWithRange:range] stringByRemovingPercentEncoding];
+    }];
+    DLog(@"stringWithPlaceholders=%@", stringWithPlaceholders);
+    DLog(@"map=%@", map);
+
+    NSURLComponents *components = [NSURLComponents componentsWithString:stringWithPlaceholders];
+    DLog(@"components=%@", components);
+
+    NSString *(^glue)(NSString *) = ^NSString *(NSString *encoded) {
+        // Encoded is something like 1.2 or 2/3 or 5=6&7=8
+        NSArray<NSString *> *parts =
+        [[encoded componentsSeparatedByCharactersInSet:reservedSymbols] reduceWithFirstValue:@[] block:^id(NSArray<NSString *> *accumulator, NSString *tail) {
+            if (accumulator.count == 0) {
+                return @[ tail ];
+            }
+            if (accumulator.lastObject.length == 0 && tail.length == 0) {
+                // Removes consecutive empty strings because something like &=x&= should have parts ["", x, ""].
+                return accumulator;
+            }
+            return [accumulator arrayByAddingObject:tail];
+        }];
+
+        // Joiners are like [.] or [/] or [=,&,=] for the examples above.
+        NSArray<NSString *> *joiners = [[encoded componentsSeparatedByCharactersInSet:[reservedSymbols invertedSet]] filteredArrayUsingBlock:^BOOL(NSString *anObject) {
+            return anObject.length > 0;
+        }];
+
+        NSArray<NSString *> *values = [parts mapWithBlock:^id(NSString *encodedPart) {
+            if (encodedPart.length == 0) {
+                return @"";
+            }
+            ITAssertWithMessage(map[encodedPart], @"Can't find encoded part %@ in string %@", encodedPart, string);
+            return map[encodedPart];
+        }];
+
+        NSString *result = [[values mapEnumeratedWithBlock:^id(NSUInteger i, NSString *value) {
+            if (i < joiners.count) {
+                return [value stringByAppendingString:joiners[i]];
+            }
+            return value;
+        }] componentsJoinedByString:@""];
+
+        DLog(@"glue(%@) parts=%@ joiners=%@ values=%@ result=%@", encoded, parts, joiners, values, result);
+        return result;
+    };
+    if (components.scheme) {
+        @try {
+            components.scheme = glue(components.scheme);
+        } @catch (NSException *exception) {
+            return nil;
+        }
     }
+    if (components.user) {
+        components.user = glue(components.user);
+    }
+    if (components.password) {
+        components.password = glue(components.password);
+    }
+    if (components.host) {
+        components.host = [NSURL IDNEncodedHostname:glue(components.host)];
+    }
+    if (components.port) {
+        @try {
+            components.port = @([glue(components.port.stringValue) integerValue]);
+        } @catch (NSException *exception) {
+            return nil;
+        }
+    }
+    if (components.path) {
+        components.path = glue(components.path);
+    }
+    if (components.fragment) {
+        components.fragment = glue(components.fragment);
+    }
+    if (components.queryItems.count) {
+        components.queryItems = [components.queryItems mapWithBlock:^id(NSURLQueryItem *item) {
+            return [NSURLQueryItem queryItemWithName:glue(item.name) ?: @""
+                                               value:glue(item.value)];
+        }];
+    }
+    DLog(@"Final result: %@", components.URL);
+    return components.URL;
 }
 
 - (nullable NSData *)zippedContents {

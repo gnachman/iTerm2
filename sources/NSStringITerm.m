@@ -2332,6 +2332,15 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
     }];
 }
 
+- (NSString *)stringByReplacingCharactersAtIndices:(NSIndexSet *)indexSet
+                               withStringFromBlock:(NSString *(^ NS_NOESCAPE)(void))replacement {
+    NSMutableString *result = [self mutableCopy];
+    [indexSet enumerateRangesWithOptions:NSEnumerationReverse usingBlock:^(NSRange range, BOOL * _Nonnull stop) {
+        [result replaceCharactersInRange:range withString:replacement()];
+    }];
+    return [result copy];
+}
+
 @end
 
 @implementation NSMutableString (iTerm)
