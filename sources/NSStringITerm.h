@@ -90,9 +90,6 @@ int decode_utf8_char(const unsigned char * restrict datap,
 // Replaces tab with ^V + tab.
 - (NSString *)stringWithShellEscapedTabs;
 
-// Properly escapes chars for a string to stick in a URL query param.
-- (NSString*)stringWithPercentEscape;
-
 // Convert DOS-style and \n newlines to \r newlines.
 - (NSString*)stringWithLinefeedNewlines;
 

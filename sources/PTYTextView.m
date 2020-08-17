@@ -2834,10 +2834,10 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
 }
 
 - (void)searchInBrowser:(id)sender {
-    NSString* url =
-        [NSString stringWithFormat:[iTermAdvancedSettingsModel searchCommand],
-                                   [[self selectedText] stringWithPercentEscape]];
-    [_urlActionHelper findUrlInString:url andOpenInBackground:NO];
+    NSURL *url = [NSURL urlByReplacingFormatSpecifier:@"%@"
+                                             inString:[iTermAdvancedSettingsModel searchCommand]
+                                            withValue:[self selectedText]];
+    [_urlActionHelper findUrlInString:url.absoluteString andOpenInBackground:NO];
 }
 
 #pragma mark - Marks

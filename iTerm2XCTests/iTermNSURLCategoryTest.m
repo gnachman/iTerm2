@@ -15,6 +15,56 @@
 
 @implementation iTermNSURLCategoryTest
 
+#pragma mark - URLByReplacingFormatSpecifier
+
+- (void)testURLByReplacingFormatSpecifier_QueryValue {
+    NSString *string = @"https://example.com/?a=1&b=%@&c=3";
+    NSURL *url = [NSURL urlByReplacingFormatSpecifier:@"%@" inString:string withValue:@"value"];
+    XCTAssertEqualObjects(url.absoluteString, @"https://example.com/?a=1&b=value&c=3");
+}
+
+- (void)testURLByReplacingFormatSpecifier_QueryName {
+    NSString *string = @"https://example.com/?a=1&%@=2&c=3";
+    NSURL *url = [NSURL urlByReplacingFormatSpecifier:@"%@" inString:string withValue:@"value"];
+    XCTAssertEqualObjects(url.absoluteString, @"https://example.com/?a=1&value=2&c=3");
+}
+
+- (void)testURLByReplacingFormatSpecifier_Fragment {
+    NSString *string = @"https://example.com/?a=1&b=2&c=3#fragment%@";
+    NSURL *url = [NSURL urlByReplacingFormatSpecifier:@"%@" inString:string withValue:@"value"];
+    XCTAssertEqualObjects(url.absoluteString, @"https://example.com/?a=1&b=2&c=3#fragmentvalue");
+}
+
+- (void)testURLByReplacingFormatSpecifier_Path {
+    NSString *string = @"https://example.com/a/%@/b?a=1&b=2&c=3#fragment";
+    NSURL *url = [NSURL urlByReplacingFormatSpecifier:@"%@" inString:string withValue:@"value"];
+    XCTAssertEqualObjects(url.absoluteString, @"https://example.com/a/value/b?a=1&b=2&c=3#fragment");
+}
+
+- (void)testURLByReplacingFormatSpecifier_Host {
+    NSString *string = @"https://%@.example.com/a/c/b?a=1&b=2&c=3#fragment";
+    NSURL *url = [NSURL urlByReplacingFormatSpecifier:@"%@" inString:string withValue:@"value"];
+    XCTAssertEqualObjects(url.absoluteString, @"https://value.example.com/a/c/b?a=1&b=2&c=3#fragment");
+}
+
+- (void)testURLByReplacingFormatSpecifier_User {
+    NSString *string = @"https://%@:password@example.com/a/c/b?a=1&b=2&c=3#fragment";
+    NSURL *url = [NSURL urlByReplacingFormatSpecifier:@"%@" inString:string withValue:@"value"];
+    XCTAssertEqualObjects(url.absoluteString, @"https://value:password@example.com/a/c/b?a=1&b=2&c=3#fragment");
+}
+
+- (void)testURLByReplacingFormatSpecifier_Password {
+    NSString *string = @"https://user:%@@example.com/a/c/b?a=1&b=2&c=3#fragment";
+    NSURL *url = [NSURL urlByReplacingFormatSpecifier:@"%@" inString:string withValue:@"value"];
+    XCTAssertEqualObjects(url.absoluteString, @"https://user:value@example.com/a/c/b?a=1&b=2&c=3#fragment");
+}
+
+- (void)testURLByReplacingFormatSpecifier_BadURL {
+    NSString *string = @" %@";
+    NSURL *url = [NSURL urlByReplacingFormatSpecifier:@"%@" inString:string withValue:@"value"];
+    XCTAssertNil(url);
+}
+
 #pragma mark - URLByRemovingFragment
 
 - (void)testURLByRemovingFragment_noFragment {

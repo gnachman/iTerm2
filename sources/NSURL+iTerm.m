@@ -12,6 +12,101 @@ NS_ASSUME_NONNULL_BEGIN
 
 @implementation NSURL(iTerm)
 
++ (nullable NSURL *)urlByReplacingFormatSpecifier:(NSString *)formatSpecifier
+                                         inString:(NSString *)string
+                                        withValue:(NSString *)value {
+    if (![string containsString:formatSpecifier]) {
+        return [NSURL URLWithString:string];
+    }
+
+    NSString *placeholder = [[[NSUUID UUID] UUIDString] stringByReplacingOccurrencesOfString:@"-" withString:@""];
+    NSString *urlString = [string stringByReplacingOccurrencesOfString:formatSpecifier
+                                                            withString:placeholder];
+    NSURLComponents *components = [[NSURLComponents alloc] initWithString:urlString];
+
+    // Query item value?
+    {
+        NSMutableArray<NSURLQueryItem *> *queryItems = [components.queryItems mutableCopy];
+        const NSUInteger i = [queryItems indexOfObjectPassingTest:^BOOL(NSURLQueryItem * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+            return [obj.value isEqualToString:placeholder];
+        }];
+        if (queryItems && i != NSNotFound) {
+            queryItems[i] = [NSURLQueryItem queryItemWithName:queryItems[i].name value:value];
+            components.queryItems = queryItems;
+            return components.URL;
+        }
+    }
+
+    // Query item name?
+    {
+        NSMutableArray<NSURLQueryItem *> *queryItems = [components.queryItems mutableCopy];
+        const NSUInteger i = [queryItems indexOfObjectPassingTest:^BOOL(NSURLQueryItem * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+            return [obj.name isEqualToString:placeholder];
+        }];
+        if (queryItems && i != NSNotFound) {
+            queryItems[i] = [NSURLQueryItem queryItemWithName:value value:queryItems[i].value];
+            components.queryItems = queryItems;
+            return components.URL;
+        }
+    }
+
+    // Fragment?
+    {
+        const NSRange range = [components.fragment rangeOfString:placeholder];
+        if (components.fragment && range.location != NSNotFound) {
+            components.fragment = [components.fragment stringByReplacingCharactersInRange:range withString:value];
+            return components.URL;
+        }
+    }
+
+    // Path?
+    {
+        const NSRange range = [components.path rangeOfString:placeholder];
+        if (components.path && range.location != NSNotFound) {
+            components.path = [components.path stringByReplacingCharactersInRange:range withString:value];
+            return components.URL;
+        }
+    }
+
+    // Hostname?
+    {
+        const NSRange range = [components.host rangeOfString:placeholder];
+        if (components.host && range.location != NSNotFound) {
+            components.host = [components.host stringByReplacingCharactersInRange:range withString:value];
+            return components.URL;
+        }
+    }
+
+    // Scheme?
+    {
+        const NSRange range = [components.scheme rangeOfString:placeholder];
+        if (components.scheme && range.location != NSNotFound) {
+            components.scheme = [components.scheme stringByReplacingCharactersInRange:range withString:value];
+            return components.URL;
+        }
+    }
+
+    // User name?
+    {
+        const NSRange range = [components.user rangeOfString:placeholder];
+        if (components.user && range.location != NSNotFound) {
+            components.user = [components.user stringByReplacingCharactersInRange:range withString:value];
+            return components.URL;
+        }
+    }
+
+    // Password?
+    {
+        const NSRange range = [components.password rangeOfString:placeholder];
+        if (components.password && range.location != NSNotFound) {
+            components.password = [components.password stringByReplacingCharactersInRange:range withString:value];
+            return components.URL;
+        }
+    }
+
+    return nil;
+}
+
 - (NSURL *)URLByRemovingFragment {
     if (self.fragment) {
         NSString *string = self.absoluteString;

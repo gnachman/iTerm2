@@ -170,20 +170,6 @@
     return [self stringByReplacingOccurrencesOfString:@"\t" withString:replacement];
 }
 
-- (NSString *)stringWithPercentEscape
-{
-    // From
-    // http://stackoverflow.com/questions/705448/iphone-sdk-problem-with-ampersand-in-the-url-string
-    static NSMutableCharacterSet *allowedCharacters;
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        allowedCharacters = [[NSCharacterSet URLHostAllowedCharacterSet] mutableCopy];
-        [allowedCharacters removeCharactersInString:@"￼=,!$&'()*+;@?\n\"<>#\t :/"];
-    });
-
-    return [self stringByAddingPercentEncodingWithAllowedCharacters:allowedCharacters];
-}
-
 - (NSString*)stringWithLinefeedNewlines
 {
     return [[self stringByReplacingOccurrencesOfString:@"\r\n" withString:@"\r"]
