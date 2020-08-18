@@ -2814,7 +2814,7 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
 }
 
 - (void)mail:(id)sender {
-    NSString* mailto;
+    NSString *mailto;
 
     if ([[self selectedText] hasPrefix:@"mailto:"]) {
         mailto = [NSString stringWithString:[self selectedText]];
@@ -2822,9 +2822,7 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
         mailto = [NSString stringWithFormat:@"mailto:%@", [self selectedText]];
     }
 
-    NSString *escapedString = [mailto stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet characterSetWithCharactersInString:@"!*'();:@&=+$,/?%#[]"]];
-
-    NSURL* url = [NSURL URLWithString:escapedString];
+    NSURL *url = [NSURL URLWithUserSuppliedString:mailto];
 
     [[NSWorkspace sharedWorkspace] openURL:url];
 }
