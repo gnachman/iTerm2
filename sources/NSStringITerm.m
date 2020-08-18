@@ -855,17 +855,6 @@ int decode_utf8_char(const unsigned char *datap,
     return [self substringFromIndex:range.location];
 }
 
-- (NSString *)stringByEscapingForURL {
-    static NSMutableCharacterSet *allowedCharacters;
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        allowedCharacters = [[NSCharacterSet URLHostAllowedCharacterSet] mutableCopy];
-        [allowedCharacters addCharactersInString:@"!*'();:@&=+$,/?%#[]"];
-    });
-
-    return [self stringByAddingPercentEncodingWithAllowedCharacters:allowedCharacters];
-}
-
 - (NSString *)stringByCapitalizingFirstLetter {
     if ([self length] == 0) {
         return self;

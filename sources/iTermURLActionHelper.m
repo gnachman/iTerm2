@@ -122,9 +122,7 @@
         DLog(@"string is empty");
         return;
     }
-    NSString* escapedString = [trimmedURLString stringByEscapingForURL];
-
-    NSURL *url = [NSURL URLWithString:escapedString];
+    NSURL *url = [NSURL URLWithUserSuppliedString:trimmedURLString];
     [self openURL:url inBackground:background workingDirectory:nil];
 }
 

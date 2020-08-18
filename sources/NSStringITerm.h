@@ -155,7 +155,6 @@ int decode_utf8_char(const unsigned char * restrict datap,
 
 - (NSString *)stringByRemovingEnclosingBrackets;
 
-- (NSString *)stringByEscapingForURL;
 - (NSString *)stringByCapitalizingFirstLetter;
 
 - (NSArray<NSString *> *)helpfulSynonyms;
