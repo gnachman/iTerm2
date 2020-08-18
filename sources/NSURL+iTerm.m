@@ -197,11 +197,13 @@ NS_ASSUME_NONNULL_BEGIN
             number = [@"x" stringByAppendingString:number];
         }
         [stringWithPlaceholders replaceCharactersInRange:range withString:number];
-        // We have to remove percent encoding here or it gets double-encoded. This does make the
-        // assumption that the URL is percent encoded and doesn't have random percent signs in it,
-        // but that's pretty reasonable because such a URL doesn't stand a snowball's chance of
-        // working.
-        map[number] = [[string substringWithRange:range] stringByRemovingPercentEncoding];
+        // We have to remove percent encoding here or it gets double-encoded. If there is a percent
+        // that is not part of a percent encoding scheme, then -stringByRemovingPercentEncoding
+        // will return nil and then we just use the raw string. A mix of percent-encoded and
+        // non-percent-encoded will not work, nor will non-percent-encoded that happens to look like
+        // percent-encoded.
+        NSString *substring = [string substringWithRange:range];
+        map[number] = [substring stringByRemovingPercentEncoding] ?: substring;
     }];
     DLog(@"stringWithPlaceholders=%@", stringWithPlaceholders);
     DLog(@"map=%@", map);

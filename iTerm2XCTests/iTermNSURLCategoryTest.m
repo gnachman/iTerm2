@@ -131,6 +131,12 @@
     XCTAssertEqualObjects(url.absoluteString, urlString);
 }
 
+- (void)testPercent {
+    NSString *urlString = @"Georges-Mac-Pro:/Users/gnachman%";
+    NSURL *url = [NSURL URLWithUserSuppliedString:urlString];
+    XCTAssertEqualObjects(url.absoluteString, @"Georges-Mac-Pro:/Users/gnachman%25");
+}
+
 #pragma mark - URLByRemovingFragment
 
 - (void)testURLByRemovingFragment_noFragment {
