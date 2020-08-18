@@ -290,6 +290,22 @@ typedef struct iTermTextColorContext {
         }
     }
 
+    // Make sure to draw above and below the region that we plan to draw text in to avoid artifacts
+    // as seen in issue 5665. This will cause double-draws on the top and bottom margin, but that's
+    // small enough that it probably won't matter.
+    {
+        [[self.delegate drawingHelperColorForCode:ALTSEM_DEFAULT green:0 blue:0 colorMode:ColorModeAlternate bold:NO faint:NO isBackground:YES] set];
+        const CGFloat minDrawnY = boundingCoordRange.start.y * _cellSize.height;
+        CGFloat height = minDrawnY - NSMinY(rect);
+        if (height > 0) {
+            NSRectFill(NSMakeRect(NSMinX(rect), NSMinY(rect), NSWidth(rect), height));
+        }
+        const CGFloat maxDrawnY = (boundingCoordRange.end.y + 1) * _cellSize.height;
+        height = NSMaxY(rect) - maxDrawnY;
+        if (height > 0) {
+            NSRectFill(NSMakeRect(NSMinX(rect), maxDrawnY, NSWidth(rect), height));
+        }
+    }
     [self drawRanges:ranges count:numRowsInRect
               origin:boundingCoordRange.start
         boundingRect:[self rectForCoordRange:boundingCoordRange]
