@@ -159,14 +159,20 @@
             self.skipButton.enabled = !_busy;
         }
     }
-    
+
+    NSMutableParagraphStyle *paragraphStyle = [[NSMutableParagraphStyle alloc] init];
+    paragraphStyle.lineSpacing = 4;
     NSMutableAttributedString *attributedString = [[NSMutableAttributedString alloc] init];
     NSDictionary *regularAttributes =
     @{ NSFontAttributeName: [NSFont systemFontOfSize:[NSFont systemFontSize]],
-       NSForegroundColorAttributeName: [NSColor textColor] };
+       NSForegroundColorAttributeName: [NSColor textColor],
+       NSParagraphStyleAttributeName: paragraphStyle
+    };
     NSDictionary *boldAttributes =
     @{ NSFontAttributeName: [NSFont boldSystemFontOfSize:[NSFont systemFontSize]],
-       NSForegroundColorAttributeName: [NSColor textColor] };
+       NSForegroundColorAttributeName: [NSColor textColor],
+       NSParagraphStyleAttributeName: paragraphStyle
+    };
     [lines enumerateObjectsUsingBlock:^(NSString * _Nonnull string, NSUInteger idx, BOOL * _Nonnull stop) {
         NSString *temp = [string stringByAppendingString:@"\n"];
         NSAttributedString *as = [[NSAttributedString alloc] initWithString:temp attributes:idx == indexToBold ? boldAttributes : regularAttributes];
