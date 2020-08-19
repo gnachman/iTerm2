@@ -189,7 +189,7 @@
 // then it is truncated. The data is a weak reference and will be invalid if the line buffer is
 // changed.
 //- (NSDictionary *)dictionary;
-- (void)encode:(id<iTermEncoderAdapter>)encoder;
+- (void)encode:(id<iTermEncoderAdapter>)encoder maxLines:(NSInteger)maxLines;
 
 // Append text in reverse video to the end of the line buffer.
 - (void)appendMessage:(NSString *)message;

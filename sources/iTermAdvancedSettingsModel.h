@@ -327,6 +327,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 #endif
 
 + (BOOL)useModernScrollWheelAccumulator;
++ (BOOL)useNewContentFormat;
 + (BOOL)useOldStyleDropDownViews;
 + (BOOL)useOpenDirectory;
 + (BOOL)useSystemCursorWhenPossible;

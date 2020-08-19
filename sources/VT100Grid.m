@@ -9,8 +9,11 @@
 #import "VT100Grid.h"
 
 #import "DebugLogging.h"
+#import "iTermEncoderAdapter.h"
 #import "LineBuffer.h"
+#import "NSArray+iTerm.h"
 #import "NSDictionary+iTerm.h"
+#import "NSObject+iTerm.h"
 #import "VT100GridTypes.h"
 #import "VT100LineInfo.h"
 #import "VT100Terminal.h"
@@ -28,8 +31,8 @@ static NSString *const kGridSizeKey = @"Size";
 @implementation VT100Grid {
     VT100GridSize size_;
     int screenTop_;  // Index into lines_ and dirty_ of first line visible in the grid.
-    NSMutableArray *lines_;  // Array of NSMutableData. Each data has size_.width+1 screen_char_t's.
-    NSMutableArray *lineInfos_;  // Array of VT100LineInfo.
+    NSMutableArray<NSMutableData *> *lines_;  // Array of NSMutableData. Each data has size_.width+1 screen_char_t's.
+    NSMutableArray<VT100LineInfo *> *lineInfos_;  // Array of VT100LineInfo.
     id<VT100GridDelegate> delegate_;
     VT100GridCoord cursor_;
     VT100GridRange scrollRegionRows_;
@@ -59,6 +62,37 @@ static NSString *const kGridSizeKey = @"Size";
         scrollRegionRows_ = VT100GridRangeMake(0, size_.height);
         scrollRegionCols_ = VT100GridRangeMake(0, size_.width);
         _preferredCursorPosition = VT100GridCoordMake(-1, -1);
+    }
+    return self;
+}
+
+- (instancetype)initWithDictionary:(NSDictionary *)dictionary
+                          delegate:(id<VT100GridDelegate>)delegate {
+    self = [super init];
+    if (self) {
+        delegate_ = delegate;
+        [self setSize:[NSDictionary castFrom:dictionary[@"size"]].gridSize];
+        assert(size_.width > 0 && size_.height > 0);
+        lines_ = [[NSArray castFrom:dictionary[@"lines"]] mutableCopy];
+        [[NSArray castFrom:dictionary[@"timestamps"]] enumerateObjectsUsingBlock:^(NSNumber *timestamp,
+                                                                                   NSUInteger idx,
+                                                                                   BOOL * _Nonnull stop) {
+            if (idx >= lineInfos_.count) {
+                DLog(@"Too many lineInfos");
+                *stop = YES;
+                return;
+            }
+            lineInfos_[idx].timestamp = timestamp.doubleValue;
+        }];
+        cursor_ = [NSDictionary castFrom:dictionary[@"cursor"]].gridCoord;
+        scrollRegionRows_ = [NSDictionary castFrom:dictionary[@"scrollRegionRows"]].gridRange;
+        scrollRegionCols_ = [NSDictionary castFrom:dictionary[@"scrollRegionCols"]].gridRange;
+        useScrollRegionCols_ = [NSNumber castFrom:dictionary[@"useScrollRegionCols"]].boolValue;
+        NSData *data = [NSData castFrom:dictionary[@"savedDefaultCharData"]];
+        if (data.length == sizeof(savedDefaultChar_)) {
+            memmove(&savedDefaultChar_, data.bytes, sizeof(savedDefaultChar_));
+        }
+        _preferredCursorPosition = cursor_;
     }
     return self;
 }
@@ -1686,6 +1720,25 @@ static NSString *const kGridSizeKey = @"Size";
     screen_char_t *chars = [self screenCharsAtLineNumber:line];
     assert(chars);
     chars[size_.width].code = code;
+}
+
+- (void)encode:(id<iTermEncoderAdapter>)encoder {
+    NSArray<NSNumber *> *timestamps = [lineInfos_ mapWithBlock:^id(VT100LineInfo *anObject) {
+        return @(anObject.timestamp);
+    }];
+    NSArray<NSData *> *lines = [[NSArray sequenceWithRange:NSMakeRange(0, size_.height)] mapWithBlock:^id(NSNumber *i) {
+        return [self lineDataAtLineNumber:i.intValue];
+    }];
+    [encoder mergeDictionary:@{
+        @"size": [NSDictionary dictionaryWithGridSize:size_],
+        @"lines": lines,
+        @"timestamps": timestamps,
+        @"cursor": [NSDictionary dictionaryWithGridCoord:cursor_],
+        @"scrollRegionRows": [NSDictionary dictionaryWithGridRange:scrollRegionRows_],
+        @"scrollRegionCols": [NSDictionary dictionaryWithGridRange:scrollRegionCols_],
+        @"useScrollRegionCols": @(useScrollRegionCols_),
+        @"savedDefaultCharData": [NSData dataWithBytes:&savedDefaultChar_ length:sizeof(savedDefaultChar_)]
+    }];
 }
 
 #pragma mark - Private

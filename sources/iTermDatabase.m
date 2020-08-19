@@ -174,7 +174,7 @@
 }
 
 - (BOOL)transaction:(BOOL (^ NS_NOESCAPE)(void))block {
-    [_db beginTransaction];
+    [_db beginDeferredTransaction];
     DLog(@"Begin transaction");
     BOOL result;
     if (block()) {
