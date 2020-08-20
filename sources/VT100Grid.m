@@ -1977,6 +1977,16 @@ static NSString *const kGridSizeKey = @"Size";
     return VT100GridCoordMake(cx, cy);
 }
 
+- (screen_char_t)characterAt:(VT100GridCoord)coord {
+    if (coord.y < 0 || coord.y >= self.size.height || coord.x < 0 || coord.x >= self.size.width) {
+        ITBetaAssert(NO, @"Asked for %@ in %@", VT100GridCoordDescription(coord), self);
+        screen_char_t defaultChar = { 0 };
+        return defaultChar;
+    }
+    screen_char_t *line = [self screenCharsAtLineNumber:coord.y];
+    return line[coord.x];
+}
+
 - (NSString *)stringForCharacterAt:(VT100GridCoord)coord {
     screen_char_t *theLine = [self screenCharsAtLineNumber:coord.y];
     if (!theLine) {
@@ -1993,6 +2003,31 @@ static NSString *const kGridSizeKey = @"Size";
     }
 }
 
+- (BOOL)haveDoubleWidthExtensionAt:(VT100GridCoord)coord {
+    screen_char_t sct = [self characterAt:coord];
+    return !sct.complexChar && (sct.code == DWC_RIGHT || sct.code == DWC_SKIP);
+}
+
+- (VT100GridCoord)successorOf:(VT100GridCoord)origin {
+    VT100GridCoord coord = origin;
+    coord.x += 1;
+    BOOL checkedForDWC = NO;
+    if (coord.x < self.size.width && [self haveDoubleWidthExtensionAt:coord]) {
+        coord.x += 1;
+        checkedForDWC = YES;
+    }
+    if (coord.x >= self.size.width) {
+        coord.x = 0;
+        coord.y += 1;
+        if (coord.y >= self.size.height) {
+            return VT100GridCoordMake(-1, -1);
+        }
+        if (!checkedForDWC && [self haveDoubleWidthExtensionAt:coord]) {
+            coord.x++;
+        }
+    }
+    return coord;
+}
 
 #ifdef VERBOSE_STRING
 static void DumpBuf(screen_char_t* p, int n) {

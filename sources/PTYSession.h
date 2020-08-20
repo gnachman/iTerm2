@@ -514,6 +514,7 @@ backgroundColor:(NSColor *)backgroundColor;
 @property(nonatomic, assign) BOOL sessionIsSeniorToTmuxSplitPane;
 
 @property(nonatomic, readonly) NSArray<iTermCommandHistoryCommandUseMO *> *commandUses;
+@property(nonatomic, readonly) BOOL eligibleForAutoCommandHistory;
 
 // If we want to show quicklook this will not be nil.
 @property(nonatomic, readonly) iTermQuickLookController *quickLookController;

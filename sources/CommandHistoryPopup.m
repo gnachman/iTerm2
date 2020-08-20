@@ -125,6 +125,24 @@
     return @"Press ⇧⏎ or ⌥⏎ to send command.";
 }
 
+- (void)moveLeft:(id)sender {
+    if (_autocomplete && NSApp.currentEvent.type == NSEventTypeKeyDown) {
+        [self.delegate popupKeyDown:NSApp.currentEvent];
+        [self closePopupWindow];
+    } else {
+        [super moveLeft:sender];
+    }
+}
+
+- (void)moveRight:(id)sender {
+    if (_autocomplete && NSApp.currentEvent.type == NSEventTypeKeyDown) {
+        [self.delegate popupKeyDown:NSApp.currentEvent];
+        [self closePopupWindow];
+    } else {
+        [super moveLeft:sender];
+    }
+}
+
 - (void)doCommandBySelector:(SEL)selector {
     if (_autocomplete && NSApp.currentEvent.type == NSEventTypeKeyDown) {
         // Control-C and such should go to the session.

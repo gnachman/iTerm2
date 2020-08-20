@@ -223,6 +223,8 @@
 
 // Returns a string for the character at |coord|.
 - (NSString *)stringForCharacterAt:(VT100GridCoord)coord;
+- (VT100GridCoord)successorOf:(VT100GridCoord)coord;
+- (screen_char_t)characterAt:(VT100GridCoord)coord;
 
 // Converts a run into one or more VT100GridRect NSValues.
 - (NSArray *)rectsForRun:(VT100GridRun)run;

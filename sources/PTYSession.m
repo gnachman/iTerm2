@@ -10759,13 +10759,26 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     }
 }
 
+- (BOOL)eligibleForAutoCommandHistory {
+    if (!_textview.cursorVisible) {
+        return NO;
+    }
+    VT100GridCoord coord = _commandRange.end;
+    coord.y -= _screen.numberOfScrollbackLines;
+    if (!VT100GridCoordEquals(_screen.currentGrid.cursor, coord)) {
+        return NO;
+    }
+
+    const screen_char_t c = [_screen.currentGrid characterAt:coord];
+    return c.code == 0;
+}
+
 - (NSArray *)autocompleteSuggestionsForCurrentCommand {
     NSString *command;
     if (_commandRange.start.x < 0) {
         return nil;
-    } else {
-        command = [self commandInRange:_commandRange];
     }
+    command = [self commandInRange:_commandRange];
     VT100RemoteHost *host = [_screen remoteHostOnLine:[_screen numberOfLines]];
     NSString *trimmedCommand =
         [command stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
@@ -10798,7 +10811,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         if ([[_delegate realParentWindow] wantsCommandHistoryUpdatesFromSession:self]) {
             NSString *command = haveCommand ? [self commandInRange:_commandRange] : @"";
             DLog(@"Update command to %@, have=%d, range.start.x=%d", command, (int)haveCommand, range.start.x);
-            if (haveCommand) {
+            if (haveCommand && self.eligibleForAutoCommandHistory) {
                 [[_delegate realParentWindow] updateAutoCommandHistoryForPrefix:command
                                                                       inSession:self
                                                                     popIfNeeded:NO];

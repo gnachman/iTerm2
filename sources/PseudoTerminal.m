@@ -8078,7 +8078,9 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 
 // NOTE: If you change the conditions under which action is taken here also
 // update wantsCommandHistoryUpdatesFromSession:
-- (void)updateAutoCommandHistoryForPrefix:(NSString *)prefix inSession:(PTYSession *)session popIfNeeded:(BOOL)popIfNeeded {
+- (void)updateAutoCommandHistoryForPrefix:(NSString *)prefix
+                                inSession:(PTYSession *)session
+                              popIfNeeded:(BOOL)popIfNeeded {
     if ([session.guid isEqualToString:self.autoCommandHistorySessionGuid]) {
         if (!commandHistoryPopup) {
             commandHistoryPopup = [[CommandHistoryPopupWindowController alloc] initForAutoComplete:YES];
@@ -8129,9 +8131,14 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 }
 
 - (void)reallyShowAutoCommandHistoryForSession:(PTYSession *)session {
-    if ([self currentSession] == session && [[self window] isKeyWindow] && [[session currentCommand] length] > 0) {
+    if ([self currentSession] == session &&
+        [[self window] isKeyWindow] &&
+        [[session currentCommand] length] > 0 &&
+        session.eligibleForAutoCommandHistory) {
         self.autoCommandHistorySessionGuid = session.guid;
-        [self updateAutoCommandHistoryForPrefix:[session currentCommand] inSession:session popIfNeeded:YES];
+        [self updateAutoCommandHistoryForPrefix:[session currentCommand]
+                                      inSession:session
+                                    popIfNeeded:YES];
     }
 }
 
