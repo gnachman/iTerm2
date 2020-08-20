@@ -32,6 +32,7 @@
                                tablePtr:nil
                                   model:[[[PopupModel alloc] init] autorelease]];
     if (self) {
+        [self window];
         [self setTableView:_tableView];
     }
 

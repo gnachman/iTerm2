@@ -228,6 +228,7 @@
         return nil;
     }
 
+    [self window];
     [self setTableView:table_];
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(pasteboardHistoryDidChange:)

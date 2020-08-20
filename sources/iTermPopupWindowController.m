@@ -4,6 +4,7 @@
 #import "DebugLogging.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "NSTextField+iTerm.h"
+#import "NSView+iTerm.h"
 #import "NSWindow+PSM.h"
 #import "PopupEntry.h"
 #import "PopupModel.h"
@@ -48,13 +49,12 @@
 
     NSString *footerString_;
     NSTextField *footerView_;
+    NSView *_footerBackground;
 }
 
 - (instancetype)initWithWindowNibName:(NSString*)nibName tablePtr:(NSTableView**)table model:(PopupModel*)model {
     self = [super initWithWindowNibName:nibName];
     if (self) {
-        [self window];
-
         if (table) {
             tableView_ = [*table retain];
         }
@@ -77,35 +77,48 @@
     [tableView_ release];
     [footerString_ release];
     [footerView_ release];
+    [_footerBackground release];
     [super dealloc];
 }
 
 - (void)awakeFromNib {
     [super awakeFromNib];
+    NSVisualEffectView *vev = [[NSVisualEffectView alloc] init];
+    vev.wantsLayer = YES;
+    vev.layer.cornerRadius = 4;
+    vev.material = NSVisualEffectMaterialSheet;
+    [self.window.contentView insertSubview:vev atIndex:0];
+    vev.frame = self.window.contentView.bounds;
+    vev.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
+
     footerString_ = [[self footerString] copy];
     if (!footerString_) {
         return;
     }
 
     footerView_ = [NSTextField newLabelStyledTextField];
-    [self updateBackgroundColor];
     footerView_.stringValue = footerString_;
     [self.window.contentView addSubview:footerView_];
     [footerView_ sizeToFit];
     const CGFloat footerHeight = footerView_.frame.size.height;
-    footerView_.frame = NSMakeRect(0, 0, self.window.contentView.frame.size.width - footerHeight, footerHeight);
+    footerView_.frame = NSMakeRect(0, self.footerMargin, self.window.contentView.frame.size.width - footerHeight, footerHeight);
     footerView_.autoresizingMask = (NSViewWidthSizable | NSViewMaxYMargin);
+
+    _footerBackground = [[NSView alloc] init];
+    _footerBackground.wantsLayer = YES;
+    [_footerBackground makeBackingLayer];
+    _footerBackground.layer.backgroundColor = [[NSColor colorWithWhite:0.5 alpha:1] CGColor];
+    _footerBackground.layer.opacity = 0.2;
+    _footerBackground.layer.cornerRadius = 4;
+    _footerBackground.layer.maskedCorners = (kCALayerMinXMinYCorner | kCALayerMaxXMinYCorner);
+    _footerBackground.frame = NSMakeRect(0, 0, self.window.contentView.frame.size.width, footerHeight + self.footerMargin * 1.5);
+    _footerBackground.autoresizingMask = NSViewWidthSizable;
+    [self.window.contentView insertSubview:_footerBackground atIndex:1];
 
     NSRect frame = [[tableView_ enclosingScrollView] frame];
     frame.size.height = MAX(0, frame.size.height - footerHeight);
     frame.origin.y += footerHeight;
     [[tableView_ enclosingScrollView] setFrame:frame];
-}
-
-- (void)updateBackgroundColor {
-    if (footerString_) {
-        self.window.backgroundColor = [NSColor whiteColor];
-    }
 }
 
 - (void)shutdown
@@ -123,7 +136,6 @@
 - (void)setTableView:(NSTableView *)table {
     [tableView_ autorelease];
     tableView_ = [table retain];
-    [self updateBackgroundColor];
 }
 
 - (BOOL)disableFocusFollowsMouse
@@ -270,6 +282,10 @@
     timer_ = nil;
 }
 
+- (CGFloat)footerMargin {
+    return 4;
+}
+
 - (CGFloat)desiredHeight {
     CGFloat height = [[tableView_ headerView] frame].size.height + MIN(20, [model_ count]) * ([tableView_ rowHeight] + [tableView_ intercellSpacing].height);
     if (@available(macOS 10.16, *)) {
@@ -277,7 +293,7 @@
         height += 20;
     }
     if (footerView_) {
-        height += footerView_.frame.size.height;
+        height += footerView_.frame.size.height + self.footerMargin * 2;
     }
     return height;
 }

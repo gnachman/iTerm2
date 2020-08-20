@@ -26,13 +26,16 @@
 @implementation CommandHistoryPopupWindowController {
     IBOutlet NSTableView *_tableView;
     int _partialCommandLength;
+    BOOL _autocomplete;
 }
 
-- (instancetype)init {
+- (instancetype)initForAutoComplete:(BOOL)autocomplete {
     self = [super initWithWindowNibName:@"CommandHistoryPopup"
                                tablePtr:nil
                                   model:[[[PopupModel alloc] init] autorelease]];
     if (self) {
+        _autocomplete = autocomplete;
+        [self window];
         [self setTableView:_tableView];
     }
 
@@ -90,13 +93,41 @@
     }
 }
 
-- (void)rowSelected:(id)sender
-{
+- (void)rowSelected:(id)sender {
     if ([_tableView selectedRow] >= 0) {
-        CommandHistoryPopupEntry* entry = [[self model] objectAtIndex:[self convertIndex:[_tableView selectedRow]]];
-        [self.delegate popupInsertText:[entry.command substringFromIndex:_partialCommandLength]];
-        [super rowSelected:sender];
+        if (!_autocomplete || ([[NSApp currentEvent] modifierFlags] & NSEventModifierFlagShift)) {
+            CommandHistoryPopupEntry* entry = [[self model] objectAtIndex:[self convertIndex:[_tableView selectedRow]]];
+            [self.delegate popupInsertText:[entry.command substringFromIndex:_partialCommandLength]];
+            [super rowSelected:sender];
+            return;
+        }
     }
+    [self.delegate popupInsertText:@"\n"];
+    [super rowSelected:sender];
+}
+
+- (NSString *)footerString {
+    if (!_autocomplete) {
+        return nil;
+    }
+    return @"Press ⇧⏎ to send command.";
+}
+
+- (void)doCommandBySelector:(SEL)selector {
+    if (_autocomplete && NSApp.currentEvent.type == NSEventTypeKeyDown) {
+        // Control-C and such should go to the session.
+        [self.delegate popupKeyDown:NSApp.currentEvent];
+    } else {
+        [super doCommandBySelector:selector];
+    }
+}
+
+- (void)insertTab:(nullable id)sender {
+    if (!_autocomplete) {
+        return;
+    }
+    // Don't steal tab.
+    [self passKeyEventToDelegateForSelector:_cmd string:@"\t"];
 }
 
 @end

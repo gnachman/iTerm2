@@ -79,6 +79,7 @@ const int kMaxResultContextWords = 4;
     if (!self) {
         return nil;
     }
+    [self window];
     [self setTableView:table_];
     prefix_ = [[NSMutableString alloc] init];
     context_ = [[NSMutableArray alloc] init];

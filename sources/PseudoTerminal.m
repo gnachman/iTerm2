@@ -8026,7 +8026,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 - (IBAction)openCommandHistory:(id)sender
 {
     if (!commandHistoryPopup) {
-        commandHistoryPopup = [[CommandHistoryPopupWindowController alloc] init];
+        commandHistoryPopup = [[CommandHistoryPopupWindowController alloc] initForAutoComplete:NO];
     }
     if ([[iTermShellHistoryController sharedInstance] commandHistoryHasEverBeenUsed]) {
         [self openPopupWindow:commandHistoryPopup];
@@ -8081,7 +8081,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 - (void)updateAutoCommandHistoryForPrefix:(NSString *)prefix inSession:(PTYSession *)session popIfNeeded:(BOOL)popIfNeeded {
     if ([session.guid isEqualToString:self.autoCommandHistorySessionGuid]) {
         if (!commandHistoryPopup) {
-            commandHistoryPopup = [[CommandHistoryPopupWindowController alloc] init];
+            commandHistoryPopup = [[CommandHistoryPopupWindowController alloc] initForAutoComplete:YES];
         }
         NSArray<iTermCommandHistoryCommandUseMO *> *commands = [commandHistoryPopup commandsForHost:[session currentHost]
                                                                                      partialCommand:prefix

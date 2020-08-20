@@ -19,6 +19,9 @@
 
 @interface CommandHistoryPopupWindowController : iTermPopupWindowController
 
+- (instancetype)initForAutoComplete:(BOOL)autocomplete;
+- (instancetype)init NS_UNAVAILABLE;
+
 // Returns uses if expand is NO or entries if it is YES.
 - (NSArray *)commandsForHost:(VT100RemoteHost *)host
               partialCommand:(NSString *)partialCommand

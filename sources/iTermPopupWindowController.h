@@ -20,6 +20,7 @@
 - (VT100Screen *)popupVT100Screen;
 - (PTYTextView *)popupVT100TextView;
 - (void)popupInsertText:(NSString *)text;
+- (void)popupKeyDown:(NSEvent *)event;
 // Return YES if the delegate handles it, NO if Popup should handle it.
 - (BOOL)popupHandleSelector:(SEL)selector string:(NSString *)string currentValue:(NSString *)currentValue;
 - (void)popupWillClose:(iTermPopupWindowController *)popup;
@@ -85,5 +86,6 @@
 - (NSAttributedString *)shrunkToFitAttributedString:(NSAttributedString *)attributedString
                                             inEntry:(PopupEntry *)entry
                                      baseAttributes:(NSDictionary *)baseAttributes;
+- (BOOL)passKeyEventToDelegateForSelector:(SEL)selector string:(NSString *)string;
 
 @end

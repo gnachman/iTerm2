@@ -11571,6 +11571,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [self insertText:string];
 }
 
+- (void)popupKeyDown:(NSEvent *)event {
+    [_textview keyDown:event];
+}
+
 - (BOOL)popupHandleSelector:(SEL)selector
                      string:(NSString *)string
                currentValue:(NSString *)currentValue {
@@ -11603,7 +11607,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                                              keyCode:51]];  // 51 is the keycode for delete; not in any header file :(
         return YES;
     }
-    if (selector == @selector(insertText:)) {
+    if (selector == @selector(insertText:) || selector == @selector(insertTab:)) {
         [self insertText:string];
         return YES;
     }
