@@ -329,7 +329,7 @@ int decode_utf8_char(const unsigned char * restrict datap,
 - (NSString *)stringByPerformingOrderedSubstitutions:(iTermOrderedDictionary<NSString *, NSString *> *)substitutions;
 - (NSString *)stringByReplacingCharactersAtIndices:(NSIndexSet *)indexSet
                                withStringFromBlock:(NSString *(^ NS_NOESCAPE)(void))replacement;
-
+- (BOOL)caseInsensitiveHasPrefix:(NSString *)prefix;
 @end
 
 @interface NSMutableString (iTerm)

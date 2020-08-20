@@ -18,6 +18,7 @@
 #import "iTermRecentDirectoryMO+Additions.h"
 #import "NSArray+iTerm.h"
 #import "NSDictionary+iTerm.h"
+#import "NSStringITerm.h"
 #import "iTermCommandHistoryEntryMO.h"
 #import "PreferencePanel.h"
 #import "VT100RemoteHost.h"
@@ -528,7 +529,7 @@ static const NSTimeInterval kMaxTimeToRememberDirectories = 60 * 60 * 24 * 90;
     NSMutableArray<iTermCommandHistoryEntryMO *> *result = [NSMutableArray array];
     iTermHostRecordMO *hostRecord = [self recordForHost:host];
     for (iTermCommandHistoryEntryMO *entry in hostRecord.entries) {
-        if (emptyPartialCommand || [entry.command hasPrefix:partialCommand]) {
+        if (emptyPartialCommand || [entry.command caseInsensitiveHasPrefix:partialCommand]) {
             // The FinalTerm algorithm doesn't require |partialCommand| to be a prefix of the
             // history entry, but based on how our autocomplete works, it makes sense to only
             // accept prefixes. Their scoring algorithm is implemented in case this should change.

@@ -2330,6 +2330,12 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
     return [result copy];
 }
 
+- (BOOL)caseInsensitiveHasPrefix:(NSString *)prefix {
+    const NSRange prefixRange = [self rangeOfString:prefix
+                                            options:(NSAnchoredSearch | NSCaseInsensitiveSearch)];
+    return prefixRange.location == 0;
+sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss}
+
 @end
 
 @implementation NSMutableString (iTerm)
