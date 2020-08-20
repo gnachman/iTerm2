@@ -95,9 +95,16 @@
 
 - (void)rowSelected:(id)sender {
     if ([_tableView selectedRow] >= 0) {
-        if (!_autocomplete || ([[NSApp currentEvent] modifierFlags] & NSEventModifierFlagShift)) {
-            CommandHistoryPopupEntry* entry = [[self model] objectAtIndex:[self convertIndex:[_tableView selectedRow]]];
-            [self.delegate popupInsertText:[entry.command substringFromIndex:_partialCommandLength]];
+        const NSEventModifierFlags flags = [[NSApp currentEvent] modifierFlags];
+        CommandHistoryPopupEntry *entry = [[self model] objectAtIndex:[self convertIndex:[_tableView selectedRow]]];
+        const NSEventModifierFlags mask = NSEventModifierFlagShift | NSEventModifierFlagOption;
+        NSString *const string = [entry.command substringFromIndex:_partialCommandLength];
+        if (!_autocomplete || (flags & mask) == NSEventModifierFlagShift) {
+            [self.delegate popupInsertText:string];
+            [super rowSelected:sender];
+            return;
+        } else if (_autocomplete && (flags & mask) == NSEventModifierFlagOption) {
+            [self.delegate popupInsertText:[string stringByAppendingString:@"\n"]];
             [super rowSelected:sender];
             return;
         }
@@ -106,11 +113,16 @@
     [super rowSelected:sender];
 }
 
+// Called for option+return
+- (void)insertNewlineIgnoringFieldEditor:(id)sender {
+    [self rowSelected:sender];
+}
+
 - (NSString *)footerString {
     if (!_autocomplete) {
         return nil;
     }
-    return @"Press ⇧⏎ to send command.";
+    return @"Press ⇧⏎ or ⌥⏎ to send command.";
 }
 
 - (void)doCommandBySelector:(SEL)selector {
