@@ -1,7 +1,7 @@
 PATH := /usr/bin:/bin:/usr/sbin:/sbin
 
 ORIG_PATH := $(PATH)
-PATH := /usr/bin:/bin:/usr/sbin:/sbin
+PATH := /usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin
 ITERM_PID=$(shell pgrep "iTerm2")
 APPS := /Applications
 ITERM_CONF_PLIST = $(HOME)/Library/Preferences/com.googlecode.iterm2.plist
@@ -87,6 +87,10 @@ release:
 preview:
 	cp plists/preview-iTerm2.plist plists/iTerm2.plist
 	make Deployment
+
+hidapi: force
+	cd submodules/hidapi && git clean -fdx && ./bootstrap
+	cd submodules/hidapi && ./configure --prefix=${PWD}/ThirdParty/hidapi --disable-shared && make && make install
 
 x86libsixel: force
 	cd submodules/libsixel && make clean

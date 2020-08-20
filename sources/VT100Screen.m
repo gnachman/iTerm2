@@ -37,6 +37,7 @@
 #import "VT100WorkingDirectory.h"
 #import "VT100DCSParser.h"
 #import "VT100Token.h"
+#include "hidapi.h"
 
 #import <apr-1/apr_base64.h>
 
@@ -1478,6 +1479,46 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     return result;
 }
 
+- (void)readGPSettingsFrom: (hid_device *)handle into:(char *)buff {
+    memset(buff, 0, 64);
+    buff[0] = 0xB0; // Read flash
+    buff[1] = 0x01; // GP Settings
+    NSData *dataData = [NSData dataWithBytes:buff length:64];
+    int written = hid_write(handle, buff, 64);
+    memset(buff, 0, 64);
+    hid_read(handle, buff, 64);
+}
+
+- (void)setGPIOOutputOn: (hid_device*)handle currentSettings:(char *)buff pin:(int)num {
+      buff[0] = 0x60;
+      buff[1] = 0x0;
+      buff[2] = 0x0;
+      buff[3] = 0x0;
+      buff[4] = 0x0;
+      buff[5] = 0x0;
+      buff[6] = 0x0;
+      buff[7] = (1 << 7); // Alter GPIO config
+      buff[8 + num] = 0; // Set pin 0 to output
+      int written = hid_write(handle, buff, 64);
+      memset(buff, 0, 64);
+      hid_read(handle, buff, 64);
+      assert(buff[0] == 0x60);
+      NSData *dataData = [NSData dataWithBytes:buff length:64];
+}
+
+- (void)setGPIOValue: (hid_device *)handle pin:(int)num value:(int)v {
+    char buff[64];
+    memset(buff, 0, 64);
+    buff[0] = 0x50;
+    buff[(num * 4) + 2] = 0x1;
+    buff[(num * 4) + 3] = (v & 0x1);
+
+    int written = hid_write(handle, buff, 64);
+    memset(buff, 0, 64);
+    hid_read(handle, buff, 64);
+    assert(buff[0] == 0x50);
+}
+
 - (void)activateBell {
     if ([delegate_ screenShouldIgnoreBellWhichIsAudible:audibleBell_ visible:flashBell_]) {
         return;
@@ -1492,6 +1533,24 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
         }
         if (flashBell_) {
             [delegate_ screenFlashImage:kiTermIndicatorBell];
+        }
+
+        if (!_analogBell) { // idgi. I have no idea what I'm doing
+          hid_device * handle = hid_open(0x04d8, 0x00dd, NULL);
+          if (handle) {
+            char buff[64];
+            [self readGPSettingsFrom: handle into: buff];
+            NSData *dataData = [NSData dataWithBytes:buff length:64];
+            NSLog(@"read gp settings = %@", dataData);
+
+            // buffer contains the current GPIO settings
+            [self setGPIOOutputOn:handle currentSettings:buff pin:0];
+            [self setGPIOValue:handle pin:0 value:1];
+            usleep(10000);
+            [self setGPIOValue:handle pin:0 value:0];
+
+            hid_close(handle);
+          }
         }
     }
     [delegate_ screenIncrementBadge];

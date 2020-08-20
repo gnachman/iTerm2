@@ -1,0 +1,10 @@
+prefix=/Users/aaron/git/iTerm2/ThirdParty/hidapi
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+
+Name: hidapi
+Description: C Library for USB/Bluetooth HID device access from Linux, Mac OS X, FreeBSD, and Windows.
+Version: 0.8.0-rc1
+Libs: -L${libdir} -lhidapi
+Cflags: -I${includedir}/hidapi

@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="16097" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="16097.2" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES">
     <dependencies>
         <deployment identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="16097"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="16097.2"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
@@ -129,7 +129,7 @@
             <windowStyleMask key="styleMask" titled="YES" utility="YES" documentModal="YES"/>
             <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>
             <rect key="contentRect" x="196" y="132" width="451" height="246"/>
-            <rect key="screenRect" x="0.0" y="0.0" width="3008" height="1669"/>
+            <rect key="screenRect" x="0.0" y="0.0" width="2560" height="1417"/>
             <view key="contentView" id="6180">
                 <rect key="frame" x="0.0" y="0.0" width="451" height="246"/>
                 <autoresizingMask key="autoresizingMask"/>
@@ -381,7 +381,7 @@ Gw
             <windowStyleMask key="styleMask" titled="YES" closable="YES" miniaturizable="YES"/>
             <windowPositionMask key="initialPositionMask" leftStrut="YES" bottomStrut="YES"/>
             <rect key="contentRect" x="269" y="110" width="924" height="463"/>
-            <rect key="screenRect" x="0.0" y="0.0" width="3008" height="1669"/>
+            <rect key="screenRect" x="0.0" y="0.0" width="2560" height="1417"/>
             <view key="contentView" id="1924">
                 <rect key="frame" x="0.0" y="0.0" width="924" height="463"/>
                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
@@ -697,7 +697,7 @@ Gw
             <windowStyleMask key="styleMask" titled="YES" closable="YES" miniaturizable="YES" resizable="YES" utility="YES" documentModal="YES"/>
             <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>
             <rect key="contentRect" x="162" y="123" width="804" height="356"/>
-            <rect key="screenRect" x="0.0" y="0.0" width="3008" height="1669"/>
+            <rect key="screenRect" x="0.0" y="0.0" width="2560" height="1417"/>
             <value key="minSize" type="size" width="804" height="356"/>
             <view key="contentView" id="5905">
                 <rect key="frame" x="0.0" y="0.0" width="804" height="356"/>
@@ -866,7 +866,7 @@ DQ
             <windowStyleMask key="styleMask" titled="YES" closable="YES" miniaturizable="YES" resizable="YES" utility="YES" documentModal="YES"/>
             <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>
             <rect key="contentRect" x="162" y="156" width="805" height="358"/>
-            <rect key="screenRect" x="0.0" y="0.0" width="3008" height="1669"/>
+            <rect key="screenRect" x="0.0" y="0.0" width="2560" height="1417"/>
             <value key="minSize" type="size" width="805" height="358"/>
             <view key="contentView" id="5911">
                 <rect key="frame" x="0.0" y="0.0" width="805" height="358"/>
@@ -1054,7 +1054,7 @@ DQ
             <windowStyleMask key="styleMask" titled="YES" closable="YES" miniaturizable="YES" resizable="YES" utility="YES" documentModal="YES"/>
             <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>
             <rect key="contentRect" x="162" y="229" width="575" height="295"/>
-            <rect key="screenRect" x="0.0" y="0.0" width="3008" height="1669"/>
+            <rect key="screenRect" x="0.0" y="0.0" width="2560" height="1417"/>
             <value key="minSize" type="size" width="575" height="100"/>
             <view key="contentView" id="6275">
                 <rect key="frame" x="0.0" y="0.0" width="575" height="295"/>
@@ -1608,6 +1608,7 @@ DQ
             <connections>
                 <outlet property="_allowPasteBracketing" destination="4Ha-Ub-4AS" id="0m4-El-bQ1"/>
                 <outlet property="_allowTitleReporting" destination="6387" id="ET9-YF-B1M"/>
+                <outlet property="_analogBell" destination="3404" id="Nim-fU-LJG"/>
                 <outlet property="_answerBackString" destination="tcJ-V2-9Fd" id="wc8-xa-PRR"/>
                 <outlet property="_answerBackStringLabel" destination="Fzk-rB-88j" id="xcc-hw-dLN"/>
                 <outlet property="_bellAlert" destination="O5A-H9-sKq" id="Mhv-zY-a7H"/>
@@ -3508,7 +3509,7 @@ DQ
                     </buttonCell>
                     <connections>
                         <action selector="settingChanged:" target="gMD-DK-gev" id="imh-CJ-KN3"/>
-                        <outlet property="nextKeyView" destination="2403" id="5269"/>
+                        <outlet property="nextKeyView" destination="3404" id="qFu-DA-EVW"/>
                     </connections>
                 </button>
                 <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2402">
@@ -3521,6 +3522,18 @@ DQ
                     <connections>
                         <action selector="settingChanged:" target="gMD-DK-gev" id="KKF-gH-Gft"/>
                         <outlet property="nextKeyView" destination="5081" id="5277"/>
+                    </connections>
+                </button>
+                <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="3404">
+                    <rect key="frame" x="283" y="138" width="160" height="18"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <buttonCell key="cell" type="check" title="Analog Bell" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="3414">
+                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                        <font key="font" metaFont="system"/>
+                    </buttonCell>
+                    <connections>
+                        <action selector="settingChanged:" target="gMD-DK-gev" id="6Dr-os-An0"/>
+                        <outlet property="nextKeyView" destination="2403" id="xTT-HC-Vk3"/>
                     </connections>
                 </button>
                 <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2403">
@@ -5758,12 +5771,12 @@ DQ
                                             <popUpButton verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="4118">
                                                 <rect key="frame" x="238" y="70" width="161" height="26"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                                <popUpButtonCell key="cell" type="push" title="No Shortcut" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" borderStyle="borderAndBezel" tag="9" imageScaling="proportionallyDown" inset="2" autoenablesItems="NO" selectedItem="4132" id="4129">
+                                                <popUpButtonCell key="cell" type="push" title="No Shortcut" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" tag="9" imageScaling="proportionallyDown" inset="2" autoenablesItems="NO" selectedItem="4132" id="4129">
                                                     <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
                                                     <font key="font" metaFont="system"/>
                                                     <menu key="menu" title="OtherViews" autoenablesItems="NO" id="4130">
                                                         <items>
-                                                            <menuItem title="No Shortcut" tag="9" id="4132">
+                                                            <menuItem title="No Shortcut" state="on" tag="9" id="4132">
                                                                 <modifierMask key="keyEquivalentModifierMask"/>
                                                             </menuItem>
                                                             <menuItem title="⌥ Number" tag="5" id="kEx-j4-xkm">
@@ -5772,7 +5785,7 @@ DQ
                                                             <menuItem title="⌘ Number" tag="4" id="4133">
                                                                 <modifierMask key="keyEquivalentModifierMask"/>
                                                             </menuItem>
-                                                            <menuItem title="⌥⌘ Number" state="on" tag="6" id="4137">
+                                                            <menuItem title="⌥⌘ Number" tag="6" id="4137">
                                                                 <modifierMask key="keyEquivalentModifierMask"/>
                                                             </menuItem>
                                                             <menuItem title="^ Number" tag="1" id="bik-Ja-Wpf">
@@ -5807,12 +5820,12 @@ DQ
                                             <popUpButton verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="4269">
                                                 <rect key="frame" x="238" y="101" width="161" height="26"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                                <popUpButtonCell key="cell" type="push" title="No Shortcut" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" borderStyle="borderAndBezel" tag="9" imageScaling="proportionallyDown" inset="2" autoenablesItems="NO" selectedItem="4274" id="4270">
+                                                <popUpButtonCell key="cell" type="push" title="No Shortcut" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" tag="9" imageScaling="proportionallyDown" inset="2" autoenablesItems="NO" selectedItem="4274" id="4270">
                                                     <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
                                                     <font key="font" metaFont="system"/>
                                                     <menu key="menu" title="OtherViews" autoenablesItems="NO" id="4271">
                                                         <items>
-                                                            <menuItem title="No Shortcut" tag="9" id="4274">
+                                                            <menuItem title="No Shortcut" state="on" tag="9" id="4274">
                                                                 <modifierMask key="keyEquivalentModifierMask"/>
                                                             </menuItem>
                                                             <menuItem title="⌥ Number" tag="5" id="XvI-gy-pDy">
@@ -5821,7 +5834,7 @@ DQ
                                                             <menuItem title="⌘ Number" tag="4" id="4272">
                                                                 <modifierMask key="keyEquivalentModifierMask"/>
                                                             </menuItem>
-                                                            <menuItem title="⌥⌘ Number" state="on" tag="6" id="4273">
+                                                            <menuItem title="⌥⌘ Number" tag="6" id="4273">
                                                                 <modifierMask key="keyEquivalentModifierMask"/>
                                                             </menuItem>
                                                             <menuItem title="^ Number" tag="1" id="vVr-Bk-IXn">
@@ -5860,12 +5873,12 @@ DQ
                                             <popUpButton verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="LXv-KO-6t6">
                                                 <rect key="frame" x="238" y="39" width="161" height="26"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                                <popUpButtonCell key="cell" type="push" title="No Shortcut" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" borderStyle="borderAndBezel" tag="9" imageScaling="proportionallyDown" inset="2" autoenablesItems="NO" selectedItem="dAC-MA-Mtf" id="T7I-ty-osf">
+                                                <popUpButtonCell key="cell" type="push" title="No Shortcut" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" tag="9" imageScaling="proportionallyDown" inset="2" autoenablesItems="NO" selectedItem="dAC-MA-Mtf" id="T7I-ty-osf">
                                                     <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
                                                     <font key="font" metaFont="system"/>
                                                     <menu key="menu" title="OtherViews" autoenablesItems="NO" id="G8M-3E-Bit">
                                                         <items>
-                                                            <menuItem title="No Shortcut" tag="9" id="dAC-MA-Mtf">
+                                                            <menuItem title="No Shortcut" state="on" tag="9" id="dAC-MA-Mtf">
                                                                 <modifierMask key="keyEquivalentModifierMask"/>
                                                             </menuItem>
                                                             <menuItem title="⌥ Number" tag="5" id="vlQ-02-Vie">
@@ -5874,7 +5887,7 @@ DQ
                                                             <menuItem title="⌘ Number" tag="4" id="oGG-n4-dNs">
                                                                 <modifierMask key="keyEquivalentModifierMask"/>
                                                             </menuItem>
-                                                            <menuItem title="⌥⌘ Number" state="on" tag="6" id="a9h-ca-fto">
+                                                            <menuItem title="⌥⌘ Number" tag="6" id="a9h-ca-fto">
                                                                 <modifierMask key="keyEquivalentModifierMask"/>
                                                             </menuItem>
                                                             <menuItem title="^ Number" tag="1" id="f4C-Hg-4Vb">
@@ -6496,7 +6509,7 @@ DQ
                     <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
                     <clipView key="contentView" id="Fm3-fw-Qw5">
                         <rect key="frame" x="1" y="1" width="950" height="362"/>
-                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <autoresizingMask key="autoresizingMask"/>
                         <subviews>
                             <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="none" columnReordering="NO" columnResizing="NO" multipleSelection="NO" autosaveColumns="NO" typeSelect="NO" rowSizeStyle="automatic" viewBased="YES" id="5ik-Xh-beg" customClass="iTermAdvancedSettingsTableView">
                                 <rect key="frame" x="0.0" y="0.0" width="950" height="362"/>
@@ -6518,11 +6531,11 @@ DQ
                                         <tableColumnResizingMask key="resizingMask" resizeWithTable="YES"/>
                                         <prototypeCellViews>
                                             <tableCellView id="RoD-zs-eHF">
-                                                <rect key="frame" x="1" y="1" width="591" height="17"/>
+                                                <rect key="frame" x="1" y="1" width="590.5" height="17"/>
                                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                                 <subviews>
                                                     <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="zlz-2J-KIa">
-                                                        <rect key="frame" x="0.0" y="0.0" width="591" height="17"/>
+                                                        <rect key="frame" x="0.0" y="0.0" width="590.5" height="17"/>
                                                         <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
                                                         <textFieldCell key="cell" lineBreakMode="truncatingTail" sendsActionOnEndEditing="YES" title="Table View Cell" id="XeY-ex-eKM">
                                                             <font key="font" metaFont="system"/>
@@ -6550,7 +6563,7 @@ DQ
                                         <tableColumnResizingMask key="resizingMask" resizeWithTable="YES"/>
                                         <prototypeCellViews>
                                             <tableCellView id="W6M-oM-X4N">
-                                                <rect key="frame" x="595" y="1" width="353" height="17"/>
+                                                <rect key="frame" x="594.5" y="1" width="353" height="17"/>
                                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                                 <subviews>
                                                     <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="n68-XZ-ujb">
@@ -6824,7 +6837,7 @@ DQ
         <window title="Filter Alerts" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" restorable="NO" hidesOnDeactivate="YES" releasedWhenClosed="NO" visibleAtLaunch="NO" animationBehavior="default" id="u39-OD-7hu" customClass="NSPanel">
             <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>
             <rect key="contentRect" x="120" y="138" width="406" height="145"/>
-            <rect key="screenRect" x="0.0" y="0.0" width="3008" height="1669"/>
+            <rect key="screenRect" x="0.0" y="0.0" width="2560" height="1417"/>
             <view key="contentView" id="dXn-d7-O8o">
                 <rect key="frame" x="0.0" y="0.0" width="406" height="145"/>
                 <autoresizingMask key="autoresizingMask"/>

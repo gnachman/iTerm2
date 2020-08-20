@@ -37,6 +37,7 @@
     IBOutlet NSButton *_filterAlertsButton;
     IBOutlet NSButton *_flashingBell;
     IBOutlet NSButton *_bellIconInTabs;
+    IBOutlet NSButton *_analogBell;
     IBOutlet NSButton *_setLocaleVars;
     IBOutlet NSButton *_forceCommandPromptToFirstColumn;
     IBOutlet NSButton *_showMarkIndicators;
@@ -204,6 +205,11 @@
 
     [self defineControl:_bellIconInTabs
                     key:KEY_VISUAL_BELL
+            relatedView:nil
+                   type:kPreferenceInfoTypeCheckbox];
+
+    [self defineControl:_analogBell
+                    key:KEY_ANALOG_BELL
             relatedView:nil
                    type:kPreferenceInfoTypeCheckbox];
 

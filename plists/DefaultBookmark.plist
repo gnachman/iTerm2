@@ -556,6 +556,8 @@
 	<string></string>
 	<key>Silence Bell</key>
 	<false/>
+	<key>Analog Bell</key>
+	<false/>
 	<key>Sync Title</key>
 	<false/>
 	<key>Terminal Type</key>

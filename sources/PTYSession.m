@@ -3823,6 +3823,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
     // Set up the rest of the preferences
     [_screen setAudibleBell:![iTermProfilePreferences boolForKey:KEY_SILENCE_BELL inProfile:aDict]];
+    [_screen setAnalogBell:![iTermProfilePreferences boolForKey:KEY_ANALOG_BELL inProfile:aDict]];
     [_screen setShowBellIndicator:[iTermProfilePreferences boolForKey:KEY_VISUAL_BELL inProfile:aDict]];
     [_screen setFlashBell:[iTermProfilePreferences boolForKey:KEY_FLASHING_BELL inProfile:aDict]];
     [_screen setPostUserNotifications:[iTermProfilePreferences boolForKey:KEY_BOOKMARK_USER_NOTIFICATIONS inProfile:aDict]];

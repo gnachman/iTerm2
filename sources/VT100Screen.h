@@ -49,6 +49,7 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 
 @property(nonatomic, retain) VT100Terminal *terminal;
 @property(nonatomic, assign) BOOL audibleBell;
+@property(nonatomic, assign) BOOL analogBell;
 @property(nonatomic, assign) BOOL showBellIndicator;
 @property(nonatomic, assign) BOOL flashBell;
 @property(nonatomic, assign) id<VT100ScreenDelegate> delegate;
