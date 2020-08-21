@@ -392,6 +392,7 @@ static NSButton *iTermToolSnippetsNewButton(NSString *imageName, NSString *title
 
         NSString *value = [self valueStringForRow:row];
         result.stringValue = value;
+        result.font = [NSFont fontWithName:@"Menlo" size:11];
         result.lineBreakMode = NSLineBreakByTruncatingTail;
         return result;
     }
