@@ -7,6 +7,7 @@
 
 #import "ScriptTrigger.h"
 #import "DebugLogging.h"
+#import "iTermBackgroundCommandRunner.h"
 #import "PTYSession.h"
 #import "RegexKitLite.h"
 #import "NSStringITerm.h"
@@ -43,22 +44,22 @@
                                               scope:aSession.variablesScope
                                    useInterpolation:useInterpolation
                                          completion:^(NSString *command) {
-                                             if (!command) {
-                                                 return;
-                                             }
-                                             [NSThread detachNewThreadSelector:@selector(runCommand:)
-                                                                      toTarget:[self class]
-                                                                    withObject:command];
-                                         }];
+        if (!command) {
+            return;
+        }
+        [self runCommand:command session:aSession];
+    }];
     return YES;
 }
 
-+ (void)runCommand:(NSString *)command {
-    @autoreleasepool {
-        // TODO: Use a buried single-purpose window or something somehow less terrible.
-        DLog(@"Invoking command %@", command);
-        system([command UTF8String]);
-    }
+- (void)runCommand:(NSString *)command session:(PTYSession *)session {
+    DLog(@"Invoking command %@", command);
+    iTermBackgroundCommandRunner *runner =
+    [[iTermBackgroundCommandRunner alloc] initWithCommand:command
+                                                    shell:session.userShell
+                                                    title:@"Run Command Trigger"];
+    runner.notificationTitle = @"Run Command Trigger Failed";
+    [runner run];
 }
 
 @end

@@ -545,6 +545,7 @@ backgroundColor:(NSColor *)backgroundColor;
 @property(nonatomic, readonly) BOOL hasNontrivialJob;
 @property(nonatomic, readonly) iTermExpect *expect;
 @property(nonatomic, readonly) BOOL tmuxPaused;
+@property(nonatomic, readonly) NSString *userShell;  // Something like "/bin/bash".
 
 #pragma mark - methods
 

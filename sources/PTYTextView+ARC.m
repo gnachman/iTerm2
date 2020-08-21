@@ -10,6 +10,7 @@
 #import "DebugLogging.h"
 #import "FileTransferManager.h"
 #import "iTermAdvancedSettingsModel.h"
+#import "iTermBackgroundCommandRunner.h"
 #import "iTermCommandRunner.h"
 #import "iTermController.h"
 #import "iTermImageInfo.h"
@@ -43,7 +44,6 @@
 static const NSUInteger kDragPaneModifiers = (NSEventModifierFlagOption | NSEventModifierFlagCommand | NSEventModifierFlagShift);
 static const NSUInteger kRectangularSelectionModifiers = (NSEventModifierFlagCommand | NSEventModifierFlagOption);
 static const NSUInteger kRectangularSelectionModifierMask = (kRectangularSelectionModifiers | NSEventModifierFlagControl);
-static NSString *const PTYTextViewSmartSelectionActionFailedNotification = @"PTYTextViewSmartSelectionActionFailedNotification";
 
 @interface PTYTextView (ARCPrivate)<iTermShellIntegrationWindowControllerDelegate>
 @end
@@ -52,10 +52,6 @@ static NSString *const PTYTextViewSmartSelectionActionFailedNotification = @"PTY
 @implementation PTYTextView (ARC)
 
 - (void)initARC {
-    [[NSNotificationCenter defaultCenter] addObserver:self
-                                             selector:@selector(smartSelectionActionFailedNotificationSelected:)
-                                                 name:PTYTextViewSmartSelectionActionFailedNotification
-                                               object:nil];
 }
 
 #pragma mark - Coordinate Space Conversions
@@ -302,61 +298,12 @@ static NSString *const PTYTextViewSmartSelectionActionFailedNotification = @"PTY
 }
 
 - (void)runCommand:(NSString *)command {
-    [[iTermSlowOperationGateway sharedInstance] exfiltrateEnvironmentVariableNamed:@"PATH"
-                                                                             shell:self.delegate.textViewShell
-                                                                        completion:^(NSString * _Nonnull value) {
-        [self runCommand:command path:value];
-    }];
-}
-
-- (void)runCommand:(NSString *)command path:(NSString *)path {
-    iTermCommandRunner *commandRunner = [[iTermCommandRunner alloc] initWithCommand:@"/bin/sh"
-                                                                      withArguments:@[ @"-c", command ]
-                                                                               path:[[NSFileManager defaultManager] currentDirectoryPath]];
-    if (path.length > 0) {
-        NSDictionary *environment = [[NSProcessInfo processInfo] environment];
-        environment = [environment dictionaryBySettingObject:path forKey:@"PATH"];
-        commandRunner.environment = environment;
-    }
-    iTermScriptHistoryEntry *entry =
-    [[iTermScriptHistoryEntry alloc] initWithName:@"Smart Selection Action"
-                                         fullPath:command
-                                       identifier:[[NSUUID UUID] UUIDString]
-                                         relaunch:nil];
-    [[iTermScriptHistory sharedInstance] addHistoryEntry:entry];
-    [entry addOutput:[NSString stringWithFormat:@"Run command:\n%@\n", command]];
-    commandRunner.outputHandler = ^(NSData *data) {
-        NSString *string = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
-        if (!string) {
-            string = [data it_hexEncoded];
-        }
-        [entry addOutput:string];
-    };
-    commandRunner.completion = ^(int status) {
-        if (status) {
-            [entry addOutput:[NSString stringWithFormat:@"\nFinished with status %d", status]];
-        }
-        [entry stopRunning];
-        if (status) {
-            [[iTermNotificationController sharedInstance] postNotificationWithTitle:@"Smart Selection Action Failed"
-                                                                             detail:[NSString stringWithFormat:@"\nFinished with status %d", status]
-                                                           callbackNotificationName:PTYTextViewSmartSelectionActionFailedNotification
-                                                       callbackNotificationUserInfo:@{ @"identifier": entry.identifier }];
-        }
-    };
-    [commandRunner run];
-}
-
-- (void)smartSelectionActionFailedNotificationSelected:(NSNotification *)notification {
-    NSString *identifier = notification.userInfo[@"identifier"];
-    if (!identifier) {
-        return;
-    }
-    iTermScriptHistoryEntry *entry = [[iTermScriptHistory sharedInstance] entryWithIdentifier:identifier];
-    if (!entry) {
-        return;
-    }
-    [[iTermScriptConsole sharedInstance] revealTailOfHistoryEntry:entry];
+    iTermBackgroundCommandRunner *runner =
+        [[iTermBackgroundCommandRunner alloc] initWithCommand:command
+                                                        shell:self.delegate.textViewShell
+                                                        title:@"Smart Selection Action"];
+    runner.notificationTitle = @"Smart Selection Action Failed";
+    [runner run];
 }
 
 - (void)contextMenuActionRunCoprocess:(id)sender {

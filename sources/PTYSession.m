@@ -9172,6 +9172,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (NSString *)textViewShell {
+    return self.userShell;
+}
+
+- (NSString *)userShell {
     return [ITAddressBookMgr customShellForProfile:self.profile] ?: [iTermOpenDirectory userShell] ?: @"/bin/bash";
 }
 
