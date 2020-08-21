@@ -2334,7 +2334,7 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
     const NSRange prefixRange = [self rangeOfString:prefix
                                             options:(NSAnchoredSearch | NSCaseInsensitiveSearch)];
     return prefixRange.location == 0;
-sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss}
+}
 
 @end
 

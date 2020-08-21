@@ -21,6 +21,7 @@
 #import "iTermScriptConsole.h"
 #import "iTermScriptHistory.h"
 #import "iTermShellIntegrationWindowController.h"
+#import "iTermSlowOperationGateway.h"
 #import "iTermTextExtractor.h"
 #import "iTermURLActionFactory.h"
 #import "iTermURLStore.h"
@@ -285,9 +286,7 @@ static NSString *const PTYTextViewSmartSelectionActionFailedNotification = @"PTY
 - (void)contextMenuActionRunCommand:(id)sender {
     NSString *command = [sender representedObject];
     DLog(@"Run command: %@", command);
-    [NSThread detachNewThreadSelector:@selector(runCommand:)
-                             toTarget:[self class]
-                           withObject:command];
+    [self runCommand:command];
 }
 
 - (void)contextMenuActionRunCommandInWindow:(id)sender {
@@ -302,10 +301,23 @@ static NSString *const PTYTextViewSmartSelectionActionFailedNotification = @"PTY
                                                           completion:nil];
 }
 
-+ (void)runCommand:(NSString *)command {
+- (void)runCommand:(NSString *)command {
+    [[iTermSlowOperationGateway sharedInstance] exfiltrateEnvironmentVariableNamed:@"PATH"
+                                                                             shell:self.delegate.textViewShell
+                                                                        completion:^(NSString * _Nonnull value) {
+        [self runCommand:command path:value];
+    }];
+}
+
+- (void)runCommand:(NSString *)command path:(NSString *)path {
     iTermCommandRunner *commandRunner = [[iTermCommandRunner alloc] initWithCommand:@"/bin/sh"
                                                                       withArguments:@[ @"-c", command ]
                                                                                path:[[NSFileManager defaultManager] currentDirectoryPath]];
+    if (path.length > 0) {
+        NSDictionary *environment = [[NSProcessInfo processInfo] environment];
+        environment = [environment dictionaryBySettingObject:path forKey:@"PATH"];
+        commandRunner.environment = environment;
+    }
     iTermScriptHistoryEntry *entry =
     [[iTermScriptHistoryEntry alloc] initWithName:@"Smart Selection Action"
                                          fullPath:command

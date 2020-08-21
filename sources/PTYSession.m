@@ -50,6 +50,7 @@
 #import "iTermLoggingHelper.h"
 #import "iTermMalloc.h"
 #import "iTermObject.h"
+#import "iTermOpenDirectory.h"
 #import "iTermScriptConsole.h"
 #import "iTermScriptHistory.h"
 #import "iTermStandardKeyMapper.h"
@@ -9168,6 +9169,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         NSMenuItem *item = [menu addItemWithTitle:@"Pause tmux Pane" action:@selector(toggleTmuxPaused) keyEquivalent:@""];
         item.target = self;
     }
+}
+
+- (NSString *)textViewShell {
+    return [ITAddressBookMgr customShellForProfile:self.profile] ?: [iTermOpenDirectory userShell] ?: @"/bin/bash";
 }
 
 - (void)toggleTmuxPaused {
