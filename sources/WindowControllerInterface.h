@@ -216,9 +216,6 @@
 - (BOOL)fitWindowToTabSize:(NSSize)tabSize;
 
 // Return the index of a tab or NSNotFound.
-// This method is used, for example, in iTermExpose, where PTYTabs are shown
-// side by side, and one needs to determine which index it has, so it can be
-// selected when leaving iTerm expose.
 - (NSInteger)indexOfTab:(PTYTab*)aTab;
 
 // Insert a tab at a specified location.

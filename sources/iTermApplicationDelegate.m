@@ -42,7 +42,6 @@
 #import "iTermController.h"
 #import "iTermDependencyEditorWindowController.h"
 #import "iTermDisclosableView.h"
-#import "iTermExpose.h"
 #import "iTermFileDescriptorSocketPath.h"
 #import "iTermFontPanel.h"
 #import "iTermFullScreenWindowManager.h"
@@ -1830,10 +1829,6 @@ static BOOL hasBecomeActive = NO;
 
 - (IBAction)showAbout:(id)sender {
     [[iTermAboutWindowController sharedInstance] showWindow:self];
-}
-
-- (IBAction)exposeForTabs:(id)sender {
-    [iTermExpose toggle];
 }
 
 - (void)clearAllDownloads:(id)sender {

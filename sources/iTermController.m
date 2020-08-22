@@ -58,7 +58,6 @@
 #import "iTerm.h"
 #import "iTermApplication.h"
 #import "iTermApplicationDelegate.h"
-#import "iTermExpose.h"
 #import "iTermFullScreenWindowManager.h"
 #import "iTermNotificationController.h"
 #import "iTermPreferences.h"
@@ -668,7 +667,6 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
 
 - (void)arrangeHorizontally {
     DLog(@"Arrange horizontally");
-    [iTermExpose exitIfActive];
 
     // Un-full-screen each window. This is done in two steps because
     // toggleFullScreenMode deallocs self.

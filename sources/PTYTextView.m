@@ -13,7 +13,6 @@
 #import "iTermColorMap.h"
 #import "iTermController.h"
 #import "iTermCPS.h"
-#import "iTermExpose.h"
 #import "iTermFindCursorView.h"
 #import "iTermFindOnPageHelper.h"
 #import "iTermFindPasteboard.h"
@@ -133,8 +132,6 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
     // Last position that accessibility was read up to.
     int _lastAccessibilityCursorX;
     int _lastAccessibiltyAbsoluteCursorY;
-
-    BOOL _changedSinceLastExpose;
 
     // True while the context menu is being opened.
     BOOL openingContextMenu_;
@@ -1915,7 +1912,6 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
     }
 
     if (foundDirty && [_dataSource shouldSendContentsChangedNotification]) {
-        _changedSinceLastExpose = YES;
         [_delegate textViewPostTabContentsChangedNotification];
     }
 
@@ -4551,13 +4547,6 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 - (void)aboutToHide {
     [_selectionScrollHelper mouseUp];
 }
-
-- (BOOL)getAndResetChangedSinceLastExpose {
-    BOOL temp = _changedSinceLastExpose;
-    _changedSinceLastExpose = NO;
-    return temp;
-}
-
 
 #pragma mark - Find Cursor
 

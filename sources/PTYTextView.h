@@ -400,9 +400,6 @@ typedef void (^PTYTextViewDrawingHookBlock)(iTermTextDrawingHelper *);
 // called.
 - (instancetype)initWithFrame:(NSRect)frame colorMap:(iTermColorMap *)colorMap;
 
-// Sets the "changed since last Exposé" flag to NO and returns its original value.
-- (BOOL)getAndResetChangedSinceLastExpose;
-
 // Changes the document cursor, if needed. The event is used to get modifier flags.
 - (void)updateCursor:(NSEvent *)event;
 

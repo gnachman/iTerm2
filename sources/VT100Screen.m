@@ -8,7 +8,6 @@
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermCapturedOutputMark.h"
 #import "iTermColorMap.h"
-#import "iTermExpose.h"
 #import "iTermNotificationController.h"
 #import "iTermImage.h"
 #import "iTermImageInfo.h"
@@ -2137,10 +2136,8 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
                  info:&info];
 }
 
-- (BOOL)shouldSendContentsChangedNotification
-{
-    return ([[iTermExpose sharedInstance] isVisible] ||
-            [delegate_ screenShouldSendContentsChangedNotification]);
+- (BOOL)shouldSendContentsChangedNotification {
+    return [delegate_ screenShouldSendContentsChangedNotification];
 }
 
 - (VT100GridRange)dirtyRangeForLine:(int)y {
