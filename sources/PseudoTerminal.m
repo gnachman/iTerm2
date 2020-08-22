@@ -4527,6 +4527,15 @@ ITERM_WEAKLY_REFERENCEABLE
     return [self windowTypeImpl];
 }
 
+- (IBAction)setWindowStyle:(id)sender {
+    NSMenuItem *menuItem = [NSMenuItem castFrom:sender];
+    if (!menuItem) {
+        DLog(@"Bogus sender: %@", sender);
+        return;
+    }
+    [self changeToWindowType:(iTermWindowType)menuItem.tag];
+}
+
 - (IBAction)toggleFullScreenMode:(id)sender {
     [self toggleFullScreenModeImpl:sender];
 }
@@ -9498,6 +9507,9 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
         iTermTabColorMenuItem *colorMenuItem = [iTermTabColorMenuItem castFrom:item];
         colorMenuItem.colorsView.currentColor = self.currentSession.tabColor;
         return self.currentSession != nil;
+    } else if (item.action == @selector(setWindowStyle:)) {
+        item.state = (iTermWindowTypeNormalized(self.windowType) == item.tag) ? NSControlStateValueOn : NSControlStateValueOff;
+        return YES;
     }
 
     return result;

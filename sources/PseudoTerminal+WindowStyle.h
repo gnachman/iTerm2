@@ -10,6 +10,7 @@
 NS_ASSUME_NONNULL_BEGIN
 
 BOOL iTermWindowTypeIsCompact(iTermWindowType windowType);
+iTermWindowType iTermWindowTypeNormalized(iTermWindowType windowType);
 
 @interface PseudoTerminal (WindowStyle)
 
@@ -25,6 +26,7 @@ BOOL iTermWindowTypeIsCompact(iTermWindowType windowType);
 
 + (BOOL)windowTypeHasFullSizeContentView:(iTermWindowType)windowType;
 
+- (void)changeToWindowType:(iTermWindowType)newWindowType;
 - (void)setWindowType:(iTermWindowType)windowType;
 - (NSRect)traditionalFullScreenFrameForScreen:(NSScreen *)screen;
 - (iTermWindowType)savedWindowType;

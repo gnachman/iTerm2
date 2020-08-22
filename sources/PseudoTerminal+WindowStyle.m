@@ -26,6 +26,34 @@
 
 #pragma mark - Window Type
 
+iTermWindowType iTermWindowTypeNormalized(iTermWindowType windowType) {
+    switch (iTermThemedWindowType(windowType)) {
+        case WINDOW_TYPE_TOP:
+        case WINDOW_TYPE_BOTTOM:
+        case WINDOW_TYPE_LEFT:
+        case WINDOW_TYPE_RIGHT:
+        case WINDOW_TYPE_TOP_PARTIAL:
+        case WINDOW_TYPE_BOTTOM_PARTIAL:
+        case WINDOW_TYPE_LEFT_PARTIAL:
+        case WINDOW_TYPE_RIGHT_PARTIAL:
+        case WINDOW_TYPE_NO_TITLE_BAR:
+        case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
+        case WINDOW_TYPE_MAXIMIZED:
+        case WINDOW_TYPE_NORMAL:
+            return windowType;
+
+        case WINDOW_TYPE_COMPACT:
+        case WINDOW_TYPE_ACCESSORY:
+            return WINDOW_TYPE_NORMAL;
+
+        case WINDOW_TYPE_COMPACT_MAXIMIZED:
+            return WINDOW_TYPE_MAXIMIZED;
+
+        case WINDOW_TYPE_LION_FULL_SCREEN:
+            return WINDOW_TYPE_TRADITIONAL_FULL_SCREEN;
+    }
+}
+
 + (BOOL)windowTypeHasFullSizeContentView:(iTermWindowType)windowType {
     switch (iTermThemedWindowType(windowType)) {
         case WINDOW_TYPE_TOP:
@@ -134,9 +162,8 @@
         // monitor.
         [myWindow setFrame:initialFrame display:NO];
     }
-    if (windowType == WINDOW_TYPE_MAXIMIZED || windowType == WINDOW_TYPE_COMPACT_MAXIMIZED) {
-        myWindow.movable = NO;
-    }
+    myWindow.movable = [self.class windowTypeIsMovable:windowType];
+
     [self updateForTransparency:(NSWindow<PTYWindow> *)myWindow];
     [self setWindow:myWindow];
 
@@ -149,6 +176,166 @@
 
     [self updateVariables];
     return myWindow;
+}
+
++ (BOOL)windowTypeIsMovable:(iTermWindowType)windowType {
+    switch (windowType) {
+        case WINDOW_TYPE_NORMAL:
+        case WINDOW_TYPE_NO_TITLE_BAR:
+        case WINDOW_TYPE_COMPACT:
+        case WINDOW_TYPE_ACCESSORY:
+            return YES;
+
+        case WINDOW_TYPE_TOP:
+        case WINDOW_TYPE_BOTTOM:
+        case WINDOW_TYPE_LEFT:
+        case WINDOW_TYPE_RIGHT:
+        case WINDOW_TYPE_BOTTOM_PARTIAL:
+        case WINDOW_TYPE_TOP_PARTIAL:
+        case WINDOW_TYPE_LEFT_PARTIAL:
+        case WINDOW_TYPE_RIGHT_PARTIAL:
+        case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
+        case WINDOW_TYPE_LION_FULL_SCREEN:
+        case WINDOW_TYPE_MAXIMIZED:
+        case WINDOW_TYPE_COMPACT_MAXIMIZED:
+            return NO;
+    }
+}
+
+- (BOOL)windowTypeIsFullScreen:(iTermWindowType)windowType {
+    switch (windowType) {
+        case WINDOW_TYPE_NORMAL:
+        case WINDOW_TYPE_TOP:
+        case WINDOW_TYPE_BOTTOM:
+        case WINDOW_TYPE_LEFT:
+        case WINDOW_TYPE_RIGHT:
+        case WINDOW_TYPE_BOTTOM_PARTIAL:
+        case WINDOW_TYPE_TOP_PARTIAL:
+        case WINDOW_TYPE_LEFT_PARTIAL:
+        case WINDOW_TYPE_RIGHT_PARTIAL:
+        case WINDOW_TYPE_NO_TITLE_BAR:
+        case WINDOW_TYPE_COMPACT:
+        case WINDOW_TYPE_ACCESSORY:
+        case WINDOW_TYPE_MAXIMIZED:
+        case WINDOW_TYPE_COMPACT_MAXIMIZED:
+            return NO;
+        case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
+        case WINDOW_TYPE_LION_FULL_SCREEN:
+            return YES;
+    }
+}
+
+- (BOOL)windowTypeHasTitleBar:(iTermWindowType)newWindowType {
+    switch (self.windowType) {
+        case WINDOW_TYPE_NORMAL:
+        case WINDOW_TYPE_COMPACT:
+        case WINDOW_TYPE_ACCESSORY:
+        case WINDOW_TYPE_MAXIMIZED:
+        case WINDOW_TYPE_COMPACT_MAXIMIZED:
+            return YES;
+
+        case WINDOW_TYPE_TOP:
+        case WINDOW_TYPE_BOTTOM:
+        case WINDOW_TYPE_LEFT:
+        case WINDOW_TYPE_RIGHT:
+        case WINDOW_TYPE_BOTTOM_PARTIAL:
+        case WINDOW_TYPE_TOP_PARTIAL:
+        case WINDOW_TYPE_LEFT_PARTIAL:
+        case WINDOW_TYPE_RIGHT_PARTIAL:
+        case WINDOW_TYPE_NO_TITLE_BAR:
+        case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
+        case WINDOW_TYPE_LION_FULL_SCREEN:
+            return NO;
+    }
+}
+
+- (void)changeToWindowType:(iTermWindowType)newWindowType {
+    if (newWindowType == self.windowType) {
+        return;
+    }
+    // The general categories of window are:
+    // Full screen
+    // Edge-attached
+    // Normal
+    // No title bar
+    if (![self windowTypeIsFullScreen:newWindowType] && [self windowTypeIsFullScreen:self.windowType]) {
+        // Exit full screen mode.
+        [self toggleFullScreenMode:nil completion:^(BOOL ok) {
+            if (!ok) {
+                return;
+            }
+            [self changeToWindowType:newWindowType];
+        }];
+        return;
+    }
+
+    // Because this is not a transition out of full screen, we must update the saved window type
+    // before calculating the style mask. That is because the style mask calculation decides
+    // whether there is a full screen content view based on the *saved* window type, since it wants
+    // to preserve the value when entering full screen.
+    _savedWindowType = newWindowType;
+
+    switch (newWindowType) {
+        case WINDOW_TYPE_TOP:
+        case WINDOW_TYPE_BOTTOM:
+        case WINDOW_TYPE_LEFT:
+        case WINDOW_TYPE_RIGHT:
+        case WINDOW_TYPE_BOTTOM_PARTIAL:
+        case WINDOW_TYPE_TOP_PARTIAL:
+        case WINDOW_TYPE_LEFT_PARTIAL:
+        case WINDOW_TYPE_RIGHT_PARTIAL:
+            if ([self windowTypeHasTitleBar:self.windowType]) {
+                [self updateWindowForWindowType:newWindowType];
+                self.windowType = newWindowType;
+                [self updateTabColors];
+                [self.contentView didChangeCompactness];
+                [self.contentView layoutSubviews];
+            } else {
+                self.windowType = newWindowType;
+                self.window.movable = [self.class windowTypeIsMovable:newWindowType];
+            }
+            [self canonicalizeWindowFrame];
+            return;
+
+        case WINDOW_TYPE_COMPACT:
+        case WINDOW_TYPE_ACCESSORY:
+        case WINDOW_TYPE_MAXIMIZED:
+        case WINDOW_TYPE_COMPACT_MAXIMIZED:
+        case WINDOW_TYPE_NORMAL:
+            if (![self windowTypeHasTitleBar:self.windowType]) {
+                [self updateWindowForWindowType:newWindowType];
+                self.windowType = newWindowType;
+                [self updateTabColors];
+                [self.contentView didChangeCompactness];
+                [self.contentView layoutSubviews];
+                [self canonicalizeWindowFrame];
+            } else {
+                self.windowType = newWindowType;
+                self.window.movable = [self.class windowTypeIsMovable:newWindowType];
+            }
+            [self canonicalizeWindowFrame];
+            break;
+
+        case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
+        case WINDOW_TYPE_LION_FULL_SCREEN:
+            if (self.anyFullScreen) {
+                return;
+            }
+            [self toggleFullScreenMode:nil];
+            return;
+
+        case WINDOW_TYPE_NO_TITLE_BAR:
+            if ([self windowTypeHasTitleBar:self.windowType]) {
+                [self updateWindowForWindowType:newWindowType];
+                self.windowType = newWindowType;
+                [self updateTabColors];
+                [self.contentView didChangeCompactness];
+                [self.contentView layoutSubviews];
+                return;
+            }
+            self.window.movable = [self.class windowTypeIsMovable:newWindowType];
+            return;
+    }
 }
 
 - (BOOL)replaceWindowWithWindowOfType:(iTermWindowType)newWindowType {
