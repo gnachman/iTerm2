@@ -37,11 +37,7 @@
         case WINDOW_TYPE_LEFT_PARTIAL:
         case WINDOW_TYPE_RIGHT_PARTIAL:
         case WINDOW_TYPE_NO_TITLE_BAR:
-            if (@available(macOS 10.14, *)) {
-                return YES;
-            } else {
-                return NO;
-            }
+            return YES;
 
         case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
             return NO;
@@ -69,10 +65,7 @@
         case WINDOW_TYPE_LEFT_PARTIAL:
         case WINDOW_TYPE_RIGHT_PARTIAL:
         case WINDOW_TYPE_NO_TITLE_BAR:
-            if (@available(macOS 10.14, *)) {
-                return YES;
-            }
-            return NO;
+            return YES;
 
         case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
         case WINDOW_TYPE_MAXIMIZED:
@@ -101,9 +94,7 @@
     // view style mask. Otherwise, you are left with an unusable title bar.
     if (self.window.styleMask & NSWindowStyleMaskTitled) {
         DLog(@"Remove title bar accessory view controllers to appease appkit");
-        if (@available(macOS 10.14, *)) {
-            [self returnTabBarToContentView];
-        }
+        [self returnTabBarToContentView];
         while (self.window.titlebarAccessoryViewControllers.count > 0) {
             [self.window removeTitlebarAccessoryViewControllerAtIndex:0];
         }
@@ -148,23 +139,12 @@
     }
     [self updateForTransparency:(NSWindow<PTYWindow> *)myWindow];
     [self setWindow:myWindow];
-    if (@available(macOS 10.14, *)) {
-        // This doesn't work on 10.14. See it_setNeedsInvalidateShadow for a saner approach.
-    } else {
-        // This had been in iTerm2 for years and was removed, but I can't tell why. Issue 3833 reveals
-        // that it is still needed, at least on OS 10.9.
-        if ([myWindow respondsToSelector:@selector(_setContentHasShadow:)]) {
-            [myWindow _setContentHasShadow:NO];
-        }
-    }
 
-    if (@available(macOS 10.14, *)) {
-        if (@available(macOS 10.16, *)) {
-            // TODO
-        } else {
-            NSView *view = [myWindow it_titlebarViewOfClassWithName:@"_NSTitlebarDecorationView"];
-            [view setHidden:YES];
-        }
+    if (@available(macOS 10.16, *)) {
+        // TODO
+    } else {
+        NSView *view = [myWindow it_titlebarViewOfClassWithName:@"_NSTitlebarDecorationView"];
+        [view setHidden:YES];
     }
 
     [self updateVariables];
@@ -213,15 +193,7 @@
 }
 
 - (void)setWindowType:(iTermWindowType)windowType {
-    if (@available(macOS 10.14, *)) {
-        _windowType = iTermThemedWindowType(windowType);
-    } else if (iTermWindowTypeIsCompact(iTermThemedWindowType(windowType))) {
-        // Requires layer support
-        _windowType = WINDOW_TYPE_NO_TITLE_BAR;
-    } else {
-        // Normal 10.12, 10.13 code path
-        _windowType = iTermThemedWindowType(windowType);
-    }
+    _windowType = iTermThemedWindowType(windowType);
 }
 
 - (void)updateWindowType {
@@ -639,9 +611,7 @@
     [self updateForTransparency:self.ptyWindow];
     [self.contentView layoutSubviews];
     [self.contentView didChangeCompactness];
-    if (@available(macOS 10.14, *)) {
-        [self updateTabBarControlIsTitlebarAccessory];
-    }
+    [self updateTabBarControlIsTitlebarAccessory];
     if (self.windowType != WINDOW_TYPE_LION_FULL_SCREEN) {
         DLog(@"Set saved window type to %@", @(self.windowType));
         _savedWindowType = self.windowType;
@@ -656,9 +626,7 @@
     togglingLionFullScreen_ = NO;
     _fullScreenRetryCount = 0;
     lionFullScreen_ = YES;
-    if (@available(macOS 10.14, *)) {
-        [self updateTabBarControlIsTitlebarAccessory];
-    }
+    [self updateTabBarControlIsTitlebarAccessory];
     [self didChangeAnyFullScreen];
     [self.contentView.tabBarControl setFlashing:YES];
     [self.contentView updateToolbeltForWindow:self.window];
@@ -726,30 +694,19 @@
     }
     exitingLionFullscreen_ = YES;
 
-    if (@available(macOS 10.14, *)) {
-        [self updateTabBarControlIsTitlebarAccessory];
-    } else {
-        [self safelySetStyleMask:[PseudoTerminal styleMaskForWindowType:self.savedWindowType
-                                                        savedWindowType:self.savedWindowType
-                                                       hotkeyWindowType:self.hotkeyWindowType]];
-    }
+    [self updateTabBarControlIsTitlebarAccessory];
     [self updateForTransparency:(NSWindow<PTYWindow> *)self.window];
     [self.contentView.tabBarControl updateFlashing];
     [self fitTabsToWindow];
-    if (@available(macOS 10.14, *)) {} else {
-        [self.contentView layoutSubviews];
-    }
     self.window.hasShadow = YES;
     [self updateUseMetalInAllTabs];
     [self updateForTransparency:self.ptyWindow];
     self.windowType = WINDOW_TYPE_LION_FULL_SCREEN;
-    if (@available(macOS 10.14, *)) {
-        if (![self shouldRevealStandardWindowButtons]) {
-            [self hideStandardWindowButtonsAndTitlebarAccessories];
-        }
-        [self.contentView didChangeCompactness];
-        [self.contentView layoutSubviews];
+    if (![self shouldRevealStandardWindowButtons]) {
+        [self hideStandardWindowButtonsAndTitlebarAccessories];
     }
+    [self.contentView didChangeCompactness];
+    [self.contentView layoutSubviews];
 }
 
 - (void)windowDidExitFullScreenImpl:(NSNotification *)notification {
@@ -759,11 +716,9 @@
     lionFullScreen_ = NO;
 
     DLog(@"Window did exit fullscreen. Set window type to %d", self.savedWindowType);
-    if (@available(macOS 10.14, *)) {
-        [self safelySetStyleMask:[PseudoTerminal styleMaskForWindowType:self.savedWindowType
-                                                        savedWindowType:self.savedWindowType
-                                                       hotkeyWindowType:self.hotkeyWindowType]];
-    }
+    [self safelySetStyleMask:[PseudoTerminal styleMaskForWindowType:self.savedWindowType
+                                                    savedWindowType:self.savedWindowType
+                                                   hotkeyWindowType:self.hotkeyWindowType]];
     const iTermWindowType desiredWindowType = self.savedWindowType;
     [self updateWindowForWindowType:desiredWindowType];
     self.windowType = desiredWindowType;
@@ -837,23 +792,15 @@ BOOL iTermWindowTypeIsCompact(iTermWindowType windowType) {
         case WINDOW_TYPE_LEFT_PARTIAL:
         case WINDOW_TYPE_RIGHT_PARTIAL:
         case WINDOW_TYPE_NO_TITLE_BAR:
-            if (@available(macOS 10.14, *)) {
-                return (mask |
-                        NSWindowStyleMaskFullSizeContentView |
-                        NSWindowStyleMaskTitled |
-                        NSWindowStyleMaskClosable |
-                        NSWindowStyleMaskMiniaturizable |
-                        NSWindowStyleMaskResizable);
-            } else {
-                return mask | NSWindowStyleMaskBorderless | NSWindowStyleMaskResizable;
-            }
+            return (mask |
+                    NSWindowStyleMaskFullSizeContentView |
+                    NSWindowStyleMaskTitled |
+                    NSWindowStyleMaskClosable |
+                    NSWindowStyleMaskMiniaturizable |
+                    NSWindowStyleMaskResizable);
 
         case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
-            if (@available(macOS 10.13, *)) {
-                return mask | NSWindowStyleMaskBorderless | NSWindowStyleMaskMiniaturizable;
-            } else {
-                return mask | NSWindowStyleMaskBorderless;
-            }
+            return mask | NSWindowStyleMaskBorderless | NSWindowStyleMaskMiniaturizable;
 
         case WINDOW_TYPE_COMPACT:
             return (mask |
@@ -883,10 +830,8 @@ BOOL iTermWindowTypeIsCompact(iTermWindowType windowType) {
         case WINDOW_TYPE_LION_FULL_SCREEN:
         case WINDOW_TYPE_ACCESSORY:
         case WINDOW_TYPE_NORMAL:
-            if (@available(macOS 10.14, *)) {
-                if ([self windowTypeHasFullSizeContentView:iTermThemedWindowType(savedWindowType)]) {
-                    mask |= NSWindowStyleMaskFullSizeContentView;
-                }
+            if ([self windowTypeHasFullSizeContentView:iTermThemedWindowType(savedWindowType)]) {
+                mask |= NSWindowStyleMaskFullSizeContentView;
             }
             return (mask |
                     NSWindowStyleMaskTitled |
