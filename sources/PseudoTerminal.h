@@ -59,13 +59,9 @@ extern NSString *const iTermDidCreateTerminalWindowNotification;
   PTYWindowDelegateProtocol,
   WindowControllerInterface>
 
-// Called when entering fullscreen has finished.
-// Used to make restoring fullscreen windows work on 10.11.
-@property(nonatomic, copy) void (^didEnterLionFullscreen)(PseudoTerminal *);
-
 // Is this window in the process of becoming fullscreen?
 // Used to make restoring fullscreen windows work on 10.11.
-@property(nonatomic, readonly) BOOL togglingLionFullScreen;
+- (BOOL)togglingLionFullScreen;
 
 // What kind of hotkey window this is, if any.
 @property(nonatomic, assign) iTermHotkeyWindowType hotkeyWindowType;

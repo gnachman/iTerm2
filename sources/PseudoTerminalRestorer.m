@@ -18,6 +18,8 @@
 #import "NSApplication+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "PseudoTerminal.h"
+#import "PseudoTerminal+Private.h"
+#import "PseudoTerminal+WindowStyle.h"
 
 static NSMutableArray *queuedBlocks;
 typedef void (^VoidBlock)(void);

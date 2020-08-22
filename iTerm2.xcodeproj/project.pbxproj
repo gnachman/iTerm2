@@ -1585,6 +1585,8 @@
 		A618FFD2224602F800B8FD88 /* StatusBarIconAction.png in Resources */ = {isa = PBXBuildFile; fileRef = A618FFCC224602F800B8FD88 /* StatusBarIconAction.png */; };
 		A61A859424EFA01800B03880 /* iTermBackgroundCommandRunner.h in Headers */ = {isa = PBXBuildFile; fileRef = A61A859224EFA01800B03880 /* iTermBackgroundCommandRunner.h */; };
 		A61A859524EFA01800B03880 /* iTermBackgroundCommandRunner.m in Sources */ = {isa = PBXBuildFile; fileRef = A61A859324EFA01800B03880 /* iTermBackgroundCommandRunner.m */; };
+		A61A859C24F0F2CC00B03880 /* PseudoTerminal+WindowStyle.h in Headers */ = {isa = PBXBuildFile; fileRef = A61A859A24F0F2CC00B03880 /* PseudoTerminal+WindowStyle.h */; };
+		A61A859D24F0F2CC00B03880 /* PseudoTerminal+WindowStyle.m in Sources */ = {isa = PBXBuildFile; fileRef = A61A859B24F0F2CC00B03880 /* PseudoTerminal+WindowStyle.m */; };
 		A61ABBBB1AE5F38C004656C2 /* NSDictionary+Profile.h in Headers */ = {isa = PBXBuildFile; fileRef = A61ABBB91AE5F38C004656C2 /* NSDictionary+Profile.h */; };
 		A61ABBBC1AE5F38C004656C2 /* NSDictionary+Profile.h in Headers */ = {isa = PBXBuildFile; fileRef = A61ABBB91AE5F38C004656C2 /* NSDictionary+Profile.h */; };
 		A61ABBC21AE5F54A004656C2 /* NSMutableDictionary+Profile.h in Headers */ = {isa = PBXBuildFile; fileRef = A61ABBC01AE5F54A004656C2 /* NSMutableDictionary+Profile.h */; };
@@ -5051,6 +5053,8 @@
 		A618FFCC224602F800B8FD88 /* StatusBarIconAction.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = StatusBarIconAction.png; path = images/StatusBarIcons/StatusBarIconAction.png; sourceTree = "<group>"; };
 		A61A859224EFA01800B03880 /* iTermBackgroundCommandRunner.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermBackgroundCommandRunner.h; sourceTree = "<group>"; };
 		A61A859324EFA01800B03880 /* iTermBackgroundCommandRunner.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermBackgroundCommandRunner.m; sourceTree = "<group>"; };
+		A61A859A24F0F2CC00B03880 /* PseudoTerminal+WindowStyle.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "PseudoTerminal+WindowStyle.h"; sourceTree = "<group>"; };
+		A61A859B24F0F2CC00B03880 /* PseudoTerminal+WindowStyle.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "PseudoTerminal+WindowStyle.m"; sourceTree = "<group>"; };
 		A61ABBB91AE5F38C004656C2 /* NSDictionary+Profile.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSDictionary+Profile.h"; sourceTree = "<group>"; };
 		A61ABBBA1AE5F38C004656C2 /* NSDictionary+Profile.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSDictionary+Profile.m"; sourceTree = "<group>"; };
 		A61ABBC01AE5F54A004656C2 /* NSMutableDictionary+Profile.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSMutableDictionary+Profile.h"; sourceTree = "<group>"; };
@@ -8671,6 +8675,8 @@
 				A6C3005E247117A9002BC672 /* iTermLocatedString.m */,
 				A6BA7D22247637B700407C4D /* VT100InlineImageHelper.h */,
 				A6BA7D23247637B700407C4D /* VT100InlineImageHelper.m */,
+				A61A859A24F0F2CC00B03880 /* PseudoTerminal+WindowStyle.h */,
+				A61A859B24F0F2CC00B03880 /* PseudoTerminal+WindowStyle.m */,
 			);
 			name = Core;
 			sourceTree = "<group>";
@@ -11338,6 +11344,7 @@
 				A60C03642089897400FE2F1F /* iTermScriptConsole.h in Headers */,
 				A653F66724CD6A8C0062377E /* iTermRestorableStateRestorer.h in Headers */,
 				A61A859424EFA01800B03880 /* iTermBackgroundCommandRunner.h in Headers */,
+				A61A859C24F0F2CC00B03880 /* PseudoTerminal+WindowStyle.h in Headers */,
 				530AB8B420B2098000D2AA08 /* iTermVariables.h in Headers */,
 				A653F68424CF4EC70062377E /* FMResultSet.h in Headers */,
 				A667194D1DCE36C3000CE608 /* iTermWebSocketConnection.h in Headers */,
@@ -14056,6 +14063,7 @@
 				A6352253238CA23100FED5BC /* iTermOpenQuicklyItem.m in Sources */,
 				A6EA071E24EA441900DD6E17 /* NSURL+IDN.m in Sources */,
 				A6EB2042223EC54E00E928C3 /* ini.c in Sources */,
+				A61A859D24F0F2CC00B03880 /* PseudoTerminal+WindowStyle.m in Sources */,
 				A6AB55E1217256A600142244 /* iTermLineBlockArray.m in Sources */,
 				A67960CC1F81FCB6008A42BC /* iTermMetalCellRenderer.m in Sources */,
 				A653F6AD24D122440062377E /* iTermRestorableStateDriver.m in Sources */,

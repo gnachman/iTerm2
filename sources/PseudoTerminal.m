@@ -1,6 +1,7 @@
 #import "PseudoTerminal.h"
 #import "PseudoTerminal+Private.h"
 #import "PseudoTerminal+TouchBar.h"
+#import "PseudoTerminal+WindowStyle.h"
 
 #import "CapturedOutput.h"
 #import "CaptureTrigger.h"
@@ -189,10 +190,6 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
     return frameToCenter;
 }
 
-static BOOL iTermWindowTypeIsCompact(iTermWindowType windowType) {
-    return windowType == WINDOW_TYPE_COMPACT || windowType == WINDOW_TYPE_COMPACT_MAXIMIZED;
-}
-
 @interface PseudoTerminal () <
     iTermBroadcastInputHelperDelegate,
     iTermGraphCodable,
@@ -220,8 +217,6 @@ static BOOL iTermWindowTypeIsCompact(iTermWindowType windowType) {
 
 @property(nonatomic, readonly) iTermVariables *variables;
 @property(nonatomic, readonly) iTermSwiftyString *windowTitleOverrideSwiftyString;
-@property(nonatomic, readwrite) BOOL isReplacingWindow;
-@property(nonatomic, copy) NSString *swipeIdentifier;
 @end
 
 @implementation PseudoTerminal {
@@ -239,23 +234,6 @@ static BOOL iTermWindowTypeIsCompact(iTermWindowType windowType) {
     ////////////////////////////////////////////////////////////////////////////
     // Miscellaneous
 
-    // Is the transparency setting respected?
-    BOOL useTransparency_;
-
-    // Is this a full screen window?
-    BOOL _fullScreen;
-
-    // When you enter full-screen mode the old frame size is saved here. When
-    // full-screen mode is exited that frame is restored.
-    NSRect oldFrame_;
-    BOOL oldFrameSizeIsBogus_;  // If set, the size in oldFrame_ shouldn't be used.
-
-    // When you enter fullscreen mode, the old use transparency setting is
-    // saved, and then restored when you exit FS unless it was changed
-    // by the user.
-    BOOL oldUseTransparency_;
-    BOOL restoreUseTransparency_;
-
     // When sending input to all sessions we temporarily change the background
     // color. This stores the normal background color so we can restore to it.
     NSColor *normalBackgroundColor;
@@ -268,13 +246,6 @@ static BOOL iTermWindowTypeIsCompact(iTermWindowType windowType) {
     // includes its unique number. This variable gives this window's number.
     int uniqueNumber_;
 
-    // This is set while toggling full screen. It prevents windowDidResignMain
-    // from trying to exit fullscreen mode in the midst of toggling it.
-    BOOL togglingFullScreen_;
-
-    // True while entering lion fullscreen (the animation is going on)
-    BOOL togglingLionFullScreen_;
-
     PasteboardHistoryWindowController* pbHistoryView;
     CommandHistoryPopupWindowController *commandHistoryPopup;
     DirectoriesPopupWindowController *_directoriesPopupWindowController;
@@ -285,13 +256,6 @@ static BOOL iTermWindowTypeIsCompact(iTermWindowType windowType) {
     // textviews and windows are loosely coupled.
     int nextSessionRows_;
     int nextSessionColumns_;
-
-    // DO NOT ACCESS DIRECTLY - USE ACCESSORS INSTEAD
-    iTermWindowType _windowType;
-
-    // DO NOT ACCESS DIRECTLY - USE ACCESSORS INSTEAD
-    // Window type before entering fullscreen. Only relevant if in/entering fullscreen.
-    iTermWindowType _savedWindowType;
 
     // Indicates if _anchoredScreenNumber is to be used.
     BOOL _isAnchoredToScreen;
@@ -311,9 +275,6 @@ static BOOL iTermWindowTypeIsCompact(iTermWindowType windowType) {
     // Affects how its size is set when the number of tabview items changes.
     BOOL wasDraggedFromAnotherWindow_;
 
-    // In the process of zooming in Lion or later.
-    BOOL zooming_;
-
     // Time since 1970 of last window resize
     double lastResizeTime_;
 
@@ -327,17 +288,12 @@ static BOOL iTermWindowTypeIsCompact(iTermWindowType windowType) {
     // Time of last magnification change.
     NSTimeInterval lastMagChangeTime_;
 
-    // In 10.7 style full screen mode
-    BOOL lionFullScreen_;
-
     IBOutlet NSPanel *coprocesssPanel_;
     IBOutlet NSButton *coprocessOkButton_;
     IBOutlet NSComboBox *coprocessCommand_;
     IBOutlet NSButton *coprocessIgnoreErrors_;
 
     NSDictionary *lastArrangement_;
-
-    BOOL exitingLionFullscreen_;
 
     // If positive, then any window resizing that happens is driven by tmux and
     // shouldn't be reported back to tmux as a user-originated resize.
@@ -369,39 +325,7 @@ static BOOL iTermWindowTypeIsCompact(iTermWindowType windowType) {
     // the window's frame.
     BOOL hidingToolbeltShouldResizeWindowInitialized_;
 
-    // This thing is a freaking horror show, and it's what people are talking about when they say
-    // that software quality has declined in OS X.
-    //
-    // OS 10.10 added a barely documented API to add an accessory view to the title bar (it's
-    // mentioned in the release notes and public header files and methods exist, but that's it).
-    // It creates auto layout constraints in the title bar. For some reason, that causes EVERYTHING
-    // to get auto layout. Autoresizing masks become constraints throughout the window. This does
-    // not work well, in particular with the toolbelt. The toolbelt is designed to allow the window
-    // to be too short to show all its contents, in which case some tools will get partially or
-    // completely clipped. When auto layout is used, the window is prevented from being shorter than
-    // the sum of the tools' minimum heights. This is especially bad when you create a tmux window,
-    // because then you get a gray bar on the bottom where the window's height exceeds the content's
-    // height, simply because you have a (possibly invisible!) toolbelt that can't shrink. But it
-    // gets worse. I wrote a replacement NSSplitView that collapses tools when they don't fit. Auto
-    // layout is so broken that it lags when the window or toolbelt is resized. Sometimes it catches
-    // up when the drag is done, and sometimes it just leaves things in a broken state. I tried
-    // removing auto layout from the toolbelt by setting translatesAutoresizingMaskIntoConstraints
-    // to NO, but it's not enough to set that on ToolbeltView. In fact, it's not enough to set it on
-    // every view that I create within the toolbelt. If any view anywhere in the view hierarchy in
-    // the toolbelt has a constraint, the whole thing gets broken and laggy on resize. For example,
-    // a table view will create various internal subviews. Those will end up with auto layout
-    // constraints. There's no (sane) way for me to set translatesAutoresizingMaskIntoConstraints on
-    // them to prevent the viral spread of auto layout garbage. So for now, the toolbelt hangs on to
-    // life because it remains possible to have no auto-layout as long as you don't use title bar
-    // accessories. To see the whole mess, check out the clusterfuck[123] branches.
-    //
-    // Update: This seems to work properly on Mojave. Hurray!
-    iTermWindowShortcutLabelTitlebarAccessoryViewController *_shortcutAccessoryViewController NS_AVAILABLE_MAC(10_14);
     iTermTabBarAccessoryViewController *_titleBarAccessoryTabBarViewController NS_AVAILABLE_MAC(10_14);
-    
-    // Is there a pending delayed-perform of enterFullScreen:? Used to figure
-    // out if it's safe to toggle Lion full screen since only one can go at a time.
-    BOOL _haveDelayedEnterFullScreenMode;
 
     // Number of tabs since last change.
     NSInteger _previousNumberOfTabs;
@@ -424,8 +348,6 @@ static BOOL iTermWindowTypeIsCompact(iTermWindowType windowType) {
     iTermSessionFactory *_sessionFactory;
     BOOL _openingPopupWindow;
 
-    NSInteger _fullScreenRetryCount;
-
     // This is true if the user is dragging the window by the titlebar. It should not be set for
     // programmatic moves or moves because of disconnecting a display.
     BOOL _windowIsMoving;
@@ -437,8 +359,6 @@ static BOOL iTermWindowTypeIsCompact(iTermWindowType windowType) {
     // Have we started showing a transient title? If so, don't stop until time runs out.
     BOOL _lockTransientTitle;
 
-    NSMutableArray *_toggleFullScreenModeCompletionBlocks;
-
     BOOL _windowNeedsInitialSize;
 
     iTermFunctionCallTextFieldDelegate *_currentTabTitleTextFieldDelegate;
@@ -447,15 +367,9 @@ static BOOL iTermWindowTypeIsCompact(iTermWindowType windowType) {
 
     BOOL _anyPaneIsTransparent;
     BOOL _windowDidResize;
-    BOOL _willClose;
-    BOOL _updatingWindowType;  // updateWindowType is not reentrant
     BOOL _suppressMakeCurrentTerminal;
-    NSArray *_screenConfigurationAtTimeOfForceFrame;
-    NSRect _forceFrame;
-    NSTimeInterval _forceFrameUntil;
     BOOL _deallocing;
     iTermOrderEnforcer *_proxyIconOrderEnforcer;
-    BOOL _settingStyleMask;
     BOOL _restorableStateInvalid;
     BOOL _inWindowDidMove;
     NSView *_swipeContainerView;
@@ -476,115 +390,6 @@ static BOOL iTermWindowTypeIsCompact(iTermWindowType windowType) {
 + (void)registerSessionsInArrangement:(NSDictionary *)arrangement {
     for (NSDictionary *tabArrangement in arrangement[TERMINAL_ARRANGEMENT_TABS]) {
         [PTYTab registerSessionsInArrangement:tabArrangement];
-    }
-}
-
-+ (BOOL)windowTypeHasFullSizeContentView:(iTermWindowType)windowType {
-    switch (iTermThemedWindowType(windowType)) {
-        case WINDOW_TYPE_TOP:
-        case WINDOW_TYPE_BOTTOM:
-        case WINDOW_TYPE_LEFT:
-        case WINDOW_TYPE_RIGHT:
-        case WINDOW_TYPE_TOP_PARTIAL:
-        case WINDOW_TYPE_BOTTOM_PARTIAL:
-        case WINDOW_TYPE_LEFT_PARTIAL:
-        case WINDOW_TYPE_RIGHT_PARTIAL:
-        case WINDOW_TYPE_NO_TITLE_BAR:
-            if (@available(macOS 10.14, *)) {
-                return YES;
-            } else {
-                return NO;
-            }
-
-        case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
-            return NO;
-
-        case WINDOW_TYPE_COMPACT:
-        case WINDOW_TYPE_COMPACT_MAXIMIZED:
-            return YES;
-
-        case WINDOW_TYPE_MAXIMIZED:
-        case WINDOW_TYPE_LION_FULL_SCREEN:
-        case WINDOW_TYPE_ACCESSORY:
-        case WINDOW_TYPE_NORMAL:
-            return NO;
-    }
-}
-
-+ (NSInteger)styleMaskForWindowType:(iTermWindowType)windowType
-                    savedWindowType:(iTermWindowType)savedWindowType
-                   hotkeyWindowType:(iTermHotkeyWindowType)hotkeyWindowType {
-    NSInteger mask = 0;
-    if (hotkeyWindowType == iTermHotkeyWindowTypeFloatingPanel) {
-        mask = NSWindowStyleMaskNonactivatingPanel;
-    }
-    switch (iTermThemedWindowType(windowType)) {
-        case WINDOW_TYPE_TOP:
-        case WINDOW_TYPE_BOTTOM:
-        case WINDOW_TYPE_LEFT:
-        case WINDOW_TYPE_RIGHT:
-        case WINDOW_TYPE_TOP_PARTIAL:
-        case WINDOW_TYPE_BOTTOM_PARTIAL:
-        case WINDOW_TYPE_LEFT_PARTIAL:
-        case WINDOW_TYPE_RIGHT_PARTIAL:
-        case WINDOW_TYPE_NO_TITLE_BAR:
-            if (@available(macOS 10.14, *)) {
-                return (mask |
-                        NSWindowStyleMaskFullSizeContentView |
-                        NSWindowStyleMaskTitled |
-                        NSWindowStyleMaskClosable |
-                        NSWindowStyleMaskMiniaturizable |
-                        NSWindowStyleMaskResizable);
-            } else {
-                return mask | NSWindowStyleMaskBorderless | NSWindowStyleMaskResizable;
-            }
-
-        case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
-            if (@available(macOS 10.13, *)) {
-                return mask | NSWindowStyleMaskBorderless | NSWindowStyleMaskMiniaturizable;
-            } else {
-                return mask | NSWindowStyleMaskBorderless;
-            }
-
-        case WINDOW_TYPE_COMPACT:
-            return (mask |
-                    NSWindowStyleMaskFullSizeContentView |
-                    NSWindowStyleMaskTitled |
-                    NSWindowStyleMaskClosable |
-                    NSWindowStyleMaskMiniaturizable |
-                    NSWindowStyleMaskResizable);
-
-        case WINDOW_TYPE_COMPACT_MAXIMIZED:
-            return (mask |
-                    NSWindowStyleMaskFullSizeContentView |
-                    NSWindowStyleMaskTitled |
-                    NSWindowStyleMaskClosable |
-                    NSWindowStyleMaskMiniaturizable |
-                    NSWindowStyleMaskTexturedBackground |
-                    NSWindowStyleMaskResizable);
-
-        case WINDOW_TYPE_MAXIMIZED:
-            return (mask |
-                    NSWindowStyleMaskTitled |
-                    NSWindowStyleMaskClosable |
-                    NSWindowStyleMaskMiniaturizable |
-                    NSWindowStyleMaskTexturedBackground |
-                    NSWindowStyleMaskResizable);
- 
-        case WINDOW_TYPE_LION_FULL_SCREEN:
-        case WINDOW_TYPE_ACCESSORY:
-        case WINDOW_TYPE_NORMAL:
-            if (@available(macOS 10.14, *)) {
-                if ([self windowTypeHasFullSizeContentView:iTermThemedWindowType(savedWindowType)]) {
-                    mask |= NSWindowStyleMaskFullSizeContentView;
-                }
-            }
-            return (mask |
-                    NSWindowStyleMaskTitled |
-                    NSWindowStyleMaskClosable |
-                    NSWindowStyleMaskMiniaturizable |
-                    NSWindowStyleMaskResizable |
-                    NSWindowStyleMaskTexturedBackground);
     }
 }
 
@@ -1818,26 +1623,6 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void)softCloseSession:(PTYSession *)aSession
 {
     [self closeSession:aSession soft:YES];
-}
-
-- (iTermWindowType)windowType {
-    return iTermThemedWindowType(_windowType);
-}
-
-- (iTermWindowType)savedWindowType {
-    return iTermThemedWindowType(_savedWindowType);
-}
-
-- (void)setWindowType:(iTermWindowType)windowType {
-    if (@available(macOS 10.14, *)) {
-        _windowType = iTermThemedWindowType(windowType);
-    } else if (iTermWindowTypeIsCompact(iTermThemedWindowType(windowType))) {
-        // Requires layer support
-        _windowType = WINDOW_TYPE_NO_TITLE_BAR;
-    } else {
-        // Normal 10.12, 10.13 code path
-        _windowType = iTermThemedWindowType(windowType);
-    }
 }
 
 - (BOOL)confirmCloseForSessions:(NSArray *)sessions
@@ -4515,35 +4300,6 @@ ITERM_WEAKLY_REFERENCEABLE
     }];
 }
 
-// When you replace the window with one of a different type and then order it
-// front, the window gets moved to the first screen after a little while. It's
-// not after one spin of the runloop, but just a little while later. I can't 
-// tell why. But it's horrible and I can't find a better workaround than to
-// just muscle it back to the frame we want if it changes for apparently no
-// reason for some time.
-- (void)forceFrame:(NSRect)frame {
-    if (![iTermAdvancedSettingsModel workAroundMultiDisplayOSBug]) {
-        return;
-    }
-    if (NSEqualRects(frame, NSIntersectionRect(frame, NSScreen.screens.firstObject.frame))) {
-        DLog(@"Frame is entirely in the first screen. Not forcing.");
-        return;
-    }
-    [self clearForceFrame];
-    _forceFrame = frame;
-    _screenConfigurationAtTimeOfForceFrame = [[self screenConfiguration] retain];
-    _forceFrameUntil = [NSDate it_timeSinceBoot] + 2;
-    DLog(@"Force frame to %@", NSStringFromRect(frame));
-    [self.window setFrame:frame display:YES animate:NO];
-}
-
-- (void)clearForceFrame {
-    [_screenConfigurationAtTimeOfForceFrame autorelease];
-    _screenConfigurationAtTimeOfForceFrame = nil;
-    _forceFrameUntil = 0;
-    _forceFrame = NSZeroRect;
-}
-
 - (void)windowWillMove:(NSNotification *)notification {
     // AFAICT this is only called when you move the window by dragging it or double-click the title bar.
     DLog(@"Looks like the user started dragging the window.");
@@ -4676,140 +4432,6 @@ ITERM_WEAKLY_REFERENCEABLE
     return useTransparency_;
 }
 
-// Like toggleFullScreenMode but does nothing if it's already fullscreen.
-// Save to call from a timer.
-- (void)enterFullScreenMode
-{
-    _haveDelayedEnterFullScreenMode = NO;
-    if (!togglingFullScreen_ &&
-        !togglingLionFullScreen_ &&
-        ![self anyFullScreen]) {
-        [self toggleFullScreenMode:nil];
-    }
-}
-
-- (NSRect)traditionalFullScreenFrame {
-    return [self traditionalFullScreenFrameForScreen:self.window.screen];
-}
-
-- (BOOL)fullScreenWindowFrameShouldBeShiftedDownBelowMenuBarOnScreen:(NSScreen *)screen {
-    const BOOL wantToHideMenuBar = [iTermPreferences boolForKey:kPreferenceKeyHideMenuBarInFullscreen];
-    const BOOL canHideMenuBar = ![[iTermApplication sharedApplication] isUIElement];
-    const BOOL menuBarIsHidden = ![[iTermMenuBarObserver sharedInstance] menuBarVisibleOnScreen:screen];
-    const BOOL canOverlapMenuBar = [self.window isKindOfClass:[iTermPanel class]];
-
-    DLog(@"Checking if the fullscreen window frame should be shifted down below the menu bar. "
-         @"wantToHideMenuBar=%@, canHideMenuBar=%@, menuIsHidden=%@, canOverlapMenuBar=%@",
-         @(wantToHideMenuBar), @(canHideMenuBar), @(menuBarIsHidden), @(canOverlapMenuBar));
-    if (wantToHideMenuBar && canHideMenuBar) {
-        DLog(@"Nope");
-        return NO;
-    }
-    if (menuBarIsHidden) {
-        DLog(@"Nope");
-        return NO;
-    }
-    if (canOverlapMenuBar && wantToHideMenuBar) {
-        DLog(@"Nope");
-        return NO;
-    }
-
-    DLog(@"Yep");
-    return YES;
-}
-
-- (NSRect)traditionalFullScreenFrameForScreen:(NSScreen *)screen {
-    NSRect screenFrame = [screen frame];
-    NSRect frameMinusMenuBar = screenFrame;
-    frameMinusMenuBar.size.height -= [[[NSApplication sharedApplication] mainMenu] menuBarHeight];
-    BOOL menuBarIsVisible = NO;
-
-    if ([self fullScreenWindowFrameShouldBeShiftedDownBelowMenuBarOnScreen:screen]) {
-        menuBarIsVisible = YES;
-    }
-    if (menuBarIsVisible) {
-        PtyLog(@"Subtract menu bar from frame");
-    } else {
-        PtyLog(@"Do not subtract menu bar from frame");
-    }
-    return menuBarIsVisible ? frameMinusMenuBar : screenFrame;
-}
-
-// Like toggleTraditionalFullScreenMode but does nothing if it's already
-// fullscreen. Save to call from a timer.
-- (void)enterTraditionalFullScreenMode
-{
-    if (!togglingFullScreen_ &&
-        !togglingLionFullScreen_ &&
-        ![self anyFullScreen]) {
-        [self toggleTraditionalFullScreenMode];
-    }
-}
-
-- (BOOL)togglingLionFullScreen {
-    return togglingLionFullScreen_;
-}
-
-- (IBAction)toggleFullScreenMode:(id)sender {
-    [self toggleFullScreenMode:sender completion:nil];
-}
-
-- (BOOL)toggleFullScreenShouldUseLionFullScreen {
-    if ([self lionFullScreen]) {
-        return YES;
-    }
-
-    if (self.windowType == WINDOW_TYPE_TRADITIONAL_FULL_SCREEN ||
-        self.windowType == WINDOW_TYPE_ACCESSORY) {
-        return NO;
-    }
-    if (self.isHotKeyWindow) {
-        // NSWindowCollectionBehaviorFullScreenAuxiliary window can't enter Lion fullscreen mode properly
-        return NO;
-    }
-    if (![iTermPreferences boolForKey:kPreferenceKeyLionStyleFullscreen]) {
-        return NO;
-    }
-    return YES;
-}
-
-- (void)toggleFullScreenMode:(id)sender
-                  completion:(void (^)(BOOL))completion {
-    DLog(@"toggleFullScreenMode:. window type is %d", self.windowType);
-    if (self.toggleFullScreenShouldUseLionFullScreen) {
-        [[self ptyWindow] toggleFullScreen:self];
-        if (completion) {
-            [_toggleFullScreenModeCompletionBlocks addObject:[[completion copy] autorelease]];
-        }
-        return;
-    }
-
-    [self toggleTraditionalFullScreenMode];
-    if (completion) {
-        completion(YES);
-    }
-}
-
-- (void)delayedEnterFullscreen
-{
-    if (self.windowType == WINDOW_TYPE_LION_FULL_SCREEN &&
-        [iTermPreferences boolForKey:kPreferenceKeyLionStyleFullscreen]) {
-        if (![[[iTermController sharedInstance] keyTerminalWindow] lionFullScreen]) {
-            // call enter(Traditional)FullScreenMode instead of toggle... because
-            // when doing a lion resume, the window may be toggled immediately
-            // after creation by the window restorer.
-            _haveDelayedEnterFullScreenMode = YES;
-            [self performSelector:@selector(enterFullScreenMode)
-                       withObject:nil
-                       afterDelay:0];
-        }
-    } else if (!_fullScreen) {
-        [self performSelector:@selector(enterTraditionalFullScreenMode)
-                   withObject:nil
-                   afterDelay:0];
-    }
-}
-
 // Returns YES if a change was made.
 - (BOOL)updateSessionScrollbars {
     BOOL changed = NO;
@@ -4822,17 +4444,6 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 
     return changed;
-}
-
-- (NSUInteger)styleMask {
-    NSUInteger styleMask = [PseudoTerminal styleMaskForWindowType:self.windowType
-                                                  savedWindowType:self.savedWindowType
-                                                 hotkeyWindowType:_hotkeyWindowType];
-    if (self.lionFullScreen || togglingLionFullScreen_) {
-        styleMask |= NSWindowStyleMaskFullScreen;
-    }
-    DLog(@"Returning style mask of %@", @(styleMask));
-    return styleMask;
 }
 
 // This is a hack to fix the problem of exiting a fullscreen window that as never not-fullscreen.
@@ -4851,236 +4462,6 @@ ITERM_WEAKLY_REFERENCEABLE
                           [session.profile[KEY_ROWS] intValue]));
     return NSMakeSize([iTermAdvancedSettingsModel terminalMargin] * 2 + sessionSize.width * cellSize.width + decorationSize.width,
                       [iTermAdvancedSettingsModel terminalVMargin] * 2 + sessionSize.height * cellSize.height + decorationSize.height);
-}
-
-+ (BOOL)windowType:(iTermWindowType)windowType shouldBeCompactWithSavedWindowType:(iTermWindowType)savedWindowType {
-    switch (iTermThemedWindowType(windowType)) {
-        case WINDOW_TYPE_TOP:
-        case WINDOW_TYPE_BOTTOM:
-        case WINDOW_TYPE_LEFT:
-        case WINDOW_TYPE_RIGHT:
-        case WINDOW_TYPE_TOP_PARTIAL:
-        case WINDOW_TYPE_BOTTOM_PARTIAL:
-        case WINDOW_TYPE_LEFT_PARTIAL:
-        case WINDOW_TYPE_RIGHT_PARTIAL:
-        case WINDOW_TYPE_NO_TITLE_BAR:
-            if (@available(macOS 10.14, *)) {
-                return YES;
-            }
-            return NO;
-
-        case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
-        case WINDOW_TYPE_MAXIMIZED:
-        case WINDOW_TYPE_NORMAL:
-        case WINDOW_TYPE_ACCESSORY:
-            return NO;
-            break;
-
-        case WINDOW_TYPE_COMPACT:
-        case WINDOW_TYPE_COMPACT_MAXIMIZED:
-            return YES;
-            break;
-
-        case WINDOW_TYPE_LION_FULL_SCREEN:
-            return iTermWindowTypeIsCompact(iTermThemedWindowType(savedWindowType));
-    }
-    return NO;
-}
-
-- (NSWindow *)setWindowWithWindowType:(iTermWindowType)windowType
-                      savedWindowType:(iTermWindowType)savedWindowType
-               windowTypeForStyleMask:(iTermWindowType)windowTypeForStyleMask
-                     hotkeyWindowType:(iTermHotkeyWindowType)hotkeyWindowType
-                         initialFrame:(NSRect)initialFrame {
-    // For reasons that defy comprehension, you have to do this when switching to full-size content
-    // view style mask. Otherwise, you are left with an unusable title bar.
-    if (self.window.styleMask & NSWindowStyleMaskTitled) {
-        DLog(@"Remove title bar accessory view controllers to appease appkit");
-        if (@available(macOS 10.14, *)) {
-            [self returnTabBarToContentView];
-        }
-        while (self.window.titlebarAccessoryViewControllers.count > 0) {
-            [self.window removeTitlebarAccessoryViewControllerAtIndex:0];
-        }
-    }
-
-    const BOOL panel = (hotkeyWindowType == iTermHotkeyWindowTypeFloatingPanel) || (windowType == WINDOW_TYPE_ACCESSORY);
-    const BOOL compact = [PseudoTerminal windowType:windowType shouldBeCompactWithSavedWindowType:savedWindowType];
-    Class windowClass;
-    if (panel) {
-        if (compact) {
-            windowClass = [iTermCompactPanel class];
-        } else {
-            windowClass = [iTermPanel class];
-        }
-    } else {
-        if (compact) {
-            windowClass = [iTermCompactWindow class];
-        } else {
-            windowClass = [iTermWindow class];
-        }
-    }
-    NSWindowStyleMask styleMask = [PseudoTerminal styleMaskForWindowType:windowTypeForStyleMask
-                                                         savedWindowType:savedWindowType
-                                                        hotkeyWindowType:hotkeyWindowType];
-    const BOOL defer = (hotkeyWindowType != iTermHotkeyWindowTypeNone);
-    NSWindow<PTYWindow> *myWindow = [[[windowClass alloc] initWithContentRect:initialFrame
-                                                                    styleMask:styleMask
-                                                                      backing:NSBackingStoreBuffered
-                                                                        defer:defer] autorelease];
-    myWindow.collectionBehavior = [self desiredWindowCollectionBehavior];
-    if (windowType != WINDOW_TYPE_LION_FULL_SCREEN) {
-        // For some reason, you don't always get the frame you requested. I saw
-        // this on OS 10.10 when creating normal windows on a 2-screen display. The
-        // frames were within the visible frame of screen #2.
-        // However, setting the frame at this point while restoring a Lion fullscreen window causes
-        // it to appear with a title bar. TODO: Test if lion fullscreen windows restore on the right
-        // monitor.
-        [myWindow setFrame:initialFrame display:NO];
-    }
-    if (windowType == WINDOW_TYPE_MAXIMIZED || windowType == WINDOW_TYPE_COMPACT_MAXIMIZED) {
-        myWindow.movable = NO;
-    }
-    [self updateForTransparency:(NSWindow<PTYWindow> *)myWindow];
-    [self setWindow:myWindow];
-    if (@available(macOS 10.14, *)) {
-        // This doesn't work on 10.14. See it_setNeedsInvalidateShadow for a saner approach.
-    } else {
-        // This had been in iTerm2 for years and was removed, but I can't tell why. Issue 3833 reveals
-        // that it is still needed, at least on OS 10.9.
-        if ([myWindow respondsToSelector:@selector(_setContentHasShadow:)]) {
-            [myWindow _setContentHasShadow:NO];
-        }
-    }
-
-    if (@available(macOS 10.14, *)) {
-        if (@available(macOS 10.16, *)) {
-            // TODO
-        } else {
-            NSView *view = [myWindow it_titlebarViewOfClassWithName:@"_NSTitlebarDecorationView"];
-            [view setHidden:YES];
-        }
-    }
-    
-    [self updateVariables];
-    return myWindow;
-}
-
-- (BOOL)replaceWindowWithWindowOfType:(iTermWindowType)newWindowType {
-    if (_willClose) {
-        return NO;
-    }
-    iTermWindowType effectiveWindowType;
-    if (_windowType == WINDOW_TYPE_LION_FULL_SCREEN) {
-        effectiveWindowType = _savedWindowType;
-    } else {
-        effectiveWindowType = _windowType;
-    }
-    if (newWindowType == effectiveWindowType) {
-        return NO;
-    }
-    NSWindow *oldWindow = [[self.window retain] autorelease];
-    oldWindow.delegate = nil;
-    [[_contentView retain] autorelease];
-    [self setWindowWithWindowType:newWindowType
-                  savedWindowType:self.savedWindowType
-           windowTypeForStyleMask:newWindowType
-                 hotkeyWindowType:_hotkeyWindowType
-                     initialFrame:[self traditionalFullScreenFrameForScreen:self.window.screen]];
-    [self.window.ptyWindow setLayoutDone];
-    [[_contentView retain] autorelease];
-    [_contentView removeFromSuperview];
-    self.window.contentView = _contentView;
-    self.window.opaque = NO;
-    self.window.delegate = self;
-    self.isReplacingWindow = YES;
-    [oldWindow close];
-    self.isReplacingWindow = NO;
-    return YES;
-}
-
-- (void)willEnterTraditionalFullScreenMode {
-    DLog(@"willEnterTraditionalFullScreenMode");
-    oldFrame_ = self.window.frame;
-    oldFrameSizeIsBogus_ = NO;
-    DLog(@"Set saved window type to %@", @(self.windowType));
-    _savedWindowType = self.windowType;
-    if (@available(macOS 10.14, *)) {
-        if (_contentView.tabBarControlOnLoan) {
-            DLog(@"returnTabBarToContentView");
-            [self returnTabBarToContentView];
-        }
-        if ([_shortcutAccessoryViewController respondsToSelector:@selector(removeFromParentViewController)]) {
-            [_shortcutAccessoryViewController removeFromParentViewController];
-        }
-    }
-    [self.window setOpaque:NO];
-    self.window.alphaValue = 0;
-    if (self.ptyWindow.isCompact) {
-        [self replaceWindowWithWindowOfType:WINDOW_TYPE_TRADITIONAL_FULL_SCREEN];
-        self.windowType = WINDOW_TYPE_TRADITIONAL_FULL_SCREEN;
-    } else {
-        self.windowType = WINDOW_TYPE_TRADITIONAL_FULL_SCREEN;
-        [self safelySetStyleMask:self.styleMask];
-        [self.window setFrame:[self traditionalFullScreenFrameForScreen:self.window.screen]
-                      display:YES];
-    }
-    self.window.alphaValue = 1;
-}
-
-- (void)safelySetStyleMask:(NSWindowStyleMask)styleMask {
-    assert(!_settingStyleMask);
-    _settingStyleMask = YES;
-    self.window.styleMask = styleMask;
-    _settingStyleMask = NO;
-}
-
-- (void)willExitTraditionalFullScreenMode {
-    BOOL shouldForce = NO;
-    if ([PseudoTerminal windowType:self.savedWindowType shouldBeCompactWithSavedWindowType:self.savedWindowType]) {
-        shouldForce = [self replaceWindowWithWindowOfType:self.savedWindowType];
-        self.windowType = self.savedWindowType;
-    } else {
-        // NOTE: Setting the style mask causes the presentation options to be
-        // changed (menu/dock hidden) because refreshTerminal gets called.
-        iTermWindowType newType = self.savedWindowType;
-        if (newType == WINDOW_TYPE_TRADITIONAL_FULL_SCREEN) {
-            // Hm, how'd that happen?
-            newType = WINDOW_TYPE_NORMAL;
-        }
-        self.windowType = newType;
-        [self safelySetStyleMask:[self styleMask]];
-    }
-    [[iTermPresentationController sharedInstance] update];
-
-    // This will be close but probably not quite right because tweaking to the decoration size
-    // happens later.
-    if (oldFrameSizeIsBogus_) {
-        oldFrame_.size = [self preferredWindowFrameToPerfectlyFitCurrentSessionInInitialConfiguration];
-    }
-    [self.window setFrame:oldFrame_ display:YES];
-    switch ((iTermPreferencesTabStyle)[iTermPreferences intForKey:kPreferenceKeyTabStyle]) {
-        case TAB_STYLE_MINIMAL:
-        case TAB_STYLE_COMPACT:
-            if (shouldForce) {
-                [self forceFrame:oldFrame_];
-            }
-            break;
-
-        case TAB_STYLE_AUTOMATIC:
-        case TAB_STYLE_LIGHT:
-        case TAB_STYLE_LIGHT_HIGH_CONTRAST:
-        case TAB_STYLE_DARK:
-        case TAB_STYLE_DARK_HIGH_CONTRAST:
-            break;
-    }
-
-    [self addShortcutAccessorViewControllerToTitleBarIfNeeded];
-    if (@available(macOS 10.14, *)) {
-        [self updateTabBarControlIsTitlebarAccessory];
-    }
-
-    PtyLog(@"toggleFullScreenMode - allocate new terminal");
 }
 
 - (void)addShortcutAccessorViewControllerToTitleBarIfNeeded {
@@ -5134,140 +4515,29 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
-- (void)updateTransparencyBeforeTogglingTraditionalFullScreenMode {
-    if (!_fullScreen &&
-        [iTermPreferences boolForKey:kPreferenceKeyDisableFullscreenTransparencyByDefault]) {
-        oldUseTransparency_ = useTransparency_;
-        useTransparency_ = NO;
-        restoreUseTransparency_ = YES;
-    } else {
-        if (_fullScreen && restoreUseTransparency_) {
-            useTransparency_ = oldUseTransparency_;
-        } else {
-            restoreUseTransparency_ = NO;
-        }
-    }
-}
-
 - (void)toggleTraditionalFullScreenMode {
-    [SessionView windowDidResize];
-    PtyLog(@"toggleFullScreenMode called");
-    if (self.swipeIdentifier) {
-        [[NSNotificationCenter defaultCenter] postNotificationName:iTermSwipeHandlerCancelSwipe
-                                                            object:self.swipeIdentifier];
-    }
-    CGFloat savedToolbeltWidth = _contentView.toolbeltWidth;
-    if (!_fullScreen) {
-        [self willEnterTraditionalFullScreenMode];
-    } else {
-        [self willExitTraditionalFullScreenMode];
-    }
-    [self updateForTransparency:self.ptyWindow];
-
-    [self updateTransparencyBeforeTogglingTraditionalFullScreenMode];
-    _fullScreen = !_fullScreen;
-    [self didToggleTraditionalFullScreenModeWithSavedToolbeltWidth:savedToolbeltWidth];
-    iTermApplicationDelegate *itad = [iTermApplication.sharedApplication delegate];
-    [itad didToggleTraditionalFullScreenMode];
+    [self toggleTraditionalFullScreenModeImpl];
 }
 
-- (void)didExitTraditionalFullScreenMode {
-    NSSize contentSize = self.window.frame.size;
-    NSSize decorationSize = self.windowDecorationSize;
-    if (_contentView.shouldShowToolbelt) {
-        decorationSize.width += _contentView.toolbelt.frame.size.width;
-    }
-    contentSize.width -= decorationSize.width;
-    contentSize.height -= decorationSize.height;
-
-    [self fitWindowToTabSize:contentSize];
+- (BOOL)fullScreen {
+    return [self fullScreenImpl];
 }
 
-- (void)didToggleTraditionalFullScreenModeWithSavedToolbeltWidth:(CGFloat)savedToolbeltWidth {
-    [self didChangeAnyFullScreen];
-    [_contentView.tabBarControl updateFlashing];
-    togglingFullScreen_ = YES;
-    _contentView.toolbeltWidth = savedToolbeltWidth;
-    [_contentView constrainToolbeltWidth];
-    [_contentView updateToolbeltForWindow:self.window];
-    [self updateUseTransparency];
+- (iTermWindowType)windowType {
+    return [self windowTypeImpl];
+}
 
-    if (_fullScreen) {
-        PtyLog(@"toggleFullScreenMode - call adjustFullScreenWindowForBottomBarChange");
-        [self fitTabsToWindow];
-        [[iTermPresentationController sharedInstance] update];
-    }
+- (IBAction)toggleFullScreenMode:(id)sender {
+    [self toggleFullScreenModeImpl:sender];
+}
 
-    // The toolbelt may try to become the first responder.
-    [[self window] makeFirstResponder:[[self currentSession] textview]];
+- (void)toggleFullScreenMode:(id)sender
+                  completion:(void (^)(BOOL))completion {
+    [self toggleFullScreenModeImpl:sender completion:completion];
+}
 
-    if (!_fullScreen) {
-        // Find the largest possible session size for the existing window frame
-        // and fit the window to an imaginary session of that size.
-        [self didExitTraditionalFullScreenMode];
-    }
-    togglingFullScreen_ = NO;
-    PtyLog(@"toggleFullScreenMode - calling updateSessionScrollbars");
-    [self updateSessionScrollbars];
-    PtyLog(@"toggleFullScreenMode - calling fitTabsToWindow");
-    [self repositionWidgets];
-
-    if (!_fullScreen && oldFrameSizeIsBogus_) {
-        // The window frame can be established exactly, now.
-        if (oldFrameSizeIsBogus_) {
-            oldFrame_.size = [self preferredWindowFrameToPerfectlyFitCurrentSessionInInitialConfiguration];
-        }
-        [self.window setFrame:oldFrame_ display:YES];
-    }
-
-    [self fitTabsToWindow];
-    PtyLog(@"toggleFullScreenMode - calling fitWindowToTabs");
-    [self fitWindowToTabsExcludingTmuxTabs:YES];
-    for (TmuxController *c in [self uniqueTmuxControllers]) {
-        [c windowDidResize:self];
-    }
-
-    PtyLog(@"toggleFullScreenMode - calling setWindowTitle");
-    [self setWindowTitle];
-    PtyLog(@"toggleFullScreenMode - calling window update");
-    [[self window] update];
-    for (PTYTab *aTab in [self tabs]) {
-        [aTab notifyWindowChanged];
-    }
-    if (_fullScreen) {
-        [self notifyTmuxOfWindowResize];
-    }
-    PtyLog(@"toggleFullScreenMode returning");
-    togglingFullScreen_ = false;
-
-    switch ((iTermPreferencesTabStyle)[iTermPreferences intForKey:kPreferenceKeyTabStyle]) {
-        case TAB_STYLE_MINIMAL:
-        case TAB_STYLE_COMPACT:
-            [self forceFrame:self.window.frame];
-            break;
-
-        case TAB_STYLE_AUTOMATIC:
-        case TAB_STYLE_LIGHT:
-        case TAB_STYLE_LIGHT_HIGH_CONTRAST:
-        case TAB_STYLE_DARK:
-        case TAB_STYLE_DARK_HIGH_CONTRAST:
-            break;
-    }
-
-    [self.window performSelector:@selector(makeKeyAndOrderFront:) withObject:nil afterDelay:0];
-    [self.window makeFirstResponder:[[self currentSession] textview]];
-    if (iTermWindowTypeIsCompact(self.savedWindowType) ||
-        iTermWindowTypeIsCompact(self.windowType)) {
-        [self didChangeCompactness];
-    }
-    [self refreshTools];
-    [self updateTabColors];
-    [self saveTmuxWindowOrigins];
-    [self didChangeCompactness];
-    [self updateTouchBarIfNeeded:NO];
-    [self updateUseMetalInAllTabs];
-    [self updateForTransparency:self.ptyWindow];
-    [self updateWindowMenu];
+- (void)delayedEnterFullscreen {
+    [self delayedEnterFullscreenImpl];
 }
 
 - (void)updateWindowMenu {
@@ -5357,16 +4627,6 @@ ITERM_WEAKLY_REFERENCEABLE
     if (@available(macOS 10.16, *)) {} else {
         window.hasShadow = !haveTransparency;
     }
-}
-
-- (void)didChangeCompactness {
-    [self updateForTransparency:(NSWindow<PTYWindow> *)self.window];
-    [_contentView didChangeCompactness];
-}
-
-- (BOOL)fullScreen
-{
-    return _fullScreen;
 }
 
 - (BOOL)tabBarShouldBeVisibleEvenWhenOnLoan {
@@ -5551,28 +4811,6 @@ ITERM_WEAKLY_REFERENCEABLE
     [self updateUseMetalInAllTabs];
 }
 
-- (void)didChangeAnyFullScreen {
-    for (PTYSession *session in self.allSessions) {
-        [session updateStatusBarStyle];
-    }
-    if (@available(macOS 10.14, *)) {
-        if (!togglingLionFullScreen_ && !exitingLionFullscreen_) {
-            if (lionFullScreen_) {
-                [self safelySetStyleMask:self.styleMask | NSWindowStyleMaskFullScreen];
-            } else {
-                NSRect frameBefore = self.window.frame;
-                [self safelySetStyleMask:[self styleMask]];
-                if (!_fullScreen) {
-                    // Changing the style mask can cause the frame to change.
-                    [self.window setFrame:frameBefore display:YES];
-                }
-            }
-            [self repositionWidgets];
-        }
-    }
-    [_contentView invalidateAutomaticTabBarBackingHiding];
-}
-
 - (NSTitlebarAccessoryViewController *)titleBarAccessoryTabBarViewController NS_AVAILABLE_MAC(10_14) {
     if (!_titleBarAccessoryTabBarViewController) {
         _titleBarAccessoryTabBarViewController = [[iTermTabBarAccessoryViewController alloc] initWithView:[_contentView borrowTabBarControl]];
@@ -5694,7 +4932,7 @@ ITERM_WEAKLY_REFERENCEABLE
     return YES;
 }
 
-- (void)updateTabBarControlIsTitlebarAccessory NS_AVAILABLE_MAC(10_14) {
+- (void)updateTabBarControlIsTitlebarAccessory {
     const NSInteger index = [self.window.it_titlebarAccessoryViewControllers indexOfObject:_titleBarAccessoryTabBarViewController];
     if ([self tabBarShouldBeAccessory]) {
         DLog(@"tab bar should be accessory");
@@ -5724,7 +4962,7 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
-- (void)returnTabBarToContentView NS_AVAILABLE_MAC(10_14) {
+- (void)returnTabBarToContentView {
     DLog(@"returnTabBarToContentView %@", self);
     const NSInteger index = [self.window.it_titlebarAccessoryViewControllers indexOfObject:_titleBarAccessoryTabBarViewController];
     if (index == NSNotFound) {
@@ -5741,96 +4979,15 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)windowWillEnterFullScreen:(NSNotification *)notification {
-    DLog(@"Window will enter lion fullscreen");
-    if (self.swipeIdentifier) {
-        [[NSNotificationCenter defaultCenter] postNotificationName:iTermSwipeHandlerCancelSwipe
-                                                            object:self.swipeIdentifier];
-    }
-    togglingLionFullScreen_ = YES;
-    [self didChangeAnyFullScreen];
-    [self updateUseMetalInAllTabs];
-    [self updateForTransparency:self.ptyWindow];
-    [self repositionWidgets];
-    [_contentView didChangeCompactness];
-    if (@available(macOS 10.14, *)) {
-        [self updateTabBarControlIsTitlebarAccessory];
-    }
-    if (self.windowType != WINDOW_TYPE_LION_FULL_SCREEN) {
-        DLog(@"Set saved window type to %@", @(self.windowType));
-        _savedWindowType = self.windowType;
-        _windowType = WINDOW_TYPE_LION_FULL_SCREEN;
-    }
+    [self windowWillEnterFullScreenImpl:notification];
 }
 
-- (void)windowDidEnterFullScreen:(NSNotification *)notification
-{
-    DLog(@"Window did enter lion fullscreen");
-
-    zooming_ = NO;
-    togglingLionFullScreen_ = NO;
-    _fullScreenRetryCount = 0;
-    lionFullScreen_ = YES;
-    if (@available(macOS 10.14, *)) {
-        [self updateTabBarControlIsTitlebarAccessory];
-    }
-    [self didChangeAnyFullScreen];
-    [_contentView.tabBarControl setFlashing:YES];
-    [_contentView updateToolbeltForWindow:self.window];
-    [self repositionWidgets];
-    // Set scrollbars appropriately
-    [self updateSessionScrollbars];
-    [self fitTabsToWindow];
-    [self invalidateRestorableState];
-    [self notifyTmuxOfWindowResize];
-    for (PTYTab *aTab in [self tabs]) {
-        [aTab notifyWindowChanged];
-    }
-    [self saveTmuxWindowOrigins];
-    [self.window makeFirstResponder:self.currentSession.textview];
-    if (_didEnterLionFullscreen) {
-        _didEnterLionFullscreen(self);
-        [_didEnterLionFullscreen release];
-        _didEnterLionFullscreen = nil;
-    }
-    [self updateTouchBarIfNeeded:NO];
-
-    [self updateUseMetalInAllTabs];
-    [self updateForTransparency:self.ptyWindow];
-    [self didFinishFullScreenTransitionSuccessfully:YES];
-    [self updateVariables];
-}
-
-- (void)didFinishFullScreenTransitionSuccessfully:(BOOL)success {
-    DLog(@"didFinishFullScreenTransitionSuccessfully:%@", @(success));
-    NSArray *blocks = [[_toggleFullScreenModeCompletionBlocks copy] autorelease];
-    [_toggleFullScreenModeCompletionBlocks removeAllObjects];
-    for (void (^block)(BOOL) in blocks) {
-        block(success);
-    }
+- (void)windowDidEnterFullScreen:(NSNotification *)notification {
+    [self windowDidEnterFullScreenImpl:notification];
 }
 
 - (void)windowDidFailToEnterFullScreen:(NSWindow *)window {
-    DLog(@"windowDidFailToEnterFullScreen %@", self);
-    [self didFinishFullScreenTransitionSuccessfully:NO];
-    if (!togglingLionFullScreen_) {
-        DLog(@"It's ok though because togglingLionFullScreen is off");
-        return;
-    }
-    if (_fullScreenRetryCount < 3) {
-        _fullScreenRetryCount++;
-        DLog(@"Increment retry count to %@ and schedule an attempt after a delay %@", @(_fullScreenRetryCount), self);
-        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.25 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-            DLog(@"About to retry entering full screen with count %@: %@", @(_fullScreenRetryCount), self);
-            [self.window toggleFullScreen:self];
-        });
-    } else {
-        DLog(@"Giving up after three retries: %@", self);
-        togglingLionFullScreen_ = NO;
-        _fullScreenRetryCount = 0;
-        [_contentView didChangeCompactness];
-        [_contentView layoutSubviews];
-    }
-    [self updateVariables];
+    [self windowDidFailToEnterFullScreenImpl:window];
 }
 
 - (void)hideStandardWindowButtonsAndTitlebarAccessories {
@@ -5846,84 +5003,11 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)windowWillExitFullScreen:(NSNotification *)notification {
-    DLog(@"Window will exit lion fullscreen");
-    if (self.swipeIdentifier) {
-        [[NSNotificationCenter defaultCenter] postNotificationName:iTermSwipeHandlerCancelSwipe
-                                                            object:self.swipeIdentifier];
-    }
-    exitingLionFullscreen_ = YES;
-
-    if (@available(macOS 10.14, *)) {
-        [self updateTabBarControlIsTitlebarAccessory];
-    } else {
-        [self safelySetStyleMask:[PseudoTerminal styleMaskForWindowType:self.savedWindowType
-                                                        savedWindowType:self.savedWindowType
-                                                       hotkeyWindowType:_hotkeyWindowType]];
-    }
-    [self updateForTransparency:(NSWindow<PTYWindow> *)self.window];
-    [_contentView.tabBarControl updateFlashing];
-    [self fitTabsToWindow];
-    if (@available(macOS 10.14, *)) {} else {
-        [self repositionWidgets];
-    }
-    self.window.hasShadow = YES;
-    [self updateUseMetalInAllTabs];
-    [self updateForTransparency:self.ptyWindow];
-    self.windowType = WINDOW_TYPE_LION_FULL_SCREEN;
-    if (@available(macOS 10.14, *)) {
-        if (![self rootTerminalViewShouldRevealStandardWindowButtons]) {
-            [self hideStandardWindowButtonsAndTitlebarAccessories];
-        }
-        [_contentView didChangeCompactness];
-        [self repositionWidgets];
-    }
+    [self windowWillExitFullScreenImpl:notification];
 }
 
 - (void)windowDidExitFullScreen:(NSNotification *)notification {
-    DLog(@"Window did exit lion fullscreen");
-    exitingLionFullscreen_ = NO;
-    zooming_ = NO;
-    lionFullScreen_ = NO;
-
-    DLog(@"Window did exit fullscreen. Set window type to %d", self.savedWindowType);
-    if (@available(macOS 10.14, *)) {
-        [self safelySetStyleMask:[PseudoTerminal styleMaskForWindowType:self.savedWindowType
-                                                        savedWindowType:self.savedWindowType
-                                                       hotkeyWindowType:_hotkeyWindowType]];
-    }
-    const iTermWindowType desiredWindowType = self.savedWindowType;
-    [self updateWindowForWindowType:desiredWindowType];
-    self.windowType = desiredWindowType;
-    [self didChangeAnyFullScreen];
-
-    [_contentView.tabBarControl updateFlashing];
-    // Set scrollbars appropriately
-    [self updateSessionScrollbars];
-    [self fitTabsToWindow];
-    [self repositionWidgets];
-    [self invalidateRestorableState];
-    [_contentView updateToolbeltForWindow:self.window];
-
-    for (PTYTab *aTab in [self tabs]) {
-        [aTab notifyWindowChanged];
-    }
-    [self.currentTab recheckBlur];
-    [self notifyTmuxOfWindowResize];
-    [self saveTmuxWindowOrigins];
-    [self.window makeFirstResponder:self.currentSession.textview];
-    [self updateTouchBarIfNeeded:NO];
-    [self updateUseMetalInAllTabs];
-    [_contentView didChangeCompactness];
-    [_contentView layoutSubviews];
-    [self updateForTransparency:self.ptyWindow];
-    [self addShortcutAccessorViewControllerToTitleBarIfNeeded];
-    [self didFinishFullScreenTransitionSuccessfully:YES];
-    [self updateVariables];
-
-    // Windows forget their collection behavior when exiting full screen when the app is a LSUIElement. Issue 8048.
-    if ([[iTermApplication sharedApplication] isUIElement]) {
-        self.window.collectionBehavior = self.desiredWindowCollectionBehavior;
-    }
+    [self windowDidExitFullScreenImpl:notification];
 }
 
 - (void)windowWillBeginSheet:(NSNotification *)notification {
@@ -6292,10 +5376,8 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)updateUseMetalInAllTabs {
-    if (@available(macOS 10.11, *)) {
-        for (PTYTab *aTab in self.tabs) {
-            [aTab updateUseMetal];
-        }
+    for (PTYTab *aTab in self.tabs) {
+        [aTab updateUseMetal];
     }
 }
 
@@ -9188,49 +8270,6 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     }
 }
 
-- (void)updateWindowType {
-    if (self.windowType == _windowType) {
-        return;
-    }
-    // -updateWindowForWindowType: assigns a new contentView which causes
-    // -viewDidChangeEffectiveAppearance to be called, which eventually calls back into this method.
-    // Then cocoa 💩s when you try to change the content view from within setContentView:.
-    if (_updatingWindowType) {
-        return;
-    }
-    assert(_windowType == WINDOW_TYPE_NORMAL ||
-           _windowType == WINDOW_TYPE_COMPACT ||
-           _windowType == WINDOW_TYPE_MAXIMIZED ||
-           _windowType == WINDOW_TYPE_COMPACT_MAXIMIZED);
-    assert(self.windowType == WINDOW_TYPE_NORMAL ||
-           self.windowType == WINDOW_TYPE_COMPACT ||
-           self.windowType == WINDOW_TYPE_MAXIMIZED ||
-           self.windowType == WINDOW_TYPE_COMPACT_MAXIMIZED);
-
-    _updatingWindowType = YES;
-    [self updateWindowForWindowType:self.windowType];
-    _updatingWindowType = NO;
-
-    _windowType = self.windowType;
-}
-
-- (void)updateWindowForWindowType:(iTermWindowType)windowType {
-    if (_willClose) {
-        return;
-    }
-    NSRect frame = self.window.frame;
-    NSString *title = [[self.window.title copy] autorelease];
-    const BOOL changed = [self replaceWindowWithWindowOfType:windowType];
-    [self.window setFrame:frame display:YES];
-    [self.window orderFront:nil];
-    [self repositionWidgets];
-    self.window.title = title;
-
-    if (changed) {
-        [self forceFrame:frame];
-    }
-}
-
 - (void)refreshTerminal:(NSNotification *)aNotification {
     PtyLog(@"refreshTerminal - calling fitWindowToTabs");
     if (_settingStyleMask) {
@@ -9440,6 +8479,10 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 }
 
 - (BOOL)rootTerminalViewShouldRevealStandardWindowButtons {
+    return [self shouldRevealStandardWindowButtons];
+}
+
+- (BOOL)shouldRevealStandardWindowButtons {
     if (self.enteringLionFullscreen) {
         return YES;
     }
@@ -10528,8 +9571,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 
 // Push size changes to all sessions so they are all as large as possible while
 // still fitting in the window.
-- (void)fitTabsToWindow
-{
+- (void)fitTabsToWindow {
     PtyLog(@"fitTabsToWindow begins");
     for (int i = 0; i < [_contentView.tabView numberOfTabViewItems]; ++i) {
         [self fitTabToWindow:[[_contentView.tabView tabViewItemAtIndex:i] identifier]];

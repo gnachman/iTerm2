@@ -876,6 +876,7 @@ backgroundColor:(NSColor *)backgroundColor;
 - (BOOL)copyModeConsumesEvent:(NSEvent *)event;
 - (Profile *)profileForSplit;
 - (void)compose;
+- (void)didChangeScreen;
 
 #pragma mark - API
 
