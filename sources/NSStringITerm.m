@@ -2255,12 +2255,48 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
     return [self substringWithRange:NSMakeRange(0, self.length - count)];
 }
 
+- (NSString *)stringByKeepingLastCharacters:(NSInteger)count {
+    if (count >= self.length) {
+        return self;
+    }
+    if (count <= 0) {
+        return @"";
+    }
+    return [self substringFromIndex:self.length - count];
+}
+
 - (NSString *)stringByAppendingVariablePathComponent:(NSString *)component {
     if (self.length == 0) {
         return component;
     } else {
         return [self stringByAppendingFormat:@".%@", component];
     }
+}
+
+- (NSString *)stringByTrimmingOrphanedSurrogates {
+    if (self.length == 0) {
+        return self;
+    }
+    NSInteger i;
+    for (i = 0; i < self.length; i++) {
+        const unichar firstUTF16 = [self characterAtIndex:i];
+        if (!IsHighSurrogate(firstUTF16)) {
+            break;
+        }
+    }
+    if (i == self.length) {
+        return @"";
+    }
+    const NSInteger startIndex = i;
+    for (i = self.length - 1; i > startIndex; i--) {
+        const unichar utf16 = [self characterAtIndex:i];
+        if (!IsLowSurrogate(utf16)) {
+            break;
+        }
+    }
+    const NSInteger endIndex = i;
+    assert(endIndex >= startIndex);
+    return [self substringWithRange:NSMakeRange(startIndex, endIndex - startIndex + 1)];
 }
 
 - (NSString *)stringByAppendingPathComponents:(NSArray<NSString *> *)pathComponents {

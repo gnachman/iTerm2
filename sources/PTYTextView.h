@@ -597,6 +597,9 @@ scrollToFirstResult:(BOOL)scrollToFirstResult;
                            by:(PTYTextViewSelectionExtensionUnit)unit
                   cursorCoord:(VT100GridCoord)cursorCoord;
 
+- (void)selectCoordRange:(VT100GridCoordRange)range;
+- (NSRect)frameForCoord:(VT100GridCoord)coord;
+
 - (iTermLogicalMovementHelper *)logicalMovementHelperForCursorCoordinate:(VT100GridCoord)cursorCoord;
 
 // Undoes -refuseFirstResponderAtCurrentMouseLocation.

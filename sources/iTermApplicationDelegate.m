@@ -46,6 +46,7 @@
 #import "iTermFontPanel.h"
 #import "iTermFullScreenWindowManager.h"
 #import "iTermGlobalScopeController.h"
+#import "iTermGlobalSearchWindowController.h"
 #import "iTermHotKeyController.h"
 #import "iTermHotKeyProfileBindingController.h"
 #import "iTermIntegerNumberFormatter.h"
@@ -228,6 +229,7 @@ static BOOL hasBecomeActive = NO;
     iTermGlobalScopeController *_globalScopeController;
     iTermRestorableStateController *_restorableStateController;
     iTermUntitledWindowStateMachine *_untitledWindowStateMachine;
+    iTermGlobalSearchWindowController *_globalSearchWindowController;
 }
 
 - (instancetype)init {
@@ -1571,6 +1573,13 @@ static BOOL hasBecomeActive = NO;
 }
 
 #pragma mark - Actions
+
+- (IBAction)findGlobally:(id)sender {
+    if (!_globalSearchWindowController) {
+        _globalSearchWindowController = [[iTermGlobalSearchWindowController alloc] init];
+    }
+    [_globalSearchWindowController.window makeKeyAndOrderFront:nil];
+}
 
 - (IBAction)promptToConvertTabsToSpacesWhenPasting:(id)sender {
     [iTermPasteHelper togglePromptToConvertTabsToSpacesWhenPasting];

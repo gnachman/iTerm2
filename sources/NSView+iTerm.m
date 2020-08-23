@@ -41,9 +41,13 @@
 }
 
 - (NSImage *)snapshot {
-    NSBitmapImageRep *rep = [self bitmapImageRepForCachingDisplayInRect:self.bounds];
+    return [self snapshotOfRect:self.bounds];
+}
+
+- (NSImage *)snapshotOfRect:(NSRect)rect {
+    NSBitmapImageRep *rep = [self bitmapImageRepForCachingDisplayInRect:rect];
     [self cacheDisplayInRect:self.bounds toBitmapImageRep:rep];
-    NSImage *image = [[NSImage alloc] initWithSize:self.bounds.size];
+    NSImage *image = [[NSImage alloc] initWithSize:rect.size];
     [image addRepresentation:rep];
 
     return image;

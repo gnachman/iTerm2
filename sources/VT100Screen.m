@@ -1899,7 +1899,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     return [self numberOfLines] - [self height] + currentGrid_.cursorY;
 }
 
-- (BOOL)continueFindAllResults:(NSMutableArray *)results
+- (BOOL)continueFindAllResults:(NSMutableArray<SearchResult *> *)results
                      inContext:(FindContext*)context {
     context.hasWrapped = YES;
     NSDate* start = [NSDate date];

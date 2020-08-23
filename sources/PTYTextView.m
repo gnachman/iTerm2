@@ -4413,17 +4413,28 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
                multipleResults:multipleResults];
 }
 
-- (void)findOnPageSelectRange:(VT100GridCoordRange)range wrapped:(BOOL)wrapped {
+- (void)selectCoordRange:(VT100GridCoordRange)range {
     [_selection clearSelection];
     iTermSubSelection *sub =
         [iTermSubSelection subSelectionWithRange:VT100GridWindowedRangeMake(range, 0, 0)
                                             mode:kiTermSelectionModeCharacter
                                            width:_dataSource.width];
     [_selection addSubSelection:sub];
+    [_delegate textViewDidSelectRangeForFindOnPage:range];
+}
+
+- (NSRect)frameForCoord:(VT100GridCoord)coord {
+    return NSMakeRect(MAX(0, floor(coord.x * _charWidth + [iTermAdvancedSettingsModel terminalMargin])),
+                      MAX(0, coord.y * _lineHeight),
+                      _charWidth,
+                      _lineHeight);
+}
+
+- (void)findOnPageSelectRange:(VT100GridCoordRange)range wrapped:(BOOL)wrapped {
+    [self selectCoordRange:range];
     if (!wrapped) {
         [self setNeedsDisplay:YES];
     }
-    [_delegate textViewDidSelectRangeForFindOnPage:range];
 }
 
 - (void)findOnPageSaveFindContextAbsPos {

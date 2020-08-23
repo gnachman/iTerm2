@@ -1265,6 +1265,55 @@ const NSInteger kLongMaximumWordLength = 100000;
     return result;
 }
 
+- (NSAttributedString *)attributedStringForSnippetForRange:(VT100GridAbsCoordRange)range
+                                         regularAttributes:(NSDictionary *)regularAttributes
+                                           matchAttributes:(NSDictionary *)matchAttributes
+                                       maximumPrefixLength:(NSUInteger)maximumPrefixLength
+                                       maximumSuffixLength:(NSUInteger)maximumSuffixLength {
+    const VT100GridCoordRange relativeRange =
+        VT100GridCoordRangeFromAbsCoordRange(range, self.dataSource.totalScrollbackOverflow);
+    const NSInteger maxMatchLength = 1024;
+    NSString *match = [self contentInRange:VT100GridWindowedRangeMake(relativeRange, _logicalWindow.location, _logicalWindow.length)
+                         attributeProvider:nil
+                                nullPolicy:kiTermTextExtractorNullPolicyFromLastToEnd
+                                       pad:NO
+                        includeLastNewline:NO
+                    trimTrailingWhitespace:NO
+                              cappedAtSize:maxMatchLength
+                              truncateTail:YES
+                         continuationChars:nil
+                                    coords:nil];
+    NSAttributedString *matchString = [[[NSAttributedString alloc] initWithString:match
+                                                                       attributes:matchAttributes] autorelease];
+    if (match.length == maxMatchLength) {
+        return matchString;
+    }
+    NSString *prefix = [[self wrappedLocatedStringAt:relativeRange.start
+                                             forward:NO
+                                 respectHardNewlines:YES
+                                            maxChars:maximumPrefixLength
+                                   continuationChars:nil
+                                 convertNullsToSpace:NO].string stringByTrimmingLeadingWhitespace];
+    NSString *suffix = [[self wrappedLocatedStringAt:relativeRange.end
+                                             forward:YES
+                                 respectHardNewlines:YES
+                                            maxChars:maximumSuffixLength + 1
+                                   continuationChars:nil
+                                 convertNullsToSpace:NO].string stringByTrimmingTrailingWhitespace];
+    if (suffix.length > maximumSuffixLength) {
+        suffix = [[[suffix stringByDroppingLastCharacters:1] stringByTrimmingOrphanedSurrogates] stringByAppendingString:@"…"];
+    }
+    NSAttributedString *attributedPrefix = [[[NSAttributedString alloc] initWithString:prefix
+                                                                            attributes:regularAttributes] autorelease];
+    NSAttributedString *attributedSuffix = [[[NSAttributedString alloc] initWithString:suffix
+                                                                            attributes:regularAttributes] autorelease];
+    NSMutableAttributedString *result = [[[NSMutableAttributedString alloc] init] autorelease];
+    [result appendAttributedString:attributedPrefix];
+    [result appendAttributedString:matchString];
+    [result appendAttributedString:attributedSuffix];
+    return result;
+}
+
 - (id)contentInRange:(VT100GridWindowedRange)windowedRange
    attributeProvider:(NSDictionary *(^)(screen_char_t))attributeProvider
           nullPolicy:(iTermTextExtractorNullPolicy)nullPolicy

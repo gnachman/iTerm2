@@ -31,6 +31,7 @@ typedef NS_ENUM(NSUInteger, iTermAppleWindowTabbingMode) {
 @property (class, nonatomic) BOOL openTmuxDashboardIfHiddenWindows;
 @property (class, nonatomic) BOOL haveExplainedHowToAddTouchbarControls;
 @property (class, nonatomic) BOOL ignoreSystemWindowRestoration;
+@property (class, nonatomic) NSUInteger globalSearchMode;
 
 @end
 

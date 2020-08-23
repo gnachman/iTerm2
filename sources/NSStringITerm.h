@@ -308,6 +308,8 @@ int decode_utf8_char(const unsigned char * restrict datap,
 - (NSString *)it_twoPartVersionNumber;
 - (NSString *)stringByEscapingForSandboxLiteral;
 - (NSString *)stringByDroppingLastCharacters:(NSInteger)count;
+- (NSString *)stringByKeepingLastCharacters:(NSInteger)count;
+- (NSString *)stringByTrimmingOrphanedSurrogates;
 
 - (NSString *)stringByAppendingVariablePathComponent:(NSString *)component;
 - (NSString *)stringByAppendingPathComponents:(NSArray<NSString *> *)pathComponents;

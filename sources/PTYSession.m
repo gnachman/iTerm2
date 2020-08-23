@@ -5609,6 +5609,30 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     return [_view snapshot];
 }
 
+- (NSImage *)snapshotCenteredOn:(VT100GridAbsCoord)coord size:(NSSize)size {
+    if (_screen.totalScrollbackOverflow > coord.y) {
+        return nil;
+    }
+    VT100GridCoord relativeCoord = VT100GridCoordMake(coord.x,
+                                                      coord.y - _screen.totalScrollbackOverflow);
+    NSPoint centerPoint = [_textview pointForCoord:relativeCoord];
+    NSRect rect = NSMakeRect(MIN(MAX(0, centerPoint.x - size.width / 2), NSWidth(_textview.bounds)),
+                             MIN(MAX(0, centerPoint.y - size.height / 2), NSHeight(_textview.bounds)),
+                             MIN(NSWidth(_textview.bounds), size.width),
+                             MIN(NSHeight(_textview.bounds), size.height));
+    CGFloat overage = NSMaxX(rect) - NSWidth(_textview.bounds);
+    if (overage > 0) {
+        rect.origin.x -= overage;
+    }
+    
+    overage = NSMaxY(rect) - NSHeight(_textview.bounds);
+    if (overage > 0) {
+        rect.origin.y -= overage;
+    }
+    
+    return [_textview snapshotOfRect:rect];
+}
+
 - (NSInteger)findDriverNumberOfSearchResults {
     return _textview.findOnPageHelper.numberOfSearchResults;
 }
@@ -9397,7 +9421,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)continueTailFind {
-    NSMutableArray *results = [NSMutableArray array];
+    NSMutableArray<SearchResult *> *results = [NSMutableArray array];
     BOOL more;
     more = [_screen continueFindAllResults:results
                                  inContext:_tailFindContext];

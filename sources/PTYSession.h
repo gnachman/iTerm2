@@ -795,6 +795,7 @@ backgroundColor:(NSColor *)backgroundColor;
 
 // Refreshes the textview and takes a snapshot of the SessionView.
 - (NSImage *)snapshot;
+- (NSImage *)snapshotCenteredOn:(VT100GridAbsCoord)coord size:(NSSize)size;
 
 - (void)enterPassword:(NSString *)password;
 

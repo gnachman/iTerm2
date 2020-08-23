@@ -23,6 +23,7 @@ static NSString *const iTermUserDefaultsKeyRequireAuthenticationAfterScreenLocks
 static NSString *const iTermUserDefaultsKeyOpenTmuxDashboardIfHiddenWindows = @"OpenTmuxDashboardIfHiddenWindows";
 static NSString *const iTermUserDefaultsKeyHaveExplainedHowToAddTouchbarControls = @"NoSyncHaveExplainedHowToAddTouchbarControls";
 static NSString *const iTermUserDefaultsKeyIgnoreSystemWindowRestoration = @"NoSyncIgnoreSystemWindowRestoration";
+static NSString *const iTermUserDefaultsKeyGlobalSearchMode = @"NoSyncGlobalSearchMode";
 
 @implementation iTermUserDefaults
 
@@ -170,6 +171,14 @@ static NSUserDefaults *iTermPrivateUserDefaults(void) {
 + (void)setIgnoreSystemWindowRestoration:(BOOL)ignoreSystemWindowRestoration {
     [self.userDefaults setBool:ignoreSystemWindowRestoration
                         forKey:iTermUserDefaultsKeyIgnoreSystemWindowRestoration];
+}
+
++ (NSUInteger)globalSearchMode {
+    return [[self.userDefaults objectForKey:iTermUserDefaultsKeyGlobalSearchMode] unsignedIntegerValue];
+}
+
++ (void)setGlobalSearchMode:(NSUInteger)globalSearchMode {
+    [self.userDefaults setObject:@(globalSearchMode) forKey:iTermUserDefaultsKeyGlobalSearchMode];
 }
 
 @end
