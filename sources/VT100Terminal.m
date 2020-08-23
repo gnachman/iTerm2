@@ -2656,6 +2656,8 @@ static const int kMaxScreenRows = 4096;
         [delegate_ terminalAddNote:(NSString *)value show:NO];
     } else if ([key isEqualToString:@"HighlightCursorLine"]) {
         [delegate_ terminalSetHighlightCursorLine:value.length ? [value boolValue] : YES];
+    } else if ([key isEqualToString:@"ClearCapturedOutput"]) {
+        [delegate_ terminalClearCapturedOutput];
     } else if ([key isEqualToString:@"CopyToClipboard"]) {
         if ([delegate_ terminalIsTrusted]) {
             [delegate_ terminalSetPasteboard:value];

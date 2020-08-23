@@ -193,6 +193,7 @@
 - (void)screenSetCursorVisible:(BOOL)visible;
 
 - (void)screenSetHighlightCursorLine:(BOOL)highlight;
+- (void)screenClearCapturedOutput;
 
 // Only called if the trackCursorLineMovement property is set.
 - (void)screenCursorDidMoveToLine:(int)line;

@@ -183,5 +183,9 @@ static NSString *const kMarkOutputStart = @"Output Start";
     _hasCode = YES;
 }
 
+- (void)incrementClearCount {
+    _clearCount += 1;
+}
+
 @end
 

@@ -1,6 +1,7 @@
 #import "PTYSession.h"
 #import "PTYSession+ARC.h"
 
+#import "CapturedOutput.h"
 #import "Coprocess.h"
 #import "CVector.h"
 #import "FakeWindow.h"
@@ -9877,6 +9878,14 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 - (void)screenSetHighlightCursorLine:(BOOL)highlight {
     _cursorGuideSettingHasChanged = YES;
     self.highlightCursorLine = highlight;
+}
+
+- (void)screenClearCapturedOutput {
+    if (self.screen.lastCommandMark.capturedOutput.count) {
+        [self.screen.lastCommandMark incrementClearCount];
+    }
+    [[NSNotificationCenter defaultCenter] postNotificationName:kPTYSessionCapturedOutputDidChange
+                                                        object:nil];
 }
 
 - (void)setHighlightCursorLine:(BOOL)highlight {

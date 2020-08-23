@@ -436,5 +436,6 @@ typedef NS_ENUM(int, VT100TerminalColorIndex) {
 - (void)terminalAppendSixelData:(NSData *)sixelData;
 
 - (void)terminalDidChangeSendModifiers;
+- (void)terminalClearCapturedOutput;
 
 @end

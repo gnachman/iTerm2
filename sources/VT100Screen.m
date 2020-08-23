@@ -4423,6 +4423,10 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     [delegate_ screenSetHighlightCursorLine:highlight];
 }
 
+- (void)terminalClearCapturedOutput {
+    [delegate_ screenClearCapturedOutput];
+}
+
 - (void)terminalPromptDidStart {
     [self promptDidStartAt:VT100GridAbsCoordMake(currentGrid_.cursor.x,
                                                  currentGrid_.cursor.y + self.numberOfScrollbackLines + self.totalScrollbackOverflow)];

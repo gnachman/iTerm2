@@ -40,10 +40,12 @@ static NSString *const iTermCapturedOutputToolTableViewCellIdentifier = @"ToolCa
     NSArray *allCapturedOutput_;
     NSTableCellView *_measuringCellView;
     VT100ScreenMark *mark_;  // Mark from which captured output came
+    NSInteger _clearCount;
     iTermSearchField *searchField_;
     NSButton *help_;
     NSButton *_clearButton;
     NSArray *filteredEntries_;
+    BOOL _ignoreClick;
 }
 
 @synthesize tableView = tableView_;
@@ -130,6 +132,8 @@ static NSString *const iTermCapturedOutputToolTableViewCellIdentifier = @"ToolCa
 
         [tableView_ setDoubleAction:@selector(doubleClickOnTableView:)];
         [tableView_ setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
+        tableView_.target = self;
+        tableView_.action = @selector(didClick:);
 
         tableView_.menu = [[NSMenu alloc] init];
         tableView_.menu.delegate = self;
@@ -181,6 +185,10 @@ static NSString *const iTermCapturedOutputToolTableViewCellIdentifier = @"ToolCa
     if (mark != mark_) {
         [tableView_ selectRowIndexes:[NSIndexSet indexSet] byExtendingSelection:NO];
         mark_ = mark;
+        _clearCount = mark.clearCount;
+    } else if (mark.clearCount > _clearCount) {
+        _clearCount = mark.clearCount;
+        theArray = @[];
     }
 
     allCapturedOutput_ = [theArray copy];
@@ -323,9 +331,9 @@ static NSString *const iTermCapturedOutputToolTableViewCellIdentifier = @"ToolCa
 - (NSString *)labelForCapturedOutput:(CapturedOutput *)capturedOutput {
     NSString *label = capturedOutput.line;
     if (capturedOutput.state) {
-        label = [@"✔ " stringByAppendingString:label];
+        label = [@"✔" stringByAppendingString:label];
     } else {
-        label = [@"• " stringByAppendingString:label];
+        label = [@"-" stringByAppendingString:label];
     }
     return label;
 }
@@ -360,6 +368,14 @@ static NSString *const iTermCapturedOutputToolTableViewCellIdentifier = @"ToolCa
 }
 
 - (void)tableViewSelectionDidChange:(NSNotification *)notification {
+    _ignoreClick = YES;
+    dispatch_async(dispatch_get_main_queue(), ^{
+        self->_ignoreClick = NO;
+    });
+    [self revealSelection];
+}
+
+- (void)revealSelection {
     NSInteger selectedIndex = [tableView_ selectedRow];
     if (selectedIndex < 0) {
         return;
@@ -405,6 +421,13 @@ static NSString *const iTermCapturedOutputToolTableViewCellIdentifier = @"ToolCa
         capturedOutput.state = !capturedOutput.state;
     }
     [tableView_ reloadData];
+}
+
+- (void)didClick:(id)sender {
+    if (_ignoreClick) {
+        return;
+    }
+    [self revealSelection];
 }
 
 #pragma mark - NSMenuDelegate

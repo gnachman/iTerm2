@@ -21,6 +21,7 @@
 
 @property(nonatomic, assign) BOOL isPrompt;
 @property(nonatomic, copy) NSString *guid;
+@property(nonatomic, readonly) NSInteger clearCount;
 
 // Array of CapturedOutput objects.
 @property(nonatomic, readonly) NSArray *capturedOutput;
@@ -52,5 +53,6 @@
 
 // Add an object to self.capturedOutput.
 - (void)addCapturedOutput:(CapturedOutput *)capturedOutput;
+- (void)incrementClearCount;
 
 @end
