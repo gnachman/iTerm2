@@ -179,6 +179,8 @@ NS_ASSUME_NONNULL_BEGIN
 // The reason there was a mostly is because it doesn't know about IDN. So we IDN-encode the
 // hostname before generating a URL.
 + (NSURL *)URLWithUserSuppliedString:(NSString *)string {
+#warning DNS
+    return nil;
     DLog(@"Trying to make a proper URL out of: %@", string);
 
     // Convert all sequences of non-reserved symbols into numbers 0, 1, 2, ...

@@ -4801,7 +4801,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
             selectionString.length < MAX_SELECTION_SIZE ? selectionString : nil];
     }
     [_delegate textViewSelectionDidChangeToTruncatedString:selectionString];
-    DLog(@"Selection did change: selection=%@. stack=%@",
+    NSLog(@"Selection did change: selection=%@. stack=%@",
          selection, [NSThread callStackSymbols]);
 }
 
@@ -5801,6 +5801,7 @@ allowDragBeforeMouseDown:(BOOL)allowDragBeforeMouseDown
 
 - (BOOL)mouseHandler:(PTYMouseHandler *)mouseHandler moveSelectionToGridCoord:(VT100GridCoord)coord
            viewCoord:(NSPoint)locationInTextView {
+    [self refresh];
     return [self moveSelectionEndpointToX:coord.x
                                         Y:coord.y
                        locationInTextView:locationInTextView];

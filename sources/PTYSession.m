@@ -4748,7 +4748,8 @@ ITERM_WEAKLY_REFERENCEABLE
             result[SESSION_ARRANGEMENT_LAST_LOCAL_DIRECTORY] = self.lastLocalDirectory;
         }
         result[SESSION_ARRANGEMENT_SELECTION] =
-            [self.textview.selection dictionaryValueWithYOffset:-numberOfLinesDropped];
+            [self.textview.selection dictionaryValueWithYOffset:-numberOfLinesDropped
+                                        totalScrollbackOverflow:_screen.totalScrollbackOverflow];
         result[SESSION_ARRANGEMENT_APS] = [_automaticProfileSwitcher savedState];
     }
     result[SESSION_ARRANGEMENT_GUID] = _guid;

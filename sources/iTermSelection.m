@@ -34,22 +34,22 @@ static NSString *const kiTermSubSelectionMode = @"Mode";
                                      width:(int)width
                    totalScrollbackOverflow:(long long)totalScrollbackOverflow {
     VT100GridAbsWindowedRange range;
-    if (dict.hasGridAbsWindowedRange) {
-        range = [dict[kiTermSubSelectionRange] gridAbsWindowedRange];
-    } else {
-        range = VT100GridAbsWindowedRangeFromWindowedRange([dict[kiTermSubSelectionRange] gridWindowedRange],
-                                                           totalScrollbackOverflow);
-    }
+    range = VT100GridAbsWindowedRangeFromWindowedRange([dict[kiTermSubSelectionRange] gridWindowedRange],
+                                                       totalScrollbackOverflow);
     return [self subSelectionWithAbsRange:range
                                      mode:[dict[kiTermSubSelectionMode] intValue]
                                     width:width];
 }
 
-- (NSDictionary *)dictionaryValueWithYOffset:(int)yOffset {
+- (NSDictionary *)dictionaryValueWithYOffset:(int)yOffset
+                     totalScrollbackOverflow:(long long)totalScrollbackOverflow {
     VT100GridAbsWindowedRange absrange = _absRange;
     absrange.coordRange.start.y += yOffset;
     absrange.coordRange.end.y += yOffset;
-    return @{ kiTermSubSelectionRange: [NSDictionary dictionaryWithGridAbsWindowedRange:absrange],
+
+    const VT100GridWindowedRange range = VT100GridWindowedRangeFromAbsWindowedRange(absrange,
+                                                                                    totalScrollbackOverflow);
+    return @{ kiTermSubSelectionRange: [NSDictionary dictionaryWithGridWindowedRange:range],
               kiTermSubSelectionMode: @(_selectionMode) };
 }
 
@@ -508,10 +508,10 @@ static NSString *const kiTermSubSelectionMode = @"Mode";
 }
 
 - (BOOL)moveSelectionEndpointTo:(VT100GridAbsCoord)coord {
-    DLog(@"Move selection to %@", VT100GridAbsCoordDescription(coord));
+    NSLog(@"Move selection to %@", VT100GridAbsCoordDescription(coord));
     const long long totalScrollbackOverflow = [self.delegate selectionTotalScrollbackOverflow];
     if (coord.y < totalScrollbackOverflow) {
-        coord.x = coord.y = totalScrollbackOverflow;
+        coord.x = 0; coord.y = totalScrollbackOverflow;
     }
     NSArray<iTermSubSelection *> *subselectionsBefore = [[self.allSubSelections copy] autorelease] ?: @[];
     VT100GridAbsWindowedRange range = [self absRangeForCurrentModeAtAbsCoord:coord
@@ -551,7 +551,7 @@ static NSString *const kiTermSubSelectionMode = @"Mode";
 }
 
 - (void)moveSelectionEndpointToAbsRange:(VT100GridAbsWindowedRange)range {
-    DLog(@"move selection endpoint to range=%@ selection=%@ initial=%@",
+    NSLog(@"move selection endpoint to range=%@ selection=%@ initial=%@",
          VT100GridAbsWindowedRangeDescription(range),
          VT100GridAbsWindowedRangeDescription(_absRange),
          VT100GridAbsWindowedRangeDescription(_initialAbsRange));
@@ -1121,7 +1121,7 @@ static NSString *const kiTermSubSelectionMode = @"Mode";
     }];
 
     NSArray<NSValue *> *sortedRanges =
-        [allRanges sortedArrayUsingSelector:@selector(compareGridCoordRangeStart:)];
+        [allRanges sortedArrayUsingSelector:@selector(compareGridAbsCoordRangeStart:)];
     for (NSValue *value in sortedRanges) {
         BOOL stop = NO;
         const VT100GridAbsCoordRange theRange = [value gridAbsCoordRangeValue];
@@ -1138,11 +1138,13 @@ static NSString *const kiTermSubSelectionMode = @"Mode";
 
 #pragma mark - Serialization
 
-- (NSDictionary *)dictionaryValueWithYOffset:(int)yOffset {
+- (NSDictionary *)dictionaryValueWithYOffset:(int)yOffset
+                     totalScrollbackOverflow:(long long)totalScrollbackOverflow {
     NSArray *subs = self.allSubSelections;
     subs = [subs mapWithBlock:^id(id anObject) {
         iTermSubSelection *sub = anObject;
-        return [sub dictionaryValueWithYOffset:yOffset];
+        return [sub dictionaryValueWithYOffset:yOffset
+                       totalScrollbackOverflow:totalScrollbackOverflow];
     }];
     return @{ kSelectionSubSelectionsKey: subs };
 }

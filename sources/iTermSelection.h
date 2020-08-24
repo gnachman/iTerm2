@@ -189,7 +189,8 @@ typedef NS_ENUM(NSInteger, iTermSelectionMode) {
        totalScrollbackOverflow:(long long)totalScrollbackOverflow;
 
 // Serialized.
-- (NSDictionary *)dictionaryValueWithYOffset:(int)yOffset;
+- (NSDictionary *)dictionaryValueWithYOffset:(int)yOffset
+                     totalScrollbackOverflow:(long long)totalScrollbackOverflow;
 
 // Utility methods
 - (BOOL)absCoord:(VT100GridAbsCoord)a isBeforeAbsCoord:(VT100GridAbsCoord)b;

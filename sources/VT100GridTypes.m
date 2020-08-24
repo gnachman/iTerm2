@@ -93,48 +93,48 @@ NSString *VT100GridAbsWindowedRangeDescription(VT100GridAbsWindowedRange range) 
 
 - (VT100GridAbsCoord)gridAbsCoordValue {
     VT100GridAbsCoord absCoord;
-    [self getValue:&absCoord];
+    [self getValue:&absCoord size:sizeof(absCoord)];
     return absCoord;
 }
 
 - (VT100GridSize)gridSizeValue {
     VT100GridSize size;
-    [self getValue:&size];
+    [self getValue:&size size:sizeof(size)];
     return size;
 }
 
 - (VT100GridRange)gridRangeValue {
     VT100GridRange range;
-    [self getValue:&range];
+    [self getValue:&range size:sizeof(range)];
     return range;
 }
 
 - (VT100GridRect)gridRectValue {
     VT100GridRect rect;
-    [self getValue:&rect];
+    [self getValue:&rect size:sizeof(rect)];
     return rect;
 }
 
 - (VT100GridRun)gridRunValue {
     VT100GridRun run;
-    [self getValue:&run];
+    [self getValue:&run size:sizeof(run)];
     return run;
 }
 
 - (VT100GridCoordRange)gridCoordRangeValue {
   VT100GridCoordRange coordRange;
-  [self getValue:&coordRange];
+  [self getValue:&coordRange size:sizeof(coordRange)];
   return coordRange;
 }
 
 - (VT100GridAbsCoordRange)gridAbsCoordRangeValue {
     VT100GridAbsCoordRange absCoordRange;
-    [self getValue:&absCoordRange];
+    [self getValue:&absCoordRange size:sizeof(absCoordRange)];
     return absCoordRange;
 }
 
-- (NSComparisonResult)compareGridCoordRangeStart:(NSValue *)other {
-    return VT100GridCoordOrder([self gridCoordRangeValue].start, [other gridCoordRangeValue].start);
+- (NSComparisonResult)compareGridAbsCoordRangeStart:(NSValue *)other {
+    return VT100GridAbsCoordOrder([self gridAbsCoordRangeValue].start, [other gridAbsCoordRangeValue].start);
 }
 
 @end

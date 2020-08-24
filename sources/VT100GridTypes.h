@@ -82,7 +82,7 @@ extern const VT100GridCoord VT100GridCoordInvalid;
 - (VT100GridAbsCoordRange)gridAbsCoordRangeValue;
 
 // Use for sorting array of VT100GridCoorRange's in NSValue*s by the start coord.
-- (NSComparisonResult)compareGridCoordRangeStart:(NSValue *)other;
+- (NSComparisonResult)compareGridAbsCoordRangeStart:(NSValue *)other;
 
 @end
 
@@ -90,24 +90,6 @@ NSString *VT100GridCoordRangeDescription(VT100GridCoordRange range);
 NSString *VT100GridWindowedRangeDescription(VT100GridWindowedRange range);
 NSString *VT100GridAbsCoordRangeDescription(VT100GridAbsCoordRange range);
 NSString *VT100GridSizeDescription(VT100GridSize size);
-
-NS_INLINE VT100GridWindowedRange VT100GridWindowedRangeFromAbsWindowedRange(VT100GridAbsWindowedRange absrange,
-                                                                            long long offset) {
-    VT100GridWindowedRange range = {
-        .coordRange = {
-            .start = {
-                .x = absrange.coordRange.start.x,
-                .y = (int)MIN(INT_MAX, MAX(offset, absrange.coordRange.start.y) - offset)
-            },
-            .end = {
-                .x = absrange.coordRange.end.x,
-                .y = (int)MIN(INT_MAX, MAX(offset, absrange.coordRange.end.y - offset))
-            }
-        },
-        .columnWindow = absrange.columnWindow
-    };
-    return range;
-}
 
 NS_INLINE VT100GridAbsWindowedRange VT100GridAbsWindowedRangeClampedToWidth(const VT100GridAbsWindowedRange range,
                                                                             const int width) {
@@ -354,6 +336,16 @@ NS_INLINE VT100GridAbsCoordRange VT100GridAbsCoordRangeMake(int startX,
     coordRange.end.x = endX;
     coordRange.end.y = endY;
     return coordRange;
+}
+
+NS_INLINE VT100GridWindowedRange VT100GridWindowedRangeFromAbsWindowedRange(VT100GridAbsWindowedRange absrange,
+                                                                            long long offset) {
+    return VT100GridWindowedRangeMake(VT100GridCoordRangeMake(absrange.coordRange.start.x,
+                                                              (int)MIN(INT_MAX, MAX(offset, absrange.coordRange.start.y) - offset),
+                                                              absrange.coordRange.end.x,
+                                                              (int)MIN(INT_MAX, MAX(offset, absrange.coordRange.end.y - offset))),
+                                      absrange.columnWindow.location,
+                                      absrange.columnWindow.length);
 }
 
 NS_INLINE VT100GridAbsCoordRange VT100GridAbsCoordRangeFromCoordRange(VT100GridCoordRange range,
