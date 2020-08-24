@@ -145,22 +145,41 @@
                                               onScreen:[self.delegate urlActionHelperScreen:self]];
 }
 
-- (SmartMatch *)smartSelectAtX:(int)x
-                             y:(int)y
-                            to:(VT100GridWindowedRange *)rangePtr
-              ignoringNewlines:(BOOL)ignoringNewlines
-                actionRequired:(BOOL)actionRequired
-               respectDividers:(BOOL)respectDividers {
+- (SmartMatch *)smartSelectAtAbsoluteCoord:(VT100GridAbsCoord)absCoord
+                                        to:(VT100GridAbsWindowedRange *)rangePtr
+                          ignoringNewlines:(BOOL)ignoringNewlines
+                            actionRequired:(BOOL)actionRequired
+                           respectDividers:(BOOL)respectDividers {
+    const long long totalScrollbackOverflow = [self.delegate urlActionTotalScrollbackOverflow:self];
+    BOOL ok;
+    const VT100GridCoord coord = VT100GridCoordFromAbsCoord(absCoord,
+                                                            totalScrollbackOverflow,
+                                                            &ok);
+    if (!ok) {
+        *rangePtr = VT100GridAbsWindowedRangeMake(VT100GridAbsCoordRangeMake(0,
+                                                                             totalScrollbackOverflow,
+                                                                             0,
+                                                                             totalScrollbackOverflow),
+                                                  -1, -1);
+        return nil;
+    }
     iTermTextExtractor *extractor = [self.delegate urlActionHelperNewTextExtractor:self];
-    VT100GridCoord coord = VT100GridCoordMake(x, y);
     if (respectDividers) {
         [extractor restrictToLogicalWindowIncludingCoord:coord];
     }
-    return [extractor smartSelectionAt:coord
-                             withRules:[self.delegate urlActionHelperSmartSelectionRules:self]
-                        actionRequired:actionRequired
-                                 range:rangePtr
-                      ignoringNewlines:ignoringNewlines];
+    VT100GridWindowedRange relativeRange;
+    SmartMatch *result = [extractor smartSelectionAt:coord
+                                           withRules:[self.delegate urlActionHelperSmartSelectionRules:self]
+                                      actionRequired:actionRequired
+                                               range:&relativeRange
+                                    ignoringNewlines:ignoringNewlines];
+    if (result) {
+        *rangePtr = VT100GridAbsWindowedRangeFromWindowedRange(relativeRange,
+                                                               totalScrollbackOverflow);
+    } else {
+        *rangePtr = VT100GridAbsWindowedRangeMake(VT100GridAbsCoordRangeMake(-1, -1, -1, -1), -1, -1);
+    }
+    return result;
 }
 
 - (void)openSemanticHistoryPath:(NSString *)path
@@ -188,9 +207,9 @@
 
 - (void)smartSelectAndMaybeCopyWithEvent:(NSEvent *)event
                         ignoringNewlines:(BOOL)ignoringNewlines {
-    const VT100GridCoord coord = [self.delegate urlActionHelper:self coordForEvent:event allowRightMarginOverflow:NO];
+    const VT100GridAbsCoord coord = [self.delegate urlActionHelper:self absCoordForEvent:event allowRightMarginOverflow:NO];
 
-    [self smartSelectAtX:coord.x y:coord.y ignoringNewlines:ignoringNewlines];
+    [self smartSelectAtAbsoluteCoord:coord ignoringNewlines:ignoringNewlines];
     [self.delegate urlActionHelperCopySelectionIfNeeded:self];
 }
 
@@ -372,24 +391,25 @@
 #pragma mark - Smart Selection
 
 - (void)smartSelectWithEvent:(NSEvent *)event {
-    const VT100GridCoord coord = [self.delegate urlActionHelper:self coordForEvent:event allowRightMarginOverflow:NO];
-    [self smartSelectAtX:coord.x y:coord.y ignoringNewlines:NO];
+    const VT100GridAbsCoord coord = [self.delegate urlActionHelper:self
+                                                  absCoordForEvent:event
+                                          allowRightMarginOverflow:NO];
+    [self smartSelectAtAbsoluteCoord:coord ignoringNewlines:NO];
 }
 
-- (BOOL)smartSelectAtX:(int)x y:(int)y ignoringNewlines:(BOOL)ignoringNewlines {
-    VT100GridWindowedRange range;
-    SmartMatch *smartMatch = [self smartSelectAtX:x
-                                                y:y
-                                               to:&range
-                                 ignoringNewlines:ignoringNewlines
-                                   actionRequired:NO
-                                  respectDividers:[[NSUserDefaults standardUserDefaults] boolForKey:kSelectionRespectsSoftBoundariesKey]];
+- (BOOL)smartSelectAtAbsoluteCoord:(VT100GridAbsCoord)coord ignoringNewlines:(BOOL)ignoringNewlines {
+    VT100GridAbsWindowedRange range;
+    SmartMatch *smartMatch = [self smartSelectAtAbsoluteCoord:coord
+                                                           to:&range
+                                             ignoringNewlines:ignoringNewlines
+                                               actionRequired:NO
+                                              respectDividers:[[NSUserDefaults standardUserDefaults] boolForKey:kSelectionRespectsSoftBoundariesKey]];
 
     iTermSelection *selection = [self.delegate urlActionHelperSelection:self];
-    [selection beginSelectionAt:range.coordRange.start
-                           mode:kiTermSelectionModeCharacter
-                         resume:NO
-                         append:NO];
+    [selection beginSelectionAtAbsCoord:range.coordRange.start
+                                   mode:kiTermSelectionModeCharacter
+                                 resume:NO
+                                 append:NO];
     [selection moveSelectionEndpointTo:range.coordRange.end];
     if (!ignoringNewlines) {
         // TODO(georgen): iTermSelection doesn't have a mode for smart selection ignoring newlines.

@@ -60,10 +60,14 @@ extern const NSInteger kLongMaximumWordLength;
 // bounds. The maximum length is only approximate. See the suggested constants above.
 - (VT100GridWindowedRange)rangeForWordAt:(VT100GridCoord)location
                            maximumLength:(NSInteger)maximumLength;
+- (VT100GridAbsWindowedRange)rangeForWordAtAbsCoord:(VT100GridAbsCoord)absLocation
+                                      maximumLength:(NSInteger)maximumLength;
 
 // A big word is delimited by whitespace.
 - (VT100GridWindowedRange)rangeForBigWordAt:(VT100GridCoord)location
                               maximumLength:(NSInteger)maximumLength;
+- (VT100GridAbsWindowedRange)rangeForBigWordAtAbsCoord:(VT100GridAbsCoord)location
+                                         maximumLength:(NSInteger)maximumLength;
 
 // Returns the string for the character at a screen location.
 - (NSString *)stringForCharacterAt:(VT100GridCoord)location;
@@ -96,10 +100,12 @@ extern const NSInteger kLongMaximumWordLength;
 - (VT100GridCoord)successorOfCoord:(VT100GridCoord)coord;
 // Won't go past the end of the line while skipping nulls.
 - (VT100GridCoord)successorOfCoordSkippingContiguousNulls:(VT100GridCoord)coord;
+- (VT100GridAbsCoord)successorOfAbsCoordSkippingContiguousNulls:(VT100GridAbsCoord)coord;
 
 - (VT100GridCoord)predecessorOfCoord:(VT100GridCoord)coord;
 // Won't go past the start of the line while skipping nulls.
 - (VT100GridCoord)predecessorOfCoordSkippingContiguousNulls:(VT100GridCoord)coord;
+- (VT100GridAbsCoord)predecessorOfAbsCoordSkippingContiguousNulls:(VT100GridAbsCoord)coord;
 
 // Advances coord by a positive or negative delta, staying within the column window, if any. Any
 // indices in |coordsToSkip| will not count against delta.
@@ -160,6 +166,7 @@ extern const NSInteger kLongMaximumWordLength;
 - (NSIndexSet *)indexesOnLine:(int)line containingCharacter:(unichar)c inRange:(NSRange)range;
 
 - (int)lengthOfLine:(int)line;
+- (int)lengthOfAbsLine:(long long)absLine;
 
 - (void)enumerateCharsInRange:(VT100GridWindowedRange)range
                     charBlock:(BOOL (^)(screen_char_t *currentLine, screen_char_t theChar, VT100GridCoord coord))charBlock
@@ -182,6 +189,7 @@ extern const NSInteger kLongMaximumWordLength;
                            convertNullsToSpace:(BOOL)convertNullsToSpace;
 
 - (screen_char_t)characterAt:(VT100GridCoord)coord;
+- (screen_char_t)characterAtAbsCoord:(VT100GridAbsCoord)coord;
 
 // Returns a subset of `range` by removing leading and trailing whitespace.
 - (VT100GridAbsCoordRange)rangeByTrimmingWhitespaceFromRange:(VT100GridAbsCoordRange)range;
@@ -218,6 +226,7 @@ typedef NS_ENUM(NSUInteger, iTermTextExtractorTrimTrailingWhitespace) {
                                        passingTest:(BOOL(^)(screen_char_t *c, VT100GridCoord coord))block;
 
 - (int)startOfIndentationOnLine:(int)line;
+- (int)startOfIndentationOnAbsLine:(long long)absLine;
 
 #pragma mark - For tests
 

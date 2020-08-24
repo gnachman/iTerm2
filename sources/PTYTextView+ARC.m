@@ -600,6 +600,17 @@ static const NSUInteger kRectangularSelectionModifierMask = (kRectangularSelecti
     return coord;
 }
 
+- (VT100GridAbsCoord)urlActionHelper:(iTermURLActionHelper *)helper
+                    absCoordForEvent:(NSEvent *)event
+            allowRightMarginOverflow:(BOOL)allowRightMarginOverflow {
+    const VT100GridCoord coord = [self urlActionHelper:helper coordForEvent:event allowRightMarginOverflow:allowRightMarginOverflow];
+    return VT100GridAbsCoordFromCoord(coord, self.dataSource.totalScrollbackOverflow);
+}
+
+- (long long)urlActionTotalScrollbackOverflow:(iTermURLActionHelper *)helper {
+    return self.dataSource.totalScrollbackOverflow;
+}
+
 - (VT100RemoteHost *)urlActionHelper:(iTermURLActionHelper *)helper remoteHostOnLine:(int)y {
     return [self.dataSource remoteHostOnLine:y];
 }

@@ -241,6 +241,17 @@ const NSInteger kLongMaximumWordLength = 100000;
     return range;
 }
 
+- (int)startOfIndentationOnAbsLine:(long long)absLine {
+    const long long overflow = [_dataSource totalScrollbackOverflow];
+    if (absLine < overflow) {
+        return 0;
+    }
+    if (absLine - overflow > INT_MAX) {
+        return 0;
+    }
+    return [self startOfIndentationOnLine:absLine - overflow];
+}
+
 - (int)startOfIndentationOnLine:(int)line {
     if (line >= [_dataSource numberOfLines]) {
         return 0;
@@ -259,9 +270,23 @@ const NSInteger kLongMaximumWordLength = 100000;
     return result;
 }
 
+- (VT100GridAbsWindowedRange)rangeForWordAtAbsCoord:(VT100GridAbsCoord)absLocation
+                                      maximumLength:(NSInteger)maximumLength {
+    return VT100GridAbsWindowedRangeFromWindowedRange([self rangeForWordAt:[self coordFromAbsolute:absLocation]
+                                                             maximumLength:maximumLength],
+                                                      [_dataSource totalScrollbackOverflow]);
+}
+
 - (VT100GridWindowedRange)rangeForWordAt:(VT100GridCoord)location
                            maximumLength:(NSInteger)maximumLength {
     return [self rangeForWordAt:location maximumLength:maximumLength big:NO];
+}
+
+- (VT100GridAbsWindowedRange)rangeForBigWordAtAbsCoord:(VT100GridAbsCoord)location
+                                         maximumLength:(NSInteger)maximumLength {
+    return VT100GridAbsWindowedRangeFromWindowedRange([self rangeForBigWordAt:[self coordFromAbsolute:location]
+                                                                maximumLength:maximumLength],
+                                                      [_dataSource totalScrollbackOverflow]);
 }
 
 - (VT100GridWindowedRange)rangeForBigWordAt:(VT100GridCoord)unsafeLocation
@@ -936,6 +961,27 @@ const NSInteger kLongMaximumWordLength = 100000;
     return coord;
 }
 
+- (VT100GridCoord)coordFromAbsolute:(VT100GridAbsCoord)absCoord {
+    const long long overflow = [_dataSource totalScrollbackOverflow];
+    if (absCoord.y < overflow) {
+        return VT100GridCoordMake(0, 0);
+    }
+    if (absCoord.y - overflow > INT_MAX) {
+        return VT100GridCoordMake(absCoord.x, [_dataSource numberOfLines]);
+    }
+    return VT100GridCoordMake(absCoord.x, absCoord.y - overflow);
+}
+
+- (VT100GridAbsCoord)coordToAbsolute:(VT100GridCoord)coord {
+    return VT100GridAbsCoordMake(coord.x, [_dataSource totalScrollbackOverflow] + coord.y);
+}
+
+- (VT100GridAbsCoord)successorOfAbsCoordSkippingContiguousNulls:(VT100GridAbsCoord)absCoord {
+    const VT100GridCoord coord = [self coordFromAbsolute:absCoord];
+    VT100GridCoord result = [self successorOfCoordSkippingContiguousNulls:coord];
+    return [self coordToAbsolute:result];
+}
+
 - (VT100GridCoord)successorOfCoordSkippingContiguousNulls:(VT100GridCoord)coord {
     do {
         coord.x++;
@@ -972,6 +1018,10 @@ const NSInteger kLongMaximumWordLength = 100000;
     }
 
     return coord;
+}
+
+- (VT100GridAbsCoord)predecessorOfAbsCoordSkippingContiguousNulls:(VT100GridAbsCoord)coord {
+    return [self coordToAbsolute:[self predecessorOfCoordSkippingContiguousNulls:[self coordFromAbsolute:coord]]];
 }
 
 - (VT100GridCoord)predecessorOfCoordSkippingContiguousNulls:(VT100GridCoord)coord {
@@ -1905,6 +1955,17 @@ trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
     }
 }
 
+- (int)lengthOfAbsLine:(long long)absLine {
+    const long long overflow = [_dataSource totalScrollbackOverflow];
+    if (absLine < overflow) {
+        return 0;
+    }
+    if (absLine - overflow > INT_MAX) {
+        return 0;
+    }
+    return [self lengthOfLine:absLine - overflow];
+}
+
 - (int)lengthOfLine:(int)line {
     screen_char_t *theLine = [_dataSource getLineAtIndex:line];
     int x;
@@ -2016,6 +2077,15 @@ trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
     coord.x = MIN(MAX(coord.x, _logicalWindow.location),
                   _logicalWindow.location + _logicalWindow.length - 1);
     return coord;
+}
+
+- (screen_char_t)characterAtAbsCoord:(VT100GridAbsCoord)coord {
+    const long long overflow = [_dataSource totalScrollbackOverflow];
+    if (coord.y < overflow || coord.y - overflow > INT_MAX) {
+        screen_char_t zero = { 0 };
+        return zero;
+    }
+    return [self characterAt:[self coordFromAbsolute:coord]];
 }
 
 - (screen_char_t)characterAt:(VT100GridCoord)coord {

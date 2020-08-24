@@ -941,7 +941,7 @@ iTermWindowType iTermWindowTypeNormalized(iTermWindowType windowType) {
     }
 }
 
-- (BOOL)togglingLionFullScreen {
+- (BOOL)togglingLionFullScreenImpl {
     return togglingLionFullScreen_;
 }
 

@@ -4519,6 +4519,10 @@ ITERM_WEAKLY_REFERENCEABLE
     [self toggleTraditionalFullScreenModeImpl];
 }
 
+- (BOOL)togglingLionFullScreen {
+    return [self togglingLionFullScreenImpl];
+}
+
 - (BOOL)fullScreen {
     return [self fullScreenImpl];
 }
@@ -6936,9 +6940,13 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     iTermSelection *selection = session.textview.selection;
     iTermSubSelection *sub = [selection.allSubSelections lastObject];
     if (sub) {
-        [self showRangeOfLines:NSMakeRange(sub.range.coordRange.start.y,
-                                           sub.range.coordRange.end.y - sub.range.coordRange.start.y + 1)
-                     inSession:session];
+        VT100GridAbsCoordRangeTryMakeRelative(sub.absRange.coordRange,
+                                              session.screen.totalScrollbackOverflow,
+                                              ^(VT100GridCoordRange range) {
+            [self showRangeOfLines:NSMakeRange(range.start.y,
+                                               range.end.y - range.start.y + 1)
+                         inSession:session];
+        });
     }
 }
 

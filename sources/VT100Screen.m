@@ -504,17 +504,20 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
              newHeight:newHeight];
     NSMutableArray *altScreenSubSelectionTuples = [NSMutableArray array];
     for (iTermSubSelection *sub in selection.allSubSelections) {
-        VT100GridCoordRange range = sub.range.coordRange;
-        LineBufferPositionRange *positionRange =
-        [self positionRangeForCoordRange:range
-                            inLineBuffer:lineBufferWithAltScreen
-                           tolerateEmpty:NO];
-        if (positionRange) {
-            [altScreenSubSelectionTuples addObject:@[ positionRange, sub ]];
-        } else {
-            DLog(@"Failed to get position range for selection on alt screen %@",
-                 VT100GridCoordRangeDescription(range));
-        }
+        VT100GridAbsCoordRangeTryMakeRelative(sub.absRange.coordRange,
+                                              self.totalScrollbackOverflow,
+                                              ^(VT100GridCoordRange range) {
+            LineBufferPositionRange *positionRange =
+            [self positionRangeForCoordRange:range
+                                inLineBuffer:lineBufferWithAltScreen
+                               tolerateEmpty:NO];
+            if (positionRange) {
+                [altScreenSubSelectionTuples addObject:@[ positionRange, sub ]];
+            } else {
+                DLog(@"Failed to get position range for selection on alt screen %@",
+                     VT100GridCoordRangeDescription(range));
+            }
+        });
     }
     return altScreenSubSelectionTuples;
 }
@@ -563,23 +566,32 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 - (NSArray *)subSelectionsWithConvertedRangesFromSelection:(iTermSelection *)selection
                                                   newWidth:(int)newWidth {
     NSMutableArray *newSubSelections = [NSMutableArray array];
+    const long long overflow = self.totalScrollbackOverflow;
     for (iTermSubSelection *sub in selection.allSubSelections) {
-        VT100GridCoordRange newSelection;
         DLog(@"convert sub %@", sub);
-        BOOL ok = [self convertRange:sub.range.coordRange
-                             toWidth:newWidth
-                                  to:&newSelection
-                        inLineBuffer:linebuffer_
-                       tolerateEmpty:NO];
-        if (ok) {
-            assert(sub.range.coordRange.start.y >= 0);
-            assert(sub.range.coordRange.end.y >= 0);
-            VT100GridWindowedRange theRange = VT100GridWindowedRangeMake(newSelection, 0, 0);
-            iTermSubSelection *theSub =
-            [iTermSubSelection subSelectionWithRange:theRange mode:sub.selectionMode width:newWidth];
-            theSub.connected = sub.connected;
-            [newSubSelections addObject:theSub];
-        }
+        VT100GridAbsCoordRangeTryMakeRelative(sub.absRange.coordRange,
+                                              overflow,
+                                              ^(VT100GridCoordRange range) {
+            VT100GridCoordRange newSelection;
+            const BOOL ok = [self convertRange:range
+                                       toWidth:newWidth
+                                            to:&newSelection
+                                  inLineBuffer:linebuffer_
+                                 tolerateEmpty:NO];
+            if (ok) {
+                assert(range.start.y >= 0);
+                assert(range.end.y >= 0);
+                const VT100GridWindowedRange relativeRange = VT100GridWindowedRangeMake(newSelection, 0, 0);
+                const VT100GridAbsWindowedRange absRange =
+                    VT100GridAbsWindowedRangeFromWindowedRange(relativeRange, overflow);
+                iTermSubSelection *theSub =
+                [iTermSubSelection subSelectionWithAbsRange:absRange
+                                                       mode:sub.selectionMode
+                                                      width:newWidth];
+                theSub.connected = sub.connected;
+                [newSubSelections addObject:theSub];
+            }
+        });
     }
     return newSubSelections;
 }
@@ -641,11 +653,12 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
                                                 range:&newSelection
                                          linesMovedUp:linesMovedUp];
         if (ok) {
-            VT100GridWindowedRange theRange =
-            VT100GridWindowedRangeMake(newSelection, 0, 0);
-            iTermSubSelection *theSub = [iTermSubSelection subSelectionWithRange:theRange
-                                                                            mode:originalSub.selectionMode
-                                                                           width:self.width];
+            const VT100GridAbsWindowedRange theRange =
+            VT100GridAbsWindowedRangeMake(VT100GridAbsCoordRangeFromCoordRange(newSelection, self.totalScrollbackOverflow),
+                                          0, 0);
+            iTermSubSelection *theSub = [iTermSubSelection subSelectionWithAbsRange:theRange
+                                                                               mode:originalSub.selectionMode
+                                                                              width:self.width];
             theSub.connected = originalSub.connected;
             [newSubSelections addObject:theSub];
         }
@@ -837,14 +850,13 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     [delegate_ screenNeedsRedraw];
     if (couldHaveSelection) {
         NSMutableArray *subSelectionsToAdd = [NSMutableArray array];
-        for (iTermSubSelection* sub in newSubSelections) {
-            VT100GridCoordRange newSelection = sub.range.coordRange;
-            if (newSelection.start.y >= linesDropped &&
-                newSelection.end.y >= linesDropped) {
-                newSelection.start.y -= linesDropped;
-                newSelection.end.y -= linesDropped;
+        for (iTermSubSelection *sub in newSubSelections) {
+            VT100GridAbsCoordRangeTryMakeRelative(sub.absRange.coordRange,
+                                                  self.totalScrollbackOverflow,
+                                                  ^(VT100GridCoordRange range) {
+#warning TODO: Test this! I changed it quite a bit and it looked buggy before.
                 [subSelectionsToAdd addObject:sub];
-            }
+            });
         }
         [selection addSubSelections:subSelectionsToAdd];
     }
@@ -2670,7 +2682,11 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     return objects;
 }
 
-- (int)lineNumberOfMarkBeforeLine:(int)line {
+- (long long)lineNumberOfMarkBeforeAbsLine:(long long)absLine {
+    const long long line = absLine - self.totalScrollbackOverflow;
+    if (line < 0 || line > INT_MAX) {
+        return -1;
+    }
     Interval *interval = [self intervalForGridCoordRange:VT100GridCoordRangeMake(0, line, 0, line)];
     NSEnumerator *enumerator = [intervalTree_ reverseLimitEnumeratorAt:interval.limit];
     NSArray *objects = [enumerator nextObject];
@@ -2686,7 +2702,11 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     return -1;
 }
 
-- (int)lineNumberOfMarkAfterLine:(int)line {
+- (long long)lineNumberOfMarkAfterAbsLine:(long long)absLine {
+    const long long line = absLine - self.totalScrollbackOverflow;
+    if (line < 0 || line > INT_MAX) {
+        return -1;
+    }
     Interval *interval = [self intervalForGridCoordRange:VT100GridCoordRangeMake(0, line + 1, 0, line + 1)];
     NSEnumerator *enumerator = [intervalTree_ forwardLimitEnumeratorAt:interval.limit];
     NSArray *objects = [enumerator nextObject];

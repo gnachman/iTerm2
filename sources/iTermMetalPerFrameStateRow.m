@@ -44,7 +44,7 @@ NS_ASSUME_NONNULL_BEGIN
         }
         [data checkForOverrun];
         _screenCharLine = data;
-        _selectedIndexSet = [textView.selection selectedIndexesIncludingTabFillersInLine:i];
+        _selectedIndexSet = [textView.selection selectedIndexesIncludingTabFillersInAbsoluteLine:totalScrollbackOverflow + i];
 
         NSData *findMatches = [drawingHelper.delegate drawingHelperMatchesOnLine:i];
         if (findMatches) {

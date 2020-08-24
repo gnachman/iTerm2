@@ -34,6 +34,10 @@
 + (NSDictionary *)dictionaryWithGridWindowedRange:(VT100GridWindowedRange)range;
 - (VT100GridWindowedRange)gridWindowedRange;
 
++ (NSDictionary *)dictionaryWithGridAbsWindowedRange:(VT100GridAbsWindowedRange)range;
+- (VT100GridAbsWindowedRange)gridAbsWindowedRange;
+- (BOOL)hasGridAbsWindowedRange;
+
 + (NSDictionary *)dictionaryWithGridRange:(VT100GridRange)range;
 - (VT100GridRange)gridRange;
 
