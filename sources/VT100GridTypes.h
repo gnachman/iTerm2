@@ -82,7 +82,7 @@ extern const VT100GridCoord VT100GridCoordInvalid;
 - (VT100GridAbsCoordRange)gridAbsCoordRangeValue;
 
 // Use for sorting array of VT100GridCoorRange's in NSValue*s by the start coord.
-- (NSComparisonResult)compareGridCoordRangeStart:(NSValue *)other;
+- (NSComparisonResult)compareGridAbsCoordRangeStart:(NSValue *)other;
 
 @end
 
@@ -90,6 +90,31 @@ NSString *VT100GridCoordRangeDescription(VT100GridCoordRange range);
 NSString *VT100GridWindowedRangeDescription(VT100GridWindowedRange range);
 NSString *VT100GridAbsCoordRangeDescription(VT100GridAbsCoordRange range);
 NSString *VT100GridSizeDescription(VT100GridSize size);
+
+NS_INLINE VT100GridAbsWindowedRange VT100GridAbsWindowedRangeClampedToWidth(const VT100GridAbsWindowedRange range,
+                                                                            const int width) {
+    if (width <= 0) {
+        return range;
+    }
+    VT100GridAbsWindowedRange result = range;
+    result.coordRange.start.x = MAX(0, MIN(result.coordRange.start.x, width - 1));
+    result.coordRange.end.x = MIN(result.coordRange.end.x, width);
+
+    int left = result.columnWindow.location;
+    int right = range.columnWindow.location + range.columnWindow.length;
+    if (left <= 0 && right <= 0) {
+        return result;
+    }
+    if (left >= width) {
+        left = width - 1;
+    }
+    if (right > width) {
+        right = width;
+    }
+    result.columnWindow.location = left;
+    result.columnWindow.length = right - left;
+    return result;
+}
 
 NS_INLINE VT100GridCoord VT100GridCoordMake(int x, int y) {
     VT100GridCoord coord;
@@ -221,6 +246,13 @@ NS_INLINE BOOL VT100GridAbsWindowedRangeEquals(VT100GridAbsWindowedRange a, VT10
             VT100GridRangeEqualsRange(a.columnWindow, b.columnWindow));
 }
 
+NS_INLINE BOOL VT100GridAbsWindowsRangeEqualsAbsWindowedRange(VT100GridAbsWindowedRange a, VT100GridAbsWindowedRange b) {
+    return (VT100GridRangeEqualsRange(a.columnWindow,
+                                      b.columnWindow) &&
+            VT100GridAbsCoordRangeEquals(a.coordRange,
+                                         b.coordRange));
+}
+
 NSString *VT100GridAbsWindowedRangeDescription(VT100GridAbsWindowedRange range);
 
 NS_INLINE VT100GridAbsCoord VT100GridAbsWindowedRangeStart(VT100GridAbsWindowedRange range) {
@@ -306,6 +338,16 @@ NS_INLINE VT100GridAbsCoordRange VT100GridAbsCoordRangeMake(int startX,
     return coordRange;
 }
 
+NS_INLINE VT100GridWindowedRange VT100GridWindowedRangeFromAbsWindowedRange(VT100GridAbsWindowedRange absrange,
+                                                                            long long offset) {
+    return VT100GridWindowedRangeMake(VT100GridCoordRangeMake(absrange.coordRange.start.x,
+                                                              (int)MIN(INT_MAX, MAX(offset, absrange.coordRange.start.y) - offset),
+                                                              absrange.coordRange.end.x,
+                                                              (int)MIN(INT_MAX, MAX(offset, absrange.coordRange.end.y) - offset)),
+                                      absrange.columnWindow.location,
+                                      absrange.columnWindow.length);
+}
+
 NS_INLINE VT100GridAbsCoordRange VT100GridAbsCoordRangeFromCoordRange(VT100GridCoordRange range,
                                                                       long long offset) {
     return VT100GridAbsCoordRangeMake(range.start.x, range.start.y + offset, range.end.x, range.end.y + offset);
@@ -322,6 +364,18 @@ NS_INLINE VT100GridAbsWindowedRange VT100GridAbsWindowedRangeFromRelative(VT100G
     return windowedRange;
 }
 
+NS_INLINE VT100GridAbsWindowedRange VT100GridAbsWindowedRangeFromWindowedRange(VT100GridWindowedRange range,
+                                                                               long long offset) {
+    return VT100GridAbsWindowedRangeFromRelative(range, offset);
+}
+
+NS_INLINE VT100GridWindowedRange VT100GridWindowedRangeClampedToWidth(const VT100GridWindowedRange range,
+                                                                      const int width) {
+    const VT100GridAbsWindowedRange input = VT100GridAbsWindowedRangeFromWindowedRange(range, 0);
+    const VT100GridAbsWindowedRange output = VT100GridAbsWindowedRangeClampedToWidth(input, width);
+    return VT100GridWindowedRangeFromAbsWindowedRange(output, 0);
+}
+
 NS_INLINE VT100GridWindowedRange VT100GridWindowedRangeFromVT100GridAbsWindowedRange(VT100GridAbsWindowedRange source,
                                                                                      long long totalScrollbackOverflow) {
     const long long minY = source.coordRange.start.y;
@@ -336,7 +390,7 @@ NS_INLINE VT100GridWindowedRange VT100GridWindowedRangeFromVT100GridAbsWindowedR
 }
 
 NS_INLINE VT100GridCoordRange VT100GridCoordRangeFromAbsCoordRange(VT100GridAbsCoordRange absRange, long long totalOverflow) {
-    const long long startY = absRange.start.y - totalOverflow;
+    const long long startY = MAX(0, absRange.start.y - totalOverflow);
     const long long endY = absRange.end.y - totalOverflow;
     if (endY < 0 || startY >= INT_MAX || endY >= INT_MAX) {
         // Avoid integer underflow
@@ -348,6 +402,40 @@ NS_INLINE VT100GridCoordRange VT100GridCoordRangeFromAbsCoordRange(VT100GridAbsC
                                    (int)endY);
 }
 
+NS_INLINE VT100GridAbsCoord VT100GridAbsCoordFromCoord(VT100GridCoord coord, long long overflow) {
+    return VT100GridAbsCoordMake(coord.x, coord.y + overflow);
+}
+
+NS_INLINE VT100GridCoord VT100GridCoordFromAbsCoord(VT100GridAbsCoord absCoord,
+                                                    long long totalOverflow,
+                                                    BOOL *ok) {
+    const long long y = absCoord.y - totalOverflow;
+    if (y < 0 || y > INT_MAX) {
+        if (ok) {
+            *ok = NO;
+        }
+        return VT100GridCoordMake(0, 0);
+    }
+    if (ok) {
+        *ok = YES;
+    }
+    return VT100GridCoordMake(absCoord.x, (int)y);
+}
+
+NS_INLINE BOOL VT100GridAbsCoordRangeTryMakeRelative(VT100GridAbsCoordRange range,
+                                                     long long overflow,
+                                                     void (^NS_NOESCAPE block)(VT100GridCoordRange range)) {
+    VT100GridCoordRange relative = VT100GridCoordRangeFromAbsCoordRange(range, overflow);
+    if (relative.start.x < 0) {
+        return NO;
+    }
+    block(relative);
+    return YES;
+}
+
+NS_INLINE NSString *VT100GridAbsCoordDescription(VT100GridAbsCoord c) {
+    return [NSString stringWithFormat:@"(%d, %lld)", c.x, c.y];
+}
 
 NS_INLINE NSString *VT100GridCoordDescription(VT100GridCoord c) {
     return [NSString stringWithFormat:@"(%d, %d)", c.x, c.y];
@@ -377,6 +465,22 @@ NS_INLINE VT100GridCoord VT100GridCoordRangeMax(VT100GridCoordRange range) {
     }
 }
 
+NS_INLINE VT100GridAbsCoord VT100GridAbsCoordRangeMin(VT100GridAbsCoordRange range) {
+    if (VT100GridAbsCoordOrder(range.start, range.end) == NSOrderedAscending) {
+        return range.start;
+    } else {
+        return range.end;
+    }
+}
+
+NS_INLINE VT100GridAbsCoord VT100GridAbsCoordRangeMax(VT100GridAbsCoordRange range) {
+    if (VT100GridAbsCoordOrder(range.start, range.end) == NSOrderedAscending) {
+        return range.end;
+    } else {
+        return range.start;
+    }
+}
+
 NS_INLINE BOOL VT100GridCoordRangeContainsCoord(VT100GridCoordRange range, VT100GridCoord coord) {
   NSComparisonResult order = VT100GridCoordOrder(VT100GridCoordRangeMin(range), coord);
   if (order == NSOrderedDescending) {
@@ -399,6 +503,18 @@ NS_INLINE long long VT100GridCoordDistance(VT100GridCoord a, VT100GridCoord b, i
     return llabs(aPos - bPos);
 }
 
+NS_INLINE long long VT100GridAbsCoordDistance(VT100GridAbsCoord a, VT100GridAbsCoord b, int gridWidth) {
+    long long aPos = a.y;
+    aPos *= gridWidth;
+    aPos += a.x;
+
+    long long bPos = b.y;
+    bPos *= gridWidth;
+    bPos += b.x;
+
+    return llabs(aPos - bPos);
+}
+
 NS_INLINE BOOL VT100GridWindowedRangeContainsCoord(VT100GridWindowedRange range,
                                                    VT100GridCoord coord) {
     if (range.columnWindow.location < 0 && range.columnWindow.length < 0) {
@@ -409,9 +525,9 @@ NS_INLINE BOOL VT100GridWindowedRangeContainsCoord(VT100GridWindowedRange range,
             VT100GridCoordRangeContainsCoord(range.coordRange, coord));
 }
 
-NS_INLINE long long VT100GridWindowedRangeLength(VT100GridWindowedRange range, int gridWidth) {
+NS_INLINE long long VT100GridAbsWindowedRangeLength(VT100GridAbsWindowedRange range, int gridWidth) {
     if (range.coordRange.start.y == range.coordRange.end.y) {
-        return VT100GridWindowedRangeEnd(range).x - VT100GridWindowedRangeStart(range).x;
+        return VT100GridAbsWindowedRangeEnd(range).x - VT100GridAbsWindowedRangeStart(range).x;
     } else {
         int left = range.columnWindow.location;
         int right = left + range.columnWindow.length;
@@ -419,15 +535,24 @@ NS_INLINE long long VT100GridWindowedRangeLength(VT100GridWindowedRange range, i
             left = 0;
             right = gridWidth;
         }
-        int numFullLines = MAX(0, (range.coordRange.end.y - range.coordRange.start.y - 1));
-        return ((right - VT100GridWindowedRangeStart(range).x) +  // Chars on first line
-                (VT100GridWindowedRangeEnd(range).x - left) +  // Chars on second line
+        const long long numFullLines = MAX(0, (range.coordRange.end.y - range.coordRange.start.y - 1));
+        return ((right - VT100GridAbsWindowedRangeStart(range).x) +  // Chars on first line
+                (VT100GridAbsWindowedRangeEnd(range).x - left) +  // Chars on second line
                 (right - left) * numFullLines);  // Chars between
     }
 }
 
+NS_INLINE long long VT100GridWindowedRangeLength(VT100GridWindowedRange range, int gridWidth) {
+    return VT100GridAbsWindowedRangeLength(VT100GridAbsWindowedRangeFromWindowedRange(range, 0),
+                                           gridWidth);
+}
+
 NS_INLINE long long VT100GridCoordRangeLength(VT100GridCoordRange range, int gridWidth) {
     return VT100GridCoordDistance(range.start, range.end, gridWidth);
+}
+
+NS_INLINE long long VT100GridAbsCoordRangeLength(VT100GridAbsCoordRange range, int gridWidth) {
+    return VT100GridAbsCoordDistance(range.start, range.end, gridWidth);
 }
 
 // Returns the coord of the last char inside the run.

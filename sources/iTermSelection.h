@@ -25,33 +25,35 @@ typedef NS_ENUM(NSInteger, iTermSelectionMode) {
 - (void)selectionDidChange:(iTermSelection *)selection;
 // Returns range of (parenthesized phrase) starting or ending at coord, or
 // -1,-1,-1,-1 if none.
-- (VT100GridWindowedRange)selectionRangeForParentheticalAt:(VT100GridCoord)coord;
+- (VT100GridAbsWindowedRange)selectionAbsRangeForParentheticalAt:(VT100GridAbsCoord)coord;
 
 // Returns range of word including coord.
-- (VT100GridWindowedRange)selectionRangeForWordAt:(VT100GridCoord)coord;
+- (VT100GridAbsWindowedRange)selectionAbsRangeForWordAt:(VT100GridAbsCoord)coord;
 
 // Returns range of smart selection at coord.
-- (VT100GridWindowedRange)selectionRangeForSmartSelectionAt:(VT100GridCoord)coord;
+- (VT100GridAbsWindowedRange)selectionAbsRangeForSmartSelectionAt:(VT100GridAbsCoord)absCoord;
 
 // Returns range of full wrapped line at coord.
-- (VT100GridWindowedRange)selectionRangeForWrappedLineAt:(VT100GridCoord)coord;
+- (VT100GridAbsWindowedRange)selectionAbsRangeForWrappedLineAt:(VT100GridAbsCoord)absCoord;
 
 // Returns range of single line at coord.
-- (VT100GridWindowedRange)selectionRangeForLineAt:(VT100GridCoord)coord;
+- (VT100GridAbsWindowedRange)selectionAbsRangeForLineAt:(VT100GridAbsCoord)absCoord;
 
 // Returns the x range of trailing nulls on a line.
-- (VT100GridRange)selectionRangeOfTerminalNullsOnLine:(int)lineNumber;
+- (VT100GridRange)selectionRangeOfTerminalNullsOnAbsoluteLine:(long long)absLineNumber;
 
 // Returns the coordinate of the coordinate just before coord.
-- (VT100GridCoord)selectionPredecessorOfCoord:(VT100GridCoord)coord;
+- (VT100GridAbsCoord)selectionPredecessorOfAbsCoord:(VT100GridAbsCoord)absCoord;
 
 // Returns the width of the viewport (total columns in session).
 - (int)selectionViewportWidth;
 
+- (long long)selectionTotalScrollbackOverflow;
+
 // Returns the indexes of cells on the given line containing the given (non-complex) character.
-- (NSIndexSet *)selectionIndexesOnLine:(int)line
-                   containingCharacter:(unichar)c
-                               inRange:(NSRange)range;
+- (NSIndexSet *)selectionIndexesOnAbsoluteLine:(long long)line
+                           containingCharacter:(unichar)c
+                                       inRange:(NSRange)range;
 
 @end
 
@@ -59,14 +61,14 @@ typedef NS_ENUM(NSInteger, iTermSelectionMode) {
 // on selectionMode).
 @interface iTermSubSelection : NSObject <NSCopying>
 
-@property(nonatomic, assign) VT100GridWindowedRange range;
+@property(nonatomic, assign) VT100GridAbsWindowedRange absRange;
 @property(nonatomic, assign) iTermSelectionMode selectionMode;
 @property(nonatomic, assign) BOOL connected;  // If connected, no newline occurs before the next sub
 
-+ (instancetype)subSelectionWithRange:(VT100GridWindowedRange)range
-                                 mode:(iTermSelectionMode)mode
-                                width:(int)width;
-- (BOOL)containsCoord:(VT100GridCoord)coord;
++ (instancetype)subSelectionWithAbsRange:(VT100GridAbsWindowedRange)range
+                                    mode:(iTermSelectionMode)mode
+                                   width:(int)width;
+- (BOOL)containsAbsCoord:(VT100GridAbsCoord)coord;
 
 @end
 
@@ -86,7 +88,7 @@ typedef NS_ENUM(NSInteger, iTermSelectionMode) {
 @property(nonatomic, readonly) BOOL liveRangeIsFlipped;
 
 // The range of selections. May be flipped.
-@property(nonatomic, readonly) VT100GridWindowedRange liveRange;
+@property(nonatomic, readonly) VT100GridAbsWindowedRange liveRange;
 
 // A selection is in progress.
 @property(nonatomic, readonly) BOOL live;
@@ -96,11 +98,11 @@ typedef NS_ENUM(NSInteger, iTermSelectionMode) {
 
 // The last range, including the live one if applicable. Ranges are ordered by endpoint.
 // The range will be -1,-1,-1,-1 if there are none.
-@property(nonatomic, readonly) VT100GridWindowedRange lastRange;
+@property(nonatomic, readonly) VT100GridAbsWindowedRange lastAbsRange;
 
 // The first range, including the live one if applicable. Ranges are ordered by startpoint.
 // The range will be -1,-1,-1,-1 if ther are none.
-@property(nonatomic, readonly) VT100GridWindowedRange firstRange;
+@property(nonatomic, readonly) VT100GridAbsWindowedRange firstAbsRange;
 
 // If set, then the current live selection can be resumed in a different mode.
 // This is used when a range is created by a single click which then becomes a double,
@@ -117,7 +119,7 @@ typedef NS_ENUM(NSInteger, iTermSelectionMode) {
 @property(nonatomic, readonly) long long length;
 
 // Range from the earliest point to the latest point of all selection ranges.
-@property(nonatomic, readonly) VT100GridCoordRange spanningRange;
+@property(nonatomic, readonly) VT100GridAbsCoordRange spanningAbsRange;
 
 // Has clearColumnWindowForLiveSelection been called?
 @property(nonatomic, readonly) BOOL haveClearedColumnWindow;
@@ -130,17 +132,17 @@ typedef NS_ENUM(NSInteger, iTermSelectionMode) {
 // Set |append| to create a new (possibly discontinuous) selection rather than replacing the
 // existing set of subselections.
 // Start a new selection, erasing the old one. Enters live selection.
-- (void)beginSelectionAt:(VT100GridCoord)coord
-                    mode:(iTermSelectionMode)mode
-                  resume:(BOOL)resume
-                  append:(BOOL)append;
+- (void)beginSelectionAtAbsCoord:(VT100GridAbsCoord)absCoord
+                            mode:(iTermSelectionMode)mode
+                          resume:(BOOL)resume
+                          append:(BOOL)append;
 
 // Start extending an existing election, moving an endpoint to the given
 // coordinate in a way appropriate for the selection mode. Enters live selection.
-- (void)beginExtendingSelectionAt:(VT100GridCoord)coord;
+- (void)beginExtendingSelectionAt:(VT100GridAbsCoord)coord;
 
 // During live selection, adjust the endpoint.
-- (BOOL)moveSelectionEndpointTo:(VT100GridCoord)coord;
+- (BOOL)moveSelectionEndpointTo:(VT100GridAbsCoord)coord;
 
 // End live selection.
 - (void)endLiveSelection;
@@ -151,11 +153,11 @@ typedef NS_ENUM(NSInteger, iTermSelectionMode) {
 // Remove selection.
 - (void)clearSelection;
 
-// Subtract numLines from y coordinates.
-- (void)moveUpByLines:(int)numLines;
+// Update ranges for new scrollback overflow.
+- (void)scrollbackOverflowDidChange;
 
 // Indicates if the selection contains the coordinate.
-- (BOOL)containsCoord:(VT100GridCoord)coord;
+- (BOOL)containsAbsCoord:(VT100GridAbsCoord)coord;
 
 // Add a range to the set of selections.
 - (void)addSubSelection:(iTermSubSelection *)sub;
@@ -164,14 +166,14 @@ typedef NS_ENUM(NSInteger, iTermSelectionMode) {
 - (void)addSubSelections:(NSArray<iTermSubSelection *> *)subSelectionArray;
 
 // Returns the indexes of characters selected on a given line.
-- (NSIndexSet *)selectedIndexesOnLine:(int)line;
+- (NSIndexSet *)selectedIndexesOnAbsoluteLine:(long long)line;
 
 // Calls the block for each selected range.
-- (void)enumerateSelectedRanges:(void (^)(VT100GridWindowedRange range, BOOL *stop, BOOL eol))block;
+- (void)enumerateSelectedAbsoluteRanges:(void (^)(VT100GridAbsWindowedRange range, BOOL *stop, BOOL eol))block;
 
 // Changes the first/last range.
-- (void)setFirstRange:(VT100GridWindowedRange)firstRange mode:(iTermSelectionMode)mode;
-- (void)setLastRange:(VT100GridWindowedRange)lastRange mode:(iTermSelectionMode)mode;
+- (void)setFirstAbsRange:(VT100GridAbsWindowedRange)firstRange mode:(iTermSelectionMode)mode;
+- (void)setLastAbsRange:(VT100GridAbsWindowedRange)lastRange mode:(iTermSelectionMode)mode;
 
 // Convert windowed selections to multiple discontinuous non-windowed selections.
 // If a subselection's window spans 0 to width, then it is windowless.
@@ -179,15 +181,18 @@ typedef NS_ENUM(NSInteger, iTermSelectionMode) {
 
 // Augments the "real" selection by adding TAB_FILLER characters preceding a selected TAB. Used for
 // display purposes. Removes selected TAB_FILLERS that aren't followed by a selected TAB.
-- (NSIndexSet *)selectedIndexesIncludingTabFillersInLine:(int)y;
+- (NSIndexSet *)selectedIndexesIncludingTabFillersInAbsoluteLine:(long long)y;
 
 // Load selection from serialized dict
-- (void)setFromDictionaryValue:(NSDictionary *)dict width:(int)width;
+- (void)setFromDictionaryValue:(NSDictionary *)dict
+                         width:(int)width
+       totalScrollbackOverflow:(long long)totalScrollbackOverflow;
 
 // Serialized.
-- (NSDictionary *)dictionaryValueWithYOffset:(int)yOffset;
+- (NSDictionary *)dictionaryValueWithYOffset:(int)yOffset
+                     totalScrollbackOverflow:(long long)totalScrollbackOverflow;
 
 // Utility methods
-- (BOOL)coord:(VT100GridCoord)a isBeforeCoord:(VT100GridCoord)b;
+- (BOOL)absCoord:(VT100GridAbsCoord)a isBeforeAbsCoord:(VT100GridAbsCoord)b;
 
 @end

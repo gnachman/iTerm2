@@ -3602,14 +3602,16 @@ static BOOL iTermCheckSplitTreesIsomorphic(ITMSplitTreeNode *node1, ITMSplitTree
     const NSInteger absoluteOffset = session.screen.totalScrollbackOverflow;
     for (iTermSubSelection *sub in selection.allSubSelections) {
         ITMSubSelection *subProto = [[ITMSubSelection alloc] init];
-        subProto.windowedCoordRange.coordRange.start.x = sub.range.coordRange.start.x;
-        subProto.windowedCoordRange.coordRange.start.y = absoluteOffset + sub.range.coordRange.start.y;
-        subProto.windowedCoordRange.coordRange.end.x = sub.range.coordRange.end.x;
-        subProto.windowedCoordRange.coordRange.end.y = absoluteOffset + sub.range.coordRange.end.y;
+        const long long overflow = session.screen.totalScrollbackOverflow;
+        const VT100GridWindowedRange relativeRange = VT100GridWindowedRangeFromAbsWindowedRange(sub.absRange, overflow);
+        subProto.windowedCoordRange.coordRange.start.x = relativeRange.coordRange.start.x;
+        subProto.windowedCoordRange.coordRange.start.y = absoluteOffset + relativeRange.coordRange.start.y;
+        subProto.windowedCoordRange.coordRange.end.x = relativeRange.coordRange.end.x;
+        subProto.windowedCoordRange.coordRange.end.y = absoluteOffset + relativeRange.coordRange.end.y;
         subProto.connected = sub.connected;
-        if (sub.range.columnWindow.length > 0) {
-            subProto.windowedCoordRange.columns.location = sub.range.columnWindow.location;
-            subProto.windowedCoordRange.columns.length = sub.range.columnWindow.length;
+        if (relativeRange.columnWindow.length > 0) {
+            subProto.windowedCoordRange.columns.location = relativeRange.columnWindow.location;
+            subProto.windowedCoordRange.columns.length = relativeRange.columnWindow.length;
         }
         switch (sub.selectionMode) {
             case kiTermSelectionModeWholeLine:
@@ -3690,7 +3692,9 @@ static BOOL iTermCheckSplitTreesIsomorphic(ITMSplitTreeNode *node1, ITMSplitTree
         if (mode == NSNotFound) {
             return nil;
         }
-        iTermSubSelection *sub = [iTermSubSelection subSelectionWithRange:range mode:mode width:width];
+        const long long overflow = session.screen.totalScrollbackOverflow;
+        VT100GridAbsWindowedRange absRange = VT100GridAbsWindowedRangeFromWindowedRange(range, overflow);
+        iTermSubSelection *sub = [iTermSubSelection subSelectionWithAbsRange:absRange mode:mode width:width];
         return sub;
     }];
 

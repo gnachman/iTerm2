@@ -390,7 +390,7 @@ typedef struct iTermTextColorContext {
         NSData *matches = [_delegate drawingHelperMatchesOnLine:line];
         screen_char_t* theLine = [self.delegate drawingHelperLineAtIndex:line];
         NSIndexSet *selectedIndexes =
-            [_selection selectedIndexesIncludingTabFillersInLine:line];
+            [_selection selectedIndexesIncludingTabFillersInAbsoluteLine:line + _totalScrollbackOverflow];
         iTermBackgroundColorRunsInLine *runsInLine =
             [iTermBackgroundColorRunsInLine backgroundRunsInLine:theLine
                                                       lineLength:_gridSize.width

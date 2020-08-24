@@ -14,16 +14,18 @@
 @implementation iTermLogicalMovementHelper {
     iTermSelection *_selection;
     iTermTextExtractor *_textExtractor;
-    VT100GridCoord _cursorCoord;
+    VT100GridAbsCoord _cursorCoord;
     int _width;
-    int _numberOfLines;
+    long long _numberOfLines;
+    long long _totalScrollbackOverflow;
 }
 
 - (instancetype)initWithTextExtractor:(iTermTextExtractor *)textExtractor
                             selection:(iTermSelection *)selection
-                     cursorCoordinate:(VT100GridCoord)cursorCoord
+                     cursorCoordinate:(VT100GridAbsCoord)cursorCoord
                                 width:(int)width
-                        numberOfLines:(int)numberOfLines {
+                        numberOfLines:(long long)numberOfLines
+              totalScrollbackOverflow:(long long)totalScrollbackOverflow {
     self = [super init];
     if (self) {
         _textExtractor = textExtractor;
@@ -31,13 +33,14 @@
         _cursorCoord = cursorCoord;
         _width = width;
         _numberOfLines = numberOfLines;
+        _totalScrollbackOverflow = totalScrollbackOverflow;
     }
     return self;
 }
 
-- (VT100GridCoordRange)moveSelectionEndpoint:(PTYTextViewSelectionEndpoint)endpoint
-                                 inDirection:(PTYTextViewSelectionExtensionDirection)direction
-                                          by:(PTYTextViewSelectionExtensionUnit)unit {
+- (VT100GridAbsCoordRange)moveSelectionEndpoint:(PTYTextViewSelectionEndpoint)endpoint
+                                    inDirection:(PTYTextViewSelectionExtensionDirection)direction
+                                             by:(PTYTextViewSelectionExtensionUnit)unit {
     // Ensure the unit is valid, since it comes from preferences.
     if (![self unitIsValid:unit]) {
         XLog(@"ERROR: Unrecognized unit enumerated value %@, treating as character.", @(unit));
@@ -49,38 +52,41 @@
         [_selection endLiveSelection];
     }
     iTermSubSelection *sub = _selection.allSubSelections.lastObject;
-    VT100GridWindowedRange existingRange;
+    VT100GridAbsWindowedRange existingRange;
     // Create a selection at the cursor if none exists.
     if (!sub) {
-        VT100GridCoord coord = _cursorCoord;
-        VT100GridRange columnWindow = _textExtractor.logicalWindow;
-        existingRange = VT100GridWindowedRangeMake(VT100GridCoordRangeMake(coord.x, coord.y, coord.x, coord.y),
-                                                   columnWindow.location,
-                                                   columnWindow.length);
+        const VT100GridAbsCoord coord = _cursorCoord;
+        const VT100GridRange columnWindow = _textExtractor.logicalWindow;
+        existingRange = VT100GridAbsWindowedRangeMake(VT100GridAbsCoordRangeMake(coord.x,
+                                                                                 coord.y,
+                                                                                 coord.x,
+                                                                                 coord.y),
+                                                      columnWindow.location,
+                                                      columnWindow.length);
     } else {
-        VT100GridRange columnWindow = sub.range.columnWindow;
-        existingRange = sub.range;
+        const VT100GridRange columnWindow = sub.absRange.columnWindow;
+        existingRange = sub.absRange;
         if (columnWindow.length > 0) {
             _textExtractor.logicalWindow = columnWindow;
         }
     }
 
 
-    VT100GridWindowedRange newRange = [self rangeByExtendingRange:existingRange
-                                                         endpoint:endpoint
-                                                        direction:direction
-                                                        extractor:_textExtractor
-                                                             unit:unit];
+    VT100GridAbsWindowedRange newRange = [self absRangeByExtendingRange:existingRange
+                                                               endpoint:endpoint
+                                                              direction:direction
+                                                              extractor:_textExtractor
+                                                                   unit:unit];
 
     // Convert the mode into an iTermSelectionMode. Only a subset of iTermSelectionModes are
     // possible which is why this uses its own enum.
-    iTermSelectionMode mode = [self selectionModeForExtensionUnit:unit];
+    const iTermSelectionMode mode = [self selectionModeForExtensionUnit:unit];
 
     if (!sub) {
-        [_selection beginSelectionAt:newRange.coordRange.start
-                                mode:mode
-                              resume:NO
-                              append:NO];
+        [_selection beginSelectionAtAbsCoord:newRange.coordRange.start
+                                        mode:mode
+                                      resume:NO
+                                      append:NO];
         if (unit == kPTYTextViewSelectionExtensionUnitCharacter ||
             unit == kPTYTextViewSelectionExtensionUnitMark) {
             [_selection moveSelectionEndpointTo:newRange.coordRange.end];
@@ -88,27 +94,28 @@
             [_selection moveSelectionEndpointTo:newRange.coordRange.start];
         }
         [_selection endLiveSelection];
-    } else if ([_selection coord:newRange.coordRange.start isBeforeCoord:newRange.coordRange.end]) {
+    } else if ([_selection absCoord:newRange.coordRange.start isBeforeAbsCoord:newRange.coordRange.end]) {
         // Is a valid range
-        [_selection setLastRange:newRange mode:mode];
+        [_selection setLastAbsRange:newRange mode:mode];
     } else {
         // Select a single character if the range is empty or flipped. This lets you move the
         // selection around like a cursor.
         switch (endpoint) {
-            case kPTYTextViewSelectionEndpointStart:
+            case kPTYTextViewSelectionEndpointStart: {
                 newRange.coordRange.end =
-                    [_textExtractor successorOfCoordSkippingContiguousNulls:newRange.coordRange.start];
+                [_textExtractor successorOfAbsCoordSkippingContiguousNulls:newRange.coordRange.start];
                 break;
+            }
             case kPTYTextViewSelectionEndpointEnd:
                 newRange.coordRange.start =
-                    [_textExtractor predecessorOfCoordSkippingContiguousNulls:newRange.coordRange.end];
+                [_textExtractor predecessorOfAbsCoordSkippingContiguousNulls:newRange.coordRange.end];
                 break;
         }
-        [_selection setLastRange:newRange mode:mode];
+        [_selection setLastAbsRange:newRange mode:mode];
     }
 
-    VT100GridCoordRange range = _selection.lastRange.coordRange;
-    int start = range.start.y;
+    VT100GridAbsCoordRange range = _selection.lastAbsRange.coordRange;
+    long long start = range.start.y;
     int end = range.end.y;
     static const NSInteger kExtraLinesToMakeVisible = 2;
     switch (endpoint) {
@@ -123,142 +130,142 @@
             break;
     }
 
-    return VT100GridCoordRangeMake(range.start.x,
-                                   start,
-                                   range.end.x,
-                                   end);
+    return VT100GridAbsCoordRangeMake(range.start.x,
+                                      start,
+                                      range.end.x,
+                                      end);
 }
 
-- (VT100GridWindowedRange)rangeByMovingStartOfRange:(VT100GridWindowedRange)existingRange
-                                 toTopWithExtractor:(iTermTextExtractor *)extractor {
-    VT100GridWindowedRange newRange = existingRange;
-    newRange.coordRange.start = VT100GridCoordMake(0, 0);
+- (VT100GridAbsWindowedRange)absRangeByMovingStartOfRange:(VT100GridAbsWindowedRange)existingRange
+                                       toTopWithExtractor:(iTermTextExtractor *)extractor {
+    VT100GridAbsWindowedRange newRange = existingRange;
+    newRange.coordRange.start = VT100GridAbsCoordMake(0, _totalScrollbackOverflow);
     return newRange;
 }
 
-- (VT100GridWindowedRange)rangeByMovingStartOfRange:(VT100GridWindowedRange)existingRange
-                              toBottomWithExtractor:(iTermTextExtractor *)extractor {
-    VT100GridWindowedRange newRange = existingRange;
-    int maxY = MAX(0, _numberOfLines - 1);
-    newRange.coordRange.start = VT100GridCoordMake(MAX(0, _width - 1), maxY);
+- (VT100GridAbsWindowedRange)absRangeByMovingStartOfRange:(VT100GridAbsWindowedRange)existingRange
+                                    toBottomWithExtractor:(iTermTextExtractor *)extractor {
+    VT100GridAbsWindowedRange newRange = existingRange;
+    long long maxY = MAX(0, _totalScrollbackOverflow + _numberOfLines - 1);
+    newRange.coordRange.start = VT100GridAbsCoordMake(MAX(0, _width - 1), maxY);
     return newRange;
 }
 
-- (VT100GridWindowedRange)rangeByMovingStartOfRange:(VT100GridWindowedRange)existingRange
-                         toStartOfLineWithExtractor:(iTermTextExtractor *)extractor {
-    VT100GridWindowedRange newRange = existingRange;
+- (VT100GridAbsWindowedRange)absRangeByMovingStartOfRange:(VT100GridAbsWindowedRange)existingRange
+                               toStartOfLineWithExtractor:(iTermTextExtractor *)extractor {
+    VT100GridAbsWindowedRange newRange = existingRange;
     newRange.coordRange.start.x = existingRange.columnWindow.location;
     return newRange;
 }
 
-- (VT100GridWindowedRange)rangeByMovingStartOfRange:(VT100GridWindowedRange)existingRange
-                         toEndOfLineWithExtractor:(iTermTextExtractor *)extractor {
-    VT100GridWindowedRange newRange = existingRange;
-    newRange.coordRange.start.x = [extractor lengthOfLine:newRange.coordRange.start.y];
+- (VT100GridAbsWindowedRange)absRangeByMovingStartOfRange:(VT100GridAbsWindowedRange)existingRange
+                                 toEndOfLineWithExtractor:(iTermTextExtractor *)extractor {
+    VT100GridAbsWindowedRange newRange = existingRange;
+    newRange.coordRange.start.x = [extractor lengthOfAbsLine:newRange.coordRange.start.y];
     return newRange;
 }
 
-- (VT100GridWindowedRange)rangeByMovingStartOfRange:(VT100GridWindowedRange)existingRange
-                  toStartOfIndentationWithExtractor:(iTermTextExtractor *)extractor {
-    VT100GridWindowedRange newRange = existingRange;
-    newRange.coordRange.start.x = [extractor startOfIndentationOnLine:existingRange.coordRange.start.y];
+- (VT100GridAbsWindowedRange)absRangeByMovingStartOfRange:(VT100GridAbsWindowedRange)existingRange
+                        toStartOfIndentationWithExtractor:(iTermTextExtractor *)extractor {
+    VT100GridAbsWindowedRange newRange = existingRange;
+    newRange.coordRange.start.x = [extractor startOfIndentationOnAbsLine:existingRange.coordRange.start.y];
     return newRange;
 }
 
-- (VT100GridWindowedRange)rangeByMovingStartOfRange:(VT100GridWindowedRange)existingRange
-                                    upWithExtractor:(iTermTextExtractor *)extractor {
-    VT100GridWindowedRange newRange = existingRange;
-    newRange.coordRange.start.y = MAX(0, existingRange.coordRange.start.y - 1);
+- (VT100GridAbsWindowedRange)absRangeByMovingStartOfRange:(VT100GridAbsWindowedRange)existingRange
+                                          upWithExtractor:(iTermTextExtractor *)extractor {
+    VT100GridAbsWindowedRange newRange = existingRange;
+    newRange.coordRange.start.y = MAX(_totalScrollbackOverflow, existingRange.coordRange.start.y - 1);
     return newRange;
 }
 
-- (VT100GridWindowedRange)rangeByMovingStartOfRange:(VT100GridWindowedRange)existingRange
-                                  downWithExtractor:(iTermTextExtractor *)extractor {
-    VT100GridWindowedRange newRange = existingRange;
-    int maxY = _numberOfLines;
+- (VT100GridAbsWindowedRange)absRangeByMovingStartOfRange:(VT100GridAbsWindowedRange)existingRange
+                                        downWithExtractor:(iTermTextExtractor *)extractor {
+    VT100GridAbsWindowedRange newRange = existingRange;
+    const long long maxY = _numberOfLines + _totalScrollbackOverflow;
     newRange.coordRange.start.y = MIN(maxY - 1, existingRange.coordRange.start.y + 1);
     return newRange;
 }
 
-- (VT100GridWindowedRange)rangeByMovingEndOfRange:(VT100GridWindowedRange)existingRange
-                               toTopWithExtractor:(iTermTextExtractor *)extractor {
-    VT100GridWindowedRange newRange = existingRange;
-    newRange.coordRange.end = VT100GridCoordMake(0, 0);
+- (VT100GridAbsWindowedRange)absRangeByMovingEndOfRange:(VT100GridAbsWindowedRange)existingRange
+                                     toTopWithExtractor:(iTermTextExtractor *)extractor {
+    VT100GridAbsWindowedRange newRange = existingRange;
+    newRange.coordRange.end = VT100GridAbsCoordMake(0, _totalScrollbackOverflow);
     return newRange;
 }
 
-- (VT100GridWindowedRange)rangeByMovingEndOfRange:(VT100GridWindowedRange)existingRange
-                            toBottomWithExtractor:(iTermTextExtractor *)extractor {
-    VT100GridWindowedRange newRange = existingRange;
-    int maxY = MAX(0, _numberOfLines - 1);
-    newRange.coordRange.end = VT100GridCoordMake(MAX(0, _width - 1), maxY);
+- (VT100GridAbsWindowedRange)absRangeByMovingEndOfRange:(VT100GridAbsWindowedRange)existingRange
+                                  toBottomWithExtractor:(iTermTextExtractor *)extractor {
+    VT100GridAbsWindowedRange newRange = existingRange;
+    const long long maxY = MAX(_totalScrollbackOverflow, _totalScrollbackOverflow + _numberOfLines - 1);
+    newRange.coordRange.end = VT100GridAbsCoordMake(MAX(0, _width - 1), maxY);
     return newRange;
 }
 
-- (VT100GridWindowedRange)rangeByMovingEndOfRange:(VT100GridWindowedRange)existingRange
-                       toStartOfLineWithExtractor:(iTermTextExtractor *)extractor {
-    VT100GridWindowedRange newRange = existingRange;
+- (VT100GridAbsWindowedRange)absRangeByMovingEndOfRange:(VT100GridAbsWindowedRange)existingRange
+                             toStartOfLineWithExtractor:(iTermTextExtractor *)extractor {
+    VT100GridAbsWindowedRange newRange = existingRange;
     newRange.coordRange.end.x = existingRange.columnWindow.location;
     return newRange;
 }
 
-- (VT100GridWindowedRange)rangeByMovingEndOfRange:(VT100GridWindowedRange)existingRange
-                         toEndOfLineWithExtractor:(iTermTextExtractor *)extractor {
-    VT100GridWindowedRange newRange = existingRange;
-    newRange.coordRange.end.x = [extractor lengthOfLine:newRange.coordRange.end.y];
+- (VT100GridAbsWindowedRange)absRangeByMovingEndOfRange:(VT100GridAbsWindowedRange)existingRange
+                               toEndOfLineWithExtractor:(iTermTextExtractor *)extractor {
+    VT100GridAbsWindowedRange newRange = existingRange;
+    newRange.coordRange.end.x = [extractor lengthOfAbsLine:newRange.coordRange.end.y];
     return newRange;
 }
 
-- (VT100GridWindowedRange)rangeByMovingEndOfRange:(VT100GridWindowedRange)existingRange
-                toStartOfIndentationWithExtractor:(iTermTextExtractor *)extractor {
-    VT100GridWindowedRange newRange = existingRange;
-    newRange.coordRange.end.x = [extractor startOfIndentationOnLine:existingRange.coordRange.end.y];
+- (VT100GridAbsWindowedRange)absRangeByMovingEndOfRange:(VT100GridAbsWindowedRange)existingRange
+                      toStartOfIndentationWithExtractor:(iTermTextExtractor *)extractor {
+    VT100GridAbsWindowedRange newRange = existingRange;
+    newRange.coordRange.end.x = [extractor startOfIndentationOnAbsLine:existingRange.coordRange.end.y];
     return newRange;
 }
 
-- (VT100GridWindowedRange)rangeByMovingEndOfRange:(VT100GridWindowedRange)existingRange
-                                  upWithExtractor:(iTermTextExtractor *)extractor {
-    VT100GridWindowedRange newRange = existingRange;
-    newRange.coordRange.end.y = MAX(0, existingRange.coordRange.end.y - 1);
+- (VT100GridAbsWindowedRange)absRangeByMovingEndOfRange:(VT100GridAbsWindowedRange)existingRange
+                                        upWithExtractor:(iTermTextExtractor *)extractor {
+    VT100GridAbsWindowedRange newRange = existingRange;
+    newRange.coordRange.end.y = MAX(_totalScrollbackOverflow, existingRange.coordRange.end.y - 1);
     return newRange;
 }
 
-- (VT100GridWindowedRange)rangeByMovingEndOfRange:(VT100GridWindowedRange)existingRange
-                                downWithExtractor:(iTermTextExtractor *)extractor {
-    VT100GridWindowedRange newRange = existingRange;
-    int maxY = _numberOfLines;
+- (VT100GridAbsWindowedRange)absRangeByMovingEndOfRange:(VT100GridAbsWindowedRange)existingRange
+                                      downWithExtractor:(iTermTextExtractor *)extractor {
+    VT100GridAbsWindowedRange newRange = existingRange;
+    const long long maxY = _numberOfLines + _totalScrollbackOverflow;
     newRange.coordRange.end.y = MIN(maxY - 1, existingRange.coordRange.end.y + 1);
     return newRange;
 }
 
-- (VT100GridWindowedRange)rangeByMovingStartOfRangeBack:(VT100GridWindowedRange)existingRange
-                                              extractor:(iTermTextExtractor *)extractor
-                                                   unit:(PTYTextViewSelectionExtensionUnit)unit {
-    VT100GridCoord coordBeforeStart =
-        [extractor predecessorOfCoordSkippingContiguousNulls:VT100GridWindowedRangeStart(existingRange)];
+- (VT100GridAbsWindowedRange)absRangeByMovingStartOfRangeBack:(VT100GridAbsWindowedRange)existingRange
+                                                    extractor:(iTermTextExtractor *)extractor
+                                                         unit:(PTYTextViewSelectionExtensionUnit)unit {
+    VT100GridAbsCoord coordBeforeStart =
+    [extractor predecessorOfAbsCoordSkippingContiguousNulls:VT100GridAbsWindowedRangeStart(existingRange)];
     switch (unit) {
         case kPTYTextViewSelectionExtensionUnitCharacter: {
-            VT100GridWindowedRange rangeWithCharacterBeforeStart = existingRange;
+            VT100GridAbsWindowedRange rangeWithCharacterBeforeStart = existingRange;
             rangeWithCharacterBeforeStart.coordRange.start = coordBeforeStart;
             return rangeWithCharacterBeforeStart;
         }
         case kPTYTextViewSelectionExtensionUnitWord: {
-            VT100GridWindowedRange rangeWithWordBeforeStart =
-                [extractor rangeForWordAt:coordBeforeStart maximumLength:kLongMaximumWordLength];
+            VT100GridAbsWindowedRange rangeWithWordBeforeStart =
+            [extractor rangeForWordAtAbsCoord:coordBeforeStart maximumLength:kLongMaximumWordLength];
             rangeWithWordBeforeStart.coordRange.end = existingRange.coordRange.end;
             rangeWithWordBeforeStart.columnWindow = existingRange.columnWindow;
             return rangeWithWordBeforeStart;
         }
         case kPTYTextViewSelectionExtensionUnitBigWord: {
-            VT100GridWindowedRange rangeWithWordBeforeStart =
-                [extractor rangeForBigWordAt:coordBeforeStart maximumLength:kLongMaximumWordLength];
+            VT100GridAbsWindowedRange rangeWithWordBeforeStart =
+            [extractor rangeForBigWordAtAbsCoord:coordBeforeStart maximumLength:kLongMaximumWordLength];
             rangeWithWordBeforeStart.coordRange.end = existingRange.coordRange.end;
             rangeWithWordBeforeStart.columnWindow = existingRange.columnWindow;
             return rangeWithWordBeforeStart;
         }
         case kPTYTextViewSelectionExtensionUnitLine: {
-            VT100GridWindowedRange rangeWithLineBeforeStart = existingRange;
-            if (rangeWithLineBeforeStart.coordRange.start.y > 0) {
+            VT100GridAbsWindowedRange rangeWithLineBeforeStart = existingRange;
+            if (rangeWithLineBeforeStart.coordRange.start.y > _totalScrollbackOverflow) {
                 if (rangeWithLineBeforeStart.coordRange.start.x > rangeWithLineBeforeStart.columnWindow.location) {
                     rangeWithLineBeforeStart.coordRange.start.x = rangeWithLineBeforeStart.columnWindow.location;
                 } else {
@@ -268,13 +275,13 @@
             return rangeWithLineBeforeStart;
         }
         case kPTYTextViewSelectionExtensionUnitMark: {
-            VT100GridWindowedRange rangeWithLineBeforeStart = existingRange;
-            if (rangeWithLineBeforeStart.coordRange.start.y > 0) {
-                int previousMark = [self lineNumberOfMarkBeforeLine:existingRange.coordRange.start.y];
+            VT100GridAbsWindowedRange rangeWithLineBeforeStart = existingRange;
+            if (rangeWithLineBeforeStart.coordRange.start.y > _totalScrollbackOverflow) {
+                long long previousMark = [self absoluteLineNumberOfMarkBeforeAbsLine:existingRange.coordRange.start.y];
                 if (previousMark != -1) {
                     rangeWithLineBeforeStart.coordRange.start.y = previousMark + 1;
                     if (rangeWithLineBeforeStart.coordRange.start.y == existingRange.coordRange.start.y) {
-                        previousMark = [self lineNumberOfMarkBeforeLine:existingRange.coordRange.start.y - 1];
+                        previousMark = [self absoluteLineNumberOfMarkBeforeAbsLine:existingRange.coordRange.start.y - 1];
                         if (previousMark != -1) {
                             rangeWithLineBeforeStart.coordRange.start.y = previousMark + 1;
                         }
@@ -288,60 +295,62 @@
     assert(false);
 }
 
-- (VT100GridWindowedRange)rangeByMovingStartOfRangeForward:(VT100GridWindowedRange)existingRange
-                                                 extractor:(iTermTextExtractor *)extractor
-                                                      unit:(PTYTextViewSelectionExtensionUnit)unit {
-    VT100GridCoord coordAfterStart =
-        [extractor successorOfCoordSkippingContiguousNulls:VT100GridWindowedRangeStart(existingRange)];
+- (VT100GridAbsWindowedRange)absRangeByMovingStartOfRangeForward:(VT100GridAbsWindowedRange)existingRange
+                                                       extractor:(iTermTextExtractor *)extractor
+                                                            unit:(PTYTextViewSelectionExtensionUnit)unit {
+    const VT100GridAbsCoord coordAfterStart =
+    [extractor successorOfAbsCoordSkippingContiguousNulls:VT100GridAbsWindowedRangeStart(existingRange)];
     switch (unit) {
         case kPTYTextViewSelectionExtensionUnitCharacter: {
-            VT100GridWindowedRange rangeExcludingFirstCharacter = existingRange;
+            VT100GridAbsWindowedRange rangeExcludingFirstCharacter = existingRange;
             rangeExcludingFirstCharacter.coordRange.start = coordAfterStart;
             return rangeExcludingFirstCharacter;
         }
         case kPTYTextViewSelectionExtensionUnitWord: {
-            VT100GridCoord startCoord = VT100GridWindowedRangeStart(existingRange);
-            BOOL startWasOnNull = [extractor characterAt:startCoord].code == 0;
-            VT100GridWindowedRange rangeExcludingWordAtStart = existingRange;
+            VT100GridAbsCoord startCoord = VT100GridAbsWindowedRangeStart(existingRange);
+            const BOOL startWasOnNull = [extractor characterAtAbsCoord:startCoord].code == 0;
+            VT100GridAbsWindowedRange rangeExcludingWordAtStart = existingRange;
             rangeExcludingWordAtStart.coordRange.start =
-            [extractor rangeForWordAt:startCoord  maximumLength:kLongMaximumWordLength].coordRange.end;
+            [extractor rangeForWordAtAbsCoord:startCoord
+                                maximumLength:kLongMaximumWordLength].coordRange.end;
             // If the start of range moved from a null to a null, skip to the end of the line or past all the nulls.
             if (startWasOnNull &&
-                [extractor characterAt:rangeExcludingWordAtStart.coordRange.start].code == 0) {
+                [extractor characterAtAbsCoord:rangeExcludingWordAtStart.coordRange.start].code == 0) {
                 rangeExcludingWordAtStart.coordRange.start =
-                [extractor successorOfCoordSkippingContiguousNulls:rangeExcludingWordAtStart.coordRange.start];
+                [extractor successorOfAbsCoordSkippingContiguousNulls:rangeExcludingWordAtStart.coordRange.start];
             }
             return rangeExcludingWordAtStart;
         }
         case kPTYTextViewSelectionExtensionUnitBigWord: {
-            VT100GridCoord startCoord = VT100GridWindowedRangeStart(existingRange);
-            BOOL startWasOnNull = [extractor characterAt:startCoord].code == 0;
-            VT100GridWindowedRange rangeExcludingWordAtStart = existingRange;
+            VT100GridAbsCoord startCoord = VT100GridAbsWindowedRangeStart(existingRange);
+            const BOOL startWasOnNull = [extractor characterAtAbsCoord:startCoord].code == 0;
+            VT100GridAbsWindowedRange rangeExcludingWordAtStart = existingRange;
             rangeExcludingWordAtStart.coordRange.start =
-            [extractor rangeForBigWordAt:startCoord  maximumLength:kLongMaximumWordLength].coordRange.end;
+            [extractor rangeForBigWordAtAbsCoord:startCoord
+                                   maximumLength:kLongMaximumWordLength].coordRange.end;
             // If the start of range moved from a null to a null, skip to the end of the line or past all the nulls.
             if (startWasOnNull &&
-                [extractor characterAt:rangeExcludingWordAtStart.coordRange.start].code == 0) {
+                [extractor characterAtAbsCoord:rangeExcludingWordAtStart.coordRange.start].code == 0) {
                 rangeExcludingWordAtStart.coordRange.start =
-                [extractor successorOfCoordSkippingContiguousNulls:rangeExcludingWordAtStart.coordRange.start];
+                [extractor successorOfAbsCoordSkippingContiguousNulls:rangeExcludingWordAtStart.coordRange.start];
             }
             return rangeExcludingWordAtStart;
         }
         case kPTYTextViewSelectionExtensionUnitLine: {
-            VT100GridWindowedRange rangeExcludingFirstLine = existingRange;
+            VT100GridAbsWindowedRange rangeExcludingFirstLine = existingRange;
             rangeExcludingFirstLine.coordRange.start.x = existingRange.columnWindow.location;
             rangeExcludingFirstLine.coordRange.start.y =
-            MIN(_numberOfLines,
+            MIN(_numberOfLines + _totalScrollbackOverflow,
                 rangeExcludingFirstLine.coordRange.start.y + 1);
             return rangeExcludingFirstLine;
         }
         case kPTYTextViewSelectionExtensionUnitMark: {
-            VT100GridWindowedRange rangeExcludingFirstLine = existingRange;
+            VT100GridAbsWindowedRange rangeExcludingFirstLine = existingRange;
             rangeExcludingFirstLine.coordRange.start.x = existingRange.columnWindow.location;
-            int nextMark = [self lineNumberOfMarkAfterLine:rangeExcludingFirstLine.coordRange.start.y - 1];
+            const long long nextMark = [self absoluteLineNumberOfMarkAfterAbsLine:rangeExcludingFirstLine.coordRange.start.y - 1];
             if (nextMark != -1) {
                 rangeExcludingFirstLine.coordRange.start.y =
-                    MIN(_numberOfLines, nextMark + 1);
+                MIN(_numberOfLines + _totalScrollbackOverflow, nextMark + 1);
             }
             return rangeExcludingFirstLine;
         }
@@ -349,43 +358,46 @@
     assert(false);
 }
 
-- (VT100GridWindowedRange)rangeByMovingEndOfRangeBack:(VT100GridWindowedRange)existingRange
-                                            extractor:(iTermTextExtractor *)extractor
-                                                 unit:(PTYTextViewSelectionExtensionUnit)unit {
-    VT100GridCoord coordBeforeEnd =
-    [extractor predecessorOfCoordSkippingContiguousNulls:VT100GridWindowedRangeEnd(existingRange)];
+- (VT100GridAbsWindowedRange)absRangeByMovingEndOfRangeBack:(VT100GridAbsWindowedRange)existingRange
+                                                  extractor:(iTermTextExtractor *)extractor
+                                                       unit:(PTYTextViewSelectionExtensionUnit)unit {
+    const VT100GridAbsCoord coordBeforeEnd =
+    [extractor predecessorOfAbsCoordSkippingContiguousNulls:VT100GridAbsWindowedRangeEnd(existingRange)];
     switch (unit) {
         case kPTYTextViewSelectionExtensionUnitCharacter: {
-            VT100GridWindowedRange rangeExcludingLastCharacter = existingRange;
+            VT100GridAbsWindowedRange rangeExcludingLastCharacter = existingRange;
             rangeExcludingLastCharacter.coordRange.end = coordBeforeEnd;
             return rangeExcludingLastCharacter;
         }
         case kPTYTextViewSelectionExtensionUnitWord: {
-            VT100GridWindowedRange rangeExcludingWordAtEnd = existingRange;
+            VT100GridAbsWindowedRange rangeExcludingWordAtEnd = existingRange;
             rangeExcludingWordAtEnd.coordRange.end =
-            [extractor rangeForWordAt:coordBeforeEnd maximumLength:kLongMaximumWordLength].coordRange.start;
+            [extractor rangeForWordAtAbsCoord:coordBeforeEnd
+                                maximumLength:kLongMaximumWordLength].coordRange.start;
             rangeExcludingWordAtEnd.columnWindow = existingRange.columnWindow;
             return rangeExcludingWordAtEnd;
         }
         case kPTYTextViewSelectionExtensionUnitBigWord: {
-            VT100GridWindowedRange rangeExcludingWordAtEnd = existingRange;
+            VT100GridAbsWindowedRange rangeExcludingWordAtEnd = existingRange;
             rangeExcludingWordAtEnd.coordRange.end =
-            [extractor rangeForBigWordAt:coordBeforeEnd maximumLength:kLongMaximumWordLength].coordRange.start;
+            [extractor rangeForBigWordAtAbsCoord:coordBeforeEnd
+                                   maximumLength:kLongMaximumWordLength].coordRange.start;
             rangeExcludingWordAtEnd.columnWindow = existingRange.columnWindow;
             return rangeExcludingWordAtEnd;
         }
         case kPTYTextViewSelectionExtensionUnitLine: {
-            VT100GridWindowedRange rangeExcludingLastLine = existingRange;
+            VT100GridAbsWindowedRange rangeExcludingLastLine = existingRange;
             if (existingRange.coordRange.end.x > existingRange.columnWindow.location) {
                 rangeExcludingLastLine.coordRange.end.x = existingRange.columnWindow.location;
             } else {
                 rangeExcludingLastLine.coordRange.end.x = existingRange.columnWindow.location;
-                rangeExcludingLastLine.coordRange.end.y = MAX(1, existingRange.coordRange.end.y - 1);
+                rangeExcludingLastLine.coordRange.end.y = MAX(1 + _totalScrollbackOverflow,
+                                                              existingRange.coordRange.end.y - 1);
             }
             return rangeExcludingLastLine;
         }
         case kPTYTextViewSelectionExtensionUnitMark: {
-            VT100GridWindowedRange rangeExcludingLastLine = existingRange;
+            VT100GridAbsWindowedRange rangeExcludingLastLine = existingRange;
             int rightMargin;
             if (existingRange.columnWindow.length) {
                 rightMargin = VT100GridRangeMax(existingRange.columnWindow) + 1;
@@ -393,9 +405,9 @@
                 rightMargin = _width;
             }
             rangeExcludingLastLine.coordRange.end.x = rightMargin;
-            int n = [self lineNumberOfMarkBeforeLine:rangeExcludingLastLine.coordRange.end.y + 1];
+            long long n = [self absoluteLineNumberOfMarkBeforeAbsLine:rangeExcludingLastLine.coordRange.end.y + 1];
             if (n != -1) {
-                rangeExcludingLastLine.coordRange.end.y = MAX(1, n - 1);
+                rangeExcludingLastLine.coordRange.end.y = MAX(1 + _totalScrollbackOverflow, n - 1);
             }
             return rangeExcludingLastLine;
         }
@@ -403,42 +415,46 @@
     assert(false);
 }
 
-- (VT100GridWindowedRange)rangeByMovingEndOfRangeForward:(VT100GridWindowedRange)existingRange
-                                               extractor:(iTermTextExtractor *)extractor
-                                                    unit:(PTYTextViewSelectionExtensionUnit)unit {
-    VT100GridCoord endCoord = VT100GridWindowedRangeEnd(existingRange);
-    VT100GridCoord coordAfterEnd =
-        [extractor successorOfCoordSkippingContiguousNulls:endCoord];
+- (VT100GridAbsWindowedRange)absRangeByMovingEndOfRangeForward:(VT100GridAbsWindowedRange)existingRange
+                                                     extractor:(iTermTextExtractor *)extractor
+                                                          unit:(PTYTextViewSelectionExtensionUnit)unit {
+    const VT100GridAbsCoord endCoord = VT100GridAbsWindowedRangeEnd(existingRange);
+    VT100GridAbsCoord coordAfterEnd =
+    [extractor successorOfAbsCoordSkippingContiguousNulls:endCoord];
     switch (unit) {
         case kPTYTextViewSelectionExtensionUnitCharacter: {
-            VT100GridWindowedRange rangeWithCharacterAfterEnd = existingRange;
+            VT100GridAbsWindowedRange rangeWithCharacterAfterEnd = existingRange;
             rangeWithCharacterAfterEnd.coordRange.end = coordAfterEnd;
             return rangeWithCharacterAfterEnd;
         }
         case kPTYTextViewSelectionExtensionUnitWord: {
-            VT100GridWindowedRange rangeWithWordAfterEnd;
+            VT100GridAbsWindowedRange rangeWithWordAfterEnd;
             if (endCoord.x > VT100GridRangeMax(existingRange.columnWindow)) {
-                rangeWithWordAfterEnd = [extractor rangeForWordAt:coordAfterEnd maximumLength:kLongMaximumWordLength];
+                rangeWithWordAfterEnd = [extractor rangeForWordAtAbsCoord:coordAfterEnd
+                                                            maximumLength:kLongMaximumWordLength];
             } else {
-                rangeWithWordAfterEnd = [extractor rangeForWordAt:endCoord maximumLength:kLongMaximumWordLength];
+                rangeWithWordAfterEnd = [extractor rangeForWordAtAbsCoord:endCoord
+                                                            maximumLength:kLongMaximumWordLength];
             }
             rangeWithWordAfterEnd.coordRange.start = existingRange.coordRange.start;
             rangeWithWordAfterEnd.columnWindow = existingRange.columnWindow;
             return rangeWithWordAfterEnd;
         }
         case kPTYTextViewSelectionExtensionUnitBigWord: {
-            VT100GridWindowedRange rangeWithWordAfterEnd;
+            VT100GridAbsWindowedRange rangeWithWordAfterEnd;
             if (endCoord.x > VT100GridRangeMax(existingRange.columnWindow)) {
-                rangeWithWordAfterEnd = [extractor rangeForBigWordAt:coordAfterEnd maximumLength:kLongMaximumWordLength];
+                rangeWithWordAfterEnd = [extractor rangeForBigWordAtAbsCoord:coordAfterEnd
+                                                               maximumLength:kLongMaximumWordLength];
             } else {
-                rangeWithWordAfterEnd = [extractor rangeForBigWordAt:endCoord maximumLength:kLongMaximumWordLength];
+                rangeWithWordAfterEnd = [extractor rangeForBigWordAtAbsCoord:endCoord
+                                                               maximumLength:kLongMaximumWordLength];
             }
             rangeWithWordAfterEnd.coordRange.start = existingRange.coordRange.start;
             rangeWithWordAfterEnd.columnWindow = existingRange.columnWindow;
             return rangeWithWordAfterEnd;
         }
         case kPTYTextViewSelectionExtensionUnitLine: {
-            VT100GridWindowedRange rangeWithLineAfterEnd = existingRange;
+            VT100GridAbsWindowedRange rangeWithLineAfterEnd = existingRange;
             int rightMargin;
             if (existingRange.columnWindow.length) {
                 rightMargin = VT100GridRangeMax(existingRange.columnWindow) + 1;
@@ -450,13 +466,13 @@
             } else {
                 rangeWithLineAfterEnd.coordRange.end.x = rightMargin;
                 rangeWithLineAfterEnd.coordRange.end.y =
-                MIN(_numberOfLines,
+                MIN(_numberOfLines + _totalScrollbackOverflow,
                     rangeWithLineAfterEnd.coordRange.end.y + 1);
             }
             return rangeWithLineAfterEnd;
         }
         case kPTYTextViewSelectionExtensionUnitMark: {
-            VT100GridWindowedRange rangeWithLineAfterEnd = existingRange;
+            VT100GridAbsWindowedRange rangeWithLineAfterEnd = existingRange;
             int rightMargin;
             if (existingRange.columnWindow.length) {
                 rightMargin = VT100GridRangeMax(existingRange.columnWindow) + 1;
@@ -464,19 +480,19 @@
                 rightMargin = _width;
             }
             rangeWithLineAfterEnd.coordRange.end.x = rightMargin;
-            int nextMark =
-                [self lineNumberOfMarkAfterLine:rangeWithLineAfterEnd.coordRange.end.y];
+            const long long nextMark =
+            [self absoluteLineNumberOfMarkAfterAbsLine:rangeWithLineAfterEnd.coordRange.end.y];
             if (nextMark != -1) {
                 rangeWithLineAfterEnd.coordRange.end.y =
-                    MIN(_numberOfLines,
-                        nextMark - 1);
+                MIN(_numberOfLines + _totalScrollbackOverflow,
+                    nextMark - 1);
             }
             if (rangeWithLineAfterEnd.coordRange.end.y == existingRange.coordRange.end.y) {
-                int nextMark =
-                    [self lineNumberOfMarkAfterLine:rangeWithLineAfterEnd.coordRange.end.y + 1];
+                const long long nextMark =
+                [self absoluteLineNumberOfMarkAfterAbsLine:rangeWithLineAfterEnd.coordRange.end.y + 1];
                 if (nextMark != -1) {
                     rangeWithLineAfterEnd.coordRange.end.y =
-                        MIN(_numberOfLines, nextMark - 1);
+                    MIN(_numberOfLines + _totalScrollbackOverflow, nextMark - 1);
                 }
             }
             return rangeWithLineAfterEnd;
@@ -485,46 +501,46 @@
     assert(false);
 }
 
-- (VT100GridWindowedRange)rangeByExtendingRange:(VT100GridWindowedRange)existingRange
-                                       endpoint:(PTYTextViewSelectionEndpoint)endpoint
-                                      direction:(PTYTextViewSelectionExtensionDirection)direction
-                                      extractor:(iTermTextExtractor *)extractor
-                                           unit:(PTYTextViewSelectionExtensionUnit)unit {
+- (VT100GridAbsWindowedRange)absRangeByExtendingRange:(VT100GridAbsWindowedRange)existingRange
+                                             endpoint:(PTYTextViewSelectionEndpoint)endpoint
+                                            direction:(PTYTextViewSelectionExtensionDirection)direction
+                                            extractor:(iTermTextExtractor *)extractor
+                                                 unit:(PTYTextViewSelectionExtensionUnit)unit {
     switch (endpoint) {
         case kPTYTextViewSelectionEndpointStart:
             switch (direction) {
                 case kPTYTextViewSelectionExtensionDirectionUp:
-                    return [self rangeByMovingStartOfRange:existingRange
-                                           upWithExtractor:extractor];
+                    return [self absRangeByMovingStartOfRange:existingRange
+                                              upWithExtractor:extractor];
 
                 case kPTYTextViewSelectionExtensionDirectionLeft:
-                    return [self rangeByMovingStartOfRangeBack:existingRange
-                                                     extractor:extractor
-                                                          unit:unit];
-
-                case kPTYTextViewSelectionExtensionDirectionDown:
-                    return [self rangeByMovingStartOfRange:existingRange
-                                         downWithExtractor:extractor];
-
-                case kPTYTextViewSelectionExtensionDirectionRight:
-                    return [self rangeByMovingStartOfRangeForward:existingRange
+                    return [self absRangeByMovingStartOfRangeBack:existingRange
                                                         extractor:extractor
                                                              unit:unit];
 
+                case kPTYTextViewSelectionExtensionDirectionDown:
+                    return [self absRangeByMovingStartOfRange:existingRange
+                                            downWithExtractor:extractor];
+
+                case kPTYTextViewSelectionExtensionDirectionRight:
+                    return [self absRangeByMovingStartOfRangeForward:existingRange
+                                                           extractor:extractor
+                                                                unit:unit];
+
                 case kPTYTextViewSelectionExtensionDirectionStartOfLine:
-                    return [self rangeByMovingStartOfRange:existingRange toStartOfLineWithExtractor:extractor];
+                    return [self absRangeByMovingStartOfRange:existingRange toStartOfLineWithExtractor:extractor];
 
                 case kPTYTextViewSelectionExtensionDirectionEndOfLine:
-                    return [self rangeByMovingStartOfRange:existingRange toEndOfLineWithExtractor:extractor];
+                    return [self absRangeByMovingStartOfRange:existingRange toEndOfLineWithExtractor:extractor];
 
                 case kPTYTextViewSelectionExtensionDirectionTop:
-                    return [self rangeByMovingStartOfRange:existingRange toTopWithExtractor:extractor];
+                    return [self absRangeByMovingStartOfRange:existingRange toTopWithExtractor:extractor];
 
                 case kPTYTextViewSelectionExtensionDirectionBottom:
-                    return [self rangeByMovingStartOfRange:existingRange toBottomWithExtractor:extractor];
+                    return [self absRangeByMovingStartOfRange:existingRange toBottomWithExtractor:extractor];
 
                 case kPTYTextViewSelectionExtensionDirectionStartOfIndentation:
-                    return [self rangeByMovingStartOfRange:existingRange toStartOfIndentationWithExtractor:extractor];
+                    return [self absRangeByMovingStartOfRange:existingRange toStartOfIndentationWithExtractor:extractor];
             }
             assert(false);
             break;
@@ -532,37 +548,37 @@
         case kPTYTextViewSelectionEndpointEnd:
             switch (direction) {
                 case kPTYTextViewSelectionExtensionDirectionUp:
-                    return [self rangeByMovingEndOfRange:existingRange
-                                         upWithExtractor:extractor];
+                    return [self absRangeByMovingEndOfRange:existingRange
+                                            upWithExtractor:extractor];
 
                 case kPTYTextViewSelectionExtensionDirectionLeft:
-                    return [self rangeByMovingEndOfRangeBack:existingRange
-                                                   extractor:extractor
-                                                        unit:unit];
-
-                case kPTYTextViewSelectionExtensionDirectionDown:
-                    return [self rangeByMovingEndOfRange:existingRange
-                                       downWithExtractor:extractor];
-
-                case kPTYTextViewSelectionExtensionDirectionRight:
-                    return [self rangeByMovingEndOfRangeForward:existingRange
+                    return [self absRangeByMovingEndOfRangeBack:existingRange
                                                       extractor:extractor
                                                            unit:unit];
 
+                case kPTYTextViewSelectionExtensionDirectionDown:
+                    return [self absRangeByMovingEndOfRange:existingRange
+                                          downWithExtractor:extractor];
+
+                case kPTYTextViewSelectionExtensionDirectionRight:
+                    return [self absRangeByMovingEndOfRangeForward:existingRange
+                                                         extractor:extractor
+                                                              unit:unit];
+
                 case kPTYTextViewSelectionExtensionDirectionStartOfLine:
-                    return [self rangeByMovingEndOfRange:existingRange toStartOfLineWithExtractor:extractor];
+                    return [self absRangeByMovingEndOfRange:existingRange toStartOfLineWithExtractor:extractor];
 
                 case kPTYTextViewSelectionExtensionDirectionEndOfLine:
-                    return [self rangeByMovingEndOfRange:existingRange toEndOfLineWithExtractor:extractor];
+                    return [self absRangeByMovingEndOfRange:existingRange toEndOfLineWithExtractor:extractor];
 
                 case kPTYTextViewSelectionExtensionDirectionTop:
-                    return [self rangeByMovingEndOfRange:existingRange toTopWithExtractor:extractor];
+                    return [self absRangeByMovingEndOfRange:existingRange toTopWithExtractor:extractor];
 
                 case kPTYTextViewSelectionExtensionDirectionBottom:
-                    return [self rangeByMovingEndOfRange:existingRange toBottomWithExtractor:extractor];
+                    return [self absRangeByMovingEndOfRange:existingRange toBottomWithExtractor:extractor];
 
                 case kPTYTextViewSelectionExtensionDirectionStartOfIndentation:
-                    return [self rangeByMovingEndOfRange:existingRange toStartOfIndentationWithExtractor:extractor];
+                    return [self absRangeByMovingEndOfRange:existingRange toStartOfIndentationWithExtractor:extractor];
             }
             assert(false);
             break;
@@ -598,18 +614,18 @@
     return NO;
 }
 
-- (int)lineNumberOfMarkAfterLine:(int)line {
+- (long long)absoluteLineNumberOfMarkAfterAbsLine:(long long)line {
     if (!self.delegate) {
         return -1;
     }
-    return [self.delegate lineNumberOfMarkAfterLine:line];
+    return [self.delegate lineNumberOfMarkAfterAbsLine:line];
 }
 
-- (int)lineNumberOfMarkBeforeLine:(int)line {
+- (long long)absoluteLineNumberOfMarkBeforeAbsLine:(long long)line {
     if (!self.delegate) {
         return -1;
     }
-    return [self.delegate lineNumberOfMarkAfterLine:line];
+    return [self.delegate lineNumberOfMarkBeforeAbsLine:line];
 }
 
 @end

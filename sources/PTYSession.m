@@ -1628,7 +1628,8 @@ ITERM_WEAKLY_REFERENCEABLE
 
     if (arrangement[SESSION_ARRANGEMENT_SELECTION]) {
         [aSession.textview.selection setFromDictionaryValue:arrangement[SESSION_ARRANGEMENT_SELECTION]
-                                                      width:aSession.screen.width];
+                                                      width:aSession.screen.width
+                                    totalScrollbackOverflow:aSession.screen.totalScrollbackOverflow];
     }
     [aSession.screen restoreInitialSize];
     [aSession updateMarksMinimapRangeOfVisibleLines];
@@ -3498,14 +3499,19 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)openSelection {
     iTermSemanticHistoryController *semanticHistoryController = _textview.semanticHistoryController;
-    int lineNumber;
+    long long absLineNumber;
     NSArray *subSelections = _textview.selection.allSubSelections;
     if ([subSelections count]) {
         iTermSubSelection *firstSub = subSelections[0];
-        lineNumber = firstSub.range.coordRange.start.y;
+        absLineNumber = firstSub.absRange.coordRange.start.y;
     } else {
-        lineNumber = _textview.selection.liveRange.coordRange.start.y;
+        absLineNumber = _textview.selection.liveRange.coordRange.start.y;
     }
+    const long long overflow = _screen.totalScrollbackOverflow;
+    if (absLineNumber < overflow || absLineNumber - overflow > INT_MAX) {
+        return;
+    }
+    const int lineNumber = absLineNumber - overflow;
 
     // TODO: Figure out if this is a remote host and download/open if that's the case.
     NSString *workingDirectory = [_screen workingDirectoryOnLine:lineNumber];
@@ -4742,7 +4748,8 @@ ITERM_WEAKLY_REFERENCEABLE
             result[SESSION_ARRANGEMENT_LAST_LOCAL_DIRECTORY] = self.lastLocalDirectory;
         }
         result[SESSION_ARRANGEMENT_SELECTION] =
-            [self.textview.selection dictionaryValueWithYOffset:-numberOfLinesDropped];
+            [self.textview.selection dictionaryValueWithYOffset:-numberOfLinesDropped
+                                        totalScrollbackOverflow:_screen.totalScrollbackOverflow];
         result[SESSION_ARRANGEMENT_APS] = [_automaticProfileSwitcher savedState];
     }
     result[SESSION_ARRANGEMENT_GUID] = _guid;
@@ -12872,13 +12879,15 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     state.textView = _textview;
 
     if (_textview.selection.allSubSelections.count == 1) {
-        [_textview.window makeFirstResponder:_textview];
         iTermSubSelection *sub = _textview.selection.allSubSelections.firstObject;
-        state.start = sub.range.coordRange.start;
-        state.coord = sub.range.coordRange.end;
-        state.selecting = YES;
-        state.start = sub.range.coordRange.start;
-        state.coord = sub.range.coordRange.end;
+        VT100GridAbsCoordRangeTryMakeRelative(sub.absRange.coordRange,
+                                              _screen.totalScrollbackOverflow,
+                                              ^(VT100GridCoordRange range) {
+            [_textview.window makeFirstResponder:_textview];
+            state.selecting = YES;
+            state.start = range.start;
+            state.coord = range.end;
+        });
     }
     [_textview scrollLineNumberRangeIntoView:VT100GridRangeMake(state.coord.y, 1)];
     return state;

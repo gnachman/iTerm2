@@ -37,6 +37,12 @@ NS_ASSUME_NONNULL_BEGIN
                     coordForEvent:(NSEvent *)event
          allowRightMarginOverflow:(BOOL)allowRightMarginOverflow;
 
+- (VT100GridAbsCoord)urlActionHelper:(iTermURLActionHelper *)helper
+                    absCoordForEvent:(NSEvent *)event
+            allowRightMarginOverflow:(BOOL)allowRightMarginOverflow;
+
+- (long long)urlActionTotalScrollbackOverflow:(iTermURLActionHelper *)helper;
+
 - (VT100RemoteHost *)urlActionHelper:(iTermURLActionHelper *)helper remoteHostOnLine:(int)line;
 
 - (NSDictionary<NSNumber *, NSString *> *)urlActionHelperSmartSelectionActionSelectorDictionary:(iTermURLActionHelper *)helper;
@@ -77,12 +83,11 @@ NS_ASSUME_NONNULL_BEGIN
                          displayName:(NSString *)name
                       locationInView:(VT100GridCoordRange)range;
 
-- (SmartMatch *)smartSelectAtX:(int)x
-                             y:(int)y
-                            to:(VT100GridWindowedRange *)rangePtr
-              ignoringNewlines:(BOOL)ignoringNewlines
-                actionRequired:(BOOL)actionRequired
-               respectDividers:(BOOL)respectDividers;
+- (SmartMatch *)smartSelectAtAbsoluteCoord:(VT100GridAbsCoord)coord
+                                        to:(VT100GridAbsWindowedRange *)rangePtr
+                          ignoringNewlines:(BOOL)ignoringNewlines
+                            actionRequired:(BOOL)actionRequired
+                           respectDividers:(BOOL)respectDividers;
 
 - (void)smartSelectWithEvent:(NSEvent *)event;
 

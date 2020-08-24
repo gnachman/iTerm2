@@ -42,10 +42,11 @@ typedef NS_ENUM(NSInteger, PTYTextViewSelectionExtensionUnit) {
 
 @protocol iTermLogicalMovementHelperDelegate<NSObject>
 // return -1 if none
-- (int)lineNumberOfMarkAfterLine:(int)line;
+- (long long)lineNumberOfMarkAfterAbsLine:(long long)line;
 
 // return -1 if none
-- (int)lineNumberOfMarkBeforeLine:(int)line;
+- (long long)lineNumberOfMarkBeforeAbsLine:(long long)line;
+
 @end
 
 @interface iTermLogicalMovementHelper : NSObject
@@ -54,20 +55,21 @@ typedef NS_ENUM(NSInteger, PTYTextViewSelectionExtensionUnit) {
 
 - (instancetype)initWithTextExtractor:(iTermTextExtractor *)textExtractor
                             selection:(iTermSelection *)selection
-                     cursorCoordinate:(VT100GridCoord)cursorCoord
+                     cursorCoordinate:(VT100GridAbsCoord)cursorCoord
                                 width:(int)width
-                        numberOfLines:(int)numberOfLines NS_DESIGNATED_INITIALIZER;
+                        numberOfLines:(long long)numberOfLines
+              totalScrollbackOverflow:(long long)totalScrollbackOverflow NS_DESIGNATED_INITIALIZER;
 - (instancetype)init NS_UNAVAILABLE;
 
-- (VT100GridCoordRange)moveSelectionEndpoint:(PTYTextViewSelectionEndpoint)endpoint
-                                 inDirection:(PTYTextViewSelectionExtensionDirection)direction
-                                          by:(PTYTextViewSelectionExtensionUnit)unit;
+- (VT100GridAbsCoordRange)moveSelectionEndpoint:(PTYTextViewSelectionEndpoint)endpoint
+                                    inDirection:(PTYTextViewSelectionExtensionDirection)direction
+                                             by:(PTYTextViewSelectionExtensionUnit)unit;
 
-- (VT100GridWindowedRange)rangeByExtendingRange:(VT100GridWindowedRange)existingRange
-                                       endpoint:(PTYTextViewSelectionEndpoint)endpoint
-                                      direction:(PTYTextViewSelectionExtensionDirection)direction
-                                      extractor:(iTermTextExtractor *)extractor
-                                           unit:(PTYTextViewSelectionExtensionUnit)unit;
+- (VT100GridAbsWindowedRange)absRangeByExtendingRange:(VT100GridAbsWindowedRange)existingRange
+                                             endpoint:(PTYTextViewSelectionEndpoint)endpoint
+                                            direction:(PTYTextViewSelectionExtensionDirection)direction
+                                            extractor:(iTermTextExtractor *)extractor
+                                                 unit:(PTYTextViewSelectionExtensionUnit)unit;
 
 @end
 

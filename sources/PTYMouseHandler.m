@@ -254,8 +254,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
 
     iTermImageInfo *const imageBeingClickedOn = [self.mouseDelegate mouseHandler:self imageAt:VT100GridCoordMake(x, y)];
+    const long long overflow = [_mouseDelegate mouseHandlerTotalScrollbackOverflow:self];
     const BOOL mouseDownOnSelection =
-    [self.selection containsCoord:VT100GridCoordMake(x, y)];
+        [self.selection containsAbsCoord:VT100GridAbsCoordMake(x, y + overflow)];
     _lastMouseDownOnSelectedText = mouseDownOnSelection;
 
     if (!_mouseDownWasFirstMouse) {
@@ -276,7 +277,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     const BOOL isExtension = ([self.selection hasSelection] && shiftPressed);
     if (isExtension && [self.selection hasSelection]) {
         if (!self.selection.live) {
-            [self.selection beginExtendingSelectionAt:VT100GridCoordMake(x, y)];
+            [self.selection beginExtendingSelectionAt:VT100GridAbsCoordMake(x, y + overflow)];
         }
     } else if (clickCount < 2) {
         // single click
@@ -300,32 +301,32 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             return YES;
         } else {
             // start a new selection
-            [self.selection beginSelectionAt:VT100GridCoordMake(x, y)
-                                        mode:mode
-                                      resume:NO
-                                      append:(cmdPressed && !altPressed)];
+            [self.selection beginSelectionAtAbsCoord:VT100GridAbsCoordMake(x, y + overflow)
+                                                mode:mode
+                                              resume:NO
+                                              append:(cmdPressed && !altPressed)];
             self.selection.resumable = YES;
         }
     } else if ([self shouldSelectWordWithClicks:clickCount]) {
-        [self.selection beginSelectionAt:VT100GridCoordMake(x, y)
-                                    mode:kiTermSelectionModeWord
-                                  resume:YES
-                                  append:self.selection.appending];
+        [self.selection beginSelectionAtAbsCoord:VT100GridAbsCoordMake(x, y + overflow)
+                                            mode:kiTermSelectionModeWord
+                                          resume:YES
+                                          append:self.selection.appending];
     } else if (clickCount == 3) {
         BOOL wholeLines =
         [iTermPreferences boolForKey:kPreferenceKeyTripleClickSelectsFullWrappedLines];
         iTermSelectionMode mode =
         wholeLines ? kiTermSelectionModeWholeLine : kiTermSelectionModeLine;
 
-        [self.selection beginSelectionAt:VT100GridCoordMake(x, y)
-                                    mode:mode
-                                  resume:YES
-                                  append:self.selection.appending];
+        [self.selection beginSelectionAtAbsCoord:VT100GridAbsCoordMake(x, y + overflow)
+                                            mode:mode
+                                          resume:YES
+                                          append:self.selection.appending];
     } else if ([self shouldSmartSelectWithClicks:clickCount]) {
-        [self.selection beginSelectionAt:VT100GridCoordMake(x, y)
-                                    mode:kiTermSelectionModeSmart
-                                  resume:YES
-                                  append:self.selection.appending];
+        [self.selection beginSelectionAtAbsCoord:VT100GridAbsCoordMake(x, y + overflow)
+                                            mode:kiTermSelectionModeSmart
+                                          resume:YES
+                                          append:self.selection.appending];
     }
 
     DLog(@"Mouse down. selection set to %@", self.selection);
@@ -493,14 +494,15 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     } else if (isShiftedSingleClick &&
                [self.mouseDelegate mouseHandler:self getFindOnPageCursor:&findOnPageCursor] &&
                ![self.selection hasSelection]) {
-        [self.selection beginSelectionAt:findOnPageCursor
-                                    mode:kiTermSelectionModeCharacter
-                                  resume:NO
-                                  append:NO];
+        const long long overflow = [_mouseDelegate mouseHandlerTotalScrollbackOverflow:self];
+        [self.selection beginSelectionAtAbsCoord:VT100GridAbsCoordFromCoord(findOnPageCursor, overflow)
+                                            mode:kiTermSelectionModeCharacter
+                                          resume:NO
+                                          append:NO];
 
         const VT100GridCoord newEndPoint =
         [self.mouseDelegate mouseHandler:self clickPoint:event allowOverflow:YES];
-        [self.selection moveSelectionEndpointTo:newEndPoint];
+        [self.selection moveSelectionEndpointTo:VT100GridAbsCoordFromCoord(newEndPoint, overflow)];
         [self.selection endLiveSelection];
 
         [self.mouseDelegate mouseHandlerResetFindOnPageCursor:self];
@@ -640,11 +642,12 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         const BOOL isExtension = ([self.selection hasSelection] && shiftPressed);
         const BOOL altPressed = ([event it_modifierFlags] & NSEventModifierFlagOption) != 0;
         const BOOL cmdPressed = ([event it_modifierFlags] & NSEventModifierFlagCommand) != 0;
+        const long long overflow = [_mouseDelegate mouseHandlerTotalScrollbackOverflow:self];
         if (isExtension &&
             [self.selection hasSelection]) {
             if (!self.selection.live) {
                 DLog(@"Begin extending");
-                [self.selection beginExtendingSelectionAt:VT100GridCoordMake(x, y)];
+                [self.selection beginExtendingSelectionAt:VT100GridAbsCoordMake(x, y + overflow)];
             }
         } else {
             iTermSelectionMode mode;
@@ -655,11 +658,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             }
 
             DLog(@"Begin selection");
-            [self.selection
-             beginSelectionAt:VT100GridCoordMake(x, y)
-             mode:mode
-             resume:NO
-             append:(cmdPressed && !altPressed)];
+            [self.selection beginSelectionAtAbsCoord:VT100GridAbsCoordMake(x, y + overflow)
+                                                mode:mode
+                                              resume:NO
+                                              append:(cmdPressed && !altPressed)];
             self.selection.resumable = YES;
         }
     } else {

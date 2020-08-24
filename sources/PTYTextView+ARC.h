@@ -58,7 +58,6 @@ iTermURLActionHelperDelegate>
 - (void)contextMenuActionOpenURL:(id)sender;
 - (void)contextMenuActionRunCommand:(id)sender;
 - (void)contextMenuActionRunCommandInWindow:(id)sender;
-- (void)contextMenuActionRunCommand:(id)sender;
 - (void)contextMenuActionRunCoprocess:(id)sender;
 - (void)contextMenuActionSendText:(id)sender;
 

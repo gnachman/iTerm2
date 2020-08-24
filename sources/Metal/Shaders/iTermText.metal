@@ -30,7 +30,7 @@ iTermTextVertexShader(uint vertexID [[ vertex_id ]],
                       constant iTermVertex *vertexArray [[ buffer(iTermVertexInputIndexVertices) ]],
                       constant vector_uint2 *viewportSizePointer  [[ buffer(iTermVertexInputIndexViewportSize) ]],
                       constant iTermVertexTextInfoStruct *textInfo  [[ buffer(iTermVertexTextInfo) ]],
-                      device iTermTextPIU *perInstanceUniforms [[ buffer(iTermVertexInputIndexPerInstanceUniforms) ]],
+                      constant iTermTextPIU *perInstanceUniforms [[ buffer(iTermVertexInputIndexPerInstanceUniforms) ]],
                       unsigned int iid [[instance_id]]) {
     iTermTextVertexFunctionOutput out;
 
@@ -64,7 +64,7 @@ iTermTextVertexShaderEmoji(uint vertexID [[ vertex_id ]],
                            constant iTermVertex *vertexArray [[ buffer(iTermVertexInputIndexVertices) ]],
                            constant vector_uint2 *viewportSizePointer  [[ buffer(iTermVertexInputIndexViewportSize) ]],
                            constant iTermVertexTextInfoStruct *textInfo  [[ buffer(iTermVertexTextInfo) ]],
-                           device iTermTextPIU *perInstanceUniforms [[ buffer(iTermVertexInputIndexPerInstanceUniforms) ]],
+                           constant iTermTextPIU *perInstanceUniforms [[ buffer(iTermVertexInputIndexPerInstanceUniforms) ]],
                            unsigned int iid [[instance_id]]) {
     iTermTextVertexFunctionOutputEmoji out;
 
@@ -88,7 +88,7 @@ iTermTextVertexShaderBlending(uint vertexID [[ vertex_id ]],
                               constant iTermVertex *vertexArray [[ buffer(iTermVertexInputIndexVertices) ]],
                               constant vector_uint2 *viewportSizePointer  [[ buffer(iTermVertexInputIndexViewportSize) ]],
                               constant iTermVertexTextInfoStruct *textInfo  [[ buffer(iTermVertexTextInfo) ]],
-                              device iTermTextPIU *perInstanceUniforms [[ buffer(iTermVertexInputIndexPerInstanceUniforms) ]],
+                              constant iTermTextPIU *perInstanceUniforms [[ buffer(iTermVertexInputIndexPerInstanceUniforms) ]],
                               unsigned int iid [[instance_id]]) {
     iTermTextVertexFunctionOutputBlending out;
 
@@ -116,7 +116,7 @@ iTermTextVertexShaderMonochrome(uint vertexID [[ vertex_id ]],
                                 constant iTermVertex *vertexArray [[ buffer(iTermVertexInputIndexVertices) ]],
                                 constant vector_uint2 *viewportSizePointer  [[ buffer(iTermVertexInputIndexViewportSize) ]],
                                 constant iTermVertexTextInfoStruct *textInfo [[ buffer(iTermVertexTextInfo) ]],
-                                device iTermTextPIU *perInstanceUniforms [[ buffer(iTermVertexInputIndexPerInstanceUniforms) ]],
+                                constant iTermTextPIU *perInstanceUniforms [[ buffer(iTermVertexInputIndexPerInstanceUniforms) ]],
                                 unsigned int iid [[instance_id]]) {
     iTermTextVertexFunctionOutputMonochrome out;
 

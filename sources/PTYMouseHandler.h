@@ -104,6 +104,7 @@ dragSemanticHistoryWithEvent:(NSEvent *)event
 
 - (id<iTermSwipeHandler>)mouseHandlerSwipeHandler:(PTYMouseHandler *)sender;
 - (CGFloat)mouseHandlerAccumulatedDeltaY:(PTYMouseHandler *)sender forEvent:(NSEvent *)event;
+- (long long)mouseHandlerTotalScrollbackOverflow:(PTYMouseHandler *)sender;
 @end
 
 @interface PTYMouseHandler : NSObject
