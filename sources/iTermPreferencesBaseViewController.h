@@ -67,6 +67,8 @@ extern NSString *const kPreferenceDidChangeFromOtherPanelKeyUserInfoKey;
                            update:(BOOL (^)(void))update
                        searchable:(BOOL)searchable;
 
+- (void)setControl:(NSControl *)control inPreference:(PreferenceInfo *)info;
+
 - (void)addViewToSearchIndex:(NSView *)control
                  displayName:(NSString *)displayName
                      phrases:(NSArray<NSString *> *)phrases

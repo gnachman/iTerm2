@@ -470,6 +470,12 @@ NSString *const kPreferenceDidChangeFromOtherPanelKeyUserInfoKey = @"key";
     return info;
 }
 
+- (void)setControl:(NSControl *)control inPreference:(PreferenceInfo *)info {
+    [_keyMap removeObjectForKey:info.control];
+    info.control = control;
+    [_keyMap setObject:info forKey:control];
+}
+
 - (NSString *)displayNameForControl:(NSControl *)control
                         relatedView:(NSView *)relatedView
                                type:(PreferenceInfoType)type

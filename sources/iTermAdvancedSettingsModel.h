@@ -50,6 +50,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)alwaysAcceptFirstMouse;
 + (int)alwaysWarnBeforePastingOverSize;
 + (BOOL)appendToExistingDebugLog;
++ (BOOL)autoLockSessionNameOnEdit;
 + (int)autocompleteMaxOptions;
 + (NSString *)autoLogFormat;
 + (BOOL)autologAppends;

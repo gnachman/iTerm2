@@ -12,6 +12,7 @@
 #import "DebugLogging.h"
 #import "ITAddressBookMgr.h"
 #import "iTermAPIHelper.h"
+#import "iTermAdvancedSettingsModel.h"
 #import "iTermBadgeConfigurationWindowController.h"
 #import "iTermFunctionCallTextFieldDelegate.h"
 #import "iTermImageWell.h"
@@ -99,7 +100,8 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
     IBOutlet NSTextField *_tabTitle;
     IBOutlet NSTextField *_windowTitle;
     IBOutlet NSButton *_allowTitleSetting;
-
+    IBOutlet NSButton *_locked;
+    
     // Controls for Edit Info
     IBOutlet ProfileListView *_profiles;
     IBOutlet iTermShortcutInputView *_sessionHotkeyInputView;
@@ -389,7 +391,11 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
 }
 
 - (void)sessionNameDidEndEditing {
-    [self setString:_profileNameFieldForEditCurrentSession.stringValue forKey:KEY_TMUX_PANE_TITLE];
+    if ([self stringForKey:KEY_TMUX_PANE_TITLE]) {
+        [self setString:_profileNameFieldForEditCurrentSession.stringValue forKey:KEY_TMUX_PANE_TITLE];
+    } else {
+        [self setString:_profileNameFieldForEditCurrentSession.stringValue forKey:KEY_NAME];
+    }
     [_rateLimit force];
     [_profileDelegate profilesGeneralPreferencesNameDidEndEditing];
 }
@@ -470,6 +476,33 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
 
 - (void)layoutSubviewsForEditCurrentSessionMode {
     self.view = _editCurrentSessionView;
+
+    PreferenceInfo *info = [self infoForControl:_allowTitleSetting];
+    [self setControl:_locked inPreference:info];
+    __weak __typeof(self) weakSelf = self;
+    info.observer = ^{
+        [weakSelf updateLockImage];
+    };
+    info.customSettingChangedHandler = ^(id sender) {
+        [weakSelf toggleLock];
+    };
+    [self updateLockImage];
+}
+
+- (void)toggleLock {
+    [self setBool:![self boolForKey:KEY_ALLOW_TITLE_SETTING] forKey:KEY_ALLOW_TITLE_SETTING];
+}
+
+- (void)updateLockImage {
+    static NSImage *unlockedImage;
+    static NSImage *lockedImage;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        unlockedImage = [NSImage imageNamed:NSImageNameLockUnlockedTemplate];
+        lockedImage = [NSImage imageNamed:NSImageNameLockLockedTemplate];
+    });
+    const BOOL unlocked = [self boolForKey:KEY_ALLOW_TITLE_SETTING];
+    _locked.image = unlocked ? unlockedImage : lockedImage;
 }
 
 - (void)updateTmuxTabTitle {
@@ -1056,6 +1089,10 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
     id control = [aNotification object];
     if (control == _profileNameFieldForEditCurrentSession) {
         [self sessionNameDidChange];
+        if ([self boolForKey:KEY_ALLOW_TITLE_SETTING] &&
+            [iTermAdvancedSettingsModel autoLockSessionNameOnEdit]) {
+            [self toggleLock];
+        }
         return;
     }
     if (control == _tabTitle) {
