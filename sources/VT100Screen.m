@@ -5611,12 +5611,14 @@ static void SwapInt(int *a, int *b) {
         [primaryGrid_ encode:subencoder];
         return YES;
     }];
-    [encoder encodeDictionaryWithKey:@"AltGrid"
-                          generation:iTermGenerationAlwaysEncode
-                               block:^BOOL(id<iTermEncoderAdapter>  _Nonnull subencoder) {
-        [altGrid_ encode:subencoder];
-        return YES;
-    }];
+    if (altGrid_) {
+        [encoder encodeDictionaryWithKey:@"AltGrid"
+                              generation:iTermGenerationAlwaysEncode
+                                   block:^BOOL(id<iTermEncoderAdapter>  _Nonnull subencoder) {
+            [altGrid_ encode:subencoder];
+            return YES;
+        }];
+    }
 }
 
 - (BOOL)encodeContents:(id<iTermEncoderAdapter>)encoder
@@ -5802,14 +5804,16 @@ static void SwapInt(int *a, int *b) {
         [primaryGrid_ release];
         altGrid_.delegate = nil;
         [altGrid_ release];
+        altGrid_ = nil;
         currentGrid_ = nil;
 
         primaryGrid_ = [[VT100Grid alloc] initWithDictionary:dictionary[@"PrimaryGrid"]
                                                     delegate:self];
-        if (dictionary[@"AltGrid"]) {
+        if ([dictionary[@"AltGrid"] count]) {
             altGrid_ = [[VT100Grid alloc] initWithDictionary:dictionary[@"AltGrid"]
                                                     delegate:self];
-        } else {
+        }
+        if (!altGrid_) {
             altGrid_ = [[VT100Grid alloc] initWithSize:primaryGrid_.size delegate:self];
         }
         if (onPrimary || includeRestorationBanner) {

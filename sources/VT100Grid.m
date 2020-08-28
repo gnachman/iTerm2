@@ -71,6 +71,13 @@ static NSString *const kGridSizeKey = @"Size";
     self = [super init];
     if (self) {
         delegate_ = delegate;
+        NSArray<NSString *> *requiredKeys = @[ @"size", @"lines", @"cursor" ];
+        for (NSString *requiredKey in requiredKeys) {
+            if (!dictionary[requiredKey]) {
+                [self release];
+                return nil;
+            }
+        }
         [self setSize:[NSDictionary castFrom:dictionary[@"size"]].gridSize];
         assert(size_.width > 0 && size_.height > 0);
         lines_ = [[NSArray castFrom:dictionary[@"lines"]] mutableCopy];
