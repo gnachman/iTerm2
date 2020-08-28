@@ -5806,7 +5806,6 @@ ITERM_WEAKLY_REFERENCEABLE
                 [self fitTabsToWindow];
             }
         }
-
         if (@available(macOS 10.14, *)) {
             // May need to enter or exit being a titlebar accessory if its visibility changed.
             [self updateTabBarControlIsTitlebarAccessory];
@@ -8840,6 +8839,11 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     return NO;
 }
 
+// See the note in windowDecorationSize about this hack.
+- (BOOL)shouldCompensateForDisappearingTabBarAccessory {
+    return (!self.tabBarShouldBeAccessory && _contentView.tabBarControlOnLoan);
+}
+
 // Returns the size of the stuff outside the tabview.
 - (NSSize)windowDecorationSize {
     NSSize decorationSize = NSZeroSize;
@@ -8888,7 +8892,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
         decorationSize.height += iTermGetStatusBarHeight();
     }
     NSSize result = [[self window] frameRectForContentRect:NSMakeRect(0, 0, decorationSize.width, decorationSize.height)].size;
-    if (!self.tabBarShouldBeAccessory && _contentView.tabBarControlOnLoan) {
+    if (self.shouldCompensateForDisappearingTabBarAccessory) {
         // Tab bar is currently an accessory but is about to go away and should not be included.
         // We can't remove it before measuring in this case because then the tabview grows to fill
         // the space, causing -fitWindowToTabs to keep the window the same size instead of shrinking
@@ -10488,6 +10492,15 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
         }
         return session.hasNontrivialJob;
     }];
+}
+
+- (NSSize)tabExpectedSize {
+    NSSize size = _contentView.tabView.frame.size;
+    if (self.shouldCompensateForDisappearingTabBarAccessory) {
+        // See the note in windowDecorationSize about this hack.
+        size.height += _contentView.tabBarControl.frame.size.height;
+    }
+    return size;
 }
 
 #pragma mark - Toolbelt

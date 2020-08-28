@@ -63,5 +63,6 @@ backgroundColor:(NSColor *)backgroundColor;
 - (CGFloat)tabBlend;
 - (void)tabActiveSessionDidUpdatePreferencesFromProfile:(PTYTab *)tab;
 - (BOOL)tabIsSwiping;
+- (NSSize)tabExpectedSize;
 
 @end

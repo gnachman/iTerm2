@@ -3749,8 +3749,11 @@ typedef struct {
     // baseTmuxSize is how large the tmux window ought to be for the PTYSplitView.
     __block NSSize baseTmuxSize = NSZeroSize;
 
-    // Size we will grow to
-    const NSSize targetSizePoints = [currentTab->tabView_ frame].size;
+    // Size we will grow to. Note that we don't use the tabView's frame. That is because when the
+    // tabbar is a titlebar accessory and it's about to be removed, we need to include its size in
+    // the target size. The tabView hasn't been resized yet because AppKit.
+    const NSSize targetSizePoints = [currentTab.delegate tabExpectedSize];
+
     // Current size
     const NSSize currentSize = root_.frame.size;
 
@@ -3964,7 +3967,7 @@ typedef struct {
     if (!currentTab) {
         currentTab = self;
     }
-    NSSize targetSizePixels = [currentTab->tabView_ frame].size;
+    NSSize targetSizePixels = [currentTab.delegate tabExpectedSize];
 
     // The current size in pixels
     NSSize rootSizePixels = [root_ frame].size;
