@@ -937,7 +937,15 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
 }
 
 - (void)enablePauseModeIfPossible {
-    if ([gateway_.minimumServerVersion compare:[NSDecimalNumber decimalNumberWithString:@"3.2"]] == NSOrderedAscending) {
+    if (gateway_.minimumServerVersion &&
+        [gateway_.minimumServerVersion compare:[NSDecimalNumber decimalNumberWithString:@"3.2"]] == NSOrderedAscending) {
+        return;
+    }
+    if (gateway_.maximumServerVersion &&
+        [gateway_.maximumServerVersion compare:[NSDecimalNumber decimalNumberWithString:@"3.2"]] == NSOrderedAscending) {
+        return;
+    }
+    if (!gateway_.minimumServerVersion && !gateway_.maximumServerVersion) {
         return;
     }
     NSUInteger catchUpTime= [iTermPreferences unsignedIntegerForKey:kPreferenceKeyTmuxPauseModeAgeLimit];
