@@ -768,11 +768,14 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 #pragma mark - Responder
 
 - (void)didResignFirstResponder {
+    DLog(@"set scrolling=NO for %@\n%@", self, [NSThread callStackSymbols]);
     _scrolling = NO;
     [_altScreenMouseScrollInferrer firstResponderDidChange];
 }
 
 - (void)didBecomeFirstResponder {
+    DLog(@"set scrolling=NO for %@\n%@", self, [NSThread callStackSymbols]);
+    _scrolling = NO;
     [_altScreenMouseScrollInferrer firstResponderDidChange];
 }
 
@@ -780,10 +783,12 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (BOOL)scrollWheel:(NSEvent *)event pointInView:(NSPoint)point {
     if (event.momentumPhase == NSEventPhaseBegan) {
+        DLog(@"set scrolling=YES for %@\n%@", self, [NSThread callStackSymbols]);
         _scrolling = YES;
     } else if (event.momentumPhase == NSEventPhaseEnded |
                event.momentumPhase == NSEventPhaseCancelled ||
                event.momentumPhase == NSEventPhaseStationary) {
+        DLog(@"set scrolling=NO for %@\n%@", self, [NSThread callStackSymbols]);
         _scrolling = NO;
     }
     [_threeFingerTapGestureRecognizer scrollWheel];

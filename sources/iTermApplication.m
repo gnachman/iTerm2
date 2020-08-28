@@ -489,6 +489,7 @@ static const char *iTermApplicationKVOKey = "iTermApplicationKVOKey";
     while (current) {
         if ([current respondsToSelector:@selector(it_wantsScrollWheelMomentumEvents)] &&
             [current it_wantsScrollWheelMomentumEvents]) {
+            DLog(@"Deliver scroll event %@ to %@", event, current);
             [current it_scrollWheelMomentum:event];
             return;
         }
