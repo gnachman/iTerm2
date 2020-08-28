@@ -23,6 +23,7 @@ int main(int argc, const char *argv[]){
         // Run a server that spawns a job.
         return iterm2_server(argc - 2, (char *const *)argv + 2);
     }
+    setenv("NSZombieEnabled", "YES", 1);
     // Normal launch of GUI.
     iTermResourceLimitsHelperSaveCurrentLimits();
     signal(SIGPIPE, SIG_IGN);
