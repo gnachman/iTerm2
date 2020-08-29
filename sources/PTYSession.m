@@ -6787,8 +6787,11 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                            layout:(NSString *)layout
                            zoomed:(NSNumber *)zoomed
                              only:(BOOL)only {
+    DLog(@"tmuxUpdateLayoutForWindow:%@ layout:%@ zoomed:%@ only:%@",
+         @(windowId), layout, zoomed, @(only));
     PTYTab *tab = [_tmuxController window:windowId];
     if (!tab) {
+        DLog(@"* NO TAB, DO NOTHING");
         return NO;
     }
     const BOOL result = [_tmuxController setLayoutInTab:tab toLayout:layout zoomed:zoomed];

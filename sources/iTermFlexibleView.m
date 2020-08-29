@@ -7,6 +7,8 @@
 
 #import "iTermFlexibleView.h"
 
+#import "DebugLogging.h"
+
 @implementation iTermFlexibleView  {
     BOOL _isFlipped;
 }
@@ -50,6 +52,14 @@
     }
     
     [super drawRect:dirtyRect];
+}
+
+- (void)resizeWithOldSuperviewSize:(NSSize)oldSize {
+    DLog(@"%@ resized %@ -> %@:\n%@",
+         NSStringFromSize(oldSize),
+         NSStringFromSize(self.frame.size),
+         [NSThread callStackSymbols]);
+    [super resizeWithOldSuperviewSize:oldSize];
 }
 
 @end

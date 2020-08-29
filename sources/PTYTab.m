@@ -495,11 +495,13 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 }
 
 - (NSString *)description {
-    return [NSString stringWithFormat:@"<%@: %p label=%@ objectCount=%@>",
+    return [NSString stringWithFormat:@"<%@: %p label=%@ objectCount=%@ tmuxWindow=%@ tmuxController=%@>",
             NSStringFromClass([self class]),
             self,
             tabViewItem_.label,
-            @(objectCount_)];
+            @(objectCount_),
+            @(self.tmuxWindow),
+            self.tmuxController];
 }
 
 #pragma mark - NSCopying
@@ -2183,10 +2185,10 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 // This returns the current size
 - (NSSize)currentSize {
     if (_reportIdeal) {
-        DLog(@"Reporting ideal size for tab %@", self);
+        DLog(@"Reporting ideal size %@ for tab %@", NSStringFromSize(self.size), self);
         return [self size];
     } else {
-        DLog(@"Reporting size of root frame for tab %@", self);
+        DLog(@"Reporting size %@ of root frame for tab %@", NSStringFromSize(root_.frame.size), self);
         return [root_ frame].size;
     }
 }
@@ -4505,6 +4507,7 @@ typedef struct {
 - (void)setTmuxLayout:(NSMutableDictionary *)parseTree
        tmuxController:(TmuxController *)tmuxController
                zoomed:(NSNumber *)zoomed {
+    DLog(@"setTmuxLayout:tmuxController:%@zoomed:%@", tmuxController, zoomed);
     BOOL shouldZoom = isMaximized_;
     if (isMaximized_) {
         DLog(@"Unmaximizing");
@@ -4513,7 +4516,6 @@ typedef struct {
     if (zoomed) {
         shouldZoom = zoomed.boolValue;
     }
-    DLog(@"setTmuxLayout:tmuxController:");
     [PTYTab setSizesInTmuxParseTree:parseTree
                          inTerminal:realParentWindow_
                              zoomed:shouldZoom

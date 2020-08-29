@@ -336,6 +336,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
 }
 
 - (void)adjustWindowSizeIfNeededForTabs:(NSArray<PTYTab *> *)tabs {
+    DLog(@"adjustWindowSizeIfNeededForTabs:%@", tabs);
     if (![tabs anyWithBlock:^BOOL(PTYTab *tab) { return [tab updatedTmuxLayoutRequiresAdjustment]; }]) {
         DLog(@"Layouts fit among %@", tabs);
         return;
@@ -779,8 +780,11 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
         }
         PTYTab *tab = [self window:windowKey.intValue];
         NSSize size = [tab tmuxSize];
-        minSize.width = MIN(minSize.width, size.width);
-        minSize.height = MIN(minSize.height, size.height);
+        if (size.width > 0 && size.height > 0) {
+            minSize.width = MIN(minSize.width, size.width);
+            DLog(@"Ignore tab %@ with size of 0", tab);
+            minSize.height = MIN(minSize.height, size.height);
+        }
     }
     return minSize;
 }
@@ -2422,6 +2426,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     NSArray *layoutStrings = [response componentsSeparatedByString:@"\n"];
     BOOL windowMightNeedAdjustment = NO;
     NSMutableArray<PTYTab *> *tabs = [NSMutableArray array];
+    DLog(@"Begin handling list-windows response\n%@", response);
     for (NSString *layoutString in layoutStrings) {
         NSArray *components = [layoutString captureComponentsMatchedByRegex:@"^@([0-9]+) ([^ ]+)(?: ([^ ]+))?"];
         if ([components count] < 3) {
@@ -2444,6 +2449,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
             }
         }
     }
+    DLog(@"End handling list-windows response");
     if (windowMightNeedAdjustment) {
         [self adjustWindowSizeIfNeededForTabs:tabs];
     }

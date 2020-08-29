@@ -4212,20 +4212,25 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void)tmuxTabLayoutDidChange:(BOOL)nontrivialChange
                            tab:(PTYTab *)tab
             variableWindowSize:(BOOL)variableWindowSize {
+    DLog(@"%@", [NSThread callStackSymbols]);
     if (liveResize_) {
+        DLog(@"During live resize");
         if (nontrivialChange) {
             postponedTmuxTabLayoutChange_ = variableWindowSize ? iTermPostponeTmuxTabLayoutChangeStateVariableSizeWindow : iTermPostponeTmuxTabLayoutChangeStateFixedSizeWindow;
         }
         return;
     }
+    DLog(@"Check if any tmux controller has outstanding window resizes.");
     for (TmuxController *controller in [self uniqueTmuxControllers]) {
         if ([controller hasOutstandingWindowResize]) {
+            DLog(@"Yes - %@ does", controller);
             return;
         }
     }
-
+    DLog(@"No - proceeding");
     if (variableWindowSize) {
         if (![iTermAdvancedSettingsModel disableTmuxWindowResizing]) {
+            DLog(@"Variable window size and tmux window resizing is not disabled. Fit window to tab.");
             if (tab) {
                 [self fitWindowToTab:tab];
             } else {
@@ -4233,6 +4238,7 @@ ITERM_WEAKLY_REFERENCEABLE
             }
         }
     } else {
+        DLog(@"tmuxTabLayoutDidChange. Fit window to tabs");
         [self beginTmuxOriginatedResize];
         [self fitWindowToTabs];
         [self endTmuxOriginatedResize];
@@ -7732,6 +7738,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     // Determine the size of the largest tab.
     NSSize maxTabSize = NSZeroSize;
     PtyLog(@"fitWindowToTabs.......");
+    DLog(@"Finding the biggest tab:");
     for (NSTabViewItem* item in [_contentView.tabView tabViewItems]) {
         PTYTab* tab = [item identifier];
         if ([tab isTmuxTab] && excludeTmux) {
@@ -7755,6 +7762,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
             maxTabSize.height = tabSize.height;
         }
     }
+    DLog(@"Max tab size is %@", NSStringFromSize(maxTabSize));
     return maxTabSize;
 }
 
@@ -7767,13 +7775,18 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 - (void)fitWindowToTabsExcludingTmuxTabs:(BOOL)excludeTmux
                         preservingHeight:(BOOL)preserveHeight
                         sizeOfLargestTab:(NSSize)maxTabSize {
+    DLog(@"fitWindowToTabsExcludingTmuxTabs:%@ preservingHeight:%@ sizeOfLargestTab:%@",
+         @(excludeTmux), @(preserveHeight), NSStringFromSize(maxTabSize));
+
     _windowNeedsInitialSize = NO;
     if (togglingFullScreen_) {
+        DLog(@"Toggling full screen, abort");
         return;
     }
 
     if (NSEqualSizes(NSZeroSize, maxTabSize)) {
         // all tabs are tmux tabs.
+        DLog(@"max tab size is zero, abort");
         return;
     }
     PtyLog(@"fitWindowToTabs - calling fitWindowToTabSize");
@@ -7792,8 +7805,9 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 // NOTE: The preferred height is respected only if it would be larger than the height the window would
 // otherwise be set to and is less than the max height (self.maxFrame.size.height).
 - (BOOL)fitWindowToTabSize:(NSSize)tabSize preferredHeight:(NSNumber *)preferredHeight {
-    PtyLog(@"fitWindowToTabSize:%@ preferredHeight:%@", NSStringFromSize(tabSize), preferredHeight);
+    DLog(@"fitWindowToTabSize:%@ preferredHeight:%@", NSStringFromSize(tabSize), preferredHeight);
     if ([self anyFullScreen]) {
+        DLog(@"Full screen - fit tabs to window instead.");
         [self fitTabsToWindow];
         return NO;
     }
@@ -7825,7 +7839,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
         // This can happen when scrollers are changing while no monitors are
         // attached (e.g., plug in mouse+keyboard and external display into
         // clamshell simultaneously)
-        NSLog(@"* max frame size was not positive; aborting fitWindowToTabSize");
+        XLog(@"* max frame size was not positive; aborting fitWindowToTabSize");
         return NO;
     }
     if (winSize.width > maxFrameSize.width ||

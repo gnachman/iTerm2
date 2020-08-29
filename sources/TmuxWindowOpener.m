@@ -130,6 +130,7 @@ NSString *const kTmuxWindowOpenerWindowOptionStyleValueFullScreen = @"FullScreen
 }
 
 - (BOOL)updateLayoutInTab:(PTYTab *)tab {
+    DLog(@"updateLayoutInTab:%@ layout=%@", tab, self.layout);
     if (!self.layout) {
         DLog(@"Bad layout");
         return NO;
@@ -146,6 +147,7 @@ NSString *const kTmuxWindowOpenerWindowOptionStyleValueFullScreen = @"FullScreen
     TmuxLayoutParser *parser = [TmuxLayoutParser sharedInstance];
     self.parseTree = [parser parsedLayoutFromString:self.layout];
     if (!self.parseTree) {
+        DLog(@"Failed to create parse tree for %@", self.layout);
         [gateway_ abortWithErrorMessage:[NSString stringWithFormat:@"Error parsing layout %@", self.layout]];
         return NO;
     }
@@ -160,6 +162,7 @@ NSString *const kTmuxWindowOpenerWindowOptionStyleValueFullScreen = @"FullScreen
     if (cmdList.count) {
         tabToUpdate_ = [tab retain];
         [gateway_ sendCommandList:cmdList];
+        DLog(@"Sending command list before setting layout: %@", cmdList);
         return NO;
     }
     [tab setTmuxLayout:self.parseTree
