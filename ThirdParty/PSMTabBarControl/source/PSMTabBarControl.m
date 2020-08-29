@@ -1012,6 +1012,7 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionAttachedToTitleBar = @"PSMTabBar
     // size all cells appropriately and create tracking rects
     // nuke old tracking rects
     int i, cellCount = [_cells count];
+#warning TODO: This is quadratic. Creating a window with 100 tabs takes forever.
     for (i = 0; i < cellCount; i++) {
         id cell = [_cells objectAtIndex:i];
         [[NSNotificationCenter defaultCenter] removeObserver:cell];
