@@ -256,6 +256,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)showMetalFPSmeter;
 + (BOOL)showLocationsInScrollbar;
 + (BOOL)showSessionRestoredBanner;
++ (BOOL)showTimestampsByDefault;
 + (BOOL)showYellowMarkForJobStoppedBySignal;
 + (double)slowFrameRate;
 + (int)slowPasteBytesPerCall;

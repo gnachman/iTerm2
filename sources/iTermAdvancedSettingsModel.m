@@ -337,6 +337,7 @@ DEFINE_BOOL(indicateBellsInDockBadgeLabel, YES, SECTION_GENERAL @"Indicate the n
 DEFINE_STRING(downloadsDirectory, @"", SECTION_GENERAL @"Downloads folder.\nIf set, downloaded files go to this location instead of the user’s $HOME/Downloads folder.");
 DEFINE_BOOL(noSyncSuppressDownloadConfirmation, NO, SECTION_GENERAL @"Suppress confirmation of terminal-initiated downloads?");
 DEFINE_FLOAT(pointSizeOfTimeStamp, 10, SECTION_GENERAL @"Point size for timestamps");
+DEFINE_BOOL(showTimestampsByDefault, NO, SECTION_GENERAL @"Show timestamps by default?");
 DEFINE_NONNEGATIVE_INT(terminalMargin, 5, SECTION_GENERAL @"Width of left and right margins in terminal panes\nHow much space to leave between the left and right edges of the terminal.\nYou must restart iTerm2 after modifying this property. Saved window arrangements should be re-created.");
 DEFINE_INT(terminalVMargin, 2, SECTION_GENERAL @"Height of top and bottom margins in terminal panes\nHow much space to leave between the top and bottom edges of the terminal.\nYou must restart iTerm2 after modifying this property. Saved window arrangements should be re-created.");
 DEFINE_STRING(viewManPageCommand, @"man %@ || sleep 3", SECTION_GENERAL @"Command to view man pages.\nUsed when you press the man page button on the touch bar. %@ is replaced with the command. End the command with & to avoid opening an iTerm2 window (e.g., if you're launching an external viewer).");

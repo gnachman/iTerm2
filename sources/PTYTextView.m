@@ -219,6 +219,9 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
     if (self) {
         [self resetMouseLocationToRefuseFirstResponderAt];
         _drawingHelper = [[iTermTextDrawingHelper alloc] init];
+        if ([iTermAdvancedSettingsModel showTimestampsByDefault]) {
+            _drawingHelper.showTimestamps = YES;
+        }
         _drawingHelper.delegate = self;
 
         _colorMap = [colorMap retain];
