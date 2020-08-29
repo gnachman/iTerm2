@@ -211,12 +211,12 @@ DEFINE_INT(minimumTabDragDistance, 10, SECTION_TABS @"How far must the mouse mov
 DEFINE_BOOL(tabTitlesUseSmartTruncation, YES, SECTION_TABS @"Use “smart truncation” for tab titles.\nIf a tab‘s title is too long to fit, ellipsize the start of the title if more tabs have unique suffixes than prefixes in a given window.");
 DEFINE_BOOL(middleClickClosesTab, YES, SECTION_TABS @"Should middle-click on a tab in the tab bar close the tab?");
 DEFINE_FLOAT(coloredSelectedTabOutlineStrength, 0.5, SECTION_TABS @"How prominent should the outline around the selected tab be drawn when there are colored tabs in a window?\nTakes a value in 0 to 3, where 0 means no outline and 3 means a very prominent outline.");
-DEFINE_FLOAT(minimalTabStyleBackgroundColorDifference, 0.05, SECTION_TABS @"In minimal tab style, how different should the background color of the selected tab be from the others?\nTakes a value in 0 to 1, where 0 is no difference and 1 very different.");
-DEFINE_FLOAT(minimalTabStyleOutlineStrength, 0.2, SECTION_TABS @"In minimal tab style, how prominent should the tab outline be?\nTakes a value in 0 to 1, where 0 is invisible and 1 is very prominent");
-DEFINE_FLOAT(minimalSplitPaneDividerProminence, 0.15, SECTION_TABS @"In minimal tab style, how prominent should split pane dividers be?\nTakes a value in 0 to 1, where 0 is invisible and 1 is very prominent");
+DEFINE_FLOAT(minimalTabStyleBackgroundColorDifference, 0.05, SECTION_TABS @"In the Minimal theme, how different should the background color of the selected tab be from the others?\nTakes a value in 0 to 1, where 0 is no difference and 1 very different.");
+DEFINE_FLOAT(minimalTabStyleOutlineStrength, 0.2, SECTION_TABS @"In the Minimal theme, how prominent should the tab outline be?\nTakes a value in 0 to 1, where 0 is invisible and 1 is very prominent");
+DEFINE_FLOAT(minimalSplitPaneDividerProminence, 0.15, SECTION_TABS @"In the Minimal theme, how prominent should split pane dividers be?\nTakes a value in 0 to 1, where 0 is invisible and 1 is very prominent");
 DEFINE_FLOAT(coloredUnselectedTabTextProminence, 0.5, SECTION_TABS @"How prominent should the text in a non-selected tab be when there are colored tabs in a window?\nTakes a value in 0 to 1, the alpha value.");
-DEFINE_BOOL(minimalTabStyleTreatLeftInsetAsPartOfFirstTab, NO, SECTION_TABS @"In the minimal tab style, should the area left of the tab bar be treated as part of the first tab?");
-DEFINE_FLOAT(compactMinimalTabBarHeight, 38, SECTION_TABS @"Tab bar height (points) for minimal theme.\nThe default is 38. Use 22 to match the compact theme's height.");
+DEFINE_BOOL(minimalTabStyleTreatLeftInsetAsPartOfFirstTab, NO, SECTION_TABS @"In the Minimal theme, should the area left of the tab bar be treated as part of the first tab?");
+DEFINE_FLOAT(compactMinimalTabBarHeight, 38, SECTION_TABS @"Tab bar height (points) for the Minimal theme.\nThe default is 38. Use 22 to match the compact theme's height.");
 DEFINE_FLOAT(defaultTabBarHeight, 24, SECTION_TABS @"Default tab bar height")
 DEFINE_BOOL(doubleClickTabToEdit, YES, SECTION_TABS @"Should double-clicking a tab open a window to edit its title?");
 DEFINE_FLOAT(minimumTabLabelWidth, 35, SECTION_TABS @"Minimum width for tab labels.\nThe activity/bell icon will be hidden when the space for the label drops below this size (in points)");
@@ -227,7 +227,7 @@ DEFINE_BOOL(drawBottomLineForHorizontalTabBar, YES, SECTION_TABS @"Draw bottom l
 DEFINE_BOOL(disableTabBarTooltips, NO, SECTION_TABS @"Disable tab bar tooltips?");
 DEFINE_BOOL(useCustomTabBarFontSize, NO, SECTION_TABS @"Use custom font size for tab labels?\nSee also advanced setting “Custom tab label font size”.");
 DEFINE_FLOAT(customTabBarFontSize, 11.0, SECTION_TABS @"Custom tab label font size\nFor this to take effect, turn on “Use custom font size for tab labels?”.");
-DEFINE_FLOAT(minimalSelectedTabUnderlineProminence, 1, SECTION_TABS @"Prominence of selected tab underline indicator in Minimal theme when there is at least one colored tab.");
+DEFINE_FLOAT(minimalSelectedTabUnderlineProminence, 1, SECTION_TABS @"Prominence of selected tab underline indicator in the Minimal theme when there is at least one colored tab.");
 DEFINE_BOOL(allowInteractiveSwipeBetweenTabs, YES, SECTION_TABS @"Allow two-finger interactive swipe between tabs?\nThe system preference Trackpad > More Gestures > Swipe between pages controls this globally. When “swipe with two fingers” is enabled, you can change this setting to “No” to prevent swiping between tabs in iTerm2.");
 
 #pragma mark Mouse
