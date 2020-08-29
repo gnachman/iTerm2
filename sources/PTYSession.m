@@ -7302,7 +7302,9 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     const BOOL accept = ![self keystrokeIsFilteredByMonitor:event];
 
     if (accept) {
-        if ([_copyModeHandler shouldAutoEnterWithEvent:event]) {
+        if (_textview.selection.hasSelection &&
+            !_textview.selection.live &&
+            [_copyModeHandler shouldAutoEnterWithEvent:event]) {
             _copyModeHandler.enabled = YES;
             [_copyModeHandler handleAutoEnteringEvent:event];
             return NO;
@@ -8165,7 +8167,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (BOOL)hasActionableKeyMappingForEvent:(NSEvent *)event {
-    if (_textview.selection.hasSelection) {
+    if (_textview.selection.hasSelection && !_textview.selection.live) {
         if ([_copyModeHandler shouldAutoEnterWithEvent:event]) {
             return NO;
         }
