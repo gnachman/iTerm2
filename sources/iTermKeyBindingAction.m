@@ -386,9 +386,9 @@ static NSString *GetProfileName(NSString *guid) {
     switch (self.keyAction) {
         case KEY_ACTION_DO_NOT_REMAP_MODIFIERS:
         case KEY_ACTION_REMAP_LOCALLY:
-        case KEY_ACTION_IGNORE:
             return NO;
 
+        case KEY_ACTION_IGNORE:
         case KEY_ACTION_ESCAPE_SEQUENCE:
         case KEY_ACTION_HEX_CODE:
         case KEY_ACTION_TEXT:
