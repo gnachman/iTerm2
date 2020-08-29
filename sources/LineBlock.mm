@@ -129,8 +129,7 @@ NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock)
     return self;
 }
 
-- (LineBlock*)initWithRawBufferSize:(int)size
-{
+- (LineBlock *)initWithRawBufferSize:(int)size {
     self = [super init];
     if (self) {
         raw_buffer = (screen_char_t*)iTermMalloc(sizeof(screen_char_t) * size);
@@ -153,7 +152,9 @@ NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock)
         }
     });
 
-    _guid = [[[NSUUID UUID] UUIDString] retain];
+    if (!_guid) {
+        _guid = [[[NSUUID UUID] UUIDString] retain];
+    }
     cached_numlines_width = -1;
     if (cll_capacity > 0) {
         metadata_ = (LineBlockMetadata *)iTermCalloc(sizeof(LineBlockMetadata), cll_capacity);
@@ -191,7 +192,8 @@ NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock)
         first_entry = [dictionary[kLineBlockFirstEntryKey] intValue];
         if (dictionary[kLineBlockGuid]) {
             [_guid release];
-            _guid = dictionary[kLineBlockGuid];
+            _guid = [dictionary[kLineBlockGuid] copy];
+            DLog(@"Restore block %p with guid %@", self, _guid);
         }
         NSArray *cllArray = dictionary[kLineBlockCLLKey];
         cll_capacity = [cllArray count];

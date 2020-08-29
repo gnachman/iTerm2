@@ -6443,7 +6443,7 @@ backgroundColor:(NSColor *)backgroundColor {
 #pragma mark - iTermUniquelyIdentifiable
 
 - (NSString *)stringUniqueIdentifier {
-    return [NSString stringWithFormat:@"%@.%@", @(self.uniqueId), _guid];
+    return _guid;
 }
 
 @end

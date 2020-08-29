@@ -1105,6 +1105,7 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
     [iTermOrderedDictionary byMappingEnumerator:_lineBlocks.blocks.reverseObjectEnumerator
                                           block:^id _Nonnull(NSUInteger index,
                                                              LineBlock *_Nonnull block) {
+        DLog(@"Maybe encode block %p with guid %@", block, block.stringUniqueIdentifier);
         return block.stringUniqueIdentifier;
     }];
     [encoder encodeArrayWithKey:kLineBufferBlocksKey
@@ -1119,6 +1120,7 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
         return [encoder encodeDictionaryWithKey:kLineBufferBlockWrapperKey
                                      generation:block.generation
                                           block:^BOOL(id<iTermEncoderAdapter>  _Nonnull encoder) {
+            DLog(@"Really encode block %p with guid %@", block, block.stringUniqueIdentifier);
             if (truncated) {
                 return NO;
             }
