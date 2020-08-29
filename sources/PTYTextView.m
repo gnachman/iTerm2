@@ -20,6 +20,7 @@
 #import "iTermKeyboardHandler.h"
 #import "iTermLaunchServices.h"
 #import "iTermLocalHostNameGuesser.h"
+#import "iTermMetalClipView.h"
 #import "iTermMouseCursor.h"
 #import "iTermPreferences.h"
 #import "iTermPrintAccessoryViewController.h"
@@ -2069,7 +2070,10 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
 
     // Scroll to the bottom if needed.
     if (!userScroll) {
-        [self scrollEnd];
+        iTermMetalClipView *clipView = [iTermMetalClipView castFrom:self.enclosingScrollView.contentView];
+        [clipView performBlockWithoutShowingOverlayScrollers:^{
+            [self scrollEnd];
+        }];
     }
 
     if ([[self subviews] count]) {
