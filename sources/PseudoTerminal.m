@@ -395,7 +395,9 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
 
 + (Profile *)expurgatedInitialProfile:(Profile *)profile {
     // We don't care about almost all the keys in the profile, so don't waste space and privacy storing them.
-    return [profile ?: @{} dictionaryKeepingOnlyKeys:@[ KEY_CUSTOM_WINDOW_TITLE, KEY_USE_CUSTOM_WINDOW_TITLE ]];
+    return [profile ?: @{} dictionaryKeepingOnlyKeys:@[ KEY_CUSTOM_WINDOW_TITLE,
+                                                        KEY_USE_CUSTOM_WINDOW_TITLE,
+                                                        KEY_DISABLE_AUTO_FRAME ]];
 }
 
 - (instancetype)initWithWindowNibName:(NSString *)windowNibName {
@@ -783,6 +785,8 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
         _shortcutAccessoryViewController.ordinal = number_ + 1;
     }
 
+    DLog(@"Creating window with profile:%@", profile);
+    DLog(@"%@\n%@", self, [NSThread callStackSymbols]);
     _initialProfile = [[PseudoTerminal expurgatedInitialProfile:profile] retain];
     if ([iTermProfilePreferences boolForKey:KEY_USE_CUSTOM_WINDOW_TITLE inProfile:profile]) {
         NSString *override = [iTermProfilePreferences stringForKey:KEY_CUSTOM_WINDOW_TITLE inProfile:profile];;
@@ -5114,6 +5118,11 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)loadAutoSaveFrame {
+    DLog(@"-[%p loadAutoSaveFrame]. Profile is\n%@", self, self.initialProfile);
+    if ([_initialProfile[KEY_DISABLE_AUTO_FRAME] boolValue]) {
+        DLog(@"Auto-frame disabled.");
+        return;
+    }
     DLog(@"Load auto-save frame");
     iTermTerminalWindow *window = [self ptyWindow];
     NSRect frame = [window frame];

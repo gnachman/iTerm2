@@ -255,6 +255,10 @@
 // field correctly.
 #define KEY_TMUX_PANE_TITLE                  @"tmux Pane Title"
 
+// This is not a real setting. It's a way to communicate that a newly created
+// window should not use auto-saved frames (see -loadAutoSave). Takes a boolean.
+#define KEY_DISABLE_AUTO_FRAME               @"Disable Auto Frame"
+
 @class iTermVariableScope;
 
 // Posted when a session's unicode version changes.

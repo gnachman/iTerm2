@@ -495,13 +495,20 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 }
 
 - (NSString *)description {
-    return [NSString stringWithFormat:@"<%@: %p label=%@ objectCount=%@ tmuxWindow=%@ tmuxController=%@>",
+    if (self.tmuxTab) {
+        return [NSString stringWithFormat:@"<%@: %p label=%@ objectCount=%@ tmuxWindow=%@ tmuxController=%@>",
+                NSStringFromClass([self class]),
+                self,
+                tabViewItem_.label,
+                @(objectCount_),
+                @(self.tmuxWindow),
+                self.tmuxController];
+    }
+    return [NSString stringWithFormat:@"<%@: %p label=%@ objectCount=%@>",
             NSStringFromClass([self class]),
             self,
             tabViewItem_.label,
-            @(objectCount_),
-            @(self.tmuxWindow),
-            self.tmuxController];
+            @(objectCount_)];
 }
 
 #pragma mark - NSCopying

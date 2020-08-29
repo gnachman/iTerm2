@@ -629,6 +629,10 @@ static BOOL hasBecomeActive = NO;
         }
 
         PseudoTerminal *windowController = [self terminalToOpenFileIn];
+        if (!windowController) {
+            bookmark[KEY_DISABLE_AUTO_FRAME] = @YES;
+            DLog(@"Disable auto frame. Profile is:\n%@", bookmark);
+        }
         DLog(@"application:openFile: launching new session in window %@", windowController);
         [iTermSessionLauncher launchBookmark:bookmark
                                   inTerminal:windowController
