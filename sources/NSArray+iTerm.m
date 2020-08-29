@@ -276,7 +276,7 @@
     if (self.count >= index) {
         length = self.count - index;
     } else {
-        length = 0;
+        return @[];
     }
     return [self subarrayWithRange:NSMakeRange(index, length)];
 }
