@@ -592,7 +592,7 @@ DEFINE_BOOL(multiserver, YES, SECTION_EXPERIMENTAL @"Enable multi-server daemon.
 DEFINE_BOOL(useRestorableStateController, YES, SECTION_EXPERIMENTAL @"Enable restorable state controller?\nThis makes window restoration more reliable.");
 DEFINE_BOOL(fixMouseWheel, YES, SECTION_EXPERIMENTAL @"Mouse wheel always scrolls when scroll bars are visible");
 DEFINE_BOOL(oscColorReport16Bits, YES, SECTION_EXPERIMENTAL @"Report 16-bit color values to OSC 4 and 10 through 19.\nWorks around a bug in older vim where they could not properly parse 8-bit values.");
-DEFINE_BOOL(showSearchResultsMinimap, YES, SECTION_EXPERIMENTAL @"Show search result locations in scroll bar.\nChanging this setting will not affect existing sessions until you restart.");
+DEFINE_BOOL(showLocationsInScrollbar, YES, SECTION_EXPERIMENTAL @"Show search result and prompt locations in scroll bar.\nChanging this setting will not affect existing sessions until you restart.");
 DEFINE_BOOL(allowTabbarInTitlebarAccessoryBigSur, NO, SECTION_EXPERIMENTAL @"Make the tab bar a titlebar accessory view in Big Sur?");
 DEFINE_BOOL(storeStateInSqlite, YES, SECTION_EXPERIMENTAL @"Store window restoration state in SQLite");
 DEFINE_BOOL(useNewContentFormat, YES, SECTION_EXPERIMENTAL @"Save unlimited amount of window contents.\nThis is going to be slow unless you enable SQLite-based window restoration too.");

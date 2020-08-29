@@ -234,7 +234,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
         [self addSubviewBelowFindView:_scrollview];
 
         if (@available(macOS 10.14, *)) {
-            if ([iTermAdvancedSettingsModel showSearchResultsMinimap]) {
+            if ([iTermAdvancedSettingsModel showLocationsInScrollbar]) {
                 _searchResultsMinimap = [[iTermSearchResultsMinimapView alloc] init];
                 _searchResultsMinimap.delegate = self;
                 [self addSubviewBelowFindView:_searchResultsMinimap];
@@ -1585,7 +1585,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
 }
 
 - (void)updateMinimapFrameAnimated:(BOOL)animated {
-    if (![iTermAdvancedSettingsModel showSearchResultsMinimap]) {
+    if (![iTermAdvancedSettingsModel showLocationsInScrollbar]) {
         return;
     }
     if (@available(macOS 10.14, *)) {
@@ -1773,7 +1773,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
 }
 
 - (void)updateMinimapAlpha {
-    if (![iTermAdvancedSettingsModel showSearchResultsMinimap]) {
+    if (![iTermAdvancedSettingsModel showLocationsInScrollbar]) {
         return;
     }
     PTYScroller *scroller = [PTYScroller castFrom:self.scrollview.verticalScroller];
@@ -1783,7 +1783,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
 }
 
 - (void)ptyScrollerDidTransitionToState:(PTYScrollerState)state {
-    if (![iTermAdvancedSettingsModel showSearchResultsMinimap]) {
+    if (![iTermAdvancedSettingsModel showLocationsInScrollbar]) {
         return;
     }
     const CGFloat maxAlpha = _scrollview.verticalScroller.effectiveAppearance.it_isDark ? 0.5 : 0.75;

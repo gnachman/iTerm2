@@ -1707,7 +1707,7 @@ ITERM_WEAKLY_REFERENCEABLE
 // Session specific methods
 - (BOOL)setScreenSize:(NSRect)aRect parent:(id<WindowControllerInterface>)parent {
     _screen.delegate = self;
-    if ([iTermAdvancedSettingsModel showSearchResultsMinimap]) {
+    if ([iTermAdvancedSettingsModel showLocationsInScrollbar]) {
         _screen.intervalTreeObserver = self;
     }
 
@@ -2586,7 +2586,7 @@ ITERM_WEAKLY_REFERENCEABLE
         _textview.delegate = self;
         _colorMap.delegate = _textview;
         _screen.delegate = self;
-        if ([iTermAdvancedSettingsModel showSearchResultsMinimap]) {
+        if ([iTermAdvancedSettingsModel showLocationsInScrollbar]) {
             _screen.intervalTreeObserver = self;
         }
         _screen.terminal = _terminal;
@@ -13263,7 +13263,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 #pragma mark - iTermIntervalTreeObserver
 
 - (void)intervalTreeDidReset {
-    if (![iTermAdvancedSettingsModel showSearchResultsMinimap]) {
+    if (![iTermAdvancedSettingsModel showLocationsInScrollbar]) {
         return;
     }
     if (@available(macOS 10.14, *)) {
@@ -13285,7 +13285,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 - (void)intervalTreeDidAddObjectOfType:(iTermIntervalTreeObjectType)type
                                 onLine:(NSInteger)line {
-    if (![iTermAdvancedSettingsModel showSearchResultsMinimap]) {
+    if (![iTermAdvancedSettingsModel showLocationsInScrollbar]) {
         return;
     }
     if (@available(macOS 10.14, *)) {
@@ -13295,7 +13295,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 - (void)intervalTreeDidRemoveObjectOfType:(iTermIntervalTreeObjectType)type
                                    onLine:(NSInteger)line {
-    if (![iTermAdvancedSettingsModel showSearchResultsMinimap]) {
+    if (![iTermAdvancedSettingsModel showLocationsInScrollbar]) {
         return;
     }
     if (@available(macOS 10.14, *)) {
@@ -13308,7 +13308,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)updateMarksMinimapRangeOfVisibleLines {
-    if (![iTermAdvancedSettingsModel showSearchResultsMinimap]) {
+    if (![iTermAdvancedSettingsModel showLocationsInScrollbar]) {
         return;
     }
     if (@available(macOS 10.14, *)) {
