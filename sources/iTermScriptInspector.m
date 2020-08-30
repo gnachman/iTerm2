@@ -16,6 +16,7 @@
 @implementation iTermScriptInspector {
     IBOutlet iTermSessionTabWindowOutlineDelegate *_sessionTabWindowOutlineDelegate;
     IBOutlet iTermRegisteredFunctionsTableViewDelegate *_registeredFunctionTableViewDelegate;
+    IBOutlet NSSplitView *_splitView;
 }
 
 - (IBAction)reload:(id)sender {
