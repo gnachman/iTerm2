@@ -92,7 +92,8 @@
                                                            _backgroundColor.greenComponent,
                                                            _backgroundColor.blueComponent,
                                                            _backgroundColor.alphaComponent);
-    const CGFloat vmargin = self.margins.top / self.configuration.scale;
+    const CGFloat scale = self.configuration.scale;
+    const CGFloat vmargin = self.margins.bottom / scale;
     [_timestamps enumerateObjectsUsingBlock:^(NSDate * _Nonnull date, NSUInteger idx, BOOL * _Nonnull stop) {
         iTermTimestampKey *key = [[iTermTimestampKey alloc] init];
         key.width = visibleWidth;
@@ -101,8 +102,8 @@
         key.date = [self->_drawHelper rowIsRepeat:idx] ? -1 : round(date.timeIntervalSinceReferenceDate);
         block(idx,
               key,
-              NSMakeRect(self.configuration.viewportSize.x / self.configuration.scale - visibleWidth,
-                         self.configuration.viewportSize.y / self.configuration.scale - ((idx + 1) * rowHeight) - vmargin,
+              NSMakeRect(self.configuration.viewportSize.x / scale - visibleWidth,
+                         self.configuration.viewportSize.y / scale - ((idx + 1) * rowHeight) - vmargin,
                          visibleWidth,
                          rowHeight));
 
