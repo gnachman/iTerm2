@@ -82,12 +82,6 @@
     const BOOL result = [_db executeUpdate:sql withVAList:args];
     va_end(args);
 
-#if DEBUG
-    va_start(args, sql);
-    NSLog(@"%@", [self formatSQL:sql vaList:args]);
-    va_end(args);
-#endif
-
     if (gDebugLogging) {
         va_start(args, sql);
         [self logStatement:sql vaList:args];
