@@ -305,7 +305,8 @@ backgroundColor:(NSColor *)backgroundColor;
 
 // Array of subprocessess names. WARNING: This forces a synchronous update of the process cache.
 // It is up-to-date but too slow to call frequently.
-@property(nonatomic, readonly) NSArray *childJobNames;
+// The first value is the name and the second is the process title.
+@property(nonatomic, readonly) NSArray<iTermTuple<NSString *, NSString *> *> *childJobNameTuples;
 
 // Is the session idle? Used by updateLabelAttributes to send a user notification when processing ends.
 @property(nonatomic, assign) BOOL havePostedIdleNotification;

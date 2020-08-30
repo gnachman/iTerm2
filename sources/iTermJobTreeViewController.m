@@ -32,7 +32,7 @@
     self = [super init];
     if (self) {
         _pid = processInfo.processID;
-        _name = [processInfo.name copy];
+        _name = [(processInfo.argv0 ?: processInfo.name) copy];
         _children = [[processInfo.sortedChildren mapWithBlock:^id(iTermProcessInfo *anObject) {
             return [[iTermJobProxy alloc] initWithProcessInfo:anObject];
         }] mutableCopy];

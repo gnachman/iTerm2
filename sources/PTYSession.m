@@ -1952,7 +1952,7 @@ ITERM_WEAKLY_REFERENCEABLE
     return result;
 }
 
-- (NSArray<NSString *> *)childJobNames {
+- (NSArray<iTermTuple<NSString *, NSString *> *> *)childJobNameTuples {
     pid_t thePid = [_shell pid];
 
     [[iTermProcessCache sharedInstance] updateSynchronously];
@@ -1969,7 +1969,8 @@ ITERM_WEAKLY_REFERENCEABLE
 
     NSArray<iTermProcessInfo *> *allInfos = [info descendantsSkippingLevels:levelsToSkip];
     return [allInfos mapWithBlock:^id(iTermProcessInfo *info) {
-        return info.name;
+        return [iTermTuple tupleWithObject:info.name
+                                 andObject:info.argv0 ?: info.name];
     }];
 }
 
@@ -1996,12 +1997,13 @@ ITERM_WEAKLY_REFERENCEABLE
             NSMutableArray<NSString *> *blockingJobs = [NSMutableArray array];
             NSArray *jobsThatDontRequirePrompting = [_profile objectForKey:KEY_JOBS];
             DLog(@"jobs that don't require prompting: %@", jobsThatDontRequirePrompting);
-            for (NSString *childName in [self childJobNames]) {
-                DLog(@"Check child %@", childName);
-                if ([jobsThatDontRequirePrompting indexOfObject:childName] == NSNotFound) {
+            for (iTermTuple<NSString *, NSString *> *childNameTuple in [self childJobNameTuples]) {
+                DLog(@"Check child %@", childNameTuple);
+                if ([jobsThatDontRequirePrompting indexOfObject:childNameTuple.firstObject] == NSNotFound &&
+                    [jobsThatDontRequirePrompting indexOfObject:childNameTuple.secondObject] == NSNotFound) {
                     DLog(@"    not on the ignore list");
                     // This job is not in the ignore list.
-                    [blockingJobs addObject:childName];
+                    [blockingJobs addObject:childNameTuple.secondObject];
                 }
             }
             if (blockingJobs.count > 0) {
@@ -4980,14 +4982,17 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void)setCurrentForegroundJobProcessInfo:(iTermProcessInfo *)processInfo {
     DLog(@"%p set job name to %@", self, processInfo.name);
     NSString *name = processInfo.name;
-
+    NSString *processTitle = processInfo.argv0 ?: name;
+    
     // This is a gross hack but I haven't found a nicer way to do it yet. When exec fails (or takes
-    // enough time that we happen to poll it before exec finishes ) then the process name is
+    // enough time that we happen to poll it before exec finishes) then the job name is
     // "iTermServer" as inherited from the parent. This avoids showing it in the UI.
     if ([name isEqualToString:@"iTermServer"] && ![[self.program lastPathComponent] isEqualToString:name]) {
         name = self.program.lastPathComponent;
+        processTitle = name;
     }
     [self.variablesScope setValue:name forVariableNamed:iTermVariableKeySessionJob];
+    [self.variablesScope setValue:processTitle forVariableNamed:iTermVariableKeySessionProcessTitle];
     [self.variablesScope setValue:processInfo.commandLine forVariableNamed:iTermVariableKeySessionCommandLine];
     [self.variablesScope setValue:@(processInfo.processID) forVariableNamed:iTermVariableKeySessionJobPid];
 

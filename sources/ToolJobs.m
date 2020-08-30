@@ -455,7 +455,7 @@ static const CGFloat kMargin = 4;
                                row:(NSInteger)rowIndex {
     if ([[aTableColumn identifier] isEqualToString:@"name"]) {
         // name
-        return _processInfos[rowIndex].name;
+        return _processInfos[rowIndex].argv0 ?: _processInfos[rowIndex].name;
     } else {
         // pid
         return [@(_processInfos[rowIndex].processID) stringValue];

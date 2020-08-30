@@ -60,6 +60,11 @@
 }
 
 + (NSString *)commandForProcess:(pid_t)pid execName:(NSString **)execName {
+    NSArray<NSString *> *argv = [self commandLineArgumentsForProcess:pid execName:execName];
+    return [argv componentsJoinedByString:@" "];
+}
+
++ (NSArray<NSString *> *)commandLineArgumentsForProcess:(pid_t)pid execName:(NSString **)execName {
     int argmax = [self maximumLengthOfProcargs];
     char *procargs = [self procargsForProcess:pid];
 
@@ -102,14 +107,14 @@
     }
 
     if (argv.count == 0) {
-        return @"";
+        return @[];
     }
     NSString *command = argv[0];
     NSRange lastSlash = [command rangeOfString:@"/" options:NSBackwardsSearch];
     if (lastSlash.location != NSNotFound) {
         argv[0] = [command substringFromIndex:lastSlash.location + 1];
     }
-    return [argv componentsJoinedByString:@" "];
+    return argv;
 }
 
 + (NSArray<NSNumber *> *)allPids {

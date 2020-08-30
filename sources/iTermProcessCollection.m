@@ -19,8 +19,9 @@
 
 @interface iTermProcessInfo()
 @property(nonatomic, weak, readwrite) iTermProcessInfo *parent;
-@property(atomic, strong) NSString *nameValue;
-@property(atomic, strong) NSString *commandLineValue;
+@property(atomic, copy) NSString *nameValue;
+@property(atomic, copy) NSString *argv0Value;
+@property(atomic, copy) NSString *commandLineValue;
 @property(atomic) NSNumber *isForegroundJobValue;
 @end
 
@@ -208,11 +209,16 @@
 - (void)doSlowLookup {
     if ([self shouldInitialize]) {
         BOOL fg = NO;
-        // This is the "real" name, not the hacked one with a leading hyphen.
         self.nameValue = [iTermLSOF nameOfProcessWithPid:self->_processID isForeground:&fg];
         if (fg || [self.parent.name isEqualToString:@"login"] || !self.parent) {
             // Full command line with hacked command name.
-            self.commandLineValue = [iTermLSOF commandForProcess:self->_processID execName:nil];
+            NSArray<NSString *> *argv = [iTermLSOF commandLineArgumentsForProcess:self->_processID execName:NULL];
+            self.commandLineValue = [argv componentsJoinedByString:@" "];
+            if (argv.firstObject.length) {
+                self.argv0Value = argv[0];
+            } else {
+                self.argv0Value = nil;
+            }
         }
         self.isForegroundJobValue = @(fg);
     }
@@ -221,6 +227,11 @@
 - (NSString *)name {
     [self doSlowLookup];
     return self.nameValue;
+}
+
+- (NSString *)argv0 {
+    [self doSlowLookup];
+    return self.argv0Value;
 }
 
 - (NSString *)commandLine {

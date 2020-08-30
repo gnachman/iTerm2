@@ -40,7 +40,7 @@ static NSString *const iTermSessionTitleSession = @"session";
     NSDictionary<NSString *, NSString *> *defaults =
     @{ iTermSessionTitleArgName: iTermVariableKeySessionAutoName,
        iTermSessionTitleArgProfile: iTermVariableKeySessionProfileName,
-       iTermSessionTitleArgJob: iTermVariableKeySessionJob,
+       iTermSessionTitleArgJob: iTermVariableKeySessionProcessTitle,
        iTermSessionTitleArgCommandLine: iTermVariableKeySessionCommandLine,
        iTermSessionTitleArgPath: iTermVariableKeySessionPath,
        iTermSessionTitleArgTTY: iTermVariableKeySessionTTY,

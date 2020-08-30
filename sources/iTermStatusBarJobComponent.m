@@ -100,7 +100,7 @@ NS_ASSUME_NONNULL_BEGIN
             // Don't include login.
             break;
         }
-        [chain addObject:current.name ?: @"?"];
+        [chain addObject:current.argv0 ?: current.name ?: @"?"];
         if (current.processID == sessionTaskPid || !sessionTaskPid) {
             break;
         }

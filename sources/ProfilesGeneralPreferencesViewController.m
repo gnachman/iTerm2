@@ -277,6 +277,7 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
                                                            iTermVariableKeySessionHostname,
                                                            iTermVariableKeySessionName,
                                                            iTermVariableKeySessionJob,
+                                                           iTermVariableKeySessionProcessTitle,
                                                            iTermVariableKeySessionPath,
                                                            iTermVariableKeySessionJobPid] ];
     _customDirectoryTextFieldDelegate =

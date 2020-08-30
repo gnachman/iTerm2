@@ -1633,10 +1633,15 @@ ITERM_WEAKLY_REFERENCEABLE
                      identifier:(NSString*)identifier
                     genericName:(NSString *)genericName
 {
-    NSMutableArray *names = [NSMutableArray array];
+    NSArray *names = @[];
     for (PTYSession *aSession in sessions) {
         if (![aSession exited]) {
-            [names addObjectsFromArray:[[aSession childJobNames] arrayByRemovingObject:@"login"]];
+            names = [aSession.childJobNameTuples mapWithBlock:^id(iTermTuple<NSString *,NSString *> *tuple) {
+                if ([tuple.firstObject isEqualToString:@"login"]) {
+                    return nil;
+                }
+                return tuple.secondObject;
+            }];
         }
     }
     NSString *message;

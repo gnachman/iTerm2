@@ -58,6 +58,7 @@
                                     iTermVariableKeySessionTriggerName,
                                     iTermVariableKeySessionWindowName,
                                     iTermVariableKeySessionJob,
+                                    iTermVariableKeySessionProcessTitle,
                                     iTermVariableKeySessionCommandLine,
                                     iTermVariableKeySessionPresentationName,
                                     iTermVariableKeySessionTmuxPaneTitle,
