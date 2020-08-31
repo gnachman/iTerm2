@@ -329,8 +329,8 @@
 
             case kURLActionSmartSelectionAction: {
                 DLog(@"Run smart selection selector %@", NSStringFromSelector(action.selector));
-                NSObject *delegate = self.delegate;
-                [delegate it_performNonObjectReturningSelector:action.selector withObject:action];
+                [self.smartSelectionActionTarget it_performNonObjectReturningSelector:action.selector
+                                                                           withObject:action];
                 break;
             }
 

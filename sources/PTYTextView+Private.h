@@ -7,6 +7,7 @@
 
 #import "PTYTextView.h"
 
+#import "iTermTextViewContextMenuHelper.h"
 #import "iTermSelection.h"
 #import "iTermSemanticHistoryController.h"
 #import "iTermFindCursorView.h"
@@ -32,12 +33,12 @@ iTermKeyboardHandlerDelegate,
 iTermSelectionDelegate,
 iTermSelectionScrollHelperDelegate,
 NSDraggingSource,
-NSMenuDelegate,
 NSPopoverDelegate> {
     NSCursor *cursor_;
     PTYMouseHandler *_mouseHandler;
     iTermURLActionHelper *_urlActionHelper;
     iTermShellIntegrationWindowController *_shellIntegrationInstallerWindow;
+    iTermTextViewContextMenuHelper *_contextMenuHelper;
 }
 
 @property(nonatomic, strong) iTermSelection *selection;
@@ -47,11 +48,13 @@ NSPopoverDelegate> {
 @property(nonatomic, strong) iTermQuickLookController *quickLookController;
 @property(strong, readwrite) NSTouchBar *touchBar NS_AVAILABLE_MAC(10_12_2);
 
-// Set when a context menu opens, nilled when it closes. If the data source changes between when we
-// ask the context menu to open and when the main thread enters a tracking runloop, the text under
-// the selection can change. We want to respect what we show while the context menu is open.
-// See issue 4048.
-@property(nonatomic, copy) NSString *savedSelectedText;
+- (void)addNote;
+- (NSString *)selectedTextCappedAtSize:(int)maxBytes;
+- (BOOL)_haveShortSelection;
+- (BOOL)withRelativeCoord:(VT100GridAbsCoord)coord
+                    block:(void (^ NS_NOESCAPE)(VT100GridCoord coord))block;
+- (BOOL)withRelativeCoordRange:(VT100GridAbsCoordRange)range
+                         block:(void (^ NS_NOESCAPE)(VT100GridCoordRange))block;
 
 @end
 

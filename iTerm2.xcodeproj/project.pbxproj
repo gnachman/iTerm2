@@ -1592,6 +1592,8 @@
 		A61A85B224F23CDE00B03880 /* iTermGlobalSearchEngineCursor.m in Sources */ = {isa = PBXBuildFile; fileRef = A61A85B024F23CDE00B03880 /* iTermGlobalSearchEngineCursor.m */; };
 		A61A85B524F23D0700B03880 /* iTermGlobalSearchEngine.h in Headers */ = {isa = PBXBuildFile; fileRef = A61A85B324F23D0700B03880 /* iTermGlobalSearchEngine.h */; };
 		A61A85B624F23D0700B03880 /* iTermGlobalSearchEngine.m in Sources */ = {isa = PBXBuildFile; fileRef = A61A85B424F23D0700B03880 /* iTermGlobalSearchEngine.m */; };
+		A61A85B924FC260700B03880 /* iTermTextViewContextMenuHelper.h in Headers */ = {isa = PBXBuildFile; fileRef = A61A85B724FC260700B03880 /* iTermTextViewContextMenuHelper.h */; };
+		A61A85BA24FC260700B03880 /* iTermTextViewContextMenuHelper.m in Sources */ = {isa = PBXBuildFile; fileRef = A61A85B824FC260700B03880 /* iTermTextViewContextMenuHelper.m */; };
 		A61ABBBB1AE5F38C004656C2 /* NSDictionary+Profile.h in Headers */ = {isa = PBXBuildFile; fileRef = A61ABBB91AE5F38C004656C2 /* NSDictionary+Profile.h */; };
 		A61ABBBC1AE5F38C004656C2 /* NSDictionary+Profile.h in Headers */ = {isa = PBXBuildFile; fileRef = A61ABBB91AE5F38C004656C2 /* NSDictionary+Profile.h */; };
 		A61ABBC21AE5F54A004656C2 /* NSMutableDictionary+Profile.h in Headers */ = {isa = PBXBuildFile; fileRef = A61ABBC01AE5F54A004656C2 /* NSMutableDictionary+Profile.h */; };
@@ -5054,6 +5056,8 @@
 		A61A85B024F23CDE00B03880 /* iTermGlobalSearchEngineCursor.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermGlobalSearchEngineCursor.m; sourceTree = "<group>"; };
 		A61A85B324F23D0700B03880 /* iTermGlobalSearchEngine.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermGlobalSearchEngine.h; sourceTree = "<group>"; };
 		A61A85B424F23D0700B03880 /* iTermGlobalSearchEngine.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermGlobalSearchEngine.m; sourceTree = "<group>"; };
+		A61A85B724FC260700B03880 /* iTermTextViewContextMenuHelper.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermTextViewContextMenuHelper.h; sourceTree = "<group>"; };
+		A61A85B824FC260700B03880 /* iTermTextViewContextMenuHelper.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermTextViewContextMenuHelper.m; sourceTree = "<group>"; };
 		A61ABBB91AE5F38C004656C2 /* NSDictionary+Profile.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSDictionary+Profile.h"; sourceTree = "<group>"; };
 		A61ABBBA1AE5F38C004656C2 /* NSDictionary+Profile.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSDictionary+Profile.m"; sourceTree = "<group>"; };
 		A61ABBC01AE5F54A004656C2 /* NSMutableDictionary+Profile.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSMutableDictionary+Profile.h"; sourceTree = "<group>"; };
@@ -9574,6 +9578,8 @@
 				A6EC936E24E787BA00EEADEF /* iTermSnippetsModel.m */,
 				A61A859224EFA01800B03880 /* iTermBackgroundCommandRunner.h */,
 				A61A859324EFA01800B03880 /* iTermBackgroundCommandRunner.m */,
+				A61A85B724FC260700B03880 /* iTermTextViewContextMenuHelper.h */,
+				A61A85B824FC260700B03880 /* iTermTextViewContextMenuHelper.m */,
 			);
 			name = Helpers;
 			sourceTree = "<group>";
@@ -11282,6 +11288,7 @@
 				A6A39EBF24B9A96B00A64433 /* iTermUnobtrusiveMessage.h in Headers */,
 				5312269A20CB1D3A004831C6 /* iTermBuiltInFunctions.h in Headers */,
 				A63493E023E661B60047C31B /* iTermPresentationController.h in Headers */,
+				A61A85B924FC260700B03880 /* iTermTextViewContextMenuHelper.h in Headers */,
 				A6A39EBB24B99AC000A64433 /* iTermGraphicsUtilities.h in Headers */,
 				A66719471DCE36C3000CE608 /* NSTableColumn+iTerm.h in Headers */,
 				A629F5A523AFF5BA00C2F16B /* iTermShellIntegrationSecondPageViewController.h in Headers */,
@@ -14075,6 +14082,7 @@
 				A648DABA2427E73E00C2FF02 /* iTermFlagsChangedNotification.m in Sources */,
 				A6905561241E98CB0020EA6A /* iTermFileDescriptorMultiClientChild.m in Sources */,
 				A631FC9220EDDBC600EB824F /* iTermFindDriver.m in Sources */,
+				A61A85BA24FC260700B03880 /* iTermTextViewContextMenuHelper.m in Sources */,
 				A60C03682089897400FE2F1F /* iTermScriptConsole.m in Sources */,
 				A66719601DCE3772000CE608 /* iTermAPIServer.m in Sources */,
 				5308BF8A22828268004BECAC /* iTermStatusBarBatteryComponent.m in Sources */,

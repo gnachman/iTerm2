@@ -166,6 +166,8 @@ static BOOL iTermAPIHelperLastApplescriptAuthRequiredSetting;
             return [NSString stringWithFormat:@"title.%@", [self.sessionTitleAttributes.uniqueIdentifier stringByReplacingOccurrencesOfString:@"-" withString:@"_"]];
         case ITMRPCRegistrationRequest_RoleSpecificAttributes_OneOfCase_StatusBarComponentAttributes:
             return [NSString stringWithFormat:@"statusbar.%@", [self.statusBarComponentAttributes.uniqueIdentifier  stringByReplacingOccurrencesOfString:@"-" withString:@"_"]];
+        case ITMRPCRegistrationRequest_RoleSpecificAttributes_OneOfCase_ContextMenuAttributes:
+            return [NSString stringWithFormat:@"contextMenu.%@", [self.contextMenuAttributes.uniqueIdentifier  stringByReplacingOccurrencesOfString:@"-" withString:@"_"]];
     }
 }
 
@@ -543,6 +545,10 @@ static BOOL iTermAPIHelperLastApplescriptAuthRequiredSetting;
 
 + (NSArray<ITMRPCRegistrationRequest *> *)statusBarComponentProviderRegistrationRequests {
     return [sAPIHelperInstance statusBarComponentProviderRegistrationRequests] ?: @[];
+}
+
++ (NSArray<ITMRPCRegistrationRequest *> *)contextMenuProviderRegistrationRequests {
+    return [sAPIHelperInstance contextMenuProviderRegistrationRequests] ?: @[];
 }
 
 + (BOOL)confirmShouldStartServerAndUpdateUserDefaultsForced:(BOOL)forced {
@@ -1208,6 +1214,19 @@ static BOOL iTermAPIHelperLastApplescriptAuthRequiredSetting;
     }];
 }
 
+- (NSArray<ITMRPCRegistrationRequest *> *)contextMenuProviderRegistrationRequests {
+    return [self.serverOriginatedRPCSubscriptions.allKeys mapWithBlock:^id(NSString *signature) {
+        ITMNotificationRequest *req = self.serverOriginatedRPCSubscriptions[signature].secondObject;
+        if (!req) {
+            return nil;
+        }
+        if (req.rpcRegistrationRequest.role != ITMRPCRegistrationRequest_Role_ContextMenu) {
+            return nil;
+        }
+        return req.rpcRegistrationRequest;
+    }];
+}
+
 + (ITMRPCRegistrationRequest *)registrationRequestForStatusBarComponentWithUniqueIdentifier:(NSString *)uniqueIdentifier {
     return [[[self sharedInstance] statusBarComponentProviderRegistrationRequests] objectPassingTest:^BOOL(ITMRPCRegistrationRequest *request, NSUInteger index, BOOL *stop) {
         return [request.statusBarComponentAttributes.uniqueIdentifier isEqualToString:uniqueIdentifier];
@@ -1712,6 +1731,7 @@ static BOOL iTermAPIHelperLastApplescriptAuthRequiredSetting;
                 case ITMRPCRegistrationRequest_Role_StatusBarComponent:
                     [self didRegisterStatusBarComponent:request.rpcRegistrationRequest.statusBarComponentAttributes
                                            onConnection:connectionKey];
+                case ITMRPCRegistrationRequest_Role_ContextMenu:
                     break;
             }
         } else {

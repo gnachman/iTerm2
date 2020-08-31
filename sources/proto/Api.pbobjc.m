@@ -7019,6 +7019,7 @@ BOOL ITMRegisterToolRequest_ToolType_IsValidValue(int32_t value__) {
 @dynamic hasRole, role;
 @dynamic sessionTitleAttributes;
 @dynamic statusBarComponentAttributes;
+@dynamic contextMenuAttributes;
 @dynamic hasDisplayName, displayName;
 
 typedef struct ITMRPCRegistrationRequest__storage_ {
@@ -7031,6 +7032,7 @@ typedef struct ITMRPCRegistrationRequest__storage_ {
   NSString *displayName;
   ITMRPCRegistrationRequest_SessionTitleAttributes *sessionTitleAttributes;
   ITMRPCRegistrationRequest_StatusBarComponentAttributes *statusBarComponentAttributes;
+  ITMRPCRegistrationRequest_ContextMenuAttributes *contextMenuAttributes;
 } ITMRPCRegistrationRequest__storage_;
 
 // This method is threadsafe because it is initially called
@@ -7119,6 +7121,16 @@ typedef struct ITMRPCRegistrationRequest__storage_ {
         .core.flags = GPBFieldOptional,
         .core.dataType = GPBDataTypeMessage,
       },
+      {
+        .defaultValue.valueMessage = nil,
+        .core.name = "contextMenuAttributes",
+        .core.dataTypeSpecific.className = GPBStringifySymbol(ITMRPCRegistrationRequest_ContextMenuAttributes),
+        .core.number = ITMRPCRegistrationRequest_FieldNumber_ContextMenuAttributes,
+        .core.hasIndex = -1,
+        .core.offset = (uint32_t)offsetof(ITMRPCRegistrationRequest__storage_, contextMenuAttributes),
+        .core.flags = GPBFieldOptional,
+        .core.dataType = GPBDataTypeMessage,
+      },
     };
     GPBDescriptor *localDescriptor =
         [GPBDescriptor allocDescriptorForClass:[ITMRPCRegistrationRequest class]
@@ -7153,11 +7165,13 @@ GPBEnumDescriptor *ITMRPCRegistrationRequest_Role_EnumDescriptor(void) {
   static GPBEnumDescriptor *descriptor = NULL;
   if (!descriptor) {
     static const char *valueNames =
-        "Generic\000SessionTitle\000StatusBarComponent\000";
+        "Generic\000SessionTitle\000StatusBarComponent\000"
+        "ContextMenu\000";
     static const int32_t values[] = {
         ITMRPCRegistrationRequest_Role_Generic,
         ITMRPCRegistrationRequest_Role_SessionTitle,
         ITMRPCRegistrationRequest_Role_StatusBarComponent,
+        ITMRPCRegistrationRequest_Role_ContextMenu,
     };
     GPBEnumDescriptor *worker =
         [GPBEnumDescriptor allocDescriptorForName:GPBNSStringifySymbol(ITMRPCRegistrationRequest_Role)
@@ -7177,6 +7191,7 @@ BOOL ITMRPCRegistrationRequest_Role_IsValidValue(int32_t value__) {
     case ITMRPCRegistrationRequest_Role_Generic:
     case ITMRPCRegistrationRequest_Role_SessionTitle:
     case ITMRPCRegistrationRequest_Role_StatusBarComponent:
+    case ITMRPCRegistrationRequest_Role_ContextMenu:
       return YES;
     default:
       return NO;
@@ -7628,6 +7643,61 @@ typedef struct ITMRPCRegistrationRequest_StatusBarComponentAttributes_Icon__stor
                                    storageSize:sizeof(ITMRPCRegistrationRequest_StatusBarComponentAttributes_Icon__storage_)
                                          flags:GPBDescriptorInitializationFlag_None];
     [localDescriptor setupContainingMessageClassName:GPBStringifySymbol(ITMRPCRegistrationRequest_StatusBarComponentAttributes)];
+    NSAssert(descriptor == nil, @"Startup recursed!");
+    descriptor = localDescriptor;
+  }
+  return descriptor;
+}
+
+@end
+
+#pragma mark - ITMRPCRegistrationRequest_ContextMenuAttributes
+
+@implementation ITMRPCRegistrationRequest_ContextMenuAttributes
+
+@dynamic hasDisplayName, displayName;
+@dynamic hasUniqueIdentifier, uniqueIdentifier;
+
+typedef struct ITMRPCRegistrationRequest_ContextMenuAttributes__storage_ {
+  uint32_t _has_storage_[1];
+  NSString *displayName;
+  NSString *uniqueIdentifier;
+} ITMRPCRegistrationRequest_ContextMenuAttributes__storage_;
+
+// This method is threadsafe because it is initially called
+// in +initialize for each subclass.
++ (GPBDescriptor *)descriptor {
+  static GPBDescriptor *descriptor = nil;
+  if (!descriptor) {
+    static GPBMessageFieldDescription fields[] = {
+      {
+        .name = "displayName",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMRPCRegistrationRequest_ContextMenuAttributes_FieldNumber_DisplayName,
+        .hasIndex = 0,
+        .offset = (uint32_t)offsetof(ITMRPCRegistrationRequest_ContextMenuAttributes__storage_, displayName),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeString,
+      },
+      {
+        .name = "uniqueIdentifier",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMRPCRegistrationRequest_ContextMenuAttributes_FieldNumber_UniqueIdentifier,
+        .hasIndex = 1,
+        .offset = (uint32_t)offsetof(ITMRPCRegistrationRequest_ContextMenuAttributes__storage_, uniqueIdentifier),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeString,
+      },
+    };
+    GPBDescriptor *localDescriptor =
+        [GPBDescriptor allocDescriptorForClass:[ITMRPCRegistrationRequest_ContextMenuAttributes class]
+                                     rootClass:[ITMApiRoot class]
+                                          file:ITMApiRoot_FileDescriptor()
+                                        fields:fields
+                                    fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
+                                   storageSize:sizeof(ITMRPCRegistrationRequest_ContextMenuAttributes__storage_)
+                                         flags:GPBDescriptorInitializationFlag_None];
+    [localDescriptor setupContainingMessageClassName:GPBStringifySymbol(ITMRPCRegistrationRequest)];
     NSAssert(descriptor == nil, @"Startup recursed!");
     descriptor = localDescriptor;
   }

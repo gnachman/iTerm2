@@ -62,6 +62,7 @@ NS_ASSUME_NONNULL_BEGIN
 @interface iTermURLActionHelper : NSObject
 @property (nonatomic, weak) id<iTermURLActionHelperDelegate> delegate;
 @property (nonatomic, strong, readonly) iTermSemanticHistoryController *semanticHistoryController;
+@property (nonatomic, weak) id smartSelectionActionTarget;
 
 - (instancetype)initWithSemanticHistoryController:(iTermSemanticHistoryController *)semanticHistoryController NS_DESIGNATED_INITIALIZER;
 - (instancetype)init NS_UNAVAILABLE;

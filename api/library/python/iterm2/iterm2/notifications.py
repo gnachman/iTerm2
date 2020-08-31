@@ -15,6 +15,9 @@ RPC_ROLE_SESSION_TITLE = iterm2.api_pb2.RPCRegistrationRequest.Role.Value(
         "SESSION_TITLE")
 RPC_ROLE_STATUS_BAR_COMPONENT = (
     iterm2.api_pb2.RPCRegistrationRequest.Role.Value("STATUS_BAR_COMPONENT"))
+RPC_ROLE_CONTEXT_MENU = iterm2.api_pb2.RPCRegistrationRequest.Role.Value(
+        "CONTEXT_MENU")
+
 # pylint: enable=no-member
 
 
@@ -296,7 +299,9 @@ async def async_subscribe_to_server_originated_rpc_notification(
         role=RPC_ROLE_GENERIC,
         session_title_display_name=None,
         session_title_unique_id=None,
-        status_bar_component=None):
+        status_bar_component=None,
+        context_menu_display_name=None,
+        context_menu_unique_id=None):
     """
     Registers a callback to be run when the server wants to invoke an RPC.
 
@@ -315,6 +320,9 @@ async def async_subscribe_to_server_originated_rpc_notification(
         `RPC_ROLE_GENERIC`.
     :param session_title_display_name: Used by the `RPC_ROLE_SESSION_TITLE`
         role to give the name of the function to show in preferences.
+    :param context_menu_display_name: Used by the `RPC_ROLE_CONTEXT_MENU`
+        role to give the name of the menu item.
+    :param context_menu_unique_id: Unique ID for the context menu provider.
 
     :returns: A token that can be passed to unsubscribe.
     """
@@ -354,6 +362,12 @@ async def async_subscribe_to_server_originated_rpc_notification(
     elif status_bar_component is not None:
         status_bar_component.set_fields_in_proto(
             rpc_registration_request.status_bar_component_attributes)
+    elif context_menu_display_name is not None:
+        (rpc_registration_request.context_menu_attributes.
+                display_name) = context_menu_display_name
+        assert context_menu_unique_id
+        (rpc_registration_request.context_menu_attributes.
+                unique_identifier) = context_menu_unique_id
 
     return await _async_subscribe(
         connection,

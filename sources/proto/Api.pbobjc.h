@@ -122,6 +122,7 @@ CF_EXTERN_C_BEGIN
 @class ITMPromptNotificationCommandStart;
 @class ITMPromptNotificationPrompt;
 @class ITMRPCRegistrationRequest;
+@class ITMRPCRegistrationRequest_ContextMenuAttributes;
 @class ITMRPCRegistrationRequest_RPCArgument;
 @class ITMRPCRegistrationRequest_RPCArgumentSignature;
 @class ITMRPCRegistrationRequest_SessionTitleAttributes;
@@ -686,6 +687,7 @@ typedef GPB_ENUM(ITMRPCRegistrationRequest_Role) {
   ITMRPCRegistrationRequest_Role_Generic = 1,
   ITMRPCRegistrationRequest_Role_SessionTitle = 2,
   ITMRPCRegistrationRequest_Role_StatusBarComponent = 3,
+  ITMRPCRegistrationRequest_Role_ContextMenu = 4,
 };
 
 GPBEnumDescriptor *ITMRPCRegistrationRequest_Role_EnumDescriptor(void);
@@ -1447,6 +1449,18 @@ typedef GPB_ENUM(ITMInvokeFunctionRequest_Method_FieldNumber) {
 
 @interface ITMInvokeFunctionRequest_Method : GPBMessage
 
+/**
+ * The following methods are defined:
+ * window.set_title(title: String)
+ * session.set_name(name: String)
+ * session.run_tmux_command(command: String) throws  // Throws an exception if this is not a tmux session
+ * session.set_status_bar_component_unread_count(identifier: String, count: Int)
+ * session.stop_coprocess() -> Bool  // returns whether there was a coprocess to stop
+ * session.get_coprocess() -> String?  // returns the name of the command, or nil
+ * session.run_coprocess(commandLine: String, mute: Bool) -> Bool  // returns whether it attempted to start the coprocess. It'll fail only if there is already a coprocess.
+ * tab.set_title(title: String)
+ * tab.select_pane_in_direction(direction: String) throws -> String  // direction is 'left', 'right', 'above', or 'below'. If successful, it will return the ID of the newly active session. If you can't go that way, it returns null. Throws an exception if the direction is invalid.
+ **/
 @property(nonatomic, readwrite, copy, null_resettable) NSString *receiver;
 /** Test to see if @c receiver has been set. */
 @property(nonatomic, readwrite) BOOL hasReceiver;
@@ -3227,12 +3241,14 @@ typedef GPB_ENUM(ITMRPCRegistrationRequest_FieldNumber) {
   ITMRPCRegistrationRequest_FieldNumber_DisplayName = 6,
   ITMRPCRegistrationRequest_FieldNumber_SessionTitleAttributes = 7,
   ITMRPCRegistrationRequest_FieldNumber_StatusBarComponentAttributes = 8,
+  ITMRPCRegistrationRequest_FieldNumber_ContextMenuAttributes = 9,
 };
 
 typedef GPB_ENUM(ITMRPCRegistrationRequest_RoleSpecificAttributes_OneOfCase) {
   ITMRPCRegistrationRequest_RoleSpecificAttributes_OneOfCase_GPBUnsetOneOfCase = 0,
   ITMRPCRegistrationRequest_RoleSpecificAttributes_OneOfCase_SessionTitleAttributes = 7,
   ITMRPCRegistrationRequest_RoleSpecificAttributes_OneOfCase_StatusBarComponentAttributes = 8,
+  ITMRPCRegistrationRequest_RoleSpecificAttributes_OneOfCase_ContextMenuAttributes = 9,
 };
 
 /**
@@ -3265,6 +3281,8 @@ typedef GPB_ENUM(ITMRPCRegistrationRequest_RoleSpecificAttributes_OneOfCase) {
 @property(nonatomic, readwrite, strong, null_resettable) ITMRPCRegistrationRequest_SessionTitleAttributes *sessionTitleAttributes;
 
 @property(nonatomic, readwrite, strong, null_resettable) ITMRPCRegistrationRequest_StatusBarComponentAttributes *statusBarComponentAttributes;
+
+@property(nonatomic, readwrite, strong, null_resettable) ITMRPCRegistrationRequest_ContextMenuAttributes *contextMenuAttributes;
 
 @property(nonatomic, readwrite, copy, null_resettable) NSString *displayName DEPRECATED_ATTRIBUTE;
 /** Test to see if @c displayName has been set. */
@@ -3431,6 +3449,25 @@ typedef GPB_ENUM(ITMRPCRegistrationRequest_StatusBarComponentAttributes_Icon_Fie
 @property(nonatomic, readwrite) float scale;
 
 @property(nonatomic, readwrite) BOOL hasScale;
+@end
+
+#pragma mark - ITMRPCRegistrationRequest_ContextMenuAttributes
+
+typedef GPB_ENUM(ITMRPCRegistrationRequest_ContextMenuAttributes_FieldNumber) {
+  ITMRPCRegistrationRequest_ContextMenuAttributes_FieldNumber_DisplayName = 1,
+  ITMRPCRegistrationRequest_ContextMenuAttributes_FieldNumber_UniqueIdentifier = 2,
+};
+
+@interface ITMRPCRegistrationRequest_ContextMenuAttributes : GPBMessage
+
+@property(nonatomic, readwrite, copy, null_resettable) NSString *displayName;
+/** Test to see if @c displayName has been set. */
+@property(nonatomic, readwrite) BOOL hasDisplayName;
+
+@property(nonatomic, readwrite, copy, null_resettable) NSString *uniqueIdentifier;
+/** Test to see if @c uniqueIdentifier has been set. */
+@property(nonatomic, readwrite) BOOL hasUniqueIdentifier;
+
 @end
 
 #pragma mark - ITMRegisterToolResponse

@@ -791,6 +791,7 @@ message RPCRegistrationRequest {
     GENERIC = 1;
     SESSION_TITLE = 2;
     STATUS_BAR_COMPONENT = 3;
+    CONTEXT_MENU = 4;
   }
   optional Role role = 5 [default=GENERIC];
 
@@ -835,9 +836,15 @@ message RPCRegistrationRequest {
     repeated Icon icons = 7;
   }
 
+  message ContextMenuAttributes {
+    optional string display_name = 1;
+    optional string unique_identifier = 2;
+  }
+
   oneof RoleSpecificAttributes {
     SessionTitleAttributes session_title_attributes = 7;
     StatusBarComponentAttributes status_bar_component_attributes = 8;
+    ContextMenuAttributes context_menu_attributes = 9;
   }
 
   optional string display_name = 6 [deprecated=true];

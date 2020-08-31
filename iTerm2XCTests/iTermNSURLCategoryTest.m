@@ -137,6 +137,12 @@
     XCTAssertEqualObjects(url.absoluteString, @"Georges-Mac-Pro:/Users/gnachman%25");
 }
 
+- (void)testUrlInQuery {
+    NSString *urlString = @"https://google.com/search?q=http://google.com/";
+    NSURL *url = [NSURL URLWithUserSuppliedString:urlString];
+    XCTAssertEqualObjects(url.absoluteString, @"https://google.com/search?q=http://google.com/");
+}
+
 #pragma mark - URLByRemovingFragment
 
 - (void)testURLByRemovingFragment_noFragment {

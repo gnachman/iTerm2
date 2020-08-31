@@ -9203,6 +9203,9 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     if (!self.isTmuxClient) {
         return;
     }
+    if (!_tmuxController.gateway.pauseModeEnabled) {
+        return;
+    }
     [menu addItem:[NSMenuItem separatorItem]];
     if (_tmuxPaused) {
         NSMenuItem *item = [menu addItemWithTitle:@"Unpause tmux Pane" action:@selector(toggleTmuxPaused) keyEquivalent:@""];
@@ -9215,6 +9218,15 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 - (NSString *)textViewShell {
     return self.userShell;
+}
+
+- (void)textViewContextMenuInvocation:(NSString *)invocation
+                      failedWithError:(NSError *)error
+                          forMenuItem:(NSString *)title {
+    [PTYSession reportFunctionCallError:error
+                          forInvocation:invocation
+                                 origin:[NSString stringWithFormat:@"Menu Item “%@”", title]
+                                 window:self.view.window];
 }
 
 - (NSString *)userShell {

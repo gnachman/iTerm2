@@ -7,6 +7,7 @@
 
 #import "PTYTextView.h"
 
+#import "iTermTextViewContextMenuHelper.h"
 #import "iTermMouseReportingFrustrationDetector.h"
 #import "iTermURLActionHelper.h"
 #import "VT100GridTypes.h"
@@ -16,6 +17,7 @@
 NS_ASSUME_NONNULL_BEGIN
 
 @interface PTYTextView (ARC)<
+iTermContextMenuHelperDelegate,
 iTermMouseReportingFrustrationDetectorDelegate,
 iTermURLActionHelperDelegate>
 
@@ -35,13 +37,10 @@ iTermURLActionHelperDelegate>
 
 - (VT100GridCoord)coordForPointInWindow:(NSPoint)point;
 
-#pragma mark - Query Coordinates
+#pragma mark - Inline Images
 
 - (nullable iTermImageInfo *)imageInfoAtCoord:(VT100GridCoord)coord;
-
-#pragma mark - Open URL
-
-- (NSDictionary<NSNumber *, NSString *> *)smartSelectionActionSelectorDictionary;
+- (BOOL)imageIsVisible:(iTermImageInfo *)image;
 
 #pragma mark - Semantic History
 
@@ -51,15 +50,6 @@ iTermURLActionHelperDelegate>
 #pragma mark - Underlined Actions
 
 - (void)updateUnderlinedURLs:(NSEvent *)event;
-
-#pragma mark - Context Menu Actions
-
-- (void)contextMenuActionOpenFile:(id)sender;
-- (void)contextMenuActionOpenURL:(id)sender;
-- (void)contextMenuActionRunCommand:(id)sender;
-- (void)contextMenuActionRunCommandInWindow:(id)sender;
-- (void)contextMenuActionRunCoprocess:(id)sender;
-- (void)contextMenuActionSendText:(id)sender;
 
 #pragma mark - Mouse Cursor
 

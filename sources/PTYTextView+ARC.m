@@ -31,9 +31,12 @@
 #import "NSData+iTerm.h"
 #import "NSDictionary+iTerm.h"
 #import "NSEvent+iTerm.h"
+#import "NSFileManager+iTerm.h"
 #import "NSObject+iTerm.h"
+#import "NSSavePanel+iTerm.h"
 #import "NSURL+iTerm.h"
 #import "PTYMouseHandler.h"
+#import "PTYNoteViewController.h"
 #import "PTYTextView+Private.h"
 #import "SCPPath.h"
 #import "URLAction.h"
@@ -52,6 +55,11 @@ static const NSUInteger kRectangularSelectionModifierMask = (kRectangularSelecti
 @implementation PTYTextView (ARC)
 
 - (void)initARC {
+    _contextMenuHelper.delegate = self;
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(imageDidLoad:)
+                                                 name:iTermImageDidLoad
+                                               object:nil];
 }
 
 #pragma mark - Coordinate Space Conversions
@@ -251,71 +259,10 @@ static const NSUInteger kRectangularSelectionModifierMask = (kRectangularSelecti
 
 #pragma mark - Smart Selection
 
-- (NSDictionary<NSNumber *, NSString *> *)smartSelectionActionSelectorDictionary {
-    // The selector's name must begin with contextMenuAction to
-    // pass validateMenuItem.
-    return @{ @(kOpenFileContextMenuAction): NSStringFromSelector(@selector(contextMenuActionOpenFile:)),
-              @(kOpenUrlContextMenuAction): NSStringFromSelector(@selector(contextMenuActionOpenURL:)),
-              @(kRunCommandContextMenuAction): NSStringFromSelector(@selector(contextMenuActionRunCommand:)),
-              @(kRunCoprocessContextMenuAction): NSStringFromSelector(@selector(contextMenuActionRunCoprocess:)),
-              @(kSendTextContextMenuAction): NSStringFromSelector(@selector(contextMenuActionSendText:)),
-              @(kRunCommandInWindowContextMenuAction): NSStringFromSelector(@selector(contextMenuActionRunCommandInWindow:)) };
-}
+#pragma mark - Context Menu
 
-#pragma mark - Context Menu Actions
-
-- (void)contextMenuActionOpenFile:(id)sender {
-    DLog(@"Open file: '%@'", [sender representedObject]);
-    [[NSWorkspace sharedWorkspace] openFile:[[sender representedObject] stringByExpandingTildeInPath]];
-}
-
-- (void)contextMenuActionOpenURL:(id)sender {
-    NSURL *url = [NSURL URLWithUserSuppliedString:[sender representedObject]];
-    if (url) {
-        DLog(@"Open URL: %@", [sender representedObject]);
-        [[NSWorkspace sharedWorkspace] openURL:url];
-    } else {
-        DLog(@"%@ is not a URL", [sender representedObject]);
-    }
-}
-
-- (void)contextMenuActionRunCommand:(id)sender {
-    NSString *command = [sender representedObject];
-    DLog(@"Run command: %@", command);
-    [self runCommand:command];
-}
-
-- (void)contextMenuActionRunCommandInWindow:(id)sender {
-    NSString *command = [sender representedObject];
-    DLog(@"Run command in window: %@", command);
-    [[iTermController sharedInstance] openSingleUseWindowWithCommand:command
-                                                              inject:nil
-                                                         environment:nil
-                                                                 pwd:nil
-                                                             options:iTermSingleUseWindowOptionsDoNotEscapeArguments
-                                                      didMakeSession:nil
-                                                          completion:nil];
-}
-
-- (void)runCommand:(NSString *)command {
-    iTermBackgroundCommandRunner *runner =
-        [[iTermBackgroundCommandRunner alloc] initWithCommand:command
-                                                        shell:self.delegate.textViewShell
-                                                        title:@"Smart Selection Action"];
-    runner.notificationTitle = @"Smart Selection Action Failed";
-    [runner run];
-}
-
-- (void)contextMenuActionRunCoprocess:(id)sender {
-    NSString *command = [sender representedObject];
-    DLog(@"Run coprocess: %@", command);
-    [self.delegate launchCoprocessWithCommand:command];
-}
-
-- (void)contextMenuActionSendText:(id)sender {
-    NSString *command = [sender representedObject];
-    DLog(@"Send text: %@", command);
-    [self.delegate insertText:command];
+- (NSMenu *)menuForEvent:(NSEvent *)event {
+    return [_contextMenuHelper menuForEvent:event];
 }
 
 #pragma mark - Mouse Cursor
@@ -616,7 +563,7 @@ static const NSUInteger kRectangularSelectionModifierMask = (kRectangularSelecti
 }
 
 - (NSDictionary<NSNumber *, NSString *> *)urlActionHelperSmartSelectionActionSelectorDictionary:(iTermURLActionHelper *)helper {
-    return [self smartSelectionActionSelectorDictionary];
+    return [_contextMenuHelper smartSelectionActionSelectorDictionary];
 }
 
 - (NSArray<NSDictionary<NSString *, id> *> *)urlActionHelperSmartSelectionRules:(iTermURLActionHelper *)helper {
@@ -719,6 +666,343 @@ static const NSUInteger kRectangularSelectionModifierMask = (kRectangularSelecti
 
 - (void)didCopyToPasteboardWithControlSequence {
     [_mouseHandler didCopyToPasteboardWithControlSequence];
+}
+
+#pragma mark - Inline Images
+
+- (void)imageDidLoad:(NSNotification *)notification {
+    if ([self missingImageIsVisible:notification.object]) {
+        [self setNeedsDisplay:YES];
+    }
+}
+
+- (BOOL)missingImageIsVisible:(iTermImageInfo *)image {
+    if (![self.drawingHelper.missingImages containsObject:image.uniqueIdentifier]) {
+        return NO;
+    }
+    return [self imageIsVisible:image];
+}
+
+- (BOOL)imageIsVisible:(iTermImageInfo *)image {
+    int firstVisibleLine = [[self enclosingScrollView] documentVisibleRect].origin.y / self.lineHeight;
+    int width = [self.dataSource width];
+    for (int y = 0; y < [self.dataSource height]; y++) {
+        screen_char_t *theLine = [self.dataSource getLineAtIndex:y + firstVisibleLine];
+        for (int x = 0; x < width; x++) {
+            if (theLine && theLine[x].image && GetImageInfo(theLine[x].code) == image) {
+                return YES;
+            }
+        }
+    }
+    return NO;
+}
+
+#pragma mark - iTermContextMenuHelperDelegate
+
+- (NSPoint)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu
+            clickPoint:(NSEvent *)event
+allowRightMarginOverflow:(BOOL)allowRightMarginOverflow {
+    return [self clickPoint:event allowRightMarginOverflow:allowRightMarginOverflow];
+}
+
+- (NSString *)contextMenuSelectedText:(iTermTextViewContextMenuHelper *)contextMenu
+                               capped:(int)maxBytes {
+    return [self selectedTextCappedAtSize:maxBytes];
+}
+
+- (VT100ScreenMark *)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu
+                      markOnLine:(int)line {
+    return [self.dataSource markOnLine:line];
+}
+
+- (NSString *)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu
+   workingDirectoryOnLine:(int)line {
+    return [self.dataSource workingDirectoryOnLine:line];
+}
+
+- (nullable iTermImageInfo *)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu
+                        imageInfoAtCoord:(VT100GridCoord)coord {
+    return [self imageInfoAtCoord:coord];
+}
+
+- (long long)contextMenuTotalScrollbackOverflow:(iTermTextViewContextMenuHelper *)contextMenu {
+    return [self.dataSource totalScrollbackOverflow];
+}
+
+- (iTermSelection *)contextMenuSelection:(iTermTextViewContextMenuHelper *)contextMenu {
+    return self.selection;
+}
+
+- (void)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu
+       setSelection:(iTermSelection *)newSelection {
+    self.selection = newSelection;
+}
+
+- (BOOL)contextMenuSelectionIsShort:(iTermTextViewContextMenuHelper *)contextMenu {
+    return [self _haveShortSelection];
+}
+
+- (iTermTextExtractor *)contextMenuTextExtractor:(iTermTextViewContextMenuHelper *)contextMenu {
+    return [iTermTextExtractor textExtractorWithDataSource:self.dataSource];
+}
+
+- (BOOL)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu
+  withRelativeCoord:(VT100GridAbsCoord)coord
+              block:(void (^ NS_NOESCAPE)(VT100GridCoord coord))block {
+    return [self withRelativeCoord:coord block:block];
+}
+
+- (nullable SCPPath *)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu
+                   scpPathForFile:(NSString *)file
+                           onLine:(int)line {
+    return [self.dataSource scpPathForFile:file onLine:line];
+}
+
+- (void)contextMenuSplitVertically:(iTermTextViewContextMenuHelper *)contextMenu {
+    [self.delegate textViewSplitVertically:YES withProfileGuid:nil];
+}
+
+- (void)contextMenuSplitHorizontally:(iTermTextViewContextMenuHelper *)contextMenu {
+    [self.delegate textViewSplitVertically:NO withProfileGuid:nil];
+}
+
+- (void)contextMenuMovePane:(iTermTextViewContextMenuHelper *)contextMenu {
+    [self.delegate textViewMovePane];
+}
+
+- (void)contextMenuSwapSessions:(iTermTextViewContextMenuHelper *)contextMenu {
+    [self.delegate textViewSwapPane];
+}
+
+- (void)contextMenuSendSelectedText:(iTermTextViewContextMenuHelper *)contextMenu {
+    [self.delegate sendText:self.selectedText];
+}
+
+- (void)contextMenuClearBuffer:(iTermTextViewContextMenuHelper *)contextMenu {
+    [self.dataSource clearBuffer];
+}
+
+- (void)contextMenuAddAnnotation:(iTermTextViewContextMenuHelper *)contextMenu {
+    [self addNote];
+}
+
+- (BOOL)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu
+hasOpenAnnotationInRange:(VT100GridCoordRange)coordRange {
+    for (PTYNoteViewController *note in [self.dataSource notesInRange:coordRange]) {
+        if (note.isNoteHidden) {
+            return YES;
+        }
+    }
+    return NO;
+}
+
+- (void)contextMenuRevealAnnotations:(iTermTextViewContextMenuHelper *)contextMenu at:(VT100GridCoord)coord {
+    for (PTYNoteViewController *note in [self.dataSource notesInRange:VT100GridCoordRangeMake(coord.x,
+                                                                                              coord.y,
+                                                                                              coord.x + 1,
+                                                                                              coord.y)]) {
+        [note setNoteHidden:NO];
+    }
+}
+
+- (void)contextMenuEditSession:(iTermTextViewContextMenuHelper *)contextMenu {
+    [self.delegate textViewEditSession];
+}
+
+- (void)contextMenuToggleBroadcastingInput:(iTermTextViewContextMenuHelper *)contextMenu {
+    [self.delegate textViewToggleBroadcastingInput];
+}
+
+- (BOOL)contextMenuHasCoprocess:(iTermTextViewContextMenuHelper *)contextMenu {
+    return [self.delegate textViewHasCoprocess];
+}
+
+- (void)contextMenuStopCoprocess:(iTermTextViewContextMenuHelper *)contextMenu {
+    [self.delegate textViewStopCoprocess];
+}
+
+- (void)contextMenuCloseSession:(iTermTextViewContextMenuHelper *)contextMenu {
+    [self.delegate textViewCloseWithConfirmation];
+}
+
+- (BOOL)contextMenuSessionCanBeRestarted:(iTermTextViewContextMenuHelper *)contextMenu {
+    return [self.delegate isRestartable];
+}
+
+- (void)contextMenuRestartSession:(iTermTextViewContextMenuHelper *)contextMenu {
+    [self.delegate textViewRestartWithConfirmation];
+}
+
+- (BOOL)contextMenuCanBurySession:(iTermTextViewContextMenuHelper *)contextMenu {
+    return [self.delegate textViewCanBury];
+}
+
+- (void)contextMenuBurySession:(iTermTextViewContextMenuHelper *)contextMenu {
+    [self.delegate textViewBurySession];
+}
+
+- (void)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu amend:(NSMenu *)menu {
+    if ([[self delegate] respondsToSelector:@selector(menuForEvent:menu:)]) {
+        [[self delegate] menuForEvent:nil menu:menu];
+    }
+}
+
+- (NSControlStateValue)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu
+     terminalStateForMenuItem:(NSMenuItem *)item {
+    return [self.delegate textViewTerminalStateForMenuItem:item] ? NSControlStateValueOn : NSControlStateValueOff;
+}
+
+- (void)contextMenuResetTerminal:(iTermTextViewContextMenuHelper *)contextMenu {
+    [self.delegate textViewResetTerminal];
+}
+
+- (void)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu addContextMenuItems:(NSMenu *)theMenu {
+    [self.delegate textViewAddContextMenuItems:theMenu];
+}
+
+- (NSArray<NSDictionary *> *)contextMenuSmartSelectionRules:(iTermTextViewContextMenuHelper *)contextMenu {
+    return self.smartSelectionRules;
+}
+
+- (VT100RemoteHost *)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu remoteHostOnLine:(int)line {
+    return [self.dataSource remoteHostOnLine:line];
+}
+
+- (void)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu insertText:(NSString *)text {
+    [self.delegate insertText:text];
+}
+
+- (BOOL)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu hasOutputForCommandMark:(VT100ScreenMark *)commandMark {
+    return [self.dataSource textViewRangeOfOutputForCommandMark:commandMark].start.x != -1;
+}
+
+- (VT100GridCoordRange)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu
+       rangeOfOutputForCommandMark:(VT100ScreenMark *)mark {
+    return [self.dataSource textViewRangeOfOutputForCommandMark:mark];
+}
+
+- (void)contextMenuCopySelectionAccordingToUserPreferences:(iTermTextViewContextMenuHelper *)contextMenu {
+    [self copySelectionAccordingToUserPreferences];
+}
+
+- (void)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu
+ runCommandInWindow:(NSString *)command {
+    [[iTermController sharedInstance] openSingleUseWindowWithCommand:command
+                                                              inject:nil
+                                                         environment:nil
+                                                                 pwd:nil
+                                                             options:iTermSingleUseWindowOptionsDoNotEscapeArguments
+                                                      didMakeSession:nil
+                                                          completion:nil];
+}
+
+- (void)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu
+runCommandInBackground:(NSString *)command {
+    iTermBackgroundCommandRunner *runner =
+        [[iTermBackgroundCommandRunner alloc] initWithCommand:command
+                                                        shell:self.delegate.textViewShell
+                                                        title:@"Smart Selection Action"];
+    runner.notificationTitle = @"Smart Selection Action Failed";
+    [runner run];
+}
+
+- (void)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu
+       runCoprocess:(NSString *)command {
+    [self.delegate launchCoprocessWithCommand:command];
+}
+
+- (BOOL)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu
+withRelativeCoordRange:(VT100GridAbsCoordRange)range
+              block:(void (^ NS_NOESCAPE)(VT100GridCoordRange))block {
+    return [self withRelativeCoordRange:range block:block];
+}
+
+- (void)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu
+            openURL:(NSURL *)url {
+    [[NSWorkspace sharedWorkspace] openURL:url];
+}
+
+- (NSView *)contextMenuViewForMenu:(iTermTextViewContextMenuHelper *)contextMenu {
+    return self;
+}
+
+- (void)contextMenu:(nonnull iTermTextViewContextMenuHelper *)contextMenu
+toggleTerminalStateForMenuItem:(nonnull NSMenuItem *)item {
+    [self.delegate textViewToggleTerminalStateForMenuItem:item];
+
+}
+
+- (void)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu saveImage:(iTermImageInfo *)imageInfo {
+    NSSavePanel* panel = [NSSavePanel savePanel];
+
+    NSString *directory = [[NSFileManager defaultManager] downloadsDirectory] ?: NSHomeDirectory();
+    [NSSavePanel setDirectoryURL:[NSURL fileURLWithPath:directory] onceForID:@"saveImageAs" savePanel:panel];
+    panel.nameFieldStringValue = [imageInfo.filename lastPathComponent];
+    panel.allowedFileTypes = @[ @"png", @"bmp", @"gif", @"jp2", @"jpeg", @"jpg", @"tiff" ];
+    panel.allowsOtherFileTypes = NO;
+    panel.canCreateDirectories = YES;
+    [panel setExtensionHidden:NO];
+
+    if ([panel runModal] == NSModalResponseOK) {
+        NSString *filename = [[panel URL] path];
+        [imageInfo saveToFile:filename];
+    }
+}
+
+- (void)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu copyImage:(iTermImageInfo *)imageInfo {
+    NSPasteboard *pboard = [NSPasteboard generalPasteboard];
+    NSPasteboardItem *item = imageInfo.pasteboardItem;
+    if (item) {
+        [pboard clearContents];
+        [pboard writeObjects:@[ item ]];
+    }
+}
+
+
+- (void)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu openImage:(iTermImageInfo *)imageInfo {
+    NSString *name = imageInfo.nameForNewSavedTempFile;
+    if (name) {
+        [[iTermLaunchServices sharedInstance] openFile:name];
+    }
+}
+
+- (void)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu inspectImage:(iTermImageInfo *)imageInfo {
+    if (imageInfo) {
+        NSString *text = [NSString stringWithFormat:
+                          @"Filename: %@\n"
+                          @"Dimensions: %d x %d",
+                          imageInfo.filename,
+                          (int)imageInfo.image.size.width,
+                          (int)imageInfo.image.size.height];
+
+        NSAlert *alert = [[NSAlert alloc] init];
+        alert.messageText = text;
+        [alert addButtonWithTitle:@"OK"];
+        [alert layout];
+        [alert runModal];
+    }
+}
+
+- (void)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu toggleAnimationOfImage:(iTermImageInfo *)imageInfo {
+    if (imageInfo) {
+        imageInfo.paused = !imageInfo.paused;
+        if (!imageInfo.paused) {
+            // A redraw is needed to recompute which visible lines are animated
+            // and ensure they keep getting redrawn on a fast cadence.
+            [self setNeedsDisplay:YES];
+        }
+    }
+}
+
+- (iTermVariableScope *)contextMenuSessionScope:(iTermTextViewContextMenuHelper *)contextMenu {
+    return [self.delegate textViewVariablesScope];
+}
+
+- (void)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu
+         invocation:(NSString *)invocation
+    failedWithError:(NSError *)error
+        forMenuItem:(NSString *)title {
+    [self.delegate textViewContextMenuInvocation:invocation failedWithError:error forMenuItem:title];
 }
 
 @end

@@ -178,6 +178,35 @@ Status bar components can also define configuration settings, called knobs.
 For more information, see :class:`iterm2.StatusBarComponent`. There are also a
 number of status bar components in the :doc:`/examples/index`.
 
+Custom Context Menu Item
+------------------------
+
+A custom context menu item is another kind of hook. Like the others, it
+lives in a long-running daemon. It registers an RPC that provides a function
+to execute when the user chooses it from the right-click menu in a terminal
+session.
+
+Here's a simple context menu item that prints "Hello World" to the console
+when activated:
+
+.. code-block:: python
+
+    import iterm2
+
+    async def main(connection):
+        # This function gets called when the user chooses this menu item.
+        @iterm2.ContextMenuProviderRPC
+        async def coro():
+            print("Hello world")
+
+        # Register the menu item provider
+        await coro.async_register(
+            connection,
+            "Hello world",  # Title of the menu item
+            "com.iterm2.example.context-menu")
+
+    iterm2.run_forever(main)
+
 Continue to the next section, :doc:`troubleshooting`.
 
 ----

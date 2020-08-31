@@ -29,6 +29,7 @@
 #import "NSStringITerm.h"
 #import "PTYFontInfo.h"
 #import "PTYTextView.h"
+#import "PTYTextView+ARC.h"
 #import "VT100Screen.h"
 #import "VT100ScreenMark.h"
 

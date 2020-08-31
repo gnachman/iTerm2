@@ -47,7 +47,7 @@ from iterm2.prompt import (
     Prompt, PromptMonitor, PromptState, async_get_last_prompt,
     async_list_prompts, async_get_prompt_by_id)
 
-from iterm2.registration import RPC, TitleProviderRPC, StatusBarRPC, Reference
+from iterm2.registration import RPC, ContextMenuProviderRPC, TitleProviderRPC, StatusBarRPC, Reference
 
 from iterm2.screen import ScreenStreamer, LineContents, ScreenContents
 

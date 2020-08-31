@@ -66,6 +66,9 @@
             case ITMRPCRegistrationRequest_Role_StatusBarComponent:
                 role = @"Status Bar Component";
                 break;
+            case ITMRPCRegistrationRequest_Role_ContextMenu:
+                role = @"Context Menu Provider";
+                break;
         }
         id connectionKey = subs[signature].firstObject;
         iTermScriptHistoryEntry *entry =  [[iTermAPIHelper sharedInstance] scriptHistoryEntryForConnectionKey:connectionKey];

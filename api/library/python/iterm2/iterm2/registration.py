@@ -2,8 +2,10 @@
 import inspect
 import json
 import traceback
+import typing
 import websockets
 
+import iterm2.capabilities
 import iterm2.notifications
 import iterm2.rpc
 
@@ -135,6 +137,55 @@ def RPC(func):  # pylint: disable=invalid-name
     func.async_register = async_register
     return func
 
+def ContextMenuProviderRPC(func):  # pylint: disable=invalid-name
+    """
+    A decorator that prepares a function for registration as a context menu
+    provider. Similar to :func:`~iterm2.registration.RPC`.
+
+    A context menu provider is a function that gets called when the user selects
+    an item in a context menu. The context menu is the menu that appears when ou
+    right-click in a terminal window.
+
+    The return value is ignored.
+
+    :param connection: :class:`Connection`
+    :param display_name: Name that appears in the context menu.
+    :param unique_identifier: Globally unique identifier for this provider
+        (e.g., "com.example.my-provider")
+    :param timeout: Max number of seconds to wait, or None to use the default.
+    """
+    async def async_register(
+            connection: iterm2.connection.Connection,
+            display_name: str,
+            unique_identifier: str,
+            timeout: typing.Optional[float] = None):
+        assert unique_identifier
+        iterm2.capabilities.check_supports_context_menu_provider(connection)
+        signature = inspect.signature(func)
+        defaults = {}
+        for key, value in signature.parameters.items():
+            if isinstance(value.default, Reference):
+                defaults[key] = value.default.name
+
+        async def handle_rpc(connection, notif):
+            await generic_handle_rpc(func, connection, notif)
+
+        func.rpc_token = (
+            await iterm2.notifications.
+            async_subscribe_to_server_originated_rpc_notification(
+                connection=connection,
+                callback=handle_rpc,
+                name=func.__name__,
+                arguments=signature.parameters.keys(),
+                timeout_seconds=timeout,
+                defaults=defaults,
+                role=iterm2.notifications.RPC_ROLE_CONTEXT_MENU,
+                context_menu_display_name=display_name,
+                context_menu_unique_id=unique_identifier))
+        func.rpc_connection = connection
+
+    func.async_register = async_register
+    return func
 
 def TitleProviderRPC(func):  # pylint: disable=invalid-name
     """

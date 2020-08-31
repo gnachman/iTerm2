@@ -97,3 +97,16 @@ def check_supports_list_saved_arrangements(connection):
             "default profile from a Python script. You should upgrade " +
             "to run this script.")
 
+def supports_context_menu_providers(connection):
+    """Can you register a context menu provider?"""
+    min_ver = (1, 7)
+    return ge(connection.iterm2_protocol_version, min_ver)
+
+def check_supports_context_menu_provider(connection):
+    """"Die if context menu providers are not supported."""
+    if not supports_context_menu_providers(connection):
+        raise AppVersionTooOld(
+            "This version of iTerm2 is too old to register a " +
+            "context menu provider. You should upgrade to " +
+            "run this script.")
+

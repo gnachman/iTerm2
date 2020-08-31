@@ -83,6 +83,8 @@ typedef void (^iTermServerOriginatedRPCCompletionBlock)(id, NSError *);
 + (NSArray<iTermSessionTitleProvider *> *)sessionTitleFunctions;
 
 + (NSArray<ITMRPCRegistrationRequest *> *)statusBarComponentProviderRegistrationRequests;
++ (NSArray<ITMRPCRegistrationRequest *> *)contextMenuProviderRegistrationRequests;
+
 + (NSString *)nameOfScriptVendingStatusBarComponentWithUniqueIdentifier:(NSString *)uniqueID;
 
 // stringSignature is like func(arg1,arg2) or title.com.example.foo::func(arg1,arg2). Use iTermFunctionSignatureFromNamespaceAndNameAndArguments to construct it safely.

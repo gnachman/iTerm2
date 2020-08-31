@@ -4,6 +4,7 @@ Registration
 .. autofunction:: RPC
 .. autofunction:: TitleProviderRPC
 .. autofunction:: StatusBarRPC
+.. autofunction:: ContextMenuProviderRPC
 .. autoclass:: iterm2.Reference
 
 ----

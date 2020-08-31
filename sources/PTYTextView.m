@@ -90,8 +90,6 @@
 
 #import <WebKit/WebKit.h>
 
-static const int kMaxSelectedTextLengthForCustomActions = 400;
-
 @implementation iTermHighlightedRow
 
 - (instancetype)initWithAbsoluteLineNumber:(long long)row success:(BOOL)success {
@@ -134,9 +132,6 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
     int _lastAccessibilityCursorX;
     int _lastAccessibiltyAbsoluteCursorY;
 
-    // True while the context menu is being opened.
-    BOOL openingContextMenu_;
-
     // Detects three finger taps (as opposed to clicks).
     ThreeFingerTapGestureRecognizer *threeFingerTapGestureRecognizer_;
 
@@ -144,10 +139,6 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
     // calls to -updateDirtyRects without making any changes, we only redraw the old and new cursor
     // positions.
     VT100GridAbsCoord _previousCursorCoord;
-
-    // Point clicked, valid only during -validateMenuItem and calls made from
-    // the context menu and if x and y are nonnegative.
-    VT100GridCoord _validationClickPoint;
 
     iTermSelection *_oldSelection;
 
@@ -253,10 +244,6 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
                                                      name:kRefreshTerminalNotification
                                                    object:nil];
         [[NSNotificationCenter defaultCenter] addObserver:self
-                                                 selector:@selector(imageDidLoad:)
-                                                     name:iTermImageDidLoad
-                                                   object:nil];
-        [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(applicationDidResignActive:)
                                                      name:NSApplicationDidResignActiveNotification
                                                    object:nil];
@@ -266,6 +253,8 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
 
         _urlActionHelper = [[iTermURLActionHelper alloc] initWithSemanticHistoryController:_semanticHistoryController];
         _urlActionHelper.delegate = self;
+        _contextMenuHelper = [[iTermTextViewContextMenuHelper alloc] initWithURLActionHelper:_urlActionHelper];
+        _urlActionHelper.smartSelectionActionTarget = _contextMenuHelper;
 
         _primaryFont = [[PTYFontInfo alloc] init];
         _secondaryFont = [[PTYFontInfo alloc] init];
@@ -305,6 +294,7 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
                                      pointerControllerDelegate:self
                      mouseReportingFrustrationDetectorDelegate:self];
         _mouseHandler.mouseDelegate = self;
+
         [self initARC];
     }
     return self;
@@ -350,7 +340,7 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
     [_badgeLabel release];
     [_quickLookController close];
     [_quickLookController release];
-    [_savedSelectedText release];
+    [_contextMenuHelper release];
     [_highlightedRows release];
     [_scrollAccumulator release];
     [_shadowRateLimit release];
@@ -405,9 +395,6 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
         // Never allow cut.
         return NO;
     }
-    if ([item action]==@selector(toggleBroadcastingInput:)) {
-        return YES;
-    }
     if ([item action] == @selector(showHideNotes:)) {
         item.state = [self anyAnnotationsAreVisible] ? NSControlStateValueOn : NSControlStateValueOff;
         return YES;
@@ -420,30 +407,12 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
     if ([item action]==@selector(saveDocumentAs:)) {
         return [self isAnyCharSelected];
     } else if ([item action] == @selector(selectAll:) ||
-               [item action]==@selector(splitTextViewVertically:) ||
-               [item action]==@selector(splitTextViewHorizontally:) ||
-               [item action]==@selector(clearTextViewBuffer:) ||
-               [item action]==@selector(editTextViewSession:) ||
-               [item action]==@selector(closeTextViewSession:) ||
-               [item action]==@selector(movePane:) ||
-               [item action]==@selector(swapSessions:) ||
                [item action]==@selector(installShellIntegration:) ||
                ([item action] == @selector(print:) && [item tag] != 1)) {
         // We always validate the above commands
         return YES;
     }
-    if ([item action]==@selector(restartTextViewSession:)) {
-        return [_delegate isRestartable];
-    } else if ([item action]==@selector(bury:)) {
-        return [_delegate textViewCanBury];
-    }
-
-    if ([item action]==@selector(mail:) ||
-        [item action]==@selector(browse:) ||
-        [item action]==@selector(searchInBrowser:) ||
-        [item action]==@selector(sendSelection:) ||
-        [item action]==@selector(addNote:) ||
-        [item action]==@selector(copy:) ||
+    if ([item action]==@selector(copy:) ||
         [item action]==@selector(copyWithStyles:) ||
         [item action]==@selector(performFindPanelAction:) ||
         ([item action]==@selector(print:) && [item tag] == 1)) { // print selection
@@ -456,50 +425,9 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
     } else if ([item action]==@selector(selectCurrentCommand:)) {
         return [_delegate textViewCanSelectCurrentCommand];
     }
-    if ([item action] == @selector(downloadWithSCP:)) {
-        __block BOOL result = NO;
-        const BOOL valid =
-        [self withRelativeCoord:_selection.lastAbsRange.coordRange.start block:^(VT100GridCoord coord) {
-            result = ([self _haveShortSelection] &&
-                      [_selection hasSelection] &&
-                      [_dataSource scpPathForFile:[self selectedText]
-                                           onLine:coord.y] != nil);
-        }];
-        return valid && result;
-    }
-    if ([item action]==@selector(showNotes:)) {
-        if (_validationClickPoint.x < 0) {
-            return NO;
-        }
-        for (PTYNoteViewController *note in [_dataSource notesInRange:VT100GridCoordRangeMake(_validationClickPoint.x,
-                                                                                              _validationClickPoint.y,
-                                                                                              _validationClickPoint.x + 1,
-                                                                                              _validationClickPoint.y)]) {
-            if (note.isNoteHidden) {
-                return YES;
-            }
-        }
-        return NO;
-    }
-
-    // Image actions
-    if ([item action] == @selector(saveImageAs:) ||
-        [item action] == @selector(copyImage:) ||
-        [item action] == @selector(openImage:) ||
-        [item action] == @selector(togglePauseAnimatingImage:) ||
-        [item action] == @selector(inspectImage:)) {
-        return YES;
-    }
-    if ([item action] == @selector(reRunCommand:)) {
-        return YES;
-    }
-    if ([item action] == @selector(selectCommandOutput:)) {
-        return [_dataSource textViewRangeOfOutputForCommandMark:[item representedObject]].start.x != -1;
-    }
     if ([item action] == @selector(pasteBase64Encoded:)) {
         return [[NSPasteboard generalPasteboard] dataForFirstFile] != nil;
     }
-
     if (item.action == @selector(terminalStateToggleAlternateScreen:) ||
         item.action == @selector(terminalStateToggleFocusReporting:) ||
         item.action == @selector(terminalStateToggleMouseReporting:) ||
@@ -2313,9 +2241,9 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
 }
 
 - (NSString *)selectedText {
-    if (_savedSelectedText) {
+    if (_contextMenuHelper.savedSelectedText) {
         DLog(@"Returning saved selected text");
-        return _savedSelectedText;
+        return _contextMenuHelper.savedSelectedText;
     }
     return [self selectedTextCappedAtSize:0];
 }
@@ -2404,22 +2332,9 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
     return [self selectedTextAttributed:YES cappedAtSize:0 minimumLineNumber:0];
 }
 
-- (void)sendSelection:(id)sender {
-    if (![_selection hasSelection]) {
-        return;
-    }
-    [self.delegate sendText:self.selectedText];
-}
-
 - (BOOL)_haveShortSelection {
     int width = [_dataSource width];
     return [_selection hasSelection] && [_selection length] <= width;
-}
-
-- (SEL)selectorForSmartSelectionAction:(NSDictionary *)action {
-    NSDictionary<NSNumber *, NSString *> *dictionary = [self smartSelectionActionSelectorDictionary];
-    ContextMenuActions contextMenuAction = [ContextMenuActionPrefsController actionForActionDict:action];
-    return NSSelectorFromString(dictionary[@(contextMenuAction)]);
 }
 
 - (iTermLogicalMovementHelper *)logicalMovementHelperForCursorCoordinate:(VT100GridCoord)relativeCursorCoord {
@@ -2497,27 +2412,6 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
     const BOOL result = [_selection moveSelectionEndpointTo:VT100GridAbsCoordMake(x, y + _dataSource.totalScrollbackOverflow)];
     DLog(@"moveSelectionEndpoint. selection=%@", _selection);
     return result;
-}
-
-- (void)selectCommandOutput:(id)sender {
-    VT100ScreenMark *mark = [sender representedObject];
-    VT100GridCoordRange range = [_dataSource textViewRangeOfOutputForCommandMark:mark];
-    if (range.start.x == -1) {
-        DLog(@"Beep: can't select output");
-        NSBeep();
-        return;
-    }
-    VT100GridAbsCoordRange absRange = VT100GridAbsCoordRangeFromCoordRange(range, _dataSource.totalScrollbackOverflow);
-    [_selection beginSelectionAtAbsCoord:absRange.start
-                                    mode:kiTermSelectionModeCharacter
-                                  resume:NO
-                                  append:NO];
-    [_selection moveSelectionEndpointTo:absRange.end];
-    [_selection endLiveSelection];
-
-    if ([iTermPreferences boolForKey:kPreferenceKeySelectionCopiesText]) {
-        [self copySelectionAccordingToUserPreferences];
-    }
 }
 
 - (BOOL)growSelectionLeft {
@@ -2793,102 +2687,39 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
 
 #pragma mark - Miscellaneous Actions
 
-- (void)splitTextViewVertically:(id)sender {
-    [_delegate textViewSplitVertically:YES withProfileGuid:nil];
-}
-
-- (void)splitTextViewHorizontally:(id)sender {
-    [_delegate textViewSplitVertically:NO withProfileGuid:nil];
-}
-
-- (void)movePane:(id)sender {
-    [_delegate textViewMovePane];
-}
-
-- (void)swapSessions:(id)sender {
-    [_delegate textViewSwapPane];
-}
-
-- (void)clearTextViewBuffer:(id)sender {
-    [_dataSource clearBuffer];
-}
-
-- (void)editTextViewSession:(id)sender {
-    [_delegate textViewEditSession];
-}
-
-- (void)toggleBroadcastingInput:(id)sender {
-    [_delegate textViewToggleBroadcastingInput];
-}
-
-- (void)closeTextViewSession:(id)sender {
-    [_delegate textViewCloseWithConfirmation];
-}
-
-- (void)restartTextViewSession:(id)sender {
-    DLog(@"restartTextViewSession");
-    [_delegate textViewRestartWithConfirmation];
-}
-
 - (IBAction)terminalStateToggleAlternateScreen:(id)sender {
-    [self.delegate textViewToggleTerminalStateForMenuItem:sender];
+    [self contextMenu:_contextMenuHelper toggleTerminalStateForMenuItem:sender];
 }
 - (IBAction)terminalStateToggleFocusReporting:(id)sender {
-    [self.delegate textViewToggleTerminalStateForMenuItem:sender];
+    [self contextMenu:_contextMenuHelper toggleTerminalStateForMenuItem:sender];
 }
 - (IBAction)terminalStateToggleMouseReporting:(id)sender {
-    [self.delegate textViewToggleTerminalStateForMenuItem:sender];
+    [self contextMenu:_contextMenuHelper toggleTerminalStateForMenuItem:sender];
 }
 - (IBAction)terminalStateTogglePasteBracketing:(id)sender {
-    [self.delegate textViewToggleTerminalStateForMenuItem:sender];
+    [self contextMenu:_contextMenuHelper toggleTerminalStateForMenuItem:sender];
 }
 - (IBAction)terminalStateToggleApplicationCursor:(id)sender {
-    [self.delegate textViewToggleTerminalStateForMenuItem:sender];
+    [self contextMenu:_contextMenuHelper toggleTerminalStateForMenuItem:sender];
 }
 - (IBAction)terminalStateToggleApplicationKeypad:(id)sender {
-    [self.delegate textViewToggleTerminalStateForMenuItem:sender];
+    [self contextMenu:_contextMenuHelper toggleTerminalStateForMenuItem:sender];
 }
 
 - (IBAction)terminalStateToggleCSIu:(id)sender {
-    [self.delegate textViewToggleTerminalStateForMenuItem:sender];
+    [self contextMenu:_contextMenuHelper toggleTerminalStateForMenuItem:sender];
 }
 
 - (IBAction)terminalStateReset:(id)sender {
     [self.delegate textViewResetTerminal];
 }
 
-- (void)reRunCommand:(id)sender {
-    NSString *command = [sender representedObject];
-    [_delegate insertText:[command stringByAppendingString:@"\n"]];
+- (void)movePane:(id)sender {
+    [_delegate textViewMovePane];
 }
 
 - (IBAction)bury:(id)sender {
     [_delegate textViewBurySession];
-}
-
-- (void)mail:(id)sender {
-    NSString *mailto;
-
-    if ([[self selectedText] hasPrefix:@"mailto:"]) {
-        mailto = [NSString stringWithString:[self selectedText]];
-    } else {
-        mailto = [NSString stringWithFormat:@"mailto:%@", [self selectedText]];
-    }
-
-    NSURL *url = [NSURL URLWithUserSuppliedString:mailto];
-
-    [[NSWorkspace sharedWorkspace] openURL:url];
-}
-
-- (void)browse:(id)sender {
-    [_urlActionHelper findUrlInString:[self selectedText] andOpenInBackground:NO];
-}
-
-- (void)searchInBrowser:(id)sender {
-    NSURL *url = [NSURL urlByReplacingFormatSpecifier:@"%@"
-                                             inString:[iTermAdvancedSettingsModel searchCommand]
-                                            withValue:[self selectedText]];
-    [_urlActionHelper findUrlInString:url.absoluteString andOpenInBackground:NO];
 }
 
 #pragma mark - Marks
@@ -2962,7 +2793,7 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
     [note setNoteHidden:NO];
 }
 
-- (void)addNote:(id)sender {
+- (void)addNote {
     if (![_selection hasSelection]) {
         return;
     }
@@ -2981,12 +2812,6 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
 }
 
 - (void)showNotes:(id)sender {
-    for (PTYNoteViewController *note in [_dataSource notesInRange:VT100GridCoordRangeMake(_validationClickPoint.x,
-                                                                                          _validationClickPoint.y,
-                                                                                          _validationClickPoint.x + 1,
-                                                                                          _validationClickPoint.y)]) {
-        [note setNoteHidden:NO];
-    }
 }
 
 - (void)updateNoteViewFrames {
@@ -3148,63 +2973,6 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
                                    completion:completion];
 }
 
-#pragma mark - Context Menu
-
-- (NSMenu *)contextMenuWithEvent:(NSEvent *)event {
-    NSPoint clickPoint = [self clickPoint:event allowRightMarginOverflow:NO];
-    int x = clickPoint.x;
-    int y = clickPoint.y;
-    NSMenu *markMenu = nil;
-    VT100ScreenMark *mark = [_dataSource markOnLine:y];
-    DLog(@"contextMenuWithEvent:%@ x=%d, mark=%@, mark command=%@", event, x, mark, [mark command]);
-    if (mark && mark.command.length) {
-        markMenu = [self menuForMark:mark directory:[_dataSource workingDirectoryOnLine:y]];
-        NSPoint locationInWindow = [event locationInWindow];
-        if (locationInWindow.x < [iTermAdvancedSettingsModel terminalMargin]) {
-            return markMenu;
-        }
-    }
-
-    VT100GridCoord coord = VT100GridCoordMake(x, y);
-    iTermImageInfo *imageInfo = [self imageInfoAtCoord:coord];
-
-    const long long overflow = _dataSource.totalScrollbackOverflow;
-    const BOOL clickedInExistingSelection = [_selection containsAbsCoord:VT100GridAbsCoordMake(x, y + overflow)];
-    if (!imageInfo &&
-        !clickedInExistingSelection) {
-        // Didn't click on selection.
-        // Save the selection and do a smart selection. If we don't like the result, restore it.
-        iTermSelection *savedSelection = [[_selection copy] autorelease];
-        [_urlActionHelper smartSelectWithEvent:event];
-        NSCharacterSet *nonWhiteSpaceSet = [[NSCharacterSet whitespaceAndNewlineCharacterSet] invertedSet];
-        NSString *text = [self selectedText];
-        if (!text ||
-            !text.length ||
-            [text rangeOfCharacterFromSet:nonWhiteSpaceSet].location == NSNotFound) {
-            // If all we selected was white space, undo it.
-            [_selection release];
-            _selection = [savedSelection retain];
-            self.savedSelectedText = [self selectedText];
-        } else {
-            self.savedSelectedText = text;
-        }
-    } else if (clickedInExistingSelection && [self _haveShortSelection]) {
-        self.savedSelectedText = [self selectedText];
-    }
-    [self setNeedsDisplay:YES];
-    NSMenu *contextMenu = [self menuAtCoord:coord];
-    if (markMenu) {
-        NSMenuItem *markItem = [[[NSMenuItem alloc] initWithTitle:@"Command Info"
-                                                           action:nil
-                                                    keyEquivalent:@""] autorelease];
-        markItem.submenu = markMenu;
-        [contextMenu insertItem:markItem atIndex:0];
-        [contextMenu insertItem:[NSMenuItem separatorItem] atIndex:1];
-    }
-
-    return contextMenu;
-}
-
 #pragma mark PointerControllerDelegate
 
 - (void)pasteFromClipboardWithEvent:(NSEvent *)event {
@@ -3233,15 +3001,8 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
 // Called for a right click that isn't control+click (e.g., two fingers on trackpad).
 - (void)openContextMenuWithEvent:(NSEvent *)event {
     NSPoint clickPoint = [self clickPoint:event allowRightMarginOverflow:NO];
-    openingContextMenu_ = YES;
-
-    // Slowly moving away from using NSPoint for integer coordinates.
-    _validationClickPoint = VT100GridCoordMake(clickPoint.x, clickPoint.y);
-    NSMenu *menu = [self contextMenuWithEvent:event];
-    menu.delegate = self;
-    [NSMenu popUpContextMenu:menu withEvent:event forView:self];
-    _validationClickPoint = VT100GridCoordMake(-1, -1);
-    openingContextMenu_ = NO;
+    [_contextMenuHelper openContextMenuAt:VT100GridCoordMake(clickPoint.x, clickPoint.y)
+                                    event:event];
 }
 
 - (void)extendSelectionWithEvent:(NSEvent *)event {
@@ -3340,507 +3101,8 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
                                                  fromSelection:fromSelection];
 }
 
-- (BOOL)addCustomActionsToMenu:(NSMenu *)theMenu matchingText:(NSString *)textWindow line:(int)line {
-    BOOL didAdd = NO;
-    NSArray *rulesArray = _smartSelectionRules ? _smartSelectionRules : [SmartSelectionController defaultRules];
-    const int numRules = [rulesArray count];
-
-    DLog(@"Looking for custom actions. Evaluating smart selection rules…");
-    DLog(@"text window is: %@", textWindow);
-    for (int j = 0; j < numRules; j++) {
-        NSDictionary *rule = [rulesArray objectAtIndex:j];
-        NSArray *actions = [SmartSelectionController actionsInRule:rule];
-        if (!actions.count) {
-            DLog(@"Skipping rule with no actions:\n%@", rule);
-            continue;
-        }
-
-        DLog(@"Evaluating rule:\n%@", rule);
-        NSString *regex = [SmartSelectionController regexInRule:rule];
-        for (int i = 0; i <= textWindow.length; i++) {
-            NSString *substring = [textWindow substringWithRange:NSMakeRange(i, [textWindow length] - i)];
-            NSError *regexError = nil;
-            NSArray *components = [substring captureComponentsMatchedByRegex:regex
-                                                                     options:0
-                                                                       range:NSMakeRange(0, [substring length])
-                                                                       error:&regexError];
-            if (components.count) {
-                DLog(@"Components for %@ are %@", regex, components);
-                for (NSDictionary *action in actions) {
-                    SEL mySelector = [self selectorForSmartSelectionAction:action];
-                    NSString *theTitle =
-                        [ContextMenuActionPrefsController titleForActionDict:action
-                                                       withCaptureComponents:components
-                                                            workingDirectory:[_dataSource workingDirectoryOnLine:line]
-                                                                  remoteHost:[_dataSource remoteHostOnLine:line]];
-
-                    NSMenuItem *theItem = [[[NSMenuItem alloc] initWithTitle:theTitle
-                                                                      action:mySelector
-                                                               keyEquivalent:@""] autorelease];
-                    NSString *parameter =
-                        [ContextMenuActionPrefsController parameterForActionDict:action
-                                                           withCaptureComponents:components
-                                                                workingDirectory:[_dataSource workingDirectoryOnLine:line]
-                                                                      remoteHost:[_dataSource remoteHostOnLine:line]];
-                    [theItem setRepresentedObject:parameter];
-                    [theItem setTarget:self];
-                    [theMenu addItem:theItem];
-                    didAdd = YES;
-                }
-                break;
-            }
-        }
-    }
-    return didAdd;
-}
-
-// This method is called by control-click or by clicking the hamburger icon in the session title bar.
-// Two-finger tap (or presumably right click with a mouse) would go through mouseUp->
-// PointerController->openContextMenuWithEvent.
-- (NSMenu *)menuForEvent:(NSEvent *)theEvent {
-    if (theEvent) {
-        // Control-click
-        if ([iTermPreferences boolForKey:kPreferenceKeyControlLeftClickBypassesContextMenu]) {
-            return nil;
-        }
-        NSPoint clickPoint = [self clickPoint:theEvent allowRightMarginOverflow:NO];
-        _validationClickPoint = VT100GridCoordMake(clickPoint.x, clickPoint.y);
-        openingContextMenu_ = YES;
-
-        NSMenu *menu = [self contextMenuWithEvent:theEvent];
-        menu.delegate = self;
-        return menu;
-    } else {
-        // Hamburger icon in session title view.
-        _validationClickPoint = VT100GridCoordMake(-1, -1);
-        NSMenu *menu = [self titleBarMenu];
-        self.savedSelectedText = [self selectedText];
-        menu.delegate = self;
-        return menu;
-    }
-}
-
 - (NSMenu *)titleBarMenu {
-    _validationClickPoint = VT100GridCoordMake(-1, -1);
-    return [self menuAtCoord:VT100GridCoordMake(-1, -1)];
-}
-
-- (NSMenu *)menuForMark:(VT100ScreenMark *)mark directory:(NSString *)directory
-{
-    NSMenu *theMenu;
-
-    // Allocate a menu
-    theMenu = [[[NSMenu alloc] initWithTitle:@"Contextual Menu"] autorelease];
-
-    NSMenuItem *theItem = [[[NSMenuItem alloc] init] autorelease];
-    theItem.title = [NSString stringWithFormat:@"Command: %@", mark.command];
-    [theMenu addItem:theItem];
-
-    if (directory) {
-        theItem = [[[NSMenuItem alloc] init] autorelease];
-        theItem.title = [NSString stringWithFormat:@"Directory: %@", directory];
-        [theMenu addItem:theItem];
-    }
-
-    theItem = [[[NSMenuItem alloc] init] autorelease];
-    theItem.title = [NSString stringWithFormat:@"Return code: %d", mark.code];
-    [theMenu addItem:theItem];
-
-    if (mark.startDate) {
-        theItem = [[[NSMenuItem alloc] init] autorelease];
-        NSTimeInterval runningTime;
-        if (mark.endDate) {
-            runningTime = [mark.endDate timeIntervalSinceDate:mark.startDate];
-        } else {
-            runningTime = -[mark.startDate timeIntervalSinceNow];
-        }
-        int hours = runningTime / 3600;
-        int minutes = ((int)runningTime % 3600) / 60;
-        int seconds = (int)runningTime % 60;
-        int millis = (int) ((runningTime - floor(runningTime)) * 1000);
-        if (hours > 0) {
-            theItem.title = [NSString stringWithFormat:@"Running time: %d:%02d:%02d",
-                             hours, minutes, seconds];
-        } else {
-            theItem.title = [NSString stringWithFormat:@"Running time: %d:%02d.%03d",
-                             minutes, seconds, millis];
-        }
-        [theMenu addItem:theItem];
-    }
-
-    [theMenu addItem:[NSMenuItem separatorItem]];
-
-    theItem = [[[NSMenuItem alloc] initWithTitle:@"Re-run Command"
-                                          action:@selector(reRunCommand:)
-                                   keyEquivalent:@""] autorelease];
-    [theItem setRepresentedObject:mark.command];
-    [theMenu addItem:theItem];
-
-    theItem = [[[NSMenuItem alloc] initWithTitle:@"Select Command Output"
-                                          action:@selector(selectCommandOutput:)
-                                   keyEquivalent:@""] autorelease];
-    [theItem setRepresentedObject:mark];
-    [theMenu addItem:theItem];
-
-    return theMenu;
-}
-
-- (NSMenu *)menuAtCoord:(VT100GridCoord)coord {
-    NSMenu *theMenu;
-
-    // Allocate a menu
-    theMenu = [[[NSMenu alloc] initWithTitle:@"Contextual Menu"] autorelease];
-    iTermImageInfo *imageInfo = [self imageInfoAtCoord:coord];
-    if (imageInfo) {
-        // Show context menu for an image.
-        NSArray *entryDicts;
-        if (imageInfo.broken) {
-            entryDicts =
-                @[ @{ @"title": @"Save File As…",
-                      @"selector": @"saveImageAs:" },
-                   @{ @"title": @"Copy File",
-                      @"selector": @"copyImage:" },
-                   @{ @"title": @"Open File",
-                      @"selector": @"openImage:" },
-                   @{ @"title": @"Inspect",
-                      @"selector": @"inspectImage:" } ];
-        } else {
-            entryDicts =
-                @[ @{ @"title": @"Save Image As…",
-                      @"selector": @"saveImageAs:" },
-                   @{ @"title": @"Copy Image",
-                      @"selector": @"copyImage:" },
-                   @{ @"title": @"Open Image",
-                      @"selector": @"openImage:" },
-                   @{ @"title": @"Inspect",
-                      @"selector": @"inspectImage:" } ];
-        }
-        if (imageInfo.animated || imageInfo.paused) {
-            NSString *selector = @"togglePauseAnimatingImage:";
-            if (imageInfo.paused) {
-                entryDicts = [entryDicts arrayByAddingObject:@{ @"title": @"Resume Animating", @"selector": selector }];
-            } else {
-                entryDicts = [entryDicts arrayByAddingObject:@{ @"title": @"Stop Animating", @"selector": selector }];
-            }
-        }
-        for (NSDictionary *entryDict in entryDicts) {
-            NSMenuItem *item;
-
-            item = [[[NSMenuItem alloc] initWithTitle:entryDict[@"title"]
-                                               action:NSSelectorFromString(entryDict[@"selector"])
-                                        keyEquivalent:@""] autorelease];
-            [item setRepresentedObject:imageInfo];
-            [theMenu addItem:item];
-        }
-        return theMenu;
-    }
-
-    if ([self _haveShortSelection]) {
-        NSString *text = [self selectedText];
-        NSArray<NSString *> *synonyms = [text helpfulSynonyms];
-        for (NSString *conversion in synonyms) {
-            NSMenuItem *theItem = [[[NSMenuItem alloc] init] autorelease];
-            theItem.title = conversion;
-            [theMenu addItem:theItem];
-        }
-        if (synonyms.count) {
-            [theMenu addItem:[NSMenuItem separatorItem]];
-        }
-    }
-    if (_selection.length == 1) {
-        iTermSubSelection *sub = _selection.allSubSelections.firstObject;
-        [self withRelativeCoord:sub.absRange.coordRange.start block:^(VT100GridCoord coord) {
-            iTermTextExtractor *extractor =
-            [iTermTextExtractor textExtractorWithDataSource:_dataSource];
-            const screen_char_t c = [extractor characterAt:coord];
-            NSString *description = ScreenCharDescription(c);
-            if (description) {
-                NSMenuItem *theItem = [[[NSMenuItem alloc] init] autorelease];
-                theItem.title = ScreenCharDescription(c);
-                [theMenu addItem:theItem];
-            }
-        }];
-    }
-
-    // Menu items for acting on text selections
-    __block NSString *scpTitle = @"Download with scp";
-    if ([self _haveShortSelection]) {
-        [self withRelativeCoord:_selection.lastAbsRange.coordRange.start block:^(VT100GridCoord coord) {
-            SCPPath *scpPath = [_dataSource scpPathForFile:[self selectedText]
-                                                    onLine:coord.y];
-            if (scpPath) {
-                scpTitle = [NSString stringWithFormat:@"Download with scp from %@", scpPath.hostname];
-            }
-        }];
-    }
-
-    [theMenu addItemWithTitle:scpTitle
-                       action:@selector(downloadWithSCP:)
-                keyEquivalent:@""];
-    [theMenu addItemWithTitle:@"Open Selection as URL"
-                     action:@selector(browse:) keyEquivalent:@""];
-    [[theMenu itemAtIndex:[theMenu numberOfItems] - 1] setTarget:self];
-    [theMenu addItemWithTitle:@"Search the Web for Selection"
-                     action:@selector(searchInBrowser:) keyEquivalent:@""];
-    [[theMenu itemAtIndex:[theMenu numberOfItems] - 1] setTarget:self];
-    [theMenu addItemWithTitle:@"Send Email to Selected Address"
-                     action:@selector(mail:) keyEquivalent:@""];
-    [[theMenu itemAtIndex:[theMenu numberOfItems] - 1] setTarget:self];
-
-    // Separator
-    [theMenu addItem:[NSMenuItem separatorItem]];
-
-    // Custom actions
-    if ([_selection hasSelection] &&
-        [_selection length] < kMaxSelectedTextLengthForCustomActions) {
-        NSString *selectedText = [self selectedTextCappedAtSize:1024];
-        if ([self addCustomActionsToMenu:theMenu matchingText:selectedText line:coord.y]) {
-            [theMenu addItem:[NSMenuItem separatorItem]];
-        }
-    }
-
-    // Split pane options
-    [theMenu addItemWithTitle:@"Split Pane Vertically" action:@selector(splitTextViewVertically:) keyEquivalent:@""];
-    [[theMenu itemAtIndex:[theMenu numberOfItems] - 1] setTarget:self];
-
-    [theMenu addItemWithTitle:@"Split Pane Horizontally" action:@selector(splitTextViewHorizontally:) keyEquivalent:@""];
-    [[theMenu itemAtIndex:[theMenu numberOfItems] - 1] setTarget:self];
-
-    // Separator
-    [theMenu addItem:[NSMenuItem separatorItem]];
-
-    [theMenu addItemWithTitle:@"Move Session to Split Pane" action:@selector(movePane:) keyEquivalent:@""];
-    [[theMenu itemAtIndex:[theMenu numberOfItems] - 1] setTarget:self];
-
-    [theMenu addItemWithTitle:@"Move Session to Window" action:@selector(moveSessionToWindow:) keyEquivalent:@""];
-
-    [theMenu addItemWithTitle:@"Swap With Session…" action:@selector(swapSessions:) keyEquivalent:@""];
-    [[theMenu itemAtIndex:[theMenu numberOfItems] - 1] setTarget:self];
-
-    // Separator
-    [theMenu addItem:[NSMenuItem separatorItem]];
-
-    // Copy,  paste, and save
-    [theMenu addItemWithTitle:NSLocalizedStringFromTableInBundle(@"Copy",@"iTerm", [NSBundle bundleForClass: [self class]], @"Context menu")
-                     action:@selector(copy:) keyEquivalent:@""];
-    [[theMenu itemAtIndex:[theMenu numberOfItems] - 1] setTarget:self];
-    [theMenu addItemWithTitle:NSLocalizedStringFromTableInBundle(@"Paste",@"iTerm", [NSBundle bundleForClass: [self class]], @"Context menu")
-                     action:@selector(paste:) keyEquivalent:@""];
-    [[theMenu itemAtIndex:[theMenu numberOfItems] - 1] setTarget:self];
-    [theMenu addItemWithTitle:NSLocalizedStringFromTableInBundle(@"Save",@"iTerm", [NSBundle bundleForClass: [self class]], @"Context menu")
-                     action:@selector(saveDocumentAs:) keyEquivalent:@""];
-    [[theMenu itemAtIndex:[theMenu numberOfItems] - 1] setTarget:self];
-
-    // Separator
-    [theMenu addItem:[NSMenuItem separatorItem]];
-
-    // Select all
-    [theMenu addItemWithTitle:NSLocalizedStringFromTableInBundle(@"Select All",@"iTerm", [NSBundle bundleForClass: [self class]], @"Context menu")
-                     action:@selector(selectAll:) keyEquivalent:@""];
-    [[theMenu itemAtIndex:[theMenu numberOfItems] - 1] setTarget:self];
-
-    [theMenu addItemWithTitle:@"Send Selection"
-                       action:@selector(sendSelection:)
-                keyEquivalent:@""];
-    [[theMenu itemAtIndex:[theMenu numberOfItems] - 1] setTarget:self];
-
-    // Clear buffer
-    [theMenu addItemWithTitle:@"Clear Buffer"
-                       action:@selector(clearTextViewBuffer:)
-                keyEquivalent:@""];
-    [[theMenu itemAtIndex:[theMenu numberOfItems] - 1] setTarget:self];
-
-    // Make note
-    [theMenu addItemWithTitle:@"Annotate Selection"
-                       action:@selector(addNote:)
-                keyEquivalent:@""];
-    [[theMenu itemAtIndex:[theMenu numberOfItems] - 1] setTarget:self];
-
-    [theMenu addItemWithTitle:@"Reveal Annotation"
-                       action:@selector(showNotes:)
-                keyEquivalent:@""];
-    [[theMenu itemAtIndex:[theMenu numberOfItems] - 1] setTarget:self];
-
-    // Separator
-    [theMenu addItem:[NSMenuItem separatorItem]];
-
-    // Edit Session
-    [theMenu addItemWithTitle:@"Edit Session..."
-                       action:@selector(editTextViewSession:)
-                keyEquivalent:@""];
-    [[theMenu itemAtIndex:[theMenu numberOfItems] - 1] setTarget:self];
-
-    // Separator
-    [theMenu addItem:[NSMenuItem separatorItem]];
-
-    // Toggle broadcast
-    [theMenu addItemWithTitle:@"Toggle Broadcasting Input"
-                       action:@selector(toggleBroadcastingInput:)
-                keyEquivalent:@""];
-    [[theMenu itemAtIndex:[theMenu numberOfItems] - 1] setTarget:self];
-
-    if ([_delegate textViewHasCoprocess]) {
-        [theMenu addItemWithTitle:@"Stop Coprocess"
-                           action:@selector(textViewStopCoprocess)
-                    keyEquivalent:@""];
-        [[theMenu itemAtIndex:[theMenu numberOfItems] - 1] setTarget:self.delegate];
-    }
-
-    // Separator
-    [theMenu addItem:[NSMenuItem separatorItem]];
-
-    // Close current pane
-    [theMenu addItemWithTitle:@"Close"
-                       action:@selector(closeTextViewSession:)
-                keyEquivalent:@""];
-    [theMenu addItemWithTitle:@"Restart"
-                       action:@selector(restartTextViewSession:)
-                keyEquivalent:@""];
-    [[theMenu itemAtIndex:[theMenu numberOfItems] - 1] setTarget:self];
-
-    // Ask the delegate if there is anything to be added
-    if ([[self delegate] respondsToSelector:@selector(menuForEvent:menu:)]) {
-        [[self delegate] menuForEvent:nil menu:theMenu];
-    }
-
-    // Separator
-    [theMenu addItem:[NSMenuItem separatorItem]];
-    [theMenu addItemWithTitle:@"Bury"
-                       action:@selector(bury:)
-                keyEquivalent:@""];
-
-    // Terminal State
-    [theMenu addItem:[NSMenuItem separatorItem]];
-    NSMenuItem *terminalState = [[[NSMenuItem alloc] initWithTitle:@"Terminal State" action:nil keyEquivalent:@""] autorelease];
-    terminalState.submenu = [[[NSMenu alloc] initWithTitle:@"Terminal State"] autorelease];
-    struct {
-        NSString *title;
-        SEL action;
-    } terminalStateDecls[] = {
-        { @"Alternate Screen", @selector(terminalStateToggleAlternateScreen:) },
-        { nil, nil },
-        { @"Focus Reporting", @selector(terminalStateToggleFocusReporting:) },
-        { @"Mouse Reporting", @selector(terminalStateToggleMouseReporting:) },
-        { @"Paste Bracketing", @selector(terminalStateTogglePasteBracketing:) },
-        { nil, nil },
-        { @"Application Cursor", @selector(terminalStateToggleApplicationCursor:) },
-        { @"Application Keypad", @selector(terminalStateToggleApplicationKeypad:) },
-        { @"Report Modifiers with CSI u", @selector(terminalStateToggleCSIu:) }
-    };
-    NSInteger j = 1;
-    for (size_t i = 0; i < sizeof(terminalStateDecls) / sizeof(*terminalStateDecls); i++) {
-        if (!terminalStateDecls[i].title) {
-            [terminalState.submenu addItem:[NSMenuItem separatorItem]];
-            continue;
-        }
-        NSMenuItem *item = [terminalState.submenu addItemWithTitle:terminalStateDecls[i].title
-                                                            action:terminalStateDecls[i].action
-                                                     keyEquivalent:@""];
-        item.target = self;
-        item.tag = j;
-        j += 1;
-        item.state = [self.delegate textViewTerminalStateForMenuItem:item] ? NSControlStateValueOn : NSControlStateValueOff;
-    }
-    [theMenu addItem:terminalState];
-
-    [self.delegate textViewAddContextMenuItems:theMenu];
-
-    return theMenu;
-}
-
-#pragma mark - Inline Images
-
-- (void)saveImageAs:(id)sender {
-    iTermImageInfo *imageInfo = [sender representedObject];
-    NSSavePanel* panel = [NSSavePanel savePanel];
-
-    NSString *directory = [[NSFileManager defaultManager] downloadsDirectory] ?: NSHomeDirectory();
-    [NSSavePanel setDirectoryURL:[NSURL fileURLWithPath:directory] onceForID:@"saveImageAs" savePanel:panel];
-    panel.nameFieldStringValue = [imageInfo.filename lastPathComponent];
-    panel.allowedFileTypes = @[ @"png", @"bmp", @"gif", @"jp2", @"jpeg", @"jpg", @"tiff" ];
-    panel.allowsOtherFileTypes = NO;
-    panel.canCreateDirectories = YES;
-    [panel setExtensionHidden:NO];
-
-    if ([panel runModal] == NSModalResponseOK) {
-        NSString *filename = [[panel URL] path];
-        [imageInfo saveToFile:filename];
-    }
-}
-
-- (void)copyImage:(id)sender {
-    iTermImageInfo *imageInfo = [sender representedObject];
-    NSPasteboard *pboard = [NSPasteboard generalPasteboard];
-    NSPasteboardItem *item = imageInfo.pasteboardItem;
-    if (item) {
-        [pboard clearContents];
-        [pboard writeObjects:@[ item ]];
-    }
-}
-
-- (void)openImage:(id)sender {
-    iTermImageInfo *imageInfo = [sender representedObject];
-    NSString *name = imageInfo.nameForNewSavedTempFile;
-    if (name) {
-        [[iTermLaunchServices sharedInstance] openFile:name];
-    }
-}
-
-- (void)inspectImage:(id)sender {
-    iTermImageInfo *imageInfo = [sender representedObject];
-    if (imageInfo) {
-        NSString *text = [NSString stringWithFormat:
-                          @"Filename: %@\n"
-                          @"Dimensions: %d x %d",
-                          imageInfo.filename,
-                          (int)imageInfo.image.size.width,
-                          (int)imageInfo.image.size.height];
-
-        NSAlert *alert = [[[NSAlert alloc] init] autorelease];
-        alert.messageText = text;
-        [alert addButtonWithTitle:@"OK"];
-        [alert layout];
-        [alert runModal];
-    }
-}
-
-- (void)togglePauseAnimatingImage:(id)sender {
-    iTermImageInfo *imageInfo = [sender representedObject];
-    if (imageInfo) {
-        imageInfo.paused = !imageInfo.paused;
-        if (!imageInfo.paused) {
-            // A redraw is needed to recompute which visible lines are animated
-            // and ensure they keep getting redrawn on a fast cadence.
-            [self setNeedsDisplay:YES];
-        }
-    }
-}
-
-- (void)imageDidLoad:(NSNotification *)notification {
-    if ([self missingImageIsVisible:notification.object]) {
-        [self setNeedsDisplay:YES];
-    }
-}
-
-- (BOOL)missingImageIsVisible:(iTermImageInfo *)image {
-    if (![_drawingHelper.missingImages containsObject:image.uniqueIdentifier]) {
-        return NO;
-    }
-    return [self imageIsVisible:image];
-}
-
-- (BOOL)imageIsVisible:(iTermImageInfo *)image {
-    int firstVisibleLine = [[self enclosingScrollView] documentVisibleRect].origin.y / _lineHeight;
-    int width = [_dataSource width];
-    for (int y = 0; y < [_dataSource height]; y++) {
-        screen_char_t *theLine = [_dataSource getLineAtIndex:y + firstVisibleLine];
-        for (int x = 0; x < width; x++) {
-            if (theLine && theLine[x].image && GetImageInfo(theLine[x].code) == image) {
-                return YES;
-            }
-        }
-    }
-    return NO;
+    return [_contextMenuHelper titleBarMenu];
 }
 
 #pragma mark - Drag and Drop
@@ -4073,21 +3335,6 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
 }
 
 #pragma mark - File Transfer
-
-- (void)downloadWithSCP:(id)sender {
-    if (![_selection hasSelection]) {
-        return;
-    }
-    NSString *selectedText = [[self selectedText] stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
-    NSArray *parts = [selectedText componentsSeparatedByString:@"\n"];
-    if (parts.count != 1) {
-        return;
-    }
-    [self withRelativeCoordRange:_selection.lastAbsRange.coordRange block:^(VT100GridCoordRange coordRange) {
-        SCPPath *scpPath = [_dataSource scpPathForFile:parts[0] onLine:coordRange.start.y];
-        [_urlActionHelper downloadFileAtSecureCopyPath:scpPath displayName:selectedText locationInView:coordRange];
-    }];
-}
 
 - (BOOL)confirmUploadOfFiles:(NSArray *)files toPath:(SCPPath *)path {
     NSString *text;
@@ -5455,12 +4702,6 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 - (int)accessibilityHelperNumberOfLines {
     return MIN([iTermAdvancedSettingsModel numberOfLinesForAccessibility],
                [_dataSource numberOfLines]);
-}
-
-#pragma mark - NSMenuDelegate
-
-- (void)menuDidClose:(NSMenu *)menu {
-    self.savedSelectedText = nil;
 }
 
 #pragma mark - NSPopoverDelegate

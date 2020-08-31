@@ -184,26 +184,26 @@ NS_ASSUME_NONNULL_BEGIN
     // Convert all sequences of non-reserved symbols into numbers 0, 1, 2, ...
     NSCharacterSet *reservedSymbols = [NSCharacterSet characterSetWithCharactersInString:@":/@:.#?&="];
     NSIndexSet *nonReservedSymbolIndices = [string indicesOfCharactersInSet:[reservedSymbols invertedSet]];
-    __block NSInteger count;
+    __block int count = 0x10000000;
     NSMutableString *stringWithPlaceholders = [string mutableCopy];
-    NSMutableDictionary *map = [NSMutableDictionary dictionary];
+    NSMutableDictionary<NSString *, NSString *> *map = [NSMutableDictionary dictionary];
     [nonReservedSymbolIndices enumerateRangesWithOptions:NSEnumerationReverse
                                               usingBlock:^(NSRange range, BOOL * _Nonnull stop) {
-        NSString *number = [@(count++) stringValue];
+        NSString *placeholder = [NSString stringWithFormat:@"%08x", count++];
         if (range.location == 0) {
             // Schemes can't start with a number. In case the first thing is a scheme, start it
             // with a letter. This is safe because ports are the only thing that must be a number
             // but they can't come first!
-            number = [@"x" stringByAppendingString:number];
+            placeholder = [@"x" stringByAppendingString:placeholder];
         }
-        [stringWithPlaceholders replaceCharactersInRange:range withString:number];
+        [stringWithPlaceholders replaceCharactersInRange:range withString:placeholder];
         // We have to remove percent encoding here or it gets double-encoded. If there is a percent
         // that is not part of a percent encoding scheme, then -stringByRemovingPercentEncoding
         // will return nil and then we just use the raw string. A mix of percent-encoded and
         // non-percent-encoded will not work, nor will non-percent-encoded that happens to look like
         // percent-encoded.
         NSString *substring = [string substringWithRange:range];
-        map[number] = [substring stringByRemovingPercentEncoding] ?: substring;
+        map[placeholder] = [substring stringByRemovingPercentEncoding] ?: substring;
     }];
     DLog(@"stringWithPlaceholders=%@", stringWithPlaceholders);
     DLog(@"map=%@", map);
@@ -212,40 +212,14 @@ NS_ASSUME_NONNULL_BEGIN
     DLog(@"components=%@", components);
 
     NSString *(^glue)(NSString *) = ^NSString *(NSString *encoded) {
-        // Encoded is something like 1.2 or 2/3 or 5=6&7=8
-        NSArray<NSString *> *parts =
-        [[encoded componentsSeparatedByCharactersInSet:reservedSymbols] reduceWithFirstValue:@[] block:^id(NSArray<NSString *> *accumulator, NSString *tail) {
-            if (accumulator.count == 0) {
-                return @[ tail ];
+        NSMutableString *result = [encoded mutableCopy];
+        [map enumerateKeysAndObjectsUsingBlock:^(NSString *_Nonnull key, NSString *_Nonnull obj, BOOL * _Nonnull stop) {
+            const NSRange range = [result rangeOfString:key];
+            if (range.location == NSNotFound) {
+                return;
             }
-            if (accumulator.lastObject.length == 0 && tail.length == 0) {
-                // Removes consecutive empty strings because something like &=x&= should have parts ["", x, ""].
-                return accumulator;
-            }
-            return [accumulator arrayByAddingObject:tail];
+            [result replaceCharactersInRange:range withString:obj];
         }];
-
-        // Joiners are like [.] or [/] or [=,&,=] for the examples above.
-        NSArray<NSString *> *joiners = [[encoded componentsSeparatedByCharactersInSet:[reservedSymbols invertedSet]] filteredArrayUsingBlock:^BOOL(NSString *anObject) {
-            return anObject.length > 0;
-        }];
-
-        NSArray<NSString *> *values = [parts mapWithBlock:^id(NSString *encodedPart) {
-            if (encodedPart.length == 0) {
-                return @"";
-            }
-            ITAssertWithMessage(map[encodedPart], @"Can't find encoded part %@ in string %@", encodedPart, string);
-            return map[encodedPart];
-        }];
-
-        NSString *result = [[values mapEnumeratedWithBlock:^id(NSUInteger i, NSString *value) {
-            if (i < joiners.count) {
-                return [value stringByAppendingString:joiners[i]];
-            }
-            return value;
-        }] componentsJoinedByString:@""];
-
-        DLog(@"glue(%@) parts=%@ joiners=%@ values=%@ result=%@", encoded, parts, joiners, values, result);
         return result;
     };
     if (components.scheme) {

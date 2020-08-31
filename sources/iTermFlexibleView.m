@@ -56,6 +56,7 @@
 
 - (void)resizeWithOldSuperviewSize:(NSSize)oldSize {
     DLog(@"%@ resized %@ -> %@:\n%@",
+         self,
          NSStringFromSize(oldSize),
          NSStringFromSize(self.frame.size),
          [NSThread callStackSymbols]);

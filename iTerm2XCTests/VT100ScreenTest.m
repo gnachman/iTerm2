@@ -2768,7 +2768,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
                @"dc\n"
                @"dd"]);
     [screen resetScrollbackOverflow];
-    XCTAssert([selection_ firstRange].coordRange.start.x == 1);
+    XCTAssert([selection_ firstAbsRange].coordRange.start.x == 1);
 
     screen.saveToScrollbackInAlternateScreen = NO;
     // scrollback overflow should be 0 and selection shouldn't be insane
@@ -2786,7 +2786,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
                @"dd\n"
                @"dd\n"
                @"dd"]);
-    VT100GridWindowedRange selectionRange = [selection_ firstRange];
+    VT100GridAbsWindowedRange selectionRange = [selection_ firstAbsRange];
     ITERM_TEST_KNOWN_BUG(selectionRange.coordRange.start.y == 4,
                          selectionRange.coordRange.start.y == -1);
     // See comment in -linefeed about why this happens

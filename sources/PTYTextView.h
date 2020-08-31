@@ -213,6 +213,9 @@ typedef NS_ENUM(NSInteger, PTYCharType) {
 - (id<iTermSwipeHandler>)textViewSwipeHandler;
 - (void)textViewAddContextMenuItems:(NSMenu *)menu;
 - (NSString *)textViewShell;
+- (void)textViewContextMenuInvocation:(NSString *)invocation
+                      failedWithError:(NSError *)error
+                          forMenuItem:(NSString *)title;
 @end
 
 @interface iTermHighlightedRow : NSObject
@@ -611,8 +614,6 @@ scrollToFirstResult:(BOOL)scrollToFirstResult;
 - (IBAction)selectOutputOfLastCommand:(id)sender;
 
 - (void)showFireworks;
-
-- (BOOL)imageIsVisible:(iTermImageInfo *)image;
 
 // Turns on the flicker fixer (if enabled) while drawing.
 - (void)performBlockWithFlickerFixerGrid:(void (NS_NOESCAPE ^)(void))block;
