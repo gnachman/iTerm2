@@ -45,7 +45,7 @@
 #define KEY_DESCRIPTION                 @"Description"  // Deprecated
 #define KEY_CUSTOM_COMMAND              @"Custom Command"
 #define KEY_COMMAND_LINE                @"Command"
-#define KEY_INITIAL_TEXT                @"Initial Text"
+#define KEY_INITIAL_TEXT                @"Initial Text"  // String. Evaluated as a swifty string.
 #define KEY_CUSTOM_DIRECTORY            @"Custom Directory"  // values are Yes, No, Recycle, Advanced
 #define KEY_WORKING_DIRECTORY           @"Working Directory"
 #define KEY_BADGE_FORMAT                @"Badge Text"

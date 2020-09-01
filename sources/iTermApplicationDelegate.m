@@ -624,7 +624,8 @@ static BOOL hasBecomeActive = NO;
                     return YES;
                 }
 
-                bookmark[KEY_INITIAL_TEXT] = initialText;
+                // Escape it again because KEY_INITIAL_TEXT is a swifty string.
+                bookmark[KEY_INITIAL_TEXT] = [initialText stringByReplacingOccurrencesOfString:@"\\" withString:@"\\\\"];
             }
         }
 
