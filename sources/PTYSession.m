@@ -2947,7 +2947,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)finishedHandlingNewOutputOfLength:(int)length {
-    DLog(@"Session %@ is processing", _nameController.presentationSessionTitle);
+    DLog(@"Session %@ (%@) is processing", self, _nameController.presentationSessionTitle);
     if (![self haveResizedRecently]) {
         _lastOutputIgnoringOutputAfterResizing = [NSDate timeIntervalSinceReferenceDate];
     }

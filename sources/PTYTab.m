@@ -667,6 +667,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     _state |= flagsToSet;
     _state &= ~flagsToReset;
     if (_state != before) {
+        DLog(@"Set state of %@ from %@ to %@", self, @(before), @(_state));
         [self updateIcon];
         [_delegate tab:self didChangeToState:_state];
     }
@@ -808,6 +809,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     [self recheckBlur];
 
     if (!session.exited) {
+        DLog(@"Clear dead state");
         [self setState:0 reset:kPTYTabDeadState];
     }
     [self updateTabTitle];
@@ -5835,6 +5837,7 @@ typedef struct {
 #pragma mark - Private
 
 - (void)setLabelAttributesForDeadSession {
+    DLog(@"Session is dead");
     [self setState:kPTYTabDeadState reset:0];
 
     if (isProcessing_) {
@@ -5858,6 +5861,7 @@ typedef struct {
     BOOL anySessionHasNewOutput = NO;
     for (PTYSession *session in [self sessions]) {
         if ([session newOutput]) {
+            DLog(@"%@ has new output", self);
             // Got new output
             anySessionHasNewOutput = YES;
 
@@ -5891,10 +5895,12 @@ typedef struct {
     if (isBackgroundTab) {
         if (anySessionHasNewOutput) {
             if (allSessionsWithNewOutputAreIdle) {
+                DLog(@"Tab is idle");
                 [self setState:kPTYTabIdleState reset:kPTYTabNewOutputState];
             }
         } else {
             // No new output (either we got foregrounded or nothing has happened to a background tab)
+            DLog(@"Clear idle & new output state");
             [self setState:0 reset:(kPTYTabIdleState | kPTYTabNewOutputState)];
         }
     }
@@ -5931,11 +5937,13 @@ typedef struct {
             [session setNewOutput:NO];
         }
     } else if (isBackgroundTab) {
+        DLog(@"Background tab has new output");
         [self setState:kPTYTabNewOutputState reset:kPTYTabIdleState];
     }
 }
 
 - (void)resetLabelAttributesIfAppropriate {
+    DLog(@"resetLabelAttributesIfAppropriate");
     BOOL amProcessing = [self isProcessing];
     BOOL shouldResetLabel = NO;
     for (PTYSession *aSession in [self sessions]) {
@@ -5952,6 +5960,7 @@ typedef struct {
         }
     }
     if (shouldResetLabel && [self isForegroundTab]) {
+        DLog(@"Reset label");
         [self setIsProcessing:NO];
         [self setState:0 reset:(kPTYTabIdleState |
                                 kPTYTabNewOutputState |

@@ -5283,6 +5283,7 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void)tabView:(NSTabView *)tabView willSelectTabViewItem:(NSTabViewItem *)tabViewItem
 {
     if (![[self currentSession] exited]) {
+        DLog(@"Clear new-output flag in %@", [self currentSession]);
         [[self currentSession] setNewOutput:NO];
     }
     // If the user is currently select-dragging the text view, stop it so it
@@ -5329,7 +5330,8 @@ ITERM_WEAKLY_REFERENCEABLE
         [self hideAutoCommandHistory];
     }
     PTYTab *tab = [tabViewItem identifier];
-    for (PTYSession* aSession in [tab sessions]) {
+    for (PTYSession *aSession in [tab sessions]) {
+        DLog(@"Clear new-output flag in %@", aSession);
         [aSession setNewOutput:NO];
 
         // Background tabs' timers run infrequently so make sure the display is
