@@ -280,7 +280,7 @@
         }
         NSString *fullName = [path stringByAppendingPathComponent:file];
         if (![self loadDynamicProfilesFromFile:fullName intoArray:newProfiles guids:guids]) {
-            [self reportError:[NSString stringWithFormat:@"Ignoring dynamic profiles in malformed file %@ and continuing.", fullName]
+            [self reportError:[NSString stringWithFormat:@"Ignoring dynamic profiles in “%@” because of an error.", fullName]
                          file:fullName];
         }
     }
@@ -329,13 +329,14 @@
         }
     } else {
         // Try JSON
-        NSData *data = [NSData dataWithContentsOfFile:filename];
+        NSError *error = nil;
+        NSData *data = [NSData dataWithContentsOfFile:filename options:0 error:&error];
         if (!data) {
-            [self reportError:[NSString stringWithFormat:@"Dynamic Profiles file %@ is not readable. Check the permissions.", filename]
+            [self reportError:[NSString stringWithFormat:@"Dynamic Profiles file %@ is not readable: %@.",
+                               filename, error.localizedDescription]
                          file:filename];
             return nil;
         }
-        NSError *error = nil;
         dict = [NSJSONSerialization JSONObjectWithData:data
                                                options:0
                                                  error:&error];
