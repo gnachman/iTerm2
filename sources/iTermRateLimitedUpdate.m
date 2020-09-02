@@ -22,6 +22,7 @@
     [_timer invalidate];
     _timer = nil;
     _block = nil;
+    _deferCount = 0;
 }
 
 - (void)force {
@@ -32,6 +33,7 @@
     _timer = nil;
     if (_block) {
         _block();
+        _deferCount = 0;
     }
     [self scheduleTimer];
 }
@@ -75,17 +77,20 @@
         _minimumInterval = minimumInterval;
     }
 }
+
 - (void)performRateLimitedBlock:(void (^)(void))block {
     if (_timer == nil) {
         if (self.debug) {
             NSLog(@"RLU perform immediately");
         }
         block();
+        _deferCount = 0;
         [self scheduleTimer];
     } else {
         if (self.debug) {
             NSLog(@"RLU defer. minimum interval is %@", @(_minimumInterval));
         }
+        _deferCount += 1;
         _block = [block copy];
     }
 }
@@ -115,6 +120,7 @@
         void (^block)(void) = _block;
         _block = nil;
         block();
+        _deferCount = 0;
         [self scheduleTimer];
     } else {
         if (self.debug) {

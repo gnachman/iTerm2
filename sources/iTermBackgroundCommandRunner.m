@@ -10,6 +10,7 @@
 #import "DebugLogging.h"
 #import "iTermCommandRunner.h"
 #import "iTermNotificationController.h"
+#import "iTermRateLimitedUpdate.h"
 #import "iTermScriptConsole.h"
 #import "iTermScriptHistory.h"
 #import "iTermSlowOperationGateway.h"
@@ -62,6 +63,18 @@ static NSMutableArray<iTermBackgroundCommandRunner *> *activeRunners;
 
 @implementation iTermBackgroundCommandRunner {
     BOOL _running;
+}
+
++ (void)maybeNotify:(void (^)(NSInteger))block {
+    static iTermRateLimitedUpdate *rateLimit;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        rateLimit = [[iTermRateLimitedUpdate alloc] init];
+        rateLimit.minimumInterval = 10;
+    });
+    [rateLimit performRateLimitedBlock:^{
+        block(rateLimit.deferCount);
+    }];
 }
 
 - (instancetype)initWithCommand:(NSString *)command
@@ -147,11 +160,18 @@ static NSMutableArray<iTermBackgroundCommandRunner *> *activeRunners;
     if (self.notificationTitle && status) {
         DLog(@"%@ post notification with identifier %@", self, entry.identifier);
         [iTermBackgroundCommandRunnerNotificationObserver sharedInstance];
-        NSString *detail = [NSString stringWithFormat:@"\nFinished with status %d", status];
-        [[iTermNotificationController sharedInstance] postNotificationWithTitle:self.notificationTitle
-                                                                         detail:detail
-                                                       callbackNotificationName:iTermBackgroundCommandRunnerDidSelectNotificationNotificationName
-                                                   callbackNotificationUserInfo:@{ @"identifier": entry.identifier }];
+        [self.class maybeNotify:^(NSInteger deferCount) {
+            NSString *detail = [NSString stringWithFormat:@"\nFinished with status %d", status];
+            if (deferCount > 1) {
+                detail = [detail stringByAppendingFormat:@", plus %@ other error%@ silenced.",
+                          @(deferCount - 1),
+                          deferCount > 2 ? @"s" : @""];
+            }
+            [[iTermNotificationController sharedInstance] postNotificationWithTitle:self.notificationTitle
+                                                                             detail:detail
+                                                           callbackNotificationName:iTermBackgroundCommandRunnerDidSelectNotificationNotificationName
+                                                       callbackNotificationUserInfo:@{ @"identifier": entry.identifier }];
+        }];
     }
 }
 

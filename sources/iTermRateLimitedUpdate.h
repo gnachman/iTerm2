@@ -12,6 +12,7 @@
 
 @property (nonatomic) NSTimeInterval minimumInterval;
 @property (nonatomic) BOOL debug;
+@property (nonatomic, readonly) NSTimeInterval deferCount;
 
 // Do not perform a pending action.
 - (void)invalidate;
