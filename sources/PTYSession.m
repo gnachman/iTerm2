@@ -11955,7 +11955,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)sessionViewScrollViewDidResize {
-    [_shell setSize:_screen.size viewSize:_screen.viewSize scaleFactor:_view.window.backingScaleFactor];
+    const CGFloat scale = self.delegate.realParentWindow.window.backingScaleFactor ?: 2;
+    [_shell setSize:_screen.size viewSize:_screen.viewSize scaleFactor:scale];
 }
 
 - (iTermStatusBarViewController *)sessionViewStatusBarViewController {

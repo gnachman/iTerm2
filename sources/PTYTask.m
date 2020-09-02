@@ -390,7 +390,8 @@ static void HandleSigChld(int n) {
 }
 
 - (void)setSize:(VT100GridSize)size viewSize:(NSSize)viewSize scaleFactor:(CGFloat)scaleFactor {
-    DLog(@"Set terminal size to %@", VT100GridSizeDescription(size));
+    DLog(@"Set terminal size to %@; %@; %f for %@",
+         VT100GridSizeDescription(size), NSStringFromSize(viewSize), scaleFactor, self.delegate);
     if (self.fd == -1) {
         return;
     }
@@ -873,8 +874,13 @@ static void HandleSigChld(int n) {
 }
 
 - (void)setTerminalSizeToDesiredSize {
-    DLog(@"Set size of %@ to %@x%@ cells, %@x%@ px",
+    DLog(@"Set size of %@ from (%@x%@ cells, %@x%@px) to (%@x%@ cells, %@x%@ px)",
          self.delegate,
+         @(_lastSize.cellSize.width),
+         @(_lastSize.cellSize.height),
+         @(_lastSize.pixelSize.width),
+         @(_lastSize.pixelSize.height),
+
          @(_desiredSize.cellSize.width),
          @(_desiredSize.cellSize.height),
          @(_desiredSize.pixelSize.width),
