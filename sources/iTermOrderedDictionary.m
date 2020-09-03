@@ -55,8 +55,25 @@
     if (self) {
         _orderedKeys = array;
         _dictionary = dictionary;
+        if ([[NSSet setWithArray:array] count] != array.count) {
+            _containsDuplicates = YES;
+        }
     }
     return self;
+}
+
+- (NSString *)debugString {
+    if (!_containsDuplicates) {
+        return @"ok";
+    }
+    NSCountedSet *countedSet = [[NSCountedSet alloc] initWithArray:_orderedKeys];
+    NSMutableArray<NSString *> *dups = [NSMutableArray array];
+    for (id obj in countedSet) {
+        if ([countedSet countForObject:obj] > 1) {
+            [dups addObject:[obj description]];
+        }
+    }
+    return [dups componentsJoinedByString:@", "];
 }
 
 - (NSArray *)keys {

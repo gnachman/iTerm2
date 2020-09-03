@@ -73,12 +73,7 @@ typedef NS_OPTIONS(NSUInteger, iTermGraphEncoderArrayOptions) {
 
 - (instancetype)initWithKey:(NSString *)key
                  identifier:(NSString *)identifier
-                 generation:(NSInteger)generation
-                      rowid:(NSNumber * _Nullable)rowid NS_DESIGNATED_INITIALIZER;
-
-- (instancetype)initWithKey:(NSString *)key
-                 identifier:(NSString *)identifier
-                 generation:(NSInteger)generation;
+                 generation:(NSInteger)generation NS_DESIGNATED_INITIALIZER;
 
 - (instancetype)initWithRecord:(iTermEncoderGraphRecord *)record;
 

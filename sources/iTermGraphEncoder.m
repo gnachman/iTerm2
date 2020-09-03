@@ -22,20 +22,12 @@ NSInteger iTermGenerationAlwaysEncode = NSIntegerMax;
     NSInteger _generation;
     NSString *_key;
     NSMutableArray<iTermEncoderGraphRecord *> *_children;
-    NSNumber *_Nullable _rowid;
     iTermEncoderGraphRecord *_record;
 }
 
 - (instancetype)initWithKey:(NSString *)key
                  identifier:(NSString *)identifier
                  generation:(NSInteger)generation {
-    return [self initWithKey:key identifier:identifier generation:generation rowid:nil];
-}
-
-- (instancetype)initWithKey:(NSString *)key
-                 identifier:(NSString *)identifier
-                 generation:(NSInteger)generation
-                      rowid:(NSNumber * _Nullable)rowid {
     assert(identifier);
     self = [super init];
     if (self) {
@@ -49,7 +41,6 @@ NSInteger iTermGenerationAlwaysEncode = NSIntegerMax;
         _pod = [NSMutableDictionary dictionary];
         _children = [NSMutableArray array];
         _state = iTermGraphEncoderStateLive;
-        _rowid = rowid;
     }
     return self;
 }
@@ -57,8 +48,7 @@ NSInteger iTermGenerationAlwaysEncode = NSIntegerMax;
 - (instancetype)initWithRecord:(iTermEncoderGraphRecord *)record {
     iTermGraphEncoder *encoder = [self initWithKey:record.key
                                         identifier:record.identifier
-                                        generation:record.generation
-                                             rowid:nil];
+                                        generation:record.generation];
     if (!encoder) {
         return nil;
     }
@@ -232,7 +222,7 @@ NSInteger iTermGenerationAlwaysEncode = NSIntegerMax;
                                              generation:_generation
                                                     key:_key
                                              identifier:_identifier
-                                                  rowid:_rowid];
+                                                  rowid:nil];
             _state = iTermGraphEncoderStateCommitted;
             return _record;
 

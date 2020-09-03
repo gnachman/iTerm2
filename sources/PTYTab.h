@@ -197,7 +197,8 @@ extern NSString *const PTYTabVariableTitleOverride;
 // arrangement with matching session unique IDs will be assigned those
 // SessionView's.
 - (void)updateFlexibleViewColors;
-- (NSDictionary*)arrangement;
+- (NSDictionary *)arrangement;
+- (NSDictionary *)arrangementWithNewGUID;
 
 - (void)notifyWindowChanged;
 - (void)maximize;

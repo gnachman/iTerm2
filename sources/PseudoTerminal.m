@@ -9700,7 +9700,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
                               didMakeSession:nil
                                   completion:nil];
     } else {
-        [self openTabWithArrangement:self.currentTab.arrangement
+        [self openTabWithArrangement:self.currentTab.arrangementWithNewGUID
                                named:nil
                      hasFlexibleView:self.currentTab.isTmuxTab
                              viewMap:nil

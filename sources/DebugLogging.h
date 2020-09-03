@@ -209,4 +209,11 @@ BOOL TurnOffDebugLoggingSilently(void);
 
 void SetPinnedDebugLogMessage(NSString *key, NSString *value, ...);
 void AppendPinnedDebugLogMessage(NSString *key, NSString *value, ...);
+
+@interface NSException(iTerm)
+@property (nonatomic, readonly) NSArray<NSString *> *it_originalCallStackSymbols;
+@property (nonatomic, readonly) NSString *it_compressedDescription;
+- (NSException *)it_rethrowWithMessage:(NSString *)format, ...;
+@end
+
 #endif  // __OBJC__

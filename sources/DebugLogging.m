@@ -9,6 +9,7 @@
 #import "DebugLogging.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermApplication.h"
+#import "NSData+iTerm.h"
 #import "NSFileManager+iTerm.h"
 #import "NSView+RecursiveDescription.h"
 #import <Cocoa/Cocoa.h>
@@ -296,3 +297,35 @@ void DLogC(const char *format, va_list args) {
     DLog(@"%@", [NSString stringWithUTF8String:temp]);
     free(temp);
 }
+
+@implementation NSException(iTerm)
+
+- (NSException *)it_rethrowWithMessage:(NSString *)format, ... {
+    va_list arguments;
+    va_start(arguments, format);
+    NSString *string = [[NSString alloc] initWithFormat:format arguments:arguments];
+    va_end(arguments);
+
+    NSDictionary *userInfo = self.userInfo;
+    NSString *const stackKey = @"original stack";
+    if (!userInfo[stackKey]) {
+        NSMutableDictionary *temp = [[userInfo mutableCopy] autorelease];
+        temp[stackKey] = self.callStackSymbols;
+        userInfo = temp;
+    }
+    @throw [NSException exceptionWithName:self.name
+                                   reason:[NSString stringWithFormat:@"%@:\n%@", string, self.reason]
+                                 userInfo:userInfo];
+}
+
+- (NSArray<NSString *> *)it_originalCallStackSymbols {
+    return self.userInfo[@"original stack"];
+}
+
+- (NSString *)it_compressedDescription {
+    NSString *uncompressed = [NSString stringWithFormat:@"%@:\n%@\n%@", self.name, self.reason, [self.it_originalCallStackSymbols componentsJoinedByString:@"\n"]];
+    return [[[uncompressed dataUsingEncoding:NSUTF8StringEncoding] it_compressedData] stringWithBase64EncodingWithLineBreak:@""];
+}
+
+@end
+

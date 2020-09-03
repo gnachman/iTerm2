@@ -71,7 +71,14 @@
                                    NSNumber *parent,
                                    BOOL *stop))block {
     BOOL stop = NO;
-    block(_previousRevision, self.record, @0, &stop);
+    @try {
+        block(_previousRevision, self.record, @0, &stop);
+    } @catch (NSException *exception) {
+        [exception it_rethrowWithMessage:@"(1) %@ vs %@",
+         _previousRevision.compactDescription,
+         self.record.compactDescription];
+    }
+
     if (stop) {
         return NO;
     }
@@ -105,12 +112,28 @@
                                BOOL *stop) {
         iTermEncoderGraphRecord *before = beforeDict[key];
         iTermEncoderGraphRecord *after = afterDict[key];
-        block(before, after, parent, stop);
-        // Now recurse for their descendants.
-        ok = [self enumerateBefore:before
-                             after:after
-                            parent:before ? before.rowid : after.rowid
-                             block:block];
+        @try {
+            block(before, after, parent, stop);
+        } @catch (NSException *exception) {
+            [exception it_rethrowWithMessage:@"(2) %@ [%@] vs %@ [%@]",
+             before.compactDescription,
+             beforeDict.debugString,
+             after.compactDescription,
+             afterDict.debugString];
+        }
+        @try {
+            // Now recurse for their descendants.
+            ok = [self enumerateBefore:before
+                                 after:after
+                                parent:before ? before.rowid : after.rowid
+                                 block:block];
+        } @catch (NSException *exception) {
+            [exception it_rethrowWithMessage:@"(3) %@ [%@] vs %@ [%@]",
+             before.compactDescription,
+             beforeDict.debugString,
+             after.compactDescription,
+             afterDict.debugString];
+        }
     };
     NSMutableSet<NSDictionary *> *seenKeys = [NSMutableSet set];
     [beforeDict.keys enumerateObjectsUsingBlock:^(NSDictionary * _Nonnull key, NSUInteger idx, BOOL * _Nonnull stop) {

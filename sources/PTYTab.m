@@ -514,7 +514,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 #pragma mark - NSCopying
 
 - (id)copyWithZone:(NSZone *)zone {
-    NSDictionary *arrangement = [self arrangement];
+    NSDictionary *arrangement = [self arrangementWithNewGUID];
     PTYTab *theCopy = [PTYTab tabWithArrangement:arrangement
                                            named:nil
                                       inTerminal:[self realParentWindow]
@@ -3139,6 +3139,12 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     }];
 }
 
+
+- (NSDictionary *)arrangementWithNewGUID {
+    NSMutableDictionary *arrangement = [[self arrangement] mutableCopy];
+    arrangement[TAB_GUID] = [[NSUUID UUID] UUIDString];
+    return arrangement;
+}
 
 - (NSDictionary*)arrangement {
     return [self arrangementConstructingIdMap:NO contents:NO];

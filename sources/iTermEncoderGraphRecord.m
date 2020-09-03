@@ -57,6 +57,10 @@
     [self dumpWithIndent:@""];
 }
 
+- (NSString *)compactDescription {
+    return [NSString stringWithFormat:@"key=%@ id=%@", self.key, self.identifier];
+}
+
 - (void)dumpWithIndent:(NSString *)indent {
     NSLog(@"%@%@[%@] rowid=%@ %@", indent, self.key, self.identifier, self.rowid,
           [[self.pod.allKeys mapWithBlock:^id(NSString *key) {
@@ -81,6 +85,11 @@
 }
 
 - (void)setRowid:(NSNumber *)rowid {
+    if (_rowid != nil) {
+        @throw [NSException exceptionWithName:@"DuplicateRowID"
+                                       reason:[NSString stringWithFormat:@"_rowid=%@ setRowid:%@", _rowid, rowid]
+                                     userInfo:nil];
+    }
     assert(_rowid == nil);
     _rowid = rowid;
 }

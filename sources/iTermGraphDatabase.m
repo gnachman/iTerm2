@@ -94,18 +94,22 @@
 #pragma mark - Private
 
 - (void)trySaveEncoder:(iTermGraphDeltaEncoder *)encoder state:(iTermGraphDatabaseState *)state {
-    if ([self save:encoder state:state]) {
-        _recoveryCount = 0;
-        return;
-    }
+    @try {
+        if ([self save:encoder state:state]) {
+            _recoveryCount = 0;
+            return;
+        }
 
-    DLog(@"save failed: %@ with recovery count %@", self.db.lastError, @(_recoveryCount));
-    if (_recoveryCount >= 3) {
-        DLog(@"Not attempting recovery.");
-        return;
+        DLog(@"save failed: %@ with recovery count %@", self.db.lastError, @(_recoveryCount));
+        if (_recoveryCount >= 3) {
+            DLog(@"Not attempting recovery.");
+            return;
+        }
+        _recoveryCount += 1;
+        [self attemptRecovery:state record:encoder.record];
+    } @catch (NSException *exception) {
+        ITAssertWithMessage(NO, @"%@", exception.it_compressedDescription);
     }
-    _recoveryCount += 1;
-    [self attemptRecovery:state record:encoder.record];
 }
 
 - (void)attemptRecovery:(iTermGraphDatabaseState *)state
@@ -162,7 +166,12 @@
             }
             NSNumber *lastInsertRowID = state.db.lastInsertRowId;
             assert(lastInsertRowID);
-            after.rowid = lastInsertRowID;
+            @try {
+                // Issue 9117
+                after.rowid = lastInsertRowID;
+            } @catch (NSException *exception) {
+                @throw [exception it_rethrowWithMessage:@"after.key=%@ after.identifier=%@", after.key, after.identifier];
+            }
             return;
         }
         if (before && after) {
