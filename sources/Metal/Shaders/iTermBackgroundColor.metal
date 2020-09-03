@@ -15,7 +15,7 @@ iTermBackgroundColorVertexShader(uint vertexID [[ vertex_id ]],
                                  constant float2 *offset [[ buffer(iTermVertexInputIndexOffset) ]],
                                  constant iTermVertex *vertexArray [[ buffer(iTermVertexInputIndexVertices) ]],
                                  constant vector_uint2 *viewportSizePointer  [[ buffer(iTermVertexInputIndexViewportSize) ]],
-                                 constant iTermBackgroundColorPIU *perInstanceUniforms [[ buffer(iTermVertexInputIndexPerInstanceUniforms) ]],
+                                 device iTermBackgroundColorPIU *perInstanceUniforms [[ buffer(iTermVertexInputIndexPerInstanceUniforms) ]],
                                  unsigned int iid [[instance_id]]) {
     iTermBackgroundColorVertexFunctionOutput out;
 
