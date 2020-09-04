@@ -11,6 +11,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface iTermGlobalSearchWindowController : NSWindowController
 
+- (void)activate;
+
 @end
 
 NS_ASSUME_NONNULL_END

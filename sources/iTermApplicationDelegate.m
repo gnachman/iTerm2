@@ -1580,7 +1580,7 @@ static BOOL hasBecomeActive = NO;
     if (!_globalSearchWindowController) {
         _globalSearchWindowController = [[iTermGlobalSearchWindowController alloc] init];
     }
-    [_globalSearchWindowController.window makeKeyAndOrderFront:nil];
+    [_globalSearchWindowController activate];
 }
 
 - (IBAction)promptToConvertTabsToSpacesWhenPasting:(id)sender {

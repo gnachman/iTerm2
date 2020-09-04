@@ -223,6 +223,23 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
 }
 
+- (void)activate {
+    [self.window makeKeyAndOrderFront:nil];
+    [_searchField.window makeFirstResponder:_searchField];
+}
+
+- (IBAction)closeCurrentSession:(id)sender {
+    [self close];
+}
+
+- (void)closeWindow:(id)sender {
+    [self close];
+}
+
+- (BOOL)autoHidesHotKeyWindow {
+    return NO;
+}
+
 #pragma mark - NSWindowDelegate
 
 - (void)windowDidBecomeKey:(NSNotification *)notification {
