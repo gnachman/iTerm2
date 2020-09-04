@@ -12,6 +12,13 @@
 
 @implementation NSIndexSet (iTerm)
 
++ (instancetype)it_indexSetWithIndexesInRange:(NSRange)range {
+    if (range.length == 0) {
+        return [self indexSet];
+    }
+    return [self indexSetWithIndexesInRange:range];
+}
+
 - (NSArray<NSNumber *> *)it_array {
     NSMutableArray<NSNumber *> *result = [NSMutableArray array];
     [self enumerateIndexesUsingBlock:^(NSUInteger idx, BOOL * _Nonnull stop) {

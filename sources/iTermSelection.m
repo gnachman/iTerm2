@@ -10,6 +10,7 @@
 #import "DebugLogging.h"
 #import "NSArray+iTerm.h"
 #import "NSDictionary+iTerm.h"
+#import "NSIndexSet+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "ScreenChar.h"
 
@@ -961,14 +962,14 @@ static NSString *const kiTermSubSelectionMode = @"Mode";
         NSRange theRange = [self rangeOfIndexesInAbsRange:sub.absRange
                                            onAbsoluteLine:line
                                                      mode:sub.selectionMode];
-        return [NSIndexSet indexSetWithIndexesInRange:theRange];
+        return [NSIndexSet it_indexSetWithIndexesInRange:theRange];
     }
     if (_live && numberOfSubSelections == 0) {
         // Fast path
         NSRange theRange = [self rangeOfIndexesInAbsRange:[self unflippedLiveAbsRange]
                                            onAbsoluteLine:line
                                                      mode:_selectionMode];
-        return [NSIndexSet indexSetWithIndexesInRange:theRange];
+        return [NSIndexSet it_indexSetWithIndexesInRange:theRange];
     }
 
     // Slow path.
@@ -981,7 +982,7 @@ static NSString *const kiTermSubSelectionMode = @"Mode";
 
         // Any values in theRange that intersect indexes should be removed from indexes.
         // And values in theSet that don't intersect indexes should be added to indexes.
-        NSMutableIndexSet *indexesToAdd = [NSMutableIndexSet indexSetWithIndexesInRange:theRange];
+        NSMutableIndexSet *indexesToAdd = [NSMutableIndexSet it_indexSetWithIndexesInRange:theRange];
         NSMutableIndexSet *indexesToRemove = [NSMutableIndexSet indexSet];
 
         [indexes enumerateRangesInRange:theRange options:0 usingBlock:^(NSRange innerRange, BOOL *stop) {

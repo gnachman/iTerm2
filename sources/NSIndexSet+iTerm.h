@@ -16,6 +16,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property (nonatomic, readonly) NSArray<NSNumber *> *it_array;
 
++ (instancetype)it_indexSetWithIndexesInRange:(NSRange)range;
+
 @end
 
 NS_ASSUME_NONNULL_END
