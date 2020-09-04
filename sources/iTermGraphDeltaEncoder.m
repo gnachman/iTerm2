@@ -27,6 +27,9 @@
     assert(identifier);
     self = [super initWithKey:key identifier:identifier generation:generation];
     if (self) {
+        if (previousRevision && !previousRevision.rowid) {
+            ITBetaAssert(NO, @"Previous revision lacks a rowID: %@", previousRevision);
+        }
         _previousRevision = previousRevision;
     }
     return self;

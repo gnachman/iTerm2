@@ -80,6 +80,7 @@ extern NSString *const iTermApplicationWillTerminate;
 }
 
 - (void)saveRestorableState {
+    assert([NSThread isMainThread]);
     if (![iTermRestorableStateController stateRestorationEnabled]) {
         return;
     }
@@ -92,6 +93,7 @@ extern NSString *const iTermApplicationWillTerminate;
 }
 
 - (void)restoreWindows {
+    assert([NSThread isMainThread]);
     if (![iTermRestorableStateController stateRestorationEnabled]) {
         return;
     }
@@ -115,6 +117,7 @@ extern NSString *const iTermApplicationWillTerminate;
 }
  
 - (void)didRestore {
+    assert([NSThread isMainThread]);
     if (![iTermRestorableStateController stateRestorationEnabled]) {
         return;
     }

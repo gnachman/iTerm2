@@ -20,14 +20,17 @@ static NSString *const iTermRestorableStateControllerUserDefaultsKeyCount = @"No
 #pragma mark - Save
 
 - (void)save {
+    assert([NSThread isMainThread]);
     [self saveSynchronously:NO];
 }
 
 - (void)saveSynchronously {
+    assert([NSThread isMainThread]);
     [self saveSynchronously:YES];
 }
 
 - (void)saveSynchronously:(BOOL)sync {
+    assert([NSThread isMainThread]);
     DLog(@"save");
     if (_saving) {
         DLog(@"Currently saving. Set needsSave.");
@@ -43,6 +46,7 @@ static NSString *const iTermRestorableStateControllerUserDefaultsKeyCount = @"No
 
 // Main queue
 - (void)didSave {
+    assert([NSThread isMainThread]);
     DLog(@"didSave");
     _saving = NO;
     if (_needsSave) {

@@ -810,6 +810,7 @@ static BOOL hasBecomeActive = NO;
 - (void)applicationWillTerminate:(NSNotification *)aNotification {
     DLog(@"applicationWillTerminate called");
     if ([iTermController sharedInstance]) {
+#warning TODO: Can I eliminate this? I already do it in iTermRestorableStateController.applicationWillTerminate
         [_restorableStateController saveRestorableState];
     }
     [[iTermModifierRemapper sharedInstance] setRemapModifiers:NO];

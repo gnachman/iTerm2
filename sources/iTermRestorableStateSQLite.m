@@ -185,6 +185,7 @@
 #pragma mark - iTermRestorableStateSaver
 
 - (void)saveSynchronously:(BOOL)sync withCompletion:(void (^)(void))completion {
+    assert([NSThread isMainThread]);
     _generation += 1;
     const NSInteger generation = _generation;
     NSArray<NSWindow *> *windows = [self.delegate restorableStateWindows];

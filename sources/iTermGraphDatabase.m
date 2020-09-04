@@ -14,6 +14,7 @@
 #import "iTermGraphDeltaEncoder.h"
 #import "iTermGraphTableTransformer.h"
 #import "iTermThreadSafety.h"
+#import <stdatomic.h>
 
 @class iTermGraphDatabaseState;
 
@@ -24,15 +25,21 @@
 @implementation iTermGraphDatabaseState
 @end
 
+@interface iTermGraphDatabase()
+@property (atomic, readwrite) iTermEncoderGraphRecord *record;
+@end
+
 @implementation iTermGraphDatabase {
     id<iTermDatabaseFactory> _databaseFactory;
     BOOL _ok;
     NSInteger _recoveryCount;
+    _Atomic int _updating;
 }
 
 - (instancetype)initWithURL:(NSURL *)url databaseFactory:(id<iTermDatabaseFactory>)databaseFactory {
     self = [super init];
     if (self) {
+        _updating = ATOMIC_VAR_INIT(0);
         _thread = [[iTermThread alloc] initWithLabel:@"com.iterm2.graph-db"
                                         stateFactory:^iTermSynchronizedState * _Nonnull(dispatch_queue_t  _Nonnull queue) {
             return [[iTermGraphDatabaseState alloc] initWithQueue:queue];
@@ -41,7 +48,7 @@
         _url = url;
 #warning TODO: Make this async
         [_thread dispatchSync:^(iTermGraphDatabaseState *state) {
-            _record = [self load:state factory:databaseFactory];
+            self.record = [self load:state factory:databaseFactory];
         }];
         if (!_ok) {
             return nil;
@@ -50,37 +57,42 @@
     return self;
 }
 
-- (void)updateSynchronously:(void (^ NS_NOESCAPE)(iTermGraphEncoder * _Nonnull))block
-                 completion:(nullable iTermCallback *)completion {
-    [self updateSynchronously:YES
-                        block:block
-                   completion:completion];
-}
-
-- (void)update:(void (^ NS_NOESCAPE)(iTermGraphEncoder * _Nonnull))block
-    completion:(iTermCallback *)completion {
-    [self updateSynchronously:NO
-                        block:block
-                   completion:completion];
-}
-
 - (void)updateSynchronously:(BOOL)sync
                       block:(void (^ NS_NOESCAPE)(iTermGraphEncoder * _Nonnull))block
                  completion:(nullable iTermCallback *)completion {
-    iTermGraphDeltaEncoder *encoder = [[iTermGraphDeltaEncoder alloc] initWithPreviousRevision:_record];
+    assert([NSThread isMainThread]);
+
+    if (self.updating && !sync) {
+        __weak __typeof(self) weakSelf = self;
+        // Wait for any queued updates to finish and then try again.
+        [_thread dispatchAsync:^(id  _Nullable state) {
+            dispatch_async(dispatch_get_main_queue(), ^{
+                [weakSelf updateSynchronously:sync block:block completion:completion];
+            });
+        }];
+        return;
+    }
+    [self beginUpdate];
+    iTermGraphDeltaEncoder *encoder = [[iTermGraphDeltaEncoder alloc] initWithPreviousRevision:self.record];
     block(encoder);
     __weak __typeof(self) weakSelf = self;
 
     void (^perform)(iTermGraphDatabaseState *) = ^(iTermGraphDatabaseState *state) {
+        // This will mutate encoder.record.
         [weakSelf trySaveEncoder:encoder state:state];
-        [completion invokeWithObject:nil];
+        [completion invokeWithObject:@YES];
+        // Save the now final record. A lot of the dance between threads is because we can only
+        // write to record after -trySaveEncoder has finished.
+        self.record = encoder.record;
+        // Decrement the update count so that when this function returns the next block in the queue
+        // can save.
+        [weakSelf endUpdate];
     };
     if (sync) {
         [_thread dispatchSync:perform];
     } else {
         [_thread dispatchAsync:perform];
     }
-    _record = encoder.record;
 }
 
 - (id<iTermDatabase>)db {
@@ -92,6 +104,21 @@
 }
 
 #pragma mark - Private
+
+// any queue
+- (BOOL)updating {
+    return _updating;
+}
+
+// any queue
+- (void)beginUpdate {
+    _updating++;
+}
+
+// any queue
+- (void)endUpdate {
+    _updating--;
+}
 
 - (void)trySaveEncoder:(iTermGraphDeltaEncoder *)encoder state:(iTermGraphDatabaseState *)state {
     @try {
@@ -148,8 +175,10 @@
                                 iTermEncoderGraphRecord * _Nullable after,
                                 NSNumber *parent,
                                 BOOL *stop) {
-        if (before) {
-            assert(before.rowid);
+        if (before && !before.rowid) {
+            @throw [NSException exceptionWithName:@"MissingRowID"
+                                           reason:[NSString stringWithFormat:@"Before lacking a rowid: %@", before]
+                                         userInfo:nil];
         }
         if (before && !after) {
             if (![state.db executeUpdate:@"delete from Node where rowid=?", before.rowid]) {

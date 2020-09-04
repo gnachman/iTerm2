@@ -17,7 +17,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 // Manages a SQLite database that holds an encoded graph. Loads it and updates it incrementally.
 @interface iTermGraphDatabase: NSObject
-@property (nonatomic, readonly) iTermEncoderGraphRecord *record;
+@property (atomic, readonly) iTermEncoderGraphRecord *record;
 @property (nonatomic, readonly) NSURL *url;
 @property (nonatomic, readonly) iTermThread *thread;
 
@@ -32,9 +32,6 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)updateSynchronously:(BOOL)sync
                       block:(void (^ NS_NOESCAPE)(iTermGraphEncoder * _Nonnull))block
                  completion:(nullable iTermCallback *)completion;
-
-- (void)update:(void (^ NS_NOESCAPE)(iTermGraphEncoder * _Nonnull))block
-    completion:(nullable iTermCallback *)completion;
 
 @end
 
