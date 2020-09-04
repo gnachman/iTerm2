@@ -5623,31 +5623,35 @@ static void SwapInt(int *a, int *b) {
 
 - (BOOL)encodeContents:(id<iTermEncoderAdapter>)encoder
           linesDropped:(int *)linesDroppedOut {
+    NSDictionary *extra;
+
+    // Interval tree
     if ([iTermAdvancedSettingsModel useNewContentFormat]) {
         [self encodeContentWithEncoder:encoder];
         if (linesDroppedOut) {
             *linesDroppedOut = 0;
         }
         const long long intervalOffset = -[self totalScrollbackOverflow] * (self.width + 1);
-        [encoder mergeDictionary:@{
+        extra = @{
             kScreenStateIntervalTreeKey: [intervalTree_ dictionaryValueWithOffset:intervalOffset] ?: @{},
-        }];
+        };
     } else {
         long long intervalOffset = 0;
         const int linesDroppedForBrevity = [self numberOfLinesDroppedWhenEncodingLegacyFormatWithEncoder:encoder
                                                                                           intervalOffset:&intervalOffset];
-        NSDictionary<NSString *, id> *legacyDictionary = @{
+        extra = @{
             kScreenStateIntervalTreeKey: [intervalTree_ dictionaryValueWithOffset:intervalOffset] ?: @{},
             kScreenStateCursorCoord: VT100GridCoordToDictionary(primaryGrid_.cursor),
         };
-        [encoder mergeDictionary:legacyDictionary];
         if (linesDroppedOut) {
             *linesDroppedOut = linesDroppedForBrevity;
         }
     }
+
     [encoder encodeDictionaryWithKey:kScreenStateKey
                           generation:iTermGenerationAlwaysEncode
                                block:^BOOL(id<iTermEncoderAdapter>  _Nonnull encoder) {
+        [encoder mergeDictionary:extra];
         NSDictionary *dict =
         @{ kScreenStateTabStopsKey: [tabStops_ allObjects] ?: @[],
            kScreenStateTerminalKey: [terminal_ stateDictionary] ?: @{},
