@@ -105,6 +105,8 @@ extern NSString *const iTermApplicationWillTerminate;
 
 #pragma mark - Private
 
+// NOTE! This is iTermApplicationWillTerminate, not NSApplicationWillTerminateNotification.
+// That's important because it runs while iTermController still exists.
 - (void)applicationWillTerminate:(NSNotification *)notification {
     if (![iTermRestorableStateController stateRestorationEnabled]) {
         [_driver erase];
