@@ -1985,8 +1985,11 @@ static NSString *const kGridSizeKey = @"Size";
 }
 
 - (screen_char_t)characterAt:(VT100GridCoord)coord {
-    if (coord.y < 0 || coord.y >= self.size.height || coord.x < 0 || coord.x >= self.size.width) {
+    if (coord.y < 0 || coord.y >= self.size.height || coord.x < 0 || coord.x > self.size.width) {
         ITBetaAssert(NO, @"Asked for %@ in %@", VT100GridCoordDescription(coord), self);
+        screen_char_t defaultChar = { 0 };
+        return defaultChar;
+    } else if (coord.x == self.size.width) {
         screen_char_t defaultChar = { 0 };
         return defaultChar;
     }
