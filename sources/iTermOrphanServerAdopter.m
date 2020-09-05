@@ -206,6 +206,8 @@ static void iTermOrphanServerAdopterFindMultiServers(void (^completion)(NSArray<
             }
         };
         dispatch_group_enter(group);
+#warning TODO: Handle hot spares
+        assert(!child.isHotSpare);
         DLog(@"Orphan server adopter wants to open session for pid %@ on socket %@", @(child.pid), @(number));
         [self.delegate orphanServerAdopterOpenSessionForConnection:generalConnection
                                                           inWindow:self->_window

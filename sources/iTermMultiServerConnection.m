@@ -288,6 +288,7 @@
                       argv:(const char **)argv
                 initialPwd:(const char *)initialPwd
                 newEnviron:(const char **)newEnviron
+                  hotSpare:(BOOL)hotSpare
                   callback:(iTermCallback<id, iTermResult<iTermFileDescriptorMultiClientChild *> *> *)callback {
     [_thread dispatchAsync:^(iTermMultiServerPerConnectionState * _Nullable state) {
         if (!state.client) {
@@ -303,6 +304,7 @@
                                         environment:newEnviron
                                                 pwd:initialPwd
                                            ttyState:ttyState
+                                           hotSpare:hotSpare
                                            callback:callback];
     }];
 }

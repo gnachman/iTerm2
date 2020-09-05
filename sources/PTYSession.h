@@ -621,6 +621,7 @@ backgroundColor:(NSColor *)backgroundColor;
          environment:(NSDictionary *)prog_env
          customShell:(NSString *)customShell
               isUTF8:(BOOL)isUTF8
+            hotSpare:(BOOL)hotSpare
        substitutions:(NSDictionary *)substitutions
          arrangement:(NSString *)arrangement
           completion:(void (^)(BOOL))completion;

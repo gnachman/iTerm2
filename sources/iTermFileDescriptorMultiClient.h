@@ -28,7 +28,8 @@ typedef NS_ENUM(NSUInteger, iTermFileDescriptorMultiClientErrorCode) {
     iTermFileDescriptorMultiClientErrorIO,
     iTermFileDescriptorMultiClientErrorProtocolError,  // unparsable message
     iTermFileDescriptorMultiClientErrorCannotConnect,
-    iTermFileDescriptorMultiClientErrorAlreadyWaited
+    iTermFileDescriptorMultiClientErrorAlreadyWaited,
+    iTermFileDescriptorMultiClientErrorCodeActivateSpareFailed
 };
 
 // No guarantees about which thread delegates are called on.
@@ -50,6 +51,7 @@ typedef NS_ENUM(NSUInteger, iTermFileDescriptorMultiClientErrorCode) {
 
 @property (nonatomic, weak) id<iTermFileDescriptorMultiClientDelegate> delegate;
 @property (nonatomic, readonly) pid_t serverPID;
+@property (nonatomic, readonly) BOOL supportsHotSpares;
 
 - (instancetype)initWithPath:(NSString *)path NS_DESIGNATED_INITIALIZER;
 - (instancetype)init NS_UNAVAILABLE;
@@ -63,11 +65,15 @@ typedef NS_ENUM(NSUInteger, iTermFileDescriptorMultiClientErrorCode) {
                           environment:(const char *_Nonnull *_Nonnull)environment
                                   pwd:(const char *)pwd
                              ttyState:(iTermTTYState)ttyStatePtr
+                             hotSpare:(BOOL)hotSpare
                              callback:(iTermMultiClientLaunchCallback *)callback;
 
 - (void)waitForChild:(iTermFileDescriptorMultiClientChild *)child
   removePreemptively:(BOOL)removePreemptively
             callback:(iTermCallback<id, iTermResult<NSNumber *> *> *)callback;  // number is integer status
+
+- (void)activateHotSpare:(iTermFileDescriptorMultiClientChild *)child
+                callback:(iTermCallback<id, iTermResult<NSNumber *> *> *)callback;  // number is integer status, 0=ok
 
 @end
 

@@ -84,6 +84,7 @@
                            argv:(NSArray<NSString *> *)argv
                      initialPwd:(NSString *)initialPwd
                      newEnviron:(NSArray<NSString *> *)newEnviron
+                       hotSpare:(BOOL)hotSpare
                            task:(id<iTermTask>)task
                      completion:(void (^)(iTermJobManagerForkAndExecStatus))completion  {
     // Completion wrapper. NOT called on self.queue because that will deadlock.

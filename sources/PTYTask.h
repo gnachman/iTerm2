@@ -86,6 +86,7 @@ typedef struct {
                            argv:(NSArray<NSString *> *)argv
                      initialPwd:(NSString *)initialPwd
                      newEnviron:(NSArray<NSString *> *)newEnviron
+                       hotSpare:(BOOL)hotSpare
                            task:(id<iTermTask>)task
                      completion:(void (^)(iTermJobManagerForkAndExecStatus))completion;
 
@@ -154,6 +155,7 @@ typedef NS_OPTIONS(NSUInteger, iTermJobManagerAttachResults) {
               gridSize:(VT100GridSize)gridSize
               viewSize:(NSSize)viewSize
                 isUTF8:(BOOL)isUTF8
+              hotSpare:(BOOL)hotSpare
             completion:(void (^)(void))completion;
 
 - (void)fetchProcessInfoForCurrentJobWithCompletion:(void (^)(iTermProcessInfo *))completion;

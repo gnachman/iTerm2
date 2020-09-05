@@ -37,6 +37,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, nullable, copy) void (^completion)(PTYSession * _Nullable session, BOOL ok);  // If nonnil, attachorLaunch may be async
 // Name of the arrangement from which this request originated.
 @property (nullable, nonatomic, copy) NSString *arrangementName;
+@property (nonatomic, readonly) BOOL hotSpare;
 
 + (instancetype)launchRequestWithSession:(PTYSession *)aSession
                                canPrompt:(BOOL)canPrompt
@@ -51,6 +52,7 @@ NS_ASSUME_NONNULL_BEGIN
                           forceUseOldCWD:(BOOL)forceUseOldCWD
                                  command:(nullable NSString *)command
                                   isUTF8:(nullable NSNumber *)isUTF8Number  // Overrides profile's iSUTF8 if nonnil
+                                hotSpare:(BOOL)hotSpare
                            substitutions:(nullable NSDictionary *)substitutions
                         windowController:(PseudoTerminal * _Nonnull)windowController
                                    ready:(void (^ _Nullable)(BOOL ok))ready

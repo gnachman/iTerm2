@@ -10,6 +10,7 @@
 @implementation iTermFileDescriptorMultiClientChild {
     iTermThread *_thread;
     NSMutableArray<iTermCallback<id, iTermResult<NSNumber *> *> *> *_callbacks;
+    NSMutableArray<iTermCallback<id, iTermResult<NSNumber *> *> *> *_activateCallbacks;
 }
 @synthesize hasTerminated = _hasTerminated;
 @synthesize haveWaited = _haveWaited;
@@ -51,10 +52,12 @@
         _hasTerminated = report->terminated;
         _fd = report->fd;
         assert(_fd >= 0);
+        _isHotSpare = report->isHotSpare;
         fcntl(_fd, F_SETFL, O_NONBLOCK);
         _tty = [NSString stringWithUTF8String:report->tty] ?: @"";
         _haveWaited = NO;
         _callbacks = [NSMutableArray array];
+        _activateCallbacks = [NSMutableArray array];
     }
     return self;
 }
@@ -83,6 +86,13 @@
 - (void)didTerminate {
     [_thread dispatchRecursiveSync:^(id _Nonnull state) {
         _hasTerminated = YES;
+    }];
+}
+
+- (void)activate {
+    [_thread dispatchRecursiveSync:^(id _Nonnull state) {
+        assert(_isHotSpare);
+        _isHotSpare = NO;
     }];
 }
 
@@ -141,6 +151,35 @@
     [_thread dispatchRecursiveSync:^(id _Nonnull state) {
         callbacks = [_callbacks copy];
         [_callbacks removeAllObjects];
+    }];
+    for (iTermCallback<id, iTermResult<NSNumber *> *> *callback in callbacks) {
+        [callback invokeWithObject:status];
+    }
+}
+
+- (void)addActivateHotSpareCallback:(iTermCallback<id, iTermResult<NSNumber *> *> *)callback {
+    [_thread dispatchRecursiveSync:^(id _Nonnull state) {
+        [_activateCallbacks addObject:callback];
+    }];
+}
+
+- (void)invokeActivateHotSpareCallback:(iTermResult<NSNumber *> *)status {
+    __block iTermCallback<id, iTermResult<NSNumber *> *> *callback;
+    [_thread dispatchRecursiveSync:^(id _Nonnull state) {
+        callback = _activateCallbacks.firstObject;
+        if (!callback) {
+            return;
+        }
+        [_activateCallbacks removeObjectAtIndex:0];
+    }];
+    [callback invokeWithObject:status];
+}
+
+- (void)invokeAllActivateHotSpareCallbacks:(iTermResult<NSNumber *> *)status {
+    __block NSArray<iTermCallback<id, iTermResult<NSNumber *> *> *> *callbacks;
+    [_thread dispatchRecursiveSync:^(id _Nonnull state) {
+        callbacks = [_activateCallbacks copy];
+        [_activateCallbacks removeAllObjects];
     }];
     for (iTermCallback<id, iTermResult<NSNumber *> *> *callback in callbacks) {
         [callback invokeWithObject:status];

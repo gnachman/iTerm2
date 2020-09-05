@@ -10,7 +10,8 @@
 enum {
     iTermMultiServerProtocolVersionRejected = -1,
     iTermMultiServerProtocolVersion1 = 1,
-    iTermMultiServerProtocolVersion2 = 2
+    iTermMultiServerProtocolVersion2 = 2,
+    iTermMultiServerProtocolVersion3 = 3,
 };
 
 typedef enum {
@@ -32,6 +33,7 @@ typedef enum {
     iTermMultiServerTagLaunchRequestIsUTF8,
     iTermMultiServerTagLaunchRequestPwd,
     iTermMultiServerTagLaunchRequestUniqueId,
+    // iTermMultiServerTagLaunchRequestIsHotSpare
 
     iTermMultiServerTagWaitRequestPid,
     iTermMultiServerTagWaitRequestRemovePreemptively,
@@ -54,10 +56,20 @@ typedef enum {
     iTermMultiServerTagReportChildIsUTF8,
     iTermMultiServerTagReportChildTerminated,
     iTermMultiServerTagReportChildTTY,
+    // iTermMultiServerTagReportChildTTY
 
     iTermMultiServerTagTerminationPid,
     iTermMultiServerTagTerminationStatus,
-} iTermMultiServerTagLaunch;
+
+    iTermMultiServerTagActivateHotSpareRequestPid,
+    iTermMultiServerTagActivateHotSpareResponseStatus,
+    iTermMultiServerTagActivateHotSpareResponsePid,
+
+    // Add new values below this line
+    iTermMultiServerTagLaunchRequestIsHotSpare,
+    iTermMultiServerTagReportChildIsHotSpare,
+
+} iTermMultiServerTag;
 
 typedef struct {
     // iTermMultiServerTagHandshakeRequestClientMaximumProtocolVersion
@@ -107,6 +119,9 @@ typedef struct {
 
     // iTermMultiServerTagLaunchRequestUniqueId
     unsigned long long uniqueId;
+
+    // iTermMultiServerTagLaunchRequestIsHotSpare
+    int isHotSpare;
 } iTermMultiServerRequestLaunch;
 
 // NOTE: The PTY master file descriptor is also passed with this message.
@@ -136,6 +151,11 @@ typedef struct {
     // iTermMultiServerTagWaitRequestRemovePreemptively
     int removePreemptively;
 } iTermMultiServerRequestWait;
+
+typedef struct {
+    // iTermMultiServerTagActivateHotSpareRequestPid
+    pid_t pid;
+} iTermMultiServerRequestActivateHotSpare;
 
 // A note on preemptive wait: we use this when we kill the child with a signal.
 // The server doesn't remove its reference to the child immediately, but the
@@ -194,17 +214,21 @@ typedef struct iTermMultiServerReportChild {
     // iTermMultiServerTagReportChildTTY
     const char *tty;
 
+    // iTermMultiServerTagReportChildIsHotSpare
+    int isHotSpare;
+
     // Sent out-of-band
     int fd;
 } iTermMultiServerReportChild;
 
 typedef enum {
-    iTermMultiServerRPCTypeHandshake,  // Client-originated, has response
-    iTermMultiServerRPCTypeLaunch,  // Client-originated, has response
-    iTermMultiServerRPCTypeWait,  // Client-originated, has response
+    iTermMultiServerRPCTypeHandshake,  // Client-originated, has response.
+    iTermMultiServerRPCTypeLaunch,  // Client-originated, has response.
+    iTermMultiServerRPCTypeWait,  // Client-originated, has response.
     iTermMultiServerRPCTypeReportChild,  // Server-originated, no response.
     iTermMultiServerRPCTypeTermination,  // Server-originated, no response.
     iTermMultiServerRPCTypeHello,  // Server-originated, no response.
+    iTermMultiServerRPCTypeActivateHotSpare,  // Client-originated, has response.
 } iTermMultiServerRPCType;
 
 // You should send iTermMultiServerResponseWait after getting this.
@@ -219,11 +243,20 @@ typedef struct {
         iTermMultiServerRequestHandshake handshake;
         iTermMultiServerRequestLaunch launch;
         iTermMultiServerRequestWait wait;
+        iTermMultiServerRequestActivateHotSpare activateHotSpare;
     } payload;
 } iTermMultiServerClientOriginatedMessage;
 
 typedef struct {
 } iTermMultiServerHello;
+
+typedef struct {
+    // iTermMultiServerTagActivateHotSpareResponsePid
+    pid_t pid;
+
+    // iTermMultiServerTagActivateHotSpareResponseStatus
+    int status;  // 0 = ok, nonzero = not ok
+} iTermMultiServerResponseActivateHotSpare;
 
 typedef struct {
     iTermMultiServerRPCType type;
@@ -234,6 +267,7 @@ typedef struct {
         iTermMultiServerReportTermination termination;
         iTermMultiServerReportChild reportChild;
         iTermMultiServerHello hello;
+        iTermMultiServerResponseActivateHotSpare activateHotSpare;
     } payload;
 } iTermMultiServerServerOriginatedMessage;
 
@@ -243,7 +277,8 @@ iTermMultiServerProtocolParseMessageFromClient(iTermClientServerProtocolMessage 
 
 int __attribute__((warn_unused_result))
 iTermMultiServerProtocolEncodeMessageFromClient(iTermMultiServerClientOriginatedMessage *obj,
-                                                iTermClientServerProtocolMessage *message);
+                                                iTermClientServerProtocolMessage *message,
+                                                int protocolVersion);
 
 int __attribute__((warn_unused_result))
 iTermMultiServerProtocolParseMessageFromServer(iTermClientServerProtocolMessage *message,
@@ -251,7 +286,8 @@ iTermMultiServerProtocolParseMessageFromServer(iTermClientServerProtocolMessage 
 
 int __attribute__((warn_unused_result))
 iTermMultiServerProtocolEncodeMessageFromServer(iTermMultiServerServerOriginatedMessage *obj,
-                                                iTermClientServerProtocolMessage *message);
+                                                iTermClientServerProtocolMessage *message,
+                                                int protocolVersion);
 
 void iTermMultiServerClientOriginatedMessageFree(iTermMultiServerClientOriginatedMessage *obj);
 void iTermMultiServerServerOriginatedMessageFree(iTermMultiServerServerOriginatedMessage *obj);

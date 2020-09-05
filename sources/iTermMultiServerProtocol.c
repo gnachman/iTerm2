@@ -67,6 +67,11 @@ typedef enum iTermMultiServerProtocolError {
     iTermMultiServerProtocolErrorReportChildMissingTTY = 708,
 
     iTermMultiServerProtocolErrorTerminationMissingPID = 800,
+
+    iTermMultiServerProtocolErrorActivateHotSpareRequestMissingPID = 900,
+
+    iTermMultiServerProtocolErrorActivateHotSpareResponseMissingPID = 1000,
+    iTermMultiServerProtocolErrorActivateHotSpareResponseMissingStatus = 1000,
 } iTermMultiServerProtocolError;
 
 static int ParseHandshakeRequest(iTermClientServerProtocolMessageParser *parser,
@@ -148,11 +153,17 @@ static int ParseLaunchReqest(iTermClientServerProtocolMessageParser *parser,
     if (iTermClientServerProtocolParseTaggedInt(parser, &out->uniqueId, sizeof(out->uniqueId), iTermMultiServerTagLaunchRequestUniqueId)) {
         return iTermMultiServerProtocolErrorLaunchRequestMissingUniqueID;
     }
+    if (iTermClientServerProtocolParseTaggedInt(parser, &out->isHotSpare, sizeof(out->isHotSpare),
+                                                iTermMultiServerTagLaunchRequestIsHotSpare)) {
+        // Not present in version 1.
+        out->isHotSpare = 0;
+    }
     return 0;
 }
 
 static int EncodeLaunchRequest(iTermClientServerProtocolMessageEncoder *encoder,
-                               iTermMultiServerRequestLaunch *launch) {
+                               iTermMultiServerRequestLaunch *launch,
+                               int protocolVersion) {
     if (iTermClientServerProtocolEncodeTaggedString(encoder, launch->path, iTermMultiServerTagLaunchRequestPath)) {
         return iTermMultiServerProtocolErrorEncodingFailed;
     }
@@ -180,8 +191,14 @@ static int EncodeLaunchRequest(iTermClientServerProtocolMessageEncoder *encoder,
     if (iTermClientServerProtocolEncodeTaggedString(encoder, launch->pwd, iTermMultiServerTagLaunchRequestPwd)) {
         return iTermMultiServerProtocolErrorEncodingFailed;
     }
-    if (iTermClientServerProtocolEncodeTaggedInt(encoder, &launch->uniqueId, sizeof(launch->uniqueId), iTermMultiServerTagLaunchRequestUniqueId)) {
+    if (iTermClientServerProtocolEncodeTaggedInt(encoder, &launch->uniqueId, sizeof(launch->uniqueId),
+                                                 iTermMultiServerTagLaunchRequestUniqueId)) {
         return iTermMultiServerProtocolErrorEncodingFailed;
+    }
+    if (protocolVersion >= iTermMultiServerProtocolVersion3) {
+        if (iTermClientServerProtocolEncodeTaggedInt(encoder, &launch->isHotSpare, sizeof(launch->isHotSpare),                                                  iTermMultiServerTagLaunchRequestIsHotSpare)) {
+            return iTermMultiServerProtocolErrorEncodingFailed;
+        }
     }
     return 0;
 }
@@ -231,6 +248,14 @@ static int ParseWaitRequest(iTermClientServerProtocolMessageParser *parser,
     return 0;
 }
 
+static int ParseActivateHotSpareRequest(iTermClientServerProtocolMessageParser *parser,
+                                        iTermMultiServerRequestActivateHotSpare *out) {
+    if (iTermClientServerProtocolParseTaggedInt(parser, &out->pid, sizeof(out->pid), iTermMultiServerTagWaitRequestPid)) {
+        return iTermMultiServerProtocolErrorActivateHotSpareRequestMissingPID;
+    }
+    return 0;
+}
+
 static int EncodeWaitRequest(iTermClientServerProtocolMessageEncoder *encoder,
                              iTermMultiServerRequestWait *wait) {
     if (iTermClientServerProtocolEncodeTaggedInt(encoder, &wait->pid, sizeof(wait->pid), iTermMultiServerTagWaitRequestPid)) {
@@ -238,6 +263,25 @@ static int EncodeWaitRequest(iTermClientServerProtocolMessageEncoder *encoder,
     }
     if (iTermClientServerProtocolEncodeTaggedInt(encoder, &wait->removePreemptively, sizeof(wait->removePreemptively), iTermMultiServerTagWaitRequestRemovePreemptively)) {
         return iTermMultiServerProtocolErrorEncodingFailed;
+    }
+    return 0;
+}
+
+static int EncodeActivateHotSpareRequest(iTermClientServerProtocolMessageEncoder *encoder,
+                                         iTermMultiServerRequestActivateHotSpare *request) {
+    if (iTermClientServerProtocolEncodeTaggedInt(encoder, &request->pid, sizeof(request->pid), iTermMultiServerTagActivateHotSpareRequestPid)) {
+        return iTermMultiServerProtocolErrorEncodingFailed;
+    }
+    return 0;
+}
+
+static int ParseActivateHotSpareResponse(iTermClientServerProtocolMessageParser *parser,
+                                         iTermMultiServerResponseActivateHotSpare *out) {
+    if (iTermClientServerProtocolParseTaggedInt(parser, &out->pid, sizeof(out->pid), iTermMultiServerTagActivateHotSpareResponsePid)) {
+        return iTermMultiServerProtocolErrorActivateHotSpareResponseMissingPID;
+    }
+    if (iTermClientServerProtocolParseTaggedInt(parser, &out->status, sizeof(out->status), iTermMultiServerTagActivateHotSpareResponseStatus)) {
+        return iTermMultiServerProtocolErrorActivateHotSpareResponseMissingStatus;
     }
     return 0;
 }
@@ -299,11 +343,17 @@ static int ParseReportChild(iTermClientServerProtocolMessageParser *parser,
     if (iTermClientServerProtocolParseTaggedString(parser, (char **)&out->tty, iTermMultiServerTagReportChildTTY)) {
         return iTermMultiServerProtocolErrorReportChildMissingTTY;
     }
+    if (iTermClientServerProtocolParseTaggedInt(parser, &out->isHotSpare, sizeof(out->isHotSpare), iTermMultiServerTagReportChildIsHotSpare)) {
+        // Version 2 didn't have this. If we're speaking to an old server it's safe to default it
+        // to 0.
+        out->isHotSpare = 0;
+    }
     return 0;
 }
 
 static int EncodeReportChild(iTermClientServerProtocolMessageEncoder *encoder,
-                             iTermMultiServerReportChild *obj) {
+                             iTermMultiServerReportChild *obj,
+                             int protocolVersion) {
     if (iTermClientServerProtocolEncodeTaggedInt(encoder, &obj->isLast, sizeof(obj->isLast), iTermMultiServerTagReportChildIsLast)) {
         return iTermMultiServerProtocolErrorEncodingFailed;
     }
@@ -331,6 +381,11 @@ static int EncodeReportChild(iTermClientServerProtocolMessageEncoder *encoder,
     if (iTermClientServerProtocolEncodeTaggedString(encoder, obj->tty, iTermMultiServerTagReportChildTTY)) {
         return iTermMultiServerProtocolErrorEncodingFailed;
     }
+    if (protocolVersion >= iTermMultiServerProtocolVersion3) {
+        if (iTermClientServerProtocolEncodeTaggedInt(encoder, &obj->isHotSpare, sizeof(obj->isHotSpare), iTermMultiServerTagReportChildIsHotSpare)) {
+            return iTermMultiServerProtocolErrorEncodingFailed;
+        }
+    }
     return 0;
 }
 
@@ -345,6 +400,17 @@ static int ParseTermination(iTermClientServerProtocolMessageParser *parser,
 static int EncodeTermination(iTermClientServerProtocolMessageEncoder *encoder,
                              iTermMultiServerReportTermination *obj) {
     if (iTermClientServerProtocolEncodeTaggedInt(encoder, &obj->pid, sizeof(obj->pid), iTermMultiServerTagTerminationPid)) {
+        return iTermMultiServerProtocolErrorEncodingFailed;
+    }
+    return 0;
+}
+
+static int EncodeActivateHotSpareResponse(iTermClientServerProtocolMessageEncoder *encoder,
+                                          iTermMultiServerResponseActivateHotSpare *obj) {
+    if (iTermClientServerProtocolEncodeTaggedInt(encoder, &obj->pid, sizeof(obj->pid), iTermMultiServerTagActivateHotSpareResponsePid)) {
+        return iTermMultiServerProtocolErrorEncodingFailed;
+    }
+    if (iTermClientServerProtocolEncodeTaggedInt(encoder, &obj->status, sizeof(obj->status), iTermMultiServerTagActivateHotSpareResponseStatus)) {
         return iTermMultiServerProtocolErrorEncodingFailed;
     }
     return 0;
@@ -385,6 +451,8 @@ int iTermMultiServerProtocolParseMessageFromClient(iTermClientServerProtocolMess
         case iTermMultiServerRPCTypeTermination: // Server-originated, no response.
         case iTermMultiServerRPCTypeHello: // Server-originated, no response.
             return iTermMultiServerProtocolErrorUnexpectedType;
+        case iTermMultiServerRPCTypeActivateHotSpare:  // Client-originated, has response.
+            return ParseActivateHotSpareRequest(&parser, &out->payload.activateHotSpare);
     }
     FDLog(LOG_DEBUG, "Parsed message with unknown type %d", (int)out->type);
     return iTermMultiServerProtocolErrorUnknownType;
@@ -449,12 +517,16 @@ int iTermMultiServerProtocolParseMessageFromServer(iTermClientServerProtocolMess
 
         case iTermMultiServerRPCTypeHello:  // Server-originated, no response.
             return ParseHello(&parser, &out->payload.hello);
+
+        case iTermMultiServerRPCTypeActivateHotSpare:  // Client-originated, has response.
+            return ParseActivateHotSpareResponse(&parser, &out->payload.activateHotSpare);
     }
     return iTermMultiServerProtocolErrorUnknownType;
 }
 
 int iTermMultiServerProtocolEncodeMessageFromClient(iTermMultiServerClientOriginatedMessage *obj,
-                                                    iTermClientServerProtocolMessage *message) {
+                                                    iTermClientServerProtocolMessage *message,
+                                                    int protocolVersion) {
     iTermClientServerProtocolMessageEncoder encoder = {
         .offset = 0,
         .message = message
@@ -470,7 +542,7 @@ int iTermMultiServerProtocolEncodeMessageFromClient(iTermMultiServerClientOrigin
             break;
 
         case iTermMultiServerRPCTypeLaunch:
-            status = EncodeLaunchRequest(&encoder, &obj->payload.launch);
+            status = EncodeLaunchRequest(&encoder, &obj->payload.launch, protocolVersion);
             break;
 
         case iTermMultiServerRPCTypeWait:
@@ -481,6 +553,10 @@ int iTermMultiServerProtocolEncodeMessageFromClient(iTermMultiServerClientOrigin
         case iTermMultiServerRPCTypeTermination:
         case iTermMultiServerRPCTypeHello:
             break;
+
+        case iTermMultiServerRPCTypeActivateHotSpare:
+            status = EncodeActivateHotSpareRequest(&encoder, &obj->payload.activateHotSpare);
+            break;
     }
     if (!status) {
         iTermEncoderCommit(&encoder);
@@ -489,7 +565,8 @@ int iTermMultiServerProtocolEncodeMessageFromClient(iTermMultiServerClientOrigin
 }
 
 int iTermMultiServerProtocolEncodeMessageFromServer(iTermMultiServerServerOriginatedMessage *obj,
-                                                    iTermClientServerProtocolMessage *message) {
+                                                    iTermClientServerProtocolMessage *message,
+                                                    int protocolVersion) {
     iTermClientServerProtocolMessageEncoder encoder = {
         .offset = 0,
         .message = message
@@ -509,13 +586,16 @@ int iTermMultiServerProtocolEncodeMessageFromServer(iTermMultiServerServerOrigin
             status = EncodeWaitResponse(&encoder, &obj->payload.wait);
             break;
         case iTermMultiServerRPCTypeReportChild:
-            status = EncodeReportChild(&encoder, &obj->payload.reportChild);
+            status = EncodeReportChild(&encoder, &obj->payload.reportChild, protocolVersion);
             break;
         case iTermMultiServerRPCTypeTermination:
             status = EncodeTermination(&encoder, &obj->payload.termination);
             break;
         case iTermMultiServerRPCTypeHello:
             status = EncodeHello(&encoder, &obj->payload.hello);
+            break;
+        case iTermMultiServerRPCTypeActivateHotSpare:
+            status = EncodeActivateHotSpareResponse(&encoder, &obj->payload.activateHotSpare);
             break;
     }
     if (status) {
@@ -559,6 +639,12 @@ static void FreeReportChild(iTermMultiServerReportChild *obj) {
 static void FreeHello(iTermMultiServerHello *obj) {
 }
 
+static void FreeActivateHotSpareRequest(iTermMultiServerRequestActivateHotSpare *request) {
+}
+
+static void FreeActivateHotSpareResponse(iTermMultiServerResponseActivateHotSpare *response) {
+}
+
 static void FreeWaitRequest(iTermMultiServerRequestWait *wait) {
 }
 
@@ -590,6 +676,9 @@ void iTermMultiServerClientOriginatedMessageFree(iTermMultiServerClientOriginate
         case iTermMultiServerRPCTypeTermination:
         case iTermMultiServerRPCTypeHello:
             break;
+        case iTermMultiServerRPCTypeActivateHotSpare:
+            FreeActivateHotSpareRequest(&obj->payload.activateHotSpare);
+            break;
     }
     memset(obj, 0xAB, sizeof(*obj));
 }
@@ -612,6 +701,9 @@ void iTermMultiServerServerOriginatedMessageFree(iTermMultiServerServerOriginate
             FreeHello(&obj->payload.hello);
             break;
         case iTermMultiServerRPCTypeTermination:
+            break;
+        case iTermMultiServerRPCTypeActivateHotSpare:
+            FreeActivateHotSpareResponse(&obj->payload.activateHotSpare);
             break;
     }
     memset(obj, 0xCD, sizeof(*obj));
@@ -732,6 +824,10 @@ static void LogWaitRequest(iTermMultiServerRequestWait *message) {
           message->pid, message->removePreemptively);
 }
 
+static void LogActivateHotSpareRequest(iTermMultiServerRequestActivateHotSpare *message) {
+    FDLog(LOG_DEBUG, "Activate hot spare request [pid=%d]", message->pid);
+}
+
 void
 iTermMultiServerProtocolLogMessageFromClient(iTermMultiServerClientOriginatedMessage *message) {
     switch (message->type) {
@@ -755,6 +851,10 @@ iTermMultiServerProtocolLogMessageFromClient(iTermMultiServerClientOriginatedMes
         case iTermMultiServerRPCTypeHello:
             // Server-originated, no response.
             break;
+
+        case iTermMultiServerRPCTypeActivateHotSpare:
+            LogActivateHotSpareRequest(&message->payload.activateHotSpare);
+            break;
     }
 }
 
@@ -775,7 +875,7 @@ static void LogLaunchResponse(iTermMultiServerResponseLaunch *message) {
 }
 
 static void LogReportChild(iTermMultiServerReportChild *message) {
-    FDLog(LOG_DEBUG, "Report child [isLast=%d pid=%d path=%s isUTF8=%d pwd=%s terminated=%d tty=%s fd=%d argc=%d envc=%d]",
+    FDLog(LOG_DEBUG, "Report child [isLast=%d pid=%d path=%s isUTF8=%d pwd=%s terminated=%d tty=%s fd=%d argc=%d envc=%d isHotSpare=%d]",
           message->isLast,
           message->pid,
           message->path,
@@ -785,7 +885,8 @@ static void LogReportChild(iTermMultiServerReportChild *message) {
           message->tty,
           message->fd,
           message->argc,
-          message->envc);
+          message->envc,
+          message->isHotSpare);
     for (int i = 0; i < message->argc; i++) {
         FDLog(LOG_DEBUG, "  Arg %d of child with pid %d: %s",
               i, message->pid, message->argv[i]);
@@ -808,6 +909,10 @@ static void LogTermination(iTermMultiServerReportTermination *message) {
 
 static void LogHello(iTermMultiServerHello *message) {
     FDLog(LOG_DEBUG, "Hello");
+}
+
+static void LogActivateHotSpareResponse(iTermMultiServerResponseActivateHotSpare *message) {
+    FDLog(LOG_DEBUG, "Activate hot spare [pid=%d, status=%d]", message->pid, message->status);
 }
 
 void
@@ -835,6 +940,10 @@ iTermMultiServerProtocolLogMessageFromServer(iTermMultiServerServerOriginatedMes
 
         case iTermMultiServerRPCTypeHello:
             LogHello(&message->payload.hello);
+            break;
+
+        case iTermMultiServerRPCTypeActivateHotSpare:
+            LogActivateHotSpareResponse(&message->payload.activateHotSpare);
             break;
     }
 }

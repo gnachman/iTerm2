@@ -1614,6 +1614,7 @@ ITERM_WEAKLY_REFERENCEABLE
                                                              forceUseOldCWD:contents != nil && oldCWD.length
                                                                     command:commandArg
                                                                      isUTF8:isUTF8Arg
+                                                                   hotSpare:NO
                                                               substitutions:substitutionsArg
                                                            windowController:(PseudoTerminal *)aSession.delegate.realParentWindow
                                                                       ready:nil
@@ -2236,6 +2237,7 @@ ITERM_WEAKLY_REFERENCEABLE
          environment:(NSDictionary *)environment
          customShell:(NSString *)customShell
               isUTF8:(BOOL)isUTF8
+            hotSpare:(BOOL)hotSpare
        substitutions:(NSDictionary *)substitutions
          arrangement:(NSString *)arrangementName
           completion:(void (^)(BOOL))completion {
@@ -2273,6 +2275,7 @@ ITERM_WEAKLY_REFERENCEABLE
                               gridSize:_screen.size
                               viewSize:_screen.viewSize
                                 isUTF8:isUTF8
+                              hotSpare:hotSpare
                             completion:^{
                     [self sendInitialText];
                     if (completion) {
@@ -3245,6 +3248,7 @@ ITERM_WEAKLY_REFERENCEABLE
            environment:_environment
            customShell:_customShell
                 isUTF8:_isUTF8
+              hotSpare:NO
          substitutions:_substitutions
            arrangement:nil
             completion:nil];

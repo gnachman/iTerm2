@@ -37,6 +37,7 @@ NS_ASSUME_NONNULL_BEGIN
                       argv:(const char **)argv
                 initialPwd:(const char *)initialPwd
                 newEnviron:(const char **)newEnviron
+                  hotSpare:(BOOL)hotSpare
                   callback:(iTermCallback<id, iTermResult<iTermFileDescriptorMultiClientChild *> *> *)callback;
 
 - (void)waitForChild:(iTermFileDescriptorMultiClientChild *)child

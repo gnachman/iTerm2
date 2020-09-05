@@ -57,6 +57,14 @@ NSString *const iTermFileDescriptorMultiClientErrorDomain = @"iTermFileDescripto
     return pid;
 }
 
+- (BOOL)supportsHotSpares {
+    __block BOOL result;
+    [_thread dispatchSync:^(iTermFileDescriptorMultiClientState * _Nullable state) {
+        result = state.protocolVersion >= iTermMultiServerProtocolVersion3;
+    }];
+    return result;
+}
+
 - (void)attachToOrLaunchNewDaemonWithCallback:(iTermCallback<id, NSNumber *> *)callback {
     [_thread dispatchAsync:^(iTermFileDescriptorMultiClientState * _Nonnull state) {
         [self attachToOrLaunchNewDaemonServerWithState:state
@@ -88,6 +96,7 @@ NSString *const iTermFileDescriptorMultiClientErrorDomain = @"iTermFileDescripto
                           environment:(const char **)environment
                                   pwd:(const char *)pwd
                              ttyState:(iTermTTYState)ttyState
+                             hotSpare:(BOOL)hotSpare
                              callback:(iTermMultiClientLaunchCallback *)callback {
     [_thread dispatchSync:^(iTermFileDescriptorMultiClientState * _Nullable state) {
         [self launchChildWithExecutablePath:path
@@ -95,6 +104,7 @@ NSString *const iTermFileDescriptorMultiClientErrorDomain = @"iTermFileDescripto
                                 environment:environment
                                         pwd:pwd
                                    ttyState:ttyState
+                                   hotSpare:hotSpare
                                       state:state
                                    callback:callback];
     }];
@@ -109,6 +119,13 @@ NSString *const iTermFileDescriptorMultiClientErrorDomain = @"iTermFileDescripto
         removePreemptively:removePreemptively
                      state:state
                   callback:callback];
+    }];
+}
+
+- (void)activateHotSpare:(iTermFileDescriptorMultiClientChild *)child
+                callback:(iTermCallback<id,iTermResult<NSNumber *> *> *)callback {
+    [_thread dispatchAsync:^(iTermFileDescriptorMultiClientState * _Nullable state) {
+        [self activateHotSpare:child state:state callback:callback];
     }];
 }
 
@@ -252,7 +269,7 @@ NSString *const iTermFileDescriptorMultiClientErrorDomain = @"iTermFileDescripto
         .type = iTermMultiServerRPCTypeHandshake,
         .payload = {
             .handshake = {
-                .maximumProtocolVersion = iTermMultiServerProtocolVersion2
+                .maximumProtocolVersion = iTermMultiServerProtocolVersion3
             }
         }
     };
@@ -309,7 +326,7 @@ NSString *const iTermFileDescriptorMultiClientErrorDomain = @"iTermFileDescripto
     NSString *socketPath = _socketPath;
     DLog(@"Read handshake response for %@", socketPath);
     [self readMessageWithState:state
-                      callback:[_thread newCallbackWithBlock:^(id  _Nonnull state,
+                      callback:[_thread newCallbackWithBlock:^(iTermFileDescriptorMultiClientState *_Nonnull state,
                                                                iTermResult<iTermClientServerProtocolMessageBox *> *result) {
         [result handleObject:^(iTermClientServerProtocolMessageBox * _Nonnull boxedMessage) {
             DLog(@"Got a response for %@", socketPath);
@@ -324,10 +341,11 @@ NSString *const iTermFileDescriptorMultiClientErrorDomain = @"iTermFileDescripto
                 return;
             }
             DLog(@"Got a valid handshake response for %@", socketPath);
-            if (boxedMessage.decoded->payload.handshake.protocolVersion != iTermMultiServerProtocolVersion2) {
+            if (boxedMessage.decoded->payload.handshake.protocolVersion < iTermMultiServerProtocolVersion2) {
                 completion(state, NO, 0, -1);
                 return;
             }
+            state.protocolVersion = boxedMessage.decoded->payload.handshake.protocolVersion;
             completion(state,
                        YES,
                        boxedMessage.decoded->payload.handshake.numChildren,
@@ -448,6 +466,7 @@ static unsigned long long MakeUniqueID(void) {
                           environment:(const char **)environment
                                   pwd:(const char *)pwd
                              ttyState:(iTermTTYState)ttyState
+                             hotSpare:(BOOL)hotSpare
                                 state:(iTermFileDescriptorMultiClientState *)state
                              callback:(iTermMultiClientLaunchCallback *)callback {
     const unsigned long long uniqueID = MakeUniqueID();
@@ -466,11 +485,13 @@ static unsigned long long MakeUniqueID(void) {
                 .pixel_height = ttyState.win.ws_ypixel,
                 .isUTF8 = !!(ttyState.term.c_iflag & IUTF8),
                 .pwd = pwd,
-                .uniqueId = uniqueID
+                .uniqueId = uniqueID,
+                .isHotSpare = NO
             }
         }
     };
-    iTermMultiServerClientOriginatedMessage messageCopy = [self copyLaunchRequest:message];
+    iTermMultiServerClientOriginatedMessage messageCopy = [self copyLaunchRequest:message
+                                                                  protocolVersion:state.protocolVersion];
 
     DLog(@"Add pending launch %@ for %@", @(message.payload.launch.uniqueId), _socketPath);
     state.pendingLaunches[@(message.payload.launch.uniqueId)] =
@@ -493,7 +514,8 @@ static unsigned long long MakeUniqueID(void) {
 }
 
 // Called on job manager's queue via [self launchChildWithExecutablePath:…]
-- (iTermMultiServerClientOriginatedMessage)copyLaunchRequest:(iTermMultiServerClientOriginatedMessage)original {
+- (iTermMultiServerClientOriginatedMessage)copyLaunchRequest:(iTermMultiServerClientOriginatedMessage)original
+                                             protocolVersion:(int)protocolVersion {
     assert(original.type == iTermMultiServerRPCTypeLaunch);
 
     // Encode and decode the message so we can have our own copy of it.
@@ -501,7 +523,7 @@ static unsigned long long MakeUniqueID(void) {
     iTermClientServerProtocolMessageInitialize(&temp);
 
     {
-        const int status = iTermMultiServerProtocolEncodeMessageFromClient(&original, &temp);
+        const int status = iTermMultiServerProtocolEncodeMessageFromClient(&original, &temp, protocolVersion);
         assert(status == 0);
     }
 
@@ -561,6 +583,80 @@ static unsigned long long MakeUniqueID(void) {
     temp.payload.launch = pendingLaunch.launchRequest;
     iTermMultiServerClientOriginatedMessageFree(&temp);
     [pendingLaunch invalidate];
+}
+
+#pragma mark - Activate Hot Spare
+
+//[self activateHotSpare:child state:state callback:callback];
+- (void)activateHotSpare:(iTermFileDescriptorMultiClientChild *)child
+                      state:(iTermFileDescriptorMultiClientState *)state
+                   callback:(iTermCallback<id, iTermResult<NSNumber *> *> *)callback {
+    assert(self.supportsHotSpares);
+    if (!child.isHotSpare) {
+        [callback invokeWithObject:[iTermResult withError:[self activateHotSpareError]]];
+        return;
+    }
+    iTermMultiServerClientOriginatedMessage message = {
+        .type = iTermMultiServerRPCTypeActivateHotSpare,
+        .payload = {
+            .activateHotSpare = {
+                .pid = child.pid
+            }
+        }
+    };
+
+    __weak __typeof(child) weakChild = child;
+    iTermCallback<id, iTermResult<NSNumber *> *> *activateHotSpareCallback =
+    [_thread newCallbackWithBlock:^(iTermFileDescriptorMultiClientState *_Nonnull state,
+                                                         iTermResult<NSNumber *> *result) {
+        [result handleObject:
+         ^(NSNumber * _Nonnull statusNumber) {
+            DLog(@"Activate hot spare for %@ returned status %@", @(weakChild.pid), statusNumber);
+            if (statusNumber.intValue == 0) {
+                [weakChild activate];
+            }
+            [callback invokeWithObject:result];
+        }
+                           error:
+         ^(NSError * _Nonnull error) {
+            DLog(@"Activate hot spare for %@ returned error %@", @(weakChild.pid), error);
+            [callback invokeWithObject:result];
+        }];
+    }];
+    [child addActivateHotSpareCallback:activateHotSpareCallback];
+
+    __weak __typeof(self) weakSelf = self;
+    [self send:&message
+         state:state
+      callback:[_thread newCallbackWithBlock:^(iTermFileDescriptorMultiClientState *state,
+                                               NSNumber *value) {
+        [weakSelf didWriteActivateHotSpareRequestWithStatus:value.boolValue
+                                                      child:child
+                                                      state:state];
+    }]];
+}
+
+- (void)didWriteActivateHotSpareRequestWithStatus:(BOOL)sendOK
+                                            child:(iTermFileDescriptorMultiClientChild *)child
+                                            state:(iTermFileDescriptorMultiClientState *)state {
+    if (sendOK) {
+        return;
+    }
+    [child invokeAllActivateHotSpareCallbacks:[iTermResult withError:self.ioError]];
+    DLog(@"Close client for %@ because of failed write", _socketPath);
+    [self closeWithState:state];
+}
+
+- (void)handleActivateHotSpareResponse:(iTermMultiServerResponseActivateHotSpare)response
+                                 state:(iTermFileDescriptorMultiClientState *)state {
+    DLog(@"handleActivateHotSpareResponse for %@, pid=%d", _socketPath, response.pid);
+    iTermFileDescriptorMultiClientChild *child = [self childWithPID:response.pid
+                                                              state:state];
+    if (!state) {
+        DLog(@"Can't find child with pid %d", response.pid);
+    }
+    iTermResult<NSNumber *> *result = [iTermResult withObject:@(response.status)];
+    [child invokeActivateHotSpareCallback:result];
 }
 
 #pragma mark - Wait for Child
@@ -895,6 +991,10 @@ static unsigned long long MakeUniqueID(void) {
             [self handleTermination:decoded->payload.termination state:state];
             break;
 
+        case iTermMultiServerRPCTypeActivateHotSpare:
+            [self handleActivateHotSpareResponse:decoded->payload.activateHotSpare state:state];
+            break;
+
         case iTermMultiServerRPCTypeHello:  // Shouldn't happen at this point
         case iTermMultiServerRPCTypeHandshake:
         case iTermMultiServerRPCTypeReportChild:
@@ -1123,7 +1223,7 @@ static void HexDump(NSData *data) {
 
     iTermClientServerProtocolMessage clientServerProtocolMessage;
     iTermClientServerProtocolMessageInitialize(&clientServerProtocolMessage);
-    if (iTermMultiServerProtocolEncodeMessageFromClient(message, &clientServerProtocolMessage)) {
+    if (iTermMultiServerProtocolEncodeMessageFromClient(message, &clientServerProtocolMessage, state.protocolVersion)) {
         DLog(@"Failed to encode message from client");
         iTermMultiServerProtocolLogMessageFromClient(message);
         [callback invokeWithObject:@NO];
@@ -1253,4 +1353,9 @@ static void HexDump(NSData *data) {
                            userInfo:nil];
 }
 
+- (NSError *)activateHotSpareError {
+    return [NSError errorWithDomain:iTermFileDescriptorMultiClientErrorDomain
+                               code:iTermFileDescriptorMultiClientErrorCodeActivateSpareFailed
+                           userInfo:nil];
+}
 @end

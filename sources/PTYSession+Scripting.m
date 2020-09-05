@@ -42,6 +42,7 @@
            environment:@{}
            customShell:nil
                 isUTF8:[args[@"isUTF8"] boolValue]
+              hotSpare:NO
          substitutions:nil
            arrangement:nil
             completion:^(BOOL ok) {

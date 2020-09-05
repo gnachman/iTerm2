@@ -36,6 +36,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly, copy) NSString *computedCommand;
 @property (nullable, nonatomic, readonly) NSString *name;
 @property (nullable, nonatomic, readonly) NSString *workingDirectory;
+@property (nonatomic, readwrite) BOOL hotSpare;
 @end
 
 @implementation iTermSessionAttachOrLaunchRequest
@@ -53,6 +54,7 @@ NS_ASSUME_NONNULL_BEGIN
                           forceUseOldCWD:(BOOL)forceUseOldCWD
                                  command:(nullable NSString *)command
                                   isUTF8:(nullable NSNumber *)isUTF8Number
+                                hotSpare:(BOOL)hotSpare
                            substitutions:(nullable NSDictionary *)substitutions
                         windowController:(PseudoTerminal * _Nonnull)windowController
                                    ready:(void (^ _Nullable)(BOOL ok))ready
@@ -70,6 +72,7 @@ NS_ASSUME_NONNULL_BEGIN
     request.forceUseOldCWD = forceUseOldCWD;
     request.command = command;
     request.completion = completion;
+    request.hotSpare = hotSpare;
     if (isUTF8Number) {
         request.isUTF8 = isUTF8Number.boolValue;
     } else {
@@ -361,6 +364,7 @@ NS_ASSUME_NONNULL_BEGIN
                       environment:request.environment
                       customShell:request.customShell
                            isUTF8:request.isUTF8
+                         hotSpare:request.hotSpare
                     substitutions:request.substitutions
                       arrangement:request.arrangementName
                        completion:^(BOOL ok) {

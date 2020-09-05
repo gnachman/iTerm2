@@ -7679,6 +7679,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
                                                  forceUseOldCWD:NO
                                                         command:nil
                                                          isUTF8:nil
+                                                       hotSpare:NO
                                                   substitutions:nil
                                                windowController:self
                                                           ready:^(BOOL ok) {
@@ -10050,6 +10051,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
                                                  forceUseOldCWD:NO
                                                         command:nil
                                                          isUTF8:nil
+                                                       hotSpare:NO
                                                   substitutions:nil
                                                windowController:self
                                                           ready:nil

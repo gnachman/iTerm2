@@ -111,6 +111,7 @@ typedef struct {
     const char **argv;
     NSData *initialPwd;
     const char **environ;
+    BOOL hotSpare;
 } iTermMultiServerJobManagerForkRequest;
 
 - (void)forkAndExecWithTtyState:(iTermTTYState)ttyState
@@ -118,6 +119,7 @@ typedef struct {
                            argv:(NSArray<NSString *> *)argv
                      initialPwd:(NSString *)initialPwd
                      newEnviron:(NSArray<NSString *> *)newEnviron
+                       hotSpare:(BOOL)hotSpare
                            task:(id<iTermTask>)task
                      completion:(void (^)(iTermJobManagerForkAndExecStatus))completion  {
     iTermMultiServerJobManagerForkRequest forkRequest = {
@@ -125,7 +127,8 @@ typedef struct {
         .argpath = [NSData dataWithBytes:argpath.UTF8String length:strlen(argpath.UTF8String) + 1],
         .argv = [argv nullTerminatedCStringArray],
         .initialPwd = [NSData dataWithBytes:initialPwd.UTF8String length:strlen(initialPwd.UTF8String) + 1],
-        .environ = [newEnviron nullTerminatedCStringArray]
+        .environ = [newEnviron nullTerminatedCStringArray],
+        .hotSpare = hotSpare
     };
     iTermCallback *callback = [self.thread newCallbackWithBlock:^(iTermMultiServerJobManagerState *state,
                                                                   iTermMultiServerConnection *conn) {
@@ -195,6 +198,7 @@ typedef struct {
                         argv:forkRequest.argv
                   initialPwd:forkRequest.initialPwd.bytes
                   newEnviron:forkRequest.environ
+                    hotSpare:forkRequest.hotSpare
                     callback:callback];
 }
 

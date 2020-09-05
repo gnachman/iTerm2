@@ -2263,6 +2263,7 @@ static BOOL hasBecomeActive = NO;
                                                  forceUseOldCWD:NO
                                                         command:nil
                                                          isUTF8:nil
+                                                       hotSpare:NO
                                                   substitutions:nil
                                                windowController:term
                                                           ready:^(BOOL ok) { didMakeSession(ok ? session : nil); }

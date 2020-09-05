@@ -260,6 +260,7 @@ static void HandleSigChld(int n) {
               gridSize:(VT100GridSize)gridSize
               viewSize:(NSSize)viewSize
                 isUTF8:(BOOL)isUTF8
+              hotSpare:(BOOL)hotSpare
             completion:(void (^)(void))completion {
     DLog(@"launchWithPath:%@ args:%@ env:%@ grisSize:%@ isUTF8:%@",
          progpath, args, env, VT100GridSizeDescription(gridSize), @(isUTF8));
@@ -278,6 +279,7 @@ static void HandleSigChld(int n) {
                           gridSize:gridSize
                           viewSize:viewSize
                             isUTF8:isUTF8
+                          hotSpare:hotSpare
                         completion:completion];
     } else {
         [self reallyLaunchWithPath:progpath
@@ -287,6 +289,7 @@ static void HandleSigChld(int n) {
                           gridSize:gridSize
                           viewSize:viewSize
                             isUTF8:isUTF8
+                          hotSpare:hotSpare
                         completion:completion];
     }
 }
@@ -695,6 +698,7 @@ static void HandleSigChld(int n) {
                     gridSize:(VT100GridSize)gridSize
                     viewSize:(NSSize)viewSize
                       isUTF8:(BOOL)isUTF8
+                    hotSpare:(BOOL)hotSpare
                   completion:(void (^)(void))completion {
     DLog(@"reallyLaunchWithPath:%@ args:%@ env:%@ gridSize:%@ viewSize:%@ isUTF8:%@",
          progpath, args, env,VT100GridSizeDescription(gridSize), NSStringFromSize(viewSize), @(isUTF8));
@@ -745,6 +749,7 @@ static void HandleSigChld(int n) {
                                         argv:argv
                                   initialPwd:initialPwd
                                   newEnviron:newEnviron
+                                    hotSpare:hotSpare
                                         task:self
                                   completion:
      ^(iTermJobManagerForkAndExecStatus status) {

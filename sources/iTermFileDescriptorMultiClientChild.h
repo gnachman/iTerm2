@@ -23,6 +23,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (atomic, readonly) NSString *initialDirectory;
 @property (atomic, readonly) int fd;
 @property (atomic, readonly) NSString *tty;
+@property (atomic, readonly) BOOL isHotSpare;
 
 // Mutable properties. Must only be accessed on the child's thread.
 @property (nonatomic, readonly) BOOL hasTerminated;
@@ -38,11 +39,17 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)invokeWaitCallback:(iTermResult<NSNumber *> *)status;
 - (void)invokeAllWaitCallbacks:(iTermResult<NSNumber *> *)status;
 
+- (void)addActivateHotSpareCallback:(iTermCallback<id, iTermResult<NSNumber *> *> *)callback;
+- (void)invokeActivateHotSpareCallback:(iTermResult<NSNumber *> *)status;
+- (void)invokeAllActivateHotSpareCallbacks:(iTermResult<NSNumber *> *)status;
+
 // Must be called on child's thread.
 - (void)willWaitPreemptively;
 
 // Must be called on child's thread.
 - (void)didTerminate;
+
+- (void)activate;
 
 @end
 

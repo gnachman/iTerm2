@@ -5,26 +5,53 @@
 //  Created by George Nachman on 7/22/19.
 //
 
+#ifndef ITERM_SERVER
+#error ITERM_SERVER not defined. Build process is broken.
+#endif
+
 #include "iTermFileDescriptorMultiServer.h"
 
+#import "iTermFileDescriptorServer.h"
+#import "iTermMultiServerProtocol.h"
+#import "iTermPosixTTYReplacements.h"
 #include "iTermCLogging.h"
 #include "iTermFileDescriptorServerShared.h"
 
 #include <Availability.h>
 #include <Carbon/Carbon.h>
+#include <assert.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <mach/mach.h>
+#include <signal.h>
 #include <stdarg.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/types.h>
 #include <sys/un.h>
+#include <syslog.h>
 #include <unistd.h>
+#include <util.h>
 
-#ifndef ITERM_SERVER
-#error ITERM_SERVER not defined. Build process is broken.
-#endif
+#define MIN(a,b) ( (a) < (b) ? (a) : (b) )
 
 const char *gMultiServerSocketPath;
+
+// Only valid after handshake completes.
+static int gProtocolVersion;
+static int gPipe[2];
+static char *gPath;
+
+typedef struct {
+    iTermMultiServerClientOriginatedMessage messageWithLaunchRequest;
+    pid_t pid;
+    int terminated;  // Nonzero if process is terminated and wait()ed on.
+    int willTerminate;  // Preemptively terminated. Stop reporting its existence.
+    int masterFd;  // Valid only if !terminated && !willTerminate
+    int status;  // Only valid if terminated. Gives status from wait.
+    const char *tty;
+    int isHotSpare;
+} iTermMultiServerChild;
 
 // On entry there should be three file descriptors:
 // 0: A socket we can accept() on. listen() was already called on it.
@@ -38,38 +65,13 @@ typedef enum {
     iTermMultiServerFileDescriptorInitialRead = 3
 } iTermMultiServerFileDescriptor;
 
-static int MakeBlocking(int fd);
-
-#import "iTermFileDescriptorServer.h"
-#import "iTermMultiServerProtocol.h"
-#import "iTermPosixTTYReplacements.h"
-
-#include <assert.h>
-#include <errno.h>
-#include <signal.h>
-#include <stdlib.h>
-#include <string.h>
-#include <syslog.h>
-#include <unistd.h>
-#include <util.h>
-
-static int gPipe[2];
-static char *gPath;
-
-typedef struct {
-    iTermMultiServerClientOriginatedMessage messageWithLaunchRequest;
-    pid_t pid;
-    int terminated;  // Nonzero if process is terminated and wait()ed on.
-    int willTerminate;  // Preemptively terminated. Stop reporting its existence.
-    int masterFd;  // Valid only if !terminated && !willTerminate
-    int status;  // Only valid if terminated. Gives status from wait.
-    const char *tty;
-} iTermMultiServerChild;
-
 static iTermMultiServerChild *children;
 static int numberOfChildren;
+
+static int MakeBlocking(int fd);
 static void CheckIfBootstrapPortIsDead(void);
 static void CleanUp(void);
+static int GetChildIndexByPID(pid_t pid);
 
 #pragma mark - Signal handlers
 
@@ -94,13 +96,16 @@ static int GetNumberOfReportableChildren(void) {
 #pragma mark - Mutate Children
 
 static void LogChild(const iTermMultiServerChild *child) {
-    FDLog(LOG_DEBUG, "masterFd=%d, pid=%d, willTerminate=%d, terminated=%d, status=%d, tty=%s", child->masterFd, child->pid, child->willTerminate, child->terminated, child->status, child->tty ?: "(null)");
+    FDLog(LOG_DEBUG, "masterFd=%d, pid=%d, willTerminate=%d, terminated=%d, status=%d, tty=%s isHotSpare=%d",
+          child->masterFd, child->pid, child->willTerminate, child->terminated, child->status,
+          child->tty ?: "(null)", child->isHotSpare);
 }
 
 static void AddChild(const iTermMultiServerRequestLaunch *launch,
                      int masterFd,
                      const char *tty,
-                     const iTermForkState *forkState) {
+                     const iTermForkState *forkState,
+                     int isHotSpare) {
     if (!children) {
         children = calloc(1, sizeof(iTermMultiServerChild));
     } else {
@@ -121,7 +126,7 @@ static void AddChild(const iTermMultiServerRequestLaunch *launch,
     iTermClientServerProtocolMessage tempMessage;
     iTermClientServerProtocolMessageInitialize(&tempMessage);
     int status;
-    status = iTermMultiServerProtocolEncodeMessageFromClient(&tempClientMessage, &tempMessage);
+    status = iTermMultiServerProtocolEncodeMessageFromClient(&tempClientMessage, &tempMessage, gProtocolVersion);
     assert(status == 0);
     status = iTermMultiServerProtocolParseMessageFromClient(&tempMessage,
                                                             &children[i].messageWithLaunchRequest);
@@ -135,6 +140,7 @@ static void AddChild(const iTermMultiServerRequestLaunch *launch,
     children[i].terminated = 0;
     children[i].status = 0;
     children[i].tty = strdup(tty);
+    children[i].isHotSpare = isHotSpare;
 
     FDLog(LOG_DEBUG, "Added child %d:", i);
     LogChild(&children[i]);
@@ -220,7 +226,7 @@ static int SendLaunchResponse(int fd, int status, pid_t pid, int masterFd, const
             }
         }
     };
-    const int rc = iTermMultiServerProtocolEncodeMessageFromServer(&message, &obj);
+    const int rc = iTermMultiServerProtocolEncodeMessageFromServer(&message, &obj, gProtocolVersion);
     if (rc) {
         FDLog(LOG_ERR, "Error encoding launch response");
         return -1;
@@ -276,13 +282,60 @@ static int HandleLaunchRequest(int fd, const iTermMultiServerRequestLaunch *laun
     }
 
     // Happy path
-    AddChild(launch, masterFd, ttyState.tty, &forkState);
+    AddChild(launch, masterFd, ttyState.tty, &forkState, launch->isHotSpare);
     return SendLaunchResponse(fd,
                               0 /* status */,
                               forkState.pid,
                               masterFd,
                               ttyState.tty,
                               launch->uniqueId);
+}
+
+#pragma mark - Active Hot Spare
+
+static int SendActivateHotSpareResponse(int fd, int pid, int status) {
+    iTermClientServerProtocolMessage obj;
+    iTermClientServerProtocolMessageInitialize(&obj);
+
+    iTermMultiServerServerOriginatedMessage message = {
+        .type = iTermMultiServerRPCTypeActivateHotSpare,
+        .payload = {
+            .activateHotSpare = {
+                .pid = pid,
+                .status = status,
+            }
+        }
+    };
+    const int rc = iTermMultiServerProtocolEncodeMessageFromServer(&message, &obj, gProtocolVersion);
+    if (rc) {
+        FDLog(LOG_ERR, "Error encoding activate hot spare response");
+        return -1;
+    }
+
+    int error;
+    const ssize_t result = iTermFileDescriptorServerWriteLengthAndBuffer(fd,
+                                                                         obj.ioVectors[0].iov_base,
+                                                                         obj.ioVectors[0].iov_len,
+                                                                         &error);
+    if (result < 0) {
+        FDLog(LOG_ERR, "SendMsg failed with %s", strerror(error));
+    }
+
+    iTermClientServerProtocolMessageFree(&obj);
+    return result == -1;
+}
+
+static int HandleActivateHotSpareRequest(int fd, const iTermMultiServerRequestActivateHotSpare *request) {
+    FDLog(LOG_DEBUG, "HandleActivateHotSpareRequest pid=%d", request->pid);
+    const int index = GetChildIndexByPID(request->pid);
+    if (index < 0) {
+        return SendActivateHotSpareResponse(fd, request->pid, 1);
+    }
+    if (!children[index].isHotSpare) {
+        return SendActivateHotSpareResponse(fd, request->pid, 2);
+    }
+    children[index].isHotSpare = 0;
+    return SendActivateHotSpareResponse(fd, request->pid, 0);
 }
 
 #pragma mark - Report Termination
@@ -301,7 +354,7 @@ static int ReportTermination(int fd, pid_t pid) {
             }
         }
     };
-    const int rc = iTermMultiServerProtocolEncodeMessageFromServer(&message, &obj);
+    const int rc = iTermMultiServerProtocolEncodeMessageFromServer(&message, &obj, gProtocolVersion);
     if (rc) {
         FDLog(LOG_ERR, "Failed to encode termination report");
         return -1;
@@ -333,7 +386,8 @@ static void PopulateReportChild(const iTermMultiServerChild *child, int isLast, 
         .isUTF8 = child->messageWithLaunchRequest.payload.launch.isUTF8,
         .pwd = child->messageWithLaunchRequest.payload.launch.pwd,
         .terminated = !!child->terminated,
-        .tty = child->tty
+        .tty = child->tty,
+        .isHotSpare = child->messageWithLaunchRequest.payload.launch.isHotSpare
     };
     *out = temp;
 }
@@ -349,7 +403,7 @@ static int ReportChild(int fd, const iTermMultiServerChild *child, int isLast) {
         .type = iTermMultiServerRPCTypeReportChild,
     };
     PopulateReportChild(child, isLast, &message.payload.reportChild);
-    const int rc = iTermMultiServerProtocolEncodeMessageFromServer(&message, &obj);
+    const int rc = iTermMultiServerProtocolEncodeMessageFromServer(&message, &obj, gProtocolVersion);
     if (rc) {
         FDLog(LOG_ERR, "Failed to encode report child");
         return -1;
@@ -439,7 +493,7 @@ static int ReportChildren(int fd) {
 #pragma mark - Handshake
 
 static int HandleHandshake(int fd, iTermMultiServerRequestHandshake *handshake) {
-    FDLog(LOG_DEBUG, "Handle handshake maximumProtocolVersion=%d", handshake->maximumProtocolVersion);;
+    FDLog(LOG_DEBUG, "Handle handshake maximumProtocolVersion=%d", handshake->maximumProtocolVersion);
     iTermClientServerProtocolMessage obj;
     iTermClientServerProtocolMessageInitialize(&obj);
 
@@ -447,17 +501,24 @@ static int HandleHandshake(int fd, iTermMultiServerRequestHandshake *handshake) 
         FDLog(LOG_ERR, "Maximum protocol version is too low: %d", handshake->maximumProtocolVersion);
         return -1;
     }
+    // We accept either iTermMultiServerProtocolVersion2 or iTermMultiServerProtocolVersion3
+    const int maximumProtocolVersionSupportedByServer = iTermMultiServerProtocolVersion3;
+    gProtocolVersion = MIN(maximumProtocolVersionSupportedByServer, handshake->maximumProtocolVersion);
+    FDLog(LOG_DEBUG, "Set protocol version to %d, the smaller of my max %d and the client's max %d",
+          gProtocolVersion,
+          maximumProtocolVersionSupportedByServer,
+          handshake->maximumProtocolVersion);
     iTermMultiServerServerOriginatedMessage message = {
         .type = iTermMultiServerRPCTypeHandshake,
         .payload = {
             .handshake = {
-                .protocolVersion = iTermMultiServerProtocolVersion2,
+                .protocolVersion = gProtocolVersion,
                 .numChildren = GetNumberOfReportableChildren(),
                 .pid = getpid()
             }
         }
     };
-    const int rc = iTermMultiServerProtocolEncodeMessageFromServer(&message, &obj);
+    const int rc = iTermMultiServerProtocolEncodeMessageFromServer(&message, &obj, gProtocolVersion);
     if (rc) {
         FDLog(LOG_ERR, "Failed to encode handshake response");
         return -1;
@@ -524,7 +585,7 @@ static int HandleWait(int fd, iTermMultiServerRequestWait *wait) {
             }
         }
     };
-    const int rc = iTermMultiServerProtocolEncodeMessageFromServer(&message, &obj);
+    const int rc = iTermMultiServerProtocolEncodeMessageFromServer(&message, &obj, gProtocolVersion);
     if (rc) {
         FDLog(LOG_ERR, "Failed to encode wait response");
         return -1;
@@ -631,6 +692,9 @@ static int ReadAndHandleRequest(int readFd, int writeFd) {
         case iTermMultiServerRPCTypeHello:
             FDLog(LOG_ERR, "Ignore hello");
             break;
+        case iTermMultiServerRPCTypeActivateHotSpare:
+            result = HandleActivateHotSpareRequest(writeFd, &request.payload.activateHotSpare);
+            break;
     }
     iTermMultiServerClientOriginatedMessageFree(&request);
     return result;
@@ -659,7 +723,7 @@ static void AcceptAndReject(int socket) {
     };
     iTermClientServerProtocolMessage obj;
     iTermClientServerProtocolMessageInitialize(&obj);
-    const int rc = iTermMultiServerProtocolEncodeMessageFromServer(&message, &obj);
+    const int rc = iTermMultiServerProtocolEncodeMessageFromServer(&message, &obj, gProtocolVersion);
     if (rc) {
         FDLog(LOG_ERR, "Failed to encode version-rejected");
         goto done;
@@ -733,7 +797,7 @@ static int MakeAndSendPipe(int unixDomainSocketFd) {
     iTermMultiServerServerOriginatedMessage message = {
         .type = iTermMultiServerRPCTypeHello,
     };
-    const int encodeRC = iTermMultiServerProtocolEncodeMessageFromServer(&message, &obj);
+    const int encodeRC = iTermMultiServerProtocolEncodeMessageFromServer(&message, &obj, gProtocolVersion);
     if (encodeRC) {
         FDLog(LOG_ERR, "Error encoding hello");
         return -1;
@@ -797,6 +861,8 @@ static void MainLoop(char *path, int acceptFd, int initialWriteFd, int initialRe
     MakeBlocking(readFd);
 
     do {
+        gProtocolVersion = iTermMultiServerProtocolVersion2;
+        FDLog(LOG_DEBUG, "Initialize protocol version to %d", gProtocolVersion);
         if (writeFd >= 0 && readFd >= 0) {
             SelectLoop(acceptFd, writeFd, readFd);
         }

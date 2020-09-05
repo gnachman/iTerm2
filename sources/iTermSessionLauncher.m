@@ -244,6 +244,7 @@
                                                  forceUseOldCWD:NO
                                                         command:nil
                                                          isUTF8:nil
+                                                       hotSpare:NO
                                                   substitutions:nil
                                                windowController:windowController
                                                           ready:^(BOOL ok) {
