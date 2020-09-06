@@ -64,8 +64,6 @@
     NSImage *_addTabButtonImage;
     NSImage *_addTabButtonPressedImage;
     NSImage *_addTabButtonRolloverImage;
-
-    NSDictionary *_objectCountStringAttributes;
 }
 
 @synthesize tabBar = _tabBar;
@@ -345,25 +343,20 @@
 #pragma mark - Cell Values
 
 - (NSAttributedString *)attributedObjectCountValueForTabCell:(PSMTabBarCell *)cell {
-    NSNumberFormatter *nf = [[[NSNumberFormatter alloc] init] autorelease];
-    [nf setLocalizesFormat:YES];
-    [nf setFormat:@"0"];
-    [nf setHasThousandSeparators:YES];
-    NSString *contents = [nf stringFromNumber:[NSNumber numberWithInt:[cell count]]];
+    const NSInteger count = cell.count;
+    NSString *contents = [@(count) stringValue];
     NSString *const modifierString = [cell modifierString];
-    if (modifierString.length > 0 && [cell count] < 9) {
-        contents = [NSString stringWithFormat:@"%@%@", modifierString, contents];
+    if (modifierString.length > 0 && count < 9) {
+        contents = [modifierString stringByAppendingString:contents];
     } else if (modifierString.length > 0 && [cell isLast]) {
-        contents = [NSString stringWithFormat:@"%@9", modifierString];
+        contents = [modifierString stringByAppendingString:@"9"];
     } else {
         contents = @"";
     }
     NSDictionary *attributes =
         @{ NSFontAttributeName: [NSFont systemFontOfSize:self.fontSize],
            NSForegroundColorAttributeName: [self textColorForCell:cell] };
-    return [[[NSMutableAttributedString alloc] initWithString:contents
-                                                   attributes:attributes]
-               autorelease];
+    return [[NSAttributedString alloc] initWithString:contents attributes:attributes];
 }
 
 - (NSColor *)textColorDefaultSelected:(BOOL)selected backgroundColor:(NSColor *)backgroundColor windowIsMainAndAppIsActive:(BOOL)mainAndActive {
