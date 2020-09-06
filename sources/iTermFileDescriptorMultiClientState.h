@@ -14,6 +14,7 @@
 NS_ASSUME_NONNULL_BEGIN
 
 @class iTermFileDescriptorMultiClientState;
+@class iTermHotSpareController;
 
 @interface iTermFileDescriptorMultiClientState: iTermSynchronizedState<iTermFileDescriptorMultiClientState *>
 @property (nonatomic) int readFD;
@@ -23,6 +24,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) NSMutableArray<iTermFileDescriptorMultiClientChild *> *children;
 @property (nonatomic, readonly) NSMutableDictionary<NSNumber *, iTermFileDescriptorMultiClientPendingLaunch *> *pendingLaunches;
 @property (nonatomic, strong) dispatch_source_t daemonProcessSource;
+@property (nullable, nonatomic, strong) iTermHotSpareController *hotSpareController;
 
 - (void)whenWritable:(void (^)(iTermFileDescriptorMultiClientState *state))block;
 - (void)whenReadable:(void (^)(iTermFileDescriptorMultiClientState *state))block;

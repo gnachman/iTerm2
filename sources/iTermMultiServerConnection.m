@@ -60,6 +60,18 @@
 
 #pragma mark - Class Method APIs
 
++ (BOOL)connectionIsPrimary:(iTermMultiServerConnection *)connection {
+    __block BOOL result = NO;
+    [self.thread dispatchSync:^(iTermMultiServerConnectionGlobalState * _Nonnull state) {
+        if ([state.registry.allValues containsObject:state.primary]) {
+            result = (state.primary == connection);
+            return;
+        }
+        result = (connection == state.registry.allValues.firstObject);
+    }];
+    return result;
+}
+
 + (void)getOrCreatePrimaryConnectionWithCallback:(iTermCallback<id, iTermMultiServerConnection *> *)callback {
     [self.thread dispatchAsync:^(iTermMultiServerConnectionGlobalState * _Nonnull state) {
         [self getOrCreatePrimaryConnectionWithState:state callback:callback];
@@ -276,6 +288,9 @@
             [callback invokeWithObject:nil];
             return;
         }
+        if (child.isHotSpare) {
+            [state.client activateHotSpare:child callback:nil];
+        }
         DLog(@"Attached to pid %@. Remove unattached child", @(pid));
         [state.unattachedChildren removeObject:child];
         [callback invokeWithObject:child];
@@ -325,6 +340,12 @@
     }];
 }
 
+- (void)addHotSpare:(iTermFileDescriptorMultiClientChild *)child {
+    [_thread dispatchAsync:^(iTermMultiServerPerConnectionState * _Nullable state) {
+        [state.client addHotSpare:child];
+    }];
+}
+
 #pragma mark - iTermFileDescriptorMultiClientDelegate
 
 - (void)fileDescriptorMultiClient:(iTermFileDescriptorMultiClient *)client
@@ -367,6 +388,10 @@
             DLog(@"Failed to wait on child with pid %d: %@", pid, error);
         }];
     }]];
+}
+
+- (BOOL)fileDescriptorMultiClientShouldCreateHotSpare:(iTermFileDescriptorMultiClient *)client {
+    return [iTermMultiServerConnection connectionIsPrimary:self];
 }
 
 @end

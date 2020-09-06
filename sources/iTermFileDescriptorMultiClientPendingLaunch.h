@@ -17,9 +17,11 @@ typedef iTermCallback<id, iTermResult<iTermFileDescriptorMultiClientChild *> *> 
 @interface iTermFileDescriptorMultiClientPendingLaunch: NSObject
 @property (nonatomic, readonly) iTermMultiServerRequestLaunch launchRequest;
 @property (nonatomic, readonly) iTermMultiClientLaunchCallback *launchCallback;
+@property (nonatomic, readonly, getter=isHotSpare) BOOL hotSpare;
 
 - (instancetype)initWithRequest:(iTermMultiServerRequestLaunch)request
                        callback:(iTermMultiClientLaunchCallback *)callback
+                       hotSpare:(BOOL)hotSpare
                          thread:(iTermThread *)thread NS_DESIGNATED_INITIALIZER;
 - (instancetype)init NS_UNAVAILABLE;
 - (void)invalidate;

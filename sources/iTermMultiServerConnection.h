@@ -44,6 +44,8 @@ NS_ASSUME_NONNULL_BEGIN
   removePreemptively:(BOOL)removePreemptively
             callback:(iTermCallback<id, iTermResult<NSNumber *> *> *)callback;
 
+- (void)addHotSpare:(iTermFileDescriptorMultiClientChild *)child;
+
 @end
 
 

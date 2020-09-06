@@ -14,13 +14,15 @@
 }
 
 - (instancetype)initWithRequest:(iTermMultiServerRequestLaunch)request
-                     callback:(iTermMultiClientLaunchCallback *)callback
+                       callback:(iTermMultiClientLaunchCallback *)callback
+                       hotSpare:(BOOL)hotSpare
                          thread:(iTermThread *)thread {
     self = [super init];
     if (self) {
         _launchRequest = request;
         _launchCallback = callback;
         _checker = [[iTermThreadChecker alloc] initWithThread:thread];
+        _hotSpare = hotSpare;
     }
     return self;
 }

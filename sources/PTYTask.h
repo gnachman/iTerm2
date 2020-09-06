@@ -30,6 +30,9 @@
 
 // Main thread
 - (void)taskDidChangeTTY:(PTYTask *)task;
+
+- (void)taskRequestSetSize:(PTYTask *)task;
+
 @end
 
 typedef NS_ENUM(NSUInteger, iTermJobManagerForkAndExecStatus) {

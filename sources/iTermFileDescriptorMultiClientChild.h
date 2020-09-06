@@ -24,6 +24,8 @@ NS_ASSUME_NONNULL_BEGIN
 @property (atomic, readonly) int fd;
 @property (atomic, readonly) NSString *tty;
 @property (atomic, readonly) BOOL isHotSpare;
+@property (atomic, readonly) BOOL needsTIOCGWINSZ;
+@property (nonatomic, readonly) iTermMultiServerReportChild report;
 
 // Mutable properties. Must only be accessed on the child's thread.
 @property (nonatomic, readonly) BOOL hasTerminated;
@@ -50,6 +52,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)didTerminate;
 
 - (void)activate;
+- (void)willActivate;
 
 @end
 

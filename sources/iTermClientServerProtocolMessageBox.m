@@ -20,15 +20,33 @@
     iTermClientServerProtocolMessageBox *box = [[iTermClientServerProtocolMessageBox alloc] init];
     iTermClientServerProtocolMessageInitialize(&box->_protocolMessage);
     if (message.fileDescriptor) {
-        box->_protocolMessage.controlBuffer.cm.cmsg_len = CMSG_LEN(sizeof(int));
-        box->_protocolMessage.controlBuffer.cm.cmsg_level = SOL_SOCKET;
-        box->_protocolMessage.controlBuffer.cm.cmsg_type = SCM_RIGHTS;
-        *((int *)CMSG_DATA(&box->_protocolMessage.controlBuffer.cm)) = message.fileDescriptor.intValue;
+        iTermClientServerProtocolMessageSetFileDesciptor(&box->_protocolMessage,
+                                                         message.fileDescriptor.intValue);
     }
     iTermClientServerProtocolMessageEnsureSpace(&box->_protocolMessage, message.data.length);
     memmove(box->_protocolMessage.message.msg_iov[0].iov_base, message.data.bytes, message.data.length);
     box->_message = message;
     return box;
+}
+
++ (instancetype)withChildReport:(const iTermMultiServerReportChild *)report {
+    iTermMultiServerServerOriginatedMessage temp = {
+        .type = iTermMultiServerRPCTypeReportChild,
+        .payload = {
+            .reportChild = *report
+        }
+    };
+    iTermClientServerProtocolMessage protocolMessage;
+    iTermClientServerProtocolMessageInitialize(&protocolMessage);
+    iTermClientServerProtocolMessageSetFileDesciptor(&protocolMessage, report->fd);
+    const int rc = iTermMultiServerProtocolEncodeMessageFromServer(&temp, &protocolMessage, iTermMultiServerProtocolVersion3);
+    if (rc) {
+        return nil;
+    }
+    iTermMultiServerMessage *message = [[iTermMultiServerMessage alloc] initWithProtocolMessage:&protocolMessage
+                                                                                 fileDescriptor:@(report->fd)];
+    iTermClientServerProtocolMessageFree(&protocolMessage);
+    return [self withMessage:message];
 }
 
 - (iTermMultiServerServerOriginatedMessage *)decoded {

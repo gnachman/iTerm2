@@ -7,9 +7,11 @@
 //
 
 #import <Foundation/Foundation.h>
+#import "iTermMultiServerProtocol.h"
 #import "PTYTask.h"
 
 @class PTYSession;
+@class iTermMultiServerConnection;
 
 @protocol iTermOrphanServerAdopterDelegate<NSObject>
 - (void)orphanServerAdopterOpenSessionForConnection:(iTermGeneralServerConnection)connection

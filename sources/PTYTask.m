@@ -385,6 +385,14 @@ static void HandleSigChld(int n) {
     [writeLock unlock];
 }
 
+- (void)sendTIOCGWINSZ {
+    _lastSize = (PTYTaskSize) {
+        .cellSize = iTermTTYCellSizeMake(INFINITY, INFINITY),
+        .pixelSize = iTermTTYPixelSizeMake(INFINITY, INFINITY)
+    };
+    [self.delegate taskRequestSetSize:self];
+}
+
 - (void)killWithMode:(iTermJobManagerKillingMode)mode {
     [self.jobManager killWithMode:mode];
     if (_tmuxClientProcessID) {

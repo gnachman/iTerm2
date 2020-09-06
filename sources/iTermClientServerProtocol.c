@@ -47,6 +47,14 @@ void iTermClientServerProtocolMessageInitialize(iTermClientServerProtocolMessage
     message->valid = ITERM_MULTISERVER_MAGIC;
 }
 
+void iTermClientServerProtocolMessageSetFileDesciptor(iTermClientServerProtocolMessage *message,
+                                                      int fd) {
+    message->controlBuffer.cm.cmsg_len = CMSG_LEN(sizeof(int));
+    message->controlBuffer.cm.cmsg_level = SOL_SOCKET;
+    message->controlBuffer.cm.cmsg_type = SCM_RIGHTS;
+    *((int *)CMSG_DATA(&message->controlBuffer.cm)) = fd;
+}
+
 void iTermClientServerProtocolMessageEnsureSpace(iTermClientServerProtocolMessage *message,
                                                  ssize_t spaceNeeded) {
     message->ioVectors[0].iov_base = realloc(message->ioVectors[0].iov_base, MAX(1, spaceNeeded));

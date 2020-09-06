@@ -165,6 +165,9 @@ typedef struct {
                 [[iTermProcessCache sharedInstance] registerTrackedPID:child.pid];
                 DLog(@"Register %@ after server successfully execs job", @(child.pid));
                 [[TaskNotifier sharedInstance] registerTask:task];
+                if (child.needsTIOCGWINSZ) {
+                    [task sendTIOCGWINSZ];
+                }
                 [[iTermProcessCache sharedInstance] setNeedsUpdate:YES];
                 completion(iTermJobManagerForkAndExecStatusSuccess);
             });
@@ -183,6 +186,7 @@ typedef struct {
                 case iTermFileDescriptorMultiClientErrorCannotConnect:
                 case iTermFileDescriptorMultiClientErrorProtocolError:
                 case iTermFileDescriptorMultiClientErrorAlreadyWaited:
+                case iTermFileDescriptorMultiClientErrorCodeActivateSpareFailed:
                     completion(iTermJobManagerForkAndExecStatusServerError);
                     return;
                     

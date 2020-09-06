@@ -250,7 +250,7 @@ static int ParseWaitRequest(iTermClientServerProtocolMessageParser *parser,
 
 static int ParseActivateHotSpareRequest(iTermClientServerProtocolMessageParser *parser,
                                         iTermMultiServerRequestActivateHotSpare *out) {
-    if (iTermClientServerProtocolParseTaggedInt(parser, &out->pid, sizeof(out->pid), iTermMultiServerTagWaitRequestPid)) {
+    if (iTermClientServerProtocolParseTaggedInt(parser, &out->pid, sizeof(out->pid), iTermMultiServerTagActivateHotSpareRequestPid)) {
         return iTermMultiServerProtocolErrorActivateHotSpareRequestMissingPID;
     }
     return 0;

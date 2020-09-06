@@ -206,8 +206,17 @@ static void iTermOrphanServerAdopterFindMultiServers(void (^completion)(NSArray<
             }
         };
         dispatch_group_enter(group);
-#warning TODO: Handle hot spares
-        assert(!child.isHotSpare);
+        if (child.isHotSpare) {
+            // NOTE: hot spares take this route because there is a race that we may have a session
+            // attached to one but it wasn't activated in the server before the main iTerm process
+            // crashed. In theory, we could detectt that if we were able to save restorable
+            // state. Not in this code path, though. That would be in the session restoration
+            // happy path.
+            DLog(@"Discovered hot spare with pid %@, socket %@", @(child.pid), @(number));
+            [connection addHotSpare:child];
+            continue;
+        }
+        
         DLog(@"Orphan server adopter wants to open session for pid %@ on socket %@", @(child.pid), @(number));
         [self.delegate orphanServerAdopterOpenSessionForConnection:generalConnection
                                                           inWindow:self->_window

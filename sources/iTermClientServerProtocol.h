@@ -31,6 +31,10 @@ typedef struct {
 
 void iTermClientServerProtocolMessageInitialize(iTermClientServerProtocolMessage *message);
 
+// Use this to set a fake control buffer file descriptor.
+void iTermClientServerProtocolMessageSetFileDesciptor(iTermClientServerProtocolMessage *message,
+                                                      int fd);
+
 void iTermClientServerProtocolMessageEnsureSpace(iTermClientServerProtocolMessage *message,
                                                  ssize_t spaceNeeded);
 

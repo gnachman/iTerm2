@@ -15,6 +15,7 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+@class iTermClientServerProtocolMessageBox;
 @class iTermFileDescriptorMultiClient;
 
 extern NSString *const iTermFileDescriptorMultiClientErrorDomain;
@@ -29,7 +30,8 @@ typedef NS_ENUM(NSUInteger, iTermFileDescriptorMultiClientErrorCode) {
     iTermFileDescriptorMultiClientErrorProtocolError,  // unparsable message
     iTermFileDescriptorMultiClientErrorCannotConnect,
     iTermFileDescriptorMultiClientErrorAlreadyWaited,
-    iTermFileDescriptorMultiClientErrorCodeActivateSpareFailed
+    iTermFileDescriptorMultiClientErrorCodeActivateSpareFailed,
+    iTermFileDescriptorMultiClientErrorCodeHotSpareCreated // not actually an error, just a special case
 };
 
 // No guarantees about which thread delegates are called on.
@@ -42,6 +44,8 @@ typedef NS_ENUM(NSUInteger, iTermFileDescriptorMultiClientErrorCode) {
                 childDidTerminate:(iTermFileDescriptorMultiClientChild *)child;
 
 - (void)fileDescriptorMultiClientDidClose:(iTermFileDescriptorMultiClient *)client;
+
+- (BOOL)fileDescriptorMultiClientShouldCreateHotSpare:(iTermFileDescriptorMultiClient *)client;
 
 @end
 
@@ -73,7 +77,9 @@ typedef NS_ENUM(NSUInteger, iTermFileDescriptorMultiClientErrorCode) {
             callback:(iTermCallback<id, iTermResult<NSNumber *> *> *)callback;  // number is integer status
 
 - (void)activateHotSpare:(iTermFileDescriptorMultiClientChild *)child
-                callback:(iTermCallback<id, iTermResult<NSNumber *> *> *)callback;  // number is integer status, 0=ok
+                callback:(iTermCallback<id, iTermResult<NSNumber *> *> * _Nullable)callback;  // number is integer status, 0=ok
+
+- (void)addHotSpare:(iTermFileDescriptorMultiClientChild *)chld;
 
 @end
 

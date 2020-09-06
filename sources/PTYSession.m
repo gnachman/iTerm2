@@ -3102,6 +3102,10 @@ ITERM_WEAKLY_REFERENCEABLE
     [self.variablesScope setValue:task.tty forVariableNamed:iTermVariableKeySessionTTY];
 }
 
+- (void)taskRequestSetSize:(PTYTask *)task {
+    [task setSize:_screen.size viewSize:_screen.viewSize scaleFactor:_view.window.backingScaleFactor];
+}
+
 - (void)tmuxDidDisconnect {
     DLog(@"tmuxDidDisconnect");
     if (_exited) {

@@ -17,6 +17,8 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nullable, nonatomic, readonly) iTermMultiServerServerOriginatedMessage *decoded;
 
 + (instancetype)withMessage:(iTermMultiServerMessage *)message;
++ (instancetype)withChildReport:(const iTermMultiServerReportChild *)report;
+
 @end
 
 NS_ASSUME_NONNULL_END

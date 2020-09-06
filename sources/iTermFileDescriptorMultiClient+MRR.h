@@ -32,6 +32,10 @@ int iTermCreateConnectedUnixDomainSocket(const char *path,
                             executable:(NSString *)executable
                                 readFD:(int *)readFDOut
                                writeFD:(int *)writeFDOut;
+
+- (void)activateHotSpare:(iTermFileDescriptorMultiClientChild *)child
+                callback:(iTermCallback<id,iTermResult<NSNumber *> *> * _Nullable)callback;
+
 @end
 
 NS_ASSUME_NONNULL_END

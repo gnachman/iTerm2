@@ -7,7 +7,10 @@
 
 #import "iTermFileDescriptorMultiClientChild.h"
 
+#import "iTermClientServerProtocolMessageBox.h"
+
 @implementation iTermFileDescriptorMultiClientChild {
+    iTermClientServerProtocolMessageBox *_reportBox;  // immutable, readable on any thread.
     iTermThread *_thread;
     NSMutableArray<iTermCallback<id, iTermResult<NSNumber *> *> *> *_callbacks;
     NSMutableArray<iTermCallback<id, iTermResult<NSNumber *> *> *> *_activateCallbacks;
@@ -58,6 +61,7 @@
         _haveWaited = NO;
         _callbacks = [NSMutableArray array];
         _activateCallbacks = [NSMutableArray array];
+        _reportBox = [iTermClientServerProtocolMessageBox withChildReport:report];
     }
     return self;
 }
@@ -65,6 +69,11 @@
 - (NSString *)description {
     return [NSString stringWithFormat:@"<%@: %p pid=%@ fd=%@>", NSStringFromClass(self.class),
             self, @(self.pid), @(self.fd)];
+}
+
+// Any thread
+- (iTermMultiServerReportChild)report {
+    return _reportBox.decoded->payload.reportChild;
 }
 
 - (void)willWaitPreemptively {
@@ -91,8 +100,13 @@
 
 - (void)activate {
     [_thread dispatchRecursiveSync:^(id _Nonnull state) {
-        assert(_isHotSpare);
         _isHotSpare = NO;
+    }];
+}
+
+- (void)willActivate {
+    [_thread dispatchRecursiveSync:^(id _Nonnull state) {
+        _needsTIOCGWINSZ = YES;
     }];
 }
 
