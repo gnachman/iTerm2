@@ -19,6 +19,42 @@
 #import "NSObject+iTerm.h"
 #import "NSStringITerm.h"
 
+@interface iTermExpressionEvaluator(Private)
+- (void)didCompleteWithResult:(id)result
+                        error:(NSError *)error
+                      missing:(NSSet<NSString *> *)missing
+                   completion:(void (^)(iTermExpressionEvaluator *))completion;
+@end
+
+@interface iTermTrivialExpressionEvaluator: iTermExpressionEvaluator
+@end
+
+@implementation iTermTrivialExpressionEvaluator {
+    NSString *_string;
+}
+
+- (instancetype)initWithString:(NSString *)string scope:(iTermVariableScope *)scope {
+    self = [super initWithParsedExpression:[[iTermParsedExpression alloc] initWithString:string]
+                                invocation:string
+                                     scope:scope];
+    if (self) {
+        _string = [string copy];
+    }
+    return self;
+}
+
+- (void)evaluateWithTimeout:(NSTimeInterval)timeout
+                 completion:(void (^)(iTermExpressionEvaluator * _Nonnull))completion {
+    NSString *result = _string;
+    if (self.escapingFunction) {
+        result = self.escapingFunction(_string);
+    }
+    [self didCompleteWithResult:result error:nil missing:[NSSet set] completion:completion];
+}
+
+@end
+
+
 @implementation iTermExpressionEvaluator {
     BOOL _hasBeenEvaluated;
     BOOL _isBeingEvaluated;
@@ -54,6 +90,10 @@
 
 - (instancetype)initWithStrictInterpolatedString:(NSString *)interpolatedString
                                            scope:(iTermVariableScope *)scope {
+    if ([interpolatedString rangeOfString:@"\\"].location == NSNotFound) {
+        return [[iTermTrivialExpressionEvaluator alloc] initWithString:interpolatedString scope:scope];
+    }
+
     iTermParsedExpression *parsedExpression =
     [iTermExpressionParser parsedExpressionWithInterpolatedString:interpolatedString
                                                  escapingFunction:nil
