@@ -228,9 +228,16 @@ NSString *const iTermFileDescriptorMultiClientErrorDomain = @"iTermFileDescripto
     DLog(@"Handshake with %@", _socketPath);
 
     iTermCallback<id, NSNumber *> *innerCallback =
-    [_thread newCallbackWithWeakTarget:self
-                              selector:@selector(handshakeDidCompleteWithState:ok:userInfo:)
-                              userInfo:callback];
+    [_thread newCallbackWithBlock:^(iTermFileDescriptorMultiClientState *state,
+                                    NSNumber *handshakeOK) {
+        // All child reports have been read, or it failed and we're giving up.
+        DLog(@"Handshake completed for %@", self->_socketPath);
+        if (!handshakeOK.boolValue) {
+            DLog(@"HANDSHAKE FAILED FOR %@", self->_socketPath);
+            [self closeWithState:state];
+        }
+        [callback invokeWithObject:handshakeOK];
+    }];
     __weak __typeof(self) weakSelf = self;
     [self sendHandshakeRequestWithState:state
                                callback:[_thread newCallbackWithBlock:^(iTermFileDescriptorMultiClientState *state,
@@ -396,19 +403,6 @@ NSString *const iTermFileDescriptorMultiClientErrorDomain = @"iTermFileDescripto
             completion(state, NO);
         }];
     }]];
-}
-
-// Called after all children are reported during handshake.
-- (void)handshakeDidCompleteWithState:(iTermFileDescriptorMultiClientState *)state
-                                   ok:(NSNumber *)handshakeOK
-                             userInfo:(id)userInfo {
-    DLog(@"Handshake completed for %@", _socketPath);
-    iTermCallback<id, NSNumber *> *callback = [iTermCallback forceCastFrom:userInfo];
-    if (!handshakeOK.boolValue) {
-        DLog(@"HANDSHAKE FAILED FOR %@", _socketPath);
-        [self closeWithState:state];
-    }
-    [callback invokeWithObject:handshakeOK];
 }
 
 // Called during handshake as children are reported.
