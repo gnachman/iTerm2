@@ -259,10 +259,12 @@
     for (NSInteger i = 0; i < self.length; i++) {
         unichar c = [self characterAtIndex:i];
         if (escape) {
-            NSNumber *replacement = escapes[@(c)] ?: @(c);
-            [result appendString:[self substringWithRange:NSMakeRange(start, i - start - 1)]];
-            [result appendCharacter:replacement.shortValue];
-            start = i + 1;
+            NSNumber *replacement = escapes[@(c)];
+            if (replacement) {
+                [result appendString:[self substringWithRange:NSMakeRange(start, i - start - 1)]];
+                [result appendCharacter:replacement.shortValue];
+                start = i + 1;
+            }
             escape = NO;
         } else if (c == '\\') {
             escape = YES;
