@@ -280,6 +280,7 @@
                                                  escapingFunction:(NSString *(^)(NSString *string))escapingFunction
                                                             scope:(iTermVariableScope *)scope
                                                            strict:(BOOL)strict {
+    __block BOOL allLiterals = YES;
     __block NSError *error = nil;
     NSMutableArray *interpolatedParts = [NSMutableArray array];
     [swifty enumerateSwiftySubstrings:^(NSUInteger index, NSString *substring, BOOL isLiteral, BOOL *stop) {
@@ -288,6 +289,7 @@
             [interpolatedParts addObject:[[iTermParsedExpression alloc] initWithString:escapedString]];
             return;
         }
+        allLiterals = NO;
 
         iTermExpressionParser *parser = [[iTermExpressionParser alloc] initWithStart:@"expression"];
         iTermParsedExpression *expression = [parser parse:substring
@@ -321,6 +323,9 @@
         return [[iTermParsedExpression alloc] initWithError:error];
     }
 
+    if (allLiterals) {
+        return [[iTermParsedExpression alloc] initWithString:[swifty it_stringByExpandingBackslashEscapedCharacters]];
+    }
     return [self parsedExpressionWithInterpolatedStringParts:interpolatedParts];
 }
 
