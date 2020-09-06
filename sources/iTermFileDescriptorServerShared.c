@@ -9,6 +9,7 @@
 
 #include <assert.h>
 #include <errno.h>
+#include <limits.h>
 #include <signal.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -170,7 +171,36 @@ ssize_t iTermFileDescriptorServerSendMessageAndFileDescriptor(int connectionFd,
                                                               void *buffer,
                                                               size_t bufferSize,
                                                               int fdToSend) {
-    FDLog(LOG_DEBUG, "Send file descriptor %d", fdToSend);
+    FDLog(LOG_DEBUG, "Send file descriptor %d and message of size %ld", fdToSend, (long)bufferSize);
+    if (bufferSize > IOV_MAX) {
+        // sendmsg wants to send the whole buffer atomically so it has a small upper bound on message
+        // size. The client-server protocol allows a message to be fragmented as long as the first
+        // one has the file descriptor.
+        //
+        // Send the prefix of the message with the file descriptor.
+        const ssize_t firstResult = iTermFileDescriptorServerSendMessageAndFileDescriptor(connectionFd,
+                                                                                          buffer,
+                                                                                          IOV_MAX,
+                                                                                          fdToSend);
+        if (firstResult <= 0) {
+            return firstResult;
+        }
+        ssize_t remainingSize = bufferSize;
+        remainingSize -= firstResult;
+        assert(remainingSize > 0);
+
+        // Now write the remainder. Because this doesn't use sendmsg there's no size limit problem.
+        int error = 0;
+        const ssize_t secondResult = iTermFileDescriptorWriteImpl(connectionFd,
+                                                                  buffer,
+                                                                  remainingSize,
+                                                                  &error);
+        if (secondResult <= 0) {
+            return secondResult;
+        }
+        return bufferSize;
+    }
+
     struct msghdr message;
     memset(&message, 0, sizeof(message));
 
