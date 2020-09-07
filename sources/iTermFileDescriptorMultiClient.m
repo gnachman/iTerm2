@@ -137,6 +137,7 @@ NSString *const iTermFileDescriptorMultiClientErrorDomain = @"iTermFileDescripto
                     status:(iTermFileDescriptorMultiClientAttachStatus)status
                   callback:(iTermCallback<id, NSNumber *> *)callback {
     switch (status) {
+        case iTermFileDescriptorMultiClientAttachStatusInProgress:
         case iTermFileDescriptorMultiClientAttachStatusSuccess:
             DLog(@"Attached to %@. Will handshake.", _socketPath);
             [self handshakeWithState:state callback:callback];
@@ -170,7 +171,10 @@ NSString *const iTermFileDescriptorMultiClientErrorDomain = @"iTermFileDescripto
 
     // Connect to the socket. This gets us the reading file descriptor.
     int temp = -1;
-    iTermFileDescriptorMultiClientAttachStatus status = iTermConnectToUnixDomainSocket(_socketPath.UTF8String, &temp);
+    iTermFileDescriptorMultiClientAttachStatus status =
+    iTermConnectToUnixDomainSocket(_socketPath.UTF8String,
+                                   &temp,
+                                   0 /* async */);
     state.readFD = temp;
     if (status != iTermFileDescriptorMultiClientAttachStatusSuccess) {
         // Server dead or already connected.

@@ -34,7 +34,9 @@ static void Free2DArray(char **array, NSInteger count) {
 
 @implementation iTermFileDescriptorMultiClient (MRR)
 
-iTermFileDescriptorMultiClientAttachStatus iTermConnectToUnixDomainSocket(const char *path, int *fdOut) {
+iTermFileDescriptorMultiClientAttachStatus iTermConnectToUnixDomainSocket(const char *path,
+                                                                          int *fdOut,
+                                                                          int async) {
     int interrupted = 0;
     int socketFd;
     int flags;
@@ -63,6 +65,20 @@ iTermFileDescriptorMultiClientAttachStatus iTermConnectToUnixDomainSocket(const 
         DLog(@"Calling connect()");
         int rc = connect(socketFd, (struct sockaddr *)&remote, len);
         if (rc == -1) {
+            if (errno == EINPROGRESS) {
+                if (async) {
+                    *fdOut = socketFd;
+                    return iTermFileDescriptorMultiClientAttachStatusInProgress;
+                }
+                // per connect(2): EINPROGRESS means the connection cannot be completed
+                // immediately, and you should select for writing to wait for completion.
+                // See also: https://cr.yp.to/docs/connect.html
+                int fds[1] = { socketFd };
+                int results[1] = { 0 };
+                iTermSelectForWriting(fds, 1, results, 0);
+                *fdOut = socketFd;
+                return iTermFileDescriptorMultiClientAttachStatusSuccess;
+            }
             interrupted = (errno == EINTR);
             DLog(@"Connect failed: %s\n", strerror(errno));
             close(socketFd);
@@ -78,75 +94,95 @@ iTermFileDescriptorMultiClientAttachStatus iTermConnectToUnixDomainSocket(const 
     return iTermFileDescriptorMultiClientAttachStatusSuccess;
 }
 
-int iTermCreateConnectedUnixDomainSocket(const char *path,
-                                         int closeAfterAccept,
-                                         int *listenFDOut,
-                                         int *acceptedFDOut,
-                                         int *connectFDOut) {
-    *listenFDOut = iTermFileDescriptorServerSocketBindListen(path);
+iTermUnixDomainSocketConnectResult iTermCreateConnectedUnixDomainSocket(const char *path,
+                                                                        int closeAfterAccept) {
+    iTermUnixDomainSocketConnectResult result = {
+        .ok = NO
+    };
 
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
+    // Per https://stackoverflow.com/questions/17769964/linux-sockets-non-blocking-connect
+    // To do an async connect you have to first listen, then connect, then accept.
+    result.listenFD = iTermFileDescriptorServerSocketBindListen(path);
 
-    // In another thread, accept on the unix domain socket. Since it's
-    // already listening, there's no race here. connect will block until
-    // accept is called if the main thread wins the race. accept will block
-    // til connect is called if the background thread wins the race.
-    iTermFileDescriptorServerLog("Kicking off a background job to accept() in the server");
-    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-        iTermFileDescriptorServerLog("Now running the accept queue block");
-        if (closeAfterAccept) {
-            *acceptedFDOut = iTermFileDescriptorServerAcceptAndClose(*listenFDOut);
-        } else {
-            *acceptedFDOut = iTermFileDescriptorServerAccept(*listenFDOut);
-        }
+    DLog(@"Connect asynchronously to UDS at %s", path);
+    const iTermFileDescriptorMultiClientAttachStatus connectStatus =
+        iTermConnectToUnixDomainSocket(path,
+                                       &result.connectedFD,
+                                       1 /* async */);
 
-        // Let the main thread go. This is necessary to ensure that
-        // *acceptedFDOut is written to before the main thread uses it.
-        iTermFileDescriptorServerLog("Signal the semaphore");
-        dispatch_semaphore_signal(semaphore);
-    });
-
-    // Connect to the server running in a thread.
-    DLog(@"Connect to server running in thread with path %s", path);
-    switch (iTermConnectToUnixDomainSocket(path, connectFDOut)) {
+    switch (connectStatus) {
         case iTermFileDescriptorMultiClientAttachStatusSuccess:
+        case iTermFileDescriptorMultiClientAttachStatusInProgress:
+            // I don't know why, but connect() doesn't return EINPROGRESS. It returns 0. I can't
+            // get it to take the InProgress code path!
             break;
         case iTermFileDescriptorMultiClientAttachStatusConnectFailed:
         case iTermFileDescriptorMultiClientAttachStatusFatalError:
             // It's pretty weird if this fails.
-            dispatch_release(semaphore);
-            close(*acceptedFDOut);
-            close(*listenFDOut);
-            *listenFDOut = -1;
-            *acceptedFDOut = -1;
-            *connectFDOut = -1;
-            return NO;
+            close(result.listenFD);
+            return (iTermUnixDomainSocketConnectResult) {
+                .ok = NO,
+                .listenFD = -1,
+                .acceptedFD = -1,
+                .connectedFD = -1,
+                .readFD = -1
+            };
+    }
+    iTermFileDescriptorServerLog("Now calling accept");
+    if (closeAfterAccept) {
+        result.acceptedFD = iTermFileDescriptorServerAcceptAndClose(result.listenFD);
+    } else {
+        result.acceptedFD = iTermFileDescriptorServerAccept(result.listenFD);
     }
 
-    // Wait until the background thread finishes accepting.
-    iTermFileDescriptorServerLog("Waiting for the semaphore");
-    dispatch_semaphore_wait(semaphore, DISPATCH_TIME_FOREVER);
-    iTermFileDescriptorServerLog("The semaphore was signaled");
-    dispatch_release(semaphore);
+    if (result.acceptedFD < 0) {
+        iTermFileDescriptorServerLog("Accept failed with %s", strerror(errno));
+        close(result.listenFD);
+        return (iTermUnixDomainSocketConnectResult) {
+            .ok = NO,
+            .listenFD = -1,
+            .acceptedFD = -1,
+            .connectedFD = -1,
+            .readFD = -1
+        };
+    }
 
-    return YES;
+    // This is here because it might be useful in theory, but I cannot test it. According to the
+    // man page for connect, it should return EINPROGRESS for a nonblocking socket. If that were
+    // to happen we would need to wait for the remote to accept(). This will block until that
+    // happens.
+    int fds[1] = { result.connectedFD };
+    int results[1] = { 0 };
+    iTermSelectForWriting(fds, 1, results, 0);
+
+    // https://cr.yp.to/docs/connect.html
+    // Again, I can't get this to happen, but if EINPROGRESS *did* occur and then the remote closed
+    // the socket, it should leave an error in the so_err sockopt.
+    int option_value = 0;
+    socklen_t option_len = sizeof(option_value);
+    const int rc = getsockopt(result.connectedFD, SOL_SOCKET, SO_ERROR, &option_value, &option_len);
+    if (rc < 0 || option_value) {
+        iTermFileDescriptorServerLog("getsockopt failed with %s", strerror(errno));
+        close(result.listenFD);
+        close(result.connectedFD);
+        close(result.acceptedFD);
+        return (iTermUnixDomainSocketConnectResult) {
+            .ok = NO,
+            .listenFD = -1,
+            .acceptedFD = -1,
+            .connectedFD = -1,
+            .readFD = -1
+        };
+    }
+
+    result.ok = YES;
+    result.readFD = result.connectedFD;
+    return result;
 }
 
-- (BOOL)createAttachedSocketAtPath:(NSString *)path
-                            listen:(int *)listenFDOut  // has called listen() on this one
-                          accepted:(int *)acceptedFDOut  // has called accept() on this one
-                         connected:(int *)connectedFDOut   // has called connect() on this one
-                            readFD:(int *)readFDOut {
+- (iTermUnixDomainSocketConnectResult)createAttachedSocketAtPath:(NSString *)path {
     DLog(@"iTermForkAndExecToRunJobInServer");
-    BOOL ok = iTermCreateConnectedUnixDomainSocket(path.UTF8String,
-                                                   NO,  /* closeAfterAccept */
-                                                   listenFDOut,
-                                                   acceptedFDOut,
-                                                   connectedFDOut);
-    if (ok) {
-        *readFDOut = *connectedFDOut;
-    }
-    return ok;
+    return iTermCreateConnectedUnixDomainSocket(path.UTF8String, NO /* closeAfterAccept */);
 }
 
 // NOTE: Sets _readFD and _writeFD as side-effects when returned forkState.pid >= 0.
@@ -171,20 +207,14 @@ int iTermCreateConnectedUnixDomainSocket(const char *path,
     }
 
     // Get ready to run the server in a thread.
-    int listenFd;
-    int acceptedFd;
-    int connectedFd;
+    const iTermUnixDomainSocketConnectResult connectResult = [self createAttachedSocketAtPath:path];
+    *readFDOut = connectResult.readFD;
 
-    const BOOL ok = [self createAttachedSocketAtPath:path
-                                              listen:&listenFd
-                                            accepted:&acceptedFd
-                                           connected:&connectedFd
-                                              readFD:readFDOut];
-    if (!ok) {
+    if (!connectResult.ok) {
         return forkState;
     }
 
-    forkState.connectionFd = connectedFd;
+    forkState.connectionFd = connectResult.connectedFD;
     forkState.writeFd = pipeFds[1];
 
     pipe(forkState.deadMansPipe);
@@ -194,7 +224,7 @@ int iTermCreateConnectedUnixDomainSocket(const char *path,
     const char **cenv = (const char **)Make2DArray(@[]);
     const char *argpath = executable.UTF8String;
 
-    int fds[] = { listenFd, acceptedFd, forkState.deadMansPipe[1], pipeFds[0] };
+    int fds[] = { connectResult.listenFD, connectResult.acceptedFD, forkState.deadMansPipe[1], pipeFds[0] };
     assert(sizeof(fds) / sizeof(*fds) == numberOfFileDescriptorsToPreserve);
 
     forkState.pid = fork();
@@ -202,8 +232,8 @@ int iTermCreateConnectedUnixDomainSocket(const char *path,
         case -1:
             // error
             iTermFileDescriptorServerLog("Fork failed: %s", strerror(errno));
-            close(listenFd);
-            close(acceptedFd);
+            close(connectResult.listenFD);
+            close(connectResult.acceptedFD);
             close(forkState.deadMansPipe[1]);
             Free2DArray(cargv, argv.count);
             close(pipeFds[0]);
@@ -227,8 +257,8 @@ int iTermCreateConnectedUnixDomainSocket(const char *path,
         }
         default:
             // parent
-            close(listenFd);
-            close(acceptedFd);
+            close(connectResult.listenFD);
+            close(connectResult.acceptedFD);
             close(forkState.deadMansPipe[1]);
             Free2DArray(cargv, argv.count);
             close(pipeFds[0]);

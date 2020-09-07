@@ -15,16 +15,26 @@ NS_ASSUME_NONNULL_BEGIN
 typedef NS_ENUM(NSUInteger, iTermFileDescriptorMultiClientAttachStatus) {
     iTermFileDescriptorMultiClientAttachStatusSuccess,
     iTermFileDescriptorMultiClientAttachStatusConnectFailed,
-    iTermFileDescriptorMultiClientAttachStatusFatalError  // includes rejection, unexpected errors
+    iTermFileDescriptorMultiClientAttachStatusFatalError,  // includes rejection, unexpected errors
+    iTermFileDescriptorMultiClientAttachStatusInProgress  // connecting asynchronously
 };
 
-iTermFileDescriptorMultiClientAttachStatus iTermConnectToUnixDomainSocket(const char *path, int *fdOut);
+iTermFileDescriptorMultiClientAttachStatus iTermConnectToUnixDomainSocket(const char *path, int *fdOut, int async);
 
-int iTermCreateConnectedUnixDomainSocket(const char *path,
-                                         int closeAfterAccept,
-                                         int *listenFDOut,
-                                         int *acceptedFDOut,
-                                         int *connectFDOut);
+typedef struct {
+    BOOL ok;
+    // has called listen() on this one
+    int listenFD;
+    // has called accept() on this one
+    int acceptedFD;
+    // has called connect() on this one
+    int connectedFD;
+    // you can read() on this one. Valid only if ok=true
+    int readFD;
+} iTermUnixDomainSocketConnectResult;
+
+iTermUnixDomainSocketConnectResult iTermCreateConnectedUnixDomainSocket(const char *path,
+                                                                        int closeAfterAccept);
 
 @interface iTermFileDescriptorMultiClient (MRR)
 
