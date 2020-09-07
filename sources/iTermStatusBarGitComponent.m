@@ -133,8 +133,8 @@ static const NSTimeInterval iTermStatusBarGitComponentDefaultCadence = 2;
                                                        key:iTermStatusBarGitComponentPollingIntervalKey];
 
     knobs = @[ formatKnob ];
-    knobs = [knobs arrayByAddingObjectsFromArray:self.minMaxWidthKnobs];
     knobs = [knobs arrayByAddingObjectsFromArray:[super statusBarComponentKnobs]];
+    knobs = [knobs arrayByAddingObjectsFromArray:self.minMaxWidthKnobs];
     return knobs;
 }
 

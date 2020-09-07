@@ -355,7 +355,7 @@ static const CGFloat iTermStatusBarSparklineBottomMargin = 2;
 
     iTermStatusBarSparklinesModel *model = [self.sparklinesModel modelKeepingLast:maximumWidth];
     if (preferredWidth) {
-        *preferredWidth = model.count;
+        *preferredWidth = [self maximumNumberOfValues];
     }
     return model;
 }

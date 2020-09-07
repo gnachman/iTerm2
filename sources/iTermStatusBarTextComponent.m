@@ -37,7 +37,7 @@ NS_ASSUME_NONNULL_BEGIN
                                                   defaultValue:nil
                                                            key:iTermStatusBarSharedBackgroundColorKey];
 
-    return [@[ textColorKnob, backgroundColorKnob ] arrayByAddingObjectsFromArray:[super statusBarComponentKnobs]];
+    return [@[ textColorKnob, backgroundColorKnob, [super statusBarComponentKnobs], [self minMaxWidthKnobs]] flattenedArray];
 }
 
 - (NSFont *)font {

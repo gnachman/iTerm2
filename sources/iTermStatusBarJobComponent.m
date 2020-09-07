@@ -45,10 +45,6 @@ NS_ASSUME_NONNULL_BEGIN
     return self;
 }
 
-- (NSArray<iTermStatusBarComponentKnob *> *)statusBarComponentKnobs {
-    return [self.minMaxWidthKnobs arrayByAddingObjectsFromArray:[super statusBarComponentKnobs]];
-}
-
 + (NSDictionary *)statusBarComponentDefaultKnobs {
     NSDictionary *fromSuper = [super statusBarComponentDefaultKnobs];
     return [fromSuper dictionaryByMergingDictionary:self.defaultMinMaxWidthKnobValues];

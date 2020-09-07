@@ -9,6 +9,7 @@
 
 #import "DebugLogging.h"
 #import "iTermAdvancedSettingsModel.h"
+#import "iTermStatusBarBaseComponent.h"
 #import "iTermUnreadCountView.h"
 #import "NSDictionary+iTerm.h"
 #import "NSEvent+iTerm.h"
@@ -112,10 +113,14 @@ const CGFloat iTermGetStatusBarHeight() {
 }
 
 - (CGFloat)minimumWidthIncludingIcon {
+    const CGFloat minPreferred = self.component.statusBarComponentMinimumWidth;
+    NSDictionary *knobValues = self.component.configuration[iTermStatusBarComponentConfigurationKeyKnobValues];
+    NSNumber *knobValue = knobValues[iTermStatusBarMinimumWidthKey];
+    const CGFloat minExIcon = knobValue ? MAX(minPreferred, knobValue.doubleValue) : minPreferred;
     if (self.component.statusBarComponentIcon) {
-        return self.component.statusBarComponentMinimumWidth + iTermStatusBarViewControllerIconWidth + iTermStatusBarViewControllerMargin;
+        return minExIcon + iTermStatusBarViewControllerIconWidth + iTermStatusBarViewControllerMargin;
     } else {
-        return self.component.statusBarComponentMinimumWidth + iTermStatusBarViewControllerMargin;
+        return minExIcon + iTermStatusBarViewControllerMargin;
     }
 }
 

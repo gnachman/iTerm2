@@ -366,6 +366,14 @@ static const CGFloat iTermStatusBarViewControllerBottomMargin = 0;
     [self.delegate statusBarResignFirstResponder];
 }
 
+- (void)statusBarComponent:(id<iTermStatusBarComponent>)component
+      reportScriptingError:(NSError *)error
+             forInvocation:(NSString *)invocation
+                    origin:(NSString *)origin {
+    [self.delegate statusBarReportScriptingError:error forInvocation:invocation origin:origin];
+}
+
+
 #pragma mark - iTermStatusBarContainerViewDelegate
 
 - (void)statusBarContainerView:(iTermStatusBarContainerView *)sender hideComponent:(id<iTermStatusBarComponent>)component {

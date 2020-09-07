@@ -42,7 +42,7 @@
                                               defaultValue:nil
                                                        key:iTermStatusBarSharedBackgroundColorKey];
 
-    return [@[ textColorKnob, backgroundColorKnob ] arrayByAddingObjectsFromArray:[super statusBarComponentKnobs]];
+    return [@[ textColorKnob, backgroundColorKnob, [super statusBarComponentKnobs], [self minMaxWidthKnobs] ] flattenedArray];
 }
 
 - (CGFloat)statusBarComponentPreferredWidth {

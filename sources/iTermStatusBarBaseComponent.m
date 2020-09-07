@@ -315,6 +315,11 @@ const double iTermStatusBarBaseComponentDefaultPriority = 5;
     return MAX(0.01, value.doubleValue);
 }
 
+- (CGFloat)statusBarComponentMaximumWidth {
+    NSNumber *value = self.configuration[iTermStatusBarComponentConfigurationKeyKnobValues][iTermStatusBarMaximumWidthKey] ?: @(INFINITY);
+    return MAX(24, value.doubleValue);
+}
+
 - (nullable NSViewController<iTermFindViewController> *)statusBarComponentSearchViewController {
     return nil;
 }

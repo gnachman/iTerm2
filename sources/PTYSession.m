@@ -12707,6 +12707,15 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [_textview.window makeFirstResponder:_textview];
 }
 
+- (void)statusBarReportScriptingError:(NSError *)error
+                        forInvocation:(NSString *)invocation
+                               origin:(NSString *)origin {
+    [PTYSession reportFunctionCallError:error
+                          forInvocation:invocation
+                                 origin:origin
+                                 window:self.delegate.realParentWindow.window];
+}
+
 #pragma mark - iTermMetaFrustrationDetectorDelegate
 
 - (void)metaFrustrationDetectorDidDetectFrustrationForLeftOption {

@@ -9,6 +9,7 @@
 #import "iTermActionsModel.h"
 #import "iTermScriptHistory.h"
 #import "iTermSwiftyString.h"
+#import "NSArray+iTerm.h"
 #import "NSDictionary+iTerm.h"
 #import "NSImage+iTerm.h"
 #import "RegexKitLite.h"
@@ -50,7 +51,7 @@ static NSString *const iTermStatusBarActionKey = @"action";
                                                placeholder:nil
                                               defaultValue:nil
                                                        key:iTermStatusBarActionKey];
-    return [@[ actionKnob ] arrayByAddingObjectsFromArray:[self minMaxWidthKnobs]];
+    return [@[ actionKnob, [super statusBarComponentKnobs] ] flattenedArray];
 }
 
 - (NSDictionary *)actionDictionary {

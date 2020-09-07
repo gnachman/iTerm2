@@ -249,10 +249,6 @@ static NSString *const iTermStatusBarHostnameComponentAbbreviateLocalhost = @"ab
     }
 }
 
-- (NSArray<iTermStatusBarComponentKnob *> *)statusBarComponentKnobs {
-    return [self.minMaxWidthKnobs arrayByAddingObjectsFromArray:[super statusBarComponentKnobs]];
-}
-
 - (NSImage *)statusBarComponentIcon {
     return [NSImage it_cacheableImageNamed:@"StatusBarIconFolder" forClass:[self class]];
 }

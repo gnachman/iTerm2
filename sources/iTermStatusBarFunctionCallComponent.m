@@ -21,6 +21,7 @@ static NSString *const iTermStatusBarTimeoutKey = @"timeout";
 
 @implementation iTermStatusBarFunctionCallComponent {
     NSButton *_button;
+    NSButton *_measuringButton;
 }
 
 - (NSArray<iTermStatusBarComponentKnob *> *)statusBarComponentKnobs {
@@ -132,7 +133,12 @@ static NSString *const iTermStatusBarTimeoutKey = @"timeout";
 }
 
 - (CGFloat)statusBarComponentMinimumWidth {
-    return self.button.frame.size.width;
+    if (!_measuringButton) {
+        _measuringButton = [self newButton];
+    }
+    _measuringButton.attributedTitle = self.attributedString;
+    [_measuringButton sizeToFit];
+    return [_measuringButton frame].size.width;
 }
 
 - (NSString *)statusBarComponentShortDescription {
@@ -157,7 +163,7 @@ static NSString *const iTermStatusBarTimeoutKey = @"timeout";
 }
 
 - (CGFloat)statusBarComponentVerticalOffset {
-    return -1.5;
+    return 0.5;
 }
 
 #pragma mark - iTermStatusBarComponent
@@ -176,7 +182,12 @@ static NSString *const iTermStatusBarTimeoutKey = @"timeout";
                                   timeout:timeout
                                     scope:weakSelf.scope
                                retainSelf:YES
-                               completion:^(id value, NSError *error, NSSet<NSString *> *dependencies) {}];
+                               completion:^(id value, NSError *error, NSSet<NSString *> *dependencies) {
+        if (error) {
+            NSString *label = self.configuration[iTermStatusBarComponentConfigurationKeyKnobValues][iTermStatusBarLabelKey] ?: @"";
+            [weakSelf.delegate statusBarComponent:self reportScriptingError:error forInvocation:invocation origin:label];
+        }
+    }];
 }
 
 @end

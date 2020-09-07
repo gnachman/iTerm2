@@ -7,6 +7,7 @@
 
 #import "iTermStatusBarClockComponent.h"
 
+#import "NSArray+iTerm.h"
 #import "NSImage+iTerm.h"
 #import "NSDictionary+iTerm.h"
 
@@ -44,8 +45,7 @@ static NSString *const iTermStatusBarClockComponentLocalizeKey = @"localize";
                                                    placeholder:nil
                                                   defaultValue:@YES
                                                            key:iTermStatusBarClockComponentLocalizeKey];
-
-    return [@[ formatKnob, dateFormatIsTemplate ] arrayByAddingObjectsFromArray:[super statusBarComponentKnobs]];
+    return [ @[ formatKnob, dateFormatIsTemplate, [super statusBarComponentKnobs] ] flattenedArray];
 }
 
 + (NSDictionary *)statusBarComponentDefaultKnobs {

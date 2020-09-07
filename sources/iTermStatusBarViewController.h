@@ -32,6 +32,9 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)statusBarPerformAction:(iTermAction *)action;
 - (void)statusBarRevealActionsTool;
 - (void)statusBarResignFirstResponder;
+- (void)statusBarReportScriptingError:(NSError *)error
+                        forInvocation:(NSString *)invocation
+                               origin:(NSString *)origin;
 
 // Takes into account theme, dark/light mode (if relevant), and advanced config background color.
 - (BOOL)statusBarHasDarkBackground;

@@ -22,6 +22,10 @@
     [views enumerateObjectsUsingBlock:^(iTermStatusBarContainerView * _Nonnull view, NSUInteger idx, BOOL * _Nonnull stop) {
         const double weight = view.component.statusBarComponentSpringConstant / sumOfSpringConstants;
         double delta = floor(availableWidth * weight);
+        const CGFloat maxWidth = [self maximumWidthForComponent:view.component];
+        if (view.desiredWidth + delta > maxWidth) {
+            delta = maxWidth - view.desiredWidth;
+        }
         const double maximum = view.component.statusBarComponentPreferredWidth + (view.component.statusBarComponentIcon ? iTermStatusBarViewControllerIconWidth : 0);
         const double proposed = view.desiredWidth + delta;
         const double overage = floor(MAX(0, proposed - maximum));

@@ -9,6 +9,8 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+@protocol iTermStatusBarComponent;
+
 @interface iTermStatusBarBaseLayoutAlgorithm : iTermStatusBarLayoutAlgorithm {
 @protected
     CGFloat _statusBarWidth;
@@ -22,6 +24,8 @@ NS_ASSUME_NONNULL_BEGIN
 - (CGFloat)minimumWidthOfContainerViews:(NSArray<iTermStatusBarContainerView *> *)views;
 - (NSArray<iTermStatusBarContainerView *> *)containerViewsSortedByPriority:(NSArray<iTermStatusBarContainerView *> *)eligibleContainerViews;
 - (void)makeWidthsAndOriginsIntegers:(NSArray<iTermStatusBarContainerView *> *)views;
+- (CGFloat)minimumWidthForComponent:(id<iTermStatusBarComponent>)component;
+- (CGFloat)maximumWidthForComponent:(id<iTermStatusBarComponent>)component;
 
 @end
 
