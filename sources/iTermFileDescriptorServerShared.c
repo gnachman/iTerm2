@@ -192,7 +192,7 @@ ssize_t iTermFileDescriptorServerSendMessageAndFileDescriptor(int connectionFd,
         // Now write the remainder. Because this doesn't use sendmsg there's no size limit problem.
         int error = 0;
         const ssize_t secondResult = iTermFileDescriptorWriteImpl(connectionFd,
-                                                                  buffer,
+                                                                  buffer + IOV_MAX,
                                                                   remainingSize,
                                                                   &error);
         if (secondResult <= 0) {
@@ -240,6 +240,7 @@ ssize_t iTermFileDescriptorServerSendMessageAndFileDescriptor(int connectionFd,
     return rc;
 }
 
+/* Selects for reading */
 int iTermSelect(int *fds, int count, int *results, int wantErrors) {
     int result;
     int theError;
@@ -267,6 +268,41 @@ int iTermSelect(int *fds, int count, int *results, int wantErrors) {
     int n = 0;
     for (int i = 0; i < count; i++) {
         results[i] = FD_ISSET(fds[i], &readset) || (wantErrors && FD_ISSET(fds[i], &errorset));
+        if (results[i]) {
+            n++;
+        }
+    }
+    return n;
+}
+
+/* Selects for writing */
+int iTermSelectForWriting(int *fds, int count, int *results, int wantErrors) {
+    int result;
+    int theError;
+    fd_set writeset;
+    fd_set errorset;
+    do {
+        FD_ZERO(&writeset);
+        FD_ZERO(&errorset);
+        int max = 0;
+        for (int i = 0; i < count; i++) {
+            if (fds[i] > max) {
+                max = fds[i];
+            }
+            FD_SET(fds[i], &writeset);
+            if (wantErrors) {
+                FD_SET(fds[i], &errorset);
+            }
+        }
+        FDLog(LOG_DEBUG, "Calling select...");
+        result = select(max + 1, NULL, &writeset, wantErrors ? &errorset : NULL, NULL);
+        theError = errno;
+        FDLog(LOG_DEBUG, "select returned %d, error = %s", result, strerror(theError));
+    } while (result == -1 && theError == EINTR);
+
+    int n = 0;
+    for (int i = 0; i < count; i++) {
+        results[i] = FD_ISSET(fds[i], &writeset) || (wantErrors && FD_ISSET(fds[i], &errorset));
         if (results[i]) {
             n++;
         }
