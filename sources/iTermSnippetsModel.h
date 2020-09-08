@@ -23,6 +23,11 @@ NS_ASSUME_NONNULL_BEGIN
 - (instancetype)initWithDictionary:(NSDictionary *)dictionary;
 
 - (instancetype)init NS_UNAVAILABLE;
+
+- (NSString *)trimmedValue:(NSInteger)maxLength;
+- (NSString *)trimmedTitle:(NSInteger)maxLength;
+- (BOOL)titleEqualsValueUpToLength:(NSInteger)maxLength;
+
 @end
 
 @interface iTermSnippetsModel : NSObject

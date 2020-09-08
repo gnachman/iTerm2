@@ -23,6 +23,10 @@ iTermURLActionHelperDelegate>
 
 - (void)initARC;
 
+#pragma mark - NSResponder
+
+- (BOOL)arcValidateMenuItem:(NSMenuItem *)item;
+
 #pragma mark - Coordinate Space Conversions
 
 - (NSPoint)clickPoint:(NSEvent *)event allowRightMarginOverflow:(BOOL)allowRightMarginOverflow;

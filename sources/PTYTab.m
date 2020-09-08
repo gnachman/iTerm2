@@ -6364,8 +6364,12 @@ typedef struct {
     [self.delegate tabHasNontrivialJobDidChange:self];
 }
 
-- (void)sessionRevealActionsTool {
-    [self.delegate tabRevealActionsTool:self];
+- (void)sessionEditActions {
+    [self.delegate tabEditActions:self];
+}
+
+- (void)sessionEditSnippets {
+    [self.delegate tabEditSnippets:self];
 }
 
 - (NSImage *)sessionBackgroundImage {

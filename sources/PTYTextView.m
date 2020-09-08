@@ -446,7 +446,7 @@
     if ([NSStringFromSelector(theSel) hasPrefix:@"contextMenuAction"]) {
         return YES;
     }
-    return NO;
+    return [self arcValidateMenuItem:item];
 }
 
 - (BOOL)resignFirstResponder {

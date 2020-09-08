@@ -29,6 +29,9 @@
                 <outlet property="_mouseToolbarItem" destination="6056" id="Wc9-tZ-Fn8"/>
                 <outlet property="_pointerViewController" destination="pwh-OY-l3e" id="oUo-Ri-MHo"/>
                 <outlet property="_profilesViewController" destination="HVI-63-mNz" id="jfc-z4-6um"/>
+                <outlet property="_shortcutsTabViewItem" destination="B3u-OI-QBk" id="lIq-B3-nkv"/>
+                <outlet property="_shortcutsToolbarItem" destination="97f-06-acT" id="JSR-PF-6wg"/>
+                <outlet property="_shortcutsViewController" destination="Go1-4j-VZ4" id="UYk-oY-V6G"/>
                 <outlet property="_tabView" destination="1943" id="ygD-e3-PPB"/>
                 <outlet property="_toolbar" destination="5885" id="m2f-4x-oIV"/>
                 <outlet property="arrangements_" destination="5572" id="5584"/>
@@ -51,10 +54,10 @@
                 <outlet property="placeholderView" destination="6sa-Ma-Wvi" id="d35-GN-ycl"/>
             </connections>
         </customObject>
-        <customObject id="Go1-4j-VZ4" userLabel="Global iTermKeyMappingViewController" customClass="iTermKeyMappingViewController">
+        <customObject id="4x3-hD-7hx" userLabel="Global iTermKeyMappingViewController" customClass="iTermKeyMappingViewController">
             <connections>
-                <outlet property="delegate" destination="8TE-cq-5cL" id="w6N-gg-Ofw"/>
-                <outlet property="placeholderView" destination="zLA-QA-WQd" id="sBB-40-LAa"/>
+                <outlet property="delegate" destination="8TE-cq-5cL" id="Ozn-wL-Mb7"/>
+                <outlet property="placeholderView" destination="zLA-QA-WQd" id="Dcz-oT-vDY"/>
             </connections>
         </customObject>
         <customObject id="5797" customClass="TriggerController">
@@ -390,20 +393,20 @@ Gw
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <font key="font" metaFont="system"/>
                         <tabViewItems>
-                            <tabViewItem label="Global Settings" identifier="1" id="1944" userLabel="Tab View Item - General">
+                            <tabViewItem label="Global Settings" identifier="1" id="1944" userLabel="General">
                                 <view key="view" id="1947" userLabel="Filler">
                                     <rect key="frame" x="0.0" y="0.0" width="911" height="454"/>
                                     <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                 </view>
                             </tabViewItem>
-                            <tabViewItem label="Item 4" identifier="Item 4" id="4439" userLabel="Tab View Item - Appearance">
+                            <tabViewItem label="Item 4" identifier="Item 4" id="4439" userLabel="Appearance">
                                 <view key="view" id="4440" userLabel="Filler">
                                     <rect key="frame" x="0.0" y="0.0" width="911" height="454"/>
                                     <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                 </view>
                             </tabViewItem>
-                            <tabViewItem label="Bookmarks" identifier="2" id="1945" userLabel="Tab View Item - Profiles">
-                                <view key="view" ambiguous="YES" id="1946">
+                            <tabViewItem label="Bookmarks" identifier="2" id="1945" userLabel="Profiles">
+                                <view key="view" id="1946">
                                     <rect key="frame" x="0.0" y="0.0" width="911" height="454"/>
                                     <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                     <subviews>
@@ -417,7 +420,7 @@ Gw
                                                     <font key="font" metaFont="system"/>
                                                     <tabViewItems>
                                                         <tabViewItem label="General" identifier="1" id="2101">
-                                                            <view key="view" ambiguous="YES" id="2104" userLabel="Filler">
+                                                            <view key="view" id="2104" userLabel="Filler">
                                                                 <rect key="frame" x="10" y="33" width="559" height="404"/>
                                                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                                             </view>
@@ -575,13 +578,19 @@ Gw
                                     <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                 </view>
                             </tabViewItem>
-                            <tabViewItem label="Mouse" identifier="Mouse" id="6059" userLabel="Tab View Item - Pointer">
+                            <tabViewItem label="Mouse" identifier="Mouse" id="6059">
                                 <view key="view" id="6060" userLabel="Filler">
                                     <rect key="frame" x="0.0" y="0.0" width="911" height="454"/>
                                     <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                 </view>
                             </tabViewItem>
-                            <tabViewItem label="Keys" identifier="Keys" id="5417" userLabel="Tab View Item - Arrangements">
+                            <tabViewItem label="Shortcuts" identifier="Shortcuts" id="B3u-OI-QBk">
+                                <view key="view" id="hV8-Ia-2Li" userLabel="Filler">
+                                    <rect key="frame" x="0.0" y="0.0" width="911" height="454"/>
+                                    <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                                </view>
+                            </tabViewItem>
+                            <tabViewItem label="Keys" identifier="Keys" id="5417" userLabel="Arrangements">
                                 <view key="view" id="5418" userLabel="Filler">
                                     <rect key="frame" x="0.0" y="0.0" width="911" height="454"/>
                                     <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
@@ -658,6 +667,13 @@ Gw
                         </connections>
                     </toolbarItem>
                     <toolbarItem implicitItemIdentifier="NSToolbarFlexibleSpaceItem" id="gT5-w7-yWc"/>
+                    <toolbarItem implicitItemIdentifier="AC57CB9F-043A-4DC7-9155-F358367619B6" label="Shortcuts" paletteLabel="Shortcuts" tag="-1" image="PrefsShortcuts" id="97f-06-acT">
+                        <size key="minSize" width="32" height="32"/>
+                        <size key="maxSize" width="32" height="32"/>
+                        <connections>
+                            <action selector="showShortcutsTabView:" target="-2" id="e52-BD-2Aw"/>
+                        </connections>
+                    </toolbarItem>
                 </allowedToolbarItems>
                 <defaultToolbarItems>
                     <toolbarItem reference="5887"/>
@@ -665,6 +681,7 @@ Gw
                     <toolbarItem reference="5886"/>
                     <toolbarItem reference="5888"/>
                     <toolbarItem reference="6056"/>
+                    <toolbarItem reference="97f-06-acT"/>
                     <toolbarItem reference="5890"/>
                     <toolbarItem reference="gtg-rw-6h8"/>
                     <toolbarItem reference="gT5-w7-yWc"/>
@@ -707,7 +724,7 @@ Gw
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <clipView key="contentView" id="Oi5-ZC-SxR">
                             <rect key="frame" x="1" y="0.0" width="762" height="264"/>
-                            <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                            <autoresizingMask key="autoresizingMask"/>
                             <subviews>
                                 <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" alternatingRowBackgroundColors="YES" columnReordering="NO" multipleSelection="NO" autosaveColumns="NO" headerView="5784" id="5783">
                                     <rect key="frame" x="0.0" y="0.0" width="762" height="247"/>
@@ -1320,7 +1337,7 @@ DQ
                 <outlet property="_hotkeyField" destination="5105" id="7JV-k6-QEN"/>
                 <outlet property="_hotkeyLabel" destination="5106" id="nqf-CS-llf"/>
                 <outlet property="_keyMappingView" destination="zLA-QA-WQd" id="SJH-CO-sM8"/>
-                <outlet property="_keyMappingViewController" destination="Go1-4j-VZ4" id="SjN-Ah-cyq"/>
+                <outlet property="_keyMappingViewController" destination="4x3-hD-7hx" id="XhT-BU-0nz"/>
                 <outlet property="_leftCommandButton" destination="4393" id="Acz-Ri-0zT"/>
                 <outlet property="_leftCommandButtonLabel" destination="3677" id="UYl-D3-ufT"/>
                 <outlet property="_leftOptionButton" destination="4383" id="kbJ-KW-Hkc"/>
@@ -1350,6 +1367,16 @@ DQ
                 <outlet property="_tabView" destination="kxy-pe-gzv" id="iKb-9p-k0h"/>
                 <outlet property="_threeFingerEmulatesMiddle" destination="6227" id="eEX-cI-LAf"/>
                 <outlet property="view" destination="qwf-ly-A8K" id="myg-rZ-Ivy"/>
+            </connections>
+        </customObject>
+        <customObject id="Go1-4j-VZ4" userLabel="Prefs&gt;Shortcuts View Controller" customClass="iTermShortcutsViewController">
+            <connections>
+                <outlet property="_actionsView" destination="zEH-KM-w0R" id="bCh-ZU-O5a"/>
+                <outlet property="_actionsViewController" destination="NZL-jc-nXF" id="izj-9l-mbO"/>
+                <outlet property="_snippetsView" destination="9IY-Wm-Rgs" id="ZGB-Mp-UyI"/>
+                <outlet property="_snippetsViewController" destination="wEw-Xc-e6F" id="XHv-e1-wH2"/>
+                <outlet property="_tabView" destination="jEa-TW-gyU" id="Ffq-XX-TDu"/>
+                <outlet property="view" destination="kYi-80-OOk" id="jHb-Fx-gY8"/>
             </connections>
         </customObject>
         <customObject id="HVI-63-mNz" userLabel="Prefs&gt;Profiles View Controller" customClass="ProfilePreferencesViewController">
@@ -6485,7 +6512,45 @@ DQ
                 </tabView>
             </subviews>
             <accessibility identifier="prefsPointer"/>
-            <point key="canvasLocation" x="-685" y="-595.5"/>
+            <point key="canvasLocation" x="-704" y="-762"/>
+        </customView>
+        <customView id="kYi-80-OOk" userLabel="Prefs - Shortcuts" customClass="iTermSizeRememberingView">
+            <rect key="frame" x="0.0" y="0.0" width="892" height="394"/>
+            <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+            <subviews>
+                <tabView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="jEa-TW-gyU">
+                    <rect key="frame" x="13" y="10" width="866" height="390"/>
+                    <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                    <font key="font" metaFont="system"/>
+                    <tabViewItems>
+                        <tabViewItem label="Actions" identifier="Actions" id="GdP-GX-FgT">
+                            <view key="view" identifier="ActionWrapper" id="zEH-KM-w0R">
+                                <rect key="frame" x="10" y="33" width="846" height="344"/>
+                                <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                                <subviews>
+                                    <customView identifier="ActionCustomView" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="CIm-Xk-Wex">
+                                        <rect key="frame" x="-3" y="-3" width="852" height="344"/>
+                                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                    </customView>
+                                </subviews>
+                            </view>
+                        </tabViewItem>
+                        <tabViewItem label="Snippets" identifier="Snippets" id="DUQ-NG-jEh">
+                            <view key="view" identifier="SnippetWrapper" id="0Vk-OH-GGO">
+                                <rect key="frame" x="10" y="33" width="846" height="344"/>
+                                <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                                <subviews>
+                                    <customView identifier="SnippetCustomView" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="9IY-Wm-Rgs">
+                                        <rect key="frame" x="0.0" y="0.0" width="849" height="341"/>
+                                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                    </customView>
+                                </subviews>
+                            </view>
+                        </tabViewItem>
+                    </tabViewItems>
+                </tabView>
+            </subviews>
+            <point key="canvasLocation" x="-704" y="-314"/>
         </customView>
         <customView id="FiR-vo-BeU" userLabel="Prefs - Advanced" customClass="iTermSizeRememberingView">
             <rect key="frame" x="0.0" y="0.0" width="992" height="416"/>
@@ -6496,7 +6561,7 @@ DQ
                     <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
                     <clipView key="contentView" id="Fm3-fw-Qw5">
                         <rect key="frame" x="1" y="1" width="950" height="362"/>
-                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <autoresizingMask key="autoresizingMask"/>
                         <subviews>
                             <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="none" columnReordering="NO" columnResizing="NO" multipleSelection="NO" autosaveColumns="NO" typeSelect="NO" rowSizeStyle="automatic" viewBased="YES" id="5ik-Xh-beg" customClass="iTermAdvancedSettingsTableView">
                                 <rect key="frame" x="0.0" y="0.0" width="950" height="362"/>
@@ -6518,11 +6583,11 @@ DQ
                                         <tableColumnResizingMask key="resizingMask" resizeWithTable="YES"/>
                                         <prototypeCellViews>
                                             <tableCellView id="RoD-zs-eHF">
-                                                <rect key="frame" x="1" y="1" width="591" height="17"/>
+                                                <rect key="frame" x="1" y="1" width="590.5" height="17"/>
                                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                                 <subviews>
                                                     <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="zlz-2J-KIa">
-                                                        <rect key="frame" x="0.0" y="0.0" width="591" height="17"/>
+                                                        <rect key="frame" x="0.0" y="0.0" width="590.5" height="17"/>
                                                         <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
                                                         <textFieldCell key="cell" lineBreakMode="truncatingTail" sendsActionOnEndEditing="YES" title="Table View Cell" id="XeY-ex-eKM">
                                                             <font key="font" metaFont="system"/>
@@ -6550,7 +6615,7 @@ DQ
                                         <tableColumnResizingMask key="resizingMask" resizeWithTable="YES"/>
                                         <prototypeCellViews>
                                             <tableCellView id="W6M-oM-X4N">
-                                                <rect key="frame" x="595" y="1" width="353" height="17"/>
+                                                <rect key="frame" x="594.5" y="1" width="353" height="17"/>
                                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                                 <subviews>
                                                     <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="n68-XZ-ujb">
@@ -6917,6 +6982,8 @@ DQ
             <accessibility identifier="filterAlertsPanel"/>
             <point key="canvasLocation" x="139" y="345"/>
         </window>
+        <viewController id="NZL-jc-nXF" userLabel="Global Actions Editing View Controller" customClass="iTermActionsEditingViewController"/>
+        <viewController id="wEw-Xc-e6F" userLabel="Global Snippets Editing View Controller" customClass="iTermSnippetsEditingViewController"/>
     </objects>
     <resources>
         <image name="NSActionTemplate" width="14" height="14"/>
@@ -6930,6 +6997,7 @@ DQ
         <image name="PrefsKeyboard" width="32" height="32"/>
         <image name="PrefsMouse" width="32" height="32"/>
         <image name="PrefsProfile" width="32" height="32"/>
+        <image name="PrefsShortcuts" width="32" height="32"/>
         <image name="Warning" width="16" height="16"/>
         <image name="WarningSign" width="16" height="16"/>
     </resources>

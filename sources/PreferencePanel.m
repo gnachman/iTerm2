@@ -34,6 +34,7 @@
  *     - AppearancePreferencesViewController: View controller for Prefs>Appearance
  *     - KeysPreferencesViewController:       View controller for Prefs>Keys
  *     - PointerPreferencesViewController:    View controller for Prefs>Pointer
+ *     - iTermShortcutsViewController:        View controller for Prefs>Shortcuts
  *     - ProfilePreferencesViewController:    View controller for Prefs>Profiles
  *     - WindowArrangements:                  Owns Prefs>Arrangements
  *     - iTermAdvancedSettingsController:     Owns Prefs>Advanced
@@ -83,6 +84,7 @@
 #import "iTermRemotePreferences.h"
 #import "iTermPreferencesSearchEngineResultsWindowController.h"
 #import "iTermSearchableViewController.h"
+#import "iTermShortcutsViewController.h"
 #import "iTermSizeRememberingView.h"
 #import "iTermWarning.h"
 #import "KeysPreferencesViewController.h"
@@ -317,6 +319,7 @@ static iTermPreferencesSearchEngine *gSearchEngine;
     IBOutlet ProfilePreferencesViewController *_profilesViewController;
     IBOutlet PointerPreferencesViewController *_pointerViewController;
     IBOutlet iTermAdvancedSettingsViewController *_advancedViewController;
+    IBOutlet iTermShortcutsViewController *_shortcutsViewController;
 
     IBOutlet NSToolbar *_toolbar;
     IBOutlet NSTabView *_tabView;
@@ -335,6 +338,9 @@ static iTermPreferencesSearchEngine *gSearchEngine;
     IBOutlet NSToolbarItem *_advancedToolbarItem;
     IBOutlet NSTabViewItem *_advancedTabViewItem;
     IBOutlet NSToolbarItem *_flexibleSpaceToolbarItem;
+    IBOutlet NSTabViewItem *_shortcutsTabViewItem;
+    IBOutlet NSToolbarItem *_shortcutsToolbarItem;
+
     NSToolbarItem *_searchFieldToolbarItem;
 #ifdef MAC_OS_X_VERSION_10_16
     NSSearchToolbarItem *_bigSurSearchFieldToolbarItem NS_AVAILABLE_MAC(10_16);
@@ -407,6 +413,7 @@ static iTermPreferencesSearchEngine *gSearchEngine;
         _bookmarksToolbarItem.image = [NSImage it_imageForSymbolName:@"person" accessibilityDescription:@"Profiles"];
         _mouseToolbarItem.image = [NSImage it_imageForSymbolName:@"cursorarrow.motionlines" accessibilityDescription:@"Pointer"];
         _advancedToolbarItem.image = [NSImage it_imageForSymbolName:@"gearshape.2" accessibilityDescription:@"Advanced"];
+#warning TODO: Big sur icon for shortcuts
     }
 #endif
     _globalTabViewItem.view = _generalPreferencesViewController.view;
@@ -415,6 +422,7 @@ static iTermPreferencesSearchEngine *gSearchEngine;
     _arrangementsTabViewItem.view = arrangements_.view;
     _mouseTabViewItem.view = _pointerViewController.view;
     _advancedTabViewItem.view = _advancedViewController.view;
+    _shortcutsTabViewItem.view = _shortcutsViewController.view;
 
     _generalPreferencesViewController.preferencePanel = self;
     _appearancePreferencesViewController.preferencePanel = self;
@@ -704,6 +712,11 @@ andEditComponentWithIdentifier:(NSString *)identifier
     [_tabView selectTabViewItem:_advancedTabViewItem];
 }
 
+- (IBAction)showShortcutsTabView:(id)sender {
+    [self hideScrimAndSERP];
+    [_tabView selectTabViewItem:_shortcutsTabViewItem];
+}
+
 #pragma mark - NSToolbarDelegate and ToolbarItemValidation
 
 - (BOOL)validateToolbarItem:(NSToolbarItem *)theItem {
@@ -734,6 +747,7 @@ andEditComponentWithIdentifier:(NSString *)identifier
                          [_keyboardToolbarItem itemIdentifier],
                          [_arrangementsToolbarItem itemIdentifier],
                          [_mouseToolbarItem itemIdentifier],
+                         [_shortcutsToolbarItem itemIdentifier],
                          [_advancedToolbarItem itemIdentifier],
                          [_flexibleSpaceToolbarItem itemIdentifier],
                          _searchFieldToolbarItem.itemIdentifier];
@@ -770,6 +784,7 @@ andEditComponentWithIdentifier:(NSString *)identifier
        [_keyboardToolbarItem itemIdentifier]: _keyboardToolbarItem,
        [_arrangementsToolbarItem itemIdentifier]: _arrangementsToolbarItem,
        [_mouseToolbarItem itemIdentifier]: _mouseToolbarItem,
+       [_shortcutsToolbarItem itemIdentifier]: _shortcutsToolbarItem,
        [_advancedToolbarItem itemIdentifier]: _advancedToolbarItem,
        _searchFieldToolbarItem.itemIdentifier: _searchFieldToolbarItem };
     return dict;
@@ -838,6 +853,9 @@ andEditComponentWithIdentifier:(NSString *)identifier
     if (tabViewItem == _mouseTabViewItem) {
         return _mouseToolbarItem;
     }
+    if (tabViewItem == _shortcutsTabViewItem) {
+        return _shortcutsToolbarItem;
+    }
     if (tabViewItem == _advancedTabViewItem) {
         return _advancedToolbarItem;
     }
@@ -864,6 +882,9 @@ andEditComponentWithIdentifier:(NSString *)identifier
     if (viewController == _pointerViewController) {
         return _mouseTabViewItem;
     }
+    if (viewController == _shortcutsViewController) {
+        return _shortcutsTabViewItem;
+    }
     if (viewController == _advancedViewController) {
         return _advancedTabViewItem;
     }
@@ -889,6 +910,9 @@ andEditComponentWithIdentifier:(NSString *)identifier
     }
     if (tabViewItem == _mouseTabViewItem) {
         return _pointerViewController;
+    }
+    if (tabViewItem == _shortcutsTabViewItem) {
+        return _shortcutsViewController;
     }
     if (tabViewItem == _advancedTabViewItem) {
         // TODO: the advanced vc doesn't have the right superclass
@@ -960,7 +984,8 @@ andEditComponentWithIdentifier:(NSString *)identifier
              _keysViewController,
              _profilesViewController,
              _pointerViewController,
-             _advancedViewController];
+             _advancedViewController,
+             _shortcutsViewController];
 }
 
 - (void)buildSearchEngineIfNeeded {

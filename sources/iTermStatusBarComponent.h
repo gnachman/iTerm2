@@ -36,7 +36,8 @@ static NSString *const iTermStatusBarSharedTextColorKey = @"shared text color";
 - (void)statusBarComponent:(id<iTermStatusBarComponent>)component writeString:(NSString *)string;
 - (void)statusBarComponentOpenStatusBarPreferences:(id<iTermStatusBarComponent>)component;
 - (void)statusBarComponentPerformAction:(iTermAction *)action;
-- (void)statusBarComponentRevealActionsTool:(id<iTermStatusBarComponent>)component;
+- (void)statusBarComponentEditActions:(id<iTermStatusBarComponent>)component;
+- (void)statusBarComponentEditSnippets:(id<iTermStatusBarComponent>)component;
 - (void)statusBarComponentResignFirstResponder:(id<iTermStatusBarComponent>)component;
 - (void)statusBarComponent:(id<iTermStatusBarComponent>)component
       reportScriptingError:(NSError *)error

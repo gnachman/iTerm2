@@ -113,7 +113,7 @@ runCommandInBackground:(NSString *)command;
 - (void)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu openImage:(iTermImageInfo *)image;
 - (void)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu inspectImage:(iTermImageInfo *)image;
 - (void)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu toggleAnimationOfImage:(iTermImageInfo *)image;
-
+- (void)contextMenuSaveSelectionAsSnippet:(iTermTextViewContextMenuHelper *)contextMenu;
 @end
 
 @interface iTermTextViewContextMenuHelper : NSObject<NSMenuDelegate>

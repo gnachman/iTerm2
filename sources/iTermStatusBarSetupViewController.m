@@ -25,6 +25,7 @@
 #import "iTermStatusBarNetworkUtilizationComponent.h"
 #import "iTermStatusBarRPCProvidedTextComponent.h"
 #import "iTermStatusBarSearchFieldComponent.h"
+#import "iTermStatusBarSnippetComponent.h"
 #import "iTermStatusBarSpringComponent.h"
 #import "iTermStatusBarSetupCollectionViewItem.h"
 #import "iTermStatusBarSetupDestinationCollectionViewController.h"
@@ -108,6 +109,7 @@ NS_ASSUME_NONNULL_BEGIN
                                  [iTermStatusBarClockComponent class],
                                  [iTermStatusBarActionComponent class],
                                  [iTermStatusBarActionMenuComponent class],
+                                 [iTermStatusBarSnippetMenuComponent class],
 
                                  [iTermStatusBarGitComponent class],
                                  [iTermStatusBarHostnameComponent class],

@@ -9,6 +9,7 @@
 
 #import "DebugLogging.h"
 #import "FileTransferManager.h"
+#import "iTermActionsMenuController.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermBackgroundCommandRunner.h"
 #import "iTermCommandRunner.h"
@@ -23,6 +24,8 @@
 #import "iTermScriptHistory.h"
 #import "iTermShellIntegrationWindowController.h"
 #import "iTermSlowOperationGateway.h"
+#import "iTermSnippetsMenuController.h"
+#import "iTermSnippetsModel.h"
 #import "iTermTextExtractor.h"
 #import "iTermURLActionFactory.h"
 #import "iTermURLStore.h"
@@ -60,6 +63,16 @@ static const NSUInteger kRectangularSelectionModifierMask = (kRectangularSelecti
                                              selector:@selector(imageDidLoad:)
                                                  name:iTermImageDidLoad
                                                object:nil];
+}
+
+#pragma mark - NSResponder
+
+- (BOOL)arcValidateMenuItem:(NSMenuItem *)item {
+    if (item.action == @selector(sendSnippet:) ||
+        item.action == @selector(applyAction:)) {
+        return YES;
+    }
+    return NO;
 }
 
 #pragma mark - Coordinate Space Conversions
@@ -1003,6 +1016,29 @@ toggleTerminalStateForMenuItem:(nonnull NSMenuItem *)item {
     failedWithError:(NSError *)error
         forMenuItem:(NSString *)title {
     [self.delegate textViewContextMenuInvocation:invocation failedWithError:error forMenuItem:title];
+}
+
+- (void)contextMenuSaveSelectionAsSnippet:(iTermTextViewContextMenuHelper *)contextMenu {
+    NSString *selectedText = [self selectedText];
+    iTermSnippet *snippet = [[iTermSnippet alloc] initWithTitle:selectedText
+                                                          value:selectedText];
+    [[iTermSnippetsModel sharedInstance] addSnippet:snippet];
+}
+
+#pragma mark - NSResponder Additions
+
+- (void)sendSnippet:(id)sender {
+    iTermSnippet *snippet = [iTermSnippet castFrom:[sender representedObject]];
+    if (snippet) {
+        [self.delegate sendText:snippet.value];
+    }
+}
+
+- (void)applyAction:(id)sender {
+    iTermAction *action = [iTermAction castFrom:[sender representedObject]];
+    if (action) {
+        [self.delegate textViewApplyAction:action];
+    }
 }
 
 @end

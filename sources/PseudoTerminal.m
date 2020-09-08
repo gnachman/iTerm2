@@ -10628,13 +10628,12 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     }
 }
 
-- (void)tabRevealActionsTool:(PTYTab *)tab {
-    if (!self.shouldShowToolbelt) {
-        [self toggleToolbeltVisibility:nil];
-    }
-    if (![iTermToolbeltView shouldShowTool:kActionsToolName]) {
-        [iTermToolbeltView toggleShouldShowTool:kActionsToolName];
-    }
+- (void)tabEditActions:(PTYTab *)tab {
+    [[PreferencePanel sharedInstance] openToPreferenceWithKey:kPreferenceKeyActions];
+}
+
+- (void)tabEditSnippets:(PTYTab *)tab {
+    [[PreferencePanel sharedInstance] openToPreferenceWithKey:kPreferenceKeySnippets];
 }
 
 - (void)updateBackgroundImage {

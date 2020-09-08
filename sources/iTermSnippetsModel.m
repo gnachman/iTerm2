@@ -7,11 +7,11 @@
 
 #import "iTermSnippetsModel.h"
 #import "iTermNotificationCenter+Protected.h"
+#import "iTermPreferences.h"
 #import "NSArray+iTerm.h"
 #import "NSIndexSet+iTerm.h"
 #import "NSObject+iTerm.h"
-
-static NSString *const iTermSnippetsUserDefaultsKey = @"Snippets";
+#import "NSStringITerm.h"
 
 @implementation iTermSnippet
 
@@ -47,6 +47,18 @@ static NSString *const iTermSnippetsUserDefaultsKey = @"Snippets";
     return self.identifier == other.identifier;
 }
 
+- (NSString *)trimmedValue:(NSInteger)maxLength {
+    return [self.value ellipsizedDescriptionNoLongerThan:maxLength];
+}
+
+- (NSString *)trimmedTitle:(NSInteger)maxLength {
+    return [self.title ellipsizedDescriptionNoLongerThan:maxLength];
+}
+
+- (BOOL)titleEqualsValueUpToLength:(NSInteger)maxLength {
+    return [[self trimmedTitle:maxLength] isEqualToString:[self trimmedValue:maxLength]];
+}
+
 @end
 
 @implementation iTermSnippetsModel {
@@ -65,7 +77,7 @@ static NSString *const iTermSnippetsUserDefaultsKey = @"Snippets";
 - (instancetype)init {
     self = [super init];
     if (self) {
-        _snippets = [[[NSArray castFrom:[[NSUserDefaults standardUserDefaults] objectForKey:iTermSnippetsUserDefaultsKey]] mapWithBlock:^id(id anObject) {
+        _snippets = [[[NSArray castFrom:[[NSUserDefaults standardUserDefaults] objectForKey:kPreferenceKeySnippets]] mapWithBlock:^id(id anObject) {
             NSDictionary *dict = [NSDictionary castFrom:anObject];
             if (!dict) {
                 return nil;
@@ -149,7 +161,7 @@ static NSString *const iTermSnippetsUserDefaultsKey = @"Snippets";
 
 - (void)save {
     [[NSUserDefaults standardUserDefaults] setObject:[self arrayOfDictionaries]
-                                              forKey:iTermSnippetsUserDefaultsKey];
+                                              forKey:kPreferenceKeySnippets];
 }
 
 - (NSArray<NSDictionary *> *)arrayOfDictionaries {

@@ -189,7 +189,8 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
         [item action] == @selector(addNote:) ||
         [item action] == @selector(mail:) ||
         [item action] == @selector(browse:) ||
-        [item action] == @selector(searchInBrowser:)) {
+        [item action] == @selector(searchInBrowser:) ||
+        [item action] == @selector(saveSelectionAsSnippet:)) {
         iTermSelection *selection = [self.delegate contextMenuSelection:self];
         return selection.hasSelection;
     }
@@ -383,6 +384,9 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
     [theMenu addItemWithTitle:@"Send Selection"
                        action:@selector(sendSelection:)
                 keyEquivalent:@""];
+    [[theMenu itemAtIndex:[theMenu numberOfItems] - 1] setTarget:self];
+    [theMenu addItemWithTitle:@"Save Selection as Snippet"
+                     action:@selector(saveSelectionAsSnippet:) keyEquivalent:@""];
     [[theMenu itemAtIndex:[theMenu numberOfItems] - 1] setTarget:self];
 
     // Clear buffer
@@ -739,6 +743,14 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
         return;
     }
     [self.delegate contextMenuSendSelectedText:self];
+}
+
+- (void)saveSelectionAsSnippet:(id)sender {
+    iTermSelection *selection = [self.delegate contextMenuSelection:self];
+    if (!selection.hasSelection) {
+        return;
+    }
+    [self.delegate contextMenuSaveSelectionAsSnippet:self];
 }
 
 - (void)clearTextViewBuffer:(id)sender {

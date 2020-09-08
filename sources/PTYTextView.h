@@ -20,6 +20,7 @@
 #include <sys/time.h>
 
 @class CRunStorage;
+@class iTermAction;
 @class iTermExpect;
 @class iTermFindCursorView;
 @class iTermFindOnPageHelper;
@@ -216,6 +217,7 @@ typedef NS_ENUM(NSInteger, PTYCharType) {
 - (void)textViewContextMenuInvocation:(NSString *)invocation
                       failedWithError:(NSError *)error
                           forMenuItem:(NSString *)title;
+- (void)textViewApplyAction:(iTermAction *)action;
 @end
 
 @interface iTermHighlightedRow : NSObject
