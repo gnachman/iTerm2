@@ -1,36 +1,36 @@
 //
-//  iTermSnippetsMenuController.m
+//  iTermActionsMenuController.m
 //  iTerm2SharedARC
 //
 //  Created by George Nachman on 9/8/20.
 //
 
-#import "iTermSnippetsMenuController.h"
+#import "iTermActionsMenuController.h"
 
-@implementation iTermSnippetsMenuController {
+@implementation iTermActionsMenuController {
     IBOutlet NSMenuItem *_menu;
 }
 
 - (void)awakeFromNib {
-    [iTermSnippetsDidChangeNotification subscribe:self selector:@selector(snippetsDidChange:)];
+    [iTermActionsDidChangeNotification subscribe:self selector:@selector(actionsDidChange:)];
     [self reload];
 }
 
-- (void)snippetsDidChange:(iTermSnippetsDidChangeNotification *)notification {
+- (void)actionsDidChange:(iTermActionsDidChangeNotification *)notification {
     switch (notification.mutationType) {
-        case iTermSnippetsDidChangeMutationTypeEdit:
+        case iTermActionsDidChangeMutationTypeEdit:
             [self reloadIndex:notification.index];
             break;
-        case iTermSnippetsDidChangeMutationTypeDeletion:
+        case iTermActionsDidChangeMutationTypeDeletion:
             [self deleteIndexes:notification.indexSet];
             break;
-        case iTermSnippetsDidChangeMutationTypeInsertion:
+        case iTermActionsDidChangeMutationTypeInsertion:
             [self insertAtIndex:notification.index];
             break;
-        case iTermSnippetsDidChangeMutationTypeMove:
+        case iTermActionsDidChangeMutationTypeMove:
             [self moveIndexes:notification.indexSet to:notification.index];
             break;
-        case iTermSnippetsDidChangeMutationTypeFullReplacement:
+        case iTermActionsDidChangeMutationTypeFullReplacement:
             [self reload];
             break;
     }
@@ -38,25 +38,25 @@
 
 - (void)reload {
     [_menu.submenu removeAllItems];
-    [[[iTermSnippetsModel sharedInstance] snippets] enumerateObjectsUsingBlock:
-     ^(iTermSnippet * _Nonnull snippet, NSUInteger idx, BOOL * _Nonnull stop) {
-        [self add:snippet];
+    [[[iTermActionsModel sharedInstance] actions] enumerateObjectsUsingBlock:
+     ^(iTermAction * _Nonnull action, NSUInteger idx, BOOL * _Nonnull stop) {
+        [self add:action];
     }];
 }
 
-- (void)add:(iTermSnippet *)snippet {
-    NSMenuItem *item = [[NSMenuItem alloc] initWithTitle:snippet.title
-                                                  action:@selector(sendSnippet:)
+- (void)add:(iTermAction *)action {
+    NSMenuItem *item = [[NSMenuItem alloc] initWithTitle:action.title
+                                                  action:@selector(applyAction:)
                                            keyEquivalent:@""];
-    item.representedObject = snippet;
+    item.representedObject = action;
     [_menu.submenu addItem:item];
 }
 
 - (void)reloadIndex:(NSInteger)index {
-    iTermSnippet *snippet = [[[iTermSnippetsModel sharedInstance] snippets] objectAtIndex:index];
+    iTermAction *action = [[[iTermActionsModel sharedInstance] actions] objectAtIndex:index];
     NSMenuItem *item = [_menu.submenu itemAtIndex:index];
-    item.title = snippet.title;
-    item.representedObject = snippet;
+    item.title = action.title;
+    item.representedObject = action;
 }
 
 - (void)deleteIndexes:(NSIndexSet *)indexes {

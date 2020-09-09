@@ -1463,5 +1463,10 @@ DQ
                 <outlet property="_menu" destination="s0f-jP-7Pk" id="Kcc-Y5-5hf"/>
             </connections>
         </customObject>
+        <customObject id="EJt-fO-K8I" customClass="iTermActionsMenuController">
+            <connections>
+                <outlet property="_menu" destination="8Ja-GB-Waf" id="a0G-8e-2dj"/>
+            </connections>
+        </customObject>
     </objects>
 </document>

@@ -984,7 +984,8 @@ andEditComponentWithIdentifier:(NSString *)identifier
              _keysViewController,
              _profilesViewController,
              _pointerViewController,
-             _advancedViewController];
+             _advancedViewController,
+             _shortcutsViewController];
 }
 
 - (void)buildSearchEngineIfNeeded {

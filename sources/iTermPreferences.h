@@ -193,6 +193,10 @@ extern NSString *const kPreferenceKeySizeChangesAffectProfile;
 // Set to YES on the first launch of a version that supports multiple hotkey windows.
 extern NSString *const kPreferenceKeyHotkeyMigratedFromSingleToMulti;
 
+// See iTermActionsModel. NOTE: This cannot be accessed with the usual getters and setters because
+// it is array-valued.
+extern NSString *const kPreferenceKeyActions;
+
 @interface iTermPreferences : NSObject
 
 // This should be called early during startup to set user defaults keys that fix problematic Apple

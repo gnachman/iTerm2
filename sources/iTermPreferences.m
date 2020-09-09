@@ -162,6 +162,7 @@ NSString *const kPreferenceKeyShowFullscreenTabBar = @"ShowFullScreenTabBar";
 NSString *const kPreferenceKeyHotkeyMigratedFromSingleToMulti = @"HotkeyMigratedFromSingleToMulti";
 NSString *const kPreferenceKeyDefaultToolbeltWidth = @"Default Toolbelt Width";
 NSString *const kPreferenceKeySizeChangesAffectProfile = @"Size Changes Affect Profile";
+NSString *const kPreferenceKeyActions = @"Actions";
 // NOTE: If you update this list, also update preferences.py.
 
 static NSMutableDictionary *gObservers;

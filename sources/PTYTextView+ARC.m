@@ -9,6 +9,7 @@
 
 #import "DebugLogging.h"
 #import "FileTransferManager.h"
+#import "iTermActionsMenuController.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermBackgroundCommandRunner.h"
 #import "iTermCommandRunner.h"
@@ -66,7 +67,8 @@ static const NSUInteger kRectangularSelectionModifierMask = (kRectangularSelecti
 #pragma mark - NSResponder
 
 - (BOOL)arcValidateMenuItem:(NSMenuItem *)item {
-    if (item.action == @selector(sendSnippet:)) {
+    if (item.action == @selector(sendSnippet:) ||
+        item.action == @selector(applyAction:)) {
         return YES;
     }
     return NO;
@@ -1015,12 +1017,19 @@ toggleTerminalStateForMenuItem:(nonnull NSMenuItem *)item {
     [self.delegate textViewContextMenuInvocation:invocation failedWithError:error forMenuItem:title];
 }
 
-#pragma mark - NSResponder+Snippets
+#pragma mark - NSResponder Additions
 
 - (void)sendSnippet:(id)sender {
     iTermSnippet *snippet = [iTermSnippet castFrom:[sender representedObject]];
     if (snippet) {
         [self.delegate sendText:snippet.value];
+    }
+}
+
+- (void)applyAction:(id)sender {
+    iTermAction *action = [iTermAction castFrom:[sender representedObject]];
+    if (action) {
+        [self.delegate textViewApplyAction:action];
     }
 }
 

@@ -40,6 +40,7 @@ static NSString *const iTermActionsEditingPasteboardType = @"iTermActionsEditing
     self.view.frame = containerView.bounds;
     _actions = [[[iTermActionsModel sharedInstance] actions] copy];
     [_tableView setDoubleAction:@selector(doubleClickOnTableView:)];
+    [self updateEnabled];
     [_tableView registerForDraggedTypes:@[ iTermActionsEditingPasteboardType ]];
     [_tableView reloadData];
     __weak __typeof(self) weakSelf = self;
@@ -47,6 +48,10 @@ static NSString *const iTermActionsEditingPasteboardType = @"iTermActionsEditing
                                            block:^(iTermActionsDidChangeNotification * _Nonnull notification) {
                                                [weakSelf actionsDidChange:notification];
                                            }];
+    [container addViewToSearchIndex:_tableView
+                        displayName:@"Actions"
+                            phrases:@[ @"Actions" ]
+                                key:kPreferenceKeyActions];
 }
 
 #pragma mark - Private

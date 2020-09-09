@@ -196,7 +196,7 @@ static NSString *const iTermStatusBarActionKey = @"action";
 
     [menu addItem:[NSMenuItem separatorItem]];
 
-    NSMenuItem *item = [[NSMenuItem alloc] initWithTitle:@"Reveal Actions Tool…" action:@selector(editActions:) keyEquivalent:@""];
+    NSMenuItem *item = [[NSMenuItem alloc] initWithTitle:@"Edit Actions…" action:@selector(editActions:) keyEquivalent:@""];
     item.target = self;
     [menu addItem:item];
 
@@ -216,7 +216,7 @@ static NSString *const iTermStatusBarActionKey = @"action";
 }
 
 - (void)editActions:(id)sender {
-    [self.delegate statusBarComponentRevealActionsTool:self];
+    [self.delegate statusBarComponentEditActions:self];
 }
 
 @end

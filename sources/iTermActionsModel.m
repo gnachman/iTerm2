@@ -7,11 +7,10 @@
 
 #import "iTermActionsModel.h"
 #import "iTermNotificationCenter+Protected.h"
+#import "iTermPreferences.h"
 #import "NSArray+iTerm.h"
 #import "NSIndexSet+iTerm.h"
 #import "NSObject+iTerm.h"
-
-static NSString *const iTermActionsUserDefaultsKey = @"Actions";
 
 @implementation iTermAction
 
@@ -74,7 +73,7 @@ static NSString *const iTermActionsUserDefaultsKey = @"Actions";
 - (instancetype)init {
     self = [super init];
     if (self) {
-        _actions = [[[NSArray castFrom:[[NSUserDefaults standardUserDefaults] objectForKey:iTermActionsUserDefaultsKey]] mapWithBlock:^id(id anObject) {
+        _actions = [[[NSArray castFrom:[[NSUserDefaults standardUserDefaults] objectForKey:kPreferenceKeyActions]] mapWithBlock:^id(id anObject) {
             NSDictionary *dict = [NSDictionary castFrom:anObject];
             if (!dict) {
                 return nil;
@@ -158,7 +157,7 @@ static NSString *const iTermActionsUserDefaultsKey = @"Actions";
 
 - (void)save {
     [[NSUserDefaults standardUserDefaults] setObject:[self arrayOfDictionaries]
-                                              forKey:iTermActionsUserDefaultsKey];
+                                              forKey:kPreferenceKeyActions];
 }
 
 - (NSArray<NSDictionary *> *)arrayOfDictionaries {

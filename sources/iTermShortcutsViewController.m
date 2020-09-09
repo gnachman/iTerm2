@@ -34,4 +34,18 @@
     return 846;
 }
 
+- (NSView *)searchableViewControllerRevealItemForDocument:(iTermPreferencesSearchDocument *)document
+                                                 forQuery:(NSString *)query
+                                            willChangeTab:(BOOL *)willChangeTab {
+    if ([document.identifier isEqualToString:kPreferenceKeyActions]) {
+        NSString *identifier = @"Actions";
+        *willChangeTab = [_tabView.selectedTabViewItem.identifier isEqualToString:identifier];
+        [_tabView selectTabViewItemWithIdentifier:identifier];
+        return _actionsView;
+    }
+    // TODO: snippets
+    return nil;
+}
+
+
 @end

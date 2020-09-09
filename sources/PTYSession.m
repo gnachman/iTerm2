@@ -9232,6 +9232,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                                  window:self.view.window];
 }
 
+- (void)textViewApplyAction:(iTermAction *)action {
+    [self applyAction:action];
+}
+
 - (NSString *)userShell {
     return [ITAddressBookMgr customShellForProfile:self.profile] ?: [iTermOpenDirectory userShell] ?: @"/bin/bash";
 }
@@ -12699,8 +12703,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [self applyAction:action];
 }
 
-- (void)statusBarRevealActionsTool {
-    [self.delegate sessionRevealActionsTool];
+- (void)statusBarEditActions {
+    [self.delegate sessionEditActions];
 }
 
 - (void)statusBarResignFirstResponder {
