@@ -18,6 +18,12 @@
 
 static NSString *const iTermSnippetsEditingPasteboardType = @"iTermSnippetsEditingPasteboardType";
 
+@interface iTermSnippetsEditingView: NSView
+@end
+
+@implementation iTermSnippetsEditingView
+@end
+
 @interface iTermSnippetsEditingViewController ()<NSTableViewDataSource, NSTableViewDelegate>
 @end
 

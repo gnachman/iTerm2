@@ -32,7 +32,7 @@
 }
 
 - (CGFloat)minimumWidth {
-    return 846;
+    return 778;
 }
 
 - (NSView *)searchableViewControllerRevealItemForDocument:(iTermPreferencesSearchDocument *)document

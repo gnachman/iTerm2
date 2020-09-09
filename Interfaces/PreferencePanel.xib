@@ -6524,25 +6524,25 @@ DQ
                     <font key="font" metaFont="system"/>
                     <tabViewItems>
                         <tabViewItem label="Actions" identifier="Actions" id="GdP-GX-FgT">
-                            <view key="view" id="zEH-KM-w0R">
+                            <view key="view" identifier="ActionWrapper" id="zEH-KM-w0R">
                                 <rect key="frame" x="10" y="33" width="846" height="344"/>
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                 <subviews>
-                                    <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="CIm-Xk-Wex">
+                                    <customView identifier="ActionCustomView" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="CIm-Xk-Wex">
                                         <rect key="frame" x="-3" y="-3" width="852" height="344"/>
-                                        <autoresizingMask key="autoresizingMask"/>
+                                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                     </customView>
                                 </subviews>
                             </view>
                         </tabViewItem>
                         <tabViewItem label="Snippets" identifier="Snippets" id="DUQ-NG-jEh">
-                            <view key="view" id="0Vk-OH-GGO">
+                            <view key="view" identifier="SnippetWrapper" id="0Vk-OH-GGO">
                                 <rect key="frame" x="10" y="33" width="846" height="344"/>
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                 <subviews>
-                                    <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="9IY-Wm-Rgs">
+                                    <customView identifier="SnippetCustomView" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="9IY-Wm-Rgs">
                                         <rect key="frame" x="0.0" y="0.0" width="849" height="341"/>
-                                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                     </customView>
                                 </subviews>
                             </view>

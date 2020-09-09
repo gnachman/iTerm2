@@ -20,6 +20,12 @@
 
 static NSString *const iTermActionsEditingPasteboardType = @"iTermActionsEditingPasteboardType";
 
+@interface iTermActionsEditingView: NSView
+@end
+
+@implementation iTermActionsEditingView
+@end
+
 @interface iTermActionsEditingViewController()<NSTableViewDataSource, NSTableViewDelegate>
 @end
 
