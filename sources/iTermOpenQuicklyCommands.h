@@ -21,6 +21,7 @@
 - (BOOL)supportsScript;
 - (BOOL)supportsColorPreset;
 - (BOOL)supportsAction;
+- (BOOL)supportsSnippet;
 @end
 
 @interface iTermOpenQuicklyCommand : NSObject<iTermOpenQuicklyCommand>
@@ -51,3 +52,5 @@
 @interface iTermOpenQuicklyActionCommand : iTermOpenQuicklyCommand
 @end
 
+@interface iTermOpenQuicklySnippetCommand : iTermOpenQuicklyCommand
+@end

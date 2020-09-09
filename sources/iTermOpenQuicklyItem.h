@@ -63,3 +63,7 @@
 @property(nonatomic, strong) iTermAction *action;
 @end
 
+@class iTermSnippet;
+@interface iTermOpenQuicklySnippetItem : iTermOpenQuicklyItem
+@property(nonatomic, strong) iTermSnippet *snippet;
+@end

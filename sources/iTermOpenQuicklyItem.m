@@ -85,3 +85,16 @@
 }
 
 @end
+
+@implementation iTermOpenQuicklySnippetItem : iTermOpenQuicklyItem
+
+- (NSImage *)icon {
+    return [NSImage it_imageNamed:@"OpenQuicklySnippetIcon" forClass:self.class];
+}
+
+// This can be the sender to -sendSnippet:
+- (id)representedObject {
+    return self.snippet;
+}
+
+@end

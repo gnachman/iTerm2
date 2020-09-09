@@ -10,6 +10,7 @@
 #import "iTermOpenQuicklyCommands.h"
 #import "iTermOpenQuicklyItem.h"
 #import "iTermScriptsMenuController.h"
+#import "iTermSnippetsModel.h"
 #import "iTermVariableScope.h"
 #import "iTermVariableScope+Session.h"
 #import "iTermVariableScope+Tab.h"
@@ -32,8 +33,11 @@ static const double kDirectoryMultiplier = 0.9;
 static const double kCommandMultiplier = 0.8;
 static const double kUsernameMultiplier = 0.5;
 
-// Action items (e.g., as defined in Actions tool)
+// Action items (as defined in Prefs > Shortcuts > Snippets)
 static const double kActionMultiplier = 0.4;
+
+// Snippet items (as defined in Prefs > Shortcuts > Snippets)
+static const double kSnippetMultiplier = 0.3;
 
 // Multipliers for arrangement items. Arrangements rank just above profiles
 static const double kProfileNameMultiplierForArrangementItem = 0.11;
@@ -325,6 +329,35 @@ static const double kProfileNameMultiplierForScriptItem = 0.09;
     return actionItem;
 }
 
+- (void)addSnippetsToItems:(NSMutableArray<iTermOpenQuicklyItem *> *)items
+               withMatcher:(iTermMinimumSubsequenceMatcher *)matcher {
+    [[[iTermSnippetsModel sharedInstance] snippets] enumerateObjectsUsingBlock:^(iTermSnippet * _Nonnull snippet, NSUInteger idx, BOOL * _Nonnull stop) {
+        iTermOpenQuicklySnippetItem *snippetItem = [self snippetItemForSnippet:snippet
+                                                                       matcher:matcher];
+        if (snippetItem) {
+            [items addObject:snippetItem];
+        }
+    }];
+}
+
+- (iTermOpenQuicklySnippetItem *)snippetItemForSnippet:(iTermSnippet *)snippet
+                                               matcher:(iTermMinimumSubsequenceMatcher *)matcher {
+    iTermOpenQuicklySnippetItem *snippetItem = [[iTermOpenQuicklySnippetItem alloc] init];
+    snippetItem.snippet = snippet;
+    NSMutableAttributedString *attributedName = [[NSMutableAttributedString alloc] init];
+    snippetItem.score = [self scoreForSnippet:snippet matcher:matcher attributedName:attributedName];
+    if (snippetItem.score <= 0) {
+        return nil;
+    }
+    snippetItem.detail = [_delegate openQuicklyModelDisplayStringForFeatureNamed:nil
+                                                                           value:[NSString stringWithFormat:@"Send snippet “%@”", snippet.title]
+                                                              highlightedIndexes:nil];
+    snippetItem.title = attributedName;
+    snippetItem.identifier = [@(snippet.identifier) stringValue];
+    return snippetItem;
+}
+
+
 - (iTermOpenQuicklyArrangementItem *)arrangementItemWithName:(NSString *)arrangementName
                                                      matcher:(iTermMinimumSubsequenceMatcher *)matcher
                                                       inTabs:(BOOL)inTabs {
@@ -435,6 +468,9 @@ static const double kProfileNameMultiplierForScriptItem = 0.09;
     if ([command supportsAction] && haveCurrentWindow) {
         [self addActionsToItems:items withMatcher:matcher];
     }
+    if ([command supportsSnippet] && haveCurrentWindow) {
+        [self addSnippetsToItems:items withMatcher:matcher];
+    }
 
     // Sort from highest to lowest score.
     [items sortUsingComparator:^NSComparisonResult(iTermOpenQuicklyItem *obj1,
@@ -473,6 +509,8 @@ static const double kProfileNameMultiplierForScriptItem = 0.09;
     } else if ([item isKindOfClass:[iTermOpenQuicklyColorPresetItem class]]) {
         return item;
     } else if ([item isKindOfClass:[iTermOpenQuicklyActionItem class]]) {
+        return item;
+    } else if ([item isKindOfClass:[iTermOpenQuicklySnippetItem class]]) {
         return item;
     }
     return nil;
@@ -527,6 +565,23 @@ static const double kProfileNameMultiplierForScriptItem = 0.09;
                                       name:nil
                                   features:nameFeature
                                      limit:2 * kActionMultiplier];
+    if (nameFeature.count) {
+        [attributedName appendAttributedString:nameFeature[0][0]];
+    }
+    return score;
+}
+
+- (double)scoreForSnippet:(iTermSnippet *)snippet
+                  matcher:(iTermMinimumSubsequenceMatcher *)matcher
+           attributedName:(NSMutableAttributedString *)attributedName {
+    NSMutableArray *nameFeature = [NSMutableArray array];
+    double score = [self scoreUsingMatcher:matcher
+                                 documents:@[ snippet.title ?: @"",
+                                              [snippet trimmedValue:80] ?: @"" ]
+                                multiplier:kSnippetMultiplier
+                                      name:nil
+                                  features:nameFeature
+                                     limit:2 * kSnippetMultiplier];
     if (nameFeature.count) {
         [attributedName appendAttributedString:nameFeature[0][0]];
     }

@@ -12,6 +12,7 @@
 #import "iTermOpenQuicklyTextField.h"
 #import "iTermScriptsMenuController.h"
 #import "iTermSessionLauncher.h"
+#import "iTermSnippetsMenuController.h"
 #import "NSColor+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "NSTextField+iTerm.h"
@@ -231,9 +232,10 @@
             [[iTermController sharedInstance] loadWindowArrangementWithName:item.identifier asTabsInTerminal:item.inTabs ? [[iTermController sharedInstance] currentTerminal] : nil];
         } else if ([object isKindOfClass:[iTermOpenQuicklyChangeProfileItem class]]) {
             // Change profile
+            iTermOpenQuicklyChangeProfileItem *item = object;
             PseudoTerminal *term = [[iTermController sharedInstance] currentTerminal];
             PTYSession *session = term.currentSession;
-            NSString *guid = [object identifier];
+            NSString *guid = [item identifier];
             Profile *profile = [[ProfileModel sharedInstance] bookmarkWithGuid:guid];
             if (profile) {
                 [session setProfile:profile preservingName:YES];
@@ -241,7 +243,8 @@
                 [term.window makeKeyAndOrderFront:nil];
             }
         } else if ([object isKindOfClass:[iTermOpenQuicklyHelpItem class]]) {
-            _textField.stringValue = [object identifier];
+            iTermOpenQuicklyHelpItem *item = object;
+            _textField.stringValue = [item identifier];
             [self update];
             return;
         } else if ([object isKindOfClass:[iTermOpenQuicklyScriptItem class]]) {
@@ -259,6 +262,11 @@
             PseudoTerminal *term = [[iTermController sharedInstance] currentTerminal];
             PTYSession *session = term.currentSession;
             [session applyAction:item.action];
+        } else if ([object isKindOfClass:[iTermOpenQuicklySnippetItem class]]) {
+            iTermOpenQuicklySnippetItem *item = [iTermOpenQuicklySnippetItem castFrom:object];
+            PseudoTerminal *term = [[iTermController sharedInstance] currentTerminal];
+            PTYSession *session = term.currentSession;
+            [session.textview sendSnippet:item];
         }
     }
 
