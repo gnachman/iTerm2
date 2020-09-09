@@ -9,6 +9,7 @@
 
 #import "iTermCompetentTableRowView.h"
 #import "iTermEditSnippetWindowController.h"
+#import "iTermPreferencesBaseViewController.h"
 #import "iTermSnippetsModel.h"
 #import "NSArray+iTerm.h"
 #import "NSIndexSet+iTerm.h"
@@ -46,6 +47,10 @@ static NSString *const iTermSnippetsEditingPasteboardType = @"iTermSnippetsEditi
                                             block:^(iTermSnippetsDidChangeNotification * _Nonnull notification) {
         [weakSelf snippetsDidChange:notification];
     }];
+    [container addViewToSearchIndex:_tableView
+                        displayName:@"Snippets"
+                            phrases:@[ @"Snippets" ]
+                                key:kPreferenceKeySnippets];
 }
 
 #pragma mark - Private
@@ -188,7 +193,7 @@ static NSString *const iTermSnippetsEditingPasteboardType = @"iTermSnippetsEditi
 }
 
 - (NSView *)viewForTitleColumnOnRow:(NSInteger)row {
-    static NSString *const identifier = @"PrefsActionsTitle";
+    static NSString *const identifier = @"PrefsSnippetsTitle";
     NSTextField *result = [_tableView makeViewWithIdentifier:identifier owner:self];
     if (result == nil) {
         result = [NSTextField it_textFieldForTableViewWithIdentifier:identifier];
@@ -200,7 +205,7 @@ static NSString *const iTermSnippetsEditingPasteboardType = @"iTermSnippetsEditi
 }
 
 - (NSView *)viewForValueColumnOnRow:(NSInteger)row {
-    static NSString *const identifier = @"PrefsActionsAction";
+    static NSString *const identifier = @"PrefsSnippetsValue";
     NSTextField *result = [_tableView makeViewWithIdentifier:identifier owner:self];
     if (result == nil) {
         result = [NSTextField it_textFieldForTableViewWithIdentifier:identifier];

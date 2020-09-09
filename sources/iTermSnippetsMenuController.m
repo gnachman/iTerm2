@@ -8,7 +8,8 @@
 #import "iTermSnippetsMenuController.h"
 
 @implementation iTermSnippetsMenuController {
-    IBOutlet NSMenuItem *_menu;
+    IBOutlet NSMenuItem *_menuItem;
+    NSMenu *_overridingMenu;  // If set, this takes priority over _menuItem
 }
 
 - (void)awakeFromNib {
@@ -37,11 +38,23 @@
 }
 
 - (void)reload {
-    [_menu.submenu removeAllItems];
+    [self.menu removeAllItems];
     [[[iTermSnippetsModel sharedInstance] snippets] enumerateObjectsUsingBlock:
      ^(iTermSnippet * _Nonnull snippet, NSUInteger idx, BOOL * _Nonnull stop) {
         [self add:snippet];
     }];
+}
+
+- (NSMenu *)menu {
+    if (_overridingMenu) {
+        return _overridingMenu;
+    }
+    return _menuItem.submenu;
+}
+
+- (void)setMenu:(NSMenu *)menu {
+    _overridingMenu = menu;
+    [self reload];
 }
 
 - (void)add:(iTermSnippet *)snippet {
@@ -49,24 +62,24 @@
                                                   action:@selector(sendSnippet:)
                                            keyEquivalent:@""];
     item.representedObject = snippet;
-    [_menu.submenu addItem:item];
+    [self.menu addItem:item];
 }
 
 - (void)reloadIndex:(NSInteger)index {
     iTermSnippet *snippet = [[[iTermSnippetsModel sharedInstance] snippets] objectAtIndex:index];
-    NSMenuItem *item = [_menu.submenu itemAtIndex:index];
+    NSMenuItem *item = [self.menu itemAtIndex:index];
     item.title = snippet.title;
     item.representedObject = snippet;
 }
 
 - (void)deleteIndexes:(NSIndexSet *)indexes {
     [indexes enumerateIndexesWithOptions:NSEnumerationReverse usingBlock:^(NSUInteger idx, BOOL * _Nonnull stop) {
-        [_menu.submenu removeItemAtIndex:idx];
+        [self.menu removeItemAtIndex:idx];
     }];
 }
 
 - (void)insertAtIndex:(NSInteger)index {
-    [_menu.submenu insertItem:[[NSMenuItem alloc] init] atIndex:index];
+    [self.menu insertItem:[[NSMenuItem alloc] init] atIndex:index];
     [self reloadIndex:index];
 }
 

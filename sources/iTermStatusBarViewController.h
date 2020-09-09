@@ -31,6 +31,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)statusBarDisable;
 - (void)statusBarPerformAction:(iTermAction *)action;
 - (void)statusBarEditActions;
+- (void)statusBarEditSnippets;
 - (void)statusBarResignFirstResponder;
 - (void)statusBarReportScriptingError:(NSError *)error
                         forInvocation:(NSString *)invocation

@@ -6368,6 +6368,10 @@ typedef struct {
     [self.delegate tabEditActions:self];
 }
 
+- (void)sessionEditSnippets {
+    [self.delegate tabEditSnippets:self];
+}
+
 - (NSImage *)sessionBackgroundImage {
     return [self.delegate tabBackgroundImage];
 }

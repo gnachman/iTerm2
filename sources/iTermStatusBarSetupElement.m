@@ -181,6 +181,10 @@ NSString *const iTermStatusBarElementPasteboardType = @"com.iterm2.status-bar-el
     assert(NO);
 }
 
+- (void)statusBarComponentEditSnippets:(id<iTermStatusBarComponent>)component {
+    assert(NO);
+}
+
 - (void)statusBarComponentResignFirstResponder:(id<iTermStatusBarComponent>)component {
     assert(NO);
 }

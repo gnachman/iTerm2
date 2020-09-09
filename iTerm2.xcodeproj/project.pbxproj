@@ -2943,6 +2943,14 @@
 		A6A64E562508A9E10040490B /* iTermSnippetsMenuController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A64E542508A9E10040490B /* iTermSnippetsMenuController.m */; };
 		A6A64E592508AF650040490B /* iTermActionsMenuController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A64E572508AF650040490B /* iTermActionsMenuController.h */; };
 		A6A64E5A2508AF650040490B /* iTermActionsMenuController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A64E582508AF650040490B /* iTermActionsMenuController.m */; };
+		A6A64E5D2508B83F0040490B /* iTermStatusBarSnippetComponent.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A64E5B2508B83F0040490B /* iTermStatusBarSnippetComponent.h */; };
+		A6A64E5E2508B83F0040490B /* iTermStatusBarSnippetComponent.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A64E5C2508B83F0040490B /* iTermStatusBarSnippetComponent.m */; };
+		A6A64E612508BE650040490B /* StatusBarIconSnippet.png in Resources */ = {isa = PBXBuildFile; fileRef = A6A64E5F2508BE650040490B /* StatusBarIconSnippet.png */; };
+		A6A64E622508BE650040490B /* StatusBarIconSnippet.png in Resources */ = {isa = PBXBuildFile; fileRef = A6A64E5F2508BE650040490B /* StatusBarIconSnippet.png */; };
+		A6A64E632508BE650040490B /* StatusBarIconSnippet.png in Resources */ = {isa = PBXBuildFile; fileRef = A6A64E5F2508BE650040490B /* StatusBarIconSnippet.png */; };
+		A6A64E642508BE650040490B /* StatusBarIconSnippet@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A6A64E602508BE650040490B /* StatusBarIconSnippet@2x.png */; };
+		A6A64E652508BE650040490B /* StatusBarIconSnippet@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A6A64E602508BE650040490B /* StatusBarIconSnippet@2x.png */; };
+		A6A64E662508BE650040490B /* StatusBarIconSnippet@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A6A64E602508BE650040490B /* StatusBarIconSnippet@2x.png */; };
 		A6A802E0226AD0D200BC70DC /* iTermSearchHistory.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A802DE226AD0D200BC70DC /* iTermSearchHistory.h */; };
 		A6A802E1226AD0D200BC70DC /* iTermSearchHistory.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A802DF226AD0D200BC70DC /* iTermSearchHistory.m */; };
 		A6A802E6226B8C8400BC70DC /* PTYTask.m in Sources */ = {isa = PBXBuildFile; fileRef = E8CF7560026DDA6303A80106 /* PTYTask.m */; };
@@ -6147,6 +6155,10 @@
 		A6A64E542508A9E10040490B /* iTermSnippetsMenuController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermSnippetsMenuController.m; sourceTree = "<group>"; };
 		A6A64E572508AF650040490B /* iTermActionsMenuController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermActionsMenuController.h; sourceTree = "<group>"; };
 		A6A64E582508AF650040490B /* iTermActionsMenuController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermActionsMenuController.m; sourceTree = "<group>"; };
+		A6A64E5B2508B83F0040490B /* iTermStatusBarSnippetComponent.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermStatusBarSnippetComponent.h; sourceTree = "<group>"; };
+		A6A64E5C2508B83F0040490B /* iTermStatusBarSnippetComponent.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermStatusBarSnippetComponent.m; sourceTree = "<group>"; };
+		A6A64E5F2508BE650040490B /* StatusBarIconSnippet.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = StatusBarIconSnippet.png; path = images/StatusBarIcons/StatusBarIconSnippet.png; sourceTree = "<group>"; };
+		A6A64E602508BE650040490B /* StatusBarIconSnippet@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "StatusBarIconSnippet@2x.png"; path = "images/StatusBarIcons/StatusBarIconSnippet@2x.png"; sourceTree = "<group>"; };
 		A6A802DE226AD0D200BC70DC /* iTermSearchHistory.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermSearchHistory.h; sourceTree = "<group>"; };
 		A6A802DF226AD0D200BC70DC /* iTermSearchHistory.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermSearchHistory.m; sourceTree = "<group>"; };
 		A6A802E7226ED20800BC70DC /* iTermPrintGuard.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermPrintGuard.h; sourceTree = "<group>"; };
@@ -7407,6 +7419,8 @@
 		1D093C131217412B0029F9AD /* Images */ = {
 			isa = PBXGroup;
 			children = (
+				A6A64E5F2508BE650040490B /* StatusBarIconSnippet.png */,
+				A6A64E602508BE650040490B /* StatusBarIconSnippet@2x.png */,
 				A6F2F217250757FE00FC227F /* PrefsShortcuts.png */,
 				A6F2F216250757FD00FC227F /* PrefsShortcuts@2x.png */,
 				A6C978EF24A0194400971AA7 /* WindowCornerFull.psd */,
@@ -8568,6 +8582,8 @@
 				A6AAD5ED22F4A1DD002DD12C /* iTermCommandRunnerPool.m */,
 				A6E2CC0924E0950600CBD957 /* iTermStatusBarSparklinesComponent.h */,
 				A6E2CC0A24E0950600CBD957 /* iTermStatusBarSparklinesComponent.m */,
+				A6A64E5B2508B83F0040490B /* iTermStatusBarSnippetComponent.h */,
+				A6A64E5C2508B83F0040490B /* iTermStatusBarSnippetComponent.m */,
 			);
 			name = Components;
 			sourceTree = "<group>";
@@ -11178,6 +11194,7 @@
 				5370678221C9D2780088D0F3 /* SIGArchiveChunk.h in Headers */,
 				A6AFE9382401E88D00D489C7 /* iTermImageView.h in Headers */,
 				A630117620E6971D008114B7 /* iTermStatusBarTextComponent.h in Headers */,
+				A6A64E5D2508B83F0040490B /* iTermStatusBarSnippetComponent.h in Headers */,
 				A66719291DCE36C3000CE608 /* iTermCommandHistoryEntryMO+CoreDataProperties.h in Headers */,
 				530AB8C020B4E1DE00D2AA08 /* iTermRPCTrigger.h in Headers */,
 				A6A64E552508A9E10040490B /* iTermSnippetsMenuController.h in Headers */,
@@ -11969,6 +11986,7 @@
 				536EF5BA23F6684D00B81875 /* it2run in Resources */,
 				A67F61C3214395C60093940A /* graphic_read.png in Resources */,
 				A6E7AE69214394CA00DE9F3B /* graphic_bullhorn@2x.png in Resources */,
+				A6A64E662508BE650040490B /* StatusBarIconSnippet@2x.png in Resources */,
 				A665C1FC2440461500F623F0 /* WindowCorner@2x.png in Resources */,
 				A6F7A721213CB143004DE961 /* StatusBarIconCPU@2x.png in Resources */,
 				A690F7031B424C55009F76D8 /* Media.xcassets in Resources */,
@@ -12158,6 +12176,7 @@
 				1D6ED9D119AEA20D005A7799 /* TabClose_Front_Pressed@2x.png in Resources */,
 				1D6ED9D219AEA20D005A7799 /* TabClose_Front@2x.png in Resources */,
 				A635F1E525076203008C3038 /* iTermActionsEditingViewController.xib in Resources */,
+				A6A64E632508BE650040490B /* StatusBarIconSnippet.png in Resources */,
 				A67F614C214395870093940A /* graphic_http.png in Resources */,
 				1D6ED9D319AEA20D005A7799 /* TabClose_Front_Pressed.png in Resources */,
 				A635029E229B5F8B0042B779 /* YosemiteAddTab@2x.png in Resources */,
@@ -12647,6 +12666,7 @@
 				1D44CFAA1CC7F5A600BE5630 /* PTYTextViewTest-golden-nonretina-testDimmingTextAndBgAndCursorBoost.png in Resources */,
 				1D44D0711CC7F5A600BE5630 /* PTYTextViewTest-golden-travis-testDimmingTextAndMinimumContrast.png in Resources */,
 				1D44D01C1CC7F5A600BE5630 /* PTYTextViewTest-golden-testIMEWithAmbiguousIsDoubleWidth.png in Resources */,
+				A6A64E622508BE650040490B /* StatusBarIconSnippet.png in Resources */,
 				A67F6135214395570093940A /* graphic_gulp.png in Resources */,
 				53B93E0021F640BB001EC59C /* iTermBadgeConfigurationWindowController.xib in Resources */,
 				A6EC937724E78A5900EEADEF /* iTermEditSnippetWindowController.xib in Resources */,
@@ -12729,6 +12749,7 @@
 				1D44CFD71CC7F5A600BE5630 /* PTYTextViewTest-golden-nonretina-testSmartCursorColor_reverseVideo.png in Resources */,
 				1D44D05D1CC7F5A600BE5630 /* PTYTextViewTest-golden-travis-testBlockCursorDoublyReverseVideo.png in Resources */,
 				1D44CFCA1CC7F5A600BE5630 /* PTYTextViewTest-golden-nonretina-testSelectedTab.png in Resources */,
+				A6A64E652508BE650040490B /* StatusBarIconSnippet@2x.png in Resources */,
 				1D44CFCB1CC7F5A600BE5630 /* PTYTextViewTest-golden-nonretina-testSelectedTabFillerWithoutTab.png in Resources */,
 				A63821F0229E50CD005D74BE /* Warning@2x.png in Resources */,
 				1D44D04C1CC7F5A600BE5630 /* PTYTextViewTest-golden-travis-testAnsiColors.png in Resources */,
@@ -12839,6 +12860,7 @@
 				A6E7AE86214394DD00DE9F3B /* graphic_curl.png in Resources */,
 				A66F52D92106F6F100571168 /* gitup@2x.png in Resources */,
 				1D5FDD7C1208E91100C46BA3 /* close.png in Resources */,
+				A6A64E612508BE650040490B /* StatusBarIconSnippet.png in Resources */,
 				A67F6141214395870093940A /* graphic_http@2x.png in Resources */,
 				1D44CCDB1CC6A1DE00BE5630 /* Loupe.png in Resources */,
 				A67D0D5C1A2EE12A003A8B35 /* iTermEditKeyActionWindowController.xib in Resources */,
@@ -13226,6 +13248,7 @@
 				53BBA0F8214236AC0074D061 /* iterm2_git_poll.sh in Resources */,
 				A6F7A707213CB143004DE961 /* StatusBarIconUser.png in Resources */,
 				A6F7A728213CB143004DE961 /* StatusBarIconComposer.png in Resources */,
+				A6A64E642508BE650040490B /* StatusBarIconSnippet@2x.png in Resources */,
 				A6E7AE67214394CA00DE9F3B /* graphic_bullhorn@2x.png in Resources */,
 				9DB3D6ED176CC47E0071CCF8 /* PrefsMouse@2x.png in Resources */,
 				A68E33331DE746F5003F1D8E /* Add Mark Touch Bar Icon.png in Resources */,
@@ -13745,6 +13768,7 @@
 				5370678A21C9D2780088D0F3 /* SIGKey.m in Sources */,
 				A6F718C62265B2580053488E /* iTermPathCleaner.m in Sources */,
 				A67D19582237289900BD0D4D /* iTermImage.m in Sources */,
+				A6A64E5E2508B83F0040490B /* iTermStatusBarSnippetComponent.m in Sources */,
 				5312269B20CB1D3A004831C6 /* iTermBuiltInFunctions.m in Sources */,
 				A65660D92372A69A00DC6744 /* iTermDoublyLinkedList.m in Sources */,
 				A6352257238CA38A00FED5BC /* iTermMultiServerJobManager.m in Sources */,

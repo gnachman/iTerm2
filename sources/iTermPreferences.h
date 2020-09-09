@@ -196,6 +196,9 @@ extern NSString *const kPreferenceKeyHotkeyMigratedFromSingleToMulti;
 // See iTermActionsModel. NOTE: This cannot be accessed with the usual getters and setters because
 // it is array-valued.
 extern NSString *const kPreferenceKeyActions;
+// See iTermSnippetsModel. NOTE: This cannot be accessed with the useal getters and setters because
+// it is array-valued.
+extern NSString *const kPreferenceKeySnippets;
 
 @interface iTermPreferences : NSObject
 

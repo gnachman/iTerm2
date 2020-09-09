@@ -7,12 +7,11 @@
 
 #import "iTermSnippetsModel.h"
 #import "iTermNotificationCenter+Protected.h"
+#import "iTermPreferences.h"
 #import "NSArray+iTerm.h"
 #import "NSIndexSet+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "NSStringITerm.h"
-
-static NSString *const iTermSnippetsUserDefaultsKey = @"Snippets";
 
 @implementation iTermSnippet
 
@@ -78,7 +77,7 @@ static NSString *const iTermSnippetsUserDefaultsKey = @"Snippets";
 - (instancetype)init {
     self = [super init];
     if (self) {
-        _snippets = [[[NSArray castFrom:[[NSUserDefaults standardUserDefaults] objectForKey:iTermSnippetsUserDefaultsKey]] mapWithBlock:^id(id anObject) {
+        _snippets = [[[NSArray castFrom:[[NSUserDefaults standardUserDefaults] objectForKey:kPreferenceKeySnippets]] mapWithBlock:^id(id anObject) {
             NSDictionary *dict = [NSDictionary castFrom:anObject];
             if (!dict) {
                 return nil;
@@ -162,7 +161,7 @@ static NSString *const iTermSnippetsUserDefaultsKey = @"Snippets";
 
 - (void)save {
     [[NSUserDefaults standardUserDefaults] setObject:[self arrayOfDictionaries]
-                                              forKey:iTermSnippetsUserDefaultsKey];
+                                              forKey:kPreferenceKeySnippets];
 }
 
 - (NSArray<NSDictionary *> *)arrayOfDictionaries {

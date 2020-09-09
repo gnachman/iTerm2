@@ -6,6 +6,7 @@
 //
 
 #import "iTermShortcutsViewController.h"
+
 #import "iTermActionsEditingViewController.h"
 #import "iTermSnippetsEditingViewController.h"
 
@@ -43,7 +44,12 @@
         [_tabView selectTabViewItemWithIdentifier:identifier];
         return _actionsView;
     }
-    // TODO: snippets
+    if ([document.identifier isEqualToString:kPreferenceKeySnippets]) {
+        NSString *identifier = @"Snippets";
+        *willChangeTab = [_tabView.selectedTabViewItem.identifier isEqualToString:identifier];
+        [_tabView selectTabViewItemWithIdentifier:identifier];
+        return _snippetsView;
+    }
     return nil;
 }
 

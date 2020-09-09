@@ -163,6 +163,7 @@ NSString *const kPreferenceKeyHotkeyMigratedFromSingleToMulti = @"HotkeyMigrated
 NSString *const kPreferenceKeyDefaultToolbeltWidth = @"Default Toolbelt Width";
 NSString *const kPreferenceKeySizeChangesAffectProfile = @"Size Changes Affect Profile";
 NSString *const kPreferenceKeyActions = @"Actions";
+NSString *const kPreferenceKeySnippets = @"Snippets";
 // NOTE: If you update this list, also update preferences.py.
 
 static NSMutableDictionary *gObservers;

@@ -11,13 +11,13 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface NSResponder (iTerm)
+@interface NSResponder (Snippets)
 // -representedObject of sender is an iTermSnippet.
 - (void)sendSnippet:(id)sender;
 @end
 
 @interface iTermSnippetsMenuController : NSObject
-
+@property (nonatomic, nullable, strong) NSMenu *menu;
 @end
 
 NS_ASSUME_NONNULL_END

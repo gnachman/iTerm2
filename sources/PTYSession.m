@@ -12707,6 +12707,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [self.delegate sessionEditActions];
 }
 
+- (void)statusBarEditSnippets {
+    [self.delegate sessionEditSnippets];
+}
+
 - (void)statusBarResignFirstResponder {
     [_textview.window makeFirstResponder:_textview];
 }

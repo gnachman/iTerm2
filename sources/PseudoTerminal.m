@@ -10632,6 +10632,10 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     [[PreferencePanel sharedInstance] openToPreferenceWithKey:kPreferenceKeyActions];
 }
 
+- (void)tabEditSnippets:(PTYTab *)tab {
+    [[PreferencePanel sharedInstance] openToPreferenceWithKey:kPreferenceKeySnippets];
+}
+
 - (void)updateBackgroundImage {
     if ([iTermPreferences boolForKey:kPreferenceKeyPerPaneBackgroundImage]) {
         return;

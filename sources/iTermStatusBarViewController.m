@@ -362,6 +362,10 @@ static const CGFloat iTermStatusBarViewControllerBottomMargin = 0;
     [self.delegate statusBarEditActions];
 }
 
+- (void)statusBarComponentEditSnippets:(id<iTermStatusBarComponent>)component {
+    [self.delegate statusBarEditSnippets];
+}
+
 - (void)statusBarComponentResignFirstResponder:(id<iTermStatusBarComponent>)component {
     [self.delegate statusBarResignFirstResponder];
 }
