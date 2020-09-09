@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="16097" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
     <dependencies>
+        <deployment identifier="macosx"/>
         <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="16097"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
@@ -35,7 +36,7 @@
                     <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="pjl-7C-lDk">
                         <rect key="frame" x="18" y="196" width="51" height="16"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                        <textFieldCell key="cell" lineBreakMode="clipping" title="Value:" id="9X0-kM-Zun">
+                        <textFieldCell key="cell" lineBreakMode="clipping" alignment="right" title="Value:" id="9X0-kM-Zun">
                             <font key="font" metaFont="system"/>
                             <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                             <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
@@ -54,26 +55,26 @@
                         <rect key="frame" x="75" y="61" width="385" height="148"/>
                         <autoresizingMask key="autoresizingMask" flexibleMinY="YES"/>
                         <clipView key="contentView" drawsBackground="NO" copiesOnScroll="NO" id="w6e-IA-se6">
-                            <rect key="frame" x="0.0" y="0.0" width="370" height="148"/>
+                            <rect key="frame" x="0.0" y="0.0" width="385" height="148"/>
                             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                             <subviews>
                                 <textView importsGraphics="NO" richText="NO" verticallyResizable="YES" allowsUndo="YES" textCompletion="NO" id="RYC-Fx-alf">
-                                    <rect key="frame" x="0.0" y="0.0" width="370" height="148"/>
+                                    <rect key="frame" x="0.0" y="0.0" width="385" height="148"/>
                                     <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                     <color key="textColor" name="textColor" catalog="System" colorSpace="catalog"/>
                                     <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
-                                    <size key="minSize" width="370" height="148"/>
-                                    <size key="maxSize" width="370" height="10000000"/>
+                                    <size key="minSize" width="385" height="148"/>
+                                    <size key="maxSize" width="385" height="10000000"/>
                                     <color key="insertionPointColor" name="textColor" catalog="System" colorSpace="catalog"/>
                                 </textView>
                             </subviews>
                         </clipView>
-                        <scroller key="horizontalScroller" hidden="YES" verticalHuggingPriority="750" horizontal="YES" id="YPA-8C-Y1A">
+                        <scroller key="horizontalScroller" hidden="YES" wantsLayer="YES" verticalHuggingPriority="750" horizontal="YES" id="YPA-8C-Y1A">
                             <rect key="frame" x="-100" y="-100" width="225" height="15"/>
                             <autoresizingMask key="autoresizingMask"/>
                         </scroller>
-                        <scroller key="verticalScroller" verticalHuggingPriority="750" horizontal="NO" id="QbB-rg-Mv4">
-                            <rect key="frame" x="370" y="0.0" width="15" height="148"/>
+                        <scroller key="verticalScroller" wantsLayer="YES" verticalHuggingPriority="750" horizontal="NO" id="QbB-rg-Mv4">
+                            <rect key="frame" x="369" y="0.0" width="16" height="148"/>
                             <autoresizingMask key="autoresizingMask"/>
                         </scroller>
                     </scrollView>
@@ -86,6 +87,7 @@
                             <string key="keyEquivalent" base64-UTF8="YES">
 DQ
 </string>
+                            <modifierMask key="keyEquivalentModifierMask" shift="YES"/>
                         </buttonCell>
                         <connections>
                             <action selector="ok:" target="-2" id="FJm-an-XgH"/>

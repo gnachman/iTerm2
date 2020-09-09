@@ -18,8 +18,7 @@
 
 #import <Carbon/Carbon.h>
 
-#warning TODO: This is also defined in iTermToolActions.m
-static NSString *const iTermToolActionsPasteboardType = @"iTermToolActionsPasteboardType";
+static NSString *const iTermActionsEditingPasteboardType = @"iTermActionsEditingPasteboardType";
 
 @interface iTermActionsEditingViewController()<NSTableViewDataSource, NSTableViewDelegate>
 @end
@@ -41,7 +40,7 @@ static NSString *const iTermToolActionsPasteboardType = @"iTermToolActionsPasteb
     self.view.frame = containerView.bounds;
     _actions = [[[iTermActionsModel sharedInstance] actions] copy];
     [_tableView setDoubleAction:@selector(doubleClickOnTableView:)];
-    [_tableView registerForDraggedTypes:@[ iTermToolActionsPasteboardType ]];
+    [_tableView registerForDraggedTypes:@[ iTermActionsEditingPasteboardType ]];
     [_tableView reloadData];
     __weak __typeof(self) weakSelf = self;
     [iTermActionsDidChangeNotification subscribe:self
@@ -245,14 +244,14 @@ static NSString *const iTermToolActionsPasteboardType = @"iTermToolActionsPasteb
 - (BOOL)tableView:(NSTableView *)tableView
 writeRowsWithIndexes:(NSIndexSet *)rowIndexes
      toPasteboard:(NSPasteboard*)pboard {
-    [pboard declareTypes:@[ iTermToolActionsPasteboardType ]
+    [pboard declareTypes:@[ iTermActionsEditingPasteboardType ]
                    owner:self];
 
     NSArray<NSNumber *> *plist = [rowIndexes.it_array mapWithBlock:^id(NSNumber *anObject) {
         return @(_actions[anObject.integerValue].identifier);
     }];
     [pboard setPropertyList:plist
-                    forType:iTermToolActionsPasteboardType];
+                    forType:iTermActionsEditingPasteboardType];
     return YES;
 }
 
@@ -283,7 +282,7 @@ writeRowsWithIndexes:(NSIndexSet *)rowIndexes
     dropOperation:(NSTableViewDropOperation)operation {
     [self pushUndo];
     NSPasteboard *pboard = [info draggingPasteboard];
-    NSArray<NSNumber *> *identifiers = [pboard propertyListForType:iTermToolActionsPasteboardType];
+    NSArray<NSNumber *> *identifiers = [pboard propertyListForType:iTermActionsEditingPasteboardType];
     [[iTermActionsModel sharedInstance] moveActionsWithIdentifiers:identifiers
                                                            toIndex:row];
     return YES;

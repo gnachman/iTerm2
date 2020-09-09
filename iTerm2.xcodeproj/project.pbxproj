@@ -2939,6 +2939,8 @@
 		A6A4B2BB2426C02800184EAC /* iTermPresetKeyMappings.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A4B2B92426C02800184EAC /* iTermPresetKeyMappings.h */; };
 		A6A4B2BC2426C02800184EAC /* iTermPresetKeyMappings.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A4B2BA2426C02800184EAC /* iTermPresetKeyMappings.m */; };
 		A6A5991D1887C63700CB4209 /* ToolCommandHistoryView.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A5991B1887C63700CB4209 /* ToolCommandHistoryView.h */; };
+		A6A64E552508A9E10040490B /* iTermSnippetsMenuController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A64E532508A9E10040490B /* iTermSnippetsMenuController.h */; };
+		A6A64E562508A9E10040490B /* iTermSnippetsMenuController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A64E542508A9E10040490B /* iTermSnippetsMenuController.m */; };
 		A6A802E0226AD0D200BC70DC /* iTermSearchHistory.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A802DE226AD0D200BC70DC /* iTermSearchHistory.h */; };
 		A6A802E1226AD0D200BC70DC /* iTermSearchHistory.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A802DF226AD0D200BC70DC /* iTermSearchHistory.m */; };
 		A6A802E6226B8C8400BC70DC /* PTYTask.m in Sources */ = {isa = PBXBuildFile; fileRef = E8CF7560026DDA6303A80106 /* PTYTask.m */; };
@@ -6139,6 +6141,8 @@
 		A6A51A3F1B45CEA9007891F3 /* VT100DCSParserTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VT100DCSParserTest.m; sourceTree = "<group>"; };
 		A6A5991B1887C63700CB4209 /* ToolCommandHistoryView.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = ToolCommandHistoryView.h; sourceTree = "<group>"; tabWidth = 4; };
 		A6A5991C1887C63700CB4209 /* ToolCommandHistoryView.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = ToolCommandHistoryView.m; sourceTree = "<group>"; tabWidth = 4; };
+		A6A64E532508A9E10040490B /* iTermSnippetsMenuController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermSnippetsMenuController.h; sourceTree = "<group>"; };
+		A6A64E542508A9E10040490B /* iTermSnippetsMenuController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermSnippetsMenuController.m; sourceTree = "<group>"; };
 		A6A802DE226AD0D200BC70DC /* iTermSearchHistory.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermSearchHistory.h; sourceTree = "<group>"; };
 		A6A802DF226AD0D200BC70DC /* iTermSearchHistory.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermSearchHistory.m; sourceTree = "<group>"; };
 		A6A802E7226ED20800BC70DC /* iTermPrintGuard.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermPrintGuard.h; sourceTree = "<group>"; };
@@ -9620,6 +9624,8 @@
 				A61A859324EFA01800B03880 /* iTermBackgroundCommandRunner.m */,
 				A61A85B724FC260700B03880 /* iTermTextViewContextMenuHelper.h */,
 				A61A85B824FC260700B03880 /* iTermTextViewContextMenuHelper.m */,
+				A6A64E532508A9E10040490B /* iTermSnippetsMenuController.h */,
+				A6A64E542508A9E10040490B /* iTermSnippetsMenuController.m */,
 			);
 			name = Helpers;
 			sourceTree = "<group>";
@@ -11167,6 +11173,7 @@
 				A630117620E6971D008114B7 /* iTermStatusBarTextComponent.h in Headers */,
 				A66719291DCE36C3000CE608 /* iTermCommandHistoryEntryMO+CoreDataProperties.h in Headers */,
 				530AB8C020B4E1DE00D2AA08 /* iTermRPCTrigger.h in Headers */,
+				A6A64E552508A9E10040490B /* iTermSnippetsMenuController.h in Headers */,
 				A6556EAD1FD37ED6000CC89C /* iTermASCIITexture.h in Headers */,
 				A6232E76202832A900EC0F98 /* iTermData.h in Headers */,
 				A6481654228FD511008E7E0C /* iTermVariablesIndex.h in Headers */,
@@ -13713,6 +13720,7 @@
 				A6A4866020B6762E00493302 /* AppearancePreferencesViewController.m in Sources */,
 				A6F718B8226583600053488E /* iTermURLActionFactory.m in Sources */,
 				A630119920E70CDA008114B7 /* iTermStatusBarSetupElement.m in Sources */,
+				A6A64E562508A9E10040490B /* iTermSnippetsMenuController.m in Sources */,
 				A630118420E6A613008114B7 /* iTermStatusBarSetupViewController.m in Sources */,
 				5370678C21C9D2780088D0F3 /* SIGVerificationAlgorithm.m in Sources */,
 				A6FF3F2F2435BA3C003CCB03 /* FindView.m in Sources */,

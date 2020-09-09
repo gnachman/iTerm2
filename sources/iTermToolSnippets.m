@@ -26,24 +26,6 @@ static const CGFloat kMargin = 4;
 static NSString *const iTermToolSnippetsPasteboardType = @"iTermToolSnippetsPasteboardType";
 
 
-@interface iTermSnippet(Tool)
-@property (nonatomic, readonly) NSString *trimmedValue;
-@property (nonatomic, readonly) NSString *trimmedTitle;
-@property (nonatomic, readonly) BOOL titleEqualsValue;
-@end
-
-@implementation iTermSnippet(Tool)
-- (NSString *)trimmedValue {
-    return [self.value ellipsizedDescriptionNoLongerThan:40];
-}
-- (NSString *)trimmedTitle {
-    return [self.title ellipsizedDescriptionNoLongerThan:40];
-}
-- (BOOL)titleEqualsValue {
-    return [self.trimmedTitle isEqualToString:self.trimmedValue];
-}
-@end
-
 @interface iTermToolSnippets() <NSDraggingDestination, NSTableViewDataSource, NSTableViewDelegate>
 @end
 
@@ -337,15 +319,15 @@ static NSButton *iTermToolSnippetsNewButton(NSString *imageName, NSString *title
 
 - (NSString *)combinedStringForRow:(NSInteger)rowIndex {
     iTermSnippet *snippet = _snippets[rowIndex];
-    NSString *title = snippet.trimmedTitle;
+    NSString *title = [snippet trimmedTitle:40];
     if (!title.length) {
         return [self valueStringForRow:rowIndex];
     }
-    return [NSString stringWithFormat:@"%@ — %@", title, snippet.trimmedValue];
+    return [NSString stringWithFormat:@"%@ — %@", title, [snippet trimmedValue:40]];
 }
 
 - (NSString *)valueStringForRow:(NSInteger)rowIndex {
-    return _snippets[rowIndex].trimmedValue;
+    return [_snippets[rowIndex] trimmedValue:40];
 }
 
 - (void)update {
@@ -383,7 +365,7 @@ static NSButton *iTermToolSnippetsNewButton(NSString *imageName, NSString *title
    viewForTableColumn:(NSTableColumn *)tableColumn
                   row:(NSInteger)row {
     iTermSnippet *snippet = _snippets[row];
-    if (snippet.titleEqualsValue) {
+    if ([snippet titleEqualsValueUpToLength:40]) {
         static NSString *const identifier = @"ToolSnippetValue";
         NSTextField *result = [tableView makeViewWithIdentifier:identifier owner:self];
         if (result == nil) {

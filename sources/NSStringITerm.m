@@ -1246,7 +1246,7 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
 }
 
 - (NSString *)ellipsizedDescriptionNoLongerThan:(int)maxLength {
-    NSString *noNewlineSelf = [self stringByReplacingOccurrencesOfRegex:@"[\\r\\n]" withString:@" "];
+    NSString *noNewlineSelf = [self stringByReplacingOccurrencesOfRegex:@"[\\r\\n]" withString:@"↩"];
     if (noNewlineSelf.length <= maxLength) {
         return [noNewlineSelf stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
     }

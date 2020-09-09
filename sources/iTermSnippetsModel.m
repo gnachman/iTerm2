@@ -10,6 +10,7 @@
 #import "NSArray+iTerm.h"
 #import "NSIndexSet+iTerm.h"
 #import "NSObject+iTerm.h"
+#import "NSStringITerm.h"
 
 static NSString *const iTermSnippetsUserDefaultsKey = @"Snippets";
 
@@ -45,6 +46,18 @@ static NSString *const iTermSnippetsUserDefaultsKey = @"Snippets";
         return NO;
     }
     return self.identifier == other.identifier;
+}
+
+- (NSString *)trimmedValue:(NSInteger)maxLength {
+    return [self.value ellipsizedDescriptionNoLongerThan:maxLength];
+}
+
+- (NSString *)trimmedTitle:(NSInteger)maxLength {
+    return [self.title ellipsizedDescriptionNoLongerThan:maxLength];
+}
+
+- (BOOL)titleEqualsValueUpToLength:(NSInteger)maxLength {
+    return [[self trimmedTitle:maxLength] isEqualToString:[self trimmedValue:maxLength]];
 }
 
 @end

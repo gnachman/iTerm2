@@ -23,6 +23,7 @@
 #import "iTermScriptHistory.h"
 #import "iTermShellIntegrationWindowController.h"
 #import "iTermSlowOperationGateway.h"
+#import "iTermSnippetsMenuController.h"
 #import "iTermTextExtractor.h"
 #import "iTermURLActionFactory.h"
 #import "iTermURLStore.h"
@@ -60,6 +61,15 @@ static const NSUInteger kRectangularSelectionModifierMask = (kRectangularSelecti
                                              selector:@selector(imageDidLoad:)
                                                  name:iTermImageDidLoad
                                                object:nil];
+}
+
+#pragma mark - NSResponder
+
+- (BOOL)arcValidateMenuItem:(NSMenuItem *)item {
+    if (item.action == @selector(sendSnippet:)) {
+        return YES;
+    }
+    return NO;
 }
 
 #pragma mark - Coordinate Space Conversions
@@ -1003,6 +1013,15 @@ toggleTerminalStateForMenuItem:(nonnull NSMenuItem *)item {
     failedWithError:(NSError *)error
         forMenuItem:(NSString *)title {
     [self.delegate textViewContextMenuInvocation:invocation failedWithError:error forMenuItem:title];
+}
+
+#pragma mark - NSResponder+Snippets
+
+- (void)sendSnippet:(id)sender {
+    iTermSnippet *snippet = [iTermSnippet castFrom:[sender representedObject]];
+    if (snippet) {
+        [self.delegate sendText:snippet.value];
+    }
 }
 
 @end

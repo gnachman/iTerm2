@@ -450,6 +450,15 @@ DQ
                                 </menu>
                             </menuItem>
                             <menuItem isSeparatorItem="YES" id="EC1-3K-Gyr"/>
+                            <menuItem title="Snippets" id="s0f-jP-7Pk" userLabel="Snippets">
+                                <modifierMask key="keyEquivalentModifierMask"/>
+                                <menu key="submenu" title="Snippets" id="sOq-3j-vtq" userLabel="Snippets"/>
+                            </menuItem>
+                            <menuItem title="Actions" id="8Ja-GB-Waf" userLabel="Snippets">
+                                <modifierMask key="keyEquivalentModifierMask"/>
+                                <menu key="submenu" title="Actions" id="w4F-uL-QPB" userLabel="Snippets"/>
+                            </menuItem>
+                            <menuItem isSeparatorItem="YES" id="6Wz-M8-IFF"/>
                             <menuItem title="Open Selection" keyEquivalent="o" identifier="Open Selection" id="upW-1r-eM7">
                                 <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
                                 <connections>
@@ -1449,5 +1458,10 @@ DQ
         <menuItem title="Application Keypad Mode" id="gvK-7r-3df" userLabel="Application Cursor Keys">
             <modifierMask key="keyEquivalentModifierMask"/>
         </menuItem>
+        <customObject id="vNk-ru-3oN" customClass="iTermSnippetsMenuController">
+            <connections>
+                <outlet property="_menu" destination="s0f-jP-7Pk" id="Kcc-Y5-5hf"/>
+            </connections>
+        </customObject>
     </objects>
 </document>
