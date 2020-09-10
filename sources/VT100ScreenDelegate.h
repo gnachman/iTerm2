@@ -283,7 +283,6 @@
                        displayInline:(BOOL)displayInline
                          promptIfBig:(BOOL *)promptIfBig;
 - (BOOL)screenShouldClearScrollbackBuffer;
-- (void)screenSetUseCSIu:(int)terminalSetting;
 - (VT100GridRange)screenRangeOfVisibleLines;
 
 @end

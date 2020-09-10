@@ -972,9 +972,6 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
 - (void)screenResetCursorTypeAndBlink {
 }
 
-- (void)screenSetUseCSIu:(int)terminalSetting {
-}
-
 - (BOOL)screenShouldClearScrollbackBuffer {
     return YES;
 }

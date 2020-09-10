@@ -4009,8 +4009,7 @@ ITERM_WEAKLY_REFERENCEABLE
         _terminal.sendModifiers[4] = @-1;
         terminalTickit = -1;
     }
-    [self setUseLibTickit:[self shouldUseLibTickitWithProfileSetting:profileWantsTickit
-                                                     terminalSetting:terminalTickit]];
+    [self setUseLibTickit:profileWantsTickit];
     [_lastLibTickitProfileSetting autorelease];
     _lastLibTickitProfileSetting = [@(profileWantsTickit) retain];
 
@@ -4066,14 +4065,6 @@ ITERM_WEAKLY_REFERENCEABLE
                                                               return newValue;
                                                           }];
 
-}
-
-- (BOOL)shouldUseLibTickitWithProfileSetting:(BOOL)profileSetting
-                             terminalSetting:(int)terminalSetting {
-    if (terminalSetting < 0) {
-        return profileSetting;
-    }
-    return (terminalSetting > 0);
 }
 
 - (void)setUseLibTickit:(BOOL)value {
@@ -9139,12 +9130,16 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
             break;
 
         case 7: {
-            _terminal.sendModifiers[4] = _useLibTickit ? @0 : @1;
-            [self screenSetUseCSIu:[_terminal.sendModifiers[4] intValue]];
+            [self updateUseCSIuMode];
             break;
-        }
-            
+        }        
     }
+}
+
+- (void)updateUseCSIuMode {
+    const BOOL profileSetting =
+        [iTermProfilePreferences boolForKey:KEY_USE_LIBTICKIT_PROTOCOL inProfile:self.profile];
+    [self setUseLibTickit:profileSetting];
 }
 
 - (void)textViewResetTerminal {
@@ -11637,13 +11632,6 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         return NO;
     }
     return !*boolPtr;
-}
-
-- (void)screenSetUseCSIu:(int)terminalSetting {
-    const BOOL profileSetting =
-        [iTermProfilePreferences boolForKey:KEY_USE_LIBTICKIT_PROTOCOL inProfile:self.profile];
-    [self setUseLibTickit:[self shouldUseLibTickitWithProfileSetting:profileSetting
-                                                     terminalSetting:terminalSetting]];
 }
 
 - (VT100Screen *)popupVT100Screen {
