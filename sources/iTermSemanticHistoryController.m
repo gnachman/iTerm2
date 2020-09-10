@@ -534,9 +534,10 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
     [runner run];
 }
 
-- (BOOL)openFile:(NSString *)fullPath {
+- (BOOL)openFile:(NSString *)fullPath fragment:(NSString *)fragment {
     DLog(@"Open file %@", fullPath);
-    return [[iTermLaunchServices sharedInstance] openFile:fullPath];
+    return [[iTermLaunchServices sharedInstance] openFile:fullPath
+                                                 fragment:fragment];
 }
 
 - (BOOL)openURL:(NSURL *)url editorIdentifier:(NSString *)editorIdentifier {
@@ -570,6 +571,7 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
 
 - (void)openPath:(NSString *)cleanedUpPath
    orRawFilename:(NSString *)rawFileName
+        fragment:(NSString *)fragment
    substitutions:(NSDictionary *)substitutions
            scope:(iTermVariableScope *)originalScope
       lineNumber:(NSString *)lineNumber
@@ -661,7 +663,7 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
 
     if (isDirectory) {
         DLog(@"Open directory %@", path);
-        [self openFile:path];
+        [self openFile:path fragment:fragment];
         completion(YES);
         return;
     }
@@ -716,7 +718,7 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
         }
     }
 
-    [self openFile:path];
+    [self openFile:path fragment:fragment];
     completion(YES);
 }
 

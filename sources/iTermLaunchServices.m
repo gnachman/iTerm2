@@ -175,7 +175,18 @@ static NSString *const kOldStyleUrlHandlersUserDefaultsKey = @"URLHandlers";
 }
 
 - (BOOL)openFile:(NSString *)fullPath {
-    DLog(@"openFile: %@", fullPath);
+    return [self openFile:fullPath fragment:nil];
+}
+
+- (BOOL)openFile:(NSString *)fullPath fragment:(NSString *)fragment {
+    DLog(@"openFile: %@ with fragment %@", fullPath, fragment);
+    if (fragment) {
+        NSURLComponents *components = [NSURLComponents componentsWithURL:[NSURL fileURLWithPath:fullPath]
+                                                 resolvingAgainstBaseURL:NO];
+        components.fragment = fragment;
+        [[NSWorkspace sharedWorkspace] openURL:components.URL];
+        return YES;
+    }
     BOOL ok = [[NSWorkspace sharedWorkspace] openFile:fullPath];
     if (!ok && [self offerToPickApplicationToOpenFile:fullPath]) {
         DLog(@"Try to open %@ again", fullPath);

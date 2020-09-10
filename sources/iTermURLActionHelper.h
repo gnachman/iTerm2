@@ -97,6 +97,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)openSemanticHistoryPath:(NSString *)path
                   orRawFilename:(NSString *)rawFileName
+                       fragment:(NSString * _Nullable)fragment
                workingDirectory:(NSString *)workingDirectory
                      lineNumber:(NSString *)lineNumber
                    columnNumber:(NSString *)columnNumber

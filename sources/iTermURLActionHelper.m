@@ -184,6 +184,7 @@
 
 - (void)openSemanticHistoryPath:(NSString *)path
                   orRawFilename:(NSString *)rawFileName
+                       fragment:(NSString *)fragment
                workingDirectory:(NSString *)workingDirectory
                      lineNumber:(NSString *)lineNumber
                    columnNumber:(NSString *)columnNumber
@@ -198,6 +199,7 @@
                                                          columnNumber:columnNumber];
     [self.semanticHistoryController openPath:path
                                orRawFilename:rawFileName
+                                    fragment:fragment
                                substitutions:subs
                                        scope:[self.delegate urlActionHelperScope:self]
                                   lineNumber:lineNumber
@@ -233,10 +235,11 @@
                                                                    suffix:url.path
                                                                      path:url.path
                                                          workingDirectory:workingDirectory
-                                                               lineNumber:lineNumber
-                                                             columnNumber:columnNumber];
+                                                               lineNumber:lineNumber.isNumeric ? lineNumber : nil
+                                                             columnNumber:columnNumber.isNumeric && lineNumber.isNumeric ? columnNumber : nil];
         [self.semanticHistoryController openPath:url.path
                                    orRawFilename:url.path
+                                        fragment:url.fragment
                                    substitutions:subs
                                            scope:[self.delegate urlActionHelperScope:self]
                                       lineNumber:lineNumber
@@ -293,6 +296,7 @@
                 __weak __typeof(self) weakSelf = self;
                 [self openSemanticHistoryPath:action.fullPath
                                 orRawFilename:action.rawFilename
+                                     fragment:nil
                              workingDirectory:action.workingDirectory
                                    lineNumber:action.lineNumber
                                  columnNumber:action.columnNumber

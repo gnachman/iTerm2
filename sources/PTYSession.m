@@ -3549,6 +3549,7 @@ ITERM_WEAKLY_REFERENCEABLE
         __weak __typeof(self) weakSelf = self;
         [_textview openSemanticHistoryPath:cleanedup
                              orRawFilename:rawFilename
+                                  fragment:nil
                           workingDirectory:workingDirectory
                                 lineNumber:lineNumber
                               columnNumber:columnNumber

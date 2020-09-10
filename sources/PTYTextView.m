@@ -2957,6 +2957,7 @@
 
 - (void)openSemanticHistoryPath:(NSString *)path
                   orRawFilename:(NSString *)rawFileName
+                       fragment:(NSString *)fragment
                workingDirectory:(NSString *)workingDirectory
                      lineNumber:(NSString *)lineNumber
                    columnNumber:(NSString *)columnNumber
@@ -2965,6 +2966,7 @@
                      completion:(void (^)(BOOL))completion {
     [_urlActionHelper openSemanticHistoryPath:path
                                 orRawFilename:rawFileName
+                                     fragment:fragment
                              workingDirectory:workingDirectory
                                    lineNumber:lineNumber
                                  columnNumber:columnNumber
