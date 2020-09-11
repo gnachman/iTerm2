@@ -413,7 +413,7 @@ static iTermPreferencesSearchEngine *gSearchEngine;
         _bookmarksToolbarItem.image = [NSImage it_imageForSymbolName:@"person" accessibilityDescription:@"Profiles"];
         _mouseToolbarItem.image = [NSImage it_imageForSymbolName:@"cursorarrow.motionlines" accessibilityDescription:@"Pointer"];
         _advancedToolbarItem.image = [NSImage it_imageForSymbolName:@"gearshape.2" accessibilityDescription:@"Advanced"];
-#warning TODO: Big sur icon for shortcuts
+        _shortcutsToolbarItem.image = [NSImage it_imageForSymbolName:@"bolt.circle" accessibilityDescription:@"Shortcuts"];
     }
 #endif
     _globalTabViewItem.view = _generalPreferencesViewController.view;

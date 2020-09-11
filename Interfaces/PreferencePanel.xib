@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="16097" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="17154" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES">
     <dependencies>
         <deployment identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="16097"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="17154"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
@@ -132,7 +132,7 @@
             <windowStyleMask key="styleMask" titled="YES" utility="YES" documentModal="YES"/>
             <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>
             <rect key="contentRect" x="196" y="132" width="451" height="246"/>
-            <rect key="screenRect" x="0.0" y="0.0" width="3008" height="1669"/>
+            <rect key="screenRect" x="0.0" y="0.0" width="3008" height="1667"/>
             <view key="contentView" id="6180">
                 <rect key="frame" x="0.0" y="0.0" width="451" height="246"/>
                 <autoresizingMask key="autoresizingMask"/>
@@ -166,7 +166,7 @@
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         <popUpButtonCell key="cell" type="push" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" id="6125">
                             <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
-                            <font key="font" metaFont="system"/>
+                            <font key="font" metaFont="menu"/>
                             <menu key="menu" title="OtherViews" id="6126">
                                 <items>
                                     <menuItem title="Right Button" tag="1" id="6164">
@@ -219,7 +219,7 @@
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         <popUpButtonCell key="cell" type="push" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" id="6131">
                             <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
-                            <font key="font" metaFont="system"/>
+                            <font key="font" metaFont="menu"/>
                             <menu key="menu" title="OtherViews" id="6132"/>
                         </popUpButtonCell>
                         <connections>
@@ -240,7 +240,7 @@
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         <popUpButtonCell key="cell" type="push" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" id="6189">
                             <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
-                            <font key="font" metaFont="system"/>
+                            <font key="font" metaFont="menu"/>
                             <menu key="menu" title="OtherViews" id="6190">
                                 <items>
                                     <menuItem title="Single Click" tag="1" id="6194">
@@ -358,7 +358,7 @@ Gw
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         <popUpButtonCell key="cell" type="push" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" id="6242">
                             <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
-                            <font key="font" metaFont="system"/>
+                            <font key="font" metaFont="menu"/>
                             <menu key="menu" title="OtherViews" id="6243"/>
                         </popUpButtonCell>
                     </popUpButton>
@@ -383,7 +383,7 @@ Gw
         <window title="Preferences" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" releasedWhenClosed="NO" visibleAtLaunch="NO" animationBehavior="default" id="1923" userLabel="Main Preferences Window" customClass="iTermPrefsPanel">
             <windowStyleMask key="styleMask" titled="YES" closable="YES" miniaturizable="YES"/>
             <rect key="contentRect" x="269" y="110" width="924" height="463"/>
-            <rect key="screenRect" x="0.0" y="0.0" width="3008" height="1669"/>
+            <rect key="screenRect" x="0.0" y="0.0" width="3008" height="1667"/>
             <view key="contentView" id="1924">
                 <rect key="frame" x="0.0" y="0.0" width="924" height="463"/>
                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
@@ -516,7 +516,7 @@ Gw
                                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                             <popUpButtonCell key="cell" type="square" title="Other Actions..." bezelStyle="shadowlessSquare" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" pullsDown="YES" id="3231">
                                                 <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
-                                                <font key="font" metaFont="system"/>
+                                                <font key="font" metaFont="menu"/>
                                                 <menu key="menu" title="OtherViews" id="3232">
                                                     <items>
                                                         <menuItem title="Other Actions..." state="on" image="NSActionTemplate" hidden="YES" id="3235"/>
@@ -611,65 +611,49 @@ Gw
             </view>
             <toolbar key="toolbar" implicitIdentifier="D08B01BC-1A7C-42DC-B326-C2E53519AB95" autosavesConfiguration="NO" allowsUserCustomization="NO" displayMode="iconAndLabel" sizeMode="regular" id="5885">
                 <allowedToolbarItems>
-                    <toolbarItem implicitItemIdentifier="45D9C222-64ED-4B5F-89E3-E9862F727A2B" label="General" paletteLabel="General" tag="-1" image="PrefsGeneral" selectable="YES" id="5887">
+                    <toolbarItem implicitItemIdentifier="45D9C222-64ED-4B5F-89E3-E9862F727A2B" label="General" paletteLabel="General" tag="-1" image="PrefsGeneral" sizingBehavior="auto" selectable="YES" id="5887">
                         <nil key="toolTip"/>
-                        <size key="minSize" width="32" height="32"/>
-                        <size key="maxSize" width="32" height="32"/>
                         <connections>
                             <action selector="showGlobalTabView:" target="-2" id="5895"/>
                         </connections>
                     </toolbarItem>
-                    <toolbarItem implicitItemIdentifier="A981DCF2-5E61-441F-8042-57635FC79EC6" label="Appearance" paletteLabel="Appearance" tag="-1" image="PrefsAppearance" selectable="YES" id="5889">
+                    <toolbarItem implicitItemIdentifier="A981DCF2-5E61-441F-8042-57635FC79EC6" label="Appearance" paletteLabel="Appearance" tag="-1" image="PrefsAppearance" sizingBehavior="auto" selectable="YES" id="5889">
                         <nil key="toolTip"/>
-                        <size key="minSize" width="32" height="32"/>
-                        <size key="maxSize" width="32" height="32"/>
                         <connections>
                             <action selector="showAppearanceTabView:" target="-2" id="5892"/>
                         </connections>
                     </toolbarItem>
-                    <toolbarItem implicitItemIdentifier="A3650111-7031-4C54-AE69-7C0A67F80581" label="Profiles" paletteLabel="Profiles" tag="-1" image="PrefsProfile" selectable="YES" id="5886">
+                    <toolbarItem implicitItemIdentifier="A3650111-7031-4C54-AE69-7C0A67F80581" label="Profiles" paletteLabel="Profiles" tag="-1" image="PrefsProfile" sizingBehavior="auto" selectable="YES" id="5886">
                         <nil key="toolTip"/>
-                        <size key="minSize" width="32" height="32"/>
-                        <size key="maxSize" width="32" height="32"/>
                         <connections>
                             <action selector="showBookmarksTabView:" target="-2" id="5893"/>
                         </connections>
                     </toolbarItem>
-                    <toolbarItem implicitItemIdentifier="AD5C9306-CF41-4791-A62C-E30615D27619" label="Keys" paletteLabel="Keys" tag="-1" image="PrefsKeyboard" selectable="YES" id="5888">
+                    <toolbarItem implicitItemIdentifier="AD5C9306-CF41-4791-A62C-E30615D27619" label="Keys" paletteLabel="Keys" tag="-1" image="PrefsKeyboard" sizingBehavior="auto" selectable="YES" id="5888">
                         <nil key="toolTip"/>
-                        <size key="minSize" width="32" height="32"/>
-                        <size key="maxSize" width="32" height="32"/>
                         <connections>
                             <action selector="showKeyboardTabView:" target="-2" id="5891"/>
                         </connections>
                     </toolbarItem>
-                    <toolbarItem implicitItemIdentifier="1DFE8A74-36A5-440E-BBB1-67A1D8C0368B" label="Pointer" paletteLabel="Pointer" tag="-1" image="PrefsMouse" selectable="YES" id="6056">
-                        <size key="minSize" width="32" height="32"/>
-                        <size key="maxSize" width="32" height="32"/>
+                    <toolbarItem implicitItemIdentifier="1DFE8A74-36A5-440E-BBB1-67A1D8C0368B" label="Pointer" paletteLabel="Pointer" tag="-1" image="PrefsMouse" sizingBehavior="auto" selectable="YES" id="6056">
                         <connections>
                             <action selector="showMouseTabView:" target="-2" id="6058"/>
                         </connections>
                     </toolbarItem>
-                    <toolbarItem implicitItemIdentifier="E909A2CE-74E7-4BCC-B139-A2EDCEDC7A5A" label="Arrangements" paletteLabel="Arrangements" tag="-1" image="PrefsArrangements" selectable="YES" id="5890">
+                    <toolbarItem implicitItemIdentifier="E909A2CE-74E7-4BCC-B139-A2EDCEDC7A5A" label="Arrangements" paletteLabel="Arrangements" tag="-1" image="PrefsArrangements" sizingBehavior="auto" selectable="YES" id="5890">
                         <nil key="toolTip"/>
-                        <size key="minSize" width="32" height="32"/>
-                        <size key="maxSize" width="32" height="32"/>
                         <connections>
                             <action selector="showArrangementsTabView:" target="-2" id="5894"/>
                         </connections>
                     </toolbarItem>
-                    <toolbarItem implicitItemIdentifier="3F832EA9-FDDD-4862-94BF-B3813E2AD10B" label="Advanced" paletteLabel="Advanced" tag="-1" image="PrefsAdvanced" selectable="YES" id="gtg-rw-6h8">
+                    <toolbarItem implicitItemIdentifier="3F832EA9-FDDD-4862-94BF-B3813E2AD10B" label="Advanced" paletteLabel="Advanced" tag="-1" image="PrefsAdvanced" sizingBehavior="auto" selectable="YES" id="gtg-rw-6h8">
                         <nil key="toolTip"/>
-                        <size key="minSize" width="32" height="32"/>
-                        <size key="maxSize" width="32" height="32"/>
                         <connections>
                             <action selector="showAdvancedTabView:" target="-2" id="f9X-n8-IcJ"/>
                         </connections>
                     </toolbarItem>
                     <toolbarItem implicitItemIdentifier="NSToolbarFlexibleSpaceItem" id="gT5-w7-yWc"/>
-                    <toolbarItem implicitItemIdentifier="AC57CB9F-043A-4DC7-9155-F358367619B6" label="Shortcuts" paletteLabel="Shortcuts" tag="-1" image="PrefsShortcuts" id="97f-06-acT">
-                        <size key="minSize" width="32" height="32"/>
-                        <size key="maxSize" width="32" height="32"/>
+                    <toolbarItem implicitItemIdentifier="AC57CB9F-043A-4DC7-9155-F358367619B6" label="Shortcuts" paletteLabel="Shortcuts" tag="-1" image="PrefsShortcuts" sizingBehavior="auto" id="97f-06-acT">
                         <connections>
                             <action selector="showShortcutsTabView:" target="-2" id="e52-BD-2Aw"/>
                         </connections>
@@ -713,7 +697,7 @@ Gw
             <windowStyleMask key="styleMask" titled="YES" closable="YES" miniaturizable="YES" resizable="YES" utility="YES" documentModal="YES"/>
             <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>
             <rect key="contentRect" x="162" y="123" width="804" height="356"/>
-            <rect key="screenRect" x="0.0" y="0.0" width="3008" height="1669"/>
+            <rect key="screenRect" x="0.0" y="0.0" width="3008" height="1667"/>
             <value key="minSize" type="size" width="804" height="356"/>
             <view key="contentView" id="5905">
                 <rect key="frame" x="0.0" y="0.0" width="804" height="356"/>
@@ -723,11 +707,11 @@ Gw
                         <rect key="frame" x="20" y="52" width="764" height="265"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <clipView key="contentView" id="Oi5-ZC-SxR">
-                            <rect key="frame" x="1" y="0.0" width="762" height="264"/>
+                            <rect key="frame" x="1" y="1" width="762" height="263"/>
                             <autoresizingMask key="autoresizingMask"/>
                             <subviews>
                                 <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" alternatingRowBackgroundColors="YES" columnReordering="NO" multipleSelection="NO" autosaveColumns="NO" headerView="5784" id="5783">
-                                    <rect key="frame" x="0.0" y="0.0" width="762" height="247"/>
+                                    <rect key="frame" x="0.0" y="0.0" width="762" height="246"/>
                                     <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                     <size key="intercellSpacing" width="3" height="2"/>
                                     <color key="backgroundColor" name="controlBackgroundColor" catalog="System" colorSpace="catalog"/>
@@ -790,7 +774,7 @@ Gw
                             </subviews>
                         </clipView>
                         <scroller key="horizontalScroller" hidden="YES" wantsLayer="YES" verticalHuggingPriority="750" horizontal="YES" id="5782">
-                            <rect key="frame" x="1" y="248" width="762" height="16"/>
+                            <rect key="frame" x="1" y="249" width="762" height="15"/>
                             <autoresizingMask key="autoresizingMask"/>
                         </scroller>
                         <scroller key="verticalScroller" hidden="YES" wantsLayer="YES" verticalHuggingPriority="750" horizontal="NO" id="5781">
@@ -882,7 +866,7 @@ DQ
             <windowStyleMask key="styleMask" titled="YES" closable="YES" miniaturizable="YES" resizable="YES" utility="YES" documentModal="YES"/>
             <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>
             <rect key="contentRect" x="162" y="156" width="805" height="358"/>
-            <rect key="screenRect" x="0.0" y="0.0" width="3008" height="1669"/>
+            <rect key="screenRect" x="0.0" y="0.0" width="3008" height="1667"/>
             <value key="minSize" type="size" width="805" height="358"/>
             <view key="contentView" id="5911">
                 <rect key="frame" x="0.0" y="0.0" width="805" height="358"/>
@@ -892,11 +876,11 @@ DQ
                         <rect key="frame" x="20" y="54" width="765" height="265"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <clipView key="contentView" id="gZI-PG-peZ">
-                            <rect key="frame" x="1" y="0.0" width="763" height="264"/>
+                            <rect key="frame" x="1" y="1" width="763" height="263"/>
                             <autoresizingMask key="autoresizingMask"/>
                             <subviews>
                                 <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" alternatingRowBackgroundColors="YES" columnReordering="NO" multipleSelection="NO" autosaveColumns="NO" headerView="5844" id="5845">
-                                    <rect key="frame" x="0.0" y="0.0" width="763" height="247"/>
+                                    <rect key="frame" x="0.0" y="0.0" width="763" height="246"/>
                                     <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                     <size key="intercellSpacing" width="3" height="2"/>
                                     <color key="backgroundColor" name="controlBackgroundColor" catalog="System" colorSpace="catalog"/>
@@ -947,7 +931,7 @@ DQ
                             </subviews>
                         </clipView>
                         <scroller key="horizontalScroller" hidden="YES" wantsLayer="YES" verticalHuggingPriority="750" horizontal="YES" id="5846">
-                            <rect key="frame" x="1" y="248" width="763" height="16"/>
+                            <rect key="frame" x="1" y="249" width="763" height="15"/>
                             <autoresizingMask key="autoresizingMask"/>
                         </scroller>
                         <scroller key="verticalScroller" hidden="YES" wantsLayer="YES" verticalHuggingPriority="750" horizontal="NO" id="5847">
@@ -1070,7 +1054,7 @@ DQ
             <windowStyleMask key="styleMask" titled="YES" closable="YES" miniaturizable="YES" resizable="YES" utility="YES" documentModal="YES"/>
             <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>
             <rect key="contentRect" x="162" y="229" width="575" height="295"/>
-            <rect key="screenRect" x="0.0" y="0.0" width="3008" height="1669"/>
+            <rect key="screenRect" x="0.0" y="0.0" width="3008" height="1667"/>
             <value key="minSize" type="size" width="575" height="100"/>
             <view key="contentView" id="6275">
                 <rect key="frame" x="0.0" y="0.0" width="575" height="295"/>
@@ -1107,11 +1091,11 @@ DQ
                         <rect key="frame" x="20" y="53" width="535" height="154"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <clipView key="contentView" id="Moz-RU-iUF">
-                            <rect key="frame" x="1" y="0.0" width="533" height="153"/>
+                            <rect key="frame" x="1" y="1" width="533" height="152"/>
                             <autoresizingMask key="autoresizingMask"/>
                             <subviews>
                                 <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" alternatingRowBackgroundColors="YES" columnReordering="NO" multipleSelection="NO" autosaveColumns="NO" headerView="6284" id="6283">
-                                    <rect key="frame" x="0.0" y="0.0" width="533" height="136"/>
+                                    <rect key="frame" x="0.0" y="0.0" width="533" height="135"/>
                                     <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                     <size key="intercellSpacing" width="3" height="2"/>
                                     <color key="backgroundColor" name="controlBackgroundColor" catalog="System" colorSpace="catalog"/>
@@ -1136,7 +1120,7 @@ DQ
                                             </tableHeaderCell>
                                             <popUpButtonCell key="dataCell" type="bevel" title="Open File" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="bezel" imageScaling="proportionallyDown" inset="2" arrowPosition="arrowAtCenter" preferredEdge="maxY" selectedItem="6296" id="6291">
                                                 <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
-                                                <font key="font" metaFont="system"/>
+                                                <font key="font" metaFont="menu"/>
                                                 <menu key="menu" title="OtherViews" id="6292">
                                                     <items>
                                                         <menuItem title="Open File" state="on" id="6296"/>
@@ -1170,7 +1154,7 @@ DQ
                             </subviews>
                         </clipView>
                         <scroller key="horizontalScroller" hidden="YES" wantsLayer="YES" verticalHuggingPriority="750" horizontal="YES" id="6282">
-                            <rect key="frame" x="1" y="137" width="533" height="16"/>
+                            <rect key="frame" x="1" y="138" width="533" height="15"/>
                             <autoresizingMask key="autoresizingMask"/>
                         </scroller>
                         <scroller key="verticalScroller" hidden="YES" wantsLayer="YES" verticalHuggingPriority="750" horizontal="NO" id="6281">
@@ -1818,7 +1802,7 @@ DQ
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <popUpButtonCell key="cell" type="push" title="⌃⌘A" bezelStyle="rounded" alignment="left" lineBreakMode="clipping" state="on" borderStyle="borderAndBezel" inset="2" arrowPosition="arrowAtCenter" preferredEdge="maxY" selectedItem="2163" id="2143">
                         <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
-                        <font key="font" metaFont="system"/>
+                        <font key="font" metaFont="menu"/>
                         <menu key="menu" title="OtherViews" id="2144">
                             <items>
                                 <menuItem tag="-1" id="2159"/>
@@ -1924,7 +1908,7 @@ DQ
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <popUpButtonCell key="cell" type="push" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" pullsDown="YES" id="5038">
                         <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
-                        <font key="font" metaFont="system"/>
+                        <font key="font" metaFont="menu"/>
                         <menu key="menu" title="OtherViews" id="5039"/>
                     </popUpButtonCell>
                     <connections>
@@ -2002,7 +1986,7 @@ DQ
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <popUpButtonCell key="cell" type="push" title="Components" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" pullsDown="YES" autoenablesItems="NO" id="Xgh-er-la0" userLabel="Title Popup Button Cell">
                         <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
-                        <font key="font" metaFont="system"/>
+                        <font key="font" metaFont="menu"/>
                         <menu key="menu" autoenablesItems="NO" id="Odx-9x-W67">
                             <items>
                                 <menuItem title="Components" hidden="YES" id="JWB-xg-ElI"/>
@@ -2068,7 +2052,7 @@ DQ
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <popUpButtonCell key="cell" type="push" title="Login Shell" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" tag="1" imageScaling="proportionallyDown" inset="2" selectedItem="KVK-Yx-UwL" id="Rq6-lu-Csd">
                         <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
-                        <font key="font" metaFont="system"/>
+                        <font key="font" metaFont="menu"/>
                         <menu key="menu" id="cL8-MC-tZN">
                             <items>
                                 <menuItem title="Login Shell" state="on" tag="1" id="KVK-Yx-UwL"/>
@@ -2099,7 +2083,7 @@ DQ
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <popUpButtonCell key="cell" type="push" title="No Icon" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" selectedItem="9aT-V8-QXb" id="rEM-cS-sAI">
                                 <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
-                                <font key="font" metaFont="system"/>
+                                <font key="font" metaFont="menu"/>
                                 <menu key="menu" id="JaN-Qa-zX5">
                                     <items>
                                         <menuItem title="No Icon" state="on" id="9aT-V8-QXb"/>
@@ -2492,7 +2476,7 @@ DQ
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <popUpButtonCell key="cell" type="push" title="Color Presets…" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" pullsDown="YES" id="3214">
                         <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
-                        <font key="font" metaFont="system"/>
+                        <font key="font" metaFont="menu"/>
                         <menu key="menu" title="OtherViews" id="3215">
                             <items>
                                 <menuItem title="Color Presets…" state="on" hidden="YES" id="3218"/>
@@ -2772,7 +2756,7 @@ DQ
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <popUpButtonCell key="cell" type="push" title="Never" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" selectedItem="ChU-JM-nQR" id="ODn-Ih-XKx">
                         <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
-                        <font key="font" metaFont="system"/>
+                        <font key="font" metaFont="menu"/>
                         <menu key="menu" id="0LS-QL-7pz">
                             <items>
                                 <menuItem title="Never" state="on" id="ChU-JM-nQR"/>
@@ -2814,7 +2798,7 @@ DQ
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <popUpButtonCell key="cell" type="push" title="None" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" selectedItem="td0-LJ-Zf9" id="ttZ-UD-tsk">
                         <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
-                        <font key="font" metaFont="system"/>
+                        <font key="font" metaFont="menu"/>
                         <menu key="menu" id="S1A-6E-uei">
                             <items>
                                 <menuItem title="None" state="on" id="td0-LJ-Zf9"/>
@@ -2938,7 +2922,7 @@ DQ
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <popUpButtonCell key="cell" type="push" title="Normal" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" selectedItem="4945" id="4941">
                                 <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
-                                <font key="font" metaFont="system"/>
+                                <font key="font" metaFont="menu"/>
                                 <menu key="menu" title="OtherViews" id="4942">
                                     <items>
                                         <menuItem title="Normal" state="on" id="4945"/>
@@ -2998,7 +2982,7 @@ DQ
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <popUpButtonCell key="cell" type="push" alternateTitle="Current Screen" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" id="4939">
                                 <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
-                                <font key="font" metaFont="system"/>
+                                <font key="font" metaFont="menu"/>
                                 <menu key="menu" title="OtherViews" id="4940"/>
                             </popUpButtonCell>
                             <connections>
@@ -3105,7 +3089,7 @@ DQ
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <popUpButtonCell key="cell" type="push" title="Current Space" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" selectedItem="4935" id="4922">
                                 <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
-                                <font key="font" metaFont="system"/>
+                                <font key="font" metaFont="menu"/>
                                 <menu key="menu" title="OtherViews" id="4923">
                                     <items>
                                         <menuItem title="Current Space" state="on" id="4935"/>
@@ -3327,7 +3311,7 @@ DQ
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <popUpButtonCell key="cell" type="push" title="Stretch" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" selectedItem="SZF-cW-ZSJ" id="Td6-wf-6Jq" userLabel="Mode Popup Cell">
                         <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
-                        <font key="font" metaFont="system"/>
+                        <font key="font" metaFont="menu"/>
                         <menu key="menu" id="Vd1-ex-T43">
                             <items>
                                 <menuItem title="Stretch" state="on" id="SZF-cW-ZSJ"/>
@@ -3390,7 +3374,7 @@ DQ
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <popUpButtonCell key="cell" type="push" bezelStyle="rounded" alignment="left" lineBreakMode="clipping" borderStyle="borderAndBezel" inset="2" arrowPosition="arrowAtCenter" preferredEdge="maxY" id="2427">
                         <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
-                        <font key="font" metaFont="system"/>
+                        <font key="font" metaFont="menu"/>
                         <menu key="menu" title="OtherViews" id="2428"/>
                     </popUpButtonCell>
                     <connections>
@@ -3806,7 +3790,7 @@ DQ
                         </subviews>
                     </clipView>
                     <scroller key="horizontalScroller" hidden="YES" wantsLayer="YES" verticalHuggingPriority="750" horizontal="YES" id="5660">
-                        <rect key="frame" x="1" y="80" width="523" height="16"/>
+                        <rect key="frame" x="1" y="81" width="523" height="15"/>
                         <autoresizingMask key="autoresizingMask"/>
                     </scroller>
                     <scroller key="verticalScroller" hidden="YES" wantsLayer="YES" verticalHuggingPriority="750" horizontal="NO" id="5659">
@@ -4073,7 +4057,7 @@ DQ
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <popUpButtonCell key="cell" type="push" title="No Action" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" selectedItem="2UH-A6-PHv" id="sAi-EY-JC7">
                         <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
-                        <font key="font" metaFont="system"/>
+                        <font key="font" metaFont="menu"/>
                         <menu key="menu" id="gR0-Db-g6f">
                             <items>
                                 <menuItem title="No Action" state="on" id="2UH-A6-PHv"/>
@@ -4411,7 +4395,7 @@ DQ
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <popUpButtonCell key="cell" type="push" title="Run coprocess…" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" tag="6" imageScaling="proportionallyDown" inset="2" selectedItem="6406" id="5935">
                         <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
-                        <font key="font" metaFont="system"/>
+                        <font key="font" metaFont="menu"/>
                         <menu key="menu" title="OtherViews" id="5936">
                             <items>
                                 <menuItem title="Open with default app" tag="1" id="5937"/>
@@ -4441,7 +4425,7 @@ DQ
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <popUpButtonCell key="cell" type="push" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" id="5944">
                         <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
-                        <font key="font" metaFont="system"/>
+                        <font key="font" metaFont="menu"/>
                         <menu key="menu" title="OtherViews" id="5945"/>
                     </popUpButtonCell>
                     <connections>
@@ -4493,7 +4477,7 @@ DQ
                         </subviews>
                     </clipView>
                     <scroller key="horizontalScroller" hidden="YES" wantsLayer="YES" verticalHuggingPriority="750" horizontal="YES" id="PuK-Zm-kQk">
-                        <rect key="frame" x="1" y="61" width="519" height="16"/>
+                        <rect key="frame" x="1" y="62" width="519" height="15"/>
                         <autoresizingMask key="autoresizingMask"/>
                     </scroller>
                     <scroller key="verticalScroller" hidden="YES" wantsLayer="YES" verticalHuggingPriority="750" horizontal="NO" id="e2n-ov-yNp">
@@ -4590,7 +4574,7 @@ DQ
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <popUpButtonCell key="cell" type="push" title="Open Default Window Arrangement" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" tag="1" imageScaling="proportionallyDown" inset="2" autoenablesItems="NO" selectedItem="nMp-ky-1KX" id="TIr-9J-Y7W">
                                                     <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
-                                                    <font key="font" metaFont="system"/>
+                                                    <font key="font" metaFont="menu"/>
                                                     <menu key="menu" title="OtherViews" autoenablesItems="NO" id="oDc-dV-6wC">
                                                         <items>
                                                             <menuItem title="Use System Window Restoration Setting" id="Smv-f0-j9o"/>
@@ -5192,7 +5176,7 @@ DQ
                                                 <string key="toolTip">A tmux server has multiple virtual windows. When you attach to a tmux server, these virtual windows can be presented as windows or tabs. This setting determines how they should appear in iTerm2.</string>
                                                 <popUpButtonCell key="cell" type="push" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" id="6338">
                                                     <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
-                                                    <font key="font" metaFont="system"/>
+                                                    <font key="font" metaFont="menu"/>
                                                     <menu key="menu" title="OtherViews" id="6339">
                                                         <items>
                                                             <menuItem title="Native windows" id="6340"/>
@@ -5325,7 +5309,7 @@ DQ
                                                 <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMinY="YES"/>
                                                 <popUpButtonCell key="cell" type="push" title="Top" bezelStyle="rounded" alignment="left" lineBreakMode="clipping" state="on" borderStyle="borderAndBezel" inset="2" arrowPosition="arrowAtCenter" preferredEdge="maxY" selectedItem="7BM-xw-fbE" id="9o6-qH-zo0" userLabel="Tab Style">
                                                     <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
-                                                    <font key="font" metaFont="system"/>
+                                                    <font key="font" metaFont="menu"/>
                                                     <menu key="menu" title="OtherViews" id="TGp-XX-gkr">
                                                         <items>
                                                             <menuItem title="Top" state="on" id="7BM-xw-fbE">
@@ -5344,7 +5328,7 @@ DQ
                                                 <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMinY="YES"/>
                                                 <popUpButtonCell key="cell" type="push" bezelStyle="rounded" alignment="left" lineBreakMode="clipping" borderStyle="borderAndBezel" inset="2" arrowPosition="arrowAtCenter" preferredEdge="maxY" id="4495">
                                                     <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
-                                                    <font key="font" metaFont="system"/>
+                                                    <font key="font" metaFont="menu"/>
                                                     <menu key="menu" title="OtherViews" id="4496">
                                                         <items>
                                                             <menuItem title="Top" id="4497"/>
@@ -5363,7 +5347,7 @@ DQ
                                                 <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMinY="YES"/>
                                                 <popUpButtonCell key="cell" type="push" title="Regular" bezelStyle="rounded" alignment="left" lineBreakMode="clipping" state="on" borderStyle="borderAndBezel" tag="4" inset="2" arrowPosition="arrowAtCenter" preferredEdge="maxY" selectedItem="ZNW-QH-Lff" id="dAw-Fo-tf4" userLabel="Tab Style">
                                                     <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
-                                                    <font key="font" metaFont="system"/>
+                                                    <font key="font" metaFont="menu"/>
                                                     <menu key="menu" title="OtherViews" id="dVY-ir-1iD">
                                                         <items>
                                                             <menuItem title="Regular" state="on" tag="4" id="ZNW-QH-Lff"/>
@@ -5787,7 +5771,7 @@ DQ
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <popUpButtonCell key="cell" type="push" title="No Shortcut" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" tag="9" imageScaling="proportionallyDown" inset="2" autoenablesItems="NO" selectedItem="4132" id="4129">
                                                     <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
-                                                    <font key="font" metaFont="system"/>
+                                                    <font key="font" metaFont="menu"/>
                                                     <menu key="menu" title="OtherViews" autoenablesItems="NO" id="4130">
                                                         <items>
                                                             <menuItem title="No Shortcut" state="on" tag="9" id="4132">
@@ -5836,7 +5820,7 @@ DQ
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <popUpButtonCell key="cell" type="push" title="No Shortcut" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" tag="9" imageScaling="proportionallyDown" inset="2" autoenablesItems="NO" selectedItem="4274" id="4270">
                                                     <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
-                                                    <font key="font" metaFont="system"/>
+                                                    <font key="font" metaFont="menu"/>
                                                     <menu key="menu" title="OtherViews" autoenablesItems="NO" id="4271">
                                                         <items>
                                                             <menuItem title="No Shortcut" state="on" tag="9" id="4274">
@@ -5889,7 +5873,7 @@ DQ
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <popUpButtonCell key="cell" type="push" title="No Shortcut" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" tag="9" imageScaling="proportionallyDown" inset="2" autoenablesItems="NO" selectedItem="dAC-MA-Mtf" id="T7I-ty-osf">
                                                     <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
-                                                    <font key="font" metaFont="system"/>
+                                                    <font key="font" metaFont="menu"/>
                                                     <menu key="menu" title="OtherViews" autoenablesItems="NO" id="G8M-3E-Bit">
                                                         <items>
                                                             <menuItem title="No Shortcut" state="on" tag="9" id="dAC-MA-Mtf">
@@ -6023,7 +6007,7 @@ DQ
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <popUpButtonCell key="cell" type="push" title="⌥ Right Option" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" tag="3" imageScaling="proportionallyDown" inset="2" selectedItem="4407" id="4401">
                                                     <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
-                                                    <font key="font" metaFont="system"/>
+                                                    <font key="font" metaFont="menu"/>
                                                     <menu key="menu" title="OtherViews" id="4402">
                                                         <items>
                                                             <menuItem title="⌃ Control" tag="1" id="4406"/>
@@ -6052,7 +6036,7 @@ DQ
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <popUpButtonCell key="cell" type="push" title="⌘ Right Command" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" tag="8" imageScaling="proportionallyDown" inset="2" selectedItem="4413" id="4411">
                                                     <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
-                                                    <font key="font" metaFont="system"/>
+                                                    <font key="font" metaFont="menu"/>
                                                     <menu key="menu" title="OtherViews" id="4412">
                                                         <items>
                                                             <menuItem title="⌃ Control" tag="1" id="4416"/>
@@ -6099,7 +6083,7 @@ DQ
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <popUpButtonCell key="cell" type="push" title="⌘ Left Command" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" tag="7" imageScaling="proportionallyDown" inset="2" selectedItem="4398" id="4394">
                                                     <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
-                                                    <font key="font" metaFont="system"/>
+                                                    <font key="font" metaFont="menu"/>
                                                     <menu key="menu" title="OtherViews" id="4395">
                                                         <items>
                                                             <menuItem title="⌃ Control" tag="1" id="4397"/>
@@ -6127,7 +6111,7 @@ DQ
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <popUpButtonCell key="cell" type="push" title="⌥ Left Option" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" tag="2" imageScaling="proportionallyDown" inset="2" selectedItem="4387" id="4384">
                                                     <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
-                                                    <font key="font" metaFont="system"/>
+                                                    <font key="font" metaFont="menu"/>
                                                     <menu key="menu" title="OtherViews" id="4385">
                                                         <items>
                                                             <menuItem title="⌃ Control" tag="1" id="4389"/>
@@ -6174,7 +6158,7 @@ DQ
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <popUpButtonCell key="cell" type="push" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" id="4238">
                                                     <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
-                                                    <font key="font" metaFont="system"/>
+                                                    <font key="font" metaFont="menu"/>
                                                     <menu key="menu" title="OtherViews" id="4239">
                                                         <items>
                                                             <menuItem title="⌃ Control" tag="1" id="4242"/>
@@ -6221,7 +6205,7 @@ DQ
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <clipView key="contentView" id="N1C-ir-dI5">
                         <rect key="frame" x="1" y="1" width="238" height="377"/>
-                        <autoresizingMask key="autoresizingMask"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
                             <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" columnReordering="NO" columnResizing="NO" autosaveColumns="NO" typeSelect="NO" id="5562">
                                 <rect key="frame" x="0.0" y="0.0" width="238" height="377"/>
@@ -6263,7 +6247,7 @@ DQ
                         </subviews>
                     </clipView>
                     <scroller key="horizontalScroller" hidden="YES" wantsLayer="YES" verticalHuggingPriority="750" horizontal="YES" id="5561">
-                        <rect key="frame" x="1" y="362" width="238" height="16"/>
+                        <rect key="frame" x="1" y="363" width="238" height="15"/>
                         <autoresizingMask key="autoresizingMask"/>
                     </scroller>
                     <scroller key="verticalScroller" hidden="YES" wantsLayer="YES" verticalHuggingPriority="750" horizontal="NO" id="5560">
@@ -6438,11 +6422,11 @@ DQ
                                                 <rect key="frame" x="20" y="49" width="851" height="285"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <clipView key="contentView" id="2zv-hI-Vxj">
-                                                    <rect key="frame" x="1" y="1" width="849" height="283"/>
+                                                    <rect key="frame" x="1" y="1" width="849" height="268"/>
                                                     <autoresizingMask key="autoresizingMask"/>
                                                     <subviews>
                                                         <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="none" columnReordering="NO" columnResizing="NO" multipleSelection="NO" autosaveColumns="NO" id="6091">
-                                                            <rect key="frame" x="0.0" y="0.0" width="849" height="283"/>
+                                                            <rect key="frame" x="0.0" y="0.0" width="869" height="268"/>
                                                             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                                             <size key="intercellSpacing" width="3" height="2"/>
                                                             <color key="backgroundColor" name="controlBackgroundColor" catalog="System" colorSpace="catalog"/>
@@ -6480,8 +6464,8 @@ DQ
                                                         </tableView>
                                                     </subviews>
                                                 </clipView>
-                                                <scroller key="horizontalScroller" hidden="YES" wantsLayer="YES" verticalHuggingPriority="750" horizontal="YES" id="6092">
-                                                    <rect key="frame" x="1" y="268" width="849" height="16"/>
+                                                <scroller key="horizontalScroller" wantsLayer="YES" verticalHuggingPriority="750" horizontal="YES" id="6092">
+                                                    <rect key="frame" x="1" y="269" width="849" height="15"/>
                                                     <autoresizingMask key="autoresizingMask"/>
                                                 </scroller>
                                                 <scroller key="verticalScroller" hidden="YES" wantsLayer="YES" verticalHuggingPriority="750" horizontal="NO" id="6094">
@@ -6561,7 +6545,7 @@ DQ
                     <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
                     <clipView key="contentView" id="Fm3-fw-Qw5">
                         <rect key="frame" x="1" y="1" width="950" height="362"/>
-                        <autoresizingMask key="autoresizingMask"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
                             <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="none" columnReordering="NO" columnResizing="NO" multipleSelection="NO" autosaveColumns="NO" typeSelect="NO" rowSizeStyle="automatic" viewBased="YES" id="5ik-Xh-beg" customClass="iTermAdvancedSettingsTableView">
                                 <rect key="frame" x="0.0" y="0.0" width="950" height="362"/>
@@ -6570,7 +6554,7 @@ DQ
                                 <color key="backgroundColor" name="_sourceListBackgroundColor" catalog="System" colorSpace="catalog"/>
                                 <color key="gridColor" name="gridColor" catalog="System" colorSpace="catalog"/>
                                 <tableColumns>
-                                    <tableColumn editable="NO" width="590.5" minWidth="40" maxWidth="1000" id="wQ6-7Q-vbc">
+                                    <tableColumn editable="NO" width="586" minWidth="40" maxWidth="1000" id="wQ6-7Q-vbc">
                                         <tableHeaderCell key="headerCell" lineBreakMode="truncatingTail" borderStyle="border" alignment="left" title="Setting">
                                             <color key="textColor" name="headerTextColor" catalog="System" colorSpace="catalog"/>
                                             <color key="backgroundColor" white="0.33333298560000002" alpha="1" colorSpace="calibratedWhite"/>
@@ -6583,11 +6567,11 @@ DQ
                                         <tableColumnResizingMask key="resizingMask" resizeWithTable="YES"/>
                                         <prototypeCellViews>
                                             <tableCellView id="RoD-zs-eHF">
-                                                <rect key="frame" x="1" y="1" width="590.5" height="17"/>
+                                                <rect key="frame" x="1" y="1" width="591" height="17"/>
                                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                                 <subviews>
                                                     <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="zlz-2J-KIa">
-                                                        <rect key="frame" x="0.0" y="0.0" width="590.5" height="17"/>
+                                                        <rect key="frame" x="0.0" y="0.0" width="591" height="17"/>
                                                         <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
                                                         <textFieldCell key="cell" lineBreakMode="truncatingTail" sendsActionOnEndEditing="YES" title="Table View Cell" id="XeY-ex-eKM">
                                                             <font key="font" metaFont="system"/>
@@ -6602,7 +6586,7 @@ DQ
                                             </tableCellView>
                                         </prototypeCellViews>
                                     </tableColumn>
-                                    <tableColumn width="353" minWidth="40" maxWidth="1000" id="FSW-rl-pkB">
+                                    <tableColumn width="349" minWidth="40" maxWidth="1000" id="FSW-rl-pkB">
                                         <tableHeaderCell key="headerCell" lineBreakMode="truncatingTail" borderStyle="border" alignment="left" title="Value">
                                             <color key="textColor" name="headerTextColor" catalog="System" colorSpace="catalog"/>
                                             <color key="backgroundColor" white="0.33333298560000002" alpha="1" colorSpace="calibratedWhite"/>
@@ -6615,7 +6599,7 @@ DQ
                                         <tableColumnResizingMask key="resizingMask" resizeWithTable="YES"/>
                                         <prototypeCellViews>
                                             <tableCellView id="W6M-oM-X4N">
-                                                <rect key="frame" x="594.5" y="1" width="353" height="17"/>
+                                                <rect key="frame" x="595" y="1" width="353" height="17"/>
                                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                                 <subviews>
                                                     <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="n68-XZ-ujb">
@@ -6803,7 +6787,7 @@ DQ
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <popUpButtonCell key="cell" type="push" title="Components" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" pullsDown="YES" autoenablesItems="NO" selectedItem="YRV-oK-I4f" id="2Pb-yH-LeK" userLabel="Title Popup Button Cell">
                         <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
-                        <font key="font" metaFont="system"/>
+                        <font key="font" metaFont="menu"/>
                         <menu key="menu" autoenablesItems="NO" id="SYi-rt-Kyn">
                             <items>
                                 <menuItem title="Components" hidden="YES" id="YRV-oK-I4f"/>
@@ -6901,7 +6885,7 @@ DQ
         <window title="Filter Alerts" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" restorable="NO" hidesOnDeactivate="YES" releasedWhenClosed="NO" visibleAtLaunch="NO" animationBehavior="default" id="u39-OD-7hu" customClass="NSPanel">
             <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>
             <rect key="contentRect" x="120" y="138" width="406" height="145"/>
-            <rect key="screenRect" x="0.0" y="0.0" width="3008" height="1669"/>
+            <rect key="screenRect" x="0.0" y="0.0" width="3008" height="1667"/>
             <view key="contentView" id="dXn-d7-O8o">
                 <rect key="frame" x="0.0" y="0.0" width="406" height="145"/>
                 <autoresizingMask key="autoresizingMask"/>
