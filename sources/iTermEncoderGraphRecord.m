@@ -320,6 +320,13 @@
     return data;
 }
 
+- (void)eraseRowIDs {
+    _rowid = nil;
+    [_graphRecords enumerateObjectsUsingBlock:^(iTermEncoderGraphRecord * _Nonnull child, NSUInteger idx, BOOL * _Nonnull stop) {
+        [child eraseRowIDs];
+    }];
+}
+
 @end
 
 @implementation NSObject (iTermEncoderGraphRecord)

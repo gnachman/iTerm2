@@ -24,14 +24,16 @@ NS_ASSUME_NONNULL_BEGIN
 // Tests only!
 @property (nonatomic, readonly) id<iTermDatabase> db;
 
-- (instancetype)initWithURL:(NSURL *)url
-            databaseFactory:(id<iTermDatabaseFactory>)databaseFactory NS_DESIGNATED_INITIALIZER;
+- (instancetype)initWithDatabase:(id<iTermDatabase>)db NS_DESIGNATED_INITIALIZER;
 - (instancetype)init NS_UNAVAILABLE;
 
 
-- (void)updateSynchronously:(BOOL)sync
+// This will return NO if you try to save asynchronously but we're busy. In that case the
+// completion callback is not invoked.
+- (BOOL)updateSynchronously:(BOOL)sync
                       block:(void (^ NS_NOESCAPE)(iTermGraphEncoder * _Nonnull))block
                  completion:(nullable iTermCallback *)completion;
+- (void)invalidate;
 
 @end
 

@@ -45,7 +45,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (NSInteger)integerWithKey:(NSString *)key error:(out NSError **)error;
 - (NSString *)stringWithKey:(NSString *)key;
 - (nullable id)objectWithKey:(NSString *)key class:(Class)theClass;
-
+- (void)eraseRowIDs;
 @end
 
 @interface NSObject (iTermEncoderGraphRecord)

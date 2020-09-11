@@ -54,7 +54,9 @@ NS_ASSUME_NONNULL_BEGIN
 
 @protocol iTermRestorableStateSaver<NSObject>
 @property (nonatomic, weak) id<iTermRestorableStateSaving> delegate;
-- (void)saveSynchronously:(BOOL)synchronously withCompletion:(void (^)(void))completion;
+// Returns NO if an async request couldn't be done because it's busy. Completion is not called in
+// that case.
+- (BOOL)saveSynchronously:(BOOL)synchronously withCompletion:(void (^)(void))completion;
 @end
 
 @interface iTermRestorableStateDriver : NSObject

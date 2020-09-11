@@ -26,17 +26,18 @@ NS_ASSUME_NONNULL_BEGIN
 - (id<iTermDatabaseResultSet> _Nullable)executeQuery:(NSString*)sql, ...;
 - (BOOL)open;
 - (BOOL)close;
+- (BOOL)lock;
+- (void)unlock;
 - (NSError *)lastError;
 // Return YES to commit, no to cancel
 - (BOOL)transaction:(BOOL (^ NS_NOESCAPE)(void))block;
 - (void)unlink;
+- (NSURL *)url;
 @end
 
-@protocol iTermDatabaseFactory<NSObject>
-- (nullable id<iTermDatabase>)withURL:(NSURL *)url;
-@end
-
-@interface iTermSqliteDatabaseFactory: NSObject<iTermDatabaseFactory>
+@interface iTermSqliteDatabaseImpl: NSObject<iTermDatabase>
+- (instancetype)initWithURL:(NSURL *)url;
+- (instancetype)init NS_UNAVAILABLE;
 @end
 
 NS_ASSUME_NONNULL_END

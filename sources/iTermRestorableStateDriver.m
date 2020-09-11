@@ -37,11 +37,15 @@ static NSString *const iTermRestorableStateControllerUserDefaultsKeyCount = @"No
         _needsSave = YES;
         return;
     }
-    _needsSave = NO;
-    __weak __typeof(self) weakSelf;
-    [_saver saveSynchronously:sync withCompletion:^{
+    __weak __typeof(self) weakSelf = self;
+    const BOOL saved = [_saver saveSynchronously:sync withCompletion:^{
         [weakSelf didSave];
     }];
+    // Do this after saveSynchronously:withCompletion:. It guarantees not to run its completion block
+    // synchronously. It could fail if it was already busy saving, in which case we don't want
+    // to reset _needsSave. Considering it is busy, the other guy will eventually finish and cause
+    // didSave to be called, and it will try again.
+    _needsSave = !saved;
 }
 
 // Main queue
@@ -61,6 +65,11 @@ static NSString *const iTermRestorableStateControllerUserDefaultsKeyCount = @"No
     DLog(@"restoreWindows");
     if (![[NSUserDefaults standardUserDefaults] boolForKey:@"NSQuitAlwaysKeepsWindows"]) {
         DLog(@"NSQuitAlwaysKeepsWindows=NO");
+        completion();
+        return;
+    }
+    if (!self.restorer) {
+        DLog(@"Have no restorer.");
         completion();
         return;
     }

@@ -118,7 +118,7 @@
 }
 
 + (void)unlinkDatabaseAtURL:(NSURL *)url {
-    [[[[iTermSqliteDatabaseFactory alloc] init] withURL:url] unlink];
+    [[[iTermSqliteDatabaseImpl alloc] initWithURL:url] unlink];
 }
 
 - (instancetype)initWithURL:(NSURL *)url erase:(BOOL)erase {
@@ -128,8 +128,7 @@
             [self.class unlinkDatabaseAtURL:url];
         }
 
-        _db = [[iTermGraphDatabase alloc] initWithURL:url
-                                      databaseFactory:[[iTermSqliteDatabaseFactory alloc] init]];
+        _db = [[iTermGraphDatabase alloc] initWithDatabase:[[iTermSqliteDatabaseImpl alloc] initWithURL:url]];
     }
     return self;
 }
@@ -177,14 +176,14 @@
 }
 
 - (void)eraseStateRestorationData {
-    [_db.db close];
+    [_db invalidate];
     [self.class unlinkDatabaseAtURL:_db.url];
     _db = nil;
 }
 
 #pragma mark - iTermRestorableStateSaver
 
-- (void)saveSynchronously:(BOOL)sync withCompletion:(void (^)(void))completion {
+- (BOOL)saveSynchronously:(BOOL)sync withCompletion:(void (^)(void))completion {
     assert([NSThread isMainThread]);
     _generation += 1;
     const NSInteger generation = _generation;
@@ -229,7 +228,7 @@
         completion();
     }];
 
-    [_db updateSynchronously:sync block:update completion:callback];
+    return [_db updateSynchronously:sync block:update completion:callback];
 }
 
 @end
