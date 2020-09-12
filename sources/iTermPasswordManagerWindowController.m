@@ -148,6 +148,7 @@ static NSString *const iTermPasswordManagerAccountNameUserNameSeparator = @"\u20
     [myContext evaluatePolicy:policy
               localizedReason:myLocalizedReasonString
                         reply:^(BOOL success, NSError *error) {
+        DLog(@"Policy evaluation success=%@ error=%@", @(success), error);
         LAContext *theContext NS_VALID_UNTIL_END_OF_SCOPE;
         theContext = myContext;
         if (policy == LAPolicyDeviceOwnerAuthentication) {
@@ -590,6 +591,7 @@ static NSString *const iTermPasswordManagerAccountNameUserNameSeparator = @"\u20
 - (void)authenticateWithPolicy:(LAPolicy)policy context:(LAContext *)myContext {
     __weak __typeof(self) weakSelf = self;
     [[self class] authenticateWithPolicy:policy context:myContext reply:^(BOOL success, NSError * _Nullable error) {
+        DLog(@"Authentication completed with succes=%@ error=%@", @(success), error);
         [weakSelf didAuthenticateWithContext:myContext
                                      success:success
                                        error:error];
@@ -613,6 +615,7 @@ static NSString *const iTermPasswordManagerAccountNameUserNameSeparator = @"\u20
             [[self window] makeFirstResponder:_searchField];
         }
     } else {
+        DLog(@"Auth failed. Close window.");
         [self closeOrEndSheet];
     }
 }
