@@ -32,7 +32,7 @@
 
 #pragma mark - iTermRestorableStateSaver
 
-- (void)saveSynchronously:(BOOL)synchronously withCompletion:(void (^)(void))completion {
+- (BOOL)saveSynchronously:(BOOL)synchronously withCompletion:(void (^)(void))completion {
     NSMutableArray<iTermRestorableStateRecord *> *recordsToKeepUnchanged = [NSMutableArray array];
     NSMutableArray<iTermRestorableStateRecord *> *recordsNeedingNewContent = [NSMutableArray array];
     if ([[NSUserDefaults standardUserDefaults] boolForKey:@"NSQuitAlwaysKeepsWindows"]) {
@@ -84,6 +84,7 @@
                           completion:completion];
         });
     }
+    return YES;
 }
 
 // queue
