@@ -1,0 +1,266 @@
+//
+//  iTermModifyOtherKeysMapper.m
+//  iTerm2SharedARC
+//
+//  Created by George Nachman on 9/12/20.
+//
+
+#import "iTermModifyOtherKeysMapper.h"
+
+#import "DebugLogging.h"
+#import "iTermKeyboardHandler.h"
+#import "NSEvent+iTerm.h"
+#import "NSStringITerm.h"
+
+static BOOL CodePointInPrivateUseArea(unichar c) {
+    return c >= 0xE000 && c <= 0xF8FF;
+}
+
+@implementation iTermModifyOtherKeysMapper
+
+- (NSString *)stringForEvent:(NSEvent *)event {
+    const NSEventModifierFlags allEventModifierFlags = (NSEventModifierFlagControl |
+                                                        NSEventModifierFlagOption |
+                                                        NSEventModifierFlagShift |
+                                                        NSEventModifierFlagCommand);
+    NSString *charactersIgnoringModifiers = event.charactersIgnoringModifiers;
+    if (charactersIgnoringModifiers.length == 0) {
+        return nil;
+    }
+    if (charactersIgnoringModifiers.length > 1) {
+        DLog(@"Got multiple characters for keystroke: %@", charactersIgnoringModifiers);
+        return charactersIgnoringModifiers;
+    }
+    const UTF32Char codePoint = [charactersIgnoringModifiers firstCharacter];
+    const NSEventModifierFlags maybeFunction = CodePointInPrivateUseArea(codePoint) ? NSEventModifierFlagFunction : 0;
+    const NSEventModifierFlags allEventModifierFlagsExShift = (NSEventModifierFlagControl |
+                                                               NSEventModifierFlagOption |
+                                                               maybeFunction);
+    if ((event.it_modifierFlags & allEventModifierFlagsExShift) == NSEventModifierFlagOption) {
+        if ([self optionKeyBehaviorForEvent:event] != OPT_NORMAL) {
+            return [self stringWhenOptionPressedForEvent:event];
+        }
+    }
+
+    const NSEventModifierFlags modifiers = [event it_modifierFlags] & allEventModifierFlags;
+    return [self stringForCodePoint:codePoint modifiers:modifiers];
+}
+
+- (NSString *)stringWhenOptionPressedForEvent:(NSEvent *)event {
+    switch ([self optionKeyBehaviorForEvent:event]) {
+        case OPT_NORMAL:
+            return event.charactersIgnoringModifiers;
+        case OPT_ESC:
+        case OPT_META:
+            break;
+    }
+    const NSEventModifierFlags allEventModifierFlags = (NSEventModifierFlagControl |
+                                                        NSEventModifierFlagOption |
+                                                        NSEventModifierFlagShift |
+                                                        NSEventModifierFlagCommand);
+    const NSEventModifierFlags modifiers = [event it_modifierFlags] & allEventModifierFlags;
+    return [self stringForCodePoint:event.charactersIgnoringModifiers.firstCharacter modifiers:modifiers];
+}
+
+- (iTermOptionKeyBehavior)optionKeyBehaviorForEvent:(NSEvent *)event {
+    const NSEventModifierFlags modflag = event.it_modifierFlags;
+    const BOOL rightAltPressed = (modflag & NSRightAlternateKeyMask) == NSRightAlternateKeyMask;
+    const BOOL leftAltPressed = (modflag & NSEventModifierFlagOption) == NSEventModifierFlagOption && !rightAltPressed;
+    assert(leftAltPressed || rightAltPressed);
+
+    iTermOptionKeyBehavior left, right;
+    [self.delegate modifyOtherKeys:self getOptionKeyBehaviorLeft:&left right:&right];
+    if (leftAltPressed) {
+        return left;
+    } else {
+        return right;
+    }
+}
+
+- (NSString *)stringForCodePoint:(UTF32Char)codePoint
+                       modifiers:(NSEventModifierFlags)eventModifiers {
+    switch (codePoint) {
+        case NSInsertFunctionKey:
+        case NSHelpFunctionKey:  // On Apple keyboards help is where insert belongs.
+            return [self sequenceForNonUnicodeKeypress:@"2" eventModifiers:eventModifiers];
+        case NSDeleteFunctionKey:
+            return [self sequenceForNonUnicodeKeypress:@"3" eventModifiers:eventModifiers];
+        case NSPageUpFunctionKey:
+            return [self sequenceForNonUnicodeKeypress:@"5" eventModifiers:eventModifiers];
+        case NSPageDownFunctionKey:
+            return [self sequenceForNonUnicodeKeypress:@"6" eventModifiers:eventModifiers];
+        case NSF1FunctionKey:
+            return [self reallySpecialSequenceWithCode:@"P" eventModifiers:eventModifiers fkey:YES];
+        case NSF2FunctionKey:
+            return [self reallySpecialSequenceWithCode:@"Q" eventModifiers:eventModifiers fkey:YES];
+        case NSF3FunctionKey:
+            return [self reallySpecialSequenceWithCode:@"R" eventModifiers:eventModifiers fkey:YES];
+        case NSF4FunctionKey:
+            return [self reallySpecialSequenceWithCode:@"S" eventModifiers:eventModifiers fkey:YES];
+        case NSF5FunctionKey:
+            return [self sequenceForNonUnicodeKeypress:@"15" eventModifiers:eventModifiers];
+        case NSF6FunctionKey:
+            return [self sequenceForNonUnicodeKeypress:@"17" eventModifiers:eventModifiers];
+        case NSF7FunctionKey:
+            return [self sequenceForNonUnicodeKeypress:@"18" eventModifiers:eventModifiers];
+        case NSF8FunctionKey:
+            return [self sequenceForNonUnicodeKeypress:@"19" eventModifiers:eventModifiers];
+        case NSF9FunctionKey:
+            return [self sequenceForNonUnicodeKeypress:@"20" eventModifiers:eventModifiers];
+        case NSF10FunctionKey:
+            return [self sequenceForNonUnicodeKeypress:@"21" eventModifiers:eventModifiers];
+        case NSF11FunctionKey:
+            return [self sequenceForNonUnicodeKeypress:@"23" eventModifiers:eventModifiers];
+        case NSF12FunctionKey:
+            return [self sequenceForNonUnicodeKeypress:@"24" eventModifiers:eventModifiers];
+        case NSF13FunctionKey:
+            return [self sequenceForNonUnicodeKeypress:@"25" eventModifiers:eventModifiers];
+        case NSF14FunctionKey:
+            return [self sequenceForNonUnicodeKeypress:@"26" eventModifiers:eventModifiers];
+        case NSF15FunctionKey:
+            return [self sequenceForNonUnicodeKeypress:@"28" eventModifiers:eventModifiers];
+        case NSUpArrowFunctionKey:
+            return [self reallySpecialSequenceWithCode:@"A" eventModifiers:eventModifiers fkey:NO];
+        case NSDownArrowFunctionKey:
+            return [self reallySpecialSequenceWithCode:@"B" eventModifiers:eventModifiers fkey:NO];
+        case NSRightArrowFunctionKey:
+            return [self reallySpecialSequenceWithCode:@"C" eventModifiers:eventModifiers fkey:NO];
+        case NSLeftArrowFunctionKey:
+            return [self reallySpecialSequenceWithCode:@"D" eventModifiers:eventModifiers fkey:NO];
+        case NSHomeFunctionKey:
+            return [self reallySpecialSequenceWithCode:@"H" eventModifiers:eventModifiers fkey:NO];
+        case NSEndFunctionKey:
+            return [self reallySpecialSequenceWithCode:@"F" eventModifiers:eventModifiers fkey:NO];
+        default:
+            if (eventModifiers == 0) {
+                return [NSString stringWithLongCharacter:codePoint];
+            }
+            return [NSString stringWithFormat:@"\e[27;%d;%d~",
+                    [self csiModifiersForEventModifiers:eventModifiers],
+                    codePoint];
+    }
+}
+
+- (NSString *)reallySpecialSequenceWithCode:(NSString *)code
+                             eventModifiers:(NSEventModifierFlags)eventModifiers
+                                       fkey:(BOOL)fkey {
+    const int csiModifiers = [self csiModifiersForEventModifiers:eventModifiers];
+    if (fkey) {
+        if (csiModifiers == 1) {
+            // esc O code
+            return [NSString stringWithFormat:@"%cO%@", 27, code];
+        } else {
+            // CSI 1 ; mods code
+            return [NSString stringWithFormat:@"%c[1;%d%@", 27, csiModifiers, code];
+        }
+    }
+    if (csiModifiers == 1) {
+        // esc code
+        return [NSString stringWithFormat:@"%c[%@", 27, code];
+    } else {
+        // CSI 1 ; mods code
+        return [NSString stringWithFormat:@"%c[1;%d%@", 27, csiModifiers, code];
+    }
+}
+
+// CSI code ~
+// CSI code ; modifier ~
+- (NSString *)sequenceForNonUnicodeKeypress:(NSString *)code
+                             eventModifiers:(NSEventModifierFlags)eventModifiers {
+    const int csiModifiers = [self csiModifiersForEventModifiers:eventModifiers];
+    if (csiModifiers == 1) {
+        return [NSString stringWithFormat:@"%c[%@~", 27, code];
+    } else {
+        return [NSString stringWithFormat:@"%c[%@;%d~", 27, code, csiModifiers];
+    }
+}
+
+- (int)csiModifiersForEventModifiers:(NSEventModifierFlags)eventModifiers {
+    const int shiftMask = 1;
+    const int optionMask = 2;
+    const int controlMask = 4;
+    int csiModifiers = 0;
+    if (eventModifiers & NSEventModifierFlagShift) {
+        csiModifiers |= shiftMask;
+    }
+    if (eventModifiers & NSEventModifierFlagOption) {
+        csiModifiers |= optionMask;
+    }
+    if (eventModifiers & NSEventModifierFlagControl) {
+        csiModifiers |= controlMask;
+    }
+    return csiModifiers + 1;
+}
+
+#pragma mark - iTermKeyMapper
+
+// Handle control modifier when it's alone.
+- (nullable NSString *)keyMapperStringForPreCocoaEvent:(NSEvent *)event {
+    if (event.type != NSEventTypeKeyDown) {
+        return nil;
+    }
+    const NSEventModifierFlags modifiers = [event it_modifierFlags];
+    const NSEventModifierFlags allEventModifierFlags = (NSEventModifierFlagControl |
+                                                        NSEventModifierFlagOption |
+                                                        NSEventModifierFlagShift |
+                                                        NSEventModifierFlagCommand);
+    if (event.keyCode == kVK_Space &&
+        (event.modifierFlags & allEventModifierFlags) == NSEventModifierFlagShift) {
+        // Shift+Space is special. No other unicode character + shift reports a control sequence.
+        return [self stringForEvent:event];
+    }
+    if ((modifiers & allEventModifierFlags) != NSEventModifierFlagControl) {
+        return nil;
+    }
+    return [self stringForEvent:event];
+}
+
+// For events that are not handled by the pre-cocoa code (because it was bypassed, the pre-cocoa
+// handler returned nil, or it was a repeating keypress not otherwise handled), they may come here
+// as the last resort after the controller has a chance to handle it.
+- (nullable NSData *)keyMapperDataForPostCocoaEvent:(NSEvent *)event {
+    if (event.type != NSEventTypeKeyDown) {
+        return nil;
+    }
+    const NSStringEncoding encoding = [self.delegate modifiyOtherKeysDelegateEncoding:self];
+    return [[self stringForEvent:event] dataUsingEncoding:encoding];
+}
+
+- (nullable NSData *)keyMapperDataForKeyUp:(NSEvent *)event {
+    return nil;
+}
+
+// If this returns YES then the event will be sent to the controller which, if it does not handle
+// the event itself, will send the event to the post-cocoa handler here. Don't return YES if the
+// event should go through the IME.
+- (BOOL)keyMapperShouldBypassPreCocoaForEvent:(NSEvent *)event {
+    const NSEventModifierFlags modifiers = event.it_modifierFlags;
+    const BOOL isNonEmpty = [[event charactersIgnoringModifiers] length] > 0;  // Dead keys have length 0
+    const BOOL rightAltPressed = (modifiers & NSRightAlternateKeyMask) == NSRightAlternateKeyMask;
+    const BOOL leftAltPressed = (modifiers & NSEventModifierFlagOption) == NSEventModifierFlagOption && !rightAltPressed;
+    iTermOptionKeyBehavior left, right;
+    [self.delegate modifyOtherKeys:self getOptionKeyBehaviorLeft:&left right:&right];
+    const BOOL leftOptionModifiesKey = (leftAltPressed && left != OPT_NORMAL);
+    const BOOL rightOptionModifiesKey = (rightAltPressed && right != OPT_NORMAL);
+    const BOOL optionModifiesKey = (leftOptionModifiesKey || rightOptionModifiesKey);
+    const BOOL willSendOptionModifiedKey = (isNonEmpty && optionModifiesKey);
+    if (willSendOptionModifiedKey) {
+        // Meta+key or Esc+ key
+        DLog(@"isNonEmpty=%@ rightAltPressed=%@ leftAltPressed=%@ leftOptionModifiesKey=%@ rightOptionModifiesKey=%@ optionModifiesKey=%@ willSendOptionModifiedKey=%@ -> bypass pre-cocoa",
+             @(isNonEmpty), @(rightAltPressed), @(leftAltPressed), @(leftOptionModifiesKey), @(rightOptionModifiesKey), @(optionModifiesKey), @(willSendOptionModifiedKey));
+    }
+    return willSendOptionModifiedKey;
+}
+
+// Prepare to handle this event. Update config from delegate.
+- (void)keyMapperSetEvent:(NSEvent *)event {
+}
+
+// When a keystroke is routed to performKeyEquivalent instead of keyDown, this is called to check
+// if the key mapper is interested in it.
+- (BOOL)keyMapperWantsKeyEquivalent:(NSEvent *)event {
+    const BOOL cmdPressed = !!(event.modifierFlags & NSEventModifierFlagCommand);
+    return !cmdPressed;
+}
+
+@end

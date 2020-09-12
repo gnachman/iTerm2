@@ -4201,6 +4201,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     // xterm's control sequences. Lots of strange problems appear with vim. For example, mailing
     // list thread with subject "Control Keys Failing After System Bell".
     // TODO: terminal_.sendModifiers[i] holds the settings. See xterm's modifyOtherKeys and friends.
+    [self.delegate screenSendModifiersDidChange];
 }
 
 - (void)terminalDidFinishReceivingFile {

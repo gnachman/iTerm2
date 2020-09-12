@@ -1560,7 +1560,7 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
     return hash;
 }
 
-- (NSUInteger)firstCharacter {
+- (UTF32Char)firstCharacter {
     if (self.length == 0) {
         return 0;
     } else {

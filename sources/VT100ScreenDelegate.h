@@ -269,6 +269,7 @@
 - (void)screenSetLabel:(NSString *)label forKey:(NSString *)keyName;
 - (void)screenPushKeyLabels:(NSString *)value;
 - (void)screenPopKeyLabels:(NSString *)value;
+- (void)screenSendModifiersDidChange;
 
 - (void)screenTerminalAttemptedPasteboardAccess;
 - (NSString *)screenValueOfVariableNamed:(NSString *)name;
