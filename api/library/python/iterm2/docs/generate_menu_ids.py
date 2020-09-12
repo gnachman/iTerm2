@@ -16,10 +16,14 @@ def search_container(path, container, f):
             search_container(this_path, menu.find("items"), f)
         else:
             name = " > ".join(this_path)
-            if "identifier" not in item.attrib:
-                print("Bogus item: {}".format(item.attrib))
-            identifier = item.attrib["identifier"]
-            f(".".join(this_path), name, identifier)
+            try:
+                identifier = item.attrib["identifier"]
+                f(".".join(this_path), name, identifier)
+            except:
+                print("Bogus item: {}".format(item.attrib), file=sys.stderr)
+                raise
+
+
 
 def prologue():
     print(

@@ -79,6 +79,7 @@ Edit > Paste Special > Prompt to Convert Tabs to Spaces when Pasting            
 Edit > Paste Special > Limit Multi-Line Paste Warning to Shell Prompt                   `Paste Special.Limit Multi-Line Paste Warning to Shell Prompt`                
 Edit > Paste Special > Warn Before Pasting One Line Ending in a Newline at Shell Prompt `Paste Special.Warn Before Pasting One Line Ending in a Newline at Shell Prompt`
 Edit > Open Selection                                                                   `Open Selection`                                                              
+Edit > Jump to Selection                                                                `Find.Jump to Selection`                                                      
 Edit > Select All                                                                       `Select All`                                                                  
 Edit > Selection Respects Soft Boundaries                                               `Selection Respects Soft Boundaries`                                          
 Edit > Select Output of Last Command                                                    `Select Output of Last Command`                                               
@@ -87,7 +88,7 @@ Edit > Find > Find...                                                           
 Edit > Find > Find Next                                                                 `Find.Find Next`                                                              
 Edit > Find > Find Previous                                                             `Find.Find Previous`                                                          
 Edit > Find > Use Selection for Find                                                    `Find.Use Selection for Find`                                                 
-Edit > Find > Jump to Selection                                                         `Find.Jump to Selection`                                                      
+Edit > Find > Find Globally...                                                          `Find.Find Globally...`                                                       
 Edit > Find > Find URLs                                                                 `Find.Find URLs`                                                              
 Edit > Marks and Annotations > Set Mark                                                 `Marks and Annotations.Set Mark`                                              
 Edit > Marks and Annotations > Jump to Mark                                             `Marks and Annotations.Jump to Mark`                                          
@@ -160,10 +161,21 @@ Window > Minimize                                                               
 Window > Zoom                                                                           `Zoom`                                                                        
 Window > Edit Tab Title                                                                 `Edit Tab Title`                                                              
 Window > Edit Window Title                                                              `Edit Window Title`                                                           
+Window > Window Style > Normal                                                          `Window Style.Normal`                                                         
+Window > Window Style > Full Screen                                                     `Window Style.Full Screen`                                                    
+Window > Window Style > Maximized                                                       `Window Style.Maximized`                                                      
+Window > Window Style > No Title Bar                                                    `Window Style.No Title Bar`                                                   
+Window > Window Style > Full-Width Bottom of Screen                                     `Window Style.FullWidth Bottom of Screen`                                     
+Window > Window Style > Full-Width Top of Screen                                        `Window Style.FullWidth Top of Screen`                                        
+Window > Window Style > Full-Height Left of Screen                                      `Window Style..FullHeight Left of Screen`                                     
+Window > Window Style > Full-Height Right of Screen                                     `Window Style.FullHeight Right of Screen`                                     
+Window > Window Style > Bottom of Screen                                                `Window Style.Bottom of Screen`                                               
+Window > Window Style > Top of Screen                                                   `Window Style.Top of Screen`                                                  
+Window > Window Style > Left of Screen                                                  `Window Style.Left of Screen`                                                 
+Window > Window Style > Right of Screen                                                 `Window Style.Right of Screen`                                                
 Window > Merge All Windows                                                              `Merge All Windows`                                                           
 Window > Arrange Windows Horizontally                                                   `Arrange Windows Horizontally`                                                
 Window > Arrange Split Panes Evenly                                                     `Arrange Split Panes Evenly`                                                  
-Window > Exposé all Tabs                                                                `Exposé all Tabs`                                                             
 Window > Save Window Arrangement                                                        `Save Window Arrangement`                                                     
 Window > Save Current Window as Arrangement                                             `Save Current Window as Arrangement`                                          
 Window > Select Split Pane > Select Pane Above                                          `Select Split Pane.Select Pane Above`                                         

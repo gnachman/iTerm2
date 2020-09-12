@@ -1112,66 +1112,66 @@ DQ
                                 <modifierMask key="keyEquivalentModifierMask"/>
                                 <menu key="submenu" title="Window Style" id="9u2-er-NQu">
                                     <items>
-                                        <menuItem title="Normal" state="on" id="2GY-cf-R3u">
+                                        <menuItem title="Normal" state="on" identifier="Window Style.Normal" id="2GY-cf-R3u">
                                             <connections>
                                                 <action selector="setWindowStyle:" target="-1" id="sRK-2W-In4"/>
                                             </connections>
                                         </menuItem>
                                         <menuItem isSeparatorItem="YES" id="cm0-u9-eJW"/>
-                                        <menuItem title="Full Screen" tag="1" id="7YH-d7-iVT">
+                                        <menuItem title="Full Screen" tag="1" identifier="Window Style.Full Screen" id="7YH-d7-iVT">
                                             <connections>
                                                 <action selector="setWindowStyle:" target="-1" id="cAM-6K-gHa"/>
                                             </connections>
                                         </menuItem>
-                                        <menuItem title="Maximized" tag="15" id="yOg-Xf-9Ja">
+                                        <menuItem title="Maximized" tag="15" identifier="Window Style.Maximized" id="yOg-Xf-9Ja">
                                             <connections>
                                                 <action selector="setWindowStyle:" target="-1" id="TUw-ln-UTt"/>
                                             </connections>
                                         </menuItem>
                                         <menuItem isSeparatorItem="YES" id="MSa-Cc-Jw0"/>
-                                        <menuItem title="No Title Bar" tag="12" id="c9F-P9-dcr">
+                                        <menuItem title="No Title Bar" tag="12" identifier="Window Style.No Title Bar" id="c9F-P9-dcr">
                                             <connections>
                                                 <action selector="setWindowStyle:" target="-1" id="GQA-tc-adb"/>
                                             </connections>
                                         </menuItem>
                                         <menuItem isSeparatorItem="YES" id="xVP-RA-UyC"/>
-                                        <menuItem title="Full-Width Bottom of Screen" tag="5" id="VcO-5C-gYt">
+                                        <menuItem title="Full-Width Bottom of Screen" tag="5" identifier="Window Style.FullWidth Bottom of Screen" id="VcO-5C-gYt">
                                             <connections>
                                                 <action selector="setWindowStyle:" target="-1" id="AoZ-YA-7dw"/>
                                             </connections>
                                         </menuItem>
-                                        <menuItem title="Full-Width Top of Screen" tag="2" id="xx4-Ao-jke">
+                                        <menuItem title="Full-Width Top of Screen" tag="2" identifier="Window Style.FullWidth Top of Screen" id="xx4-Ao-jke">
                                             <connections>
                                                 <action selector="setWindowStyle:" target="-1" id="shN-Pz-FqQ"/>
                                             </connections>
                                         </menuItem>
-                                        <menuItem title="Full-Height Left of Screen" tag="6" id="8Up-pV-Ad7">
+                                        <menuItem title="Full-Height Left of Screen" tag="6" identifier="Window Style..FullHeight Left of Screen" id="8Up-pV-Ad7">
                                             <connections>
                                                 <action selector="setWindowStyle:" target="-1" id="GTz-qr-LxZ"/>
                                             </connections>
                                         </menuItem>
-                                        <menuItem title="Full-Height Right of Screen" tag="7" id="Nbx-zl-DQO">
+                                        <menuItem title="Full-Height Right of Screen" tag="7" identifier="Window Style.FullHeight Right of Screen" id="Nbx-zl-DQO">
                                             <connections>
                                                 <action selector="setWindowStyle:" target="-1" id="jq8-Pr-NnW"/>
                                             </connections>
                                         </menuItem>
                                         <menuItem isSeparatorItem="YES" id="blF-GQ-heM"/>
-                                        <menuItem title="Bottom of Screen" tag="8" id="GpQ-q3-0fg">
+                                        <menuItem title="Bottom of Screen" tag="8" identifier="Window Style.Bottom of Screen" id="GpQ-q3-0fg">
                                             <connections>
                                                 <action selector="setWindowStyle:" target="-1" id="NHP-PY-C6A"/>
                                             </connections>
                                         </menuItem>
-                                        <menuItem title="Top of Screen" tag="9" id="K5f-FR-QxY">
+                                        <menuItem title="Top of Screen" tag="9" identifier="Window Style.Top of Screen" id="K5f-FR-QxY">
                                             <connections>
                                                 <action selector="setWindowStyle:" target="-1" id="f2J-Yh-4Qa"/>
                                             </connections>
                                         </menuItem>
-                                        <menuItem title="Left of Screen" tag="10" id="5VM-vY-8EI">
+                                        <menuItem title="Left of Screen" tag="10" identifier="Window Style.Left of Screen" id="5VM-vY-8EI">
                                             <connections>
                                                 <action selector="setWindowStyle:" target="-1" id="Meg-Ft-YBN"/>
                                             </connections>
                                         </menuItem>
-                                        <menuItem title="Right of Screen" tag="11" id="Xma-aq-b5U">
+                                        <menuItem title="Right of Screen" tag="11" identifier="Window Style.Right of Screen" id="Xma-aq-b5U">
                                             <connections>
                                                 <action selector="setWindowStyle:" target="-1" id="q3g-dB-W5d"/>
                                             </connections>
