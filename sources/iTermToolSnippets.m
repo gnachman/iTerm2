@@ -407,7 +407,7 @@ static NSButton *iTermToolSnippetsNewButton(NSString *imageName, NSString *title
 - (BOOL)tableView:(NSTableView *)tableView
 writeRowsWithIndexes:(NSIndexSet *)rowIndexes
      toPasteboard:(NSPasteboard*)pboard {
-    [pboard declareTypes:@[ iTermToolSnippetsPasteboardType ]
+    [pboard declareTypes:@[ iTermToolSnippetsPasteboardType, NSPasteboardTypeString ]
                    owner:self];
 
     NSArray<NSNumber *> *plist = [rowIndexes.it_array mapWithBlock:^id(NSNumber *anObject) {
@@ -415,6 +415,10 @@ writeRowsWithIndexes:(NSIndexSet *)rowIndexes
     }];
     [pboard setPropertyList:plist
                     forType:iTermToolSnippetsPasteboardType];
+    [pboard setString:[[rowIndexes.it_array mapWithBlock:^id(NSNumber *anObject) {
+        return _snippets[anObject.integerValue].value;
+    }] componentsJoinedByString:@"\n"]
+              forType:NSPasteboardTypeString];
     return YES;
 }
 

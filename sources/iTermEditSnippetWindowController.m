@@ -6,6 +6,7 @@
 //
 
 #import "iTermEditSnippetWindowController.h"
+#import "NSStringITerm.h"
 
 @interface iTermEditSnippetWindowController ()
 
@@ -27,8 +28,14 @@
             _title = snippet.title;
             _value = snippet.value;
         } else {
-            _title = @"Unititled";
-            _value = @"";
+            NSString *pasteboardString = [NSString stringFromPasteboard];
+            if (pasteboardString) {
+                _title = [pasteboardString ellipsizedDescriptionNoLongerThan:40];
+                _value = pasteboardString;
+            } else {
+                _title = @"Untitled";
+                _value = @"";
+            }
         }
         _completion = [completion copy];
     }
