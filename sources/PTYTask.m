@@ -71,6 +71,7 @@ static void HandleSigChld(int n) {
     BOOL _paused;
 
     PTYTaskSize _desiredSize;
+    CGFloat _lastScaleFactor;
     PTYTaskSize _lastSize;
     NSTimeInterval _timeOfLastSizeChange;
     BOOL _rateLimitedSetSizeToDesiredSizePending;
@@ -389,7 +390,18 @@ static void HandleSigChld(int n) {
     }
 }
 
-- (void)setSize:(VT100GridSize)size viewSize:(NSSize)viewSize scaleFactor:(CGFloat)scaleFactor {
+// NOTE: maybeScaleFactor will be 0 if the session is not attached to a window. For example, if
+// a different space is active.
+- (void)setSize:(VT100GridSize)size viewSize:(NSSize)viewSize scaleFactor:(CGFloat)maybeScaleFactor {
+    CGFloat scaleFactor = maybeScaleFactor;
+    if (scaleFactor < 1) {
+        scaleFactor = _lastScaleFactor;
+    } else {
+        _lastScaleFactor = scaleFactor;
+    }
+    if (scaleFactor < 1) {
+        scaleFactor = 2;
+    }
     DLog(@"Set terminal size to %@; %@; %f for %@",
          VT100GridSizeDescription(size), NSStringFromSize(viewSize), scaleFactor, self.delegate);
     if (self.fd == -1) {

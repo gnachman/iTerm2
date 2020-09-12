@@ -1835,7 +1835,9 @@ ITERM_WEAKLY_REFERENCEABLE
             if (!(results & iTermJobManagerAttachResultsAttached)) {
                 [self brokenPipe];
             }
-            [self->_shell setSize:_screen.size viewSize:_screen.viewSize scaleFactor:_view.window.backingScaleFactor];
+            [self->_shell setSize:_screen.size
+                         viewSize:_screen.viewSize
+                      scaleFactor:self.backingScaleFactor];
             completion();
         }];
     } else {
@@ -1843,10 +1845,10 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
-- (void)didChangeScreen {
+- (void)didChangeScreen:(CGFloat)scaleFactor {
     [_shell setSize:_screen.currentGrid.size
            viewSize:_screen.viewSize
-        scaleFactor:_view.window.backingScaleFactor];
+        scaleFactor:scaleFactor];
 }
 
 - (void)setSize:(VT100GridSize)size {
@@ -1864,7 +1866,9 @@ ITERM_WEAKLY_REFERENCEABLE
 
     [_screen setSize:size];
     if (!self.delegate || [self.delegate sessionShouldSendWindowSizeIOCTL:self]) {
-        [_shell setSize:size viewSize:_screen.viewSize scaleFactor:_view.window.backingScaleFactor];
+        [_shell setSize:size
+               viewSize:_screen.viewSize
+            scaleFactor:self.backingScaleFactor];
     }
     [_textview clearHighlights:NO];
     [[_delegate realParentWindow] invalidateRestorableState];
@@ -3240,7 +3244,9 @@ ITERM_WEAKLY_REFERENCEABLE
     self.guid = [NSString uuid];
     _shell = [[PTYTask alloc] init];
     [_shell setDelegate:self];
-    [_shell setSize:_screen.size viewSize:_screen.viewSize scaleFactor:_view.window.backingScaleFactor];
+    [_shell setSize:_screen.size
+           viewSize:_screen.viewSize
+        scaleFactor:self.backingScaleFactor];
     [self startProgram:_program
            environment:_environment
            customShell:_customShell
@@ -4591,8 +4597,12 @@ ITERM_WEAKLY_REFERENCEABLE
     if ([iTermAdvancedSettingsModel jiggleTTYSizeOnClearBuffer]) {
         VT100GridSize size = _screen.size;
         size.width++;
-        [_shell setSize:size viewSize:_screen.viewSize scaleFactor:_view.window.backingScaleFactor];
-        [_shell setSize:_screen.size viewSize:_screen.viewSize scaleFactor:_view.window.backingScaleFactor];
+        [_shell setSize:size
+               viewSize:_screen.viewSize
+            scaleFactor:self.backingScaleFactor];
+        [_shell setSize:_screen.size
+               viewSize:_screen.viewSize
+            scaleFactor:self.backingScaleFactor];
     }
     _view.scrollview.ptyVerticalScroller.userScroll = NO;
 }
@@ -11947,9 +11957,14 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     }
 }
 
+- (CGFloat)backingScaleFactor {
+    return self.delegate.realParentWindow.window.backingScaleFactor ?: self.view.window.backingScaleFactor;
+}
+
 - (void)sessionViewScrollViewDidResize {
-    const CGFloat scale = self.delegate.realParentWindow.window.backingScaleFactor ?: 2;
-    [_shell setSize:_screen.size viewSize:_screen.viewSize scaleFactor:scale];
+    [_shell setSize:_screen.size
+           viewSize:_screen.viewSize
+        scaleFactor:self.backingScaleFactor];
 }
 
 - (iTermStatusBarViewController *)sessionViewStatusBarViewController {
