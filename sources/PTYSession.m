@@ -41,6 +41,7 @@
 #import "iTermIntervalTreeObserver.h"
 #import "iTermKeyMappings.h"
 #import "iTermKeystroke.h"
+#import "iTermModifyOtherKeysMapper.h"
 #import "iTermNaggingController.h"
 #import "iTermNotificationController.h"
 #import "iTermHapticActuator.h"
@@ -304,6 +305,7 @@ static const NSUInteger kMaxHosts = 100;
     iTermLogging,
     iTermMetaFrustrationDetector,
     iTermMetalGlueDelegate,
+    iTermModifyOtherKeysMapperDelegate,
     iTermNaggingControllerDelegate,
     iTermObject,
     iTermPasteHelperDelegate,
@@ -556,7 +558,8 @@ static const NSUInteger kMaxHosts = 100;
     BOOL _errorCreatingMetalContext;
 
     id<iTermKeyMapper> _keyMapper;
-    BOOL _useLibTickit;
+    iTermKeyMappingMode _keyMappingMode;
+
     NSString *_badgeFontName;
     iTermVariableScope *_variablesScope;
     
@@ -4016,7 +4019,7 @@ ITERM_WEAKLY_REFERENCEABLE
         _terminal.sendModifiers[4] = @-1;
         terminalTickit = -1;
     }
-    [self setUseLibTickit:profileWantsTickit];
+    self.keyMappingMode = profileWantsTickit ? iTermKeyMappingModeCSIu : iTermKeyMappingModeStandard;
     [_lastLibTickitProfileSetting autorelease];
     _lastLibTickitProfileSetting = [@(profileWantsTickit) retain];
 
@@ -4074,21 +4077,32 @@ ITERM_WEAKLY_REFERENCEABLE
 
 }
 
-- (void)setUseLibTickit:(BOOL)value {
-    if (value == _useLibTickit) {
+- (void)setKeyMappingMode:(iTermKeyMappingMode)mode {
+    if (mode == _keyMappingMode) {
         return;
     }
-    _useLibTickit = value;
+    _keyMappingMode = mode;
     [self updateKeyMapper];
 }
 
 - (void)updateKeyMapper {
     Class mapperClass = [iTermStandardKeyMapper class];
-    if (_terminal.reportKeyUp) {
-        mapperClass = [iTermRawKeyMapper class];
-    } else if (_useLibTickit) {
-        mapperClass = [iTermTermkeyKeyMapper class];
+
+    switch (_keyMappingMode) {
+        case iTermKeyMappingModeStandard:
+            mapperClass = [iTermStandardKeyMapper class];
+            break;
+        case iTermKeyMappingModeCSIu:
+            mapperClass = [iTermTermkeyKeyMapper class];
+            break;
+        case iTermKeyMappingModeRaw:
+            mapperClass = [iTermRawKeyMapper class];
+            break;
+        case iTermKeyMappingModeModifyOtherKeys:
+            mapperClass = [iTermModifyOtherKeysMapper class];
+            break;
     }
+
     if ([_keyMapper isKindOfClass:mapperClass]) {
         return;
     }
@@ -9103,7 +9117,16 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
             return _terminal.keypadMode;
 
         case 7:
-            return _useLibTickit;
+            return _keyMappingMode == iTermKeyMappingModeStandard;
+
+        case 8:
+            return _keyMappingMode == iTermKeyMappingModeModifyOtherKeys;
+
+        case 9:
+            return _keyMappingMode == iTermKeyMappingModeCSIu;
+
+        case 10:
+            return _keyMappingMode == iTermKeyMappingModeRaw;
     }
 
     return NO;
@@ -9114,11 +9137,11 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         case 1:
             [_screen toggleAlternateScreen];
             break;
-
+            
         case 2:
             _terminal.reportFocus = !_terminal.reportFocus;
             break;
-
+            
         case 3:
             if (_terminal.mouseMode == MOUSE_REPORTING_NONE) {
                 _terminal.mouseMode = _terminal.previousMouseMode;
@@ -9127,30 +9150,41 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
             }
             [_terminal.delegate terminalMouseModeDidChangeTo:_terminal.mouseMode];
             break;
-
+            
         case 4:
             _terminal.bracketedPasteMode = !_terminal.bracketedPasteMode;
             break;
-
+            
         case 5:
             _terminal.cursorMode = !_terminal.cursorMode;
             break;
-
+            
         case 6:
             [_terminal forceSetKeypadMode:!_terminal.keypadMode];
             break;
-
-        case 7: {
-            [self updateUseCSIuMode];
+            
+        case 7:
+            self.keyMappingMode = iTermKeyMappingModeStandard;
             break;
-        }        
+            
+        case 8:
+            self.keyMappingMode = iTermKeyMappingModeModifyOtherKeys;
+            break;
+            
+        case 9:
+            self.keyMappingMode = iTermKeyMappingModeCSIu;
+            break;
+            
+        case 10:
+            self.keyMappingMode = iTermKeyMappingModeRaw;
+            break;
     }
 }
 
 - (void)updateUseCSIuMode {
     const BOOL profileSetting =
         [iTermProfilePreferences boolForKey:KEY_USE_LIBTICKIT_PROTOCOL inProfile:self.profile];
-    [self setUseLibTickit:profileSetting];
+    self.keyMappingMode = profileSetting ? iTermKeyMappingModeCSIu : iTermKeyMappingModeStandard;
 }
 
 - (void)textViewResetTerminal {
@@ -11465,6 +11499,16 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [_delegate sessionKeyLabelsDidChange:self];
 }
 
+- (void)screenSendModifiersDidChange {
+    const int modifyOtherKeysMode = _terminal.sendModifiers[4].intValue;
+    if (modifyOtherKeysMode == 2) {
+        self.keyMappingMode = iTermKeyMappingModeModifyOtherKeys;
+    } else {
+        self.keyMappingMode = iTermKeyMappingModeStandard;
+    }
+}
+
+
 - (void)screenTerminalAttemptedPasteboardAccess {
     [self.textview didCopyToPasteboardWithControlSequence];
     if ([iTermPreferences boolForKey:kPreferenceKeyAllowClipboardAccessFromTerminal]) {
@@ -11526,7 +11570,11 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)screenReportKeyUpDidChange:(BOOL)reportKeyUp {
-    [self updateKeyMapper];
+    if (reportKeyUp) {
+        self.keyMappingMode = iTermKeyMappingModeRaw;
+    } else {
+        self.keyMappingMode = iTermKeyMappingModeStandard;
+    }
 }
 
 #pragma mark - Announcements
@@ -13427,6 +13475,30 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 - (NSString *)stringUniqueIdentifier {
     return self.guid;
+}
+
+#pragma mark - iTermModifyOtherKeysMapperDelegate
+
+- (NSStringEncoding)modifiyOtherKeysDelegateEncoding:(iTermModifyOtherKeysMapper *)sender {
+    DLog(@"encoding=%@", @(_terminal.encoding));
+    return _terminal.encoding;
+}
+
+- (void)modifyOtherKeys:(iTermModifyOtherKeysMapper *)sender
+getOptionKeyBehaviorLeft:(iTermOptionKeyBehavior *)left
+                  right:(iTermOptionKeyBehavior *)right {
+    *left = self.optionKey;
+    *right = self.rightOptionKey;
+    DLog(@"left=%@ right=%@", @(*left), @(*right));
+}
+
+- (VT100Output *)modifyOtherKeysOutputFactory:(iTermModifyOtherKeysMapper *)sender {
+    return _terminal.output;
+}
+
+- (BOOL)modifyOtherKeysTerminalIsScreenlike:(iTermModifyOtherKeysMapper *)sender {
+    DLog(@"screenlike=%@", @(self.isTmuxClient));
+    return self.isTmuxClient;
 }
 
 @end

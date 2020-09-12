@@ -163,40 +163,40 @@ typedef enum {
     }
 }
 
-- (NSData *)keyArrowUp:(unsigned int)modflag
-{
+- (NSData *)keyArrowUp:(unsigned int)modflag {
     return [self specialKey:TERMINFO_KEY_UP
                   cursorMod:CURSOR_MOD_UP
                   cursorSet:CURSOR_SET_UP
                 cursorReset:CURSOR_RESET_UP
-                    modflag:modflag];
+                    modflag:modflag
+                   isCursor:YES];
 }
 
-- (NSData *)keyArrowDown:(unsigned int)modflag
-{
+- (NSData *)keyArrowDown:(unsigned int)modflag {
     return [self specialKey:TERMINFO_KEY_DOWN
                   cursorMod:CURSOR_MOD_DOWN
                   cursorSet:CURSOR_SET_DOWN
                 cursorReset:CURSOR_RESET_DOWN
-                    modflag:modflag];
+                    modflag:modflag
+                   isCursor:YES];
 }
 
-- (NSData *)keyArrowLeft:(unsigned int)modflag
-{
+- (NSData *)keyArrowLeft:(unsigned int)modflag {
     return [self specialKey:TERMINFO_KEY_LEFT
                   cursorMod:CURSOR_MOD_LEFT
                   cursorSet:CURSOR_SET_LEFT
                 cursorReset:CURSOR_RESET_LEFT
-                    modflag:modflag];
+                    modflag:modflag
+                   isCursor:YES];
 }
 
-- (NSData *)keyArrowRight:(unsigned int)modflag
-{
+- (NSData *)keyArrowRight:(unsigned int)modflag {
     return [self specialKey:TERMINFO_KEY_RIGHT
                   cursorMod:CURSOR_MOD_RIGHT
                   cursorSet:CURSOR_SET_RIGHT
                 cursorReset:CURSOR_RESET_RIGHT
-                    modflag:modflag];
+                    modflag:modflag
+                   isCursor:YES];
 }
 
 - (NSData *)keyHome:(unsigned int)modflag screenlikeTerminal:(BOOL)screenlike {
@@ -208,11 +208,11 @@ typedef enum {
                   cursorMod:CURSOR_MOD_HOME
                   cursorSet:CURSOR_SET_HOME
                 cursorReset:CURSOR_RESET_HOME
-                    modflag:modflag];
+                    modflag:modflag
+                   isCursor:NO];
 }
 
-- (NSData *)keyEnd:(unsigned int)modflag screenlikeTerminal:(BOOL)screenlike
-{
+- (NSData *)keyEnd:(unsigned int)modflag screenlikeTerminal:(BOOL)screenlike {
     if (screenlike) {
         const char *bytes = "\033[4~";
         return [NSData dataWithBytes:bytes length:strlen(bytes)];
@@ -221,11 +221,11 @@ typedef enum {
                   cursorMod:CURSOR_MOD_END
                   cursorSet:CURSOR_SET_END
                 cursorReset:CURSOR_RESET_END
-                    modflag:modflag];
+                    modflag:modflag
+                   isCursor:NO];
 }
 
-- (NSData *)keyInsert
-{
+- (NSData *)keyInsert {
     if (_keyStrings[TERMINFO_KEY_INS]) {
         return [NSData dataWithBytes:_keyStrings[TERMINFO_KEY_INS]
                               length:strlen(_keyStrings[TERMINFO_KEY_INS])];
@@ -235,8 +235,7 @@ typedef enum {
 }
 
 
-- (NSData *)keyDelete
-{
+- (NSData *)keyDelete {
     if (_keyStrings[TERMINFO_KEY_DEL]) {
         return [NSData dataWithBytes:_keyStrings[TERMINFO_KEY_DEL]
                               length:strlen(_keyStrings[TERMINFO_KEY_DEL])];
@@ -245,8 +244,7 @@ typedef enum {
     }
 }
 
-- (NSData *)keyBackspace
-{
+- (NSData *)keyBackspace {
     if (_keyStrings[TERMINFO_KEY_BACKSPACE]) {
         return [NSData dataWithBytes:_keyStrings[TERMINFO_KEY_BACKSPACE]
                               length:strlen(_keyStrings[TERMINFO_KEY_BACKSPACE])];
@@ -627,11 +625,12 @@ typedef enum {
              cursorMod:(char*)cursorMod
              cursorSet:(char*)cursorSet
            cursorReset:(char*)cursorReset
-               modflag:(unsigned int)modflag {
+               modflag:(unsigned int)modflag
+              isCursor:(BOOL)isCursor {
     NSData* prefix = nil;
     NSData* theSuffix;
-    if (_keyStrings[terminfo] && self.keypadMode) {
-        // Application keypad mode
+    if (_keyStrings[terminfo] && (isCursor ? self.cursorMode : self.keypadMode)) {
+        // Application keypad mode or application cursor mode
         theSuffix = [NSData dataWithBytes:_keyStrings[terminfo]
                                    length:strlen(_keyStrings[terminfo])];
     } else {

@@ -7,6 +7,13 @@
 
 #import <Cocoa/Cocoa.h>
 
+typedef NS_ENUM(NSUInteger, iTermKeyMappingMode) {
+    iTermKeyMappingModeStandard,
+    iTermKeyMappingModeCSIu,
+    iTermKeyMappingModeRaw,
+    iTermKeyMappingModeModifyOtherKeys
+};
+
 NS_ASSUME_NONNULL_BEGIN
 
 // A key mapper is responsible for converting an event into the data that gets sent to the pty.

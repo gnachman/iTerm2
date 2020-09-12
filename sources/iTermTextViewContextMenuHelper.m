@@ -205,6 +205,7 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
                                                                   _validationClickPoint.y);
         return [self.delegate contextMenu:self hasOpenAnnotationInRange:range];
     }
+
     return NO;
 }
 
@@ -470,7 +471,11 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
         { nil, nil },
         { @"Application Cursor", @selector(terminalStateToggleApplicationCursor:) },
         { @"Application Keypad", @selector(terminalStateToggleApplicationKeypad:) },
-        { @"Report Modifiers with CSI u", @selector(terminalStateToggleCSIu:) }
+        { nil, nil },
+        { @"Standard Key Reporting", @selector(terminalToggleKeyboardMode:) },
+        { @"Report Modifiers like xterm", @selector(terminalToggleKeyboardMode:) },
+        { @"Report Modifiers with CSI u", @selector(terminalToggleKeyboardMode:) },
+        { @"Raw Key Reporting", @selector(terminalToggleKeyboardMode:) },
     };
     NSInteger j = 1;
     for (size_t i = 0; i < sizeof(terminalStateDecls) / sizeof(*terminalStateDecls); i++) {
@@ -481,7 +486,6 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
         NSMenuItem *item = [terminalState.submenu addItemWithTitle:terminalStateDecls[i].title
                                                             action:terminalStateDecls[i].action
                                                      keyEquivalent:@""];
-        item.target = self;
         item.tag = j;
         j += 1;
         item.state = [self.delegate contextMenu:self terminalStateForMenuItem:item];
@@ -788,29 +792,6 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
 
 - (void)bury:(id)sender {
     [self.delegate contextMenuBurySession:self];
-}
-
-- (IBAction)terminalStateToggleAlternateScreen:(id)sender {
-    [self.delegate contextMenu:self toggleTerminalStateForMenuItem:sender];
-}
-- (IBAction)terminalStateToggleFocusReporting:(id)sender {
-    [self.delegate contextMenu:self toggleTerminalStateForMenuItem:sender];
-}
-- (IBAction)terminalStateToggleMouseReporting:(id)sender {
-    [self.delegate contextMenu:self toggleTerminalStateForMenuItem:sender];
-}
-- (IBAction)terminalStateTogglePasteBracketing:(id)sender {
-    [self.delegate contextMenu:self toggleTerminalStateForMenuItem:sender];
-}
-- (IBAction)terminalStateToggleApplicationCursor:(id)sender {
-    [self.delegate contextMenu:self toggleTerminalStateForMenuItem:sender];
-}
-- (IBAction)terminalStateToggleApplicationKeypad:(id)sender {
-    [self.delegate contextMenu:self toggleTerminalStateForMenuItem:sender];
-}
-
-- (IBAction)terminalStateToggleCSIu:(id)sender {
-    [self.delegate contextMenu:self toggleTerminalStateForMenuItem:sender];
 }
 
 - (void)reRunCommand:(id)sender {

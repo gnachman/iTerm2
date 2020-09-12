@@ -246,7 +246,7 @@ int decode_utf8_char(const unsigned char * restrict datap,
 // A fast, non-crypto-quality hash.
 - (NSUInteger)hashWithDJB2;
 
-- (NSUInteger)firstCharacter;
+- (UTF32Char)firstCharacter;
 // Is this a phrase enclosed in quotation marks?
 - (BOOL)isInQuotationMarks;
 

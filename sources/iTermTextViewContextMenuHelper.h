@@ -21,6 +21,17 @@ NS_ASSUME_NONNULL_BEGIN
 @class iTermURLActionHelper;
 @class iTermVariableScope;
 
+// First responder can choose to implement these.
+@interface NSResponder(ContextMenuHelper)
+- (void)terminalStateToggleAlternateScreen:(id)sender;
+- (void)terminalStateToggleFocusReporting:(id)sender;
+- (void)terminalStateToggleMouseReporting:(id)sender;
+- (void)terminalStateTogglePasteBracketing:(id)sender;
+- (void)terminalStateToggleApplicationCursor:(id)sender;
+- (void)terminalStateToggleApplicationKeypad:(id)sender;
+- (void)terminalToggleKeyboardMode:(id)sender;
+@end
+
 @protocol iTermContextMenuHelperDelegate<NSObject>
 - (NSPoint)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu
             clickPoint:(NSEvent *)event

@@ -941,10 +941,29 @@ DQ
                                                 <action selector="terminalStateToggleApplicationKeypad:" target="-1" id="vqM-de-PE3"/>
                                             </connections>
                                         </menuItem>
-                                        <menuItem title="Report Modifiers with CSI u" tag="7" identifier="Reprot Modifiers with CSI u" id="NiW-ZC-qkW">
+                                        <menuItem isSeparatorItem="YES" id="Csl-Na-fLA"/>
+                                        <menuItem title="Standard Key Reporting" tag="7" identifier="Terminal State.Standard Key Reporting" id="NiW-ZC-qkW">
                                             <modifierMask key="keyEquivalentModifierMask"/>
                                             <connections>
                                                 <action selector="terminalStateToggleApplicationKeypad:" target="-1" id="dEu-4i-avK"/>
+                                            </connections>
+                                        </menuItem>
+                                        <menuItem title="Report Modifiers like xterm" tag="8" identifier="Terminal State.Report Modifiers like xterm" id="xK3-pO-8bT">
+                                            <modifierMask key="keyEquivalentModifierMask"/>
+                                            <connections>
+                                                <action selector="terminalStateToggleApplicationKeypad:" target="-1" id="V3u-fZ-VC2"/>
+                                            </connections>
+                                        </menuItem>
+                                        <menuItem title="Report Modifiers with CSI u" tag="9" identifier="Terminal State.Report Modifiers with CSI u" id="Qlm-EZ-J8K">
+                                            <modifierMask key="keyEquivalentModifierMask"/>
+                                            <connections>
+                                                <action selector="terminalStateToggleApplicationKeypad:" target="-1" id="kMi-Ez-WPl"/>
+                                            </connections>
+                                        </menuItem>
+                                        <menuItem title="Raw Key Reporting" tag="10" identifier="Terminal State.Raw Key Reporting" id="HUg-bw-Kax">
+                                            <modifierMask key="keyEquivalentModifierMask"/>
+                                            <connections>
+                                                <action selector="terminalStateToggleApplicationKeypad:" target="-1" id="Io8-vc-lTj"/>
                                             </connections>
                                         </menuItem>
                                         <menuItem isSeparatorItem="YES" id="JGI-zr-cwU"/>
@@ -1451,13 +1470,6 @@ DQ
         </customObject>
         <customObject id="266" userLabel="Font Manager" customClass="NSFontManager"/>
         <customObject id="879" userLabel="SUUpdater" customClass="SUUpdater"/>
-        <menuItem isSeparatorItem="YES" id="TYx-JS-5H0"/>
-        <menuItem title="Mouse Reporting" id="y5H-9R-t1f">
-            <modifierMask key="keyEquivalentModifierMask"/>
-        </menuItem>
-        <menuItem title="Application Keypad Mode" id="gvK-7r-3df" userLabel="Application Cursor Keys">
-            <modifierMask key="keyEquivalentModifierMask"/>
-        </menuItem>
         <customObject id="vNk-ru-3oN" userLabel="Snippets Menu Controller" customClass="iTermSnippetsMenuController">
             <connections>
                 <outlet property="_menuItem" destination="s0f-jP-7Pk" id="Yh8-jB-GRV"/>

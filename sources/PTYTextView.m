@@ -434,7 +434,7 @@
         item.action == @selector(terminalStateTogglePasteBracketing:) ||
         item.action == @selector(terminalStateToggleApplicationCursor:) ||
         item.action == @selector(terminalStateToggleApplicationKeypad:) ||
-        item.action == @selector(terminalStateToggleCSIu:)) {
+        item.action == @selector(terminalToggleKeyboardMode:)) {
         item.state = [self.delegate textViewTerminalStateForMenuItem:item] ? NSControlStateValueOn : NSControlStateValueOff;
         return YES;
     }
@@ -2706,7 +2706,7 @@
     [self contextMenu:_contextMenuHelper toggleTerminalStateForMenuItem:sender];
 }
 
-- (IBAction)terminalStateToggleCSIu:(id)sender {
+- (IBAction)terminalToggleKeyboardMode:(id)sender {
     [self contextMenu:_contextMenuHelper toggleTerminalStateForMenuItem:sender];
 }
 
