@@ -66,6 +66,7 @@ extern NSString *const iTermVariableKeySessionTab;  // NString. Containing tab.
 extern NSString *const iTermVariableKeySessionSelection;  // NSString. Containing selected text.
 extern NSString *const iTermVariableKeySessionSelectionLength;  // NSNumber. Contains length of selected text.
 extern NSString *const iTermVariableKeySessionParent;  // Session that was active when this one was created, if any.
+extern NSString *const iTermVariableKeySessionBellCount;  // NSNumber. Number of times the bell has tried to ring.
 
 extern NSString *const iTermVariableKeyWindowTitleOverrideFormat;
 extern NSString *const iTermVariableKeyWindowCurrentTab;

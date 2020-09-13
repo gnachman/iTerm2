@@ -294,4 +294,12 @@
     [self setValue:newValue forVariableNamed:iTermVariableKeySessionSelectionLength];
 }
 
+- (NSNumber *)bellCount {
+    return [self valueForVariableName:iTermVariableKeySessionBellCount];
+}
+
+- (void)setBellCount:(NSNumber *)bellCount {
+    [self setValue:bellCount forVariableNamed:iTermVariableKeySessionBellCount];
+}
+
 @end

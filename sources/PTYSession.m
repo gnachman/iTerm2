@@ -11024,6 +11024,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (BOOL)screenShouldIgnoreBellWhichIsAudible:(BOOL)audible visible:(BOOL)visible {
+    self.variablesScope.bellCount = @(self.variablesScope.bellCount.integerValue + 1);
     NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
     if (now < _ignoreBellUntil) {
         return YES;

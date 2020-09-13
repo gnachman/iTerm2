@@ -80,6 +80,7 @@ NSString *const iTermVariableKeySessionTab = @"tab";
 NSString *const iTermVariableKeySessionSelection = @"selection";
 NSString *const iTermVariableKeySessionSelectionLength = @"selectionLength";
 NSString *const iTermVariableKeySessionParent = @"parentSession";
+NSString *const iTermVariableKeySessionBellCount = @"bellCount";
 
 #pragma mark - Window Context
 
