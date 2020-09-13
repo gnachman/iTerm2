@@ -1218,31 +1218,19 @@ NS_CLASS_AVAILABLE_MAC(10_14)
 }
 
 - (CGFloat)leftBorderInset {
-    if (@available(macOS 10.15, *)) {
-        return 0;
-    }
-    return [_delegate haveLeftBorder] ? 1 : 0;
+    return 0;
 }
 
 - (CGFloat)rightBorderInset {
-    if (@available(macOS 10.15, *)) {
-        return 0;
-    }
-    return [_delegate haveRightBorder] ? 1 : 0;
+    return 0;
 }
 
 - (CGFloat)bottomBorderInset {
-    if (@available(macOS 10.15, *)) {
-        return 0;
-    }
-    return [_delegate haveBottomBorder] ? 1 : 0;
+    return 0;
 }
 
 - (CGFloat)topBorderInset {
-    if (@available(macOS 10.15, *)) {
-        return 0;
-    }
-    return [_delegate haveTopBorder] ? 1 : 0;
+    return 0;
 }
 
 - (void)layoutSubviewsWithHiddenTabBarForWindow:(NSWindow *)thisWindow {
