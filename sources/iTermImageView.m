@@ -99,10 +99,8 @@
 
 // Loads a non-tiled image.
 - (void)loadRegularImage {
-    CGFloat scale = self.window.backingScaleFactor ?: 2.0;
     self.layer.backgroundColor = nil;
-    self.layer.contents = [_image layerContentsForContentsScale:[_image recommendedLayerContentsScale:scale]];
-#warning TODO: What if you switch to a low dpi screen?
+    self.layer.contents = [_image layerContentsForContentsScale:2];
 }
 
 static void iTermImageViewDrawImage(void *info, CGContextRef context) {
