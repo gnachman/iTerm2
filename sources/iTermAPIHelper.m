@@ -2752,8 +2752,10 @@ static BOOL iTermAPIHelperLastApplescriptAuthRequiredSetting;
 }
 
 - (void)apiServerVariable:(ITMVariableRequest *)request handler:(void (^)(ITMVariableResponse *))handler {
+    NSString *userPrefix = @"user.";
     const BOOL allSetNamesLegal = [request.setArray allWithBlock:^BOOL(ITMVariableRequest_Set *setRequest) {
-        return [setRequest.name hasPrefix:@"user."];
+        return ([setRequest.name hasPrefix:userPrefix] &&
+                [[setRequest.name substringFromIndex:userPrefix.length] rangeOfString:@"."].location == NSNotFound);
     }];
     if (!allSetNamesLegal) {
         ITMVariableResponse *response = [[ITMVariableResponse alloc] init];

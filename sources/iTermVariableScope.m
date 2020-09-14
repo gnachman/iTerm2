@@ -7,6 +7,7 @@
 
 #import "iTermVariableScope.h"
 
+#import "DebugLogging.h"
 #import "iTermObject.h"
 #import "iTermTuple.h"
 #import "iTermVariableReference.h"
@@ -191,6 +192,9 @@ NS_ASSUME_NONNULL_BEGIN
         if (value == nil) {
             return nil;
         }
+        ITAssertWithMessage([value isKindOfClass:[iTermVariables class]],
+                            @"Value is not iTermVariables. It is %@. The path is %@. The remaining parts are %@",
+                            value, path, parts);
         assert([value isKindOfClass:[iTermVariables class]]);
         owner = value;
         parts = [parts subarrayFromIndex:1];

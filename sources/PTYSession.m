@@ -10479,8 +10479,12 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)screenSetUserVar:(NSString *)kvpString {
-    iTermTuple *kvp = [kvpString keyValuePair];
+    iTermTuple<NSString *, NSString *> *kvp = [kvpString keyValuePair];
     if (kvp) {
+        if ([kvp.firstObject rangeOfString:@"."].location != NSNotFound) {
+            DLog(@"key contains a ., which is not allowed. kvpString=%@", kvpString);
+            return;
+        }
         NSString *key = [NSString stringWithFormat:@"user.%@", kvp.firstObject];
         NSString *value = [kvp.secondObject stringByBase64DecodingStringWithEncoding:NSUTF8StringEncoding];
         [self.variablesScope setValue:value
@@ -10491,6 +10495,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                                                    pane:self.tmuxPane];
         }
     } else {
+        if ([kvpString rangeOfString:@"."].location != NSNotFound) {
+            DLog(@"key contains a ., which is not allowed. key=%@", kvpString);
+            return;
+        }
         NSString *key = [NSString stringWithFormat:@"user.%@", kvpString];
         [self.variablesScope setValue:nil forVariableNamed:[NSString stringWithFormat:@"user.%@", kvpString]];
         if (self.isTmuxClient) {
