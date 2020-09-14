@@ -197,7 +197,7 @@ NSString *iTermNamespaceFromSignature(NSString *signature) {
     NSDictionary *nameToArgs = [signatureToArgs mapKeysWithBlock:^id(NSString *signature, id object) {
         return iTermFunctionNameFromSignature(signature);
     }];
-    NSDictionary *publicNameToArgs = [nameToArgs filterWithBlock:^BOOL(NSString *name, id object) {
+    NSDictionary *publicNameToArgs = [nameToArgs filteredWithBlock:^BOOL(NSString *name, id object) {
         return ![name hasPrefix:@"iterm2.private"];
     }];
     return publicNameToArgs;
