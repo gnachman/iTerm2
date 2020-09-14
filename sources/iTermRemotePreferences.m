@@ -224,6 +224,13 @@
     NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
     NSDictionary *myDict =
         [userDefaults persistentDomainForName:[[NSBundle mainBundle] bundleIdentifier]];
+    myDict = [myDict filteredWithBlock:^BOOL(id key, id value) {
+        NSString *stringKey = [NSString castFrom:key];
+        if (!stringKey) {
+            return YES;
+        }
+        return [self preferenceKeyIsSyncable:key];
+    }];
     BOOL isOk = [myDict it_writeToXMLPropertyListAt:filename];
     if (!isOk) {
         NSAlert *alert = [[NSAlert alloc] init];
