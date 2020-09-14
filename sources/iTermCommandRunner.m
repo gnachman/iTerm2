@@ -169,7 +169,17 @@
     DLog(@"%@ readAndWait starting", task);
     dispatch_async(_waitingQueue, ^{
         DLog(@"%@ readAndWait calling waitUntilExit", task);
-        [task waitUntilExit];
+
+        DLog(@"Wait for %@", task.executableURL.path);
+        dispatch_group_t group = dispatch_group_create();
+        dispatch_group_enter(group);
+        task.terminationHandler = ^(NSTask *task) {
+            DLog(@"Termination handler run for %@", task.executableURL.path);
+            dispatch_group_leave(group);
+        };
+        dispatch_wait(group, DISPATCH_TIME_FOREVER);
+        DLog(@"Resuming after termination of %@", task.executableURL.path);
+
         DLog(@"%@ readAndWait waitUntilExit returned", task);
         // This makes -availableData return immediately.
         pipe.fileHandleForReading.readabilityHandler = nil;
