@@ -38,6 +38,20 @@
     return [super resignFirstResponder];
 }
 
+- (instancetype)initWithCoder:(NSCoder *)coder {
+    self = [super initWithCoder:coder];
+    if (self) {
+        self.continuousSpellCheckingEnabled = NO;
+        self.grammarCheckingEnabled = NO;
+        self.automaticLinkDetectionEnabled = NO;
+        self.automaticQuoteSubstitutionEnabled = NO;
+        self.automaticDashSubstitutionEnabled = NO;
+        self.automaticDataDetectionEnabled = NO;
+        self.automaticTextReplacementEnabled = NO;
+        self.smartInsertDeleteEnabled = NO;
+    }
+    return self;
+}
 @end
 
 @implementation iTermComposerView {

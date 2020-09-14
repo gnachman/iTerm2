@@ -727,6 +727,7 @@ Gw
                                 </connections>
                             </menuItem>
                             <menuItem title="Composer" keyEquivalent="." identifier="Composer" id="Bhs-45-5yR">
+                                <modifierMask key="keyEquivalentModifierMask" shift="YES" command="YES"/>
                                 <connections>
                                     <action selector="compose:" target="-1" id="dCP-co-yhy"/>
                                 </connections>
