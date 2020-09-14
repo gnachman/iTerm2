@@ -11,6 +11,8 @@
 #import "PseudoTerminalRestorer.h"
 #import "DebugLogging.h"
 #import "iTermAdvancedSettingsModel.h"
+#import "iTermApplication.h"
+#import "iTermApplicationDelegate.h"
 #import "iTermController.h"
 #import "iTermOrphanServerAdopter.h"
 #import "iTermPreferences.h"
@@ -27,6 +29,7 @@ static BOOL gWaitingForFullScreen;
 static void (^gPostRestorationCompletionBlock)(void);
 static BOOL gRanQueuedBlocks;
 static BOOL gShouldIgnoreOpenUntitledFile;
+static BOOL gExternalRestorationDidComplete;
 
 @implementation PseudoTerminalState
 
@@ -72,20 +75,42 @@ static BOOL gShouldIgnoreOpenUntitledFile;
     [queuedBlocks release];
     queuedBlocks = nil;
     gRanQueuedBlocks = YES;
+    [self runPostRestorationBlockIfNeeded];
+}
 
-    if (gPostRestorationCompletionBlock) {
++ (void)runPostRestorationBlockIfNeeded {
+    if (gPostRestorationCompletionBlock && gExternalRestorationDidComplete) {
+        DLog(@"run post-restoration block %p", gPostRestorationCompletionBlock);
         gPostRestorationCompletionBlock();
         [gPostRestorationCompletionBlock release];
         gPostRestorationCompletionBlock = nil;
     }
 }
 
++ (void)externalRestorationDidComplete {
+    DLog(@"external restoration completed");
+    gExternalRestorationDidComplete = YES;
+    [self runPostRestorationBlockIfNeeded];
+}
+
 + (void)setPostRestorationCompletionBlock:(void (^)(void))postRestorationCompletionBlock {
-    assert(!gPostRestorationCompletionBlock);
-    if (gRanQueuedBlocks) {
+    DLog(@"set post-restoration completion block");
+    if (gRanQueuedBlocks && gExternalRestorationDidComplete) {
         postRestorationCompletionBlock();
     } else {
-        gPostRestorationCompletionBlock = [postRestorationCompletionBlock copy];
+        if (gPostRestorationCompletionBlock) {
+            void (^oldBlock)(void) = [[gPostRestorationCompletionBlock retain] autorelease];
+            gPostRestorationCompletionBlock = [^{
+                DLog(@"call older postrestoration block");
+                oldBlock();
+                [oldBlock release];
+                postRestorationCompletionBlock();
+            } copy];
+            DLog(@"replace postretoration block %p with new one %p", oldBlock, gPostRestorationCompletionBlock);
+        } else {
+            gPostRestorationCompletionBlock = [postRestorationCompletionBlock copy];
+            DLog(@"postrestoration block is now %p", gPostRestorationCompletionBlock);
+        }
     }
 }
 
@@ -138,6 +163,7 @@ static BOOL gShouldIgnoreOpenUntitledFile;
         completionHandler(nil, nil);
         return;
     }
+    [[[iTermApplication sharedApplication] delegate] willRestoreWindow];
 
     if ([iTermPreferences boolForKey:kPreferenceKeyOpenArrangementAtStartup]) {
         DLog(@"Abort because opening arrangement at startup");

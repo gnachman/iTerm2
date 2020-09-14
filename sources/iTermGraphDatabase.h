@@ -28,12 +28,13 @@ NS_ASSUME_NONNULL_BEGIN
 - (instancetype)init NS_UNAVAILABLE;
 
 
-// This will return NO if you try to save asynchronously but we're busy. In that case the
-// completion callback is not invoked.
+// Returns NO if the completion block will never be called. Otherwise it will be called after the
+// method returns (guaranteed!).
 - (BOOL)updateSynchronously:(BOOL)sync
                       block:(void (^ NS_NOESCAPE)(iTermGraphEncoder * _Nonnull))block
                  completion:(nullable iTermCallback *)completion;
 - (void)invalidate;
+- (void)whenReady:(void (^)(void))readyBlock;
 
 @end
 

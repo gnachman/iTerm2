@@ -11,129 +11,71 @@
 #import "iTermAdvancedSettingsModel.h"
 #import "NSApplication+iTerm.h"
 
-typedef NS_ENUM(NSUInteger, iTermUntitledFileOpen) {
-    iTermUntitledFileOpenUnsafe,
-    iTermUntitledFileOpenPending,
-    iTermUntitledFileOpenAllowed,
-    iTermUntitledFileOpenComplete,
-    iTermUntitledFileOpenDisallowed
-};
 
-@interface iTermUntitledWindowStateMachine()
-@property (nonatomic) iTermUntitledFileOpen state;
-@end
-
-@implementation iTermUntitledWindowStateMachine
-
-- (instancetype)init {
-    self = [super init];
-    if (self) {
-        if ([iTermAdvancedSettingsModel openNewWindowAtStartup]) {
-            self.state = iTermUntitledFileOpenUnsafe;
-        } else {
-            self.state = iTermUntitledFileOpenDisallowed;
-        }
-    }
-    return self;
+@implementation iTermUntitledWindowStateMachine {
+    NSMutableSet<NSString *> *_contingencies;
+    BOOL _windowRestorationComplete;
+    BOOL _disableInitialWindow;
+    BOOL _initializationComplete;
+    BOOL _wantsWindow;
 }
 
-- (void)setState:(iTermUntitledFileOpen)state {
-    DLog(@"%@ -> %@\n%@",
-         [self stringForState:_state], [self stringForState:state], [NSThread callStackSymbols]);
-    _state = state;
-}
-
-- (NSString *)stringForState:(iTermUntitledFileOpen)state {
-    switch (state) {
-        case iTermUntitledFileOpenUnsafe:
-            return @"unsafe";
-        case iTermUntitledFileOpenPending:
-            return @"pending";
-        case iTermUntitledFileOpenAllowed:
-            return @"allowed";
-        case iTermUntitledFileOpenComplete:
-            return @"complete";
-        case iTermUntitledFileOpenDisallowed:
-            return @"disallowed";
-    }
-    return [@(state) stringValue];
-}
-
-- (void)didBecomeSafe {
-    DLog(@"Did become safe");
-    if ([[NSApplication sharedApplication] isRunningUnitTests]) {
-        DLog(@"Running unit tests");
-        self.state = iTermUntitledFileOpenUnsafe;
-        return;
-    }
-    switch (_state) {
-        case iTermUntitledFileOpenUnsafe:
-            self.state = iTermUntitledFileOpenAllowed;
-            break;
-        case iTermUntitledFileOpenAllowed:
-            // Shouldn't happen
-            break;
-        case iTermUntitledFileOpenPending:
-            self.state = iTermUntitledFileOpenAllowed;
-            [self maybeOpenUntitledFile];
-            break;
-
-        case iTermUntitledFileOpenComplete:
-            // Shouldn't happen
-            break;
-        case iTermUntitledFileOpenDisallowed:
-            break;
-    }
+- (NSString *)description {
+    return [NSString stringWithFormat:@"<%@: %p windowRestorationComplete=%@ disableInitialWindow=%@ initializationComplete=%@ wantsWindow=%@>",
+            self.class, self, @(_windowRestorationComplete), @(_disableInitialWindow),
+            @(_initializationComplete), @(_wantsWindow)];
 }
 
 - (void)maybeOpenUntitledFile {
-    DLog(@"Maybe open untitled file %@", [self stringForState:_state]);
+    DLog(@"untitled: maybeOpenUntitledFile %@", self);
+    if (_disableInitialWindow && !_initializationComplete) {
+        // This is the initial window.
+        return;
+    }
+    _wantsWindow = YES;
+    [self openWindowIfWanted];
+}
+
+- (void)didRestoreSomeWindows {
+    DLog(@"untitled: didRestoreSomeWindows %@", self);
+    [self disableInitialUntitledWindow];
+}
+
+- (void)disableInitialUntitledWindow {
+    DLog(@"untitled: didRestoreSomeWindows %@", self);
+    _disableInitialWindow = YES;
+    _wantsWindow = NO;
+}
+
+- (void)didFinishRestoringWindows {
+    DLog(@"untitled: windowRestorationDidComplete %@", self);
+    _windowRestorationComplete = YES;
+    [self openWindowIfWanted];
+}
+
+- (void)didFinishInitialization {
+    DLog(@"untitled: didFinishInitialization %@", self);
+    _initializationComplete = YES;
+    [self openWindowIfWanted];
+}
+
+- (void)openWindowIfWanted {
+    DLog(@"untitled: openWindowIfWanted %@", self);
     if ([[NSApplication sharedApplication] isRunningUnitTests]) {
         DLog(@"Nope, running unit tests");
         return;
     }
-    switch (_state) {
-        case iTermUntitledFileOpenUnsafe:
-            self.state = iTermUntitledFileOpenPending;
-            break;
-        case iTermUntitledFileOpenAllowed:
-            self.state = iTermUntitledFileOpenComplete;
-            DLog(@"OK");
-            [self.delegate untitledWindowStateMachineCreateNewWindow:self];
-            break;
-        case iTermUntitledFileOpenPending:
-            break;
-        case iTermUntitledFileOpenComplete:
-            DLog(@"OK");
-            [self.delegate untitledWindowStateMachineCreateNewWindow:self];
-            break;
-        case iTermUntitledFileOpenDisallowed:
-            break;
-    }
-}
-
-- (void)didRestoreHotkeyWindows {
-    DLog(@"Did restore hotkey windows");
-    switch (_state) {
-        case iTermUntitledFileOpenUnsafe:
-        case iTermUntitledFileOpenAllowed:
-        case iTermUntitledFileOpenDisallowed:
-            self.state = iTermUntitledFileOpenDisallowed;
-            break;
-        case iTermUntitledFileOpenPending:
-        case iTermUntitledFileOpenComplete:
-            break;
-    }
-}
-
-- (void)didPerformStartupActivities {
-    DLog(@"Did perform startup activities");
-    if (_state != iTermUntitledFileOpenDisallowed) {
+    if (!_windowRestorationComplete || !_initializationComplete) {
+        DLog(@"untitled: not ready yet %@", self);
         return;
     }
-    // Don't need to worry about the initial window any more. Allow future clicks
-    // on the dock icon to open an untitled window.
-    self.state = iTermUntitledFileOpenAllowed;
+    if (!_wantsWindow) {
+        DLog(@"untitled: doesn't want window %@", self);
+        return;
+    }
+
+    DLog(@"untitled: actually open a window %@", self);
+    [self.delegate untitledWindowStateMachineCreateNewWindow:self];
 }
 
 @end

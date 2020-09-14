@@ -31,7 +31,8 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 @protocol iTermRestorableStateRestorer<NSObject>
-- (id<iTermRestorableStateIndex>)restorableStateIndex;
+
+- (void)loadRestorableStateIndexWithCompletion:(void (^)(id<iTermRestorableStateIndex> _Nullable))completion;
 
 - (void)restoreWindowWithRecord:(id<iTermRestorableStateRecord>)record
                      completion:(void (^)(void))completion;
@@ -66,7 +67,10 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) NSInteger numberOfWindowsRestored;
 @property (nonatomic) BOOL needsSave;
 
-- (void)restoreWithCompletion:(void (^)(void))completion;
+// ready is called after all windows have been asked to restore.
+// completion is called when they are actually restored.
+- (void)restoreWithReady:(void (^)(void))ready
+              completion:(void (^)(void))completion;
 - (void)save;
 - (void)saveSynchronously;
 - (void)erase;

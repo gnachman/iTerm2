@@ -196,6 +196,7 @@ static void iTermOrphanServerAdopterFindMultiServers(void (^completion)(NSArray<
                                completion:(void (^)(void))completion {
     dispatch_group_t group = dispatch_group_create();
 
+    DLog(@"Multiserver adoption beginning.");
     NSArray<iTermFileDescriptorMultiClientChild *> *children = [connection.unattachedChildren copy];
     for (iTermFileDescriptorMultiClientChild *child in children) {
         iTermGeneralServerConnection generalConnection = {

@@ -133,8 +133,16 @@
     return self;
 }
 
-- (id<iTermRestorableStateIndex>)restorableStateIndex {
-    return [[iTermRestorableStateSQLiteIndex alloc] initWithGraphRecord:_db.record];
+- (void)loadRestorableStateIndexWithCompletion:(void (^)(id<iTermRestorableStateIndex>))completion {
+    if (!_db) {
+        completion(nil);
+        return;
+    }
+    DLog(@"Add a when-ready callback to %@", _db);
+    [_db whenReady:^{
+        DLog(@"db is ready now");
+        completion([[iTermRestorableStateSQLiteIndex alloc] initWithGraphRecord:self->_db.record]);
+    }];
 }
 
 - (void)restoreWindowWithRecord:(id<iTermRestorableStateRecord>)record

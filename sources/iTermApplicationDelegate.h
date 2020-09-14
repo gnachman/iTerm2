@@ -72,6 +72,7 @@ extern NSString *const iTermApplicationWillTerminate;
 
 - (void)openPasswordManagerToAccountName:(NSString *)name inSession:(PTYSession *)session;
 - (void)didToggleTraditionalFullScreenMode;
+- (void)willRestoreWindow;
 
 #pragma mark - Actions
 

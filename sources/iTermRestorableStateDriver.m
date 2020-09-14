@@ -61,20 +61,31 @@ static NSString *const iTermRestorableStateControllerUserDefaultsKeyCount = @"No
 
 #pragma mark - Restore
 
-- (void)restoreWithCompletion:(void (^)(void))completion {
+- (void)restoreWithReady:(void (^)(void))ready
+              completion:(void (^)(void))completion {
     DLog(@"restoreWindows");
     if (![[NSUserDefaults standardUserDefaults] boolForKey:@"NSQuitAlwaysKeepsWindows"]) {
         DLog(@"NSQuitAlwaysKeepsWindows=NO");
+        ready();
         completion();
         return;
     }
     if (!self.restorer) {
         DLog(@"Have no restorer.");
+        ready();
         completion();
         return;
     }
-    id<iTermRestorableStateIndex> index = [self.restorer restorableStateIndex];
+    __weak __typeof(self) weakSelf = self;
+    [self.restorer loadRestorableStateIndexWithCompletion:^(id<iTermRestorableStateIndex> index) {
+        [weakSelf restoreWithIndex:index ready:ready completion:completion];
+    }];
+}
 
+- (void)restoreWithIndex:(id<iTermRestorableStateIndex>)index
+                   ready:(void (^)(void))ready
+              completion:(void (^)(void))completion {
+    DLog(@"Have an index. Proceeding to restore windows.");
     const NSInteger count = [[NSUserDefaults standardUserDefaults] integerForKey:iTermRestorableStateControllerUserDefaultsKeyCount];
     if (count > 1) {
         const iTermWarningSelection selection =
@@ -89,6 +100,8 @@ static NSString *const iTermRestorableStateControllerUserDefaultsKeyCount = @"No
             [index restorableStateIndexUnlink];
             [[NSUserDefaults standardUserDefaults] setInteger:0
                                                        forKey:iTermRestorableStateControllerUserDefaultsKeyCount];
+            DLog(@"Ready after warning");
+            ready();
             completion();
             return;
         }
@@ -100,6 +113,8 @@ static NSString *const iTermRestorableStateControllerUserDefaultsKeyCount = @"No
         [self didRestoreFromIndex:index];
         completion();
     }];
+    DLog(@"Ready - normal case");
+    ready();
 }
 
 // Main queue

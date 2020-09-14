@@ -58,8 +58,8 @@
 
 #pragma mark - iTermRestorableStateRestorationImpl
 
-- (id<iTermRestorableStateIndex>)restorableStateIndex {
-    return [[iTermRestorableStateRestorerIndex alloc] initWithURL:_indexURL];
+- (void)loadRestorableStateIndexWithCompletion:(void (^)(id<iTermRestorableStateIndex>))completion {
+    completion([[iTermRestorableStateRestorerIndex alloc] initWithURL:_indexURL]);
 }
 
 - (void)restoreWindowWithRecord:(id<iTermRestorableStateRecord>)record

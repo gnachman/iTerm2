@@ -20,17 +20,48 @@
 
 @interface iTermGraphDatabaseState: iTermSynchronizedState<iTermGraphDatabaseState *>
 @property (nonatomic, strong) id<iTermDatabase> db;
+// Load complete means that the initial attempt to load the DB has finished. It may have failed, leaving
+// us without any state, but it is now safe to proceed to use the graph DB as it won't change out
+// from under you after this point.
+@property (nonatomic) BOOL loadComplete;
 - (instancetype)initWithQueue:(dispatch_queue_t)queue database:(id<iTermDatabase>)db;
+- (void)addLoadCompleteBlock:(void (^)(void))block;
 @end
 
-@implementation iTermGraphDatabaseState
+@implementation iTermGraphDatabaseState {
+    NSMutableArray<void (^)(void)> *_loadCompleteBlocks;
+}
 - (instancetype)initWithQueue:(dispatch_queue_t)queue database:(id<iTermDatabase>)db {
     self = [super initWithQueue:queue];
     if (self) {
         _db = db;
+        _loadCompleteBlocks = [NSMutableArray array];
     }
     return self;
 }
+
+- (void)addLoadCompleteBlock:(void (^)(void))block {
+    if (self.loadComplete) {
+        dispatch_async(dispatch_get_main_queue(), block);
+    } else {
+        [_loadCompleteBlocks addObject:[block copy]];
+    }
+}
+
+- (void)setLoadComplete:(BOOL)loadComplete {
+    if (loadComplete == _loadComplete) {
+        return;
+    }
+    if (loadComplete && !_loadComplete) {
+        NSArray<void (^)(void)> *blocks = [_loadCompleteBlocks copy];
+        [_loadCompleteBlocks removeAllObjects];
+        [blocks enumerateObjectsUsingBlock:^(void (^ _Nonnull block)(void), NSUInteger idx, BOOL * _Nonnull stop) {
+            dispatch_async(dispatch_get_main_queue(), block);
+        }];
+    }
+    _loadComplete = loadComplete;
+}
+
 @end
 
 @interface iTermGraphDatabase()
@@ -59,25 +90,25 @@
         }];
 
         _url = [db url];
-        if (![self finishInitialization]) {
-            DLog(@"Initialization failed. Give up.");
-            [db unlock];
-            return nil;
-        }
+        [_thread dispatchAsync:^(iTermGraphDatabaseState *state) {
+            [self finishInitialization:state];
+            state.loadComplete = YES;
+        }];
     }
     return self;
 }
 
-#warning TODO: Make this async
-- (BOOL)finishInitialization {
-    __block BOOL ok = NO;
-    [_thread dispatchSync:^(iTermGraphDatabaseState *state) {
-        ok = [self finishInitialization:state];
-    }];
-    return ok;
+- (void)finishInitialization:(iTermGraphDatabaseState *)state {
+    if ([self reallyFinishInitialization:state]) {
+        return;
+    }
+    // Failed.
+    [state.db unlock];
+    state.db = nil;
+    _invalid = YES;
 }
 
-- (BOOL)finishInitialization:(iTermGraphDatabaseState *)state {
+- (BOOL)reallyFinishInitialization:(iTermGraphDatabaseState *)state {
     if (![self openAndInitializeDatabase:state]) {
         DLog(@"openAndInitialize failed. Attempt recovery.");
         return [self attemptRecovery:state encoder:nil];
@@ -128,8 +159,15 @@
 
 - (void)invalidate {
     [_thread dispatchAsync:^(iTermGraphDatabaseState *state) {
+        self->_invalid = YES;
         [state.db close];
         state.db = nil;
+    }];
+}
+
+- (void)whenReady:(void (^)(void))readyBlock {
+    [_thread dispatchAsync:^(iTermGraphDatabaseState *state) {
+        [state addLoadCompleteBlock:readyBlock];
     }];
 }
 
@@ -192,6 +230,7 @@
     }
 }
 
+// On failure, the db will be closed.
 - (BOOL)attemptRecovery:(iTermGraphDatabaseState *)state
                 encoder:(iTermGraphDeltaEncoder *)encoder {
     if (!state.db) {
@@ -208,7 +247,12 @@
         return YES;
     }
     DLog(@"Save record after deleting and creating database.");
-    return [self save:encoder state:state];
+    const BOOL ok = [self save:encoder state:state];
+    if (!ok) {
+        [state.db close];
+        return NO;
+    }
+    return YES;
 }
 
 - (BOOL)save:(iTermGraphDeltaEncoder *)encoder

@@ -832,23 +832,16 @@ static BOOL hasBecomeActive = NO;
          @([iTermPreferences boolForKey:kPreferenceKeyOpenArrangementAtStartup]),
          @([iTermPreferences boolForKey:kPreferenceKeyOpenNoWindowsAtStartup]));
 
-    if (!finishedLaunching_ &&
-        ([iTermPreferences boolForKey:kPreferenceKeyOpenArrangementAtStartup] ||
-         [iTermPreferences boolForKey:kPreferenceKeyOpenNoWindowsAtStartup] )) {
-        // There are two ways this can happen:
-        // 1. System window restoration is off in System Prefs>General, the window arrangement has
-        //    no windows, and iTerm2 is configured to restore it at startup.
-        // 2. System window restoration is off in System Prefs>General and iTerm2 is configured to
-        //    open no windows at startup.
-        DLog(@"Nope");
-        return NO;
-    }
     if (![iTermAdvancedSettingsModel openUntitledFile]) {
         DLog(@"Opening untitled files is disabled");
         return NO;
     }
     [_untitledWindowStateMachine maybeOpenUntitledFile];
     return YES;
+}
+
+- (void)willRestoreWindow {
+    [_untitledWindowStateMachine didRestoreSomeWindows];
 }
 
 - (NSMenu *)applicationDockMenu:(NSApplication *)sender {
@@ -935,7 +928,7 @@ static BOOL hasBecomeActive = NO;
             // launch finishes; otherwise any running hotkey window jobs will be treated as orphans.
             const NSInteger count = [[iTermHotKeyController sharedInstance] createHiddenWindowsFromRestorableStates:hotkeyWindowsStates];
             if (count > 0) {
-                [_untitledWindowStateMachine didRestoreHotkeyWindows];
+                [_untitledWindowStateMachine didRestoreSomeWindows];
             }
         }
     }
@@ -1036,10 +1029,21 @@ static BOOL hasBecomeActive = NO;
         [[PreferencePanel sharedInstance] openToProfileWithGuid:guid
                                                             key:KEY_AUTOLOG];
     }];
-    [_untitledWindowStateMachine didBecomeSafe];
-    [_restorableStateController restoreWindows];
-}
 
+    if ([iTermPreferences boolForKey:kPreferenceKeyOpenArrangementAtStartup] ||
+        [iTermPreferences boolForKey:kPreferenceKeyOpenNoWindowsAtStartup]) {
+        [_untitledWindowStateMachine disableInitialUntitledWindow];
+    }
+
+    if (_restorableStateController) {
+        [_restorableStateController restoreWindowsWithCompletion:^{
+            DLog(@"Window restoration is totally complete");
+            [_untitledWindowStateMachine didFinishRestoringWindows];
+        }];
+    } else {
+        [_untitledWindowStateMachine didFinishRestoringWindows];
+    }
+}
 
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification {
     [iTermLaunchExperienceController applicationDidFinishLaunching];
@@ -1104,7 +1108,6 @@ static BOOL hasBecomeActive = NO;
     [self performSelector:@selector(performStartupActivities)
                withObject:nil
                afterDelay:0];
-    [PseudoTerminalRestorer runQueuedBlocks];
 
     [[[NSWorkspace sharedWorkspace] notificationCenter] addObserver:self
                                                            selector:@selector(workspaceSessionDidBecomeActive:)
@@ -1131,7 +1134,9 @@ static BOOL hasBecomeActive = NO;
 
     if ([iTermAdvancedSettingsModel runJobsInServers] &&
         !self.isAppleScriptTestApp) {
-        [PseudoTerminalRestorer setRestorationCompletionBlock:^{
+        DLog(@"Set post-retoration completion block from appDidFinishLaunching");
+        [PseudoTerminalRestorer setPostRestorationCompletionBlock:^{
+            DLog(@"Running post-retoration completion block from appDidFinishLaunching");
             [self restoreBuriedSessionsState];
             if ([[iTermController sharedInstance] numberOfDecodesPending] == 0) {
                 _orphansAdopted = YES;
@@ -1352,7 +1357,7 @@ static BOOL hasBecomeActive = NO;
     if (quiet_) {
         DLog(@"Launched in quiet mode. Return early.");
         // iTerm2 was launched with "open file" that turns off startup activities.
-        [_untitledWindowStateMachine didPerformStartupActivities];
+        [_untitledWindowStateMachine didFinishInitialization];
         return;
     }
     [[iTermController sharedInstance] setStartingUp:YES];
@@ -1388,7 +1393,7 @@ static BOOL hasBecomeActive = NO;
                ![[NSApplication sharedApplication] isRunningUnitTests]) {
         [self newWindow:nil];
     }
-    [_untitledWindowStateMachine didPerformStartupActivities];
+    [_untitledWindowStateMachine didFinishInitialization];
 
     [[iTermController sharedInstance] setStartingUp:NO];
     [PTYSession removeAllRegisteredSessions];
@@ -2272,6 +2277,12 @@ static BOOL hasBecomeActive = NO;
 
 #pragma mark - iTermRestorableStateControllerDelegate
 
+- (void)restorableStateDidFinishRequestingRestorations:(iTermRestorableStateController *)sender {
+    DLog(@"All restorations requested. Set external restoration complete");
+    [PseudoTerminalRestorer runQueuedBlocks];
+    [PseudoTerminalRestorer externalRestorationDidComplete];
+}
+
 - (NSArray<NSWindow *> *)restorableStateWindows {
     return [[[iTermController sharedInstance] terminals] mapWithBlock:^id(PseudoTerminal *term) {
         if (term.isHotKeyWindow) {
@@ -2292,6 +2303,8 @@ static BOOL hasBecomeActive = NO;
 - (void)restorableStateRestoreWithCoder:(NSCoder *)coder
                              identifier:(NSString *)identifier
                              completion:(void (^)(NSWindow * _Nonnull, NSError * _Nonnull))completion {
+    DLog(@"Enqueue(1) restoration for window with identifier %@", identifier);
+    [_untitledWindowStateMachine didRestoreSomeWindows];
     [PseudoTerminalRestorer restoreWindowWithIdentifier:identifier
                                     pseudoTerminalState:[[[PseudoTerminalState alloc] initWithCoder:coder] autorelease]
                                                  system:NO
@@ -2301,6 +2314,8 @@ static BOOL hasBecomeActive = NO;
 - (void)restorableStateRestoreWithRecord:(nonnull iTermEncoderGraphRecord *)record
                               identifier:(nonnull NSString *)identifier
                               completion:(nonnull void (^)(NSWindow *, NSError *))completion {
+    DLog(@"Enqueue(2) restoration for window with identifier %@", identifier);
+    [_untitledWindowStateMachine didRestoreSomeWindows];
     NSDictionary *dict = [NSDictionary castFrom:record.propertyListValue];
     if (!dict) {
         NSError *error = [[[NSError alloc] initWithDomain:@"com.iterm2.app-delegate" code:1 userInfo:nil] autorelease];
@@ -2309,10 +2324,12 @@ static BOOL hasBecomeActive = NO;
     }
 
     PseudoTerminalState *state = [[PseudoTerminalState alloc] initWithDictionary:dict];
+    DLog(@"Will restore window with state %p", state);
     [PseudoTerminalRestorer restoreWindowWithIdentifier:identifier
                                     pseudoTerminalState:state
                                                  system:NO
                                       completionHandler:^(NSWindow *window, NSError *error) {
+        DLog(@"Did restore window with state %p", state);
         [state autorelease];
         if (error || !window) {
             completion(window, error);
@@ -2421,7 +2438,7 @@ static BOOL hasBecomeActive = NO;
             // launch finishes; otherwise any running hotkey window jobs will be treated as orphans.
             const BOOL createdAny = [[iTermHotKeyController sharedInstance] createHiddenWindowsByDecoding:hotkeyWindowsStates];
             if (createdAny) {
-                [_untitledWindowStateMachine didRestoreHotkeyWindows];
+                [_untitledWindowStateMachine didRestoreSomeWindows];
             }
         }
     }

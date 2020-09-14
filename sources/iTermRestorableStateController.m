@@ -92,14 +92,19 @@ extern NSString *const iTermApplicationWillTerminate;
     [_driver save];
 }
 
-- (void)restoreWindows {
+- (void)restoreWindowsWithCompletion:(void (^)(void))completion {
     assert([NSThread isMainThread]);
     if (![iTermRestorableStateController stateRestorationEnabled]) {
+        completion();
         return;
     }
     __weak __typeof(self) weakSelf = self;
-    [_driver restoreWithCompletion:^{
+    [_driver restoreWithReady:^{
+        [weakSelf.delegate restorableStateDidFinishRequestingRestorations:self];
+    }
+                   completion:^{
         [weakSelf didRestore];
+        completion();
     }];
 }
 
