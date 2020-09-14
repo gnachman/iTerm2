@@ -117,9 +117,8 @@ NSString * const DirectoryLocationDomain = @"DirectoryLocationDomain";
                                           inDomain:NSUserDomainMask
                                appendPathComponent:executableName
                                              error:&error];
-    if (!result) {
-        DLog(@"Unable to find or create application support directory:\n%@", error);
-    }
+    ITBetaAssert(result != nil,
+                 @"Unable to find or create application support directory:\n%@", error);
     return result;
 }
 

@@ -33,6 +33,10 @@ extern NSString *const iTermApplicationWillTerminate;
     if (self) {
         dispatch_queue_t queue = dispatch_queue_create("com.iterm2.restorable-state", DISPATCH_QUEUE_SERIAL);
         NSString *appSupport = [[NSFileManager defaultManager] applicationSupportDirectory];
+        if (!appSupport) {
+            DLog(@"ERROR - No app support directory.");
+            return nil;
+        }
         NSString *savedState = [appSupport stringByAppendingPathComponent:@"SavedState"];
         [[NSFileManager defaultManager] createDirectoryAtPath:savedState
                                   withIntermediateDirectories:YES
