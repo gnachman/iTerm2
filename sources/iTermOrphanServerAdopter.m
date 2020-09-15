@@ -113,6 +113,7 @@ static void iTermOrphanServerAdopterFindMultiServers(void (^completion)(NSArray<
 }
 
 - (void)reallyOpenWindowWithOrphansWithCompletion:(void (^)(void))completion {
+    DLog(@"Orphan adoption beginning");
     dispatch_group_t group = dispatch_group_create();
     for (NSString *path in _pathsOfOrphanedMonoServers) {
         dispatch_group_enter(group);

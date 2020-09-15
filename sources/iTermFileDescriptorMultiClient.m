@@ -15,6 +15,8 @@
 #import "iTermMalloc.h"
 #import "iTermMultiServerMessage.h"
 #import "iTermMultiServerMessageBuilder.h"
+#import "iTermNotificationController.h"
+#import "iTermRateLimitedUpdate.h"
 #import "iTermResult.h"
 #import "iTermThreadSafety.h"
 #import "iTermWarning.h"
@@ -694,15 +696,18 @@ static unsigned long long MakeUniqueID(void) {
     return [[[NSFileManager defaultManager] applicationSupportDirectory] stringByAppendingPathComponent:filename];
 }
 
-- (void)showError:(NSError *)error message:(NSString *)message {
+- (void)showError:(NSError *)error message:(NSString *)message badURL:(NSURL *)url {
     dispatch_async(dispatch_get_main_queue(), ^{
-        [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"%@: %@", message, error.localizedDescription]
-                                   actions:@[ @"OK" ]
-                                 accessory:nil
-                                identifier:@"DaemonSetupError"
-                               silenceable:kiTermWarningTypePersistent
-                                   heading:@"Problem Initializing iTerm2 Daemon"
-                                    window:nil];
+        static iTermRateLimitedUpdate *rateLimit;
+        static dispatch_once_t onceToken;
+        dispatch_once(&onceToken, ^{
+            rateLimit = [[iTermRateLimitedUpdate alloc] init];
+            rateLimit.minimumInterval = 2;
+        });
+        [rateLimit performRateLimitedBlock:^{
+            [[iTermNotificationController sharedInstance] notify:@"Problem Starting iTerm2 Daemon"
+                                                 withDescription:message];
+        }];
     });
 }
 
@@ -720,7 +725,9 @@ static unsigned long long MakeUniqueID(void) {
                                                 toPath:desiredPath
                                                  error:&error];
         if (error) {
-            [self showError:error message:[NSString stringWithFormat:@"Could not copy %@ to %@", sourcePath, desiredPath]];
+            [self showError:error
+                    message:[NSString stringWithFormat:@"Could not copy %@ to %@", sourcePath, desiredPath]
+                     badURL:[NSURL fileURLWithPath:desiredPath]];
             return nil;
         }
     }
@@ -730,7 +737,9 @@ static unsigned long long MakeUniqueID(void) {
         NSError *error = nil;
         NSDictionary *attributes = [fileManager attributesOfItemAtPath:desiredPath error:&error];
         if (error) {
-            [self showError:error message:[NSString stringWithFormat:@"Could not check permissions on %@", desiredPath]];
+            [self showError:error
+                    message:[NSString stringWithFormat:@"Could not check permissions on %@", desiredPath]
+                     badURL:[NSURL fileURLWithPath:desiredPath]];
             return nil;
         }
         NSNumber *permissions = attributes[NSFilePosixPermissions];
@@ -746,7 +755,9 @@ static unsigned long long MakeUniqueID(void) {
                                          ofItemAtPath:desiredPath
                                                 error:&error];
         if (error) {
-            [self showError:error message:[NSString stringWithFormat:@"Could not set 0700 permissions on %@", desiredPath]];
+            [self showError:error
+                    message:[NSString stringWithFormat:@"Could not set 0700 permissions on %@", desiredPath]
+                     badURL:[NSURL fileURLWithPath:desiredPath]];
             return nil;
         }
     }

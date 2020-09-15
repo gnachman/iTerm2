@@ -41,6 +41,7 @@
 #import "PSMTabStyle.h"
 #import "PTYScrollView.h"
 #import "PTYSession.h"
+#import "PTYSession+ARC.h"
 #import "SessionView.h"
 #import "SolidColorView.h"
 #import "TmuxDashboardController.h"
@@ -521,7 +522,8 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                                  hasFlexibleView:flexibleView_ != nil
                                          viewMap:nil
                                       sessionMap:nil
-                                  tmuxController:tmuxController_];
+                                  tmuxController:tmuxController_
+                              partialAttachments:nil];
     return theCopy;
 }
 
@@ -2754,7 +2756,8 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                                     named:(NSString *)arrangementName
                                    atNode:(__kindof NSView *)view
                                     inTab:(PTYTab *)theTab
-                            forObjectType:(iTermObjectType)objectType {
+                            forObjectType:(iTermObjectType)objectType
+                       partialAttachments:(NSDictionary *)partialAttachments {
     if ([[arrangement objectForKey:TAB_ARRANGEMENT_VIEW_TYPE] isEqualToString:VIEW_TYPE_SPLITTER]) {
         assert([view isKindOfClass:[NSSplitView class]]);
         NSSplitView* splitter = (NSSplitView*)view;
@@ -2767,7 +2770,8 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                                                             named:arrangementName
                                                            atNode:[[splitter subviews] objectAtIndex:i]
                                                             inTab:theTab
-                                                    forObjectType:subObjectType];
+                                                    forObjectType:subObjectType
+                                               partialAttachments:partialAttachments];
             if (session) {
                 active = session;
             }
@@ -2795,7 +2799,8 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                                                    named:arrangementName
                                                   inView:view
                                             withDelegate:theTab
-                                           forObjectType:objectType];
+                                           forObjectType:objectType
+                                      partialAttachments:partialAttachments];
             [self.viewToSessionMap setObject:session forKey:view];
         }
         if ([[arrangement objectForKey:TAB_ARRANGEMENT_IS_ACTIVE] boolValue]) {
@@ -2883,13 +2888,47 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     }
 }
 
++ (void)_recursiveOpenPartialAttachments:(NSDictionary *)arrangement
+                              completion:(void (^)(NSDictionary *))completion {
+    if ([arrangement[TAB_ARRANGEMENT_VIEW_TYPE] isEqualToString:VIEW_TYPE_SPLITTER]) {
+        DLog(@"_recursiveOpenPartialAttachments: found splitter");
+        NSArray<NSDictionary<NSString *, id> *> *subArrangements = [arrangement objectForKey:SUBVIEWS];
+        NSMutableDictionary *result = [[NSMutableDictionary alloc] init];
+        dispatch_group_t group = dispatch_group_create();
+        for (NSDictionary *subArrangement in subArrangements) {
+            dispatch_group_enter(group);
+            DLog(@"_recursiveOpenPartialAttachments: recurse");
+            [self _recursiveOpenPartialAttachments:subArrangement completion:^(NSDictionary *dict) {
+                DLog(@"_recursiveOpenPartialAttachments: got a result from a subview");
+                [result it_mergeFrom:dict];
+                dispatch_group_leave(group);
+            }];
+        }
+        dispatch_group_notify(group, dispatch_get_main_queue(), ^{
+            DLog(@"_recursiveOpenPartialAttachments: got results from all subviews");
+            completion(result);
+        });
+    } else {
+        DLog(@"_recursiveOpenPartialAttachments: found session");
+        [PTYSession openPartialAttachmentsForArrangement:arrangement[TAB_ARRANGEMENT_SESSION]
+                                              completion:completion];
+    }
+}
+
++ (void)openPartialAttachmentsForArrangement:(NSDictionary *)arrangement
+                                  completion:(void (^)(NSDictionary *))completion {
+    [self _recursiveOpenPartialAttachments:arrangement[TAB_ARRANGEMENT_ROOT]
+                                completion:completion];
+}
+
 + (PTYTab *)tabWithArrangement:(NSDictionary*)arrangement
                          named:(NSString *)arrangementName
                     inTerminal:(NSWindowController<iTermWindowController> *)term
                hasFlexibleView:(BOOL)hasFlexible
                        viewMap:(NSDictionary<NSNumber *, SessionView *> *)viewMap
                     sessionMap:(NSDictionary<NSString *, PTYSession *> *)sessionMap
-                tmuxController:(TmuxController *)tmuxController {
+                tmuxController:(TmuxController *)tmuxController
+            partialAttachments:(NSDictionary *)partialAttachments {
     PTYTab *theTab;
     NSMutableArray<PTYSession *> *revivedSessions = [NSMutableArray array];
     // Build a tree with splitters and SessionViews but no PTYSessions.
@@ -2927,7 +2966,8 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                                                          named:arrangementName
                                                         atNode:theTab->root_
                                                          inTab:theTab
-                                                 forObjectType:objectType]];
+                                                 forObjectType:objectType
+                                            partialAttachments:partialAttachments]];
     theTab.titleOverride = [arrangement[TAB_ARRANGEMENT_TITLE_OVERRIDE] nilIfNull];
     if (arrangement[TAB_GUID]) {
         theTab->_guid = arrangement[TAB_GUID];
@@ -3494,7 +3534,8 @@ typedef struct {
                               hasFlexibleView:YES
                                       viewMap:nil
                                    sessionMap:nil
-                               tmuxController:tmuxController];
+                               tmuxController:tmuxController
+                           partialAttachments:nil];
 
     NSArray *theChildren = [parseTree objectForKey:kLayoutDictChildrenKey];
     BOOL haveMultipleSessions = ([theChildren count] > 1);
@@ -4426,7 +4467,8 @@ typedef struct {
                                                           named:nil
                                                          atNode:newRoot
                                                           inTab:self
-                                                  forObjectType:objectType];
+                                                  forObjectType:objectType
+                                             partialAttachments:nil];
     if (activeSession) {
         [self setActiveSession:activeSession];
     }

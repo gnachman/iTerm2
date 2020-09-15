@@ -604,7 +604,8 @@ backgroundColor:(NSColor *)backgroundColor;
                                 named:(NSString *)arrangementName
                                inView:(SessionView *)sessionView
                          withDelegate:(id<PTYSessionDelegate>)delegate
-                        forObjectType:(iTermObjectType)objectType;
+                        forObjectType:(iTermObjectType)objectType
+                   partialAttachments:(NSDictionary *)partialAttachments;
 
 + (NSDictionary *)arrangementFromTmuxParsedLayout:(NSDictionary *)parseNode
                                          bookmark:(Profile *)bookmark
