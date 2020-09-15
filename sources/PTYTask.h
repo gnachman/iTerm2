@@ -66,6 +66,9 @@ typedef struct {
     };
 } iTermGeneralServerConnection;
 
+@protocol iTermJobManagerPartialResult<NSObject>
+@end
+
 @protocol iTermJobManager<NSObject>
 
 @property (atomic) int fd;
@@ -108,6 +111,16 @@ typedef NS_OPTIONS(NSUInteger, iTermJobManagerAttachResults) {
 
 // Atomic. Only closes it once. Returns YES if close() called, NO if already closed.
 - (BOOL)closeFileDescriptor;
+
+@optional
+// Attach to the server before an iTermTask exists.
+- (void)asyncPartialAttachToServer:(iTermGeneralServerConnection)serverConnection
+                     withProcessID:(NSNumber *)thePid
+                        completion:(void (^)(id<iTermJobManagerPartialResult> result))completion;
+
+// After a partial attach, call this to register (if needed) and compute the attach results.
+- (iTermJobManagerAttachResults)finishAttaching:(id<iTermJobManagerPartialResult>)result
+                                           task:(id<iTermTask>)task;
 
 @end
 
@@ -198,6 +211,13 @@ typedef NS_OPTIONS(NSUInteger, iTermJobManagerAttachResults) {
 - (void)registerTmuxTask;
 
 - (void)getWorkingDirectoryWithCompletion:(void (^)(NSString *pwd))completion;
+
+- (void)partiallyAttachToMultiserverWithRestorationIdentifier:(NSDictionary *)restorationIdentifier
+                                                   completion:(void (^)(id<iTermJobManagerPartialResult>))completion;
+
+- (iTermJobManagerAttachResults)finishAttachingToMultiserver:(id<iTermJobManagerPartialResult>)partialResult
+                                                  jobManager:(id<iTermJobManager>)jobManager
+                                                       queue:(dispatch_queue_t)queue;
 
 @end
 

@@ -810,6 +810,8 @@ static void MainLoop(char *path, int acceptFd, int initialWriteFd, int initialRe
         // You get here after the connection is lost. Listen and accept.
         FDLog(LOG_DEBUG, "Calling iTermMultiServerAccept");
         writeFd = iTermMultiServerAccept(acceptFd);
+#warning DNS
+        sleep(10);
         if (writeFd == -1) {
             FDLog(LOG_ERR, "iTermMultiServerAccept failed: %s", strerror(errno));
             break;

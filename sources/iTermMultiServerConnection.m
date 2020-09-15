@@ -150,14 +150,14 @@
                          callback:(iTermCallback<id, iTermResult<iTermMultiServerConnection *> *> *)callback {
     iTermMultiServerConnection *result = globalState.registry[@(number)];
     if (result) {
-        DLog(@"Already have a good server connection for %@", @(number));
+        NSLog(@"qqqw Already have a good server connection for %@", @(number));
         [callback invokeWithObject:[iTermResult withObject:result]];
         return;
     }
 
     NSMutableArray<iTermCallback *> *pendingCallbacks = globalState.pending[@(number)];
     if (pendingCallbacks) {
-        DLog(@"Add to pending callback for socket %@", @(number));
+        NSLog(@"qqqw Add to pending callback for socket %@", @(number));
         [pendingCallbacks addObject:callback];
         return;
     }
@@ -165,42 +165,61 @@
     result = [[self alloc] initWithSocketNumber:number];
     assert(result);
 
-    DLog(@"Don't have an existing or pending connection for %@", @(number));
+    globalState.pending[@(number)] = [NSMutableArray arrayWithObject:callback];
+
+    NSLog(@"qqqw Don't have an existing or pending connection for %@", @(number));
     [result.thread dispatchAsync:^(iTermMultiServerPerConnectionState * _Nullable connectionState) {
         if (shouldCreate) {
             // Attach or launch
-            DLog(@"Attach or launch socket %@", @(number));
+            NSLog(@"qqqw Attach or launch socket %@", @(number));
             [connectionState.client attachToOrLaunchNewDaemonWithCallback:[self.thread newCallbackWithBlock:^(iTermMultiServerConnectionGlobalState *globalState, NSNumber *statusNumber) {
                 iTermResult *resultObject;
                 if (!statusNumber.boolValue) {
-                    DLog(@"Failed to attach or launch socket %@", @(number));
+                    NSLog(@"qqqw Failed to attach or launch socket %@", @(number));
                     resultObject = [iTermResult withError:self.cannotConnectError];
-                    [callback invokeWithObject:resultObject];
                 } else {
-                    DLog(@"Succeeded to attach or launch socket %@", @(number));
+                    NSLog(@"qqqw Succeeded to attach or launch socket %@", @(number));
                     resultObject = [iTermResult withObject:result];
-                    [self addConnection:result number:number state:globalState callback:callback];
+                    [self addConnection:result number:number state:globalState];
                 }
-                NSMutableArray<iTermCallback *> *pendingCallbacks = globalState.pending[@(number)];
-                [globalState.pending removeObjectForKey:@(number)];
-                for (iTermCallback *callback in pendingCallbacks) {
-                    DLog(@"Runner pending callback for %@", @(number));
-                    [callback invokeWithObject:resultObject];
-                }
+#warning TODO: TEST THIS
+                [self invokePendingCallbacksForSocketNumber:number
+                                                      state:globalState
+                                                     result:resultObject];
             }]];
             return;
         }
 
         // Attach
-        DLog(@"Attach to %@", @(number));
+        NSLog(@"qqqw Attach to %@", @(number));
         [connectionState.client attachWithCallback:[self.thread newCallbackWithBlock:^(iTermMultiServerConnectionGlobalState *globalState, NSNumber *statusNumber) {
             if (!statusNumber.boolValue) {
-                [callback invokeWithObject:[iTermResult withError:self.cannotConnectError]];
+                #warning TODO: TEST THIS
+                NSLog(@"qqqw Attach failed for socket %@", @(number));
+                [self invokePendingCallbacksForSocketNumber:number
+                                                      state:globalState
+                                                     result:[iTermResult withError:self.cannotConnectError]];
             } else {
-                [self addConnection:result number:number state:globalState callback:callback];
+                #warning TODO: TEST THIS
+                [self addConnection:result number:number state:globalState];
+                NSLog(@"qqqw Attach succeeded for socket %@", @(number));
+                [self invokePendingCallbacksForSocketNumber:number
+                                                      state:globalState
+                                                     result:[iTermResult withObject:result]];
             }
         }]];
     }];
+}
+
++ (void)invokePendingCallbacksForSocketNumber:(int)number
+                                        state:(iTermMultiServerConnectionGlobalState *)globalState
+                                       result:(iTermResult *)resultObject {
+    NSMutableArray<iTermCallback *> *pendingCallbacks = globalState.pending[@(number)];
+    [globalState.pending removeObjectForKey:@(number)];
+    for (iTermCallback *callback in pendingCallbacks) {
+        NSLog(@"qqqw Running pending callback for %@ with result %@", @(number), resultObject);
+        [callback invokeWithObject:resultObject];
+    }
 }
 
 + (NSError *)cannotConnectError {
@@ -211,14 +230,12 @@
 
 + (void)addConnection:(iTermMultiServerConnection *)result
                number:(NSInteger)number
-                state:(iTermMultiServerConnectionGlobalState *)state
-             callback:(iTermCallback<id, iTermResult<iTermMultiServerConnection *> *> *)callback {
+                state:(iTermMultiServerConnectionGlobalState *)state {
     DLog(@"Register connection number %@", @(number));
     state.registry[@(number)] = result;
     if (!state.primary) {
         state.primary = result;
     }
-    [callback invokeWithObject:[iTermResult withObject:result]];
 }
 
 + (NSString *)pathForNumber:(int)number {
@@ -276,7 +293,7 @@
             [callback invokeWithObject:nil];
             return;
         }
-        DLog(@"Attached to pid %@. Remove unattached child", @(pid));
+        NSLog(@"qqq Attached to pid %@. Remove unattached child", @(pid));
         [state.unattachedChildren removeObject:child];
         [callback invokeWithObject:child];
     }];

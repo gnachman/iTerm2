@@ -622,6 +622,35 @@ static void HandleSigChld(int n) {
     return [self attachToServer:generalConnection];
 }
 
+- (void)partiallyAttachToMultiserverWithRestorationIdentifier:(NSDictionary *)restorationIdentifier
+                                                   completion:(void (^)(id<iTermJobManagerPartialResult>))completion {
+    if (!self.canAttach) {
+        completion(0);
+        return;
+    }
+    iTermGeneralServerConnection generalConnection;
+    if (![iTermMultiServerJobManager getGeneralConnection:&generalConnection
+                                fromRestorationIdentifier:restorationIdentifier]) {
+        completion(0);
+        return;
+    }
+    if (generalConnection.type != iTermGeneralServerConnectionTypeMulti) {
+        assert(NO);
+    }
+    [_jobManager asyncPartialAttachToServer:generalConnection
+                              withProcessID:@(generalConnection.multi.pid)
+                                 completion:completion];
+}
+
+- (iTermJobManagerAttachResults)finishAttachingToMultiserver:(id<iTermJobManagerPartialResult>)partialResult
+                                                  jobManager:(id<iTermJobManager>)jobManager
+                                                       queue:(dispatch_queue_t)queue {
+    assert([NSThread isMainThread]);
+    self.jobManager = jobManager;
+    _jobManagerQueue = queue;
+    return [_jobManager finishAttaching:partialResult task:self];
+}
+
 - (void)registerTmuxTask {
     _isTmuxTask = YES;
     DLog(@"Register pid %@ as coprocess-only task", @(self.pid));

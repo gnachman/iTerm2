@@ -484,7 +484,10 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
                      named:(NSString *)arrangementName
             asTabsInWindow:(PseudoTerminal *)term {
     if (term) {
-        [term restoreTabsFromArrangement:terminalArrangement named:arrangementName sessions:nil];
+        [term restoreTabsFromArrangement:terminalArrangement
+                                   named:arrangementName
+                                sessions:nil
+                      partialAttachments:nil];
         return;
     }
     BOOL shouldDelay = NO;

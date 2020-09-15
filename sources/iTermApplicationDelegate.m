@@ -2340,8 +2340,9 @@ static BOOL hasBecomeActive = NO;
             completion(window, error);
             return;
         }
-        [term restoreState:state];
-        completion(window, error);
+        [term asyncRestoreState:state completion:^{
+            completion(window, error);
+        }];
     }];
 }
 

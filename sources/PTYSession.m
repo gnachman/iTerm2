@@ -204,7 +204,8 @@ static NSString *const SESSION_ARRANGEMENT_BOOKMARK = @"Bookmark";
 static NSString *const __attribute__((unused)) SESSION_ARRANGEMENT_BOOKMARK_NAME_DEPRECATED = @"Bookmark Name";
 static NSString *const SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
 static NSString *const SESSION_ARRANGEMENT_CONTENTS = @"Contents";
-static NSString *const SESSION_ARRANGEMENT_TMUX_PANE = @"Tmux Pane";
+// Not static because the ARC category uses it.
+NSString *const SESSION_ARRANGEMENT_TMUX_PANE = @"Tmux Pane";
 static NSString *const SESSION_ARRANGEMENT_TMUX_HISTORY = @"Tmux History";
 static NSString *const SESSION_ARRANGEMENT_TMUX_ALT_HISTORY = @"Tmux AltHistory";
 static NSString *const SESSION_ARRANGEMENT_TMUX_STATE = @"Tmux State";
@@ -222,7 +223,8 @@ static NSString *const SESSION_ARRANGEMENT_LIVE_SESSION = @"Live Session";  // I
 static NSString *const SESSION_ARRANGEMENT_SUBSTITUTIONS = @"Substitutions";  // Dictionary for $$VAR$$ substitutions
 static NSString *const SESSION_UNIQUE_ID = @"Session Unique ID";  // DEPRECATED. A string used for restoring soft-terminated sessions for arrangements that predate the introduction of the GUID.
 static NSString *const SESSION_ARRANGEMENT_SERVER_PID = @"Server PID";  // PID for server process for restoration. Only for monoserver.
-static NSString *const SESSION_ARRANGEMENT_SERVER_DICT = @"Server Dict";  // NSDictionary. Describes server connection. Only for multiserver.
+// Not static because the ARC category uses it.
+NSString *const SESSION_ARRANGEMENT_SERVER_DICT = @"Server Dict";  // NSDictionary. Describes server connection. Only for multiserver.
 // TODO: Make server report the TTY to us since orphans will end up with a nil tty.
 static NSString *const SESSION_ARRANGEMENT_TTY = @"TTY";  // TTY name. Used when using restoration to connect to a restored server.
 static NSString *const SESSION_ARRANGEMENT_VARIABLES = @"Variables";  // _variables
@@ -1278,7 +1280,8 @@ ITERM_WEAKLY_REFERENCEABLE
                                                                      named:nil
                                                                     inView:liveView
                                                               withDelegate:delegate
-                                                             forObjectType:objectType]];
+                                                             forObjectType:objectType
+                                                            partialAttachments:nil]];
     }
     if (shouldEnterTmuxMode) {
         // Restored a tmux gateway session.
@@ -1304,7 +1307,8 @@ ITERM_WEAKLY_REFERENCEABLE
                                  named:(NSString *)arrangementName
                                 inView:(SessionView *)sessionView
                           withDelegate:(id<PTYSessionDelegate>)delegate
-                         forObjectType:(iTermObjectType)objectType {
+                         forObjectType:(iTermObjectType)objectType
+                    partialAttachments:(NSDictionary *)partialAttachments {
     DLog(@"Restoring session from arrangement");
 
     Profile *theBookmark =
@@ -1503,8 +1507,15 @@ ITERM_WEAKLY_REFERENCEABLE
                        [NSDictionary castFrom:arrangement[SESSION_ARRANGEMENT_SERVER_DICT]]) {
                 DLog(@"Have a server dict in the arrangement");
                 NSDictionary *serverDict = arrangement[SESSION_ARRANGEMENT_SERVER_DICT];
-                DLog(@"Try to attach to %@", serverDict);
-                if ([aSession tryToAttachToMultiserverWithRestorationIdentifier:serverDict]) {
+                NSLog(@"qqq Try to attach to %@", serverDict);
+                if (partialAttachments) {
+                    id partial = partialAttachments[serverDict];
+                    if (partial &&
+                        [aSession tryToFinishAttachingToMultiserverWithPartialAttachment:partial]) {
+                        NSLog(@"qqq Finished attaching to multiserver!");
+                        didAttach = YES;
+                    }
+                } else if ([aSession tryToAttachToMultiserverWithRestorationIdentifier:serverDict]) {
                     DLog(@"Attached to multiserver!");
                     didAttach = YES;
                 }

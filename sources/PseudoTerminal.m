@@ -2650,7 +2650,10 @@ ITERM_WEAKLY_REFERENCEABLE
     for (PTYSession *session in sessions) {
         assert([session revive]);  // TODO(georgen): This isn't guaranteed
     }
-    if ([term loadArrangement:arrangement named:arrangementName sessions:sessions]) {
+    if ([term loadArrangement:arrangement
+                        named:arrangementName
+                     sessions:sessions
+           partialAttachments:nil]) {
         return term;
     } else {
         return term;
@@ -2850,12 +2853,16 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (BOOL)loadArrangement:(NSDictionary *)arrangement named:(NSString *)arrangementName {
-    return [self loadArrangement:arrangement named:arrangementName sessions:nil];
+    return [self loadArrangement:arrangement
+                           named:arrangementName
+                        sessions:nil
+              partialAttachments:nil];
 }
 
 - (BOOL)loadArrangement:(NSDictionary *)arrangement
                   named:(NSString *)arrangementName
-               sessions:(NSArray *)sessions {
+               sessions:(NSArray *)sessions
+     partialAttachments:(NSDictionary *)partialAttachments {
     PtyLog(@"Restore arrangement: %@", arrangement);
     if ([arrangement objectForKey:TERMINAL_ARRANGEMENT_DESIRED_ROWS]) {
         desiredRows_ = [[arrangement objectForKey:TERMINAL_ARRANGEMENT_DESIRED_ROWS] intValue];
@@ -2891,7 +2898,8 @@ ITERM_WEAKLY_REFERENCEABLE
     _suppressMakeCurrentTerminal = (self.hotkeyWindowType != iTermHotkeyWindowTypeNone);
     const BOOL restoreTabsOK = [self restoreTabsFromArrangement:arrangement
                                                           named:arrangementName
-                                                       sessions:sessions];
+                                                       sessions:sessions
+                                             partialAttachments:partialAttachments];
     _suppressMakeCurrentTerminal = NO;
     _restoringWindow = savedRestoringWindow;
     if (!restoreTabsOK) {
@@ -2965,7 +2973,8 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (BOOL)restoreTabsFromArrangement:(NSDictionary *)arrangement
                              named:(NSString *)arrangementName
-                          sessions:(NSArray<PTYSession *> *)sessions {
+                          sessions:(NSArray<PTYSession *> *)sessions
+                partialAttachments:(NSDictionary *)partialAttachments {
     BOOL openedAny = NO;
     for (NSDictionary *tabArrangement in arrangement[TERMINAL_ARRANGEMENT_TABS]) {
         NSDictionary<NSString *, PTYSession *> *sessionMap = nil;
@@ -2976,7 +2985,8 @@ ITERM_WEAKLY_REFERENCEABLE
                                     named:arrangementName
                             hasFlexibleView:NO
                                     viewMap:nil
-                                 sessionMap:sessionMap]) {
+                                 sessionMap:sessionMap
+                       partialAttachments:partialAttachments]) {
             return NO;
         }
         openedAny = YES;
@@ -7389,7 +7399,8 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
                                       hasFlexibleView:NO
                                               viewMap:nil
                                            sessionMap:theMap
-                                       tmuxController:nil];
+                                       tmuxController:nil
+                                   partialAttachments:nil];
     [tab replaceWithContentsOfTab:temporaryTab];
     [tab updatePaneTitles];
     [tab setActiveSession:nil];
@@ -7423,7 +7434,8 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
                              hasFlexibleView:NO
                                      viewMap:nil
                                   sessionMap:sessionMap
-                              tmuxController:nil];
+                              tmuxController:nil
+                          partialAttachments:nil];
     tab.uniqueId = tabUniqueId;
     for (NSString *theKey in sessionMap) {
         PTYSession *session = sessionMap[theKey];
@@ -8094,14 +8106,16 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
                              named:(NSString *)arrangementName
                    hasFlexibleView:(BOOL)hasFlexible
                            viewMap:(NSDictionary<NSNumber *, SessionView *> *)viewMap
-                        sessionMap:(NSDictionary<NSString *, PTYSession *> *)sessionMap {
+                        sessionMap:(NSDictionary<NSString *, PTYSession *> *)sessionMap
+                partialAttachments:(NSDictionary *)partialAttachments {
     PTYTab *theTab = [PTYTab tabWithArrangement:arrangement
                                           named:arrangementName
                                      inTerminal:self
                                 hasFlexibleView:hasFlexible
                                         viewMap:viewMap
                                      sessionMap:sessionMap
-                                 tmuxController:nil];
+                                 tmuxController:nil
+                             partialAttachments:partialAttachments];
     if ([[theTab sessionViews] count] == 0) {
         return nil;
     }
@@ -9689,7 +9703,8 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
                                named:nil
                      hasFlexibleView:self.currentTab.isTmuxTab
                              viewMap:nil
-                          sessionMap:nil];
+                          sessionMap:nil
+                  partialAttachments:nil];
     }
 }
 
@@ -10064,11 +10079,48 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     [self restoreArrangement:state.arrangement];
 }
 
+- (void)asyncRestoreState:(PseudoTerminalState *)state completion:(void (^)(void))completion {
+    [self asyncRestoreArrangement:state.arrangement completion:completion];
+}
+
 - (void)restoreArrangement:(NSDictionary *)arrangement {
     [self loadArrangement:arrangement
                     named:nil
-                 sessions:nil];
+                 sessions:nil
+       partialAttachments:nil];
     self.restorableStateDecodePending = NO;
+}
+
+- (void)asyncRestoreArrangement:(NSDictionary *)arrangement completion:(void (^)(void))completion {
+    NSLog(@"qqq asyncRestoreArrangement: begin");
+    [self openPartialAttachmentsForArrangement:arrangement
+                                    completion:^(NSDictionary *partialAttachments) {
+        NSLog(@"qqq asyncRestoreArrangement: ready:\n%@", partialAttachments);
+        [self loadArrangement:arrangement named:nil sessions:nil partialAttachments:partialAttachments];
+        self.restorableStateDecodePending = NO;
+        completion();
+    }];
+}
+
+- (void)openPartialAttachmentsForArrangement:(NSDictionary *)arrangement
+                                  completion:(void (^)(NSDictionary *))completion {
+    NSLog(@"qqq PseudoTerminal.openPartialAttachmentsForArrangement: begin");
+    NSMutableDictionary *result = [[NSMutableDictionary alloc] init];
+    dispatch_group_t group = dispatch_group_create();
+    for (NSDictionary *tabArrangement in arrangement[TERMINAL_ARRANGEMENT_TABS]) {
+        dispatch_group_enter(group);
+        NSLog(@"qqq PseudoTerminal.openPartialAttachmentsForArrangement: request for tab");
+        [PTYTab openPartialAttachmentsForArrangement:tabArrangement
+                                          completion:^(NSDictionary *tabResult) {
+            NSLog(@"qqq PseudoTerminal.openPartialAttachmentsForArrangement: got result for tab");
+            [result it_mergeFrom:tabResult];
+            dispatch_group_leave(group);
+        }];
+    }
+    dispatch_group_notify(group, dispatch_get_main_queue(), ^{
+        NSLog(@"qqq PseudoTerminal.openPartialAttachmentsForArrangement: got results for all tabs");
+        completion([result autorelease]);
+    });
 }
 
 - (void)window:(NSWindow *)window didDecodeRestorableState:(NSCoder *)state {

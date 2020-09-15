@@ -276,7 +276,8 @@ extern NSString *const iTermDidCreateTerminalWindowNotification;
 // Load just the tabs into this window.
 - (BOOL)restoreTabsFromArrangement:(NSDictionary *)arrangement
                              named:(NSString *)arrangementName
-                          sessions:(NSArray<PTYSession *> *)sessions;
+                          sessions:(NSArray<PTYSession *> *)sessions
+                partialAttachments:(NSDictionary *)partialAttachments;
 
 // Returns the arrangement for this window.
 - (NSDictionary*)arrangement;
@@ -377,6 +378,7 @@ extern NSString *const iTermDidCreateTerminalWindowNotification;
 - (PseudoTerminal *)it_moveTabToNewWindow:(PTYTab *)aTab;
 - (BOOL)getAndResetRestorableState;
 - (void)restoreState:(PseudoTerminalState *)state;
+- (void)asyncRestoreState:(PseudoTerminalState *)state completion:(void (^)(void))completion;
 
 @end
 

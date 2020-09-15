@@ -908,7 +908,7 @@ static unsigned long long MakeUniqueID(void) {
 - (void)addChild:(iTermFileDescriptorMultiClientChild *)child
            state:(iTermFileDescriptorMultiClientState *)state
         attached:(BOOL)attached {
-    DLog(@"Add child %@ attached=%@", child, @(attached));
+    NSLog(@"qqq Add child %@ attached=%@", child, @(attached));
     [state.children addObject:child];
     if (!attached) {
         [self.delegate fileDescriptorMultiClient:self didDiscoverChild:child];

@@ -12,11 +12,25 @@
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermExpect.h"
 #import "iTermExpressionEvaluator.h"
+#import "iTermMultiServerJobManager.h"
 #import "iTermProfilePreferences.h"
+#import "iTermThreadSafety.h"
 #import "iTermVariableScope.h"
 #import "iTermWarning.h"
 #import "NSStringITerm.h"
 #import "PTYSession.h"
+
+extern NSString *const SESSION_ARRANGEMENT_TMUX_PANE;
+extern NSString *const SESSION_ARRANGEMENT_SERVER_DICT;
+
+@interface iTermPartialAttachment: NSObject
+@property (nonatomic, strong) id<iTermJobManagerPartialResult> partialResult;
+@property (nonatomic, strong) id<iTermJobManager> jobManager;
+@property (nonatomic, strong) dispatch_queue_t queue;
+@end
+
+@implementation iTermPartialAttachment
+@end
 
 @interface PTYSession(Private)
 @property(nonatomic, retain) iTermExpectation *pasteBracketingOopsieExpectation;
@@ -24,6 +38,71 @@
 @end
 
 @implementation PTYSession (ARC)
+
+#pragma mark - Arrangements
+
++ (void)openPartialAttachmentsForArrangement:(NSDictionary *)arrangement
+                                  completion:(void (^)(NSDictionary *))completion {
+    NSLog(@"qqq PTYSession.openPartialAttachmentsForArrangement: start");
+    if (arrangement[SESSION_ARRANGEMENT_TMUX_PANE] ||
+        ![iTermAdvancedSettingsModel runJobsInServers] ||
+        ![iTermAdvancedSettingsModel multiserver]) {
+        NSLog(@"qqq PTYSession.openPartialAttachmentsForArrangement: NO, is tmux");
+        completion(@{});
+        return;
+    }
+    NSDictionary *restorationIdentifier = [NSDictionary castFrom:arrangement[SESSION_ARRANGEMENT_SERVER_DICT]];
+    if (!restorationIdentifier) {
+        NSLog(@"qqq PTYSession.openPartialAttachmentsForArrangement: NO, lacks server dict");
+        completion(@{});
+        return;
+    }
+    iTermGeneralServerConnection generalConnection;
+    if (![iTermMultiServerJobManager getGeneralConnection:&generalConnection
+                                fromRestorationIdentifier:restorationIdentifier]) {
+        NSLog(@"qqq PTYSession.openPartialAttachmentsForArrangement: NO, not multiserver");
+        completion(@{});
+        return;
+    }
+    if (generalConnection.type != iTermGeneralServerConnectionTypeMulti) {
+        assert(NO);
+    }
+    const char *label = [iTermThread uniqueQueueLabelWithName:@"com.iterm2.job-manager"].UTF8String;
+    dispatch_queue_t jobManagerQueue = dispatch_queue_create(label, DISPATCH_QUEUE_SERIAL);
+    iTermMultiServerJobManager *jobManager =
+        [[iTermMultiServerJobManager alloc] initWithQueue:jobManagerQueue];
+    NSLog(@"qqq PTYSession.openPartialAttachmentsForArrangement: request partial attach");
+    [jobManager asyncPartialAttachToServer:generalConnection
+                             withProcessID:@(generalConnection.multi.pid)
+                                completion:^(id<iTermJobManagerPartialResult> partialResult) {
+        NSLog(@"qqq PTYSession.openPartialAttachmentsForArrangement: finished");
+        if (!partialResult) {
+            NSLog(@"qqq PTYSession.openPartialAttachmentsForArrangement: NO, failed");
+            completion(@{});
+            return;
+        }
+        NSLog(@"qqq PTYSession.openPartialAttachmentsForArrangement: SUCCESS for pid %@", @(generalConnection.multi.pid));
+        iTermPartialAttachment *attachment = [[iTermPartialAttachment alloc] init];
+        attachment.jobManager = jobManager;
+        attachment.partialResult = partialResult;
+        attachment.queue = jobManagerQueue;
+        completion(@{ restorationIdentifier: attachment });
+    }];
+}
+
+#pragma mark - Attaching
+
+- (BOOL)tryToFinishAttachingToMultiserverWithPartialAttachment:(id)obj {
+    iTermPartialAttachment *partialAttachment = [iTermPartialAttachment castFrom:obj];
+    if (!partialAttachment) {
+        return NO;
+    }
+    return [self.shell finishAttachingToMultiserver:partialAttachment.partialResult
+                                         jobManager:partialAttachment.jobManager
+                                              queue:partialAttachment.queue];
+}
+
+#pragma mark - Launching
 
 - (void)fetchAutoLogFilenameWithCompletion:(void (^)(NSString *filename))completion {
     [self setTermIDIfPossible];

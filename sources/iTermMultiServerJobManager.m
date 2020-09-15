@@ -27,6 +27,16 @@ NSString *const iTermMultiServerRestorationKeyChildPID = @"Child PID";
 static NSString *const iTermMultiServerRestorationType = @"multiserver";
 static const int iTermMultiServerMaximumSupportedRestorationIdentifierVersion = 1;
 
+@interface iTermMultiServerJobManagerPartialAttachment: NSObject<iTermJobManagerPartialResult>
+@property (nonatomic) BOOL shouldRegister;
+@property (nonatomic) BOOL attached;
+@property (nonatomic) pid_t pid;
+@property (nonatomic) BOOL brokenPipe;
+@end
+
+@implementation iTermMultiServerJobManagerPartialAttachment
+@end
+
 @class iTermMultiServerJobManagerState;
 @interface iTermMultiServerJobManagerState: iTermSynchronizedState<iTermMultiServerJobManagerState *>
 @property (nonatomic, strong) iTermMultiServerConnection *conn;
@@ -316,40 +326,50 @@ typedef struct {
     };
     [self beginAttachToServer:serverConnection
                 withProcessID:thePid
-                         task:task
+                   brokenPipe:^{ [task brokenPipe]; }
                    completion:finish];
+}
+
+- (void)asyncPartialAttachToServer:(iTermGeneralServerConnection)serverConnection
+                     withProcessID:(NSNumber *)thePid
+                        completion:(void (^)(id<iTermJobManagerPartialResult>))completion {
+    assert(serverConnection.type == iTermGeneralServerConnectionTypeMulti);
+    DLog(@"(sync) Attach to server on socket number %@ for pid %@\n%@", @(serverConnection.multi.number),
+         @(serverConnection.multi.pid), [NSThread callStackSymbols]);
+
+    iTermMultiServerJobManagerPartialAttachment *result = [[iTermMultiServerJobManagerPartialAttachment alloc] init];
+    [self beginAttachToServer:serverConnection
+                withProcessID:thePid
+                   brokenPipe:^{ result.brokenPipe = YES; }
+                   completion:^(iTermFileDescriptorMultiClientChild *child) {
+        result.shouldRegister = (child != nil && !child.hasTerminated);
+        result.attached = (child != nil);
+        result.pid = child.pid;
+        completion(result);
+    }];
 }
 
 - (iTermJobManagerAttachResults)attachToServer:(iTermGeneralServerConnection)serverConnection
                                  withProcessID:(NSNumber *)thePid
                                           task:(id<iTermTask>)task {
-    assert(serverConnection.type == iTermGeneralServerConnectionTypeMulti);
-    DLog(@"(sync) Attach to server on socket number %@ for pid %@\n%@", @(serverConnection.multi.number),
-         @(serverConnection.multi.pid), [NSThread callStackSymbols]);
-    __block struct {
-        BOOL shouldRegister;
-        BOOL attached;
-        pid_t pid;
-    } result = {
-        .shouldRegister = NO,
-        .attached = NO,
-        .pid = -1
-    };
-
+    __block iTermMultiServerJobManagerPartialAttachment *result;
     dispatch_group_t group = dispatch_group_create();
     dispatch_group_enter(group);
-    [self beginAttachToServer:serverConnection
-                withProcessID:thePid
-                         task:task
-                   completion:^(iTermFileDescriptorMultiClientChild *child) {
-        result.shouldRegister = (child != nil && !child.hasTerminated);
-        result.attached = (child != nil);
-        result.pid = child.pid;
+    [self asyncPartialAttachToServer:serverConnection
+                       withProcessID:thePid
+                          completion:^(iTermMultiServerJobManagerPartialAttachment *value) {
+        result = value;
         dispatch_group_leave(group);
     }];
-#warning TODO: Time out somehow.
     dispatch_group_wait(group, DISPATCH_TIME_FOREVER);
+    if (result.brokenPipe) {
+        [task brokenPipe];
+    }
+    return [self finishAttaching:result task:task];
+}
 
+- (iTermJobManagerAttachResults)finishAttaching:(iTermMultiServerJobManagerPartialAttachment *)result
+                                           task:(id<iTermTask>)task {
     if (result.shouldRegister) {
         assert(result.pid > 0);
         [self didAttachToProcess:result.pid
@@ -368,7 +388,7 @@ typedef struct {
 
 - (void)beginAttachToServer:(iTermGeneralServerConnection)serverConnection
               withProcessID:(NSNumber *)thePid
-                       task:(id<iTermTask>)task
+                 brokenPipe:(void (^)(void))brokenPipe
                  completion:(void (^)(iTermFileDescriptorMultiClientChild *))completion {
     assert(serverConnection.type == iTermGeneralServerConnectionTypeMulti);
     DLog(@"begin attaching to server on socket %@ with pid %@", @(serverConnection.multi.number), @(serverConnection.multi.pid));
@@ -376,7 +396,7 @@ typedef struct {
         assert(state.child == nil);
         [self reallyAttachToServer:serverConnection
                     withProcessID:thePid
-                             task:task
+                        brokenPipe:brokenPipe
                             state:state
                          callback:[self.thread newCallbackWithBlock:^(iTermMultiServerJobManagerState *state,
                                                                       iTermFileDescriptorMultiClientChild *child) {
@@ -397,7 +417,7 @@ typedef struct {
 
 - (void)reallyAttachToServer:(iTermGeneralServerConnection)serverConnection
                withProcessID:(NSNumber *)thePid
-                        task:(id<iTermTask>)task
+                  brokenPipe:(void (^)(void))brokenPipe
                        state:(iTermMultiServerJobManagerState *)state
                     callback:(iTermCallback<id, iTermFileDescriptorMultiClientChild *> *)completionCallback {
     assert(serverConnection.type == iTermGeneralServerConnectionTypeMulti);
@@ -436,7 +456,7 @@ typedef struct {
                          ^(NSError * _Nonnull error) {
                             DLog(@"Failed to wait on child with pid %d: %@", pid, error);
                         }];
-                        [task brokenPipe];
+                        brokenPipe();
                         [completionCallback invokeWithObject:child];
                         return;
                     }]];
