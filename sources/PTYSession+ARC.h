@@ -20,7 +20,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 #pragma mark - Private
 
-- (BOOL)tryToFinishAttachingToMultiserverWithPartialAttachment:(id)obj;
+- (BOOL)tryToFinishAttachingToMultiserverWithPartialAttachment:(id<iTermPartialAttachment>)partialAttachment;
 
 @end
 

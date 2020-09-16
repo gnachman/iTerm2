@@ -378,7 +378,9 @@ extern NSString *const iTermDidCreateTerminalWindowNotification;
 - (PseudoTerminal *)it_moveTabToNewWindow:(PTYTab *)aTab;
 - (BOOL)getAndResetRestorableState;
 - (void)restoreState:(PseudoTerminalState *)state;
-- (void)asyncRestoreState:(PseudoTerminalState *)state completion:(void (^)(void))completion;
+- (void)asyncRestoreState:(PseudoTerminalState *)state
+                  timeout:(void (^)(NSArray *))timeout
+               completion:(void (^)(void))completion;
 
 @end
 

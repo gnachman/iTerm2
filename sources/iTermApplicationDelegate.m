@@ -2246,6 +2246,38 @@ static BOOL hasBecomeActive = NO;
                               completion:nil];
 }
 
+- (void)orphanServerAdopterOpenSessionForPartialAttachment:(id<iTermPartialAttachment>)partialAttachment
+                                                  inWindow:(id)window
+                                                completion:(void (^)(PTYSession *))completion {
+    assert([iTermAdvancedSettingsModel runJobsInServers]);
+
+    void (^makeSession)(NSDictionary * _Nonnull,
+                        PseudoTerminal * _Nonnull,
+                        void (^ _Nonnull)(PTYSession * _Nonnull)) =
+    ^(NSDictionary * _Nonnull profile,
+      PseudoTerminal * _Nonnull term,
+      void (^ _Nonnull didMakeSession)(PTYSession * _Nonnull)) {
+        [self makeSessionWithPartialAttachment:partialAttachment
+                              windowController:term
+                                    completion:didMakeSession];
+    };
+
+    [iTermSessionLauncher launchBookmark:nil
+                              inTerminal:window
+                                 withURL:nil
+                        hotkeyWindowType:iTermHotkeyWindowTypeNone
+                                 makeKey:NO
+                             canActivate:NO
+                      respectTabbingMode:NO
+                                 command:nil
+                             makeSession:makeSession
+                          didMakeSession:^(PTYSession * _Nonnull session) {
+        [session showOrphanAnnouncement];
+        completion(session);
+    }
+                              completion:nil];
+}
+
 - (void)makeSessionWithConnection:(iTermGeneralServerConnection)generalConnection
                  windowController:(PseudoTerminal *)term
                        completion:(void (^)(PTYSession *))didMakeSession {
@@ -2272,6 +2304,35 @@ static BOOL hasBecomeActive = NO;
                                                windowController:term
                                                           ready:^(BOOL ok) { didMakeSession(ok ? session : nil); }
                                                      completion:nil];
+    [term.sessionFactory attachOrLaunchWithRequest:launchRequest];
+}
+
+- (void)makeSessionWithPartialAttachment:(id<iTermPartialAttachment>)partialAttachment
+                        windowController:(PseudoTerminal *)term
+                              completion:(void (^)(PTYSession *))didMakeSession {
+    Profile *defaultProfile = [[ProfileModel sharedInstance] defaultBookmark];
+    PTYSession *session = [[term.sessionFactory newSessionWithProfile:defaultProfile
+                                                               parent:nil] autorelease];
+    [term addSessionInNewTab:session];
+    iTermSessionAttachOrLaunchRequest *launchRequest =
+    [iTermSessionAttachOrLaunchRequest launchRequestWithSession:session
+                                                      canPrompt:NO
+                                                     objectType:iTermWindowObject
+                                            hasServerConnection:NO
+                                               serverConnection:(iTermGeneralServerConnection){}
+                                                      urlString:nil
+                                                   allowURLSubs:NO
+                                                    environment:@{}
+                                                    customShell:[ITAddressBookMgr customShellForProfile:defaultProfile]
+                                                         oldCWD:nil
+                                                 forceUseOldCWD:NO
+                                                        command:nil
+                                                         isUTF8:nil
+                                                  substitutions:nil
+                                               windowController:term
+                                                          ready:^(BOOL ok) { didMakeSession(ok ? session : nil); }
+                                                     completion:nil];
+    launchRequest.partialAttachment = partialAttachment;
     [term.sessionFactory attachOrLaunchWithRequest:launchRequest];
 }
 
@@ -2340,8 +2401,9 @@ static BOOL hasBecomeActive = NO;
             completion(window, error);
             return;
         }
-        [term asyncRestoreState:state completion:^{
-            completion(window, error);
+        [term asyncRestoreState:state
+                        timeout: ^(NSArray *partialAttachments) { [[iTermOrphanServerAdopter sharedInstance] adoptPartialAttachments:partialAttachments]; }
+                     completion: ^{ completion(window, error);
         }];
     }];
 }

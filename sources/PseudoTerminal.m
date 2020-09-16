@@ -10079,8 +10079,12 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     [self restoreArrangement:state.arrangement];
 }
 
-- (void)asyncRestoreState:(PseudoTerminalState *)state completion:(void (^)(void))completion {
-    [self asyncRestoreArrangement:state.arrangement completion:completion];
+- (void)asyncRestoreState:(PseudoTerminalState *)state
+                  timeout:(void (^)(NSArray *))timeout
+               completion:(void (^)(void))completion {
+    [self asyncRestoreArrangement:state.arrangement
+                          timeout:timeout
+                       completion:completion];
 }
 
 - (void)restoreArrangement:(NSDictionary *)arrangement {
@@ -10091,9 +10095,12 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     self.restorableStateDecodePending = NO;
 }
 
-- (void)asyncRestoreArrangement:(NSDictionary *)arrangement completion:(void (^)(void))completion {
+- (void)asyncRestoreArrangement:(NSDictionary *)arrangement
+                        timeout:(void (^)(NSArray *))timeout
+                     completion:(void (^)(void))completion {
     DLog(@"asyncRestoreArrangement: begin");
     [self openPartialAttachmentsForArrangement:arrangement
+                                       timeout:timeout
                                     completion:^(NSDictionary *partialAttachments) {
         DLog(@"asyncRestoreArrangement: ready:\n%@", partialAttachments);
         [self loadArrangement:arrangement named:nil sessions:nil partialAttachments:partialAttachments];
@@ -10102,9 +10109,13 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     }];
 }
 
+// The timeout block is called when we get a response after having timed out and called completion.
+// It can be called more than once: for each child we discover after the deadline.
 - (void)openPartialAttachmentsForArrangement:(NSDictionary *)arrangement
+                                     timeout:(void (^)(NSArray *))timeout
                                   completion:(void (^)(NSDictionary *))completion {
     DLog(@"PseudoTerminal.openPartialAttachmentsForArrangement: begin");
+    __block BOOL haveNotified = NO;
     NSMutableDictionary *result = [[NSMutableDictionary alloc] init];
     dispatch_group_t group = dispatch_group_create();
     for (NSDictionary *tabArrangement in arrangement[TERMINAL_ARRANGEMENT_TABS]) {
@@ -10113,13 +10124,33 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
         [PTYTab openPartialAttachmentsForArrangement:tabArrangement
                                           completion:^(NSDictionary *tabResult) {
             DLog(@"PseudoTerminal.openPartialAttachmentsForArrangement: got result for tab");
-            [result it_mergeFrom:tabResult];
+            if (haveNotified) {
+                // Timed out.
+                timeout([tabResult allValues]);
+            } else {
+                [result it_mergeFrom:tabResult];
+            }
             dispatch_group_leave(group);
         }];
     }
 
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)([iTermAdvancedSettingsModel timeoutForDaemonAttachment] * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        if (haveNotified) {
+            DLog(@"PseudoTerminal.openPartialAttachmentsForArrangement: no timeout, already notified.");
+            return;
+        }
+        haveNotified = YES;
+        DLog(@"PseudoTerminal.openPartialAttachmentsForArrangement: timeout");
+        completion([result autorelease]);
+    });
     dispatch_group_notify(group, dispatch_get_main_queue(), ^{
         DLog(@"PseudoTerminal.openPartialAttachmentsForArrangement: got results for all tabs");
+        if (haveNotified) {
+            DLog(@"PseudoTerminal.openPartialAttachmentsForArrangement:timeout");
+            // result gets freed by the timeout handler.
+            return;
+        }
+        haveNotified = YES;
         completion([result autorelease]);
         dispatch_release(group);
     });

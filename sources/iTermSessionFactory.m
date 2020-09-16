@@ -18,6 +18,7 @@
 #import "NSDictionary+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "PTYSession.h"
+#import "PTYSession+ARC.h"
 #import "PseudoTerminal.h"
 
 NS_ASSUME_NONNULL_BEGIN
@@ -340,6 +341,12 @@ NS_ASSUME_NONNULL_BEGIN
         return;
     }
 
+    if (request.partialAttachment) {
+        const iTermJobManagerAttachResults results = [request.session tryToFinishAttachingToMultiserverWithPartialAttachment:request.partialAttachment];
+        const BOOL ok = (results & iTermJobManagerAttachResultsAttached) == iTermJobManagerAttachResultsAttached;
+        completion(ok);
+        return;
+    }
     // Fork & exec
     [self startProgramForRequest:request completion:completion];
 }

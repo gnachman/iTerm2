@@ -297,6 +297,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (void)setTimeBetweenTips:(double)time;
 + (BOOL)synergyModifierRemappingEnabled;
 + (double)timeoutForStringEvaluation;
++ (double)timeoutForDaemonAttachment;
 + (double)timeToWaitForEmojiPanel;
 + (BOOL)tmuxVariableWindowSizesSupported;
 + (const BOOL *)tmuxWindowsShouldCloseAfterDetach;

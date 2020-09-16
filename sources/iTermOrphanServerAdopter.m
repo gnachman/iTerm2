@@ -221,6 +221,18 @@ static void iTermOrphanServerAdopterFindMultiServers(void (^completion)(NSArray<
     dispatch_group_notify(group, dispatch_get_main_queue(), completion);
 }
 
+- (void)adoptPartialAttachments:(NSArray<id<iTermPartialAttachment>> *)partialAttachments {
+    [partialAttachments enumerateObjectsUsingBlock:^(id  _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+        [self.delegate orphanServerAdopterOpenSessionForPartialAttachment:obj
+                                                                 inWindow:self->_window
+                                                               completion:^(PTYSession *session) {
+            if (!self->_window) {
+                self->_window = [[iTermController sharedInstance] terminalWithSession:session];
+            }
+        }];
+    }];
+}
+
 #pragma mark - Properties
 
 - (BOOL)haveOrphanServers {

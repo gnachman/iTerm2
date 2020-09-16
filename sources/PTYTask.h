@@ -125,6 +125,12 @@ typedef NS_OPTIONS(NSUInteger, iTermJobManagerAttachResults) {
 
 @end
 
+@protocol iTermPartialAttachment
+@property (nonatomic, strong) id<iTermJobManagerPartialResult> partialResult;
+@property (nonatomic, strong) id<iTermJobManager> jobManager;
+@property (nonatomic, strong) dispatch_queue_t queue;
+@end
+
 @interface PTYTask : NSObject<iTermLogging>
 
 @property(atomic, readonly) BOOL hasMuteCoprocess;
@@ -221,4 +227,3 @@ typedef NS_OPTIONS(NSUInteger, iTermJobManagerAttachResults) {
                                                        queue:(dispatch_queue_t)queue;
 
 @end
-

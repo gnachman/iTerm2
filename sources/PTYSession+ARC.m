@@ -23,13 +23,13 @@
 extern NSString *const SESSION_ARRANGEMENT_TMUX_PANE;
 extern NSString *const SESSION_ARRANGEMENT_SERVER_DICT;
 
-@interface iTermPartialAttachment: NSObject
-@property (nonatomic, strong) id<iTermJobManagerPartialResult> partialResult;
-@property (nonatomic, strong) id<iTermJobManager> jobManager;
-@property (nonatomic, strong) dispatch_queue_t queue;
+@interface iTermPartialAttachment: NSObject<iTermPartialAttachment>
 @end
 
 @implementation iTermPartialAttachment
+@synthesize partialResult;
+@synthesize jobManager;
+@synthesize queue;
 @end
 
 @interface PTYSession(Private)
@@ -91,8 +91,7 @@ extern NSString *const SESSION_ARRANGEMENT_SERVER_DICT;
 
 #pragma mark - Attaching
 
-- (BOOL)tryToFinishAttachingToMultiserverWithPartialAttachment:(id)obj {
-    iTermPartialAttachment *partialAttachment = [iTermPartialAttachment castFrom:obj];
+- (BOOL)tryToFinishAttachingToMultiserverWithPartialAttachment:(id<iTermPartialAttachment>)partialAttachment {
     if (!partialAttachment) {
         return NO;
     }
