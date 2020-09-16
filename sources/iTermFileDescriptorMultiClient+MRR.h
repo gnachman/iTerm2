@@ -31,6 +31,9 @@ typedef struct {
     int connectedFD;
     // you can read() on this one. Valid only if ok=true
     int readFD;
+    // as long as this fd is open, nobody else can use the socket. It is an advisory lock using O_EXLOCK.
+    int lockFD;
+
 } iTermUnixDomainSocketConnectResult;
 
 iTermUnixDomainSocketConnectResult iTermCreateConnectedUnixDomainSocket(const char *path,

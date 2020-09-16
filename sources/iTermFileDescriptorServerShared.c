@@ -9,6 +9,7 @@
 
 #include <assert.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <limits.h>
 #include <signal.h>
 #include <stdarg.h>
@@ -344,5 +345,19 @@ int iTermFileDescriptorServerSocketBindListen(const char *path) {
     }
     umask(oldMask);
     return socketFd;
+}
+
+int iTermAcquireAdvisoryLock(const char *path) {
+    int fd;
+    do {
+        FDLog(LOG_DEBUG, "Attempting to lock %s", path);
+        fd = open(path, O_CREAT | O_TRUNC | O_EXLOCK | O_NONBLOCK, 0600);
+    } while (fd < 0 && errno == EINTR);
+    if (fd < 0) {
+        FDLog(LOG_DEBUG, "Failed: %s", strerror(errno));
+        return -1;
+    }
+    FDLog(LOG_DEBUG, "Lock acquired");
+    return fd;
 }
 

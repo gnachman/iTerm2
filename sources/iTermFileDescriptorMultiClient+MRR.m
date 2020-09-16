@@ -14,7 +14,7 @@
 #import "iTermPosixTTYReplacements.h"
 #include <sys/un.h>
 
-static const NSInteger numberOfFileDescriptorsToPreserve = 4;
+static const NSInteger numberOfFileDescriptorsToPreserve = 5;
 
 static char **Make2DArray(NSArray<NSString *> *strings) {
     char **result = (char **)malloc(sizeof(char *) * (strings.count + 1));
@@ -96,9 +96,23 @@ iTermFileDescriptorMultiClientAttachStatus iTermConnectToUnixDomainSocket(const 
 
 iTermUnixDomainSocketConnectResult iTermCreateConnectedUnixDomainSocket(const char *path,
                                                                         int closeAfterAccept) {
+    NSString *lockPath = [[NSString stringWithUTF8String:path] stringByAppendingString:@".lock"];
     iTermUnixDomainSocketConnectResult result = {
-        .ok = NO
+        .ok = NO,
+        .lockFD = iTermAcquireAdvisoryLock(lockPath.UTF8String)
     };
+
+    if (result.lockFD < 0) {
+        DLog(@"Failed to acquire lock.");
+        return (iTermUnixDomainSocketConnectResult) {
+            .ok = NO,
+            .listenFD = -1,
+            .acceptedFD = -1,
+            .connectedFD = -1,
+            .readFD = -1,
+            .lockFD = -1
+        };
+    }
 
     // Per https://stackoverflow.com/questions/17769964/linux-sockets-non-blocking-connect
     // To do an async connect you have to first listen, then connect, then accept.
@@ -120,12 +134,14 @@ iTermUnixDomainSocketConnectResult iTermCreateConnectedUnixDomainSocket(const ch
         case iTermFileDescriptorMultiClientAttachStatusFatalError:
             // It's pretty weird if this fails.
             close(result.listenFD);
+            close(result.lockFD);
             return (iTermUnixDomainSocketConnectResult) {
                 .ok = NO,
                 .listenFD = -1,
                 .acceptedFD = -1,
                 .connectedFD = -1,
-                .readFD = -1
+                .readFD = -1,
+                .lockFD = -1
             };
     }
     iTermFileDescriptorServerLog("Now calling accept");
@@ -224,7 +240,13 @@ iTermUnixDomainSocketConnectResult iTermCreateConnectedUnixDomainSocket(const ch
     const char **cenv = (const char **)Make2DArray(@[]);
     const char *argpath = executable.UTF8String;
 
-    int fds[] = { connectResult.listenFD, connectResult.acceptedFD, forkState.deadMansPipe[1], pipeFds[0] };
+    int fds[] = {
+        connectResult.listenFD,
+        connectResult.acceptedFD,
+        forkState.deadMansPipe[1],
+        pipeFds[0],
+        connectResult.lockFD
+    };
     assert(sizeof(fds) / sizeof(*fds) == numberOfFileDescriptorsToPreserve);
 
     forkState.pid = fork();
@@ -234,6 +256,7 @@ iTermUnixDomainSocketConnectResult iTermCreateConnectedUnixDomainSocket(const ch
             iTermFileDescriptorServerLog("Fork failed: %s", strerror(errno));
             close(connectResult.listenFD);
             close(connectResult.acceptedFD);
+            close(connectResult.lockFD);
             close(forkState.deadMansPipe[1]);
             Free2DArray(cargv, argv.count);
             close(pipeFds[0]);
@@ -259,6 +282,7 @@ iTermUnixDomainSocketConnectResult iTermCreateConnectedUnixDomainSocket(const ch
             // parent
             close(connectResult.listenFD);
             close(connectResult.acceptedFD);
+            close(connectResult.lockFD);
             close(forkState.deadMansPipe[1]);
             Free2DArray(cargv, argv.count);
             close(pipeFds[0]);

@@ -31,11 +31,13 @@ const char *gMultiServerSocketPath;
 // 1: A connection we can sendmsg() on. accept() was already called on it.
 // 2: A pipe that can be used to detect this process's termination. Do nothing with it.
 // 3: A pipe we can read on.
+// 4: Advisory lock on iterm2-daemon-1.socket.lock. Remains open for the lifetime of the process.
 typedef enum {
     iTermMultiServerFileDescriptorAcceptSocket = 0,
     iTermMultiServerFileDescriptorInitialWrite = 1,
     iTermMultiServerFileDescriptorDeadMansPipe = 2,
-    iTermMultiServerFileDescriptorInitialRead = 3
+    iTermMultiServerFileDescriptorInitialRead = 3,
+    iTermMultiServerFileDescriptorLock = 4
 } iTermMultiServerFileDescriptor;
 
 static int MakeBlocking(int fd);
@@ -807,7 +809,7 @@ static void MainLoop(char *path, int acceptFd, int initialWriteFd, int initialRe
             return;
         }
 
-        // You get here after the connection is lost. Listen and accept.
+        // You get here after the connection is lost. Accept.
         FDLog(LOG_DEBUG, "Calling iTermMultiServerAccept");
         writeFd = iTermMultiServerAccept(acceptFd);
         if (writeFd == -1) {
