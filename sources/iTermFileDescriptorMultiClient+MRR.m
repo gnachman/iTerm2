@@ -43,14 +43,18 @@ iTermFileDescriptorMultiClientAttachStatus iTermConnectToUnixDomainSocket(const 
 
     DLog(@"Trying to connect to %s", path);
     do {
+        struct sockaddr_un remote;
+        if (strlen(path) + 1 > sizeof(remote.sun_path)) {
+            DLog(@"Path is too long: %s", path);
+            return iTermFileDescriptorMultiClientAttachStatusFatalError;
+        }
+
         DLog(@"Calling socket()");
         socketFd = socket(AF_UNIX, SOCK_STREAM, 0);
         if (socketFd == -1) {
             DLog(@"Failed to create socket: %s\n", strerror(errno));
             return iTermFileDescriptorMultiClientAttachStatusFatalError;
         }
-
-        struct sockaddr_un remote;
         remote.sun_family = AF_UNIX;
         strcpy(remote.sun_path, path);
         const socklen_t len = (socklen_t)(strlen(remote.sun_path) + sizeof(remote.sun_family) + 1);

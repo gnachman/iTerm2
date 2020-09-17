@@ -23,6 +23,10 @@
 @synthesize tty = _tty;
 @synthesize queue = _queue;
 
++ (BOOL)available {
+    return YES;
+}
+
 - (instancetype)initWithQueue:(dispatch_queue_t)queue {
     self = [super init];
     if (self) {

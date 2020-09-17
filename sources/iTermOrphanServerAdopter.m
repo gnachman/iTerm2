@@ -17,6 +17,7 @@
 #import "iTermController.h"
 #import "iTermFileDescriptorSocketPath.h"
 #import "iTermMultiServerConnection.h"
+#import "iTermMultiServerJobManager.h"
 #import "iTermSessionFactory.h"
 #import "iTermSessionLauncher.h"
 
@@ -83,7 +84,7 @@ static void iTermOrphanServerAdopterFindMultiServers(void (^completion)(NSArray<
     self = [super init];
     if (self) {
         _group = dispatch_group_create();
-        if ([iTermAdvancedSettingsModel multiserver]) {
+        if ([iTermMultiServerJobManager available]) {
             dispatch_group_enter(_group);
             iTermOrphanServerAdopterFindMultiServers(^(NSArray<NSString *> *paths) {
                 DLog(@"Have found multiservers at %@", paths);

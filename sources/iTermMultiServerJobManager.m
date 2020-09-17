@@ -8,6 +8,7 @@
 #import "iTermMultiServerJobManager.h"
 
 #import "DebugLogging.h"
+#import "iTermAdvancedSettingsModel.h"
 #import "iTermFileDescriptorMultiClient.h"
 #import "iTermMultiServerChildDidTerminateNotification.h"
 #import "iTermMultiServerConnection.h"
@@ -56,6 +57,10 @@ static const int iTermMultiServerMaximumSupportedRestorationIdentifierVersion = 
     return _thread.queue;
 }
 
++ (BOOL)available {
+    return [iTermAdvancedSettingsModel multiserver] && [iTermMultiServerConnection available];
+}
+
 + (BOOL)getGeneralConnection:(iTermGeneralServerConnection *)generalConnection
    fromRestorationIdentifier:(NSDictionary *)dict {
     NSString *type = dict[iTermMultiServerRestorationKeyType];
@@ -84,6 +89,10 @@ static const int iTermMultiServerMaximumSupportedRestorationIdentifierVersion = 
 }
 
 - (instancetype)initWithQueue:(dispatch_queue_t)queue {
+    if (![iTermMultiServerConnection available]) {
+        DLog(@"Not creating multiserver job manager because it isn't available. Long path to socket?");
+        return nil;
+    }
     self = [super init];
     if (self) {
         _thread = [[iTermThread alloc] initWithQueue:queue

@@ -83,6 +83,8 @@ typedef struct {
 @property (atomic, readonly) dispatch_queue_t queue;
 @property (atomic, readonly) BOOL isReadOnly;
 
++ (BOOL)available;
+
 - (instancetype)initWithQueue:(dispatch_queue_t)queue;
 
 - (void)forkAndExecWithTtyState:(iTermTTYState)ttyState

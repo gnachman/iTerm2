@@ -51,6 +51,7 @@
 #import "iTermKeyLabels.h"
 #import "iTermLoggingHelper.h"
 #import "iTermMalloc.h"
+#import "iTermMultiServerJobManager.h"
 #import "iTermObject.h"
 #import "iTermOpenDirectory.h"
 #import "iTermScriptConsole.h"
@@ -1506,7 +1507,7 @@ ITERM_WEAKLY_REFERENCEABLE
                     DLog(@"Success!");
                     didAttach = YES;
                 }
-            } else if ([iTermAdvancedSettingsModel multiserver] &&
+            } else if ([iTermMultiServerJobManager available] &&
                        [NSDictionary castFrom:arrangement[SESSION_ARRANGEMENT_SERVER_DICT]]) {
                 DLog(@"Have a server dict in the arrangement");
                 NSDictionary *serverDict = arrangement[SESSION_ARRANGEMENT_SERVER_DICT];

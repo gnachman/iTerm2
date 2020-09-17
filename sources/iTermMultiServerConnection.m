@@ -15,6 +15,7 @@
 #import "NSArray+iTerm.h"
 #import "NSFileManager+iTerm.h"
 #import "TaskNotifier.h"
+#include <sys/un.h>
 
 @class iTermMultiServerConnectionState;
 
@@ -148,6 +149,12 @@
     }
 
     [self findAnyConnectionCreatingIfNeededWithState:state callback:callback];
+}
+
++ (BOOL)available {
+    NSString *path = [self pathForNumber:100];
+    struct sockaddr_un addr;
+    return (strlen(path.UTF8String) + 1 <= sizeof(addr.sun_path));
 }
 
 + (void)connectionForSocketNumber:(int)number

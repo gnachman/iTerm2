@@ -92,7 +92,7 @@ static void HandleSigChld(int n) {
         writeBuffer = [[NSMutableData alloc] init];
         writeLock = [[NSLock alloc] init];
         if ([iTermAdvancedSettingsModel runJobsInServers]) {
-            if ([iTermAdvancedSettingsModel multiserver]) {
+            if ([iTermMultiServerJobManager available]) {
                 self.jobManager = [[iTermMultiServerJobManager alloc] initWithQueue:_jobManagerQueue];
             } else {
                 self.jobManager = [[iTermMonoServerJobManager alloc] initWithQueue:_jobManagerQueue];
@@ -265,7 +265,7 @@ static void HandleSigChld(int n) {
     DLog(@"launchWithPath:%@ args:%@ env:%@ grisSize:%@ isUTF8:%@",
          progpath, args, env, VT100GridSizeDescription(gridSize), @(isUTF8));
 
-    if ([iTermAdvancedSettingsModel runJobsInServers] && ![iTermAdvancedSettingsModel multiserver]) {
+    if ([iTermAdvancedSettingsModel runJobsInServers] && ![iTermMultiServerJobManager available]) {
         // We want to run
         //   iTerm2 --server progpath args
         NSArray *updatedArgs = [@[ @"--server", progpath ] arrayByAddingObjectsFromArray:args];

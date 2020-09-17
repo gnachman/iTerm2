@@ -46,7 +46,7 @@ extern NSString *const SESSION_ARRANGEMENT_SERVER_DICT;
     DLog(@"PTYSession.openPartialAttachmentsForArrangement: start");
     if (arrangement[SESSION_ARRANGEMENT_TMUX_PANE] ||
         ![iTermAdvancedSettingsModel runJobsInServers] ||
-        ![iTermAdvancedSettingsModel multiserver]) {
+        ![iTermMultiServerJobManager available]) {
         DLog(@"PTYSession.openPartialAttachmentsForArrangement: NO, is tmux");
         completion(@{});
         return;
