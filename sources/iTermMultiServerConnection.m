@@ -152,9 +152,7 @@
 }
 
 + (BOOL)available {
-    NSString *path = [self pathForNumber:100];
-    struct sockaddr_un addr;
-    return (strlen(path.UTF8String) + 1 <= sizeof(addr.sun_path));
+    return [self pathIsSafe:[self pathForNumber:1000]];
 }
 
 + (void)connectionForSocketNumber:(int)number
@@ -248,11 +246,47 @@
     }
 }
 
++ (BOOL)pathIsSafe:(NSString *)path {
+    struct sockaddr_un addr;
+    return (strlen(path.UTF8String) + 1 <= sizeof(addr.sun_path));
+}
+
 + (NSString *)pathForNumber:(int)number {
+    // Normally use application support for the socket because that's where we keep everything
+    // else. But for some users the path may be too long to fit in sockaddr_un.sun_path, in which
+    // case we'll fall back to their home directory.
     NSString *appSupportPath = [[NSFileManager defaultManager] applicationSupportDirectory];
-    NSString *filename = [NSString stringWithFormat:@"iterm2-daemon-%d.socket", number];
-    NSURL *url = [[NSURL fileURLWithPath:appSupportPath] URLByAppendingPathComponent:filename];
-    return url.path;
+    NSString *normalFilename = [NSString stringWithFormat:@"iterm2-daemon-%d.socket", number];
+    NSURL *normalURL = [[NSURL fileURLWithPath:appSupportPath] URLByAppendingPathComponent:normalFilename];
+    if ([self pathIsSafe:normalURL.path]) {
+        return normalURL.path;
+    }
+
+    NSString *homedir = NSHomeDirectory();
+    NSString *dotdir = [homedir stringByAppendingPathComponent:@".iterm2"];
+    NSString *shortFilename = [NSString stringWithFormat:@"%d.socket", number];
+    NSURL *shortURL = [[NSURL fileURLWithPath:dotdir] URLByAppendingPathComponent:shortFilename];
+
+    BOOL isdir = NO;
+
+    // Try to create ~/.iterm2
+    // NOTE: If this fails we return the known-to-be-too-long normal path. It is important to check
+    // that the path is legal before using it.
+    if (![[NSFileManager defaultManager] fileExistsAtPath:dotdir isDirectory:&isdir]) {
+        NSError *error = nil;
+        [[NSFileManager defaultManager] createDirectoryAtPath:dotdir withIntermediateDirectories:NO attributes:nil error:&error];
+        if (error) {
+            // Failed to create it.
+            // check.
+            return normalURL.path;
+        }
+    }
+    if (!isdir) {
+        // Can't put a directory there because a file already exists.
+        return normalURL.path;
+    }
+
+    return shortURL.path;
 }
 
 #pragma mark - Instance Methods

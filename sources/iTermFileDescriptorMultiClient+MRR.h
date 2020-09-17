@@ -19,7 +19,9 @@ typedef NS_ENUM(NSUInteger, iTermFileDescriptorMultiClientAttachStatus) {
     iTermFileDescriptorMultiClientAttachStatusInProgress  // connecting asynchronously
 };
 
-iTermFileDescriptorMultiClientAttachStatus iTermConnectToUnixDomainSocket(const char *path, int *fdOut, int async);
+iTermFileDescriptorMultiClientAttachStatus iTermConnectToUnixDomainSocket(NSString *path,
+                                                                          int *fdOut,
+                                                                          int async);
 
 typedef struct {
     BOOL ok;
@@ -36,7 +38,7 @@ typedef struct {
 
 } iTermUnixDomainSocketConnectResult;
 
-iTermUnixDomainSocketConnectResult iTermCreateConnectedUnixDomainSocket(const char *path,
+iTermUnixDomainSocketConnectResult iTermCreateConnectedUnixDomainSocket(NSString *path,
                                                                         int closeAfterAccept);
 
 @interface iTermFileDescriptorMultiClient (MRR)

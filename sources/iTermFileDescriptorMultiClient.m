@@ -174,7 +174,7 @@ NSString *const iTermFileDescriptorMultiClientErrorDomain = @"iTermFileDescripto
     // Connect to the socket. This gets us the reading file descriptor.
     int temp = -1;
     iTermFileDescriptorMultiClientAttachStatus status =
-    iTermConnectToUnixDomainSocket(_socketPath.UTF8String,
+    iTermConnectToUnixDomainSocket(_socketPath,
                                    &temp,
                                    0 /* async */);
     state.readFD = temp;

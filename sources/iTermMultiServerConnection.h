@@ -22,6 +22,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) int socketNumber;
 
 + (BOOL)available;
++ (BOOL)pathIsSafe:(NSString *)path;
 
 + (void)getOrCreatePrimaryConnectionWithCallback:(iTermCallback<id, iTermMultiServerConnection *> *)callback;
 

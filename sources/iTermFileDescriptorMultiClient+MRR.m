@@ -34,13 +34,14 @@ static void Free2DArray(char **array, NSInteger count) {
 
 @implementation iTermFileDescriptorMultiClient (MRR)
 
-iTermFileDescriptorMultiClientAttachStatus iTermConnectToUnixDomainSocket(const char *path,
+iTermFileDescriptorMultiClientAttachStatus iTermConnectToUnixDomainSocket(NSString *pathString,
                                                                           int *fdOut,
                                                                           int async) {
     int interrupted = 0;
     int socketFd;
     int flags;
 
+    const char *path = pathString.UTF8String;
     DLog(@"Trying to connect to %s", path);
     do {
         struct sockaddr_un remote;
@@ -98,8 +99,9 @@ iTermFileDescriptorMultiClientAttachStatus iTermConnectToUnixDomainSocket(const 
     return iTermFileDescriptorMultiClientAttachStatusSuccess;
 }
 
-iTermUnixDomainSocketConnectResult iTermCreateConnectedUnixDomainSocket(const char *path,
+iTermUnixDomainSocketConnectResult iTermCreateConnectedUnixDomainSocket(NSString *pathString,
                                                                         int closeAfterAccept) {
+    const char *path = pathString.UTF8String;
     NSString *lockPath = [[NSString stringWithUTF8String:path] stringByAppendingString:@".lock"];
     iTermUnixDomainSocketConnectResult result = {
         .ok = NO,
@@ -124,7 +126,7 @@ iTermUnixDomainSocketConnectResult iTermCreateConnectedUnixDomainSocket(const ch
 
     DLog(@"Connect asynchronously to UDS at %s", path);
     const iTermFileDescriptorMultiClientAttachStatus connectStatus =
-        iTermConnectToUnixDomainSocket(path,
+        iTermConnectToUnixDomainSocket(pathString,
                                        &result.connectedFD,
                                        1 /* async */);
 
@@ -202,7 +204,7 @@ iTermUnixDomainSocketConnectResult iTermCreateConnectedUnixDomainSocket(const ch
 
 - (iTermUnixDomainSocketConnectResult)createAttachedSocketAtPath:(NSString *)path {
     DLog(@"iTermForkAndExecToRunJobInServer");
-    return iTermCreateConnectedUnixDomainSocket(path.UTF8String, NO /* closeAfterAccept */);
+    return iTermCreateConnectedUnixDomainSocket(path, NO /* closeAfterAccept */);
 }
 
 // NOTE: Sets _readFD and _writeFD as side-effects when returned forkState.pid >= 0.
