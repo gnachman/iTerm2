@@ -164,7 +164,7 @@ static CGEventRef iTermEventTapCallback(CGEventTapProxy proxy,
 }
 
 - (void)postEventToObservers:(CGEventRef)event type:(CGEventType)type {
-    for (id<iTermEventTapObserver> observer in self.observers) {
+    for (id<iTermEventTapObserver> observer in [self.observers copy]) {
         [observer eventTappedWithType:type event:event];
     }
     [self pruneReleasedObservers];
