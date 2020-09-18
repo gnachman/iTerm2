@@ -246,6 +246,7 @@ NSString *const iTermProcessTypeDidChangeNotification = @"iTermProcessTypeDidCha
     info.observer = ^{
         [[NSNotificationCenter defaultCenter] postNotificationName:iTermProcessTypeDidChangeNotification
                                                             object:nil];
+        [weakSelf updateHiddenAndEnabled];
     };
 
     info = [self defineControl:_flashTabBarInFullscreenWhenSwitchingTabs
@@ -372,6 +373,9 @@ NSString *const iTermProcessTypeDidChangeNotification = @"iTermProcessTypeDidCha
     // Can't preserve size if you can't hide the tab bar.
     _preserveWindowSizeWhenTabBarVisibilityChanges.enabled = (_hideTab.state != NSControlStateValueOn);
     [self updateEnabledState];
+
+    _hideMenuBarInFullscreen.enabled = (![self boolForKey:kPreferenceKeyUIElement] ||
+                                        [self boolForKey:kPreferenceKeyUIElementRequiresHotkeys]);
 }
 
 - (NSTabView *)tabView {
