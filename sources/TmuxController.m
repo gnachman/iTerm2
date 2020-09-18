@@ -1120,7 +1120,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
                                          responseSelector:@selector(guessVersion22Response:)
                                            responseObject:nil
                                                     flags:kTmuxGatewayCommandShouldTolerateErrors],
-                           [gateway_ dictionaryForCommand:@"list-windows -F \"#{session_activity}\""
+                           [gateway_ dictionaryForCommand:@"list-windows -F \"#{pid}\""
                                            responseTarget:self
                                          responseSelector:@selector(guessVersion21Response:)
                                            responseObject:nil
