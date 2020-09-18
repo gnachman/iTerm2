@@ -481,11 +481,13 @@ static const NSUInteger kRectangularSelectionModifierMask = (kRectangularSelecti
                                        isComplex:c.complexChar
                                       renderBold:&isBold
                                     renderItalic:&isItalic];
+    DLog(@"Font for “%@” (code=%@, complex=%@, primary=%@, secondary=%@) is %@", @(c.code), @(c.complexChar), ScreenCharToStr(&c), fontInfo, self.primaryFont, self.secondaryFont);
     NSMutableParagraphStyle *paragraphStyle = [[NSMutableParagraphStyle alloc] init];
     paragraphStyle.lineBreakMode = NSLineBreakByCharWrapping;
 
     NSFont *font = fontInfo.font;
     if (!font) {
+        DLog(@"USE SYSTEM FONT");
         // Ordinarily fontInfo would never be nil, but it is in unit tests. It's useful to distinguish
         // bold from regular in tests, so we ensure that attribute is correctly set in this test-only
         // path.

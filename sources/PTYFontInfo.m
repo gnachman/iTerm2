@@ -99,7 +99,8 @@
         } else if (!theFont && rootFontInfo.italicVersion) {
             theFont = rootFontInfo.italicVersion;
             *renderBold = YES;
-        } else if (!theFont) {
+        }
+        if (!theFont) {
             theFont = rootFontInfo;
             *renderBold = YES;
             *renderItalic = YES;
@@ -133,6 +134,10 @@
     [italicVersion_ release];
     [_boldItalicVersion release];
     [super dealloc];
+}
+
+- (NSString *)description {
+    return [NSString stringWithFormat:@"<%@: %p font=%@>", NSStringFromClass([self class]), self, font_];
 }
 
 - (void)setFont:(NSFont *)font {

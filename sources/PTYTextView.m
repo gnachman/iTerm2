@@ -3422,6 +3422,7 @@
 #pragma mark - Printing
 
 - (void)print:(id)sender {
+    DLog(@"printing");
     NSRect visibleRect;
     int lineOffset, numLines;
     int type = sender ? [sender tag] : 0;
