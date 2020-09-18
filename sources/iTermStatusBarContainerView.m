@@ -144,6 +144,7 @@ const CGFloat iTermGetStatusBarHeight() {
 }
 
 - (void)reevaluateTimer:(NSTimer *)timer {
+    DLog(@"Timer fired with interval %@", @(timer.timeInterval));
     [self setNeedsUpdate];
 }
 
@@ -151,6 +152,7 @@ const CGFloat iTermGetStatusBarHeight() {
     if (_needsUpdate) {
         return;
     }
+    DLog(@"setNeedsUpdate:%@\n%@", self.component, [NSThread callStackSymbols]);
     _needsUpdate = YES;
     dispatch_async(dispatch_get_main_queue(), ^{
         [self updateIfNeeded];

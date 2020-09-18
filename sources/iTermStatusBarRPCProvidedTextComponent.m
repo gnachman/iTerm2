@@ -300,6 +300,11 @@ static NSString *const iTermStatusBarRPCRegistrationRequestKey = @"registration 
         // avoid spurious errors, do not actually evaluate the invocation.
         return;
     }
+    DLog(@"Update status bar component %@ instance %p for session %@\n%@",
+         _savedRegistrationRequest.statusBarComponentAttributes.uniqueIdentifier,
+         self,
+         [scope valueForVariableName:iTermVariableKeySessionID],
+         [NSThread callStackSymbols]);
     // Create a temporary frame to shadow __knobs in the scope. This avoids mutating a scope we don't own.
     iTermVariables *variables = [[iTermVariables alloc] initWithContext:iTermVariablesSuggestionContextNone
                                                                   owner:self];
