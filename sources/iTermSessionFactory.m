@@ -116,9 +116,11 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 - (void)realizeWithCompletion:(void (^)(BOOL realized))completion {
+    DLog(@"realizeWithCompletion %@", self);
     [self computeCommandWithCompletion:^{
         const BOOL ok = [self didComputeCommandWithCompletion:completion];
         if (self.ready) {
+            DLog(@"Invoking ready callback");
             self.ready(ok);
         }
     }];
@@ -131,8 +133,10 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 - (void)computeCommandWithCompletion:(void (^)(void))completion {
+    DLog(@"computeCommandWithCompletion %@ command=%@", self, self.command);
     if (self.command) {
         self->_computedCommand = [self unescapeDoubleDollarsInString:self.command];
+        DLog(@"Computed command is %@", self->_computedCommand);
         completion();
         return;
     }
@@ -146,34 +150,46 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 - (void)computeWorkingDirectoryWithCompletion:(void (^)(void))completion {
+    DLog(@"computeWorkingDirectoryWithCompletion %@", self);
     if (self.forceUseOldCWD) {
+        DLog(@"  setWorkingDirectory:%@", self.oldCWD);
         [self setWorkingDirectory:self.oldCWD];
+        DLog(@"  done");
         completion();
         return;
     }
 
     if (!self.canPrompt) {
+        DLog(@"  can't prompt, set pwd to empty string");
         [self setWorkingDirectory:@""];
+        DLog(@"  done");
         completion();
         return;
     }
 
+    DLog(@"  create initial directory object");
     iTermInitialDirectory *initialDirectory = [iTermInitialDirectory initialDirectoryFromProfile:self.profile
                                                                                       objectType:self.objectType];
     // Keep the initial directory alive
     void *key = (void *)"iTermSessionFactory.initialDirectory";
     [self.session it_setAssociatedObject:initialDirectory forKey:key];
+    DLog(@"  evaluating with old pwd %@", self.oldCWD);
     [initialDirectory evaluateWithOldPWD:self.oldCWD
                                    scope:self.session.variablesScope
                               completion:^(NSString *pwd) {
+        DLog(@"  evaluation finished with result %@", pwd);
         [self.session it_setAssociatedObject:nil forKey:key];
+        DLog(@"  set pwd to %@", pwd);
         [self setWorkingDirectory:pwd];
+        DLog(@"  done");
         completion();
     }];
 }
 
 - (BOOL)computeSubstitutions {
+    DLog(@"computeSubstitutions");
     if (self.substitutions) {
+        DLog(@"  already have subs");
         return YES;
     }
 
@@ -182,38 +198,47 @@ NS_ASSUME_NONNULL_BEGIN
     self.substitutions = [self substitutionsAfterPrompting];
 
     if (self.substitutions) {
+        DLog(@"  have subs after prompting.");
         return YES;
     }
 
     if (self.completion) {
+        DLog(@"  calling didFinishInitialization");
         [self.session didFinishInitialization];
         // Ensure the controller has it before removing it, since this might get called by the controller.
         // TODO: Remove cyclic dependency
         dispatch_async(dispatch_get_main_queue(), ^{
             [[[iTermController sharedInstance] terminalWithSession:self.session] closeSessionWithoutConfirmation:self.session];
         });
+        DLog(@"  Completing");
         self.completion(nil, NO);
     }
     return NO;
 }
 
 - (BOOL)didComputeCommandWithCompletion:(void (^)(BOOL))completion {
+    DLog(@"didComputeCommandWithCompletion %@", self);
     if (![self computeSubstitutions]) {
         completion(NO);
         return NO;
     }
     [self didComputeSubstitutions];
     [self computeWorkingDirectoryWithCompletion:^{
+        DLog(@"Working directory computation finished.");
         completion(YES);
     }];
     return YES;
 }
 
 - (void)didComputeSubstitutions {
+    DLog(@"didComputeSubstitutions %@", self);
     _name = [self.name stringByPerformingSubstitutions:self.substitutions];
+    DLog(@"  update variables");
     [self updateVariables];
+    DLog(@"  set name to %@", self.name);
     [self.windowController setName:self.name ?: @""
                         forSession:self.session];
+    DLog(@"  done setting name");
 }
 
 // Returns nil if the user pressed cancel, otherwise returns a dictionary that's a supeset of |substitutions|.
@@ -315,8 +340,10 @@ NS_ASSUME_NONNULL_BEGIN
     DLog(@"attachOrLaunchWithRequest:%@", request);
     [request realizeWithCompletion:^(BOOL realized) {
         if (!realized) {
+            DLog(@"Realization failed");
             return;
         }
+        DLog(@"Realized ok");
         [self handleRealizedRequest:request
                          completion:^(BOOL ok) {
             [self requestDidComplete:request ok:ok];

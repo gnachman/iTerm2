@@ -472,10 +472,10 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
         { @"Application Cursor", @selector(terminalStateToggleApplicationCursor:) },
         { @"Application Keypad", @selector(terminalStateToggleApplicationKeypad:) },
         { nil, nil },
-        { @"Standard Key Reporting", @selector(terminalToggleKeyboardMode:) },
-        { @"Report Modifiers like xterm", @selector(terminalToggleKeyboardMode:) },
-        { @"Report Modifiers with CSI u", @selector(terminalToggleKeyboardMode:) },
-        { @"Raw Key Reporting", @selector(terminalToggleKeyboardMode:) },
+        { @"Standard Key Reporting Mode", @selector(terminalToggleKeyboardMode:) },
+        { @"modifyOtherKeys Mode", @selector(terminalToggleKeyboardMode:) },
+        { @"CSI u Mode", @selector(terminalToggleKeyboardMode:) },
+        { @"Raw Key Reporting Mode", @selector(terminalToggleKeyboardMode:) },
     };
     NSInteger j = 1;
     for (size_t i = 0; i < sizeof(terminalStateDecls) / sizeof(*terminalStateDecls); i++) {

@@ -660,20 +660,24 @@ iTermWindowType iTermThemedWindowType(iTermWindowType windowType) {
     BOOL custom = [profile[KEY_CUSTOM_COMMAND] isEqualToString:kProfilePreferenceCommandTypeCustomValue];
     NSString *swifty = [self bookmarkCommandSwiftyString:profile forObjectType:objectType];
     if (!custom) {
+        DLog(@"Don't have a custom command. COmputed command is %@", swifty);
         completion(swifty);
         return;
     }
 
+    DLog(@"Must evaluate swifty string: %@", swifty);
     iTermExpressionEvaluator *evaluator =
     [[iTermExpressionEvaluator alloc] initWithStrictInterpolatedString:swifty
                                                                  scope:scope];
     [evaluator evaluateWithTimeout:5 completion:^(iTermExpressionEvaluator * _Nonnull evaluator) {
         NSString *string = [NSString castFrom:evaluator.value];
+        DLog(@"Evaluation finished with value %@", string);
         string = [string stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
         if (!string.length) {
             string = [ITAddressBookMgr loginShellCommandForBookmark:profile
                                                       forObjectType:objectType];
         }
+        DLog(@"Finish with %@", string);
         completion(string);
     }];
 }

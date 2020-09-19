@@ -5418,6 +5418,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [[iTermFindPasteboard sharedInstance] updateObservers];
     [self updateBackgroundImage];
     [[NSNotificationCenter defaultCenter] postNotificationName:iTermSelectedTabDidChange object:tab];
+    DLog(@"Finished");
 }
 
 - (void)updateUseMetalInAllTabs {
