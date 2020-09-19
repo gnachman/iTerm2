@@ -23,7 +23,8 @@
 
 @interface iTermEditKeyActionWindowController () <
     iTermSearchableComboViewDelegate,
-    iTermShortcutInputViewDelegate>
+    iTermShortcutInputViewDelegate,
+    NSTextFieldDelegate>
 
 @property(nonatomic, assign) BOOL ok;
 
@@ -320,19 +321,19 @@
             if (self.titleIsInterpolated) {
                 if (!_labelDelegate) {
                     _labelDelegate = [[iTermFunctionCallTextFieldDelegate alloc] initWithPathSource:[iTermVariableHistory pathSourceForContext:iTermVariablesSuggestionContextSession]
-                                                                                        passthrough:nil
+                                                                                        passthrough:self
                                                                                       functionsOnly:NO];
                 }
                 _touchBarLabel.delegate = _labelDelegate;
             } else {
-                _touchBarLabel.delegate = nil;
+                _touchBarLabel.delegate = self;
             }
             _touchBarLabel.hidden = NO;
             _shortcutField.hidden = YES;
             break;
         case iTermEditKeyActionWindowControllerModeTouchBarItem:
             _keyboardShortcutLabel.stringValue = @"Touch Bar Label";
-            _touchBarLabel.delegate = nil;
+            _touchBarLabel.delegate = self;
             _touchBarLabel.hidden = NO;
             _shortcutField.hidden = YES;
             break;
