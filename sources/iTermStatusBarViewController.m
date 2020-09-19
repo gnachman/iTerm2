@@ -432,7 +432,11 @@ static const CGFloat iTermStatusBarViewControllerBottomMargin = 0;
     [_autoRainbowController enumerateColorsWithCount:_visibleContainerViews.count block:^(NSInteger i, NSColor * _Nonnull color) {
         id<iTermStatusBarComponent> component = _visibleContainerViews[i].component;
         NSMutableDictionary *knobValues = [component.configuration[iTermStatusBarComponentConfigurationKeyKnobValues] mutableCopy];
-        knobValues[iTermStatusBarSharedTextColorKey] = [color dictionaryValue];
+        NSDictionary *colorDict = [color dictionaryValue];
+        if ([knobValues[iTermStatusBarSharedTextColorKey] isEqualToDictionary:colorDict]) {
+            return;
+        }
+        knobValues[iTermStatusBarSharedTextColorKey] = colorDict;
         [component statusBarComponentSetKnobValues:knobValues];
     }];
 }

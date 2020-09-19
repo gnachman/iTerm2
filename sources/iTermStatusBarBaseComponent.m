@@ -280,6 +280,10 @@ const double iTermStatusBarBaseComponentDefaultPriority = 5;
             [updatedKeys addObject:key];
         }
     }
+    if ([_configuration isEqualToDictionary:replacement]) {
+        DLog(@"Configuration remains unchanged.");
+        return;
+    }
     _configuration = replacement;
     [self statusBarComponentUpdate];
     [self.delegate statusBarComponentKnobsDidChange:self
