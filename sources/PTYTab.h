@@ -108,7 +108,8 @@ extern NSString *const PTYTabVariableTitleOverride;
                        viewMap:(NSDictionary<NSNumber *, SessionView *> *)viewMap
                     sessionMap:(NSDictionary<NSString *, PTYSession *> *)sessionMap
                 tmuxController:(TmuxController *)tmuxController
-            partialAttachments:(NSDictionary *)partialAttachments;
+            partialAttachments:(NSDictionary *)partialAttachments
+              reservedTabGUIDs:(NSSet<NSString *> *)reservedTabGUIDs;
 
 + (NSDictionary<NSString *, PTYSession *> *)sessionMapWithArrangement:(NSDictionary *)arrangement
                                                              sessions:(NSArray *)sessions;

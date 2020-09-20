@@ -1190,6 +1190,17 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
     return nil;
 }
 
+- (PTYTab *)tabWithGUID:(NSString *)guid {
+    for (PseudoTerminal *term in self.terminals) {
+        for (PTYTab *tab in term.tabs) {
+            if ([tab.stringUniqueIdentifier isEqualToString:guid]) {
+                return tab;
+            }
+        }
+    }
+    return nil;
+}
+
 - (void)dumpViewHierarchy {
     for (PseudoTerminal *term in [self terminals]) {
         DebugLog([NSString stringWithFormat:@"Terminal %@ at %@", [term window], [NSValue valueWithRect:[[term window] frame]]]);

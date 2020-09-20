@@ -87,7 +87,8 @@ typedef NS_ENUM(NSUInteger, iTermHotkeyWindowType) {
 
 - (PseudoTerminal*)terminalWithNumber:(int)n;
 - (PseudoTerminal *)terminalWithGuid:(NSString *)guid;
-- (PTYTab *)tabWithID:(NSString *)tabID;
+- (PTYTab *)tabWithID:(NSString *)tabID;  // short numeric ID
+- (PTYTab *)tabWithGUID:(NSString *)guid;  // UUID
 
 - (int)allocateWindowNumber;
 

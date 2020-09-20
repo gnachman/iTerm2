@@ -5548,6 +5548,9 @@ ITERM_WEAKLY_REFERENCEABLE
     PTYTab* theTab = [tabViewItem identifier];
     [theTab setParentWindow:self];
     theTab.delegate = self;
+#if BETA
+    [self sanityCheckTabGUIDs];
+#endif
     if ([theTab isTmuxTab]) {
         [theTab recompact];
         [theTab notifyWindowChanged];
@@ -5555,6 +5558,16 @@ ITERM_WEAKLY_REFERENCEABLE
         [[theTab tmuxController] setSize:theTab.tmuxSize window:theTab.tmuxWindow];
     }
     [self saveAffinitiesLater:[tabViewItem identifier]];
+}
+
+- (void)sanityCheckTabGUIDs {
+    NSMutableSet<NSString *> *guids = [NSMutableSet set];
+    for (PseudoTerminal *term in [[iTermController sharedInstance] terminals]) {
+        for (PTYTab *tab in term.tabs) {
+            NSString *guid = tab.stringUniqueIdentifier;
+            ITBetaAssert(![guids containsObject:guid], @"Duplicate tab guid found");
+        }
+    }
 }
 
 - (BOOL)tabView:(NSTabView*)tabView shouldCloseTabViewItem:(NSTabViewItem *)tabViewItem {
@@ -7401,7 +7414,8 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
                                               viewMap:nil
                                            sessionMap:theMap
                                        tmuxController:nil
-                                   partialAttachments:nil];
+                                   partialAttachments:nil
+                                     reservedTabGUIDs:[self tabGUIDs]];
     [tab replaceWithContentsOfTab:temporaryTab];
     [tab updatePaneTitles];
     [tab setActiveSession:nil];
@@ -7436,7 +7450,8 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
                                      viewMap:nil
                                   sessionMap:sessionMap
                               tmuxController:nil
-                          partialAttachments:nil];
+                          partialAttachments:nil
+                            reservedTabGUIDs:[self tabGUIDs]];
     tab.uniqueId = tabUniqueId;
     for (NSString *theKey in sessionMap) {
         PTYSession *session = sessionMap[theKey];
@@ -8116,7 +8131,8 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
                                         viewMap:viewMap
                                      sessionMap:sessionMap
                                  tmuxController:nil
-                             partialAttachments:partialAttachments];
+                             partialAttachments:partialAttachments
+                               reservedTabGUIDs:[self tabGUIDs]];
     if ([[theTab sessionViews] count] == 0) {
         return nil;
     }
@@ -8130,6 +8146,12 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     [theTab didAddToTerminal:self
              withArrangement:arrangement];
     return theTab;
+}
+
+- (NSSet<NSString *> *)tabGUIDs {
+    return [NSSet setWithArray:[self.tabs mapWithBlock:^id(PTYTab *tab) {
+        return tab.stringUniqueIdentifier;
+    }]];
 }
 
 - (void)appendTab:(PTYTab*)aTab {

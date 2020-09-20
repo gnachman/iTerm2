@@ -523,7 +523,8 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                                          viewMap:nil
                                       sessionMap:nil
                                   tmuxController:tmuxController_
-                              partialAttachments:nil];
+                              partialAttachments:nil
+                                reservedTabGUIDs:[NSSet set]];
     return theCopy;
 }
 
@@ -2921,6 +2922,9 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                                 completion:completion];
 }
 
+// reservedTabGUIDs gives GUIDs of other tabs which are not reachable through
+// iTermController.terminals because they are siblings of a window that is still being created.
+// It's passed in to ensure that tab GUIDs are truly globally unique.
 + (PTYTab *)tabWithArrangement:(NSDictionary*)arrangement
                          named:(NSString *)arrangementName
                     inTerminal:(NSWindowController<iTermWindowController> *)term
@@ -2928,7 +2932,8 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                        viewMap:(NSDictionary<NSNumber *, SessionView *> *)viewMap
                     sessionMap:(NSDictionary<NSString *, PTYSession *> *)sessionMap
                 tmuxController:(TmuxController *)tmuxController
-            partialAttachments:(NSDictionary *)partialAttachments {
+            partialAttachments:(NSDictionary *)partialAttachments
+              reservedTabGUIDs:(NSSet<NSString *> *)reservedTabGUIDs {
     PTYTab *theTab;
     NSMutableArray<PTYSession *> *revivedSessions = [NSMutableArray array];
     // Build a tree with splitters and SessionViews but no PTYSessions.
@@ -2969,8 +2974,14 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                                                  forObjectType:objectType
                                             partialAttachments:partialAttachments]];
     theTab.titleOverride = [arrangement[TAB_ARRANGEMENT_TITLE_OVERRIDE] nilIfNull];
-    if (arrangement[TAB_GUID]) {
-        theTab->_guid = arrangement[TAB_GUID];
+    NSString *guid = arrangement[TAB_GUID];
+    if (guid) {
+        if ([[iTermController sharedInstance] tabWithGUID:guid] ||
+            [reservedTabGUIDs containsObject:guid]) {
+            theTab->_guid = [[NSUUID UUID] UUIDString];
+        } else {
+            theTab->_guid = arrangement[TAB_GUID];
+        }
     }
     [theTab updateTmuxTitleMonitor];
     return theTab;
@@ -3535,7 +3546,8 @@ typedef struct {
                                       viewMap:nil
                                    sessionMap:nil
                                tmuxController:tmuxController
-                           partialAttachments:nil];
+                           partialAttachments:nil
+                             reservedTabGUIDs:[NSSet set]];
 
     NSArray *theChildren = [parseTree objectForKey:kLayoutDictChildrenKey];
     BOOL haveMultipleSessions = ([theChildren count] > 1);
