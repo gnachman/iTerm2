@@ -7511,7 +7511,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     NSSize size = [sessionView frame].size;
     if (performSetup) {
         [self setupSession:newSession withSize:&size];
-        scrollView = [[[newSession view] subviews] objectAtIndex:0];
+        scrollView = newSession.view.scrollview;
     } else {
         [newSession setScrollViewDocumentView];
     }
