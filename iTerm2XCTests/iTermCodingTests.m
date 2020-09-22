@@ -4,7 +4,7 @@
 //
 //  Created by George Nachman on 7/26/20.
 //
-
+#if 0
 #import <XCTest/XCTest.h>
 
 #import "NSArray+iTerm.h"
@@ -1662,3 +1662,4 @@
 }
 
 @end
+#endif
