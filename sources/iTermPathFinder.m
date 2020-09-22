@@ -204,7 +204,7 @@ static dispatch_queue_t iTermPathFinderQueue(void) {
 - (NSArray<NSString *> *)splitString:(NSString *)string {
     NSMutableArray<NSString *> *parts = [NSMutableArray array];
     __block NSRange lastRange = NSMakeRange(0, 0);
-    [string enumerateStringsMatchedByRegex:@"([^\t ():]*)([\t ():])"
+    [string enumerateStringsMatchedByRegex:@"([^\t ():\",]*)([\t ():\",])"
                                    options:0
                                    inRange:NSMakeRange(0, string.length)
                                      error:nil
@@ -246,7 +246,9 @@ static dispatch_queue_t iTermPathFinderQueue(void) {
                                       @"^(:\\d+)",
                                       @"^(\\[\\d+, ?\\d+])",
                                       @"^(\", line \\d+, column \\d+)",
+                                      @"^(\", line \\d+, in)",
                                       @"^(\\(\\d+, ?\\d+\\))"];
+    // NOTE: If you change this also update regexes in iTermPathCleaner.
     for (NSString *regex in regexes) {
         NSString *value = [suffix stringByMatching:regex capture:1];
         if (value) {

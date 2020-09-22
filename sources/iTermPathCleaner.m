@@ -177,7 +177,9 @@ static dispatch_queue_t iTermPathCleanerQueue(void) {
               @":(\\d+)",
               @"\\[(\\d+), ?(\\d+)]",
               @"\", line (\\d+), column (\\d+)",
+              @"\", line (\\d+), in",
               @"\\((\\d+), ?(\\d+)\\)" ];
+    // NOTE: If you change this also update regexes in iTermPathFinder.
 }
 
 - (NSString *)pathByStrippingEnclosingPunctuationFromPath:(NSString *)path

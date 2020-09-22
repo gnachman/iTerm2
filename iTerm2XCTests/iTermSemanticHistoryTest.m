@@ -131,8 +131,12 @@
     completion();
 }
 
-- (BOOL)openFile:(NSString *)fullPath {
-    self.openedFile = fullPath;
+- (BOOL)openFile:(NSString *)fullPath fragment:(NSString *)fragment {
+    if (fragment) {
+        self.openedFile = [NSString stringWithFormat:@"%@#%@", fullPath, fragment];
+    } else {
+        self.openedFile = fullPath;
+    }
     return YES;
 }
 
@@ -366,6 +370,23 @@
     XCTAssert(columnNumber.integerValue == 456);
 }
 
+- (void)testGetFullPathExtractsVeryVerboseLineNumberSyntax {
+    NSString *lineNumber = nil;
+    NSString *columnNumber = nil;
+    static NSString *const kFilename = @"/path/to/file";
+    static NSString *const kWorkingDirectory = @"/working/directory";
+    [_semanticHistoryController.fakeFileManager.files addObject:kFilename];
+    NSString *actual = [_semanticHistoryController cleanedUpPathFromPath:kFilename
+                                                                  suffix:@"\", line 123, in <module>"
+                                                        workingDirectory:kWorkingDirectory
+                                                     extractedLineNumber:&lineNumber
+                                                            columnNumber:&columnNumber];
+    NSString *expected = kFilename;
+    XCTAssert([expected isEqualToString:actual]);
+    XCTAssert(lineNumber.integerValue == 123);
+    XCTAssert(columnNumber == nil);
+}
+
 - (void)testGetFullPathExtractsParenthesesLineNumberAndColumnSyntax {
     NSString *lineNumber = nil;
     NSString *columnNumber = nil;
@@ -562,6 +583,7 @@
     dispatch_group_enter(group);
     [_semanticHistoryController openPath:path
                            orRawFilename:rawFileName
+                                fragment:nil
                            substitutions:substitutions
                                    scope:_scope
                               lineNumber:lineNumber
@@ -597,7 +619,7 @@
                       lineNumber:lineNumber
                     columnNumber:columnNumber];
     XCTAssert(opened);
-    NSString *expectedScript = @"'Prefix X Suffix:1';;Prefix;Suffix;/tmp;User Variable";
+    NSString *expectedScript = @"Prefix\\ X\\ Suffix:1;;Prefix;Suffix;/tmp;User Variable";
     NSString *actualScript = _semanticHistoryController.scriptArguments[1];
     XCTAssertEqualObjects(expectedScript, actualScript);
 }
@@ -687,7 +709,7 @@
                       lineNumber:lineNumber
                     columnNumber:columnNumber];
     XCTAssert(opened);
-    XCTAssert([kDirectory isEqualToString:_semanticHistoryController.openedFile]);
+    XCTAssertEqualObjects(kDirectory, _semanticHistoryController.openedFile);
 }
 
 - (void)testOpenPathOpensURLWithProperSubstitutions {
@@ -714,7 +736,7 @@
                     columnNumber:columnNumber];
     XCTAssert(opened);
     NSURL *expectedURL =
-        [NSURL URLWithString:@"http://foo/?pwd=%2FThe%20Path&line=1&prefix=The%20Prefix&suffix=The%20Suffix&dir=%2F&uservar=User%20Variable"];
+        [NSURL URLWithString:@"http://foo/?pwd=/The%20Path&line=1&prefix=The%20Prefix&suffix=The%20Suffix&dir=/&uservar=User%20Variable"];
     NSURL *actualURL = _semanticHistoryController.openedURL;
     XCTAssertEqualObjects(expectedURL, actualURL);
     XCTAssert(!_semanticHistoryController.openedEditor);
@@ -740,7 +762,7 @@
                       lineNumber:lineNumber
                     columnNumber:columnNumber];
     XCTAssert(opened);
-    NSString *expectedUrlString = [NSString stringWithFormat:@"mvim://open?url=file://%@",
+    NSString *expectedUrlString = [NSString stringWithFormat:@"mvim://open?url=file:%%2F%%2F%@",
                                    [kExistingFileAbsolutePath stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet alphanumericCharacterSet]]];
     XCTAssertEqualObjects(_semanticHistoryController.openedURL, [NSURL URLWithString:expectedUrlString]);
     XCTAssert([_semanticHistoryController.openedEditor isEqualToString:kMacVimIdentifier]);
@@ -769,10 +791,11 @@
                       lineNumber:lineNumber
                     columnNumber:columnNumber];
     XCTAssert(opened);
-    NSString *expectedUrlString = [NSString stringWithFormat:@"mvim://open?url=file://%@&line=12",
-                                   [kExistingFileAbsolutePath stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet alphanumericCharacterSet]]];
-    XCTAssert([_semanticHistoryController.openedURL isEqualTo:[NSURL URLWithString:expectedUrlString]]);
-    XCTAssert([_semanticHistoryController.openedEditor isEqualToString:kMacVimIdentifier]);
+    NSString *expectedUrlString = @"mvim://open?url=file:///file/that/exists&line=12";
+    XCTAssertEqualObjects(_semanticHistoryController.openedURL,
+                          [NSURL URLWithString:expectedUrlString]);
+    XCTAssertEqualObjects(_semanticHistoryController.openedEditor,
+                          kMacVimIdentifier);
 }
 
 - (void)testOpenPathOpensTextFileInEditorWithLineNumberWhenEditorIsDefaultApp {
@@ -796,8 +819,7 @@
                       lineNumber:lineNumber
                     columnNumber:columnNumber];
     XCTAssert(opened);
-    NSString *expectedUrlString = [NSString stringWithFormat:@"mvim://open?url=file://%@&line=12",
-                                   [kExistingFileAbsolutePath stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet alphanumericCharacterSet]]];
+    NSString *expectedUrlString = @"mvim://open?url=file:///file/that/exists&line=12";
     XCTAssertEqualObjects(_semanticHistoryController.openedURL, [NSURL URLWithString:expectedUrlString]);
     XCTAssert([_semanticHistoryController.openedEditor isEqualToString:kMacVimIdentifier]);
 }

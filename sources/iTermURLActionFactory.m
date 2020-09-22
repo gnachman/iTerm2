@@ -287,9 +287,15 @@ semanticHistoryController:(iTermSemanticHistoryController *)semanticHistoryContr
     [locatedPrefix.string substringIncludingOffset:[locatedPrefix.string length] - 1
                                   fromCharacterSet:[NSCharacterSet filenameCharacterSet]
                               charsTakenFromPrefix:NULL];
+
+    // Allow quotes and commas in the suffix to pick up Python line numbers like:
+    //   File "/path/to/file.py", line 12, in <module>
+    NSMutableCharacterSet *suffixCharacterSet = [[NSCharacterSet filenameCharacterSet] mutableCopy];
+    [suffixCharacterSet formUnionWithCharacterSet:[NSCharacterSet characterSetWithCharactersInString:@"\","]];
+
     NSString *possibleFilePart2 =
     [locatedSuffix.string substringIncludingOffset:0
-                                  fromCharacterSet:[NSCharacterSet filenameCharacterSet]
+                                  fromCharacterSet:suffixCharacterSet
                               charsTakenFromPrefix:NULL];
     DLog(@"Prefix=%@", possibleFilePart1);
     DLog(@"Suffix=%@", possibleFilePart2);
