@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Scheme
-   LastUpgradeVersion = "1130"
+   LastUpgradeVersion = "1200"
    version = "1.3">
    <BuildAction
       parallelizeBuildables = "YES"
@@ -14,10 +14,10 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "A6DBE7B0225ABC5F00144200"
-               BuildableName = "BetterFontPickerDemo.app"
-               BlueprintName = "BetterFontPickerDemo"
-               ReferencedContainer = "container:BetterFontPicker.xcodeproj">
+               BlueprintIdentifier = "A6184EA71BA874020088EF3C"
+               BuildableName = "ColorPicker.framework"
+               BlueprintName = "ColorPicker"
+               ReferencedContainer = "container:ColorPicker.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -27,16 +27,17 @@
       selectedDebuggerIdentifier = "Xcode.DebuggerFoundation.Debugger.LLDB"
       selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
       shouldUseLaunchSchemeArgsEnv = "YES">
-      <MacroExpansion>
-         <BuildableReference
-            BuildableIdentifier = "primary"
-            BlueprintIdentifier = "A6DBE7B0225ABC5F00144200"
-            BuildableName = "BetterFontPickerDemo.app"
-            BlueprintName = "BetterFontPickerDemo"
-            ReferencedContainer = "container:BetterFontPicker.xcodeproj">
-         </BuildableReference>
-      </MacroExpansion>
       <Testables>
+         <TestableReference
+            skipped = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "A6184EB21BA874020088EF3C"
+               BuildableName = "ColorPickerTests.xctest"
+               BlueprintName = "ColorPickerTests"
+               ReferencedContainer = "container:ColorPicker.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
       </Testables>
    </TestAction>
    <LaunchAction
@@ -49,16 +50,6 @@
       debugDocumentVersioning = "YES"
       debugServiceExtension = "internal"
       allowLocationSimulation = "YES">
-      <BuildableProductRunnable
-         runnableDebuggingMode = "0">
-         <BuildableReference
-            BuildableIdentifier = "primary"
-            BlueprintIdentifier = "A6DBE7B0225ABC5F00144200"
-            BuildableName = "BetterFontPickerDemo.app"
-            BlueprintName = "BetterFontPickerDemo"
-            ReferencedContainer = "container:BetterFontPicker.xcodeproj">
-         </BuildableReference>
-      </BuildableProductRunnable>
    </LaunchAction>
    <ProfileAction
       buildConfiguration = "Release"
@@ -66,16 +57,15 @@
       savedToolIdentifier = ""
       useCustomWorkingDirectory = "NO"
       debugDocumentVersioning = "YES">
-      <BuildableProductRunnable
-         runnableDebuggingMode = "0">
+      <MacroExpansion>
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "A6DBE7B0225ABC5F00144200"
-            BuildableName = "BetterFontPickerDemo.app"
-            BlueprintName = "BetterFontPickerDemo"
-            ReferencedContainer = "container:BetterFontPicker.xcodeproj">
+            BlueprintIdentifier = "A6184EA71BA874020088EF3C"
+            BuildableName = "ColorPicker.framework"
+            BlueprintName = "ColorPicker"
+            ReferencedContainer = "container:ColorPicker.xcodeproj">
          </BuildableReference>
-      </BuildableProductRunnable>
+      </MacroExpansion>
    </ProfileAction>
    <AnalyzeAction
       buildConfiguration = "Debug">
