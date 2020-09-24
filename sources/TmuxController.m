@@ -138,6 +138,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     int _paneToActivateWhenCreated;
     iTermTmuxBufferSizeMonitor *_tmuxBufferMonitor;
     NSMutableDictionary<NSNumber *, NSValue *> *_windowSizes;  // window -> NSValue cell size
+    BOOL _versionDetected;
 }
 
 @synthesize gateway = gateway_;
@@ -941,20 +942,20 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
 }
 
 - (void)enablePauseModeIfPossible {
+    DLog(@"enablePauseModeIfPossible min=%@ max=%@", gateway_.minimumServerVersion, gateway_.maximumServerVersion);
     if (gateway_.minimumServerVersion &&
         [gateway_.minimumServerVersion compare:[NSDecimalNumber decimalNumberWithString:@"3.2"]] == NSOrderedAscending) {
+        DLog(@"min < 3.2");
         return;
     }
-    if (gateway_.maximumServerVersion &&
-        [gateway_.maximumServerVersion compare:[NSDecimalNumber decimalNumberWithString:@"3.2"]] == NSOrderedAscending) {
+    if (!gateway_.minimumServerVersion) {
+        DLog(@"have no min version");
         return;
     }
-    if (!gateway_.minimumServerVersion && !gateway_.maximumServerVersion) {
-        return;
-    }
-    NSUInteger catchUpTime= [iTermPreferences unsignedIntegerForKey:kPreferenceKeyTmuxPauseModeAgeLimit];
+    NSUInteger catchUpTime = [iTermPreferences unsignedIntegerForKey:kPreferenceKeyTmuxPauseModeAgeLimit];
     gateway_.pauseModeEnabled = YES;
     const NSInteger age = MAX(1, round(catchUpTime));
+    DLog(@"Enable pause-after=%@", @(age));
     [gateway_ sendCommand:[NSString stringWithFormat:@"refresh-client -fpause-after=%@", @(age)]
            responseTarget:nil
          responseSelector:nil];
@@ -1162,6 +1163,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
 }
 
 - (void)handleDisplayMessageVersion:(NSString *)response {
+    DLog(@"handleDisplayMessageVersion: %@", response);
     if (response.length == 0) {
         // The "version" format was first added in 2.4
         [self decreaseMaximumServerVersionTo:@"2.3"];
@@ -1177,15 +1179,20 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
         response = [response stringByDroppingLastCharacters:3];
     }
     // In case we get back something that's not a number, or a totally unreasonable number, just ignore this.
+    DLog(@"response=%@", response);
     NSDecimalNumber *number = [NSDecimalNumber decimalNumberWithString:response];
+    DLog(@"number=%@", number);
     if (number.doubleValue != number.doubleValue ||
         number.doubleValue < 2.4 || number.doubleValue > 10) {
+        DLog(@"nan or out of bounds, do nothing.");
         return;
     }
     
     // Sadly tmux version numbers look like 2.9 or 2.9a instead of a proper decimal number.
     NSRange range = [response rangeOfCharacterFromSet:[NSCharacterSet lowercaseLetterCharacterSet]];
+    DLog(@"Use range %@", NSStringFromRange(range));
     if (range.location == NSNotFound) {
+        DLog(@"Normal case: increase min version to %@", response);
         [self increaseMinimumServerVersionTo:response];
     } else {
         // Convert 2.9a to 2.91
@@ -1195,15 +1202,24 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
         NSInteger bug = c - 'a' + 1;
         NSString *prefix = [response substringToIndex:range.location];
         NSString *version = [NSString stringWithFormat:@"%@%@", prefix, @(bug)];
+        DLog(@"dot-release. Increase min version to %@", version);
         [self increaseMinimumServerVersionTo:version];
     }
 
     if (gateway_.minimumServerVersion.doubleValue >= 2.9 && [iTermAdvancedSettingsModel tmuxVariableWindowSizesSupported]) {
         _variableWindowSize = YES;
     }
+
+    _versionDetected = YES;
+    [self didGuessVersion];
 }
 
 - (void)guessVersion23Response:(NSString *)response {
+    if (_versionDetected) {
+        DLog(@"Version already detected.");
+        return;
+    }
+    DLog(@"guessVersion23Response");
     if (response == nil) {
         [self decreaseMaximumServerVersionTo:@"2.2"];
     } else {
@@ -1212,6 +1228,11 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
 }
 
 - (void)guessVersion22Response:(NSString *)response {
+    if (_versionDetected) {
+        DLog(@"Version already detected.");
+        return;
+    }
+    DLog(@"guessVersion22Response");
     const NSInteger index = [response rangeOfCharacterFromSet:[[NSCharacterSet whitespaceAndNewlineCharacterSet] invertedSet]].location;
     if (index == NSNotFound) {
         [self decreaseMaximumServerVersionTo:@"2.1"];
@@ -1221,6 +1242,11 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
 }
 
 - (void)guessVersion21Response:(NSString *)response {
+    if (_versionDetected) {
+        DLog(@"Version already detected.");
+        return;
+    }
+    DLog(@"guessVersion21Response");
     if (response.length == 0) {
         [self decreaseMaximumServerVersionTo:@"2.0"];
     } else {
@@ -1229,6 +1255,11 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
 }
 
 - (void)guessVersion18Response:(NSString *)response {
+    if (_versionDetected) {
+        DLog(@"Version already detected.");
+        return;
+    }
+    DLog(@"guessVersion18Response");
     if (response.length == 0) {
         [self increaseMinimumServerVersionTo:@"1.9"];
     } else {
@@ -1241,6 +1272,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
 
 // Actions to perform after the version number is known.
 - (void)didGuessVersion {
+    DLog(@"didGuessVersion");
     [self enablePauseModeIfPossible];
     [self loadServerPID];
     [self loadTitleFormat];
