@@ -12284,6 +12284,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     }
 }
 
+- (BOOL)updateCadenceControllerWindowHasSheet {
+    return self.view.window.sheets.count > 0;
+}
+
 #pragma mark - API
 
 - (NSString *)stringForLine:(screen_char_t *)screenChars

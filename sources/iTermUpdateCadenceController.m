@@ -13,6 +13,7 @@
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermHistogram.h"
 #import "iTermThroughputEstimator.h"
+#import "iTermWarning.h"
 
 // Timer period between updates when adaptive frame rate is enabled and throughput is low but not 0.
 static const NSTimeInterval kFastUpdateCadence = 1.0 / 60.0;
@@ -252,7 +253,7 @@ static const NSTimeInterval kBackgroundUpdateCadence = 1;
     __weak __typeof(self) weakSelf = self;
     dispatch_source_set_event_handler(_gcdUpdateTimer, ^{
         DLog(@"GCD cadence timer fired for %@", weakSelf);
-        [weakSelf updateDisplay];
+        [weakSelf maybeUpdateDisplay];
     });
     dispatch_resume(_gcdUpdateTimer);
 }
@@ -263,6 +264,13 @@ static const NSTimeInterval kBackgroundUpdateCadence = 1;
     } else {
         return _updateTimer.isValid;
     }
+}
+
+- (void)maybeUpdateDisplay {
+    if ([iTermWarning showingWarning] || [NSApp modalWindow] || [self.delegate updateCadenceControllerWindowHasSheet]) {
+        return;
+    }
+    [self updateDisplay];
 }
 
 - (void)updateDisplay {
