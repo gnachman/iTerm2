@@ -1268,6 +1268,7 @@ DQ
                 <outlet property="_unpauseTmuxAutomatically" destination="Xpa-up-i7z" id="P3K-mQ-k3Y"/>
                 <outlet property="_useTmuxProfile" destination="gLU-0J-chc" id="IzY-fx-eIB"/>
                 <outlet property="_useTmuxStatusBar" destination="oHn-bB-rYM" id="GMi-WL-nVq"/>
+                <outlet property="_warningButton" destination="d3j-d3-YO1" id="V75-M5-Dk8"/>
                 <outlet property="_wordChars" destination="2096" id="hwf-SH-vM1"/>
                 <outlet property="_wordCharsLabel" destination="2095" id="skH-XY-s6r"/>
                 <outlet property="view" destination="zBG-6Q-502" id="Pic-en-AMU"/>
@@ -4566,7 +4567,7 @@ DQ
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                 <subviews>
                                     <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="La3-md-S0L" customClass="iTermPreferencesInnerTabContainerView">
-                                        <rect key="frame" x="126" y="384" width="502" height="84"/>
+                                        <rect key="frame" x="93" y="384" width="569" height="84"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMinY="YES"/>
                                         <subviews>
                                             <popUpButton verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="cZL-gb-ECo">
@@ -4588,8 +4589,8 @@ DQ
                                                 </connections>
                                             </popUpButton>
                                             <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="64T-Y0-ROF">
-                                                <rect key="frame" x="18" y="43" width="166" height="17"/>
-                                                <autoresizingMask key="autoresizingMask"/>
+                                                <rect key="frame" x="18" y="45" width="166" height="17"/>
+                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <textFieldCell key="cell" lineBreakMode="clipping" title="Window restoration policy:" id="ggI-iG-lBw">
                                                     <font key="font" metaFont="system"/>
                                                     <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
@@ -4605,6 +4606,17 @@ DQ
                                                 </buttonCell>
                                                 <connections>
                                                     <action selector="settingChanged:" target="9Se-ld-UJa" id="1gO-ml-ecT"/>
+                                                </connections>
+                                            </button>
+                                            <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="d3j-d3-YO1">
+                                                <rect key="frame" x="485" y="44" width="23" height="20"/>
+                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                <buttonCell key="cell" type="bevel" title="⚠️" bezelStyle="rounded" alignment="center" imageScaling="proportionallyDown" inset="2" id="guj-u2-dA0">
+                                                    <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                                                    <font key="font" metaFont="system"/>
+                                                </buttonCell>
+                                                <connections>
+                                                    <action selector="warning:" target="9Se-ld-UJa" id="BKs-vE-c7P"/>
                                                 </connections>
                                             </button>
                                         </subviews>

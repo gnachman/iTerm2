@@ -21,6 +21,14 @@ static char iTermAdvancedSettingsModelKVOKey;
     return self;
 }
 
+- (void)dealloc {
+    for (NSString *key in _blocks) {
+        [[NSUserDefaults standardUserDefaults] removeObserver:self
+                                                   forKeyPath:key
+                                                      context:(void *)&iTermAdvancedSettingsModelKVOKey];
+    }
+}
+
 - (void)observeKey:(NSString *)key block:(void (^)(void))block {
     _blocks[key] = [block copy];
     [[NSUserDefaults standardUserDefaults] addObserver:self

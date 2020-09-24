@@ -15,6 +15,7 @@
 #import "iTermPreferenceDidChangeNotification.h"
 #import "iTermRemotePreferences.h"
 #import "iTermShellHistoryController.h"
+#import "iTermUserDefaultsObserver.h"
 #import "iTermWarning.h"
 #import "NSTextField+iTerm.h"
 #import "PasteboardHistory.h"
@@ -131,6 +132,8 @@ enum {
     IBOutlet NSTabView *_tabView;
 
     IBOutlet NSButton *_enterCopyModeAutomatically;
+    IBOutlet NSButton *_warningButton;
+    iTermUserDefaultsObserver *_observer;
 }
 
 - (instancetype)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil {
@@ -144,7 +147,11 @@ enum {
                                                  selector:@selector(didRevertPythonAuthenticationMethod:)
                                                      name:iTermAPIHelperDidDetectChangeOfPythonAuthMethodNotification
                                                    object:nil];
-
+        _observer = [[iTermUserDefaultsObserver alloc] init];
+        __weak __typeof(self) weakSelf = self;
+        [_observer observeKey:@"NSQuitAlwaysKeepsWindows" block:^{
+            [weakSelf updateEnabledState];
+        }];
     }
     return self;
 }
@@ -183,6 +190,7 @@ enum {
                      [strongSelf setBool:YES forKey:kPreferenceKeyOpenNoWindowsAtStartup];
                      break;
              }
+             [strongSelf updateEnabledState];
          } update:^BOOL{
              __strong __typeof(weakSelf) strongSelf = weakSelf;
              if (!strongSelf) {
@@ -196,6 +204,7 @@ enum {
              } else {
                  [strongSelf->_openWindowsAtStartup selectItemWithTag:kUseSystemWindowRestorationSettingTag];
              }
+             [strongSelf updateEnabledState];
              return YES;
          }];
     [_openDefaultWindowArrangementItem setEnabled:[WindowArrangements count] > 0];
@@ -520,6 +529,10 @@ enum {
     [super updateEnabledState];
     [_apiPermission selectItemWithTag:[iTermAPIHelper requireApplescriptAuth] ? 0 : 1];
     _evenIfThereAreNoWindows.enabled = [self boolForKey:kPreferenceKeyPromptOnQuit];
+    const BOOL useSystemWindowRestoration = (![self boolForKey:kPreferenceKeyOpenArrangementAtStartup] &&
+                                             ![self boolForKey:kPreferenceKeyOpenNoWindowsAtStartup]);
+    const BOOL systemRestorationEnabled = [[NSUserDefaults standardUserDefaults] boolForKey:@"NSQuitAlwaysKeepsWindows"];
+    _warningButton.hidden = (!useSystemWindowRestoration || systemRestorationEnabled);
 }
 
 - (void)updateAdvancedGPUEnabled {
@@ -556,6 +569,20 @@ enum {
 }
 
 #pragma mark - Actions
+
+- (IBAction)warning:(id)sender {
+    const iTermWarningSelection selection =
+    [iTermWarning showWarningWithTitle:@"System window restoration has been disabled, which prevents iTerm2 from respecting this setting. Disable System Preferences > General > Close windows when quitting an app to enable window restoration."
+                               actions:@[ @"Open System Preferences", @"OK" ]
+                             accessory:nil
+                            identifier:@"NoSyncWindowRestorationDisabled"
+                           silenceable:kiTermWarningTypePersistent
+                               heading:@"Window Restoration Disabled"
+                                window:self.view.window];
+    if (selection == kiTermWarningSelection0) {
+        [[NSWorkspace sharedWorkspace] openURL:[NSURL fileURLWithPath:@"/System/Library/PreferencePanes/Appearance.prefPane"]];
+    }
+}
 
 - (IBAction)browseCustomFolder:(id)sender {
     [self choosePrefsCustomFolder];
