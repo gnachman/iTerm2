@@ -33,8 +33,11 @@ NS_ASSUME_NONNULL_BEGIN
 @interface iTermSnippetsModel : NSObject
 
 + (instancetype)sharedInstance;
++ (instancetype)instanceForProfileWithGUID:(NSString *)guid;
 
 @property (nonatomic, readonly) NSArray<iTermSnippet *> *snippets;
+
+- (instancetype)init NS_UNAVAILABLE;
 
 - (void)addSnippet:(iTermSnippet *)snippet;
 - (void)removeSnippets:(NSArray<iTermSnippet *> *)snippets;
@@ -60,13 +63,17 @@ typedef NS_ENUM(NSUInteger, iTermSnippetsDidChangeMutationType) {
 @property (nonatomic, readonly) iTermSnippetsDidChangeMutationType mutationType;
 @property (nonatomic, readonly) NSInteger index;
 @property (nonatomic, readonly) NSIndexSet *indexSet;  // for move only
+@property (nonatomic, readonly) iTermSnippetsModel *model;
 
 + (instancetype)notificationWithMutationType:(iTermSnippetsDidChangeMutationType)mutationType
-                                       index:(NSInteger)index;
+                                       index:(NSInteger)index
+                                       model:(iTermSnippetsModel *)model;
 + (instancetype)moveNotificationWithRemovals:(NSIndexSet *)removals
-                            destinationIndex:(NSInteger)destinationIndex;
-+ (instancetype)fullReplacementNotification;
-+ (instancetype)removalNotificationWithIndexes:(NSIndexSet *)indexes;
+                            destinationIndex:(NSInteger)destinationIndex
+                                       model:(iTermSnippetsModel *)model;
++ (instancetype)fullReplacementNotificationForModel:(iTermSnippetsModel *)model;
++ (instancetype)removalNotificationWithIndexes:(NSIndexSet *)indexes
+                                         model:(iTermSnippetsModel *)model;
 
 + (void)subscribe:(NSObject *)owner
             block:(void (^)(iTermSnippetsDidChangeNotification * _Nonnull notification))block;

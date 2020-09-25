@@ -35,6 +35,7 @@
 
 NSString *const kReloadAddressBookNotification = @"iTermReloadAddressBook";
 NSString *const kReloadAllProfiles = @"kReloadAllProfiles";
+NSString *const iTermProfileSnippetsDidChange = @"iTermProfileSnippetsDidChange";
 NSString *const iTermProfileModelNewWindowMenuItemIdentifierPrefix = @"NewWindow:";
 NSString *const iTermProfileModelNewTabMenuItemIdentifierPrefix = @"NewTab:";
 

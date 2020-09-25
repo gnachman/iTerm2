@@ -47,6 +47,7 @@ extern NSString *const iTermSessionWillTerminateNotification;
 @class iTermExpect;
 @class iTermKeyBindingAction;
 @class iTermScriptHistoryEntry;
+@class iTermSnippet;
 @class iTermStatusBarViewController;
 @class iTermSwiftyStringGraph;
 @class iTermVariables;
@@ -548,6 +549,7 @@ backgroundColor:(NSColor *)backgroundColor;
 @property(nonatomic, readonly) iTermExpect *expect;
 @property(nonatomic, readonly) BOOL tmuxPaused;
 @property(nonatomic, readonly) NSString *userShell;  // Something like "/bin/bash".
+@property(nonatomic, readonly, copy) NSArray<iTermSnippet *> *snippets;
 
 #pragma mark - methods
 

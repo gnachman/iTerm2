@@ -36,6 +36,27 @@ static NSString *const iTermSnippetsEditingPasteboardType = @"iTermSnippetsEditi
 
     NSArray<iTermSnippet *> *_snippets;
     iTermEditSnippetWindowController *_windowController;
+    BOOL _initialized;
+}
+
+- (instancetype)initWithCoder:(NSCoder *)coder {
+    self = [super initWithCoder:coder];
+    if (self) {
+        _model = [iTermSnippetsModel sharedInstance];
+    }
+    return self;
+}
+
+- (void)setModel:(iTermSnippetsModel *)model {
+    _model = model;
+    [self loadFromModel];
+}
+
+- (void)loadFromModel {
+    _snippets = [[_model snippets] copy];
+    [self updateEnabled];
+    [_tableView reloadData];
+    [self finishInitialization];
 }
 
 - (void)defineControlsInContainer:(iTermPreferencesBaseViewController *)container
@@ -43,26 +64,31 @@ static NSString *const iTermSnippetsEditingPasteboardType = @"iTermSnippetsEditi
     [containerView addSubview:self.view];
     containerView.autoresizesSubviews = YES;
     self.view.frame = containerView.bounds;
-    _snippets = [[[iTermSnippetsModel sharedInstance] snippets] copy];
-    [_tableView setDoubleAction:@selector(doubleClickOnTableView:)];
-    [self updateEnabled];
-    [_tableView registerForDraggedTypes:@[ iTermSnippetsEditingPasteboardType ]];
-    [_tableView reloadData];
-    __weak __typeof(self) weakSelf = self;
-    [iTermSnippetsDidChangeNotification subscribe:self
-                                            block:^(iTermSnippetsDidChangeNotification * _Nonnull notification) {
-        [weakSelf snippetsDidChange:notification];
-    }];
+    [self loadFromModel];
     [container addViewToSearchIndex:_tableView
                         displayName:@"Snippets"
                             phrases:@[ @"Snippets" ]
                                 key:kPreferenceKeySnippets];
 }
 
+- (void)finishInitialization {
+    if (_initialized) {
+        return;
+    }
+    _initialized = YES;
+    [_tableView setDoubleAction:@selector(doubleClickOnTableView:)];
+    [_tableView registerForDraggedTypes:@[ iTermSnippetsEditingPasteboardType ]];
+    __weak __typeof(self) weakSelf = self;
+    [iTermSnippetsDidChangeNotification subscribe:self
+                                            block:^(iTermSnippetsDidChangeNotification * _Nonnull notification) {
+        [weakSelf snippetsDidChange:notification];
+    }];
+}
+
 #pragma mark - Private
 
 - (NSArray<iTermSnippet *> *)selectedSnippets {
-    NSArray<iTermSnippet *> *snippets = [[iTermSnippetsModel sharedInstance] snippets];
+    NSArray<iTermSnippet *> *snippets = [_model snippets];
     return [[_tableView.selectedRowIndexes it_array] mapWithBlock:^id(NSNumber *indexNumber) {
         return snippets[indexNumber.integerValue];
     }];
@@ -70,7 +96,7 @@ static NSString *const iTermSnippetsEditingPasteboardType = @"iTermSnippetsEditi
 
 - (void)setSnippets:(NSArray<iTermSnippet *> *)snippets {
     [self pushUndo];
-    [[iTermSnippetsModel sharedInstance] setSnippets:snippets];
+    [_model setSnippets:snippets];
 }
 
 - (void)pushUndo {
@@ -80,7 +106,10 @@ static NSString *const iTermSnippetsEditingPasteboardType = @"iTermSnippetsEditi
 }
 
 - (void)snippetsDidChange:(iTermSnippetsDidChangeNotification *)notif {
-    _snippets = [[[iTermSnippetsModel sharedInstance] snippets] copy];
+    if (notif.model != _model) {
+        return;
+    }
+    _snippets = [[_model snippets] copy];
     switch (notif.mutationType) {
         case iTermSnippetsDidChangeMutationTypeEdit: {
             [_tableView it_performUpdateBlock:^{
@@ -140,12 +169,13 @@ static NSString *const iTermSnippetsEditingPasteboardType = @"iTermSnippetsEditi
 }
 
 - (IBAction)add:(id)sender {
+    __weak __typeof(self) weakSelf = self;
     _windowController = [[iTermEditSnippetWindowController alloc] initWithSnippet:nil
                                                                        completion:^(iTermSnippet * _Nullable snippet) {
         if (!snippet) {
             return;
         }
-        [[iTermSnippetsModel sharedInstance] addSnippet:snippet];
+        [weakSelf.model addSnippet:snippet];
     }];
     [self.view.window beginSheet:_windowController.window completionHandler:^(NSModalResponse returnCode) {}];
 }
@@ -153,18 +183,19 @@ static NSString *const iTermSnippetsEditingPasteboardType = @"iTermSnippetsEditi
 - (IBAction)remove:(id)sender {
     NSArray<iTermSnippet *> *snippets = [self selectedSnippets];
     [self pushUndo];
-    [[iTermSnippetsModel sharedInstance] removeSnippets:snippets];
+    [_model removeSnippets:snippets];
 }
 
 - (IBAction)edit:(id)sender {
     iTermSnippet *snippet = [[self selectedSnippets] firstObject];
     if (snippet) {
+        __weak __typeof(self) weakSelf = self;
         _windowController = [[iTermEditSnippetWindowController alloc] initWithSnippet:snippet
                                                                            completion:^(iTermSnippet * _Nullable updatedSnippet) {
             if (!updatedSnippet) {
                 return;
             }
-            [[iTermSnippetsModel sharedInstance] replaceSnippet:snippet withSnippet:updatedSnippet];
+            [weakSelf.model replaceSnippet:snippet withSnippet:updatedSnippet];
         }];
         [self.view.window beginSheet:_windowController.window completionHandler:^(NSModalResponse returnCode) {}];
     }
@@ -266,8 +297,8 @@ writeRowsWithIndexes:(NSIndexSet *)rowIndexes
     [self pushUndo];
     NSPasteboard *pboard = [info draggingPasteboard];
     NSArray<NSNumber *> *identifiers = [pboard propertyListForType:iTermSnippetsEditingPasteboardType];
-    [[iTermSnippetsModel sharedInstance] moveSnippetsWithIdentifiers:identifiers
-                                                             toIndex:row];
+    [_model moveSnippetsWithIdentifiers:identifiers
+                                toIndex:row];
     return YES;
 }
 

@@ -8,10 +8,12 @@
 #import "iTermSnippetsModel.h"
 #import "iTermNotificationCenter+Protected.h"
 #import "iTermPreferences.h"
+#import "iTermSettingsProvider.h"
 #import "NSArray+iTerm.h"
 #import "NSIndexSet+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "NSStringITerm.h"
+#import "ProfileModel.h"
 
 @implementation iTermSnippet
 
@@ -63,21 +65,46 @@
 
 @implementation iTermSnippetsModel {
     NSMutableArray<iTermSnippet *> *_snippets;
+    id<iTermSettingsProvider> _settingsProvider;
 }
 
 + (instancetype)sharedInstance {
     static id instance;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        instance = [[self alloc] init];
+        instance = [[iTermSnippetsModel alloc] initWithSettingsProvider:[iTermSettingsProviderGlobal sharedInstance]];
     });
     return instance;
 }
 
-- (instancetype)init {
++ (instancetype)instanceForProfileWithGUID:(NSString *)guid {
+    static NSMapTable *map;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        NSPointerFunctionsOptions strong = (NSPointerFunctionsStrongMemory |
+                                            NSPointerFunctionsObjectPersonality);
+        NSPointerFunctionsOptions weak = (NSPointerFunctionsWeakMemory |
+                                          NSPointerFunctionsObjectPersonality);
+        map = [[NSMapTable alloc] initWithKeyOptions:strong
+                                        valueOptions:weak
+                                            capacity:1];
+    });
+    iTermSnippetsModel *model = [map objectForKey:guid];
+    if (!model) {
+        id<iTermSettingsProvider> provider =
+        [[iTermSettingsProviderProfile alloc] initWithGUID:guid
+                                              profileModel:[ProfileModel sharedInstance]];
+        model = [[iTermSnippetsModel alloc] initWithSettingsProvider:provider];
+        [map setObject:model forKey:guid];
+    }
+    return model;
+}
+
+- (instancetype)initWithSettingsProvider:(id<iTermSettingsProvider>)settingsProvider {
     self = [super init];
     if (self) {
-        _snippets = [[[NSArray castFrom:[[NSUserDefaults standardUserDefaults] objectForKey:kPreferenceKeySnippets]] mapWithBlock:^id(id anObject) {
+        _settingsProvider = settingsProvider;
+        _snippets = [[[NSArray castFrom:[_settingsProvider objectForKey:kPreferenceKeySnippets]] mapWithBlock:^id(id anObject) {
             NSDictionary *dict = [NSDictionary castFrom:anObject];
             if (!dict) {
                 return nil;
@@ -91,14 +118,17 @@
 - (void)addSnippet:(iTermSnippet *)snippet {
     [_snippets addObject:snippet];
     [self save];
-    [[iTermSnippetsDidChangeNotification notificationWithMutationType:iTermSnippetsDidChangeMutationTypeInsertion index:_snippets.count - 1] post];
+    [[iTermSnippetsDidChangeNotification notificationWithMutationType:iTermSnippetsDidChangeMutationTypeInsertion
+                                                                index:_snippets.count - 1
+                                                                model:self] post];
 }
 
 - (void)removeSnippets:(NSArray<iTermSnippet *> *)snippets {
     NSIndexSet *indexes = [_snippets it_indexSetWithIndexesOfObjects:snippets];
     [_snippets removeObjectsAtIndexes:indexes];
     [self save];
-    [[iTermSnippetsDidChangeNotification removalNotificationWithIndexes:indexes] post];
+    [[iTermSnippetsDidChangeNotification removalNotificationWithIndexes:indexes
+                                                                  model:self] post];
 }
 
 - (void)replaceSnippet:(iTermSnippet *)snippetToReplace withSnippet:(iTermSnippet *)replacement {
@@ -108,7 +138,9 @@
     }
     _snippets[index] = replacement;
     [self save];
-    [[iTermSnippetsDidChangeNotification notificationWithMutationType:iTermSnippetsDidChangeMutationTypeEdit index:index] post];
+    [[iTermSnippetsDidChangeNotification notificationWithMutationType:iTermSnippetsDidChangeMutationTypeEdit
+                                                                index:index
+                                                                model:self] post];
 }
 
 - (NSInteger)indexOfSnippetWithIdentifier:(NSInteger)identifier {
@@ -148,20 +180,21 @@
     _snippets = updatedSnippets;
     [self save];
     [[iTermSnippetsDidChangeNotification moveNotificationWithRemovals:removals
-                                                     destinationIndex:row - countBeforeRow] post];
+                                                     destinationIndex:row - countBeforeRow
+                                                                model:self] post];
 }
 
 - (void)setSnippets:(NSArray<iTermSnippet *> *)snippets {
     _snippets = [snippets mutableCopy];
     [self save];
-    [[iTermSnippetsDidChangeNotification fullReplacementNotification] post];
+    [[iTermSnippetsDidChangeNotification fullReplacementNotificationForModel:self] post];
 }
 
 #pragma mark - Private
 
 - (void)save {
-    [[NSUserDefaults standardUserDefaults] setObject:[self arrayOfDictionaries]
-                                              forKey:kPreferenceKeySnippets];
+    [_settingsProvider setObject:[self arrayOfDictionaries]
+                          forKey:kPreferenceKeySnippets];
 }
 
 - (NSArray<NSDictionary *> *)arrayOfDictionaries {
@@ -174,32 +207,40 @@
 
 @implementation iTermSnippetsDidChangeNotification
 
-+ (instancetype)notificationWithMutationType:(iTermSnippetsDidChangeMutationType)mutationType index:(NSInteger)index {
++ (instancetype)notificationWithMutationType:(iTermSnippetsDidChangeMutationType)mutationType
+                                       index:(NSInteger)index
+                                       model:(nonnull iTermSnippetsModel *)model {
     iTermSnippetsDidChangeNotification *notif = [[self alloc] initPrivate];
     notif->_mutationType = mutationType;
     notif->_index = index;
+    notif->_model = model;
     return notif;
 }
 
 + (instancetype)moveNotificationWithRemovals:(NSIndexSet *)removals
-                            destinationIndex:(NSInteger)destinationIndex {
+                            destinationIndex:(NSInteger)destinationIndex
+                                       model:(nonnull iTermSnippetsModel *)model {
     iTermSnippetsDidChangeNotification *notif = [[self alloc] initPrivate];
     notif->_mutationType = iTermSnippetsDidChangeMutationTypeMove;
     notif->_indexSet = removals;
     notif->_index = destinationIndex;
+    notif->_model = model;
     return notif;
 }
 
-+ (instancetype)fullReplacementNotification {
++ (instancetype)fullReplacementNotificationForModel:(iTermSnippetsModel *)model {
     iTermSnippetsDidChangeNotification *notif = [[self alloc] initPrivate];
     notif->_mutationType = iTermSnippetsDidChangeMutationTypeFullReplacement;
+    notif->_model = model;
     return notif;
 }
 
-+ (instancetype)removalNotificationWithIndexes:(NSIndexSet *)indexes {
++ (instancetype)removalNotificationWithIndexes:(NSIndexSet *)indexes
+                                         model:(nonnull iTermSnippetsModel *)model {
     iTermSnippetsDidChangeNotification *notif = [[self alloc] initPrivate];
     notif->_mutationType = iTermSnippetsDidChangeMutationTypeDeletion;
     notif->_indexSet = indexes;
+    notif->_model = model;
     return notif;
 }
 

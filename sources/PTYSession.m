@@ -56,6 +56,7 @@
 #import "iTermOpenDirectory.h"
 #import "iTermScriptConsole.h"
 #import "iTermScriptHistory.h"
+#import "iTermSnippetsModel.h"
 #import "iTermStandardKeyMapper.h"
 #import "iTermStatusBarUnreadCountController.h"
 #import "iTermSoundPlayer.h"
@@ -351,6 +352,7 @@ static const NSUInteger kMaxHosts = 100;
 @property(nonatomic, retain) VT100RemoteHost *currentHost;
 @property(nonatomic, retain) iTermExpectation *pasteBracketingOopsieExpectation;
 @property(nonatomic, copy) NSString *cookie;
+@property(nonatomic, readwrite, copy) NSArray<iTermSnippet *> *snippets;
 @end
 
 @implementation PTYSession {
@@ -409,6 +411,9 @@ static const NSUInteger kMaxHosts = 100;
 
     // The current triggers.
     NSMutableArray *_triggers;
+
+    // Current snippets
+    NSMutableArray<iTermSnippet *> *_snippets;
 
     // Does the terminal think this session is focused?
     BOOL _focused;
@@ -3925,6 +3930,15 @@ ITERM_WEAKLY_REFERENCEABLE
             [_triggers addObject:trigger];
         }
     }
+
+    [_snippets release];
+    _snippets = [[NSMutableArray alloc] init];
+    for (NSDictionary *snippetDict in aDict[KEY_SNIPPETS]) {
+        iTermSnippet *snippet = [[iTermSnippet alloc] initWithDictionary:snippetDict];
+        if (snippet) {
+            [_snippets addObject:snippet];
+        }
+    }
     _triggerParametersUseInterpolatedStrings = [iTermProfilePreferences boolForKey:KEY_TRIGGERS_USE_INTERPOLATED_STRINGS
                                                                          inProfile:aDict];
 
@@ -4039,6 +4053,13 @@ ITERM_WEAKLY_REFERENCEABLE
     [_lastLibTickitProfileSetting autorelease];
     _lastLibTickitProfileSetting = [@(profileWantsTickit) retain];
 
+    NSArray<NSDictionary *> *snippetDicts = [NSArray castFrom:aDict[KEY_SNIPPETS]];
+    self.snippets = [snippetDicts mapWithBlock:^id(NSDictionary *dict) {
+        if (![dict isKindOfClass:[NSDictionary class]]) {
+            return nil;
+        }
+        return [[[iTermSnippet alloc] initWithDictionary:dict] autorelease];
+    }];
     if (self.isTmuxClient) {
         NSDictionary *tabColorDict = [iTermProfilePreferences objectForKey:KEY_TAB_COLOR inProfile:aDict];
         if (![iTermProfilePreferences boolForKey:KEY_USE_TAB_COLOR inProfile:aDict]) {

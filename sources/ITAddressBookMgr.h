@@ -242,6 +242,8 @@
 #define KEY_SMART_SELECTION_RULES            @"Smart Selection Rules"
 #define KEY_SEMANTIC_HISTORY                 @"Semantic History"
 #define KEY_BOUND_HOSTS                      @"Bound Hosts"
+#define KEY_SNIPPETS                         @"Snippets"
+#define KEY_ACTIONS                          @"Actions"
 
 // Dynamic Profiles (not in prefs ui)
 #define KEY_DYNAMIC_PROFILE_PARENT_NAME      @"Dynamic Profile Parent Name"

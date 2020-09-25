@@ -10,6 +10,7 @@
 
 #import "DebugLogging.h"
 #import "ITAddressBookMgr.h"
+#import "iTermEditSnippetsWindowController.h"
 #import "iTermProfilePreferences.h"
 #import "iTermSemanticHistoryPrefsController.h"
 #import "iTermShellHistoryController.h"
@@ -31,6 +32,8 @@
 
 @implementation ProfilesAdvancedPreferencesViewController {
     IBOutlet TriggerController *_triggerWindowController;
+    iTermEditSnippetsWindowController *_snippetsWindowController;
+//    iTermEditActionsWindowController *_actionsWindowController;
     IBOutlet SmartSelectionController *_smartSelectionWindowController;
     IBOutlet iTermSemanticHistoryPrefsController *_semanticHistoryPrefController;
     IBOutlet NSButton *_removeHost;
@@ -47,6 +50,9 @@
     IBOutlet NSButton *_smartSelectionButton;
     IBOutlet NSView *_automaticProfileSwitchingView;
     IBOutlet NSView *_semanticHistoryAction;
+    IBOutlet NSButton *_snippetsButton;
+    IBOutlet NSButton *_actionsButton;
+
 
     IBOutlet NSTextField *_disabledTip;
     IBOutlet NSButton *_enableAPSLogging;
@@ -81,6 +87,14 @@
                    displayName:@"Automatic profile switching rules"
                        phrases:@[]
                            key:nil];
+    [self addViewToSearchIndex:_snippetsButton
+                   displayName:@"Snippets"
+                       phrases:@[ @"saved text" ]
+                           key:nil];
+    [self addViewToSearchIndex:_actionsButton
+                   displayName:@"Actions"
+                       phrases:@[]
+                           key:nil];
     [self addViewToSearchIndex:_semanticHistoryAction
                    displayName:@"Semantic history"
                        phrases:@[ @"cmd click", @"open file", @"open url" ]
@@ -91,6 +105,8 @@
 - (NSArray *)keysForBulkCopy {
     NSArray *keys = @[ KEY_TRIGGERS,
                        KEY_TRIGGERS_USE_INTERPOLATED_STRINGS,
+                       KEY_SNIPPETS,
+                       KEY_ACTIONS,
                        KEY_SMART_SELECTION_RULES,
                        KEY_SEMANTIC_HISTORY,
                        KEY_BOUND_HOSTS ];
@@ -132,6 +148,43 @@
     [self updateSemanticHistoryDisabledLabel:nil];
     [super viewWillAppear];
 }
+
+#pragma mark - Snippets
+
+- (IBAction)editSnippets:(id)sender {
+    if (!_snippetsWindowController) {
+        _snippetsWindowController = [[iTermEditSnippetsWindowController alloc] init];
+    }
+    _snippetsWindowController.guid = [self.delegate profilePreferencesCurrentProfile][KEY_GUID];
+    [_snippetsWindowController windowWillOpen];
+    __weak __typeof(self) weakSelf = self;
+    [self.view.window beginSheet:_snippetsWindowController.window completionHandler:^(NSModalResponse returnCode) {
+        [weakSelf didFinishEditingSnippets];
+    }];
+}
+
+- (void)didFinishEditingSnippets {
+    [_snippetsWindowController.window close];
+    [[self.delegate profilePreferencesCurrentModel] flush];
+    [[NSNotificationCenter defaultCenter] postNotificationName:kReloadAllProfiles object:nil];
+    [[NSNotificationCenter defaultCenter] postNotificationName:iTermProfileSnippetsDidChange object:[self objectForKey:KEY_GUID]];
+}
+
+#pragma mark - Actions
+
+//- (IBAction)editActions:(id)sender {
+//    if (!_actionsWindowController) {
+//        _actionsWindowController = [[iTermEditActionsWindowController alloc] init];
+//    }
+//    [_actionsWindowController windowWillOpen];
+//    __weak __typeof(self) weakSelf = self;
+//    [self.view.window beginSheet:_actionsWindowController.window completionHandler:^(NSModalResponse returnCode) {
+//        __strong typeof(weakSelf) strongSelf = weakSelf;
+//        if (strongSelf) {
+//            [strongSelf->_actionsWindowController.window close];
+//        }
+//    }];
+//}
 
 #pragma mark - Triggers
 
