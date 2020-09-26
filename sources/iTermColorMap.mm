@@ -55,8 +55,6 @@ const int kColorMapAnsiBrightModifier = 8;
     // This one actually uses four components.
     CGFloat _lastBackgroundComponents[4];
     NSColor *_lastBackgroundColor;
-
-    std::unordered_map<int, vector_float4> *_fastMap;
 }
 
 + (iTermColorMapKey)keyFor8bitRed:(int)red
@@ -69,7 +67,6 @@ const int kColorMapAnsiBrightModifier = 8;
     self = [super init];
     if (self) {
         _map = [[NSMutableDictionary alloc] init];
-        _fastMap = new std::unordered_map<int, vector_float4>();
     }
     return self;
 }
@@ -78,7 +75,6 @@ const int kColorMapAnsiBrightModifier = 8;
     [_map release];
     [_lastTextColor release];
     [_lastBackgroundColor release];
-    delete _fastMap;
     [super dealloc];
 }
 
@@ -98,7 +94,6 @@ const int kColorMapAnsiBrightModifier = 8;
 
     if (!theColor) {
         [_map removeObjectForKey:@(theKey)];
-        _fastMap->erase(theKey);
         return;
     }
 
@@ -123,12 +118,6 @@ const int kColorMapAnsiBrightModifier = 8;
 
     // Get components again, now in SRGB (possibly it was already SRGB)
     [theColor getComponents:components];
-    (*_fastMap)[theKey] = (vector_float4){
-        (float)components[0],
-        (float)components[1],
-        (float)components[2],
-        (float)components[3]
-   };
 
     [_delegate colorMap:self didChangeColorForKey:theKey];
 }
@@ -160,7 +149,11 @@ const int kColorMapAnsiBrightModifier = 8;
                                 blue / 255.0,
                                 1);
     } else {
-        return (*_fastMap)[theKey];
+        NSColor *color = _map[@(theKey)];
+        return simd_make_float4(color.redComponent,
+                                color.greenComponent,
+                                color.blueComponent,
+                                1);
     }
 }
 
@@ -341,7 +334,7 @@ const int kColorMapAnsiBrightModifier = 8;
 }
 
 - (vector_float4)fastProcessedBackgroundColorForBackgroundColor:(vector_float4)backgroundColor {
-    vector_float4 defaultBackgroundComponents = (*_fastMap)[kColorMapBackground];
+    vector_float4 defaultBackgroundComponents = [self fastColorForKey:kColorMapBackground];
     const vector_float4 mutedRgb = [self fastAverageComponents:backgroundColor with:defaultBackgroundComponents alpha:_mutingAmount];
     vector_float4 grayRgb { 0.5, 0.5, 0.5, 1 };
 
@@ -520,9 +513,6 @@ const int kColorMapAnsiBrightModifier = 8;
 
     [other->_map release];
     other->_map = [_map mutableCopy];
-
-    delete other->_fastMap;
-    other->_fastMap = new std::unordered_map<int, vector_float4>(*_fastMap);
 
     return other;
 }
