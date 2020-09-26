@@ -117,7 +117,15 @@ NSString *const kPreferencePanelWillCloseNotification = @"kPreferencePanelWillCl
 static NSString *const iTermPreferencePanelSearchFieldToolbarItemIdentifier = @"iTermPreferencePanelSearchFieldToolbarItemIdentifier";
 static NSString *const iTermPrefsScrimMouseUpNotification = @"iTermPrefsScrimMouseUpNotification";
 
-CGFloat iTermSharedPreferencePanelWindowMinimumWidth = 560;
+CGFloat iTermPreferencePanelGetWindowMinimumWidth(void) {
+    if (@available(macOS 10.16, *)) {
+        // Need extra space to keep search field from collapsing.
+        // Use 760 if you are OK with the search field hiding tabs when focused (I don't like it
+        // because it stays hidden after the search field loses focus if there's a query).
+        return 785;
+    }
+    return 560;
+}
 
 // Strong references to the two preference panels.
 static PreferencePanel *gSharedPreferencePanel;
@@ -951,7 +959,7 @@ andEditComponentWithIdentifier:(NSString *)identifier
     rect.size.width += 26;
     rect.origin = topLeft;
     rect.origin.y -= rect.size.height;
-    rect.size.width = MAX(iTermSharedPreferencePanelWindowMinimumWidth, rect.size.width);
+    rect.size.width = MAX(iTermPreferencePanelGetWindowMinimumWidth(), rect.size.width);
     [[self window] setFrame:rect display:YES animate:animated];
 }
 

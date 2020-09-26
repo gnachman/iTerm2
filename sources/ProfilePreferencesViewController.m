@@ -502,7 +502,7 @@ andEditComponentWithIdentifier:(NSString *)identifier
     NSPoint windowTopLeft = NSMakePoint(NSMinX(window.frame), NSMaxY(window.frame));
     NSRect frame = [window frameRectForContentRect:NSMakeRect(windowTopLeft.x, 0, contentSize.width, contentSize.height)];
     frame.origin.y = windowTopLeft.y - frame.size.height;
-    frame.size.width = MAX(iTermSharedPreferencePanelWindowMinimumWidth, frame.size.width);
+    frame.size.width = MAX(iTermPreferencePanelGetWindowMinimumWidth(), frame.size.width);
 
     if (NSEqualRects(_desiredFrame, frame)) {
         return;
