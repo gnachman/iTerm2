@@ -31,6 +31,9 @@ NS_ASSUME_NONNULL_BEGIN
     NSTimeInterval _timeOfLastWindowTitleChange;
     BOOL _needsInvalidateShadow;
     BOOL _it_restorableStateInvalid;
+#if BETA
+    NSString *_lastAlphaChangeStack;
+#endif
 }
 
 @synthesize it_openingSheet;
@@ -63,6 +66,9 @@ ITERM_WEAKLY_REFERENCEABLE
         [[iTermWindowOcclusionChangeMonitor sharedInstance] invalidateCachedOcclusion];
     });
     [restoreState_ release];
+#if BETA
+    [_lastAlphaChangeStack release];
+#endif
     [super dealloc];
 
 }
@@ -116,7 +122,13 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (NSString *)description {
-    return [NSString stringWithFormat:@"<%@: %p frame=%@ title=%@ alpha=%f isMain=%d isKey=%d isVisible=%d delegate=%p>",
+    NSString *extra = @"";
+#if BETA
+    if (_lastAlphaChangeStack) {
+        extra = [NSString stringWithFormat:@" Alpha last changed from:\n%@\n", _lastAlphaChangeStack];
+    }
+#endif
+    return [NSString stringWithFormat:@"<%@: %p frame=%@ title=%@ alpha=%f isMain=%d isKey=%d isVisible=%d delegate=%p%@>",
             [self class],
             self,
             [NSValue valueWithRect:self.frame],
@@ -125,7 +137,8 @@ ITERM_WEAKLY_REFERENCEABLE
             (int)self.isMainWindow,
             (int)self.isKeyWindow,
             (int)self.isVisible,
-            self.delegate];
+            self.delegate,
+            extra];
 }
 
 - (NSString *)windowIdentifier {
@@ -355,6 +368,14 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void)setAlphaValue:(CGFloat)alphaValue {
     DLog(@"Invalidate cached occlusion: %@ %p", NSStringFromSelector(_cmd), self);
     [[iTermWindowOcclusionChangeMonitor sharedInstance] invalidateCachedOcclusion];
+#if BETA
+    if (alphaValue < 0.01 && !_lastAlphaChangeStack) {
+        _lastAlphaChangeStack = [[[NSThread callStackSymbols] componentsJoinedByString:@"\n"] copy];
+    } else if (alphaValue > 0.01) {
+        [_lastAlphaChangeStack release];
+        _lastAlphaChangeStack = nil;
+    }
+#endif
     [super setAlphaValue:alphaValue];
 }
 
