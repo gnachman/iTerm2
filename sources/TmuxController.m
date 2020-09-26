@@ -1126,7 +1126,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
                                          responseSelector:@selector(guessVersion21Response:)
                                            responseObject:nil
                                                     flags:kTmuxGatewayCommandShouldTolerateErrors],
-                           [gateway_ dictionaryForCommand:@"list-clients -F \"#{client_cwd}\""  // client_cwd was deprecated in 1.9
+                           [gateway_ dictionaryForCommand:@"show-options -g message-style"  // message-style added in 1.9
                                            responseTarget:self
                                          responseSelector:@selector(guessVersion18Response:)
                                            responseObject:nil
@@ -1260,7 +1260,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
         return;
     }
     DLog(@"guessVersion18Response");
-    if (response.length == 0) {
+    if (response != nil) {
         [self increaseMinimumServerVersionTo:@"1.9"];
     } else {
         [self decreaseMaximumServerVersionTo:@"1.8"];
