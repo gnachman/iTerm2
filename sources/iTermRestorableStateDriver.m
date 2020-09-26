@@ -31,7 +31,7 @@ static NSString *const iTermRestorableStateControllerUserDefaultsKeyCount = @"No
 
 - (void)saveSynchronously:(BOOL)sync {
     assert([NSThread isMainThread]);
-    DLog(@"save");
+    DLog(@"save sync=%@ saver=%@", @(sync), _saver);
     if (_saving) {
         DLog(@"Currently saving. Set needsSave.");
         _needsSave = YES;

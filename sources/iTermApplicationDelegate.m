@@ -792,6 +792,7 @@ static BOOL hasBecomeActive = NO;
     }
 
     // Last chance before windows get closed.
+    DLog(@"Post applikcationWillTerminate which triggers saving restorable state.");
     [[NSNotificationCenter defaultCenter] postNotificationName:iTermApplicationWillTerminate object:nil];
 
     // This causes all windows to be closed and all sessions to be terminated.

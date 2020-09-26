@@ -130,28 +130,36 @@
 - (BOOL)updateSynchronously:(BOOL)sync
                       block:(void (^ NS_NOESCAPE)(iTermGraphEncoder * _Nonnull))block
                  completion:(nullable iTermCallback *)completion {
+    DLog(@"updateSynchronously:%@", @(sync));
     assert([NSThread isMainThread]);
     if (_invalid) {
+        DLog(@"Invalid, so fail");
         [completion invokeWithObject:@NO];
         return YES;
     }
     if (self.updating && !sync) {
+        DLog(@"Already updating and asynchronous, do nothing.");
         return NO;
     }
+    DLog(@"beginUpdate");
     [self beginUpdate];
     iTermGraphDeltaEncoder *encoder = [[iTermGraphDeltaEncoder alloc] initWithPreviousRevision:self.record];
     block(encoder);
     __weak __typeof(self) weakSelf = self;
 
     void (^perform)(iTermGraphDatabaseState *) = ^(iTermGraphDatabaseState *state) {
+        DLog(@"Perform weakSelf=%@", weakSelf);
         if (!self->_invalid) {
             [weakSelf trySaveEncoder:encoder state:state completion:completion];
         }
+        DLog(@"endUpdate");
         [weakSelf endUpdate];
     };
     if (sync) {
+        DLog(@"dispatch sync");
         [_thread dispatchSync:perform];
     } else {
+        DLog(@"dispatch async");
         [_thread dispatchAsync:perform];
     }
     return YES;
@@ -193,15 +201,18 @@
 - (void)trySaveEncoder:(iTermGraphDeltaEncoder *)originalEncoder
                  state:(iTermGraphDatabaseState *)state
             completion:(nullable iTermCallback *)completion {
+    DLog(@"trySaveEncoder");
     iTermGraphDeltaEncoder *encoder = originalEncoder;
     BOOL ok = YES;
     @try {
         if (!state.db) {
             ok = NO;
+            DLog(@"I have no db");
             return;
         }
         if ([self save:encoder state:state]) {
             _recoveryCount = 0;
+            DLog(@"Save succeeded");
             return;
         }
 
@@ -257,6 +268,7 @@
 
 - (BOOL)save:(iTermGraphDeltaEncoder *)encoder
        state:(iTermGraphDatabaseState *)state {
+    DLog(@"save");
     assert(state.db);
 
     const BOOL ok = [state.db transaction:^BOOL{

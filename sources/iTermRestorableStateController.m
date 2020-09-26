@@ -117,14 +117,19 @@ extern NSString *const iTermApplicationWillTerminate;
 // NOTE! This is iTermApplicationWillTerminate, not NSApplicationWillTerminateNotification.
 // That's important because it runs while iTermController still exists.
 - (void)applicationWillTerminate:(NSNotification *)notification {
+    DLog(@"application will terminate");
     if (![iTermRestorableStateController stateRestorationEnabled]) {
+        DLog(@"State restoration disabled. Erase state.");
         [_driver erase];
         return;
     }
-    if (!_driver.restoring) {
-        [_driver saveSynchronously];
-        _driver = nil;
+    if (_driver.restoring) {
+        DLog(@"Still restoring so don't save");
+        return;
     }
+    DLog(@"Calling saveSynchronously.");
+    [_driver saveSynchronously];
+    _driver = nil;
 }
  
 - (void)didRestore {

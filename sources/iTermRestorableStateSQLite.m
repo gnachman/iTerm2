@@ -192,6 +192,7 @@
 #pragma mark - iTermRestorableStateSaver
 
 - (BOOL)saveSynchronously:(BOOL)sync withCompletion:(void (^)(void))completion {
+    DLog(@"saveSynchronously:%@", @(sync));
     assert([NSThread isMainThread]);
     _generation += 1;
     const NSInteger generation = _generation;
