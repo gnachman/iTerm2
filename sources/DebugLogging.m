@@ -16,7 +16,10 @@
 
 #include <sys/time.h>
 
-static NSString *const kDebugLogFilename = @"/tmp/debuglog.txt";
+static NSString *DebugLogFilename(void) {
+    return [NSHomeDirectory() stringByAppendingPathComponent:@"debuglog.txt"];
+}
+
 static NSString* gDebugLogHeader = nil;
 static NSMutableString* gDebugLogStr = nil;
 
@@ -88,13 +91,13 @@ static void FlushDebugLog() {
     [log appendString:gDebugLogStr ?: @""];
 
     if ([iTermAdvancedSettingsModel appendToExistingDebugLog] &&
-        [[NSFileManager defaultManager] fileExistsAtPath:kDebugLogFilename]) {
-        NSFileHandle *fileHandle = [NSFileHandle fileHandleForWritingAtPath:kDebugLogFilename];
+        [[NSFileManager defaultManager] fileExistsAtPath:DebugLogFilename()]) {
+        NSFileHandle *fileHandle = [NSFileHandle fileHandleForWritingAtPath:DebugLogFilename()];
         [fileHandle seekToEndOfFile];
         [fileHandle writeData:[log dataUsingEncoding:NSUTF8StringEncoding]];
         [fileHandle closeFile];
     } else {
-        [log writeToFile:kDebugLogFilename atomically:NO encoding:NSUTF8StringEncoding error:nil];
+        [log writeToFile:DebugLogFilename() atomically:NO encoding:NSUTF8StringEncoding error:nil];
     }
 
     [gDebugLogStr setString:@""];
@@ -239,7 +242,7 @@ static void StartDebugLogging() {
     [GetDebugLogLock() lock];
     if (!gDebugLogging) {
         if (![iTermAdvancedSettingsModel appendToExistingDebugLog]) {
-            [[NSFileManager defaultManager] removeItemAtURL:[NSURL fileURLWithPath:kDebugLogFilename]
+            [[NSFileManager defaultManager] removeItemAtURL:[NSURL fileURLWithPath:DebugLogFilename()]
                                                       error:nil];
         }
         gDebugLogStr = [[NSMutableString alloc] init];
