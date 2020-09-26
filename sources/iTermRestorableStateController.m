@@ -25,6 +25,7 @@ extern NSString *const iTermApplicationWillTerminate;
 }
 
 + (BOOL)stateRestorationEnabled {
+    DLog(@"NSQuitAlwaysKeepsWindow=%@", [[NSUserDefaults standardUserDefaults] objectForKey:@"NSQuitAlwaysKeepsWindows"]);
     return [[NSUserDefaults standardUserDefaults] boolForKey:@"NSQuitAlwaysKeepsWindows"];
 }
 
