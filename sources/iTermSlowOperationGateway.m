@@ -10,6 +10,7 @@
 #import "DebugLogging.h"
 #import "ITAddressBookMgr.h"
 #import "iTermOpenDirectory.h"
+#import "NSStringITerm.h"
 #import "ProfileModel.h"
 #import "pidinfo.h"
 #include <stdatomic.h>
@@ -101,7 +102,7 @@
                                                    withReply:^(NSData * _Nullable data,
                                                                NSData * _Nullable error,
                                                                int status) {
-        completion(status == 0 ? [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding] : nil);
+        completion(status == 0 ? [[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding] stringByTrimmingTrailingCharactersFromCharacterSet:[NSCharacterSet newlineCharacterSet]] : nil);
     }];
 }
 
