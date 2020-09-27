@@ -1995,6 +1995,9 @@ ITERM_WEAKLY_REFERENCEABLE
 
     NSArray<iTermProcessInfo *> *allInfos = [info descendantsSkippingLevels:levelsToSkip];
     return [allInfos mapWithBlock:^id(iTermProcessInfo *info) {
+        if (!info.name) {
+            return nil;
+        }
         return [iTermTuple tupleWithObject:info.name
                                  andObject:info.argv0 ?: info.name];
     }];
