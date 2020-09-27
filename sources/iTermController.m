@@ -37,6 +37,7 @@
 #import "iTermMissionControlHacks.h"
 #import "iTermPresentationController.h"
 #import "iTermProfileModelJournal.h"
+#import "iTermRestorableStateController.h"
 #import "iTermSessionFactory.h"
 #import "iTermSessionLauncher.h"
 #import "iTermWebSocketCookieJar.h"
@@ -160,7 +161,7 @@ static iTermController *gSharedInstance;
 - (BOOL)willRestoreWindowsAtNextLaunch {
   return (![iTermPreferences boolForKey:kPreferenceKeyOpenArrangementAtStartup] &&
           ![iTermPreferences boolForKey:kPreferenceKeyOpenNoWindowsAtStartup] &&
-          [[NSUserDefaults standardUserDefaults] boolForKey:@"NSQuitAlwaysKeepsWindows"]);
+          [iTermRestorableStateController stateRestorationEnabled]);
 }
 
 - (BOOL)shouldLeaveSessionsRunningOnQuit {

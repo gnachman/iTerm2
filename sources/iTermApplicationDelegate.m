@@ -922,17 +922,16 @@ static BOOL hasBecomeActive = NO;
 
     NSArray *hotkeyWindowsStates = nil;
     NSDictionary *legacyState = nil;
-    if ([[NSUserDefaults standardUserDefaults] boolForKey:@"NSQuitAlwaysKeepsWindows"]) {
-        hotkeyWindowsStates = [coder decodeObjectForKey:kHotkeyWindowsRestorableStates];
-        if (hotkeyWindowsStates) {
-            // We have to create the hotkey window now because we need to attach to servers before
-            // launch finishes; otherwise any running hotkey window jobs will be treated as orphans.
-            const NSInteger count = [[iTermHotKeyController sharedInstance] createHiddenWindowsFromRestorableStates:hotkeyWindowsStates];
-            if (count > 0) {
-                [_untitledWindowStateMachine didRestoreSomeWindows];
-            }
+    hotkeyWindowsStates = [coder decodeObjectForKey:kHotkeyWindowsRestorableStates];
+    if (hotkeyWindowsStates) {
+        // We have to create the hotkey window now because we need to attach to servers before
+        // launch finishes; otherwise any running hotkey window jobs will be treated as orphans.
+        const NSInteger count = [[iTermHotKeyController sharedInstance] createHiddenWindowsFromRestorableStates:hotkeyWindowsStates];
+        if (count > 0) {
+            [_untitledWindowStateMachine didRestoreSomeWindows];
         }
     }
+
     _buriedSessionsState = [[coder decodeObjectForKey:iTermBuriedSessionState] retain];
     if (finishedLaunching_) {
         [self restoreBuriedSessionsState];
@@ -2498,15 +2497,13 @@ static BOOL hasBecomeActive = NO;
         [[iTermURLStore sharedInstance] loadFromDictionary:urlStoreState];
     }
 
-    if ([[NSUserDefaults standardUserDefaults] boolForKey:@"NSQuitAlwaysKeepsWindows"]) {
-        iTermEncoderGraphRecord *hotkeyWindowsStates = [app childRecordWithKey:kHotkeyWindowsRestorableStates identifier:@""];
-        if (hotkeyWindowsStates) {
-            // We have to create the hotkey window now because we need to attach to servers before
-            // launch finishes; otherwise any running hotkey window jobs will be treated as orphans.
-            const BOOL createdAny = [[iTermHotKeyController sharedInstance] createHiddenWindowsByDecoding:hotkeyWindowsStates];
-            if (createdAny) {
-                [_untitledWindowStateMachine didRestoreSomeWindows];
-            }
+    iTermEncoderGraphRecord *hotkeyWindowsStates = [app childRecordWithKey:kHotkeyWindowsRestorableStates identifier:@""];
+    if (hotkeyWindowsStates) {
+        // We have to create the hotkey window now because we need to attach to servers before
+        // launch finishes; otherwise any running hotkey window jobs will be treated as orphans.
+        const BOOL createdAny = [[iTermHotKeyController sharedInstance] createHiddenWindowsByDecoding:hotkeyWindowsStates];
+        if (createdAny) {
+            [_untitledWindowStateMachine didRestoreSomeWindows];
         }
     }
 

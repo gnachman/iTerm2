@@ -64,12 +64,6 @@ static NSString *const iTermRestorableStateControllerUserDefaultsKeyCount = @"No
 - (void)restoreWithReady:(void (^)(void))ready
               completion:(void (^)(void))completion {
     DLog(@"restoreWindows");
-    if (![[NSUserDefaults standardUserDefaults] boolForKey:@"NSQuitAlwaysKeepsWindows"]) {
-        DLog(@"NSQuitAlwaysKeepsWindows=NO");
-        ready();
-        completion();
-        return;
-    }
     if (!self.restorer) {
         DLog(@"Have no restorer.");
         ready();

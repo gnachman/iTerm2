@@ -15,6 +15,16 @@
 
 extern NSString *const iTermApplicationWillTerminate;
 
+@interface NSApplication(Private)
+// This is true when "System Prefs > General > Close windows when quitting an
+// app" is on but you choose to log out/restart and turn on the "restore
+// windows when logging back in" checkbox. That checkbox supercedes the "close
+// windows when quitting an app" setting. I discovered this private API by
+// reversing -[NSApplication(NSAppleEventHandling) _handleAEQuit], which is
+// called when closing apps after logging out.
+- (BOOL)shouldRestoreStateOnNextLaunch;
+@end
+
 @interface iTermRestorableStateController()<iTermRestorableStateRestoring, iTermRestorableStateSaving>
 @end
 
@@ -25,7 +35,8 @@ extern NSString *const iTermApplicationWillTerminate;
 }
 
 + (BOOL)stateRestorationEnabled {
-    return [[NSUserDefaults standardUserDefaults] boolForKey:@"NSQuitAlwaysKeepsWindows"];
+    return ([[NSUserDefaults standardUserDefaults] boolForKey:@"NSQuitAlwaysKeepsWindows"] ||
+            [NSApp shouldRestoreStateOnNextLaunch]);
 }
 
 - (instancetype)init {
@@ -46,11 +57,13 @@ extern NSString *const iTermApplicationWillTerminate;
                                          ofItemAtPath:savedState
                                                 error:nil];
 
-        const BOOL erase = ![iTermRestorableStateController stateRestorationEnabled];
+        // NOTE: I used to erase state at this point if window restoration was globally disabled,
+        // but doing so breaks restoring state when logging back in. See the comment on
+        // shouldRestoreStateOnNextLaunch above.
         if ([iTermAdvancedSettingsModel storeStateInSqlite]) {
             NSURL *url = [NSURL fileURLWithPath:[savedState stringByAppendingPathComponent:@"restorable-state.sqlite"]];
             iTermRestorableStateSQLite *sqlite = [[iTermRestorableStateSQLite alloc] initWithURL:url
-                                                                                           erase:erase];
+                                                                                           erase:NO];
             sqlite.delegate = self;
             _saver = sqlite;
             _restorer = sqlite;
@@ -61,7 +74,7 @@ extern NSString *const iTermApplicationWillTerminate;
             saver.delegate = self;
 
             iTermRestorableStateRestorer *restorer = [[iTermRestorableStateRestorer alloc] initWithIndexURL:indexURL
-                                                                                                      erase:erase];
+                                                                                                      erase:NO];
             restorer.delegate = self;
             _restorer = restorer;
         }
@@ -96,12 +109,11 @@ extern NSString *const iTermApplicationWillTerminate;
     [_driver save];
 }
 
+// NOTE: Window restoration happens unconditionally. The decision of whether to use state
+// restoration must be made before state is *saved* not before it is restored. See the comment on
+// shouldRestoreStateOnNextLaunch above.
 - (void)restoreWindowsWithCompletion:(void (^)(void))completion {
     assert([NSThread isMainThread]);
-    if (![iTermRestorableStateController stateRestorationEnabled]) {
-        completion();
-        return;
-    }
     __weak __typeof(self) weakSelf = self;
     [_driver restoreWithReady:^{
         [weakSelf.delegate restorableStateDidFinishRequestingRestorations:self];
@@ -135,6 +147,8 @@ extern NSString *const iTermApplicationWillTerminate;
 - (void)didRestore {
     assert([NSThread isMainThread]);
     if (![iTermRestorableStateController stateRestorationEnabled]) {
+        // Just in case we don't get a chance to erase the state later.
+        [_driver erase];
         return;
     }
     if (_driver.needsSave) {

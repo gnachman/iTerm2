@@ -115,6 +115,7 @@
 @implementation iTermRestorableStateSQLite {
     iTermGraphDatabase *_db;
     NSInteger _generation;
+    NSURL *_url;
 }
 
 + (void)unlinkDatabaseAtURL:(NSURL *)url {
@@ -127,10 +128,17 @@
         if (erase) {
             [self.class unlinkDatabaseAtURL:url];
         }
-
-        _db = [[iTermGraphDatabase alloc] initWithDatabase:[[iTermSqliteDatabaseImpl alloc] initWithURL:url]];
+        _url = url;
+        [self initializeDb];
     }
     return self;
+}
+
+- (void)initializeDb {
+    if (_db) {
+        return;
+    }
+    _db = [[iTermGraphDatabase alloc] initWithDatabase:[[iTermSqliteDatabaseImpl alloc] initWithURL:_url]];
 }
 
 - (void)loadRestorableStateIndexWithCompletion:(void (^)(id<iTermRestorableStateIndex>))completion {
@@ -185,7 +193,7 @@
 
 - (void)eraseStateRestorationData {
     [_db invalidate];
-    [self.class unlinkDatabaseAtURL:_db.url];
+    [self.class unlinkDatabaseAtURL:_url];
     _db = nil;
 }
 
@@ -194,6 +202,8 @@
 - (BOOL)saveSynchronously:(BOOL)sync withCompletion:(void (^)(void))completion {
     DLog(@"saveSynchronously:%@", @(sync));
     assert([NSThread isMainThread]);
+
+    [self initializeDb];
     _generation += 1;
     const NSInteger generation = _generation;
     NSArray<NSWindow *> *windows = [self.delegate restorableStateWindows];
