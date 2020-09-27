@@ -127,12 +127,14 @@ extern NSString *const iTermApplicationWillTerminate;
 #pragma mark - Private
 
 // NOTE! This is iTermApplicationWillTerminate, not NSApplicationWillTerminateNotification.
-// That's important because it runs while iTermController still exists.
+// That's important because it runs while iTermController still exists. Also, it's actually
+// called from applicationShouldTerminate because waiting until willTerminate is too late - the
+// windows have already been closed.
 - (void)applicationWillTerminate:(NSNotification *)notification {
     DLog(@"application will terminate");
     if (![iTermRestorableStateController stateRestorationEnabled]) {
         DLog(@"State restoration disabled. Erase state.");
-        [_driver erase];
+        [_driver eraseSynchronously:YES];
         return;
     }
     if (_driver.restoring) {
@@ -148,7 +150,7 @@ extern NSString *const iTermApplicationWillTerminate;
     assert([NSThread isMainThread]);
     if (![iTermRestorableStateController stateRestorationEnabled]) {
         // Just in case we don't get a chance to erase the state later.
-        [_driver erase];
+        [_driver eraseSynchronously:NO];
         return;
     }
     if (_driver.needsSave) {

@@ -33,7 +33,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (BOOL)updateSynchronously:(BOOL)sync
                       block:(void (^ NS_NOESCAPE)(iTermGraphEncoder * _Nonnull))block
                  completion:(nullable iTermCallback *)completion;
-- (void)invalidate;
+- (void)invalidateSynchronously:(BOOL)sync;
 - (void)whenReady:(void (^)(void))readyBlock;
 
 @end

@@ -39,7 +39,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)restoreApplicationState;
 
-- (void)eraseStateRestorationData;
+- (void)eraseStateRestorationDataSynchronously:(BOOL)sync;
 
 @end
 
@@ -73,7 +73,7 @@ NS_ASSUME_NONNULL_BEGIN
               completion:(void (^)(void))completion;
 - (void)save;
 - (void)saveSynchronously;
-- (void)erase;
+- (void)eraseSynchronously:(BOOL)sync;
 
 @end
 

@@ -50,7 +50,7 @@
     if (self) {
         _indexURL = [indexURL copy];
         if (erase) {
-            [self eraseStateRestorationData];
+            [self eraseStateRestorationDataSynchronously:YES];
         }
     }
     return self;
@@ -80,7 +80,7 @@
     // This goes through the regular mechanism.
 }
 
-- (void)eraseStateRestorationData {
+- (void)eraseStateRestorationDataSynchronously:(BOOL)sync {
     [[NSFileManager defaultManager] removeItemAtURL:_indexURL error:nil];
 }
 

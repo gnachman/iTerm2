@@ -149,8 +149,8 @@ static NSString *const iTermRestorableStateControllerUserDefaultsKeyCount = @"No
 
 #pragma mark - Erase
 
-- (void)erase {
-    [self.restorer eraseStateRestorationData];
+- (void)eraseSynchronously:(BOOL)sync {
+    [self.restorer eraseStateRestorationDataSynchronously:sync];
 }
 
 @end

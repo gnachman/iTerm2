@@ -165,12 +165,23 @@
     return YES;
 }
 
-- (void)invalidate {
-    [_thread dispatchAsync:^(iTermGraphDatabaseState *state) {
-        self->_invalid = YES;
-        [state.db close];
-        state.db = nil;
-    }];
+- (void)invalidateSynchronously:(BOOL)sync {
+    if (sync) {
+        [_thread dispatchSync:^(iTermGraphDatabaseState *_Nullable state) {
+            [self reallyInvalidate:state];
+        }];
+    } else {
+        [_thread dispatchAsync:^(iTermGraphDatabaseState *_Nullable state) {
+            [self reallyInvalidate:state];
+        }];
+    }
+}
+
+- (void)reallyInvalidate:(iTermGraphDatabaseState *)state {
+    _invalid = YES;
+    [state.db executeUpdate:@"delete from Node"];
+    [state.db close];
+    state.db = nil;
 }
 
 - (void)whenReady:(void (^)(void))readyBlock {

@@ -191,9 +191,9 @@
     [self.delegate restorableStateRestoreApplicationStateWithRecord:_db.record];
 }
 
-- (void)eraseStateRestorationData {
-    [_db invalidate];
-    [self.class unlinkDatabaseAtURL:_url];
+- (void)eraseStateRestorationDataSynchronously:(BOOL)sync {
+    [self initializeDb];
+    [_db invalidateSynchronously:sync];
     _db = nil;
 }
 
