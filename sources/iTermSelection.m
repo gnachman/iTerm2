@@ -894,23 +894,33 @@ static NSString *const kiTermSubSelectionMode = @"Mode";
     _subSelections = [newSubs retain];
 }
 
+static NSRange iTermMakeRange(NSInteger location, NSInteger length) {
+    if (location < 0) {
+        return iTermMakeRange(0, length + location);
+    }
+    if (location > NSNotFound) {
+        return NSMakeRange(NSNotFound, 0);
+    }
+    return NSMakeRange(location, MAX(0, length));
+}
+
 - (NSRange)rangeOfIndexesInAbsRange:(VT100GridAbsWindowedRange)range
                      onAbsoluteLine:(long long)line
                                mode:(iTermSelectionMode)mode {
     if (mode == kiTermSelectionModeBox) {
         if (range.coordRange.start.y <= line && range.coordRange.end.y >= line) {
-            return NSMakeRange(range.coordRange.start.x,
-                               range.coordRange.end.x - range.coordRange.start.x);
+            return iTermMakeRange(range.coordRange.start.x,
+                                  range.coordRange.end.x - range.coordRange.start.x);
         } else {
-            return NSMakeRange(0, 0);
+            return iTermMakeRange(0, 0);
         }
     }
     if (range.coordRange.start.y < line && range.coordRange.end.y > line) {
         if (range.columnWindow.length) {
-            return NSMakeRange(range.columnWindow.location,
-                               range.columnWindow.length);
+            return iTermMakeRange(range.columnWindow.location,
+                                  range.columnWindow.length);
         } else {
-            return NSMakeRange(0, [self width]);
+            return iTermMakeRange(0, [self width]);
         }
     }
     if (range.coordRange.start.y == line) {
@@ -922,8 +932,8 @@ static NSString *const kiTermSubSelectionMode = @"Mode";
                 result.length = MIN(limit, range.coordRange.end.x) - result.location;
                 return result;
             } else {
-                return NSMakeRange(range.coordRange.start.x,
-                                   range.coordRange.end.x - range.coordRange.start.x);
+                return iTermMakeRange(range.coordRange.start.x,
+                                      range.coordRange.end.x - range.coordRange.start.x);
             }
         } else {
             if (range.columnWindow.length) {
@@ -933,21 +943,21 @@ static NSString *const kiTermSubSelectionMode = @"Mode";
                 result.length = MIN(limit, [self width]) - result.location;
                 return result;
             } else {
-                return NSMakeRange(range.coordRange.start.x,
-                                   [self width] - range.coordRange.start.x);
+                return iTermMakeRange(range.coordRange.start.x,
+                                      [self width] - range.coordRange.start.x);
             }
         }
     }
     if (range.coordRange.end.y == line) {
         if (range.columnWindow.length) {
             int limit = VT100GridRangeMax(range.columnWindow) + 1;
-            return NSMakeRange(range.columnWindow.location,
-                               MIN(limit, range.coordRange.end.x) - range.columnWindow.location);
+            return iTermMakeRange(range.columnWindow.location,
+                                  MIN(limit, range.coordRange.end.x) - range.columnWindow.location);
         } else {
-            return NSMakeRange(0, range.coordRange.end.x);
+            return iTermMakeRange(0, range.coordRange.end.x);
         }
     }
-    return NSMakeRange(0, 0);
+    return iTermMakeRange(0, 0);
 }
 
 - (NSIndexSet *)selectedIndexesOnAbsoluteLine:(long long)line {

@@ -13,7 +13,7 @@
 @implementation NSIndexSet (iTerm)
 
 + (instancetype)it_indexSetWithIndexesInRange:(NSRange)range {
-    if (range.length == 0) {
+    if (range.length == 0|| range.location >= NSNotFound) {
         return [self indexSet];
     }
     return [self indexSetWithIndexesInRange:range];
