@@ -8,9 +8,11 @@
 #import "iTermActionsModel.h"
 #import "iTermNotificationCenter+Protected.h"
 #import "iTermPreferences.h"
+#import "iTermSettingsProvider.h"
 #import "NSArray+iTerm.h"
 #import "NSIndexSet+iTerm.h"
 #import "NSObject+iTerm.h"
+#import "ProfileModel.h"
 
 @implementation iTermAction
 
@@ -59,21 +61,46 @@
 
 @implementation iTermActionsModel {
     NSMutableArray<iTermAction *> *_actions;
+    id<iTermSettingsProvider> _settingsProvider;
 }
 
 + (instancetype)sharedInstance {
     static id instance;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        instance = [[self alloc] init];
+        instance = [[self alloc] initWithSettingsProvider:[iTermSettingsProviderGlobal sharedInstance]];
     });
     return instance;
 }
 
-- (instancetype)init {
++ (instancetype)instanceForProfileWithGUID:(NSString *)guid {
+    static NSMapTable *map;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        NSPointerFunctionsOptions strong = (NSPointerFunctionsStrongMemory |
+                                            NSPointerFunctionsObjectPersonality);
+        NSPointerFunctionsOptions weak = (NSPointerFunctionsWeakMemory |
+                                          NSPointerFunctionsObjectPersonality);
+        map = [[NSMapTable alloc] initWithKeyOptions:strong
+                                        valueOptions:weak
+                                            capacity:1];
+    });
+    iTermActionsModel *model = [map objectForKey:guid];
+    if (!model) {
+        id<iTermSettingsProvider> provider =
+        [[iTermSettingsProviderProfile alloc] initWithGUID:guid
+                                              profileModel:[ProfileModel sharedInstance]];
+        model = [[iTermActionsModel alloc] initWithSettingsProvider:provider];
+        [map setObject:model forKey:guid];
+    }
+    return model;
+}
+
+- (instancetype)initWithSettingsProvider:(id<iTermSettingsProvider>)settingsProvider {
     self = [super init];
     if (self) {
-        _actions = [[[NSArray castFrom:[[NSUserDefaults standardUserDefaults] objectForKey:kPreferenceKeyActions]] mapWithBlock:^id(id anObject) {
+        _settingsProvider = settingsProvider;
+        _actions = [[[NSArray castFrom:[_settingsProvider objectForKey:kPreferenceKeyActions]] mapWithBlock:^id(id anObject) {
             NSDictionary *dict = [NSDictionary castFrom:anObject];
             if (!dict) {
                 return nil;
@@ -87,14 +114,17 @@
 - (void)addAction:(iTermAction *)action {
     [_actions addObject:action];
     [self save];
-    [[iTermActionsDidChangeNotification notificationWithMutationType:iTermActionsDidChangeMutationTypeInsertion index:_actions.count - 1] post];
+    [[iTermActionsDidChangeNotification notificationWithMutationType:iTermActionsDidChangeMutationTypeInsertion
+                                                               index:_actions.count - 1
+                                                               model:self] post];
 }
 
 - (void)removeActions:(NSArray<iTermAction *> *)actions {
     NSIndexSet *indexes = [_actions it_indexSetWithIndexesOfObjects:actions];
     [_actions removeObjectsAtIndexes:indexes];
     [self save];
-    [[iTermActionsDidChangeNotification removalNotificationWithIndexes:indexes] post];
+    [[iTermActionsDidChangeNotification removalNotificationWithIndexes:indexes
+                                                                 model:self] post];
 }
 
 - (void)replaceAction:(iTermAction *)actionToReplace withAction:(iTermAction *)replacement {
@@ -104,7 +134,9 @@
     }
     _actions[index] = replacement;
     [self save];
-    [[iTermActionsDidChangeNotification notificationWithMutationType:iTermActionsDidChangeMutationTypeEdit index:index] post];
+    [[iTermActionsDidChangeNotification notificationWithMutationType:iTermActionsDidChangeMutationTypeEdit
+                                                               index:index
+                                                               model:self] post];
 }
 
 - (NSInteger)indexOfActionWithIdentifier:(NSInteger)identifier {
@@ -144,20 +176,21 @@
     _actions = updatedActions;
     [self save];
     [[iTermActionsDidChangeNotification moveNotificationWithRemovals:removals
-                                                    destinationIndex:row - countBeforeRow] post];
+                                                    destinationIndex:row - countBeforeRow
+                                                               model:self] post];
 }
 
 - (void)setActions:(NSArray<iTermAction *> *)actions {
     _actions = [actions mutableCopy];
     [self save];
-    [[iTermActionsDidChangeNotification fullReplacementNotification] post];
+    [[iTermActionsDidChangeNotification fullReplacementNotificationForModel:self] post];
 }
 
 #pragma mark - Private
 
 - (void)save {
-    [[NSUserDefaults standardUserDefaults] setObject:[self arrayOfDictionaries]
-                                              forKey:kPreferenceKeyActions];
+    [_settingsProvider setObject:[self arrayOfDictionaries]
+                          forKey:kPreferenceKeyActions];
 }
 
 - (NSArray<NSDictionary *> *)arrayOfDictionaries {
@@ -170,32 +203,40 @@
 
 @implementation iTermActionsDidChangeNotification
 
-+ (instancetype)notificationWithMutationType:(iTermActionsDidChangeMutationType)mutationType index:(NSInteger)index {
++ (instancetype)notificationWithMutationType:(iTermActionsDidChangeMutationType)mutationType
+                                       index:(NSInteger)index
+                                       model:(nonnull iTermActionsModel *)model {
     iTermActionsDidChangeNotification *notif = [[self alloc] initPrivate];
     notif->_mutationType = mutationType;
     notif->_index = index;
+    notif->_model = model;
     return notif;
 }
 
 + (instancetype)moveNotificationWithRemovals:(NSIndexSet *)removals
-                            destinationIndex:(NSInteger)destinationIndex {
+                            destinationIndex:(NSInteger)destinationIndex
+                                       model:(nonnull iTermActionsModel *)model {
     iTermActionsDidChangeNotification *notif = [[self alloc] initPrivate];
     notif->_mutationType = iTermActionsDidChangeMutationTypeMove;
     notif->_indexSet = removals;
     notif->_index = destinationIndex;
+    notif->_model = model;
     return notif;
 }
 
-+ (instancetype)fullReplacementNotification {
++ (instancetype)fullReplacementNotificationForModel:(iTermActionsModel *)model {
     iTermActionsDidChangeNotification *notif = [[self alloc] initPrivate];
     notif->_mutationType = iTermActionsDidChangeMutationTypeFullReplacement;
+    notif->_model = model;
     return notif;
 }
 
-+ (instancetype)removalNotificationWithIndexes:(NSIndexSet *)indexes {
++ (instancetype)removalNotificationWithIndexes:(NSIndexSet *)indexes
+                                         model:(nonnull iTermActionsModel *)model {
     iTermActionsDidChangeNotification *notif = [[self alloc] initPrivate];
     notif->_mutationType = iTermActionsDidChangeMutationTypeDeletion;
     notif->_indexSet = indexes;
+    notif->_model = model;
     return notif;
 }
 

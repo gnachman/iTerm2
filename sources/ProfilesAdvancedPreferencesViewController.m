@@ -10,6 +10,7 @@
 
 #import "DebugLogging.h"
 #import "ITAddressBookMgr.h"
+#import "iTermEditActionsWindowController.h"
 #import "iTermEditSnippetsWindowController.h"
 #import "iTermProfilePreferences.h"
 #import "iTermSemanticHistoryPrefsController.h"
@@ -33,7 +34,7 @@
 @implementation ProfilesAdvancedPreferencesViewController {
     IBOutlet TriggerController *_triggerWindowController;
     iTermEditSnippetsWindowController *_snippetsWindowController;
-//    iTermEditActionsWindowController *_actionsWindowController;
+    iTermEditActionsWindowController *_actionsWindowController;
     IBOutlet SmartSelectionController *_smartSelectionWindowController;
     IBOutlet iTermSemanticHistoryPrefsController *_semanticHistoryPrefController;
     IBOutlet NSButton *_removeHost;
@@ -172,19 +173,24 @@
 
 #pragma mark - Actions
 
-//- (IBAction)editActions:(id)sender {
-//    if (!_actionsWindowController) {
-//        _actionsWindowController = [[iTermEditActionsWindowController alloc] init];
-//    }
-//    [_actionsWindowController windowWillOpen];
-//    __weak __typeof(self) weakSelf = self;
-//    [self.view.window beginSheet:_actionsWindowController.window completionHandler:^(NSModalResponse returnCode) {
-//        __strong typeof(weakSelf) strongSelf = weakSelf;
-//        if (strongSelf) {
-//            [strongSelf->_actionsWindowController.window close];
-//        }
-//    }];
-//}
+- (IBAction)editActions:(id)sender {
+    if (!_actionsWindowController) {
+        _actionsWindowController = [[iTermEditActionsWindowController alloc] init];
+    }
+    _actionsWindowController.guid = [self.delegate profilePreferencesCurrentProfile][KEY_GUID];
+    [_actionsWindowController windowWillOpen];
+    __weak __typeof(self) weakSelf = self;
+    [self.view.window beginSheet:_actionsWindowController.window completionHandler:^(NSModalResponse returnCode) {
+        [weakSelf didFinishEditingActions];
+    }];
+}
+
+- (void)didFinishEditingActions {
+    [_actionsWindowController.window close];
+    [[self.delegate profilePreferencesCurrentModel] flush];
+    [[NSNotificationCenter defaultCenter] postNotificationName:kReloadAllProfiles object:nil];
+    [[NSNotificationCenter defaultCenter] postNotificationName:iTermProfileActionsDidChange object:[self objectForKey:KEY_GUID]];
+}
 
 #pragma mark - Triggers
 

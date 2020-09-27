@@ -234,6 +234,9 @@ static NSButton *iTermToolActionsNewButton(NSString *imageName, NSString *title,
 #pragma mark - Private
 
 - (void)actionsDidChange:(iTermActionsDidChangeNotification *)notif {
+    if (notif.model != [iTermActionsModel sharedInstance]) {
+        return;
+    }
     _actions = [[[iTermActionsModel sharedInstance] actions] copy];
     switch (notif.mutationType) {
         case iTermActionsDidChangeMutationTypeEdit: {

@@ -253,6 +253,9 @@ static NSButton *iTermToolSnippetsNewButton(NSString *imageName, NSString *title
 #pragma mark - Private
 
 - (void)snippetsDidChange:(iTermSnippetsDidChangeNotification *)notif {
+    if (notif.model != [iTermSnippetsModel sharedInstance]) {
+        return;
+    }
     _snippets = [[[iTermSnippetsModel sharedInstance] snippets] copy];
     switch (notif.mutationType) {
         case iTermSnippetsDidChangeMutationTypeEdit: {

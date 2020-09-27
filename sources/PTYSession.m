@@ -353,6 +353,7 @@ static const NSUInteger kMaxHosts = 100;
 @property(nonatomic, retain) iTermExpectation *pasteBracketingOopsieExpectation;
 @property(nonatomic, copy) NSString *cookie;
 @property(nonatomic, readwrite, copy) NSArray<iTermSnippet *> *snippets;
+@property(nonatomic, readwrite, copy) NSArray<iTermAction *> *actions;
 @end
 
 @implementation PTYSession {
@@ -414,6 +415,9 @@ static const NSUInteger kMaxHosts = 100;
 
     // Current snippets
     NSMutableArray<iTermSnippet *> *_snippets;
+
+    // Current actions
+    NSMutableArray<iTermAction *> *_actions;
 
     // Does the terminal think this session is focused?
     BOOL _focused;
@@ -3931,14 +3935,22 @@ ITERM_WEAKLY_REFERENCEABLE
         }
     }
 
-    [_snippets release];
-    _snippets = [[NSMutableArray alloc] init];
-    for (NSDictionary *snippetDict in aDict[KEY_SNIPPETS]) {
-        iTermSnippet *snippet = [[iTermSnippet alloc] initWithDictionary:snippetDict];
-        if (snippet) {
-            [_snippets addObject:snippet];
+    NSArray<NSDictionary *> *snippetDicts = [NSArray castFrom:aDict[KEY_SNIPPETS]];
+    self.snippets = [snippetDicts mapWithBlock:^id(NSDictionary *dict) {
+        if (![dict isKindOfClass:[NSDictionary class]]) {
+            return nil;
         }
-    }
+        return [[[iTermSnippet alloc] initWithDictionary:dict] autorelease];
+    }];
+
+    NSArray<NSDictionary *> *actionDicts = [NSArray castFrom:aDict[KEY_ACTIONS]];
+    self.actions = [actionDicts mapWithBlock:^id(NSDictionary *dict) {
+        if (![dict isKindOfClass:[NSDictionary class]]) {
+            return nil;
+        }
+        return [[[iTermAction alloc] initWithDictionary:dict] autorelease];
+    }];
+
     _triggerParametersUseInterpolatedStrings = [iTermProfilePreferences boolForKey:KEY_TRIGGERS_USE_INTERPOLATED_STRINGS
                                                                          inProfile:aDict];
 
@@ -4053,13 +4065,6 @@ ITERM_WEAKLY_REFERENCEABLE
     [_lastLibTickitProfileSetting autorelease];
     _lastLibTickitProfileSetting = [@(profileWantsTickit) retain];
 
-    NSArray<NSDictionary *> *snippetDicts = [NSArray castFrom:aDict[KEY_SNIPPETS]];
-    self.snippets = [snippetDicts mapWithBlock:^id(NSDictionary *dict) {
-        if (![dict isKindOfClass:[NSDictionary class]]) {
-            return nil;
-        }
-        return [[[iTermSnippet alloc] initWithDictionary:dict] autorelease];
-    }];
     if (self.isTmuxClient) {
         NSDictionary *tabColorDict = [iTermProfilePreferences objectForKey:KEY_TAB_COLOR inProfile:aDict];
         if (![iTermProfilePreferences boolForKey:KEY_USE_TAB_COLOR inProfile:aDict]) {

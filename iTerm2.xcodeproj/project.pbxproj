@@ -2774,6 +2774,11 @@
 		A68DA49C2517CFF3009567A9 /* iTermEditSnippetsWindowController.xib in Resources */ = {isa = PBXBuildFile; fileRef = A68DA4972517CFE9009567A9 /* iTermEditSnippetsWindowController.xib */; };
 		A68DA4A32517D747009567A9 /* iTermSettingsProvider.h in Headers */ = {isa = PBXBuildFile; fileRef = A68DA4A12517D747009567A9 /* iTermSettingsProvider.h */; };
 		A68DA4A42517D747009567A9 /* iTermSettingsProvider.m in Sources */ = {isa = PBXBuildFile; fileRef = A68DA4A22517D747009567A9 /* iTermSettingsProvider.m */; };
+		A68DA4A8252113D8009567A9 /* iTermEditActionsWindowController.h in Headers */ = {isa = PBXBuildFile; fileRef = A68DA4A5252113D8009567A9 /* iTermEditActionsWindowController.h */; };
+		A68DA4A9252113D8009567A9 /* iTermEditActionsWindowController.m in Sources */ = {isa = PBXBuildFile; fileRef = A68DA4A6252113D8009567A9 /* iTermEditActionsWindowController.m */; };
+		A68DA4AA252113E1009567A9 /* iTermEditActionsWindowController.xib in Resources */ = {isa = PBXBuildFile; fileRef = A68DA4A7252113D8009567A9 /* iTermEditActionsWindowController.xib */; };
+		A68DA4AB252113E2009567A9 /* iTermEditActionsWindowController.xib in Resources */ = {isa = PBXBuildFile; fileRef = A68DA4A7252113D8009567A9 /* iTermEditActionsWindowController.xib */; };
+		A68DA4AC252113E2009567A9 /* iTermEditActionsWindowController.xib in Resources */ = {isa = PBXBuildFile; fileRef = A68DA4A7252113D8009567A9 /* iTermEditActionsWindowController.xib */; };
 		A68E332B1DE6AFC6003F1D8E /* iTermTouchBarButton.h in Headers */ = {isa = PBXBuildFile; fileRef = A68E33291DE6AFC6003F1D8E /* iTermTouchBarButton.h */; };
 		A68E33331DE746F5003F1D8E /* Add Mark Touch Bar Icon.png in Resources */ = {isa = PBXBuildFile; fileRef = A68E332D1DE746F5003F1D8E /* Add Mark Touch Bar Icon.png */; };
 		A68E33341DE746F5003F1D8E /* Add Mark Touch Bar Icon@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A68E332E1DE746F5003F1D8E /* Add Mark Touch Bar Icon@2x.png */; };
@@ -6022,6 +6027,9 @@
 		A68DA4972517CFE9009567A9 /* iTermEditSnippetsWindowController.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = iTermEditSnippetsWindowController.xib; sourceTree = "<group>"; };
 		A68DA4A12517D747009567A9 /* iTermSettingsProvider.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermSettingsProvider.h; sourceTree = "<group>"; };
 		A68DA4A22517D747009567A9 /* iTermSettingsProvider.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermSettingsProvider.m; sourceTree = "<group>"; };
+		A68DA4A5252113D8009567A9 /* iTermEditActionsWindowController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermEditActionsWindowController.h; sourceTree = "<group>"; };
+		A68DA4A6252113D8009567A9 /* iTermEditActionsWindowController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermEditActionsWindowController.m; sourceTree = "<group>"; };
+		A68DA4A7252113D8009567A9 /* iTermEditActionsWindowController.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = iTermEditActionsWindowController.xib; sourceTree = "<group>"; };
 		A68E33291DE6AFC6003F1D8E /* iTermTouchBarButton.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermTouchBarButton.h; sourceTree = "<group>"; };
 		A68E332A1DE6AFC6003F1D8E /* iTermTouchBarButton.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermTouchBarButton.m; sourceTree = "<group>"; };
 		A68E332D1DE746F5003F1D8E /* Add Mark Touch Bar Icon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "Add Mark Touch Bar Icon.png"; path = "images/Add Mark Touch Bar Icon.png"; sourceTree = "<group>"; };
@@ -7717,6 +7725,9 @@
 				A68DA4972517CFE9009567A9 /* iTermEditSnippetsWindowController.xib */,
 				A68DA4A12517D747009567A9 /* iTermSettingsProvider.h */,
 				A68DA4A22517D747009567A9 /* iTermSettingsProvider.m */,
+				A68DA4A5252113D8009567A9 /* iTermEditActionsWindowController.h */,
+				A68DA4A6252113D8009567A9 /* iTermEditActionsWindowController.m */,
+				A68DA4A7252113D8009567A9 /* iTermEditActionsWindowController.xib */,
 			);
 			name = Preferences;
 			sourceTree = "<group>";
@@ -11503,6 +11514,7 @@
 				A6BA7D24247637B700407C4D /* VT100InlineImageHelper.h in Headers */,
 				A62EED9620DF602F00943DE3 /* iTermCommandRunner.h in Headers */,
 				A6EC936624E513DB00EEADEF /* iTermSlowOperationGateway.h in Headers */,
+				A68DA4A8252113D8009567A9 /* iTermEditActionsWindowController.h in Headers */,
 				531E71F72229A69C00915960 /* iTermExpressionParser+Private.h in Headers */,
 				A66719541DCE36C3000CE608 /* SetDirectoryTrigger.h in Headers */,
 				535B3BB92228DC5500D6D410 /* iTermAlertBuiltInFunction.h in Headers */,
@@ -12282,6 +12294,7 @@
 				A67D0D8E1A2EE12A003A8B35 /* SplitPanel.xib in Resources */,
 				A6E16C6924A866F300C6DB06 /* WindowCornerFull_BigSur@2x.png in Resources */,
 				A67F613A214395680093940A /* graphic_heroku@2x.png in Resources */,
+				A68DA4AC252113E2009567A9 /* iTermEditActionsWindowController.xib in Resources */,
 				1D6ED9E819AEA20D005A7799 /* PrefsMouse.png in Resources */,
 				A6E7AE8E214394DD00DE9F3B /* graphic_composer@2x.png in Resources */,
 				A6E7AE60214394CA00DE9F3B /* graphic_clojure.png in Resources */,
@@ -12392,6 +12405,7 @@
 				1D44D0101CC7F5A600BE5630 /* PTYTextViewTest-golden-testDimmingTextAndMinimumContrast.png in Resources */,
 				A6C978F524A0194500971AA7 /* WindowCornerFull@2x.png in Resources */,
 				1D44D0271CC7F5A600BE5630 /* PTYTextViewTest-golden-testOversizeGlyphs.png in Resources */,
+				A68DA4AB252113E2009567A9 /* iTermEditActionsWindowController.xib in Resources */,
 				1D44D0611CC7F5A600BE5630 /* PTYTextViewTest-golden-travis-testBrightBoldOff.png in Resources */,
 				A6E16C6324A85D5F00C6DB06 /* BigSurAddTab.png in Resources */,
 				A629F5BA23B081DD00C2F16B /* MouseReportingCursorOverlay@2x.png in Resources */,
@@ -13170,6 +13184,7 @@
 				A6F7A73D213CB143004DE961 /* StatusBarIconJobs@2x.png in Resources */,
 				A67F6184214395A70093940A /* graphic_npm@2x.png in Resources */,
 				1DC2A1CE1949165D005769D5 /* Maximized@2x.png in Resources */,
+				A68DA4AA252113E1009567A9 /* iTermEditActionsWindowController.xib in Resources */,
 				A66F52C12106F6F100571168 /* gitdirty@2x.png in Resources */,
 				A65FF3C320F1854F008BD0AE /* iTermMiniSearchFieldViewController.xib in Resources */,
 				A6339DDB1D232DF2000BAD78 /* StatusItemAlt.png in Resources */,
@@ -13888,6 +13903,7 @@
 				A666D5F1221A1EF100D6184A /* iTermVariableScope+Window.m in Sources */,
 				A6A4867220B67AB800493302 /* PointerPreferencesViewController.m in Sources */,
 				A67C44E8211E24F6004EDB1C /* PSMMinimalTabStyle.m in Sources */,
+				A68DA4A9252113D8009567A9 /* iTermEditActionsWindowController.m in Sources */,
 				A6E2CC0C24E0950600CBD957 /* iTermStatusBarSparklinesComponent.m in Sources */,
 				53E9DFE7220D53230070C9C0 /* Trigger.m in Sources */,
 				A64DE9AB237A8555002E390C /* iTermFakeWindowTitleLabel.m in Sources */,

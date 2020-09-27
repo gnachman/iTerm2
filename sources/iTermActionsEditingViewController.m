@@ -35,8 +35,30 @@ static NSString *const iTermActionsEditingPasteboardType = @"iTermActionsEditing
     IBOutlet NSTableColumn *_actionColumns;
     IBOutlet NSButton *_removeButton;
     IBOutlet NSButton *_editButton;
-    iTermEditKeyActionWindowController *_editActionWindowController;
+
     NSArray<iTermAction *> *_actions;
+    iTermEditKeyActionWindowController *_editActionWindowController;
+    BOOL _initialized;
+}
+
+- (instancetype)initWithCoder:(NSCoder *)coder {
+    self = [super initWithCoder:coder];
+    if (self) {
+        _model = [iTermActionsModel sharedInstance];
+    }
+    return self;
+}
+
+- (void)setModel:(iTermActionsModel *)model {
+    _model = model;
+    [self loadFromModel];
+}
+
+- (void)loadFromModel {
+    _actions = [[_model actions] copy];
+    [self updateEnabled];
+    [_tableView reloadData];
+    [self finishInitialization];
 }
 
 - (void)defineControlsInContainer:(iTermPreferencesBaseViewController *)container
@@ -44,29 +66,45 @@ static NSString *const iTermActionsEditingPasteboardType = @"iTermActionsEditing
     [containerView addSubview:self.view];
     containerView.autoresizesSubviews = YES;
     self.view.frame = containerView.bounds;
-    _actions = [[[iTermActionsModel sharedInstance] actions] copy];
-    [_tableView setDoubleAction:@selector(doubleClickOnTableView:)];
-    [self updateEnabled];
-    [_tableView registerForDraggedTypes:@[ iTermActionsEditingPasteboardType ]];
-    [_tableView reloadData];
-    __weak __typeof(self) weakSelf = self;
-    [iTermActionsDidChangeNotification subscribe:self
-                                           block:^(iTermActionsDidChangeNotification * _Nonnull notification) {
-                                               [weakSelf actionsDidChange:notification];
-                                           }];
+    [self loadFromModel];
     [container addViewToSearchIndex:_tableView
                         displayName:@"Actions"
                             phrases:@[ @"Actions" ]
                                 key:kPreferenceKeyActions];
 }
 
+- (void)finishInitialization {
+    if (_initialized) {
+        return;
+    }
+    _initialized = YES;
+    [_tableView setDoubleAction:@selector(doubleClickOnTableView:)];
+    [_tableView registerForDraggedTypes:@[ iTermActionsEditingPasteboardType ]];
+    __weak __typeof(self) weakSelf = self;
+    [iTermActionsDidChangeNotification subscribe:self
+                                           block:^(iTermActionsDidChangeNotification * _Nonnull notification) {
+        [weakSelf actionsDidChange:notification];
+    }];
+}
+
 #pragma mark - Private
 
 - (NSArray<iTermAction *> *)selectedActions {
-    NSArray<iTermAction *> *actions = [[iTermActionsModel sharedInstance] actions];
+    NSArray<iTermAction *> *actions = [self.model actions];
     return [[_tableView.selectedRowIndexes it_array] mapWithBlock:^id(NSNumber *indexNumber) {
         return actions[indexNumber.integerValue];
     }];
+}
+
+- (void)setActions:(NSArray<iTermAction *> *)actions {
+    [self pushUndo];
+    [self.model setActions:actions];
+}
+
+- (void)pushUndo {
+    [[self undoManager] registerUndoWithTarget:self
+                                      selector:@selector(setActions:)
+                                        object:_actions];
 }
 
 - (iTermEditKeyActionWindowController *)newEditKeyActionWindowControllerForAction:(iTermAction *)action {
@@ -91,29 +129,21 @@ static NSString *const iTermActionsEditingPasteboardType = @"iTermActionsEditing
     if (_editActionWindowController.ok) {
         [self pushUndo];
         if (original) {
-            [[iTermActionsModel sharedInstance] replaceAction:original
-                                                   withAction:_editActionWindowController.unboundAction];
+            [self.model replaceAction:original
+                           withAction:_editActionWindowController.unboundAction];
         } else {
-            [[iTermActionsModel sharedInstance] addAction:_editActionWindowController.unboundAction];
+            [self.model addAction:_editActionWindowController.unboundAction];
         }
     }
     [_editActionWindowController.window close];
     _editActionWindowController = nil;
 }
 
-- (void)setActions:(NSArray<iTermAction *> *)actions {
-    [self pushUndo];
-    [[iTermActionsModel sharedInstance] setActions:actions];
-}
-
-- (void)pushUndo {
-    [[self undoManager] registerUndoWithTarget:self
-                                      selector:@selector(setActions:)
-                                        object:_actions];
-}
-
 - (void)actionsDidChange:(iTermActionsDidChangeNotification *)notif {
-    _actions = [[[iTermActionsModel sharedInstance] actions] copy];
+    if (notif.model != _model) {
+        return;
+    }
+    _actions = [[self.model actions] copy];
     switch (notif.mutationType) {
         case iTermActionsDidChangeMutationTypeEdit: {
             [_tableView it_performUpdateBlock:^{
@@ -179,7 +209,7 @@ static NSString *const iTermActionsEditingPasteboardType = @"iTermActionsEditing
 - (IBAction)remove:(id)sender {
     NSArray<iTermAction *> *actions = [self selectedActions];
     [self pushUndo];
-    [[iTermActionsModel sharedInstance] removeActions:actions];
+    [self.model removeActions:actions];
 }
 
 - (IBAction)edit:(id)sender {
@@ -294,8 +324,8 @@ writeRowsWithIndexes:(NSIndexSet *)rowIndexes
     [self pushUndo];
     NSPasteboard *pboard = [info draggingPasteboard];
     NSArray<NSNumber *> *identifiers = [pboard propertyListForType:iTermActionsEditingPasteboardType];
-    [[iTermActionsModel sharedInstance] moveActionsWithIdentifiers:identifiers
-                                                           toIndex:row];
+    [self.model moveActionsWithIdentifiers:identifiers
+                                   toIndex:row];
     return YES;
 }
 

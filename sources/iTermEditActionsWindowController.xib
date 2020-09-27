@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="16097" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
+    <dependencies>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="16097"/>
+        <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
+    </dependencies>
+    <objects>
+        <customObject id="-2" userLabel="File's Owner" customClass="iTermEditActionsWindowController">
+            <connections>
+                <outlet property="_viewController" destination="JrY-0y-RZ2" id="Vv4-Oy-F3r"/>
+                <outlet property="_wrapper" destination="ztx-cY-ms4" id="KTn-hl-eVl"/>
+                <outlet property="window" destination="F0z-JX-Cv5" id="gIp-Ho-8D9"/>
+            </connections>
+        </customObject>
+        <customObject id="-1" userLabel="First Responder" customClass="FirstResponder"/>
+        <customObject id="-3" userLabel="Application" customClass="NSObject"/>
+        <window title="Edit Actions" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" hidesOnDeactivate="YES" visibleAtLaunch="NO" animationBehavior="default" id="F0z-JX-Cv5" userLabel="Actions Panel" customClass="NSPanel">
+            <windowStyleMask key="styleMask" titled="YES" closable="YES" miniaturizable="YES" resizable="YES" utility="YES" documentModal="YES"/>
+            <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>
+            <rect key="contentRect" x="196" y="240" width="824" height="351"/>
+            <rect key="screenRect" x="0.0" y="0.0" width="1536" height="937"/>
+            <view key="contentView" id="se5-gp-TjO">
+                <rect key="frame" x="0.0" y="0.0" width="824" height="351"/>
+                <autoresizingMask key="autoresizingMask"/>
+                <subviews>
+                    <customView id="ztx-cY-ms4" userLabel="Wrapper">
+                        <rect key="frame" x="0.0" y="0.0" width="824" height="351"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <subviews>
+                            <button verticalHuggingPriority="750" id="Iqg-sh-6Bk">
+                                <rect key="frame" x="728" y="13" width="82" height="32"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxY="YES"/>
+                                <buttonCell key="cell" type="push" title="OK" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="5qJ-eO-0jk">
+                                    <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                                    <font key="font" metaFont="system"/>
+                                    <string key="keyEquivalent" base64-UTF8="YES">
+DQ
+</string>
+                                </buttonCell>
+                                <connections>
+                                    <action selector="ok:" target="-2" id="FJ1-gf-Sow"/>
+                                </connections>
+                            </button>
+                        </subviews>
+                    </customView>
+                </subviews>
+            </view>
+            <accessibility identifier="actionsPanel"/>
+            <connections>
+                <outlet property="delegate" destination="-2" id="0bl-1N-AYu"/>
+            </connections>
+            <point key="canvasLocation" x="139" y="147"/>
+        </window>
+        <viewController id="JrY-0y-RZ2" customClass="iTermActionsEditingViewController"/>
+    </objects>
+</document>

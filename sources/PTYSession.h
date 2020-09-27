@@ -550,6 +550,7 @@ backgroundColor:(NSColor *)backgroundColor;
 @property(nonatomic, readonly) BOOL tmuxPaused;
 @property(nonatomic, readonly) NSString *userShell;  // Something like "/bin/bash".
 @property(nonatomic, readonly, copy) NSArray<iTermSnippet *> *snippets;
+@property(nonatomic, readonly, copy) NSArray<iTermAction *> *actions;
 
 #pragma mark - methods
 

@@ -33,6 +33,7 @@ NS_ASSUME_NONNULL_BEGIN
 @interface iTermActionsModel : NSObject
 
 + (instancetype)sharedInstance;
++ (instancetype)instanceForProfileWithGUID:(NSString *)guid;
 
 @property (nonatomic, readonly) NSArray<iTermAction *> *actions;
 
@@ -60,13 +61,18 @@ typedef NS_ENUM(NSUInteger, iTermActionsDidChangeMutationType) {
 @property (nonatomic, readonly) iTermActionsDidChangeMutationType mutationType;
 @property (nonatomic, readonly) NSInteger index;
 @property (nonatomic, readonly) NSIndexSet *indexSet;  // for move only
+@property (nonatomic, readonly) iTermActionsModel *model;
 
 + (instancetype)notificationWithMutationType:(iTermActionsDidChangeMutationType)mutationType
-                                       index:(NSInteger)index;
+                                       index:(NSInteger)index
+                                       model:(iTermActionsModel *)model;
 + (instancetype)moveNotificationWithRemovals:(NSIndexSet *)removals
-                            destinationIndex:(NSInteger)destinationIndex;
-+ (instancetype)fullReplacementNotification;
-+ (instancetype)removalNotificationWithIndexes:(NSIndexSet *)indexes;
+                            destinationIndex:(NSInteger)destinationIndex
+                                       model:(iTermActionsModel *)model;
++ (instancetype)fullReplacementNotificationForModel:(iTermActionsModel *)model;
+
++ (instancetype)removalNotificationWithIndexes:(NSIndexSet *)indexes
+                                         model:(iTermActionsModel *)model;
 
 + (void)subscribe:(NSObject *)owner
             block:(void (^)(iTermActionsDidChangeNotification * _Nonnull notification))block;

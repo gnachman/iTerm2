@@ -36,6 +36,7 @@ extern NSString *const kReloadAllProfiles;
 
 // Snippets in a profile changed. Object is profile GUID.
 extern NSString *const iTermProfileSnippetsDidChange;
+extern NSString *const iTermProfileActionsDidChange;
 
 // Menu item identifier prefixes for NSMenuItems that open a window/tab
 extern NSString *const iTermProfileModelNewWindowMenuItemIdentifierPrefix;
