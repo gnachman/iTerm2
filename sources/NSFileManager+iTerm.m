@@ -28,6 +28,7 @@
 #import "DebugLogging.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermAutoMasterParser.h"
+#import "iTermWarning.h"
 #import "RegexKitLite.h"
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -117,8 +118,19 @@ NSString * const DirectoryLocationDomain = @"DirectoryLocationDomain";
                                           inDomain:NSUserDomainMask
                                appendPathComponent:executableName
                                              error:&error];
-    ITBetaAssert(result != nil,
-                 @"Unable to find or create application support directory:\n%@", error);
+    if (result == nil) {
+        static dispatch_once_t onceToken;
+        dispatch_once(&onceToken, ^{
+            [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"There was a problem finding or creating your application support directory. iTerm2 won't work very well until this problem is fixed.\n\nIt should be at ~/Library/Application Support/iTerm2.\n\nThe error was:\n%@", error.localizedDescription]
+                                       actions:@[ @"OK" ]
+                                     accessory:nil
+                                    identifier:@"NoSyncAppSupportFail"
+                                   silenceable:kiTermWarningTypePersistent
+                                       heading:@"Problem with Application Support Directory"
+                                        window:nil];
+        });
+    }
+
     return result;
 }
 
