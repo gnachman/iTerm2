@@ -746,7 +746,7 @@ static BOOL hasBecomeActive = NO;
         [iTermAdvancedSettingsModel restoreWindowContents] &&
         [[iTermController sharedInstance] willRestoreWindowsAtNextLaunch]) {
         // Nothing will be lost so just restart without asking.
-        [reason addReason:[iTermPromptOnCloseReason noReason]];
+        reason = [iTermPromptOnCloseReason noReason];
     }
 
     if (reason.hasReason) {
