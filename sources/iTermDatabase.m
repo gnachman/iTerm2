@@ -213,6 +213,13 @@
         DLog(@"Rollback");
         result = [_db rollback];
     }
+#if BETA
+    FMResultSet *rs = [_db executeQuery:@"select count(*) as c from Node where parent=0"];
+    if ([rs next]) {
+        NSString *count = [rs stringForColumn:@"c"];
+        ITBetaAssert(count.integerValue == 1, count);
+    }
+#endif
     if (!result) {
         DLog(@"error=%@", _db.lastError);
     }

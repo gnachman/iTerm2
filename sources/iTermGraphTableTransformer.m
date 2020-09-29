@@ -13,13 +13,15 @@
 #import "NSObject+iTerm.h"
 
 static iTermEncoderGraphRecord *iTermGraphDeltaEncoderMakeGraphRecord(NSNumber *nodeID,
-                                                                      NSDictionary *nodes) {
+                                                                      NSDictionary *nodes,
+                                                                      NSArray<NSString *> *path) {
     NSDictionary *nodeDict = nodes[nodeID];
     NSArray<NSNumber *> *childNodeIDs = nodeDict[@"children"];
+    NSString *tail = [NSString stringWithFormat:@"%@[%@]", nodeDict[@"key"], nodeDict[@"identifier"]];
     NSArray<iTermEncoderGraphRecord *> *childGraphRecords =
-    [childNodeIDs mapWithBlock:^id(NSNumber *childNodeID) {
-        return iTermGraphDeltaEncoderMakeGraphRecord(childNodeID, nodes);
-    }];
+        [childNodeIDs mapWithBlock:^id(NSNumber *childNodeID) {
+            return iTermGraphDeltaEncoderMakeGraphRecord(childNodeID, nodes, [path arrayByAddingObject:tail]);
+        }];
     NSDictionary<NSString *, id> *pod;
     NSData *data = nodeDict[@"data"];
     if (data.length) {
@@ -146,7 +148,7 @@ static iTermEncoderGraphRecord *iTermGraphDeltaEncoderMakeGraphRecord(NSNumber *
     }
 
     // Finally, we can construct a record.
-    return iTermGraphDeltaEncoderMakeGraphRecord(rootNodeID, nodes);
+    return iTermGraphDeltaEncoderMakeGraphRecord(rootNodeID, nodes, @[ @"(root)" ]);
 }
 
 @end

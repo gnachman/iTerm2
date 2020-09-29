@@ -23,6 +23,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (BOOL)enumerateRecords:(void (^)(iTermEncoderGraphRecord * _Nullable before,
                                    iTermEncoderGraphRecord * _Nullable after,
                                    NSNumber *parent,
+                                   NSString *path,
                                    BOOL *stop))block;
 
 @end

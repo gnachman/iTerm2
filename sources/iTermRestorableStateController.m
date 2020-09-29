@@ -32,6 +32,7 @@ extern NSString *const iTermApplicationWillTerminate;
     id<iTermRestorableStateSaver> _saver;
     id<iTermRestorableStateRestorer> _restorer;
     iTermRestorableStateDriver *_driver;
+    BOOL _ready;
 }
 
 + (BOOL)stateRestorationEnabled {
@@ -106,6 +107,11 @@ extern NSString *const iTermApplicationWillTerminate;
         _driver.needsSave = YES;
         return;
     }
+    if (!_ready) {
+        DLog(@"Still initializing. Set needsSave.");
+        _driver.needsSave = YES;
+        return;
+    }
     [_driver save];
 }
 
@@ -119,9 +125,15 @@ extern NSString *const iTermApplicationWillTerminate;
         [weakSelf.delegate restorableStateDidFinishRequestingRestorations:self];
     }
                    completion:^{
-        [weakSelf didRestore];
+        DLog(@"Restoration did complete");
+        [weakSelf completeInitialization];
         completion();
     }];
+}
+
+- (void)didSkipRestoration {
+    DLog(@"did skip restoration");
+    [self completeInitialization];
 }
 
 #pragma mark - Private
@@ -145,11 +157,15 @@ extern NSString *const iTermApplicationWillTerminate;
     [_driver saveSynchronously];
     _driver = nil;
 }
- 
-- (void)didRestore {
+
+// All restoration activities (if any) are complete and it's now save to save to the db.
+- (void)completeInitialization {
+    DLog(@"completeInitialization");
     assert([NSThread isMainThread]);
+    _ready = YES;
     if (![iTermRestorableStateController stateRestorationEnabled]) {
         // Just in case we don't get a chance to erase the state later.
+        DLog(@"State restoration is disabled so erase db");
         [_driver eraseSynchronously:NO];
         return;
     }

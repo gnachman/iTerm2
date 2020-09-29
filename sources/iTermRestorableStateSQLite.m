@@ -167,9 +167,11 @@
     }
     assert(i >= 0);
 
+    DLog(@"Create index...");
     iTermRestorableStateSQLiteIndex *windowIndex =
         [[iTermRestorableStateSQLiteIndex alloc] initWithGraphRecord:_db.record];
     iTermEncoderGraphRecord *windowRecord = windowIndex[i];
+    DLog(@"Done creating index");
     if (!windowRecord) {
         completion();
         return;

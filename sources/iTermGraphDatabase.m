@@ -118,7 +118,7 @@
     NSError *error = nil;
     self.record = [self load:state error:&error];
     if (error) {
-        DLog(@"load failed. Attempt recovery.");
+        DLog(@"load failed. Attempt recovery. %@", error);
         return [self attemptRecovery:state encoder:nil];
     }
     DLog(@"Loaded ok.");
@@ -301,6 +301,7 @@
     [encoder enumerateRecords:^(iTermEncoderGraphRecord * _Nullable before,
                                 iTermEncoderGraphRecord * _Nullable after,
                                 NSNumber *parent,
+                                NSString *path,
                                 BOOL *stop) {
         if (before && !before.rowid) {
             @throw [NSException exceptionWithName:@"MissingRowID"
@@ -321,6 +322,9 @@
                 return;
             }
             NSNumber *lastInsertRowID = state.db.lastInsertRowId;
+            if (parent.integerValue == 0) {
+                DLog(@"Insert root node with path %@, rowid %@", path, lastInsertRowID);
+            }
             assert(lastInsertRowID);
             @try {
                 // Issue 9117
@@ -331,6 +335,9 @@
             return;
         }
         if (before && after) {
+            if (before.parent == nil) {
+                DLog(@"Updating root with path %@, rowid %@", path, before.rowid);
+            }
             if (after.rowid == nil) {
                 after.rowid = before.rowid;
             } else {
@@ -397,22 +404,28 @@
 
 - (iTermEncoderGraphRecord * _Nullable)load:(iTermGraphDatabaseState *)state
                                       error:(out NSError **)error {
+    DLog(@"load");
     NSMutableArray<NSArray *> *nodes = [NSMutableArray array];
     {
+        DLog(@"select from Node...");
         FMResultSet *rs = [state.db executeQuery:@"select key, identifier, parent, rowid, data from Node"];
         while ([rs next]) {
+            DLog(@"Read row");
             [nodes addObject:@[ [rs stringForColumn:@"key"],
                                 [rs stringForColumn:@"identifier"],
                                 @([rs longLongIntForColumn:@"parent"]),
                                 @([rs longLongIntForColumn:@"rowid"]),
                                 [rs dataForColumn:@"data"] ?: [NSData data] ]];
         }
+        DLog(@"Select done");
         [rs close];
     }
 
+    DLog(@"Begin transforming");
     iTermGraphTableTransformer *transformer = [[iTermGraphTableTransformer alloc] initWithNodeRows:nodes];
     iTermEncoderGraphRecord *record = transformer.root;
-    
+    DLog(@"Done transforming");
+
     if (!record) {
         if (error) {
             *error = transformer.lastError;

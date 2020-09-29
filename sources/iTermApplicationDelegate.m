@@ -1041,6 +1041,7 @@ static BOOL hasBecomeActive = NO;
             [_untitledWindowStateMachine didFinishRestoringWindows];
         }];
     } else {
+        [_restorableStateController didSkipRestoration];
         [_untitledWindowStateMachine didFinishRestoringWindows];
     }
 }
@@ -2404,9 +2405,12 @@ static BOOL hasBecomeActive = NO;
             completion(window, error);
             return;
         }
+        DLog(@"Call asyncRestoreState for identifier %@", identifier);
         [term asyncRestoreState:state
                         timeout: ^(NSArray *partialAttachments) { [[iTermOrphanServerAdopter sharedInstance] adoptPartialAttachments:partialAttachments]; }
-                     completion: ^{ completion(window, error);
+                     completion: ^{
+            DLog(@"Async restore finished for identifier %@", identifier);
+            completion(window, error);
         }];
     }];
 }

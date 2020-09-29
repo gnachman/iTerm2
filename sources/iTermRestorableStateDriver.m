@@ -102,6 +102,7 @@ static NSString *const iTermRestorableStateControllerUserDefaultsKeyCount = @"No
     }
     [[NSUserDefaults standardUserDefaults] setInteger:count + 1
                                                forKey:iTermRestorableStateControllerUserDefaultsKeyCount];
+    DLog(@"set restoring to YES");
     _restoring = YES;
     [self reallyRestoreWindows:index withCompletion:^{
         [self didRestoreFromIndex:index];
@@ -113,6 +114,7 @@ static NSString *const iTermRestorableStateControllerUserDefaultsKeyCount = @"No
 
 // Main queue
 - (void)didRestoreFromIndex:(id<iTermRestorableStateIndex>)index {
+    DLog(@"set restoring to NO");
     _restoring = NO;
     [[NSUserDefaults standardUserDefaults] setInteger:0
                                                forKey:iTermRestorableStateControllerUserDefaultsKeyCount];
