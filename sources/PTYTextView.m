@@ -428,6 +428,9 @@
     if ([item action] == @selector(pasteBase64Encoded:)) {
         return [[NSPasteboard generalPasteboard] dataForFirstFile] != nil;
     }
+    if (item.action == @selector(bury:)) {
+        return YES;
+    }
     if (item.action == @selector(terminalStateToggleAlternateScreen:) ||
         item.action == @selector(terminalStateToggleFocusReporting:) ||
         item.action == @selector(terminalStateToggleMouseReporting:) ||
