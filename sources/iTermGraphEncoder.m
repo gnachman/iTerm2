@@ -133,7 +133,8 @@ NSInteger iTermGenerationAlwaysEncode = NSIntegerMax;
                          options:0
                            block:^BOOL (NSString * _Nonnull identifier,
                                    NSInteger index,
-                                   iTermGraphEncoder * _Nonnull subencoder) {
+                                   iTermGraphEncoder * _Nonnull subencoder,
+                                        BOOL *stop) {
             [subencoder encodeObject:array[index] key:@"__arrayValue"];
             return YES;
         }];
@@ -191,21 +192,27 @@ NSInteger iTermGenerationAlwaysEncode = NSIntegerMax;
                    options:(iTermGraphEncoderArrayOptions)options
                      block:(BOOL (^ NS_NOESCAPE)(NSString *identifier,
                                                  NSInteger index,
-                                                 iTermGraphEncoder *subencoder))block {
+                                                 iTermGraphEncoder *subencoder,
+                                                 BOOL *stop))block {
     [self encodeChildWithKey:@"__array"
                   identifier:key
                   generation:generation
                        block:^BOOL(iTermGraphEncoder * _Nonnull subencoder) {
+        NSMutableArray<NSString *> *savedIdentifiers = [NSMutableArray array];
         [identifiers enumerateObjectsUsingBlock:^(NSString * _Nonnull identifier,
                                                   NSUInteger idx,
                                                   BOOL * _Nonnull stop) {
             [subencoder transaction:^BOOL {
                 return [subencoder encodeChildWithKey:@"" identifier:identifier generation:iTermGenerationAlwaysEncode block:^BOOL(iTermGraphEncoder * _Nonnull subencoder) {
-                    return block(identifier, idx, subencoder);
+                    const BOOL result = block(identifier, idx, subencoder, stop);
+                    if (result) {
+                        [savedIdentifiers addObject:identifier];
+                    }
+                    return result;
                 }];
             }];
         }];
-        NSArray<NSString *> *orderedIdentifiers = identifiers;
+        NSArray<NSString *> *orderedIdentifiers = savedIdentifiers;
         if (options & iTermGraphEncoderArrayOptionsReverse) {
             orderedIdentifiers = orderedIdentifiers.reversed;
         }

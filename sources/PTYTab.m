@@ -2548,7 +2548,8 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                          generation:iTermGenerationAlwaysEncode
                               block:^BOOL(id<iTermEncoderAdapter>  _Nonnull encoder,
                                           NSInteger i,
-                                          NSString * _Nonnull identifier) {
+                                          NSString * _Nonnull identifier,
+                                          BOOL *stop) {
             return [self _recursiveEncodeArrangementForView:index[identifier]
                                                       idMap:idMap
                                                 isMaximized:isMaximized
@@ -3069,7 +3070,8 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                          generation:iTermGenerationAlwaysEncode
                               block:^BOOL(id<iTermEncoderAdapter>  _Nonnull encoder,
                                           NSInteger i,
-                                          NSString * _Nonnull identifier) {
+                                          NSString * _Nonnull identifier,
+                                          BOOL *stop) {
             NSDictionary *subnode = index[identifier];
             if (![self encodeArrangementNodeWithContents:includeContents
                                      fromArrangementNode:subnode

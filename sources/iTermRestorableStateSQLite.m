@@ -227,7 +227,8 @@
                             options:0
                               block:^BOOL(NSString * _Nonnull identifier,
                                           NSInteger index,
-                                          iTermGraphEncoder * _Nonnull subencoder) {
+                                          iTermGraphEncoder * _Nonnull subencoder,
+                                          BOOL *stop) {
             NSWindow *window = windows[index];
             [subencoder encodeString:identifier forKey:@"__identifier"];
             [subencoder encodeNumber:@(window.windowNumber) forKey:@"__windowNumber"];

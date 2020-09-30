@@ -49,7 +49,8 @@
                 generation:(NSInteger)generation
                      block:(BOOL (^ NS_NOESCAPE)(id<iTermEncoderAdapter> encoder,
                                                  NSInteger index,
-                                                 NSString *identifier))block {
+                                                 NSString *identifier,
+                                                 BOOL *stop))block {
     [self encodeArrayWithKey:key
                  identifiers:identifiers
                   generation:generation
@@ -63,15 +64,17 @@
                    options:(iTermGraphEncoderArrayOptions)options
                      block:(BOOL (^ NS_NOESCAPE)(id<iTermEncoderAdapter> encoder,
                                                  NSInteger i,
-                                                 NSString *identifier))block {
+                                                 NSString *identifier,
+                                                 BOOL *stop))block {
     [_encoder encodeArrayWithKey:key
                       generation:generation
                      identifiers:identifiers
                          options:options
                            block:^BOOL(NSString * _Nonnull identifier,
                                        NSInteger index,
-                                       iTermGraphEncoder * _Nonnull subencoder) {
-        return block([[iTermGraphEncoderAdapter alloc] initWithGraphEncoder:subencoder], index, identifier);
+                                       iTermGraphEncoder * _Nonnull subencoder,
+                                       BOOL *stop) {
+        return block([[iTermGraphEncoderAdapter alloc] initWithGraphEncoder:subencoder], index, identifier, stop);
     }];
 }
 
@@ -134,7 +137,8 @@
                 generation:(NSInteger)generation
                      block:(BOOL (^ NS_NOESCAPE)(id<iTermEncoderAdapter> _Nonnull,
                                                  NSInteger index,
-                                                 NSString * _Nonnull))block {
+                                                 NSString * _Nonnull,
+                                                 BOOL *stop))block {
     [self encodeArrayWithKey:key
                  identifiers:identifiers
                   generation:generation
@@ -148,13 +152,16 @@
                    options:(iTermGraphEncoderArrayOptions)options
                      block:(BOOL (^ NS_NOESCAPE)(id<iTermEncoderAdapter> encoder,
                                                  NSInteger i,
-                                                 NSString *identifier))block {
+                                                 NSString *identifier,
+                                                 BOOL *stop))block {
     NSArray *array = [identifiers mapEnumeratedWithBlock:^id(NSUInteger index,
-                                                                      NSString *identifier) {
+                                                             NSString *identifier,
+                                                             BOOL *stop) {
         NSMutableDictionary *dict = [NSMutableDictionary dictionary];
         if (!block([[iTermMutableDictionaryEncoderAdapter alloc] initWithMutableDictionary:dict],
                    index,
-                   identifier)) {
+                   identifier,
+                   stop)) {
             return nil;
         }
         return dict;

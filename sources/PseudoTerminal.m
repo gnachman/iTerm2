@@ -3100,7 +3100,8 @@ ITERM_WEAKLY_REFERENCEABLE
                     generation:iTermGenerationAlwaysEncode
                          block:^BOOL(id<iTermEncoderAdapter>  _Nonnull encoder,
                                      NSInteger index,
-                                     NSString * _Nonnull identifier) {
+                                     NSString * _Nonnull identifier,
+                                     BOOL *stop) {
         return [tabs[index] encodeWithContents:includeContents
                                        encoder:encoder];
     }];

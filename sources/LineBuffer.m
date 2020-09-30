@@ -1114,21 +1114,21 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
                         options:iTermGraphEncoderArrayOptionsReverse
                           block:^BOOL(id<iTermEncoderAdapter> _Nonnull encoder,
                                       NSInteger i,
-                                      NSString * _Nonnull identifier) {
+                                      NSString * _Nonnull identifier,
+                                      BOOL *stop) {
         LineBlock *block = index[identifier];
         DLog(@"Encode %@ with identifier %@ and generation %@", block, identifier, @(block.generation));
         return [encoder encodeDictionaryWithKey:kLineBufferBlockWrapperKey
                                      generation:block.generation
                                           block:^BOOL(id<iTermEncoderAdapter>  _Nonnull encoder) {
+            assert(!truncated);
             DLog(@"Really encode block %p with guid %@", block, block.stringUniqueIdentifier);
-            if (truncated) {
-                return NO;
-            }
-            [encoder mergeDictionary:block.dictionary];
+            [encoder mergeDictionary:block.dictionary]; 
             // This caps the amount of data at a reasonable but arbitrary size.
             numLines += [block getNumLinesWithWrapWidth:80];
             if (numLines >= maxLines) {
                 truncated = YES;
+                *stop = YES;
             }
             return YES;
         }];

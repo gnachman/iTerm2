@@ -812,7 +812,8 @@
                         options:0
                           block:^BOOL (NSString * _Nonnull identifier,
                                        NSInteger index,
-                                       iTermGraphEncoder * _Nonnull subencoder) {
+                                       iTermGraphEncoder * _Nonnull subencoder,
+                                       BOOL *stop) {
         [subencoder encodeString:[NSString stringWithFormat:@"value1_%@_%@", identifier, @(index)]
                           forKey:@"k"];
         return YES;
@@ -823,7 +824,7 @@
                      generation:1
                     identifiers:@[ @"i1", @"i2", @"i3" ]
                           options:0
-                          block:^BOOL (NSString * _Nonnull identifier, NSInteger index, iTermGraphEncoder * _Nonnull subencoder) {
+                          block:^BOOL (NSString * _Nonnull identifier, NSInteger index, iTermGraphEncoder * _Nonnull subencoder, BOOL *stop) {
         XCTFail(@"Should not have been called because generation didn't change");
         return YES;
     }];
@@ -842,7 +843,8 @@
                           options:0
                           block:^BOOL (NSString * _Nonnull identifier,
                                        NSInteger index,
-                                       iTermGraphEncoder * _Nonnull subencoder) {
+                                       iTermGraphEncoder * _Nonnull subencoder,
+                                       BOOL *stop) {
         [subencoder encodeString:[NSString stringWithFormat:@"value1_%@_%@", identifier, @(index)]
                           forKey:[NSString stringWithFormat:@"k_%@", identifier]];
         return YES;
@@ -864,7 +866,7 @@
                      generation:2
                     identifiers:@[ @"i1", @"i2", @"i3" ]
                           options:0
-                          block:^BOOL (NSString * _Nonnull identifier, NSInteger index, iTermGraphEncoder * _Nonnull subencoder) {
+                          block:^BOOL (NSString * _Nonnull identifier, NSInteger index, iTermGraphEncoder * _Nonnull subencoder, BOOL *stop) {
         [subencoder encodeString:[NSString stringWithFormat:@"value2_%@_%@", identifier, @(index)]
                           forKey:[NSString stringWithFormat:@"k_%@", identifier]];
         return YES;
@@ -889,7 +891,8 @@
                           options:0
                           block:^BOOL (NSString * _Nonnull identifier,
                                        NSInteger index,
-                                       iTermGraphEncoder * _Nonnull subencoder) {
+                                       iTermGraphEncoder * _Nonnull subencoder,
+                                       BOOL *stop) {
         [subencoder encodeString:[NSString stringWithFormat:@"value1_%@_%@", identifier, @(index)]
                           forKey:[NSString stringWithFormat:@"k_%@", identifier]];
         return YES;
@@ -911,7 +914,7 @@
                      generation:2
                     identifiers:@[ @"i2", @"i3" ]
                           options:0
-                          block:^BOOL (NSString * _Nonnull identifier, NSInteger index, iTermGraphEncoder * _Nonnull subencoder) {
+                          block:^BOOL (NSString * _Nonnull identifier, NSInteger index, iTermGraphEncoder * _Nonnull subencoder, BOOL *stop) {
         [subencoder encodeString:[NSString stringWithFormat:@"value2_%@_%@", identifier, @(index)]
                           forKey:[NSString stringWithFormat:@"k_%@", identifier]];
         return YES;
@@ -937,7 +940,8 @@
                           options:0
                           block:^BOOL (NSString * _Nonnull identifier,
                                        NSInteger index,
-                                       iTermGraphEncoder * _Nonnull subencoder) {
+                                       iTermGraphEncoder * _Nonnull subencoder,
+                                       BOOL *stop) {
         [subencoder encodeString:[NSString stringWithFormat:@"value1_%@_%@", identifier, @(index)]
                           forKey:[NSString stringWithFormat:@"k_%@", identifier]];
         return YES;
@@ -959,7 +963,7 @@
                      generation:2
                     identifiers:@[ @"i1", @"i2", @"i3", @"i4" ]
                           options:0
-                          block:^BOOL (NSString * _Nonnull identifier, NSInteger index, iTermGraphEncoder * _Nonnull subencoder) {
+                          block:^BOOL (NSString * _Nonnull identifier, NSInteger index, iTermGraphEncoder * _Nonnull subencoder, BOOL *stop) {
         [subencoder encodeString:[NSString stringWithFormat:@"value1_%@_%@", identifier, @(index)]
                           forKey:[NSString stringWithFormat:@"k_%@", identifier]];
         return YES;
@@ -1534,7 +1538,7 @@
     [db update:^(iTermGraphEncoder * _Nonnull encoder) {
         [encoder encodeChildWithKey:@"root" identifier:@"" generation:1 block:^BOOL (iTermGraphEncoder * _Nonnull subencoder) {
             [subencoder encodeString:@"string" forKey:@"STRING"];
-            [subencoder encodeArrayWithKey:@"values" generation:1 identifiers:@[ @"i1", @"i2" ] options:0 block:^BOOL (NSString * _Nonnull identifier, NSInteger index, iTermGraphEncoder * _Nonnull subencoder) {
+            [subencoder encodeArrayWithKey:@"values" generation:1 identifiers:@[ @"i1", @"i2" ] options:0 block:^BOOL (NSString * _Nonnull identifier, NSInteger index, iTermGraphEncoder * _Nonnull subencoder, BOOL *stop) {
                 [subencoder encodeString:[identifier stringRepeatedTimes:10] forKey:identifier];
                 return YES;
             }];
@@ -1549,7 +1553,7 @@
     [db update:^(iTermGraphEncoder * _Nonnull encoder) {
         [encoder encodeChildWithKey:@"root" identifier:@"" generation:2 block:^BOOL(iTermGraphEncoder * _Nonnull subencoder) {
             [subencoder encodeString:@"string" forKey:@"STRING"];
-            [subencoder encodeArrayWithKey:@"values" generation:2 identifiers:@[ @"i2", @"i3" ] options:0 block:^BOOL (NSString * _Nonnull identifier, NSInteger index, iTermGraphEncoder * _Nonnull subencoder) {
+            [subencoder encodeArrayWithKey:@"values" generation:2 identifiers:@[ @"i2", @"i3" ] options:0 block:^BOOL (NSString * _Nonnull identifier, NSInteger index, iTermGraphEncoder * _Nonnull subencoder, BOOL *stop) {
                 [subencoder encodeString:[identifier stringRepeatedTimes:10] forKey:identifier];
                 return YES;
             }];
@@ -1605,14 +1609,14 @@
         [adapter encodeArrayWithKey:@"Tabs"
                         identifiers:@[ @"tab1" ]
                          generation:iTermGenerationAlwaysEncode
-                              block:^BOOL(id<iTermEncoderAdapter>  _Nonnull encoder, NSInteger i, NSString * _Nonnull identifier) {
+                              block:^BOOL(id<iTermEncoderAdapter>  _Nonnull encoder, NSInteger i, NSString * _Nonnull identifier, BOOL *stop) {
             return [encoder encodeDictionaryWithKey:@"Root"
                                          generation:iTermGenerationAlwaysEncode
                                               block:^BOOL(id<iTermEncoderAdapter>  _Nonnull encoder) {
                 [encoder encodeArrayWithKey:@"Subviews"
                                 identifiers:@[ @"view1" ]
                                  generation:iTermGenerationAlwaysEncode
-                                      block:^BOOL(id<iTermEncoderAdapter>  _Nonnull encoder, NSInteger i, NSString * _Nonnull identifier) {
+                                      block:^BOOL(id<iTermEncoderAdapter>  _Nonnull encoder, NSInteger i, NSString * _Nonnull identifier, BOOL *stop) {
                     return [encoder encodeDictionaryWithKey:@"session"
                                                  generation:iTermGenerationAlwaysEncode
                                                       block:^BOOL(id<iTermEncoderAdapter>  _Nonnull encoder) {

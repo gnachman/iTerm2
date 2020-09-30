@@ -23,7 +23,7 @@
 
 // Returns an array where each object in self is replaced with block(object).
 - (NSArray *)mapWithBlock:(id (^NS_NOESCAPE)(ObjectType anObject))block;
-- (NSArray *)mapEnumeratedWithBlock:(id (^NS_NOESCAPE)(NSUInteger i, id object))block;
+- (NSArray *)mapEnumeratedWithBlock:(id (^NS_NOESCAPE)(NSUInteger i, id object, BOOL *stop))block;
 - (NSArray *)flatMapWithBlock:(NSArray *(^)(ObjectType anObject))block;
 
 - (NSArray<ObjectType> *)flattenedArray;

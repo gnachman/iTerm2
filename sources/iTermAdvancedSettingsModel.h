@@ -150,6 +150,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)logDrawingPerformance;
 + (BOOL)logRestorableStateSize;
 + (BOOL)lowFiCombiningMarks;
++ (int)maxHistoryLinesToRestore;
 + (int)maximumBytesToProvideToServices;
 + (int)maximumBytesToProvideToPythonAPI;
 + (int)maxSemanticHistoryPrefixOrSuffix;

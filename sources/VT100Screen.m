@@ -5561,14 +5561,15 @@ static void SwapInt(int *a, int *b) {
     }
 }
 
-// Deprecated
-- (int)numberOfLinesDroppedWhenEncodingLegacyFormatWithEncoder:(id<iTermEncoderAdapter>)encoder
-                                                intervalOffset:(long long *)intervalOffsetPtr {
+- (int)numberOfLinewDroppedWhenEncodingContentsIncludingGrid:(BOOL)includeGrid
+                                                     encoder:(id<iTermEncoderAdapter>)encoder
+                                              intervalOffset:(long long *)intervalOffsetPtr {
     // We want 10k lines of history at 80 cols, and fewer for small widths, to keep the size
     // reasonable.
-    int maxArea = 10000 * 80;
-    int effectiveWidth = self.width ?: 80;
-    int maxLines = MAX(1000, maxArea / effectiveWidth);
+    const int maxLines80 = [iTermAdvancedSettingsModel maxHistoryLinesToRestore];
+    const int effectiveWidth = self.width ?: 80;
+    const int maxArea = maxLines80 * (includeGrid ? 80 : effectiveWidth);
+    const int maxLines = MAX(1000, maxArea / effectiveWidth);
 
     // Make a copy of the last blocks of the line buffer; enough to contain at least |maxLines|.
     LineBuffer *temp = [linebuffer_ appendOnlyCopyWithMinimumLines:maxLines
@@ -5580,13 +5581,24 @@ static void SwapInt(int *a, int *b) {
     long long intervalOffset =
         -(linesDroppedForBrevity + [self totalScrollbackOverflow]) * (self.width + 1);
 
-    int numLines;
-    if ([iTermAdvancedSettingsModel runJobsInServers]) {
-        numLines = currentGrid_.size.height;
-    } else {
-        numLines = [currentGrid_ numberOfLinesUsed];
+    if (includeGrid) {
+        int numLines;
+        if ([iTermAdvancedSettingsModel runJobsInServers]) {
+            numLines = currentGrid_.size.height;
+        } else {
+            numLines = [currentGrid_ numberOfLinesUsed];
+        }
+        [currentGrid_ appendLines:numLines toLineBuffer:temp];
     }
-    [currentGrid_ appendLines:numLines toLineBuffer:temp];
+
+    [temp encode:encoder maxLines:maxLines80];
+    *intervalOffsetPtr = intervalOffset;
+    return linesDroppedForBrevity;
+}
+
+// Deprecated
+- (int)numberOfLinesDroppedWhenEncodingLegacyFormatWithEncoder:(id<iTermEncoderAdapter>)encoder
+                                                intervalOffset:(long long *)intervalOffsetPtr {
     if (gDebugLogging) {
         DLog(@"Saving state with width=%@", @(self.width));
         for (PTYNoteViewController *note in intervalTree_.allObjects) {
@@ -5596,17 +5608,18 @@ static void SwapInt(int *a, int *b) {
             DLog(@"Save note with coord range %@", VT100GridCoordRangeDescription([self coordRangeForInterval:note.entry.interval]));
         }
     }
-
-    [temp encode:encoder maxLines:10000];
-    *intervalOffsetPtr = intervalOffset;
-    return linesDroppedForBrevity;
+    return [self numberOfLinewDroppedWhenEncodingContentsIncludingGrid:YES
+                                                               encoder:encoder
+                                                        intervalOffset:intervalOffsetPtr];
 }
 
-- (void)encodeContentWithEncoder:(id<iTermEncoderAdapter>)encoder {
+- (int)numberOfLinesDroppedWhenEncodingModernFormatWithEncoder:(id<iTermEncoderAdapter>)encoder
+                                                intervalOffset:(long long *)intervalOffsetPtr {
+    __block int linesDropped = 0;
     [encoder encodeDictionaryWithKey:@"LineBuffer"
                           generation:iTermGenerationAlwaysEncode
                                block:^BOOL(id<iTermEncoderAdapter>  _Nonnull subencoder) {
-        [linebuffer_ encode:subencoder maxLines:NSIntegerMax];
+        linesDropped = [self numberOfLinesDroppedWhenEncodingLegacyFormatWithEncoder:subencoder intervalOffset:intervalOffsetPtr];
         return YES;
     }];
     [encoder encodeDictionaryWithKey:@"PrimaryGrid"
@@ -5623,6 +5636,7 @@ static void SwapInt(int *a, int *b) {
             return YES;
         }];
     }
+    return linesDropped;
 }
 
 - (BOOL)encodeContents:(id<iTermEncoderAdapter>)encoder
@@ -5631,14 +5645,15 @@ static void SwapInt(int *a, int *b) {
 
     // Interval tree
     if ([iTermAdvancedSettingsModel useNewContentFormat]) {
-        [self encodeContentWithEncoder:encoder];
-        if (linesDroppedOut) {
-            *linesDroppedOut = 0;
-        }
-        const long long intervalOffset = -[self totalScrollbackOverflow] * (self.width + 1);
+        long long intervalOffset = 0;
+        const int linesDroppedForBrevity = [self numberOfLinesDroppedWhenEncodingModernFormatWithEncoder:encoder
+                                                                                          intervalOffset:&intervalOffset];
         extra = @{
             kScreenStateIntervalTreeKey: [intervalTree_ dictionaryValueWithOffset:intervalOffset] ?: @{},
         };
+        if (linesDroppedOut) {
+            *linesDroppedOut = linesDroppedForBrevity;
+        }
     } else {
         long long intervalOffset = 0;
         const int linesDroppedForBrevity = [self numberOfLinesDroppedWhenEncodingLegacyFormatWithEncoder:encoder

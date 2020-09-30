@@ -34,7 +34,8 @@ NS_ASSUME_NONNULL_BEGIN
                 generation:(NSInteger)generation
                      block:(BOOL (^ NS_NOESCAPE)(id<iTermEncoderAdapter> encoder,
                                                  NSInteger i,
-                                                 NSString *identifier))block;
+                                                 NSString *identifier,
+                                                 BOOL *stop))block;
 
 - (void)encodeArrayWithKey:(NSString *)key
                identifiers:(NSArray<NSString *> *)identifiers
@@ -42,7 +43,8 @@ NS_ASSUME_NONNULL_BEGIN
                    options:(iTermGraphEncoderArrayOptions)options
                      block:(BOOL (^ NS_NOESCAPE)(id<iTermEncoderAdapter> encoder,
                                                  NSInteger i,
-                                                 NSString *identifier))block;
+                                                 NSString *identifier,
+                                                 BOOL *stop))block;
 
 @end
 

@@ -74,10 +74,10 @@
     return result;
 }
 
-- (NSArray *)mapEnumeratedWithBlock:(id (^NS_NOESCAPE)(NSUInteger, id anObject))block {
+- (NSArray *)mapEnumeratedWithBlock:(id (^NS_NOESCAPE)(NSUInteger, id anObject, BOOL *stop))block {
     NSMutableArray *temp = [NSMutableArray array];
     [self enumerateObjectsUsingBlock:^(id  _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-        id mappedObject = block(idx, obj);
+        id mappedObject = block(idx, obj, stop);
         if (mappedObject) {
             [temp addObject:mappedObject];
         }
@@ -635,7 +635,7 @@ void iTermFreeeNullTerminatedCStringArray(const char **array) {
     if (count < 2) {
         return self;
     }
-    return [self mapEnumeratedWithBlock:^id(NSUInteger i, id object) {
+    return [self mapEnumeratedWithBlock:^id(NSUInteger i, id object, BOOL *stop) {
         return self[count - i - 1];
     }];
 }

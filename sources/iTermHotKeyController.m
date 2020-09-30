@@ -198,7 +198,8 @@ NSString *const TERMINAL_ARRANGEMENT_PROFILE_GUID = @"Hotkey Profile GUID";
                         options:0
                           block:^BOOL(NSString * _Nonnull identifier,
                                       NSInteger i,
-                                      iTermGraphEncoder * _Nonnull subencoder) {
+                                      iTermGraphEncoder * _Nonnull subencoder,
+                                      BOOL *stop) {
         iTermProfileHotKey *profileHotKey = index[identifier];
         return [profileHotKey encodeGraphWithEncoder:subencoder];
     }];

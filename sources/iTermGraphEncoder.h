@@ -65,7 +65,8 @@ typedef NS_OPTIONS(NSUInteger, iTermGraphEncoderArrayOptions) {
                    options:(iTermGraphEncoderArrayOptions)options
                      block:(BOOL (^ NS_NOESCAPE)(NSString *identifier,
                                                  NSInteger i,
-                                                 iTermGraphEncoder *subencoder))block;
+                                                 iTermGraphEncoder *subencoder,
+                                                 BOOL *stop))block;
 
 - (void)encodeDictionary:(NSDictionary *)dict
                  withKey:(NSString *)key
