@@ -32,7 +32,7 @@
 }
 
 - (NSString *)command {
-    return [NSString stringWithFormat:@"curl -L %@ | bash", self.urlString];
+    return [NSString stringWithFormat:@"\ncurl -L %@ | bash", self.urlString];
 }
 
 - (void)setInstallUtilities:(BOOL)installUtilities {
