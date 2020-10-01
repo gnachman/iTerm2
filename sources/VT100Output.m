@@ -96,7 +96,7 @@ typedef enum {
 // improvement as it would let vim use ttym=sgr rather than xterm2, which passes through luit.
 // However, it must return three arguments (at the very least) to keep vim happy. For more, see
 // check_termcode() in vim's term.c.
-#define REPORT_SDA           "\033[>0;95;0c"
+#define REPORT_SDA           "\033[>0;314;0c"
 
 #define REPORT_VT52          "\033/Z"
 
