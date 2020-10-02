@@ -41,6 +41,7 @@
 #import "iTermIntervalTreeObserver.h"
 #import "iTermKeyMappings.h"
 #import "iTermKeystroke.h"
+#import "iTermModifyOtherKeysMapper1.h"
 #import "iTermModifyOtherKeysMapper.h"
 #import "iTermNaggingController.h"
 #import "iTermNotificationController.h"
@@ -585,7 +586,6 @@ static const NSUInteger kMaxHosts = 100;
     iTermLoggingHelper *_logging;
     iTermNaggingController *_naggingController;
     iTermComposerManager *_composerManager;
-    NSNumber *_lastLibTickitProfileSetting;
     BOOL _tmuxTTLHasThresholds;
     NSTimeInterval _tmuxTTLLowerThreshold;
     NSTimeInterval _tmuxTTLUpperThreshold;
@@ -956,7 +956,6 @@ ITERM_WEAKLY_REFERENCEABLE
         [_cookie release];
     }
     [_composerManager release];
-    [_lastLibTickitProfileSetting release];
     [_tmuxClientWritePipe release];
     [_arrangementGUID release];
 
@@ -4027,20 +4026,12 @@ ITERM_WEAKLY_REFERENCEABLE
                                                     forSession:self];
     [[_delegate realParentWindow] invalidateRestorableState];
 
-    int terminalTickit = _terminal.sendModifiers[4].intValue;
-    const BOOL profileWantsTickit = [iTermProfilePreferences boolForKey:KEY_USE_LIBTICKIT_PROTOCOL
-                                                              inProfile:aDict];
-    if (_lastLibTickitProfileSetting &&                                   // I had a setting before
-        _lastLibTickitProfileSetting.boolValue != profileWantsTickit &&   // My setting has changed
-        terminalTickit >= 0 &&                                            // The terminal has an opinion
-        profileWantsTickit != !!terminalTickit) {                         // New setting differs from terminal
-        DLog(@"Reset terminal's setting because the user's CSI u choice takes priority.");
-        _terminal.sendModifiers[4] = @-1;
-        terminalTickit = -1;
+    const int modifyOtherKeysTerminalSetting = _terminal.sendModifiers[4].intValue;
+    if (modifyOtherKeysTerminalSetting == -1) {
+        const BOOL profileWantsTickit = [iTermProfilePreferences boolForKey:KEY_USE_LIBTICKIT_PROTOCOL
+                                                                  inProfile:aDict];
+        self.keyMappingMode = profileWantsTickit ? iTermKeyMappingModeCSIu : iTermKeyMappingModeStandard;
     }
-    self.keyMappingMode = profileWantsTickit ? iTermKeyMappingModeCSIu : iTermKeyMappingModeStandard;
-    [_lastLibTickitProfileSetting autorelease];
-    _lastLibTickitProfileSetting = [@(profileWantsTickit) retain];
 
     if (self.isTmuxClient) {
         NSDictionary *tabColorDict = [iTermProfilePreferences objectForKey:KEY_TAB_COLOR inProfile:aDict];
@@ -4117,8 +4108,11 @@ ITERM_WEAKLY_REFERENCEABLE
         case iTermKeyMappingModeRaw:
             mapperClass = [iTermRawKeyMapper class];
             break;
-        case iTermKeyMappingModeModifyOtherKeys:
-            mapperClass = [iTermModifyOtherKeysMapper class];
+        case iTermKeyMappingModeModifyOtherKeys1:
+            mapperClass = [iTermModifyOtherKeysMapper1 class];
+            break;
+        case iTermKeyMappingModeModifyOtherKeys2:
+            mapperClass = [iTermModifyOtherKeysMapper2 class];
             break;
     }
 
@@ -9142,12 +9136,15 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
             return _keyMappingMode == iTermKeyMappingModeStandard;
 
         case 8:
-            return _keyMappingMode == iTermKeyMappingModeModifyOtherKeys;
+            return _keyMappingMode == iTermKeyMappingModeModifyOtherKeys1;
 
         case 9:
-            return _keyMappingMode == iTermKeyMappingModeCSIu;
+            return _keyMappingMode == iTermKeyMappingModeModifyOtherKeys2;
 
         case 10:
+            return _keyMappingMode == iTermKeyMappingModeCSIu;
+
+        case 11:
             return _keyMappingMode == iTermKeyMappingModeRaw;
     }
 
@@ -9186,18 +9183,27 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
             break;
             
         case 7:
+            _terminal.sendModifiers[4] = @-1;
             self.keyMappingMode = iTermKeyMappingModeStandard;
             break;
             
         case 8:
-            self.keyMappingMode = iTermKeyMappingModeModifyOtherKeys;
+            _terminal.sendModifiers[4] = @1;
+            self.keyMappingMode = iTermKeyMappingModeModifyOtherKeys1;
             break;
             
         case 9:
+            _terminal.sendModifiers[4] = @2;
+            self.keyMappingMode = iTermKeyMappingModeModifyOtherKeys2;
+            break;
+
+        case 10:
+            _terminal.sendModifiers[4] = @-1;
             self.keyMappingMode = iTermKeyMappingModeCSIu;
             break;
             
-        case 10:
+        case 11:
+            _terminal.sendModifiers[4] = @-1;
             self.keyMappingMode = iTermKeyMappingModeRaw;
             break;
     }
@@ -11532,8 +11538,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 - (void)screenSendModifiersDidChange {
     const int modifyOtherKeysMode = _terminal.sendModifiers[4].intValue;
-    if (modifyOtherKeysMode == 2) {
-        self.keyMappingMode = iTermKeyMappingModeModifyOtherKeys;
+    if (modifyOtherKeysMode == 1) {
+        self.keyMappingMode = iTermKeyMappingModeModifyOtherKeys1;
+    } else if (modifyOtherKeysMode == 2) {
+        self.keyMappingMode = iTermKeyMappingModeModifyOtherKeys2;
     } else {
         self.keyMappingMode = iTermKeyMappingModeStandard;
     }

@@ -949,19 +949,25 @@ DQ
                                                 <action selector="terminalStateToggleApplicationKeypad:" target="-1" id="dEu-4i-avK"/>
                                             </connections>
                                         </menuItem>
-                                        <menuItem title="modifyOtherKeys Mode" tag="8" identifier="Terminal State.Report Modifiers like xterm" id="xK3-pO-8bT">
+                                        <menuItem title="modifyOtherKeys Mode 1" tag="8" identifier="Terminal State.Report Modifiers like xterm 1" id="xK3-pO-8bT">
                                             <modifierMask key="keyEquivalentModifierMask"/>
                                             <connections>
                                                 <action selector="terminalStateToggleApplicationKeypad:" target="-1" id="V3u-fZ-VC2"/>
                                             </connections>
                                         </menuItem>
-                                        <menuItem title="CSI u Mode" tag="9" identifier="Terminal State.Report Modifiers with CSI u" id="Qlm-EZ-J8K">
+                                        <menuItem title="modifyOtherKeys Mode 2" tag="9" identifier="Terminal State.Report Modifiers like xterm 2" id="kN6-Ru-Vvk">
+                                            <modifierMask key="keyEquivalentModifierMask"/>
+                                            <connections>
+                                                <action selector="terminalStateToggleApplicationKeypad:" target="-1" id="hFh-Cz-Vqt"/>
+                                            </connections>
+                                        </menuItem>
+                                        <menuItem title="CSI u Mode" tag="10" identifier="Terminal State.Report Modifiers with CSI u" id="Qlm-EZ-J8K">
                                             <modifierMask key="keyEquivalentModifierMask"/>
                                             <connections>
                                                 <action selector="terminalStateToggleApplicationKeypad:" target="-1" id="kMi-Ez-WPl"/>
                                             </connections>
                                         </menuItem>
-                                        <menuItem title="Raw Key Reporting Mode" tag="10" identifier="Terminal State.Raw Key Reporting" id="HUg-bw-Kax">
+                                        <menuItem title="Raw Key Reporting Mode" tag="11" identifier="Terminal State.Raw Key Reporting" id="HUg-bw-Kax">
                                             <modifierMask key="keyEquivalentModifierMask"/>
                                             <connections>
                                                 <action selector="terminalStateToggleApplicationKeypad:" target="-1" id="Io8-vc-lTj"/>

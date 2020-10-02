@@ -339,6 +339,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)openProfilesInNewWindow;
 + (BOOL)workAroundMultiDisplayOSBug;
 + (BOOL)workAroundNumericKeypadBug;
++ (int)xtermVersion;
 + (CGFloat)verticalBarCursorWidth;
 + (NSString *)viewManPageCommand;
 + (BOOL)wrapFocus;

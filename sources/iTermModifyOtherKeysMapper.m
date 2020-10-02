@@ -295,3 +295,7 @@ static BOOL CodePointInPrivateUseArea(unichar c) {
 }
 
 @end
+
+@implementation iTermModifyOtherKeysMapper2
+@end
+

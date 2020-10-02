@@ -74,6 +74,14 @@
     const unichar character = characters.length > 0 ? [characters characterAtIndex:0] : 0;
     const BOOL shiftPressed = !!(event.it_modifierFlags & NSEventModifierFlagShift);
 
+    return [iTermStandardKeyMapper codeForSpecialControlCharacter:character
+                                       characterIgnoringModifiers:characterIgnoringModifiers
+                                                     shiftPressed:shiftPressed];
+}
+
++ (unichar)codeForSpecialControlCharacter:(unichar)character
+               characterIgnoringModifiers:(unichar)characterIgnoringModifiers
+                             shiftPressed:(BOOL)shiftPressed {
     if (character == '|') {
         // This is necessary to handle Japanese keyboards correctly. Pressing Control+backslash
         // generates characters=@"|" and charactersIgnoringModifiers=@"¥". This code path existed

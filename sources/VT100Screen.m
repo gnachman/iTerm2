@@ -5923,6 +5923,7 @@ static void SwapInt(int *a, int *b) {
                       guidOfLastCommandMark:guidOfLastCommandMark];
 
         [self reloadMarkCache];
+        [self.delegate screenSendModifiersDidChange];
 
         if (gDebugLogging) {
             DLog(@"Notes after restoring with width=%@", @(self.width));

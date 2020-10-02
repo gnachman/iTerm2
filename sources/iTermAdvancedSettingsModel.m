@@ -306,6 +306,12 @@ DEFINE_BOOL(convertItalicsToReverseVideoForTmux, YES, SECTION_TERMINAL @"Convert
 DEFINE_FLOAT(bellRateLimit, 0.1, SECTION_TERMINAL @"Minimum time between beeping or flashing screen on bell, in seconds.\nIf the time interval between bells is less than this amount of time, it will be ignored.");
 DEFINE_BOOL(translateScreenToXterm, YES, SECTION_TERMINAL @"Support TERM=screen\nMost notably, this fixes italics replacing inverse text.");
 
+// TODO: When xterm compatibility is reached, change 95 to 314 or later. Even 277 would be an
+// improvement as it would let vim use ttym=sgr rather than xterm2, which passes through luit.
+// However, it must return three arguments (at the very least) to keep vim happy. For more, see
+// check_termcode() in vim's term.c.
+DEFINE_INT(xtermVersion, 95, SECTION_TERMINAL @"xterm version for secondary device attributes (SDA).\nIncreasing this number enables more features in apps but may break things. Use 216 to get more support for modifier keys in emacs.");
+
 #pragma mark Hotkey
 
 #define SECTION_HOTKEY @"Hotkey: "

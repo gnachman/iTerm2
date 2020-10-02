@@ -11,7 +11,8 @@ typedef NS_ENUM(NSUInteger, iTermKeyMappingMode) {
     iTermKeyMappingModeStandard,
     iTermKeyMappingModeCSIu,
     iTermKeyMappingModeRaw,
-    iTermKeyMappingModeModifyOtherKeys
+    iTermKeyMappingModeModifyOtherKeys1,
+    iTermKeyMappingModeModifyOtherKeys2
 };
 
 NS_ASSUME_NONNULL_BEGIN

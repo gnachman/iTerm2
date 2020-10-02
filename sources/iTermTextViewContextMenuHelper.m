@@ -473,7 +473,8 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
         { @"Application Keypad", @selector(terminalStateToggleApplicationKeypad:) },
         { nil, nil },
         { @"Standard Key Reporting Mode", @selector(terminalToggleKeyboardMode:) },
-        { @"modifyOtherKeys Mode", @selector(terminalToggleKeyboardMode:) },
+        { @"modifyOtherKeys Mode 1", @selector(terminalToggleKeyboardMode:) },
+        { @"modifyOtherKeys Mode 2", @selector(terminalToggleKeyboardMode:) },
         { @"CSI u Mode", @selector(terminalToggleKeyboardMode:) },
         { @"Raw Key Reporting Mode", @selector(terminalToggleKeyboardMode:) },
     };

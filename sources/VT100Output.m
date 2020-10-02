@@ -92,14 +92,6 @@ typedef enum {
 
 // Secondary Device Attribute: VT100
 
-// TODO: When xterm compatibility is reached, change 95 to 314 or later. Even 277 would be an
-// improvement as it would let vim use ttym=sgr rather than xterm2, which passes through luit.
-// However, it must return three arguments (at the very least) to keep vim happy. For more, see
-// check_termcode() in vim's term.c.
-#define REPORT_SDA           "\033[>0;95;0c"
-
-#define REPORT_VT52          "\033/Z"
-
 #define STATIC_STRLEN(n)   ((sizeof(n)) - 1)
 
 @implementation VT100Output {
@@ -573,8 +565,9 @@ typedef enum {
 }
 
 - (NSData *)reportSecondaryDeviceAttribute {
-    return [NSData dataWithBytes:REPORT_SDA
-                          length:STATIC_STRLEN(REPORT_SDA)];
+    const int xtermVersion = [iTermAdvancedSettingsModel xtermVersion];
+    NSString *report = [NSString stringWithFormat:@"\033[>0;%d;0c", xtermVersion];
+    return [report dataUsingEncoding:NSISOLatin1StringEncoding];
 }
 
 - (NSData *)reportExtendedDeviceAttribute {
