@@ -955,7 +955,7 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void)iterm_dealloc {
     _deallocing = YES;
     [_contentView shutdown];
-
+    [_violentlyFixFrameTimer invalidate];
     [self closeInstantReplayWindow];
     doNotSetRestorableState_ = YES;
     _wellFormed = NO;

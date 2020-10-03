@@ -806,6 +806,11 @@ iTermWindowType iTermWindowTypeNormalized(iTermWindowType windowType) {
     }
 }
 
+- (void)violentlyFixFrame {
+    if (self.window.styleMask & NSWindowStyleMaskFullScreen) {
+        [self.window setFrame:self.window.screen.visibleFrame display:YES];
+    }
+}
 - (void)windowDidEnterFullScreenImpl:(NSNotification *)notification {
     DLog(@"Window did enter lion fullscreen");
 
@@ -813,6 +818,12 @@ iTermWindowType iTermWindowTypeNormalized(iTermWindowType windowType) {
     togglingLionFullScreen_ = NO;
     _fullScreenRetryCount = 0;
     lionFullScreen_ = YES;
+
+    __weak __typeof(self) weakSelf = self;
+    [_violentlyFixFrameTimer invalidate];
+    _violentlyFixFrameTimer = [NSTimer scheduledTimerWithTimeInterval:1 repeats:YES block:^(NSTimer * _Nonnull timer) {
+        [weakSelf violentlyFixFrame];
+    }];
     [self updateTabBarControlIsTitlebarAccessory];
     [self didChangeAnyFullScreen];
     [self.contentView.tabBarControl setFlashing:YES];
@@ -875,6 +886,7 @@ iTermWindowType iTermWindowTypeNormalized(iTermWindowType windowType) {
 
 - (void)windowWillExitFullScreenImpl:(NSNotification *)notification {
     DLog(@"Window will exit lion fullscreen");
+    [_violentlyFixFrameTimer invalidate];
     if (self.swipeIdentifier) {
         [[NSNotificationCenter defaultCenter] postNotificationName:iTermSwipeHandlerCancelSwipe
                                                             object:self.swipeIdentifier];

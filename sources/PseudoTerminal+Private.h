@@ -12,6 +12,8 @@
 @class iTermWindowShortcutLabelTitlebarAccessoryViewController;
 
 @interface PseudoTerminal() {
+    NSTimer *_violentlyFixFrameTimer;
+
     // Is this a full screen window?
     BOOL _fullScreen;
 

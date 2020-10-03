@@ -487,8 +487,9 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)setFrame:(NSRect)frameRect display:(BOOL)flag {
-    DLog(@"setFrame:%@ display:%@ maxy=%@ from\n%@",
+    DLog(@"setFrame:%@ display:%@ maxy=%@ screen.frame=%@ from\n%@",
          NSStringFromRect(frameRect), @(flag), @(NSMaxY(frameRect)),
+         NSStringFromRect(self.screen.frame),
          [NSThread callStackSymbols]);
     [super setFrame:frameRect display:flag];
 }
