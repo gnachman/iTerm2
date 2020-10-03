@@ -299,9 +299,9 @@
 
 - (NSSize)myPreferredContentSize {
     if ([self boolForKey:KEY_USE_NONASCII_FONT]) {
-        return NSMakeSize(NSWidth(self.view.frame), _heightWithNonAsciiControls);
+        return NSMakeSize(((iTermSizeRememberingView *)self.view).originalSize.width, _heightWithNonAsciiControls);
     } else {
-        return NSMakeSize(NSWidth(self.view.frame), _heightWithoutNonAsciiControls);
+        return NSMakeSize(((iTermSizeRememberingView *)self.view).originalSize.width, _heightWithoutNonAsciiControls);
     }
 }
 
