@@ -258,6 +258,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)showLocationsInScrollbar;
 + (BOOL)showSessionRestoredBanner;
 + (BOOL)showTimestampsByDefault;
++ (BOOL)showWindowTitleWhenTabBarInvisible;
 + (BOOL)showYellowMarkForJobStoppedBySignal;
 + (double)slowFrameRate;
 + (int)slowPasteBytesPerCall;
