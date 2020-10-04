@@ -49,66 +49,60 @@
 }
 
 - (instancetype)init {
-    self = [super initWithWindowNibName:@"TmuxDashboard"];
-    if (self) {
-        [self window];
-
-        DLog(@"dashboard: Initialize with tmux controller %@", self.tmuxController);
-        [sessionsTable_ selectSessionNumber:[[self tmuxController] sessionId]];
-        [self reloadWindows];
-        [[NSNotificationCenter defaultCenter] addObserver:self
-                                                 selector:@selector(tmuxControllerDetached:)
-                                                     name:kTmuxControllerDetachedNotification
-                                                   object:nil];
-        [[NSNotificationCenter defaultCenter] addObserver:self
-                                                 selector:@selector(tmuxControllerSessionsDidChange:)
-                                                     name:kTmuxControllerSessionsDidChange
-                                                   object:nil];
-        [[NSNotificationCenter defaultCenter] addObserver:self
-                                                 selector:@selector(tmuxControllerSessionsWillChange:)
-                                                     name:kTmuxControllerSessionsWillChange
-                                                   object:nil];
-        [[NSNotificationCenter defaultCenter] addObserver:self
-                                                 selector:@selector(tmuxControllerWindowsDidChange:)
-                                                     name:kTmuxControllerWindowsChangeNotification
-                                                   object:nil];
-        [[NSNotificationCenter defaultCenter] addObserver:self
-                                                 selector:@selector(tmuxControllerWindowWasRenamed:)
-                                                     name:kTmuxControllerWindowWasRenamed
-                                                   object:nil];
-        [[NSNotificationCenter defaultCenter] addObserver:self
-                                                 selector:@selector(tmuxControllerWindowOpenedOrClosed:)
-                                                     name:kTmuxControllerWindowDidOpen
-                                                   object:nil];
-        [[NSNotificationCenter defaultCenter] addObserver:self
-                                                 selector:@selector(tmuxControllerWindowOpenedOrClosed:)
-                                                     name:kTmuxControllerWindowDidClose
-                                                   object:nil];
-        [[NSNotificationCenter defaultCenter] addObserver:self
-                                                 selector:@selector(tmuxControllerAttachedSessionChanged:)
-                                                     name:kTmuxControllerAttachedSessionDidChange
-                                                   object:nil];
-        [[NSNotificationCenter defaultCenter] addObserver:self
-                                                 selector:@selector(tmuxControllerSessionWasRenamed:)
-                                                     name:kTmuxControllerSessionWasRenamed
-                                                   object:nil];
-        [[NSNotificationCenter defaultCenter] addObserver:self
-                                                 selector:@selector(tmuxControllerRegistryDidChange:)
-                                                     name:kTmuxControllerRegistryDidChange
-                                                   object:nil];
-        __weak __typeof(self) weakSelf = self;
-        [iTermPreferenceDidChangeNotification subscribe:self block:^(iTermPreferenceDidChangeNotification *notification) {
-            [weakSelf preferenceDidChange:notification];
-        }];
-    }
-
-    return self;
+    return [super initWithWindowNibName:@"TmuxDashboard"];
 }
 
-- (void)windowDidLoad
-{
-    DLog(@"dashboard: windowDidLoad");
+- (void)windowDidLoad {
+    DLog(@"dashboard: windowDidLoad with tmux controller %@", self.tmuxController);
     [super windowDidLoad];
+
+    [sessionsTable_ selectSessionNumber:[[self tmuxController] sessionId]];
+    [self reloadWindows];
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(tmuxControllerDetached:)
+                                                 name:kTmuxControllerDetachedNotification
+                                               object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(tmuxControllerSessionsDidChange:)
+                                                 name:kTmuxControllerSessionsDidChange
+                                               object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(tmuxControllerSessionsWillChange:)
+                                                 name:kTmuxControllerSessionsWillChange
+                                               object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(tmuxControllerWindowsDidChange:)
+                                                 name:kTmuxControllerWindowsChangeNotification
+                                               object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(tmuxControllerWindowWasRenamed:)
+                                                 name:kTmuxControllerWindowWasRenamed
+                                               object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(tmuxControllerWindowOpenedOrClosed:)
+                                                 name:kTmuxControllerWindowDidOpen
+                                               object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(tmuxControllerWindowOpenedOrClosed:)
+                                                 name:kTmuxControllerWindowDidClose
+                                               object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(tmuxControllerAttachedSessionChanged:)
+                                                 name:kTmuxControllerAttachedSessionDidChange
+                                               object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(tmuxControllerSessionWasRenamed:)
+                                                 name:kTmuxControllerSessionWasRenamed
+                                               object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(tmuxControllerRegistryDidChange:)
+                                                 name:kTmuxControllerRegistryDidChange
+                                               object:nil];
+    __weak __typeof(self) weakSelf = self;
+    [iTermPreferenceDidChangeNotification subscribe:self block:^(iTermPreferenceDidChangeNotification *notification) {
+        [weakSelf preferenceDidChange:notification];
+    }];
+
     [self tmuxControllerRegistryDidChange:nil];
     if ([connectionsButton_ numberOfItems] > 0) {
         [connectionsButton_ selectItemAtIndex:0];
