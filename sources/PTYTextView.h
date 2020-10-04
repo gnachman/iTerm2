@@ -626,9 +626,15 @@ scrollToFirstResult:(BOOL)scrollToFirstResult;
 
 #pragma mark - Testing only
 
-- (id)selectedTextAttributed:(BOOL)attributed
-                cappedAtSize:(int)maxBytes
-           minimumLineNumber:(int)minimumLineNumber;
+typedef NS_ENUM(NSUInteger, iTermCopyTextStyle) {
+    iTermCopyTextStylePlainText,
+    iTermCopyTextStyleAttributed,
+    iTermCopyTextStyleWithControlSequences
+};
+
+- (id)selectedTextWithStyle:(iTermCopyTextStyle)style
+               cappedAtSize:(int)maxBytes
+          minimumLineNumber:(int)minimumLineNumber;
 
 @end
 

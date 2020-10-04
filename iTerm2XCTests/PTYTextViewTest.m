@@ -2567,9 +2567,9 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
         [iTermAdvancedSettingsModel loadAdvancedSettingsFromUserDefaults];
         // When
         [_textView selectAll:nil];
-        NSAttributedString *selectedAttributedText = [_textView selectedTextAttributed:YES
-                                                                          cappedAtSize:0
-                                                                     minimumLineNumber:0];
+        NSAttributedString *selectedAttributedText = [_textView selectedTextWithStyle:iTermCopyTextStyleAttributed
+                                                                         cappedAtSize:0
+                                                                    minimumLineNumber:0];
 
         // Then
         XCTAssertEqualObjects([text stringByAppendingString:@"\n"], selectedAttributedText.string);
@@ -2582,7 +2582,7 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
     NSString *text = @"123456789abc";
     [session synchronousReadTask:text];
     [_textView selectAll:nil];
-    NSString *selectedText = [_textView selectedTextAttributed:NO cappedAtSize:5 minimumLineNumber:0];
+    NSString *selectedText = [_textView selectedTextWithStyle:iTermCopyTextStylePlainText cappedAtSize:5 minimumLineNumber:0];
     XCTAssertEqualObjects(@"12345", selectedText);
 }
 
@@ -2603,7 +2603,7 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
         [iTermAdvancedSettingsModel loadAdvancedSettingsFromUserDefaults];
         // When
         [_textView selectAll:nil];
-        NSString *selectedText = [_textView selectedTextAttributed:NO cappedAtSize:0 minimumLineNumber:1];
+        NSString *selectedText = [_textView selectedTextWithStyle:iTermCopyTextStylePlainText cappedAtSize:0 minimumLineNumber:1];
 
         // Then
         XCTAssertEqualObjects(@"12345\n", selectedText);
@@ -2616,7 +2616,7 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
     NSString *text = @"blah\r\n12345";
     [session synchronousReadTask:text];
     [_textView selectAll:nil];
-    NSString *selectedText = [_textView selectedTextAttributed:NO cappedAtSize:2 minimumLineNumber:1];
+    NSString *selectedText = [_textView selectedTextWithStyle:iTermCopyTextStylePlainText cappedAtSize:2 minimumLineNumber:1];
     XCTAssertEqualObjects(@"12", selectedText);
 }
 

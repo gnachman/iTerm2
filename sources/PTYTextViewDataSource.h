@@ -132,5 +132,6 @@
 // is YES, of course).
 - (PTYTextViewSynchronousUpdateState *)setUseSavedGridIfAvailable:(BOOL)useSavedGrid;
 - (NSString *)compactLineDumpWithContinuationMarks;
+- (NSSet<NSString *> *)sgrCodesForChar:(screen_char_t)c;
 
 @end

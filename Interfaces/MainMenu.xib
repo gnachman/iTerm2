@@ -358,6 +358,12 @@ DQ
                                     <action selector="copyWithStyles:" target="-1" id="B2X-kC-nrq"/>
                                 </connections>
                             </menuItem>
+                            <menuItem title="Copy with Control Sequences" alternate="YES" identifier="Copy with Styles" id="GT8-oj-uFO">
+                                <modifierMask key="keyEquivalentModifierMask"/>
+                                <connections>
+                                    <action selector="copyWithControlSequences:" target="-1" id="mvT-2h-6oO"/>
+                                </connections>
+                            </menuItem>
                             <menuItem title="Copy Mode" keyEquivalent="C" identifier="Copy Mode" id="CQc-0U-rfn">
                                 <connections>
                                     <action selector="toggleCopyMode:" target="-1" id="nrd-WW-ADX"/>

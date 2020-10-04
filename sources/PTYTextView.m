@@ -414,6 +414,7 @@
     }
     if ([item action]==@selector(copy:) ||
         [item action]==@selector(copyWithStyles:) ||
+        [item action]==@selector(copyWithControlSequences:) ||
         [item action]==@selector(performFindPanelAction:) ||
         ([item action]==@selector(print:) && [item tag] == 1)) { // print selection
         // These commands are allowed only if there is a selection.
@@ -2252,30 +2253,42 @@
 }
 
 - (NSString *)selectedTextCappedAtSize:(int)maxBytes {
-    return [self selectedTextAttributed:NO cappedAtSize:maxBytes minimumLineNumber:0];
+    return [self selectedTextWithStyle:iTermCopyTextStylePlainText cappedAtSize:maxBytes minimumLineNumber:0];
 }
 
 // Does not include selected text on lines before |minimumLineNumber|.
-// Returns an NSAttributedString* if |attributed|, or an NSString* if not.
-- (id)selectedTextAttributed:(BOOL)attributed
-                cappedAtSize:(int)maxBytes
-           minimumLineNumber:(int)minimumLineNumber {
+// Returns an NSAttributedString* if style is iTermCopyTextStyleAttributed, or an NSString* if not.
+- (id)selectedTextWithStyle:(iTermCopyTextStyle)style
+               cappedAtSize:(int)maxBytes
+          minimumLineNumber:(int)minimumLineNumber {
     if (![_selection hasSelection]) {
         DLog(@"startx < 0 so there is no selected text");
         return nil;
     }
-    BOOL copyLastNewline = [iTermPreferences boolForKey:kPreferenceKeyCopyLastNewline];
-    BOOL trimWhitespace = [iTermAdvancedSettingsModel trimWhitespaceOnCopy];
+    const BOOL copyLastNewline = YES;
+    const BOOL trimWhitespace = NO;
     id theSelectedText;
+    NSAttributedStringKey sgrAttribute = @"iTermSGR";
     NSDictionary *(^attributeProvider)(screen_char_t);
-    if (attributed) {
-        theSelectedText = [[[NSMutableAttributedString alloc] init] autorelease];
-        attributeProvider = ^NSDictionary *(screen_char_t theChar) {
-            return [self charAttributes:theChar];
-        };
-    } else {
-        theSelectedText = [[[NSMutableString alloc] init] autorelease];
-        attributeProvider = nil;
+    switch (style) {
+        case iTermCopyTextStyleAttributed:
+            theSelectedText = [[[NSMutableAttributedString alloc] init] autorelease];
+            attributeProvider = ^NSDictionary *(screen_char_t theChar) {
+                return [self charAttributes:theChar];
+            };
+            break;
+
+        case iTermCopyTextStylePlainText:
+            theSelectedText = [[[NSMutableString alloc] init] autorelease];
+            attributeProvider = nil;
+            break;
+
+        case iTermCopyTextStyleWithControlSequences:
+            theSelectedText = [[[NSMutableAttributedString alloc] init] autorelease];
+            attributeProvider = ^NSDictionary *(screen_char_t theChar) {
+                return @{ sgrAttribute: [self.dataSource sgrCodesForChar:theChar] };
+            };
+            break;
     }
 
     [_selection enumerateSelectedAbsoluteRanges:^(VT100GridAbsWindowedRange absRange, BOOL *stop, BOOL eol) {
@@ -2305,14 +2318,14 @@
                                       truncateTail:YES
                                  continuationChars:nil
                                             coords:nil];
-            if (attributed) {
+            if (attributeProvider != nil) {
                 [theSelectedText appendAttributedString:content];
             } else {
                 [theSelectedText appendString:content];
             }
-            NSString *contentString = attributed ? [content string] : content;
+            NSString *contentString = (attributeProvider != nil) ? [content string] : content;
             if (eol && ![contentString hasSuffix:@"\n"]) {
-                if (attributed) {
+                if (attributeProvider != nil) {
                     [theSelectedText iterm_appendString:@"\n"];
                 } else {
                     [theSelectedText appendString:@"\n"];
@@ -2321,18 +2334,32 @@
         }];
     }];
 
+    if (style == iTermCopyTextStyleWithControlSequences) {
+        NSAttributedString *attributedString = theSelectedText;
+        NSMutableString *string = [NSMutableString string];
+        [attributedString enumerateAttribute:sgrAttribute
+                                     inRange:NSMakeRange(0, attributedString.length)
+                                     options:0
+                                  usingBlock:^(NSSet *_Nullable value, NSRange range, BOOL * _Nonnull stop) {
+            NSString *code = [NSString stringWithFormat:@"%c[%@m", VT100CC_ESC, [value.allObjects componentsJoinedByString:@";"]];
+            [string appendString:code];
+            [string appendString:[attributedString.string substringWithRange:range]];
+        }];
+        return string;
+    }
+
     return theSelectedText;
 }
 
 - (NSString *)selectedTextCappedAtSize:(int)maxBytes
                      minimumLineNumber:(int)minimumLineNumber {
-    return [self selectedTextAttributed:NO
-                           cappedAtSize:maxBytes
-                      minimumLineNumber:minimumLineNumber];
+    return [self selectedTextWithStyle:iTermCopyTextStylePlainText
+                          cappedAtSize:maxBytes
+                     minimumLineNumber:minimumLineNumber];
 }
 
 - (NSAttributedString *)selectedAttributedTextWithPad:(BOOL)pad {
-    return [self selectedTextAttributed:YES cappedAtSize:0 minimumLineNumber:0];
+    return [self selectedTextWithStyle:iTermCopyTextStyleAttributed cappedAtSize:0 minimumLineNumber:0];
 }
 
 - (BOOL)_haveShortSelection {
@@ -2540,6 +2567,28 @@
     // but this seems to take precedence over the attributed version for
     // pasting sometimes, for example in TextEdit.
     [[PasteboardHistory sharedInstance] save:[copyAttributedString string]];
+}
+
+- (IBAction)copyWithControlSequences:(id)sender {
+    DLog(@"-[PTYTextView copyWithControlSequences:] called");
+    DLog(@"%@", [NSThread callStackSymbols]);
+
+    NSString *copyString = [self selectedTextWithStyle:iTermCopyTextStyleWithControlSequences
+                                          cappedAtSize:-1
+                                     minimumLineNumber:0];
+
+    if ([iTermAdvancedSettingsModel disallowCopyEmptyString] && copyString.length == 0) {
+        DLog(@"Disallow copying empty string");
+        return;
+    }
+    DLog(@"Have selected text: “%@”. selection=%@", copyString, _selection);
+    if (copyString) {
+        NSPasteboard *pboard = [NSPasteboard generalPasteboard];
+        [pboard declareTypes:[NSArray arrayWithObject:NSPasteboardTypeString] owner:self];
+        [pboard setString:copyString forType:NSPasteboardTypeString];
+    }
+
+    [[PasteboardHistory sharedInstance] save:copyString];
 }
 
 - (void)paste:(id)sender {
@@ -4687,9 +4736,9 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (NSString *)accessibilityHelperSelectedText {
-    return [self selectedTextAttributed:NO
-                           cappedAtSize:0
-                      minimumLineNumber:[self accessibilityHelperLineNumberForAccessibilityLineNumber:0]];
+    return [self selectedTextWithStyle:iTermCopyTextStylePlainText
+                          cappedAtSize:0
+                     minimumLineNumber:[self accessibilityHelperLineNumberForAccessibilityLineNumber:0]];
 }
 
 - (NSURL *)accessibilityHelperCurrentDocumentURL {
