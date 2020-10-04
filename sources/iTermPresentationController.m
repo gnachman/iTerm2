@@ -204,6 +204,24 @@ static void iTermDisplayReconfigurationCallback(CGDirectDisplayID display,
     [self setApplicationPresentationFlagsWithHiddenDock:NO menuBar:NO screenWithDock:nil];
 }
 
+NSString *PODescription(NSApplicationPresentationOptions presentationOptions) {
+    NSMutableArray *array = [NSMutableArray array];
+    if ((presentationOptions & (1 <<  0))) { [array addObject:@"NSApplicationPresentationAutoHideDock"]; }
+    if ((presentationOptions & (1 <<  1))) { [array addObject:@"NSApplicationPresentationHideDock"]; }
+    if ((presentationOptions & (1 <<  2))) { [array addObject:@"NSApplicationPresentationAutoHideMenuBar"]; }
+    if ((presentationOptions & (1 <<  3))) { [array addObject:@"NSApplicationPresentationHideMenuBar"]; }
+    if ((presentationOptions & (1 <<  4))) { [array addObject:@"NSApplicationPresentationDisableAppleMenu"]; }
+    if ((presentationOptions & (1 <<  5))) { [array addObject:@"NSApplicationPresentationDisableProcessSwitching"]; }
+    if ((presentationOptions & (1 <<  6))) { [array addObject:@"NSApplicationPresentationDisableForceQuit"]; }
+    if ((presentationOptions & (1 <<  7))) { [array addObject:@"NSApplicationPresentationDisableSessionTermination"]; }
+    if ((presentationOptions & (1 <<  8))) { [array addObject:@"NSApplicationPresentationDisableHideApplication"]; }
+    if ((presentationOptions & (1 <<  9))) { [array addObject:@"NSApplicationPresentationDisableMenuBarTransparency"]; }
+    if ((presentationOptions & (1 << 10))) { [array addObject:@"NSApplicationPresentationFullScreen"]; }
+    if ((presentationOptions & (1 << 11))) { [array addObject:@"NSApplicationPresentationAutoHideToolbar"]; }
+    if ((presentationOptions & (1 << 12))) { [array addObject:@"NSApplicationPresentationDisableCursorLocationAssistance"]; }
+    return [array componentsJoinedByString:@", "];
+}
+
 - (void)setApplicationPresentationFlagsWithHiddenDock:(BOOL)shouldHideDock
                                               menuBar:(BOOL)shouldHideMenuBar
                                        screenWithDock:(NSScreen *)screenWithDock {
@@ -227,6 +245,23 @@ static void iTermDisplayReconfigurationCallback(CGDirectDisplayID display,
     if (shouldHideMenuBar) {
         presentationOptions |= NSApplicationPresentationAutoHideMenuBar;
     }
+
+    if (NSApp.presentationOptions == presentationOptions) {
+        return;
+    }
+    if (presentationOptions & NSApplicationPresentationFullScreen) {
+        // Do not remove auto-hide dock/menubar when in full screen or else you don't get
+        // a title bar w/ title bar view controller. A new feature of macOS 10.15.6.
+        // Issue 9164
+        if (NSApp.presentationOptions & NSApplicationPresentationAutoHideDock) {
+            presentationOptions |= NSApplicationPresentationAutoHideDock;
+        }
+        if (NSApp.presentationOptions & NSApplicationPresentationAutoHideMenuBar) {
+            presentationOptions |= NSApplicationPresentationAutoHideMenuBar;
+        }
+    }
+    DLog(@"Set presentation options from %@ to %@", PODescription(NSApp.presentationOptions), PODescription(presentationOptions));
+
     NSApp.presentationOptions = presentationOptions;
 }
 
