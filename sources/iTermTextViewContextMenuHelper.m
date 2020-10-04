@@ -1115,8 +1115,10 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
 - (NSDate *)dateValueFromUnix {
     static const NSUInteger kTimestampLength = 10;
     static const NSUInteger kJavaTimestampLength = 13;
+    static const NSUInteger kMicroTimestampLength = 16;
     if ((self.length == kTimestampLength ||
-         self.length == kJavaTimestampLength) &&
+         self.length == kJavaTimestampLength ||
+         self.length == kMicroTimestampLength) &&
         [self hasPrefix:@"1"]) {
         for (int i = 0; i < kTimestampLength; i++) {
             if (!isdigit([self characterAtIndex:i])) {
@@ -1129,6 +1131,9 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
         if (self.length == kJavaTimestampLength) {
             // Convert milliseconds to seconds
             timestamp /= 1000.0;
+        } else if (self.length == kMicroTimestampLength) {
+            // Convert microseconds to seconds
+            timestamp /= 1000000.0;
         }
         return [NSDate dateWithTimeIntervalSince1970:timestamp];
     } else {
