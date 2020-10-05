@@ -5781,6 +5781,40 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     return [self metalAllowed:nil];
 }
 
+- (BOOL)usingIntegratedGPU {
+    if (_view.metalView.device != nil) {
+        const BOOL result = _view.metalView.device.isLowPower;
+        DLog(@"usingIntegratedGPU=%@", @(result));
+        return result;
+    }
+    for (PseudoTerminal *term in [[iTermController sharedInstance] terminals]) {
+        for (PTYSession *session in term.allSessions) {
+            if (session.view.metalView.device != nil) {
+                const BOOL result = session.view.metalView.device.isLowPower;
+                DLog(@"Found another session %p with a metal device, usingIntegratedGPU=%@", session, @(result));
+                return result;
+            }
+        }
+    }
+
+    DLog(@"Check if the system has an integrated GPU");
+    static BOOL haveIntegrated;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        NSArray<id<MTLDevice>> *devices = MTLCopyAllDevices();
+        haveIntegrated = NO;
+        for (id<MTLDevice> device in devices) {
+            if (device.isLowPower) {
+                haveIntegrated = YES;
+                break;
+            }
+        }
+        CFRelease(devices);
+    });
+    DLog(@"No sessions using GPU. Return %@.", @(haveIntegrated));
+    return haveIntegrated;
+}
+
 - (BOOL)metalAllowed:(out iTermMetalUnavailableReason *)reason {
     static dispatch_once_t onceToken;
     static BOOL machineSupportsMetal;
@@ -5840,6 +5874,14 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     if (_textview.drawingHelper.showDropTargets) {
         if (reason) {
             *reason = iTermMetalUnavailableReasonDropTargetsVisible;
+        }
+        return NO;
+    }
+    // Use window occlusion because of issue 9174 but only for integrated GPUs because of issue 9044.
+    if ([self usingIntegratedGPU] &&
+        [_delegate.realParentWindow.ptyWindow approximateFractionOccluded] > 0.5) {
+        if (reason) {
+            *reason = iTermMetalUnavailableReasonWindowObscured;
         }
         return NO;
     }

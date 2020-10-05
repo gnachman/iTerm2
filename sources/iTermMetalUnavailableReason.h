@@ -36,6 +36,7 @@ typedef NS_ENUM(NSUInteger, iTermMetalUnavailableReason) {
     iTermMetalUnavailableReasonSharedBackgroundImage,
     iTermMetalUnavailableReasonSwipingBetweenTabs,
     iTermMetalUnavailableReasonSplitPaneBeingDragged,
+    iTermMetalUnavailableReasonWindowObscured
 };
 
 static inline NSString *iTermMetalUnavailableReasonDescription(iTermMetalUnavailableReason reason) {
@@ -102,6 +103,8 @@ static inline NSString *iTermMetalUnavailableReasonDescription(iTermMetalUnavail
             return @"swiping between tabs";
         case iTermMetalUnavailableReasonSplitPaneBeingDragged:
             return @"a split pane is being dragged.";
+        case iTermMetalUnavailableReasonWindowObscured:
+            return @"the window is mostly under another window.";
     }
 
     return @"of an internal error. Please file a bug report!";
