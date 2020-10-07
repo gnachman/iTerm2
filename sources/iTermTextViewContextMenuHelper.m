@@ -1112,16 +1112,20 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
     return [NSString stringWithFormat:@"“%@” = %@ = %@ (UTF-8)", self, ucs4String, utf8String];
 }
 
+#define NUMBER_OF_CHARS_IN(s) (sizeof(s)-1)
 - (NSDate *)dateValueFromUnix {
-    static const NSUInteger kTimestampLength = 10;
-    static const NSUInteger kJavaTimestampLength = 13;
-    static const NSUInteger kMicroTimestampLength = 16;
+    static const NSUInteger kTimestampLength = NUMBER_OF_CHARS_IN("1602081847");
+    static const NSUInteger kJavaTimestampLength = NUMBER_OF_CHARS_IN("1602081847000");
+    static const NSUInteger kMicroTimestampLength = NUMBER_OF_CHARS_IN("1602081847000999");
+    static const NSUInteger kFloatTimestampLength = NUMBER_OF_CHARS_IN("1602081847.473");
     if ((self.length == kTimestampLength ||
          self.length == kJavaTimestampLength ||
-         self.length == kMicroTimestampLength) &&
+         self.length == kMicroTimestampLength ||
+         self.length == kFloatTimestampLength) &&
         [self hasPrefix:@"1"]) {
         for (int i = 0; i < kTimestampLength; i++) {
-            if (!isdigit([self characterAtIndex:i])) {
+            unichar c = [self characterAtIndex:i];
+            if (!(isdigit(c) || (self.length == kFloatTimestampLength && c == '.'))) {
                 return nil;
             }
         }
