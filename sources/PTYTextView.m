@@ -2265,8 +2265,8 @@
         DLog(@"startx < 0 so there is no selected text");
         return nil;
     }
-    const BOOL copyLastNewline = YES;
-    const BOOL trimWhitespace = NO;
+    BOOL copyLastNewline = [iTermPreferences boolForKey:kPreferenceKeyCopyLastNewline];
+    BOOL trimWhitespace = [iTermAdvancedSettingsModel trimWhitespaceOnCopy];
     id theSelectedText;
     NSAttributedStringKey sgrAttribute = @"iTermSGR";
     NSDictionary *(^attributeProvider)(screen_char_t);
