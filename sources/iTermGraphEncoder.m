@@ -194,6 +194,9 @@ NSInteger iTermGenerationAlwaysEncode = NSIntegerMax;
                                                  NSInteger index,
                                                  iTermGraphEncoder *subencoder,
                                                  BOOL *stop))block {
+    if (identifiers.count != [NSSet setWithArray:identifiers].count) {
+        ITBetaAssert(NO, @"Identifiers for %@ contains a duplicate: %@", key, identifiers);
+    }
     [self encodeChildWithKey:@"__array"
                   identifier:key
                   generation:generation
