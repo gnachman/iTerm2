@@ -539,6 +539,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     if (size.height == 0) {
         size.height = 1;
     }
+    // NOTE: setSizeCommand only set when variable window sizes are not in use.
     NSString *setSizeCommand = [NSString stringWithFormat:@"refresh-client -C %d,%d",
                                 size.width, size.height];
     NSString *listWindowsCommand = [NSString stringWithFormat:@"list-windows -F %@", kListWindowsFormat];
@@ -553,11 +554,13 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
                                          responseSelector:@selector(getSessionGuidResponse:)
                                            responseObject:nil
                                                     flags:0],
-                           [gateway_ dictionaryForCommand:setSizeCommand
-                                           responseTarget:nil
-                                         responseSelector:nil
-                                           responseObject:nil
-                                                    flags:kTmuxGatewayCommandShouldTolerateErrors],
+                           _variableWindowSize ?
+                               [NSNull null] :
+                               [gateway_ dictionaryForCommand:setSizeCommand
+                                               responseTarget:nil
+                                             responseSelector:nil
+                                               responseObject:nil
+                                                        flags:kTmuxGatewayCommandShouldTolerateErrors],
                            [gateway_ dictionaryForCommand:getHiddenWindowsCommand
                                            responseTarget:self
                                          responseSelector:@selector(getHiddenWindowsResponse:)
@@ -593,7 +596,9 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
                                          responseSelector:@selector(initialListWindowsResponse:)
                                            responseObject:nil
                                                     flags:0] ];
-    [gateway_ sendCommandList:commands];
+    [gateway_ sendCommandList:[commands filteredArrayUsingBlock:^BOOL(id anObject) {
+        return ![anObject isKindOfClass:[NSNull class]];
+    }]];
 }
 
 // Returns the mutable set of session GUIDs we're attached to.
