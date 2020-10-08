@@ -7560,6 +7560,12 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     }
 }
 
+- (void)didFailToSplitTmuxPane {
+    for (PTYSession *session in self.allSessions) {
+        session.sessionIsSeniorToTmuxSplitPane = NO;
+    }
+}
+
 - (iTermSessionFactory *)sessionFactory {
     if (!_sessionFactory) {
         _sessionFactory = [[iTermSessionFactory alloc] init];
@@ -7583,6 +7589,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
                    initialDirectory:[iTermInitialDirectory initialDirectoryFromProfile:targetSession.profile objectType:iTermPaneObject]
                          completion:^(int wp) {
             if (wp < 0) {
+                [self didFailToSplitTmuxPane];
                 if (completion) {
                     completion(nil, NO);
                 }

@@ -1403,12 +1403,12 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
                                               responseTarget:nil
                                             responseSelector:nil
                                               responseObject:nil
-                                                       flags:0];
+                                                       flags:kTmuxGatewayCommandShouldTolerateErrors];
         NSDictionary *followupListPanes = [gateway_ dictionaryForCommand:listPanesCommand
                                                          responseTarget:self
                                                        responseSelector:@selector(didSplit:state:)
                                                          responseObject:state
-                                                                  flags:0];
+                                                                  flags:kTmuxGatewayCommandShouldTolerateErrors];
         [gateway_ sendCommandList:@[ initialListPanes, split, followupListPanes ]];
      }];
 }
