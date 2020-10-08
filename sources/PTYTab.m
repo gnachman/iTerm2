@@ -972,9 +972,6 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     }
     Profile *profile = [self.tmuxController profileForWindow:self.tmuxWindow];
     NSSize cellSize = [PTYTab cellSizeForBookmark:profile];
-    NSLog(@"flexibleView: %@", NSStringFromSize(flexibleView_.frame.size));
-    NSLog(@"root:         %@", NSStringFromSize(root_.frame.size));
-    NSLog(@"cellSize:     %@", NSStringFromSize(cellSize));
     const NSSize delta = NSMakeSize(flexibleView_.frame.size.width - root_.frame.size.width,
                                     flexibleView_.frame.size.height - root_.frame.size.height);
     if (![realParentWindow_ anyFullScreen] &&
