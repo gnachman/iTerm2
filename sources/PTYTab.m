@@ -4959,6 +4959,12 @@ typedef struct {
     if (((PTYTab *)session1.delegate)->lockedSession_ || ((PTYTab *)session2.delegate)->lockedSession_) {
         return;
     }
+    if (session1.isTmuxClient &&
+        session2.isTmuxClient &&
+        session1.tmuxController == session2.tmuxController) {
+        [session1.tmuxController swapPane:session1.tmuxPane withPane:session2.tmuxPane];
+        return;
+    }
     if ([session1 isTmuxClient] ||
         [session2 isTmuxClient] ||
         [session1 isTmuxGateway] ||
