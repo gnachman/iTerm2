@@ -1113,32 +1113,36 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
 }
 
 - (NSDate *)dateValueFromUnix {
-    static const NSUInteger kTimestampLength = 10;
-    static const NSUInteger kJavaTimestampLength = 13;
-    static const NSUInteger kMicroTimestampLength = 16;
-    if ((self.length == kTimestampLength ||
-         self.length == kJavaTimestampLength ||
-         self.length == kMicroTimestampLength) &&
-        [self hasPrefix:@"1"]) {
-        for (int i = 0; i < kTimestampLength; i++) {
-            if (!isdigit([self characterAtIndex:i])) {
-                return nil;
-            }
+    typedef struct {
+        NSString *regex;
+        double divisor;
+    } Format;
+    // TODO: Change these regexes to begin with ^[12] in the year 2032 or so.
+    Format formats[] = {
+        {
+            .regex = @"^1[0-9]{9}$",
+            .divisor = 1
+        },
+        {
+            .regex = @"^1[0-9]{12}$",
+            .divisor = 1000
+        },
+        {
+            .regex = @"^1[0-9]{15}$",
+            .divisor = 1000000
+        },
+        {
+            .regex = @"^1[0-9]{9}\\.[0-9]+$",
+            .divisor = 1
         }
-        // doubles run out of precision at 2^53. The largest Java timestamp we will convert is less
-        // than 2^41, so this is fine.
-        NSTimeInterval timestamp = [self doubleValue];
-        if (self.length == kJavaTimestampLength) {
-            // Convert milliseconds to seconds
-            timestamp /= 1000.0;
-        } else if (self.length == kMicroTimestampLength) {
-            // Convert microseconds to seconds
-            timestamp /= 1000000.0;
+    };
+    for (size_t i = 0; i < sizeof(formats) / sizeof(*formats); i++) {
+        if ([self isMatchedByRegex:formats[i].regex]) {
+            const NSTimeInterval timestamp = [self doubleValue] / formats[i].divisor;
+            return [NSDate dateWithTimeIntervalSince1970:timestamp];
         }
-        return [NSDate dateWithTimeIntervalSince1970:timestamp];
-    } else {
-        return nil;
     }
+    return nil;
 }
 
 - (NSDate *)dateValueFromUTC {
