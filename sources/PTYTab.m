@@ -972,11 +972,15 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     }
     Profile *profile = [self.tmuxController profileForWindow:self.tmuxWindow];
     NSSize cellSize = [PTYTab cellSizeForBookmark:profile];
+    NSLog(@"flexibleView: %@", NSStringFromSize(flexibleView_.frame.size));
+    NSLog(@"root:         %@", NSStringFromSize(root_.frame.size));
+    NSLog(@"cellSize:     %@", NSStringFromSize(cellSize));
+    const NSSize delta = NSMakeSize(flexibleView_.frame.size.width - root_.frame.size.width,
+                                    flexibleView_.frame.size.height - root_.frame.size.height);
     if (![realParentWindow_ anyFullScreen] &&
-        flexibleView_.frame.size.width > root_.frame.size.width &&
-        flexibleView_.frame.size.width - root_.frame.size.width < cellSize.width &&
-        flexibleView_.frame.size.height > root_.frame.size.height &&
-        flexibleView_.frame.size.height - root_.frame.size.height < cellSize.height) {
+        delta.width >= 0 && delta.width < cellSize.width &&
+        delta.height >= 0 && delta.height < cellSize.height) {
+        DLog(@"Root is slightly smaller than flexible view so use terminal background color for flexible view's background");
         // Root is just slightly smaller than flexibleView, by less than the size of a character.
         // Set flexible view's color to the default background color for tmux tabs.
         NSColor *bgColor;
