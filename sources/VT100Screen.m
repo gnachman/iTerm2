@@ -1335,7 +1335,7 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
                                 movedBackOverDoubleWidth:&predecessorIsDoubleWidth];
     NSString *augmentedString = string;
     NSString *predecessorString = pred.x >= 0 ? [currentGrid_ stringForCharacterAt:pred] : nil;
-    BOOL augmented = predecessorString != nil;
+    const BOOL augmented = predecessorString != nil;
     if (augmented) {
         augmentedString = [predecessorString stringByAppendingString:string];
     } else {
@@ -5333,12 +5333,6 @@ static void SwapInt(int *a, int *b) {
     [printBuffer_ release];
     printBuffer_ = nil;
     collectInputForPrinting_ = NO;
-}
-
-- (BOOL)isDoubleWidthCharacter:(unichar)c {
-    return [NSString isDoubleWidthCharacter:c
-                     ambiguousIsDoubleWidth:[delegate_ screenShouldTreatAmbiguousCharsAsDoubleWidth]
-                             unicodeVersion:[delegate_ screenUnicodeVersion]];
 }
 
 - (void)popScrollbackLines:(int)linesPushed

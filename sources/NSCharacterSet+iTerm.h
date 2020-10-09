@@ -23,6 +23,8 @@
 
 + (instancetype)spacingCombiningMarksForUnicodeVersion:(int)version;
 
++ (instancetype)emojiAcceptingVS16;
+
 + (instancetype)codePointsWithOwnCell;
 
 + (NSCharacterSet *)urlCharacterSet;
