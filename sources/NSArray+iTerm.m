@@ -316,6 +316,19 @@
     return [[[[NSSet alloc] initWithArray:self] autorelease] allObjects];
 }
 
+- (NSArray *)arrayByRemovingDuplicatesStably {
+    NSMutableSet *members = [NSMutableSet set];
+    NSMutableArray *result = [NSMutableArray array];
+    [self enumerateObjectsUsingBlock:^(id  _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+        if ([members containsObject:obj]) {
+            return;
+        }
+        [members addObject:obj];
+        [result addObject:obj];
+    }];
+    return result;
+}
+
 - (NSArray *)uniq {
     return [self uniqWithComparator:^BOOL(id obj1, id obj2) {
         return [obj1 isEqual:obj2];

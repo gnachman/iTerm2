@@ -219,6 +219,7 @@ NSInteger iTermGenerationAlwaysEncode = NSIntegerMax;
         if (options & iTermGraphEncoderArrayOptionsReverse) {
             orderedIdentifiers = orderedIdentifiers.reversed;
         }
+        orderedIdentifiers = [orderedIdentifiers arrayByRemovingDuplicatesStably];
         [subencoder encodeString:[orderedIdentifiers componentsJoinedByString:@"\t"] forKey:@"__order"];
         return YES;
     }];

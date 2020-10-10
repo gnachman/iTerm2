@@ -66,6 +66,9 @@
 // May reorder the whole array.
 - (NSArray<ObjectType> *)arrayByRemovingDuplicates;
 
+// Removes dups, does not reorder array.
+- (NSArray<ObjectType> *)arrayByRemovingDuplicatesStably;
+
 // Removes consecutive duplicates. Is stable.
 - (NSArray<ObjectType> *)uniq;
 - (NSArray<ObjectType> *)uniqWithComparator:(BOOL (^)(ObjectType obj1, ObjectType obj2))block;

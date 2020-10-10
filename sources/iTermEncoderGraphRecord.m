@@ -169,6 +169,7 @@
     }
 
     NSArray<NSString *> *order = [[NSString castFrom:record.pod[@"__order"]] componentsSeparatedByString:@"\t"] ?: @[];
+    order = [order arrayByRemovingDuplicatesStably];
     NSDictionary *items = [[record.graphRecords classifyWithBlock:^id(iTermEncoderGraphRecord *itemRecord) {
         return itemRecord.identifier;
     }] mapValuesWithBlock:^id(id key, NSArray<iTermEncoderGraphRecord *> *object) {
@@ -202,6 +203,7 @@
         return object.firstObject;
     }];
     NSArray<NSString *> *order = [[NSString castFrom:record.pod[@"__order"]] componentsSeparatedByString:@"\t"] ?: @[];
+    order = [order arrayByRemovingDuplicatesStably];
     return [order mapWithBlock:^id(NSString *key) {
         return items[key];
     }];
@@ -239,6 +241,7 @@
 - (NSArray *)arrayValue {
     assert([self.key isEqualToString:@"__array"]);
     NSArray<NSString *> *order = [[NSString castFrom:self.pod[@"__order"]] componentsSeparatedByString:@"\t"] ?: @[];
+    order = [order arrayByRemovingDuplicatesStably];
     NSDictionary *items = [[self.graphRecords classifyWithBlock:^id(iTermEncoderGraphRecord *itemRecord) {
         return itemRecord.identifier;
     }] mapValuesWithBlock:^id(id key, NSArray<iTermEncoderGraphRecord *> *object) {
