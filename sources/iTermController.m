@@ -1163,10 +1163,13 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
 }
 
 - (PseudoTerminal *)terminalWithGuid:(NSString *)guid {
+    DLog(@"Search for terminal with guid %@", guid);
     for (PseudoTerminal *term in [self terminals]) {
         if ([[term terminalGuid] isEqualToString:guid]) {
+            DLog(@"Found it");
             return term;
         }
+        DLog(@"%@", term.terminalGuid);
     }
     return nil;
 }

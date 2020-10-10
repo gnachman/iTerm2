@@ -9359,11 +9359,13 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)bury {
+    DLog(@"Bury %@", self);
     if (_synthetic) {
         DLog(@"Attempt to bury while synthetic");
         return;
     }
     if (self.isTmuxClient) {
+        DLog(@"Is tmux");
         if (!self.delegate) {
             return;
         }

@@ -1781,6 +1781,7 @@ ITERM_WEAKLY_REFERENCEABLE
     restorableSession.arrangement = [self arrangement];
     restorableSession.group = kiTermRestorableSessionGroupWindow;
     [self storeWindowStateInRestorableSession:restorableSession];
+    DLog(@"Create restorable session with terminal guid %@", restorableSession.terminalGuid);
     return restorableSession;
 }
 
@@ -7364,10 +7365,13 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     withArrangement:(NSDictionary *)arrangement
            sessions:(NSArray *)sessions
              revive:(BOOL)revive {
+    DLog(@"Re-create tab");
     NSInteger tabIndex = [_contentView.tabView indexOfTabViewItemWithIdentifier:tab];
     if (tabIndex == NSNotFound) {
+        DLog(@"The requested tab does not exist any more");
         return;
     }
+    DLog(@"OK");
     NSMutableArray *allSessions = [NSMutableArray array];
     [allSessions addObjectsFromArray:sessions];
     [allSessions addObjectsFromArray:[tab sessions]];
@@ -7376,23 +7380,26 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 
     BOOL ok = (theMap != nil);
     if (ok) {
+        DLog(@"Found session map");
         // Make sure the proposed tab has at least all the sessions already in the current tab.
         for (PTYSession *sessionInExistingTab in [tab sessions]) {
             BOOL found = NO;
             for (PTYSession *sessionInProposedTab in [theMap allValues]) {
                 if (sessionInProposedTab == sessionInExistingTab) {
+                    DLog(@"A session in the tab matches a session in the map");
                     found = YES;
                     break;
                 }
             }
             if (!found) {
+                DLog(@"No session in the tab matches any session in the map");
                 ok = NO;
                 break;
             }
         }
     }
     if (!ok) {
-        // Can't do it. Just add each session as its own tab.
+        DLog(@"Can't do it. Just add each session as its own tab.");
         for (PTYSession *session in sessions) {
             if (revive) {
                 [session revive];
@@ -7407,6 +7414,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
         }
     }
 
+    DLog(@"Replace tab with temporary tab");
     PTYSession *originalActiveSession = [tab activeSession];
     PTYTab *temporaryTab = [PTYTab tabWithArrangement:arrangement
                                                 named:nil

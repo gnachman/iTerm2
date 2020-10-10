@@ -8,6 +8,7 @@
 
 #import "iTermBuriedSessions.h"
 
+#import "DebugLogging.h"
 #import "iTermApplication.h"
 #import "iTermProfilePreferences.h"
 #import "iTermRestorableSession.h"
@@ -46,9 +47,11 @@ NSString *const iTermSessionBuriedStateChangeTabNotification = @"iTermSessionBur
 }
 
 - (void)addBuriedSession:(PTYSession *)sessionToBury {
+    DLog(@"addBuriedSession:%@", sessionToBury);
     id<iTermWindowController> windowController = (PseudoTerminal *)sessionToBury.delegate.parentWindow;
     iTermRestorableSession *restorableSession = [windowController restorableSessionForSession:sessionToBury];
     if (!restorableSession) {
+        DLog(@"Failed to create restorable session");
         return;
     }
     [_array addObject:restorableSession];
@@ -69,23 +72,29 @@ NSString *const iTermSessionBuriedStateChangeTabNotification = @"iTermSessionBur
         return;
     }
     [_array removeObject:restorableSession];
+    DLog(@"Restore %@", session);
     [session disinter];
+    DLog(@"Look for terminal with guid %@", restorableSession.terminalGuid);
     PseudoTerminal *term = [[iTermController sharedInstance] terminalWithGuid:restorableSession.terminalGuid];
     if (term) {
+        DLog(@"Found it. Look for tab with unique id %@", @(restorableSession.tabUniqueId));
         // Reuse an existing window
         PTYTab *tab = [term tabWithUniqueId:restorableSession.tabUniqueId];
         if (tab) {
+            DLog(@"Found it. Re-create the tab.");
             // Add to existing tab by destroying and recreating it.
             [term recreateTab:tab
               withArrangement:restorableSession.arrangement
                      sessions:restorableSession.sessions
                        revive:NO];
         } else {
+            DLog(@"The tab doesn't exist. Create a new tab and add the session to it");
             // Create a new tab and add the session to it.
             [term addRevivedSession:restorableSession.sessions[0]];
         }
     } else {
         // Create a new term and add the session to it.
+        DLog(@"Failed to find the terminal by uid. Create a new window and add the session to it.");
         term = [[PseudoTerminal alloc] initWithSmartLayout:YES
                                                 windowType:restorableSession.windowType
                                            savedWindowType:restorableSession.savedWindowType
