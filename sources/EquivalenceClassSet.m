@@ -1,5 +1,8 @@
 #import "EquivalenceClassSet.h"
 
+#import "DebugLogging.h"
+#import "NSArray+iTerm.h"
+
 @implementation EquivalenceClassSet {
     // Maps objects belonging to an equivalence class to their class's number.
     NSMutableDictionary<NSObject<NSCopying> *, NSNumber *> *index_;
@@ -28,8 +31,16 @@
     return ec ? classes_[ec] : nil;
 }
 
+- (void)log {
+    [classes_ enumerateKeysAndObjectsUsingBlock:^(NSNumber * _Nonnull key, NSMutableSet<NSObject<NSCopying> *> * _Nonnull obj, BOOL * _Nonnull stop) {
+        DLog(@"Class %@ contains: %@", key, [[obj.allObjects mapWithBlock:^id(NSObject<NSCopying> *anObject) {
+            return [anObject description];
+        }] componentsJoinedByString:@", "]);
+    }];
+}
+
 - (void)addValue:(NSObject<NSCopying> *)value toClass:(NSNumber *)ec {
-    [self removeValue:value];
+    [self _removeValue:value];
     index_[value] = ec;
     NSMutableSet<NSObject<NSCopying> *> *theSet = classes_[ec];
     if (!theSet) {
@@ -48,6 +59,7 @@
 }
 
 - (void)setValue:(NSObject<NSCopying> *)n1 equalToValue:(NSObject<NSCopying> *)n2 {
+    DLog(@"Set %@ = %@", n1, n2);
     NSNumber *n1Class = index_[n1];
     NSNumber *n2Class = index_[n2];
     if (n1Class) {
@@ -75,9 +87,16 @@
             [self addValue:n1 toClass:ec];
         }
     }
+    [self log];
 }
 
 - (void)removeValue:(NSObject<NSCopying> *)target {
+    [self _removeValue:target];
+    DLog(@"Remove %@", target);
+    [self log];
+}
+
+- (void)_removeValue:(NSObject<NSCopying> *)target {
     NSNumber *ec = index_[target];
     if (!ec) {
         return;
@@ -89,7 +108,7 @@
         [classes_ removeObjectForKey:ec];
     } else if (c.count == 1) {
         // An equivalence class with one object is silly so remove its last element.
-        [self removeValue:[[c allObjects] lastObject]];
+        [self _removeValue:[[c allObjects] lastObject]];
     }
 }
 

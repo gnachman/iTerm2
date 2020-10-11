@@ -83,7 +83,8 @@ NSString *const kTmuxWindowOpenerWindowOptionStyleValueFullScreen = @"FullScreen
     [_profile release];
     [_completion release];
     [_unpausingWindowPanes release];
-
+    [_newWindowBlock release];
+    
     [super dealloc];
 }
 
@@ -451,6 +452,9 @@ static int OctalValue(const char *bytes) {
         }
         if (!term) {
             term = [[iTermController sharedInstance] openTmuxIntegrationWindowUsingProfile:self.profile];
+            if (self.newWindowBlock) {
+                self.newWindowBlock(term.terminalGuid);
+            }
             isNewWindow = YES;
             DLog(@"Opened a new window %@", term);
         }
@@ -542,6 +546,8 @@ static int OctalValue(const char *bytes) {
                                                       withObject:nil];
     if (self.manuallyOpened) {
         parseTree[kLayoutDictTabOpenedManually] = @YES;
+    } else if (self.tabIndex) {
+        parseTree[kLayoutDictTabIndex] = self.tabIndex;
     }
 }
 

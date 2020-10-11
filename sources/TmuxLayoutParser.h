@@ -34,6 +34,7 @@ extern NSString *kLayoutDictTabColorKey;      // Tab color
 
 // Children of leaf:
 extern NSString *kLayoutDictTabOpenedManually;  // Was this tab opened by a user-initiated action?
+extern NSString *kLayoutDictTabIndex;           // Which index the tab should have in the native window
 
 typedef NS_ENUM(NSInteger, LayoutNodeType) {
     kLeafLayoutNode,

@@ -9286,9 +9286,10 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
         assert(aTabViewItem);
         [aTab setTabViewItem:aTabViewItem];
         PtyLog(@"insertTab:atIndex - calling [_contentView.tabView insertTabViewItem:atIndex]");
-        [_contentView.tabView insertTabViewItem:aTabViewItem atIndex:anIndex];
+        const int safeIndex = MAX(0, MIN(_contentView.tabView.tabViewItems.count, anIndex));
+        [_contentView.tabView insertTabViewItem:aTabViewItem atIndex:safeIndex];
         [aTabViewItem release];
-        [_contentView.tabView selectTabViewItemAtIndex:anIndex];
+        [_contentView.tabView selectTabViewItemAtIndex:safeIndex];
         if (self.windowInitialized && !_restoringWindow) {
             if (self.tabs.count == 1) {
                 // It's important to do this before makeKeyAndOrderFront because API clients need
