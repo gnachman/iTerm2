@@ -338,6 +338,7 @@ static iTermController *gSharedInstance;
                               completion:^(PTYSession *session) {
         if (divorced) {
             [session divorceAddressBookEntryFromPreferences];
+            [session refreshOverriddenFields];
         }
     }];
 }

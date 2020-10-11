@@ -5501,6 +5501,10 @@ ITERM_WEAKLY_REFERENCEABLE
     return guid;
 }
 
+- (void)refreshOverriddenFields {
+    [self sessionProfileDidChange];
+}
+
 // Jump to the saved scroll position
 - (void)jumpToSavedScrollPosition
 {

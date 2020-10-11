@@ -739,6 +739,10 @@ backgroundColor:(NSColor *)backgroundColor;
 - (NSString*)divorceAddressBookEntryFromPreferences;
 - (void)remarry;
 
+// After divorcing, if there are already profile values that differ from underlying, call this to
+// set overridden fields.
+- (void)refreshOverriddenFields;
+
 // Call refresh on the textview and schedule a timer if anything is blinking.
 - (void)refresh;
 
