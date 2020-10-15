@@ -3282,8 +3282,8 @@ typedef struct {
             parseTree[kLayoutDictPixelWidthKey] = @(size.width);
             parseTree[kLayoutDictPixelHeightKey] = @(size.height);
 
-            const NSSize maximumSize = NSMakeSize(size.width + cellSize.width - 1,
-                                                  size.height + cellSize.height - 1);
+            const NSSize maximumSize = NSMakeSize(size.width + cellSize.width,
+                                                  size.height + cellSize.height);
             parseTree[kLayoutDictMaximumPixelWidthKey] = @(maximumSize.width);
             parseTree[kLayoutDictMaximumPixelHeightKey] = @(maximumSize.height);
             return (iTermSizeRange){ size, maximumSize };
