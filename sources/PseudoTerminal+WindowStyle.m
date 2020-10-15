@@ -911,6 +911,7 @@ iTermWindowType iTermWindowTypeNormalized(iTermWindowType windowType) {
     self.windowType = desiredWindowType;
     [self didChangeAnyFullScreen];
 
+    [self updateTabBarControlIsTitlebarAccessory];
     [self.contentView.tabBarControl updateFlashing];
     // Set scrollbars appropriately
     [self updateSessionScrollbars];
