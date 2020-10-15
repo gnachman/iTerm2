@@ -7961,7 +7961,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     // as needed (e.g., for edge-spanning x-of-screen windows).
     frame = [self canonicalFrameForScreen:self.screen windowFrame:frame preserveSize:YES];
 
-    BOOL didResize = NSEqualRects([[self window] frame], frame);
+    const BOOL didResize = !NSEqualRects([[self window] frame], frame);
     DLog(@"Set window frame to %@", NSStringFromRect(frame));
 
     self.contentView.autoresizesSubviews = NO;
@@ -8366,6 +8366,10 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
         // Use ideal sizes instead, to fit to the session dimensions instead of
         // the existing pixel dimensions of the tabs.
         [self fitWindowToTabsExcludingTmuxTabs:NO preservingHeight:YES];
+        [self fitTabsToWindow];
+        for (TmuxController *controller in [self uniqueTmuxControllers]) {
+            [controller fitLayoutToWindows];
+        }
     }
 }
 
