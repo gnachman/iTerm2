@@ -554,7 +554,6 @@ static int HandleWait(int fd, iTermMultiServerRequestWait *wait) {
 
 #pragma mark - Requests
 
-#if BETA
 static void HexDump(iTermClientServerProtocolMessage *message) {
     char buffer[80];
     const unsigned char *bytes = (const unsigned char *)message->message.msg_iov[0].iov_base;
@@ -574,7 +573,6 @@ static void HexDump(iTermClientServerProtocolMessage *message) {
     }
     FDLog(LOG_DEBUG, "- End hex dump of message -");
 }
-#endif
 
 static int ReadRequest(int fd, iTermMultiServerClientOriginatedMessage *out) {
     iTermClientServerProtocolMessage message;
@@ -588,11 +586,9 @@ static int ReadRequest(int fd, iTermMultiServerClientOriginatedMessage *out) {
     memset(out, 0, sizeof(*out));
 
     status = iTermMultiServerProtocolParseMessageFromClient(&message, out);
-#if BETA
-    HexDump(&message);
-#endif
     if (status) {
         FDLog(LOG_ERR, "Parse failed with status %d", status);
+        HexDump(&message);
     } else {
         FDLog(LOG_DEBUG, "Parsed message from client:");
         iTermMultiServerProtocolLogMessageFromClient(out);
