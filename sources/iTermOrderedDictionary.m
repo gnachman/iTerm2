@@ -32,6 +32,10 @@
         if (!mapped) {
             continue;
         }
+        if (dictionary[mapped] != nil) {
+            // Ignore duplicate keys.
+            continue;
+        }
         [keys addObject:mapped];
         dictionary[mapped] = obj;
         idx += 1;
