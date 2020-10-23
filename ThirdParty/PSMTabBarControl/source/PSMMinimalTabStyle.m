@@ -535,6 +535,7 @@
 - (void)drawOutlineAroundTopTabBarWithOneTab:(PSMTabBarControl *)bar {
     if (!self.treatLeftInsetAsPartOfFirstTab) {
         [self drawOutlineBeforeSelectedTabInTopTabBar:bar];
+        [self drawOutlineAfterSelectedTabInTopTabBar:bar];
     }
 }
 
