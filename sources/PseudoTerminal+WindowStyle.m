@@ -940,6 +940,7 @@ iTermWindowType iTermWindowTypeNormalized(iTermWindowType windowType) {
     if ([[iTermApplication sharedApplication] isUIElement]) {
         self.window.collectionBehavior = self.desiredWindowCollectionBehavior;
     }
+    self.window.movable = [self.class windowTypeIsMovable:self.windowType];
 }
 
 - (BOOL)togglingLionFullScreenImpl {
