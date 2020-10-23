@@ -4194,6 +4194,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
                                                                             scaleFactor:[delegate_ screenBackingScaleFactor]] autorelease];
     helper.delegate = self;
     [helper writeToGrid:currentGrid_];
+    [self crlf];
 }
 
 - (void)terminalDidChangeSendModifiers {
