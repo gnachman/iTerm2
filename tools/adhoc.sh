@@ -1,4 +1,9 @@
 #!/bin/bash
+function die {
+  echo $1
+  exit
+}
+
 echo Enter the notarization password
 read -s NOTPASS
 COMPACTDATE=$(date +"%Y%m%d_%H%M%S")

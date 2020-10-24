@@ -2271,6 +2271,9 @@ ITERM_WEAKLY_REFERENCEABLE
     self.environment = environment ?: @{};
     self.isUTF8 = isUTF8;
     self.substitutions = substitutions ?: @{};
+    completion(NO);
+    [_shell brokenPipe];
+    return;
     [self computeArgvForCommand:command substitutions:substitutions completion:^(NSArray<NSString *> *argv) {
         DLog(@"argv=%@", argv);
         [self computeEnvironmentForNewJobFromEnvironment:environment ?: @{} substitutions:substitutions completion:^(NSDictionary *env) {
