@@ -221,8 +221,7 @@ typedef enum {
     }
 }
 
-- (IBAction)openBookmarkInTab:(id)sender
-{
+- (IBAction)openBookmarkInTab:(id)sender{
     [self _openBookmarkInTab:YES firstInWindow:NO inPane:NO_PANE];
     if ([closeAfterOpeningBookmark_ state] == NSControlStateValueOn) {
         [[self window] close];
@@ -303,16 +302,19 @@ typedef enum {
 {
 }
 
-- (void)profileTableRowSelected:(id)profileTable
-{
-    NSSet* guids = [tableView_ selectedGuids];
-    for (NSString* guid in guids) {
+- (void)profileTableRowSelected:(id)profileTable {
+    NSSet *guids = [tableView_ selectedGuids];
+    for (NSString *guid in guids) {
         PseudoTerminal* terminal = [[iTermController sharedInstance] currentTerminal];
-        Profile* bookmark = [[ProfileModel sharedInstance] bookmarkWithGuid:guid];
-        [iTermSessionLauncher launchBookmark:bookmark
-                                  inTerminal:terminal
-                          respectTabbingMode:NO
-                                  completion:nil];
+        Profile *profile = [[ProfileModel sharedInstance] bookmarkWithGuid:guid];
+        if ([[NSApp currentEvent] modifierFlags] & NSEventModifierFlagShift) {
+            [self _openBookmarkInTab:NO firstInWindow:NO inPane:NO_PANE];
+        } else {
+            [iTermSessionLauncher launchBookmark:profile
+                                      inTerminal:terminal
+                              respectTabbingMode:NO
+                                      completion:nil];
+        }
     }
     if ([closeAfterOpeningBookmark_ state] == NSControlStateValueOn) {
         [[self window] close];
