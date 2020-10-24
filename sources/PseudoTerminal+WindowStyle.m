@@ -167,12 +167,12 @@ iTermWindowType iTermWindowTypeNormalized(iTermWindowType windowType) {
     [self updateForTransparency:(NSWindow<PTYWindow> *)myWindow];
     [self setWindow:myWindow];
 
-    if (@available(macOS 10.16, *)) {
-        // TODO
-    } else {
-        NSView *view = [myWindow it_titlebarViewOfClassWithName:@"_NSTitlebarDecorationView"];
-        [view setHidden:YES];
-    }
+//    if (@available(macOS 10.16, *)) {
+//        // TODO
+//    } else {
+//        NSView *view = [myWindow it_titlebarViewOfClassWithName:@"_NSTitlebarDecorationView"];
+//        [view setHidden:YES];
+//    }
 
     [self updateVariables];
     return myWindow;
