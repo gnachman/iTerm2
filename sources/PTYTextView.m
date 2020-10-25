@@ -196,12 +196,14 @@
 }
 
 + (NSSize)charSizeForFont:(NSFont *)aFont
-        horizontalSpacing:(double)hspace
-          verticalSpacing:(double)vspace {
+        horizontalSpacing:(CGFloat)hspace
+          verticalSpacing:(CGFloat)vspace {
     FontSizeEstimator* fse = [FontSizeEstimator fontSizeEstimatorForFont:aFont];
     NSSize size = [fse size];
+    size.width = ceil(size.width);
+    size.height = ceil(size.height + [aFont leading]);
     size.width = ceil(size.width * hspace);
-    size.height = ceil(vspace * ceil(size.height + [aFont leading]));
+    size.height = ceil(size.height * vspace);
     return size;
 }
 
@@ -1561,8 +1563,8 @@
 
 - (void)setFont:(NSFont*)aFont
     nonAsciiFont:(NSFont *)nonAsciiFont
-    horizontalSpacing:(double)horizontalSpacing
-    verticalSpacing:(double)verticalSpacing {
+    horizontalSpacing:(CGFloat)horizontalSpacing
+    verticalSpacing:(CGFloat)verticalSpacing {
     NSSize sz = [PTYTextView charSizeForFont:aFont
                            horizontalSpacing:1.0
                              verticalSpacing:1.0];

@@ -730,8 +730,8 @@ backgroundColor:(NSColor *)backgroundColor;
 - (void)changeFontSizeDirection:(int)dir;
 - (void)setFont:(NSFont*)font
     nonAsciiFont:(NSFont*)nonAsciiFont
-    horizontalSpacing:(float)horizontalSpacing
-    verticalSpacing:(float)verticalSpacing;
+    horizontalSpacing:(CGFloat)horizontalSpacing
+    verticalSpacing:(CGFloat)verticalSpacing;
 
 // Assigns a new GUID to the session so that changes to the bookmark will not
 // affect it. Returns the GUID of a divorced bookmark. Does nothing if already

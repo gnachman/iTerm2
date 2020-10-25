@@ -7306,8 +7306,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     }
 }
 
-- (BOOL)canSplitPaneVertically:(BOOL)isVertical withBookmark:(Profile*)theBookmark
-{
+- (BOOL)canSplitPaneVertically:(BOOL)isVertical withBookmark:(Profile *)theBookmark {
     if ([self inInstantReplay]) {
         // Things get very complicated in this case. Just disallow it.
         return NO;
@@ -7315,11 +7314,11 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     NSFont* asciiFont = [ITAddressBookMgr fontWithDesc:[theBookmark objectForKey:KEY_NORMAL_FONT]];
     NSFont* nonAsciiFont = [ITAddressBookMgr fontWithDesc:[theBookmark objectForKey:KEY_NON_ASCII_FONT]];
     NSSize asciiCharSize = [PTYTextView charSizeForFont:asciiFont
-                                      horizontalSpacing:[[theBookmark objectForKey:KEY_HORIZONTAL_SPACING] floatValue]
-                                        verticalSpacing:[[theBookmark objectForKey:KEY_VERTICAL_SPACING] floatValue]];
+                                      horizontalSpacing:[[theBookmark objectForKey:KEY_HORIZONTAL_SPACING] doubleValue]
+                                        verticalSpacing:[[theBookmark objectForKey:KEY_VERTICAL_SPACING] doubleValue]];
     NSSize nonAsciiCharSize = [PTYTextView charSizeForFont:nonAsciiFont
-                                         horizontalSpacing:[[theBookmark objectForKey:KEY_HORIZONTAL_SPACING] floatValue]
-                                           verticalSpacing:[[theBookmark objectForKey:KEY_VERTICAL_SPACING] floatValue]];
+                                         horizontalSpacing:[[theBookmark objectForKey:KEY_HORIZONTAL_SPACING] doubleValue]
+                                           verticalSpacing:[[theBookmark objectForKey:KEY_VERTICAL_SPACING] doubleValue]];
     NSSize charSize = NSMakeSize(MAX(asciiCharSize.width, nonAsciiCharSize.width),
                                  MAX(asciiCharSize.height, nonAsciiCharSize.height));
     NSSize newSessionSize = NSMakeSize(charSize.width * kVT100ScreenMinColumns + [iTermAdvancedSettingsModel terminalMargin] * 2,
@@ -9159,8 +9158,8 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
                                      userInfo:nil];
     }
     NSSize charSize = [PTYTextView charSizeForFont:[ITAddressBookMgr fontWithDesc:[profile objectForKey:KEY_NORMAL_FONT]]
-                                 horizontalSpacing:[[profile objectForKey:KEY_HORIZONTAL_SPACING] floatValue]
-                                   verticalSpacing:[[profile objectForKey:KEY_VERTICAL_SPACING] floatValue]];
+                                 horizontalSpacing:[[profile objectForKey:KEY_HORIZONTAL_SPACING] doubleValue]
+                                   verticalSpacing:[[profile objectForKey:KEY_VERTICAL_SPACING] doubleValue]];
 
     if (size == nil && [_contentView.tabView numberOfTabViewItems] != 0) {
         NSSize contentSize = [[[[self currentSession] view] scrollview] documentVisibleRect].size;

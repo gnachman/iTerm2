@@ -226,8 +226,8 @@ extern NSString *const kTmuxControllerDidChangeHiddenWindows;
 
 - (void)setTmuxFont:(NSFont *)font
        nonAsciiFont:(NSFont *)nonAsciiFont
-           hSpacing:(double)hs
-           vSpacing:(double)vs
+           hSpacing:(CGFloat)hs
+           vSpacing:(CGFloat)vs
              window:(int)window;
 - (BOOL)windowIsHidden:(int)windowId;
 - (void)setLayoutInWindowPane:(int)windowPane toLayoutNamed:(NSString *)name;

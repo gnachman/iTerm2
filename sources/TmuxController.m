@@ -2257,8 +2257,8 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
 
 - (void)setTmuxFont:(NSFont *)font
        nonAsciiFont:(NSFont *)nonAsciiFont
-           hSpacing:(double)hs
-           vSpacing:(double)vs
+           hSpacing:(CGFloat)hs
+           vSpacing:(CGFloat)vs
              window:(int)window {
     NSDictionary *dict = @{ KEY_NORMAL_FONT: [font stringValue],
                             KEY_NON_ASCII_FONT: [nonAsciiFont stringValue],

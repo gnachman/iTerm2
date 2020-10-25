@@ -1759,8 +1759,8 @@ ITERM_WEAKLY_REFERENCEABLE
     [_textview setAutoresizingMask: NSViewWidthSizable | NSViewHeightSizable];
     [_textview setFont:[ITAddressBookMgr fontWithDesc:[_profile objectForKey:KEY_NORMAL_FONT]]
           nonAsciiFont:[ITAddressBookMgr fontWithDesc:[_profile objectForKey:KEY_NON_ASCII_FONT]]
-     horizontalSpacing:[[_profile objectForKey:KEY_HORIZONTAL_SPACING] floatValue]
-       verticalSpacing:[[_profile objectForKey:KEY_VERTICAL_SPACING] floatValue]];
+     horizontalSpacing:[[_profile objectForKey:KEY_HORIZONTAL_SPACING] doubleValue]
+       verticalSpacing:[[_profile objectForKey:KEY_VERTICAL_SPACING] doubleValue]];
     [self setTransparency:[[_profile objectForKey:KEY_TRANSPARENCY] floatValue]];
     [self setTransparencyAffectsOnlyDefaultBackgroundColor:[[_profile objectForKey:KEY_TRANSPARENCY_AFFECTS_ONLY_DEFAULT_BACKGROUND_COLOR] boolValue]];
 
@@ -5097,10 +5097,10 @@ ITERM_WEAKLY_REFERENCEABLE
     return [font it_fontByAddingToPointSize:dir];
 }
 
-- (void)setFont:(NSFont*)font
-    nonAsciiFont:(NSFont*)nonAsciiFont
-    horizontalSpacing:(float)horizontalSpacing
-    verticalSpacing:(float)verticalSpacing {
+- (void)setFont:(NSFont *)font
+    nonAsciiFont:(NSFont *)nonAsciiFont
+    horizontalSpacing:(CGFloat)horizontalSpacing
+    verticalSpacing:(CGFloat)verticalSpacing {
     DLog(@"setFont:%@ nonAsciiFont:%@", font, nonAsciiFont);
     NSWindow *window = [[_delegate realParentWindow] window];
     DLog(@"Before:\n%@", [window.contentView iterm_recursiveDescription]);
@@ -5118,12 +5118,12 @@ ITERM_WEAKLY_REFERENCEABLE
         // session.
         return;
     }
-    DLog(@"Line height was %f", (float)[_textview lineHeight]);
+    DLog(@"Line height was %f", [_textview lineHeight]);
     [_textview setFont:font
           nonAsciiFont:nonAsciiFont
      horizontalSpacing:horizontalSpacing
        verticalSpacing:verticalSpacing];
-    DLog(@"Line height is now %f", (float)[_textview lineHeight]);
+    DLog(@"Line height is now %f", [_textview lineHeight]);
     [_delegate sessionDidChangeFontSize:self adjustWindow:!_windowAdjustmentDisabled];
     DLog(@"After:\n%@", [window.contentView iterm_recursiveDescription]);
     DLog(@"Window frame: %@", window);
@@ -5280,7 +5280,8 @@ ITERM_WEAKLY_REFERENCEABLE
     DLog(@"changeFontSizeDirection:%d", dir);
     NSFont* font;
     NSFont* nonAsciiFont;
-    float hs, vs;
+    CGFloat hs;
+    CGFloat vs;
     if (dir) {
         // Grow or shrink
         DLog(@"grow/shrink");
@@ -5294,8 +5295,8 @@ ITERM_WEAKLY_REFERENCEABLE
         NSString* fontDesc = [abEntry objectForKey:KEY_NORMAL_FONT];
         font = [ITAddressBookMgr fontWithDesc:fontDesc];
         nonAsciiFont = [ITAddressBookMgr fontWithDesc:[abEntry objectForKey:KEY_NON_ASCII_FONT]];
-        hs = [[abEntry objectForKey:KEY_HORIZONTAL_SPACING] floatValue];
-        vs = [[abEntry objectForKey:KEY_VERTICAL_SPACING] floatValue];
+        hs = [[abEntry objectForKey:KEY_HORIZONTAL_SPACING] doubleValue];
+        vs = [[abEntry objectForKey:KEY_VERTICAL_SPACING] doubleValue];
     }
     [self setFont:font nonAsciiFont:nonAsciiFont horizontalSpacing:hs verticalSpacing:vs];
 

@@ -255,8 +255,8 @@ typedef NS_ENUM(NSInteger, PTYCharType) {
 @property(nonatomic, copy) NSArray *smartSelectionRules;
 
 // Intercell spacing as a proportion of cell size.
-@property(nonatomic, assign) double horizontalSpacing;
-@property(nonatomic, assign) double verticalSpacing;
+@property(nonatomic, assign) CGFloat horizontalSpacing;
+@property(nonatomic, assign) CGFloat verticalSpacing;
 
 // Use a different font for bold, if available?
 @property(nonatomic, assign) BOOL useBoldFont;
@@ -397,8 +397,8 @@ typedef void (^PTYTextViewDrawingHookBlock)(iTermTextDrawingHelper *);
 // Returns the size of a cell for a given font. hspace and vspace are multipliers and the width
 // and height.
 + (NSSize)charSizeForFont:(NSFont*)aFont
-        horizontalSpacing:(double)hspace
-          verticalSpacing:(double)vspace;
+        horizontalSpacing:(CGFloat)hspace
+          verticalSpacing:(CGFloat)vspace;
 
 // This is the designated initializer. The color map should have the
 // basic colors plus the 8-bit ansi colors set shortly after this is
@@ -455,8 +455,8 @@ typedef void (^PTYTextViewDrawingHookBlock)(iTermTextDrawingHelper *);
 // Various accessors (TODO: convert as many as possible into properties)
 - (void)setFont:(NSFont*)aFont
     nonAsciiFont:(NSFont *)nonAsciiFont
-    horizontalSpacing:(double)horizontalSpacing
-    verticalSpacing:(double)verticalSpacing;
+    horizontalSpacing:(CGFloat)horizontalSpacing
+    verticalSpacing:(CGFloat)verticalSpacing;
 - (NSRect)scrollViewContentSize;
 - (void)setAntiAlias:(BOOL)asciiAA nonAscii:(BOOL)nonAsciiAA;
 

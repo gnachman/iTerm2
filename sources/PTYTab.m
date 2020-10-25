@@ -303,12 +303,10 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 
 + (NSSize)cellSizeForBookmark:(Profile *)bookmark {
     NSFont *font;
-    double hspace;
-    double vspace;
 
     font = [ITAddressBookMgr fontWithDesc:[bookmark objectForKey:KEY_NORMAL_FONT]];
-    hspace = [[bookmark objectForKey:KEY_HORIZONTAL_SPACING] doubleValue];
-    vspace = [[bookmark objectForKey:KEY_VERTICAL_SPACING] doubleValue];
+    const CGFloat hspace = [[bookmark objectForKey:KEY_HORIZONTAL_SPACING] doubleValue];
+    const CGFloat vspace = [[bookmark objectForKey:KEY_VERTICAL_SPACING] doubleValue];
     return [PTYTextView charSizeForFont:font
                       horizontalSpacing:hspace
                         verticalSpacing:vspace];
