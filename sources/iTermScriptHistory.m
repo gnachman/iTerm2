@@ -24,8 +24,9 @@ NSString *const iTermScriptHistoryEntryFieldKey = @"field";
 NSString *const iTermScriptHistoryEntryFieldLogsValue = @"logs";
 NSString *const iTermScriptHistoryEntryFieldRPCValue = @"rpc";
 
+static NSDateFormatter *gScriptHistoryDateFormatter;
+
 @implementation iTermScriptHistoryEntry {
-    NSDateFormatter *_dateFormatter;
     NSMutableArray<NSString *> *_logLines;
     NSMutableArray<NSString *> *_callEntries;
 }
@@ -90,12 +91,17 @@ NSString *const iTermScriptHistoryEntryFieldRPCValue = @"rpc";
         _relaunch = [relaunch copy];
         _startDate = [NSDate date];
         _isRunning = YES;
-        _dateFormatter = [[NSDateFormatter alloc] init];
+
         _logLines = [NSMutableArray array];
         _callEntries = [NSMutableArray array];
-        _dateFormatter.dateFormat = [NSDateFormatter dateFormatFromTemplate:@"Ld jj:mm:ssSSS"
-                                                                    options:0
-                                                                     locale:[NSLocale currentLocale]];
+        static dispatch_once_t onceToken;
+        dispatch_once(&onceToken, ^{
+            gScriptHistoryDateFormatter = [[NSDateFormatter alloc] init];
+            gScriptHistoryDateFormatter.dateFormat =
+            [NSDateFormatter dateFormatFromTemplate:@"Ld jj:mm:ssSSS"
+                                            options:0
+                                             locale:[NSLocale currentLocale]];
+        });
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(apiServerDidReceiveMessage:)
                                                      name:iTermAPIServerDidReceiveMessage
@@ -127,7 +133,7 @@ NSString *const iTermScriptHistoryEntryFieldRPCValue = @"rpc";
 }
 
 - (void)addOutput:(NSString *)output {
-    NSString *timestamp = [NSString stringWithFormat:@"\n%@: ", [_dateFormatter stringFromDate:[NSDate date]]];
+    NSString *timestamp = [NSString stringWithFormat:@"\n%@: ", [gScriptHistoryDateFormatter stringFromDate:[NSDate date]]];
     BOOL trimmed = [output hasSuffix:@"\n"];
     if (trimmed) {
         output = [output substringWithRange:NSMakeRange(0, output.length - 1)];
@@ -138,7 +144,7 @@ NSString *const iTermScriptHistoryEntryFieldRPCValue = @"rpc";
     }
 
     if (!_lastLogLineContinues) {
-        output = [NSString stringWithFormat:@"%@: %@", [_dateFormatter stringFromDate:[NSDate date]], output];
+        output = [NSString stringWithFormat:@"%@: %@", [gScriptHistoryDateFormatter stringFromDate:[NSDate date]], output];
     }
 
     [self appendLogs:output];
@@ -149,7 +155,7 @@ NSString *const iTermScriptHistoryEntryFieldRPCValue = @"rpc";
 }
 
 - (void)addClientOriginatedRPC:(NSString *)rpc {
-    NSString *string = [NSString stringWithFormat:@"Script → iTerm2 %@:\n%@\n", [_dateFormatter stringFromDate:[NSDate date]], rpc];
+    NSString *string = [NSString stringWithFormat:@"Script → iTerm2 %@:\n%@\n", [gScriptHistoryDateFormatter stringFromDate:[NSDate date]], rpc];
     [self appendCalls:string];
     [[NSNotificationCenter defaultCenter] postNotificationName:iTermScriptHistoryEntryDidChangeNotification
                                                         object:self
@@ -158,7 +164,7 @@ NSString *const iTermScriptHistoryEntryFieldRPCValue = @"rpc";
 }
 
 - (void)addServerOriginatedRPC:(NSString *)rpc {
-    NSString *string = [NSString stringWithFormat:@"Script ← iTerm2 %@:\n%@\n", [_dateFormatter stringFromDate:[NSDate date]], rpc];
+    NSString *string = [NSString stringWithFormat:@"Script ← iTerm2 %@:\n%@\n", [gScriptHistoryDateFormatter stringFromDate:[NSDate date]], rpc];
     [self appendCalls:string];
     [[NSNotificationCenter defaultCenter] postNotificationName:iTermScriptHistoryEntryDidChangeNotification
                                                         object:self
