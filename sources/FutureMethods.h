@@ -46,6 +46,10 @@ MTActuatorActuateFunction *iTermGetMTActuatorActuateFunction(void);
 MTActuatorIsOpenFunction *iTermGetMTActuatorIsOpenFunction(void);
 
 NS_INLINE BOOL iTermTextIsMonochromeOnMojave(void) NS_AVAILABLE_MAC(10_14) {
+    if (@available(macOS 10.16, *)) {
+        // Issue 9209
+        return YES;
+    }
     static dispatch_once_t onceToken;
     static BOOL subpixelAAEnabled;
     dispatch_once(&onceToken, ^{

@@ -196,6 +196,10 @@
                      return YES;
                  }];
 
+    if (@available(macOS 10.16, *)) {
+        // 😢 See issue 9209
+        _subpixelAA.hidden = YES;
+    }
 
     _asciiFontPicker.delegate = self;
     _asciiFontPicker.mode = BFPCompositeViewModeFixedPitch;
