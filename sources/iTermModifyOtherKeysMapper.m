@@ -136,6 +136,14 @@ static BOOL CodePointInPrivateUseArea(unichar c) {
         case NSHomeFunctionKey:
         case NSEndFunctionKey:
             return [self reallySpecialSequenceWithCode:codePoint eventModifiers:eventModifiers];
+        case '\t':
+            if (eventModifiers == NSEventModifierFlagShift) {
+                // Issue 9202 - hack to make vim work. xterm does this on linux but not macos.
+                // See also https://github.com/vim/vim/issues/7189
+                // Private email thread with Thomas Dickey subject line "Shift-tab and modifyOtherKeys=2"
+                return [NSString stringWithFormat:@"\e[Z"];
+            }
+            // fall through
         default:
             if (eventModifiers == 0) {
                 return [NSString stringWithLongCharacter:codePoint];
