@@ -147,5 +147,6 @@ typedef struct {
 - (void)gentleReset;
 
 - (NSSet<NSString *> *)sgrCodesForCharacter:(screen_char_t)c;
+- (void)resetSendModifiersWithSideEffects:(BOOL)sideEffects;
 
 @end

@@ -1297,7 +1297,9 @@ ITERM_WEAKLY_REFERENCEABLE
                                     missingProfileNamed:arrangementProfile[KEY_NAME]
                                                    guid:arrangementProfile[KEY_GUID]];
     }
-
+    if (!attachedToServer) {
+        [aSession.terminal resetSendModifiersWithSideEffects:YES];
+    }
     NSString *path = [aSession.screen workingDirectoryOnLine:aSession.screen.numberOfScrollbackLines + aSession.screen.cursorY - 1];
     [aSession.variablesScope setValue:path forVariableNamed:iTermVariableKeySessionPath];
 

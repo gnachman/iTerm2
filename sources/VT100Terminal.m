@@ -363,10 +363,17 @@ static const int kMaxScreenRows = 4096;
     [self resetSavedCursorPositions];
     [delegate_ terminalShowPrimaryBuffer];
     self.softAlternateScreenMode = NO;
+    [self resetSendModifiersWithSideEffects:NO];
+    [self.delegate terminalDidChangeSendModifiers];
+}
+
+- (void)resetSendModifiersWithSideEffects:(BOOL)sideEffects {
     for (int i = 0; i < NUM_MODIFIABLE_RESOURCES; i++) {
         _sendModifiers[i] = @-1;
     }
-    [self.delegate terminalDidChangeSendModifiers];
+    if (sideEffects) {
+        [self.delegate terminalDidChangeSendModifiers];
+    }
 }
 
 - (void)gentleReset {
@@ -2074,10 +2081,7 @@ static const int kMaxScreenRows = 4096;
 
         case VT100CSI_RESET_MODIFIERS:
             if (token.csi->count == 0) {
-                for (int i = 0; i < NUM_MODIFIABLE_RESOURCES; i++) {
-                    _sendModifiers[i] = @-1;
-                }
-                [self.delegate terminalDidChangeSendModifiers];
+                [self resetSendModifiersWithSideEffects:YES];
                 break;
             }
             int resource = token.csi->p[0];
@@ -2089,10 +2093,7 @@ static const int kMaxScreenRows = 4096;
 
         case VT100CSI_SET_MODIFIERS: {
             if (token.csi->count == 0) {
-                for (int j = 0; j < NUM_MODIFIABLE_RESOURCES; j++) {
-                    _sendModifiers[j] = @-1;
-                }
-                [self.delegate terminalDidChangeSendModifiers];
+                [self resetSendModifiersWithSideEffects:YES];
                 break;
             }
             const int resource = token.csi->p[0];
