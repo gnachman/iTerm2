@@ -298,6 +298,9 @@ NS_CLASS_AVAILABLE_MAC(10_14)
                     if (@available(macOS 10.16, *)) {
                         halfName = @"WindowCorner_BigSur";
                     }
+                    if ([iTermAdvancedSettingsModel squareWindowCorners]) {
+                        halfName = @"WindowCorner_Square";
+                    }
                     gTopLeftCornerHalfImage = [[NSImage it_imageNamed:halfName forClass:self.class] it_verticallyFlippedImage];
                     gTopRightCornerHalfImage = [gTopLeftCornerHalfImage it_horizontallyFlippedImage];
                     gBottomLeftCornerHalfImage = [NSImage it_imageNamed:halfName forClass:self.class];
@@ -306,6 +309,9 @@ NS_CLASS_AVAILABLE_MAC(10_14)
                     NSString *fullName = @"WindowCornerFull";
                     if (@available(macOS 10.16, *)) {
                         fullName = @"WindowCornerFull_BigSur";
+                    }
+                    if ([iTermAdvancedSettingsModel squareWindowCorners]) {
+                        halfName = @"WindowCornerFull_Square";
                     }
                     gTopLeftCornerFullImage = [[NSImage it_imageNamed:fullName forClass:self.class] it_verticallyFlippedImage];
                     gTopRightCornerFullImage = [gTopLeftCornerFullImage it_horizontallyFlippedImage];
