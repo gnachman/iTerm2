@@ -30,19 +30,120 @@ def output(label, variable, values):
         print("        [%s addCharactersInRange:NSMakeRange(%s, %d)];" % (variable, hex(start), count))
     print("")
 
-f = open("emoji-sequences.txt", "r")
-ranges = []
-for line in f:
-    if line.startswith("#"):
-        continue
-    parts = line.split(";")
-    if len(parts) < 1:
-        continue
-    sequences = parts[0].split(" ")
-    if len(sequences) < 2:
-        continue
-    if sequences[1] == "FE0F":
-        ranges.append(sequences[0])
+def output_sequences():
+    """Output emoji that accept VS16"""
+    f = open("emoji-sequences.txt", "r")
+    ranges = []
+    for line in f:
+        if line.startswith("#"):
+            continue
+        parts = line.split(";")
+        if len(parts) < 1:
+            continue
+        sequences = parts[0].split(" ")
+        if len(sequences) < 2:
+            continue
+        if sequences[1] == "FE0F":
+            ranges.append(sequences[0])
 
 
-output("Emoji", "emoji", ranges)
+    output("Emoji", "emoji", ranges)
+
+def output_default_emoji_presentation():
+    """Output emoji that have a default emoji presentation."""
+    # https://unicode.org/Public/UCD/latest/ucd/emoji/emoji-data.txt
+    f = open("emoji-data.txt", "r")
+    ranges = []
+    for line in f:
+        try:
+            i = line.index("#")
+            line = line[0:i]
+        except:
+            pass
+        parts = line.split(";")
+        if len(parts) < 2:
+            continue
+        flavor = parts[1].strip()
+        if flavor != "Emoji_Presentation":
+            continue
+        ranges.append(parts[0])
+    output("EmojiPresentation", "emojiPresentation", ranges)
+
+def get_all_emoji():
+    """Returns the set of emoji base character."""
+    # https://unicode.org/Public/UCD/latest/ucd/emoji/emoji-data.txt
+    f = open("emoji-data.txt", "r")
+    emoji = []
+    for line in f:
+        try:
+            i = line.index("#")
+            line = line[0:i]
+        except:
+            pass
+        parts = line.split(";")
+        if len(parts) < 2:
+            continue
+        flavor = parts[1].strip()
+        if flavor != "Emoji":
+            continue
+        minmax = parse(parts[0])
+        for i in range(minmax[0], minmax[0] + minmax[1]):
+            emoji.append(i)
+    return set(emoji)
+
+def output_default_text_presentation():
+    """See issue 9185. Outputs default-text emoji that get emoji presentation
+    when following a default-emoji presentation character."""
+    # https://unicode.org/Public/UCD/latest/ucd/emoji/emoji-data.txt
+    emoji = list(get_all_emoji())
+
+    f = open("emoji-data.txt", "r")
+    for line in f:
+        try:
+            i = line.index("#")
+            line = line[0:i]
+        except:
+            pass
+        parts = line.split(";")
+        if len(parts) < 2:
+            continue
+        flavor = parts[1].strip()
+        if flavor != "Emoji_Presentation":
+            continue
+        minmax = parse(parts[0])
+        for i in range(minmax[0], minmax[0] + minmax[1]):
+            emoji.remove(i)
+
+    emoji.sort()
+    ranges = list(map(lambda x: format(x, 'x'), emoji))
+    output("TextPresentation", "textPresentation", ranges)
+
+def print_sequences_issue9185():
+    # https://unicode.org/Public/UCD/latest/ucd/emoji/emoji-data.txt
+    emoji = list(get_all_emoji())
+    f = open("emoji-data.txt", "r")
+    for line in f:
+        try:
+            i = line.index("#")
+            line = line[0:i]
+        except:
+            pass
+        parts = line.split(";")
+        if len(parts) < 2:
+            continue
+        flavor = parts[1].strip()
+        if flavor != "Emoji_Presentation":
+            continue
+        minmax = parse(parts[0])
+        for i in range(minmax[0], minmax[0] + minmax[1]):
+            emoji.remove(i)
+
+    emoji.sort()
+    for i in emoji:
+        print(f'{hex(i)}: \U0001f37b{chr(i)} regular={chr(i)} emojified={chr(i)+chr(0xfe0f)}')
+
+# Uncomment the one you want:
+#output_default_emoji_presentation()
+#print_sequences_issue9185()
+#output_upgradable_presentation()
+#output_default_text_presentation()
