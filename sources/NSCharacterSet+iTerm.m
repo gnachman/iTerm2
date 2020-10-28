@@ -9,6 +9,8 @@
 #import "NSCharacterSet+iTerm.h"
 #import "iTermAdvancedSettingsModel.h"
 
+unichar iTermMinimumDefaultEmojiPresentationCodePoint = 0x2300;
+
 @implementation NSCharacterSet (iTerm)
 // Ranges are generated list list_to_range.py and range_to_range.py scripts in the tools folder.
 
@@ -2184,6 +2186,231 @@
     });
 
     return urlChars;
+}
+
++ (NSCharacterSet *)emojiWithDefaultTextPresentation {
+    static dispatch_once_t onceToken;
+    static NSMutableCharacterSet *textPresentation;
+    dispatch_once(&onceToken, ^{
+        textPresentation = [[NSMutableCharacterSet alloc] init];
+        [textPresentation addCharactersInRange:NSMakeRange(0x23, 1)];
+        [textPresentation addCharactersInRange:NSMakeRange(0x2a, 1)];
+        [textPresentation addCharactersInRange:NSMakeRange(0x30, 10)];
+        [textPresentation addCharactersInRange:NSMakeRange(0xa9, 1)];
+        [textPresentation addCharactersInRange:NSMakeRange(0xae, 1)];
+        [textPresentation addCharactersInRange:NSMakeRange(0x203c, 1)];
+        [textPresentation addCharactersInRange:NSMakeRange(0x2049, 1)];
+        [textPresentation addCharactersInRange:NSMakeRange(0x2122, 1)];
+        [textPresentation addCharactersInRange:NSMakeRange(0x2139, 1)];
+        [textPresentation addCharactersInRange:NSMakeRange(0x2194, 6)];
+        [textPresentation addCharactersInRange:NSMakeRange(0x21a9, 2)];
+        [textPresentation addCharactersInRange:NSMakeRange(0x2328, 1)];
+        [textPresentation addCharactersInRange:NSMakeRange(0x23cf, 1)];
+        [textPresentation addCharactersInRange:NSMakeRange(0x23ed, 3)];
+        [textPresentation addCharactersInRange:NSMakeRange(0x23f1, 2)];
+        [textPresentation addCharactersInRange:NSMakeRange(0x23f8, 3)];
+        [textPresentation addCharactersInRange:NSMakeRange(0x24c2, 1)];
+        [textPresentation addCharactersInRange:NSMakeRange(0x25aa, 2)];
+        [textPresentation addCharactersInRange:NSMakeRange(0x25b6, 1)];
+        [textPresentation addCharactersInRange:NSMakeRange(0x25c0, 1)];
+        [textPresentation addCharactersInRange:NSMakeRange(0x25fb, 2)];
+        [textPresentation addCharactersInRange:NSMakeRange(0x2600, 5)];
+        [textPresentation addCharactersInRange:NSMakeRange(0x260e, 1)];
+        [textPresentation addCharactersInRange:NSMakeRange(0x2611, 1)];
+        [textPresentation addCharactersInRange:NSMakeRange(0x2618, 1)];
+        [textPresentation addCharactersInRange:NSMakeRange(0x261d, 1)];
+        [textPresentation addCharactersInRange:NSMakeRange(0x2620, 1)];
+        [textPresentation addCharactersInRange:NSMakeRange(0x2622, 2)];
+        [textPresentation addCharactersInRange:NSMakeRange(0x2626, 1)];
+        [textPresentation addCharactersInRange:NSMakeRange(0x262a, 1)];
+        [textPresentation addCharactersInRange:NSMakeRange(0x262e, 2)];
+        [textPresentation addCharactersInRange:NSMakeRange(0x2638, 3)];
+        [textPresentation addCharactersInRange:NSMakeRange(0x2640, 1)];
+        [textPresentation addCharactersInRange:NSMakeRange(0x2642, 1)];
+        [textPresentation addCharactersInRange:NSMakeRange(0x265f, 2)];
+        [textPresentation addCharactersInRange:NSMakeRange(0x2663, 1)];
+        [textPresentation addCharactersInRange:NSMakeRange(0x2665, 2)];
+        [textPresentation addCharactersInRange:NSMakeRange(0x2668, 1)];
+        [textPresentation addCharactersInRange:NSMakeRange(0x267b, 1)];
+        [textPresentation addCharactersInRange:NSMakeRange(0x267e, 1)];
+        [textPresentation addCharactersInRange:NSMakeRange(0x2692, 1)];
+        [textPresentation addCharactersInRange:NSMakeRange(0x2694, 4)];
+        [textPresentation addCharactersInRange:NSMakeRange(0x2699, 1)];
+        [textPresentation addCharactersInRange:NSMakeRange(0x269b, 2)];
+        [textPresentation addCharactersInRange:NSMakeRange(0x26a0, 1)];
+        [textPresentation addCharactersInRange:NSMakeRange(0x26a7, 1)];
+        [textPresentation addCharactersInRange:NSMakeRange(0x26b0, 2)];
+        [textPresentation addCharactersInRange:NSMakeRange(0x26c8, 1)];
+        [textPresentation addCharactersInRange:NSMakeRange(0x26cf, 1)];
+        [textPresentation addCharactersInRange:NSMakeRange(0x26d1, 1)];
+        [textPresentation addCharactersInRange:NSMakeRange(0x26d3, 1)];
+        [textPresentation addCharactersInRange:NSMakeRange(0x26e9, 1)];
+        [textPresentation addCharactersInRange:NSMakeRange(0x26f0, 2)];
+        [textPresentation addCharactersInRange:NSMakeRange(0x26f4, 1)];
+        [textPresentation addCharactersInRange:NSMakeRange(0x26f7, 3)];
+        [textPresentation addCharactersInRange:NSMakeRange(0x2702, 1)];
+        [textPresentation addCharactersInRange:NSMakeRange(0x2708, 2)];
+        [textPresentation addCharactersInRange:NSMakeRange(0x270c, 2)];
+        [textPresentation addCharactersInRange:NSMakeRange(0x270f, 1)];
+        [textPresentation addCharactersInRange:NSMakeRange(0x2712, 1)];
+        [textPresentation addCharactersInRange:NSMakeRange(0x2714, 1)];
+        [textPresentation addCharactersInRange:NSMakeRange(0x2716, 1)];
+        [textPresentation addCharactersInRange:NSMakeRange(0x271d, 1)];
+        [textPresentation addCharactersInRange:NSMakeRange(0x2721, 1)];
+        [textPresentation addCharactersInRange:NSMakeRange(0x2733, 2)];
+        [textPresentation addCharactersInRange:NSMakeRange(0x2744, 1)];
+        [textPresentation addCharactersInRange:NSMakeRange(0x2747, 1)];
+        [textPresentation addCharactersInRange:NSMakeRange(0x2763, 2)];
+        [textPresentation addCharactersInRange:NSMakeRange(0x27a1, 1)];
+        [textPresentation addCharactersInRange:NSMakeRange(0x2934, 2)];
+        [textPresentation addCharactersInRange:NSMakeRange(0x2b05, 3)];
+        [textPresentation addCharactersInRange:NSMakeRange(0x3030, 1)];
+        [textPresentation addCharactersInRange:NSMakeRange(0x303d, 1)];
+        [textPresentation addCharactersInRange:NSMakeRange(0x3297, 1)];
+        [textPresentation addCharactersInRange:NSMakeRange(0x3299, 1)];
+        [textPresentation addCharactersInRange:NSMakeRange(0x1f170, 2)];
+        [textPresentation addCharactersInRange:NSMakeRange(0x1f17e, 2)];
+        [textPresentation addCharactersInRange:NSMakeRange(0x1f202, 1)];
+        [textPresentation addCharactersInRange:NSMakeRange(0x1f237, 1)];
+        [textPresentation addCharactersInRange:NSMakeRange(0x1f321, 1)];
+        [textPresentation addCharactersInRange:NSMakeRange(0x1f324, 9)];
+        [textPresentation addCharactersInRange:NSMakeRange(0x1f336, 1)];
+        [textPresentation addCharactersInRange:NSMakeRange(0x1f37d, 1)];
+        [textPresentation addCharactersInRange:NSMakeRange(0x1f396, 2)];
+        [textPresentation addCharactersInRange:NSMakeRange(0x1f399, 3)];
+        [textPresentation addCharactersInRange:NSMakeRange(0x1f39e, 2)];
+        [textPresentation addCharactersInRange:NSMakeRange(0x1f3cb, 4)];
+        [textPresentation addCharactersInRange:NSMakeRange(0x1f3d4, 12)];
+        [textPresentation addCharactersInRange:NSMakeRange(0x1f3f3, 1)];
+        [textPresentation addCharactersInRange:NSMakeRange(0x1f3f5, 1)];
+        [textPresentation addCharactersInRange:NSMakeRange(0x1f3f7, 1)];
+        [textPresentation addCharactersInRange:NSMakeRange(0x1f43f, 1)];
+        [textPresentation addCharactersInRange:NSMakeRange(0x1f441, 1)];
+        [textPresentation addCharactersInRange:NSMakeRange(0x1f4fd, 1)];
+        [textPresentation addCharactersInRange:NSMakeRange(0x1f549, 2)];
+        [textPresentation addCharactersInRange:NSMakeRange(0x1f56f, 2)];
+        [textPresentation addCharactersInRange:NSMakeRange(0x1f573, 7)];
+        [textPresentation addCharactersInRange:NSMakeRange(0x1f587, 1)];
+        [textPresentation addCharactersInRange:NSMakeRange(0x1f58a, 4)];
+        [textPresentation addCharactersInRange:NSMakeRange(0x1f590, 1)];
+        [textPresentation addCharactersInRange:NSMakeRange(0x1f5a5, 1)];
+        [textPresentation addCharactersInRange:NSMakeRange(0x1f5a8, 1)];
+        [textPresentation addCharactersInRange:NSMakeRange(0x1f5b1, 2)];
+        [textPresentation addCharactersInRange:NSMakeRange(0x1f5bc, 1)];
+        [textPresentation addCharactersInRange:NSMakeRange(0x1f5c2, 3)];
+        [textPresentation addCharactersInRange:NSMakeRange(0x1f5d1, 3)];
+        [textPresentation addCharactersInRange:NSMakeRange(0x1f5dc, 3)];
+        [textPresentation addCharactersInRange:NSMakeRange(0x1f5e1, 1)];
+        [textPresentation addCharactersInRange:NSMakeRange(0x1f5e3, 1)];
+        [textPresentation addCharactersInRange:NSMakeRange(0x1f5e8, 1)];
+        [textPresentation addCharactersInRange:NSMakeRange(0x1f5ef, 1)];
+        [textPresentation addCharactersInRange:NSMakeRange(0x1f5f3, 1)];
+        [textPresentation addCharactersInRange:NSMakeRange(0x1f5fa, 1)];
+        [textPresentation addCharactersInRange:NSMakeRange(0x1f6cb, 1)];
+        [textPresentation addCharactersInRange:NSMakeRange(0x1f6cd, 3)];
+        [textPresentation addCharactersInRange:NSMakeRange(0x1f6e0, 6)];
+        [textPresentation addCharactersInRange:NSMakeRange(0x1f6e9, 1)];
+        [textPresentation addCharactersInRange:NSMakeRange(0x1f6f0, 1)];
+        [textPresentation addCharactersInRange:NSMakeRange(0x1f6f3, 1)];
+
+    });
+    return textPresentation;
+}
+
+// Emoji are added and not removed so this needs to be kept up to date with the most recent
+// Unicode version.
+// Use tools/emoji.py function output_default_emoji_presentation()
++ (NSCharacterSet *)emojiWithDefaultEmojiPresentation {
+    static dispatch_once_t onceToken;
+    static NSMutableCharacterSet *emojiPresentation;
+    dispatch_once(&onceToken, ^{
+        // NOTE: The smallest member must be at least iTermMinimumDefaultEmojiPresentationCodePoint.
+        // If Unicode adds a new one, then adjust the constant.
+        emojiPresentation = [[NSMutableCharacterSet alloc] init];
+        [emojiPresentation addCharactersInRange:NSMakeRange(0x231a, 2)];
+        [emojiPresentation addCharactersInRange:NSMakeRange(0x23e9, 4)];
+        [emojiPresentation addCharactersInRange:NSMakeRange(0x23f0, 1)];
+        [emojiPresentation addCharactersInRange:NSMakeRange(0x23f3, 1)];
+        [emojiPresentation addCharactersInRange:NSMakeRange(0x25fd, 2)];
+        [emojiPresentation addCharactersInRange:NSMakeRange(0x2614, 2)];
+        [emojiPresentation addCharactersInRange:NSMakeRange(0x2648, 12)];
+        [emojiPresentation addCharactersInRange:NSMakeRange(0x267f, 1)];
+        [emojiPresentation addCharactersInRange:NSMakeRange(0x2693, 1)];
+        [emojiPresentation addCharactersInRange:NSMakeRange(0x26a1, 1)];
+        [emojiPresentation addCharactersInRange:NSMakeRange(0x26aa, 2)];
+        [emojiPresentation addCharactersInRange:NSMakeRange(0x26bd, 2)];
+        [emojiPresentation addCharactersInRange:NSMakeRange(0x26c4, 2)];
+        [emojiPresentation addCharactersInRange:NSMakeRange(0x26ce, 1)];
+        [emojiPresentation addCharactersInRange:NSMakeRange(0x26d4, 1)];
+        [emojiPresentation addCharactersInRange:NSMakeRange(0x26ea, 1)];
+        [emojiPresentation addCharactersInRange:NSMakeRange(0x26f2, 2)];
+        [emojiPresentation addCharactersInRange:NSMakeRange(0x26f5, 1)];
+        [emojiPresentation addCharactersInRange:NSMakeRange(0x26fa, 1)];
+        [emojiPresentation addCharactersInRange:NSMakeRange(0x26fd, 1)];
+        [emojiPresentation addCharactersInRange:NSMakeRange(0x2705, 1)];
+        [emojiPresentation addCharactersInRange:NSMakeRange(0x270a, 2)];
+        [emojiPresentation addCharactersInRange:NSMakeRange(0x2728, 1)];
+        [emojiPresentation addCharactersInRange:NSMakeRange(0x274c, 1)];
+        [emojiPresentation addCharactersInRange:NSMakeRange(0x274e, 1)];
+        [emojiPresentation addCharactersInRange:NSMakeRange(0x2753, 3)];
+        [emojiPresentation addCharactersInRange:NSMakeRange(0x2757, 1)];
+        [emojiPresentation addCharactersInRange:NSMakeRange(0x2795, 3)];
+        [emojiPresentation addCharactersInRange:NSMakeRange(0x27b0, 1)];
+        [emojiPresentation addCharactersInRange:NSMakeRange(0x27bf, 1)];
+        [emojiPresentation addCharactersInRange:NSMakeRange(0x2b1b, 2)];
+        [emojiPresentation addCharactersInRange:NSMakeRange(0x2b50, 1)];
+        [emojiPresentation addCharactersInRange:NSMakeRange(0x2b55, 1)];
+        [emojiPresentation addCharactersInRange:NSMakeRange(0x1f004, 1)];
+        [emojiPresentation addCharactersInRange:NSMakeRange(0x1f0cf, 1)];
+        [emojiPresentation addCharactersInRange:NSMakeRange(0x1f18e, 1)];
+        [emojiPresentation addCharactersInRange:NSMakeRange(0x1f191, 10)];
+        [emojiPresentation addCharactersInRange:NSMakeRange(0x1f1e6, 26)];
+        [emojiPresentation addCharactersInRange:NSMakeRange(0x1f201, 1)];
+        [emojiPresentation addCharactersInRange:NSMakeRange(0x1f21a, 1)];
+        [emojiPresentation addCharactersInRange:NSMakeRange(0x1f22f, 1)];
+        [emojiPresentation addCharactersInRange:NSMakeRange(0x1f232, 5)];
+        [emojiPresentation addCharactersInRange:NSMakeRange(0x1f238, 3)];
+        [emojiPresentation addCharactersInRange:NSMakeRange(0x1f250, 2)];
+        [emojiPresentation addCharactersInRange:NSMakeRange(0x1f300, 33)];
+        [emojiPresentation addCharactersInRange:NSMakeRange(0x1f32d, 9)];
+        [emojiPresentation addCharactersInRange:NSMakeRange(0x1f337, 70)];
+        [emojiPresentation addCharactersInRange:NSMakeRange(0x1f37e, 22)];
+        [emojiPresentation addCharactersInRange:NSMakeRange(0x1f3a0, 43)];
+        [emojiPresentation addCharactersInRange:NSMakeRange(0x1f3cf, 5)];
+        [emojiPresentation addCharactersInRange:NSMakeRange(0x1f3e0, 17)];
+        [emojiPresentation addCharactersInRange:NSMakeRange(0x1f3f4, 1)];
+        [emojiPresentation addCharactersInRange:NSMakeRange(0x1f3f8, 71)];
+        [emojiPresentation addCharactersInRange:NSMakeRange(0x1f440, 1)];
+        [emojiPresentation addCharactersInRange:NSMakeRange(0x1f442, 187)];
+        [emojiPresentation addCharactersInRange:NSMakeRange(0x1f4ff, 63)];
+        [emojiPresentation addCharactersInRange:NSMakeRange(0x1f54b, 4)];
+        [emojiPresentation addCharactersInRange:NSMakeRange(0x1f550, 24)];
+        [emojiPresentation addCharactersInRange:NSMakeRange(0x1f57a, 1)];
+        [emojiPresentation addCharactersInRange:NSMakeRange(0x1f595, 2)];
+        [emojiPresentation addCharactersInRange:NSMakeRange(0x1f5a4, 1)];
+        [emojiPresentation addCharactersInRange:NSMakeRange(0x1f5fb, 85)];
+        [emojiPresentation addCharactersInRange:NSMakeRange(0x1f680, 70)];
+        [emojiPresentation addCharactersInRange:NSMakeRange(0x1f6cc, 1)];
+        [emojiPresentation addCharactersInRange:NSMakeRange(0x1f6d0, 3)];
+        [emojiPresentation addCharactersInRange:NSMakeRange(0x1f6d5, 3)];
+        [emojiPresentation addCharactersInRange:NSMakeRange(0x1f6eb, 2)];
+        [emojiPresentation addCharactersInRange:NSMakeRange(0x1f6f4, 9)];
+        [emojiPresentation addCharactersInRange:NSMakeRange(0x1f7e0, 12)];
+        [emojiPresentation addCharactersInRange:NSMakeRange(0x1f90c, 47)];
+        [emojiPresentation addCharactersInRange:NSMakeRange(0x1f93c, 10)];
+        [emojiPresentation addCharactersInRange:NSMakeRange(0x1f947, 50)];
+        [emojiPresentation addCharactersInRange:NSMakeRange(0x1f97a, 82)];
+        [emojiPresentation addCharactersInRange:NSMakeRange(0x1f9cd, 51)];
+        [emojiPresentation addCharactersInRange:NSMakeRange(0x1fa70, 5)];
+        [emojiPresentation addCharactersInRange:NSMakeRange(0x1fa78, 3)];
+        [emojiPresentation addCharactersInRange:NSMakeRange(0x1fa80, 7)];
+        [emojiPresentation addCharactersInRange:NSMakeRange(0x1fa90, 25)];
+        [emojiPresentation addCharactersInRange:NSMakeRange(0x1fab0, 7)];
+        [emojiPresentation addCharactersInRange:NSMakeRange(0x1fac0, 3)];
+        [emojiPresentation addCharactersInRange:NSMakeRange(0x1fad0, 7)];
+
+    });
+    return emojiPresentation;
 }
 
 + (instancetype)emojiAcceptingVS16 {

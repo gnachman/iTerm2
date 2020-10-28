@@ -2236,10 +2236,12 @@ static BOOL iTermTextDrawingHelperShouldAntiAlias(screen_char_t *c,
     int segmentLength = 0;
     BOOL previousDrawable = YES;
     screen_char_t predecessor = { 0 };
+    BOOL lastCharacterImpartsEmojiPresentation = NO;
 
     // Only defined if not preferring speed to full ligature support.
     BOOL lastWasNull = NO;
-    
+    NSCharacterSet *emojiWithDefaultTextPresentation = [NSCharacterSet emojiWithDefaultTextPresentation];
+    NSCharacterSet *emojiWithDefaultEmojiPresentationCharacterSet = [NSCharacterSet emojiWithDefaultEmojiPresentation];
     for (int i = indexRange.location; i < NSMaxRange(indexRange); i++) {
         iTermPreciseTimerStatsStartTimer(&_stats[TIMER_ATTRS_FOR_CHAR]);
         screen_char_t c = line[i];
@@ -2277,8 +2279,24 @@ static BOOL iTermTextDrawingHelperShouldAntiAlias(screen_char_t *c,
                 }
                 continue;
             }
+            const UTF32Char base = [charAsString firstCharacter];
+            if (lastCharacterImpartsEmojiPresentation && [emojiWithDefaultTextPresentation longCharacterIsMember:base] && ![charAsString containsString:@"\ufe0f"]) {
+                // Prevent previous character's emoji presentation from making this one have an emoji presentation as well.
+                // Leave lastCharacterImpartsEmojiPresentation set to YES intentionally.
+                charAsString = [charAsString stringByAppendingString:@"\ufe0e"];
+            } else {
+                lastCharacterImpartsEmojiPresentation = [emojiWithDefaultEmojiPresentationCharacterSet longCharacterIsMember:base];
+            }
         } else {
             charAsString = nil;
+            if (lastCharacterImpartsEmojiPresentation && [emojiWithDefaultTextPresentation characterIsMember:code]) {
+                unichar chars[2] = { code, 0xfe0e };
+                // Prevent previous character's emoji presentation from making this one have an emoji presentation as well.
+                // See issue 9185
+                charAsString = [NSString stringWithCharacters:chars length:2];
+            } else if (code != DWC_RIGHT && code >= iTermMinimumDefaultEmojiPresentationCodePoint) {  // filter out small values for speed
+                lastCharacterImpartsEmojiPresentation = [emojiWithDefaultEmojiPresentationCharacterSet characterIsMember:code];
+            }
         }
 
         const BOOL drawable = iTermTextDrawingHelperIsCharacterDrawable(&c,
