@@ -52,7 +52,7 @@ NS_ASSUME_NONNULL_BEGIN
         _metalRenderer = [[iTermMetalRenderer alloc] initWithDevice:device
                                                  vertexFunctionName:@"iTermIndicatorVertexShader"
                                                fragmentFunctionName:@"iTermIndicatorFragmentShader"
-                                                           blending:[iTermMetalBlending premultipliedCompositing]
+                                                           blending:[iTermMetalBlending compositeSourceOver]
                                                 transientStateClass:[iTermIndicatorRendererTransientState class]];
         _textures = [NSMutableDictionary dictionary];
         _indicatorDescriptors = [NSMutableArray array];

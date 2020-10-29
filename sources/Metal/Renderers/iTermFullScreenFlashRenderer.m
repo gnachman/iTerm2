@@ -43,7 +43,7 @@
         _metalRenderer = [[iTermMetalRenderer alloc] initWithDevice:device
                                                  vertexFunctionName:@"iTermFullScreenFlashVertexShader"
                                                fragmentFunctionName:@"iTermFullScreenFlashFragmentShader"
-                                                           blending:[iTermMetalBlending premultipliedCompositing]
+                                                           blending:[iTermMetalBlending compositeSourceOver]
                                                 transientStateClass:[iTermFullScreenFlashRendererTransientState class]];
         _colorBufferPool = [[iTermMetalBufferPool alloc] initWithDevice:device bufferSize:sizeof(vector_float4)];
     }

@@ -34,7 +34,7 @@
 // combinations of transparency, blending, and keep-non-default-background-colors-opaque settings.
 // https://stackoverflow.com/questions/51354283/transparent-mtkview-not-blending-properly-with-windows-behind-it
 // https://openradar.appspot.com/radar?id=4996901569036288
-#define ENABLE_TRANSPARENT_METAL_WINDOWS 1
+#define ENABLE_TRANSPARENT_METAL_WINDOWS 0
 
 // Sometimes when you ask MKTView for its currentDrawable, you get back a drawable with a texture
 // that you've never seen before. When you go to presentDrawable:, the completion handler is called
