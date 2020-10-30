@@ -2271,6 +2271,9 @@ ITERM_WEAKLY_REFERENCEABLE
         DLog(@"argv=%@", argv);
         [self computeEnvironmentForNewJobFromEnvironment:environment ?: @{} substitutions:substitutions completion:^(NSDictionary *env) {
             [self fetchAutoLogFilenameWithCompletion:^(NSString * _Nonnull autoLogFilename) {
+                [_logging stop];
+                [_logging autorelease];
+                _logging = nil;
                 [[self loggingHelper] setPath:autoLogFilename
                                       enabled:autoLogFilename != nil
                                     plainText:[iTermProfilePreferences boolForKey:KEY_PLAIN_TEXT_LOGGING
