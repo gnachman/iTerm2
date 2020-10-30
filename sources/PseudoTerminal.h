@@ -295,7 +295,7 @@ extern NSString *const iTermDidCreateTerminalWindowNotification;
 
 // Changes how input is broadcast.
 - (void)setBroadcastMode:(BroadcastMode)mode;
-- (void)setBroadcastingSessions:(NSArray<PTYSession *> *)sessions;
+- (void)setBroadcastingSessions:(NSArray<NSArray<PTYSession *> *> *)domains;
 
 // Change split selection mode for all sessions in this window.
 - (void)setSplitSelectionMode:(BOOL)mode excludingSession:(PTYSession *)session move:(BOOL)move;

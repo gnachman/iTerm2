@@ -13,7 +13,7 @@ extern NSString *const iTermBroadcastDomainsDidChangeNotification;
 
 typedef NS_ENUM(NSInteger, BroadcastMode) {
     BROADCAST_OFF,
-    BROADCAST_TO_ALL_PANES,
+    BROADCAST_TO_ALL_PANES,  // All panes in some tab, but we don't track which tab that is. The delegate knows, and we can ask it.
     BROADCAST_TO_ALL_TABS,
     BROADCAST_CUSTOM
 };
@@ -33,6 +33,8 @@ typedef NS_ENUM(NSInteger, BroadcastMode) {
 - (void)broadcastInputHelperSetNoTabBroadcasting:(iTermBroadcastInputHelper *)helper;
 - (void)broadcastInputHelper:(iTermBroadcastInputHelper *)helper setCurrentTabBroadcasting:(BOOL)broadcasting;
 - (NSWindow *)broadcastInputHelperWindowForWarnings:(iTermBroadcastInputHelper *)helper;
+- (BOOL)broadcastInputHelper:(iTermBroadcastInputHelper *)helper tabWithSessionIsBroadcasting:(NSString *)sessionID;
+
 @end
 
 @interface iTermBroadcastInputHelper : NSObject
@@ -41,9 +43,12 @@ typedef NS_ENUM(NSInteger, BroadcastMode) {
 
 // How input should be broadcast (or not).
 @property (nonatomic) BroadcastMode broadcastMode;
-@property (nonatomic, copy) NSSet<NSString *> *broadcastSessionIDs;
+@property (nonatomic, copy) NSSet<NSSet<NSString *> *> *broadcastDomains;
 
 - (void)toggleSession:(NSString *)sessionID;
+
+- (BOOL)shouldBroadcastToSessionWithID:(NSString *)sessionID;
+- (NSSet<NSString *> *)currentDomain;
 
 @end
 

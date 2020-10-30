@@ -2223,9 +2223,13 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (NSArray<PTYSession *> *)broadcastSessions {
-    NSSet<NSString *> *guids = _broadcastInputHelper.broadcastSessionIDs;
-    return [self.allSessions filteredArrayUsingBlock:^BOOL(PTYSession *session) {
-        return [guids containsObject:session.guid];
+    NSArray<PTYSession *> *allSessions = [self allSessions];
+    return [[_broadcastInputHelper currentDomain].allObjects mapWithBlock:^id(NSString *guid) {
+        PTYSession *session = [[iTermController sharedInstance] sessionWithGUID:guid];
+        if (![allSessions containsObject:session]) {
+            return nil;
+        }
+        return session;
     }];
 }
 
@@ -2240,7 +2244,19 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (BOOL)broadcastInputToSession:(PTYSession *)session {
-    return [_broadcastInputHelper.broadcastSessionIDs containsObject:session.guid];
+    return [_broadcastInputHelper shouldBroadcastToSessionWithID:session.guid];
+}
+
+- (BOOL)broadcastInputHelper:(iTermBroadcastInputHelper *)helper tabWithSessionIsBroadcasting:(NSString *)sessionID {
+    PTYSession *session = [[iTermController sharedInstance] sessionWithGUID:sessionID];
+    if (!session) {
+        return NO;
+    }
+    PTYTab *tab = [self tabForSession:session];
+    if (!tab) {
+        return NO;
+    }
+    return tab.isBroadcasting;
 }
 
 + (iTermWindowType)_windowTypeForArrangement:(NSDictionary*)arrangement {
@@ -8203,10 +8219,13 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     return _broadcastInputHelper.broadcastMode;
 }
 
-- (void)setBroadcastingSessions:(NSArray<PTYSession *> *)sessions {
-    _broadcastInputHelper.broadcastSessionIDs = [NSSet setWithArray:[sessions mapWithBlock:^id(PTYSession *session) {
-        return session.guid;
+- (void)setBroadcastingSessions:(NSArray<NSArray<PTYSession *> *> *)domains {
+    NSSet<NSSet<NSString *> *> *stringDomains = [NSSet setWithArray:[domains mapWithBlock:^id(NSArray<PTYSession *> *sessions) {
+        return [NSSet setWithArray:[sessions mapWithBlock:^id(PTYSession *session) {
+            return session.guid;
+        }]];
     }]];
+    _broadcastInputHelper.broadcastDomains = stringDomains;
 }
 
 - (void)setBroadcastMode:(BroadcastMode)mode {

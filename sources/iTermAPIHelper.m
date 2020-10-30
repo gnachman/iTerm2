@@ -3785,7 +3785,6 @@ static BOOL iTermCheckSplitTreesIsomorphic(ITMSplitTreeNode *node1, ITMSplitTree
     // Check validity
     NSMutableSet<NSString *> *sessionIDs = [NSMutableSet set];
     NSMutableArray<NSArray<PTYSession *> *> *sessionGroups = [NSMutableArray array];
-    NSMutableArray *windowControllers = [NSMutableArray array];
     for (ITMBroadcastDomain *domain in request.broadcastDomainsArray) {
         NSMutableArray<PTYSession *> *sessions = [NSMutableArray array];
         id<iTermWindowController> windowController = nil;
@@ -3810,19 +3809,14 @@ static BOOL iTermCheckSplitTreesIsomorphic(ITMSplitTreeNode *node1, ITMSplitTree
         }
         if (sessions.count) {
             [sessionGroups addObject:sessions];
-            [windowControllers addObject:sessions.firstObject.delegate.realParentWindow];
         }
     }
 
     for (PseudoTerminal *term in [[iTermController sharedInstance] terminals]) {
-        if (![windowControllers containsObject:term]) {
-            [term setBroadcastingSessions:@[]];
-            continue;
-        }
-        for (NSArray<PTYSession *> *sessions in sessionGroups) {
-            PseudoTerminal *windowController = [PseudoTerminal castFrom:[sessions.firstObject.delegate realParentWindow]];
-            [windowController setBroadcastingSessions:sessions];
-        }
+        NSArray<NSArray<PTYSession *> *> *sessionGroupsForWindow = [sessionGroups filteredArrayUsingBlock:^BOOL(NSArray<PTYSession *> *sessionGroup) {
+            return [PseudoTerminal castFrom:sessionGroup.firstObject.delegate.realParentWindow] == term;
+        }];
+        [term setBroadcastingSessions:sessionGroupsForWindow];
     }
     response.status = ITMSetBroadcastDomainsResponse_Status_Ok;
     return response;

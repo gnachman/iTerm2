@@ -1446,6 +1446,8 @@
 		A60014FB18552BDF00CE38D8 /* iTermNSKeyBindingEmulator.h in Headers */ = {isa = PBXBuildFile; fileRef = A60014F918552BDF00CE38D8 /* iTermNSKeyBindingEmulator.h */; };
 		A600E9BC22129D1300846C1C /* ToolCommandHistoryView.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A5991C1887C63700CB4209 /* ToolCommandHistoryView.m */; };
 		A601F8902328B3E800EEE4DC /* iTermWeakReference.m in Sources */ = {isa = PBXBuildFile; fileRef = A6FCB60D1C6714C70019184E /* iTermWeakReference.m */; };
+		A6024B79254C93DA0036D6CF /* NSSet+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A6024B77254C93DA0036D6CF /* NSSet+iTerm.h */; };
+		A6024B7A254C93DA0036D6CF /* NSSet+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A6024B78254C93DA0036D6CF /* NSSet+iTerm.m */; };
 		A60251681CCD3E5E009BABF1 /* NSURL+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A60251661CCD3E5E009BABF1 /* NSURL+iTerm.h */; };
 		A6047134213D9E7B009C6C6D /* iTermWorkingDirectoryPoller.h in Headers */ = {isa = PBXBuildFile; fileRef = A6047132213D9E7B009C6C6D /* iTermWorkingDirectoryPoller.h */; };
 		A6047135213D9E7B009C6C6D /* iTermWorkingDirectoryPoller.m in Sources */ = {isa = PBXBuildFile; fileRef = A6047133213D9E7B009C6C6D /* iTermWorkingDirectoryPoller.m */; };
@@ -4917,6 +4919,8 @@
 		A60014F518550F3900CE38D8 /* NSMutableAttributedString+iTerm.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = "NSMutableAttributedString+iTerm.m"; sourceTree = "<group>"; tabWidth = 4; };
 		A60014F918552BDF00CE38D8 /* iTermNSKeyBindingEmulator.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermNSKeyBindingEmulator.h; sourceTree = "<group>"; tabWidth = 4; };
 		A60014FA18552BDF00CE38D8 /* iTermNSKeyBindingEmulator.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermNSKeyBindingEmulator.m; sourceTree = "<group>"; tabWidth = 4; };
+		A6024B77254C93DA0036D6CF /* NSSet+iTerm.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "NSSet+iTerm.h"; sourceTree = "<group>"; };
+		A6024B78254C93DA0036D6CF /* NSSet+iTerm.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "NSSet+iTerm.m"; sourceTree = "<group>"; };
 		A60250A21CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-test24BitColor.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "PTYTextViewTest-golden-nonretina-test24BitColor.png"; path = "tests/Goldens/PTYTextViewTest-golden-nonretina-test24BitColor.png"; sourceTree = "<group>"; };
 		A60250A31CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-test256Colors.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "PTYTextViewTest-golden-nonretina-test256Colors.png"; path = "tests/Goldens/PTYTextViewTest-golden-nonretina-test256Colors.png"; sourceTree = "<group>"; };
 		A60250A41CC757BF009BABF1 /* PTYTextViewTest-golden-nonretina-testAnsiColors.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "PTYTextViewTest-golden-nonretina-testAnsiColors.png"; path = "tests/Goldens/PTYTextViewTest-golden-nonretina-testAnsiColors.png"; sourceTree = "<group>"; };
@@ -8021,6 +8025,8 @@
 				53D0FD4C237DC30F00DAFA8A /* NSIndexSet+iTerm.m */,
 				53D0FD4F237DCB5A00DAFA8A /* NSTableView+iTerm.h */,
 				53D0FD50237DCB5A00DAFA8A /* NSTableView+iTerm.m */,
+				A6024B77254C93DA0036D6CF /* NSSet+iTerm.h */,
+				A6024B78254C93DA0036D6CF /* NSSet+iTerm.m */,
 			);
 			name = Categories;
 			sourceTree = "<group>";
@@ -11379,6 +11385,7 @@
 				A6905560241E98CB0020EA6A /* iTermFileDescriptorMultiClientChild.h in Headers */,
 				A63011A420E7ECC2008114B7 /* iTermStatusBarSetupKnobsViewController.h in Headers */,
 				A62A1F761E711BC000363EE9 /* iTermHelpMessageViewController.h in Headers */,
+				A6024B79254C93DA0036D6CF /* NSSet+iTerm.h in Headers */,
 				A6F22ABF2396326200C5D1A9 /* iTermSyntheticConfParser.h in Headers */,
 				A63011B920E83000008114B7 /* iTermStatusBarKnobTextViewController.h in Headers */,
 				537BFDC920FFB2590098C91F /* iTermProcessCache.h in Headers */,
@@ -13859,6 +13866,7 @@
 				A6E5110E24C1729E00D6552D /* iTermAttributedStringProxy.m in Sources */,
 				A6180D6D21A35D5E0073F219 /* iTermMetalPerFrameState.m in Sources */,
 				530AB7B520A615D900D2AA08 /* iTermPythonArgumentParser.m in Sources */,
+				A6024B7A254C93DA0036D6CF /* NSSet+iTerm.m in Sources */,
 				A6EC937B24E8565000EEADEF /* iTermShortcut.m in Sources */,
 				A6AAD5EF22F4A1DD002DD12C /* iTermCommandRunnerPool.m in Sources */,
 				A68400BD1FF98101008D3EE2 /* iTermTimestampsRenderer.m in Sources */,
