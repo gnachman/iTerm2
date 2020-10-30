@@ -12,12 +12,12 @@
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermImageInfo.h"
 #import "iTermLaunchServices.h"
-#import "iTermLocalHostNameGuesser.h"
 #import "iTermSelection.h"
 #import "iTermSemanticHistoryController.h"
 #import "iTermTextExtractor.h"
 #import "iTermURLActionFactory.h"
 #import "iTermUserDefaults.h"
+#import "NSHost+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "NSURL+iTerm.h"
 #import "SCPPath.h"
@@ -314,7 +314,7 @@
                 NSURL *url = [NSURL URLWithUserSuppliedString:action.string];
                 if ([url.scheme isEqualToString:@"file"] &&
                     url.host.length > 0 &&
-                    ![url.host isEqualToString:[[iTermLocalHostNameGuesser sharedInstance] name]]) {
+                    ![url.host isEqualToString:[NSHost fullyQualifiedDomainName]]) {
                     SCPPath *path = [[SCPPath alloc] init];
                     path.path = url.path;
                     path.hostname = url.host;

@@ -19,7 +19,6 @@
 #import "iTermImageInfo.h"
 #import "iTermKeyboardHandler.h"
 #import "iTermLaunchServices.h"
-#import "iTermLocalHostNameGuesser.h"
 #import "iTermMetalClipView.h"
 #import "iTermMouseCursor.h"
 #import "iTermPreferences.h"

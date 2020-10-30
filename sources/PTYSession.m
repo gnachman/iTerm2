@@ -62,7 +62,6 @@
 #import "iTermSoundPlayer.h"
 #import "iTermRawKeyMapper.h"
 #import "iTermTermkeyKeyMapper.h"
-#import "iTermLocalHostNameGuesser.h"
 #import "iTermMetaFrustrationDetector.h"
 #import "iTermMetalGlue.h"
 #import "iTermMetalDriver.h"
@@ -122,6 +121,7 @@
 #import "NSDictionary+iTerm.h"
 #import "NSEvent+iTerm.h"
 #import "NSFont+iTerm.h"
+#import "NSHost+iTerm.h"
 #import "NSImage+iTerm.h"
 #import "NSPasteboard+iTerm.h"
 #import "NSStringITerm.h"
@@ -974,16 +974,10 @@ ITERM_WEAKLY_REFERENCEABLE
         [self.variablesScope setValue:NSUserName() forVariableNamed:iTermVariableKeySessionUsername];
     }
     if ([self.variablesScope valueForVariableName:iTermVariableKeySessionHostname] == nil) {
-        __weak __typeof(self) weakSelf = self;
-        [[iTermLocalHostNameGuesser sharedInstance] callBlockWhenReady:^(NSString * _Nonnull name) {
-            [weakSelf didGuessLocalHostName:name];
-        }];
-    }
-}
-
-- (void)didGuessLocalHostName:(NSString *)name {
-    if ([self.variablesScope valueForVariableName:iTermVariableKeySessionHostname] == nil) {
-        [self.variablesScope setValue:name forVariableNamed:iTermVariableKeySessionHostname];
+        NSString *const name = [NSHost fullyQualifiedDomainName];
+        if ([self.variablesScope valueForVariableName:iTermVariableKeySessionHostname] == nil) {
+            [self.variablesScope setValue:name forVariableNamed:iTermVariableKeySessionHostname];
+        }
     }
 }
 

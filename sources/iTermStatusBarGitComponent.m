@@ -15,7 +15,6 @@
 #import "iTermController.h"
 #import "iTermGitPoller.h"
 #import "iTermGitState.h"
-#import "iTermLocalHostNameGuesser.h"
 #import "iTermTextPopoverViewController.h"
 #import "iTermVariableReference.h"
 #import "iTermVariableScope.h"
@@ -24,6 +23,7 @@
 #import "NSArray+iTerm.h"
 #import "NSDate+iTerm.h"
 #import "NSDictionary+iTerm.h"
+#import "NSHost+iTerm.h"
 #import "NSImage+iTerm.h"
 #import "NSStringITerm.h"
 #import "NSObject+iTerm.h"
@@ -204,7 +204,7 @@ static const NSTimeInterval iTermStatusBarGitComponentDefaultCadence = 2;
 }
 
 - (BOOL)onLocalhost {
-    NSString *localhostName = [[iTermLocalHostNameGuesser sharedInstance] name];
+    NSString *localhostName = [NSHost fullyQualifiedDomainName];
     NSString *currentHostname = self.scope.hostname;
     DLog(@"git poller current hostname is %@, localhost is %@", currentHostname, localhostName);
     return [localhostName isEqualToString:currentHostname];

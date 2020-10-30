@@ -7,12 +7,12 @@
 
 #import "iTermGlobalScopeController.h"
 
-#import "iTermLocalHostNameGuesser.h"
 #import "iTermObject.h"
 #import "iTermPreferences.h"
 #import "iTermVariableScope.h"
 #import "iTermVariableScope+Global.h"
 #import "NSAppearance+iTerm.h"
+#import "NSHost+iTerm.h"
 #import "NSUserDefaults+iTerm.h"
 
 static char iTermGlobalScopeControllerKVOContext;
@@ -84,8 +84,11 @@ NS_CLASS_AVAILABLE_MAC(10_14)
         [[iTermVariableScope globalsScope] setValue:_userVariables forVariableNamed:@"user"];
         [[iTermVariableScope globalsScope] setValue:[self effectiveTheme]
                                    forVariableNamed:iTermVariableKeyApplicationEffectiveTheme];
-        [[iTermLocalHostNameGuesser sharedInstance] callBlockWhenReady:^(NSString *name) {
-            [[iTermVariableScope globalsScope] setValue:name forVariableNamed:iTermVariableKeyApplicationLocalhostName];
+        [[iTermVariableScope globalsScope] setValue:[NSHost fullyQualifiedDomainName]
+                                   forVariableNamed:iTermVariableKeyApplicationLocalhostName];
+        [NSTimer scheduledTimerWithTimeInterval:60 repeats:YES block:^(NSTimer * _Nonnull timer) {
+            [[iTermVariableScope globalsScope] setValue:[NSHost fullyQualifiedDomainName]
+                                       forVariableNamed:iTermVariableKeyApplicationLocalhostName];
         }];
     }
     return self;

@@ -7,12 +7,12 @@
 
 #import "iTermStatusBarVariableBaseComponent.h"
 
-#import "iTermLocalHostNameGuesser.h"
 #import "iTermShellHistoryController.h"
 #import "iTermVariableScope.h"
 #import "iTermVariableReference.h"
 #import "NSArray+iTerm.h"
 #import "NSDictionary+iTerm.h"
+#import "NSHost+iTerm.h"
 #import "NSImage+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "NSStringITerm.h"
@@ -165,7 +165,7 @@ static NSString *const iTermStatusBarHostnameComponentAbbreviateLocalhost = @"ab
     NSDictionary *knobValues = self.configuration[iTermStatusBarComponentConfigurationKeyKnobValues];
     NSString *abbreviation = [NSString castFrom:knobValues[iTermStatusBarHostnameComponentAbbreviateLocalhost]];
     if (abbreviation.length &&
-        [[[iTermLocalHostNameGuesser sharedInstance] name] isEqualToString:self.cached]) {
+        [[NSHost fullyQualifiedDomainName] isEqualToString:self.cached]) {
         return @[ abbreviation ];
     }
     return [super stringVariants];

@@ -16,7 +16,6 @@
 #import "iTermController.h"
 #import "iTermImageInfo.h"
 #import "iTermLaunchServices.h"
-#import "iTermLocalHostNameGuesser.h"
 #import "iTermMouseCursor.h"
 #import "iTermNotificationController.h"
 #import "iTermPreferences.h"
