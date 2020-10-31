@@ -113,7 +113,7 @@ NSString * const kTriggerPartialLineKey = @"partial";
   }
 }
 
-- (id<NSTextFieldDelegate>)newParameterDelegateWithPassthrough:(id<NSTextFieldDelegate>)passthrough {
+- (id<iTermFocusReportingTextFieldDelegate>)newParameterDelegateWithPassthrough:(id<NSTextFieldDelegate>)passthrough {
     return nil;
 }
 

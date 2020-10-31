@@ -1024,6 +1024,10 @@ toggleTerminalStateForMenuItem:(nonnull NSMenuItem *)item {
     [[iTermSnippetsModel sharedInstance] addSnippet:snippet];
 }
 
+- (void)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu addTrigger:(NSString *)text {
+    [self.delegate textViewAddTrigger:text];
+}
+
 #pragma mark - NSResponder Additions
 
 - (void)sendSnippet:(id)sender {

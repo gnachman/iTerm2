@@ -7177,6 +7177,10 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     [self _openSplitSheetForVertical:YES];
 }
 
+- (IBAction)addTrigger:(id)sender {
+    [self.currentSession textViewAddTrigger:self.currentSession.selectedText ?: @""];
+}
+
 - (IBAction)openPasteHistory:(id)sender
 {
     if (!pbHistoryView) {

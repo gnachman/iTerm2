@@ -10,6 +10,7 @@
 #import "iTerm.h"
 #import "iTermAPIHelper.h"
 #import "iTermActionsModel.h"
+#import "iTermAddTriggerViewController.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermAnnouncementViewController.h"
 #import "iTermApplication.h"
@@ -24,6 +25,7 @@
 #import "iTermCharacterSource.h"
 #import "iTermColorMap.h"
 #import "iTermColorPresets.h"
+#import "iTermColorSuggester.h"
 #import "iTermComposerManager.h"
 #import "iTermCommandHistoryCommandUseMO+Additions.h"
 #import "iTermController.h"
@@ -2119,6 +2121,9 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void)triggerDidChangeNameTo:(NSString *)newName {
     [self.variablesScope setValuesFromDictionary:@{ iTermVariableKeySessionTriggerName: newName,
                                                     iTermVariableKeySessionAutoNameFormat: newName }];
+    if (newName.length > 0) {
+        [self enableSessionNameTitleComponentIfPossible];
+    }
 }
 
 - (void)didInitializeSessionWithName:(NSString *)name {
@@ -9346,6 +9351,50 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                                  window:self.view.window];
 }
 
+- (void)textViewAddTrigger:(NSString *)text {
+    __weak __typeof(self) weakSelf = self;
+    iTermColorSuggester *cs =
+        [[[iTermColorSuggester alloc] initWithDefaultTextColor:[_colorMap colorForKey:kColorMapForeground]
+                                        defaultBackgroundColor:[_colorMap colorForKey:kColorMapBackground]
+                                             minimumDifference:0.25
+                                                          seed:[text hash]] autorelease];
+    [iTermAddTriggerViewController addTriggerForText:text
+                                              window:self.view.window
+                                 interpolatedStrings:[self.profile[KEY_TRIGGERS_USE_INTERPOLATED_STRINGS] boolValue]
+                                    defaultTextColor:cs.suggestedTextColor
+                              defaultBackgroundColor:cs.suggestedBackgroundColor
+                                          completion:^(NSDictionary * _Nonnull dict, BOOL updateProfile) {
+        if (!dict) {
+            return;
+        }
+        [weakSelf addTriggerDictionary:dict updateProfile:updateProfile];
+    }];
+}
+
+- (void)addTriggerDictionary:(NSDictionary *)dict updateProfile:(BOOL)updateProfile {
+    if (!updateProfile || !self.isDivorced || [_overriddenFields containsObject:KEY_TRIGGERS]) {
+        NSMutableArray<NSDictionary *> *triggers = [[self.profile[KEY_TRIGGERS] ?: @{} mutableCopy] autorelease];
+        [triggers addObject:dict];
+        [self setSessionSpecificProfileValues:@{ KEY_TRIGGERS: triggers }];
+    }
+
+    if (!updateProfile) {
+        return;
+    }
+    NSString *guid;
+    if (self.isDivorced) {
+        guid = self.profile[KEY_ORIGINAL_GUID];
+    } else {
+        guid = self.profile[KEY_GUID];
+    }
+    MutableProfile *profile = [[[[ProfileModel sharedInstance] bookmarkWithGuid:guid] mutableCopy] autorelease];
+    if (!profile) {
+        return;
+    }
+    profile[KEY_TRIGGERS] = [profile[KEY_TRIGGERS] ?: @[] arrayByAddingObject:dict];
+    [[ProfileModel sharedInstance] setBookmark:profile withGuid:profile[KEY_GUID]];
+}
+
 - (void)textViewApplyAction:(iTermAction *)action {
     [self applyAction:action];
 }
@@ -9826,7 +9875,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)enableSessionNameTitleComponentIfPossible {
-    // Turn on the session name component so the icon name will be visible.
+    // Turn on the session name component so the icon/trigger name will be visible.
     iTermTitleComponents components = [iTermProfilePreferences unsignedIntegerForKey:KEY_TITLE_COMPONENTS
                                                                            inProfile:self.profile];
     if (components & iTermTitleComponentsCustom) {

@@ -218,6 +218,7 @@ typedef NS_ENUM(NSInteger, PTYCharType) {
                       failedWithError:(NSError *)error
                           forMenuItem:(NSString *)title;
 - (void)textViewApplyAction:(iTermAction *)action;
+- (void)textViewAddTrigger:(NSString *)text;
 @end
 
 @interface iTermHighlightedRow : NSObject

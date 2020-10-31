@@ -358,7 +358,7 @@ DQ
                                     <action selector="copyWithStyles:" target="-1" id="B2X-kC-nrq"/>
                                 </connections>
                             </menuItem>
-                            <menuItem title="Copy with Control Sequences" alternate="YES" identifier="Copy with Styles" id="GT8-oj-uFO">
+                            <menuItem title="Copy with Control Sequences" alternate="YES" identifier="Copy with Control Sequences" id="GT8-oj-uFO">
                                 <modifierMask key="keyEquivalentModifierMask"/>
                                 <connections>
                                     <action selector="copyWithControlSequences:" target="-1" id="mvT-2h-6oO"/>
@@ -859,6 +859,15 @@ DQ
                                 </connections>
                             </menuItem>
                             <menuItem isSeparatorItem="YES" id="908">
+                                <modifierMask key="keyEquivalentModifierMask" command="YES"/>
+                            </menuItem>
+                            <menuItem title="Add Trigger…" identifier="Add Trigger" id="xcL-dd-3m4">
+                                <modifierMask key="keyEquivalentModifierMask"/>
+                                <connections>
+                                    <action selector="addTrigger:" target="-1" id="iVb-tZ-MfQ"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem isSeparatorItem="YES" id="2Gf-zh-GWz">
                                 <modifierMask key="keyEquivalentModifierMask" command="YES"/>
                             </menuItem>
                             <menuItem title="Reset" keyEquivalent="r" identifier="Reset" id="907">

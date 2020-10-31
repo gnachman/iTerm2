@@ -34,7 +34,148 @@ CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
             kBlueComponentBrightness * b);
 }
 
+typedef struct {
+    CGFloat x;
+    CGFloat y;
+    CGFloat z;
+} iTermXYZColor;
+
+iTermRGBColor iTermLinearizeSRGB(iTermSRGBColor srgb) {
+    CGFloat (^pivot)(CGFloat) = ^CGFloat(CGFloat n) {
+        CGFloat x;
+        if (n > 0.04045) {
+            x = pow((n + 0.055) / 1.055, 2.4);
+        } else {
+            x =  n / 12.92;
+        }
+        return x;
+    };
+    return (iTermRGBColor) {
+        .r = pivot(srgb.r),
+        .g = pivot(srgb.g),
+        .b = pivot(srgb.b)
+    };
+}
+
+// https://entropymine.com/imageworsener/srgbformula/
+iTermSRGBColor iTermCompressRGB(iTermRGBColor rgb) {
+    CGFloat (^pivot)(CGFloat) = ^CGFloat(CGFloat l) {
+        if (l <= 0.003130) {
+            return l * 12.92;
+        }
+        return 1.055 * pow(l, 1.0 / 2.4) - 0.055;
+    };
+    return (iTermSRGBColor) {
+        .r = pivot(rgb.r),
+        .g = pivot(rgb.g),
+        .b = pivot(rgb.b)
+    };
+}
+
+// Reference observer. D65 illuminant, 2 degrees. Divided by 100 vs the usual values for simplicity.
+static iTermXYZColor iTermD65Reference(void) {
+    return (iTermXYZColor) {
+        .x = 0.95047,
+        .y = 1.00000,
+        .z = 1.08883
+    };
+}
+
+static iTermXYZColor iTermCompressXYZ(iTermXYZColor compressed) {
+    CGFloat (^pivot)(CGFloat) = ^CGFloat(CGFloat l) {
+        if (l > 0.008856) {
+            return pow(l, 1.0 / 3.0);
+        }
+        return (7.787 * l) + (16.0 / 116.0);
+    };
+    return (iTermXYZColor) {
+        .x = pivot(compressed.x),
+        .y = pivot(compressed.y),
+        .z = pivot(compressed.z)
+    };
+}
+
+static iTermXYZColor iTermLinearizeXYZ(iTermXYZColor linear) {
+    CGFloat (^pivot)(CGFloat) = ^CGFloat(CGFloat l) {
+        if (pow(l, 3.0) > 0.008856) {
+            return pow(l, 3.0);
+        }
+        return (l - 16.0 / 116.0) / 7.787;
+    };
+    return (iTermXYZColor) {
+        .x = pivot(linear.x),
+        .y = pivot(linear.y),
+        .z = pivot(linear.z)
+    };
+}
+
+iTermLABColor iTermLABFromSRGB(iTermSRGBColor srgb) {
+    const iTermRGBColor rgb = iTermLinearizeSRGB(srgb);
+    const iTermXYZColor reference = iTermD65Reference();
+    iTermXYZColor xyz = {
+        .x = (rgb.r * 0.4124 + rgb.g * 0.3576 + rgb.b * 0.1805) / reference.x,
+        .y = (rgb.r * 0.2126 + rgb.g * 0.7152 + rgb.b * 0.0722) / reference.y,
+        .z = (rgb.r * 0.0193 + rgb.g * 0.1192 + rgb.b * 0.9505) / reference.z
+    };
+    xyz = iTermCompressXYZ(xyz);
+    return (iTermLABColor) {
+        .l = (116.0 * xyz.y) - 16.0,
+        .a = 500.0 * (xyz.x - xyz.y),
+        .b = 200.0 * (xyz.y - xyz.z)
+    };
+}
+
+iTermSRGBColor iTermSRGBFromLAB(iTermLABColor lab) {
+    const CGFloat tempY = (lab.l + 16.0) / 116.0;
+    iTermXYZColor xyz = {
+        .x = lab.a / 500.0 + tempY,
+        .y = tempY,
+        .z = tempY - lab.b / 200.0
+    };
+
+    xyz = iTermLinearizeXYZ(xyz);
+    const iTermXYZColor reference = iTermD65Reference();
+
+    xyz.x = reference.x * xyz.x;
+    xyz.y = reference.y * xyz.y;
+    xyz.z = reference.z * xyz.z;
+
+    iTermRGBColor rgb = {
+        .r = MAX(MIN(1, xyz.x *  3.2406 + xyz.y * -1.5372 + xyz.z * -0.4986), 0),
+        .g = MAX(MIN(1, xyz.x * -0.9689 + xyz.y *  1.8758 + xyz.z *  0.0415), 0),
+        .b = MAX(MIN(1, xyz.x *  0.0557 + xyz.y * -0.2040 + xyz.z *  1.0570), 0)
+    };
+    return iTermCompressRGB(rgb);
+}
+
+CGFloat iTermLABDistance(iTermLABColor lhs, iTermLABColor rhs) {
+    // Everything I can find about detla E says it's supposed to be in [0,100]
+    // but it's easy to find values larger than 100. My guess is that that's
+    // just a convention and that the L*ab color space is absurdly large and
+    // most of it is imperceptbile, allowing theoretically huge delta E values
+    // that don't happen in real life (modulo numerical errors in conversions
+    // between L*ab and SRGB).
+    return sqrt(pow(lhs.l - rhs.l, 2) +
+                pow(lhs.a - rhs.a, 2) +
+                pow(lhs.b - rhs.b, 2)) / 100.0;
+}
+
 @implementation NSColor (iTerm)
+
+- (iTermLABColor)labColor {
+    NSColor *color = [self colorUsingColorSpace:[NSColorSpace sRGBColorSpace]];
+    const iTermSRGBColor srgb = (iTermSRGBColor) {
+        .r = color.redComponent,
+        .g = color.blueComponent,
+        .b = color.greenComponent
+    };
+    return iTermLABFromSRGB(srgb);
+}
+
++ (instancetype)withLABColor:(iTermLABColor)lab {
+    iTermSRGBColor srgb = iTermSRGBFromLAB(lab);
+    return [NSColor colorWithSRGBRed:srgb.r green:srgb.g blue:srgb.b alpha:1];
+}
 
 - (NSString *)shortDescription {
     return [NSString stringWithFormat:@"(%.2f, %.2f, %.2f)",

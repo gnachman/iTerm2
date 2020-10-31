@@ -24,6 +24,8 @@ static NSString *const iTermUserDefaultsKeyOpenTmuxDashboardIfHiddenWindows = @"
 static NSString *const iTermUserDefaultsKeyHaveExplainedHowToAddTouchbarControls = @"NoSyncHaveExplainedHowToAddTouchbarControls";
 static NSString *const iTermUserDefaultsKeyIgnoreSystemWindowRestoration = @"NoSyncIgnoreSystemWindowRestoration";
 static NSString *const iTermUserDefaultsKeyGlobalSearchMode = @"NoSyncGlobalSearchMode";
+static NSString *const iTermUserDefaultsKeyAddTriggerInstant = @"NoSyncAddTriggerInstant";
+static NSString *const iTermUserDefaultsKeyAddTriggerUpdateProfile = @"NoSyncAddTriggerUpdateProfile";
 
 @implementation iTermUserDefaults
 
@@ -179,6 +181,22 @@ static NSUserDefaults *iTermPrivateUserDefaults(void) {
 
 + (void)setGlobalSearchMode:(NSUInteger)globalSearchMode {
     [self.userDefaults setObject:@(globalSearchMode) forKey:iTermUserDefaultsKeyGlobalSearchMode];
+}
+
++ (BOOL)addTriggerInstant {
+    return [[self.userDefaults objectForKey:iTermUserDefaultsKeyAddTriggerInstant] boolValue];
+}
+
++ (void)setAddTriggerInstant:(BOOL)addTriggerInstant {
+    [self.userDefaults setObject:@(addTriggerInstant) forKey:iTermUserDefaultsKeyAddTriggerInstant];
+}
+
++ (BOOL)addTriggerUpdateProfile {
+    return [[self.userDefaults objectForKey:iTermUserDefaultsKeyAddTriggerUpdateProfile] boolValue];
+}
+
++ (void)setAddTriggerUpdateProfile:(BOOL)addTriggerUpdateProfile {
+    [self.userDefaults setObject:@(addTriggerUpdateProfile) forKey:iTermUserDefaultsKeyAddTriggerUpdateProfile];
 }
 
 @end

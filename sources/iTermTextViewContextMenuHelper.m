@@ -190,6 +190,7 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
         [item action] == @selector(mail:) ||
         [item action] == @selector(browse:) ||
         [item action] == @selector(searchInBrowser:) ||
+        [item action] == @selector(addTrigger:) ||
         [item action] == @selector(saveSelectionAsSnippet:)) {
         iTermSelection *selection = [self.delegate contextMenuSelection:self];
         return selection.hasSelection;
@@ -304,19 +305,17 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
         }];
     }
 
-    [theMenu addItemWithTitle:scpTitle
-                       action:@selector(downloadWithSCP:)
-                keyEquivalent:@""];
-    [[theMenu itemAtIndex:[theMenu numberOfItems] - 1] setTarget:self];
-    [theMenu addItemWithTitle:@"Open Selection as URL"
-                     action:@selector(browse:) keyEquivalent:@""];
-    [[theMenu itemAtIndex:[theMenu numberOfItems] - 1] setTarget:self];
-    [theMenu addItemWithTitle:@"Search the Web for Selection"
-                     action:@selector(searchInBrowser:) keyEquivalent:@""];
-    [[theMenu itemAtIndex:[theMenu numberOfItems] - 1] setTarget:self];
-    [theMenu addItemWithTitle:@"Send Email to Selected Address"
-                     action:@selector(mail:) keyEquivalent:@""];
-    [[theMenu itemAtIndex:[theMenu numberOfItems] - 1] setTarget:self];
+    void (^add)(NSString *, SEL) = ^(NSString *title, SEL selector) {
+        [theMenu addItemWithTitle:title
+                         action:selector
+                    keyEquivalent:@""];
+        [[theMenu itemAtIndex:[theMenu numberOfItems] - 1] setTarget:self];
+    };
+    add(scpTitle, @selector(downloadWithSCP:));
+    add(@"Open Selection as URL", @selector(browse:));
+    add(@"Search the Web for Selection", @selector(searchInBrowser:));
+    add(@"Send Email to Selected Address", @selector(mail:));
+    add(@"Add Trigger…", @selector(addTrigger:));
 
     // Separator
     [theMenu addItem:[NSMenuItem separatorItem]];
@@ -335,22 +334,15 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
     }
 
     // Split pane options
-    [theMenu addItemWithTitle:@"Split Pane Vertically" action:@selector(splitTextViewVertically:) keyEquivalent:@""];
-    [[theMenu itemAtIndex:[theMenu numberOfItems] - 1] setTarget:self];
-
-    [theMenu addItemWithTitle:@"Split Pane Horizontally" action:@selector(splitTextViewHorizontally:) keyEquivalent:@""];
-    [[theMenu itemAtIndex:[theMenu numberOfItems] - 1] setTarget:self];
+    add(@"Split Pane Vertically", @selector(splitTextViewVertically:));
+    add(@"Split Pane Horizontally", @selector(splitTextViewHorizontally:));
 
     // Separator
     [theMenu addItem:[NSMenuItem separatorItem]];
 
-    [theMenu addItemWithTitle:@"Move Session to Split Pane" action:@selector(movePane:) keyEquivalent:@""];
-    [[theMenu itemAtIndex:[theMenu numberOfItems] - 1] setTarget:self];
-
-    [theMenu addItemWithTitle:@"Move Session to Window" action:@selector(moveSessionToWindow:) keyEquivalent:@""];
-
-    [theMenu addItemWithTitle:@"Swap With Session…" action:@selector(swapSessions:) keyEquivalent:@""];
-    [[theMenu itemAtIndex:[theMenu numberOfItems] - 1] setTarget:self];
+    add(@"Move Session to Split Pane", @selector(movePane:));
+    add(@"Move Session to Window", @selector(moveSessionToWindow:));
+    add(@"Swap With Session…", @selector(swapSessions:));
 
     // Separator
     [theMenu addItem:[NSMenuItem separatorItem]];
@@ -382,78 +374,44 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
                                                                  @"Context menu")
                      action:@selector(selectAll:) keyEquivalent:@""];
 
-    [theMenu addItemWithTitle:@"Send Selection"
-                       action:@selector(sendSelection:)
-                keyEquivalent:@""];
-    [[theMenu itemAtIndex:[theMenu numberOfItems] - 1] setTarget:self];
-    [theMenu addItemWithTitle:@"Save Selection as Snippet"
-                     action:@selector(saveSelectionAsSnippet:) keyEquivalent:@""];
-    [[theMenu itemAtIndex:[theMenu numberOfItems] - 1] setTarget:self];
+    add(@"Send Selection", @selector(sendSelection:));
+    add(@"Save Selection as Snippet", @selector(saveSelectionAsSnippet:));
 
     // Clear buffer
-    [theMenu addItemWithTitle:@"Clear Buffer"
-                       action:@selector(clearTextViewBuffer:)
-                keyEquivalent:@""];
-    [[theMenu itemAtIndex:[theMenu numberOfItems] - 1] setTarget:self];
+    add(@"Clear Buffer", @selector(clearTextViewBuffer:));
 
     // Make note
-    [theMenu addItemWithTitle:@"Annotate Selection"
-                       action:@selector(addNote:)
-                keyEquivalent:@""];
-    [[theMenu itemAtIndex:[theMenu numberOfItems] - 1] setTarget:self];
-
-    [theMenu addItemWithTitle:@"Reveal Annotation"
-                       action:@selector(showNotes:)
-                keyEquivalent:@""];
-    [[theMenu itemAtIndex:[theMenu numberOfItems] - 1] setTarget:self];
+    add(@"Annotate Selection", @selector(addNote:));
+    add(@"Reveal Annotation", @selector(showNotes:));
 
     // Separator
     [theMenu addItem:[NSMenuItem separatorItem]];
 
     // Edit Session
-    [theMenu addItemWithTitle:@"Edit Session..."
-                       action:@selector(editTextViewSession:)
-                keyEquivalent:@""];
-    [[theMenu itemAtIndex:[theMenu numberOfItems] - 1] setTarget:self];
+    add(@"Edit Session...", @selector(editTextViewSession:));
 
     // Separator
     [theMenu addItem:[NSMenuItem separatorItem]];
 
     // Toggle broadcast
-    [theMenu addItemWithTitle:@"Toggle Broadcasting Input"
-                       action:@selector(toggleBroadcastingInput:)
-                keyEquivalent:@""];
-    [[theMenu itemAtIndex:[theMenu numberOfItems] - 1] setTarget:self];
+    add(@"Toggle Broadcasting Input", @selector(toggleBroadcastingInput:));
 
     if ([self.delegate contextMenuHasCoprocess:self]) {
-        [theMenu addItemWithTitle:@"Stop Coprocess"
-                           action:@selector(stopCoprocess:)
-                    keyEquivalent:@""];
-        [[theMenu itemAtIndex:[theMenu numberOfItems] - 1] setTarget:self];
+        add(@"Stop Coprocess", @selector(stopCoprocess:));
     }
 
     // Separator
     [theMenu addItem:[NSMenuItem separatorItem]];
 
     // Close current pane
-    [theMenu addItemWithTitle:@"Close"
-                       action:@selector(closeTextViewSession:)
-                keyEquivalent:@""];
-    [[theMenu itemAtIndex:[theMenu numberOfItems] - 1] setTarget:self];
-
-    [theMenu addItemWithTitle:@"Restart"
-                       action:@selector(restartSession:)
-                keyEquivalent:@""];
-    [[theMenu itemAtIndex:[theMenu numberOfItems] - 1] setTarget:self];
+    add(@"Close", @selector(closeTextViewSession:));
+    add(@"Restart", @selector(restartSession:));
 
     [self.delegate contextMenu:self amend:theMenu];
 
     // Separator
     [theMenu addItem:[NSMenuItem separatorItem]];
-    [theMenu addItemWithTitle:@"Bury"
-                       action:@selector(bury:)
-                keyEquivalent:@""];
-    [[theMenu itemAtIndex:[theMenu numberOfItems] - 1] setTarget:self];
+    add(@"Bury", @selector(bury:));
 
     // Terminal State
     [theMenu addItem:[NSMenuItem separatorItem]];
@@ -710,6 +668,10 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
                                              inString:[iTermAdvancedSettingsModel searchCommand]
                                             withValue:[self.delegate contextMenuSelectedText:self capped:0]];
     [_urlActionHelper findUrlInString:url.absoluteString andOpenInBackground:NO];
+}
+
+- (void)addTrigger:(id)sender {
+    [self.delegate contextMenu:self addTrigger:[self.delegate contextMenuSelectedText:self capped:0]];
 }
 
 - (void)mail:(id)sender {
@@ -1166,3 +1128,4 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
 }
 
 @end
+

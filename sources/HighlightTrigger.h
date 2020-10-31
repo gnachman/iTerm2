@@ -11,5 +11,7 @@
 @interface HighlightTrigger : Trigger
 
 + (NSString *)title;
+- (void)setTextColor:(NSColor *)textColor;
+- (void)setBackgroundColor:(NSColor *)backgroundColor;
 
 @end
