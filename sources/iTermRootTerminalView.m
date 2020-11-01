@@ -814,15 +814,14 @@ NS_CLASS_AVAILABLE_MAC(10_14)
                                          thickness);
     }
 
-    _bottomLeftCornerHalfRoundImageView.hidden = !(haveLeft && haveBottom && !fullThickness);
-    _bottomRightCornerHalfRoundImageView.hidden = !(haveRight && haveBottom && !fullThickness);
-    _topLeftCornerHalfRoundImageView.hidden = !(haveLeft && haveTop && !fullThickness);
-    _topRightCornerHalfRoundImageView.hidden = !(haveRight && haveTop && !fullThickness);
-
-    _bottomLeftCornerFullRoundImageView.hidden = !(haveLeft && haveBottom && fullThickness);
-    _bottomRightCornerFullRoundImageView.hidden = !(haveRight && haveBottom && fullThickness);
-    _topLeftCornerFullRoundImageView.hidden = !(haveLeft && haveTop && fullThickness);
-    _topRightCornerFullRoundImageView.hidden = !(haveRight && haveTop && fullThickness);
+    _bottomLeftCornerHalfRoundImageView.hidden = YES;
+    _bottomRightCornerHalfRoundImageView.hidden = YES;
+    _topLeftCornerHalfRoundImageView.hidden = YES;
+    _topRightCornerHalfRoundImageView.hidden = YES;
+    _bottomLeftCornerFullRoundImageView.hidden = YES;
+    _bottomRightCornerFullRoundImageView.hidden = YES;
+    _topLeftCornerFullRoundImageView.hidden = YES;
+    _topRightCornerFullRoundImageView.hidden = YES;
 }
 
 - (void)setUseMetal:(BOOL)useMetal {
