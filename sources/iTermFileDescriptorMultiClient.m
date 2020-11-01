@@ -690,10 +690,7 @@ static unsigned long long MakeUniqueID(void) {
 }
 
 - (NSString *)serverPath {
-    NSDictionary *infoDictionary = [[NSBundle bundleForClass:[self class]] infoDictionary];
-    NSString *versionNumber = infoDictionary[(NSString *)kCFBundleVersionKey];
-    NSString *filename = [NSString stringWithFormat:@"iTermServer-%@", versionNumber];
-    return [[[NSFileManager defaultManager] applicationSupportDirectory] stringByAppendingPathComponent:filename];
+    return [[NSBundle bundleForClass:self.class] pathForAuxiliaryExecutable:@"iTermServer"];
 }
 
 - (void)showError:(NSError *)error message:(NSString *)message badURL:(NSURL *)url {
@@ -714,55 +711,7 @@ static unsigned long long MakeUniqueID(void) {
 // Copy iTermServer to a safe location where Autoupdate won't delete it. See issue 9022 for
 // wild speculation on why this is important.
 - (NSString *)serverPathCopyingIfNeeded {
-    NSString *desiredPath = [self serverPath];
-    NSFileManager *fileManager = [NSFileManager defaultManager];
-
-    // Does the server already exist where we need it to be?
-    if (![fileManager fileExistsAtPath:desiredPath]) {
-        NSString *sourcePath = [[NSBundle bundleForClass:self.class] pathForAuxiliaryExecutable:@"iTermServer"];
-        NSError *error = nil;
-        [[NSFileManager defaultManager] copyItemAtPath:sourcePath
-                                                toPath:desiredPath
-                                                 error:&error];
-        if (error) {
-            [self showError:error
-                    message:[NSString stringWithFormat:@"Could not copy %@ to %@", sourcePath, desiredPath]
-                     badURL:[NSURL fileURLWithPath:desiredPath]];
-            return nil;
-        }
-    }
-
-    // Is it executable?
-    {
-        NSError *error = nil;
-        NSDictionary *attributes = [fileManager attributesOfItemAtPath:desiredPath error:&error];
-        if (error) {
-            [self showError:error
-                    message:[NSString stringWithFormat:@"Could not check permissions on %@", desiredPath]
-                     badURL:[NSURL fileURLWithPath:desiredPath]];
-            return nil;
-        }
-        NSNumber *permissions = attributes[NSFilePosixPermissions];
-        if ((permissions.intValue & 0700) == 0700) {
-            return desiredPath;
-        }
-    }
-
-    // Make it executable.
-    {
-        NSError *error = nil;
-        [[NSFileManager defaultManager] setAttributes:@{ NSFilePosixPermissions: @(0700) }
-                                         ofItemAtPath:desiredPath
-                                                error:&error];
-        if (error) {
-            [self showError:error
-                    message:[NSString stringWithFormat:@"Could not set 0700 permissions on %@", desiredPath]
-                     badURL:[NSURL fileURLWithPath:desiredPath]];
-            return nil;
-        }
-    }
-
-    return desiredPath;
+    return [self serverPath];
 }
 
 // Launch a daemon synchronously.
