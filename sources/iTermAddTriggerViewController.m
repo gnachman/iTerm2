@@ -22,7 +22,6 @@
 @end
 
 @implementation iTermAddTriggerViewController {
-    IBOutlet NSTextField *_nameTextField;
     IBOutlet NSTextField *_regexTextField;
     IBOutlet NSPopUpButton *_actionButton;
     IBOutlet NSView *_paramContainerView;
@@ -33,7 +32,6 @@
     id _param;
     NSView *_paramView;
 
-    NSString *_name;
     NSString *_regex;
     BOOL _interpolatedStrings;
     void (^_completion)(NSDictionary *, BOOL);
@@ -94,7 +92,6 @@
     self = [super initWithNibName:NSStringFromClass([self class])
                            bundle:[NSBundle bundleForClass:[self class]]];
     if (self) {
-        _name = [name copy];
         _regex = [regex copy];
         _interpolatedStrings = interpolatedStrings;
         _defaultTextColor = defaultTextColor;
@@ -106,7 +103,6 @@
 
 - (void)viewDidLoad {
     _paramY = NSMinY(_paramContainerView.frame);
-    _nameTextField.stringValue = _name;
     _regexTextField.stringValue = _regex;
     _instantButton.state = [iTermUserDefaults addTriggerInstant] ? NSControlStateValueOn : NSControlStateValueOff;
     _updateProfileButton.state = [iTermUserDefaults addTriggerUpdateProfile] ? NSControlStateValueOn : NSControlStateValueOff;

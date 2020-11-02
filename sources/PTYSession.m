@@ -9373,7 +9373,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 - (void)addTriggerDictionary:(NSDictionary *)dict updateProfile:(BOOL)updateProfile {
     if (!updateProfile || !self.isDivorced || [_overriddenFields containsObject:KEY_TRIGGERS]) {
-        NSMutableArray<NSDictionary *> *triggers = [[self.profile[KEY_TRIGGERS] ?: @{} mutableCopy] autorelease];
+        NSMutableArray<NSDictionary *> *triggers = [[self.profile[KEY_TRIGGERS] ?: @[] mutableCopy] autorelease];
         [triggers addObject:dict];
         [self setSessionSpecificProfileValues:@{ KEY_TRIGGERS: triggers }];
     }
