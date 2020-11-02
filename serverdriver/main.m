@@ -113,6 +113,7 @@ iTermClientServerProtocolMessage ReadMessage(int fd) {
         memmove(&length, message.ioVectors[0].iov_base, sizeof(length));
         DLog(@"Size of message will be %d", (int)length);
     }
+    const size_t totalLength = length;
 
     // Now payload message
     iTermClientServerProtocolMessage result = { 0 };
@@ -132,15 +133,14 @@ iTermClientServerProtocolMessage ReadMessage(int fd) {
             result.valid = 1;
             result.message = message.message;
             result.controlBuffer = message.controlBuffer;
-            result.ioVectors[0].iov_base = malloc(message.ioVectors[0].iov_len);
-            result.ioVectors[0].iov_len = message.ioVectors[0].iov_len;
-            memmove(result.ioVectors[0].iov_base, message.ioVectors[0].iov_base, message.ioVectors[0].iov_len);
+            result.ioVectors[0].iov_base = malloc(totalLength);
+            result.ioVectors[0].iov_len = bytesRead;
+            memmove(result.ioVectors[0].iov_base, message.ioVectors[0].iov_base, bytesRead);
         } else {
-            result.ioVectors[0].iov_base = realloc(result.ioVectors[0].iov_base, result.ioVectors[0].iov_len + message.ioVectors[0].iov_len);
             memmove(result.ioVectors[0].iov_base + result.ioVectors[0].iov_len,
                     message.ioVectors[0].iov_base,
-                    message.ioVectors[0].iov_len);
-            result.ioVectors[0].iov_len += message.ioVectors[0].iov_len;
+                    bytesRead);
+            result.ioVectors[0].iov_len += bytesRead;
         }
     }
     return result;
@@ -264,7 +264,7 @@ int Run(const char *path) {
         }
 
         DLog(@"Launch child");
-        const char *argv[] = {"/bin/bash", NULL};
+        const char *argv[] = {"/bin/sh", NULL};
         const char *envp[] = {"", NULL};
         iTermMultiServerClientOriginatedMessage launchRequest = {
             .type = iTermMultiServerRPCTypeLaunch,
@@ -303,6 +303,9 @@ int Run(const char *path) {
             char buffer[1024];
             ssize_t rc = read(pty, buffer, sizeof(buffer));
             if (rc < 0) {
+                if (errno == EINTR || errno == EAGAIN) {
+                    continue;
+                }
                 DLog(@"\nread failed: %s", strerror(errno));
                 return 1;
             }
