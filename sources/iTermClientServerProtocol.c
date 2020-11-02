@@ -20,7 +20,7 @@ const size_t ITERM_MULTISERVER_BUFFER_SIZE = 65536;
 const int ITERM_MULTISERVER_MAGIC = 0xdeadbeef;
 
 typedef enum iTermClientServerProtocolError {
-    iTermClientServerProtocolErrorTagTruncated,
+    iTermClientServerProtocolErrorTagTruncated = 1000,
     iTermClientServerProtocolErrorLengthTruncated,
     iTermClientServerProtocolErrorValueTruncated,
     iTermClientServerProtocolErrorUnexpectedTag,

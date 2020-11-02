@@ -11,7 +11,7 @@
 #include <sys/un.h>
 
 @implementation iTermClientServerProtocolMessageBox {
-    iTermClientServerProtocolMessage _protocolMessage;
+    iTermClientServerProtocolMessage message_protocolMessage;
     BOOL _haveDecodedMessage;
     iTermMultiServerServerOriginatedMessage _decodedMessage;
 }
