@@ -311,7 +311,7 @@ NS_CLASS_AVAILABLE_MAC(10_14)
                         fullName = @"WindowCornerFull_BigSur";
                     }
                     if ([iTermAdvancedSettingsModel squareWindowCorners]) {
-                        halfName = @"WindowCornerFull_Square";
+                        fullName = @"WindowCornerFull_Square";
                     }
                     gTopLeftCornerFullImage = [[NSImage it_imageNamed:fullName forClass:self.class] it_verticallyFlippedImage];
                     gTopRightCornerFullImage = [gTopLeftCornerFullImage it_horizontallyFlippedImage];
