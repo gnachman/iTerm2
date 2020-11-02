@@ -64,7 +64,7 @@ static iTermLABColor BackgroundLAB(LightnessAndAngle laa) {
             const LightnessAndAngle laa = RandomLightnessAndAngle();
             textLAB = TextLAB(laa);
             backgroundLAB = BackgroundLAB(laa);
-        } while (iTermLABDistance(backgroundLAB, defaultBackgroundLAB) < minimumDifference);
+        } while (fabs(backgroundLAB.l / 100.0 - defaultBackgroundLAB.l / 100.0) < minimumDifference);
         _suggestedTextColor = [NSColor withLABColor:textLAB];
         _suggestedBackgroundColor = [NSColor withLABColor:backgroundLAB];
     }

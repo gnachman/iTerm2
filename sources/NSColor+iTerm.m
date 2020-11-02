@@ -148,6 +148,13 @@ iTermSRGBColor iTermSRGBFromLAB(iTermLABColor lab) {
     return iTermCompressRGB(rgb);
 }
 
+CGFloat iTermLABBrightnessDistance(iTermLABColor lhs, iTermLABColor rhs) {
+    const iTermSRGBColor lsrgb = iTermSRGBFromLAB(lhs);
+    const iTermSRGBColor rsrgb = iTermSRGBFromLAB(rhs);
+    return fabs(PerceivedBrightness(lsrgb.r, lsrgb.g, lsrgb.b) -
+                PerceivedBrightness(rsrgb.r, rsrgb.g, rsrgb.b));
+}
+
 CGFloat iTermLABDistance(iTermLABColor lhs, iTermLABColor rhs) {
     // Everything I can find about detla E says it's supposed to be in [0,100]
     // but it's easy to find values larger than 100. My guess is that that's

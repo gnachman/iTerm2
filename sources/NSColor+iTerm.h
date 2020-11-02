@@ -53,7 +53,8 @@ iTermSRGBColor iTermCompressRGB(iTermRGBColor rgb);
 iTermLABColor iTermLABFromSRGB(iTermSRGBColor srgb);
 iTermSRGBColor iTermSRGBFromLAB(iTermLABColor lab);
 
-// Distance will be in 0-1
+// Distance will be in 0-1. Warning: this doesn't work very well. For example,
+// ((l=15.6, a=29.6, b=24.0) = srgb (.31,.05,0) has a distance from pure black of .41
 CGFloat iTermLABDistance(iTermLABColor lhs, iTermLABColor rhs);
 
 @interface NSColor (iTerm)
