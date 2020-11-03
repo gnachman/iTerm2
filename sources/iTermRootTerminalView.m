@@ -294,25 +294,13 @@ NS_CLASS_AVAILABLE_MAC(10_14)
 
                 static dispatch_once_t onceToken;
                 dispatch_once(&onceToken, ^{
-                    NSString *halfName = @"WindowCorner";
-                    if (@available(macOS 10.16, *)) {
-                        halfName = @"WindowCorner_BigSur";
-                    }
-                    if ([iTermAdvancedSettingsModel squareWindowCorners]) {
-                        halfName = @"WindowCorner_Square";
-                    }
+                    NSString *halfName = @"WindowCorner_Square";
                     gTopLeftCornerHalfImage = [[NSImage it_imageNamed:halfName forClass:self.class] it_verticallyFlippedImage];
                     gTopRightCornerHalfImage = [gTopLeftCornerHalfImage it_horizontallyFlippedImage];
                     gBottomLeftCornerHalfImage = [NSImage it_imageNamed:halfName forClass:self.class];
                     gBottomRightCornerHalfImage = [gBottomLeftCornerHalfImage it_horizontallyFlippedImage];
 
-                    NSString *fullName = @"WindowCornerFull";
-                    if (@available(macOS 10.16, *)) {
-                        fullName = @"WindowCornerFull_BigSur";
-                    }
-                    if ([iTermAdvancedSettingsModel squareWindowCorners]) {
-                        fullName = @"WindowCornerFull_Square";
-                    }
+                    NSString *fullName = @"WindowCornerFull_Square";
                     gTopLeftCornerFullImage = [[NSImage it_imageNamed:fullName forClass:self.class] it_verticallyFlippedImage];
                     gTopRightCornerFullImage = [gTopLeftCornerFullImage it_horizontallyFlippedImage];
                     gBottomLeftCornerFullImage = [NSImage it_imageNamed:fullName forClass:self.class];
