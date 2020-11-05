@@ -594,13 +594,11 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
                                          responseSelector:@selector(getSessionGuidResponse:)
                                            responseObject:nil
                                                     flags:0],
-                           _variableWindowSize ?
-                               [NSNull null] :
-                               [gateway_ dictionaryForCommand:setSizeCommand
-                                               responseTarget:nil
-                                             responseSelector:nil
-                                               responseObject:nil
-                                                        flags:kTmuxGatewayCommandShouldTolerateErrors],
+			   [gateway_ dictionaryForCommand:setSizeCommand
+					   responseTarget:nil
+					 responseSelector:nil
+					   responseObject:nil
+						    flags:kTmuxGatewayCommandShouldTolerateErrors],
                            [gateway_ dictionaryForCommand:getHiddenWindowsCommand
                                            responseTarget:self
                                          responseSelector:@selector(getHiddenWindowsResponse:)
