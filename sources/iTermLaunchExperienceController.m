@@ -95,12 +95,6 @@ typedef NS_ENUM(NSUInteger, iTermLaunchExperienceChoice) {
     const NSInteger runCount = [self runCount] + 1;
     [[NSUserDefaults standardUserDefaults] setInteger:runCount
                                                forKey:iTermLaunchExperienceControllerRunCount];
-    if (runCount == 1) {
-        // This is our only chance to get the last launch version.
-        if (![iTermOnboardingWindowController previousLaunchVersionImpliesShouldBeShown]) {
-            [iTermOnboardingWindowController suppressFutureShowings];
-        }
-    }
     return runCount;
 }
 
@@ -109,6 +103,11 @@ typedef NS_ENUM(NSUInteger, iTermLaunchExperienceChoice) {
 - (instancetype)init {
     self = [super init];
     if (self) {
+        if ([iTermOnboardingWindowController previousLaunchVersionImpliesShouldBeShown]) {
+            [iTermOnboardingWindowController suppressFutureShowings];
+            _choice = iTermLaunchExperienceChoiceWhatsNew;
+            return self;
+        }
         const NSInteger runCount = [iTermLaunchExperienceController incrementRunCount];
         if (runCount == 2 && ![[SUUpdater sharedUpdater] automaticallyChecksForUpdates]) {
             // Sparkle will do its thing this launch.

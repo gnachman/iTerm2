@@ -18,78 +18,13 @@
 #import "ProfileModel.h"
 #import "SessionView.h"
 
-static NSString *const iTermOnboardingWindowControllerHasBeenShown = @"NoSyncOnboardingWindowHasBeenShown";
-
-static void iTermTryMinimalCompact(NSWindow *window) {
-    const iTermPreferencesTabStyle savedTabStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
-    [iTermPreferences setInt:TAB_STYLE_MINIMAL forKey:kPreferenceKeyTabStyle];
-    [[NSNotificationCenter defaultCenter] postNotificationName:kRefreshTerminalNotification
-                                                        object:nil
-                                                      userInfo:nil];
-    [iTermSessionLauncher launchBookmark:nil
-                              inTerminal:nil
-                      respectTabbingMode:NO
-                              completion:^(PTYSession *session) {
-        [session.view.window performZoom:nil];
-
-        NSAlert *alert = [[NSAlert alloc] init];
-        [alert setMessageText:@"Minimal Theme"];
-        [alert setInformativeText:@"The theme has been changed to minimal. Want to keep it?"];
-        [alert addButtonWithTitle:@"Save"];
-        [alert addButtonWithTitle:@"Undo"];
-        [alert setAlertStyle:NSAlertStyleInformational];
-
-        [alert beginSheetModalForWindow:window completionHandler:^(NSModalResponse returnCode) {
-            if (returnCode == NSAlertFirstButtonReturn) {
-                return;
-            };
-            [iTermPreferences setInt:savedTabStyle forKey:kPreferenceKeyTabStyle];
-            [[NSNotificationCenter defaultCenter] postNotificationName:kRefreshTerminalNotification
-                                                                object:nil
-                                                              userInfo:nil];
-        }];
-    }];
-}
-
-static void iTermTryStatusBar(NSWindow *window) {
-    ProfileModel *model = [ProfileModel sharedInstance];
-    Profile *profile = [model defaultBookmark];
-    [iTermProfilePreferences setBool:YES forKey:KEY_SHOW_STATUS_BAR inProfile:profile model:model];
-    [[PreferencePanel sharedInstance] openToProfileWithGuid:[[model defaultBookmark] objectForKey:KEY_GUID]
-                             andEditComponentWithIdentifier:nil
-                                                       tmux:NO
-                                                      scope:nil];
-
-    NSAlert *alert = [[NSAlert alloc] init];
-    [alert setMessageText:@"Status Bar"];
-    [alert setInformativeText:@"The status bar setup panel has been opened, and the status bar is now enabled for your default profile. Add some components by dragging them to the bottom section to try it out."];
-    [alert addButtonWithTitle:@"OK"];
-    [alert setAlertStyle:NSAlertStyleInformational];
-
-    [alert beginSheetModalForWindow:window completionHandler:^(NSModalResponse returnCode) {
-    }];
-}
-
-static void iTermTrySessionTitles() {
-    ProfileModel *model = [ProfileModel sharedInstance];
-    [[PreferencePanel sharedInstance] openToProfileWithGuid:[[model defaultBookmark] objectForKey:KEY_GUID]
-                                           selectGeneralTab:YES
-                                                       tmux:NO
-                                                      scope:nil];
-}
+static NSString *const iTermOnboardingWindowControllerHasBeenShown = @"NoSyncOnboardingWindowHasBeenShown34";
 
 static void iTermOpenWhatsNewURL(NSString *path, NSWindow *window) {
-    if ([path isEqualToString:@"/minimal-compact"]) {
-        iTermTryMinimalCompact(window);
-        return;
-    }
-    if ([path isEqualToString:@"/statusbar"]) {
-        iTermTryStatusBar(window);
-    }
-
-    if ([path isEqualToString:@"/session-titles"]) {
-        iTermTrySessionTitles();
-    }
+//    if ([path isEqualToString:@"/foo"]) {
+//        iTermTryFoo(window);
+//        return;
+//    }
 }
 
 @interface iTermOnboardingView : NSView
@@ -167,7 +102,7 @@ static void iTermOpenWhatsNewURL(NSString *path, NSWindow *window) {
         return NO;
     }
     NSString *twoPartVersion = [[parts subarrayWithRange:NSMakeRange(0, 2)] componentsJoinedByString:@"."];
-    NSArray<NSString *> *versionsForAnnouncement = @[ @"3.1", @"3.2" ];
+    NSArray<NSString *> *versionsForAnnouncement = @[ @"3.1", @"3.2", @"3.3" ];
     return [versionsForAnnouncement containsObject:twoPartVersion];
 }
 
@@ -179,32 +114,12 @@ static void iTermOpenWhatsNewURL(NSString *path, NSWindow *window) {
 }
 
 - (void)awakeFromNib {
-    NSMutableAttributedString *attributedString;
     // LOL the IB setting is not respected in 10.12 so you have to do it in code.
     self.window.titlebarAppearsTransparent = YES;
-    if (@available(macOS 10.14, *)) {
-        NSString *url1 = @"iterm2whatsnew:/minimal-compact";
-        NSMutableAttributedString *attributedString = _textField1.attributedStringValue.mutableCopy;
-        [attributedString appendAttributedString:[self attributedStringWithLinkToURL:url1 title:@"Try it now!"]];
-        _textField1.attributedStringValue = attributedString;
-    } else {
-        _textField1.stringValue = [_textField1.stringValue stringByAppendingString:@"Available on macOS 10.14."];
-    }
 
-    NSString *url2 = @"iterm2whatsnew:/statusbar";
-    attributedString = _textField2.attributedStringValue.mutableCopy;
-    [attributedString appendAttributedString:[self attributedStringWithLinkToURL:url2 title:@"Try it now!"]];
-    _textField2.attributedStringValue = attributedString;
-
-    NSString *url3 = @"iterm2whatsnew:/session-titles";
-    attributedString = _textField3.attributedStringValue.mutableCopy;
-    [attributedString appendAttributedString:[self attributedStringWithLinkToURL:url3 title:@"Try it now!"]];
-    _textField3.attributedStringValue = attributedString;
-
-    NSString *url4 = @"https://iterm2.com/python-api";
-    attributedString = _textField4.attributedStringValue.mutableCopy;
-    [attributedString appendAttributedString:[self attributedStringWithLinkToURL:url4 title:@"Learn more."]];
-    _textField4.attributedStringValue = attributedString;
+    // This is the place to tweak the contents of text fields for conditionally available features
+    // or to add hyperlinks. None needed in 3.4, but maybe the next version will want them.
+    // Also look at the commit history to see how it was done for 3.3.
 
     _views = @[ [self wrap:_view1], [self wrap:_view2], [self wrap:_view3], [self wrap:_view4] ];
     _pageIndicators = @[ _pageIndicator1, _pageIndicator2, _pageIndicator3, _pageIndicator4 ];
@@ -217,13 +132,6 @@ static void iTermOpenWhatsNewURL(NSString *path, NSWindow *window) {
     }
     [self updateButtons];
     [self.class suppressFutureShowings];
-}
-
-- (NSAttributedString *)attributedStringWithLinkToURL:(NSString *)urlString title:(NSString *)title {
-    NSDictionary *linkAttributes = @{ NSLinkAttributeName: [NSURL URLWithString:urlString] };
-    NSString *localizedTitle = title;
-    return [[NSAttributedString alloc] initWithString:localizedTitle
-                                           attributes:linkAttributes];
 }
 
 - (IBAction)previousPage:(id)sender {
