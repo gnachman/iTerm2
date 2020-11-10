@@ -64,6 +64,7 @@ Edit > Redo                                                                     
 Edit > Cut                                                                              `Cut`                                                                         
 Edit > Copy                                                                             `Copy`                                                                        
 Edit > Copy with Styles                                                                 `Copy with Styles`                                                            
+Edit > Copy with Control Sequences                                                      `Copy with Control Sequences`                                                 
 Edit > Copy Mode                                                                        `Copy Mode`                                                                   
 Edit > Paste                                                                            `Paste`                                                                       
 Edit > Paste Special > Advanced Paste…                                                  `Paste Special.Advanced Paste…`                                               
@@ -129,6 +130,7 @@ Session > Open Autocomplete…                                                  
 Session > Open Command History…                                                         `Open Command History…`                                                       
 Session > Open Recent Directories…                                                      `Open Recent Directories…`                                                    
 Session > Open Paste History…                                                           `Open Paste History…`                                                         
+Session > Add Trigger…                                                                  `Add Trigger`                                                                 
 Session > Reset                                                                         `Reset`                                                                       
 Session > Reset Character Set                                                           `Reset Character Set`                                                         
 Session > Log > Log to File                                                             `Log.Toggle`                                                                  
@@ -141,7 +143,11 @@ Session > Terminal State > Mouse Reporting                                      
 Session > Terminal State > Paste Bracketing                                             `Paste Bracketing`                                                            
 Session > Terminal State > Application Cursor                                           `Application Cursor`                                                          
 Session > Terminal State > Application Keypad                                           `Application Keypad`                                                          
-Session > Terminal State > Report Modifiers with CSI u                                  `Reprot Modifiers with CSI u`                                                 
+Session > Terminal State > Standard Key Reporting Mode                                  `Terminal State.Standard Key Reporting`                                       
+Session > Terminal State > modifyOtherKeys Mode 1                                       `Terminal State.Report Modifiers like xterm 1`                                
+Session > Terminal State > modifyOtherKeys Mode 2                                       `Terminal State.Report Modifiers like xterm 2`                                
+Session > Terminal State > CSI u Mode                                                   `Terminal State.Report Modifiers with CSI u`                                  
+Session > Terminal State > Raw Key Reporting Mode                                       `Terminal State.Raw Key Reporting`                                            
 Session > Terminal State > Reset                                                        `Reset Terminal State`                                                        
 Session > Bury Session                                                                  `Bury Session`                                                                
 Scripts > Manage > New Python Script                                                    `New Python Script`                                                           
