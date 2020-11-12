@@ -77,7 +77,7 @@
                              eventModifiers:(NSEventModifierFlags)eventModifiers {
     const int csiModifiers = [self csiModifiersForEventModifiers:eventModifiers];
     if (csiModifiers == 1) {
-        return [NSString stringWithFormat:@"%cO%@", 27, code];
+        return [NSString stringWithFormat:@"%c[%@", 27, code];
     } else {
         return [NSString stringWithFormat:@"%c[1;%d%@", 27, csiModifiers, code];
     }
