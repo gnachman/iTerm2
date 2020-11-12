@@ -16,7 +16,7 @@
 // SEE ALSO iTermWebSocketConnectionMinimumPythonLibraryVersion
 // NOTE: This does not affect full-environment scripts.
 // Increasing this makes everyone download a new version.
-const int iTermMinimumPythonEnvironmentVersion = 67;
+const int iTermMinimumPythonEnvironmentVersion = 70;
 
 @protocol iTermOptionalComponentDownloadPhaseDelegate<NSObject>
 - (void)optionalComponentDownloadPhaseDidComplete:(iTermOptionalComponentDownloadPhase *)sender;
