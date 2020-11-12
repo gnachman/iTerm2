@@ -20,6 +20,17 @@
 #import "NSTextField+iTerm.h"
 #import "PreferencePanel.h"
 
+// On macOS 10.13, we see that blur over 26 can turn red (issue 6138).
+// On macOS 10.15, this doesn't seem to be a problem and it works up to 64 (issue 9229).
+static CGFloat iTermMaxBlurPreCatalina = 24;
+static CGFloat iTermMaxBlurPostCatalina = 64;
+CGFloat iTermMaxBlurRadius(void) {
+    if (@available(macOS 10.15, *)) {
+        return iTermMaxBlurPostCatalina;
+    }
+    return iTermMaxBlurPreCatalina;
+}
+
 @interface ProfilesWindowPreferencesViewController ()<iTermImageWellDelegate>
 
 @property(nonatomic, copy) NSString *backgroundImageFilename;
@@ -54,6 +65,7 @@
     IBOutlet NSButton *_useCustomWindowTitle;
     IBOutlet NSTextField *_customWindowTitle;
     IBOutlet NSView *_settingsForNewWindows;
+    IBOutlet NSTextField *_largeBlurRadiusWarning;
     iTermFunctionCallTextFieldDelegate *_customWindowTitleDelegate;
 
     IBOutlet NSButton *_useCustomTabTitle;
@@ -103,12 +115,18 @@
             return;
         }
         strongSelf->_blurRadius.enabled = (strongSelf->_useBlur.state == NSControlStateValueOn);
+        [strongSelf updateBlurRadiusWarning];
     };
 
-    [self defineControl:_blurRadius
-                    key:KEY_BLUR_RADIUS
-            displayName:@"Blur radius"
-                   type:kPreferenceInfoTypeSlider];
+    _blurRadius.maxValue = iTermMaxBlurRadius();
+    info = [self defineControl:_blurRadius
+                           key:KEY_BLUR_RADIUS
+                   displayName:@"Blur radius"
+                          type:kPreferenceInfoTypeSlider];
+    info.observer = ^{
+        [weakSelf updateBlurRadiusWarning];
+    };
+    [self updateBlurRadiusWarning];
 
     info = [self defineControl:_backgroundImageMode
                            key:KEY_BACKGROUND_IMAGE_MODE
@@ -252,6 +270,17 @@
                    displayName:@"Background image enabled"
                        phrases:@[]
                            key:nil];
+}
+
+- (void)updateBlurRadiusWarning {
+    if (@available(macOS 10.15, *)) {
+        // It seems to get slow around this point on some machines circa 2017.
+        if ([self boolForKey:KEY_BLUR] && [self floatForKey:KEY_BLUR_RADIUS] > 26) {
+            _largeBlurRadiusWarning.hidden = NO;
+            return;
+        }
+    }
+    _largeBlurRadiusWarning.hidden = YES;
 }
 
 - (void)updateCustomWindowTitleEnabled {

@@ -8,6 +8,8 @@
 
 #import "iTermProfilePreferencesBaseViewController.h"
 
+CGFloat iTermMaxBlurRadius(void);
+
 @interface ProfilesWindowPreferencesViewController : iTermProfilePreferencesBaseViewController
 
 - (void)layoutSubviewsForEditCurrentSessionMode;
