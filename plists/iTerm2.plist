@@ -310,7 +310,7 @@
         <string>MainMenu</string>
         <key>NSPrincipalClass</key>
         <string>iTermApplication</string>
-        <key>SUPublicDSAKeyFile</key>
+        <key>SUPublicEDKey</key>
         <string>xdqAa0KXBPhMbUrutVTe87i6U7yWf7WKaCeRG7AAZ0w=</string>
         <key>NSSupportsAutomaticGraphicsSwitching</key>
         <true/>
