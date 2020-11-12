@@ -931,7 +931,8 @@ NSString *const kPreferenceDidChangeFromOtherPanelKeyUserInfoKey = @"key";
     CGSize tabViewSize = NSMakeSize(MAX(kTabViewMinWidth, theView.bounds.size.width) + inset,
                                     theView.bounds.size.height + bottomMargin);
     NSRect frame = [self windowFrameForTabViewSize:tabViewSize tabView:tabView];
-    frame.size.width = MAX(iTermPreferencePanelGetWindowMinimumWidth(), frame.size.width);
+    frame.size.width = MAX(self.preferencePanel.preferencePanelMinimumWidth ?: iTermPreferencePanelGetWindowMinimumWidth(NO),
+                           frame.size.width);
     if (NSEqualRects(_desiredFrame, frame)) {
         return;
     }

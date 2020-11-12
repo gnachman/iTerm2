@@ -11,6 +11,10 @@
 #import "iTermSearchableViewController.h"
 #import "PreferenceInfo.h"
 
+@protocol iTermPreferencePanelSizing<NSObject>
+- (CGFloat)preferencePanelMinimumWidth;
+@end
+
 // Used in preferenceDidChangeFromOtherPanel:'s notification's user info dictionary.
 extern NSString *const kPreferenceDidChangeFromOtherPanelKeyUserInfoKey;
 
@@ -23,7 +27,7 @@ extern NSString *const kPreferenceDidChangeFromOtherPanelKeyUserInfoKey;
 @property(nonatomic, readonly) NSMapTable *keyMap;
 @property(nonatomic, readonly) NSArray *keysForBulkCopy;
 
-@property(nonatomic, weak) NSWindowController *preferencePanel;
+@property(nonatomic, weak) NSWindowController<iTermPreferencePanelSizing> *preferencePanel;
 
 #pragma mark - Core Methods
 

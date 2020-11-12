@@ -150,7 +150,7 @@ NSString *const kProfileSessionHotkeyDidChange = @"kProfileSessionHotkeyDidChang
 
 #pragma mark - iTermPreferencesBaseViewController
 
-- (void)setPreferencePanel:(NSWindowController *)preferencePanel {
+- (void)setPreferencePanel:(NSWindowController<iTermPreferencePanelSizing> *)preferencePanel {
     for (iTermPreferencesBaseViewController *viewController in [self tabViewControllers]) {
         viewController.preferencePanel = preferencePanel;
     }
@@ -502,7 +502,8 @@ andEditComponentWithIdentifier:(NSString *)identifier
     NSPoint windowTopLeft = NSMakePoint(NSMinX(window.frame), NSMaxY(window.frame));
     NSRect frame = [window frameRectForContentRect:NSMakeRect(windowTopLeft.x, 0, contentSize.width, contentSize.height)];
     frame.origin.y = windowTopLeft.y - frame.size.height;
-    frame.size.width = MAX(iTermPreferencePanelGetWindowMinimumWidth(), frame.size.width);
+    frame.size.width = MAX([self.preferencePanel preferencePanelMinimumWidth] ?: iTermPreferencePanelGetWindowMinimumWidth(NO),
+                           frame.size.width);
 
     if (NSEqualRects(_desiredFrame, frame)) {
         return;
