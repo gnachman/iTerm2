@@ -96,6 +96,7 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionAttachedToTitleBar = @"PSMTabBar
     // iTerm2 additions
     NSUInteger _modifier;
     BOOL _hasCloseButton;
+    BOOL _needsUpdate;
 }
 
 #pragma mark -
@@ -285,7 +286,7 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionAttachedToTitleBar = @"PSMTabBar
                 [self sanityCheckFailedWithCallsite:callsite reason:@"cells[i].representedObject != tabView.tabViewItems[i].representedObject"];
             }
         }
-        NSLog(@"Sanity check passed. cells=%@. tabView.tabViewITems=%@", self.cells, self.tabView.tabViewItems);
+        DLog(@"Sanity check passed. cells=%@. tabView.tabViewITems=%@", self.cells, self.tabView.tabViewItems);
     }
 }
 
@@ -2323,6 +2324,30 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionAttachedToTitleBar = @"PSMTabBar
     }
 }
 
+- (void)setNeedsUpdate:(BOOL)needsUpdate {
+    if (_needsUpdate == needsUpdate) {
+        return;
+    }
+    if (!needsUpdate) {
+        _needsUpdate = NO;
+        return;
+    }
+    _needsUpdate = YES;
+    __weak __typeof(self) weakSelf = self;
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [weakSelf updateIfNeeded];
+    });
+}
+
+- (void)updateIfNeeded {
+    if (!_needsUpdate) {
+        return;
+    }
+    [self setNeedsUpdate:NO];
+    [self update];
+}
+
+
 #pragma mark - NSDraggingSource
 
 - (NSDragOperation)draggingSession:(NSDraggingSession *)session sourceOperationMaskForDraggingContext:(NSDraggingContext)context {
@@ -2339,7 +2364,7 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionAttachedToTitleBar = @"PSMTabBar
 #pragma mark - PSMProgressIndicatorDelegate
 
 - (void)progressIndicatorNeedsUpdate {
-    [self update];
+    [self setNeedsUpdate:YES];
 }
 
 @end

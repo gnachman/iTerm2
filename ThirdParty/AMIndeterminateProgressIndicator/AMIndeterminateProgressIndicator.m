@@ -28,6 +28,7 @@ typedef struct {
     NSPoint center;
     CGFloat anglePerStep;
     CGFloat (^alphaFunction)(NSInteger, NSInteger);
+    int alphaFunctionID;
     BOOL bigSur;
 } AMConfig;
 
@@ -116,6 +117,14 @@ typedef struct {
     [self startAnimation];
 }
 
+- (void)initializeConfigIfNeeded {
+    if (_hasConfig) {
+        return;
+    }
+    _config = [self config];
+    _hasConfig = YES;
+}
+
 - (void)startAnimation {
     if (_count) {
         return;
@@ -129,7 +138,12 @@ typedef struct {
         } else {
             self.animation.duration = 0.5;
         }
-        NSArray *images = self.images;
+        [self initializeConfigIfNeeded];
+        NSArray *images = AMIndeterminateProgressIndicatorImagesForSize(self.physicalSize,
+                                                                        self.numberOfSteps,
+                                                                        self.numberOfSpokes,
+                                                                        _color,
+                                                                        &_config);
         static CFTimeInterval epoch;
         static dispatch_once_t onceToken;
         dispatch_once(&onceToken, ^{
@@ -162,15 +176,82 @@ typedef struct {
     [self.layer removeAllAnimations];
 }
 
-// Returns an array of CGImageRefs for each frame of the animation.
-- (NSArray *)images {
-    NSMutableArray *frames = [NSMutableArray array];
-    NSSize size = self.physicalSize;
+static void AMIndeterminateProgressIndicatorDrawSpoke(NSPoint firstPoint,
+                                                      NSPoint secondPoint,
+                                                      CGFloat strokeWidth) {
+    NSLineCapStyle previousLineCapStyle = [NSBezierPath defaultLineCapStyle];
+    CGFloat previousLineWidth = [NSBezierPath defaultLineWidth];
 
-    for (NSInteger step = 0; step < self.numberOfSteps; step++) {
+    [NSBezierPath setDefaultLineCapStyle:NSRoundLineCapStyle];
+    [NSBezierPath setDefaultLineWidth:strokeWidth];
+
+    [NSBezierPath strokeLineFromPoint:firstPoint toPoint:secondPoint];
+
+    // Restore previous defaults
+    [NSBezierPath setDefaultLineCapStyle:previousLineCapStyle];
+    [NSBezierPath setDefaultLineWidth:previousLineWidth];
+}
+
+static void AMIndeterminateProgressIndicatorDrawStep(NSInteger step,
+                                                     NSInteger numberOfSpokes,
+                                                     NSColor *color,
+                                                     const AMConfig *config) {
+    CGFloat initialAngle = 0;
+    if (!config->bigSur) {
+        initialAngle = DegreesToRadians(270 - (step * config->anglePerStep));
+    }
+
+    for (NSInteger i = 0; i < numberOfSpokes; i++) {
+        CGFloat currentAngle = initialAngle - DegreesToRadians(config->anglePerStep) * i;
+        [[color colorWithAlphaComponent:config->alphaFunction(i, step)] set];
+
+        const NSPoint outerPoint = NSMakePoint(config->center.x + cos(currentAngle) * config->geometry.outerRadius,
+                                               config->center.y + sin(currentAngle) * config->geometry.outerRadius);
+
+        const NSPoint innerPoint = NSMakePoint(config->center.x + cos(currentAngle) * config->geometry.innerRadius,
+                                               config->center.y + sin(currentAngle) * config->geometry.innerRadius);
+        AMIndeterminateProgressIndicatorDrawSpoke(innerPoint,
+                                                  outerPoint,
+                                                  config->geometry.strokeWidth);
+    }
+}
+
+// Returns an array of CGImageRefs for each frame of the animation.
+static NSArray *AMIndeterminateProgressIndicatorImagesForSize(NSSize size,
+                                                              NSInteger numberOfSteps,
+                                                              NSInteger numberOfSpokes,
+                                                              NSColor *color,
+                                                              const AMConfig *config) {
+    static NSMutableDictionary *_cache;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        _cache = [NSMutableDictionary dictionary];
+    });
+    id key = @{ @"size": NSStringFromSize(size),
+                @"numberOfSteps": @(numberOfSteps),
+                @"numberOfSpokes": @(numberOfSpokes),
+                @"color": color,
+                @"config.geometry.outerRadius": @(config->geometry.outerRadius),
+                @"config.geometry.innerRadius": @(config->geometry.innerRadius),
+                @"config.geometry.strokeWidth": @(config->geometry.strokeWidth),
+                @"config.scale": @(config->scale),
+                @"config.frame": NSStringFromRect(config->frame),
+                @"config.size": @(config->size),
+                @"config.center": NSStringFromPoint(config->center),
+                @"config.anglePerStep": @(config->anglePerStep),
+                @"config.alphaFunctionID": @(config->alphaFunctionID) };
+
+    NSArray *cached = _cache[key];
+    if (cached) {
+        return cached;
+    }
+
+    NSMutableArray *frames = [NSMutableArray array];
+
+    for (NSInteger step = 0; step < numberOfSteps; step++) {
         NSImage *image = [[NSImage alloc] initWithSize:size];
         [image lockFocus];
-        [self drawStep:step];
+        AMIndeterminateProgressIndicatorDrawStep(step, numberOfSpokes, color, config);
         [image unlockFocus];
         
         NSBitmapImageRep *rep = image.bitmapImageRep;
@@ -187,6 +268,7 @@ typedef struct {
         [frames addObject:(__bridge id)cgImage];
         CFRelease(cgImage);
     }
+    _cache[key] = frames;
     return frames;
 }
 
@@ -211,22 +293,6 @@ typedef struct {
     return 12;
 }
 
-- (void)drawStrokeFromPoint:(NSPoint)firstPoint
-                    toPoint:(NSPoint)secondPoint
-                strokeWidth:(CGFloat)strokeWidth {
-    NSLineCapStyle previousLineCapStyle = [NSBezierPath defaultLineCapStyle];
-    CGFloat previousLineWidth = [NSBezierPath defaultLineWidth];
-
-    [NSBezierPath setDefaultLineCapStyle:NSRoundLineCapStyle];
-    [NSBezierPath setDefaultLineWidth:strokeWidth];
-    
-    [NSBezierPath strokeLineFromPoint:firstPoint toPoint:secondPoint];
-
-    // Restore previous defaults
-    [NSBezierPath setDefaultLineCapStyle:previousLineCapStyle];
-    [NSBezierPath setDefaultLineWidth:previousLineWidth];
-}
-
 - (AMConfig)config {
     AMConfig config;
     config.frame = self.frame;
@@ -245,39 +311,15 @@ typedef struct {
     if (self.useBigSurStyle) {
         config.bigSur = YES;
         config.alphaFunction = [self bigSurAlphaFunction];
+        config.alphaFunctionID = 0;
         config.geometry = [self bigSurGeometryForSize:config.size scale:config.scale];
     } else {
         config.bigSur = NO;
         config.alphaFunction = [self legacyAlphaFunction];
+        config.alphaFunctionID = 1;
         config.geometry = [self legacyGeometryForSize:config.size scale:config.scale];
     }
     return config;
-}
-
-- (void)drawStep:(NSInteger)step {
-    if (!_hasConfig) {
-        _config = [self config];
-        _hasConfig = YES;
-    }
-    CGFloat initialAngle = 0;
-    if (!_config.bigSur) {
-        initialAngle = DegreesToRadians(270 - (step * _config.anglePerStep));
-    }
-
-    for (NSInteger i = 0; i < self.numberOfSpokes; i++) {
-        CGFloat currentAngle = initialAngle - DegreesToRadians(_config.anglePerStep) * i;
-        [[_color colorWithAlphaComponent:_config.alphaFunction(i, step)] set];
-        
-        const NSPoint outerPoint = NSMakePoint(_config.center.x + cos(currentAngle) * _config.geometry.outerRadius,
-                                               _config.center.y + sin(currentAngle) * _config.geometry.outerRadius);
-        
-        const NSPoint innerPoint = NSMakePoint(_config.center.x + cos(currentAngle) * _config.geometry.innerRadius,
-                                               _config.center.y + sin(currentAngle) * _config.geometry.innerRadius);
-        
-        [self drawStrokeFromPoint:innerPoint
-                          toPoint:outerPoint
-                      strokeWidth:_config.geometry.strokeWidth];
-    }
 }
 
 - (CGFloat (^)(NSInteger, NSInteger))legacyAlphaFunction {
