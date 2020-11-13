@@ -206,6 +206,15 @@
     [_db beginDeferredTransaction];
     DLog(@"Begin transaction");
     BOOL result;
+#if BETA
+    {
+        FMResultSet *rs = [_db executeQuery:@"select count(*) as c from Node where parent=0"];
+        if ([rs next]) {
+            NSString *count = [rs stringForColumn:@"c"];
+            ITBetaAssert(count.integerValue < 2, @"PRE: %@", count);
+        }
+    }
+#endif
     if (block()) {
         DLog(@"Commit");
         result = [_db commit];
@@ -214,10 +223,12 @@
         result = [_db rollback];
     }
 #if BETA
-    FMResultSet *rs = [_db executeQuery:@"select count(*) as c from Node where parent=0"];
-    if ([rs next]) {
-        NSString *count = [rs stringForColumn:@"c"];
-        ITBetaAssert(count.integerValue == 1, @"%@", count);
+    {
+        FMResultSet *rs = [_db executeQuery:@"select count(*) as c from Node where parent=0"];
+        if ([rs next]) {
+            NSString *count = [rs stringForColumn:@"c"];
+            ITBetaAssert(count.integerValue == 1, @"POST: %@", count);
+        }
     }
 #endif
     if (!result) {
