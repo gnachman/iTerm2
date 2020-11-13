@@ -44,6 +44,7 @@ typedef NS_ENUM(NSInteger, iTermTabBarFlashState) {
         if (@available(macOS 10.14, *)) {
             self.showAddTabButton = YES;
         }
+        self.selectsTabsOnMouseDown = [iTermAdvancedSettingsModel selectsTabsOnMouseDown];
     }
     return self;
 }

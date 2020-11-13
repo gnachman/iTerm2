@@ -245,6 +245,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)runJobsInServers;
 + (BOOL)saveToPasteHistoryWhenSecureInputEnabled;
 + (NSString *)searchCommand;
++ (BOOL)selectsTabsOnMouseDown;
 + (BOOL)sensitiveScrollWheel;
 + (BOOL)serializeOpeningMultipleFullScreenWindows;
 + (BOOL)setCookie;
