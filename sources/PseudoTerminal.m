@@ -381,6 +381,11 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
     BOOL _haveDesiredAppearance;
     NSAppearance *_desiredAppearance;
     CGFloat _backingScaleFactor;
+
+    // When restoring an arrangement with lots of tabs, updating object counts is slow because it
+    // adds and removes tracking rects for each tab, which its itself slow. This is an optimization
+    // to only update object counts once when creating gobs of tabs at once.
+    BOOL _needsUpdateTabObjectCounts;
 }
 
 @synthesize scope = _scope;
@@ -5674,12 +5679,30 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
-- (void)_updateTabObjectCounts
-{
-    for (int i = 0; i < [_contentView.tabView numberOfTabViewItems]; ++i) {
-        PTYTab *theTab = [[_contentView.tabView tabViewItemAtIndex:i] identifier];
-        [theTab setObjectCount:i+1];
+- (void)setNeedsUpdateTabObjectCounts:(BOOL)needsUpdate {
+    if (_needsUpdateTabObjectCounts == needsUpdate) {
+        return;
     }
+    if (!needsUpdate) {
+        _needsUpdateTabObjectCounts = NO;
+        return;
+    }
+    _needsUpdateTabObjectCounts = YES;
+    __weak __typeof(self) weakSelf = self;
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [weakSelf updateTabObjectCounts];
+    });
+}
+
+- (void)updateTabObjectCounts {
+    if (!_needsUpdateTabObjectCounts) {
+        return;
+    }
+    [self setNeedsUpdateTabObjectCounts:NO];
+    [self.tabs enumerateObjectsUsingBlock:^(PTYTab * _Nonnull tab, NSUInteger i, BOOL * _Nonnull stop) {
+        [tab setObjectCount:i + 1];
+        [_contentView.tabBarControl setIsProcessing:tab.isProcessing forTabWithIdentifier:tab];
+    }];
 }
 
 - (void)tabView:(NSTabView*)aTabView
@@ -5696,7 +5719,7 @@ ITERM_WEAKLY_REFERENCEABLE
     } else {
         [term fitTabToWindow:aTab];
     }
-    [self _updateTabObjectCounts];
+    [self setNeedsUpdateTabObjectCounts:YES];
 
     // In fullscreen mode reordering the tabs causes the tabview not to be displayed properly.
     // This seems to fix it.
@@ -5907,7 +5930,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
     [self updateTabColors];
     [self updateToolbeltAppearance];
-    [self _updateTabObjectCounts];
+    [self setNeedsUpdateTabObjectCounts:YES];
     [self updateTouchBarIfNeeded:NO];
 
     if (_contentView.tabView.numberOfTabViewItems == 1 &&
@@ -8269,7 +8292,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
         return;
     }
     [_contentView.tabBarControl moveTabAtIndex:selectedIndex toIndex:destinationIndex];
-    [self _updateTabObjectCounts];
+    [self setNeedsUpdateTabObjectCounts:YES];
     [self tabsDidReorder];
 }
 

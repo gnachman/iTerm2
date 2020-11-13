@@ -144,6 +144,15 @@ typedef struct {
     [self.layer addAnimation:_animation forKey:@"contents"];
 }
 
+- (void)viewDidMoveToWindow {
+    [super viewDidMoveToWindow];
+    if (self.window && _wantsAnimation && [self.layer animationKeys] == nil) {
+        // Layer animations seem to be removed when the view is removed from and then re-added to
+        // the view hierarchy, so re-add it.
+        [self startAnimation];
+    }
+}
+
 - (void)stopAnimation:(id)sender {
     _wantsAnimation = NO;
     [self stopAnimation];
