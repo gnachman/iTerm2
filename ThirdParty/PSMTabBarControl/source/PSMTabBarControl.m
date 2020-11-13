@@ -96,6 +96,7 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionAttachedToTitleBar = @"PSMTabBar
     // iTerm2 additions
     NSUInteger _modifier;
     BOOL _hasCloseButton;
+    BOOL _needsUpdateAnimate;
     BOOL _needsUpdate;
 }
 
@@ -379,7 +380,7 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionAttachedToTitleBar = @"PSMTabBar
 
 - (void)setDisableTabClose:(BOOL)value {
     _disableTabClose = value;
-    [self update:_automaticallyAnimates];
+    [self setNeedsUpdate:YES animate:YES];
 }
 
 - (void)setHideForSingleTab:(BOOL)value {
@@ -389,32 +390,32 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionAttachedToTitleBar = @"PSMTabBar
 
 - (void)setShowAddTabButton:(BOOL)value {
     _showAddTabButton = value;
-    [self update];
+    [self setNeedsUpdate:YES];
 }
 
 - (void)setCellMinWidth:(int)value {
     _cellMinWidth = value;
-    [self update:_automaticallyAnimates];
+    [self setNeedsUpdate:YES animate:YES];
 }
 
 - (void)setCellMaxWidth:(int)value {
     _cellMaxWidth = value;
-    [self update:_automaticallyAnimates];
+    [self setNeedsUpdate:YES animate:YES];
 }
 
 - (void)setCellOptimumWidth:(int)value {
     _cellOptimumWidth = value;
-    [self update:_automaticallyAnimates];
+    [self setNeedsUpdate:YES animate:YES];
 }
 
 - (void)setSizeCellsToFit:(BOOL)value {
     _sizeCellsToFit = value;
-    [self update:_automaticallyAnimates];
+    [self setNeedsUpdate:YES animate:YES];
 }
 
 - (void)setStretchCellsToFit:(BOOL)value {
     _stretchCellsToFit = value;
-    [self update:_automaticallyAnimates];
+    [self setNeedsUpdate:YES animate:YES];
 }
 
 - (void)setUseOverflowMenu:(BOOL)value {
@@ -2325,6 +2326,11 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionAttachedToTitleBar = @"PSMTabBar
 }
 
 - (void)setNeedsUpdate:(BOOL)needsUpdate {
+    [self setNeedsUpdate:needsUpdate animate:NO];
+}
+
+- (void)setNeedsUpdate:(BOOL)needsUpdate animate:(BOOL)animate {
+    _needsUpdateAnimate = _needsUpdateAnimate && animate;
     if (_needsUpdate == needsUpdate) {
         return;
     }
@@ -2343,7 +2349,7 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionAttachedToTitleBar = @"PSMTabBar
     if (!_needsUpdate) {
         return;
     }
-    [self setNeedsUpdate:NO];
+    [self setNeedsUpdate:_needsUpdateAnimate];
     [self update];
 }
 
