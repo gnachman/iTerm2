@@ -118,6 +118,7 @@
 #import "PTYTextView.h"
 #import "PTYWindow.h"
 #import "QLPreviewPanel+iTerm.h"
+#import "TmuxControllerRegistry.h"
 #import "TmuxDashboardController.h"
 #import "ToastWindowController.h"
 #import "VT100Terminal.h"
@@ -429,6 +430,9 @@ static BOOL hasBecomeActive = NO;
     } else if (menuItem.action == @selector(promptToConvertTabsToSpacesWhenPasting:)) {
         menuItem.state = [iTermPasteHelper promptToConvertTabsToSpacesWhenPasting] ? NSControlStateValueOn : NSControlStateValueOff;
         return YES;
+    } else if (menuItem.action == @selector(newTmuxWindow:) ||
+               menuItem.action == @selector(newTmuxTab:)) {
+        return [[TmuxControllerRegistry sharedInstance] numberOfClients];
     } else {
         return YES;
     }
@@ -1670,6 +1674,26 @@ static BOOL hasBecomeActive = NO;
 
 - (IBAction)arrangeSplitPanesEvenly:(id)sender {
     [[[[iTermController sharedInstance] currentTerminal] currentTab] arrangeSplitPanesEvenly];
+}
+
+- (IBAction)newTmuxWindow:(id)sender {
+    for (PseudoTerminal *term in [[iTermController sharedInstance] terminals]) {
+        TmuxController *controller = [[term uniqueTmuxControllers] firstObject];
+        if (controller) {
+            [term newTmuxWindow:nil];
+            return;
+        }
+    }
+}
+
+- (IBAction)newTmuxTab:(id)sender {
+    for (PseudoTerminal *term in [[iTermController sharedInstance] terminals]) {
+        TmuxController *controller = [[term uniqueTmuxControllers] firstObject];
+        if (controller) {
+            [term newTmuxTab:nil];
+            return;
+        }
+    }
 }
 
 - (IBAction)showPrefWindow:(id)sender {
