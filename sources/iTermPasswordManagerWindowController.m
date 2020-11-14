@@ -379,11 +379,22 @@ static NSString *const iTermPasswordManagerAccountNameUserNameSeparator = @"\u20
         if (selectedRow < 0 || selectedRow >= _entries.count) {
             return;
         }
+        if (![self shouldRemoveSelection]) {
+            return;
+        }
         [_tableView reloadData];
         [[self keychain] deletePasswordForService:kServiceName account:_entries[selectedRow].combinedAccountNameUserName];
         [self reloadAccounts];
         [self passwordsDidChange];
     }
+}
+
+- (BOOL)shouldRemoveSelection {
+    NSAlert *alert = [[NSAlert alloc] init];
+    alert.messageText = @"Are you sure you want to delete this password?";
+    [alert addButtonWithTitle:@"OK"];
+    [alert addButtonWithTitle:@"Cancel"];
+    return [alert runSheetModalForWindow:self.window] == NSAlertFirstButtonReturn;
 }
 
 - (IBAction)edit:(id)sender {
