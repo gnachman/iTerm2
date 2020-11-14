@@ -8724,7 +8724,9 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     }
     if ([PseudoTerminal windowTypeHasFullSizeContentView:self.savedWindowType]) {
         DLog(@"YES because saved window type %@ has full size content view", @(self.savedWindowType));
-        if (![iTermAdvancedSettingsModel allowTabbarInTitlebarAccessoryBigSur]) {
+        if (![iTermAdvancedSettingsModel allowTabbarInTitlebarAccessoryBigSur] &&
+            !self.lionFullScreen &&
+            !togglingLionFullScreen_) {
             if (@available(macOS 10.16, *)) {
                 DLog(@"NO because big sur");
                 return NO;
