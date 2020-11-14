@@ -32,7 +32,9 @@ const int iTermMinimumPythonEnvironmentVersion = 70;
 @property (nonatomic, strong) NSURLSession *urlSession;
 @end
 
-@implementation iTermOptionalComponentDownloadPhase
+@implementation iTermOptionalComponentDownloadPhase {
+    NSInteger _continuationsLeft;
+}
 
 - (instancetype)initWithURL:(NSURL *)url
                       title:(NSString *)title
@@ -42,6 +44,7 @@ const int iTermMinimumPythonEnvironmentVersion = 70;
         _url = [url copy];
         _title = [title copy];
         _nextPhaseFactory = [nextPhaseFactory copy];
+        _continuationsLeft = 10;
     }
     return self;
 }
@@ -109,9 +112,34 @@ didFinishDownloadingToURL:(NSURL *)location {
 - (void)URLSession:(NSURLSession *)session
               task:(NSURLSessionTask *)task
 didCompleteWithError:(nullable NSError *)error {
+    if ([error.domain isEqualToString:NSURLErrorDomain] &&
+        error.code == kCFURLErrorNetworkConnectionLost &&
+        _continuationsLeft > 0) {
+        // There seems to be a bug in Big Sur. There's a spurious "The network connection was lost"
+        // error. I get it every once in a while, and a user reported it in issue 9236. This attempts
+        // to work around it.
+        // I made a wireshark trace and I can see that the client sends a FIN long before the
+        // download is complete. Turning on CFNETWORK_DIAGNOSTICS doesn't help; at level 1 we get
+        // "failed strict content length check" which suggests the connection was closed before the
+        // whole content was recevied. At level 2 and higher it is very slow and the bug doesn't
+        // reproduce.
+        // This is an attempt to route around the damage. I was able to reproduce the problem and
+        // verify that this fixes it.
+        NSData *resumeData = [error.userInfo objectForKey:NSURLSessionDownloadTaskResumeData];
+        if (resumeData.length > 0) {
+            _continuationsLeft -= 1;
+            NSURLSessionConfiguration *sessionConfig = [NSURLSessionConfiguration defaultSessionConfiguration];
+            _urlSession = [NSURLSession sessionWithConfiguration:sessionConfig
+                                                        delegate:self
+                                                   delegateQueue:nil];
+            _task = [_urlSession downloadTaskWithResumeData:resumeData];
+            [_task resume];
+            return;
+        }
+    }
     if (!error) {
         int statusCode = [[NSHTTPURLResponse castFrom:task.response] statusCode];
-        if (statusCode != 200) {
+        if (statusCode != 200 && statusCode != 206) {
             error = [NSError errorWithDomain:@"com.iterm2" code:1 userInfo:@{ NSLocalizedDescriptionKey: [NSString stringWithFormat:@"Server returned status code %@: %@", @(statusCode), [NSHTTPURLResponse localizedStringForStatusCode:statusCode] ] }];
         }
     }
