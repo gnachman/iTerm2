@@ -365,6 +365,25 @@ static NSRect PSMConvertAccessibilityFrameToScreen(NSView *view, NSRect frame) {
     _currentStep = value;
 }
 
+- (BOOL)hasCloseButton {
+    if (self.frame.size.width > 85) {
+        return _hasCloseButton;
+    }
+    id control = [self controlView];
+    if (![control respondsToSelector:@selector(tabView)]) {
+        // Shouldn't happen.
+        return _hasCloseButton;
+    }
+    NSTabView *tabView = [control tabView];
+    if (!tabView) {
+        return _hasCloseButton;
+    }
+    if ([tabView selectedTabViewItem] == self.representedObject) {
+        return _hasCloseButton;
+    }
+    return NO;
+}
+
 #pragma mark - Bindings
 
 - (void)observeValueForKeyPath:(NSString *)keyPath
