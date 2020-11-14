@@ -774,6 +774,15 @@ static BOOL hasBecomeActive = NO;
         accessory.frame = NSMakeRect(0, 0, accessory.intrinsicContentSize.width, accessory.intrinsicContentSize.height);
         accessory.requestLayout = ^{
             [alert layout];
+            if (@available(macOS 10.16, *)) {
+                // FB8897296:
+                // Prior to Big Sur, you could call [NSAlert layout] on an already-visible NSAlert
+                // to have it change its size to accommodate an accessory view controller whose
+                // frame changed.
+                //
+                // On Big Sur, it no longer works. Instead, you must call NSAlert.layout *twice*.
+                [alert layout];
+            }
         };
         alert.accessoryView = accessory;
 
