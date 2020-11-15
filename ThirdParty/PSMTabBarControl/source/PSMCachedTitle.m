@@ -112,46 +112,8 @@
                                   NSParagraphStyleAttributeName: truncatingTailParagraphStyle };
     NSAttributedString *textAttributedString = [[NSAttributedString alloc] initWithString:_inputs.title
                                                                                attributes:attributes];
-    if (!_inputs.graphic) {
-        _attributedString = textAttributedString;
-        return _attributedString;
-    }
-    _attributedString = [self attributedStringWithGraphicAndText:textAttributedString
-                                                       capHeight:font.capHeight
-                                                      attributes:attributes
-                                    truncatingTailParagraphStyle:truncatingTailParagraphStyle];
+    _attributedString = textAttributedString;
     return _attributedString;
-}
-
-- (NSAttributedString *)attributedStringWithGraphicAndText:(NSAttributedString *)textAttributedString
-                                                 capHeight:(CGFloat)capHeight
-                                                attributes:(NSDictionary *)attributes
-                              truncatingTailParagraphStyle:(NSParagraphStyle *)truncatingTailParagraphStyle {
-    NSTextAttachment *textAttachment = [[NSTextAttachment alloc] init];
-    textAttachment.image = _inputs.graphic;
-    textAttachment.bounds = NSMakeRect(0,
-                                       - (_inputs.graphic.size.height - capHeight) / 2.0,
-                                       _inputs.graphic.size.width,
-                                       _inputs.graphic.size.height);
-    NSAttributedString *graphicAttributedString = [NSAttributedString attributedStringWithAttachment:textAttachment];
-
-    NSAttributedString *space = [[NSAttributedString alloc] initWithString:@"\u2002"
-                                                                attributes:attributes];
-    NSMutableAttributedString *result = [[NSMutableAttributedString alloc] init];
-    [result appendAttributedString:graphicAttributedString];
-    [result appendAttributedString:space];
-    [result appendAttributedString:textAttributedString];
-    [result enumerateAttribute:NSAttachmentAttributeName
-                       inRange:NSMakeRange(0, result.length)
-                       options:0
-                    usingBlock:^(id  _Nullable attachment, NSRange range, BOOL * _Nonnull stop) {
-                        if ([attachment isKindOfClass:[NSTextAttachment class]]) {
-                            [result addAttribute:NSParagraphStyleAttributeName
-                                           value:truncatingTailParagraphStyle
-                                           range:range];
-                        }
-                    }];
-    return result;
 }
 
 - (NSRect)boundingRectWithSize:(NSSize)size {

@@ -873,6 +873,8 @@
 
     CGFloat reservedSpace = 0;
     closeButtonSize = [closeButton size];
+    PSMCachedTitle *cachedTitle = cell.cachedTitle;
+
     if ([cell hasCloseButton]) {
         if (cell.isCloseButtonSuppressed && _orientation == PSMTabBarHorizontalOrientation) {
             // Do not use this much space on the left for the label, but the label is centered as
@@ -889,25 +891,34 @@
     }
 
     // Draw close button
+    CGFloat closeButtonAlpha = 0;
     if ([cell hasCloseButton] && [cell closeButtonVisible]) {
-        CGFloat fraction;
         if (cell.isCloseButtonSuppressed) {
-            fraction = highlightAmount;
+            closeButtonAlpha = highlightAmount;
         } else {
-            fraction = 1;
+            closeButtonAlpha = 1;
         }
         const BOOL keyMainAndActive = self.windowIsMainAndAppIsActive;
         if (!keyMainAndActive) {
-            fraction /= 2;
+            closeButtonAlpha /= 2;
         }
         [closeButton drawAtPoint:closeButtonRect.origin
                         fromRect:NSZeroRect
                        operation:NSCompositingOperationSourceOver
-                        fraction:fraction];
+                        fraction:closeButtonAlpha];
 
     }
-
-    PSMCachedTitle *cachedTitle = cell.cachedTitle;
+    // Draw graphic icon (i.e., the app icon, not new-output indicator icon) over close button.
+    if (cachedTitle.inputs.graphic) {
+        const CGFloat width = [self drawGraphicWithCellFrame:cellFrame
+                                                       image:cachedTitle.inputs.graphic
+                                                       alpha:1 - closeButtonAlpha];
+        if (_orientation == PSMTabBarHorizontalOrientation) {
+            reservedSpace = MAX(reservedSpace, width);
+        } else {
+            labelPosition = MAX(labelPosition, width + kPSMTabBarCellPadding);
+        }
+    }
 
     // icon
     BOOL drewIcon = NO;
@@ -985,6 +996,17 @@
 
         [attributedString drawInRect:labelRect];
     }
+}
+
+- (CGFloat)drawGraphicWithCellFrame:(NSRect)cellFrame
+                              image:(NSImage *)image
+                              alpha:(CGFloat)alpha {
+    NSRect rect = NSMakeRect(NSMinX(cellFrame) + 6,
+                             NSMinY(cellFrame) + (NSHeight(cellFrame) - image.size.height) / 2.0,
+                             image.size.width,
+                             image.size.height);
+    [image drawInRect:rect fromRect:NSZeroRect operation:NSCompositingOperationSourceOver fraction:alpha respectFlipped:YES hints:nil];
+    return NSWidth(rect) + kPSMTabBarCellPadding + 2;
 }
 
 - (CGFloat)widthForLabelInCell:(PSMTabBarCell *)cell
