@@ -6,10 +6,7 @@
 //
 
 #import "PSMCachedTitle.h"
-
-@interface NSAttributedString(PSM)
-- (NSAttributedString *)attributedStringWithTextAlignment:(NSTextAlignment)textAlignment;
-@end
+#import "NSAttributedString+PSM.h"
 
 @implementation PSMCachedTitleInputs
 
@@ -18,7 +15,8 @@
                         color:(NSColor *)color
                       graphic:(NSImage *)graphic
                   orientation:(PSMTabBarOrientation)orientation
-                     fontSize:(CGFloat)fontSize {
+                     fontSize:(CGFloat)fontSize
+                    parseHTML:(BOOL)parseHTML {
     self = [super init];
     if (self) {
         _title = title.length < 256 ? [title copy] : [[title substringToIndex:255] stringByAppendingString:@"…"];
@@ -27,14 +25,15 @@
         _graphic = graphic;
         _orientation = orientation;
         _fontSize = fontSize;
+        _parseHTML = parseHTML;
     }
     return self;
 }
 
 - (NSString *)description {
-    return [NSString stringWithFormat:@"<%@: %p title=%@ trunc=%@ color=%@ graphic=%@ orientation=%@ fontSize=%@>",
+    return [NSString stringWithFormat:@"<%@: %p title=%@ trunc=%@ color=%@ graphic=%@ orientation=%@ fontSize=%@ parseHTML=%@>",
             NSStringFromClass([self class]), self, self.title, @(self.truncationStyle),
-            self.color, self.graphic, @(self.orientation), @(self.fontSize)];
+            self.color, self.graphic, @(self.orientation), @(self.fontSize), @(_parseHTML)];
 }
 
 - (BOOL)isEqual:(id)obj {
@@ -61,6 +60,9 @@
         return NO;
     }
     if (other->_fontSize != _fontSize) {
+        return NO;
+    }
+    if (other->_parseHTML != _parseHTML) {
         return NO;
     }
     return YES;
@@ -110,8 +112,14 @@
     NSDictionary *attributes = @{ NSFontAttributeName: font,
                                   NSForegroundColorAttributeName: _inputs.color,
                                   NSParagraphStyleAttributeName: truncatingTailParagraphStyle };
-    NSAttributedString *textAttributedString = [[NSAttributedString alloc] initWithString:_inputs.title
-                                                                               attributes:attributes];
+    NSAttributedString *textAttributedString = nil;
+    if (_inputs.parseHTML) {
+        textAttributedString = [NSAttributedString newAttributedStringWithHTML:_inputs.title
+                                                                    attributes:attributes];
+    } else {
+        textAttributedString = [[NSAttributedString alloc] initWithString:_inputs.title
+                                                               attributes:attributes];
+    }
     _attributedString = textAttributedString;
     return _attributedString;
 }
@@ -191,34 +199,4 @@
 
 @end
 
-@implementation NSAttributedString(PSM)
-
-- (NSAttributedString *)attributedStringWithTextAlignment:(NSTextAlignment)textAlignment {
-    if (self.length == 0) {
-        return self;
-    }
-    NSInteger representativeIndex = self.length;
-    representativeIndex = MAX(0, representativeIndex - 1);
-    NSDictionary *immutableAttributes = [self attributesAtIndex:representativeIndex effectiveRange:nil];
-    if (!immutableAttributes) {
-        return self;
-    }
-
-    NSMutableAttributedString *mutableCopy = [self mutableCopy];
-    [self enumerateAttributesInRange:NSMakeRange(0, self.length)
-                             options:0
-                          usingBlock:^(NSDictionary<NSAttributedStringKey,id> * _Nonnull attrs, NSRange range, BOOL * _Nonnull stop) {
-        NSMutableParagraphStyle *paragraphStyle = [attrs[NSParagraphStyleAttributeName] mutableCopy];
-        if (!paragraphStyle) {
-            paragraphStyle = [[NSParagraphStyle defaultParagraphStyle] mutableCopy];
-        }
-        paragraphStyle.alignment = textAlignment;
-        NSMutableDictionary *updatedAttrs = [attrs mutableCopy];
-        updatedAttrs[NSParagraphStyleAttributeName] = paragraphStyle;
-        [mutableCopy setAttributes:updatedAttrs range:range];
-    }];
-    return mutableCopy;
-}
-
-@end
 

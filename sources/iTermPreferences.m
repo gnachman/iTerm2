@@ -164,6 +164,7 @@ NSString *const kPreferenceKeyDefaultToolbeltWidth = @"Default Toolbelt Width";
 NSString *const kPreferenceKeySizeChangesAffectProfile = @"Size Changes Affect Profile";
 NSString *const kPreferenceKeyActions = @"Actions";
 NSString *const kPreferenceKeySnippets = @"Snippets";
+NSString *const kPreferenceKeyHTMLTabTitles = @"HTMLTabTitles";
 // NOTE: If you update this list, also update preferences.py.
 
 static NSMutableDictionary *gObservers;
@@ -425,6 +426,7 @@ static NSString *sPreviousVersion;
                   kPreferenceKeyLeftTabBarWidth: @150,
                   kPreferenceKeyDefaultToolbeltWidth: @250,
                   kPreferenceKeySizeChangesAffectProfile: @NO,
+                  kPreferenceKeyHTMLTabTitles: @NO
               };
     }
     return dict;

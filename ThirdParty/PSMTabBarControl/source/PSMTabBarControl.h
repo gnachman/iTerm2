@@ -57,6 +57,7 @@ extern PSMTabBarControlOptionKey PSMTabBarControlOptionFontSizeOverride;  // NSN
 extern PSMTabBarControlOptionKey PSMTabBarControlOptionMinimalSelectedTabUnderlineProminence;  // NSNumber double in 0-1
 extern PSMTabBarControlOptionKey PSMTabBarControlOptionDragEdgeHeight;  // NSNumber CGFloat
 extern PSMTabBarControlOptionKey PSMTabBarControlOptionAttachedToTitleBar;  // NSNumber bool, 10.16+
+extern PSMTabBarControlOptionKey PSMTabBarControlOptionHTMLTabTitles;  // NSNumber bool
 
 // Tab views controlled by the tab bar may expect this protocol to be conformed to by their delegate.
 @protocol PSMTabViewDelegate<NSTabViewDelegate>

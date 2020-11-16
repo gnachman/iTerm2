@@ -102,6 +102,7 @@ class PreferenceKey(enum.Enum):
     EMULATE_US_KEYBOARD = "UseVirtualKeyCodesForDetectingDigits"  #: Emulate US keyboard for the purposes of switching tabs/panes/windows by keyboard? Takes a boolean.
     TEXT_SIZE_CHANGES_AFFECT_PROFILE = "Size Changes Affect Profile"  #: Does increasing/decreasing text size update the backing profile? Takes a boolean.
     ACTIONS = "Actions"  #: Array of dictionaries defining actions.
+    HTML_TAB_TITLES = "HTMLTabTitles"  #: Support basic HTML tags in tab titles
 
 # pylint: enable=line-too-long
 

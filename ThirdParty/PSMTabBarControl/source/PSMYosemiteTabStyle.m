@@ -439,12 +439,15 @@
 }
 
 - (PSMCachedTitleInputs *)cachedTitleInputsForTabCell:(PSMTabBarCell *)cell {
-    return [[[PSMCachedTitleInputs alloc] initWithTitle:cell.stringValue
-                                        truncationStyle:cell.truncationStyle
-                                                  color:[self textColorForCell:cell]
-                                                graphic:[(id)[[cell representedObject] identifier] psmTabGraphic]
-                                            orientation:_orientation
-                                               fontSize:self.fontSize] autorelease];
+    const BOOL parseHTML = [[_tabBar.delegate tabView:_tabBar valueOfOption:PSMTabBarControlOptionHTMLTabTitles] boolValue];
+    PSMCachedTitleInputs *inputs = [[[PSMCachedTitleInputs alloc] initWithTitle:cell.stringValue
+                                                                truncationStyle:cell.truncationStyle
+                                                                          color:[self textColorForCell:cell]
+                                                                        graphic:[(id)[[cell representedObject] identifier] psmTabGraphic]
+                                                                    orientation:_orientation
+                                                                       fontSize:self.fontSize
+                                                                      parseHTML:parseHTML] autorelease];
+    return inputs;
 }
 
 - (CGFloat)fontSize {

@@ -126,6 +126,7 @@ extern NSString *const kPreferenceKeyEnableDivisionView;
 extern NSString *const kPreferenceKeyEnableProxyIcon;
 extern NSString *const kPreferenceKeyDimBackgroundWindows;
 extern NSString *const kPreferenceKeySeparateStatusBarsPerPane;
+extern NSString *const kPreferenceKeyHTMLTabTitles;
 
 // Keys
 extern NSString *const kPreferenceKeyControlRemapping;

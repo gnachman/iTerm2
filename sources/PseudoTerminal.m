@@ -6677,6 +6677,8 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
                     return @YES;
             }
         }
+    } else if ([option isEqualToString:PSMTabBarControlOptionHTMLTabTitles]) {
+        return @([iTermPreferences boolForKey:kPreferenceKeyHTMLTabTitles]);
     }
     return nil;
 }

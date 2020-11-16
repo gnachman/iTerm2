@@ -1073,7 +1073,7 @@ DQ
                         <rect key="frame" x="17" y="236" width="534" height="14"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Items are added to the context menu when you right click on text matching this smart selection." id="6279">
-                            <font key="font" metaFont="label" size="11"/>
+                            <font key="font" metaFont="message" size="11"/>
                             <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
                             <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                         </textFieldCell>
@@ -1082,7 +1082,7 @@ DQ
                         <rect key="frame" x="18" y="222" width="539" height="14"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="In “parameter,” use \0 for match, \1…\9 for match groups, \d for directory, \u for user, \h for host." id="aev-dz-zJQ">
-                            <font key="font" metaFont="label" size="11"/>
+                            <font key="font" metaFont="message" size="11"/>
                             <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
                             <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                         </textFieldCell>
@@ -1290,6 +1290,7 @@ DQ
                 <outlet property="_hideScrollbar" destination="4561" id="I02-gk-NqP"/>
                 <outlet property="_hideTab" destination="4462" id="GTv-bn-7th"/>
                 <outlet property="_hideTabNumber" destination="4446" id="PIE-R6-5sO"/>
+                <outlet property="_htmlTabTitles" destination="Ids-PU-lco" id="kJN-gO-Kup"/>
                 <outlet property="_perPaneStatusBars" destination="rf8-fE-qJb" id="76w-3w-lRJ"/>
                 <outlet property="_preserveWindowSizeWhenTabBarVisibilityChanges" destination="vJk-74-qzt" id="UoO-2M-VxB"/>
                 <outlet property="_separateBackgroundImages" destination="FvM-qm-P8l" id="ZWl-m2-tm0"/>
@@ -1932,7 +1933,7 @@ DQ
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <buttonCell key="cell" type="push" title="Edit…" bezelStyle="rounded" alignment="center" controlSize="small" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="5976">
                         <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
-                        <font key="font" metaFont="label" size="11"/>
+                        <font key="font" metaFont="message" size="11"/>
                     </buttonCell>
                     <connections>
                         <action selector="showAdvancedWorkingDirConfigPanel:" target="dVg-Ac-SiZ" id="hr1-VG-5jr"/>
@@ -2031,7 +2032,7 @@ DQ
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <buttonCell key="cell" type="push" title="Edit…" bezelStyle="rounded" alignment="center" controlSize="small" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="9iq-xC-84R">
                         <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
-                        <font key="font" metaFont="label" size="11"/>
+                        <font key="font" metaFont="message" size="11"/>
                     </buttonCell>
                     <connections>
                         <action selector="configureBadge:" target="dVg-Ac-SiZ" id="7dS-4S-7fF"/>
@@ -2538,7 +2539,7 @@ DQ
                     <rect key="frame" x="155" y="128" width="23" height="17"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" controlSize="small" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="⚠️" id="zNa-1V-sCK">
-                        <font key="font" metaFont="label" size="11"/>
+                        <font key="font" metaFont="message" size="11"/>
                         <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
@@ -2902,7 +2903,7 @@ DQ
                     <rect key="frame" x="58" y="182" width="291" height="14"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" controlSize="small" lineBreakMode="clipping" alignment="left" title="⚠️ Enabling ligatures may reduce performance" id="voP-Nf-qdo">
-                        <font key="font" metaFont="label" size="11"/>
+                        <font key="font" metaFont="message" size="11"/>
                         <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
@@ -3246,7 +3247,7 @@ DQ
                     <rect key="frame" x="35" y="365" width="53" height="11"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Opaque" id="4982">
-                        <font key="font" metaFont="system" size="9"/>
+                        <font key="font" metaFont="miniSystem"/>
                         <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
@@ -3255,7 +3256,7 @@ DQ
                     <rect key="frame" x="196" y="365" width="58" height="11"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Transparent" id="4981">
-                        <font key="font" metaFont="system" size="9"/>
+                        <font key="font" metaFont="miniSystem"/>
                         <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
@@ -3273,7 +3274,7 @@ DQ
                     <rect key="frame" x="35" y="267" width="61" height="11"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Small Radius" id="5367">
-                        <font key="font" metaFont="system" size="9"/>
+                        <font key="font" metaFont="miniSystem"/>
                         <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
@@ -3282,7 +3283,7 @@ DQ
                     <rect key="frame" x="192" y="267" width="62" height="11"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Large Radius" id="5366">
-                        <font key="font" metaFont="system" size="9"/>
+                        <font key="font" metaFont="miniSystem"/>
                         <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
@@ -3340,7 +3341,7 @@ DQ
                     <rect key="frame" x="338" y="267" width="83" height="11"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Background Color" id="32Y-Ur-CMV">
-                        <font key="font" metaFont="system" size="9"/>
+                        <font key="font" metaFont="miniSystem"/>
                         <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
@@ -3349,7 +3350,7 @@ DQ
                     <rect key="frame" x="522" y="267" width="31" height="11"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Image" id="hxE-2N-hxp">
-                        <font key="font" metaFont="system" size="9"/>
+                        <font key="font" metaFont="miniSystem"/>
                         <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
@@ -3367,7 +3368,7 @@ DQ
                     <rect key="frame" x="129" y="302" width="125" height="22"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" controlSize="mini" alignment="right" title="⚠️ A large blur radius may hurt performance" id="1JR-lN-kdB">
-                        <font key="font" metaFont="system" size="9"/>
+                        <font key="font" metaFont="miniSystem"/>
                         <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
@@ -3693,7 +3694,7 @@ DQ
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <buttonCell key="cell" type="push" title="Filter Alerts" bezelStyle="rounded" alignment="center" controlSize="small" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="7Pi-Gm-UyI">
                         <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
-                        <font key="font" metaFont="label" size="11"/>
+                        <font key="font" metaFont="message" size="11"/>
                     </buttonCell>
                     <connections>
                         <action selector="showFilterAlertsPanel:" target="gMD-DK-gev" id="cTC-oU-rqv"/>
@@ -4048,7 +4049,7 @@ DQ
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <buttonCell key="cell" type="push" title="Configure Status Bar" bezelStyle="rounded" alignment="center" controlSize="small" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="Kw4-Uw-vBd">
                         <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
-                        <font key="font" metaFont="label" size="11"/>
+                        <font key="font" metaFont="message" size="11"/>
                     </buttonCell>
                     <connections>
                         <action selector="configureStatusBar:" target="TG6-06-mq9" id="bdA-lf-KWd"/>
@@ -4447,7 +4448,7 @@ DQ
                     <rect key="frame" x="14" y="245" width="526" height="47"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" selectable="YES" sendsActionOnEndEditing="YES" id="5958">
-                        <font key="font" metaFont="label" size="11"/>
+                        <font key="font" metaFont="message" size="11"/>
                         <string key="title">Up to three lines of information go here. Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</string>
                         <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
@@ -4522,7 +4523,7 @@ DQ
                     <rect key="frame" x="206" y="355" width="334" height="11"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Disabled by “⌘-Click Opens Filename/URL” setting in Pointer preferences" id="fXe-U0-Ddw">
-                        <font key="font" metaFont="system" size="9"/>
+                        <font key="font" metaFont="miniSystem"/>
                         <color key="textColor" red="0.36963383838383834" green="0.36963383838383834" blue="0.36963383838383834" alpha="0.84999999999999998" colorSpace="calibratedRGB"/>
                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
@@ -4543,7 +4544,7 @@ DQ
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <buttonCell key="cell" type="help" bezelStyle="helpButton" alignment="center" controlSize="small" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="lxV-Yu-rQk">
                         <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
-                        <font key="font" metaFont="label" size="11"/>
+                        <font key="font" metaFont="message" size="11"/>
                     </buttonCell>
                     <connections>
                         <action selector="help:" target="Qvt-kg-svI" id="sHe-fn-c5u"/>
@@ -4553,7 +4554,7 @@ DQ
                     <rect key="frame" x="226" y="211" width="285" height="14"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" controlSize="small" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Shell Integration must be installed to use this feature." id="1bp-B6-W52">
-                        <font key="font" metaFont="label" size="11"/>
+                        <font key="font" metaFont="message" size="11"/>
                         <color key="textColor" name="textColor" catalog="System" colorSpace="catalog"/>
                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
@@ -4777,7 +4778,7 @@ DQ
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <popUpButtonCell key="cell" type="push" title="Require “Automation” permission" bezelStyle="rounded" alignment="left" controlSize="small" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" selectedItem="A1J-wd-hbr" id="A9A-re-7GZ">
                                                     <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
-                                                    <font key="font" metaFont="label" size="11"/>
+                                                    <font key="font" metaFont="message" size="11"/>
                                                     <menu key="menu" id="uQt-Ra-QpR">
                                                         <items>
                                                             <menuItem title="Require “Automation” permission" state="on" id="A1J-wd-hbr"/>
@@ -4794,7 +4795,7 @@ DQ
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="push" title="Advanced GPU Settings…" bezelStyle="rounded" alignment="center" controlSize="small" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="tof-yo-OcS">
                                                     <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
-                                                    <font key="font" metaFont="label" size="11"/>
+                                                    <font key="font" metaFont="message" size="11"/>
                                                 </buttonCell>
                                                 <connections>
                                                     <action selector="advancedGPU:" target="9Se-ld-UJa" id="q48-sD-aZR"/>
@@ -4805,7 +4806,7 @@ DQ
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="help" bezelStyle="helpButton" alignment="center" controlSize="small" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="PzG-2P-IYF">
                                                     <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
-                                                    <font key="font" metaFont="label" size="11"/>
+                                                    <font key="font" metaFont="message" size="11"/>
                                                 </buttonCell>
                                                 <connections>
                                                     <action selector="pythonAPIAuthHelp:" target="9Se-ld-UJa" id="Kwa-lB-SY3"/>
@@ -5187,7 +5188,7 @@ DQ
                                                 <rect key="frame" x="112" y="109" width="120" height="11"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <textFieldCell key="cell" controlSize="mini" lineBreakMode="clipping" title="Requires tmux 2.9 or later." id="fKK-ZX-n3u">
-                                                    <font key="font" metaFont="system" size="9"/>
+                                                    <font key="font" metaFont="miniSystem"/>
                                                     <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                                                     <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                                 </textFieldCell>
@@ -5245,7 +5246,7 @@ DQ
                                                 <rect key="frame" x="112" y="20" width="209" height="11"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <textFieldCell key="cell" controlSize="mini" lineBreakMode="clipping" title="The “pause” feature requires tmux 3.2 or later." id="2EN-9v-M1n">
-                                                    <font key="font" metaFont="system" size="9"/>
+                                                    <font key="font" metaFont="miniSystem"/>
                                                     <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                                                     <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                                 </textFieldCell>
@@ -5276,21 +5277,21 @@ DQ
             <point key="canvasLocation" x="2057" y="-22.5"/>
         </customView>
         <customView id="yCt-fi-XI9" userLabel="Prefs - Appearance" customClass="iTermSizeRememberingView">
-            <rect key="frame" x="0.0" y="0.0" width="623" height="256"/>
+            <rect key="frame" x="0.0" y="0.0" width="623" height="264"/>
             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
             <subviews>
                 <tabView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="W2g-ef-8zn">
-                    <rect key="frame" x="0.0" y="10" width="610" height="252"/>
+                    <rect key="frame" x="0.0" y="10" width="610" height="260"/>
                     <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                     <font key="font" metaFont="system"/>
                     <tabViewItems>
                         <tabViewItem label="General" identifier="" id="wt3-Hu-DaR">
                             <view key="view" id="7fG-Sy-1hE">
-                                <rect key="frame" x="10" y="33" width="590" height="206"/>
+                                <rect key="frame" x="10" y="33" width="590" height="234"/>
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                 <subviews>
                                     <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Wsp-9H-Fsm" customClass="iTermPreferencesInnerTabContainerView">
-                                        <rect key="frame" x="47" y="45" width="496" height="158"/>
+                                        <rect key="frame" x="47" y="73" width="496" height="158"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMinY="YES"/>
                                         <subviews>
                                             <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="awA-hH-ziY">
@@ -5426,11 +5427,11 @@ DQ
                         </tabViewItem>
                         <tabViewItem label="Windows" identifier="1" id="9EZ-jv-4Qy">
                             <view key="view" id="Ei6-Ql-t7N">
-                                <rect key="frame" x="10" y="33" width="590" height="206"/>
+                                <rect key="frame" x="10" y="33" width="590" height="234"/>
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                 <subviews>
                                     <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="qVl-YI-RPa" customClass="iTermPreferencesInnerTabContainerView">
-                                        <rect key="frame" x="98" y="69" width="391" height="134"/>
+                                        <rect key="frame" x="98" y="97" width="391" height="134"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMinY="YES"/>
                                         <subviews>
                                             <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="5144">
@@ -5510,15 +5511,15 @@ DQ
                         </tabViewItem>
                         <tabViewItem label="Tabs" identifier="2" id="med-Jd-f8A">
                             <view key="view" id="z6P-Vz-VbA">
-                                <rect key="frame" x="10" y="33" width="590" height="206"/>
+                                <rect key="frame" x="10" y="33" width="590" height="214"/>
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                 <subviews>
                                     <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="ksv-Y5-pY9" customClass="iTermPreferencesInnerTabContainerView">
-                                        <rect key="frame" x="112" y="9" width="366" height="194"/>
+                                        <rect key="frame" x="112" y="-3" width="366" height="214"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMinY="YES"/>
                                         <subviews>
                                             <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Q0o-aJ-Wec">
-                                                <rect key="frame" x="18" y="78" width="348" height="18"/>
+                                                <rect key="frame" x="18" y="98" width="348" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="check" title="Show new-output indicator" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="P1b-LJ-ARG">
                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -5530,7 +5531,7 @@ DQ
                                                 </connections>
                                             </button>
                                             <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="4446">
-                                                <rect key="frame" x="18" y="138" width="348" height="18"/>
+                                                <rect key="frame" x="18" y="158" width="348" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="check" title="Show tab numbers" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="4447">
                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -5542,7 +5543,7 @@ DQ
                                                 </connections>
                                             </button>
                                             <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="5374">
-                                                <rect key="frame" x="18" y="98" width="343" height="18"/>
+                                                <rect key="frame" x="18" y="118" width="343" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="check" title="Show activity indicator" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="5375">
                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -5554,7 +5555,7 @@ DQ
                                                 </connections>
                                             </button>
                                             <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="4462">
-                                                <rect key="frame" x="18" y="178" width="348" height="18"/>
+                                                <rect key="frame" x="18" y="198" width="348" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="check" title="Show tab bar even when there is only one tab" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="4499">
                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -5565,7 +5566,7 @@ DQ
                                                 </connections>
                                             </button>
                                             <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="vJk-74-qzt">
-                                                <rect key="frame" x="18" y="158" width="348" height="18"/>
+                                                <rect key="frame" x="18" y="178" width="348" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="check" title="Preserve window size when tab bar shows or hides" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="9ky-UU-jS2">
                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -5576,7 +5577,7 @@ DQ
                                                 </connections>
                                             </button>
                                             <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="1dE-aB-uR8">
-                                                <rect key="frame" x="18" y="118" width="348" height="18"/>
+                                                <rect key="frame" x="18" y="138" width="348" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="check" title="Tabs have close buttons" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="GRU-c6-tJK">
                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -5588,7 +5589,7 @@ DQ
                                                 </connections>
                                             </button>
                                             <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Esq-U7-Af7">
-                                                <rect key="frame" x="18" y="58" width="348" height="18"/>
+                                                <rect key="frame" x="18" y="78" width="348" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="check" title="Flash tab bar when switching tabs in fullscreen" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="2Eu-ti-9Nf">
                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -5600,7 +5601,7 @@ DQ
                                                 </connections>
                                             </button>
                                             <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="e4x-7h-mzh">
-                                                <rect key="frame" x="18" y="38" width="348" height="18"/>
+                                                <rect key="frame" x="18" y="58" width="348" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="check" title="Show tab bar in fullscreen" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="UI6-As-YT2">
                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -5612,7 +5613,7 @@ DQ
                                                 </connections>
                                             </button>
                                             <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="q7y-hG-x0m" userLabel="Stretch Tabs to Fill Bar">
-                                                <rect key="frame" x="18" y="18" width="348" height="18"/>
+                                                <rect key="frame" x="18" y="38" width="348" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="check" title="Stretch tabs to fill bar" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="X12-cb-Cnf">
                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -5623,6 +5624,18 @@ DQ
                                                     <outlet property="nextKeyView" destination="5330" id="JWT-Si-m0o"/>
                                                 </connections>
                                             </button>
+                                            <button toolTip="The following tags are recognized: &lt;u&gt;, &lt;i&gt;, and &lt;ul&gt;. You can also use &amp;lt; and &amp;amp;." fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Ids-PU-lco" userLabel="Stretch Tabs to Fill Bar">
+                                                <rect key="frame" x="18" y="18" width="348" height="18"/>
+                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                <buttonCell key="cell" type="check" title="Support basic HTML tags in tab titles" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="RnY-AK-UW0">
+                                                    <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                                                    <font key="font" metaFont="system"/>
+                                                </buttonCell>
+                                                <connections>
+                                                    <action selector="settingChanged:" target="wvi-ET-SJJ" id="ohC-he-kp8"/>
+                                                    <outlet property="nextKeyView" destination="5330" id="IO9-5v-iWV"/>
+                                                </connections>
+                                            </button>
                                         </subviews>
                                     </customView>
                                 </subviews>
@@ -5630,11 +5643,11 @@ DQ
                         </tabViewItem>
                         <tabViewItem label="Panes" identifier="2" id="zjb-6I-dDc">
                             <view key="view" id="kid-3c-MWv">
-                                <rect key="frame" x="10" y="33" width="590" height="206"/>
+                                <rect key="frame" x="10" y="33" width="590" height="234"/>
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                 <subviews>
                                     <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="DgM-Zm-3SV" customClass="iTermPreferencesInnerTabContainerView">
-                                        <rect key="frame" x="146" y="129" width="299" height="74"/>
+                                        <rect key="frame" x="146" y="157" width="299" height="74"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMinY="YES"/>
                                         <subviews>
                                             <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="rf8-fE-qJb">
@@ -5677,11 +5690,11 @@ DQ
                         </tabViewItem>
                         <tabViewItem label="Dimming" identifier="" id="erX-Qj-Ist">
                             <view key="view" id="qPY-VI-zPN">
-                                <rect key="frame" x="10" y="33" width="590" height="206"/>
+                                <rect key="frame" x="10" y="33" width="590" height="234"/>
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                 <subviews>
                                     <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="YkA-5c-Wt0" customClass="iTermPreferencesInnerTabContainerView">
-                                        <rect key="frame" x="74" y="98" width="440" height="105"/>
+                                        <rect key="frame" x="74" y="126" width="440" height="105"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMinY="YES"/>
                                         <subviews>
                                             <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="4560">
@@ -5750,7 +5763,7 @@ DQ
                 </tabView>
             </subviews>
             <accessibility identifier="prefsAppearance"/>
-            <point key="canvasLocation" x="-303.5" y="1293"/>
+            <point key="canvasLocation" x="-303.5" y="1297"/>
         </customView>
         <customView id="Z7N-XT-vVo" userLabel="Prefs - Keys" customClass="iTermSizeRememberingView">
             <rect key="frame" x="0.0" y="0.0" width="932" height="439"/>
@@ -5992,7 +6005,7 @@ DQ
                                                 <rect key="frame" x="378" y="20" width="190" height="14"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="⚠️ A profile also uses this shortcut" id="FcK-Mk-rxx">
-                                                    <font key="font" metaFont="label" size="11"/>
+                                                    <font key="font" metaFont="message" size="11"/>
                                                     <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                                                     <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                                                 </textFieldCell>
