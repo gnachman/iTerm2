@@ -207,6 +207,10 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
         return [self.delegate contextMenu:self hasOpenAnnotationInRange:range];
     }
 
+    if ([self.smartSelectionActionSelectorDictionary.allValues containsObject:NSStringFromSelector(item.action)]) {
+        return YES;
+    }
+
     return NO;
 }
 
