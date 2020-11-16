@@ -149,6 +149,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)loadFromFindPasteboard;
 + (BOOL)logDrawingPerformance;
 + (BOOL)logRestorableStateSize;
++ (BOOL)logTimestampsWithPlainText;
 + (BOOL)lowFiCombiningMarks;
 + (int)maxHistoryLinesToRestore;
 + (int)maximumBytesToProvideToServices;

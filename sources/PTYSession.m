@@ -11697,7 +11697,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 - (void)screenDidReceiveLineFeed {
     [_pwdPoller didReceiveLineFeed];
     if (_logging.enabled && _logging.plainText && !self.isTmuxGateway) {
-        [_logging logData:[NSData dataWithBytesNoCopy:"\n" length:1 freeWhenDone:NO]];
+        [_logging logNewline];
     }
 }
 

@@ -40,6 +40,7 @@ extern NSString *const iTermLoggingHelperErrorNotificationGUIDKey;
 - (void)stop;
 
 - (void)logData:(NSData *)data;
+- (void)logNewline;
 
 @end
 

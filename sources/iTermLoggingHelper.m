@@ -24,6 +24,7 @@ NSString *const iTermLoggingHelperErrorNotificationGUIDKey = @"guid";
     // File handle can only be accessed on this queue.
     dispatch_queue_t _queue;
     NSString *_profileGUID;
+    BOOL _needsTimestamp;  // Access only on _queue.
 }
 
 + (void)observeNotificationsWithHandler:(void (^)(NSString * _Nonnull))handler {
@@ -106,7 +107,9 @@ NSString *const iTermLoggingHelperErrorNotificationGUIDKey = @"guid";
         [self.fileHandle closeFile];
         self.fileHandle = nil;
         self.fileHandle = [self newFileHandle];
-        if (!self.fileHandle) {
+        if (self.fileHandle) {
+            self->_needsTimestamp = YES;
+        } else {
             self->_enabled = NO;
             dispatch_async(dispatch_get_main_queue(), ^{
                 [[iTermNotificationController sharedInstance] postNotificationWithTitle:@"Couldn’t write to session log"
@@ -144,18 +147,52 @@ NSString *const iTermLoggingHelperErrorNotificationGUIDKey = @"guid";
 
 - (void)logData:(NSData *)data {
     dispatch_async(_queue, ^{
-        NSFileHandle *fileHandle = self.fileHandle;
-        @try {
-            [fileHandle writeData:data];
-        } @catch (NSException *exception) {
-            DLog(@"Exception while logging %@ bytes of data: %@", @(data.length), exception);
-            [self.fileHandle closeFile];
-            self.fileHandle = nil;
-            dispatch_async(dispatch_get_main_queue(), ^{
-                self->_enabled = NO;
-            });
+        if (self.plainText && self->_needsTimestamp) {
+            self->_needsTimestamp = NO;
+            [self queueLogTimestamp];
         }
+        [self queueLogData:data];
     });
+}
+
+// Called on _queue
+- (void)queueLogData:(NSData *)data {
+    NSFileHandle *fileHandle = self.fileHandle;
+    @try {
+        [fileHandle writeData:data];
+    } @catch (NSException *exception) {
+        DLog(@"Exception while logging %@ bytes of data: %@", @(data.length), exception);
+        [self.fileHandle closeFile];
+        self.fileHandle = nil;
+        dispatch_async(dispatch_get_main_queue(), ^{
+            self->_enabled = NO;
+        });
+    }
+}
+
+- (void)logNewline {
+    dispatch_async(_queue, ^{
+        [self queueLogData:[NSData dataWithBytesNoCopy:"\n" length:1 freeWhenDone:NO]];
+        self->_needsTimestamp = YES;
+    });
+}
+
+// Called on _queue
+- (void)queueLogTimestamp {
+    if (![iTermAdvancedSettingsModel logTimestampsWithPlainText]) {
+        return;
+    }
+    static NSDateFormatter *dateFormatter;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        dateFormatter = [[NSDateFormatter alloc] init];
+        dateFormatter.dateFormat = [NSDateFormatter dateFormatFromTemplate:@"yyyy-MM-dd hh.mm.ss.SSS"
+                                                                   options:0
+                                                                    locale:[NSLocale currentLocale]];
+    });
+    NSString *dateString = [NSString stringWithFormat:@"[%@] ", [dateFormatter stringFromDate:[NSDate date]]];
+    [self queueLogData:[dateString dataUsingEncoding:NSUTF8StringEncoding]];
+    _needsTimestamp = NO;
 }
 
 @end
