@@ -4,6 +4,7 @@
 #import "FutureMethods.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermBackgroundDrawingHelper.h"
+#import "iTermPreferences.h"
 #import "iTermShaderTypes.h"
 
 NS_ASSUME_NONNULL_BEGIN
@@ -228,7 +229,7 @@ NS_ASSUME_NONNULL_BEGIN
         vmargin = 0;
         insets = NSEdgeInsetsZero;
     } else {
-        vmargin = [iTermAdvancedSettingsModel terminalVMargin] * scale;
+        vmargin = [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins] * scale;
         insets = tState.edgeInsets;
     }
     const CGFloat topMargin = insets.bottom + vmargin;

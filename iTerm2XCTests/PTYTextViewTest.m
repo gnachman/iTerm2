@@ -631,8 +631,8 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
     [session setSize:size];
     NSRect theFrame = NSMakeRect(0,
                                  0,
-                                 size.width * session.textview.charWidth + [iTermAdvancedSettingsModel terminalMargin] * 2,
-                                 size.height * session.textview.lineHeight + [iTermAdvancedSettingsModel terminalVMargin] * 2);
+                                 size.width * session.textview.charWidth + [iTermPreferences intForKey:kPreferenceKeySideMargins] * 2,
+                                 size.height * session.textview.lineHeight + [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins] * 2);
     session.view.frame = theFrame;
     [session loadInitialColorTable];
 //    [session.nameController setSessionName:profile[KEY_NAME]];

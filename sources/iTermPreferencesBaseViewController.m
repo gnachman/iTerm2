@@ -18,6 +18,16 @@
 
 #import <ColorPicker/ColorPicker.h>
 
+@interface NSStepper(Prefs)
+- (int)separatorTolerantIntValue;
+@end
+
+@implementation NSStepper(Prefs)
+- (int)separatorTolerantIntValue {
+    return [self intValue];
+}
+@end
+
 @interface iTermPreferencesInnerTabContainerView : NSView
 @end
 
@@ -264,6 +274,7 @@ NSString *const kPreferenceDidChangeFromOtherPanelKeyUserInfoKey = @"key";
                 if (!info.deferUpdate) {
                     [self setInt:intValue forKey:info.key];
                 }
+                info.associatedStepper.integerValue = intValue;
                 break;
 
             case kPreferenceInfoTypeDoubleTextField: {
@@ -697,6 +708,12 @@ NSString *const kPreferenceDidChangeFromOtherPanelKeyUserInfoKey = @"key";
     return info;
 }
 
+- (void)associateStepper:(NSStepper *)stepper withPreference:(PreferenceInfo *)info {
+    stepper.integerValue = [self integerForKey:info.key];
+    info.associatedStepper = stepper;
+    [_keyMap setObject:info forKey:stepper];
+}
+
 - (void)postRefreshNotification {
     [[NSNotificationCenter defaultCenter] postNotificationName:kRefreshTerminalNotification
                                                         object:nil
@@ -995,6 +1012,9 @@ NSString *const kPreferenceDidChangeFromOtherPanelKeyUserInfoKey = @"key";
     *willChangeTab = NO;
     NSString *key = document.identifier;
     for (NSControl *control in _keyMap) {
+        if ([control isKindOfClass:[NSStepper class]]) {
+            continue;
+        }
         PreferenceInfo *info = [_keyMap objectForKey:control];
         if ([key isEqualToString:info.key]) {
             *willChangeTab = [self revealControl:control];

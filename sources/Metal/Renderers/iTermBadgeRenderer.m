@@ -3,6 +3,7 @@
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermMetalBufferPool.h"
 #import "iTermMetalRenderer.h"
+#import "iTermPreferences.h"
 #import "iTermTextDrawingHelper.h"
 
 NS_ASSUME_NONNULL_BEGIN
@@ -61,7 +62,7 @@ NS_ASSUME_NONNULL_BEGIN
     iTermBadgeRendererTransientState *tState = transientState;
     const CGSize size = tState.destinationRect.size;
     const CGFloat scale = tState.configuration.scale;
-    const CGFloat MARGIN_HEIGHT = [iTermAdvancedSettingsModel terminalVMargin] * scale;
+    const CGFloat MARGIN_HEIGHT = [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins] * scale;
     CGRect quad = CGRectMake(scale * tState.destinationRect.origin.x,
                              tState.configuration.viewportSize.y - scale * CGRectGetMaxY(tState.destinationRect) - MARGIN_HEIGHT - transientState.configuration.extraMargins.top,
                              scale * size.width,

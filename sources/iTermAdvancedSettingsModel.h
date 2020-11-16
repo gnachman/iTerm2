@@ -294,8 +294,6 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (double)tabFlashAnimationDuration;
 + (BOOL)tabsWrapAround;
 + (BOOL)tabTitlesUseSmartTruncation;
-+ (int)terminalMargin;
-+ (int)terminalVMargin;
 + (BOOL)throttleMetalConcurrentFrames;
 + (double)timeBetweenBlinks;
 + (double)timeBetweenTips;

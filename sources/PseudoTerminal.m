@@ -3664,7 +3664,7 @@ ITERM_WEAKLY_REFERENCEABLE
                 // If the screen grew and the window was smaller than the desired number of rows, grow it.
                 if (desiredRows_ > 0) {
                     frame.size.height = MIN(screenVisibleFrame.size.height,
-                                            ceil([[session textview] lineHeight] * desiredRows_) + decorationSize.height + 2 * [iTermAdvancedSettingsModel terminalVMargin]);
+                                            ceil([[session textview] lineHeight] * desiredRows_) + decorationSize.height + 2 * [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins]);
                 } else {
                     frame.size.height = MIN(screenVisibleFrame.size.height, frame.size.height);
                 }
@@ -3691,7 +3691,7 @@ ITERM_WEAKLY_REFERENCEABLE
                 // If the screen grew and the window was smaller than the desired number of rows, grow it.
                 if (desiredRows_ > 0) {
                     frame.size.height = MIN(screenVisibleFrame.size.height,
-                                            ceil([[session textview] lineHeight] * desiredRows_) + decorationSize.height + 2 * [iTermAdvancedSettingsModel terminalVMargin]);
+                                            ceil([[session textview] lineHeight] * desiredRows_) + decorationSize.height + 2 * [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins]);
                 } else {
                     frame.size.height = MIN(screenVisibleFrame.size.height, frame.size.height);
                 }
@@ -3721,7 +3721,7 @@ ITERM_WEAKLY_REFERENCEABLE
                 // If the screen grew and the window was smaller than the desired number of columns, grow it.
                 if (desiredColumns_ > 0) {
                     frame.size.width = MIN(screenVisibleFrame.size.width,
-                                           [[session textview] charWidth] * desiredColumns_ + 2 * [iTermAdvancedSettingsModel terminalMargin]);
+                                           [[session textview] charWidth] * desiredColumns_ + 2 * [iTermPreferences intForKey:kPreferenceKeySideMargins]);
                 } else {
                     frame.size.width = MIN(screenVisibleFrame.size.width, frame.size.width);
                 }
@@ -3748,7 +3748,7 @@ ITERM_WEAKLY_REFERENCEABLE
                 // If the screen grew and the window was smaller than the desired number of columns, grow it.
                 if (desiredColumns_ > 0) {
                     frame.size.width = MIN(screenVisibleFrame.size.width,
-                                           [[session textview] charWidth] * desiredColumns_ + 2 * [iTermAdvancedSettingsModel terminalMargin]);
+                                           [[session textview] charWidth] * desiredColumns_ + 2 * [iTermPreferences intForKey:kPreferenceKeySideMargins]);
                 } else {
                     frame.size.width = MIN(screenVisibleFrame.size.width, frame.size.width);
                 }
@@ -4137,14 +4137,14 @@ ITERM_WEAKLY_REFERENCEABLE
                               controlSize:NSControlSizeRegular
                             scrollerStyle:[self scrollerStyle]];
 
-    int screenWidth = (contentSize.width - [iTermAdvancedSettingsModel terminalMargin] * 2) / charWidth;
-    int screenHeight = (contentSize.height - [iTermAdvancedSettingsModel terminalVMargin] * 2) / charHeight;
+    int screenWidth = (contentSize.width - [iTermPreferences intForKey:kPreferenceKeySideMargins] * 2) / charWidth;
+    int screenHeight = (contentSize.height - [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins] * 2) / charHeight;
 
     if (snapWidth) {
-      contentSize.width = screenWidth * charWidth + [iTermAdvancedSettingsModel terminalMargin] * 2;
+      contentSize.width = screenWidth * charWidth + [iTermPreferences intForKey:kPreferenceKeySideMargins] * 2;
     }
     if (snapHeight) {
-      contentSize.height = screenHeight * charHeight + [iTermAdvancedSettingsModel terminalVMargin] * 2;
+      contentSize.height = screenHeight * charHeight + [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins] * 2;
     }
     tabSize =
         [PTYScrollView frameSizeForContentSize:contentSize
@@ -4508,8 +4508,8 @@ ITERM_WEAKLY_REFERENCEABLE
                           [session.profile[KEY_COLUMNS] intValue]),
                       MIN(iTermMaxInitialSessionSize,
                           [session.profile[KEY_ROWS] intValue]));
-    return NSMakeSize([iTermAdvancedSettingsModel terminalMargin] * 2 + sessionSize.width * cellSize.width + decorationSize.width,
-                      [iTermAdvancedSettingsModel terminalVMargin] * 2 + sessionSize.height * cellSize.height + decorationSize.height);
+    return NSMakeSize([iTermPreferences intForKey:kPreferenceKeySideMargins] * 2 + sessionSize.width * cellSize.width + decorationSize.width,
+                      [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins] * 2 + sessionSize.height * cellSize.height + decorationSize.height);
 }
 
 - (void)addShortcutAccessorViewControllerToTitleBarIfNeeded {
@@ -7366,8 +7366,8 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
                                            verticalSpacing:[[theBookmark objectForKey:KEY_VERTICAL_SPACING] doubleValue]];
     NSSize charSize = NSMakeSize(MAX(asciiCharSize.width, nonAsciiCharSize.width),
                                  MAX(asciiCharSize.height, nonAsciiCharSize.height));
-    NSSize newSessionSize = NSMakeSize(charSize.width * kVT100ScreenMinColumns + [iTermAdvancedSettingsModel terminalMargin] * 2,
-                                       charSize.height * kVT100ScreenMinRows + [iTermAdvancedSettingsModel terminalVMargin] * 2);
+    NSSize newSessionSize = NSMakeSize(charSize.width * kVT100ScreenMinColumns + [iTermPreferences intForKey:kPreferenceKeySideMargins] * 2,
+                                       charSize.height * kVT100ScreenMinRows + [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins] * 2);
 
     return [[self currentTab] canSplitVertically:isVertical withSize:newSessionSize];
 }
@@ -9213,8 +9213,8 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 
     if (size == nil && [_contentView.tabView numberOfTabViewItems] != 0) {
         NSSize contentSize = [[[[self currentSession] view] scrollview] documentVisibleRect].size;
-        rows = (contentSize.height - [iTermAdvancedSettingsModel terminalVMargin]*2) / charSize.height;
-        columns = (contentSize.width - [iTermAdvancedSettingsModel terminalMargin]*2) / charSize.width;
+        rows = (contentSize.height - [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins]*2) / charSize.height;
+        columns = (contentSize.width - [iTermPreferences intForKey:kPreferenceKeySideMargins]*2) / charSize.width;
     }
     NSRect sessionRect;
     if (size != nil) {
@@ -9226,12 +9226,12 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
                                    borderType:NSNoBorder
                                   controlSize:NSControlSizeRegular
                                 scrollerStyle:[self scrollerStyle]];
-        rows = (contentSize.height - [iTermAdvancedSettingsModel terminalVMargin]*2) / charSize.height;
-        columns = (contentSize.width - [iTermAdvancedSettingsModel terminalMargin]*2) / charSize.width;
+        rows = (contentSize.height - [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins]*2) / charSize.height;
+        columns = (contentSize.width - [iTermPreferences intForKey:kPreferenceKeySideMargins]*2) / charSize.width;
         sessionRect.origin = NSZeroPoint;
         sessionRect.size = *size;
     } else {
-        sessionRect = NSMakeRect(0, 0, columns * charSize.width + [iTermAdvancedSettingsModel terminalMargin] * 2, rows * charSize.height + [iTermAdvancedSettingsModel terminalVMargin] * 2);
+        sessionRect = NSMakeRect(0, 0, columns * charSize.width + [iTermPreferences intForKey:kPreferenceKeySideMargins] * 2, rows * charSize.height + [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins] * 2);
     }
 
     if ([aSession setScreenSize:sessionRect parent:self]) {

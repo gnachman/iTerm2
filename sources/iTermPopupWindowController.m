@@ -3,6 +3,7 @@
 #import "iTermPopupWindowController.h"
 #import "DebugLogging.h"
 #import "iTermAdvancedSettingsModel.h"
+#import "iTermPreferences.h"
 #import "NSTextField+iTerm.h"
 #import "NSView+iTerm.h"
 #import "NSWindow+PSM.h"
@@ -311,7 +312,7 @@
     NSRect frame = [[self window] frame];
     frame.size.height = self.desiredHeight;
 
-    NSPoint p = NSMakePoint([iTermAdvancedSettingsModel terminalMargin] + cx * [tv charWidth],
+    NSPoint p = NSMakePoint([iTermPreferences intForKey:kPreferenceKeySideMargins] + cx * [tv charWidth],
                             ([screen numberOfLines] - [screen height] + cy) * [tv lineHeight]);
     p = [tv convertPoint:p toView:nil];
     p = [[tv window] pointToScreenCoords:p];

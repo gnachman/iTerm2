@@ -99,7 +99,7 @@ static const NSUInteger kRectangularSelectionModifierMask = (kRectangularSelecti
     int x, y;
     int width = [self.dataSource width];
 
-    x = (locationInTextView.x - [iTermAdvancedSettingsModel terminalMargin] + self.charWidth * [iTermAdvancedSettingsModel fractionOfCharacterSelectingNextNeighbor]) / self.charWidth;
+    x = (locationInTextView.x - [iTermPreferences intForKey:kPreferenceKeySideMargins] + self.charWidth * [iTermAdvancedSettingsModel fractionOfCharacterSelectingNextNeighbor]) / self.charWidth;
     if (x < 0) {
         x = 0;
     }
@@ -138,7 +138,7 @@ static const NSUInteger kRectangularSelectionModifierMask = (kRectangularSelecti
 }
 
 - (NSPoint)pointForCoord:(VT100GridCoord)coord {
-    return NSMakePoint([iTermAdvancedSettingsModel terminalMargin] + coord.x * self.charWidth,
+    return NSMakePoint([iTermPreferences intForKey:kPreferenceKeySideMargins] + coord.x * self.charWidth,
                        coord.y * self.lineHeight);
 }
 
@@ -603,7 +603,7 @@ static const NSUInteger kRectangularSelectionModifierMask = (kRectangularSelecti
 }
 
 - (NSPoint)urlActionHelper:(iTermURLActionHelper *)helper pointForCoord:(VT100GridCoord)coord {
-    NSRect windowRect = [self convertRect:NSMakeRect(coord.x * self.charWidth + [iTermAdvancedSettingsModel terminalMargin],
+    NSRect windowRect = [self convertRect:NSMakeRect(coord.x * self.charWidth + [iTermPreferences intForKey:kPreferenceKeySideMargins],
                                                      coord.y * self.lineHeight,
                                                      0,
                                                      0)

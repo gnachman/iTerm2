@@ -29,6 +29,7 @@
 
 #import "TextViewWrapper.h"
 #import "iTermAdvancedSettingsModel.h"
+#import "iTermPreferences.h"
 #import "PTYTextView.h"
 
 @implementation TextViewWrapper {
@@ -69,7 +70,7 @@
     // parts undrawn. Some day macOS 10.0's features will work correctly but
     // I'm not holding my breath.
     NSRect rect = self.enclosingScrollView.documentVisibleRect;
-    rect.size.height = [iTermAdvancedSettingsModel terminalVMargin];
+    rect.size.height = [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins];
     if (_useMetal) {
         if (@available(macOS 10.14, *)) {
             return;
@@ -115,8 +116,8 @@
 
 - (void)resizeSubviewsWithOldSize:(NSSize)oldSize {
     NSRect rect = self.bounds;
-    rect.size.height -= [iTermAdvancedSettingsModel terminalVMargin];
-    rect.origin.y = [iTermAdvancedSettingsModel terminalVMargin];
+    rect.size.height -= [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins];
+    rect.origin.y = [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins];
     if (!NSEqualRects(child_.frame, rect)) {
         child_.frame = rect;
     }

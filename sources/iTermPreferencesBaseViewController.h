@@ -46,6 +46,8 @@ extern NSString *const kPreferenceDidChangeFromOtherPanelKeyUserInfoKey;
                                           key:(NSString *)key
                                          type:(PreferenceInfoType)type;
 
+- (void)associateStepper:(NSStepper *)stepper withPreference:(PreferenceInfo *)info;
+
 // Define a control with a custom settingChanged and update handler. If they're both not null then
 // the default value is not type checked.
 - (PreferenceInfo *)defineControl:(NSControl *)control

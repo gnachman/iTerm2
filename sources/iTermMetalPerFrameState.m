@@ -19,6 +19,7 @@
 #import "iTermMarkRenderer.h"
 #import "iTermMetalPerFrameStateConfiguration.h"
 #import "iTermMetalPerFrameStateRow.h"
+#import "iTermPreferences.h"
 #import "iTermSelection.h"
 #import "iTermSmartCursorColor.h"
 #import "iTermTextDrawingHelper.h"
@@ -412,7 +413,7 @@ typedef struct {
     if (@available(macOS 10.14, *)) {
         vmargin = 0;
     } else {
-        vmargin = [iTermAdvancedSettingsModel terminalVMargin];
+        vmargin = [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins];
     }
     NSRect frame = NSMakeRect(0, vmargin, textView.visibleRect.size.width, textView.visibleRect.size.height);
     [textView.indicatorsHelper enumerateTopRightIndicatorsInFrame:frame andDraw:NO block:^(NSString *identifier, NSImage *image, NSRect rect) {

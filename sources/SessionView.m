@@ -849,7 +849,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     if (@available(macOS 10.14, *)) {
         return frame;
     } else {
-        return NSInsetRect(frame, 1, [iTermAdvancedSettingsModel terminalVMargin]);
+        return NSInsetRect(frame, 1, [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins]);
     }
 }
 
@@ -1469,8 +1469,8 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
          VT100GridSizeDescription(gridSize), NSStringFromSize(cellSize));
 
     NSSize dim = NSMakeSize(gridSize.width, gridSize.height);
-    NSSize innerSize = NSMakeSize(cellSize.width * dim.width + [iTermAdvancedSettingsModel terminalMargin] * 2,
-                                  cellSize.height * dim.height + [iTermAdvancedSettingsModel terminalVMargin] * 2);
+    NSSize innerSize = NSMakeSize(cellSize.width * dim.width + [iTermPreferences intForKey:kPreferenceKeySideMargins] * 2,
+                                  cellSize.height * dim.height + [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins] * 2);
     const BOOL hasScrollbar = [[self scrollview] hasVerticalScroller];
     NSSize size =
         [PTYScrollView frameSizeForContentSize:innerSize

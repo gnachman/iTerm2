@@ -2,6 +2,7 @@
 
 #import "iTermMetalCellRenderer.h"
 #import "iTermMetalBufferPool.h"
+#import "iTermPreferences.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -71,11 +72,11 @@ NS_ASSUME_NONNULL_BEGIN
     CGFloat MARGIN_HEIGHT;
     if (@available(macOS 10.14, *)) {
         // MTKView goes to window's edges. It does not overlap the rounded corners.
-        MARGIN_WIDTH = [iTermAdvancedSettingsModel terminalMargin] * self.configuration.scale;
-        MARGIN_HEIGHT = [iTermAdvancedSettingsModel terminalVMargin] * self.configuration.scale;
+        MARGIN_WIDTH = [iTermPreferences intForKey:kPreferenceKeySideMargins] * self.configuration.scale;
+        MARGIN_HEIGHT = [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins] * self.configuration.scale;
     } else {
         // MTKView inset on sides and top to avoid overlapping rounded corners too much.
-        MARGIN_WIDTH = MAX(0, [iTermAdvancedSettingsModel terminalMargin] - 1) * self.configuration.scale;
+        MARGIN_WIDTH = MAX(0, [iTermPreferences intForKey:kPreferenceKeySideMargins] - 1) * self.configuration.scale;
         MARGIN_HEIGHT = 0;
     }
 

@@ -23,6 +23,7 @@
 #import "iTermIndicatorsHelper.h"
 #import "iTermMutableAttributedStringBuilder.h"
 #import "iTermPreciseTimer.h"
+#import "iTermPreferences.h"
 #import "iTermSelection.h"
 #import "iTermTextExtractor.h"
 #import "iTermTimestampDrawHelper.h"
@@ -506,7 +507,7 @@ typedef struct iTermTextColorContext {
 
 //        NSLog(@"Paint background row %d range %@", line, NSStringFromRange(run->range));
 
-        NSRect rect = NSMakeRect(floor([iTermAdvancedSettingsModel terminalMargin] + run->range.location * _cellSize.width),
+        NSRect rect = NSMakeRect(floor([iTermPreferences intForKey:kPreferenceKeySideMargins] + run->range.location * _cellSize.width),
                                  yOrigin,
                                  ceil(run->range.length * _cellSize.width),
                                  _cellSize.height * rows);
@@ -641,9 +642,9 @@ typedef struct iTermTextColorContext {
     // Draw a margin at the top of the visible area.
     NSRect topMarginRect = _visibleRect;
     topMarginRect.origin.y -=
-        MAX(0, [iTermAdvancedSettingsModel terminalVMargin] - NSMinY(_delegate.enclosingScrollView.documentVisibleRect));
+        MAX(0, [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins] - NSMinY(_delegate.enclosingScrollView.documentVisibleRect));
 
-    topMarginRect.size.height = [iTermAdvancedSettingsModel terminalVMargin];
+    topMarginRect.size.height = [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins];
     [self.delegate drawingHelperDrawBackgroundImageInRect:topMarginRect
                                    blendDefaultBackground:YES];
 
@@ -653,10 +654,10 @@ typedef struct iTermTextColorContext {
 }
 
 - (void)drawMarginsAndMarkForLine:(int)line y:(CGFloat)y {
-    NSRect leftMargin = NSMakeRect(0, y, MAX(0, [iTermAdvancedSettingsModel terminalMargin]), _cellSize.height);
+    NSRect leftMargin = NSMakeRect(0, y, MAX(0, [iTermPreferences intForKey:kPreferenceKeySideMargins]), _cellSize.height);
     NSRect rightMargin;
     NSRect visibleRect = _visibleRect;
-    rightMargin.origin.x = _cellSize.width * _gridSize.width + [iTermAdvancedSettingsModel terminalMargin];
+    rightMargin.origin.x = _cellSize.width * _gridSize.width + [iTermPreferences intForKey:kPreferenceKeySideMargins];
     rightMargin.origin.y = y;
     rightMargin.size.width = visibleRect.size.width - rightMargin.origin.x;
     rightMargin.size.height = _cellSize.height;
@@ -716,7 +717,7 @@ typedef struct iTermTextColorContext {
         return;
     }
     [_cursorGuideColor set];
-    NSPoint textOrigin = NSMakePoint([iTermAdvancedSettingsModel terminalMargin] + range.location * _cellSize.width, yOrigin);
+    NSPoint textOrigin = NSMakePoint([iTermPreferences intForKey:kPreferenceKeySideMargins] + range.location * _cellSize.width, yOrigin);
     NSRect rect = NSMakeRect(textOrigin.x,
                              textOrigin.y,
                              range.length * _cellSize.width,
@@ -836,11 +837,11 @@ typedef struct iTermTextColorContext {
     if (noteRanges.count) {
         for (NSValue *value in noteRanges) {
             VT100GridRange range = [value gridRangeValue];
-            CGFloat x = range.location * _cellSize.width + [iTermAdvancedSettingsModel terminalMargin];
+            CGFloat x = range.location * _cellSize.width + [iTermPreferences intForKey:kPreferenceKeySideMargins];
             CGFloat y = line * _cellSize.height;
             [[NSColor yellowColor] set];
 
-            CGFloat maxX = MIN(_frame.size.width - [iTermAdvancedSettingsModel terminalMargin], range.length * _cellSize.width + x);
+            CGFloat maxX = MIN(_frame.size.width - [iTermPreferences intForKey:kPreferenceKeySideMargins], range.length * _cellSize.width + x);
             CGFloat w = maxX - x;
             NSRectFill(NSMakeRect(x, y + _cellSize.height - 1.5, w, 1));
             [[NSColor orangeColor] set];
@@ -1095,7 +1096,7 @@ typedef struct iTermTextColorContext {
     NSData *matches = [_delegate drawingHelperMatchesOnLine:line];
     for (iTermBoxedBackgroundColorRun *box in backgroundRuns) {
         iTermBackgroundColorRun *run = box.valuePointer;
-        NSPoint textOrigin = NSMakePoint([iTermAdvancedSettingsModel terminalMargin] + run->range.location * _cellSize.width,
+        NSPoint textOrigin = NSMakePoint([iTermPreferences intForKey:kPreferenceKeySideMargins] + run->range.location * _cellSize.width,
                                          y);
         [self constructAndDrawRunsForLine:theLine
                                       row:line
@@ -2690,7 +2691,7 @@ static BOOL iTermTextDrawingHelperShouldAntiAlias(screen_char_t *c,
                             _normalization,
                             self.unicodeVersion);
         int cursorX = 0;
-        int baseX = floor(xStart * _cellSize.width + [iTermAdvancedSettingsModel terminalMargin]);
+        int baseX = floor(xStart * _cellSize.width + [iTermPreferences intForKey:kPreferenceKeySideMargins]);
         int i;
         int y = (yStart + _numberOfLines - height) * _cellSize.height;
         int cursorY = y;
@@ -2769,14 +2770,14 @@ static BOOL iTermTextDrawingHelperShouldAntiAlias(screen_char_t *c,
             } else {
                 justWrapped = NO;
             }
-            x = floor(xStart * _cellSize.width + [iTermAdvancedSettingsModel terminalMargin]);
+            x = floor(xStart * _cellSize.width + [iTermPreferences intForKey:kPreferenceKeySideMargins]);
             y = (yStart + _numberOfLines - height) * _cellSize.height;
             i += charsInLine;
         }
 
         if (!foundCursor && i == cursorIndex) {
             if (justWrapped) {
-                cursorX = [iTermAdvancedSettingsModel terminalMargin] + width * _cellSize.width;
+                cursorX = [iTermPreferences intForKey:kPreferenceKeySideMargins] + width * _cellSize.width;
                 cursorY = preWrapY;
             } else {
                 cursorX = x;
@@ -2784,7 +2785,7 @@ static BOOL iTermTextDrawingHelperShouldAntiAlias(screen_char_t *c,
             }
         }
         const double kCursorWidth = 2.0;
-        double rightMargin = [iTermAdvancedSettingsModel terminalMargin] + _gridSize.width * _cellSize.width;
+        double rightMargin = [iTermPreferences intForKey:kPreferenceKeySideMargins] + _gridSize.width * _cellSize.width;
         if (cursorX + kCursorWidth >= rightMargin) {
             // Make sure the cursor doesn't draw in the margin. Shove it left
             // a little bit so it fits.
@@ -2813,13 +2814,13 @@ static BOOL iTermTextDrawingHelperShouldAntiAlias(screen_char_t *c,
     const int rowNumber = cursorCoord.y + _numberOfLines - _gridSize.height;
     if ([iTermAdvancedSettingsModel fullHeightCursor]) {
         const CGFloat height = MAX(_cellSize.height, _cellSizeWithoutSpacing.height);
-        return NSMakeRect(floor(cursorCoord.x * _cellSize.width + [iTermAdvancedSettingsModel terminalMargin]),
+        return NSMakeRect(floor(cursorCoord.x * _cellSize.width + [iTermPreferences intForKey:kPreferenceKeySideMargins]),
                           rowNumber * _cellSize.height,
                           MIN(_cellSize.width, _cellSizeWithoutSpacing.width),
                           height);
     } else {
         const CGFloat height = MIN(_cellSize.height, _cellSizeWithoutSpacing.height);
-        return NSMakeRect(floor(cursorCoord.x * _cellSize.width + [iTermAdvancedSettingsModel terminalMargin]),
+        return NSMakeRect(floor(cursorCoord.x * _cellSize.width + [iTermPreferences intForKey:kPreferenceKeySideMargins]),
                           rowNumber * _cellSize.height + MAX(0, round((_cellSize.height - _cellSizeWithoutSpacing.height) / 2.0)),
                           MIN(_cellSize.width, _cellSizeWithoutSpacing.width),
                           height);
@@ -3085,7 +3086,7 @@ static BOOL iTermTextDrawingHelperShouldAntiAlias(screen_char_t *c,
 #pragma mark - Coord/Rect Utilities
 
 - (NSRange)rangeOfVisibleRows {
-    int visibleRows = floor((_scrollViewContentSize.height - [iTermAdvancedSettingsModel terminalVMargin] * 2) / _cellSize.height);
+    int visibleRows = floor((_scrollViewContentSize.height - [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins] * 2) / _cellSize.height);
     CGFloat top = _scrollViewDocumentVisibleRect.origin.y;
     int firstVisibleRow = floor(top / _cellSize.height);
     if (firstVisibleRow < 0) {
@@ -3102,14 +3103,14 @@ static BOOL iTermTextDrawingHelperShouldAntiAlias(screen_char_t *c,
 }
 
 - (VT100GridCoordRange)coordRangeForRect:(NSRect)rect {
-    return VT100GridCoordRangeMake(floor((rect.origin.x - [iTermAdvancedSettingsModel terminalMargin]) / _cellSize.width),
+    return VT100GridCoordRangeMake(floor((rect.origin.x - [iTermPreferences intForKey:kPreferenceKeySideMargins]) / _cellSize.width),
                                    floor(rect.origin.y / _cellSize.height),
-                                   ceil((NSMaxX(rect) - [iTermAdvancedSettingsModel terminalMargin]) / _cellSize.width),
+                                   ceil((NSMaxX(rect) - [iTermPreferences intForKey:kPreferenceKeySideMargins]) / _cellSize.width),
                                    ceil(NSMaxY(rect) / _cellSize.height));
 }
 
 - (NSRect)rectForCoordRange:(VT100GridCoordRange)coordRange {
-    return NSMakeRect(coordRange.start.x * _cellSize.width + [iTermAdvancedSettingsModel terminalMargin],
+    return NSMakeRect(coordRange.start.x * _cellSize.width + [iTermPreferences intForKey:kPreferenceKeySideMargins],
                       coordRange.start.y * _cellSize.height,
                       (coordRange.end.x - coordRange.start.x) * _cellSize.width,
                       (coordRange.end.y - coordRange.start.y) * _cellSize.height);
@@ -3132,8 +3133,8 @@ static BOOL iTermTextDrawingHelperShouldAntiAlias(screen_char_t *c,
 
 - (NSRange)rangeOfColumnsFrom:(CGFloat)x ofWidth:(CGFloat)width {
     NSRange charRange;
-    charRange.location = MAX(0, (x - [iTermAdvancedSettingsModel terminalMargin]) / _cellSize.width);
-    charRange.length = ceil((x + width - [iTermAdvancedSettingsModel terminalMargin]) / _cellSize.width) - charRange.location;
+    charRange.location = MAX(0, (x - [iTermPreferences intForKey:kPreferenceKeySideMargins]) / _cellSize.width);
+    charRange.length = ceil((x + width - [iTermPreferences intForKey:kPreferenceKeySideMargins]) / _cellSize.width) - charRange.location;
     if (charRange.location + charRange.length > _gridSize.width) {
         charRange.length = _gridSize.width - charRange.location;
     }
@@ -3270,7 +3271,7 @@ static BOOL iTermTextDrawingHelperShouldAntiAlias(screen_char_t *c,
     [self constructAndDrawRunsForLine:line
                                   row:row
                               inRange:NSMakeRange(0, _gridSize.width)
-                      startingAtPoint:NSMakePoint([iTermAdvancedSettingsModel terminalMargin], row * _cellSize.height)
+                      startingAtPoint:NSMakePoint([iTermPreferences intForKey:kPreferenceKeySideMargins], row * _cellSize.height)
                            bgselected:NO
                               bgColor:backgroundColor
              processedBackgroundColor:backgroundColor

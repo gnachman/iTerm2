@@ -653,7 +653,7 @@
 
 - (long long)absoluteScrollPosition {
     NSRect visibleRect = [self visibleRect];
-    long long localOffset = (visibleRect.origin.y + [iTermAdvancedSettingsModel terminalVMargin]) / [self lineHeight];
+    long long localOffset = (visibleRect.origin.y + [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins]) / [self lineHeight];
     return localOffset + [_dataSource totalScrollbackOverflow];
 }
 
@@ -661,7 +661,7 @@
 {
     NSRect aFrame;
     aFrame.origin.x = 0;
-    aFrame.origin.y = (absOff - [_dataSource totalScrollbackOverflow]) * _lineHeight - [iTermAdvancedSettingsModel terminalVMargin];
+    aFrame.origin.y = (absOff - [_dataSource totalScrollbackOverflow]) * _lineHeight - [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins];
     aFrame.size.width = [self frame].size.width;
     aFrame.size.height = _lineHeight * height;
     [self scrollRectToVisible: aFrame];
@@ -714,7 +714,7 @@
     [self withRelativeCoordRange:[_selection spanningAbsRange] block:^(VT100GridCoordRange range) {
         NSRect aFrame;
         aFrame.origin.x = 0;
-        aFrame.origin.y = range.start.y * _lineHeight - [iTermAdvancedSettingsModel terminalVMargin];  // allow for top margin
+        aFrame.origin.y = range.start.y * _lineHeight - [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins];  // allow for top margin
         aFrame.size.width = [self frame].size.width;
         aFrame.size.height = (range.end.y - range.start.y + 1) * _lineHeight;
         [self scrollRectToVisible: aFrame];
@@ -733,7 +733,7 @@
 
 - (void)_scrollToCenterLine:(int)line {
     NSRect visible = [self visibleRect];
-    int visibleLines = (visible.size.height - [iTermAdvancedSettingsModel terminalVMargin] * 2) / _lineHeight;
+    int visibleLines = (visible.size.height - [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins] * 2) / _lineHeight;
     int lineMargin = (visibleLines - 1) / 2;
     double margin = lineMargin * _lineHeight;
 
@@ -848,7 +848,7 @@
     const int x = allowPartialLineRedraw ? range.location : 0;
     const int maxX = range.location + range.length;
 
-    dirtyRect.origin.x = [iTermAdvancedSettingsModel terminalMargin] + x * _charWidth;
+    dirtyRect.origin.x = [iTermPreferences intForKey:kPreferenceKeySideMargins] + x * _charWidth;
     dirtyRect.origin.y = y * _lineHeight;
     dirtyRect.size.width = allowPartialLineRedraw ? (maxX - x) * _charWidth : _dataSource.width;
     dirtyRect.size.height = _lineHeight;
@@ -871,7 +871,7 @@
     }
     int imeLines = ([_dataSource cursorX] - 1 + [self inputMethodEditorLength] + 1) / [_dataSource width] + 1;
 
-    NSRect imeRect = NSMakeRect([iTermAdvancedSettingsModel terminalMargin],
+    NSRect imeRect = NSMakeRect([iTermPreferences intForKey:kPreferenceKeySideMargins],
                                 ([_dataSource cursorY] - 1 + [_dataSource numberOfLines] - [_dataSource height]) * _lineHeight,
                                 [_dataSource width] * _charWidth,
                                 imeLines * _lineHeight);
@@ -1308,10 +1308,10 @@
 // This is 2 except for just after the frame has changed and things are resizing.
 - (double)excess {
     NSRect visible = [self scrollViewContentSize];
-    visible.size.height -= [iTermAdvancedSettingsModel terminalVMargin] * 2;  // Height without top and bottom margins.
+    visible.size.height -= [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins] * 2;  // Height without top and bottom margins.
     int rows = visible.size.height / _lineHeight;
     double usablePixels = rows * _lineHeight;
-    return MAX(visible.size.height - usablePixels + [iTermAdvancedSettingsModel terminalVMargin], [iTermAdvancedSettingsModel terminalVMargin]);  // Never have less than VMARGIN excess, but it can be more (if another tab has a bigger font)
+    return MAX(visible.size.height - usablePixels + [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins], [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins]);  // Never have less than VMARGIN excess, but it can be more (if another tab has a bigger font)
 }
 
 - (void)maybeInvalidateWindowShadow {
@@ -1431,7 +1431,7 @@
 - (NSRect)visibleContentRect {
     NSRect visibleRect = [[self enclosingScrollView] documentVisibleRect];
     visibleRect.size.height -= [self excess];
-    visibleRect.size.height -= [iTermAdvancedSettingsModel terminalVMargin];
+    visibleRect.size.height -= [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins];
     return visibleRect;
 }
 
@@ -1759,7 +1759,7 @@
 
 - (BOOL)_isTextBlinking {
     int width = [_dataSource width];
-    int lineStart = ([self visibleRect].origin.y + [iTermAdvancedSettingsModel terminalVMargin]) / _lineHeight;  // add VMARGIN because stuff under top margin isn't visible.
+    int lineStart = ([self visibleRect].origin.y + [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins]) / _lineHeight;  // add VMARGIN because stuff under top margin isn't visible.
     int lineEnd = ceil(([self visibleRect].origin.y + [self visibleRect].size.height - [self excess]) / _lineHeight);
     if (lineStart < 0) {
         lineStart = 0;
@@ -2066,7 +2066,7 @@
     BOOL anyBlinkers = NO;
     // Visible chars that have changed selection status are dirty
     // Also mark blinking text as dirty if needed
-    int lineStart = ([self visibleRect].origin.y + [iTermAdvancedSettingsModel terminalVMargin]) / _lineHeight;  // add VMARGIN because stuff under top margin isn't visible.
+    int lineStart = ([self visibleRect].origin.y + [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins]) / _lineHeight;  // add VMARGIN because stuff under top margin isn't visible.
     int lineEnd = ceil(([self visibleRect].origin.y + [self visibleRect].size.height - [self excess]) / _lineHeight);
     if (lineStart < 0) {
         lineStart = 0;
@@ -2425,7 +2425,7 @@
     int width = [_dataSource width];
     if (locationInTextView.y == 0) {
         x = y = 0;
-    } else if (locationInTextView.x < [iTermAdvancedSettingsModel terminalMargin] && _selection.liveRange.coordRange.start.y < y) {
+    } else if (locationInTextView.x < [iTermPreferences intForKey:kPreferenceKeySideMargins] && _selection.liveRange.coordRange.start.y < y) {
         // complete selection of previous line
         x = width;
         y--;
@@ -2875,7 +2875,7 @@
                 (PTYNoteViewController *)noteView.delegate.noteViewController;
             VT100GridCoordRange coordRange = [_dataSource coordRangeOfNote:note];
             if (coordRange.end.y >= 0) {
-                [note setAnchor:NSMakePoint(coordRange.end.x * _charWidth + [iTermAdvancedSettingsModel terminalMargin],
+                [note setAnchor:NSMakePoint(coordRange.end.x * _charWidth + [iTermPreferences intForKey:kPreferenceKeySideMargins],
                                             (1 + coordRange.end.y) * _lineHeight)];
             }
         }
@@ -3289,7 +3289,7 @@
     // drag from center of the image
     NSPoint dragPoint = [self convertPoint:[theEvent locationInWindow] fromView:nil];
 
-    VT100GridCoord coord = VT100GridCoordMake((dragPoint.x - [iTermAdvancedSettingsModel terminalMargin]) / _charWidth,
+    VT100GridCoord coord = VT100GridCoordMake((dragPoint.x - [iTermPreferences intForKey:kPreferenceKeySideMargins]) / _charWidth,
                                               dragPoint.y / _lineHeight);
     screen_char_t* theLine = [_dataSource getLineAtIndex:coord.y];
     if (theLine &&
@@ -3304,7 +3304,7 @@
                                                             coord.y - pos.y);
 
         // Compute the pixel coordinate of the image's top left point
-        NSPoint imageTopLeftPoint = NSMakePoint(imageCellOrigin.x * _charWidth + [iTermAdvancedSettingsModel terminalMargin],
+        NSPoint imageTopLeftPoint = NSMakePoint(imageCellOrigin.x * _charWidth + [iTermPreferences intForKey:kPreferenceKeySideMargins],
                                                 imageCellOrigin.y * _lineHeight);
 
         // Compute the distance from the click location to the image's origin
@@ -3692,7 +3692,7 @@
     int y = [_dataSource cursorY] - 1;
     int x = [_dataSource cursorX] - 1;
 
-    NSRect rect=NSMakeRect(x * _charWidth + [iTermAdvancedSettingsModel terminalMargin],
+    NSRect rect=NSMakeRect(x * _charWidth + [iTermPreferences intForKey:kPreferenceKeySideMargins],
                            (y + [_dataSource numberOfLines] - [_dataSource height] + 1) * _lineHeight,
                            _charWidth * theRange.length,
                            _lineHeight);
@@ -3793,7 +3793,7 @@
 }
 
 - (NSRect)frameForCoord:(VT100GridCoord)coord {
-    return NSMakeRect(MAX(0, floor(coord.x * _charWidth + [iTermAdvancedSettingsModel terminalMargin])),
+    return NSMakeRect(MAX(0, floor(coord.x * _charWidth + [iTermPreferences intForKey:kPreferenceKeySideMargins])),
                       MAX(0, coord.y * _lineHeight),
                       _charWidth,
                       _lineHeight);
@@ -3934,7 +3934,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     int lineStart = [_dataSource numberOfLines] - [_dataSource height];
     int cursorX = [_dataSource cursorX] - 1;
     int cursorY = [_dataSource cursorY] - 1;
-    return NSMakeRect([iTermAdvancedSettingsModel terminalMargin] + cursorX * _charWidth,
+    return NSMakeRect([iTermPreferences intForKey:kPreferenceKeySideMargins] + cursorX * _charWidth,
                       (lineStart + cursorY) * _lineHeight,
                       _charWidth,
                       _lineHeight);
@@ -4304,7 +4304,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     int height = [_dataSource height];
     rect.origin.y = numLines - height;
     rect.origin.y *= _lineHeight;
-    rect.origin.x = [iTermAdvancedSettingsModel terminalMargin];
+    rect.origin.x = [iTermPreferences intForKey:kPreferenceKeySideMargins];
     rect.size.width = _charWidth * [_dataSource width];
     rect.size.height = _lineHeight * [_dataSource height];
     return rect;
@@ -4668,7 +4668,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     NSRect windowRect = [self.window convertRectFromScreen:screenRect];
     NSPoint locationInTextView = [self convertPoint:windowRect.origin fromView:nil];
     NSRect visibleRect = [[self enclosingScrollView] documentVisibleRect];
-    int x = (locationInTextView.x - [iTermAdvancedSettingsModel terminalMargin] - visibleRect.origin.x) / _charWidth;
+    int x = (locationInTextView.x - [iTermPreferences intForKey:kPreferenceKeySideMargins] - visibleRect.origin.x) / _charWidth;
     int y = locationInTextView.y / _lineHeight;
     return VT100GridCoordMake(x, [self accessibilityHelperAccessibilityLineNumberForLineNumber:y]);
 }
@@ -4676,7 +4676,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 - (NSRect)accessibilityHelperFrameForCoordRange:(VT100GridCoordRange)coordRange {
     coordRange.start.y = [self accessibilityHelperLineNumberForAccessibilityLineNumber:coordRange.start.y];
     coordRange.end.y = [self accessibilityHelperLineNumberForAccessibilityLineNumber:coordRange.end.y];
-    NSRect result = NSMakeRect(MAX(0, floor(coordRange.start.x * _charWidth + [iTermAdvancedSettingsModel terminalMargin])),
+    NSRect result = NSMakeRect(MAX(0, floor(coordRange.start.x * _charWidth + [iTermPreferences intForKey:kPreferenceKeySideMargins])),
                                MAX(0, coordRange.start.y * _lineHeight),
                                MAX(0, (coordRange.end.x - coordRange.start.x) * _charWidth),
                                MAX(0, (coordRange.end.y - coordRange.start.y + 1) * _lineHeight));

@@ -57,6 +57,7 @@
 #import "iTermMultiServerJobManager.h"
 #import "iTermObject.h"
 #import "iTermOpenDirectory.h"
+#import "iTermPreferences.h"
 #import "iTermScriptConsole.h"
 #import "iTermScriptHistory.h"
 #import "iTermStandardKeyMapper.h"
@@ -1744,7 +1745,7 @@ ITERM_WEAKLY_REFERENCEABLE
     NSSize aSize = [_view.scrollview contentSize];
     _wrapper = [[TextViewWrapper alloc] initWithFrame:NSMakeRect(0, 0, aSize.width, aSize.height)];
 
-    _textview = [[PTYTextView alloc] initWithFrame: NSMakeRect(0, [iTermAdvancedSettingsModel terminalVMargin], aSize.width, aSize.height)
+    _textview = [[PTYTextView alloc] initWithFrame: NSMakeRect(0, [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins], aSize.width, aSize.height)
                                           colorMap:_colorMap];
     _textview.keyboardHandler.keyMapper = _keyMapper;
     if (@available(macOS 10.14, *)) {
@@ -1763,7 +1764,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [self setTransparencyAffectsOnlyDefaultBackgroundColor:[[_profile objectForKey:KEY_TRANSPARENCY_AFFECTS_ONLY_DEFAULT_BACKGROUND_COLOR] boolValue]];
 
     [_wrapper addSubview:_textview];
-    [_textview setFrame:NSMakeRect(0, [iTermAdvancedSettingsModel terminalVMargin], aSize.width, aSize.height - [iTermAdvancedSettingsModel terminalVMargin])];
+    [_textview setFrame:NSMakeRect(0, [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins], aSize.width, aSize.height - [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins])];
 
     // assign terminal and task objects
     _terminal.delegate = _screen;
@@ -1780,8 +1781,8 @@ ITERM_WEAKLY_REFERENCEABLE
                                                     controlSize:NSControlSizeRegular
                                                   scrollerStyle:_view.scrollview.scrollerStyle];
 
-    int width = (contentSize.width - [iTermAdvancedSettingsModel terminalMargin]*2) / [_textview charWidth];
-    int height = (contentSize.height - [iTermAdvancedSettingsModel terminalVMargin]*2) / [_textview lineHeight];
+    int width = (contentSize.width - [iTermPreferences intForKey:kPreferenceKeySideMargins]*2) / [_textview charWidth];
+    int height = (contentSize.height - [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins]*2) / [_textview lineHeight];
     [_screen destructivelySetScreenWidth:width height:height];
     [self.variablesScope setValuesFromDictionary:@{ iTermVariableKeySessionColumns: @(width),
                                                     iTermVariableKeySessionRows: @(height) }];
@@ -1951,7 +1952,7 @@ ITERM_WEAKLY_REFERENCEABLE
         if (_view.showBottomStatusBar) {
             result -= iTermGetStatusBarHeight();
         }
-        result -= [iTermAdvancedSettingsModel terminalVMargin] * 2;
+        result -= [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins] * 2;
         int iLineHeight = [_textview lineHeight];
         if (iLineHeight == 0) {
             return 0;
@@ -1962,7 +1963,7 @@ ITERM_WEAKLY_REFERENCEABLE
         }
         return result;
     } else {
-        result -= [iTermAdvancedSettingsModel terminalMargin] * 2;
+        result -= [iTermPreferences intForKey:kPreferenceKeySideMargins] * 2;
         int iCharWidth = [_textview charWidth];
         if (iCharWidth == 0) {
             return 0;
@@ -3284,8 +3285,8 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (NSSize)idealScrollViewSizeWithStyle:(NSScrollerStyle)scrollerStyle {
-    NSSize innerSize = NSMakeSize([_screen width] * [_textview charWidth] + [iTermAdvancedSettingsModel terminalMargin] * 2,
-                                  [_screen height] * [_textview lineHeight] + [iTermAdvancedSettingsModel terminalVMargin] * 2);
+    NSSize innerSize = NSMakeSize([_screen width] * [_textview charWidth] + [iTermPreferences intForKey:kPreferenceKeySideMargins] * 2,
+                                  [_screen height] * [_textview lineHeight] + [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins] * 2);
     BOOL hasScrollbar = [[_delegate realParentWindow] scrollbarShouldBeVisible];
     NSSize outerSize =
         [PTYScrollView frameSizeForContentSize:innerSize
@@ -5943,8 +5944,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         const BOOL nativeFullScreen = !!(self.view.window.styleMask & NSWindowStyleMaskFullScreen);
         const BOOL untitled = self.view.window && !(self.view.window.styleMask & NSWindowStyleMaskTitled);
         const BOOL hasSquareCorners = untitled || nativeFullScreen;
-        const BOOL marginsOk = ([iTermAdvancedSettingsModel terminalVMargin] >= 2 &&
-                                [iTermAdvancedSettingsModel terminalMargin] >= 1);  // Smaller margins break rounded window corners
+        const BOOL marginsOk = ([iTermPreferences intForKey:kPreferenceKeyTopBottomMargins] >= 2 &&
+                                [iTermPreferences intForKey:kPreferenceKeySideMargins] >= 1);  // Smaller margins break rounded window corners
         const BOOL safeForWindowCorners = (hasSquareCorners || marginsOk);
         if (!safeForWindowCorners) {
             if (reason) {
@@ -9043,7 +9044,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     const CGFloat desiredHeight = _textview.desiredHeight;
     if (fabs(desiredHeight - NSHeight(frame)) >= 0.5) {
         // Update the wrapper's size, which in turn updates textview's size.
-        frame.size.height = desiredHeight + [iTermAdvancedSettingsModel terminalVMargin];  // The wrapper is always larger by VMARGIN.
+        frame.size.height = desiredHeight + [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins];  // The wrapper is always larger by VMARGIN.
         _wrapper.frame = frame;
 
         NSAccessibilityPostNotification(_textview,
@@ -12110,7 +12111,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (CGFloat)sessionViewDesiredHeightOfDocumentView {
-    return _textview.desiredHeight + [iTermAdvancedSettingsModel terminalVMargin];
+    return _textview.desiredHeight + [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins];
 }
 
 - (BOOL)sessionViewShouldUpdateSubviewsFramesAutomatically {

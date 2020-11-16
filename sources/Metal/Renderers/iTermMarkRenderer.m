@@ -1,6 +1,7 @@
 #import "iTermMarkRenderer.h"
 
 #import "iTermAdvancedSettingsModel.h"
+#import "iTermPreferences.h"
 #import "iTermTextDrawingHelper.h"
 #import "iTermTextureArray.h"
 #import "iTermMetalCellRenderer.h"
@@ -100,7 +101,7 @@
 
     CGRect leftMarginRect = CGRectMake(1,
                                        0,
-                                       ([iTermAdvancedSettingsModel terminalMargin] - 1) * scale,
+                                       ([iTermPreferences intForKey:kPreferenceKeySideMargins] - 1) * scale,
                                        tState.cellConfiguration.cellSize.height);
     CGRect markRect = [iTermTextDrawingHelper frameForMarkContainedInRect:leftMarginRect
                                                                  cellSize:tState.cellConfiguration.cellSize

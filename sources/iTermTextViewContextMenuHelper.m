@@ -97,7 +97,7 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
                                         workingDirectoryOnLine:y];
         markMenu = [self menuForMark:mark directory:workingDirectory];
         NSPoint locationInWindow = [event locationInWindow];
-        if (locationInWindow.x < [iTermAdvancedSettingsModel terminalMargin]) {
+        if (locationInWindow.x < [iTermPreferences intForKey:kPreferenceKeySideMargins]) {
             return markMenu;
         }
     }

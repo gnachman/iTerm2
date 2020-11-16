@@ -99,6 +99,14 @@ NSString *const iTermProcessTypeDidChangeNotification = @"iTermProcessTypeDidCha
 
     IBOutlet NSTabView *_tabView;
     NSRect _desiredFrame;
+
+    IBOutlet NSTextField *_sideMarginsLabel;
+    IBOutlet NSTextField *_sideMargins;
+    IBOutlet NSStepper *_sideMarginsStepper;
+
+    IBOutlet NSTextField *_topBottomMarginsLabel;
+    IBOutlet NSTextField *_topBottomMargins;
+    IBOutlet NSStepper *_topBottomMarginsStepper;
 }
 
 - (void)awakeFromNib {
@@ -141,6 +149,23 @@ NSString *const iTermProcessTypeDidChangeNotification = @"iTermProcessTypeDidCha
         [weakSelf updateProxyIconEnabled];
     };
 
+    info = [self defineControl:_sideMargins
+                           key:kPreferenceKeySideMargins
+                   relatedView:_sideMarginsLabel
+                          type:kPreferenceInfoTypeIntegerTextField];
+    [self associateStepper:_sideMarginsStepper withPreference:info];
+    info.onChange = ^{
+        [weakSelf postRefreshNotification];
+    };
+
+    info = [self defineControl:_topBottomMargins
+                           key:kPreferenceKeyTopBottomMargins
+                   relatedView:_topBottomMarginsLabel
+                          type:kPreferenceInfoTypeIntegerTextField];
+    info.onChange = ^{
+        [weakSelf postRefreshNotification];
+    };
+    [self associateStepper:_topBottomMarginsStepper withPreference:info];
 
     info = [self defineControl:_hideTab
                            key:kPreferenceKeyHideTabBar

@@ -77,6 +77,8 @@ NSString *const kPreferenceKeyTabStyle_Deprecated = @"TabStyle";  // Pre-10.14
 NSString *const kPreferenceKeyTabStyle = @"TabStyleWithAutomaticOption";  // Pre-10.14
 NSString *const kPreferenceKeyTabPosition = @"TabViewType";
 NSString *const kPreferenceKeyStatusBarPosition = @"StatusBarPosition";
+NSString *const kPreferenceKeySideMargins = @"TerminalMargin";
+NSString *const kPreferenceKeyTopBottomMargins = @"TerminalVMargin";
 NSString *const kPreferenceKeyHideTabBar = @"HideTab";
 NSString *const kPreferenceKeyHideTabNumber = @"HideTabNumber";
 NSString *const kPreferenceKeyPreserveWindowSizeWhenTabBarVisibilityChanges = @"PreserveWindowSizeWhenTabBarVisibilityChanges";
@@ -346,6 +348,8 @@ static NSString *sPreviousVersion;
                   
                   kPreferenceKeyTabPosition: @(TAB_POSITION_TOP),
                   kPreferenceKeyStatusBarPosition: @(iTermStatusBarPositionTop),
+                  kPreferenceKeyTopBottomMargins: @2,
+                  kPreferenceKeySideMargins: @5,
                   kPreferenceKeyHideTabBar: @YES,
                   kPreferenceKeyHideTabNumber: @NO,
                   kPreferenceKeyPreserveWindowSizeWhenTabBarVisibilityChanges: @NO,

@@ -8,6 +8,7 @@
 #import "iTermTimestampDrawHelper.h"
 
 #import "iTermAdvancedSettingsModel.h"
+#import "iTermPreferences.h"
 #import "NSColor+iTerm.h"
 #import "RegexKitLite.h"
 
@@ -101,7 +102,7 @@ const CGFloat iTermTimestampGradientWidth = 20;
 }
 
 - (CGFloat)suggestedWidth {
-    return _maximumWidth + [iTermAdvancedSettingsModel terminalMargin] + iTermTimestampGradientWidth;
+    return _maximumWidth + [iTermPreferences intForKey:kPreferenceKeySideMargins] + iTermTimestampGradientWidth;
 }
 
 #pragma mark - Draw Methods
@@ -161,7 +162,7 @@ const CGFloat iTermTimestampGradientWidth = 20;
 }
 
 - (NSRect)frameForStringGivenWidth:(CGFloat)width line:(int)line maxX:(CGFloat)maxX {
-    const int w = width + [iTermAdvancedSettingsModel terminalMargin];
+    const int w = width + [iTermPreferences intForKey:kPreferenceKeySideMargins];
     const int x = MAX(0, maxX - w);
     const CGFloat y = line * _rowHeight;
 
