@@ -246,7 +246,11 @@ float ComputeWeightOfUnderlineInverted(int underlineStyle,  // iTermMetalGlyphAt
     if (weight == 0) {
         return 0;
     }
-    if (clipSpacePosition.x >= cellOffset.x + cellSize.x) {
+    const float margin = (glyphSize.x - cellSize.x) / 2;
+    if (clipSpacePosition.x < cellOffset.x + margin) {
+        return 0;
+    }
+    if (clipSpacePosition.x >= cellOffset.x + margin + cellSize.x) {
         return 0;
     }
     if (underlineStyle == iTermMetalGlyphAttributesUnderlineStrikethrough || solid) {
@@ -314,7 +318,11 @@ float ComputeWeightOfUnderlineRegular(int underlineStyle,  // iTermMetalGlyphAtt
     if (weight == 0) {
         return 0;
     }
-    if (clipSpacePosition.x >= cellOffset.x + cellSize.x) {
+    const float margin = (glyphSize.x - cellSize.x) / 2;
+    if (clipSpacePosition.x < cellOffset.x + margin) {
+        return 0;
+    }
+    if (clipSpacePosition.x >= cellOffset.x + margin + cellSize.x) {
         return 0;
     }
     if (underlineStyle == iTermMetalGlyphAttributesUnderlineStrikethrough || solid) {
