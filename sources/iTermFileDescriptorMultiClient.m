@@ -1186,8 +1186,9 @@ static void HexDump(NSData *data) {
     const ssize_t bytesWritten = iTermFileDescriptorClientWrite(state.writeFD,
                                                                 data.bytes,
                                                                 data.length);
-    DLog(@"Wrote %@/%@", @(bytesWritten), @(data.length));
-    if (bytesWritten < 0) {
+    const int savedErrno = errno;
+    DLog(@"Wrote %@/%@ error=%s", @(bytesWritten), @(data.length), strerror(savedErrno));
+    if (bytesWritten < 0 && errno != EAGAIN) {
         DLog(@"Write failed to %@: %s", _socketPath, strerror(errno));
         [callback invokeWithObject:@NO];
         return;
@@ -1207,7 +1208,7 @@ static void HexDump(NSData *data) {
     DLog(@"Queue attempt to write in the future.");
     __weak __typeof(self) weakSelf = self;
     [state whenWritable:^(iTermFileDescriptorMultiClientState * _Nullable state) {
-        [weakSelf tryWrite:[data subdataFromOffset:bytesWritten]
+        [weakSelf tryWrite:[data subdataFromOffset:MAX(0, bytesWritten)]
                      state:state
                   callback:callback];
     }];
