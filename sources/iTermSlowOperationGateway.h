@@ -41,6 +41,8 @@ NS_ASSUME_NONNULL_BEGIN
                                      shell:(NSString *)shell
                                 completion:(void (^)(NSString *value))completion;
 
+- (void)runCommandInUserShell:(NSString *)command completion:(void (^)(NSString * _Nullable value))completion;
+
 @end
 
 NS_ASSUME_NONNULL_END

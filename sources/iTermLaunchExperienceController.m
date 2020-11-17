@@ -7,12 +7,21 @@
 
 #import "iTermLaunchExperienceController.h"
 
-#import "iTermAdvancedSettingsModel.h"
-#import "iTermOnboardingWindowController.h"
-#import "iTermPreferences.h"
-#import "iTermTipController.h"
-#import "iTermWarning.h"
+#import "NSArray+iTerm.h"
+#import "NSStringITerm.h"
 #import "PFMoveApplication.h"
+#import "PTYSession.h"
+#import "iTermAdvancedSettingsModel.h"
+#import "iTermController.h"
+#import "iTermOnboardingWindowController.h"
+#import "iTermOpenDirectory.h"
+#import "iTermOptionalComponentDownloadWindowController.h"
+#import "iTermPreferences.h"
+#import "iTermSlowOperationGateway.h"
+#import "iTermTipController.h"
+#import "iTermTuple.h"
+#import "iTermUserDefaults.h"
+#import "iTermWarning.h"
 
 @import Sparkle;
 
@@ -160,6 +169,7 @@ typedef NS_ENUM(NSUInteger, iTermLaunchExperienceChoice) {
 }
 
 - (void)applicationDidFinishLaunching {
+    [self checkIfSystemPythonModuleNeedsUpgrade];
     switch (_choice) {
         case iTermLaunchExperienceChoiceDefaultPasteBehaviorChangeWarning:
             [self.class quellAnnoyancesForDays:1];
@@ -175,6 +185,72 @@ typedef NS_ENUM(NSUInteger, iTermLaunchExperienceChoice) {
             [self showWhatsNewInThisVersion];
             return;
     }
+}
+
+- (void)checkIfSystemPythonModuleNeedsUpgrade {
+    // This must be a decimal number. No more than one dot.
+    NSString *minimumModuleVersionString = @"1.17";
+    NSDecimalNumber *const minimumModuleVersion = [NSDecimalNumber decimalNumberWithString:minimumModuleVersionString];
+    NSString *lastVersionString = [iTermUserDefaults lastSystemPythonVersionRequirement];
+    NSDecimalNumber *lastVersion = lastVersionString ? [NSDecimalNumber decimalNumberWithString:lastVersionString] : nil;
+    if (lastVersion && [lastVersion compare:minimumModuleVersion] != NSOrderedAscending) {
+        // No need to check this module version. Assume it's good.
+        return;
+    }
+    [[iTermSlowOperationGateway sharedInstance] runCommandInUserShell:@"pip3 show iterm2" completion:^(NSString * _Nullable value) {
+        NSArray<NSString *> *lines = [value componentsSeparatedByCharactersInSet:[NSCharacterSet newlineCharacterSet]];
+        NSArray<iTermTuple<NSString *, NSString *> *> *kvps = [lines mapWithBlock:^id(NSString *line) {
+            return [line it_stringBySplittingOnFirstSubstring:@":"];
+        }];
+        NSString *(^getHeader)(NSString *) = ^NSString *(NSString *desiredName) {
+            return [[kvps objectPassingTest:^BOOL(iTermTuple<NSString *,NSString *> *tuple, NSUInteger index, BOOL *stop) {
+                NSString *key = tuple.firstObject;
+                return [[[key stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]] lowercaseString] isEqualToString:desiredName];
+            }].secondObject stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
+        };
+        NSString *versionString = getHeader(@"version");
+        const NSDecimalNumber *version = [NSDecimalNumber decimalNumberWithString:versionString];
+        if (!version || [version isEqual:[NSDecimalNumber notANumber]] || !versionString || [version compare:minimumModuleVersion] != NSOrderedAscending) {
+            // Not installed or new enough.
+            [iTermUserDefaults setLastSystemPythonVersionRequirement:minimumModuleVersionString];
+            return;
+        }
+
+        NSString *location = getHeader(@"location");
+        NSString *command;
+        if ([location hasPrefix:@"/Library"]) {
+            command = @"sudo pip3 install --upgrade iterm2";
+        } else {
+            command = @"pip3 install --user --upgrade iterm2";
+        }
+        dispatch_async(dispatch_get_main_queue(), ^{
+            NSString *message = [NSString stringWithFormat:@"The system Python's iterm2 module is out of date and won't work with this version of iTerm2. Run `%@` to fix it.", command];
+            const iTermWarningSelection selection =
+            [iTermWarning showWarningWithTitle:message
+                                       actions:@[ @"Copy Command", @"Ignore", @"Remind me Later"]
+                                     accessory:nil
+                                    identifier:@"SystemPythonModuleOutdated"
+                                   silenceable:kiTermWarningTypePersistent
+                                       heading:@"Upgrade system Python iterm2 module?"
+                                        window:nil];
+            switch (selection) {
+                case kiTermWarningSelection0: {
+                    NSPasteboard *pboard = [NSPasteboard generalPasteboard];
+                    [pboard declareTypes:@[NSPasteboardTypeString] owner:NSApp];
+                    [pboard setString:command
+                              forType:NSPasteboardTypeString];
+                    return;
+                }
+                case kiTermWarningSelection1:
+                    [iTermUserDefaults setLastSystemPythonVersionRequirement:minimumModuleVersionString];
+                    return;
+                case kiTermWarningSelection2:
+                    return;
+                default:
+                    return;
+            }
+        });
+    }];
 }
 
 - (void)showWhatsNewInThisVersion {

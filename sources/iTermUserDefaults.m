@@ -26,6 +26,7 @@ static NSString *const iTermUserDefaultsKeyIgnoreSystemWindowRestoration = @"NoS
 static NSString *const iTermUserDefaultsKeyGlobalSearchMode = @"NoSyncGlobalSearchMode";
 static NSString *const iTermUserDefaultsKeyAddTriggerInstant = @"NoSyncAddTriggerInstant";
 static NSString *const iTermUserDefaultsKeyAddTriggerUpdateProfile = @"NoSyncAddTriggerUpdateProfile";
+static NSString *const iTermUserDefaultsKeyLastSystemPythonVersionRequirement = @"NoSyncLastSystemPythonVersionRequirement";
 
 @implementation iTermUserDefaults
 
@@ -199,4 +200,11 @@ static NSUserDefaults *iTermPrivateUserDefaults(void) {
     [self.userDefaults setObject:@(addTriggerUpdateProfile) forKey:iTermUserDefaultsKeyAddTriggerUpdateProfile];
 }
 
++ (NSString *)lastSystemPythonVersionRequirement {
+    return [self.userDefaults objectForKey:iTermUserDefaultsKeyLastSystemPythonVersionRequirement];
+}
+
++ (void)setLastSystemPythonVersionRequirement:(NSString *)lastSystemPythonVersionRequirement {
+    [self.userDefaults setObject:lastSystemPythonVersionRequirement forKey:iTermUserDefaultsKeyLastSystemPythonVersionRequirement];
+}
 @end

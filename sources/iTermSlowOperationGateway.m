@@ -140,4 +140,14 @@
     });
 }
 
+- (void)runCommandInUserShell:(NSString *)command completion:(void (^)(NSString *))completion {
+    [[_connectionToService remoteObjectProxy] runShellScript:command
+                                                       shell:[iTermOpenDirectory userShell] ?: @"/bin/bash"
+                                                   withReply:^(NSData * _Nullable data,
+                                                               NSData * _Nullable error,
+                                                               int status) {
+        completion(status == 0 ? [[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding] stringByTrimmingTrailingCharactersFromCharacterSet:[NSCharacterSet newlineCharacterSet]] : nil);
+    }];
+}
+
 @end
