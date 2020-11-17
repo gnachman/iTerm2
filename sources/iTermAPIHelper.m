@@ -496,9 +496,12 @@ static BOOL iTermAPIHelperLastApplescriptAuthRequiredSetting;
 + (BOOL)reallyCreateNoAuthFile:(NSWindow *)window {
     // Write to a temp file and then move it. If the destination is a link then it's not safe
     // to write to it.
-    NSString *sourceCode = [NSString stringWithFormat:@"do shell script \"umask 077; TF=$(mktemp); printf '%%s' '%@' > \\\"$TF\\\" && chmod a+r \\\"$TF\\\" && mv \\\"$TF\\\" %@ || rm -f \\\"$TF\\\"\" with administrator privileges",
+    NSString *path = [self noauthPath];
+    path = [path stringByReplacingOccurrencesOfString:@"\\" withString:@"\\\\"];
+    path = [path stringByReplacingOccurrencesOfString:@"\"" withString:@"\\\\\\\""];
+    NSString *sourceCode = [NSString stringWithFormat:@"do shell script \"umask 077; TF=$(mktemp); printf '%%s' '%@' > \\\"$TF\\\" && chmod a+r \\\"$TF\\\" && mv \\\"$TF\\\" \\\"%@\\\" || rm -f \\\"$TF\\\"\" with administrator privileges",
                             [self noauthMagic],
-                            [[self noauthPath] stringWithEscapedShellCharactersIncludingNewlines:YES]];
+                            path];
     NSAppleScript *script = [[NSAppleScript alloc] initWithSource:sourceCode];
     NSDictionary<NSString *, id> *dict = nil;
     [script executeAndReturnError:&dict];
