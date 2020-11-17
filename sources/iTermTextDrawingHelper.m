@@ -135,6 +135,11 @@ typedef struct iTermTextColorContext {
     NSColor *previousForegroundColor;
 } iTermTextColorContext;
 
+static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL hasBackgroundImage,
+                                                                         BOOL enableBlending,
+                                                                         BOOL reverseVideo,
+                                                                         CGFloat transparencyAlpha,
+                                                                         CGFloat blend);
 @implementation iTermTextDrawingHelper {
     NSFont *_cachedFont;
     CGFontRef _cgFont;
@@ -295,16 +300,36 @@ typedef struct iTermTextColorContext {
     // as seen in issue 5665. This will cause double-draws on the top and bottom margin, but that's
     // small enough that it probably won't matter.
     {
-        [[self.delegate drawingHelperColorForCode:ALTSEM_DEFAULT green:0 blue:0 colorMode:ColorModeAlternate bold:NO faint:NO isBackground:YES] set];
+        NSColor *color;
+        if (_hasBackgroundImage) {
+            color = [NSColor clearColor];
+        } else {
+            color = [self.delegate drawingHelperColorForCode:ALTSEM_DEFAULT
+                                                       green:0
+                                                        blue:0
+                                                   colorMode:ColorModeAlternate
+                                                        bold:NO
+                                                       faint:NO
+                                                isBackground:YES];
+            const CGFloat alpha = iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(_hasBackgroundImage,
+                                                                                            !iTermTextIsMonochrome(),
+                                                                                            _reverseVideo,
+                                                                                            _transparencyAlpha,
+                                                                                            _blend);
+            color = [color colorWithAlphaComponent:alpha];
+        }
+        [color set];
         const CGFloat minDrawnY = boundingCoordRange.start.y * _cellSize.height;
         CGFloat height = minDrawnY - NSMinY(rect);
         if (height > 0) {
-            NSRectFill(NSMakeRect(NSMinX(rect), NSMinY(rect), NSWidth(rect), height));
+            NSRectFillUsingOperation(NSMakeRect(NSMinX(rect), NSMinY(rect), NSWidth(rect), height),
+                                     NSCompositingOperationSourceOver);
         }
         const CGFloat maxDrawnY = (boundingCoordRange.end.y + 1) * _cellSize.height;
         height = NSMaxY(rect) - maxDrawnY;
         if (height > 0) {
-            NSRectFill(NSMakeRect(NSMinX(rect), maxDrawnY, NSWidth(rect), height));
+            NSRectFillUsingOperation(NSMakeRect(NSMinX(rect), maxDrawnY, NSWidth(rect), height),
+                                     NSCompositingOperationSourceOver);
         }
     }
     [self drawRanges:ranges count:numRowsInRect
@@ -580,23 +605,36 @@ typedef struct iTermTextColorContext {
         }
 
         if (defaultBackground) {
-            // We can draw the default background color with a solid-color view under some circumstances.
-            if (_hasBackgroundImage) {
-                if (enableBlending) {
-                    // Don't use the solid-color view to draw the default background color.
-                    alpha = 1 - _blend;
-                } else {
-                    // Use the solid-color view to draw the default background color
-                    alpha = 0;
-                }
-            } else if (!_reverseVideo && !enableBlending) {
-                // Use the solid-color view to draw the default background color
-                alpha = 0;
-            }
+            alpha = iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(_hasBackgroundImage,
+                                                                              enableBlending,
+                                                                              _reverseVideo,
+                                                                              alpha,
+                                                                              _blend);
         }
     }
 
     return [color colorWithAlphaComponent:alpha];
+}
+
+static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL hasBackgroundImage,
+                                                                         BOOL enableBlending,
+                                                                         BOOL reverseVideo,
+                                                                         CGFloat transparencyAlpha,
+                                                                         CGFloat blend) {
+    // We can draw the default background color with a solid-color view under some circumstances.
+    if (hasBackgroundImage) {
+        if (enableBlending) {
+            // Don't use the solid-color view to draw the default background color.
+            return 1 - blend;
+        } else {
+            // Use the solid-color view to draw the default background color
+            return 0;
+        }
+    } else if (!reverseVideo && !enableBlending) {
+        // Use the solid-color view to draw the default background color
+        return 0;
+    }
+    return transparencyAlpha;
 }
 
 - (void)drawExcessAtLine:(int)line {
