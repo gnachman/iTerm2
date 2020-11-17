@@ -4378,6 +4378,9 @@ ITERM_WEAKLY_REFERENCEABLE
             NSBundle *myBundle = [NSBundle bundleForClass:[self class]];
             imageFilePath = [myBundle pathForResource:imageFilePath ofType:@""];
         }
+        if ([imageFilePath isEqualToString:_backgroundImagePath]) {
+            return;
+        }
         [_backgroundImagePath autorelease];
         _backgroundImagePath = [imageFilePath copy];
         self.backgroundImage = [[[NSImage alloc] initWithContentsOfFile:_backgroundImagePath] autorelease];
