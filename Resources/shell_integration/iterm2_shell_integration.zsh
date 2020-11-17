@@ -38,7 +38,11 @@ if [[ -o interactive ]]; then
     fi
 
     iterm2_print_state_data() {
-      printf "\033]1337;RemoteHost=%s@%s\007" "$USER" "${iterm2_hostname-}"
+      local _iterm2_hostname="${iterm2_hostname-}"
+      if [ -z "${iterm2_hostname:-}" ]; then
+        _iterm2_hostname=$(hostname -f 2>/dev/null)
+      fi
+      printf "\033]1337;RemoteHost=%s@%s\007" "$USER" "${_iterm2_hostname-}"
       printf "\033]1337;CurrentDir=%s\007" "$PWD"
       iterm2_print_user_vars
     }
@@ -140,12 +144,16 @@ if [[ -o interactive ]]; then
     }
 
     # If hostname -f is slow on your system set iterm2_hostname prior to
-    # sourcing this script.
+    # sourcing this script. We know it is fast on macOS so we don't cache
+    # it. That lets us handle the hostname changing like when you attach
+    # to a VPN.
     if [ -z "${iterm2_hostname-}" ]; then
-      iterm2_hostname=`hostname -f 2>/dev/null`
-      # Some flavors of BSD (i.e. NetBSD and OpenBSD) don't have the -f option.
-      if [ $? -ne 0 ]; then
-	iterm2_hostname=`hostname`
+      if [ "$(uname)" != "Darwin" ]; then
+        iterm2_hostname=`hostname -f 2>/dev/null`
+        # Some flavors of BSD (i.e. NetBSD and OpenBSD) don't have the -f option.
+        if [ $? -ne 0 ]; then
+          iterm2_hostname=`hostname`
+        fi
       fi
     fi
 
@@ -156,6 +164,6 @@ if [[ -o interactive ]]; then
     preexec_functions=($preexec_functions iterm2_preexec)
 
     iterm2_print_state_data
-    printf "\033]1337;ShellIntegrationVersion=11;shell=zsh\007"
+    printf "\033]1337;ShellIntegrationVersion=12;shell=zsh\007"
   fi
 fi

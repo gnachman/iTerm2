@@ -43,7 +43,11 @@ if begin; status --is-interactive; and not functions -q -- iterm2_status; and [ 
   end
 
   function iterm2_write_remotehost_currentdir_uservars
-    printf "\033]1337;RemoteHost=%s@%s\007\033]1337;CurrentDir=%s\007" $USER $iterm2_hostname $PWD
+    if not set -q -g iterm2_hostname
+      printf "\033]1337;RemoteHost=%s@%s\007\033]1337;CurrentDir=%s\007" $USER (hostname -f 2> /dev/null) $PWD
+    else
+      printf "\033]1337;RemoteHost=%s@%s\007\033]1337;CurrentDir=%s\007" $USER $iterm2_hostname $PWD
+    end
 
     # Users can define a function called iterm2_print_user_vars.
     # It should call iterm2_set_user_var and produce no other output.
@@ -80,13 +84,17 @@ if begin; status --is-interactive; and not functions -q -- iterm2_status; and [ 
 
   # If hostname -f is slow for you, set iterm2_hostname before sourcing this script
   if not set -q -g iterm2_hostname
-    set -g iterm2_hostname (hostname -f 2>/dev/null)
-    # some flavors of BSD (i.e. NetBSD and OpenBSD) don't have the -f option
-    if test $status -ne 0
-      set -g iterm2_hostname (hostname)
+    # hostname -f is fast on macOS so don't cache it. This lets us get an updated version when
+    # it changes, such as if you attach to a VPN.
+    if [ (uname) != Darwin ]
+      set -g iterm2_hostname (hostname -f 2>/dev/null)
+      # some flavors of BSD (i.e. NetBSD and OpenBSD) don't have the -f option
+      if test $status -ne 0
+        set -g iterm2_hostname (hostname)
+      end
     end
   end
 
   iterm2_write_remotehost_currentdir_uservars
-  printf "\033]1337;ShellIntegrationVersion=10;shell=fish\007"
+  printf "\033]1337;ShellIntegrationVersion=11;shell=fish\007"
 end

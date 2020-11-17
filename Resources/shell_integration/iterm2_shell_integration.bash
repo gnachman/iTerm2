@@ -454,8 +454,12 @@ function iterm2_end_osc {
 }
 
 function iterm2_print_state_data() {
+  local _iterm2_hostname="${iterm2_hostname}"
+  if [ -z "${iterm2_hostname:-}" ]; then
+    _iterm2_hostname=$(hostname -f 2>/dev/null)
+  fi
   iterm2_begin_osc
-  printf "1337;RemoteHost=%s@%s" "$USER" "$iterm2_hostname"
+  printf "1337;RemoteHost=%s@%s" "$USER" "$_iterm2_hostname"
   iterm2_end_osc
 
   iterm2_begin_osc
@@ -508,11 +512,14 @@ function iterm2_print_version_number() {
 
 
 # If hostname -f is slow on your system, set iterm2_hostname before sourcing this script.
+# On macOS we run `hostname -f` every time because it is fast.
 if [ -z "${iterm2_hostname:-}" ]; then
-  iterm2_hostname=$(hostname -f 2>/dev/null)
-  # some flavors of BSD (i.e. NetBSD and OpenBSD) don't have the -f option
-  if [ $? -ne 0 ]; then
-    iterm2_hostname=$(hostname)
+  if [ "$(uname)" != "Darwin" ]; then
+    iterm2_hostname=$(hostname -f 2>/dev/null)
+    # some flavors of BSD (i.e. NetBSD and OpenBSD) don't have the -f option
+    if [ $? -ne 0 ]; then
+      iterm2_hostname=$(hostname)
+    fi
   fi
 fi
 

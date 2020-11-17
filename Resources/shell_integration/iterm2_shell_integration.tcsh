@@ -27,14 +27,6 @@ if ( ! ($?iterm2_shell_integration_installed)) then
 
     if ( x"$ITERM_ENABLE_SHELL_INTEGRATION_WITH_TMUX""$TERM" != xscreen && x"$TERM" != xlinux && x"$TERM" != xdumb ) then
 
-      # If hostname -f is slow to run on your system, set iterm2_hostname before sourcing this script.
-      if ( ! ($?iterm2_hostname)) then
-          set iterm2_hostname=`hostname -f |& cat || false`
-          # some flavors of BSD (i.e. NetBSD and OpenBSD) don't have the -f option
-          if ( $status != 0 ) then
-              set iterm2_hostname=`hostname`
-          endif
-      endif
 
       set iterm2_shell_integration_installed="yes"
 
@@ -43,7 +35,23 @@ if ( ! ($?iterm2_shell_integration_installed)) then
       alias _iterm2_end_prompt 'printf "\007"'
 
       # Define aliases for printing the current hostname
-      alias _iterm2_print_remote_host 'printf "1337;RemoteHost=%s@%s" "$USER" "$iterm2_hostname"'
+      # If hostname -f is slow to run on your system, set iterm2_hostname before sourcing this script.
+      if ( ! ($?iterm2_hostname)) then
+          # hostname is fast on macOS so don't cache it. This lets us have an up to date value if it
+          # changes because you connect to a VPN, for example.
+          if ( `uname` != Darwin ) then
+              set iterm2_hostname=`hostname -f |& cat || false`
+              # some flavors of BSD (i.e. NetBSD and OpenBSD) don't have the -f option
+              if ( $status != 0 ) then
+                  set iterm2_hostname=`hostname`
+              endif
+          endif
+      endif
+      if ( ! ($?iterm2_hostname)) then
+          alias _iterm2_print_remote_host 'printf "1337;RemoteHost=%s@%s" "$USER" `hostname -f`'
+      else
+          alias _iterm2_print_remote_host 'printf "1337;RemoteHost=%s@%s" "$USER" "$iterm2_hostname"'
+      endif
       alias _iterm2_remote_host "(_iterm2_start; _iterm2_print_remote_host; _iterm2_end)"
 
       # Define aliases for printing the current directory
