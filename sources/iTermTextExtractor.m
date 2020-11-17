@@ -1999,7 +1999,7 @@ trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
         charSet = [[NSMutableCharacterSet alloc] init];
-        [charSet addCharactersInString:@"|\u2502"];
+        [charSet addCharactersInString:@"|\u2502\u251c\u2524"];
     });
     return charSet;
 }
