@@ -28,6 +28,9 @@ typedef NS_ENUM(NSUInteger, iTermPythonRuntimeDownloaderStatus) {
 
     // Something else went wrong (e.g., download failed)
     iTermPythonRuntimeDownloaderStatusError,
+
+    // For launchtime checks only, stop asking and live with the old & busted forever.
+    iTermPythonRuntimeDownloaderStatusStopAsking,
 };
 
 @interface iTermPythonRuntimeDownloader : NSObject
@@ -52,6 +55,9 @@ typedef NS_ENUM(NSUInteger, iTermPythonRuntimeDownloaderStatus) {
 // This downloads if any version is already installed and there's a newer version available.
 - (void)upgradeIfPossible;
 
+// Prompts the user to upgrade if the most recent installed version is too old to be usable.
+- (void)upgradeIfRequired;
+
 // Like upgradeIfPossible but shows the window immediately.
 - (void)userRequestedCheckForUpdate;
 
@@ -60,6 +66,7 @@ typedef NS_ENUM(NSUInteger, iTermPythonRuntimeDownloaderStatus) {
                                              pythonVersion:(NSString *)pythonVersion
                                  minimumEnvironmentVersion:(NSInteger)minimumEnvironmentVersion
                                         requiredToContinue:(BOOL)requiredToContinue
+                                      performPeriodicCheck:(BOOL)performPeriodicCheck
                                             withCompletion:(void (^)(iTermPythonRuntimeDownloaderStatus))completion;
 
 // Returns the path of the python binary given a root directory having a pyenv.

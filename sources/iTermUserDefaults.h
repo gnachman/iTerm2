@@ -34,7 +34,7 @@ typedef NS_ENUM(NSUInteger, iTermAppleWindowTabbingMode) {
 @property (class, nonatomic) NSUInteger globalSearchMode;
 @property (class, nonatomic) BOOL addTriggerInstant;
 @property (class, nonatomic) BOOL addTriggerUpdateProfile;
-
+@property (class, nonatomic) NSUInteger lastPythonRuntimeUpgradeVersionChecked;
 @end
 
 NS_ASSUME_NONNULL_END

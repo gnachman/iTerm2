@@ -15,9 +15,11 @@
 #import "iTermNotificationController.h"
 #import "iTermOptionalComponentDownloadWindowController.h"
 #import "iTermPreferences.h"
+#import "iTermPythonVersion.h"
 #import "iTermRateLimitedUpdate.h"
 #import "iTermSetupCfgParser.h"
 #import "iTermSignatureVerifier.h"
+#import "iTermUserDefaults.h"
 #import "NSArray+iTerm.h"
 #import "NSDictionary+iTerm.h"
 #import "NSFileManager+iTerm.h"
@@ -172,6 +174,7 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
                           silently:YES
                            confirm:YES
                 requiredToContinue:NO
+                   launchtimeCheck:NO
                      pythonVersion:nil
                latestFullComponent:@(installedVersion)];
 }
@@ -193,18 +196,56 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
                           silently:NO
                            confirm:YES
                 requiredToContinue:NO
+                   launchtimeCheck:NO
                      pythonVersion:nil
                latestFullComponent:@(installedVersion)];
+}
+
+- (void)upgradeIfRequired {
+    if ([iTermUserDefaults lastPythonRuntimeUpgradeVersionChecked] >= iTermMinimumPythonEnvironmentVersion) {
+        return;
+    }
+    if (![iTermPreferences boolForKey:kPreferenceKeyEnableAPIServer]) {
+        return;
+    }
+    if ([self installedVersionWithPythonVersion:nil] == 0) {
+        // No runtime installed. Don't prompt to upgrade because you obviously aren't using it.
+        return;
+    }
+    [[iTermPythonRuntimeDownloader sharedInstance] downloadOptionalComponentsIfNeededWithConfirmation:YES
+                                                                                        pythonVersion:nil
+                                                                            minimumEnvironmentVersion:0
+                                                                                   requiredToContinue:NO
+                                                                                 performPeriodicCheck:NO
+                                                                                       withCompletion:^(iTermPythonRuntimeDownloaderStatus status) {
+        switch (status) {
+            case iTermPythonRuntimeDownloaderStatusNotNeeded:
+            case iTermPythonRuntimeDownloaderStatusDownloaded:
+            case iTermPythonRuntimeDownloaderStatusStopAsking:
+                [iTermUserDefaults setLastPythonRuntimeUpgradeVersionChecked:iTermMinimumPythonEnvironmentVersion];
+                break;
+
+            case iTermPythonRuntimeDownloaderStatusError:
+            case iTermPythonRuntimeDownloaderStatusUnknown:
+            case iTermPythonRuntimeDownloaderStatusWorking:
+            case iTermPythonRuntimeDownloaderStatusCanceledByUser:
+            case iTermPythonRuntimeDownloaderStatusRequestedVersionNotFound:
+                break;
+        }
+    }];
 }
 
 - (void)downloadOptionalComponentsIfNeededWithConfirmation:(BOOL)confirm
                                              pythonVersion:(NSString *)pythonVersion
                                  minimumEnvironmentVersion:(NSInteger)minimumEnvironmentVersion
                                         requiredToContinue:(BOOL)requiredToContinue
+                                      performPeriodicCheck:(BOOL)performPeriodicCheck
                                             withCompletion:(void (^)(iTermPythonRuntimeDownloaderStatus))completion {
     if (![self shouldDownloadEnvironmentForPythonVersion:pythonVersion
                                minimumEnvironmentVersion:minimumEnvironmentVersion]) {
-        [self performPeriodicUpgradeCheck];
+        if (performPeriodicCheck) {
+            [self performPeriodicUpgradeCheck];
+        }
         completion(iTermPythonRuntimeDownloaderStatusNotNeeded);
         return;
     }
@@ -214,6 +255,7 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
                           silently:YES
                            confirm:confirm
                 requiredToContinue:requiredToContinue
+                   launchtimeCheck:!performPeriodicCheck
                      pythonVersion:pythonVersion
                latestFullComponent:installedVersion ? @(installedVersion) : nil];
     dispatch_group_notify(self->_downloadGroup, dispatch_get_main_queue(), ^{
@@ -241,6 +283,7 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
                         silently:(BOOL)silent
                          confirm:(BOOL)confirm
               requiredToContinue:(BOOL)requiredToContinue
+                 launchtimeCheck:(BOOL)launchtimeCheck
                    pythonVersion:(NSString *)pythonVersion
              latestFullComponent:(NSNumber *)latestFullComponent {
     if (_status == iTermPythonRuntimeDownloaderStatusWorking) {
@@ -258,6 +301,7 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
     }
     _downloadController = [[iTermOptionalComponentDownloadWindowController alloc] initWithWindowNibName:@"iTermOptionalComponentDownloadWindowController"];
     __block BOOL declined = NO;
+    __block BOOL stopAsking = NO;
     __block BOOL raiseOnCompletion = (!silent || !confirm);
     NSURL *url;
 #if BETA
@@ -290,18 +334,39 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
         if (stillNeedsConfirmation) {
             NSAlert *alert = [[NSAlert alloc] init];
             alert.messageText = @"Download Python Runtime?";
-            if (requiredToContinue) {
-                alert.informativeText = [NSString stringWithFormat:@"The Python Runtime is used by Python scripts that work with iTerm2. It must be downloaded to complete the requested action. The download is about %@. OK to download it now?", [NSString it_formatBytes:info.size]];
+            if (launchtimeCheck) {
+                alert.informativeText = [NSString stringWithFormat:@"You have an out-of-date version of the Python runtime, which is used by Python scripts that work with iTerm2. You need to upgrade in order for these scripts to work. The download is about %@. OK to download it now?", [NSString it_formatBytes:info.size]];
+            } else if (requiredToContinue) {
+                if (installedVersion < iTermMinimumPythonEnvironmentVersion) {
+                    alert.informativeText = [NSString stringWithFormat:@"You have an out-of-date version of the Python runtime, which is used by Python scripts that work with iTerm2. A new version must be downloaded to complete the requested action. The download is about %@. OK to download it now?", [NSString it_formatBytes:info.size]];
+                } else {
+                    alert.informativeText = [NSString stringWithFormat:@"The Python Runtime is used by Python scripts that work with iTerm2. It must be downloaded to complete the requested action. The download is about %@. OK to download it now?", [NSString it_formatBytes:info.size]];
+                }
             } else {
                 alert.informativeText = [NSString stringWithFormat:@"The Python Runtime is used by Python scripts that work with iTerm2. The download is about %@. OK to download it now?", [NSString it_formatBytes:info.size]];
             }
             [alert addButtonWithTitle:silent ? @"Download" : @"OK"];
             [alert addButtonWithTitle:@"Cancel"];
-            if ([alert runModal] == NSAlertSecondButtonReturn) {
-                declined = YES;
-                dispatch_group_leave(group);
-                strongSelf->_status = iTermPythonRuntimeDownloaderStatusCanceledByUser;
-                return nil;
+            if (launchtimeCheck) {
+                [alert addButtonWithTitle:@"Stop Asking"];
+            }
+            switch ([alert runModal]) {
+                case NSAlertFirstButtonReturn:
+                    // download/OK
+                    break;
+                case NSAlertSecondButtonReturn:
+                    // cancel
+                    declined = YES;
+                    strongSelf->_status = iTermPythonRuntimeDownloaderStatusCanceledByUser;
+                    dispatch_group_leave(group);
+                    return nil;
+                case NSAlertThirdButtonReturn:
+                    // stop asking
+                    declined = YES;
+                    stopAsking = YES;
+                    strongSelf->_status = iTermPythonRuntimeDownloaderStatusStopAsking;
+                    dispatch_group_leave(group);
+                    return nil;
             }
             stillNeedsConfirmation = NO;
         }
@@ -334,6 +399,7 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
         if (lastPhase == manifestPhase) {
             iTermPythonRuntimeDownloader *strongSelf = weakSelf;
             [strongSelf didStopCheckAfterReceivingManifestBecauseDeclined:declined
+                                                               stopAsking:stopAsking
                                                         raiseOnCompletion:raiseOnCompletion];
         }
     };
@@ -344,9 +410,14 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
 }
 
 - (void)didStopCheckAfterReceivingManifestBecauseDeclined:(BOOL)declined
+                                               stopAsking:(BOOL)stopAsking
                                         raiseOnCompletion:(BOOL)raiseOnCompletion {
     if (declined) {
-        _status = iTermPythonRuntimeDownloaderStatusCanceledByUser;
+        if (stopAsking) {
+            _status = iTermPythonRuntimeDownloaderStatusStopAsking;
+        } else {
+            _status = iTermPythonRuntimeDownloaderStatusCanceledByUser;
+        }
         [_downloadController close];
         return;
     }

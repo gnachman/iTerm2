@@ -2135,6 +2135,8 @@
 		A65FF3C320F1854F008BD0AE /* iTermMiniSearchFieldViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = A65FF3C020F18547008BD0AE /* iTermMiniSearchFieldViewController.xib */; };
 		A65FF3C420F18550008BD0AE /* iTermMiniSearchFieldViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = A65FF3C020F18547008BD0AE /* iTermMiniSearchFieldViewController.xib */; };
 		A65FF3C520F18552008BD0AE /* iTermMiniSearchFieldViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = A65FF3C020F18547008BD0AE /* iTermMiniSearchFieldViewController.xib */; };
+		A66074EF25643F2C008EB7DE /* iTermPythonVersion.h in Headers */ = {isa = PBXBuildFile; fileRef = A66074ED25643F2C008EB7DE /* iTermPythonVersion.h */; };
+		A66074F025643F2C008EB7DE /* iTermPythonVersion.m in Sources */ = {isa = PBXBuildFile; fileRef = A66074EE25643F2C008EB7DE /* iTermPythonVersion.m */; };
 		A6614A2320958ED400A10D97 /* iTermBuildingScriptWindowController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6614A2020958ED400A10D97 /* iTermBuildingScriptWindowController.h */; };
 		A6614A2420958ED400A10D97 /* iTermBuildingScriptWindowController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6614A2120958ED400A10D97 /* iTermBuildingScriptWindowController.m */; };
 		A6614A2520958EDC00A10D97 /* iTermBuildingScriptWindowController.xib in Resources */ = {isa = PBXBuildFile; fileRef = A6614A2220958ED400A10D97 /* iTermBuildingScriptWindowController.xib */; };
@@ -5604,6 +5606,8 @@
 		A65FF3BE20F18547008BD0AE /* iTermMiniSearchFieldViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermMiniSearchFieldViewController.h; sourceTree = "<group>"; };
 		A65FF3BF20F18547008BD0AE /* iTermMiniSearchFieldViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermMiniSearchFieldViewController.m; sourceTree = "<group>"; };
 		A65FF3C020F18547008BD0AE /* iTermMiniSearchFieldViewController.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = iTermMiniSearchFieldViewController.xib; sourceTree = "<group>"; };
+		A66074ED25643F2C008EB7DE /* iTermPythonVersion.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermPythonVersion.h; sourceTree = "<group>"; };
+		A66074EE25643F2C008EB7DE /* iTermPythonVersion.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermPythonVersion.m; sourceTree = "<group>"; };
 		A6614A2020958ED400A10D97 /* iTermBuildingScriptWindowController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermBuildingScriptWindowController.h; sourceTree = "<group>"; };
 		A6614A2120958ED400A10D97 /* iTermBuildingScriptWindowController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermBuildingScriptWindowController.m; sourceTree = "<group>"; };
 		A6614A2220958ED400A10D97 /* iTermBuildingScriptWindowController.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = iTermBuildingScriptWindowController.xib; sourceTree = "<group>"; };
@@ -8434,6 +8438,8 @@
 				A6BF8D1521EB188E003CF805 /* iTermDependencyEditorWindowController.xib */,
 				A65B49A6244199CF002B1C68 /* iTermSocketUnixDomainAddress.h */,
 				A65B49A7244199CF002B1C68 /* iTermSocketUnixDomainAddress.m */,
+				A66074ED25643F2C008EB7DE /* iTermPythonVersion.h */,
+				A66074EE25643F2C008EB7DE /* iTermPythonVersion.m */,
 			);
 			name = API;
 			sourceTree = "<group>";
@@ -11377,6 +11383,7 @@
 				A65429AF20C492F000CE71B1 /* iTermParameterPanelWindowController.h in Headers */,
 				535EA50420D1869800FC81E0 /* iTermSwiftyStringParser.h in Headers */,
 				A66719351DCE36C3000CE608 /* iTermClearView.h in Headers */,
+				A66074EF25643F2C008EB7DE /* iTermPythonVersion.h in Headers */,
 				A69D559B232A0CF3002E0F99 /* iTermSessionLauncher.h in Headers */,
 				A648DAC22427E82900C2FF02 /* iTermMultiServerChildDidTerminateNotification.h in Headers */,
 				A66719361DCE36C3000CE608 /* iTermHostRecordMO.h in Headers */,
@@ -14262,6 +14269,7 @@
 				A6556EAE1FD37ED6000CC89C /* iTermASCIITexture.m in Sources */,
 				A6971F3420D8D3C30075CFD4 /* iTermAdvancedGPUSettingsViewController.m in Sources */,
 				A66719661DCE3772000CE608 /* iTermWebSocketFrame.m in Sources */,
+				A66074F025643F2C008EB7DE /* iTermPythonVersion.m in Sources */,
 				A63819D11FAECD3F00A9EF9E /* iTermCopyBackgroundRenderer.m in Sources */,
 				A65EC0341F3181E700AC0A6B /* NSTimer+iTerm.m in Sources */,
 				A67D197A2238D50800BD0D4D /* iTermSetFindStringNotification.m in Sources */,

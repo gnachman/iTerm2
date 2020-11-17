@@ -26,6 +26,7 @@ static NSString *const iTermUserDefaultsKeyIgnoreSystemWindowRestoration = @"NoS
 static NSString *const iTermUserDefaultsKeyGlobalSearchMode = @"NoSyncGlobalSearchMode";
 static NSString *const iTermUserDefaultsKeyAddTriggerInstant = @"NoSyncAddTriggerInstant";
 static NSString *const iTermUserDefaultsKeyAddTriggerUpdateProfile = @"NoSyncAddTriggerUpdateProfile";
+static NSString *const iTermUserDefaultsKeyLastPythonRuntimeUpgradeVersionChecked = @"NoSyncLastPythonRuntimeUpgradeVersionChecked";
 
 @implementation iTermUserDefaults
 
@@ -197,6 +198,15 @@ static NSUserDefaults *iTermPrivateUserDefaults(void) {
 
 + (void)setAddTriggerUpdateProfile:(BOOL)addTriggerUpdateProfile {
     [self.userDefaults setObject:@(addTriggerUpdateProfile) forKey:iTermUserDefaultsKeyAddTriggerUpdateProfile];
+}
+
++ (NSUInteger)lastPythonRuntimeUpgradeVersionChecked {
+    return [[self.userDefaults objectForKey:iTermUserDefaultsKeyLastPythonRuntimeUpgradeVersionChecked] unsignedIntegerValue];
+}
+
++ (void)setLastPythonRuntimeUpgradeVersionChecked:(NSUInteger)lastPythonRuntimeUpgradeVersionChecked {
+    [self.userDefaults setObject:@(lastPythonRuntimeUpgradeVersionChecked)
+                          forKey:iTermUserDefaultsKeyLastPythonRuntimeUpgradeVersionChecked];
 }
 
 @end

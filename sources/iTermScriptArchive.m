@@ -275,6 +275,7 @@ NSString *const iTermScriptMetadataName = @"metadata.json";
                                                                                         pythonVersion:setupParser.pythonVersion
                                                                             minimumEnvironmentVersion:setupParser.minimumEnvironmentVersion
                                                                                    requiredToContinue:YES
+                                                                                 performPeriodicCheck:YES
                                                                                        withCompletion:
      ^(iTermPythonRuntimeDownloaderStatus status) {
          switch (status) {
@@ -293,6 +294,7 @@ NSString *const iTermScriptMetadataName = @"metadata.json";
              }
 
              case iTermPythonRuntimeDownloaderStatusNotNeeded:
+             case iTermPythonRuntimeDownloaderStatusStopAsking:
              case iTermPythonRuntimeDownloaderStatusDownloaded:
                  break;
          }
@@ -329,6 +331,7 @@ NSString *const iTermScriptMetadataName = @"metadata.json";
             return @"Network error";
         case iTermPythonRuntimeDownloaderStatusNotNeeded:
         case iTermPythonRuntimeDownloaderStatusDownloaded:
+        case iTermPythonRuntimeDownloaderStatusStopAsking:
             return nil;
     }
 }

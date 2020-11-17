@@ -596,6 +596,7 @@ NS_ASSUME_NONNULL_BEGIN
                                                      pythonVersion:nil
                                          minimumEnvironmentVersion:0
                                                 requiredToContinue:YES
+                                              performPeriodicCheck:YES
                                                     withCompletion:^(iTermPythonRuntimeDownloaderStatus status) {
         switch (status) {
             case iTermPythonRuntimeDownloaderStatusRequestedVersionNotFound:
@@ -606,6 +607,7 @@ NS_ASSUME_NONNULL_BEGIN
                 return;
             case iTermPythonRuntimeDownloaderStatusNotNeeded:
             case iTermPythonRuntimeDownloaderStatusDownloaded:
+            case iTermPythonRuntimeDownloaderStatusStopAsking:
                 break;
         }
         [weakSelf reallyCreateNewPythonScript];
@@ -630,6 +632,7 @@ NS_ASSUME_NONNULL_BEGIN
                                                                                             pythonVersion:pythonVersion
                                                                                 minimumEnvironmentVersion:0
                                                                                        requiredToContinue:YES
+                                                                                     performPeriodicCheck:YES
                                                                                            withCompletion:
          ^(iTermPythonRuntimeDownloaderStatus status) {
              switch (status) {
@@ -643,6 +646,7 @@ NS_ASSUME_NONNULL_BEGIN
 
                  case iTermPythonRuntimeDownloaderStatusNotNeeded:
                  case iTermPythonRuntimeDownloaderStatusDownloaded:
+                 case iTermPythonRuntimeDownloaderStatusStopAsking:
                      break;
              }
              [self reallyCreateNewPythonScriptAtURL:url picker:picker dependencies:dependencies pythonVersion:pythonVersion];

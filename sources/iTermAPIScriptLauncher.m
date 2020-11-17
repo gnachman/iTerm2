@@ -95,6 +95,7 @@ static NSString *const iTermAPIScriptLauncherScriptDidFailUserNotificationCallba
                                                                                         pythonVersion:nil
                                                                             minimumEnvironmentVersion:0
                                                                                    requiredToContinue:YES
+                                                                                 performPeriodicCheck:YES
                                                                                        withCompletion:
      ^(iTermPythonRuntimeDownloaderStatus status) {
          switch (status) {
@@ -109,6 +110,7 @@ static NSString *const iTermAPIScriptLauncherScriptDidFailUserNotificationCallba
              case iTermPythonRuntimeDownloaderStatusWorking:
              case iTermPythonRuntimeDownloaderStatusCanceledByUser:
              case iTermPythonRuntimeDownloaderStatusRequestedVersionNotFound:
+             case iTermPythonRuntimeDownloaderStatusStopAsking:
                  break;
         }
     }];
@@ -215,6 +217,7 @@ static NSString *const iTermAPIScriptLauncherScriptDidFailUserNotificationCallba
                                                                                         pythonVersion:pythonVersion
                                                                             minimumEnvironmentVersion:0
                                                                                    requiredToContinue:YES
+                                                                                 performPeriodicCheck:YES
                                                                                        withCompletion:
      ^(iTermPythonRuntimeDownloaderStatus status) {
          switch (status) {
@@ -232,6 +235,7 @@ static NSString *const iTermAPIScriptLauncherScriptDidFailUserNotificationCallba
              case iTermPythonRuntimeDownloaderStatusWorking:
              case iTermPythonRuntimeDownloaderStatusCanceledByUser:
              case iTermPythonRuntimeDownloaderStatusRequestedVersionNotFound:
+             case iTermPythonRuntimeDownloaderStatusStopAsking:
                  break;
         }
     }];

@@ -1909,6 +1909,7 @@ static BOOL hasBecomeActive = NO;
                                                                                         pythonVersion:nil
                                                                             minimumEnvironmentVersion:0
                                                                                    requiredToContinue:NO
+                                                                                 performPeriodicCheck:YES
                                                                                        withCompletion:
      ^(iTermPythonRuntimeDownloaderStatus status) {
          if (status == iTermPythonRuntimeDownloaderStatusNotNeeded) {
@@ -1944,6 +1945,7 @@ static BOOL hasBecomeActive = NO;
                 return;
             case iTermPythonRuntimeDownloaderStatusNotNeeded:
             case iTermPythonRuntimeDownloaderStatusDownloaded:
+            case iTermPythonRuntimeDownloaderStatusStopAsking:
                 break;
         }
         if (![iTermAPIHelper sharedInstanceFromExplicitUserAction]) {

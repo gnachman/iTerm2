@@ -10,7 +10,10 @@
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermOnboardingWindowController.h"
 #import "iTermPreferences.h"
+#import "iTermPythonRuntimeDownloader.h"
+#import "iTermPythonVersion.h"
 #import "iTermTipController.h"
+#import "iTermUserDefaults.h"
 #import "iTermWarning.h"
 #import "PFMoveApplication.h"
 
@@ -138,18 +141,19 @@ typedef NS_ENUM(NSUInteger, iTermLaunchExperienceChoice) {
             // Will prompt for access.
             [self.class quellAnnoyancesForDays:1];
             [[iTermTipController sharedInstance] startWithPermissionPromptAllowed:YES notBefore:[NSDate date]];
-            return;
+            break;
         case iTermLaunchExperienceChoiceNone:
             // This is the steady-state.
             [[iTermTipController sharedInstance] startWithPermissionPromptAllowed:NO notBefore:[NSDate date]];
-            return;
+            break;
         case iTermLaunchExperienceChoiceWhatsNew:
         case iTermLaunchExperienceChoiceDefaultPasteBehaviorChangeWarning:
             // If permission was already granted then allow a tip after 24 hours.
             [[iTermTipController sharedInstance] startWithPermissionPromptAllowed:NO
                                                                         notBefore:[NSDate dateWithTimeIntervalSinceNow:24 * 60 * 60]];
-            return;
+            break;
     }
+    [[iTermPythonRuntimeDownloader sharedInstance] upgradeIfRequired];
 }
 
 - (void)applicationWillFinishLaunching {
