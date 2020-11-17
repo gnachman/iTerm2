@@ -13206,6 +13206,19 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                                                    target:self
                                                    action:@selector(runCoprocessWithCompletion:commandLine:mute:)];
         [_methods registerFunction:method namespace:@"iterm2"];
+
+        method = [[iTermBuiltInMethod alloc] initWithName:@"add_annotation"
+                                            defaultValues:@{}
+                                                    types:@{ @"startX": [NSNumber class],
+                                                             @"startY": [NSNumber class],
+                                                             @"endX": [NSNumber class],
+                                                             @"endY": [NSNumber class],
+                                                             @"text": [NSString class] }
+                                        optionalArguments:[NSSet set]
+                                                  context:iTermVariablesSuggestionContextSession
+                                                   target:self
+                                                   action:@selector(addAnnotationWithCompletion:startX:startY:endX:endY:text:)];
+        [_methods registerFunction:method namespace:@"iterm2"];
     }
     return _methods;
 }
@@ -13233,6 +13246,34 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     }
     [self launchCoprocessWithCommand:command mute:mute];
     completion(@YES, nil);
+}
+
+- (void)addAnnotationWithCompletion:(void (^)(id, NSError *))completion
+                             startX:(NSNumber *)startXNumber
+                             startY:(NSNumber *)startYNumber
+                               endX:(NSNumber *)endXNumber
+                               endY:(NSNumber *)endYNumber
+                               text:(NSString *)text {
+    const VT100GridAbsCoordRange range = VT100GridAbsCoordRangeMake(startXNumber.intValue,
+                                                                    startYNumber.longLongValue,
+                                                                    endXNumber.intValue,
+                                                                    endYNumber.longLongValue);
+    const long long maxY = _screen.totalScrollbackOverflow + _screen.numberOfLines;
+    if (startYNumber.integerValue > endYNumber.integerValue ||
+        startYNumber.integerValue < 0 ||
+        startYNumber.integerValue > maxY ||
+        endYNumber.integerValue < 0 ||
+        endYNumber.integerValue > maxY ||
+        (startYNumber.integerValue == endYNumber.integerValue && startXNumber.integerValue > endXNumber.integerValue)) {
+        NSError *error = [NSError errorWithDomain:@"com.iterm2.add-annotation-command"
+                                             code:0
+                                         userInfo:@{ NSLocalizedDescriptionKey: @"Invalid range" }];
+        completion(nil, error);
+        return;
+    }
+
+    [self addNoteWithText:text inAbsoluteRange:range];
+    completion(nil, nil);
 }
 
 - (void)setStatusBarComponentUnreadCountWithCompletion:(void (^)(id, NSError *))completion

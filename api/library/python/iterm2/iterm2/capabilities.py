@@ -110,3 +110,14 @@ def check_supports_context_menu_provider(connection):
             "context menu provider. You should upgrade to " +
             "run this script.")
 
+def supports_add_annotation(connection):
+    """Can you add an annotation?"""
+    min_ver = (1, 8)
+    return ge(connection.iterm2_protocol_version, min_ver)
+
+def check_supports_add_annotation(connection):
+    """Die if you can't add an annotation."""
+    if not supports_add_annotation(connection):
+        raise AppVersionTooOld(
+            "This version of iTerm2 is too old to add an annotation. " +
+            "You should upgrade to run this script.")

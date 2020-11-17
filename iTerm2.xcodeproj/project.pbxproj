@@ -6632,6 +6632,7 @@
 		A6F2B6D22558B51B008D6BF1 /* ScrollerHighlights.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = ScrollerHighlights.png; path = images/Onboarding/ScrollerHighlights.png; sourceTree = "<group>"; };
 		A6F2B6D62558B8AC008D6BF1 /* Composer.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = Composer.png; path = images/Onboarding/Composer.png; sourceTree = "<group>"; };
 		A6F2B6DA2558BECC008D6BF1 /* TmuxFlowControl.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = TmuxFlowControl.png; path = images/Onboarding/TmuxFlowControl.png; sourceTree = "<group>"; };
+		A6F2D54C2563455D0036B9C5 /* auth.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = auth.py; sourceTree = "<group>"; };
 		A6F2F216250757FD00FC227F /* PrefsShortcuts@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "PrefsShortcuts@2x.png"; path = "images/PrefsShortcuts@2x.png"; sourceTree = "<group>"; };
 		A6F2F217250757FE00FC227F /* PrefsShortcuts.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = PrefsShortcuts.png; path = images/PrefsShortcuts.png; sourceTree = "<group>"; };
 		A6F385DC1FA55E2000739939 /* iTermSmartCursorColor.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermSmartCursorColor.h; sourceTree = "<group>"; };
@@ -8266,6 +8267,7 @@
 		530AB86B20AE85DF00D2AA08 /* iterm2 */ = {
 			isa = PBXGroup;
 			children = (
+				A6F2D54C2563455D0036B9C5 /* auth.py */,
 				530AB87220AE85DF00D2AA08 /* __init__.py */,
 				530AB86D20AE85DF00D2AA08 /* _version.py */,
 				A63F2A4523FB8193008DDEA4 /* alert.py */,

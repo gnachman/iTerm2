@@ -970,6 +970,27 @@ class Session:
             await iterm2.rpc.async_invoke_method(
                 self.connection, self.session_id, invocation, -1))
 
+    async def async_add_annotation(self, range: iterm2.util.CoordRange, text: str):
+        """
+        Adds an annotation.
+
+        This will not replace an existing annotation. It will always add a new one.
+
+        Throws an exception if the range is invalid.
+
+        :param range: The range to annotate.
+        :param text: The string to annotate with.
+        """
+        iterm2.capabilities.check_supports_add_annotation(self.connection)
+        args = {
+            "startX": range.start.x,
+            "startY": range.start.y,
+            "endX": range.end.x,
+            "endY": range.end.y,
+            "text": text}
+        invocation = iterm2.util.invocation_string("iterm2.add_annotation", args)
+        await iterm2.rpc.async_invoke_method(self.connection, self.session_id, invocation, -1)
+
     async def async_run_coprocess(self, command_line: str) -> bool:
         """
         Runs a coprocess, provided non is already running.
