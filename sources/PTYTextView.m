@@ -932,7 +932,7 @@
 
 - (void)rightMouseDown:(NSEvent *)event {
     [_mouseHandler rightMouseDown:event
-                      superCaller:^{ [super otherMouseDragged:event]; }];
+                      superCaller:^{ [super rightMouseDown:event]; }];
 }
 
 - (void)rightMouseUp:(NSEvent *)event {
@@ -2739,6 +2739,10 @@
 }
 
 #pragma mark - Miscellaneous Actions
+
+- (NSMenu *)menuForEvent:(NSEvent *)theEvent {
+    return [_contextMenuHelper menuForEvent:theEvent];
+}
 
 - (IBAction)terminalStateToggleAlternateScreen:(id)sender {
     [self contextMenu:_contextMenuHelper toggleTerminalStateForMenuItem:sender];
