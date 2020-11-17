@@ -9398,7 +9398,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
         self.scope.windowTitleOverrideFormat.length > 0) {
         return self.scope.windowTitleOverride;
     }
-    if (![self tabBarShouldBeVisible] && [iTermAdvancedSettingsModel showWindowTitleWhenTabBarInvisible]) {
+    if (![self tabBarShouldBeVisible] && ![iTermAdvancedSettingsModel showWindowTitleWhenTabBarInvisible]) {
         return self.currentSession.nameController.presentationSessionTitle ?: @"Untitled";
     }
     return self.currentSession.nameController.presentationWindowTitle ?: @"Untitled";
