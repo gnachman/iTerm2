@@ -487,8 +487,11 @@ static unsigned long long MakeUniqueID(void) {
         }
 
         DLog(@"Failed to write launch request.");
-        [state.pendingLaunches removeObjectForKey:@(uniqueID)];
-        [callback invokeWithObject:[iTermResult withError:[self connectionLostError]]];
+        if (state.pendingLaunches[@(uniqueID)]) {
+            DLog(@"Invoke callback with connection-lost error.");
+            [state.pendingLaunches removeObjectForKey:@(uniqueID)];
+            [callback invokeWithObject:[iTermResult withError:[self connectionLostError]]];
+        }
     }]];
 }
 
@@ -822,13 +825,14 @@ static unsigned long long MakeUniqueID(void) {
     state.readFD = -1;
     state.writeFD = -1;
 
-    [state.pendingLaunches enumerateKeysAndObjectsUsingBlock:
+    NSDictionary<NSNumber *, iTermFileDescriptorMultiClientPendingLaunch *> *pendingLaunches = [state.pendingLaunches copy];
+    [state.pendingLaunches removeAllObjects];
+    [pendingLaunches enumerateKeysAndObjectsUsingBlock:
      ^(NSNumber * _Nonnull uniqueID,
        iTermFileDescriptorMultiClientPendingLaunch * _Nonnull pendingLaunch,
        BOOL * _Nonnull stop) {
         [pendingLaunch cancelWithError:[self connectionLostError]];
     }];
-    [state.pendingLaunches removeAllObjects];
 
     [state.children enumerateObjectsUsingBlock:
      ^(iTermFileDescriptorMultiClientChild * _Nonnull child,
