@@ -661,8 +661,8 @@ typedef enum {
     NSData* prefix = nil;
     NSData* theSuffix;
     const int mod = [self cursorModifierParamForEventModifierFlags:modflag];
-    if (_keyStrings[terminfo] && mod == 0 && (isCursor ? self.cursorMode : self.keypadMode)) {
-        // Application keypad mode or application cursor mode
+    if (_keyStrings[terminfo] && mod == 0 && !isCursor && self.keypadMode) {
+        // Application keypad mode.
         theSuffix = [NSData dataWithBytes:_keyStrings[terminfo]
                                    length:strlen(_keyStrings[terminfo])];
     } else {
