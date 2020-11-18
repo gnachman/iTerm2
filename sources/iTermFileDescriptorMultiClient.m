@@ -1208,7 +1208,7 @@ static void HexDump(NSData *data) {
     DLog(@"Queue attempt to write in the future.");
     __weak __typeof(self) weakSelf = self;
     [state whenWritable:^(iTermFileDescriptorMultiClientState * _Nullable state) {
-        [weakSelf tryWrite:[data subdataFromOffset:MAX(0, bytesWritten)]
+        [weakSelf tryWrite:[data subdataFromOffset:MAX(0, bytesWritten)]  // NOTE: bytesWritten can be negative if we get EAGAIN
                      state:state
                   callback:callback];
     }];
