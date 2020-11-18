@@ -156,11 +156,19 @@ ssize_t iTermFileDescriptorClientWrite(int fd, const void *buffer, size_t buffer
     ssize_t rc = -1;
     size_t totalWritten = 0;
     while (totalWritten < bufferSize) {
+        int savedErrno = 0;
         do {
             errno = 0;
             rc = write(fd, buffer, bufferSize);
-        } while (rc == -1 && errno == EINTR);
+            savedErrno = errno;
+            FDLog(LOG_DEBUG, "write of %d bytes returned %d, errno=%d", (int)bufferSize, (int)rc, (int)savedErrno);
+        } while (rc == -1 && savedErrno == EINTR);
         if (rc <= 0) {
+            if (savedErrno == EAGAIN && totalWritten > 0) {
+                FDLog(LOG_DEBUG, "write: EAGAIN with totalWritten=%d", (int)totalWritten);
+                return totalWritten;
+            }
+            errno = savedErrno;
             return rc;
         }
         totalWritten += rc;
