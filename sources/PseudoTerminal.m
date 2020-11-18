@@ -4660,19 +4660,14 @@ ITERM_WEAKLY_REFERENCEABLE
             [self updateWindowShadowForNonFullScreenWindowDisablingIfAnySessionHasTransparency:window];
             shouldEnableShadow = NO;
         }
-        if (![iTermPreferences boolForKey:kPreferenceKeyPerPaneBackgroundImage]) {
-            [CATransaction begin];
-            [CATransaction setDisableActions:YES];
-            const CGFloat transparency = 1 - self.currentSession.textview.transparencyAlpha;
-            self.contentView.backgroundImage.transparency = transparency;
-            self.contentView.backgroundImage.blend = self.currentSession.desiredBlend;
-            [CATransaction commit];
-        }
-    } else {
-        if ([iTermAdvancedSettingsModel disableWindowShadowWhenTransparencyPreMojave]) {
-            [self updateWindowShadowForNonFullScreenWindowDisablingIfAnySessionHasTransparency:window];
-            shouldEnableShadow = NO;
-        }
+    }
+    if (![iTermPreferences boolForKey:kPreferenceKeyPerPaneBackgroundImage]) {
+        [CATransaction begin];
+        [CATransaction setDisableActions:YES];
+        const CGFloat transparency = 1 - self.currentSession.textview.transparencyAlpha;
+        self.contentView.backgroundImage.transparency = transparency;
+        self.contentView.backgroundImage.blend = self.currentSession.desiredBlend;
+        [CATransaction commit];
     }
     if (shouldEnableShadow) {
         window.hasShadow = YES;
