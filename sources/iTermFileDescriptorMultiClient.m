@@ -49,6 +49,11 @@ NSString *const iTermFileDescriptorMultiClientErrorDomain = @"iTermFileDescripto
     return self;
 }
 
+- (NSString *)description {
+    return [NSString stringWithFormat:@"<%@: %p %@>", NSStringFromClass([self class]),
+            self, _socketPath];
+}
+
 #pragma mark - APIs
 
 - (pid_t)serverPID {
@@ -489,6 +494,8 @@ static unsigned long long MakeUniqueID(void) {
         DLog(@"Failed to write launch request.");
         if (state.pendingLaunches[@(uniqueID)]) {
             DLog(@"Invoke callback with connection-lost error.");
+            [callback addDebugInfo:[state.pendingLaunches debugDescription]];
+            [callback addDebugInfo:[self debugDescription]];
             [state.pendingLaunches removeObjectForKey:@(uniqueID)];
             [callback invokeWithObject:[iTermResult withError:[self connectionLostError]]];
         }
@@ -831,6 +838,8 @@ static unsigned long long MakeUniqueID(void) {
      ^(NSNumber * _Nonnull uniqueID,
        iTermFileDescriptorMultiClientPendingLaunch * _Nonnull pendingLaunch,
        BOOL * _Nonnull stop) {
+        [pendingLaunch.launchCallback addDebugInfo:[pendingLaunches debugDescription]];
+        [pendingLaunch.launchCallback addDebugInfo:[self debugDescription]];
         [pendingLaunch cancelWithError:[self connectionLostError]];
     }];
 

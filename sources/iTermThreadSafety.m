@@ -296,6 +296,7 @@ NSPointerArray *gThreads;
     NSString *_invokeStack;
     NSString *_creationStack;
     int _magic;
+    NSMutableString *_debugInfo;
 #endif
 }
 
@@ -311,6 +312,7 @@ NSPointerArray *gThreads;
         _group = dispatch_group_create();
         dispatch_group_enter(_group);
 #if CHECK_DOUBLE_INVOKES
+        _debugInfo = [[NSMutableString alloc] init];
         _magic = 0xdeadbeef;
         _creationStack = [[[NSThread callStackSymbols] componentsJoinedByString:@"\n"] copy];
 #endif
@@ -325,6 +327,7 @@ NSPointerArray *gThreads;
     assert(_magic == 0xdeadbeef);
     [_invokeStack release];
     [_creationStack release];
+    [_debugInfo release];
     _magic = 0;
 #endif
     dispatch_release(_group);
@@ -341,8 +344,8 @@ NSPointerArray *gThreads;
 #endif
     [_thread dispatchAsync:^(iTermSynchronizedState *state) {
 #if CHECK_DOUBLE_INVOKES
-        ITAssertWithMessage(!self->_invokeStack, @"Previously invoked from:\n%@\n\nNow invoked from:\n%@\n\nCreated from:\n%@",
-                     _invokeStack, stack, _creationStack);
+        ITAssertWithMessage(!self->_invokeStack, @"Previously invoked from:\n%@\n\nNow invoked from:\n%@\n\nCreated from:\n%@\n%@",
+                     _invokeStack, stack, _creationStack, _debugInfo);
         _invokeStack = [stack copy];
         [stack release];
 #endif
@@ -361,8 +364,8 @@ NSPointerArray *gThreads;
 #endif
     [_thread dispatchRecursiveSync:^(iTermSynchronizedState *state) {
 #if CHECK_DOUBLE_INVOKES
-        ITAssertWithMessage(!self->_invokeStack, @"Previously invoked from:\n%@\n\nNow invoked from:\n%@\n\nCreated from:\n%@",
-                     _invokeStack, stack, _creationStack);
+        ITAssertWithMessage(!self->_invokeStack, @"Previously invoked from:\n%@\n\nNow invoked from:\n%@\n\nCreated from:\n%@\n%@",
+                     _invokeStack, stack, _creationStack, _debugInfo);
 
         _invokeStack = [stack copy];
         [stack release];
@@ -376,6 +379,11 @@ NSPointerArray *gThreads;
 
 - (void)waitUntilInvoked {
     dispatch_group_wait(_group, DISPATCH_TIME_FOREVER);
+}
+
+- (void)addDebugInfo:(NSString *)debugInfo {
+    [_debugInfo appendString:debugInfo];
+    [_debugInfo appendString:@"\n"];
 }
 
 @end
