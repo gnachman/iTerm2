@@ -11,6 +11,8 @@
 #import "NSArray+iTerm.h"
 #import "NSObject+iTerm.h"
 
+#define CHECK_DOUBLE_INVOKES BETA
+
 @interface iTermSynchronizedState()
 @property (atomic) BOOL ready;
 @end
@@ -80,7 +82,7 @@ static void Check(iTermSynchronizedState *self) {
 }
 @end
 
-#if BETA
+#if CHECK_DOUBLE_INVOKES
 // Weak references to all iTermThread objects.
 NSPointerArray *gThreads;
 #endif
@@ -88,7 +90,7 @@ NSPointerArray *gThreads;
 @implementation iTermThread {
     iTermSynchronizedState *_state;
     NSMutableArray *_deferred;
-#if BETA
+#if CHECK_DOUBLE_INVOKES
     NSArray<NSString *> *_stacks;
 #endif
 }
@@ -111,7 +113,7 @@ NSPointerArray *gThreads;
     return [[self alloc] initWithLabel:label stateFactory:stateFactory];
 }
 
-#if BETA
+#if CHECK_DOUBLE_INVOKES
 + (iTermThread *)currentThread {
     const char *currentLabel = dispatch_queue_get_label(DISPATCH_CURRENT_QUEUE_LABEL);
     @synchronized (gThreads) {
@@ -136,7 +138,7 @@ NSPointerArray *gThreads;
         dispatch_retain(_queue);
         _state = [stateFactory(_queue) retain];
         _state.ready = YES;
-#if BETA
+#if CHECK_DOUBLE_INVOKES
         _stacks = [@[] retain];
         static dispatch_once_t onceToken;
         dispatch_once(&onceToken, ^{
@@ -167,7 +169,7 @@ NSPointerArray *gThreads;
     dispatch_release(_queue);
     assert(!_deferred);
     [_state release];
-#if BETA
+#if CHECK_DOUBLE_INVOKES
     [_stacks release];
 #endif
     [super dealloc];
@@ -182,7 +184,7 @@ NSPointerArray *gThreads;
     return [NSString stringWithUTF8String:dispatch_queue_get_label(_queue)];
 }
 
-#if BETA
+#if CHECK_DOUBLE_INVOKES
 - (NSString *)stack {
     return [_stacks componentsJoinedByString:@"\n\n"];
 }
@@ -231,17 +233,17 @@ NSPointerArray *gThreads;
             return;
         }
     }
-#if BETA
+#if CHECK_DOUBLE_INVOKES
     NSArray *stacks = [[iTermThread currentThread] currentStacks] ?: @[ [[NSThread callStackSymbols]  componentsJoinedByString:@"\n"] ];
     [stacks retain];
 #endif
     dispatch_async(_queue, ^{
-#if BETA
+#if CHECK_DOUBLE_INVOKES
         NSArray *saved = [_stacks retain];
         _stacks = stacks;
 #endif
         block(self->_state);
-#if BETA
+#if CHECK_DOUBLE_INVOKES
         _stacks = saved;
         [stacks release];
         [saved release];
@@ -290,10 +292,11 @@ NSPointerArray *gThreads;
 @implementation iTermCallback {
     void (^_block)(id, id);
     dispatch_group_t _group;
-#if BETA
+#if CHECK_DOUBLE_INVOKES
     NSString *_invokeStack;
     NSString *_creationStack;
     int _magic;
+    NSMutableString *_debugInfo;
 #endif
 }
 
@@ -308,7 +311,8 @@ NSPointerArray *gThreads;
         _block = [block copy];
         _group = dispatch_group_create();
         dispatch_group_enter(_group);
-#if BETA
+#if CHECK_DOUBLE_INVOKES
+        _debugInfo = [[NSMutableString alloc] init];
         _magic = 0xdeadbeef;
         _creationStack = [[[NSThread callStackSymbols] componentsJoinedByString:@"\n"] copy];
 #endif
@@ -319,10 +323,11 @@ NSPointerArray *gThreads;
 - (void)dealloc {
     [_thread release];
     [_block release];
-#if BETA
+#if CHECK_DOUBLE_INVOKES
     assert(_magic == 0xdeadbeef);
     [_invokeStack release];
     [_creationStack release];
+    [_debugInfo release];
     _magic = 0;
 #endif
     dispatch_release(_group);
@@ -334,13 +339,13 @@ NSPointerArray *gThreads;
 - (void)invokeWithObject:(id)object {
     void (^block)(id, id) = [_block retain];
     [self retain];
-#if BETA
+#if CHECK_DOUBLE_INVOKES
     NSString *stack = [[[iTermThread currentThread] currentStack] retain];
 #endif
     [_thread dispatchAsync:^(iTermSynchronizedState *state) {
-#if BETA
-        ITBetaAssert(!self->_invokeStack, @"Previously invoked from:\n%@\n\nNow invoked from:\n%@\n\nCreated from:\n%@",
-                     _invokeStack, stack, _creationStack);
+#if CHECK_DOUBLE_INVOKES
+        ITAssertWithMessage(!self->_invokeStack, @"Previously invoked from:\n%@\n\nNow invoked from:\n%@\n\nCreated from:\n%@\n%@",
+                     _invokeStack, stack, _creationStack, _debugInfo);
         _invokeStack = [stack copy];
         [stack release];
 #endif
@@ -354,13 +359,13 @@ NSPointerArray *gThreads;
 - (void)invokeMaybeImmediatelyWithObject:(id)object {
     void (^block)(id, id) = [_block retain];
     [self retain];
-#if BETA
+#if CHECK_DOUBLE_INVOKES
     NSString *stack = [[_thread currentStack] retain];
 #endif
     [_thread dispatchRecursiveSync:^(iTermSynchronizedState *state) {
-#if BETA
-        ITBetaAssert(!self->_invokeStack, @"Previously invoked from:\n%@\n\nNow invoked from:\n%@\n\nCreated from:\n%@",
-                     _invokeStack, stack, _creationStack);
+#if CHECK_DOUBLE_INVOKES
+        ITAssertWithMessage(!self->_invokeStack, @"Previously invoked from:\n%@\n\nNow invoked from:\n%@\n\nCreated from:\n%@\n%@",
+                     _invokeStack, stack, _creationStack, _debugInfo);
 
         _invokeStack = [stack copy];
         [stack release];
@@ -374,6 +379,13 @@ NSPointerArray *gThreads;
 
 - (void)waitUntilInvoked {
     dispatch_group_wait(_group, DISPATCH_TIME_FOREVER);
+}
+
+- (void)addDebugInfo:(NSString *)debugInfo {
+#if CHECK_DOUBLE_INVOKES
+    [_debugInfo appendString:debugInfo];
+    [_debugInfo appendString:@"\n"];
+#endif
 }
 
 @end

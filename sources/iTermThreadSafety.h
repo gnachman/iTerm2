@@ -95,6 +95,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)invokeWithObject:(ObjectType _Nullable)object;
 - (void)invokeMaybeImmediatelyWithObject:(ObjectType _Nullable)object;
 - (void)waitUntilInvoked;
+- (void)addDebugInfo:(NSString *)debugInfo;
 
 @end
 
