@@ -49,6 +49,11 @@ NSString *const iTermFileDescriptorMultiClientErrorDomain = @"iTermFileDescripto
     return self;
 }
 
+- (NSString *)description {
+    return [NSString stringWithFormat:@"<%@: %p %@>", NSStringFromClass([self class]),
+            self, _socketPath];
+}
+
 #pragma mark - APIs
 
 - (pid_t)serverPID {
@@ -487,8 +492,11 @@ static unsigned long long MakeUniqueID(void) {
         }
 
         DLog(@"Failed to write launch request.");
-        [state.pendingLaunches removeObjectForKey:@(uniqueID)];
-        [callback invokeWithObject:[iTermResult withError:[self connectionLostError]]];
+        if (state.pendingLaunches[@(uniqueID)]) {
+            DLog(@"Invoke callback with connection-lost error.");
+            [state.pendingLaunches removeObjectForKey:@(uniqueID)];
+            [callback invokeWithObject:[iTermResult withError:[self connectionLostError]]];
+        }
     }]];
 }
 
@@ -822,13 +830,14 @@ static unsigned long long MakeUniqueID(void) {
     state.readFD = -1;
     state.writeFD = -1;
 
-    [state.pendingLaunches enumerateKeysAndObjectsUsingBlock:
+    NSDictionary<NSNumber *, iTermFileDescriptorMultiClientPendingLaunch *> *pendingLaunches = [state.pendingLaunches copy];
+    [state.pendingLaunches removeAllObjects];
+    [pendingLaunches enumerateKeysAndObjectsUsingBlock:
      ^(NSNumber * _Nonnull uniqueID,
        iTermFileDescriptorMultiClientPendingLaunch * _Nonnull pendingLaunch,
        BOOL * _Nonnull stop) {
         [pendingLaunch cancelWithError:[self connectionLostError]];
     }];
-    [state.pendingLaunches removeAllObjects];
 
     [state.children enumerateObjectsUsingBlock:
      ^(iTermFileDescriptorMultiClientChild * _Nonnull child,
@@ -1208,7 +1217,7 @@ static void HexDump(NSData *data) {
     DLog(@"Queue attempt to write in the future.");
     __weak __typeof(self) weakSelf = self;
     [state whenWritable:^(iTermFileDescriptorMultiClientState * _Nullable state) {
-        [weakSelf tryWrite:[data subdataFromOffset:MAX(0, bytesWritten)]
+        [weakSelf tryWrite:[data subdataFromOffset:MAX(0, bytesWritten)]  // NOTE: bytesWritten can be negative if we get EAGAIN
                      state:state
                   callback:callback];
     }];
