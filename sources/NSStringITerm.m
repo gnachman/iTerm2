@@ -1328,10 +1328,12 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
         range = [self rangeOfString:@"$$" options:NSLiteralSearch range:rangeToSearch];
         if (start < 0) {
             start = range.location;
+        } else if (range.location == NSNotFound) {
+            break;
         } else {
             NSRange capture = NSMakeRange(start, NSMaxRange(range) - start);
             NSString *string = [self substringWithRange:capture];
-            if (string.length > 4) {  // length of 4 implies $$$$, which should be interpreted as $$
+            if (string.length >= 4) {  // length of 4 implies $$$$, which should be interpreted as $$
                 [set addObject:string];
             }
             start = -1;

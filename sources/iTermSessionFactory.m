@@ -128,14 +128,10 @@ NS_ASSUME_NONNULL_BEGIN
 
 #pragma mark - Private
 
-- (NSString *)unescapeDoubleDollarsInString:(NSString *)string {
-    return [string stringByReplacingOccurrencesOfString:@"$$$$" withString:@"$$"];
-}
-
 - (void)computeCommandWithCompletion:(void (^)(void))completion {
     DLog(@"computeCommandWithCompletion %@ command=%@", self, self.command);
     if (self.command) {
-        self->_computedCommand = [self unescapeDoubleDollarsInString:self.command];
+        self->_computedCommand = self.command;
         DLog(@"Computed command is %@", self->_computedCommand);
         completion();
         return;
@@ -144,7 +140,7 @@ NS_ASSUME_NONNULL_BEGIN
                                     objectType:self.objectType
                                          scope:self.session.variablesScope
                                     completion:^(NSString *command) {
-        self->_computedCommand = [self unescapeDoubleDollarsInString:command];
+        self->_computedCommand = command;
         completion();
     }];
 }
@@ -244,6 +240,7 @@ NS_ASSUME_NONNULL_BEGIN
 // Returns nil if the user pressed cancel, otherwise returns a dictionary that's a supeset of |substitutions|.
 - (nullable NSDictionary *)substitutionsAfterPrompting {
     NSDictionary *baseSubstitutions = self.allowURLSubs ? [self substitutionsForURL:self.urlString] : @{};
+    baseSubstitutions = [baseSubstitutions dictionaryByMergingDictionary:@{ @"$$$$": @"$$" }];
     NSSet *cmdVars = [self.computedCommand doubleDollarVariables];
     NSSet *nameVars = [self.name doubleDollarVariables];
     NSMutableSet *allVars = [cmdVars mutableCopy];
