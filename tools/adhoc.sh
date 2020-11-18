@@ -28,8 +28,8 @@ xcrun stapler staple iTerm.app
 
 zip -ry iTerm2-${NAME}.zip iTerm.app
 chmod a+r iTerm2-${NAME}.zip
-scp iTerm2-${NAME}.zip gnachman@iterm2.com:bryan.dreamhost.com/adhocbuilds/ || \
-  scp iTerm2-${NAME}.zip gnachman@iterm2.com:bryan.dreamhost.com/adhocbuilds/
+scp iTerm2-${NAME}.zip gnachman@bryan.dreamhost.com:iterm2.com/adhocbuilds/ || \
+  scp iTerm2-${NAME}.zip gnachman@bryan.dreamhost.com:iterm2.com/adhocbuilds/
 BRANCH=$(git rev-parse --abbrev-ref HEAD)
 git checkout -b adhoc_$VERSION
 git commit -am "Adhoc build $VERSION"
