@@ -2405,7 +2405,7 @@ ITERM_WEAKLY_REFERENCEABLE
     if (self.isSingleUseSession) {
         return;
     }
-    if (_tmuxMode == TMUX_CLIENT && _tmuxController.detached) {
+    if (_tmuxMode == TMUX_CLIENT && (_tmuxController.detached || _tmuxController.detaching)) {
         return;
     }
     if ([[NSDate date] timeIntervalSinceDate:_creationDate] < [iTermAdvancedSettingsModel shortLivedSessionDuration]) {
