@@ -1345,6 +1345,10 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     [[self parentWindow] closeSession:session];
 }
 
+- (void)softCloseSession:(PTYSession *)session {
+    [[self realParentWindow] softCloseSession:session];
+}
+
 - (void)terminateAllSessions {
     [self.sessions makeObjectsPerformSelector:@selector(terminate)];
 }

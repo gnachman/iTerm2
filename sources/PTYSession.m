@@ -3140,7 +3140,7 @@ ITERM_WEAKLY_REFERENCEABLE
     switch (self.endAction) {
         case iTermSessionEndActionClose:
             if ([_delegate sessionShouldAutoClose:self]) {
-                [_delegate closeSession:self];
+                [_delegate softCloseSession:self];
                 return;
             }
             break;
@@ -3149,7 +3149,7 @@ ITERM_WEAKLY_REFERENCEABLE
         case iTermSessionEndActionDefault:
             if (_tmuxWindowClosingByClientRequest ||
                 [self.naggingController tmuxWindowsShouldCloseAfterDetach]) {
-                [_delegate closeSession:self];
+                [_delegate softCloseSession:self];
                 return;
             }
             break;

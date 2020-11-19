@@ -39,6 +39,9 @@
 // Close a session
 - (void)closeSession:(PTYSession*)aSession;
 
+// Close a session but don't kill the underlying window pane if it's a tmux session.
+- (void)softCloseSession:(PTYSession *)aSession;
+
 // Select the tab to the right of the foreground tab.
 - (void)nextTab:(id)sender;
 
@@ -256,9 +259,6 @@
 
 // Restart a session if the user agrees to a modal alert.
 - (void)restartSessionWithConfirmation:(PTYSession *)aSession;
-
-// Close a session but don't kill the underlying window pane if it's a tmux session.
-- (void)softCloseSession:(PTYSession *)aSession;
 
 // Update sessions' dimming status.
 - (void)setDimmingForSessions;
