@@ -57,7 +57,9 @@
 - (void)setHidden:(BOOL)hidden {
     [CATransaction begin];
     [CATransaction setDisableActions:YES];
-
+    NSLog(@"Set iTermImageView with superview %@ hidden %@ -> %@ from\n%@",
+          [self.superview class], @(self.isHidden), @(hidden),
+          [NSThread callStackSymbols]);
     [super setHidden:hidden];
 
     [CATransaction commit];

@@ -16,9 +16,9 @@
 }
 
 - (BOOL)shouldPremultiply {
-    if (@available(macOS 10.14, *)) {
-        return iTermTextIsMonochrome();
-    }
+//    if (@available(macOS 10.14, *)) {
+//        return iTermTextIsMonochrome();
+//    }
     return NO;
 }
 
@@ -61,6 +61,7 @@
 @implementation iTermBackgroundColorRenderer {
     iTermMetalCellRenderer *_blendingRenderer;
     iTermMetalCellRenderer *_nonblendingRenderer NS_AVAILABLE_MAC(10_14);
+    iTermMetalBufferPool *_infoPool;
 
 #if ENABLE_TRANSPARENT_METAL_WINDOWS
     iTermMetalCellRenderer *_compositeOverRenderer NS_AVAILABLE_MAC(10_14);
@@ -101,6 +102,7 @@
         _piuPool = [[iTermMetalMixedSizeBufferPool alloc] initWithDevice:device
                                                                 capacity:512
                                                                     name:@"background color PIU"];
+        _infoPool = [[iTermMetalBufferPool alloc] initWithDevice:device bufferSize:sizeof(iTermMetalBackgroundColorInfo)];
     }
     return self;
 }
@@ -142,9 +144,22 @@
     tState.vertexBuffer.label = @"Vertices";
 }
 
+- (id<MTLBuffer>)infoBufferForTransientState:(iTermBackgroundColorRendererTransientState *)tState {
+    iTermMetalBackgroundColorInfo info;
+    memset(&info, 0, sizeof(info));
+    info.defaultBackgroundColor = tState.defaultBackgroundColor;
+    info.transparencyAlpha = tState.transparencyAlpha;
+    id<MTLBuffer> buffer = [self->_infoPool requestBufferFromContext:tState.poolContext
+                                                           withBytes:&info
+                                                      checkIfChanged:YES];
+    buffer.label = @"BG color info";
+    return buffer;
+}
+
 - (void)drawWithFrameData:(iTermMetalFrameData *)frameData
            transientState:(__kindof iTermMetalRendererTransientState *)transientState {
     iTermBackgroundColorRendererTransientState *tState = transientState;
+    id<MTLBuffer> infoBuffer = [self infoBufferForTransientState:tState];
     [tState enumerateSegments:^(const iTermBackgroundColorPIU *pius, size_t numberOfInstances) {
         id<MTLBuffer> piuBuffer = [self->_piuPool requestBufferFromContext:tState.poolContext
                                                                       size:numberOfInstances * sizeof(*pius)
@@ -157,7 +172,9 @@
                                 numberOfPIUs:numberOfInstances
                                vertexBuffers:@{ @(iTermVertexInputIndexVertices): tState.vertexBuffer,
                                                 @(iTermVertexInputIndexPerInstanceUniforms): piuBuffer,
-                                                @(iTermVertexInputIndexOffset): tState.offsetBuffer }
+                                                @(iTermVertexInputIndexOffset): tState.offsetBuffer,
+                                                @(iTermVertexInputIndexDefaultBackgroundColorInfo): infoBuffer
+                               }
                              fragmentBuffers:@{}
                                     textures:@{} ];
     }];

@@ -9,6 +9,7 @@ typedef enum iTermVertexInputIndex {
     iTermVertexInputIndexPerInstanceUniforms,
     iTermVertexInputIndexOffset,
     iTermVertexInputIndexCursorDescription,
+    iTermVertexInputIndexDefaultBackgroundColorInfo,  // Points at iTermMetalBackgroundColorInfo
     iTermVertexTextInfo
 } iTermVertexInputIndex;
 
@@ -49,6 +50,14 @@ typedef enum {
     iTermMetalGlyphAttributesUnderlineStrikethroughAndDashedSingle = iTermMetalGlyphAttributesUnderlineStrikethroughFlag + 3,
     iTermMetalGlyphAttributesUnderlineStrikethroughAndCurly = iTermMetalGlyphAttributesUnderlineStrikethroughFlag + 4,
 } iTermMetalGlyphAttributesUnderline;
+
+// out_A = src_A + dst_A * (1 - src_A)
+// if out_A > 0: out_RGB = (src_RGB * src_A + dst_RGB * dst_A * (1 - src_A)) / out_A
+//         else: out_RGB = 0
+typedef struct {
+    vector_float4 defaultBackgroundColor;  // dst_RGB | dst_A
+    float transparencyAlpha; // transparencyAlpha * piu_A = src_A; piu_RGB = src_RGB
+} iTermMetalBackgroundColorInfo;
 
 typedef struct {
     // Distance in pixel space from origin

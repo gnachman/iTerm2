@@ -54,6 +54,10 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
 @end
 
 @implementation iTermMTKView
+- (void)setAlphaValue:(CGFloat)alphaValue {
+    NSLog(@"Set MTKView's alpha value %@ -> %@ from\n%@", @(self.alphaValue), @(alphaValue), [NSThread callStackSymbols]);
+    [super setAlphaValue:alphaValue];
+}
 @end
 
 @interface iTermHoverContainerView : NSView
@@ -298,7 +302,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
         if (image) {
             _imageView.image = image;
         }
-        _imageView.hidden = (image == nil);
+        [self updateImageAndBackgroundViewVisibility];
     }
 }
 
@@ -656,20 +660,24 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
 }
 
 - (void)metalViewVisibilityDidChange {
-    if (@available(macOS 10.14, *)) {
-        [CATransaction begin];
-        [CATransaction setDisableActions:YES];
-        if (_metalView.alphaValue == 0) {
-            _imageView.hidden = (_imageView.image == nil);
-            _backgroundColorView.hidden = !iTermTextIsMonochrome();
-            _legacyScrollerBackgroundView.hidden = iTermTextIsMonochrome();
-        } else {
-            _imageView.hidden = YES;
-            _backgroundColorView.hidden = YES;
-            _legacyScrollerBackgroundView.hidden = YES;
-        }
-        [CATransaction commit];
+    [self updateImageAndBackgroundViewVisibility];
+}
+
+- (void)updateImageAndBackgroundViewVisibility {
+    [CATransaction begin];
+    [CATransaction setDisableActions:YES];
+    if (_metalView.alphaValue == 0) {
+        NSLog(@"Metal's alpha value is 0 so show iTermImageView");
+        _imageView.hidden = (_imageView.image == nil);
+        _backgroundColorView.hidden = !iTermTextIsMonochrome();
+        _legacyScrollerBackgroundView.hidden = iTermTextIsMonochrome();
+    } else {
+        NSLog(@"Metal's alpha value is positive so hide iTermImageView");
+        _imageView.hidden = YES;
+        _backgroundColorView.hidden = YES;
+        _legacyScrollerBackgroundView.hidden = YES;
     }
+    [CATransaction commit];
 }
 
 - (void)tabColorDidChange {
