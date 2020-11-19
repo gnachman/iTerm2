@@ -6,6 +6,9 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface iTermBackgroundColorRendererTransientState : iTermMetalCellRendererTransientState
 
+// Alpha value gives the value from iTermAlphaValueForTopView.
+@property (nonatomic) vector_float4 defaultBackgroundColor;
+
 - (void)setColorRLEs:(const iTermMetalBackgroundColorRLE *)rles
                count:(size_t)count
                  row:(int)row

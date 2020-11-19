@@ -146,6 +146,9 @@ static void iTermImageViewReleaseImage(void *info) {
 }
 
 - (void)setContentMode:(iTermBackgroundImageMode)contentMode {
+    if (contentMode == _contentMode) {
+        return;
+    }
     _contentMode = contentMode;
     [self update];
 }

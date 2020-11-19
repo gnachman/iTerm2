@@ -15,28 +15,15 @@
     return sizeof(iTermBackgroundColorPIU) * self.cellConfiguration.gridSize.width * self.cellConfiguration.gridSize.height;
 }
 
-- (BOOL)shouldPremultiply {
-    if (@available(macOS 10.14, *)) {
-        return iTermTextIsMonochrome();
-    }
-    return NO;
-}
-
 - (void)setColorRLEs:(const iTermMetalBackgroundColorRLE *)rles
                count:(size_t)count
                  row:(int)row
        repeatingRows:(int)repeatingRows {
     vector_float2 cellSize = simd_make_float2(self.cellConfiguration.cellSize.width, self.cellConfiguration.cellSize.height);
     const int height = self.cellConfiguration.gridSize.height;
-    const BOOL premultiply = [self shouldPremultiply];
     for (int i = 0; i < count; i++) {
         iTermBackgroundColorPIU &piu = *_pius.get_next();
         piu.color = rles[i].color;
-        if (premultiply) {
-            piu.color.x *= piu.color.w;
-            piu.color.y *= piu.color.w;
-            piu.color.z *= piu.color.w;
-        }
         piu.runLength = rles[i].count;
         piu.numRows = repeatingRows;
         piu.offset = simd_make_float2(cellSize.x * (float)rles[i].origin,
@@ -61,6 +48,7 @@
 @implementation iTermBackgroundColorRenderer {
     iTermMetalCellRenderer *_blendingRenderer;
     iTermMetalCellRenderer *_nonblendingRenderer NS_AVAILABLE_MAC(10_14);
+    iTermMetalBufferPool *_infoPool;
 
 #if ENABLE_TRANSPARENT_METAL_WINDOWS
     iTermMetalCellRenderer *_compositeOverRenderer NS_AVAILABLE_MAC(10_14);
@@ -101,6 +89,7 @@
         _piuPool = [[iTermMetalMixedSizeBufferPool alloc] initWithDevice:device
                                                                 capacity:512
                                                                     name:@"background color PIU"];
+        _infoPool = [[iTermMetalBufferPool alloc] initWithDevice:device bufferSize:sizeof(iTermMetalBackgroundColorInfo)];
     }
     return self;
 }
@@ -142,9 +131,21 @@
     tState.vertexBuffer.label = @"Vertices";
 }
 
+- (id<MTLBuffer>)infoBufferForTransientState:(iTermBackgroundColorRendererTransientState *)tState {
+    iTermMetalBackgroundColorInfo info;
+    memset(&info, 0, sizeof(info));
+    info.defaultBackgroundColor = tState.defaultBackgroundColor;
+    id<MTLBuffer> buffer = [self->_infoPool requestBufferFromContext:tState.poolContext
+                                                           withBytes:&info
+                                                      checkIfChanged:YES];
+    buffer.label = @"BG color info";
+    return buffer;
+}
+
 - (void)drawWithFrameData:(iTermMetalFrameData *)frameData
            transientState:(__kindof iTermMetalRendererTransientState *)transientState {
     iTermBackgroundColorRendererTransientState *tState = transientState;
+    id<MTLBuffer> infoBuffer = [self infoBufferForTransientState:tState];
     [tState enumerateSegments:^(const iTermBackgroundColorPIU *pius, size_t numberOfInstances) {
         id<MTLBuffer> piuBuffer = [self->_piuPool requestBufferFromContext:tState.poolContext
                                                                       size:numberOfInstances * sizeof(*pius)
@@ -157,7 +158,9 @@
                                 numberOfPIUs:numberOfInstances
                                vertexBuffers:@{ @(iTermVertexInputIndexVertices): tState.vertexBuffer,
                                                 @(iTermVertexInputIndexPerInstanceUniforms): piuBuffer,
-                                                @(iTermVertexInputIndexOffset): tState.offsetBuffer }
+                                                @(iTermVertexInputIndexOffset): tState.offsetBuffer,
+                                                @(iTermVertexInputIndexDefaultBackgroundColorInfo): infoBuffer
+                               }
                              fragmentBuffers:@{}
                                     textures:@{} ];
     }];

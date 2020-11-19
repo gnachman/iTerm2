@@ -751,12 +751,7 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
             backgroundRLE[previousRLE].count++;
             unprocessedBackgroundColor = lastUnprocessedBackgroundColor;
         } else {
-            BOOL enableBlending = YES;
-            if (@available(macOS 10.14, *)) {
-                enableBlending = NO;
-            }
-            unprocessedBackgroundColor = [self unprocessedColorForBackgroundColorKey:&backgroundKey
-                                                                      enableBlending:enableBlending];
+            unprocessedBackgroundColor = [self unprocessedColorForBackgroundColorKey:&backgroundKey];
             lastUnprocessedBackgroundColor = unprocessedBackgroundColor;
             // The unprocessed color is needed for minimum contrast computation for text color.
             backgroundColor = [_configuration->_colorMap fastProcessedBackgroundColorForBackgroundColor:unprocessedBackgroundColor];
@@ -958,8 +953,7 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
     }
 }
 
-- (vector_float4)unprocessedColorForBackgroundColorKey:(iTermBackgroundColorKey *)colorKey
-                                        enableBlending:(BOOL)enableBlending {
+- (vector_float4)unprocessedColorForBackgroundColorKey:(iTermBackgroundColorKey *)colorKey {
     vector_float4 color = { 0, 0, 0, 0 };
     CGFloat alpha = _configuration->_transparencyAlpha;
     if (colorKey->selected) {
@@ -978,8 +972,7 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
             .isMatch = NO,
             .image = NO
         };
-        return [self unprocessedColorForBackgroundColorKey:&temp
-                                            enableBlending:enableBlending];
+        return [self unprocessedColorForBackgroundColorKey:&temp];
     } else if (colorKey->isMatch) {
         color = (vector_float4){ 1, 1, 0, 1 };
     } else {
@@ -1001,6 +994,9 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
                                   bold:NO
                                  faint:NO
                           isBackground:NO];
+        } else if (defaultBackground) {
+            color = simd_make_float4(0, 0, 0, 0);
+            alpha = 0;
         } else {
             // Use the regular background color.
             color = [self colorForCode:colorKey->bgColor
@@ -1010,21 +1006,6 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
                                   bold:NO
                                  faint:NO
                           isBackground:YES];
-        }
-
-        if (defaultBackground && _backgroundImage) {
-            if (enableBlending) {
-                // Legacy
-                alpha = 1 - _configuration->_backgroundImageBlend;
-            } else {
-                // 10.14+
-                alpha = iTermAlphaValueForTopView(1 - _configuration->_transparencyAlpha,
-                                                  _configuration->_backgroundImageBlend);
-            }
-        } else if (!_configuration->_reverseVideo && defaultBackground && !enableBlending) {
-            // 10.14+
-            alpha = iTermAlphaValueForTopView(1 - _configuration->_transparencyAlpha,
-                                              _configuration->_backgroundImageBlend);
         }
     }
     color.w = alpha;

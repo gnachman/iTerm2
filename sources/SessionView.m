@@ -298,7 +298,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
         if (image) {
             _imageView.image = image;
         }
-        _imageView.hidden = (image == nil);
+        [self updateImageAndBackgroundViewVisibility];
     }
 }
 
@@ -656,20 +656,22 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
 }
 
 - (void)metalViewVisibilityDidChange {
-    if (@available(macOS 10.14, *)) {
-        [CATransaction begin];
-        [CATransaction setDisableActions:YES];
-        if (_metalView.alphaValue == 0) {
-            _imageView.hidden = (_imageView.image == nil);
-            _backgroundColorView.hidden = !iTermTextIsMonochrome();
-            _legacyScrollerBackgroundView.hidden = iTermTextIsMonochrome();
-        } else {
-            _imageView.hidden = YES;
-            _backgroundColorView.hidden = YES;
-            _legacyScrollerBackgroundView.hidden = YES;
-        }
-        [CATransaction commit];
+    [self updateImageAndBackgroundViewVisibility];
+}
+
+- (void)updateImageAndBackgroundViewVisibility {
+    [CATransaction begin];
+    [CATransaction setDisableActions:YES];
+    if (_metalView.alphaValue == 0) {
+        _imageView.hidden = (_imageView.image == nil);
+        _backgroundColorView.hidden = !iTermTextIsMonochrome();
+        _legacyScrollerBackgroundView.hidden = iTermTextIsMonochrome();
+    } else {
+        _imageView.hidden = YES;
+        _backgroundColorView.hidden = YES;
+        _legacyScrollerBackgroundView.hidden = YES;
     }
+    [CATransaction commit];
 }
 
 - (void)tabColorDidChange {

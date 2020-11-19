@@ -1135,6 +1135,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
 
     CGSize glyphSize = textState.cellConfiguration.glyphSize;
     iTermBackgroundColorRendererTransientState *backgroundState = [frameData transientStateForRenderer:_backgroundColorRenderer];
+    backgroundState.defaultBackgroundColor = frameData.perFrameState.processedDefaultBackgroundColor;
 
     iTermMetalIMEInfo *imeInfo = frameData.perFrameState.imeInfo;
 
