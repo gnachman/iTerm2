@@ -284,7 +284,7 @@
                         kTipBodyKey: @"Hold ⌥ while dragging a tab to move the window. This is useful in the Compact and Minimal themes, which have a very small area for dragging the window." },
 
             @"0079": @{ kTipTitleKey: @"Composer",
-                        kTipBodyKey: @"Press ⌘. to open the Composer. It gives you a scratchpad to edit a command before sending it to the shell." },
+                        kTipBodyKey: @"Press ⇧⌘. to open the Composer. It gives you a scratchpad to edit a command before sending it to the shell." },
             };
 }
 
