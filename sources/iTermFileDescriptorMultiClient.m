@@ -1196,6 +1196,7 @@ static void HexDump(NSData *data) {
                                                                 data.bytes,
                                                                 data.length);
     const int savedErrno = errno;
+    ITAssertWithMessage(bytesWritten <= data.length, @"Data length is %@ but wrote %@. errno is %d",  @(data.length), @(bytesWritten), savedErrno);
     DLog(@"Wrote %@/%@ error=%s", @(bytesWritten), @(data.length), strerror(savedErrno));
     if (bytesWritten < 0 && errno != EAGAIN) {
         DLog(@"Write failed to %@: %s", _socketPath, strerror(errno));
@@ -1217,6 +1218,8 @@ static void HexDump(NSData *data) {
     DLog(@"Queue attempt to write in the future.");
     __weak __typeof(self) weakSelf = self;
     [state whenWritable:^(iTermFileDescriptorMultiClientState * _Nullable state) {
+        ITAssertWithMessage(bytesWritten <= data.length, @"Data length is %@ but wrote %@.",
+                            @(data.length), @(bytesWritten));
         [weakSelf tryWrite:[data subdataFromOffset:MAX(0, bytesWritten)]  // NOTE: bytesWritten can be negative if we get EAGAIN
                      state:state
                   callback:callback];
