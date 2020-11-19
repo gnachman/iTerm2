@@ -546,6 +546,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
 }
 
 - (void)handleShowSize:(NSString *)response {
+    DLog(@"handleShowSize: %@", response);
     NSScanner *scanner = [NSScanner scannerWithString:response ?: @""];
     int width = 0;
     int height = 0;
@@ -560,6 +561,8 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
 }
 
 - (void)openWindowsOfSize:(VT100GridSize)size {
+    DLog(@"openWindowsOfSize: %@", VT100GridSizeDescription(size));
+
     // There's a (hopefully) minor race condition here. When we initially connect to
     // a session we get its @iterm2_id. If one doesn't exist, it is assigned. This
     // lets us know if a single instance of iTerm2 is trying to attach to the same
@@ -572,11 +575,11 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     NSString *getSessionGuidCommand = [NSString stringWithFormat:@"show -v -q -t $%d @iterm2_id",
                                        sessionId_];
     size.height = [self adjustHeightForStatusBar:size.height];
-    if (size.width == 0) {
-        size.width = 1;
+    if (size.width < 2) {
+        size.width = 2;
     }
-    if (size.height == 0) {
-        size.height = 1;
+    if (size.height < 2) {
+        size.height = 2;
     }
     // NOTE: setSizeCommand only set when variable window sizes are not in use.
     NSString *setSizeCommand = [NSString stringWithFormat:@"refresh-client -C %d,%d",

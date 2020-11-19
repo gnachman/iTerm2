@@ -7204,8 +7204,11 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 - (VT100GridSize)tmuxClientSize {
     if (!_delegate) {
+        DLog(@"No delegate so use saved grid size %@", VT100GridSizeDescription(_savedGridSize));
         return _savedGridSize;
     }
+    DLog(@"Get size from delegate %@, controller tmuxController %@, window %@", _delegate,
+         _tmuxController, @(self.delegate.tmuxWindow));
     return [_delegate sessionTmuxSizeWithProfile:[_tmuxController profileForWindow:self.delegate.tmuxWindow]];
 }
 
