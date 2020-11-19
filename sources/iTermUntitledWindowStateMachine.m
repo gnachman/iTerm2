@@ -27,9 +27,10 @@
 }
 
 - (void)maybeOpenUntitledFile {
-    DLog(@"untitled: maybeOpenUntitledFile %@", self);
+    DLog(@"untitled: maybeOpenUntitledFile %@\n%@", self, [NSThread callStackSymbols]);
     if (_disableInitialWindow && !_initializationComplete) {
         // This is the initial window.
+        DLog(@"untitled: do nothing because this is the initial window.");
         return;
     }
     _wantsWindow = YES;
