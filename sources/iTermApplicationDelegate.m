@@ -1382,6 +1382,7 @@ static BOOL hasBecomeActive = NO;
         ![[NSApplication sharedApplication] isRunningUnitTests]) {
         ranAutoLaunchScripts = [self.scriptsMenuController runAutoLaunchScriptsIfNeeded];
     }
+    DLog(@"ranAutoLaunchScripts=%@", @(ranAutoLaunchScripts));
 
     if ([WindowArrangements defaultArrangementName] == nil &&
         [WindowArrangements arrangementWithName:LEGACY_DEFAULT_ARRANGEMENT_NAME] != nil) {
@@ -1392,6 +1393,10 @@ static BOOL hasBecomeActive = NO;
         // Open bookmarks window at startup.
         [[iTermProfilesWindowController sharedInstance] showWindow:nil];
     }
+
+    DLog(@"terminals=%@", [[iTermController sharedInstance] terminals]);
+    DLog(@"profileHotKeys=%@", [[iTermHotKeyController sharedInstance] profileHotKeys]);
+    DLog(@"buriedSessions=%@", [[iTermBuriedSessions sharedInstance] buriedSessions]);
 
     if ([iTermPreferences boolForKey:kPreferenceKeyOpenArrangementAtStartup]) {
         // Open the saved arrangement at startup.

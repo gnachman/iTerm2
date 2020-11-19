@@ -483,6 +483,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)launchScriptWithAbsolutePath:(NSString *)fullPath
                            arguments:(NSArray<NSString *> *)arguments
                   explicitUserAction:(BOOL)explicitUserAction {
+    DLog(@"launch path=%@ args=%@", fullPath, arguments);
     NSString *venv = [iTermAPIScriptLauncher environmentForScript:fullPath
                                                      checkForMain:YES
                                                     checkForSaved:YES];
@@ -1014,6 +1015,7 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 - (void)runAutoLaunchScripts {
+    DLog(@"run auto launch scripts");
     _ranAutoLaunchScript = YES;
 
     [self runLegacyAutoLaunchScripts];
@@ -1050,6 +1052,7 @@ NS_ASSUME_NONNULL_BEGIN
     if (!script) {
         return;
     }
+    DLog(@"Execute %@", aURL);
     [script executeWithAppleEvent:nil completionHandler:nil];
 }
 
