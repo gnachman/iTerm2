@@ -31,6 +31,7 @@ NS_ASSUME_NONNULL_BEGIN
     NSTimeInterval _timeOfLastWindowTitleChange;
     BOOL _needsInvalidateShadow;
     BOOL _it_restorableStateInvalid;
+    BOOL _validatingMenuItems;
 #if BETA
     NSString *_lastAlphaChangeStack;
 #endif
@@ -98,7 +99,10 @@ ITERM_WEAKLY_REFERENCEABLE
             return ![self.ptyDelegate anyFullScreen];
         }
     } else {
-        return [super validateMenuItem:item];
+        _validatingMenuItems = YES;
+        const BOOL result = [super validateMenuItem:item];
+        _validatingMenuItems = NO;
+        return result;
     }
 }
 
@@ -561,6 +565,10 @@ ITERM_WEAKLY_REFERENCEABLE
         _needsInvalidateShadow = NO;
         [self invalidateShadow];
     });
+}
+
+- (BOOL)isMovable {
+    return _validatingMenuItems || [super isMovable];
 }
 
 NS_ASSUME_NONNULL_END
