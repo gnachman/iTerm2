@@ -6286,10 +6286,12 @@ typedef struct {
 
 - (VT100GridSize)sessionTmuxSizeWithProfile:(Profile *)profile {
     if ([iTermPreferences useTmuxProfile]) {
+        DLog(@"Return size from profile %@", profile);
         return VT100GridSizeMake([[profile objectForKey:KEY_COLUMNS] intValue],
                                  [[profile objectForKey:KEY_ROWS] intValue]);
     } else {
         NSSize frameSize = tabView_.frame.size;
+        DLog(@"Compute size from frame %@", NSStringFromSize(frameSize));
         PTYSession *anySession = self.sessions.firstObject;
 
         NSSize contentSize = [NSScrollView contentSizeForFrameSize:frameSize
