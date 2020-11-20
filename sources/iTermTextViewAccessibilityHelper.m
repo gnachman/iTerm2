@@ -157,7 +157,7 @@
     NSUInteger location2 = [self rangeOfCharAtX:coordRange.end.x y:coordRange.end.y].location;
 
     NSUInteger start = MIN(location1, location2);
-    NSUInteger end = MAX(location1, location2);
+    NSUInteger end = MIN(_allText.length, MAX(location1, location2));
 
     return NSMakeRange(start, end - start);
 }
@@ -183,7 +183,7 @@
         return @"";
     }
     NSInteger min = MAX(0, MIN(range.location, length - 1));
-    NSInteger max = MAX(NSMaxRange(range), length - 1);
+    NSInteger max = MIN(NSMaxRange(range), length);
     return [_allText substringWithRange:NSMakeRange(min, max - min)];
 }
 
@@ -219,6 +219,10 @@
     if (range.location == NSNotFound || range.length == 0) {
         return nil;
     } else {
+        const NSInteger length = _allText.length;
+        NSInteger min = MAX(0, MIN(length - 1, range.location));
+        NSInteger max = MAX(min, MIN(length, NSMaxRange(range)));
+        NSRange range = NSMakeRange(min, max - min);
         NSString *theString = [_allText substringWithRange:range];
         NSAttributedString *attributedString = [[NSAttributedString alloc] initWithString:theString];
         return attributedString;
