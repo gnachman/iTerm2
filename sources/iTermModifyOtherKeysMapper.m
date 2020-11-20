@@ -19,11 +19,52 @@ static BOOL CodePointInPrivateUseArea(unichar c) {
 
 @implementation iTermModifyOtherKeysMapper
 
+- (BOOL)eventIsControlCodeWithOption:(NSEvent *)event {
+    const NSEventModifierFlags allEventModifierFlags = (NSEventModifierFlagControl |
+                                                        NSEventModifierFlagOption |
+                                                        NSEventModifierFlagShift |
+                                                        NSEventModifierFlagCommand);
+    const NSEventModifierFlags controlOption = (NSEventModifierFlagControl | NSEventModifierFlagOption);
+    if ((event.it_modifierFlags & allEventModifierFlags) != controlOption) {
+        return NO;
+    }
+    if (event.characters.length != 1) {
+        return NO;
+    }
+    if ([event.characters characterAtIndex:0] >= 32) {
+        return NO;
+    }
+    const unichar controlCode = [event.characters characterAtIndex:0] + '@';
+    if ([[NSString stringWithCharacters:&controlCode length:1] isEqualTo:event.charactersIgnoringModifiers]) {
+        // On US keyboards, when you just press control+opt+<char> you get:
+        //  event.characters="<control code>" event.charactersIgnoringModifiers="<char>"
+        // On Spanish ISO (and presumably all others like it) when you press control+opt+<char> you can get:
+        //  event.characters="<control code>" event.charactersIgnoringModifiers="<some random other thing on the key>"
+        // This code path prevents control-opt-char from ignoring the Option modifier on US-style
+        // keyboards. Those should not be treated as control keys. The reason I think this is correct
+        // is that on a keyboard that *requires* you to press option to get a control, it must be
+        // because the default character for the key is not the one that goes with the control. For
+        // example, on Spanish ISO the key labeled + becomes ] when you press option. So to send
+        // C-] you have to press C-Opt-], and modifyOtherKeys should treat it as C-].
+        return NO;
+    }
+    // This is a control key. We can't just send it in modifyOtherKeys=2 mode. For example,
+    // in issue 9279 @elias.baixas notes that on a Spanish ISO keyboard you press control-alt-+
+    // to get control-]. characters="<0x1d>".
+    return YES;
+}
+
 - (UTF32Char)codePointForEvent:(NSEvent *)event {
     NSString *charactersIgnoringModifiers = event.charactersIgnoringModifiers;
     if (event.keyCode == kVK_Tab) {
         // For some reason shift-tab gives 25.
         return 9;
+    }
+    if ([self eventIsControlCodeWithOption:event]) {
+        // Keyboards that require you to press control+option+something to generate a control code
+        // take this path.
+        const unichar controlCode = [event.characters characterAtIndex:0];
+        return controlCode + '@';
     }
     return [charactersIgnoringModifiers firstCharacter];
 }
@@ -52,7 +93,13 @@ static BOOL CodePointInPrivateUseArea(unichar c) {
         }
     }
 
-    const NSEventModifierFlags modifiers = [event it_modifierFlags] & allEventModifierFlags;
+    NSEventModifierFlags mask = allEventModifierFlags;
+    if ([self eventIsControlCodeWithOption:event]) {
+        // This is intended for keyboards like Spanish ISO that require you to press option to get
+        // certain control codes (like ctrl+opt++ for C-]).
+        mask &= (~NSEventModifierFlagOption);
+    }
+    const NSEventModifierFlags modifiers = [event it_modifierFlags] & mask;
     return [self stringForCodePoint:codePoint modifiers:modifiers];
 }
 
@@ -233,24 +280,24 @@ static BOOL CodePointInPrivateUseArea(unichar c) {
 
 #pragma mark - iTermKeyMapper
 
-// Handle control modifier when it's alone.
+// Handle control modifier when it's alone or in concert with option, provided that sends a control.
 - (nullable NSString *)keyMapperStringForPreCocoaEvent:(NSEvent *)event {
     if (event.type != NSEventTypeKeyDown) {
         return nil;
     }
-    const NSEventModifierFlags modifiers = [event it_modifierFlags];
     const NSEventModifierFlags allEventModifierFlags = (NSEventModifierFlagControl |
                                                         NSEventModifierFlagOption |
                                                         NSEventModifierFlagShift |
                                                         NSEventModifierFlagCommand);
     if (event.keyCode == kVK_Space &&
-        (event.modifierFlags & allEventModifierFlags) == NSEventModifierFlagShift) {
+        (event.it_modifierFlags & allEventModifierFlags) == NSEventModifierFlagShift) {
         // Shift+Space is special. No other unicode character + shift reports a control sequence.
         return [self stringForEvent:event];
     }
-    if ((modifiers & allEventModifierFlags) != NSEventModifierFlagControl) {
+    if ((event.it_modifierFlags & NSEventModifierFlagControl) == 0) {
         return nil;
     }
+    // Always send a modifyOtherKeys sequence for control+anything.
     return [self stringForEvent:event];
 }
 
@@ -282,13 +329,23 @@ static BOOL CodePointInPrivateUseArea(unichar c) {
     const BOOL leftOptionModifiesKey = (leftAltPressed && left != OPT_NORMAL);
     const BOOL rightOptionModifiesKey = (rightAltPressed && right != OPT_NORMAL);
     const BOOL optionModifiesKey = (leftOptionModifiesKey || rightOptionModifiesKey);
+
+    if ([self eventIsControlCodeWithOption:event]) {
+        // Always handle control+anything ourselves. We certainly don't want
+        // cocoa to get ahold of it and call insertText: or
+        // performKeyEquivalent:, which bypasses all the modifyOtherKeys goodness.
+        return NO;
+    }
+
     const BOOL willSendOptionModifiedKey = (isNonEmpty && optionModifiesKey);
     if (willSendOptionModifiedKey) {
         // Meta+key or Esc+ key
         DLog(@"isNonEmpty=%@ rightAltPressed=%@ leftAltPressed=%@ leftOptionModifiesKey=%@ rightOptionModifiesKey=%@ optionModifiesKey=%@ willSendOptionModifiedKey=%@ -> bypass pre-cocoa",
              @(isNonEmpty), @(rightAltPressed), @(leftAltPressed), @(leftOptionModifiesKey), @(rightOptionModifiesKey), @(optionModifiesKey), @(willSendOptionModifiedKey));
+        return YES;
     }
-    return willSendOptionModifiedKey;
+
+    return NO;
 }
 
 // Prepare to handle this event. Update config from delegate.
