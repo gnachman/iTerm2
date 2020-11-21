@@ -221,6 +221,7 @@
 #define KEY_OPTION_KEY_SENDS                  @"Option Key Sends"
 #define KEY_RIGHT_OPTION_KEY_SENDS            @"Right Option Key Sends"
 #define KEY_APPLICATION_KEYPAD_ALLOWED        @"Application Keypad Allowed"
+#define KEY_ALLOW_MODIFY_OTHER_KEYS           @"Allow modifyOtherKeys"
 #define KEY_HAS_HOTKEY                        @"Has Hotkey"  // This determines whether the "has a hotkey" box is checked. See also KEY_HOTKEY_CHARACTERS_IGNORING_MODIFIERS.
 #define KEY_HOTKEY_KEY_CODE                   @"HotKey Key Code"
 #define KEY_HOTKEY_CHARACTERS                 @"HotKey Characters"

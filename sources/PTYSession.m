@@ -11640,11 +11640,17 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)screenSendModifiersDidChange {
+    const BOOL allowed = [iTermProfilePreferences boolForKey:KEY_ALLOW_MODIFY_OTHER_KEYS
+                                                   inProfile:self.profile];
     const int modifyOtherKeysMode = _terminal.sendModifiers[4].intValue;
     if (modifyOtherKeysMode == 1) {
-        self.keyMappingMode = iTermKeyMappingModeModifyOtherKeys1;
+        if (allowed) {
+            self.keyMappingMode = iTermKeyMappingModeModifyOtherKeys1;
+        }
     } else if (modifyOtherKeysMode == 2) {
-        self.keyMappingMode = iTermKeyMappingModeModifyOtherKeys2;
+        if (allowed) {
+            self.keyMappingMode = iTermKeyMappingModeModifyOtherKeys2;
+        }
     } else {
         self.keyMappingMode = iTermKeyMappingModeStandard;
     }
