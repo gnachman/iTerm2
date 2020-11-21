@@ -1153,6 +1153,7 @@ ITERM_WEAKLY_REFERENCEABLE
                                                  state:(NSDictionary *)state
                                      tmuxDCSIdentifier:(NSString *)tmuxDCSIdentifier
                                         missingProfile:(BOOL)missingProfile {
+    assert(arrangement);
     if (needDivorce) {
         [aSession divorceAddressBookEntryFromPreferences];
         [aSession sessionProfileDidChange];
@@ -1290,6 +1291,9 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     if (missingProfile) {
         NSDictionary *arrangementProfile = arrangement[SESSION_ARRANGEMENT_BOOKMARK];
+        ITAssertWithMessage(arrangement != nil, @"Nil arrangement");
+        ITAssertWithMessage(arrangementProfile != nil, @"Nil profile from arrangement with debug info: %@",
+                            arrangement[@"wtf"]);
         [aSession.naggingController arrangementWithName:arrangementName
                                     missingProfileNamed:arrangementProfile[KEY_NAME]
                                                    guid:arrangementProfile[KEY_GUID]];
@@ -1311,6 +1315,7 @@ ITERM_WEAKLY_REFERENCEABLE
                          forObjectType:(iTermObjectType)objectType
                     partialAttachments:(NSDictionary *)partialAttachments {
     DLog(@"Restoring session from arrangement");
+    assert(arrangement);
 
     Profile *theBookmark =
         [[ProfileModel sharedInstance] bookmarkWithGuid:arrangement[SESSION_ARRANGEMENT_BOOKMARK][KEY_GUID]];
@@ -4728,7 +4733,7 @@ ITERM_WEAKLY_REFERENCEABLE
     result[SESSION_ARRANGEMENT_COLUMNS] = @(_screen.width);
     result[SESSION_ARRANGEMENT_ROWS] = @(_screen.height);
     result[SESSION_ARRANGEMENT_BOOKMARK] = _profile;
-
+    result[@"wtf"] = [NSString stringWithFormat:@"Arrangement has profile %p guid %@ name %@ with %@ entries", _profile, _profile[KEY_NAME], _profile[KEY_GUID], @(_profile.count)];
     if (_substitutions) {
         result[SESSION_ARRANGEMENT_SUBSTITUTIONS] = _substitutions;
     }
@@ -4858,6 +4863,8 @@ ITERM_WEAKLY_REFERENCEABLE
                                    tmuxController:(TmuxController *)tmuxController
                                            window:(int)window {
     NSMutableDictionary* result = [NSMutableDictionary dictionaryWithCapacity:3];
+    result[@"wtf"] = [NSString stringWithFormat:@"Arrangement FROM TMUX has profile %p guid %@ name %@ with %@ entries", bookmark, bookmark[KEY_NAME], bookmark[KEY_GUID], @(bookmark.count)];
+
     [result setObject:[parseNode objectForKey:kLayoutDictWidthKey] forKey:SESSION_ARRANGEMENT_COLUMNS];
     [result setObject:[parseNode objectForKey:kLayoutDictHeightKey] forKey:SESSION_ARRANGEMENT_ROWS];
     [result setObject:bookmark forKey:SESSION_ARRANGEMENT_BOOKMARK];
