@@ -1195,9 +1195,10 @@ static void HexDump(NSData *data) {
     const ssize_t bytesWritten = iTermFileDescriptorClientWrite(state.writeFD,
                                                                 data.bytes,
                                                                 data.length);
+    const NSInteger dataLength = data.length;
     const int savedErrno = errno;
-    ITAssertWithMessage(bytesWritten <= data.length, @"Data length is %@ but wrote %@. errno is %d",  @(data.length), @(bytesWritten), savedErrno);
-    DLog(@"Wrote %@/%@ error=%s", @(bytesWritten), @(data.length), strerror(savedErrno));
+    ITAssertWithMessage(bytesWritten <= dataLength, @"Data length is %@ but wrote %@. errno is %d",  @(dataLength), @(bytesWritten), savedErrno);
+    DLog(@"Wrote %@/%@ error=%s", @(bytesWritten), @(dataLength), strerror(savedErrno));
     if (bytesWritten < 0 && errno != EAGAIN) {
         DLog(@"Write failed to %@: %s", _socketPath, strerror(errno));
         [callback invokeWithObject:@NO];
@@ -1210,7 +1211,7 @@ static void HexDump(NSData *data) {
         return;
     }
 
-    if (bytesWritten == data.length) {
+    if (bytesWritten == dataLength) {
         [callback invokeWithObject:@YES];
         return;
     }
@@ -1218,8 +1219,8 @@ static void HexDump(NSData *data) {
     DLog(@"Queue attempt to write in the future.");
     __weak __typeof(self) weakSelf = self;
     [state whenWritable:^(iTermFileDescriptorMultiClientState * _Nullable state) {
-        ITAssertWithMessage(bytesWritten <= data.length, @"Data length is %@ but wrote %@.",
-                            @(data.length), @(bytesWritten));
+        ITAssertWithMessage(bytesWritten <= dataLength, @"Data length is %@ but wrote %@.",
+                            @(dataLength), @(bytesWritten));
         [weakSelf tryWrite:[data subdataFromOffset:MAX(0, bytesWritten)]  // NOTE: bytesWritten can be negative if we get EAGAIN
                      state:state
                   callback:callback];
