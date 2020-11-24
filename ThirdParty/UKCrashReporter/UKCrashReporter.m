@@ -303,10 +303,11 @@ NSString*    gCrashLogString = nil;
     NSData*                crashReport = [crashReportString dataUsingEncoding: NSUTF8StringEncoding];
     
     // Prepare a request:
-    NSMutableURLRequest *postRequest = [NSMutableURLRequest requestWithURL: [NSURL URLWithString: NSLocalizedStringFromTable( @"CRASH_REPORT_CGI_URL", @"UKCrashReporter", @"" )]];
+    NSURL *url = [NSURL URLWithString: NSLocalizedStringFromTable( @"CRASH_REPORT_CGI_URL", @"UKCrashReporter", @"" )];
+    NSMutableURLRequest *postRequest = [NSMutableURLRequest requestWithURL: url];
     NSString            *contentType = [NSString stringWithFormat:@"multipart/form-data; boundary=%@",boundary];
     NSString            *agent = @"UKCrashReporter";
-    
+
     // Add form trappings to crashReport:
     NSData*            header = [[NSString stringWithFormat:@"--%@\r\nContent-Disposition: form-data; name=\"crashlog\"\r\n\r\n", boundary] dataUsingEncoding:NSUTF8StringEncoding];
     NSMutableData*    formData = [[header mutableCopy] autorelease];
@@ -315,6 +316,7 @@ NSString*    gCrashLogString = nil;
     
     // setting the headers:
     [postRequest setHTTPMethod: @"POST"];
+    [postRequest setValue: url.host forHTTPHeaderField: @"Host"];
     [postRequest setValue: contentType forHTTPHeaderField: @"Content-Type"];
     [postRequest setValue: agent forHTTPHeaderField: @"User-Agent"];
     NSString *contentLength = [NSString stringWithFormat:@"%lu", (unsigned long)[formData length]];
