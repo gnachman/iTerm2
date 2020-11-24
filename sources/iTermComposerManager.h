@@ -21,6 +21,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)composerManager:(iTermComposerManager *)composerManager
             sendCommand:(NSString *)command;
 - (void)composerManagerDidDismissMinimalView:(iTermComposerManager *)composerManager;
+- (NSAppearance *_Nullable)composerManagerAppearance:(iTermComposerManager *)composerManager;
 @end
 
 @interface iTermComposerManager : NSObject

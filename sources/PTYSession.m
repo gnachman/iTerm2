@@ -13547,6 +13547,14 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [_textview.window makeFirstResponder:_textview];
 }
 
+- (NSAppearance *)composerManagerAppearance:(iTermComposerManager *)composerManager {
+    NSColor *color = [_colorMap colorForKey:kColorMapBackground];
+    if ([color isDark]) {
+        return [NSAppearance appearanceNamed:NSAppearanceNameDarkAqua];
+    }
+    return [NSAppearance appearanceNamed:NSAppearanceNameAqua];
+}
+
 #pragma mark - iTermIntervalTreeObserver
 
 - (void)intervalTreeDidReset {
