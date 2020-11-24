@@ -77,6 +77,12 @@ scp  -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no iTerm2-${NAME}.
 ssh  -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no gnachman@bryan.dreamhost.com "./newnightly.sh iTerm2-${NAME}.zip" || die "ssh"
 scp  -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no $SVNDIR/source/appcasts/nightly_changes.txt $SVNDIR/source/appcasts/nightly_modern.xml gnachman@bryan.dreamhost.com:iterm2.com/appcasts/ || die "scp appcasts"
 
+curl -v -X POST "https://api.cloudflare.com/client/v4/zones/$CFZONE/purge_cache" \
+     -H "X-Auth-Email: gnachman@gmail.com" \
+     -H "X-Auth-Key: $CFKEY" \
+     -H "Content-Type: application/json" \
+     --data '{"files":["https://iterm2.com/nightly/latest"]}'
+
 cd $SVNDIR
 git add source/appcasts/nightly_changes.txt
 # Modern
