@@ -28,6 +28,10 @@
     [[self viewController] makeFirstResponder];
 }
 
+- (BOOL)dismiss {
+    return [[self viewController] dismissPopover];
+}
+
 - (NSArray<iTermStatusBarComponentKnob *> *)statusBarComponentKnobs {
     iTermStatusBarComponentKnob *textColorKnob =
     [[iTermStatusBarComponentKnob alloc] initWithLabelText:@"Icon Color:"

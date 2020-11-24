@@ -82,6 +82,30 @@
     _dropDownComposerViewIsVisible = YES;
 }
 
+- (BOOL)dismiss {
+    if (_dropDownComposerViewIsVisible) {
+        _saved = _minimalViewController.stringValue;
+        [self dismissMinimalView];
+        return YES;
+    }
+
+    iTermStatusBarViewController *statusBarViewController = [self.delegate composerManagerStatusBarViewController:self];
+    if (!statusBarViewController) {
+        return NO;
+    }
+    iTermStatusBarComposerComponent *component;
+    component = [statusBarViewController visibleComponentWithIdentifier:[iTermStatusBarComposerComponent statusBarComponentIdentifier]];
+    if (!component) {
+        return NO;
+    }
+    NSString *value = component.stringValue;
+    const BOOL dismissed = [component dismiss];
+    if (dismissed) {
+        _saved = [value copy];
+    }
+    return dismissed;
+}
+
 - (void)layout {
     [_minimalViewController updateFrame];
 }
@@ -122,6 +146,7 @@
         [vc.view removeFromSuperview];
     }];
     _minimalViewController = nil;
+    _dropDownComposerViewIsVisible = NO;
     // You get into infinite recursion if you do ths inside resignFirstResponder.
     dispatch_async(dispatch_get_main_queue(), ^{
         [self.delegate composerManagerDidDismissMinimalView:self];

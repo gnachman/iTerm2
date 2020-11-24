@@ -59,6 +59,14 @@ static NSString *const iTermComposerComboBoxDidBecomeFirstResponder = @"iTermCom
     [_comboBox.window makeFirstResponder:_comboBox];
 }
 
+- (BOOL)dismissPopover {
+    if (![_popover isShown]) {
+        return NO;
+    }
+    [_comboBox.window makeFirstResponder:_comboBox];
+    return YES;
+}
+
 - (void)setTintColor:(NSColor *)tintColor {
     NSImage *image = [NSImage it_imageNamed:@"PopoverIcon" forClass:self.class];
     _button.image = [image it_imageWithTintColor:tintColor];

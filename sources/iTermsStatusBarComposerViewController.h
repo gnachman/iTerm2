@@ -30,6 +30,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)reloadData;
 - (void)makeFirstResponder;
+- (BOOL)dismissPopover;
 
 @end
 

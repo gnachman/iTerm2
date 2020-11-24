@@ -22,6 +22,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)updateFrame;
 - (void)makeFirstResponder;
+- (void)dismiss;
 
 @end
 

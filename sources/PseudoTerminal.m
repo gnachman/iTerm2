@@ -1960,6 +1960,9 @@ ITERM_WEAKLY_REFERENCEABLE
     [appDelegate userDidInteractWithASession];
     if ([[self window] isKeyWindow]) {
         PTYSession *aSession = [[[_contentView.tabView selectedTabViewItem] identifier] activeSession];
+        if ([aSession closeComposer]) {
+            return;
+        }
         [self closeSessionWithConfirmation:aSession];
     }
 }

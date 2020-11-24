@@ -5575,6 +5575,10 @@ ITERM_WEAKLY_REFERENCEABLE
     [_composerManager reveal];
 }
 
+- (BOOL)closeComposer {
+    return [_composerManager dismiss];
+}
+
 // Note that the caller is responsible for respecting swapFindNextPrevious
 - (void)searchNext {
     [_view.findDriver searchNext];

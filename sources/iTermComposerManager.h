@@ -29,6 +29,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) BOOL dropDownComposerViewIsVisible;
 
 - (void)reveal;
+- (BOOL)dismiss;
 - (void)layout;
 
 @end
