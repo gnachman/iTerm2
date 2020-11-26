@@ -550,7 +550,7 @@ error:
                                           currentCommandResponse_, currentCommand_[kCommandString]]];
             }
             const BOOL shouldTolerateError = ([self currentCommandFlags] & kTmuxGatewayCommandShouldTolerateErrors);
-            if (!shouldTolerateError) {
+            if (!shouldTolerateError && (_initialized || currentCommand_[kCommandString])) {
                 [self abortWithErrorForCurrentCommand];
                 return;
             }
