@@ -55,13 +55,16 @@ iTermURLActionHelperDelegate>
 
 - (void)updateUnderlinedURLs:(NSEvent *)event;
 
+#pragma mark - Context Menu
+
+- (NSMenu *)menuForEvent:(NSEvent *)event;
+
 #pragma mark - Mouse Cursor
 
 // Returns whether any change was made.
 - (BOOL)updateCursor:(NSEvent *)event action:(nullable URLAction *)action;
 - (BOOL)setCursor:(NSCursor *)cursor;
 - (BOOL)mouseIsOverImageInEvent:(NSEvent *)event;
-
 
 #pragma mark - Quicklook
 

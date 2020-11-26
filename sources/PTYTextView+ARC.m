@@ -269,8 +269,6 @@ static const NSUInteger kRectangularSelectionModifierMask = (kRectangularSelecti
     [self updateCursor:event action:action];
 }
 
-#pragma mark - Smart Selection
-
 #pragma mark - Context Menu
 
 - (NSMenu *)menuForEvent:(NSEvent *)event {

@@ -2740,10 +2740,6 @@
 
 #pragma mark - Miscellaneous Actions
 
-- (NSMenu *)menuForEvent:(NSEvent *)theEvent {
-    return [_contextMenuHelper menuForEvent:theEvent];
-}
-
 - (IBAction)terminalStateToggleAlternateScreen:(id)sender {
     [self contextMenu:_contextMenuHelper toggleTerminalStateForMenuItem:sender];
 }

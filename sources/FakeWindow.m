@@ -240,4 +240,9 @@
 - (void)createDuplicateOfTab:(PTYTab *)theTab {
 }
 
+- (void)softCloseSession:(PTYSession *)aSession {
+    hasPendingClose = YES;  // TODO: This isn't right with panes.
+}
+
+
 @end
