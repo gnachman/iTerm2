@@ -131,6 +131,11 @@
     XCTAssertEqualObjects(url.absoluteString, urlString);
 }
 
+- (void)testURLWithUserSuppliedString_ManyParts {
+    NSString *urlString = @"https://example.com:6088/projects/repos/applications/pull-requests?create&sourceBranch=refs/heads/feature/myfeature";
+    NSURL *url = [NSURL URLWithUserSuppliedString:urlString];
+    XCTAssertEqualObjects(url.absoluteString, urlString);
+}
 - (void)testPercent {
     NSString *urlString = @"Georges-Mac-Pro:/Users/gnachman%";
     NSURL *url = [NSURL URLWithUserSuppliedString:urlString];

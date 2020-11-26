@@ -189,7 +189,7 @@ NS_ASSUME_NONNULL_BEGIN
     NSMutableDictionary<NSString *, NSString *> *map = [NSMutableDictionary dictionary];
     [nonReservedSymbolIndices enumerateRangesWithOptions:NSEnumerationReverse
                                               usingBlock:^(NSRange range, BOOL * _Nonnull stop) {
-        NSString *placeholder = [NSString stringWithFormat:@"%08x", count++];
+        NSString *placeholder = [NSString stringWithFormat:@"%08d", count++];
         if (range.location == 0) {
             // Schemes can't start with a number. In case the first thing is a scheme, start it
             // with a letter. This is safe because ports are the only thing that must be a number
