@@ -1797,6 +1797,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (iTermRestorableSession *)restorableSessionForTab:(PTYTab *)aTab {
+    DLog(@"Create restorable session for tab %@", aTab);
     if (!aTab) {
         return nil;
     }
@@ -1821,6 +1822,7 @@ ITERM_WEAKLY_REFERENCEABLE
 // Just like closeTab but skips the tmux code. Terminates sessions, removes the
 // tab, and closes the window if there are no tabs left.
 - (void)removeTab:(PTYTab *)aTab {
+    DLog(@"Remove tab %@", aTab);
     if (![aTab isTmuxTab]) {
         iTermRestorableSession *restorableSession = [[[iTermRestorableSession alloc] init] autorelease];
         restorableSession.sessions = [aTab sessions];
@@ -9752,6 +9754,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 }
 
 - (void)createDuplicateOfTab:(PTYTab *)theTab {
+    DLog(@"Duplicate tab %@", theTab);
     if (!theTab) {
         theTab = [self currentTab];
     }
