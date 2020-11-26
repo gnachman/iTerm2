@@ -421,7 +421,7 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
                   KEY_OPTION_KEY_SENDS: @(OPT_NORMAL),
                   KEY_RIGHT_OPTION_KEY_SENDS: @(OPT_NORMAL),
                   KEY_APPLICATION_KEYPAD_ALLOWED: @NO,
-                  KEY_ALLOW_MODIFY_OTHER_KEYS: @YES,
+                  KEY_ALLOW_MODIFY_OTHER_KEYS: @NO,
                   KEY_USE_LIBTICKIT_PROTOCOL: @NO,
                   KEY_PLACE_PROMPT_AT_FIRST_COLUMN: @YES,
                   KEY_SHOW_MARK_INDICATORS: @YES,
