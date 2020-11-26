@@ -129,7 +129,7 @@ async def async_filter_keystrokes(
     Returns: A token that can be passed to unsubscribe.
     """
     # pylint: disable=no-member
-    kmr = iterm2.api_pb2.KeystrokeMonitorRequest()
+    kmr = iterm2.api_pb2.KeystrokeFilterRequest()
     kmr.patterns_to_ignore.extend(
         list(map(lambda x: x.to_proto(), patterns_to_ignore)))
 

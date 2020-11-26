@@ -7393,6 +7393,15 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                 return YES;
             }
         }
+        // Prior to 1.17, the filter monitor used keystrokeMonitorRequest instead of keystrokeFilterRequest.
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+        for (ITMKeystrokePattern *pattern in request.keystrokeMonitorRequest.patternsToIgnoreArray) {
+#pragma clang diagnostic pop
+            if ([self event:event matchesPattern:pattern]) {
+                return YES;
+            }
+        }
     }
     return NO;
 }
