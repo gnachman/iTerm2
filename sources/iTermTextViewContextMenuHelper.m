@@ -345,7 +345,9 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
     [theMenu addItem:[NSMenuItem separatorItem]];
 
     add(@"Move Session to Split Pane", @selector(movePane:));
-    add(@"Move Session to Window", @selector(moveSessionToWindow:));
+    [theMenu addItemWithTitle:@"Move Session to Window"
+                     action:@selector(moveSessionToWindow:)
+                keyEquivalent:@""];
     add(@"Swap With Session…", @selector(swapSessions:));
 
     // Separator
