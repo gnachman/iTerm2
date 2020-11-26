@@ -1290,9 +1290,11 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     if (missingProfile) {
         NSDictionary *arrangementProfile = arrangement[SESSION_ARRANGEMENT_BOOKMARK];
-        [aSession.naggingController arrangementWithName:arrangementName
-                                    missingProfileNamed:arrangementProfile[KEY_NAME]
-                                                   guid:arrangementProfile[KEY_GUID]];
+        if (arrangementProfile) {
+            [aSession.naggingController arrangementWithName:arrangementName
+                                        missingProfileNamed:arrangementProfile[KEY_NAME]
+                                                       guid:arrangementProfile[KEY_GUID]];
+        }
     }
     if (!attachedToServer) {
         [aSession.terminal resetSendModifiersWithSideEffects:YES];
