@@ -37,8 +37,10 @@
 }
 
 - (NSDictionary *)restorableState {
+    DLog(@"Creating restorable state dictionary");
     NSArray *maybeSessionFrameTuples =
     [_sessions mapWithBlock:^id(PTYSession *session) {
+        DLog(@"Encode session %@", session);
         NSMutableDictionary *dict = [NSMutableDictionary dictionary];;
         iTermMutableDictionaryEncoderAdapter *encoder =
             [[iTermMutableDictionaryEncoderAdapter alloc] initWithMutableDictionary:dict];

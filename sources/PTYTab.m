@@ -514,6 +514,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 #pragma mark - NSCopying
 
 - (id)copyWithZone:(NSZone *)zone {
+    DLog(@"Making a copy of tab %@", self);
     NSDictionary *arrangement = [self arrangementWithNewGUID];
     PTYTab *theCopy = [PTYTab tabWithArrangement:arrangement
                                            named:nil
@@ -737,6 +738,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 }
 
 - (void)addSession:(PTYSession *)session toRestorableSession:(iTermRestorableSession *)restorableSession {
+    DLog(@"Add %@ to restorable session", session);
     NSArray *sessions = restorableSession.sessions ?: @[];
     restorableSession.sessions = [sessions arrayByAddingObject:session];
     restorableSession.terminalGuid = self.realParentWindow.terminalGuid;
@@ -2518,7 +2520,8 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                                      idMap:(NSMutableDictionary<NSNumber *, SessionView *> *)idMap
                                isMaximized:(BOOL)isMaximized
                                   contents:(BOOL)contents
-                                   encoder:(id<iTermEncoderAdapter>)encoder{
+                                   encoder:(id<iTermEncoderAdapter>)encoder {
+    DLog(@"Encode view %@", view);
     if (isMaximized) {
         encoder[TAB_ARRANGEMENT_IS_MAXIMIZED] = @YES;
     }
@@ -2553,13 +2556,16 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                                                    contents:contents
                                                     encoder:encoder];
         }];
+        DLog(@"Done encoding splitter view %@", view);
         return YES;
     }
     SessionView *sessionView = (SessionView*)view;
     PTYSession *session = [self sessionForSessionView:sessionView];
     if (!session) {
+        DLog(@"Failed to find session for view %@", view);
         return NO;
     }
+    DLog(@"Will encode session %@", session);
     encoder[TAB_ARRANGEMENT_VIEW_TYPE] = VIEW_TYPE_SESSIONVIEW;
     encoder[TAB_ARRANGEMENT_SESSIONVIEW_FRAME] = [PTYTab frameToDict:[view frame]];
     [encoder encodeDictionaryWithKey:TAB_ARRANGEMENT_SESSION
@@ -3042,6 +3048,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 - (BOOL)encodeArrangementNodeWithContents:(BOOL)includeContents
                       fromArrangementNode:(NSDictionary *)node
                                   encoder:(id<iTermEncoderAdapter>)encoder {
+    DLog(@"Encode arragnement for %@ from node %@", self, node);
     if ([node[TAB_ARRANGEMENT_VIEW_TYPE] isEqual:VIEW_TYPE_SPLITTER]) {
         // Add everything in node except SUBVIEWS
         [node enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, id  _Nonnull obj, BOOL * _Nonnull stop) {
@@ -3144,10 +3151,12 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 - (BOOL)encodeWithContents:(BOOL)contents
             constructIdMap:(BOOL)constructIdMap
                    encoder:(id<iTermEncoderAdapter>)encoder {
+    DLog(@"Encode tab %@", self);
     encoder[TAB_GUID] = _guid;
     encoder[TAB_ARRANGEMENT_TITLE_OVERRIDE] = self.titleOverride.length ? self.titleOverride : nil;
 
     if (isMaximized_) {
+        DLog(@"Tab is maximized");
         // We never construct id map in this case because it must already exist.
         assert(!constructIdMap);
         assert(savedArrangement_);
@@ -3178,6 +3187,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     if (constructIdMap) {
         assert(idMap_);
     }
+    DLog(@"Will encode each view in tab");
     return [encoder encodeDictionaryWithKey:TAB_ARRANGEMENT_ROOT
                                  generation:iTermGenerationAlwaysEncode
                                       block:^BOOL(id<iTermEncoderAdapter>  _Nonnull encoder) {
@@ -4696,7 +4706,7 @@ typedef struct {
 }
 
 - (void)maximize {
-    DLog(@"maximize");
+    DLog(@"maximize %@", self);
     for (PTYSession *session in [self sessions]) {
         session.savedRootRelativeOrigin = [self rootRelativeOriginOfSession:session];
     }
