@@ -24,6 +24,7 @@ typedef struct {
 - (id)swipeHandlerBeginSessionAtOffset:(CGFloat)offset identifier:(id)identifier;
 - (void)swipeHandlerSetOffset:(CGFloat)offset forSession:(id)session;
 - (void)swipeHandlerEndSession:(id)session atIndex:(NSInteger)index;
+- (BOOL)swipeHandlerShouldBeginNewSwipe;
 
 @end
 

@@ -11003,6 +11003,10 @@ backgroundColor:(NSColor *)backgroundColor {
 
 #pragma mark - iTermSwipeHandler
 
+- (BOOL)swipeHandlerShouldBeginNewSwipe {
+    return self.tabs.count > 1;
+}
+
 - (id)swipeHandlerBeginSessionAtOffset:(CGFloat)offset identifier:(nonnull id)identifier {
     assert(!_swipeContainerView);
     self.swipeIdentifier = identifier;

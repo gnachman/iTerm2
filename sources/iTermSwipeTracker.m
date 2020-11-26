@@ -109,6 +109,10 @@ NSString *const iTermSwipeHandlerCancelSwipe = @"iTermSwipeHandlerCancelSwipe";
             DLog(@"Not creating a new state because not starting in ground state");
             return NO;
         }
+        if (![self.delegate swipeTrackerShouldBeginNewSwipe:self]) {
+            DLog(@"Delegate declined to begin new swipe");
+            return NO;
+        }
         return [self createStateForEventIfNeeded:event transition:transition];
     }
     return [_liveState handleEvent:event transition:transition];
