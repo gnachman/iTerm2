@@ -138,7 +138,8 @@
     if (_db) {
         return;
     }
-    _db = [[iTermGraphDatabase alloc] initWithDatabase:[[iTermSqliteDatabaseImpl alloc] initWithURL:_url]];
+    iTermGraphDatabase *db = [[iTermGraphDatabase alloc] initWithDatabase:[[iTermSqliteDatabaseImpl alloc] initWithURL:_url]];
+    _db = db;
 }
 
 - (void)loadRestorableStateIndexWithCompletion:(void (^)(id<iTermRestorableStateIndex>))completion {

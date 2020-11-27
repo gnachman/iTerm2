@@ -1221,6 +1221,7 @@ static BOOL hasBecomeActive = NO;
     [NSApp invalidateRestorableState];
     [[NSApp windows] makeObjectsPerformSelector:@selector(invalidateRestorableState)];
     _sparkleRestarting = YES;
+    iTermRestorableStateController.forceSaveState = YES;
 }
 
 - (void)itermDidDecodeWindowRestorableState:(NSNotification *)notification {
