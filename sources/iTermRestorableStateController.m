@@ -12,6 +12,7 @@
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermRestorableStateDriver.h"
 #import "iTermRestorableStateSQLite.h"
+#import "iTermUserDefaults.h"
 
 extern NSString *const iTermApplicationWillTerminate;
 
@@ -37,7 +38,21 @@ extern NSString *const iTermApplicationWillTerminate;
 
 + (BOOL)stateRestorationEnabled {
     return ([[NSUserDefaults standardUserDefaults] boolForKey:@"NSQuitAlwaysKeepsWindows"] ||
-            [NSApp shouldRestoreStateOnNextLaunch]);
+            [self shouldRestoreStateOnNextLaunch]);
+}
+
++ (BOOL)shouldRestoreStateOnNextLaunch {
+    return self.forceSaveState || [NSApp shouldRestoreStateOnNextLaunch];
+}
+
+static BOOL gForceSaveState;
+
++ (BOOL)forceSaveState {
+    return gForceSaveState;
+}
+
++ (void)setForceSaveState:(BOOL)forceSaveState {
+    gForceSaveState = forceSaveState;
 }
 
 - (instancetype)init {
