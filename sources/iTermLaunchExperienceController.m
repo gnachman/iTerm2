@@ -63,10 +63,6 @@ typedef NS_ENUM(NSUInteger, iTermLaunchExperienceChoice) {
         // This is important because it is an unsafe change.
         return iTermLaunchExperienceChoiceDefaultPasteBehaviorChangeWarning;
     }
-    if ([iTermOnboardingWindowController shouldBeShown]) {
-        // This preceeds tip of the day because it's more relevant to an upgrading user.
-        return iTermLaunchExperienceChoiceWhatsNew;
-    }
     if ([[iTermTipController sharedInstance] willAskPermission]) {
         // This is just a nice thing to have.
         return iTermLaunchExperienceChoiceTipOfTheDay;
