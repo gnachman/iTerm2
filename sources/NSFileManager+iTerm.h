@@ -74,4 +74,6 @@ additionalNetworkPaths:(NSArray<NSString *> *)additionalNetworkPaths;
 - (id)monitorFile:(NSString *)file block:(void (^)(long flags))block;
 - (void)stopMonitoringFileWithToken:(id)token;
 
+// Returns ~/.iterm2, creating if needed, or nil.
+- (NSString *)homeDirectoryDotDir;
 @end
