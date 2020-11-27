@@ -258,7 +258,7 @@
     NSString *appSupportPath = [[NSFileManager defaultManager] applicationSupportDirectory];
     NSString *normalFilename = [NSString stringWithFormat:@"iterm2-daemon-%d.socket", number];
     NSURL *normalURL = [[NSURL fileURLWithPath:appSupportPath] URLByAppendingPathComponent:normalFilename];
-    if ([self pathIsSafe:normalURL.path]) {
+    if ([self pathIsSafe:normalURL.path] && [[NSFileManager defaultManager] directoryIsWritable:appSupportPath]) {
         return normalURL.path;
     }
 

@@ -701,10 +701,30 @@ static unsigned long long MakeUniqueID(void) {
     NSDictionary *infoDictionary = [[NSBundle bundleForClass:[self class]] infoDictionary];
     NSString *versionNumber = infoDictionary[(NSString *)kCFBundleVersionKey];
     NSString *filename = [NSString stringWithFormat:@"iTermServer-%@", versionNumber];
-    return [[[NSFileManager defaultManager] applicationSupportDirectory] stringByAppendingPathComponent:filename];
+    NSString *appSupport = [[NSFileManager defaultManager] applicationSupportDirectory];
+    NSString *regularPath = [appSupport stringByAppendingPathComponent:filename];
+    if ([[NSFileManager defaultManager] isExecutableFileAtPath:regularPath]) {
+        return regularPath;
+    }
+    if (![[NSFileManager defaultManager] directoryIsWritable:appSupport]) {
+        NSString *dotDir = [[NSFileManager defaultManager] homeDirectoryDotDir];
+        NSString *alternatePath = [dotDir stringByAppendingPathComponent:filename];
+        if (!alternatePath) {
+            return nil;
+        }
+        if ([[NSFileManager defaultManager] isExecutableFileAtPath:alternatePath]) {
+            return alternatePath;
+        }
+        if (![[NSFileManager defaultManager] directoryIsWritable:dotDir]) {
+            return nil;
+        }
+        return alternatePath;
+    }
+    return regularPath;
 }
 
 - (void)showError:(NSError *)error message:(NSString *)message badURL:(NSURL *)url {
+    DLog(@"message: %@ error: %@ url: %@", message, error, url);
     dispatch_async(dispatch_get_main_queue(), ^{
         static iTermRateLimitedUpdate *rateLimit;
         static dispatch_once_t onceToken;
@@ -713,8 +733,10 @@ static unsigned long long MakeUniqueID(void) {
             rateLimit.minimumInterval = 2;
         });
         [rateLimit performRateLimitedBlock:^{
-            [[iTermNotificationController sharedInstance] notify:@"Problem Starting iTerm2 Daemon"
-                                                 withDescription:message];
+            NSAlert *alert = [[NSAlert alloc] init];
+            alert.messageText = @"Problem Starting iTerm2 Daemon";
+            alert.informativeText = message;
+            [alert runModal];
         }];
     });
 }
@@ -723,6 +745,12 @@ static unsigned long long MakeUniqueID(void) {
 // wild speculation on why this is important.
 - (NSString *)serverPathCopyingIfNeeded {
     NSString *desiredPath = [self serverPath];
+    if (!desiredPath) {
+        [self showError:nil
+                message:[NSString stringWithFormat:@"Neither ~/Library/Application Support/iTerm2 nor ~/.iterm2 are writable directories. This prevents the session restoration server from running. Please correct the problem and restart iTerm2."]
+                 badURL:nil];
+        return nil;
+    }
     NSFileManager *fileManager = [NSFileManager defaultManager];
 
     // Does the server already exist where we need it to be?
@@ -734,7 +762,7 @@ static unsigned long long MakeUniqueID(void) {
                                                  error:&error];
         if (error) {
             [self showError:error
-                    message:[NSString stringWithFormat:@"Could not copy %@ to %@", sourcePath, desiredPath]
+                    message:[NSString stringWithFormat:@"Could not copy %@ to %@: %@", sourcePath, desiredPath, error.localizedDescription]
                      badURL:[NSURL fileURLWithPath:desiredPath]];
             return nil;
         }
