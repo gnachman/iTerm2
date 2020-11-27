@@ -8,11 +8,13 @@
 #import "NSJSONSerialization+iTerm.h"
 
 #import "DebugLogging.h"
+#import "NSObject+iTerm.h"
 #import "NSStringITerm.h"
 
 @implementation NSJSONSerialization (iTerm)
 
-+ (NSString *)it_jsonStringForObject:(id)object {
++ (NSString *)it_jsonStringForObject:(id)unsafeObject {
+    id object = [unsafeObject it_jsonSafeValue];
     NSError *error = nil;
     NSData *json = nil;
 

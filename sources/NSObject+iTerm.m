@@ -313,4 +313,8 @@
     return [self description];
 }
 
+- (id)it_jsonSafeValue {
+    return self;
+}
+
 @end
