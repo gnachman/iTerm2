@@ -15,7 +15,7 @@ Scripts Menu
 ------------
 
 The `Scripts` menu contains all the scripts in
-`$HOME/Library/Application Support/iTerm2/Scripts`. The following files are
+`$HOME/Library/ApplicationSupport/iTerm2/Scripts`. The following files are
 included:
 
 * Any file ending in `.py`. These correspond to "basic" scripts.
@@ -35,21 +35,21 @@ the right `python3` so that your script's dependencies (such as the `iterm2`
 module) can be satisfied.
 
 The standard iTerm2 Python installation is at
-`~/Library/Application Support/iTerm2/iterm2env/versions/*/bin/python3`.
+`~/Library/ApplicationSupport/iTerm2/iterm2env/versions/*/bin/python3`.
 This is the so-called "Basic" environment.
 
 If you create a script with the "Full Environment" its instance of Python
 will be in
-`~/Library/Application Support/iTerm2/Scripts/YourScript/iterm2env/versions/*/bin/python3`.
+`~/Library/ApplicationSupport/iTerm2/Scripts/YourScript/iterm2env/versions/*/bin/python3`.
 
 Internally, iTerm2 runs a basic script by invoking:
 
 .. code-block:: python
 
-    ~/Library/Application Support/iTerm2/iterm2env/versions/*/bin/python3 YourScript.py
+    ~/Library/ApplicationSupport/iTerm2/iterm2env/versions/*/bin/python3 YourScript.py
 
 
-Scripts are stored in `$HOME/Library/Application Support/iTerm2/Scripts`.
+Scripts are stored in `$HOME/Library/ApplicationSupport/iTerm2/Scripts`.
 
 Make sure you don't have a `PYTHONPATH` environment variable set when you run
 your script.
@@ -58,7 +58,20 @@ If you prefer to use Python as installed by Homebrew, you can install modules
 yourself using the Homebrew-installed `pip3`, which should be in your path. At
 a minimum, install the `iterm2` module.
 
-If you'd like your script to launch iTerm2, put this in your script:
+.. note::
+
+    iTerm2 creates the `ApplicationSupport` symlink to `Application
+    Support` because shell scripts may not have spaces in their paths
+    and the `pip` utiltiy does not work correctly in directories with
+    spaces.
+
+If you'd like your script to launch iTerm2, you'll need to use pyobjc. To install it:
+
+.. code-block:: bash
+
+    pip3 install pyobjc
+
+Then put this in your script:
 
 .. code-block:: python
 
@@ -97,7 +110,7 @@ Auto-Run Scripts
 ----------------
 
 If you'd like your script to launch automatically when iTerm2 starts, move it
-to `$HOME/Library/Application Support/iTerm2/Scripts/AutoLaunch`.
+to `$HOME/Library/ApplicationSupport/iTerm2/Scripts/AutoLaunch`.
 
 REPL
 ----

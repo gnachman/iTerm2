@@ -28,6 +28,7 @@
 #import "DebugLogging.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermMalloc.h"
+#import "iTermOrderedDictionary.h"
 #import "iTermSwiftyStringParser.h"
 #import "iTermTuple.h"
 #import "iTermVariableScope.h"
