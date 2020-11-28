@@ -67,6 +67,7 @@ const int iTermMinimumPythonEnvironmentVersion = 70;
 
     self.downloading = YES;
     NSURLSessionConfiguration *sessionConfig = [NSURLSessionConfiguration defaultSessionConfiguration];
+    sessionConfig.requestCachePolicy = NSURLRequestReloadIgnoringLocalCacheData;
     _urlSession = [NSURLSession sessionWithConfiguration:sessionConfig
                                                 delegate:self
                                            delegateQueue:nil];
@@ -88,6 +89,7 @@ const int iTermMinimumPythonEnvironmentVersion = 70;
 }
 
 #pragma mark - NSURLSessionDownloadDelegate
+
 
 - (void)URLSession:(NSURLSession *)session
       downloadTask:(NSURLSessionDownloadTask *)downloadTask
