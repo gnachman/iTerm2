@@ -78,7 +78,9 @@
                              @"Secure Input",
                              @"moveToApplicationsFolderAlertSuppress",
                              kPreferenceKeyAppVersion,
-                             @"CGFontRenderingFontSmoothingDisabled" ];
+                             @"CGFontRenderingFontSmoothingDisabled",
+                             @"PreventEscapeSequenceFromChangingProfile",
+                             @"PreventEscapeSequenceFromClearingHistory" ];
     return ![exemptKeys containsObject:key] &&
             ![key hasPrefix:@"NS"] &&
             ![key hasPrefix:@"SU"] &&
