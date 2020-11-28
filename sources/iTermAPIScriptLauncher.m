@@ -356,7 +356,8 @@ static NSString *const iTermAPIScriptLauncherScriptDidFailUserNotificationCallba
                                   pythonVersion:pythonVersion];
     NSString *cookie = [[iTermWebSocketCookieJar sharedInstance] randomStringForCookie];
     NSString *standardEnv = [[iTermPythonRuntimeDownloader sharedInstance] pathToStandardPyenvPythonWithPythonVersion:pythonVersion];
-    NSString *searchPath = [iTermPythonRuntimeDownloader.sharedInstance pathToStandardPyenvWithVersion:pythonVersion];
+    NSString *searchPath = [iTermPythonRuntimeDownloader.sharedInstance pathToStandardPyenvWithVersion:pythonVersion
+                                        creatingSymlinkIfNeeded:NO];
     NSString *path = [searchPath stringByAppendingPathComponent:@"versions"];
     NSString *standardPythonVersion = [[iTermPythonRuntimeDownloader bestPythonVersionAt:path] it_twoPartVersionNumber];
     task.environment = [self environmentFromEnvironment:task.environment
@@ -505,7 +506,7 @@ static NSString *const iTermAPIScriptLauncherScriptDidFailUserNotificationCallba
 
 + (NSString *)prospectivePythonPathForPyenvScriptNamed:(NSString *)name {
     NSArray<NSString *> *components = @[ name, @"iterm2env", @"versions" ];
-    NSString *path = [[NSFileManager defaultManager] scriptsPath];
+    NSString *path = [[NSFileManager defaultManager] scriptsPathWithoutSpaces];
     for (NSString *part in components) {
         path = [path stringByAppendingPathComponent:part];
     }
