@@ -10131,6 +10131,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         return;
     }
     [_delegate setActiveSession:self];
+    [self.delegate sessionDisableFocusFollowsMouseAtCurrentLocation];
 }
 
 - (void)reveal {

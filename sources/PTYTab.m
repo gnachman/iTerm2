@@ -6478,6 +6478,12 @@ backgroundColor:(NSColor *)backgroundColor {
     return self.delegate;
 }
 
+- (void)sessionDisableFocusFollowsMouseAtCurrentLocation {
+    for (PTYSession *session in self.sessions) {
+        [session.textview refuseFirstResponderAtCurrentMouseLocation];
+    }
+}
+
 #pragma mark - iTermObject
 
 - (iTermBuiltInFunctions *)objectMethodRegistry {
