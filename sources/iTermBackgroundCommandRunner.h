@@ -16,7 +16,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) NSString *shell;
 @property (nonatomic, readonly) NSString *title;
 @property (nonatomic, nullable, copy) NSString *notificationTitle;  // Title to show in user notification
-@property (nonatomic, nullable, copy) NSString *path;
+@property (atomic, nullable, copy) NSString *path;
 
 - (instancetype)initWithCommand:(NSString *)command
                           shell:(NSString *)shell
