@@ -188,7 +188,13 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 - (NSArray<iTermScriptItem *> *)scriptItems {
-    iTermScriptItem *root = [[iTermScriptItem alloc] initFolderWithPath:[[NSFileManager defaultManager] scriptsPathWithoutSpaces] parent:nil];
+    NSFileManager *fm = [NSFileManager defaultManager];
+    NSString *path = [fm scriptsPath];
+    if ([fm fileExistsAtPath:path]) {
+        [fm applicationSupportDirectoryWithoutSpaces];  // create link if needed
+        path = [fm scriptsPathWithoutSpaces];
+    }
+    iTermScriptItem *root = [[iTermScriptItem alloc] initFolderWithPath:path parent:nil];
     [self populateScriptItem:root];
     return root.children;
 }
