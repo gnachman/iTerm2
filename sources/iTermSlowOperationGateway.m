@@ -146,7 +146,9 @@
                                                    withReply:^(NSData * _Nullable data,
                                                                NSData * _Nullable error,
                                                                int status) {
-        completion(status == 0 ? [[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding] stringByTrimmingTrailingCharactersFromCharacterSet:[NSCharacterSet newlineCharacterSet]] : nil);
+        dispatch_async(dispatch_get_main_queue(), ^{
+            completion(status == 0 ? [[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding] stringByTrimmingTrailingCharactersFromCharacterSet:[NSCharacterSet newlineCharacterSet]] : nil);
+        });
     }];
 }
 

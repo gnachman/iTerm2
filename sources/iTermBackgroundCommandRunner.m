@@ -110,7 +110,9 @@ static NSMutableArray<iTermBackgroundCommandRunner *> *activeRunners;
                                                                         completion:^(NSString * _Nonnull value) {
         self.path = value ?: @"";
         DLog(@"%@", self);
-        [self reallyRun];
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [self reallyRun];
+        });
     }];
 }
 
@@ -144,7 +146,9 @@ static NSMutableArray<iTermBackgroundCommandRunner *> *activeRunners;
         [entry addOutput:string];
     };
     commandRunner.completion = ^(int status) {
-        [weakSelf didCompleteWithStatus:status entry:entry];
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [weakSelf didCompleteWithStatus:status entry:entry];
+        });
     };
     [commandRunner run];
 }
