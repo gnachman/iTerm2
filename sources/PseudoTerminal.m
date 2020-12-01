@@ -5055,9 +5055,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [[self.window standardWindowButton:NSWindowCloseButton] setHidden:YES];
     [[self.window standardWindowButton:NSWindowMiniaturizeButton] setHidden:YES];
     [[self.window standardWindowButton:NSWindowZoomButton] setHidden:YES];
-    if (@available(macOS 10.14, *)) {
-        [self returnTabBarToContentView];
-    }
+    [self returnTabBarToContentView];
     while (self.window.titlebarAccessoryViewControllers.count) {
         [self.window removeTitlebarAccessoryViewControllerAtIndex:0];
     }
@@ -5451,10 +5449,10 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (BOOL)proxyIconIsAllowed {
-    if (![iTermPreferences boolForKey:kPreferenceKeyEnableProxyIcon]) {
-        return NO;
-    }
+    return [iTermPreferences boolForKey:kPreferenceKeyEnableProxyIcon];
+}
 
+- (BOOL)proxyIconShouldBeVisible {
     switch ((iTermPreferencesTabStyle)[iTermPreferences intForKey:kPreferenceKeyTabStyle]) {
         case TAB_STYLE_MINIMAL:
             return NO;
@@ -5500,6 +5498,7 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     if (self.currentSession.preferredProxyIcon) {
         self.window.representedURL = self.currentSession.preferredProxyIcon;
+        [self updateProxyIconVisibility];
         return;
     }
     __weak __typeof(self) weakSelf = self;
@@ -5518,6 +5517,7 @@ ITERM_WEAKLY_REFERENCEABLE
         }
         DLog(@"Assign to representedURL");
         self.window.representedURL = url;
+        [self updateProxyIconVisibility];
     }];
 }
 
@@ -8660,7 +8660,15 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     }
 }
 
+- (void)updateProxyIconVisibility {
+    const BOOL hideProxy = ([self proxyIconIsAllowed] &&
+                            ![self proxyIconShouldBeVisible]);
+    [[self.window standardWindowButton:NSWindowDocumentIconButton] setHidden:hideProxy];
+}
+
 - (BOOL)rootTerminalViewShouldDrawStoplightButtons {
+    [self updateProxyIconVisibility];
+
     if (self.enteringLionFullscreen) {
         return NO;
     }
