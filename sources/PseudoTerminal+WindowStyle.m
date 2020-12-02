@@ -545,6 +545,7 @@ iTermWindowType iTermWindowTypeNormalized(iTermWindowType windowType) {
     contentSize.width -= decorationSize.width;
     contentSize.height -= decorationSize.height;
 
+    self.window.movable = [self.class windowTypeIsMovable:self.windowType];
     [self fitWindowToTabSize:contentSize];
 }
 
