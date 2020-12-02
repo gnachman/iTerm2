@@ -1043,7 +1043,9 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
     if ([iTermProfilePreferences boolForKey:KEY_HIDE_AFTER_OPENING inProfile:profile]) {
         [term hideAfterOpening];
     }
-    if (term.windowType != WINDOW_TYPE_LION_FULL_SCREEN) {
+    if (term.windowType == WINDOW_TYPE_LION_FULL_SCREEN) {
+        [term delayedEnterFullscreen];
+    } else {
         iTermProfileHotKey *profileHotKey =
         [[iTermHotKeyController sharedInstance] didCreateWindowController:term
                                                               withProfile:profile];
