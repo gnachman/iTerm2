@@ -450,6 +450,15 @@ static int OctalValue(const char *bytes) {
             initialTabs = term.tabs.count;
             DLog(@"Use original window %@", term);
         }
+        if (!term && [iTermAdvancedSettingsModel anonymousTmuxWindowsOpenInCurrentWindow]) {
+            PseudoTerminal *candidate = [[iTermController sharedInstance] currentTerminal];
+            if ([[candidate uniqueTmuxControllers] count] == 0 ||
+                [[candidate uniqueTmuxControllers] containsObject:controller_]) {
+                term = candidate;
+                initialTabs = term.tabs.count;
+                DLog(@"Use current window %@", term);
+            }
+        }
         if (!term) {
             term = [[iTermController sharedInstance] openTmuxIntegrationWindowUsingProfile:self.profile];
             if (self.newWindowBlock) {
