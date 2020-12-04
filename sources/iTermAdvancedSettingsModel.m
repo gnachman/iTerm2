@@ -472,6 +472,7 @@ DEFINE_BOOL(workAroundMultiDisplayOSBug, YES, SECTION_WINDOWS @"Work around a ma
 DEFINE_BOOL(disableDocumentedEditedIndicator, NO, SECTION_WINDOWS @"Disable documented edited indicator (black dot in close button)");
 DEFINE_BOOL(showWindowTitleWhenTabBarInvisible, YES, SECTION_WINDOWS @"Show window title when the tab bar is not visible?\nWhen disabled, the tab's title will be shown where the window title would normally go.");
 DEFINE_BOOL(squareWindowCorners, NO, SECTION_WINDOWS @"Windows have square corners.\nThis is only for users who have already hacked macOS to remove rounded corners. You must restart iTerm2 after changing this setting for it to take effect.");
+DEFINE_BOOL(useShortcutAccessoryViewController, YES, SECTION_WINDOWS @"Show window number in titlebar accessory?");
 
 #pragma mark tmux
 

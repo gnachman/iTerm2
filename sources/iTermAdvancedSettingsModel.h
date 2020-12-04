@@ -321,6 +321,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (double)updateScreenParamsDelay;
 + (BOOL)useCustomTabBarFontSize;
 + (BOOL)useRestorableStateController;
++ (BOOL)useShortcutAccessoryViewController;
 + (NSString *)URLCharacterSet;
 + (NSString *)URLCharacterSetExclusions;
 + (BOOL)useAdaptiveFrameRate;
