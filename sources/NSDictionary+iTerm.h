@@ -69,6 +69,7 @@
 - (NSDictionary *)mapWithBlock:(iTermTuple * (^)(KeyType key, ObjectType object))block;
 - (NSDictionary<id, NSDictionary<KeyType, ObjectType> *> *)classifyWithBlock:(id (^NS_NOESCAPE)(KeyType key, ObjectType object))block;
 
+- (NSData *)it_xmlPropertyList;
 - (BOOL)it_writeToXMLPropertyListAt:(NSString *)path;
 - (id)it_jsonSafeValue;
 

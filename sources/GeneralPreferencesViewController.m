@@ -80,7 +80,8 @@ enum {
     IBOutlet NSImageView *_prefsDirWarning;  // Image shown when path is not writable
     IBOutlet NSButton *_browseCustomFolder;  // Push button to open file browser
     IBOutlet NSButton *_pushToCustomFolder;  // Push button to copy local to remote
-    IBOutlet NSButton *_autoSaveOnQuit;  // Save settings to folder on quit
+    IBOutlet NSPopUpButton *_saveChanges;  // Save settings to folder when
+    IBOutlet NSTextField *_saveChangesLabel;
 
     // Copy to clipboard on selection
     IBOutlet NSButton *_selectionCopiesText;
@@ -361,25 +362,19 @@ enum {
     info.onChange = ^() { [self loadPrefsFromCustomFolderDidChange]; };
     info.observer = ^() { [self updateRemotePrefsViews]; };
 
-    info = [self defineControl:_autoSaveOnQuit
-                           key:@"NoSyncNeverRemindPrefsChangesLostForFile_selection"
-                   relatedView:nil
-                          type:kPreferenceInfoTypeCheckbox];
+    info = [self defineControl:_saveChanges
+                           key:kPreferenceKeyNeverRemindPrefsChangesLostForFileSelection
+                   relatedView:_saveChangesLabel
+                          type:kPreferenceInfoTypePopup];
     // Called when user interacts with control
     info.customSettingChangedHandler = ^(id sender) {
         __strong __typeof(weakSelf) strongSelf = weakSelf;
         if (!strongSelf) {
             return;
         }
-        [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"NoSyncNeverRemindPrefsChangesLostForFile"];
-        NSNumber *value;
-        if ([strongSelf->_autoSaveOnQuit state] == NSControlStateValueOn) {
-            value = @0;
-        } else {
-            value = @1;
-        }
-        [[NSUserDefaults standardUserDefaults] setObject:value
-                                                  forKey:@"NoSyncNeverRemindPrefsChangesLostForFile_selection"];
+        [[NSUserDefaults standardUserDefaults] setBool:YES forKey:kPreferenceKeyNeverRemindPrefsChangesLostForFileHaveSelection];
+        [[NSUserDefaults standardUserDefaults] setObject:@([strongSelf->_saveChanges selectedTag])
+                                                  forKey:kPreferenceKeyNeverRemindPrefsChangesLostForFileSelection];
     };
 
     // Called on programmatic change (e.g., selecting a different profile. Returns YES to avoid
@@ -390,14 +385,11 @@ enum {
             return NO;
         }
         NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
-        NSControlStateValue state;
-        if ([userDefaults boolForKey:@"NoSyncNeverRemindPrefsChangesLostForFile"] &&
-            [userDefaults integerForKey:@"NoSyncNeverRemindPrefsChangesLostForFile_selection"] == 0) {
-            state = NSControlStateValueOn;
-        } else {
-            state = NSControlStateValueOff;
+        NSUInteger tag = iTermPreferenceSavePrefsModeNever;
+        if ([userDefaults boolForKey:kPreferenceKeyNeverRemindPrefsChangesLostForFileHaveSelection]) {
+            tag = [userDefaults integerForKey:kPreferenceKeyNeverRemindPrefsChangesLostForFileSelection];
         }
-        strongSelf->_autoSaveOnQuit.state = state;
+        [strongSelf->_saveChanges selectItemWithTag:tag];
         return YES;
     };
     info.onUpdate();
@@ -637,7 +629,8 @@ enum {
     BOOL isValidFile = (shouldLoadRemotePrefs &&
                         remoteLocationIsValid &&
                         ![[iTermRemotePreferences sharedInstance] remoteLocationIsURL]);
-    [_autoSaveOnQuit setEnabled:isValidFile];
+    [_saveChanges setEnabled:isValidFile];
+    [_saveChangesLabel setLabelEnabled:isValidFile];
     [_pushToCustomFolder setEnabled:isValidFile];
 }
 

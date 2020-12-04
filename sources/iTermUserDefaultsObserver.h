@@ -11,6 +11,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface iTermUserDefaultsObserver : NSObject
 - (void)observeKey:(NSString *)key block:(void (^)(void))block;
+- (void)observeAllKeysWithBlock:(void (^)(void))block;
+
 @end
 
 NS_ASSUME_NONNULL_END

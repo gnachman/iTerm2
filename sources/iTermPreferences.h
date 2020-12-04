@@ -53,6 +53,12 @@ typedef NS_ENUM(int, iTermPreferencesModifierTag) {
     kPreferenceModifierTagNone = 9,  // No modifier assigned (not available for all popups)
 };
 
+typedef NS_ENUM(NSInteger, iTermPreferenceSavePrefsMode) {
+    iTermPreferenceSavePrefsModeOnQuit = 0,
+    iTermPreferenceSavePrefsModeNever = 1,  // default
+    iTermPreferenceSavePrefsModeAlways = 2
+};
+
 // General
 extern NSString *const kPreferenceKeyOpenBookmark;
 extern NSString *const kPreferenceKeyOpenArrangementAtStartup;
@@ -67,7 +73,10 @@ extern NSString *const kPreferenceKeyAddBonjourHostsToProfiles;
 extern NSString *const kPreferenceKeyCheckForUpdatesAutomatically;
 extern NSString *const kPreferenceKeyCheckForTestReleases;
 extern NSString *const kPreferenceKeyLoadPrefsFromCustomFolder;
-extern NSString *const kPreferenceKeyNeverRemindPrefsChangesLostForFileSelection;
+
+// Note: if kPreferenceKeyNeverRemindPrefsChangesLostForFileHaveSelection is false, then use the default value (.never).
+// Otherwise, respect this value.
+extern NSString *const kPreferenceKeyNeverRemindPrefsChangesLostForFileSelection;  // iTermPreferenceSavePrefsMode
 extern NSString *const kPreferenceKeyNeverRemindPrefsChangesLostForFileHaveSelection;
 extern NSString *const kPreferenceKeyCustomFolder;  // Path/URL to location with prefs. Path may have ~ in it.
 extern NSString *const kPreferenceKeySelectionCopiesText;

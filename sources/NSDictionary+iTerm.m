@@ -352,6 +352,22 @@ static const NSEventModifierFlags iTermHotkeyModifierMask = (NSEventModifierFlag
     return total;
 }
 
+- (NSData *)it_xmlPropertyList {
+    NSOutputStream *outputStream = [NSOutputStream outputStreamToMemory];
+    [outputStream open];
+    NSError *error = nil;
+    [NSPropertyListSerialization writePropertyList:self
+                                          toStream:outputStream
+                                            format:NSPropertyListXMLFormat_v1_0
+                                           options:0
+                                             error:&error];
+    [outputStream close];
+    if (error != nil) {
+        return nil;
+    }
+    return [outputStream propertyForKey:NSStreamDataWrittenToMemoryStreamKey];
+}
+
 - (BOOL)it_writeToXMLPropertyListAt:(NSString *)filename {
     NSOutputStream *outputStream = [NSOutputStream outputStreamToFileAtPath:filename append:NO];
     [outputStream scheduleInRunLoop:[NSRunLoop currentRunLoop] forMode:NSDefaultRunLoopMode];

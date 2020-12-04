@@ -39,7 +39,7 @@ NSString *const kPreferenceKeyLoadPrefsFromCustomFolder = @"LoadPrefsFromCustomF
 // This pref was originally a suppressable warning plus a user default, which is why it's in two
 // parts.
 
-// 0 = Save, 1 = Lose changes
+// 0 = on quit, 1 = never, 2 = always
 NSString *const kPreferenceKeyNeverRemindPrefsChangesLostForFileSelection = @"NoSyncNeverRemindPrefsChangesLostForFile_selection";
 
 // YES = apply preference from above key, NO = ask on exit if changes exist
