@@ -6642,9 +6642,9 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
         }
         switch (preferredStyle) {
             case TAB_STYLE_MINIMAL:
-                return @12;
+                return @([iTermAdvancedSettingsModel minimalEdgeDragSize]);
             case TAB_STYLE_COMPACT:
-                return @10;
+                return @([iTermAdvancedSettingsModel compactEdgeDragSize]);
             case TAB_STYLE_LIGHT:
             case TAB_STYLE_DARK:
             case TAB_STYLE_LIGHT_HIGH_CONTRAST:
