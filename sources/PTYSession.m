@@ -7071,7 +7071,11 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     // rate that this can write, since it can only write after a %output is read.
     __weak NSFileHandle *handle = _tmuxClientWritePipe;
     dispatch_async([[self class] tmuxQueue], ^{
-        [handle writeData:data];
+        @try {
+            [handle writeData:data];
+        } @catch (NSException *exception) {
+            DLog(@"%@ while writing to tmux pipe", exception);
+        }
     });
 }
 
