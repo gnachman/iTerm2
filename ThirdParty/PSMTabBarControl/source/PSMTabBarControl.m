@@ -18,6 +18,7 @@
 #import "PTYTask.h"
 #import "NSColor+PSM.h"
 #import "NSWindow+PSM.h"
+#import <QuartzCore/QuartzCore.h>
 
 NSString *const kPSMModifierChangedNotification = @"kPSMModifierChangedNotification";
 NSString *const kPSMTabModifierKey = @"TabModifier";
@@ -99,6 +100,9 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionHTMLTabTitles = @"PSMTabBarContr
     BOOL _hasCloseButton;
     BOOL _needsUpdateAnimate;
     BOOL _needsUpdate;
+
+    NSView *_grabHandle;
+    NSTrackingArea *_trackingArea;
 }
 
 #pragma mark -
@@ -1538,12 +1542,17 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionHTMLTabTitles = @"PSMTabBarContr
     return menu;
 }
 
-- (void)resetCursorRects
-{
+- (void)resetCursorRects {
     [super resetCursorRects];
+
+    [self removeTrackingArea:_trackingArea];
+    [_trackingArea release];
+    _trackingArea = nil;
+    _grabHandle.hidden = YES;
+
     if ([self orientation] == PSMTabBarVerticalOrientation) {
         NSRect frame = [self frame];
-        [self addCursorRect:NSMakeRect(frame.size.width - 2, 0, 2, frame.size.height) cursor:[NSCursor resizeLeftRightCursor]];
+        [self psmAddCursorRect:NSMakeRect(frame.size.width - 2, 0, 2, frame.size.height) cursor:[NSCursor resizeLeftRightCursor]];
     } else {
         const CGFloat edgeDragHeight = self.style.edgeDragHeight;
         if (edgeDragHeight == 0) {
@@ -1551,20 +1560,64 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionHTMLTabTitles = @"PSMTabBarContr
         }
         switch (_tabLocation) {
             case PSMTab_TopTab:
-                [self addCursorRect:NSMakeRect(0, 0, self.bounds.size.width, edgeDragHeight)
-                             cursor:[NSCursor openHandCursor]];
+                [self psmAddCursorRect:NSMakeRect(0, 0, self.bounds.size.width, edgeDragHeight)
+                                cursor:[NSCursor openHandCursor]];
                 break;
             case PSMTab_BottomTab:
-                [self addCursorRect:NSMakeRect(0,
-                                               self.bounds.size.height - edgeDragHeight,
-                                               self.bounds.size.width,
-                                               edgeDragHeight)
-                             cursor:[NSCursor openHandCursor]];
+                [self psmAddCursorRect:NSMakeRect(0,
+                                                  self.bounds.size.height - edgeDragHeight,
+                                                  self.bounds.size.width,
+                                                  edgeDragHeight)
+                                cursor:[NSCursor openHandCursor]];
                 break;
 
             case PSMTab_LeftTab:
                 break;
         }
+    }
+}
+
+- (void)mouseExited:(NSEvent *)event {
+    _grabHandle.hidden = YES;
+}
+
+- (void)removeTrackingAreaIfPresent {
+    if (_trackingArea) {
+        [self removeTrackingArea:_trackingArea];
+        [_trackingArea release];
+        _trackingArea = nil;
+    }
+}
+
+- (void)psmAddCursorRect:(NSRect)rect cursor:(NSCursor *)cursor {
+    [self addCursorRect:rect cursor:cursor];
+
+    [self removeTrackingAreaIfPresent];
+    if (!_grabHandle) {
+        _grabHandle = [[NSView alloc] initWithFrame:rect];
+        _grabHandle.wantsLayer = YES;
+
+        CALayer *layer = [[CALayer alloc] init];
+        layer.backgroundColor = [[NSColor windowBackgroundColor] CGColor];
+        _grabHandle.layer = layer;
+        _grabHandle.hidden = YES;
+        [self addSubview:_grabHandle];
+    } else {
+        _grabHandle.frame = rect;
+    }
+    _trackingArea = [[NSTrackingArea alloc] initWithRect:rect
+                                                 options:NSTrackingMouseEnteredAndExited | NSTrackingCursorUpdate | NSTrackingActiveAlways
+                                                   owner:self
+                                                userInfo:nil];
+    [self addTrackingArea:_trackingArea];
+}
+
+- (void)cursorUpdate:(NSEvent *)event {
+    const NSRect rect = [self convertRect:_trackingArea.rect toView:nil];
+    if (NSPointInRect(event.locationInWindow, rect)) {
+        _grabHandle.hidden = NO;
+    } else {
+        _grabHandle.hidden = YES;
     }
 }
 
