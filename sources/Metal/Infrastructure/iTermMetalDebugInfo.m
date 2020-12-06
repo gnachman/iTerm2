@@ -82,6 +82,7 @@
     NSMutableArray<id<iTermMetalCellRenderer>> *_cellRenderers;
     NSMutableArray<iTermMetalDebugDrawInfo *> *_draws;
     NSImage *_finalImage;
+    NSURL *_metalCaptureURL;
 }
 
 - (instancetype)init {
@@ -135,6 +136,10 @@
                                                    colorSpaceName:NSDeviceRGBColorSpace];
 }
 
+- (void)addMetalCapture:(NSURL *)url {
+    _metalCaptureURL = url;
+}
+
 - (NSUInteger)numberOfRecordedDraws {
     return _draws.count;
 }
@@ -184,6 +189,13 @@
         [self writeRenderPassDescriptor:_temporaryRenderPassDescriptor
                                      to:[self newFolderNamed:@"TemporaryRenderPassDescriptor"
                                                         root:root]];
+    }
+    if (_metalCaptureURL) {
+        NSError *error = nil;
+        [[NSFileManager defaultManager] moveItemAtURL:_metalCaptureURL
+                                                toURL:[root URLByAppendingPathComponent:_metalCaptureURL.path.lastPathComponent]
+                                                error:&error];
+        ITCriticalError(error == nil, @"Error moving gpu capture: %@", error);
     }
     NSURL *rowDataFolder = [self newFolderNamed:@"RowData" root:root];
     [_rowData enumerateObjectsUsingBlock:^(iTermMetalRowData * _Nonnull rowData, NSUInteger idx, BOOL * _Nonnull stop) {

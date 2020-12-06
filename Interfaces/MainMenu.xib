@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="16097" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="17506" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES">
     <dependencies>
         <deployment identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="16097"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="17506"/>
     </dependencies>
     <objects>
         <customObject id="-2" userLabel="File's Owner" customClass="NSApplication">
@@ -50,7 +50,8 @@
                                     <action selector="copyPerformanceStats:" target="201" id="Q9K-AS-x9Q"/>
                                 </connections>
                             </menuItem>
-                            <menuItem title="Capture GPU Frame" identifier="Capture Metal Frame" id="8KO-hG-xdC">
+                            <menuItem title="Capture GPU Frame" keyEquivalent="G" identifier="Capture Metal Frame" id="8KO-hG-xdC">
+                                <modifierMask key="keyEquivalentModifierMask" control="YES" option="YES" command="YES"/>
                                 <connections>
                                     <action selector="captureNextMetalFrame:" target="-1" id="vR7-q7-IN8"/>
                                 </connections>

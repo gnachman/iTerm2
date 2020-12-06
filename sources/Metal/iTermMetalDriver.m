@@ -390,6 +390,22 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     });
 }
 
+- (MTLCaptureDescriptor *)triggerProgrammaticCapture:(id<MTLDevice>)device NS_AVAILABLE_MAC(10_15) {
+    MTLCaptureManager* captureManager = [MTLCaptureManager sharedCaptureManager];
+    MTLCaptureDescriptor* captureDescriptor = [[MTLCaptureDescriptor alloc] init];
+    NSString *filename = [NSString stringWithFormat:@"/tmp/%@.gputrace", [[NSUUID UUID] UUIDString]];
+    captureDescriptor.outputURL = [NSURL fileURLWithPath:filename];
+    captureDescriptor.destination = MTLCaptureDestinationGPUTraceDocument;
+    captureDescriptor.captureObject = device;
+
+    NSError *error;
+    if (![captureManager startCaptureWithDescriptor:captureDescriptor error:&error]) {
+        ITCriticalError(NO, @"Failed to start capture, error %@", error);
+        return nil;
+    }
+    return captureDescriptor;
+}
+
 - (BOOL)reallyDrawInMTKView:(nonnull MTKView *)view startToStartTime:(NSTimeInterval)startToStartTime {
     @synchronized (self) {
         [_inFlightHistogram addValue:_currentFrames.count];
@@ -441,6 +457,9 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
 
     if (self.captureDebugInfoForNextFrame) {
         frameData.debugInfo = [[iTermMetalDebugInfo alloc] init];
+        if (@available(macOS 10.15, *)) {
+            frameData.captureDescriptor = [self triggerProgrammaticCapture:frameData.device];
+        }
         self.captureDebugInfoForNextFrame = NO;
     }
     if (_total > 1) {
@@ -1757,6 +1776,13 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
         DLog(@"first time completed %@", frameData);
         if (frameData.debugInfo) {
             DLog(@"have debug info %@", frameData);
+            if (@available(macOS 10.15, *)) {
+                if (frameData.captureDescriptor) {
+                    MTLCaptureManager* captureManager = [MTLCaptureManager sharedCaptureManager];
+                    [captureManager stopCapture];
+                    [frameData.debugInfo addMetalCapture:frameData.captureDescriptor.outputURL];
+                }
+            }
             NSData *archive = [frameData.debugInfo newArchive];
             dispatch_async(dispatch_get_main_queue(), ^{
                 [self.dataSource metalDriverDidProduceDebugInfo:archive];

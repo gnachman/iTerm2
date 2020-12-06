@@ -56,6 +56,7 @@ NS_CLASS_AVAILABLE(10_11, NA)
 - (void)addRenderOutputData:(NSData *)data
                        size:(CGSize)size
              transientState:(iTermMetalRendererTransientState *)tState;
+- (void)addMetalCapture:(NSURL *)url;
 
 - (NSData *)newArchive;
 
