@@ -44,7 +44,7 @@ extern NSString *const iTermScriptHistoryEntryFieldRPCValue;  // RPC changed
                     relaunch:(void (^ _Nullable)(void))relaunch NS_DESIGNATED_INITIALIZER;
 - (instancetype)init NS_UNAVAILABLE;
 
-- (void)addOutput:(NSString *)output;
+- (void)addOutput:(NSString *)output completion:(void (^)(void))completion;
 - (void)addClientOriginatedRPC:(NSString *)rpc;
 - (void)addServerOriginatedRPC:(NSString *)rpc;
 - (void)stopRunning;

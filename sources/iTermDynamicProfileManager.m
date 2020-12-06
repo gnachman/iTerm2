@@ -148,7 +148,8 @@
 
 - (void)reportError:(NSString *)error file:(NSString *)file {
     [[iTermScriptHistory sharedInstance] addDynamicProfilesLoggingEntryIfNeeded];
-    [[iTermScriptHistoryEntry dynamicProfilesEntry] addOutput:[error stringByAppendingString:@"\n"]];
+    [[iTermScriptHistoryEntry dynamicProfilesEntry] addOutput:[error stringByAppendingString:@"\n"]
+                                                   completion:^{}];
 
     _pendingErrors += 1;
     if (_pendingErrors > 1) {

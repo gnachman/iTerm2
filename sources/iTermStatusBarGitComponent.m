@@ -582,8 +582,9 @@ static NSArray<NSString *> *NonEmptyLinesInString(NSString *output) {
     iTermTextPopoverViewController *popoverVC = _popoverVC;
     __weak __typeof(_logRunner) weakLogRunner = _logRunner;
     __block BOOL stopped = NO;
-    _logRunner.outputHandler = ^(NSData *data) {
+    _logRunner.outputHandler = ^(NSData *data, void (^completion)(void)) {
         if (stopped) {
+            completion();
             return;
         }
         [popoverVC appendString:[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding]];
@@ -592,6 +593,7 @@ static NSArray<NSString *> *NonEmptyLinesInString(NSString *output) {
             [popoverVC appendString:@"\n[Truncated]\n"];
             [weakLogRunner terminate];
         }
+        completion();
     };
     [_logRunner runWithTimeout:5];
 }

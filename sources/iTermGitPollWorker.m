@@ -132,8 +132,9 @@ typedef void (^iTermGitCallback)(iTermGitState * _Nullable);
             [self reset];
             return;
         }
-        _commandRunner.outputHandler = ^(NSData *data) {
+        _commandRunner.outputHandler = ^(NSData *data, void (^completion)(void)) {
             [weakSelf didRead:data];
+            completion();
         };
         [_commandRunner run];
     }

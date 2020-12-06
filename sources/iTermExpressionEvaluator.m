@@ -400,7 +400,7 @@ static NSMutableArray *iTermExpressionEvaluatorGlobalStore(void) {
     NSString *message =
     [NSString stringWithFormat:@"Error evaluating expression %@: %@\n",
      invocation, error.localizedDescription];
-    [[iTermScriptHistoryEntry globalEntry] addOutput:message];
+    [[iTermScriptHistoryEntry globalEntry] addOutput:message completion:^{}];
 }
 
 @end

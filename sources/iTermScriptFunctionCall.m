@@ -240,7 +240,7 @@ void iTermFunctionCallSplitFullyQualifiedName(NSString *fqName, NSString **names
                                                 forKey:iTermAPIHelperFunctionCallErrorUserInfoKeyConnection];
     }
     iTermScriptHistoryEntry *entry = [[iTermAPIHelper sharedInstance] scriptHistoryEntryForConnectionKey:self.connectionKey];
-    [entry addOutput:[reason stringByAppendingString:@"\n"]];
+    [entry addOutput:[reason stringByAppendingString:@"\n"] completion:^{}];
 
     NSError *error = [NSError errorWithDomain:@"com.iterm2.call"
                                          code:2

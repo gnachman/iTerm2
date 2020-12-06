@@ -502,7 +502,8 @@ static NSString *const iTermStatusBarRPCRegistrationRequestKey = @"registration 
                                completion:^(id result, NSError *error, NSSet<NSString *> *mutations) {
                                    if (error) {
                                        NSString *message = [NSString stringWithFormat:@"Error in onclick handler: %@\n%@", error.localizedDescription, error.localizedFailureReason];
-                                       [[iTermScriptHistoryEntry globalEntry] addOutput:message];
+                                       [[iTermScriptHistoryEntry globalEntry] addOutput:message
+                                                                             completion:^{}];
                                    }
                                }];
 }

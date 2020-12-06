@@ -134,16 +134,17 @@ static NSMutableArray<iTermBackgroundCommandRunner *> *activeRunners;
                                        identifier:[[NSUUID UUID] UUIDString]
                                          relaunch:nil];
     [[iTermScriptHistory sharedInstance] addHistoryEntry:entry];
-    [entry addOutput:[NSString stringWithFormat:@"Run command:\n%@\n", self.command]];
+    [entry addOutput:[NSString stringWithFormat:@"Run command:\n%@\n", self.command]
+          completion:^{}];
     [activeRunners addObject:self];
     __weak __typeof(self) weakSelf = self;
-    commandRunner.outputHandler = ^(NSData *data) {
+    commandRunner.outputHandler = ^(NSData *data, void (^completion)(void)) {
         NSString *string = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
         if (!string) {
             string = [data it_hexEncoded];
         }
         DLog(@"%@: add output %@", weakSelf, string);
-        [entry addOutput:string];
+        [entry addOutput:string completion:completion];
     };
     commandRunner.completion = ^(int status) {
         dispatch_async(dispatch_get_main_queue(), ^{
@@ -157,7 +158,8 @@ static NSMutableArray<iTermBackgroundCommandRunner *> *activeRunners;
     DLog(@"%@", self);
     [activeRunners removeObject:self];
     if (status) {
-        [entry addOutput:[NSString stringWithFormat:@"\nFinished with status %d", status]];
+        [entry addOutput:[NSString stringWithFormat:@"\nFinished with status %d", status]
+              completion:^{}];
     }
     [entry stopRunning];
     _running = NO;

@@ -73,7 +73,8 @@ static NSString *const iTermStatusBarActionKey = @"action";
                                                         scope:self.scope
                                                      observer:^(NSString * _Nonnull newValue, NSError *error) {
         if (error != nil) {
-            [[iTermScriptHistoryEntry globalEntry] addOutput:[NSString stringWithFormat:@"Error while evaluating %@ in status bar action button: %@", expression, error]];
+            [[iTermScriptHistoryEntry globalEntry] addOutput:[NSString stringWithFormat:@"Error while evaluating %@ in status bar action button: %@", expression, error]
+                                                  completion:^{}];
             return [NSString stringWithFormat:@"🐞 %@", error.localizedDescription];
         }
         [weakSelf setStringValue:newValue];

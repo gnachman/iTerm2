@@ -29,7 +29,8 @@ static void APSWriteToScriptHistory(id<iTermAutomaticProfileSwitcherDelegate> de
     NSString *output = [NSString stringWithFormat:@"[%@] %@\n",
                         [delegate automaticProfileSwitcherSessionName],
                         string];
-    [[iTermScriptHistoryEntry apsEntry] addOutput:output];
+    [[iTermScriptHistoryEntry apsEntry] addOutput:output
+                                       completion:^{}];
 }
 
 #define APSLog(args...) do { DLog(args); APSWriteToScriptHistory(self.delegate, args); } while (0)

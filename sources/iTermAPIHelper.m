@@ -1310,9 +1310,9 @@ static BOOL iTermAPIHelperLastApplescriptAuthRequiredSetting;
         entry = [iTermScriptHistoryEntry globalEntry];
     }
 
-    [entry addOutput:@"❗️ "];
-    [entry addOutput:string];
-    [entry addOutput:@"\n"];
+    [entry addOutput:@"❗️ " completion:^{}];
+    [entry addOutput:string completion:^{}];
+    [entry addOutput:@"\n" completion:^{}];
     XLog(@"%@", string);
 }
 

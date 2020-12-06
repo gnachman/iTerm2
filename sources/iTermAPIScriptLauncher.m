@@ -326,7 +326,8 @@ static NSString *const iTermAPIScriptLauncherScriptDidFailUserNotificationCallba
     }
     @catch (NSException *e) {
         [[iTermScriptHistory sharedInstance] addHistoryEntry:entry];
-        [entry addOutput:[NSString stringWithFormat:@"ERROR: Failed to launch: %@", e.reason]];
+        [entry addOutput:[NSString stringWithFormat:@"ERROR: Failed to launch: %@", e.reason]
+              completion:^{}];
         [self didFailToLaunchScript:filename withException:e];
     }
 }
@@ -371,7 +372,8 @@ static NSString *const iTermAPIScriptLauncherScriptDidFailUserNotificationCallba
     [task setStandardOutput:pipe];
     [task setStandardError:pipe];
 
-    [entry addOutput:[NSString stringWithFormat:@"%@ %@\n", task.launchPath, [task.arguments componentsJoinedByString:@" "]]];
+    [entry addOutput:[NSString stringWithFormat:@"%@ %@\n", task.launchPath, [task.arguments componentsJoinedByString:@" "]]
+          completion:^{}];
     [task launch];   // This can throw
     entry.pids = @[ @(task.processIdentifier) ];
     [self waitForTask:task readFromPipe:pipe historyEntry:entry];
@@ -451,7 +453,8 @@ static NSString *const iTermAPIScriptLauncherScriptDidFailUserNotificationCallba
         NSData *inData = [readHandle availableData];
         while (inData.length) {
             dispatch_async(dispatch_get_main_queue(), ^{
-                [entry addOutput:[[NSString alloc] initWithData:inData encoding:NSUTF8StringEncoding]];
+                [entry addOutput:[[NSString alloc] initWithData:inData encoding:NSUTF8StringEncoding]
+                      completion:^{}];
             });
             inData = [readHandle availableData];
         }
@@ -460,9 +463,11 @@ static NSString *const iTermAPIScriptLauncherScriptDidFailUserNotificationCallba
         dispatch_async(dispatch_get_main_queue(), ^{
             if (!task.isRunning && (task.terminationReason == NSTaskTerminationReasonUncaughtSignal || task.terminationStatus != 0)) {
                 if (task.terminationReason == NSTaskTerminationReasonUncaughtSignal) {
-                    [entry addOutput:@"\n** Script was killed by a signal **"];
+                    [entry addOutput:@"\n** Script was killed by a signal **"
+                          completion:^{}];
                 } else {
-                    [entry addOutput:[NSString stringWithFormat:@"\n** Script exited with status %@ **", @(task.terminationStatus)]];
+                    [entry addOutput:[NSString stringWithFormat:@"\n** Script exited with status %@ **", @(task.terminationStatus)]
+                          completion:^{}];
                 }
                 if (!entry.terminatedByUser) {
                     NSString *message = [NSString stringWithFormat:@"“%@” ended unexpectedly.", entry.name];

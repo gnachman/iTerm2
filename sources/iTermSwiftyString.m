@@ -184,8 +184,7 @@
             if (!entry) {
                 entry = [iTermScriptHistoryEntry globalEntry];
             }
-            [entry addOutput:message];
-
+            [entry addOutput:message completion:^{}];
         }
         completion(result, error);
     }];

@@ -132,26 +132,8 @@ static NSDateFormatter *gScriptHistoryDateFormatter;
     [self addServerOriginatedRPC:[message.description stringByAppendingString:@"\n"]];
 }
 
-- (void)addOutput:(NSString *)output {
-    NSString *timestamp = [NSString stringWithFormat:@"\n%@: ", [gScriptHistoryDateFormatter stringFromDate:[NSDate date]]];
-    BOOL trimmed = [output hasSuffix:@"\n"];
-    if (trimmed) {
-        output = [output substringWithRange:NSMakeRange(0, output.length - 1)];
-    }
-    output = [output stringByReplacingOccurrencesOfString:@"\n" withString:timestamp];
-    if (trimmed) {
-        output = [output stringByAppendingString:@"\n"];
-    }
-
-    if (!_lastLogLineContinues) {
-        output = [NSString stringWithFormat:@"%@: %@", [gScriptHistoryDateFormatter stringFromDate:[NSDate date]], output];
-    }
-
-    [self appendLogs:output];
-    [[NSNotificationCenter defaultCenter] postNotificationName:iTermScriptHistoryEntryDidChangeNotification
-                                                        object:self
-                                                      userInfo:@{ iTermScriptHistoryEntryDelta: output,
-                                                                  iTermScriptHistoryEntryFieldKey: iTermScriptHistoryEntryFieldLogsValue }];
+- (void)addOutput:(NSString *)output completion:(void (^)(void))completion {
+    [self appendLogs:output completion:completion];
 }
 
 - (void)addClientOriginatedRPC:(NSString *)rpc {
@@ -188,7 +170,7 @@ static NSDateFormatter *gScriptHistoryDateFormatter;
 }
 
 - (void)kill {
-    [self addOutput:@"\n*Terminate button pressed*\n"];
+    [self addOutput:@"\n*Terminate button pressed*\n" completion:^{}];
     self.terminatedByUser = YES;
     if (self.onlyPid > 0) {
         [self kill:1];
@@ -216,27 +198,92 @@ static NSDateFormatter *gScriptHistoryDateFormatter;
                                                         object:self];
 }
 
-- (void)appendLogs:(NSString *)delta {
-    if (delta.length == 0) {
+- (void)appendLogs:(NSString *)rawLogs completion:(void (^)(void))completion {
+    if (rawLogs.length == 0) {
+        completion();
         return;
     }
-    BOOL endsWithNewline = [delta hasSuffix:@"\n"];
-    if (endsWithNewline) {
-        delta = [delta substringWithRange:NSMakeRange(0, delta.length - 1)];
+    NSString *timestamp = [gScriptHistoryDateFormatter stringFromDate:[NSDate date]];
+
+    static dispatch_queue_t queue;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        dispatch_queue_attr_t attr = dispatch_queue_attr_make_with_qos_class(DISPATCH_QUEUE_SERIAL, QOS_CLASS_UTILITY, 0);
+        queue = dispatch_queue_create("com.iterm2.script-history", attr);
+    });
+    const BOOL continuation = _lastLogLineContinues;
+    dispatch_async(queue, ^{
+        [self queueAppendLogs:rawLogs
+                    timestamp:timestamp
+                 continuation:continuation
+                   completion:completion];
+    });
+}
+
+// Runs on background queue
+- (void)queueAppendLogs:(NSString *)rawLogs
+              timestamp:(NSString *)timestamp
+           continuation:(BOOL)continuation
+             completion:(void (^)(void))completion {
+    NSMutableString *output = [rawLogs mutableCopy];
+    BOOL trimmed = [output hasSuffix:@"\n"];
+    if (trimmed) {
+        [output replaceCharactersInRange:NSMakeRange(output.length - 1, 1) withString:@""];
     }
-    NSArray<NSString *> *newLines = [delta componentsSeparatedByString:@"\n"];
+
+    [output replaceOccurrencesOfString:@"\n"
+                            withString:[NSString stringWithFormat:@"\n%@: ", timestamp]
+                               options:0
+                                 range:NSMakeRange(0, output.length)];
+    if (trimmed) {
+        [output appendString:@"\n"];
+    }
+
+    if (!continuation) {
+        [output insertString:[NSString stringWithFormat:@"%@: ", timestamp] atIndex:0];
+    }
+
+    BOOL endsWithNewline = [output hasSuffix:@"\n"];
+    if (endsWithNewline) {
+        [output replaceCharactersInRange:NSMakeRange(output.length - 1, 1) withString:@""];
+    }
+    NSArray<NSString *> *newLines = [output componentsSeparatedByString:@"\n"];
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [self didSplitLogIntoLines:newLines
+                   endsWithNewline:endsWithNewline
+                             delta:output
+                        completion:completion];
+    });
+}
+
+// Runs on main queue
+- (void)didSplitLogIntoLines:(NSArray<NSString *> *)newLines
+             endsWithNewline:(BOOL)endsWithNewline
+                       delta:(NSString *)delta
+                  completion:(void (^)(void))completion {
     if (_lastLogLineContinues) {
         NSString *amended = [_logLines.lastObject stringByAppendingString:newLines.firstObject];
         newLines = [newLines subarrayWithRange:NSMakeRange(1, newLines.count - 1)];
         _logLines[_logLines.count - 1] = amended;
 
     }
-    [_logLines addObjectsFromArray:newLines];
-    _lastLogLineContinues = !endsWithNewline;
+    const NSInteger maxLines = 1000;
+    if (newLines.count > maxLines) {
+        [_logLines removeAllObjects];
+        [_logLines addObjectsFromArray:[newLines subarrayWithRange:NSMakeRange(newLines.count - maxLines, maxLines)]];
+    } else {
+        [_logLines addObjectsFromArray:newLines];
 
-    while (_logLines.count > 1000) {
-        [_logLines removeObjectAtIndex:0];
+        if (_logLines.count > maxLines) {
+            [_logLines removeObjectsInRange:NSMakeRange(0, _logLines.count - maxLines)];
+        }
     }
+    _lastLogLineContinues = !endsWithNewline;
+    [[NSNotificationCenter defaultCenter] postNotificationName:iTermScriptHistoryEntryDidChangeNotification
+                                                        object:self
+                                                      userInfo:@{ iTermScriptHistoryEntryDelta: delta,
+                                                                  iTermScriptHistoryEntryFieldKey: iTermScriptHistoryEntryFieldLogsValue }];
+    completion();
 }
 
 - (void)appendCalls:(NSString *)delta {

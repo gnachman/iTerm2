@@ -896,9 +896,10 @@ static NSArray<NSString *> *iTermConvertThreePartVersionNumbersToTwoPart(NSArray
                                                                withArguments:arguments
                                                                         path:container.path];
     NSString *identifier = [runner description];
-    runner.outputHandler = ^(NSData *data) {
+    runner.outputHandler = ^(NSData *data, void (^completion)(void)) {
         DLog(@"Runner %@ recvd: %@", identifier, [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding]);
         [output appendData:data];
+        completion();
     };
     runner.completion = ^(int status) {
         if (status != 0) {

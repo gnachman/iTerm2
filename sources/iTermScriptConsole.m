@@ -439,7 +439,7 @@ typedef NS_ENUM(NSInteger, iTermScriptFilterControlTag) {
     }
     entry.pids = notification.userInfo[@"pids"];
     [[iTermScriptHistory sharedInstance] addHistoryEntry:entry];
-    [entry addOutput:notification.userInfo[@"reason"]];
+    [entry addOutput:notification.userInfo[@"reason"] completion:^{}];
     [entry stopRunning];
 }
 
@@ -468,7 +468,8 @@ typedef NS_ENUM(NSInteger, iTermScriptFilterControlTag) {
         [[iTermScriptHistory sharedInstance] addHistoryEntry:entry];
     }
     entry.websocketConnection = notification.userInfo[@"websocket"];
-    [entry addOutput:[NSString stringWithFormat:@"Connection accepted: %@\n", notification.userInfo[@"reason"]]];
+    [entry addOutput:[NSString stringWithFormat:@"Connection accepted: %@\n", notification.userInfo[@"reason"]]
+          completion:^{}];
 }
 
 - (void)connectionClosed:(NSNotification *)notification {
@@ -478,7 +479,7 @@ typedef NS_ENUM(NSInteger, iTermScriptFilterControlTag) {
     if (!entry) {
         return;
     }
-    [entry addOutput:@"\nConnection closed.\n"];
+    [entry addOutput:@"\nConnection closed.\n" completion:^{}];
     [entry stopRunning];
 }
 

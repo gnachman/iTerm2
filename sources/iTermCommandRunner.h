@@ -13,7 +13,9 @@
 @property (nonatomic, copy) NSArray<NSString *> *arguments;
 @property (nonatomic, copy) NSString *currentDirectoryPath;
 @property (nonatomic, copy) void (^completion)(int);
-@property (nonatomic, copy) void (^outputHandler)(NSData *);
+// Call the completion block after you're completely done processing the input.
+// This gives backpressure to the background process.
+@property (nonatomic, copy) void (^outputHandler)(NSData *, void (^)(void));
 @property (nonatomic, copy) NSDictionary<NSString *, NSString *> *environment;
 
 + (void)unzipURL:(NSURL *)zipURL
