@@ -6107,6 +6107,8 @@ typedef struct {
         _metalUnavailableReason = iTermMetalUnavailableReasonNone;
         allowed = YES;
     }
+    _metalUnavailableReason = iTermMetalUnavailableReasonDisconnectedFromPower;
+    allowed = NO;
     const BOOL ONLY_KEY_WINDOWS_USE_METAL = NO;
     const BOOL isKey = [[[self realParentWindow] window] isKeyWindow];
     const BOOL satisfiesKeyRequirement = (isKey || !ONLY_KEY_WINDOWS_USE_METAL);
