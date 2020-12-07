@@ -7,6 +7,8 @@
 //
 
 #import "iTermAdvancedSettingsViewController.h"
+
+#import "DebugLogging.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "NSApplication+iTerm.h"
 #import "NSArray+iTerm.h"
@@ -647,7 +649,7 @@ static NSDictionary *gIntrospection;
     switch ([dict advancedSettingType]) {
         case kiTermAdvancedSettingTypeBoolean:
         case kiTermAdvancedSettingTypeOptionalBoolean:
-            assert(NO);
+            ITAssertWithMessage(NO, @"Boolean can't end editing. %@", dict);
             break;
 
         case kiTermAdvancedSettingTypeFloat:

@@ -60,10 +60,13 @@ static inline id iTermAdvancedSettingsModelInverseTransformInt(int value) {
     return @(value);
 }
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-function"
 static inline int iTermAdvancedSettingsModelTransformNonnegativeInt(id object) {
     int value = [object intValue];
     return MAX(0, value);
 }
+#pragma clang diagnostic pop
 
 static inline double iTermAdvancedSettingsModelTransformFloat(id object) {
     return [object doubleValue];
