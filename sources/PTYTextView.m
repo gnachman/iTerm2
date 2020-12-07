@@ -786,6 +786,7 @@
 
 // For Metal
 - (void)setNeedsDisplay:(BOOL)needsDisplay {
+    DLog(@"%@", [NSThread callStackSymbols]);
     [super setNeedsDisplay:needsDisplay];
     if (needsDisplay) {
         [_delegate textViewNeedsDisplayInRect:self.bounds];
@@ -794,6 +795,7 @@
 
 // For Metal
 - (void)setNeedsDisplayInRect:(NSRect)invalidRect {
+    DLog(@"%@", [NSThread callStackSymbols]);
     [super setNeedsDisplayInRect:invalidRect];
     [_delegate textViewNeedsDisplayInRect:invalidRect];
 }
