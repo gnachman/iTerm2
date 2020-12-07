@@ -7,6 +7,8 @@
 
 #import <Foundation/Foundation.h>
 
+#import "iTermMetalConfig.h"
+
 @interface iTermHistogram : NSObject
 
 @property (nonatomic, readonly) NSString *stringValue;

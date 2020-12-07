@@ -19,6 +19,7 @@
 #define ENABLE_DISPATCH_TO_MAIN_QUEUE_FOR_ENQUEUEING_DRAW_CALLS 0
 
 #define ENABLE_PER_FRAME_METAL_STATS 0
+#define ENABLE_STATS 1
 
 //I've had to disable this feature because it appears to tickle a race condition. It dies saying:
 //"[CAMetalLayerDrawable texture] should not be called after already presenting this drawable. Get a nextDrawable instead"
