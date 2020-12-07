@@ -7533,7 +7533,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [entry addOutput:[NSString stringWithFormat:@"An error occurred while running the function invocation “%@”:\n%@\n\nTraceback:\n%@",
                       invocation,
                       error.localizedDescription,
-                      traceback]];
+                      traceback]
+          completion:^{}];
     iTermWarningSelection selection = [iTermWarning showWarningWithTitle:message
                                                                  actions:actions
                                                                accessory:nil
@@ -12638,7 +12639,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         id value = tuple.secondObject;
         if (![iTermProfilePreferences valueIsLegal:value forKey:key]) {
             XLog(@"Value %@ is not legal for key %@", value, key);
-            [scriptHistoryEntry addOutput:[NSString stringWithFormat:@"Value %@ is not legal type for key %@\n", value, key]];
+            [scriptHistoryEntry addOutput:[NSString stringWithFormat:@"Value %@ is not legal type for key %@\n", value, key]
+                               completion:^{}];
             return ITMSetProfilePropertyResponse_Status_RequestMalformed;
         }
         dict[key] = value;
