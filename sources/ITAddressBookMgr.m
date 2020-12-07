@@ -588,10 +588,12 @@ iTermWindowType iTermThemedWindowType(iTermWindowType windowType) {
 + (NSString *)shellLauncherCommandWithCustomShell:(NSString *)customShell {
     NSString *sanitizedCustomShell = [self sanitizedCustomShell:customShell];
     NSString *customShellArg = sanitizedCustomShell ? [@" SHELL=" stringByAppendingString:sanitizedCustomShell] : @"";
+    NSString *shellLauncher = [[NSBundle bundleForClass:self.class] pathForAuxiliaryExecutable:@"ShellLauncher"];
+
     return [NSString stringWithFormat:@"/usr/bin/login -f%@pl %@ %@ --launch_shell%@",
             [self hushlogin] ? @"q" : @"",
             [NSUserName() stringWithBackslashEscapedShellCharactersIncludingNewlines:YES],
-            [[[NSBundle mainBundle] executablePath] stringWithBackslashEscapedShellCharactersIncludingNewlines:YES],
+            shellLauncher,
             customShellArg];
 }
 

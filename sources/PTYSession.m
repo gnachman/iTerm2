@@ -271,7 +271,7 @@ static NSString *const kProgramCommand = @"Command";  // For kProgramTypeCommand
 static NSString *const kCustomShell = @"Custom Shell";
 
 // Values for kProgramType
-static NSString *const kProgramTypeShellLauncher = @"Shell Launcher";  // Use iTerm2 --launch_shell
+static NSString *const kProgramTypeShellLauncher = @"Shell Launcher";  // Use ShellLauncher --launch_shell
 static NSString *const kProgramTypeCommand = @"Command";  // Use command in kProgramCommand
 static NSString *const kProgramTypeCustomShell = @"Custom Shell";
 
@@ -2050,7 +2050,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (NSSet<NSString *> *)jobsToIgnore {
-    NSArray<NSString *> *builtInJobsToIgnore = @[ @"login", @"iTerm2" ];
+    NSArray<NSString *> *builtInJobsToIgnore = @[ @"login", @"iTerm2", @"ShellLauncher" ];
     return [NSSet setWithArray:[[_profile objectForKey:KEY_JOBS] ?: @[] arrayByAddingObjectsFromArray:builtInJobsToIgnore]];
 }
 
@@ -2085,7 +2085,7 @@ ITERM_WEAKLY_REFERENCEABLE
     if (!rootInfo) {
         return NO;
     }
-    // iTerm2 --launch_shell could be a child job temporarily.
+    // ShellLauncher --launch_shell could be a child job temporarily.
     NSSet<NSString *> *jobToIgnore = [self jobsToIgnore];
     DLog(@"Ignoring %@", jobToIgnore);
     __block BOOL result = NO;

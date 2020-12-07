@@ -8,7 +8,7 @@
 #import "iTermPosixTTYReplacements.h"
 #import "iTermFileDescriptorServer.h"
 #import "iTermResourceLimitsHelper.h"
-#import "shell_launcher.h"
+#import "legacy_server.h"
 
 #include <assert.h>
 #include <signal.h>

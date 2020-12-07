@@ -25,7 +25,7 @@
 #include "iTermFileDescriptorClient.h"
 #include "iTermFileDescriptorServer.h"
 #include "iTermFileDescriptorSocketPath.h"
-#include "shell_launcher.h"
+#include "legacy_server.h"
 #include <dlfcn.h>
 #include <libproc.h>
 #include <stdio.h>

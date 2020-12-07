@@ -18,7 +18,7 @@
 #include "iTermFileDescriptorSocketPath.h"
 #import "iTermPosixTTYReplacements.h"
 #import "iTermResourceLimitsHelper.h"
-#include "shell_launcher.h"
+#include "legacy_server.h"
 
 #include <sys/ioctl.h>
 
