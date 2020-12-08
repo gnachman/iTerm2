@@ -29,8 +29,8 @@
     IBOutlet NSButton *_updateProfileButton;
 
     NSArray<Trigger *> *_triggers;
-    id _param;
     NSView *_paramView;
+    id _savedDelegate;
 
     NSString *_regex;
     BOOL _interpolatedStrings;
@@ -138,7 +138,7 @@
     const BOOL updateProfile = _updateProfileButton.state == NSControlStateValueOn;
     NSDictionary *triggerDictionary = @{ kTriggerActionKey: trigger.action,
                                          kTriggerRegexKey: _regexTextField.stringValue,
-                                         kTriggerParameterKey: trigger.param ?: @0,
+                                         kTriggerParameterKey: [[self currentTrigger] param] ?: @0,
                                          kTriggerPartialLineKey: @(instant) };
     [iTermUserDefaults setAddTriggerInstant:instant];
     [iTermUserDefaults setAddTriggerUpdateProfile:updateProfile];
@@ -155,11 +155,13 @@
 }
 
 - (void)updateCustomViewForTrigger:(Trigger *)trigger value:(id)value {
+    id delegateToSave;
     NSView *view = [TriggerController viewForParameterForTrigger:self.currentTrigger
                                                             size:NSMakeSize(_paramContainerView.frame.size.width, 21)
                                                            value:value
                                                         receiver:self
                                              interpolatedStrings:_interpolatedStrings
+                                                     delegateOut:&delegateToSave
                                                      wellFactory:^CPKColorWell *(NSRect frame, NSColor *color) {
         CPKColorWell *well = [[CPKColorWell alloc] initWithFrame:frame];
         well.noColorAllowed = YES;
@@ -169,6 +171,7 @@
         well.action = @selector(colorWellDidChange:);
         return well;
     }];
+    _savedDelegate = delegateToSave;
 
     NSPopUpButton *popup = [NSPopUpButton castFrom:view];
     if (popup) {
@@ -186,7 +189,7 @@
     }
     NSTextField *textField = [NSTextField castFrom:view];
     textField.bordered = YES;
-
+    textField.drawsBackground = YES;
 
     [_paramView removeFromSuperview];
     _paramView = view;
@@ -205,7 +208,12 @@
 #pragma mark - iTermTriggerParameterController
 
 - (void)parameterPopUpButtonDidChange:(id)sender {
-    _param = [[self currentTrigger] objectAtIndex:[sender indexOfSelectedItem]];
+    [[self currentTrigger] setParam:[[self currentTrigger] objectAtIndex:[sender indexOfSelectedItem]]];
+}
+
+- (void)controlTextDidChange:(NSNotification *)obj {
+    NSTextField *textField = [NSTextField castFrom:_paramView];
+    [[self currentTrigger] setParam:textField.stringValue ?: @""];
 }
 
 @end

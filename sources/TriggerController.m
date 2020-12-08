@@ -356,6 +356,7 @@ NSString *const kBackgroundColorWellIdentifier = @"kBackgroundColorWellIdentifie
                                  value:(id)value
                               receiver:(id<iTermTriggerParameterController>)receiver
                    interpolatedStrings:(BOOL)interpolatedStrings
+                           delegateOut:(out id *)delegateOut
                            wellFactory:(CPKColorWell *(^ NS_NOESCAPE)(NSRect, NSColor *))wellFactory {
     if (![trigger takesParameter]) {
         return [[NSView alloc] initWithFrame:NSZeroRect];
@@ -445,8 +446,9 @@ NSString *const kBackgroundColorWellIdentifier = @"kBackgroundColorWellIdentifie
     if ([textField respondsToSelector:@selector(setPlaceholderString:)]) {
         textField.placeholderString = [trigger triggerOptionalParameterPlaceholderWithInterpolation:interpolatedStrings];
     }
+    *delegateOut = [trigger newParameterDelegateWithPassthrough:receiver];
     id<iTermFocusReportingTextFieldDelegate> delegate =
-        [trigger newParameterDelegateWithPassthrough:receiver]  ?: receiver;
+        *delegateOut  ?: receiver;
     textField.delegate = delegate;
     textField.identifier = kParameterColumnIdentifier;
 
@@ -500,11 +502,13 @@ NSString *const kBackgroundColorWellIdentifier = @"kBackgroundColorWellIdentifie
         NSArray *triggerDicts = [self triggerDictionariesForCurrentProfile];
         Trigger *trigger = [self triggerWithAction:triggerDicts[row][kTriggerActionKey]];
         trigger.param = triggerDicts[row][kTriggerParameterKey];
+        id delegateToSave;
         NSView *result = [self.class viewForParameterForTrigger:trigger
                                                            size:NSMakeSize(tableColumn.width, _tableView.rowHeight)
                                                           value:triggerDictionary[kTriggerParameterKey]
                                                        receiver:self
                                             interpolatedStrings:_interpolatedStringParameters.state == NSControlStateValueOn
+                                                    delegateOut:&delegateToSave
                                                     wellFactory:
                           ^iTermColorWell *(NSRect frame,
                                             NSColor *color) {
@@ -529,13 +533,7 @@ NSString *const kBackgroundColorWellIdentifier = @"kBackgroundColorWellIdentifie
             };
             return well;
         }];
-        NSTextField *textField = [NSTextField castFrom:result];
-        if (textField) {
-            if (textField.delegate != self) {
-                _parameterDelegate = textField.delegate;
-            }
-        }
-
+        _parameterDelegate = delegateToSave;
         return result;
     }
     return nil;

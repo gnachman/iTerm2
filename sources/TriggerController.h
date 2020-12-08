@@ -38,6 +38,7 @@ extern NSString *const kBackgroundColorWellIdentifier;
                                  value:(id)value
                               receiver:(id<iTermTriggerParameterController>)receiver
                    interpolatedStrings:(BOOL)interpolatedStrings
+                           delegateOut:(out id *)delegateOut
                            wellFactory:(CPKColorWell *(^ NS_NOESCAPE)(NSRect, NSColor *))wellFactory;
 
 - (void)windowWillOpen;
