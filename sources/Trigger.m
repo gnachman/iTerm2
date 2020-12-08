@@ -199,14 +199,14 @@ NSString * const kTriggerPartialLineKey = @"partial";
                                             scope:(iTermVariableScope *)scope
                                  useInterpolation:(BOOL)useInterpolation
                                        completion:(void (^)(NSString *))completion {
+    NSString *p = [NSString castFrom:self.param] ?: @"";
     if (useInterpolation) {
-        [self evaluateSwiftyStringParameter:self.param
+        [self evaluateSwiftyStringParameter:p
                              backreferences:[[NSArray alloc] initWithObjects:strings count:count]
                                       scope:scope
                                  completion:completion];
         return;
     }
-    NSString *p = self.param;
 
     for (int i = 0; i < 9; i++) {
         NSString *rep = @"";
