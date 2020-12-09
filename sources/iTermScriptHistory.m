@@ -212,6 +212,7 @@ static NSDateFormatter *gScriptHistoryDateFormatter;
         queue = dispatch_queue_create("com.iterm2.script-history", attr);
     });
     const BOOL continuation = _lastLogLineContinues;
+    _lastLogLineContinues = ![rawLogs hasSuffix:@"\n"];
     dispatch_async(queue, ^{
         [self queueAppendLogs:rawLogs
                     timestamp:timestamp
@@ -248,20 +249,26 @@ static NSDateFormatter *gScriptHistoryDateFormatter;
         [output replaceCharactersInRange:NSMakeRange(output.length - 1, 1) withString:@""];
     }
     NSArray<NSString *> *newLines = [output componentsSeparatedByString:@"\n"];
+    NSString *delta;
+    if (continuation) {
+        delta = output;
+    } else {
+        delta = [@"\n" stringByAppendingString:output];
+    }
     dispatch_async(dispatch_get_main_queue(), ^{
         [self didSplitLogIntoLines:newLines
-                   endsWithNewline:endsWithNewline
-                             delta:output
+                      continuation:continuation
+                             delta:delta
                         completion:completion];
     });
 }
 
 // Runs on main queue
 - (void)didSplitLogIntoLines:(NSArray<NSString *> *)newLines
-             endsWithNewline:(BOOL)endsWithNewline
+                continuation:(BOOL)continuation
                        delta:(NSString *)delta
                   completion:(void (^)(void))completion {
-    if (_lastLogLineContinues) {
+    if (continuation) {
         NSString *amended = [_logLines.lastObject stringByAppendingString:newLines.firstObject];
         newLines = [newLines subarrayWithRange:NSMakeRange(1, newLines.count - 1)];
         _logLines[_logLines.count - 1] = amended;
@@ -278,7 +285,6 @@ static NSDateFormatter *gScriptHistoryDateFormatter;
             [_logLines removeObjectsInRange:NSMakeRange(0, _logLines.count - maxLines)];
         }
     }
-    _lastLogLineContinues = !endsWithNewline;
     [[NSNotificationCenter defaultCenter] postNotificationName:iTermScriptHistoryEntryDidChangeNotification
                                                         object:self
                                                       userInfo:@{ iTermScriptHistoryEntryDelta: delta,
