@@ -9,6 +9,8 @@
 #import "iTermMetalUnavailableReason.h"
 
 #import "iTermSwipeHandler.h"
+
+@class iTermImageWrapper;
 @class iTermVariables;
 @class NSImage;
 @class PTYSession;
@@ -56,10 +58,10 @@ typedef NS_OPTIONS(NSUInteger, PTYTabState) {
 - (void)tabEditActions:(PTYTab *)tab;
 - (void)tabEditSnippets:(PTYTab *)tab;
 - (void)tab:(PTYTab *)tab
-setBackgroundImage:(NSImage *)image
+setBackgroundImage:(iTermImageWrapper *)image
        mode:(iTermBackgroundImageMode)imageMode
 backgroundColor:(NSColor *)backgroundColor;
-- (NSImage *)tabBackgroundImage;
+- (iTermImageWrapper *)tabBackgroundImage;
 - (iTermBackgroundImageMode)tabBackgroundImageMode;
 - (CGFloat)tabBlend;
 - (void)tabActiveSessionDidUpdatePreferencesFromProfile:(PTYTab *)tab;

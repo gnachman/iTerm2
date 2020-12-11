@@ -60,6 +60,7 @@
 #import "iTermPreferences.h"
 #import "iTermScriptConsole.h"
 #import "iTermScriptHistory.h"
+#import "iTermSharedImageStore.h"
 #import "iTermStandardKeyMapper.h"
 #import "iTermStatusBarUnreadCountController.h"
 #import "iTermSoundPlayer.h"
@@ -4386,7 +4387,7 @@ ITERM_WEAKLY_REFERENCEABLE
         }
         [_backgroundImagePath autorelease];
         _backgroundImagePath = [imageFilePath copy];
-        self.backgroundImage = [[[NSImage alloc] initWithContentsOfFile:_backgroundImagePath] autorelease];
+        self.backgroundImage = [[iTermSharedImageStore sharedInstance] imageWithContentsOfFile:_backgroundImagePath];
     } else {
         self.backgroundImage = nil;
         [_backgroundImagePath release];
@@ -4418,7 +4419,7 @@ ITERM_WEAKLY_REFERENCEABLE
     return [iTermProfilePreferences floatForKey:KEY_BLEND inProfile:self.profile];
 }
 
-- (NSImage *)effectiveBackgroundImage {
+- (iTermImageWrapper *)effectiveBackgroundImage {
     if ([iTermPreferences boolForKey:kPreferenceKeyPerPaneBackgroundImage]) {
         return _backgroundImage;
     } else {
@@ -4445,27 +4446,22 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)updateViewBackgroundImage {
-    if (@available(macOS 10.14, *)) {
-        if ([iTermPreferences boolForKey:kPreferenceKeyPerPaneBackgroundImage]) {
-            self.view.image = _backgroundImage;
-            [self.view setImageMode:_backgroundImageMode];
-            [self.view setTerminalBackgroundColor:[self processedBackgroundColor]];
-            return;
-        }
-        self.view.image = nil;
+    if ([iTermPreferences boolForKey:kPreferenceKeyPerPaneBackgroundImage]) {
+        self.view.image = _backgroundImage;
+        [self.view setImageMode:_backgroundImageMode];
         [self.view setTerminalBackgroundColor:[self processedBackgroundColor]];
-        [self invalidateBlend];
-        [self.delegate session:self
-            setBackgroundImage:_backgroundImage
-                          mode:_backgroundImageMode
-               backgroundColor:[self processedBackgroundColor]];
         return;
     }
-    
     self.view.image = nil;
+    [self.view setTerminalBackgroundColor:[self processedBackgroundColor]];
+    [self invalidateBlend];
+    [self.delegate session:self
+        setBackgroundImage:_backgroundImage
+                      mode:_backgroundImageMode
+           backgroundColor:[self processedBackgroundColor]];
 }
 
-- (void)setBackgroundImage:(NSImage *)backgroundImage {
+- (void)setBackgroundImage:(iTermImageWrapper *)backgroundImage {
     [_backgroundImage autorelease];
     _backgroundImage = [backgroundImage retain];
     [self updateViewBackgroundImage];
@@ -5709,7 +5705,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 #pragma mark iTermMetalGlueDelegate
 
-- (NSImage *)metalGlueBackgroundImage {
+- (iTermImageWrapper *)metalGlueBackgroundImage {
     if ([iTermPreferences boolForKey:kPreferenceKeyPerPaneBackgroundImage]) {
         return _backgroundImage;
     } else {
@@ -8504,7 +8500,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     return NSEdgeInsetsZero;
 }
 
-- (NSImage *)textViewBackgroundImage {
+- (iTermImageWrapper *)textViewBackgroundImage {
     return _backgroundImage;
 }
 
@@ -12777,7 +12773,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     return _view;
 }
 
-- (NSImage *)backgroundDrawingHelperImage {
+- (iTermImageWrapper *)backgroundDrawingHelperImage {
     return [self effectiveBackgroundImage];
 }
 

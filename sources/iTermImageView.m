@@ -46,7 +46,7 @@
     [super setAlphaValue:self.desiredAlpha];
 }
 
-- (void)setImage:(NSImage *)image {
+- (void)setImage:(iTermImageWrapper *)image {
     if (image == _image) {
         return;
     }
@@ -100,7 +100,7 @@
 // Loads a non-tiled image.
 - (void)loadRegularImage {
     self.layer.backgroundColor = nil;
-    self.layer.contents = [_image layerContentsForContentsScale:2];
+    self.layer.contents = (__bridge id)[_image cgimage];
 }
 
 static void iTermImageViewDrawImage(void *info, CGContextRef context) {
@@ -119,7 +119,7 @@ static void iTermImageViewReleaseImage(void *info) {
 
 // Make a pattern color and set the layer's background color to that.
 - (void)loadTiledImage {
-    const CGImageRef cgImage = [_image CGImage];
+    const CGImageRef cgImage = [_image.image CGImage];
     const int width = CGImageGetWidth(cgImage);
     const int height = CGImageGetHeight(cgImage);
     const CGPatternCallbacks callbacks = {
@@ -168,3 +168,4 @@ static void iTermImageViewReleaseImage(void *info) {
 }
 
 @end
+

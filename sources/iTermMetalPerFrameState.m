@@ -109,7 +109,7 @@ typedef struct {
 
     NSMutableArray<iTermMetalPerFrameStateRow *> *_rows;
     NSMutableArray<iTermIndicatorDescriptor *> *_indicators;
-    NSImage *_backgroundImage;
+    iTermImageWrapper *_backgroundImage;
     NSDictionary<NSNumber *, NSIndexSet *> *_rowToAnnotationRanges;  // Row on screen to characters with annotation underline on that row.
     NSArray<iTermHighlightedRow *> *_highlightedRows;
     NSTimeInterval _startTime;
@@ -660,7 +660,7 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
 }
 
 // Private queue
-- (NSImage *)metalBackgroundImageGetMode:(nullable iTermBackgroundImageMode *)mode {
+- (iTermImageWrapper *)metalBackgroundImageGetMode:(nullable iTermBackgroundImageMode *)mode {
     if (mode) {
         *mode = _configuration->_backgroundImageMode;
     }

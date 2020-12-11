@@ -10824,7 +10824,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 }
 
 - (void)tab:(PTYTab *)tab
-setBackgroundImage:(NSImage *)image
+setBackgroundImage:(iTermImageWrapper *)image
        mode:(iTermBackgroundImageMode)imageMode
 backgroundColor:(NSColor *)backgroundColor {
     if (tab != self.currentTab) {
@@ -10838,7 +10838,7 @@ backgroundColor:(NSColor *)backgroundColor {
     }
 }
 
-- (void)setSharedBackgroundImage:(NSImage *)image
+- (void)setSharedBackgroundImage:(iTermImageWrapper *)image
                             mode:(iTermBackgroundImageMode)imageMode
                  backgroundColor:(NSColor *)backgroundColor NS_AVAILABLE_MAC(10_14) {
     _contentView.backgroundImage.image = image;
@@ -10850,7 +10850,7 @@ backgroundColor:(NSColor *)backgroundColor {
     }
 }
 
-- (NSImage *)tabBackgroundImage {
+- (iTermImageWrapper *)tabBackgroundImage {
     return self.currentSession.backgroundImage;
 }
 

@@ -1,0 +1,143 @@
+//
+//  iTermSharedImageStore.m
+//  iTerm2SharedARC
+//
+//  Created by George Nachman on 12/10/20.
+//
+
+#import "iTermSharedImageStore.h"
+
+#import "DebugLogging.h"
+#import <QuartzCore/QuartzCore.h>
+
+@interface NSFileManager(CachedImage)
+- (NSDate *)lastModifiedDateOfFile:(NSString *)path;
+@end
+
+@implementation NSFileManager(CachedImage)
+
+- (NSDate *)lastModifiedDateOfFile:(NSString *)path {
+    NSDictionary *attrs = [self attributesOfItemAtPath:path error:nil];
+    if (!attrs) {
+        return nil;
+    }
+    return [attrs fileModificationDate];
+}
+
+@end
+
+@interface iTermCachedImage: NSObject
+@property (nonatomic, copy) NSString *path;
+@property (nonatomic, readonly, weak) iTermImageWrapper *image;
+@property (nonatomic, readonly, strong) NSDate *lastModified;
+@property (nonatomic, readonly) iTermImageWrapper *imageIfValid;
+
+- (instancetype)initWithPath:(NSString *)path
+                       image:(out iTermImageWrapper **)imageOut NS_DESIGNATED_INITIALIZER;
+- (instancetype)init NS_UNAVAILABLE;
+@end
+
+
+@implementation iTermCachedImage;
+
+- (instancetype)initWithPath:(NSString *)path image:(out iTermImageWrapper **)imageOut {
+    self = [super init];
+    if (self) {
+        _path = [path copy];
+        iTermImageWrapper *image = [iTermImageWrapper withContentsOfFile:path];
+        if (image) {
+            DLog(@"Loaded image from %@", path);
+            _lastModified = [[NSFileManager defaultManager] lastModifiedDateOfFile:_path];
+        }
+        _image = image;
+        *imageOut = image;
+    }
+    return self;
+}
+
+- (iTermImageWrapper *)imageIfValid {
+    iTermImageWrapper *image = self.image;
+    if (image != nil &&
+        self.lastModified != nil &&
+        [_lastModified isEqual:[[NSFileManager defaultManager] lastModifiedDateOfFile:_path]]) {
+        return image;
+    }
+    return nil;
+}
+
+@end
+
+
+@implementation iTermSharedImageStore {
+    NSMutableDictionary<NSString *, iTermCachedImage *> *_cache;
+}
+
++ (instancetype)sharedInstance {
+    static dispatch_once_t onceToken;
+    static id instance;
+    dispatch_once(&onceToken, ^{
+        instance = [[self alloc] init];
+    });
+    return instance;
+}
+
+- (instancetype)init {
+    self = [super init];
+    if (self) {
+        _cache = [NSMutableDictionary dictionary];
+    }
+    return self;
+}
+
+- (iTermImageWrapper * _Nullable)imageWithContentsOfFile:(NSString *)path {
+    iTermCachedImage *entry = _cache[path];
+    iTermImageWrapper *image = [entry imageIfValid];
+    if (image) {
+        DLog(@"Use cached image at %@: %p", path, image);
+        return image;
+    }
+
+    entry = [[iTermCachedImage alloc] initWithPath:path image:&image];
+    if (!image) {
+        return nil;
+    }
+    [_cache setObject:entry forKey:path];
+    return image;
+}
+
+@end
+
+@implementation iTermImageWrapper {
+    id _cgimage;
+}
+
++ (instancetype)withContentsOfFile:(NSString *)path {
+    NSImage *image = [[NSImage alloc] initWithContentsOfFile:path];
+    if (!image) {
+        return nil;
+    }
+    return [[self alloc] initWithImage:image];
+}
+
++ (instancetype)withImage:(NSImage *)image {
+    return [[self alloc] initWithImage:image];
+}
+
+- (instancetype)initWithImage:(NSImage *)image {
+    self = [super init];
+    if (self) {
+        _image = image;
+    }
+    return self;
+}
+
+- (CGImageRef)cgimage {
+    if (_cgimage) {
+        return (__bridge CGImageRef)_cgimage;
+    }
+    _cgimage = [self.image layerContentsForContentsScale:2];
+    return (__bridge CGImageRef)_cgimage;
+}
+
+@end
+

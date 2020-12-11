@@ -965,7 +965,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
         return;
     }
     iTermBackgroundImageMode mode;
-    NSImage *backgroundImage = [frameData.perFrameState metalBackgroundImageGetMode:&mode];
+    iTermImageWrapper *backgroundImage = [frameData.perFrameState metalBackgroundImageGetMode:&mode];
     [_backgroundImageRenderer setImage:backgroundImage
                                   mode:mode
                                  frame:frameData.perFrameState.relativeFrame

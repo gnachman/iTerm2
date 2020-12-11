@@ -8,6 +8,7 @@
 #import "iTermImageRenderer.h"
 
 #import "iTermImageInfo.h"
+#import "iTermSharedImageStore.h"
 #import "iTermTexture.h"
 #import "NSArray+iTerm.h"
 #import "NSImage+iTerm.h"
@@ -130,7 +131,8 @@ static NSString *const iTermImageRendererTextureMetadataKeyImageMissing = @"iTer
             [_foundImageUniqueIdentifiers addObject:run.imageInfo.uniqueIdentifier];
         }
     }
-    id<MTLTexture> texture = [_cellRenderer textureFromImage:image context:self.poolContext];
+    id<MTLTexture> texture = [_cellRenderer textureFromImage:[iTermImageWrapper withImage:image]
+                                                     context:self.poolContext];
     if (missing) {
         [iTermTexture setMetadataObject:@YES forKey:iTermImageRendererTextureMetadataKeyImageMissing onTexture:texture];
     }

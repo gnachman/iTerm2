@@ -3,6 +3,7 @@
 #import "DebugLogging.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermMetalBufferPool.h"
+#import "iTermSharedImageStore.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -90,7 +91,7 @@ NS_ASSUME_NONNULL_BEGIN
     return size;
 }
 
-- (NSImage *)newImage {
+- (iTermImageWrapper *)newImage {
     CGSize size = self.size;
     NSImage *image = [[NSImage alloc] initWithSize:size];
 
@@ -123,7 +124,7 @@ NS_ASSUME_NONNULL_BEGIN
     [path stroke];
     [image unlockFocus];
 
-    return image;
+    return [iTermImageWrapper withImage:image];
 }
 
 - (void)setSelecting:(BOOL)selecting {
@@ -147,7 +148,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @implementation iTermFrameCursorRendererTransientState
 
-- (NSImage *)newImage {
+- (iTermImageWrapper *)newImage {
     NSImage *image = [[NSImage alloc] initWithSize:self.cellConfiguration.cellSize];
 
     [image lockFocus];
@@ -167,7 +168,7 @@ NS_ASSUME_NONNULL_BEGIN
 
     [image unlockFocus];
 
-    return image;
+    return [iTermImageWrapper withImage:image];
 }
 
 - (void)setColor:(NSColor *)color {
@@ -530,7 +531,8 @@ static id<MTLBuffer> iTermNewVertexBufferWithBlockCursorQuad(iTermCursorRenderer
     ITAssertWithMessage(tState.offsetBuffer != nil, @"Nil offset buffer");
 
     if (!_texture) {
-        _texture = [self.cellRenderer textureFromImage:[[NSBundle bundleForClass:self.class] imageForResource:@"key"] context:nil];
+        _texture = [self.cellRenderer textureFromImage:[iTermImageWrapper withImage:[[NSBundle bundleForClass:self.class] imageForResource:@"key"]]
+                                               context:nil];
         ITAssertWithMessage(_texture != nil, @"Failed to load key image");
     }
     [_cellRenderer drawWithTransientState:tState

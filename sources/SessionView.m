@@ -293,23 +293,18 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     return self;
 }
 
-- (void)setImage:(NSImage *)image {
-    if (@available(macOS 10.14, *)) {
-        if (image) {
-            _imageView.image = image;
-        }
-        [self updateImageAndBackgroundViewVisibility];
+- (void)setImage:(iTermImageWrapper *)image {
+    if (image) {
+        _imageView.image = image;
     }
+    [self updateImageAndBackgroundViewVisibility];
 }
 
-- (NSImage *)image {
-    if (@available(macOS 10.14, *)) {
-        if (_imageView.hidden) {
-            return nil;
-        }
-        return _imageView.image;
+- (iTermImageWrapper *)image {
+    if (_imageView.hidden) {
+        return nil;
     }
-    return nil;
+    return _imageView.image;
 }
 
 - (void)setImageMode:(iTermBackgroundImageMode)imageMode {

@@ -6,12 +6,14 @@
 //
 
 #import "iTermBackgroundDrawingHelper.h"
+
+#import "iTermSharedImageStore.h"
 #import "SessionView.h"
 
 typedef struct {
     NSRect solidBackgroundColorRect;
     
-    NSImage *image;
+    iTermImageWrapper *image;
     NSRect imageDestinationRect;
     NSRect imageSourceRect;
     NSRect boxes[2];
@@ -50,19 +52,22 @@ typedef struct {
     }
 
     NSRect (^flip)(NSRect) = ^NSRect(NSRect r) {
-        return NSMakeRect(r.origin.x, draws.image.size.height - r.origin.y - r.size.height, r.size.width, r.size.height);
+        return NSMakeRect(r.origin.x,
+                          draws.image.image.size.height - r.origin.y - r.size.height,
+                          r.size.width,
+                          r.size.height);
     };
     NSRect (^identity)(NSRect) = ^NSRect(NSRect r) {
         return r;
     };
     NSRect (^transform)(NSRect) = shouldFlip ? flip : identity;
     
-    [draws.image drawInRect:draws.imageDestinationRect
-                   fromRect:transform(draws.imageSourceRect)
-                  operation:operation
-                   fraction:alpha
-             respectFlipped:YES
-                      hints:nil];
+    [draws.image.image drawInRect:draws.imageDestinationRect
+                         fromRect:transform(draws.imageSourceRect)
+                        operation:operation
+                         fraction:alpha
+                   respectFlipped:YES
+                            hints:nil];
     // Draw letterboxes/pillarboxes
     NSColor *defaultBackgroundColor = [self.delegate backgroundDrawingHelperDefaultBackgroundColor];
     [defaultBackgroundColor set];
@@ -103,7 +108,7 @@ typedef struct {
                                visibleRectInContainer:(NSRect)windowVisibleAreaRect
                                blendDefaultBackground:(BOOL)blendDefaultBackground {
     iTermBackgroundDraws result;
-    NSImage *backgroundImage = [self.delegate backgroundDrawingHelperImage];
+    iTermImageWrapper *backgroundImage = [self.delegate backgroundDrawingHelperImage];
     result.image = backgroundImage;
     if (!backgroundImage && blendDefaultBackground) {
         // No image, so just draw background color.
@@ -117,7 +122,7 @@ typedef struct {
         NSRect dirtyRectInAdjustedContainerCoords = dirtyRectInContainerCoords;
         dirtyRectInAdjustedContainerCoords.origin.x -= windowVisibleAreaRect.origin.x;
         dirtyRectInAdjustedContainerCoords.origin.y -= windowVisibleAreaRect.origin.y;
-        NSImage *image;
+        iTermImageWrapper *image;
         NSRect sourceRect;
         result.boxes[0] = NSZeroRect;
         result.boxes[1] = NSZeroRect;
@@ -127,21 +132,21 @@ typedef struct {
         switch ([self.delegate backgroundDrawingHelperBackgroundImageMode]) {
             case iTermBackgroundImageModeStretch:
                 image = backgroundImage;
-                sourceRect = [self sourceRectForImageSize:image.size
+                sourceRect = [self sourceRectForImageSize:image.image.size
                                                  viewSize:windowVisibleAreaRect.size
                                           destinationRect:dirtyRectInAdjustedContainerCoords];
                 break;
                 
             case iTermBackgroundImageModeTile:
                 image = [self patternedImageForViewOfSize:windowVisibleAreaRect.size];
-                sourceRect = [self sourceRectForImageSize:image.size
+                sourceRect = [self sourceRectForImageSize:image.image.size
                                                  viewSize:windowVisibleAreaRect.size
                                           destinationRect:dirtyRectInAdjustedContainerCoords];
                 break;
                 
             case iTermBackgroundImageModeScaleAspectFill:
                 image = backgroundImage;
-                sourceRect = [self scaleAspectFillSourceRectForImageSize:image.size
+                sourceRect = [self scaleAspectFillSourceRectForImageSize:image.image.size
                                                              contentRect:windowVisibleAreaRect
                                                          destinationRect:dirtyRectInAdjustedContainerCoords];
                 break;
@@ -150,7 +155,7 @@ typedef struct {
                 image = backgroundImage;
                 // TODO: The analyze complained about this dead store, which suggests I'm assing the wrong argument for dirtyRect below.
                 // dirtyRectInAdjustedContainerCoords = NSIntersectionRect(dirtyRectInAdjustedContainerCoords, containerView.bounds);
-                sourceRect = [iTermBackgroundDrawingHelper scaleAspectFitSourceRectForForImageSize:image.size
+                sourceRect = [iTermBackgroundDrawingHelper scaleAspectFitSourceRectForForImageSize:image.image.size
                                                                                    destinationRect:windowVisibleAreaRect
                                                                                          dirtyRect:dirtyRectInContainerCoords
                                                                                           drawRect:&drawRect
@@ -177,21 +182,21 @@ typedef struct {
 
 #pragma mark - Private
 
-- (NSImage *)patternedImageForViewOfSize:(NSSize)size {
+- (iTermImageWrapper *)patternedImageForViewOfSize:(NSSize)size {
     // If there is a tiled background image, tessellate _backgroundImage onto
     // _patternedImage, which will be the source for future background image
     // drawing operations.
     if (!_patternedImage || !NSEqualSizes(_patternedImage.size, size)) {
         _patternedImage = [[NSImage alloc] initWithSize:size];
         [_patternedImage lockFocus];
-        NSColor *pattern = [NSColor colorWithPatternImage:[self.delegate backgroundDrawingHelperImage]];
+        NSColor *pattern = [NSColor colorWithPatternImage:[[self.delegate backgroundDrawingHelperImage] image]];
         [pattern drawSwatchInRect:NSMakeRect(0,
                                              0,
                                              _patternedImage.size.width,
                                              _patternedImage.size.height)];
         [_patternedImage unlockFocus];
     }
-    return _patternedImage;
+    return [iTermImageWrapper withImage:_patternedImage];
 }
 
 - (NSRect)sourceRectForImageSize:(NSSize)imageSize

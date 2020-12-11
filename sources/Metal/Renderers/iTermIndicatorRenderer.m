@@ -8,6 +8,7 @@
 #import "iTermIndicatorRenderer.h"
 
 #import "NSArray+iTerm.h"
+#import "iTermSharedImageStore.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -151,7 +152,8 @@ NS_ASSUME_NONNULL_BEGIN
 - (id<MTLTexture>)textureForIdentifier:(NSString *)identifier image:(NSImage *)image context:(iTermMetalBufferPoolContext *)context {
     id<MTLTexture> texture = _identifierToTextureMap[identifier];
     if (!texture) {
-        texture = [_metalRenderer textureFromImage:image context:context];
+        texture = [_metalRenderer textureFromImage:[iTermImageWrapper withImage:image]
+                                           context:context];
         _identifierToTextureMap[identifier] = texture;
     }
     return texture;

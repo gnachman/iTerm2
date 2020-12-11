@@ -4,6 +4,7 @@
 #import "iTermMetalBufferPool.h"
 #import "iTermMetalRenderer.h"
 #import "iTermPreferences.h"
+#import "iTermSharedImageStore.h"
 #import "iTermTextDrawingHelper.h"
 
 NS_ASSUME_NONNULL_BEGIN
@@ -53,7 +54,8 @@ NS_ASSUME_NONNULL_BEGIN
     }
     _previousImage = image;
     _size = image.size;
-    _texture = [_metalRenderer textureFromImage:image context:context];
+    _texture = [_metalRenderer textureFromImage:[iTermImageWrapper withImage:image]
+                                        context:context];
     _texture.label = @"Badge";
 }
 

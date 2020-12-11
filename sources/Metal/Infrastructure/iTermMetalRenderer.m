@@ -5,6 +5,7 @@
 #import "iTermMalloc.h"
 #import "iTermMetalBufferPool.h"
 #import "iTermMetalDebugInfo.h"
+#import "iTermSharedImageStore.h"
 #import "iTermShaderTypes.h"
 #import "iTermTexture.h"
 #import "NSDictionary+iTerm.h"
@@ -368,7 +369,7 @@ const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 1;
     return pipeline;
 }
 
-- (nullable id<MTLTexture>)textureFromImage:(NSImage *)image context:(nullable iTermMetalBufferPoolContext *)context {
+- (nullable id<MTLTexture>)textureFromImage:(iTermImageWrapper *)image context:(nullable iTermMetalBufferPoolContext *)context {
     return [self textureFromImage:image context:context pool:nil];
 }
 
@@ -392,12 +393,12 @@ const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 1;
     }
 }
 
-- (nullable id<MTLTexture>)textureFromImage:(NSImage *)image context:(iTermMetalBufferPoolContext *)context pool:(iTermTexturePool *)pool {
-    if (!image) {
+- (nullable id<MTLTexture>)textureFromImage:(iTermImageWrapper *)image context:(iTermMetalBufferPoolContext *)context pool:(iTermTexturePool *)pool {
+    if (!image.image) {
         return nil;
     }
-    NSRect imageRect = NSMakeRect(0, 0, image.size.width, image.size.height);
-    CGImageRef imageRef = [image CGImageForProposedRect:&imageRect context:NULL hints:nil];
+    NSRect imageRect = NSMakeRect(0, 0, image.image.size.width, image.image.size.height);
+    CGImageRef imageRef = [image.image CGImageForProposedRect:&imageRect context:NULL hints:nil];
 
     // Create a suitable bitmap context for extracting the bits of the image
     NSUInteger width, height;

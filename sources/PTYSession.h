@@ -45,6 +45,7 @@ extern NSString *const iTermSessionWillTerminateNotification;
 @class iTermAnnouncementViewController;
 @class iTermEchoProbe;
 @class iTermExpect;
+@class iTermImageWrapper;
 @class iTermKeyBindingAction;
 @class iTermScriptHistoryEntry;
 @class iTermStatusBarViewController;
@@ -252,10 +253,10 @@ typedef enum {
 - (void)sessionEditActions;
 - (void)sessionEditSnippets;
 - (void)session:(PTYSession *)session
-setBackgroundImage:(NSImage *)image
+setBackgroundImage:(iTermImageWrapper *)image
            mode:(iTermBackgroundImageMode)imageMode
 backgroundColor:(NSColor *)backgroundColor;
-- (NSImage *)sessionBackgroundImage;
+- (iTermImageWrapper *)sessionBackgroundImage;
 - (iTermBackgroundImageMode)sessionBackgroundImageMode;
 - (CGFloat)sessionBlend;
 - (void)sessionDidUpdatePreferencesFromProfile:(PTYSession *)session;
@@ -393,7 +394,7 @@ backgroundColor:(NSColor *)backgroundColor;
 
 // Filename of background image.
 @property(nonatomic, copy) NSString *backgroundImagePath;  // Used by scripting
-@property(nonatomic, retain) NSImage *backgroundImage;
+@property(nonatomic, retain) iTermImageWrapper *backgroundImage;
 
 @property(nonatomic, retain) iTermColorMap *colorMap;
 @property(nonatomic, assign) float transparency;

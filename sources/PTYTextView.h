@@ -24,6 +24,7 @@
 @class iTermExpect;
 @class iTermFindCursorView;
 @class iTermFindOnPageHelper;
+@class iTermImageWrapper;
 @class iTermQuickLookController;
 @class iTermSelection;
 @protocol iTermSemanticHistoryControllerDelegate;
@@ -190,7 +191,7 @@ typedef NS_ENUM(NSInteger, PTYCharType) {
 - (void)textViewDidSelectRangeForFindOnPage:(VT100GridCoordRange)range;
 - (void)textViewNeedsDisplayInRect:(NSRect)rect;
 - (void)textViewDidSelectPasswordPrompt;
-- (NSImage *)textViewBackgroundImage;
+- (iTermImageWrapper *)textViewBackgroundImage;
 - (iTermBackgroundImageMode)backgroundImageMode;
 - (BOOL)textViewShouldDrawRect;
 - (void)textViewDidHighlightMark;

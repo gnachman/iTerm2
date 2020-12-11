@@ -6446,7 +6446,7 @@ typedef struct {
     [self.delegate tabEditSnippets:self];
 }
 
-- (NSImage *)sessionBackgroundImage {
+- (iTermImageWrapper *)sessionBackgroundImage {
     return [self.delegate tabBackgroundImage];
 }
 
@@ -6465,7 +6465,7 @@ typedef struct {
 }
 
 - (void)session:(PTYSession *)session
-setBackgroundImage:(NSImage *)image
+setBackgroundImage:(iTermImageWrapper *)image
            mode:(iTermBackgroundImageMode)imageMode
 backgroundColor:(NSColor *)backgroundColor {
     if (session != self.activeSession) {

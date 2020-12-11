@@ -1,4 +1,5 @@
 #import "iTermCursorGuideRenderer.h"
+#import "iTermSharedImageStore.h"
 
 @interface iTermCursorGuideRendererTransientState()
 @property (nonatomic, strong) id<MTLTexture> texture;
@@ -143,7 +144,8 @@
     }
     [image unlockFocus];
 
-    return [_cellRenderer textureFromImage:image context:tState.poolContext];
+    return [_cellRenderer textureFromImage:[iTermImageWrapper withImage:image]
+                                   context:tState.poolContext];
 }
 
 @end

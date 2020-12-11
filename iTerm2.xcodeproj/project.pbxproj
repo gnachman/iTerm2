@@ -1469,6 +1469,8 @@
 		A60593E9257DFBCC00CACEE6 /* legacy_server.h in Headers */ = {isa = PBXBuildFile; fileRef = A60593E7257DFBCC00CACEE6 /* legacy_server.h */; };
 		A60593F3257DFBDC00CACEE6 /* legacy_server.c in Sources */ = {isa = PBXBuildFile; fileRef = A60593E8257DFBCC00CACEE6 /* legacy_server.c */; };
 		A6059414257DFD0300CACEE6 /* shell_launcher.c in Sources */ = {isa = PBXBuildFile; fileRef = 1D8FC67B17E67FA700A82402 /* shell_launcher.c */; };
+		A605943E2583305E00CACEE6 /* iTermSharedImageStore.h in Headers */ = {isa = PBXBuildFile; fileRef = A605943C2583305E00CACEE6 /* iTermSharedImageStore.h */; };
+		A605943F2583305E00CACEE6 /* iTermSharedImageStore.m in Sources */ = {isa = PBXBuildFile; fileRef = A605943D2583305E00CACEE6 /* iTermSharedImageStore.m */; };
 		A605D4B319CF796800D40343 /* NMSSH.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = A624232519CF70DF00182C08 /* NMSSH.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		A605D4B419CF796F00D40343 /* NMSSH.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = A624232519CF70DF00182C08 /* NMSSH.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		A606CBF42145AF4800B3A97E /* iTermRootTerminalView.m in Sources */ = {isa = PBXBuildFile; fileRef = A6BDB0BA1B470CBE00F511E6 /* iTermRootTerminalView.m */; };
@@ -5084,6 +5086,8 @@
 		A60593B4257DF9A500CACEE6 /* main.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = main.c; sourceTree = "<group>"; };
 		A60593E7257DFBCC00CACEE6 /* legacy_server.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = legacy_server.h; sourceTree = "<group>"; };
 		A60593E8257DFBCC00CACEE6 /* legacy_server.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = legacy_server.c; sourceTree = "<group>"; };
+		A605943C2583305E00CACEE6 /* iTermSharedImageStore.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermSharedImageStore.h; sourceTree = "<group>"; };
+		A605943D2583305E00CACEE6 /* iTermSharedImageStore.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermSharedImageStore.m; sourceTree = "<group>"; };
 		A608CCF2214DE6E8007A7B87 /* XCTest.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = XCTest.framework; path = Platforms/MacOSX.platform/Developer/Library/Frameworks/XCTest.framework; sourceTree = DEVELOPER_DIR; };
 		A6099B0318D6B0FD00081FA9 /* iTermWarning.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermWarning.h; sourceTree = "<group>"; tabWidth = 4; };
 		A6099B0418D6B0FD00081FA9 /* iTermWarning.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermWarning.m; sourceTree = "<group>"; tabWidth = 4; };
@@ -9771,6 +9775,8 @@
 				A6A64E582508AF650040490B /* iTermActionsMenuController.m */,
 				A6024B86254D367E0036D6CF /* iTermColorSuggester.h */,
 				A6024B87254D367E0036D6CF /* iTermColorSuggester.m */,
+				A605943C2583305E00CACEE6 /* iTermSharedImageStore.h */,
+				A605943D2583305E00CACEE6 /* iTermSharedImageStore.m */,
 			);
 			name = Helpers;
 			sourceTree = "<group>";
@@ -11451,6 +11457,7 @@
 				A62F8FD021D9A603008EA71C /* iTermTermkeyKeyMapper.h in Headers */,
 				A667193D1DCE36C3000CE608 /* iTermHotkeyPreferencesModel.h in Headers */,
 				A6E5110D24C1729E00D6552D /* iTermAttributedStringProxy.h in Headers */,
+				A605943E2583305E00CACEE6 /* iTermSharedImageStore.h in Headers */,
 				A6971F3320D8D3C30075CFD4 /* iTermAdvancedGPUSettingsViewController.h in Headers */,
 				A653F69024D00B9E0062377E /* iTermGraphTableTransformer.h in Headers */,
 				A6D4C26C21E19155009CF11B /* iTermSessionTabWindowOutlineDelegate.h in Headers */,
@@ -14051,6 +14058,7 @@
 				A6A4865D20B6706700493302 /* ProfilesKeysPreferencesViewController.m in Sources */,
 				5370679121C9D2780088D0F3 /* SIGTrust.m in Sources */,
 				A67F62022143A1650093940A /* iTermGraphicSource.m in Sources */,
+				A605943F2583305E00CACEE6 /* iTermSharedImageStore.m in Sources */,
 				A666D5F1221A1EF100D6184A /* iTermVariableScope+Window.m in Sources */,
 				A6A4867220B67AB800493302 /* PointerPreferencesViewController.m in Sources */,
 				A67C44E8211E24F6004EDB1C /* PSMMinimalTabStyle.m in Sources */,

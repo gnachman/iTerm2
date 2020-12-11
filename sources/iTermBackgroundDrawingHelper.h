@@ -10,10 +10,11 @@
 #import "ITAddressBookMgr.h"
 
 @class SessionView;
+@class iTermImageWrapper;
 
 @protocol iTermBackgroundDrawingHelperDelegate<NSObject>
 - (SessionView *)backgroundDrawingHelperView;  // _view
-- (NSImage *)backgroundDrawingHelperImage;  // _backgroundImage
+- (iTermImageWrapper *)backgroundDrawingHelperImage;  // _backgroundImage
 - (BOOL)backgroundDrawingHelperUseTransparency;  // _textview.useTransparency
 - (CGFloat)backgroundDrawingHelperTransparency;  // _textview.transparency
 - (iTermBackgroundImageMode)backgroundDrawingHelperBackgroundImageMode;  // _backgroundImageMode

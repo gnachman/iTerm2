@@ -9,6 +9,7 @@
 
 #import "FutureMethods.h"
 #import "iTermGraphicsUtilities.h"
+#import "iTermSharedImageStore.h"
 #import "iTermTexturePool.h"
 #import "iTermTimestampDrawHelper.h"
 
@@ -191,7 +192,7 @@
         if (!pooledTexture) {
             NSImage *image = [tState imageForRow:row];
             iTermMetalBufferPoolContext *context = tState.poolContext;
-            id<MTLTexture> texture = [self->_cellRenderer textureFromImage:image
+            id<MTLTexture> texture = [self->_cellRenderer textureFromImage:[iTermImageWrapper withImage:image]
                                                                    context:context
                                                                       pool:self->_texturePool];
             assert(texture);

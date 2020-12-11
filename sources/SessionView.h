@@ -36,6 +36,7 @@
 @class iTermAnnouncementViewController;
 @class iTermBackgroundColorView;
 @class iTermFindDriver;
+@class iTermImageWrapper;
 @class iTermIncrementalMinimapView;
 @class iTermMetalDriver;
 @protocol iTermSearchResultsMinimapViewDelegate;
@@ -178,7 +179,7 @@ typedef NS_ENUM(NSUInteger, iTermSessionViewFindDriver) {
 @property(nonatomic, readonly) NSSize internalDecorationSize;
 @property(nonatomic, readonly) iTermSessionViewFindDriver findDriverType;
 @property(nonatomic, weak) id<iTermSearchResultsMinimapViewDelegate> searchResultsMinimapViewDelegate NS_AVAILABLE_MAC(10_14);
-@property(nonatomic, strong) NSImage *image;
+@property(nonatomic, strong) iTermImageWrapper *image;
 @property(nonatomic) iTermBackgroundImageMode imageMode;
 
 // For macOS 10.14+ when subpixel AA is OFF, this draws the default background color. When there's

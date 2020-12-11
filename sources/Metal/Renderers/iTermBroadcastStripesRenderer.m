@@ -1,6 +1,7 @@
 #import "iTermBroadcastStripesRenderer.h"
 
 #import "iTermMetalBufferPool.h"
+#import "iTermSharedImageStore.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -38,7 +39,8 @@ NS_ASSUME_NONNULL_BEGIN
                                                 transientStateClass:[iTermBroadcastStripesRendererTransientState class]];
         NSImage *image = [[NSBundle bundleForClass:self.class] imageForResource:@"BackgroundStripes"];
         _size = image.size;
-        _texture = [_metalRenderer textureFromImage:image context:nil];
+        _texture = [_metalRenderer textureFromImage:[iTermImageWrapper withImage:image]
+                                            context:nil];
         _verticesPool = [[iTermMetalBufferPool alloc] initWithDevice:device bufferSize:sizeof(iTermVertex) * 6];
     }
     return self;

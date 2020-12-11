@@ -150,7 +150,7 @@ NS_ASSUME_NONNULL_BEGIN
     [[NSWorkspace sharedWorkspace] activateFileViewerSelectingURLs:@[ [NSURL fileURLWithPath:filename] ]];
 }
 
-- (NSImage *)backgroundImage {
+- (iTermImageWrapper *)backgroundImage {
     return [self.delegate metalGlueBackgroundImage];
 }
 

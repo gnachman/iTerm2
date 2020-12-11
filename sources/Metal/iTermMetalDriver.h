@@ -98,7 +98,7 @@ NS_CLASS_AVAILABLE(10_11, NA)
                                                                                 emoji:(BOOL *)emoji;
 
 // Returns the background image or nil. If there's a background image, fill in mode.
-- (NSImage *)metalBackgroundImageGetMode:(nullable iTermBackgroundImageMode *)mode;
+- (iTermImageWrapper *)metalBackgroundImageGetMode:(nullable iTermBackgroundImageMode *)mode;
 
 // An object that compares as equal if ascii characters produced by metalImagesForGlyph would
 // produce the same bitmap.
