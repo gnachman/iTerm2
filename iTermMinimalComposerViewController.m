@@ -78,7 +78,6 @@ static CGFloat desiredHeight = 135;
 }
 
 - (void)composerTextViewDidResignFirstResponder {
-    [self.delegate minimalComposer:self sendCommand:@""];
 }
 
 @end

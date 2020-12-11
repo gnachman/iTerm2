@@ -28,6 +28,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, weak) id<iTermComposerManagerDelegate> delegate;
 @property (nonatomic, readonly) BOOL dropDownComposerViewIsVisible;
 
+- (void)setCommand:(NSString *)command;
 - (void)reveal;
 - (BOOL)dismiss;
 - (void)layout;

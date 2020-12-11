@@ -5570,6 +5570,10 @@ ITERM_WEAKLY_REFERENCEABLE
         _composerManager = [[iTermComposerManager alloc] init];
         _composerManager.delegate = self;
     }
+    if (self.currentCommand.length > 0) {
+        [self sendHexCode:[iTermAdvancedSettingsModel composerClearSequence]];
+        [_composerManager setCommand:self.currentCommand];
+    }
     [_composerManager reveal];
 }
 

@@ -455,6 +455,7 @@ DEFINE_BOOL(showAutomaticProfileSwitchingBanner, YES, SECTION_SESSION @"Show a â
 DEFINE_BOOL(autoLockSessionNameOnEdit, YES, SECTION_SESSION @"Auto-lock sesison name after editing it.");
 DEFINE_FLOAT(timeoutForDaemonAttachment, 10, SECTION_SESSION @"How long to wait when trying to attach to an iTerm daemon at startup when restoring windows (in seconds)?");
 DEFINE_BOOL(logTimestampsWithPlainText, YES, SECTION_SESSION @"When logging plain text, include timestamps for each line?");
+DEFINE_STRING(composerClearSequence, @"0x15 0x0b", SECTION_SESSION @"Hex codes to send to clear the command line when entering the composer.\n0x15 is ^U, 0x0b is ^K.");
 
 #pragma mark - Windows
 

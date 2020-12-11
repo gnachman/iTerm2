@@ -23,6 +23,11 @@
     iTermStatusBarViewController *_statusBarViewController;
     iTermMinimalComposerViewController *_minimalViewController;
     NSString *_saved;
+    BOOL _preserveSaved;
+}
+
+- (void)setCommand:(NSString *)command {
+    _saved = [command copy];
 }
 
 - (void)reveal {

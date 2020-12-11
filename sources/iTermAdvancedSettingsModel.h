@@ -69,6 +69,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (double)coloredUnselectedTabTextProminence;
 + (double)compactEdgeDragSize;
 + (double)compactMinimalTabBarHeight;
++ (NSString *)composerClearSequence;
 + (BOOL)conservativeURLGuessing;
 + (BOOL)convertItalicsToReverseVideoForTmux;
 + (BOOL)convertTabDragToWindowDragForSolitaryTabInCompactOrMinimalTheme;
