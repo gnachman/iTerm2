@@ -190,7 +190,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (NSArray<iTermScriptItem *> *)scriptItems {
     NSFileManager *fm = [NSFileManager defaultManager];
     NSString *path = [fm scriptsPath];
-    if ([fm fileExistsAtPath:path]) {
+    if ([fm fileExistsAtPath:path] && [iTermAdvancedSettingsModel spacelessApplicationSupport].length > 0) {
         [fm applicationSupportDirectoryWithoutSpaces];  // create link if needed
         path = [fm scriptsPathWithoutSpaces];
     }
