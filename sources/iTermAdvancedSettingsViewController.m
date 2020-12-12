@@ -645,6 +645,9 @@ static NSDictionary *gIntrospection;
     const int row = [associatedObject intValue];
     NSString *string = textField.stringValue;
     NSArray *settings = [self filteredAdvancedSettings];
+    if (row < 0 || row >= settings.count) {
+        return;
+    }
     NSDictionary *dict = settings[row];
     switch ([dict advancedSettingType]) {
         case kiTermAdvancedSettingTypeBoolean:
