@@ -1378,6 +1378,10 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     return YES;
 }
 
+- (BOOL)statusBarIsInPaneTitleBar {
+    return _title.statusBarViewController != nil;
+}
+
 - (BOOL)showBottomStatusBar {
     return _showBottomStatusBar;
 }

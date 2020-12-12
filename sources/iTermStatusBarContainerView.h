@@ -22,6 +22,7 @@ const CGFloat iTermGetStatusBarHeight(void);
 - (void)statusBarContainerView:(iTermStatusBarContainerView *)sender hideComponent:(id<iTermStatusBarComponent>)component;
 - (void)statusBarContainerViewConfigureStatusBar:(iTermStatusBarContainerView *)sender;
 - (void)statusBarContainerViewDisableStatusBar:(iTermStatusBarContainerView *)sender;
+- (BOOL)statusBarContainerViewCanDragWindow:(iTermStatusBarContainerView *)sender;
 @end
 
 @interface iTermStatusBarContainerView : NSView

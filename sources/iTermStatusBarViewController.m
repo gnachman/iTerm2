@@ -393,6 +393,10 @@ static const CGFloat iTermStatusBarViewControllerBottomMargin = 0;
     [self.delegate statusBarDisable];
 }
 
+- (BOOL)statusBarContainerViewCanDragWindow:(iTermStatusBarContainerView *)sender {
+    return [self.delegate statusBarCanDragWindow];
+}
+
 - (void)statusBarContainerViewConfigureStatusBar:(iTermStatusBarContainerView *)sender {
     [self.delegate statusBarOpenPreferencesToComponent:nil];
 }

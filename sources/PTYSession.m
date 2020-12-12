@@ -12913,6 +12913,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                                                         object:_profile[KEY_GUID]];
 }
 
+- (BOOL)statusBarCanDragWindow {
+    return !self.view.statusBarIsInPaneTitleBar;
+}
+
 - (void)statusBarSetLayout:(nonnull iTermStatusBarLayout *)layout {
     ProfileModel *model;
     if (self.isDivorced && [_overriddenFields containsObject:KEY_STATUS_BAR_LAYOUT]) {

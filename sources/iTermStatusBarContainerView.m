@@ -67,7 +67,7 @@ const CGFloat iTermGetStatusBarHeight() {
             if ([component statusBarComponentHandlesMouseDown]) {
                 recognizer.delaysPrimaryMouseButtonEvents = NO;
             }
-            [_view addGestureRecognizer:recognizer];
+            [self addGestureRecognizer:recognizer];
         }
         [self updateIconIfNeeded];
         _unreadCountView = [[iTermUnreadCountView alloc] init];
@@ -257,12 +257,23 @@ const CGFloat iTermGetStatusBarHeight() {
 }
 
 - (void)mouseDragged:(NSEvent *)event {
-    if (![_component statusBarComponentHandlesMouseDown]) {
+    if ([self shouldDragWindowForEvent:event]) {
         [self.window performWindowDragWithEvent:event];
-    } else {
-        [super mouseDragged:event];
+        return;
     }
+    [super mouseDragged:event];
 }
+
+- (BOOL)shouldDragWindowForEvent:(NSEvent *)event {
+    if ((event.modifierFlags & NSEventModifierFlagOption) != 0) {
+        return YES;
+    }
+    if ([_component statusBarComponentHandlesMouseDown]) {
+        return NO;
+    }
+    return [self.delegate statusBarContainerViewCanDragWindow:self];
+}
+
 - (void)showContextMenuForEvent:(NSEvent *)event {
     NSMenu *menu = [[NSMenu alloc] initWithTitle:@"Contextual Menu"];
     if (![_component statusBarComponentIsInternal]) {
