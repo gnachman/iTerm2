@@ -180,6 +180,10 @@ static NSString *gSearchString;
 
 - (void)userDidEditSearchQuery:(NSString *)updatedQuery
                    fieldEditor:(NSTextView *)fieldEditor {
+    if (!_savedState) {
+        [self loadFindStringIntoSharedPasteboard:_viewController.findString];
+    }
+
     // A query becomes stale when it is 1 or 2 chars long and it hasn't been edited in 3 seconds (or
     // the search field has lost focus since the last char was entered).
     static const CGFloat kStaleTime = 3;
