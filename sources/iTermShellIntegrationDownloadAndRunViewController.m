@@ -38,7 +38,7 @@
 - (void)setInstallUtilities:(BOOL)installUtilities {
     _installUtilities = installUtilities;
     NSString *prefix = self.busy ? @"Waiting for this command to finish:" : @"Press “Continue” to run this command:";
-    self.textField.stringValue = [NSString stringWithFormat:@"%@\n\n%@", prefix, self.command];
+    self.textField.stringValue = [NSString stringWithFormat:@"%@\n%@", prefix, self.command];
 }
 
 - (void)showShellUnsupportedError {
