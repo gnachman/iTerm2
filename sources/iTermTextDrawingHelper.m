@@ -2558,66 +2558,67 @@ static BOOL iTermTextDrawingHelperShouldAntiAlias(screen_char_t *c,
                                        font:(NSFont *)font
                                        rect:(NSRect)rect {
     [color set];
-    NSBezierPath *path = [NSBezierPath bezierPath];
 
     const CGFloat y = (wantUnderline ?
                        [self yOriginForUnderlineForFont:font yOffset:rect.origin.y cellHeight:_cellSize.height] :
                        [self yOriginForStrikethroughForFont:font yOffset:rect.origin.y cellHeight:_cellSize.height]);
     NSPoint origin = NSMakePoint(rect.origin.x,
                                  y);
-    origin.y += self.isRetina ? 0.25 : 0.5;
-    CGFloat dashPattern[] = { 4, 3 };
-    CGFloat phase = fmod(rect.origin.x, dashPattern[0] + dashPattern[1]);
+    origin.y -= self.isRetina ? 0.5 : 0;
 
-    const CGFloat lineWidth = wantUnderline ? [self underlineThicknessForFont:font] : [self strikethroughThicknessForFont:font];
+    const CGFloat fontLineWidth = wantUnderline ? [self underlineThicknessForFont:font] : [self strikethroughThicknessForFont:font];
     switch (underlineStyle) {
         case NSUnderlineStyleSingle:
-            [path moveToPoint:origin];
-            [path lineToPoint:NSMakePoint(origin.x + rect.size.width, origin.y)];
-            [path setLineWidth:lineWidth];
-            [path stroke];
+            NSRectFill(NSMakeRect(origin.x, origin.y, rect.size.width, fontLineWidth));
             break;
 
         case NSUnderlineStyleDouble: {  // Single underline with dash beneath
-            origin.y = rect.origin.y + _cellSize.height - 1;
-            origin.y -= self.isRetina ? 0.25 : 0.5;
-            [path moveToPoint:origin];
-            [path lineToPoint:NSMakePoint(origin.x + rect.size.width, origin.y)];
-            [path setLineWidth:lineWidth];
-            [path stroke];
+            const CGFloat lineWidth = fontLineWidth;
+            CGFloat dashPattern[] = { 4, 3 };
+            const CGFloat dashPeriod = dashPattern[0] + dashPattern[1];
+            CGFloat phase = fmod(rect.origin.x, dashPeriod);
 
-            const CGFloat px = self.isRetina ? 0.5 : 1;
-            path = [NSBezierPath bezierPath];
-            [path moveToPoint:NSMakePoint(origin.x, origin.y + lineWidth + px)];
-            [path lineToPoint:NSMakePoint(origin.x + rect.size.width, origin.y + lineWidth + px)];
-            [path setLineWidth:lineWidth];
-            [path setLineDash:dashPattern count:2 phase:phase];
-            [path stroke];
+            origin.y = rect.origin.y + _cellSize.height - 2 - (self.isRetina ? 0.5 : 0);
+            NSRectFill(NSMakeRect(origin.x, origin.y, rect.size.width, lineWidth));
+
+            const CGFloat px = self.isRetina ? 1 : 1;
+            const CGFloat maxX = NSMaxX(rect);
+            const CGFloat adjustedLineWidth = self.isRetina ? lineWidth / 2.0 : lineWidth;
+            for (CGFloat x = origin.x - phase; x < maxX; x += dashPeriod) {
+                CGFloat segmentWidth = dashPattern[0];
+                const CGFloat overflow = (x + segmentWidth) - maxX;
+                if (overflow > 0) {
+                    segmentWidth -= overflow;
+                }
+                const NSRect rect = NSMakeRect(x,
+                                               origin.y + lineWidth + px,
+                                               segmentWidth,
+                                               adjustedLineWidth);
+                NSRectFill(rect);
+            }
             break;
         }
         case NSUnderlineStyleThick: {  // We use this for curly. Cocoa doesn't have curly underlines, so we reprupose thick.
-            const CGFloat offset = 0;
-            origin.y = rect.origin.y + _cellSize.height - 1.5;
-            CGContextRef cgContext = [[NSGraphicsContext currentContext] CGContext];
-            CGContextSaveGState(cgContext);
-            CGContextClipToRect(cgContext, NSMakeRect(origin.x, origin.y - 1, rect.size.width, 3));
+            const CGFloat lineWidth = 1;
+            CGFloat phase = fmod(rect.origin.x, 3);
 
-            [color set];
-            NSBezierPath *path = [NSBezierPath bezierPath];
-            const CGFloat height = 1;
-            const CGFloat width = 3;
-            const CGFloat lowY = origin.y + offset;
-            const CGFloat highY = origin.y + height + offset;
-            for (CGFloat x = origin.x - fmod(origin.x, width * 2); x < NSMaxX(rect); x += width * 2) {
-                [path moveToPoint:NSMakePoint(x + 0, highY)];
-                [path lineToPoint:NSMakePoint(x + width, highY)];
+            origin.y = rect.origin.y + _cellSize.height - 2;
 
-                [path moveToPoint:NSMakePoint(x + width, lowY)];
-                [path lineToPoint:NSMakePoint(x + width * 2, lowY)];
+            const CGFloat maxX = NSMaxX(rect);
+            CGFloat dy = 1;
+            for (CGFloat x = origin.x - phase; x < maxX; x += 3) {
+                CGFloat segmentWidth = 3;
+                const CGFloat overflow = (x + segmentWidth) - maxX;
+                if (overflow > 0) {
+                    segmentWidth -= overflow;
+                }
+                const NSRect rect = NSMakeRect(x,
+                                               origin.y + dy,
+                                               segmentWidth,
+                                               lineWidth);
+                NSRectFill(rect);
+                dy = 1 - dy;
             }
-            [path setLineWidth:1];
-            [path stroke];
-            CGContextRestoreGState(cgContext);
             break;
         }
 
@@ -2625,11 +2626,26 @@ static BOOL iTermTextDrawingHelperShouldAntiAlias(screen_char_t *c,
             if (![iTermAdvancedSettingsModel underlineHyperlinks]) {
                 break;
             }
-            [path moveToPoint:origin];
-            [path lineToPoint:NSMakePoint(origin.x + rect.size.width, origin.y)];
-            [path setLineWidth:lineWidth];
-            [path setLineDash:dashPattern count:2 phase:phase];
-            [path stroke];
+            const CGFloat lineWidth = fontLineWidth;
+            CGFloat dashPattern[] = { 4, 3 };
+            const CGFloat dashPeriod = dashPattern[0] + dashPattern[1];
+            CGFloat phase = fmod(rect.origin.x, dashPeriod);
+
+            origin.y = rect.origin.y + _cellSize.height - 2;
+
+            const CGFloat maxX = NSMaxX(rect);
+            for (CGFloat x = origin.x - phase; x < maxX; x += dashPeriod) {
+                CGFloat segmentWidth = dashPattern[0];
+                const CGFloat overflow = (x + segmentWidth) - maxX;
+                if (overflow > 0) {
+                    segmentWidth -= overflow;
+                }
+                const NSRect rect = NSMakeRect(x,
+                                               origin.y,
+                                               segmentWidth,
+                                               lineWidth);
+                NSRectFill(rect);
+            }
             break;
 
         case NSUnderlineStyleNone:

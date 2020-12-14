@@ -415,6 +415,8 @@ static NSString *const VertexFunctionName(const BOOL &underlined,
     const float scale = tState.cellConfiguration.scale;
     const simd_float2 cellSize = simd_make_float2(frameData.cellConfiguration.cellSize.width,
                                                   frameData.cellConfiguration.cellSize.height);
+    const simd_float2 cellSizeWithoutSpacing = simd_make_float2(frameData.cellConfiguration.cellSizeWithoutSpacing.width,
+                                                                frameData.cellConfiguration.cellSizeWithoutSpacing.height);
 
     // The vertex buffer's texture coordinates depend on the texture map's atlas size so it must
     // be initialized after the texture map.
@@ -464,7 +466,7 @@ static NSString *const VertexFunctionName(const BOOL &underlined,
         [tState measureTimeForStat:iTermTextRendererStatNewDims ofBlock:^{
             iTermTextureDimensions textureDimensions = {
                 .textureSize = simd_make_float2(textureSize.x, textureSize.y),
-                .glyphSize = simd_make_float2(glyphSize.x, glyphSize.y),
+                .cellSizeWithoutSpacing = simd_make_float2(cellSizeWithoutSpacing.x, cellSizeWithoutSpacing.y),
                 .cellSize = cellSize,
                 .underlineOffset = MAX(underlineThickness, glyphSize.y - (underlineDescriptor.offset * scale)),
                 .underlineThickness = underlineThickness,

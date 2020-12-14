@@ -70,7 +70,7 @@ float4 GetMinimumColorComponentsOfNeighbors(float2 textureSize,
 float4 GetMaximumColorComponentsOfNeighbors(float2 textureSize,
                                            float2 textureOffset,
                                            float2 textureCoordinate,
-                                           float2 glyphSize,
+                                           float2 cellSizeWithoutSpacing,
                                            float scale,
                                            texture2d<float> texture,
                                            sampler textureSampler) {
@@ -78,7 +78,7 @@ float4 GetMaximumColorComponentsOfNeighbors(float2 textureSize,
     SampleNeighbors(textureSize,
                     textureOffset,
                     textureCoordinate,
-                    glyphSize,
+                    cellSizeWithoutSpacing,
                     scale,
                     texture,
                     textureSampler,
@@ -284,7 +284,7 @@ float ComputeWeightOfUnderlineRegular(int underlineStyle,  // iTermMetalGlyphAtt
                                       float2 textureSize,
                                       float2 textureOffset,
                                       float2 textureCoordinate,
-                                      float2 glyphSize,
+                                      float2 cellSizeWithoutSpacing,
                                       float2 cellSize,
                                       texture2d<float> texture,
                                       sampler textureSampler,
@@ -318,23 +318,23 @@ float ComputeWeightOfUnderlineRegular(int underlineStyle,  // iTermMetalGlyphAtt
     if (weight == 0) {
         return 0;
     }
-    const float margin = (glyphSize.x - cellSize.x) / 2;
+    const float margin = (cellSizeWithoutSpacing.x - cellSize.x) / 2;
     if (clipSpacePosition.x < cellOffset.x + margin) {
         return 0;
     }
-    if (clipSpacePosition.x >= cellOffset.x + margin + cellSize.x) {
+    if (clipSpacePosition.x >= cellOffset.x + margin + cellSizeWithoutSpacing.x) {
         return 0;
     }
     if (underlineStyle == iTermMetalGlyphAttributesUnderlineStrikethrough || solid) {
         return weight;
     }
     float maxAlpha = GetMaximumColorComponentsOfNeighbors(textureSize,
-                                                         textureOffset,
-                                                         textureCoordinate,
-                                                         glyphSize,
-                                                         scale,
-                                                         texture,
-                                                         textureSampler).w;
+                                                          textureOffset,
+                                                          textureCoordinate,
+                                                          cellSizeWithoutSpacing,
+                                                          scale,
+                                                          texture,
+                                                          textureSampler).w;
     float opacity = 1 - maxAlpha;
     if (scale > 1) {
         if (opacity >= 0.99) {
