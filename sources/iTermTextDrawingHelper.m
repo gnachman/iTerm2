@@ -244,7 +244,8 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
                         rectCount:(NSInteger)rectCount {
     DLog(@"begin drawRect:%@ in view %@", [NSValue valueWithRect:rect], _delegate);
     iTermPreciseTimerSetEnabled(YES);
-
+    [[NSColor clearColor] set];
+    NSRectFillUsingOperation(rect, NSCompositingOperationCopy);
     if (_debug) {
         [[NSColor redColor] set];
         NSRectFill(rect);
