@@ -182,6 +182,7 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
 - (instancetype)init {
     self = [super init];
     if (self) {
+        _debug = YES;
         iTermPreciseTimerSetEnabled(YES);
         iTermPreciseTimerStatsInit(&_stats[TIMER_TOTAL_DRAW_RECT], "Total drawRect");
         iTermPreciseTimerStatsInit(&_stats[TIMER_CONSTRUCT_BACKGROUND_RUNS], "Construct BG runs");
@@ -1431,11 +1432,12 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
             CGContextShowGlyphsAtPositions(ctx, glyphs, points, length);
         }
     }
-#if 0
-    // Indicates which regions were drawn with the fastpath
-    [[NSColor yellowColor] set];
-    NSFrameRect(NSMakeRect(point.x + positions[0], point.y, positions[length - 1] - positions[0] + _cellSize.width, _cellSize.height));
-#endif
+
+    if (_debug) {
+        // Indicates which regions were drawn with the fastpath
+        [[NSColor yellowColor] set];
+        NSFrameRect(NSMakeRect(point.x + positions[0], point.y, positions[length - 1] - positions[0] + _cellSize.width, _cellSize.height));
+    }
 
     if (style >= 0) {
         CGContextSetFontSmoothingStyle(ctx, savedFontSmoothingStyle);
