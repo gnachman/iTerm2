@@ -100,7 +100,8 @@
 // Loads a non-tiled image.
 - (void)loadRegularImage {
     self.layer.backgroundColor = nil;
-    self.layer.contents = (__bridge id)[_image cgimage];
+    CGImageRef cgi = [_image cgimage];
+    self.layer.contents = (__bridge id)cgi;
 }
 
 static void iTermImageViewDrawImage(void *info, CGContextRef context) {
@@ -119,6 +120,7 @@ static void iTermImageViewReleaseImage(void *info) {
 
 // Make a pattern color and set the layer's background color to that.
 - (void)loadTiledImage {
+    return;
     const CGImageRef cgImage = [_image.image CGImage];
     const int width = CGImageGetWidth(cgImage);
     const int height = CGImageGetHeight(cgImage);

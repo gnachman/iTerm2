@@ -8,6 +8,7 @@
 #import "iTermSharedImageStore.h"
 
 #import "DebugLogging.h"
+#import "NSImage+iTerm.h"
 #import <QuartzCore/QuartzCore.h>
 
 @interface NSFileManager(CachedImage)
@@ -123,9 +124,22 @@
     return [[self alloc] initWithImage:image];
 }
 
-- (instancetype)initWithImage:(NSImage *)image {
+- (instancetype)initWithImage:(NSImage *)unsafeImage {
     self = [super init];
     if (self) {
+        NSImage *image = unsafeImage;
+        if (unsafeImage.size.height > 0 && unsafeImage.size.width > 0) {
+            // Downscale to deal with issue 9346
+            const CGFloat maxSize = 5120;
+            if (unsafeImage.size.width > maxSize || unsafeImage.size.height > maxSize) {
+                const CGFloat xscale = MIN(1, maxSize / unsafeImage.size.width);
+                const CGFloat yscale = MIN(1, maxSize / unsafeImage.size.height);
+                const CGFloat scale = MIN(xscale, yscale);
+                NSImage *downscaled = [unsafeImage it_imageOfSize:NSMakeSize(unsafeImage.size.width * scale,
+                                                                             unsafeImage.size.height * scale)];
+                image = downscaled;
+            }
+        }
         _image = image;
     }
     return self;
