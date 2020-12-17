@@ -2154,8 +2154,11 @@ unichar iTermMinimumDefaultEmojiPresentationCodePoint = 0x2300;
     dispatch_once(&onceToken, ^{
         NSString *string =
             @"\ufeff"  // zero width no-break space
-            @"\u200c"  // zero width non-joiner
-            @"\u200d";  // zero width joiner
+            @"\u200b"  // zero-width space (not supported by Terminal, is supported by Kitty)
+            @"\u200c"  // zero width non-joiner (not supported by Terminal, is supported by Kitty)
+            @"\u200d"  // zero width joiner
+            @"\u2060"  // word joiner (not supported by Terminal, is supported by Kitty)
+        ;
         if (![iTermAdvancedSettingsModel zeroWidthSpaceAdvancesCursor]) {
             string = [string stringByAppendingString:@"\u200b"];  // zero width space
         }
