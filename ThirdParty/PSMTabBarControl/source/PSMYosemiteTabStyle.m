@@ -514,17 +514,12 @@
 }
 
 - (NSColor *)bigSurBackgroundColorSelected:(BOOL)selected highlightAmount:(CGFloat)highlightAmount NS_AVAILABLE_MAC(10_16) {
-    CGFloat colors[4] = { 0, 0, 0, 0};
     if (selected) {
-        // clear
-    } else {
-        colors[3] = 0.1 + 0.086 * highlightAmount;
+        const CGFloat white = 0.95;
+        return [NSColor colorWithWhite:white alpha:1];
     }
-
-    return [NSColor colorWithSRGBRed:colors[0]
-                               green:colors[1]
-                                blue:colors[2]
-                               alpha:colors[3]];
+    const CGFloat white = 0.9 - 0.05 * highlightAmount;
+    return [NSColor colorWithWhite:white alpha:1];
 }
 
 - (NSColor *)mojaveBackgroundColorSelected:(BOOL)selected highlightAmount:(CGFloat)highlightAmount NS_AVAILABLE_MAC(10_14) {

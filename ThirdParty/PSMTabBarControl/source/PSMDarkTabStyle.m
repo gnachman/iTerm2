@@ -79,6 +79,28 @@
 }
 
 - (NSColor *)backgroundColorSelected:(BOOL)selected highlightAmount:(CGFloat)highlightAmount {
+    if (@available(macOS 10.16, *)) {
+        return [self bigSurBackgroundColorSelected:selected highlightAmount:highlightAmount];
+    } else  {
+        return [self mojaveBackgroundColorSelected:selected highlightAmount:highlightAmount];
+    }
+}
+
+- (NSColor *)bigSurBackgroundColorSelected:(BOOL)selected highlightAmount:(CGFloat)highlightAmount NS_AVAILABLE_MAC(10_16) {
+    CGFloat colors[4] = { 0, 0, 0, 0};
+    if (selected) {
+        // clear
+    } else {
+        colors[3] = 0.1 + 0.086 * highlightAmount;
+    }
+
+    return [NSColor colorWithSRGBRed:colors[0]
+                               green:colors[1]
+                                blue:colors[2]
+                               alpha:colors[3]];
+}
+
+- (NSColor *)mojaveBackgroundColorSelected:(BOOL)selected highlightAmount:(CGFloat)highlightAmount {
     if (@available(macOS 10.14, *)) {
         CGFloat colors[3];
         const BOOL keyMainAndActive = self.windowIsMainAndAppIsActive;
