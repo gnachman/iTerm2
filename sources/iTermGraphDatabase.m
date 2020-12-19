@@ -385,6 +385,8 @@
      @"        parentNode.rowid is NULL and "
      @"        child.parent != 0"
      @"  )"];
+    [state.db executeUpdate:@"pragma wal_checkpoint"];
+    [state.db executeUpdate:@"vacuum"];
     return YES;
 }
 

@@ -134,11 +134,13 @@
 
     NSString *checkType = arc4random_uniform(100) == 0 ? @"integrity_check" : @"quick_check";
     FMResultSet *results = [_db executeQuery:[NSString stringWithFormat:@"pragma %@", checkType]];
-    if (![results next]) {
+    NSString *value = nil;
+    if ([results next]) {
+        value = [results stringForColumn:checkType];
+    } else {
         DLog(@"%@ check failed - no next result", checkType);
-        return NO;
     }
-    NSString *value = [results stringForColumn:checkType];
+    [results close];
     if (![value isEqualToString:@"ok"]) {
         DLog(@"%@ check failed: %@", checkType, value);
         return NO;
