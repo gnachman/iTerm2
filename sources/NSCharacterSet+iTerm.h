@@ -24,6 +24,11 @@ extern unichar iTermMinimumDefaultEmojiPresentationCodePoint;
 // Zero-width spaces.
 + (instancetype)zeroWidthSpaceCharacterSetForUnicodeVersion:(NSInteger)version;
 
+// Characters with the Default_Ignorable_Code_Point derived property.
+// Includes things like zero-width spaces.
+// See issue 9368.
++ (instancetype)ignorableCharactersForUnicodeVersion:(NSInteger)version;
+
 + (instancetype)spacingCombiningMarksForUnicodeVersion:(int)version;
 
 + (instancetype)emojiAcceptingVS16;

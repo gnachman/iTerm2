@@ -2167,6 +2167,34 @@ unichar iTermMinimumDefaultEmojiPresentationCodePoint = 0x2300;
     return characterSet;
 }
 
+// Characters with the Default Ignorable Code Point (DI) property. See issue 9368.
+// 
++ (instancetype)ignorableCharactersForUnicodeVersion:(NSInteger)version {
+    static dispatch_once_t onceToken;
+    static NSMutableCharacterSet *defaultIgnorables;
+    dispatch_once(&onceToken, ^{
+        defaultIgnorables = [[NSMutableCharacterSet alloc] init];
+        [defaultIgnorables addCharactersInRange:NSMakeRange(0xad, 1)];
+        [defaultIgnorables addCharactersInRange:NSMakeRange(0x34f, 1)];
+        [defaultIgnorables addCharactersInRange:NSMakeRange(0x61c, 1)];
+        [defaultIgnorables addCharactersInRange:NSMakeRange(0x115f, 2)];
+        [defaultIgnorables addCharactersInRange:NSMakeRange(0x17b4, 2)];
+        [defaultIgnorables addCharactersInRange:NSMakeRange(0x180b, 4)];
+        [defaultIgnorables addCharactersInRange:NSMakeRange(0x200b, 5)];
+        [defaultIgnorables addCharactersInRange:NSMakeRange(0x202a, 5)];
+        [defaultIgnorables addCharactersInRange:NSMakeRange(0x2060, 16)];
+        [defaultIgnorables addCharactersInRange:NSMakeRange(0x3164, 1)];
+        [defaultIgnorables addCharactersInRange:NSMakeRange(0xfe00, 16)];
+        [defaultIgnorables addCharactersInRange:NSMakeRange(0xfeff, 1)];
+        [defaultIgnorables addCharactersInRange:NSMakeRange(0xffa0, 1)];
+        [defaultIgnorables addCharactersInRange:NSMakeRange(0xfff0, 9)];
+        [defaultIgnorables addCharactersInRange:NSMakeRange(0x1bca0, 4)];
+        [defaultIgnorables addCharactersInRange:NSMakeRange(0x1d173, 8)];
+        [defaultIgnorables addCharactersInRange:NSMakeRange(0xe0000, 4096)];
+    });
+    return defaultIgnorables;
+}
+
 + (NSCharacterSet *)filenameCharacterSet {
     static NSMutableCharacterSet* filenameChars;
     if (!filenameChars) {

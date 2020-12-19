@@ -590,7 +590,7 @@ void StringToScreenChars(NSString *s,
                          NSInteger unicodeVersion) {
     __block NSInteger j = 0;
     __block BOOL foundCursor = NO;
-    NSCharacterSet *zeroWidthSpaces = [NSCharacterSet zeroWidthSpaceCharacterSetForUnicodeVersion:unicodeVersion];
+    NSCharacterSet *ignorableCharacters = [NSCharacterSet ignorableCharactersForUnicodeVersion:unicodeVersion];
     NSCharacterSet *spacingCombiningMarks = [NSCharacterSet spacingCombiningMarksForUnicodeVersion:12];
 
     [s enumerateComposedCharacters:^(NSRange range,
@@ -609,8 +609,7 @@ void StringToScreenChars(NSString *s,
         // Set the code and the complex flag. Also return early if no cell should be used by this
         // grapheme cluster. Set the isDoubleWidth flag.
         if (!composedOrNonBmpChar) {
-            if ([zeroWidthSpaces characterIsMember:baseBmpChar]) {
-                // Ignore zero-width spacers.
+            if ([ignorableCharacters characterIsMember:baseBmpChar]) {
                 return;
             } else if ([spacingCombiningMarks characterIsMember:baseBmpChar]) {
                 composedOrNonBmpChar = [NSString stringWithLongCharacter:baseBmpChar];
@@ -652,6 +651,9 @@ void StringToScreenChars(NSString *s,
             if (IsHighSurrogate(baseChar) && composedLength > 1) {
                 baseChar = DecodeSurrogatePair(baseChar, [composedOrNonBmpChar characterAtIndex:1]);
                 next += 1;
+                if (composedLength == 2 && [ignorableCharacters longCharacterIsMember:baseChar]) {
+                    return;
+                }
             }
             isDoubleWidth = [NSString isDoubleWidthCharacter:baseChar
                                       ambiguousIsDoubleWidth:ambiguousIsDoubleWidth
