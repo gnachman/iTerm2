@@ -1806,8 +1806,8 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
         froms = [[NSMutableArray alloc] init];
         tos = [[NSMutableArray alloc] init];
         for (int i = 0; i < numberOfControlCharacters; i++) {
-            char utf8[2] = { i, 0 };
-            NSString *from = [NSString stringWithUTF8String:utf8];
+            unichar c = i;
+            NSString *from = [NSString stringWithCharacters:&c length:1];
             NSString *to = [NSString stringWithFormat:@"\\u%04x", i];
             [froms addObject:from];
             [tos addObject:to];

@@ -580,4 +580,10 @@
     XCTAssertEqualObjects(actual, @"12^A34^B56");
 }
 
+- (void)testEncodeNullString {
+    const unichar zero = 0;
+    NSString *actual = [[NSString stringWithCharacters:&zero length:1] jsonEncodedString];
+    XCTAssertEqualObjects(actual, @"\"\\u0000\"");
+}
+
 @end
