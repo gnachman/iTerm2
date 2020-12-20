@@ -14,13 +14,13 @@
 
 static const CGFloat kMaxDimension = 10000;
 
-#define DECODE_IMAGES_IN_PROCESS 0
+#define FORCE_DECODE_IMAGES_IN_PROCESS 0
 
 #if defined(__has_feature)
 #if __has_feature(address_sanitizer)
-#undef DECODE_IMAGES_IN_PROCESS
+#undef FORCE_DECODE_IMAGES_IN_PROCESS
 #warning Decoding images in process because address sanitizer is enabled.
-#define DECODE_IMAGES_IN_PROCESS 1
+#define FORCE_DECODE_IMAGES_IN_PROCESS 1
 #endif
 #endif
 
@@ -30,7 +30,6 @@ static const CGFloat kMaxDimension = 10000;
 @property(nonatomic, strong) NSMutableArray<NSImage *> *images;
 @end
 
-#if DECODE_IMAGES_IN_PROCESS
 static NSDictionary *GIFProperties(CGImageSourceRef source, size_t i) {
     CFDictionaryRef const properties = CGImageSourceCopyPropertiesAtIndex(source, i, NULL);
     if (properties) {
@@ -60,7 +59,6 @@ static NSTimeInterval DelayInGifProperties(NSDictionary *gifProperties) {
 
     return delay;
 }
-#endif
 
 @implementation iTermImage
 
@@ -78,19 +76,19 @@ static NSTimeInterval DelayInGifProperties(NSDictionary *gifProperties) {
         bytes[1] == 'P') {
         return [[iTermImage alloc] initWithSixelData:compressedData];
     }
-#if DECODE_IMAGES_IN_PROCESS
-    NSLog(@"** WARNING: Decompressing image in-process **");
-    return [[iTermImage alloc] initWithData:compressedData];
-#else
-    iTermImageDecoderDriver *driver = [[iTermImageDecoderDriver alloc] init];
-    NSData *jsonData = [driver jsonForCompressedImageData:compressedData
-                                                     type:@"image/*"];
-    if (jsonData) {
-        return [[iTermImage alloc] initWithJson:jsonData];
+    if (compressedData.length < 4096 || FORCE_DECODE_IMAGES_IN_PROCESS) {
+        DLog(@"Decompressing image in-process");
+        return [[iTermImage alloc] initWithData:compressedData];
     } else {
-        return nil;
+        iTermImageDecoderDriver *driver = [[iTermImageDecoderDriver alloc] init];
+        NSData *jsonData = [driver jsonForCompressedImageData:compressedData
+                                                         type:@"image/*"];
+        if (jsonData) {
+            return [[iTermImage alloc] initWithJson:jsonData];
+        } else {
+            return nil;
+        }
     }
-#endif
 }
 
 + (instancetype)imageWithSixelData:(NSData *)sixelData {
@@ -116,7 +114,6 @@ static NSTimeInterval DelayInGifProperties(NSDictionary *gifProperties) {
     return self;
 }
 
-#if DECODE_IMAGES_IN_PROCESS
 - (instancetype)initWithData:(NSData *)data {
     self = [self init];
     if (self) {
@@ -182,7 +179,6 @@ static NSTimeInterval DelayInGifProperties(NSDictionary *gifProperties) {
     }
     return self;
 }
-#endif
 
 - (instancetype)initWithJson:(NSData *)json {
     DLog(@"Initialize iTermImage");
