@@ -1214,6 +1214,21 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
 }
 
 - (void)handleDisplayMessageVersion:(NSString *)response {
+    if ([response isEqualToString:@"openbsd-6.8"]) {
+        [self handleDisplayMessageVersion:@"3.1"];
+        return;
+    }
+    if ([response isEqualToString:@"openbsd-6.7"]) {
+        [self handleDisplayMessageVersion:@"3.0"];
+        return;
+    }
+    if ([response hasPrefix:@"openbsd-"]) {
+        // This is a forecast. When a new openbsd comes out, figure out what it acts like and add
+        // a new fallback.
+        [self handleDisplayMessageVersion:@"3.2"];
+        return;
+    }
+    // openbsd-6.6 and earlier are never reported; you just get an empty string.
     DLog(@"handleDisplayMessageVersion: %@", response);
     if (response.length == 0) {
         // The "version" format was first added in 2.4
