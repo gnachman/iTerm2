@@ -66,6 +66,8 @@
 }
 
 - (void)drawRect:(NSRect)bogusRect {
+    [[NSColor clearColor] set];
+    NSRectFill(self.bounds);
     // The passed-in rect tends to be 0x0 but respecting it leaves visible
     // parts undrawn. Some day macOS 10.0's features will work correctly but
     // I'm not holding my breath.
