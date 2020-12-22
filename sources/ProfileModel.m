@@ -695,6 +695,7 @@ static NSMutableArray<NSString *> *_combinedLog;
 }
 
 - (Profile*)setObject:(id)object forKey:(NSString*)key inBookmark:(Profile*)bookmark {
+    DLog(@"%@=%@ in %@ from\n%@", key, object, bookmark[KEY_GUID], [NSThread callStackSymbols]);
     NSMutableDictionary* newDict = [NSMutableDictionary dictionaryWithDictionary:bookmark];
     if (object == nil) {
         [newDict removeObjectForKey:key];
