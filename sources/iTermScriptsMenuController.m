@@ -190,8 +190,8 @@ NS_ASSUME_NONNULL_BEGIN
 - (NSArray<iTermScriptItem *> *)scriptItems {
     NSFileManager *fm = [NSFileManager defaultManager];
     NSString *path = [fm scriptsPath];
-    if ([fm fileExistsAtPath:path] && [iTermAdvancedSettingsModel spacelessApplicationSupport].length > 0) {
-        [fm applicationSupportDirectoryWithoutSpaces];  // create link if needed
+    if ([fm fileExistsAtPath:path]) {
+        [fm spacelessAppSupportCreatingLink];  // create link if needed
         path = [fm scriptsPathWithoutSpaces];
     }
     iTermScriptItem *root = [[iTermScriptItem alloc] initFolderWithPath:path parent:nil];
@@ -479,7 +479,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)launchScriptWithRelativePath:(NSString *)path
                            arguments:(NSArray<NSString *> *)arguments
                   explicitUserAction:(BOOL)explicitUserAction {
-    NSString *fullPath = [[[NSFileManager defaultManager] scriptsPath] stringByAppendingPathComponent:path];
+    NSString *fullPath = [[[NSFileManager defaultManager] scriptsPathWithoutSpaces] stringByAppendingPathComponent:path];
     [self launchScriptWithAbsolutePath:fullPath
                              arguments:arguments
                     explicitUserAction:explicitUserAction];
@@ -720,7 +720,7 @@ NS_ASSUME_NONNULL_BEGIN
     NSPopUpButton *popUpButton = [[NSPopUpButton alloc] initWithFrame:NSMakeRect(10, 0, 50, 50)];
 
     NSArray<NSString *> *components = @[ @"iterm2env", @"versions" ];
-    NSString *path = [[NSFileManager defaultManager] applicationSupportDirectoryWithoutSpaces];
+    NSString *path = [[NSFileManager defaultManager] spacelessAppSupportCreatingLink];
     for (NSString *part in components) {
         path = [path stringByAppendingPathComponent:part];
     }

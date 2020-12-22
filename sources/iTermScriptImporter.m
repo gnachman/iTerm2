@@ -56,7 +56,7 @@ static BOOL sInstallingScript;
     }
 
     if ([downloadedURL.pathExtension isEqualToString:@"py"]) {
-        NSString *to = [[[NSFileManager defaultManager] scriptsPath] stringByAppendingPathComponent:downloadedURL.lastPathComponent];
+        NSString *to = [[[NSFileManager defaultManager] scriptsPathWithoutSpaces] stringByAppendingPathComponent:downloadedURL.lastPathComponent];
         NSError *error;
         [[NSFileManager defaultManager] copyItemAtURL:downloadedURL
                                                 toURL:[NSURL fileURLWithPath:to]

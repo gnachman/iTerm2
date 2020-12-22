@@ -180,9 +180,9 @@ NSString *const iTermScriptMetadataName = @"metadata.json";
     NSString *from = [self.container stringByAppendingPathComponent:self.name];
     NSString *to;
     if ([self shouldAutoLaunchWhenTrusted:trusted offerAutoLaunch:offerAutoLaunch]) {
-        to = [[[NSFileManager defaultManager] autolaunchScriptPath] stringByAppendingPathComponent:self.name];
+        to = [[[NSFileManager defaultManager] autolaunchScriptPathCreatingLink] stringByAppendingPathComponent:self.name];
     } else {
-        to = [[[NSFileManager defaultManager] scriptsPath] stringByAppendingPathComponent:self.name];
+        to = [[[NSFileManager defaultManager] scriptsPathWithoutSpaces] stringByAppendingPathComponent:self.name];
     }
     NSError *error = nil;
     [[NSFileManager defaultManager] moveItemAtPath:from
@@ -240,7 +240,7 @@ NSString *const iTermScriptMetadataName = @"metadata.json";
     // Decide where to put it and make the directory if needed.
     NSString *containingFolder;
     if ([self shouldAutoLaunchWhenTrusted:trusted offerAutoLaunch:offerAutoLaunch]) {
-        containingFolder = [[NSFileManager defaultManager] autolaunchScriptPath];
+        containingFolder = [[NSFileManager defaultManager] autolaunchScriptPathCreatingLink];
     } else {
         containingFolder = [[NSFileManager defaultManager] scriptsPathWithoutSpaces];
     }

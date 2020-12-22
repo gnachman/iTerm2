@@ -32,8 +32,8 @@
 
 // Gives a symlink called ApplicationSupport because pip3 can't handle spaces and this breaks pyenv.
 // Creates the symlink if it doesn't already exist
-- (NSString *)applicationSupportDirectoryWithoutSpaces;
-- (NSString *)applicationSupportDirectoryWithoutSpacesWithoutCreatingSymlink;
+- (NSString *)spacelessAppSupportCreatingLink;
+- (NSString *)spacelessAppSupportWithoutCreatingLink;
 
 - (NSString *)temporaryDirectory;
 
@@ -67,6 +67,7 @@ additionalNetworkPaths:(NSArray<NSString *> *)additionalNetworkPaths;
 // Path to special auto-launch script that is run at startup.
 - (NSString *)legacyAutolaunchScriptPath;  // applescript
 - (NSString *)autolaunchScriptPath;  // scripting API
+- (NSString *)autolaunchScriptPathCreatingLink;  // scripting API
 
 // Path to special file that, if it exists at launch time, suppresses autolaunch script and
 // window restoration.

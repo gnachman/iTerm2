@@ -111,9 +111,9 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
                            creatingSymlinkIfNeeded:(BOOL)createSymlink {
     NSString *appsupport;
     if (createSymlink) {
-        appsupport = [[NSFileManager defaultManager] applicationSupportDirectoryWithoutSpaces];
+        appsupport = [[NSFileManager defaultManager] spacelessAppSupportCreatingLink];
     } else {
-        appsupport = [[NSFileManager defaultManager] applicationSupportDirectoryWithoutSpacesWithoutCreatingSymlink];
+        appsupport = [[NSFileManager defaultManager] spacelessAppSupportWithoutCreatingLink];
     }
     if (pythonVersion) {
         return [appsupport stringByAppendingPathComponent:[NSString stringWithFormat:@"iterm2env-%@", pythonVersion]];
@@ -500,7 +500,7 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
 
 + (NSString *)latestPythonVersion {
     NSArray<NSString *> *components = @[ @"iterm2env", @"versions" ];
-    NSString *path = [[NSFileManager defaultManager] applicationSupportDirectoryWithoutSpaces];
+    NSString *path = [[NSFileManager defaultManager] spacelessAppSupportCreatingLink];
     for (NSString *part in components) {
         path = [path stringByAppendingPathComponent:part];
     }
@@ -525,7 +525,7 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
     [NSURL fileURLWithPath:[self pathToStandardPyenvWithVersion:[@(runtimeVersion) stringValue]
                                         creatingSymlinkIfNeeded:YES]];
     NSURL *const tempDestination =
-    [NSURL fileURLWithPath:[[[NSFileManager defaultManager] applicationSupportDirectoryWithoutSpaces] stringByAppendingPathComponent:[[NSUUID UUID] UUIDString]]];
+    [NSURL fileURLWithPath:[[[NSFileManager defaultManager] spacelessAppSupportCreatingLink] stringByAppendingPathComponent:[[NSUUID UUID] UUIDString]]];
 
     NSURL *const sourceURL =
     [NSURL fileURLWithPath:[self pathToStandardPyenvWithVersion:[@(latestFullComponent) stringValue]
@@ -588,7 +588,7 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
                              completion:(void (^)(BOOL))completion {
     NSURL *finalDestination = [NSURL fileURLWithPath:[self pathToStandardPyenvWithVersion:[@(runtimeVersion) stringValue]
                                                                   creatingSymlinkIfNeeded:YES]];
-    NSURL *tempDestination = [NSURL fileURLWithPath:[[[NSFileManager defaultManager] applicationSupportDirectoryWithoutSpaces] stringByAppendingPathComponent:[[NSUUID UUID] UUIDString]]];
+    NSURL *tempDestination = [NSURL fileURLWithPath:[[[NSFileManager defaultManager] spacelessAppSupportCreatingLink] stringByAppendingPathComponent:[[NSUUID UUID] UUIDString]]];
 
     [[NSFileManager defaultManager] removeItemAtPath:finalDestination.path error:nil];
     [self unzip:[NSURL fileURLWithPath:zip] to:tempDestination completion:^(BOOL unzipOk) {
