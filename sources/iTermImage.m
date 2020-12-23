@@ -30,7 +30,6 @@ static const CGFloat kMaxDimension = 10000;
 @property(nonatomic, strong) NSMutableArray<NSImage *> *images;
 @end
 
-#if DECODE_IMAGES_IN_PROCESS
 static NSDictionary *GIFProperties(CGImageSourceRef source, size_t i) {
     CFDictionaryRef const properties = CGImageSourceCopyPropertiesAtIndex(source, i, NULL);
     if (properties) {
@@ -60,7 +59,6 @@ static NSTimeInterval DelayInGifProperties(NSDictionary *gifProperties) {
 
     return delay;
 }
-#endif
 
 @implementation iTermImage
 
@@ -116,7 +114,7 @@ static NSTimeInterval DelayInGifProperties(NSDictionary *gifProperties) {
     return self;
 }
 
-#if DECODE_IMAGES_IN_PROCESS
+/// Only use from `iTerm2SandboxedWorker`
 - (instancetype)initWithData:(NSData *)data {
     self = [self init];
     if (self) {
@@ -182,7 +180,6 @@ static NSTimeInterval DelayInGifProperties(NSDictionary *gifProperties) {
     }
     return self;
 }
-#endif
 
 - (instancetype)initWithJson:(NSData *)json {
     DLog(@"Initialize iTermImage");
@@ -272,6 +269,15 @@ static NSTimeInterval DelayInGifProperties(NSDictionary *gifProperties) {
     DLog(@"Successfully inited iTermImage");
 
     return self;
+}
+
+#warning TODO IMAGE
+- (void)encodeWithCoder:(nonnull NSCoder *)coder {
+    //
+}
+
+- (nullable instancetype)initWithCoder:(nonnull NSCoder *)coder {
+    return nil;
 }
 
 @end

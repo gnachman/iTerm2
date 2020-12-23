@@ -8,7 +8,7 @@
 
 #import <Cocoa/Cocoa.h>
 
-@interface iTermImage : NSObject
+@interface iTermImage : NSObject <NSSecureCoding>
 
 // For animated gifs, delays is 1:1 with images. For non-animated images, delays is empty.
 @property(nonatomic, readonly) NSMutableArray<NSNumber *> *delays;
