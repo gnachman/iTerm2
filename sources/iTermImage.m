@@ -271,13 +271,32 @@ static NSTimeInterval DelayInGifProperties(NSDictionary *gifProperties) {
     return self;
 }
 
-#warning TODO IMAGE
+#pragma mark - NSSecureCoding
+
++ (BOOL)supportsSecureCoding {
+    return YES;
+}
+
 - (void)encodeWithCoder:(nonnull NSCoder *)coder {
-    //
+    [coder encodeObject:self.delays forKey:@"delays"];
+    [coder encodeSize:self.size forKey:@"size"];
+    [coder encodeObject:self.images forKey:@"images"];
+    if (coder.error) {
+        XLog(@"Failed to encode image: %@", coder.error);
+    }
 }
 
 - (nullable instancetype)initWithCoder:(nonnull NSCoder *)coder {
-    return nil;
+#warning TODO: old OS version decoding
+    _delays = [[coder decodeArrayOfObjectsOfClass:[NSNumber class] forKey:@"delays"] mutableCopy];
+    _size = [coder decodeSizeForKey:@"size"];
+    _images = [[coder decodeArrayOfObjectsOfClass:[NSImage class] forKey:@"images"] mutableCopy];
+    if (coder.error) {
+        XLog(@"Failed to decode image: %@", coder.error);
+        return nil;
+    } else {
+        return self;
+    }
 }
 
 @end
