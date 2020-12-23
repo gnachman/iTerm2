@@ -13,6 +13,7 @@
 
 + (iTermImage *)imageFromData:(NSData *)data {
     __block iTermImage *retVal;
+#warning TODO fix service name
     NSXPCConnection *connectionToService = [[NSXPCConnection alloc] initWithServiceName:@"hu.cyberbeni.iTerm2SandboxedWorker"];
     if (connectionToService) {
         __block NSLock *lock = [NSLock new];
