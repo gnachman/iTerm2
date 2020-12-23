@@ -252,20 +252,19 @@ NSString * const DirectoryLocationDomain = @"DirectoryLocationDomain";
 
 - (NSString *)homeDirectoryDotDir {
     NSString *homedir = NSHomeDirectory();
-    NSString *dotdir = [homedir stringByAppendingPathComponent:@".iterm2"];
+    NSString *dotdir = [[homedir stringByAppendingPathComponent:@".config"] stringByAppendingPathComponent:@"iterm2"];
 
     BOOL isdir = NO;
 
-    // Try to create ~/.iterm2 if needed
+    // Try to create ~/.config/iterm2 if needed
     if (![self fileExistsAtPath:dotdir isDirectory:&isdir]) {
         NSError *error = nil;
-        [self createDirectoryAtPath:dotdir withIntermediateDirectories:NO attributes:nil error:&error];
+        [self createDirectoryAtPath:dotdir withIntermediateDirectories:YES attributes:nil error:&error];
         if (error) {
             DLog(@"Couldn't create %@: %@", dotdir, error);
             return nil;
         }
-    }
-    if (!isdir) {
+    } else if (!isdir) {
         return nil;
     }
     return dotdir;
