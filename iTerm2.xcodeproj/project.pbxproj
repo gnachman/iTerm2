@@ -2971,6 +2971,7 @@
 		A6A4B2BB2426C02800184EAC /* iTermPresetKeyMappings.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A4B2B92426C02800184EAC /* iTermPresetKeyMappings.h */; };
 		A6A4B2BC2426C02800184EAC /* iTermPresetKeyMappings.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A4B2BA2426C02800184EAC /* iTermPresetKeyMappings.m */; };
 		A6A5991D1887C63700CB4209 /* ToolCommandHistoryView.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A5991B1887C63700CB4209 /* ToolCommandHistoryView.h */; };
+		A6A5995B25930F8F0041172E /* TextViewWrapper.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D44218B1290B34500891504 /* TextViewWrapper.m */; };
 		A6A64E552508A9E10040490B /* iTermSnippetsMenuController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A64E532508A9E10040490B /* iTermSnippetsMenuController.h */; };
 		A6A64E562508A9E10040490B /* iTermSnippetsMenuController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A64E542508A9E10040490B /* iTermSnippetsMenuController.m */; };
 		A6A64E592508AF650040490B /* iTermActionsMenuController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A64E572508AF650040490B /* iTermActionsMenuController.h */; };
@@ -3264,7 +3265,6 @@
 		A6C762E11B45C52B00E3C992 /* PTYWindow.m in Sources */ = {isa = PBXBuildFile; fileRef = F56B230B03A1B36701A8A066 /* PTYWindow.m */; };
 		A6C762E21B45C52B00E3C992 /* ScreenChar.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D36155412CBF33E00803EA9 /* ScreenChar.m */; };
 		A6C762E41B45C52B00E3C992 /* TaskNotifier.m in Sources */ = {isa = PBXBuildFile; fileRef = A67E0ACF186E4B71009B2B68 /* TaskNotifier.m */; };
-		A6C762E51B45C52B00E3C992 /* TextViewWrapper.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D44218B1290B34500891504 /* TextViewWrapper.m */; };
 		A6C762E61B45C52B00E3C992 /* VT100Grid.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D8B8A131806038F00C2DC25 /* VT100Grid.m */; };
 		A6C762E71B45C52B00E3C992 /* VT100GridTypes.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DD39ACE180B7884004E56D5 /* VT100GridTypes.m */; };
 		A6C762E81B45C52B00E3C992 /* VT100LineInfo.m in Sources */ = {isa = PBXBuildFile; fileRef = A63F409E183F3AF5003A6A6D /* VT100LineInfo.m */; };
@@ -14276,6 +14276,7 @@
 				A6556EAA1FCB42E0000CC89C /* iTermCharacterSource.m in Sources */,
 				53D0FD4E237DC30F00DAFA8A /* NSIndexSet+iTerm.m in Sources */,
 				A629F59C23AFF4D400C2F16B /* iTermShellIntegrationPanel.m in Sources */,
+				A6A5995B25930F8F0041172E /* TextViewWrapper.m in Sources */,
 				A639359A210401C700A16D1C /* iTermStatusBarMemoryUtilizationComponent.m in Sources */,
 				A69CCB1D211BF4FF008ADA71 /* iTermRecordingCodec.m in Sources */,
 				A65429B020C492F000CE71B1 /* iTermParameterPanelWindowController.m in Sources */,
@@ -14663,7 +14664,6 @@
 				A6FEA2641CF0F33300376F28 /* iTermModifierRemapper.m in Sources */,
 				A6C762B01B45C52B00E3C992 /* NSColor+Scripting.m in Sources */,
 				A6C762D31B45C52B00E3C992 /* LineBlock.mm in Sources */,
-				A6C762E51B45C52B00E3C992 /* TextViewWrapper.m in Sources */,
 				A6C762F41B45C52B00E3C992 /* FakeWindow.m in Sources */,
 				A6C7632B1B45C52B00E3C992 /* SmartMatch.m in Sources */,
 				A6C763CB1B45C52B00E3C992 /* VT100TmuxParser.m in Sources */,

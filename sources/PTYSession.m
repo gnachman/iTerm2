@@ -4436,13 +4436,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (BOOL)shouldDrawBackgroundImageManually {
-    if (@available(macOS 10.14, *)) {
-        return !iTermTextIsMonochrome();
-    }
-    if ([self effectiveBackgroundImage] == nil) {
-        return YES;
-    }
-    return YES;
+    return !iTermTextIsMonochrome();
 }
 
 - (void)updateViewBackgroundImage {
@@ -8400,11 +8394,15 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 // image. If there is no image and this flag is set then the background color is drawn instead. This
 // way SessionView and TextViewWrapper don't have to worry about whether a background image is
 // present.
-- (void)textViewDrawBackgroundImageInView:(NSView *)view
+//
+// The only reason this still exists is because when subpixel antialiasing is enabled we can't
+// draw text on a clear background over a background image. The background image needs to be drawn
+// to the same view and then the text can be properly composited over it.
+- (BOOL)textViewDrawBackgroundImageInView:(NSView *)view
                                  viewRect:(NSRect)dirtyRect
-                   blendDefaultBackground:(BOOL)blendDefaultBackground {
+                   blendDefaultBackground:(BOOL)blendDefaultBackground NS_DEPRECATED_MAC(10_0, 10_16) {
     if (!self.shouldDrawBackgroundImageManually) {
-        return;
+        return NO;
     }
     if (!_backgroundDrawingHelper) {
         _backgroundDrawingHelper = [[iTermBackgroundDrawingHelper alloc] init];
@@ -8414,7 +8412,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         NSRect contentRect = self.view.contentRect;
         if (contentRect.size.width == 0 ||
             contentRect.size.height == 0) {
-            return;
+            return NO;
         }
         [_backgroundDrawingHelper drawBackgroundImageInView:view
                                                   container:self.view
@@ -8440,6 +8438,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                                      blendDefaultBackground:blendDefaultBackground
                                                        flip:YES];
     }
+    return YES;
 }
 
 - (CGRect)textViewRelativeFrame {
@@ -12049,15 +12048,6 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 - (BOOL)sessionViewIsVisible {
     return YES;
-}
-
-- (void)sessionViewDrawBackgroundImageInView:(NSView *)view
-                                    viewRect:(NSRect)rect
-                      blendDefaultBackground:(BOOL)blendDefaultBackground {
-    [self textViewDrawBackgroundImageInView:view
-                                   viewRect:rect
-                     blendDefaultBackground:blendDefaultBackground];
-
 }
 
 - (void)sessionViewDraggingExited:(id<NSDraggingInfo>)sender {

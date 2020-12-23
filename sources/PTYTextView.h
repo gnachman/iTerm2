@@ -72,7 +72,7 @@ typedef NS_ENUM(NSInteger, PTYCharType) {
 - (void)paste:(id)sender;
 - (void)pasteOptions:(id)sender;
 - (void)textViewFontDidChange;
-- (void)textViewDrawBackgroundImageInView:(NSView *)view
+- (BOOL)textViewDrawBackgroundImageInView:(NSView *)view
                                  viewRect:(NSRect)rect
                    blendDefaultBackground:(BOOL)blendDefaultBackground;
 - (BOOL)textViewHasBackgroundImage;

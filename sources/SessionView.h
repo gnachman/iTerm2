@@ -70,11 +70,6 @@ extern NSString *const SessionViewWasSelectedForInspectionNotification;
 // Is this this view part of a visible tab?
 - (BOOL)sessionViewIsVisible;
 
-// Requests to draw part of the background image/color.
-- (void)sessionViewDrawBackgroundImageInView:(NSView *)view
-                                    viewRect:(NSRect)rect
-                      blendDefaultBackground:(BOOL)blendDefaultBackground;
-
 // Drag entered this view.
 - (NSDragOperation)sessionViewDraggingEntered:(id<NSDraggingInfo>)sender;
 - (void)sessionViewDraggingExited:(id<NSDraggingInfo>)sender;

@@ -294,9 +294,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
 }
 
 - (void)setImage:(iTermImageWrapper *)image {
-    if (image) {
-        _imageView.image = image;
-    }
+    _imageView.image = image;
     [self updateImageAndBackgroundViewVisibility];
 }
 
@@ -1097,12 +1095,6 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     }
 }
 
-- (void)drawBackgroundInRect:(NSRect)rect {
-    [_delegate sessionViewDrawBackgroundImageInView:self
-                                           viewRect:rect
-                             blendDefaultBackground:YES];
-}
-
 - (NSColor *)backgroundColorForDecorativeSubviews {
     return [[iTermTheme sharedInstance] backgroundColorForDecorativeSubviewsInSessionWithTabColor:self.tabColor
                                                                               effectiveAppearance:self.effectiveAppearance
@@ -1110,64 +1102,6 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
                                                                                  isFirstResponder:[_delegate sessionViewTerminalIsFirstResponder]
                                                                                       dimOnlyText:[_delegate sessionViewShouldDimOnlyText]
                                                                             adjustedDimmingAmount:[self adjustedDimmingAmount]];
-}
-
-- (void)drawRect:(NSRect)dirtyRect {
-    if (@available(macOS 10.14, *)) {
-        return;
-    }
-    // Fill in background color in the area around a scrollview if it's smaller
-    // than the session view.
-    [super drawRect:dirtyRect];
-    if (_useMetal && _metalView.alphaValue == 1) {
-        [self drawAroundFrame:_metalView.frame dirtyRect:dirtyRect];
-    } else {
-        NSRect frame = self.scrollview.frame;
-        if (@available(macOS 10.14, *)) {
-            // work around issue 7101. Draw a window background colored area under the legacy scroller.
-            if (_scrollview.isLegacyScroller &&
-                ![iTermPreferences boolForKey:kPreferenceKeyHideScrollbar]) {
-                frame.size.width -= 15;
-            }
-        }
-        [self drawAroundFrame:frame dirtyRect:dirtyRect];
-    }
-    // 10.13 path: work around issue 6974
-    if (_useMetal &&
-        _scrollview.isLegacyScroller &&
-        ![iTermPreferences boolForKey:kPreferenceKeyHideScrollbar] &&
-        [_scrollview.effectiveAppearance.name isEqualToString:NSAppearanceNameVibrantDark]) {
-        [[NSColor colorWithWhite:20.0 / 255.0 alpha:1] set];
-        NSRectFill(NSMakeRect(self.frame.size.width - 15, 0, self.frame.size.height, self.frame.size.height));
-    }
-}
-
-- (void)drawAroundFrame:(NSRect)svFrame dirtyRect:(NSRect)dirtyRect {
-    // left
-    if (svFrame.origin.x > 0) {
-        [self drawBackgroundInRect:NSMakeRect(0, 0, svFrame.origin.x, self.frame.size.height)];
-    }
-
-    // right
-    if (svFrame.size.width < self.frame.size.width) {
-        double widthDiff = self.frame.size.width - svFrame.size.width;
-        [self drawBackgroundInRect:NSMakeRect(self.frame.size.width - widthDiff,
-                                              0,
-                                              widthDiff,
-                                              self.frame.size.height)];
-    }
-    // bottom
-    if (svFrame.origin.y != 0) {
-        [self drawBackgroundInRect:NSMakeRect(0, 0, self.frame.size.width, svFrame.origin.y)];
-    }
-
-    // top
-    if (NSMaxY(svFrame) < self.frame.size.height) {
-        [self drawBackgroundInRect:NSMakeRect(dirtyRect.origin.x,
-                                              NSMaxY(svFrame),
-                                              dirtyRect.size.width,
-                                              self.frame.size.height - NSMaxY(svFrame))];
-    }
 }
 
 - (NSEdgeInsets)extraMargins {
