@@ -276,21 +276,18 @@ static NSTimeInterval DelayInGifProperties(NSDictionary *gifProperties) {
     [coder encodeObject:self.delays forKey:@"delays"];
     [coder encodeSize:self.size forKey:@"size"];
     [coder encodeObject:self.images forKey:@"images"];
-    if (coder.error) {
-        XLog(@"Failed to encode image: %@", coder.error);
-    }
 }
 
 - (nullable instancetype)initWithCoder:(nonnull NSCoder *)coder {
-    _delays = [coder decodeObjectOfClasses:[NSSet setWithArray:@[[NSMutableArray class], [NSNumber class]]] forKey:@"delays"];
-    _size = [coder decodeSizeForKey:@"size"];
-    _images = [coder decodeObjectOfClasses:[NSSet setWithArray:@[[NSMutableArray class], [NSImage class]]] forKey:@"images"];
-    if (coder.error) {
-        XLog(@"Failed to decode image: %@", coder.error);
+    @try {
+        _delays = [coder decodeObjectOfClasses:[NSSet setWithArray:@[[NSMutableArray class], [NSNumber class]]] forKey:@"delays"];
+        _size = [coder decodeSizeForKey:@"size"];
+        _images = [coder decodeObjectOfClasses:[NSSet setWithArray:@[[NSMutableArray class], [NSImage class]]] forKey:@"images"];
+    } @catch (NSException * exception) {
+        XLog(@"Failed to decode image: %@", exception);
         return nil;
-    } else {
-        return self;
     }
+    return self;
 }
 
 @end
