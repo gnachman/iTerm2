@@ -11,6 +11,7 @@
 #import "iTermImageDecoderDriver.h"
 #import "NSData+iTerm.h"
 #import "NSImage+iTerm.h"
+#import "iTermXpcConnectionHelper.h"
 
 static const CGFloat kMaxDimension = 10000;
 
@@ -80,14 +81,7 @@ static NSTimeInterval DelayInGifProperties(NSDictionary *gifProperties) {
     NSLog(@"** WARNING: Decompressing image in-process **");
     return [[iTermImage alloc] initWithData:compressedData];
 #else
-    iTermImageDecoderDriver *driver = [[iTermImageDecoderDriver alloc] init];
-    NSData *jsonData = [driver jsonForCompressedImageData:compressedData
-                                                     type:@"image/*"];
-    if (jsonData) {
-        return [[iTermImage alloc] initWithJson:jsonData];
-    } else {
-        return nil;
-    }
+    return [iTermXpcConnectionHelper imageFromData:compressedData];
 #endif
 }
 
@@ -96,6 +90,7 @@ static NSTimeInterval DelayInGifProperties(NSDictionary *gifProperties) {
 }
 
 - (instancetype)initWithSixelData:(NSData *)sixel {
+#warning TODO decode in XPC service
     iTermImageDecoderDriver *driver = [[iTermImageDecoderDriver alloc] init];
     NSData *jsonData = [driver jsonForCompressedImageData:sixel
                                                      type:@"image/x-sixel"];
@@ -287,10 +282,9 @@ static NSTimeInterval DelayInGifProperties(NSDictionary *gifProperties) {
 }
 
 - (nullable instancetype)initWithCoder:(nonnull NSCoder *)coder {
-#warning TODO: old OS version decoding
-    _delays = [[coder decodeArrayOfObjectsOfClass:[NSNumber class] forKey:@"delays"] mutableCopy];
+    _delays = [coder decodeObjectOfClasses:[NSSet setWithArray:@[[NSMutableArray class], [NSNumber class]]] forKey:@"delays"];
     _size = [coder decodeSizeForKey:@"size"];
-    _images = [[coder decodeArrayOfObjectsOfClass:[NSImage class] forKey:@"images"] mutableCopy];
+    _images = [coder decodeObjectOfClasses:[NSSet setWithArray:@[[NSMutableArray class], [NSImage class]]] forKey:@"images"];
     if (coder.error) {
         XLog(@"Failed to decode image: %@", coder.error);
         return nil;
