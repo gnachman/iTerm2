@@ -7,6 +7,7 @@
 
 #import <Foundation/Foundation.h>
 #import "iTerm2SandboxedWorker.h"
+#include <sandbox.h>
 
 @interface ServiceDelegate : NSObject <NSXPCListenerDelegate>
 @end
@@ -35,6 +36,12 @@
 
 int main(int argc, const char *argv[])
 {
+    char *errorbuf;
+    int res = sandbox_init(kSBXProfilePureComputation, SANDBOX_NAMED, &errorbuf);
+    if (res || errorbuf) {
+        // ERROR
+        return -1;
+    }
     // Create the delegate for the service.
     ServiceDelegate *delegate = [ServiceDelegate new];
     
