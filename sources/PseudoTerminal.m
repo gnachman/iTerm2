@@ -1522,6 +1522,21 @@ ITERM_WEAKLY_REFERENCEABLE
 - (NSColor *)terminalWindowDecorationControlColor {
     iTermPreferencesTabStyle preferredStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
     if (self.shouldUseMinimalStyle) {
+        if ([iTermAdvancedSettingsModel minimalSplitPaneDividerProminence] == 0 &&
+            ![iTermPreferences boolForKey:kPreferenceKeyDimOnlyText] &&
+            [iTermPreferences boolForKey:kPreferenceKeyDimInactiveSplitPanes]) {
+            // Use the dimmed background color to keep the divider invisible. Issue 9327.
+            PTYSession *currentSession = [self currentSession];
+            NSArray<NSColor *> *candidates = [[self.allSessions mapWithBlock:^NSColor *(PTYSession *session) {
+                if (session == currentSession) {
+                    return nil;
+                }
+                return [session processedBackgroundColor];
+            }] uniq];
+            if (candidates.count == 1) {
+                return candidates[0];
+            }
+        }
         NSColor *color = [self terminalWindowDecorationBackgroundColor];
         const CGFloat perceivedBrightness = [color perceivedBrightness];
         const CGFloat target = perceivedBrightness < 0.5 ? 1 : 0;
