@@ -12,10 +12,16 @@
 @interface ServiceDelegate : NSObject <NSXPCListenerDelegate>
 @end
 
+static BOOL sandboxSuccessful;
+
 @implementation ServiceDelegate
 
 - (BOOL)listener:(NSXPCListener *)listener shouldAcceptNewConnection:(NSXPCConnection *)newConnection {
     // This method is where the NSXPCListener configures, accepts, and resumes a new incoming NSXPCConnection.
+    
+    if (!sandboxSuccessful) {
+        return NO;
+    }
     
     // Configure the connection.
     // First, set the interface that the exported object implements.
@@ -40,10 +46,11 @@ int main(int argc, const char *argv[])
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
     int res = sandbox_init(kSBXProfilePureComputation, SANDBOX_NAMED, &errorbuf);
+    if (errorbuf) {
+        sandbox_free_error(errorbuf);
 #pragma clang diagnostic pop
-    if (res || errorbuf) {
-        // ERROR
-        return -1;
+    } else if (!res) {
+        sandboxSuccessful = YES;
     }
     // Create the delegate for the service.
     ServiceDelegate *delegate = [ServiceDelegate new];
