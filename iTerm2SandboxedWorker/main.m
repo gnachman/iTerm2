@@ -45,7 +45,7 @@ int main(int argc, const char *argv[])
     char *errorbuf;
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
-    int res = sandbox_init(kSBXProfilePureComputation, SANDBOX_NAMED, &errorbuf);
+    int res = sandbox_init(kSBXProfileNoWrite, SANDBOX_NAMED, &errorbuf);
     if (errorbuf) {
         sandbox_free_error(errorbuf);
 #pragma clang diagnostic pop
