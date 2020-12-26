@@ -126,14 +126,14 @@ int main(int argc, const char * argv[]) {
             [serializableImage.images addObject:image];
         }
 
-        syslog(LOG_DEBUG, "converting json");
+        syslog(LOG_DEBUG, "encoding");
         NSKeyedArchiver *archiver = [[NSKeyedArchiver alloc] init];
         [archiver encodeObject:serializableImage forKey:@"image"];
         [archiver finishEncoding];
-        NSData *jsonValue =  archiver.encodedData;
+        NSData *encodedData =  archiver.encodedData;
         syslog(LOG_DEBUG, "writing data out");
         fileHandle = [[NSFileHandle alloc] initWithFileDescriptor:1];
-        [fileHandle writeData:jsonValue];
+        [fileHandle writeData:encodedData];
         syslog(LOG_DEBUG, "done");
     }
     return 0;
