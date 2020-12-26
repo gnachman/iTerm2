@@ -149,18 +149,22 @@ static NSTimeInterval DelayInGifProperties(NSDictionary *gifProperties) {
             }
             if (isGIF) {
                 double totalDelay = 0;
+                NSBitmapImageRep *bitmapImageRep = (NSBitmapImageRep *)image.representations.firstObject;
+                if (![bitmapImageRep isKindOfClass:[NSBitmapImageRep class]]) {
+                    return nil;
+                }
                 for (size_t i = 0; i < count; ++i) {
                     CGImageRef imageRef = CGImageSourceCreateImageAtIndex(source, i, NULL);
-                    NSImage *image = [[NSImage alloc] initWithCGImage:imageRef
-                                                                 size:NSMakeSize(CGImageGetWidth(imageRef),
-                                                                                 CGImageGetHeight(imageRef))];
-                    if (!image) {
+                    [bitmapImageRep setProperty:NSImageCurrentFrame withValue:[NSNumber numberWithUnsignedInt:i]];
+                    NSData *repData = [bitmapImageRep representationUsingType:NSBitmapImageFileTypePNG properties:@{}];
+                    NSImage *frame = [[NSImage alloc] initWithData:repData];
+                    if (!frame) {
                         if (imageRef) {
                             CFRelease(imageRef);
                         }
                         return nil;
                     }
-                    [_images addObject:image];
+                    [_images addObject:frame];
                     CFRelease(imageRef);
                     NSTimeInterval delay = DelayInGifProperties(frameProperties[i]);
                     totalDelay += delay;
