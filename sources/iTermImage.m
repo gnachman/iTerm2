@@ -133,6 +133,7 @@ static const CGFloat kMaxDimension = 10000;
 
 - (instancetype)initWithJson:(NSData *)json {
     DLog(@"Initialize iTermImage");
+#warning TODO: use initWithCoder instead
     NSDictionary *dict = [NSJSONSerialization JSONObjectWithData:json options:0 error:nil];
     if (!dict) {
         DLog(@"nil json");
