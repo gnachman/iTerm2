@@ -81,7 +81,19 @@ static NSTimeInterval DelayInGifProperties(NSDictionary *gifProperties) {
     NSLog(@"** WARNING: Decompressing image in-process **");
     return [[iTermImage alloc] initWithData:compressedData];
 #else
-    return [iTermXpcConnectionHelper imageFromData:compressedData];
+    iTermImage *imageFromXpc = [iTermXpcConnectionHelper imageFromData:compressedData];
+    if (imageFromXpc) {
+        return imageFromXpc;
+    } else {
+        iTermImageDecoderDriver *driver = [[iTermImageDecoderDriver alloc] init];
+        NSData *jsonData = [driver jsonForCompressedImageData:compressedData
+                                                         type:@"image/*"];
+        if (jsonData) {
+            return [[iTermImage alloc] initWithJson:jsonData];
+        } else {
+            return nil;
+        }
+    }
 #endif
 }
 
@@ -90,7 +102,6 @@ static NSTimeInterval DelayInGifProperties(NSDictionary *gifProperties) {
 }
 
 - (instancetype)initWithSixelData:(NSData *)sixel {
-#warning TODO decode in XPC service
     iTermImageDecoderDriver *driver = [[iTermImageDecoderDriver alloc] init];
     NSData *jsonData = [driver jsonForCompressedImageData:sixel
                                                      type:@"image/x-sixel"];
@@ -148,8 +159,9 @@ static NSTimeInterval DelayInGifProperties(NSDictionary *gifProperties) {
                 }
             }
             if (isGIF) {
+                CFRelease(source);
                 double totalDelay = 0;
-                NSBitmapImageRep *bitmapImageRep = (NSBitmapImageRep *)image.representations.firstObject;
+                NSBitmapImageRep *bitmapImageRep = (NSBitmapImageRep *)rep;
                 if (![bitmapImageRep isKindOfClass:[NSBitmapImageRep class]]) {
                     return nil;
                 }
@@ -168,9 +180,14 @@ static NSTimeInterval DelayInGifProperties(NSDictionary *gifProperties) {
             }
         }
         if (!isGIF) {
+            CFRelease(source);
+#if !DECODE_IMAGES_IN_PROCESS
+            if ([rep isKindOfClass:[NSPDFImageRep class]]) {
+                return nil;
+            }
+#endif
             [_images addObject:image];
         }
-        CFRelease(source);
     }
     return self;
 }
