@@ -142,7 +142,7 @@ static const CGFloat kMaxDimension = 10000;
 }
 
 - (void)encodeWithCoder:(nonnull NSCoder *)coder {
-    DLog(@"The main app is trying to encode an iTermImage");
+    ELog(@"The main app is trying to encode an iTermImage");
 }
 
 - (nullable instancetype)initWithCoder:(nonnull NSCoder *)coder {
