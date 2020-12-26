@@ -278,6 +278,11 @@ static const CGFloat kMaxDimension = 10000;
     @try {
         _delays = [coder decodeObjectOfClasses:[NSSet setWithArray:@[[NSMutableArray class], [NSNumber class]]] forKey:@"delays"];
         _size = [coder decodeSizeForKey:@"size"];
+        if (_size.width <= 0 || _size.width >= kMaxDimension ||
+            _size.height <= 0 || _size.height >= kMaxDimension) {
+            DLog(@"Bogus size %@", NSStringFromSize(_size));
+            return nil;
+        }
         _images = [NSMutableArray new];
         NSMutableArray<NSData *> *imageDatas = [coder decodeObjectOfClasses:[NSSet setWithArray:@[[NSMutableArray class], [NSData class]]] forKey:@"images"];
         for (NSData *imageData in imageDatas) {
@@ -295,6 +300,10 @@ static const CGFloat kMaxDimension = 10000;
                 return nil;
             }
             [_images addObject:image];
+        }
+        if ((_delays.count != 0 ||  _images.count > 1) && _delays.count != _images.count) {
+            DLog(@"delays.count=%@, images.count=%@", @(_delays.count), @(_images.count));
+            return nil;
         }
     } @catch (NSException * exception) {
         XLog(@"Failed to decode image: %@", exception);
