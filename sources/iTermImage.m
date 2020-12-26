@@ -31,36 +31,6 @@ static const CGFloat kMaxDimension = 10000;
 @property(nonatomic, strong) NSMutableArray<NSImage *> *images;
 @end
 
-static NSDictionary *GIFProperties(CGImageSourceRef source, size_t i) {
-    CFDictionaryRef const properties = CGImageSourceCopyPropertiesAtIndex(source, i, NULL);
-    if (properties) {
-        NSDictionary *gifProperties = (NSDictionary *)CFDictionaryGetValue(properties,
-                                                                           kCGImagePropertyGIFDictionary);
-        gifProperties = [gifProperties copy];
-        CFRelease(properties);
-        return gifProperties;
-    } else {
-        return nil;
-    }
-}
-
-static NSTimeInterval DelayInGifProperties(NSDictionary *gifProperties) {
-    NSTimeInterval delay = 0.01;
-    if (gifProperties) {
-        NSNumber *number = (id)CFDictionaryGetValue((CFDictionaryRef)gifProperties,
-                                                    kCGImagePropertyGIFUnclampedDelayTime);
-        if (number == NULL || [number doubleValue] == 0) {
-            number = (id)CFDictionaryGetValue((CFDictionaryRef)gifProperties,
-                                              kCGImagePropertyGIFDelayTime);
-        }
-        if ([number doubleValue] > 0) {
-            delay = number.doubleValue;
-        }
-    }
-
-    return delay;
-}
-
 @implementation iTermImage
 
 + (instancetype)imageWithNativeImage:(NSImage *)nativeImage {
@@ -125,9 +95,6 @@ static NSTimeInterval DelayInGifProperties(NSDictionary *gifProperties) {
     self = [self init];
     if (self) {
         NSImage *image = [[NSImage alloc] initWithData:data];
-        CGImageSourceRef source = CGImageSourceCreateWithData((CFDataRef)data,
-                                                              (CFDictionaryRef)@{});
-        size_t count = CGImageSourceGetCount(source);
         NSImageRep *rep = [[image representations] firstObject];
         NSSize imageSize = NSMakeSize(rep.pixelsWide, rep.pixelsHigh);
 
@@ -136,51 +103,35 @@ static NSTimeInterval DelayInGifProperties(NSDictionary *gifProperties) {
             if (image.size.width != 0 && image.size.height != 0) {
                 imageSize = image.size;
             } else {
-                if (source) {
-                    CFRelease(source);
-                }
                 return nil;
             }
         }
         _size = imageSize;
 
         BOOL isGIF = NO;
-        if (count > 1) {
-            NSMutableArray *frameProperties = [NSMutableArray array];
-            isGIF = YES;
-            for (size_t i = 0; i < count; ++i) {
-                NSDictionary *gifProperties = GIFProperties(source, i);
-                // TIFF and PDF files may have multiple pages, so make sure it's an animated GIF.
-                if (gifProperties) {
-                    [frameProperties addObject:gifProperties];
-                } else {
-                    isGIF = NO;
-                    break;
-                }
-            }
-            if (isGIF) {
-                CFRelease(source);
-                double totalDelay = 0;
-                NSBitmapImageRep *bitmapImageRep = (NSBitmapImageRep *)rep;
-                if (![bitmapImageRep isKindOfClass:[NSBitmapImageRep class]]) {
-                    return nil;
-                }
-                for (size_t i = 0; i < count; ++i) {
-                    [bitmapImageRep setProperty:NSImageCurrentFrame withValue:[NSNumber numberWithUnsignedInt:i]];
-                    NSData *repData = [bitmapImageRep representationUsingType:NSBitmapImageFileTypePNG properties:@{}];
-                    NSImage *frame = [[NSImage alloc] initWithData:repData];
-                    if (!frame) {
-                        return nil;
-                    }
-                    [_images addObject:frame];
-                    NSTimeInterval delay = DelayInGifProperties(frameProperties[i]);
-                    totalDelay += delay;
-                    [_delays addObject:@(totalDelay)];
-                }
+        NSNumber *frameCount;
+        NSBitmapImageRep *bitmapImageRep = (NSBitmapImageRep *)rep;
+        if ([bitmapImageRep isKindOfClass:[NSBitmapImageRep class]]) {
+            frameCount = [bitmapImageRep valueForProperty:NSImageFrameCount];
+            if (frameCount != nil) {
+                isGIF = YES;
             }
         }
-        if (!isGIF) {
-            CFRelease(source);
+        if (isGIF) {
+            double totalDelay = 0;
+            for (size_t i = 0; i < frameCount.unsignedIntValue; ++i) {
+                [bitmapImageRep setProperty:NSImageCurrentFrame withValue:[NSNumber numberWithUnsignedInt:i]];
+                NSData *repData = [bitmapImageRep representationUsingType:NSBitmapImageFileTypePNG properties:@{}];
+                NSImage *frame = [[NSImage alloc] initWithData:repData];
+                if (!frame) {
+                    return nil;
+                }
+                [_images addObject:frame];
+                NSTimeInterval delay = [((NSNumber *)[bitmapImageRep valueForProperty:NSImageCurrentFrameDuration]) doubleValue];
+                totalDelay += delay;
+                [_delays addObject:@(totalDelay)];
+            }
+        } else {
 #if !DECODE_IMAGES_IN_PROCESS
             if ([rep isKindOfClass:[NSPDFImageRep class]]) {
                 return nil;
