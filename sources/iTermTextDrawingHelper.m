@@ -244,7 +244,6 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
                         rectCount:(NSInteger)rectCount {
     DLog(@"begin drawRect:%@ in view %@", [NSValue valueWithRect:rect], _delegate);
     iTermPreciseTimerSetEnabled(YES);
-
     if (_debug) {
         [[NSColor redColor] set];
         NSRectFill(rect);
@@ -254,6 +253,10 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
     // bounding rect that contains them all. Luckily, we can get the list of the "real" dirty rects
     // and they're guaranteed to be disjoint. So draw each of them individually.
     [self startTiming];
+
+    // Issue 9352 - you have to clear the surface or else you can get artifacts.
+    [[NSColor clearColor] set];
+    NSRectFillUsingOperation(rect, NSCompositingOperationCopy);
 
     const int haloWidth = 4;
     NSInteger yLimit = _numberOfLines;
@@ -296,42 +299,6 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
         }
     }
 
-    // Make sure to draw above and below the region that we plan to draw text in to avoid artifacts
-    // as seen in issue 5665. This will cause double-draws on the top and bottom margin, but that's
-    // small enough that it probably won't matter.
-    {
-        NSColor *color;
-        if (_hasBackgroundImage) {
-            color = [NSColor clearColor];
-        } else {
-            color = [self.delegate drawingHelperColorForCode:ALTSEM_DEFAULT
-                                                       green:0
-                                                        blue:0
-                                                   colorMode:ColorModeAlternate
-                                                        bold:NO
-                                                       faint:NO
-                                                isBackground:YES];
-            const CGFloat alpha = iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(_hasBackgroundImage,
-                                                                                            !iTermTextIsMonochrome(),
-                                                                                            _reverseVideo,
-                                                                                            _transparencyAlpha,
-                                                                                            _blend);
-            color = [color colorWithAlphaComponent:alpha];
-        }
-        [color set];
-        const CGFloat minDrawnY = boundingCoordRange.start.y * _cellSize.height;
-        CGFloat height = minDrawnY - NSMinY(rect);
-        if (height > 0) {
-            NSRectFillUsingOperation(NSMakeRect(NSMinX(rect), NSMinY(rect), NSWidth(rect), height),
-                                     NSCompositingOperationSourceOver);
-        }
-        const CGFloat maxDrawnY = (boundingCoordRange.end.y + 1) * _cellSize.height;
-        height = NSMaxY(rect) - maxDrawnY;
-        if (height > 0) {
-            NSRectFillUsingOperation(NSMakeRect(NSMinX(rect), maxDrawnY, NSWidth(rect), height),
-                                     NSCompositingOperationSourceOver);
-        }
-    }
     [self drawRanges:ranges count:numRowsInRect
               origin:boundingCoordRange.start
         boundingRect:[self rectForCoordRange:boundingCoordRange]
