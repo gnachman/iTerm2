@@ -45,7 +45,7 @@ static const CGFloat kMaxDimension = 10000;
     if (compressedData.length > 2 &&
         bytes[0] == 27 &&
         bytes[1] == 'P') {
-        return [[iTermImage alloc] initWithSixelData:compressedData];
+        return [self imageWithSixelData:compressedData];
     }
 #if DECODE_IMAGES_IN_PROCESS
     NSLog(@"** WARNING: Decompressing image in-process **");
@@ -68,17 +68,7 @@ static const CGFloat kMaxDimension = 10000;
 }
 
 + (instancetype)imageWithSixelData:(NSData *)sixelData {
-    return [[self alloc] initWithSixelData:sixelData];
-}
-
-- (instancetype)initWithSixelData:(NSData *)sixel {
-    iTermImageDecoderDriver *driver = [[iTermImageDecoderDriver alloc] init];
-    NSData *jsonData = [driver jsonForCompressedImageData:sixel
-                                                     type:@"image/x-sixel"];
-    if (!jsonData) {
-        return nil;
-    }
-    return [[iTermImage alloc] initWithJson:jsonData];
+    return [iTermXpcConnectionHelper imageFromSixelData:sixelData];
 }
 
 - (instancetype)init {

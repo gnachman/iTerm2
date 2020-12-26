@@ -24,5 +24,6 @@
  */
 
 - (void)decodeImageFromData:(NSData * _Nonnull)imageData withReply:(void (^_Nonnull)(iTermImage * _Nullable))reply;
+- (void)decodeImageFromSixelData:(NSData * _Nonnull)imageData withReply:(void (^_Nonnull)(iTermImage * _Nullable))reply;
     
 @end

@@ -1425,6 +1425,8 @@
 		53FF984B20967806008688D7 /* iTermMetalDeviceProvider.h in Headers */ = {isa = PBXBuildFile; fileRef = 53FF984920967805008688D7 /* iTermMetalDeviceProvider.h */; };
 		53FF984C20967806008688D7 /* iTermMetalDeviceProvider.m in Sources */ = {isa = PBXBuildFile; fileRef = 53FF984A20967805008688D7 /* iTermMetalDeviceProvider.m */; };
 		5ECE005F1454E59B004861E9 /* PseudoTerminalRestorer.h in Headers */ = {isa = PBXBuildFile; fileRef = 5ECE005D1454E59B004861E9 /* PseudoTerminalRestorer.h */; };
+		756C32AD2597AC2E0047B3A9 /* iTermImage+Sixel.m in Sources */ = {isa = PBXBuildFile; fileRef = 756C32AC2597AC2E0047B3A9 /* iTermImage+Sixel.m */; };
+		756C32B72597AC8C0047B3A9 /* libsixel.a in Frameworks */ = {isa = PBXBuildFile; fileRef = A67D194E2237045C00BD0D4D /* libsixel.a */; };
 		7577E2752593B73000905402 /* libiTerm2SharedARC.a in Frameworks */ = {isa = PBXBuildFile; fileRef = A667195C1DCE36C3000CE608 /* libiTerm2SharedARC.a */; };
 		7577E2812593B78C00905402 /* libiTerm2Shared.a in Frameworks */ = {isa = PBXBuildFile; fileRef = A6C760501B45C4CF00E3C992 /* libiTerm2Shared.a */; };
 		7577E2A12593B88700905402 /* iTermXpcConnectionHelper.h in Headers */ = {isa = PBXBuildFile; fileRef = 7577E29F2593B88700905402 /* iTermXpcConnectionHelper.h */; };
@@ -1434,6 +1436,7 @@
 		759637A12593AE0700E278CC /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 759637A02593AE0700E278CC /* main.m */; };
 		759637A52593AE0700E278CC /* iTerm2SandboxedWorker.xpc in Embed XPC Services */ = {isa = PBXBuildFile; fileRef = 7596379A2593AE0700E278CC /* iTerm2SandboxedWorker.xpc */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		759637C82593AFB500E278CC /* iTerm2SandboxedWorkerProtocol.h in Headers */ = {isa = PBXBuildFile; fileRef = 7596379C2593AE0700E278CC /* iTerm2SandboxedWorkerProtocol.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		75B19C862597B310007BEB7F /* libaprutil-1.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 756C32C12597AC9C0047B3A9 /* libaprutil-1.tbd */; };
 		874206490564169600CFC3F1 /* iTermApplicationDelegate.h in Headers */ = {isa = PBXBuildFile; fileRef = 20D5CC6304E7AA0500000106 /* iTermApplicationDelegate.h */; };
 		874206530564169600CFC3F1 /* AppKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0464AB2F006CD2EC7F000001 /* AppKit.framework */; };
 		90A1E13B186F9EA4003EC3E8 /* AppleScriptTest.m in Sources */ = {isa = PBXBuildFile; fileRef = 90A1E13A186F9EA4003EC3E8 /* AppleScriptTest.m */; };
@@ -2074,7 +2077,6 @@
 		A6566750219EA46E005FE60E /* NSNumber+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A656674E219EA46E005FE60E /* NSNumber+iTerm.m */; };
 		A6566753219EA582005FE60E /* NSNull+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A6566751219EA582005FE60E /* NSNull+iTerm.h */; };
 		A6566754219EA582005FE60E /* NSNull+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A6566752219EA582005FE60E /* NSNull+iTerm.m */; };
-		A656AE4C1DBBE1CE00CE8448 /* libaprutil-1.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = A656AE4B1DBBE1CE00CE8448 /* libaprutil-1.tbd */; };
 		A656E9951F99C5FB00158128 /* iTermSubpixelModelBuilder.h in Headers */ = {isa = PBXBuildFile; fileRef = A656E9931F99C5FB00158128 /* iTermSubpixelModelBuilder.h */; };
 		A656E9961F99C60300158128 /* iTermSubpixelModelBuilder.mm in Sources */ = {isa = PBXBuildFile; fileRef = A656E9921F99C5FB00158128 /* iTermSubpixelModelBuilder.mm */; };
 		A658716A1D85E6700061CEEE /* PFMoveApplication.h in Headers */ = {isa = PBXBuildFile; fileRef = A65871681D85E6700061CEEE /* PFMoveApplication.h */; };
@@ -3948,7 +3950,6 @@
 		A6FD85311B767D6300EB9DCE /* Hamburger@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A6FD852F1B767D6300EB9DCE /* Hamburger@2x.png */; };
 		A6FD85341B768B7800EB9DCE /* BigArrow.png in Resources */ = {isa = PBXBuildFile; fileRef = A6FD85321B768B7800EB9DCE /* BigArrow.png */; };
 		A6FD85351B768B7800EB9DCE /* BigArrow@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A6FD85331B768B7800EB9DCE /* BigArrow@2x.png */; };
-		A6FE418A238A026600BBD086 /* libsixel.a in Frameworks */ = {isa = PBXBuildFile; fileRef = A67D194E2237045C00BD0D4D /* libsixel.a */; };
 		A6FE8D03209380E400B5C648 /* iTermOptionalComponentDownloadWindowController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6FE8D00209380E400B5C648 /* iTermOptionalComponentDownloadWindowController.h */; };
 		A6FE8D04209380E400B5C648 /* iTermOptionalComponentDownloadWindowController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6FE8D01209380E400B5C648 /* iTermOptionalComponentDownloadWindowController.m */; };
 		A6FE8D07209382C000B5C648 /* download@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A6FE8D05209382C000B5C648 /* download@2x.png */; };
@@ -4971,6 +4972,9 @@
 		53FF984A20967805008688D7 /* iTermMetalDeviceProvider.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermMetalDeviceProvider.m; sourceTree = "<group>"; };
 		5ECE005D1454E59B004861E9 /* PseudoTerminalRestorer.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = PseudoTerminalRestorer.h; sourceTree = "<group>"; tabWidth = 4; };
 		5ECE005E1454E59B004861E9 /* PseudoTerminalRestorer.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = PseudoTerminalRestorer.m; sourceTree = "<group>"; tabWidth = 4; };
+		756C32AB2597AC2E0047B3A9 /* iTermImage+Sixel.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "iTermImage+Sixel.h"; sourceTree = "<group>"; };
+		756C32AC2597AC2E0047B3A9 /* iTermImage+Sixel.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "iTermImage+Sixel.m"; sourceTree = "<group>"; };
+		756C32C12597AC9C0047B3A9 /* libaprutil-1.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = "libaprutil-1.tbd"; path = "Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/lib/libaprutil-1.tbd"; sourceTree = DEVELOPER_DIR; };
 		7577E2622593B4DB00905402 /* iTermImage+ImageWithData.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "iTermImage+ImageWithData.h"; sourceTree = "<group>"; };
 		7577E29F2593B88700905402 /* iTermXpcConnectionHelper.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermXpcConnectionHelper.h; sourceTree = "<group>"; };
 		7577E2A02593B88700905402 /* iTermXpcConnectionHelper.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermXpcConnectionHelper.m; sourceTree = "<group>"; };
@@ -6929,6 +6933,7 @@
 			files = (
 				7577E2812593B78C00905402 /* libiTerm2Shared.a in Frameworks */,
 				7577E2752593B73000905402 /* libiTerm2SharedARC.a in Frameworks */,
+				756C32B72597AC8C0047B3A9 /* libsixel.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -6980,8 +6985,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				A6FE418A238A026600BBD086 /* libsixel.a in Frameworks */,
-				A656AE4C1DBBE1CE00CE8448 /* libaprutil-1.tbd in Frameworks */,
+				75B19C862597B310007BEB7F /* libaprutil-1.tbd in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -8187,6 +8191,7 @@
 		1DD39AD5180B8118004E56D5 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				756C32C12597AC9C0047B3A9 /* libaprutil-1.tbd */,
 				A60EAE7C23F9CEB3007536CE /* ApplicationServices.framework */,
 				A6FB633023DE7DEB00026D52 /* SearchableComboListView.framework */,
 				A6661309225CFF5A00840E89 /* BetterFontPicker.framework */,
@@ -8534,6 +8539,8 @@
 			children = (
 				7577E2B52593CF2E00905402 /* iTerm2SandboxedWorker.entitlements */,
 				7577E2622593B4DB00905402 /* iTermImage+ImageWithData.h */,
+				756C32AB2597AC2E0047B3A9 /* iTermImage+Sixel.h */,
+				756C32AC2597AC2E0047B3A9 /* iTermImage+Sixel.m */,
 				7596379D2593AE0700E278CC /* iTerm2SandboxedWorker.h */,
 				7596379E2593AE0700E278CC /* iTerm2SandboxedWorker.m */,
 				759637A02593AE0700E278CC /* main.m */,
@@ -14015,6 +14022,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				759637A12593AE0700E278CC /* main.m in Sources */,
+				756C32AD2597AC2E0047B3A9 /* iTermImage+Sixel.m in Sources */,
 				7596379F2593AE0700E278CC /* iTerm2SandboxedWorker.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -15828,7 +15836,13 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = ThirdParty/libsixel/include;
 				INFOPLIST_FILE = iTerm2SandboxedWorker/Info.plist;
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/ThirdParty/libsixel/lib",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 10.14;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -15890,7 +15904,13 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = ThirdParty/libsixel/include;
 				INFOPLIST_FILE = iTerm2SandboxedWorker/Info.plist;
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/ThirdParty/libsixel/lib",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 10.14;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = hu.cyberbeni.iTerm2SandboxedWorker;
@@ -15951,7 +15971,13 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = ThirdParty/libsixel/include;
 				INFOPLIST_FILE = iTerm2SandboxedWorker/Info.plist;
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/ThirdParty/libsixel/lib",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 10.14;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = hu.cyberbeni.iTerm2SandboxedWorker;
@@ -16012,7 +16038,13 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = ThirdParty/libsixel/include;
 				INFOPLIST_FILE = iTerm2SandboxedWorker/Info.plist;
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/ThirdParty/libsixel/lib",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 10.14;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = hu.cyberbeni.iTerm2SandboxedWorker;
@@ -16702,9 +16734,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				HEADER_SEARCH_PATHS = ThirdParty/libsixel/include;
 				LIBRARY_SEARCH_PATHS = "$(PROJECT_DIR)/ThirdParty/libsixel/lib";
-				MACOSX_DEPLOYMENT_TARGET = 10.14;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				OTHER_CODE_SIGN_FLAGS = "--timestamp";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -17262,12 +17292,8 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				HEADER_SEARCH_PATHS = (
-					ThirdParty,
-					ThirdParty/libsixel/include,
-				);
+				HEADER_SEARCH_PATHS = ThirdParty;
 				LIBRARY_SEARCH_PATHS = "$(PROJECT_DIR)/ThirdParty/libsixel/lib";
-				MACOSX_DEPLOYMENT_TARGET = 10.14;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CODE_SIGN_FLAGS = "--timestamp";
 				OTHER_LDFLAGS = "";
@@ -17312,9 +17338,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				HEADER_SEARCH_PATHS = ThirdParty/libsixel/include;
 				LIBRARY_SEARCH_PATHS = "$(PROJECT_DIR)/ThirdParty/libsixel/lib";
-				MACOSX_DEPLOYMENT_TARGET = 10.14;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				OTHER_CODE_SIGN_FLAGS = "--timestamp";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -17358,9 +17382,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				HEADER_SEARCH_PATHS = ThirdParty/libsixel/include;
 				LIBRARY_SEARCH_PATHS = "$(PROJECT_DIR)/ThirdParty/libsixel/lib";
-				MACOSX_DEPLOYMENT_TARGET = 10.14;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				OTHER_CODE_SIGN_FLAGS = "--timestamp";
 				PRODUCT_NAME = "$(TARGET_NAME)";

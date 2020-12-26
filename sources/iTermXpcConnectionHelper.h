@@ -16,6 +16,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (instancetype)init NS_UNAVAILABLE;
 
 + (iTermImage *_Nullable)imageFromData:(NSData *)data;
++ (iTermImage *)imageFromSixelData:(NSData *)data;
 
 @end
 

@@ -33,4 +33,26 @@
     return retVal;
 }
 
++ (iTermImage *)imageFromSixelData:(NSData *)data {
+    __block iTermImage *retVal;
+#warning TODO fix service name
+    NSXPCConnection *connectionToService = [[NSXPCConnection alloc] initWithServiceName:@"hu.cyberbeni.iTerm2SandboxedWorker"];
+    if (connectionToService) {
+        __block NSLock *lock = [NSLock new];
+        [lock lock];
+        connectionToService.remoteObjectInterface = [NSXPCInterface interfaceWithProtocol:@protocol(iTerm2SandboxedWorkerProtocol)];
+        [connectionToService resume];
+        [[connectionToService remoteObjectProxyWithErrorHandler:^(NSError * _Nonnull error) {
+            XLog(@"Failed to connect to service: %@", error);
+            [lock unlock];
+        }] decodeImageFromSixelData:data withReply:^(iTermImage * _Nullable image) {
+            retVal = image;
+            [lock unlock];
+        }];
+        [lock lock];
+        [connectionToService invalidate];
+    }
+    return retVal;
+}
+
 @end
