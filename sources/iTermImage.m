@@ -116,6 +116,10 @@ static const CGFloat kMaxDimension = 10000;
             if (frameCount.intValue > 1) {
                 isGIF = YES;
             }
+        } else {
+#if !DECODE_IMAGES_IN_PROCESS
+            return nil;
+#endif
         }
         if (isGIF) {
             double totalDelay = 0;
@@ -132,11 +136,6 @@ static const CGFloat kMaxDimension = 10000;
                 [_delays addObject:@(totalDelay)];
             }
         } else {
-#if !DECODE_IMAGES_IN_PROCESS
-            if ([rep isKindOfClass:[NSPDFImageRep class]]) {
-                return nil;
-            }
-#endif
             [_images addObject:image];
         }
     }
