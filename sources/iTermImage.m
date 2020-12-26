@@ -113,14 +113,14 @@ static const CGFloat kMaxDimension = 10000;
         NSBitmapImageRep *bitmapImageRep = (NSBitmapImageRep *)rep;
         if ([bitmapImageRep isKindOfClass:[NSBitmapImageRep class]]) {
             frameCount = [bitmapImageRep valueForProperty:NSImageFrameCount];
-            if (frameCount != nil) {
+            if (frameCount.intValue > 1) {
                 isGIF = YES;
             }
         }
         if (isGIF) {
             double totalDelay = 0;
-            for (size_t i = 0; i < frameCount.unsignedIntValue; ++i) {
-                [bitmapImageRep setProperty:NSImageCurrentFrame withValue:[NSNumber numberWithUnsignedInt:i]];
+            for (int i = 0; i < frameCount.intValue; ++i) {
+                [bitmapImageRep setProperty:NSImageCurrentFrame withValue:[NSNumber numberWithInt:i]];
                 NSData *repData = [bitmapImageRep representationUsingType:NSBitmapImageFileTypePNG properties:@{}];
                 NSImage *frame = [[NSImage alloc] initWithData:repData];
                 if (!frame) {
