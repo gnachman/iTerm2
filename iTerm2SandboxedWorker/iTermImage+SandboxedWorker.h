@@ -10,6 +10,7 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+// Has to be the same class name as in the main app for NSSecureCoding.
 @interface iTermImage : NSObject <NSSecureCoding>
 
 @property(nonatomic) NSMutableArray<NSNumber *> *delays;
