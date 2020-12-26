@@ -9,7 +9,7 @@
 //
 //
 
-#import "iTermSerializableImage.h"
+#import "iTermImage+image_decoder.h"
 #import <apr-1/apr_base64.h>
 
 @interface NSData(ImageDecoder)
@@ -33,7 +33,7 @@
 
 @end
 
-@implementation iTermSerializableImage
+@implementation iTermImage
 
 - (instancetype)init {
     self = [super init];
@@ -75,28 +75,26 @@
     return storage;
 }
 
-- (NSArray<NSString *> *)imageStringArray {
-    NSMutableArray<NSString *> *result = [NSMutableArray array];
+#pragma mark - NSSecureCoding
+
++ (BOOL)supportsSecureCoding {
+    return YES;
+}
+
+- (void)encodeWithCoder:(nonnull NSCoder *)coder {
+    [coder encodeObject:self.delays forKey:@"delays"];
+    [coder encodeSize:self.size forKey:@"size"];
+    NSMutableArray<NSData *> *imageDatas = [NSMutableArray new];
     for (NSImage *image in self.images) {
-        NSData *data = [self dataForImage:image];
-        NSString *encoded = [data imageDecoder_base64String];
-        if (encoded) {
-            [result addObject:encoded];
-        }
+        NSData *imageData = [self dataForImage:image];
+        [imageDatas addObject:imageData];
     }
-    return result;
+    [coder encodeObject:imageDatas forKey:@"images"];
 }
 
-- (NSDictionary *)dictionaryValue {
-    return @{ @"delays": self.delays,
-              @"size": @[ @(self.size.width), @(self.size.height) ],
-              @"images": [self imageStringArray] };
-}
-
-- (NSData *)jsonValue {
-    return [NSJSONSerialization dataWithJSONObject:[self dictionaryValue]
-                                           options:0
-                                             error:nil];
+- (instancetype)initWithCoder:(NSCoder *)coder {
+    // This process will not have to decode any images.
+    return nil;
 }
 
 @end

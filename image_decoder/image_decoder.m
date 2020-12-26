@@ -8,7 +8,7 @@
 
 #import <Cocoa/Cocoa.h>
 #include <syslog.h>
-#import "iTermSerializableImage.h"
+#import "iTermImage+image_decoder.h"
 
 static const NSUInteger kMaxBytes = 20 * 1024 * 1024;
 
@@ -44,7 +44,7 @@ static NSTimeInterval DelayInGifProperties(NSDictionary *gifProperties) {
 int main(int argc, const char * argv[]) {
     syslog(LOG_DEBUG, "image_decoder started");
     @autoreleasepool {
-        iTermSerializableImage *serializableImage = [[iTermSerializableImage alloc] init];
+        iTermImage *serializableImage = [[iTermImage alloc] init];
         NSFileHandle *fileHandle = [[NSFileHandle alloc] initWithFileDescriptor:0];
         NSData *data = nil;
         @try {
@@ -127,7 +127,10 @@ int main(int argc, const char * argv[]) {
         }
 
         syslog(LOG_DEBUG, "converting json");
-        NSData *jsonValue = [serializableImage jsonValue];
+        NSKeyedArchiver *archiver = [[NSKeyedArchiver alloc] init];
+        [archiver encodeObject:serializableImage forKey:@"image"];
+        [archiver finishEncoding];
+        NSData *jsonValue =  archiver.encodedData;
         syslog(LOG_DEBUG, "writing data out");
         fileHandle = [[NSFileHandle alloc] initWithFileDescriptor:1];
         [fileHandle writeData:jsonValue];
