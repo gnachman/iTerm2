@@ -223,6 +223,42 @@ static const CGFloat kMaxDimension = 10000;
 
 #pragma mark - NSSecureCoding
 
+- (CGContextRef)newBitmapContextWithStorage:(NSMutableData *)data {
+    NSSize size = self.size;
+    NSInteger bytesPerRow = size.width * 4;
+    NSUInteger storageNeeded = bytesPerRow * size.height;
+    [data setLength:storageNeeded];
+    
+    CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
+    CGContextRef context = CGBitmapContextCreate((void *)data.bytes,
+                                                 size.width,
+                                                 size.height,
+                                                 8,
+                                                 bytesPerRow,
+                                                 colorSpace,
+                                                 (CGBitmapInfo)kCGImageAlphaPremultipliedLast);
+    CGColorSpaceRelease(colorSpace);
+    if (!context) {
+        return NULL;
+    }
+    
+    return context;
+}
+
+- (NSData *)dataForImage:(NSImage *)image {
+    NSMutableData *storage = [NSMutableData data];
+    NSBitmapImageRep *rep = ((NSBitmapImageRep *)image.representations.firstObject);
+    if (![rep isKindOfClass:[NSBitmapImageRep class]]) {
+        DLog(@"Only bitmap images should get to this point.");
+        return storage;
+    }
+    CGContextRef context = [self newBitmapContextWithStorage:storage];
+    CGImageRef imageToDraw = rep.CGImage;
+    CGContextDrawImage(context, NSMakeRect(0, 0, self.size.width, self.size.height), imageToDraw);
+    CGContextRelease(context);
+    return storage;
+}
+
 + (BOOL)supportsSecureCoding {
     return YES;
 }
@@ -230,14 +266,36 @@ static const CGFloat kMaxDimension = 10000;
 - (void)encodeWithCoder:(nonnull NSCoder *)coder {
     [coder encodeObject:self.delays forKey:@"delays"];
     [coder encodeSize:self.size forKey:@"size"];
-    [coder encodeObject:self.images forKey:@"images"];
+    NSMutableArray<NSData *> *imageDatas = [NSMutableArray new];
+    for (NSImage *image in self.images) {
+        NSData *imageData = [self dataForImage:image];
+        [imageDatas addObject:imageData];
+    }
+    [coder encodeObject:imageDatas forKey:@"images"];
 }
 
 - (nullable instancetype)initWithCoder:(nonnull NSCoder *)coder {
     @try {
         _delays = [coder decodeObjectOfClasses:[NSSet setWithArray:@[[NSMutableArray class], [NSNumber class]]] forKey:@"delays"];
         _size = [coder decodeSizeForKey:@"size"];
-        _images = [coder decodeObjectOfClasses:[NSSet setWithArray:@[[NSMutableArray class], [NSImage class]]] forKey:@"images"];
+        _images = [NSMutableArray new];
+        NSMutableArray<NSData *> *imageDatas = [coder decodeObjectOfClasses:[NSSet setWithArray:@[[NSMutableArray class], [NSData class]]] forKey:@"images"];
+        for (NSData *imageData in imageDatas) {
+            if (imageData.length != _size.width * _size.height * 4) {
+                return nil;
+            }
+            NSImage *image = [NSImage imageWithRawData:imageData
+                                                  size:_size
+                                         bitsPerSample:8
+                                       samplesPerPixel:4
+                                              hasAlpha:YES
+                                        colorSpaceName:NSDeviceRGBColorSpace];
+            if (!image) {
+                DLog(@"Failed to create NSImage from data");
+                return nil;
+            }
+            [_images addObject:image];
+        }
     } @catch (NSException * exception) {
         XLog(@"Failed to decode image: %@", exception);
         return nil;
