@@ -44,13 +44,6 @@ static NSTimeInterval DelayInGifProperties(NSDictionary *gifProperties) {
 int main(int argc, const char * argv[]) {
     syslog(LOG_DEBUG, "image_decoder started");
     @autoreleasepool {
-        NSString *type;
-        if (argc > 1) {
-            type = [[NSString alloc] initWithUTF8String:argv[1]];
-        } else {
-            type = @"image/*";
-        }
-
         iTermSerializableImage *serializableImage = [[iTermSerializableImage alloc] init];
         NSFileHandle *fileHandle = [[NSFileHandle alloc] initWithFileDescriptor:0];
         NSData *data = nil;

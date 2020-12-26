@@ -20,5 +20,4 @@
     reply([[iTermImage alloc] initWithSixelData:imageData]);
 }
 
-
 @end
