@@ -5,7 +5,7 @@
 //  Created by Benedek Kozma on 2020. 12. 26..
 //
 
-#import "iTermImage.h"
+#import "iTermImage+SandboxedWorker.h"
 
 NS_ASSUME_NONNULL_BEGIN
 

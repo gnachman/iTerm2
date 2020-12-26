@@ -110,12 +110,6 @@ static NSImage *ImageFromSixelData(NSData *data) {
     return image;
 }
 
-@interface iTermImage ()
-
-@property (nonatomic, readwrite) NSSize size;
-
-@end
-
 @implementation iTermImage (Sixel)
 
 - (instancetype)initWithSixelData:(NSData *)data;

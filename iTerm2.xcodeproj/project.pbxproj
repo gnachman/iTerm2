@@ -1427,8 +1427,7 @@
 		5ECE005F1454E59B004861E9 /* PseudoTerminalRestorer.h in Headers */ = {isa = PBXBuildFile; fileRef = 5ECE005D1454E59B004861E9 /* PseudoTerminalRestorer.h */; };
 		756C32AD2597AC2E0047B3A9 /* iTermImage+Sixel.m in Sources */ = {isa = PBXBuildFile; fileRef = 756C32AC2597AC2E0047B3A9 /* iTermImage+Sixel.m */; };
 		756C32B72597AC8C0047B3A9 /* libsixel.a in Frameworks */ = {isa = PBXBuildFile; fileRef = A67D194E2237045C00BD0D4D /* libsixel.a */; };
-		7577E2752593B73000905402 /* libiTerm2SharedARC.a in Frameworks */ = {isa = PBXBuildFile; fileRef = A667195C1DCE36C3000CE608 /* libiTerm2SharedARC.a */; };
-		7577E2812593B78C00905402 /* libiTerm2Shared.a in Frameworks */ = {isa = PBXBuildFile; fileRef = A6C760501B45C4CF00E3C992 /* libiTerm2Shared.a */; };
+		756DF2F42597FEB3002935A5 /* iTermImage+SandboxedWorker.m in Sources */ = {isa = PBXBuildFile; fileRef = 756DF2F32597FEB3002935A5 /* iTermImage+SandboxedWorker.m */; };
 		7577E2A12593B88700905402 /* iTermXpcConnectionHelper.h in Headers */ = {isa = PBXBuildFile; fileRef = 7577E29F2593B88700905402 /* iTermXpcConnectionHelper.h */; };
 		7577E2A22593B88700905402 /* iTermXpcConnectionHelper.m in Sources */ = {isa = PBXBuildFile; fileRef = 7577E2A02593B88700905402 /* iTermXpcConnectionHelper.m */; };
 		7581C4E120A38E0F00699F99 /* iTermHyperlinkTrigger.h in Headers */ = {isa = PBXBuildFile; fileRef = 7581C4DD20A38DF900699F99 /* iTermHyperlinkTrigger.h */; };
@@ -2406,7 +2405,7 @@
 		A673DEBF22624A90004EBF4D /* iTermCopyModeHandler.m in Sources */ = {isa = PBXBuildFile; fileRef = A673DEBD22624A90004EBF4D /* iTermCopyModeHandler.m */; };
 		A675271D213DB6E800035F2B /* NSImageView+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A675271B213DB6E800035F2B /* NSImageView+iTerm.h */; };
 		A675271E213DB6E800035F2B /* NSImageView+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A675271C213DB6E800035F2B /* NSImageView+iTerm.m */; };
-		A6755F431D728FFA00F3726C /* iTermImage.h in Headers */ = {isa = PBXBuildFile; fileRef = A6755F411D728FFA00F3726C /* iTermImage.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		A6755F431D728FFA00F3726C /* iTermImage.h in Headers */ = {isa = PBXBuildFile; fileRef = A6755F411D728FFA00F3726C /* iTermImage.h */; };
 		A6755F4C1D729A0500F3726C /* image_decoder.m in Sources */ = {isa = PBXBuildFile; fileRef = A6755F4B1D729A0500F3726C /* image_decoder.m */; };
 		A6755F541D73836B00F3726C /* iTermImage+image_decoder.m in Sources */ = {isa = PBXBuildFile; fileRef = A6755F531D73836B00F3726C /* iTermImage+image_decoder.m */; };
 		A675856024595D6C00827C25 /* iTermSquash.h in Headers */ = {isa = PBXBuildFile; fileRef = A675855E24595D6C00827C25 /* iTermSquash.h */; };
@@ -4021,26 +4020,12 @@
 			remoteGlobalIDString = 1DFA7C661923E83500DF1410;
 			remoteInfo = SSKeychain;
 		};
-		7577E27F2593B77F00905402 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 0464AB0C006CD2EC7F000001 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = A6C7603F1B45C4CF00E3C992;
-			remoteInfo = iTerm2Shared;
-		};
 		759637A32593AE0700E278CC /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 0464AB0C006CD2EC7F000001 /* Project object */;
 			proxyType = 1;
 			remoteGlobalIDString = 759637992593AE0700E278CC;
 			remoteInfo = iTerm2SandboxedWorker;
-		};
-		759637D22593B00100E278CC /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 0464AB0C006CD2EC7F000001 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = A66717851DCE36C3000CE608;
-			remoteInfo = iTerm2SharedARC;
 		};
 		A60593DD257DFB0900CACEE6 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -4974,7 +4959,8 @@
 		756C32AB2597AC2E0047B3A9 /* iTermImage+Sixel.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "iTermImage+Sixel.h"; sourceTree = "<group>"; };
 		756C32AC2597AC2E0047B3A9 /* iTermImage+Sixel.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "iTermImage+Sixel.m"; sourceTree = "<group>"; };
 		756C32C12597AC9C0047B3A9 /* libaprutil-1.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = "libaprutil-1.tbd"; path = "Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/lib/libaprutil-1.tbd"; sourceTree = DEVELOPER_DIR; };
-		7577E2622593B4DB00905402 /* iTermImage+ImageWithData.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "iTermImage+ImageWithData.h"; sourceTree = "<group>"; };
+		756DF2F22597FEB3002935A5 /* iTermImage+SandboxedWorker.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "iTermImage+SandboxedWorker.h"; sourceTree = "<group>"; };
+		756DF2F32597FEB3002935A5 /* iTermImage+SandboxedWorker.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "iTermImage+SandboxedWorker.m"; sourceTree = "<group>"; };
 		7577E29F2593B88700905402 /* iTermXpcConnectionHelper.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermXpcConnectionHelper.h; sourceTree = "<group>"; };
 		7577E2A02593B88700905402 /* iTermXpcConnectionHelper.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermXpcConnectionHelper.m; sourceTree = "<group>"; };
 		7577E2B52593CF2E00905402 /* iTerm2SandboxedWorker.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = iTerm2SandboxedWorker.entitlements; sourceTree = "<group>"; };
@@ -6930,8 +6916,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				7577E2812593B78C00905402 /* libiTerm2Shared.a in Frameworks */,
-				7577E2752593B73000905402 /* libiTerm2SharedARC.a in Frameworks */,
 				756C32B72597AC8C0047B3A9 /* libsixel.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -8536,7 +8520,8 @@
 			isa = PBXGroup;
 			children = (
 				7577E2B52593CF2E00905402 /* iTerm2SandboxedWorker.entitlements */,
-				7577E2622593B4DB00905402 /* iTermImage+ImageWithData.h */,
+				756DF2F22597FEB3002935A5 /* iTermImage+SandboxedWorker.h */,
+				756DF2F32597FEB3002935A5 /* iTermImage+SandboxedWorker.m */,
 				756C32AB2597AC2E0047B3A9 /* iTermImage+Sixel.h */,
 				756C32AC2597AC2E0047B3A9 /* iTermImage+Sixel.m */,
 				7596379D2593AE0700E278CC /* iTerm2SandboxedWorker.h */,
@@ -11948,8 +11933,6 @@
 			buildRules = (
 			);
 			dependencies = (
-				7577E2802593B77F00905402 /* PBXTargetDependency */,
-				759637D32593B00100E278CC /* PBXTargetDependency */,
 			);
 			name = iTerm2SandboxedWorker;
 			productName = iTerm2SandboxedWorker;
@@ -14022,6 +14005,7 @@
 				759637A12593AE0700E278CC /* main.m in Sources */,
 				756C32AD2597AC2E0047B3A9 /* iTermImage+Sixel.m in Sources */,
 				7596379F2593AE0700E278CC /* iTerm2SandboxedWorker.m in Sources */,
+				756DF2F42597FEB3002935A5 /* iTermImage+SandboxedWorker.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -15007,20 +14991,10 @@
 			target = 1DFA7C661923E83500DF1410 /* SSKeychain */;
 			targetProxy = 69021A922344313A00FDA6CA /* PBXContainerItemProxy */;
 		};
-		7577E2802593B77F00905402 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = A6C7603F1B45C4CF00E3C992 /* iTerm2Shared */;
-			targetProxy = 7577E27F2593B77F00905402 /* PBXContainerItemProxy */;
-		};
 		759637A42593AE0700E278CC /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 759637992593AE0700E278CC /* iTerm2SandboxedWorker */;
 			targetProxy = 759637A32593AE0700E278CC /* PBXContainerItemProxy */;
-		};
-		759637D32593B00100E278CC /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = A66717851DCE36C3000CE608 /* iTerm2SharedARC */;
-			targetProxy = 759637D22593B00100E278CC /* PBXContainerItemProxy */;
 		};
 		A60593DE257DFB0900CACEE6 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;

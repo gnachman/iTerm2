@@ -7,7 +7,7 @@
 
 #import <Foundation/Foundation.h>
 #import "iTerm2SandboxedWorker.h"
-#import "iTermImage+ImageWithData.h"
+#import "iTermImage+SandboxedWorker.h"
 #import "iTermImage+Sixel.h"
 
 @implementation iTerm2SandboxedWorker

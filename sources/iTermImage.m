@@ -86,9 +86,7 @@ static const CGFloat kMaxDimension = 10000;
     return self;
 }
 
-#pragma mark - iTerm2SandboxedWorker / Debug
-
-/// Only use from `iTerm2SandboxedWorker`
+#if DECODE_IMAGES_IN_PROCESS
 - (instancetype)initWithData:(NSData *)data {
     self = [self init];
     if (self) {
@@ -114,10 +112,6 @@ static const CGFloat kMaxDimension = 10000;
             if (frameCount.intValue > 1) {
                 isGIF = YES;
             }
-        } else {
-#if !DECODE_IMAGES_IN_PROCESS
-            return nil;
-#endif
         }
         if (isGIF) {
             double totalDelay = 0;
@@ -139,42 +133,7 @@ static const CGFloat kMaxDimension = 10000;
     }
     return self;
 }
-
-- (CGContextRef)newBitmapContextWithStorage:(NSMutableData *)data {
-    NSSize size = self.size;
-    NSInteger bytesPerRow = size.width * 4;
-    NSUInteger storageNeeded = bytesPerRow * size.height;
-    [data setLength:storageNeeded];
-    
-    CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
-    CGContextRef context = CGBitmapContextCreate((void *)data.bytes,
-                                                 size.width,
-                                                 size.height,
-                                                 8,
-                                                 bytesPerRow,
-                                                 colorSpace,
-                                                 (CGBitmapInfo)kCGImageAlphaPremultipliedLast);
-    CGColorSpaceRelease(colorSpace);
-    if (!context) {
-        return NULL;
-    }
-    
-    return context;
-}
-
-- (NSData *)dataForImage:(NSImage *)image {
-    NSMutableData *storage = [NSMutableData data];
-    NSBitmapImageRep *rep = ((NSBitmapImageRep *)image.representations.firstObject);
-    if (![rep isKindOfClass:[NSBitmapImageRep class]]) {
-        DLog(@"Only bitmap images should get to this point.");
-        return storage;
-    }
-    CGContextRef context = [self newBitmapContextWithStorage:storage];
-    CGImageRef imageToDraw = rep.CGImage;
-    CGContextDrawImage(context, NSMakeRect(0, 0, self.size.width, self.size.height), imageToDraw);
-    CGContextRelease(context);
-    return storage;
-}
+#endif
 
 #pragma mark - NSSecureCoding
 
@@ -183,14 +142,7 @@ static const CGFloat kMaxDimension = 10000;
 }
 
 - (void)encodeWithCoder:(nonnull NSCoder *)coder {
-    [coder encodeObject:self.delays forKey:@"delays"];
-    [coder encodeSize:self.size forKey:@"size"];
-    NSMutableArray<NSData *> *imageDatas = [NSMutableArray new];
-    for (NSImage *image in self.images) {
-        NSData *imageData = [self dataForImage:image];
-        [imageDatas addObject:imageData];
-    }
-    [coder encodeObject:imageDatas forKey:@"images"];
+    DLog(@"The main app is trying to encode an iTermImage");
 }
 
 - (nullable instancetype)initWithCoder:(nonnull NSCoder *)coder {
