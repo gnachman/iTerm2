@@ -56,8 +56,7 @@ static const CGFloat kMaxDimension = 10000;
         return imageFromXpc;
     } else {
         iTermImageDecoderDriver *driver = [[iTermImageDecoderDriver alloc] init];
-        NSData *jsonData = [driver jsonForCompressedImageData:compressedData
-                                                         type:@"image/*"];
+        NSData *jsonData = [driver jsonForCompressedImageData:compressedData];
         if (jsonData) {
             return [[iTermImage alloc] initWithJson:jsonData];
         } else {

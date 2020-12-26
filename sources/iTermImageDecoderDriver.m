@@ -31,7 +31,7 @@ static void Dup2OrDie(int source, int dest) {
     }
 }
 
-static void ExecImageDecoder(char *executable, char *type, char *sandbox, int jsonFD, int compressedDataFD, int dtablesize) {
+static void ExecImageDecoder(char *executable, char *sandbox, int jsonFD, int compressedDataFD, int dtablesize) {
     int numFileDescriptorsToPreserve = 0;
 
     Dup2OrDie(compressedDataFD, numFileDescriptorsToPreserve++);
@@ -55,7 +55,6 @@ static void ExecImageDecoder(char *executable, char *type, char *sandbox, int js
         "-p",
         sandbox,
         executable,
-        type,
         NULL
     };
 
@@ -150,7 +149,7 @@ static void ExecImageDecoder(char *executable, char *type, char *sandbox, int js
     return rc == pid && WIFEXITED(stat_loc) && WEXITSTATUS(stat_loc) == 0;
 }
 
-- (NSData *)jsonForCompressedImageData:(NSData *)compressedData type:(NSString *)type {
+- (NSData *)jsonForCompressedImageData:(NSData *)compressedData {
     NSString *sandboxString = [self sandbox];
     if (!sandboxString) {
         return nil;
@@ -172,17 +171,15 @@ static void ExecImageDecoder(char *executable, char *type, char *sandbox, int js
     NSString *executable = [self executable];
     char *utf8Executable = strdup([executable UTF8String]);
     char *sandbox = strdup([sandboxString UTF8String]);
-    char *typeCString = strdup(type.UTF8String);
     int dtablesize = getdtablesize();
 
-    DLog(@"sandbox-exec -p '%@' '%@' '%@'", sandboxString, executable, type);
+    DLog(@"sandbox-exec -p '%@' '%@'", sandboxString, executable);
     pid_t pid = fork();
     switch (pid) {
         case -1:
             // error
             NSLog(@"Fork failed: %s", strerror(errno));
             free(sandbox);
-            free(typeCString);
             free(utf8Executable);
             return nil;
 
@@ -190,7 +187,7 @@ static void ExecImageDecoder(char *executable, char *type, char *sandbox, int js
             // child
             close(jsonFDs[0]);
             close(compressedImageFDs[1]);
-            ExecImageDecoder(utf8Executable, typeCString, sandbox, jsonFDs[1], compressedImageFDs[0], dtablesize);
+            ExecImageDecoder(utf8Executable, sandbox, jsonFDs[1], compressedImageFDs[0], dtablesize);
             exit(1);
             return nil;
 
@@ -200,7 +197,6 @@ static void ExecImageDecoder(char *executable, char *type, char *sandbox, int js
             // Get rid of resources only needed by the child.
             free(utf8Executable);
             free(sandbox);
-            free(typeCString);
             close(jsonFDs[1]);
             close(compressedImageFDs[0]);
 
