@@ -220,7 +220,7 @@ static const CGFloat kMaxDimension = 10000;
             }
             [_images addObject:image];
         }
-        if ((_delays.count != 0 ||  _images.count > 1) && _delays.count != _images.count) {
+        if ((_images.count > 1 && _delays.count != _images.count) || !_images.count || _delays.count == 1) {
             DLog(@"delays.count=%@, images.count=%@", @(_delays.count), @(_images.count));
             return nil;
         }
