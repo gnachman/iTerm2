@@ -10,28 +10,6 @@
 //
 
 #import "iTermImage+image_decoder.h"
-#import <apr-1/apr_base64.h>
-
-@interface NSData(ImageDecoder)
-@end
-
-@implementation NSData(ImageDecoder)
-
-// Get rid of this and use base64EncodedDataWithOptions when 10.8 support is dropped.
-- (NSString *)imageDecoder_base64String {
-    // Subtract because the result includes the trailing null. Take MAX in case it returns 0 for
-    // some reason.
-    int length = MAX(0, apr_base64_encode_len((int)self.length) - 1);
-    NSMutableData *buffer = [NSMutableData dataWithLength:length];
-    if (buffer) {
-        apr_base64_encode_binary(buffer.mutableBytes,
-                                 self.bytes,
-                                 (int)self.length);
-    }
-    return [[NSString alloc] initWithData:buffer encoding:NSUTF8StringEncoding];
-}
-
-@end
 
 @implementation iTermImage
 
