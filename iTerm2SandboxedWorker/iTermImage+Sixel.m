@@ -114,8 +114,10 @@ static NSImage *ImageFromSixelData(NSData *data) {
 
 - (instancetype)initWithSixelData:(NSData *)data;
 {
-    self = [self init];
+    self = [super init];
     if (self) {
+        _delays = [NSMutableArray new];
+        _images = [NSMutableArray new];
         NSImage *image = ImageFromSixelData(data);
         if (!image) {
             return nil;
