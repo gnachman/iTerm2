@@ -1223,6 +1223,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
                 if (array1[i].color.x != array2[i].color.x ||
                     array1[i].color.y != array2[i].color.y ||
                     array1[i].color.z != array2[i].color.z ||
+                    array1[i].color.w != array2[i].color.w ||
                     array1[i].count != array2[i].count) {
                     return NO;
                 }
