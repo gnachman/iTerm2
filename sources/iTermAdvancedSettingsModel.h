@@ -345,6 +345,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)useUnevenTabs;
 + (BOOL)openProfilesInNewWindow;
 + (BOOL)vs16Supported;
++ (BOOL)workAroundBigSurBug;
 + (BOOL)workAroundMultiDisplayOSBug;
 + (BOOL)workAroundNumericKeypadBug;
 + (int)xtermVersion;

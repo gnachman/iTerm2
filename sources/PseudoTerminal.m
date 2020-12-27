@@ -4576,8 +4576,10 @@ ITERM_WEAKLY_REFERENCEABLE
         case WINDOW_TYPE_COMPACT_MAXIMIZED:
             return NO;
             
-        case WINDOW_TYPE_MAXIMIZED:
         case WINDOW_TYPE_LION_FULL_SCREEN:
+            return ![iTermAdvancedSettingsModel workAroundBigSurBug];
+
+        case WINDOW_TYPE_MAXIMIZED:
         case WINDOW_TYPE_ACCESSORY:
         case WINDOW_TYPE_NORMAL:
             return YES;
@@ -4897,6 +4899,9 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (BOOL)shouldMoveTabBarToTitlebarAccessoryInLionFullScreen {
+    if ([iTermAdvancedSettingsModel workAroundBigSurBug]) {
+        return NO;
+    }
     switch ([iTermPreferences intForKey:kPreferenceKeyTabPosition]) {
         case PSMTab_LeftTab:
         case PSMTab_BottomTab:
