@@ -12,54 +12,77 @@
 @interface ServiceDelegate : NSObject <NSXPCListenerDelegate>
 @end
 
+#pragma mark - Sandbox
+
+typedef struct iTermSandboxProfile iTermSandboxProfile;
+typedef struct iTermSandboxParam iTermSandboxParam;
+
+extern iTermSandboxParam *sandbox_create_params(void);
+extern iTermSandboxProfile *sandbox_compile_string(char *program,
+                                                   iTermSandboxParam *params,
+                                                   char **errorOut);
+extern void sandbox_free_profile(iTermSandboxProfile *profile);
+extern int sandbox_apply_container(iTermSandboxProfile *profile, uint32_t options);
+
+static BOOL BeginSandbox(void) {
+    iTermSandboxParam *const params = sandbox_create_params();
+
+    if (!params) {
+        return NO;
+    }
+
+    NSBundle *const bundle = [NSBundle bundleForClass:[ServiceDelegate class]];
+    NSString *const path = [bundle pathForResource:@"image_decoder" ofType:@"sb"];
+    NSString *const profileString = [NSString stringWithContentsOfFile:path
+                                                              encoding:NSUTF8StringEncoding error:nil];
+    if (!profileString) {
+        return NO;
+    }
+
+    char *temp = strdup(profileString.UTF8String);
+    char *error = NULL;
+    iTermSandboxProfile *compiled_profile = sandbox_compile_string(temp, params, &error);
+    free(temp);
+
+    const int rc = sandbox_apply_container(compiled_profile, 0);
+
+    if (rc) {
+        return NO;
+    }
+
+    sandbox_free_profile(compiled_profile);
+    return YES;
+}
+
+#pragma mark - ServiceDelegate
+
 static BOOL sandboxSuccessful;
 
 @implementation ServiceDelegate
 
 - (BOOL)listener:(NSXPCListener *)listener shouldAcceptNewConnection:(NSXPCConnection *)newConnection {
-    // This method is where the NSXPCListener configures, accepts, and resumes a new incoming NSXPCConnection.
-    
     if (!sandboxSuccessful) {
         return NO;
     }
     
-    // Configure the connection.
-    // First, set the interface that the exported object implements.
     newConnection.exportedInterface = [NSXPCInterface interfaceWithProtocol:@protocol(iTerm2SandboxedWorkerProtocol)];
-    
-    // Next, set the object that the connection exports. All messages sent on the connection to this service will be sent to the exported object to handle. The connection retains the exported object.
     iTerm2SandboxedWorker *exportedObject = [iTerm2SandboxedWorker new];
     newConnection.exportedObject = exportedObject;
-    
-    // Resuming the connection allows the system to deliver more incoming messages.
     [newConnection resume];
     
-    // Returning YES from this method tells the system that you have accepted this connection. If you want to reject the connection for some reason, call -invalidate on the connection and return NO.
     return YES;
 }
 
 @end
 
-int main(int argc, const char *argv[])
-{
-    char *errorbuf;
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdeprecated-declarations"
-    int res = sandbox_init(kSBXProfilePureComputation, SANDBOX_NAMED, &errorbuf);
-    if (errorbuf) {
-        sandbox_free_error(errorbuf);
-#pragma clang diagnostic pop
-    } else if (!res) {
-        sandboxSuccessful = YES;
-    }
-    // Create the delegate for the service.
-    ServiceDelegate *delegate = [ServiceDelegate new];
-    
-    // Set up the one NSXPCListener for this service. It will handle all incoming connections.
+int main(int argc, const char *argv[]) {
+    sandboxSuccessful = BeginSandbox();
+
+    static ServiceDelegate *delegate;
+    delegate = [[ServiceDelegate alloc] init];
     NSXPCListener *listener = [NSXPCListener serviceListener];
     listener.delegate = delegate;
-    
-    // Resuming the serviceListener starts this service. This method does not return.
     [listener resume];
+
     return 0;
 }

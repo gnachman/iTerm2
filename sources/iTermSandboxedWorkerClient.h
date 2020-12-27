@@ -1,5 +1,5 @@
 //
-//  iTermXpcConnectionHelper.h
+//  iTermSandboxedWorkerClient.h
 //  iTerm2SharedARC
 //
 //  Created by Benedek Kozma on 2020. 12. 23..
@@ -11,12 +11,12 @@ NS_ASSUME_NONNULL_BEGIN
 
 @class iTermImage;
 
-@interface iTermXpcConnectionHelper : NSObject
+@interface iTermSandboxedWorkerClient : NSObject
 
 - (instancetype)init NS_UNAVAILABLE;
 
-+ (iTermImage *_Nullable)imageFromData:(NSData *)data;
-+ (iTermImage *_Nullable)imageFromSixelData:(NSData *)data;
++ (iTermImage * _Nullable)imageFromData:(NSData *)data;
++ (iTermImage * _Nullable)imageFromSixelData:(NSData *)data;
 
 @end
 

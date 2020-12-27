@@ -6,9 +6,11 @@
 //
 
 #import "iTermImage+Sixel.h"
+#import "iTermImage+Private.h"
 #include "sixel.h"
 
 @implementation NSImage(ImageDecoder)
+
 + (instancetype)imageWithRawData:(NSData *)data
                             size:(NSSize)size
                    bitsPerSample:(NSInteger)bitsPerSample
@@ -35,6 +37,7 @@
     
     return theImage;
 }
+
 @end
 
 static NSImage *DecodeSixelData(sixel_decoder_t *decoder, NSData *data) {
@@ -110,16 +113,9 @@ static NSImage *ImageFromSixelData(NSData *data) {
     return image;
 }
 
-@interface iTermImage ()
+@implementation iTermImage(Sixel)
 
-@property (nonatomic, readwrite) NSSize size;
-
-@end
-
-@implementation iTermImage (Sixel)
-
-- (instancetype)initWithSixelData:(NSData *)data;
-{
+- (instancetype)initWithSixelData:(NSData *)data {
     self = [self init];
     if (self) {
         NSImage *image = ImageFromSixelData(data);

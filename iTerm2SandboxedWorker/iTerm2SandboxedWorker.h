@@ -7,5 +7,5 @@
 
 #import "iTerm2SandboxedWorkerProtocol.h"
 
-@interface iTerm2SandboxedWorker : NSObject <iTerm2SandboxedWorkerProtocol>
+@interface iTerm2SandboxedWorker : NSObject<iTerm2SandboxedWorkerProtocol>
 @end

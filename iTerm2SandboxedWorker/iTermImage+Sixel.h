@@ -9,7 +9,7 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface iTermImage (Sixel)
+@interface iTermImage(Sixel)
 
 - (instancetype)initWithSixelData:(NSData *)data;
 
