@@ -42,6 +42,9 @@
 // Get a delta Y out of the event with the most precision available and a consistent interpretation.
 - (CGFloat)adjustedDeltaYForEvent:(NSEvent *)event {
     if (event.hasPreciseScrollingDeltas) {
+        if ([iTermAdvancedSettingsModel fastTrackpad]) {
+            return event.scrollingDeltaY;
+        }
         return event.scrollingDeltaY / _lineHeight;
     } else {
         return event.scrollingDeltaY;

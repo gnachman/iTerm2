@@ -617,6 +617,7 @@ DEFINE_BOOL(allowTabbarInTitlebarAccessoryBigSur, NO, SECTION_EXPERIMENTAL @"Mak
 DEFINE_BOOL(storeStateInSqlite, YES, SECTION_EXPERIMENTAL @"Store window restoration state in SQLite");
 DEFINE_BOOL(useNewContentFormat, YES, SECTION_EXPERIMENTAL @"Save unlimited amount of window contents.\nThis is going to be slow unless you enable SQLite-based window restoration too.");
 DEFINE_BOOL(vs16Supported, NO, SECTION_EXPERIMENTAL @"Support variation selector 16 making emoji fullwidth?");
+DEFINE_BOOL(fastTrackpad, YES, SECTION_EXPERIMENTAL @"Trackpad scrolls fast?\nSet to No for legacy scrolling speed.");
 
 #pragma mark - Scripting
 #define SECTION_SCRIPTING @"Scripting: "

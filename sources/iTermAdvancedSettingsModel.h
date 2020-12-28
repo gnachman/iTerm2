@@ -118,6 +118,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (double)extraSpaceBeforeCompactTopTabBar;
 + (NSString *)fallbackLCCType;
 + (BOOL)fastForegroundJobUpdates;
++ (BOOL)fastTrackpad;
 + (double)findDelaySeconds;
 
 // Regular expression for finding URLs for Edit>Find>Find URLs
