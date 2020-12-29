@@ -780,7 +780,7 @@ static void HandleSigChld(int n) {
 
     // Note: stringByStandardizingPath will automatically call stringByExpandingTildeInPath.
     NSString *initialPwd = [[env objectForKey:@"PWD"] stringByStandardizingPath];
-    DLog(@"initialPwd=%@", initialPwd);
+    DLog(@"initialPwd=%@, jobManager=%@", initialPwd, self.jobManager);
     [self.jobManager forkAndExecWithTtyState:ttyState
                                      argpath:commandToExec
                                         argv:argv

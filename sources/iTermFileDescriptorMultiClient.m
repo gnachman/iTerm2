@@ -96,7 +96,9 @@ NSString *const iTermFileDescriptorMultiClientErrorDomain = @"iTermFileDescripto
                                   pwd:(const char *)pwd
                              ttyState:(iTermTTYState)ttyState
                              callback:(iTermMultiClientLaunchCallback *)callback {
+    DLog(@"begin");
     [_thread dispatchSync:^(iTermFileDescriptorMultiClientState * _Nullable state) {
+        DLog(@"dispatched");
         [self launchChildWithExecutablePath:path
                                        argv:argv
                                 environment:environment
@@ -455,6 +457,7 @@ static unsigned long long MakeUniqueID(void) {
                              ttyState:(iTermTTYState)ttyState
                                 state:(iTermFileDescriptorMultiClientState *)state
                              callback:(iTermMultiClientLaunchCallback *)callback {
+    DLog(@"begin");
     const unsigned long long uniqueID = MakeUniqueID();
     iTermMultiServerClientOriginatedMessage message = {
         .type = iTermMultiServerRPCTypeLaunch,
@@ -485,6 +488,7 @@ static unsigned long long MakeUniqueID(void) {
 
     [self send:&message state:state callback:[_thread newCallbackWithBlock:^(iTermFileDescriptorMultiClientState *state,
                                                                              NSNumber *result) {
+        DLog(@"called back");
         const BOOL ok = result.boolValue;
         if (ok) {
             DLog(@"Wrote launch request successfully.");
@@ -1162,7 +1166,9 @@ static void HexDump(NSData *data) {
 - (void)send:(iTermMultiServerClientOriginatedMessage *)message
        state:(iTermFileDescriptorMultiClientState *)state
     callback:(iTermCallback<id, NSNumber *> *)callback {
+    DLog(@"begin");
     if (state.writeFD < 0) {
+        DLog(@"no write fd");
         [callback invokeWithObject:@NO];
         return;
     }
@@ -1200,6 +1206,7 @@ static void HexDump(NSData *data) {
 
     __weak __typeof(self) weakSelf = self;
     [state whenWritable:^(iTermFileDescriptorMultiClientState * _Nullable state) {
+        DLog(@"called back");
         [weakSelf tryWrite:data
                      state:state
                   callback:callback];

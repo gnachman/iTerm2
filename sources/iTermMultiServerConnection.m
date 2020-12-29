@@ -350,8 +350,11 @@
                 initialPwd:(const char *)initialPwd
                 newEnviron:(const char **)newEnviron
                   callback:(iTermCallback<id, iTermResult<iTermFileDescriptorMultiClientChild *> *> *)callback {
+    DLog(@"begin");
     [_thread dispatchAsync:^(iTermMultiServerPerConnectionState * _Nullable state) {
+        DLog(@"dispatched");
         if (!state.client) {
+            DLog(@"No client");
             NSError *error = [NSError errorWithDomain:iTermFileDescriptorMultiClientErrorDomain
                                                  code:iTermFileDescriptorMultiClientErrorCodeConnectionLost
                                              userInfo:nil];
