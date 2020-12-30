@@ -120,7 +120,6 @@ static void iTermImageViewReleaseImage(void *info) {
 
 // Make a pattern color and set the layer's background color to that.
 - (void)loadTiledImage {
-    return;
     const CGImageRef cgImage = [_image.image CGImage];
     const int width = CGImageGetWidth(cgImage);
     const int height = CGImageGetHeight(cgImage);
