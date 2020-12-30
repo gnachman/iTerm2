@@ -3172,7 +3172,7 @@ ITERM_WEAKLY_REFERENCEABLE
 // Called when the file descriptor closes. If -terminate was already called this does nothing.
 // Otherwise, you can call replaceTerminatedShellWithNewInstance after this to restart the session.
 - (void)brokenPipe {
-    DLog(@"  brokenPipe %@ task=%@", self, self.shell);
+    DLog(@"  brokenPipe %@ task=%@\n%@", self, self.shell, [NSThread callStackSymbols]);
     if (_exited) {
         DLog(@"  brokenPipe: Already exited");
         return;
