@@ -593,7 +593,7 @@ iTermWindowType iTermThemedWindowType(iTermWindowType windowType) {
     return [NSString stringWithFormat:@"/usr/bin/login -f%@pl %@ %@ --launch_shell%@",
             [self hushlogin] ? @"q" : @"",
             [NSUserName() stringWithBackslashEscapedShellCharactersIncludingNewlines:YES],
-            shellLauncher,
+            [shellLauncher stringWithBackslashEscapedShellCharactersIncludingNewlines:YES],
             customShellArg];
 }
 
