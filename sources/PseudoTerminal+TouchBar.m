@@ -145,7 +145,8 @@ ITERM_IGNORE_PARTIAL_BEGIN
                 [scrubber setSelectedIndex:[self.tabs indexOfObject:self.currentTab]];
             });
         }
-        NSArray *ids = @[ iTermTouchBarIdentifierManPage,
+        NSArray *ids = @[ NSTouchBarItemIdentifierCharacterPicker,
+                          iTermTouchBarIdentifierManPage,
                           iTermTouchBarIdentifierColorPreset,
                           iTermTouchBarIdentifierFunctionKeys,
                           iTermTouchBarFunctionKeysScrollView,
