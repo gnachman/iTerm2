@@ -79,7 +79,9 @@
 }
 
 - (void)insertAtIndex:(NSInteger)index {
-    [self.menu insertItem:[[NSMenuItem alloc] init] atIndex:index];
+    NSMenuItem *item = [[NSMenuItem alloc] init];
+    item.action = @selector(sendSnippet:);
+    [self.menu insertItem:item atIndex:index];
     [self reloadIndex:index];
 }
 
