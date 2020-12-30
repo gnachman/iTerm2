@@ -5618,6 +5618,7 @@ ITERM_WEAKLY_REFERENCEABLE
               mode:(iTermFindMode)mode
         withOffset:(int)offset
 scrollToFirstResult:(BOOL)scrollToFirstResult {
+    DLog(@"self=%@ aString=%@", self, aString);
     [_textview findString:aString
          forwardDirection:direction
                      mode:mode
@@ -5642,6 +5643,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)findViewControllerClearSearch {
+    DLog(@"begin");
     [_textview clearHighlights:YES];
 }
 

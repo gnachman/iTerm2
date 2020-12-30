@@ -123,10 +123,12 @@ typedef struct {
      numberOfLines:(int)numberOfLines
     totalScrollbackOverflow:(long long)totalScrollbackOverflow
 scrollToFirstResult:(BOOL)scrollToFirstResult {
+    DLog(@"begin self=%@ aString=%@", self, aString);
     _searchingForward = direction;
     _findOffset = offset;
     if ([_lastStringSearchedFor isEqualToString:aString] &&
         _mode == mode) {
+        DLog(@"query and mode are unchanged.");
         _haveRevealedSearchResult = NO;  // select the next item before/after the current selection.
         _searchingForNextResult = scrollToFirstResult;
         // I would like to call selectNextResultForward:withOffset: here, but
@@ -135,6 +137,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         // and everything works fine. The 100ms delay introduced is not
         // noticeable.
     } else {
+        DLog(@"Begin a brand new search");
         // Begin a brand new search.
         self.selectedResult = nil;
         if (_findInProgress) {

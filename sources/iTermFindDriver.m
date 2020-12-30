@@ -125,6 +125,7 @@ static NSString *gSearchString;
 }
 
 - (void)saveState {
+    DLog(@"save mode=%@ string=%@", @(_savedState.mode), _savedState.string);
     _savedState = _state;
     _state = [[FindState alloc] init];
     _state.mode = _savedState.mode;
@@ -150,6 +151,7 @@ static NSString *gSearchString;
 - (void)close {
     BOOL wasHidden = _viewController.view.isHidden;
     if (!wasHidden) {
+        DLog(@"Remove timer");
         [_timer invalidate];
         _timer = nil;
     }
@@ -167,6 +169,7 @@ static NSString *gSearchString;
 }
 
 - (void)closeViewAndDoTemporarySearchForString:(NSString *)string mode:(iTermFindMode)mode {
+    DLog(@"begin %@", self);
     [_viewController close];
     if (!_savedState) {
         [self saveState];
@@ -174,6 +177,7 @@ static NSString *gSearchString;
     _state.mode = mode;
     _state.string = string;
     _viewController.findString = string;
+    DLog(@"delegate=%@ state=%@ state.mode=%@ state.string=%@", self.delegate, _state, @(_state.mode), _state.string);
     [self.delegate findViewControllerClearSearch];
     [self doSearch];
 }
@@ -352,7 +356,9 @@ static NSString *gSearchString;
 }
 
 - (void)loadFindStringIntoSharedPasteboard:(NSString *)stringValue {
+    DLog(@"begin %@", self);
     if (_savedState) {
+        DLog(@"Have no saved state, doing nothing");
         return;
     }
     // Copy into the NSPasteboardNameFind
@@ -399,8 +405,10 @@ static NSString *gSearchString;
 #pragma mark - Private
 
 - (BOOL)continueSearch {
+    DLog(@"begin self=%@", self);
     BOOL more = NO;
     if ([self.delegate findInProgress]) {
+        DLog(@"Find is in progress");
         double progress;
         more = [self.delegate continueFind:&progress];
         [_viewController setProgress:progress];
@@ -408,13 +416,16 @@ static NSString *gSearchString;
     if (!more) {
         [_timer invalidate];
         _timer = nil;
+        DLog(@"Remove timer");
         [_viewController setProgress:1];
     }
     return more;
 }
 
 - (void)setSearchString:(NSString *)s {
+    DLog(@"begin self=%@ s=%@", self, s);
     if (!_savedState) {
+        DLog(@"Have no saved state so updating gSearchString and _state.string");
         gSearchString = [s copy];
         _state.string = [s copy];
     }
@@ -430,6 +441,7 @@ static NSString *gSearchString;
 }
 
 - (void)setSearchDefaults {
+    DLog(@"begin %@", self);
     [self setSearchString:_viewController.findString];
     [self setGlobalMode:_state.mode];
 }
@@ -439,9 +451,13 @@ static NSString *gSearchString;
                  mode:(iTermFindMode)mode
            withOffset:(int)offset
   scrollToFirstResult:(BOOL)scrollToFirstResult {
+    DLog(@"begin self=%@ subString=%@ direction=%@ mode=%@ offset=%@ scrollToFirstResult=%@",
+         self, subString, @(direction), @(mode), @(offset), @(scrollToFirstResult));
     BOOL ok = NO;
     if ([_delegate canSearch]) {
+        DLog(@"delegate can search %@", _delegate);
         if ([subString length] <= 0) {
+            DLog(@"Clear search");
             [_delegate findViewControllerClearSearch];
         } else {
             [_delegate findString:subString
@@ -453,6 +469,7 @@ static NSString *gSearchString;
         }
     }
 
+    DLog(@"ok=%@ timer=%@", @(ok), _timer);
     if (ok && !_timer) {
         [_viewController setProgress:0];
         if ([self continueSearch]) {
@@ -461,9 +478,11 @@ static NSString *gSearchString;
                                                     selector:@selector(continueSearch)
                                                     userInfo:nil
                                                      repeats:YES];
+            DLog(@"Set timer");
             [[NSRunLoop currentRunLoop] addTimer:_timer forMode:NSRunLoopCommonModes];
         }
     } else if (!ok && _timer) {
+        DLog(@"Remove timer");
         [_timer invalidate];
         _timer = nil;
         [_viewController setProgress:1];
@@ -524,8 +543,10 @@ static NSString *gSearchString;
 }
 
 - (void)doSearch {
+    DLog(@"begin %@ _state.string=%@ _viewController.findString=%@", self, _state.string, _viewController.findString);
     NSString *theString = _savedState ? _state.string : _viewController.findString;
     if (!_savedState) {
+        DLog(@"Have no saved state. Load find string into shared pasteboard: %@", _viewController.findString);
         [self loadFindStringIntoSharedPasteboard:_viewController.findString];
     }
     // Search.

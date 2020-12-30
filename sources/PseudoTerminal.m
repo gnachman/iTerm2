@@ -2747,8 +2747,10 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (IBAction)findUrls:(id)sender {
+    DLog(@"begin");
     iTermFindDriver *findDriver = self.currentSession.view.findDriver;
     NSString *regex = [iTermAdvancedSettingsModel findUrlsRegex];
+    DLog(@"findDriver=%@ regex=%@", findDriver, regex);
     [findDriver closeViewAndDoTemporarySearchForString:regex
                                                   mode:iTermFindModeCaseSensitiveRegex];
 }

@@ -674,6 +674,7 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
                    options:(FindOptions)options
                       mode:(iTermFindMode)mode
                withContext:(FindContext*)context {
+    DLog(@"Prepare to search for %@", substring);
     context.substring = substring;
     context.options = options;
     if (options & FindOptBackwards) {

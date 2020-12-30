@@ -1938,8 +1938,8 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
           startingAtY:(int)y
            withOffset:(int)offset
             inContext:(FindContext*)context
-      multipleResults:(BOOL)multipleResults
-{
+      multipleResults:(BOOL)multipleResults {
+    DLog(@"begin self=%@ aString=%@", self, aString);
     // Append the screen contents to the scrollback buffer so they are included in the search.
     int linesPushed = [currentGrid_ appendLines:[currentGrid_ numberOfLinesUsed]
                                    toLineBuffer:linebuffer_];
@@ -1952,11 +1952,14 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     if (!startPos) {
         // x,y wasn't a real position in the line buffer, probably a null after the end.
         if (direction) {
+            DLog(@"Search from first position");
             startPos = [linebuffer_ firstPosition];
         } else {
+            DLog(@"Search from last position");
             startPos = [[linebuffer_ lastPosition] predecessor];
         }
     } else {
+        DLog(@"Search from %@", startPos);
         // Make sure startPos is not at or after the last cell in the line buffer.
         BOOL ok;
         VT100GridCoord startPosCoord = [linebuffer_ coordinateForPosition:startPos

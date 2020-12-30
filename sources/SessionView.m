@@ -1795,6 +1795,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
 }
 
 - (void)findViewControllerClearSearch {
+    DLog(@"begin delegate=%@", self.delegate);
     [self.delegate findViewControllerClearSearch];
     self.delegate.sessionViewStatusBarViewController.temporaryLeftComponent = nil;
 }
@@ -1804,6 +1805,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
               mode:(iTermFindMode)mode
         withOffset:(int)offset
 scrollToFirstResult:(BOOL)scrollToFirstResult {
+    DLog(@"begin self=%@ aString=%@", self, aString);
     [self.delegate findString:aString
              forwardDirection:direction
                          mode:mode

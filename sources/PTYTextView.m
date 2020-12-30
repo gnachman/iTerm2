@@ -3771,6 +3771,7 @@
                      withOffset:(int)offset
                       inContext:(FindContext*)context
                 multipleResults:(BOOL)multipleResults {
+    DLog(@"begin self=%@ aString=%@ dataSource=%@", self, aString, _dataSource);
     [_dataSource setFindString:aString
               forwardDirection:direction
                           mode:mode
@@ -3844,6 +3845,7 @@
               mode:(iTermFindMode)mode
         withOffset:(int)offset
 scrollToFirstResult:(BOOL)scrollToFirstResult {
+    DLog(@"begin self=%@ aString=%@", self, aString);
     [_findOnPageHelper findString:aString
                  forwardDirection:direction
                              mode:mode
@@ -3855,6 +3857,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)clearHighlights:(BOOL)resetContext {
+    DLog(@"begin");
     [_findOnPageHelper clearHighlights];
     if (resetContext) {
         [_findOnPageHelper resetCopiedFindContext];
