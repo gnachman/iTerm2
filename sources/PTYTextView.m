@@ -5079,7 +5079,7 @@ allowDragBeforeMouseDown:(BOOL)allowDragBeforeMouseDown
 
 - (CGFloat)mouseHandler:(PTYMouseHandler *)mouseHandler accumulateVerticalScrollFromEvent:(NSEvent *)event {
     PTYScrollView *scrollView = (PTYScrollView *)self.enclosingScrollView;
-    return [scrollView accumulateVerticalScrollFromEvent:event];
+    return [self scrollDeltaYAdjustedForMouseReporting:[scrollView accumulateVerticalScrollFromEvent:event]];
 }
 
 - (void)mouseHandler:(PTYMouseHandler *)handler
@@ -5166,10 +5166,23 @@ dragSemanticHistoryWithEvent:(NSEvent *)event
     return [self.delegate textViewSwipeHandler];
 }
 
+- (CGFloat)scrollDeltaYAdjustedForMouseReporting:(CGFloat)deltaY {
+    if (![iTermAdvancedSettingsModel fastTrackpad]) {
+        return deltaY;
+    }
+    // This value is used for mouse reporting and we need to report lines, not pixels.
+    const CGFloat frac = deltaY / self.enclosingScrollView.verticalLineScroll;
+    if (frac < 0) {
+        return floor(frac);
+    }
+    return ceil(frac);
+}
+
 - (CGFloat)mouseHandlerAccumulatedDeltaY:(PTYMouseHandler *)sender
                                 forEvent:(NSEvent *)event {
-    return [_scrollAccumulator deltaYForEvent:event
-                                   lineHeight:self.enclosingScrollView.verticalLineScroll];
+    const CGFloat deltaY = [_scrollAccumulator deltaYForEvent:event
+                                                   lineHeight:self.enclosingScrollView.verticalLineScroll];
+    return [self scrollDeltaYAdjustedForMouseReporting:deltaY];
 }
 
 - (long long)mouseHandlerTotalScrollbackOverflow:(nonnull PTYMouseHandler *)sender {
