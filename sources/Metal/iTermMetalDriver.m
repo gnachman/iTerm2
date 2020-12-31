@@ -309,6 +309,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
 
 // Called whenever the view needs to render a frame
 - (void)drawInMTKView:(nonnull MTKView *)view {
+    NSLog(@"drawInMTKView");
     const NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
     const NSTimeInterval dt = now - _lastFrameStartTime;
     _lastFrameStartTime = now;
@@ -417,7 +418,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     }
 
 #if ENABLE_FLAKY_METAL
-#warning DO NOT SUBMIT - FLAKY MODE ENABLED
+#warning DO NOT SUBMIT - FLAKY xMODE ENABLED
     if (arc4random_uniform(3) == 0) {
         return NO;
     }

@@ -54,6 +54,12 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
 @end
 
 @implementation iTermMTKView
+
+- (void)setNeedsDisplayInRect:(NSRect)invalidRect {
+    DLog(@"%@:\n%@", NSStringFromRect(invalidRect), [NSThread callStackSymbols]);
+    [super setNeedsDisplayInRect:invalidRect];
+}
+
 @end
 
 @interface iTermHoverContainerView : NSView
