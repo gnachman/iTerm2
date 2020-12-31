@@ -61,6 +61,7 @@
 #import "iTermScriptConsole.h"
 #import "iTermScriptHistory.h"
 #import "iTermSharedImageStore.h"
+#import "iTermSnippetsModel.h"
 #import "iTermStandardKeyMapper.h"
 #import "iTermStatusBarUnreadCountController.h"
 #import "iTermSoundPlayer.h"
@@ -7637,6 +7638,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         case KEY_ACTION_TOGGLE_MOUSE_REPORTING:
         case KEY_ACTION_DUPLICATE_TAB:
         case KEY_ACTION_MOVE_TO_SPLIT_PANE:
+        case KEY_ACTION_SEND_SNIPPET:
             return NO;
 
         case KEY_ACTION_INVOKE_SCRIPT_FUNCTION:
@@ -7760,6 +7762,16 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                 return;
             }
             [self sendText:[action.parameter stringByExpandingVimSpecialCharacters]];
+            break;
+        case KEY_ACTION_SEND_SNIPPET:
+            if (_exited || isTmuxGateway) {
+                return;
+            } else {
+                iTermSnippet *snippet = [[iTermSnippetsModel sharedInstance] snippetWithTitle:action.parameter];
+                if (snippet) {
+                    [self sendText:snippet.value];
+                }
+            }
             break;
         case KEY_ACTION_RUN_COPROCESS:
             if (_exited || isTmuxGateway) {

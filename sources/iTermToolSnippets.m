@@ -298,7 +298,9 @@ static NSButton *iTermToolSnippetsNewButton(NSString *imageName, NSString *title
 - (void)applySelectedSnippets {
     for (iTermSnippet *snippet in [self selectedSnippets]) {
         iTermToolWrapper *wrapper = self.toolWrapper;
-        iTermAction *action = [[iTermAction alloc] initWithTitle:@"Send Snippet" action:KEY_ACTION_TEXT parameter:snippet.value];
+        iTermAction *action = [[iTermAction alloc] initWithTitle:@"Send Snippet"
+                                                          action:KEY_ACTION_SEND_SNIPPET
+                                                       parameter:snippet.title];
         [wrapper.delegate.delegate toolbeltApplyActionToCurrentSession:action];
     }
 }

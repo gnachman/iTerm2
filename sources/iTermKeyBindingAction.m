@@ -10,6 +10,7 @@
 #import "DebugLogging.h"
 #import "ITAddressBookMgr.h"
 #import "iTermPasteSpecialViewController.h"
+#import "iTermSnippetsModel.h"
 #import "PTYTextView.h"  // just for PTYTextViewSelectionExtensionUnit
 #import "ProfileModel.h"
 
@@ -148,6 +149,15 @@ static NSString *GetProfileName(NSString *guid) {
         case KEY_ACTION_TEXT:
             actionString = [NSString stringWithFormat:@"%@ \"%@\"", @"Send:", _parameter];
             break;
+        case KEY_ACTION_SEND_SNIPPET: {
+            iTermSnippet *snippet = [[iTermSnippetsModel sharedInstance] snippetWithTitle:_parameter];
+            if (snippet) {
+                actionString = [NSString stringWithFormat:@"Send Snippet “%@”", snippet.title];
+            } else {
+                actionString = @"Send Deleted Snippet (no action)";
+            }
+            break;
+        }
         case KEY_ACTION_RUN_COPROCESS:
             actionString = [NSString stringWithFormat:@"Run Coprocess \"%@\"",
 						    _parameter];
@@ -314,6 +324,7 @@ static NSString *GetProfileName(NSString *guid) {
         case KEY_ACTION_ESCAPE_SEQUENCE:
         case KEY_ACTION_HEX_CODE:
         case KEY_ACTION_TEXT:
+        case KEY_ACTION_SEND_SNIPPET:
         case KEY_ACTION_VIM_TEXT:
         case KEY_ACTION_RUN_COPROCESS:
         case KEY_ACTION_SEND_C_H_BACKSPACE:
@@ -393,6 +404,7 @@ static NSString *GetProfileName(NSString *guid) {
         case KEY_ACTION_HEX_CODE:
         case KEY_ACTION_TEXT:
         case KEY_ACTION_VIM_TEXT:
+        case KEY_ACTION_SEND_SNIPPET:
         case KEY_ACTION_RUN_COPROCESS:
         case KEY_ACTION_SEND_C_H_BACKSPACE:
         case KEY_ACTION_SEND_C_QM_BACKSPACE:

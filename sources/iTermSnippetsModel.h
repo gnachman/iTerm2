@@ -44,6 +44,7 @@ NS_ASSUME_NONNULL_BEGIN
                             toIndex:(NSInteger)row;
 - (void)setSnippets:(NSArray<iTermSnippet *> *)snippets;
 - (nullable iTermSnippet *)snippetWithIdentifier:(NSInteger)identifier;
+- (nullable iTermSnippet *)snippetWithTitle:(NSString *)title;
 
 @end
 

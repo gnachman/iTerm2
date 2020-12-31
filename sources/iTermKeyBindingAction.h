@@ -76,6 +76,7 @@ typedef NS_ENUM(int, KEY_ACTION) {
     KEY_ACTION_INVOKE_SCRIPT_FUNCTION = 60,
     KEY_ACTION_DUPLICATE_TAB = 61,
     KEY_ACTION_MOVE_TO_SPLIT_PANE = 62,
+    KEY_ACTION_SEND_SNIPPET = 63
 };
 
 @interface iTermKeyBindingAction : NSObject

@@ -44,6 +44,7 @@
     IBOutlet NSTextField *_profileLabel;
     IBOutlet NSTextField *_colorPresetsLabel;
     IBOutlet NSPopUpButton *_colorPresetsPopup;
+    IBOutlet NSPopUpButton *_snippetsPopup;
     IBOutlet NSView *_pasteSpecialViewContainer;
     IBOutlet NSButton *_okButton;
 
@@ -163,6 +164,7 @@
             [[iTermSearchableComboViewItem alloc] initWithLabel:@"Send Hex Code" tag:KEY_ACTION_HEX_CODE],
             [[iTermSearchableComboViewItem alloc] initWithLabel:@"Send Text" tag:KEY_ACTION_TEXT],
             [[iTermSearchableComboViewItem alloc] initWithLabel:@"Send Text with “vim” Special Chars" tag:KEY_ACTION_VIM_TEXT],
+            [[iTermSearchableComboViewItem alloc] initWithLabel:@"Send Snippet" tag:KEY_ACTION_SEND_SNIPPET]
         ]],
 
         [[iTermSearchableComboViewGroup alloc] initWithLabel:@"Search" items:@[
@@ -249,6 +251,9 @@
     }
     if (!_colorPresetsPopup.isHidden) {
         [_colorPresetsPopup loadColorPresetsSelecting:self.parameterValue];
+    }
+    if (!_snippetsPopup.isHidden) {
+        [_snippetsPopup populateWithSnippetsSelectingTitle:self.parameterValue];
     }
     if (!_selectionMovementUnit.isHidden) {
         [_selectionMovementUnit selectItemWithTag:[self.parameterValue integerValue]];
@@ -354,9 +359,14 @@
     BOOL colorPresetsLabelHidden = YES;
     BOOL colorPresetsPopupHidden = YES;
     BOOL pasteSpecialHidden = YES;
+    BOOL snippetsHidden = YES;
     id<NSTextFieldDelegate> parameterDelegate = nil;
 
     switch (tag) {
+        case KEY_ACTION_SEND_SNIPPET:
+            snippetsHidden = NO;
+            break;
+
         case KEY_ACTION_HEX_CODE:
             parameterHidden = NO;
             [[_parameter cell] setPlaceholderString:@"ex: 0x7f 0x20"];
@@ -450,6 +460,7 @@
     _shortcutField.disableKeyRemapping = shortcutFieldDisableKeyRemapping;
     [_colorPresetsLabel setHidden:colorPresetsLabelHidden];
     [_colorPresetsPopup setHidden:colorPresetsPopupHidden];
+    [_snippetsPopup setHidden:snippetsHidden];
     [self setPasteSpecialHidden:pasteSpecialHidden];
     _parameter.delegate = parameterDelegate;
     if (!parameterDelegate && _functionCallDelegate) {
@@ -464,6 +475,7 @@
             !_profilePopup.isHidden ||
             !_menuToSelectPopup.isHidden ||
             !_colorPresetsPopup.isHidden ||
+            !_snippetsPopup.isHidden ||
             !_pasteSpecialViewContainer.isHidden ||
             !_parameterLabel.isHidden ||
             !_selectionMovementUnit.isHidden);
@@ -663,6 +675,10 @@
             self.parameterValue = [[_colorPresetsPopup selectedItem] title];
             break;
 
+        case KEY_ACTION_SEND_SNIPPET:
+            self.parameterValue = [[_snippetsPopup selectedItem] representedObject];
+            break;
+
         case KEY_ACTION_PASTE_SPECIAL_FROM_SELECTION:
         case KEY_ACTION_PASTE_SPECIAL:
             self.parameterValue = [_pasteSpecialViewController stringEncodedSettings];
@@ -694,6 +710,7 @@
     NSString *guid = [[_profilePopup selectedItem] representedObject];
     [_profilePopup populateWithProfilesSelectingGuid:guid];
     [_colorPresetsPopup loadColorPresetsSelecting:_colorPresetsPopup.selectedItem.representedObject];
+    [_snippetsPopup populateWithSnippetsSelectingTitle:_snippetsPopup.selectedItem.representedObject];
     [[self class] populatePopUpButtonWithMenuItems:_menuToSelectPopup
                                      selectedTitle:[[_menuToSelectPopup selectedItem] title]
                                         identifier:_menuToSelectPopup.selectedItem.identifier];

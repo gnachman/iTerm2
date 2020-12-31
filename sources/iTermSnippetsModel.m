@@ -125,6 +125,12 @@
     return _snippets[i];
 }
 
+- (nullable iTermSnippet *)snippetWithTitle:(NSString *)title {
+    return [_snippets objectPassingTest:^BOOL(iTermSnippet *snippet, NSUInteger index, BOOL *stop) {
+        return [snippet.title isEqualToString:title];
+    }];
+}
+
 - (void)moveSnippetsWithIdentifiers:(NSArray<NSNumber *> *)identifiers
                             toIndex:(NSInteger)row {
     NSArray<iTermSnippet *> *snippets = [_snippets filteredArrayUsingBlock:^BOOL(iTermSnippet *snippet) {

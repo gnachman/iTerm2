@@ -21,6 +21,7 @@
                 <outlet property="_profilePopup" destination="a20-Tf-Nfn" id="DgR-fn-bWA"/>
                 <outlet property="_selectionMovementUnit" destination="otv-pU-Wmk" id="00N-Yc-D4i"/>
                 <outlet property="_shortcutField" destination="OcE-sI-T64" id="El9-Wc-JTH"/>
+                <outlet property="_snippetsPopup" destination="cTx-aj-BkY" id="FtX-yX-BLZ"/>
                 <outlet property="_touchBarLabel" destination="oHw-49-aB1" id="SwV-cq-OK3"/>
                 <outlet property="window" destination="F0z-JX-Cv5" id="gIp-Ho-8D9"/>
             </connections>
@@ -139,6 +140,18 @@ Gw
                                 </popUpButtonCell>
                                 <connections>
                                     <outlet property="nextKeyView" destination="rEh-rY-u5S" id="DN4-rw-W4G"/>
+                                </connections>
+                            </popUpButton>
+                            <popUpButton hidden="YES" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="cTx-aj-BkY" userLabel="Snippet popup">
+                                <rect key="frame" x="146" y="58" width="279" height="26"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                <popUpButtonCell key="cell" type="push" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" id="MKC-Jd-n0v">
+                                    <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
+                                    <font key="font" metaFont="menu"/>
+                                    <menu key="menu" title="OtherViews" id="S7J-2N-AsL"/>
+                                </popUpButtonCell>
+                                <connections>
+                                    <outlet property="nextKeyView" destination="rEh-rY-u5S" id="apJ-I1-6qe"/>
                                 </connections>
                             </popUpButton>
                             <popUpButton hidden="YES" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="otv-pU-Wmk" userLabel="Selection movement unit">
