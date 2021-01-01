@@ -23,13 +23,6 @@ namespace iTerm2 {
     class TexturePage;
 }
 
-typedef struct {
-    size_t piu_index;
-    int x;
-    int y;
-    int outerPIUIndex;
-} iTermTextFixup;
-
 static vector_uint2 CGSizeToVectorUInt2(const CGSize &size) {
     return simd_make_uint2(size.width, size.height);
 }
@@ -43,11 +36,6 @@ static const size_t iTermPIUArraySize = 4;
 static const size_t iTermNumberOfPIUArrays = iTermASCIITextureAttributesMax * 2;
 
 @implementation iTermTextRendererTransientState {
-    // Info about PIUs that need their background colors set. They belong to
-    // parts of glyphs that spilled out of their bounds. The actual PIUs
-    // belong to _pius, but are missing some fields.
-    std::map<iTerm2::TexturePage *, std::vector<iTermTextFixup> *> _fixups;
-
     iTerm2::PIUArray<iTermTextPIU> _asciiPIUArrays[iTermPIUArraySize][iTermNumberOfPIUArrays];
     iTerm2::PIUArray<iTermTextPIU> _asciiOverflowArrays[iTermPIUArraySize][iTermNumberOfPIUArrays];
 
@@ -58,9 +46,6 @@ static const size_t iTermNumberOfPIUArrays = iTermASCIITextureAttributesMax * 2;
 }
 
 - (void)dealloc {
-    for (auto pair : _fixups) {
-        delete pair.second;
-    }
     for (size_t i = 0; i < iTermPIUArraySize; i++) {
         for (auto it = _pius[i].begin(); it != _pius[i].end(); it++) {
             delete it->second;
@@ -94,20 +79,6 @@ static const size_t iTermNumberOfPIUArrays = iTermASCIITextureAttributesMax * 2;
     [super writeDebugInfoToFolder:folder];
 
     [_modelData writeToURL:[folder URLByAppendingPathComponent:@"model.bin"] atomically:NO];
-
-    @autoreleasepool {
-        NSMutableString *s = [NSMutableString string];
-        for (auto entry : _fixups) {
-            id<MTLTexture> texture = entry.first->get_texture();
-            [s appendFormat:@"Texture Page with texture %@\n", texture.label];
-            if (entry.second) {
-                for (auto fixup : *entry.second) {
-                    [s appendFormat:@"piu_index=%@ x=%@ y=%@\n", @(fixup.piu_index), @(fixup.x), @(fixup.y)];
-                }
-            }
-        }
-        [s writeToURL:[folder URLByAppendingPathComponent:@"fixups.txt"] atomically:NO encoding:NSUTF8StringEncoding error:nil];
-    }
 
     @autoreleasepool {
         for (int k = 0; k < iTermPIUArraySize; k++) {
@@ -343,13 +314,6 @@ static const size_t iTermNumberOfPIUArrays = iTermASCIITextureAttributesMax * 2;
 
 - (void)willDraw {
     DLog(@"WILL DRAW %@", self);
-    for (auto pair : _fixups) {
-        std::vector<iTermTextFixup> *fixups = pair.second;
-        delete fixups;
-    }
-
-    _fixups.clear();
-
     for (int k = 0; k < iTermPIUArraySize; k++) {
         for (auto pair : _pius[k]) {
             iTerm2::TexturePage *page = pair.first;
@@ -630,22 +594,6 @@ static inline BOOL GlyphKeyCanTakeASCIIFastPath(const iTermMetalGlyphKey &glyphK
                     // such as floating underlines (for parts above and below) or doubly drawn
                     // underlines.
                     piu->underlineStyle = iTermMetalGlyphAttributesUnderlineNone;
-                }
-
-                // Set color info or queue for fixup since color info may not exist yet.
-                if (entry->_part != iTermTextureMapMiddleCharacterPart) {
-                    iTermTextFixup fixup = {
-                        .piu_index = array->size() - 1,
-                        .x = x + dx,
-                        .y = row + dy,
-                        .outerPIUIndex = outerPIUIndex
-                    };
-                    std::vector<iTermTextFixup> *fixups = _fixups[entry->_page];
-                    if (fixups == nullptr) {
-                        fixups = new std::vector<iTermTextFixup>();
-                        _fixups[entry->_page] = fixups;
-                    }
-                    fixups->push_back(fixup);
                 }
             }
         }
