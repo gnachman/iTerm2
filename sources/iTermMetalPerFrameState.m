@@ -751,10 +751,13 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
             backgroundRLE[previousRLE].count++;
             unprocessedBackgroundColor = lastUnprocessedBackgroundColor;
         } else {
-            unprocessedBackgroundColor = [self unprocessedColorForBackgroundColorKey:&backgroundKey];
+            BOOL isDefaultBackgroundColor = NO;
+            unprocessedBackgroundColor = [self unprocessedColorForBackgroundColorKey:&backgroundKey
+                                                                        isDefault:&isDefaultBackgroundColor];
             lastUnprocessedBackgroundColor = unprocessedBackgroundColor;
             // The unprocessed color is needed for minimum contrast computation for text color.
-            backgroundColor = [_configuration->_colorMap fastProcessedBackgroundColorForBackgroundColor:unprocessedBackgroundColor];
+            vector_float4 processableColor = isDefaultBackgroundColor ? simd_make_float4(0, 0, 0, 0) : unprocessedBackgroundColor;
+            backgroundColor = [_configuration->_colorMap fastProcessedBackgroundColorForBackgroundColor:processableColor];
             backgroundRLE[rles].color = backgroundColor;
             backgroundRLE[rles].origin = x;
             backgroundRLE[rles].count = 1;
@@ -762,7 +765,6 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
         }
         lastBackgroundKey = backgroundKey;
         attributes[x].backgroundColor = backgroundColor;
-        attributes[x].backgroundColor.w = 1;
         attributes[x].annotation = annotated;
 
         const BOOL characterIsDrawable = iTermTextDrawingHelperIsCharacterDrawable(&line[x],
@@ -953,9 +955,11 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
     }
 }
 
-- (vector_float4)unprocessedColorForBackgroundColorKey:(iTermBackgroundColorKey *)colorKey {
+- (vector_float4)unprocessedColorForBackgroundColorKey:(iTermBackgroundColorKey *)colorKey
+                                             isDefault:(BOOL *)isDefault {
     vector_float4 color = { 0, 0, 0, 0 };
     CGFloat alpha = _configuration->_transparencyAlpha;
+    *isDefault = NO;
     if (colorKey->selected) {
         color = [self selectionColorForCurrentFocus];
         if (_configuration->_transparencyAffectsOnlyDefaultBackgroundColor) {
@@ -972,7 +976,7 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
             .isMatch = NO,
             .image = NO
         };
-        return [self unprocessedColorForBackgroundColorKey:&temp];
+        return [self unprocessedColorForBackgroundColorKey:&temp isDefault:isDefault];
     } else if (colorKey->isMatch) {
         color = (vector_float4){ 1, 1, 0, 1 };
     } else {
@@ -994,10 +998,8 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
                                   bold:NO
                                  faint:NO
                           isBackground:NO];
-        } else if (defaultBackground) {
-            color = simd_make_float4(0, 0, 0, 0);
-            alpha = 0;
         } else {
+            *isDefault = defaultBackground;
             // Use the regular background color.
             color = [self colorForCode:colorKey->bgColor
                                  green:colorKey->bgGreen
