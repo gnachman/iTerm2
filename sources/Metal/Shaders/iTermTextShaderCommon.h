@@ -17,7 +17,6 @@ typedef struct {
     float2 textureCoordinate;
     float2 backgroundTextureCoordinate;
     float4 textColor;
-    float4 backgroundColor;
     float4 underlineColor;
     float2 textureOffset;  // Normalized offset in texture.
     float2 cellOffset;  // Coordinate of bottom left of cell in pixel coordinates. 0,0 is the bottom left of the screen.

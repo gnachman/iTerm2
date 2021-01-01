@@ -73,8 +73,7 @@ typedef struct iTermTextPIU {
     // Offset of source texture
     vector_float2 textureOffset;
 
-    // Values in 0-1. These will be composited over what's already rendered.
-    vector_float4 backgroundColor;
+    // Values in 0-1. This will be composited over what's already rendered.
     vector_float4 textColor;
 
     // What kind of underline to draw. The offset is provided in iTermTextureDimensions.

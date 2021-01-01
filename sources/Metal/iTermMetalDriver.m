@@ -1154,7 +1154,6 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     textState.asciiUnderlineDescriptor = asciiUnderlineDescriptor;
     textState.nonAsciiUnderlineDescriptor = nonAsciiUnderlineDescriptor;
     textState.strikethroughUnderlineDescriptor = strikethroughUnderlineDescriptor;
-    textState.defaultBackgroundColor = frameData.perFrameState.defaultBackgroundColor;
 
     CGSize glyphSize = textState.cellConfiguration.glyphSize;
     iTermBackgroundColorRendererTransientState *backgroundState = [frameData transientStateForRenderer:_backgroundColorRenderer];

@@ -46,7 +46,6 @@ iTermTextVertexShader(uint vertexID [[ vertex_id ]],
     out.textureOffset = perInstanceUniforms[iid].textureOffset;
     out.textureCoordinate = vertexArray[vertexID].textureCoordinate + perInstanceUniforms[iid].textureOffset;
     out.textColor = perInstanceUniforms[iid].textColor;
-    out.backgroundColor = perInstanceUniforms[iid].backgroundColor;
     out.viewportSize = viewportSize;
 
     out.cellOffset = perInstanceUniforms[iid].offset.xy + offset[0];

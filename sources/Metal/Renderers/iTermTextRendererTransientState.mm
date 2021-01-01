@@ -43,9 +43,6 @@ static const size_t iTermPIUArraySize = 4;
 static const size_t iTermNumberOfPIUArrays = iTermASCIITextureAttributesMax * 2;
 
 @implementation iTermTextRendererTransientState {
-    // Data's bytes contains a C array of iTermMetalBackgroundColorRLE with background colors.
-    NSMutableArray<iTermData *> *_backgroundColorRLEDataArray;
-
     // Info about PIUs that need their background colors set. They belong to
     // parts of glyphs that spilled out of their bounds. The actual PIUs
     // belong to _pius, but are missing some fields.
@@ -58,14 +55,6 @@ static const size_t iTermNumberOfPIUArrays = iTermASCIITextureAttributesMax * 2;
     std::map<iTerm2::TexturePage *, iTerm2::PIUArray<iTermTextPIU> *> _pius[iTermPIUArraySize];
 
     iTermPreciseTimerStats _stats[iTermTextRendererStatCount];
-}
-
-- (instancetype)initWithConfiguration:(__kindof iTermRenderConfiguration *)configuration {
-    self = [super initWithConfiguration:configuration];
-    if (self) {
-        _backgroundColorRLEDataArray = [NSMutableArray array];
-    }
-    return self;
 }
 
 - (void)dealloc {
@@ -83,7 +72,6 @@ static const size_t iTermNumberOfPIUArrays = iTermASCIITextureAttributesMax * 2;
     return [NSString stringWithFormat:
             @"offset=(%@, %@) "
             @"textureOffset=(%@, %@) "
-            @"backgroundColor=(%@, %@, %@, %@) "
             @"textColor=(%@, %@, %@, %@) "
             @"underlineStyle=%@ "
             @"underlineColor=(%@, %@, %@, %@)\n",
@@ -91,10 +79,6 @@ static const size_t iTermNumberOfPIUArrays = iTermASCIITextureAttributesMax * 2;
             @(a.offset.y),
             @(a.textureOffset.x),
             @(a.textureOffset.y),
-            @(a.backgroundColor.x),
-            @(a.backgroundColor.y),
-            @(a.backgroundColor.z),
-            @(a.backgroundColor.w),
             @(a.textColor.x),
             @(a.textColor.y),
             @(a.textColor.z),
@@ -110,15 +94,6 @@ static const size_t iTermNumberOfPIUArrays = iTermASCIITextureAttributesMax * 2;
     [super writeDebugInfoToFolder:folder];
 
     [_modelData writeToURL:[folder URLByAppendingPathComponent:@"model.bin"] atomically:NO];
-
-    @autoreleasepool {
-        NSMutableString *s = [NSMutableString string];
-        [_backgroundColorRLEDataArray enumerateObjectsUsingBlock:^(iTermData * _Nonnull data, NSUInteger idx, BOOL * _Nonnull stop) {
-            const iTermMetalBackgroundColorRLE *rle = (const iTermMetalBackgroundColorRLE *)data.bytes;
-            [s appendFormat:@"%4d: %@\n", (int)idx, iTermMetalBackgroundColorRLEDescription(rle)];
-        }];
-        [s writeToURL:[folder URLByAppendingPathComponent:@"backgroundColors.txt"] atomically:NO encoding:NSUTF8StringEncoding error:nil];
-    }
 
     @autoreleasepool {
         NSMutableString *s = [NSMutableString string];
@@ -217,15 +192,11 @@ static const size_t iTermNumberOfPIUArrays = iTermASCIITextureAttributesMax * 2;
         }
     }
 
-    NSString *s = [NSString stringWithFormat:@"backgroundTexture=%@\nasciiUnderlineDescriptor=%@\nnonAsciiUnderlineDescriptor=%@\nstrikethroughUnderlineDescriptor=%@\ndefaultBackgroundColor=(%@, %@, %@, %@)",
+    NSString *s = [NSString stringWithFormat:@"backgroundTexture=%@\nasciiUnderlineDescriptor=%@\nnonAsciiUnderlineDescriptor=%@\nstrikethroughUnderlineDescriptor=%@",
                    _backgroundTexture,
                    iTermMetalUnderlineDescriptorDescription(&_asciiUnderlineDescriptor),
                    iTermMetalUnderlineDescriptorDescription(&_nonAsciiUnderlineDescriptor),
-                   iTermMetalUnderlineDescriptorDescription(&_strikethroughUnderlineDescriptor),
-                   @(_defaultBackgroundColor.x),
-                   @(_defaultBackgroundColor.y),
-                   @(_defaultBackgroundColor.z),
-                   @(_defaultBackgroundColor.w)];
+                   iTermMetalUnderlineDescriptorDescription(&_strikethroughUnderlineDescriptor)];
     [s writeToURL:[folder URLByAppendingPathComponent:@"state.txt"]
        atomically:NO
          encoding:NSUTF8StringEncoding
@@ -372,41 +343,8 @@ static const size_t iTermNumberOfPIUArrays = iTermASCIITextureAttributesMax * 2;
 
 - (void)willDraw {
     DLog(@"WILL DRAW %@", self);
-    // Fix up the background color of parts of glyphs that are drawn outside their cell. Add to the
-    // correct page's PIUs.
-    const int numRows = _backgroundColorRLEDataArray.count;
-        const int width = self.cellConfiguration.gridSize.width;
     for (auto pair : _fixups) {
-        iTerm2::TexturePage *page = pair.first;
         std::vector<iTermTextFixup> *fixups = pair.second;
-        for (auto fixup : *fixups) {
-            iTerm2::PIUArray<iTermTextPIU> &piuArray = *_pius[fixup.outerPIUIndex][page];
-            iTermTextPIU &piu = piuArray.get(fixup.piu_index);
-
-            // Set fields in piu
-            if (fixup.y >= 0 && fixup.y < numRows && fixup.x >= 0 && fixup.x < width) {
-                iTermData *data = _backgroundColorRLEDataArray[fixup.y];
-                const iTermMetalBackgroundColorRLE *backgroundRLEs = (iTermMetalBackgroundColorRLE *)data.bytes;
-                // find RLE for index fixup.x
-                const int rleCount = data.length / sizeof(iTermMetalBackgroundColorRLE);
-                // Use upper bound. Consider the following:
-                // Origins          0         10         20         end()
-                // Lower bounds     0         1...10     11...20    21...inf
-                // Upper bounds               0...9      10...19    20...inf
-                //
-                // Upper bound always gives you one past what you wanted. Lower bound is not consistent.
-                auto it = std::upper_bound(backgroundRLEs,
-                                           backgroundRLEs + rleCount,
-                                           static_cast<unsigned short>(fixup.x));
-                it--;
-                const iTermMetalBackgroundColorRLE &rle = *it;
-                piu.backgroundColor = rle.color;
-                [data checkForOverrun];
-            } else {
-                // Offscreen
-                piu.backgroundColor = _defaultBackgroundColor;
-            }
-        }
         delete fixups;
     }
 
@@ -431,7 +369,6 @@ NS_INLINE iTermTextPIU *iTermTextRendererTransientStateAddASCIIPart(iTermTextPIU
                                                                     CGSize asciiOffset,
                                                                     iTermASCIITextureOffset offset,
                                                                     vector_float4 textColor,
-                                                                    vector_float4 backgroundColor,
                                                                     iTermMetalGlyphAttributesUnderline underlineStyle,
                                                                     vector_float4 underlineColor) {
     piu->offset = simd_make_float2(x * cellWidth + asciiOffset.width,
@@ -440,7 +377,6 @@ NS_INLINE iTermTextPIU *iTermTextRendererTransientStateAddASCIIPart(iTermTextPIU
     MTLOrigin origin = iTermTextureArrayOffsetForIndex(texture.textureArray, index);
     piu->textureOffset = (vector_float2){ origin.x * w, origin.y * h };
     piu->textColor = textColor;
-    piu->backgroundColor = backgroundColor;
     piu->underlineStyle = underlineStyle;
     piu->underlineColor = underlineColor;
     return piu;
@@ -500,7 +436,6 @@ static inline int iTermOuterPIUIndex(const bool &annotation, const bool &underli
                                                     asciiOffset,
                                                     iTermASCIITextureOffsetCenter,
                                                     textColor,
-                                                    attributes[x].backgroundColor,
                                                     underlineStyle,
                                                     underlineColor);
         return;
@@ -521,7 +456,6 @@ static inline int iTermOuterPIUIndex(const bool &annotation, const bool &underli
                                                         asciiOffset,
                                                         iTermASCIITextureOffsetLeft,
                                                         textColor,
-                                                        attributes[x - 1].backgroundColor,
                                                         iTermMetalGlyphAttributesUnderlineNone,
                                                         underlineColor);
         } else {
@@ -536,7 +470,6 @@ static inline int iTermOuterPIUIndex(const bool &annotation, const bool &underli
                                                         asciiOffset,
                                                         iTermASCIITextureOffsetLeft,
                                                         textColor,
-                                                        _defaultBackgroundColor,
                                                         iTermMetalGlyphAttributesUnderlineNone,
                                                         underlineColor);
         }
@@ -553,7 +486,6 @@ static inline int iTermOuterPIUIndex(const bool &annotation, const bool &underli
                                                 asciiOffset,
                                                 iTermASCIITextureOffsetCenter,
                                                 textColor,
-                                                attributes[x].backgroundColor,
                                                 underlineStyle,
                                                 underlineColor);
     // Add PIU for right overflow
@@ -571,7 +503,6 @@ static inline int iTermOuterPIUIndex(const bool &annotation, const bool &underli
                                                         asciiOffset,
                                                         iTermASCIITextureOffsetRight,
                                                         attributes[x].foregroundColor,
-                                                        attributes[x + 1].backgroundColor,
                                                         iTermMetalGlyphAttributesUnderlineNone,
                                                         underlineColor);
         } else {
@@ -586,7 +517,6 @@ static inline int iTermOuterPIUIndex(const bool &annotation, const bool &underli
                                                         asciiOffset,
                                                         iTermASCIITextureOffsetRight,
                                                         attributes[x].foregroundColor,
-                                                        _defaultBackgroundColor,
                                                         iTermMetalGlyphAttributesUnderlineNone,
                                                         underlineColor);
         }
@@ -609,8 +539,6 @@ static inline BOOL GlyphKeyCanTakeASCIIFastPath(const iTermMetalGlyphKey &glyphK
                  context:(iTermMetalBufferPoolContext *)context
                 creation:(NSDictionary<NSNumber *, iTermCharacterBitmap *> *(NS_NOESCAPE ^)(int x, BOOL *emoji))creation {
     //DLog(@"BEGIN setGlyphKeysData for %@", self);
-    ITDebugAssert(row == _backgroundColorRLEDataArray.count);
-    [_backgroundColorRLEDataArray addObject:backgroundColorRLEData];
     const iTermMetalGlyphKey *glyphKeys = (iTermMetalGlyphKey *)glyphKeysData.bytes;
     const iTermMetalGlyphAttributes *attributes = (iTermMetalGlyphAttributes *)attributesData.bytes;
     vector_float2 reciprocalAsciiAtlasSize = 1.0 / _asciiTextureGroup.atlasSize;
@@ -705,9 +633,7 @@ static inline BOOL GlyphKeyCanTakeASCIIFastPath(const iTermMetalGlyphKey &glyphK
                 }
 
                 // Set color info or queue for fixup since color info may not exist yet.
-                if (entry->_part == iTermTextureMapMiddleCharacterPart) {
-                    piu->backgroundColor = attributes[x].backgroundColor;
-                } else {
+                if (entry->_part != iTermTextureMapMiddleCharacterPart) {
                     iTermTextFixup fixup = {
                         .piu_index = array->size() - 1,
                         .x = x + dx,

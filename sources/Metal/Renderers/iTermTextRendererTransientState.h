@@ -23,7 +23,6 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @property (nonatomic) iTermMetalUnderlineDescriptor asciiUnderlineDescriptor;
 @property (nonatomic) iTermMetalUnderlineDescriptor nonAsciiUnderlineDescriptor;
 @property (nonatomic) iTermMetalUnderlineDescriptor strikethroughUnderlineDescriptor;
-@property (nonatomic) vector_float4 defaultBackgroundColor;
 
 - (void)setGlyphKeysData:(iTermGlyphKeyData*)glyphKeysData
                    count:(int)count
