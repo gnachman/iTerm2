@@ -94,7 +94,11 @@ function Build {
   test -f $SVNDIR/downloads/beta/iTerm2-${NAME}.description || (echo "$DESCRIPTION" > $SVNDIR/downloads/beta/iTerm2-${NAME}.description)
   vi $SVNDIR/downloads/beta/iTerm2-${NAME}.description
   echo 'SHA-256 of the zip file is' > $SVNDIR/downloads/beta/iTerm2-${NAME}.changelog
-  shasum -a256 iTerm2-${NAME}.zip | awk '{print $1}' >> $SVNDIR/downloads/beta/iTerm2-${NAME}.changelog
+  rm -f /tmp/sum /tmp/sum.asc
+  shasum -a256 iTerm2-${NAME}.zip > /tmp/sum
+  gpg --detach-sig --armor /tmp/sum
+  awk '{print $1}' < /tmp/sum >> $SVNDIR/downloads/beta/iTerm2-${NAME}.changelog
+  cat /tmp/sum.asc >> $SVNDIR/downloads/beta/iTerm2-${NAME}.changelog
   vi $SVNDIR/downloads/beta/iTerm2-${NAME}.changelog
   pushd $SVNDIR
   git add downloads/beta/iTerm2-${NAME}.summary downloads/beta/iTerm2-${NAME}.description downloads/beta/iTerm2-${NAME}.changelog downloads/beta/iTerm2-${NAME}.zip source/appcasts/testing3_new.xml source/appcasts/testing3_modern.xml source/appcasts/testing_changes3.txt
