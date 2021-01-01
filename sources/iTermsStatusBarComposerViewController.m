@@ -53,7 +53,9 @@ static NSString *const iTermComposerComboBoxDidBecomeFirstResponder = @"iTermCom
 
 - (void)makeFirstResponder {
     if ([_comboBox textFieldIsFirstResponder]) {
-        [self showPopover:nil];
+        if ([_delegate statusBarComposerShouldUsePopover:self]) {
+            [self showPopover:nil];
+        }
         return;
     }
     [_comboBox.window makeFirstResponder:_comboBox];

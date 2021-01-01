@@ -179,6 +179,9 @@
     }
 }
 
+- (BOOL)statusBarComposerShouldUsePopover:(iTermsStatusBarComposerViewController *)composer {
+    return [self.delegate statusBarComponentComposerShouldUsePopover:self];
+}
 #pragma mark - Notifications
 
 - (void)commandHistoryDidChange:(NSNotification *)notification {

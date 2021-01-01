@@ -370,6 +370,10 @@ static const CGFloat iTermStatusBarViewControllerBottomMargin = 0;
     [self.delegate statusBarResignFirstResponder];
 }
 
+- (BOOL)statusBarComponentComposerShouldUsePopover:(id<iTermStatusBarComponent>)component {
+    return [self.delegate statusBarComposerShouldUsePopover];
+}
+
 - (void)statusBarComponent:(id<iTermStatusBarComponent>)component
       reportScriptingError:(NSError *)error
              forInvocation:(NSString *)invocation

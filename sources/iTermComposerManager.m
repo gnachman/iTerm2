@@ -33,10 +33,26 @@
 - (void)reveal {
     iTermStatusBarViewController *statusBarViewController = [self.delegate composerManagerStatusBarViewController:self];
     if (statusBarViewController) {
-        [self showComposerInStatusBar:statusBarViewController];
+        if (_dropDownComposerViewIsVisible) {
+            _saved = _minimalViewController.stringValue;
+            [self dismissMinimalView];
+        } else {
+            [self showComposerInStatusBar:statusBarViewController];
+        }
     } else {
         [self showMinimalComposerInView:[self.delegate composerManagerContainerView:self]];
     }
+}
+
+- (void)revealMinimal {
+    iTermStatusBarViewController *statusBarViewController = [self.delegate composerManagerStatusBarViewController:self];
+    if (statusBarViewController) {
+        iTermStatusBarComposerComponent *component = [statusBarViewController visibleComponentWithIdentifier:[iTermStatusBarComposerComponent statusBarComponentIdentifier]];
+        if (component) {
+            _saved = [component.stringValue copy];
+        }
+    }
+    [self showMinimalComposerInView:[self.delegate composerManagerContainerView:self]];
 }
 
 - (void)showComposerInStatusBar:(iTermStatusBarViewController *)statusBarViewController {

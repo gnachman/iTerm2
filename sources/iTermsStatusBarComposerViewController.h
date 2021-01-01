@@ -20,6 +20,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (NSFont *)statusBarComposerFont:(iTermsStatusBarComposerViewController *)composer;
 - (BOOL)statusBarComposerShouldForceDarkAppearance:(iTermsStatusBarComposerViewController *)composer;
 - (void)statusBarComposerDidEndEditing:(iTermsStatusBarComposerViewController *)composer;
+- (BOOL)statusBarComposerShouldUsePopover:(iTermsStatusBarComposerViewController *)composer;
 @end
 
 @interface iTermsStatusBarComposerViewController : NSViewController

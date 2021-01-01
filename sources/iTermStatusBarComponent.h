@@ -43,6 +43,7 @@ static NSString *const iTermStatusBarSharedTextColorKey = @"shared text color";
       reportScriptingError:(NSError *)error
 forInvocation:(NSString *)invocation
                     origin:(NSString *)origin;
+- (BOOL)statusBarComponentComposerShouldUsePopover:(id<iTermStatusBarComponent>)component;
 @end
 
 @protocol iTermStatusBarComponentFactory<NSSecureCoding, NSCopying, NSObject>

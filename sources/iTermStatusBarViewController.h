@@ -40,6 +40,8 @@ NS_ASSUME_NONNULL_BEGIN
 // Takes into account theme, dark/light mode (if relevant), and advanced config background color.
 - (BOOL)statusBarHasDarkBackground;
 - (BOOL)statusBarCanDragWindow;
+- (BOOL)statusBarComposerShouldUsePopover;
+
 @end
 
 @protocol iTermStatusBarContainer<NSObject>

@@ -29,7 +29,10 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) BOOL dropDownComposerViewIsVisible;
 
 - (void)setCommand:(NSString *)command;
+// Reveal appropriately (focus status bar, open popover, or open minimal)
 - (void)reveal;
+// Reveal minimal composer.
+- (void)revealMinimal;
 - (BOOL)dismiss;
 - (void)layout;
 

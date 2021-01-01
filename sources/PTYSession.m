@@ -12824,6 +12824,11 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     return self.view.window.contentView.effectiveAppearance.it_isDark;
 }
 
+- (BOOL)statusBarComposerShouldUsePopover {
+    [_composerManager revealMinimal];
+    return NO;
+}
+
 - (NSColor *)statusBarDefaultTextColor {
     return [self textColorForStatusBar];
 }
