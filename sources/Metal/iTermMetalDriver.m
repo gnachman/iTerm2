@@ -88,9 +88,12 @@ typedef struct {
 } iTermMetalDriverMainThreadState;
 
 @interface iTermMetalDriver()
-// This indicates if a draw call was made while busy. When we stop being busy
-// and this is set, then we must schedule another draw.
-@property (atomic) BOOL needsDraw;
+
+// When less than infinity, we need to trigger our own redraw. This could be because we failed to
+// get a frame or there are too many concurrent draws. When the current attempt at drawing finishes
+// a call to setNeedsDisplay: will be made after this duration. It is reset to INFINITY when a draw
+// is not needed.
+@property (atomic) NSTimeInterval needsDrawAfterDuration;
 @property (atomic) BOOL waitingOnSynchronousDraw;
 @property (nonatomic, readonly) iTermMetalDriverMainThreadState *mainThreadState;
 @end
@@ -216,6 +219,7 @@ typedef struct {
         }];
 #endif
         _maxFramesInFlight = iTermMetalDriverMaximumNumberOfFramesInFlight;
+        _needsDrawAfterDuration = INFINITY;
 
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(applicationDidBecomeActive:)
@@ -450,7 +454,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
             DLog(@"  abort: busy (dropped %@%%, number in flight: %d)", @((_dropped * 100)/_total), (int)framesInFlight);
             DLog(@"  current frames:\n%@", _currentFrames);
             _dropped++;
-            self.needsDraw = YES;
+            self.needsDrawAfterDuration = MIN(self.needsDrawAfterDuration, 1/60.0);
             return NO;
         }
     }
@@ -470,7 +474,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     if (!frameData.deferCurrentDrawable) {
         if (frameData.destinationTexture == nil || frameData.renderPassDescriptor == nil) {
             DLog(@"  abort: failed to get drawable or RPD");
-            self.needsDraw = YES;
+            self.needsDrawAfterDuration = MIN(self.needsDrawAfterDuration, 1/60.0);
             return NO;
         }
     }
@@ -478,7 +482,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     if (!frameData.textureIsFamiliar) {
         if (_mainThreadState.unfamiliarTextureCount < _maxFramesInFlight) {
             DLog(@"Texture is unfamiliar for %@", frameData);
-            self.needsDraw = YES;
+            self.needsDrawAfterDuration = 0;
         } else {
             DLog(@"Avoid redrawing unfamiliar texture to break loop");
         }
@@ -615,7 +619,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     if (!frameData.deferCurrentDrawable) {
         if (frameData.destinationTexture == nil || frameData.renderPassDescriptor == nil) {
             DLog(@"  abort: failed to get drawable or RPD");
-            self.needsDraw = YES;
+            self.needsDrawAfterDuration = MIN(self.needsDrawAfterDuration, 1/60.0);
             [self complete:frameData];
             return;
         }
@@ -1667,7 +1671,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
         }
         if (frameData.destinationTexture == nil) {
             DLog(@"  abort: failed to get drawable or RPD %@", frameData);
-            self.needsDraw = YES;
+            self.needsDrawAfterDuration = MIN(self.needsDrawAfterDuration, 1/60.0);
             [frameData.renderEncoder endEncoding];
             [commandBuffer commit];
             [self didComplete:NO withFrameData:frameData];
@@ -1887,19 +1891,20 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
 }
 
 - (void)scheduleDrawIfNeededInView:(MTKView *)view {
-    if (self.needsDraw) {
+    const NSTimeInterval duration = self.needsDrawAfterDuration;
+    if (duration < INFINITY) {
         void (^block)(void) = ^{
-            if (self.needsDraw) {
-                self.needsDraw = NO;
+            if (self.needsDrawAfterDuration < INFINITY) {
+                self.needsDrawAfterDuration = INFINITY;
                 DLog(@"Calling setNeedsDisplay because of needsDraw");
                 [view setNeedsDisplay:YES];
             }
         };
-#if ENABLE_PRIVATE_QUEUE
-        dispatch_async(dispatch_get_main_queue(), block);
-#else
-        block();
-#endif
+        DLog(@"Schedule redraw after %f ms", duration * 1000);
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW,
+                                     (int64_t)(duration * NSEC_PER_SEC)),
+                       dispatch_get_main_queue(),
+                       block);
     }
 }
 
