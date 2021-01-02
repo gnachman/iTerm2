@@ -105,27 +105,12 @@
 }
 
 - (BOOL)dismiss {
-    if (_dropDownComposerViewIsVisible) {
-        _saved = _minimalViewController.stringValue;
-        [self dismissMinimalView];
-        return YES;
-    }
-
-    iTermStatusBarViewController *statusBarViewController = [self.delegate composerManagerStatusBarViewController:self];
-    if (!statusBarViewController) {
+    if (!_dropDownComposerViewIsVisible) {
         return NO;
     }
-    iTermStatusBarComposerComponent *component;
-    component = [statusBarViewController visibleComponentWithIdentifier:[iTermStatusBarComposerComponent statusBarComponentIdentifier]];
-    if (!component) {
-        return NO;
-    }
-    NSString *value = component.stringValue;
-    const BOOL dismissed = [component dismiss];
-    if (dismissed) {
-        _saved = [value copy];
-    }
-    return dismissed;
+    _saved = _minimalViewController.stringValue;
+    [self dismissMinimalView];
+    return YES;
 }
 
 - (void)layout {

@@ -12824,7 +12824,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     return self.view.window.contentView.effectiveAppearance.it_isDark;
 }
 
-- (BOOL)statusBarComposerShouldUsePopover {
+- (BOOL)statusBarRevealComposer {
     [_composerManager revealMinimal];
     return NO;
 }

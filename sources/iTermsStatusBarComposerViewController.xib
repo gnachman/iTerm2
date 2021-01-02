@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="14460.31" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="17506" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
     <dependencies>
         <deployment identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="14460.31"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="17506"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
@@ -10,8 +10,6 @@
             <connections>
                 <outlet property="_button" destination="Hed-q1-qQm" id="vGh-6A-kk8"/>
                 <outlet property="_comboBox" destination="4Lx-8h-aAd" id="vCT-pq-8Yh"/>
-                <outlet property="_popover" destination="9Mb-Fy-zsB" id="f3Z-N9-tIg"/>
-                <outlet property="_popoverVC" destination="hP2-aE-JJR" id="B0c-SD-inM"/>
                 <outlet property="view" destination="Hz6-mo-xeY" id="0bl-1N-x8E"/>
             </connections>
         </customObject>
@@ -42,25 +40,19 @@
                 <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Hed-q1-qQm">
                     <rect key="frame" x="180" y="2" width="20" height="20"/>
                     <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMinY="YES"/>
-                    <buttonCell key="cell" type="roundTextured" bezelStyle="texturedRounded" image="PopoverIcon" imagePosition="only" alignment="center" controlSize="small" lineBreakMode="truncatingTail" state="on" imageScaling="proportionallyDown" inset="2" id="tfx-TP-uUz">
+                    <buttonCell key="cell" type="roundTextured" bezelStyle="texturedRounded" image="StatusBarComposerExpand" imagePosition="only" alignment="center" controlSize="small" lineBreakMode="truncatingTail" state="on" imageScaling="proportionallyDown" inset="2" id="tfx-TP-uUz">
                         <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                         <font key="font" metaFont="smallSystem"/>
                     </buttonCell>
                     <connections>
-                        <action selector="showPopover:" target="-2" id="JqG-Lt-ktF"/>
+                        <action selector="revealComposer:" target="-2" id="hWE-8f-OME"/>
                     </connections>
                 </button>
             </subviews>
             <point key="canvasLocation" x="-1" y="154"/>
         </customView>
-        <viewController id="hP2-aE-JJR" userLabel="Popover View Controller" customClass="iTermStatusBarLargeComposerViewController"/>
-        <popover id="9Mb-Fy-zsB">
-            <connections>
-                <outlet property="contentViewController" destination="hP2-aE-JJR" id="YWi-xg-6ad"/>
-            </connections>
-        </popover>
     </objects>
     <resources>
-        <image name="PopoverIcon" width="16" height="16"/>
+        <image name="StatusBarComposerExpand" width="16" height="16"/>
     </resources>
 </document>
