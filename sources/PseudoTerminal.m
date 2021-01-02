@@ -121,6 +121,7 @@
 #import "ToolCapturedOutputView.h"
 #import "ToolCommandHistoryView.h"
 #import "ToolDirectoriesView.h"
+#import "VT100RemoteHost.h"
 #import "VT100Screen.h"
 #import "VT100Screen.h"
 #import "VT100Terminal.h"
@@ -7229,16 +7230,14 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     [self.currentSession textViewAddTrigger:self.currentSession.selectedText ?: @""];
 }
 
-- (IBAction)openPasteHistory:(id)sender
-{
+- (IBAction)openPasteHistory:(id)sender {
     if (!pbHistoryView) {
         pbHistoryView = [[PasteboardHistoryWindowController alloc] init];
     }
     [self openPopupWindow:pbHistoryView];
 }
 
-- (IBAction)openCommandHistory:(id)sender
-{
+- (IBAction)openCommandHistory:(id)sender {
     if (!commandHistoryPopup) {
         commandHistoryPopup = [[CommandHistoryPopupWindowController alloc] initForAutoComplete:NO];
     }
@@ -9628,7 +9627,8 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
         if (![[iTermShellHistoryController sharedInstance] commandHistoryHasEverBeenUsed]) {
             return YES;
         }
-        return [[iTermShellHistoryController sharedInstance] haveCommandsForHost:[[self currentSession] currentHost]];
+        VT100RemoteHost *host = [[self currentSession] currentHost] ?: [VT100RemoteHost localhost];
+        return [[iTermShellHistoryController sharedInstance] haveCommandsForHost:host];
     } else if ([item action] == @selector(openDirectories:)) {
         if (![[iTermShellHistoryController sharedInstance] commandHistoryHasEverBeenUsed]) {
             return YES;

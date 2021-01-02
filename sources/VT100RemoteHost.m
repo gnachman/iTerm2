@@ -27,10 +27,11 @@ static NSString *const kRemoteHostUserNameKey = @"User name";
     return self;
 }
 
-- (void)dealloc {
-    [_hostname release];
-    [_username release];
-    [super dealloc];
++ (instancetype)localhost {
+    VT100RemoteHost *localhost = [[self alloc] init];
+    localhost.hostname = [NSHost fullyQualifiedDomainName];
+    localhost.username = NSUserName();
+    return localhost;
 }
 
 - (NSString *)description {

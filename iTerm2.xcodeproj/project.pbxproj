@@ -1554,6 +1554,7 @@
 		A60D20E62597FAFB004AC979 /* libsandbox.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = A60D20E52597FAFB004AC979 /* libsandbox.tbd */; };
 		A60D20EF2597FCFA004AC979 /* iTermImage+ImageWithData.m in Sources */ = {isa = PBXBuildFile; fileRef = A60D20C82597F496004AC979 /* iTermImage+ImageWithData.m */; };
 		A60D21F4259C66D9004AC979 /* NSPopUpButton+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DF8006E18F34CAB00722B35 /* NSPopUpButton+iTerm.m */; };
+		A60D223025A11039004AC979 /* VT100RemoteHost.m in Sources */ = {isa = PBXBuildFile; fileRef = A68A30DA186D1429007F550F /* VT100RemoteHost.m */; };
 		A60D85A81A3A8105003AEE22 /* NSPasteboard+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A60D85A61A3A8105003AEE22 /* NSPasteboard+iTerm.h */; };
 		A60D85A91A3A8105003AEE22 /* NSPasteboard+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A60D85A61A3A8105003AEE22 /* NSPasteboard+iTerm.h */; };
 		A60EAE7D23F9CEB3007536CE /* ApplicationServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A60EAE7C23F9CEB3007536CE /* ApplicationServices.framework */; };
@@ -3296,7 +3297,6 @@
 		A6C762FF1B45C52B00E3C992 /* TransferrableFile.m in Sources */ = {isa = PBXBuildFile; fileRef = A68A30D7186D1429007F550F /* TransferrableFile.m */; };
 		A6C763001B45C52B00E3C992 /* TransferrableFileMenuItemView.m in Sources */ = {isa = PBXBuildFile; fileRef = A68A30D8186D1429007F550F /* TransferrableFileMenuItemView.m */; };
 		A6C763011B45C52B00E3C992 /* TransferrableFileMenuItemViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = A68A30D9186D1429007F550F /* TransferrableFileMenuItemViewController.m */; };
-		A6C763021B45C52B00E3C992 /* VT100RemoteHost.m in Sources */ = {isa = PBXBuildFile; fileRef = A68A30DA186D1429007F550F /* VT100RemoteHost.m */; };
 		A6C763031B45C52B00E3C992 /* VT100WorkingDirectory.m in Sources */ = {isa = PBXBuildFile; fileRef = A68A30DB186D1429007F550F /* VT100WorkingDirectory.m */; };
 		A6C763061B45C52B00E3C992 /* BackgroundThread.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DA26ABF15007507004B5792 /* BackgroundThread.m */; };
 		A6C763071B45C52B00E3C992 /* CapturedOutput.m in Sources */ = {isa = PBXBuildFile; fileRef = A67F57D31B11882900B4F135 /* CapturedOutput.m */; };
@@ -14280,6 +14280,7 @@
 				A630116A20E60725008114B7 /* iTermStatusBarLayout.m in Sources */,
 				A665C1CB243A4DE300F623F0 /* SIGArchiveCommon.m in Sources */,
 				A6A4867120B67A6D00493302 /* KeysPreferencesViewController.m in Sources */,
+				A60D223025A11039004AC979 /* VT100RemoteHost.m in Sources */,
 				A629F5AB23AFF5EC00C2F16B /* iTermShellIntegrationDownloadAndRunViewController.m in Sources */,
 				A631FC8E20EDDAEA00EB824F /* iTermSearchFieldCell.m in Sources */,
 				A67F5DE723947A2700D18028 /* iTermMultiServerConnection.m in Sources */,
@@ -14836,7 +14837,6 @@
 				A66E5E541E6268F700E8FE35 /* iTermServiceProvider.m in Sources */,
 				A6C7635D1B45C52B00E3C992 /* DirectoriesPopup.m in Sources */,
 				A6C7639D1B45C52B00E3C992 /* TmuxSessionsTable.m in Sources */,
-				A6C763021B45C52B00E3C992 /* VT100RemoteHost.m in Sources */,
 				A6C762EF1B45C52B00E3C992 /* DVR.m in Sources */,
 				A6C763071B45C52B00E3C992 /* CapturedOutput.m in Sources */,
 				A6C762F11B45C52B00E3C992 /* DVRDecoder.m in Sources */,

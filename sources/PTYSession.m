@@ -13575,6 +13575,13 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)composerManager:(iTermComposerManager *)composerManager sendCommand:(NSString *)command {
+    if (_commandRange.start.x < 0) {
+        VT100RemoteHost *host = [self currentHost] ?: [VT100RemoteHost localhost];
+        [[iTermShellHistoryController sharedInstance] addCommand:command
+                                                          onHost:host
+                                                     inDirectory:[_screen workingDirectoryOnLine:_commandRange.start.y]
+                                                        withMark:nil];
+    }
     [self writeTask:command];
 }
 

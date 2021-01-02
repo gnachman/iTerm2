@@ -525,6 +525,9 @@ static const NSTimeInterval kMaxTimeToRememberDirectories = 60 * 60 * 24 * 90;
 
 - (NSArray<iTermCommandHistoryEntryMO *> *)commandHistoryEntriesWithPrefix:(NSString *)partialCommand
                                                                     onHost:(VT100RemoteHost *)host {
+    if (host == nil) {
+        return [self commandHistoryEntriesWithPrefix:partialCommand onHost:[VT100RemoteHost localhost]];
+    }
     BOOL emptyPartialCommand = (partialCommand.length == 0);
     NSMutableArray<iTermCommandHistoryEntryMO *> *result = [NSMutableArray array];
     iTermHostRecordMO *hostRecord = [self recordForHost:host];
