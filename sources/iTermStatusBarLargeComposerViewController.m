@@ -14,6 +14,7 @@
 #import "SolidColorView.h"
 #import "iTermPopupWindowController.h"
 #import "iTermShellHistoryController.h"
+#import "iTermWarning.h"
 #import "WindowControllerInterface.h"
 
 @interface iTermComposerView : NSView
@@ -98,11 +99,12 @@
 }
 @end
 
-@interface iTermStatusBarLargeComposerViewController ()<PopupDelegate, iTermPopupWindowPresenter>
+@interface iTermStatusBarLargeComposerViewController ()<PopupDelegate, iTermPopupWindowPresenter, NSTextViewDelegate>
 
 @end
 
 @implementation iTermStatusBarLargeComposerViewController {
+    IBOutlet NSButton *_help;
     CommandHistoryPopupWindowController *_historyWindowController;
 }
 
@@ -110,6 +112,35 @@
     [super awakeFromNib];
     self.textView.textColor = [NSColor textColor];
     self.textView.font = [NSFont fontWithName:@"Menlo" size:11];
+}
+
+- (void)viewWillLayout {
+    _help.enabled = [self helpShouldBeAvailable];
+    [super viewWillLayout];
+}
+
+- (NSString *)commandAtCursor {
+    NSString *content = self.textView.string;
+    const NSRange selectedRange = [self.textView selectedRange];
+    if (selectedRange.location > content.length) {
+        return @"";
+    }
+
+    NSInteger lowerBound = [content rangeOfCharacterFromSet:[NSCharacterSet newlineCharacterSet]
+                                                       options:NSBackwardsSearch
+                                                         range:NSMakeRange(0, selectedRange.location)].location;
+    if (lowerBound == NSNotFound) {
+        lowerBound = 0;
+    } else {
+        lowerBound += 1;
+    }
+    NSInteger upperBound = [content rangeOfCharacterFromSet:[NSCharacterSet newlineCharacterSet]
+                                                    options:0
+                                                      range:NSMakeRange(lowerBound, content.length - lowerBound)].location;
+    if (upperBound == NSNotFound) {
+        upperBound = content.length;
+    }
+    return [content substringWithRange:NSMakeRange(lowerBound, upperBound - lowerBound)];
 }
 
 - (void)openCommandHistory:(id)sender {
@@ -128,7 +159,7 @@
                                                                    range:NSMakeRange(0, selectedRange.location)].location;
         if (newlineBefore == NSNotFound) {
             prefix = [content substringToIndex:selectedRange.location];
-            } else {
+        } else {
             prefix = [content substringWithRange:NSMakeRange(newlineBefore + 1, selectedRange.location - newlineBefore - 1)];
         }
         [_historyWindowController popWithDelegate:self inWindow:self.view.window];
@@ -140,6 +171,49 @@
         [iTermShellHistoryController showInformationalMessage];
     }
 }
+
+- (BOOL)helpShouldBeAvailable {
+    return [[self commandAtCursor] length] > 0 && [[self browserName] length] > 0;
+}
+
+- (NSString *)browserName {
+    NSURL *appUrl = [[NSWorkspace sharedWorkspace] URLForApplicationToOpenURL:[NSURL URLWithString:@"https://explainshell.com/explain?cmd=example"]];
+    if (!appUrl) {
+        return nil;
+    }
+    NSBundle *bundle = [NSBundle bundleWithURL:appUrl];
+    return [bundle objectForInfoDictionaryKey:@"CFBundleDisplayName"] ?: [bundle objectForInfoDictionaryKey:@"CFBundleName"] ?: [[appUrl URLByDeletingPathExtension] lastPathComponent];
+}
+
+- (IBAction)help:(id)sender {
+    NSString *command = [self commandAtCursor];
+    if (!command.length) {
+        return;
+    }
+    NSString *browserName = [self browserName];
+    if (!browserName.length) {
+        return;
+    }
+    NSURLComponents *components = [[NSURLComponents alloc] init];
+    components.host = @"explainshell.com";
+    components.scheme = @"https";
+    components.path = @"/explain";
+    components.queryItems = @[ [NSURLQueryItem queryItemWithName:@"cmd" value:command] ];
+    NSURL *url = components.URL;
+
+    const iTermWarningSelection selection = [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"This will open %@ in %@.", url.absoluteString, browserName]
+                                                                       actions:@[ @"OK", @"Cancel" ]
+                                                                 actionMapping:nil
+                                                                     accessory:nil
+                                                                    identifier:@"NoSyncExplainShell"
+                                                                   silenceable:kiTermWarningTypePermanentlySilenceable
+                                                                       heading:@"Open ExplainShell?"
+                                                                        window:self.view.window];
+    if (selection == kiTermWarningSelection0) {
+        [[NSWorkspace sharedWorkspace] openURL:url];
+    }
+}
+
 
 #pragma mark - PopupDelegate
 
@@ -191,6 +265,12 @@
     NSRange range = [self.textView selectedRange];
     range.length = 0;
     return [self.textView firstRectForCharacterRange:range actualRange:NULL];
+}
+
+#pragma mark - NSTextViewDelegate
+
+- (void)textDidChange:(NSNotification *)notification {
+    _help.enabled = [self helpShouldBeAvailable];
 }
 
 @end

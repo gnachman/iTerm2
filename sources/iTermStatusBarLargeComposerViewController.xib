@@ -8,6 +8,7 @@
     <objects>
         <customObject id="-2" userLabel="File's Owner" customClass="iTermStatusBarLargeComposerViewController">
             <connections>
+                <outlet property="_help" destination="Due-Dn-30r" id="Uar-qV-wfj"/>
                 <outlet property="textView" destination="Gmj-Uu-ZiB" id="6iA-Qn-S8s"/>
                 <outlet property="view" destination="Hz6-mo-xeY" id="0bl-1N-x8E"/>
             </connections>
@@ -19,7 +20,7 @@
             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
             <subviews>
                 <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="q4z-gz-Utj">
-                    <rect key="frame" x="166" y="5" width="307" height="14"/>
+                    <rect key="frame" x="26" y="5" width="447" height="14"/>
                     <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxY="YES"/>
                     <textFieldCell key="cell" lineBreakMode="clipping" alignment="right" title="Press ⇧-Return to send command. Press ⇧⌘; for history." drawsBackground="YES" id="mjF-rO-FZ2">
                         <font key="font" metaFont="controlContent" size="11"/>
@@ -34,7 +35,7 @@
                         <rect key="frame" x="0.0" y="0.0" width="470" height="242"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
-                            <textView drawsBackground="NO" importsGraphics="NO" richText="NO" verticallyResizable="YES" allowsUndo="YES" id="Gmj-Uu-ZiB" customClass="iTermComposerTextView">
+                            <textView drawsBackground="NO" importsGraphics="NO" richText="NO" verticallyResizable="YES" allowsUndo="YES" textCompletion="NO" id="Gmj-Uu-ZiB" customClass="iTermComposerTextView">
                                 <rect key="frame" x="0.0" y="0.0" width="470" height="242"/>
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                 <color key="textColor" name="textColor" catalog="System" colorSpace="catalog"/>
@@ -42,6 +43,9 @@
                                 <size key="minSize" width="470" height="242"/>
                                 <size key="maxSize" width="480" height="10000000"/>
                                 <color key="insertionPointColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                                <connections>
+                                    <outlet property="delegate" destination="-2" id="W91-xw-WiT"/>
+                                </connections>
                             </textView>
                         </subviews>
                         <color key="backgroundColor" red="0.0" green="0.0" blue="0.0" alpha="0.0" colorSpace="custom" customColorSpace="sRGB"/>
@@ -55,6 +59,19 @@
                         <autoresizingMask key="autoresizingMask"/>
                     </scroller>
                 </scrollView>
+                <button toolTip="Opens explainshell.com for this command. Shortcut is ⇧⌘/." horizontalHuggingPriority="750" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Due-Dn-30r">
+                    <rect key="frame" x="4" y="4" width="16" height="17"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                    <buttonCell key="cell" type="help" bezelStyle="helpButton" alignment="center" controlSize="mini" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="HE3-n1-eE6">
+                        <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                        <font key="font" metaFont="miniSystem"/>
+                        <string key="keyEquivalent">/</string>
+                        <modifierMask key="keyEquivalentModifierMask" shift="YES" command="YES"/>
+                    </buttonCell>
+                    <connections>
+                        <action selector="help:" target="-2" id="1tB-yN-5o5"/>
+                    </connections>
+                </button>
             </subviews>
             <point key="canvasLocation" x="143" y="132"/>
         </customView>
