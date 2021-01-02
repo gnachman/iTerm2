@@ -11884,8 +11884,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     return _screen;
 }
 
-- (PTYTextView *)popupVT100TextView {
-    return _textview;
+- (id<iTermPopupWindowPresenter>)popupPresenter {
+    return self;
 }
 
 - (void)popupInsertText:(NSString *)string {

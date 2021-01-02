@@ -13,11 +13,13 @@
 #import "iTermExpect.h"
 #import "iTermExpressionEvaluator.h"
 #import "iTermMultiServerJobManager.h"
+#import "iTermPreferences.h"
 #import "iTermProfilePreferences.h"
 #import "iTermThreadSafety.h"
 #import "iTermVariableScope.h"
 #import "iTermWarning.h"
 #import "NSStringITerm.h"
+#import "NSWindow+PSM.h"
 #import "PTYSession.h"
 
 extern NSString *const SESSION_ARRANGEMENT_TMUX_PANE;
@@ -165,5 +167,25 @@ extern NSString *const SESSION_ARRANGEMENT_SERVER_DICT;
     [self.expect cancelExpectation:self.pasteBracketingOopsieExpectation];
     [self offerToTurnOffBracketedPasteOnHostChange];
  }
+
+#pragma mark - iTermPopupWindowPresenter
+
+- (void)popupWindowWillPresent:(iTermPopupWindowController *)popupWindowController {
+    [self.textview scrollEnd];
+}
+
+- (NSRect)popupWindowOriginRectInScreenCoords {
+    const int cx = [self.screen cursorX] - 1;
+    const int cy = [self.screen cursorY];
+    const CGFloat charWidth = [self.textview charWidth];
+    const CGFloat lineHeight = [self.textview lineHeight];
+    NSPoint p = NSMakePoint([iTermPreferences doubleForKey:kPreferenceKeySideMargins] + cx * charWidth,
+                            ([self.screen numberOfLines] - [self.screen height] + cy) * lineHeight);
+    const NSPoint origin = [self.textview.window pointToScreenCoords:[self.textview convertPoint:p toView:nil]];
+    return NSMakeRect(origin.x,
+                      origin.y,
+                      charWidth,
+                      lineHeight);
+}
 
 @end

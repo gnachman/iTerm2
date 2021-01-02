@@ -11,14 +11,18 @@
 @class iTermPopupWindowController;
 @class PopupModel;
 @class PopupEntry;
-@class PTYTextView;
 @class VT100Screen;
+
+@protocol iTermPopupWindowPresenter<NSObject>
+- (void)popupWindowWillPresent:(iTermPopupWindowController *)popupWindowController;
+- (NSRect)popupWindowOriginRectInScreenCoords;
+@end
 
 @protocol PopupDelegate <NSObject>
 
 - (NSWindowController *)popupWindowController;
 - (VT100Screen *)popupVT100Screen;
-- (PTYTextView *)popupVT100TextView;
+- (id<iTermPopupWindowPresenter>)popupPresenter;
 - (void)popupInsertText:(NSString *)text;
 - (void)popupKeyDown:(NSEvent *)event;
 // Return YES if the delegate handles it, NO if Popup should handle it.

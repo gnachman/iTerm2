@@ -10,7 +10,6 @@
 #import "PopupEntry.h"
 #import "PopupModel.h"
 #import "PopupWindow.h"
-#import "PTYTextView.h"
 #import "SolidColorView.h"
 #import "VT100Screen.h"
 
@@ -303,19 +302,14 @@
 {
     BOOL onTop = NO;
 
-    VT100Screen* screen = [self.delegate popupVT100Screen];
-    int cx = [screen cursorX] - 1;
-    int cy = [screen cursorY];
+    id<iTermPopupWindowPresenter> presenter = [self.delegate popupPresenter];
+    [presenter popupWindowWillPresent:self];
 
-    PTYTextView* tv = [self.delegate popupVT100TextView];
-    [tv scrollEnd];
     NSRect frame = [[self window] frame];
     frame.size.height = self.desiredHeight;
 
-    NSPoint p = NSMakePoint([iTermPreferences intForKey:kPreferenceKeySideMargins] + cx * [tv charWidth],
-                            ([screen numberOfLines] - [screen height] + cy) * [tv lineHeight]);
-    p = [tv convertPoint:p toView:nil];
-    p = [[tv window] pointToScreenCoords:p];
+    const NSRect cursorRect = [presenter popupWindowOriginRectInScreenCoords];
+    NSPoint p = cursorRect.origin;
     p.y -= frame.size.height;
 
     NSRect monitorFrame = [[[[self.delegate popupWindowController] window] screen] visibleFrame];
@@ -323,7 +317,7 @@
     if (canChangeSide) {
         // p.y gives the bottom of the frame relative to the bottom of the screen, assuming it's below the cursor.
         float bottomOverflow = monitorFrame.origin.y - p.y;
-        float topOverflow = p.y + 2 * frame.size.height + [tv lineHeight] - (monitorFrame.origin.y + monitorFrame.size.height);
+        float topOverflow = p.y + 2 * frame.size.height + NSHeight(cursorRect) - (monitorFrame.origin.y + monitorFrame.size.height);
         if (bottomOverflow > 0 && topOverflow < bottomOverflow) {
             onTop = YES;
         }
@@ -331,7 +325,7 @@
         onTop = onTop_;
     }
     if (onTop) {
-        p.y += frame.size.height + [tv lineHeight];
+        p.y += frame.size.height + NSHeight(cursorRect);
     }
     float rightX = monitorFrame.origin.x + monitorFrame.size.width;
     if (p.x + frame.size.width > rightX) {
