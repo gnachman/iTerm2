@@ -38,6 +38,11 @@ static CGFloat desiredHeight = 135;
     _vev.layer.borderWidth = 1;
 }
 
+- (void)setHost:(VT100RemoteHost *)host {
+    [self view];
+    _largeComposerViewController.host = host;
+}
+
 - (void)updateFrame {
     NSRect newFrame = self.view.frame;
     newFrame.origin.y = self.view.superview.frame.size.height;

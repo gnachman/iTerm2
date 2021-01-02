@@ -147,10 +147,11 @@
     return (PopupWindow *)self.window;
 }
 
-- (void)popWithDelegate:(id<PopupDelegate>)delegate {
+- (void)popWithDelegate:(id<PopupDelegate>)delegate
+               inWindow:(NSWindow *)owningWindow {
     self.delegate = delegate;
 
-    [self.popupWindow setOwningWindow:delegate.popupWindowController.window];
+    [self.popupWindow setOwningWindow:owningWindow];
 
     static const NSTimeInterval kAnimationDuration = 0.15;
     self.window.alphaValue = 0;
@@ -162,8 +163,8 @@
         self.window.level = NSPopUpMenuWindowLevel;
         [self.window makeKeyAndOrderFront:nil];
     } else {
-        [self showWindow:delegate.popupWindowController];
-        [[self window] makeKeyAndOrderFront:delegate.popupWindowController];
+        [self showWindow:nil];
+        [[self window] makeKeyAndOrderFront:nil];
     }
     [NSAnimationContext beginGrouping];
     [[NSAnimationContext currentContext] setDuration:kAnimationDuration];
@@ -312,7 +313,7 @@
     NSPoint p = cursorRect.origin;
     p.y -= frame.size.height;
 
-    NSRect monitorFrame = [[[[self.delegate popupWindowController] window] screen] visibleFrame];
+    NSRect monitorFrame = [self.delegate popupScreenVisibleFrame];
 
     if (canChangeSide) {
         // p.y gives the bottom of the frame relative to the bottom of the screen, assuming it's below the cursor.

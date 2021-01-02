@@ -6836,7 +6836,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 
 - (void)openPopupWindow:(iTermPopupWindowController *)popupWindowController {
     _openingPopupWindow = YES;
-    [popupWindowController popWithDelegate:[self currentSession]];
+    [popupWindowController popWithDelegate:[self currentSession] inWindow:self.window];
     _openingPopupWindow = NO;
 }
 
@@ -7304,7 +7304,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
                                                                                              expand:NO];
         if (commands.count) {
             if (popIfNeeded) {
-                [commandHistoryPopup popWithDelegate:session];
+                [commandHistoryPopup popWithDelegate:session inWindow:self.window];
             }
         } else {
             [commandHistoryPopup close];

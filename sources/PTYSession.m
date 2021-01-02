@@ -11810,8 +11810,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [[_delegate realParentWindow] popupWillClose:popup];
 }
 
-- (NSWindowController *)popupWindowController {
-    return [_delegate realParentWindow];
+- (NSRect)popupScreenVisibleFrame {
+    return [[[[_delegate realParentWindow] window] screen] visibleFrame];
 }
 
 - (BOOL)popupWindowIsInFloatingHotkeyWindow {
@@ -13588,6 +13588,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         return [NSAppearance appearanceNamed:NSAppearanceNameDarkAqua];
     }
     return [NSAppearance appearanceNamed:NSAppearanceNameAqua];
+}
+
+- (VT100RemoteHost *)composerManagerRemoteHost:(iTermComposerManager *)composerManager {
+    return [self currentHost];
 }
 
 #pragma mark - iTermIntervalTreeObserver

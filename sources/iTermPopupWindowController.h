@@ -20,7 +20,7 @@
 
 @protocol PopupDelegate <NSObject>
 
-- (NSWindowController *)popupWindowController;
+- (NSRect)popupScreenVisibleFrame;
 - (VT100Screen *)popupVT100Screen;
 - (id<iTermPopupWindowPresenter>)popupPresenter;
 - (void)popupInsertText:(NSString *)text;
@@ -51,7 +51,8 @@
 - (BOOL)disableFocusFollowsMouse;
 
 // Called by clients to open window.
-- (void)popWithDelegate:(id<PopupDelegate>)delegate;
+- (void)popWithDelegate:(id<PopupDelegate>)delegate
+               inWindow:(NSWindow *)owningWindow;
 
 // Safely shut down the popup when the parent is about to be dealloced. Clients must call this from
 // dealloc. It removes possible pending timers.

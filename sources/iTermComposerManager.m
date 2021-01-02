@@ -93,6 +93,7 @@
                                                     _minimalViewController.view.frame.size.width,
                                                     _minimalViewController.view.frame.size.height);
     _minimalViewController.view.appearance = [self.delegate composerManagerAppearance:self];
+    _minimalViewController.host = [self.delegate composerManagerRemoteHost:self];
     [superview addSubview:_minimalViewController.view];
     if (_saved.length) {
         _minimalViewController.stringValue = _saved ?: @"";

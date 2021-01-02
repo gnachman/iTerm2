@@ -9,6 +9,7 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+@class VT100RemoteHost;
 @class iTermComposerManager;
 @class iTermVariableScope;
 @class iTermStatusBarViewController;
@@ -22,6 +23,7 @@ NS_ASSUME_NONNULL_BEGIN
             sendCommand:(NSString *)command;
 - (void)composerManagerDidDismissMinimalView:(iTermComposerManager *)composerManager;
 - (NSAppearance *_Nullable)composerManagerAppearance:(iTermComposerManager *)composerManager;
+- (VT100RemoteHost *)composerManagerRemoteHost:(iTermComposerManager *)composerManager;
 @end
 
 @interface iTermComposerManager : NSObject

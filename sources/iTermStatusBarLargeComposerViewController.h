@@ -9,6 +9,8 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+@class VT100RemoteHost;
+
 @protocol iTermComposerTextViewDelegate<NSObject>
 - (void)composerTextViewDidFinishWithCancel:(BOOL)cancel;
 
@@ -22,6 +24,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface iTermStatusBarLargeComposerViewController : NSViewController
 @property (nonatomic, strong) IBOutlet iTermComposerTextView *textView;
+@property (nonatomic, strong) VT100RemoteHost *host;
 
 @end
 

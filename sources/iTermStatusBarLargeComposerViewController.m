@@ -6,10 +6,15 @@
 //
 
 #import "iTermStatusBarLargeComposerViewController.h"
+
+#import "CommandHistoryPopup.h"
 #import "NSEvent+iTerm.h"
 #import "NSResponder+iTerm.h"
 #import "NSView+iTerm.h"
 #import "SolidColorView.h"
+#import "iTermPopupWindowController.h"
+#import "iTermShellHistoryController.h"
+#import "WindowControllerInterface.h"
 
 @interface iTermComposerView : NSView
 @end
@@ -93,16 +98,99 @@
 }
 @end
 
-@interface iTermStatusBarLargeComposerViewController ()
+@interface iTermStatusBarLargeComposerViewController ()<PopupDelegate, iTermPopupWindowPresenter>
 
 @end
 
-@implementation iTermStatusBarLargeComposerViewController
+@implementation iTermStatusBarLargeComposerViewController {
+    CommandHistoryPopupWindowController *_historyWindowController;
+}
 
 - (void)awakeFromNib {
     [super awakeFromNib];
     self.textView.textColor = [NSColor textColor];
     self.textView.font = [NSFont fontWithName:@"Menlo" size:11];
+}
+
+- (void)openCommandHistory:(id)sender {
+    if (!_historyWindowController) {
+        _historyWindowController = [[CommandHistoryPopupWindowController alloc] initForAutoComplete:NO];
+    }
+    if ([[iTermShellHistoryController sharedInstance] commandHistoryHasEverBeenUsed]) {
+        NSString *prefix;
+        NSString *content = self.textView.string;
+        const NSRange selectedRange = [self.textView selectedRange];
+        if (selectedRange.location > content.length) {
+            return;
+        }
+        const NSInteger newlineBefore = [content rangeOfCharacterFromSet:[NSCharacterSet newlineCharacterSet]
+                                                                 options:NSBackwardsSearch
+                                                                   range:NSMakeRange(0, selectedRange.location)].location;
+        if (newlineBefore == NSNotFound) {
+            prefix = [content substringToIndex:selectedRange.location];
+            } else {
+            prefix = [content substringWithRange:NSMakeRange(newlineBefore + 1, selectedRange.location - newlineBefore - 1)];
+        }
+        [_historyWindowController popWithDelegate:self inWindow:self.view.window];
+        [_historyWindowController loadCommands:[_historyWindowController commandsForHost:self.host
+                                                                          partialCommand:prefix
+                                                                                  expand:YES]
+                                partialCommand:prefix];
+    } else {
+        [iTermShellHistoryController showInformationalMessage];
+    }
+}
+
+#pragma mark - PopupDelegate
+
+- (NSRect)popupScreenVisibleFrame {
+    return self.view.window.screen.visibleFrame;
+}
+
+- (VT100Screen *)popupVT100Screen {
+    return nil;
+}
+
+- (id<iTermPopupWindowPresenter>)popupPresenter {
+    return self;
+}
+
+- (void)popupInsertText:(NSString *)text {
+    [self.textView insertText:text replacementRange:self.textView.selectedRange];
+}
+
+- (void)popupKeyDown:(NSEvent *)event {
+    [self.textView keyDown:event];
+}
+
+- (BOOL)popupHandleSelector:(SEL)selector string:(NSString *)string currentValue:(NSString *)currentValue {
+    return NO;
+}
+
+- (void)popupWillClose:(iTermPopupWindowController *)popup {
+    _historyWindowController = nil;
+}
+
+- (BOOL)popupWindowIsInFloatingHotkeyWindow {
+    id<iTermWindowController> windowController = (id<iTermWindowController>)self.view.window.delegate;
+    if ([windowController conformsToProtocol:@protocol(iTermWindowController)]) {
+        return [windowController isFloatingHotKeyWindow];
+    }
+    return NO;
+}
+
+- (void)popupIsSearching:(BOOL)searching {
+}
+
+#pragma mark - iTermPopupWindowPresenter
+
+- (void)popupWindowWillPresent:(iTermPopupWindowController *)popupWindowController {
+}
+
+- (NSRect)popupWindowOriginRectInScreenCoords {
+    NSRange range = [self.textView selectedRange];
+    range.length = 0;
+    return [self.textView firstRectForCharacterRange:range actualRange:NULL];
 }
 
 @end

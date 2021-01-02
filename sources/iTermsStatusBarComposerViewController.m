@@ -93,6 +93,10 @@ static NSString *const iTermComposerComboBoxDidBecomeFirstResponder = @"iTermCom
     _comboBox.stringValue = stringValue;
 }
 
+- (void)setHost:(VT100RemoteHost *)host {
+    _popoverVC.host = host;
+}
+
 #pragma mark - Private
 
 - (void)comboBoxDidBecomeFirstResponder:(NSNotification *)notification {

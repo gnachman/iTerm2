@@ -9,6 +9,7 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+@class VT100RemoteHost;
 @class iTermMinimalComposerViewController;
 
 @protocol iTermMinimalComposerViewControllerDelegate<NSObject>
@@ -22,6 +23,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)updateFrame;
 - (void)makeFirstResponder;
+- (void)setHost:(VT100RemoteHost *)host;
 
 @end
 
