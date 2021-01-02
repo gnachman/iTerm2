@@ -59,14 +59,14 @@
                         <autoresizingMask key="autoresizingMask"/>
                     </scroller>
                 </scrollView>
-                <button toolTip="Opens explainshell.com for this command. Shortcut is ⇧⌘/." horizontalHuggingPriority="750" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Due-Dn-30r">
+                <button toolTip="Opens explainshell.com for this command. Shortcut is ⌥⇧⌘/." horizontalHuggingPriority="750" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Due-Dn-30r">
                     <rect key="frame" x="4" y="4" width="16" height="17"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                     <buttonCell key="cell" type="help" bezelStyle="helpButton" alignment="center" controlSize="mini" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="HE3-n1-eE6">
                         <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                         <font key="font" metaFont="miniSystem"/>
                         <string key="keyEquivalent">/</string>
-                        <modifierMask key="keyEquivalentModifierMask" shift="YES" command="YES"/>
+                        <modifierMask key="keyEquivalentModifierMask" shift="YES" option="YES" command="YES"/>
                     </buttonCell>
                     <connections>
                         <action selector="help:" target="-2" id="1tB-yN-5o5"/>
