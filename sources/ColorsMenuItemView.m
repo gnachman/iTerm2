@@ -51,7 +51,8 @@
 }
 
 const int kNumberOfColors = 8;
-const int kColorAreaOffsetX = 20;
+const int kColorAreaOffsetX_PreBigSur = 20;
+const int kColorAreaOffsetX_BigSur = 24;
 const int kColorAreaOffsetY = 10;
 const int kColorAreaDistanceX = 18;
 const int kColorAreaDimension = 12;
@@ -60,7 +61,8 @@ const int kDefaultColorOffset = 2;
 const int kDefaultColorDimension = 8;
 const int kDefaultColorStokeWidth = 2;
 const int kMenuFontSize = 14;
-const int kMenuLabelOffsetX = 20;
+const int kMenuLabelOffsetX_PreBigSur = 20;
+const int kMenuLabelOffsetX_BigSur = 24;
 const int kMenuLabelOffsetY = 32;
 
 const CGFloat iTermColorsMenuItemViewDisabledAlpha = 0.3;
@@ -142,12 +144,19 @@ typedef NS_ENUM(NSUInteger, kMenuItem) {
     }
 }
 
+- (CGFloat)colorXOffset {
+    if (@available(macOS 10.16, *)) {
+        return kColorAreaOffsetX_BigSur;
+    }
+    return kColorAreaOffsetX_PreBigSur;
+}
+
 - (NSRect)rectForIndex:(NSInteger)i  enlarged:(BOOL)enlarged {
     if (i == NSNotFound) {
         return NSZeroRect;
     }
     CGFloat growth = enlarged ? 2 : 0;
-    return NSMakeRect(kColorAreaOffsetX + kColorAreaDistanceX * i - growth,
+    return NSMakeRect(self.colorXOffset + kColorAreaDistanceX * i - growth,
                       kColorAreaOffsetY - growth,
                       kColorAreaDimension + growth * 2,
                       kColorAreaDimension + growth * 2);
@@ -180,11 +189,7 @@ typedef NS_ENUM(NSUInteger, kMenuItem) {
 
     // draw the "x" (reset color to default)
     CGFloat savedWidth = [NSBezierPath defaultLineWidth];
-    [NSBezierPath setDefaultLineWidth:kDefaultColorStokeWidth];
-    CGFloat defaultX0 = kColorAreaOffsetX + kDefaultColorOffset;
-    CGFloat defaultX1 = defaultX0 + kDefaultColorDimension;
-    CGFloat defaultY0 = kColorAreaOffsetY + kDefaultColorOffset;
-    CGFloat defaultY1 = defaultY0 + kDefaultColorDimension;
+
     NSColor *color;
     if (0 == _selectedIndex) {
         color = self.effectiveAppearance.it_isDark ? [NSColor whiteColor] : [NSColor blackColor];
@@ -195,11 +200,15 @@ typedef NS_ENUM(NSUInteger, kMenuItem) {
         color = [color colorWithAlphaComponent:iTermColorsMenuItemViewDisabledAlpha];
     }
     [color set];
-    [NSBezierPath strokeLineFromPoint:NSMakePoint(defaultX0, defaultY0)
-                              toPoint:NSMakePoint(defaultX1, defaultY1)];
-    [NSBezierPath strokeLineFromPoint:NSMakePoint(defaultX1, defaultY0)
-                              toPoint:NSMakePoint(defaultX0, defaultY1)];
+    [NSBezierPath setDefaultLineWidth:1];
+    const NSRect noColorRect = NSInsetRect([self rectForIndex:0 enlarged:(enabled && _selectedIndex == 0)],
+                                           0.5,
+                                           0.5);
+    [NSBezierPath strokeRect:noColorRect];
+    [NSBezierPath strokeLineFromPoint:NSMakePoint(NSMaxX(noColorRect), NSMinY(noColorRect))
+                              toPoint:NSMakePoint(NSMinX(noColorRect), NSMaxY(noColorRect))];
 
+    [NSBezierPath setDefaultLineWidth:kDefaultColorStokeWidth];
     // draw the colors
     for (NSInteger i = 1; i < kNumberOfColors; i++) {
         const BOOL highlighted = enabled && i == _selectedIndex;
@@ -250,22 +259,20 @@ typedef NS_ENUM(NSUInteger, kMenuItem) {
     while (rootMenu.supermenu) {
         rootMenu = rootMenu.supermenu;
     }
-    if ([self darkTheme]) {
-        attributes[NSForegroundColorAttributeName] = [NSColor whiteColor];
-    } else {
-        attributes[NSForegroundColorAttributeName] = [NSColor blackColor];
-    }
+    attributes[NSForegroundColorAttributeName] = [NSColor textColor];
     if (!enabled) {
         const CGFloat alpha = self.effectiveAppearance.it_isDark ? 0.30 : 0.25;
         attributes[NSForegroundColorAttributeName] = [attributes[NSForegroundColorAttributeName] colorWithAlphaComponent:alpha];
     }
     NSString *labelTitle = @"Tab Color:";
-    [labelTitle drawAtPoint:NSMakePoint(kMenuLabelOffsetX, kMenuLabelOffsetY) withAttributes:attributes];
+    CGFloat x;
+    if (@available(macOS 10.16, *)) {
+        x = kMenuLabelOffsetX_BigSur;
+    } else {
+        x = kMenuLabelOffsetX_PreBigSur;
+    }
+    [labelTitle drawAtPoint:NSMakePoint(x, kMenuLabelOffsetY) withAttributes:attributes];
     [NSBezierPath setDefaultLineWidth:savedWidth];
-}
-
-- (BOOL)darkTheme {
-    return [self.window.appearance.name isEqual:NSAppearanceNameVibrantDark];
 }
 
 - (NSColor *)colorAtIndex:(kMenuItem)index enabled:(BOOL)enabled {
