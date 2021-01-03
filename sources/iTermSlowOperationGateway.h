@@ -43,6 +43,13 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)runCommandInUserShell:(NSString *)command completion:(void (^)(NSString * _Nullable value))completion;
 
+- (void)findCompletionsWithPrefix:(NSString *)prefix
+                    inDirectories:(NSArray<NSString *> *)directories
+                              pwd:(NSString *)pwd
+                         maxCount:(NSInteger)maxCount
+                       executable:(BOOL)executable
+                       completion:(void (^)(NSArray<NSString *> *))completions;
+
 @end
 
 NS_ASSUME_NONNULL_END

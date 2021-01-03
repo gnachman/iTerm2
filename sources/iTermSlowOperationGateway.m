@@ -152,4 +152,18 @@
     }];
 }
 
+- (void)findCompletionsWithPrefix:(NSString *)prefix
+                    inDirectories:(NSArray<NSString *> *)directories
+                              pwd:(NSString *)pwd
+                         maxCount:(NSInteger)maxCount
+                       executable:(BOOL)executable
+                       completion:(void (^)(NSArray<NSString *> *))completions {
+    [[_connectionToService remoteObjectProxy] findCompletionsWithPrefix:prefix
+                                                          inDirectories:directories
+                                                                    pwd:pwd
+                                                               maxCount:maxCount
+                                                             executable:executable
+                                                              withReply:completions];
+}
+
 @end

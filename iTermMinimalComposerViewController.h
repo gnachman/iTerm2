@@ -23,7 +23,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)updateFrame;
 - (void)makeFirstResponder;
-- (void)setHost:(VT100RemoteHost *)host;
+- (void)setHost:(VT100RemoteHost *)host workingDirectory:(NSString *)pwd shell:(NSString *)shell;
 
 @end
 

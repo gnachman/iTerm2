@@ -13601,6 +13601,14 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     return [self currentHost];
 }
 
+- (NSString *_Nullable)composerManagerWorkingDirectory:(iTermComposerManager *)composerManager {
+    return [self.variablesScope path];
+}
+
+- (NSString *)composerManagerShell:(iTermComposerManager *)composerManager {
+    return [ITAddressBookMgr customShellForProfile:self.profile] ?: [iTermOpenDirectory userShell] ?: @"/bin/bash";
+}
+
 #pragma mark - iTermIntervalTreeObserver
 
 - (void)intervalTreeDidReset {

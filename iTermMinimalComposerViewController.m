@@ -38,9 +38,11 @@ static CGFloat desiredHeight = 135;
     _vev.layer.borderWidth = 1;
 }
 
-- (void)setHost:(VT100RemoteHost *)host {
+- (void)setHost:(VT100RemoteHost *)host workingDirectory:(NSString *)pwd shell:(NSString *)shell {
     [self view];
     _largeComposerViewController.host = host;
+    _largeComposerViewController.workingDirectory = pwd;
+    _largeComposerViewController.shell = shell;
 }
 
 - (void)updateFrame {

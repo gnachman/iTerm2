@@ -30,6 +30,13 @@ NS_ASSUME_NONNULL_BEGIN
                                  NSData * _Nullable error,
                                  int status))reply;
 
+- (void)findCompletionsWithPrefix:(NSString *)prefix
+                    inDirectories:(NSArray<NSString *> *)directories
+                              pwd:(NSString *)pwd
+                         maxCount:(NSInteger)maxCount
+                       executable:(BOOL)executable
+                        withReply:(void (^)(NSArray<NSString *> * _Nullable))reply;
+
 
 @end
 

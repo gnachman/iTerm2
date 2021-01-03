@@ -24,7 +24,9 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface iTermStatusBarLargeComposerViewController : NSViewController
 @property (nonatomic, strong) IBOutlet iTermComposerTextView *textView;
-@property (nonatomic, strong) VT100RemoteHost *host;
+@property (nonatomic, strong, nullable) VT100RemoteHost *host;
+@property (nonatomic, strong, nullable) NSString *workingDirectory;
+@property (nonatomic, copy) NSString *shell;
 
 @end
 

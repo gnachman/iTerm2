@@ -206,7 +206,11 @@ static int MakeNonBlocking(int fd) {
 //   }];
 // }];
 - (void)performRiskyBlock:(void (^)(BOOL shouldPerform, BOOL (^ _Nullable completion)(void)))block {
+#if DEBUG
+    const NSTimeInterval timeout = 30;
+#else
     const NSTimeInterval timeout = 10;
+#endif
     __block _Atomic BOOL done = NO;
     __block _Atomic BOOL wedged = NO;
     _count++;
@@ -326,5 +330,116 @@ static double TimespecToSeconds(struct timespec* ts) {
     dispatch_async(dispatch_get_main_queue(), ^{ reply(@(rc), result); });
 }
 
+- (NSArray<NSString *> *)contentsOfDirectory:(NSString *)directory
+                                  withPrefix:(NSString *)prefix
+                                  executable:(BOOL)executable {
+    NSArray<NSString *> *relative = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:directory error:nil] ?: @[];
+    NSMutableArray<NSString*> *result = [NSMutableArray array];
+    for (NSString *path in relative) {
+        if (prefix.length == 0 || [path.lastPathComponent hasPrefix:prefix]) {
+            NSString *fullPath = [directory stringByAppendingPathComponent:path];
+            if (!executable || [[NSFileManager defaultManager] isExecutableFileAtPath:fullPath]) {
+                [result addObject:fullPath];
+            }
+        }
+    }
+    return result;
+}
+
+- (NSArray<NSString *> *)reallyFindCompletionsWithPrefix:(NSString *)prefix
+                                             inDirectory:(NSString *)directory
+                                                maxCount:(NSInteger)maxCount
+                                              executable:(BOOL)executable {
+    if (![prefix hasPrefix:@"/"] && [directory hasPrefix:@"/"]) {
+        // Can't use stringByAppendingPathComponent: because it doesn't do anything if prefix is
+        // empty and we always want to append a / to directory.
+        NSArray<NSString *> *temp = [self reallyFindCompletionsWithPrefix:[NSString stringWithFormat:@"%@/%@", directory, prefix]
+                                                              inDirectory:@""
+                                                                 maxCount:maxCount
+                                                               executable:executable];
+        NSString *prefixToRemove = [directory hasSuffix:@"/"] ? directory : [directory stringByAppendingString:@"/"];
+        return [self array:temp byRemovingPrefix:prefixToRemove];
+    }
+
+    // If prefix is the exact name of a directory, return its contents.
+    if ([prefix hasSuffix:@"/"]) {
+        return [self contentsOfDirectory:prefix withPrefix:@"" executable:executable];
+    }
+
+    NSMutableArray<NSString *> *results = [NSMutableArray array];
+    NSFileManager *fm = [NSFileManager defaultManager];
+    BOOL isDirectory = NO;
+    const BOOL exists = [fm fileExistsAtPath:prefix isDirectory:&isDirectory];
+    if (exists && isDirectory) {
+        [results addObject:[prefix stringByAppendingString:@"/"]];
+    }
+
+    NSString *container = [prefix stringByDeletingLastPathComponent];
+    if (container.length == 0) {
+        return results;
+    }
+
+    [results addObjectsFromArray:[self contentsOfDirectory:container
+                                                withPrefix:prefix.lastPathComponent
+                                                executable:executable]];
+    return results;
+}
+
+- (void)findCompletionsWithPrefix:(NSString *)prefix
+                    inDirectories:(NSArray<NSString *> *)directories
+                              pwd:(NSString *)pwd
+                         maxCount:(NSInteger)maxCount
+                       executable:(BOOL)executable
+                        withReply:(void (^)(NSArray<NSString *> *))reply {
+    [self performRiskyBlock:^(BOOL shouldPerform, BOOL (^ _Nullable completion)(void)) {
+        if (!shouldPerform) {
+            reply(nil);
+            syslog(LOG_WARNING, "pidinfo wedged");
+            return;
+        }
+        NSMutableArray<NSString *> *combined = [NSMutableArray array];
+        for (NSString *relativeDirectory in directories) {
+            NSString *directory;
+            if ([relativeDirectory hasPrefix:@"/"]) {
+                directory = relativeDirectory;
+            } else {
+                if (!pwd) {
+                    continue;
+                }
+                directory = [pwd stringByAppendingPathComponent:relativeDirectory];
+            }
+            NSArray<NSString *> *temp = [[self reallyFindCompletionsWithPrefix:prefix
+                                                                   inDirectory:directory
+                                                                      maxCount:maxCount
+                                                                    executable:executable] sortedArrayUsingSelector:@selector(compare:)];
+            [combined addObjectsFromArray:[self array:temp byRemovingPrefix:prefix]];
+            if (combined.count > maxCount) {
+                break;
+            }
+        }
+        NSArray<NSString *> *completions = combined;
+        if (completions.count > maxCount) {
+            completions = [completions subarrayWithRange:NSMakeRange(0, maxCount)];
+        }
+        if (!completion()) {
+            syslog(LOG_INFO, "findCompletions finished after timing out");
+            return;
+        }
+        reply(completions);
+    }];
+}
+
+- (NSArray<NSString *> *)array:(NSArray<NSString *> *)input byRemovingPrefix:(NSString *)prefix {
+    NSMutableArray<NSString *> *result = [NSMutableArray array];
+    for (NSString *fq in input) {
+        NSString *truncated = [fq substringFromIndex:prefix.length];
+        if (truncated.length > 0) {
+            [result addObject:truncated];
+        }
+    }
+    return result;
+}
+
 @end
+
 
