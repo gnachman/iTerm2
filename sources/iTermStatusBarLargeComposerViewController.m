@@ -12,6 +12,7 @@
 #import "NSDictionary+iTerm.h"
 #import "NSEvent+iTerm.h"
 #import "NSResponder+iTerm.h"
+#import "NSStringITerm.h"
 #import "NSView+iTerm.h"
 #import "SolidColorView.h"
 #import "iTermPopupWindowController.h"
@@ -486,28 +487,10 @@ static NSRange iTermRangeMinus(NSRange lhs, NSRange rhs) {
     if (command.length == 0) {
         return;
     }
-    // Look for a space anywhere in the line.
-    const NSRange spaceRange = [command rangeOfCharacterFromSet:[NSCharacterSet whitespaceCharacterSet] options:NSBackwardsSearch];
-    NSInteger start;
-    BOOL onFirstWord = YES;
-    if (spaceRange.location == NSNotFound) {
-        // No whitespace in the line.
-        start = 0;
-    } else {
-        // There is whitespace in the line.
-        start = NSMaxRange(spaceRange);
-
-        // Is there non-whitespace before the whitespace?
-        if (spaceRange.location != 0 &&
-            [command rangeOfCharacterFromSet:[[NSCharacterSet whitespaceCharacterSet] invertedSet]
-                                     options:NSBackwardsSearch
-                                       range:NSMakeRange(0, spaceRange.location - 1)].location != NSNotFound) {
-            // Found text before the space.
-            onFirstWord = NO;
-        }
-    }
+    NSArray<NSString *> *words = [command componentsInShellCommand];
+    const BOOL onFirstWord = words.count < 2;
+    NSString *const prefix = words.lastObject;
     const NSInteger generation = ++_completionGeneration;
-    NSString *prefix = [command substringFromIndex:start];
     NSArray<NSString *> *directories;
     if (onFirstWord) {
         iTermSearchPathsCacheEntry *entry = self.cache[self.shell];
@@ -542,16 +525,30 @@ static NSRange iTermRangeMinus(NSRange lhs, NSRange rhs) {
     if (completions.count == 0) {
         return;
     }
-    self.textView.suggestion = completions.firstObject;
+
+    self.textView.suggestion = [completions.firstObject stringWithBackslashEscapedShellCharactersIncludingNewlines:YES];
 }
 
 - (BOOL)textView:(NSTextView *)textView doCommandBySelector:(SEL)commandSelector {
     if (self.textView.hasSuggestion &&
-        (commandSelector == @selector(moveForward:) ||
-         commandSelector == @selector(moveRight:))) {
+        commandSelector == @selector(insertTab:)) {
         [self.textView acceptSuggestion];
         return YES;
     }
+
+    if (commandSelector == @selector(deleteForward:) ||
+        commandSelector == @selector(deleteBackward:) ||
+        commandSelector == @selector(deleteBackwardByDecomposingPreviousCharacter:) ||
+        commandSelector == @selector(deleteWordForward:) ||
+        commandSelector == @selector(deleteWordBackward:) ||
+        commandSelector == @selector(deleteToBeginningOfLine:) ||
+        commandSelector == @selector(deleteToEndOfLine:) ||
+        commandSelector == @selector(deleteToBeginningOfParagraph:) ||
+        commandSelector == @selector(deleteToEndOfParagraph:) ||
+        commandSelector == @selector(deleteToMark:)) {
+        [self.textView setSuggestion:nil];
+    }
+
     return NO;
 }
 

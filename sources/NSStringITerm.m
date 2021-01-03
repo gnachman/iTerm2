@@ -354,7 +354,7 @@
         if (!inSingleQuotes && !inDoubleQuotes && isWhitespace) {
             if (!isFirstCharacterOfWord) {
                 if (!firstCharacterOfThisWordWasQuoted) {
-                    [result addObject:[currentValue stringByExpandingTildeInPath]];
+                    [result addObject:[currentValue stringByExpandingTildeInPathPreservingSlash]];
                 } else {
                     [result addObject:currentValue];
                 }
@@ -374,6 +374,20 @@
     }
 
     return result;
+}
+
+// For unknown reasons stringByExpandingTildeInPath removes terminal slashes. This method puts them
+// back. That is useful for completion suggestions.
+// ~                   -> /Users/example
+// ~/                  -> /Users/example/
+// /Users/example/foo  -> /Users/example/foo
+// /Users/example/foo/ -> /Users/example/foo/
+- (NSString *)stringByExpandingTildeInPathPreservingSlash {
+    NSString *candidate = [self stringByExpandingTildeInPath];
+    if ([self hasSuffix:@"/"] && ![candidate hasSuffix:@"/"]) {
+        return [candidate stringByAppendingString:@"/"];
+    }
+    return candidate;
 }
 
 - (NSString *)stringByReplacingBackreference:(int)n withString:(NSString *)s
