@@ -13609,6 +13609,13 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     return [ITAddressBookMgr customShellForProfile:self.profile] ?: [iTermOpenDirectory userShell] ?: @"/bin/bash";
 }
 
+- (TmuxController *)composerManagerTmuxController:(iTermComposerManager *)composerManager {
+    if (!self.isTmuxClient) {
+        return nil;
+    }
+    return self.tmuxController;
+}
+
 #pragma mark - iTermIntervalTreeObserver
 
 - (void)intervalTreeDidReset {

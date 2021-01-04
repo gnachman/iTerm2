@@ -9,6 +9,7 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+@class TmuxController;
 @class VT100RemoteHost;
 @class iTermMinimalComposerViewController;
 
@@ -23,7 +24,10 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)updateFrame;
 - (void)makeFirstResponder;
-- (void)setHost:(VT100RemoteHost *)host workingDirectory:(NSString *)pwd shell:(NSString *)shell;
+- (void)setHost:(VT100RemoteHost *)host
+workingDirectory:(NSString *)pwd
+          shell:(NSString *)shell
+ tmuxController:(TmuxController *)tmuxController;
 
 @end
 

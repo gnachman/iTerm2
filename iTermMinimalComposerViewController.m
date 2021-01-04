@@ -38,11 +38,12 @@ static CGFloat desiredHeight = 135;
     _vev.layer.borderWidth = 1;
 }
 
-- (void)setHost:(VT100RemoteHost *)host workingDirectory:(NSString *)pwd shell:(NSString *)shell {
+- (void)setHost:(VT100RemoteHost *)host workingDirectory:(NSString *)pwd shell:(NSString *)shell tmuxController:(nonnull TmuxController *)tmuxController {
     [self view];
     _largeComposerViewController.host = host;
     _largeComposerViewController.workingDirectory = pwd;
     _largeComposerViewController.shell = shell;
+    _largeComposerViewController.tmuxController = tmuxController;
 }
 
 - (void)updateFrame {

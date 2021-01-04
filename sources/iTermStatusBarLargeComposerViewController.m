@@ -510,8 +510,10 @@ static NSRange iTermRangeMinus(NSRange lhs, NSRange rhs) {
         return;
     }
 
-    if (![self.host isLocalhost]) {
-        // Don't try to complete filenames if not on localhost.
+    if (![self.host isLocalhost] || self.tmuxController) {
+        // Don't try to complete filenames if not on localhost. Completion on tmux is possible in
+        // theory but likely to be very slow because of the amount of data that would need to be
+        // exchanged.
         [self.textView setSuggestion:nil];
         return;
     }

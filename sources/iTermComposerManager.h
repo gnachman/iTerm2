@@ -9,6 +9,7 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+@class TmuxController;
 @class VT100RemoteHost;
 @class iTermComposerManager;
 @class iTermVariableScope;
@@ -26,6 +27,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (VT100RemoteHost *)composerManagerRemoteHost:(iTermComposerManager *)composerManager;
 - (NSString *_Nullable)composerManagerWorkingDirectory:(iTermComposerManager *)composerManager;
 - (NSString *)composerManagerShell:(iTermComposerManager *)composerManager;
+- (TmuxController * _Nullable)composerManagerTmuxController:(iTermComposerManager *)composerManager;
 @end
 
 @interface iTermComposerManager : NSObject
