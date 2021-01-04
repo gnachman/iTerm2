@@ -15,11 +15,13 @@
 #import "NSStringITerm.h"
 #import "NSView+iTerm.h"
 #import "SolidColorView.h"
+#import "VT100RemoteHost.h"
+#import "WindowControllerInterface.h"
+#import "iTermCommandHistoryEntryMO+CoreDataProperties.h"
 #import "iTermPopupWindowController.h"
 #import "iTermShellHistoryController.h"
 #import "iTermSlowOperationGateway.h"
 #import "iTermWarning.h"
-#import "WindowControllerInterface.h"
 
 @interface iTermComposerView : NSView
 @end
@@ -475,6 +477,15 @@ static NSRange iTermRangeMinus(NSRange lhs, NSRange rhs) {
     });
 }
 
+- (NSString *)historySuggestionForPrefix:(NSString *)prefix {
+    NSArray<iTermCommandHistoryEntryMO *> *entries =
+    [[iTermShellHistoryController sharedInstance] commandHistoryEntriesWithPrefix:prefix
+                                                                           onHost:self.host];
+    return [entries.firstObject.command copy];
+}
+
+// NOTE: This must not change the suggestion directly. It has to do it in dispatch_async because
+// otherwise NSTextView throws exceptions.
 - (void)textDidChange:(NSNotification *)notification {
     _completionGeneration += 1;
     if (self.textView.isSettingSuggestion) {
@@ -487,6 +498,24 @@ static NSRange iTermRangeMinus(NSRange lhs, NSRange rhs) {
     if (command.length == 0) {
         return;
     }
+    NSString *historySuggestion = [self historySuggestionForPrefix:command];
+    if (historySuggestion) {
+        __weak __typeof(self) weakSelf = self;
+        const NSInteger generation = ++_completionGeneration;
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [weakSelf didFindCompletions:@[[historySuggestion substringFromIndex:command.length]]
+                           forGeneration:generation
+                                  escape:NO];
+        });
+        return;
+    }
+
+    if (![self.host isLocalhost]) {
+        // Don't try to complete filenames if not on localhost.
+        [self.textView setSuggestion:nil];
+        return;
+    }
+
     NSArray<NSString *> *words = [command componentsInShellCommand];
     const BOOL onFirstWord = words.count < 2;
     NSString *const prefix = words.lastObject;
@@ -510,12 +539,16 @@ static NSRange iTermRangeMinus(NSRange lhs, NSRange rhs) {
                                                                executable:onFirstWord
                                                                completion:^(NSArray<NSString *> * _Nonnull completions) {
         dispatch_async(dispatch_get_main_queue(), ^{
-            [weakSelf didFindCompletions:completions forGeneration:generation];
+            [weakSelf didFindCompletions:completions
+                           forGeneration:generation
+                                  escape:YES];
         });
     }];
 }
 
-- (void)didFindCompletions:(NSArray<NSString *> *)completions forGeneration:(NSInteger)generation {
+- (void)didFindCompletions:(NSArray<NSString *> *)completions
+             forGeneration:(NSInteger)generation
+                    escape:(BOOL)shouldEscape {
     if ([_historyWindowController.window isVisible]) {
         return;
     }
@@ -525,8 +558,11 @@ static NSRange iTermRangeMinus(NSRange lhs, NSRange rhs) {
     if (completions.count == 0) {
         return;
     }
-
-    self.textView.suggestion = [completions.firstObject stringWithBackslashEscapedShellCharactersIncludingNewlines:YES];
+    if (shouldEscape) {
+        self.textView.suggestion = [completions.firstObject stringWithBackslashEscapedShellCharactersIncludingNewlines:YES];
+    } else {
+        self.textView.suggestion = completions.firstObject;
+    }
 }
 
 - (BOOL)textView:(NSTextView *)textView doCommandBySelector:(SEL)commandSelector {
