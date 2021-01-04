@@ -37,6 +37,7 @@
 #import "NSObject+iTerm.h"
 #import "NSSavePanel+iTerm.h"
 #import "NSURL+iTerm.h"
+#import "PasteboardHistory.h"
 #import "PTYMouseHandler.h"
 #import "PTYNoteViewController.h"
 #import "PTYTextView+Private.h"
@@ -778,6 +779,16 @@ allowRightMarginOverflow:(BOOL)allowRightMarginOverflow {
 
 - (void)contextMenuMovePane:(iTermTextViewContextMenuHelper *)contextMenu {
     [self.delegate textViewMovePane];
+}
+
+- (void)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu copyURL:(NSURL *)url {
+    NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
+    [pasteboard declareTypes:@[ NSPasteboardTypeString ]
+                       owner:self];
+    NSString *copyString = url.absoluteString;
+    [pasteboard setString:copyString
+                  forType:NSPasteboardTypeString];
+    [[PasteboardHistory sharedInstance] save:copyString];
 }
 
 - (void)contextMenuSwapSessions:(iTermTextViewContextMenuHelper *)contextMenu {

@@ -172,7 +172,8 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
         [item action] == @selector(openImage:) ||
         [item action] == @selector(togglePauseAnimatingImage:) ||
         [item action] == @selector(inspectImage:) ||
-        [item action] == @selector(apiMenuItem:)) {
+        [item action] == @selector(apiMenuItem:) ||
+        [item action] == @selector(copyLinkAddress:)) {
         return YES;
     }
     if ([item action] == @selector(stopCoprocess:)) {
@@ -359,6 +360,15 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
                                                                  [NSBundle bundleForClass: [self class]],
                                                                  @"Context menu")
                      action:@selector(copy:) keyEquivalent:@""];
+
+    iTermTextExtractor *extractor = [self.delegate contextMenuTextExtractor:self];
+    NSString *urlID;
+    NSURL *url = [extractor urlOfHypertextLinkAt:coord urlId:&urlID];
+    if (url) {
+        NSMenuItem *item = [theMenu addItemWithTitle:@"Copy Link Address" action:@selector(copyLinkAddress:) keyEquivalent:@""];
+        item.target = self;
+        item.representedObject = url;
+    }
     [theMenu addItemWithTitle:NSLocalizedStringFromTableInBundle(@"Paste",
                                                                  @"iTerm",
                                                                  [NSBundle bundleForClass: [self class]],
@@ -704,6 +714,10 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
 
 - (void)movePane:(id)sender {
     [self.delegate contextMenuMovePane:self];
+}
+
+- (void)copyLinkAddress:(id)sender {
+    [self.delegate contextMenu:self copyURL:[sender representedObject]];
 }
 
 - (void)swapSessions:(id)sender {

@@ -74,6 +74,7 @@ withRelativeCoordRange:(VT100GridAbsCoordRange)range
 - (void)contextMenuSplitVertically:(iTermTextViewContextMenuHelper *)contextMenu;
 - (void)contextMenuSplitHorizontally:(iTermTextViewContextMenuHelper *)contextMenu;
 - (void)contextMenuMovePane:(iTermTextViewContextMenuHelper *)contextMenu;
+- (void)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu copyURL:(NSURL *)url;
 - (void)contextMenuSwapSessions:(iTermTextViewContextMenuHelper *)contextMenu;
 - (void)contextMenuSendSelectedText:(iTermTextViewContextMenuHelper *)contextMenu;
 - (void)contextMenuClearBuffer:(iTermTextViewContextMenuHelper *)contextMenu;
