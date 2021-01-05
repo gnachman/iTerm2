@@ -175,6 +175,10 @@ static NSString *const TERMINAL_ARRANGEMENT_TOOLBELT_PROPORTIONS = @"Toolbelt Pr
 static NSString *const TERMINAL_ARRANGEMENT_TITLE_OVERRIDE = @"Title Override";
 static NSString *const TERMINAL_ARRANGEMENT_TOOLBELT = @"Toolbelt";
 
+// Only present in arrangements created by the window restoration system, not (for example) saved arrangements in the UI.
+// Boolean NSNumber.
+static NSString *const TERMINAL_ARRANGEMENT_MINIATURIZED = @"miniaturized";
+
 static NSRect iTermRectCenteredHorizontallyWithinRect(NSRect frameToCenter, NSRect container) {
     CGFloat centerOfContainer = NSMidX(container);
     CGFloat centerOfFrame = NSMidX(frameToCenter);
@@ -190,6 +194,17 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
     frameToCenter.origin.y += diff;
     return frameToCenter;
 }
+
+typedef NS_OPTIONS(NSUInteger, iTermSuppressMakeCurrentTerminal) {
+    // Allow adding a tab to make this window current, revealing it.
+    iTermSuppressMakeCurrentTerminalNone = 0,
+
+    // This is a hotkey window and restoration should not reveal it.
+    iTermSuppressMakeCurrentTerminalHotkey = 1 << 0,
+
+    // This window is being restored miniaturized and restoration should not reveal it.
+    iTermSuppressMakeCurrentTerminalMiniaturized = 1 << 1
+};
 
 @interface PseudoTerminal () <
     iTermBroadcastInputHelperDelegate,
@@ -368,7 +383,7 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
 
     BOOL _anyPaneIsTransparent;
     BOOL _windowDidResize;
-    BOOL _suppressMakeCurrentTerminal;
+    iTermSuppressMakeCurrentTerminal _suppressMakeCurrentTerminal;
     BOOL _deallocing;
     iTermOrderEnforcer *_proxyIconOrderEnforcer;
     BOOL _restorableStateInvalid;
@@ -2625,7 +2640,10 @@ ITERM_WEAKLY_REFERENCEABLE
                                                      screen:screenIndex
                                            hotkeyWindowType:hotkeyWindowType
                                                     profile:arrangement[TERMINAL_ARRANGEMENT_INITIAL_PROFILE]] autorelease];
-
+        if ([arrangement[TERMINAL_ARRANGEMENT_MINIATURIZED] boolValue]) {
+            term->_suppressMakeCurrentTerminal |= iTermSuppressMakeCurrentTerminalMiniaturized;
+            [term.window miniaturize:nil];
+        }
         NSRect rect;
         rect.origin.x = [[arrangement objectForKey:TERMINAL_ARRANGEMENT_X_ORIGIN] doubleValue];
         rect.origin.y = [[arrangement objectForKey:TERMINAL_ARRANGEMENT_Y_ORIGIN] doubleValue];
@@ -2941,12 +2959,14 @@ ITERM_WEAKLY_REFERENCEABLE
 
     const BOOL savedRestoringWindow = _restoringWindow;
     _restoringWindow = YES;
-    _suppressMakeCurrentTerminal = (self.hotkeyWindowType != iTermHotkeyWindowTypeNone);
+    if (self.hotkeyWindowType != iTermHotkeyWindowTypeNone) {
+        _suppressMakeCurrentTerminal |= iTermSuppressMakeCurrentTerminalHotkey;
+    }
     const BOOL restoreTabsOK = [self restoreTabsFromArrangement:arrangement
                                                           named:arrangementName
                                                        sessions:sessions
                                              partialAttachments:partialAttachments];
-    _suppressMakeCurrentTerminal = NO;
+    _suppressMakeCurrentTerminal &= ~iTermSuppressMakeCurrentTerminalHotkey;
     _restoringWindow = savedRestoringWindow;
     if (!restoreTabsOK) {
         return NO;
@@ -9385,7 +9405,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
         } else {
             PtyLog(@"window not initialized, is fullscreen, or is being restored. Stack:\n%@", [NSThread callStackSymbols]);
         }
-        if (!_suppressMakeCurrentTerminal) {
+        if (_suppressMakeCurrentTerminal == iTermSuppressMakeCurrentTerminalNone) {
             [[iTermController sharedInstance] setCurrentTerminal:self];
         }
     }
@@ -10233,6 +10253,8 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
         DLog(@"asyncRestoreArrangement: ready:\n%@", partialAttachments);
         [self loadArrangement:arrangement named:nil sessions:nil partialAttachments:partialAttachments];
         self.restorableStateDecodePending = NO;
+        // No more tabs will be restored, and in doing so deminiaturize the window.
+        _suppressMakeCurrentTerminal &= ~iTermSuppressMakeCurrentTerminalMiniaturized;
         completion();
     }];
 }
@@ -11122,6 +11144,7 @@ backgroundColor:(NSColor *)backgroundColor {
     const BOOL commit = [self populateArrangementWithTabs:tabs
                                         includingContents:includeContents
                                                   encoder:adapter];
+    [encoder encodeNumber:@(self.window.miniaturized) forKey:TERMINAL_ARRANGEMENT_MINIATURIZED];
     return commit;
 }
 
