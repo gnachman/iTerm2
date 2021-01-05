@@ -326,6 +326,8 @@
                                                                     image:viewImage
                                                                 styleMask:NSWindowStyleMaskBorderless] retain];
             [_dragViewWindow setAlphaValue:0.0];
+            // Select the tab that was selected before dragging began.
+            [[self sourceTabBar] dragWillExitTabBar];
         }
 
         const NSPoint bottomLeftOfTabWindow = [_dragTabWindow frame].origin;
@@ -587,6 +589,7 @@
     [[[self sourceTabBar] cells] insertObject:[self draggedCell] atIndex:[self draggedCellIndex]];
     [[[self sourceTabBar] window] setAlphaValue:1];  // Make the window visible again.
     [[[self sourceTabBar] window] orderFront:nil];
+    [[self sourceTabBar] dragDidFinish];
 }
 
 - (void)draggedImageEndedAt:(NSPoint)aPoint operation:(NSDragOperation)operation {
@@ -645,6 +648,7 @@
 
 - (void)finishDrag {
     ILog(@"Drag of %p finished from\n%@", [self sourceTabBar], [NSThread callStackSymbols]);
+    [[self sourceTabBar] dragDidFinish];
     if ([[[self sourceTabBar] tabView] numberOfTabViewItems] == 0 &&
         [[[self sourceTabBar] delegate] respondsToSelector:@selector(tabView:closeWindowForLastTabViewItem:)]) {
         [[[self sourceTabBar] delegate] tabView:[[self sourceTabBar] tabView]

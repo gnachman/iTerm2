@@ -99,6 +99,7 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionHTMLTabTitles = @"PSMTabBarContr
     BOOL _hasCloseButton;
     BOOL _needsUpdateAnimate;
     BOOL _needsUpdate;
+    NSInteger _preDragSelectedTabIndex;  // or NSNotFound
 }
 
 #pragma mark -
@@ -155,6 +156,7 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionHTMLTabTitles = @"PSMTabBarContr
         _hasCloseButton = YES;
         _tabLocation = PSMTab_TopTab;
         _style = [[PSMYosemiteTabStyle alloc] init];
+        _preDragSelectedTabIndex = NSNotFound;
 
         // the overflow button/menu
         NSRect overflowButtonRect = NSMakeRect([self frame].size.width - [_style rightMarginForTabBarControlWithOverflow:YES
@@ -566,6 +568,36 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionHTMLTabTitles = @"PSMTabBarContr
 
     // pull from collection
     [_cells removeObject:cell];
+}
+
+- (void)dragDidFinish {
+    _preDragSelectedTabIndex = NSNotFound;
+}
+
+- (void)dragWillExitTabBar {
+    const NSInteger count = self.tabView.tabViewItems.count;
+    if (_preDragSelectedTabIndex == NSNotFound || _preDragSelectedTabIndex < 0 || _preDragSelectedTabIndex >= count) {
+        // There is no most-recent. Can we select the next one?
+        if (count == 1) {
+            // No next one exists.
+            return;
+        }
+        NSInteger currentIndex = [[self tabView] indexOfTabViewItem:self.tabView.selectedTabViewItem];
+        if (currentIndex == NSNotFound) {
+            // Shouldn't happen
+            return;
+        }
+        NSInteger indexToSelect;
+        if (currentIndex + 1 < count) {
+            indexToSelect = currentIndex + 1;
+        } else {
+            indexToSelect = currentIndex - 1;
+        }
+        [self.tabView selectTabViewItem:self.tabView.tabViewItems[indexToSelect]];
+        return;
+    }
+    [self.tabView selectTabViewItem:self.tabView.tabViewItems[_preDragSelectedTabIndex]];
+    _preDragSelectedTabIndex = NSNotFound;
 }
 
 #pragma mark -
@@ -1334,8 +1366,7 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionHTMLTabTitles = @"PSMTabBarContr
     }
 }
 
-- (void)mouseDown:(NSEvent *)theEvent
-{
+- (void)mouseDown:(NSEvent *)theEvent {
     _didDrag = NO;
 
     // keep for dragging
@@ -1362,6 +1393,13 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionHTMLTabTitles = @"PSMTabBarContr
             [cell setCloseButtonPressed:NO];
             if ([theEvent clickCount] == 1) {
                 if (_selectsTabsOnMouseDown) {
+                    if (cell.state != NSControlStateValueOn) {
+                        _preDragSelectedTabIndex = [[self tabView] indexOfTabViewItem:self.tabView.selectedTabViewItem];
+                    } else {
+                        // Because we always want it to switch tabs, don't save
+                        // the index if you're dragging the current tab.
+                        _preDragSelectedTabIndex = NSNotFound;
+                    }
                     [self tabClick:cell];
                 }
             }
@@ -1457,6 +1495,7 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionHTMLTabTitles = @"PSMTabBarContr
 }
 
 - (void)mouseUp:(NSEvent *)theEvent {
+    _preDragSelectedTabIndex = NSNotFound;
     _haveInitialDragLocation = NO;
     if (_resizing) {
         _resizing = NO;

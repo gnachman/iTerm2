@@ -258,5 +258,8 @@ typedef enum {
 - (void)backgroundColorWillChange;
 - (id)cellForPoint:(NSPoint)point
          cellFrame:(NSRectPointer)outFrame;
+- (void)dragWillExitTabBar;
+- (void)dragDidFinish;
+- (void)dragDidBegin;
 
 @end
