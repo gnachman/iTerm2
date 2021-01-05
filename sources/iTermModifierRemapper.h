@@ -25,4 +25,6 @@
 + (instancetype)sharedInstance;
 - (instancetype)init NS_UNAVAILABLE;
 
+- (CGEventRef)eventByRemappingEvent:(CGEventRef)event;
+
 @end

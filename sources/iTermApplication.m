@@ -214,7 +214,7 @@ static const char *iTermApplicationKVOKey = "iTermApplicationKVOKey";
         // The event tap is not working, but we can still remap modifiers for non-system
         // keys. Only things like cmd-tab will not be remapped in this case. Otherwise,
         // the event tap performs the remapping.
-        event = [iTermModifierRemapper remapModifiers:event];
+        event = [NSEvent eventWithCGEvent:[[iTermModifierRemapper sharedInstance] eventByRemappingEvent:[event CGEvent]]];
         DLog(@"Remapped modifiers to %@", event);
     }
     return event;
