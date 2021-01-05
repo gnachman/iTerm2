@@ -314,7 +314,8 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     windowOpener.manuallyOpened = _manualOpenRequested;
     windowOpener.tabColors = _tabColors;
     windowOpener.profile = profile;
-    windowOpener.initial = initial || !_pendingWindows[@(windowIndex)];
+    windowOpener.initial = initial;
+    windowOpener.anonymous = (_pendingWindows[@(windowIndex)] == nil);
     windowOpener.completion = _pendingWindows[@(windowIndex)];
     windowOpener.minimumServerVersion = self.gateway.minimumServerVersion;
     windowOpener.tabIndex = tabIndex;
