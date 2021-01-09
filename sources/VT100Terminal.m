@@ -76,6 +76,7 @@ NSString *const kTerminalStateUnicodeVersionStack = @"Unicode Version Stack";
 NSString *const kTerminalStateURL = @"URL";
 NSString *const kTerminalStateURLParams = @"URL Params";
 NSString *const kTerminalStateReportKeyUp = @"Report Key Up";
+NSString *const kTerminalStateMetaSendsEscape = @"Meta Sends Escape";
 NSString *const kTerminalStateSendModifiers = @"Send Modifiers";
 
 @interface VT100Terminal ()
@@ -338,6 +339,7 @@ static const int kMaxScreenRows = 4096;
     self.autorepeatMode = YES;
     self.keypadMode = NO;
     self.reportKeyUp = NO;
+    self.metaSendsEscape = NO;
     self.insertMode = NO;
     self.sendReceiveMode = NO;
     self.bracketedPasteMode = NO;
@@ -654,6 +656,10 @@ static const int kMaxScreenRows = 4096;
                 } else {
                     self.mouseFormat = MOUSE_FORMAT_XTERM;
                 }
+                break;
+
+            case 1036:
+                self.metaSendsEscape = mode;
                 break;
 
             case 1337:
@@ -1318,6 +1324,7 @@ static const int kMaxScreenRows = 4096;
     self.keypadMode = NO;
 
     self.reportKeyUp = NO;
+    self.metaSendsEscape = NO;
 
     // Set WRAPROUND to initial value
     self.wraparoundMode = YES;
@@ -3110,6 +3117,9 @@ static iTermDECRPMSetting VT100TerminalDECRPMSettingFromBoolean(BOOL flag) {
         case 1015:
             return VT100TerminalDECRPMSettingFromBoolean(self.mouseFormat == MOUSE_FORMAT_URXVT);
 
+        case 1036:
+            return VT100TerminalDECRPMSettingFromBoolean(self.metaSendsEscape);
+
         case 1337:
             return VT100TerminalDECRPMSettingFromBoolean(self.reportKeyUp);
 
@@ -3251,6 +3261,7 @@ static iTermDECRPMSetting VT100TerminalDECRPMSettingFromBoolean(BOOL flag) {
            kTerminalStateCursorModeKey: @(self.cursorMode),
            kTerminalStateKeypadModeKey: @(self.keypadMode),
            kTerminalStateReportKeyUp: @(self.reportKeyUp),
+           kTerminalStateMetaSendsEscape: @(self.metaSendsEscape),
            kTerminalStateSendModifiers: _sendModifiers ?: @[],
            kTerminalStateAllowKeypadModeKey: @(self.allowKeypadMode),
            kTerminalStateAllowPasteBracketing: @(self.allowPasteBracketing),
@@ -3301,6 +3312,7 @@ static iTermDECRPMSetting VT100TerminalDECRPMSettingFromBoolean(BOOL flag) {
     self.cursorMode = [dict[kTerminalStateCursorModeKey] boolValue];
     self.keypadMode = [dict[kTerminalStateKeypadModeKey] boolValue];
     self.reportKeyUp = [dict[kTerminalStateReportKeyUp] boolValue];
+    self.metaSendsEscape = [dict[kTerminalStateMetaSendsEscape] boolValue];
     if ([dict[kTerminalStateSendModifiers] isKindOfClass:[NSArray class]]) {
         self.sendModifiers = [[dict[kTerminalStateSendModifiers] mutableCopy] autorelease];
     }

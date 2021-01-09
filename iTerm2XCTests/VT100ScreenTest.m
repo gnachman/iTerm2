@@ -913,7 +913,6 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
 - (void)screenReportKeyUpDidChange:(BOOL)reportKeyUp {
 }
 
-
 - (void)screenSetPreferredProxyIcon:(NSString *)value {
 }
 

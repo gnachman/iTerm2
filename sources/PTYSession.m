@@ -4642,8 +4642,7 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
-- (BOOL)shouldSendEscPrefixForModifier:(unsigned int)modmask
-{
+- (BOOL)shouldSendEscPrefixForModifier:(unsigned int)modmask {
     if ([self optionKey] == OPT_ESC) {
         if ((modmask == NSEventModifierFlagOption) ||
             (modmask & NSLeftAlternateKeyMask) == NSLeftAlternateKeyMask) {
@@ -8304,14 +8303,31 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     return [[self _keyBindingActionForEvent:event] isActionable];
 }
 
-- (int)optionKey
-{
+- (BOOL)shouldRespectTerminalMetaSendsEscape {
+    if (![iTermAdvancedSettingsModel supportDecsetMetaSendsEscape]) {
+        return NO;
+    }
+    if ([[[self profile] objectForKey:KEY_OPTION_KEY_SENDS] intValue] == OPT_ESC) {
+        return NO;
+    }
+    if ([[[self profile] objectForKey:KEY_RIGHT_OPTION_KEY_SENDS] intValue] == OPT_ESC) {
+        return NO;
+    }
+    return YES;
+}
+
+- (iTermOptionKeyBehavior)optionKey {
+    if ([self shouldRespectTerminalMetaSendsEscape] && self.terminal.metaSendsEscape) {
+        return OPT_ESC;
+    }
     return [[[self profile] objectForKey:KEY_OPTION_KEY_SENDS] intValue];
 }
 
-- (int)rightOptionKey
-{
-    NSNumber* rightOptPref = [[self profile] objectForKey:KEY_RIGHT_OPTION_KEY_SENDS];
+- (iTermOptionKeyBehavior)rightOptionKey {
+    if ([self shouldRespectTerminalMetaSendsEscape] && self.terminal.metaSendsEscape) {
+        return OPT_ESC;
+    }
+    NSNumber *rightOptPref = [[self profile] objectForKey:KEY_RIGHT_OPTION_KEY_SENDS];
     if (rightOptPref == nil) {
         return [self optionKey];
     }

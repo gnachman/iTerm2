@@ -105,6 +105,9 @@ typedef struct {
 // If YES, overrides the delegate's -terminalTmuxMode.
 @property(nonatomic) BOOL tmuxMode;
 
+// DECSET 1036. This can be overridden by modifyOtherKeys, CSI u mode, and raw key reporting.
+@property(nonatomic) BOOL metaSendsEscape;
+
 - (void)setStateFromDictionary:(NSDictionary *)dict;
 
 - (void)setForegroundColor:(int)fgColorCode alternateSemantics:(BOOL)altsem;

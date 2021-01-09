@@ -618,6 +618,7 @@ DEFINE_BOOL(storeStateInSqlite, YES, SECTION_EXPERIMENTAL @"Store window restora
 DEFINE_BOOL(useNewContentFormat, YES, SECTION_EXPERIMENTAL @"Save unlimited amount of window contents.\nThis is going to be slow unless you enable SQLite-based window restoration too.");
 DEFINE_BOOL(vs16Supported, NO, SECTION_EXPERIMENTAL @"Support variation selector 16 making emoji fullwidth?");
 DEFINE_BOOL(fastTrackpad, YES, SECTION_EXPERIMENTAL @"Trackpad scrolls fast?\nSet to No for legacy scrolling speed.");
+DEFINE_BOOL(supportDecsetMetaSendsEscape, YES_IF_BETA_ELSE_NO, SECTION_EXPERIMENTAL @"Support DECSET 1036?\nThis allows apps in the terminal to control whether the option key sends esc+ or acts like a regular option key.");
 
 #pragma mark - Scripting
 #define SECTION_SCRIPTING @"Scripting: "

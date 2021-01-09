@@ -64,8 +64,8 @@ typedef NS_ENUM(NSInteger, PTYCharType) {
 - (void)keyDown:(NSEvent *)event;
 - (void)keyUp:(NSEvent *)event;
 - (BOOL)hasActionableKeyMappingForEvent:(NSEvent *)event;
-- (int)optionKey;
-- (int)rightOptionKey;
+- (iTermOptionKeyBehavior)optionKey;
+- (iTermOptionKeyBehavior)rightOptionKey;
 // Contextual menu
 - (void)menuForEvent:(NSEvent *)theEvent menu:(NSMenu *)theMenu;
 - (void)pasteString:(NSString *)aString;
