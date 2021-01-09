@@ -2633,6 +2633,12 @@
                     return NO;
                 } else {
                     [stringToPaste appendString:@"cd "];
+                    filenames = [filenames mapWithBlock:^NSString *(NSString *filename) {
+                        if ([[NSFileManager defaultManager] itemIsDirectory:[filename stringByResolvingSymlinksInPath]]) {
+                            return filename;
+                        }
+                        return [filename stringByDeletingLastPathComponent];
+                    }];
                     pasteNewline = YES;
                 }
             }
