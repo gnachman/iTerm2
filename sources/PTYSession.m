@@ -4964,6 +4964,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
     [self checkPartialLineTriggers];
     const BOOL passwordInput = _shell.passwordInput;
+    DLog(@"passwordInput=%@", @(passwordInput));
     if (passwordInput != _passwordInput) {
         _passwordInput = _shell.passwordInput;
         [[iTermSecureKeyboardEntryController sharedInstance] update];
