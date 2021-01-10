@@ -260,6 +260,5 @@ typedef enum {
          cellFrame:(NSRectPointer)outFrame;
 - (void)dragWillExitTabBar;
 - (void)dragDidFinish;
-- (void)dragDidBegin;
 
 @end
