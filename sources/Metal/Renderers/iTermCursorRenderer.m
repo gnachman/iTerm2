@@ -315,6 +315,14 @@ NS_ASSUME_NONNULL_BEGIN
             1
         }
     };
+    if ([iTermAdvancedSettingsModel hdrCursor] &&
+        tState.color.redComponent == 1 &&
+        tState.color.greenComponent == 1 &&
+        tState.color.blueComponent == 1 &&
+        tState.color.alphaComponent == 1) {
+        CGFloat maxValue = tState.configuration.maximumExtendedDynamicRangeColorComponentValue;
+        description.color = simd_make_float4(maxValue, maxValue, maxValue, 1);
+    }
     return description;
 }
 

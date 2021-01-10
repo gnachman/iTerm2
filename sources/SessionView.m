@@ -595,6 +595,12 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
 #else
     _metalView.layer.opaque = YES;
 #endif
+    if ([iTermAdvancedSettingsModel hdrCursor]) {
+        CAMetalLayer *metalLayer = [CAMetalLayer castFrom:_metalView.layer];
+        assert(metalLayer);
+        metalLayer.wantsExtendedDynamicRangeContent = YES;
+        metalLayer.pixelFormat = MTLPixelFormatRGBA16Float;
+    }
     CGColorSpaceRef colorSpace = CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
     _metalView.colorspace = colorSpace;
     CFRelease(colorSpace);

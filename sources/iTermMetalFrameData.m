@@ -302,7 +302,13 @@ static NSInteger gNextFrameDataNumber;
     colorAttachment.texture = fast ? [self.fullSizeTexturePool requestTextureOfSize:self.viewportSize] : nil;
     if (!colorAttachment.texture) {
         // Allocate a new texture.
-        MTLTextureDescriptor *textureDescriptor = [MTLTextureDescriptor texture2DDescriptorWithPixelFormat:MTLPixelFormatBGRA8Unorm
+        MTLPixelFormat pixelFormat;
+        if ([iTermAdvancedSettingsModel hdrCursor]) {
+            pixelFormat = MTLPixelFormatRGBA16Float;
+        } else {
+            pixelFormat = MTLPixelFormatBGRA8Unorm;
+        }
+        MTLTextureDescriptor *textureDescriptor = [MTLTextureDescriptor texture2DDescriptorWithPixelFormat:pixelFormat
                                                                                                      width:self.viewportSize.x
                                                                                                     height:self.viewportSize.y
                                                                                                  mipmapped:NO];
@@ -483,6 +489,7 @@ static NSInteger gNextFrameDataNumber;
                                                                                   scale:self.scale
                                                                      hasBackgroundImage:self.hasBackgroundImage
                                                                            extraMargins:self.extraMargins
+                                         maximumExtendedDynamicRangeColorComponentValue:self.maximumExtendedDynamicRangeColorComponentValue
                                                                                cellSize:self.cellSize
                                                                               glyphSize:self.glyphSize
                                                                  cellSizeWithoutSpacing:self.cellSizeWithoutSpacing

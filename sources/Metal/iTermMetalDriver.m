@@ -85,6 +85,7 @@ typedef struct {
 #if ENABLE_UNFAMILIAR_TEXTURE_WORKAROUND
     NSInteger unfamiliarTextureCount;
 #endif
+    CGFloat maximumExtendedDynamicRangeColorComponentValue NS_AVAILABLE_MAC(10_15);
 } iTermMetalDriverMainThreadState;
 
 @interface iTermMetalDriver()
@@ -419,6 +420,9 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
         [self scheduleDrawIfNeededInView:view];
         return NO;
     }
+    if (@available(macOS 10.15, *)) {
+        self.mainThreadState->maximumExtendedDynamicRangeColorComponentValue = view.window.screen.maximumPotentialExtendedDynamicRangeColorComponentValue;
+    }
 
 #if ENABLE_FLAKY_METAL
 #warning DO NOT SUBMIT - FLAKY MODE ENABLED
@@ -557,6 +561,9 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
                                                   pointInsets.left * scale,
                                                   pointInsets.bottom * scale,
                                                   pointInsets.right * scale);
+        if (@available(macOS 10.15, *)) {
+            frameData.maximumExtendedDynamicRangeColorComponentValue = self.mainThreadState->maximumExtendedDynamicRangeColorComponentValue;
+        }
     }];
     return frameData;
 }
@@ -757,8 +764,14 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
 - (id<MTLTexture>)destinationTextureForFrameData:(iTermMetalFrameData *)frameData {
     if (frameData.debugInfo) {
         // Render to offscreen first
+        MTLPixelFormat pixelFormat;
+        if ([iTermAdvancedSettingsModel hdrCursor]) {
+            pixelFormat = MTLPixelFormatRGBA16Float;
+        } else {
+            pixelFormat = MTLPixelFormatBGRA8Unorm;
+        }
         MTLTextureDescriptor *textureDescriptor =
-            [MTLTextureDescriptor texture2DDescriptorWithPixelFormat:MTLPixelFormatBGRA8Unorm
+            [MTLTextureDescriptor texture2DDescriptorWithPixelFormat:pixelFormat
                                                                width:frameData.destinationDrawable.texture.width
                                                               height:frameData.destinationDrawable.texture.height
                                                            mipmapped:NO];

@@ -12,6 +12,7 @@ NS_ASSUME_NONNULL_BEGIN
                                scale:(CGFloat)scale
                   hasBackgroundImage:(BOOL)hasBackgroundImage
                         extraMargins:(NSEdgeInsets)extraMargins
+maximumExtendedDynamicRangeColorComponentValue:(CGFloat)maximumExtendedDynamicRangeColorComponentValue
                             cellSize:(CGSize)cellSize
                            glyphSize:(CGSize)glyphSize
               cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
@@ -20,7 +21,8 @@ NS_ASSUME_NONNULL_BEGIN
     self = [super initWithViewportSize:viewportSize
                                  scale:scale
                     hasBackgroundImage:hasBackgroundImage
-                          extraMargins:extraMargins];
+                          extraMargins:extraMargins
+maximumExtendedDynamicRangeColorComponentValue:maximumExtendedDynamicRangeColorComponentValue];
     if (self) {
         _cellSize = cellSize;
         _cellSizeWithoutSpacing = cellSizeWithoutSpacing;

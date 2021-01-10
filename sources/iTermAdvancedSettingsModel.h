@@ -133,6 +133,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)fullHeightCursor;
 + (NSString *)gitSearchPath;
 + (double)gitTimeout;
++ (BOOL)hdrCursor;
 + (BOOL)hideStuckTooltips;
 + (BOOL)highVisibility;
 + (double)hotKeyDoubleTapMaxDelay;
