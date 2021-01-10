@@ -269,9 +269,12 @@
 - (void)didReadData:(NSData *)inData completion:(void (^)(void))completion {
     dispatch_async(dispatch_get_main_queue(), ^{
         [self saveData:inData];
-        completion();
+        if (!self.outputHandler) {
+            completion();
+            return;
+        }
+        self.outputHandler(inData, completion);
     });
-    [super didReadData:inData completion:completion];
 }
 
 - (void)saveData:(NSData *)inData {
