@@ -35,6 +35,8 @@ static NSString *const kDeleteKeyString = @"0x7f-0x0";
     IBOutlet NSMatrix *_rightOptionKeySends;
     IBOutlet NSTextField *_optionKeySendsLabel;
     IBOutlet NSTextField *_rightOptionKeySendsLabel;
+    IBOutlet NSButton *_leftOptionKeyChangeable;
+    IBOutlet NSButton *_rightOptionKeyChangeable;
     IBOutlet NSButton *_deleteSendsCtrlHButton;
     IBOutlet NSButton *_applicationKeypadAllowed;
     IBOutlet NSButton *_hasHotkey;
@@ -85,6 +87,15 @@ static NSString *const kDeleteKeyString = @"0x7f-0x0";
                          return NO;
                      }
                  }];
+
+    [self defineControl:_leftOptionKeyChangeable
+                    key:KEY_LEFT_OPTION_KEY_CHANGEABLE
+            relatedView:nil
+                   type:kPreferenceInfoTypeCheckbox];
+    [self defineControl:_rightOptionKeyChangeable
+                    key:KEY_RIGHT_OPTION_KEY_CHANGEABLE
+            relatedView:nil
+                   type:kPreferenceInfoTypeCheckbox];
 
     [self defineControl:_applicationKeypadAllowed
                     key:KEY_APPLICATION_KEYPAD_ALLOWED
@@ -146,7 +157,14 @@ static NSString *const kDeleteKeyString = @"0x7f-0x0";
 }
 
 - (NSArray *)keysForBulkCopy {
-    NSArray *keys = @[ KEY_KEYBOARD_MAP, KEY_TOUCHBAR_MAP, KEY_OPTION_KEY_SENDS, KEY_RIGHT_OPTION_KEY_SENDS, KEY_APPLICATION_KEYPAD_ALLOWED, KEY_USE_LIBTICKIT_PROTOCOL ];
+    NSArray *keys = @[ KEY_KEYBOARD_MAP,
+                       KEY_TOUCHBAR_MAP,
+                       KEY_OPTION_KEY_SENDS,
+                       KEY_RIGHT_OPTION_KEY_SENDS,
+                       KEY_LEFT_OPTION_KEY_CHANGEABLE,
+                       KEY_RIGHT_OPTION_KEY_CHANGEABLE,
+                       KEY_APPLICATION_KEYPAD_ALLOWED,
+                       KEY_USE_LIBTICKIT_PROTOCOL ];
     return [[super keysForBulkCopy] arrayByAddingObjectsFromArray:keys];
 }
 

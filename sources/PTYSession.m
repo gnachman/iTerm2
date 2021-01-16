@@ -8318,14 +8318,18 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (iTermOptionKeyBehavior)optionKey {
-    if ([self shouldRespectTerminalMetaSendsEscape] && self.terminal.metaSendsEscape) {
+    if ([self shouldRespectTerminalMetaSendsEscape] &&
+        self.terminal.metaSendsEscape &&
+        [iTermProfilePreferences boolForKey:KEY_LEFT_OPTION_KEY_CHANGEABLE inProfile:self.profile]) {
         return OPT_ESC;
     }
     return [[[self profile] objectForKey:KEY_OPTION_KEY_SENDS] intValue];
 }
 
 - (iTermOptionKeyBehavior)rightOptionKey {
-    if ([self shouldRespectTerminalMetaSendsEscape] && self.terminal.metaSendsEscape) {
+    if ([self shouldRespectTerminalMetaSendsEscape] &&
+        self.terminal.metaSendsEscape &&
+        [iTermProfilePreferences boolForKey:KEY_RIGHT_OPTION_KEY_CHANGEABLE inProfile:self.profile]) {
         return OPT_ESC;
     }
     NSNumber *rightOptPref = [[self profile] objectForKey:KEY_RIGHT_OPTION_KEY_SENDS];

@@ -974,6 +974,19 @@ class LocalWriteOnlyProfile:
         """
         return self._simple_set("Triggers Use Interpolated Strings", value)
 
+    def set_left_option_key_changeable(self, value: bool):
+        """Should apps be able to change the left option key to send esc+?
+
+        :param value: Whether it should be allowed.
+        """
+        return self._simple_set("Left Option Key Changeable", value)
+
+    def set_right_option_key_changeable(self, value: bool):
+        """Should apps be able to change the right option key to send esc+?
+
+        :param value: Whether it should be allowed.
+        """
+        return self._simple_set("Right Option Key Changeable", value)
 
 class WriteOnlyProfile:
     """A profile that can be modified but not read. Useful for changing many
@@ -1906,6 +1919,19 @@ class WriteOnlyProfile:
         return await self._async_simple_set(
             "Triggers Use Interpolated Strings", value)
 
+    async def async_set_left_option_key_changeable(self, value: bool):
+        """Should apps be able to change the left option key to send esc+?
+
+        :param value: Whether it should be allowed.
+        """
+        return await self._async_simple_set("Left Option Key Changeable", value)
+
+    async def async_set_right_option_key_changeable(self, value: bool):
+        """Should apps be able to change the right option key to send esc+?
+
+        :param value: Whether it should be allowed.
+        """
+        return await self._async_simple_set("Right Option Key Changeable", value)
 
 class Profile(WriteOnlyProfile):
     """Represents a profile.
@@ -3003,6 +3029,21 @@ class Profile(WriteOnlyProfile):
         strings?
         """
         return self._get_optional_bool("Triggers Use Interpolated Strings")
+
+    @property
+    def left_option_key_changeable(self) -> typing.Optional[bool]:
+        """Returns whether apps be able to change the left option key to
+        send esc+?
+        """
+        return self._get_optional_bool("Left Option Key Changeable")
+
+    @property
+    def right_option_key_changeable(self) -> typing.Optional[bool]:
+        """Returns whether apps be able to change the right option key to
+        send esc+?
+        """
+        return self._get_optional_bool("Right Option Key Changeable")
+
 
     async def async_make_default(self):
         """Makes this profile the default profile."""

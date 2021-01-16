@@ -220,6 +220,8 @@
 #define KEY_TOUCHBAR_MAP                      @"Touch Bar Map"
 #define KEY_OPTION_KEY_SENDS                  @"Option Key Sends"
 #define KEY_RIGHT_OPTION_KEY_SENDS            @"Right Option Key Sends"
+#define KEY_LEFT_OPTION_KEY_CHANGEABLE        @"Left Option Key Changeable"
+#define KEY_RIGHT_OPTION_KEY_CHANGEABLE       @"Right Option Key Changeable"
 #define KEY_APPLICATION_KEYPAD_ALLOWED        @"Application Keypad Allowed"
 #define KEY_ALLOW_MODIFY_OTHER_KEYS           @"Allow modifyOtherKeys"
 #define KEY_HAS_HOTKEY                        @"Has Hotkey"  // This determines whether the "has a hotkey" box is checked. See also KEY_HOTKEY_CHARACTERS_IGNORING_MODIFIERS.
