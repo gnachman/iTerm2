@@ -60,7 +60,7 @@
 // For some reason this view just doesn't work with layers when using the legacy renderer. When it
 // has a layer it becomes opaque black, as of macOS 11.1.
 - (void)drawRect:(NSRect)bogusRect {
-    [[NSColor redColor] set];
+    [[NSColor clearColor] set];
     NSRectFill(bogusRect);
 }
 

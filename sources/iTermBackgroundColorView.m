@@ -24,7 +24,7 @@
 }
 
 - (void)setBackgroundColor:(NSColor *)backgroundColor {
-    _backgroundColor = [NSColor blackColor];
+    _backgroundColor = [NSColor greenColor];
     [self updateBackgroundColor];
 }
 

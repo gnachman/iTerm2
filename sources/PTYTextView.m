@@ -1098,6 +1098,10 @@
 #pragma mark - NSView Drawing
 
 - (void)drawRect:(NSRect)rect {
+    [[NSColor greenColor] set];
+    NSRectFill(rect);
+    return;
+    
     if (![_delegate textViewShouldDrawRect]) {
         // Metal code path in use
         [super drawRect:rect];
