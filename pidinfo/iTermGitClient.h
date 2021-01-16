@@ -17,6 +17,8 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly, copy) NSString *path;
 @property (nonatomic, readonly) git_repository *repo;
 
++ (BOOL)name:(NSString *)name matchesPattern:(NSString *)pattern;
+
 - (instancetype)initWithRepoPath:(NSString *)path NS_DESIGNATED_INITIALIZER;
 - (instancetype)init NS_UNAVAILABLE;
 
@@ -26,6 +28,12 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (NSString *)branchAt:(git_reference *)ref;
 
+- (NSString *)shortNameForReference:(git_reference *)ref;
+
+- (NSString *)fullNameForReference:(git_reference *)ref;
+
+- (NSDate *)commiterDateAt:(git_reference *)ref;
+
 - (BOOL)getCountsFromRef:(git_reference *)ref
                     pull:(NSInteger *)pullCount
                     push:(NSInteger *)pushCount;
@@ -34,6 +42,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (BOOL)getDeletions:(NSInteger *)deletionsPtr
            untracked:(NSInteger *)untrackedPtr;
+- (void)forEachReference:(void (^)(git_reference *ref, BOOL *stop))block;
 
 @end
 

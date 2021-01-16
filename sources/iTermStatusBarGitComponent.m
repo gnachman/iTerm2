@@ -15,6 +15,7 @@
 #import "iTermController.h"
 #import "iTermGitPoller.h"
 #import "iTermGitState+MainApp.h"
+#import "iTermSlowOperationGateway.h"
 #import "iTermTextPopoverViewController.h"
 #import "iTermVariableReference.h"
 #import "iTermVariableScope.h"
@@ -436,7 +437,8 @@ static const NSTimeInterval iTermStatusBarGitComponentDefaultCadence = 2;
     iTermGitState *state = self.currentState.copy;
     NSString *directory = _gitPoller.currentDirectory;
     __weak __typeof(self) weakSelf = self;
-    [self fetchRecentBranchesWithTimeout:0.5 completion:^(NSArray<NSString *> *branches) {
+    const NSInteger maxCount = 7;
+    [self fetchRecentBranchesWithTimeout:0.5 count:maxCount + 1 completion:^(NSArray<NSString *> *branches) {
         NSMenu *menu = [[NSMenu alloc] init];
         iTermGitMenuItemContext *(^addItem)(NSString *, SEL, BOOL) = ^iTermGitMenuItemContext *(NSString *title, SEL selector, BOOL enabled) {
             NSMenuItem *item = [[NSMenuItem alloc] initWithTitle:title
@@ -466,7 +468,7 @@ static const NSTimeInterval iTermStatusBarGitComponentDefaultCadence = 2;
                 @selector(pull:),
                 !state.dirty);
         [menu addItem:[NSMenuItem separatorItem]];
-        for (NSString *branch in [branches it_arrayByKeepingFirstN:7]) {
+        for (NSString *branch in [branches it_arrayByKeepingFirstN:maxCount]) {
             if (branch.length == 0) {
                 continue;
             }
@@ -507,37 +509,20 @@ static const NSTimeInterval iTermStatusBarGitComponentDefaultCadence = 2;
     [runner runWithTimeout:timeout];
 }
 
-static NSArray<NSString *> *NonEmptyLinesInString(NSString *output) {
-    NSArray<NSString *> *branches = [output componentsSeparatedByCharactersInSet:[NSCharacterSet newlineCharacterSet]];
-    return [branches mapWithBlock:^id(NSString *branch) {
-        NSString *trimmed = [branch stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
-        if (trimmed.length == 0) {
-            return nil;
-        }
-        return trimmed;
-    }];
-}
-
-- (void)fetchRecentBranchesWithTimeout:(NSTimeInterval)timeout completion:(void (^)(NSArray<NSString *> *branches))completion {
+- (void)fetchRecentBranchesWithTimeout:(NSTimeInterval)timeout
+                                 count:(NSInteger)maxCount
+                            completion:(void (^)(NSArray<NSString *> *branches))completion {
     if (!self.onLocalhost) {
         completion(@[]);
         return;
     }
-    NSArray *args = @[ @"for-each-ref",
-                       @"--count=30",
-                       @"--sort=-committerdate",
-                       @"refs/heads/",
-                       @"--format=%(refname:short)" ];
-    [self runGitCommandWithArguments:args
-                             timeout:timeout
-                          completion:
-     ^(NSString * _Nullable output, int status) {
-         if (status != 0 || output == nil) {
-             completion(@[]);
-             return;
-         }
-         completion(NonEmptyLinesInString(output));
-     }];
+    [[iTermSlowOperationGateway sharedInstance] fetchRecentBranchesAt:_gitPoller.currentDirectory
+                                                                count:maxCount
+                                                           completion:^(NSArray<NSString *> * _Nonnull branches) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            completion(branches);
+        });
+    }];
 }
 
 - (void)showPopover {

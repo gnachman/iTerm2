@@ -42,6 +42,8 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)requestGitStateForPath:(NSString *)path
                     completion:(void (^)(iTermGitState * _Nullable))completion;
 
+- (void)fetchRecentBranchesAt:(NSString *)path count:(NSInteger)maxCount completion:(void (^)(NSArray<NSString *> *))reply;
+
 @end
 
 NS_ASSUME_NONNULL_END

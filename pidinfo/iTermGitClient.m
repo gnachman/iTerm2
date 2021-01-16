@@ -9,10 +9,26 @@
 
 #import "iTermGitState.h"
 
+#include <fnmatch.h>
+
 typedef void (^DeferralBlock)(void);
 
 @implementation iTermGitClient {
     NSMutableArray<DeferralBlock> *_defers;
+}
+
++ (BOOL)name:(NSString *)name matchesPattern:(NSString *)pattern {
+    const int result = fnmatch(pattern.UTF8String, name.UTF8String, 0);
+    if (result == 0) {
+        return YES;
+    }
+    if ([name isEqualToString:pattern]) {
+        return YES;
+    }
+    if ([name hasPrefix:[pattern stringByAppendingString:@"/"]]) {
+        return YES;
+    }
+    return NO;
 }
 
 - (instancetype)initWithRepoPath:(NSString *)path {
@@ -85,6 +101,22 @@ typedef void (^DeferralBlock)(void);
     return [NSString stringWithUTF8String:str];
 }
 
+- (NSString *)fullNameForReference:(git_reference *)ref {
+    const char *name = git_reference_name(ref);
+    if (!name) {
+        return nil;
+    }
+    return [NSString stringWithUTF8String:name];
+}
+
+- (NSString *)shortNameForReference:(git_reference *)ref {
+    const char *name = git_reference_shorthand(ref);
+    if (!name) {
+        return [self branchAt:ref];
+    }
+    return [NSString stringWithUTF8String:name];
+}
+
 - (NSString *)branchAt:(git_reference *)ref {
     const git_oid *oid = [self oidAtRef:ref];
     if (!oid) {
@@ -97,6 +129,19 @@ typedef void (^DeferralBlock)(void);
         return [self stringForOid:oid];
     }
     return [NSString stringWithUTF8String:branch_name];
+}
+
+- (NSDate *)commiterDateAt:(git_reference *)ref {
+    const git_oid *oid = [self oidAtRef:ref];
+    if (!oid) {
+        return nil;
+    }
+    git_commit *commit;
+    if (git_commit_lookup(&commit, _repo, oid)) {
+        return nil;
+    }
+    git_time_t t = git_commit_time(commit);
+    return [NSDate dateWithTimeIntervalSince1970:t];
 }
 
 // Walks from newest (fromCommit) to oldest (toCommit). block is called for `fromCommit` but not
@@ -213,6 +258,18 @@ typedef void (^DeferralBlock)(void);
     *untrackedPtr = untracked;
 
     return YES;
+}
+
+static int GitForEachCallback(git_reference *ref, void *data) {
+    typedef void (^UserCallback)(git_reference *, BOOL *);
+    UserCallback block = (__bridge UserCallback)data;
+    BOOL stop = NO;
+    block(ref, &stop);
+    return stop == YES;
+}
+
+- (void)forEachReference:(void (^)(git_reference * _Nonnull, BOOL *))block {
+    git_reference_foreach(_repo, GitForEachCallback, (__bridge void *)block);
 }
 
 @end
