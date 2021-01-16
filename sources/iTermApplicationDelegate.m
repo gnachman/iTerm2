@@ -380,7 +380,8 @@ static BOOL hasBecomeActive = NO;
             return NO;
         }
     } else if ([menuItem action] == @selector(saveCurrentWindowAsArrangement:) ||
-               [menuItem action] == @selector(newSessionWithSameProfile:)) {
+               [menuItem action] == @selector(newSessionWithSameProfile:) ||
+               [menuItem action] == @selector(newWindowWithSameProfile:)) {
         return [[iTermController sharedInstance] currentTerminal] != nil;
     } else if ([menuItem action] == @selector(toggleFullScreenTabBar:)) {
         [menuItem setState:[iTermPreferences boolForKey:kPreferenceKeyShowFullscreenTabBar] ? NSControlStateValueOn : NSControlStateValueOff];
@@ -1665,9 +1666,16 @@ static BOOL hasBecomeActive = NO;
     }
 }
 
+- (IBAction)newWindowWithSameProfile:(id)sender
+{
+    [[iTermController sharedInstance] newSessionWithSameProfile:sender
+                                                      newWindow:YES];
+}
+
 - (IBAction)newSessionWithSameProfile:(id)sender
 {
-    [[iTermController sharedInstance] newSessionWithSameProfile:sender];
+    [[iTermController sharedInstance] newSessionWithSameProfile:sender
+                                                      newWindow:NO];
 }
 
 - (IBAction)newSession:(id)sender

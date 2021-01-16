@@ -321,7 +321,7 @@ static iTermController *gSharedInstance;
 - (void)noAction:(id)sender {
 }
 
-- (void)newSessionWithSameProfile:(id)sender {
+- (void)newSessionWithSameProfile:(id)sender newWindow:(BOOL)newWindow {
     Profile *bookmark = nil;
     if (_frontTerminalWindowController) {
         bookmark = [[_frontTerminalWindowController currentSession] profile];
@@ -332,9 +332,10 @@ static iTermController *gSharedInstance;
         NSString *guid = [ProfileModel freshGuid];
         bookmark = [bookmark dictionaryBySettingObject:guid forKey:KEY_GUID];
     }
+    PseudoTerminal *windowController = (newWindow) ? nil : _frontTerminalWindowController;
     [iTermSessionLauncher launchBookmark:bookmark
-                              inTerminal:_frontTerminalWindowController
-                      respectTabbingMode:NO
+                              inTerminal:windowController
+                      respectTabbingMode:newWindow
                               completion:^(PTYSession *session) {
         if (divorced) {
             [session divorceAddressBookEntryFromPreferences];
