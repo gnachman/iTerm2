@@ -6,6 +6,7 @@
 //
 
 #import <Cocoa/Cocoa.h>
+#import "iTermActivityInfo.h"
 #import "iTermStatusBarContainerView.h"
 #import "iTermFindViewController.h"
 #import "iTermStatusBarComponent.h"
@@ -41,6 +42,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (BOOL)statusBarHasDarkBackground;
 - (BOOL)statusBarCanDragWindow;
 - (BOOL)statusBarRevealComposer;
+- (iTermActivityInfo)statusBarActivityInfo;
 
 @end
 

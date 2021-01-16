@@ -7,6 +7,8 @@
 
 #import <Foundation/Foundation.h>
 
+@class iTermGitState;
+
 NS_ASSUME_NONNULL_BEGIN
 
 // The protocol that this service will vend as its API. This header file will also need to be visible to the process hosting the service.
@@ -37,6 +39,8 @@ NS_ASSUME_NONNULL_BEGIN
                        executable:(BOOL)executable
                         withReply:(void (^)(NSArray<NSString *> * _Nullable))reply;
 
+- (void)requestGitStateForPath:(NSString *)path
+                    completion:(void (^)(iTermGitState * _Nullable))completion;
 
 @end
 

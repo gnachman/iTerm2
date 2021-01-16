@@ -7,6 +7,8 @@
 
 #import <Foundation/Foundation.h>
 
+@class iTermGitState;
+
 NS_ASSUME_NONNULL_BEGIN
 
 // This runs potentially very slow operations outside the process. If they hang forever it's cool,
@@ -49,6 +51,9 @@ NS_ASSUME_NONNULL_BEGIN
                          maxCount:(NSInteger)maxCount
                        executable:(BOOL)executable
                        completion:(void (^)(NSArray<NSString *> *))completions;
+
+- (void)requestGitStateForPath:(NSString *)path
+                    completion:(void (^)(iTermGitState * _Nullable))completion;
 
 @end
 

@@ -15,6 +15,17 @@
 #import "pidinfo.h"
 #include <stdatomic.h>
 
+@interface iTermGitStateHandlerBox: NSObject
+@property (nonatomic, copy) void (^block)(iTermGitState *);
+@end
+
+@implementation iTermGitStateHandlerBox
+
+- (BOOL)isEqual:(id)object {
+    return self == object;
+}
+@end
+
 @interface iTermSlowOperationGateway()
 @property (nonatomic, readwrite) BOOL ready;
 @end
@@ -22,6 +33,7 @@
 @implementation iTermSlowOperationGateway {
     NSXPCConnection *_connectionToService;
     NSTimeInterval _timeout;
+    NSMutableArray<iTermGitStateHandlerBox *> *_gitStateHandlers;
 }
 
 + (instancetype)sharedInstance {
@@ -36,6 +48,7 @@
 - (instancetype)initPrivate {
     self = [super init];
     if (self) {
+        _gitStateHandlers = [NSMutableArray array];
         _timeout = 0.5;
         [self connect];
         __weak __typeof(self) weakSelf = self;
@@ -69,6 +82,21 @@
             [weakSelf didInvalidateConnection];
         });
     };
+    _connectionToService.interruptionHandler = ^{
+        [weakSelf didInterrupt];
+    };
+}
+
+- (void)didInterrupt {
+    NSArray<iTermGitStateHandlerBox *> *handlers;
+    @synchronized (_gitStateHandlers) {
+        handlers = [_gitStateHandlers copy];
+        [_gitStateHandlers removeAllObjects];
+    }
+    DLog(@"didInterrupt. Run all %@ handlers", @(handlers.count));
+    [handlers enumerateObjectsUsingBlock:^(iTermGitStateHandlerBox  *_Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+        obj.block(nil);
+    }];
 }
 
 - (int)nextReqid {
@@ -164,6 +192,29 @@
                                                                maxCount:maxCount
                                                              executable:executable
                                                               withReply:completions];
+}
+
+- (void)requestGitStateForPath:(NSString *)path
+                    completion:(void (^)(iTermGitState * _Nullable))completion {
+    iTermGitStateHandlerBox *box = [[iTermGitStateHandlerBox alloc] init];
+    box.block = completion;
+    @synchronized(_gitStateHandlers) {
+        [_gitStateHandlers addObject:box];
+    }
+    [[_connectionToService remoteObjectProxy] requestGitStateForPath:path
+                                                          completion:^(iTermGitState * _Nullable state) {
+        [self didGetGitState:state completion:box];
+    }];
+}
+
+- (void)didGetGitState:(iTermGitState *)gitState completion:(iTermGitStateHandlerBox *)completion {
+    @synchronized (_gitStateHandlers) {
+        if (![_gitStateHandlers containsObject:completion]) {
+            return;
+        }
+        [_gitStateHandlers removeObject:completion];
+    }
+    completion.block(gitState);
 }
 
 @end

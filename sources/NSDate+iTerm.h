@@ -12,5 +12,6 @@
 
 + (BOOL)isAprilFools;
 + (NSTimeInterval)it_timeSinceBoot;
++ (NSDate *)it_dateWithTimeSinceBoot:(NSTimeInterval)t;
 
 @end

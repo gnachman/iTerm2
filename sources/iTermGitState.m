@@ -7,20 +7,14 @@
 
 #import "iTermGitState.h"
 
-#import "DebugLogging.h"
-#import "iTermVariableReference.h"
-#import "iTermVariableScope.h"
-#import "NSArray+iTerm.h"
-#import "NSDate+iTerm.h"
+NSString *const iTermGitStateVariableNameGitBranch = @"user.gitBranch";
+NSString *const iTermGitStateVariableNameGitPushCount = @"user.gitPushCount";
+NSString *const iTermGitStateVariableNameGitPullCount = @"user.gitPullCount";
+NSString *const iTermGitStateVariableNameGitDirty = @"user.gitDirty";
+NSString *const iTermGitStateVariableNameGitAdds = @"user.gitAdds";
+NSString *const iTermGitStateVariableNameGitDeletes = @"user.gitDeletes";
 
-static NSString *const iTermGitStateVariableNameGitBranch = @"user.gitBranch";
-static NSString *const iTermGitStateVariableNameGitPushCount = @"user.gitPushCount";
-static NSString *const iTermGitStateVariableNameGitPullCount = @"user.gitPullCount";
-static NSString *const iTermGitStateVariableNameGitDirty = @"user.gitDirty";
-static NSString *const iTermGitStateVariableNameGitAdds = @"user.gitAdds";
-static NSString *const iTermGitStateVariableNameGitDeletes = @"user.gitDeletes";
-
-static NSArray<NSString *> *iTermGitStatePaths(void) {
+NSArray<NSString *> *iTermGitStatePaths(void) {
     return @[ iTermGitStateVariableNameGitBranch,
               iTermGitStateVariableNameGitPushCount,
               iTermGitStateVariableNameGitPullCount,
@@ -29,46 +23,41 @@ static NSArray<NSString *> *iTermGitStatePaths(void) {
               iTermGitStateVariableNameGitDeletes ];
 }
 
-@interface NSString(GitState)
-@property (nonatomic, readonly) BOOL gitDirtyBoolValue;
-@end
+@implementation iTermGitState
 
-@implementation NSString(GitState)
-- (BOOL)gitDirtyBoolValue {
-    if ([self isEqualToString:@"dirty"]) {
-        return YES;
-    }
-    if ([self isEqualToString:@"clean"]) {
-        return NO;
-    }
-    return [self boolValue];
-}
-@end
+#pragma mark NSSecureCoding
 
-@implementation iTermGitState {
-    NSTimeInterval _creationTime;
++ (BOOL)supportsSecureCoding {
+    return YES;
 }
 
-- (instancetype)initWithScope:(iTermVariableScope *)scope {
-    self = [self init];
+- (void)encodeWithCoder:(NSCoder *)coder {
+    [coder encodeObject:self.xcode forKey:@"xcode"];
+    [coder encodeObject:self.pushArrow forKey:@"pushArrow"];
+    [coder encodeObject:self.pullArrow forKey:@"pullArrow"];
+    [coder encodeObject:self.branch forKey:@"branch"];
+    [coder encodeBool:self.dirty forKey:@"dirty"];
+    [coder encodeInteger:self.adds forKey:@"adds"];
+    [coder encodeInteger:self.deletes forKey:@"deletes"];
+    [coder encodeInteger:self.creationTime forKey:@"creationTime"];
+}
+
+- (instancetype)initWithCoder:(NSCoder *)coder {
+    self = [super init];
     if (self) {
-        for (NSString *path in iTermGitStatePaths()) {
-            if (![scope valueForVariableName:path]) {
-                DLog(@"%@ is not set; cannot construct git state from scope", path);
-                return nil;
-            }
-        }
-        _directory = [scope valueForVariableName:iTermVariableKeySessionID] ?: @"(null)";
-        _branch = [scope valueForVariableName:iTermGitStateVariableNameGitBranch];
-        _pushArrow = [scope valueForVariableName:iTermGitStateVariableNameGitPushCount];
-        _pullArrow = [scope valueForVariableName:iTermGitStateVariableNameGitPullCount];
-        _dirty = [[scope valueForVariableName:iTermGitStateVariableNameGitDirty] gitDirtyBoolValue];
-        _adds = [[scope valueForVariableName:iTermGitStateVariableNameGitAdds] integerValue];
-        _deletes = [[scope valueForVariableName:iTermGitStateVariableNameGitDeletes] integerValue];
-        _creationTime = [NSDate it_timeSinceBoot];
+        _xcode = [coder decodeObjectOfClass:[NSString class] forKey:@"xcode"];
+        _pushArrow = [coder decodeObjectOfClass:[NSString class] forKey:@"pushArrow"];
+        _pullArrow = [coder decodeObjectOfClass:[NSString class] forKey:@"pullArrow"];
+        _branch = [coder decodeObjectOfClass:[NSString class] forKey:@"branch"];
+        _dirty = [coder decodeBoolForKey:@"dirty"];
+        _adds = [coder decodeIntegerForKey:@"adds"];
+        _deletes = [coder decodeIntegerForKey:@"deletes"];
+        _creationTime = [coder decodeIntegerForKey:@"creationTime"];
     }
     return self;
 }
+
+#pragma mark NSCopying
 
 - (id)copyWithZone:(NSZone *)zone {
     iTermGitState *theCopy = [[iTermGitState alloc] init];
@@ -82,34 +71,13 @@ static NSArray<NSString *> *iTermGitStatePaths(void) {
     return theCopy;
 }
 
+#pragma mark NSObject
+
 - (NSString *)description {
     return [NSString stringWithFormat:@"<%@: %p dir=%@ xcode=%@ push=%@ pull=%@ branch=%@ dirty=%@ adds=%@ deletes=%@>",
             self.class, self,
             _directory, _xcode, _pushArrow, _pullArrow, _branch, @(_dirty), @(_adds), @(_deletes)];
 }
 
-- (NSTimeInterval)age {
-    return [NSDate it_timeSinceBoot] - _creationTime;
-}
-
 @end
 
-@implementation iTermRemoteGitStateObserver {
-    NSArray<iTermVariableReference *> *_refs;
-}
-
-- (instancetype)initWithScope:(iTermVariableScope *)scope
-                        block:(void (^)(void))block {
-    self = [super init];
-    if (self) {
-        NSArray<NSString *> *paths = iTermGitStatePaths();
-        _refs = [paths mapWithBlock:^id(NSString *path) {
-            iTermVariableReference *ref = [[iTermVariableReference alloc] initWithPath:path vendor:scope];
-            ref.onChangeBlock = block;
-            return ref;
-        }];
-    }
-    return self;
-}
-
-@end

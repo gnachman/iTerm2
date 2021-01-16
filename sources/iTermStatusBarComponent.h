@@ -7,6 +7,7 @@
 
 #import <Cocoa/Cocoa.h>
 
+#import "iTermActivityInfo.h"
 #import "iTermFindViewController.h"
 #import "iTermStatusBarComponentKnob.h"
 #import "iTermStatusBarLayoutAlgorithm.h"
@@ -44,6 +45,7 @@ static NSString *const iTermStatusBarSharedTextColorKey = @"shared text color";
 forInvocation:(NSString *)invocation
                     origin:(NSString *)origin;
 - (void)statusBarComponentComposerRevealComposer:(id<iTermStatusBarComponent>)component;
+- (iTermActivityInfo)statusBarComponentActivityInfo:(id<iTermStatusBarComponent>)component;
 @end
 
 @protocol iTermStatusBarComponentFactory<NSSecureCoding, NSCopying, NSObject>

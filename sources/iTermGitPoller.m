@@ -88,7 +88,7 @@ NS_ASSUME_NONNULL_BEGIN
         DLog(@"%@: don't poll: current directory unknown", self);
         return;
     }
-    if (![self.delegate gitPollerShouldPoll:self]) {
+    if (![self.delegate gitPollerShouldPoll:self after:_lastPollTime]) {
         DLog(@"%@: don't poll: delegate %@ declined", self, self.delegate);
         return;
     }
@@ -103,6 +103,7 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 - (void)didPollWithUpdatedState:(iTermGitState *)state {
+    DLog(@"%@ (%@)", state, self.delegate);
     self.state = state;
 }
 

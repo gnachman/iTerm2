@@ -14,7 +14,7 @@
 #import "iTermCommandRunner.h"
 #import "iTermController.h"
 #import "iTermGitPoller.h"
-#import "iTermGitState.h"
+#import "iTermGitState+MainApp.h"
 #import "iTermTextPopoverViewController.h"
 #import "iTermVariableReference.h"
 #import "iTermVariableScope.h"
@@ -519,6 +519,10 @@ static NSArray<NSString *> *NonEmptyLinesInString(NSString *output) {
 }
 
 - (void)fetchRecentBranchesWithTimeout:(NSTimeInterval)timeout completion:(void (^)(NSArray<NSString *> *branches))completion {
+    if (!self.onLocalhost) {
+        completion(@[]);
+        return;
+    }
     NSArray *args = @[ @"for-each-ref",
                        @"--count=30",
                        @"--sort=-committerdate",
@@ -702,7 +706,7 @@ static NSArray<NSString *> *NonEmptyLinesInString(NSString *output) {
 
 #pragma mark - iTermGitPollerDelegate
 
-- (BOOL)gitPollerShouldPoll:(iTermGitPoller *)poller {
+- (BOOL)gitPollerShouldPoll:(iTermGitPoller *)poller after:(NSDate * _Nullable)lastPoll {
     if ([self.delegate statusBarComponentIsInSetupUI:self]) {
         DLog(@"Don't poll: in setup UI");
         return NO;
@@ -711,9 +715,28 @@ static NSArray<NSString *> *NonEmptyLinesInString(NSString *output) {
         DLog(@"Don't poll: not visible");
         return NO;
     }
+    if (lastPoll == nil) {
+        DLog(@"First poll. Return YES.");
+        return YES;
+    }
 
-    DLog(@"returning YES");
-    return YES;
+    const iTermActivityInfo activityInfo = [self.delegate statusBarComponentActivityInfo:self];
+    NSDate *lastNewline = [NSDate it_dateWithTimeSinceBoot:activityInfo.lastNewline];
+    // Add a 3 second grace period since git takes a moment to update. You might only pick up
+    // the change on the second check after pressing enter.
+    if ([lastNewline compare:[lastPoll dateByAddingTimeInterval:-3]] == NSOrderedDescending) {
+        DLog(@"Newline sent since last poll-3: returning YES");
+        return YES;
+    }
+    const NSTimeInterval pollIntervalWhenInactive = 60;
+    NSDate *lastActivity = [NSDate it_dateWithTimeSinceBoot:activityInfo.lastActivity];
+    if ([[NSDate date] timeIntervalSinceDate:lastPoll] > pollIntervalWhenInactive &&
+        [lastActivity compare:lastPoll] == NSOrderedDescending) {
+        DLog(@"Activity since last poll more than %@ seconds ago: return YES", @(pollIntervalWhenInactive));
+        return YES;
+    }
+    DLog(@"Don't poll. lastPoll=%@ lastNewline=%@ lastActivity=%@", lastPoll, lastNewline, lastActivity);
+    return NO;
 }
 
 @end

@@ -600,6 +600,8 @@ static const NSUInteger kMaxHosts = 100;
     NSString *_arrangementGUID;
 
     VT100GridSize _savedGridSize;
+
+    iTermActivityInfo _activityInfo;
 }
 
 @synthesize isDivorced = _divorced;
@@ -2685,8 +2687,15 @@ ITERM_WEAKLY_REFERENCEABLE
         }
         NSData *data = [self dataForInputString:string usingEncoding:encoding];
         const char *bytes = data.bytes;
+        BOOL newline = NO;
         for (NSUInteger i = 0; i < data.length; i++) {
             DLog(@"Write byte 0x%02x (%c)", (((int)bytes[i]) & 0xff), bytes[i]);
+            if (bytes[i] == '\r' || bytes[i] == '\n') {
+                newline = YES;
+            }
+        }
+        if (newline) {
+            _activityInfo.lastNewline = [NSDate it_timeSinceBoot];
         }
         [_shell writeTask:data];
     }
@@ -5052,6 +5061,7 @@ ITERM_WEAKLY_REFERENCEABLE
     DLog(@"setActive:%@ timerRunning=%@ updateTimer.isValue=%@ lastTimeout=%f session=%@",
          @(active), @(_timerRunning), @(_cadenceController.updateTimerIsValid), _lastTimeout, self);
     _active = active;
+    _activityInfo.lastActivity = [NSDate it_timeSinceBoot];
     [_cadenceController changeCadenceIfNeeded];
 }
 
@@ -12945,6 +12955,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 - (BOOL)statusBarCanDragWindow {
     return !self.view.statusBarIsInPaneTitleBar;
+}
+
+- (iTermActivityInfo)statusBarActivityInfo {
+    return _activityInfo;
 }
 
 - (void)statusBarSetLayout:(nonnull iTermStatusBarLayout *)layout {

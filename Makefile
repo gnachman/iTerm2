@@ -8,6 +8,7 @@ ITERM_CONF_PLIST = $(HOME)/Library/Preferences/com.googlecode.iterm2.plist
 COMPACTDATE=$(shell date +"%Y%m%d")
 VERSION = $(shell cat version.txt | sed -e "s/%(extra)s/$(COMPACTDATE)/")
 NAME=$(shell echo $(VERSION) | sed -e "s/\\./_/g")
+CMAKE=/usr/local/bin/cmake
 
 .PHONY: clean all backup-old-iterm restart
 
@@ -139,6 +140,10 @@ CoreParse: force
 NMSSH: force fatlibssh2
 	rm -rf ThirdParty/NMSSH.framework
 	cd submodules/NMSSH && xcodebuild -target NMSSH -project NMSSH.xcodeproj -configuration Release CONFIGURATION_BUILD_DIR=../../ThirdParty
+
+libgit2: force
+	mkdir -p submodules/libgit2/build
+	MAKE=/usr/local/bin/cmake PATH=/usr/local/bin:${PATH} cd submodules/libgit2/build && ${CMAKE} -DBUILD_SHARED_LIBS=OFF -DCMAKE_OSX_ARCHITECTURES="x86_64;arm64" -DCMAKE_OSX_DEPLOYMENT_TARGET="10.14" -DCMAKE_INSTALL_PREFIX=../../../ThirdParty/libgit2 .. && ${CMAKE} -j22 --build . && ${CMAKE} --build . -j22 --target install
 
 deps: force
 	make fatlibsixel

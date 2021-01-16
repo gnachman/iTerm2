@@ -8,10 +8,13 @@
 #import "pidinfo.h"
 
 #import "iTermFileDescriptorServerShared.h"
+#import "iTermGitClient.h"
 #include <libproc.h>
 #include <stdatomic.h>
 #include <stdlib.h>
 #include <syslog.h>
+#include <sys/resource.h>
+#include <sys/types.h>
 #include <time.h>
 
 //#define ENABLE_RANDOM_WEDGING 1
@@ -42,7 +45,7 @@
     [self performRiskyBlock:^(BOOL shouldPerform, BOOL (^ _Nullable completion)(void)) {
         if (!shouldPerform) {
             reply(nil, nil, 0);
-            syslog(LOG_WARNING, "pidinfo wedged");
+            syslog(LOG_WARNING, "pidinfo wedged while running script");
             return;
         }
         [self reallyRunShellScript:script shell:shell completion:^(NSData *output,
@@ -394,7 +397,7 @@ static double TimespecToSeconds(struct timespec* ts) {
     [self performRiskyBlock:^(BOOL shouldPerform, BOOL (^ _Nullable completion)(void)) {
         if (!shouldPerform) {
             reply(nil);
-            syslog(LOG_WARNING, "pidinfo wedged");
+            syslog(LOG_WARNING, "pidinfo wedged while searching for completions");
             return;
         }
         NSMutableArray<NSString *> *combined = [NSMutableArray array];
@@ -438,6 +441,32 @@ static double TimespecToSeconds(struct timespec* ts) {
         }
     }
     return result;
+}
+
+- (void)setPriority:(int)newPriority {
+    int rc = setpriority(PRIO_PROCESS, 0, newPriority);
+    if (rc) {
+        syslog(LOG_ERR, "setpriority(%d): %s", newPriority, strerror(errno));
+    }
+}
+
+- (void)requestGitStateForPath:(NSString *)path
+                    completion:(void (^)(iTermGitState * _Nullable))reply {
+    [self performRiskyBlock:^(BOOL shouldPerform, BOOL (^ _Nullable completion)(void)) {
+        if (!shouldPerform) {
+            reply(nil);
+            syslog(LOG_WARNING, "pidinfo wedged");
+            return;
+        }
+        [self setPriority:20];
+        // NSLog(@"Request state for %@", path);
+        // const NSTimeInterval start = [NSDate timeIntervalSinceReferenceDate];
+        iTermGitState *state = [iTermGitState gitStateForRepoAtPath:path];
+        // const NSTimeInterval end = [NSDate timeIntervalSinceReferenceDate];
+        // NSLog(@"It took %f sec to request state for %@", end-start, path);
+        reply(state);
+        completion();
+    }];
 }
 
 @end

@@ -205,6 +205,9 @@ NSString *const iTermStatusBarElementPasteboardType = @"com.iterm2.status-bar-el
     assert(NO);
 }
 
+- (iTermActivityInfo)statusBarComponentActivityInfo:(id<iTermStatusBarComponent>)component {
+    assert(NO);
+}
 
 @end
 

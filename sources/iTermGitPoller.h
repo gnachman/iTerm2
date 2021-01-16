@@ -14,7 +14,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @protocol iTermGitPollerDelegate <NSObject>
 
-- (BOOL)gitPollerShouldPoll:(iTermGitPoller *)poller;
+- (BOOL)gitPollerShouldPoll:(iTermGitPoller *)poller after:(NSDate * _Nullable)lastPoll;
 
 @end
 

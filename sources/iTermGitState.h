@@ -9,9 +9,16 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-@class iTermVariableScope;
+extern NSArray<NSString *> *iTermGitStatePaths(void);
 
-@interface iTermGitState : NSObject<NSCopying>
+extern NSString *const iTermGitStateVariableNameGitBranch;
+extern NSString *const iTermGitStateVariableNameGitPushCount;
+extern NSString *const iTermGitStateVariableNameGitPullCount;
+extern NSString *const iTermGitStateVariableNameGitDirty;
+extern NSString *const iTermGitStateVariableNameGitAdds;
+extern NSString *const iTermGitStateVariableNameGitDeletes;
+
+@interface iTermGitState : NSObject<NSCopying, NSSecureCoding>
 @property (nonatomic, copy) NSString *directory;
 @property (nonatomic, copy) NSString *xcode;
 @property (nonatomic, copy) NSString *pushArrow;
@@ -20,20 +27,9 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic) BOOL dirty;
 @property (nonatomic) NSInteger adds;
 @property (nonatomic) NSInteger deletes;
-@property (nonatomic, readonly) NSTimeInterval age;
-
-- (instancetype)initWithScope:(iTermVariableScope *)scope;
+@property (nonatomic) NSTimeInterval creationTime;
 
 @end
 
-@class iTermVariableScope;
-
-@interface iTermRemoteGitStateObserver : NSObject
-
-- (instancetype)initWithScope:(iTermVariableScope *)scope
-                        block:(void (^)(void))block NS_DESIGNATED_INITIALIZER;
-- (instancetype)init NS_UNAVAILABLE;
-
-@end
 
 NS_ASSUME_NONNULL_END

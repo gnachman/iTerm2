@@ -19,3 +19,6 @@
 [submodule "submodules/fmdb"]
 	path = submodules/fmdb
 	url = https://github.com/ccgus/fmdb
+[submodule "submodules/libgit2"]
+	path = submodules/libgit2
+	url = https://github.com/libgit2/libgit2

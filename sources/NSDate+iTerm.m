@@ -41,4 +41,10 @@
     return nanoseconds / nanosPerSecond;
 }
 
++ (NSDate *)it_dateWithTimeSinceBoot:(NSTimeInterval)t {
+    const NSTimeInterval now = [self it_timeSinceBoot];
+    const NSTimeInterval delta = now - t;
+    return [NSDate dateWithTimeIntervalSinceNow:-delta];
+}
+
 @end

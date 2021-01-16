@@ -374,6 +374,10 @@ static const CGFloat iTermStatusBarViewControllerBottomMargin = 0;
     [self.delegate statusBarRevealComposer];
 }
 
+- (iTermActivityInfo)statusBarComponentActivityInfo:(id<iTermStatusBarComponent>)component {
+    return [self.delegate statusBarActivityInfo];
+}
+
 - (void)statusBarComponent:(id<iTermStatusBarComponent>)component
       reportScriptingError:(NSError *)error
              forInvocation:(NSString *)invocation
