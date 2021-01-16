@@ -251,6 +251,22 @@ static const NSTimeInterval iTermStatusBarGitComponentDefaultCadence = 2;
     if (!self.pollerReady) {
         return nil;
     }
+    switch (self.currentState.repoState) {
+        case iTermGitRepoStateNone:
+            break;
+        case iTermGitRepoStateMerge:
+            return [self attributedStringWithString:@"Merging"];
+        case iTermGitRepoStateRevert:
+            return [self attributedStringWithString:@"Reverting"];
+        case iTermGitRepoStateCherrypick:
+            return [self attributedStringWithString:@"Cherrypicking"];
+        case iTermGitRepoStateBisect:
+            return [self attributedStringWithString:@"Bisecting"];
+        case iTermGitRepoStateRebase:
+            return [self attributedStringWithString:@"Rebasing"];
+        case iTermGitRepoStateApply:
+            return [self attributedStringWithString:@"Applying"];
+    }
     static NSAttributedString *upImage;
     static NSAttributedString *downImage;
     static NSAttributedString *dirtyImage;

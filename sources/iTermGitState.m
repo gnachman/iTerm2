@@ -40,6 +40,7 @@ NSArray<NSString *> *iTermGitStatePaths(void) {
     [coder encodeInteger:self.adds forKey:@"adds"];
     [coder encodeInteger:self.deletes forKey:@"deletes"];
     [coder encodeInteger:self.creationTime forKey:@"creationTime"];
+    [coder encodeInteger:self.repoState forKey:@"repoState"];
 }
 
 - (instancetype)initWithCoder:(NSCoder *)coder {
@@ -53,6 +54,7 @@ NSArray<NSString *> *iTermGitStatePaths(void) {
         _adds = [coder decodeIntegerForKey:@"adds"];
         _deletes = [coder decodeIntegerForKey:@"deletes"];
         _creationTime = [coder decodeIntegerForKey:@"creationTime"];
+        _repoState = [coder decodeIntegerForKey:@"repoState"];
     }
     return self;
 }

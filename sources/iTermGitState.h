@@ -18,6 +18,16 @@ extern NSString *const iTermGitStateVariableNameGitDirty;
 extern NSString *const iTermGitStateVariableNameGitAdds;
 extern NSString *const iTermGitStateVariableNameGitDeletes;
 
+typedef NS_ENUM(NSInteger, iTermGitRepoState) {
+    iTermGitRepoStateNone,
+    iTermGitRepoStateMerge,
+    iTermGitRepoStateRevert,
+    iTermGitRepoStateCherrypick,
+    iTermGitRepoStateBisect,
+    iTermGitRepoStateRebase,
+    iTermGitRepoStateApply,
+};
+
 @interface iTermGitState : NSObject<NSCopying, NSSecureCoding>
 @property (nonatomic, copy) NSString *directory;
 @property (nonatomic, copy) NSString *xcode;
@@ -28,7 +38,7 @@ extern NSString *const iTermGitStateVariableNameGitDeletes;
 @property (nonatomic) NSInteger adds;
 @property (nonatomic) NSInteger deletes;
 @property (nonatomic) NSTimeInterval creationTime;
-
+@property (nonatomic) iTermGitRepoState repoState;
 @end
 
 

@@ -319,6 +319,37 @@ static int GitForEachCallback(git_reference *ref, void *data) {
         state.deletes = deletions;
     }
 
+    // Current operation
+    const git_repository_state_t repoState = git_repository_state(client.repo);
+    switch (repoState) {
+        case GIT_REPOSITORY_STATE_NONE:
+            state.repoState = iTermGitRepoStateNone;
+            break;
+        case GIT_REPOSITORY_STATE_MERGE:
+            state.repoState = iTermGitRepoStateMerge;
+            break;
+        case GIT_REPOSITORY_STATE_REVERT:
+        case GIT_REPOSITORY_STATE_REVERT_SEQUENCE:
+            state.repoState = iTermGitRepoStateRevert;
+            break;
+        case GIT_REPOSITORY_STATE_CHERRYPICK:
+        case GIT_REPOSITORY_STATE_CHERRYPICK_SEQUENCE:
+            state.repoState = iTermGitRepoStateCherrypick;
+            break;
+        case GIT_REPOSITORY_STATE_BISECT:
+            state.repoState = iTermGitRepoStateBisect;
+            break;
+        case GIT_REPOSITORY_STATE_REBASE:
+        case GIT_REPOSITORY_STATE_REBASE_INTERACTIVE:
+        case GIT_REPOSITORY_STATE_REBASE_MERGE:
+            state.repoState = iTermGitRepoStateRebase;
+            break;
+        case GIT_REPOSITORY_STATE_APPLY_MAILBOX:
+        case GIT_REPOSITORY_STATE_APPLY_MAILBOX_OR_REBASE:
+            state.repoState = iTermGitRepoStateApply;
+            break;
+    }
+
     return state;
 }
 
