@@ -6239,10 +6239,18 @@ typedef struct {
 }
 
 - (void)sessionDoubleClickOnTitleBar:(PTYSession *)session {
-    if (self.isMaximized) {
+    [self toggleMaximizeSession:session];
+}
+
+- (void)toggleMaximizeSession:(PTYSession *)session {
+    if (session.isTmuxClient) {
+        [session toggleTmuxZoom];
+    } else if ([self hasMaximizedPane]) {
         [self unmaximize];
     } else {
-        [self setActiveSession:session];
+        if (self.activeSession != session) {
+            [self setActiveSession:session];
+        }
         [self maximize];
     }
 }

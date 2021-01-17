@@ -206,7 +206,9 @@ extern NSString *const PTYTabVariableTitleOverride;
 - (NSDictionary *)arrangementWithNewGUID;
 
 - (void)notifyWindowChanged;
+// NOTE: Do not call this directly. It doesn't handle tmux correctly.
 - (void)maximize;
+- (void)toggleMaximizeSession:(PTYSession *)session;
 // Does any session in this tab require prompt on close?
 - (iTermPromptOnCloseReason *)promptOnCloseReason;
 
