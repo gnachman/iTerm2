@@ -361,14 +361,18 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
                                                                  @"Context menu")
                      action:@selector(copy:) keyEquivalent:@""];
 
-    iTermTextExtractor *extractor = [self.delegate contextMenuTextExtractor:self];
-    NSString *urlID;
-    NSURL *url = [extractor urlOfHypertextLinkAt:coord urlId:&urlID];
-    if (url) {
-        NSMenuItem *item = [theMenu addItemWithTitle:@"Copy Link Address" action:@selector(copyLinkAddress:) keyEquivalent:@""];
-        item.target = self;
-        item.representedObject = url;
+    // Don't attempt to extract a URL from invalid coordinates (-1,-1) if opened from the session titlebar
+    if (coord.x >= 0 && coord.y >= 0) {
+        iTermTextExtractor *extractor = [self.delegate contextMenuTextExtractor:self];
+        NSString *urlID;
+        NSURL *url = [extractor urlOfHypertextLinkAt:coord urlId:&urlID];
+        if (url) {
+            NSMenuItem *item = [theMenu addItemWithTitle:@"Copy Link Address" action:@selector(copyLinkAddress:) keyEquivalent:@""];
+            item.target = self;
+            item.representedObject = url;
+        }
     }
+    
     [theMenu addItemWithTitle:NSLocalizedStringFromTableInBundle(@"Paste",
                                                                  @"iTerm",
                                                                  [NSBundle bundleForClass: [self class]],
