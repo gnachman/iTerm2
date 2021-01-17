@@ -10104,11 +10104,18 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 }
 
 - (BOOL)iTermTabBarShouldHideBacking {
-    if (@available(macOS 10.14, *)) {
-        iTermPreferencesTabStyle preferredStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
-        return (preferredStyle != TAB_STYLE_MINIMAL);
+    iTermPreferencesTabStyle preferredStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
+    if (preferredStyle != TAB_STYLE_MINIMAL) {
+        return YES;
     }
-    return YES;
+    if ([iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_TopTab &&
+        self.anyFullScreen &&
+        ![self tabBarShouldBeVisible] &&
+        !_contentView.tabBarControlOnLoan) {
+        // Code path taken big Big Sur workaround for issue #9199
+        return YES;
+    }
+    return NO;
 }
 
 - (PTYSession *)sessionForDirectoryRecycling {

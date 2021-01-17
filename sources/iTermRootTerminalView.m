@@ -1383,9 +1383,6 @@ NS_CLASS_AVAILABLE_MAC(10_14)
 
 - (NSRect)tabViewFrameByShrinkingForFullScreenTabBar:(NSRect)frame
                                               window:(NSWindow *)thisWindow {
-    if (@available(macOS 10.14, *)) {} else {
-        return frame;
-    }
     if (!thisWindow) {
         return frame;
     }
@@ -1403,6 +1400,10 @@ NS_CLASS_AVAILABLE_MAC(10_14)
         case PSMTab_TopTab:
             if (self.tabBarControl.flashing) {
                 // Overlaps content
+                return frame;
+            }
+            if (!_tabBarControlOnLoan && !self.tabBarControl.flashing) {
+                // Already accounted for this before calling this function.
                 return frame;
             }
             break;
@@ -1750,7 +1751,13 @@ NS_CLASS_AVAILABLE_MAC(10_14)
     }
     if ([_delegate lionFullScreen] || [_delegate enteringLionFullscreen]) {
         if (isTop) {
-            return [iTermPreferences boolForKey:kPreferenceKeyFlashTabBarInFullscreen];
+            if ([iTermPreferences boolForKey:kPreferenceKeyFlashTabBarInFullscreen]) {
+                return YES;
+            }
+            if (![self tabBarShouldBeVisible] && !_tabBarControlOnLoan) {
+                // Code path taken big Big Sur workaround for issue #9199
+                return YES;
+            }
         } else {
             return NO;
         }
