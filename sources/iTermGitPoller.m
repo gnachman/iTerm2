@@ -95,7 +95,7 @@ NS_ASSUME_NONNULL_BEGIN
     _lastPollTime = [NSDate date];
     __weak __typeof(self) weakSelf = self;
     DLog(@"%@: POLL: request path %@", self, self.currentDirectory);
-    iTermGitPollWorker *worker = [iTermGitPollWorker instanceForPath:self.currentDirectory];
+    iTermGitPollWorker *worker = [iTermGitPollWorker sharedInstance];
     DLog(@"%@: Using worker %@", self, worker);
     [worker requestPath:self.currentDirectory completion:^(iTermGitState *state) {
         [weakSelf didPollWithUpdatedState:state];
@@ -124,7 +124,7 @@ NS_ASSUME_NONNULL_BEGIN
         DLog(@"%@: Attempt to invalidate cache", self);
         [_rateLimit performRateLimitedBlock:^{
             DLog(@"%@: Invalidate cache", self);
-            iTermGitPollWorker *worker = [iTermGitPollWorker instanceForPath:currentDirectory];
+            iTermGitPollWorker *worker = [iTermGitPollWorker sharedInstance];
             DLog(@"%@: Worker for %@ is %@", self, currentDirectory, worker);
             [worker invalidateCacheForPath:currentDirectory];
         }];

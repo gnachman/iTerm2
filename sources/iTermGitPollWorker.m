@@ -27,7 +27,7 @@ typedef void (^iTermGitPollWorkerCompletionBlock)(iTermGitState * _Nullable);
     NSMutableDictionary<NSString *, NSMutableArray<iTermGitPollWorkerCompletionBlock> *> *_pending;
 }
 
-+ (instancetype)instanceForPath:(NSString *)path {
++ (instancetype)sharedInstance {
     static id instance;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
@@ -43,6 +43,10 @@ typedef void (^iTermGitPollWorkerCompletionBlock)(iTermGitState * _Nullable);
         _pending = [NSMutableDictionary dictionary];
     }
     return self;
+}
+
+- (NSString *)cachedBranchForPath:(NSString *)path {
+    return _cache[path].branch;
 }
 
 - (void)requestPath:(NSString *)path completion:(void (^)(iTermGitState * _Nullable))completion {

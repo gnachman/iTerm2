@@ -5,6 +5,7 @@
 #import "iTermApplicationDelegate.h"
 #import "iTermColorPresets.h"
 #import "iTermController.h"
+#import "iTermGitPollWorker.h"
 #import "iTermLogoGenerator.h"
 #import "iTermMinimumSubsequenceMatcher.h"
 #import "iTermOpenQuicklyCommands.h"
@@ -26,6 +27,7 @@
 // uses the same feature for all items.
 static const double kSessionBadgeMultiplier = 3;
 static const double kSessionNameMultiplier = 2;
+static const double kGitBranchMultiplier = 1.5;
 static const double kHostnameMultiplier = 1.2;
 static const double kProfileNameMultiplier = 1.01;
 static const double kUserDefinedVariableMultiplier = 1;
@@ -698,6 +700,13 @@ static const double kProfileNameMultiplierForScriptItem = 0.09;
                             features:features
                                limit:maxScorePerFeature];
 
+    score += [self scoreUsingMatcher:matcher
+                           documents:[self gitBranchesInSession:session]
+                          multiplier:kGitBranchMultiplier
+                                name:@"Git Branch"
+                            features:features
+                               limit:maxScorePerFeature];
+
     NSDictionary<NSString *, NSString *> *userVariablesDict = [[session.variables discouragedValueForVariableName:@"user"] stringValuedDictionary];
     for (NSString *name in userVariablesDict) {
         score += [self scoreUsingMatcher:matcher
@@ -855,6 +864,18 @@ static const double kProfileNameMultiplierForScriptItem = 0.09;
         [names addObject:host.username];
     }
     return names;
+}
+
+- (NSArray<NSString *> *)gitBranchesInSession:(PTYSession *)session {
+    NSString *pwd = session.directories.lastObject;
+    if (!pwd) {
+        return @[];
+    }
+    NSString *branch = [[iTermGitPollWorker sharedInstance] cachedBranchForPath:pwd];
+    if (!branch) {
+        return @[];
+    }
+    return @[branch];
 }
 
 @end
