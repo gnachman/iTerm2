@@ -43,15 +43,16 @@
 }
 
 - (NSColor *)topLineColorSelected:(BOOL)selected {
-    if (@available(macOS 10.14, *)) {
-        const BOOL keyMainAndActive = self.windowIsMainAndAppIsActive;
-        if (keyMainAndActive) {
-            return [NSColor colorWithWhite:1 alpha:0.20];
-        } else {
-            return [NSColor colorWithWhite:1 alpha:0.16];
+    if (@available(macOS 10.16, *)) {
+        if (!selected) {
+            return [NSColor blackColor];
         }
+    }
+    const BOOL keyMainAndActive = self.windowIsMainAndAppIsActive;
+    if (keyMainAndActive) {
+        return [NSColor colorWithWhite:1 alpha:0.20];
     } else {
-        return [NSColor colorWithCalibratedWhite:0.10 alpha:1.00];
+        return [NSColor colorWithWhite:1 alpha:0.16];
     }
 }
 
@@ -71,11 +72,15 @@
 }
 
 - (NSColor *)verticalLineColorSelected:(BOOL)selected {
-    if (@available(macOS 10.14, *)) {
-        return [self topLineColorSelected:selected];
-    } else {
-        return [NSColor colorWithCalibratedWhite:0.08 alpha:1.00];
+    if (@available(macOS 10.16, *)) {
+        const BOOL keyMainAndActive = self.windowIsMainAndAppIsActive;
+        if (keyMainAndActive) {
+            return [NSColor colorWithWhite:1 alpha:0.20];
+        } else {
+            return [NSColor colorWithWhite:1 alpha:0.16];
+        }
     }
+    return [self topLineColorSelected:selected];
 }
 
 - (NSColor *)backgroundColorSelected:(BOOL)selected highlightAmount:(CGFloat)highlightAmount {
@@ -91,7 +96,7 @@
     if (selected) {
         // clear
     } else {
-        colors[3] = 0.1 + 0.086 * highlightAmount;
+        colors[3] = 0.45 + 0.086 * highlightAmount;
     }
 
     return [NSColor colorWithSRGBRed:colors[0]
@@ -185,6 +190,23 @@
         insets.right = 1;
     }
     return insets;
+}
+
+- (void)drawTabBar:(PSMTabBarControl *)bar
+            inRect:(NSRect)rect
+          clipRect:(NSRect)clipRect
+        horizontal:(BOOL)horizontal
+      withOverflow:(BOOL)withOverflow {
+    [super drawTabBar:bar inRect:rect clipRect:clipRect horizontal:horizontal withOverflow:withOverflow];
+    if (@available(macOS 10.16, *)) {
+        // Draw shadow at bottom of tabbar.
+        NSGradient *gradient =
+        [[NSGradient alloc] initWithStartingColor:[NSColor colorWithWhite:0 alpha:1]
+                                      endingColor:[NSColor colorWithWhite:0 alpha:0.75]];
+        const CGFloat height = 1;
+        [gradient drawInRect:NSMakeRect(0, bar.bounds.size.height - height, bar.bounds.size.width, height)
+                       angle:90];
+    }
 }
 
 @end
