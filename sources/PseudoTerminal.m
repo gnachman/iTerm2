@@ -7448,15 +7448,8 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     return [[self currentTab] canSplitVertically:isVertical withSize:newSessionSize];
 }
 
-- (void)toggleMaximizeActivePane
-{
-    if (self.currentTab.activeSession.isTmuxClient) {
-        [self.currentTab.activeSession toggleTmuxZoom];
-    } else if ([[self currentTab] hasMaximizedPane]) {
-        [[self currentTab] unmaximize];
-    } else {
-        [[self currentTab] maximize];
-    }
+- (void)toggleMaximizeActivePane {
+    [self.currentTab toggleMaximizeSession:self.currentTab.activeSession];
 }
 
 - (void)newWindowWithBookmarkGuid:(NSString*)guid
