@@ -19,6 +19,11 @@
               withBlock:(id)fakeSelectorBlock
                forBlock:(dispatch_block_t)block;
 
+// Returns the original IMP
++ (IMP)permanentlySwizzleSelector:(SEL)selector
+                        fromClass:(Class)fromClass
+                        withBlock:(id)replacementBlock;
+
 @end
 
 // Before using -[NSObject swizzleInstanceMethodSelector:withBlock:] you must first create a context

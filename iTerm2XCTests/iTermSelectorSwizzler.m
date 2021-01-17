@@ -25,6 +25,23 @@ static NSString *const iTermSelectorSwizzlerContexts = @"iTermSelectorSwizzlerCo
     method_setImplementation(originalMethod, originalMethodImplementation);
 }
 
++ (IMP)permanentlySwizzleSelector:(SEL)selector
+                        fromClass:(Class)fromClass
+                        withBlock:(id)replacementBlock {
+    Method originalMethod = class_getClassMethod(fromClass, selector)
+        ?: class_getInstanceMethod(fromClass, selector);
+    if (!originalMethod) {
+        return nil;
+    }
+    IMP originalMethodImplementation = method_getImplementation(originalMethod);
+    if (!originalMethodImplementation) {
+        return nil;
+    }
+    IMP fakeMethodImplementation = imp_implementationWithBlock(replacementBlock);
+    method_setImplementation(originalMethod, fakeMethodImplementation);
+    return originalMethodImplementation;
+}
+
 @end
 
 @interface iTermSwizzledSelector : NSObject

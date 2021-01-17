@@ -206,6 +206,12 @@ typedef NS_OPTIONS(NSUInteger, iTermSuppressMakeCurrentTerminal) {
     iTermSuppressMakeCurrentTerminalMiniaturized = 1 << 1
 };
 
+typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
+    iTermShouldHaveTitleSeparatorUninitialized = 0,
+    iTermShouldHaveTitleSeparatorYes = 1,
+    iTermShouldHaveTitleSeparatorNo = 2
+};
+
 @interface PseudoTerminal () <
     iTermBroadcastInputHelperDelegate,
     iTermGraphCodable,
@@ -402,6 +408,11 @@ typedef NS_OPTIONS(NSUInteger, iTermSuppressMakeCurrentTerminal) {
     // adds and removes tracking rects for each tab, which its itself slow. This is an optimization
     // to only update object counts once when creating gobs of tabs at once.
     BOOL _needsUpdateTabObjectCounts;
+
+    // A disgusting hack. This is used to twiddle the titlebar separator style to force
+    // the private method _updateDividerLayoutForController:animated: to be called so that we can
+    // hide the divider between the title bar and its accessory view controller.
+    iTermShouldHaveTitleSeparator _previousTerminalWindowShouldHaveTitlebarSeparator;
 }
 
 @synthesize scope = _scope;
@@ -1594,6 +1605,27 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (BOOL)terminalWindowUseMinimalStyle {
     return self.shouldUseMinimalStyle;
+}
+
+- (BOOL)terminalWindowShouldHaveTitlebarSeparator {
+    if (togglingLionFullScreen_ || [self lionFullScreen]) {
+        return YES;
+    }
+    if (_contentView.tabBarControlOnLoan) {
+        return NO;
+    }
+    if (!_contentView.tabBarShouldBeVisible) {
+        return YES;
+    }
+    switch ([iTermPreferences intForKey:kPreferenceKeyTabPosition]) {
+        case PSMTab_TopTab:
+            return NO;
+        case PSMTab_LeftTab:
+        case PSMTab_BottomTab:
+            return YES;
+    }
+    // Shouldn't happen
+    return YES;
 }
 
 - (PTYWindowTitleBarFlavor)ptyWindowTitleBarFlavor {
@@ -4835,8 +4867,10 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)windowDidEndLiveResize:(NSNotification *)notification {
     NSScreen *screen = self.window.screen;
-    if (@available(macOS 10.14, *)) {
-        [_contentView setShowsWindowSize:NO];
+    [_contentView setShowsWindowSize:NO];
+    if (@available(macOS 10.16, *)) {
+        // Zoom/unzoom leaves wrong titlebar separator.
+        [self forceUpdateTitlebarSeparator];
     }
 
     // Canonicalize the frame so that centered windows stay centered, edge-attached windows stay edge
@@ -8822,6 +8856,24 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
         return YES;
     }
     return NO;
+}
+
+- (void)rootTerminalViewWillLayoutSubviews {
+    if (@available(macOS 10.16, *)) {
+        const iTermShouldHaveTitleSeparator shouldHave =
+        [self terminalWindowShouldHaveTitlebarSeparator] ?
+            iTermShouldHaveTitleSeparatorYes : iTermShouldHaveTitleSeparatorNo;
+        if (shouldHave != _previousTerminalWindowShouldHaveTitlebarSeparator) {
+            [self forceUpdateTitlebarSeparator];
+            _previousTerminalWindowShouldHaveTitlebarSeparator = shouldHave;
+        }
+    }
+}
+
+- (void)forceUpdateTitlebarSeparator NS_AVAILABLE_MAC(10_16) {
+    NSTitlebarSeparatorStyle saved = self.window.titlebarSeparatorStyle;
+    self.window.titlebarSeparatorStyle = 1 - saved;
+    self.window.titlebarSeparatorStyle = saved;
 }
 
 - (VT100GridSize)rootTerminalViewCurrentSessionSize {

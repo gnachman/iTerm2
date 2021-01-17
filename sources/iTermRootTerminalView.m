@@ -1529,6 +1529,8 @@ NS_CLASS_AVAILABLE_MAC(10_14)
 
 - (void)layoutSubviews {
     DLog(@"layoutSubviews");
+    [self.delegate rootTerminalViewWillLayoutSubviews];
+
     if (@available(macOS 10.15, *)) { } else {
         _workaroundView.frame = NSMakeRect(0, self.bounds.size.height - 1, 1, 1);
     }

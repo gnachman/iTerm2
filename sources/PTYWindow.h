@@ -47,6 +47,7 @@ extern const NSTimeInterval iTermWindowTitleChangeMinimumInterval;
 - (BOOL)anyFullScreen;
 - (void)windowWillShowInitial;
 - (void)toggleTraditionalFullScreenMode;
+- (BOOL)terminalWindowShouldHaveTitlebarSeparator NS_AVAILABLE_MAC(10_16);
 
 // Returns the tab a session belongs to.
 - (PTYTab *)tabForSession:(PTYSession *)session;
@@ -101,6 +102,7 @@ typedef NS_ENUM(NSUInteger, PTYWindowTitleBarFlavor) {
 // Returns the approximate fraction of this window that is occluded by other windows in this app.
 - (double)approximateFractionOccluded;
 - (void)it_setNeedsInvalidateShadow;
+- (void)setUpdatingDividerLayer:(BOOL)value;
 
 @end
 

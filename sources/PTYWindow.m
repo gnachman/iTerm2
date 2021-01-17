@@ -27,6 +27,7 @@
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermApplicationDelegate.h"
 #import "iTermController.h"
+#import "iTermSelectorSwizzler.h"
 #import "iTermWindowOcclusionChangeMonitor.h"
 #import "iTermPreferences.h"
 #import "iTermSessionLauncher.h"

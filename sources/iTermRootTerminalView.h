@@ -54,6 +54,7 @@
 - (BOOL)rootTerminalViewShouldHideTabBarBackingWhenTabBarIsHidden;
 - (VT100GridSize)rootTerminalViewCurrentSessionSize;
 - (NSString *)rootTerminalViewWindowSizeViewDetailString;
+- (void)rootTerminalViewWillLayoutSubviews;
 @end
 
 extern const NSInteger iTermRootTerminalViewWindowNumberLabelMargin;

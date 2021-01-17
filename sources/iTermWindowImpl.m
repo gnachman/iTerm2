@@ -5,6 +5,12 @@
 #endif
 
 @class iTermThemeFrame;
+@class NSTitlebarContainerView;
+
+@interface NSObject(PrivateNSTitlebarContainerView)
+- (void)_updateDividerLayerForController:(id)controller animated:(BOOL)animated;
+@end
+
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -35,6 +41,7 @@ NS_ASSUME_NONNULL_BEGIN
 #if BETA
     NSString *_lastAlphaChangeStack;
 #endif
+    BOOL _updatingDividerLayer;
 }
 
 @synthesize it_openingSheet;
@@ -54,6 +61,18 @@ NS_ASSUME_NONNULL_BEGIN
     if (self) {
         DLog(@"Invalidate cached occlusion: %@ %p", NSStringFromSelector(_cmd), self);
         [[iTermWindowOcclusionChangeMonitor sharedInstance] invalidateCachedOcclusion];
+        [self preventTitlebarDivider];
+    }
+    return self;
+}
+
+- (instancetype)initWithContentRect:(NSRect)contentRect styleMask:(NSWindowStyleMask)style backing:(NSBackingStoreType)backingStoreType defer:(BOOL)flag {
+    self = [super initWithContentRect:contentRect
+                            styleMask:style
+                              backing:backingStoreType
+                                defer:flag];
+    if (self) {
+        [self preventTitlebarDivider];
     }
     return self;
 }
@@ -72,6 +91,49 @@ ITERM_WEAKLY_REFERENCEABLE
 #endif
     [super dealloc];
 
+}
+
+- (void)preventTitlebarDivider {
+    if (@available(macOS 10.16, *)) {
+        static dispatch_once_t onceToken;
+        dispatch_once(&onceToken, ^{
+            static IMP originalImp;
+            originalImp =
+            [iTermSelectorSwizzler permanentlySwizzleSelector:@selector(_updateDividerLayerForController:animated:)
+                                                    fromClass:NSClassFromString(@"NSTitlebarContainerView")
+                                                    withBlock:^(id receiver, id controller, BOOL animated) {
+                void (*f)(id, SEL, id, BOOL) = (void (*)(id, SEL, id, BOOL))originalImp;
+                if (![controller respondsToSelector:@selector(window)]) {
+                    f(receiver, @selector(_updateDividerLayerForController:animated:), controller, animated);
+                    return;
+                }
+                NSWindow<PTYWindow> *window = (NSWindow<PTYWindow> *)[controller window];
+                if (![window conformsToProtocol:@protocol(PTYWindow)]) {
+                    f(receiver, @selector(_updateDividerLayerForController:animated:), controller, animated);
+                    return;
+                }
+
+                [window setUpdatingDividerLayer:YES];
+                f(receiver, @selector(_updateDividerLayerForController:animated:), controller, animated);
+                [window setUpdatingDividerLayer:NO];
+            }];
+        });
+    }
+}
+
+- (NSTitlebarSeparatorStyle)titlebarSeparatorStyle {
+    if (_updatingDividerLayer) {
+        id<PTYWindow> ptywindow = (id<PTYWindow>)self;
+        if ([ptywindow.ptyDelegate terminalWindowShouldHaveTitlebarSeparator]) {
+            return NSTitlebarSeparatorStyleShadow;
+        }
+        return NSTitlebarSeparatorStyleNone;
+    }
+    return [super titlebarSeparatorStyle];
+}
+
+- (void)setUpdatingDividerLayer:(BOOL)value {
+    _updatingDividerLayer = value;
 }
 
 - (void)setDocumentEdited:(BOOL)documentEdited {

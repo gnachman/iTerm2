@@ -2346,6 +2346,7 @@
 		A66A883324DFCCC30043728B /* graphic_elixir@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A66A882124DFCCC30043728B /* graphic_elixir@2x.png */; };
 		A66BFADC1CD072DB00DA2346 /* iTermThroughputEstimator.h in Headers */ = {isa = PBXBuildFile; fileRef = A66BFADA1CD072DB00DA2346 /* iTermThroughputEstimator.h */; };
 		A66BFADD1CD072DB00DA2346 /* iTermThroughputEstimator.m in Sources */ = {isa = PBXBuildFile; fileRef = A66BFADB1CD072DB00DA2346 /* iTermThroughputEstimator.m */; };
+		A66C2E7D25B42BEA00C19523 /* iTermSelectorSwizzler.m in Sources */ = {isa = PBXBuildFile; fileRef = C6675EBB1C4FE96B0041173B /* iTermSelectorSwizzler.m */; };
 		A66DABFF20867749006391A3 /* iTermTextViewAccessibilityHelper.m in Sources */ = {isa = PBXBuildFile; fileRef = A60BD9121B3913F6007D7F11 /* iTermTextViewAccessibilityHelper.m */; };
 		A66DB80E1C8E182B00233E88 /* Info.png in Resources */ = {isa = PBXBuildFile; fileRef = A66DB80C1C8E182B00233E88 /* Info.png */; };
 		A66DB80F1C8E182B00233E88 /* Info@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A66DB80D1C8E182B00233E88 /* Info@2x.png */; };
@@ -14644,6 +14645,7 @@
 				A6C763031B45C52B00E3C992 /* VT100WorkingDirectory.m in Sources */,
 				A62C3B281BCC24AB00B5629D /* iTermHostRecordMO+CoreDataProperties.m in Sources */,
 				A6C763461B45C52B00E3C992 /* iTermProgressIndicator.m in Sources */,
+				A66C2E7D25B42BEA00C19523 /* iTermSelectorSwizzler.m in Sources */,
 				A6C763471B45C52B00E3C992 /* iTermSearchField.m in Sources */,
 				A6C763241B45C52B00E3C992 /* MovingAverage.m in Sources */,
 				A6C763601B45C52B00E3C992 /* PopupEntry.m in Sources */,
