@@ -148,6 +148,10 @@ static void FreeChild(int i) {
     FDLog(LOG_DEBUG, "Free child %d", i);
     iTermMultiServerChild *child = &children[i];
     free((char *)child->tty);
+    if (child->masterFd >= 0) {
+        close(child->masterFd);
+        child->masterFd = -1;
+    }
     iTermMultiServerClientOriginatedMessageFree(&child->messageWithLaunchRequest);
     child->tty = NULL;
 }
@@ -157,11 +161,11 @@ static void RemoveChild(int i) {
     assert(i < numberOfChildren);
 
     FDLog(LOG_DEBUG, "Remove child %d", i);
+    FreeChild(i);
     if (numberOfChildren == 1) {
         free(children);
         children = NULL;
     } else {
-        FreeChild(i);
         const int afterCount = numberOfChildren - i - 1;
         memmove(children + i,
                 children + i + 1,
