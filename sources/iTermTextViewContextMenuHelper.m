@@ -327,7 +327,8 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
 
     // Custom actions
     if ([selection hasSelection] &&
-        [selection length] < kMaxSelectedTextLengthForCustomActions) {
+        [selection length] < kMaxSelectedTextLengthForCustomActions &&
+        coord.y >= 0) {
         NSString *selectedText = [self.delegate contextMenuSelectedText:self capped:1024];
         if ([self addCustomActionsToMenu:theMenu matchingText:selectedText line:coord.y]) {
             [theMenu addItem:[NSMenuItem separatorItem]];
