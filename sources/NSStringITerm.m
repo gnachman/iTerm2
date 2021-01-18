@@ -31,7 +31,6 @@
 #import "iTermOrderedDictionary.h"
 #import "iTermSwiftyStringParser.h"
 #import "iTermTuple.h"
-#import "iTermVariableScope.h"
 #import "NSArray+iTerm.h"
 #import "NSData+iTerm.h"
 #import "NSLocale+iTerm.h"

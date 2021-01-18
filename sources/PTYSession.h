@@ -1,6 +1,5 @@
 // Implements the model class for a terminal session.
 
-#import "Api.pbobjc.h"
 #import "DVR.h"
 #import "iTermAPIHelper.h"
 #import "iTermEchoProbe.h"
@@ -9,21 +8,17 @@
 #import "iTermFileDescriptorClient.h"
 #import "iTermMetalUnavailableReason.h"
 #import "iTermWeakReference.h"
-#import "ITAddressBookMgr.h"
 #import "iTermPopupWindowController.h"
 #import "iTermSessionNameController.h"
 
 #import "GPBEnumArray+iTerm.h"
-#import "LineBuffer.h"
 #import "PTYTask.h"
 #import "PTYTextView.h"
-#import "ProfileModel.h"
 #import "TextViewWrapper.h"
 #import "TmuxController.h"
 #import "TmuxGateway.h"
 #import "VT100Screen.h"
 #import "VT100ScreenMark.h"
-#import "WindowControllerInterface.h"
 #import <AppKit/AppKit.h>
 #import <Foundation/Foundation.h>
 #include <sys/time.h>

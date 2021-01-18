@@ -31,7 +31,6 @@
 #import "iTermScrollAccumulator.h"
 #import "NSEvent+iTerm.h"
 #import "NSView+iTerm.h"
-#import "PreferencePanel.h"
 #import "PTYScrollView.h"
 #import "PTYTextView.h"
 

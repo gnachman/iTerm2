@@ -26,7 +26,6 @@
  */
 
 #import <Cocoa/Cocoa.h>
-#import "iTermFindDriver.h"
 #import "iTermMetalDriver.h"
 #import "PTYScrollView.h"
 #import "PTYSession.h"
