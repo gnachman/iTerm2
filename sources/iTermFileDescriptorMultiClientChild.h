@@ -35,7 +35,6 @@ NS_ASSUME_NONNULL_BEGIN
 - (instancetype)init NS_UNAVAILABLE;
 
 - (void)addWaitCallback:(iTermCallback<id, iTermResult<NSNumber *> *> *)callback;
-- (void)invokeWaitCallback:(iTermResult<NSNumber *> *)status;
 - (void)invokeAllWaitCallbacks:(iTermResult<NSNumber *> *)status;
 
 // Must be called on child's thread.

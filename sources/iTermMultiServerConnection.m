@@ -411,24 +411,25 @@
 - (void)fileDescriptorMultiClient:(iTermFileDescriptorMultiClient *)client
                 childDidTerminate:(iTermFileDescriptorMultiClientChild *)child {
     const pid_t pid = child.pid;
+    iTermCallback *callback = [iTermThread.main newCallbackWithBlock:^(iTermMainThreadState *_Nonnull state,
+                                                                       iTermResult<NSNumber *> *result) {
+             [result handleObject:
+              ^(NSNumber * _Nonnull statusNumber) {
+                 DLog(@"Child with pid %d terminated with status %d", pid, statusNumber.intValue);
+
+                 // Post a notification that causes the task to be removed from the task notifier. Note that
+                 // this is usually unnecessary because the file descriptor will return 0 before we finish
+                 // round-tripping on Wait. This is a backstop in case of the unexpected.
+                 [[iTermMultiServerChildDidTerminateNotification notificationWithProcessID:child.pid
+                                                                         terminationStatus:child.terminationStatus] post];
+             } error:
+              ^(NSError * _Nonnull error) {
+                 DLog(@"Failed to wait on child with pid %d: %@", pid, error);
+             }];
+    }];
     [client waitForChild:child
       removePreemptively:NO
-                callback:[iTermThread.main newCallbackWithBlock:^(iTermMainThreadState *_Nonnull state,
-                                                                  iTermResult<NSNumber *> *result) {
-        [result handleObject:
-         ^(NSNumber * _Nonnull statusNumber) {
-            DLog(@"Child with pid %d terminated with status %d", pid, statusNumber.intValue);
-
-            // Post a notification that causes the task to be removed from the task notifier. Note that
-            // this is usually unnecessary because the file descriptor will return 0 before we finish
-            // round-tripping on Wait. This is a backstop in case of the unexpected.
-            [[iTermMultiServerChildDidTerminateNotification notificationWithProcessID:child.pid
-                                                                    terminationStatus:child.terminationStatus] post];
-        } error:
-         ^(NSError * _Nonnull error) {
-            DLog(@"Failed to wait on child with pid %d: %@", pid, error);
-        }];
-    }]];
+                callback:callback];
 }
 
 @end

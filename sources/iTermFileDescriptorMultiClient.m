@@ -627,12 +627,14 @@ static unsigned long long MakeUniqueID(void) {
     [child addWaitCallback:waitCallback];
 
     __weak __typeof(self) weakSelf = self;
-    [self send:&message state:state callback:[_thread newCallbackWithBlock:^(iTermFileDescriptorMultiClientState *state,
+    iTermCallback<id, NSNumber *> *sendCallback =
+    [_thread newCallbackWithBlock:^(iTermFileDescriptorMultiClientState *state,
                                                                              NSNumber *value) {
         [weakSelf didWriteWaitRequestWithStatus:value.boolValue
                                           child:child
                                           state:state];
-    }]];
+    }];
+    [self send:&message state:state callback:sendCallback];
 }
 
 - (void)didWriteWaitRequestWithStatus:(BOOL)sendOK
@@ -667,7 +669,7 @@ static unsigned long long MakeUniqueID(void) {
     } else {
         result = [iTermResult withObject:@(wait.status)];
     }
-    [child invokeWaitCallback:result];
+    [child invokeAllWaitCallbacks:result];
 }
 
 #pragma mark - Termination

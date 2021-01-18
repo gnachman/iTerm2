@@ -400,6 +400,9 @@ typedef struct {
             results |= iTermJobManagerAttachResultsRegistered;
         }
     }
+    if (result.brokenPipe) {
+        [task brokenPipe];
+    }
     return results;
 }
 
@@ -559,6 +562,7 @@ typedef struct {
               removePreemptively:YES
                         callback:[self.thread newCallbackWithBlock:^(iTermMultiServerJobManagerState *state,
                                                                      iTermResult<NSNumber *> *result) {
+            // NOTE: killWithMode:state: must be idempotent. Be careful here.
             DLog(@"Preemptive wait for %d finished with result %@", pid, result);
         }]];
     }
