@@ -59,6 +59,13 @@
     return self;
 }
 
+- (void)dealloc {
+    if (_fd >= 0) {
+        close(_fd);
+        _fd = -1;
+    }
+}
+
 - (NSString *)description {
     return [NSString stringWithFormat:@"<%@: %p pid=%@ fd=%@>", NSStringFromClass(self.class),
             self, @(self.pid), @(self.fd)];
@@ -122,18 +129,6 @@
     [_thread dispatchRecursiveSync:^(id _Nonnull state) {
         [_callbacks addObject:callback];
     }];
-}
-
-- (void)invokeWaitCallback:(iTermResult<NSNumber *> *)status {
-    __block iTermCallback<id, iTermResult<NSNumber *> *> *callback;
-    [_thread dispatchRecursiveSync:^(id _Nonnull state) {
-        callback = _callbacks.firstObject;
-        if (!callback) {
-            return;
-        }
-        [_callbacks removeObjectAtIndex:0];
-    }];
-    [callback invokeWithObject:status];
 }
 
 - (void)invokeAllWaitCallbacks:(iTermResult<NSNumber *> *)status {

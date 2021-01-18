@@ -90,6 +90,9 @@ NS_ASSUME_NONNULL_BEGIN
 // Combines a block and an iTermThread to run it on.
 @interface iTermCallback<__contravariant CallerState, __covariant ObjectType>: NSObject
 @property (nonatomic, readonly) iTermThread *thread;
+#if DEBUG
+@property (atomic) BOOL trace;
+#endif
 
 + (instancetype)onThread:(iTermThread *)thread block:(void (^)(CallerState state, ObjectType _Nullable result))block;
 - (void)invokeWithObject:(ObjectType _Nullable)object;

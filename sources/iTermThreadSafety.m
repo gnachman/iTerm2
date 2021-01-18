@@ -337,6 +337,9 @@ NSPointerArray *gThreads;
 }
 
 - (void)invokeWithObject:(id)object {
+#if DEBUG
+    BOOL trace = self.trace;
+#endif
     void (^block)(id, id) = [_block retain];
     [self retain];
 #if CHECK_DOUBLE_INVOKES
@@ -348,6 +351,11 @@ NSPointerArray *gThreads;
                      _invokeStack, stack, _creationStack, _debugInfo);
         _invokeStack = [stack copy];
         [stack release];
+#endif
+#if DEBUG
+        if (trace) {
+            NSLog(@"%@", stack);
+        }
 #endif
         block(state, object);
         [block release];
