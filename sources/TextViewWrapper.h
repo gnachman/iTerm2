@@ -32,5 +32,4 @@
 
 @interface TextViewWrapper : NSView
 @property (nonatomic) BOOL useMetal;
-@property (nonatomic, strong) NSColor *backgroundColor;
 @end

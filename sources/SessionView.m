@@ -333,8 +333,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
             _backgroundColorView.hidden = YES;
             _legacyScrollerBackgroundView.hidden = YES;
         }
-        [self.delegate didSetBackgroundColorViewHidden:_backgroundColorView.hidden
-                                                 color:_backgroundColorView.backgroundColor];
+        [self setNeedsDisplay:YES];
         [CATransaction commit];
         [self updateMinimapAlpha];
     }
@@ -672,11 +671,16 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
         _backgroundColorView.hidden = YES;
         _legacyScrollerBackgroundView.hidden = YES;
     }
-    [self.delegate didSetBackgroundColorViewHidden:_backgroundColorView.hidden
-                                             color:_backgroundColorView.backgroundColor];
+    [self setNeedsDisplay:YES];
     [CATransaction commit];
 }
 
+- (NSColor *)it_backgroundColorOfEnclosingTerminalIfBackgroundColorViewHidden {
+    if (_backgroundColorView.isHidden) {
+        return [_backgroundColorView.backgroundColor colorWithAlphaComponent:[self.delegate sessionViewTransparencyAlpha]];
+    }
+    return nil;
+}
 - (void)tabColorDidChange {
     [_title updateBackgroundColor];
 }

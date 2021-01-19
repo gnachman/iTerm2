@@ -31,6 +31,7 @@
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermPreferences.h"
 #import "NSObject+iTerm.h"
+#import "NSView+iTerm.h"
 #import "PTYTextView.h"
 
 @implementation TextViewWrapper {
@@ -61,11 +62,8 @@
 // For some reason this view just doesn't work with layers when using the legacy renderer. When it
 // has a layer it becomes opaque black, as of macOS 11.1.
 - (void)drawRect:(NSRect)dirtyRect {
-    if (!self.backgroundColor) {
-        [[NSColor clearColor] set];
-    } else {
-        [self.backgroundColor set];
-    }
+    NSColor *color = [self it_backgroundColorOfEnclosingTerminalIfBackgroundColorViewHidden];
+    [color ?: [NSColor clearColor] set];
     NSRectFill(dirtyRect);
 }
 
@@ -109,14 +107,6 @@
         return;
     }
     _useMetal = useMetal;
-    [self setNeedsDisplay:YES];
-}
-
-- (void)setBackgroundColor:(NSColor *)backgroundColor {
-    if ([NSObject object:self.backgroundColor isEqualToObject:backgroundColor]) {
-        return;
-    }
-    _backgroundColor = backgroundColor;
     [self setNeedsDisplay:YES];
 }
 

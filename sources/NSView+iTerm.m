@@ -185,4 +185,8 @@
     return NO;
 }
 
+- (NSColor *)it_backgroundColorOfEnclosingTerminalIfBackgroundColorViewHidden {
+    return [self.superview it_backgroundColorOfEnclosingTerminalIfBackgroundColorViewHidden];
+}
+
 @end

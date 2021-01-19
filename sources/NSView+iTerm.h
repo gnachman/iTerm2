@@ -44,5 +44,6 @@
 - (CGFloat)retinaRoundUp:(CGFloat)value;
 - (CGRect)retinaRoundRect:(CGRect)rect;
 - (BOOL)containsDescendant:(NSView *)possibleDescendant;
+- (NSColor *)it_backgroundColorOfEnclosingTerminalIfBackgroundColorViewHidden;
 
 @end
