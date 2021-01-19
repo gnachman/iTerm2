@@ -333,6 +333,8 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
             _backgroundColorView.hidden = YES;
             _legacyScrollerBackgroundView.hidden = YES;
         }
+        [self.delegate didSetBackgroundColorViewHidden:_backgroundColorView.hidden
+                                                 color:_backgroundColorView.backgroundColor];
         [CATransaction commit];
         [self updateMinimapAlpha];
     }
@@ -670,6 +672,8 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
         _backgroundColorView.hidden = YES;
         _legacyScrollerBackgroundView.hidden = YES;
     }
+    [self.delegate didSetBackgroundColorViewHidden:_backgroundColorView.hidden
+                                             color:_backgroundColorView.backgroundColor];
     [CATransaction commit];
 }
 

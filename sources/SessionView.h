@@ -142,6 +142,9 @@ extern NSString *const SessionViewWasSelectedForInspectionNotification;
 
 - (BOOL)sessionViewUseSeparateStatusBarsPerPane;
 
+- (void)didSetBackgroundColorViewHidden:(BOOL)hidden
+                                  color:(NSColor *)color;
+
 @end
 
 typedef NS_ENUM(NSUInteger, iTermSessionViewFindDriver) {
