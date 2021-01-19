@@ -7,11 +7,6 @@
 @class iTermThemeFrame;
 @class NSTitlebarContainerView;
 
-@interface NSObject(PrivateNSTitlebarContainerView)
-- (void)_updateDividerLayerForController:(id)controller animated:(BOOL)animated;
-@end
-
-
 NS_ASSUME_NONNULL_BEGIN
 
 @implementation THE_CLASS
@@ -121,7 +116,7 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
-- (NSTitlebarSeparatorStyle)titlebarSeparatorStyle {
+- (NSTitlebarSeparatorStyle)titlebarSeparatorStyle NS_AVAILABLE_MAC(10_16) {
     if (_updatingDividerLayer) {
         id<PTYWindow> ptywindow = (id<PTYWindow>)self;
         if ([ptywindow.ptyDelegate terminalWindowShouldHaveTitlebarSeparator]) {

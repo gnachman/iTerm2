@@ -26,6 +26,7 @@
  */
 
 #import <Cocoa/Cocoa.h>
+#import "iTermBackgroundColorView.h"
 #import "iTermFindDriver.h"
 #import "iTermMetalDriver.h"
 #import "PTYScrollView.h"
@@ -34,7 +35,6 @@
 #import "SplitSelectionView.h"
 
 @class iTermAnnouncementViewController;
-@class iTermBackgroundColorView;
 @class iTermFindDriver;
 @class iTermImageWrapper;
 @class iTermIncrementalMinimapView;
@@ -141,9 +141,7 @@ extern NSString *const SessionViewWasSelectedForInspectionNotification;
 - (iTermVariableScope *)sessionViewScope;
 
 - (BOOL)sessionViewUseSeparateStatusBarsPerPane;
-
-- (void)didSetBackgroundColorViewHidden:(BOOL)hidden
-                                  color:(NSColor *)color;
+- (CGFloat)sessionViewTransparencyAlpha;
 
 @end
 

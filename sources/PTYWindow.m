@@ -44,6 +44,10 @@ const NSTimeInterval iTermWindowTitleChangeMinimumInterval = 0.1;
 - (NSView *)titlebarContainerView;
 @end
 
+@interface NSObject(PrivateNSTitlebarContainerView)
+- (void)_updateDividerLayerForController:(id)controller animated:(BOOL)animated;
+@end
+
 // Insane hacks inspired by Chrome.
 // This makes it possible to implement our own window dragging.
 // Absurdly, making the window title invisible does not stop it from being used

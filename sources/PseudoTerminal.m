@@ -8862,11 +8862,12 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
         }
     }
 }
-
 - (void)forceUpdateTitlebarSeparator NS_AVAILABLE_MAC(10_16) {
+#if MAC_OS_X_VERSION_MAX_ALLOWED >= 101600
     NSTitlebarSeparatorStyle saved = self.window.titlebarSeparatorStyle;
     self.window.titlebarSeparatorStyle = 1 - saved;
     self.window.titlebarSeparatorStyle = saved;
+#endif
 }
 
 - (VT100GridSize)rootTerminalViewCurrentSessionSize {

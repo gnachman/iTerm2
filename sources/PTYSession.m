@@ -9141,6 +9141,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [_delegate sessionBackgroundColorDidChange:self];
     [_delegate sessionUpdateMetalAllowed];
     [_statusBarViewController updateColors];
+    [_wrapper setNeedsDisplay:YES];
     [self.view setNeedsDisplay:YES];
 }
 
@@ -12067,6 +12068,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 #pragma mark - iTermSessionViewDelegate
 
+- (CGFloat)sessionViewTransparencyAlpha {
+    return _textview.transparencyAlpha;
+}
+
 - (void)sessionViewMouseEntered:(NSEvent *)event {
     [_textview mouseEntered:event];
 }
@@ -12397,15 +12402,6 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         return NO;
     }
     return YES;
-}
-
-- (void)didSetBackgroundColorViewHidden:(BOOL)hidden
-                                  color:(NSColor *)color {
-    if (hidden) {
-        _wrapper.backgroundColor = color;
-    } else {
-        _wrapper.backgroundColor = nil;
-    }
 }
 
 #pragma mark - iTermCoprocessDelegate
