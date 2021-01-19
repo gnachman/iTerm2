@@ -12399,6 +12399,15 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     return YES;
 }
 
+- (void)didSetBackgroundColorViewHidden:(BOOL)hidden
+                                  color:(NSColor *)color {
+    if (hidden) {
+        _wrapper.backgroundColor = color;
+    } else {
+        _wrapper.backgroundColor = nil;
+    }
+}
+
 #pragma mark - iTermCoprocessDelegate
 
 - (void)coprocess:(Coprocess *)coprocess didTerminateWithErrorOutput:(NSString *)errors {
