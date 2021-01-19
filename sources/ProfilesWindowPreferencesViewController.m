@@ -21,14 +21,10 @@
 #import "PreferencePanel.h"
 
 // On macOS 10.13, we see that blur over 26 can turn red (issue 6138).
+// On macOS 10.14, we have evidence that it's safe up to 64 (issue 9438).
 // On macOS 10.15, this doesn't seem to be a problem and it works up to 64 (issue 9229).
-static CGFloat iTermMaxBlurPreCatalina = 24;
-static CGFloat iTermMaxBlurPostCatalina = 64;
 CGFloat iTermMaxBlurRadius(void) {
-    if (@available(macOS 10.15, *)) {
-        return iTermMaxBlurPostCatalina;
-    }
-    return iTermMaxBlurPreCatalina;
+    return 64;
 }
 
 @interface ProfilesWindowPreferencesViewController ()<iTermImageWellDelegate>
