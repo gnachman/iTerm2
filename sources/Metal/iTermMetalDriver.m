@@ -340,6 +340,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
         iTermPreciseTimerSaveLog([NSString stringWithFormat:@"%@: Frames In Flight at Start", _identifier],
                                  [_inFlightHistogram stringValue]);
     }
+    [view setNeedsDisplay:YES];
 }
 
 - (int)maximumNumberOfFramesInFlight {
