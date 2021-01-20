@@ -4632,6 +4632,7 @@ ITERM_WEAKLY_REFERENCEABLE
         return;
     }
     [self changeToWindowType:(iTermWindowType)menuItem.tag];
+    [[self currentTab] recheckBlur];
 }
 
 - (IBAction)toggleFullScreenMode:(id)sender {
