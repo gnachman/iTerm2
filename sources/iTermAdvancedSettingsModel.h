@@ -160,6 +160,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (int)maximumBytesToProvideToServices;
 + (int)maximumBytesToProvideToPythonAPI;
 + (int)maxSemanticHistoryPrefixOrSuffix;
++ (double)metalRedrawPeriod;
 + (double)metalSlowFrameRate;
 + (BOOL)middleClickClosesTab;
 + (int)minCompactTabWidth;

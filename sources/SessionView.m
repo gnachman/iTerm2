@@ -22,6 +22,8 @@
 #import "iTermUnobtrusiveMessage.h"
 #import "NSAppearance+iTerm.h"
 #import "NSColor+iTerm.h"
+#import "NSDate+iTerm.h"
+#import "NSTimer+iTerm.h"
 #import "NSView+iTerm.h"
 #import "NSView+RecursiveDescription.h"
 #import "MovePaneController.h"
@@ -53,7 +55,53 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
 @interface iTermMTKView : MTKView
 @end
 
-@implementation iTermMTKView
+@implementation iTermMTKView {
+    NSTimer *_timer;
+    NSTimeInterval _lastSetNeedsDisplay;
+}
+
+- (nonnull instancetype)initWithFrame:(CGRect)frameRect device:(nullable id<MTLDevice>)device {
+    self = [super initWithFrame:frameRect device:device];
+    if (self) {
+        [self it_schedule];
+    }
+    return self;
+}
+
+- (void)it_schedule {
+    _timer = [NSTimer scheduledWeakTimerWithTimeInterval:[iTermAdvancedSettingsModel metalRedrawPeriod]
+                                                  target:self
+                                                selector:@selector(it_redrawPeriodically:)
+                                                userInfo:nil
+                                                 repeats:YES];
+}
+
+- (void)it_redrawPeriodically:(NSTimer *)timer {
+    DLog(@"redrawPeriodically: timer fired");
+    if (self.isHidden || self.alphaValue < 0.01 || self.bounds.size.width == 0 || self.bounds.size.height == 0) {
+        DLog(@"Not visible %@", self);
+        return;
+    }
+    if (round(1000 * timer.timeInterval) != round(1000 * [iTermAdvancedSettingsModel metalRedrawPeriod]))  {
+        DLog(@"Recreate timer");
+        [_timer invalidate];
+        [self it_schedule];
+    }
+    if ([NSDate it_timeSinceBoot] - _lastSetNeedsDisplay < timer.timeInterval) {
+        DLog(@"Redrew recently");
+        return;
+    }
+    [self setNeedsDisplay:YES];
+}
+
+- (void)setNeedsDisplay:(BOOL)needsDisplay {
+    DLog(@"setNeedsDisplay:%@", @(needsDisplay));
+    if (needsDisplay) {
+        _lastSetNeedsDisplay = [NSDate it_timeSinceBoot];
+    }
+    [super setNeedsDisplay:needsDisplay];
+}
+
 @end
 
 @interface iTermHoverContainerView : NSView

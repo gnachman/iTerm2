@@ -408,6 +408,7 @@ DEFINE_BOOL(underlineHyperlinks, YES, SECTION_DRAWING @"Underline OSC 8 hyperlin
 DEFINE_BOOL(solidUnderlines, NO, SECTION_DRAWING @"Use solid underlines?\nWhen disabled, underlines break near text that would intersect them.");
 DEFINE_BOOL(showMetalFPSmeter, NO, SECTION_DRAWING @"Show FPS meter\nRequires Metal renderer");
 DEFINE_BOOL(hdrCursor, NO, SECTION_DRAWING @"HDR cursor\nExperimental. Half-baked. Probably don't use this.");
+DEFINE_FLOAT(metalRedrawPeriod, 0.5, SECTION_DRAWING @"GPU renderer redraws at least this often, in seconds.\nThis is to work around a problem where the GPU renderer encounters a lot of latency when drawing for the first time after a short period of inactivity. Set this to a big number to render it ineffectual.");
 
 #pragma mark - Semantic History
 
