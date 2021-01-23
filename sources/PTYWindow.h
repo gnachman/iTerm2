@@ -72,6 +72,8 @@ extern const NSTimeInterval iTermWindowTitleChangeMinimumInterval;
 - (id<PSMTabStyle>)terminalWindowTabStyle;
 - (NSColor *)terminalWindowDecorationControlColor;
 - (BOOL)terminalWindowUseMinimalStyle;
+// This is called only for the menu item window > move to (screen name)
+- (void)terminalWindowWillMoveToScreen:(NSScreen *)screen;
 
 typedef NS_ENUM(NSUInteger, PTYWindowTitleBarFlavor) {
     PTYWindowTitleBarFlavorDefault,

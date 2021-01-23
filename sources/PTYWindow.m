@@ -55,6 +55,7 @@ const NSTimeInterval iTermWindowTitleChangeMinimumInterval = 0.1;
 
 @interface NSWindow (PrivateAPI)
 + (Class)frameViewClassForStyleMask:(NSUInteger)windowStyle;
+- (void)_moveToScreen:(id)sender;
 @end
 
 @interface NSFrameView : NSView

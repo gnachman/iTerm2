@@ -1628,6 +1628,28 @@ ITERM_WEAKLY_REFERENCEABLE
     return YES;
 }
 
+- (void)terminalWindowWillMoveToScreen:(NSScreen *)screen {
+    DLog(@"moving to screen with frame %@. self=%@", NSStringFromRect(screen.frame), self);
+    if (!_isAnchoredToScreen) {
+        DLog(@"Not anchored, do nothing");
+        return;
+    }
+    NSArray<NSScreen *> *screens = [NSScreen screens];
+    if (_anchoredScreenNumber >= screens.count) {
+        DLog(@"Am anchored to screen %@ but there aren't that many screens. Unanchor", @(_anchoredScreenNumber));
+        _isAnchoredToScreen = NO;
+        return;
+    }
+
+    NSScreen *currentScreen = screens[_anchoredScreenNumber];
+    if (NSEqualRects(currentScreen.frame, screen.frame)) {
+        DLog(@"New screen has same frame. Doing nothing.");
+        return;
+    }
+    DLog(@"Current screen has frame %@. Moving.", NSStringFromRect(currentScreen.frame));
+    _isAnchoredToScreen = NO;
+}
+
 - (PTYWindowTitleBarFlavor)ptyWindowTitleBarFlavor {
     if (self.lionFullScreen || togglingLionFullScreen_) {
         return PTYWindowTitleBarFlavorDefault;

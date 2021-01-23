@@ -547,6 +547,16 @@ ITERM_WEAKLY_REFERENCEABLE
     return NSWindowTabbingModeDisallowed;
 }
 
+- (void)_moveToScreen:(id)sender {
+    if (![[THE_CLASS superclass] instancesRespondToSelector:_cmd]) {
+        return;
+    }
+    if ([sender isKindOfClass:[NSScreen class]]) {
+        [self.ptyDelegate terminalWindowWillMoveToScreen:sender];
+    }
+    [super _moveToScreen:sender];
+}
+
 - (void)setFrame:(NSRect)frameRect display:(BOOL)flag {
     DLog(@"setFrame:%@ display:%@ maxy=%@ from\n%@",
          NSStringFromRect(frameRect), @(flag), @(NSMaxY(frameRect)),
