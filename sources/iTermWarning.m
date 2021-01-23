@@ -275,10 +275,11 @@ static BOOL gShowingWarning;
 
     for (iTermWarningAction *action in _warningActions) {
         [alert addButtonWithTitle:action.label];
+        NSButton *button = alert.buttons.lastObject;
         if (action.keyEquivalent) {
-            alert.buttons.lastObject.keyEquivalent = action.keyEquivalent;
+            button.keyEquivalent = action.keyEquivalent;
         } else {
-            action.keyEquivalent = alert.buttons.lastObject.keyEquivalent;
+            action.keyEquivalent = button.keyEquivalent;
         }
     }
     [self assignKeyEquivalents];
@@ -286,6 +287,7 @@ static BOOL gShowingWarning;
         NSButton *button = alert.buttons[idx];
         if (!button.keyEquivalent.length) {
             button.keyEquivalent = action.keyEquivalent;
+            button.keyEquivalentModifierMask = NSEventModifierFlagCommand;
             if ([iTermAdvancedSettingsModel alertsIndicateShortcuts] && action.shortcutRange.length == 1) {
                 dispatch_async(dispatch_get_main_queue(),
                                ^{
