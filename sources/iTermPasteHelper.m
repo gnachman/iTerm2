@@ -635,6 +635,7 @@ const NSInteger iTermQuickPasteBytesPerCallDefaultValue = 768;
         result = NO;
     }]];
     iTermWarning *warning = [[iTermWarning alloc] init];
+    warning.heading = @"Confirm Multi-Line Paste";
     warning.title = theTitle;
     warning.warningActions = actions;
     warning.identifier = identifier;
