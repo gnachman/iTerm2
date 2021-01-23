@@ -1120,7 +1120,10 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (BOOL)windowIsResizing {
-    return togglingFullScreen_ || liveResize_ || togglingLionFullScreen_ || exitingLionFullscreen_ || zooming_;
+    const BOOL result = togglingFullScreen_ || liveResize_ || togglingLionFullScreen_ || exitingLionFullscreen_ || zooming_;
+    DLog(@"togglingFullScreen=%@ liveResize=%@ togglingLionFullscreen=%@ exitingLionFullscreen=%@ zooming=%@ DISPOSITION=%@ self=%@",
+         @(togglingFullScreen_), @(liveResize_), @(togglingLionFullScreen_), @(exitingLionFullscreen_), @(zooming_), @(result), self);
+    return result;
 }
 
 - (void)hideToolbelt {
@@ -4424,18 +4427,19 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)windowDidResize:(NSNotification *)aNotification {
+    PtyLog(@"windowDidResize to: %fx%f self=%@", [[self window] frame].size.width, [[self window] frame].size.height, self);
+    PtyLog(@"%@", [NSThread callStackSymbols]);
     if (self.swipeIdentifier) {
         [[NSNotificationCenter defaultCenter] postNotificationName:iTermSwipeHandlerCancelSwipe
                                                             object:self.swipeIdentifier];
     }
     lastResizeTime_ = [[NSDate date] timeIntervalSince1970];
     if (zooming_) {
+        DLog(@"zooming so pretend nothing happened for better performance");
         // Pretend nothing happened to avoid slowing down zooming.
         return;
     }
 
-    PtyLog(@"windowDidResize to: %fx%f", [[self window] frame].size.width, [[self window] frame].size.height);
-    PtyLog(@"%@", [NSThread callStackSymbols]);
     _windowDidResize = YES;
 
     [SessionView windowDidResize];
@@ -4796,6 +4800,8 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 - (void)windowWillStartLiveResize:(NSNotification *)notification {
+    DLog(@"self=%@", self);
+
     [self clearForceFrame];
     liveResize_ = YES;
     if ([self windowTitleIsVisible]) {
@@ -4835,6 +4841,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)windowDidEndLiveResize:(NSNotification *)notification {
+    DLog(@"self=%@", self);
     NSScreen *screen = self.window.screen;
     if (@available(macOS 10.14, *)) {
         [_contentView setShowsWindowSize:NO];
@@ -4899,6 +4906,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
     liveResize_ = NO;
     BOOL wasZooming = zooming_;
+    DLog(@"set zooming=NO");
     zooming_ = NO;
     if (wasZooming) {
         // Reached zoom size. Update size.
@@ -5122,10 +5130,13 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (NSRect)windowWillUseStandardFrame:(NSWindow *)sender defaultFrame:(NSRect)defaultFrame {
+    DLog(@"windowWillUseStandardFrame. defaultFrame=%@ self=%@", NSStringFromRect(defaultFrame), self);
     // Disable redrawing during zoom-initiated live resize.
+    DLog(@"Set zooming=YES");
     zooming_ = YES;
     [self updateUseMetalInAllTabs];
     if (togglingLionFullScreen_) {
+        DLog(@"Currently toggling lion full screen so accept default frame");
         // Tell it to use the whole screen when entering Lion fullscreen.
         // This is actually called twice in a row when entering fullscreen.
         return defaultFrame;
@@ -5143,26 +5154,32 @@ ITERM_WEAKLY_REFERENCEABLE
     if (togglingLionFullScreen_ || [[self ptyWindow] isTogglingLionFullScreen] || [self lionFullScreen]) {
         // Going into lion fullscreen mode. Disregard the "maximize vertically"
         // preference.
+        DLog(@"Going into lion fullscreen mode so disregard maximize vertically preference");
         verticalOnly = NO;
     } else {
         maxVerticallyPref = [iTermPreferences boolForKey:kPreferenceKeyMaximizeVerticallyOnly];
         if ([[NSApp currentEvent] type] == NSEventTypeKeyDown) {
+            DLog(@"Is due to keydown");
             verticalOnly = maxVerticallyPref;
         } else if (maxVerticallyPref ^
                    (([[NSApp currentEvent] it_modifierFlags] & NSEventModifierFlagShift) != 0)) {
+            DLog(@"Not keydown, holding shift, pref is not for vertical only. maximize vertically only");
             verticalOnly = YES;
         }
     }
 
     if (verticalOnly) {
+        DLog(@"verticalOnly=true");
         // Keep the width the same
         proposedFrame.size.width = [sender frame].size.width;
     } else {
+        DLog(@"!verticalOnly");
         proposedFrame.size.width = defaultFrame.size.width;
         proposedFrame.origin.x = defaultFrame.origin.x;
     }
     proposedFrame.size.height = defaultFrame.size.height;
     proposedFrame.origin.y = defaultFrame.origin.y;
+    DLog(@"Return frame %@", NSStringFromRect(proposedFrame));
     return proposedFrame;
 }
 

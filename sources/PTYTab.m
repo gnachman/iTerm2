@@ -6048,6 +6048,7 @@ typedef struct {
 
 // Note this is a notification handler
 - (void)updateUseMetal NS_AVAILABLE_MAC(10_11) {
+    DLog(@"begin");
     const BOOL resizing = self.realParentWindow.windowIsResizing;
     const BOOL powerOK = [[iTermPowerManager sharedInstance] metalAllowed];
     __block iTermMetalUnavailableReason sessionReason = iTermMetalUnavailableReasonNone;
