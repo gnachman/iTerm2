@@ -118,6 +118,10 @@ typedef struct {
 - (void)resetCharset;
 - (void)resetByUserRequest:(BOOL)preservePrompt;
 - (void)resetForTmuxUnpause;
+// Use this when restarting the login shell. Some features like paste bracketing should be turned
+// off for a newly launched program. It differs from resetByUserRequest: by not modifying screen
+// contents.
+- (void)resetForRelaunch;
 
 - (void)setDisableSmcupRmcup:(BOOL)value;
 

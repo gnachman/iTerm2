@@ -3349,16 +3349,18 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     [delegate_ screenTriggerableChangeDidOccur];
 }
 
-- (void)terminalResetPreservingPrompt:(BOOL)preservePrompt {
-    const int linesToSave = [self numberOfLinesToPreserveWhenClearingScreen];
-    [delegate_ screenTriggerableChangeDidOccur];
-    if (preservePrompt) {
-        [self clearAndResetScreenSavingLines:linesToSave];
-    } else {
-        [self incrementOverflowBy:[currentGrid_ resetWithLineBuffer:linebuffer_
-                                                unlimitedScrollback:unlimitedScrollback_
-                                                 preserveCursorLine:NO
-                                              additionalLinesToSave:0]];
+- (void)terminalResetPreservingPrompt:(BOOL)preservePrompt modifyContent:(BOOL)modifyContent {
+    if (modifyContent) {
+        const int linesToSave = [self numberOfLinesToPreserveWhenClearingScreen];
+        [delegate_ screenTriggerableChangeDidOccur];
+        if (preservePrompt) {
+            [self clearAndResetScreenSavingLines:linesToSave];
+        } else {
+            [self incrementOverflowBy:[currentGrid_ resetWithLineBuffer:linebuffer_
+                                                    unlimitedScrollback:unlimitedScrollback_
+                                                     preserveCursorLine:NO
+                                                  additionalLinesToSave:0]];
+        }
     }
 
     [self setInitialTabStops];
@@ -3366,7 +3368,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     for (int i = 0; i < NUM_CHARSETS; i++) {
         charsetUsesLineDrawingMode_[i] = NO;
     }
-    [delegate_ screenDidReset];
+    [delegate_ screenDidResetAllowingContentModification:modifyContent];
     commandStartX_ = commandStartY_ = -1;
     [self showCursor:YES];
 }

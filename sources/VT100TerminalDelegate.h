@@ -117,7 +117,7 @@ typedef NS_ENUM(int, VT100TerminalColorIndex) {
 - (void)terminalReverseIndex;
 
 // Clear the screen, preserving the cursor's line.
-- (void)terminalResetPreservingPrompt:(BOOL)preservePrompt;
+- (void)terminalResetPreservingPrompt:(BOOL)preservePrompt modifyContent:(BOOL)modifyContent;
 
 // Changes the cursor type.
 - (void)terminalSetCursorType:(ITermCursorType)cursorType;

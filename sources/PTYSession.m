@@ -1427,7 +1427,7 @@ ITERM_WEAKLY_REFERENCEABLE
         [aSession setSizeFromArrangement:arrangement];
     }
     [aSession setPreferencesFromAddressBookEntry:theBookmark];
-    [aSession loadInitialColorTable];
+    [aSession loadInitialColorTableAndResetCursorGuide];
     aSession.delegate = delegate;
 
     BOOL haveSavedProgramData = YES;
@@ -1597,6 +1597,7 @@ ITERM_WEAKLY_REFERENCEABLE
             // When restoring a window arrangement with contents and a nonempty saved directory, always
             // use the saved working directory, even if that contravenes the default setting for the
             // profile.
+            [aSession.terminal resetForRelaunch];
             NSString *oldCWD = arrangement[SESSION_ARRANGEMENT_WORKING_DIRECTORY];
             DLog(@"Running command...");
 
@@ -3286,6 +3287,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_shell setSize:_screen.size
            viewSize:_screen.viewSize
         scaleFactor:self.backingScaleFactor];
+    [_terminal resetForRelaunch];
     [self startProgram:_program
            environment:_environment
            customShell:_customShell
@@ -3679,15 +3681,18 @@ ITERM_WEAKLY_REFERENCEABLE
     return ([[NSString alloc] initWithFormat:@"%d;%d", fgNum, bgNum]);
 }
 
-- (void)loadInitialColorTable
-{
+- (void)loadInitialColorTableAndResetCursorGuide {
+    [self loadInitialColorTable];
+    _textview.highlightCursorLine = [iTermProfilePreferences boolForKey:KEY_USE_CURSOR_GUIDE
+                                                              inProfile:_profile];
+}
+
+- (void)loadInitialColorTable {
     int i;
     for (i = 16; i < 256; i++) {
         NSColor *theColor = [NSColor colorForAnsi256ColorIndex:i];
         [_colorMap setColor:theColor forKey:kColorMap8bitBase + i];
     }
-    _textview.highlightCursorLine = [iTermProfilePreferences boolForKey:KEY_USE_CURSOR_GUIDE
-                                                              inProfile:_profile];
 }
 
 - (NSColor *)tabColorInProfile:(NSDictionary *)profile
@@ -9847,8 +9852,12 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [self clearTriggerLine];
 }
 
-- (void)screenDidReset {
-    [self loadInitialColorTable];
+- (void)screenDidResetAllowingContentModification:(BOOL)modifyContent {
+    if (!modifyContent) {
+        [self loadInitialColorTable];
+        return;
+    }
+    [self loadInitialColorTableAndResetCursorGuide];
     _cursorGuideSettingHasChanged = NO;
     _textview.highlightCursorLine = [iTermProfilePreferences boolForKey:KEY_USE_CURSOR_GUIDE
                                                               inProfile:_profile];

@@ -646,6 +646,7 @@ backgroundColor:(NSColor *)backgroundColor;
 // Preferences
 - (void)setPreferencesFromAddressBookEntry: (NSDictionary *)aePrefs;
 - (void)loadInitialColorTable;
+- (void)loadInitialColorTableAndResetCursorGuide;
 
 // Call this after the profile changed. If not divorced, the profile and
 // settings are updated. If divorced, changes are found in the session and

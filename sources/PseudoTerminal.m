@@ -9388,7 +9388,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
         [self safelySetSessionSize:aSession rows:rows columns:columns];
         PtyLog(@"setupSession - call setPreferencesFromAddressBookEntry");
         [aSession setPreferencesFromAddressBookEntry:profile];
-        [aSession loadInitialColorTable];
+        [aSession loadInitialColorTableAndResetCursorGuide];
         [aSession.screen resetTimestamps];
     }
 }
