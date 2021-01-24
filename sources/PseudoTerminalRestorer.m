@@ -16,6 +16,7 @@
 #import "iTermController.h"
 #import "iTermOrphanServerAdopter.h"
 #import "iTermPreferences.h"
+#import "iTermRestorableStateController.h"
 #import "iTermUserDefaults.h"
 #import "NSApplication+iTerm.h"
 #import "NSObject+iTerm.h"
@@ -28,13 +29,19 @@ typedef void (^VoidBlock)(void);
 static BOOL gWaitingForFullScreen;
 static void (^gPostRestorationCompletionBlock)(void);
 static BOOL gRanQueuedBlocks;
-static BOOL gShouldIgnoreOpenUntitledFile;
 static BOOL gExternalRestorationDidComplete;
+
+NSString *const iTermWindowStateKeyGUID = @"guid";
 
 @implementation PseudoTerminalState
 
 - (instancetype)initWithCoder:(NSCoder *)coder {
-    return [self initWithDictionary:[NSDictionary castFrom:[coder decodeObjectForKey:kTerminalWindowStateRestorationWindowArrangementKey]]];
+    self = [super init];
+    if (self) {
+        _arrangement = [[NSDictionary castFrom:[coder decodeObjectForKey:kTerminalWindowStateRestorationWindowArrangementKey]] retain];
+        _coder = [coder retain];
+    }
+    return self;
 }
 
 - (instancetype)initWithDictionary:(NSDictionary *)arrangement {
@@ -47,6 +54,7 @@ static BOOL gExternalRestorationDidComplete;
 
 - (void)dealloc {
     [_arrangement release];
+    [_coder release];
     [super dealloc];
 }
 
@@ -127,20 +135,24 @@ static BOOL gExternalRestorationDidComplete;
                     completionHandler:completionHandler];
 }
 
-+ (BOOL)shouldIgnoreOpenUntitledFile {
-    return gShouldIgnoreOpenUntitledFile;
-}
-
 + (void)restoreWindowWithIdentifier:(NSString *)identifier
                 pseudoTerminalState:(PseudoTerminalState *)state
                              system:(BOOL)system
                   completionHandler:(void (^)(NSWindow *, NSError *))completionHandler {
     if (system && [iTermUserDefaults ignoreSystemWindowRestoration]) {
         DLog(@"Ignore system window restoration because we're using our own restorable state controller.");
-        gShouldIgnoreOpenUntitledFile = YES;
-        completionHandler(nil, nil);
-        gShouldIgnoreOpenUntitledFile = NO;
-        DLog(@"Return");
+        NSString *guid = [state.coder decodeObjectForKey:iTermWindowStateKeyGUID];
+        if (!guid) {
+            DLog(@"GUID missing.");
+            iTermRestorableStateController.shouldIgnoreOpenUntitledFile = YES;
+            completionHandler(nil, nil);
+            iTermRestorableStateController.shouldIgnoreOpenUntitledFile = NO;
+        } else {
+            DLog(@"Save completion handler in restorable state controller for window %@", guid);
+            [[iTermRestorableStateController sharedInstance] setSystemRestorationCallback:completionHandler
+                                                                         windowIdentifier:guid];
+        }
+        DLog(@"return");
         return;
     }
     if ([[NSApplication sharedApplication] isRunningUnitTests]) {

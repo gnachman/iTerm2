@@ -61,8 +61,9 @@ static NSString *const iTermRestorableStateControllerUserDefaultsKeyCount = @"No
 
 #pragma mark - Restore
 
-- (void)restoreWithReady:(void (^)(void))ready
-              completion:(void (^)(void))completion {
+- (void)restoreWithSystemCallbacks:(NSMutableDictionary<NSString *, void (^)(NSWindow *, NSError *)> *)callbacks
+                             ready:(void (^)(void))ready
+                        completion:(void (^)(void))completion {
     DLog(@"restoreWindows");
     if (!self.restorer) {
         DLog(@"Have no restorer.");
@@ -71,12 +72,14 @@ static NSString *const iTermRestorableStateControllerUserDefaultsKeyCount = @"No
         return;
     }
     __weak __typeof(self) weakSelf = self;
+    DLog(@"Loading restorable state index…");
     [self.restorer loadRestorableStateIndexWithCompletion:^(id<iTermRestorableStateIndex> index) {
-        [weakSelf restoreWithIndex:index ready:ready completion:completion];
+        [weakSelf restoreWithIndex:index callbacks:callbacks ready:ready completion:completion];
     }];
 }
 
 - (void)restoreWithIndex:(id<iTermRestorableStateIndex>)index
+               callbacks:(NSMutableDictionary<NSString *, void (^)(NSWindow *, NSError *)> *)callbacks
                    ready:(void (^)(void))ready
               completion:(void (^)(void))completion {
     DLog(@"Have an index. Proceeding to restore windows.");
@@ -104,7 +107,7 @@ static NSString *const iTermRestorableStateControllerUserDefaultsKeyCount = @"No
                                                forKey:iTermRestorableStateControllerUserDefaultsKeyCount];
     DLog(@"set restoring to YES");
     _restoring = YES;
-    [self reallyRestoreWindows:index withCompletion:^{
+    [self reallyRestoreWindows:index callbacks:callbacks withCompletion:^{
         [self didRestoreFromIndex:index];
         completion();
     }];
@@ -123,6 +126,7 @@ static NSString *const iTermRestorableStateControllerUserDefaultsKeyCount = @"No
 
 // Main queue
 - (void)reallyRestoreWindows:(id<iTermRestorableStateIndex>)index
+                   callbacks:(NSMutableDictionary<NSString *, void (^)(NSWindow *, NSError *)> *)callbacks
               withCompletion:(void (^)(void))completion {
     [self.restorer restoreApplicationState];
 
@@ -140,10 +144,22 @@ static NSString *const iTermRestorableStateControllerUserDefaultsKeyCount = @"No
     });
     DLog(@"Restoring from index:\n%@", index);
     for (NSInteger i = 0; i < count; i++) {
+        DLog(@"driver: restore window number %@", @(i));
         _numberOfWindowsRestored += 1;
         dispatch_group_enter(group);
         [self.restorer restoreWindowWithRecord:[index restorableStateRecordAtIndex:i]
-                                    completion:^{
+                                    completion:^(NSString *windowIdentifier, NSWindow *window) {
+            DLog(@"driver: restoration of window number %@ with identifier %@ finished", @(i), windowIdentifier);
+            if (windowIdentifier) {
+                void (^callback)(NSWindow *, NSError *) = callbacks[windowIdentifier];
+                if (callback) {
+                    DLog(@"Running callback with window %@", window);
+                    [callbacks removeObjectForKey:windowIdentifier];
+                    callback(window, nil);
+                } else {
+                    DLog(@"No callback");
+                }
+            }
             dispatch_group_leave(group);
         }];
     }

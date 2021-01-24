@@ -63,7 +63,7 @@
 }
 
 - (void)restoreWindowWithRecord:(id<iTermRestorableStateRecord>)record
-                     completion:(void (^)(void))completion {
+                     completion:(void (^)(NSString * _Nonnull, NSWindow * _Nonnull))completion {
     NSKeyedUnarchiver *unarchiver = record.unarchiver;
     [self.delegate restorableStateRestoreWithCoder:unarchiver
                                         identifier:record.identifier
@@ -72,7 +72,7 @@
             [window.delegate window:window didDecodeRestorableState:unarchiver];
         }
         [unarchiver finishDecoding];
-        completion();
+        completion(record.identifier, window);
     }];
 }
 

@@ -155,7 +155,7 @@
 }
 
 - (void)restoreWindowWithRecord:(id<iTermRestorableStateRecord>)record
-                     completion:(void (^)(void))completion {
+                     completion:(void (^)(NSString *windowIdentifier, NSWindow *window))completion {
     NSKeyedUnarchiver *coder = record.unarchiver;
     NSInteger i = -1;
     @try {
@@ -163,7 +163,7 @@
         [coder finishDecoding];
     } @catch (NSException *exception) {
         DLog(@"Failed to decode index: %@", exception);
-        completion();
+        completion(nil, nil);
         return;
     }
     assert(i >= 0);
@@ -174,16 +174,20 @@
     iTermEncoderGraphRecord *windowRecord = windowIndex[i];
     DLog(@"Done creating index");
     if (!windowRecord) {
-        completion();
+        DLog(@"Have no windowRecord");
+        completion(nil, nil);
         return;
     }
+
     NSString *identifier = windowRecord.identifier;
+    DLog(@"Will restore window %@", identifier);
     assert(identifier.length > 0);
     [self.delegate restorableStateRestoreWithRecord:windowRecord
                                          identifier:identifier
                                          completion:^(NSWindow *window,
                                                       NSError *error) {
-        completion();
+        DLog(@"did restore window %@", identifier);
+        completion(identifier, window);
     }];
 }
 

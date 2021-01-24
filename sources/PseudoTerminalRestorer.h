@@ -8,8 +8,12 @@
 
 #import <Cocoa/Cocoa.h>
 
+// Top-level key for restorable window state when using the SQLite restorer.
+extern NSString *const iTermWindowStateKeyGUID;
+
 @interface PseudoTerminalState: NSObject
 @property (nonatomic, readonly) NSDictionary *arrangement;
+@property (nonatomic, readonly) NSCoder *coder;
 - (instancetype)initWithCoder:(NSCoder *)coder;
 - (instancetype)initWithDictionary:(NSDictionary *)arrangement;
 @end
@@ -33,7 +37,6 @@
                 pseudoTerminalState:(PseudoTerminalState *)state
                              system:(BOOL)system
                   completionHandler:(void (^)(NSWindow *, NSError *))completionHandler;
-+ (BOOL)shouldIgnoreOpenUntitledFile;
 
 // The db-backed restoration mechansim has completed and the post-restoration callback is now safe to run.
 + (void)externalRestorationDidComplete;

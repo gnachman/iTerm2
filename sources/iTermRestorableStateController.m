@@ -14,6 +14,7 @@
 #import "iTermRestorableStateSQLite.h"
 #import "iTermUserDefaults.h"
 
+static BOOL gShouldIgnoreOpenUntitledFile;
 extern NSString *const iTermApplicationWillTerminate;
 
 @interface NSApplication(Private)
@@ -34,6 +35,25 @@ extern NSString *const iTermApplicationWillTerminate;
     id<iTermRestorableStateRestorer> _restorer;
     iTermRestorableStateDriver *_driver;
     BOOL _ready;
+    NSMutableDictionary<NSString *, void (^)(NSWindow *, NSError *)> *_systemCallbacks;
+}
+
++ (BOOL)shouldIgnoreOpenUntitledFile {
+    return gShouldIgnoreOpenUntitledFile;
+}
+
++ (void)setShouldIgnoreOpenUntitledFile:(BOOL)value {
+    gShouldIgnoreOpenUntitledFile = value;
+}
+
+
++ (instancetype)sharedInstance {
+    static dispatch_once_t onceToken;
+    static id instance;
+    dispatch_once(&onceToken, ^{
+        instance = [[self alloc] init];
+    });
+    return instance;
 }
 
 + (BOOL)stateRestorationEnabled {
@@ -58,6 +78,7 @@ static BOOL gForceSaveState;
 - (instancetype)init {
     self = [super init];
     if (self) {
+        _systemCallbacks = [NSMutableDictionary dictionary];
         dispatch_queue_t queue = dispatch_queue_create("com.iterm2.restorable-state", DISPATCH_QUEUE_SERIAL);
         NSString *appSupport = [[NSFileManager defaultManager] applicationSupportDirectory];
         if (!appSupport) {
@@ -136,10 +157,11 @@ static BOOL gForceSaveState;
 - (void)restoreWindowsWithCompletion:(void (^)(void))completion {
     assert([NSThread isMainThread]);
     __weak __typeof(self) weakSelf = self;
-    [_driver restoreWithReady:^{
+    [_driver restoreWithSystemCallbacks:_systemCallbacks
+                                  ready:^{
         [weakSelf.delegate restorableStateDidFinishRequestingRestorations:self];
     }
-                   completion:^{
+                             completion:^{
         DLog(@"Restoration did complete");
         [weakSelf completeInitialization];
         completion();
@@ -149,6 +171,12 @@ static BOOL gForceSaveState;
 - (void)didSkipRestoration {
     DLog(@"did skip restoration");
     [self completeInitialization];
+}
+
+- (void)setSystemRestorationCallback:(void (^)(NSWindow *, NSError *))callback
+                    windowIdentifier:(NSString *)windowIdentifier {
+    assert(!_ready);
+    _systemCallbacks[windowIdentifier] = [callback copy];
 }
 
 #pragma mark - Private
@@ -187,6 +215,16 @@ static BOOL gForceSaveState;
     if (_driver.needsSave) {
         [_driver save];
     }
+    NSMutableDictionary<NSString *, void (^)(NSWindow *, NSError *)> *temp = [_systemCallbacks copy];
+    [_systemCallbacks removeAllObjects];
+
+    // Run system callbacks that were never married up to windows as failures.
+    iTermRestorableStateController.shouldIgnoreOpenUntitledFile = YES;
+    [temp enumerateKeysAndObjectsUsingBlock:^(NSString * _Nonnull windowIdentifier, void (^ _Nonnull completion)(NSWindow *, NSError *), BOOL * _Nonnull stop) {
+        DLog(@"Running system callback with nil for %@", windowIdentifier);
+        completion(nil, nil);
+    }];
+    iTermRestorableStateController.shouldIgnoreOpenUntitledFile = NO;
 }
 
 #pragma mark - iTermRestorableStateRestoring

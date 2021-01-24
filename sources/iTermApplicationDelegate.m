@@ -240,7 +240,7 @@ static BOOL hasBecomeActive = NO;
         _untitledWindowStateMachine.delegate = self;
         if ([iTermAdvancedSettingsModel useRestorableStateController] &&
             ![[NSApplication sharedApplication] isRunningUnitTests]) {
-            _restorableStateController = [[iTermRestorableStateController alloc] init];
+            _restorableStateController = [iTermRestorableStateController sharedInstance];
             _restorableStateController.delegate = self;
         }
         // Add ourselves as an observer for notifications.
@@ -832,7 +832,7 @@ static BOOL hasBecomeActive = NO;
 
 - (BOOL)applicationOpenUntitledFile:(NSApplication *)theApplication {
     DLog(@"Open untitled file");
-    if ([PseudoTerminalRestorer shouldIgnoreOpenUntitledFile] &&
+    if ([iTermRestorableStateController shouldIgnoreOpenUntitledFile] &&
         _restorableStateController.numberOfWindowsRestored > 0) {
         DLog(@"Already restored one of our own windows so not opening an untitled file during window state restoration.");
         return NO;
