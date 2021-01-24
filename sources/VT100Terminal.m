@@ -384,12 +384,17 @@ static const int kMaxScreenRows = 4096;
 }
 
 - (void)resetByUserRequest:(BOOL)userInitiated {
-    [self resetAllowingResize:YES preservePrompt:userInitiated resetParser:userInitiated];
+    [self resetAllowingResize:YES preservePrompt:userInitiated resetParser:userInitiated modifyContent:YES];
+}
+
+- (void)resetForRelaunch {
+    [self resetAllowingResize:NO preservePrompt:NO resetParser:YES modifyContent:NO];
 }
 
 - (void)resetAllowingResize:(BOOL)canResize
              preservePrompt:(BOOL)preservePrompt
-                resetParser:(BOOL)resetParser {
+                resetParser:(BOOL)resetParser
+              modifyContent:(BOOL)modifyContent {
     if (canResize && _columnMode) {
         [delegate_ terminalSetWidth:80];
     }
@@ -398,11 +403,11 @@ static const int kMaxScreenRows = 4096;
     if (resetParser) {
         [_parser reset];
     }
-    [delegate_ terminalResetPreservingPrompt:preservePrompt];
+    [delegate_ terminalResetPreservingPrompt:preservePrompt modifyContent:modifyContent];
 }
 
 - (void)resetForTmuxUnpause {
-    [self resetAllowingResize:NO preservePrompt:NO resetParser:YES];
+    [self resetAllowingResize:NO preservePrompt:NO resetParser:YES modifyContent:YES];
 }
 
 - (void)setWraparoundMode:(BOOL)mode {

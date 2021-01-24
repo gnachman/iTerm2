@@ -634,9 +634,7 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
                                  size.width * session.textview.charWidth + [iTermPreferences intForKey:kPreferenceKeySideMargins] * 2,
                                  size.height * session.textview.lineHeight + [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins] * 2);
     session.view.frame = theFrame;
-    [session loadInitialColorTable];
-//    [session.nameController setSessionName:profile[KEY_NAME]];
-//    [session.nameController setOriginalName:profile[KEY_NAME]];
+    [session loadInitialColorTableAndResetCursorGuide];
     return session;
 }
 

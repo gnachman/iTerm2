@@ -32,7 +32,7 @@
 - (void)screenTriggerableChangeDidOccur;
 
 // Called when the screen and terminal's attributes are reset
-- (void)screenDidReset;
+- (void)screenDidResetAllowingContentModification:(BOOL)modifyContent;
 
 // Terminal can change title
 - (BOOL)screenAllowTitleSetting;
