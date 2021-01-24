@@ -5236,7 +5236,20 @@ ITERM_WEAKLY_REFERENCEABLE
     proposedFrame.size.height = defaultFrame.size.height;
     proposedFrame.origin.y = defaultFrame.origin.y;
     DLog(@"Return frame %@", NSStringFromRect(proposedFrame));
+    __weak __typeof(self) weakSelf = self;
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [weakSelf resetZoomIfNotLiveResizing];
+    });
     return proposedFrame;
+}
+
+- (void)resetZoomIfNotLiveResizing {
+    if (liveResize_) {
+        DLog(@"Not resetting zoom");
+        return;
+    }
+    zooming_ = NO;
+    [self updateUseMetalInAllTabs];
 }
 
 - (void)windowWillShowInitial {
