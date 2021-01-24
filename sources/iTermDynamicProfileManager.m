@@ -278,6 +278,9 @@
         if ([file hasPrefix:@"."]) {
             DLog(@"Skipping it because of leading dot");
             continue;
+        } else if ([file hasSuffix:@"~"]) {
+            DLog(@"Skipping it because of trailing tilde (GNU-style backup file)");
+            continue;
         }
         NSString *fullName = [path stringByAppendingPathComponent:file];
         if (![self loadDynamicProfilesFromFile:fullName intoArray:newProfiles guids:guids]) {
