@@ -28,6 +28,14 @@
 }
 
 - (BOOL)keyMapperWantsKeyEquivalent:(NSEvent *)event {
+    const NSEventModifierFlags mask = (NSEventModifierFlagCommand |
+                                       NSEventModifierFlagControl |
+                                       NSEventModifierFlagShift |
+                                       NSEventModifierFlagFunction);
+    if ((event.modifierFlags & mask) == (NSEventModifierFlagControl | NSEventModifierFlagShift | NSEventModifierFlagFunction)) {
+        // control+shift+arrow takes this path. See issue 8382. Possibly other things should, too.
+        return YES;
+    }
     return NO;
 }
 
