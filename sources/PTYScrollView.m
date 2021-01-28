@@ -266,7 +266,7 @@
 // We HAVE to call super when the scroll bars are not hidden because otherwise
 // you get issue 6637.
 - (void)scrollWheel:(NSEvent *)event {
-    if (self.hasVerticalScroller) {
+    if (self.hasVerticalScroller && ![iTermAdvancedSettingsModel fastTrackpad]) {
         if ([iTermAdvancedSettingsModel fixMouseWheel]) {
             NSEvent *fixed = [event eventByRoundingScrollWheelClicksAwayFromZero];
             DLog(@"Fix mouse wheel. %@", fixed);
@@ -276,7 +276,7 @@
             [super scrollWheel:event];
         }
     } else {
-        DLog(@"Scroll bar invisible so use accumulator %@", event);
+        DLog(@"Scroll bar invisible or fast trackpad enabled, so use accumulator %@", event);
         NSRect scrollRect;
 
         scrollRect = [self documentVisibleRect];
