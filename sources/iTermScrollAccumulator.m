@@ -58,7 +58,7 @@ static CGFloat RoundAwayFromZero(CGFloat value) {
 - (CGFloat)adjustedDeltaYForEvent:(NSEvent *)event {
     DLog(@"scrollingDeltaY=%@ deltaY=%@ lineHeight=%@", @(event.scrollingDeltaY), @(event.deltaY), @(_lineHeight));
     if (event.hasPreciseScrollingDeltas) {
-        if ([iTermAdvancedSettingsModel fastTrackpad]) {
+        if (YES) {
             // This is based on what Terminal.app does. See issue 9427.
             return RoundAwayFromZero(event.deltaY);
         }

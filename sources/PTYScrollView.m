@@ -266,7 +266,7 @@
 // We HAVE to call super when the scroll bars are not hidden because otherwise
 // you get issue 6637.
 - (void)scrollWheel:(NSEvent *)event {
-    if (self.hasVerticalScroller && ![iTermAdvancedSettingsModel fastTrackpad]) {
+    if (self.hasVerticalScroller && !YES) {
         if ([iTermAdvancedSettingsModel fixMouseWheel]) {
             NSEvent *fixed = [event eventByRoundingScrollWheelClicksAwayFromZero];
             DLog(@"Fix mouse wheel. %@", fixed);

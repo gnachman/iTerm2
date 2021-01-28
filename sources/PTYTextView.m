@@ -5173,7 +5173,7 @@ dragSemanticHistoryWithEvent:(NSEvent *)event
 }
 
 - (CGFloat)scrollDeltaYAdjustedForMouseReporting:(CGFloat)deltaY {
-    if (![iTermAdvancedSettingsModel fastTrackpad]) {
+    if (!YES) {
         return deltaY;
     }
     // This value is used for mouse reporting and we need to report lines, not pixels.
