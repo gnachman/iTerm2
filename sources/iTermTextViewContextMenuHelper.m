@@ -20,6 +20,7 @@
 #import "iTermSelection.h"
 #import "iTermTextExtractor.h"
 #import "iTermURLActionHelper.h"
+#import "NSColor+iTerm.h"
 #import "RegexKitLite.h"
 #import "WindowControllerInterface.h"
 
@@ -275,12 +276,43 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
     if (haveShortSelection) {
         shortSelectedText = [self.delegate contextMenuSelectedText:self capped:0];
         NSArray<NSString *> *synonyms = [shortSelectedText helpfulSynonyms];
+        BOOL needSeparator = synonyms.count > 0;
         for (NSString *conversion in synonyms) {
             NSMenuItem *theItem = [[NSMenuItem alloc] init];
             theItem.title = conversion;
             [theMenu addItem:theItem];
         }
-        if (synonyms.count) {
+        NSArray *captures = [shortSelectedText captureComponentsMatchedByRegex:@"^#([0-9a-fA-F]{2})([0-9a-fA-F]{2})([0-9a-fA-F]{2})$"];
+        if (captures.count) {
+            NSMenuItem *theItem = [[NSMenuItem alloc] init];
+            NSColor *color = [NSColor colorFromHexString:shortSelectedText];
+            if (color) {
+                CGFloat x;
+                if (@available(macOS 10.16, *)) {
+                    x = 15;
+                } else {
+                    x = 11;
+                }
+                const CGFloat margin = 2;
+                const CGFloat height = 24;
+                const CGFloat width = 24;
+                NSView *wrapper = [[NSView alloc] initWithFrame:NSMakeRect(0, 0, width + x, height + margin * 2)];
+                NSView *colorView = [[NSView alloc] initWithFrame:NSMakeRect(x, margin, width, height)];
+                colorView.wantsLayer = YES;
+                colorView.layer = [[CALayer alloc] init];
+                colorView.layer.backgroundColor = [color CGColor];
+                colorView.layer.borderColor = [color.isDark ? [NSColor colorWithWhite:0.8 alpha:1] : [NSColor colorWithWhite:0.2 alpha:1] CGColor];
+                colorView.layer.borderWidth = 1;
+                colorView.layer.cornerRadius = 3;
+                wrapper.autoresizesSubviews = YES;
+                colorView.autoresizingMask = NSViewMaxXMargin;
+                [wrapper addSubview:colorView];
+                theItem.view = wrapper;
+                [theMenu addItem:theItem];
+                needSeparator = YES;
+            }
+        }
+        if (needSeparator) {
             [theMenu addItem:[NSMenuItem separatorItem]];
         }
     }
