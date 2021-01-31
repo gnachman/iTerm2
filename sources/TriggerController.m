@@ -20,6 +20,7 @@
 #import "iTermSetTitleTrigger.h"
 #import "ITAddressBookMgr.h"
 #import "iTermFunctionCallTextFieldDelegate.h"
+#import "iTermHighlightLineTrigger.h"
 #import "iTermNoColorAccessoryButton.h"
 #import "iTermProfilePreferences.h"
 #import "iTermRPCTrigger.h"
@@ -111,6 +112,7 @@ NSString *const kBackgroundColorWellIdentifier = @"kBackgroundColorWellIdentifie
                              [BounceTrigger class],
                              [iTermRPCTrigger class],
                              [CaptureTrigger class],
+                             [iTermHighlightLineTrigger class],
                              [iTermUserNotificationTrigger class],
                              [iTermShellPromptTrigger class],
                              [iTermSetTitleTrigger class],
@@ -607,12 +609,11 @@ NSString *const kBackgroundColorWellIdentifier = @"kBackgroundColorWellIdentifie
     }
     NSMutableDictionary *triggerDictionary =
         [[self triggerDictionariesForCurrentProfile][row] mutableCopy];
-    HighlightTrigger *trigger =
-        (HighlightTrigger *)[HighlightTrigger triggerFromDict:triggerDictionary];
+    Trigger<iTermColorSettable> *trigger = (id)[Trigger triggerFromDict:triggerDictionary];
     if ([colorWell.identifier isEqual:kTextColorWellIdentifier]) {
-        trigger.textColor = colorWell.color;
+        [trigger setTextColor:colorWell.color];
     } else {
-        trigger.backgroundColor = colorWell.color;
+        [trigger setBackgroundColor:colorWell.color];
     }
     if (trigger.param) {
         triggerDictionary[kTriggerParameterKey] = trigger.param;

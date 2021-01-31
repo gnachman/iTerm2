@@ -8,6 +8,7 @@
 #import "iTermAddTriggerViewController.h"
 
 #import "iTermFocusablePanel.h"
+#import "iTermHighlightLineTrigger.h"
 #import "iTermUserDefaults.h"
 #import "HighlightTrigger.h"
 #import "NSArray+iTerm.h"
@@ -115,17 +116,23 @@
     }];
 
     // Select highlight with colors based on text.
-    NSInteger i = [_triggers indexOfObjectPassingTest:^BOOL(Trigger * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-        return [obj isKindOfClass:[HighlightTrigger class]];
-    }];
-    if (i == NSNotFound) {
-        i = 0;
+    for (Class theClass in @[ [iTermHighlightLineTrigger class], [HighlightTrigger class] ]) {
+        Trigger<iTermColorSettable> *trigger = [self firstTriggerOfClass:theClass];
+        if (trigger) {
+            [trigger setTextColor:_defaultTextColor];
+            [trigger setBackgroundColor:_defaultBackgroundColor];
+            [_actionButton selectItemAtIndex:[_triggers indexOfObject:trigger]];
+        } else {
+            [_actionButton selectItemAtIndex:0];
+        }
+        [self updateCustomViewForTrigger:self.currentTrigger value:nil];
     }
-    [_actionButton selectItemAtIndex:i];
-    HighlightTrigger *trigger = [HighlightTrigger castFrom:self.currentTrigger];
-    [trigger setTextColor:_defaultTextColor];
-    [trigger setBackgroundColor:_defaultBackgroundColor];
-    [self updateCustomViewForTrigger:self.currentTrigger value:nil];
+}
+
+- (__kindof Trigger *)firstTriggerOfClass:(Class)theClass {
+    return [_triggers objectPassingTest:^BOOL(Trigger *element, NSUInteger index, BOOL *stop) {
+        return [element isKindOfClass:theClass];
+    }];
 }
 
 - (IBAction)selectionDidChange:(id)sender {
@@ -197,11 +204,14 @@
 }
 
 - (void)colorWellDidChange:(CPKColorWell *)colorWell {
-    HighlightTrigger *trigger = [HighlightTrigger castFrom:[self currentTrigger]];
+    id<iTermColorSettable> trigger = (id)self.currentTrigger;
+    if (![trigger conformsToProtocol:@protocol(iTermColorSettable)]) {
+        return;
+    }
     if ([colorWell.identifier isEqual:kTextColorWellIdentifier]) {
-        trigger.textColor = colorWell.color;
+        [trigger setTextColor:colorWell.color];
     } else {
-        trigger.backgroundColor = colorWell.color;
+        [trigger setBackgroundColor:colorWell.color];
     }
 }
 

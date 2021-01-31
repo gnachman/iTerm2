@@ -8,10 +8,13 @@
 #import <Cocoa/Cocoa.h>
 #import "Trigger.h"
 
-@interface HighlightTrigger : Trigger
-
-+ (NSString *)title;
+@protocol iTermColorSettable<NSObject>
 - (void)setTextColor:(NSColor *)textColor;
 - (void)setBackgroundColor:(NSColor *)backgroundColor;
+@end
+
+@interface HighlightTrigger : Trigger<iTermColorSettable>
+
++ (NSString *)title;
 
 @end
