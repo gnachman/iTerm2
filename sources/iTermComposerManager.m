@@ -97,6 +97,7 @@
                    workingDirectory:[self.delegate composerManagerWorkingDirectory:self]
                               shell:[self.delegate composerManagerShell:self]
                      tmuxController:[self.delegate composerManagerTmuxController:self]];
+    [_minimalViewController setFont:[self.delegate composerManagerFont:self]];
     [superview addSubview:_minimalViewController.view];
     if (_saved.length) {
         _minimalViewController.stringValue = _saved ?: @"";

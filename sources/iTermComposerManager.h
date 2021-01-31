@@ -28,6 +28,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (NSString *_Nullable)composerManagerWorkingDirectory:(iTermComposerManager *)composerManager;
 - (NSString *)composerManagerShell:(iTermComposerManager *)composerManager;
 - (TmuxController * _Nullable)composerManagerTmuxController:(iTermComposerManager *)composerManager;
+- (NSFont *)composerManagerFont:(iTermComposerManager *)composerManager;
 @end
 
 @interface iTermComposerManager : NSObject

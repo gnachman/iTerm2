@@ -38,6 +38,10 @@ static CGFloat desiredHeight = 135;
     _vev.layer.borderWidth = 1;
 }
 
+- (void)setFont:(NSFont *)font {
+    _largeComposerViewController.textView.font = font;
+}
+
 - (void)setHost:(VT100RemoteHost *)host workingDirectory:(NSString *)pwd shell:(NSString *)shell tmuxController:(nonnull TmuxController *)tmuxController {
     [self view];
     _largeComposerViewController.host = host;

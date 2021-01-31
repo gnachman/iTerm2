@@ -28,6 +28,7 @@ NS_ASSUME_NONNULL_BEGIN
 workingDirectory:(NSString *)pwd
           shell:(NSString *)shell
  tmuxController:(TmuxController *)tmuxController;
+- (void)setFont:(NSFont *)font;
 
 @end
 

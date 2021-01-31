@@ -13665,6 +13665,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     return self.tmuxController;
 }
 
+- (NSFont *)composerManagerFont:(iTermComposerManager *)composerManager {
+    return self.textview.font;
+}
+
 #pragma mark - iTermIntervalTreeObserver
 
 - (void)intervalTreeDidReset {
