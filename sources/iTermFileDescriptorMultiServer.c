@@ -16,6 +16,7 @@
 #include <mach/mach.h>
 #include <stdarg.h>
 #include <stdlib.h>
+#include <sys/time.h>
 #include <sys/types.h>
 #include <sys/un.h>
 #include <unistd.h>
@@ -1053,14 +1054,65 @@ static int iTermFileDescriptorMultiServerRun(char *path, int socketFd, int write
     return 1;
 }
 
+static double now(void) {
+    struct timeval tp;
+    gettimeofday(&tp, NULL);
+    return (double)tp.tv_sec + (double)tp.tv_usec / 1000000.0;
+}
+
 // There should be a single command-line argument, which is the path to the unix-domain socket
 // I'll use.
 int main(int argc, char *argv[]) {
-    assert(argc == 2);
-    gMultiServerSocketPath = argv[1];
-    iTermFileDescriptorMultiServerRun(argv[1],
-                                      iTermMultiServerFileDescriptorAcceptSocket,
-                                      iTermMultiServerFileDescriptorInitialWrite,
-                                      iTermMultiServerFileDescriptorInitialRead);
-    return 1;
+    iTermForkState forkState = {
+        .connectionFd = -1,
+        .deadMansPipe = { 0, 0 },
+    };
+    iTermTTYState ttyState;
+    memset(&ttyState, 0, sizeof(ttyState));
+
+    int error = 0;
+    const char *launchArgv[] = { "/bin/sh", NULL };
+    const char *launchEnvp[] = {"", NULL};
+    iTermMultiServerRequestLaunch launch = {
+        .path = "/bin/bash",
+        .argv = launchArgv,
+        .argc = 1,
+        .envp = launchEnvp,
+        .envc = 1,
+        .columns = 80,
+        .rows = 25,
+        .pixel_width = 800,
+        .pixel_height = 250,
+        .isUTF8 = 1,
+        .pwd = "/",
+        .uniqueId = 1234
+    };
+
+    printf("%0.4f: fork & exec\n", now());
+    int masterFd = Launch(&launch, &forkState, &ttyState, &error);
+    printf("%0.4f returned from fork & exec\n", now());
+    if (masterFd <= 0) {
+        printf("Failed\n");
+        return 1;
+    }
+    while (1) {
+        char buf[1025];
+        printf("%0.4f: reading...\n", now());
+        const ssize_t n = read(masterFd, buf, sizeof(buf) - 1);
+        if (n < 0) {
+            if (errno != EAGAIN && errno != EINTR) {
+                printf("error: %s\n", strerror(errno));
+                return 1;
+            }
+            continue;
+        }
+        if (n == 0) {
+            printf("%0.4f: [eof]\n", now());
+            return 0;
+        }
+
+        buf[n] = '\0';
+        printf("%0.4f: Read: %.*s\n", now(), (int)n, buf);
+    }
+    return 0;
 }
