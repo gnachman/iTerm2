@@ -61,9 +61,13 @@ NSString *const iTermSwipeHandlerCancelSwipe = @"iTermSwipeHandlerCancelSwipe";
     // drags that aren't horizontal enough after collecting more data.
     const NSEventMask eventMask = NSEventMaskScrollWheel;
     event = [NSApp nextEventMatchingMask:eventMask
-                               untilDate:[NSDate distantFuture]
+                               untilDate:[NSDate dateWithTimeIntervalSinceNow:0.1]
                                   inMode:NSEventTrackingRunLoopMode
                                  dequeue:YES];
+    if (!event) {
+        return NO;
+    }
+
     DLog(@"Got event %@", iTermShortEventPhasesString(event));
     while (1) {
         @autoreleasepool {
