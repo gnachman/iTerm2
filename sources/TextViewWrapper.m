@@ -28,6 +28,8 @@
 
 
 #import "TextViewWrapper.h"
+
+#import "DebugLogging.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermPreferences.h"
 #import "NSObject+iTerm.h"
