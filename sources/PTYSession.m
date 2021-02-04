@@ -3369,6 +3369,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 + (BOOL)_recursiveSelectMenuItemWithTitle:(NSString*)title identifier:(NSString *)identifier inMenu:(NSMenu*)menu {
+    [menu update];
     for (NSMenuItem* item in [menu itemArray]) {
         if (![item isEnabled] || [item isHidden]) {
             continue;
