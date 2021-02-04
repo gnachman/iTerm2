@@ -939,6 +939,7 @@ iTermWindowType iTermWindowTypeNormalized(iTermWindowType windowType) {
     [self.contentView layoutSubviews];
     [self updateForTransparency:self.ptyWindow];
     [self addShortcutAccessorViewControllerToTitleBarIfNeeded];
+    [self updateTabColors];  // This updates the window's background colors in case some panes are now transparent.
     [self didFinishFullScreenTransitionSuccessfully:YES];
     [self updateVariables];
 

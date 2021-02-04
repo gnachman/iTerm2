@@ -29,6 +29,9 @@
 }
 
 - (CGFloat)desiredAlphaValue {
+    if (self.window && (self.window.styleMask & NSWindowStyleMaskFullScreen) == NSWindowStyleMaskFullScreen) {
+        return 1;
+    }
     return iTermAlphaValueForTopView(_transparency, _blend);
 }
 

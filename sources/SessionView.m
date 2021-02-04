@@ -375,9 +375,12 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
 
         DLog(@"setTerminalBackgroundColor:%@ %@\n%@", color, self.delegate, [NSThread callStackSymbols]);
         if (color && _metalView.alphaValue < 1) {
+            DLog(@"setTerminalBackgroundColor: Set background color view hidden=%@ because metalview is not opaque", @(!iTermTextIsMonochrome()));
             _backgroundColorView.hidden = !iTermTextIsMonochrome();
             _legacyScrollerBackgroundView.hidden = iTermTextIsMonochrome();
         } else {
+            DLog(@"setTerminalBackgroundColor: Set background color view hidden=YES because bg color (%@) is nil or metalView.alphaValue (%@) == 1",
+                  color, @(_metalView.alphaValue));
             _backgroundColorView.hidden = YES;
             _legacyScrollerBackgroundView.hidden = YES;
         }
@@ -712,10 +715,13 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     [CATransaction setDisableActions:YES];
     if (_metalView.alphaValue == 0) {
         _imageView.hidden = (_imageView.image == nil);
+        DLog(@"updateImageAndBackgroundViewVisibility: set backgroundColorView.hidden=%@ because metalView.alphaValue=0",
+             @(!iTermTextIsMonochrome()));
         _backgroundColorView.hidden = !iTermTextIsMonochrome();
         _legacyScrollerBackgroundView.hidden = iTermTextIsMonochrome();
     } else {
         _imageView.hidden = YES;
+        DLog(@"updateImageAndBackgroundViewVisibility: Set backgroundColorView.hidden=YES because metalView.alphaValue (%@) != 0", @(_metalView.alphaValue));
         _backgroundColorView.hidden = YES;
         _legacyScrollerBackgroundView.hidden = YES;
     }

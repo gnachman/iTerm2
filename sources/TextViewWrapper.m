@@ -63,6 +63,7 @@
 // has a layer it becomes opaque black, as of macOS 11.1.
 - (void)drawRect:(NSRect)dirtyRect {
     NSColor *color = [self it_backgroundColorOfEnclosingTerminalIfBackgroundColorViewHidden];
+    DLog(@"textViewWrapper: draw with color %@", color);
     [color ?: [NSColor clearColor] set];
     NSRectFill(dirtyRect);
 }
