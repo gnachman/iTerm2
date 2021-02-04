@@ -1185,7 +1185,8 @@ const CGFloat kDefaultTagsWidth = 80;
 - (void)setFont:(NSFont *)theFont
 {
     _haveHeights = NO;
-    _font = theFont;
+    [_font autorelease];
+    _font = [theFont retain];
 
     if ([theFont pointSize] < 13) {
         [[searchField_ cell] setFont:theFont];
