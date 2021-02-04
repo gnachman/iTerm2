@@ -107,9 +107,9 @@ static NSRect PSMConvertAccessibilityFrameToScreen(NSView *view, NSRect frame) {
 }
 
 - (BOOL)accessibilityPerformPress {
-        PSMTabBarCell *cell = self.cell;
-    [cell.psmTabControlView closeTabClick:cell];
-    return YES; // we don't actually know if -closeTabClick: succeeded, but for now, let's pretend it did
+    PSMTabBarCell *cell = self.cell;
+    [cell.psmTabControlView closeTabClick:cell button:0];
+    return YES; // we don't actually know if -closeTabClick:button: succeeded, but for now, let's pretend it did
 }
 
 @end

@@ -1489,7 +1489,7 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionHTMLTabTitles = @"PSMTabBarContr
         PSMTabBarCell *mouseDownCell = [self cellForPoint:[self convertPoint:[[self lastMiddleMouseDownEvent] locationInWindow] fromView:nil]
                                                 cellFrame:&mouseDownCellFrame];
         if (cell && cell == mouseDownCell) {
-            [self closeTabClick:cell];
+            [self closeTabClick:cell button:theEvent.buttonNumber];
         }
     }
 }
@@ -1522,7 +1522,7 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionHTMLTabTitles = @"PSMTabBarContr
         cell.closeButtonVisible &&
         [mouseDownCell closeButtonPressed]) {
         // Clicked on close button
-        [self closeTabClick:cell];
+        [self closeTabClick:cell button:theEvent.buttonNumber];
         return;
     }
 
@@ -1739,8 +1739,7 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionHTMLTabTitles = @"PSMTabBarContr
     [self update];
 }
 
-- (void)closeTabClick:(id)sender
-{
+- (void)closeTabClick:(id)sender button:(int)button {
     NSTabViewItem *item = [sender representedObject];
     [[sender retain] autorelease];
     [[item retain] autorelease];
@@ -1753,8 +1752,8 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionHTMLTabTitles = @"PSMTabBarContr
         }
     }
 
-    if ([[self delegate] respondsToSelector:@selector(tabView:closeTab:)]) {
-        [[self delegate] tabView:[self tabView] closeTab:[item identifier]];
+    if ([[self delegate] respondsToSelector:@selector(tabView:closeTab:button:)]) {
+        [[self delegate] tabView:[self tabView] closeTab:[item identifier] button:button];
     }
 }
 

@@ -15,7 +15,8 @@
 
 @protocol PSMTabBarControlProtocol <NSObject>
 - (void)tabClick:(id)sender;
-- (void)closeTabClick:(id)sender;
+// 0=left, 1=right, 2=middle
+- (void)closeTabClick:(id)sender button:(int)button;
 - (id<PSMTabStyle>)style;
 - (void)update:(BOOL)animate;
 - (BOOL)automaticallyAnimates;

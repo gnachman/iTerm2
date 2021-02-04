@@ -138,7 +138,7 @@ extern PSMTabBarControlOptionKey PSMTabBarControlOptionHTMLTabTitles;  // NSNumb
 - (void)tabViewDoubleClickTabBar:(NSTabView *)tabView;
 - (void)setModifier:(int)mask;
 - (void)fillPath:(NSBezierPath*)path;
-- (void)tabView:(NSTabView *)tabView closeTab:(id)identifier;
+- (void)tabView:(NSTabView *)tabView closeTab:(id)identifier button:(int)button;
 - (NSTabViewItem *)tabView:(NSTabView *)tabView unknownObjectWasDropped:(id <NSDraggingInfo>)sender;
 - (id)tabView:(PSMTabBarControl *)tabView valueOfOption:(PSMTabBarControlOptionKey)option;
 - (void)tabViewDidClickAddTabButton:(PSMTabBarControl *)tabView;

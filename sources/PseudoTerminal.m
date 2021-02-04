@@ -5436,8 +5436,8 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 // NSTabView
-- (void)tabView:(NSTabView *)tabView closeTab:(id)identifier {
-    if ([iTermAdvancedSettingsModel middleClickClosesTab]) {
+- (void)tabView:(NSTabView *)tabView closeTab:(id)identifier button:(int)button {
+    if (button != 2 || [iTermAdvancedSettingsModel middleClickClosesTab]) {
         [self closeTab:identifier];
     }
 }
