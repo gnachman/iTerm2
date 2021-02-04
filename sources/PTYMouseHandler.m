@@ -337,7 +337,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 }
 
 - (void)mouseUp:(NSEvent *)event {
-    DLog(@"Mouse Up on %@ with event %@, numTouches=%d", self, event, _numTouches);
+    DLog(@"Mouse Up on %@ with event %@, numTouches=%d, mouseDown=%@", self, event, _numTouches, @(_mouseDown));
     _makingThreeFingerSelection = NO;
     [_altScreenMouseScrollInferrer nonScrollWheelEvent:event];
     if ([_threeFingerTapGestureRecognizer mouseUp:event]) {
@@ -349,14 +349,21 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     if (_mouseDownIsThreeFingerClick) {
         [self emulateThirdButtonPressDown:NO withEvent:event];
         DLog(@"Returning from mouseUp because mouse-down was a 3-finger click");
+        if (self.selection.live) {
+            [self copyAfterSelectionEndsIfDesired];
+        }
         [self.selection endLiveSelection];
         return;
-    } else if (numTouches == 3 && mouseDown) {
+    } else if (numTouches == 3 && _mouseDown) {
         // Three finger tap is valid but not emulating middle button
         [pointer_ mouseUp:event withTouches:numTouches];
+        DLog(@"set mouseDown=NO");
         _mouseDown = NO;
         DLog(@"Returning from mouseUp because there were 3 touches. Set mouseDown=NO");
         // We don't want a three finger tap followed by a scrollwheel to make a selection.
+        if (self.selection.live) {
+            [self copyAfterSelectionEndsIfDesired];
+        }
         [self.selection endLiveSelection];
         return;
     }
@@ -365,6 +372,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     if ([pointer_ eventEmulatesRightClick:event]) {
         [pointer_ mouseUp:event withTouches:numTouches];
         DLog(@"Returning from mouseUp because we'e emulating a right click.");
+        if (self.selection.live) {
+            [self copyAfterSelectionEndsIfDesired];
+        }
         [self.selection endLiveSelection];
         return;
     }
@@ -373,8 +383,11 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     // semantic history.
     const BOOL cmdPressed = cmdActuallyPressed && (!_mouseDownWasFirstMouse ||
                                                    [iTermAdvancedSettingsModel cmdClickWhenInactiveInvokesSemanticHistory]);
-    if (mouseDown == NO) {
+    if (_mouseDown == NO) {
         DLog(@"Returning from mouseUp because the mouse was never down.");
+        if (self.selection.live) {
+            [self copyAfterSelectionEndsIfDesired];
+        }
         [self.selection endLiveSelection];
         return;
     }
@@ -517,19 +530,28 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         // mouse-up so you have the chance to drag it.
         [self.selection clearSelection];
     }
+    if (wasSelecting) {
+        [self copyAfterSelectionEndsIfDesired];
+    }
+
+    DLog(@"Mouse up. selection=%@", self.selection);
+
+    [self.mouseDelegate mouseHandlerDidMutateState:self];
+}
+
+- (void)copyAfterSelectionEndsIfDesired {
+    DLog(@"hasSelection=%@ handlerIsValid=%@ self=%@",
+         @([self.selection hasSelection]),
+         @([self.mouseDelegate mouseHandlerIsValid:self]),
+         self);
     if ([self.selection hasSelection] &&
-        [self.mouseDelegate mouseHandlerIsValid:self] &&
-        wasSelecting) {
+        [self.mouseDelegate mouseHandlerIsValid:self]) {
         // if we want to copy our selection, do so
         DLog(@"selection copies text=%@", @([iTermPreferences boolForKey:kPreferenceKeySelectionCopiesText]));
         if ([iTermPreferences boolForKey:kPreferenceKeySelectionCopiesText]) {
             [self.mouseDelegate mouseHandlerCopy:self];
         }
     }
-
-    DLog(@"Mouse up. selection=%@", self.selection);
-
-    [self.mouseDelegate mouseHandlerDidMutateState:self];
 }
 
 - (void)mouseDragged:(NSEvent *)event {
