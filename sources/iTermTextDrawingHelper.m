@@ -262,13 +262,12 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
     NSInteger yLimit = _numberOfLines;
 
     VT100GridCoordRange boundingCoordRange = [self coordRangeForRect:rect];
-    NSRange visibleLines = [self rangeOfVisibleRows];
 
     // Start at 0 because ligatures can draw incorrectly otherwise. When a font has a ligature for
     // -> and >-, then a line like ->->-> needs to start at the beginning since drawing only a
     // suffix of it could draw a >- ligature at the start of the range being drawn. Issue 5030.
     boundingCoordRange.start.x = 0;
-    boundingCoordRange.start.y = MAX(MAX(0, boundingCoordRange.start.y - 1), visibleLines.location);
+    boundingCoordRange.start.y = MAX(0, boundingCoordRange.start.y - 1);
     boundingCoordRange.end.x = MIN(_gridSize.width, boundingCoordRange.end.x + haloWidth);
     boundingCoordRange.end.y = MIN(yLimit, boundingCoordRange.end.y + 1);
 
@@ -301,8 +300,7 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
 
     [self drawRanges:ranges count:numRowsInRect
               origin:boundingCoordRange.start
-        boundingRect:[self rectForCoordRange:boundingCoordRange]
-        visibleLines:visibleLines];
+        boundingRect:[self rectForCoordRange:boundingCoordRange]];
 
     if (_showDropTargets) {
         [self drawDropTargets];
@@ -346,8 +344,7 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
 - (void)drawRanges:(NSRange *)ranges
              count:(NSInteger)numRanges
             origin:(VT100GridCoord)origin
-      boundingRect:(NSRect)boundingRect
-      visibleLines:(NSRange)visibleLines {
+      boundingRect:(NSRect)boundingRect {
     // Configure graphics
     [[NSGraphicsContext currentContext] setCompositingOperation:NSCompositingOperationCopy];
 
@@ -358,9 +355,6 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
 
     for (NSInteger i = 0; i < numRanges; i++) {
         const int line = origin.y + i;
-        if (line >= NSMaxRange(visibleLines)) {
-            continue;
-        }
         iTermPreciseTimerStatsStartTimer(&_stats[TIMER_CONSTRUCT_BACKGROUND_RUNS]);
         NSRange charRange = ranges[i];
         // We work hard to paint all the backgrounds first and then all the foregrounds. The reason this
