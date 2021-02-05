@@ -30,7 +30,8 @@
                         dirtyRect:(NSRect)rect
            visibleRectInContainer:(NSRect)visibleRectInContainer
            blendDefaultBackground:(BOOL)blendDefaultBackground
-                             flip:(BOOL)shouldFlip;
+                             flip:(BOOL)shouldFlip
+                    virtualOffset:(CGFloat)virtualOffset;
 
 // Call this when the image changes.
 - (void)invalidate;

@@ -74,7 +74,8 @@ typedef NS_ENUM(NSInteger, PTYCharType) {
 - (void)textViewFontDidChange;
 - (BOOL)textViewDrawBackgroundImageInView:(NSView *)view
                                  viewRect:(NSRect)rect
-                   blendDefaultBackground:(BOOL)blendDefaultBackground;
+                   blendDefaultBackground:(BOOL)blendDefaultBackground
+                            virtualOffset:(CGFloat)virtualOffset;
 - (BOOL)textViewHasBackgroundImage;
 - (void)sendEscapeSequence:(NSString *)text;
 - (void)sendHexCode:(NSString *)codes;
@@ -396,6 +397,9 @@ typedef void (^PTYTextViewDrawingHookBlock)(iTermTextDrawingHelper *);
 @property (nonatomic, readonly) VT100GridCoord cursorCoord;
 @property (nonatomic, readonly) iTermFindOnPageHelper *findOnPageHelper;
 
+// This is the height of the bottom margin.
+@property (nonatomic, readonly) double excess;
+
 // Returns the size of a cell for a given font. hspace and vspace are multipliers and the width
 // and height.
 + (NSSize)charSizeForFont:(NSFont*)aFont
@@ -625,6 +629,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult;
 
 - (id)contentWithAttributes:(BOOL)attributes;
 - (void)setUseBoldColor:(BOOL)flag brighten:(BOOL)brighten;
+
+- (void)drawRect:(NSRect)rect inView:(NSView *)view;
+
+- (void)setAlphaValue:(CGFloat)alphaValue NS_UNAVAILABLE;
 
 #pragma mark - Testing only
 

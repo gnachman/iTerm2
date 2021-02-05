@@ -8,6 +8,7 @@
 #import "iTermBackgroundDrawingHelper.h"
 
 #import "iTermSharedImageStore.h"
+#import "iTermVirtualOffset.h"
 #import "SessionView.h"
 
 typedef struct {
@@ -29,7 +30,8 @@ typedef struct {
                         dirtyRect:(NSRect)dirtyRect
            visibleRectInContainer:(NSRect)visibleRectInContainer
            blendDefaultBackground:(BOOL)blendDefaultBackground
-                             flip:(BOOL)shouldFlip {
+                             flip:(BOOL)shouldFlip
+                    virtualOffset:(CGFloat)virtualOffset {
     const BOOL debug = NO;
     const iTermBackgroundDraws draws = [self drawsForBackgroundImageInView:view
                                                                  dirtyRect:dirtyRect
@@ -40,7 +42,7 @@ typedef struct {
     const float alpha = [self.delegate backgroundDrawingHelperUseTransparency] ? (1.0 - [self.delegate backgroundDrawingHelperTransparency]) : 1.0;
     if (!draws.image) {
         [[[self.delegate backgroundDrawingHelperDefaultBackgroundColor] colorWithAlphaComponent:alpha] set];
-        NSRectFillUsingOperation(draws.solidBackgroundColorRect, NSCompositingOperationCopy);
+        iTermRectFillUsingOperation(draws.solidBackgroundColorRect, NSCompositingOperationCopy, virtualOffset);
         return;
     }
 
@@ -62,43 +64,47 @@ typedef struct {
     };
     NSRect (^transform)(NSRect) = shouldFlip ? flip : identity;
     
-    [draws.image.image drawInRect:draws.imageDestinationRect
-                         fromRect:transform(draws.imageSourceRect)
-                        operation:operation
-                         fraction:alpha
-                   respectFlipped:YES
-                            hints:nil];
+    [draws.image.image it_drawInRect:draws.imageDestinationRect
+                            fromRect:transform(draws.imageSourceRect)
+                           operation:operation
+                            fraction:alpha
+                      respectFlipped:YES
+                               hints:nil
+                       virtualOffset:virtualOffset];
     // Draw letterboxes/pillarboxes
     NSColor *defaultBackgroundColor = [self.delegate backgroundDrawingHelperDefaultBackgroundColor];
     [defaultBackgroundColor set];
-    NSRectFillUsingOperation(draws.boxes[0], NSCompositingOperationSourceOver);
-    NSRectFillUsingOperation(draws.boxes[1], NSCompositingOperationSourceOver);
+    iTermRectFillUsingOperation(draws.boxes[0], NSCompositingOperationSourceOver, virtualOffset);
+    iTermRectFillUsingOperation(draws.boxes[1], NSCompositingOperationSourceOver, virtualOffset);
     
     if (blendDefaultBackground) {
         // Blend default background color over background image.
         [[defaultBackgroundColor colorWithAlphaComponent:1 - [self.delegate backgroundDrawingHelperBlending]] set];
-        NSRectFillUsingOperation(draws.imageRect, NSCompositingOperationSourceOver);
+        iTermRectFillUsingOperation(draws.imageRect, NSCompositingOperationSourceOver, virtualOffset);
     }
     
     if (debug) {
+        const NSRect adjustedRect = NSRectSubtractingVirtualOffset(dirtyRect, virtualOffset);
         NSBezierPath *path = [NSBezierPath bezierPath];
-        [path moveToPoint:dirtyRect.origin];
-        [path lineToPoint:NSMakePoint(NSMaxX(dirtyRect), NSMaxY(dirtyRect))];
+        [path moveToPoint:adjustedRect.origin];
+        [path lineToPoint:NSMakePoint(NSMaxX(adjustedRect), NSMaxY(adjustedRect))];
         [[NSColor redColor] set];
         [path setLineWidth:1];
         [path stroke];
-        NSFrameRect(dirtyRect);
+        iTermFrameRect(dirtyRect, virtualOffset);
         NSRect localRect = [container convertRect:dirtyRect fromView:view];
         NSString *s = [NSString stringWithFormat:@"rect=%@ local=%@ src=%@ dst=%@",
-                       NSStringFromRect(dirtyRect),
-                       NSStringFromRect(localRect),
+                       NSStringFromRect(NSRectSubtractingVirtualOffset(dirtyRect, virtualOffset)),
+                       NSStringFromRect(NSRectSubtractingVirtualOffset(localRect, virtualOffset)),
                        NSStringFromRect(NSIntegralRect(draws.imageSourceRect)),
                        NSStringFromRect(NSIntegralRect(draws.imageDestinationRect))];
 
         [[NSColor whiteColor] set];
-        NSRectFill(NSMakeRect(100, dirtyRect.origin.y+20, 600, 24));
+        iTermRectFill(NSMakeRect(100, dirtyRect.origin.y+20, 600, 24), virtualOffset);
 
-        [s drawAtPoint:NSMakePoint(100, dirtyRect.origin.y+20) withAttributes:@{ NSForegroundColorAttributeName: [NSColor blackColor] }];
+        [s it_drawAtPoint:NSMakePoint(100, dirtyRect.origin.y+20)
+           withAttributes:@{ NSForegroundColorAttributeName: [NSColor blackColor]}
+            virtualOffset:virtualOffset];
     }
 }
 

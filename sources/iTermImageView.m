@@ -24,6 +24,14 @@
         self.layer.actions = @{@"backgroundColor": [NSNull null],
                                @"contents": [NSNull null],
                                @"contentsGravity": [NSNull null] };
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(fullScreenDidChange:)
+                                                     name:NSWindowDidEnterFullScreenNotification
+                                                   object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(fullScreenDidChange:)
+                                                     name:NSWindowDidExitFullScreenNotification
+                                                   object:nil];
     }
     return self;
 }
@@ -38,10 +46,23 @@
     [self updateAlpha];
 }
 
+- (BOOL)inFullScreenWindow {
+    return (self.window.styleMask & NSWindowStyleMaskFullScreen) == NSWindowStyleMaskFullScreen;
+}
+
 - (CGFloat)desiredAlpha {
+    if ([self inFullScreenWindow]) {
+        // There is nothing behind this view in full screen so if it is not hidden it must be opaque.
+        return 1;
+    }
     return iTermAlphaValueForBottomView(_transparency, _blend);
 }
 
+- (void)fullScreenDidChange:(NSNotification *)notification {
+    if (notification.object == self.window) {
+        [self updateAlpha];
+    }
+}
 - (void)updateAlpha {
     [super setAlphaValue:self.desiredAlpha];
 }

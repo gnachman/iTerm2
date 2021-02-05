@@ -31,6 +31,8 @@
     [super scrollToPoint:newOrigin];
     if (_useMetal) {
         [_metalView setNeedsDisplay:YES];
+    } else {
+        [_legacyView setNeedsDisplay:YES];
     }
 }
 

@@ -17,7 +17,8 @@ typedef NS_ENUM(NSInteger, ITermCursorType) {
                   doubleWidth:(BOOL)doubleWidth
                 overrideColor:(NSColor*)overrideColor
                       context:(CGContextRef)ctx
-              backgroundColor:(NSColor *)backgroundColor;
+              backgroundColor:(NSColor *)backgroundColor
+                virtualOffset:(CGFloat)virtualOffset;
 
 @end
 
@@ -37,7 +38,8 @@ typedef NS_ENUM(NSInteger, ITermCursorType) {
                smart:(BOOL)smart
              focused:(BOOL)focused
                coord:(VT100GridCoord)coord
-             outline:(BOOL)outline;
+             outline:(BOOL)outline
+       virtualOffset:(CGFloat)virtualOffset;
 
 
 @end

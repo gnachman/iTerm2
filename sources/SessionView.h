@@ -28,6 +28,7 @@
 #import <Cocoa/Cocoa.h>
 #import "iTermBackgroundColorView.h"
 #import "iTermFindDriver.h"
+#import "iTermLegacyView.h"
 #import "iTermMetalDriver.h"
 #import "PTYScrollView.h"
 #import "PTYSession.h"
@@ -47,7 +48,7 @@
 
 extern NSString *const SessionViewWasSelectedForInspectionNotification;
 
-@protocol iTermSessionViewDelegate<iTermFindDriverDelegate, NSObject>
+@protocol iTermSessionViewDelegate<iTermFindDriverDelegate, iTermLegacyViewDelegate, NSObject>
 
 // Mouse entered the view.
 - (void)sessionViewMouseEntered:(NSEvent *)event;
@@ -142,6 +143,7 @@ extern NSString *const SessionViewWasSelectedForInspectionNotification;
 
 - (BOOL)sessionViewUseSeparateStatusBarsPerPane;
 - (CGFloat)sessionViewTransparencyAlpha;
+- (NSRect)sessionViewFrameForLegacyView;
 
 @end
 
@@ -184,7 +186,7 @@ typedef NS_ENUM(NSUInteger, iTermSessionViewFindDriver) {
 // is 10.13 or earlier then this is hidden. It can't be used with subpixel AA because macOS isn't
 // able to take the color it's drawing over into account when choosing the subpixel colors and it
 // looks horrible.
-@property(nonatomic, strong) iTermBackgroundColorView *backgroundColorView NS_AVAILABLE_MAC(10_14);
+@property(nonatomic, strong) iTermSessionBackgroundColorView *backgroundColorView;
 
 // How far the metal view extends beyond the visible part of the viewport, such as under the title
 // bar or bottom per-pane status bar.
@@ -265,5 +267,6 @@ typedef NS_ENUM(NSUInteger, iTermSessionViewFindDriver) {
 - (void)tabColorDidChange;
 - (void)didBecomeVisible;
 - (void)showUnobtrusiveMessage:(NSString *)message;
+- (void)setSuppressLegacyDrawing:(BOOL)suppressLegacyDrawing;
 
 @end

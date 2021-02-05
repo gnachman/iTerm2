@@ -7,16 +7,36 @@
 
 #import "iTermBackgroundColorView.h"
 
+#import "DebugLogging.h"
 #import "iTermAlphaBlendingHelper.h"
 
 @implementation iTermBackgroundColorView {
     NSColor *_backgroundColor;
 }
 
+- (instancetype)init {
+    self = [super init];
+    if (self) {
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(fullScreenDidChange:)
+                                                     name:NSWindowDidEnterFullScreenNotification
+                                                   object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(fullScreenDidChange:)
+                                                     name:NSWindowDidExitFullScreenNotification
+                                                   object:nil];
+    }
+    return self;
+}
+
 - (NSString *)description {
     return [NSString stringWithFormat:@"<%@: %p frame=%@ hidden=%@ alpha=%@ backgroundColor=%@>",
             NSStringFromClass([self class]), self, NSStringFromRect(self.frame),
             self.hidden ? @"YES": @"no", @(self.alphaValue), _backgroundColor];
+}
+
+- (void)fullScreenDidChange:(NSNotification *)notification {
+    [self updateBackgroundColor];
 }
 
 - (NSColor *)backgroundColor {
@@ -28,11 +48,17 @@
     [self updateBackgroundColor];
 }
 
+- (BOOL)inFullScreenWindow {
+    return (self.window.styleMask & NSWindowStyleMaskFullScreen) == NSWindowStyleMaskFullScreen;
+}
+
 - (CGFloat)desiredAlphaValue {
-    if (self.window && (self.window.styleMask & NSWindowStyleMaskFullScreen) == NSWindowStyleMaskFullScreen) {
+    if (self.inFullScreenWindow &&
+        self.blend == 0) {
+        // Am full screen without a background image.
         return 1;
     }
-    return iTermAlphaValueForTopView(_transparency, _blend);
+    return iTermAlphaValueForTopView(self.inFullScreenWindow ? 0 : _transparency, _blend);
 }
 
 - (void)updateBackgroundColor {
@@ -51,3 +77,16 @@
 
 @end
 
+@implementation iTermSessionBackgroundColorView
+
+- (CGFloat)desiredAlphaValue {
+    CGFloat a = [super desiredAlphaValue];
+    DLog(@"%@ alpha=%@, transparency=%@, blend=%@, fullscreen=%@", 
+         self, @(a), @(self.transparency), @(self.blend), @(self.inFullScreenWindow));
+    return a;
+}
+
+@end
+
+@implementation iTermScrollerBackgroundColorView
+@end

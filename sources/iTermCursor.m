@@ -11,6 +11,7 @@
 #import "NSColor+iTerm.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermSmartCursorColor.h"
+#import "iTermVirtualOffset.h"
 
 @interface iTermUnderlineCursor : iTermCursor
 @end
@@ -57,10 +58,11 @@
                smart:(BOOL)smart
              focused:(BOOL)focused
                coord:(VT100GridCoord)coord
-             outline:(BOOL)outline {
+             outline:(BOOL)outline
+       virtualOffset:(CGFloat)virtualOffset {
 }
 
-- (void)drawOutlineOfRect:(NSRect)cursorRect withColor:(NSColor *)color {
+- (void)drawOutlineOfRect:(NSRect)cursorRect withColor:(NSColor *)color virtualOffset:(CGFloat)virtualOffset {
     [[color colorWithAlphaComponent:0.75] set];
     NSRect rect = cursorRect;
     CGFloat frameWidth = 0.5;
@@ -68,7 +70,7 @@
     rect.origin.y -= frameWidth;
     rect.size.width += frameWidth * 2;
     rect.size.height += frameWidth * 2;
-    NSFrameRectWithWidthUsingOperation(rect, 0.5, NSCompositingOperationSourceOver);
+    iTermFrameRectWithWidthUsingOperation(rect, 0.5, NSCompositingOperationSourceOver, virtualOffset);
 }
 
 @end
@@ -83,17 +85,20 @@
                smart:(BOOL)smart
              focused:(BOOL)focused
                coord:(VT100GridCoord)coord
-             outline:(BOOL)outline {
+             outline:(BOOL)outline
+       virtualOffset:(CGFloat)virtualOffset {
     const CGFloat height = [iTermAdvancedSettingsModel underlineCursorHeight];
     NSRect cursorRect = NSMakeRect(rect.origin.x,
                                    rect.origin.y + rect.size.height - height - [iTermAdvancedSettingsModel underlineCursorOffset],
                                    ceil(rect.size.width),
                                    height);
     if (outline) {
-        [self drawOutlineOfRect:cursorRect withColor:backgroundColor];
+        [self drawOutlineOfRect:cursorRect
+                      withColor:backgroundColor
+                  virtualOffset:virtualOffset];
     } else {
         [backgroundColor set];
-        NSRectFill(cursorRect);
+        iTermRectFill(cursorRect, virtualOffset);
     }
 }
 
@@ -109,13 +114,14 @@
                smart:(BOOL)smart
              focused:(BOOL)focused
                coord:(VT100GridCoord)coord
-             outline:(BOOL)outline {
+             outline:(BOOL)outline
+       virtualOffset:(CGFloat)virtualOffset {
     NSRect cursorRect = NSMakeRect(rect.origin.x, rect.origin.y, [iTermAdvancedSettingsModel verticalBarCursorWidth], rect.size.height);
     if (outline) {
-        [self drawOutlineOfRect:cursorRect withColor:backgroundColor];
+        [self drawOutlineOfRect:cursorRect withColor:backgroundColor virtualOffset:virtualOffset];
     } else {
         [backgroundColor set];
-        NSRectFill(cursorRect);
+        iTermRectFill(cursorRect, virtualOffset);
     }
 }
 
@@ -131,7 +137,8 @@
                smart:(BOOL)smart
              focused:(BOOL)focused
                coord:(VT100GridCoord)coord
-             outline:(BOOL)outline {
+             outline:(BOOL)outline
+       virtualOffset:(CGFloat)virtualOffset {
     const CGFloat heightFraction = 1 / 3.0;
     NSRect cursorRect = NSMakeRect(rect.origin.x - rect.size.width,
                                    rect.origin.y,
@@ -141,13 +148,13 @@
     const CGFloat r = self.selecting ? 2 : 1;
     NSBezierPath *path;
     path = [[[NSBezierPath alloc] init] autorelease];
-    [path moveToPoint:NSMakePoint(NSMinX(cursorRect), NSMinY(cursorRect))];
-    [path lineToPoint:NSMakePoint(NSMidX(cursorRect) - r, NSMaxY(cursorRect))];
-    [path lineToPoint:NSMakePoint(NSMidX(cursorRect) - r, NSMaxY(rect))];
-    [path lineToPoint:NSMakePoint(NSMidX(cursorRect) + r, NSMaxY(rect))];
-    [path lineToPoint:NSMakePoint(NSMidX(cursorRect) + r, NSMaxY(cursorRect))];
-    [path lineToPoint:NSMakePoint(NSMaxX(cursorRect), NSMinY(cursorRect))];
-    [path lineToPoint:NSMakePoint(NSMinX(cursorRect), NSMinY(cursorRect))];
+    [path it_moveToPoint:NSMakePoint(NSMinX(cursorRect), NSMinY(cursorRect)) virtualOffset:virtualOffset];
+    [path it_lineToPoint:NSMakePoint(NSMidX(cursorRect) - r, NSMaxY(cursorRect)) virtualOffset:virtualOffset];
+    [path it_lineToPoint:NSMakePoint(NSMidX(cursorRect) - r, NSMaxY(rect)) virtualOffset:virtualOffset];
+    [path it_lineToPoint:NSMakePoint(NSMidX(cursorRect) + r, NSMaxY(rect)) virtualOffset:virtualOffset];
+    [path it_lineToPoint:NSMakePoint(NSMidX(cursorRect) + r, NSMaxY(cursorRect)) virtualOffset:virtualOffset];
+    [path it_lineToPoint:NSMakePoint(NSMaxX(cursorRect), NSMinY(cursorRect)) virtualOffset:virtualOffset];
+    [path it_lineToPoint:NSMakePoint(NSMinX(cursorRect), NSMinY(cursorRect)) virtualOffset:virtualOffset];
     if (self.selecting) {
         [[NSColor colorWithRed:0xc1 / 255.0 green:0xde / 255.0 blue:0xff / 255.0 alpha:1] set];
     } else {
@@ -178,7 +185,8 @@
                smart:(BOOL)smart
              focused:(BOOL)focused
                coord:(VT100GridCoord)coord
-             outline:(BOOL)outline {
+             outline:(BOOL)outline
+       virtualOffset:(CGFloat)virtualOffset {
     assert(!outline);
 
     // Draw the colored box/frame
@@ -192,10 +200,10 @@
     [backgroundColor set];
     const BOOL frameOnly = !focused;
     if (frameOnly) {
-        NSFrameRect(rect);
+        iTermFrameRect(rect, virtualOffset);
         return;
     } else {
-        NSRectFill(rect);
+        iTermRectFill(rect, virtualOffset);
     }
 
     if (screenChar.code) {
@@ -206,14 +214,16 @@
                                doubleWidth:doubleWidth
                            backgroundColor:backgroundColor
                                        ctx:ctx
-                                     coord:coord];
+                                     coord:coord
+                             virtualOffset:virtualOffset];
         } else {
             // Non-smart
             [self.delegate cursorDrawCharacterAt:coord
                                      doubleWidth:doubleWidth
                                    overrideColor:foregroundColor
                                          context:ctx
-                                 backgroundColor:backgroundColor];
+                                 backgroundColor:backgroundColor
+                                   virtualOffset:virtualOffset];
         }
     }
 }
@@ -222,7 +232,8 @@
                      doubleWidth:(BOOL)doubleWidth
                  backgroundColor:(NSColor *)backgroundColor
                              ctx:(CGContextRef)ctx
-                           coord:(VT100GridCoord)coord {
+                           coord:(VT100GridCoord)coord
+                   virtualOffset:(CGFloat)virtualOffset {
     NSColor *regularTextColor = [self.delegate cursorColorForCharacter:screenChar
                                                         wantBackground:YES
                                                                  muted:NO];
@@ -233,7 +244,8 @@
                              doubleWidth:doubleWidth
                            overrideColor:overrideColor
                                  context:ctx
-                         backgroundColor:nil];
+                         backgroundColor:nil
+                           virtualOffset:virtualOffset];
 
 }
 

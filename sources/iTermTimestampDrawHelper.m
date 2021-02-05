@@ -58,7 +58,7 @@ const CGFloat iTermTimestampGradientWidth = 20;
     NSString *string = [self stringForTimestamp:timestamp
                                             now:_now
                              useTestingTimezone:_useTestingTimezone];
-    NSRect textFrame = [self frameForString:string line:line maxX:0];
+    const NSRect textFrame = [self frameForString:string line:line maxX:0 virtualOffset:0];
     _maximumWidth = MAX(_maximumWidth, NSWidth(textFrame));
 
     iTermTimestampRow *row = [[iTermTimestampRow alloc] init];
@@ -67,9 +67,9 @@ const CGFloat iTermTimestampGradientWidth = 20;
     [_rows addObject:row];
 }
 
-- (void)drawInContext:(NSGraphicsContext *)context frame:(NSRect)frame {
+- (void)drawInContext:(NSGraphicsContext *)context frame:(NSRect)frame virtualOffset:(CGFloat)virtualOffset {
     [_rows enumerateObjectsUsingBlock:^(iTermTimestampRow * _Nonnull row, NSUInteger idx, BOOL * _Nonnull stop) {
-        NSRect stringFrame = [self frameForStringGivenWidth:self->_maximumWidth line:row.line maxX:NSMaxX(frame)];
+        NSRect stringFrame = [self frameForStringGivenWidth:self->_maximumWidth line:row.line maxX:NSMaxX(frame) virtualOffset:virtualOffset];
         [self drawBackgroundInFrame:[self backgroundFrameForTextFrame:stringFrame]
                             bgColor:self->_bgColor
                             context:context];
@@ -77,13 +77,13 @@ const CGFloat iTermTimestampGradientWidth = 20;
     }];
 }
 
-- (void)drawRow:(int)index inContext:(NSGraphicsContext *)context frame:(NSRect)frameWithGradient {
+- (void)drawRow:(int)index inContext:(NSGraphicsContext *)context frame:(NSRect)frameWithGradient virtualOffset:(CGFloat)virtualOffset {
     NSRect frame = frameWithGradient;
     frame.origin.x += iTermTimestampGradientWidth;
     frame.size.width -= iTermTimestampGradientWidth;
 
     iTermTimestampRow *row = _rows[index];
-    NSRect stringFrame = [self frameForStringGivenWidth:_maximumWidth line:0 maxX:NSMaxX(frame)];
+    NSRect stringFrame = [self frameForStringGivenWidth:_maximumWidth line:0 maxX:NSMaxX(frame) virtualOffset:virtualOffset];
     stringFrame.origin.y += frame.origin.y;
     [self drawBackgroundInFrame:[self backgroundFrameForTextFrame:stringFrame]
                         bgColor:_bgColor
@@ -154,17 +154,17 @@ const CGFloat iTermTimestampGradientWidth = 20;
                       NSHeight(frame));
 }
 
-- (NSRect)frameForString:(NSString *)s line:(int)line maxX:(CGFloat)maxX {
+- (NSRect)frameForString:(NSString *)s line:(int)line maxX:(CGFloat)maxX virtualOffset:(CGFloat)virtualOffset {
     NSString *widest = [s stringByReplacingOccurrencesOfRegex:@"[\\d\\p{Alphabetic}]" withString:@"M"];
     NSSize size = [widest sizeWithAttributes:@{ NSFontAttributeName: [NSFont systemFontOfSize:[iTermAdvancedSettingsModel pointSizeOfTimeStamp]] }];
 
-    return [self frameForStringGivenWidth:size.width line:line maxX:maxX];
+    return [self frameForStringGivenWidth:size.width line:line maxX:maxX virtualOffset:virtualOffset];
 }
 
-- (NSRect)frameForStringGivenWidth:(CGFloat)width line:(int)line maxX:(CGFloat)maxX {
+- (NSRect)frameForStringGivenWidth:(CGFloat)width line:(int)line maxX:(CGFloat)maxX virtualOffset:(CGFloat)virtualOffset {
     const int w = width + [iTermPreferences intForKey:kPreferenceKeySideMargins];
     const int x = MAX(0, maxX - w);
-    const CGFloat y = line * _rowHeight;
+    const CGFloat y = line * _rowHeight - virtualOffset;
 
     return NSMakeRect(x, y, w, _rowHeight);
 }
