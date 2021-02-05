@@ -36,6 +36,7 @@
 #import "iTermTextViewAccessibilityHelper.h"
 #import "iTermURLActionHelper.h"
 #import "iTermURLStore.h"
+#import "iTermVirtualOffset.h"
 #import "iTermWebViewWrapperViewController.h"
 #import "iTermWarning.h"
 #import "MovePaneController.h"
@@ -209,6 +210,7 @@
 - (instancetype)initWithFrame:(NSRect)aRect colorMap:(iTermColorMap *)colorMap {
     self = [super initWithFrame:aRect];
     if (self) {
+        [super setAlphaValue:0];
         [self resetMouseLocationToRefuseFirstResponderAt];
         _drawingHelper = [[iTermTextDrawingHelper alloc] init];
         if ([iTermAdvancedSettingsModel showTimestampsByDefault]) {
@@ -774,8 +776,7 @@
 #pragma mark - NSView
 
 - (void)setAlphaValue:(CGFloat)alphaValue {
-    DLog(@"Set textview alpha to %@", @(alphaValue));
-    [super setAlphaValue:alphaValue];
+    assert(NO);
 }
 
 // Overrides an NSView method.
@@ -1097,7 +1098,9 @@
 
 #pragma mark - NSView Drawing
 
-- (void)drawRect:(NSRect)rect {
+// Draw in to another view which exactly coincides with the clip view, except it's inset on the top
+// and bottom by the margin heights.
+- (void)drawRect:(NSRect)rect inView:(NSView *)view {
     if (![_delegate textViewShouldDrawRect]) {
         // Metal code path in use
         [super drawRect:rect];
@@ -1112,9 +1115,17 @@
     }
     DLog(@"drawing document visible rect %@", NSStringFromRect(self.enclosingScrollView.documentVisibleRect));
 
-    const NSRect *rectArray;
+    const CGFloat virtualOffset = NSMinY(self.enclosingScrollView.documentVisibleRect);
+    const NSRect *constRectArray;
     NSInteger rectCount;
-    [self getRectsBeingDrawn:&rectArray count:&rectCount];
+    [view getRectsBeingDrawn:&constRectArray count:&rectCount];
+    NSMutableData *storage = [NSMutableData dataWithLength:sizeof(NSRect) * rectCount];
+    NSRect *rectArray = (NSRect *)[storage mutableBytes];
+    for (NSInteger i = 0; i < rectCount; i++) {
+        rectArray[i] = constRectArray[i];
+        rectArray[i].origin.y += virtualOffset;
+        NSLog(@"rect %d = %@ -> %@", (int)i, NSStringFromRect(constRectArray[i]), NSStringFromRect(rectArray[i]));
+    }
 
     [self performBlockWithFlickerFixerGrid:^{
         // Initialize drawing helper
@@ -1125,10 +1136,12 @@
             _drawingHook(_drawingHelper);
         }
 
-        [_drawingHelper drawTextViewContentInRect:rect rectsPtr:rectArray rectCount:rectCount];
+        NSRect virtualRect = rect;
+        virtualRect.origin.y += virtualOffset;
+        [_drawingHelper drawTextViewContentInRect:virtualRect rectsPtr:rectArray rectCount:rectCount virtualOffset:virtualOffset];
 
-        [_indicatorsHelper drawInFrame:_drawingHelper.indicatorFrame];
-        [_drawingHelper drawTimestamps];
+        [_indicatorsHelper drawInFrame:NSRectSubtractingVirtualOffset(_drawingHelper.indicatorFrame, virtualOffset)];
+        [_drawingHelper drawTimestampsWithVirtualOffset:virtualOffset];
 
         // Not sure why this is needed, but for some reason this view draws over its subviews.
         for (NSView *subview in [self subviews]) {
@@ -1143,6 +1156,9 @@
         }
     }];
     [self maybeInvalidateWindowShadow];
+}
+
+- (void)drawRect:(NSRect)rect {
 }
 
 - (void)performBlockWithFlickerFixerGrid:(void (NS_NOESCAPE ^)(void))block {
@@ -1186,8 +1202,6 @@
                 self.layer = nil;
             }
         }
-        // This is necessary to avoid drawing artifacts when Metal is enabled.
-        self.alphaValue = suppressDrawing ? 0 : 1;
     }
     PTYScrollView *scrollView = (PTYScrollView *)self.enclosingScrollView;
     [scrollView.verticalScroller setNeedsDisplay:YES];
@@ -4426,8 +4440,9 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 #pragma mark - iTermTextDrawingHelperDelegate
 
 - (void)drawingHelperDrawBackgroundImageInRect:(NSRect)rect
-                        blendDefaultBackground:(BOOL)blend {
-    [_delegate textViewDrawBackgroundImageInView:self viewRect:rect blendDefaultBackground:blend];
+                        blendDefaultBackground:(BOOL)blend
+                                 virtualOffset:(CGFloat)virtualOffset {
+    [_delegate textViewDrawBackgroundImageInView:self viewRect:rect blendDefaultBackground:blend virtualOffset:virtualOffset];
 }
 
 - (VT100ScreenMark *)drawingHelperMarkOnLine:(int)line {

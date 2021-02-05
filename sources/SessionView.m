@@ -162,6 +162,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     iTermAnnouncementDelegate,
     iTermFindDriverDelegate,
     iTermGenericStatusBarContainer,
+    iTermLegacyViewDelegate,
     iTermSearchResultsMinimapViewDelegate,
     NSDraggingSource,
     PTYScrollerDelegate,
@@ -206,6 +207,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     // its frame is 0x0.
     iTermBackgroundColorView *_legacyScrollerBackgroundView NS_AVAILABLE_MAC(10_14);
     iTermUnobtrusiveMessage *_unobtrusiveMessage;
+    iTermLegacyView *_legacyView;
 }
 
 + (double)titleHeight {
@@ -277,66 +279,61 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
         }
 
         _scrollview.contentView.copiesOnScroll = NO;
-        
         // assign the main view
         [self addSubviewBelowFindView:_scrollview];
 
-        if (@available(macOS 10.14, *)) {
-            if ([iTermAdvancedSettingsModel showLocationsInScrollbar]) {
-                _searchResultsMinimap = [[iTermSearchResultsMinimapView alloc] init];
-                _searchResultsMinimap.delegate = self;
-                [self addSubviewBelowFindView:_searchResultsMinimap];
-                iTermTuple<NSColor *, NSColor *> *(^tuple)(NSColor *) = ^iTermTuple<NSColor *, NSColor *> *(NSColor *color) {
-                    NSColor *saturated = [NSColor colorWithHue:color.hueComponent
-                                                    saturation:1
-                                                    brightness:1
-                                                         alpha:1];
-                    return [iTermTuple tupleWithObject:saturated
-                                             andObject:[saturated colorDimmedBy:0.2 towardsGrayLevel:1]];
-                };
-                // This order must match the iTermIntervalTreeObjectType enum.
-                NSArray<iTermTuple<NSColor *, NSColor *> *> *colors = @[
-                    // Blue mark
-                    tuple([iTermTextDrawingHelper successMarkColor]),
+        if ([iTermAdvancedSettingsModel showLocationsInScrollbar]) {
+            _searchResultsMinimap = [[iTermSearchResultsMinimapView alloc] init];
+            _searchResultsMinimap.delegate = self;
+            [self addSubviewBelowFindView:_searchResultsMinimap];
+            iTermTuple<NSColor *, NSColor *> *(^tuple)(NSColor *) = ^iTermTuple<NSColor *, NSColor *> *(NSColor *color) {
+                NSColor *saturated = [NSColor colorWithHue:color.hueComponent
+                                                saturation:1
+                                                brightness:1
+                                                     alpha:1];
+                return [iTermTuple tupleWithObject:saturated
+                                         andObject:[saturated colorDimmedBy:0.2 towardsGrayLevel:1]];
+            };
+            // This order must match the iTermIntervalTreeObjectType enum.
+            NSArray<iTermTuple<NSColor *, NSColor *> *> *colors = @[
+                // Blue mark
+                tuple([iTermTextDrawingHelper successMarkColor]),
 
-                     // Yellow mark
-                    [iTermTuple tupleWithObject:[iTermTextDrawingHelper otherMarkColor]
-                                      andObject:[[iTermTextDrawingHelper otherMarkColor] colorDimmedBy:0.2 towardsGrayLevel:1]],
+                 // Yellow mark
+                [iTermTuple tupleWithObject:[iTermTextDrawingHelper otherMarkColor]
+                                  andObject:[[iTermTextDrawingHelper otherMarkColor] colorDimmedBy:0.2 towardsGrayLevel:1]],
 
-                    // Red mark
-                    tuple([iTermTextDrawingHelper errorMarkColor]),
+                // Red mark
+                tuple([iTermTextDrawingHelper errorMarkColor]),
 
-                    // Manually created mark or prompt without code
-                    [iTermTuple tupleWithObject:[NSColor colorWithWhite:0.5 alpha:1]
-                                      andObject:[NSColor colorWithWhite:0.7 alpha:1]],
+                // Manually created mark or prompt without code
+                [iTermTuple tupleWithObject:[NSColor colorWithWhite:0.5 alpha:1]
+                                  andObject:[NSColor colorWithWhite:0.7 alpha:1]],
 
-                    // Annotation
-                    tuple([NSColor colorWithSRGBRed:1 green:1 blue:0 alpha:1]),
+                // Annotation
+                tuple([NSColor colorWithSRGBRed:1 green:1 blue:0 alpha:1]),
 
-                ];
-                _marksMinimap = [[iTermIncrementalMinimapView alloc] initWithColors:colors];
-                [self addSubviewBelowFindView:_marksMinimap];
-            }
+            ];
+            _marksMinimap = [[iTermIncrementalMinimapView alloc] initWithColors:colors];
+            [self addSubviewBelowFindView:_marksMinimap];
         }
+
+        [self installLegacyView];
 
 #if ENABLE_LOW_POWER_GPU_DETECTION
-        if (@available(macOS 10.11, *)) {
-            [[NSNotificationCenter defaultCenter] addObserver:self
-                                                     selector:@selector(preferredMetalDeviceDidChange:)
-                                                         name:iTermMetalDeviceProviderPreferredDeviceDidChangeNotification
-                                                       object:nil];
-        }
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(preferredMetalDeviceDidChange:)
+                                                     name:iTermMetalDeviceProviderPreferredDeviceDidChangeNotification
+                                                   object:nil];
 #endif
-        if (@available(macOS 10.14, *)) {
-            if (PTYScrollView.shouldDismember) {
-                [self addSubviewBelowFindView:_scrollview.verticalScroller];
-                _scrollview.verticalScroller.frame = [self frameForScroller];
-            }
-            [[NSNotificationCenter defaultCenter] addObserver:self
-                                                     selector:@selector(scrollerStyleDidChange:)
-                                                         name:@"NSPreferredScrollerStyleDidChangeNotification"
-                                                       object:nil];
+        if (PTYScrollView.shouldDismember) {
+            [self addSubviewBelowFindView:_scrollview.verticalScroller];
+            _scrollview.verticalScroller.frame = [self frameForScroller];
         }
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(scrollerStyleDidChange:)
+                                                     name:@"NSPreferredScrollerStyleDidChangeNotification"
+                                                   object:nil];
     }
     return self;
 }
@@ -582,7 +579,8 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
 
         iTermMetalClipView *metalClipView = (iTermMetalClipView *)_scrollview.contentView;
         metalClipView.useMetal = useMetal;
-
+        _legacyView.hidden = !useMetal;
+        
         [self updateLayout];
         [self setNeedsDisplay:YES];
     }
@@ -629,6 +627,15 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
         }
     });
     return chosenDevice;
+}
+
+- (void)installLegacyView {
+    assert(!_legacyView);
+    _legacyView = [[iTermLegacyView alloc] init];
+    _legacyView.delegate = self;
+    // Image view and background color view go under it.
+    [self insertSubview:_legacyView atIndex:2];
+    _metalClipView.legacyView = _legacyView;
 }
 
 - (void)installMetalViewWithDataSource:(id<iTermMetalDriverDataSource>)dataSource NS_AVAILABLE_MAC(10_11) {
@@ -699,6 +706,8 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
         // that doesn't involve doing something nutty like saving a copy of the drawable.
         [_metalView setNeedsDisplay:YES];
         [_scrollview setNeedsDisplay:YES];
+    } else {
+        [_legacyView setNeedsDisplay:YES];
     }
 }
 
@@ -881,6 +890,12 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     if (_useMetal) {
         [self updateMetalViewFrame];
     }
+    const CGFloat topMarginHeight = [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins];
+    const CGFloat bottomMarginHeight = [self.delegate sessionViewBottomMarginHeight];
+    _legacyView.frame = NSMakeRect(0,
+                                   bottomMarginHeight,
+                                   NSWidth(_scrollview.documentVisibleRect),
+                                   NSHeight(self.bounds) - bottomMarginHeight - topMarginHeight);
     DLog(@"After:\n%@", [self iterm_recursiveDescription]);
 }
 
@@ -1275,6 +1290,10 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
 
 - (PTYScroller *)verticalScroller {
     return [PTYScroller castFrom:self.scrollview.verticalScroller];
+}
+
+- (void)setSuppressLegacyDrawing:(BOOL)suppressLegacyDrawing {
+    _legacyView.hidden = suppressLegacyDrawing;
 }
 
 #pragma mark NSDraggingSource protocol
@@ -1935,6 +1954,12 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 - (NSRange)searchResultsMinimapViewRangeOfVisibleLines:(iTermSearchResultsMinimapView *)view NS_AVAILABLE_MAC(10_14) {
     return [self.searchResultsMinimapViewDelegate searchResultsMinimapViewRangeOfVisibleLines:view];
+}
+
+#pragma mark - iTermLegacyViewDelegate
+
+- (void)legacyView:(iTermLegacyView *)legacyView drawRect:(NSRect)dirtyRect {
+    [self.delegate legacyView:legacyView drawRect:dirtyRect];
 }
 
 @end

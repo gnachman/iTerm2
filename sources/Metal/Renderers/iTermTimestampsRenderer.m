@@ -124,7 +124,8 @@
                       self.antialiased);
     [_drawHelper drawRow:row
                inContext:[NSGraphicsContext currentContext]
-                   frame:NSMakeRect(0, 0, size.width, size.height)];
+                   frame:NSMakeRect(0, 0, size.width, size.height)
+           virtualOffset:0];
     [image unlockFocus];
 
     return image;

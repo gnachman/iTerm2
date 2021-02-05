@@ -29,9 +29,8 @@
 
 - (void)scrollToPoint:(NSPoint)newOrigin {
     [super scrollToPoint:newOrigin];
-    if (_useMetal) {
-        [_metalView setNeedsDisplay:YES];
-    }
+    [_metalView setNeedsDisplay:YES];
+    [_legacyView setNeedsDisplay:YES];
 }
 
 - (void)performBlockWithoutShowingOverlayScrollers:(void (^ NS_NOESCAPE)(void))block {

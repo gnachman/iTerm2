@@ -2199,6 +2199,10 @@
 		A66319882312139400C502BD /* NSImage+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A69B45B7197C60FB00F5444D /* NSImage+iTerm.m */; };
 		A66319892312312600C502BD /* iTermRule.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D8CE03C195A143100FE1BEE /* iTermRule.m */; };
 		A66444BA1DEEA534000AC615 /* iTermDisclosableView.h in Headers */ = {isa = PBXBuildFile; fileRef = A66444B81DEEA534000AC615 /* iTermDisclosableView.h */; };
+		A6644BE225CDCCD600419355 /* iTermLegacyView.h in Headers */ = {isa = PBXBuildFile; fileRef = A6644BE025CDCCD600419355 /* iTermLegacyView.h */; };
+		A6644BE325CDCCD600419355 /* iTermLegacyView.m in Sources */ = {isa = PBXBuildFile; fileRef = A6644BE125CDCCD600419355 /* iTermLegacyView.m */; };
+		A6644BEE25CDD20800419355 /* iTermVirtualOffset.h in Headers */ = {isa = PBXBuildFile; fileRef = A6644BEC25CDD20800419355 /* iTermVirtualOffset.h */; };
+		A6644BEF25CDD20800419355 /* iTermVirtualOffset.m in Sources */ = {isa = PBXBuildFile; fileRef = A6644BED25CDD20800419355 /* iTermVirtualOffset.m */; };
 		A665C1CB243A4DE300F623F0 /* SIGArchiveCommon.m in Sources */ = {isa = PBXBuildFile; fileRef = A665C1CA243A4DE300F623F0 /* SIGArchiveCommon.m */; };
 		A665C1D0243A606C00F623F0 /* iTermRequestCookieCommand.h in Headers */ = {isa = PBXBuildFile; fileRef = A665C1CE243A606C00F623F0 /* iTermRequestCookieCommand.h */; };
 		A665C1D1243A606C00F623F0 /* iTermRequestCookieCommand.m in Sources */ = {isa = PBXBuildFile; fileRef = A665C1CF243A606C00F623F0 /* iTermRequestCookieCommand.m */; };
@@ -5691,6 +5695,10 @@
 		A663197822FF349700C502BD /* iTermServer */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = iTermServer; sourceTree = BUILT_PRODUCTS_DIR; };
 		A66444B81DEEA534000AC615 /* iTermDisclosableView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermDisclosableView.h; sourceTree = "<group>"; };
 		A66444B91DEEA534000AC615 /* iTermDisclosableView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermDisclosableView.m; sourceTree = "<group>"; };
+		A6644BE025CDCCD600419355 /* iTermLegacyView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermLegacyView.h; sourceTree = "<group>"; };
+		A6644BE125CDCCD600419355 /* iTermLegacyView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermLegacyView.m; sourceTree = "<group>"; };
+		A6644BEC25CDD20800419355 /* iTermVirtualOffset.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermVirtualOffset.h; sourceTree = "<group>"; };
+		A6644BED25CDD20800419355 /* iTermVirtualOffset.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermVirtualOffset.m; sourceTree = "<group>"; };
 		A665C1CA243A4DE300F623F0 /* SIGArchiveCommon.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SIGArchiveCommon.m; path = SignedArchive/SIGArchiveCommon.m; sourceTree = "<group>"; };
 		A665C1CE243A606C00F623F0 /* iTermRequestCookieCommand.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermRequestCookieCommand.h; sourceTree = "<group>"; };
 		A665C1CF243A606C00F623F0 /* iTermRequestCookieCommand.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermRequestCookieCommand.m; sourceTree = "<group>"; };
@@ -8941,6 +8949,8 @@
 				A6BA7D23247637B700407C4D /* VT100InlineImageHelper.m */,
 				A61A859A24F0F2CC00B03880 /* PseudoTerminal+WindowStyle.h */,
 				A61A859B24F0F2CC00B03880 /* PseudoTerminal+WindowStyle.m */,
+				A6644BE025CDCCD600419355 /* iTermLegacyView.h */,
+				A6644BE125CDCCD600419355 /* iTermLegacyView.m */,
 			);
 			name = Core;
 			sourceTree = "<group>";
@@ -9833,6 +9843,8 @@
 				A605943D2583305E00CACEE6 /* iTermSharedImageStore.m */,
 				A60D211025991A59004AC979 /* iTermImage+Private.h */,
 				A6DDA88425B376D200AA55EE /* iTermActivityInfo.h */,
+				A6644BEC25CDD20800419355 /* iTermVirtualOffset.h */,
+				A6644BED25CDD20800419355 /* iTermVirtualOffset.m */,
 			);
 			name = Helpers;
 			sourceTree = "<group>";
@@ -11372,6 +11384,7 @@
 				A66719221DCE36C3000CE608 /* iTermWindowOcclusionChangeMonitor.h in Headers */,
 				A6AFE93023FCFF8C00D489C7 /* iTermRestorableStateController.h in Headers */,
 				A6E112D625C615B400875D27 /* iTermHighlightLineTrigger.h in Headers */,
+				A6644BE225CDCCD600419355 /* iTermLegacyView.h in Headers */,
 				53A96ED02322040C00AEA8E0 /* iTermOpenDirectory.h in Headers */,
 				A65FF3C120F18547008BD0AE /* iTermMiniSearchFieldViewController.h in Headers */,
 				A6614C74210AE3FD0001EAA3 /* iTermStatusBarProgressComponent.h in Headers */,
@@ -11505,6 +11518,7 @@
 				A65660D82372A69A00DC6744 /* iTermDoublyLinkedList.h in Headers */,
 				5370679E21C9D2780088D0F3 /* SIGArchiveReader.h in Headers */,
 				A66F3CF01FEA3D9E00AA2021 /* iTermHistogram.h in Headers */,
+				A6644BEE25CDD20800419355 /* iTermVirtualOffset.h in Headers */,
 				A6725AD223D639C2001CA48A /* iTermProfilesMenuController.h in Headers */,
 				A667193C1DCE36C3000CE608 /* iTermThroughputEstimator.h in Headers */,
 				A6A4B2B72426BCD900184EAC /* iTermKeyMappings.h in Headers */,
@@ -14529,6 +14543,7 @@
 				A6BF8D1921EB188E003CF805 /* iTermDependencyEditorWindowController.m in Sources */,
 				A6DBC04A2005F09100F1466D /* iTermHighlightRowRenderer.mm in Sources */,
 				A639E1A12112CA33001696DE /* iTermEchoProbe.m in Sources */,
+				A6644BE325CDCCD600419355 /* iTermLegacyView.m in Sources */,
 				535B3BBA2228DC5500D6D410 /* iTermAlertBuiltInFunction.m in Sources */,
 				530AB8A420B12B9500D2AA08 /* iTermFunctionCallTextFieldDelegate.m in Sources */,
 				A6A4B2B82426BCD900184EAC /* iTermKeyMappings.m in Sources */,
@@ -14559,6 +14574,7 @@
 				A63493E523E7AC160047C31B /* iTermStatusBarAutoRainbowController.m in Sources */,
 				A635029F229B64000042B779 /* PSMRolloverButton.m in Sources */,
 				5365207221433ED2003C58FD /* iTermGitState.m in Sources */,
+				A6644BEF25CDD20800419355 /* iTermVirtualOffset.m in Sources */,
 				A630118E20E6B71A008114B7 /* iTermStatusBarSetupCollectionViewItem.m in Sources */,
 				A63011C920E8518A008114B7 /* iTermStatusBarFixedSpacerComponent.m in Sources */,
 				5370678E21C9D2780088D0F3 /* SIGIdentity.m in Sources */,

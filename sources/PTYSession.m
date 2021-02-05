@@ -6158,6 +6158,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     DLog(@"showMetalAndStopDrawingTextView");
     _wrapper.useMetal = YES;
     _textview.suppressDrawing = YES;
+    [_view setSuppressLegacyDrawing:YES];
     if (@available(macOS 10.14, *)) {
         if (PTYScrollView.shouldDismember) {
             _view.scrollview.alphaValue = 0;
@@ -6178,6 +6179,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [_view setUseMetal:useMetal dataSource:dataSource];
     if (!useMetal) {
         _textview.suppressDrawing = NO;
+        [_view setSuppressLegacyDrawing:NO];
         if (@available(macOS 10.14, *)) {
             if (PTYScrollView.shouldDismember) {
                 _view.scrollview.alphaValue = 1;
@@ -8451,7 +8453,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 // to the same view and then the text can be properly composited over it.
 - (BOOL)textViewDrawBackgroundImageInView:(NSView *)view
                                  viewRect:(NSRect)dirtyRect
-                   blendDefaultBackground:(BOOL)blendDefaultBackground NS_DEPRECATED_MAC(10_0, 10_16) {
+                   blendDefaultBackground:(BOOL)blendDefaultBackground
+                            virtualOffset:(CGFloat)virtualOffset NS_DEPRECATED_MAC(10_0, 10_16) {
     if (!self.shouldDrawBackgroundImageManually) {
         return NO;
     }
@@ -8470,7 +8473,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                                                   dirtyRect:dirtyRect
                                      visibleRectInContainer:NSMakeRect(0, 0, contentRect.size.width, contentRect.size.height)
                                      blendDefaultBackground:blendDefaultBackground
-                                                       flip:NO];
+                                                       flip:NO
+                                              virtualOffset:virtualOffset];
     } else {
         NSView *container = [self.delegate sessionContainerView:self];
         NSRect clippedDirtyRect = NSIntersectionRect(dirtyRect, view.enclosingScrollView.documentVisibleRect);;
@@ -8487,7 +8491,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                                                   dirtyRect:clippedDirtyRect
                                      visibleRectInContainer:windowVisibleRect
                                      blendDefaultBackground:blendDefaultBackground
-                                                       flip:YES];
+                                                       flip:YES
+                                              virtualOffset:virtualOffset];
     }
     return YES;
 }
@@ -12078,6 +12083,9 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 #pragma mark - iTermSessionViewDelegate
 
+- (CGFloat)sessionViewBottomMarginHeight {
+    return [_textview excess];
+}
 - (CGFloat)sessionViewTransparencyAlpha {
     return _textview.transparencyAlpha;
 }
@@ -12281,6 +12289,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     assert(_useMetal);
     _wrapper.useMetal = NO;
     _textview.suppressDrawing = NO;
+    [_view setSuppressLegacyDrawing:NO];
     if (@available(macOS 10.14, *)) {
         if (PTYScrollView.shouldDismember) {
             _view.scrollview.alphaValue = 1;
@@ -13816,6 +13825,12 @@ getOptionKeyBehaviorLeft:(iTermOptionKeyBehavior *)left
 - (BOOL)modifyOtherKeysTerminalIsScreenlike:(iTermModifyOtherKeysMapper *)sender {
     DLog(@"screenlike=%@", @(self.isTmuxClient));
     return self.isTmuxClient;
+}
+
+#pragma mark - iTermLegacyViewDelegate
+
+- (void)legacyView:(iTermLegacyView *)legacyView drawRect:(NSRect)dirtyRect {
+    [_textview drawRect:dirtyRect inView:legacyView];
 }
 
 @end

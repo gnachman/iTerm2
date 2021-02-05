@@ -25,7 +25,8 @@ BOOL CheckFindMatchAtIndex(NSData *findMatches, int index);
 @protocol iTermTextDrawingHelperDelegate <NSObject>
 
 - (void)drawingHelperDrawBackgroundImageInRect:(NSRect)rect
-                        blendDefaultBackground:(BOOL)blendDefaultBackground;
+                        blendDefaultBackground:(BOOL)blendDefaultBackground
+                                 virtualOffset:(CGFloat)virtualOffset;
 
 - (VT100ScreenMark *)drawingHelperMarkOnLine:(int)line;
 
@@ -320,13 +321,14 @@ BOOL CheckFindMatchAtIndex(NSData *findMatches, int index);
 // Updates self.blinkingFound.
 - (void)drawTextViewContentInRect:(NSRect)rect
                          rectsPtr:(const NSRect *)rectArray
-                        rectCount:(NSInteger)rectCount;
+                        rectCount:(NSInteger)rectCount
+                    virtualOffset:(CGFloat)virtualOffset;
 
 // If timestamps are to be shown, call this just before drawing.
 - (void)createTimestampDrawingHelper;
 
 // Draw timestamps.
-- (void)drawTimestamps;
+- (void)drawTimestampsWithVirtualOffset:(CGFloat)virtualOffset;
 
 - (VT100GridCoordRange)coordRangeForRect:(NSRect)rect;
 

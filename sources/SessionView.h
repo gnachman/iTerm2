@@ -28,6 +28,7 @@
 #import <Cocoa/Cocoa.h>
 #import "iTermBackgroundColorView.h"
 #import "iTermFindDriver.h"
+#import "iTermLegacyView.h"
 #import "iTermMetalDriver.h"
 #import "PTYScrollView.h"
 #import "PTYSession.h"
@@ -47,7 +48,7 @@
 
 extern NSString *const SessionViewWasSelectedForInspectionNotification;
 
-@protocol iTermSessionViewDelegate<iTermFindDriverDelegate, NSObject>
+@protocol iTermSessionViewDelegate<iTermFindDriverDelegate, iTermLegacyViewDelegate, NSObject>
 
 // Mouse entered the view.
 - (void)sessionViewMouseEntered:(NSEvent *)event;
@@ -142,6 +143,7 @@ extern NSString *const SessionViewWasSelectedForInspectionNotification;
 
 - (BOOL)sessionViewUseSeparateStatusBarsPerPane;
 - (CGFloat)sessionViewTransparencyAlpha;
+- (CGFloat)sessionViewBottomMarginHeight;
 
 @end
 
@@ -265,5 +267,6 @@ typedef NS_ENUM(NSUInteger, iTermSessionViewFindDriver) {
 - (void)tabColorDidChange;
 - (void)didBecomeVisible;
 - (void)showUnobtrusiveMessage:(NSString *)message;
+- (void)setSuppressLegacyDrawing:(BOOL)suppressLegacyDrawing;
 
 @end
