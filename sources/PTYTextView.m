@@ -1115,7 +1115,7 @@
     }
     DLog(@"drawing document visible rect %@", NSStringFromRect(self.enclosingScrollView.documentVisibleRect));
 
-    const CGFloat virtualOffset = NSMinY(self.enclosingScrollView.documentVisibleRect);
+    const CGFloat virtualOffset = NSMinY(self.enclosingScrollView.documentVisibleRect) - [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins];
     const NSRect *constRectArray;
     NSInteger rectCount;
     [view getRectsBeingDrawn:&constRectArray count:&rectCount];
@@ -1124,7 +1124,6 @@
     for (NSInteger i = 0; i < rectCount; i++) {
         rectArray[i] = constRectArray[i];
         rectArray[i].origin.y += virtualOffset;
-        NSLog(@"rect %d = %@ -> %@", (int)i, NSStringFromRect(constRectArray[i]), NSStringFromRect(rectArray[i]));
     }
 
     [self performBlockWithFlickerFixerGrid:^{

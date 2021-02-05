@@ -12083,6 +12083,14 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 #pragma mark - iTermSessionViewDelegate
 
+- (NSRect)sessionViewFrameForLegacyView {
+    const CGFloat bottomMarginHeight = [_textview excess];
+    return NSMakeRect(0,
+                      bottomMarginHeight,
+                      NSWidth(_textview.bounds),
+                      _textview.lineHeight * _screen.height);
+}
+
 - (CGFloat)sessionViewBottomMarginHeight {
     return [_textview excess];
 }

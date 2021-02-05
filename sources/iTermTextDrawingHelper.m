@@ -457,6 +457,8 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
                                                 virtualOffset:virtualOffset];
     }
 
+    [self drawTopMarginWithVirtualOffset:virtualOffset];
+
     // If the IME is in use, draw its contents over top of the "real" screen
     // contents.
     [self drawInputMethodEditorTextAt:_cursorCoord.x
@@ -619,25 +621,57 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
 - (void)drawExcessAtLine:(int)line
            virtualOffset:(CGFloat)virtualOffset {
     NSRect excessRect;
-    if (!_numberOfIMELines) {
-        return;
+    if (_numberOfIMELines) {
+        // Draw a default-color rectangle from below the last line of text to
+        // the bottom of the frame to make sure that IME offset lines are
+        // cleared when the screen is scrolled up.
+        excessRect.origin.x = 0;
+        excessRect.origin.y = line * _cellSize.height;
+        excessRect.size.width = _scrollViewContentSize.width;
+        excessRect.size.height = _frame.size.height - excessRect.origin.y;
+    } else  {
+        // Draw the excess bar at the bottom of the visible rect the in case
+        // that some other tab has a larger font and these lines don't fit
+        // evenly in the available space.
+        NSRect visibleRect = _visibleRect;
+        excessRect.origin.x = 0;
+        excessRect.origin.y = NSMaxY(visibleRect) - _excess;
+        excessRect.size.width = _scrollViewContentSize.width;
+        excessRect.size.height = _excess;
     }
-    // Draw a default-color rectangle from below the last line of text to
-    // the bottom of the frame to make sure that IME offset lines are
-    // cleared when the screen is scrolled up.
-    excessRect.origin.x = 0;
-    excessRect.origin.y = line * _cellSize.height;
-    excessRect.size.width = _scrollViewContentSize.width;
-    excessRect.size.height = _frame.size.height - excessRect.origin.y;
 
     [self.delegate drawingHelperDrawBackgroundImageInRect:excessRect
                                    blendDefaultBackground:YES
                                             virtualOffset:virtualOffset];
 
+    if (_debug) {
+        [[NSColor blueColor] set];
+        NSBezierPath *path = [NSBezierPath bezierPath];
+        [path moveToPoint:excessRect.origin];
+        [path lineToPoint:NSMakePoint(NSMaxX(excessRect), NSMaxY(excessRect))];
+        [path stroke];
+
+        NSFrameRect(excessRect);
+    }
 
     if (_showStripes) {
-        [self drawStripesInRect:excessRect
-                  virtualOffset:virtualOffset];
+        [self drawStripesInRect:excessRect virtualOffset:virtualOffset];
+    }
+}
+
+- (void)drawTopMarginWithVirtualOffset:(CGFloat)virtualOffset {
+    // Draw a margin at the top of the visible area.
+    NSRect topMarginRect = _visibleRect;
+    topMarginRect.origin.y -=
+        MAX(0, [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins] - NSMinY(_delegate.enclosingScrollView.documentVisibleRect));
+
+    topMarginRect.size.height = [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins];
+    [self.delegate drawingHelperDrawBackgroundImageInRect:topMarginRect
+                                   blendDefaultBackground:YES
+                                            virtualOffset:virtualOffset];
+
+    if (_showStripes) {
+        [self drawStripesInRect:topMarginRect virtualOffset:virtualOffset];
     }
 }
 

@@ -890,15 +890,17 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     if (_useMetal) {
         [self updateMetalViewFrame];
     }
-    const CGFloat topMarginHeight = [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins];
-    const CGFloat bottomMarginHeight = [self.delegate sessionViewBottomMarginHeight];
-    _legacyView.frame = NSMakeRect(0,
-                                   bottomMarginHeight,
-                                   NSWidth(_scrollview.documentVisibleRect),
-                                   NSHeight(self.bounds) - bottomMarginHeight - topMarginHeight);
+    [self updateLegacyViewFrame];
     DLog(@"After:\n%@", [self iterm_recursiveDescription]);
 }
 
+- (void)updateLegacyViewFrame {
+    NSRect rect = NSZeroRect;
+    rect.origin.y = self.showBottomStatusBar ? iTermGetStatusBarHeight() : 0;
+    rect.size.width = NSWidth(_scrollview.documentVisibleRect);
+    rect.size.height = NSHeight(_scrollview.documentVisibleRect);
+    _legacyView.frame = rect;
+}
 - (void)didBecomeVisible {
     [[self.delegate sessionViewStatusBarViewController] updateColors];
 }
@@ -1396,6 +1398,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     [self updateScrollViewFrame];
     [self invalidateStatusBar];
     [self updateAnnouncementFrame];
+    [self updateLayout];
     return YES;
 }
 
