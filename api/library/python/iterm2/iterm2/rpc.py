@@ -42,7 +42,8 @@ async def async_notification_request(
         keystroke_monitor_request=None,
         variable_monitor_request=None,
         profile_change_request=None,
-        prompt_monitor_modes=None):
+        prompt_monitor_modes=None,
+        keystroke_filter_request=None):
     """
     Requests a change to a notification subscription.
 
@@ -74,6 +75,9 @@ async def async_notification_request(
     if keystroke_monitor_request:
         request.notification_request.keystroke_monitor_request.CopyFrom(
             keystroke_monitor_request)
+    if keystroke_filter_request:
+        request.notification_request.keystroke_filter_request.CopyFrom(
+            keystroke_filter_request)
     if variable_monitor_request:
         request.notification_request.variable_monitor_request.CopyFrom(
             variable_monitor_request)

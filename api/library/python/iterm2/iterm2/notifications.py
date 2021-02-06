@@ -129,8 +129,8 @@ async def async_filter_keystrokes(
     Returns: A token that can be passed to unsubscribe.
     """
     # pylint: disable=no-member
-    kmr = iterm2.api_pb2.KeystrokeFilterRequest()
-    kmr.patterns_to_ignore.extend(
+    kfr = iterm2.api_pb2.KeystrokeFilterRequest()
+    kfr.patterns_to_ignore.extend(
         list(map(lambda x: x.to_proto(), patterns_to_ignore)))
 
     async def callback(connection, notif):  # pylint: disable=unused-argument
@@ -142,7 +142,7 @@ async def async_filter_keystrokes(
         iterm2.api_pb2.KEYSTROKE_FILTER,
         callback,
         session=session,
-        keystroke_monitor_request=kmr)
+        keystroke_filter_request=kfr)
 
 
 async def async_subscribe_to_screen_update_notification(
@@ -462,7 +462,8 @@ async def _async_subscribe(
         variable_monitor_request=None,
         key=None,
         profile_change_request=None,
-        prompt_monitor_modes=None):
+        prompt_monitor_modes=None,
+        keystroke_filter_request=None):
     """Note: session argument is ignored for variable-change notifications."""
     _register_helper_if_needed()
     transformed_session = session if session is not None else "all"
@@ -489,7 +490,8 @@ async def _async_subscribe(
         keystroke_monitor_request,
         variable_monitor_request,
         profile_change_request,
-        prompt_monitor_modes)
+        prompt_monitor_modes,
+        keystroke_filter_request)
     status = response.notification_response.status
     # pylint: disable=no-member
     status_ok = (
