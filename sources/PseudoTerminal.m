@@ -1685,6 +1685,11 @@ ITERM_WEAKLY_REFERENCEABLE
     assert(NO);
 }
 
+- (void)ptyWindowDidMakeKeyAndOrderFront:(id<PTYWindow>)window {
+    DLog(@"%@", self);
+    [[self currentTab] recheckBlur];
+}
+
 - (BOOL)ptyWindowIsDraggable:(id<PTYWindow>)window {
     if (self.lionFullScreen || togglingLionFullScreen_) {
         return NO;

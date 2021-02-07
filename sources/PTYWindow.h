@@ -84,6 +84,7 @@ typedef NS_ENUM(NSUInteger, PTYWindowTitleBarFlavor) {
 - (PTYWindowTitleBarFlavor)ptyWindowTitleBarFlavor;
 
 - (BOOL)ptyWindowIsDraggable:(id<PTYWindow>)window;
+- (void)ptyWindowDidMakeKeyAndOrderFront:(id<PTYWindow>)window;
 @end
 
 // Common methods implemented by terminal windows of both kinds.

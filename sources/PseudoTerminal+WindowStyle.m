@@ -534,6 +534,7 @@ iTermWindowType iTermWindowTypeNormalized(iTermWindowType windowType) {
     [self didToggleTraditionalFullScreenModeWithSavedToolbeltWidth:savedToolbeltWidth];
     iTermApplicationDelegate *itad = [iTermApplication.sharedApplication delegate];
     [itad didToggleTraditionalFullScreenMode];
+    DLog(@"done toggling trad fullscreen. fullscreen=%@", @(_fullScreen));
 }
 
 - (void)didExitTraditionalFullScreenMode {

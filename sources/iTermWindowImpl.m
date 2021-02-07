@@ -251,6 +251,7 @@ ITERM_WEAKLY_REFERENCEABLE
                 _minBlur = 1;
             }
         }
+        DLog(@"enable blur with radius %@ for window %@", @(MAX(_minBlur, radius)), self);
         function(con, [self windowNumber], (int)MAX(_minBlur, radius));
     } else {
         NSLog(@"Couldn't get blur function");
@@ -266,6 +267,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
     CGSSetWindowBackgroundBlurRadiusFunction* function = GetCGSSetWindowBackgroundBlurRadiusFunction();
     if (function) {
+        DLog(@"disable blur for window %@", self);
         function(con, [self windowNumber], MAX(_minBlur, 0));
     }
 }
@@ -376,6 +378,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [[iTermWindowOcclusionChangeMonitor sharedInstance] invalidateCachedOcclusion];
     self.it_becomingKey = YES;
     [super makeKeyAndOrderFront:sender];
+    [self.ptyDelegate ptyWindowDidMakeKeyAndOrderFront:self];
     self.it_becomingKey = NO;
 }
 
