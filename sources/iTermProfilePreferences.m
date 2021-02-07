@@ -385,7 +385,7 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
                   KEY_POWERLINE: @NO,
                   KEY_SCROLLBACK_LINES: @1000,
                   KEY_UNLIMITED_SCROLLBACK: @NO,
-                  KEY_SCROLLBACK_WITH_STATUS_BAR: @NO,
+                  KEY_SCROLLBACK_WITH_STATUS_BAR: @YES,
                   KEY_SCROLLBACK_IN_ALTERNATE_SCREEN: @YES,
                   KEY_CHARACTER_ENCODING: @(NSUTF8StringEncoding),
                   KEY_TERMINAL_TYPE: @"xterm",
