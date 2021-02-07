@@ -181,7 +181,7 @@ semanticHistoryController:(iTermSemanticHistoryController *)semanticHistoryContr
                                        forward:NO
                            respectHardNewlines:forceRespect || self.respectHardNewlines
                                       maxChars:[iTermAdvancedSettingsModel maxSemanticHistoryPrefixOrSuffix]
-                             continuationChars:nil
+                             continuationChars:[NSMutableIndexSet indexSet]
                            convertNullsToSpace:NO];
     if (!self.locatedPrefix) {
         self.locatedPrefix = locatedPrefix;
@@ -192,7 +192,7 @@ semanticHistoryController:(iTermSemanticHistoryController *)semanticHistoryContr
                                        forward:YES
                            respectHardNewlines:forceRespect || self.respectHardNewlines
                                       maxChars:[iTermAdvancedSettingsModel maxSemanticHistoryPrefixOrSuffix]
-                             continuationChars:nil
+                             continuationChars:[NSMutableIndexSet indexSet]
                            convertNullsToSpace:NO];
     if (!self.locatedSuffix) {
         self.locatedSuffix = locatedSuffix;
