@@ -19,6 +19,10 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)restorableStateDidFinishRequestingRestorations:(iTermRestorableStateController *)sender;
 @end
 
+@protocol iTermRestorableWindowController<NSObject>
+- (void)didFinishRestoringWindow;
+@end
+
 @interface iTermRestorableStateController : NSObject
 @property (nonatomic, class, readwrite) BOOL shouldIgnoreOpenUntitledFile;
 @property (nonatomic, weak) id<iTermRestorableStateControllerDelegate> delegate;

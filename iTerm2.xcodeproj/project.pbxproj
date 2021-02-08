@@ -1465,6 +1465,8 @@
 		A6024B89254D367E0036D6CF /* iTermColorSuggester.m in Sources */ = {isa = PBXBuildFile; fileRef = A6024B87254D367E0036D6CF /* iTermColorSuggester.m */; };
 		A6024B8B254DDFEE0036D6CF /* iTermNSColorCategoryTests.m in Sources */ = {isa = PBXBuildFile; fileRef = A6024B8A254DDFEE0036D6CF /* iTermNSColorCategoryTests.m */; };
 		A60251681CCD3E5E009BABF1 /* NSURL+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A60251661CCD3E5E009BABF1 /* NSURL+iTerm.h */; };
+		A6042CD925D0CBCD0001C8FE /* NSScroller+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A6042CD725D0CBCD0001C8FE /* NSScroller+iTerm.h */; };
+		A6042CDA25D0CBCD0001C8FE /* NSScroller+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A6042CD825D0CBCD0001C8FE /* NSScroller+iTerm.m */; };
 		A6047134213D9E7B009C6C6D /* iTermWorkingDirectoryPoller.h in Headers */ = {isa = PBXBuildFile; fileRef = A6047132213D9E7B009C6C6D /* iTermWorkingDirectoryPoller.h */; };
 		A6047135213D9E7B009C6C6D /* iTermWorkingDirectoryPoller.m in Sources */ = {isa = PBXBuildFile; fileRef = A6047133213D9E7B009C6C6D /* iTermWorkingDirectoryPoller.m */; };
 		A6057C041878CD30004A60AF /* ProfileTagsView.h in Headers */ = {isa = PBXBuildFile; fileRef = A6057C021878CD30004A60AF /* ProfileTagsView.h */; };
@@ -5104,6 +5106,8 @@
 		A60251661CCD3E5E009BABF1 /* NSURL+iTerm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSURL+iTerm.h"; sourceTree = "<group>"; };
 		A60251671CCD3E5E009BABF1 /* NSURL+iTerm.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSURL+iTerm.m"; sourceTree = "<group>"; };
 		A602516A1CCD40D9009BABF1 /* iTermNSURLCategoryTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermNSURLCategoryTest.m; sourceTree = "<group>"; };
+		A6042CD725D0CBCD0001C8FE /* NSScroller+iTerm.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "NSScroller+iTerm.h"; sourceTree = "<group>"; };
+		A6042CD825D0CBCD0001C8FE /* NSScroller+iTerm.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "NSScroller+iTerm.m"; sourceTree = "<group>"; };
 		A6047132213D9E7B009C6C6D /* iTermWorkingDirectoryPoller.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermWorkingDirectoryPoller.h; sourceTree = "<group>"; };
 		A6047133213D9E7B009C6C6D /* iTermWorkingDirectoryPoller.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermWorkingDirectoryPoller.m; sourceTree = "<group>"; };
 		A6057C021878CD30004A60AF /* ProfileTagsView.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = ProfileTagsView.h; sourceTree = "<group>"; tabWidth = 4; };
@@ -8148,6 +8152,8 @@
 				53D0FD50237DCB5A00DAFA8A /* NSTableView+iTerm.m */,
 				A6024B77254C93DA0036D6CF /* NSSet+iTerm.h */,
 				A6024B78254C93DA0036D6CF /* NSSet+iTerm.m */,
+				A6042CD725D0CBCD0001C8FE /* NSScroller+iTerm.h */,
+				A6042CD825D0CBCD0001C8FE /* NSScroller+iTerm.m */,
 			);
 			name = Categories;
 			sourceTree = "<group>";
@@ -11727,6 +11733,7 @@
 				A66F52A9210458CA00571168 /* iTermNetworkUtilization.h in Headers */,
 				A653F69C24D00C960062377E /* iTermEncoderGraphRecord.h in Headers */,
 				A6FF4AEE246BBFDB00410BA2 /* iTermTmuxWindowCache.h in Headers */,
+				A6042CD925D0CBCD0001C8FE /* NSScroller+iTerm.h in Headers */,
 				A6A4B2A1240B67A400184EAC /* PTYMouseHandler.h in Headers */,
 				A6B60CAB245E33C200DBD6A7 /* PSMCachedTitle.h in Headers */,
 				A63F34D021E1E0F8000C9D52 /* iTermSessionPicker.h in Headers */,
@@ -14180,6 +14187,7 @@
 				A67109AC240C677D0018631A /* NSEvent+iTerm.m in Sources */,
 				A6AC5D241E9036D70097C0A7 /* iTermURLMark.m in Sources */,
 				535EA51420D8C1EB00FC81E0 /* iTermProfilesWindowController.m in Sources */,
+				A6042CDA25D0CBCD0001C8FE /* NSScroller+iTerm.m in Sources */,
 				A6A4866F20B67A1600493302 /* iTermSemanticHistoryPrefsController.m in Sources */,
 				53E98E7C233C6B760094D8A9 /* iTermTmuxSessionObject.m in Sources */,
 				A66719621DCE3772000CE608 /* iTermSocketAddress.m in Sources */,

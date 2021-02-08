@@ -153,9 +153,10 @@ static NSString *const iTermRestorableStateControllerUserDefaultsKeyCount = @"No
             if (windowIdentifier) {
                 void (^callback)(NSWindow *, NSError *) = callbacks[windowIdentifier];
                 if (callback) {
-                    DLog(@"Running callback with window %@", window);
+                    DLog(@"Restorable state driver: Invoke callback callback with window %@", window);
                     [callbacks removeObjectForKey:windowIdentifier];
                     callback(window, nil);
+                    DLog(@"Restorable state driver: Returned from callback callback with window %@", window);
                 } else {
                     DLog(@"No callback");
                 }

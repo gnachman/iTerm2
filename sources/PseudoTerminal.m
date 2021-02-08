@@ -52,6 +52,7 @@
 #import "iTermQuickLookController.h"
 #import "iTermRateLimitedUpdate.h"
 #import "iTermRecordingCodec.h"
+#import "iTermRestorableStateController.h"
 #import "iTermRootTerminalView.h"
 #import "iTermSavePanel.h"
 #import "iTermScriptFunctionCall.h"
@@ -88,6 +89,7 @@
 #import "NSScreen+iTerm.h"
 #import "NSStringITerm.h"
 #import "NSResponder+iTerm.h"
+#import "NSScroller+iTerm.h"
 #import "NSView+iTerm.h"
 #import "NSView+RecursiveDescription.h"
 #import "NSWindow+iTerm.h"
@@ -174,6 +176,7 @@ static NSString *const TERMINAL_ARRANGEMENT_USE_TRANSPARENCY = @"Use Transparenc
 static NSString *const TERMINAL_ARRANGEMENT_TOOLBELT_PROPORTIONS = @"Toolbelt Proportions";
 static NSString *const TERMINAL_ARRANGEMENT_TITLE_OVERRIDE = @"Title Override";
 static NSString *const TERMINAL_ARRANGEMENT_TOOLBELT = @"Toolbelt";
+static NSString *const TERMINAL_ARRANGEMENT_SCROLLER_WIDTH = @"Scroller Width";
 
 // Only present in arrangements created by the window restoration system, not (for example) saved arrangements in the UI.
 // Boolean NSNumber.
@@ -216,6 +219,7 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
     iTermBroadcastInputHelperDelegate,
     iTermGraphCodable,
     iTermObject,
+    iTermRestorableWindowController,
     iTermTabBarControlViewDelegate,
     iTermPasswordManagerDelegate,
     iTermUniquelyIdentifiable,
@@ -413,6 +417,11 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
     // the private method _updateDividerLayoutForController:animated: to be called so that we can
     // hide the divider between the title bar and its accessory view controller.
     iTermShouldHaveTitleSeparator _previousTerminalWindowShouldHaveTitlebarSeparator;
+
+    // When restoring a window, this keeps track of how the window's width needs to be adjusted in
+    // case scrollbar style has changed since the state was saved. It can be postiive or negative.
+    // The frame is modified by this amount when it is safe to do so.
+    CGFloat _widthAdjustment;
 }
 
 @synthesize scope = _scope;
@@ -3046,14 +3055,57 @@ ITERM_WEAKLY_REFERENCEABLE
     hidingToolbeltShouldResizeWindow_ = [arrangement[TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW] boolValue];
     hidingToolbeltShouldResizeWindowInitialized_ = YES;
 
-    if (windowType == WINDOW_TYPE_NORMAL ||
-        windowType == WINDOW_TYPE_ACCESSORY ||
-        windowType == WINDOW_TYPE_NO_TITLE_BAR ||
-        windowType == WINDOW_TYPE_COMPACT) {
-        // The window may have changed size while adding tab bars, etc.
-        // TODO: for window type top, set width to screen width.
-        [[self window] setFrame:[PseudoTerminal sanitizedWindowFrame:rect]
-                        display:YES];
+    if (arrangement[TERMINAL_ARRANGEMENT_SCROLLER_WIDTH]) {
+        const CGFloat savedWidth = [arrangement[TERMINAL_ARRANGEMENT_SCROLLER_WIDTH] doubleValue];
+        const CGFloat preferredWidth = iTermScrollbarWidth();
+        // Set _widthAdjustment here because it will be used below in the call to
+        // -rectByAdjustingWidth:.
+        _widthAdjustment = preferredWidth - savedWidth;
+        DLog(@"Computing scroller width adjustment. preferredWidth=%@ savedWidth=%@ adjustment=%@",
+              @(preferredWidth), @(savedWidth), @(_widthAdjustment));
+    }
+
+    {
+        NSRect frame = rect;
+        switch (windowType) {
+            case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
+            case WINDOW_TYPE_LION_FULL_SCREEN:
+            case WINDOW_TYPE_TOP:
+            case WINDOW_TYPE_BOTTOM:
+            case WINDOW_TYPE_MAXIMIZED:
+            case WINDOW_TYPE_COMPACT_MAXIMIZED:
+                DLog(@"Neither width adjustment nor sanitization needed.");
+                break;
+
+            case WINDOW_TYPE_NORMAL:
+            case WINDOW_TYPE_ACCESSORY:
+            case WINDOW_TYPE_NO_TITLE_BAR:
+            case WINDOW_TYPE_COMPACT:
+                DLog(@"Needs width adjustment and sanitization.");
+                frame = [PseudoTerminal sanitizedWindowFrame:[self rectByAdjustingWidth:rect]];
+                break;
+
+            case WINDOW_TYPE_LEFT:
+            case WINDOW_TYPE_RIGHT:
+            case WINDOW_TYPE_BOTTOM_PARTIAL:
+            case WINDOW_TYPE_TOP_PARTIAL:
+            case WINDOW_TYPE_LEFT_PARTIAL:
+            case WINDOW_TYPE_RIGHT_PARTIAL:
+                DLog(@"No sanitization but width adjustment.");
+                // There's a good chance that sanitization would make sense here but I'm afraid of
+                // breaking things I don't understand by changing it.
+                frame = [self rectByAdjustingWidth:rect];
+                break;
+        }
+        if (!NSEqualRects(frame, rect)) {
+            // Note: this has no effect when using system window restoration because the window's size
+            // is set from the completion block passed to PseudoTerminalRestorer, which is controlled
+            // by the system. However, it is still effective when restoring a saved arrangement.
+            DLog(@"Set frame with adjustments %@ in %@", NSStringFromRect(frame), self);
+            [[self window] setFrame:frame display:YES];
+        } else {
+            DLog(@"No change needed");
+        }
     }
 
     const int tabIndex = [[arrangement objectForKey:TERMINAL_ARRANGEMENT_SELECTED_TAB_INDEX] intValue];
@@ -3242,6 +3294,10 @@ ITERM_WEAKLY_REFERENCEABLE
     if (profileGuid) {
         result[TERMINAL_ARRANGEMENT_PROFILE_GUID] = profileGuid;
     }
+
+    const CGFloat scrollerWidth = iTermScrollbarWidth();
+    result[TERMINAL_ARRANGEMENT_SCROLLER_WIDTH] = @(scrollerWidth);
+    DLog(@"Save scroller width of %@", @(scrollerWidth));
 
     return YES;
 }
@@ -3827,7 +3883,7 @@ ITERM_WEAKLY_REFERENCEABLE
                 // If the screen grew and the window was smaller than the desired number of columns, grow it.
                 if (desiredColumns_ > 0) {
                     frame.size.width = MIN(screenVisibleFrame.size.width,
-                                           [[session textview] charWidth] * desiredColumns_ + 2 * [iTermPreferences intForKey:kPreferenceKeySideMargins]);
+                                           [[session textview] charWidth] * desiredColumns_ + 2 * [iTermPreferences intForKey:kPreferenceKeySideMargins] + iTermScrollbarWidth());
                 } else {
                     frame.size.width = MIN(screenVisibleFrame.size.width, frame.size.width);
                 }
@@ -3854,7 +3910,7 @@ ITERM_WEAKLY_REFERENCEABLE
                 // If the screen grew and the window was smaller than the desired number of columns, grow it.
                 if (desiredColumns_ > 0) {
                     frame.size.width = MIN(screenVisibleFrame.size.width,
-                                           [[session textview] charWidth] * desiredColumns_ + 2 * [iTermPreferences intForKey:kPreferenceKeySideMargins]);
+                                           [[session textview] charWidth] * desiredColumns_ + 2 * [iTermPreferences intForKey:kPreferenceKeySideMargins] + iTermScrollbarWidth());
                 } else {
                     frame.size.width = MIN(screenVisibleFrame.size.width, frame.size.width);
                 }
@@ -11264,6 +11320,58 @@ backgroundColor:(NSColor *)backgroundColor {
 
 - (NSString *)stringUniqueIdentifier {
     return self.terminalGuid;
+}
+
+#pragma mark - iTermRestorableWindowController
+
+- (void)didFinishRestoringWindow {
+    DLog(@"%@ widthAdjustment=%@", self, @(_widthAdjustment));
+    if (_widthAdjustment == 0) {
+        return;
+    }
+    DLog(@"windowType=%@", @(self.windowType));
+    NSRect rect = [self rectByAdjustingWidth:self.window.frame];
+    if (!NSEqualRects(rect, self.window.frame)) {
+        DLog(@"Change window frame for width adjustment");
+        [self.window setFrame:rect display:YES];
+        [self fitTabsToWindow];
+    }
+
+    DLog(@"Set width adjustment to 0 for %@", self);
+    _widthAdjustment = 0;
+}
+
+- (NSRect)rectByAdjustingWidth:(NSRect)rect {
+    DLog(@"%@: Computing width adjustment for window type %@ rect %@ widthAdjustment %@",
+          self, @(self.windowType), NSStringFromRect(rect), @(_widthAdjustment));
+    switch (self.windowType) {
+        case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
+        case WINDOW_TYPE_LION_FULL_SCREEN:
+        case WINDOW_TYPE_TOP:
+        case WINDOW_TYPE_BOTTOM:
+        case WINDOW_TYPE_MAXIMIZED:
+        case WINDOW_TYPE_COMPACT_MAXIMIZED:
+            DLog(@"No width adjustment because of window type");
+            return rect;
+
+        case WINDOW_TYPE_NORMAL:
+        case WINDOW_TYPE_LEFT:
+        case WINDOW_TYPE_RIGHT:
+        case WINDOW_TYPE_BOTTOM_PARTIAL:
+        case WINDOW_TYPE_TOP_PARTIAL:
+        case WINDOW_TYPE_LEFT_PARTIAL:
+        case WINDOW_TYPE_RIGHT_PARTIAL:
+        case WINDOW_TYPE_NO_TITLE_BAR:
+        case WINDOW_TYPE_COMPACT:
+        case WINDOW_TYPE_ACCESSORY: {
+            DLog(@"Will apply width adjustment of %@", @(_widthAdjustment));
+            NSRect rect = self.window.frame;
+            rect.size.width += _widthAdjustment;
+            return rect;
+        }
+    }
+    assert(NO);
+    return rect;
 }
 
 @end

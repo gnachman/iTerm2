@@ -36,6 +36,7 @@ extern NSString *const iTermApplicationWillTerminate;
     iTermRestorableStateDriver *_driver;
     BOOL _ready;
     NSMutableDictionary<NSString *, void (^)(NSWindow *, NSError *)> *_systemCallbacks;
+    dispatch_group_t _completionGroup;
 }
 
 + (BOOL)shouldIgnoreOpenUntitledFile {
@@ -155,6 +156,8 @@ static BOOL gForceSaveState;
 // restoration must be made before state is *saved* not before it is restored. See the comment on
 // shouldRestoreStateOnNextLaunch above.
 - (void)restoreWindowsWithCompletion:(void (^)(void))completion {
+    _completionGroup = dispatch_group_create();
+    dispatch_group_enter(_completionGroup);
     assert([NSThread isMainThread]);
     __weak __typeof(self) weakSelf = self;
     [_driver restoreWithSystemCallbacks:_systemCallbacks
@@ -206,6 +209,7 @@ static BOOL gForceSaveState;
     DLog(@"completeInitialization");
     assert([NSThread isMainThread]);
     _ready = YES;
+    dispatch_group_leave(_completionGroup);
     if (![iTermRestorableStateController stateRestorationEnabled]) {
         // Just in case we don't get a chance to erase the state later.
         DLog(@"State restoration is disabled so erase db");
@@ -234,7 +238,10 @@ static BOOL gForceSaveState;
                              completion:(void (^)(NSWindow *, NSError *))completion {
     [self.delegate restorableStateRestoreWithCoder:coder
                                         identifier:identifier
-                                        completion:completion];
+                                        completion:^(NSWindow * _Nullable window, NSError * _Nullable error) {
+        completion(window, error);
+        [self didRestoreWindow:window];
+    }];
 }
 
 - (void)restorableStateRestoreWithRecord:(nonnull iTermEncoderGraphRecord *)record
@@ -243,11 +250,31 @@ static BOOL gForceSaveState;
                                                            NSError *))completion {
     [self.delegate restorableStateRestoreWithRecord:record
                                          identifier:identifier
-                                         completion:completion];
+                                         completion:^(NSWindow * _Nullable window, NSError * _Nullable error) {
+        NSLog(@"iTermRestorableStateController's completion block calling the completion block for window %@", window);
+        completion(window, error);
+        NSLog(@"iTermRestorableStateController's completion block calling didRestoreWindow:%@", window);
+        __weak __typeof(window) weakWindow = window;
+        dispatch_group_notify(self->_completionGroup, dispatch_get_main_queue(), ^{
+            __strong __typeof(window) strongWindow = weakWindow;
+            if (strongWindow) {
+                [self didRestoreWindow:strongWindow];
+            }
+        });
+        NSLog(@"iTermRestorableStateController's completion block returning");
+    }];
 }
 
 - (void)restorableStateRestoreApplicationStateWithRecord:(nonnull iTermEncoderGraphRecord *)record {
     [self.delegate restorableStateRestoreApplicationStateWithRecord:record];
+}
+
+- (void)didRestoreWindow:(NSWindow *)window {
+    if (![window.delegate conformsToProtocol:@protocol(iTermRestorableWindowController)]) {
+        return;
+    }
+    id<iTermRestorableWindowController> controller = (id<iTermRestorableWindowController>)[window delegate];
+    [controller didFinishRestoringWindow];
 }
 
 #pragma mark - iTermRestorableStateSaving
