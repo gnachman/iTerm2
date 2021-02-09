@@ -5695,7 +5695,7 @@ DQ
                                                     <outlet property="nextKeyView" destination="5330" id="JWT-Si-m0o"/>
                                                 </connections>
                                             </button>
-                                            <button toolTip="The following tags are recognized: &lt;u&gt;, &lt;i&gt;, and &lt;ul&gt;. You can also use &amp;lt; and &amp;amp;." fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Ids-PU-lco" userLabel="Stretch Tabs to Fill Bar">
+                                            <button toolTip="The following tags are recognized: &lt;u&gt;, &lt;i&gt;, and &lt;b&gt;. You can also use &amp;lt; and &amp;amp;." fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Ids-PU-lco" userLabel="Stretch Tabs to Fill Bar">
                                                 <rect key="frame" x="18" y="18" width="348" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="check" title="Support basic HTML tags in tab titles" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="RnY-AK-UW0">
