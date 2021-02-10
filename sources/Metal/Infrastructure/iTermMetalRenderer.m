@@ -403,13 +403,11 @@ maximumExtendedDynamicRangeColorComponentValue:(CGFloat)maximumExtendedDynamicRa
     if (!image.image) {
         return nil;
     }
-    NSRect imageRect = NSMakeRect(0, 0, image.image.size.width, image.image.size.height);
-    CGImageRef imageRef = [image.image CGImageForProposedRect:&imageRect context:NULL hints:nil];
 
-    // Create a suitable bitmap context for extracting the bits of the image
+    // Calculate a safe size for the image while preserving its aspect ratio.
     NSUInteger width, height;
-    [self convertWidth:CGImageGetWidth(imageRef)
-                height:CGImageGetHeight(imageRef)
+    [self convertWidth:image.image.size.width
+                height:image.image.size.height
                toWidth:&width
                 height:&height
           notExceeding:4096];
@@ -417,22 +415,8 @@ maximumExtendedDynamicRangeColorComponentValue:(CGFloat)maximumExtendedDynamicRa
         return nil;
     }
 
-    CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
-    uint8_t *rawData = (uint8_t *)iTermCalloc(height * width * 4, sizeof(uint8_t));
-    NSUInteger bytesPerPixel = 4;
-    NSUInteger bytesPerRow = bytesPerPixel * width;
-    NSUInteger bitsPerComponent = 8;
-    CGContextRef bitmapContext = CGBitmapContextCreate(rawData, width, height,
-                                                       bitsPerComponent, bytesPerRow, colorSpace,
-                                                       kCGImageAlphaPremultipliedLast | kCGBitmapByteOrder32Big);
-    CGColorSpaceRelease(colorSpace);
-
-    // Flip the context so the positive Y axis points down
-    CGContextTranslateCTM(bitmapContext, 0, height);
-    CGContextScaleCTM(bitmapContext, 1, -1);
-
-    CGContextDrawImage(bitmapContext, CGRectMake(0, 0, width, height), imageRef);
-    CGContextRelease(bitmapContext);
+    NSData *data = [image.image rawDataForMetal];
+    const uint8_t *rawData = data.bytes;
 
     MTLTextureDescriptor *textureDescriptor =
     [MTLTextureDescriptor texture2DDescriptorWithPixelFormat:MTLPixelFormatRGBA8Unorm
@@ -448,6 +432,8 @@ maximumExtendedDynamicRangeColorComponentValue:(CGFloat)maximumExtendedDynamicRa
     }
 
     MTLRegion region = MTLRegionMake2D(0, 0, width, height);
+    NSUInteger bytesPerPixel = 4;
+    NSUInteger bytesPerRow = bytesPerPixel * width;
     [texture replaceRegion:region mipmapLevel:0 withBytes:rawData bytesPerRow:bytesPerRow];
 
     [iTermTexture setBytesPerRow:bytesPerRow
@@ -455,7 +441,6 @@ maximumExtendedDynamicRangeColorComponentValue:(CGFloat)maximumExtendedDynamicRa
                  samplesPerPixel:4
                       forTexture:texture];
 
-    free(rawData);
     if (texture) {
         [context didAddTextureOfSize:texture.width * texture.height];
     }

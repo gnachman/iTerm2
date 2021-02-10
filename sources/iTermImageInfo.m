@@ -278,7 +278,6 @@ static NSSize iTermImageInfoGetSizeForRegionPreservingAspectRatio(const NSSize r
     NSSize region = NSMakeSize(cellSize.width * _size.width,
                                cellSize.height * _size.height);
     if (!NSEqualSizes(embeddedImage.size, region)) {
-        NSImage *canvas = [[[NSImage alloc] init] autorelease];
         NSSize size;
         NSImage *theImage;
         if (self.animatedImage) {
@@ -291,8 +290,6 @@ static NSSize iTermImageInfoGetSizeForRegionPreservingAspectRatio(const NSSize r
         } else {
             size = region;
         }
-        [canvas setSize:region];
-        [canvas lockFocus];
         NSEdgeInsets inset = _inset;
         inset.top *= cellSize.height;
         inset.bottom *= cellSize.height;
@@ -302,9 +299,7 @@ static NSSize iTermImageInfoGetSizeForRegionPreservingAspectRatio(const NSSize r
                                                   (region.height - size.height) / 2 + inset.bottom,
                                                   MAX(0, size.width - inset.left - inset.right),
                                                   MAX(0, size.height - inset.top - inset.bottom));
-        [theImage drawInRect:destinationRect];
-        [canvas unlockFocus];
-
+        NSImage *canvas = [theImage safelyResizedImageWithSize:size destinationRect:destinationRect];
         self.embeddedImages[@(frame)] = canvas;
     }
     return _embeddedImages[@(frame)];

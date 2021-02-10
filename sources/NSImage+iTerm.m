@@ -281,6 +281,72 @@
     return storage;
 }
 
+- (NSData *)rawDataForMetal {
+    NSSize size = self.size;
+
+    CGImageRef cgImage = [self CGImageForProposedRect:nil context:nil hints:nil];
+
+    size_t bitsPerComponent = 8;
+    size_t bytesPerRow = size.width * bitsPerComponent * 4 / 8;
+    CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
+    CGBitmapInfo bitmapInfo = (CGBitmapInfo)kCGImageAlphaPremultipliedLast | kCGBitmapByteOrderDefault;
+    NSMutableData *data = [NSMutableData dataWithLength:bytesPerRow * ceil(size.height)];
+    CGContextRef context = CGBitmapContextCreate(data.mutableBytes,
+                                                 size.width,
+                                                 size.height,
+                                                 bitsPerComponent,
+                                                 bytesPerRow,
+                                                 colorSpace,
+                                                 bitmapInfo);
+    assert(context != nil);
+    CGContextSetInterpolationQuality(context, kCGInterpolationHigh);
+
+    // Flip the context so the positive Y axis points down
+    CGContextTranslateCTM(context, 0, size.height);
+    CGContextScaleCTM(context, 1, -1);
+
+    CGContextDrawImage(context, CGRectMake(0, 0, size.width, size.height), cgImage);
+
+    CFRelease(context);
+
+    return data;
+
+}
+
+- (NSImage *)safelyResizedImageWithSize:(NSSize)unsafeSize destinationRect:(NSRect)destinationRect {
+    NSSize newSize = NSMakeSize(round(unsafeSize.width), round(unsafeSize.height));
+    const CGFloat scale = 1;
+    if (!self.isValid) {
+        return nil;
+    }
+
+    NSBitmapImageRep *rep =
+      [[NSBitmapImageRep alloc] initWithBitmapDataPlanes:NULL
+                                              pixelsWide:newSize.width
+                                              pixelsHigh:newSize.height
+                                           bitsPerSample:8
+                                         samplesPerPixel:4
+                                                hasAlpha:YES
+                                                isPlanar:NO
+                                          colorSpaceName:NSCalibratedRGBColorSpace
+                                             bytesPerRow:0
+                                            bitsPerPixel:0];
+    rep.size = newSize;
+
+    [NSGraphicsContext saveGraphicsState];
+    [NSGraphicsContext setCurrentContext:[NSGraphicsContext graphicsContextWithBitmapImageRep:rep]];
+    [self drawInRect:destinationRect
+            fromRect:NSZeroRect
+           operation:NSCompositingOperationCopy
+            fraction:1.0];
+    [NSGraphicsContext restoreGraphicsState];
+
+    NSImage *newImage = [[NSImage alloc] initWithSize:NSMakeSize(newSize.width / scale,
+                                                                 newSize.height / scale)];
+    [newImage addRepresentation:rep];
+    return newImage;
+}
+
 - (NSBitmapImageRep *)bitmapImageRep {
     int width = [self size].width;
     int height = [self size].height;
