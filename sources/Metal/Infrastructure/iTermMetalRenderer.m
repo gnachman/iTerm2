@@ -416,6 +416,9 @@ maximumExtendedDynamicRangeColorComponentValue:(CGFloat)maximumExtendedDynamicRa
     }
 
     NSData *data = [image.image rawDataForMetal];
+    if (!data) {
+        return nil;
+    }
     const uint8_t *rawData = data.bytes;
 
     MTLTextureDescriptor *textureDescriptor =

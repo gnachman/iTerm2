@@ -7,6 +7,8 @@
 //
 
 #import "NSAppearance+iTerm.h"
+
+#import "DebugLogging.h"
 #import "NSColor+iTerm.h"
 #import "NSImage+iTerm.h"
 #import "NSObject+iTerm.h"
@@ -298,7 +300,11 @@
                                                  bytesPerRow,
                                                  colorSpace,
                                                  bitmapInfo);
-    assert(context != nil);
+    if (!context) {
+        DLog(@"Failed to create bitmap context width=%@ height=%@ bpc=%@ bpr=%@ cs=%@",
+             @(size.width), @(size.height), @(bitsPerComponent), @(bytesPerRow), colorSpace);
+        return nil;
+    }
     CGContextSetInterpolationQuality(context, kCGInterpolationHigh);
 
     // Flip the context so the positive Y axis points down
