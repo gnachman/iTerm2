@@ -29,10 +29,12 @@
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermMalloc.h"
 #import "iTermOrderedDictionary.h"
+#import "iTermPreferences.h"
 #import "iTermSwiftyStringParser.h"
 #import "iTermTuple.h"
 #import "iTermVariableScope.h"
 #import "NSArray+iTerm.h"
+#import "NSAttributedString+PSM.h"
 #import "NSData+iTerm.h"
 #import "NSLocale+iTerm.h"
 #import "NSMutableAttributedString+iTerm.h"
@@ -2122,6 +2124,14 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
     const NSRange prefixRange = [self rangeOfString:prefix
                                             options:(NSAnchoredSearch | NSCaseInsensitiveSearch)];
     return prefixRange.location == 0;
+}
+
+- (NSString *)removingHTMLFromTabTitleIfNeeded {
+    if (![iTermPreferences boolForKey:kPreferenceKeyHTMLTabTitles]) {
+        return self;
+    }
+    NSAttributedString *attributedString = [NSAttributedString newAttributedStringWithHTML:self attributes:@{}];
+    return attributedString.string;
 }
 
 @end

@@ -18,6 +18,7 @@
 #import "NSArray+iTerm.h"
 #import "NSDictionary+iTerm.h"
 #import "NSObject+iTerm.h"
+#import "NSStringITerm.h"
 #import "PseudoTerminal.h"
 #import "PTYSession+Scripting.h"
 #import "VT100RemoteHost.h"
@@ -128,7 +129,7 @@ static const double kProfileNameMultiplierForScriptItem = 0.09;
 }
 
 - (NSString *)documentForSession:(PTYSession *)session {
-    NSString *sessionName = session.name;
+    NSString *sessionName = session.name.removingHTMLFromTabTitleIfNeeded;
     NSString *tabTitle = session.variablesScope.tab.tabTitleOverride;
     NSString *tmuxWindowName = session.variablesScope.tab.tmuxWindowName;
     if (tabTitle.length == 0) {

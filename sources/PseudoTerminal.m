@@ -6433,9 +6433,21 @@ ITERM_WEAKLY_REFERENCEABLE
         return nil;
     }
     PTYSession *session = [[aTabViewItem identifier] activeSession];
+    NSString *guid = session.profile[KEY_GUID];
+    NSString *profileName = session.profile[KEY_NAME];
+    if (guid) {
+        Profile *profile = [[ProfileModel sharedInstance] bookmarkWithGuid:guid];
+        if (!profile) {
+            guid = session.profile[KEY_ORIGINAL_GUID];
+            profile = [[ProfileModel sharedInstance] bookmarkWithGuid:guid];
+        }
+        if (profile[KEY_NAME]) {
+            profileName = profile[KEY_NAME];
+        }
+    }
     return [NSString stringWithFormat:@"Name: %@\nProfile: %@\nCommand: %@",
-            aTabViewItem.label,
-            [[session profile] objectForKey:KEY_NAME],
+            [aTabViewItem.label removingHTMLFromTabTitleIfNeeded],
+            profileName,
             [session.shell originalCommand] ?: @"None"];
 }
 
