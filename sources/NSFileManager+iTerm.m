@@ -250,10 +250,7 @@ NSString * const DirectoryLocationDomain = @"DirectoryLocationDomain";
     return [paths firstObject];
 }
 
-- (NSString *)homeDirectoryDotDir {
-    NSString *homedir = NSHomeDirectory();
-    NSString *dotdir = [[homedir stringByAppendingPathComponent:@".config"] stringByAppendingPathComponent:@"iterm2"];
-
+- (NSString *)pathToExistingDirectoryCreatingIfNeeded:(NSString *)dotdir error:(out NSError **)errorPtr {
     BOOL isdir = NO;
 
     // Try to create ~/.config/iterm2 if needed
@@ -262,12 +259,54 @@ NSString * const DirectoryLocationDomain = @"DirectoryLocationDomain";
         [self createDirectoryAtPath:dotdir withIntermediateDirectories:YES attributes:nil error:&error];
         if (error) {
             DLog(@"Couldn't create %@: %@", dotdir, error);
+            if (errorPtr) {
+                *errorPtr = error;
+            }
             return nil;
         }
     } else if (!isdir) {
+        if (errorPtr) {
+            *errorPtr = [NSError errorWithDomain:@"com.iterm2.createDir" code:1 userInfo:@{ NSLocalizedDescriptionKey: @"File exists but is not a directory." }];
+        }
         return nil;
     }
     return dotdir;
+}
+
+- (NSString *)pathToFirstDirectoryCreatingIfNeeded:(NSArray<NSString *> *)options error:(NSError **)errorPtr {
+    NSMutableArray<NSString *> *errors = [NSMutableArray array];
+    for (NSString *option in options) {
+        NSError *error = nil;
+        NSString *result = [self pathToExistingDirectoryCreatingIfNeeded:option error:&error];
+        if (result) {
+            return result;
+        }
+        [errors addObject:[NSString stringWithFormat:@"%@: %@", option, error.localizedDescription]];
+    }
+    if (errorPtr) {
+        *errorPtr = [NSError errorWithDomain:@"com.iterm2.createDir" code:2 userInfo:@{ NSLocalizedDescriptionKey: [errors componentsJoinedByString:@"\n"] }];
+    }
+    return nil;
+}
+
+- (NSString *)homeDirectoryDotDir {
+    NSString *homedir = NSHomeDirectory();
+    NSString *dotConfigIterm2 = [[homedir stringByAppendingPathComponent:@".config"] stringByAppendingPathComponent:@"iterm2"];
+    NSString *dotIterm2 = [homedir stringByAppendingPathComponent:@".iterm2"];
+    NSArray<NSString *> *options = @[ dotConfigIterm2, dotIterm2 ];
+    NSError *error = nil;
+    NSString *result = [self pathToFirstDirectoryCreatingIfNeeded:options error:&error];
+
+    if (!result && error) {
+        [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"There was a problem finding or creating the config directory:\n%@", error.localizedDescription]
+                                   actions:@[ @"OK" ]
+                                 accessory:nil
+                                identifier:@"NoSyncErrorCreatingConfigFolder"
+                               silenceable:kiTermWarningTypePersistent
+                                   heading:@"Problem Creating Config Folder"
+                                    window:nil];
+    }
+    return result;
 }
 
 - (BOOL)directoryIsWritable:(NSString *)dir
