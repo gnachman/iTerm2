@@ -214,15 +214,17 @@ static BOOL gForceSaveState;
         // Just in case we don't get a chance to erase the state later.
         DLog(@"State restoration is disabled so erase db");
         [_driver eraseSynchronously:NO];
-        return;
-    }
-    if (_driver.needsSave) {
+    } else if (_driver.needsSave) {
         [_driver save];
     }
+    [self invokeRemainingCompletionBlocksAsFailure];
+}
+
+// Run system callbacks that were never married up to windows as failures.
+- (void)invokeRemainingCompletionBlocksAsFailure {
     NSMutableDictionary<NSString *, void (^)(NSWindow *, NSError *)> *temp = [_systemCallbacks copy];
     [_systemCallbacks removeAllObjects];
 
-    // Run system callbacks that were never married up to windows as failures.
     iTermRestorableStateController.shouldIgnoreOpenUntitledFile = YES;
     [temp enumerateKeysAndObjectsUsingBlock:^(NSString * _Nonnull windowIdentifier, void (^ _Nonnull completion)(NSWindow *, NSError *), BOOL * _Nonnull stop) {
         DLog(@"Running system callback with nil for %@", windowIdentifier);
