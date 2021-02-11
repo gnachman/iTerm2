@@ -164,8 +164,16 @@ static const CGFloat iTermStatusBarSparklineBottomMargin = 2;
 }
 
 - (void)animateSublayersLeftBy:(CGFloat)dx {
-    [self animationToMoveLayer:_shapeLayers[0] positionXBy:-dx];
-    [self animationToMoveLayer:_shapeLayers[1] positionXBy:-dx];
+//    [self animationToMoveLayer:_shapeLayers[0] positionXBy:-dx];
+//    [self animationToMoveLayer:_shapeLayers[1] positionXBy:-dx];
+    [CATransaction begin];
+    [CATransaction setDisableActions:YES];
+    for (size_t i = 0; i < 2; i++) {
+        CGPoint p = _shapeLayers[i].position;
+        p.x -= dx;
+        _shapeLayers[i].position = p;
+    }
+    [CATransaction commit];
 }
 
 - (CGPathRef)desiredPathDroppingFirst:(NSInteger)count {
