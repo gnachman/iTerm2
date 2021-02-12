@@ -6,6 +6,8 @@
 //
 
 #import "iTermStatusBarSparklinesComponent.h"
+
+#import "iTermAdvancedSettingsModel.h"
 #import "NSArray+iTerm.h"
 #import "NSBezierPath+iTerm.h"
 #import "NSDictionary+iTerm.h"
@@ -164,8 +166,22 @@ static const CGFloat iTermStatusBarSparklineBottomMargin = 2;
 }
 
 - (void)animateSublayersLeftBy:(CGFloat)dx {
-    [self animationToMoveLayer:_shapeLayers[0] positionXBy:-dx];
-    [self animationToMoveLayer:_shapeLayers[1] positionXBy:-dx];
+    if ([self shouldAnimate]) {
+        [self animationToMoveLayer:_shapeLayers[0] positionXBy:-dx];
+        [self animationToMoveLayer:_shapeLayers[1] positionXBy:-dx];
+    } else {
+        [CATransaction setDisableActions:YES];
+        for (size_t i = 0; i < 2; i++) {
+            CGPoint p = _shapeLayers[i].position;
+            p.x -= dx;
+            _shapeLayers[i].position = p;
+        }
+        [CATransaction commit];
+    }
+}
+
+- (BOOL)shouldAnimate {
+    return [iTermAdvancedSettingsModel animateGraphStatusBarComponents];
 }
 
 - (CGPathRef)desiredPathDroppingFirst:(NSInteger)count {
