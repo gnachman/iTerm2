@@ -284,7 +284,7 @@
 }
 
 - (NSData *)rawDataForMetal {
-    NSSize size = self.size;
+    NSSize size = NSMakeSize(round(self.size.width), round(self.size.height));
 
     CGImageRef cgImage = [self CGImageForProposedRect:nil context:nil hints:nil];
 

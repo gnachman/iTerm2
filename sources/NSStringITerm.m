@@ -1742,7 +1742,7 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
         size.height += frameSize.height;
     }
 
-    return NSMakeRect(0, 0, size.width, size.height);
+    return NSMakeRect(0, 0, ceil(size.width), ceil(size.height));
 }
 
 - (void)it_drawInRect:(CGRect)rect attributes:(NSDictionary *)attributes {
