@@ -120,10 +120,6 @@ static NSDictionary *sGraphicIconMap;
         NSString *path = [appSupport stringByAppendingPathComponent:[iconName stringByAppendingPathExtension:@"png"]];
         image = [NSImage it_imageWithScaledBitmapFromFile:path pointSize:NSMakeSize(16, 16)];
     }
-    if (@available(macOS 10.15, *)) {
-    } else {
-        image = [image it_verticallyFlippedImage];
-    }
 
     NSString *colorCode = sGraphicColorMap[command];
     if (!colorCode) {
