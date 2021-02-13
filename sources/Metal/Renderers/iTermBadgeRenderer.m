@@ -4,7 +4,7 @@
 #import "iTermMetalBufferPool.h"
 #import "iTermMetalRenderer.h"
 #import "iTermPreferences.h"
-draw#import "iTermSharedImageStore.h"
+#import "iTermSharedImageStore.h"
 #import "iTermTextDrawingHelper.h"
 
 NS_ASSUME_NONNULL_BEGIN
