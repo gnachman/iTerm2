@@ -756,8 +756,7 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
                                                                         isDefault:&isDefaultBackgroundColor];
             lastUnprocessedBackgroundColor = unprocessedBackgroundColor;
             // The unprocessed color is needed for minimum contrast computation for text color.
-            vector_float4 processableColor = isDefaultBackgroundColor ? simd_make_float4(0, 0, 0, 0) : unprocessedBackgroundColor;
-            backgroundColor = [_configuration->_colorMap fastProcessedBackgroundColorForBackgroundColor:processableColor];
+            backgroundColor = [_configuration->_colorMap fastProcessedBackgroundColorForBackgroundColor:unprocessedBackgroundColor];
             backgroundRLE[rles].color = backgroundColor;
             backgroundRLE[rles].origin = x;
             backgroundRLE[rles].count = 1;
@@ -1008,6 +1007,9 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
                                   bold:NO
                                  faint:NO
                           isBackground:YES];
+            if (defaultBackground) {
+                alpha = 0;
+            }
         }
     }
     color.w = alpha;
