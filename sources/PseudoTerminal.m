@@ -9037,6 +9037,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     [_contentView.tabBarControl setTabsHaveCloseButtons:[iTermPreferences boolForKey:kPreferenceKeyTabsHaveCloseButton]];
     _contentView.tabBarControl.height = [self desiredTabBarHeight];
 
+    [[self currentTab] recheckBlur];
     [self updateTabColors];
     [self updateToolbeltAppearance];
     if (@available(macOS 10.14, *)) {
