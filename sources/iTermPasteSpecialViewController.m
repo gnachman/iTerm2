@@ -16,7 +16,7 @@ typedef struct {
     double visualCenter;
 } iTermFloatingRange;
 
-#define DASHES @"\u2010-\u2015\u207b\u208b\u2212\u2e3a\u2e3b\ufe58\ufe63\uff0d"
+#define DASHES @"\u2010-\u2015\u207b\u208b\u2212\u2e3a\u2e3b\ufe58\ufe63\uff0d\u00ad"
 #define DOUBLE_QUOTES @"\u201c-\u201f\u301d-\u301f\uff02"
 #define SINGLE_QUOTES @"\u2018-\u201b\uff07"
 
