@@ -353,10 +353,10 @@ static const double kProfileNameMultiplierForScriptItem = 0.09;
         return nil;
     }
     snippetItem.detail = [_delegate openQuicklyModelDisplayStringForFeatureNamed:nil
-                                                                           value:[NSString stringWithFormat:@"Send snippet “%@”", snippet.title]
+                                                                           value:[NSString stringWithFormat:@"Send snippet “%@”", snippet.displayTitle]
                                                               highlightedIndexes:nil];
     snippetItem.title = attributedName;
-    snippetItem.identifier = [@(snippet.identifier) stringValue];
+    snippetItem.identifier = snippet.guid;
     return snippetItem;
 }
 

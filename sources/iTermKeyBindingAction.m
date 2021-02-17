@@ -150,9 +150,9 @@ static NSString *GetProfileName(NSString *guid) {
             actionString = [NSString stringWithFormat:@"%@ \"%@\"", @"Send:", _parameter];
             break;
         case KEY_ACTION_SEND_SNIPPET: {
-            iTermSnippet *snippet = [[iTermSnippetsModel sharedInstance] snippetWithTitle:_parameter];
+            iTermSnippet *snippet = [[iTermSnippetsModel sharedInstance] snippetWithActionKey:_parameter];
             if (snippet) {
-                actionString = [NSString stringWithFormat:@"Send Snippet “%@”", snippet.title];
+                actionString = [NSString stringWithFormat:@"Send Snippet “%@”", snippet.displayTitle];
             } else {
                 actionString = @"Send Deleted Snippet (no action)";
             }

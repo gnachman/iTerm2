@@ -43,17 +43,17 @@
     [self selectItemAtIndex:selectedIndex];
 }
 
-- (void)populateWithSnippetsSelectingTitle:(NSString *)title {
+- (void)populateWithSnippetsSelectingActionKey:(id)actionKey {
     [self removeAllItems];
     NSArray *sorted = [[[iTermSnippetsModel sharedInstance] snippets] sortedArrayUsingComparator:^NSComparisonResult(iTermSnippet *lhs, iTermSnippet *rhs) {
         return [lhs.title localizedCaseInsensitiveCompare:rhs.title];
     }];
     __block NSInteger selectedIndex = -1;
     [sorted enumerateObjectsUsingBlock:^(iTermSnippet *snippet, NSUInteger i, BOOL * _Nonnull stop) {
-        [self addItemWithTitle:snippet.title];
+        [self addItemWithTitle:snippet.displayTitle];
         NSMenuItem *item = self.lastItem;
-        item.representedObject = snippet.title;
-        if ([snippet.title isEqualToString:title]) {
+        item.representedObject = snippet.actionKey;
+        if ([snippet matchesActionKey:actionKey]) {
             selectedIndex = i;
         }
     }];

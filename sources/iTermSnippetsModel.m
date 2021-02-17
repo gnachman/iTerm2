@@ -9,6 +9,7 @@
 #import "iTermNotificationCenter+Protected.h"
 #import "iTermPreferences.h"
 #import "NSArray+iTerm.h"
+#import "NSData+iTerm.h"
 #import "NSIndexSet+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "NSStringITerm.h"
@@ -16,24 +17,35 @@
 @implementation iTermSnippet
 
 - (instancetype)initWithTitle:(NSString *)title
-                        value:(NSString *)value {
+                        value:(NSString *)value
+                         guid:(NSString *)guid {
     if (self) {
         _title = [title copy];
         _value = [value copy];
-        static NSInteger nextIdentifier;
-        _identifier = nextIdentifier++;
+        _guid = guid;
     }
     return self;
 }
 
-- (instancetype)initWithDictionary:(NSDictionary *)dictionary {
-    return [self initWithTitle:dictionary[@"title"] ?: @""
-                         value:dictionary[@"value"] ?: @""];
+- (instancetype)initWithDictionary:(NSDictionary *)dictionary index:(NSInteger)i {
+    NSString *title = dictionary[@"title"] ?: @"";
+    NSString *value = dictionary[@"value"] ?: @"";
+    // The fallback GUID is a migration path for pre-3.4.5 versions which did not serialize an
+    // identifier. That was a bad idea because actions need a way to refer to an item since titles
+    // could be ambiguous. The key thing about it is that it's stable. You can create new actions,
+    // and they'll have GUIDs, even if your snippet table doesn't get re-written. If you edit your
+    // snippets then they will all be assigned GUIDs. The only problem is if you downgrade your
+    // actions will be broken since they'll continue to have GUIDs but older versions expect them to
+    // have titles (and it'll probably crash. Don't downgrade).
+    return [self initWithTitle:title
+                         value:value
+                          guid:dictionary[@"guid"] ?: [[@[ [@(i) stringValue], title, value ] hashWithSHA256] it_hexEncoded]];
 }
 
 - (NSDictionary *)dictionaryValue {
     return @{ @"title": _title ?: @"",
-              @"value": _value ?: @"" };
+              @"value": _value ?: @"",
+              @"guid": _guid };
 }
 
 - (BOOL)isEqual:(id)object {
@@ -44,7 +56,16 @@
     if (!other) {
         return NO;
     }
-    return self.identifier == other.identifier;
+    return [self.guid isEqual:other.guid];
+}
+
+- (NSString *)description {
+    return [NSString stringWithFormat:@"<%@: %p title=%@ value=%@ guid=%@>",
+            NSStringFromClass([self class]),
+            self,
+            _title,
+            _value,
+            _guid];
 }
 
 - (NSString *)trimmedValue:(NSInteger)maxLength {
@@ -57,6 +78,27 @@
 
 - (BOOL)titleEqualsValueUpToLength:(NSInteger)maxLength {
     return [[self trimmedTitle:maxLength] isEqualToString:[self trimmedValue:maxLength]];
+}
+
+- (id)actionKey {
+    return @{ @"guid": _guid };
+}
+
+- (BOOL)matchesActionKey:(id)actionKey {
+    if ([actionKey isEqual:self.actionKey]) {
+        return YES;
+    }
+    if ([actionKey isEqual:self.title]) {
+        return YES;
+    }
+    return NO;
+}
+
+- (NSString *)displayTitle {
+    if (self.title.length == 0) {
+        return [self.value ellipsizedDescriptionNoLongerThan:30];
+    }
+    return self.title;
 }
 
 @end
@@ -77,12 +119,13 @@
 - (instancetype)init {
     self = [super init];
     if (self) {
+        __block NSInteger i = 0;
         _snippets = [[[NSArray castFrom:[[NSUserDefaults standardUserDefaults] objectForKey:kPreferenceKeySnippets]] mapWithBlock:^id(id anObject) {
             NSDictionary *dict = [NSDictionary castFrom:anObject];
             if (!dict) {
                 return nil;
             }
-            return [[iTermSnippet alloc] initWithDictionary:dict];
+            return [[iTermSnippet alloc] initWithDictionary:dict index:i++];
         }] mutableCopy] ?: [NSMutableArray array];
     }
     return self;
@@ -111,33 +154,33 @@
     [[iTermSnippetsDidChangeNotification notificationWithMutationType:iTermSnippetsDidChangeMutationTypeEdit index:index] post];
 }
 
-- (NSInteger)indexOfSnippetWithIdentifier:(NSInteger)identifier {
+- (NSInteger)indexOfSnippetWithGUID:(NSString *)guid {
     return [_snippets indexOfObjectPassingTest:^BOOL(iTermSnippet * _Nonnull snippet, NSUInteger idx, BOOL * _Nonnull stop) {
-        return snippet.identifier == identifier;
+        return [snippet.guid isEqual:guid];
     }];
 }
 
-- (iTermSnippet *)snippetWithIdentifier:(NSInteger)identifier {
-    const NSInteger i = [self indexOfSnippetWithIdentifier:identifier];
+- (iTermSnippet *)snippetWithGUID:(NSString *)guid {
+    const NSInteger i = [self indexOfSnippetWithGUID:guid];
     if (i == NSNotFound) {
         return nil;
     }
     return _snippets[i];
 }
 
-- (nullable iTermSnippet *)snippetWithTitle:(NSString *)title {
+- (nullable iTermSnippet *)snippetWithActionKey:(id)actionKey {
     return [_snippets objectPassingTest:^BOOL(iTermSnippet *snippet, NSUInteger index, BOOL *stop) {
-        return [snippet.title isEqualToString:title];
+        return [snippet matchesActionKey:actionKey];
     }];
 }
 
-- (void)moveSnippetsWithIdentifiers:(NSArray<NSNumber *> *)identifiers
-                            toIndex:(NSInteger)row {
+- (void)moveSnippetsWithGUIDs:(NSArray<NSString *> *)guids
+                      toIndex:(NSInteger)row {
     NSArray<iTermSnippet *> *snippets = [_snippets filteredArrayUsingBlock:^BOOL(iTermSnippet *snippet) {
-        return [identifiers containsObject:@(snippet.identifier)];
+        return [guids containsObject:snippet.guid];
     }];
     NSInteger countBeforeRow = [[snippets filteredArrayUsingBlock:^BOOL(iTermSnippet *snippet) {
-        return [self indexOfSnippetWithIdentifier:snippet.identifier] < row;
+        return [self indexOfSnippetWithGUID:snippet.guid] < row;
     }] count];
     NSMutableArray<iTermSnippet *> *updatedSnippets = [_snippets mutableCopy];
     NSMutableIndexSet *removals = [NSMutableIndexSet indexSet];

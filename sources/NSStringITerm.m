@@ -1579,6 +1579,10 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
     return hash;
 }
 
+- (NSData *)hashWithSHA256 {
+    return [[self dataUsingEncoding:NSUTF8StringEncoding] it_sha256];
+}
+
 - (UTF32Char)firstCharacter {
     if (self.length == 0) {
         return 0;

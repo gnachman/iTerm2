@@ -265,6 +265,10 @@
                           length:CC_SHA256_DIGEST_LENGTH];
 }
 
+- (NSData *)hashWithSHA256 {
+    return [self it_sha256];
+}
+
 - (NSString *)it_hexEncoded {
     NSMutableString *result = [NSMutableString string];
     const unsigned char *bytes = self.bytes;
@@ -461,6 +465,12 @@
         return [self description];
     }
     return [[self subdataWithRange:NSMakeRange(0, 10)] description];
+}
+
+- (NSData *)dataByAppending:(NSData *)other {
+    NSMutableData *temp = [[self mutableCopy] autorelease];
+    [temp appendData:other];
+    return temp;
 }
 
 @end

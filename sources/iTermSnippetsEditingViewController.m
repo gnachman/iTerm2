@@ -230,8 +230,8 @@ writeRowsWithIndexes:(NSIndexSet *)rowIndexes
     [pboard declareTypes:@[ iTermSnippetsEditingPasteboardType ]
                    owner:self];
 
-    NSArray<NSNumber *> *plist = [rowIndexes.it_array mapWithBlock:^id(NSNumber *anObject) {
-        return @(_snippets[anObject.integerValue].identifier);
+    NSArray<NSString *> *plist = [rowIndexes.it_array mapWithBlock:^id(NSNumber *anObject) {
+        return _snippets[anObject.integerValue].guid;
     }];
     [pboard setPropertyList:plist
                     forType:iTermSnippetsEditingPasteboardType];
@@ -265,9 +265,9 @@ writeRowsWithIndexes:(NSIndexSet *)rowIndexes
     dropOperation:(NSTableViewDropOperation)operation {
     [self pushUndo];
     NSPasteboard *pboard = [info draggingPasteboard];
-    NSArray<NSNumber *> *identifiers = [pboard propertyListForType:iTermSnippetsEditingPasteboardType];
-    [[iTermSnippetsModel sharedInstance] moveSnippetsWithIdentifiers:identifiers
-                                                             toIndex:row];
+    NSArray<NSString *> *guids = [pboard propertyListForType:iTermSnippetsEditingPasteboardType];
+    [[iTermSnippetsModel sharedInstance] moveSnippetsWithGUIDs:guids
+                                                       toIndex:row];
     return YES;
 }
 

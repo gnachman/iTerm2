@@ -253,7 +253,7 @@
         [_colorPresetsPopup loadColorPresetsSelecting:self.parameterValue];
     }
     if (!_snippetsPopup.isHidden) {
-        [_snippetsPopup populateWithSnippetsSelectingTitle:self.parameterValue];
+        [_snippetsPopup populateWithSnippetsSelectingActionKey:self.parameterValue];
     }
     if (!_selectionMovementUnit.isHidden) {
         [_selectionMovementUnit selectItemWithTag:[self.parameterValue integerValue]];
@@ -710,7 +710,7 @@
     NSString *guid = [[_profilePopup selectedItem] representedObject];
     [_profilePopup populateWithProfilesSelectingGuid:guid];
     [_colorPresetsPopup loadColorPresetsSelecting:_colorPresetsPopup.selectedItem.representedObject];
-    [_snippetsPopup populateWithSnippetsSelectingTitle:_snippetsPopup.selectedItem.representedObject];
+    [_snippetsPopup populateWithSnippetsSelectingActionKey:_snippetsPopup.selectedItem.representedObject];
     [[self class] populatePopUpButtonWithMenuItems:_menuToSelectPopup
                                      selectedTitle:[[_menuToSelectPopup selectedItem] title]
                                         identifier:_menuToSelectPopup.selectedItem.identifier];

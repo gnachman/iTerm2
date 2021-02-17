@@ -296,18 +296,23 @@ static NSButton *iTermToolSnippetsNewButton(NSString *imageName, NSString *title
 }
 
 - (void)applySelectedSnippets {
+    DLog(@"%@", [NSThread callStackSymbols]);
     for (iTermSnippet *snippet in [self selectedSnippets]) {
+        DLog(@"Create action to send snippet %@", snippet);
         iTermToolWrapper *wrapper = self.toolWrapper;
         iTermAction *action = [[iTermAction alloc] initWithTitle:@"Send Snippet"
                                                           action:KEY_ACTION_SEND_SNIPPET
-                                                       parameter:snippet.title];
+                                                       parameter:snippet.actionKey];
         [wrapper.delegate.delegate toolbeltApplyActionToCurrentSession:action];
     }
 }
 
 - (NSArray<iTermSnippet *> *)selectedSnippets {
+    DLog(@"selected row indexes are %@", _tableView.selectedRowIndexes);
     NSArray<iTermSnippet *> *snippets = [[iTermSnippetsModel sharedInstance] snippets];
+    DLog(@"Snippets are:\n%@", snippets);
     return [[_tableView.selectedRowIndexes it_array] mapWithBlock:^id(NSNumber *indexNumber) {
+        DLog(@"Add snippet at %@", indexNumber);
         return snippets[indexNumber.integerValue];
     }];
 }
@@ -413,7 +418,7 @@ writeRowsWithIndexes:(NSIndexSet *)rowIndexes
                    owner:self];
 
     NSArray<NSNumber *> *plist = [rowIndexes.it_array mapWithBlock:^id(NSNumber *anObject) {
-        return @(_snippets[anObject.integerValue].identifier);
+        return _snippets[anObject.integerValue].guid;
     }];
     [pboard setPropertyList:plist
                     forType:iTermToolSnippetsPasteboardType];
@@ -451,9 +456,9 @@ writeRowsWithIndexes:(NSIndexSet *)rowIndexes
     dropOperation:(NSTableViewDropOperation)operation {
     [self pushUndo];
     NSPasteboard *pboard = [info draggingPasteboard];
-    NSArray<NSNumber *> *identifiers = [pboard propertyListForType:iTermToolSnippetsPasteboardType];
-    [[iTermSnippetsModel sharedInstance] moveSnippetsWithIdentifiers:identifiers
-                                                             toIndex:row];
+    NSArray<NSString *> *guids = [pboard propertyListForType:iTermToolSnippetsPasteboardType];
+    [[iTermSnippetsModel sharedInstance] moveSnippetsWithGUIDs:guids
+                                                       toIndex:row];
     return YES;
 }
 
@@ -489,7 +494,7 @@ writeRowsWithIndexes:(NSIndexSet *)rowIndexes
         return NO;
     }
     NSString *title = [self titleFromString:string];
-    iTermSnippet *snippet = [[iTermSnippet alloc] initWithTitle:title value:string];
+    iTermSnippet *snippet = [[iTermSnippet alloc] initWithTitle:title value:string guid:[[NSUUID UUID] UUIDString]];
     [[iTermSnippetsModel sharedInstance] addSnippet:snippet];
     return YES;
 }
