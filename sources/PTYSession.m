@@ -7785,7 +7785,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
             if (_exited || isTmuxGateway) {
                 return;
             } else {
-                iTermSnippet *snippet = [[iTermSnippetsModel sharedInstance] snippetWithTitle:action.parameter];
+                DLog(@"Look up snippet with param %@", action.parameter);
+                iTermSnippet *snippet = [[iTermSnippetsModel sharedInstance] snippetWithActionKey:action.parameter];
                 if (snippet) {
                     [self sendText:snippet.value];
                 }

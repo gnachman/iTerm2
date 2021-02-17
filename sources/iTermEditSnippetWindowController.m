@@ -17,6 +17,7 @@
     IBOutlet NSTextView *_valueView;
     NSString *_title;
     NSString *_value;
+    NSString *_guid;
     BOOL _canceled;
 }
 
@@ -27,6 +28,7 @@
         if (snippet) {
             _title = snippet.title;
             _value = snippet.value;
+            _guid = snippet.guid;
         } else {
             NSString *pasteboardString = [NSString stringFromPasteboard];
             if (pasteboardString) {
@@ -36,6 +38,7 @@
                 _title = @"Untitled";
                 _value = @"";
             }
+            _guid = [[NSUUID UUID] UUIDString];
         }
         _completion = [completion copy];
     }
@@ -46,7 +49,7 @@
     if (_canceled) {
         return nil;
     }
-    return [[iTermSnippet alloc] initWithTitle:_title value:_value];
+    return [[iTermSnippet alloc] initWithTitle:_title value:_value guid:_guid];
 }
 
 - (void)windowDidLoad {

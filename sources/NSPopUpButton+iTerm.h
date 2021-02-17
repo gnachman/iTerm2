@@ -17,6 +17,6 @@
 - (void)loadColorPresetsSelecting:(NSString *)presetName;
 
 // Add snippets.
-- (void)populateWithSnippetsSelectingTitle:(NSString *)title;
+- (void)populateWithSnippetsSelectingActionKey:(id)actionKey;
 
 @end

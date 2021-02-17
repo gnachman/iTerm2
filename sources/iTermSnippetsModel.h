@@ -15,18 +15,25 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) NSDictionary *dictionaryValue;
 @property (nonatomic, readonly) NSString *title;
 @property (nonatomic, readonly) NSString *value;
-@property (nonatomic, readonly) NSInteger identifier;
+@property (nonatomic, readonly) NSString *guid;
+@property (nonatomic, readonly) id actionKey;
+
+// Title suitable for display. Works nicely if the title is empty by using a prefix of the value.
+@property (nonatomic, readonly) NSString *displayTitle;
 
 - (instancetype)initWithTitle:(NSString *)title
-                        value:(NSString *)value NS_DESIGNATED_INITIALIZER;
+                        value:(NSString *)value
+                         guid:(NSString *)guid NS_DESIGNATED_INITIALIZER;
 
-- (instancetype)initWithDictionary:(NSDictionary *)dictionary;
+- (instancetype)initWithDictionary:(NSDictionary *)dictionary
+                             index:(NSInteger)index;
 
 - (instancetype)init NS_UNAVAILABLE;
 
 - (NSString *)trimmedValue:(NSInteger)maxLength;
 - (NSString *)trimmedTitle:(NSInteger)maxLength;
 - (BOOL)titleEqualsValueUpToLength:(NSInteger)maxLength;
+- (BOOL)matchesActionKey:(id)actionKey;
 
 @end
 
@@ -40,11 +47,11 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)removeSnippets:(NSArray<iTermSnippet *> *)snippets;
 - (void)replaceSnippet:(iTermSnippet *)snippetToReplace
            withSnippet:(iTermSnippet *)replacement;
-- (void)moveSnippetsWithIdentifiers:(NSArray<NSNumber *> *)identifiersToMove
-                            toIndex:(NSInteger)row;
+- (void)moveSnippetsWithGUIDs:(NSArray<NSString *> *)guids
+                      toIndex:(NSInteger)row;
 - (void)setSnippets:(NSArray<iTermSnippet *> *)snippets;
-- (nullable iTermSnippet *)snippetWithIdentifier:(NSInteger)identifier;
-- (nullable iTermSnippet *)snippetWithTitle:(NSString *)title;
+- (iTermSnippet *)snippetWithGUID:(NSString *)guid;
+- (nullable iTermSnippet *)snippetWithActionKey:(id)actionKey;
 
 @end
 

@@ -10,6 +10,7 @@
 
 #import "iTermMalloc.h"
 #import "iTermTuple.h"
+#import "NSData+iTerm.h"
 #import "NSLocale+iTerm.h"
 #import "NSMutableAttributedString+iTerm.h"
 #import "NSStringITerm.h"
@@ -302,6 +303,22 @@
             objectHash = [object unsignedIntegerValue];
         }
         hash = (hash * 33) ^ objectHash;
+    }
+    return hash;
+}
+
+- (NSData *)hashWithSHA256 {
+    NSData *hash = [[NSData data] it_sha256];
+    for (id object in self) {
+        NSData *objectHash = nil;
+        if ([object respondsToSelector:@selector(hashWithSHA256)]) {
+            // This handles string and other arrays, at least.
+            objectHash = [object hashWithSHA256];
+        } else {
+            objectHash = hash;
+        }
+
+        hash = [[hash dataByAppending:objectHash] it_sha256];
     }
     return hash;
 }

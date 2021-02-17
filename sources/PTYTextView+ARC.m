@@ -1029,7 +1029,8 @@ toggleTerminalStateForMenuItem:(nonnull NSMenuItem *)item {
 - (void)contextMenuSaveSelectionAsSnippet:(iTermTextViewContextMenuHelper *)contextMenu {
     NSString *selectedText = [self selectedText];
     iTermSnippet *snippet = [[iTermSnippet alloc] initWithTitle:selectedText
-                                                          value:selectedText];
+                                                          value:selectedText
+                                                           guid:[[NSUUID UUID] UUIDString]];
     [[iTermSnippetsModel sharedInstance] addSnippet:snippet];
 }
 
