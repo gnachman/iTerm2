@@ -31,11 +31,13 @@ NSString *const iTermBroadcastDomainsDidChangeNotification = @"iTermBroadcastDom
 }
 
 - (BroadcastMode)broadcastMode {
-    if ([self.delegate broadcastInputHelperCurrentTabIsBroadcasting:self]) {
-        return BROADCAST_TO_ALL_PANES;
-    } else {
-        return _broadcastMode;
+    if (_broadcastMode == BROADCAST_TO_ALL_PANES) {
+        if ([self.delegate broadcastInputHelperCurrentTabIsBroadcasting:self]) {
+            return BROADCAST_TO_ALL_PANES;
+        }
+        return BROADCAST_OFF;
     }
+    return _broadcastMode;
 }
 
 - (void)toggleSession:(NSString *)sessionID {
@@ -193,24 +195,40 @@ NSString *const iTermBroadcastDomainsDidChangeNotification = @"iTermBroadcastDom
 
 - (void)setBroadcastMode:(BroadcastMode)mode {
     if (mode != BROADCAST_CUSTOM && mode == self.broadcastMode) {
-        mode = BROADCAST_OFF;
-    }
-    if (mode != BROADCAST_OFF && self.broadcastMode == BROADCAST_OFF) {
-        NSWindow *window = [self.delegate broadcastInputHelperWindowForWarnings:self];
-        if ([iTermWarning showWarningWithTitle:@"Keyboard input will be sent to multiple sessions."
-                                       actions:@[ @"OK", @"Cancel" ]
-                                    identifier:@"NoSyncSuppressBroadcastInputWarning"
-                                   silenceable:kiTermWarningTypePermanentlySilenceable
-                                        window:window] == kiTermWarningSelection1) {
-            return;
+        // Toggle current mode.
+        if (mode == BROADCAST_TO_ALL_PANES) {
+            // Toggle just this tab.
+            const BOOL tabBroadcasting = [self.delegate broadcastInputHelperCurrentTabIsBroadcasting:self];
+            [self.delegate broadcastInputHelper:self setCurrentTabBroadcasting:!tabBroadcasting];
+            if (![self.delegate broadcastInputHelperAnyTabIsBroadcasting:self]) {
+                // All tabs have it off.
+                mode = BROADCAST_OFF;
+            }
+        } else {
+            mode = BROADCAST_OFF;
         }
-    }
-    if (mode == BROADCAST_TO_ALL_PANES) {
-        [self.delegate broadcastInputHelper:self setCurrentTabBroadcasting:YES];
     } else {
-        [self.delegate broadcastInputHelper:self setCurrentTabBroadcasting:NO];
+        // Mode is changing or being set to custom.
+        if (mode != BROADCAST_OFF && self.broadcastMode == BROADCAST_OFF) {
+            // off -> !off
+            NSWindow *window = [self.delegate broadcastInputHelperWindowForWarnings:self];
+            if ([iTermWarning showWarningWithTitle:@"Keyboard input will be sent to multiple sessions."
+                                           actions:@[ @"OK", @"Cancel" ]
+                                        identifier:@"NoSyncSuppressBroadcastInputWarning"
+                                       silenceable:kiTermWarningTypePermanentlySilenceable
+                                            window:window] == kiTermWarningSelection1) {
+                return;
+            }
+        }
+        if (mode == BROADCAST_TO_ALL_PANES) {
+            // Enable just this tab.
+            [self.delegate broadcastInputHelper:self setCurrentTabBroadcasting:YES];
+        } else {
+            // Disable broadcasting to this tab because it's irrelevant for this mode.
+            [self.delegate broadcastInputHelper:self setCurrentTabBroadcasting:NO];
+        }
+        _broadcastMode = mode;
     }
-    _broadcastMode = mode;
     [self.delegate broadcastInputHelperDidUpdate:self];
     [[NSNotificationCenter defaultCenter] postNotificationName:iTermBroadcastDomainsDidChangeNotification object:nil];
 }

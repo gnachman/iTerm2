@@ -30,6 +30,7 @@ typedef NS_ENUM(NSInteger, BroadcastMode) {
 - (NSString *)broadcastInputHelperCurrentSession:(iTermBroadcastInputHelper *)helper;
 - (void)broadcastInputHelperDidUpdate:(iTermBroadcastInputHelper *)helper;
 - (BOOL)broadcastInputHelperCurrentTabIsBroadcasting:(iTermBroadcastInputHelper *)helper;
+- (BOOL)broadcastInputHelperAnyTabIsBroadcasting:(iTermBroadcastInputHelper *)helper;
 - (void)broadcastInputHelperSetNoTabBroadcasting:(iTermBroadcastInputHelper *)helper;
 - (void)broadcastInputHelper:(iTermBroadcastInputHelper *)helper setCurrentTabBroadcasting:(BOOL)broadcasting;
 - (NSWindow *)broadcastInputHelperWindowForWarnings:(iTermBroadcastInputHelper *)helper;

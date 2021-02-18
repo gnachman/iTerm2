@@ -11162,6 +11162,12 @@ backgroundColor:(NSColor *)backgroundColor {
     return self.currentTab.isBroadcasting;
 }
 
+- (BOOL)broadcastInputHelperAnyTabIsBroadcasting:(iTermBroadcastInputHelper *)helper {
+    return [self.tabs anyWithBlock:^BOOL(PTYTab *anObject) {
+        return anObject.isBroadcasting;
+    }];
+}
+
 - (void)broadcastInputHelperSetNoTabBroadcasting:(iTermBroadcastInputHelper *)helper {
     for (PTYTab *tab in self.tabs) {
         tab.broadcasting = NO;
