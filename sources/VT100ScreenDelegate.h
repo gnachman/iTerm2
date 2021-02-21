@@ -270,6 +270,7 @@
 - (void)screenPushKeyLabels:(NSString *)value;
 - (void)screenPopKeyLabels:(NSString *)value;
 - (void)screenSendModifiersDidChange;
+- (void)screenKeyReportingFlagsDidChange;
 
 - (void)screenTerminalAttemptedPasteboardAccess;
 - (NSString *)screenValueOfVariableNamed:(NSString *)name;

@@ -252,7 +252,10 @@
         // '} not supported (Insert P s Column(s) (default = 1) (DECIC), VT420 and up)
         // '~ not supported (Delete P s Column(s) (default = 1) (DECDC), VT420 and up)
         { 0, '#', '|', VT100CSI_XTREPORTSGR, 1, 1, 1, 1 },
-        { '>', 0, 'q', VT100CSI_XDA, 0, -1, -1, -1}
+        { '>', 0, 'q', VT100CSI_XDA, 0, -1, -1, -1},
+        { '>', 1, 'u', VT100CSI_PUSH_KEY_REPORTING_MODE, 1, -1, -1, -1 },
+        { '<', 0, 'u', VT100CSI_POP_KEY_REPORTING_MODE, -1, -1, -1, -1 },
+        { '?', 0, 'u', VT100CSI_QUERY_KEY_REPORTING_MODE, -1, -1, -1, -1 }
     };
 
     const int n = sizeof(simpleCodes) / sizeof(*simpleCodes);

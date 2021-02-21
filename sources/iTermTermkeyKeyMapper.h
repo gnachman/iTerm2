@@ -9,6 +9,7 @@
 
 #import "ITAddressBookMgr.h"
 #import "iTermKeyMapper.h"
+#import "VT100Terminal.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -30,6 +31,7 @@ typedef struct {
 
 @property (nonatomic, weak) id<iTermTermkeyKeyMapperDelegate> delegate;
 @property (nonatomic) iTermTermkeyKeyMapperConfiguration configuration;
+@property (nonatomic) VT100TerminalKeyReportingFlags flags;
 
 @end
 

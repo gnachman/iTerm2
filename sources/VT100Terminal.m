@@ -78,6 +78,7 @@ NSString *const kTerminalStateURLParams = @"URL Params";
 NSString *const kTerminalStateReportKeyUp = @"Report Key Up";
 NSString *const kTerminalStateMetaSendsEscape = @"Meta Sends Escape";
 NSString *const kTerminalStateSendModifiers = @"Send Modifiers";
+NSString *const kTerminalStateKeyReportingModeStack = @"Key Reporting Mode Stack";
 
 @interface VT100Terminal ()
 @property(nonatomic, assign) BOOL reverseVideo;
@@ -131,6 +132,7 @@ typedef struct {
     unsigned short _currentURLCode;
 
     BOOL _softAlternateScreenMode;
+    NSMutableArray<NSNumber *> *_keyReportingModeStack;
 }
 
 @synthesize delegate = delegate_;
@@ -224,7 +226,7 @@ static const int kMaxScreenRows = 4096;
         _allowKeypadMode = YES;
         _allowPasteBracketing = YES;
         _sendModifiers = [@[ @-1, @-1, @-1, @-1, @-1 ] mutableCopy];
-
+        _keyReportingModeStack = [[NSMutableArray alloc] init];
         numLock_ = YES;
         [self saveCursor];  // initialize save area
         _unicodeVersionStack = [[NSMutableArray alloc] init];
@@ -241,6 +243,7 @@ static const int kMaxScreenRows = 4096;
     [_url release];
     [_urlParams release];
     [_sendModifiers release];
+    [_keyReportingModeStack release];
 
     [super dealloc];
 }
@@ -362,6 +365,7 @@ static const int kMaxScreenRows = 4096;
         mainSavedCursor_.lineDrawing[i] = NO;
         altSavedCursor_.lineDrawing[i] = NO;
     }
+    [_keyReportingModeStack removeAllObjects];
     [self resetSavedCursorPositions];
     [delegate_ terminalShowPrimaryBuffer];
     self.softAlternateScreenMode = NO;
@@ -449,6 +453,10 @@ static const int kMaxScreenRows = 4096;
     }
     _reportKeyUp = reportKeyUp;
     [self.delegate terminalReportKeyUpDidChange:reportKeyUp];
+}
+
+- (VT100TerminalKeyReportingFlags)keyReportingFlags {
+    return _keyReportingModeStack.lastObject.intValue;
 }
 
 - (screen_char_t)foregroundColorCode
@@ -1860,6 +1868,25 @@ static const int kMaxScreenRows = 4096;
             [self executeANSIRequestMode:token.csi->p[0]];
             break;
 
+        case VT100CSI_PUSH_KEY_REPORTING_MODE:
+            [_keyReportingModeStack addObject:@(token.csi->p[0])];
+            [self.delegate terminalKeyReportingFlagsDidChange];
+            break;
+
+        case VT100CSI_POP_KEY_REPORTING_MODE:
+            if (_keyReportingModeStack.count == 0) {
+                break;
+            }
+            [_keyReportingModeStack removeLastObject];
+            [self.delegate terminalKeyReportingFlagsDidChange];
+            break;
+
+        case VT100CSI_QUERY_KEY_REPORTING_MODE:
+            if ([delegate_ terminalShouldSendReport]) {
+                [delegate_ terminalSendReport:[_output reportKeyReportingMode:_keyReportingModeStack.lastObject.intValue]];
+            }
+            break;
+
         case VT100CSI_DECRQM_DEC:
             [self executeDECRequestMode:token.csi->p[0]];
             break;
@@ -3268,6 +3295,7 @@ static iTermDECRPMSetting VT100TerminalDECRPMSettingFromBoolean(BOOL flag) {
            kTerminalStateReportKeyUp: @(self.reportKeyUp),
            kTerminalStateMetaSendsEscape: @(self.metaSendsEscape),
            kTerminalStateSendModifiers: _sendModifiers ?: @[],
+           kTerminalStateKeyReportingModeStack: _keyReportingModeStack.copy,
            kTerminalStateAllowKeypadModeKey: @(self.allowKeypadMode),
            kTerminalStateAllowPasteBracketing: @(self.allowPasteBracketing),
            kTerminalStateBracketedPasteModeKey: @(self.bracketedPasteMode),
@@ -3318,15 +3346,16 @@ static iTermDECRPMSetting VT100TerminalDECRPMSettingFromBoolean(BOOL flag) {
     self.keypadMode = [dict[kTerminalStateKeypadModeKey] boolValue];
     self.reportKeyUp = [dict[kTerminalStateReportKeyUp] boolValue];
     self.metaSendsEscape = [dict[kTerminalStateMetaSendsEscape] boolValue];
-    if ([dict[kTerminalStateSendModifiers] isKindOfClass:[NSArray class]]) {
-        self.sendModifiers = [[dict[kTerminalStateSendModifiers] mutableCopy] autorelease];
-    }
     if (!_sendModifiers) {
         self.sendModifiers = [[@[ @-1, @-1, @-1, @-1, @-1 ] mutableCopy] autorelease];
     } else {
         while (_sendModifiers.count < NUM_MODIFIABLE_RESOURCES) {
             [_sendModifiers addObject:@-1];
         }
+    }
+    if ([dict[kTerminalStateKeyReportingModeStack] isKindOfClass:[NSArray class]]) {
+        [_keyReportingModeStack release];
+        _keyReportingModeStack = [dict[kTerminalStateKeyReportingModeStack] mutableCopy];
     }
     self.allowKeypadMode = [dict[kTerminalStateAllowKeypadModeKey] boolValue];
     self.allowPasteBracketing = [dict[kTerminalStateAllowPasteBracketing] boolValue];

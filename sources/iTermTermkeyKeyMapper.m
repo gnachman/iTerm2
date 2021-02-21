@@ -418,7 +418,8 @@
 }
 
 // Only control pressed
-- (NSString *)modifiedUnicodeStringForControlCharacter:(unichar)codePoint {
+- (NSString *)modifiedUnicodeStringForControlCharacter:(unichar)codePoint
+                                               keyCode:(int)keyCode {
     switch (codePoint) {
         case ' ':
             return [self stringWithCharacter:0];
@@ -429,6 +430,9 @@
     }
     if (codePoint > 'z') {
         return nil;
+    }
+    if ([self shouldDisambiguateEscape]) {
+        return [self csiuStringForCodePoint:codePoint keyCode:keyCode modifiers:NSEventModifierFlagControl];
     }
     // Legacy code path: control-letter, only control pressed.
     unichar controlCode = codePoint - 'a' + 1;
@@ -472,24 +476,27 @@ static BOOL CodePointInPrivateUseArea(unichar c) {
 
     // Modified unicode - control
     if ((eventModifiers & allEventModifierFlags) == NSEventModifierFlagControl) {
-        NSString *string = [self modifiedUnicodeStringForControlCharacter:codePoint];
+        NSString *string = [self modifiedUnicodeStringForControlCharacter:codePoint
+                                                                  keyCode:keyCode];
         if (string) {
             return string;
         }
     }
 
     // Modified Unicode - option
-    const NSEventModifierFlags allEventModifierFlagsExShift = (NSEventModifierFlagControl |
-                                                               NSEventModifierFlagOption |
-                                                               maybeFunction);
-    if ((eventModifiers & allEventModifierFlagsExShift) == NSEventModifierFlagOption) {
-        // Legacy code path: option-letter, for the "simplest form of these keys." Not sure what
-        // he meant exactly, but anything that's not a function key seems simple to me. ¯\_(ツ)_/¯
-        // Update: based on his example of m-a -> esc a and m-A -> esc A, I interpret this to mean
-        // the shift key should not be considered.
-        NSData *data = [self dataForOptionModifiedKeypress];
-        if (data) {
-            return [[NSString alloc] initWithData:data encoding:_configuration.encoding];
+    if (![self shouldDisambiguateEscape]) {
+        const NSEventModifierFlags allEventModifierFlagsExShift = (NSEventModifierFlagControl |
+                                                                   NSEventModifierFlagOption |
+                                                                   maybeFunction);
+        if ((eventModifiers & allEventModifierFlagsExShift) == NSEventModifierFlagOption) {
+            // Legacy code path: option-letter, for the "simplest form of these keys." Not sure what
+            // he meant exactly, but anything that's not a function key seems simple to me. ¯\_(ツ)_/¯
+            // Update: based on his example of m-a -> esc a and m-A -> esc A, I interpret this to mean
+            // the shift key should not be considered.
+            NSData *data = [self dataForOptionModifiedKeypress];
+            if (data) {
+                return [[NSString alloc] initWithData:data encoding:_configuration.encoding];
+            }
         }
     }
 
@@ -498,6 +505,19 @@ static BOOL CodePointInPrivateUseArea(unichar c) {
     }
 
     // The new thing
+    return [self csiuStringForCodePoint:codePoint keyCode:keyCode modifiers:eventModifiers];
+}
+
+// Based on Kitty's "disambiguate escape codes" mode
+// https://sw.kovidgoyal.net/kitty/keyboard-protocol.html#disambiguate
+// This is a modification of Paul's CSI u spec.
+- (BOOL)shouldDisambiguateEscape {
+    return (self.flags & VT100TerminalKeyReportingFlagsDisambiguateEscape) != 0;
+}
+
+- (NSString *)csiuStringForCodePoint:(unichar)codePoint
+                             keyCode:(int)keyCode
+                           modifiers:(NSEventModifierFlags)eventModifiers {
     NSEventModifierFlags modifiers = [self shiftAllowedForKeycode:keyCode] ? eventModifiers : (eventModifiers & ~NSEventModifierFlagShift);
     const int csiModifiers = [self csiModifiersForEventModifiers:modifiers];
     return [NSString stringWithFormat:@"%c[%d;%du", 27, (int)codePoint, csiModifiers];

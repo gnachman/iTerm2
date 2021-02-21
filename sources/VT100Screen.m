@@ -4210,6 +4210,10 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     [self.delegate screenSendModifiersDidChange];
 }
 
+- (void)terminalKeyReportingFlagsDidChange {
+    [self.delegate screenKeyReportingFlagsDidChange];
+}
+
 - (void)terminalDidFinishReceivingFile {
     if (_inlineImageHelper) {
         [_inlineImageHelper writeToGrid:currentGrid_];

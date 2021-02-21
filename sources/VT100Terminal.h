@@ -35,6 +35,14 @@ typedef struct {
     ColorMode bgColorMode;
 } VT100GraphicRendition;
 
+typedef NS_OPTIONS(int, VT100TerminalKeyReportingFlags) {
+    VT100TerminalKeyReportingFlagsNone = 0,
+    VT100TerminalKeyReportingFlagsDisambiguateEscape = (1 << 0),
+    VT100TerminalKeyReportingFlagsReportAllEventTypes = (1 << 1),  // TODO
+    VT100TerminalKeyReportingFlagsReportAlternateKeys = (1 << 2),  // TODO
+    VT100TerminalKeyReportingFlagsReportAllKeysAsEscapeCodes = (1 << 3),  // TODO
+    VT100TerminalKeyReportingFlagsReportAssociatedText = (1 << 4)  // TODO
+};
 
 @interface VT100Terminal : NSObject
 
@@ -107,6 +115,8 @@ typedef struct {
 
 // DECSET 1036. This can be overridden by modifyOtherKeys, CSI u mode, and raw key reporting.
 @property(nonatomic) BOOL metaSendsEscape;
+
+@property(nonatomic, readonly) VT100TerminalKeyReportingFlags keyReportingFlags;
 
 - (void)setStateFromDictionary:(NSDictionary *)dict;
 

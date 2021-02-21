@@ -534,6 +534,10 @@ typedef enum {
     return [version dataUsingEncoding:NSUTF8StringEncoding];
 }
 
+- (NSData *)reportKeyReportingMode:(int)mode {
+    return [[NSString stringWithFormat:@"%c[?%du", ESC, mode] dataUsingEncoding:NSUTF8StringEncoding];
+}
+
 - (NSData *)reportActivePositionWithX:(int)x Y:(int)y withQuestion:(BOOL)q
 {
     char buf[64];

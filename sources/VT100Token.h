@@ -120,6 +120,11 @@ typedef enum {
     VT100CSI_DECRQM_DEC,            // Request Mode - Host To Terminal (DEC Private)
     VT100CSI_DECRQM_ANSI,           // Request Mode - Host To Terminal (ANSI)
 
+    // https://sw.kovidgoyal.net/kitty/keyboard-protocol.html
+    VT100CSI_PUSH_KEY_REPORTING_MODE,
+    VT100CSI_POP_KEY_REPORTING_MODE,
+    VT100CSI_QUERY_KEY_REPORTING_MODE,
+
     // some xterm extensions
     XTERMCC_WIN_TITLE,            // Set window title
     XTERMCC_ICON_TITLE,

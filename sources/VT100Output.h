@@ -67,6 +67,7 @@ typedef NS_ENUM(NSInteger, VT100EmulationLevel) {
 
 - (NSData *)reportFocusGained:(BOOL)gained;
 - (NSData *)reportiTerm2Version;
+- (NSData *)reportKeyReportingMode:(int)mode;
 
 - (void)setTermTypeIsValid:(BOOL)termTypeIsValid;
 
