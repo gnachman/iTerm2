@@ -1248,7 +1248,7 @@ DQ
                                     <action selector="arrangeSplitPanesEvenly:" target="201" id="eE4-2D-fTq"/>
                                 </connections>
                             </menuItem>
-                            <menuItem title="Move Session to Window" identifier="Arrange Split Panes Evenly" id="Hlz-4M-IYw">
+                            <menuItem title="Move Session to Window" identifier="Move Session to Window" id="Hlz-4M-IYw">
                                 <modifierMask key="keyEquivalentModifierMask"/>
                                 <connections>
                                     <action selector="moveSessionToWindow:" target="-1" id="wG5-71-6aQ"/>
