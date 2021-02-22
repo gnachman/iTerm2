@@ -187,6 +187,7 @@ NS_ASSUME_NONNULL_BEGIN
     __block int count = 0x10000000;
     NSMutableString *stringWithPlaceholders = [string mutableCopy];
     NSMutableDictionary<NSString *, NSString *> *map = [NSMutableDictionary dictionary];
+    NSMutableDictionary<NSString *, NSString *> *originalValuesMap = [NSMutableDictionary dictionary];
     [nonReservedSymbolIndices enumerateRangesWithOptions:NSEnumerationReverse
                                               usingBlock:^(NSRange range, BOOL * _Nonnull stop) {
         NSString *placeholder = [NSString stringWithFormat:@"%08d", count++];
@@ -203,6 +204,7 @@ NS_ASSUME_NONNULL_BEGIN
         // non-percent-encoded will not work, nor will non-percent-encoded that happens to look like
         // percent-encoded.
         NSString *substring = [string substringWithRange:range];
+        originalValuesMap[placeholder] = substring;
         map[placeholder] = [substring stringByRemovingPercentEncoding] ?: substring;
     }];
     DLog(@"stringWithPlaceholders=%@", stringWithPlaceholders);
@@ -214,6 +216,17 @@ NS_ASSUME_NONNULL_BEGIN
     NSString *(^glue)(NSString *) = ^NSString *(NSString *encoded) {
         NSMutableString *result = [encoded mutableCopy];
         [map enumerateKeysAndObjectsUsingBlock:^(NSString *_Nonnull key, NSString *_Nonnull obj, BOOL * _Nonnull stop) {
+            const NSRange range = [result rangeOfString:key];
+            if (range.location == NSNotFound) {
+                return;
+            }
+            [result replaceCharactersInRange:range withString:obj];
+        }];
+        return result;
+    };
+    NSString *(^glueOriginal)(NSString *) = ^NSString *(NSString *encoded) {
+        NSMutableString *result = [encoded mutableCopy];
+        [originalValuesMap enumerateKeysAndObjectsUsingBlock:^(NSString *_Nonnull key, NSString *_Nonnull obj, BOOL * _Nonnull stop) {
             const NSRange range = [result rangeOfString:key];
             if (range.location == NSNotFound) {
                 return;
@@ -251,14 +264,43 @@ NS_ASSUME_NONNULL_BEGIN
     if (components.fragment) {
         components.fragment = glue(components.fragment);
     }
+    // Preserve the original query param. Convert each query item to a UUID and then replace it with the original value.
+    NSMutableDictionary<NSString *, NSURLQueryItem *> *uuidToQueryItem = [NSMutableDictionary dictionary];
     if (components.queryItems.count) {
         components.queryItems = [components.queryItems mapWithBlock:^id(NSURLQueryItem *item) {
-            return [NSURLQueryItem queryItemWithName:glue(item.name) ?: @""
-                                               value:glue(item.value)];
+            NSString *uuid = [[NSUUID UUID] UUIDString];
+            uuidToQueryItem[uuid] = item;
+            return [NSURLQueryItem queryItemWithName:uuid value:nil];
         }];
     }
+    NSMutableCharacterSet *charset = [[NSCharacterSet URLQueryAllowedCharacterSet] mutableCopy];
+    // In Big Sur, the following characters are allowed:
+    //   !$&'()*+,-./0123456789:;=?@ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz~
+    // I want to also allow % in the case that the string is already percent-encoded.
+    // The desire is for already-percent-encoded strings to be left alone but strings with stuff like
+    // non-ascii letters to be encoded.
+    // There is a narrow opening for queries like `fraction=50%` to be left invalid, but I expect
+    // that to be much rarer than "the query is already percent encoded" plus "the query is not percent
+    // encoded and contains no raw percents".
+    [charset addCharactersInString:@"%"];
+    NSMutableString *urlString = [components.URL.absoluteString mutableCopy];
+    [uuidToQueryItem enumerateKeysAndObjectsUsingBlock:^(NSString * _Nonnull uuid, NSURLQueryItem * _Nonnull queryItem, BOOL * _Nonnull stop) {
+        NSString *queryParam;
+        NSString *name = glueOriginal(queryItem.name);
+        NSString *value = glueOriginal(queryItem.value);
+        if (!name && !value) {
+            queryParam = @"";
+        } else if (name && !value) {
+            queryParam = name;
+        } else {
+            queryParam = [NSString stringWithFormat:@"%@=%@", name ?: @"", value];
+        }
+        [urlString replaceOccurrencesOfString:uuid
+                                   withString:[queryParam stringByAddingPercentEncodingWithAllowedCharacters:charset]
+                                      options:0 range:NSMakeRange(0, urlString.length)];
+    }];
     DLog(@"Final result: %@", components.URL);
-    return components.URL;
+    return [NSURL URLWithString:urlString];
 }
 
 - (nullable NSData *)zippedContents {

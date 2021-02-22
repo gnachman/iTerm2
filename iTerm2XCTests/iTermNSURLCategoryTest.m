@@ -148,6 +148,19 @@
     XCTAssertEqualObjects(url.absoluteString, @"https://google.com/search?q=http://google.com/");
 }
 
+// Issue 9507: don't rewrite %2B in query param to +
+- (void)testPreservePercentEncoding {
+    NSString *urlString = @"https://example.com/comm-smart-app/services/tracking/clickTracker?redirectTo=mB%2BJRRrvxRgcA3BQdTZqeVc3kNSQabbmxDhMJWX2U8PPEyOy4T8YWs0/mIZXn3tmmXaqznkrNHDf/40zBB1C9PZHO8EE7LlbT/yUHb0XvJ3FbeOuh667HLHspSZQD1wUCukq36iPRB4p7HdSYGAgsI9VnSt2Trynpzx64NPwe3UV3hnyeyJpYF9R07kH8T3puAMcP6JMYyKoOcZK8wEJ08Nli65jC4qvRbEexv5aHix%2B5JsGBUmX4PPkf0gtc4CEiGu9hhFjjWikGm57cCqD09TH4Ag5/nyXnsllpRlrmTOifCuRrcD/ETLLd2WvNaTHDRIXQDbuhmf%2BeC/ojMpybrmRZzg7iDW8om1elIdGLt%2BKMr6b5FLKjT6AMJ4qczdUBSlkjCnNPSYJovQpe5Pm%2B3F4LgcFLD7diQCoC5zFogwZKQZUJHVtYy%2BIfBsQRsWqjlo1evykxHLkVUVqMnOcpEePXOqTGzM6wiwxojf6PrwzAEGN8Qq7zwiURKEJcr8/kfjxZoA%2BuwuuiJibILpwHNovYSuOKrkepPWVenmB15u5OWHjPqZ4fulkLY%2Bv3xCbutX8UwbMkAUfaZIIGxOEGt9QWFid58hYganfe5WRCw%2Bn3EPxkNKvG6bvqt4hhS9rdI0/IlBdNy8gXFVCdfrJJ0aEmyVc6CRbuLIs/KCsOitaq%2BnCC1OlN3lCGBtE8alOB9ZxXiZOKPuXX8cyE%2By/FihNwxURQtnj4qowz9ZrnMOy1A%2BM8%2BQb0kNjSv3Vr%2B1ppG9P5YSHz6bdSNBOUkCJKknxREZA5r6Gwu6x53emuic%3D&meta=Ioe%2BWzf9FSPYt%2B9%2Ftf%2Bu7IE9bCUGf5FGiRWJBCZQQh1rVILL5VMY3FtyU5flA4FQNzwiL3lL4MlSXwrNWLpEgl4G6IzTGbzOeg%2BzIa6vhAK%2BMWxcosPQBTiTSlVUbNQJ1csgZjCXA19KUhxfTQ22JhfoAQDRlHiabxzrqfb1eDtO8fSFyMrt4G6eVeFBX5ZSjRz8RZV%2B6W%2Bwyo61Usd01oSCYCpRspmeGwlsQ6zoFbw%3D&iv=uiWo5jAQor%2BBep2ZbdgK1w%3D%3D";
+    NSURL *url = [NSURL URLWithUserSuppliedString:urlString];
+    XCTAssertEqualObjects(url.absoluteString, urlString);
+}
+
+- (void)testEscapesQueryParamsIfNeeded {
+    NSString *urlString = @"https://google.com/search?q=résumé+help%2B";
+    NSURL *url = [NSURL URLWithUserSuppliedString:urlString];
+    XCTAssertEqualObjects(url.absoluteString, @"https://google.com/search?q=r%C3%A9sum%C3%A9+help%2B");
+}
+
 #pragma mark - URLByRemovingFragment
 
 - (void)testURLByRemovingFragment_noFragment {
