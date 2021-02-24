@@ -191,6 +191,9 @@ static NSString *const iTermAPIScriptLauncherScriptDidFailUserNotificationCallba
       withVirtualEnv:(NSString *)virtualenv
         setupCfgPath:(NSString *)setupCfgPath
   explicitUserAction:(BOOL)explicitUserAction {
+    if (![[NSFileManager defaultManager] homeDirectoryDotDir]) {
+        return;
+    }
     if (virtualenv != nil) {
         // This is a full-environment script. Check if its environment version is supported and
         // offer to upgrade.
