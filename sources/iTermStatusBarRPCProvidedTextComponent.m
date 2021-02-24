@@ -22,6 +22,7 @@
 #import "iTermVariableReference.h"
 #import "iTermWarning.h"
 #import "NSArray+iTerm.h"
+#import "NSFileManager+iTerm.h"
 #import "NSJSONSerialization+iTerm.h"
 #import "NSObject+iTerm.h"
 
@@ -329,6 +330,9 @@ static NSString *const iTermStatusBarRPCRegistrationRequestKey = @"registration 
 
 - (void)maybeOfferToMoveScriptToAutoLaunch {
     if (-[_dateOfLaunchToFix timeIntervalSinceNow] >= 1) {
+        return;
+    }
+    if (![[NSFileManager defaultManager] homeDirectoryDotDir]) {
         return;
     }
     iTermScriptsMenuController *menuController = [[[iTermApplication sharedApplication] delegate] scriptsMenuController];

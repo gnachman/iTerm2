@@ -566,6 +566,9 @@ static BOOL hasBecomeActive = NO;
 - (BOOL)application:(NSApplication *)theApplication openFile:(NSString *)filename {
     DLog(@"application:%@ openFile:%@", theApplication, filename);
     if ([[filename pathExtension] isEqualToString:@"its"]) {
+        if (![[NSFileManager defaultManager] homeDirectoryDotDir]) {
+            return NO;
+        }
         [iTermScriptImporter importScriptFromURL:[NSURL fileURLWithPath:filename]
                                    userInitiated:NO
                                  offerAutoLaunch:NO
@@ -1919,6 +1922,9 @@ static BOOL hasBecomeActive = NO;
 }
 
 - (IBAction)installPythonRuntime:(id)sender {  // Explicit request from menu item
+    if (![[NSFileManager defaultManager] homeDirectoryDotDir]) {
+        return;
+    }
     [[iTermPythonRuntimeDownloader sharedInstance] downloadOptionalComponentsIfNeededWithConfirmation:NO
                                                                                         pythonVersion:nil
                                                                             minimumEnvironmentVersion:0
@@ -1943,6 +1949,9 @@ static BOOL hasBecomeActive = NO;
 }
 
 - (IBAction)openREPL:(id)sender {
+    if (![[NSFileManager defaultManager] homeDirectoryDotDir]) {
+        return;
+    }
     [[iTermPythonRuntimeDownloader sharedInstance] downloadOptionalComponentsIfNeededWithConfirmation:YES
                                                                                         pythonVersion:nil
                                                                             minimumEnvironmentVersion:0
@@ -2001,6 +2010,9 @@ static BOOL hasBecomeActive = NO;
 }
 
 - (IBAction)exportScript:(id)sender {
+    if (![[NSFileManager defaultManager] homeDirectoryDotDir]) {
+        return;
+    }
     [_scriptsMenuController chooseAndExportScript];
 }
 
@@ -2009,6 +2021,9 @@ static BOOL hasBecomeActive = NO;
 }
 
 - (IBAction)newPythonScript:(id)sender {
+    if (![[NSFileManager defaultManager] homeDirectoryDotDir]) {
+        return;
+    }
     [_scriptsMenuController newPythonScript];
 }
 

@@ -188,6 +188,9 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 - (NSArray<iTermScriptItem *> *)scriptItems {
+    if (![[NSFileManager defaultManager] homeDirectoryDotDir]) {
+        return @[];
+    }
     NSFileManager *fm = [NSFileManager defaultManager];
     NSString *path = [fm scriptsPath];
     if ([fm fileExistsAtPath:path]) {
@@ -257,6 +260,9 @@ NS_ASSUME_NONNULL_BEGIN
     NSURL *url = [NSURL fileURLWithPath:file];
     switch (selection) {
         case kiTermWarningSelection0: {
+            if (![[NSFileManager defaultManager] homeDirectoryDotDir]) {
+                break;
+            }
             [iTermScriptImporter importScriptFromURL:url
                                        userInitiated:YES
                                      offerAutoLaunch:autolaunch
@@ -362,6 +368,9 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 - (void)chooseAndImportScript {
+    if (![[NSFileManager defaultManager] homeDirectoryDotDir]) {
+        return;
+    }
     NSOpenPanel *panel = [[NSOpenPanel alloc] init];
     panel.allowedFileTypes = @[ @"zip", @"its", @"py" ];
     if ([panel runModal] == NSModalResponseOK) {
@@ -373,6 +382,9 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 - (void)importFromURL:(NSURL *)url {
+    if (![[NSFileManager defaultManager] homeDirectoryDotDir]) {
+        return;
+    }
     [iTermScriptImporter importScriptFromURL:url
                                userInitiated:YES
                              offerAutoLaunch:NO
@@ -427,6 +439,9 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 - (BOOL)couldMoveScriptToAutoLaunch:(NSString *)fullPath {
+    if (![[NSFileManager defaultManager] homeDirectoryDotDir]) {
+        return NO;
+    }
     if (![[NSFileManager defaultManager] fileExistsAtPath:fullPath]) {
         return NO;
     }
@@ -479,6 +494,9 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)launchScriptWithRelativePath:(NSString *)path
                            arguments:(NSArray<NSString *> *)arguments
                   explicitUserAction:(BOOL)explicitUserAction {
+    if (![[NSFileManager defaultManager] homeDirectoryDotDir]) {
+        return;
+    }
     NSString *fullPath = [[[NSFileManager defaultManager] scriptsPathWithoutSpaces] stringByAppendingPathComponent:path];
     [self launchScriptWithAbsolutePath:fullPath
                              arguments:arguments
@@ -498,6 +516,9 @@ NS_ASSUME_NONNULL_BEGIN
             DLog(@"Not launching %@ because the API is not enabled", fullPath);
             return;
         }
+        if (![[NSFileManager defaultManager] homeDirectoryDotDir]) {
+            return;
+        }
         NSString *name = fullPath.lastPathComponent;
         NSString *mainPyPath = [[[fullPath stringByAppendingPathComponent:name] stringByAppendingPathComponent:name] stringByAppendingPathExtension:@"py"];
         [iTermAPIScriptLauncher launchScript:mainPyPath
@@ -512,6 +533,9 @@ NS_ASSUME_NONNULL_BEGIN
     if ([[fullPath pathExtension] isEqualToString:@"py"]) {
         if (!explicitUserAction && ![iTermAPIHelper isEnabled]) {
             DLog(@"Not launching %@ because the API is not enabled", fullPath);
+            return;
+        }
+        if (![[NSFileManager defaultManager] homeDirectoryDotDir]) {
             return;
         }
         [iTermAPIScriptLauncher launchScript:fullPath
@@ -1016,6 +1040,9 @@ NS_ASSUME_NONNULL_BEGIN
     if (_ranAutoLaunchScript) {
         return NO;
     }
+    if (![[NSFileManager defaultManager] homeDirectoryDotDir]) {
+        return NO;
+    }
     return ([[NSFileManager defaultManager] fileExistsAtPath:self.legacyAutolaunchScriptPath] ||
             [[NSFileManager defaultManager] fileExistsAtPath:self.autolaunchScriptPath]);
 }
@@ -1029,6 +1056,9 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 - (void)runModernAutoLaunchScripts {
+    if (![[NSFileManager defaultManager] homeDirectoryDotDir]) {
+        return;
+    }
     NSString *scriptsPath = [[NSFileManager defaultManager] autolaunchScriptPath];
     NSDirectoryEnumerator *enumerator = [[NSFileManager defaultManager] enumeratorAtPath:scriptsPath];
     for (NSString *file in enumerator) {

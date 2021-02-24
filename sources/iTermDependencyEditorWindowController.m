@@ -16,6 +16,7 @@
 #import "iTermTuple.h"
 #import "iTermWarning.h"
 #import "NSArray+iTerm.h"
+#import "NSFileManager+iTerm.h"
 #import "NSStringITerm.h"
 #import "NSTextField+iTerm.h"
 
@@ -38,6 +39,9 @@
 }
 
 + (instancetype)sharedInstance {
+    if (![[NSFileManager defaultManager] homeDirectoryDotDir]) {
+        return nil;
+    }
     static id instance;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{

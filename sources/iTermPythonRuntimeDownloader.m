@@ -124,6 +124,9 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
 
 - (NSURL *)pathToMetadataWithPythonVersion:(NSString *)pythonVersion {
     NSString *path = [self pathToStandardPyenvWithVersion:pythonVersion creatingSymlinkIfNeeded:NO];
+    if (!path) {
+        return nil;
+    }
     path = [path stringByAppendingPathComponent:@"iterm2env-metadata.json"];
     return [NSURL fileURLWithPath:path];
 }
@@ -141,11 +144,17 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
 }
 
 - (BOOL)isPythonRuntimeInstalled {
+    if (![[NSFileManager defaultManager] homeDirectoryDotDir]) {
+        return NO;
+    }
     return ![self shouldDownloadEnvironmentForPythonVersion:nil
                                   minimumEnvironmentVersion:0];
 }
 
 - (int)versionInMetadataAtURL:(NSURL *)metadataURL {
+    if (!metadataURL) {
+        return 0;
+    }
     NSData *data = [NSData dataWithContentsOfURL:metadataURL];
     if (!data) {
         return 0;
@@ -174,6 +183,9 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
     if (installedVersion == 0) {
         return;
     }
+    if (![[NSFileManager defaultManager] homeDirectoryDotDir]) {
+        return;
+    }
 
     [self checkForNewerVersionThan:installedVersion
                           silently:YES
@@ -189,12 +201,18 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
         const NSTimeInterval day = 24 * 60 * 60;
         _checkForUpdateRateLimit.minimumInterval = 2 * day;
     }
+    if (![[NSFileManager defaultManager] homeDirectoryDotDir]) {
+        return;
+    }
     [_checkForUpdateRateLimit performRateLimitedBlock:^{
         [self upgradeIfPossible];
     }];
 }
 
 - (void)userRequestedCheckForUpdate {
+    if (![[NSFileManager defaultManager] homeDirectoryDotDir]) {
+        return;
+    }
     const int installedVersion = [self installedVersionWithPythonVersion:nil];
     [self checkForNewerVersionThan:installedVersion
                           silently:NO

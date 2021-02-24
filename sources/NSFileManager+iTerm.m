@@ -293,18 +293,22 @@ NSString * const DirectoryLocationDomain = @"DirectoryLocationDomain";
     NSString *homedir = NSHomeDirectory();
     NSString *dotConfigIterm2 = [[homedir stringByAppendingPathComponent:@".config"] stringByAppendingPathComponent:@"iterm2"];
     NSString *dotIterm2 = [homedir stringByAppendingPathComponent:@".iterm2"];
-    NSArray<NSString *> *options = @[ dotConfigIterm2, dotIterm2 ];
+    NSArray<NSString *> *options = @[ dotConfigIterm2, dotIterm2, @".iterm2-1" ];
     NSError *error = nil;
     NSString *result = [self pathToFirstDirectoryCreatingIfNeeded:options error:&error];
 
     if (!result && error) {
-        [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"There was a problem finding or creating the config directory:\n%@", error.localizedDescription]
-                                   actions:@[ @"OK" ]
-                                 accessory:nil
-                                identifier:@"NoSyncErrorCreatingConfigFolder"
-                               silenceable:kiTermWarningTypePersistent
-                                   heading:@"Problem Creating Config Folder"
-                                    window:nil];
+        static dispatch_once_t onceToken;
+        dispatch_once(&onceToken, ^{
+            DLog(@"Failed to create the config directory: %@", error);
+            [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"There was a problem finding or creating the config directory. Some features will be disabled.\n%@", error.localizedDescription]
+                                       actions:@[ @"OK" ]
+                                     accessory:nil
+                                    identifier:@"NoSyncErrorCreatingConfigFolder"
+                                   silenceable:kiTermWarningTypePersistent
+                                       heading:@"Problem Creating Config Folder"
+                                        window:nil];
+        });
     }
     return result;
 }

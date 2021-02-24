@@ -14,6 +14,7 @@
 #import "iTermExpressionParser.h"
 #import "iTermParsedExpression.h"
 #import "iTermVariableScope+Global.h"
+#import "NSFileManager+iTerm.h"
 
 @implementation iTermLaunchAPIScriptCommand
 
@@ -63,6 +64,9 @@
 }
 
 - (void)launchPythonScript:(NSString *)script arguments:(NSArray<NSString *> *)arguments {
+    if (![[NSFileManager defaultManager] homeDirectoryDotDir]) {
+        return;
+    }
     [[[[iTermApplication sharedApplication] delegate] scriptsMenuController] launchScriptWithRelativePath:script
                                                                                                 arguments:arguments
                                                                                        explicitUserAction:NO];
