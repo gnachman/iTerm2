@@ -392,7 +392,7 @@ static void HandleSigChld(int n) {
 
 // NOTE: maybeScaleFactor will be 0 if the session is not attached to a window. For example, if
 // a different space is active.
-- (void)setSize:(VT100GridSize)size viewSize:(NSSize)viewSize scaleFactor:(CGFloat)maybeScaleFactor {
+- (BOOL)setSize:(VT100GridSize)size viewSize:(NSSize)viewSize scaleFactor:(CGFloat)maybeScaleFactor {
     CGFloat scaleFactor = maybeScaleFactor;
     if (scaleFactor < 1) {
         scaleFactor = _lastScaleFactor;
@@ -402,10 +402,11 @@ static void HandleSigChld(int n) {
     if (scaleFactor < 1) {
         scaleFactor = 2;
     }
-    DLog(@"Set terminal size to %@; %@; %f for %@",
+    DLog(@"Set terminal size to %@; %@ * scaleFactor=%f for %@",
          VT100GridSizeDescription(size), NSStringFromSize(viewSize), scaleFactor, self.delegate);
     if (self.fd == -1) {
-        return;
+        DLog(@"I have no file descriptor so not setting size.");
+        return NO;
     }
 
     _desiredSize.cellSize = iTermTTYCellSizeMake(size.width, size.height);
@@ -414,9 +415,10 @@ static void HandleSigChld(int n) {
 
     if (PTYTaskSizeEqual(_lastSize, _desiredSize)) {
         DLog(@"Size didn't change");
-        return;
+        return YES;
     }
     [self rateLimitedSetSizeToDesiredSize];
+    return YES;
 }
 
 - (void)stop {
@@ -741,11 +743,20 @@ static void HandleSigChld(int n) {
          progpath, args, env,VT100GridSizeDescription(gridSize), NSStringFromSize(viewSize), @(isUTF8));
 
     __block iTermTTYState ttyState;
+    PTYTaskSize newSize = {
+        .cellSize = iTermTTYCellSizeMake(gridSize.width, gridSize.height),
+        .pixelSize = iTermTTYPixelSizeMake(viewSize.width, viewSize.height)
+    };
+    DLog(@"Initialize tty with cell size %d x %d, pixel size %d x %d",
+         newSize.cellSize.width,
+         newSize.cellSize.height,
+         newSize.pixelSize.width,
+         newSize.pixelSize.height);
+    _lastSize = newSize;
     iTermTTYStateInit(&ttyState,
-                      iTermTTYCellSizeMake(gridSize.width, gridSize.height),
-                      iTermTTYPixelSizeMake(viewSize.width, viewSize.height),
+                      newSize.cellSize,
+                      newSize.pixelSize,
                       isUTF8);
-
     [self setCommand:progpath];
     if (customShell) {
         DLog(@"Use custom shell");

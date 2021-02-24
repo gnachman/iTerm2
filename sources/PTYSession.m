@@ -12252,9 +12252,13 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)sessionViewScrollViewDidResize {
-    [_shell setSize:_screen.size
-           viewSize:_screen.viewSize
-        scaleFactor:self.backingScaleFactor];
+    [self updateTTYSize];
+}
+
+- (BOOL)updateTTYSize {
+    return [_shell setSize:_screen.size
+                  viewSize:_screen.viewSize
+               scaleFactor:self.backingScaleFactor];
 }
 
 - (iTermStatusBarViewController *)sessionViewStatusBarViewController {
@@ -12290,8 +12294,11 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)sessionViewDidChangeWindow {
-    if (@available(macOS 10.11, *)) {
-        [self updateMetalDriver];
+    [self updateMetalDriver];
+    if (!_shell.ttySizeInitialized) {
+        if ([self updateTTYSize]) {
+            _shell.ttySizeInitialized = YES;
+        }
     }
 }
 

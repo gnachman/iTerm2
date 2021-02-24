@@ -162,6 +162,10 @@ typedef NS_OPTIONS(NSUInteger, iTermJobManagerAttachResults) {
 // the name says you can't write to it.
 @property(atomic) int readOnlyFileDescriptor;
 
+// This is used by clients so they can initialize the TTY size once when the view size is known
+// for real. It is never assigned to by PTYTask.
+@property(nonatomic) BOOL ttySizeInitialized;
+
 - (instancetype)init;
 
 - (BOOL)hasBrokenPipe;
@@ -185,7 +189,9 @@ typedef NS_OPTIONS(NSUInteger, iTermJobManagerAttachResults) {
 
 // Cause the slave to receive a SIGWINCH and change the tty's window size. If `size` equals the
 // tty's current window size then no action is taken.
-- (void)setSize:(VT100GridSize)size viewSize:(NSSize)viewSize scaleFactor:(CGFloat)scaleFactor;
+// Returns NO if it could not be set because we don't yet have a file descriptor. Returns YES if
+// it was either set or nothing was done because the value didn't change.
+- (BOOL)setSize:(VT100GridSize)size viewSize:(NSSize)viewSize scaleFactor:(CGFloat)scaleFactor;
 
 - (void)stop;
 
