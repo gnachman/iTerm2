@@ -62,7 +62,9 @@
 }
 
 - (void)updateBackgroundColor {
-    self.layer.backgroundColor = [_backgroundColor colorWithAlphaComponent:self.desiredAlphaValue].CGColor;
+    NSColor *color = [_backgroundColor colorWithAlphaComponent:self.desiredAlphaValue];
+    DLog(@"Set background color to %@", color);
+    self.layer.backgroundColor = color.CGColor;
 }
 
 - (void)setBlend:(CGFloat)blend {
