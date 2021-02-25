@@ -12,10 +12,109 @@
 
 #import <QuartzCore/QuartzCore.h>
 
-@implementation iTermImageView
+// This is used with opaque windows to provide a background color under the image in case the
+// image has transparent parts.
+@interface iTermImageBackgroundColorView: NSView
+@property (nonatomic, strong) NSColor *backgroundColor;
+@end
+
+@implementation iTermImageBackgroundColorView
+
+- (instancetype)initWithFrame:(NSRect)frameRect {
+    self = [super initWithFrame:frameRect];
+    if (self) {
+        self.wantsLayer = YES;
+    }
+    return self;
+}
+
+- (void)setBackgroundColor:(NSColor *)backgroundColor {
+    _backgroundColor = backgroundColor;
+    self.layer.backgroundColor = backgroundColor.CGColor;
+}
+
+@end
+
+// This actually shows an image.
+@interface iTermInternalImageView : NSView
+
+@property (nonatomic, strong) iTermImageWrapper *image;
+@property (nonatomic) iTermBackgroundImageMode contentMode;
+@property (nonatomic) CGFloat blend;
+@property (nonatomic) CGFloat transparency;
+
+- (void)setAlphaValue:(CGFloat)alphaValue NS_UNAVAILABLE;
+
+@end
+
+@implementation iTermImageView {
+    iTermInternalImageView *_lowerView;
+
+    // This is used when the window is opaque. It provides a color behind the image in case the
+    // image has transparent portions. When thew indow is transparent we hide it an let the
+    // desktop show through.
+    iTermImageBackgroundColorView *_backgroundColorView;
+}
 
 - (instancetype)init {
-    self = [super init];
+    self = [super initWithFrame:NSMakeRect(0, 0, 100, 100)];
+    if (self) {
+        self.autoresizesSubviews = YES;
+
+        _backgroundColorView = [[iTermImageBackgroundColorView alloc] initWithFrame:NSMakeRect(0, 0, 100, 100)];
+        _backgroundColorView.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
+        [self addSubview:_backgroundColorView];
+
+        _lowerView = [[iTermInternalImageView alloc] initWithFrame:NSMakeRect(0, 0, 100, 100)];
+        _lowerView.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
+        [self addSubview:_lowerView];
+    }
+    return self;
+}
+
+- (iTermImageWrapper *)image {
+    return _lowerView.image;
+}
+
+- (void)setImage:(iTermImageWrapper *)image {
+    _lowerView.image = image;
+}
+
+- (iTermBackgroundImageMode)contentMode {
+    return _lowerView.contentMode;
+}
+
+- (void)setContentMode:(iTermBackgroundImageMode)contentMode {
+    _lowerView.contentMode = contentMode;
+}
+
+- (void)setBackgroundColor:(NSColor *)backgroundColor {
+    _backgroundColor = backgroundColor;
+    _backgroundColorView.backgroundColor = backgroundColor;
+}
+
+- (CGFloat)blend {
+    return _lowerView.blend;
+}
+
+- (void)setBlend:(CGFloat)blend {
+    _lowerView.blend = blend;
+}
+
+- (CGFloat)transparency {
+    return _lowerView.transparency;
+}
+
+- (void)setTransparency:(CGFloat)transparency {
+    _lowerView.transparency = transparency;
+}
+
+@end
+
+@implementation iTermInternalImageView
+
+- (instancetype)initWithFrame:(NSRect)frameRect {
+    self = [super initWithFrame:frameRect];
     if (self) {
         _contentMode = iTermBackgroundImageModeTile;
         self.layer = [[CALayer alloc] init];
@@ -63,8 +162,9 @@
         [self updateAlpha];
     }
 }
+
 - (void)updateAlpha {
-    [super setAlphaValue:self.desiredAlpha];
+    [self.superview setAlphaValue:self.desiredAlpha];
 }
 
 - (void)setImage:(iTermImageWrapper *)image {
@@ -108,7 +208,6 @@
         case iTermBackgroundImageModeScaleAspectFit:
             [self loadRegularImage];
             self.layer.contentsGravity = kCAGravityResizeAspect;
-            self.layer.backgroundColor = self.backgroundColor.CGColor;
             return;
             
         case iTermBackgroundImageModeScaleAspectFill:
@@ -173,20 +272,6 @@ static void iTermImageViewReleaseImage(void *info) {
     }
     _contentMode = contentMode;
     [self update];
-}
-
-- (void)setBackgroundColor:(NSColor *)backgroundColor {
-    _backgroundColor = backgroundColor;
-    switch (self.contentMode) {
-        case iTermBackgroundImageModeTile:
-        case iTermBackgroundImageModeStretch:
-        case iTermBackgroundImageModeScaleAspectFill:
-            return;
-            
-        case iTermBackgroundImageModeScaleAspectFit:
-            self.layer.backgroundColor = backgroundColor.CGColor;
-            return;
-    }
 }
 
 @end

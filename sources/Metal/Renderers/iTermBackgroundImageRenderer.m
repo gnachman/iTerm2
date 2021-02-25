@@ -44,6 +44,7 @@ NS_ASSUME_NONNULL_BEGIN
     iTermMetalBufferPool *_alphaPool;
 #endif
     iTermMetalBufferPool *_colorPool;
+    iTermMetalBufferPool *_solidColorPool;
     iTermMetalBufferPool *_box1Pool;
     iTermMetalBufferPool *_box2Pool;
     iTermBackgroundImageMode _mode;
@@ -70,6 +71,7 @@ NS_ASSUME_NONNULL_BEGIN
         _box1Pool = [[iTermMetalBufferPool alloc] initWithDevice:device bufferSize:sizeof(iTermVertex) * 6];
         _box2Pool = [[iTermMetalBufferPool alloc] initWithDevice:device bufferSize:sizeof(iTermVertex) * 6];
         _colorPool = [[iTermMetalBufferPool alloc] initWithDevice:device bufferSize:sizeof(vector_float4)];
+        _solidColorPool = [[iTermMetalBufferPool alloc] initWithDevice:device bufferSize:sizeof(vector_float4)];
     }
     return self;
 }
@@ -113,9 +115,10 @@ NS_ASSUME_NONNULL_BEGIN
                           poolContext:(iTermMetalBufferPoolContext *)poolContext {
     vector_float4 premultiplied = color * alpha;
     premultiplied.w = alpha;
-    return [_colorPool requestBufferFromContext:poolContext
-                                      withBytes:&premultiplied
-                                 checkIfChanged:YES];
+    iTermMetalBufferPool *pool = (alpha == 1) ? _solidColorPool : _colorPool;
+    return [pool requestBufferFromContext:poolContext
+                                withBytes:&premultiplied
+                           checkIfChanged:YES];
 }
 
 - (id<MTLBuffer>)boxBufferWithRect:(CGRect)rect
@@ -137,6 +140,14 @@ NS_ASSUME_NONNULL_BEGIN
                            checkIfChanged:YES];
 }
 
+- (id<MTLBuffer>)colorBufferForState:(iTermBackgroundImageRendererTransientState *)tState
+                               alpha:(float)alpha {
+    id<MTLBuffer> colorBuffer = [self colorBufferWithColor:tState.defaultBackgroundColor
+                                                     alpha:alpha
+                                               poolContext:tState.poolContext];
+    return colorBuffer;
+}
+
 - (void)drawWithFrameData:(iTermMetalFrameData *)frameData
            transientState:(__kindof iTermMetalRendererTransientState *)transientState {
     iTermBackgroundImageRendererTransientState *tState = transientState;
@@ -145,22 +156,26 @@ NS_ASSUME_NONNULL_BEGIN
     NSDictionary *fragmentBuffers = nil;
 #if ENABLE_TRANSPARENT_METAL_WINDOWS
     float alpha = tState.computedAlpha;
+
+    // Alpha=1 here because an overall alpha is applied to the combination of underlayment and image.
+    id<MTLBuffer> underlayColorBuffer = [self colorBufferForState:tState alpha:1];
     if (alpha < 1) {
         _metalRenderer.fragmentFunctionName = tState.repeat ? @"iTermBackgroundImageWithAlphaRepeatFragmentShader" : @"iTermBackgroundImageWithAlphaClampFragmentShader";
         id<MTLBuffer> alphaBuffer = [self alphaBufferWithValue:alpha poolContext:tState.poolContext];
-        fragmentBuffers = @{ @(iTermFragmentInputIndexAlpha): alphaBuffer };
+        fragmentBuffers = @{ @(iTermFragmentInputIndexAlpha): alphaBuffer,
+                             @(iTermFragmentInputIndexColor): underlayColorBuffer
+        };
     } else {
         _metalRenderer.fragmentFunctionName = tState.repeat ? @"iTermBackgroundImageRepeatFragmentShader" : @"iTermBackgroundImageClampFragmentShader";
-        fragmentBuffers = @{};
+        fragmentBuffers = @{ @(iTermFragmentInputIndexColor): underlayColorBuffer };
     }
 #else
     float alpha = 1;
+    id<MTLBuffer> colorBuffer = [self colorBufferForState:tState alpha:alpha];
     _metalRenderer.fragmentFunctionName = tState.repeat ? @"iTermBackgroundImageRepeatFragmentShader" : @"iTermBackgroundImageClampFragmentShader";
     fragmentBuffers = @{};
 #endif
     
-    tState.pipelineState = [_metalRenderer pipelineState];
-
     tState.pipelineState = _metalRenderer.pipelineState;
     [_metalRenderer drawWithTransientState:tState
                              renderEncoder:frameData.renderEncoder
@@ -172,24 +187,22 @@ NS_ASSUME_NONNULL_BEGIN
 
     if (tState.box1) {
         assert(tState.box2);
-        id<MTLBuffer> colorBuffer = [self colorBufferWithColor:tState.defaultBackgroundColor
-                                                         alpha:alpha
-                                                   poolContext:tState.poolContext];
         _metalRenderer.fragmentFunctionName = @"iTermBackgroundImageLetterboxFragmentShader";
+        id<MTLBuffer> letterboxColorBuffer = [self colorBufferForState:tState alpha:alpha];
         tState.pipelineState = _metalRenderer.pipelineState;
         [_metalRenderer drawWithTransientState:tState
                                  renderEncoder:frameData.renderEncoder
                               numberOfVertices:6
                                   numberOfPIUs:0
                                  vertexBuffers:@{ @(iTermVertexInputIndexVertices): tState.box1 }
-                               fragmentBuffers:@{ @(iTermFragmentInputIndexColor): colorBuffer }
+                               fragmentBuffers:@{ @(iTermFragmentInputIndexColor): letterboxColorBuffer }
                                       textures:@{}];
         [_metalRenderer drawWithTransientState:tState
                                  renderEncoder:frameData.renderEncoder
                               numberOfVertices:6
                                   numberOfPIUs:0
                                  vertexBuffers:@{ @(iTermVertexInputIndexVertices): tState.box2 }
-                               fragmentBuffers:@{ @(iTermFragmentInputIndexColor): colorBuffer }
+                               fragmentBuffers:@{ @(iTermFragmentInputIndexColor): letterboxColorBuffer }
                                       textures:@{}];
     }
 }

@@ -27,50 +27,59 @@ iTermBackgroundImageVertexShader(uint vertexID [[ vertex_id ]],
     return out;
 }
 
+// https://en.wikipedia.org/wiki/Alpha_compositing
+// c_o = c_a + c_b(1 - ⍺_a)
+// ⍺_o = ⍺_a + ⍺_b(1 - ⍺_a)
+// Blends a OVER b.
+static inline float4 blend(float4 a, float4 b) {
+    return a + b * (1 - a.w);
+}
+
 fragment float4
 iTermBackgroundImageClampFragmentShader(iTermBackgroundImageVertexFunctionOutput in [[stage_in]],
-                                        texture2d<float> texture [[ texture(iTermTextureIndexPrimary) ]]) {
+                                        texture2d<float> texture [[ texture(iTermTextureIndexPrimary) ]],
+                                        constant float4 &backgroundColor [[ buffer(iTermFragmentInputIndexColor) ]]) {
     constexpr sampler textureSampler(mag_filter::linear,
                                      min_filter::linear);
 
-    return texture.sample(textureSampler, in.textureCoordinate);
+    return blend(texture.sample(textureSampler, in.textureCoordinate), backgroundColor);
 }
 
 fragment float4
 iTermBackgroundImageRepeatFragmentShader(iTermBackgroundImageVertexFunctionOutput in [[stage_in]],
-                                         texture2d<float> texture [[ texture(iTermTextureIndexPrimary) ]]) {
+                                         texture2d<float> texture [[ texture(iTermTextureIndexPrimary) ]],
+                                         constant float4 &backgroundColor [[ buffer(iTermFragmentInputIndexColor) ]]) {
     constexpr sampler textureSampler(mag_filter::linear,
                                      min_filter::linear,
                                      address::repeat);
     
-    return texture.sample(textureSampler, in.textureCoordinate);
+    return blend(texture.sample(textureSampler, in.textureCoordinate), backgroundColor);
 }
 
 fragment float4
 iTermBackgroundImageWithAlphaClampFragmentShader(iTermBackgroundImageVertexFunctionOutput in [[stage_in]],
                                                  constant float *alpha [[ buffer(iTermFragmentInputIndexAlpha) ]],
-                                                 texture2d<float> texture [[ texture(iTermTextureIndexPrimary) ]]) {
+                                                 texture2d<float> texture [[ texture(iTermTextureIndexPrimary) ]],
+                                                 constant float4 &backgroundColor [[ buffer(iTermFragmentInputIndexColor) ]]) {
     constexpr sampler textureSampler(mag_filter::linear,
                                      min_filter::linear);
     
     float4 colorSample = texture.sample(textureSampler, in.textureCoordinate);
-    colorSample.w = *alpha;
-    colorSample.xyz *= *alpha;
-    return colorSample;
+    return blend(colorSample, backgroundColor) * *alpha;
 }
 
 fragment float4
 iTermBackgroundImageWithAlphaRepeatFragmentShader(iTermBackgroundImageVertexFunctionOutput in [[stage_in]],
                                                   constant float *alpha [[ buffer(iTermFragmentInputIndexAlpha) ]],
-                                                  texture2d<float> texture [[ texture(iTermTextureIndexPrimary) ]]) {
+                                                  texture2d<float> texture [[ texture(iTermTextureIndexPrimary) ]],
+                                                  constant float4 &backgroundColor [[ buffer(iTermFragmentInputIndexColor) ]]) {
     constexpr sampler textureSampler(mag_filter::linear,
                                      min_filter::linear,
                                      address::repeat);
-    
+
     float4 colorSample = texture.sample(textureSampler, in.textureCoordinate);
-    colorSample.w = *alpha;
-    colorSample.xyz *= *alpha;
-    return colorSample;
+    return blend(colorSample, backgroundColor) * *alpha;
+
 }
 
 fragment float4

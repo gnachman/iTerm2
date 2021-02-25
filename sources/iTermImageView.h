@@ -11,7 +11,6 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-NS_CLASS_AVAILABLE_MAC(10_14)
 @interface iTermImageView : NSView
 
 @property (nonatomic, strong) iTermImageWrapper *image;
