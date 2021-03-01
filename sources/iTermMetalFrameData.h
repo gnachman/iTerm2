@@ -126,7 +126,8 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @property (atomic, strong) NSString *status;
 @property (atomic, strong) id<MTLDevice> device;
 @property (atomic, strong, readonly) MTKView *view;
-@property (nonatomic, readonly) NSInteger frameNumber;
+#warning NDS - this should be readonly
+@property (nonatomic) NSInteger frameNumber;
 #if ENABLE_STATS
 @property (nonatomic, readonly) iTermPreciseTimerStats *stats;
 @property (nonatomic, readonly) NSArray<iTermHistogram *> *statHistograms;
@@ -147,6 +148,8 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @property (nonatomic) BOOL textureIsFamiliar;
 #endif  // ENABLE_UNFAMILIAR_TEXTURE_WORKAROUND
 @property (nonatomic) CGFloat maximumExtendedDynamicRangeColorComponentValue;
+@property (nonatomic) void (^presentWithTransaction)(id<MTLCommandBuffer>, id<CAMetalDrawable>);
+@property (nonatomic, copy) void (^completion)(iTermMetalFrameData *);
 
 // When drawing to an intermediate texture there may be two passes (i.e., two render encoders)
 @property (nonatomic) int currentPass;

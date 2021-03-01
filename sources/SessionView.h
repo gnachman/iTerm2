@@ -230,6 +230,7 @@ typedef NS_ENUM(NSUInteger, iTermSessionViewFindDriver) {
 // It only differs from the scrollview's size for tmux tabs, for which
 // autoresizing is off.
 - (NSSize)maximumPossibleScrollViewContentSize;
+- (void)sessionDidResize;
 
 // Smallest SessionView frame that contains our contents based on the session's
 // rows and columns.

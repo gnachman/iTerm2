@@ -42,6 +42,8 @@
 @property (nonatomic, strong) dispatch_group_t group;
 @property (nonatomic) BOOL aborted;
 @property (nonatomic) int count;
+@property (nonatomic, copy) void (^present)(id<MTLCommandBuffer> commandBuffer, id<CAMetalDrawable> drawable);
+@property (nonatomic, copy) void (^completion)(iTermMetalFrameData *);
 @end
 
 @implementation iTermMetalDriverAsyncContext
@@ -100,6 +102,8 @@ typedef struct {
 @end
 
 @implementation iTermMetalDriver {
+    // Offset for frame number so we can tell these apart in debug logs.
+    int _offset;
     iTermMarginRenderer *_marginRenderer;
     iTermBackgroundImageRenderer *_backgroundImageRenderer;
     iTermBackgroundColorRenderer *_backgroundColorRenderer;
@@ -168,6 +172,7 @@ typedef struct {
     self = [super init];
     if (self) {
         static int gNextIdentifier;
+        _offset = gNextIdentifier * 100000;
         _identifier = [NSString stringWithFormat:@"[driver %d]", gNextIdentifier++];
         _startToStartHistogram = [[iTermHistogram alloc] init];
         _inFlightHistogram = [[iTermHistogram alloc] init];
@@ -376,11 +381,13 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     return _maxFramesInFlight;
 }
 
-- (iTermMetalDriverAsyncContext *)newContextForDrawInView:(MTKView *)view count:(int)count {
+- (iTermMetalDriverAsyncContext *)newContextForDrawInView:(MTKView *)view count:(int)count present:(void (^)(id<MTLCommandBuffer> commandBuffer, id<CAMetalDrawable> drawable))present completion:(void (^)(iTermMetalFrameData *))completion {
     iTermMetalDriverAsyncContext *context = [[iTermMetalDriverAsyncContext alloc] init];
     _context = context;
     context.count = count;
     context.group = dispatch_group_create();
+    context.present = present;
+    context.completion = completion;
     dispatch_group_enter(context.group);
     [view draw];
 
@@ -392,7 +399,7 @@ static _Atomic int count;
 - (void)drawAsynchronouslyInView:(MTKView *)view completion:(void (^)(BOOL))completion {
     int thisCount = atomic_fetch_add_explicit(&count, 1, memory_order_relaxed);
     DLog(@"Start asynchronous draw of %@ count=%d", view, thisCount);
-    iTermMetalDriverAsyncContext *context = [self newContextForDrawInView:view count:count];
+    iTermMetalDriverAsyncContext *context = [self newContextForDrawInView:view count:count present:nil completion:nil];
     dispatch_group_notify(context.group, dispatch_get_main_queue(), ^{
         DLog(@"Asynchronous draw of %@ completed count=%d", view, thisCount);
         completion(!context.aborted);
@@ -403,16 +410,63 @@ static _Atomic int count;
     if (![self mainThreadStateIsValid]) {
         return;
     }
+    NSTimeInterval startTime = [NSDate timeIntervalSinceReferenceDate];
+    int n = 0;
     while (1) {
+        if (drawables > 3) {
+            // It looks like drawables hang around until the main thread gets
+            // to spin. If we don't do this then we get ~1 second long hangs.
+            // It seems to me that Metal basically requires all draws to be
+            // synchronous on the main thread.
+            NSLog(@"More than 3 drawables outstanding. Do nothing.");
+            return;
+        }
+        n++;
         int thisCount = atomic_fetch_add_explicit(&count, 1, memory_order_relaxed);
-        NSLog(@"Start synchronous draw of size=%ux%u count=%d", _mainThreadState.viewportSize.x/2, _mainThreadState.viewportSize.y/2, thisCount);
-        iTermMetalDriverAsyncContext *context = [self newContextForDrawInView:view count:count];
+        DLog(@"Start synchronous draw of size=%ux%u count=%d", _mainThreadState.viewportSize.x/2, _mainThreadState.viewportSize.y/2, thisCount);
+        dispatch_group_t g = dispatch_group_create();
+        dispatch_group_enter(g);
+        __block id<MTLCommandBuffer> _commandBuffer = nil;
+        __block id<CAMetalDrawable> _drawable = nil;
+        iTermMetalDriverAsyncContext *context = [self newContextForDrawInView:view
+                                                                        count:count
+                                                                      present:^(id<MTLCommandBuffer> commandBuffer,
+                                                                                id<CAMetalDrawable> drawable) {
+            _commandBuffer = commandBuffer;
+            _drawable = drawable;
+            dispatch_group_leave(g);
+        }
+                                                                   completion:^(iTermMetalFrameData *frameData) {
+            iTermPreciseTimerStats *stats = [frameData stats];
+            iTermPreciseTimerLogOneEvent(@"Sync frame",
+                                         stats,
+                                         iTermMetalFrameDataStatCount,
+                                         YES,
+                                         nil);
+        }];
+        if (context.aborted) {
+            continue;
+        }
+        dispatch_group_wait(g, DISPATCH_TIME_FOREVER);
+
+        CAMetalLayer *layer = (CAMetalLayer *)view.layer;
+        layer.presentsWithTransaction = YES;
+        NSLog(@"Wait until scheduled...");
+        [_commandBuffer waitUntilScheduled];
+        NSLog(@"Will present");
+        [_drawable present];
+        NSLog(@"Did present");
+
         dispatch_group_wait(context.group, DISPATCH_TIME_FOREVER);
-        NSLog(@"Finish synchronous draw count=%d aborted=%@", thisCount, @(context.aborted));
+        layer.presentsWithTransaction = NO;
+
+        DLog(@"Finish synchronous draw count=%d aborted=%@", thisCount, @(context.aborted));
         if (!context.aborted) {
             break;
         }
     }
+    NSTimeInterval endTime = [NSDate timeIntervalSinceReferenceDate];
+    NSLog(@"Synchronous draw took %d iterations and %0.3f ms", n, (endTime - startTime) * 1000);
 }
 
 - (MTLCaptureDescriptor *)triggerProgrammaticCapture:(id<MTLDevice>)device NS_AVAILABLE_MAC(10_15) {
@@ -469,6 +523,8 @@ static _Atomic int count;
     }
 
     iTermMetalFrameData *frameData = [self newFrameDataForView:view];
+    frameData.presentWithTransaction = _context.present;
+    frameData.completion = _context.completion;
     DLog(@"allocated metal frame %@", frameData);
     if (VT100GridSizeEquals(frameData.gridSize, VT100GridSizeMake(0, 0))) {
         DLog(@"  abort: 0x0 grid");
@@ -540,7 +596,6 @@ static _Atomic int count;
 
         [self performPrivateQueueSetupForFrameData:frameData view:view];
     };
-    NSLog(@"Will draw frame %@", @(frameData.frameNumber));
 #if ENABLE_PRIVATE_QUEUE
     [frameData dispatchToPrivateQueue:_queue forPreparation:block];
 #else
@@ -560,6 +615,7 @@ static _Atomic int count;
     }
     iTermMetalFrameData *frameData = [[iTermMetalFrameData alloc] initWithView:view
                                                            fullSizeTexturePool:_fullSizeTexturePool];
+    frameData.frameNumber = frameData.frameNumber + _offset;
 
     [frameData measureTimeForStat:iTermMetalFrameDataStatMtExtractFromApp ofBlock:^{
         frameData.viewportSize = self.mainThreadState->viewportSize;
@@ -600,7 +656,7 @@ static _Atomic int count;
                                         view:(nonnull MTKView *)view {
     DLog(@"Begin private queue setup for frame %@", frameData);
     if ([iTermAdvancedSettingsModel showMetalFPSmeter]) {
-        [frameData.perFrameState setDebugString:[self fpsMeterStringForFrameNumber:frameData.frameNumber]];
+        [frameData.perFrameState setDebugString:[self fpsMeterStringForFrameNumber:frameData.frameNumber width:(int)frameData.destinationDrawable.texture.width/2]];
     }
 
     // Get glyph keys, attributes, background colors, etc. from datasource.
@@ -831,6 +887,17 @@ static _Atomic int count;
 }
 #endif
 
+static _Atomic int drawables;
+
+- (id <CAMetalDrawable>)drawableFromView:(MTKView *)view {
+    NSTimeInterval startTime = [NSDate timeIntervalSinceReferenceDate];
+    id<CAMetalDrawable> drawable = view.currentDrawable;
+    NSTimeInterval endTime = [NSDate timeIntervalSinceReferenceDate];
+    int nd = atomic_fetch_add_explicit(&drawables, 1, memory_order_relaxed);
+    NSLog(@"Took %0.3f ms to get drawable with %d outstanding", (endTime - startTime) * 1000, nd);
+    return drawable;
+}
+
 // Main thread
 - (void)acquireScarceResources:(iTermMetalFrameData *)frameData view:(MTKView *)view {
     if (frameData.debugInfo) {
@@ -840,21 +907,15 @@ static _Atomic int count;
             frameData.debugRealRenderPassDescriptor = view.currentRenderPassDescriptor;
         }];
         [frameData measureTimeForStat:iTermMetalFrameDataStatMtGetCurrentDrawable ofBlock:^{
-            frameData.destinationDrawable = view.currentDrawable;
+            frameData.destinationDrawable = [self drawableFromView:view];
             frameData.destinationTexture = frameData.renderPassDescriptor.colorAttachments[0].texture;
         }];
 
     } else {
-#if ENABLE_DEFER_CURRENT_DRAWABLE
-        const BOOL synchronousDraw = (_context.group != nil);
-        frameData.deferCurrentDrawable = ([iTermPreferences boolForKey:kPreferenceKeyMetalMaximizeThroughput] &&
-                                          !synchronousDraw);
-#else
         frameData.deferCurrentDrawable = NO;
-#endif
         if (!frameData.deferCurrentDrawable) {
             NSTimeInterval duration = [frameData measureTimeForStat:iTermMetalFrameDataStatMtGetCurrentDrawable ofBlock:^{
-                frameData.destinationDrawable = view.currentDrawable;
+                frameData.destinationDrawable = [self drawableFromView:view];
                 frameData.destinationTexture = [self destinationTextureForFrameData:frameData];
 #if ENABLE_UNFAMILIAR_TEXTURE_WORKAROUND
                 frameData.textureIsFamiliar = [self textureIsFamiliar:frameData.destinationDrawable.texture];
@@ -1285,13 +1346,13 @@ static _Atomic int count;
     }
 }
 
-- (NSString *)fpsMeterStringForFrameNumber:(int)frameNumber {
+- (NSString *)fpsMeterStringForFrameNumber:(int)frameNumber width:(int)width{
     const double period = [_fpsMovingAverage value];
     double fps = 1.0 / period;
     if (period < 0.001) {
         fps = 0;
     }
-    return [NSString stringWithFormat:@" [Frame %d: %d fps] ", frameNumber, (int)round(fps)];
+    return [NSString stringWithFormat:@" [Frame %d: %d fps w=%d] ", frameNumber, (int)round(fps), width];
 }
 
 - (void)populateMarkRendererTransientStateWithFrameData:(iTermMetalFrameData *)frameData {
@@ -1680,7 +1741,7 @@ static _Atomic int count;
                         return;
                     }
                     [frameData measureTimeForStat:iTermMetalFrameDataStatMtGetCurrentDrawable ofBlock:^{
-                        drawable = frameData.view.currentDrawable;
+                        drawable = [self drawableFromView:frameData.view];
                         DLog(@"%p DEFERRED PATH: got drawable %@ for frame %@", self, drawable, @(frameData.frameNumber));
                         texture = drawable.texture;
                         renderPassDescriptor = frameData.view.currentRenderPassDescriptor;
@@ -1764,8 +1825,8 @@ static _Atomic int count;
         [self copyOffscreenTextureToDrawableInFrameData:frameData];
     }
     [frameData measureTimeForStat:iTermMetalFrameDataStatPqEnqueueDrawPresentAndCommit ofBlock:^{
-#if !ENABLE_SYNCHRONOUS_PRESENTATION && !ENABLE_PRESENT_WITH_TRANSACTION
-        if (frameData.destinationDrawable) {
+#if !ENABLE_SYNCHRONOUS_PRESENTATION
+        if (!frameData.presentWithTransaction && frameData.destinationDrawable) {
             DLog(@"  presentDrawable %@", frameData);
             [commandBuffer presentDrawable:frameData.destinationDrawable];
         }
@@ -1800,15 +1861,10 @@ static _Atomic int count;
         }];
 
         DLog(@"  commit %@", frameData);
-#warning DNS
-        [NSThread sleepForTimeInterval:0.2];
         [commandBuffer commit];
-#if ENABLE_PRESENT_WITH_TRANSACTION
-        dispatch_async(dispatch_get_main_queue(), ^{
-            [commandBuffer waitUntilScheduled];
-            [frameData.destinationDrawable present];
-        });
-#endif  // ENABLE_PRESENT_WITH_TRANSACTION
+        if (frameData.presentWithTransaction) {
+            frameData.presentWithTransaction(commandBuffer, frameData.destinationDrawable);
+        }
 
 #if ENABLE_SYNCHRONOUS_PRESENTATION
         if (frameData.destinationDrawable) {
@@ -1822,8 +1878,6 @@ static _Atomic int count;
 }
 
 - (BOOL)didComplete:(BOOL)completed withFrameData:(iTermMetalFrameData *)frameData {
-    NSLog(@"Presented frame %@", @(frameData.frameNumber));
-
     DLog(@"did complete (completed=%@) %@", @(completed), frameData);
     if (!completed) {
         DLog(@"first time completed %@", frameData);
@@ -1848,6 +1902,8 @@ static _Atomic int count;
 
         __weak __typeof(self) weakSelf = self;
         [weakSelf dispatchAsyncToMainQueue:^{
+            int nd = atomic_fetch_add_explicit(&drawables, -1, memory_order_relaxed);
+            NSLog(@"Release drawable. There are now %d outstanding", nd);
             if (!self->_imageRenderer.rendererDisabled) {
                 iTermImageRendererTransientState *tState = [frameData transientStateForRenderer:self->_imageRenderer];
                 [weakSelf.dataSource metalDidFindImages:tState.foundImageUniqueIdentifiers
@@ -1892,6 +1948,9 @@ static _Atomic int count;
 
     if (frameData.group) {
         DLog(@"finished draw with group of frame %@", frameData);
+        if (frameData.completion) {
+            frameData.completion(frameData);
+        }
         dispatch_group_leave(frameData.group);
     }
 }

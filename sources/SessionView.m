@@ -933,6 +933,14 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
 - (void)reallyUpdateMetalViewFrame {
     _metalView.frame = self.bounds;
     [_driver mtkView:_metalView drawableSizeWillChange:_metalView.drawableSize];
+}
+
+- (void)sessionDidResize {
+    if (!_metalView || _metalView.alphaValue < 1 || _metalView.isHidden) {
+        NSLog(@"Session resized but metal not visible");
+        return;
+    }
+    NSLog(@"Session resized. Do synchronous draw.");
     [_driver drawSynchronuslyInView:_metalView];
 }
 

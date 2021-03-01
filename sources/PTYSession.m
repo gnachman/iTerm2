@@ -1905,6 +1905,8 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     [self.variablesScope setValuesFromDictionary:@{ iTermVariableKeySessionColumns: @(_screen.width),
                                                     iTermVariableKeySessionRows: @(_screen.height) }];
+    // Would be nice to do [_view sessionDidResize] here but it doesn't handle a font change that doesn't affect
+    // session size. This is called relatively late in session resizing.
 }
 
 - (Profile *)profileForSplit {

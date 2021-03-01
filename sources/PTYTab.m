@@ -5820,13 +5820,16 @@ typedef struct {
     PtyLog(@"_splitViewDidResizeSubviews running");
     for (NSView* subview in [splitView subviews]) {
         if ([subview isKindOfClass:[SessionView class]]) {
-            PTYSession* session = [self sessionForSessionView:(SessionView*)subview];
+            SessionView *sessionView = (SessionView *)subview;
+            PTYSession* session = [self sessionForSessionView:sessionView];
             if (session) {
                 PtyLog(@"splitViewDidResizeSubviews - view is %fx%f, ignore=%d", [subview frame].size.width, [subview frame].size.height, (int)[session ignoreResizeNotifications]);
                 if (![session ignoreResizeNotifications]) {
                     PtyLog(@"splitViewDidResizeSubviews - adjust session %p", session);
                     [self fitSessionToCurrentViewSize:session];
                 }
+                NSLog(@"Resized subview of splitview %@", session);
+                [sessionView sessionDidResize];
             }
         } else {
             [self _splitViewDidResizeSubviews:(NSSplitView*)subview];
