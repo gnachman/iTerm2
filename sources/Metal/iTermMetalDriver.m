@@ -320,6 +320,9 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
 
     iTermMetalDriverAsyncContext *context = _context;
     BOOL ok = [self reallyDrawInMTKView:view startToStartTime:dt];
+    if (!ok) {
+        NSLog(@"Dropped a frame");
+    }
     context.aborted = !ok;
     if (_context && context) {
         // Explicit draw call (drawSynchronously or drawAsynchronously) that failed.
@@ -384,8 +387,9 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     return context;
 }
 
+static _Atomic int count;
+
 - (void)drawAsynchronouslyInView:(MTKView *)view completion:(void (^)(BOOL))completion {
-    static _Atomic int count;
     int thisCount = atomic_fetch_add_explicit(&count, 1, memory_order_relaxed);
     DLog(@"Start asynchronous draw of %@ count=%d", view, thisCount);
     iTermMetalDriverAsyncContext *context = [self newContextForDrawInView:view count:count];
@@ -393,6 +397,22 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
         DLog(@"Asynchronous draw of %@ completed count=%d", view, thisCount);
         completion(!context.aborted);
     });
+}
+
+- (void)drawSynchronuslyInView:(MTKView *)view {
+    if (![self mainThreadStateIsValid]) {
+        return;
+    }
+    while (1) {
+        int thisCount = atomic_fetch_add_explicit(&count, 1, memory_order_relaxed);
+        NSLog(@"Start synchronous draw of size=%ux%u count=%d", _mainThreadState.viewportSize.x/2, _mainThreadState.viewportSize.y/2, thisCount);
+        iTermMetalDriverAsyncContext *context = [self newContextForDrawInView:view count:count];
+        dispatch_group_wait(context.group, DISPATCH_TIME_FOREVER);
+        NSLog(@"Finish synchronous draw count=%d aborted=%@", thisCount, @(context.aborted));
+        if (!context.aborted) {
+            break;
+        }
+    }
 }
 
 - (MTLCaptureDescriptor *)triggerProgrammaticCapture:(id<MTLDevice>)device NS_AVAILABLE_MAC(10_15) {
@@ -411,11 +431,15 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     return captureDescriptor;
 }
 
+- (BOOL)mainThreadStateIsValid {
+    return !(self.mainThreadState->rows == 0 || self.mainThreadState->columns == 0);
+}
+
 - (BOOL)reallyDrawInMTKView:(nonnull MTKView *)view startToStartTime:(NSTimeInterval)startToStartTime {
     @synchronized (self) {
         [_inFlightHistogram addValue:_currentFrames.count];
     }
-    if (self.mainThreadState->rows == 0 || self.mainThreadState->columns == 0) {
+    if (![self mainThreadStateIsValid]) {
         DLog(@"  abort: uninitialized");
         [self scheduleDrawIfNeededInView:view];
         return NO;
@@ -516,6 +540,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
 
         [self performPrivateQueueSetupForFrameData:frameData view:view];
     };
+    NSLog(@"Will draw frame %@", @(frameData.frameNumber));
 #if ENABLE_PRIVATE_QUEUE
     [frameData dispatchToPrivateQueue:_queue forPreparation:block];
 #else
@@ -1739,7 +1764,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
         [self copyOffscreenTextureToDrawableInFrameData:frameData];
     }
     [frameData measureTimeForStat:iTermMetalFrameDataStatPqEnqueueDrawPresentAndCommit ofBlock:^{
-#if !ENABLE_SYNCHRONOUS_PRESENTATION
+#if !ENABLE_SYNCHRONOUS_PRESENTATION && !ENABLE_PRESENT_WITH_TRANSACTION
         if (frameData.destinationDrawable) {
             DLog(@"  presentDrawable %@", frameData);
             [commandBuffer presentDrawable:frameData.destinationDrawable];
@@ -1775,7 +1800,16 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
         }];
 
         DLog(@"  commit %@", frameData);
+#warning DNS
+        [NSThread sleepForTimeInterval:0.2];
         [commandBuffer commit];
+#if ENABLE_PRESENT_WITH_TRANSACTION
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [commandBuffer waitUntilScheduled];
+            [frameData.destinationDrawable present];
+        });
+#endif  // ENABLE_PRESENT_WITH_TRANSACTION
+
 #if ENABLE_SYNCHRONOUS_PRESENTATION
         if (frameData.destinationDrawable) {
             dispatch_async(dispatch_get_main_queue(), ^{
@@ -1788,6 +1822,8 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
 }
 
 - (BOOL)didComplete:(BOOL)completed withFrameData:(iTermMetalFrameData *)frameData {
+    NSLog(@"Presented frame %@", @(frameData.frameNumber));
+
     DLog(@"did complete (completed=%@) %@", @(completed), frameData);
     if (!completed) {
         DLog(@"first time completed %@", frameData);

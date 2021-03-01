@@ -42,3 +42,5 @@
 // but it never becomes visible! This flag enables a workaround where we redraw any frame with a
 // never-before-seen texture. I have a question out to developer tech support on this one.
 #define ENABLE_UNFAMILIAR_TEXTURE_WORKAROUND 1
+
+#define ENABLE_PRESENT_WITH_TRANSACTION 0

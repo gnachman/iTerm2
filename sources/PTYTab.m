@@ -6049,7 +6049,7 @@ typedef struct {
 // Note this is a notification handler
 - (void)updateUseMetal NS_AVAILABLE_MAC(10_11) {
     DLog(@"begin");
-    const BOOL resizing = self.realParentWindow.windowIsResizing;
+    const BOOL resizing = NO;
     const BOOL powerOK = [[iTermPowerManager sharedInstance] metalAllowed];
     __block iTermMetalUnavailableReason sessionReason = iTermMetalUnavailableReasonNone;
     NSArray<PTYSession *> *nonHiddenSessions = [self.sessions filteredArrayUsingBlock:^BOOL(PTYSession *session) {

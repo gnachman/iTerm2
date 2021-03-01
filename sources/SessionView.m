@@ -11,6 +11,7 @@
 #import "iTermImageView.h"
 #import "iTermIntervalTreeObserver.h"
 #import "iTermMetalClipView.h"
+#import "iTermMetalConfig.h"
 #import "iTermMetalDeviceProvider.h"
 #import "iTermPreferences.h"
 #import "iTermSearchResultsMinimapView.h"
@@ -64,6 +65,14 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     self = [super initWithFrame:frameRect device:device];
     if (self) {
         [self it_schedule];
+        self.layerContentsPlacement = NSViewLayerContentsPlacementTopLeft;
+        self.layerContentsRedrawPolicy = NSViewLayerContentsRedrawDuringViewResize;
+        assert(self.layer != nil);
+        self.layer.needsDisplayOnBoundsChange = YES;
+#if ENABLE_PRESENT_WITH_TRANSACTION
+        CAMetalLayer *metalLayer = (CAMetalLayer *)self.layer;
+        metalLayer.presentsWithTransaction = YES;
+#endif
     }
     return self;
 }
@@ -100,6 +109,18 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
         _lastSetNeedsDisplay = [NSDate it_timeSinceBoot];
     }
     [super setNeedsDisplay:needsDisplay];
+}
+
+- (void)setAlphaValue:(CGFloat)alphaValue {
+    [super setAlphaValue:alphaValue];
+}
+
+- (void)setHidden:(BOOL)hidden {
+    [super setHidden:hidden];
+}
+
+- (void)viewDidMoveToSuperview {
+    [super viewDidMoveToSuperview];
 }
 
 @end
@@ -910,16 +931,9 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
 }
 
 - (void)reallyUpdateMetalViewFrame {
-    if (@available(macOS 10.14, *)) {
-        _metalView.frame = self.bounds;
-    } else {
-        NSRect frame = _scrollview.contentView.frame;
-        if (self.showBottomStatusBar) {
-            frame.origin.y += iTermGetStatusBarHeight();
-        }
-        _metalView.frame = [self frameByInsettingForMetal:frame];
-    }
+    _metalView.frame = self.bounds;
     [_driver mtkView:_metalView drawableSizeWillChange:_metalView.drawableSize];
+    [_driver drawSynchronuslyInView:_metalView];
 }
 
 - (NSRect)frameByInsettingForMetal:(NSRect)frame {
@@ -1599,9 +1613,12 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     rect.size.width = _scrollview.contentSize.width;
     rect.size.height = [_delegate sessionViewDesiredHeightOfDocumentView];
     [_scrollview.documentView setFrame:rect];
-    if (_useMetal) {
-        [self updateMetalViewFrame];
-    }
+//    if (_useMetal) {
+//        [self updateMetalViewFrame];
+//    }
+//    if (_metalView) {
+//        [_driver drawSynchronuslyInView:_metalView];
+//    }
     [self updateLegacyViewFrame];
     [self updateMinimapFrameAnimated:NO];
     [_delegate sessionViewScrollViewDidResize];

@@ -12392,16 +12392,16 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
             return;
         }
 
-        _metalFrameChangePending = YES;
-        id token = [self temporarilyDisableMetal];
-        [self.textview setNeedsDisplay:YES];
-        dispatch_async(dispatch_get_main_queue(), ^{
+//        _metalFrameChangePending = YES;
+//        id token = [self temporarilyDisableMetal];
+//        [self.textview setNeedsDisplay:YES];
+//        dispatch_async(dispatch_get_main_queue(), ^{
             DLog(@"sessionViewNeedsMetalFrameUpdate %@ in dispatch_async", self);
-            _metalFrameChangePending = NO;
+//            _metalFrameChangePending = NO;
             [_view reallyUpdateMetalViewFrame];
             DLog(@"sessionViewNeedsMetalFrameUpdate will draw farme and remove disablement");
-            [self drawFrameAndRemoveTemporarilyDisablementOfMetalForToken:token];
-        });
+//            [self drawFrameAndRemoveTemporarilyDisablementOfMetalForToken:token];
+//        });
     }
 }
 
