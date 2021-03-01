@@ -2086,7 +2086,7 @@ ITERM_WEAKLY_REFERENCEABLE
       okToClose = [self confirmCloseForSessions:[NSArray arrayWithObject:aSession]
                                      identifier:@"This session"
                                     genericName:[NSString stringWithFormat:@"session \"%@\"",
-                                                    [aSession name]]];
+                                                    [[aSession name] removingHTMLFromTabTitleIfNeeded]]];
     }
     if (okToClose) {
         [self closeSessionWithoutConfirmation:aSession];

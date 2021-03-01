@@ -54,7 +54,7 @@
 }
 
 - (NSString *)displayName {
-    return [NSString stringWithFormat:@"＞ %@ (%@)", _session.name, _session.guid];
+    return [NSString stringWithFormat:@"＞ %@ (%@)", [_session.name removingHTMLFromTabTitleIfNeeded], _session.guid];
 }
 
 - (iTermVariableScope *)scope {

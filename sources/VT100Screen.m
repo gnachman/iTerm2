@@ -3745,9 +3745,9 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     if (postUserNotifications_ && [delegate_ screenShouldPostTerminalGeneratedAlert]) {
         [delegate_ screenIncrementBadge];
         NSString *description = [NSString stringWithFormat:@"Session %@ #%d: %@",
-                                    [delegate_ screenName],
-                                    [delegate_ screenNumber],
-                                    message];
+                                 [[delegate_ screenName] removingHTMLFromTabTitleIfNeeded],
+                                 [delegate_ screenNumber],
+                                 message];
         BOOL sent = [[iTermNotificationController sharedInstance]
                                  notify:@"Alert"
                         withDescription:description

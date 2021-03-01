@@ -1567,7 +1567,7 @@ static BOOL hasBecomeActive = NO;
         NSMenuItem *aMenuItem;
 
         if ([aTab activeSession]) {
-            aMenuItem  = [[NSMenuItem alloc] initWithTitle:[[aTab activeSession] name]
+            aMenuItem  = [[NSMenuItem alloc] initWithTitle:[[[aTab activeSession] name] removingHTMLFromTabTitleIfNeeded]
                                                     action:@selector(selectSessionAtIndexAction:)
                                              keyEquivalent:@""];
             [aMenuItem setTag:i-1];
