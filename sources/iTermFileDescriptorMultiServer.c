@@ -201,7 +201,7 @@ static int Launch(const iTermMultiServerRequestLaunch *launch,
                   launch->envp,
                   fd);
     }
-    if (forkState->pid == 1) {
+    if (forkState->pid == -1) {
         *errorPtr = errno;
         FDLog(LOG_DEBUG, "forkpty failed: %s", strerror(errno));
         return -1;
