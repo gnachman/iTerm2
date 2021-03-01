@@ -354,7 +354,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             textField.frame = view.bounds;
             textField.autoresizingMask = (NSViewWidthSizable | NSViewHeightSizable);
         }
-        view.textField.stringValue = [[[iTermController sharedInstance] sessionWithGUID:guid] name] ?: @"Session";
+        view.textField.stringValue = [[[[iTermController sharedInstance] sessionWithGUID:guid] name] removingHTMLFromTabTitleIfNeeded] ?: @"Session";
         return view;
     }
 

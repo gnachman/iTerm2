@@ -5951,7 +5951,7 @@ typedef struct {
                 if (!session.havePostedIdleNotification && [session shouldPostUserNotification]) {
                     NSString *theDescription =
                         [NSString stringWithFormat:@"Session %@ in tab #%d became idle.",
-                            [session name],
+                            [[session name] removingHTMLFromTabTitleIfNeeded],
                             [self tabNumber]];
                     if ([iTermProfilePreferences boolForKey:KEY_SEND_IDLE_ALERT inProfile:session.profile]) {
                         [[iTermNotificationController sharedInstance] notify:@"Idle"
@@ -5998,7 +5998,7 @@ typedef struct {
                                                                                                 [NSBundle bundleForClass:[self class]],
                                                                                                 @"User Alerts")
                                              withDescription:[NSString stringWithFormat:@"New output was received in %@, tab #%d.",
-                                                              [[self activeSession] name],
+                                                              [[[self activeSession] name] removingHTMLFromTabTitleIfNeeded],
                                                               [self tabNumber]]
                                                  windowIndex:[[self activeSession] screenWindowIndex]
                                                     tabIndex:[[self activeSession] screenTabIndex]

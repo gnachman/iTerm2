@@ -3194,7 +3194,7 @@ ITERM_WEAKLY_REFERENCEABLE
         [iTermProfilePreferences boolForKey:KEY_SEND_SESSION_ENDED_ALERT inProfile:self.profile]) {
         [[iTermNotificationController sharedInstance] notify:@"Session Ended"
                                              withDescription:[NSString stringWithFormat:@"Session \"%@\" in tab #%d just terminated.",
-                                                              [self name],
+                                                              [[self name] removingHTMLFromTabTitleIfNeeded],
                                                               [_delegate tabNumber]]];
     }
 
@@ -3637,7 +3637,7 @@ ITERM_WEAKLY_REFERENCEABLE
                 [iTermProfilePreferences boolForKey:KEY_SEND_BELL_ALERT inProfile:self.profile]) {
                 [[iTermNotificationController sharedInstance] notify:@"Bell"
                                                  withDescription:[NSString stringWithFormat:@"Session %@ #%d just rang a bell!",
-                                                                  [self name],
+                                                                  [[self name] removingHTMLFromTabTitleIfNeeded],
                                                                   [_delegate tabNumber]]
                                                      windowIndex:[self screenWindowIndex]
                                                         tabIndex:[self screenTabIndex]
@@ -10248,7 +10248,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         if ([action isEqualToString:kMarkAlertActionPostNotification]) {
             [[iTermNotificationController sharedInstance] notify:@"Mark Set"
                                                  withDescription:[NSString stringWithFormat:@"Session %@ #%d had a mark set.",
-                                                                  [self name],
+                                                                  [[self name] removingHTMLFromTabTitleIfNeeded],
                                                                   [_delegate tabNumber]]
                                                      windowIndex:[self screenWindowIndex]
                                                         tabIndex:[self screenTabIndex]

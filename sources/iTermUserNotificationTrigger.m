@@ -66,7 +66,8 @@
     iTermNotificationController *notificationController = [iTermNotificationController sharedInstance];
     [notificationController notify:notificationText
                    withDescription:[NSString stringWithFormat:@"A trigger fired in session \"%@\" in tab #%d.",
-                                    [aSession name],
+                                    [[aSession name] removingHTMLFromTabTitleIfNeeded]
+                                    ,
                                     aSession.delegate.tabNumber]
                        windowIndex:[aSession screenWindowIndex]
                           tabIndex:[aSession screenTabIndex]

@@ -157,7 +157,9 @@ NSString *const iTermSessionBuriedStateChangeTabNotification = @"iTermSessionBur
     BOOL needsSeparator = NO;
     [menu removeAllItems];
     for (PTYSession *session in [[iTermBuriedSessions sharedInstance] buriedSessions]) {
-        NSMenuItem *item = [[NSMenuItem alloc] initWithTitle:session.name action:@selector(disinter:) keyEquivalent:@""];
+        NSMenuItem *item = [[NSMenuItem alloc] initWithTitle:[session.name removingHTMLFromTabTitleIfNeeded]
+                                                      action:@selector(disinter:)
+                                               keyEquivalent:@""];
         item.representedObject = session;
         item.target = self;
         [menu addItem:item];
