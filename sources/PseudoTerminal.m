@@ -4493,12 +4493,13 @@ ITERM_WEAKLY_REFERENCEABLE
     } else {
         DLog(@"** Re-entrant call to windowDidChangeScreen:! Not canonicalizing. **");
     }
-    if (@available(macOS 10.11, *)) {
-        for (PTYSession *session in self.allSessions) {
-            [session updateMetalDriver];
-            [session.textview setNeedsDisplay:YES];
-            [session didChangeScreen:self.window.backingScaleFactor];
-        }
+    for (PTYSession *session in self.allSessions) {
+        [session updateMetalDriver];
+        [session.textview setNeedsDisplay:YES];
+        [session didChangeScreen:self.window.backingScaleFactor];
+    }
+    for (PTYTab *tab in self.tabs) {
+        [tab bounceMetal];
     }
     DLog(@"Returning from windowDidChangeScreen:.");
 }
