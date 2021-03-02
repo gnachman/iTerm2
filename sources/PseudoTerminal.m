@@ -5950,18 +5950,11 @@ ITERM_WEAKLY_REFERENCEABLE
 
     // Grabs whole tabview image.
     NSImage *viewImage = [[[NSImage alloc] initWithSize:contentFrame.size] autorelease];
-    NSImage *tabViewImage = [[[NSImage alloc] init] autorelease];
-
-    NSBitmapImageRep *tabviewRep;
 
     PTYTab *tab = tabViewItem.identifier;
     [tab bounceMetal];
 
-    tabviewRep = [tabRootView bitmapImageRepForCachingDisplayInRect:viewRect];
-    [tabRootView cacheDisplayInRect:viewRect toBitmapImageRep:tabviewRep];
-
-    [tabViewImage addRepresentation:tabviewRep];
-
+    NSImage *tabViewImage = [tabRootView snapshot];
 
     [viewImage lockFocus];
     switch ([iTermPreferences intForKey:kPreferenceKeyTabPosition]) {

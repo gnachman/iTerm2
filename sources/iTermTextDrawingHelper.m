@@ -37,6 +37,7 @@
 #import "NSMutableAttributedString+iTerm.h"
 #import "NSImage+iTerm.h"
 #import "NSStringITerm.h"
+#import "NSView+iTerm.h"
 #import "PTYFontInfo.h"
 #import "RegexKitLite.h"
 #import "VT100ScreenMark.h"
@@ -244,11 +245,12 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
                          rectsPtr:(const NSRect *)rectArray
                         rectCount:(NSInteger)rectCount
                     virtualOffset:(CGFloat)virtualOffset {
+    // return here, snapshot ok
     DLog(@"begin drawRect:%@ in view %@", [NSValue valueWithRect:rect], _delegate);
     iTermPreciseTimerSetEnabled(YES);
     if (_debug) {
         [[NSColor redColor] set];
-        NSRectFill(rect);
+        iTermRectFill(rect, virtualOffset);
     }
     [self updateCachedMetrics];
     // If there are two or more rects that need display, the OS will pass in |rect| as the smallest
@@ -256,9 +258,12 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
     // and they're guaranteed to be disjoint. So draw each of them individually.
     [self startTiming];
 
-    // Issue 9352 - you have to clear the surface or else you can get artifacts.
-    [[NSColor clearColor] set];
-    NSRectFillUsingOperation(rect, NSCompositingOperationCopy);
+    if (![NSView iterm_takingSnapshot]) {
+        // Issue 9352 - you have to clear the surface or else you can get artifacts. However, doing
+        // so breaks taking a snapshot! FB9025520
+        [[NSColor clearColor] set];
+        iTermRectFillUsingOperation(rect, NSCompositingOperationCopy, virtualOffset);
+    }
 
     const int haloWidth = 4;
     NSInteger yLimit = _numberOfLines;
