@@ -11,6 +11,7 @@
 
 @interface NSView (iTerm)
 
++ (BOOL)iterm_takingSnapshot;
 + (NSView *)viewAtScreenCoordinate:(NSPoint)point;
 
 // Returns an image representation of the view's current appearance.

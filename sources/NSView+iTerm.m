@@ -11,7 +11,13 @@
 #import "iTermApplication.h"
 #import "NSWindow+iTerm.h"
 
+static NSInteger gTakingSnapshot;
+
 @implementation NSView (iTerm)
+
++ (BOOL)iterm_takingSnapshot {
+    return gTakingSnapshot > 0;
+}
 
 + (NSView *)viewAtScreenCoordinate:(NSPoint)point {
     const NSRect mouseRect = {
@@ -45,11 +51,14 @@
 }
 
 - (NSImage *)snapshotOfRect:(NSRect)rect {
+    gTakingSnapshot += 1;
+
     NSBitmapImageRep *rep = [self bitmapImageRepForCachingDisplayInRect:rect];
     [self cacheDisplayInRect:self.bounds toBitmapImageRep:rep];
     NSImage *image = [[NSImage alloc] initWithSize:rect.size];
     [image addRepresentation:rep];
 
+    gTakingSnapshot -= 1;
     return image;
 }
 
