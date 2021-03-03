@@ -1,17 +1,16 @@
 # Performance issue
 
-<!-- Thanks for filing an issue! Please answer the questions below so I can help you. -->
+Thanks for filing an issue! Please answer the questions below so I can help you.
 
-- [ ] iTerm2 version:
-- [ ] OS version:
-- [ ] Attach `~/Library/Preferences/com.googlecode.iterm2.plist` here (drag-drop from finder into this window)
-- [ ] Attach a [debug log](https://iterm2.com/debuglog), if possible.
-- [ ] Attach a screen capture video if it would make the reproduction steps clearer.
-- [ ] Please attach a [process sample](https://gitlab.com/gnachman/iterm2/-/wikis/HowToSample)
-- [ ] Are you reporting excessive memory usage? Please attach a [heap analysis](https://gitlab.com/gnachman/iterm2/wikis/heapshot)
+- iTerm2 version:
+- OS version:
+- Attach `~/Library/Preferences/com.googlecode.iterm2.plist` here (drag-drop from finder into this window)
+- Attach a [debug log](https://iterm2.com/debuglog), if possible.
+- Attach a screen capture video if it would make the reproduction steps clearer.
+- Please attach a [process sample](https://gitlab.com/gnachman/iterm2/-/wikis/HowToSample)
 
-<!-- PLEASE ATTACH YOUR PLIST FILE FOR BUG REPORTS!
-Seriously! I'll probably ask you for it if you don’t. -->
+PLEASE ATTACH YOUR PLIST FILE FOR BUG REPORTS!
+Seriously! I'll probably ask you for it if you don’t.
 
 ## Detailed steps to reproduce the problem
 
@@ -24,5 +23,4 @@ Seriously! I'll probably ask you for it if you don’t. -->
 ## What should have happened
 
 ---
-<!-- Here be automations. -->
 /label ~Performance
