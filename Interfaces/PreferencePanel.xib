@@ -18,7 +18,6 @@
                 <outlet property="_arrangementsToolbarItem" destination="5890" id="2RT-x5-vvx"/>
                 <outlet property="_bookmarksTabViewItem" destination="1945" id="Byu-Qr-6Jc"/>
                 <outlet property="_bookmarksToolbarItem" destination="5886" id="2yS-fU-fSr"/>
-                <outlet property="_flexibleSpaceToolbarItem" destination="gT5-w7-yWc" id="Acr-j3-4A7"/>
                 <outlet property="_generalPreferencesViewController" destination="9Se-ld-UJa" id="ebT-z7-cAn"/>
                 <outlet property="_globalTabViewItem" destination="1944" id="EaV-nW-mSM"/>
                 <outlet property="_globalToolbarItem" destination="5887" id="1KD-pS-eBt"/>
@@ -652,24 +651,13 @@ Gw
                             <action selector="showAdvancedTabView:" target="-2" id="f9X-n8-IcJ"/>
                         </connections>
                     </toolbarItem>
-                    <toolbarItem implicitItemIdentifier="NSToolbarFlexibleSpaceItem" id="gT5-w7-yWc"/>
                     <toolbarItem implicitItemIdentifier="AC57CB9F-043A-4DC7-9155-F358367619B6" label="Shortcuts" paletteLabel="Shortcuts" tag="-1" image="PrefsShortcuts" sizingBehavior="auto" id="97f-06-acT">
                         <connections>
                             <action selector="showShortcutsTabView:" target="-2" id="e52-BD-2Aw"/>
                         </connections>
                     </toolbarItem>
                 </allowedToolbarItems>
-                <defaultToolbarItems>
-                    <toolbarItem reference="5887"/>
-                    <toolbarItem reference="5889"/>
-                    <toolbarItem reference="5886"/>
-                    <toolbarItem reference="5888"/>
-                    <toolbarItem reference="6056"/>
-                    <toolbarItem reference="97f-06-acT"/>
-                    <toolbarItem reference="5890"/>
-                    <toolbarItem reference="gtg-rw-6h8"/>
-                    <toolbarItem reference="gT5-w7-yWc"/>
-                </defaultToolbarItems>
+                <defaultToolbarItems/>
                 <connections>
                     <outlet property="delegate" destination="-2" id="5896"/>
                 </connections>
@@ -708,7 +696,7 @@ Gw
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <clipView key="contentView" id="Oi5-ZC-SxR">
                             <rect key="frame" x="1" y="1" width="762" height="263"/>
-                            <autoresizingMask key="autoresizingMask"/>
+                            <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                             <subviews>
                                 <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" alternatingRowBackgroundColors="YES" columnReordering="NO" multipleSelection="NO" autosaveColumns="NO" headerView="5784" id="5783">
                                     <rect key="frame" x="0.0" y="0.0" width="762" height="246"/>

@@ -348,7 +348,6 @@ static iTermPreferencesSearchEngine *gSearchEngine;
     IBOutlet NSTabViewItem *_mouseTabViewItem;
     IBOutlet NSToolbarItem *_advancedToolbarItem;
     IBOutlet NSTabViewItem *_advancedTabViewItem;
-    IBOutlet NSToolbarItem *_flexibleSpaceToolbarItem;
     IBOutlet NSTabViewItem *_shortcutsTabViewItem;
     IBOutlet NSToolbarItem *_shortcutsToolbarItem;
 
@@ -760,7 +759,6 @@ andEditComponentWithIdentifier:(NSString *)identifier
                          [_mouseToolbarItem itemIdentifier],
                          [_shortcutsToolbarItem itemIdentifier],
                          [_advancedToolbarItem itemIdentifier],
-                         [_flexibleSpaceToolbarItem itemIdentifier],
                          _searchFieldToolbarItem.itemIdentifier];
     return result;
 }
