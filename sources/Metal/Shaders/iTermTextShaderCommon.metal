@@ -209,7 +209,7 @@ float ComputeWeightOfUnderlineInverted(int underlineStyle,  // iTermMetalGlyphAt
                                        float2 clipSpacePosition,
                                        float2 viewportSize,
                                        float2 cellOffset,
-                                       float underlineOffset,
+                                       float2 underlineOffset,
                                        float underlineThickness,
                                        float2 textureSize,
                                        float2 textureOffset,
@@ -219,7 +219,8 @@ float ComputeWeightOfUnderlineInverted(int underlineStyle,  // iTermMetalGlyphAt
                                        texture2d<float> texture,
                                        sampler textureSampler,
                                        float scale,
-                                       bool solid) {
+                                       bool solid,
+                                       bool predecessorWasUnderlined) {
     float thickness;
     float offset;
     switch (underlineStyle) {
@@ -233,7 +234,7 @@ float ComputeWeightOfUnderlineInverted(int underlineStyle,  // iTermMetalGlyphAt
             break;
         default:
             thickness = underlineThickness;
-            offset = underlineOffset;
+            offset = underlineOffset.y;
             break;
     }
     float weight = FractionOfPixelThatIntersectsUnderlineForStyle(underlineStyle,
@@ -246,11 +247,11 @@ float ComputeWeightOfUnderlineInverted(int underlineStyle,  // iTermMetalGlyphAt
     if (weight == 0) {
         return 0;
     }
-    const float margin = (glyphSize.x - cellSize.x) / 2;
+    const float margin = predecessorWasUnderlined ? 0 : underlineOffset.x;
     if (clipSpacePosition.x < cellOffset.x + margin) {
         return 0;
     }
-    if (clipSpacePosition.x >= cellOffset.x + margin + cellSize.x) {
+    if (clipSpacePosition.x >= cellOffset.x + glyphSize.x) {
         return 0;
     }
     if (underlineStyle == iTermMetalGlyphAttributesUnderlineStrikethrough || solid) {
@@ -279,7 +280,7 @@ float ComputeWeightOfUnderlineRegular(int underlineStyle,  // iTermMetalGlyphAtt
                                       float2 clipSpacePosition,
                                       float2 viewportSize,
                                       float2 cellOffset,
-                                      float regularOffset,
+                                      float2 regularOffset,
                                       float regularThickness,
                                       float2 textureSize,
                                       float2 textureOffset,
@@ -289,7 +290,8 @@ float ComputeWeightOfUnderlineRegular(int underlineStyle,  // iTermMetalGlyphAtt
                                       texture2d<float> texture,
                                       sampler textureSampler,
                                       float scale,
-                                      bool solid) {
+                                      bool solid,
+                                      bool predecessorWasUnderlined) {
     float offset;
     float thickness;
 
@@ -304,7 +306,7 @@ float ComputeWeightOfUnderlineRegular(int underlineStyle,  // iTermMetalGlyphAtt
             break;
         default:
             thickness = regularThickness;
-            offset = regularOffset;
+            offset = regularOffset.y;
             break;
     }
 
@@ -318,11 +320,11 @@ float ComputeWeightOfUnderlineRegular(int underlineStyle,  // iTermMetalGlyphAtt
     if (weight == 0) {
         return 0;
     }
-    const float margin = (glyphSize.x - cellSize.x) / 2;
+    const float margin = predecessorWasUnderlined ? 0 : regularOffset.x;
     if (clipSpacePosition.x < cellOffset.x + margin) {
         return 0;
     }
-    if (clipSpacePosition.x >= cellOffset.x + margin + cellSize.x) {
+    if (clipSpacePosition.x >= cellOffset.x + glyphSize.x) {
         return 0;
     }
     if (underlineStyle == iTermMetalGlyphAttributesUnderlineStrikethrough || solid) {

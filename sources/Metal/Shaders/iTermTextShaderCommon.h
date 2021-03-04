@@ -25,6 +25,7 @@ typedef struct {
     float scale;  // 2 for retina, 1 for non-retina
     float4 alphaVector;
     int flags;  // copied from iTermVertexTextInfoStruct.flags
+    bool predecessorWasUnderlined;
 } iTermTextVertexFunctionOutput;
 
 typedef struct {
@@ -54,7 +55,7 @@ float ComputeWeightOfUnderlineInverted(int underlineStyle,  // iTermMetalGlyphAt
                                        float2 clipSpacePosition,
                                        float2 viewportSize,
                                        float2 cellOffset,
-                                       float underlineOffset,
+                                       float2 underlineOffset,
                                        float underlineThickness,
                                        float2 textureSize,
                                        float2 textureOffset,
@@ -64,7 +65,8 @@ float ComputeWeightOfUnderlineInverted(int underlineStyle,  // iTermMetalGlyphAt
                                        texture2d<float> texture,
                                        sampler textureSampler,
                                        float scale,
-                                       bool solid);
+                                       bool solid,
+                                       bool predecessorWasUnderlined);
 
 // Returns the weight in [0, 1] of underline for a pixel at `clipSpacePosition`
 // when drawing underlined emoji or monochrome text in 10.14+ where it's light-on-dark.
@@ -73,7 +75,7 @@ float ComputeWeightOfUnderlineRegular(int underlineStyle,  // iTermMetalGlyphAtt
                                       float2 clipSpacePosition,
                                       float2 viewportSize,
                                       float2 cellOffset,
-                                      float underlineOffset,
+                                      float2 underlineOffset,
                                       float underlineThickness,
                                       float2 textureSize,
                                       float2 textureOffset,
@@ -83,7 +85,8 @@ float ComputeWeightOfUnderlineRegular(int underlineStyle,  // iTermMetalGlyphAtt
                                       texture2d<float> texture,
                                       sampler textureSampler,
                                       float scale,
-                                      bool solid);
+                                      bool solid,
+                                      bool predecessorWasUnderlined);
 
 // For a discussion of this code, see this document:
 // https://docs.google.com/document/d/1vfBq6vg409Zky-IQ7ne-Yy7olPtVCl0dq3PG20E8KDs
