@@ -145,6 +145,7 @@ static NSMutableArray<NSString *> *_combinedLog;
         Profile *defaultBookmark = [self defaultBookmark];
         NSMutableDictionary *tmuxProfile = [[defaultBookmark mutableCopy] autorelease];
         tmuxProfile[KEY_HAS_HOTKEY] = @NO;
+        
         [tmuxProfile setObject:@"tmux" forKey:KEY_NAME];
         [tmuxProfile setObject:[ProfileModel freshGuid] forKey:KEY_GUID];
         [tmuxProfile setObject:[NSNumber numberWithInt:1000]

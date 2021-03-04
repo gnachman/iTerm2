@@ -2,7 +2,7 @@
 echo Enter the notarization password
 read -s NOTPASS
 COMPACTDATE=$(date +"%Y%m%d_%H%M%S")
-VERSION=$(cat version.txt | sed -e "s/%(extra)s/$COMPACTDATE/")
+VERSION="0.$COMPACTDATE-adhoc"
 NAME=$(echo $VERSION | sed -e "s/\\./_/g")-adhoc
 make clean
 make release
