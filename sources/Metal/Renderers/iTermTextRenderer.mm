@@ -195,7 +195,7 @@ static BOOL gMonochromeText;
         _emptyBuffers = [[iTermMetalBufferPool alloc] initWithDevice:device bufferSize:1];
         _verticesPool = [[iTermMetalBufferPool alloc] initWithDevice:device bufferSize:sizeof(iTermVertex) * 6];
         _dimensionsPool = [[iTermMetalBufferPool alloc] initWithDevice:device bufferSize:sizeof(iTermTextureDimensions)];
-        _textInfoPool = [[iTermMetalBufferPool alloc] initWithDevice:device bufferSize:sizeof(iTermVertexTextInfo)];
+        _textInfoPool = [[iTermMetalBufferPool alloc] initWithDevice:device bufferSize:sizeof(iTermVertexTextInfoStruct)];
 
         // Allow the pool to reserve up to this many bytes. Work backward to find the largest number
         // of buffers we are OK with keeping permanently allocated. By having enough characters on
@@ -400,6 +400,7 @@ static NSString *const VertexFunctionName(const BOOL &underlined,
     if ([iTermAdvancedSettingsModel solidUnderlines]) {
         textInfo.flags |= iTermTextVertexInfoFlagsSolidUnderlines;
     }
+    textInfo.glyphWidth = tState.cellConfiguration.glyphSize.width;
     id<MTLBuffer> buffer = [self->_textInfoPool requestBufferFromContext:tState.poolContext
                                                                withBytes:&textInfo
                                                           checkIfChanged:YES];
@@ -466,9 +467,11 @@ static NSString *const VertexFunctionName(const BOOL &underlined,
                 .textureSize = simd_make_float2(textureSize.x, textureSize.y),
                 .glyphSize = simd_make_float2(glyphSize.x, glyphSize.y),
                 .cellSize = cellSize,
-                .underlineOffset = MAX(underlineThickness, glyphSize.y - (underlineDescriptor.offset * scale)),
+                .underlineOffset = simd_make_float2(tState.asciiOffset.width,
+                                                    MAX(underlineThickness, glyphSize.y - (underlineDescriptor.offset * scale))),
                 .underlineThickness = underlineThickness,
-                .strikethroughOffset = glyphSize.y - strikethroughDescriptor.offset * scale,
+                .strikethroughOffset = simd_make_float2(tState.asciiOffset.width,
+                                                        glyphSize.y - strikethroughDescriptor.offset * scale),
                 .strikethroughThickness = strikethroughThickness,
                 .scale = scale,
             };
