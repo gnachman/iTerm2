@@ -8601,7 +8601,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
         // The scrollbar has already been added so tabs' current sizes are wrong.
         // Use ideal sizes instead, to fit to the session dimensions instead of
         // the existing pixel dimensions of the tabs.
-        [self fitWindowToTabsExcludingTmuxTabs:NO preservingHeight:YES];
+        [self fitWindowToIdealizedTabsPreservingHeight:YES];
         [self fitTabsToWindow];
         for (TmuxController *controller in [self uniqueTmuxControllers]) {
             [controller fitLayoutToWindows];
