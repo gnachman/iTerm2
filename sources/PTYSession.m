@@ -1875,6 +1875,8 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)setSize:(VT100GridSize)size {
+    NSLog(@"%p -[%@ %@:%@]", self, NSStringFromClass([self class]), NSStringFromSelector(_cmd), VT100GridSizeDescription(size));
+
     ITBetaAssert(size.width > 0, @"Nonpositive width %d", size.width);
     ITBetaAssert(size.height > 0, @"Nonpositive height %d", size.height);
     if (size.width <= 0) {
@@ -3300,6 +3302,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (NSSize)idealScrollViewSizeWithStyle:(NSScrollerStyle)scrollerStyle {
+    NSLog(@"Calculate ideal size based on screen %@x%@ and cell size %@x%@", @(_screen.width), @(_screen.height), @(_textview.charWidth), @(_textview.lineHeight));
     NSSize innerSize = NSMakeSize([_screen width] * [_textview charWidth] + [iTermPreferences intForKey:kPreferenceKeySideMargins] * 2,
                                   [_screen height] * [_textview lineHeight] + [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins] * 2);
     BOOL hasScrollbar = [[_delegate realParentWindow] scrollbarShouldBeVisible];
@@ -5116,6 +5119,7 @@ ITERM_WEAKLY_REFERENCEABLE
     nonAsciiFont:(NSFont *)nonAsciiFont
     horizontalSpacing:(CGFloat)horizontalSpacing
     verticalSpacing:(CGFloat)verticalSpacing {
+    NSLog(@"%p -[%@ setFont:%@ nonAsciiFont:horizontalSpacing:verticalSpacing:]", self, NSStringFromClass([self class]), font);
     DLog(@"setFont:%@ nonAsciiFont:%@", font, nonAsciiFont);
     NSWindow *window = [[_delegate realParentWindow] window];
     DLog(@"Before:\n%@", [window.contentView iterm_recursiveDescription]);
@@ -5252,6 +5256,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)synchronizeTmuxFonts:(NSNotification *)notification {
     if (!_exited && [self isTmuxClient]) {
+        NSLog(@"%p -[%@ %@]", self, NSStringFromClass([self class]), NSStringFromSelector(_cmd));
         NSArray *args = [notification object];
         NSFont *font = args[0];
         NSFont *nonAsciiFont = args[1];
@@ -5269,11 +5274,16 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
+static BOOL fontChangeNotificationInProgress;
+
 - (void)notifyTmuxFontChange
 {
-    static BOOL fontChangeNotificationInProgress;
+    NSLog(@"%p -[%@ %@]", self, NSStringFromClass([self class]), NSStringFromSelector(_cmd));
     if (!fontChangeNotificationInProgress) {
+        self.tmuxController.adjustingFontSize += 1;
+        NSLog(@"adjustingFontSize=YES");
         fontChangeNotificationInProgress = YES;
+        NSLog(@"notifyTmuxFontChange posting kTmuxFontChanged");
         [[NSNotificationCenter defaultCenter] postNotificationName:kTmuxFontChanged
                                                             object:@[ _textview.font,
                                                                       _textview.nonAsciiFontEvenIfNotUsed,
@@ -5281,17 +5291,23 @@ ITERM_WEAKLY_REFERENCEABLE
                                                                       @(_textview.verticalSpacing),
                                                                       _tmuxController ?: [NSNull null],
                                                                       @(self.delegate.tmuxWindow)]];
-        fontChangeNotificationInProgress = NO;
         [_delegate setTmuxFont:_textview.font
                   nonAsciiFont:_textview.nonAsciiFontEvenIfNotUsed
                       hSpacing:_textview.horizontalSpacing
                       vSpacing:_textview.verticalSpacing];
+        NSLog(@"notifyTmuxFontChange posting kPTYSessionTmuxFontDidChange");
         [[NSNotificationCenter defaultCenter] postNotificationName:kPTYSessionTmuxFontDidChange
                                                             object:self];
+        fontChangeNotificationInProgress = NO;
+        NSLog(@"adjustingFontSize=NO");
+        self.tmuxController.adjustingFontSize -= 1;
+    } else {
+        NSLog(@"[reentrant call, do nothing]");
     }
 }
 
 - (void)changeFontSizeDirection:(int)dir {
+    NSLog(@"%p -[%@ %@:%@]", self, NSStringFromClass([self class]), NSStringFromSelector(_cmd), @(dir));
     DLog(@"changeFontSizeDirection:%d", dir);
     NSFont* font;
     NSFont* nonAsciiFont;
@@ -6898,17 +6914,19 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                            layout:(NSString *)layout
                            zoomed:(NSNumber *)zoomed
                              only:(BOOL)only {
-    DLog(@"tmuxUpdateLayoutForWindow:%@ layout:%@ zoomed:%@ only:%@",
-         @(windowId), layout, zoomed, @(only));
+    NSLog(@"%p tmuxUpdateLayoutForWindow:%@ layout:%@ zoomed:%@ only:%@",
+          self,
+          @(windowId), layout, zoomed, @(only));
     PTYTab *tab = [_tmuxController window:windowId];
     if (!tab) {
-        DLog(@"* NO TAB, DO NOTHING");
+        NSLog(@"* NO TAB, DO NOTHING");
         return NO;
     }
     const BOOL result = [_tmuxController setLayoutInTab:tab toLayout:layout zoomed:zoomed];
     if (result && only) {
         [_tmuxController adjustWindowSizeIfNeededForTabs:@[ tab ]];
     }
+    NSLog(@"Done updating tmux layout");
     return result;
 }
 
@@ -8419,6 +8437,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 - (void)textViewFontDidChange
 {
+    NSLog(@"%p -[%@ %@]", self, NSStringFromClass([self class]), NSStringFromSelector(_cmd));
     if ([self isTmuxClient]) {
         [self notifyTmuxFontChange];
     }
@@ -12234,17 +12253,29 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (NSSize)sessionViewScrollViewWillResize:(NSSize)proposedSize {
-    if ([self isTmuxClient] && ![_delegate sessionBelongsToTabWhoseSplitsAreBeingDragged]) {
-        NSSize idealSize = [self idealScrollViewSizeWithStyle:_view.scrollview.scrollerStyle];
-        NSSize maximumSize = NSMakeSize(idealSize.width + _textview.charWidth - 1,
-                                        idealSize.height + _textview.lineHeight - 1);
-        DLog(@"is a tmux client, so tweaking the proposed size. idealSize=%@ maximumSize=%@",
-             NSStringFromSize(idealSize), NSStringFromSize(maximumSize));
-        return NSMakeSize(MIN(proposedSize.width, maximumSize.width),
-                          MIN(proposedSize.height, maximumSize.height));
-    } else {
+    NSLog(@"%p -[%@ %@:%@]", self, NSStringFromClass([self class]), NSStringFromSelector(_cmd), NSStringFromSize(proposedSize));
+    if (!self.isTmuxClient) {
+        NSLog(@"Return proposed size because not tmux client");
         return proposedSize;
     }
+    if ([_delegate sessionBelongsToTabWhoseSplitsAreBeingDragged]) {
+        NSLog(@"Return proposed size because dragging");
+        return proposedSize;
+    }
+    if (self.tmuxController.adjustingFontSize &&
+        !self.tmuxController.variableWindowSize &&
+        ![iTermPreferences boolForKey:kPreferenceKeyAdjustWindowForFontSizeChange]) {
+        NSLog(@"Return proposed size because adjusting font size in fixed size window while preserving window size");
+        return proposedSize;
+    }
+    NSSize idealSize = [self idealScrollViewSizeWithStyle:_view.scrollview.scrollerStyle];
+    NSSize maximumSize = NSMakeSize(idealSize.width + _textview.charWidth - 1,
+                                    idealSize.height + _textview.lineHeight - 1);
+    NSLog(@"Using ideal size");
+    DLog(@"is a tmux client, so tweaking the proposed size. idealSize=%@ maximumSize=%@",
+         NSStringFromSize(idealSize), NSStringFromSize(maximumSize));
+    return NSMakeSize(MIN(proposedSize.width, maximumSize.width),
+                      MIN(proposedSize.height, maximumSize.height));
 }
 
 - (CGFloat)backingScaleFactor {
@@ -13758,6 +13789,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 #pragma mark - iTermTmuxControllerSession
+
+- (BOOL)tmuxControllerWillSetClientSize:(NSSize)size {
+    return fontChangeNotificationInProgress;
+}
 
 - (void)tmuxControllerSessionSetTTL:(NSTimeInterval)ttl redzone:(BOOL)redzone {
     if (_tmuxPaused) {

@@ -131,17 +131,17 @@ NSString *const kTmuxWindowOpenerWindowOptionStyleValueFullScreen = @"FullScreen
 }
 
 - (BOOL)updateLayoutInTab:(PTYTab *)tab {
-    DLog(@"updateLayoutInTab:%@ layout=%@", tab, self.layout);
+    NSLog(@"%p -[%@ %@:]", self, NSStringFromClass([self class]), NSStringFromSelector(_cmd));
     if (!self.layout) {
-        DLog(@"Bad layout");
+        NSLog(@"Bad layout");
         return NO;
     }
     if (!self.controller) {
-        DLog(@"No controller");
+        NSLog(@"No controller");
         return NO;
     }
     if (!self.gateway) {
-        DLog(@"No gateway");
+        NSLog(@"No gateway");
         return NO;
     }
 
@@ -163,7 +163,7 @@ NSString *const kTmuxWindowOpenerWindowOptionStyleValueFullScreen = @"FullScreen
     if (cmdList.count) {
         tabToUpdate_ = [tab retain];
         [gateway_ sendCommandList:cmdList];
-        DLog(@"Sending command list before setting layout: %@", cmdList);
+        NSLog(@"Sending command list before setting layout: %@", cmdList);
         return NO;
     }
     [tab setTmuxLayout:self.parseTree

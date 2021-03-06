@@ -1576,12 +1576,14 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
 }
 
 - (void)updateScrollViewFrame {
+    NSLog(@"%p -[%@ %@:]", self, NSStringFromClass([self class]), NSStringFromSelector(_cmd));
     DLog(@"update scrollview frame");
     CGFloat titleHeight = _showTitle ? _title.frame.size.height : 0;
     CGFloat bottomStatusBarHeight = _showBottomStatusBar ? iTermGetStatusBarHeight() : 0;
     NSSize proposedSize = NSMakeSize(self.frame.size.width,
                                      self.frame.size.height - titleHeight - bottomStatusBarHeight);
     NSSize size = [_delegate sessionViewScrollViewWillResize:proposedSize];
+    NSLog(@"new size is %@", NSStringFromSize(size));
     NSRect rect = NSMakeRect(0,
                              bottomStatusBarHeight + proposedSize.height - size.height,
                              size.width,

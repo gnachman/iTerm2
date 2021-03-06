@@ -1234,14 +1234,29 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)tmuxFontDidChange:(NSNotification *)notification {
+    NSLog(@"%p -[%@ %@]", self, NSStringFromClass([self class]), NSStringFromSelector(_cmd));
     DLog(@"tmuxFontDidChange");
     PTYSession *session = notification.object;
-    if ([[self uniqueTmuxControllers] count]) {
-        if ([self.tabs anyWithBlock:^BOOL(PTYTab *tab) {
-            return [tab.sessions containsObject:session] || !tab.tmuxController.variableWindowSize;
-        }]) {
-            [self fitWindowToIdealizedTabsPreservingHeight:NO];
+    if (![[self uniqueTmuxControllers] count]) {
+        NSLog(@"There are no tmux controllers in %@", self);
+        return;
+    }
+    NSSet<TmuxController *> *controllers = [NSSet setWithArray:[self.tabs mapWithBlock:^id(PTYTab *tab) {
+        if ([tab.sessions containsObject:session] || !tab.tmuxController.variableWindowSize) {
+            return tab.tmuxController;
         }
+        return nil;
+    }]];
+    if (controllers.count == 0) {
+        NSLog(@"There are fixed size tmux controls or controllers containing the posting session");
+        return;
+    }
+    if ([iTermPreferences boolForKey:kPreferenceKeyAdjustWindowForFontSizeChange]) {
+        [self fitWindowToIdealizedTabsPreservingHeight:NO];
+        return;
+    }
+    for (TmuxController *controller in controllers) {
+        [controller fitLayoutToWindows];
     }
 }
 
@@ -4415,7 +4430,8 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)tmuxTabLayoutDidChange:(BOOL)nontrivialChange
                            tab:(PTYTab *)tab
-            variableWindowSize:(BOOL)variableWindowSize {
+            variableWindowSize:(BOOL)variableWindowSize
+             adjustingFontSize:(BOOL)adjustingFontSize {
     DLog(@"%@", [NSThread callStackSymbols]);
     if (liveResize_) {
         DLog(@"During live resize");
@@ -4441,12 +4457,17 @@ ITERM_WEAKLY_REFERENCEABLE
                 [self fitWindowToTabs];
             }
         }
-    } else {
-        DLog(@"tmuxTabLayoutDidChange. Fit window to tabs");
-        [self beginTmuxOriginatedResize];
-        [self fitWindowToTabs];
-        [self endTmuxOriginatedResize];
+        return;
     }
+    if (adjustingFontSize && ![iTermPreferences boolForKey:kPreferenceKeyAdjustWindowForFontSizeChange]) {
+        DLog(@"Don't fit window to tabs because adjusting font size and window size shouldn't change");
+        return;
+    }
+
+    DLog(@"tmuxTabLayoutDidChange. Fit window to tabs");
+    [self beginTmuxOriginatedResize];
+    [self fitWindowToTabs];
+    [self endTmuxOriginatedResize];
 }
 
 - (void)saveTmuxWindowOrigins
@@ -4543,6 +4564,8 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)windowDidResize:(NSNotification *)aNotification {
+    NSLog(@"%p -[PseudoTerminal windowDidResize:] %@", self, NSStringFromSize(self.window.frame.size));
+    
     PtyLog(@"windowDidResize to: %fx%f self=%@", [[self window] frame].size.width, [[self window] frame].size.height, self);
     PtyLog(@"%@", [NSThread callStackSymbols]);
     if (self.swipeIdentifier) {
@@ -5034,7 +5057,8 @@ ITERM_WEAKLY_REFERENCEABLE
     if (postponedTmuxTabLayoutChange_) {
         [self tmuxTabLayoutDidChange:YES
                                  tab:nil
-                  variableWindowSize:(postponedTmuxTabLayoutChange_ == iTermPostponeTmuxTabLayoutChangeStateVariableSizeWindow)];
+                  variableWindowSize:(postponedTmuxTabLayoutChange_ == iTermPostponeTmuxTabLayoutChangeStateVariableSizeWindow)
+                   adjustingFontSize:NO];
         postponedTmuxTabLayoutChange_ = iTermPostponeTmuxTabLayoutChangeStateNone;
     }
     [self updateUseMetalInAllTabs];
@@ -8068,18 +8092,19 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 - (void)fitWindowToTabsExcludingTmuxTabs:(BOOL)excludeTmux
                         preservingHeight:(BOOL)preserveHeight
                         sizeOfLargestTab:(NSSize)maxTabSize {
+    NSLog(@"%p -[%@ %@:]", self, NSStringFromClass([self class]), NSStringFromSelector(_cmd));
     DLog(@"fitWindowToTabsExcludingTmuxTabs:%@ preservingHeight:%@ sizeOfLargestTab:%@",
          @(excludeTmux), @(preserveHeight), NSStringFromSize(maxTabSize));
 
     _windowNeedsInitialSize = NO;
     if (togglingFullScreen_) {
-        DLog(@"Toggling full screen, abort");
+        NSLog(@"Toggling full screen, abort");
         return;
     }
 
     if (NSEqualSizes(NSZeroSize, maxTabSize)) {
         // all tabs are tmux tabs.
-        DLog(@"max tab size is zero, abort");
+        NSLog(@"max tab size is zero, abort");
         return;
     }
     PtyLog(@"fitWindowToTabs - calling fitWindowToTabSize");
@@ -8098,6 +8123,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 // NOTE: The preferred height is respected only if it would be larger than the height the window would
 // otherwise be set to and is less than the max height (self.maxFrame.size.height).
 - (BOOL)fitWindowToTabSize:(NSSize)tabSize preferredHeight:(NSNumber *)preferredHeight {
+    NSLog(@"%p -[%@ fitWindowToTabSize:%@ preferredHeight:]", self, NSStringFromClass([self class]), NSStringFromSize(tabSize));
     DLog(@"fitWindowToTabSize:%@ preferredHeight:%@", NSStringFromSize(tabSize), preferredHeight);
     if ([self anyFullScreen]) {
         DLog(@"Full screen - fit tabs to window instead.");
@@ -8523,6 +8549,8 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 // may need to grow. For tmux tabs, their existing sizes are preserved exactly and the window grows
 // as needed (probably leaving "holes" if there are split panes present).
 - (void)fitWindowToIdealizedTabsPreservingHeight:(BOOL)preserveHeight {
+    NSLog(@"%p -[%@ %@:%@]", self, NSStringFromClass([self class]), NSStringFromSelector(_cmd), @(preserveHeight));
+
     for (PTYTab *aTab in [self tabs]) {
         [aTab setReportIdealSizeAsCurrent:YES];
         if ([aTab isTmuxTab]) {
@@ -9538,6 +9566,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 
 // Adjust the tab's size for a new window size.
 - (void)fitTabToWindow:(PTYTab *)aTab {
+    NSLog(@"%p -[%@ %@:%@]", self, NSStringFromClass([self class]), NSStringFromSelector(_cmd), aTab);
     NSSize size = [_contentView.tabView contentRect].size;
     PtyLog(@"fitTabToWindow calling setSize for content size of %@", [NSValue valueWithSize:size]);
     [aTab setSize:size];
@@ -9939,6 +9968,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 // Push size changes to all sessions so they are all as large as possible while
 // still fitting in the window.
 - (void)fitTabsToWindow {
+    NSLog(@"%p -[%@ %@:]", self, NSStringFromClass([self class]), NSStringFromSelector(_cmd));
     PtyLog(@"fitTabsToWindow begins");
     for (int i = 0; i < [_contentView.tabView numberOfTabViewItems]; ++i) {
         [self fitTabToWindow:[[_contentView.tabView tabViewItemAtIndex:i] identifier]];

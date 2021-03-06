@@ -1606,6 +1606,7 @@
     nonAsciiFont:(NSFont *)nonAsciiFont
     horizontalSpacing:(CGFloat)horizontalSpacing
     verticalSpacing:(CGFloat)verticalSpacing {
+    NSLog(@"%p -[%@ setFont:%@ nonAsciiFont:horizontalSpacing:verticalSpacing:]", self, NSStringFromClass([self class]), aFont);
     NSSize sz = [PTYTextView charSizeForFont:aFont
                            horizontalSpacing:1.0
                              verticalSpacing:1.0];

@@ -1687,12 +1687,14 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 }
 
 - (void)fitSubviewsToRoot {
+    NSLog(@"%p -[%@ %@]", self, NSStringFromClass([self class]), NSStringFromSelector(_cmd));
     // Make SessionViews full-size.
     [root_ adjustSubviews];
 
     // Make scrollbars the right size and put them at the tops of their session views.
     for (PTYSession *theSession in [self sessions]) {
         NSSize theSize = [theSession idealScrollViewSizeWithStyle:[parentWindow_ scrollerStyle]];
+        NSLog(@"Set scrollview size to %@", NSStringFromSize(theSize));
         [[theSession.view scrollview] setFrame:NSMakeRect(0,
                                                           0,
                                                           theSize.width,
@@ -2216,7 +2218,9 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 }
 
 - (void)setSize:(NSSize)newSize {
+    NSLog(@"%p -[%@ %@:%@]", self, NSStringFromClass([self class]), NSStringFromSelector(_cmd), NSStringFromSize(newSize));
     if ([self isTmuxTab]) {
+        NSLog(@"Set tabview frame size to %@", NSStringFromSize(newSize));
         [tabView_ setFrameSize:newSize];
     } else {
         PtyLog(@"PTYTab setSize:%fx%f", (float)newSize.width, (float)newSize.height);
@@ -3464,6 +3468,7 @@ typedef struct {
        nonAsciiFont:(NSFont *)nonAsciiFont
            hSpacing:(double)hs
            vSpacing:(double)vs {
+    NSLog(@"%p -[%@ setFont:%@ nonAsciiFont:horizontalSpacing:verticalSpacing:]", self, NSStringFromClass([self class]), font);
     [self.tmuxController setTmuxFont:font
                         nonAsciiFont:nonAsciiFont
                             hSpacing:hs
@@ -3633,6 +3638,9 @@ typedef struct {
             // contain. The PTYScrollView might be smaller than it so it's not
             // relevant.
             NSRect sessionViewFrame = [session.view.scrollview frame];
+            if (forHeight) {  // to avoid logging twice only log on height, not width
+                NSLog(@"Calculate size based on scrollview size of %@", NSStringFromSize(sessionViewFrame.size));
+            }
             NSSize contentSize = [NSScrollView contentSizeForFrameSize:sessionViewFrame.size
                                                horizontalScrollerClass:nil
                                                  verticalScrollerClass:[realParentWindow_ scrollbarShouldBeVisible] ? [[session.view.scrollview verticalScroller] class] : nil
@@ -4028,6 +4036,7 @@ typedef struct {
 // height that can contain every column and every row (counting characters and
 // dividers as 1).
 - (NSSize)fixedTmuxSize {
+    NSLog(@"%p -[%@ %@]", self, NSStringFromClass([self class]), NSStringFromSelector(_cmd));
     DLog(@"Compute size in characters of the window that fits this tab's contents");
 
     // The current size of the sessions in this tab in characters
@@ -4302,7 +4311,7 @@ typedef struct {
     }
 }
 
-- (void)resizeViewsInViewHierarchy:(NSView *)view forNewLayout:(NSMutableDictionary *)parseTree {
+- (void)resizeViewsInViewHierarchy:(NSView *)view forNewLayout:(NSMutableDictionary *)parseTree adjustingFontSize:(BOOL)adjustingFontSize {
     Profile *bookmark = [[ProfileModel sharedInstance] defaultBookmark];
     NSDictionary *arrangement = [PTYTab _recursiveArrangementForDecoratedTmuxParseTree:parseTree
                                                                               bookmark:bookmark
@@ -4313,7 +4322,10 @@ typedef struct {
     ++tmuxOriginatedResizeInProgress_;
     [realParentWindow_ beginTmuxOriginatedResize];
     [self _recursiveResizeViewsInViewHierarchy:view forArrangement:arrangement];
-    [realParentWindow_ tmuxTabLayoutDidChange:NO tab:nil variableWindowSize:tmuxController_.variableWindowSize];
+    [realParentWindow_ tmuxTabLayoutDidChange:NO
+                                          tab:nil
+                           variableWindowSize:tmuxController_.variableWindowSize
+                            adjustingFontSize:adjustingFontSize];
     [realParentWindow_ endTmuxOriginatedResize];
     --tmuxOriginatedResizeInProgress_;
     [root_ setNeedsDisplay:YES];
@@ -4544,10 +4556,16 @@ typedef struct {
     ++tmuxOriginatedResizeInProgress_;
 
     if (tmuxController.variableWindowSize) {
-        [realParentWindow_ tmuxTabLayoutDidChange:YES tab:self variableWindowSize:tmuxController_.variableWindowSize];
+        [realParentWindow_ tmuxTabLayoutDidChange:YES
+                                              tab:self
+                               variableWindowSize:tmuxController_.variableWindowSize
+                                adjustingFontSize:NO];
     } else {
         [realParentWindow_ beginTmuxOriginatedResize];
-        [realParentWindow_ tmuxTabLayoutDidChange:YES tab:self variableWindowSize:tmuxController_.variableWindowSize];
+        [realParentWindow_ tmuxTabLayoutDidChange:YES
+                                              tab:self
+                               variableWindowSize:tmuxController_.variableWindowSize
+                                adjustingFontSize:NO];
         [realParentWindow_ endTmuxOriginatedResize];
     }
     --tmuxOriginatedResizeInProgress_;
@@ -4588,7 +4606,7 @@ typedef struct {
 - (void)setTmuxLayout:(NSMutableDictionary *)parseTree
        tmuxController:(TmuxController *)tmuxController
                zoomed:(NSNumber *)zoomed {
-    DLog(@"setTmuxLayout:tmuxController:%@zoomed:%@", tmuxController, zoomed);
+    NSLog(@"%p -[PTYTab setTmuxLayout:tmuxController:%@zoomed:%@]", self, tmuxController, zoomed);
     BOOL shouldZoom = isMaximized_;
     if (isMaximized_) {
         DLog(@"Unmaximizing");
@@ -4608,7 +4626,7 @@ typedef struct {
             parseTree = [PTYTab tweakedParseTree:parseTree fillingRootOfSize:[self rootViewSize]];
             DLog(@"Tweaked parse tree:\n%@", parseTree);
         }
-        [self resizeViewsInViewHierarchy:root_ forNewLayout:parseTree];
+        [self resizeViewsInViewHierarchy:root_ forNewLayout:parseTree adjustingFontSize:tmuxController.adjustingFontSize > 0];
         [self fitSubviewsToRoot];
     } else {
         DLog(@"Parse tree does not match the root's view hierarchy.");

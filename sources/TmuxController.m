@@ -354,7 +354,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
 - (BOOL)setLayoutInTab:(PTYTab *)tab
               toLayout:(NSString *)layout
                 zoomed:(NSNumber *)zoomed {
-    DLog(@"setLayoutInTab:%@ toLayout:%@ zoomed:%@", tab, layout, zoomed);
+    NSLog(@"%p -[TmuxController setLayoutInTab:%@ toLayout:%@ zoomed:%@]", self, tab, layout, zoomed);
     TmuxWindowOpener *windowOpener = [TmuxWindowOpener windowOpener];
     windowOpener.ambiguousIsDoubleWidth = ambiguousIsDoubleWidth_;
     windowOpener.unicodeVersion = self.unicodeVersion;
@@ -376,12 +376,13 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
 }
 
 - (void)adjustWindowSizeIfNeededForTabs:(NSArray<PTYTab *> *)tabs {
+    NSLog(@"%p -[%@ %@]", self, NSStringFromClass([self class]), NSStringFromSelector(_cmd));
     DLog(@"adjustWindowSizeIfNeededForTabs:%@", tabs);
     if (![tabs anyWithBlock:^BOOL(PTYTab *tab) { return [tab updatedTmuxLayoutRequiresAdjustment]; }]) {
-        DLog(@"Layouts fit among %@", tabs);
+        NSLog(@"Do nothing because no tab requires adjustment");
         return;
     }
-    DLog(@"layout is too large among at least one of: %@", tabs);
+    NSLog(@"layout is too large among at least one of: %@", tabs);
     // The tab's root splitter is larger than the window's tabview.
     const BOOL outstandingResize =
     [tabs anyWithBlock:^BOOL(PTYTab *tab) {
@@ -390,14 +391,14 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
         }];
     }];
     if (outstandingResize) {
-        DLog(@"One of the tabs has a tmux controller with an outstanding window resize. Don't update layouts.");
+        NSLog(@"One of the tabs has a tmux controller with an outstanding window resize. Don't update layouts.");
         return;
     }
     // If there are no outstanding window resizes then setTmuxLayout:tmuxController:
     // has called fitWindowToTabs:, and it's still too big, so shrink
     // the layout.
 
-    DLog(@"Tab's root splitter is oversize. Fit layout to windows");
+    NSLog(@"Tab's root splitter is oversize. Fit layout to windows");
     [self fitLayoutToWindows];
 }
 
@@ -843,13 +844,16 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
 }
 
 - (void)fitLayoutToWindows {
+    NSLog(@"%p -[%@ %@]", self, NSStringFromClass([self class]), NSStringFromSelector(_cmd));
     if (!_windowStates.count) {
+        NSLog(@"return eraly because there are no window states");
         return;
     }
     if (_variableWindowSize) {
         [self fitLayoutToVariableSizeWindows];
         return;
     }
+    NSLog(@"Calculate size of smallest tmux tab.");
     NSSize minSize = NSMakeSize(INFINITY, INFINITY);
     for (NSNumber *windowKey in _windowStates) {
         PTYTab *tab = _windowStates[windowKey].tab;
@@ -867,7 +871,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     if (NSEqualSizes(minSize, lastSize_)) {
         return;
     }
-    DLog(@"fitLayoutToWindows setting client size to %@", NSStringFromSize(minSize));
+    NSLog(@"fitLayoutToWindows setting client size to %@", NSStringFromSize(minSize));
     [self setClientSize:minSize];
 }
 
@@ -959,21 +963,32 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     const int height = [self adjustHeightForStatusBar:(int)size.height];
     ITBetaAssert(height > 0, @"Invalid size");
     [_windowSizes removeAllObjects];
+    NSString *refreshClientCommand = [NSString stringWithFormat:@"refresh-client -C %d,%d",
+                                      (int)size.width, height];
+    NSLog(@"%@", setSizeCommand);
+    NSLog(@"%@", refreshClientCommand);
+    NSLog(@"%@", listStr);
+    const BOOL adjustingFontSize =
+        [self.gateway.delegate tmuxControllerWillSetClientSize:size];
+    SEL finalSelector = @selector(listWindowsResponse:);
+    if (adjustingFontSize) {
+        self.adjustingFontSize += 1;
+        finalSelector = @selector(listWindowsResponseAndFinishAdjustingFontSize:);
+    }
     NSArray *commands = [NSArray arrayWithObjects:
                          [gateway_ dictionaryForCommand:setSizeCommand
                                          responseTarget:nil
                                        responseSelector:nil
                                          responseObject:nil
                                                   flags:0],
-                         [gateway_ dictionaryForCommand:[NSString stringWithFormat:@"refresh-client -C %d,%d",
-                                                         (int)size.width, height]
+                         [gateway_ dictionaryForCommand:refreshClientCommand
                                          responseTarget:nil
                                        responseSelector:nil
                                          responseObject:nil
                                                   flags:kTmuxGatewayCommandShouldTolerateErrors],
                          [gateway_ dictionaryForCommand:listStr
                                          responseTarget:self
-                                       responseSelector:@selector(listWindowsResponse:)
+                                       responseSelector:finalSelector
                                          responseObject:nil
                                                   flags:0],
                          nil];
@@ -2277,6 +2292,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
            hSpacing:(CGFloat)hs
            vSpacing:(CGFloat)vs
              window:(int)window {
+    NSLog(@"%p -[%@ setFont:%@ nonAsciiFont:horizontalSpacing:verticalSpacing:]", self, NSStringFromClass([self class]), font);
     NSDictionary *dict = @{ KEY_NORMAL_FONT: [font stringValue],
                             KEY_NON_ASCII_FONT: [nonAsciiFont stringValue],
                             KEY_HORIZONTAL_SPACING: @(hs),
@@ -2285,6 +2301,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
         _windowStates[@(window)].fontOverrides = dict;
         return;
     }
+    NSLog(@"// replace shared font overrides");
     [_sharedFontOverrides release];
     _sharedFontOverrides = [dict retain];
 }
@@ -2650,17 +2667,24 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
 // When an iTerm2 window is resized, a control -s client-size w,h
 // command is sent. It responds with new layouts for all the windows in the
 // client's session. Update the layouts for the affected tabs.
-- (void)listWindowsResponse:(NSString *)response
-{
+- (void)listWindowsResponse:(NSString *)response {
+    NSLog(@"%p -[%@ %@:%@]", self, NSStringFromClass([self class]), NSStringFromSelector(_cmd), response);
     --numOutstandingWindowResizes_;
     if (numOutstandingWindowResizes_ > 0) {
+        NSLog(@"Have outstanding window resizes so do nothing");
         return;
-    }
+   }
 
     [self parseListWindowsResponseAndUpdateLayouts:response];
 }
 
+- (void)listWindowsResponseAndFinishAdjustingFontSize:(NSString *)response {
+    [self listWindowsResponse:response];
+    self.adjustingFontSize -= 1;
+}
+
 - (void)parseListWindowsResponseAndUpdateLayouts:(NSString *)response {
+    NSLog(@"%p -[%@ %@:]", self, NSStringFromClass([self class]), NSStringFromSelector(_cmd));
     NSArray *layoutStrings = [response componentsSeparatedByString:@"\n"];
     BOOL windowMightNeedAdjustment = NO;
     NSMutableArray<PTYTab *> *tabs = [NSMutableArray array];

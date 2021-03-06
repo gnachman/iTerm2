@@ -64,6 +64,7 @@ extern NSString * const kTmuxGatewayErrorDomain;
 - (void)tmuxGatewayDidTimeOut;
 - (void)tmuxActiveWindowPaneDidChangeInWindow:(int)windowID toWindowPane:(int)paneID;
 - (void)tmuxWindowPaneDidPause:(int)wp notification:(BOOL)notification;
+- (BOOL)tmuxControllerWillSetClientSize:(NSSize)size;
 @end
 
 typedef NS_ENUM(NSInteger, ControlCommand) {

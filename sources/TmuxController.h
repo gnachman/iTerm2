@@ -71,6 +71,7 @@ extern NSString *const kTmuxControllerDidChangeHiddenWindows;
 @property(nonatomic) NSRect initialWindowHint;
 @property(nonatomic, readonly) BOOL detached;
 @property(nonatomic, readonly) NSArray<NSNumber *> *windowPaneIDs;
+@property(nonatomic) NSInteger adjustingFontSize;
 
 - (instancetype)initWithGateway:(TmuxGateway *)gateway
                      clientName:(NSString *)clientName

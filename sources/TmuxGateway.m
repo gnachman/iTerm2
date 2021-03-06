@@ -19,7 +19,7 @@ NSString * const kTmuxGatewayErrorDomain = @"kTmuxGatewayErrorDomain";;
 
 #define NEWLINE @"\r"
 
-//#define TMUX_VERBOSE_LOGGING
+#define TMUX_VERBOSE_LOGGING
 #ifdef TMUX_VERBOSE_LOGGING
 #define TmuxLog NSLog
 #else
@@ -306,6 +306,7 @@ error:
 
 - (void)parseLayoutChangeCommand:(NSString *)command
 {
+    NSLog(@"%@", command);
     // %layout-change <window> <layout>
     NSArray *components = [command captureComponentsMatchedByRegex:@"^%layout-change @([0-9]+) (.*)"];
     if (components.count != 3) {

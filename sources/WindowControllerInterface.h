@@ -342,7 +342,8 @@
 // if views are resized but the view hierarchy is not changed.
 - (void)tmuxTabLayoutDidChange:(BOOL)nontrivialChange
                            tab:(PTYTab *)tab
-            variableWindowSize:(BOOL)variableWindowSize;
+            variableWindowSize:(BOOL)variableWindowSize
+             adjustingFontSize:(BOOL)adjustingFontSize;
 
 // Returns an array of unique tmux controllers present in this window.
 - (NSArray *)uniqueTmuxControllers;
