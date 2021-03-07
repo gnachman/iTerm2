@@ -1796,6 +1796,8 @@ ITERM_WEAKLY_REFERENCEABLE
 
     [_textview setDataSource:_screen];
     [_textview setDelegate:self];
+    // useTransparency may have just changed.
+    [self invalidateBlend];
     [_view.scrollview setDocumentView:_wrapper];
     [_wrapper release];
     [_view.scrollview setDocumentCursor:[iTermMouseCursor mouseCursorOfType:iTermMouseCursorTypeIBeam]];
@@ -4242,6 +4244,8 @@ ITERM_WEAKLY_REFERENCEABLE
     if (needsTermID) {
         [self setTermIDIfPossible];
     }
+    // useTransparency may have just changed.
+    [self invalidateBlend];
 }
 
 - (NSString *)name {
