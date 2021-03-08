@@ -44,6 +44,11 @@ static char iTermSliderKVOKey;
 }
 
 - (void)initCommon {
+    // omg I hate appkit
+    // https://stackoverflow.com/questions/17793022/make-nsview-not-clip-subviews-outside-of-its-bounds
+    self.wantsLayer = YES;
+    self.layer.masksToBounds = NO;
+
     _stepper = [[NSStepper alloc] init];
     [_stepper sizeToFit];
     NSRect rect = _stepper.frame;
@@ -71,6 +76,10 @@ static char iTermSliderKVOKey;
     rect.origin.y = (NSHeight(self.frame) - NSHeight(_textField.frame)) / 2.0;
     _textField.frame = rect;
     [self addSubview:_textField];
+}
+
+- (BOOL)wantsDefaultClipping {
+    return NO;
 }
 
 - (void)awakeFromNib {
