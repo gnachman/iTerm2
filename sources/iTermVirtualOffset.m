@@ -25,6 +25,10 @@ void iTermRectFill(NSRect rect, CGFloat offset) {
     NSRectFill(NSRectSubtractingVirtualOffset(rect, offset));
 }
 
+void iTermRectClip(NSRect rect, CGFloat offset) {
+    NSRectClip(NSRectSubtractingVirtualOffset(rect, offset));
+}
+
 void iTermRectFillUsingOperation(NSRect rect, NSCompositingOperation op, CGFloat virtualOffset) {
     NSRectFillUsingOperation(NSRectSubtractingVirtualOffset(rect, virtualOffset), op);
 }

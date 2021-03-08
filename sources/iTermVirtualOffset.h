@@ -16,6 +16,7 @@ void iTermFrameRect(NSRect rect, CGFloat offset);
 void iTermRectFill(NSRect rect, CGFloat offset);
 void iTermRectFillUsingOperation(NSRect rect, NSCompositingOperation op, CGFloat virtualOffset);
 void iTermFrameRectWithWidthUsingOperation(NSRect rect, CGFloat frameWidth, NSCompositingOperation op, CGFloat virtualOffset);
+void iTermRectClip(NSRect rect, CGFloat offset);
 
 @interface NSImage(VirtualOffset)
 - (void)it_drawInRect:(NSRect)dstSpacePortionRect
