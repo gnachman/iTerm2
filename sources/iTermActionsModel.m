@@ -16,12 +16,14 @@
 
 - (instancetype)initWithTitle:(NSString *)title
                        action:(KEY_ACTION)action
-                    parameter:(NSString *)parameter {
+                    parameter:(NSString *)parameter
+     useCompatibilityEscaping:(BOOL)useCompatibilityEscaping {
     self = [super init];
     if (self) {
         _action = action;
         _title = [title copy];
         _parameter = [parameter copy];
+        _useCompatibilityEscaping = useCompatibilityEscaping;
         static NSInteger nextIdentifier;
         _identifier = nextIdentifier++;
     }
@@ -31,13 +33,16 @@
 - (instancetype)initWithDictionary:(NSDictionary *)dictionary {
     return [self initWithTitle:dictionary[@"title"] ?: @""
                         action:[dictionary[@"action"] intValue]
-                     parameter:dictionary[@"parameter"] ?: @""];
+                     parameter:dictionary[@"parameter"] ?: @""
+      useCompatibilityEscaping:[dictionary[@"version"] intValue] == 0];
 }
 
 - (NSDictionary *)dictionaryValue {
     return @{ @"action": @(_action),
               @"title": _title ?: @"",
-              @"parameter": _parameter ?: @"" };
+              @"parameter": _parameter ?: @"",
+              @"version": _useCompatibilityEscaping ? @0 : @1,
+    };
 }
 
 - (BOOL)isEqual:(id)object {
@@ -52,7 +57,9 @@
 }
 
 - (NSString *)displayString {
-    return [[iTermKeyBindingAction withAction:_action parameter:_parameter ?: @""] displayName];
+    return [[iTermKeyBindingAction withAction:_action
+                                    parameter:_parameter ?: @""
+                     useCompatibilityEscaping:_useCompatibilityEscaping] displayName];
 }
 
 @end

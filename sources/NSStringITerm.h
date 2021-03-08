@@ -107,6 +107,8 @@ int decode_utf8_char(const unsigned char * restrict datap,
 - (NSString *)stringByReplacingEscapedChar:(unichar)echar withString:(NSString *)s;
 - (NSString *)stringByReplacingEscapedHexValuesWithChars;
 - (NSString *)stringByEscapingQuotes;
+- (NSString *)stringByReplacingCommonlyEscapedCharactersWithControls;
+- (NSString *)stringByEscapingControlCharactersAndBackslash;
 
 // Convert a string of hex values (an even number of [0-9A-Fa-f]) into data.
 - (NSData *)dataFromHexValues;

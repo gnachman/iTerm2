@@ -339,7 +339,9 @@ static NSString *const kDeleteKeyString = @"0x7f-0x0";
     if (sendCtrlH) {
         [iTermKeyMappings setMappingAtIndex:0
                                forKeystroke:[iTermKeystroke backspace]
-                                     action:[iTermKeyBindingAction withAction:KEY_ACTION_SEND_C_H_BACKSPACE parameter:@""]
+                                     action:[iTermKeyBindingAction withAction:KEY_ACTION_SEND_C_H_BACKSPACE
+                                                                    parameter:@""
+                                                     useCompatibilityEscaping:NO]
                                   createNew:YES
                                   inProfile:mutableProfile];
     } else {

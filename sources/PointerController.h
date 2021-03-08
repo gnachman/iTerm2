@@ -24,7 +24,7 @@
 - (void)movePaneWithEvent:(NSEvent *)event;
 - (void)sendEscapeSequence:(NSString *)text withEvent:(NSEvent *)event;
 - (void)sendHexCode:(NSString *)codes withEvent:(NSEvent *)event;
-- (void)sendText:(NSString *)text withEvent:(NSEvent *)event;
+- (void)sendText:(NSString *)text withEvent:(NSEvent *)event compatibilityEscaping:(BOOL)compatibilityEscaping;
 - (void)selectPaneLeftWithEvent:(NSEvent *)event;
 - (void)selectPaneRightWithEvent:(NSEvent *)event;
 - (void)selectPaneAboveWithEvent:(NSEvent *)event;

@@ -17,6 +17,8 @@
 static NSString *const iTermKeyBindingDictionaryKeyAction = @"Action";
 static NSString *const iTermKeyBindingDictionaryKeyParameter = @"Text";
 static NSString *const iTermKeyBindingDictionaryKeyLabel = @"Label";
+static NSString *const iTermKeyBindingDictionaryKeyVersion = @"Version";
+
 
 static NSString *GetProfileName(NSString *guid) {
     return [[[ProfileModel sharedInstance] bookmarkWithGuid:guid] objectForKey:KEY_NAME];
@@ -28,19 +30,30 @@ static NSString *GetProfileName(NSString *guid) {
     return [[self alloc] initWithDictionary:dictionary];
 }
 
-+ (instancetype)withAction:(KEY_ACTION)action parameter:(NSString *)parameter {
++ (instancetype)withAction:(KEY_ACTION)action
+                 parameter:(NSString *)parameter
+  useCompatibilityEscaping:(BOOL)useCompatibilityEscaping {
     return [[self alloc] initWithDictionary:@{ iTermKeyBindingDictionaryKeyAction: @(action),
-                                               iTermKeyBindingDictionaryKeyParameter: parameter ?: @"" }];
+                                               iTermKeyBindingDictionaryKeyParameter: parameter ?: @"",
+                                               iTermKeyBindingDictionaryKeyVersion: useCompatibilityEscaping ? @0: @1
+    }];
 }
 
-+ (instancetype)withAction:(KEY_ACTION)action parameter:(NSString *)parameter label:(NSString *)label {
++ (instancetype)withAction:(KEY_ACTION)action
+                 parameter:(NSString *)parameter
+                     label:(NSString *)label
+  useCompatibilityEscaping:(BOOL)useCompatibilityEscaping {
     if (label) {
         return [[self alloc] initWithDictionary:@{ iTermKeyBindingDictionaryKeyAction: @(action),
                                                    iTermKeyBindingDictionaryKeyParameter: parameter ?: @"",
-                                                   iTermKeyBindingDictionaryKeyLabel: label }];
+                                                   iTermKeyBindingDictionaryKeyLabel: label,
+                                                   iTermKeyBindingDictionaryKeyVersion: useCompatibilityEscaping ? @0: @1
+        }];
     } else {
         return [[self alloc] initWithDictionary:@{ iTermKeyBindingDictionaryKeyAction: @(action),
-                                                   iTermKeyBindingDictionaryKeyParameter: parameter ?: @"" }];
+                                                   iTermKeyBindingDictionaryKeyParameter: parameter ?: @"",
+                                                   iTermKeyBindingDictionaryKeyVersion: useCompatibilityEscaping ? @0: @1
+        }];
     }
 }
 
@@ -70,6 +83,7 @@ static NSString *GetProfileName(NSString *guid) {
         _keyAction = [dictionary[iTermKeyBindingDictionaryKeyAction] intValue];
         _parameter = [dictionary[iTermKeyBindingDictionaryKeyParameter] ?: @"" copy];
         _label = [dictionary[iTermKeyBindingDictionaryKeyLabel] ?: @"" copy];
+        _useCompatibilityEscaping = ([dictionary[iTermKeyBindingDictionaryKeyVersion] intValue] == 0);
     }
     return self;
 }
@@ -78,10 +92,14 @@ static NSString *GetProfileName(NSString *guid) {
     if (_label) {
         return @{ iTermKeyBindingDictionaryKeyAction: @(_keyAction),
                   iTermKeyBindingDictionaryKeyParameter: _parameter ?: @"",
-                  iTermKeyBindingDictionaryKeyLabel: _label };
+                  iTermKeyBindingDictionaryKeyLabel: _label,
+                  iTermKeyBindingDictionaryKeyVersion: _useCompatibilityEscaping ? @0 : @1
+        };
     } else {
         return @{ iTermKeyBindingDictionaryKeyAction: @(_keyAction),
-                  iTermKeyBindingDictionaryKeyParameter: _parameter ?: @"" };
+                  iTermKeyBindingDictionaryKeyParameter: _parameter ?: @"",
+                  iTermKeyBindingDictionaryKeyVersion: _useCompatibilityEscaping ? @0 : @1
+        };
     }
 }
 

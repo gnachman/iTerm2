@@ -297,8 +297,10 @@ static NSButton *iTermToolActionsNewButton(NSString *imageName, NSString *title,
     if (action) {
         windowController.label = action.title;
         windowController.isNewMapping = NO;
+        windowController.useCompatibilityEscaping = action.useCompatibilityEscaping;
     } else {
         windowController.isNewMapping = YES;
+        windowController.useCompatibilityEscaping = NO;
     }
     windowController.parameterValue = action.parameter;
     windowController.action = action.action;

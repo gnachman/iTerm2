@@ -36,6 +36,7 @@
 #import "NSFileManager+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "NSSavePanel+iTerm.h"
+#import "NSStringITerm.h"
 #import "NSURL+iTerm.h"
 #import "PasteboardHistory.h"
 #import "PTYMouseHandler.h"
@@ -796,7 +797,10 @@ allowRightMarginOverflow:(BOOL)allowRightMarginOverflow {
 }
 
 - (void)contextMenuSendSelectedText:(iTermTextViewContextMenuHelper *)contextMenu {
-    [self.delegate sendText:self.selectedText];
+    [self.delegate sendText:self.selectedText
+   useCompatibilityEscaping:NO
+ compatibilityEscaping:iTermSendTextEscapingNone
+          preferredEscaping:iTermSendTextEscapingNone];
 }
 
 - (void)contextMenuClearBuffer:(iTermTextViewContextMenuHelper *)contextMenu {
@@ -1029,8 +1033,9 @@ toggleTerminalStateForMenuItem:(nonnull NSMenuItem *)item {
 - (void)contextMenuSaveSelectionAsSnippet:(iTermTextViewContextMenuHelper *)contextMenu {
     NSString *selectedText = [self selectedText];
     iTermSnippet *snippet = [[iTermSnippet alloc] initWithTitle:selectedText
-                                                          value:selectedText
-                                                           guid:[[NSUUID UUID] UUIDString]];
+                                                          value:[selectedText stringByEscapingControlCharactersAndBackslash]
+                                                           guid:[[NSUUID UUID] UUIDString]
+                                       useCompatibilityEscaping:NO];
     [[iTermSnippetsModel sharedInstance] addSnippet:snippet];
 }
 
@@ -1043,7 +1048,10 @@ toggleTerminalStateForMenuItem:(nonnull NSMenuItem *)item {
 - (void)sendSnippet:(id)sender {
     iTermSnippet *snippet = [iTermSnippet castFrom:[sender representedObject]];
     if (snippet) {
-        [self.delegate sendText:snippet.value];
+        [self.delegate sendText:snippet.value
+       useCompatibilityEscaping:snippet.useCompatibilityEscaping
+          compatibilityEscaping:iTermSendTextEscapingCompatibility
+              preferredEscaping:iTermSendTextEscapingCommon];
     }
 }
 

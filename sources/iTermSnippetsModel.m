@@ -18,11 +18,13 @@
 
 - (instancetype)initWithTitle:(NSString *)title
                         value:(NSString *)value
-                         guid:(NSString *)guid {
+                         guid:(NSString *)guid
+     useCompatibilityEscaping:(BOOL)useCompatibilityEscaping {
     if (self) {
         _title = [title copy];
         _value = [value copy];
         _guid = guid;
+        _useCompatibilityEscaping = useCompatibilityEscaping;
     }
     return self;
 }
@@ -39,13 +41,16 @@
     // have titles (and it'll probably crash. Don't downgrade).
     return [self initWithTitle:title
                          value:value
-                          guid:dictionary[@"guid"] ?: [[@[ [@(i) stringValue], title, value ] hashWithSHA256] it_hexEncoded]];
+                          guid:dictionary[@"guid"] ?: [[@[ [@(i) stringValue], title, value ] hashWithSHA256] it_hexEncoded]
+      useCompatibilityEscaping:[dictionary[@"version"] intValue] == 0];
 }
 
 - (NSDictionary *)dictionaryValue {
     return @{ @"title": _title ?: @"",
               @"value": _value ?: @"",
-              @"guid": _guid };
+              @"guid": _guid,
+              @"version": _useCompatibilityEscaping ? @0 : @1,
+    };
 }
 
 - (BOOL)isEqual:(id)object {
@@ -60,12 +65,13 @@
 }
 
 - (NSString *)description {
-    return [NSString stringWithFormat:@"<%@: %p title=%@ value=%@ guid=%@>",
+    return [NSString stringWithFormat:@"<%@: %p title=%@ value=%@ guid=%@ compat=%@>",
             NSStringFromClass([self class]),
             self,
             _title,
             _value,
-            _guid];
+            _guid,
+            @(_useCompatibilityEscaping)];
 }
 
 - (NSString *)trimmedValue:(NSInteger)maxLength {

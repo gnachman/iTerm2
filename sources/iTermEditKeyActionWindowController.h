@@ -32,6 +32,7 @@ typedef NS_ENUM(NSUInteger, iTermEditKeyActionWindowControllerMode) {
 @property(nonatomic, readonly) BOOL ok;
 @property(nonatomic, readonly) iTermVariablesSuggestionContext suggestContext;
 @property(nonatomic, readonly) iTermAction *unboundAction;
+@property(nonatomic) BOOL useCompatibilityEscaping;
 
 - (instancetype)init NS_UNAVAILABLE;
 - (instancetype)initWithCoder:(NSCoder *)coder NS_UNAVAILABLE;

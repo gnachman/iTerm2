@@ -17,13 +17,15 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) NSString *value;
 @property (nonatomic, readonly) NSString *guid;
 @property (nonatomic, readonly) id actionKey;
+@property (nonatomic, readonly) BOOL useCompatibilityEscaping;
 
 // Title suitable for display. Works nicely if the title is empty by using a prefix of the value.
 @property (nonatomic, readonly) NSString *displayTitle;
 
 - (instancetype)initWithTitle:(NSString *)title
                         value:(NSString *)value
-                         guid:(NSString *)guid NS_DESIGNATED_INITIALIZER;
+                         guid:(NSString *)guid
+     useCompatibilityEscaping:(BOOL)useCompatibilityEscaping NS_DESIGNATED_INITIALIZER;
 
 - (instancetype)initWithDictionary:(NSDictionary *)dictionary
                              index:(NSInteger)index;

@@ -18,6 +18,7 @@
     NSString *_title;
     NSString *_value;
     NSString *_guid;
+    BOOL _useCompatibilityEscaping;
     BOOL _canceled;
 }
 
@@ -29,6 +30,7 @@
             _title = snippet.title;
             _value = snippet.value;
             _guid = snippet.guid;
+            _useCompatibilityEscaping = snippet.useCompatibilityEscaping;
         } else {
             NSString *pasteboardString = [NSString stringFromPasteboard];
             if (pasteboardString) {
@@ -39,6 +41,7 @@
                 _value = @"";
             }
             _guid = [[NSUUID UUID] UUIDString];
+            _useCompatibilityEscaping = NO;
         }
         _completion = [completion copy];
     }
@@ -49,7 +52,7 @@
     if (_canceled) {
         return nil;
     }
-    return [[iTermSnippet alloc] initWithTitle:_title value:_value guid:_guid];
+    return [[iTermSnippet alloc] initWithTitle:_title value:_value guid:_guid useCompatibilityEscaping:_useCompatibilityEscaping];
 }
 
 - (void)windowDidLoad {

@@ -3153,8 +3153,11 @@
     [_delegate sendHexCode:codes];
 }
 
-- (void)sendText:(NSString *)text withEvent:(NSEvent *)event {
-    [_delegate sendText:text];
+- (void)sendText:(NSString *)text withEvent:(NSEvent *)event compatibilityEscaping:(BOOL)compatibilityEscaping {
+    [_delegate sendText:text
+useCompatibilityEscaping:compatibilityEscaping
+  compatibilityEscaping:iTermSendTextEscapingCompatibility
+      preferredEscaping:iTermSendTextEscapingCommon];
 }
 
 - (void)selectPaneLeftWithEvent:(NSEvent *)event {

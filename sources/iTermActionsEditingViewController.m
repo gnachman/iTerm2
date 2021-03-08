@@ -73,6 +73,7 @@ static NSString *const iTermActionsEditingPasteboardType = @"iTermActionsEditing
     iTermEditKeyActionWindowController *windowController =
     [[iTermEditKeyActionWindowController alloc] initWithContext:iTermVariablesSuggestionContextSession
                                                            mode:iTermEditKeyActionWindowControllerModeUnbound];
+    windowController.useCompatibilityEscaping = NO;
     if (action) {
         windowController.label = action.title;
         windowController.isNewMapping = NO;

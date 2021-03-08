@@ -489,6 +489,35 @@ static int fromhex(unichar c) {
     return newString;
 }
 
+- (NSString *)stringByReplacingCommonlyEscapedCharactersWithControls {
+    NSString *p = [self stringByReplacingEscapedChar:'a' withString:@"\x07"];
+    p = [p stringByReplacingEscapedChar:'b' withString:@"\x08"];
+    p = [p stringByReplacingEscapedChar:'e' withString:@"\x1b"];
+    p = [p stringByReplacingEscapedChar:'n' withString:@"\n"];
+    p = [p stringByReplacingEscapedChar:'r' withString:@"\r"];
+    p = [p stringByReplacingEscapedChar:'t' withString:@"\t"];
+    p = [p stringByReplacingEscapedChar:'\\' withString:@"\\"];
+    p = [p stringByReplacingEscapedHexValuesWithChars];
+    return p;
+}
+
+- (NSString *)stringByEscapingControlCharactersAndBackslash {
+    NSString *result = [self stringByReplacingOccurrencesOfString:@"\\" withString:@"\\\\"];
+    for (int i = 0; i < 32; i++) {
+        NSString *replacement = [NSString stringWithFormat:@"\\x%04x", i];
+        if (i == '\n') {
+            replacement = @"\\n";
+        } else if (i == '\r') {
+            replacement = @"\\r";
+        } else if (i == '\t') {
+            replacement = @"\\t";
+        }
+        result = [result stringByReplacingOccurrencesOfString:[NSString stringWithLongCharacter:i]
+                                                   withString:replacement];
+    }
+    return result;
+}
+
 // foo"bar -> foo\"bar
 // foo\bar -> foo\\bar
 // foo\"bar -> foo\\\"bar

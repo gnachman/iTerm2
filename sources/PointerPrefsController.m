@@ -19,6 +19,7 @@
 static NSString *kPointerActionsKey = @"PointerActions";  // Used in NSUserDefaults
 static NSString *kActionKey = @"Action";  // Used within values
 static NSString *kArgumentKey = @"Argument";  // Used within values
+static NSString *kVersionKey = @"Version";
 static NSString *kCommandKeyChar = @"c";
 static NSString *kOptionKeyChar = @"o";
 static NSString *kShiftKeyChar = @"s";
@@ -153,6 +154,7 @@ typedef enum {
     NSRect _initialPasteContainerFrame;
 
     NSString *origKey_;
+    int version_;
 }
 
 - (void)dealloc {
@@ -160,8 +162,7 @@ typedef enum {
     tableView_.dataSource = nil;
 }
 
-+ (NSDictionary *)dictForAction:(NSString *)action
-{
++ (NSDictionary *)dictForAction:(NSString *)action {
     return [NSDictionary dictionaryWithObject:action forKey:kActionKey];
 }
 
@@ -459,8 +460,7 @@ typedef enum {
     return name;
 }
 
-+ (NSString *)formattedLocalizedActionForDict:(NSDictionary *)dict
-{
++ (NSString *)formattedLocalizedActionForDict:(NSDictionary *)dict {
     NSDictionary *names = [PointerPrefsController localizedActionMap];
     NSString *action = [dict objectForKey:kActionKey];
     NSString *argument = [dict objectForKey:kArgumentKey];
@@ -631,14 +631,24 @@ typedef enum {
 
 + (NSString *)argumentWithButton:(int)buttonNumber
                        numClicks:(int)numClicks
-                       modifiers:(int)modMask
-{
+                       modifiers:(int)modMask {
     NSString *key = [PointerPrefsController keyForButton:buttonNumber
                                                   clicks:numClicks
                                                modifiers:modMask];
     NSDictionary *settings = [PointerPrefsController settings];
     NSDictionary *setting = [settings objectForKey:key];
     return [setting objectForKey:kArgumentKey];
+}
+
++ (BOOL)useCompatibilityEscapingWithButton:(int)buttonNumber
+                                 numClicks:(int)numClicks
+                                 modifiers:(int)modMask {
+    NSString *key = [PointerPrefsController keyForButton:buttonNumber
+                                                  clicks:numClicks
+                                               modifiers:modMask];
+    NSDictionary *settings = [PointerPrefsController settings];
+    NSDictionary *setting = [settings objectForKey:key];
+    return [[setting objectForKey:kVersionKey] intValue] == 0;
 }
 
 + (NSString *)actionWithButton:(int)buttonNumber
@@ -679,9 +689,19 @@ typedef enum {
     return [PointerPrefsController argumentForGesture:gesture modifiers:modMask];
 }
 
++ (BOOL)useCompatibilityEscapingForTapWithTouches:(int)numTouches
+                                        modifiers:(int)modMask {
+    NSString *gesture = @"";
+    if (numTouches == 3) {
+        gesture = kThreeFingerClickGesture;
+    } else {
+        return NO;
+    }
+    return [PointerPrefsController useCompatibilityEscapingForGesture:gesture modifiers:modMask];
+}
+
 + (NSString *)actionForGesture:(NSString *)gesture
-                     modifiers:(int)modMask
-{
+                     modifiers:(int)modMask {
     NSString *key;
     key = [PointerPrefsController keyForGesture:gesture
                                       modifiers:modMask];
@@ -691,15 +711,35 @@ typedef enum {
     return [setting objectForKey:kActionKey];
 }
 
++ (BOOL)useCompatibilityEscapingForGesture:(NSString *)gesture
+                                 modifiers:(int)modMask {
+    NSString *key;
+    key = [PointerPrefsController keyForGesture:gesture
+                                      modifiers:modMask];
+    DLog(@"Look up use compatibility escaping for gesture %@", key);
+    NSDictionary *settings = [PointerPrefsController settings];
+    NSDictionary *setting = [settings objectForKey:key];
+    return [[setting objectForKey:kVersionKey] intValue] == 0;
+}
+
 + (NSString *)argumentForGesture:(NSString *)gesture
-                       modifiers:(int)modMask
-{
+                       modifiers:(int)modMask {
     NSString *key;
     key = [PointerPrefsController keyForGesture:gesture
                                       modifiers:modMask];
     NSDictionary *settings = [PointerPrefsController settings];
     NSDictionary *setting = [settings objectForKey:key];
     return [setting objectForKey:kArgumentKey];
+}
+
++ (BOOL)compatibilityEscapingForGesture:(NSString *)gesture
+                              modifiers:(NSEventModifierFlags)modMask {
+    NSString *key;
+    key = [PointerPrefsController keyForGesture:gesture
+                                      modifiers:modMask];
+    NSDictionary *settings = [PointerPrefsController settings];
+    NSDictionary *setting = [settings objectForKey:key];
+    return [[setting objectForKey:kVersionKey] intValue] == 0;
 }
 
 + (BOOL)haveThreeFingerTapEvents
@@ -815,6 +855,11 @@ typedef enum {
     return [setting objectForKey:kArgumentKey];
 }
 
++ (BOOL)useCompatibilityEscapingForKey:(NSString *)key {
+    NSDictionary *setting = [[PointerPrefsController settings] objectForKey:key];
+    return [[setting objectForKey:kVersionKey] intValue] == 0;
+}
+
 - (void)updateArgumentFieldsForAction:(NSString *)actionIdent argument:(NSString *)currentArg
 {
     if (NSEqualRects(NSZeroRect, _initialFrame)) {
@@ -922,6 +967,11 @@ typedef enum {
         [editClickType_ selectItem:nil];
     }
     origKey_ = key;
+    if (key) {
+        version_ = [PointerPrefsController useCompatibilityEscapingForKey:key] ? 0 : 1;
+    } else {
+        version_ = 1;
+    }
     [self buttonOrGestureChanged:nil];
     [ok_ setEnabled:[self okShouldBeEnabled]];
 }
@@ -997,6 +1047,7 @@ typedef enum {
     NSString *theAction = [PointerPrefsController actionWithLocalizedName:[[editAction_ selectedItem] title]];
     NSMutableDictionary *newValue = [NSMutableDictionary dictionaryWithObject:theAction
                                                                        forKey:kActionKey];
+    newValue[kVersionKey] = @(version_);
     if (![editArgumentField_ isHidden]) {
         [newValue setObject:[editArgumentField_ stringValue]
                      forKey:kArgumentKey];

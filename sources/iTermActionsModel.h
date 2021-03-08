@@ -20,10 +20,12 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) NSString *parameter;
 @property (nonatomic, readonly) NSInteger identifier;
 @property (nonatomic, readonly) NSString *displayString;
+@property (nonatomic, readonly) BOOL useCompatibilityEscaping;
 
 - (instancetype)initWithTitle:(NSString *)title
                        action:(KEY_ACTION)action
-                    parameter:(NSString *)parameter NS_DESIGNATED_INITIALIZER;
+                    parameter:(NSString *)parameter
+     useCompatibilityEscaping:(BOOL)useCompatibilityEscaping NS_DESIGNATED_INITIALIZER;
 
 - (instancetype)initWithDictionary:(NSDictionary *)dictionary;
 

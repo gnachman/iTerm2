@@ -87,10 +87,18 @@ typedef NS_ENUM(int, KEY_ACTION) {
 @property (nonatomic, readonly) NSDictionary *dictionaryValue;
 @property (nonatomic, readonly) BOOL sendsText;
 @property (nonatomic, readonly) BOOL isActionable;
+@property (nonatomic, readonly) BOOL useCompatibilityEscaping;
 
 + (instancetype)withDictionary:(NSDictionary *)dictionary;
-+ (instancetype)withAction:(KEY_ACTION)action parameter:(NSString *)parameter;
-+ (instancetype)withAction:(KEY_ACTION)action parameter:(NSString *)parameter label:(NSString *)label;
+
++ (instancetype)withAction:(KEY_ACTION)action
+                 parameter:(NSString *)parameter
+  useCompatibilityEscaping:(BOOL)useCompatibilityEscaping;
+
++ (instancetype)withAction:(KEY_ACTION)action
+                 parameter:(NSString *)parameter
+                     label:(NSString *)label
+  useCompatibilityEscaping:(BOOL)useCompatibilityEscaping;
 
 - (instancetype)init NS_UNAVAILABLE;
 

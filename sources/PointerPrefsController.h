@@ -56,16 +56,23 @@ extern NSString *kForceTouchSingleClick;
 + (NSString *)argumentWithButton:(int)buttonNumber
                        numClicks:(int)numClicks
                        modifiers:(int)modMask;
++ (BOOL)useCompatibilityEscapingWithButton:(int)buttonNumber
+                                 numClicks:(int)numClicks
+                                 modifiers:(int)modMask;
 
 + (NSString *)actionForTapWithTouches:(int)numTouches
                             modifiers:(int)modMask;
 + (NSString *)argumentForTapWithTouches:(int)numTouches
                               modifiers:(int)modMask;
++ (BOOL)useCompatibilityEscapingForTapWithTouches:(int)numTouches
+                                        modifiers:(int)modMask;
 
 + (NSString *)actionForGesture:(NSString *)gesture
                      modifiers:(int)modMask;
 + (NSString *)argumentForGesture:(NSString *)gesture
                        modifiers:(int)modMask;
++ (BOOL)useCompatibilityEscapingForGesture:(NSString *)gesture
+                                 modifiers:(int)modMask;
 + (BOOL)haveThreeFingerTapEvents;
 
 - (void)setButtonNumber:(int)buttonNumber clickCount:(int)clickCount modifiers:(int)modMask;

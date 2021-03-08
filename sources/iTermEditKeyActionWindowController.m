@@ -289,7 +289,8 @@
 - (iTermAction *)unboundAction {
     return [[iTermAction alloc] initWithTitle:self.label
                                        action:self.action
-                                     parameter:self.parameterValue];
+                                    parameter:self.parameterValue
+                     useCompatibilityEscaping:self.useCompatibilityEscaping];
 }
 
 - (iTermKeystrokeOrTouchbarItem *)keystrokeOrTouchbarItem {
