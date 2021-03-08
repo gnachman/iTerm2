@@ -2223,16 +2223,22 @@ DQ
                         <outlet property="nextKeyView" destination="4896" id="acz-bU-TQP"/>
                     </connections>
                 </button>
-                <slider identifier="wtf" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="4896">
-                    <rect key="frame" x="141" y="142" width="197" height="28"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <string key="toolTip">This boosts the contrast of text when its color is close to that of the background color by moving the text color towards black or white.</string>
-                    <sliderCell key="cell" continuous="YES" alignment="left" maxValue="1" tickMarkPosition="above" sliderType="linear" id="4903"/>
-                    <connections>
-                        <action selector="settingChanged:" target="p8i-eM-oBc" id="FZP-HT-Cxc"/>
-                        <outlet property="nextKeyView" destination="3213" id="5228"/>
-                    </connections>
-                </slider>
+                <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="5Ut-Hc-7rY" customClass="iTermSlider">
+                    <rect key="frame" x="143" y="148" width="193" height="20"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                    <subviews>
+                        <slider verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="4896">
+                            <rect key="frame" x="-2" y="-6" width="197" height="28"/>
+                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                            <string key="toolTip">This boosts the contrast of text when its color is close to that of the background color by moving the text color towards black or white.</string>
+                            <sliderCell key="cell" continuous="YES" alignment="left" maxValue="1" tickMarkPosition="above" sliderType="linear" id="4903"/>
+                            <connections>
+                                <action selector="settingChanged:" target="p8i-eM-oBc" id="FZP-HT-Cxc"/>
+                                <outlet property="nextKeyView" destination="3213" id="5228"/>
+                            </connections>
+                        </slider>
+                    </subviews>
+                </customView>
                 <textField verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="4899">
                     <rect key="frame" x="10" y="149" width="128" height="17"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
@@ -2262,16 +2268,22 @@ DQ
                         <userDefinedRuntimeAttribute type="boolean" keyPath="alphaAllowed" value="YES"/>
                     </userDefinedRuntimeAttributes>
                 </customView>
-                <slider verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="evF-qt-9wo" userLabel="Horizontal Slider - Cursor Boost">
-                    <rect key="frame" x="141" y="23" width="197" height="28"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <string key="toolTip">This dims all colors except that of the cursor. A pure white cursor with Smart Cursor Color off is recommended when using cursor boost.</string>
-                    <sliderCell key="cell" continuous="YES" alignment="left" maxValue="0.80000000000000004" tickMarkPosition="above" sliderType="linear" id="gKT-qi-eSF"/>
-                    <connections>
-                        <action selector="settingChanged:" target="p8i-eM-oBc" id="FHJ-0a-eQc"/>
-                        <outlet property="nextKeyView" destination="3213" id="lIB-Zw-QBm"/>
-                    </connections>
-                </slider>
+                <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="rOx-S8-7Qg" customClass="iTermSlider">
+                    <rect key="frame" x="143" y="29" width="193" height="20"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                    <subviews>
+                        <slider verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="evF-qt-9wo" userLabel="Horizontal Slider - Cursor Boost">
+                            <rect key="frame" x="-2" y="-6" width="197" height="28"/>
+                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                            <string key="toolTip">This dims all colors except that of the cursor. A pure white cursor with Smart Cursor Color off is recommended when using cursor boost.</string>
+                            <sliderCell key="cell" continuous="YES" alignment="left" maxValue="0.80000000000000004" tickMarkPosition="above" sliderType="linear" id="gKT-qi-eSF"/>
+                            <connections>
+                                <action selector="settingChanged:" target="p8i-eM-oBc" id="FHJ-0a-eQc"/>
+                                <outlet property="nextKeyView" destination="3213" id="lIB-Zw-QBm"/>
+                            </connections>
+                        </slider>
+                    </subviews>
+                </customView>
                 <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="4889">
                     <rect key="frame" x="169" y="58" width="165" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
@@ -3232,15 +3244,21 @@ DQ
                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
-                <slider verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="4978">
-                    <rect key="frame" x="36" y="374" width="218" height="28"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <sliderCell key="cell" continuous="YES" alignment="left" maxValue="0.90000000000000002" tickMarkPosition="below" sliderType="linear" id="4983"/>
-                    <connections>
-                        <action selector="settingChanged:" target="BMA-OA-Kzc" id="srW-J0-j7N"/>
-                        <outlet property="nextKeyView" destination="4976" id="5265"/>
-                    </connections>
-                </slider>
+                <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Vwi-3q-miX" customClass="iTermSlider">
+                    <rect key="frame" x="38" y="380" width="214" height="20"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                    <subviews>
+                        <slider verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="4978">
+                            <rect key="frame" x="-2" y="-6" width="218" height="28"/>
+                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                            <sliderCell key="cell" continuous="YES" alignment="left" maxValue="0.90000000000000002" tickMarkPosition="below" sliderType="linear" id="4983"/>
+                            <connections>
+                                <action selector="settingChanged:" target="BMA-OA-Kzc" id="srW-J0-j7N"/>
+                                <outlet property="nextKeyView" destination="4976" id="5265"/>
+                            </connections>
+                        </slider>
+                    </subviews>
+                </customView>
                 <textField verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="4979">
                     <rect key="frame" x="35" y="365" width="53" height="11"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
@@ -3251,7 +3269,7 @@ DQ
                     </textFieldCell>
                 </textField>
                 <textField verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="4980">
-                    <rect key="frame" x="196" y="365" width="58" height="11"/>
+                    <rect key="frame" x="146" y="365" width="58" height="11"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Transparent" id="4981">
                         <font key="font" metaFont="menu" size="9"/>
@@ -3259,15 +3277,21 @@ DQ
                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
-                <slider verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="5363">
-                    <rect key="frame" x="36" y="275" width="218" height="28"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <sliderCell key="cell" continuous="YES" alignment="left" minValue="0.10000000000000001" maxValue="100" doubleValue="0.10000000000000001" tickMarkPosition="below" sliderType="linear" id="5368"/>
-                    <connections>
-                        <action selector="settingChanged:" target="BMA-OA-Kzc" id="AJB-o1-kDf"/>
-                        <outlet property="nextKeyView" destination="4973" id="5373"/>
-                    </connections>
-                </slider>
+                <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="aTQ-To-rLu" customClass="iTermSlider">
+                    <rect key="frame" x="38" y="281" width="214" height="20"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                    <subviews>
+                        <slider verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="5363">
+                            <rect key="frame" x="-2" y="-6" width="218" height="28"/>
+                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                            <sliderCell key="cell" continuous="YES" alignment="left" minValue="0.10000000000000001" maxValue="100" doubleValue="0.10000000000000001" tickMarkPosition="below" sliderType="linear" id="5368"/>
+                            <connections>
+                                <action selector="settingChanged:" target="BMA-OA-Kzc" id="AJB-o1-kDf"/>
+                                <outlet property="nextKeyView" destination="4973" id="5373"/>
+                            </connections>
+                        </slider>
+                    </subviews>
+                </customView>
                 <textField verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="5364">
                     <rect key="frame" x="35" y="267" width="61" height="11"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
@@ -3278,7 +3302,7 @@ DQ
                     </textFieldCell>
                 </textField>
                 <textField verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="5365">
-                    <rect key="frame" x="192" y="267" width="62" height="11"/>
+                    <rect key="frame" x="142" y="267" width="62" height="11"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Large Radius" id="5366">
                         <font key="font" metaFont="menu" size="9"/>
@@ -3286,15 +3310,21 @@ DQ
                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
-                <slider toolTip="How much of the background image is visible through the background color." verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="6320">
-                    <rect key="frame" x="338" y="275" width="215" height="28"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <sliderCell key="cell" continuous="YES" alignment="left" minValue="0.050000000000000003" maxValue="1" doubleValue="0.40000000000000002" tickMarkPosition="below" sliderType="linear" id="6321"/>
-                    <connections>
-                        <action selector="settingChanged:" target="BMA-OA-Kzc" id="O9z-H1-Kma"/>
-                        <outlet property="nextKeyView" destination="4976" id="6322"/>
-                    </connections>
-                </slider>
+                <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2W7-4B-3Az" customClass="iTermSlider">
+                    <rect key="frame" x="340" y="281" width="211" height="20"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                    <subviews>
+                        <slider toolTip="How much of the background image is visible through the background color." verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="6320">
+                            <rect key="frame" x="-2" y="-6" width="215" height="28"/>
+                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                            <sliderCell key="cell" continuous="YES" alignment="left" minValue="0.050000000000000003" maxValue="1" doubleValue="0.40000000000000002" tickMarkPosition="below" sliderType="linear" id="6321"/>
+                            <connections>
+                                <action selector="settingChanged:" target="BMA-OA-Kzc" id="O9z-H1-Kma"/>
+                                <outlet property="nextKeyView" destination="4976" id="6322"/>
+                            </connections>
+                        </slider>
+                    </subviews>
+                </customView>
                 <button toolTip="Enable this to make non-default background colors always opaque. This is useful when using Powerline in a translucent window." fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="fwj-4Y-nja">
                     <rect key="frame" x="36" y="342" width="222" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
@@ -3345,7 +3375,7 @@ DQ
                     </textFieldCell>
                 </textField>
                 <textField verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="vD5-D9-lB3">
-                    <rect key="frame" x="522" y="267" width="31" height="11"/>
+                    <rect key="frame" x="472" y="267" width="31" height="11"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Image" id="hxE-2N-hxp">
                         <font key="font" metaFont="menu" size="9"/>
@@ -5486,11 +5516,11 @@ DQ
                         </tabViewItem>
                         <tabViewItem label="Windows" identifier="1" id="9EZ-jv-4Qy">
                             <view key="view" id="Ei6-Ql-t7N">
-                                <rect key="frame" x="10" y="33" width="590" height="234"/>
+                                <rect key="frame" x="10" y="33" width="590" height="214"/>
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                 <subviews>
                                     <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="qVl-YI-RPa" customClass="iTermPreferencesInnerTabContainerView">
-                                        <rect key="frame" x="98" y="97" width="391" height="134"/>
+                                        <rect key="frame" x="98" y="77" width="391" height="134"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMinY="YES"/>
                                         <subviews>
                                             <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="5144">
@@ -5840,15 +5870,24 @@ DQ
                                                     <outlet property="nextKeyView" destination="5337" id="5348"/>
                                                 </connections>
                                             </button>
-                                            <slider toolTip="Inactive sessions get dimmed to help find the active session." verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="5337">
-                                                <rect key="frame" x="139" y="76" width="283" height="28"/>
-                                                <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMinY="YES"/>
-                                                <sliderCell key="cell" continuous="YES" state="on" alignment="left" minValue="0.01" maxValue="0.59999999999999998" doubleValue="0.59999999999999998" tickMarkPosition="above" sliderType="linear" id="5338"/>
+                                            <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="3FO-hC-V4I" userLabel="iTermSlider" customClass="iTermSlider">
+                                                <rect key="frame" x="141" y="82" width="279" height="20"/>
+                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                                <subviews>
+                                                    <slider toolTip="Inactive sessions get dimmed to help find the active session." verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="5337">
+                                                        <rect key="frame" x="-2" y="-6" width="283" height="28"/>
+                                                        <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMinY="YES"/>
+                                                        <sliderCell key="cell" continuous="YES" state="on" alignment="left" minValue="0.01" maxValue="0.59999999999999998" doubleValue="0.59999999999999998" tickMarkPosition="above" sliderType="linear" id="5338"/>
+                                                        <connections>
+                                                            <action selector="settingChanged:" target="wvi-ET-SJJ" id="esD-pm-ElK"/>
+                                                            <outlet property="nextKeyView" destination="4560" id="5349"/>
+                                                        </connections>
+                                                    </slider>
+                                                </subviews>
                                                 <connections>
-                                                    <action selector="settingChanged:" target="wvi-ET-SJJ" id="esD-pm-ElK"/>
-                                                    <outlet property="nextKeyView" destination="4560" id="5349"/>
+                                                    <outlet property="_slider" destination="5337" id="1p0-sH-6Ft"/>
                                                 </connections>
-                                            </slider>
+                                            </customView>
                                             <textField verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="5339">
                                                 <rect key="frame" x="18" y="84" width="117" height="17"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMinY="YES"/>

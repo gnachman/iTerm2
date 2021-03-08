@@ -3222,6 +3222,8 @@
 		A6C1FD561FC2B210006B9A69 /* iTermMargin.metal in Sources */ = {isa = PBXBuildFile; fileRef = A6C1FD531FC2B210006B9A69 /* iTermMargin.metal */; };
 		A6C1FD571FC2B210006B9A69 /* iTermMargin.metal in Sources */ = {isa = PBXBuildFile; fileRef = A6C1FD531FC2B210006B9A69 /* iTermMargin.metal */; };
 		A6C1FD5A1FC2BD72006B9A69 /* GlyphKey.h in Headers */ = {isa = PBXBuildFile; fileRef = A6C1FD581FC2BD72006B9A69 /* GlyphKey.h */; };
+		A6C20CB825F6CA8C0086B09C /* iTermSlider.h in Headers */ = {isa = PBXBuildFile; fileRef = A6C20CB625F6CA8C0086B09C /* iTermSlider.h */; };
+		A6C20CB925F6CA8C0086B09C /* iTermSlider.m in Sources */ = {isa = PBXBuildFile; fileRef = A6C20CB725F6CA8C0086B09C /* iTermSlider.m */; };
 		A6C3005724711620002BC672 /* iTermThreadSafety.h in Headers */ = {isa = PBXBuildFile; fileRef = A6905556241DE90A0020EA6A /* iTermThreadSafety.h */; };
 		A6C300582471162A002BC672 /* iTermFileDescriptorServerShared.c in Sources */ = {isa = PBXBuildFile; fileRef = A64FCD57238DE785001D8199 /* iTermFileDescriptorServerShared.c */; };
 		A6C3005F247117A9002BC672 /* iTermLocatedString.h in Headers */ = {isa = PBXBuildFile; fileRef = A6C3005D247117A9002BC672 /* iTermLocatedString.h */; };
@@ -6401,6 +6403,8 @@
 		A6C1FD501FC2AC9B006B9A69 /* iTermMarginRenderer.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = iTermMarginRenderer.m; path = Metal/Renderers/iTermMarginRenderer.m; sourceTree = "<group>"; };
 		A6C1FD531FC2B210006B9A69 /* iTermMargin.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; name = iTermMargin.metal; path = Metal/Shaders/iTermMargin.metal; sourceTree = "<group>"; };
 		A6C1FD581FC2BD72006B9A69 /* GlyphKey.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = GlyphKey.h; path = Metal/Infrastructure/GlyphKey.h; sourceTree = "<group>"; };
+		A6C20CB625F6CA8C0086B09C /* iTermSlider.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermSlider.h; sourceTree = "<group>"; };
+		A6C20CB725F6CA8C0086B09C /* iTermSlider.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermSlider.m; sourceTree = "<group>"; };
 		A6C3005D247117A9002BC672 /* iTermLocatedString.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermLocatedString.h; sourceTree = "<group>"; };
 		A6C3005E247117A9002BC672 /* iTermLocatedString.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermLocatedString.m; sourceTree = "<group>"; };
 		A6C4352021D1C64800346910 /* iterm2Invoke.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; name = iterm2Invoke.js; path = OtherResources/iterm2Invoke.js; sourceTree = "<group>"; };
@@ -7907,6 +7911,8 @@
 				1D29732A14082A52004C5DBE /* SplitSelectionView.m */,
 				A6A39EBD24B9A96B00A64433 /* iTermUnobtrusiveMessage.h */,
 				A6A39EBE24B9A96B00A64433 /* iTermUnobtrusiveMessage.m */,
+				A6C20CB625F6CA8C0086B09C /* iTermSlider.h */,
+				A6C20CB725F6CA8C0086B09C /* iTermSlider.m */,
 			);
 			name = "Misc. Views";
 			sourceTree = "<group>";
@@ -11418,6 +11424,7 @@
 				A6DCDD202560B410004EA8A1 /* NSAttributedString+PSM.h in Headers */,
 				53FF982A2093C823008688D7 /* iTermSignatureVerifier.h in Headers */,
 				A629F58A23AF38CA00C2F16B /* iTermClickableTextField.h in Headers */,
+				A6C20CB825F6CA8C0086B09C /* iTermSlider.h in Headers */,
 				A629F59B23AFF4D400C2F16B /* iTermShellIntegrationPanel.h in Headers */,
 				A6D463E6240447AF005D073D /* iTermBackgroundColorView.h in Headers */,
 				A66719281DCE36C3000CE608 /* iTermEventTap.h in Headers */,
@@ -14405,6 +14412,7 @@
 				A66F52AE21045B7E00571168 /* iTermStatusBarNetworkUtilizationComponent.m in Sources */,
 				A648DABF2427E7E000C2FF02 /* iTermPreferenceDidChangeNotification.m in Sources */,
 				530AB8A820B1F57E00D2AA08 /* iTermTruncatedQuotedRecognizer.m in Sources */,
+				A6C20CB925F6CA8C0086B09C /* iTermSlider.m in Sources */,
 				A69941C82331F7C400C76EF2 /* ToolPasteHistory.m in Sources */,
 				A6F718D42266FDEB0053488E /* iTermSemanticHistoryController.m in Sources */,
 				A634817A24AFC4AF0003C11B /* iTermFocusablePanel.m in Sources */,

@@ -1695,6 +1695,26 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
     return range.location == NSNotFound;
 }
 
+- (BOOL)isNonnegativeFractionalNumber {
+    NSArray<NSString *> *parts = [self componentsSeparatedByString:@"."];
+    if (parts.count == 0 || parts.count > 2) {
+        return NO;
+    }
+    if (parts.count == 1) {
+        // "123"
+        return [parts.firstObject isNumeric];
+    }
+    if (parts.count == 2) {
+        if (parts[0].length == 0) {
+            // ".1"
+            return [parts[1] isNumeric];
+        }
+        // "1.2"
+        return [parts[0] isNumeric] && [parts[1] isNumeric];
+    }
+    return NO;
+}
+
 - (BOOL)startsWithDigit {
     if (![self length]) {
         return NO;

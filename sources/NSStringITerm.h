@@ -271,6 +271,8 @@ int decode_utf8_char(const unsigned char * restrict datap,
 
 // Contains only digits?
 - (BOOL)isNumeric;
+// Accepts strings like .2, 1, 1.2
+- (BOOL)isNonnegativeFractionalNumber;
 
 // First character is a digit?
 - (BOOL)startsWithDigit;

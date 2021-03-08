@@ -81,7 +81,7 @@
                             <rect key="frame" x="224" y="17" width="15" height="102"/>
                             <autoresizingMask key="autoresizingMask"/>
                         </scroller>
-                        <tableHeaderView key="headerView" id="6">
+                        <tableHeaderView key="headerView" wantsLayer="YES" id="6">
                             <rect key="frame" x="0.0" y="0.0" width="217" height="17"/>
                             <autoresizingMask key="autoresizingMask"/>
                         </tableHeaderView>
@@ -128,7 +128,7 @@
                             <rect key="frame" x="224" y="17" width="15" height="102"/>
                             <autoresizingMask key="autoresizingMask"/>
                         </scroller>
-                        <tableHeaderView key="headerView" id="14">
+                        <tableHeaderView key="headerView" wantsLayer="YES" id="14">
                             <rect key="frame" x="0.0" y="0.0" width="315" height="17"/>
                             <autoresizingMask key="autoresizingMask"/>
                         </tableHeaderView>
