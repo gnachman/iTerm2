@@ -179,6 +179,7 @@ typedef NS_OPTIONS(NSUInteger, iTermJobManagerAttachResults) {
            customShell:(NSString *)customShell
               gridSize:(VT100GridSize)gridSize
               viewSize:(NSSize)viewSize
+      maybeScaleFactor:(CGFloat)maybeScaleFactor
                 isUTF8:(BOOL)isUTF8
             completion:(void (^)(void))completion;
 

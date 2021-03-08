@@ -260,6 +260,7 @@ static void HandleSigChld(int n) {
            customShell:(NSString *)customShell
               gridSize:(VT100GridSize)gridSize
               viewSize:(NSSize)viewSize
+      maybeScaleFactor:(CGFloat)maybeScaleFactor
                 isUTF8:(BOOL)isUTF8
             completion:(void (^)(void))completion {
     DLog(@"launchWithPath:%@ args:%@ env:%@ grisSize:%@ isUTF8:%@",
@@ -278,6 +279,7 @@ static void HandleSigChld(int n) {
                        customShell:customShell
                           gridSize:gridSize
                           viewSize:viewSize
+                  maybeScaleFactor:maybeScaleFactor
                             isUTF8:isUTF8
                         completion:completion];
     } else {
@@ -287,6 +289,7 @@ static void HandleSigChld(int n) {
                        customShell:customShell
                           gridSize:gridSize
                           viewSize:viewSize
+                  maybeScaleFactor:maybeScaleFactor
                             isUTF8:isUTF8
                         completion:completion];
     }
@@ -736,9 +739,16 @@ static void HandleSigChld(int n) {
                  environment:(NSDictionary *)env
                  customShell:(NSString *)customShell
                     gridSize:(VT100GridSize)gridSize
-                    viewSize:(NSSize)viewSize
+                    viewSize:(NSSize)pointSize
+            maybeScaleFactor:(CGFloat)maybeScaleFactor
                       isUTF8:(BOOL)isUTF8
                   completion:(void (^)(void))completion {
+    NSSize viewSize = pointSize;
+    if (maybeScaleFactor > 0) {
+        viewSize.width *= maybeScaleFactor;
+        viewSize.height *= maybeScaleFactor;
+        _lastScaleFactor = maybeScaleFactor;
+    }
     DLog(@"reallyLaunchWithPath:%@ args:%@ env:%@ gridSize:%@ viewSize:%@ isUTF8:%@",
          progpath, args, env,VT100GridSizeDescription(gridSize), NSStringFromSize(viewSize), @(isUTF8));
 

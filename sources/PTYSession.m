@@ -2311,6 +2311,7 @@ ITERM_WEAKLY_REFERENCEABLE
                            customShell:customShell
                               gridSize:_screen.size
                               viewSize:_screen.viewSize
+                      maybeScaleFactor:_textview.window.backingScaleFactor
                                 isUTF8:isUTF8
                             completion:^{
                     [self sendInitialText];
