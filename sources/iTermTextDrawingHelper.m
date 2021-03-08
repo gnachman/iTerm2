@@ -3382,7 +3382,7 @@ static BOOL iTermTextDrawingHelperShouldAntiAlias(screen_char_t *c,
     int width = doubleWidth ? 2 : 1;
     VT100GridCoordRange coordRange = VT100GridCoordRangeMake(coord.x, row, coord.x + width, row + 1);
     NSRect innerRect = [self rectForCoordRange:coordRange];
-    NSRectClip(innerRect);
+    iTermRectClip(innerRect, virtualOffset);
 
     screen_char_t *line = [self.delegate drawingHelperLineAtIndex:row];
     [self constructAndDrawRunsForLine:line
