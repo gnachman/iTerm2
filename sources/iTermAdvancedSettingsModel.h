@@ -145,6 +145,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (double)idleTimeSeconds;
 + (BOOL)ignoreHardNewlinesInURLs;
 + (BOOL)includePasteHistoryInAdvancedPaste;
++ (BOOL)includeShortcutInWindowsMenu;
 + (BOOL)indicateBellsInDockBadgeLabel;
 + (double)indicatorFlashInitialAlpha;
 + (double)invalidateShadowTimesPerSecond;

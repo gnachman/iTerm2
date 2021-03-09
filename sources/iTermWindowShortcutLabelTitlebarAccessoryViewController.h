@@ -13,6 +13,7 @@
 @property(nonatomic, assign) int ordinal;
 @property(nonatomic, assign) BOOL isMain;
 
++ (NSString *)modifiersString;
 + (NSString *)stringForOrdinal:(int)ordinal deemphasized:(out BOOL *)deemphasized;
 
 @end

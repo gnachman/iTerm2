@@ -102,6 +102,8 @@ extern const NSInteger iTermRootTerminalViewWindowNumberLabelWidth;
 @property(nonatomic, readonly) BOOL tabBarControlOnLoan NS_AVAILABLE_MAC(10_14);
 @property(nonatomic, strong, readonly) iTermStatusBarViewController *statusBarViewController;
 @property(nonatomic, readonly) iTermImageView *backgroundImage NS_AVAILABLE_MAC(10_14);
+// Excludes the window number
+@property(nonatomic, readonly) NSString *windowTitle;
 
 - (instancetype)initWithFrame:(NSRect)frame
                         color:(NSColor *)color

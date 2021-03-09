@@ -2245,6 +2245,23 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
+- (NSString *)titleForWindowMenu {
+    if (![iTermAdvancedSettingsModel includeShortcutInWindowsMenu]) {
+        return self.window.title;
+    }
+    NSString *modifiers = [iTermWindowShortcutLabelTitlebarAccessoryViewController modifiersString];
+    if (!modifiers) {
+        return self.window.title;
+    }
+    if (number_ + 1 >= 10) {
+        return [NSString stringWithFormat:@"%@ — %@", self.window.title, @(number_ + 1)];
+    }
+    NSString *formattedShortcut = [NSString stringWithFormat:@"%@%@",
+                                   modifiers,
+                                   @(number_ + 1)];
+    return [NSString stringWithFormat:@"%@ — %@", _contentView.windowTitle, formattedShortcut];
+}
+
 - (void)setWindowTitle:(NSString *)title {
     DLog(@"setWindowTitle:%@", title);
     if (_deallocing) {
@@ -4769,6 +4786,12 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)updateWindowMenu {
+    if ([iTermAdvancedSettingsModel includeShortcutInWindowsMenu]) {
+        DLog(@"Include shortcut");
+        [NSApp changeWindowsItem:self.window title:[self titleForWindowMenu] filename:NO];
+        return;
+    }
+
     if (!self.fullScreen) {
         DLog(@"No - not fullscreen %@", self);
         return;
