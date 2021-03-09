@@ -78,7 +78,7 @@ NS_ASSUME_NONNULL_BEGIN
         };
         [string drawInRect:rect withAttributes:attrs];
     }
-    *width = [self retinaRound:MIN(maxWidth, [string sizeWithAttributes:attrs].width)];
+    *width = [self retinaRoundUp:MIN(maxWidth, [string sizeWithAttributes:attrs].width)];
 }
 
 - (void)sizeToFit {
