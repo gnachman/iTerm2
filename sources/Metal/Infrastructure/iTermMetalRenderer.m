@@ -406,8 +406,8 @@ maximumExtendedDynamicRangeColorComponentValue:(CGFloat)maximumExtendedDynamicRa
 
     // Calculate a safe size for the image while preserving its aspect ratio.
     NSUInteger width, height;
-    [self convertWidth:image.image.size.width
-                height:image.image.size.height
+    [self convertWidth:image.scaledSize.width
+                height:image.scaledSize.height
                toWidth:&width
                 height:&height
           notExceeding:4096];
@@ -415,7 +415,7 @@ maximumExtendedDynamicRangeColorComponentValue:(CGFloat)maximumExtendedDynamicRa
         return nil;
     }
 
-    NSData *data = [image.image rawDataForMetal];
+    NSData *data = [image.image rawDataForMetalOfSize:NSMakeSize(width, height)];
     if (!data) {
         return nil;
     }
