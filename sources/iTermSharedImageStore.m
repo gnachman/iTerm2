@@ -8,6 +8,7 @@
 #import "iTermSharedImageStore.h"
 
 #import "DebugLogging.h"
+#import "NSArray+iTerm.h"
 #import "NSImage+iTerm.h"
 #import <QuartzCore/QuartzCore.h>
 
@@ -151,6 +152,16 @@
     }
     _cgimage = [self.image layerContentsForContentsScale:2];
     return (__bridge CGImageRef)_cgimage;
+}
+
+- (NSSize)scaledSize {
+    NSImageRep *rep = [[self.image representations] maxWithComparator:^NSComparisonResult(NSImageRep *a, NSImageRep *b) {
+        return [@(a.pixelsWide) compare:@(b.pixelsWide)];
+    }];
+    if (rep) {
+        return NSMakeSize(rep.pixelsWide, rep.pixelsHigh);
+    }
+    return self.image.size;
 }
 
 @end

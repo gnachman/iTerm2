@@ -283,8 +283,8 @@
     return storage;
 }
 
-- (NSData *)rawDataForMetal {
-    NSSize size = NSMakeSize(round(self.size.width), round(self.size.height));
+- (NSData *)rawDataForMetalOfSize:(NSSize)unsafeSize {
+    const NSSize size = NSMakeSize(round(unsafeSize.width), round(unsafeSize.height));
 
     CGImageRef cgImage = [self CGImageForProposedRect:nil context:nil hints:nil];
 

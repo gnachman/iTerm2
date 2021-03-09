@@ -16,6 +16,8 @@ NS_ASSUME_NONNULL_BEGIN
 @interface iTermImageWrapper: NSObject
 @property (nonatomic, readonly, strong) NSImage *image;
 @property (nonatomic, readonly) CGImageRef cgimage;
+// Size of largest rep
+@property (nonatomic, readonly) NSSize scaledSize;
 
 + (instancetype)withContentsOfFile:(NSString *)path;
 + (instancetype)withImage:(NSImage *)image;
