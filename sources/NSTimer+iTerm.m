@@ -7,6 +7,7 @@
 //
 
 #import "NSTimer+iTerm.h"
+#import "DebugLogging.h"
 
 @interface iTermTimerProxy : NSObject
 @property (nonatomic, weak) id target;
@@ -22,6 +23,9 @@
     id target = self.target;
     if (target) {
         ((void (*)(id, SEL, NSTimer *))[target methodForSelector:self.selector])(self.target, self.selector, timer);
+    } else {
+        DLog(@"Automatically invalidate timer for selector %@", NSStringFromSelector(self.selector));
+        [timer invalidate];
     }
 }
 
