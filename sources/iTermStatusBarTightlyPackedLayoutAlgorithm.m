@@ -18,7 +18,7 @@
                                             sumOfSpringConstants:(double)sumOfSpringConstants
                                                            views:(NSArray<iTermStatusBarContainerView *> *)views {
     __block double growth = 0;
-    // Divvy up space proportionate to spring constants.
+    // Divvy up space in proportion to spring constants.
     [views enumerateObjectsUsingBlock:^(iTermStatusBarContainerView * _Nonnull view, NSUInteger idx, BOOL * _Nonnull stop) {
         const double weight = view.component.statusBarComponentSpringConstant / sumOfSpringConstants;
         double delta = floor(availableWidth * weight);
