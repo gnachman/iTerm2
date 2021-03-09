@@ -267,8 +267,13 @@ haveSpacersOnBothSidesOfIndex:(NSInteger)index
 
     // Distribute remaining space in proportion to spring constants.
     while (round(availableWidth) > 0 && viewsExPreallocatedViews.count > 0) {
+        BOOL changed = NO;
         availableWidth = [self distributeNonPreallocatedAvailableWidth:availableWidth
-                                                            amongViews:viewsExPreallocatedViews];
+                                                            amongViews:viewsExPreallocatedViews
+                                                               changed:&changed];
+        if (!changed) {
+            break;
+        }
         viewsExPreallocatedViews = [viewsExPreallocatedViews filteredArrayUsingBlock:^BOOL(iTermStatusBarContainerView *view) {
             return view.desiredWidth < [self maximumWidthForComponent:view.component];
         }];
@@ -276,7 +281,9 @@ haveSpacersOnBothSidesOfIndex:(NSInteger)index
 }
 
 - (CGFloat)distributeNonPreallocatedAvailableWidth:(CGFloat)availableWidth
-                                        amongViews:(NSArray<iTermStatusBarContainerView *> *)views {
+                                        amongViews:(NSArray<iTermStatusBarContainerView *> *)views
+                                           changed:(out BOOL *)changed {
+    *changed = NO;
     NSArray<iTermStatusBarContainerView *> *viewsExFixedSpacers =
         [views filteredArrayUsingBlock:^BOOL(iTermStatusBarContainerView *view) {
             return ![view.component isKindOfClass:[iTermStatusBarFixedSpacerComponent class]];
@@ -287,14 +294,18 @@ haveSpacersOnBothSidesOfIndex:(NSInteger)index
     DLog(@"updateDesiredWidthsForViews available=%@ apportionment=%@", @(availableWidth), @(apportionment));
     // Allocate minimum widths
     [views enumerateObjectsUsingBlock:^(iTermStatusBarContainerView * _Nonnull view, NSUInteger idx, BOOL * _Nonnull stop) {
-        if ([view.component isKindOfClass:[iTermStatusBarFixedSpacerComponent class]]) {
-            view.desiredWidth = view.minimumWidthIncludingIcon;
-            return;
-        }
-        const CGFloat maxSize = [self maximumWidthForComponent:view.component];
-        const CGFloat minSize = [self minimumWidthForComponent:view.component];
         const CGFloat oldWidth = view.desiredWidth;
-        const CGFloat newWidth = MIN(MAX(minSize, maxSize), oldWidth + apportionment * view.component.statusBarComponentSpringConstant);
+        CGFloat newWidth = oldWidth;
+        if ([view.component isKindOfClass:[iTermStatusBarFixedSpacerComponent class]]) {
+            newWidth = view.minimumWidthIncludingIcon;
+        } else {
+            const CGFloat maxSize = [self maximumWidthForComponent:view.component];
+            const CGFloat minSize = [self minimumWidthForComponent:view.component];
+            newWidth = MIN(MAX(minSize, maxSize), oldWidth + apportionment * view.component.statusBarComponentSpringConstant);
+        }
+        if (round(oldWidth) != round(newWidth)) {
+            *changed = YES;
+        }
         view.desiredWidth = newWidth;
         const CGFloat growth = newWidth - oldWidth;
         remainingWidth -= growth;
