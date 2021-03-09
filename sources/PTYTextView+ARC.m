@@ -754,6 +754,10 @@ allowRightMarginOverflow:(BOOL)allowRightMarginOverflow {
     return [self _haveShortSelection];
 }
 
+- (BOOL)contextMenuSelectionIsReasonable:(iTermTextViewContextMenuHelper *)contextMenu {
+    return [self haveReasonableSelection];
+}
+
 - (iTermTextExtractor *)contextMenuTextExtractor:(iTermTextViewContextMenuHelper *)contextMenu {
     return [iTermTextExtractor textExtractorWithDataSource:self.dataSource];
 }
@@ -908,6 +912,11 @@ hasOpenAnnotationInRange:(VT100GridCoordRange)coordRange {
 
 - (void)contextMenuCopySelectionAccordingToUserPreferences:(iTermTextViewContextMenuHelper *)contextMenu {
     [self copySelectionAccordingToUserPreferences];
+}
+
+- (void)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu
+               copy:(NSString *)string {
+    [self copyString:string];
 }
 
 - (void)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu

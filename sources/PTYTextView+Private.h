@@ -51,6 +51,7 @@ NSPopoverDelegate> {
 - (void)addNote;
 - (NSString *)selectedTextCappedAtSize:(int)maxBytes;
 - (BOOL)_haveShortSelection;
+- (BOOL)haveReasonableSelection;
 - (BOOL)withRelativeCoord:(VT100GridAbsCoord)coord
                     block:(void (^ NS_NOESCAPE)(VT100GridCoord coord))block;
 - (BOOL)withRelativeCoordRange:(VT100GridAbsCoordRange)range

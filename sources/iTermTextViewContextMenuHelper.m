@@ -174,7 +174,8 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
         [item action] == @selector(togglePauseAnimatingImage:) ||
         [item action] == @selector(inspectImage:) ||
         [item action] == @selector(apiMenuItem:) ||
-        [item action] == @selector(copyLinkAddress:)) {
+        [item action] == @selector(copyLinkAddress:) ||
+        [item action] == @selector(copyString:)) {
         return YES;
     }
     if ([item action] == @selector(stopCoprocess:)) {
@@ -217,6 +218,47 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
 }
 
 #pragma mark - Private
+
+static int32_t iTermInt32FromBytes(const unsigned char *bytes, BOOL bigEndian) {
+    uint32_t i;
+    if (bigEndian) {
+        i = ((((uint32_t)bytes[0]) << 24) |
+             (((uint32_t)bytes[1]) << 16) |
+             (((uint32_t)bytes[2]) << 8) |
+             (((uint32_t)bytes[3]) << 0));
+    } else {
+        i = ((((uint32_t)bytes[3]) << 24) |
+             (((uint32_t)bytes[2]) << 16) |
+             (((uint32_t)bytes[1]) << 8) |
+             (((uint32_t)bytes[0]) << 0));
+    }
+    return i;
+}
+
+static uint64_t iTermInt64FromBytes(const unsigned char *bytes, BOOL bigEndian) {
+    uint64_t i;
+    if (bigEndian) {
+        i = ((((uint64_t)bytes[0]) << 56) |
+             (((uint64_t)bytes[1]) << 48) |
+             (((uint64_t)bytes[2]) << 40) |
+             (((uint64_t)bytes[3]) << 32) |
+             (((uint64_t)bytes[4]) << 24) |
+             (((uint64_t)bytes[5]) << 16) |
+             (((uint64_t)bytes[6]) << 8) |
+             (((uint64_t)bytes[7]) << 0));
+    } else {
+        i = ((((uint64_t)bytes[7]) << 56) |
+             (((uint64_t)bytes[6]) << 48) |
+             (((uint64_t)bytes[5]) << 40) |
+             (((uint64_t)bytes[4]) << 32) |
+             (((uint64_t)bytes[3]) << 24) |
+             (((uint64_t)bytes[2]) << 16) |
+             (((uint64_t)bytes[1]) << 8) |
+             (((uint64_t)bytes[0]) << 0));
+    }
+    return i;
+}
+
 
 - (NSMenu *)menuAtCoord:(VT100GridCoord)coord {
     NSMenu *theMenu;
@@ -273,43 +315,109 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
 
     const BOOL haveShortSelection = [self.delegate contextMenuSelectionIsShort:self];
     NSString *shortSelectedText = nil;
-    if (haveShortSelection) {
-        shortSelectedText = [self.delegate contextMenuSelectedText:self capped:0];
-        NSArray<NSString *> *synonyms = [shortSelectedText helpfulSynonyms];
-        BOOL needSeparator = synonyms.count > 0;
-        for (NSString *conversion in synonyms) {
-            NSMenuItem *theItem = [[NSMenuItem alloc] init];
-            theItem.title = conversion;
-            [theMenu addItem:theItem];
-        }
-        NSArray *captures = [shortSelectedText captureComponentsMatchedByRegex:@"^#([0-9a-fA-F]{2})([0-9a-fA-F]{2})([0-9a-fA-F]{2})$"];
-        if (captures.count) {
-            NSMenuItem *theItem = [[NSMenuItem alloc] init];
-            NSColor *color = [NSColor colorFromHexString:shortSelectedText];
-            if (color) {
-                CGFloat x;
-                if (@available(macOS 10.16, *)) {
-                    x = 15;
-                } else {
-                    x = 11;
-                }
-                const CGFloat margin = 2;
-                const CGFloat height = 24;
-                const CGFloat width = 24;
-                NSView *wrapper = [[NSView alloc] initWithFrame:NSMakeRect(0, 0, width + x, height + margin * 2)];
-                NSView *colorView = [[NSView alloc] initWithFrame:NSMakeRect(x, margin, width, height)];
-                colorView.wantsLayer = YES;
-                colorView.layer = [[CALayer alloc] init];
-                colorView.layer.backgroundColor = [color CGColor];
-                colorView.layer.borderColor = [color.isDark ? [NSColor colorWithWhite:0.8 alpha:1] : [NSColor colorWithWhite:0.2 alpha:1] CGColor];
-                colorView.layer.borderWidth = 1;
-                colorView.layer.cornerRadius = 3;
-                wrapper.autoresizesSubviews = YES;
-                colorView.autoresizingMask = NSViewMaxXMargin;
-                [wrapper addSubview:colorView];
-                theItem.view = wrapper;
+    {
+        BOOL needSeparator = NO;
+        if (haveShortSelection) {
+            shortSelectedText = [self.delegate contextMenuSelectedText:self capped:0];
+            NSArray<NSString *> *synonyms = [shortSelectedText helpfulSynonyms];
+            needSeparator = synonyms.count > 0;
+            for (NSString *conversion in synonyms) {
+                NSMenuItem *theItem = [[NSMenuItem alloc] init];
+                theItem.title = conversion;
                 [theMenu addItem:theItem];
-                needSeparator = YES;
+            }
+            NSArray *captures = [shortSelectedText captureComponentsMatchedByRegex:@"^#([0-9a-fA-F]{2})([0-9a-fA-F]{2})([0-9a-fA-F]{2})$"];
+            if (captures.count) {
+                NSMenuItem *theItem = [[NSMenuItem alloc] init];
+                NSColor *color = [NSColor colorFromHexString:shortSelectedText];
+                if (color) {
+                    CGFloat x;
+                    if (@available(macOS 10.16, *)) {
+                        x = 15;
+                    } else {
+                        x = 11;
+                    }
+                    const CGFloat margin = 2;
+                    const CGFloat height = 24;
+                    const CGFloat width = 24;
+                    NSView *wrapper = [[NSView alloc] initWithFrame:NSMakeRect(0, 0, width + x, height + margin * 2)];
+                    NSView *colorView = [[NSView alloc] initWithFrame:NSMakeRect(x, margin, width, height)];
+                    colorView.wantsLayer = YES;
+                    colorView.layer = [[CALayer alloc] init];
+                    colorView.layer.backgroundColor = [color CGColor];
+                    colorView.layer.borderColor = [color.isDark ? [NSColor colorWithWhite:0.8 alpha:1] : [NSColor colorWithWhite:0.2 alpha:1] CGColor];
+                    colorView.layer.borderWidth = 1;
+                    colorView.layer.cornerRadius = 3;
+                    wrapper.autoresizesSubviews = YES;
+                    colorView.autoresizingMask = NSViewMaxXMargin;
+                    [wrapper addSubview:colorView];
+                    theItem.view = wrapper;
+                    [theMenu addItem:theItem];
+                    needSeparator = YES;
+                }
+            }
+        }
+        if ([self.delegate contextMenuSelectionIsReasonable:self]) {
+            NSString *text = [self.delegate contextMenuSelectedText:self capped:0];
+            NSData *data = [text dataFromWhitespaceDelimitedHexValues];
+            if (data.length > 0) {
+                NSMenuItem *theItem = nil;
+                if (data.length > 1) {
+                    if (data.length == 4) {
+                        const uint32_t be = iTermInt32FromBytes(data.bytes, YES);
+                        theItem = [[NSMenuItem alloc] init];
+                        theItem.title = [NSString stringWithFormat:@"Big-Endian int32: %@", @(be)];
+                        theItem.target = self;
+                        theItem.action = @selector(copyString:);
+                        theItem.representedObject = [@(be) stringValue];
+                        [theMenu addItem:theItem];
+
+                        const uint32_t le = iTermInt32FromBytes(data.bytes, NO);
+                        theItem = [[NSMenuItem alloc] init];
+                        theItem.title = [NSString stringWithFormat:@"Little-Endian int32: %@", @(le)];
+                        theItem.target = self;
+                        theItem.action = @selector(copyString:);
+                        theItem.representedObject = [@(le) stringValue];
+                        [theMenu addItem:theItem];
+
+                        needSeparator = YES;
+                    } else if (data.length == 8) {
+                        const uint64_t be = iTermInt64FromBytes(data.bytes, YES);
+                        theItem = [[NSMenuItem alloc] init];
+                        theItem.title = [NSString stringWithFormat:@"Big-Endian int64: %@", @(be)];
+                        theItem.target = self;
+                        theItem.action = @selector(copyString:);
+                        theItem.representedObject = [@(be) stringValue];
+                        [theMenu addItem:theItem];
+
+                        const uint64_t le = iTermInt64FromBytes(data.bytes, NO);
+                        theItem = [[NSMenuItem alloc] init];
+                        theItem.title = [NSString stringWithFormat:@"Little-Endian int64: %@", @(le)];
+                        theItem.target = self;
+                        theItem.action = @selector(copyString:);
+                        theItem.representedObject = [@(le) stringValue];
+                        [theMenu addItem:theItem];
+
+                        needSeparator = YES;
+                    } else if (data.length < 100) {
+                        NSString *stringValue = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
+                        if (stringValue) {
+                            theItem = [[NSMenuItem alloc] init];
+                            theItem.title = [NSString stringWithFormat:@"%@ UTF-8 bytes: %@", @(data.length), stringValue];
+                            theItem.target = self;
+                            theItem.action = @selector(copyString:);
+                            theItem.representedObject = stringValue;
+                            [theMenu addItem:theItem];
+                            needSeparator = YES;
+                        }
+                    }
+                    if (!theItem && data.length > 4) {
+                        theItem = [[NSMenuItem alloc] init];
+                        theItem.title = [NSString stringWithFormat:@"%@ hex bytes", @(data.length)];
+                        [theMenu addItem:theItem];
+                        needSeparator = YES;
+                    }
+                }
             }
         }
         if (needSeparator) {
@@ -757,6 +865,10 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
     [self.delegate contextMenu:self copyURL:[sender representedObject]];
 }
 
+- (void)copyString:(id)sender {
+    NSMenuItem *item = sender;
+    [self.delegate contextMenu:self copy:item.representedObject];
+}
 - (void)swapSessions:(id)sender {
     [self.delegate contextMenuSwapSessions:self];
 }
@@ -943,6 +1055,9 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
         }
         is32bit = [self length] <= 10;
     } else {
+        if (![[self stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]] isNumeric]) {
+            return nil;
+        }
         decToHex = YES;
         NSDecimalNumber *temp = [NSDecimalNumber decimalNumberWithString:self];
         if ([temp isEqual:[NSDecimalNumber notANumber]]) {

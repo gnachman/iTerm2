@@ -56,6 +56,7 @@ allowRightMarginOverflow:(BOOL)allowRightMarginOverflow;
        setSelection:(iTermSelection *)newSelection;
 
 - (BOOL)contextMenuSelectionIsShort:(iTermTextViewContextMenuHelper *)contextMenu;
+- (BOOL)contextMenuSelectionIsReasonable:(iTermTextViewContextMenuHelper *)contextMenu;
 
 - (iTermTextExtractor *)contextMenuTextExtractor:(iTermTextViewContextMenuHelper *)contextMenu;
 
@@ -105,6 +106,9 @@ toggleTerminalStateForMenuItem:(NSMenuItem *)item;
 - (VT100GridCoordRange)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu
        rangeOfOutputForCommandMark:(VT100ScreenMark *)mark;
 - (void)contextMenuCopySelectionAccordingToUserPreferences:(iTermTextViewContextMenuHelper *)contextMenu;
+- (void)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu
+               copy:(NSString *)string;
+
 - (void)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu
  runCommandInWindow:(NSString *)command;
 - (void)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu

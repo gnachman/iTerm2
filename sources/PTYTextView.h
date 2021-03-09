@@ -449,6 +449,7 @@ typedef void (^PTYTextViewDrawingHookBlock)(iTermTextDrawingHelper *);
 
 // Copy with or without styles, as set by user defaults. Not for use when a copy item in the menu is invoked.
 - (void)copySelectionAccordingToUserPreferences;
+- (void)copyString:(NSString *)string;
 
 // Copy the current selection to the pasteboard.
 - (void)copy:(id)sender;

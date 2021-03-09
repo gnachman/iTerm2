@@ -411,8 +411,7 @@ static int fromhex(unichar c) {
     return c - 'A' + 10;
 }
 
-- (NSData *)dataFromHexValues
-{
+- (NSData *)dataFromHexValues {
     NSMutableData *data = [NSMutableData data];
     int length = self.length;  // Convert to signed so length-1 is safe below.
     for (int i = 0; i < length - 1; i+=2) {
@@ -422,6 +421,22 @@ static int fromhex(unichar c) {
         [data appendBytes:&b length:1];
     }
     return data;
+}
+
+- (NSData *)dataFromWhitespaceDelimitedHexValues {
+    if (![self isMatchedByRegex:@"^[0-9A-Fa-f\\s]+$"]) {
+        return nil;
+    }
+    NSArray<NSString *> *parts = [self componentsSeparatedByCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+    NSMutableData *result = [NSMutableData data];
+    for (NSString *string in parts) {
+        if (string.length % 2 != 0) {
+            return nil;
+        }
+        NSData *subdata = [string dataFromHexValues];
+        [result appendData:subdata];
+    }
+    return result;
 }
 
 - (NSString *)stringByReplacingEscapedHexValuesWithChars

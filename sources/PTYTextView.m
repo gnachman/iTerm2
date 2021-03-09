@@ -2410,6 +2410,10 @@
     return [_selection hasSelection] && [_selection length] <= width;
 }
 
+- (BOOL)haveReasonableSelection {
+    return [_selection hasSelection] && [_selection length] <= 1000000;
+}
+
 - (iTermLogicalMovementHelper *)logicalMovementHelperForCursorCoordinate:(VT100GridCoord)relativeCursorCoord {
     const long long overflow = _dataSource.totalScrollbackOverflow;
     VT100GridAbsCoord cursorCoord = VT100GridAbsCoordMake(relativeCursorCoord.x,
@@ -2567,15 +2571,18 @@
     DLog(@"%@", [NSThread callStackSymbols]);
 
     NSString *copyString = [self selectedText];
+    [self copyString:copyString];
+}
 
+- (void)copyString:(NSString *)copyString {
     if ([iTermAdvancedSettingsModel disallowCopyEmptyString] && copyString.length == 0) {
         DLog(@"Disallow copying empty string");
         return;
     }
-    DLog(@"Have selected text: “%@”. selection=%@", copyString, _selection);
+    DLog(@"Will copy this string: “%@”. selection=%@", copyString, _selection);
     if (copyString) {
         NSPasteboard *pboard = [NSPasteboard generalPasteboard];
-        [pboard declareTypes:[NSArray arrayWithObject:NSPasteboardTypeString] owner:self];
+        [pboard declareTypes:@[ NSPasteboardTypeString ] owner:self];
         [pboard setString:copyString forType:NSPasteboardTypeString];
     }
 
