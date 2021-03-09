@@ -1392,7 +1392,8 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionHTMLTabTitles = @"PSMTabBarContr
         } else {
             [cell setCloseButtonPressed:NO];
             if ([theEvent clickCount] == 1) {
-                if (_selectsTabsOnMouseDown) {
+                const NSEventModifierFlags mask = NSEventModifierFlagOption;
+                if (_selectsTabsOnMouseDown && (theEvent.modifierFlags & mask) == 0) {
                     if (cell.state != NSControlStateValueOn) {
                         _preDragSelectedTabIndex = [[self tabView] indexOfTabViewItem:self.tabView.selectedTabViewItem];
                     } else {
