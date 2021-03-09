@@ -208,6 +208,15 @@
                                     <action selector="closeCurrentTab:" target="-1" id="1186"/>
                                 </connections>
                             </menuItem>
+                            <menuItem isSeparatorItem="YES" id="9vB-1n-LfH">
+                                <modifierMask key="keyEquivalentModifierMask" command="YES"/>
+                            </menuItem>
+                            <menuItem title="Undo Close" identifier="Undo Close" id="OIr-XE-oT1">
+                                <modifierMask key="keyEquivalentModifierMask"/>
+                                <connections>
+                                    <action selector="undoCloseSession:" target="201" id="df0-of-sxF"/>
+                                </connections>
+                            </menuItem>
                             <menuItem isSeparatorItem="YES" id="224">
                                 <modifierMask key="keyEquivalentModifierMask" command="YES"/>
                             </menuItem>

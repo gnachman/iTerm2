@@ -350,6 +350,8 @@ static BOOL hasBecomeActive = NO;
     if ([menuItem action] == @selector(toggleUseBackgroundPatternIndicator:)) {
       [menuItem setState:[self useBackgroundPatternIndicator]];
       return YES;
+    } else if ([menuItem action] == @selector(undoCloseSession:)) {
+        return [[iTermController sharedInstance] hasRestorableSession];
     } else if ([menuItem action] == @selector(undo:)) {
         NSResponder *undoResponder = [self responderForMenuItem:menuItem];
         if (undoResponder) {
@@ -1778,89 +1780,93 @@ static BOOL hasBecomeActive = NO;
     if (undoResponder) {
         [undoResponder performSelector:@selector(undo:) withObject:sender];
     } else {
-        iTermController *controller = [iTermController sharedInstance];
-        iTermRestorableSession *restorableSession = [controller popRestorableSession];
-        if (restorableSession) {
-            PseudoTerminal *term;
-            PTYTab *tab;
+        [self undoCloseSession:nil];
+    }
+}
 
-            switch (restorableSession.group) {
-                case kiTermRestorableSessionGroupSession:
-                    // Restore a single session.
-                    DLog(@"Restore a single session");
-                    term = [controller terminalWithGuid:restorableSession.terminalGuid];
-                    if (term) {
-                        DLog(@"reuse an existing window");
-                        // Reuse an existing window
-                        tab = [term tabWithUniqueId:restorableSession.tabUniqueId];
-                        if (tab) {
-                            // Add to existing tab by destroying and recreating it.
-                            [term recreateTab:tab
-                              withArrangement:restorableSession.arrangement
-                                     sessions:restorableSession.sessions
-                                       revive:YES];
-                        } else {
-                            // Create a new tab and add the session to it.
-                            [restorableSession.sessions[0] revive];
-                            [term addRevivedSession:restorableSession.sessions[0]];
-                        }
+- (IBAction)undoCloseSession:(id)sender {
+    iTermController *controller = [iTermController sharedInstance];
+    iTermRestorableSession *restorableSession = [controller popRestorableSession];
+    if (restorableSession) {
+        PseudoTerminal *term;
+        PTYTab *tab;
+
+        switch (restorableSession.group) {
+            case kiTermRestorableSessionGroupSession:
+                // Restore a single session.
+                DLog(@"Restore a single session");
+                term = [controller terminalWithGuid:restorableSession.terminalGuid];
+                if (term) {
+                    DLog(@"reuse an existing window");
+                    // Reuse an existing window
+                    tab = [term tabWithUniqueId:restorableSession.tabUniqueId];
+                    if (tab) {
+                        // Add to existing tab by destroying and recreating it.
+                        [term recreateTab:tab
+                          withArrangement:restorableSession.arrangement
+                                 sessions:restorableSession.sessions
+                                   revive:YES];
                     } else {
-                        DLog(@"Create a new window");
-                        // Create a new term and add the session to it.
-                        term = [[[PseudoTerminal alloc] initWithSmartLayout:YES
-                                                                 windowType:iTermWindowDefaultType()
-                                                            savedWindowType:iTermWindowDefaultType()
-                                                                     screen:-1
-                                                                    profile:nil] autorelease];
-                        if (term) {
-                            [[iTermController sharedInstance] addTerminalWindow:term];
-                            term.terminalGuid = restorableSession.terminalGuid;
-                            [restorableSession.sessions[0] revive];
-                            [term addRevivedSession:restorableSession.sessions[0]];
-                            [term fitWindowToTabs];
-                        }
+                        // Create a new tab and add the session to it.
+                        [restorableSession.sessions[0] revive];
+                        [term addRevivedSession:restorableSession.sessions[0]];
                     }
-                    break;
-
-                case kiTermRestorableSessionGroupTab:
-                    // Restore a tab, possibly with multiple sessions in split panes.
-                    DLog(@"Restore a tab, possibly with multiple sessions in split panes");
-                    term = [controller terminalWithGuid:restorableSession.terminalGuid];
-                    BOOL fitTermToTabs = NO;
-                    if (!term) {
-                        // Create a new window
-                        DLog(@"Create a new window");
-                        term = [[[PseudoTerminal alloc] initWithSmartLayout:YES
-                                                                 windowType:iTermWindowDefaultType()
-                                                            savedWindowType:iTermWindowDefaultType()
-                                                                     screen:-1
-                                                                    profile:nil] autorelease];
+                } else {
+                    DLog(@"Create a new window");
+                    // Create a new term and add the session to it.
+                    term = [[[PseudoTerminal alloc] initWithSmartLayout:YES
+                                                             windowType:iTermWindowDefaultType()
+                                                        savedWindowType:iTermWindowDefaultType()
+                                                                 screen:-1
+                                                                profile:nil] autorelease];
+                    if (term) {
                         [[iTermController sharedInstance] addTerminalWindow:term];
                         term.terminalGuid = restorableSession.terminalGuid;
-                        fitTermToTabs = YES;
-                    }
-                    // Add a tab to it.
-                    DLog(@"Add a tab to the window");
-                    [term addTabWithArrangement:restorableSession.arrangement
-                                       uniqueId:restorableSession.tabUniqueId
-                                       sessions:restorableSession.sessions
-                                   predecessors:restorableSession.predecessors];
-                    if (fitTermToTabs) {
+                        [restorableSession.sessions[0] revive];
+                        [term addRevivedSession:restorableSession.sessions[0]];
                         [term fitWindowToTabs];
                     }
-                    break;
+                }
+                break;
 
-                case kiTermRestorableSessionGroupWindow:
-                    // Restore a widow.
-                    DLog(@"Restore a widow");
-                    term = [PseudoTerminal terminalWithArrangement:restorableSession.arrangement
-                                                             named:nil
-                                                          sessions:restorableSession.sessions
-                                          forceOpeningHotKeyWindow:YES];
+            case kiTermRestorableSessionGroupTab:
+                // Restore a tab, possibly with multiple sessions in split panes.
+                DLog(@"Restore a tab, possibly with multiple sessions in split panes");
+                term = [controller terminalWithGuid:restorableSession.terminalGuid];
+                BOOL fitTermToTabs = NO;
+                if (!term) {
+                    // Create a new window
+                    DLog(@"Create a new window");
+                    term = [[[PseudoTerminal alloc] initWithSmartLayout:YES
+                                                             windowType:iTermWindowDefaultType()
+                                                        savedWindowType:iTermWindowDefaultType()
+                                                                 screen:-1
+                                                                profile:nil] autorelease];
                     [[iTermController sharedInstance] addTerminalWindow:term];
                     term.terminalGuid = restorableSession.terminalGuid;
-                    break;
-            }
+                    fitTermToTabs = YES;
+                }
+                // Add a tab to it.
+                DLog(@"Add a tab to the window");
+                [term addTabWithArrangement:restorableSession.arrangement
+                                   uniqueId:restorableSession.tabUniqueId
+                                   sessions:restorableSession.sessions
+                               predecessors:restorableSession.predecessors];
+                if (fitTermToTabs) {
+                    [term fitWindowToTabs];
+                }
+                break;
+
+            case kiTermRestorableSessionGroupWindow:
+                // Restore a widow.
+                DLog(@"Restore a widow");
+                term = [PseudoTerminal terminalWithArrangement:restorableSession.arrangement
+                                                         named:nil
+                                                      sessions:restorableSession.sessions
+                                      forceOpeningHotKeyWindow:YES];
+                [[iTermController sharedInstance] addTerminalWindow:term];
+                term.terminalGuid = restorableSession.terminalGuid;
+                break;
         }
     }
 }
