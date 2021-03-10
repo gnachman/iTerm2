@@ -154,6 +154,7 @@
 #import "SessionView.h"
 #import "TaskNotifier.h"
 #import "TerminalFile.h"
+#import "TriggerController.h"
 #import "TmuxController.h"
 #import "TmuxControllerRegistry.h"
 #import "TmuxGateway.h"
@@ -325,7 +326,8 @@ static const NSUInteger kMaxHosts = 100;
     iTermTermkeyKeyMapperDelegate,
     iTermTmuxControllerSession,
     iTermUpdateCadenceControllerDelegate,
-    iTermWorkingDirectoryPollerDelegate>
+    iTermWorkingDirectoryPollerDelegate,
+    TriggerDelegate>
 @property(nonatomic, retain) Interval *currentMarkOrNotePosition;
 @property(nonatomic, retain) TerminalFileDownload *download;
 @property(nonatomic, retain) TerminalFileUpload *upload;
@@ -602,6 +604,7 @@ static const NSUInteger kMaxHosts = 100;
     VT100GridSize _savedGridSize;
 
     iTermActivityInfo _activityInfo;
+    TriggerController *_triggerWindowController;
 }
 
 @synthesize isDivorced = _divorced;
@@ -965,6 +968,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_composerManager release];
     [_tmuxClientWritePipe release];
     [_arrangementGUID release];
+    [_triggerWindowController release];
 
     [super dealloc];
 }
@@ -9448,6 +9452,22 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                                  window:self.view.window];
 }
 
+- (void)textViewEditTriggers {
+    [_triggerWindowController autorelease];
+    _triggerWindowController = [[TriggerController alloc] init];
+    _triggerWindowController.guid = self.profile[KEY_GUID];
+    _triggerWindowController.delegate = self;
+    [_triggerWindowController windowWillOpen];
+    __weak __typeof(self) weakSelf = self;
+    [self.view.window beginSheet:_triggerWindowController.window completionHandler:^(NSModalResponse returnCode) {
+        [weakSelf closeTriggerWindowController];
+    }];
+}
+
+- (void)closeTriggerWindowController {
+    [_triggerWindowController close];
+}
+
 - (void)textViewAddTrigger:(NSString *)text {
     __weak __typeof(self) weakSelf = self;
     iTermColorSuggester *cs =
@@ -13897,6 +13917,32 @@ getOptionKeyBehaviorLeft:(iTermOptionKeyBehavior *)left
 
 - (void)legacyView:(iTermLegacyView *)legacyView drawRect:(NSRect)dirtyRect {
     [_textview drawRect:dirtyRect inView:legacyView];
+}
+
+#pragma mark - TriggerDelegate
+
+- (void)triggerChanged:(TriggerController *)triggerController newValue:(NSArray *)value {
+    [[triggerController.window undoManager] registerUndoWithTarget:self
+                                                          selector:@selector(setTriggersValue:)
+                                                            object:self.profile[KEY_TRIGGERS]];
+    [[triggerController.window undoManager] setActionName:@"Edit Triggers"];
+    [self setSessionSpecificProfileValues:@{ KEY_TRIGGERS: value }];
+    triggerController.guid = self.profile[KEY_GUID];
+}
+
+- (void)setTriggersValue:(NSArray *)value {
+    [self setSessionSpecificProfileValues:@{ KEY_TRIGGERS: value }];
+    _triggerWindowController.guid = self.profile[KEY_GUID];
+    [_triggerWindowController profileDidChange];
+}
+
+- (void)triggerSetUseInterpolatedStrings:(BOOL)useInterpolatedStrings {
+    [self setSessionSpecificProfileValues:@{ KEY_TRIGGERS_USE_INTERPOLATED_STRINGS: @(useInterpolatedStrings) }];
+    _triggerWindowController.guid = self.profile[KEY_GUID];
+}
+
+- (void)triggersCloseSheet {
+    [self closeTriggerWindowController];
 }
 
 @end

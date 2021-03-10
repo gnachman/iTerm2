@@ -3091,6 +3091,9 @@
 		A6B70FC319830F0D007A4284 /* NewOutput@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A6B70FC019830F0D007A4284 /* NewOutput@2x.png */; };
 		A6B70FC419830F0D007A4284 /* NewOutput@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A6B70FC019830F0D007A4284 /* NewOutput@2x.png */; };
 		A6B70FCD1986FB39007A4284 /* PTYSession+Scripting.h in Headers */ = {isa = PBXBuildFile; fileRef = A6B70FCB1986FB39007A4284 /* PTYSession+Scripting.h */; };
+		A6B9661A25F95DAD00D45CBD /* iTermTriggersPanel.xib in Resources */ = {isa = PBXBuildFile; fileRef = A6B9661125F959C200D45CBD /* iTermTriggersPanel.xib */; };
+		A6B9662325F95DAD00D45CBD /* iTermTriggersPanel.xib in Resources */ = {isa = PBXBuildFile; fileRef = A6B9661125F959C200D45CBD /* iTermTriggersPanel.xib */; };
+		A6B9662425F95DAF00D45CBD /* iTermTriggersPanel.xib in Resources */ = {isa = PBXBuildFile; fileRef = A6B9661125F959C200D45CBD /* iTermTriggersPanel.xib */; };
 		A6BA7D24247637B700407C4D /* VT100InlineImageHelper.h in Headers */ = {isa = PBXBuildFile; fileRef = A6BA7D22247637B700407C4D /* VT100InlineImageHelper.h */; };
 		A6BA7D25247637B700407C4D /* VT100InlineImageHelper.m in Sources */ = {isa = PBXBuildFile; fileRef = A6BA7D23247637B700407C4D /* VT100InlineImageHelper.m */; };
 		A6BC8ACC21C6EC5000796BF3 /* iTermBoxDrawingBezierCurveFactory.m in Sources */ = {isa = PBXBuildFile; fileRef = A686F38C1D3951A800F08ED7 /* iTermBoxDrawingBezierCurveFactory.m */; };
@@ -6362,6 +6365,7 @@
 		A6B70FC019830F0D007A4284 /* NewOutput@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "NewOutput@2x.png"; path = "images/NewOutput@2x.png"; sourceTree = "<group>"; };
 		A6B70FCB1986FB39007A4284 /* PTYSession+Scripting.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "PTYSession+Scripting.h"; sourceTree = "<group>"; };
 		A6B70FCC1986FB39007A4284 /* PTYSession+Scripting.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = "PTYSession+Scripting.m"; sourceTree = "<group>"; };
+		A6B9661125F959C200D45CBD /* iTermTriggersPanel.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = iTermTriggersPanel.xib; path = Interfaces/iTermTriggersPanel.xib; sourceTree = "<group>"; };
 		A6BA7D22247637B700407C4D /* VT100InlineImageHelper.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = VT100InlineImageHelper.h; sourceTree = "<group>"; };
 		A6BA7D23247637B700407C4D /* VT100InlineImageHelper.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = VT100InlineImageHelper.m; sourceTree = "<group>"; };
 		A6BC8ACD21C7608B00796BF3 /* iTermImageCache.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermImageCache.h; sourceTree = "<group>"; };
@@ -7435,6 +7439,7 @@
 				A67D0D301A2EE12A003A8B35 /* TmuxDashboard.xib */,
 				A6A2D6DB24345D4000A4DF5B /* iTermMinimalComposerViewController.h */,
 				A6A2D6DC24345D4000A4DF5B /* iTermMinimalComposerViewController.m */,
+				A6B9661125F959C200D45CBD /* iTermTriggersPanel.xib */,
 			);
 			name = "Interface Builder Files";
 			sourceTree = "<group>";
@@ -12502,6 +12507,7 @@
 				A6E7AE85214394DD00DE9F3B /* graphic_code@2x.png in Resources */,
 				1D6ED9E219AEA20D005A7799 /* PrefsAppearance@2x.png in Resources */,
 				A67D0D6A1A2EE12A003A8B35 /* iTermPasteSpecialViewController.xib in Resources */,
+				A6B9662425F95DAF00D45CBD /* iTermTriggersPanel.xib in Resources */,
 				A6E7AE94214394DD00DE9F3B /* graphic_coffee.png in Resources */,
 				1D6ED9E319AEA20D005A7799 /* Alert.png in Resources */,
 				A629F57F23AF2DE100C2F16B /* iterm2_shell_integration.bash in Resources */,
@@ -12576,6 +12582,7 @@
 				1D44D0A51CC7F5A600BE5630 /* PTYTextViewTest-golden-travis-testUnderlineCursor.png in Resources */,
 				A6E7AE8D214394DD00DE9F3B /* graphic_composer@2x.png in Resources */,
 				A6A64E6A2508C5B50040490B /* OpenQuicklySnippetIcon.png in Resources */,
+				A6B9662325F95DAD00D45CBD /* iTermTriggersPanel.xib in Resources */,
 				A67F118318D82B9500B23C7B /* PrefsAdvanced@2x.png in Resources */,
 				1D44D0171CC7F5A600BE5630 /* PTYTextViewTest-golden-testFrameCursor.png in Resources */,
 				1D44CFDC1CC7F5A600BE5630 /* PTYTextViewTest-golden-nonretina-testSmartCursorColor_reverseVideoNondefaultForegroundOnlyUnderCursor.png in Resources */,
@@ -13230,6 +13237,7 @@
 				A65429A320BE7ECA00CE71B1 /* ScriptIcon.png in Resources */,
 				A65E6F5B2547F1D5008A4866 /* WindowCorner_Square.png in Resources */,
 				1D8BBA851B31DC0D0005A852 /* ChevronDown@2x.png in Resources */,
+				A6B9661A25F95DAD00D45CBD /* iTermTriggersPanel.xib in Resources */,
 				A6B3A7351AC74E02008E8D4E /* FindCursorCell4.png in Resources */,
 				A62A1F781E711DCF00363EE9 /* iTermHelpMessageViewController.xib in Resources */,
 				53B93DFF21F640B9001EC59C /* iTermBadgeConfigurationWindowController.xib in Resources */,

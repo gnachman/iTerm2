@@ -7427,6 +7427,10 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     [self.currentSession textViewAddTrigger:self.currentSession.selectedText ?: @""];
 }
 
+- (IBAction)editTriggers:(id)sender {
+    [self.currentSession textViewEditTriggers];
+}
+
 - (IBAction)openPasteHistory:(id)sender {
     if (!pbHistoryView) {
         pbHistoryView = [[PasteboardHistoryWindowController alloc] init];

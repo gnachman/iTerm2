@@ -883,6 +883,12 @@ DQ
                                     <action selector="addTrigger:" target="-1" id="iVb-tZ-MfQ"/>
                                 </connections>
                             </menuItem>
+                            <menuItem title="Edit Triggers" identifier="Edit Triggers" id="rRB-v6-pdW">
+                                <modifierMask key="keyEquivalentModifierMask"/>
+                                <connections>
+                                    <action selector="editTriggers:" target="-1" id="lJ0-nl-NnJ"/>
+                                </connections>
+                            </menuItem>
                             <menuItem isSeparatorItem="YES" id="2Gf-zh-GWz">
                                 <modifierMask key="keyEquivalentModifierMask" command="YES"/>
                             </menuItem>

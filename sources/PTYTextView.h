@@ -232,6 +232,7 @@ preferredEscaping:(iTermSendTextEscaping)preferredEscaping;
                           forMenuItem:(NSString *)title;
 - (void)textViewApplyAction:(iTermAction *)action;
 - (void)textViewAddTrigger:(NSString *)text;
+- (void)textViewEditTriggers;
 @end
 
 @interface iTermHighlightedRow : NSObject

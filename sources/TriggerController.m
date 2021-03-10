@@ -93,7 +93,7 @@ NSString *const kBackgroundColorWellIdentifier = @"kBackgroundColorWellIdentifie
 }
 
 - (instancetype)init {
-    self = [super init];
+    self = [self initWithWindowNibName:@"iTermTriggersPanel"];
     if (self) {
         NSMutableArray *triggers = [NSMutableArray array];
         for (Class class in [self.class triggerClasses]) {
@@ -682,6 +682,10 @@ NSString *const kBackgroundColorWellIdentifier = @"kBackgroundColorWellIdentifie
         [triggerDictionary removeObjectForKey:kTriggerParameterKey];
     }
     [self setTriggerDictionary:triggerDictionary forRow:rowIndex reloadData:YES];
+}
+
+- (IBAction)closeTriggersSheet:(id)sender {
+    [self.delegate triggersCloseSheet];
 }
 
 #pragma mark - NSTextFieldDelegate

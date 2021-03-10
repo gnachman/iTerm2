@@ -116,7 +116,7 @@
 
 - (void)willReloadProfile {
     [self removeNamelessHosts];
-    [self closeTriggersSheet:nil];
+    [self closeTriggersSheet];
 }
 
 - (void)reloadProfile {
@@ -146,12 +146,16 @@
     }];
 }
 
-- (IBAction)closeTriggersSheet:(id)sender {
+- (IBAction)closeTriggersSheet {
     [[_triggerWindowController.window undoManager] removeAllActionsWithTarget:self];
     [self.view.window endSheet:_triggerWindowController.window];
 }
 
 #pragma mark - TriggerDelegate
+
+- (void)triggersCloseSheet {
+    [self closeTriggersSheet];
+}
 
 - (void)triggerChanged:(TriggerController *)triggerController newValue:(NSArray *)value {
     [[triggerController.window undoManager] registerUndoWithTarget:self
