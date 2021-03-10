@@ -294,6 +294,10 @@ NSString * const DirectoryLocationDomain = @"DirectoryLocationDomain";
     NSString *dotConfigIterm2 = [[homedir stringByAppendingPathComponent:@".config"] stringByAppendingPathComponent:@"iterm2"];
     NSString *dotIterm2 = [homedir stringByAppendingPathComponent:@".iterm2"];
     NSArray<NSString *> *options = @[ dotConfigIterm2, dotIterm2, @".iterm2-1" ];
+    NSString *preferred = [iTermAdvancedSettingsModel preferredBaseDir];
+    if (preferred.length > 0) {
+        options = [@[preferred.stringByExpandingTildeInPath] arrayByAddingObjectsFromArray:options];
+    }
     NSError *error = nil;
     NSString *result = [self pathToFirstDirectoryCreatingIfNeeded:options error:&error];
 

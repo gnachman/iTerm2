@@ -228,6 +228,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)pinchToChangeFontSizeDisabled;
 + (double)pointSizeOfTimeStamp;
 + (BOOL)preferSpeedToFullLigatureSupport;
++ (NSString *)preferredBaseDir;
 + (const BOOL *)preventEscapeSequenceFromClearingHistory;
 + (BOOL)saveScrollBufferWhenClearing;
 + (void)setPreventEscapeSequenceFromClearingHistory:(const BOOL *)value;

@@ -378,6 +378,7 @@ DEFINE_STRING(dynamicProfilesPath, @"", SECTION_GENERAL @"Path to folder with dy
 DEFINE_STRING(gitSearchPath, @"", SECTION_GENERAL @"$PATH used when running git for the status bar component.\nChange this to use a custom install of git. You must restart iTerm2 for a change here to take effect.");
 DEFINE_FLOAT(gitTimeout, 4, SECTION_GENERAL @"Timeout in seconds when running git for the status bar component.");
 DEFINE_BOOL(workAroundBigSurBug, NO, SECTION_GENERAL @"Work around Big Sur bug where a white line flashes at the top of the screen in full screen mode.");
+DEFINE_STRING(preferredBaseDir, @"", SECTION_GENERAL @"Folder for config files. There must not be a space in the path.\nIf empty, then ~/.config/iterm2 will be the default location.");
 
 #pragma mark - Drawing
 
