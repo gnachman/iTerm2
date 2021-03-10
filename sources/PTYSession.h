@@ -598,8 +598,14 @@ backgroundColor:(NSColor *)backgroundColor;
 - (BOOL)setScreenSize:(NSRect)aRect parent:(id<WindowControllerInterface>)parent;
 
 // triggers
+- (void)setAllTriggersEnabled:(BOOL)enabled;
 - (void)clearTriggerLine;
+- (BOOL)anyTriggerCanBeEnabled;
+- (BOOL)anyTriggerCanBeDisabled;
 - (void)appendStringToTriggerLine:(NSString *)s;
+// (regex, enabled)
+- (NSArray<iTermTuple<NSString *, NSNumber *> *> *)triggerTuples;
+- (void)toggleTriggerEnabledAtIndex:(NSInteger)index;
 
 + (void)drawArrangementPreview:(NSDictionary *)arrangement frame:(NSRect)frame;
 - (void)setSizeFromArrangement:(NSDictionary*)arrangement;

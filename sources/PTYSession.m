@@ -3084,6 +3084,47 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
+- (void)setAllTriggersEnabled:(BOOL)enabled {
+    NSArray<NSDictionary *> *triggers = self.profile[KEY_TRIGGERS];
+    triggers = [triggers mapWithBlock:^id(NSDictionary *dict) {
+        return [dict dictionaryBySettingObject:@(!enabled) forKey:kTriggerDisabledKey];
+    }];
+    if (!triggers) {
+        return;
+    }
+    [self setSessionSpecificProfileValues:@{ KEY_TRIGGERS: triggers }];
+}
+
+- (BOOL)anyTriggerCanBeEnabled {
+    NSArray<NSDictionary *> *triggers = self.profile[KEY_TRIGGERS];
+    return [triggers anyWithBlock:^BOOL(NSDictionary *dict) {
+        return [dict[kTriggerDisabledKey] boolValue];
+    }];
+}
+
+- (BOOL)anyTriggerCanBeDisabled {
+    NSArray<NSDictionary *> *triggers = self.profile[KEY_TRIGGERS];
+    return [triggers anyWithBlock:^BOOL(NSDictionary *dict) {
+        return ![dict[kTriggerDisabledKey] boolValue];
+    }];
+}
+
+- (NSArray<iTermTuple<NSString *, NSNumber *> *> *)triggerTuples {
+    NSArray<NSDictionary *> *triggers = self.profile[KEY_TRIGGERS];
+    return [triggers mapWithBlock:^id(NSDictionary *dict) {
+        return [iTermTuple tupleWithObject:dict[kTriggerRegexKey]
+                                 andObject:@(![dict[kTriggerDisabledKey] boolValue])];
+    }];
+}
+
+- (void)toggleTriggerEnabledAtIndex:(NSInteger)index {
+    NSMutableArray<NSDictionary *> *mutableTriggers = [[self.profile[KEY_TRIGGERS] mutableCopy] autorelease];
+    NSDictionary *triggerDict = mutableTriggers[index];
+    const BOOL disabled = [triggerDict[kTriggerDisabledKey] boolValue];
+    mutableTriggers[index] = [triggerDict dictionaryBySettingObject:@(!disabled) forKey:kTriggerDisabledKey];
+    [self setSessionSpecificProfileValues:@{ KEY_TRIGGERS: mutableTriggers }];
+}
+
 - (void)clearTriggerLine {
     if ([_triggers count] || _expect.expectations.count) {
         [self checkTriggers];

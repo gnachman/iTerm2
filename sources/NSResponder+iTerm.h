@@ -19,3 +19,7 @@
 - (BOOL)it_preferredFirstResponder;
 
 @end
+
+@interface NSResponder (iTermFirstResponder)
+- (void)toggleTriggerEnabled:(id)sender;
+@end

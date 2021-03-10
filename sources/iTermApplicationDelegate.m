@@ -105,6 +105,7 @@
 #import "NSFileManager+iTerm.h"
 #import "NSFont+iTerm.h"
 #import "NSObject+iTerm.h"
+#import "NSResponder+iTerm.h"
 #import "NSStringITerm.h"
 #import "NSUserDefaults+iTerm.h"
 #import "NSWindow+iTerm.h"
@@ -161,7 +162,8 @@ static BOOL hasBecomeActive = NO;
     iTermOrphanServerAdopterDelegate,
     iTermPasswordManagerDelegate,
     iTermRestorableStateControllerDelegate,
-    iTermUntitledWindowStateMachineDelegate>
+    iTermUntitledWindowStateMachineDelegate,
+    NSMenuDelegate>
 
 @property(nonatomic, readwrite) BOOL workspaceSessionActive;
 
@@ -199,6 +201,7 @@ static BOOL hasBecomeActive = NO;
     IBOutlet NSMenuItem *_splitVerticallyWithCurrentProfile;
     IBOutlet NSMenuItem *_splitHorizontally;
     IBOutlet NSMenuItem *_splitVertically;
+    IBOutlet NSMenuItem *_triggers;
 
     // If set, skip performing launch actions.
     BOOL quiet_;
@@ -344,6 +347,7 @@ static BOOL hasBecomeActive = NO;
         [_composerMenuItem.menu removeItem:_composerMenuItem];
     }
     [[iTermBuriedSessions sharedInstance] setMenus:[NSArray arrayWithObjects:_buriedSessions, _statusIconBuriedSessions, nil]];
+    _triggers.submenu.delegate = self;
 }
 
 - (BOOL)validateMenuItem:(NSMenuItem *)menuItem {
@@ -436,9 +440,30 @@ static BOOL hasBecomeActive = NO;
     } else if (menuItem.action == @selector(newTmuxWindow:) ||
                menuItem.action == @selector(newTmuxTab:)) {
         return [[TmuxControllerRegistry sharedInstance] numberOfClients];
+    } else if (menuItem.action == @selector(toggleTriggerEnabled:)) {
+        // For some dumb reason this menu item doesn't know how to check the responder chain properly.
+        NSResponder *realResponder = [self firstResponderForMenuItem:menuItem];
+        if (!realResponder) {
+            return NO;
+        }
+        if ([realResponder respondsToSelector:@selector(validateMenuItem:)]) {
+            return [realResponder validateMenuItem:menuItem];
+        }
+        return YES;
     } else {
         return YES;
     }
+}
+
+- (NSResponder *)firstResponderForMenuItem:(NSMenuItem *)menuItem {
+    NSResponder *responder = [[NSApp keyWindow] firstResponder];
+    while (responder) {
+        if ([responder respondsToSelector:menuItem.action]) {
+            return responder;
+        }
+        responder = [responder nextResponder];
+    }
+    return nil;
 }
 
 #pragma mark - APIs
@@ -2599,6 +2624,44 @@ static BOOL hasBecomeActive = NO;
 - (void)untitledWindowStateMachineCreateNewWindow:(iTermUntitledWindowStateMachine *)sender {
     DLog(@"untitledWindowStateMachineCreateNewWindow");
     [self newWindow:nil];
+}
+
+#pragma mark - NSMenuDelegate
+
+- (void)menuNeedsUpdate:(NSMenu *)menu {
+    // Remove all tagged items. This includes the last separator and items for triggers.
+    while (_triggers.submenu.itemArray.lastObject.tag != 0) {
+        [_triggers.submenu removeItemAtIndex:_triggers.submenu.itemArray.count - 1];
+    }
+
+    PTYSession *currentSession = [[[iTermController sharedInstance] currentTerminal] currentSession];
+    if (!currentSession) {
+        return;
+    }
+
+    NSArray<iTermTuple<NSString *, NSNumber *> *> *triggers = [currentSession triggerTuples];
+    if (triggers.count) {
+        [_triggers.submenu addItem:[NSMenuItem separatorItem]];
+        _triggers.submenu.itemArray.lastObject.tag = 1;
+    }
+    [triggers enumerateObjectsUsingBlock:^(iTermTuple<NSString *,NSNumber *> * _Nonnull tuple, NSUInteger idx, BOOL * _Nonnull stop) {
+        [_triggers.submenu addItemWithTitle:tuple.firstObject
+                                     action:@selector(toggleTriggerEnabled:)
+                              keyEquivalent:@""];
+        NSMenuItem *item = _triggers.submenu.itemArray.lastObject;
+        item.representedObject = @(idx);
+        item.tag = 1;
+        item.state = tuple.secondObject.boolValue ? NSControlStateValueOn : NSControlStateValueOff;
+        item.target = self;
+    }];
+}
+
+- (void)menuWillOpen:(NSMenu *)menu {
+    NSLog(@"menu will open");
+}
+
+- (void)toggleTriggerEnabled:(id)sender {
+    [[self firstResponderForMenuItem:sender] it_performNonObjectReturningSelector:_cmd withObject:sender];
 }
 
 @end

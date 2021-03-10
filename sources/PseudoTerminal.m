@@ -7431,6 +7431,18 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     [self.currentSession textViewEditTriggers];
 }
 
+- (IBAction)enableAllTriggers:(id)sender {
+    [self.currentSession setAllTriggersEnabled:YES];
+}
+
+- (IBAction)disableAllTriggers:(id)sender {
+    [self.currentSession setAllTriggersEnabled:NO];
+}
+
+- (void)toggleTriggerEnabled:(id)sender {
+    [self.currentSession toggleTriggerEnabledAtIndex:[[sender representedObject] integerValue]];
+}
+
 - (IBAction)openPasteHistory:(id)sender {
     if (!pbHistoryView) {
         pbHistoryView = [[PasteboardHistoryWindowController alloc] init];
@@ -9891,6 +9903,12 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
         return self.currentSession != nil;
     } else if (item.action == @selector(setWindowStyle:)) {
         item.state = (iTermWindowTypeNormalized(self.windowType) == item.tag) ? NSControlStateValueOn : NSControlStateValueOff;
+        return YES;
+    } else if (item.action == @selector(enableAllTriggers:)) {
+        return [[self currentSession] anyTriggerCanBeEnabled];
+    } else if (item.action == @selector(disableAllTriggers:)) {
+        return [[self currentSession] anyTriggerCanBeDisabled];
+    } else if (item.action == @selector(toggleTriggerEnabled:)) {
         return YES;
     }
 
