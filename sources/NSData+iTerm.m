@@ -79,6 +79,9 @@
     args = [args arrayByAddingObjectsFromArray:files];  // Files to zip
 
     NSTask *task = [[[NSTask alloc] init] autorelease];
+    NSMutableDictionary<NSString *, NSString *> *environment = [[[[NSProcessInfo processInfo] environment] mutableCopy] autorelease];
+    environment[@"COPYFILE_DISABLE"] = @"1";
+    [task setEnvironment:environment];
     [task setLaunchPath:@"/usr/bin/tar"];
     [task setArguments:args];
     [task setStandardInput:[NSPipe pipe]];
