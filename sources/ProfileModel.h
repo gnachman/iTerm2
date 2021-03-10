@@ -49,6 +49,11 @@ extern NSString *const iTermProfileModelNewTabMenuItemIdentifierPrefix;
 
 + (ProfileModel *)sharedInstance;
 + (ProfileModel *)sessionsInstance;
+
++ (void)updateSharedProfileWithGUID:(NSString *)sharedProfileGUID
+                          newValues:(NSDictionary *)newValues;
+
+
 - (NSMutableArray<NSString *> *)debugHistoryForGuid:(NSString *)guid;
 + (NSString*)freshGuid;
 + (void)migratePromptOnCloseInMutableBookmark:(NSMutableDictionary *)dict;

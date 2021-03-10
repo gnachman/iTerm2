@@ -65,6 +65,27 @@ static NSMutableArray<NSString *> *_combinedLog;
     return gMigrated;
 }
 
++ (void)updateSharedProfileWithGUID:(NSString *)sharedProfileGUID
+                          newValues:(NSDictionary *)newValues {
+    if (!sharedProfileGUID) {
+        return;
+    }
+    MutableProfile *sharedProfile = [[[[ProfileModel sharedInstance] profileWithGuid:sharedProfileGUID] mutableCopy] autorelease];
+    if (!sharedProfile) {
+        return;
+    }
+    [sharedProfile it_mergeFrom:newValues];
+    [[ProfileModel sharedInstance] setBookmark:sharedProfile withGuid:sharedProfileGUID];
+
+    [[NSNotificationCenter defaultCenter] postNotificationName:kReloadAllProfiles
+                                                        object:nil
+                                                      userInfo:nil];
+
+    // Update user defaults
+    [[NSUserDefaults standardUserDefaults] setObject:[[ProfileModel sharedInstance] rawData]
+                                              forKey:@"New Bookmarks"];
+}
+
 - (NSMutableArray<NSString *> *)debugHistoryForGuid:(NSString *)guid {
     return _combinedLog;
 //    if ([_debugGuids containsObject:guid]) {

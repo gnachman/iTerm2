@@ -13945,4 +13945,10 @@ getOptionKeyBehaviorLeft:(iTermOptionKeyBehavior *)left
     [self closeTriggerWindowController];
 }
 
+- (void)triggersCopyToProfile {
+    [ProfileModel updateSharedProfileWithGUID:self.profile[KEY_ORIGINAL_GUID]
+                                    newValues:@{ KEY_TRIGGERS: self.profile[KEY_TRIGGERS],
+                                                 KEY_TRIGGERS_USE_INTERPOLATED_STRINGS: self.profile[KEY_TRIGGERS_USE_INTERPOLATED_STRINGS] }];
+}
+
 @end
