@@ -336,7 +336,7 @@
         NSError *error = nil;
         NSData *data = [NSData dataWithContentsOfFile:filename options:0 error:&error];
         if (!data) {
-            [self reportError:[NSString stringWithFormat:@"Dynamic Profiles file %@ is not readable: %@.",
+            [self reportError:[NSString stringWithFormat:@"Could not read Dynamic Profile from file %@: %@",
                                filename, error.localizedDescription]
                          file:filename];
             return nil;
