@@ -146,7 +146,8 @@
     NSDictionary *triggerDictionary = @{ kTriggerActionKey: trigger.action,
                                          kTriggerRegexKey: _regexTextField.stringValue,
                                          kTriggerParameterKey: [[self currentTrigger] param] ?: @0,
-                                         kTriggerPartialLineKey: @(instant) };
+                                         kTriggerPartialLineKey: @(instant),
+                                         kTriggerDisabledKey: @NO };
     [iTermUserDefaults setAddTriggerInstant:instant];
     [iTermUserDefaults setAddTriggerUpdateProfile:updateProfile];
     _completion(triggerDictionary, updateProfile);

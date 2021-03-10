@@ -88,6 +88,7 @@ NSString *const kBackgroundColorWellIdentifier = @"kBackgroundColorWellIdentifie
     IBOutlet NSTableColumn *_partialLineColumn;
     IBOutlet NSTableColumn *_actionColumn;
     IBOutlet NSTableColumn *_parametersColumn;
+    IBOutlet NSTableColumn *_enabledColumn;
     IBOutlet NSButton *_removeTriggerButton;
     IBOutlet NSButton *_interpolatedStringParameters;
     IBOutlet NSButton *_updateProfileButton;
@@ -400,7 +401,7 @@ NSString *const kBackgroundColorWellIdentifier = @"kBackgroundColorWellIdentifie
 - (BOOL)tableView:(NSTableView *)aTableView
     shouldEditTableColumn:(NSTableColumn *)aTableColumn
                       row:(NSInteger)rowIndex {
-    if (aTableColumn == _regexColumn || aTableColumn == _partialLineColumn) {
+    if (aTableColumn == _regexColumn || aTableColumn == _partialLineColumn | aTableColumn == _enabledColumn) {
         return YES;
     }
     if (aTableColumn == _parametersColumn) {
@@ -558,6 +559,15 @@ NSString *const kBackgroundColorWellIdentifier = @"kBackgroundColorWellIdentifie
         checkbox.target = self;
         checkbox.action = @selector(instantDidChange:);
         return checkbox;
+    } else if (tableColumn == _enabledColumn) {
+        NSButton *checkbox = [[NSButton alloc] initWithFrame:NSZeroRect];
+        [checkbox sizeToFit];
+        [checkbox setButtonType:NSButtonTypeSwitch];
+        checkbox.title = @"";
+        checkbox.state = [triggerDictionary[kTriggerDisabledKey] boolValue] ? NSControlStateValueOff : NSControlStateValueOn;
+        checkbox.target = self;
+        checkbox.action = @selector(enabledDidChange:);
+        return checkbox;
     } else if (tableColumn == _parametersColumn) {
         NSArray *triggerDicts = [self triggerDictionariesForCurrentProfile];
         Trigger *trigger = [self triggerWithAction:triggerDicts[row][kTriggerActionKey]];
@@ -699,6 +709,23 @@ NSString *const kBackgroundColorWellIdentifier = @"kBackgroundColorWellIdentifie
     NSMutableDictionary *triggerDictionary =
         [[self triggerDictionariesForCurrentProfile][row] mutableCopy];
     triggerDictionary[kTriggerPartialLineKey] = newValue;
+    [self setTriggerDictionary:triggerDictionary forRow:row reloadData:YES];
+}
+
+- (void)enabledDidChange:(NSButton *)checkbox {
+    NSNumber *newValue = checkbox.state == NSControlStateValueOff ? @YES : @NO;
+    NSInteger row = [_tableView rowForView:checkbox];
+
+    // If a text field is editing, make it save its contents before we get the trigger dictionary.
+    [_tableView reloadData];
+
+    NSArray *triggerDicts = [self triggerDictionariesForCurrentProfile];
+    if (row < 0 || row >= triggerDicts.count) {
+        return;
+    }
+    NSMutableDictionary *triggerDictionary =
+        [[self triggerDictionariesForCurrentProfile][row] mutableCopy];
+    triggerDictionary[kTriggerDisabledKey] = newValue;
     [self setTriggerDictionary:triggerDictionary forRow:row reloadData:YES];
 }
 

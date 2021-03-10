@@ -20,6 +20,7 @@ NSString * const kTriggerRegexKey = @"regex";
 NSString * const kTriggerActionKey = @"action";
 NSString * const kTriggerParameterKey = @"parameter";
 NSString * const kTriggerPartialLineKey = @"partial";
+NSString * const kTriggerDisabledKey = @"disabled";
 
 @interface Trigger()<iTermObject>
 @end
@@ -48,6 +49,7 @@ NSString * const kTriggerPartialLineKey = @"partial";
     trigger.regex = dict[kTriggerRegexKey];
     trigger.param = dict[kTriggerParameterKey];
     trigger.partialLine = [dict[kTriggerPartialLineKey] boolValue];
+    trigger.disabled = [dict[kTriggerDisabledKey] boolValue];
     return trigger;
 }
 
@@ -138,6 +140,9 @@ NSString * const kTriggerPartialLineKey = @"partial";
       partialLine:(BOOL)partialLine
        lineNumber:(long long)lineNumber
  useInterpolation:(BOOL)useInterpolation {
+    if (self.disabled) {
+        return NO;
+    }
     if (_partialLine &&
         !self.instantTriggerCanFireMultipleTimesPerLine &&
         _lastLineNumber == lineNumber) {
@@ -293,7 +298,8 @@ NSString * const kTriggerPartialLineKey = @"partial";
     NSDictionary *triggerDictionary = @{ kTriggerActionKey: NSStringFromClass(self.class),
                                          kTriggerRegexKey: self.regex ?: @"",
                                          kTriggerParameterKey: self.param ?: @"",
-                                         kTriggerPartialLineKey: @(self.partialLine) };
+                                         kTriggerPartialLineKey: @(self.partialLine),
+                                         kTriggerDisabledKey: @(self.disabled) };
 
     // Glom all the data together as key=value\nkey=value\n...
     NSMutableString *temp = [NSMutableString string];
