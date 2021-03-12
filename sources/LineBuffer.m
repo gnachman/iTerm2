@@ -553,6 +553,26 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     return RawNumLines(self, width);
 }
 
+- (void)removeLastWrappedLines:(int)numberOfLinesToRemove
+                         width:(int)width {
+    // Invalidate the cache
+    num_wrapped_lines_width = -1;
+
+    int linesToRemoveRemaining = numberOfLinesToRemove;
+    while (linesToRemoveRemaining > 0 && _lineBlocks.count > 0) {
+        LineBlock *block = _lineBlocks.lastBlock;
+        const int numberOfLinesInBlock = [block getNumLinesWithWrapWidth:width];
+        if (numberOfLinesInBlock > linesToRemoveRemaining) {
+            // Keep part of block
+            [block removeLastWrappedLines:linesToRemoveRemaining width:width];
+            return;
+        }
+        // Remove the whole block and try again.
+        [_lineBlocks removeLastBlock];
+        linesToRemoveRemaining -= numberOfLinesInBlock;
+    }
+}
+
 - (BOOL)popAndCopyLastLineInto:(screen_char_t*)ptr
                          width:(int)width
              includesEndOfLine:(int*)includesEndOfLine

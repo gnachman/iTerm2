@@ -188,6 +188,8 @@ extern const NSInteger kLongMaximumWordLength;
                              continuationChars:(NSMutableIndexSet *)continuationChars
                            convertNullsToSpace:(BOOL)convertNullsToSpace;
 
+- (ScreenCharArray *)combinedLinesInRange:(NSRange)range;
+
 - (screen_char_t)characterAt:(VT100GridCoord)coord;
 - (screen_char_t)characterAtAbsCoord:(VT100GridAbsCoord)coord;
 

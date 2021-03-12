@@ -126,6 +126,10 @@
                      timestamp:(NSTimeInterval *)timestampPtr
                   continuation:(screen_char_t *)continuationPtr;
 
+// Removes the last wrapped lines.
+- (void)removeLastWrappedLines:(int)numberOfLinesToRemove
+                         width:(int)width;
+
 // Get the number of buffer lines at a given width.
 - (int)numLinesWithWidth:(int)width;
 

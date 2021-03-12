@@ -2429,26 +2429,30 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
 - (void)removeInaccessibleNotes {
     long long lastDeadLocation = [self totalScrollbackOverflow] * (self.width + 1);
-    long long totalScrollbackOverflow = [self totalScrollbackOverflow];
     if (lastDeadLocation > 0) {
         Interval *deadInterval = [Interval intervalWithLocation:0 length:lastDeadLocation + 1];
         for (id<IntervalTreeObject> obj in [intervalTree_ objectsInInterval:deadInterval]) {
             if ([obj.entry.interval limit] <= lastDeadLocation) {
-                if ([obj isKindOfClass:[VT100ScreenMark class]]) {
-                    long long theKey = (totalScrollbackOverflow +
-                                        [self coordRangeForInterval:obj.entry.interval].end.y);
-                    [markCache_ removeObjectForKey:@(theKey)];
-                    self.lastCommandMark = nil;
-                }
-                [intervalTree_ removeObject:obj];
-                iTermIntervalTreeObjectType type = [self intervalTreeObserverTypeForObject:obj];
-                if (type != iTermIntervalTreeObjectTypeUnknown) {
-                    VT100GridCoordRange range = [self coordRangeForInterval:obj.entry.interval];
-                    [_intervalTreeObserver intervalTreeDidRemoveObjectOfType:type
-                                                                      onLine:range.start.y + self.totalScrollbackOverflow];
-                }
+                [self removeObjectFromIntervalTree:obj];
             }
         }
+    }
+}
+
+- (void)removeObjectFromIntervalTree:(id<IntervalTreeObject>)obj {
+    long long totalScrollbackOverflow = [self totalScrollbackOverflow];
+    if ([obj isKindOfClass:[VT100ScreenMark class]]) {
+        long long theKey = (totalScrollbackOverflow +
+                            [self coordRangeForInterval:obj.entry.interval].end.y);
+        [markCache_ removeObjectForKey:@(theKey)];
+        self.lastCommandMark = nil;
+    }
+    [intervalTree_ removeObject:obj];
+    iTermIntervalTreeObjectType type = [self intervalTreeObserverTypeForObject:obj];
+    if (type != iTermIntervalTreeObjectTypeUnknown) {
+        VT100GridCoordRange range = [self coordRangeForInterval:obj.entry.interval];
+        [_intervalTreeObserver intervalTreeDidRemoveObjectOfType:type
+                                                          onLine:range.start.y + self.totalScrollbackOverflow];
     }
 }
 
@@ -2606,6 +2610,130 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     }
 }
 
+- (void)clearToLastMark {
+    const long long overflow = self.totalScrollbackOverflow;
+    const int cursorLine = self.currentGrid.cursor.y + self.numberOfScrollbackLines;
+    VT100ScreenMark *lastMark = [self lastMarkPassingTest:^BOOL(__kindof id<IntervalTreeObject> obj) {
+        if (![obj isKindOfClass:[VT100ScreenMark class]]) {
+            return NO;
+        }
+        VT100ScreenMark *mark = obj;
+        const VT100GridCoord intervalStart = [self coordRangeForInterval:mark.entry.interval].start;
+        if (intervalStart.y >= self.numberOfScrollbackLines + self.currentGrid.cursor.y) {
+            return NO;
+        }
+        // Found a screen mark above the cursor.
+        return YES;
+    }];
+    long long line = overflow;
+    if (lastMark) {
+        const VT100GridCoordRange range = [self coordRangeForInterval:lastMark.entry.interval];
+        line = overflow + range.end.y;
+        if (range.end.y != cursorLine - 1) {
+            // Unless we're erasing exactly the line above the cursor, preserve the line with the mark.
+            line += 1;
+        }
+    }
+    [self clearFromAbsoluteLineToEnd:line];
+}
+
+- (void)clearFromAbsoluteLineToEnd:(long long)absLine {
+    const VT100GridCoord cursorCoord = VT100GridCoordMake(currentGrid_.cursor.x,
+                                                          currentGrid_.cursor.y + self.numberOfScrollbackLines);
+    const long long totalScrollbackOverflow = self.totalScrollbackOverflow;
+    const VT100GridAbsCoord absCursorCoord = VT100GridAbsCoordFromCoord(cursorCoord, totalScrollbackOverflow);
+    iTermTextExtractor *extractor = [[[iTermTextExtractor alloc] initWithDataSource:self] autorelease];
+    const VT100GridWindowedRange cursorLineRange = [extractor rangeForWrappedLineEncompassing:cursorCoord
+                                                                         respectContinuations:YES
+                                                                                     maxChars:100000];
+    ScreenCharArray *savedLine = [extractor combinedLinesInRange:NSMakeRange(cursorLineRange.coordRange.start.y,
+                                                                             cursorLineRange.coordRange.end.y - cursorLineRange.coordRange.start.y + 1)];
+    savedLine = [savedLine screenCharArrayByRemovingTrailingNullsAndHardNewline];
+
+    const long long firstScreenAbsLine = self.numberOfScrollbackLines + totalScrollbackOverflow;
+    [self clearGridFromLineToEnd:MAX(0, absLine - firstScreenAbsLine)];
+
+    [self clearScrollbackBufferFromLine:absLine - self.totalScrollbackOverflow];
+    const VT100GridCoordRange coordRange = VT100GridCoordRangeMake(0,
+                                                                   absLine - totalScrollbackOverflow,
+                                                                   self.width,
+                                                                   self.numberOfScrollbackLines + self.height);
+
+
+    Interval *intervalToClear = [self intervalForGridCoordRange:coordRange];
+    NSMutableArray<id<IntervalTreeObject>> *marksToMove = [NSMutableArray array];
+    for (id<IntervalTreeObject> obj in [intervalTree_ objectsInInterval:intervalToClear]) {
+        const VT100GridCoordRange markRange = [self coordRangeForInterval:obj.entry.interval];
+        if (VT100GridCoordRangeContainsCoord(cursorLineRange.coordRange, markRange.start)) {
+            [marksToMove addObject:obj];
+        } else {
+            [self removeObjectFromIntervalTree:obj];
+        }
+    }
+
+    if (absCursorCoord.y >= absLine) {
+        Interval *cursorLineInterval = [self intervalForGridCoordRange:cursorLineRange.coordRange];
+        for (id<IntervalTreeObject> obj in [intervalTree_ objectsInInterval:cursorLineInterval]) {
+            if ([marksToMove containsObject:obj]) {
+                continue;
+            }
+            [marksToMove addObject:obj];
+        }
+
+        // Cursor was among the cleared lines. Restore the line content.
+        currentGrid_.cursor = VT100GridCoordMake(0, absLine - totalScrollbackOverflow - self.numberOfScrollbackLines);
+        [self appendScreenChars:savedLine.line length:savedLine.length continuation:savedLine.continuation];
+
+        // Restore marks on that line.
+        const long long numberOfLinesRemoved = absCursorCoord.y - absLine;
+        if (numberOfLinesRemoved > 0) {
+            [marksToMove enumerateObjectsUsingBlock:^(id<IntervalTreeObject>  _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+                // Make an interval shifted up by `numberOfLinesRemoved`
+                VT100GridCoordRange range = [self coordRangeForInterval:obj.entry.interval];
+                range.start.y -= numberOfLinesRemoved;
+                range.end.y -= numberOfLinesRemoved;
+                Interval *interval = [self intervalForGridCoordRange:range];
+
+                // Remove and re-add the object with the new interval.
+                [self removeObjectFromIntervalTree:obj];
+                [intervalTree_ addObject:obj withInterval:interval];
+                [_intervalTreeObserver intervalTreeDidAddObjectOfType:[self intervalTreeObserverTypeForObject:obj]
+                                                               onLine:range.start.y + totalScrollbackOverflow];
+            }];
+        }
+    } else {
+        [marksToMove enumerateObjectsUsingBlock:^(id<IntervalTreeObject>  _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+            [self removeObjectFromIntervalTree:obj];
+        }];
+    }
+    [self reloadMarkCache];
+    [delegate_ screenRemoveSelection];
+    [delegate_ screenNeedsRedraw];
+}
+
+- (void)clearGridFromLineToEnd:(int)line {
+    assert(line >= 0 && line < self.height);
+    const VT100GridCoord savedCursor = self.currentGrid.cursor;
+    self.currentGrid.cursor = VT100GridCoordMake(0, line);
+    [self removeSoftEOLBeforeCursor];
+    const VT100GridRun run = VT100GridRunFromCoords(VT100GridCoordMake(0, line),
+                                                    VT100GridCoordMake(self.width, self.height),
+                                                    self.width);
+    [self.currentGrid setCharsInRun:run toChar:0];
+    [delegate_ screenTriggerableChangeDidOccur];
+    self.currentGrid.cursor = savedCursor;
+}
+
+- (void)clearScrollbackBufferFromLine:(int)line {
+    const int width = self.width;
+    const int scrollbackLines = [linebuffer_ numberOfWrappedLinesWithWidth:width];
+    if (scrollbackLines < line) {
+        return;
+    }
+    [linebuffer_ removeLastWrappedLines:scrollbackLines - line
+                                  width:width];
+}
+
 - (VT100ScreenMark *)lastMark {
     return [self lastMarkMustBePrompt:NO class:[VT100ScreenMark class]];
 }
@@ -2625,6 +2753,20 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
                 } else if (!wantPrompt) {
                     return obj;
                 }
+            }
+        }
+        objects = [enumerator nextObject];
+    }
+    return nil;
+}
+
+- (__kindof id<IntervalTreeObject>)lastMarkPassingTest:(BOOL (^)(__kindof id<IntervalTreeObject>))block {
+    NSEnumerator *enumerator = [intervalTree_ reverseLimitEnumerator];
+    NSArray *objects = [enumerator nextObject];
+    while (objects) {
+        for (id obj in objects) {
+            if (block(obj)) {
+                return obj;
             }
         }
         objects = [enumerator nextObject];

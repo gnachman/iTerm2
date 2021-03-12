@@ -139,10 +139,34 @@ iTermTriState iTermTriStateFromBool(BOOL b) {
 
 @end
 
-@implementation ScreenCharArray
+@implementation ScreenCharArray {
+    BOOL _shouldFreeOnRelease;
+    screen_char_t _placeholder;
+}
 @synthesize line = _line;
 @synthesize length = _length;
 @synthesize eol = _eol;
+
+- (instancetype)init {
+    self = [super init];
+    if (self) {
+        _line = &_placeholder;
+        _eol = EOL_HARD;
+    }
+    return self;
+}
+
+- (instancetype)initWithCopyOfLine:(screen_char_t *)line
+                            length:(int)length
+                      continuation:(screen_char_t)continuation {
+    screen_char_t *copy = malloc(sizeof(*line) * length);
+    memmove(copy, line, sizeof(*line) * length);
+    self = [self initWithLine:copy length:length continuation:continuation];
+    if (self) {
+        _shouldFreeOnRelease = YES;
+    }
+    return self;
+}
 
 - (instancetype)initWithLine:(screen_char_t *)line
                       length:(int)length
@@ -157,6 +181,14 @@ iTermTriState iTermTriStateFromBool(BOOL b) {
     return self;
 }
 
+- (void)dealloc {
+    if (_shouldFreeOnRelease) {
+        free(_line);
+        _line = NULL;
+    }
+    [super dealloc];
+}
+
 - (BOOL)isEqualToScreenCharArray:(ScreenCharArray *)other {
     if (!other) {
         return NO;
@@ -165,6 +197,46 @@ iTermTriState iTermTriStateFromBool(BOOL b) {
             _length == other->_length &&
             _eol == other->_eol &&
             !memcmp(&_continuation, &other->_continuation, sizeof(_continuation)));
+}
+
+- (NSString *)debugDescription {
+    return ScreenCharArrayToStringDebug(_line, _length);
+}
+
+- (id)copyWithZone:(NSZone *)zone {
+    return [[ScreenCharArray alloc] initWithCopyOfLine:_line length:_length continuation:_continuation];
+}
+
+- (ScreenCharArray *)screenCharArrayByAppendingScreenCharArray:(ScreenCharArray *)other {
+    const size_t combinedLength = (_length + other.length);
+    screen_char_t *copy = malloc(sizeof(screen_char_t) * combinedLength);
+    memmove(copy, _line, sizeof(*_line) * _length);
+    memmove(copy + _length, other.line, sizeof(*_line) * other.length);
+    self = [self initWithLine:copy length:combinedLength continuation:other.continuation];
+    if (self) {
+        _shouldFreeOnRelease = YES;
+    }
+    return self;
+}
+
+static BOOL ScreenCharIsNull(screen_char_t c) {
+    return c.code == 0 && !c.complexChar && !c.image;
+}
+
+- (ScreenCharArray *)screenCharArrayByRemovingTrailingNullsAndHardNewline {
+    ScreenCharArray *result = [[self copy] autorelease];
+    [result makeEndingSoft];
+    return result;
+}
+
+// Internal-only API for mutation. The public API is immutable.
+- (void)makeEndingSoft {
+    while (_length > 0 && ScreenCharIsNull(_line[_length - 1])) {
+        _length -= 1;
+    }
+    memset(&_continuation, 0, sizeof(_continuation));
+    _continuation.code = EOL_SOFT;
+    _eol = EOL_SOFT;
 }
 
 @end

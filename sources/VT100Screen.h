@@ -202,6 +202,8 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 - (NSArray *)annotationsAfter:(Interval *)location;
 
 - (BOOL)containsMark:(id<iTermMark>)mark;
+- (void)clearToLastMark;
+- (void)clearFromAbsoluteLineToEnd:(long long)absLine;
 
 - (void)setWorkingDirectory:(NSString *)workingDirectory onLine:(int)line pushed:(BOOL)pushed;
 - (NSString *)workingDirectoryOnLine:(int)line;

@@ -92,6 +92,9 @@ typedef struct {
               timestamp:(NSTimeInterval *)timestampPtr
            continuation:(screen_char_t *)continuationPtr;
 
+- (void)removeLastWrappedLines:(int)numberOfLinesToRemove
+                         width:(int)width;
+
 // Drop lines from the start of the buffer. Returns the number of lines actually dropped
 // (either n or the number of lines in the block).
 - (int)dropLines:(int)n withWidth:(int)width chars:(int *)charsDropped;

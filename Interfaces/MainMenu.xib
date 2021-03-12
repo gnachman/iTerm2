@@ -673,6 +673,17 @@ DQ
                                     <action selector="clearScrollbackBuffer:" target="-1" id="756"/>
                                 </connections>
                             </menuItem>
+                            <menuItem title="Clear to Start of Selection" keyEquivalent="l" identifier="Clear to Last Mark" id="CYE-nw-eWv">
+                                <connections>
+                                    <action selector="clearToStartOfSelection:" target="-1" id="Hme-Uy-xl3"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem title="Clear to Last Mark" keyEquivalent="l" identifier="Clear to Last Mark" id="Xsz-J9-7ar">
+                                <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
+                                <connections>
+                                    <action selector="clearToLastMark:" target="-1" id="5rW-GL-dJl"/>
+                                </connections>
+                            </menuItem>
                         </items>
                     </menu>
                 </menuItem>

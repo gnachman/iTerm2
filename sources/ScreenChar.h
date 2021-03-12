@@ -193,7 +193,7 @@ typedef struct screen_char_t
 } screen_char_t;
 
 // Typically used to store a single screen line.
-@interface ScreenCharArray : NSObject {
+@interface ScreenCharArray : NSObject<NSCopying> {
     screen_char_t *_line;  // Array of chars
     int _length;  // Number of chars in _line
     int _eol;  // EOL_SOFT, EOL_HARD, or EOL_DWC
@@ -208,6 +208,9 @@ typedef struct screen_char_t
                       length:(int)length
                 continuation:(screen_char_t)continuation;
 - (BOOL)isEqualToScreenCharArray:(ScreenCharArray *)other;
+- (ScreenCharArray *)screenCharArrayByAppendingScreenCharArray:(ScreenCharArray *)other;
+- (ScreenCharArray *)screenCharArrayByRemovingTrailingNullsAndHardNewline;
+
 @end
 
 // Standard unicode replacement string. Is a double-width character.

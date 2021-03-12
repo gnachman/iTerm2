@@ -1768,6 +1768,24 @@ trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
     return YES;
 }
 
+- (ScreenCharArray *)screenCharArrayAtLine:(int)line {
+    screen_char_t *theLine = [_dataSource getLineAtIndex:line];
+    const int width = [_dataSource width];
+    return [[[ScreenCharArray alloc] initWithLine:theLine
+                                           length:width
+                                     continuation:theLine[width]] autorelease];
+}
+
+- (ScreenCharArray *)combinedLinesInRange:(NSRange)range {
+    ScreenCharArray *result = [[[ScreenCharArray alloc] init] autorelease];
+    for (NSInteger i = range.location;
+         i < NSMaxRange(range);
+         i++) {
+        result = [result screenCharArrayByAppendingScreenCharArray:[self screenCharArrayAtLine:i]];
+    }
+    return result;
+}
+
 - (iTermLocatedString *)wrappedLocatedStringAt:(VT100GridCoord)coord
                                        forward:(BOOL)forward
                            respectHardNewlines:(BOOL)respectHardNewlines

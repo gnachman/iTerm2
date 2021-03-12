@@ -9688,9 +9688,16 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 }
 
 // Erase the scrollback buffer of the current session.
-- (void)clearScrollbackBuffer:(id)sender
-{
+- (void)clearScrollbackBuffer:(id)sender {
     [[self currentSession] clearScrollbackBuffer];
+}
+
+- (IBAction)clearToStartOfSelection:(id)sender {
+    [self.currentSession.screen clearFromAbsoluteLineToEnd:self.currentSession.textview.selection.firstAbsRange.coordRange.start.y];
+}
+
+- (IBAction)clearToLastMark:(id)sender {
+    [self.currentSession.screen clearToLastMark];
 }
 
 - (IBAction)saveContents:(id)sender {
@@ -9910,6 +9917,12 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
         return [[self currentSession] anyTriggerCanBeDisabled];
     } else if (item.action == @selector(toggleTriggerEnabled:)) {
         return YES;
+    } else if (item.action == @selector(clearScrollbackBuffer:)) {
+        return self.currentSession.screen.numberOfScrollbackLines > 0;
+    } else if (item.action == @selector(clearToLastMark:)) {
+        return self.currentSession.screen.lastMark != nil;
+    } else if (item.action == @selector(clearToStartOfSelection:)) {
+        return self.currentSession.hasSelection;
     }
 
     return result;

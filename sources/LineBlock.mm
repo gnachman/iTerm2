@@ -833,13 +833,27 @@ int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width, BOOL may
     return count;
 }
 
-- (BOOL) hasCachedNumLinesForWidth: (int) width
-{
+- (BOOL) hasCachedNumLinesForWidth: (int) width {
     return cached_numlines_width == width;
 }
 
-- (BOOL)popLastLineInto:(screen_char_t**)ptr
-             withLength:(int*)length
+- (void)removeLastWrappedLines:(int)numberOfLinesToRemove
+                         width:(int)width {
+    for (int i = 0; i < numberOfLinesToRemove; i++) {
+        int length = 0;
+        const BOOL ok = [self popLastLineInto:nil
+                                   withLength:&length
+                                    upToWidth:width
+                                    timestamp:nil
+                                 continuation:nil];
+        if (!ok) {
+            return;
+        }
+    }
+}
+
+- (BOOL)popLastLineInto:(screen_char_t **)ptr
+             withLength:(int *)length
               upToWidth:(int)width
               timestamp:(NSTimeInterval *)timestampPtr
            continuation:(screen_char_t *)continuationPtr {
@@ -877,7 +891,9 @@ int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width, BOOL may
                                                     width,
                                                     _mayHaveDoubleWidthCharacter);
         *length = available_len - offset_from_start;
-        *ptr = buffer_start + start + offset_from_start;
+        if (ptr) {
+            *ptr = buffer_start + start + offset_from_start;
+        }
         cumulative_line_lengths[cll_entries - 1] -= *length;
         metadata_[cll_entries - 1].number_of_wrapped_lines = 0;
         if (gEnableDoubleWidthCharacterLineCache) {
@@ -889,7 +905,9 @@ int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width, BOOL may
     } else {
         // The last raw line is not longer than width. Return the whole thing.
         *length = available_len;
-        *ptr = buffer_start + start;
+        if (ptr) {
+            *ptr = buffer_start + start;
+        }
         --cll_entries;
         is_partial = NO;
     }
