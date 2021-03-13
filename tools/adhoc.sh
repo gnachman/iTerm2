@@ -4,7 +4,7 @@ read -s NOTPASS
 COMPACTDATE=$(date +"%Y%m%d_%H%M%S")
 VERSION="0.$COMPACTDATE-adhoc"
 echo "$VERSION" > version.txt
-NAME=$(echo $VERSION | sed -e "s/\\./_/g")-adhoc
+NAME=$(echo $VERSION | sed -e "s/\\./_/g")
 make clean
 make release
 rm -rf build/Deployment/iTerm.app
