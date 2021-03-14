@@ -181,8 +181,19 @@ NS_ASSUME_NONNULL_BEGIN
 + (NSURL *)URLWithUserSuppliedString:(NSString *)string {
     DLog(@"Trying to make a proper URL out of: %@", string);
 
-    // Convert all sequences of non-reserved symbols into numbers 0, 1, 2, ...
+    // First try the simple, stupid thing for well-formed URLs.
+    NSURL *url = [NSURL URLWithString:string];
+    if (url) {
+        DLog(@"Seems legit to me. %@", url.absoluteString);
+        return url;
+    }
 
+    // Simple and stupid didn't work. Try complicated and stupid.
+    return [self URLWithUserSuppliedStringImpl:string];
+}
+
++ (NSURL *)URLWithUserSuppliedStringImpl:(NSString *)string {
+    // Convert all sequences of non-reserved symbols into numbers 0, 1, 2, ...
     NSCharacterSet *reservedSymbols = [NSCharacterSet characterSetWithCharactersInString:@":/@.#?&="];
     NSMutableIndexSet *nonReservedSymbolIndices = [[string indicesOfCharactersInSet:[reservedSymbols invertedSet]] mutableCopy];
     // Remove any colons that occur after the first [ to avoid picking up colons in IPv6 addresses
