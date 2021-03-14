@@ -161,6 +161,49 @@
     XCTAssertEqualObjects(url.absoluteString, @"https://google.com/search?q=r%C3%A9sum%C3%A9+help%2B");
 }
 
+- (void)testIPv6NoPort {
+    NSString *before = @"http://[2607:f8b0:4005:807::200e]/";
+    NSURL *url = [NSURL URLWithUserSuppliedString:before];
+    NSString *after = [url absoluteString];
+    XCTAssertEqualObjects(after, before);
+}
+
+- (void)testIPv6Port {
+    NSString *before = @"http://[2607:f8b0:4005:807::200e]:8080/";
+    NSURL *url = [NSURL URLWithUserSuppliedString:before];
+    NSString *after = [url absoluteString];
+    XCTAssertEqualObjects(after, before);
+}
+
+- (void)testPort {
+    NSString *before = @"http://example.com:8080/";
+    NSURL *url = [NSURL URLWithUserSuppliedString:before];
+    NSString *after = [url absoluteString];
+    XCTAssertEqualObjects(after, before);
+}
+
+- (void)testUser {
+    NSString *before = @"http://user@example.com:8080/";
+    NSURL *url = [NSURL URLWithUserSuppliedString:before];
+    NSString *after = [url absoluteString];
+    XCTAssertEqualObjects(after, before);
+}
+
+- (void)testUserAndPassword {
+    NSString *before = @"http://user:password@example.com:8080/";
+    NSURL *url = [NSURL URLWithUserSuppliedString:before];
+    NSString *after = [url absoluteString];
+    XCTAssertEqualObjects(after, before);
+}
+
+- (void)testIDN {
+    NSString *input = @"http://á中国.%20.icom.museum:1/path";
+    NSURL *url = [NSURL URLWithUserSuppliedString:input];
+    NSString *actual = [url absoluteString];
+    NSString *expected = @"http://xn--1ca0960bnsf.%20.icom.museum:1/path";
+    XCTAssertEqualObjects(actual, expected);
+}
+
 #pragma mark - URLByRemovingFragment
 
 - (void)testURLByRemovingFragment_noFragment {

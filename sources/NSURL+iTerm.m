@@ -182,8 +182,20 @@ NS_ASSUME_NONNULL_BEGIN
     DLog(@"Trying to make a proper URL out of: %@", string);
 
     // Convert all sequences of non-reserved symbols into numbers 0, 1, 2, ...
-    NSCharacterSet *reservedSymbols = [NSCharacterSet characterSetWithCharactersInString:@":/@:.#?&="];
-    NSIndexSet *nonReservedSymbolIndices = [string indicesOfCharactersInSet:[reservedSymbols invertedSet]];
+
+    NSCharacterSet *reservedSymbols = [NSCharacterSet characterSetWithCharactersInString:@":/@.#?&="];
+    NSMutableIndexSet *nonReservedSymbolIndices = [[string indicesOfCharactersInSet:[reservedSymbols invertedSet]] mutableCopy];
+    // Remove any colons that occur after the first [ to avoid picking up colons in IPv6 addresses
+    // while preserving any in user:password@ and scheme:
+    const NSRange rangeOfFirstOpenSquareBracket = [string rangeOfString:@"["];
+    if (rangeOfFirstOpenSquareBracket.location != NSNotFound) {
+        [[string indicesOfCharactersInSet:[NSCharacterSet characterSetWithCharactersInString:@":"]] enumerateIndexesUsingBlock:^(NSUInteger idx, BOOL * _Nonnull stop) {
+            if (idx > NSMaxRange(rangeOfFirstOpenSquareBracket)) {
+                [nonReservedSymbolIndices addIndex:idx];
+            }
+        }];
+    }
+
     __block int count = 0x10000000;
     NSMutableString *stringWithPlaceholders = [string mutableCopy];
     NSMutableDictionary<NSString *, NSString *> *map = [NSMutableDictionary dictionary];
@@ -249,7 +261,24 @@ NS_ASSUME_NONNULL_BEGIN
         components.password = glue(components.password);
     }
     if (components.host) {
-        components.host = [NSURL IDNEncodedHostname:glue(components.host)];
+        if (components.port) {
+            components.host = [NSURL IDNEncodedHostname:glue(components.host)];
+        } else {
+            NSString *compositeString = glue(components.host);
+            NSRange rangeOfLastColon = [compositeString rangeOfString:@":" options:NSBackwardsSearch];
+            // See note above about IPv6 making ports & user/pw complicated.
+            if (rangeOfLastColon.location == NSNotFound) {
+                components.host = [NSURL IDNEncodedHostname:compositeString];
+            } else {
+                NSString *possiblePort = [compositeString substringFromIndex:NSMaxRange(rangeOfLastColon)];
+                if ([possiblePort isNumeric]) {
+                    components.port = @(possiblePort.iterm_unsignedIntegerValue);
+                    components.host = [NSURL IDNEncodedHostname:[compositeString substringToIndex:rangeOfLastColon.location]];
+                } else {
+                    components.host = [NSURL IDNEncodedHostname:compositeString];
+                }
+            }
+        }
     }
     if (components.port) {
         @try {
