@@ -21,6 +21,7 @@
 static NSString *const kDebugLogFilename = @"/tmp/debuglog.txt";
 static NSString* gDebugLogHeader = nil;
 static NSMutableString* gDebugLogStr = nil;
+NSString *iTermDebugLoggingDidBeginNotification = @"iTermDebugLoggingDidBeginNotification";
 
 static NSMutableDictionary *gPinnedMessages;
 BOOL gDebugLogging = NO;
@@ -282,6 +283,8 @@ static void StartDebugLogging() {
         gDebugLogStr = [[NSMutableString alloc] init];
         gDebugLogging = !gDebugLogging;
         WriteDebugLogHeader();
+        [[NSNotificationCenter defaultCenter] postNotificationName:iTermDebugLoggingDidBeginNotification
+                                                            object:nil];
     }
     [GetDebugLogLock() unlock];
 }

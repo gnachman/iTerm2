@@ -15,6 +15,8 @@
 #import <Foundation/Foundation.h>
 extern BOOL gDebugLogging;
 #include "iTermCLogging.h"
+// Posted when debug logging begins
+extern NSString *iTermDebugLoggingDidBeginNotification;
 
 #define USE_STOPWATCH 0
 
