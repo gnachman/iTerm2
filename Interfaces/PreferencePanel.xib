@@ -5348,7 +5348,7 @@ DQ
                                             <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="5144">
                                                 <rect key="frame" x="18" y="98" width="373" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMinY="YES"/>
-                                                <buttonCell key="cell" type="check" title="Show border around windows" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="5145">
+                                                <buttonCell key="cell" type="check" title="Show border around windows when using transparency" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="5145">
                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                                                     <font key="font" metaFont="system"/>
                                                 </buttonCell>
