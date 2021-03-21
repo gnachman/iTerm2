@@ -250,6 +250,7 @@ static NSString *const SESSION_ARRANGEMENT_HOSTS = @"Hosts";  // Array of VT100R
 static NSString *const SESSION_ARRANGEMENT_CURSOR_GUIDE = @"Cursor Guide";  // BOOL
 static NSString *const SESSION_ARRANGEMENT_LAST_DIRECTORY = @"Last Directory";  // NSString
 static NSString *const SESSION_ARRANGEMENT_LAST_LOCAL_DIRECTORY = @"Last Local Directory";  // NSString
+static NSString *const SESSION_ARRANGEMENT_LAST_LOCAL_DIRECTORY_WAS_PUSHED = @"Last Local Directory Was Pushed";  // BOOL
 static NSString *const SESSION_ARRANGEMENT_LAST_DIRECTORY_IS_UNSUITABLE_FOR_OLD_PWD_DEPRECATED = @"Last Directory Is Remote";  // BOOL
 static NSString *const SESSION_ARRANGEMENT_SELECTION = @"Selection";  // Dictionary for iTermSelection.
 static NSString *const SESSION_ARRANGEMENT_APS = @"Automatic Profile Switching";  // Dictionary of APS state.
@@ -341,6 +342,7 @@ static const NSUInteger kMaxHosts = 100;
 @property(atomic, assign) PTYSessionTmuxMode tmuxMode;
 @property(nonatomic, copy) NSString *lastDirectory;
 @property(nonatomic, copy) NSString *lastLocalDirectory;
+@property(nonatomic) BOOL lastLocalDirectoryWasPushed;  // was lastLocalDirectory from shell integration?
 @property(nonatomic, retain) VT100RemoteHost *lastRemoteHost;  // last remote host at time of setting current directory
 @property(nonatomic, retain) NSColor *cursorGuideColor;
 @property(nonatomic, copy) NSString *badgeFormat;
@@ -1270,6 +1272,7 @@ ITERM_WEAKLY_REFERENCEABLE
         }
         if (arrangement[SESSION_ARRANGEMENT_LAST_LOCAL_DIRECTORY]) {
             aSession.lastLocalDirectory = arrangement[SESSION_ARRANGEMENT_LAST_LOCAL_DIRECTORY];
+            aSession.lastLocalDirectoryWasPushed = [arrangement[SESSION_ARRANGEMENT_LAST_LOCAL_DIRECTORY_WAS_PUSHED] boolValue];
         }
     }
 
@@ -4843,6 +4846,7 @@ ITERM_WEAKLY_REFERENCEABLE
         }
         if (self.lastLocalDirectory) {
             result[SESSION_ARRANGEMENT_LAST_LOCAL_DIRECTORY] = self.lastLocalDirectory;
+            result[SESSION_ARRANGEMENT_LAST_LOCAL_DIRECTORY_WAS_PUSHED] = @(self.lastLocalDirectoryWasPushed);
         }
         result[SESSION_ARRANGEMENT_SELECTION] =
             [self.textview.selection dictionaryValueWithYOffset:-numberOfLinesDropped
@@ -8703,12 +8707,23 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     DLog(@"Update local directory of %@", self);
     __weak __typeof(self) weakSelf = self;
     [_shell getWorkingDirectoryWithCompletion:^(NSString *pwd) {
-        // Don't call setLastDirectory:remote:pushed: because we don't want to update the
-        // path variable if the session is ssh'ed somewhere.
-        DLog(@"getWorkingDirectoryWithCompletion for %@ finished with %@", weakSelf, pwd);
-        weakSelf.lastLocalDirectory = pwd;
-        completion(pwd);
+        [[[weakSelf retain] autorelease] didGetWorkingDirectory:pwd completion:completion];
     }];
+}
+
+- (void)didGetWorkingDirectory:(NSString *)pwd completion:(void (^)(NSString *pwd))completion {
+    // Don't call setLastDirectory:remote:pushed: because we don't want to update the
+    // path variable if the session is ssh'ed somewhere.
+    DLog(@"getWorkingDirectoryWithCompletion for %@ finished with %@", self, pwd);
+    if (self.lastLocalDirectoryWasPushed && self.lastLocalDirectory != nil) {
+        DLog(@"Looks like there was a race because there is now a last local directory of %@. Use it.",
+             self.lastLocalDirectory);
+        completion(self.lastLocalDirectory);
+        return;
+    }
+    self.lastLocalDirectory = pwd;
+    self.lastLocalDirectoryWasPushed = NO;
+    completion(pwd);
 }
 
 - (NSURL *)urlForHost:(VT100RemoteHost *)host path:(NSString *)path {
@@ -11534,7 +11549,10 @@ preferredEscaping:(iTermSendTextEscaping)preferredEscaping {
     }
     self.lastDirectory = lastDirectory;
     if (!directoryIsRemote) {
-        self.lastLocalDirectory = lastDirectory;
+        if (pushed || !self.lastLocalDirectoryWasPushed) {
+            self.lastLocalDirectory = lastDirectory;
+            self.lastLocalDirectoryWasPushed = pushed;
+        }
     }
     if (lastDirectory) {
         DLog(@"Set path to %@", lastDirectory);
@@ -11590,6 +11608,7 @@ preferredEscaping:(iTermSendTextEscaping)preferredEscaping {
     DLog(@"Last directory is unsuitable or nil");
     // Ask the kernel what the child's process's working directory is.
     self.lastLocalDirectory = [_shell getWorkingDirectory];
+    self.lastLocalDirectoryWasPushed = NO;
     return self.lastLocalDirectory;
 }
 
@@ -13254,10 +13273,15 @@ preferredEscaping:(iTermSendTextEscaping)preferredEscaping {
     DLog(@"workingDirectoryPollerDidFindWorkingDirectory:%@ invalidated:%@", pwd, @(invalidated));
     if (invalidated || ![self useLocalDirectoryPollerResult]) {
         DLog(@"Not creating a mark. invalidated=%@", @(invalidated));
+        if (self.lastLocalDirectory != nil && self.lastLocalDirectoryWasPushed) {
+            DLog(@"Last local directory (%@) was pushed, not changing it.", self.lastLocalDirectory);
+            return;
+        }
         // This is definitely a local directory. It may have been invalidated because we got a push
         // for a remote directory, but it's still useful to know the local directory for the purposes
         // of session restoration.
         self.lastLocalDirectory = pwd;
+        self.lastLocalDirectoryWasPushed = NO;
 
         // Do not call setLastDirectory:remote:pushed: because there's no sense updating the path
         // variable for an invalidated update when we might have a better remote working directory.

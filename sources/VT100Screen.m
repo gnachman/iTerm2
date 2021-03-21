@@ -4177,6 +4177,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     [self clearBuffer];
 }
 
+// Shell integration or equivalent.
 - (void)terminalCurrentDirectoryDidChangeTo:(NSString *)dir {
     DLog(@"%p: terminalCurrentDirectoryDidChangeTo:%@", self, dir);
     [delegate_ screenSetPreferredProxyIcon:nil]; // Clear current proxy icon if exists.
