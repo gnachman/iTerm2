@@ -7877,6 +7877,7 @@ typedef struct ITMKeystrokePattern__storage_ {
 @implementation ITMKeystrokeMonitorRequest
 
 @dynamic patternsToIgnoreArray, patternsToIgnoreArray_Count;
+@dynamic hasAdvanced, advanced;
 
 typedef struct ITMKeystrokeMonitorRequest__storage_ {
   uint32_t _has_storage_[1];
@@ -7897,6 +7898,15 @@ typedef struct ITMKeystrokeMonitorRequest__storage_ {
         .offset = (uint32_t)offsetof(ITMKeystrokeMonitorRequest__storage_, patternsToIgnoreArray),
         .flags = GPBFieldRepeated,
         .dataType = GPBDataTypeMessage,
+      },
+      {
+        .name = "advanced",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMKeystrokeMonitorRequest_FieldNumber_Advanced,
+        .hasIndex = 0,
+        .offset = 1,  // Stored in _has_storage_ to save space.
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeBool,
       },
     };
     GPBDescriptor *localDescriptor =
@@ -8865,10 +8875,12 @@ typedef struct ITMServerOriginatedRPCNotification__storage_ {
 @dynamic modifiersArray, modifiersArray_Count;
 @dynamic hasKeyCode, keyCode;
 @dynamic hasSession, session;
+@dynamic hasAction, action;
 
 typedef struct ITMKeystrokeNotification__storage_ {
   uint32_t _has_storage_[1];
   int32_t keyCode;
+  ITMKeystrokeNotification_Action action;
   NSString *characters;
   NSString *charactersIgnoringModifiers;
   GPBEnumArray *modifiersArray;
@@ -8926,6 +8938,15 @@ typedef struct ITMKeystrokeNotification__storage_ {
         .flags = GPBFieldOptional,
         .dataType = GPBDataTypeString,
       },
+      {
+        .name = "action",
+        .dataTypeSpecific.enumDescFunc = ITMKeystrokeNotification_Action_EnumDescriptor,
+        .number = ITMKeystrokeNotification_FieldNumber_Action,
+        .hasIndex = 4,
+        .offset = (uint32_t)offsetof(ITMKeystrokeNotification__storage_, action),
+        .flags = (GPBFieldFlags)(GPBFieldOptional | GPBFieldHasEnumDescriptor),
+        .dataType = GPBDataTypeEnum,
+      },
     };
     GPBDescriptor *localDescriptor =
         [GPBDescriptor allocDescriptorForClass:[ITMKeystrokeNotification class]
@@ -8947,6 +8968,42 @@ typedef struct ITMKeystrokeNotification__storage_ {
 }
 
 @end
+
+#pragma mark - Enum ITMKeystrokeNotification_Action
+
+GPBEnumDescriptor *ITMKeystrokeNotification_Action_EnumDescriptor(void) {
+  static GPBEnumDescriptor *descriptor = NULL;
+  if (!descriptor) {
+    static const char *valueNames =
+        "KeyDown\000KeyUp\000FlagsChanged\000";
+    static const int32_t values[] = {
+        ITMKeystrokeNotification_Action_KeyDown,
+        ITMKeystrokeNotification_Action_KeyUp,
+        ITMKeystrokeNotification_Action_FlagsChanged,
+    };
+    GPBEnumDescriptor *worker =
+        [GPBEnumDescriptor allocDescriptorForName:GPBNSStringifySymbol(ITMKeystrokeNotification_Action)
+                                       valueNames:valueNames
+                                           values:values
+                                            count:(uint32_t)(sizeof(values) / sizeof(int32_t))
+                                     enumVerifier:ITMKeystrokeNotification_Action_IsValidValue];
+    if (!OSAtomicCompareAndSwapPtrBarrier(nil, worker, (void * volatile *)&descriptor)) {
+      [worker release];
+    }
+  }
+  return descriptor;
+}
+
+BOOL ITMKeystrokeNotification_Action_IsValidValue(int32_t value__) {
+  switch (value__) {
+    case ITMKeystrokeNotification_Action_KeyDown:
+    case ITMKeystrokeNotification_Action_KeyUp:
+    case ITMKeystrokeNotification_Action_FlagsChanged:
+      return YES;
+    default:
+      return NO;
+  }
+}
 
 #pragma mark - ITMScreenUpdateNotification
 

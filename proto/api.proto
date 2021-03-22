@@ -908,6 +908,9 @@ message KeystrokePattern {
 message KeystrokeMonitorRequest {
   // KeystrokeFilterRequest was split from this to make a more sensible API.
   repeated KeystrokePattern patterns_to_ignore = 1 [deprecated=true];
+
+  // If false, then only key-down events are sent. If true, key-down, key-up, and flags-changed events are sent.
+  optional bool advanced = 2;
 }
 
 message KeystrokeFilterRequest {
@@ -1032,6 +1035,14 @@ message KeystrokeNotification {
   repeated Modifiers modifiers = 3;
   optional int32 keyCode = 4;
   optional string session = 5;
+  enum Action {
+    // These are used for non-modifier keys.
+    KEY_DOWN = 0;
+    KEY_UP = 1;  // requires advanced=true in request
+    // This is used when only a modifier changes.
+    FLAGS_CHANGED = 2;  // requires advanced=true in request
+  }
+  optional Action action = 6;
 }
 
 message ScreenUpdateNotification {

@@ -556,6 +556,7 @@
 }
 
 - (void)flagsChanged:(NSEvent *)theEvent {
+    [_delegate textViewDidReceiveFlagsChangedEvent:theEvent];
     [self updateUnderlinedURLs:theEvent];
     NSString *string = [_keyboardHandler.keyMapper keyMapperStringForPreCocoaEvent:theEvent];
     if (string) {

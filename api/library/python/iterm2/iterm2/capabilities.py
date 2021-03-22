@@ -121,3 +121,16 @@ def check_supports_add_annotation(connection):
         raise AppVersionTooOld(
             "This version of iTerm2 is too old to add an annotation. " +
             "You should upgrade to run this script.")
+
+def supports_advanced_key_notifications(connection):
+  """Can you get key-up and flags-changed notifs?"""
+  min_ver = (1, 9)
+  return ge(connection.iterm2_protocol_version, min_ver)
+
+def check_supports_advanced_key_notifications(connection):
+  """Die if you can't get key-up and flags-changed notifs."""
+  if not supports_advanced_key_notifications(connection):
+    raise AppVersionTooOld(
+        "This version of iTerm2 is too old to get advanced keystroke " +
+        "notifications. You should upgrade to run this script.")
+

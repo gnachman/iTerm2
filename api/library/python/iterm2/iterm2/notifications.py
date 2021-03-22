@@ -94,7 +94,7 @@ async def async_subscribe_to_new_session_notification(connection, callback):
 
 
 async def async_subscribe_to_keystroke_notification(
-        connection, callback, session=None):
+        connection, callback, session=None, advanced=False):
     """
     Registers a callback to be run when a key is pressed.
 
@@ -102,16 +102,19 @@ async def async_subscribe_to_keystroke_notification(
     :param callback: A coroutine taking two arguments: an :class:`Connection`
         and iterm2.api_pb2.KeystrokeNotification.
     :param session: The session to monitor, or None.
+    :param advanced: Use "advanced" reporting (key up, flags changed)?
 
     Returns: A token that can be passed to unsubscribe.
     """
+    kmr = iterm2.api_pb2.KeystrokeMonitorRequest()
+    kmr.advanced = advanced
     return await _async_subscribe(
         connection,
         True,
         iterm2.api_pb2.NOTIFY_ON_KEYSTROKE,
         callback,
         session=session,
-        keystroke_monitor_request=None)
+        keystroke_monitor_request=kmr)
 
 
 async def async_filter_keystrokes(

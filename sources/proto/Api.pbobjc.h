@@ -751,6 +751,25 @@ GPBEnumDescriptor *ITMNotificationResponse_Status_EnumDescriptor(void);
  **/
 BOOL ITMNotificationResponse_Status_IsValidValue(int32_t value);
 
+#pragma mark - Enum ITMKeystrokeNotification_Action
+
+typedef GPB_ENUM(ITMKeystrokeNotification_Action) {
+  /** These are used for non-modifier keys. */
+  ITMKeystrokeNotification_Action_KeyDown = 0,
+  ITMKeystrokeNotification_Action_KeyUp = 1,
+
+  /** This is used when only a modifier changes. */
+  ITMKeystrokeNotification_Action_FlagsChanged = 2,
+};
+
+GPBEnumDescriptor *ITMKeystrokeNotification_Action_EnumDescriptor(void);
+
+/**
+ * Checks to see if the given value is defined by the enum or was not known at
+ * the time this source was generated.
+ **/
+BOOL ITMKeystrokeNotification_Action_IsValidValue(int32_t value);
+
 #pragma mark - Enum ITMFocusChangedNotification_Window_WindowStatus
 
 typedef GPB_ENUM(ITMFocusChangedNotification_Window_WindowStatus) {
@@ -3530,6 +3549,7 @@ typedef GPB_ENUM(ITMKeystrokePattern_FieldNumber) {
 
 typedef GPB_ENUM(ITMKeystrokeMonitorRequest_FieldNumber) {
   ITMKeystrokeMonitorRequest_FieldNumber_PatternsToIgnoreArray = 1,
+  ITMKeystrokeMonitorRequest_FieldNumber_Advanced = 2,
 };
 
 @interface ITMKeystrokeMonitorRequest : GPBMessage
@@ -3539,6 +3559,10 @@ typedef GPB_ENUM(ITMKeystrokeMonitorRequest_FieldNumber) {
 /** The number of items in @c patternsToIgnoreArray without causing the array to be created. */
 @property(nonatomic, readonly) NSUInteger patternsToIgnoreArray_Count DEPRECATED_ATTRIBUTE;
 
+/** If false, then only key-down events are sent. If true, key-down, key-up, and flags-changed events are sent. */
+@property(nonatomic, readwrite) BOOL advanced;
+
+@property(nonatomic, readwrite) BOOL hasAdvanced;
 @end
 
 #pragma mark - ITMKeystrokeFilterRequest
@@ -3892,6 +3916,7 @@ typedef GPB_ENUM(ITMKeystrokeNotification_FieldNumber) {
   ITMKeystrokeNotification_FieldNumber_ModifiersArray = 3,
   ITMKeystrokeNotification_FieldNumber_KeyCode = 4,
   ITMKeystrokeNotification_FieldNumber_Session = 5,
+  ITMKeystrokeNotification_FieldNumber_Action = 6,
 };
 
 @interface ITMKeystrokeNotification : GPBMessage
@@ -3916,6 +3941,9 @@ typedef GPB_ENUM(ITMKeystrokeNotification_FieldNumber) {
 /** Test to see if @c session has been set. */
 @property(nonatomic, readwrite) BOOL hasSession;
 
+@property(nonatomic, readwrite) ITMKeystrokeNotification_Action action;
+
+@property(nonatomic, readwrite) BOOL hasAction;
 @end
 
 #pragma mark - ITMScreenUpdateNotification

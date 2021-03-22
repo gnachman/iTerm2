@@ -7,6 +7,7 @@ import enum
 import typing
 
 import iterm2.api_pb2
+import iterm2.capabilities
 import iterm2.connection
 import iterm2.notifications
 
@@ -101,6 +102,7 @@ class Keycode(enum.Enum):
     CAPS_LOCK = 0X39
     OPTION = 0X3A
     CONTROL = 0X3B
+    RIGHT_COMMAND = 0x36
     RIGHT_SHIFT = 0X3C
     RIGHT_OPTION = 0X3D
     RIGHT_CONTROL = 0X3E
@@ -146,21 +148,44 @@ class Keystroke:
     Do not create instances of this class. They will be passed to you when you
     use a :class:`KeystrokeMonitor`.
     """
+
+    class Action(enum.Enum):
+        """Type of keyboard event."""
+        NA = 0  #: Advanced keyboard monitoring is not enabled. Otherwise, this is the same as KEY_DOWN.
+        KEY_DOWN = 1  #: A non-modifier was pressed.
+        KEY_UP = 2  #: A non-modifier was released.
+        FLAGS_CHANGED = 3  #: Only modifiers changed
+
     def __init__(self, notification):
         self.__characters = notification.characters
         self.__characters_ignoring_modifiers = (
             notification.charactersIgnoringModifiers)
         self.__modifiers = notification.modifiers
         self.__key_code = notification.keyCode
+        self.__action = Keystroke.Action.NA
+        if notification.HasField("action"):
+            if notification.action == iterm2.api_pb2.KeystrokeNotification.Action.Value("KEY_DOWN"):
+                self.__action = Keystroke.Action.KEY_DOWN
+            elif notification.action == iterm2.api_pb2.KeystrokeNotification.Action.Value("KEY_UP"):
+                self.__action = Keystroke.Action.KEY_UP
+            elif notification.action == iterm2.api_pb2.KeystrokeNotification.Action.Value("FLAGS_CHANGED"):
+                self.__action = Keystroke.Action.FLAGS_CHANGED
 
     def __repr__(self):
-        return (
-            "Keystroke(chars={}, charsIgnoringModifiers={}, " +
-            "modifiers={}, keyCode={})").format(
+        info = (
+            "chars={}, charsIgnoringModifiers={}, " +
+            "modifiers={}, keyCode={}").format(
                 self.characters,
                 self.characters_ignoring_modifiers,
                 self.modifiers,
                 self.keycode)
+        if self.__action == Keystroke.Action.KEY_DOWN:
+            info = info + ", action=key-down"
+        elif self.__action == Keystroke.Action.KEY_UP:
+            info = info + ", action=key-up"
+        elif self.__action == Keystroke.Action.FLAGS_CHANGED:
+            info = info + ", action=flags-changed"
+        return f'Keystroke({info})'
 
     @property
     def characters(self) -> str:
@@ -191,6 +216,13 @@ class Keystroke:
 
         :returns: A :class:`Keycode` object."""
         return Keycode(self.__key_code)
+
+    @property
+    def action(self) -> Action:
+        """The kind of keystroke.
+
+        :returns: A :class:`Keystroke.Action` object."""
+        return self.__action
 
 
 class KeystrokePattern:
@@ -300,7 +332,8 @@ class KeystrokeMonitor:
 
     :param connection: The :class:`~iterm2.Connection` to use.
     :param session: The session ID to affect, or `None` meaning all sessions.
-
+    :param advanced: If false only key-down events are reported. If true,
+        key-up and flags-changed events are also reported.
     .. seealso::
         * Example ":ref:`broadcast_example`"
         * Example ":ref:`escindicator_example`"
@@ -318,9 +351,13 @@ class KeystrokeMonitor:
     def __init__(
             self,
             connection: iterm2.connection.Connection,
-            session: typing.Union[None, str] = None):
+            session: typing.Union[None, str] = None,
+            advanced: typing.Optional[bool] = False):
         self.__connection = connection
         self.__session = session
+        if advanced:
+            iterm2.capabilities.check_supports_advanced_key_notifications(connection)
+        self.__advanced = advanced
         self.__token = None
         self.__queue: asyncio.Queue = asyncio.Queue(
             loop=asyncio.get_event_loop())
@@ -335,7 +372,8 @@ class KeystrokeMonitor:
             async_subscribe_to_keystroke_notification(
                 self.__connection,
                 callback,
-                self.__session))
+                self.__session,
+                self.__advanced))
         return self
 
     async def async_get(self) -> Keystroke:

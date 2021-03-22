@@ -176,6 +176,7 @@ preferredEscaping:(iTermSendTextEscaping)preferredEscaping;
 - (BOOL)isRestartable;
 - (void)textViewToggleAnnotations;
 - (BOOL)textViewShouldAcceptKeyDownEvent:(NSEvent *)event;
+- (void)textViewDidReceiveFlagsChangedEvent:(NSEvent *)event;
 - (iTermExpect *)textViewExpect;
 
 // We guess the user is trying to send arrow keys with the scroll wheel in alt screen.

@@ -7485,6 +7485,21 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     return accept;
 }
 
+- (BOOL)shouldReportOrFilterKeystrokesForAPI {
+    if (self.isTmuxClient && _tmuxPaused) {
+        // This ignores the monitor filter and subscriptions because it might be the only way to
+        // unpause.
+        return NO;
+    }
+    return YES;
+}
+
+- (void)textViewDidReceiveFlagsChangedEvent:(NSEvent *)event {
+    if ([self shouldReportOrFilterKeystrokesForAPI]) {
+        [self sendKeystrokeNotificationForEvent:event advanced:YES];
+    }
+}
+
 - (BOOL)shouldAcceptKeyDownEvent:(NSEvent *)event {
     const BOOL accept = ![self keystrokeIsFilteredByMonitor:event];
 
@@ -7518,43 +7533,12 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
             return NO;
         }
     }
-    if (self.isTmuxClient && _tmuxPaused) {
-        // This ignores the monitor filter and subscriptions because it might be the only way to
-        // unpause.
+    if (![self shouldReportOrFilterKeystrokesForAPI]) {
         [self setTmuxPaused:NO allowAutomaticUnpause:YES];
         return NO;
     }
     if (_keystrokeSubscriptions.count) {
-        ITMKeystrokeNotification *keystrokeNotification = [[[ITMKeystrokeNotification alloc] init] autorelease];
-        keystrokeNotification.characters = event.characters;
-        keystrokeNotification.charactersIgnoringModifiers = event.charactersIgnoringModifiers;
-        if (event.it_modifierFlags & NSEventModifierFlagControl) {
-            [keystrokeNotification.modifiersArray addValue:ITMModifiers_Control];
-        }
-        if (event.it_modifierFlags & NSEventModifierFlagOption) {
-            [keystrokeNotification.modifiersArray addValue:ITMModifiers_Option];
-        }
-        if (event.it_modifierFlags & NSEventModifierFlagCommand) {
-            [keystrokeNotification.modifiersArray addValue:ITMModifiers_Command];
-        }
-        if (event.it_modifierFlags & NSEventModifierFlagShift) {
-            [keystrokeNotification.modifiersArray addValue:ITMModifiers_Shift];
-        }
-        if (event.it_modifierFlags & NSEventModifierFlagNumericPad) {
-            [keystrokeNotification.modifiersArray addValue:ITMModifiers_Numpad];
-        }
-        if (event.it_modifierFlags & NSEventModifierFlagFunction) {
-            [keystrokeNotification.modifiersArray addValue:ITMModifiers_Function];
-        }
-        keystrokeNotification.keyCode = event.keyCode;
-        keystrokeNotification.session = self.guid;
-        ITMNotification *notification = [[[ITMNotification alloc] init] autorelease];
-        notification.keystrokeNotification = keystrokeNotification;
-
-        [_keystrokeSubscriptions enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, ITMNotificationRequest * _Nonnull obj, BOOL * _Nonnull stop) {
-            [[iTermAPIHelper sharedInstance] postAPINotification:notification
-                                                 toConnectionKey:key];
-        }];
+        [self sendKeystrokeNotificationForEvent:event advanced:NO];
     }
 
     if (accept) {
@@ -7566,6 +7550,58 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     }
 
     return accept;
+}
+
+- (void)sendKeystrokeNotificationForEvent:(NSEvent *)event
+                                 advanced:(BOOL)advanced {
+    ITMKeystrokeNotification *keystrokeNotification = [[[ITMKeystrokeNotification alloc] init] autorelease];
+    if (!advanced || event.type != NSEventTypeFlagsChanged) {
+        keystrokeNotification.characters = event.characters;
+        keystrokeNotification.charactersIgnoringModifiers = event.charactersIgnoringModifiers;
+    }
+    if (event.it_modifierFlags & NSEventModifierFlagControl) {
+        [keystrokeNotification.modifiersArray addValue:ITMModifiers_Control];
+    }
+    if (event.it_modifierFlags & NSEventModifierFlagOption) {
+        [keystrokeNotification.modifiersArray addValue:ITMModifiers_Option];
+    }
+    if (event.it_modifierFlags & NSEventModifierFlagCommand) {
+        [keystrokeNotification.modifiersArray addValue:ITMModifiers_Command];
+    }
+    if (event.it_modifierFlags & NSEventModifierFlagShift) {
+        [keystrokeNotification.modifiersArray addValue:ITMModifiers_Shift];
+    }
+    if (event.it_modifierFlags & NSEventModifierFlagNumericPad) {
+        [keystrokeNotification.modifiersArray addValue:ITMModifiers_Numpad];
+    }
+    if (event.it_modifierFlags & NSEventModifierFlagFunction) {
+        [keystrokeNotification.modifiersArray addValue:ITMModifiers_Function];
+    }
+    switch (event.type) {
+        case NSEventTypeKeyDown:
+            keystrokeNotification.action = ITMKeystrokeNotification_Action_KeyDown;
+            break;
+        case NSEventTypeKeyUp:
+            keystrokeNotification.action = ITMKeystrokeNotification_Action_KeyUp;
+            break;
+        case NSEventTypeFlagsChanged:
+            keystrokeNotification.action = ITMKeystrokeNotification_Action_FlagsChanged;
+            break;
+        default:
+            break;
+    }
+    keystrokeNotification.keyCode = event.keyCode;
+    keystrokeNotification.session = self.guid;
+    ITMNotification *notification = [[[ITMNotification alloc] init] autorelease];
+    notification.keystrokeNotification = keystrokeNotification;
+
+    [_keystrokeSubscriptions enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, ITMNotificationRequest * _Nonnull obj, BOOL * _Nonnull stop) {
+        if (advanced && !obj.keystrokeMonitorRequest.advanced) {
+            return;
+        }
+        [[iTermAPIHelper sharedInstance] postAPINotification:notification
+                                             toConnectionKey:key];
+    }];
 }
 
 - (BOOL)eventAbortsPasteWaitingForPrompt:(NSEvent *)event {
@@ -8205,6 +8241,9 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)keyUp:(NSEvent *)event {
+    if ([self shouldReportOrFilterKeystrokesForAPI]) {
+        [self sendKeystrokeNotificationForEvent:event advanced:YES];
+    }
     if (_terminal.reportKeyUp) {
         NSData *const dataToSend = [_keyMapper keyMapperDataForKeyUp:event];
         if (dataToSend) {
