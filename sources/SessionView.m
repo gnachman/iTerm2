@@ -704,9 +704,11 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
         // that doesn't involve doing something nutty like saving a copy of the drawable.
         [_metalView setNeedsDisplay:YES];
         [_scrollview setNeedsDisplay:YES];
-    } else {
-        [_legacyView setNeedsDisplay:YES];
     }
+
+    // Legacy view is hidden when metal is enabled, but when temporarily disabling metal you can get
+    // here while _useMetal is YES and _legacyView is also NOT hidden. Issue 9587.
+    [_legacyView setNeedsDisplay:YES];
 }
 
 - (void)didChangeMetalViewAlpha {
