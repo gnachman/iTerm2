@@ -123,6 +123,8 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
             _vev.material = NSVisualEffectMaterialSheet;
             _vev.state = NSVisualEffectStateActive;
             _vev.layer.cornerRadius = radius;
+            _vev.layer.borderWidth = 1;
+            _vev.layer.borderColor = [[self desiredBorderColor] CGColor];
             [self addSubview:_vev positioned:NSWindowBelow relativeTo:self.subviews.firstObject];
             _vev.autoresizingMask = (NSViewWidthSizable | NSViewHeightSizable);
             self.autoresizesSubviews = YES;
@@ -131,6 +133,17 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     return self;
 }
 
+- (void)viewDidChangeEffectiveAppearance {
+    _vev.layer.borderColor = [[self desiredBorderColor] CGColor];
+}
+
+- (NSColor *)desiredBorderColor {
+    if ([self.effectiveAppearance it_isDark]) {
+        return [NSColor colorWithWhite:0.9 alpha:0.25];
+    } else {
+        return [NSColor colorWithWhite:0 alpha:0.25];
+    }
+}
 - (void)drawRect:(NSRect)dirtyRect {
     if (@available(macOS 10.14, *)) {
         return;
