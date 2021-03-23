@@ -317,6 +317,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (const BOOL *)tmuxWindowsShouldCloseAfterDetach;
 + (void)setTmuxWindowsShouldCloseAfterDetach:(const BOOL *)value;
 + (BOOL)tolerateUnrecognizedTmuxCommands;
++ (double)toolbeltFontSize;
 + (BOOL)trackingRunloopForLiveResize;
 + (BOOL)traditionalVisualBell;
 + (NSString *)trailingPunctuationMarks;

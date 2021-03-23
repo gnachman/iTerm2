@@ -12,6 +12,7 @@
 #import "iTermController.h"
 #import "iTermSessionLauncher.h"
 #import "NSEvent+iTerm.h"
+#import "NSFont+iTerm.h"
 #import "NSImage+iTerm.h"
 #import "ProfileModel.h"
 #import "PseudoTerminal.h"
@@ -34,7 +35,7 @@ static NSString *const iTermToolProfilesProfileListViewState = @"iTermToolProfil
     if (self) {
         listView_ = [[ProfileListView alloc] initWithFrame:NSMakeRect(kMargin, 0, frame.size.width - kMargin * 2, frame.size.height - kPopupHeight - kVerticalMargin)
                                                      model:[ProfileModel sharedInstance]
-                                                      font:[NSFont systemFontOfSize:[NSFont smallSystemFontSize]]];
+                                                      font:[NSFont it_toolbeltFont]];
         [listView_ setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
         [listView_ setDelegate:self];
         [listView_ disableArrowHandler];

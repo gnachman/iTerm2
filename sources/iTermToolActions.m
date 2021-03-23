@@ -13,6 +13,7 @@
 #import "iTermEditKeyActionWindowController.h"
 
 #import "NSArray+iTerm.h"
+#import "NSFont+iTerm.h"
 #import "NSImage+iTerm.h"
 #import "NSIndexSet+iTerm.h"
 #import "NSTableView+iTerm.h"
@@ -378,7 +379,7 @@ static NSButton *iTermToolActionsNewButton(NSString *imageName, NSString *title,
     if (result == nil) {
         result = [NSTextField it_textFieldForTableViewWithIdentifier:identifier];
     }
-
+    result.font = [NSFont it_toolbeltFont];
     NSString *value = [self stringForTableColumn:tableColumn row:row];
     result.stringValue = value;
 

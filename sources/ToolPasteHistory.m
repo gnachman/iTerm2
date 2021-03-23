@@ -13,6 +13,7 @@
 #import "iTermSecureKeyboardEntryController.h"
 #import "iTermToolWrapper.h"
 #import "NSDateFormatterExtras.h"
+#import "NSFont+iTerm.h"
 #import "NSImage+iTerm.h"
 #import "NSTableColumn+iTerm.h"
 #import "NSTextField+iTerm.h"
@@ -212,7 +213,7 @@ static const CGFloat kMargin = 4;
 
 - (NSAttributedString *)attributedStringForTableColumn:(NSTableColumn *)aTableColumn row:(NSInteger)rowIndex {
     return [[NSAttributedString alloc] initWithString:[self stringForTableColumn:aTableColumn row:rowIndex]
-                                           attributes:@{NSFontAttributeName: [NSFont fontWithName:@"Menlo" size:11],
+                                           attributes:@{NSFontAttributeName: [NSFont it_toolbeltFont],
                                                         NSParagraphStyleAttributeName: _paragraphStyle }];
 }
 

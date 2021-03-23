@@ -13,4 +13,6 @@
 // Encoded font name, suitable for storing in a profile.
 @property(nonatomic, readonly) NSString *stringValue;
 - (NSFont *)it_fontByAddingToPointSize:(CGFloat)delta;
++ (NSFont *)it_toolbeltFont;
+
 @end

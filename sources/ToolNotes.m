@@ -9,6 +9,7 @@
 #import "ToolNotes.h"
 #import "iTermSetFindStringNotification.h"
 #import "NSFileManager+iTerm.h"
+#import "NSFont+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "NSWindow+iTerm.h"
 #import "PTYWindow.h"
@@ -91,7 +92,7 @@ static NSString *kToolNotesSetTextNotification = @"kToolNotesSetTextNotification
         [textView_ setDelegate:self];
 
         [textView_ readRTFDFromFile:[self filename]];
-        textView_.font = [NSFont fontWithName:@"Menlo" size:[NSFont smallSystemFontSize]];
+        textView_.font = [NSFont it_toolbeltFont];
         textView_.automaticSpellingCorrectionEnabled = NO;
         textView_.automaticDashSubstitutionEnabled = NO;
         textView_.automaticQuoteSubstitutionEnabled = NO;

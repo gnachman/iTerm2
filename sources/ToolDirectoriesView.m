@@ -16,6 +16,7 @@
 #import "iTermToolWrapper.h"
 #import "NSDateFormatterExtras.h"
 #import "NSEvent+iTerm.h"
+#import "NSFont+iTerm.h"
 #import "NSImage+iTerm.h"
 #import "NSStringITerm.h"
 #import "NSTableColumn+iTerm.h"
@@ -108,7 +109,7 @@ static const CGFloat kHelpMargin = 5;
 #endif
         NSTableColumn *col;
         col = [[NSTableColumn alloc] initWithIdentifier:@"directories"];
-        [[col dataCell] setFont:[NSFont fontWithName:@"Menlo" size:11]];
+        [[col dataCell] setFont:[NSFont it_toolbeltFont]];
         [col setEditable:NO];
         [tableView_ addTableColumn:col];
         [tableView_ setHeaderView:nil];
@@ -139,7 +140,7 @@ static const CGFloat kHelpMargin = 5;
                                    keyEquivalent:@""];
         [tableView_.menu addItem:item];
 
-        boldFont_ = [NSFont boldSystemFontOfSize:[NSFont smallSystemFontSize]];
+        boldFont_ = [[NSFontManager sharedFontManager] convertFont:[NSFont it_toolbeltFont] toHaveTrait:NSFontBoldTrait];
 
         [self relayout];
         [[NSNotificationCenter defaultCenter] addObserver:self

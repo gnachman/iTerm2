@@ -484,6 +484,7 @@ DEFINE_BOOL(showWindowTitleWhenTabBarInvisible, YES, SECTION_WINDOWS @"Show wind
 DEFINE_BOOL(squareWindowCorners, NO, SECTION_WINDOWS @"Windows have square corners.\nThis is only for users who have already hacked macOS to remove rounded corners. You must restart iTerm2 after changing this setting for it to take effect.");
 DEFINE_BOOL(useShortcutAccessoryViewController, YES, SECTION_WINDOWS @"Show window number in titlebar accessory?");
 DEFINE_BOOL(includeShortcutInWindowsMenu, YES, SECTION_WINDOWS @"Include keyboard shortcut for windows in Window menu?");
+DEFINE_FLOAT(toolbeltFontSize, 0, SECTION_WINDOWS @"Toolbelt font size in points.\nSet to 0 to use the system default. Changing this setting does not affect existing windows.");
 
 #pragma mark tmux
 

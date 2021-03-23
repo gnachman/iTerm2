@@ -6,6 +6,8 @@
 //
 //
 
+#import <AppKit/AppKit.h>
+
 #import "iTermRecentDirectoryMO+Additions.h"
 #import "iTermDirectoryTree.h"
 #import "NSArray+iTerm.h"
@@ -105,7 +107,8 @@ static NSString *const kDirectoryEntryIsStarred = @"starred";
 - (NSAttributedString *)attributedStringForTableColumn:(NSTableColumn *)aTableColumn
                             abbreviationSafeComponents:(NSIndexSet *)abbreviationSafeIndexes {
     NSAttributedString *theString =
-        [[[NSAttributedString alloc] initWithString:self.path ?: @""] autorelease];
+        [[[NSAttributedString alloc] initWithString:self.path ?: @""
+                                         attributes:@{ NSFontAttributeName: [[aTableColumn dataCell] font] }] autorelease];
     return [self attributedStringForTableColumn:aTableColumn
                         basedOnAttributedString:theString
                                  baseAttributes:@{}

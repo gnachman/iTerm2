@@ -15,6 +15,7 @@
 #import "NSDateFormatterExtras.h"
 #import "NSDate+iTerm.h"
 #import "NSEvent+iTerm.h"
+#import "NSFont+iTerm.h"
 #import "NSImage+iTerm.h"
 #import "NSTableColumn+iTerm.h"
 #import "NSTextField+iTerm.h"
@@ -133,7 +134,7 @@ static const CGFloat kHelpMargin = 5;
         [tableView_ setColumnAutoresizingStyle:NSTableViewSequentialColumnAutoresizingStyle];
 
         // Save the bold version of the table's default font
-        boldFont_ = [NSFont fontWithName:@"Menlo Bold" size:11];
+        boldFont_ = [[NSFontManager sharedFontManager] convertFont:[NSFont it_toolbeltFont] toHaveTrait:NSFontBoldTrait];
 
         [self relayout];
         [[NSNotificationCenter defaultCenter] addObserver:self
@@ -271,7 +272,7 @@ static const CGFloat kHelpMargin = 5;
     if (result == nil) {
         result = [NSTextField it_textFieldForTableViewWithIdentifier:identifier];
     }
-
+    result.font = [NSFont it_toolbeltFont];
     id value = [self stringOrAttributedStringForColumn:tableColumn row:row];
     if ([value isKindOfClass:[NSAttributedString class]]) {
         result.attributedStringValue = value;
@@ -312,7 +313,7 @@ static const CGFloat kHelpMargin = 5;
                                                                  NSParagraphStyleAttributeName: _paragraphStyle }];
         } else {
             return [[NSAttributedString alloc] initWithString:value
-                                                   attributes:@{NSFontAttributeName: [NSFont fontWithName:@"Menlo" size:11],
+                                                   attributes:@{NSFontAttributeName: [NSFont it_toolbeltFont],
                                                                 NSParagraphStyleAttributeName: _paragraphStyle }];
         }
     }

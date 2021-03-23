@@ -8,6 +8,8 @@
 
 #import "NSFont+iTerm.h"
 
+#import "iTermAdvancedSettingsModel.h"
+
 @implementation NSFont (iTerm)
 
 - (NSString *)stringValue {
@@ -23,6 +25,14 @@
         newSize = 200;
     }
     return [NSFont fontWithName:[self fontName] size:newSize];
+}
+
++ (NSFont *)it_toolbeltFont {
+    double points = [iTermAdvancedSettingsModel toolbeltFontSize];
+    if (points <= 0) {
+        points = [NSFont smallSystemFontSize];
+    }
+    return [NSFont fontWithName:@"Menlo" size:points];
 }
 
 @end

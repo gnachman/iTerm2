@@ -13,6 +13,7 @@
 #import "iTermProcessCache.h"
 #import "iTermToolWrapper.h"
 #import "NSArray+iTerm.h"
+#import "NSFont+iTerm.h"
 #import "NSImage+iTerm.h"
 #import "NSTableColumn+iTerm.h"
 #import "NSTextField+iTerm.h"
@@ -79,7 +80,7 @@ static const CGFloat kMargin = 4;
         [self setDataSource:self];
 
         [[self cell] setControlSize:NSControlSizeSmall];
-        [[self cell] setFont:[NSFont systemFontOfSize:[NSFont smallSystemFontSize]]];
+        [[self cell] setFont:[NSFont it_toolbeltFont]];
     }
     return self;
 }
@@ -447,7 +448,8 @@ static const CGFloat kMargin = 4;
 
     NSString *value = [self stringForTableColumn:tableColumn row:row];
     result.stringValue = value ?: @"";
-
+    result.font = [NSFont it_toolbeltFont];
+    
     return result;
 }
 

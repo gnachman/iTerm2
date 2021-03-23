@@ -15,6 +15,7 @@
 #import "iTermCompetentTableRowView.h"
 
 #import "NSArray+iTerm.h"
+#import "NSFont+iTerm.h"
 #import "NSImage+iTerm.h"
 #import "NSIndexSet+iTerm.h"
 #import "NSStringITerm.h"
@@ -382,7 +383,7 @@ static NSButton *iTermToolSnippetsNewButton(NSString *imageName, NSString *title
 
         NSString *value = [self valueStringForRow:row];
         result.stringValue = value;
-        result.font = [NSFont fontWithName:@"Menlo" size:11];
+        result.font = [NSFont it_toolbeltFont];
         result.lineBreakMode = NSLineBreakByTruncatingTail;
         return result;
     }

@@ -15,6 +15,7 @@
 #import "iTermSearchField.h"
 #import "iTermToolbeltView.h"
 #import "iTermToolWrapper.h"
+#import "NSFont+iTerm.h"
 #import "NSImage+iTerm.h"
 #import "NSTableColumn+iTerm.h"
 #import "NSTextField+iTerm.h"
@@ -118,7 +119,7 @@ static NSString *const iTermCapturedOutputToolTableViewCellIdentifier = @"ToolCa
         [col setEditable:NO];
         [tableView_ addTableColumn:col];
         [[col headerCell] setStringValue:@"Contents"];
-        NSFont *theFont = [NSFont fontWithName:@"Menlo" size:11];
+        NSFont *theFont = [NSFont it_toolbeltFont];
         [[col dataCell] setFont:theFont];
         tableView_.rowHeight = col.suggestedRowHeight;
         [tableView_ setHeaderView:nil];
@@ -298,7 +299,7 @@ static NSString *const iTermCapturedOutputToolTableViewCellIdentifier = @"ToolCa
     textField.maximumNumberOfLines = 0;
     textField.lineBreakMode = NSLineBreakByCharWrapping;
     textField.usesSingleLineMode = NO;
-    textField.font = [NSFont fontWithName:@"Menlo" size:11];
+    textField.font = [NSFont it_toolbeltFont];
     cellView.textField = textField;
     [cellView addSubview:textField];
     textField.translatesAutoresizingMaskIntoConstraints = NO;
