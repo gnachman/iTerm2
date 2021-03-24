@@ -16,6 +16,8 @@
 #import "NSView+iTerm.h"
 
 static const CGFloat iTermNetworkUtilizationWidth = 170;
+static NSString *const iTermStatusBarNetworkUtilizationComponentKnobKeyDownloadColor = @"Network download color";
+static NSString *const iTermStatusBarNetworkUtilizationComponentKnobKeyUploadColor = @"Network upload color";
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -34,6 +36,25 @@ NS_ASSUME_NONNULL_BEGIN
         }];
     }
     return self;
+}
+
+- (NSArray<iTermStatusBarComponentKnob *> *)statusBarComponentKnobs {
+    NSArray<iTermStatusBarComponentKnob *> *knobs = [super statusBarComponentKnobs];
+
+    iTermStatusBarComponentKnob *downloadColorKnob =
+        [[iTermStatusBarComponentKnob alloc] initWithLabelText:@"Download Color:"
+                                                          type:iTermStatusBarComponentKnobTypeColor
+                                                   placeholder:nil
+                                                  defaultValue:nil
+                                                           key:iTermStatusBarNetworkUtilizationComponentKnobKeyDownloadColor];
+    iTermStatusBarComponentKnob *uploadColorKnob =
+        [[iTermStatusBarComponentKnob alloc] initWithLabelText:@"Upload Color:"
+                                                          type:iTermStatusBarComponentKnobTypeColor
+                                                   placeholder:nil
+                                                  defaultValue:nil
+                                                           key:iTermStatusBarNetworkUtilizationComponentKnobKeyUploadColor];
+
+    return [knobs arrayByAddingObjectsFromArray:@[downloadColorKnob, uploadColorKnob]];
 }
 
 - (NSImage *)statusBarComponentIcon {
@@ -65,6 +86,16 @@ NS_ASSUME_NONNULL_BEGIN
     return iTermNetworkUtilizationWidth;
 }
 
+- (NSColor *)uploadColor {
+    NSDictionary *knobValues = self.configuration[iTermStatusBarComponentConfigurationKeyKnobValues];
+    return [knobValues[iTermStatusBarNetworkUtilizationComponentKnobKeyUploadColor] colorValue] ?: [NSColor redColor];
+}
+
+- (NSColor *)downloadColor {
+    NSDictionary *knobValues = self.configuration[iTermStatusBarComponentConfigurationKeyKnobValues];
+    return [knobValues[iTermStatusBarNetworkUtilizationComponentKnobKeyDownloadColor] colorValue] ?: [NSColor blueColor];
+}
+
 - (iTermStatusBarSparklinesModel *)sparklinesModel {
     NSArray<iTermNetworkUtilizationSample *> *samples =
     [[iTermNetworkUtilization sharedInstance] samples];
@@ -75,7 +106,7 @@ NS_ASSUME_NONNULL_BEGIN
     iTermStatusBarTimeSeries *readTimeSeries = [[iTermStatusBarTimeSeries alloc] initWithValues:readValues];
     iTermStatusBarTimeSeriesRendition *readRendition =
     [[iTermStatusBarTimeSeriesRendition alloc] initWithTimeSeries:readTimeSeries
-                                                            color:[NSColor blueColor]];
+                                                            color:[self downloadColor]];
 
     NSArray<NSNumber *> *writeValues = [samples mapWithBlock:^id(iTermNetworkUtilizationSample *anObject) {
         return @(anObject.bytesPerSecondWrite);
@@ -83,7 +114,7 @@ NS_ASSUME_NONNULL_BEGIN
     iTermStatusBarTimeSeries *writeTimeSeries = [[iTermStatusBarTimeSeries alloc] initWithValues:writeValues];
     iTermStatusBarTimeSeriesRendition *writeRendition =
     [[iTermStatusBarTimeSeriesRendition alloc] initWithTimeSeries:writeTimeSeries
-                                                            color:[NSColor redColor]];
+                                                            color:[self uploadColor]];
 
     return [[iTermStatusBarSparklinesModel alloc] initWithDictionary:@{ @"read": readRendition,
                                                                         @"write": writeRendition  }];
