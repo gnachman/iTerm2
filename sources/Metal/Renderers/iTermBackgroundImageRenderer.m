@@ -15,6 +15,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic) iTermBackgroundImageMode mode;
 @property (nonatomic) BOOL repeat;
 @property (nonatomic) NSSize imageSize;
+@property (nonatomic) CGFloat imageScale;
 @property (nonatomic) CGRect frame;
 @property (nonatomic) CGRect containerFrame;
 @property (nonatomic) vector_float4 defaultBackgroundColor;
@@ -225,6 +226,7 @@ NS_ASSUME_NONNULL_BEGIN
     tState.texture = _texture;
     tState.mode = _mode;
     tState.imageSize = _image.image.size;
+    tState.imageScale = [_image.image recommendedLayerContentsScale:tState.configuration.scale];
     tState.repeat = (_mode == iTermBackgroundImageModeTile);
     tState.frame = _frame;
     tState.defaultBackgroundColor = _color;
@@ -233,8 +235,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)loadVertexBuffer:(iTermBackgroundImageRendererTransientState *)tState {
     const CGFloat scale = tState.configuration.scale;
-    const CGSize nativeTextureSize = NSMakeSize(tState.imageSize.width * scale,
-                                                tState.imageSize.height * scale);
+    const CGSize nativeTextureSize = NSMakeSize(tState.imageSize.width * tState.imageScale,
+                                                tState.imageSize.height * tState.imageScale);
     const CGSize viewportSize = CGSizeMake(tState.configuration.viewportSize.x,
                                            tState.configuration.viewportSize.y);
     NSEdgeInsets insets;

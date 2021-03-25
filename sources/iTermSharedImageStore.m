@@ -111,6 +111,7 @@
 
 @implementation iTermImageWrapper {
     id _cgimage;
+    NSMutableDictionary<NSNumber *, NSImage *> *_tilingImages;
 }
 
 + (instancetype)withContentsOfFile:(NSString *)path {
@@ -128,6 +129,7 @@
 - (instancetype)initWithImage:(NSImage *)unsafeImage {
     self = [super init];
     if (self) {
+        _tilingImages = [NSMutableDictionary dictionary];
         NSImage *image = unsafeImage;
         if (unsafeImage.size.height > 0 && unsafeImage.size.width > 0) {
             // Downscale to deal with issue 9346
@@ -150,7 +152,7 @@
     if (_cgimage) {
         return (__bridge CGImageRef)_cgimage;
     }
-    _cgimage = [self.image layerContentsForContentsScale:2];
+    _cgimage = [self.image layerContentsForContentsScale:[self.image recommendedLayerContentsScale:2]];
     return (__bridge CGImageRef)_cgimage;
 }
 
@@ -162,6 +164,30 @@
         return NSMakeSize(rep.pixelsWide, rep.pixelsHigh);
     }
     return self.image.size;
+}
+
+- (NSImage *)tilingBackgroundImageForBackingScaleFactor:(CGFloat)scale {
+    NSImage *cached = _tilingImages[@(scale)];
+    if (cached) {
+        return cached;
+    }
+    NSImageRep *bestRep = [self.image.representations maxWithBlock:^NSComparisonResult(NSImageRep *obj1, NSImageRep *obj2) {
+        return [@(obj1.size.width) compare:@(obj2.size.width)];
+    }];
+    NSImage *cookedImage;
+    if ([bestRep isKindOfClass:[NSBitmapImageRep class]]) {
+        NSBitmapImageRep *bitmap = (NSBitmapImageRep *)bestRep;
+        CGImageRef cgimage = bitmap.CGImage;
+
+        NSBitmapImageRep *rep = [[NSBitmapImageRep alloc] initWithCGImage:cgimage];
+        cookedImage = [[NSImage alloc] initWithSize:NSMakeSize(CGImageGetWidth(cgimage) / scale,
+                                                               CGImageGetHeight(cgimage) / scale)];
+        [cookedImage addRepresentation:rep];
+    } else {
+        cookedImage = self.image;
+    }
+    _tilingImages[@(scale)] = cookedImage;
+    return cookedImage;
 }
 
 @end

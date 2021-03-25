@@ -8,9 +8,15 @@
 #import "iTermImageView.h"
 
 #import "iTermAlphaBlendingHelper.h"
+#import "iTermMalloc.h"
+#import "NSArray+iTerm.h"
 #import "NSImage+iTerm.h"
 
 #import <QuartzCore/QuartzCore.h>
+
+@interface CALayer (CALayerAdditions)
+@property(copy) NSString *contentsScaling;
+@end
 
 // This is used with opaque windows to provide a background color under the image in case the
 // image has transparent parts.
@@ -111,7 +117,9 @@
 
 @end
 
-@implementation iTermInternalImageView
+@implementation iTermInternalImageView {
+    CGFloat _lastTilingScale;
+}
 
 - (instancetype)initWithFrame:(NSRect)frameRect {
     self = [super initWithFrame:frameRect];
@@ -130,6 +138,10 @@
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(fullScreenDidChange:)
                                                      name:NSWindowDidExitFullScreenNotification
+                                                   object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(windowDidChangeScreen:)
+                                                     name:NSWindowDidChangeScreenNotification
                                                    object:nil];
     }
     return self;
@@ -171,6 +183,7 @@
     if (image == _image) {
         return;
     }
+    _lastTilingScale = -1;
     _image = image;
     [self update];
 }
@@ -222,48 +235,56 @@
     self.layer.backgroundColor = nil;
     CGImageRef cgi = [_image cgimage];
     self.layer.contents = (__bridge id)cgi;
+    _lastTilingScale = -1;
 }
 
-static void iTermImageViewDrawImage(void *info, CGContextRef context) {
-    CGImageRef image = (CGImageRef)info;
-    CGContextDrawImage(context,
-                       CGRectMake(0,
-                                  0,
-                                  CGImageGetWidth(image),
-                                  CGImageGetHeight(image)),
-                       image);
+- (CGFloat)scale {
+    if (!self.window) {
+        return 2;
+    }
+    return self.window.backingScaleFactor;
 }
 
-static void iTermImageViewReleaseImage(void *info) {
-    // The CGImage is autoreleased so this does nothing.
+- (void)viewDidMoveToWindow {
+    // The scale may have changed which affects tiled images.
+    [self update];
+}
+
+- (void)windowDidChangeScreen:(NSNotification *)notification {
+    // The scale may have changed which affects tiled images.
+    [self update];
 }
 
 // Make a pattern color and set the layer's background color to that.
 - (void)loadTiledImage {
-    const CGImageRef cgImage = [_image.image CGImage];
-    const int width = CGImageGetWidth(cgImage);
-    const int height = CGImageGetHeight(cgImage);
-    const CGPatternCallbacks callbacks = {
-        .version = 0,
-        .drawPattern = iTermImageViewDrawImage,
-        .releaseInfo = iTermImageViewReleaseImage
-    };
-    CGPatternRef pattern = CGPatternCreate(cgImage,
-                                           CGRectMake (0, 0, width, height),
-                                           CGAffineTransformMake(1, 0, 0, 1, 0, 0),
-                                           width,
-                                           height,
-                                           kCGPatternTilingConstantSpacing,
-                                           YES /* isColored */,
-                                           &callbacks);
-    const CGColorSpaceRef colorSpace = CGColorSpaceCreatePattern(NULL);
-    const CGFloat components[1] = { 1.0 };
-    const CGColorRef color = CGColorCreateWithPattern(colorSpace, pattern, components);
-    CGColorSpaceRelease(colorSpace);
-    CGPatternRelease(pattern);
+    if (!_image.image) {
+        self.layer.contents = nil;
+        self.layer.backgroundColor = [[NSColor redColor] CGColor];
+        return;
+    }
+
+    if (_lastTilingScale == self.scale) {
+        return;
+    }
+    _lastTilingScale = self.scale;
+
+    // This convoluted mess is because of crazy images like the one in issue 9582:
+    //
+    // <NSImage 0x60e000118580 Size={614.39999999999998, 345.59999999999997} RepProvider=<NSImageArrayRepProvider: 0x602000135730, reps:(
+    //     "NSBitmapImageRep 0x60b000682160 Size={614.39999999999998, 345.59999999999997} ColorSpace=(not yet loaded) BPS=8 BPP=(not yet loaded) Pixels=2560x1440
+    //      Alpha=NO Planar=NO Format=(not yet loaded) CurrentBacking=nil (faulting) CGImageSource=0x603000624c70"
+    // )>>
+    //
+    // The NSImage API doesn't expose enough info to do anything sane with this.
+    // Using the NSImage directly is a blurry mess.
+    // Instead, we extract the CGImage from it—which is sane—and reconstruct two NSImages (one per scale)
+    // and that does the "right" thing. The right thing I hereby define as 1 image pixel = 1 screen pixel.
+    // That is right because it's convenient for the GPU renderer.
+    // It's a little strange because the image will be visually twice as big on a 1x display as a retina display.
+    NSImage *cookedImage = [_image tilingBackgroundImageForBackingScaleFactor:self.scale];
+    CGColorRef cgcolor = [[NSColor colorWithPatternImage:cookedImage] CGColor];
+    self.layer.backgroundColor = cgcolor;
     self.layer.contents = nil;
-    self.layer.backgroundColor = color;
-    CGColorRelease(color);
 }
 
 - (void)setContentMode:(iTermBackgroundImageMode)contentMode {
