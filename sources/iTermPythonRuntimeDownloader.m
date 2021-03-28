@@ -568,9 +568,9 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
         NSString *replaceWith1 = [NSString stringWithFormat:@"/iterm2env-%@/", @(runtimeVersion)];
         NSString *searchFor2 = [NSString stringWithFormat:@"/iterm2env-%@\"", @(latestFullComponent)];
         NSString *replaceWith2 = [NSString stringWithFormat:@"/iterm2env-%@\"", @(runtimeVersion)];
-        NSDictionary<NSString *, NSDictionary<NSString *, NSString *> *> *subs =
-        @{ @"": @{ searchFor1: replaceWith1,
-                   searchFor2: replaceWith2 } };
+        NSDictionary<NSString *, NSString *> *subs =
+            @{ searchFor1: replaceWith1,
+               searchFor2: replaceWith2 } ;
         [self performSubstitutions:subs inFilesUnderFolder:tempDestination];
         [self unzip:[NSURL fileURLWithPath:zip] to:tempDestination completion:^(BOOL ok) {
             if (!ok) {
