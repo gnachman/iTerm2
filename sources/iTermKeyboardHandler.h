@@ -43,6 +43,8 @@ typedef struct {
 - (void)keyboardHandler:(iTermKeyboardHandler *)keyboardhandler
              insertText:(NSString *)aString;
 
+- (void)keyboardHandlerSendBackspace:(iTermKeyboardHandler *)keyboardhandler;
+
 @end
 
 // This is responsible for the logic involving the NSTextInput insanity, including dealing with

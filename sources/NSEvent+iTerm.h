@@ -22,5 +22,6 @@
 @property (nonatomic, readonly) NSEventModifierFlags it_modifierFlags;
 
 - (NSEvent *)eventByRoundingScrollWheelClicksAwayFromZero;
+- (BOOL)it_pressAndHoldShouldRepeat;
 
 @end

@@ -317,6 +317,7 @@ DEFINE_BOOL(translateScreenToXterm, YES, SECTION_TERMINAL @"Support TERM=screen\
 // However, it must return three arguments (at the very least) to keep vim happy. For more, see
 // check_termcode() in vim's term.c.
 DEFINE_INT(xtermVersion, 95, SECTION_TERMINAL @"xterm version for secondary device attributes (SDA).\nIncreasing this number enables more features in apps but may break things. Use 216 to get more support for modifier keys in emacs.");
+DEFINE_BOOL(disableAccentMenu, YES, SECTION_TERMINAL @"Should pressing and holding a key cause it to repeat?\nIf this is set to “No” then the system accent menu will open. You must restart iTerm2 for this setting to take effect.");
 
 #pragma mark Hotkey
 

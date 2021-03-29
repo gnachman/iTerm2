@@ -122,4 +122,16 @@
     return [NSEvent eventWithCGEvent:cgEvent];
 }
 
+- (BOOL)it_pressAndHoldShouldRepeat {
+    if (self.type != NSEventTypeKeyDown) {
+        return NO;
+    }
+    if ((self.modifierFlags & (NSEventModifierFlagCommand | NSEventModifierFlagControl)) != 0) {
+        return YES;
+    }
+    NSCharacterSet *alphanumerics = [NSCharacterSet alphanumericCharacterSet];
+    const NSRange rangeOfAlphanumeric = [[self charactersIgnoringModifiers] rangeOfCharacterFromSet:alphanumerics];
+    return rangeOfAlphanumeric.location == NSNotFound;
+}
+
 @end

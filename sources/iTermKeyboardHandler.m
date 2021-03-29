@@ -164,6 +164,9 @@ static iTermKeyboardHandler *sCurrentKeyboardHandler;
     aString = [aString stringByReplacingOccurrencesOfString:@"¥" withString:@"\\"];
 
     DLog(@"PTYTextView insertText:%@", aString);
+    if (replacementRange.length > 0 && ![iTermAdvancedSettingsModel disableAccentMenu]) {
+        [self.delegate keyboardHandlerSendBackspace:self];
+    }
     [self.delegate keyboardHandler:self insertText:aString];
     if ([aString length] > 0) {
         _keyPressHandled = YES;

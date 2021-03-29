@@ -12,9 +12,11 @@
 // Optionally, it may have a function that computes its value (set in +computedObjectDictionary)
 // and the view controller may customize how its control's appearance changes dynamically.
 
-#import "iTermNotificationCenter.h"
-#import "iTermPreferenceDidChangeNotification.h"
 #import "iTermPreferences.h"
+
+#import "iTermNotificationCenter.h"
+#import "iTermAdvancedSettingsModel.h"
+#import "iTermPreferenceDidChangeNotification.h"
 #import "iTermRemotePreferences.h"
 #import "iTermUserDefaultsObserver.h"
 #import "WindowArrangements.h"
@@ -229,7 +231,7 @@ static NSString *sPreviousVersion;
         @"AppleScrollAnimationEnabled": @0,
 
         // Turn off accent menu
-        @"ApplePressAndHoldEnabled": @NO,
+        @"ApplePressAndHoldEnabled": @(![iTermAdvancedSettingsModel disableAccentMenu]),
 
         // Override smooth scrolling, which breaks various things (such as the
         // assumption, when detectUserScroll is called, that scrolls happen

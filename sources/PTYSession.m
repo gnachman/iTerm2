@@ -9745,6 +9745,12 @@ preferredEscaping:(iTermSendTextEscaping)preferredEscaping {
     [_pasteHelper tryToPasteEvent:event];
 }
 
+- (void)textViewSendBackspace {
+    [self writeTask:[[self backspaceData] stringWithEncoding:self.encoding]
+           encoding:self.encoding
+      forceEncoding:NO];
+}
+
 - (void)launchCoprocessWithCommand:(NSString *)command
 {
     [self launchCoprocessWithCommand:command mute:NO];

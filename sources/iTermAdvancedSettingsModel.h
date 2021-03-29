@@ -82,6 +82,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (int)defaultTabStopWidth;
 + (NSString *)defaultURLScheme;
 + (BOOL)detectPasswordInput;
++ (BOOL)disableAccentMenu;
 + (BOOL)disableAdaptiveFrameRateInInteractiveApps;
 + (BOOL)disableAppNap;
 + (BOOL)disableCustomBoxDrawing;

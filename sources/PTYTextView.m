@@ -608,7 +608,16 @@
     return [super performKeyEquivalent:theEvent];
 }
 
+- (BOOL)accentMenuIsOpen {
+    NSLog(@"dunno");
+    return NO;
+}
+
 - (void)keyDown:(NSEvent *)event {
+    if (![iTermAdvancedSettingsModel disableAccentMenu] && [self accentMenuIsOpen]) {
+        [self interpretKeyEvents:event];
+        return;
+    }
     [_mouseHandler keyDown:event];
     [_keyboardHandler keyDown:event inputContext:self.inputContext];
 }
@@ -3629,6 +3638,7 @@ useCompatibilityEscaping:compatibilityEscaping
 }
 
 - (void)insertText:(id)aString replacementRange:(NSRange)replacementRange {
+    NSLog(@"%@", NSStringFromRange(replacementRange));
     [_keyboardHandler insertText:aString replacementRange:replacementRange];
 }
 
@@ -3708,7 +3718,13 @@ useCompatibilityEscaping:compatibilityEscaping
 }
 
 - (NSRange)selectedRange {
-    return NSMakeRange(0, 0);
+    if ([iTermAdvancedSettingsModel disableAccentMenu]) {
+        // Probably we could always return the actual selected range but I'm wary of breaking things.
+        return NSMakeRange(0, 0);
+    } else {
+        // The accent menu needs this to figure out which character to replace.
+        return NSMakeRange(_dataSource.cursorX - 1, 1);
+    }
 }
 
 - (NSArray *)validAttributesForMarkedText {
@@ -4835,6 +4851,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 - (BOOL)keyboardHandler:(iTermKeyboardHandler *)keyboardhandler
     shouldHandleKeyDown:(NSEvent *)event {
+    if (event.isARepeat && ![iTermAdvancedSettingsModel disableAccentMenu] && ![event it_pressAndHoldShouldRepeat]) {
+        [self interpretKeyEvents:@[event]];
+        return NO;
+    }
     if (![_delegate textViewShouldAcceptKeyDownEvent:event]) {
         return NO;
     }
@@ -4863,7 +4883,6 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         [_delegate keyDown:event];
         return NO;
     }
-
     return YES;
 }
 
@@ -4915,6 +4934,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         // In case imeOffset changed, the frame height must adjust.
         [_delegate refresh];
     }
+}
+
+- (void)keyboardHandlerSendBackspace:(iTermKeyboardHandler *)keyboardhandler {
+    [_delegate textViewSendBackspace];
 }
 
 #pragma mark - iTermBadgeLabelDelegate

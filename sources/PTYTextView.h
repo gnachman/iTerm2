@@ -92,6 +92,7 @@ useCompatibilityEscaping:(BOOL)useCompatibilityEscaping
 compatibilityEscaping:(iTermSendTextEscaping)compatibilityEscaping
 preferredEscaping:(iTermSendTextEscaping)preferredEscaping;
 - (void)sendTextSlowly:(NSString *)text;
+- (void)textViewSendBackspace;
 - (void)textViewSelectionDidChangeToTruncatedString:(NSString *)maybeSelection;
 - (void)launchCoprocessWithCommand:(NSString *)command;
 - (void)insertText:(NSString *)string;
