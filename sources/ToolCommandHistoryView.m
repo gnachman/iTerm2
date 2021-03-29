@@ -209,10 +209,11 @@ static const CGFloat kHelpMargin = 5;
     }
     
     // Scroll view
+    const CGFloat searchFieldY = searchFieldFrame.size.height + kMargin;
     [scrollView_ setFrame:NSMakeRect(0,
-                                     searchFieldFrame.size.height + kMargin,
+                                     searchFieldY,
                                      frame.size.width,
-                                     frame.size.height - 2 * kMargin)];
+                                     NSHeight(self.bounds) - searchFieldY - 2 * kMargin)];
 
     // Table view
     NSSize contentSize = [scrollView_ contentSize];
