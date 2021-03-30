@@ -3601,7 +3601,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [[self currentSession] refresh];
     [[[self currentSession] textview] setNeedsDisplay:YES];
     [_contentView setNeedsDisplay:YES];
-    [[iTermFindPasteboard sharedInstance] updateObservers];
+    [[iTermFindPasteboard sharedInstance] updateObservers:nil];
 
     // Start the timers back up
     for (PTYSession* aSession in [self allSessions]) {
@@ -5652,7 +5652,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [self.scope setValue:self.currentTab.variables forVariableNamed:iTermVariableKeyWindowCurrentTab];
     [self updateForTransparency:self.ptyWindow];
     [self updateDocumentEdited];
-    [[iTermFindPasteboard sharedInstance] updateObservers];
+    [[iTermFindPasteboard sharedInstance] updateObservers:nil];
     [self updateBackgroundImage];
     [[NSNotificationCenter defaultCenter] postNotificationName:iTermSelectedTabDidChange object:tab];
     DLog(@"Finished");
@@ -8052,7 +8052,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     [self updateForTransparency:self.ptyWindow];
     [_contentView layoutIfStatusBarChanged];
     [self updateToolbeltAppearance];
-    [[iTermFindPasteboard sharedInstance] updateObservers];
+    [[iTermFindPasteboard sharedInstance] updateObservers:nil];
     for (PTYSession *session in self.currentTab.sessions) {
         [session updateViewBackgroundImage];
     }
@@ -10724,7 +10724,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 
 - (IBAction)showFindPanel:(id)sender {
     [[self currentSession] showFindPanel];
-    [[iTermFindPasteboard sharedInstance] updateObservers];
+    [[iTermFindPasteboard sharedInstance] updateObservers:nil];
 }
 
 // findNext and findPrevious are reversed here because in the search UI next

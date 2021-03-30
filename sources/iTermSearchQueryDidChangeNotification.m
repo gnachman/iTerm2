@@ -10,13 +10,16 @@
 
 @implementation iTermSearchQueryDidChangeNotification
 
-+ (instancetype)notification {
-    return [[self alloc] initPrivate];
++ (instancetype)notificationWithSender:(id _Nullable)sender {
+    iTermSearchQueryDidChangeNotification *notification = [[self alloc] initPrivate];
+    notification.sender = sender;
+    return notification;
 }
 
-+ (void)subscribe:(NSObject *)owner block:(void (^)(void))block {
++ (void)subscribe:(NSObject *)owner block:(void (^)(id))block {
     [self internalSubscribe:owner withBlock:^(id notification) {
-        block();
+        iTermSearchQueryDidChangeNotification *notif = notification;
+        block(notif.sender);
     }];
 }
 

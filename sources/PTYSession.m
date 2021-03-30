@@ -829,10 +829,14 @@ static const NSUInteger kMaxHosts = 100;
                                                  selector:@selector(tmuxWillKillWindow:)
                                                      name:iTermTmuxControllerWillKillWindow
                                                    object:nil];
-        [[iTermFindPasteboard sharedInstance] addObserver:self block:^(NSString * _Nonnull newValue) {
-            if (weakSelf.view.window.isKeyWindow) {
-                [weakSelf useStringForFind:newValue];
+        [[iTermFindPasteboard sharedInstance] addObserver:self block:^(id sender, NSString * _Nonnull newValue) {
+            if (!weakSelf.view.window.isKeyWindow) {
+                return;
             }
+            if (![iTermAdvancedSettingsModel loadFromFindPasteboard] && sender != self) {
+                return;
+            }
+            [weakSelf useStringForFind:newValue];
         }];
 
         if (!synthetic) {
@@ -6396,7 +6400,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         _pbtext = nil;
 
         // In case it was the find pasteboard that changed
-        [[iTermFindPasteboard sharedInstance] updateObservers];
+        [[iTermFindPasteboard sharedInstance] updateObservers:self];
     }
 }
 

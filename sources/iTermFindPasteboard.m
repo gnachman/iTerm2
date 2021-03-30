@@ -51,23 +51,23 @@
     return [findBoard stringForType:NSPasteboardTypeString] ?: @"";
 }
 
-- (void)updateObservers {
-    [[iTermSearchQueryDidChangeNotification notification] post];
+- (void)updateObservers:(id _Nullable)sender {
+    [[iTermSearchQueryDidChangeNotification notificationWithSender:sender] post];
 }
 
-- (void)addObserver:(id)observer block:(void (^)(NSString *newValue))block {
+- (void)addObserver:(id)observer block:(void (^)(id sender, NSString *newValue))block {
     __weak __typeof(self) weakSelf = self;
-    [iTermSearchQueryDidChangeNotification subscribe:observer block:^{
+    [iTermSearchQueryDidChangeNotification subscribe:observer block:^(id sender) {
         __strong __typeof(self) strongSelf = weakSelf;
         if (!strongSelf) {
             return;
         }
-        block(strongSelf.stringValue);
+        block(sender, strongSelf.stringValue);
     }];
 }
 
 - (void)windowDidBecomeKey:(NSNotification *)notification {
-    [self updateObservers];
+    [self updateObservers:nil];
 }
 
 @end

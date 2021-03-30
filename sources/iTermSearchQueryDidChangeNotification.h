@@ -10,9 +10,10 @@
 NS_ASSUME_NONNULL_BEGIN
 
 @interface iTermSearchQueryDidChangeNotification : iTermBaseNotification
+@property(nonatomic, strong, nullable)  id sender;
 
-+ (instancetype)notification;
-+ (void)subscribe:(NSObject *)owner block:(void (^)(void))block;
++ (instancetype)notificationWithSender:(id _Nullable)sender;
++ (void)subscribe:(NSObject *)owner block:(void (^)(id sender))block;
 
 @end
 

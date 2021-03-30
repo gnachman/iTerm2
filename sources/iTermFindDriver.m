@@ -92,7 +92,7 @@ static NSString *gSearchString;
         _state = [[FindState alloc] init];
         _state.mode = gFindMode;
         __weak __typeof(self) weakSelf = self;
-        [[iTermFindPasteboard sharedInstance] addObserver:self block:^(NSString *newValue) {
+        [[iTermFindPasteboard sharedInstance] addObserver:self block:^(id sender, NSString *newValue) {
             [weakSelf loadFindStringFromSharedPasteboard:newValue];
         }];
     }

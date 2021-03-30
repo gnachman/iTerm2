@@ -3791,7 +3791,7 @@ useCompatibilityEscaping:compatibilityEscaping
             NSString *selection = [self selectedText];
             if (selection) {
                 [[iTermFindPasteboard sharedInstance] setStringValue:selection];
-                [[iTermFindPasteboard sharedInstance] updateObservers];
+                [[iTermFindPasteboard sharedInstance] updateObservers:_delegate];
             }
             break;
         }

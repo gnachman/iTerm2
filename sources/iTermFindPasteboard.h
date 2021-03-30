@@ -13,8 +13,8 @@ NS_ASSUME_NONNULL_BEGIN
 @property (null_resettable, nonatomic, copy) NSString *stringValue;
 
 + (instancetype)sharedInstance;
-- (void)updateObservers;
-- (void)addObserver:(id)observer block:(void (^)(NSString *newValue))block;
+- (void)updateObservers:(id _Nullable)sender;
+- (void)addObserver:(id)observer block:(void (^)(id sender, NSString *newValue))block;
 
 @end
 
