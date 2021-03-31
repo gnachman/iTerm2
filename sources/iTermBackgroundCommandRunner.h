@@ -6,26 +6,33 @@
 //
 
 #import <Foundation/Foundation.h>
+#import "iTermCommandRunner.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
 // Runs a command through /bin/sh -c and adds it to the script console, optionally posting a
 // notification if it fails.
-@interface iTermBackgroundCommandRunner : NSObject
-@property (nonatomic, readonly) NSString *command;
-@property (nonatomic, readonly) NSString *shell;
-@property (nonatomic, readonly) NSString *title;
+@interface iTermBackgroundCommandRunner : NSObject<iTermCommandRunner>
+@property (nonatomic) NSString *command;
+@property (nonatomic) NSString *shell;
+@property (nonatomic) NSString *title;
 @property (nonatomic, nullable, copy) NSString *notificationTitle;  // Title to show in user notification
 @property (atomic, nullable, copy) NSString *path;
 
-- (instancetype)initWithCommand:(NSString *)command
-                          shell:(NSString *)shell
-                          title:(NSString *)title NS_DESIGNATED_INITIALIZER;
+- (instancetype)initWithCommand:(nullable NSString *)command
+                          shell:(nullable NSString *)shell
+                          title:(nullable NSString *)title;
 
-- (instancetype)init NS_UNAVAILABLE;
+- (instancetype)init NS_DESIGNATED_INITIALIZER;
 
 - (void)run;
 
+@end
+
+@interface iTermBackgroundCommandRunnerPromise: iTermBackgroundCommandRunner
+@property (nonatomic, copy) void (^ _Nullable terminationBlock)(iTermBackgroundCommandRunner *, int);
+
+- (void)fulfill;
 @end
 
 NS_ASSUME_NONNULL_END

@@ -63,9 +63,7 @@
     [runner run];
 }
 
-- (instancetype)initWithCommand:(NSString *)command
-                  withArguments:(NSArray<NSString *> *)arguments
-                           path:(NSString *)currentDirectoryPath {
+- (instancetype)init {
     self = [super init];
     if (self) {
         _task = [[NSTask alloc] init];
@@ -74,7 +72,15 @@
         _readingQueue = dispatch_queue_create("com.iterm2.crun-reading", DISPATCH_QUEUE_SERIAL);
         _writingQueue = dispatch_queue_create("com.iterm2.crun-writing", DISPATCH_QUEUE_SERIAL);
         _waitingQueue = dispatch_queue_create("com.iterm2.crun-waiting", DISPATCH_QUEUE_SERIAL);
-        assert(command);
+    }
+    return self;
+}
+
+- (instancetype)initWithCommand:(NSString *)command
+                  withArguments:(NSArray<NSString *> *)arguments
+                           path:(NSString *)currentDirectoryPath {
+    self = [self init];
+    if (self) {
         self.command = command;
         self.arguments = arguments;
         self.currentDirectoryPath = currentDirectoryPath;

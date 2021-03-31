@@ -65,6 +65,8 @@ static NSMutableArray<iTermBackgroundCommandRunner *> *activeRunners;
     BOOL _running;
 }
 
+@synthesize completion;
+
 + (void)maybeNotify:(void (^)(NSInteger))block {
     static iTermRateLimitedUpdate *rateLimit;
     static dispatch_once_t onceToken;
@@ -77,15 +79,22 @@ static NSMutableArray<iTermBackgroundCommandRunner *> *activeRunners;
     }];
 }
 
-- (instancetype)initWithCommand:(NSString *)command
-                          shell:(NSString *)shell
-                          title:(NSString *)title {
+- (instancetype)init {
     self = [super init];
     if (self) {
         static dispatch_once_t onceToken;
         dispatch_once(&onceToken, ^{
             activeRunners = [NSMutableArray array];
         });
+    }
+    return self;
+}
+
+- (instancetype)initWithCommand:(NSString *)command
+                          shell:(NSString *)shell
+                          title:(NSString *)title {
+    self = [self init];
+    if (self) {
         _command = command.copy;
         _shell = shell.copy;
         _title = title.copy;
@@ -179,6 +188,29 @@ static NSMutableArray<iTermBackgroundCommandRunner *> *activeRunners;
                                                        callbackNotificationUserInfo:@{ @"identifier": entry.identifier }];
         }];
     }
+    if (self.completion) {
+        self.completion(status);
+    }
 }
 
+@end
+
+@implementation iTermBackgroundCommandRunnerPromise {
+    BOOL _fulfilled;
+}
+
+- (void)fulfill {
+    if (_fulfilled) {
+        return;
+    }
+    _fulfilled = YES;
+    [self run];
+}
+
+- (void)run {
+    if (!_fulfilled) {
+        return;
+    }
+    [super run];
+}
 @end

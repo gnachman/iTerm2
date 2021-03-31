@@ -161,6 +161,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (int)maxHistoryLinesToRestore;
 + (int)maximumBytesToProvideToServices;
 + (int)maximumBytesToProvideToPythonAPI;
++ (int)maximumNumberOfTriggerCommands;
 + (int)maxSemanticHistoryPrefixOrSuffix;
 + (double)metalRedrawPeriod;
 + (double)metalSlowFrameRate;

@@ -7,7 +7,12 @@
 
 #import <Foundation/Foundation.h>
 
-@interface iTermCommandRunner : NSObject
+@protocol iTermCommandRunner<NSObject>
+@property (nonatomic, copy) void (^completion)(int);
+- (void)run;
+@end
+
+@interface iTermCommandRunner : NSObject<iTermCommandRunner>
 
 @property (nonatomic, copy) NSString *command;
 @property (nonatomic, copy) NSArray<NSString *> *arguments;
@@ -31,8 +36,8 @@
 
 - (instancetype)initWithCommand:(NSString *)command
                   withArguments:(NSArray<NSString *> *)arguments
-                           path:(NSString *)currentDirectoryPath NS_DESIGNATED_INITIALIZER;
-- (instancetype)init NS_UNAVAILABLE;
+                           path:(NSString *)currentDirectoryPath;
+- (instancetype)init NS_DESIGNATED_INITIALIZER;
 
 - (void)run;
 - (void)runWithTimeout:(NSTimeInterval)timeout;

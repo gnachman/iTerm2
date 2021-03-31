@@ -8,13 +8,15 @@
 #import "iTermCommandRunnerPool.h"
 
 #import "DebugLogging.h"
+#import "iTermBackgroundCommandRunner.h"
 #import "iTermCommandRunner.h"
 #import "NSArray+iTerm.h"
 
 @implementation iTermCommandRunnerPool {
-    NSMutableArray<iTermCommandRunner *> *_idle;
-    NSMutableArray<iTermCommandRunner *> *_terminating;
-    NSMutableArray<iTermCommandRunner *> *_busy;
+@protected
+    NSMutableArray<id<iTermCommandRunner>> *_idle;
+    NSMutableArray<id<iTermCommandRunner>> *_terminating;
+    NSMutableArray<id<iTermCommandRunner>> *_busy;
 }
 
 - (instancetype)initWithCapacity:(int)capacity
@@ -41,13 +43,17 @@
             [self dumpArray:_idle], [self dumpArray:_terminating], [self dumpArray:_busy]];
 }
 
-- (NSString *)dumpArray:(NSArray<iTermCommandRunner *> *)array {
-    return [[array mapWithBlock:^id(iTermCommandRunner *runner) {
+- (NSString *)dumpArray:(NSArray<id<iTermCommandRunner>> *)array {
+    return [[array mapWithBlock:^id(id<iTermCommandRunner> runner) {
         return [runner description];
     }] componentsJoinedByString:@"\n"];
 }
 
-- (nullable iTermCommandRunner *)requestCommandRunnerWithTerminationBlock:(void (^)(iTermCommandRunner *, int))block {
+- (iTermCommandRunner *)requestCommandRunnerWithTerminationBlock:(void (^)(iTermCommandRunner * _Nonnull, int))block {
+    return (iTermCommandRunner *)[self internalRequestCommandRunnerWithTerminationBlock:(id)block];
+}
+
+- (nullable id<iTermCommandRunner>)internalRequestCommandRunnerWithTerminationBlock:(void (^)(id<iTermCommandRunner>, int))block {
     DLog(@"Command runner requested\n%@", [self stateDump]);
     if (_busy.count == _capacity) {
         DLog(@"Cannot return one because all are busy\n%@.", [self stateDump]);
@@ -60,8 +66,15 @@
         DLog(@"Failed to create new command runner");
         return nil;
     }
-    iTermCommandRunner *commandRunner = [_idle lastObject];
-    
+    id<iTermCommandRunner> commandRunner = [_idle lastObject];
+
+    [self initializeRunner:commandRunner completion:block];
+
+    DLog(@"Returning %@\n%@", commandRunner, [self stateDump]);
+    return commandRunner;
+}
+
+- (void)initializeRunner:(id<iTermCommandRunner>)commandRunner completion:(void (^)(id<iTermCommandRunner>, int))block {
     __weak __typeof(commandRunner) weakCommandRunner = commandRunner;
     __weak __typeof(self) weakSelf = self;
     commandRunner.completion = ^(int code) {
@@ -76,9 +89,6 @@
     DLog(@"Move command runner %@ from idle to busy", commandRunner);
     [_busy addObject:commandRunner];
     [_idle removeLastObject];
-
-    DLog(@"Returning %@\n%@", commandRunner, [self stateDump]);
-    return commandRunner;
 }
 
 - (void)terminateCommandRunner:(iTermCommandRunner *)commandRunner {
@@ -107,7 +117,7 @@
     [_idle addObject:commandRunner];
 }
 
-- (void)commandRunnerDied:(iTermCommandRunner *)commandRunner {
+- (void)commandRunnerDied:(id<iTermCommandRunner>)commandRunner {
     DLog(@"Removing all references to dead command runner %@", commandRunner);
     if (!commandRunner) {
         return;
@@ -115,6 +125,62 @@
     [_busy removeObject:commandRunner];
     [_idle removeObject:commandRunner];
     [_terminating removeObject:commandRunner];
+}
+
+@end
+
+@implementation iTermBackgroundCommandRunnerPool {
+    NSMutableArray<iTermBackgroundCommandRunnerPromise *> *_waiting;
+}
+
+- (instancetype)initWithCapacity:(int)capacity {
+    self = [super initWithCapacity:capacity
+                           command:nil
+                         arguments:nil
+                  workingDirectory:nil
+                       environment:nil];
+    if (self) {
+        _waiting = [NSMutableArray array];
+    }
+    return self;
+}
+
+- (nullable iTermBackgroundCommandRunner *)requestBackgroundCommandRunnerWithTerminationBlock:(void (^ _Nullable)(iTermBackgroundCommandRunner *, int))block {
+    iTermBackgroundCommandRunner *runner = (iTermBackgroundCommandRunner *)[super requestCommandRunnerWithTerminationBlock:(id)block];
+    if (runner) {
+        return runner;
+    }
+
+    iTermBackgroundCommandRunnerPromise *promise = [[iTermBackgroundCommandRunnerPromise alloc] initWithCommand:nil shell:nil title:nil];
+    DLog(@"Will return a promise %@.", promise);
+    promise.terminationBlock = block;
+    [_waiting addObject:promise];
+    return promise;
+}
+
+- (void)createNewCommandRunner {
+    DLog(@"Creating a new command runner");
+    iTermBackgroundCommandRunner *commandRunner = [[iTermBackgroundCommandRunner alloc] init];
+    if (!commandRunner) {
+        return;
+    }
+    [_idle addObject:commandRunner];
+}
+
+- (void)commandRunnerDied:(id<iTermCommandRunner>)commandRunner {
+    DLog(@"waiting.count=%@", @(_waiting.count));
+    [super commandRunnerDied:commandRunner];
+    if (!_waiting.count) {
+        return;
+    }
+    iTermBackgroundCommandRunnerPromise *promise = [_waiting firstObject];
+    DLog(@"Fulfill promise %@", promise);
+    assert(promise);
+    [_waiting removeObjectAtIndex:0];
+    void (^terminationBlock)(iTermBackgroundCommandRunner *, int) = promise.terminationBlock;
+    promise.terminationBlock = nil;
+    [self initializeRunner:promise completion:terminationBlock];
+    [promise fulfill];
 }
 
 @end

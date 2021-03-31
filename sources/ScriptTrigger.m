@@ -7,7 +7,9 @@
 
 #import "ScriptTrigger.h"
 #import "DebugLogging.h"
+#import "iTermAdvancedSettingsModel.h"
 #import "iTermBackgroundCommandRunner.h"
+#import "iTermCommandRunnerPool.h"
 #import "PTYSession.h"
 #import "RegexKitLite.h"
 #import "NSStringITerm.h"
@@ -15,6 +17,15 @@
 #include <pwd.h>
 
 @implementation ScriptTrigger
+
++ (iTermBackgroundCommandRunnerPool *)commandRunnerPool {
+    static iTermBackgroundCommandRunnerPool *pool;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        pool = [[iTermBackgroundCommandRunnerPool alloc] initWithCapacity:[iTermAdvancedSettingsModel maximumNumberOfTriggerCommands]];
+    });
+    return pool;
+}
 
 + (NSString *)title
 {
@@ -54,10 +65,10 @@
 
 - (void)runCommand:(NSString *)command session:(PTYSession *)session {
     DLog(@"Invoking command %@", command);
-    iTermBackgroundCommandRunner *runner =
-    [[iTermBackgroundCommandRunner alloc] initWithCommand:command
-                                                    shell:session.userShell
-                                                    title:@"Run Command Trigger"];
+    iTermBackgroundCommandRunner *runner = [[ScriptTrigger commandRunnerPool] requestBackgroundCommandRunnerWithTerminationBlock:nil];
+    runner.command = command;
+    runner.shell = session.userShell;
+    runner.title = @"Run Command Trigger";
     runner.notificationTitle = @"Run Command Trigger Failed";
     [runner run];
 }
