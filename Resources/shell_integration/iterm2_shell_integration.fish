@@ -59,40 +59,55 @@ if begin; status --is-interactive; and not functions -q -- iterm2_status; and [ 
 
   functions -c fish_prompt iterm2_fish_prompt
 
+   function iterm2_common_prompt
+        set -l last_status $status
+
+        iterm2_status $last_status
+        iterm2_write_remotehost_currentdir_uservars
+        if not functions iterm2_fish_prompt | grep iterm2_prompt_mark > /dev/null
+            iterm2_prompt_mark
+        end
+        sh -c "exit $last_status"
+   end
+
   function iterm2_has_fish_mode_prompt -d "Returns true iff fish_mode_prompt is defined and non-empty"
-    if test (functions fish_mode_prompt | grep -vE '^ *(#|function |end$|$)' | wc -l) = 0
-      echo -n false
-    else
-      echo -n true
-    end
-  end
+     if test (functions fish_mode_prompt | grep -vE '^ *(#|function |end$|$)' | wc -l) = 0
+       echo -n false
+     else
+       echo -n true
+     end
+   end
 
-  if test iterm2_has_fish_mode_prompt = true
-    # Only override fish_mode_prompt if it is non-empty. This works around a problem created by a
-    # workaround in starship: https://github.com/starship/starship/issues/1283
-    functions -c fish_mode_prompt iterm2_fish_mode_prompt
-    function fish_mode_prompt --description 'Write out the mode prompt; do not replace this. Instead, change fish_mode_prompt before sourcing .iterm2_shell_integration.fish, or modify iterm2_fish_mode_prompt instead.'
-       set -l last_status $status
+   if test (iterm2_has_fish_mode_prompt) = true
+     # Only override fish_mode_prompt if it is non-empty. This works around a problem created by a
+     # workaround in starship: https://github.com/starship/starship/issues/1283
+     functions -c fish_mode_prompt iterm2_fish_mode_prompt
+     function fish_mode_prompt --description 'Write out the mode prompt; do not replace this. Instead, change fish_mode_prompt before sourcing .iterm2_shell_integration.fish, or modify iterm2_fish_mode_prompt instead.'
+        iterm2_common_prompt
+        iterm2_fish_mode_prompt
+     end
 
-       iterm2_status $last_status
-       iterm2_write_remotehost_currentdir_uservars
-       if not functions iterm2_fish_prompt | grep iterm2_prompt_mark > /dev/null
-           iterm2_prompt_mark
-       end
-       sh -c "exit $last_status"
+     function fish_prompt --description 'Write out the prompt; do not replace this. Instead, change fish_prompt before sourcing .iterm2_shell_integration.fish, or modify iterm2_fish_prompt instead.'
+        # Remove the trailing newline from the original prompt. This is done
+        # using the string builtin from fish, but to make sure any escape codes
+        # are correctly interpreted, use %b for printf.
+        printf "%b" (string join "\n" (iterm2_fish_prompt))
 
-       iterm2_fish_mode_prompt
-    end
-  end
+        iterm2_prompt_end
+     end
+   else
+     # fish_mode_prompt is empty or unset.
+     function fish_prompt --description 'Write out the mode prompt; do not replace this. Instead, change fish_mode_prompt before sourcing .iterm2_shell_integration.fish, or modify iterm2_fish_mode_prompt instead.'
+        iterm2_common_prompt
 
-  function fish_prompt --description 'Write out the prompt; do not replace this. Instead, change fish_prompt before sourcing .iterm2_shell_integration.fish, or modify iterm2_fish_prompt instead.'
-     # Remove the trailing newline from the original prompt. This is done
-     # using the string builtin from fish, but to make sure any escape codes
-     # are correctly interpreted, use %b for printf.
-     printf "%b" (string join "\n" (iterm2_fish_prompt))
+        # Remove the trailing newline from the original prompt. This is done
+        # using the string builtin from fish, but to make sure any escape codes
+        # are correctly interpreted, use %b for printf.
+        printf "%b" (string join "\n" (iterm2_fish_prompt))
 
-     iterm2_prompt_end
-  end
+        iterm2_prompt_end
+     end
+   end
 
   # If hostname -f is slow for you, set iterm2_hostname before sourcing this script
   if not set -q -g iterm2_hostname
@@ -108,5 +123,5 @@ if begin; status --is-interactive; and not functions -q -- iterm2_status; and [ 
   end
 
   iterm2_write_remotehost_currentdir_uservars
-  printf "\033]1337;ShellIntegrationVersion=12;shell=fish\007"
+  printf "\033]1337;ShellIntegrationVersion=15;shell=fish\007"
 end
