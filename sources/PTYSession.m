@@ -3048,9 +3048,23 @@ ITERM_WEAKLY_REFERENCEABLE
                           lineNumber:startAbsLineNumber];
 }
 
+- (BOOL)shouldUseTriggers {
+    if (![self.terminal softAlternateScreenMode]) {
+        return YES;
+    }
+    return [iTermProfilePreferences boolForKey:KEY_ENABLE_TRIGGERS_IN_INTERACTIVE_APPS inProfile:self.profile];
+}
+
 - (void)checkTriggersOnPartialLine:(BOOL)partial
                         stringLine:(iTermStringLine *)stringLine
                         lineNumber:(long long)startAbsLineNumber {
+    DLog(@"partial=%@ startAbsLineNumber=%@", @(partial), @(startAbsLineNumber));
+
+    if (![self shouldUseTriggers]) {
+        DLog(@"Triggers disabled in interactive apps. Return early.");
+        return;
+    }
+
     // If the trigger causes the session to get released, don't crash.
     [[self retain] autorelease];
 
@@ -3065,6 +3079,7 @@ ITERM_WEAKLY_REFERENCEABLE
     // processing triggers. This can happen with automatic profile switching.
     NSArray<Trigger *> *triggers = [[_triggers retain] autorelease];
 
+    DLog(@"Start checking triggers");
     for (Trigger *trigger in triggers) {
         BOOL stop = [trigger tryString:stringLine
                              inSession:self
@@ -3075,6 +3090,7 @@ ITERM_WEAKLY_REFERENCEABLE
             break;
         }
     }
+    DLog(@"Finished checking triggers");
 }
 
 - (void)appendStringToTriggerLine:(NSString *)s {
@@ -9561,6 +9577,15 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [self.view.window beginSheet:_triggerWindowController.window completionHandler:^(NSModalResponse returnCode) {
         [weakSelf closeTriggerWindowController];
     }];
+}
+
+- (void)textViewToggleEnableTriggersInInteractiveApps {
+    const BOOL value = [iTermProfilePreferences boolForKey:KEY_ENABLE_TRIGGERS_IN_INTERACTIVE_APPS inProfile:self.profile];
+    [self setSessionSpecificProfileValues:@{ KEY_ENABLE_TRIGGERS_IN_INTERACTIVE_APPS: @(!value) }];
+}
+
+- (BOOL)textViewTriggersAreEnabledInInteractiveApps {
+    return [iTermProfilePreferences boolForKey:KEY_ENABLE_TRIGGERS_IN_INTERACTIVE_APPS inProfile:self.profile];
 }
 
 - (void)closeTriggerWindowController {

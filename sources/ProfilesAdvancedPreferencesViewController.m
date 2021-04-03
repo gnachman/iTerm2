@@ -44,6 +44,7 @@
     IBOutlet NSControl *_boundHostHelp;
 
     IBOutlet NSButton *_triggersButton;
+    IBOutlet NSButton *_enableTriggersInInteractiveApps;
     IBOutlet NSButton *_smartSelectionButton;
     IBOutlet NSView *_automaticProfileSwitchingView;
     IBOutlet NSView *_semanticHistoryAction;
@@ -69,6 +70,11 @@
                                                  name:kPointerPrefsSemanticHistoryEnabledChangedNotification
                                                object:nil];
 
+    [self defineControl:_enableTriggersInInteractiveApps
+                    key:KEY_ENABLE_TRIGGERS_IN_INTERACTIVE_APPS
+            relatedView:nil
+                   type:kPreferenceInfoTypeCheckbox];
+
     [self addViewToSearchIndex:_triggersButton
                    displayName:@"Triggers"
                        phrases:@[ @"regular expression", @"regex" ]
@@ -91,6 +97,7 @@
 - (NSArray *)keysForBulkCopy {
     NSArray *keys = @[ KEY_TRIGGERS,
                        KEY_TRIGGERS_USE_INTERPOLATED_STRINGS,
+                       KEY_ENABLE_TRIGGERS_IN_INTERACTIVE_APPS,
                        KEY_SMART_SELECTION_RULES,
                        KEY_SEMANTIC_HISTORY,
                        KEY_BOUND_HOSTS ];
@@ -149,6 +156,10 @@
 - (IBAction)closeTriggersSheet {
     [[_triggerWindowController.window undoManager] removeAllActionsWithTarget:self];
     [self.view.window endSheet:_triggerWindowController.window];
+}
+
+- (IBAction)toggleEnableTriggersInInteractiveApps:(id)sender {
+    [self setBool:![self boolForKey:KEY_ENABLE_TRIGGERS_IN_INTERACTIVE_APPS] forKey:KEY_ENABLE_TRIGGERS_IN_INTERACTIVE_APPS];
 }
 
 #pragma mark - TriggerDelegate

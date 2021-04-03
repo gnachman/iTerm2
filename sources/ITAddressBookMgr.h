@@ -241,6 +241,7 @@
 
 // Advanced
 #define KEY_TRIGGERS                         @"Triggers"  // NSArray of NSDictionary
+#define KEY_ENABLE_TRIGGERS_IN_INTERACTIVE_APPS @"Enable Triggers in Interactive Apps"  // Bool
 #define KEY_TRIGGERS_USE_INTERPOLATED_STRINGS @"Triggers Use Interpolated Strings"
 #define KEY_SMART_SELECTION_RULES            @"Smart Selection Rules"
 #define KEY_SEMANTIC_HISTORY                 @"Semantic History"

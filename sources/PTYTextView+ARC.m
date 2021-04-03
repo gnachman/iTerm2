@@ -73,6 +73,10 @@ static const NSUInteger kRectangularSelectionModifierMask = (kRectangularSelecti
         item.action == @selector(applyAction:)) {
         return YES;
     }
+    if (item.action == @selector(toggleEnableTriggersInInteractiveApps:)) {
+        item.state = [self.delegate textViewTriggersAreEnabledInInteractiveApps] ? NSControlStateValueOn : NSControlStateValueOff;
+        return YES;
+    }
     return NO;
 }
 
@@ -1069,6 +1073,12 @@ toggleTerminalStateForMenuItem:(nonnull NSMenuItem *)item {
     if (action) {
         [self.delegate textViewApplyAction:action];
     }
+}
+
+#pragma mark - Responders
+
+- (IBAction)toggleEnableTriggersInInteractiveApps:(id)sender {
+    [self.delegate textViewToggleEnableTriggersInInteractiveApps];
 }
 
 @end

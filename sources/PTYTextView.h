@@ -234,6 +234,8 @@ preferredEscaping:(iTermSendTextEscaping)preferredEscaping;
 - (void)textViewApplyAction:(iTermAction *)action;
 - (void)textViewAddTrigger:(NSString *)text;
 - (void)textViewEditTriggers;
+- (void)textViewToggleEnableTriggersInInteractiveApps;
+- (BOOL)textViewTriggersAreEnabledInInteractiveApps;
 @end
 
 @interface iTermHighlightedRow : NSObject
