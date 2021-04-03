@@ -50,6 +50,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nullable, nonatomic, strong) NSNumber *selectionLength;
 @property (nullable, nonatomic, readonly) iTermVariableScope<iTermTabScope> *tab;
 @property (nullable, nonatomic, strong) NSNumber *bellCount;
+@property (nullable, nonatomic, strong) NSNumber *showingAlternateScreen;
 
 @end
 

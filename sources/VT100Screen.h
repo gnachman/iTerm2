@@ -167,8 +167,6 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 - (iTermStringLine *)stringLineAsStringAtAbsoluteLineNumber:(long long)absoluteLineNumber
                                                    startPtr:(long long *)startAbsLineNumber;
 
-- (void)toggleAlternateScreen;
-
 #pragma mark - Marks and notes
 
 - (VT100ScreenMark *)lastMark;

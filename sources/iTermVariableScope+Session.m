@@ -302,4 +302,12 @@
     [self setValue:bellCount forVariableNamed:iTermVariableKeySessionBellCount];
 }
 
+- (NSNumber *)showingAlternateScreen {
+    return [self valueForVariableName:iTermVariableKeySessionShowingAlternateScreen];
+}
+
+- (void)setShowingAlternateScreen:(NSNumber *)showingAlternateScreen {
+    [self setValue:showingAlternateScreen forVariableNamed:iTermVariableKeySessionShowingAlternateScreen];
+}
+
 @end

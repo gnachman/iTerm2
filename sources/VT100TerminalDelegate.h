@@ -440,4 +440,6 @@ typedef NS_ENUM(int, VT100TerminalColorIndex) {
 - (void)terminalKeyReportingFlagsDidChange;
 - (void)terminalClearCapturedOutput;
 
+- (BOOL)terminalIsInAlternateScreenMode;
+
 @end

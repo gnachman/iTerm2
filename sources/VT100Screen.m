@@ -4015,14 +4015,6 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     commandStartX_ = commandStartY_ = -1;
 }
 
-- (void)toggleAlternateScreen {
-    if (self.showingAlternateScreen) {
-        [self terminalShowPrimaryBuffer];
-    } else {
-        [self terminalShowAltBuffer];
-    }
-}
-
 - (BOOL)terminalIsShowingAltBuffer {
     return [self showingAlternateScreen];
 }
@@ -5056,6 +5048,10 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
 - (void)terminalReportKeyUpDidChange:(BOOL)reportKeyUp {
     [self.delegate screenReportKeyUpDidChange:reportKeyUp];
+}
+
+- (BOOL)terminalIsInAlternateScreenMode {
+    return [self showingAlternateScreen];
 }
 
 #pragma mark - Private

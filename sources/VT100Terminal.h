@@ -165,5 +165,6 @@ typedef NS_OPTIONS(int, VT100TerminalKeyReportingFlags) {
 
 - (NSSet<NSString *> *)sgrCodesForCharacter:(screen_char_t)c;
 - (void)resetSendModifiersWithSideEffects:(BOOL)sideEffects;
+- (void)toggleAlternateScreen;
 
 @end

@@ -715,6 +715,8 @@ static const NSUInteger kMaxHosts = 100;
         [self.variablesScope setValue:_guid forVariableNamed:iTermVariableKeySessionID];
         [self.variablesScope setValue:@"" forVariableNamed:iTermVariableKeySessionSelection];
         [self.variablesScope setValue:@0 forVariableNamed:iTermVariableKeySessionSelectionLength];
+        [self.variablesScope setValue:@NO forVariableNamed:iTermVariableKeySessionShowingAlternateScreen];
+
         _variables.primaryKey = iTermVariableKeySessionID;
         _jobPidRef = [[iTermVariableReference alloc] initWithPath:iTermVariableKeySessionJobPid
                                                            vendor:self.variablesScope];
@@ -9555,7 +9557,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 - (void)textViewToggleTerminalStateForMenuItem:(NSMenuItem *)menuItem {
     switch (menuItem.tag) {
         case 1:
-            [_screen toggleAlternateScreen];
+            [_terminal toggleAlternateScreen];
             break;
             
         case 2:
@@ -12138,6 +12140,8 @@ preferredEscaping:(iTermSendTextEscaping)preferredEscaping {
     [[iTermProcessCache sharedInstance] setNeedsUpdate:YES];
     _triggersSlownessDetector.enabled = _screen.terminal.softAlternateScreenMode;
     [self.tmuxForegroundJobMonitor updateOnce];
+    [self.variablesScope setValue:@(_screen.showingAlternateScreen)
+                 forVariableNamed:iTermVariableKeySessionShowingAlternateScreen];
 }
 
 - (void)screenReportKeyUpDidChange:(BOOL)reportKeyUp {

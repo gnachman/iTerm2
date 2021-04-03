@@ -61,6 +61,7 @@
                                     iTermVariableKeySessionProcessTitle,
                                     iTermVariableKeySessionCommandLine,
                                     iTermVariableKeySessionPresentationName,
+                                    iTermVariableKeySessionShowingAlternateScreen,
                                     iTermVariableKeySessionTmuxPaneTitle,
                                     iTermVariableKeySessionTmuxRole,
                                     iTermVariableKeySessionTmuxClientName,

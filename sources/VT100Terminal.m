@@ -548,6 +548,18 @@ static const int kMaxScreenRows = 4096;
     }
 }
 
+- (void)toggleAlternateScreen {
+    // The delegate tracks "hard" alternate screen mode, which is what this affects. We only track
+    // soft alternate screen mode. No point tracking it in two places.
+    const BOOL useAlternateScreenMode = ![self.delegate terminalIsInAlternateScreenMode];
+    if (useAlternateScreenMode) {
+        [delegate_ terminalShowAltBuffer];
+    } else {
+        [delegate_ terminalShowPrimaryBuffer];
+    }
+    self.softAlternateScreenMode = useAlternateScreenMode;
+}
+
 - (void)executeDecSetReset:(VT100Token *)token {
     assert(token->type == VT100CSI_DECSET ||
            token->type == VT100CSI_DECRST);
