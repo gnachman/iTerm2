@@ -61,6 +61,7 @@
 #import "iTermScriptConsole.h"
 #import "iTermScriptHistory.h"
 #import "iTermSharedImageStore.h"
+#import "iTermSlownessDetector.h"
 #import "iTermSnippetsModel.h"
 #import "iTermStandardKeyMapper.h"
 #import "iTermStatusBarUnreadCountController.h"
@@ -199,6 +200,9 @@ static NSString *const kTurnOffFocusReportingOnHostChangeAnnouncementIdentifier 
 
 static NSString *const kShellIntegrationOutOfDateAnnouncementIdentifier =
     @"kShellIntegrationOutOfDateAnnouncementIdentifier";
+
+static NSString *const PTYSessionSlownessEventExecute = @"execute";
+static NSString *const PTYSessionSlownessEventTriggers = @"triggers";
 
 static NSString *TERM_ENVNAME = @"TERM";
 static NSString *COLORFGBG_ENVNAME = @"COLORFGBG";
@@ -607,6 +611,10 @@ static const NSUInteger kMaxHosts = 100;
 
     iTermActivityInfo _activityInfo;
     TriggerController *_triggerWindowController;
+
+    // Measures time spent in triggers and executing tokens while in interactive apps.
+    // nil when not in soft alternate screen mode.
+    iTermSlownessDetector *_triggersSlownessDetector;
 }
 
 @synthesize isDivorced = _divorced;
@@ -763,6 +771,7 @@ static const NSUInteger kMaxHosts = 100;
         _pwdPoller = [[iTermWorkingDirectoryPoller alloc] init];
         _pwdPoller.delegate = self;
         _graphicSource = [[iTermGraphicSource alloc] init];
+        _triggersSlownessDetector = [[iTermSlownessDetector alloc] init];
 
         // This is a placeholder. When the profile is set it will get updated.
         iTermStandardKeyMapper *standardKeyMapper = [[iTermStandardKeyMapper alloc] init];
@@ -975,6 +984,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_tmuxClientWritePipe release];
     [_arrangementGUID release];
     [_triggerWindowController release];
+    [_triggersSlownessDetector release];
 
     [super dealloc];
 }
@@ -1733,6 +1743,7 @@ ITERM_WEAKLY_REFERENCEABLE
           includeRestorationBanner:includeRestorationBanner
                      knownTriggers:_triggers
                         reattached:reattached];
+    [self screenSoftAlternateScreenModeDidChange];
     // Do this to force the hostname variable to be updated.
     [self currentHost];
 }
@@ -2974,15 +2985,17 @@ ITERM_WEAKLY_REFERENCEABLE
         [self recycleQueuedTokens];
     }
 
-    for (int i = 0; i < n; i++) {
-        if (![self shouldExecuteToken]) {
-            break;
-        }
+    [_triggersSlownessDetector measureEvent:PTYSessionSlownessEventExecute block:^{
+        for (int i = 0; i < n; i++) {
+            if (![self shouldExecuteToken]) {
+                break;
+            }
 
-        VT100Token *token = CVectorGetObject(vector, i);
-        DLog(@"Execute token %@ cursor=(%d, %d)", token, _screen.cursorX - 1, _screen.cursorY - 1);
-        [_terminal executeToken:token];
-    }
+            VT100Token *token = CVectorGetObject(vector, i);
+            DLog(@"Execute token %@ cursor=(%d, %d)", token, _screen.cursorX - 1, _screen.cursorY - 1);
+            [_terminal executeToken:token];
+        }
+    }];
 
     [self finishedHandlingNewOutputOfLength:length];
 
@@ -3080,17 +3093,38 @@ ITERM_WEAKLY_REFERENCEABLE
     NSArray<Trigger *> *triggers = [[_triggers retain] autorelease];
 
     DLog(@"Start checking triggers");
-    for (Trigger *trigger in triggers) {
-        BOOL stop = [trigger tryString:stringLine
-                             inSession:self
-                           partialLine:partial
-                            lineNumber:startAbsLineNumber
-                      useInterpolation:_triggerParametersUseInterpolatedStrings];
-        if (stop || _exited || (_triggers != triggers)) {
-            break;
+    [_triggersSlownessDetector measureEvent:PTYSessionSlownessEventTriggers block:^{
+        for (Trigger *trigger in triggers) {
+            BOOL stop = [trigger tryString:stringLine
+                                 inSession:self
+                               partialLine:partial
+                                lineNumber:startAbsLineNumber
+                          useInterpolation:_triggerParametersUseInterpolatedStrings];
+            if (stop || _exited || (_triggers != triggers)) {
+                break;
+            }
         }
-    }
+    }];
+    [self maybeWarnAboutSlowTriggers];
     DLog(@"Finished checking triggers");
+}
+
+- (void)maybeWarnAboutSlowTriggers {
+    if (!_triggersSlownessDetector.enabled) {
+        return;
+    }
+    NSDictionary<NSString *, NSNumber *> *dist = [_triggersSlownessDetector timeDistribution];
+    const NSTimeInterval totalTime = _triggersSlownessDetector.timeSinceReset;
+    if (totalTime > 1) {
+        const NSTimeInterval timeInTriggers = [dist[PTYSessionSlownessEventTriggers] doubleValue] / totalTime;
+        const NSTimeInterval timeExecuting = [dist[PTYSessionSlownessEventExecute] doubleValue] / totalTime;
+        if (timeInTriggers > timeExecuting * 0.5 && (timeExecuting + timeInTriggers) > 0.1) {
+            // We were CPU bound for at least 10% of the sample time and
+            // triggers were at least half as expensive as token execution.
+            [self.naggingController offerToDisableTriggersInInteractiveApps];
+        }
+        [_triggersSlownessDetector reset];
+    }
 }
 
 - (void)appendStringToTriggerLine:(NSString *)s {
@@ -11996,6 +12030,7 @@ preferredEscaping:(iTermSendTextEscaping)preferredEscaping {
 
 - (void)screenSoftAlternateScreenModeDidChange {
     [[iTermProcessCache sharedInstance] setNeedsUpdate:YES];
+    _triggersSlownessDetector.enabled = _screen.terminal.softAlternateScreenMode;
 }
 
 - (void)screenReportKeyUpDidChange:(BOOL)reportKeyUp {
@@ -13831,6 +13866,20 @@ preferredEscaping:(iTermSendTextEscaping)preferredEscaping {
     [[iTermController sharedInstance] repairSavedArrangementNamed:arrangementName
                         replaceInitialDirectoryForSessionWithGUID:guid
                                                              with:panel.directoryURL.path];
+}
+
+- (void)naggingControllerDisableTriggersInInteractiveApps {
+    NSDictionary *update = @{ KEY_ENABLE_TRIGGERS_IN_INTERACTIVE_APPS: @NO };
+    if (self.isDivorced) {
+        [self setSessionSpecificProfileValues:update];
+        [[iTermNotificationController sharedInstance] notify:@"Session Updated"
+                                             withDescription:@"Triggers disabled in interactive apps. You can change this in Edit Session > Advanced."];
+        return;
+    }
+
+    [iTermProfilePreferences setObjectsFromDictionary:update inProfile:self.profile model:[ProfileModel sharedInstance]];
+    [[iTermNotificationController sharedInstance] notify:@"Profile Updated"
+                                         withDescription:@"Triggers disabled in interactive apps. You can change this in Prefs > Profiles > Advanced."];
 }
 
 #pragma mark - iTermComposerManagerDelegate

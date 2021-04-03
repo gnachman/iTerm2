@@ -36,6 +36,8 @@ extern NSString *const kTurnOffBracketedPasteOnHostChangeAnnouncementIdentifier;
 - (void)naggingControllerCloseSession;
 - (void)naggingControllerRepairInitialWorkingDirectoryOfSessionWithGUID:(NSString *)guid
                                                   inArrangementWithName:(NSString *)arrangementName;
+- (void)naggingControllerDisableTriggersInInteractiveApps;
+
 @end
 
 @interface iTermNaggingController : NSObject
@@ -77,7 +79,7 @@ extern NSString *const kTurnOffBracketedPasteOnHostChangeAnnouncementIdentifier;
 - (void)arrangementWithName:(NSString *)arrangementName
               hasInvalidPWD:(NSString *)badPWD
          forSessionWithGuid:(NSString *)sessionGUID;
-
+- (void)offerToDisableTriggersInInteractiveApps;
 
 @end
 

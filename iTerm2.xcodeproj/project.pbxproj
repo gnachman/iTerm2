@@ -2840,6 +2840,8 @@
 		A690F7031B424C55009F76D8 /* Media.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A690F7001B424C55009F76D8 /* Media.xcassets */; };
 		A690F7041B424EF8009F76D8 /* OpenDirectory.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A60BD9181B3F5D76007D7F11 /* OpenDirectory.framework */; };
 		A690F7051B424F15009F76D8 /* OpenDirectory.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A60BD9181B3F5D76007D7F11 /* OpenDirectory.framework */; };
+		A691AACE2618DDCA0049B619 /* iTermSlownessDetector.h in Headers */ = {isa = PBXBuildFile; fileRef = A691AACC2618DDCA0049B619 /* iTermSlownessDetector.h */; };
+		A691AACF2618DDCA0049B619 /* iTermSlownessDetector.m in Sources */ = {isa = PBXBuildFile; fileRef = A691AACD2618DDCA0049B619 /* iTermSlownessDetector.m */; };
 		A692666A210A2FEA00A980C7 /* iTermTemporaryDoubleBufferedGridController.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D2C65481AE9A2C900142CF5 /* iTermTemporaryDoubleBufferedGridController.m */; };
 		A692666D210A364900A980C7 /* PTYTextViewDataSource.m in Sources */ = {isa = PBXBuildFile; fileRef = A692666B210A341000A980C7 /* PTYTextViewDataSource.m */; };
 		A693395C1851A61D00EBEA20 /* VT100ScreenMark.h in Headers */ = {isa = PBXBuildFile; fileRef = A693395A1851A61D00EBEA20 /* VT100ScreenMark.h */; };
@@ -6157,6 +6159,8 @@
 		A690555E241E98CB0020EA6A /* iTermFileDescriptorMultiClientChild.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermFileDescriptorMultiClientChild.h; sourceTree = "<group>"; };
 		A690555F241E98CB0020EA6A /* iTermFileDescriptorMultiClientChild.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermFileDescriptorMultiClientChild.m; sourceTree = "<group>"; };
 		A690F7001B424C55009F76D8 /* Media.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Media.xcassets; sourceTree = "<group>"; };
+		A691AACC2618DDCA0049B619 /* iTermSlownessDetector.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermSlownessDetector.h; sourceTree = "<group>"; };
+		A691AACD2618DDCA0049B619 /* iTermSlownessDetector.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermSlownessDetector.m; sourceTree = "<group>"; };
 		A692666B210A341000A980C7 /* PTYTextViewDataSource.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = PTYTextViewDataSource.m; sourceTree = "<group>"; };
 		A693395A1851A61D00EBEA20 /* VT100ScreenMark.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = VT100ScreenMark.h; sourceTree = "<group>"; tabWidth = 4; };
 		A693395B1851A61D00EBEA20 /* VT100ScreenMark.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = VT100ScreenMark.m; sourceTree = "<group>"; tabWidth = 4; };
@@ -9862,6 +9866,8 @@
 				A6DDA88425B376D200AA55EE /* iTermActivityInfo.h */,
 				A6644BEC25CDD20800419355 /* iTermVirtualOffset.h */,
 				A6644BED25CDD20800419355 /* iTermVirtualOffset.m */,
+				A691AACC2618DDCA0049B619 /* iTermSlownessDetector.h */,
+				A691AACD2618DDCA0049B619 /* iTermSlownessDetector.m */,
 			);
 			name = Helpers;
 			sourceTree = "<group>";
@@ -11649,6 +11655,7 @@
 				A6F3DA9324564598001D50C9 /* iTermScrollWheelStateMachine.h in Headers */,
 				A667194B1DCE36C3000CE608 /* iTermModifierRemapper.h in Headers */,
 				537BFDC520FFA5A40098C91F /* iTermStatusBarJobComponent.h in Headers */,
+				A691AACE2618DDCA0049B619 /* iTermSlownessDetector.h in Headers */,
 				A667194C1DCE36C3000CE608 /* iTermSocket.h in Headers */,
 				532755852387821C00C50732 /* iTermProcessMonitor.h in Headers */,
 				A67F5DE623947A2700D18028 /* iTermMultiServerConnection.h in Headers */,
@@ -14079,6 +14086,7 @@
 				A6153D5121F30FF4002976FC /* iTermStatusBarJobComponent.m in Sources */,
 				537BFDDF2102B4060098C91F /* iTermPublisher.m in Sources */,
 				A61A85A224F1A70500B03880 /* iTermGlobalSearchWindowController.m in Sources */,
+				A691AACF2618DDCA0049B619 /* iTermSlownessDetector.m in Sources */,
 				A6566750219EA46E005FE60E /* NSNumber+iTerm.m in Sources */,
 				A6EC936C24E7868D00EEADEF /* iTermToolSnippets.m in Sources */,
 				A6AFD69124496F88007D0660 /* iTermFileDescriptorMultiClientPendingLaunch.m in Sources */,

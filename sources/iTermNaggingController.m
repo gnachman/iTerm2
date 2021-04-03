@@ -26,6 +26,7 @@ static NSString *const iTermNaggingControllerAskAboutClearingScrollbackHistoryId
 NSString *const kTurnOffBracketedPasteOnHostChangeUserDefaultsKey = @"NoSyncTurnOffBracketedPasteOnHostChange";
 static NSString *const iTermNaggingControllerAskAboutChangingProfileIdentifier = @"AskAboutChangingProfile";
 static NSString *const iTermNaggingControllerTmuxWindowsShouldCloseAfterDetach = @"TmuxWindowsShouldCloseAfterDetach";
+static NSString *const kTurnOffSlowTriggersOfferUserDefaultsKey = @"kTurnOffSlowTriggersOfferUserDefaultsKey";
 
 static NSString *const iTermNaggingControllerUserDefaultNeverAskAboutSettingAlternateMouseScroll = @"NoSyncNeverAskAboutSettingAlternateMouseScroll";
 
@@ -395,6 +396,43 @@ static NSString *const iTermNaggingControllerDidChangeTmuxWindowsShouldCloseAfte
 
             case 3: // Help
                 [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:@"https://iterm2.com/paste_bracketing"]];
+                break;
+        }
+    }];
+}
+
+- (void)offerToDisableTriggersInInteractiveApps {
+    if (![self.delegate naggingControllerCanShowMessageWithIdentifier:kTurnOffSlowTriggersOfferUserDefaultsKey]) {
+        return;
+    }
+    NSString *title;
+    title = @"This session’s triggers are pretty slow. Disable them in interactive apps?";
+
+    [self.delegate naggingControllerShowMessage:title
+                                     isQuestion:YES
+                                      important:YES
+                                     identifier:kTurnOffSlowTriggersOfferUserDefaultsKey
+                                        options:@[ @"_Yes", @"Stop Asking", @"Help" ]
+                                     completion:^(int selection) {
+        switch (selection) {
+            case -2:  // Dismiss programmatically
+                break;
+
+            case -1: // No
+                break;
+
+            case 0: // Yes
+                [self.delegate naggingControllerDisableTriggersInInteractiveApps];
+                break;
+
+            case 1: // Stop Asking
+                [[NSUserDefaults standardUserDefaults] setBool:NO
+                                                        forKey:kTurnOffSlowTriggersOfferUserDefaultsKey];
+                [self.delegate naggingControllerDisableBracketedPasteMode];
+                break;
+
+            case 2: // Help
+                [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:@"https://iterm2.com/slow_triggers"]];
                 break;
         }
     }];

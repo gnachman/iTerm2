@@ -13,5 +13,6 @@
 + (BOOL)isAprilFools;
 + (NSTimeInterval)it_timeSinceBoot;
 + (NSDate *)it_dateWithTimeSinceBoot:(NSTimeInterval)t;
++ (NSTimeInterval)durationOfBlock:(void (^ NS_NOESCAPE)(void))block;
 
 @end
