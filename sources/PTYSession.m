@@ -9422,6 +9422,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     switch (menuItem.tag) {
         case 1:
             [_screen toggleAlternateScreen];
+            [_terminal.delegate terminalSoftAlternateScreenModeDidChange];
             break;
             
         case 2:
@@ -11996,6 +11997,8 @@ preferredEscaping:(iTermSendTextEscaping)preferredEscaping {
 
 - (void)screenSoftAlternateScreenModeDidChange {
     [[iTermProcessCache sharedInstance] setNeedsUpdate:YES];
+    [self.variablesScope setValue:@(_screen.showingAlternateScreen)
+                 forVariableNamed:iTermVariableKeySessionShowingAlternateScreen];
 }
 
 - (void)screenReportKeyUpDidChange:(BOOL)reportKeyUp {

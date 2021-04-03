@@ -75,6 +75,7 @@ NSString *const iTermVariableKeySessionChildPid = @"pid";
 NSString *const iTermVariableKeySessionTmuxStatusLeft = @"tmuxStatusLeft";
 NSString *const iTermVariableKeySessionTmuxStatusRight = @"tmuxStatusRight";
 NSString *const iTermVariableKeySessionMouseReportingMode = @"mouseReportingMode";
+NSString *const iTermVariableKeySessionShowingAlternateScreen = @"showingAlternateScreen";
 NSString *const iTermVariableKeySessionBadge = @"badge";
 NSString *const iTermVariableKeySessionTab = @"tab";
 NSString *const iTermVariableKeySessionSelection = @"selection";
