@@ -260,6 +260,13 @@
     XCTAssertEqualObjects(actual, expected);
 }
 
+// https://gitlab.com/gnachman/iterm2/-/issues/9598
+- (void)testPreserveSemicolonsInPath {
+    NSString *urlString = @"https://source.chromium.org/chromium/chromium/src/+/73104b9724fbd9aed8510807cb62e6a55e43b018:v8/test/unittests/compiler/x64/instruction-selector-x64-unittest.cc;l=2247-2249";
+    NSURL *url = [NSURL URLWithUserSuppliedStringImpl:urlString];
+    XCTAssertEqualObjects(url.absoluteString, urlString);
+}
+
 #pragma mark - URLByRemovingFragment
 
 - (void)testURLByRemovingFragment_noFragment {

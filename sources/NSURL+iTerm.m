@@ -298,8 +298,15 @@ NS_ASSUME_NONNULL_BEGIN
             return nil;
         }
     }
+    NSString *semicolonUUID = [[NSUUID UUID] UUIDString];
     if (components.path) {
-        components.path = glue(components.path);
+        NSString *path = glue(components.path);
+        // Temporarily replace semicolons with a UUID. This lets us build NSURLComponents with no
+        // semicolons in the path and the resulting URLString will not have encoded
+        // semicolons (%3B). It is not necessary to encode them as semis are legal in paths.
+        // In the future more punctuation could be treated this way. See issue 9598.
+        NSArray<NSString *> *parts = [path componentsSeparatedByString:@";"];
+        components.path = [parts componentsJoinedByString:semicolonUUID];
     }
     if (components.fragment) {
         components.fragment = glue(components.fragment);
@@ -337,8 +344,13 @@ NS_ASSUME_NONNULL_BEGIN
         }
         [urlString replaceOccurrencesOfString:uuid
                                    withString:[queryParam stringByAddingPercentEncodingWithAllowedCharacters:charset]
-                                      options:0 range:NSMakeRange(0, urlString.length)];
+                                      options:0
+                                        range:NSMakeRange(0, urlString.length)];
     }];
+
+    // Restore semicolons in path
+    [urlString replaceOccurrencesOfString:semicolonUUID withString:@";" options:0 range:NSMakeRange(0, urlString.length)];
+
     DLog(@"Final result: %@", components.URL);
     return [NSURL URLWithString:urlString];
 }
