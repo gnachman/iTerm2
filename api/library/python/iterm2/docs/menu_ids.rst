@@ -33,6 +33,7 @@ iTerm2 > Make Terminal Default Term                                             
 iTerm2 > Install Shell Integration                                                      `Install Shell Integration`                                                   
 iTerm2 > Quit iTerm2                                                                    `Quit iTerm2`                                                                 
 Shell > New Window                                                                      `New Window`                                                                  
+Shell > New Window with Current Profile                                                 `New Window with Current Profile`                                             
 Shell > New Tab                                                                         `New Tab`                                                                     
 Shell > New Tab with Current Profile                                                    `New Tab with Current Profile`                                                
 Shell > Duplicate Tab                                                                   `Duplicate Tab`                                                               
@@ -44,6 +45,7 @@ Shell > Save Selected Text…                                                   
 Shell > Close                                                                           `Close`                                                                       
 Shell > Close Terminal Window                                                           `Close Terminal Window`                                                       
 Shell > Close All Panes in Tab                                                          `Close All Panes in Tab`                                                      
+Shell > Undo Close                                                                      `Undo Close`                                                                  
 Shell > Broadcast Input > Send Input to Current Session Only                            `Broadcast Input.Send Input to Current Session Only`                          
 Shell > Broadcast Input > Broadcast Input to All Panes in All Tabs                      `Broadcast Input.Broadcast Input to All Panes in All Tabs`                    
 Shell > Broadcast Input > Broadcast Input to All Panes in Current Tab                   `Broadcast Input.Broadcast Input to All Panes in Current Tab`                 
@@ -103,6 +105,8 @@ Edit > Marks and Annotations > Alerts > Show Modal Alert Box                    
 Edit > Marks and Annotations > Alerts > Post Notification                               `Marks and Annotations.Alerts.Post Notification`                              
 Edit > Clear Buffer                                                                     `Clear Buffer`                                                                
 Edit > Clear Scrollback Buffer                                                          `Clear Scrollback Buffer`                                                     
+Edit > Clear to Start of Selection                                                      `Clear to Start of Selection`                                                 
+Edit > Clear to Last Mark                                                               `Clear to Last Mark`                                                          
 View > Show Tabs in Fullscreen                                                          `Show Tabs in Fullscreen`                                                     
 View > Toggle Full Screen                                                               `Toggle Full Screen`                                                          
 View > Use Transparency                                                                 `Use Transparency`                                                            
@@ -130,7 +134,11 @@ Session > Open Autocomplete…                                                  
 Session > Open Command History…                                                         `Open Command History…`                                                       
 Session > Open Recent Directories…                                                      `Open Recent Directories…`                                                    
 Session > Open Paste History…                                                           `Open Paste History…`                                                         
-Session > Add Trigger…                                                                  `Add Trigger`                                                                 
+Session > Triggers > Add Trigger…                                                       `Add Trigger`                                                                 
+Session > Triggers > Edit Triggers                                                      `Edit Triggers`                                                               
+Session > Triggers > Enable Triggers in Interactive Apps                                `Enable Triggers in Interactive Apps`                                         
+Session > Triggers > Enable All                                                         `Triggers.Enable All`                                                         
+Session > Triggers > Disable All                                                        `Triggers.Disable All`                                                        
 Session > Reset                                                                         `Reset`                                                                       
 Session > Reset Character Set                                                           `Reset Character Set`                                                         
 Session > Log > Log to File                                                             `Log.Toggle`                                                                  
@@ -182,6 +190,7 @@ Window > Window Style > Right of Screen                                         
 Window > Merge All Windows                                                              `Merge All Windows`                                                           
 Window > Arrange Windows Horizontally                                                   `Arrange Windows Horizontally`                                                
 Window > Arrange Split Panes Evenly                                                     `Arrange Split Panes Evenly`                                                  
+Window > Move Session to Window                                                         `Move Session to Window`                                                      
 Window > Save Window Arrangement                                                        `Save Window Arrangement`                                                     
 Window > Save Current Window as Arrangement                                             `Save Current Window as Arrangement`                                          
 Window > Select Split Pane > Select Pane Above                                          `Select Split Pane.Select Pane Above`                                         
