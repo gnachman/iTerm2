@@ -8,9 +8,11 @@
 #import "Trigger.h"
 #import "DebugLogging.h"
 #import "iTermObject.h"
+#import "iTermPreciseTimer.h"
 #import "iTermSwiftyString.h"
 #import "iTermVariableScope.h"
 #import "iTermWarning.h"
+#import "MovingAverage.h"
 #import "NSStringITerm.h"
 #import "RegexKitLite.h"
 #import "ScreenChar.h"
@@ -32,6 +34,7 @@ NSString * const kTriggerDisabledKey = @"disabled";
     NSString *regex_;
     id param_;
     iTermSwiftyString *_cachedSwiftyString;
+    MovingAverage *_avg;
 }
 
 @synthesize regex = regex_;
@@ -57,6 +60,8 @@ NSString * const kTriggerDisabledKey = @"disabled";
     self = [super init];
     if (self) {
         _lastLineNumber = -1;
+        _avg = [[MovingAverage alloc] init];
+        _avg.alpha = 0.9;
     }
     return self;
 }
@@ -64,6 +69,15 @@ NSString * const kTriggerDisabledKey = @"disabled";
 - (NSString *)description {
     return [NSString stringWithFormat:@"<%@: %p regex=%@ param=%@>",
                NSStringFromClass(self.class), self, self.regex, self.param];
+}
+
+- (NSString *)performanceSummary {
+    NSString *result = [NSString stringWithFormat:@"Trigger %@ took a total of %0.1f ms over %d calls",
+                        self.regex,
+                        _avg.sum * 1000,
+                        (int)_avg.numberOfMeasurements];
+    [_avg reset];
+    return result;
 }
 
 - (NSString *)action {
@@ -159,24 +173,26 @@ NSString * const kTriggerDisabledKey = @"disabled";
 
     __block BOOL stopFutureTriggersFromRunningOnThisLine = NO;
     NSString *s = stringLine.stringValue;
-    [s enumerateStringsMatchedByRegex:regex_
-                           usingBlock:^(NSInteger captureCount,
-                                        NSString *const __unsafe_unretained *capturedStrings,
-                                        const NSRange *capturedRanges,
-                                        volatile BOOL *const stopEnumerating) {
-                               self->_lastLineNumber = lineNumber;
-                               DLog(@"Trigger %@ matched string %@", self, s);
-                               if (![self performActionWithCapturedStrings:capturedStrings
-                                                            capturedRanges:capturedRanges
-                                                              captureCount:captureCount
-                                                                 inSession:aSession
-                                                                  onString:stringLine
-                                                      atAbsoluteLineNumber:lineNumber
-                                                          useInterpolation:useInterpolation
-                                                                      stop:&stopFutureTriggersFromRunningOnThisLine]) {
-                                   *stopEnumerating = YES;
-                               }
-                           }];
+    [_avg addTimeForBlock:^{
+        [s enumerateStringsMatchedByRegex:regex_
+                               usingBlock:^(NSInteger captureCount,
+                                            NSString *const __unsafe_unretained *capturedStrings,
+                                            const NSRange *capturedRanges,
+                                            volatile BOOL *const stopEnumerating) {
+            self->_lastLineNumber = lineNumber;
+            DLog(@"Trigger %@ matched string %@", self, s);
+            if (![self performActionWithCapturedStrings:capturedStrings
+                                         capturedRanges:capturedRanges
+                                           captureCount:captureCount
+                                              inSession:aSession
+                                               onString:stringLine
+                                   atAbsoluteLineNumber:lineNumber
+                                       useInterpolation:useInterpolation
+                                                   stop:&stopFutureTriggersFromRunningOnThisLine]) {
+                *stopEnumerating = YES;
+            }
+        }];
+    }];
     if (!partialLine) {
         _lastLineNumber = -1;
     }

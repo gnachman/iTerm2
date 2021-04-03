@@ -15,6 +15,7 @@
 @property(nonatomic, readonly) NSTimeInterval timeSinceTimerStarted;
 @property(nonatomic, readonly) BOOL timerStarted;
 @property(nonatomic, readonly) NSInteger numberOfMeasurements;
+@property(nonatomic, readonly) NSTimeInterval sum;
 
 - (void)startTimer;
 - (void)pauseTimer;
@@ -22,5 +23,6 @@
 - (void)addValue:(double)value;
 - (BOOL)haveStartedTimer;
 - (void)reset;
+- (void)addTimeForBlock:(void (^ NS_NOESCAPE)(void))block;
 
 @end

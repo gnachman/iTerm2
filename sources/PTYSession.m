@@ -58,6 +58,7 @@
 #import "iTermObject.h"
 #import "iTermOpenDirectory.h"
 #import "iTermPreferences.h"
+#import "iTermRateLimitedUpdate.h"
 #import "iTermScriptConsole.h"
 #import "iTermScriptHistory.h"
 #import "iTermSharedImageStore.h"
@@ -607,6 +608,8 @@ static const NSUInteger kMaxHosts = 100;
 
     iTermActivityInfo _activityInfo;
     TriggerController *_triggerWindowController;
+    iTermRateLimitedUpdate *_triggerLogRateLimit;
+    NSTimeInterval _timeSpentInTriggers;
 }
 
 @synthesize isDivorced = _divorced;
@@ -653,6 +656,9 @@ static const NSUInteger kMaxHosts = 100;
 - (instancetype)initSynthetic:(BOOL)synthetic {
     self = [super init];
     if (self) {
+        _triggerLogRateLimit = [[iTermRateLimitedUpdate alloc] init];
+        _triggerLogRateLimit.minimumInterval = 1;
+
         _autoLogId = arc4random();
         _useAdaptiveFrameRate = [iTermAdvancedSettingsModel useAdaptiveFrameRate];
         _adaptiveFrameRateThroughputThreshold = [iTermAdvancedSettingsModel adaptiveFrameRateThroughputThreshold];
@@ -3065,16 +3071,30 @@ ITERM_WEAKLY_REFERENCEABLE
     // processing triggers. This can happen with automatic profile switching.
     NSArray<Trigger *> *triggers = [[_triggers retain] autorelease];
 
-    for (Trigger *trigger in triggers) {
-        BOOL stop = [trigger tryString:stringLine
-                             inSession:self
-                           partialLine:partial
-                            lineNumber:startAbsLineNumber
-                      useInterpolation:_triggerParametersUseInterpolatedStrings];
-        if (stop || _exited || (_triggers != triggers)) {
-            break;
+    _timeSpentInTriggers += [NSDate durationOfBlock:^{
+        for (Trigger *trigger in triggers) {
+            BOOL stop = [trigger tryString:stringLine
+                                 inSession:self
+                               partialLine:partial
+                                lineNumber:startAbsLineNumber
+                          useInterpolation:_triggerParametersUseInterpolatedStrings];
+            if (stop || _exited || (_triggers != triggers)) {
+                break;
+            }
         }
-    }
+    }];
+    [_triggerLogRateLimit performRateLimitedBlock:^{
+        NSMutableArray<NSString *> *lines = [NSMutableArray array];
+        [lines addObject:[NSString stringWithFormat:@"Over the last second, %0.1f ms were spent handling triggers.",
+                          _timeSpentInTriggers * 1000]];
+        for (Trigger *trigger in triggers) {
+            [lines addObject:[@"    " stringByAppendingString:trigger.performanceSummary]];
+        }
+        iTermScriptHistoryEntry *entry = [iTermScriptHistoryEntry globalEntry];
+        [entry addOutput:[lines componentsJoinedByString:@"\n"]
+              completion:^{}];
+        _timeSpentInTriggers = 0;
+    }];
 }
 
 - (void)appendStringToTriggerLine:(NSString *)s {

@@ -47,4 +47,25 @@
     return [NSDate dateWithTimeIntervalSinceNow:-delta];
 }
 
++ (NSTimeInterval)durationOfBlock:(void (^ NS_NOESCAPE)(void))block {
+    const uint64_t start = mach_absolute_time();
+    block();
+    const uint64_t end = mach_absolute_time();
+    if (end < start) {
+        return 0;
+    } else {
+        return [self machTimeDeltaToSeconds:end - start];
+    }
+}
+
++ (NSTimeInterval)machTimeDeltaToSeconds:(uint64_t)elapsed {
+    static mach_timebase_info_data_t sTimebaseInfo;
+    if (sTimebaseInfo.denom == 0) {
+        mach_timebase_info(&sTimebaseInfo);
+    }
+
+    double nanoseconds = elapsed * sTimebaseInfo.numer / sTimebaseInfo.denom;
+    return nanoseconds / 1000000000.0;
+}
+
 @end

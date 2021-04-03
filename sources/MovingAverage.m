@@ -7,7 +7,7 @@
 //
 
 #import "MovingAverage.h"
-
+#import "NSDate+iTerm.h"
 @implementation MovingAverage {
     NSTimeInterval _time;  // Time when -startTimer was called, or 0 if stopped.
     NSTimeInterval _timePaused;  // Time at which -pauseTimer was called.
@@ -46,6 +46,7 @@
         _initialized = YES;
         _value = value;
     }
+    _sum += value;
     _numberOfMeasurements++;
 }
 
@@ -73,6 +74,12 @@
     _initialized = NO;
     _value = 0;
     _numberOfMeasurements = 0;
+    _sum = 0;
 
 }
+
+- (void)addTimeForBlock:(void (^ NS_NOESCAPE)(void))block {
+    [self addValue:[NSDate durationOfBlock:block]];
+}
+
 @end
