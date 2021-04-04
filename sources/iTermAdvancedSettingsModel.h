@@ -229,6 +229,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)pinEditSession;
 + (BOOL)pinchToChangeFontSizeDisabled;
 + (double)pointSizeOfTimeStamp;
++ (BOOL)pollForTmuxForegroundJob;
 + (BOOL)preferSpeedToFullLigatureSupport;
 + (NSString *)preferredBaseDir;
 + (const BOOL *)preventEscapeSequenceFromClearingHistory;

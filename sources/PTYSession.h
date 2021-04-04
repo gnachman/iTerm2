@@ -829,6 +829,7 @@ backgroundColor:(NSColor *)backgroundColor;
 - (void)toggleTmuxZoom;
 - (void)forceTmuxDetach;
 - (void)tmuxDidDisconnect;
+- (void)tmuxWindowTitleDidChange;
 
 // This is to work around a macOS bug where setNeedsDisplay: on the root view controller does not
 // cause the TextViewWrapper to be redrawn in its entirety.

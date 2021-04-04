@@ -567,6 +567,7 @@ static const NSUInteger kMaxHosts = 100;
     iTermTmuxStatusBarMonitor *_tmuxStatusBarMonitor;
     iTermWorkingDirectoryPoller *_pwdPoller;
     iTermTmuxOptionMonitor *_tmuxTitleMonitor;
+    iTermTmuxOptionMonitor *_tmuxForegroundJobMonitor;
 
     iTermGraphicSource *_graphicSource;
     iTermVariableReference *_jobPidRef;
@@ -942,6 +943,8 @@ ITERM_WEAKLY_REFERENCEABLE
     [_tmuxStatusBarMonitor setActive:NO];
     [_tmuxStatusBarMonitor release];
     [_tmuxTitleMonitor release];
+    [_tmuxForegroundJobMonitor invalidate];
+    [_tmuxForegroundJobMonitor release];
     if (_metalContext) {
         CGContextRelease(_metalContext);
     }
@@ -2524,6 +2527,7 @@ ITERM_WEAKLY_REFERENCEABLE
         _tmuxStatusBarMonitor = nil;
 
         [self uninstallTmuxTitleMonitor];
+        [self uninstallTmuxForegroundJobMonitor];
     } else if (self.tmuxMode == TMUX_GATEWAY) {
         [_tmuxController detach];
         [_tmuxGateway release];
@@ -4360,6 +4364,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [self.variablesScope setValuesFromDictionary:@{ iTermVariableKeySessionAutoNameFormat: theName ?: [NSNull null],
                                                     iTermVariableKeySessionIconName: theName ?: [NSNull null] }];
     [_tmuxTitleMonitor updateOnce];
+    [self.tmuxForegroundJobMonitor updateOnce];
     _titleDirty = YES;
 }
 
@@ -4367,6 +4372,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [self.variablesScope setValue:title forVariableNamed:iTermVariableKeySessionWindowName];
     _titleDirty = YES;
     [_tmuxTitleMonitor updateOnce];
+    [self.tmuxForegroundJobMonitor updateOnce];
 }
 
 - (BOOL)shouldShowTabGraphic {
@@ -4389,7 +4395,13 @@ ITERM_WEAKLY_REFERENCEABLE
             return nil;
             
         case iTermProfileIconAutomatic:
-            [_graphicSource updateImageForProcessID:self.shell.pid enabled:[self shouldShowTabGraphicForProfile:profile]];
+            if (self.isTmuxClient) {
+                [_graphicSource updateImageForJobName:self.tmuxForegroundJobMonitor.lastValue
+                                              enabled:[self shouldShowTabGraphicForProfile:profile]];
+            } else {
+                [_graphicSource updateImageForProcessID:self.shell.pid
+                                                enabled:[self shouldShowTabGraphicForProfile:profile]];
+            }
             return _graphicSource.image;
 
         case iTermProfileIconCustom:
@@ -6543,6 +6555,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                 [self loadTmuxProcessID];
                 [self installTmuxStatusBarMonitor];
                 [self installTmuxTitleMonitor];
+                [self installTmuxForegroundJobMonitor];
                 [self replaceWorkingDirectoryPollerWithTmuxWorkingDirectoryPoller];
                 break;
         }
@@ -6622,6 +6635,63 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     }
 }
 
+- (void)installTmuxForegroundJobMonitor {
+    if (_tmuxForegroundJobMonitor) {
+        return;
+    }
+    if (![self shouldShowTabGraphic]) {
+        return;
+    }
+    __weak __typeof(self) weakSelf = self;
+    _tmuxForegroundJobMonitor = [[iTermTmuxOptionMonitor alloc] initWithGateway:_tmuxController.gateway
+                                                                          scope:self.variablesScope
+                                                           fallbackVariableName:nil
+                                                                         format:@"#{pane_current_command}"
+                                                                         target:[NSString stringWithFormat:@"%%%@", @(self.tmuxPane)]
+                                                                   variableName:iTermVariableKeySessionJob
+                                                                          block:^(NSString * _Nonnull command) {
+        [weakSelf setCurrentForegroundJobNameForTmux:command];
+    }];
+    if ([iTermAdvancedSettingsModel pollForTmuxForegroundJob]) {
+        [_tmuxForegroundJobMonitor startTimerIfSubscriptionsUnsupported];
+    }
+    [_tmuxForegroundJobMonitor updateOnce];
+}
+
+- (void)setCurrentForegroundJobNameForTmux:(NSString *)command {
+    if ([_graphicSource updateImageForJobName:command enabled:[self shouldShowTabGraphic]]) {
+        [self.delegate sessionDidChangeGraphic:self shouldShow:self.shouldShowTabGraphic image:self.tabGraphic];
+    }
+    [self.delegate sessionJobDidChange:self];
+}
+
+- (void)tmuxWindowTitleDidChange {
+    [self.tmuxForegroundJobMonitor updateOnce];
+}
+
+- (void)uninstallTmuxForegroundJobMonitor {
+    if (!_tmuxForegroundJobMonitor) {
+        return;
+    }
+    [_tmuxForegroundJobMonitor invalidate];
+    [_tmuxForegroundJobMonitor release];
+    _tmuxForegroundJobMonitor = nil;
+}
+
+- (iTermTmuxOptionMonitor *)tmuxForegroundJobMonitor {
+    if (!self.isTmuxClient || !_tmuxController) {
+        return nil;
+    }
+    if (_tmuxForegroundJobMonitor) {
+        return _tmuxForegroundJobMonitor;
+    }
+    if (![self shouldShowTabGraphic]) {
+        return nil;
+    }
+    [self installTmuxForegroundJobMonitor];
+    return _tmuxForegroundJobMonitor;
+}
+
 // NOTE: Despite the name, this doesn't continuously monitor because that is
 // too expensive. Instead, we manually poll at times when a change is likely.
 - (void)installTmuxTitleMonitor {
@@ -6653,6 +6723,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         return;
     }
     [_tmuxTitleMonitor invalidate];
+    [_tmuxTitleMonitor release];
     _tmuxTitleMonitor = nil;
 }
 
@@ -12066,6 +12137,7 @@ preferredEscaping:(iTermSendTextEscaping)preferredEscaping {
 - (void)screenSoftAlternateScreenModeDidChange {
     [[iTermProcessCache sharedInstance] setNeedsUpdate:YES];
     _triggersSlownessDetector.enabled = _screen.terminal.softAlternateScreenMode;
+    [self.tmuxForegroundJobMonitor updateOnce];
 }
 
 - (void)screenReportKeyUpDidChange:(BOOL)reportKeyUp {

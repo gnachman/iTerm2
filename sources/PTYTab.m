@@ -4347,19 +4347,26 @@ typedef struct {
     if (self.tmuxWindow < 0) {
         return;
     }
+    __weak __typeof(self) weakSelf = self;
     _tmuxTitleMonitor = [[iTermTmuxOptionMonitor alloc] initWithGateway:tmuxController_.gateway
                                                                   scope:self.variablesScope
                                                    fallbackVariableName:iTermVariableKeySessionWindowName
                                                                  format:@"#{T:set-titles-string}"
                                                                  target:[NSString stringWithFormat:@"@%@", @(self.tmuxWindow)]
                                                            variableName:iTermVariableKeyTabTmuxWindowTitle
-                                                                  block:nil];
+                                                                  block:^(NSString * _Nonnull newTitle) {
+        [weakSelf tmuxTitleDidChange];
+    }];
     [_tmuxTitleMonitor updateOnce];
     if (self.titleOverride.length == 0) {
         // Show the tmux window title if both the tmux option set-titles is on and the user hasn't
         // already set a title override.
         self.variablesScope.tabTitleOverrideFormat = [NSString stringWithFormat:@"↣ \\(%@?)", iTermVariableKeyTabTmuxWindowTitle];
     }
+}
+
+- (void)tmuxTitleDidChange {
+    [self.activeSession tmuxWindowTitleDidChange];
 }
 
 - (void)uninstallTmuxTitleMonitor {

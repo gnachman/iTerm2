@@ -13,6 +13,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) NSImage *image;
 
 - (BOOL)updateImageForProcessID:(pid_t)pid enabled:(BOOL)enabled;
+- (BOOL)updateImageForJobName:(NSString *)name enabled:(BOOL)enabled;
 
 @end
 

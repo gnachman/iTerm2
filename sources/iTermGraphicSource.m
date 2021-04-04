@@ -85,10 +85,16 @@ static NSDictionary *sGraphicIconMap;
     return YES;
 }
 
-- (NSImage *)imageForProcessID:(pid_t)pid enabled:(BOOL)enabled {
-    if (@available(macOS 10.13, *)) { } else {
-        return nil;
+- (BOOL)updateImageForJobName:(NSString *)name enabled:(BOOL)enabled {
+    NSImage *image = [self imageForJobName:name enabled:enabled];
+    if (image == self.image) {
+        return NO;
     }
+    _image = image;
+    return YES;
+}
+
+- (NSImage *)imageForProcessID:(pid_t)pid enabled:(BOOL)enabled {
     if (!enabled) {
         return nil;
     }
@@ -99,6 +105,14 @@ static NSDictionary *sGraphicIconMap;
     
     NSArray *parts = [job componentsInShellCommand];
     NSString *command = parts.firstObject;
+
+    return [self imageForJobName:command enabled:YES];
+}
+
+- (NSImage *)imageForJobName:(NSString *)command enabled:(BOOL)enabled {
+    if (!enabled) {
+        return nil;
+    }
     NSString *logicalName = [sGraphicIconMap[command] firstObject];
     if (!logicalName) {
         return nil;

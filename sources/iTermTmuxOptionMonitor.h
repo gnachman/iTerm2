@@ -17,6 +17,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, weak) TmuxGateway *gateway;
 @property (nullable, nonatomic, strong) iTermVariableScope *scope;
 @property (nonatomic) NSTimeInterval interval;
+@property (nullable, nonatomic, readonly) NSString *lastValue;
 
 - (instancetype)init NS_UNAVAILABLE;
 
@@ -38,6 +39,7 @@ NS_ASSUME_NONNULL_BEGIN
 // Call this to stop the timer. The scope will no longer be updated.
 - (void)invalidate;
 
+- (void)startTimerIfSubscriptionsUnsupported;
 @end
 
 NS_ASSUME_NONNULL_END

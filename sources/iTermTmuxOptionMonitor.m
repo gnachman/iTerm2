@@ -72,6 +72,13 @@
     }
 }
 
+- (void)startTimerIfSubscriptionsUnsupported {
+    if ([_gateway versionAtLeastDecimalNumberWithString:@"3.2"]) {
+        return;
+    }
+    [self startTimer];
+}
+
 - (void)startTimer {
     if (_subscriptionHandle.isValid) {
         DLog(@"Not starting timer because there is a valid subscription for %@", self);
@@ -136,6 +143,7 @@
         // Probably the pane went away and we'll be dealloced soon.
         return;
     }
+    _lastValue = [value copy];
     _haveOutstandingRequest = NO;
     if (_variableName) {
         [self.scope setValue:value forVariableNamed:_variableName];
