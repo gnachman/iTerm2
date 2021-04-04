@@ -22,5 +22,14 @@
 @property (nonatomic, readonly) NSEventModifierFlags it_modifierFlags;
 
 - (NSEvent *)eventByRoundingScrollWheelClicksAwayFromZero;
+- (BOOL)it_eventGetsSpecialHandlingForAPINotifications;
 
 @end
+
+// Conform to this protocol to be notified that control-tab was key-down'ed when you are first responder.
+// macOS doesn't route this to keyDown normally because it's used for accessibility, but most people
+// have that feature turned off.
+@protocol iTermSpecialHandlerForAPIKeyDownNotifications<NSObject>
+- (void)handleSpecialKeyDown:(NSEvent *)event;
+@end
+

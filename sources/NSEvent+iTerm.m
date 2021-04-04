@@ -122,4 +122,18 @@
     return [NSEvent eventWithCGEvent:cgEvent];
 }
 
+- (BOOL)it_eventGetsSpecialHandlingForAPINotifications {
+    if (![self.charactersIgnoringModifiers isEqualToString:@"\t"]) {
+        return NO;
+    }
+    const NSEventModifierFlags mask = (NSEventModifierFlagControl |
+                                       NSEventModifierFlagOption |
+                                       NSEventModifierFlagCommand);
+    if ((self.modifierFlags & mask) != NSEventModifierFlagControl) {
+        return NO;
+    }
+
+    return YES;
+}
+
 @end

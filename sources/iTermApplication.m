@@ -441,6 +441,22 @@ static const char *iTermApplicationKVOKey = "iTermApplicationKVOKey";
     return NO;
 }
 
+- (void)reportKeyDownToAPIClientsIfNeeded:(NSEvent *)event {
+    if (![event it_eventGetsSpecialHandlingForAPINotifications]) {
+        return;
+    }
+    if (![[self keyWindow] isTerminalWindow]) {
+        return;
+    }
+    __kindof NSResponder *responder = [self.keyWindow firstResponder];
+    if (![responder conformsToProtocol:@protocol(iTermSpecialHandlerForAPIKeyDownNotifications)]) {
+        return;
+    }
+    id<iTermSpecialHandlerForAPIKeyDownNotifications> observer = responder;
+    [observer handleSpecialKeyDown:event];
+}
+
+
 - (BOOL)handleFlagsChangedEvent:(NSEvent *)event {
     if ([self routeEventToShortcutInputView:event]) {
         [[iTermFlagsChangedEventTap sharedInstance] resetCount];
@@ -474,6 +490,8 @@ static const char *iTermApplicationKVOKey = "iTermApplicationKVOKey";
         return YES;
     }
 
+    [self reportKeyDownToAPIClientsIfNeeded:event];
+    
     return NO;
 }
 

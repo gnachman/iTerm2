@@ -4927,6 +4927,12 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     return [self.delegate badgeLabelFontOfSize:pointSize];
 }
 
+#pragma mark - iTermSpecialHandlerForAPIKeyDownNotifications
+
+- (void)handleSpecialKeyDown:(NSEvent *)event {
+    [self.delegate textViewhandleSpecialKeyDown:event];
+}
+
 @end
 
 @implementation PTYTextView(MouseHandler)

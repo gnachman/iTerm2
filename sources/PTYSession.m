@@ -7591,7 +7591,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         [self setTmuxPaused:NO allowAutomaticUnpause:YES];
         return NO;
     }
-    if (_keystrokeSubscriptions.count) {
+    if (_keystrokeSubscriptions.count && ![event it_eventGetsSpecialHandlingForAPINotifications]) {
         [self sendKeystrokeNotificationForEvent:event advanced:NO];
     }
 
@@ -9672,6 +9672,12 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 - (void)textViewApplyAction:(iTermAction *)action {
     [self applyAction:action];
+}
+
+- (void)textViewhandleSpecialKeyDown:(NSEvent *)event {
+    if (_keystrokeSubscriptions.count) {
+        [self sendKeystrokeNotificationForEvent:event advanced:NO];
+    }
 }
 
 - (NSString *)userShell {
