@@ -8287,6 +8287,35 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
     DLog(@"PTYSession keyDown not short-circuted by special handler");
 
+    const NSEventModifierFlags mask = (NSEventModifierFlagCommand | NSEventModifierFlagOption | NSEventModifierFlagShift | NSEventModifierFlagControl);
+    if (!_terminal.softAlternateScreenMode &&
+        (event.modifierFlags & mask) == 0 &&
+        [iTermAdvancedSettingsModel movementKeysScrollOutsideInteractiveApps]) {
+        switch (event.keyCode) {
+            case kVK_PageUp:
+                [_textview scrollPageUp:nil];
+                [(PTYScrollView *)[_textview enclosingScrollView] detectUserScroll];
+                return;
+
+            case kVK_PageDown:
+                [_textview scrollPageDown:nil];
+                [(PTYScrollView *)[_textview enclosingScrollView] detectUserScroll];
+                return;
+
+            case kVK_Home:
+                [_textview scrollHome];
+                [(PTYScrollView *)[_textview enclosingScrollView] detectUserScroll];
+                return;
+
+            case kVK_End:
+                [_textview scrollEnd];
+                [(PTYScrollView *)[_textview enclosingScrollView] detectUserScroll];
+                return;
+
+            default:
+                break;
+        }
+    }
     NSData *const dataToSend = [_keyMapper keyMapperDataForPostCocoaEvent:event];
     DLog(@"dataToSend=%@", dataToSend);
     if (dataToSend) {
