@@ -123,6 +123,10 @@
         DLog(@"Not making a request because one is outstanding");
         return;
     }
+    if ([self.gateway versionAtLeastDecimalNumberWithString:@"3.2"] && _subscriptionHandle.isValid) {
+        DLog(@"Not making a request for %@ because subscriptions should do the job.", self.command);
+        return;
+    }
     if (_fallbackVariableName && self.gateway.minimumServerVersion.doubleValue <= 2.9) {
         [self didFetch:[self.scope valueForVariableName:_fallbackVariableName]];
         return;
