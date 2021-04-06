@@ -123,7 +123,8 @@
 }
 
 - (BOOL)it_eventGetsSpecialHandlingForAPINotifications {
-    if (![self.charactersIgnoringModifiers isEqualToString:@"\t"]) {
+    if (![self.charactersIgnoringModifiers isEqualToString:@"\t"] &&
+        ![self.charactersIgnoringModifiers isEqualToString:@"\x19"]) {  // control-shift-tab sends 0x19
         return NO;
     }
     const NSEventModifierFlags mask = (NSEventModifierFlagControl |
