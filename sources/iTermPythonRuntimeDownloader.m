@@ -246,7 +246,7 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
     });
 }
 
-- (void)unzip:(NSURL *)zipFileURL to:(NSURL *)destination completion:(void (^)(BOOL))completion {
+- (void)unzip:(NSURL *)zipFileURL to:(NSURL *)destination completion:(void (^)(NSError *))completion {
     // This serializes unzips so only one can happen at a time.
     dispatch_async(_queue, ^{
         [[NSFileManager defaultManager] createDirectoryAtPath:destination.path
@@ -256,8 +256,8 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
         [iTermCommandRunner unzipURL:zipFileURL
                        withArguments:@[ @"-o", @"-q" ]
                          destination:destination.path
-                          completion:^(BOOL ok) {
-            completion(ok);
+                          completion:^(NSError *error) {
+            completion(error);
         }];
     });
 }
@@ -452,13 +452,13 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
         self->_downloadController = nil;
         dispatch_group_leave(self->_downloadGroup);
     } else {
-        void (^completion)(BOOL) = ^(BOOL ok){
-            if (ok) {
+        void (^completion)(NSError *) = ^(NSError *error){
+            if (!error) {
                 [[NSNotificationCenter defaultCenter] postNotificationName:iTermPythonRuntimeDownloaderDidInstallRuntimeNotification object:nil];
                 [[iTermNotificationController sharedInstance] notify:@"Download finished!"];
                 [self->_downloadController.window close];
                 self->_downloadController = nil;
-                self->_status = ok ? iTermPythonRuntimeDownloaderStatusDownloaded : iTermPythonRuntimeDownloaderStatusError;
+                self->_status = iTermPythonRuntimeDownloaderStatusDownloaded;
                 dispatch_group_leave(self->_downloadGroup);
                 return;
             }
@@ -466,7 +466,7 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
             self->_downloadController = nil;
             NSAlert *alert = [[NSAlert alloc] init];
             alert.messageText = @"Error unzipping python environment";
-            alert.informativeText = @"An error occurred while unzipping the downloaded python environment";
+            alert.informativeText = error.localizedDescription ?: @"An error occurred while unzipping the downloaded python environment";
             [alert runModal];
             self->_status = iTermPythonRuntimeDownloaderStatusError;
             dispatch_group_leave(self->_downloadGroup);
@@ -538,7 +538,7 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
                     runtimeVersion:(int)runtimeVersion
                     pythonVersions:(NSArray<NSString *> *)pythonVersions
                latestFullComponent:(NSInteger)latestFullComponent
-                        completion:(void (^)(BOOL))completion {
+                        completion:(void (^)(NSError *))completion {
     NSURL *const finalDestination =
     [NSURL fileURLWithPath:[self pathToStandardPyenvWithVersion:[@(runtimeVersion) stringValue]
                                         creatingSymlinkIfNeeded:YES]];
@@ -554,14 +554,14 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
     [[NSFileManager defaultManager] createDirectoryAtPath:tempDestination.path withIntermediateDirectories:YES attributes:nil error:&error];
     if (error) {
         DLog(@"Failed to create %@: %@", tempDestination, error);
-        completion(NO);
+        completion(error);
         return;
     }
     [self copyFullEnvironmentFrom:sourceURL
                                to:overwritableURL
-                       completion:^(BOOL ok) {
-        if (!ok) {
-            completion(NO);
+                       completion:^(NSError *error) {
+        if (error) {
+            completion(error);
             return;
         }
         NSString *searchFor1 = [NSString stringWithFormat:@"/iterm2env-%@/", @(latestFullComponent)];
@@ -572,9 +572,9 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
             @{ searchFor1: replaceWith1,
                searchFor2: replaceWith2 } ;
         [self performSubstitutions:subs inFilesUnderFolder:tempDestination];
-        [self unzip:[NSURL fileURLWithPath:zip] to:tempDestination completion:^(BOOL ok) {
-            if (!ok) {
-                completion(NO);
+        [self unzip:[NSURL fileURLWithPath:zip] to:tempDestination completion:^(NSError *error) {
+            if (error) {
+                completion(error);
                 return;
             }
             [self finishInstallingRuntimeVersion:runtimeVersion
@@ -588,14 +588,14 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
 
 - (void)copyFullEnvironmentFrom:(NSURL *)source
                              to:(NSURL *)destination
-                     completion:(void (^)(BOOL))completion {
+                     completion:(void (^)(NSError *))completion {
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
         NSError *error = nil;
         [[NSFileManager defaultManager] copyItemAtURL:source
                                                 toURL:destination
                                                 error:&error];
         dispatch_async(dispatch_get_main_queue(), ^{
-            completion(error == nil);
+            completion(error);
         });
     });
 }
@@ -603,14 +603,14 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
 - (void)installPythonEnvironmentFromZip:(NSString *)zip
                          runtimeVersion:(int)runtimeVersion
                          pythonVersions:(NSArray<NSString *> *)pythonVersions
-                             completion:(void (^)(BOOL))completion {
+                             completion:(void (^)(NSError *))completion {
     NSURL *finalDestination = [NSURL fileURLWithPath:[self pathToStandardPyenvWithVersion:[@(runtimeVersion) stringValue]
                                                                   creatingSymlinkIfNeeded:YES]];
     NSURL *tempDestination = [NSURL fileURLWithPath:[[[NSFileManager defaultManager] spacelessAppSupportCreatingLink] stringByAppendingPathComponent:[[NSUUID UUID] UUIDString]]];
 
     [[NSFileManager defaultManager] removeItemAtPath:finalDestination.path error:nil];
-    [self unzip:[NSURL fileURLWithPath:zip] to:tempDestination completion:^(BOOL unzipOk) {
-        if (unzipOk) {
+    [self unzip:[NSURL fileURLWithPath:zip] to:tempDestination completion:^(NSError *error) {
+        if (!error) {
             NSDictionary<NSString *, NSString *> *subs = @{ @"__ITERM2_ENV__": finalDestination.path,
                                                             @"__ITERM2_PYENV__": [finalDestination.path stringByAppendingPathComponent:@"pyenv"] };
             [self performSubstitutions:subs inFilesUnderFolder:tempDestination];
@@ -620,7 +620,7 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
                                 finalDestination:finalDestination
                                       completion:completion];
         } else {
-            completion(NO);
+            completion(error);
         }
     }];
 }
@@ -640,7 +640,7 @@ static NSArray<NSString *> *iTermConvertThreePartVersionNumbersToTwoPart(NSArray
                         pythonVersions:(NSArray<NSString *> *)pythonVersions
                        tempDestination:(NSURL *)tempDestination
                       finalDestination:(NSURL *)finalDestination
-                            completion:(void (^)(BOOL))completion {
+                            completion:(void (^)(NSError *))completion {
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
         NSArray<NSString *> *twoPartVersions = iTermConvertThreePartVersionNumbersToTwoPart(pythonVersions);
         NSArray<NSString *> *extendedPythonVersions = [NSSet setWithArray:[pythonVersions arrayByAddingObjectsFromArray:twoPartVersions]].allObjects;
@@ -650,9 +650,16 @@ static NSArray<NSString *> *iTermConvertThreePartVersionNumbersToTwoPart(NSArray
         [self createDeepLinkTo:[tempDestination.path stringByAppendingPathComponent:@"iterm2env"]
                  pythonVersion:nil
                 runtimeVersion:runtimeVersion];
+        NSError *error = nil;
         [[NSFileManager defaultManager] moveItemAtURL:[tempDestination URLByAppendingPathComponent:@"iterm2env"]
                                                 toURL:finalDestination
-                                                error:nil];
+                                                error:&error];
+        if (error) {
+            dispatch_async(dispatch_get_main_queue(), ^{
+                completion(error);
+            });
+            return;
+        }
         // Delete older versions that have the same Python versions.
         NSSet<NSString *> *versionsToRemove = [NSSet setWithArray:twoPartVersions];
         for (int i = 1; i < runtimeVersion; i++) {
@@ -662,13 +669,19 @@ static NSArray<NSString *> *iTermConvertThreePartVersionNumbersToTwoPart(NSArray
                 // so keep it around.
                 continue;
             }
+            NSError *error = nil;
             [[NSFileManager defaultManager] removeItemAtPath:[self pathToStandardPyenvWithVersion:[@(i) stringValue]
                                                                           creatingSymlinkIfNeeded:NO]
-                                                       error:nil];
+                                                       error:&error];
+            if (error) {
+                DLog(@"%@", error);
+            }
         }
-        [[NSFileManager defaultManager] removeItemAtURL:tempDestination error:nil];
+
+        [[NSFileManager defaultManager] removeItemAtURL:tempDestination error:&error];
+        DLog(@"%@", error);
         dispatch_async(dispatch_get_main_queue(), ^{
-            completion(YES);
+            completion(nil);
         });
     });
 }

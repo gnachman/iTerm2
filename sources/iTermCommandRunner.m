@@ -16,6 +16,8 @@
 @property (atomic) BOOL terminateAfterLaunch;
 @end
 
+static NSString *const iTermCommandRunnerErrorDomain = @"com.iterm2.command-runner";
+
 @implementation iTermCommandRunner {
     NSTask *_task;
     NSPipe *_pipe;
@@ -28,13 +30,34 @@
 + (void)unzipURL:(NSURL *)zipURL
    withArguments:(NSArray<NSString *> *)arguments
      destination:(NSString *)destination
-      completion:(void (^)(BOOL))completion {
+      completion:(void (^)(NSError *))completion {
     NSArray<NSString *> *fullArgs = [arguments arrayByAddingObject:zipURL.path];
     iTermCommandRunner *runner = [[self alloc] initWithCommand:@"/usr/bin/unzip"
                                                  withArguments:fullArgs
                                                           path:destination];
+    NSMutableString *errorText = [NSMutableString string];
+    runner.outputHandler = ^(NSData *data, void (^handled)(void)) {
+        NSString *string = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
+        if (string) {
+            [errorText appendString:string];
+        } else {
+            [errorText appendString:@"\n[non-UTF-8 output]\n"];
+        }
+        static NSInteger maxLength = 1024 * 1024;
+        if (errorText.length > maxLength) {
+            [errorText replaceCharactersInRange:NSMakeRange(0, errorText.length - maxLength)
+                                     withString:@""];
+        }
+        handled();
+    };
     runner.completion = ^(int status) {
-        completion(status == 0);
+        if (!status) {
+            completion(nil);
+            return;
+        }
+        completion([NSError errorWithDomain:iTermCommandRunnerErrorDomain
+                                       code:1
+                                   userInfo:@{ NSLocalizedDescriptionKey: errorText }]);
     };
     [runner run];
 }

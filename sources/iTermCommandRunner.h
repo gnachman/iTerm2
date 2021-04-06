@@ -26,7 +26,7 @@
 + (void)unzipURL:(NSURL *)zipURL
    withArguments:(NSArray<NSString *> *)arguments
      destination:(NSString *)destination
-      completion:(void (^)(BOOL))completion;
+      completion:(void (^)(NSError *))completion;
 
 + (void)zipURLs:(NSArray<NSURL *> *)URLs
       arguments:(NSArray<NSString *> *)arguments

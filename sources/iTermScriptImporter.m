@@ -84,10 +84,10 @@ static BOOL sInstallingScript;
         [iTermCommandRunner unzipURL:url
                        withArguments:@[ @"-q" ]
                          destination:tempDir
-                          completion:^(BOOL ok) {
-                              if (!ok) {
+                          completion:^(NSError *error) {
+                              if (error) {
                                   [pleaseWait.window close];
-                                  completion(@"Could not unzip archive", NO, nil);
+                                  completion([NSString stringWithFormat: @"Could not unzip archive: %@", error.localizedDescription], NO, nil);
                                   sInstallingScript = NO;
                                   return;
                               }
