@@ -324,7 +324,7 @@ static NSString *gSearchString;
 
 - (void)loadFindStringFromSharedPasteboard:(NSString *)value {
     DLog(@"[%p loadFindStringFromSharedPasteboard:%@] in window with frame %@", self, value, NSStringFromRect(_viewController.view.window.frame));
-    if (![iTermAdvancedSettingsModel loadFromFindPasteboard]) {
+    if (![iTermAdvancedSettingsModel synchronizeQueryWithFindPasteboard]) {
         return;
     }
     if (!_viewController.view.window.isKeyWindow) {

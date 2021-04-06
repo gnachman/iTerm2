@@ -8,11 +8,14 @@
 #import "iTermFindPasteboard.h"
 
 #import "DebugLogging.h"
+#import "iTermAdvancedSettingsModel.h"
 #import "iTermSearchQueryDidChangeNotification.h"
 
 #import <Cocoa/Cocoa.h>
 
-@implementation iTermFindPasteboard
+@implementation iTermFindPasteboard {
+    NSString *_localValue;
+}
 
 + (instancetype)sharedInstance {
     static iTermFindPasteboard *instance;
@@ -36,6 +39,10 @@
 
 - (void)setStringValue:(NSString *)stringValue {
     DLog(@"Set string value to %@\n%@", stringValue, [NSThread callStackSymbols]);
+    _localValue = [stringValue copy];
+    if (![iTermAdvancedSettingsModel synchronizeQueryWithFindPasteboard]) {
+        return;
+    }
     NSPasteboard *pasteboard = [NSPasteboard pasteboardWithName:NSPasteboardNameFind];
     if (pasteboard) {
         [pasteboard declareTypes:[NSArray arrayWithObject:NSPasteboardTypeString] owner:nil];
@@ -44,6 +51,9 @@
 }
 
 - (NSString *)stringValue {
+    if (![iTermAdvancedSettingsModel synchronizeQueryWithFindPasteboard]) {
+        return _localValue;
+    }
     NSPasteboard *findBoard = [NSPasteboard pasteboardWithName:NSPasteboardNameFind];
     if (![[findBoard types] containsObject:NSPasteboardTypeString]) {
         return @"";
