@@ -3124,6 +3124,7 @@ ITERM_WEAKLY_REFERENCEABLE
     if (totalTime > 1) {
         const NSTimeInterval timeInTriggers = [dist[PTYSessionSlownessEventTriggers] doubleValue] / totalTime;
         const NSTimeInterval timeExecuting = [dist[PTYSessionSlownessEventExecute] doubleValue] / totalTime;
+        DLog(@"For session %@ time executing=%@ time in triggers=%@", self, @(timeExecuting), @(timeInTriggers));
         if (timeInTriggers > timeExecuting * 0.5 && (timeExecuting + timeInTriggers) > 0.1) {
             // We were CPU bound for at least 10% of the sample time and
             // triggers were at least half as expensive as token execution.
@@ -12165,6 +12166,7 @@ preferredEscaping:(iTermSendTextEscaping)preferredEscaping {
 
 - (void)queueAnnouncement:(iTermAnnouncementViewController *)announcement
                identifier:(NSString *)identifier {
+    DLog(@"Enqueue announcement with identifier %@", identifier);
     [self dismissAnnouncementWithIdentifier:identifier];
 
     _announcements[identifier] = announcement;

@@ -403,6 +403,7 @@ static NSString *const iTermNaggingControllerDidChangeTmuxWindowsShouldCloseAfte
 
 - (void)offerToDisableTriggersInInteractiveApps {
     if (![self.delegate naggingControllerCanShowMessageWithIdentifier:kTurnOffSlowTriggersOfferUserDefaultsKey]) {
+        DLog(@"Don't show warning");
         return;
     }
     NSString *title;
