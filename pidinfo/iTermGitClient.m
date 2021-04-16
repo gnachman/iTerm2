@@ -280,7 +280,11 @@ static int GitForEachCallback(git_reference *ref, void *data) {
     iTermGitClient *client = [[iTermGitClient alloc] initWithRepoPath:path];
 
     if (!client.repo) {
-        return nil;
+        NSString *parent = [path stringByDeletingLastPathComponent];
+        if ([parent isEqualToString:path] || parent.length == 0) {
+            return nil;
+        }
+        return [self gitStateForRepoAtPath:parent];
     }
 
     git_reference *headRef = [client head];
