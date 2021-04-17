@@ -188,7 +188,11 @@ static NSString *const iTermSessionTitleSession = @"session";
     NSString *effectiveSessionName;
     if (tmuxPaneVariable) {
         if (isWindowTitle) {
-            effectiveSessionName = tmuxWindowTitle ?: tmuxWindowName ?: windowName ?: tmuxPaneVariable;
+            // `tmuxWindowTitle` comes from #{T:set-titles-string} if you've done `set-option -g set-titles on`. Prefer this since it is an explicit opt-in.
+            // `windowName` is affected by OSC 0 and OSC 2 and popping the window title stack. It will be unset if there was no OSC. This is the session's `terminalWindowName` variable.
+            // `tmuxWindowName` comes from `#{window_name}`. The default is the current process. It can be changed with the rename-window command or ESC k. It comes from the variable `tab.tmuxWindowName`. It is driven by the %window-renamed notification.
+            // `tmuxPaneVariable` corresponds to #{pane_title}, which is affected by OSC 0 and OSC 2 and popping the window title stack. Its default value is the hostname.
+            effectiveSessionName = tmuxWindowTitle ?: windowName ?: tmuxWindowName ?: tmuxPaneVariable;
         } else {
             effectiveSessionName = tmuxPaneVariable;
         }
