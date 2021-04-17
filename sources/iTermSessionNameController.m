@@ -118,12 +118,15 @@ NSString *const iTermSessionNameControllerSystemTitleUniqueIdentifier = @"com.it
         completion(@"…");
         return;
     }
+    DLog(@"Evaluate “%@” for %@. Synchronously=%@", invocation, self.delegate, @(sync));
     [iTermScriptFunctionCall callFunction:invocation
                                   timeout:sync ? 0 : 30
                                     scope:scope
                                retainSelf:YES
                                completion:
      ^(NSString *possiblyEmptyResult, NSError *error, NSSet<NSString *> *missing) {
+        DLog(@"Result of evaluating “%@” for %@ is possiblyEmptyResult=“%@”, error=“%@”, missing=“%@”.",
+             invocation, self.delegate, possiblyEmptyResult, error, missing);
          NSString *result = [weakSelf valueForInvocation:invocation
                                               withResult:possiblyEmptyResult
                                                    error:error];
@@ -382,22 +385,24 @@ NSString *const iTermSessionNameControllerSystemTitleUniqueIdentifier = @"com.it
     __weak __typeof(self) weakSelf = self;
     NSInteger count = ++_count;
     [self evaluateInvocationSynchronously:synchronous completion:^(NSString *presentationName) {
+        DLog(@"evaluation (sync=%@) finished with value %@. %@", @(synchronous), presentationName, weakSelf.delegate);
         __strong __typeof(self) strongSelf = weakSelf;
         if (strongSelf) {
             if (strongSelf->_appliedCount > count) {
                 // A later async evaluation has already completed. Don't overwrite it.
+                DLog(@"ignore result %@", strongSelf.delegate);
                 return;
             }
             strongSelf->_appliedCount = count;
-            if (!presentationName) {
-                presentationName = @"Untitled";
-            }
-            if ([NSObject object:strongSelf->_cachedEvaluation isEqualToObject:presentationName]) {
+            NSString *safeName = presentationName ?: @"Untitled";
+            if ([NSObject object:strongSelf->_cachedEvaluation isEqualToObject:safeName]) {
+                DLog(@"result is unchanged %@", strongSelf.delegate);
                 return;
             }
-            strongSelf->_cachedEvaluation = [presentationName copy];
-            if (!synchronous) {
-                [strongSelf.delegate sessionNameControllerPresentationNameDidChangeTo:presentationName];
+            strongSelf->_cachedEvaluation = [safeName copy];
+            if (!synchronous || presentationName != nil) {
+                DLog(@"Notify delegate %@", strongSelf.delegate);
+                [strongSelf.delegate sessionNameControllerPresentationNameDidChangeTo:safeName];
             }
         }
     }];
