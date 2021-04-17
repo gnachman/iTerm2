@@ -7,6 +7,7 @@
 
 #import "iTermComposerManager.h"
 
+#import "iTermAdvancedSettingsModel.h"
 #import "iTermMinimalComposerViewController.h"
 #import "iTermStatusBarComposerComponent.h"
 #import "iTermStatusBarViewController.h"
@@ -32,7 +33,7 @@
 
 - (void)reveal {
     iTermStatusBarViewController *statusBarViewController = [self.delegate composerManagerStatusBarViewController:self];
-    if (statusBarViewController) {
+    if (statusBarViewController && [self shouldRevealStatusBarComposerInViewController:statusBarViewController]) {
         if (_dropDownComposerViewIsVisible) {
             _saved = _minimalViewController.stringValue;
             [self dismissMinimalView];
@@ -42,6 +43,13 @@
     } else {
         [self showMinimalComposerInView:[self.delegate composerManagerContainerView:self]];
     }
+}
+
+- (BOOL)shouldRevealStatusBarComposerInViewController:(iTermStatusBarViewController *)statusBarViewController {
+    if ([iTermAdvancedSettingsModel alwaysUseStatusBarComposer]) {
+        return YES;
+    }
+    return [statusBarViewController visibleComponentWithIdentifier:[iTermStatusBarComposerComponent statusBarComponentIdentifier]] != nil;
 }
 
 - (void)revealMinimal {

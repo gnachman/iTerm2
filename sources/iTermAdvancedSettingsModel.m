@@ -462,6 +462,7 @@ DEFINE_BOOL(autoLockSessionNameOnEdit, YES, SECTION_SESSION @"Auto-lock session 
 DEFINE_FLOAT(timeoutForDaemonAttachment, 10, SECTION_SESSION @"How long to wait when trying to attach to an iTerm daemon at startup when restoring windows (in seconds)?");
 DEFINE_BOOL(logTimestampsWithPlainText, YES, SECTION_SESSION @"When logging plain text, include timestamps for each line?");
 DEFINE_STRING(composerClearSequence, @"0x15 0x0b", SECTION_SESSION @"Hex codes to send to clear the command line when entering the composer.\n0x15 is ^U, 0x0b is ^K.");
+DEFINE_BOOL(alwaysUseStatusBarComposer, NO, SECTION_SESSION @"Temporarily add a composer to the status bar instead of opening the large composer view when a status bar is present.");
 
 #pragma mark - Windows
 

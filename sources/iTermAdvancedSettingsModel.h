@@ -44,6 +44,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)allowInteractiveSwipeBetweenTabs;
 + (BOOL)allowTabbarInTitlebarAccessoryBigSur;
 + (BOOL)alternateMouseScroll;
++ (BOOL)alwaysUseStatusBarComposer;
 + (BOOL)animateGraphStatusBarComponents;
 + (void)setAlternateMouseScroll:(BOOL)value;
 + (NSString *)alternateMouseScrollStringForDown;
