@@ -364,7 +364,7 @@ static NSString *const iTermAPIScriptLauncherScriptDidFailUserNotificationCallba
                                         creatingSymlinkIfNeeded:NO];
     NSString *path = [searchPath stringByAppendingPathComponent:@"versions"];
     NSString *standardPythonVersion = [[iTermPythonRuntimeDownloader bestPythonVersionAt:path] it_twoPartVersionNumber];
-    task.environment = [self environmentFromEnvironment:task.environment
+    task.environment = [self environmentFromEnvironment:[[NSProcessInfo processInfo] environment]
                                                   shell:[iTermOpenDirectory userShell]
                                                  cookie:cookie
                                                     key:key
@@ -397,7 +397,7 @@ static NSString *const iTermAPIScriptLauncherScriptDidFailUserNotificationCallba
         environment[@"SHELL"] = shell;
     }
     environment[@"PYTHONIOENCODING"] = @"utf-8";
-    
+
     // OpenSSL bakes in the directory where you compiled it so it can find root certs.
     // That works great if you happen to be me, but it seems that most people aren't.
     // Luckily it lets you set some environment variables to find cert stores.
