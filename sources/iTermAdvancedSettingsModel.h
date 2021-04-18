@@ -222,6 +222,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)optionIsMetaForSpecialChars;
 + (BOOL)oscColorReport16Bits;
 + (int)pasteHistoryMaxOptions;
++ (BOOL)pastingClearsSelection;
 + (NSString *)pathsToIgnore;
 + (NSString *)pathToFTP;
 + (NSString *)pathToTelnet;

@@ -2647,6 +2647,9 @@
     if ([_delegate respondsToSelector:@selector(paste:)]) {
         DLog(@"Calling paste on delegate.");
         [_delegate paste:sender];
+        if (!_selection.live && [iTermAdvancedSettingsModel pastingClearsSelection]) {
+            [self deselect];
+        }
     }
 }
 
