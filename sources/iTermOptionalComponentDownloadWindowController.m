@@ -211,8 +211,8 @@ didCompleteWithError:(nullable NSError *)error {
     if (!version) {
         return NO;
     }
-    if ([version isEqual:@"unknown"] || [version containsString:@".git."]) {
-        // Assume it's the top of master because there's no ordering on git commit numbers
+    if ([version isEqual:@"unknown"] || [version containsString:@".git."] || [version hasSuffix:@"-adhoc"]) {
+        // Assume it's new enough for whatever is there since we can't tell what the real version is.
         return YES;
     }
     id<SUVersionComparison> comparator = [SUStandardVersionComparator defaultComparator];
