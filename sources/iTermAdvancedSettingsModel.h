@@ -288,6 +288,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 // background. If the brightness difference is less than this value then the text color becomes
 // black or white.
 + (double)smartCursorColorFgThreshold;
++ (int)smartSelectionRadius;
 + (BOOL)solidUnderlines;
 + (BOOL)squareWindowCorners;
 + (NSString *)sshSchemePath;

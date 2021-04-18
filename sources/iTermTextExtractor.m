@@ -8,6 +8,7 @@
 
 #import "iTermTextExtractor.h"
 #import "DebugLogging.h"
+#import "iTermAdvancedSettingsModel.h"
 #import "iTermImageInfo.h"
 #import "iTermLocatedString.h"
 #import "iTermPreferences.h"
@@ -713,10 +714,10 @@ const NSInteger kLongMaximumWordLength = 100000;
                 ignoringNewlines:(BOOL)ignoringNewlines {
     location = [self coordLockedToWindow:location];
     int targetOffset;
-    const int numLines = 2;
+    const int numLines = [iTermAdvancedSettingsModel smartSelectionRadius];
     NSMutableArray* coords = [NSMutableArray arrayWithCapacity:numLines * _logicalWindow.length];
     NSString *textWindow = [self textAround:location
-                                     radius:2
+                                     radius:numLines
                                targetOffset:&targetOffset
                                      coords:coords
                            ignoringNewlines:ignoringNewlines || [self hasLogicalWindow]];
