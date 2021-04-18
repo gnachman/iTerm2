@@ -11,6 +11,7 @@
 #import "ITAddressBookMgr.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermNotificationController.h"
+#import "iTermVariableScope+Session.h"
 #import "PreferencePanel.h"
 
 NSString *const iTermLoggingHelperErrorNotificationName = @"SessionLogWriteFailed";
@@ -42,7 +43,8 @@ NSString *const iTermLoggingHelperErrorNotificationGUIDKey = @"guid";
 
 - (instancetype)initWithRawLogger:(id<iTermLogging>)rawLogger
                       plainLogger:(id<iTermLogging>)plainLogger
-                      profileGUID:(NSString *)profileGUID {
+                      profileGUID:(NSString *)profileGUID
+                            scope:(nonnull iTermVariableScope *)scope {
     self = [super init];
     if (self) {
         _path = nil;
@@ -53,6 +55,7 @@ NSString *const iTermLoggingHelperErrorNotificationGUIDKey = @"guid";
         _appending = [iTermAdvancedSettingsModel autologAppends];
         _queue = dispatch_queue_create("com.iterm2.logging", DISPATCH_QUEUE_SERIAL);
         _profileGUID = [profileGUID copy];
+        _scope = scope;
     }
     return self;
 }
@@ -96,6 +99,7 @@ NSString *const iTermLoggingHelperErrorNotificationGUIDKey = @"guid";
 }
 
 - (void)close {
+    _scope.logFilename = nil;
     dispatch_async(_queue, ^{
         [self.fileHandle closeFile];
         self.fileHandle = nil;
@@ -103,6 +107,7 @@ NSString *const iTermLoggingHelperErrorNotificationGUIDKey = @"guid";
 }
 
 - (void)start {
+    _scope.logFilename = self.path;
     dispatch_async(_queue, ^{
         [self.fileHandle closeFile];
         self.fileHandle = nil;

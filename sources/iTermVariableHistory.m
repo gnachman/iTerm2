@@ -76,7 +76,8 @@
                                     iTermVariableKeySessionTmuxStatusRight,
                                     iTermVariableKeySessionSelection,
                                     iTermVariableKeySessionSelectionLength,
-                                    iTermVariableKeySessionBellCount];
+                                    iTermVariableKeySessionBellCount,
+                                    iTermVariableKeySessionLogFilename];
     [names enumerateObjectsUsingBlock:^(NSString * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
         [self recordUseOfVariableNamed:obj inContext:iTermVariablesSuggestionContextSession];
     }];

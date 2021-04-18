@@ -310,4 +310,12 @@
     [self setValue:showingAlternateScreen forVariableNamed:iTermVariableKeySessionShowingAlternateScreen];
 }
 
+- (NSString *)logFilename {
+    return [self valueForVariableName:iTermVariableKeySessionLogFilename];
+}
+
+- (void)setLogFilename:(NSString *)newValue {
+    [self setValue:newValue forVariableNamed:iTermVariableKeySessionLogFilename];
+}
+
 @end

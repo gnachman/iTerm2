@@ -1736,7 +1736,8 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     _logging = [[iTermLoggingHelper alloc] initWithRawLogger:_shell
                                                  plainLogger:self
-                                                 profileGUID:self.profile[KEY_GUID]];
+                                                 profileGUID:self.profile[KEY_GUID]
+                                                       scope:self.variablesScope];
     return _logging;
 }
 

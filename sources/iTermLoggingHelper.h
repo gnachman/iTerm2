@@ -10,6 +10,7 @@
 NS_ASSUME_NONNULL_BEGIN
 
 @class iTermLoggingHelper;
+@class iTermVariableScope;
 
 @protocol iTermLogging<NSObject>
 - (void)loggingHelperStart:(iTermLoggingHelper *)loggingHelper;
@@ -27,12 +28,14 @@ extern NSString *const iTermLoggingHelperErrorNotificationGUIDKey;
 @property (nullable, nonatomic, weak) id<iTermLogging> rawLogger;
 @property (nullable, nonatomic, weak) id<iTermLogging> plainLogger;
 @property (nonatomic, readonly) BOOL appending;
+@property (nonatomic, readonly) iTermVariableScope *scope;
 
 + (void)observeNotificationsWithHandler:(void (^)(NSString *guid))handler;
 
 - (instancetype)initWithRawLogger:(id<iTermLogging>)rawLogger
                       plainLogger:(id<iTermLogging>)plainLogger
-                      profileGUID:(NSString *)profileGUID NS_DESIGNATED_INITIALIZER;
+                      profileGUID:(NSString *)profileGUID
+                            scope:(iTermVariableScope *)scope NS_DESIGNATED_INITIALIZER;
 
 - (instancetype)init NS_UNAVAILABLE;
 

@@ -82,6 +82,7 @@ NSString *const iTermVariableKeySessionSelection = @"selection";
 NSString *const iTermVariableKeySessionSelectionLength = @"selectionLength";
 NSString *const iTermVariableKeySessionParent = @"parentSession";
 NSString *const iTermVariableKeySessionBellCount = @"bellCount";
+NSString *const iTermVariableKeySessionLogFilename = @"logFilename";
 
 #pragma mark - Window Context
 
