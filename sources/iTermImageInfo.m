@@ -263,7 +263,7 @@ static NSSize iTermImageInfoGetSizeForRegionPreservingAspectRatio(const NSSize r
         return NSMakeSize(region.height * imageAR, region.height);
     }
 }
-
+#warning TODO: This gets called off the main queue in the metal renderer.
 - (NSImage *)imageWithCellSize:(CGSize)cellSize timestamp:(NSTimeInterval)timestamp {
     if (!self.ready) {
         DLog(@"%@ not ready", self.uniqueIdentifier);
@@ -299,7 +299,7 @@ static NSSize iTermImageInfoGetSizeForRegionPreservingAspectRatio(const NSSize r
                                                   (region.height - size.height) / 2 + inset.bottom,
                                                   MAX(0, size.width - inset.left - inset.right),
                                                   MAX(0, size.height - inset.top - inset.bottom));
-        NSImage *canvas = [theImage safelyResizedImageWithSize:size destinationRect:destinationRect];
+        NSImage *canvas = [theImage safelyResizedImageWithSize:region destinationRect:destinationRect];
         self.embeddedImages[@(frame)] = canvas;
     }
     return _embeddedImages[@(frame)];
