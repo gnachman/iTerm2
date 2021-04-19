@@ -23,52 +23,52 @@ extern NSString *const iTermImageDidLoad;
                                                          numberOfCells:(NSSize)numberOfCells;
 
 // A UUID, lazily allocated.
-@property(nonatomic, readonly) NSString *uniqueIdentifier;
+@property(atomic, readonly) NSString *uniqueIdentifier;
 
 // Size in cells.
-@property(nonatomic, assign) NSSize size;
+@property(atomic, assign) NSSize size;
 
 // Full-size image.
-@property(nonatomic, retain) iTermImage *image;
+@property(atomic, retain) iTermImage *image;
 
 // If set, the image won't be squished.
-@property(nonatomic, assign) BOOL preserveAspectRatio;
+@property(atomic, assign) BOOL preserveAspectRatio;
 
 // Original filename
-@property(nonatomic, copy) NSString *filename;
+@property(atomic, copy) NSString *filename;
 
 // Inset for the image within its area.
-@property(nonatomic, assign) NSEdgeInsets inset;
+@property(atomic, assign) NSEdgeInsets inset;
 
 // Image code
-@property(nonatomic, readonly) unichar code;
+@property(atomic, readonly) unichar code;
 
 // Is animated?
-@property(nonatomic, readonly) BOOL animated;
+@property(atomic, readonly) BOOL animated;
 
 // If animated, set this to stop animation.
-@property(nonatomic) BOOL paused;
+@property(atomic) BOOL paused;
 
 // Raw data for image.
-@property(nonatomic, readonly) NSData *data;
+@property(atomic, readonly) NSData *data;
 
 // UTI string for image type.
-@property(nonatomic, readonly) NSString *imageType;
+@property(atomic, readonly) NSString *imageType;
 
 // Creates a new randomly named temp file containing the image and returns its name.
-@property(nonatomic, readonly) NSString *nameForNewSavedTempFile;
+@property(atomic, readonly) NSString *nameForNewSavedTempFile;
 
 // Creates a pasteboard item that responds with image or file.
-@property(nonatomic, readonly) NSPasteboardItem *pasteboardItem;
+@property(atomic, readonly) NSPasteboardItem *pasteboardItem;
 
 // Is this a broken image?
-@property(nonatomic) BOOL broken;
+@property(atomic) BOOL broken;
 
 // Is there an image yet? one might be coming later
-@property (nonatomic, readonly) BOOL ready;
+@property (atomic, readonly) BOOL ready;
 
 // During restoration, do we still need to find a mark?
-@property (nonatomic) BOOL provisional;
+@property (atomic) BOOL provisional;
 
 // Used to create a new instance for a new image. This may remain an empty container until
 // -setImageFromImage: is called.
