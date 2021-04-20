@@ -21,6 +21,10 @@ extern NSString *const iTermImageDidLoad;
                                                           forImageSize:(NSSize)imageSize
                                                               cellSize:(NSSize)cellSize
                                                          numberOfCells:(NSSize)numberOfCells;
++ (NSEdgeInsets)fractionalInsetsStretchingToDesiredSize:(NSSize)desiredSize
+                                              imageSize:(NSSize)imageSize
+                                               cellSize:(NSSize)cellSize
+                                          numberOfCells:(NSSize)numberOfCells;
 
 // A UUID, lazily allocated.
 @property(atomic, readonly) NSString *uniqueIdentifier;

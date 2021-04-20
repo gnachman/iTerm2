@@ -329,32 +329,42 @@ static NSSize iTermImageInfoGetSizeForRegionPreservingAspectRatio(const NSSize r
         NSSize region = NSMakeSize(cellSize.width * _size.width,
                                    cellSize.height * _size.height);
         if (!NSEqualSizes(embeddedImage.size, region)) {
-            NSSize size;
             NSImage *theImage;
             if (self.animatedImage) {
                 theImage = [self.animatedImage imageForFrame:frame];
             } else {
                 theImage = [self.image.images firstObject];
             }
-            if (_preserveAspectRatio) {
-                size = iTermImageInfoGetSizeForRegionPreservingAspectRatio(region, theImage.size);
-            } else {
-                size = region;
-            }
             NSEdgeInsets inset = _inset;
             inset.top *= cellSize.height;
             inset.bottom *= cellSize.height;
             inset.left *= cellSize.width;
             inset.right *= cellSize.width;
-            const NSRect destinationRect = NSMakeRect((region.width - size.width) / 2 + inset.left,
-                                                      (region.height - size.height) / 2 + inset.bottom,
-                                                      MAX(0, size.width - inset.left - inset.right),
-                                                      MAX(0, size.height - inset.top - inset.bottom));
+            const NSRect destinationRect = NSMakeRect(inset.left,
+                                                      inset.bottom,
+                                                      MAX(0, region.width - inset.left - inset.right),
+                                                      MAX(0, region.height - inset.top - inset.bottom));
             NSImage *canvas = [theImage safelyResizedImageWithSize:region destinationRect:destinationRect];
             self.embeddedImages[@(frame)] = canvas;
         }
         return _embeddedImages[@(frame)];
     }
+}
+
++ (NSEdgeInsets)fractionalInsetsStretchingToDesiredSize:(NSSize)desiredSize
+                                              imageSize:(NSSize)imageSize
+                                               cellSize:(NSSize)cellSize
+                                          numberOfCells:(NSSize)numberOfCells {
+    const NSSize region = NSMakeSize(cellSize.width * numberOfCells.width,
+                                     cellSize.height * numberOfCells.height);
+    const NSEdgeInsets pointInsets = NSEdgeInsetsMake(0,
+                                                      0,
+                                                      region.height - desiredSize.height,
+                                                      region.width - desiredSize.width);
+    return NSEdgeInsetsMake(pointInsets.top / cellSize.height,
+                            pointInsets.left / cellSize.width,
+                            pointInsets.bottom / cellSize.height,
+                            pointInsets.right / cellSize.width);
 }
 
 + (NSEdgeInsets)fractionalInsetsForPreservedAspectRatioWithDesiredSize:(NSSize)desiredSize
@@ -363,28 +373,16 @@ static NSSize iTermImageInfoGetSizeForRegionPreservingAspectRatio(const NSSize r
                                                          numberOfCells:(NSSize)numberOfCells {
     const NSSize region = NSMakeSize(cellSize.width * numberOfCells.width,
                                      cellSize.height * numberOfCells.height);
-    const NSSize size = iTermImageInfoGetSizeForRegionPreservingAspectRatio(region, imageSize);
+    const NSSize size = iTermImageInfoGetSizeForRegionPreservingAspectRatio(desiredSize, imageSize);
 
-    // Given the following equalities, inferred from how the destinationRect is computed when
-    // creating the embedded image in -imageWithCellSize:timestamp: above:
-    //
-    // left = (region.width - size.width) / 2 + insets.left
-    // bottom = (region.height - size.height) / 2 + insets.bottom
-    // width = size.width - insets.left - insets.right
-    // height = size.height - insets.top - insets.bottom
-    //
-    // Set left=0, bottom=0, width=desiredSize.width, height=desiredSize.height.
-    // Solve for insets. Here's what you get:
-    const CGFloat left = (region.width - size.width) / -2.0;
-    const CGFloat bottom = (region.height - size.height) / -2.0;
-    const CGFloat right = size.width - left - desiredSize.width;
-    const CGFloat top = size.height - bottom - desiredSize.height;
-
-    // To top-align, swap the bottom and top insets.
-    return NSEdgeInsetsMake(bottom / cellSize.height,
-                            left / cellSize.width,
-                            top / cellSize.height,
-                            right / cellSize.width);
+    const NSEdgeInsets pointInsets = NSEdgeInsetsMake(0,
+                                                      0,
+                                                      region.height - size.height,
+                                                      region.width - size.width);
+    return NSEdgeInsetsMake(pointInsets.top / cellSize.height,
+                            pointInsets.left / cellSize.width,
+                            pointInsets.bottom / cellSize.height,
+                            pointInsets.right / cellSize.width);
 }
 
 - (NSString *)nameForNewSavedTempFile {

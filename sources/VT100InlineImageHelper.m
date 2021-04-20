@@ -381,11 +381,17 @@
                            decodedImage:(VT100DecodedImage *)decodedImage
                                   width:(int)width
                                  height:(int)height {
-    // Pick an inset that preserves the exact dimensions of the original image.
-    return [iTermImageInfo fractionalInsetsForPreservedAspectRatioWithDesiredSize:desiredSize
-                                                                     forImageSize:decodedImage.image.size
-                                                                         cellSize:cellSize
-                                                                    numberOfCells:NSMakeSize(width, height)];
+    if (_preserveAspectRatio) {
+        // Pick an inset that preserves the exact dimensions of the original image.
+        return [iTermImageInfo fractionalInsetsForPreservedAspectRatioWithDesiredSize:desiredSize
+                                                                         forImageSize:decodedImage.image.size
+                                                                             cellSize:cellSize
+                                                                        numberOfCells:NSMakeSize(width, height)];
+    }
+    return [iTermImageInfo fractionalInsetsStretchingToDesiredSize:desiredSize
+                                                         imageSize:decodedImage.image.size
+                                                          cellSize:cellSize
+                                                     numberOfCells:NSMakeSize(width, height)];
 }
 
 #pragma mark - Grid Twiddling
