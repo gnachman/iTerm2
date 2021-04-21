@@ -5085,6 +5085,15 @@ ITERM_WEAKLY_REFERENCEABLE
                 ![iTermPreferences boolForKey:kPreferenceKeyShowFullscreenTabBar]) {
                 return NO;
             }
+            if (@available(macOS 10.16, *)) {
+                if ([iTermPreferences boolForKey:kPreferenceKeyShowFullscreenTabBar]) {
+                    // This prevents a shadow from being drawn between the tabbar and the rest of the window.
+                    // When the tabbar is hidden, it must be a titlebar accessory vc or else you'd never see it.
+                    // The only downside I see is that when you reveal the titlebar it overlaps the tabbar
+                    // but that doesn't seem like a big problem. Issue 9639.
+                    return NO;
+                }
+            }
             break;
     }
 
@@ -5196,17 +5205,10 @@ ITERM_WEAKLY_REFERENCEABLE
         const CGFloat tabBarHeight = self.shouldShowPermanentFullScreenTabBar ? self.desiredTabBarHeight : 0;
         viewController.fullScreenMinHeight = tabBarHeight;
 
-        if (index != NSNotFound) {
-            frame.size.height = self.desiredTabBarHeight;
-            if ([iTermAdvancedSettingsModel allowTabbarInTitlebarAccessoryBigSur]) {
-                if (@available(macOS 10.16, *)) {
-                    // FB7781183
-                    frame.size.height += 4;
-                }
-            }
-            DLog(@"Set frame of tabbar as accessory to %@", NSStringFromRect(frame));
-            viewController.view.frame = frame;
-        }
+        frame.size.height = self.desiredTabBarHeight;
+        DLog(@"Set frame of tabbar as accessory to %@", NSStringFromRect(frame));
+        viewController.view.frame = frame;
+
         DLog(@"Adding title bar accessory view for %@", self);
         if (index == NSNotFound) {
             [self.window addTitlebarAccessoryViewController:viewController];
