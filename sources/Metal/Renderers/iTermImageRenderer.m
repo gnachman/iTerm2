@@ -114,7 +114,7 @@ static NSString *const iTermImageRendererTextureMetadataKeyImageMissing = @"iTer
     const CGFloat scale = self.configuration.scale;
     cellSize.width /= scale;
     cellSize.height /= scale;
-    NSImage *image = [run.imageInfo imageWithCellSize:cellSize timestamp:_timestamp];
+    NSImage *image = [run.imageInfo imageWithCellSize:cellSize timestamp:_timestamp scale:scale];
     BOOL missing = NO;
     if (!image) {
         if (!run.imageInfo) {

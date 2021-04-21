@@ -3336,9 +3336,9 @@ useCompatibilityEscaping:compatibilityEscaping
     }
 }
 
-- (void)_dragImage:(iTermImageInfo *)imageInfo forEvent:(NSEvent *)theEvent
-{
-    NSImage *icon = [imageInfo imageWithCellSize:NSMakeSize(_charWidth, _lineHeight)];
+- (void)_dragImage:(iTermImageInfo *)imageInfo forEvent:(NSEvent *)theEvent {
+    NSImage *icon = [imageInfo imageWithCellSize:NSMakeSize(_charWidth, _lineHeight)
+                                           scale:1];
 
     NSData *imageData = imageInfo.data;
     if (!imageData || !icon) {

@@ -2725,7 +2725,7 @@ static BOOL iTermTextDrawingHelperShouldAntiAlias(screen_char_t *c,
             virtualOffset:(CGFloat)virtualOffset {
     //DLog(@"Drawing image at %@ with code %@", VT100GridCoordDescription(origin), @(code));
     iTermImageInfo *imageInfo = GetImageInfo(code);
-    NSImage *image = [imageInfo imageWithCellSize:_cellSize];
+    NSImage *image = [imageInfo imageWithCellSize:_cellSize scale:self.isRetina ? 2 : 1];
     if (!image) {
         if (!imageInfo) {
             DLog(@"Image is missing (brown)");

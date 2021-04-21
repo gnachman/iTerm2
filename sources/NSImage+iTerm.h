@@ -51,9 +51,11 @@
 
 // Resizes an image in a way that lets you use rawDataForMetal. If you resize an image with only
 // Cocoa APIs (lockFocus, drawInRect, unlockFocus), it won't work with 8 bits per component (only
-// 16). So this uses CG APIs which produce a non-broken image. All notions of scale are out the
-// window, but we don't really care.
-- (NSImage *)safelyResizedImageWithSize:(NSSize)newSize destinationRect:(NSRect)destinationRect;
+// 16). So this uses CG APIs which produce a non-broken image. This creates an image with a single
+// bitmap representation at the requested scale.
+- (NSImage *)safelyResizedImageWithSize:(NSSize)newSize
+                        destinationRect:(NSRect)destinationRect
+                                  scale:(CGFloat)scale;
 
 - (NSBitmapImageRep *)bitmapImageRep;
 - (NSImageRep *)bestRepresentationForScale:(CGFloat)scale;

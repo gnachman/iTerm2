@@ -11,6 +11,7 @@
 #import "DebugLogging.h"
 #import "iTermAnimatedImageInfo.h"
 #import "iTermImage.h"
+#import "iTermTuple.h"
 #import "FutureMethods.h"
 #import "NSData+iTerm.h"
 #import "NSImage+iTerm.h"
@@ -282,9 +283,11 @@ NSString *const iTermImageDidLoad = @"iTermImageDidLoad";
     }
 }
 
-- (NSImage *)imageWithCellSize:(CGSize)cellSize {
+- (NSImage *)imageWithCellSize:(CGSize)cellSize scale:(CGFloat)scale {
     @synchronized(self) {
-        return [self imageWithCellSize:cellSize timestamp:[NSDate timeIntervalSinceReferenceDate]];
+        return [self imageWithCellSize:cellSize
+                             timestamp:[NSDate timeIntervalSinceReferenceDate]
+                                 scale:scale];
     }
 }
 
@@ -314,7 +317,7 @@ static NSSize iTermImageInfoGetSizeForRegionPreservingAspectRatio(const NSSize r
 }
 
 // NOTE: This gets called off the main queue in the metal renderer.
-- (NSImage *)imageWithCellSize:(CGSize)cellSize timestamp:(NSTimeInterval)timestamp {
+- (NSImage *)imageWithCellSize:(CGSize)cellSize timestamp:(NSTimeInterval)timestamp scale:(CGFloat)scale {
     @synchronized(self) {
         if (!self.ready) {
             DLog(@"%@ not ready", self.uniqueIdentifier);
@@ -324,7 +327,8 @@ static NSSize iTermImageInfoGetSizeForRegionPreservingAspectRatio(const NSSize r
             _embeddedImages = [[NSMutableDictionary alloc] init];
         }
         int frame = [self.animatedImage frameForTimestamp:timestamp];  // 0 if not animated
-        NSImage *embeddedImage = _embeddedImages[@(frame)];
+        iTermTuple *key = [iTermTuple tupleWithObject:@(frame) andObject:@(scale)];
+        NSImage *embeddedImage = _embeddedImages[key];
 
         NSSize region = NSMakeSize(cellSize.width * _size.width,
                                    cellSize.height * _size.height);
@@ -344,10 +348,12 @@ static NSSize iTermImageInfoGetSizeForRegionPreservingAspectRatio(const NSSize r
                                                       inset.bottom,
                                                       MAX(0, region.width - inset.left - inset.right),
                                                       MAX(0, region.height - inset.top - inset.bottom));
-            NSImage *canvas = [theImage safelyResizedImageWithSize:region destinationRect:destinationRect];
-            self.embeddedImages[@(frame)] = canvas;
+            NSImage *canvas = [theImage safelyResizedImageWithSize:region
+                                                   destinationRect:destinationRect
+                                                             scale:scale];
+            self.embeddedImages[key] = canvas;
         }
-        return _embeddedImages[@(frame)];
+        return _embeddedImages[key];
     }
 }
 

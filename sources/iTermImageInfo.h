@@ -83,10 +83,10 @@ extern NSString *const iTermImageDidLoad;
 
 // Returns an image whose size is self.size * cellSize. If the image is smaller and/or has an inset
 // there will be a transparent area around the edges.
-- (NSImage *)imageWithCellSize:(CGSize)cellSize;
+- (NSImage *)imageWithCellSize:(CGSize)cellSize scale:(CGFloat)scale;
 
 // A more predictable version of the above. Timestamp determines GIF frame.
-- (NSImage *)imageWithCellSize:(CGSize)cellSize timestamp:(NSTimeInterval)timestamp;
+- (NSImage *)imageWithCellSize:(CGSize)cellSize timestamp:(NSTimeInterval)timestamp scale:(CGFloat)scale;
 
 // Binds an image. Data is optional and only used for animated GIFs. Not to be used after
 // -initWithDictionary.

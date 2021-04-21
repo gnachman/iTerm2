@@ -319,9 +319,10 @@
 
 }
 
-- (NSImage *)safelyResizedImageWithSize:(NSSize)unsafeSize destinationRect:(NSRect)destinationRect {
-    NSSize newSize = NSMakeSize(round(unsafeSize.width), round(unsafeSize.height));
-    const CGFloat scale = 1;
+- (NSImage *)safelyResizedImageWithSize:(NSSize)unsafeSize
+                        destinationRect:(NSRect)destinationRect
+                                  scale:(CGFloat)scale {
+    NSSize newSize = NSMakeSize(round(unsafeSize.width) * scale, round(unsafeSize.height) * scale);
     if (!self.isValid) {
         return nil;
     }
@@ -341,7 +342,10 @@
 
     [NSGraphicsContext saveGraphicsState];
     [NSGraphicsContext setCurrentContext:[NSGraphicsContext graphicsContextWithBitmapImageRep:rep]];
-    [self drawInRect:destinationRect
+    [self drawInRect:NSMakeRect(NSMinX(destinationRect) * scale,
+                                NSMinY(destinationRect) * scale,
+                                NSWidth(destinationRect) * scale,
+                                NSHeight(destinationRect) * scale)
             fromRect:NSZeroRect
            operation:NSCompositingOperationCopy
             fraction:1.0];
