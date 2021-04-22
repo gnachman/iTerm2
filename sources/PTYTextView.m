@@ -2701,10 +2701,11 @@
             if (pasteNewline) {
                 // For cmd-drag, we append a newline.
                 [stringToPaste appendString:@"\r"];
+                [_delegate pasteStringWithoutBracketing:stringToPaste];
             } else if (!cdToDirectory) {
                 [stringToPaste appendString:@" "];
+                [_delegate pasteString:stringToPaste];
             }
-            [_delegate pasteString:stringToPaste];
 
             return YES;
         }

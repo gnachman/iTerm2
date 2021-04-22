@@ -212,19 +212,28 @@ const NSInteger iTermQuickPasteBytesPerCallDefaultValue = 768;
              slowly:(BOOL)slowly
    escapeShellChars:(BOOL)escapeShellChars
            isUpload:(BOOL)isUpload
+    allowBracketing:(BOOL)allowBracketing
        tabTransform:(iTermTabTransformTags)tabTransform
        spacesPerTab:(int)spacesPerTab {
-    [self pasteString:theString slowly:slowly escapeShellChars:escapeShellChars isUpload:isUpload tabTransform:tabTransform spacesPerTab:spacesPerTab progress:nil];
+    [self pasteString:theString
+               slowly:slowly
+     escapeShellChars:escapeShellChars
+             isUpload:isUpload
+      allowBracketing:allowBracketing
+         tabTransform:tabTransform
+         spacesPerTab:spacesPerTab
+             progress:nil];
 }
 
 - (PasteEvent *)pasteEventWithString:(NSString *)theString
                               slowly:(BOOL)slowly
                     escapeShellChars:(BOOL)escapeShellChars
                             isUpload:(BOOL)isUpload
+                     allowBracketing:(BOOL)allowBracketing
                         tabTransform:(iTermTabTransformTags)tabTransform
                         spacesPerTab:(int)spacesPerTab
                             progress:(void (^)(NSInteger))progress {
-    NSUInteger bracketFlag = [_delegate pasteHelperShouldBracket] ? kPasteFlagsBracket : 0;
+    NSUInteger bracketFlag = (allowBracketing && [_delegate pasteHelperShouldBracket]) ? kPasteFlagsBracket : 0;
     NSUInteger flags = (kPasteFlagsSanitizingNewlines |
                         kPasteFlagsRemovingUnsafeControlCodes |
                         bracketFlag);
@@ -266,6 +275,7 @@ const NSInteger iTermQuickPasteBytesPerCallDefaultValue = 768;
              slowly:(BOOL)slowly
    escapeShellChars:(BOOL)escapeShellChars
            isUpload:(BOOL)isUpload
+    allowBracketing:(BOOL)allowBracketing
        tabTransform:(iTermTabTransformTags)tabTransform
        spacesPerTab:(int)spacesPerTab
            progress:(void (^)(NSInteger))progress {
@@ -273,6 +283,7 @@ const NSInteger iTermQuickPasteBytesPerCallDefaultValue = 768;
                                             slowly:slowly
                                   escapeShellChars:escapeShellChars
                                           isUpload:isUpload
+                                   allowBracketing:allowBracketing
                                       tabTransform:tabTransform
                                       spacesPerTab:spacesPerTab
                                           progress:progress];
@@ -651,6 +662,7 @@ const NSInteger iTermQuickPasteBytesPerCallDefaultValue = 768;
                                                      slowly:!!(flags & kPTYSessionPasteSlowly)
                                            escapeShellChars:!!(flags & kPTYSessionPasteEscapingSpecialCharacters)
                                                    isUpload:NO
+                                            allowBracketing:YES
                                                tabTransform:kTabTransformNone
                                                spacesPerTab:4
                                                    progress:nil];

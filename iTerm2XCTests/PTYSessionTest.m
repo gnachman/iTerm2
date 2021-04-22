@@ -20,6 +20,7 @@ typedef NSModalResponse (^WarningBlockType)(NSAlert *alert, NSString *identifier
              slowly:(BOOL)slowly
    escapeShellChars:(BOOL)escapeShellChars
            isUpload:(BOOL)isUpload
+    allowBracketing:(BOOL)allowBracketing
        tabTransform:(iTermTabTransformTags)tabTransform
        spacesPerTab:(int)spacesPerTab {
     self.string = theString;

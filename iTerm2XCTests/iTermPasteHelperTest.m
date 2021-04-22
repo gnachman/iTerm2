@@ -224,6 +224,7 @@ static const double kFloatingPointTolerance = 0.00001;
                   slowly:NO
         escapeShellChars:NO
                 isUpload:NO
+         allowBracketing:YES
             tabTransform:kTabTransformNone
             spacesPerTab:0];
     [self runTimer];
@@ -237,6 +238,7 @@ static const double kFloatingPointTolerance = 0.00001;
                   slowly:NO
         escapeShellChars:NO
                 isUpload:NO
+         allowBracketing:YES
             tabTransform:kTabTransformNone
             spacesPerTab:0];
     [self runTimer];
@@ -249,6 +251,7 @@ static const double kFloatingPointTolerance = 0.00001;
                   slowly:NO
         escapeShellChars:YES
                 isUpload:NO
+         allowBracketing:YES
             tabTransform:kTabTransformConvertToSpaces
             spacesPerTab:4];
     [self runTimer];
@@ -261,6 +264,7 @@ static const double kFloatingPointTolerance = 0.00001;
                   slowly:NO
         escapeShellChars:YES
                 isUpload:NO
+         allowBracketing:YES
             tabTransform:kTabTransformConvertToSpaces
             spacesPerTab:4];
     [self runTimer];
@@ -273,6 +277,7 @@ static const double kFloatingPointTolerance = 0.00001;
                   slowly:NO
         escapeShellChars:YES
                 isUpload:NO
+         allowBracketing:YES
             tabTransform:kTabTransformConvertToSpaces
             spacesPerTab:4];
     [self runTimer];
@@ -285,6 +290,7 @@ static const double kFloatingPointTolerance = 0.00001;
                   slowly:NO
         escapeShellChars:YES
                 isUpload:NO
+         allowBracketing:YES
             tabTransform:kTabTransformEscapeWithCtrlV
             spacesPerTab:0];
     [self runTimer];
@@ -297,6 +303,7 @@ static const double kFloatingPointTolerance = 0.00001;
                   slowly:NO
         escapeShellChars:YES
                 isUpload:NO
+         allowBracketing:YES
             tabTransform:kTabTransformEscapeWithCtrlV
             spacesPerTab:0];
     [self runTimer];
@@ -309,6 +316,7 @@ static const double kFloatingPointTolerance = 0.00001;
                   slowly:NO
         escapeShellChars:YES
                 isUpload:NO
+         allowBracketing:YES
             tabTransform:kTabTransformEscapeWithCtrlV
             spacesPerTab:0];
     [self runTimer];
@@ -345,6 +353,7 @@ static const double kFloatingPointTolerance = 0.00001;
                   slowly:NO
         escapeShellChars:NO
                 isUpload:NO
+         allowBracketing:YES
             tabTransform:kTabTransformNone
             spacesPerTab:0];
     XCTAssert(!warned);
@@ -365,6 +374,7 @@ static const double kFloatingPointTolerance = 0.00001;
                   slowly:NO
         escapeShellChars:NO
                 isUpload:NO
+         allowBracketing:YES
             tabTransform:kTabTransformNone
             spacesPerTab:0];
     if (override) {
@@ -379,6 +389,7 @@ static const double kFloatingPointTolerance = 0.00001;
                   slowly:NO
         escapeShellChars:NO
                 isUpload:NO
+         allowBracketing:YES
             tabTransform:kTabTransformNone
             spacesPerTab:0];
     if (override) {
@@ -393,6 +404,7 @@ static const double kFloatingPointTolerance = 0.00001;
                   slowly:NO
         escapeShellChars:NO
                 isUpload:NO
+         allowBracketing:YES
             tabTransform:kTabTransformNone
             spacesPerTab:0];
     if (override) {
@@ -408,6 +420,7 @@ static const double kFloatingPointTolerance = 0.00001;
                   slowly:NO
         escapeShellChars:NO
                 isUpload:NO
+         allowBracketing:YES
             tabTransform:kTabTransformNone
             spacesPerTab:0];
     [self runTimer];
@@ -425,6 +438,7 @@ static const double kFloatingPointTolerance = 0.00001;
                   slowly:NO
         escapeShellChars:NO
                 isUpload:NO
+         allowBracketing:YES
             tabTransform:kTabTransformNone
             spacesPerTab:0];
     _shouldBracket = NO;
@@ -441,6 +455,7 @@ static const double kFloatingPointTolerance = 0.00001;
                   slowly:NO
         escapeShellChars:NO
                 isUpload:NO
+         allowBracketing:YES
             tabTransform:kTabTransformNone
             spacesPerTab:0];
     _shouldBracket = NO;
@@ -450,6 +465,7 @@ static const double kFloatingPointTolerance = 0.00001;
                   slowly:NO
         escapeShellChars:NO
                 isUpload:NO
+         allowBracketing:YES
             tabTransform:kTabTransformNone
             spacesPerTab:0];
 
@@ -464,6 +480,7 @@ static const double kFloatingPointTolerance = 0.00001;
                   slowly:NO
         escapeShellChars:NO
                 isUpload:NO
+         allowBracketing:YES
             tabTransform:kTabTransformNone
             spacesPerTab:0];
     [self runTimer];
@@ -477,6 +494,7 @@ static const double kFloatingPointTolerance = 0.00001;
                   slowly:YES
         escapeShellChars:NO
                 isUpload:NO
+         allowBracketing:YES
             tabTransform:kTabTransformNone
             spacesPerTab:0];
     [self runTimer];
@@ -490,6 +508,7 @@ static const double kFloatingPointTolerance = 0.00001;
                   slowly:NO
         escapeShellChars:NO
                 isUpload:NO
+         allowBracketing:YES
             tabTransform:kTabTransformNone
             spacesPerTab:0];
     NSString *test2 = [@"2" stringRepeatedTimes:2000];
@@ -497,6 +516,7 @@ static const double kFloatingPointTolerance = 0.00001;
                   slowly:NO
         escapeShellChars:NO
                 isUpload:NO
+         allowBracketing:YES
             tabTransform:kTabTransformNone
             spacesPerTab:0];
     [self runTimer];
@@ -513,6 +533,7 @@ static const double kFloatingPointTolerance = 0.00001;
                   slowly:NO
         escapeShellChars:NO
                 isUpload:NO
+         allowBracketing:YES
             tabTransform:kTabTransformNone
             spacesPerTab:0];
     [_helper enqueueEvent:[NSEvent keyEventWithType:NSEventTypeKeyDown
@@ -530,6 +551,7 @@ static const double kFloatingPointTolerance = 0.00001;
                   slowly:NO
         escapeShellChars:NO
                 isUpload:NO
+         allowBracketing:YES
             tabTransform:kTabTransformNone
             spacesPerTab:0];
     [self runTimer];

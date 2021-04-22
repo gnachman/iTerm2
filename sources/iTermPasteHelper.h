@@ -73,6 +73,7 @@ extern const NSInteger iTermQuickPasteBytesPerCallDefaultValue;
              slowly:(BOOL)slowly
    escapeShellChars:(BOOL)escapeShellChars
            isUpload:(BOOL)isUpload
+    allowBracketing:(BOOL)allowBracketing
        tabTransform:(iTermTabTransformTags)tabTransform
        spacesPerTab:(int)spacesPerTab;
 
@@ -80,6 +81,7 @@ extern const NSInteger iTermQuickPasteBytesPerCallDefaultValue;
              slowly:(BOOL)slowly
    escapeShellChars:(BOOL)escapeShellChars
            isUpload:(BOOL)isUpload
+    allowBracketing:(BOOL)allowBracketing
        tabTransform:(iTermTabTransformTags)tabTransform
        spacesPerTab:(int)spacesPerTab
            progress:(void (^)(NSInteger))progress;
@@ -118,6 +120,7 @@ extern const NSInteger iTermQuickPasteBytesPerCallDefaultValue;
                               slowly:(BOOL)slowly
                     escapeShellChars:(BOOL)escapeShellChars
                             isUpload:(BOOL)isUpload
+                     allowBracketing:(BOOL)allowBracketing  // if true respect delegate's wishes.
                         tabTransform:(iTermTabTransformTags)tabTransform
                         spacesPerTab:(int)spacesPerTab
                             progress:(void (^)(NSInteger))progress;

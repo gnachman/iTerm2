@@ -3615,9 +3615,12 @@ ITERM_WEAKLY_REFERENCEABLE
     return output;
 }
 
-- (void)pasteString:(NSString *)aString
-{
+- (void)pasteString:(NSString *)aString {
     [self pasteString:aString flags:0];
+}
+
+- (void)pasteStringWithoutBracketing:(NSString *)theString {
+    [self pasteString:theString flags:kPTYSessionPasteBracketingDisabled];
 }
 
 - (void)deleteBackward:(id)sender {
@@ -8659,6 +8662,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                        slowly:!!(flags & kPTYSessionPasteSlowly)
              escapeShellChars:!!(flags & kPTYSessionPasteEscapingSpecialCharacters)
                      isUpload:NO
+              allowBracketing:!(flags & kPTYSessionPasteBracketingDisabled)
                  tabTransform:tabTransform
                  spacesPerTab:spacesPerTab];
 }
@@ -9907,6 +9911,7 @@ preferredEscaping:(iTermSendTextEscaping)preferredEscaping {
                                                     slowly:NO
                                           escapeShellChars:NO
                                                   isUpload:NO
+                                           allowBracketing:YES
                                               tabTransform:NO
                                               spacesPerTab:0
                                                   progress:^(NSInteger progress) {}];
@@ -10924,6 +10929,7 @@ preferredEscaping:(iTermSendTextEscaping)preferredEscaping {
                                slowly:NO
                      escapeShellChars:NO
                              isUpload:YES
+                      allowBracketing:YES
                          tabTransform:kTabTransformNone
                          spacesPerTab:0
                              progress:^(NSInteger progress) {

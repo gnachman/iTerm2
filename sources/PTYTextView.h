@@ -79,6 +79,7 @@ typedef NS_ENUM(NSUInteger, iTermSendTextEscaping) {
 // Contextual menu
 - (void)menuForEvent:(NSEvent *)theEvent menu:(NSMenu *)theMenu;
 - (void)pasteString:(NSString *)aString;
+- (void)pasteStringWithoutBracketing:(NSString *)theString;
 - (void)paste:(id)sender;
 - (void)pasteOptions:(id)sender;
 - (void)textViewFontDidChange;
