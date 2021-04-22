@@ -165,11 +165,22 @@ static BOOL iTermRemotePreferencesKeyIsSyncable(NSString *key,
         remotePrefs = [NSDictionary dictionaryWithContentsOfFile:filename];
     }
     if (!remotePrefs.count) {
-        NSAlert *alert = [[NSAlert alloc] init];
-        alert.messageText = @"Failed to load preferences from custom directory. Falling back to local copy.";
-        alert.informativeText = [NSString stringWithFormat:@"Missing or malformed file at \"%@\"",
-                                 [self customFolderOrURL]];
-        [alert runModal];
+        if ([[self customFolderOrURL] length] == 0) {
+            NSAlert *alert = [[NSAlert alloc] init];
+            alert.messageText = @"Error Loading Settings";
+            alert.informativeText = @"You have enabled “Load preferences from a custom folder or URL” in settings but the location is not set.";
+            [alert addButtonWithTitle:@"Don’t Load Remote Settings"];
+            [alert addButtonWithTitle:@"Cancel"];
+            if ([alert runModal] == NSAlertFirstButtonReturn) {
+                [iTermPreferences setBool:NO forKey:kPreferenceKeyLoadPrefsFromCustomFolder];
+            }
+        } else {
+            NSAlert *alert = [[NSAlert alloc] init];
+            alert.messageText = @"Failed to load preferences from custom directory. Falling back to local copy.";
+            alert.informativeText = [NSString stringWithFormat:@"Missing or malformed file at \"%@\"",
+                                     [self customFolderOrURL]];
+            [alert runModal];
+        }
     }
     return remotePrefs;
 }
