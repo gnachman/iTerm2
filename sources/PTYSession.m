@@ -5701,16 +5701,20 @@ ITERM_WEAKLY_REFERENCEABLE
     [_view showFindUI];
 }
 
-- (void)compose {
+- (iTermComposerManager *)composerManager {
     if (!_composerManager) {
         _composerManager = [[iTermComposerManager alloc] init];
         _composerManager.delegate = self;
     }
+    return _composerManager;
+}
+
+- (void)compose {
     if (self.currentCommand.length > 0) {
         [self sendHexCode:[iTermAdvancedSettingsModel composerClearSequence]];
-        [_composerManager setCommand:self.currentCommand];
+        [self.composerManager setCommand:self.currentCommand];
     }
-    [_composerManager reveal];
+    [self.composerManager reveal];
 }
 
 - (BOOL)closeComposer {
@@ -13249,7 +13253,7 @@ preferredEscaping:(iTermSendTextEscaping)preferredEscaping {
 }
 
 - (BOOL)statusBarRevealComposer {
-    [_composerManager revealMinimal];
+    [self.composerManager revealMinimal];
     return NO;
 }
 
