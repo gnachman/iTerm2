@@ -8,6 +8,7 @@
 #import "NSResponder+iTerm.h"
 
 #import "DebugLogging.h"
+#import "NSObject+iTerm.h"
 
 #import <objc/runtime.h>
 
@@ -44,6 +45,13 @@ static char iTermIgnoreFirstResponderChangesCountKey;
 }
 
 - (BOOL)it_preferredFirstResponder {
+    NSTextView *textView = [NSTextView castFrom:self];
+    if (textView) {
+        id delegate = [textView delegate];
+        if ([delegate respondsToSelector:_cmd]) {
+            return [(NSResponder *)delegate it_preferredFirstResponder];
+        }
+    }
     return NO;
 }
 

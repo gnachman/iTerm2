@@ -27,6 +27,10 @@
 
 @implementation iTermMiniSearchField
 
+- (BOOL)it_preferredFirstResponder {
+    return YES;
+}
+
 - (BOOL)becomeFirstResponder {
     [self.window.contentView setNeedsDisplay:YES];
     return [super becomeFirstResponder];

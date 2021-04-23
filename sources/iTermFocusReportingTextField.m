@@ -7,6 +7,7 @@
 
 #import "iTermFocusReportingTextField.h"
 #import "iTermSearchFieldCell.h"
+#import "NSResponder+iTerm.h"
 #import "PTYWindow.h"
 
 @implementation iTermFocusReportingTextField
@@ -61,6 +62,10 @@
 
 // In issue 9370, we see that PTYTextView gets the mouseUp if this is allowed to call -[super mouseUp:].
 - (void)mouseUp:(NSEvent *)event {
+}
+
+- (BOOL)it_preferredFirstResponder {
+    return YES;
 }
 
 #pragma mark - iTermSearchFieldControl
