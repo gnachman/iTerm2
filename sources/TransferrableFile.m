@@ -137,6 +137,7 @@ static NSMutableSet<NSString *> *iTermTransferrableFileLockedFileNames(void) {
 }
 
 - (void)setStatus:(TransferrableFileStatus)status {
+    DLog(@"setStatus:%@\n%@", @(status), [NSThread callStackSymbols]);
     @synchronized(self) {
         if (status != _status) {
             _status = status;

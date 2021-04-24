@@ -311,6 +311,8 @@ static NSError *SCPFileError(NSString *description) {
 // This runs in a thread.
 - (void)performTransfer:(BOOL)isDownload agentAllowed:(BOOL)agentAllowed {
     NSString *baseName = [[self class] fileNameForPath:self.path.path];
+    DLog(@"performTransfer download=%@ agentAllowed=%@ path=%@ baseName=%@",
+         @(isDownload), @(agentAllowed), self.path, baseName);
     if (!baseName) {
         self.error = [NSString stringWithFormat:@"Invalid path: %@", self.path.path];
         dispatch_sync(dispatch_get_main_queue(), ^() {
@@ -325,6 +327,8 @@ static NSError *SCPFileError(NSString *description) {
         self.session.delegate = self;
         effectivePort = self.session.port.intValue;
     } else {
+        DLog(@"Create seession to hostname=%@ configs=%@ port=%@ username=%@",
+             [self hostname], [self configs], @([self port]), self.path.username);
         self.session = [[NMSSHSession alloc] initWithHost:[self hostname]
                                                   configs:[self configs]
                                           withDefaultPort:[self port]
@@ -342,6 +346,7 @@ static NSError *SCPFileError(NSString *description) {
     }
     NSURL *url = [self sessionURL];
     if (!self.session.isConnected) {
+        DLog(@"Not connected");
         NSError *theError = [self lastError];
         if (!theError) {
             // If connection fails, there is no rawSession in NMSSHSession, so it can't return an
@@ -374,6 +379,7 @@ static NSError *SCPFileError(NSString *description) {
 
     BOOL didConnectToAgent = NO;
     if (agentAllowed && !self.hasPredecessor) {
+        DLog(@"Connect to agent");
         self.session.authSock = [[iTermAuthSock sharedInstance] authSock];
         [self.session connectToAgent];
         // Check a private property to see if the connection to the agent was made.
@@ -383,6 +389,7 @@ static NSError *SCPFileError(NSString *description) {
     }
 
     if (!self.session.isAuthorized) {
+        DLog(@"Authenticate");
         NSArray *authTypes = [self.session supportedAuthenticationMethods];
         if (!authTypes) {
             authTypes = @[ @"password" ];
@@ -472,13 +479,16 @@ static NSError *SCPFileError(NSString *description) {
         return;
     }
     if (!self.session.session && didConnectToAgent) {
+        DLog(@"Retry without agent");
         // Try again without agent. I got into a state where using the agent prevented connections
         // from going through.
         [self.session disconnect];
         self.session = nil;
         [self performTransfer:isDownload agentAllowed:NO];
+        return;
     }
     if (!self.session.isAuthorized) {
+        DLog(@"Still not authenticated.");
         __block NSError *error = [self lastError];
         dispatch_sync(dispatch_get_main_queue(), ^() {
             if (!error) {
@@ -494,6 +504,7 @@ static NSError *SCPFileError(NSString *description) {
     }
 
     if (_okToAdd) {
+        DLog(@"Add %@:%@ to known hosts", self.session.host, self.session.port);
         [self.session addKnownHostName:self.session.host
                                   port:[self.session.port intValue]
                                 toFile:nil
@@ -501,6 +512,7 @@ static NSError *SCPFileError(NSString *description) {
     }
 
     if (isDownload) {
+        DLog(@"Will download");
         NSString *downloadDirectory = [[NSFileManager defaultManager] downloadsDirectory];
         NSString *tempfile = nil;
         NSString *tempFileName = [self tempFileName];
@@ -526,6 +538,7 @@ static NSError *SCPFileError(NSString *description) {
             if (!quarantined) {
                 if (![self quarantine:tempfile sourceURL:url]) {
                     quarantineError = YES;
+                    DLog(@"Quarantine error");
                     return NO;
                 }
                 quarantined = YES;
@@ -543,9 +556,11 @@ static NSError *SCPFileError(NSString *description) {
             return !self.stopped;
         }];
         if (!quarantined && [[NSFileManager defaultManager] fileExistsAtPath:tempfile]) {
+            DLog(@"Apparently a zero byte file");
             // Zero-byte file, presumably.
             if (![self quarantine:tempfile sourceURL:url]) {
                 quarantineError = YES;
+                DLog(@"Quarantine failed");
                 ok = NO;
             } else {
                 quarantined = YES;
@@ -554,6 +569,7 @@ static NSError *SCPFileError(NSString *description) {
         __block NSError *error = nil;
         __block NSString *finalDestination = nil;
         if (ok) {
+            DLog(@"Download OK");
             error = nil;
             // We determine the filename and perform the move in the main thread to avoid two
             // threads trying to determine the final destination at the same time.
@@ -567,11 +583,14 @@ static NSError *SCPFileError(NSString *description) {
             if (error) {
                 self.error = [NSString stringWithFormat:@"Couldn't move %@ to %@",
                               tempfile, finalDestination];
+                DLog(@"%@", self.error);
             }
             [[NSFileManager defaultManager] removeItemAtPath:tempfile error:NULL];
             self.destination = finalDestination;
         } else {
+            DLog(@"Download failed.");
             const BOOL ok = [[NSFileManager defaultManager] removeItemAtPath:tempfile error:&error];
+            DLog(@"Remove %@: %@", tempfile, error);
             if (quarantineError && (!ok || error)) {
                 dispatch_sync(dispatch_get_main_queue(), ^{
                     [self failedToRemoveUnquarantinedFileAt:tempfile];
@@ -612,6 +631,7 @@ static NSError *SCPFileError(NSString *description) {
             [scpSuccessor performTransferWrapper:isDownload];
         }
     } else {
+        DLog(@"Will upload");
         self.status = kTransferrableFileStatusTransferring;
         DLog(@"Upload “%@” to “%@”", [self localPath], self.path.path);
         BOOL ok = [self.session.channel uploadFile:[self localPath]
@@ -627,8 +647,10 @@ static NSError *SCPFileError(NSString *description) {
                                           }];
         NSError *error;
         if (ok) {
+            DLog(@"Upload OK");
             error = nil;
         } else {
+            DLog(@"Upload failed: %@", error);
             if (self.stopped) {
                 dispatch_sync(dispatch_get_main_queue(), ^() {
                     [[FileTransferManager sharedInstance] transferrableFileDidStopTransfer:self];
