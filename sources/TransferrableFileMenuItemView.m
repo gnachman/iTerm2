@@ -9,9 +9,23 @@
 #import "TransferrableFileMenuItemView.h"
 #import "NSStringITerm.h"
 
-const CGFloat rightMargin = 8;
-const CGFloat leftMargin = 20;
 const CGFloat progressIndicatorHeight = 6;
+
+static CGFloat TransferrableFileMenuItemViewLeftMargin(void) {
+    if (@available(macOS 10.16, *)) {
+        return 14;
+    } else {
+        return 20;
+    }
+}
+
+static CGFloat TransferrableFileMenuItemViewRightMargin(void) {
+    if (@available(macOS 10.16, *)) {
+        return 14;
+    } else {
+        return 8;
+    }
+}
 
 @interface TransferrableFileMenuItemView ()
 // This is used as part of the bug workaround in sanityCheckSiblings to ensure we don't try to
@@ -24,9 +38,9 @@ const CGFloat progressIndicatorHeight = 6;
 - (instancetype)initWithFrame:(NSRect)frameRect {
     self = [super initWithFrame:frameRect];
     if (self) {
-        _progressIndicator = [[iTermProgressIndicator alloc] initWithFrame:NSMakeRect(leftMargin,
+        _progressIndicator = [[iTermProgressIndicator alloc] initWithFrame:NSMakeRect(TransferrableFileMenuItemViewLeftMargin(),
                                                                                       17,
-                                                                                      frameRect.size.width - leftMargin - rightMargin,
+                                                                                      frameRect.size.width - TransferrableFileMenuItemViewLeftMargin() - TransferrableFileMenuItemViewRightMargin(),
                                                                                       progressIndicatorHeight)];
         [self addSubview:_progressIndicator];
     }
@@ -139,34 +153,34 @@ const CGFloat progressIndicatorHeight = 6;
     CGFloat bottomY = 1;
 
     // Draw file name
-    NSRect filenameRect = NSMakeRect(leftMargin,
+    NSRect filenameRect = NSMakeRect(TransferrableFileMenuItemViewLeftMargin(),
                                      topY,
-                                     self.bounds.size.width - leftMargin - rightMargin,
+                                     self.bounds.size.width - TransferrableFileMenuItemViewLeftMargin() - TransferrableFileMenuItemViewRightMargin(),
                                      textHeight);
 
     [_filename drawInRect:filenameRect
            withAttributes:filenameAttributes];
 
     // Draw subheading
-    NSRect subheadingRect = NSMakeRect(leftMargin,
+    NSRect subheadingRect = NSMakeRect(TransferrableFileMenuItemViewLeftMargin(),
                                        topY - smallTextHeight - 1,
-                                       self.bounds.size.width - leftMargin - rightMargin,
+                                       self.bounds.size.width - TransferrableFileMenuItemViewLeftMargin() - TransferrableFileMenuItemViewRightMargin(),
                                        smallTextHeight);
     [_subheading drawInRect:subheadingRect withAttributes:smallGrayAttributes];
 
     // Draw status label
     if (_statusMessage) {
-        [_statusMessage drawInRect:NSMakeRect(leftMargin,
+        [_statusMessage drawInRect:NSMakeRect(TransferrableFileMenuItemViewLeftMargin(),
                                               bottomY,
-                                              self.bounds.size.width - leftMargin - rightMargin,
+                                              self.bounds.size.width - TransferrableFileMenuItemViewLeftMargin() - TransferrableFileMenuItemViewRightMargin(),
                                               smallTextHeight)
                     withAttributes:smallGrayAttributes];
     }
 
     // Draw size
-    [sizeString drawInRect:NSMakeRect(leftMargin,
+    [sizeString drawInRect:NSMakeRect(TransferrableFileMenuItemViewLeftMargin(),
                                       bottomY,
-                                      self.bounds.size.width - rightMargin - leftMargin,
+                                      self.bounds.size.width - TransferrableFileMenuItemViewRightMargin() - TransferrableFileMenuItemViewLeftMargin(),
                                       smallTextHeight)
             withAttributes:sizeAttributes];
 }
