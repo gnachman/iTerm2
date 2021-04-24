@@ -12285,6 +12285,10 @@ preferredEscaping:(iTermSendTextEscaping)preferredEscaping {
     return !*boolPtr;
 }
 
+- (void)screenDidResize {
+    [self.delegate sessionDidResize:self];
+}
+
 - (VT100Screen *)popupVT100Screen {
     return _screen;
 }

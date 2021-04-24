@@ -1915,6 +1915,7 @@ static NSString *const kGridSizeKey = @"Size";
 // Warning: does not set dirty.
 - (void)setSize:(VT100GridSize)newSize {
     if (newSize.width != size_.width || newSize.height != size_.height) {
+        DLog(@"Grid for %@ resized to %@", self.delegate, VT100GridSizeDescription(newSize));
         size_ = newSize;
         [lines_ release];
         [lineInfos_ release];
@@ -1928,6 +1929,7 @@ static NSString *const kGridSizeKey = @"Size";
                                        size_.height - scrollRegionRows_.location);
         cursor_.x = MIN(cursor_.x, size_.width - 1);
         self.cursorY = MIN(cursor_.y, size_.height - 1);
+        [self.delegate gridDidResize];
     }
 }
 

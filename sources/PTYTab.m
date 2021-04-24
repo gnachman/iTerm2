@@ -6502,6 +6502,13 @@ backgroundColor:(NSColor *)backgroundColor {
     }
 }
 
+- (void)sessionDidResize:(PTYSession *)session {
+    if (session != self.activeSession) {
+        return;
+    }
+    [self.delegate tabActiveSessionDidResize:self];
+}
+
 #pragma mark - iTermObject
 
 - (iTermBuiltInFunctions *)objectMethodRegistry {

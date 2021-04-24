@@ -286,5 +286,6 @@
                          promptIfBig:(BOOL *)promptIfBig;
 - (BOOL)screenShouldClearScrollbackBuffer;
 - (VT100GridRange)screenRangeOfVisibleLines;
+- (void)screenDidResize;
 
 @end

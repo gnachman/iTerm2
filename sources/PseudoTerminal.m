@@ -11162,6 +11162,12 @@ backgroundColor:(NSColor *)backgroundColor {
     return _swipeContainerView != nil;
 }
 
+- (void)tabActiveSessionDidResize:(PTYTab *)tab {
+    if (tab == self.currentTab) {
+        [_contentView windowDidResize];
+    }
+}
+
 #pragma mark - PSMMinimalTabStyleDelegate
 
 - (NSColor *)minimalTabStyleBackgroundColor {

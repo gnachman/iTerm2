@@ -967,9 +967,7 @@ NS_CLASS_AVAILABLE_MAC(10_14)
 }
 
 - (void)windowDidResize {
-    if (@available(macOS 10.14, *)) {
-        [_windowSizeView setWindowSize:[self.delegate rootTerminalViewCurrentSessionSize]];
-    }
+    [_windowSizeView setWindowSize:[self.delegate rootTerminalViewCurrentSessionSize]];
 }
 
 #pragma mark - Division View

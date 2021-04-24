@@ -22,6 +22,7 @@
 - (iTermUnicodeNormalization)gridUnicodeNormalizationForm;
 - (void)gridCursorDidMove;
 - (void)gridCursorDidChangeLine;
+- (void)gridDidResize;
 @end
 
 @interface VT100Grid : NSObject<NSCopying>

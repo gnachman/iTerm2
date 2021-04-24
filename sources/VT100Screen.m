@@ -5696,6 +5696,10 @@ static void SwapInt(int *a, int *b) {
 - (void)gridCursorDidMove {
 }
 
+- (void)gridDidResize {
+    [self.delegate screenDidResize];
+}
+
 #pragma mark - iTermMarkDelegate
 
 - (void)markDidBecomeCommandMark:(id<iTermMark>)mark {
