@@ -9622,12 +9622,6 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     }
 }
 
-- (void)updateUseCSIuMode {
-    const BOOL profileSetting =
-        [iTermProfilePreferences boolForKey:KEY_USE_LIBTICKIT_PROTOCOL inProfile:self.profile];
-    self.keyMappingMode = profileSetting ? iTermKeyMappingModeCSIu : iTermKeyMappingModeStandard;
-}
-
 - (void)textViewResetTerminal {
     [_terminal gentleReset];
 }
@@ -12068,6 +12062,10 @@ preferredEscaping:(iTermSendTextEscaping)preferredEscaping {
 }
 
 - (void)screenSendModifiersDidChange {
+    if (_keyMappingMode == iTermKeyMappingModeCSIu) {
+        // Since you can only enter CSI u mode via the UI, don't let a control sequence change it.
+        return;
+    }
     const BOOL allowed = [iTermProfilePreferences boolForKey:KEY_ALLOW_MODIFY_OTHER_KEYS
                                                    inProfile:self.profile];
     const int modifyOtherKeysMode = _terminal.sendModifiers[4].intValue;

@@ -37,7 +37,7 @@ typedef struct {
 
 typedef NS_OPTIONS(int, VT100TerminalKeyReportingFlags) {
     VT100TerminalKeyReportingFlagsNone = 0,
-    VT100TerminalKeyReportingFlagsDisambiguateEscape = (1 << 0),
+    VT100TerminalKeyReportingFlagsDisambiguateEscape = (1 << 0),  // Legacy: can't be entered except by restoration.
     VT100TerminalKeyReportingFlagsReportAllEventTypes = (1 << 1),  // TODO
     VT100TerminalKeyReportingFlagsReportAlternateKeys = (1 << 2),  // TODO
     VT100TerminalKeyReportingFlagsReportAllKeysAsEscapeCodes = (1 << 3),  // TODO
