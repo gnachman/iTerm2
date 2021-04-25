@@ -234,14 +234,14 @@ static id gAltOpenAllRepresentedObject;
     }
 }
 
-+ (void)applyAddJournalEntry:(BookmarkJournalEntry *)e
-                      toMenu:(NSMenu *)menu
-              startingAtItem:(int)skip
-                      params:(iTermProfileModelJournalParams *)params {
++ (NSString *)applyAddJournalEntry:(BookmarkJournalEntry *)e
+                            toMenu:(NSMenu *)menu
+                    startingAtItem:(int)skip
+                            params:(iTermProfileModelJournalParams *)params {
     id<iTermProfileModelJournalModel> model = e.model;
     Profile *b = [NSDictionary castFrom:[model profileWithGuid:e.guid]];
     if (!b) {
-        return;
+        return nil;
     }
     [model.menuController addBookmark:b
                                toMenu:menu
@@ -249,6 +249,7 @@ static id gAltOpenAllRepresentedObject;
                              withTags:b[KEY_TAGS]
                                params:params
                                 atPos:e.index];
+    return [b[KEY_SHORTCUT] uppercaseString];
 }
 
 + (NSArray *)menuItemsForTag:(NSString *)multipartName inMenu:(NSMenu *)menu {
@@ -266,12 +267,15 @@ static id gAltOpenAllRepresentedObject;
     return result;
 }
 
-+ (void)applyRemoveJournalEntry:(BookmarkJournalEntry *)e
-                         toMenu:(NSMenu *)menu
-                 startingAtItem:(int)skip
-                         params:(iTermProfileModelJournalParams *)params {
++ (NSString *)applyRemoveJournalEntry:(BookmarkJournalEntry *)e
+                               toMenu:(NSMenu *)menu
+                       startingAtItem:(int)skip
+                               params:(iTermProfileModelJournalParams *)params {
     int pos = [menu indexOfItemWithRepresentedObject:e.guid];
+    NSString *shortcut = nil;
     if (pos != -1) {
+        NSMenuItem *item = [menu itemAtIndex:pos];
+        shortcut = [item.keyEquivalent uppercaseString];
         [menu removeItemAtIndex:pos];
         [menu removeItemAtIndex:pos];
     }
@@ -309,15 +313,23 @@ static id gAltOpenAllRepresentedObject;
         [menu removeItemAtIndex:[menu numberOfItems] - 1];
         [menu removeItemAtIndex:[menu numberOfItems] - 1];
     }
+    return shortcut;
 }
 
-+ (void)applyRemoveAllJournalEntry:(BookmarkJournalEntry *)e
-                            toMenu:(NSMenu *)menu
-                    startingAtItem:(int)skip
-                            params:(iTermProfileModelJournalParams *)params {
++ (NSSet<NSString *> *)applyRemoveAllJournalEntry:(BookmarkJournalEntry *)e
+                                           toMenu:(NSMenu *)menu
+                                   startingAtItem:(int)skip
+                                           params:(iTermProfileModelJournalParams *)params {
+    NSMutableSet<NSString *> *results = [NSMutableSet set];
     while ([menu numberOfItems] > skip) {
+        NSMenuItem *itemToRemove = menu.itemArray.lastObject;
+        NSString *shortcut = [itemToRemove keyEquivalent];
+        if (shortcut) {
+            [results addObject:shortcut];
+        }
         [menu removeItemAtIndex:[menu numberOfItems] - 1];
     }
+    return results;
 }
 
 + (void)applySetDefaultJournalEntry:(BookmarkJournalEntry *)e
@@ -326,24 +338,33 @@ static id gAltOpenAllRepresentedObject;
                              params:(iTermProfileModelJournalParams *)params {
 }
 
-+ (void)applyJournal:(NSDictionary *)journalDict
-              toMenu:(NSMenu *)menu
-      startingAtItem:(int)skip
-              params:(iTermProfileModelJournalParams *)params {
++ (NSDictionary<NSString *, NSNumber *> *)applyJournal:(NSDictionary *)journalDict
+                                                toMenu:(NSMenu *)menu
+                                        startingAtItem:(int)skip
+                                                params:(iTermProfileModelJournalParams *)params {
     NSArray *journal = [journalDict objectForKey:@"array"];
+    NSMutableDictionary<NSString *, NSNumber *> *results = [NSMutableDictionary dictionary];
     for (BookmarkJournalEntry *e in journal) {
         switch (e.action) {
-            case JOURNAL_ADD:
-                [self.class applyAddJournalEntry:e toMenu:menu startingAtItem:skip params:params];
+            case JOURNAL_ADD: {
+                NSString *shortcut = [self.class applyAddJournalEntry:e toMenu:menu startingAtItem:skip params:params];
+                results[shortcut] = @YES;
                 break;
+            }
 
-            case JOURNAL_REMOVE:
-                [self.class applyRemoveJournalEntry:e toMenu:menu startingAtItem:skip params:params];
+            case JOURNAL_REMOVE: {
+                NSString *shortcut = [self.class applyRemoveJournalEntry:e toMenu:menu startingAtItem:skip params:params];
+                results[shortcut] = @NO;
                 break;
+            }
 
-            case JOURNAL_REMOVE_ALL:
-                [self.class applyRemoveAllJournalEntry:e toMenu:menu startingAtItem:skip params:params];
+            case JOURNAL_REMOVE_ALL: {
+                NSSet<NSString *> *shortcuts = [self.class applyRemoveAllJournalEntry:e toMenu:menu startingAtItem:skip params:params];
+                for (NSString *shortcut in shortcuts) {
+                    [results removeObjectForKey:shortcut];
+                }
                 break;
+            }
 
             case JOURNAL_SET_DEFAULT:
                 [self.class applySetDefaultJournalEntry:e toMenu:menu startingAtItem:skip params:params];
@@ -353,15 +374,7 @@ static id gAltOpenAllRepresentedObject;
                 assert(false);
         }
     }
-}
-
-+ (void)applyJournal:(NSDictionary *)journal
-              toMenu:(NSMenu *)menu
-              params:(iTermProfileModelJournalParams *)params {
-    [self.class applyJournal:journal
-                      toMenu:menu
-              startingAtItem:0
-                      params:params];
+    return results;
 }
 
 @end

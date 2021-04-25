@@ -202,6 +202,7 @@ static BOOL hasBecomeActive = NO;
     IBOutlet NSMenuItem *_splitHorizontally;
     IBOutlet NSMenuItem *_splitVertically;
     IBOutlet NSMenuItem *_triggers;
+    IBOutlet NSMenuItem *_enterFullScreenMenuItem;
 
     // If set, skip performing launch actions.
     BOOL quiet_;
@@ -575,6 +576,10 @@ static BOOL hasBecomeActive = NO;
         [uploadsMenu_.submenu addItem:[NSMenuItem separatorItem]];
     }
     return [uploadsMenu_ submenu];
+}
+
+- (BOOL)toggleFullScreenHasCmdEnterShortcut {
+    return [[_enterFullScreenMenuItem keyEquivalent] isEqualToString:@"\r"];
 }
 
 #pragma mark - Application Delegate Overrides
@@ -1366,10 +1371,25 @@ static BOOL hasBecomeActive = NO;
     params.alternateOpenAllSelector = @selector(newSessionsInWindow:);
     params.target = [iTermController sharedInstance];
 
+    NSDictionary<NSString *, NSNumber *> *shortcutsChanged =
     [iTermProfilesMenuController applyJournal:[aNotification userInfo]
                                        toMenu:bookmarkMenu
                                startingAtItem:5
                                        params:params];
+    // See issue 6254.
+    NSNumber *fShortcut = shortcutsChanged[@"F"];
+    if (fShortcut) {
+        if (fShortcut.boolValue) {
+            // Added a menu item with cmd-ctrl-F as the shortcut. Change enter full screen to cmd-enter.
+            [_enterFullScreenMenuItem setKeyEquivalent:@"\n"];
+            [_enterFullScreenMenuItem setKeyEquivalentModifierMask:NSEventModifierFlagCommand];
+        } else {
+            // Removed a menu item with cmd-ctrl-F as the shortcut. Change enter full screen to cmd-F.
+            [_enterFullScreenMenuItem setKeyEquivalent:@"f"];
+            [_enterFullScreenMenuItem setKeyEquivalentModifierMask:(NSEventModifierFlagCommand |
+                                                                    NSEventModifierFlagControl)];
+        }
+    }
 }
 
 #pragma mark - Startup Helpers

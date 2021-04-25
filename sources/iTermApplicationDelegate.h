@@ -61,6 +61,7 @@ extern NSString *const iTermApplicationWillTerminate;
 @property(nonatomic, readonly) NSMenu *downloadsMenu;
 @property(nonatomic, readonly) NSMenu *uploadsMenu;
 @property(nonatomic, readonly) iTermScriptsMenuController *scriptsMenuController;
+@property(nonatomic, readonly) BOOL toggleFullScreenHasCmdEnterShortcut;
 
 - (void)updateMaximizePaneMenuItem;
 - (void)updateUseTransparencyMenuItem;

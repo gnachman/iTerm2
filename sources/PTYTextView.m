@@ -605,6 +605,20 @@
                 break;
         }
     }
+
+    // Backward compatibility hack for cmd-enter to toggle full screen now that the menu item normally
+    // uses cmd-ctrl-F.
+    const NSEventModifierFlags mask = (NSEventModifierFlagControl |
+                                       NSEventModifierFlagCommand |
+                                       NSEventModifierFlagShift |
+                                       NSEventModifierFlagOption);
+    if ([theEvent.charactersIgnoringModifiers isEqualToString:@"\r"] &&
+        (theEvent.modifierFlags & mask) == NSEventModifierFlagCommand &&
+        ![[[iTermApplication sharedApplication] delegate] toggleFullScreenHasCmdEnterShortcut]) {
+        DLog(@"Perform backward-compatibility toggle fullscreen for cmd-enter on event %@", theEvent);
+        [self.window toggleFullScreen:nil];
+        return YES;
+    }
     return [super performKeyEquivalent:theEvent];
 }
 

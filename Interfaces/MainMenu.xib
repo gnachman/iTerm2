@@ -695,10 +695,8 @@ DQ
                                     <action selector="toggleFullScreenTabBar:" target="-1" id="1259"/>
                                 </connections>
                             </menuItem>
-                            <menuItem title="Toggle Full Screen" identifier="Toggle Full Screen" id="914">
-                                <string key="keyEquivalent" base64-UTF8="YES">
-DQ
-</string>
+                            <menuItem title="Toggle Full Screen" keyEquivalent="f" identifier="Toggle Full Screen" id="914">
+                                <modifierMask key="keyEquivalentModifierMask" control="YES" command="YES"/>
                                 <connections>
                                     <action selector="toggleFullScreenMode:" target="-1" id="1256"/>
                                 </connections>
@@ -1534,6 +1532,7 @@ DQ
             <connections>
                 <outlet property="_buriedSessions" destination="PTu-aD-qbz" id="Fl9-Gn-jv2"/>
                 <outlet property="_composerMenuItem" destination="Bhs-45-5yR" id="Od6-HK-qOR"/>
+                <outlet property="_enterFullScreenMenuItem" destination="914" id="pbn-Hb-GK3"/>
                 <outlet property="_installPythonRuntime" destination="0D0-tt-wlA" id="nad-Fp-mh8"/>
                 <outlet property="_scriptsMenu" destination="CZD-7u-bch" id="2Q5-aI-74T"/>
                 <outlet property="_showTipOfTheDay" destination="ft3-BP-igZ" id="WZt-qp-iuC"/>
