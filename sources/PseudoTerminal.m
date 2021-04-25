@@ -2380,12 +2380,15 @@ ITERM_WEAKLY_REFERENCEABLE
 - (BOOL)broadcastInputHelper:(iTermBroadcastInputHelper *)helper tabWithSessionIsBroadcasting:(NSString *)sessionID {
     PTYSession *session = [[iTermController sharedInstance] sessionWithGUID:sessionID];
     if (!session) {
+        DLog(@"NO: No session with id %@", sessionID);
         return NO;
     }
     PTYTab *tab = [self tabForSession:session];
     if (!tab) {
+        DLog(@"NO: Session %@ belongs to no tab (wtf)", session);
         return NO;
     }
+    DLog(@"Return %@", @(tab.isBroadcasting));
     return tab.isBroadcasting;
 }
 
@@ -3460,7 +3463,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)windowWillClose:(NSNotification *)aNotification {
-    DLog(@"windowWillClose %@", self);
+   DLog(@"windowWillClose %@", self);
     _closing = YES;
     if (self.isHotKeyWindow && [[self allSessions] count] == 0) {
         // Remove hotkey window restorable state when the last session closes.
@@ -8488,6 +8491,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 }
 
 - (void)setBroadcastMode:(BroadcastMode)mode {
+    DLog(@"setBroadcastMode:%@ self=%@", @(mode), self);
     _broadcastInputHelper.broadcastMode = mode;
 }
 
@@ -11202,6 +11206,7 @@ backgroundColor:(NSColor *)backgroundColor {
 }
 
 - (void)broadcastInputHelperDidUpdate:(iTermBroadcastInputHelper *)helper {
+    DLog(@"broadcastInputHelperDidUpdate");
     for (PTYTab *tab in [self tabs]) {
         for (PTYSession *session in tab.sessions) {
             [session.view setNeedsDisplay:YES];

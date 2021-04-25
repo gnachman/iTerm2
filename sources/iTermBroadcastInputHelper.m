@@ -194,37 +194,51 @@ NSString *const iTermBroadcastDomainsDidChangeNotification = @"iTermBroadcastDom
 }
 
 - (void)setBroadcastMode:(BroadcastMode)mode {
+    DLog(@"setBroadcastMode:%@ delegate=%@", @(mode), self.delegate);
+
     if (mode != BROADCAST_CUSTOM && mode == self.broadcastMode) {
+        DLog(@"Toggle current mode");
         // Toggle current mode.
         if (mode == BROADCAST_TO_ALL_PANES) {
+            DLog(@"Toggle just this tab");
             // Toggle just this tab.
             const BOOL tabBroadcasting = [self.delegate broadcastInputHelperCurrentTabIsBroadcasting:self];
+            DLog(@"tabBroadcasting=%@", @(tabBroadcasting));
             [self.delegate broadcastInputHelper:self setCurrentTabBroadcasting:!tabBroadcasting];
             if (![self.delegate broadcastInputHelperAnyTabIsBroadcasting:self]) {
+                DLog(@"All tabs have it off");
                 // All tabs have it off.
                 mode = BROADCAST_OFF;
             }
         } else {
+            DLog(@"Turn off broadcasting");
             mode = BROADCAST_OFF;
         }
     } else {
         // Mode is changing or being set to custom.
+        DLog(@"Mode is changing or being set to custom");
         if (mode != BROADCAST_OFF && self.broadcastMode == BROADCAST_OFF) {
             // off -> !off
+            DLog(@"off -> !off");
             NSWindow *window = [self.delegate broadcastInputHelperWindowForWarnings:self];
+            DLog(@"Warn…");
             if ([iTermWarning showWarningWithTitle:@"Keyboard input will be sent to multiple sessions."
                                            actions:@[ @"OK", @"Cancel" ]
                                         identifier:@"NoSyncSuppressBroadcastInputWarning"
                                        silenceable:kiTermWarningTypePermanentlySilenceable
                                             window:window] == kiTermWarningSelection1) {
+                DLog(@"User declined");
                 return;
             }
+            DLog(@"user accepted");
         }
         if (mode == BROADCAST_TO_ALL_PANES) {
-            // Enable just this tab.
+            // Enable just this tab
+            DLog(@"Enable just this tab");
             [self.delegate broadcastInputHelper:self setCurrentTabBroadcasting:YES];
         } else {
             // Disable broadcasting to this tab because it's irrelevant for this mode.
+            DLog(@"Disable broadcasting to this tab because it's irrelevant for this mode.");
             [self.delegate broadcastInputHelper:self setCurrentTabBroadcasting:NO];
         }
         _broadcastMode = mode;
@@ -234,15 +248,21 @@ NSString *const iTermBroadcastDomainsDidChangeNotification = @"iTermBroadcastDom
 }
 
 - (BOOL)shouldBroadcastToSessionWithID:(NSString *)sessionID {
+    DLog(@"shouldBroadcastToSessionWithID:%@", sessionID);
     switch (_broadcastMode) {
         case BROADCAST_OFF:
+            DLog(@"BROADCAST_OFF: NO");
             return NO;
         case BROADCAST_TO_ALL_TABS:
+            DLog(@"BROADCAST_TO_ALL_TABS: YES");
             return YES;
         case BROADCAST_TO_ALL_PANES:
+            DLog(@"BROADCAST_TO_ALL_PANES: Maybe…");
             return [self.delegate broadcastInputHelper:self tabWithSessionIsBroadcasting:sessionID];
         case BROADCAST_CUSTOM:
+            DLog(@"BROADCAST_CUSTOM: Maybe…");
             return [_broadcastDomains anyObjectPassingTest:^BOOL(NSSet<NSString *> * _Nonnull domain) {
+                DLog(@"Consider domain %@", domain);
                 return [domain containsObject:sessionID];
             }] != nil;
     }

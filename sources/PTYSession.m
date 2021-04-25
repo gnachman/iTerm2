@@ -2705,6 +2705,7 @@ ITERM_WEAKLY_REFERENCEABLE
     // check if we want to send this input to all the sessions
     if (canBroadcast && [[_delegate realParentWindow] broadcastInputToSession:self]) {
         // Ask the parent window to write to the other tasks.
+        DLog(@"Passing input to window to broadcast it. Won't send in this call.");
         [[_delegate realParentWindow] sendInputToAllSessions:string
                                                     encoding:optionalEncoding
                                                forceEncoding:forceEncoding];
