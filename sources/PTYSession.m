@@ -13501,6 +13501,11 @@ preferredEscaping:(iTermSendTextEscaping)preferredEscaping {
 
 - (void)workingDirectoryPollerDidFindWorkingDirectory:(NSString *)pwd invalidated:(BOOL)invalidated {
     DLog(@"workingDirectoryPollerDidFindWorkingDirectory:%@ invalidated:%@", pwd, @(invalidated));
+    if (invalidated && _lastLocalDirectoryWasPushed && _lastLocalDirectory != nil) {
+        DLog(@"Ignore local directory poller's invalidated result when we have a pushed last local directory. _lastLocalDirectory=%@ _lastLocalDirectoryWasPushed=%@",
+             _lastLocalDirectory, @(_lastLocalDirectoryWasPushed));
+        return;
+    }
     if (invalidated || ![self useLocalDirectoryPollerResult]) {
         DLog(@"Not creating a mark. invalidated=%@", @(invalidated));
         if (self.lastLocalDirectory != nil && self.lastLocalDirectoryWasPushed) {
