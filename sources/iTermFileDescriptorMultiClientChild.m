@@ -71,6 +71,13 @@
             self, @(self.pid), @(self.fd)];
 }
 
+- (void)closeFileDescriptor {
+    [_thread dispatchRecursiveSync:^(id _Nonnull state) {
+        close(_fd);
+        _fd = -1;
+    }];
+}
+
 - (void)willWaitPreemptively {
     [_thread dispatchRecursiveSync:^(id _Nonnull state) {
         assert(!_haveSentPreemptiveWait);

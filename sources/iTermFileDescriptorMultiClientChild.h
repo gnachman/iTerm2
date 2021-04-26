@@ -43,6 +43,8 @@ NS_ASSUME_NONNULL_BEGIN
 // Must be called on child's thread.
 - (void)didTerminate;
 
+- (void)closeFileDescriptor;
+
 @end
 
 NS_ASSUME_NONNULL_END
