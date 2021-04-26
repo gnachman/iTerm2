@@ -240,7 +240,7 @@ typedef struct {
             result = NO;
             return;
         }
-        close(state.child.fd);
+        [state.child closeFileDescriptor];
         state.child = nil;
         result = YES;
     }];
