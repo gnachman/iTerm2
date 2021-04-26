@@ -744,7 +744,7 @@ andEditComponentWithIdentifier:(NSString *)identifier
 }
 #endif
 
-- (NSArray *)orderedToolbarIdentifiers {
+- (NSArray *)orderedToolbarIdentifiersWithExcludesSearch:(BOOL)excludesSearch {
     if (!_globalToolbarItem) {
         return @[];
     }
@@ -759,7 +759,11 @@ andEditComponentWithIdentifier:(NSString *)identifier
                          [_mouseToolbarItem itemIdentifier],
                          [_shortcutsToolbarItem itemIdentifier],
                          [_advancedToolbarItem itemIdentifier],
-                         _searchFieldToolbarItem.itemIdentifier];
+                         NSToolbarFlexibleSpaceItemIdentifier,
+                         [_searchFieldToolbarItem itemIdentifier] ];
+    if (excludesSearch) {
+        result = [result subarrayWithRange:NSMakeRange(0, [result count] - 2)];
+    }
     return result;
 }
 
@@ -810,15 +814,15 @@ andEditComponentWithIdentifier:(NSString *)identifier
 }
 
 - (NSArray *)toolbarAllowedItemIdentifiers:(NSToolbar *)toolbar {
-    return [self orderedToolbarIdentifiers];
+    return [self orderedToolbarIdentifiersWithExcludesSearch:NO];
 }
 
 - (NSArray *)toolbarDefaultItemIdentifiers:(NSToolbar *)toolbar {
-    return [self orderedToolbarIdentifiers];
+    return [self orderedToolbarIdentifiersWithExcludesSearch:NO];
 }
 
 - (NSArray *)toolbarSelectableItemIdentifiers:(NSToolbar *)toolbar {
-    return [self orderedToolbarIdentifiers];
+    return [self orderedToolbarIdentifiersWithExcludesSearch:YES];
 }
 
 #pragma mark - Hotkey Window
