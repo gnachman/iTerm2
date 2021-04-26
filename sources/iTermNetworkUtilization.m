@@ -48,6 +48,9 @@ typedef struct {
     NSTimer *_timer;
     iTermPublisher<iTermNetworkUtilizationSample *> *_publisher;
     iTermNetworkUtilizationStats _last;
+    // Used to detect network interface change
+    NSUInteger lastInterfaceCount;
+    BOOL interfaceHasChanged;
 }
 
 + (instancetype)sharedInstance {
@@ -91,13 +94,24 @@ typedef struct {
 - (void)update {
     iTermNetworkUtilizationStats last = _last;
     iTermNetworkUtilizationStats current = [self currentStats];
-    NSTimeInterval t = _publisher.timeIntervalSinceLastUpdate;
-    iTermNetworkUtilizationStats diff = {
-        .upbytes = (current.upbytes - last.upbytes) / t,
-        .downbytes = (current.downbytes - last.downbytes) / t
-    };
+    if (!interfaceHasChanged) {
+        NSTimeInterval t = _publisher.timeIntervalSinceLastUpdate;
+        iTermNetworkUtilizationStats diff = {
+            .upbytes = (current.upbytes - last.upbytes) / t,
+            .downbytes = (current.downbytes - last.downbytes) / t
+        };
+        [_publisher publish:[[iTermNetworkUtilizationSample alloc] initWithStats:diff]];
+    } else {
+        interfaceHasChanged = false;
+        iTermNetworkUtilizationSample *last = _publisher.historicalValues.lastObject;
+        if (last != nil) {
+            [_publisher publish:last];
+        } else {
+            iTermNetworkUtilizationStats zeroState = { 0, 0 };
+            [_publisher publish:[[iTermNetworkUtilizationSample alloc] initWithStats:zeroState]];
+        }
+    }
     _last = current;
-    [_publisher publish:[[iTermNetworkUtilizationSample alloc] initWithStats:diff]];
 }
 
 - (iTermNetworkUtilizationStats)currentStats {
@@ -121,6 +135,7 @@ typedef struct {
     if (sysctl(mib, 6, buf, &len, NULL, 0) < 0) {
         return result;
     }
+    NSUInteger interfaceCount = 0;
     char *lim = buf + len;
     char *next = NULL;
     for (next = buf; next < lim; ) {
@@ -130,7 +145,12 @@ typedef struct {
             struct if_msghdr2 *header = (struct if_msghdr2 *)interface;
             result.downbytes += header->ifm_data.ifi_ibytes;
             result.upbytes += header->ifm_data.ifi_obytes;
+            interfaceCount++;
         }
+    }
+    if (interfaceCount != lastInterfaceCount) {
+        lastInterfaceCount = interfaceCount;
+        interfaceHasChanged = true;
     }
     return result;
 }
