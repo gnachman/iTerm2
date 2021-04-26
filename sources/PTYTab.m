@@ -2900,14 +2900,14 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     if ([arrangement[TAB_ARRANGEMENT_VIEW_TYPE] isEqualToString:VIEW_TYPE_SPLITTER]) {
         DLog(@"_recursiveOpenPartialAttachments: found splitter");
         NSArray<NSDictionary<NSString *, id> *> *subArrangements = [arrangement objectForKey:SUBVIEWS];
-        NSMutableDictionary *result = [[NSMutableDictionary alloc] init];
+        __block NSDictionary *result = [[NSDictionary alloc] init];
         dispatch_group_t group = dispatch_group_create();
         for (NSDictionary *subArrangement in subArrangements) {
             dispatch_group_enter(group);
             DLog(@"_recursiveOpenPartialAttachments: recurse");
             [self _recursiveOpenPartialAttachments:subArrangement completion:^(NSDictionary *dict) {
                 DLog(@"_recursiveOpenPartialAttachments: got a result from a subview");
-                [result it_mergeFrom:[dict copy]];
+                result = [result dictionaryByMergingDictionary:[dict copy]];
                 dispatch_group_leave(group);
             }];
         }
