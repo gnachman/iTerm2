@@ -125,6 +125,7 @@ typedef struct {
 typedef struct {
     int flags;  // See iTermTextVertexInfoFlags defines
     float glyphWidth;
+    unsigned int numInstances;
 } iTermVertexTextInfoStruct;
 
 #endif

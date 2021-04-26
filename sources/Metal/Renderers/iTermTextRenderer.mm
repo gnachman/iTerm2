@@ -394,13 +394,15 @@ static NSString *const VertexFunctionName(const BOOL &underlined,
                                                      label:@"Draw more text"];
 }
 
-- (id<MTLBuffer>)textInfoBufferForTransientState:(iTermTextRendererTransientState *)tState {
+- (id<MTLBuffer>)textInfoBufferForTransientState:(iTermTextRendererTransientState *)tState
+                                    numInstances:(unsigned int)numInstances {
     iTermVertexTextInfoStruct textInfo;
     memset(&textInfo, 0, sizeof(textInfo));
     if ([iTermAdvancedSettingsModel solidUnderlines]) {
         textInfo.flags |= iTermTextVertexInfoFlagsSolidUnderlines;
     }
     textInfo.glyphWidth = tState.cellConfiguration.glyphSize.width;
+    textInfo.numInstances = numInstances;
     id<MTLBuffer> buffer = [self->_textInfoPool requestBufferFromContext:tState.poolContext
                                                                withBytes:&textInfo
                                                           checkIfChanged:YES];
@@ -442,7 +444,8 @@ static NSString *const VertexFunctionName(const BOOL &underlined,
 
         __block id<MTLBuffer> textInfoBuffer;
         [tState measureTimeForStat:iTermTextRendererStatNewTextInfo ofBlock:^{
-            textInfoBuffer = [self textInfoBufferForTransientState:tState];
+            textInfoBuffer = [self textInfoBufferForTransientState:tState
+                                                      numInstances:instances];
         }];
         __block id<MTLBuffer> piuBuffer;
         [tState measureTimeForStat:iTermTextRendererStatNewPIU ofBlock:^{

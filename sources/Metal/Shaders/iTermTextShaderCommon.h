@@ -26,6 +26,7 @@ typedef struct {
     float4 alphaVector;
     int flags;  // copied from iTermVertexTextInfoStruct.flags
     bool predecessorWasUnderlined;
+    bool successorWillBeUnderlined;
 } iTermTextVertexFunctionOutput;
 
 typedef struct {
@@ -66,7 +67,8 @@ float ComputeWeightOfUnderlineInverted(int underlineStyle,  // iTermMetalGlyphAt
                                        sampler textureSampler,
                                        float scale,
                                        bool solid,
-                                       bool predecessorWasUnderlined);
+                                       bool predecessorWasUnderlined,
+                                       bool successorWillBeUnderlined);
 
 // Returns the weight in [0, 1] of underline for a pixel at `clipSpacePosition`
 // when drawing underlined emoji or monochrome text in 10.14+ where it's light-on-dark.
@@ -86,7 +88,8 @@ float ComputeWeightOfUnderlineRegular(int underlineStyle,  // iTermMetalGlyphAtt
                                       sampler textureSampler,
                                       float scale,
                                       bool solid,
-                                      bool predecessorWasUnderlined);
+                                      bool predecessorWasUnderlined,
+                                      bool successorWillBeUnderlined);
 
 // For a discussion of this code, see this document:
 // https://docs.google.com/document/d/1vfBq6vg409Zky-IQ7ne-Yy7olPtVCl0dq3PG20E8KDs

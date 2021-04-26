@@ -220,7 +220,8 @@ float ComputeWeightOfUnderlineInverted(int underlineStyle,  // iTermMetalGlyphAt
                                        sampler textureSampler,
                                        float scale,
                                        bool solid,
-                                       bool predecessorWasUnderlined) {
+                                       bool predecessorWasUnderlined,
+                                       bool successorWillBeUnderlined) {
     float thickness;
     float offset;
     switch (underlineStyle) {
@@ -249,6 +250,9 @@ float ComputeWeightOfUnderlineInverted(int underlineStyle,  // iTermMetalGlyphAt
     }
     const float margin = predecessorWasUnderlined ? 0 : underlineOffset.x;
     if (clipSpacePosition.x < cellOffset.x + margin) {
+        return 0;
+    }
+    if (!successorWillBeUnderlined && clipSpacePosition.x >= cellOffset.x + cellSize.x) {
         return 0;
     }
     if (clipSpacePosition.x >= cellOffset.x + glyphSize.x) {
@@ -291,7 +295,8 @@ float ComputeWeightOfUnderlineRegular(int underlineStyle,  // iTermMetalGlyphAtt
                                       sampler textureSampler,
                                       float scale,
                                       bool solid,
-                                      bool predecessorWasUnderlined) {
+                                      bool predecessorWasUnderlined,
+                                      bool successorWillBeUnderlined) {
     float offset;
     float thickness;
 
@@ -322,6 +327,9 @@ float ComputeWeightOfUnderlineRegular(int underlineStyle,  // iTermMetalGlyphAtt
     }
     const float margin = predecessorWasUnderlined ? 0 : regularOffset.x;
     if (clipSpacePosition.x < cellOffset.x + margin) {
+        return 0;
+    }
+    if (!successorWillBeUnderlined && clipSpacePosition.x >= cellOffset.x + cellSize.x) {
         return 0;
     }
     if (clipSpacePosition.x >= cellOffset.x + glyphSize.x) {
