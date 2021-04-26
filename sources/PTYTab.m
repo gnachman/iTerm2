@@ -2907,7 +2907,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
             DLog(@"_recursiveOpenPartialAttachments: recurse");
             [self _recursiveOpenPartialAttachments:subArrangement completion:^(NSDictionary *dict) {
                 DLog(@"_recursiveOpenPartialAttachments: got a result from a subview");
-                [result it_mergeFrom:dict];
+                [result it_mergeFrom:[dict copy]];
                 dispatch_group_leave(group);
             }];
         }
