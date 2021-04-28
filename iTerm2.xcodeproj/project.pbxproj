@@ -3473,6 +3473,7 @@
 		A6CC16551CF012E300E8C148 /* iTermCarbonHotKeyController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6CC16531CF012E300E8C148 /* iTermCarbonHotKeyController.m */; };
 		A6CD8A432234DB83007C5B39 /* iTermStatusBarPlaceholderComponent.h in Headers */ = {isa = PBXBuildFile; fileRef = A6CD8A412234DB83007C5B39 /* iTermStatusBarPlaceholderComponent.h */; };
 		A6CD8A442234DB83007C5B39 /* iTermStatusBarPlaceholderComponent.m in Sources */ = {isa = PBXBuildFile; fileRef = A6CD8A422234DB83007C5B39 /* iTermStatusBarPlaceholderComponent.m */; };
+		A6CDC31826391D1200616155 /* PIDInfoGitState.m in Sources */ = {isa = PBXBuildFile; fileRef = A6CDC31726391D1200616155 /* PIDInfoGitState.m */; };
 		A6CEBFBB1DCE7E09009F4FD2 /* Api.pbobjc.h in Headers */ = {isa = PBXBuildFile; fileRef = A6CEBF7D1DCE7DFF009F4FD2 /* Api.pbobjc.h */; };
 		A6CEBFBC1DCE7E09009F4FD2 /* Api.pbobjc.m in Sources */ = {isa = PBXBuildFile; fileRef = A6CEBF7E1DCE7DFF009F4FD2 /* Api.pbobjc.m */; };
 		A6CEC0701DCE80C9009F4FD2 /* Any.pbobjc.h in Headers */ = {isa = PBXBuildFile; fileRef = A6CEC0481DCE80C1009F4FD2 /* Any.pbobjc.h */; };
@@ -6441,6 +6442,8 @@
 		A6CD8A4022345427007C5B39 /* iTermNotificationCenter+Protected.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "iTermNotificationCenter+Protected.h"; sourceTree = "<group>"; };
 		A6CD8A412234DB83007C5B39 /* iTermStatusBarPlaceholderComponent.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermStatusBarPlaceholderComponent.h; sourceTree = "<group>"; };
 		A6CD8A422234DB83007C5B39 /* iTermStatusBarPlaceholderComponent.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermStatusBarPlaceholderComponent.m; sourceTree = "<group>"; };
+		A6CDC31626391D1200616155 /* PIDInfoGitState.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = PIDInfoGitState.h; sourceTree = "<group>"; };
+		A6CDC31726391D1200616155 /* PIDInfoGitState.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = PIDInfoGitState.m; sourceTree = "<group>"; };
 		A6CEBF7D1DCE7DFF009F4FD2 /* Api.pbobjc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Api.pbobjc.h; path = proto/Api.pbobjc.h; sourceTree = "<group>"; };
 		A6CEBF7E1DCE7DFF009F4FD2 /* Api.pbobjc.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = Api.pbobjc.m; path = proto/Api.pbobjc.m; sourceTree = "<group>"; };
 		A6CEC0481DCE80C1009F4FD2 /* Any.pbobjc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Any.pbobjc.h; path = ThirdParty/google/protobuf/Any.pbobjc.h; sourceTree = SOURCE_ROOT; };
@@ -9264,6 +9267,8 @@
 				A6866B6F23CAA10A00ACD94C /* Info.plist */,
 				A687B66825AD6FF600E0A658 /* iTermGitClient.h */,
 				A687B66925AD6FF600E0A658 /* iTermGitClient.m */,
+				A6CDC31626391D1200616155 /* PIDInfoGitState.h */,
+				A6CDC31726391D1200616155 /* PIDInfoGitState.m */,
 			);
 			path = pidinfo;
 			sourceTree = "<group>";
@@ -14641,6 +14646,7 @@
 			files = (
 				A6FD5F9D25AC2B9A00006234 /* iTermGitState.m in Sources */,
 				A6866B6E23CAA10A00ACD94C /* main.m in Sources */,
+				A6CDC31826391D1200616155 /* PIDInfoGitState.m in Sources */,
 				A687B66A25AD6FF600E0A658 /* iTermGitClient.m in Sources */,
 				A6866B6C23CAA10A00ACD94C /* pidinfo.m in Sources */,
 				A6EC936824E64FAA00EEADEF /* iTermFileDescriptorServerShared.c in Sources */,

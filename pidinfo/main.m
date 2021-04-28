@@ -6,7 +6,9 @@
 //
 
 #import <Foundation/Foundation.h>
+#import "PIDInfoGitState.h"
 #import "pidinfo.h"
+#include <stdlib.h>
 
 @interface ServiceDelegate : NSObject <NSXPCListenerDelegate>
 @end
@@ -35,6 +37,13 @@
 
 int main(int argc, const char *argv[])
 {
+    // pidinfo --git-state /path/to/repo <timeout>
+    if (argc == 4 && !strcmp(argv[1], "--git-state")) {
+        @autoreleasepool {
+            PIDInfoGetGitState(argv[2], atoi(argv[3]));
+        }
+        return 0;
+    }
     // Create the delegate for the service.
     ServiceDelegate *delegate = [ServiceDelegate new];
     

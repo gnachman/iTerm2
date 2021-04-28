@@ -8,6 +8,7 @@
 #import "iTermSlowOperationGateway.h"
 
 #import "DebugLogging.h"
+#import "iTermAdvancedSettingsModel.h"
 #import "ITAddressBookMgr.h"
 #import "iTermOpenDirectory.h"
 #import "NSStringITerm.h"
@@ -228,6 +229,7 @@ typedef void (^iTermRecentBranchFetchCallback)(NSArray<NSString *> *);
         [_gitStateHandlers addObject:box];
     }
     [[_connectionToService remoteObjectProxy] requestGitStateForPath:path
+                                                             timeout:[iTermAdvancedSettingsModel gitTimeout]
                                                           completion:^(iTermGitState * _Nullable state) {
         [self didGetGitState:state completion:box];
     }];

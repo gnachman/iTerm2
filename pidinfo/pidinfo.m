@@ -10,6 +10,7 @@
 #import "iTermFileDescriptorServerShared.h"
 #import "iTermGitClient.h"
 #include <libproc.h>
+#include <mach-o/dyld.h>
 #include <stdatomic.h>
 #include <stdlib.h>
 #include <syslog.h>
@@ -463,7 +464,24 @@ static double TimespecToSeconds(struct timespec* ts) {
     }
 }
 
+static const char *GetPathToSelf(void) {
+    // First ask how much memory we need to store the path.
+    uint32_t size = 0;
+    char placeholder[1];
+    _NSGetExecutablePath(placeholder, &size);
+
+    // Allocate memory and get the path and return it. Plus an extra byte because I live in fear.
+    char *pathToExecutable = malloc(size + 1);
+    if (_NSGetExecutablePath(pathToExecutable, &size) != 0) {
+        free(pathToExecutable);
+        return nil;
+    }
+
+    return pathToExecutable;
+}
+
 - (void)requestGitStateForPath:(NSString *)path
+                       timeout:(int)timeout
                     completion:(void (^)(iTermGitState * _Nullable))reply {
     [self performRiskyBlock:^(BOOL shouldPerform, BOOL (^ _Nullable completion)(void)) {
         if (!shouldPerform) {
@@ -471,14 +489,82 @@ static double TimespecToSeconds(struct timespec* ts) {
             syslog(LOG_WARNING, "pidinfo wedged");
             return;
         }
-        [self setPriority:20];
-        // NSLog(@"Request state for %@", path);
-        // const NSTimeInterval start = [NSDate timeIntervalSinceReferenceDate];
-        iTermGitState *state = [iTermGitState gitStateForRepoAtPath:path];
-        // const NSTimeInterval end = [NSDate timeIntervalSinceReferenceDate];
-        // NSLog(@"It took %f sec to request state for %@", end-start, path);
-        reply(state);
-        completion();
+
+        int pipeFDs[2];
+        const int pipeRC = pipe(pipeFDs);
+        if (pipeRC == -1) {
+            reply(nil);
+            completion();
+            return;
+        }
+
+        const char *exe = GetPathToSelf();
+        const char *pathCString = strdup(path.UTF8String);
+        char *timeoutStr = NULL;
+        asprintf(&timeoutStr, "%d", timeout);
+        const int childPID = fork();
+        switch (childPID) {
+            case 0: {
+                // Child
+                // Make the write end of the pipe be file descriptor 0.
+                if (pipeFDs[1] != 0) {
+                  close(0);
+                  dup2(pipeFDs[1], 0);
+                }
+                // Close all file descriptors except 0.
+                const int dtableSize = getdtablesize();
+                for (int j = 1; j < dtableSize; j++) {
+                    close(j);
+                }
+                // exec because this is a multi-threaded program, and multi-threaded programs have
+                // to exec() after fork() if they want to do anything useful.
+                execl(exe, exe, "--git-state", pathCString, timeoutStr, 0);
+                _exit(0);
+            }
+            case -1:
+                // Failed to fork
+                free((void *)timeoutStr);
+                free((void *)exe);
+                free((void *)pathCString);
+                close(pipeFDs[0]);
+                close(pipeFDs[1]);
+                reply(nil);
+                completion();
+                break;
+            default: {
+                // Parent
+                free((void *)timeoutStr);
+                free((void *)exe);
+                free((void *)pathCString);
+                close(pipeFDs[1]);
+                NSFileHandle *fileHandle = [[NSFileHandle alloc] initWithFileDescriptor:pipeFDs[0] closeOnDealloc:YES];
+                int stat_loc = 0;
+                int waitRC;
+                do {
+                    waitRC = waitpid(childPID, &stat_loc, 0);
+                } while (waitRC == -1 && errno == EINTR);
+                if (WIFSIGNALED(stat_loc)) {
+                    // If it timed out don't even try to read because it could be incomplete.
+                    reply(nil);
+                    completion();
+                    break;
+                }
+                NSData *data = [fileHandle readDataToEndOfFile];
+                NSError *error = nil;
+                NSKeyedUnarchiver *decoder = [[NSKeyedUnarchiver alloc] initForReadingFromData:data error:&error];
+                if (!decoder) {
+                    reply(nil);
+                    completion();
+                    break;
+                }
+                
+                iTermGitState *state = [decoder decodeTopLevelObjectOfClass:[iTermGitState class]
+                                                                     forKey:@"state"
+                                                                      error:nil];
+                reply(state);
+                completion();
+            }
+        }
     }];
 }
 
