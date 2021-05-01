@@ -735,10 +735,11 @@ static unsigned long long MakeUniqueID(void) {
         static iTermRateLimitedUpdate *rateLimit;
         static dispatch_once_t onceToken;
         dispatch_once(&onceToken, ^{
-            rateLimit = [[iTermRateLimitedUpdate alloc] init];
-            rateLimit.minimumInterval = 2;
+            rateLimit = [[iTermRateLimitedUpdate alloc] initWithName:@"Multi client error"
+                                                     minimumInterval:2];
         });
         [rateLimit performRateLimitedBlock:^{
+            DLog(@"Called");
             NSAlert *alert = [[NSAlert alloc] init];
             alert.messageText = @"Problem Starting iTerm2 Daemon";
             alert.informativeText = message;

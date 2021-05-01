@@ -71,10 +71,11 @@ static NSMutableArray<iTermBackgroundCommandRunner *> *activeRunners;
     static iTermRateLimitedUpdate *rateLimit;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        rateLimit = [[iTermRateLimitedUpdate alloc] init];
-        rateLimit.minimumInterval = 10;
+        rateLimit = [[iTermRateLimitedUpdate alloc] initWithName:@"Background command runner"
+                                                 minimumInterval:10];
     });
     [rateLimit performRateLimitedBlock:^{
+        DLog(@"Called");
         block(rateLimit.deferCount);
     }];
 }

@@ -197,14 +197,15 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
 
 - (void)performPeriodicUpgradeCheck {
     if (!_checkForUpdateRateLimit) {
-        _checkForUpdateRateLimit = [[iTermPersistentRateLimitedUpdate alloc] initWithName:@"CheckForUpdatedPythonRuntime"];
         const NSTimeInterval day = 24 * 60 * 60;
-        _checkForUpdateRateLimit.minimumInterval = 2 * day;
+        _checkForUpdateRateLimit = [[iTermPersistentRateLimitedUpdate alloc] initWithName:@"CheckForUpdatedPythonRuntime"
+                                                                          minimumInterval:2 * day];
     }
     if (![[NSFileManager defaultManager] homeDirectoryDotDir]) {
         return;
     }
     [_checkForUpdateRateLimit performRateLimitedBlock:^{
+        DLog(@"Called");
         [self upgradeIfPossible];
     }];
 }

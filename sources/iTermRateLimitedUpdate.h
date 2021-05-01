@@ -13,6 +13,11 @@
 @property (nonatomic) NSTimeInterval minimumInterval;
 @property (nonatomic) BOOL debug;
 @property (nonatomic, readonly) NSTimeInterval deferCount;
+@property (nonatomic, readonly, copy) NSString *name;
+
+- (instancetype)initWithName:(NSString *)name
+                minimumInterval:(NSTimeInterval)minimumInterval NS_DESIGNATED_INITIALIZER;
+- (instancetype)init NS_UNAVAILABLE;
 
 // Do not perform a pending action.
 - (void)invalidate;
@@ -36,10 +41,6 @@
 
 // Remembers the delay across restarts. Useful for things like checking for updates every N days.
 @interface iTermPersistentRateLimitedUpdate : iTermRateLimitedUpdate
-
-- (instancetype)init NS_UNAVAILABLE;
-- (instancetype)initWithName:(NSString *)name NS_DESIGNATED_INITIALIZER;
-
 @end
 
 // Only updates after a period of idleness equal to the minimumInterval

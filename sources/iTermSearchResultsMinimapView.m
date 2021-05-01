@@ -52,8 +52,8 @@ static NSString *const iTermBaseMinimapViewInvalidateNotification = @"iTermBaseM
     static iTermRateLimitedUpdate *rateLimit;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        rateLimit = [[iTermRateLimitedUpdate alloc] init];
-        rateLimit.minimumInterval = 0.25;
+        rateLimit = [[iTermRateLimitedUpdate alloc] initWithName:@"Minimap update"
+                                                 minimumInterval:0.25];
     });
     return rateLimit;
 }

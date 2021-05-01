@@ -27,8 +27,8 @@ typedef void (^iTermWorkingDirectoryPollerClosure)(NSString * _Nullable);
     self = [super init];
     if (self) {
         _completions = [NSMutableArray array];
-        _pwdPollRateLimit = [[iTermRateLimitedUpdate alloc] init];
-        _pwdPollRateLimit.minimumInterval = 1;
+        _pwdPollRateLimit = [[iTermRateLimitedUpdate alloc] initWithName:@"Working directory poller"
+                                                         minimumInterval:1];
     }
     return self;
 }

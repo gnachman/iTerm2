@@ -48,8 +48,8 @@
     if (self) {
         _lockQueue = dispatch_queue_create("com.iterm2.process-cache-lock", DISPATCH_QUEUE_SERIAL);
         _workQueue = dispatch_queue_create("com.iterm2.process-cache-work", DISPATCH_QUEUE_SERIAL);
-        _rateLimit = [[iTermRateLimitedUpdate alloc] init];
-        _rateLimit.minimumInterval = 0.5;
+        _rateLimit = [[iTermRateLimitedUpdate alloc] initWithName:@"Process cache"
+                                                  minimumInterval:0.5];
         _trackedPidsLQ = [NSMutableDictionary dictionary];
         _dirtyPIDsLQ = [NSMutableIndexSet indexSet];
         [self setNeedsUpdate:YES];

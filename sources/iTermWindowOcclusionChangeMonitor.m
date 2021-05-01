@@ -29,8 +29,8 @@ NSString *const iTermWindowOcclusionDidChange = @"iTermWindowOcclusionDidChange"
 - (instancetype)init {
     self = [super init];
     if (self) {
-        _rateLimit = [[iTermRateLimitedUpdate alloc] init];
-        _rateLimit.minimumInterval = 1.0;
+        _rateLimit = [[iTermRateLimitedUpdate alloc] initWithName:@"Window occlusion change monitor"
+                                                  minimumInterval:1];
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(invalidateCachedOcclusion:)
                                                      name:NSWindowDidMoveNotification
@@ -79,6 +79,7 @@ NSString *const iTermWindowOcclusionDidChange = @"iTermWindowOcclusionDidChange"
 - (void)invalidateCachedOcclusion {
     _timeOfLastOcclusionChange = [NSDate timeIntervalSinceReferenceDate];
     [_rateLimit performRateLimitedBlock:^{
+        DLog(@"Called");
         [[NSNotificationCenter defaultCenter] postNotificationName:iTermWindowOcclusionDidChange object:nil];
     }];
 }

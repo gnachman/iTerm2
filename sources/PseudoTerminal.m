@@ -10934,10 +10934,11 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     [_previousTouchBarWord release];
     _previousTouchBarWord = [word copy];
     if (_touchBarRateLimitedUpdate == nil) {
-        _touchBarRateLimitedUpdate = [[iTermRateLimitedIdleUpdate alloc] init];
-        _touchBarRateLimitedUpdate.minimumInterval = 0.5;
+        _touchBarRateLimitedUpdate = [[iTermRateLimitedIdleUpdate alloc] initWithName:@"Touch bar update word"
+                                                                      minimumInterval:0.5];
     }
     [_touchBarRateLimitedUpdate performRateLimitedBlock:^{
+        DLog(@"Called");
         [self updateTouchBarWithWordAtCursor:word];
     }];
 }

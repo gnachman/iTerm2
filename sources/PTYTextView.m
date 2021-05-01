@@ -1381,11 +1381,12 @@
             if (self.transparencyAlpha < 1) {
                 if ([self.window conformsToProtocol:@protocol(PTYWindow)]) {
                     if (_shadowRateLimit == nil) {
-                        _shadowRateLimit = [[iTermRateLimitedUpdate alloc] init];
-                        _shadowRateLimit.minimumInterval = 1.0 / invalidateFPS;
+                        _shadowRateLimit = [[iTermRateLimitedUpdate alloc] initWithName:@"Shadow"
+                                                                        minimumInterval:1.0 / invalidateFPS];
                     }
                     id<PTYWindow> ptyWindow = (id<PTYWindow>)self.window;
                     [_shadowRateLimit performRateLimitedBlock:^{
+                        DLog(@"Called");
                         [ptyWindow it_setNeedsInvalidateShadow];
                     }];
                 }

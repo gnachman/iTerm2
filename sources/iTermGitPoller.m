@@ -25,8 +25,8 @@ NS_ASSUME_NONNULL_BEGIN
 - (instancetype)initWithCadence:(NSTimeInterval)cadence update:(void (^)(void))update {
     self = [super init];
     if (self) {
-        _rateLimit = [[iTermRateLimitedUpdate alloc] init];
-        _rateLimit.minimumInterval = 0.5;
+        _rateLimit = [[iTermRateLimitedUpdate alloc] initWithName:@"Git poller"
+                                                  minimumInterval:0.5];
         _cadence = cadence;
         _update = [update copy];
         [self startTimer];
@@ -123,6 +123,7 @@ NS_ASSUME_NONNULL_BEGIN
     if (currentDirectory) {
         DLog(@"%@: Attempt to invalidate cache", self);
         [_rateLimit performRateLimitedBlock:^{
+            DLog(@"Called");
             DLog(@"%@: Invalidate cache", self);
             iTermGitPollWorker *worker = [iTermGitPollWorker sharedInstance];
             DLog(@"%@: Worker for %@ is %@", self, currentDirectory, worker);

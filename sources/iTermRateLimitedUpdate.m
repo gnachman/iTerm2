@@ -7,12 +7,24 @@
 //
 
 #import "iTermRateLimitedUpdate.h"
+
+#import "DebugLogging.h"
 #import "NSTimer+iTerm.h"
 
 @implementation iTermRateLimitedUpdate {
     // While nonnil, block will not be performed.
     NSTimer *_timer;
     void (^_block)(void);
+}
+
+- (instancetype)initWithName:(NSString *)name minimumInterval:(NSTimeInterval)minimumInterval {
+    ITAssertWithMessage(minimumInterval > 0.01, @"Minimum interval too small");
+    self = [super init];
+    if (self) {
+        _name = [name copy];
+        [self setMinimumInterval:minimumInterval];
+    }
+    return self;
 }
 
 - (void)invalidate {
@@ -50,10 +62,12 @@
 }
 
 - (void)scheduleTimer {
+    ITAssertWithMessage(self.minimumInterval > 0.01, @"Minimum interval is %@ for %@", @(self.minimumInterval), self.name);
     [self scheduleTimerAfterDelay:self.minimumInterval];
 }
 
 - (void)scheduleTimerAfterDelay:(NSTimeInterval)delay {
+    DLog(@"Schedule timer after delay %@", @(delay));
     if (self.debug) {
         NSLog(@"Schedule timer after delay %@", @(delay));
     }
@@ -66,6 +80,7 @@
 }
 
 - (void)setMinimumInterval:(NSTimeInterval)minimumInterval {
+    DLog(@"%@ setMinimumInterval:%@\n%@", self.name, @(minimumInterval), [NSThread callStackSymbols]);
     if (minimumInterval < _minimumInterval && _timer) {
         if (self.debug) {
             NSLog(@"Invalidate timer");
@@ -79,6 +94,7 @@
 }
 
 - (void)performRateLimitedBlock:(void (^)(void))block {
+    DLog(@"%@", [NSThread callStackSymbols]);
     if (_timer == nil) {
         if (self.debug) {
             NSLog(@"RLU perform immediately");
@@ -100,6 +116,7 @@
                         withObject:(id)object {
     __weak id weakTarget = target;
     [self performRateLimitedBlock:^{
+        DLog(@"Called with target=%@ selector=%@", weakTarget, NSStringFromSelector(selector));
         id strongTarget = weakTarget;
         if (strongTarget) {
             void (*func)(id, SEL, NSTimer *) = (void *)[weakTarget methodForSelector:selector];
@@ -109,11 +126,13 @@
 }
 
 - (void)performBlockIfNeeded:(NSTimer *)timer {
+    DLog(@"RLU timer fired");
     if (self.debug) {
         NSLog(@"RLU timer fired");
     }
     _timer = nil;
     if (_block != nil) {
+        DLog(@"RLU timer handler: have a block");
         if (self.debug) {
             NSLog(@"RLU timer handler: have a block");
         }
@@ -123,6 +142,7 @@
         _deferCount = 0;
         [self scheduleTimer];
     } else {
+        DLog(@"RLU timer fired - NO BLOCK");
         if (self.debug) {
             NSLog(@"RLU timer fired - NO BLOCK");
         }
@@ -158,8 +178,8 @@ static NSString *const iTermPersistentRateLimitedUpdateUserDefaultsKey = @"NoSyn
     [[NSUserDefaults standardUserDefaults] setObject:dict forKey:iTermPersistentRateLimitedUpdateUserDefaultsKey];
 }
 
-- (instancetype)initWithName:(NSString *)name {
-    self = [super init];
+- (instancetype)initWithName:(NSString *)name minimumInterval:(NSTimeInterval)minimumInterval {
+    self = [super initWithName:name minimumInterval:minimumInterval];
     if (self) {
         _name = name;
         NSTimeInterval nextTime = [self.class nextDateForName:name];
@@ -170,6 +190,7 @@ static NSString *const iTermPersistentRateLimitedUpdateUserDefaultsKey = @"NoSyn
                 [self scheduleTimerAfterDelay:nextTime - now];
             }
         }
+        [self setMinimumInterval:minimumInterval];
     }
     return self;
 }
