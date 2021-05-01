@@ -130,6 +130,7 @@
 #import "NSHost+iTerm.h"
 #import "NSImage+iTerm.h"
 #import "NSPasteboard+iTerm.h"
+#import "NSScreen+iTerm.h"
 #import "NSStringITerm.h"
 #import "NSThread+iTerm.h"
 #import "NSURL+iTerm.h"
@@ -307,6 +308,10 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
 static const NSUInteger kMaxDirectories = 100;
 static const NSUInteger kMaxCommands = 100;
 static const NSUInteger kMaxHosts = 100;
+
+@interface NSWindow (SessionPrivate)
+- (void)_moveToScreen:(NSScreen *)sender;
+@end
 
 @interface PTYSession () <
     iTermAutomaticProfileSwitcherDelegate,
@@ -3484,6 +3489,17 @@ ITERM_WEAKLY_REFERENCEABLE
 
 + (BOOL)_recursiveSelectMenuItemWithTitle:(NSString*)title identifier:(NSString *)identifier inMenu:(NSMenu*)menu {
     [menu update];
+
+    if (menu == [NSApp windowsMenu] &&
+        [[NSApp keyWindow] respondsToSelector:@selector(_moveToScreen:)] &&
+        [NSScreen it_stringLooksLikeUniqueKey:identifier]) {
+        NSScreen *screen = [NSScreen it_screenWithUniqueKey:identifier];
+        if (screen) {
+            [NSApp sendAction:@selector(_moveToScreen:) to:nil from:screen];
+            return YES;
+        }
+    }
+
     for (NSMenuItem* item in [menu itemArray]) {
         if (![item isEnabled] || [item isHidden]) {
             continue;

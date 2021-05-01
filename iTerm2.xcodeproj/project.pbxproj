@@ -3263,7 +3263,6 @@
 		A6C762BA1B45C52B00E3C992 /* NSMutableData+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A680AA1718CEBF5C0034D4F8 /* NSMutableData+iTerm.m */; };
 		A6C762BB1B45C52B00E3C992 /* NSMutableDictionary+Profile.m in Sources */ = {isa = PBXBuildFile; fileRef = A61ABBC11AE5F54A004656C2 /* NSMutableDictionary+Profile.m */; };
 		A6C762BD1B45C52B00E3C992 /* NSPasteboard+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A60D85A71A3A8105003AEE22 /* NSPasteboard+iTerm.m */; };
-		A6C762BF1B45C52B00E3C992 /* NSScreen+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A69B4576195F668500F5444D /* NSScreen+iTerm.m */; };
 		A6C762C11B45C52B00E3C992 /* NSTextField+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A6DF401B1897607E00F05947 /* NSTextField+iTerm.m */; };
 		A6C762C31B45C52B00E3C992 /* NSView+RecursiveDescription.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D81F0BF183C3C2D00910838 /* NSView+RecursiveDescription.m */; };
 		A6C762C41B45C52B00E3C992 /* NSWorkspace+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A67F57AF1B012BD100B4F135 /* NSWorkspace+iTerm.m */; };
@@ -3474,6 +3473,7 @@
 		A6CD8A432234DB83007C5B39 /* iTermStatusBarPlaceholderComponent.h in Headers */ = {isa = PBXBuildFile; fileRef = A6CD8A412234DB83007C5B39 /* iTermStatusBarPlaceholderComponent.h */; };
 		A6CD8A442234DB83007C5B39 /* iTermStatusBarPlaceholderComponent.m in Sources */ = {isa = PBXBuildFile; fileRef = A6CD8A422234DB83007C5B39 /* iTermStatusBarPlaceholderComponent.m */; };
 		A6CDC31826391D1200616155 /* PIDInfoGitState.m in Sources */ = {isa = PBXBuildFile; fileRef = A6CDC31726391D1200616155 /* PIDInfoGitState.m */; };
+		A6CDC329263D244600616155 /* NSScreen+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A69B4576195F668500F5444D /* NSScreen+iTerm.m */; };
 		A6CEBFBB1DCE7E09009F4FD2 /* Api.pbobjc.h in Headers */ = {isa = PBXBuildFile; fileRef = A6CEBF7D1DCE7DFF009F4FD2 /* Api.pbobjc.h */; };
 		A6CEBFBC1DCE7E09009F4FD2 /* Api.pbobjc.m in Sources */ = {isa = PBXBuildFile; fileRef = A6CEBF7E1DCE7DFF009F4FD2 /* Api.pbobjc.m */; };
 		A6CEC0701DCE80C9009F4FD2 /* Any.pbobjc.h in Headers */ = {isa = PBXBuildFile; fileRef = A6CEC0481DCE80C1009F4FD2 /* Any.pbobjc.h */; };
@@ -14606,6 +14606,7 @@
 				535EA4FD20D0EBD300FC81E0 /* iTermSwiftyStringRecognizer.m in Sources */,
 				534B6C6823DC165D0031FED2 /* PasteContext.m in Sources */,
 				A629F5B323AFF70B00C2F16B /* iTermShellIntegrationFinishedViewController.m in Sources */,
+				A6CDC329263D244600616155 /* NSScreen+iTerm.m in Sources */,
 				53E9DFEA220D55E40070C9C0 /* iTermUserNotificationTrigger.m in Sources */,
 				A64816602290773A008E7E0C /* iTermReflection.m in Sources */,
 				A63493E523E7AC160047C31B /* iTermStatusBarAutoRainbowController.m in Sources */,
@@ -14925,7 +14926,6 @@
 				A6CEC1081DCE8146009F4FD2 /* GPBCodedInputStream.m in Sources */,
 				A6C763431B45C52B00E3C992 /* iTermImageWell.m in Sources */,
 				A6C763BA1B45C52B00E3C992 /* iTermTipCardViewController.m in Sources */,
-				A6C762BF1B45C52B00E3C992 /* NSScreen+iTerm.m in Sources */,
 				A6C763621B45C52B00E3C992 /* PopupWindow.m in Sources */,
 				A6CEC0831DCE80C9009F4FD2 /* Wrappers.pbobjc.m in Sources */,
 				A6C7639F1B45C52B00E3C992 /* TmuxWindowOpener.m in Sources */,

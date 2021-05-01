@@ -17,6 +17,7 @@
 #import "iTermShortcutInputView.h"
 #import "iTermVariableScope.h"
 #import "NSPopUpButton+iTerm.h"
+#import "NSScreen+iTerm.h"
 #import "RegexKitLite.h"
 
 #import <SearchableComboListView/SearchableComboListView-Swift.h>
@@ -553,11 +554,12 @@
 }
 
 + (BOOL)item:(NSMenuItem *)item isWindowInWindowsMenu:(NSMenu *)menu {
-    if (![[menu title] isEqualToString:@"Window"]) {
+    if (menu != [NSApp windowsMenu]) {
         return NO;
     }
 
-    return ([item.title isMatchedByRegex:@"^\\d+\\. " ]);
+    return ([item.target isKindOfClass:[NSWindow class]]&&
+            item.action == @selector(makeKeyAndOrderFront:));
 }
 
 + (BOOL)ancestorsContainsProfilesMenuItem:(NSArray<NSMenuItem *> *)ancestors {
@@ -572,12 +574,29 @@
                    depth:(int)depth
                ancestors:(NSArray<NSMenuItem *> *)ancestors {
     const BOOL descendsFromProfiles = [self ancestorsContainsProfilesMenuItem:ancestors];
+    NSMenu *servicesMenu = [NSApp servicesMenu];
+    NSMenu *windowsMenu = [NSApp windowsMenu];
+
+    if (menu == windowsMenu) {
+        // Add the "move to [screen]" items.
+        for (NSScreen *screen in [NSScreen screens]) {
+            NSMenuItem *theItem = [[NSMenuItem alloc] init];
+            theItem.title = [NSString stringWithFormat:@"Move to %@", screen.it_uniqueName];
+            theItem.identifier = screen.it_uniqueKey;
+            theItem.indentationLevel = depth;
+            [buttonMenu addItem:theItem];
+        }
+    }
+
     for (NSMenuItem *item in [menu itemArray]) {
         if (item.isSeparatorItem) {
             continue;
         }
-        if ([item.title isEqualToString:@"Services"] ||  // exclude services menu
+        if (item.submenu == servicesMenu ||
             [self item:item isWindowInWindowsMenu:menu]) {  // exclude windows in window menu
+            continue;
+        }
+        if (menu == windowsMenu && [NSStringFromSelector(item.action) isEqualToString:@"_moveToDisplay:"]) {
             continue;
         }
         NSMenuItem *theItem = [[NSMenuItem alloc] init];
