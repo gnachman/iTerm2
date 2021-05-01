@@ -42,7 +42,7 @@
         _block = [block copy];
         _fallbackVariableName = [fallbackVariableName copy];
         _interval = 1;
-        if ([_gateway versionAtLeastDecimalNumberWithString:@"3.2"]) {
+        if ([_gateway supportsSubscriptions]) {
             __weak __typeof(self) weakSelf = self;
             _subscriptionHandle = [_gateway subscribeToFormat:self.escapedFormat
                                                        target:target

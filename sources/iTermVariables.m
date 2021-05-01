@@ -83,6 +83,7 @@ NSString *const iTermVariableKeySessionSelectionLength = @"selectionLength";
 NSString *const iTermVariableKeySessionParent = @"parentSession";
 NSString *const iTermVariableKeySessionBellCount = @"bellCount";
 NSString *const iTermVariableKeySessionLogFilename = @"logFilename";
+NSString *const iTermVariableKeySessionTmuxWindowPaneIndex = @"tmuxWindowPaneIndex";
 
 #pragma mark - Window Context
 

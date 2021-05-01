@@ -226,6 +226,14 @@
     [self setValue:newValue forVariableNamed:iTermVariableKeySessionTmuxWindowPane];
 }
 
+- (NSString *)tmuxWindowPaneIndex {
+    return [self valueForVariableName:iTermVariableKeySessionTmuxWindowPaneIndex];
+}
+
+- (void)setTmuxWindowPaneIndex:(NSString *)tmuxWindowPaneIndex {
+    [self setValue:tmuxWindowPaneIndex forVariableNamed:iTermVariableKeySessionTmuxWindowPaneIndex];
+}
+
 - (NSNumber *)jobPid {
     return [self valueForVariableName:iTermVariableKeySessionJobPid];
 }

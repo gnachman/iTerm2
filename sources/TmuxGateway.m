@@ -1062,4 +1062,8 @@ error:
                 flags:kTmuxGatewayCommandShouldTolerateErrors];
 }
 
+- (BOOL)supportsSubscriptions {
+    return [self versionAtLeastDecimalNumberWithString:@"3.2"];
+}
+
 @end

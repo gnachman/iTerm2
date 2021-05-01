@@ -573,6 +573,7 @@ static const NSUInteger kMaxHosts = 100;
     iTermWorkingDirectoryPoller *_pwdPoller;
     iTermTmuxOptionMonitor *_tmuxTitleMonitor;
     iTermTmuxOptionMonitor *_tmuxForegroundJobMonitor;
+    iTermTmuxOptionMonitor *_paneIndexMonitor;
 
     iTermGraphicSource *_graphicSource;
     iTermVariableReference *_jobPidRef;
@@ -952,6 +953,8 @@ ITERM_WEAKLY_REFERENCEABLE
     [_tmuxTitleMonitor release];
     [_tmuxForegroundJobMonitor invalidate];
     [_tmuxForegroundJobMonitor release];
+    [_paneIndexMonitor invalidate];
+    [_paneIndexMonitor release];
     if (_metalContext) {
         CGContextRelease(_metalContext);
     }
@@ -6584,6 +6587,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                 [self installTmuxStatusBarMonitor];
                 [self installTmuxTitleMonitor];
                 [self installTmuxForegroundJobMonitor];
+                [self installOtherTmuxMonitors];
                 [self replaceWorkingDirectoryPollerWithTmuxWorkingDirectoryPoller];
                 break;
         }
@@ -6718,6 +6722,23 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     }
     [self installTmuxForegroundJobMonitor];
     return _tmuxForegroundJobMonitor;
+}
+
+- (void)installOtherTmuxMonitors {
+    if (![_tmuxController.gateway supportsSubscriptions]) {
+        return;
+    }
+    if (_paneIndexMonitor) {
+        return;
+    }
+    _paneIndexMonitor = [[iTermTmuxOptionMonitor alloc] initWithGateway:_tmuxController.gateway
+                                                                  scope:self.variablesScope
+                                                   fallbackVariableName:nil
+                                                                 format:@"#{pane_index}"
+                                                                 target:[NSString stringWithFormat:@"%%%@", @(self.tmuxPane)]
+                                                           variableName:iTermVariableKeySessionTmuxWindowPaneIndex
+                                                                  block:nil];
+    [_paneIndexMonitor updateOnce];
 }
 
 // NOTE: Despite the name, this doesn't continuously monitor because that is

@@ -68,6 +68,7 @@
                                     iTermVariableKeySessionAutoNameFormat,
                                     iTermVariableKeySessionAutoName,
                                     iTermVariableKeySessionTmuxWindowPane,
+                                    iTermVariableKeySessionTmuxWindowPaneIndex,
                                     iTermVariableKeySessionJobPid,
                                     iTermVariableKeySessionChildPid,
                                     iTermVariableKeySessionMouseReportingMode,
