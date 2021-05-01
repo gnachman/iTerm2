@@ -348,13 +348,17 @@ static id gAltOpenAllRepresentedObject;
         switch (e.action) {
             case JOURNAL_ADD: {
                 NSString *shortcut = [self.class applyAddJournalEntry:e toMenu:menu startingAtItem:skip params:params];
-                results[shortcut] = @YES;
+                if (shortcut) {
+                    results[shortcut] = @YES;
+                }
                 break;
             }
 
             case JOURNAL_REMOVE: {
                 NSString *shortcut = [self.class applyRemoveJournalEntry:e toMenu:menu startingAtItem:skip params:params];
-                results[shortcut] = @NO;
+                if (shortcut) {
+                    results[shortcut] = @NO;
+                }
                 break;
             }
 
