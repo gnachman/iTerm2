@@ -3329,6 +3329,7 @@ ITERM_WEAKLY_REFERENCEABLE
 // NSWindow delegate methods
 - (void)windowDidDeminiaturize:(NSNotification *)aNotification {
     DLog(@"windowDidDeminiaturize: %@\n%@", self, [NSThread callStackSymbols]);
+    DLog(@"Erase badge label");
     [self.window.dockTile setBadgeLabel:@""];
     [self.window.dockTile setShowsApplicationBadge:NO];
     if ([[self currentTab] blur]) {
@@ -3574,7 +3575,7 @@ ITERM_WEAKLY_REFERENCEABLE
         [[iTermHotKeyController sharedInstance] nonHotKeyWindowDidBecomeKey];
     }
     [[iTermHotKeyController sharedInstance] autoHideHotKeyWindowsExcept:[[iTermHotKeyController sharedInstance] siblingWindowControllersOf:self]];
-
+    DLog(@"Erase badge label");
     [[[NSApplication sharedApplication] dockTile] setBadgeLabel:@""];
     [[[NSApplication sharedApplication] dockTile] setShowsApplicationBadge:NO];
 
@@ -10270,24 +10271,32 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 #pragma clang diagnostic pop
 
 - (void)incrementBadge {
+    DLog(@"incrementBadge");
     if (![iTermAdvancedSettingsModel indicateBellsInDockBadgeLabel]) {
+        DLog(@"Disabled by advanced pref");
         return;
     }
 
     NSDockTile *dockTile;
     if (self.window.isMiniaturized) {
+        DLog(@"Use miniaturized window tile");
         dockTile = self.window.dockTile;
     } else {
         if ([[NSApplication sharedApplication] isActive]) {
+            DLog(@"App is active so don't increment it");
             return;
         }
+        DLog(@"Use main app dock tile");
         dockTile = [[NSApplication sharedApplication] dockTile];
     }
     int count = [[dockTile badgeLabel] intValue];
+    DLog(@"Old count was %d", count);
     if (count == 999) {
+        DLog(@"Won't go over 999, so stop early");
         return;
     }
     ++count;
+    DLog(@"Set badge label to %@", @(count));
     [dockTile setBadgeLabel:[NSString stringWithFormat:@"%d", count]];
     [self.window.dockTile setShowsApplicationBadge:YES];
 }

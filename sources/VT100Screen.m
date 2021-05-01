@@ -3059,6 +3059,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalRingBell {
+    DLog(@"Terminal rang the bell");
     [delegate_ screenDidAppendStringToCurrentLine:@"\a" isPlainText:NO];
     [self activateBell];
 }
@@ -3885,6 +3886,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
 - (BOOL)terminalPostUserNotification:(NSString *)message {
     if (postUserNotifications_ && [delegate_ screenShouldPostTerminalGeneratedAlert]) {
+        DLog(@"Terminal posting user notification %@", message);
         [delegate_ screenIncrementBadge];
         NSString *description = [NSString stringWithFormat:@"Session %@ #%d: %@",
                                  [[delegate_ screenName] removingHTMLFromTabTitleIfNeeded],
@@ -3898,6 +3900,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
                               viewIndex:[delegate_ screenViewIndex]];
         return sent;
     } else {
+        DLog(@"Declining to allow terminal to post user notification %@", message);
         return NO;
     }
 }

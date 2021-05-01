@@ -6,6 +6,8 @@
 //
 
 #import "BellTrigger.h"
+
+#import "DebugLogging.h"
 #import "PTYSession.h"
 #import "VT100Screen.h"
 
@@ -29,6 +31,7 @@
                     atAbsoluteLineNumber:(long long)lineNumber
                         useInterpolation:(BOOL)useInterpolation
                                     stop:(BOOL *)stop {
+    DLog(@"Ring bell trigger running");
     [aSession.screen activateBell];
     return YES;
 }
