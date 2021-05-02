@@ -47,8 +47,14 @@
                                                  selector:@selector(scrollViewDidScroll:)
                                                      name:NSViewBoundsDidChangeNotification
                                                    object:nil];
+        // See the note in PTYTextView's initializer.
+        [super setAlphaValue:0];
     }
     return self;
+}
+
+- (void)setAlphaValue:(CGFloat)alphaValue {
+    assert(NO);
 }
 
 // This is a hack to fix an apparent bug in macOS 10.14 beta 3. I would like to remove it when it's no longer needed.
@@ -64,10 +70,6 @@
 // For some reason this view just doesn't work with layers when using the legacy renderer. When it
 // has a layer it becomes opaque black, as of macOS 11.1.
 - (void)drawRect:(NSRect)dirtyRect {
-    NSColor *color = [self it_backgroundColorOfEnclosingTerminalIfBackgroundColorViewHidden];
-    DLog(@"textViewWrapper: draw with color %@", color);
-    [color ?: [NSColor clearColor] set];
-    NSRectFill(dirtyRect);
 }
 
 - (void)addSubview:(NSView *)child {
