@@ -50,6 +50,7 @@ static NSString *const kRemoteHostUserNameKey = @"User name";
 
 - (BOOL)isLocalhost {
     NSString *localHostName = [NSHost fullyQualifiedDomainName];
+    DLog(@"localHostName=%@, VT100RemoteHost.hostname=%@", localHostName, self.hostname);
     if ([self.hostname isEqualToString:localHostName]) {
         return YES;
     }
