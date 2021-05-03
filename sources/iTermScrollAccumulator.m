@@ -43,9 +43,12 @@ static CGFloat RoundAwayFromZero(CGFloat value) {
     switch (event.type) {
         case NSEventTypeScrollWheel: {
             CGFloat result;
-            result = [self accumulatedDeltaYForScrollEvent:event];
-            DLog(@"deltaYForEvent:%@ lineHeight:%@ -> %@. deltaY=%@ scrollingDeltaY=%@ Accumulator <- %@",
-                 event, @(lineHeight), @(result), @(event.deltaY), @(event.scrollingDeltaY), @(_accumulatedDeltaY));
+            const CGFloat accumulatedDeltaY = [self accumulatedDeltaYForScrollEvent:event];
+            const CGFloat sign = (accumulatedDeltaY > 0) ? 1 : -1;
+            const CGFloat factor = MAX(0, [iTermAdvancedSettingsModel scrollWheelAcceleration]);
+            result = pow(fabs(accumulatedDeltaY), factor) * sign;
+            DLog(@"deltaYForEvent:%@ lineHeight:%@ ^ accel:%@ -> %@. deltaY=%@ scrollingDeltaY=%@ Accumulator <- %@",
+                 event, @(lineHeight), @([iTermAdvancedSettingsModel scrollWheelAcceleration]), @(result), @(event.deltaY), @(event.scrollingDeltaY), @(_accumulatedDeltaY));
             return result;
         }
             

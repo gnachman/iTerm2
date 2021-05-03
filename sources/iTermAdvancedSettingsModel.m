@@ -255,6 +255,7 @@ DEFINE_BOOL(aggressiveFocusFollowsMouse, NO, SECTION_MOUSE @"When Focus Follows 
 DEFINE_BOOL(cmdClickWhenInactiveInvokesSemanticHistory, NO, SECTION_MOUSE @"⌘-click in an active pane while iTerm2 isn't the active app invokes Semantic History.\nBy default, iTerm2 respects the OS standard that ⌘-click in an app that doesn't have keyboard focus behaves like a non-⌘ click that does not raise the window.");
 DEFINE_BOOL(enableUnderlineSemanticHistoryOnCmdHover, YES, SECTION_MOUSE @"Underline Semantic History-selectable items under the cursor while holding ⌘?");
 DEFINE_BOOL(sensitiveScrollWheel, NO, SECTION_MOUSE @"Scroll on any scroll wheel movement, no matter how small?");
+DEFINE_FLOAT(scrollWheelAcceleration, 1, SECTION_MOUSE @"Speed up scroll gestures by this factor.");
 
 // This defines the fraction of a character's width on its right side that is used to
 // select the NEXT character.

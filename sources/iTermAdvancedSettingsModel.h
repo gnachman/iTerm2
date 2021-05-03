@@ -259,6 +259,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)retinaInlineImages;
 + (BOOL)runJobsInServers;
 + (BOOL)saveToPasteHistoryWhenSecureInputEnabled;
++ (double)scrollWheelAcceleration;
 + (NSString *)searchCommand;
 + (BOOL)selectsTabsOnMouseDown;
 + (BOOL)sensitiveScrollWheel;
