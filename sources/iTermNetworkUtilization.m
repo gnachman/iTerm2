@@ -12,6 +12,7 @@
 #include <sys/sysctl.h>
 #include <netinet/in.h>
 #include <net/if.h>
+#include <net/if_dl.h>
 #include <net/route.h>
 
 typedef struct {
@@ -49,7 +50,7 @@ typedef struct {
     iTermPublisher<iTermNetworkUtilizationSample *> *_publisher;
     iTermNetworkUtilizationStats _last;
     // Used to detect network interface change
-    NSUInteger lastInterfaceCount;
+    NSSet *lastInterfaceAddrs;
     BOOL interfaceHasChanged;
 }
 
@@ -135,7 +136,7 @@ typedef struct {
     if (sysctl(mib, 6, buf, &len, NULL, 0) < 0) {
         return result;
     }
-    NSUInteger interfaceCount = 0;
+    NSMutableSet<NSData *> *interfaceAddrs = [NSMutableSet set];
     char *lim = buf + len;
     char *next = NULL;
     for (next = buf; next < lim; ) {
@@ -145,11 +146,20 @@ typedef struct {
             struct if_msghdr2 *header = (struct if_msghdr2 *)interface;
             result.downbytes += header->ifm_data.ifi_ibytes;
             result.upbytes += header->ifm_data.ifi_obytes;
-            interfaceCount++;
+
+            // See also: https://opensource.apple.com/source/Libinfo/Libinfo-542.40.3/gen.subproj/getifaddrs.c.auto.html L282
+            if (header->ifm_addrs & RTA_IFP) {
+                struct sockaddr *sa = (struct sockaddr *)(header + 1);
+                if (sa->sa_family == AF_LINK) {
+                    struct sockaddr_dl *dl = (struct sockaddr_dl *)sa;
+                    // Caches the socaket address data (interface name + MAC address), in order to detect interface change
+                    [interfaceAddrs addObject:[NSData dataWithBytes:dl->sdl_data length:dl->sdl_nlen + dl->sdl_alen]];
+                }
+            }
         }
     }
-    if (interfaceCount != lastInterfaceCount) {
-        lastInterfaceCount = interfaceCount;
+    if (![interfaceAddrs isEqualToSet:lastInterfaceAddrs]) {
+        lastInterfaceAddrs = [interfaceAddrs copy];
         interfaceHasChanged = true;
     }
     return result;
