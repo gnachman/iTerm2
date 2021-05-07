@@ -68,6 +68,10 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     return self;
 }
 
+- (void)dealloc {
+    [_timer invalidate];
+}
+
 - (void)it_schedule {
     _timer = [NSTimer scheduledWeakTimerWithTimeInterval:[iTermAdvancedSettingsModel metalRedrawPeriod]
                                                   target:self

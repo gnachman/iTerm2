@@ -851,7 +851,7 @@ static const NSUInteger kMaxHosts = 100;
             if (!weakSelf.view.window.isKeyWindow) {
                 return;
             }
-            if (![iTermAdvancedSettingsModel synchronizeQueryWithFindPasteboard] && sender != self) {
+            if (![iTermAdvancedSettingsModel synchronizeQueryWithFindPasteboard] && sender != weakSelf) {
                 return;
             }
             [weakSelf useStringForFind:newValue];
