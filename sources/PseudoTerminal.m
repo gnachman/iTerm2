@@ -422,6 +422,9 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
     // case scrollbar style has changed since the state was saved. It can be postiive or negative.
     // The frame is modified by this amount when it is safe to do so.
     CGFloat _widthAdjustment;
+
+    NSSize _previousScreenSize;
+    CGFloat _previousScreenScaleFactor;
 }
 
 @synthesize scope = _scope;
@@ -4519,8 +4522,22 @@ ITERM_WEAKLY_REFERENCEABLE
         [session.textview setNeedsDisplay:YES];
         [session didChangeScreen:self.window.backingScaleFactor];
     }
-    for (PTYTab *tab in self.tabs) {
-        [tab bounceMetal];
+    const NSSize screenSize = self.window.screen.frame.size;
+    const CGFloat scaleFactor = self.window.screen.backingScaleFactor;
+    if (!NSEqualSizes(screenSize, _previousScreenSize) ||
+        scaleFactor != _previousScreenScaleFactor) {
+        DLog(@"Screen changed size %@->%@ scale %@->%@ so bounce metal",
+             NSStringFromSize(_previousScreenSize),
+             NSStringFromSize(screenSize),
+             @(_previousScreenScaleFactor),
+             @(scaleFactor));
+        _previousScreenSize = screenSize;
+        _previousScreenScaleFactor = scaleFactor;
+        // Fixes gray screen after resolution change (issue 9515). But do it only if the resolution
+        // changes because some poor souls have constant screen invalidations (issue 9685).
+        for (PTYTab *tab in self.tabs) {
+            [tab bounceMetal];
+        }
     }
     DLog(@"Returning from windowDidChangeScreen:.");
 }
