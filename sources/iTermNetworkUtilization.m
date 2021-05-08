@@ -45,13 +45,15 @@ typedef struct {
 @interface iTermNetworkUtilization()<iTermPublisherDelegate>
 @end
 
+typedef struct {
+    iTermNetworkUtilizationStats stats;
+    NSSet<NSData *> *interfaces;
+} iTermNetworkUtilizationStatsAndInterfaces;
+
 @implementation iTermNetworkUtilization {
     NSTimer *_timer;
     iTermPublisher<iTermNetworkUtilizationSample *> *_publisher;
-    iTermNetworkUtilizationStats _last;
-    // Used to detect network interface change
-    NSSet *lastInterfaceAddrs;
-    BOOL interfaceHasChanged;
+    iTermNetworkUtilizationStatsAndInterfaces _last;
 }
 
 + (instancetype)sharedInstance {
@@ -93,30 +95,28 @@ typedef struct {
 #pragma mark - Private
 
 - (void)update {
-    iTermNetworkUtilizationStats last = _last;
-    iTermNetworkUtilizationStats current = [self currentStats];
-    if (!interfaceHasChanged) {
-        NSTimeInterval t = _publisher.timeIntervalSinceLastUpdate;
+    iTermNetworkUtilizationStatsAndInterfaces last = _last;
+    iTermNetworkUtilizationStatsAndInterfaces current = [self currentStatsAndInterfaces];
+    if (!current.interfaces) {
+        return;
+    }
+    if (_last.interfaces == nil || [_last.interfaces isEqual:current.interfaces]) {
+        const NSTimeInterval t = _publisher.timeIntervalSinceLastUpdate;
         iTermNetworkUtilizationStats diff = {
-            .upbytes = (current.upbytes - last.upbytes) / t,
-            .downbytes = (current.downbytes - last.downbytes) / t
+            .upbytes = (current.stats.upbytes - last.stats.upbytes) / t,
+            .downbytes = (current.stats.downbytes - last.stats.downbytes) / t
         };
         [_publisher publish:[[iTermNetworkUtilizationSample alloc] initWithStats:diff]];
     } else {
-        interfaceHasChanged = false;
-        iTermNetworkUtilizationSample *last = _publisher.historicalValues.lastObject;
-        if (last != nil) {
-            [_publisher publish:last];
-        } else {
-            iTermNetworkUtilizationStats zeroState = { 0, 0 };
-            [_publisher publish:[[iTermNetworkUtilizationSample alloc] initWithStats:zeroState]];
-        }
+        // Republish last value to avoid a hiccup.
+        const iTermNetworkUtilizationStats zeroState = { 0, 0 };
+        [_publisher publish:_publisher.historicalValues.lastObject ?: [[iTermNetworkUtilizationSample alloc] initWithStats:zeroState]];
     }
     _last = current;
 }
 
-- (iTermNetworkUtilizationStats)currentStats {
-    iTermNetworkUtilizationStats result = { 0, 0 };
+- (iTermNetworkUtilizationStatsAndInterfaces)currentStatsAndInterfaces {
+    iTermNetworkUtilizationStatsAndInterfaces result = { .stats = { 0, 0 }, .interfaces = nil };
 
     int mib[] = {
         CTL_NET,
@@ -144,24 +144,21 @@ typedef struct {
         next += interface->ifm_msglen;
         if (interface->ifm_type == RTM_IFINFO2) {
             struct if_msghdr2 *header = (struct if_msghdr2 *)interface;
-            result.downbytes += header->ifm_data.ifi_ibytes;
-            result.upbytes += header->ifm_data.ifi_obytes;
+            result.stats.downbytes += header->ifm_data.ifi_ibytes;
+            result.stats.upbytes += header->ifm_data.ifi_obytes;
 
             // See also: https://opensource.apple.com/source/Libinfo/Libinfo-542.40.3/gen.subproj/getifaddrs.c.auto.html L282
             if (header->ifm_addrs & RTA_IFP) {
                 struct sockaddr *sa = (struct sockaddr *)(header + 1);
                 if (sa->sa_family == AF_LINK) {
                     struct sockaddr_dl *dl = (struct sockaddr_dl *)sa;
-                    // Caches the socaket address data (interface name + MAC address), in order to detect interface change
+                    // Caches the socket address data (interface name + MAC address), in order to detect interface change
                     [interfaceAddrs addObject:[NSData dataWithBytes:dl->sdl_data length:dl->sdl_nlen + dl->sdl_alen]];
                 }
             }
         }
     }
-    if (![interfaceAddrs isEqualToSet:lastInterfaceAddrs]) {
-        lastInterfaceAddrs = [interfaceAddrs copy];
-        interfaceHasChanged = true;
-    }
+    result.interfaces = interfaceAddrs;
     return result;
 }
 
