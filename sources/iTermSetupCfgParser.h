@@ -34,3 +34,16 @@
 - (instancetype)init NS_UNAVAILABLE;
 
 @end
+
+// Ensures the resulting array has the provided dependency.
+// setup.cfg dependencies are arrays of strings like "modulename" or "modulename[expression]"
+// where [expression] is an (in)equality operator followed by a version number.
+// The operators are:
+// <    >    ==
+// <=   >=   !=
+@interface NSArray(SetupCfg)
+- (NSArray<NSString *> *)arrayBySettingPythonDependency:(NSString *)dependency;
+
+// Package is a package name without an operator or version number, like "iterm2".
+- (BOOL)containsPythonPackage:(NSString *)package;
+@end

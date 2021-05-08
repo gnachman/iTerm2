@@ -7,7 +7,9 @@
 
 #import "iTermSetupCfgParser.h"
 
+#import "DebugLogging.h"
 #import "NSArray+iTerm.h"
+#import "NSObject+iTerm.h"
 #import "NSStringITerm.h"
 #import "RegexKitLite.h"
 #import "ini.h"
@@ -23,6 +25,7 @@
         ensureiTerm2Present:(BOOL)ensureiTerm2Present
               pythonVersion:(NSString *)pythonVersion
          environmentVersion:(NSInteger)environmentVersion {
+    DLog(@"file=%@ name=%@ deps=%@", file, name, dependencies);
     assert(pythonVersion);
 
     NSString *sanitizedPythonVersion = pythonVersion;
@@ -30,7 +33,7 @@
     if (parts.count > 2) {
         sanitizedPythonVersion = [[parts subarrayToIndex:2] componentsJoinedByString:@"."];
     }
-    if (ensureiTerm2Present && ![dependencies containsObject:@"iterm2"]) {
+    if (ensureiTerm2Present && ![dependencies containsPythonPackage:@"iterm2"]) {
         dependencies = [@[ @"iterm2" ] arrayByAddingObjectsFromArray:dependencies];
     }
     NSString *contents = [NSString stringWithFormat:
@@ -139,6 +142,76 @@ static int iTermSetupCfgParserIniHandler(void *user,
         return;
     }
     _minimumEnvironmentVersion = [[value substringFromIndex:2] integerValue];
+}
+
+@end
+
+@interface NSString(SetupCfg)
+// Convert [package] [operator] [version] to [package] or nil if it doesn't match the pattern.
+- (NSString *)pythonPackage;
+@end
+
+// <    >    ==
+// <=   >=   !=
+
+@implementation NSString(SetupCfg)
+- (NSString *)pythonPackage {
+
+    // [package name] [optional whitespace] [operator] [optional whitespace] [version]
+    // Package name regex comes from PEP 508. This is the case-dependent version of what it gives.
+    NSString *packageName = @"((?:[A-Za-z0-9][A-Za-z0-9._-]*[A-Za-z0-9])|[A-Za-z0-9])";
+
+    NSString *operator = @"(?:<|>|==|<=|>=|!=)";
+
+    // Version number regexes are complicated and we don't really care so we are permissive in matching them.
+    // The official spec is in PEP 440 appendix B.
+    NSString *version = @"(?:[0-9a-z.]+)";
+    NSString *ws = @"(?: *)";
+    NSArray<NSString *> *parts = @[
+        @"^",
+        packageName,
+        @"(?:",
+        ws,
+        operator,
+        ws,
+        version,
+        @")?",
+        ws,
+        @"$"
+    ];
+
+    NSString *regex = [parts componentsJoinedByString:@""];
+    NSArray *components = [self captureComponentsMatchedByRegex:regex];
+    if (components.count < 2) {
+        return nil;
+    }
+    return components[1];
+}
+@end
+
+@implementation NSArray(SetupCfg)
+- (NSArray<NSString *> *)arrayBySettingPythonDependency:(NSString *)dependency {
+    NSString *package = [dependency pythonPackage];
+    
+    const NSInteger index = [self indexOfObjectPassingTest:^BOOL(id  _Nonnull element, NSUInteger idx, BOOL * _Nonnull stop) {
+        NSString *string = [NSString castFrom:element];
+        if (!string) {
+            return NO;
+        }
+        return [[string pythonPackage] isEqualToString:package];
+    }];
+    if (index == NSNotFound) {
+        return [self arrayByAddingObject:dependency];
+    }
+    NSMutableArray<NSString *> *result = [self mutableCopy];
+    result[index] = dependency;
+    return [result copy];
+}
+
+- (BOOL)containsPythonPackage:(NSString *)package {
+    return [self anyWithBlock:^BOOL(id anObject) {
+        return [[[NSString castFrom:anObject] pythonPackage] isEqualToString:package];
+    }];
 }
 
 @end

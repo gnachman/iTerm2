@@ -207,12 +207,20 @@
     }
 }
 
-- (void)pip3UpgradeDidFinish:(iTermTuple<NSString *, NSString *> *)tuple index:(NSInteger)index {
+- (void)pip3UpgradeDidFinish:(iTermTuple<NSString *, NSString *> *)tuple
+                       index:(NSInteger)index
+                  scriptPath:(NSString *)scriptPath {
     if (_packageTuples.count <= index) {
         return;
     }
     if (_packageTuples[index] == tuple) {
-        [self loadPackageAtIndex:index];
+        [self loadPackageAtIndex:index completion:^(BOOL ok, NSString *result) {
+            if (!ok) {
+                return;
+            }
+            [iTermDependencyEditorWindowController setDependency:[NSString stringWithFormat:@"%@>=%@", tuple.firstObject, result]
+                                                      scriptPath:scriptPath];
+        }];
     }
 }
 
@@ -356,18 +364,33 @@
     [self didSelectScriptAtIndex:_scriptsButton.selectedTag];
 }
 
++ (void)setDependency:(NSString *)dependency scriptPath:(NSString *)scriptPath {
+    DLog(@"Set dependency %@ in %@", dependency, scriptPath);
+    NSString *path = [scriptPath stringByAppendingPathComponent:@"setup.cfg"];
+    iTermSetupCfgParser *parser = [[iTermSetupCfgParser alloc] initWithPath:path];
+    [iTermSetupCfgParser writeSetupCfgToFile:path
+                                        name:parser.name
+                                dependencies:[parser.dependencies ?: @[] arrayBySettingPythonDependency:dependency]
+                         ensureiTerm2Present:NO
+                               pythonVersion:parser.pythonVersion
+                          environmentVersion:parser.minimumEnvironmentVersion];
+}
+
 #pragma mark - Actions
 
 - (IBAction)checkForUpdates:(id)sender {
     const NSInteger index = _tableView.selectedRow;
-    if (index < 0) {
+    if (index < 0 || !_selectedScriptPath) {
         return;
     }
+    NSString *selectedScriptPath = [_selectedScriptPath copy];
     iTermTuple<NSString *, NSString *> *tuple = _packageTuples[_tableView.selectedRow];
     NSString *selectedDependencyName = tuple.firstObject;
     __weak __typeof(self) weakSelf = self;
     [self runPip3WithArguments:@[ @"install", selectedDependencyName, @"--upgrade" ] completion:^{
-        [weakSelf pip3UpgradeDidFinish:tuple index:index];
+        [weakSelf pip3UpgradeDidFinish:tuple
+                                 index:index
+                            scriptPath:selectedScriptPath];
     }];
 }
 
