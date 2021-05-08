@@ -378,10 +378,45 @@ class LocalWriteOnlyProfile:
         return self._simple_set("Non-ASCII Ligatures", value)
 
     def set_use_bright_bold(self, value: bool):
-        """Sets whether bright colors should be used for bold text.
+        """Affects how bold text is rendered.
+
+        This function is deprecated because its behavior changed in
+        iTerm2 version 3.3.7.
+
+        Pre-3.3.7, when enabled:
+        * Use the profile-specified bold color for default-colored
+          bold text.
+        * Dark ANSI colors get replaced with their light counterparts
+          for bold text.
+
+        In 3.3.7 and later:
+        * Use the profile-specified bold color for default-colored
+          bold text.
+
+        Use set_use_bold_color and set_brighten_bold_text in 3.3.7 and
+        later.
 
         :param value: A bool"""
         return self._simple_set("Use Bright Bold", value)
+
+    def set_use_bold_color(self, value: bool):
+        """Sets whether the profile-specified bold color is used for
+        default-colored bold text.
+
+        Note: In versions of iTerm2 prior to 3.3.7, this behaves like
+        set_use_bright_bold().
+
+        :param value: A bool"""
+        return self._simple_set("Use Bright Bold", value)
+
+    def set_brighten_bold_text(self, value: bool):
+        """When enabled, Dark ANSI colors get replaced with their
+        light counterparts for bold text.
+
+        This is only supported in iTerm2 version 3.3.7 and later.
+
+        :param value: A bool"""
+        return self._simple_set("Brighten Bold Text", value)
 
     def set_blink_allowed(self, value: bool):
         """Sets whether blinking text is allowed.
@@ -1302,8 +1337,35 @@ class WriteOnlyProfile:
     async def async_set_use_bright_bold(self, value: bool):
         """Sets whether bright colors should be used for bold text.
 
+        This function is deprecated because its behavior changed in
+        iTerm2 version 3.3.7.
+        See :meth:`iterm2.profile.LocalWriteOnlyProfile.set_use_bright_bold`
+        for details.
+
+        Use async_set_use_bold_color and async_set_brighten_bold_text in
+        3.3.7 and later.
+
         :param value: A bool"""
         return await self._async_simple_set("Use Bright Bold", value)
+
+    async def async_set_use_bold_color(self, value: bool):
+        """Sets whether the profile-specified bold color is used for
+        default-colored bold text.
+
+        Note: In versions of iTerm2 prior to 3.3.7, this behaves like
+        set_use_bright_bold().
+
+        :param value: A bool"""
+        return await self._async_simple_set("Use Bright Bold", value)
+
+    async def async_set_brighten_bold_text(self, value: bool):
+        """When enabled, Dark ANSI colors get replaced with their
+        light counterparts for bold text.
+
+        This is only supported in iTerm2 version 3.3.7 and later.
+
+        :param value: A bool"""
+        return await self._async_simple_set("Brighten Bold Text", value)
 
     async def async_set_blink_allowed(self, value: bool):
         """Sets whether blinking text is allowed.
@@ -2314,8 +2376,36 @@ class Profile(WriteOnlyProfile):
     def use_bright_bold(self):
         """Returns whether bright colors should be used for bold text.
 
+        This function is deprecated because its behavior changed in
+        iTerm2 version 3.3.7.
+        See :meth:`iterm2.profile.LocalWriteOnlyProfile.set_use_bright_bold`
+        for details.
+
+        Use use_bold_color and brighten_bold_text in 3.3.7 and later.
+
         :returns: A bool"""
         return self._simple_get("Use Bright Bold")
+
+    @property
+    def use_bold_color(self):
+        """Returns whether the profile-specified bold color is used for
+        default-colored bold text.
+
+        Note: In versions of iTerm2 prior to 3.3.7, this behaves like
+        use_bright_bold().
+
+        :returns: A bool"""
+        return self._simple_get("Use Bright Bold")
+
+    @property
+    def brighten_bold_text(self):
+        """Returns whether dark ANSI colors get replaced with their
+        light counterparts for bold.
+
+        This is only supported in iTerm2 version 3.3.7 and later.
+
+        :returns: A bool"""
+        return self._simple_get("Brighten Bold Text")
 
     @property
     def blink_allowed(self):
