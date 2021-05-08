@@ -2914,6 +2914,8 @@
 		A69CCB1D211BF4FF008ADA71 /* iTermRecordingCodec.m in Sources */ = {isa = PBXBuildFile; fileRef = A69CCB1B211BF4FF008ADA71 /* iTermRecordingCodec.m */; };
 		A69D559B232A0CF3002E0F99 /* iTermSessionLauncher.h in Headers */ = {isa = PBXBuildFile; fileRef = A69D5599232A0CF3002E0F99 /* iTermSessionLauncher.h */; };
 		A69D559C232A0CF3002E0F99 /* iTermSessionLauncher.m in Sources */ = {isa = PBXBuildFile; fileRef = A69D559A232A0CF3002E0F99 /* iTermSessionLauncher.m */; };
+		A69D721B264716FC009D6EAC /* UnselectedTabShadow.png in Resources */ = {isa = PBXBuildFile; fileRef = A69D721A264716FC009D6EAC /* UnselectedTabShadow.png */; };
+		A69D721C264716FC009D6EAC /* UnselectedTabShadow.png in Resources */ = {isa = PBXBuildFile; fileRef = A69D721A264716FC009D6EAC /* UnselectedTabShadow.png */; };
 		A6A13AA218C2D23300B241ED /* iTermColorMap.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A13AA018C2D23300B241ED /* iTermColorMap.h */; };
 		A6A13AA718C2D45900B241ED /* NSColor+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A13AA518C2D45900B241ED /* NSColor+iTerm.h */; };
 		A6A13AAC18C3347200B241ED /* VT100Output.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A13AAA18C3347200B241ED /* VT100Output.h */; };
@@ -6237,6 +6239,7 @@
 		A69CCB1B211BF4FF008ADA71 /* iTermRecordingCodec.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermRecordingCodec.m; sourceTree = "<group>"; };
 		A69D5599232A0CF3002E0F99 /* iTermSessionLauncher.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermSessionLauncher.h; sourceTree = "<group>"; };
 		A69D559A232A0CF3002E0F99 /* iTermSessionLauncher.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermSessionLauncher.m; sourceTree = "<group>"; };
+		A69D721A264716FC009D6EAC /* UnselectedTabShadow.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = UnselectedTabShadow.png; sourceTree = "<group>"; };
 		A6A13AA018C2D23300B241ED /* iTermColorMap.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermColorMap.h; sourceTree = "<group>"; tabWidth = 4; };
 		A6A13AA118C2D23300B241ED /* iTermColorMap.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermColorMap.m; sourceTree = "<group>"; tabWidth = 4; };
 		A6A13AA518C2D45900B241ED /* NSColor+iTerm.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = "NSColor+iTerm.h"; sourceTree = "<group>"; tabWidth = 4; };
@@ -10516,6 +10519,7 @@
 		DD02575509CB93C2008F320C /* images */ = {
 			isa = PBXGroup;
 			children = (
+				A69D721A264716FC009D6EAC /* UnselectedTabShadow.png */,
 				A6E16C6E24A8696D00C6DB06 /* WindowCorner_BigSur.png */,
 				A6E16C6D24A8696D00C6DB06 /* WindowCornerFull_BigSur.png */,
 				A6E16C6624A866F300C6DB06 /* WindowCorner_BigSur@2x.png */,
@@ -12479,6 +12483,7 @@
 				1D6ED9D319AEA20D005A7799 /* TabClose_Front_Pressed.png in Resources */,
 				A635029E229B5F8B0042B779 /* YosemiteAddTab@2x.png in Resources */,
 				A63493ED23F0A3EF0047C31B /* UKCrashReporter.xib in Resources */,
+				A69D721C264716FC009D6EAC /* UnselectedTabShadow.png in Resources */,
 				1D6ED9D419AEA20D005A7799 /* TabClose_Front_Rollover.png in Resources */,
 				A6F7A72A213CB143004DE961 /* StatusBarIconComposer.png in Resources */,
 				A67F616C214395990093940A /* graphic_micro@2x.png in Resources */,
@@ -13403,6 +13408,7 @@
 				1D8F396B13EB7A2C0025B80B /* BroadcastInput.png in Resources */,
 				A66A882B24DFCCC30043728B /* graphic_postgres.png in Resources */,
 				A66A882824DFCCC30043728B /* graphic_erlang@2x.png in Resources */,
+				A69D721B264716FC009D6EAC /* UnselectedTabShadow.png in Resources */,
 				A6F7A746213CB143004DE961 /* StatusBarIconPaste@2x.png in Resources */,
 				1D44CCDC1CC6A1DE00BE5630 /* Loupe@2x.png in Resources */,
 				A67D0D501A2EE12A003A8B35 /* FindView.xib in Resources */,

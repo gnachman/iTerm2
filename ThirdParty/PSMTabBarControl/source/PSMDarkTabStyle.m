@@ -75,9 +75,9 @@
     if (@available(macOS 10.16, *)) {
         const BOOL keyMainAndActive = self.windowIsMainAndAppIsActive;
         if (keyMainAndActive) {
-            return [NSColor colorWithWhite:1 alpha:0.20];
+            return [NSColor colorWithWhite:1 alpha:0.18];
         } else {
-            return [NSColor colorWithWhite:1 alpha:0.16];
+            return [NSColor colorWithWhite:1 alpha:0.15];
         }
     }
     return [self topLineColorSelected:selected];
@@ -92,17 +92,11 @@
 }
 
 - (NSColor *)bigSurBackgroundColorSelected:(BOOL)selected highlightAmount:(CGFloat)highlightAmount NS_AVAILABLE_MAC(10_16) {
-    CGFloat colors[4] = { 0, 0, 0, 0};
     if (selected) {
-        // clear
-    } else {
-        colors[3] = 0.45 + 0.086 * highlightAmount;
+        return [NSColor clearColor];
     }
-
-    return [NSColor colorWithSRGBRed:colors[0]
-                               green:colors[1]
-                                blue:colors[2]
-                               alpha:colors[3]];
+    const CGFloat base = 0.5;
+    return [NSColor colorWithWhite:0 alpha:base - (highlightAmount * 0.3)];
 }
 
 - (NSColor *)mojaveBackgroundColorSelected:(BOOL)selected highlightAmount:(CGFloat)highlightAmount {

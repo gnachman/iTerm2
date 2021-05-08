@@ -462,6 +462,9 @@
 
 - (NSColor *)topLineColorSelected:(BOOL)selected {
     const BOOL keyMainAndActive = self.windowIsMainAndAppIsActive;
+    if (@available(macOS 10.16, *)) {
+        return [NSColor clearColor];
+    }
     if (@available(macOS 10.14, *)) {
         if (keyMainAndActive) {
             return [NSColor colorWithSRGBRed:180.0/255.0 green:180.0/255.0 blue:180.0/255.0 alpha:1];
@@ -483,6 +486,9 @@
 
 - (NSColor *)verticalLineColorSelected:(BOOL)selected {
     const BOOL keyMainAndActive = self.windowIsMainAndAppIsActive;
+    if (@available(macOS 10.16, *)) {
+        return [NSColor colorWithWhite:0 alpha:0.07];
+    }
     if (@available(macOS 10.14, *)) {
         if (keyMainAndActive) {
             return [NSColor colorWithSRGBRed:174.0/255.0 green:174.0/255.0 blue:174.0/255.0 alpha:1];
@@ -515,11 +521,14 @@
 
 - (NSColor *)bigSurBackgroundColorSelected:(BOOL)selected highlightAmount:(CGFloat)highlightAmount NS_AVAILABLE_MAC(10_16) {
     if (selected) {
-        const CGFloat white = 0.95;
-        return [NSColor colorWithWhite:white alpha:1];
+        // Reveal the visual effect view with material NSVisualEffectMaterialTitlebar beneath the tab bar.
+        // Per NSColor.h, windowFrameColor is described as:
+        // Historically used as the color of the window chrome, which is no longer able to be represented by a color. No longer used.
+        return [NSColor clearColor];
     }
-    const CGFloat white = 0.9 - 0.05 * highlightAmount;
-    return [NSColor colorWithWhite:white alpha:1];
+    // `base` gives how much darker the unselected tab is as an alpha value.
+    const CGFloat base = 0.07;
+    return [NSColor colorWithWhite:0 alpha:base + (1 - base) * (highlightAmount * 0.05)];
 }
 
 - (NSColor *)mojaveBackgroundColorSelected:(BOOL)selected highlightAmount:(CGFloat)highlightAmount NS_AVAILABLE_MAC(10_14) {
@@ -659,6 +668,20 @@
         // Alpha the inactive tab's colors a bit to make it clear which tab is active.
         [color set];
         NSRectFillUsingOperation(cellFrame, NSCompositingOperationSourceOver);
+    }
+
+    if (@available(macOS 10.16, *)) {
+        if (!selected) {
+            const CGFloat shadowHeight = 4;
+            NSRect shadowRect = backgroundRect;
+            shadowRect.size.height = shadowHeight;
+            static NSImage *image;
+            static dispatch_once_t onceToken;
+            dispatch_once(&onceToken, ^{
+                image = [[[NSBundle bundleForClass:[self class]] imageForResource:@"UnselectedTabShadow"] retain];
+            });
+            [image drawInRect:shadowRect];
+        }
     }
 }
 
