@@ -454,6 +454,7 @@ iTermWindowType iTermWindowTypeNormalized(iTermWindowType windowType) {
 }
 
 - (void)willExitTraditionalFullScreenMode {
+    DLog(@"%@", self);
     BOOL shouldForce = NO;
     if ([PseudoTerminal windowType:self.savedWindowType shouldBeCompactWithSavedWindowType:self.savedWindowType]) {
         shouldForce = [self replaceWindowWithWindowOfType:self.savedWindowType];
@@ -789,7 +790,7 @@ iTermWindowType iTermWindowTypeNormalized(iTermWindowType windowType) {
 #pragma mark - Lion Full screen
 
 - (void)windowWillEnterFullScreenImpl:(NSNotification *)notification {
-    DLog(@"Window will enter lion fullscreen");
+    DLog(@"Window will enter lion fullscreen %@", self);
     if (self.swipeIdentifier) {
         [[NSNotificationCenter defaultCenter] postNotificationName:iTermSwipeHandlerCancelSwipe
                                                             object:self.swipeIdentifier];
@@ -814,7 +815,7 @@ iTermWindowType iTermWindowTypeNormalized(iTermWindowType windowType) {
 }
 
 - (void)windowDidEnterFullScreenImpl:(NSNotification *)notification {
-    DLog(@"Window did enter lion fullscreen");
+    DLog(@"Window did enter lion fullscreen %@", self);
 
     zooming_ = NO;
     togglingLionFullScreen_ = NO;
@@ -881,7 +882,7 @@ iTermWindowType iTermWindowTypeNormalized(iTermWindowType windowType) {
 }
 
 - (void)windowWillExitFullScreenImpl:(NSNotification *)notification {
-    DLog(@"Window will exit lion fullscreen");
+    DLog(@"Window will exit lion fullscreen %@", self);
     if (self.swipeIdentifier) {
         [[NSNotificationCenter defaultCenter] postNotificationName:iTermSwipeHandlerCancelSwipe
                                                             object:self.swipeIdentifier];
@@ -904,7 +905,7 @@ iTermWindowType iTermWindowTypeNormalized(iTermWindowType windowType) {
 }
 
 - (void)windowDidExitFullScreenImpl:(NSNotification *)notification {
-    DLog(@"Window did exit lion fullscreen");
+    DLog(@"Window did exit lion fullscreen %@", self);
     exitingLionFullscreen_ = NO;
     zooming_ = NO;
     lionFullScreen_ = NO;
