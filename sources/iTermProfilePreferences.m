@@ -232,7 +232,7 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
                              KEY_OPEN_TOOLBELT, KEY_PREVENT_TAB, KEY_SCREEN, KEY_SET_LOCALE_VARS, KEY_SPACE,
                              KEY_TITLE_COMPONENTS, KEY_USE_CUSTOM_WINDOW_TITLE, KEY_USE_CUSTOM_TAB_TITLE,
                              KEY_USE_LIBTICKIT_PROTOCOL, KEY_WINDOW_TYPE, KEY_ALLOW_PASTE_BRACKETING,
-                             KEY_PREVENT_APS ];
+                             KEY_PREVENT_APS, KEY_MOVEMENT_KEYS_SCROLL_OUTSIDE_INTERACTIVE_APPS ];
         NSArray *stringArrays = @[ KEY_TAGS, KEY_JOBS, KEY_BOUND_HOSTS ];
         NSArray *dictArrays = @[ KEY_HOTKEY_ALTERNATE_SHORTCUTS, KEY_TRIGGERS, KEY_SMART_SELECTION_RULES,
                                  ];
@@ -424,6 +424,7 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
                   KEY_LEFT_OPTION_KEY_CHANGEABLE: @YES,
                   KEY_RIGHT_OPTION_KEY_CHANGEABLE: @NO,
                   KEY_APPLICATION_KEYPAD_ALLOWED: @NO,
+                  KEY_MOVEMENT_KEYS_SCROLL_OUTSIDE_INTERACTIVE_APPS: @NO,
                   KEY_ALLOW_MODIFY_OTHER_KEYS: @NO,
                   KEY_USE_LIBTICKIT_PROTOCOL: @NO,
                   KEY_PLACE_PROMPT_AT_FIRST_COLUMN: @YES,

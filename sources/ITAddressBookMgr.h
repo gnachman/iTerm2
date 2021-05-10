@@ -223,6 +223,7 @@
 #define KEY_LEFT_OPTION_KEY_CHANGEABLE        @"Left Option Key Changeable"
 #define KEY_RIGHT_OPTION_KEY_CHANGEABLE       @"Right Option Key Changeable"
 #define KEY_APPLICATION_KEYPAD_ALLOWED        @"Application Keypad Allowed"
+#define KEY_MOVEMENT_KEYS_SCROLL_OUTSIDE_INTERACTIVE_APPS @"Movement Keys Scroll Outside Interactive Apps"
 #define KEY_ALLOW_MODIFY_OTHER_KEYS           @"Allow modifyOtherKeys"
 #define KEY_HAS_HOTKEY                        @"Has Hotkey"  // This determines whether the "has a hotkey" box is checked. See also KEY_HOTKEY_CHARACTERS_IGNORING_MODIFIERS.
 #define KEY_HOTKEY_KEY_CODE                   @"HotKey Key Code"

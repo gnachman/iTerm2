@@ -45,6 +45,8 @@ static NSString *const kDeleteKeyString = @"0x7f-0x0";
     IBOutlet NSView *_hotKeyContainerView;
     IBOutlet iTermKeyMappingViewController *_keyMappingViewController;
     IBOutlet NSButton *_allowModifyOtherKeys;
+    IBOutlet NSButton *_movementKeysScrollOutsideInteractiveApps;
+    IBOutlet NSTabView *_tabView;
     iTermHotkeyPreferencesWindowController *_hotkeyPanel;
 }
 
@@ -105,7 +107,10 @@ static NSString *const kDeleteKeyString = @"0x7f-0x0";
                     key:KEY_ALLOW_MODIFY_OTHER_KEYS
             relatedView:nil
                    type:kPreferenceInfoTypeCheckbox];
-
+    [self defineControl:_movementKeysScrollOutsideInteractiveApps
+                    key:KEY_MOVEMENT_KEYS_SCROLL_OUTSIDE_INTERACTIVE_APPS
+            relatedView:nil
+                   type:kPreferenceInfoTypeCheckbox];
     PreferenceInfo *info = [self defineControl:_useLibTickit
                                            key:KEY_USE_LIBTICKIT_PROTOCOL
                                    relatedView:nil
@@ -148,12 +153,6 @@ static NSString *const kDeleteKeyString = @"0x7f-0x0";
 
 - (void)layoutSubviewsForEditCurrentSessionMode {
     _hotKeyContainerView.hidden = YES;
-
-    // Update the "original" size of the view.
-    iTermSizeRememberingView *sizeRememberingView = (iTermSizeRememberingView *)self.view;
-    CGSize size = sizeRememberingView.originalSize;
-    size.height -= _hotKeyContainerView.frame.size.height;
-    sizeRememberingView.originalSize = size;
 }
 
 - (NSArray *)keysForBulkCopy {
@@ -164,6 +163,7 @@ static NSString *const kDeleteKeyString = @"0x7f-0x0";
                        KEY_LEFT_OPTION_KEY_CHANGEABLE,
                        KEY_RIGHT_OPTION_KEY_CHANGEABLE,
                        KEY_APPLICATION_KEYPAD_ALLOWED,
+                       KEY_MOVEMENT_KEYS_SCROLL_OUTSIDE_INTERACTIVE_APPS,
                        KEY_USE_LIBTICKIT_PROTOCOL ];
     return [[super keysForBulkCopy] arrayByAddingObjectsFromArray:keys];
 }

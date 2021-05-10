@@ -1423,17 +1423,17 @@ DQ
             <connections>
                 <outlet property="_allowModifyOtherKeys" destination="K0H-ZR-UrB" id="N2X-uU-Cyh"/>
                 <outlet property="_applicationKeypadAllowed" destination="U4H-3c-nZg" id="eUF-jC-ElI"/>
-                <outlet property="_configureHotKey" destination="buI-gb-hoX" id="yAR-QQ-pnW"/>
-                <outlet property="_deleteSendsCtrlHButton" destination="5074" id="g14-kJ-aEi"/>
-                <outlet property="_hasHotkey" destination="he1-vO-4KV" id="kDr-tW-FQn"/>
-                <outlet property="_hotKeyContainerView" destination="Rmc-92-zTk" id="hRa-hQ-fI5"/>
+                <outlet property="_configureHotKey" destination="lvq-Ke-t7v" id="8fH-Z4-AMG"/>
+                <outlet property="_deleteSendsCtrlHButton" destination="fRb-hJ-joB" id="TnO-E6-PoV"/>
+                <outlet property="_hasHotkey" destination="gVV-UZ-YGh" id="SUx-c4-G0b"/>
+                <outlet property="_hotKeyContainerView" destination="NUB-Bf-hkZ" id="kKE-74-Uwy"/>
                 <outlet property="_keyMappingViewController" destination="ANy-SZ-4JP" id="cji-9x-lSb"/>
-                <outlet property="_leftOptionKeyChangeable" destination="6Zd-tt-TUe" id="ksl-62-egK"/>
-                <outlet property="_optionKeySends" destination="4291" id="IFj-h4-wKL"/>
-                <outlet property="_optionKeySendsLabel" destination="4292" id="nvs-em-xzn"/>
-                <outlet property="_rightOptionKeyChangeable" destination="MyS-QX-vMe" id="uxt-3Z-mOQ"/>
-                <outlet property="_rightOptionKeySends" destination="4293" id="qUt-MU-5Nv"/>
-                <outlet property="_rightOptionKeySendsLabel" destination="4294" id="ZZd-yb-rxs"/>
+                <outlet property="_leftOptionKeyChangeable" destination="ttF-JA-0vc" id="eHg-7n-mCE"/>
+                <outlet property="_movementKeysScrollOutsideInteractiveApps" destination="Nqn-Qm-sbi" id="XeF-2j-BmL"/>
+                <outlet property="_optionKeySends" destination="Oxl-pz-vZ5" id="omH-eJ-aFt"/>
+                <outlet property="_rightOptionKeyChangeable" destination="UGZ-Vx-hCx" id="E0t-Fw-yPb"/>
+                <outlet property="_rightOptionKeySends" destination="gYE-Rz-4du" id="yem-fV-GFg"/>
+                <outlet property="_tabView" destination="gvH-pp-196" id="VXs-g2-ett"/>
                 <outlet property="_useLibTickit" destination="JI4-WQ-gMX" id="Law-dB-f3B"/>
                 <outlet property="delegate" destination="HVI-63-mNz" id="xet-WM-Yj5"/>
                 <outlet property="view" destination="M5G-Dw-0HO" id="7cT-58-ldP"/>
@@ -3950,243 +3950,270 @@ DQ
             <point key="canvasLocation" x="713.5" y="725"/>
         </customView>
         <customView id="M5G-Dw-0HO" userLabel="Prefs - Profiles - Keys" customClass="iTermSizeRememberingView">
-            <rect key="frame" x="0.0" y="0.0" width="657" height="495"/>
+            <rect key="frame" x="0.0" y="0.0" width="657" height="453"/>
             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
             <subviews>
-                <textField verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="4184">
-                    <rect key="frame" x="14" y="475" width="99" height="17"/>
+                <tabView identifier="KeysTabView" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="gvH-pp-196">
+                    <rect key="frame" x="-7" y="-10" width="665" height="469"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Key Mappings" id="4185">
-                        <font key="font" metaFont="systemBold"/>
-                        <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                        <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                    </textFieldCell>
-                </textField>
-                <matrix toolTip="+Esc is the preferred setting for users who don't need the option key to enter diacritics or other special character." verticalHuggingPriority="750" fixedFrame="YES" allowsEmptySelection="NO" autosizesCells="NO" translatesAutoresizingMaskIntoConstraints="NO" id="4291">
-                    <rect key="frame" x="215" y="186" width="224" height="18"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                    <size key="cellSize" width="72" height="18"/>
-                    <size key="intercellSpacing" width="4" height="2"/>
-                    <buttonCell key="prototype" type="radio" title="Radio" imagePosition="left" alignment="left" inset="2" id="4304">
-                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                        <font key="font" metaFont="system"/>
-                    </buttonCell>
-                    <cells>
-                        <column>
-                            <buttonCell type="radio" title="Normal" imagePosition="left" alignment="left" state="on" inset="2" id="4301">
-                                <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                                <font key="font" metaFont="system"/>
-                            </buttonCell>
-                        </column>
-                        <column>
-                            <buttonCell type="radio" title="Meta" imagePosition="left" alignment="left" tag="1" inset="2" id="lOQ-eq-loC">
-                                <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                                <font key="font" metaFont="system"/>
-                            </buttonCell>
-                        </column>
-                        <column>
-                            <buttonCell type="radio" title="Esc+" imagePosition="left" alignment="left" tag="2" inset="2" id="gor-ss-qJ0">
-                                <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                                <font key="font" metaFont="system"/>
-                            </buttonCell>
-                        </column>
-                    </cells>
-                    <connections>
-                        <action selector="settingChanged:" target="kOZ-HN-eXg" id="JkP-R8-l3i"/>
-                        <outlet property="nextKeyView" destination="4293" id="5286"/>
-                    </connections>
-                </matrix>
-                <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="4292">
-                    <rect key="frame" x="56" y="186" width="153" height="18"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="right" title="Left Option key:" id="4300">
-                        <font key="font" metaFont="system"/>
-                        <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                        <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                    </textFieldCell>
-                </textField>
-                <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="4294">
-                    <rect key="frame" x="56" y="166" width="153" height="18"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="right" title="Right Option key:" id="4295">
-                        <font key="font" metaFont="system"/>
-                        <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                        <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                    </textFieldCell>
-                </textField>
-                <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="5074">
-                    <rect key="frame" x="215" y="136" width="151" height="18"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <string key="toolTip">You probably don't want this; most systems use ^? (ASCII 127) for backspace. Changing this setting affects the key mappings in the table above.</string>
-                    <buttonCell key="cell" type="check" title="Delete key sends ^H" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="5075">
-                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                        <font key="font" metaFont="system"/>
-                    </buttonCell>
-                    <connections>
-                        <action selector="deleteSendsCtrlHDidChange:" target="kOZ-HN-eXg" id="YRG-hR-d7y"/>
-                    </connections>
-                </button>
-                <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="U4H-3c-nZg">
-                    <rect key="frame" x="215" y="114" width="219" height="18"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <string key="toolTip">Some programs (such as vim and emacs) want to put the numeric keypad in "application" mode. Turn this off if you always want it to act as a numeric keypad.</string>
-                    <buttonCell key="cell" type="check" title="Allow application keypad mode" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="cTE-39-JA0">
-                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                        <font key="font" metaFont="system"/>
-                    </buttonCell>
-                    <connections>
-                        <action selector="settingChanged:" target="kOZ-HN-eXg" id="QKb-eC-9mV"/>
-                    </connections>
-                </button>
-                <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="K0H-ZR-UrB">
-                    <rect key="frame" x="215" y="70" width="385" height="18"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <string key="toolTip">Some programs (such as vim and emacs) want to put the numeric keypad in "application" mode. Turn this off if you always want it to act as a numeric keypad. NOTE: This setting affects the older xterm control sequence (CSI &gt; Pp m), not the Kitty control sequence related to CSI &gt; flags u.</string>
-                    <buttonCell key="cell" type="check" title="xterm control sequence can enable modifyOtherKeys mode" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="Jc5-qq-jV3">
-                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                        <font key="font" metaFont="system"/>
-                    </buttonCell>
-                    <connections>
-                        <action selector="settingChanged:" target="kOZ-HN-eXg" id="76I-AE-p5v"/>
-                    </connections>
-                </button>
-                <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="6sa-Ma-Wvi">
-                    <rect key="frame" x="16" y="212" width="621" height="255"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                </customView>
-                <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Rmc-92-zTk">
-                    <rect key="frame" x="0.0" y="0.0" width="657" height="63"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <subviews>
-                        <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="n5u-YT-WtN">
-                            <rect key="frame" x="14" y="46" width="111" height="17"/>
-                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                            <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="left" title="Hotkey Window" id="b95-Vc-gK8">
-                                <font key="font" metaFont="systemBold"/>
-                                <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                                <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                            </textFieldCell>
-                        </textField>
-                        <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="he1-vO-4KV">
-                            <rect key="frame" x="14" y="18" width="345" height="18"/>
-                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                            <buttonCell key="cell" type="check" title="A hotkey opens a dedicated window with this profile." bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="9ah-hm-bWA">
-                                <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                                <font key="font" metaFont="system"/>
-                            </buttonCell>
-                            <connections>
-                                <action selector="settingChanged:" target="kOZ-HN-eXg" id="Lz7-Yf-9xL"/>
-                                <outlet property="nextKeyView" destination="6416" id="hN5-ci-YVf"/>
-                            </connections>
-                        </button>
-                        <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="buI-gb-hoX">
-                            <rect key="frame" x="355" y="10" width="192" height="32"/>
-                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                            <buttonCell key="cell" type="push" title="Configure Hotkey Window" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="s6P-D4-UdO">
-                                <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
-                                <font key="font" metaFont="system"/>
-                            </buttonCell>
-                            <connections>
-                                <action selector="openHotKeyPanel:" target="kOZ-HN-eXg" id="zJx-6e-GGL"/>
-                            </connections>
-                        </button>
-                    </subviews>
-                </customView>
-                <matrix verticalHuggingPriority="750" fixedFrame="YES" allowsEmptySelection="NO" autosizesCells="NO" translatesAutoresizingMaskIntoConstraints="NO" id="4293">
-                    <rect key="frame" x="215" y="166" width="224" height="18"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                    <size key="cellSize" width="72" height="18"/>
-                    <size key="intercellSpacing" width="4" height="2"/>
-                    <buttonCell key="prototype" type="radio" title="Radio" imagePosition="left" alignment="left" inset="2" id="4296">
-                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                        <font key="font" metaFont="system"/>
-                    </buttonCell>
-                    <cells>
-                        <column>
-                            <buttonCell type="radio" title="Normal" imagePosition="left" alignment="left" state="on" inset="2" id="4299">
-                                <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                                <font key="font" metaFont="system"/>
-                            </buttonCell>
-                        </column>
-                        <column>
-                            <buttonCell type="radio" title="Meta" imagePosition="left" alignment="left" tag="1" inset="2" id="kdT-sk-axY">
-                                <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                                <font key="font" metaFont="system"/>
-                            </buttonCell>
-                        </column>
-                        <column>
-                            <buttonCell type="radio" title="Esc+" imagePosition="left" alignment="left" tag="2" inset="2" id="0Ys-TQ-i5E">
-                                <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                                <font key="font" metaFont="system"/>
-                            </buttonCell>
-                        </column>
-                    </cells>
-                    <connections>
-                        <action selector="settingChanged:" target="kOZ-HN-eXg" id="Hco-9M-B7p"/>
-                        <outlet property="nextKeyView" destination="5074" id="5287"/>
-                    </connections>
-                </matrix>
-                <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="JI4-WQ-gMX">
-                    <rect key="frame" x="215" y="92" width="199" height="18"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <string key="toolTip">Some programs (such as vim and emacs) want to put the numeric keypad in "application" mode. Turn this off if you always want it to act as a numeric keypad.</string>
-                    <buttonCell key="cell" type="check" title="Report modifiers using CSI u" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="4hL-Io-AkB">
-                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                        <font key="font" metaFont="system"/>
-                    </buttonCell>
-                    <connections>
-                        <action selector="settingChanged:" target="kOZ-HN-eXg" id="sEP-1F-ZXw"/>
-                    </connections>
-                </button>
-                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="fCb-eQ-b2u">
-                    <rect key="frame" x="73" y="137" width="138" height="16"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <textFieldCell key="cell" lineBreakMode="clipping" alignment="right" title="Key Reporting Modes:" id="qAg-7O-p9K">
-                        <font key="font" usesAppearanceFont="YES"/>
-                        <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
-                        <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
-                    </textFieldCell>
-                </textField>
-                <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="6Zd-tt-TUe">
-                    <rect key="frame" x="455" y="185" width="157" height="18"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <string key="toolTip">When enabled, apps can cause this option key to send Esc+. Note that on some external keyboards left and right option keys are swapped.</string>
-                    <buttonCell key="cell" type="check" title="Apps can change this" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="T0f-ZB-N0A">
-                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                        <font key="font" metaFont="system"/>
-                    </buttonCell>
-                    <connections>
-                        <action selector="settingChanged:" target="kOZ-HN-eXg" id="q6w-Zq-aXR"/>
-                    </connections>
-                </button>
-                <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="MyS-QX-vMe">
-                    <rect key="frame" x="455" y="166" width="157" height="18"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <string key="toolTip">When enabled, apps can cause this option key to send Esc+. Note that on some external keyboards left and right option keys are swapped.</string>
-                    <buttonCell key="cell" type="check" title="Apps can change this" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="YWY-Kj-6nh">
-                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                        <font key="font" metaFont="system"/>
-                    </buttonCell>
-                    <connections>
-                        <action selector="settingChanged:" target="kOZ-HN-eXg" id="tn9-zP-Hrr"/>
-                    </connections>
-                </button>
-                <button horizontalHuggingPriority="750" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2zs-Mo-G3z">
-                    <rect key="frame" x="417" y="91" width="18" height="19"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <buttonCell key="cell" type="help" bezelStyle="helpButton" alignment="center" controlSize="small" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="H7E-rj-aaa">
-                        <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
-                        <font key="font" metaFont="smallSystem"/>
-                    </buttonCell>
-                    <connections>
-                        <action selector="csiuHelp:" target="kOZ-HN-eXg" id="ClE-0i-IMq"/>
-                    </connections>
-                </button>
+                    <font key="font" metaFont="system"/>
+                    <tabViewItems>
+                        <tabViewItem label="General" identifier="General" id="Aba-Zo-uvC">
+                            <view key="view" identifier="GeneralTabView" id="KEo-nn-2KS">
+                                <rect key="frame" x="10" y="33" width="645" height="423"/>
+                                <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                                <subviews>
+                                    <customView identifier="GeneralTabViewWrapper" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="J6r-KD-bxU">
+                                        <rect key="frame" x="12" y="10" width="621" height="418"/>
+                                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                        <subviews>
+                                            <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="U4H-3c-nZg">
+                                                <rect key="frame" x="132" y="381" width="219" height="18"/>
+                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                <string key="toolTip">Some programs (such as vim and emacs) want to put the numeric keypad in "application" mode. Turn this off if you always want it to act as a numeric keypad.</string>
+                                                <buttonCell key="cell" type="check" title="Allow application keypad mode" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="cTE-39-JA0">
+                                                    <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                                                    <font key="font" metaFont="system"/>
+                                                </buttonCell>
+                                                <connections>
+                                                    <action selector="settingChanged:" target="kOZ-HN-eXg" id="QKb-eC-9mV"/>
+                                                </connections>
+                                            </button>
+                                            <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="ttF-JA-0vc">
+                                                <rect key="frame" x="132" y="256" width="157" height="18"/>
+                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                <string key="toolTip">When enabled, apps can cause this option key to send Esc+. Note that on some external keyboards left and right option keys are swapped.</string>
+                                                <buttonCell key="cell" type="check" title="Apps can change this" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="Xvy-v8-zjR">
+                                                    <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                                                    <font key="font" metaFont="system"/>
+                                                </buttonCell>
+                                                <connections>
+                                                    <action selector="settingChanged:" target="kOZ-HN-eXg" id="4tU-Xh-7zK"/>
+                                                </connections>
+                                            </button>
+                                            <matrix verticalHuggingPriority="750" fixedFrame="YES" allowsEmptySelection="NO" autosizesCells="NO" translatesAutoresizingMaskIntoConstraints="NO" id="gYE-Rz-4du">
+                                                <rect key="frame" x="132" y="231" width="224" height="18"/>
+                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                                                <size key="cellSize" width="72" height="18"/>
+                                                <size key="intercellSpacing" width="4" height="2"/>
+                                                <buttonCell key="prototype" type="radio" title="Radio" imagePosition="left" alignment="left" inset="2" id="pO3-b4-Eib">
+                                                    <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                                                    <font key="font" metaFont="system"/>
+                                                </buttonCell>
+                                                <cells>
+                                                    <column>
+                                                        <buttonCell type="radio" title="Normal" imagePosition="left" alignment="left" state="on" inset="2" id="fkp-IQ-LJp">
+                                                            <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                                                            <font key="font" metaFont="system"/>
+                                                        </buttonCell>
+                                                    </column>
+                                                    <column>
+                                                        <buttonCell type="radio" title="Meta" imagePosition="left" alignment="left" tag="1" inset="2" id="4I5-MR-el9">
+                                                            <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                                                            <font key="font" metaFont="system"/>
+                                                        </buttonCell>
+                                                    </column>
+                                                    <column>
+                                                        <buttonCell type="radio" title="Esc+" imagePosition="left" alignment="left" tag="2" inset="2" id="XSn-nz-24O">
+                                                            <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                                                            <font key="font" metaFont="system"/>
+                                                        </buttonCell>
+                                                    </column>
+                                                </cells>
+                                                <connections>
+                                                    <action selector="settingChanged:" target="kOZ-HN-eXg" id="ZbB-Zq-Y5j"/>
+                                                    <outlet property="nextKeyView" destination="fRb-hJ-joB" id="cbp-20-R9f"/>
+                                                </connections>
+                                            </matrix>
+                                            <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="UGZ-Vx-hCx">
+                                                <rect key="frame" x="132" y="206" width="157" height="18"/>
+                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                <string key="toolTip">When enabled, apps can cause this option key to send Esc+. Note that on some external keyboards left and right option keys are swapped.</string>
+                                                <buttonCell key="cell" type="check" title="Apps can change this" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="cMx-85-ocB">
+                                                    <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                                                    <font key="font" metaFont="system"/>
+                                                </buttonCell>
+                                                <connections>
+                                                    <action selector="settingChanged:" target="kOZ-HN-eXg" id="Hdb-J7-lD7"/>
+                                                </connections>
+                                            </button>
+                                            <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Gwm-6Y-Hrv">
+                                                <rect key="frame" x="18" y="281" width="110" height="18"/>
+                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="right" title="Left Option key:" id="ehR-mJ-2EC">
+                                                    <font key="font" metaFont="system"/>
+                                                    <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                                                    <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                                                </textFieldCell>
+                                            </textField>
+                                            <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="l3O-jI-Mvm">
+                                                <rect key="frame" x="18" y="231" width="110" height="18"/>
+                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="right" title="Right Option key:" id="Cbw-j5-Mas">
+                                                    <font key="font" metaFont="system"/>
+                                                    <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                                                    <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                                                </textFieldCell>
+                                            </textField>
+                                            <matrix toolTip="+Esc is the preferred setting for users who don't need the option key to enter diacritics or other special character." verticalHuggingPriority="750" fixedFrame="YES" allowsEmptySelection="NO" autosizesCells="NO" translatesAutoresizingMaskIntoConstraints="NO" id="Oxl-pz-vZ5">
+                                                <rect key="frame" x="132" y="281" width="224" height="18"/>
+                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                                                <size key="cellSize" width="72" height="18"/>
+                                                <size key="intercellSpacing" width="4" height="2"/>
+                                                <buttonCell key="prototype" type="radio" title="Radio" imagePosition="left" alignment="left" inset="2" id="wDr-CC-M66">
+                                                    <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                                                    <font key="font" metaFont="system"/>
+                                                </buttonCell>
+                                                <cells>
+                                                    <column>
+                                                        <buttonCell type="radio" title="Normal" imagePosition="left" alignment="left" state="on" inset="2" id="CwM-Et-yJy">
+                                                            <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                                                            <font key="font" metaFont="system"/>
+                                                        </buttonCell>
+                                                    </column>
+                                                    <column>
+                                                        <buttonCell type="radio" title="Meta" imagePosition="left" alignment="left" tag="1" inset="2" id="nz0-Dd-BxJ">
+                                                            <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                                                            <font key="font" metaFont="system"/>
+                                                        </buttonCell>
+                                                    </column>
+                                                    <column>
+                                                        <buttonCell type="radio" title="Esc+" imagePosition="left" alignment="left" tag="2" inset="2" id="xMr-4X-Z11">
+                                                            <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                                                            <font key="font" metaFont="system"/>
+                                                        </buttonCell>
+                                                    </column>
+                                                </cells>
+                                                <connections>
+                                                    <action selector="settingChanged:" target="kOZ-HN-eXg" id="MZm-lO-bG7"/>
+                                                    <outlet property="nextKeyView" destination="gYE-Rz-4du" id="qda-nY-1Ke"/>
+                                                </connections>
+                                            </matrix>
+                                            <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="K0H-ZR-UrB">
+                                                <rect key="frame" x="132" y="337" width="385" height="18"/>
+                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                <string key="toolTip">Some programs (such as vim and emacs) want to put the numeric keypad in "application" mode. Turn this off if you always want it to act as a numeric keypad. NOTE: This setting affects the older xterm control sequence (CSI &gt; Pp m), not the Kitty control sequence related to CSI &gt; flags u.</string>
+                                                <buttonCell key="cell" type="check" title="xterm control sequence can enable modifyOtherKeys mode" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="Jc5-qq-jV3">
+                                                    <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                                                    <font key="font" metaFont="system"/>
+                                                </buttonCell>
+                                                <connections>
+                                                    <action selector="settingChanged:" target="kOZ-HN-eXg" id="76I-AE-p5v"/>
+                                                </connections>
+                                            </button>
+                                            <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Nqn-Qm-sbi">
+                                                <rect key="frame" x="132" y="315" width="428" height="18"/>
+                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                <buttonCell key="cell" type="check" title="Page up, page down, home and end scroll outside interactive apps" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="GRf-s1-ZiR">
+                                                    <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                                                    <font key="font" metaFont="system"/>
+                                                </buttonCell>
+                                                <connections>
+                                                    <action selector="settingChanged:" target="kOZ-HN-eXg" id="E0s-wB-IqM"/>
+                                                </connections>
+                                            </button>
+                                            <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="JI4-WQ-gMX">
+                                                <rect key="frame" x="132" y="359" width="199" height="18"/>
+                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                <string key="toolTip">Some programs (such as vim and emacs) want to put the numeric keypad in "application" mode. Turn this off if you always want it to act as a numeric keypad.</string>
+                                                <buttonCell key="cell" type="check" title="Report modifiers using CSI u" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="4hL-Io-AkB">
+                                                    <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                                                    <font key="font" metaFont="system"/>
+                                                </buttonCell>
+                                                <connections>
+                                                    <action selector="settingChanged:" target="kOZ-HN-eXg" id="sEP-1F-ZXw"/>
+                                                </connections>
+                                            </button>
+                                            <button horizontalHuggingPriority="750" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2zs-Mo-G3z">
+                                                <rect key="frame" x="334" y="358" width="18" height="19"/>
+                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                <buttonCell key="cell" type="help" bezelStyle="helpButton" alignment="center" controlSize="small" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="H7E-rj-aaa">
+                                                    <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                                                    <font key="font" metaFont="smallSystem"/>
+                                                </buttonCell>
+                                                <connections>
+                                                    <action selector="csiuHelp:" target="kOZ-HN-eXg" id="ClE-0i-IMq"/>
+                                                </connections>
+                                            </button>
+                                            <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="NUB-Bf-hkZ">
+                                                <rect key="frame" x="-1" y="137" width="622" height="62"/>
+                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                <subviews>
+                                                    <box verticalHuggingPriority="750" fixedFrame="YES" boxType="separator" translatesAutoresizingMaskIntoConstraints="NO" id="CqK-sy-SCU">
+                                                        <rect key="frame" x="12" y="59" width="597" height="5"/>
+                                                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                    </box>
+                                                    <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="gVV-UZ-YGh">
+                                                        <rect key="frame" x="133" y="36" width="345" height="18"/>
+                                                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                        <buttonCell key="cell" type="check" title="A hotkey opens a dedicated window with this profile." bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="7gx-Q0-psw">
+                                                            <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                                                            <font key="font" metaFont="system"/>
+                                                        </buttonCell>
+                                                        <connections>
+                                                            <action selector="settingChanged:" target="kOZ-HN-eXg" id="9NS-Hr-czF"/>
+                                                            <outlet property="nextKeyView" destination="6416" id="mOF-Ou-dCF"/>
+                                                        </connections>
+                                                    </button>
+                                                    <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="lvq-Ke-t7v">
+                                                        <rect key="frame" x="128" y="4" width="192" height="32"/>
+                                                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                        <buttonCell key="cell" type="push" title="Configure Hotkey Window" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="bhZ-45-rQu">
+                                                            <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                                                            <font key="font" metaFont="system"/>
+                                                        </buttonCell>
+                                                        <connections>
+                                                            <action selector="openHotKeyPanel:" target="kOZ-HN-eXg" id="NOv-0O-OmU"/>
+                                                        </connections>
+                                                    </button>
+                                                </subviews>
+                                            </customView>
+                                            <box verticalHuggingPriority="750" fixedFrame="YES" boxType="separator" translatesAutoresizingMaskIntoConstraints="NO" id="nnK-AL-7aV">
+                                                <rect key="frame" x="12" y="305" width="597" height="5"/>
+                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                            </box>
+                                        </subviews>
+                                    </customView>
+                                </subviews>
+                            </view>
+                        </tabViewItem>
+                        <tabViewItem label="Key Mappings" identifier="KeyMappings" id="Vbb-kB-WbF">
+                            <view key="view" identifier="KeyMappingsTab" id="h4S-Z8-t3R">
+                                <rect key="frame" x="10" y="33" width="645" height="423"/>
+                                <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                                <subviews>
+                                    <customView identifier="KeyMappingsViewWrapper" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="4TC-Ri-lNP">
+                                        <rect key="frame" x="7" y="11" width="635" height="409"/>
+                                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                        <subviews>
+                                            <customView identifier="ExternalView" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="6sa-Ma-Wvi">
+                                                <rect key="frame" x="0.0" y="30" width="635" height="379"/>
+                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                            </customView>
+                                            <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="fRb-hJ-joB">
+                                                <rect key="frame" x="-2" y="-1" width="151" height="18"/>
+                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                <string key="toolTip">You probably don't want this; most systems use ^? (ASCII 127) for backspace. Changing this setting affects the key mappings in the table above.</string>
+                                                <buttonCell key="cell" type="check" title="Delete key sends ^H" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="AW8-Wm-9Se">
+                                                    <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                                                    <font key="font" metaFont="system"/>
+                                                </buttonCell>
+                                                <connections>
+                                                    <action selector="deleteSendsCtrlHDidChange:" target="kOZ-HN-eXg" id="3Bd-9y-tNd"/>
+                                                </connections>
+                                            </button>
+                                        </subviews>
+                                    </customView>
+                                </subviews>
+                            </view>
+                        </tabViewItem>
+                    </tabViewItems>
+                </tabView>
             </subviews>
             <accessibility identifier="prefsProfilesKeys"/>
-            <point key="canvasLocation" x="-90.5" y="-91.5"/>
+            <point key="canvasLocation" x="-90.5" y="-112.5"/>
         </customView>
         <customView id="prV-vq-Wo2" userLabel="Prefs - Profiles - Advanced" customClass="iTermSizeRememberingView">
             <rect key="frame" x="0.0" y="0.0" width="565" height="617"/>
