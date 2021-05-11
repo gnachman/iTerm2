@@ -35,6 +35,12 @@
     NSRange _suggestionRange;
 }
 
+- (void)viewDidMoveToWindow {
+    if (self.window == nil) {
+        [[self undoManager] removeAllActionsWithTarget:[self textStorage]];
+    }
+}
+
 - (BOOL)it_preferredFirstResponder {
     return YES;
 }
