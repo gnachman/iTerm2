@@ -1159,7 +1159,21 @@
     }
     DLog(@"drawing document visible rect %@", NSStringFromRect(self.enclosingScrollView.documentVisibleRect));
 
-    const CGFloat virtualOffset = NSMinY(self.enclosingScrollView.documentVisibleRect) - [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins];
+    const BOOL userScroll = [(PTYScroller*)([[self enclosingScrollView] verticalScroller]) userScroll];
+
+    CGFloat virtualOffset;
+    if (userScroll) {
+        virtualOffset = NSMinY(self.enclosingScrollView.documentVisibleRect) - [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins];
+        DLog(@"Draw document visible rect");
+    } else {
+        // The documentVisibleRect could be wrong if we got more input since -refresh was last
+        // called. Force the last lines to be drawn so the screen doesn't appear to jump as in issue
+        // 9676.
+        const int height = _dataSource.height;
+        virtualOffset = (_dataSource.numberOfLines - height) * _lineHeight;
+        DLog(@"Force draw last rows");
+    }
+
     const NSRect *constRectArray;
     NSInteger rectCount;
     [view getRectsBeingDrawn:&constRectArray count:&rectCount];

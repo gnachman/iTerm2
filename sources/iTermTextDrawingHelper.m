@@ -1196,7 +1196,7 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
         }
     }
 
-//    NSLog(@"Draw text on line %d range %@", row, NSStringFromRange(indexRange));
+//    DLog(@"row %f: %@", (initialPoint.y - virtualOffset) / self.cellSize.height, ScreenCharArrayToStringDebug(theLine, _gridSize.width));
 
     iTermPreciseTimerStatsStartTimer(&_stats[TIMER_STAT_CONSTRUCTION]);
     NSArray<id<iTermAttributedString>> *attributedStrings = [self attributedStringsForLine:theLine
