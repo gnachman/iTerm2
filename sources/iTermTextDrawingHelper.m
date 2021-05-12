@@ -537,7 +537,7 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
         box.backgroundColor = color;
 
         [box.backgroundColor set];
-        iTermRectFillUsingOperation(rect, NSCompositingOperationSourceOver, virtualOffset);
+        iTermRectFillUsingOperation(rect, NSCompositingOperationCopy, virtualOffset);
 
         if (_debug) {
             [[NSColor yellowColor] set];
