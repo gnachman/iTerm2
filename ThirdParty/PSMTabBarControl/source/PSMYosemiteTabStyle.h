@@ -46,4 +46,6 @@ int DebugLogImpl(const char *file, int line, const char *function, NSString* val
                       withTabColor:(NSColor *)tabColor
                    highlightAmount:(CGFloat)highlightAmount
                         horizontal:(BOOL)horizontal;
+- (void)drawShadowForUnselectedTabInRect:(NSRect)backgroundRect;
+
 @end

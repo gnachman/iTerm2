@@ -649,6 +649,18 @@
     }
 }
 
+- (void)drawShadowForUnselectedTabInRect:(NSRect)backgroundRect {
+    const CGFloat shadowHeight = 4;
+    NSRect shadowRect = backgroundRect;
+    shadowRect.size.height = shadowHeight;
+    static NSImage *image;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        image = [[[NSBundle bundleForClass:[self class]] imageForResource:@"UnselectedTabShadow"] retain];
+    });
+    [image drawInRect:shadowRect];
+}
+
 - (void)drawCellBackgroundSelected:(BOOL)selected
                             inRect:(NSRect)cellFrame
                       withTabColor:(NSColor *)tabColor
@@ -672,15 +684,7 @@
 
     if (@available(macOS 10.16, *)) {
         if (!selected) {
-            const CGFloat shadowHeight = 4;
-            NSRect shadowRect = backgroundRect;
-            shadowRect.size.height = shadowHeight;
-            static NSImage *image;
-            static dispatch_once_t onceToken;
-            dispatch_once(&onceToken, ^{
-                image = [[[NSBundle bundleForClass:[self class]] imageForResource:@"UnselectedTabShadow"] retain];
-            });
-            [image drawInRect:shadowRect];
+            [self drawShadowForUnselectedTabInRect:backgroundRect];
         }
     }
 }

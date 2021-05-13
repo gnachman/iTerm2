@@ -223,6 +223,9 @@
 - (void)drawHorizontalLineInFrame:(NSRect)rect y:(CGFloat)y {
 }
 
+- (void)drawShadowForUnselectedTabInRect:(NSRect)backgroundRect {
+}
+
 - (void)drawCellBackgroundSelected:(BOOL)selected
                             inRect:(NSRect)cellFrame
                       withTabColor:(NSColor *)tabColor
