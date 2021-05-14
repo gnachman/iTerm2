@@ -306,8 +306,8 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     NSFont *font;
 
     font = [ITAddressBookMgr fontWithDesc:[bookmark objectForKey:KEY_NORMAL_FONT]];
-    const CGFloat hspace = [[bookmark objectForKey:KEY_HORIZONTAL_SPACING] doubleValue];
-    const CGFloat vspace = [[bookmark objectForKey:KEY_VERTICAL_SPACING] doubleValue];
+    const CGFloat hspace = [iTermProfilePreferences doubleForKey:KEY_HORIZONTAL_SPACING inProfile:bookmark];
+    const CGFloat vspace = [iTermProfilePreferences doubleForKey:KEY_VERTICAL_SPACING inProfile:bookmark];
     return [PTYTextView charSizeForFont:font
                       horizontalSpacing:hspace
                         verticalSpacing:vspace];
