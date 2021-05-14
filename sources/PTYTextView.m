@@ -1155,7 +1155,7 @@
         // called. Force the last lines to be drawn so the screen doesn't appear to jump as in issue
         // 9676.
         const int height = _dataSource.height;
-        virtualOffset = (_dataSource.numberOfLines - height) * _lineHeight;
+        virtualOffset = (_dataSource.numberOfLines - height) * _lineHeight - [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins];
         DLog(@"Force draw last rows");
     }
 
