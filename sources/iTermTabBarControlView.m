@@ -281,6 +281,7 @@ typedef NS_ENUM(NSInteger, iTermTabBarFlashState) {
                              hitView == self &&
                              ![self.itermTabBarDelegate iTermTabBarWindowIsFullScreen]);
     if (handleDrag) {
+        [self.window makeKeyAndOrderFront:nil];
         [self.window performWindowDragWithEvent:event];
         return;
     }
