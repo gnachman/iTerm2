@@ -1269,6 +1269,31 @@ const NSInteger kLongMaximumWordLength = 100000;
     return joinedLines;
 }
 
+- (void)enumerateWrappedLinesIntersectingRange:(VT100GridRange)range
+                                         block:(void (^)(iTermStringLine *, VT100GridWindowedRange, BOOL *))block {
+    if (range.length <= 0) {
+        return;
+    }
+    if (range.location < 0) {
+        [self enumerateWrappedLinesIntersectingRange:VT100GridRangeMake(0, range.length + range.location) block:block];
+        return;
+    }
+    int line = range.location;
+    while (line <= range.location + range.length - 1 && line < [_dataSource numberOfLines]) {
+        VT100GridWindowedRange lineRange = [self rangeForWrappedLineEncompassing:VT100GridCoordMake(0, line)
+                                                            respectContinuations:YES
+                                                                        maxChars:-1];
+
+        iTermStringLine *stringLine = [self stringLineInRange:lineRange];
+        BOOL stop = NO;
+        block(stringLine, lineRange, &stop);
+        if (stop) {
+            return;
+        }
+        line = MAX(line + 1, lineRange.coordRange.end.y + 1);
+    }
+}
+
 - (VT100GridWindowedRange)rangeForWrappedLineEncompassing:(VT100GridCoord)coord
                                      respectContinuations:(BOOL)respectContinuations
                                                  maxChars:(int)maxChars {
@@ -1775,6 +1800,33 @@ trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
     return [[[ScreenCharArray alloc] initWithLine:theLine
                                            length:width
                                      continuation:theLine[width]] autorelease];
+}
+
+- (ScreenCharArray *)screenCharArrayAtLine:(int)line window:(VT100GridRange)window {
+    screen_char_t *theLine = [_dataSource getLineAtIndex:line];
+    const int width = [_dataSource width];
+    int offset = 0;
+    int maxLength = width;
+    if (window.length > 0) {
+        offset = window.location;
+        maxLength = window.length;
+    }
+    return [[[ScreenCharArray alloc] initWithLine:theLine + offset
+                                           length:MIN(maxLength, width)
+                                     continuation:theLine[width]] autorelease];
+}
+
+- (iTermStringLine *)stringLineInRange:(VT100GridWindowedRange)range {
+    ScreenCharArray *array = [self combinedLinesInWindowedRange:range];
+    return [[[iTermStringLine alloc] initWithScreenChars:array.line length:array.length] autorelease];
+}
+
+- (ScreenCharArray *)combinedLinesInWindowedRange:(VT100GridWindowedRange)range {
+    ScreenCharArray *result = [[[ScreenCharArray alloc] init] autorelease];
+    for (NSInteger i = range.coordRange.start.y; i <= range.coordRange.end.y; i++) {
+        result = [result screenCharArrayByAppendingScreenCharArray:[self screenCharArrayAtLine:i window:range.columnWindow]];
+    }
+    return result;
 }
 
 - (ScreenCharArray *)combinedLinesInRange:(NSRange)range {

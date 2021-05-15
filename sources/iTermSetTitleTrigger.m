@@ -22,6 +22,10 @@
     return @"Enter new title";
 }
 
+- (BOOL)isIdempotent {
+    return YES;
+}
+
 - (BOOL)takesParameter
 {
     return YES;

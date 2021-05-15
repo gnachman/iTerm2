@@ -26,6 +26,9 @@
   return @"Directory";
 }
 
+- (BOOL)isIdempotent {
+    return YES;
+}
 
 - (BOOL)performActionWithCapturedStrings:(NSString *const *)capturedStrings
                           capturedRanges:(const NSRange *)capturedRanges

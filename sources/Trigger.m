@@ -105,6 +105,10 @@ NSString * const kTriggerDisabledKey = @"disabled";
     return nil;
 }
 
+- (BOOL)isIdempotent {
+    return NO;
+}
+
 - (NSArray *)groupedMenuItemsForPopupButton
 {
   NSDictionary *menuItems = [self menuItemsForPoupupButton];

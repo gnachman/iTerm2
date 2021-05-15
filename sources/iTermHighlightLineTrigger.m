@@ -40,6 +40,10 @@
     return NO;
 }
 
+- (BOOL)isIdempotent {
+    return YES;
+}
+
 - (NSString *)stringValue {
     return [self stringForTextColor:self.textColor backgroundColor:self.backgroundColor];
 }

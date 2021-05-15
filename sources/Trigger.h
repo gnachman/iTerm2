@@ -32,6 +32,7 @@ extern NSString * const kTriggerDisabledKey;
 @property (nonatomic, retain) NSColor *textColor;
 @property (nonatomic, retain) NSColor *backgroundColor;
 @property (nonatomic, readonly) BOOL instantTriggerCanFireMultipleTimesPerLine;
+@property (nonatomic, readonly) BOOL isIdempotent;
 
 + (NSSet<NSString *> *)synonyms;
 + (Trigger *)triggerFromDict:(NSDictionary *)dict;

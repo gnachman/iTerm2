@@ -41,6 +41,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)aggressiveFocusFollowsMouse;
 + (BOOL)alertsIndicateShortcuts;
 + (BOOL)allowDragOfTabIntoNewWindow;
++ (BOOL)allowIdempotentTriggers;
 + (BOOL)allowInteractiveSwipeBetweenTabs;
 + (BOOL)allowTabbarInTitlebarAccessoryBigSur;
 + (BOOL)alternateMouseScroll;

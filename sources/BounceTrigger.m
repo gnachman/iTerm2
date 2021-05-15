@@ -35,6 +35,10 @@ enum {
     return YES;
 }
 
+- (BOOL)isIdempotent {
+    return YES;
+}
+
 - (NSInteger)indexForObject:(id)object {
     int i = 0;
     for (NSNumber *n in [self objectsSortedByValueInDict:[self menuItemsForPoupupButton]]) {

@@ -3096,7 +3096,17 @@ ITERM_WEAKLY_REFERENCEABLE
 
     // If the trigger causes the session to get released, don't crash.
     [[self retain] autorelease];
+    [self reallyCheckTriggersOnPartialLine:partial
+                                stringLine:stringLine
+                                lineNumber:startAbsLineNumber
+                        requireIdempotency:NO];
+}
 
+
+- (void)reallyCheckTriggersOnPartialLine:(BOOL)partial
+                              stringLine:(iTermStringLine *)stringLine
+                              lineNumber:(long long)startAbsLineNumber
+                      requireIdempotency:(BOOL)requireIdempotency {
     for (iTermExpectation *expectation in [[_expect.expectations copy] autorelease]) {
         NSArray<NSString *> *capture = [stringLine.stringValue captureComponentsMatchedByRegex:expectation.regex];
         if (capture.count) {
@@ -3111,6 +3121,9 @@ ITERM_WEAKLY_REFERENCEABLE
     DLog(@"Start checking triggers");
     [_triggersSlownessDetector measureEvent:PTYSessionSlownessEventTriggers block:^{
         for (Trigger *trigger in triggers) {
+            if (requireIdempotency && !trigger.isIdempotent) {
+                continue;
+            }
             BOOL stop = [trigger tryString:stringLine
                                  inSession:self
                                partialLine:partial
@@ -5128,6 +5141,17 @@ ITERM_WEAKLY_REFERENCEABLE
     if (passwordInput != _passwordInput) {
         _passwordInput = _shell.passwordInput;
         [[iTermSecureKeyboardEntryController sharedInstance] update];
+    }
+
+    if (![self shouldUseTriggers] && [iTermAdvancedSettingsModel allowIdempotentTriggers]) {
+        iTermTextExtractor *extractor = [[[iTermTextExtractor alloc] initWithDataSource:_screen] autorelease];
+        [extractor enumerateWrappedLinesIntersectingRange:VT100GridRangeMake(_screen.numberOfScrollbackLines, _screen.height) block:
+         ^(iTermStringLine *stringLine, VT100GridWindowedRange range, BOOL *stop) {
+            [self reallyCheckTriggersOnPartialLine:NO
+                                        stringLine:stringLine
+                                        lineNumber:range.coordRange.start.y
+                                requireIdempotency:YES];
+        }];
     }
     _timerRunning = NO;
 }

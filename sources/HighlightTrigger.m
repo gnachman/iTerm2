@@ -81,6 +81,10 @@ enum {
     return YES;
 }
 
+- (BOOL)isIdempotent {
+    return YES;
+}
+
 - (NSDictionary *)menuItemsForPoupupButton
 {
     return [NSDictionary dictionaryWithObjectsAndKeys:

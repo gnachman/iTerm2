@@ -19,6 +19,10 @@
     return NO;
 }
 
+- (BOOL)isIdempotent {
+    return YES;
+}
+
 - (BOOL)performActionWithCapturedStrings:(NSString *const *)capturedStrings
                           capturedRanges:(const NSRange *)capturedRanges
                             captureCount:(NSInteger)captureCount

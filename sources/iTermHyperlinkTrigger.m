@@ -26,6 +26,10 @@
     return YES;
 }
 
+- (BOOL)isIdempotent {
+    return YES;
+}
+
 - (NSString *)triggerOptionalParameterPlaceholderWithInterpolation:(BOOL)interpolation {
     return [self triggerOptionalDefaultParameterValueWithInterpolation:interpolation];
 }
