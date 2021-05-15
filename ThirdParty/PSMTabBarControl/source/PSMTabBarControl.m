@@ -1446,6 +1446,7 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionHTMLTabTitles = @"PSMTabBarContr
 
     if ([self.delegate respondsToSelector:@selector(tabViewShouldDragWindow:event:)] &&
         [self.delegate tabViewShouldDragWindow:_tabView event:theEvent]) {
+        [self.window makeKeyAndOrderFront:nil];
         [self.window performWindowDragWithEvent:theEvent];
         return;
     }

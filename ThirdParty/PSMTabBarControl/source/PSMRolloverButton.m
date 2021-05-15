@@ -145,6 +145,7 @@ static const CGFloat PSMRolloverButtonMaxAlpha = 0.25;
 }
 
 - (void)mouseDragged:(NSEvent *)event {
+    [self.window makeKeyAndOrderFront:nil];
     [self.window performWindowDragWithEvent:event];
 }
 

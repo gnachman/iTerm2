@@ -258,6 +258,7 @@ const CGFloat iTermGetStatusBarHeight() {
 
 - (void)mouseDragged:(NSEvent *)event {
     if ([self shouldDragWindowForEvent:event]) {
+        [self.window makeKeyAndOrderFront:nil];
         [self.window performWindowDragWithEvent:event];
         return;
     }
