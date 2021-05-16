@@ -176,7 +176,7 @@ typedef struct {
 - (void)loadMetricsWithDrawingHelper:(iTermTextDrawingHelper *)drawingHelper
                             textView:(PTYTextView *)textView
                               screen:(VT100Screen *)screen {
-    _documentVisibleRect = textView.enclosingScrollView.documentVisibleRect;
+    _documentVisibleRect = textView.textDrawingHelperVisibleRect;
 
     _visibleRange = [drawingHelper coordRangeForRect:_documentVisibleRect];
     _visibleRange.start.x = MAX(0, _visibleRange.start.x);
@@ -209,9 +209,9 @@ typedef struct {
     _badgeImage = drawingHelper.badgeImage;
     if (_badgeImage) {
         _badgeDestinationRect = [iTermTextDrawingHelper rectForBadgeImageOfSize:_badgeImage.size
-                                                                destinationRect:textView.enclosingScrollView.documentVisibleRect
+                                                                destinationRect:textView.textDrawingHelperVisibleRect
                                                            destinationFrameSize:textView.frame.size
-                                                                    visibleSize:textView.enclosingScrollView.documentVisibleRect.size
+                                                                    visibleSize:textView.textDrawingHelperVisibleRect.size
                                                                   sourceRectPtr:&_badgeSourceRect
                                                                         margins:NSEdgeInsetsMake(drawingHelper.badgeTopMargin,
                                                                                                  0,

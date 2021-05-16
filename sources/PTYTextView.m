@@ -1182,6 +1182,7 @@
     for (NSInteger i = 0; i < rectCount; i++) {
         rectArray[i] = constRectArray[i];
         rectArray[i].origin.y += virtualOffset;
+        DLog(@"rectArray[%@]=%@", @(i), NSStringFromRect(rectArray[i]));
     }
 
     [self performBlockWithFlickerFixerGrid:^{
@@ -1195,6 +1196,13 @@
 
         NSRect virtualRect = rect;
         virtualRect.origin.y += virtualOffset;
+
+        if (gDebugLogging) {
+            DLog(@"DRAW vrect=%@ voff=%@ time=%@ session=%@", NSStringFromRect(virtualRect), @(virtualOffset), @([NSDate timeIntervalSinceReferenceDate]), self.delegate);
+            DLog(@"\n%@", [_dataSource debugString]);
+        }
+
+
         [_drawingHelper drawTextViewContentInRect:virtualRect rectsPtr:rectArray rectCount:rectCount virtualOffset:virtualOffset];
 
         [_indicatorsHelper drawInFrame:NSRectSubtractingVirtualOffset(_drawingHelper.indicatorFrame, virtualOffset)];
@@ -1216,6 +1224,19 @@
 }
 
 - (void)drawRect:(NSRect)rect {
+}
+
+- (NSRect)textDrawingHelperVisibleRect {
+    const BOOL userScroll = [(PTYScroller*)([[self enclosingScrollView] verticalScroller]) userScroll];
+    if (userScroll) {
+        return self.enclosingScrollView.documentVisibleRect;
+    } else {
+        // This is necessary because of the special case in -drawRect:inView:
+        const int height = _dataSource.height;
+        NSRect rect = self.enclosingScrollView.documentVisibleRect;
+        rect.origin.y = (_dataSource.numberOfLines - height) * _lineHeight;
+        return rect;
+    }
 }
 
 - (void)performBlockWithFlickerFixerGrid:(void (NS_NOESCAPE ^)(void))block {
