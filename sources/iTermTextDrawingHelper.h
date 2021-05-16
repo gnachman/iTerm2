@@ -61,6 +61,7 @@ BOOL CheckFindMatchAtIndex(NSData *findMatches, int index);
 - (void)drawingHelperDidFindRunOfAnimatedCellsStartingAt:(VT100GridCoord)coord ofLength:(int)length;
 
 - (NSString *)drawingHelperLabelForDropTargetOnLine:(int)line;
+- (NSRect)textDrawingHelperVisibleRect;
 
 @end
 

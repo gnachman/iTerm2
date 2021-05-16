@@ -269,6 +269,7 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
     NSInteger yLimit = _numberOfLines;
 
     VT100GridCoordRange boundingCoordRange = [self coordRangeForRect:rect];
+    DLog(@"BEFORE: boundingCoordRange=%@", VT100GridCoordRangeDescription(boundingCoordRange));
     NSRange visibleLines = [self rangeOfVisibleRows];
 
     // Start at 0 because ligatures can draw incorrectly otherwise. When a font has a ligature for
@@ -278,16 +279,18 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
     boundingCoordRange.start.y = MAX(MAX(0, boundingCoordRange.start.y - 1), visibleLines.location);
     boundingCoordRange.end.x = MIN(_gridSize.width, boundingCoordRange.end.x + haloWidth);
     boundingCoordRange.end.y = MIN(yLimit, boundingCoordRange.end.y + 1);
+    DLog(@"AFTER: boundingCoordRange=%@", VT100GridCoordRangeDescription(boundingCoordRange));
 
     int numRowsInRect = MAX(0, boundingCoordRange.end.y - boundingCoordRange.start.y);
     if (numRowsInRect == 0) {
+        DLog(@"No rows in rect given bounding coord range %@", VT100GridCoordRangeDescription(boundingCoordRange));
         return;
     }
     NSMutableData *store = [NSMutableData dataWithLength:numRowsInRect * sizeof(NSRange)];
     NSRange *ranges = (NSRange *)store.mutableBytes;
     for (int i = 0; i < rectCount; i++) {
         VT100GridCoordRange coordRange = [self coordRangeForRect:rectArray[i]];
-//        NSLog(@"Have to draw rect %@ (%@)", NSStringFromRect(rectArray[i]), VT100GridCoordRangeDescription(coordRange));
+        DLog(@"Have to draw rect %@ (%@)", NSStringFromRect(rectArray[i]), VT100GridCoordRangeDescription(coordRange));
         int coordRangeMinX = 0;
         int coordRangeMaxX = MIN(_gridSize.width, coordRange.end.x + haloWidth);
 
@@ -1196,7 +1199,7 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
         }
     }
 
-//    DLog(@"row %f: %@", (initialPoint.y - virtualOffset) / self.cellSize.height, ScreenCharArrayToStringDebug(theLine, _gridSize.width));
+    DLog(@"row %f: %@", (initialPoint.y - virtualOffset) / self.cellSize.height, ScreenCharArrayToStringDebug(theLine, _gridSize.width));
 
     iTermPreciseTimerStatsStartTimer(&_stats[TIMER_STAT_CONSTRUCTION]);
     NSArray<id<iTermAttributedString>> *attributedStrings = [self attributedStringsForLine:theLine
@@ -3326,7 +3329,7 @@ static BOOL iTermTextDrawingHelperShouldAntiAlias(screen_char_t *c,
     _frame = _delegate.frame;
     _visibleRect = _delegate.visibleRect;
     _scrollViewContentSize = _delegate.enclosingScrollView.contentSize;
-    _scrollViewDocumentVisibleRect = _delegate.enclosingScrollView.documentVisibleRect;
+    _scrollViewDocumentVisibleRect = _delegate.textDrawingHelperVisibleRect;
     _preferSpeedToFullLigatureSupport = [iTermAdvancedSettingsModel preferSpeedToFullLigatureSupport];
 
     BOOL ignore1 = NO, ignore2 = NO;
