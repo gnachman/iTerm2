@@ -2541,6 +2541,26 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     return notes;
 }
 
+- (void)removePromptMarksBelowLine:(int)line {
+    VT100ScreenMark *mark = [self lastPromptMark];
+    if (!mark) {
+        return;
+    }
+
+    VT100GridCoordRange range = [self coordRangeForInterval:mark.entry.interval];
+    while (range.start.y >= line) {
+        if (mark == self.lastCommandMark) {
+            self.lastCommandMark = nil;
+        }
+        [self removeObjectFromIntervalTree:mark];
+        mark = [self lastPromptMark];
+        if (!mark) {
+            return;
+        }
+        range = [self coordRangeForInterval:mark.entry.interval];
+    }
+}
+
 - (VT100ScreenMark *)lastPromptMark {
     return [self lastMarkMustBePrompt:YES class:[VT100ScreenMark class]];
 }
@@ -3417,6 +3437,10 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
             // Only do it in alternate screen mode to avoid doing this for zsh (issue 8822)
             [delegate_ screenRemoveSelection];
             [self scrollScreenIntoHistory];
+        } else {
+            // This is important for tmux integration with shell integration enabled. The screen
+            // terminal uses ED 0 instead of ED 2 to clear the screen (e.g., when you do ^L at the shell).
+            [self removePromptMarksBelowLine:yStart + self.numberOfScrollbackLines];
         }
     } else {
         return;
