@@ -375,6 +375,9 @@ UTF32Char CharToLongChar(unichar code, BOOL isComplex);
 // returned.
 int AppendToComplexChar(int key, unichar codePoint);
 
+// Add a code point to the end of an existing char, whether complex or not.
+void AppendToChar(screen_char_t *dest, unichar c);
+
 // Translate a surrogate pair into a single utf-32 char.
 UTF32Char DecodeSurrogatePair(unichar high, unichar low);
 

@@ -480,6 +480,18 @@ void SetComplexCharInScreenChar(screen_char_t *screenChar,
     }
 }
 
+void AppendToChar(screen_char_t *dest, unichar c) {
+    if (dest->complexChar) {
+        dest->code = AppendToComplexChar(dest->code, c);
+    } else {
+        unichar chars[2] = { dest->code, c };
+        NSString *combined = [[[NSString alloc] initWithCharacters:chars length:sizeof(chars) / sizeof(*chars)] autorelease];
+        SetComplexCharInScreenChar(dest,
+                                   combined,
+                                   iTermUnicodeNormalizationNone, NO);
+    }
+}
+
 BOOL StringContainsCombiningMark(NSString *s) {
     if (s.length < 2) {
         return NO;
@@ -681,6 +693,12 @@ void StringToScreenChars(NSString *s,
         // Set the code and the complex flag. Also return early if no cell should be used by this
         // grapheme cluster. Set the isDoubleWidth flag.
         if (!composedOrNonBmpChar) {
+            if (baseBmpChar == 0x200c && j > 0) {
+                // Zero-width non-joiner. Although this is default ignorable we don't want to ignore it becuse
+                // otherwise a ligature could be formed at drawing time.
+                AppendToChar(&buf[j - 1], baseBmpChar);
+                return;
+            }
             if ([ignorableCharacters characterIsMember:baseBmpChar]) {
                 return;
             } else if ([spacingCombiningMarks characterIsMember:baseBmpChar]) {
