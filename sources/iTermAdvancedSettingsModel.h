@@ -144,6 +144,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (double)hotkeyTermAnimationDuration;
 + (BOOL)hotkeyWindowsExcludedFromCycling;
 + (BOOL)hotkeyWindowFloatsAboveOtherWindows DEPRECATED_ATTRIBUTE;
++ (double)idempotentTriggerModeRateLimit;
 + (double)idleTimeSeconds;
 + (BOOL)ignoreHardNewlinesInURLs;
 + (BOOL)includePasteHistoryInAdvancedPaste;

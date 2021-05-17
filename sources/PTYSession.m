@@ -58,6 +58,7 @@
 #import "iTermObject.h"
 #import "iTermOpenDirectory.h"
 #import "iTermPreferences.h"
+#import "iTermRateLimitedUpdate.h"
 #import "iTermScriptConsole.h"
 #import "iTermScriptHistory.h"
 #import "iTermSharedImageStore.h"
@@ -622,6 +623,8 @@ static const NSUInteger kMaxHosts = 100;
     // Measures time spent in triggers and executing tokens while in interactive apps.
     // nil when not in soft alternate screen mode.
     iTermSlownessDetector *_triggersSlownessDetector;
+
+    iTermRateLimitedUpdate *_idempotentTriggerRateLimit;
 }
 
 @synthesize isDivorced = _divorced;
@@ -998,6 +1001,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_arrangementGUID release];
     [_triggerWindowController release];
     [_triggersSlownessDetector release];
+    [_idempotentTriggerRateLimit release];
 
     [super dealloc];
 }
@@ -5144,16 +5148,30 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 
     if (![self shouldUseTriggers] && [iTermAdvancedSettingsModel allowIdempotentTriggers]) {
-        iTermTextExtractor *extractor = [[[iTermTextExtractor alloc] initWithDataSource:_screen] autorelease];
-        [extractor enumerateWrappedLinesIntersectingRange:VT100GridRangeMake(_screen.numberOfScrollbackLines, _screen.height) block:
-         ^(iTermStringLine *stringLine, VT100GridWindowedRange range, BOOL *stop) {
-            [self reallyCheckTriggersOnPartialLine:NO
-                                        stringLine:stringLine
-                                        lineNumber:range.coordRange.start.y
-                                requireIdempotency:YES];
+        const NSTimeInterval interval = [iTermAdvancedSettingsModel idempotentTriggerModeRateLimit];
+        if (!_idempotentTriggerRateLimit) {
+            _idempotentTriggerRateLimit = [[iTermRateLimitedUpdate alloc] initWithName:@"idempotent triggers"
+                                                                       minimumInterval:interval];
+        } else {
+            _idempotentTriggerRateLimit.minimumInterval = interval;
+        }
+        __weak __typeof(self) weakSelf = self;
+        [_idempotentTriggerRateLimit performRateLimitedBlock:^{
+            [weakSelf checkIdempotentTriggers];
         }];
     }
     _timerRunning = NO;
+}
+
+- (void)checkIdempotentTriggers {
+    iTermTextExtractor *extractor = [[[iTermTextExtractor alloc] initWithDataSource:_screen] autorelease];
+    [extractor enumerateWrappedLinesIntersectingRange:VT100GridRangeMake(_screen.numberOfScrollbackLines, _screen.height) block:
+     ^(iTermStringLine *stringLine, VT100GridWindowedRange range, BOOL *stop) {
+        [self reallyCheckTriggersOnPartialLine:NO
+                                    stringLine:stringLine
+                                    lineNumber:range.coordRange.start.y
+                            requireIdempotency:YES];
+    }];
 }
 
 // Update the tab, session view, and window title.
