@@ -11484,8 +11484,8 @@ backgroundColor:(NSColor *)backgroundColor {
         case WINDOW_TYPE_COMPACT:
         case WINDOW_TYPE_ACCESSORY: {
             DLog(@"Will apply width adjustment of %@", @(_widthAdjustment));
-            NSRect rect = self.window.frame;
             rect.size.width += _widthAdjustment;
+            DLog(@"Return %@", NSStringFromRect(rect));
             return rect;
         }
     }
