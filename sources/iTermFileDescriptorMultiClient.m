@@ -748,6 +748,40 @@ static unsigned long long MakeUniqueID(void) {
     });
 }
 
+- (NSString *)pathToServerInBundle {
+    return [[NSBundle bundleForClass:self.class] pathForAuxiliaryExecutable:@"iTermServer"];
+}
+
+- (BOOL)shouldCopyServerTo:(NSString *)desiredPath {
+    DLog(@"%@", desiredPath);
+    NSFileManager *fileManager = [NSFileManager defaultManager];
+    if (![fileManager fileExistsAtPath:desiredPath]) {
+        DLog(@"File doesn't exist");
+        return YES;
+    }
+
+    NSError *error = nil;
+    NSDictionary<NSFileAttributeKey, id> *attributes = [fileManager attributesOfItemAtPath:desiredPath error:&error];
+    if (!attributes) {
+        DLog(@"%@", error);
+        return YES;
+    }
+
+    const long long existingFileSize = [attributes fileSize];
+
+    NSString *pathToServerInBundle = [self pathToServerInBundle];
+    attributes = [fileManager attributesOfItemAtPath:pathToServerInBundle error:&error];
+    if (!attributes) {
+        DLog(@"%@", error);
+        return YES;
+    }
+
+    const long long bundleFileSize = [attributes fileSize];
+    DLog(@"Existing size=%@ bundle size=%@", @(existingFileSize), @(bundleFileSize));
+
+    return existingFileSize != bundleFileSize;
+}
+
 // Copy iTermServer to a safe location where Autoupdate won't delete it. See issue 9022 for
 // wild speculation on why this is important.
 - (NSString *)serverPathCopyingIfNeeded {
@@ -761,12 +795,12 @@ static unsigned long long MakeUniqueID(void) {
     NSFileManager *fileManager = [NSFileManager defaultManager];
 
     // Does the server already exist where we need it to be?
-    if (![fileManager fileExistsAtPath:desiredPath]) {
-        NSString *sourcePath = [[NSBundle bundleForClass:self.class] pathForAuxiliaryExecutable:@"iTermServer"];
+    if ([self shouldCopyServerTo:desiredPath]) {
+        NSString *sourcePath = [self pathToServerInBundle];
         NSError *error = nil;
-        [[NSFileManager defaultManager] copyItemAtPath:sourcePath
-                                                toPath:desiredPath
-                                                 error:&error];
+        [fileManager copyItemAtPath:sourcePath
+                             toPath:desiredPath
+                              error:&error];
         if (error) {
             [self showError:error
                     message:[NSString stringWithFormat:@"Could not copy %@ to %@: %@", sourcePath, desiredPath, error.localizedDescription]
