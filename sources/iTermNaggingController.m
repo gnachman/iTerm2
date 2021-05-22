@@ -406,6 +406,9 @@ static NSString *const iTermNaggingControllerDidChangeTmuxWindowsShouldCloseAfte
         DLog(@"Don't show warning");
         return;
     }
+    if ([[[NSUserDefaults standardUserDefaults] objectForKey:kTurnOffSlowTriggersOfferUserDefaultsKey] isEqual:@NO]) {
+        return;
+    }
     NSString *title;
     title = @"This session’s triggers are pretty slow. Disable them in interactive apps?";
 
@@ -429,7 +432,6 @@ static NSString *const iTermNaggingControllerDidChangeTmuxWindowsShouldCloseAfte
             case 1: // Stop Asking
                 [[NSUserDefaults standardUserDefaults] setBool:NO
                                                         forKey:kTurnOffSlowTriggersOfferUserDefaultsKey];
-                [self.delegate naggingControllerDisableBracketedPasteMode];
                 break;
 
             case 2: // Help
