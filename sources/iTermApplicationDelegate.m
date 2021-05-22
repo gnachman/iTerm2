@@ -909,7 +909,7 @@ static BOOL hasBecomeActive = NO;
                    title:@"New Tab…"
                 selector:@selector(newSessionInTabAtIndex:)
          openAllSelector:@selector(newSessionsInWindow:)];
-    [self _addArrangementsMenuTo:aMenu];
+    [self addArrangementsToDockMenu:aMenu];
 
     return ([aMenu autorelease]);
 }
@@ -1139,8 +1139,8 @@ static BOOL hasBecomeActive = NO;
             }
         });
     }
-    [self updateRestoreWindowArrangementsMenu:windowArrangements_ asTabs:NO];
-    [self updateRestoreWindowArrangementsMenu:windowArrangementsAsTabs_ asTabs:YES];
+    [self updateRestoreWindowArrangementsMenu:windowArrangements_ asTabs:NO fromDock:NO];
+    [self updateRestoreWindowArrangementsMenu:windowArrangementsAsTabs_ asTabs:YES fromDock:NO];
 
     // register for services
     [NSApp registerServicesMenuSendTypes:@[ NSPasteboardTypeString ]
@@ -1276,8 +1276,8 @@ static BOOL hasBecomeActive = NO;
 }
 
 - (void)windowArrangementsDidChange:(id)sender {
-    [self updateRestoreWindowArrangementsMenu:windowArrangements_ asTabs:NO];
-    [self updateRestoreWindowArrangementsMenu:windowArrangementsAsTabs_ asTabs:YES];
+    [self updateRestoreWindowArrangementsMenu:windowArrangements_ asTabs:NO fromDock:NO];
+    [self updateRestoreWindowArrangementsMenu:windowArrangementsAsTabs_ asTabs:YES fromDock:NO];
 }
 
 - (void)toolDidToggle:(NSNotification *)notification {
@@ -1530,9 +1530,26 @@ static BOOL hasBecomeActive = NO;
 
 #pragma mark - Main Menu
 
-- (void)updateRestoreWindowArrangementsMenu:(NSMenuItem *)menuItem asTabs:(BOOL)asTabs {
+- (SEL)restoreWindowArrangementSelectorAsTabs:(BOOL)asTabs fromDock:(BOOL)fromDock {
+    if (fromDock) {
+        if (asTabs) {
+            return @selector(restoreWindowArrangementAfterDelayAsTabs:);
+        } else {
+            return @selector(restoreWindowArrangementAfterDelay:);
+        }
+    } else {
+        if (asTabs) {
+            return @selector(restoreWindowArrangementAsTabs:);
+        } else {
+            return @selector(restoreWindowArrangement:);
+        }
+    }
+}
+
+- (void)updateRestoreWindowArrangementsMenu:(NSMenuItem *)menuItem asTabs:(BOOL)asTabs fromDock:(BOOL)fromDock {
+    SEL selector = [self restoreWindowArrangementSelectorAsTabs:asTabs fromDock:fromDock];
     [WindowArrangements refreshRestoreArrangementsMenu:menuItem
-                                          withSelector:asTabs ? @selector(restoreWindowArrangementAsTabs:) : @selector(restoreWindowArrangement:)
+                                          withSelector:selector
                                        defaultShortcut:kRestoreDefaultWindowArrangementShortcut
                                             identifier:asTabs ? @"Restore Window Arrangement as Tabs" : @"Restore Window Arrangement"];
 }
@@ -1581,13 +1598,13 @@ static BOOL hasBecomeActive = NO;
     return bookmarkMenu;
 }
 
-- (void)_addArrangementsMenuTo:(NSMenu *)theMenu {
+- (void)addArrangementsToDockMenu:(NSMenu *)theMenu {
     NSMenuItem *container = [theMenu addItemWithTitle:@"Restore Arrangement"
                                                action:nil
                                         keyEquivalent:@""];
     NSMenu *subMenu = [[[NSMenu alloc] init] autorelease];
     [container setSubmenu:subMenu];
-    [self updateRestoreWindowArrangementsMenu:container asTabs:NO];
+    [self updateRestoreWindowArrangementsMenu:container asTabs:NO fromDock:YES];
 }
 
 - (void)buildSessionSubmenu:(NSNotification *)aNotification {
@@ -1674,8 +1691,20 @@ static BOOL hasBecomeActive = NO;
     [[iTermLaunchServices sharedInstance] makeTerminalDefaultTerminal];
 }
 
+- (void)restoreWindowArrangementAfterDelay:(id)sender {
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [[iTermController sharedInstance] loadWindowArrangementWithName:[sender title]];
+    });
+}
+
 - (void)restoreWindowArrangement:(id)sender {
     [[iTermController sharedInstance] loadWindowArrangementWithName:[sender title]];
+}
+
+- (void)restoreWindowArrangementAfterDelayAsTabs:(id)sender {
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [[iTermController sharedInstance] loadWindowArrangementWithName:[sender title] asTabsInTerminal:[[iTermController sharedInstance] currentTerminal]];
+    });
 }
 
 - (void)restoreWindowArrangementAsTabs:(id)sender {
