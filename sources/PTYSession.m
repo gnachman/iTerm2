@@ -5169,7 +5169,7 @@ ITERM_WEAKLY_REFERENCEABLE
      ^(iTermStringLine *stringLine, VT100GridWindowedRange range, BOOL *stop) {
         [self reallyCheckTriggersOnPartialLine:NO
                                     stringLine:stringLine
-                                    lineNumber:range.coordRange.start.y
+                                    lineNumber:range.coordRange.start.y + _screen.totalScrollbackOverflow
                             requireIdempotency:YES];
     }];
 }
