@@ -163,6 +163,7 @@ NSString * const kTriggerDisabledKey = @"disabled";
 
     __block BOOL stopFutureTriggersFromRunningOnThisLine = NO;
     NSString *s = stringLine.stringValue;
+    DLog(@"Search for regex %@ in string %@", regex_, s);
     [s enumerateStringsMatchedByRegex:regex_
                            usingBlock:^(NSInteger captureCount,
                                         NSString *const __unsafe_unretained *capturedStrings,
