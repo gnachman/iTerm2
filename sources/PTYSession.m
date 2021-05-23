@@ -625,6 +625,7 @@ static const NSUInteger kMaxHosts = 100;
     iTermSlownessDetector *_triggersSlownessDetector;
 
     iTermRateLimitedUpdate *_idempotentTriggerRateLimit;
+    BOOL _shouldUpdateIdempotentTriggers;
 }
 
 @synthesize isDivorced = _divorced;
@@ -5164,6 +5165,12 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)checkIdempotentTriggers {
+    DLog(@"%@", self);
+    if (!_shouldUpdateIdempotentTriggers) {
+        DLog(@"Don't need to update idempotent triggers");
+        return;
+    }
+    _shouldUpdateIdempotentTriggers = NO;
     iTermTextExtractor *extractor = [[[iTermTextExtractor alloc] initWithDataSource:_screen] autorelease];
     DLog(@"Check idempotent triggers from line number %@", @(_screen.numberOfScrollbackLines));
     [extractor enumerateWrappedLinesIntersectingRange:VT100GridRangeMake(_screen.numberOfScrollbackLines, _screen.height) block:
@@ -8940,6 +8947,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                                                  toConnectionKey:key];
         }];
     }
+    _shouldUpdateIdempotentTriggers = YES;
 }
 
 - (void)textViewBeginDrag
