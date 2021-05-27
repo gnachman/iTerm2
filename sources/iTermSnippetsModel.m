@@ -29,6 +29,13 @@
     return self;
 }
 
+- (instancetype)initWithDictionary:(NSDictionary *)dictionary {
+    if (!dictionary[@"guid"]) {
+        return nil;
+    }
+    return [self initWithDictionary:dictionary index:0];
+}
+
 - (instancetype)initWithDictionary:(NSDictionary *)dictionary index:(NSInteger)i {
     NSString *title = dictionary[@"title"] ?: @"";
     NSString *value = dictionary[@"value"] ?: @"";

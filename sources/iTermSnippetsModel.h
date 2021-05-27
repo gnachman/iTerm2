@@ -30,6 +30,9 @@ NS_ASSUME_NONNULL_BEGIN
 - (instancetype)initWithDictionary:(NSDictionary *)dictionary
                              index:(NSInteger)index;
 
+// Use when you know there is a guid. Returns nil otherwise.
+- (nullable instancetype)initWithDictionary:(NSDictionary *)dictionary;
+
 - (instancetype)init NS_UNAVAILABLE;
 
 - (NSString *)trimmedValue:(NSInteger)maxLength;

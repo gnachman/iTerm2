@@ -11,8 +11,11 @@
 #import "iTermEditSnippetWindowController.h"
 #import "iTermPreferencesBaseViewController.h"
 #import "iTermSnippetsModel.h"
+#import "iTermWarning.h"
 #import "NSArray+iTerm.h"
 #import "NSIndexSet+iTerm.h"
+#import "NSJSONSerialization+iTerm.h"
+#import "NSObject+iTerm.h"
 #import "NSTableView+iTerm.h"
 #import "NSTextField+iTerm.h"
 
@@ -33,6 +36,8 @@ static NSString *const iTermSnippetsEditingPasteboardType = @"iTermSnippetsEditi
     IBOutlet NSTableColumn *_valueColumn;
     IBOutlet NSButton *_removeButton;
     IBOutlet NSButton *_editButton;
+    IBOutlet NSButton *_exportButton;
+    IBOutlet NSButton *_importButton;
 
     NSArray<iTermSnippet *> *_snippets;
     iTermEditSnippetWindowController *_windowController;
@@ -126,6 +131,13 @@ static NSString *const iTermSnippetsEditingPasteboardType = @"iTermSnippetsEditi
     const NSInteger numberOfRows = [[self selectedSnippets] count];
     _removeButton.enabled = numberOfRows > 0;
     _editButton.enabled = numberOfRows == 1;
+    if (@available(macOS 10.16, *)) {
+        _exportButton.enabled = numberOfRows > 0;
+    } else {
+        // This is just because we don't have SF Symbols and I don't have a nice asset to use here.
+        _importButton.hidden = YES;
+        _exportButton.hidden = YES;
+    }
 }
 
 #pragma mark - Actions
@@ -167,6 +179,117 @@ static NSString *const iTermSnippetsEditingPasteboardType = @"iTermSnippetsEditi
             [[iTermSnippetsModel sharedInstance] replaceSnippet:snippet withSnippet:updatedSnippet];
         }];
         [self.view.window beginSheet:_windowController.window completionHandler:^(NSModalResponse returnCode) {}];
+    }
+}
+
+- (IBAction)import:(id)sender {
+    NSOpenPanel *panel = [[NSOpenPanel alloc] init];
+    panel.allowedFileTypes = @[ @"it2snippets" ];
+    panel.canChooseFiles = YES;
+    panel.canChooseDirectories = NO;
+    panel.allowsMultipleSelection = YES;
+    const NSModalResponse response = [panel runModal];
+    if (response != NSModalResponseOK) {
+        return;
+    }
+    for (NSURL *url in panel.URLs) {
+        [self importURL:url];
+    }
+}
+
+- (IBAction)export:(id)sender {
+    NSSavePanel *panel = [NSSavePanel savePanel];
+    panel.allowedFileTypes = @[ @"it2snippets" ];
+
+    const NSModalResponse response = [panel runModal];
+    if (response != NSModalResponseOK) {
+        return;
+    }
+    [self exportToURL:panel.URL];
+}
+
+#pragma mark - Import
+
+- (void)importURL:(NSURL *)url {
+    NSError *error = nil;
+    NSString *content = [NSString stringWithContentsOfFile:url.path
+                                                  encoding:NSUTF8StringEncoding
+                                                     error:&error];
+    if (!content || error) {
+        [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"While loading %@: %@", url.path, error.localizedDescription]
+                                   actions:@[ @"OK" ]
+                                 accessory:nil
+                                identifier:@"NoSyncImportSnippetsFailed"
+                               silenceable:kiTermWarningTypePersistent
+                                   heading:[NSString stringWithFormat:@"Import Failed"]
+                                    window:self.view.window];
+        return;
+    }
+
+    id root = [NSJSONSerialization it_objectForJsonString:content error:&error];
+    if (!root) {
+        [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"While parsing %@: %@", url.path, error.localizedDescription]
+                                   actions:@[ @"OK" ]
+                                 accessory:nil
+                                identifier:@"NoSyncImportSnippetsFailed"
+                               silenceable:kiTermWarningTypePersistent
+                                   heading:[NSString stringWithFormat:@"Import Failed"]
+                                    window:self.view.window];
+        return;
+    }
+
+    NSArray *array = [NSArray castFrom:root];
+    if (!array) {
+        [self showEncodingErrorForURL:url];
+        return;
+    }
+
+    [self pushUndo];
+    for (id element in array) {
+        NSDictionary *dict = [NSDictionary castFrom:element];
+        if (!dict) {
+            [self showEncodingErrorForURL:url];
+            return;
+        }
+        iTermSnippet *snippet = [[iTermSnippet alloc] initWithDictionary:dict];
+        if (!snippet) {
+            [self showEncodingErrorForURL:url];
+            return;
+        }
+        [[iTermSnippetsModel sharedInstance] addSnippet:snippet];
+    }
+}
+
+- (void)showEncodingErrorForURL:(NSURL *)url {
+    [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"Malformed file at %@", url.path]
+                               actions:@[ @"OK" ]
+                             accessory:nil
+                            identifier:@"NoSyncSnippetEncodingError"
+                           silenceable:kiTermWarningTypePersistent
+                               heading:[NSString stringWithFormat:@"Import Failed"]
+                                window:self.view.window];
+}
+
+#pragma mark - Export
+
+- (void)exportToURL:(NSURL *)url {
+    NSIndexSet *indexes = [_tableView selectedRowIndexes];
+    NSMutableArray<NSDictionary *> *array = [NSMutableArray array];
+    [indexes enumerateIndexesUsingBlock:^(NSUInteger i, BOOL * _Nonnull stop) {
+        iTermSnippet *snippet = _snippets[i];
+        [array addObject:snippet.dictionaryValue];
+    }];
+    NSString *json = [NSJSONSerialization it_jsonStringForObject:array];
+    NSError *error = nil;
+    [json writeToURL:url atomically:NO encoding:NSUTF8StringEncoding error:&error];
+    if (error) {
+        [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"Error saving to %@: %@", url.path, error.localizedDescription]
+                                   actions:@[ @"OK" ]
+                                 accessory:nil
+                                identifier:@"NoSyncSnippetWritingError"
+                               silenceable:kiTermWarningTypePersistent
+                                   heading:[NSString stringWithFormat:@"Export Failed"]
+                                    window:self.view.window];
     }
 }
 
