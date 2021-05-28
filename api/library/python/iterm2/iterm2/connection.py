@@ -13,6 +13,15 @@ try:
 except:
   gAppKitAvailable = False
 
+# websockets 9.0 moved client into legacy.client and didn't document how to
+# migrate to the new API :(. Stick with the old one until I have time to deal
+# with this.
+try:
+  import websockets.legacy.client
+  websockets_client = websockets.legacy.client
+except:
+  websockets_client = websockets.client
+
 import iterm2.api_pb2
 from iterm2._version import __version__
 
@@ -343,7 +352,7 @@ class Connection:
     def _get_unix_connect_coro(self):
         """Experimental: connect with unix domain socket."""
         path = self._unix_domain_socket_path()
-        return websockets.client.unix_connect(
+        return websockets_client.unix_connect(
             path,
             "ws://localhost/",
             ping_interval=None,
