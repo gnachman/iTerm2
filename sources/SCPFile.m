@@ -229,8 +229,13 @@ static NSError *SCPFileError(NSString *description) {
         NSString *privateKey = [NSString stringWithContentsOfFile:filename
                                                          encoding:NSUTF8StringEncoding
                                                             error:nil];
-        return [privateKey rangeOfString:@"ENCRYPTED"].location != NSNotFound;
+        for (NSString *string in @[@"-----BEGIN OPENSSH PRIVATE KEY-----", @"ENCRYPTED"]) {
+            if ([privateKey rangeOfString:string].location != NSNotFound) {
+                return YES;
+            }
+        }
     }
+    return NO;
 }
 
 // This runs in a thread
