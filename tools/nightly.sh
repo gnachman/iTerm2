@@ -2,8 +2,8 @@
 function die {
     echo "$@"
     echo "$@" | mail -s "Nightly build failure" $MY_EMAIL_ADDR
-    date >> ~/.login
-    echo "$@" >> ~/.login
+    echo echo Nightly build failed at `date` >> ~/.login
+    echo "echo '$@'" >> ~/.login
     exit 1
 }
 # Usage: SparkleSign testing.xml template.xml signingkey
