@@ -351,7 +351,7 @@ NS_ASSUME_NONNULL_BEGIN
     // Restore semicolons in path
     [urlString replaceOccurrencesOfString:semicolonUUID withString:@";" options:0 range:NSMakeRange(0, urlString.length)];
 
-    DLog(@"Final result: %@", components.URL);
+    DLog(@"Final result: %@", urlString);
     return [NSURL URLWithString:urlString];
 }
 
