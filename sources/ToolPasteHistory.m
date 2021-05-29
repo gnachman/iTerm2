@@ -24,7 +24,7 @@ static const CGFloat kMargin = 4;
 
 @implementation ToolPasteHistory {
     NSScrollView *scrollView_;
-    NSTableView *tableView_;
+    NSTableView *_tableView;
     NSButton *clear_;
     NSTextField *_secureKeyboardEntryWarning;
     PasteboardHistory *pasteHistory_;
@@ -80,33 +80,33 @@ static const CGFloat kMargin = 4;
         [scrollView_ setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
         scrollView_.drawsBackground = NO;
 
-        tableView_ = [[NSTableView alloc] initWithFrame:NSMakeRect(0, 0, contentSize.width, contentSize.height)];
+        _tableView = [[NSTableView alloc] initWithFrame:NSMakeRect(0, 0, contentSize.width, contentSize.height)];
 #ifdef MAC_OS_X_VERSION_10_16
         if (@available(macOS 10.16, *)) {
-            tableView_.style = NSTableViewStyleInset;
+            _tableView.style = NSTableViewStyleInset;
         }
 #endif
         NSTableColumn *col = [[NSTableColumn alloc] initWithIdentifier:@"contents"];
         [col setEditable:NO];
-        [tableView_ addTableColumn:col];
+        [_tableView addTableColumn:col];
         [[col headerCell] setStringValue:@"Values"];
-        [tableView_ setHeaderView:nil];
-        [tableView_ setDataSource:self];
-        [tableView_ setDelegate:self];
-        tableView_.intercellSpacing = NSMakeSize(tableView_.intercellSpacing.width, 0);
-        tableView_.rowHeight = 15;
+        [_tableView setHeaderView:nil];
+        [_tableView setDataSource:self];
+        [_tableView setDelegate:self];
+        _tableView.intercellSpacing = NSMakeSize(_tableView.intercellSpacing.width, 0);
+        _tableView.rowHeight = 15;
 
-        [tableView_ setDoubleAction:@selector(doubleClickOnTableView:)];
-        [tableView_ setAutoresizingMask:NSViewWidthSizable];
+        [_tableView setDoubleAction:@selector(doubleClickOnTableView:)];
+        [_tableView setAutoresizingMask:NSViewWidthSizable];
         if (@available(macOS 10.14, *)) {
-            tableView_.backgroundColor = [NSColor clearColor];
+            _tableView.backgroundColor = [NSColor clearColor];
         }
 
-        [scrollView_ setDocumentView:tableView_];
+        [scrollView_ setDocumentView:_tableView];
         [self addSubview:scrollView_];
 
-        [tableView_ sizeToFit];
-        [tableView_ setColumnAutoresizingStyle:NSTableViewSequentialColumnAutoresizingStyle];
+        [_tableView sizeToFit];
+        [_tableView setColumnAutoresizingStyle:NSTableViewSequentialColumnAutoresizingStyle];
 
         pasteHistory_ = [PasteboardHistory sharedInstance];
 
@@ -123,8 +123,8 @@ static const CGFloat kMargin = 4;
                                                              selector:@selector(pasteboardHistoryDidChange:)
                                                              userInfo:nil
                                                               repeats:YES];
-        [tableView_ performSelector:@selector(scrollToEndOfDocument:) withObject:nil afterDelay:0];
-        [tableView_ reloadData];
+        [_tableView performSelector:@selector(scrollToEndOfDocument:) withObject:nil afterDelay:0];
+        [_tableView reloadData];
     }
     return self;
 }
@@ -142,8 +142,7 @@ static const CGFloat kMargin = 4;
 
 - (NSSize)contentSize {
     NSSize size = [scrollView_ contentSize];
-    size.height = [[tableView_ headerView] frame].size.height;
-    size.height += [tableView_ numberOfRows] * ([tableView_ rowHeight] + [tableView_ intercellSpacing].height);
+    size.height = _tableView.intrinsicContentSize.height;
     return size;
 }
 
@@ -171,7 +170,7 @@ static const CGFloat kMargin = 4;
     [scrollView_ setFrame:NSMakeRect(0, offset, frame.size.width, frame.size.height - kButtonHeight - kMargin - offset)];
 
     NSSize contentSize = [self contentSize];
-    [tableView_ setFrame:NSMakeRect(0, 0, contentSize.width, contentSize.height)];
+    [_tableView setFrame:NSMakeRect(0, 0, contentSize.width, contentSize.height)];
 }
 
 - (BOOL)isFlipped {
@@ -245,13 +244,13 @@ static const CGFloat kMargin = 4;
 }
 
 - (void)update {
-    [tableView_ reloadData];
+    [_tableView reloadData];
     // Updating the table data causes the cursor to change into an arrow!
     [self performSelector:@selector(fixCursor) withObject:nil afterDelay:0];
 
-    NSResponder *firstResponder = [[tableView_ window] firstResponder];
-    if (firstResponder != tableView_) {
-        [tableView_ scrollToEndOfDocument:nil];
+    NSResponder *firstResponder = [[_tableView window] firstResponder];
+    if (firstResponder != _tableView) {
+        [_tableView scrollToEndOfDocument:nil];
     }
 }
 
@@ -264,7 +263,7 @@ static const CGFloat kMargin = 4;
 }
 
 - (void)doubleClickOnTableView:(id)sender {
-    NSInteger selectedIndex = [tableView_ selectedRow];
+    NSInteger selectedIndex = [_tableView selectedRow];
     if (selectedIndex < 0) {
         return;
     }
@@ -286,7 +285,7 @@ static const CGFloat kMargin = 4;
     if ([alert runModal] == NSAlertFirstButtonReturn) {
         [pasteHistory_ eraseHistory];
         [pasteHistory_ clear];
-        [tableView_ reloadData];
+        [_tableView reloadData];
     }
     // Updating the table data causes the cursor to change into an arrow!
     [self performSelector:@selector(fixCursor) withObject:nil afterDelay:0];

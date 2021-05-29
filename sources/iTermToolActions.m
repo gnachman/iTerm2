@@ -327,8 +327,7 @@ static NSButton *iTermToolActionsNewButton(NSString *imageName, NSString *title,
 
 - (NSSize)contentSize {
     NSSize size = [_scrollView contentSize];
-    size.height = [[_tableView headerView] frame].size.height;
-    size.height += [_tableView numberOfRows] * ([_tableView rowHeight] + [_tableView intercellSpacing].height);
+    size.height = _tableView.intrinsicContentSize.height;
     return size;
 }
 

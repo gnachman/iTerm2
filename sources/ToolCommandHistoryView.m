@@ -30,7 +30,7 @@ static const CGFloat kHelpMargin = 5;
 
 @implementation ToolCommandHistoryView {
     NSScrollView *scrollView_;
-    NSTableView *tableView_;
+    NSTableView *_tableView;
     NSButton *clear_;
     BOOL shutdown_;
     NSArray<iTermCommandHistoryCommandUseMO *> *filteredEntries_;
@@ -40,7 +40,7 @@ static const CGFloat kHelpMargin = 5;
     NSMutableParagraphStyle *_paragraphStyle;
 }
 
-@synthesize tableView = tableView_;
+@synthesize tableView = _tableView;
 
 - (instancetype)initWithFrame:(NSRect)frame {
     self = [super initWithFrame:frame];
@@ -104,34 +104,34 @@ static const CGFloat kHelpMargin = 5;
         [scrollView_ setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
         scrollView_.drawsBackground = NO;
 
-        tableView_ = [[NSTableView alloc] initWithFrame:NSMakeRect(0, 0, contentSize.width, contentSize.height)];
+        _tableView = [[NSTableView alloc] initWithFrame:NSMakeRect(0, 0, contentSize.width, contentSize.height)];
 #ifdef MAC_OS_X_VERSION_10_16
         if (@available(macOS 10.16, *)) {
-            tableView_.style = NSTableViewStyleInset;
+            _tableView.style = NSTableViewStyleInset;
         }
 #endif
         NSTableColumn *col = [[NSTableColumn alloc] initWithIdentifier:@"commands"];
         [col setEditable:NO];
-        [tableView_ addTableColumn:col];
+        [_tableView addTableColumn:col];
         [[col headerCell] setStringValue:@"Commands"];
-        [tableView_ setHeaderView:nil];
-        [tableView_ setDataSource:self];
-        [tableView_ setDelegate:self];
-        tableView_.intercellSpacing = NSMakeSize(tableView_.intercellSpacing.width, 0);
-        tableView_.rowHeight = 15;
-        [tableView_ setDoubleAction:@selector(doubleClickOnTableView:)];
-        [tableView_ setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
+        [_tableView setHeaderView:nil];
+        [_tableView setDataSource:self];
+        [_tableView setDelegate:self];
+        _tableView.intercellSpacing = NSMakeSize(_tableView.intercellSpacing.width, 0);
+        _tableView.rowHeight = 15;
+        [_tableView setDoubleAction:@selector(doubleClickOnTableView:)];
+        [_tableView setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
         if (@available(macOS 10.14, *)) {
-            tableView_.backgroundColor = [NSColor clearColor];
+            _tableView.backgroundColor = [NSColor clearColor];
         }
 
-        [searchField_ setArrowHandler:tableView_];
+        [searchField_ setArrowHandler:_tableView];
 
-        [scrollView_ setDocumentView:tableView_];
+        [scrollView_ setDocumentView:_tableView];
         [self addSubview:scrollView_];
 
-        [tableView_ sizeToFit];
-        [tableView_ setColumnAutoresizingStyle:NSTableViewSequentialColumnAutoresizingStyle];
+        [_tableView sizeToFit];
+        [_tableView setColumnAutoresizingStyle:NSTableViewSequentialColumnAutoresizingStyle];
 
         // Save the bold version of the table's default font
         boldFont_ = [[NSFontManager sharedFontManager] convertFont:[NSFont it_toolbeltFont] toHaveTrait:NSFontBoldTrait];
@@ -142,7 +142,7 @@ static const CGFloat kHelpMargin = 5;
                                                      name:kCommandHistoryDidChangeNotificationName
                                                    object:nil];
         // It doesn't seem to scroll far enough unless you use a delayed perform.
-        [tableView_ performSelector:@selector(scrollToEndOfDocument:) withObject:nil afterDelay:0];
+        [_tableView performSelector:@selector(scrollToEndOfDocument:) withObject:nil afterDelay:0];
     }
     return self;
 }
@@ -153,11 +153,9 @@ static const CGFloat kHelpMargin = 5;
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 }
 
-- (NSSize)contentSize
-{
+- (NSSize)contentSize {
     NSSize size = [scrollView_ contentSize];
-    size.height = [[tableView_ headerView] frame].size.height;
-    size.height += [tableView_ numberOfRows] * ([tableView_ rowHeight] + [tableView_ intercellSpacing].height);
+    size.height = _tableView.intrinsicContentSize.height;
     return size;
 }
 
@@ -217,15 +215,15 @@ static const CGFloat kHelpMargin = 5;
 
     // Table view
     NSSize contentSize = [scrollView_ contentSize];
-    NSTableColumn *column = tableView_.tableColumns[0];
+    NSTableColumn *column = _tableView.tableColumns[0];
     CGFloat fudgeFactor = 0;
     if (@available(macOS 10.16, *)) {
         fudgeFactor = 32;
     }
     column.minWidth = contentSize.width - fudgeFactor;
     column.maxWidth = contentSize.width - fudgeFactor;
-    [tableView_ sizeToFit];
-    [tableView_ reloadData];
+    [_tableView sizeToFit];
+    [_tableView reloadData];
 }
 
 
@@ -246,7 +244,7 @@ static const CGFloat kHelpMargin = 5;
                                    frame.size.width,
                                    frame.size.height - kButtonHeight - 2 * kMargin - searchField_.frame.size.height);
     NSSize contentSize = [self contentSize];
-    [tableView_ setFrame:NSMakeRect(0, 0, contentSize.width, contentSize.height)];
+    [_tableView setFrame:NSMakeRect(0, 0, contentSize.width, contentSize.height)];
 }
 
 - (BOOL)isFlipped
@@ -321,7 +319,7 @@ static const CGFloat kHelpMargin = 5;
 }
 
 - (iTermCommandHistoryCommandUseMO *)selectedCommandUse {
-    NSInteger row = [tableView_ selectedRow];
+    NSInteger row = [_tableView selectedRow];
     if (row != -1) {
         return filteredEntries_[row];
     } else {
@@ -353,7 +351,7 @@ static const CGFloat kHelpMargin = 5;
 }
 
 - (void)removeSelection {
-    [tableView_ selectRowIndexes:[NSIndexSet indexSet] byExtendingSelection:NO];
+    [_tableView selectRowIndexes:[NSIndexSet indexSet] byExtendingSelection:NO];
 }
 
 - (void)updateCommands {
@@ -361,9 +359,9 @@ static const CGFloat kHelpMargin = 5;
     // Updating the table data causes the cursor to change into an arrow!
     [self performSelector:@selector(fixCursor) withObject:nil afterDelay:0];
 
-    NSResponder *firstResponder = [[tableView_ window] firstResponder];
-    if (firstResponder != tableView_) {
-        [tableView_ scrollToEndOfDocument:nil];
+    NSResponder *firstResponder = [[_tableView window] firstResponder];
+    if (firstResponder != _tableView) {
+        [_tableView scrollToEndOfDocument:nil];
     }
 }
 
@@ -377,7 +375,7 @@ static const CGFloat kHelpMargin = 5;
 }
 
 - (void)doubleClickOnTableView:(id)sender {
-    NSInteger selectedIndex = [tableView_ selectedRow];
+    NSInteger selectedIndex = [_tableView selectedRow];
     if (selectedIndex < 0) {
         return;
     }
@@ -422,7 +420,7 @@ static const CGFloat kHelpMargin = 5;
         }
         filteredEntries_ = array;
     }
-    [tableView_ reloadData];
+    [_tableView reloadData];
 }
 
 - (void)controlTextDidChange:(NSNotification *)aNotification
