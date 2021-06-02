@@ -376,7 +376,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                    parentWindow:(NSWindowController<iTermWindowController> *)parentWindow {
     self = [super init];
     if (self) {
-        PtyLog(@"PTYTab initWithSession %p", self);
+        PtyLog(@"PTYTab initWithSession - begin %p", self);
         [self commonInit];
         activeSession_ = session;
         [session setActivityCounter:@(_activityCounter++)];
@@ -396,6 +396,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
         session.delegate = self;
         [root_ addSubview:[session view]];
         [self.viewToSessionMap setObject:session forKey:session.view];
+        PtyLog(@"PTYTab initWithSession - end %p", self);
     }
     return self;
 }
@@ -406,13 +407,14 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                     sessions:(NSMapTable<SessionView *, PTYSession *> *)sessions {
     self = [super init];
     if (self) {
-        PtyLog(@"PTYTab initWithRoot %p", self);
+        PtyLog(@"PTYTab initWithRoot - begin %p", self);
         [self commonInit];
         [self setRoot:root];
         [PTYTab _recursiveSetDelegateIn:root_ to:self];
         for (SessionView *sessionView in [self sessionViews]) {
             [self.viewToSessionMap setObject:[sessions objectForKey:sessionView] forKey:sessionView];
         }
+        PtyLog(@"PTYTab initWithRoot - end %p", self);
     }
     return self;
 }

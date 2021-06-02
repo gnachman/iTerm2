@@ -672,6 +672,7 @@ static const NSUInteger kMaxHosts = 100;
 - (instancetype)initSynthetic:(BOOL)synthetic {
     self = [super init];
     if (self) {
+        DLog(@"Begin initialization of new PTYsession %p", self);
         _autoLogId = arc4random();
         _useAdaptiveFrameRate = [iTermAdvancedSettingsModel useAdaptiveFrameRate];
         _adaptiveFrameRateThroughputThreshold = [iTermAdvancedSettingsModel adaptiveFrameRateThroughputThreshold];
@@ -864,6 +865,7 @@ static const NSUInteger kMaxHosts = 100;
         if (!synthetic) {
             [[NSNotificationCenter defaultCenter] postNotificationName:PTYSessionCreatedNotification object:self];
         }
+        DLog(@"Done initializing new PTYSession %@", self);
     }
     return self;
 }
@@ -4846,7 +4848,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)setProfile:(Profile *)newProfile {
     assert(newProfile);
-    DLog(@"Set profile to one with guid %@", newProfile[KEY_GUID]);
+    DLog(@"Set profile to one with guid %@\n%@", newProfile[KEY_GUID], [NSThread callStackSymbols]);
 
     NSMutableDictionary *mutableProfile = [[newProfile mutableCopy] autorelease];
     // This is the most practical way to migrate the bopy of a
@@ -10849,6 +10851,7 @@ preferredEscaping:(iTermSendTextEscaping)preferredEscaping {
         return;
     }
     [self profileDidChangeToProfileWithName:newProfile[KEY_NAME]];
+    DLog(@"Done setting profile of %@", self);
 }
 
 - (void)screenSetPasteboard:(NSString *)value {
