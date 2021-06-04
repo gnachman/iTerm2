@@ -71,9 +71,6 @@ static NSString *const iTermPasswordManagerAccountNameUserNameSeparator = @"\u20
 
 @end
 
-@interface iTermPasswordManagerPanel : NSPanel
-@end
-
 @implementation iTermPasswordManagerPanel
 
 - (NSTimeInterval)animationResizeTime:(NSRect)newFrame {
@@ -341,12 +338,13 @@ static NSString *const iTermPasswordManagerAccountNameUserNameSeparator = @"\u20
 }
 
 - (void)orderOutOrEndSheet {
+    [self sendWillClose];
     if (self.window.isSheet) {
         [self.window.sheetParent endSheet:self.window];
     } else {
         [[self window] orderOut:nil];
     }
-    [self sendWillClose];
+    [self sendDidClose];
 }
 
 - (void)doubleClickOnTableView:(id)sender {
@@ -451,6 +449,7 @@ static NSString *const iTermPasswordManagerAccountNameUserNameSeparator = @"\u20
 }
 
 - (void)closeOrEndSheet {
+    [self sendWillClose];
     if (self.window.isSheet) {
         DLog(@"Ask parent to end sheet");
         [self.window.sheetParent endSheet:self.window];
@@ -458,7 +457,7 @@ static NSString *const iTermPasswordManagerAccountNameUserNameSeparator = @"\u20
         DLog(@"Close window");
         [self.window close];
     }
-    [self sendWillClose];
+    [self sendDidClose];
 }
 
 - (IBAction)editAccountName:(id)sender {
@@ -870,6 +869,13 @@ dataCellForTableColumn:(NSTableColumn *)tableColumn
     _twoFactorCode.stringValue = @"";
     [_tableView reloadData];
     [self sendWillClose];
+    [self sendDidClose];
+}
+
+- (void)sendDidClose {
+    if ([self.delegate respondsToSelector:@selector(iTermPasswordManagerDidClose)]) {
+        [self.delegate iTermPasswordManagerDidClose];
+    }
 }
 
 - (void)sendWillClose {

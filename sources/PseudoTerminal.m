@@ -7033,22 +7033,30 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
         DLog(@"Password manager sheet already open");
         return;
     }
-    [session reveal];
-    DLog(@"Show the password manager as a sheet");
-    _passwordManagerWindowController.delegate = nil;
-    [_passwordManagerWindowController autorelease];
-    _passwordManagerWindowController = [[iTermPasswordManagerWindowController alloc] init];
-    _passwordManagerWindowController.delegate = self;
-
-    [self.window beginSheet:[_passwordManagerWindowController window] completionHandler:^(NSModalResponse returnCode) {
-        [[_passwordManagerWindowController window] close];
+    // It would be a shame to send a focus report to a password prompt.
+    [(session ?: self.currentSession) performBlockWithoutFocusReporting:^{
+        [session reveal];
+        DLog(@"Show the password manager as a sheet");
+        _passwordManagerWindowController.delegate = nil;
         [_passwordManagerWindowController autorelease];
-        _passwordManagerWindowController = nil;
-    }];
+        _passwordManagerWindowController = [[iTermPasswordManagerWindowController alloc] init];
+        _passwordManagerWindowController.delegate = self;
 
-    [_passwordManagerWindowController selectAccountName:name];
+        [self.window beginSheet:[_passwordManagerWindowController window] completionHandler:^(NSModalResponse returnCode) {
+            [[_passwordManagerWindowController window] close];
+            [_passwordManagerWindowController autorelease];
+            _passwordManagerWindowController = nil;
+        }];
+
+        [_passwordManagerWindowController selectAccountName:name];
+    }];
 }
 
+- (BOOL)tabPasswordManagerWindowIsOpen {
+    return [self.window.sheets anyWithBlock:^BOOL(__kindof NSWindow *anObject) {
+        return [anObject isKindOfClass:[iTermPasswordManagerPanel class]];
+    }];
+}
 - (void)tabDidClearScrollbackBufferInSession:(PTYSession *)session {
     [[_contentView.toolbelt capturedOutputView] removeSelection];
     [[_contentView.toolbelt commandHistoryView] removeSelection];
@@ -10807,6 +10815,14 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     return self.broadcastSessions.count > 1;
 }
 
+- (void)iTermPasswordManagerWillClose {
+    [self.currentSession incrementDisableFocusReporting:1];
+}
+
+- (void)iTermPasswordManagerDidClose {
+    [self.currentSession incrementDisableFocusReporting:-1];
+}
+
 - (void)broadcastPassword:(NSString *)password {
     [iTermBroadcastPasswordHelper tryToSendPassword:password
                                          toSessions:self.broadcastSessions
@@ -10863,7 +10879,9 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 }
 
 - (void)iTermPasswordManagerEnterUserName:(NSString *)username broadcast:(BOOL)broadcast {
-    [[self currentSession] writeTask:[username stringByAppendingString:@"\n"]];
+    [[self currentSession] performBlockWithoutFocusReporting:^{
+        [[self currentSession] writeTask:[username stringByAppendingString:@"\n"]];
+    }];
 }
 
 

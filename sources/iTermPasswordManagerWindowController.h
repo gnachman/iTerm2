@@ -18,6 +18,7 @@
 
 @optional
 - (void)iTermPasswordManagerWillClose;
+- (void)iTermPasswordManagerDidClose;
 
 @end
 
@@ -38,4 +39,7 @@
 
 - (void)selectAccountName:(NSString *)name;
 
+@end
+
+@interface iTermPasswordManagerPanel : NSPanel
 @end

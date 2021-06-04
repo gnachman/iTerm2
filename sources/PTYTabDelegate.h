@@ -68,5 +68,6 @@ backgroundColor:(NSColor *)backgroundColor;
 - (BOOL)tabIsSwiping;
 - (NSSize)tabExpectedSize;
 - (void)tabActiveSessionDidResize:(PTYTab *)tab;
+- (BOOL)tabPasswordManagerWindowIsOpen;
 
 @end

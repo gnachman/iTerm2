@@ -6511,6 +6511,10 @@ backgroundColor:(NSColor *)backgroundColor {
     [self.delegate tabActiveSessionDidResize:self];
 }
 
+- (BOOL)sessionPasswordManagerWindowIsOpen {
+    return [self.delegate tabPasswordManagerWindowIsOpen];
+}
+
 #pragma mark - iTermObject
 
 - (iTermBuiltInFunctions *)objectMethodRegistry {

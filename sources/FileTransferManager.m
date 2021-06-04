@@ -447,7 +447,7 @@ static const NSTimeInterval kMaximumTimeToKeepFinishedDownload = 24 * 60 * 60;
     return NO;
 }
 
-- (void)iTermPasswordManagerWillClose {
+- (void)iTermPasswordManagerDidClose {
     _passwordCompletion = nil;
     _passwordManagerWindowController.delegate = nil;
     _passwordManagerWindowController = nil;

@@ -264,6 +264,8 @@ backgroundColor:(NSColor *)backgroundColor;
 - (BOOL)sessionIsInSelectedTab:(PTYSession *)session;
 - (void)sessionDisableFocusFollowsMouseAtCurrentLocation;
 - (void)sessionDidResize:(PTYSession *)session;
+- (BOOL)sessionPasswordManagerWindowIsOpen;
+
 @end
 
 @class SessionView;
@@ -781,6 +783,8 @@ backgroundColor:(NSColor *)backgroundColor;
 - (void)launchSilentCoprocessWithCommand:(NSString *)command;
 
 - (void)setFocused:(BOOL)focused;
+- (void)performBlockWithoutFocusReporting:(void (^NS_NOESCAPE)(void))block;
+- (void)incrementDisableFocusReporting:(NSInteger)delta;
 - (BOOL)wantsContentChangedNotification;
 
 // The dcsID identifies the parser associated with this session. Parsers run in

@@ -626,6 +626,9 @@ static const NSUInteger kMaxHosts = 100;
 
     iTermRateLimitedUpdate *_idempotentTriggerRateLimit;
     BOOL _shouldUpdateIdempotentTriggers;
+
+    // If positive focus reports will not be sent.
+    NSInteger _disableFocusReporting;
 }
 
 @synthesize isDivorced = _divorced;
@@ -6508,6 +6511,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)enterPassword:(NSString *)password {
+    [self incrementDisableFocusReporting:1];
     _echoProbe.delegate = self;
     [_echoProbe beginProbeWithBackspace:[self backspaceData]
                                password:password];
@@ -6573,16 +6577,43 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [self launchCoprocessWithCommand:command mute:YES];
 }
 
+- (void)performBlockWithoutFocusReporting:(void (^NS_NOESCAPE)(void))block {
+    [self incrementDisableFocusReporting:1];
+    block();
+    [self incrementDisableFocusReporting:-1];
+}
+
+- (void)incrementDisableFocusReporting:(NSInteger)delta {
+    DLog(@"delta=%@ count %@->%@\n%@", @(delta), @(_disableFocusReporting), @(_disableFocusReporting + delta), self);
+    _disableFocusReporting += delta;
+    if (_disableFocusReporting == 0) {
+        [self setFocused:[self textViewIsFirstResponder]];
+    }
+}
+
 - (void)setFocused:(BOOL)focused {
-    if (focused != _focused) {
-        _focused = focused;
-        if ([_terminal reportFocus]) {
-            [self writeLatin1EncodedData:[_terminal.output reportFocusGained:focused] broadcastAllowed:NO];
-        }
-        if (focused && [self isTmuxClient]) {
-            [_tmuxController selectPane:self.tmuxPane];
-            [self.delegate sessionDidReportSelectedTmuxPane:self];
-        }
+    DLog(@"setFocused:%@ self=%@", @(focused), self);
+    if (_disableFocusReporting) {
+        DLog(@"Focus reporting disabled");
+        return;
+    }
+    if ([self.delegate sessionPasswordManagerWindowIsOpen]) {
+        DLog(@"Password manager window is open");
+        return;
+    }
+    if (focused == _focused) {
+        DLog(@"No change");
+        return;
+    }
+    _focused = focused;
+    if ([_terminal reportFocus]) {
+        DLog(@"Will report focus");
+        [self writeLatin1EncodedData:[_terminal.output reportFocusGained:focused] broadcastAllowed:NO];
+    }
+    if (focused && [self isTmuxClient]) {
+        DLog(@"Tell tmux about focus change");
+        [_tmuxController selectPane:self.tmuxPane];
+        [self.delegate sessionDidReportSelectedTmuxPane:self];
     }
 }
 
@@ -12645,10 +12676,14 @@ preferredEscaping:(iTermSendTextEscaping)preferredEscaping {
     return [_colorMap colorForKey:kColorMapBackground];
 }
 
-- (BOOL)sessionViewTerminalIsFirstResponder {
+- (BOOL)textViewIsFirstResponder {
     return (_textview.window.firstResponder == _textview &&
             [NSApp isActive] &&
             _textview.window.isKeyWindow);
+}
+
+- (BOOL)sessionViewTerminalIsFirstResponder {
+    return [self textViewIsFirstResponder];
 }
 
 - (BOOL)sessionViewShouldDimOnlyText {
@@ -13296,10 +13331,13 @@ preferredEscaping:(iTermSendTextEscaping)preferredEscaping {
                                            window:self.view.window] == kiTermWarningSelection1);
     if (ok) {
         [_echoProbe enterPassword];
+    } else {
+        [self incrementDisableFocusReporting:-1];
     }
 }
 
 - (void)echoProbeDidSucceed:(iTermEchoProbe *)echoProbe {
+    [self incrementDisableFocusReporting:-1];
 }
 
 - (BOOL)echoProbeShouldSendPassword:(iTermEchoProbe *)echoProbe {
