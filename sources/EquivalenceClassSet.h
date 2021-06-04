@@ -10,6 +10,7 @@
 // contains the objects that are equivalent.
 @property(nonatomic, readonly) NSArray<NSSet<NSObject<NSCopying> *> *> *classes;
 
+- (void)log;
 - (NSSet<NSObject<NSCopying> *> *)valuesEqualTo:(NSObject<NSCopying> *)target;
 - (void)setValue:(NSObject<NSCopying> *)value equalToValue:(NSObject<NSCopying> *)otherValue;
 - (void)removeValue:(NSObject<NSCopying> *)target;

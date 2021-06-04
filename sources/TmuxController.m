@@ -287,6 +287,9 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
         return;
     }
     NSString *originalTerminalGUID = nil;
+    DLog(@"Opening window with affinities: %@", [affinities.allObjects componentsJoinedByString:@" "]);
+    DLog(@"Existing affinities:");
+    [affinities_ log];
     for (NSString *a in affinities) {
         if ([a hasPrefix:@"pty-"]) {
             originalTerminalGUID = [[a retain] autorelease];
@@ -1887,6 +1890,12 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
                  profile:(Profile *)profile {
     if (intentional) {
         DLog(@"open intentional: Remove this window ID from hidden: %d", windowId);
+        if (!_pendingWindows[@(windowId)]) {
+            // This indicates that the window's opening is originated by the app (it is not
+            // "anonymous"), as opposed to running `tmux new-window` at the command line.
+            DLog(@"Force intentional");
+            _pendingWindows[@(windowId)] = ^(int i){};
+        }
         [hiddenWindows_ removeObject:[NSNumber numberWithInt:windowId]];
         [self saveHiddenWindows];
         [[NSNotificationCenter defaultCenter] postNotificationName:kTmuxControllerDidChangeHiddenWindows object:self];
@@ -2159,7 +2168,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     }
     // Update affinities if any have changed.
     NSString *arg = [affinities componentsJoinedByString:@" "];
-    DLog(@"save affinities");
+    DLog(@"Save affinities: %@", arg);
     NSString *command = [NSString stringWithFormat:@"set -t $%d @affinities \"%@\"",
                          sessionId_, [self encodedString:[arg stringByEscapingQuotes]
                                                   prefix:iTermTmuxControllerEncodingPrefixAffinities]];
@@ -2541,6 +2550,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     // affinity response.
     // For example "1,2,3 4,5,6" has two equivalence classes.
     // 1=2=3 and 4=5=6.
+    DLog(@"Set affinities from string: %@", result);
     NSArray *affinities = [result componentsSeparatedByString:@" "];
     [affinities_ release];
     affinities_ = [[EquivalenceClassSet alloc] init];
@@ -2555,6 +2565,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
         NSString *windowOptionsString = components[1];
 
         NSArray<NSString *> *siblings = [affset componentsSeparatedByString:@","];
+        DLog(@"Siblings are: %@", [siblings componentsJoinedByString:@" "]);
         NSString *exemplar = [siblings lastObject];
         if (siblings.count == 1) {
             // This is a wee hack. If a tmux Window is in a native window with one tab
@@ -2562,10 +2573,14 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
             // The equivalence class's existence signals not to apply the default mode for
             // unrecognized windows.
             exemplar = [exemplar stringByAppendingString:@"_ph"];
+            DLog(@"Use placeholder exemplar");
+        } else {
+            DLog(@"Use arbitrary sibling as exemplar");
         }
         NSDictionary *flags = [self windowOptionsFromString:windowOptionsString];
         for (NSString *widString in siblings) {
             if (![widString isEqualToString:exemplar]) {
+                DLog(@"Set wid %@ equal to examplar %@", widString, exemplar);
                 [affinities_ setValue:widString
                          equalToValue:exemplar];
                 _windowOpenerOptions[widString] = flags;

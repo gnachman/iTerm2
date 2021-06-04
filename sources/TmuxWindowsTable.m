@@ -8,6 +8,7 @@
 
 #import "TmuxWindowsTable.h"
 #import "FutureMethods.h"
+#import "NSTextField+iTerm.h"
 
 NSString *kWindowPasteboardType = @"kWindowPasteboardType";
 
@@ -137,20 +138,6 @@ NSString *kWindowPasteboardType = @"kWindowPasteboardType";
     [tableView_ reloadData];
 }
 
-#pragma mark NSTableViewDelegate
-
-- (void)tableView:(NSTableView *)tableView
-  willDisplayCell:(id)cell
-   forTableColumn:(NSTableColumn *)tableColumn
-              row:(NSInteger)row
-{
-    if ([delegate_ haveOpenWindowWithId:[[[[self filteredModel] objectAtIndex:row] objectAtIndex:1] intValue]]) {
-        [cell setTextColor:[[cell textColor] colorWithAlphaComponent:1]];
-    } else {
-        [cell setTextColor:[[cell textColor] colorWithAlphaComponent:0.5]];
-    }
-}
-
 #pragma mark NSTableViewDataSource
 
 - (NSInteger)numberOfRowsInTableView:(NSTableView *)aTableView
@@ -158,31 +145,38 @@ NSString *kWindowPasteboardType = @"kWindowPasteboardType";
     return [self filteredModel].count;
 }
 
-- (id)tableView:(NSTableView *)aTableView
-    objectValueForTableColumn:(NSTableColumn *)aTableColumn
-            row:(NSInteger)rowIndex
-{
-    NSString *name = [[[self filteredModel] objectAtIndex:rowIndex] objectAtIndex:0];
-    if (rowIndex < [self filteredModel].count) {
-        return name;
-    } else {
-        return nil;
+- (NSView *)tableView:(NSTableView *)tableView viewForTableColumn:(NSTableColumn *)tableColumn row:(NSInteger)row {
+    NSArray *values = [[self filteredModel] objectAtIndex:row];
+    NSString *windowID = values[1];
+    NSString *name = values[0];
+    if (row >= [self filteredModel].count) {
+        name = @"";
     }
+
+    static NSString *const identifier = @"TmuxWindowIdentifier";
+    NSTextField *result = [tableView makeViewWithIdentifier:identifier owner:self];
+    if (result == nil) {
+        result = [NSTextField it_textFieldForTableViewWithIdentifier:identifier];
+    }
+    result.font = [NSFont systemFontOfSize:[NSFont systemFontSize]];
+    result.editable = YES;
+    result.target = self;
+    result.action = @selector(didEditWindow:);
+    result.stringValue = name;
+    result.identifier = windowID;
+    if ([delegate_ haveOpenWindowWithId:[[[[self filteredModel] objectAtIndex:row] objectAtIndex:1] intValue]]) {
+        result.alphaValue = 1;
+    } else {
+        result.alphaValue = 0.5;
+    }
+    return result;;
 }
 
-- (void)tableView:(NSTableView *)aTableView
-   setObjectValue:(id)anObject
-   forTableColumn:(NSTableColumn *)aTableColumn
-              row:(NSInteger)rowIndex {
-    const int windowID = [[[[self filteredModel] objectAtIndex:rowIndex] objectAtIndex:1] intValue];
+- (void)didEditWindow:(id)sender {
+    NSTextField *textField = sender;
+    int windowID = [textField.identifier intValue];
     [delegate_ renameWindowWithId:windowID
-                           toName:anObject];
-}
-
-- (BOOL)tableView:(NSTableView *)aTableView
-    shouldEditTableColumn:(NSTableColumn *)aTableColumn
-              row:(NSInteger)rowIndex {
-    return YES;
+                           toName:textField.stringValue];
 }
 
 - (void)didDoubleClickTableView:(id)sender {
