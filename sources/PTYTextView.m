@@ -1142,6 +1142,22 @@
 
 #pragma mark - NSView Drawing
 
+// We don't draw exactly the document visible rect because there could be scrollback overflow
+// accumulated between the last call to -refresh and when it's time to draw. If `userScroll` is
+// on then we want to draw the rect you have scrolled to in order to keep it from bouncing around.
+- (NSRect)adjustedDocumentVisibleRect {
+    const NSRect documentVisibleRect = self.enclosingScrollView.documentVisibleRect;
+    const BOOL userScroll = [(PTYScroller*)([[self enclosingScrollView] verticalScroller]) userScroll];
+    if (!userScroll) {
+        return documentVisibleRect;
+    }
+    NSRect adjusted = [self visibleRectMinusRows:[_dataSource scrollbackOverflow]];
+    if (adjusted.origin.y < 0) {
+        adjusted.origin.y = 0;
+    }
+    return adjusted;
+}
+
 // Draw in to another view which exactly coincides with the clip view, except it's inset on the top
 // and bottom by the margin heights.
 - (void)drawRect:(NSRect)rect inView:(NSView *)view {
@@ -1157,13 +1173,14 @@
         ITCriticalError(_dataSource.width < 0, @"Negative datasource width of %@", @(_dataSource.width));
         return;
     }
-    DLog(@"drawing document visible rect %@", NSStringFromRect(self.enclosingScrollView.documentVisibleRect));
+    const NSRect rectToDraw = [self textDrawingHelperVisibleRect];
+    DLog(@"drawing document visible rect %@", NSStringFromRect(rectToDraw));
 
     const BOOL userScroll = [(PTYScroller*)([[self enclosingScrollView] verticalScroller]) userScroll];
 
     CGFloat virtualOffset;
     if (userScroll) {
-        virtualOffset = NSMinY(self.enclosingScrollView.documentVisibleRect) - [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins];
+        virtualOffset = NSMinY(rectToDraw) - [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins];
         DLog(@"Draw document visible rect");
     } else {
         // The documentVisibleRect could be wrong if we got more input since -refresh was last
@@ -1188,6 +1205,9 @@
     [self performBlockWithFlickerFixerGrid:^{
         // Initialize drawing helper
         [self drawingHelper];
+        DLog(@"draw: minY=%@, absLine=%@",
+             @(rectToDraw.origin.y),
+             @([_drawingHelper coordRangeForRect:rectToDraw].start.y + _dataSource.totalScrollbackOverflow));
 
         if (_drawingHook) {
             // This is used by tests to customize the draw helper.
@@ -1229,7 +1249,7 @@
 - (NSRect)textDrawingHelperVisibleRect {
     const BOOL userScroll = [(PTYScroller*)([[self enclosingScrollView] verticalScroller]) userScroll];
     if (userScroll) {
-        return self.enclosingScrollView.documentVisibleRect;
+        return [self adjustedDocumentVisibleRect];
     } else {
         // This is necessary because of the special case in -drawRect:inView:
         const int height = _dataSource.height;
@@ -2009,18 +2029,24 @@
     return _blinkAllowed && anythingIsBlinking;
 }
 
+// NOTE: May return a negative Y origin.
+- (NSRect)visibleRectMinusRows:(long long)rows {
+    NSRect scrollRect = [self visibleRect];
+    NSScrollView *scrollView = [self enclosingScrollView];
+    const CGFloat amount = [scrollView verticalLineScroll] * rows;
+    scrollRect.origin.y -= amount;
+    return scrollRect;
+}
+
 - (void)handleScrollbackOverflow:(int)scrollbackOverflow userScroll:(BOOL)userScroll {
     // Keep correct selection highlighted
     [_selection scrollbackOverflowDidChange];
     [_oldSelection scrollbackOverflowDidChange];
 
     // Keep the user's current scroll position.
-    NSScrollView *scrollView = [self enclosingScrollView];
     BOOL canSkipRedraw = NO;
     if (userScroll) {
-        NSRect scrollRect = [self visibleRect];
-        double amount = [scrollView verticalLineScroll] * scrollbackOverflow;
-        scrollRect.origin.y -= amount;
+        NSRect scrollRect = [self visibleRectMinusRows:scrollbackOverflow];
         if (scrollRect.origin.y < 0) {
             scrollRect.origin.y = 0;
         } else {
@@ -2028,7 +2054,12 @@
             // changing because of the scroll.
             canSkipRedraw = YES;
         }
+        const NSRect previous = self.enclosingScrollView.documentVisibleRect;
         [self scrollRectToVisible:scrollRect];
+        DLog(@"handleScrollbackOverflow:%@ visibleRect %@ -> %@",
+             @(scrollbackOverflow),
+             NSStringFromRect(previous),
+             NSStringFromRect(scrollRect));
     }
 
     // NOTE: I used to use scrollRect:by: here, and it is faster, but it is
