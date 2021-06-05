@@ -82,6 +82,7 @@ static const NSUInteger kRectangularSelectionModifierMask = (kRectangularSelecti
 
 #pragma mark - Coordinate Space Conversions
 
+// NOTE: This should actually be a VT100GridCoord.
 - (NSPoint)clickPoint:(NSEvent *)event allowRightMarginOverflow:(BOOL)allowRightMarginOverflow {
     NSPoint locationInWindow = [event locationInWindow];
     return [self windowLocationToRowCol:locationInWindow
@@ -109,7 +110,17 @@ static const NSUInteger kRectangularSelectionModifierMask = (kRectangularSelecti
     if (x < 0) {
         x = 0;
     }
-    y = locationInTextView.y / self.lineHeight;
+
+    // The rect we draw may be different than the document visible rect. Mouse events should be
+    // interpreted relative to what is drawn. We compute the click location relative to the
+    // documentVisibleRect and then convert it to be in the space of the adjustedDocumentVisibleRect
+    // (which corresponds to what the thinks they clicked on).
+    const NSRect adjustedVisibleRect = [self adjustedDocumentVisibleRect];
+    const NSRect scrollviewVisibleRect = [self.enclosingScrollView documentVisibleRect];
+    const CGFloat relativeY = locationInTextView.y - NSMinY(scrollviewVisibleRect);
+    const CGFloat correctedY = NSMinY(adjustedVisibleRect) + relativeY;
+
+    y = correctedY / self.lineHeight;
 
     int limit;
     if (allowRightMarginOverflow) {

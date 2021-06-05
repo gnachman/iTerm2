@@ -1151,7 +1151,7 @@
     if (!userScroll) {
         return documentVisibleRect;
     }
-    NSRect adjusted = [self visibleRectMinusRows:[_dataSource scrollbackOverflow]];
+    NSRect adjusted = [self rect:documentVisibleRect minusRows:[_dataSource scrollbackOverflow]];
     if (adjusted.origin.y < 0) {
         adjusted.origin.y = 0;
     }
@@ -2030,10 +2030,10 @@
 }
 
 // NOTE: May return a negative Y origin.
-- (NSRect)visibleRectMinusRows:(long long)rows {
-    NSRect scrollRect = [self visibleRect];
+- (NSRect)rect:(NSRect)rect minusRows:(long long)rows {
     NSScrollView *scrollView = [self enclosingScrollView];
     const CGFloat amount = [scrollView verticalLineScroll] * rows;
+    NSRect scrollRect = rect;
     scrollRect.origin.y -= amount;
     return scrollRect;
 }
@@ -2046,7 +2046,9 @@
     // Keep the user's current scroll position.
     BOOL canSkipRedraw = NO;
     if (userScroll) {
-        NSRect scrollRect = [self visibleRectMinusRows:scrollbackOverflow];
+        // NOTE: visibleRect and documentVisibleRect differ by the size of the top margin.
+        // visibleRect.origin.y == documentVisible.rect.origin.y - VMARGIN
+        NSRect scrollRect = [self rect:self.visibleRect minusRows:scrollbackOverflow];
         if (scrollRect.origin.y < 0) {
             scrollRect.origin.y = 0;
         } else {

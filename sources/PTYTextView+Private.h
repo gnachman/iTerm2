@@ -56,6 +56,7 @@ NSPopoverDelegate> {
                     block:(void (^ NS_NOESCAPE)(VT100GridCoord coord))block;
 - (BOOL)withRelativeCoordRange:(VT100GridAbsCoordRange)range
                          block:(void (^ NS_NOESCAPE)(VT100GridCoordRange))block;
+- (NSRect)adjustedDocumentVisibleRect;
 
 @end
 
