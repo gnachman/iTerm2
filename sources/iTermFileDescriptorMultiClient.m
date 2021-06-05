@@ -796,6 +796,8 @@ static unsigned long long MakeUniqueID(void) {
 
     // Does the server already exist where we need it to be?
     if ([self shouldCopyServerTo:desiredPath]) {
+        [fileManager removeItemAtPath:desiredPath error:nil];
+        
         NSString *sourcePath = [self pathToServerInBundle];
         NSError *error = nil;
         [fileManager copyItemAtPath:sourcePath
