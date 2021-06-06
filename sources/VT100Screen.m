@@ -5743,7 +5743,7 @@ static void SwapInt(int *a, int *b) {
     }
 }
 
-- (int)numberOfLinewDroppedWhenEncodingContentsIncludingGrid:(BOOL)includeGrid
+- (int)numberOfLinesDroppedWhenEncodingContentsIncludingGrid:(BOOL)includeGrid
                                                      encoder:(id<iTermEncoderAdapter>)encoder
                                               intervalOffset:(long long *)intervalOffsetPtr {
     // We want 10k lines of history at 80 cols, and fewer for small widths, to keep the size
@@ -5790,7 +5790,7 @@ static void SwapInt(int *a, int *b) {
             DLog(@"Save note with coord range %@", VT100GridCoordRangeDescription([self coordRangeForInterval:note.entry.interval]));
         }
     }
-    return [self numberOfLinewDroppedWhenEncodingContentsIncludingGrid:YES
+    return [self numberOfLinesDroppedWhenEncodingContentsIncludingGrid:YES
                                                                encoder:encoder
                                                         intervalOffset:intervalOffsetPtr];
 }
@@ -5801,7 +5801,7 @@ static void SwapInt(int *a, int *b) {
     [encoder encodeDictionaryWithKey:@"LineBuffer"
                           generation:iTermGenerationAlwaysEncode
                                block:^BOOL(id<iTermEncoderAdapter>  _Nonnull subencoder) {
-        linesDropped = [self numberOfLinesDroppedWhenEncodingLegacyFormatWithEncoder:subencoder intervalOffset:intervalOffsetPtr];
+        linesDropped = [self numberOfLinesDroppedWhenEncodingContentsIncludingGrid:NO encoder:subencoder intervalOffset:intervalOffsetPtr];
         return YES;
     }];
     [encoder encodeDictionaryWithKey:@"PrimaryGrid"
