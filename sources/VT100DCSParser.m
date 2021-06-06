@@ -451,7 +451,7 @@ static NSRange MakeCharacterRange(unsigned char first, unsigned char lastInclusi
     if (offset > limit) {
         offset = MAX(0, limit);
     }
-    _checkedCount = offset + limit;
+    _checkedCount = limit;
     NSInteger maxLength = kMaxDataLength;
     if ([_data hasPrefix:@"tmux;\e]1337;File="]) {
         // Allow file downloads to get really big.
