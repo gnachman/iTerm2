@@ -307,9 +307,9 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     VT100GridWindowedRange theRange =
     VT100GridWindowedRangeMake(range, 0, 0);
     iTermSubSelection *theSub =
-    [iTermSubSelection subSelectionWithRange:theRange
-                                        mode:kiTermSelectionModeCharacter
-                                       width:width];
+    [iTermSubSelection subSelectionWithAbsRange:VT100GridAbsWindowedRangeFromRelative(theRange, 0)
+                                           mode:kiTermSelectionModeCharacter
+                                          width:width];
     [selection_ addSubSelection:theSub];
 }
 
@@ -388,7 +388,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
         return nil;
     }
     NSMutableString *s = [NSMutableString string];
-    [selection_ enumerateSelectedRanges:^(VT100GridWindowedRange range, BOOL *stop, BOOL eol) {
+    [selection_ enumerateSelectedAbsoluteRanges:^(VT100GridAbsWindowedRange range, BOOL *stop, BOOL eol) {
         int sx = range.coordRange.start.x;
         for (int y = range.coordRange.start.y; y <= range.coordRange.end.y; y++) {
             screen_char_t *line = [screen getLineAtIndex:y];
@@ -541,10 +541,6 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
 
 - (void)screenScheduleRedrawSoon {
     needsRedraw_++;
-}
-
-- (void)screenSizeDidChange {
-    sizeDidChange_++;
 }
 
 - (void)screenResizeToWidth:(int)newWidth height:(int)newHeight {
@@ -835,9 +831,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
 - (void)screenPromptDidStartAtLine:(int)line {
 }
 
-- (NSIndexSet *)selectionIndexesOnLine:(int)line
-                   containingCharacter:(unichar)c
-                               inRange:(NSRange)range {
+- (NSIndexSet *)selectionIndexesOnAbsoluteLine:(long long)line containingCharacter:(unichar)c inRange:(NSRange)range {
     return nil;
 }
 
@@ -981,39 +975,59 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
 
 
 - (void)screenSizeDidChangeWithNewTopLineAt:(int)newTop {
+    sizeDidChange_++;
 }
 
+- (void)screenClearCapturedOutput {
+}
+
+- (void)screenDidResize {
+}
+
+- (void)screenKeyReportingFlagsDidChange {
+}
+
+- (void)screenSendModifiersDidChange {
+}
 
 #pragma mark - iTermSelectionDelegate
 
 - (void)selectionDidChange:(iTermSelection *)selection {
 }
 
-- (VT100GridWindowedRange)selectionRangeForParentheticalAt:(VT100GridCoord)coord {
-    return VT100GridWindowedRangeMake(VT100GridCoordRangeMake(0, 0, 0, 0), 0, 0);
+- (VT100GridAbsWindowedRange)selectionAbsRangeForParentheticalAt:(VT100GridAbsCoord)coord {
+    return VT100GridAbsWindowedRangeMake(VT100GridAbsCoordRangeMake(0, 0, 0, 0), 0, 0);
 }
 
-- (VT100GridWindowedRange)selectionRangeForWordAt:(VT100GridCoord)coord {
-    return VT100GridWindowedRangeMake(VT100GridCoordRangeMake(0, 0, 0, 0), 0, 0);
+- (long long)selectionTotalScrollbackOverflow {
+    return 0;
 }
 
-- (VT100GridWindowedRange)selectionRangeForSmartSelectionAt:(VT100GridCoord)coord {
-    return VT100GridWindowedRangeMake(VT100GridCoordRangeMake(0, 0, 0, 0), 0, 0);
+- (VT100GridAbsWindowedRange)selectionAbsRangeForLineAt:(VT100GridAbsCoord)absCoord {
+    return VT100GridAbsWindowedRangeMake(VT100GridAbsCoordRangeMake(0, 0, 0, 0), 0, 0);
 }
 
-- (VT100GridWindowedRange)selectionRangeForWrappedLineAt:(VT100GridCoord)coord {
-    return VT100GridWindowedRangeMake(VT100GridCoordRangeMake(0, 0, 0, 0), 0, 0);
+- (VT100GridAbsWindowedRange)selectionAbsRangeForWordAt:(VT100GridAbsCoord)coord {
+    return VT100GridAbsWindowedRangeMake(VT100GridAbsCoordRangeMake(0, 0, 0, 0), 0, 0);
+}
+
+- (VT100GridAbsWindowedRange)selectionAbsRangeForSmartSelectionAt:(VT100GridAbsCoord)absCoord {
+    return VT100GridAbsWindowedRangeMake(VT100GridAbsCoordRangeMake(0, 0, 0, 0), 0, 0);
+}
+
+- (VT100GridAbsWindowedRange)selectionAbsRangeForWrappedLineAt:(VT100GridAbsCoord)absCoord {
+    return VT100GridAbsWindowedRangeMake(VT100GridAbsCoordRangeMake(0, 0, 0, 0), 0, 0);
 }
 
 - (VT100GridWindowedRange)selectionRangeForLineAt:(VT100GridCoord)coord {
     return VT100GridWindowedRangeMake(VT100GridCoordRangeMake(0, 0, 0, 0), 0, 0);
 }
 
-- (VT100GridRange)selectionRangeOfTerminalNullsOnLine:(int)lineNumber {
+- (VT100GridRange)selectionRangeOfTerminalNullsOnAbsoluteLine:(long long)absLineNumber {
     return VT100GridRangeMake(INT_MAX, 0);
 }
 
-- (VT100GridCoord)selectionPredecessorOfCoord:(VT100GridCoord)coord {
+- (VT100GridAbsCoord)selectionPredecessorOfAbsCoord:(VT100GridAbsCoord)absCoord {
     XCTAssert(false);
 }
 
@@ -1723,7 +1737,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     [screen terminalMoveCursorToX:5 y:2];
     [screen terminalSetCharset:0 toLineDrawingMode:YES];
     XCTAssert(![screen allCharacterSetPropertiesHaveDefaultValues]);
-    [screen terminalResetPreservingPrompt:YES];
+    [screen terminalResetPreservingPrompt:YES modifyContent:YES];
     XCTAssert([[screen compactLineDump] isEqualToString:
                @"ijkl.\n"
                @".....\n"
@@ -1752,7 +1766,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     [screen terminalMoveCursorToX:5 y:2];
     [screen terminalSetCharset:0 toLineDrawingMode:YES];
     XCTAssert(![screen allCharacterSetPropertiesHaveDefaultValues]);
-    [screen terminalResetPreservingPrompt:NO];
+    [screen terminalResetPreservingPrompt:NO modifyContent:YES];
     XCTAssert([[screen compactLineDump] isEqualToString:
                @".....\n"
                @".....\n"
@@ -1788,7 +1802,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     [screen terminalSetCharset:1 toLineDrawingMode:YES];
     XCTAssert(![screen allCharacterSetPropertiesHaveDefaultValues]);
 
-    [screen terminalResetPreservingPrompt:NO];
+    [screen terminalResetPreservingPrompt:NO modifyContent:NO];
     XCTAssert(![screen allCharacterSetPropertiesHaveDefaultValues]);
 
     data = [NSData dataWithBytes:&shiftIn length:1];
@@ -1985,27 +1999,39 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     [self sendEscapeCodes:@"^[[1m^[[3m^[[4m^[[5m^[[9m"];  // Bold, italic, blink, underline, strikethrough
 
     unichar chars[] = {
+        // x=0
         0x301, //  standalone
+        // x=1
         'a',
         0x301, //  a+accent
+        // x=2
         'a',
         0x301,
         0x327, //  a+accent+cedilla
+        // x=3
         0xD800, //  surrogate pair giving 𐅐
         0xDD50,
+        // x=4,5
         0xff25, //  dwc E
         0xf000, //  item private
-        0xfeff, //  zw-spaces..
-        0x200b,
-        0x200c,
+        // x=6
+        0xfeff, //  zw-no-break space
+        0x200b, //  zw-space (not preserved)
+        // x=7
+        0x200c, //  zw-non-joiner
         0x200d,
+        // x=8
         'g',
+        // x=9
         0x142,  // ambiguous width
+        // x=10
         0xD83D,  // High surrogate for 1F595 (middle finger)
         0xDD95,  // Low surrogate for 1F595
         0xD83C,  // High surrogate for 1F3FE (dark skin tone)
         0xDFFE,  // Low surrogate for 1F3FE
+        // x=11
         'g',
+        // x=12
         0xD83C,  // High surrogate for 1F3FE (dark skin tone)
         0xDFFE,  // Low surrogate for 1F3FE
     };
@@ -2044,8 +2070,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
 
     XCTAssert([ScreenCharToStr(line + i++) isEqualToString:@"Ｅ"]);
     XCTAssert(line[i++].code == DWC_RIGHT);
-    XCTAssert([ScreenCharToStr(line + i++) isEqualToString:@"�"]);
-    XCTAssert([ScreenCharToStr(line + i++) isEqualToString:@"\u200b"]);  // zero-width space advances cursor by default.
+    XCTAssert([ScreenCharToStr(line + i++) isEqualToString:@"�"]);  // note that u+200b is not present
     if (@available(macOS 10.13, *)) {
         XCTAssert([ScreenCharToStr(line + i++) isEqualToString:@"\u200c\u200d"]);  // Funny way macoS 10.13 works
     }
@@ -3358,7 +3383,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     VT100Screen *screen = [self screenWithWidth:10 height:4];
     [self appendLines:@[ @"abcdefghijklm" ] toScreen:screen];
     [screen terminalMoveCursorToX:4 y:2];
-    [screen terminalResetPreservingPrompt:YES];
+    [screen terminalResetPreservingPrompt:YES modifyContent:YES];
     XCTAssert([[screen compactLineDump] isEqualToString:
                @"klm.......\n"
                @"..........\n"
@@ -3369,7 +3394,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     screen = [self screenWithWidth:10 height:4];
     [self appendLines:@[ @"abcdefghijklm" ] toScreen:screen];
     [screen terminalMoveCursorToX:4 y:2];
-    [screen terminalResetPreservingPrompt:NO];
+    [screen terminalResetPreservingPrompt:NO modifyContent:YES];
     XCTAssert([[screen compactLineDump] isEqualToString:
                @"..........\n"
                @"..........\n"
@@ -3386,14 +3411,14 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     [screen terminalSetTabStopAtCursor];
 
     XCTAssert([[self tabStopsInScreen:screen] isEqualToArray:augmentedTabstops]);
-    [screen terminalResetPreservingPrompt:YES];
+    [screen terminalResetPreservingPrompt:YES modifyContent:NO];
     XCTAssert([[self tabStopsInScreen:screen] isEqualToArray:defaultTabstops]);
 
     // Saved cursor gets reset to origin
     screen = [self screenWithWidth:10 height:4];
     [terminal_ saveCursor];
 
-    [screen terminalResetPreservingPrompt:YES];
+    [screen terminalResetPreservingPrompt:YES modifyContent:NO];
 
     [terminal_ restoreCursor];
 
@@ -3403,7 +3428,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     [screen terminalSetCharset:1 toLineDrawingMode:YES];
     [screen terminalSetCharset:2 toLineDrawingMode:YES];
     [screen terminalSetCharset:3 toLineDrawingMode:YES];
-    [screen terminalResetPreservingPrompt:YES];
+    [screen terminalResetPreservingPrompt:YES modifyContent:NO];
     XCTAssert([screen allCharacterSetPropertiesHaveDefaultValues]);
 
     // Saved charset flags get restored, not reset blindly
@@ -3414,7 +3439,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     [screen terminalSetCharset:3 toLineDrawingMode:YES];
     [terminal_ saveCursor];
 
-    [screen terminalResetPreservingPrompt:YES];
+    [screen terminalResetPreservingPrompt:YES modifyContent:NO];
     [terminal_ restoreCursor];
 
     XCTAssert(![screen allCharacterSetPropertiesHaveDefaultValues]);
@@ -3424,7 +3449,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     screen.delegate = (id<VT100ScreenDelegate>)self;
     [screen terminalSetCursorVisible:NO];
     XCTAssert(!cursorVisible_);
-    [screen terminalResetPreservingPrompt:YES];
+    [screen terminalResetPreservingPrompt:YES modifyContent:NO];
     XCTAssert(cursorVisible_);
 }
 

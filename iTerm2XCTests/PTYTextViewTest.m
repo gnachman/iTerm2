@@ -156,8 +156,8 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
     return YES;
 }
 
-- (int)optionKey {
-    return 2;
+- (iTermOptionKeyBehavior)optionKey {
+    return OPT_ESC;
 }
 
 - (void)textViewSwapPane {
@@ -347,8 +347,8 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
     return nil;
 }
 
-- (int)rightOptionKey {
-    return 1;
+- (iTermOptionKeyBehavior)rightOptionKey {
+    return OPT_META;
 }
 
 - (NSArray *)notesInRange:(VT100GridCoordRange)range {
@@ -817,11 +817,11 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
     [self doGoldenTestForInput:@"abcd"
                           name:NSStringFromSelector(_cmd)
                           hook:^(PTYTextView *textView) {
-                              VT100GridWindowedRange range =
-                                  VT100GridWindowedRangeMake(VT100GridCoordRangeMake(1, 0, 3, 0),
+                              VT100GridAbsWindowedRange range =
+        VT100GridAbsWindowedRangeMake(VT100GridAbsCoordRangeMake(1, 0, 3, 0),
                                                              0, 0);
                               iTermSubSelection *subSelection =
-                                  [iTermSubSelection subSelectionWithRange:range
+                                  [iTermSubSelection subSelectionWithAbsRange:range
                                                                       mode:kiTermSelectionModeCharacter
                                                                      width:textView.dataSource.width];
                               [textView.selection addSubSelection:subSelection];
@@ -836,11 +836,11 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
     [self doGoldenTestForInput:@"abcd\r\nefgh\r\nijkl\r\nmnop"
                           name:NSStringFromSelector(_cmd)
                           hook:^(PTYTextView *textView) {
-                              VT100GridWindowedRange range =
-                                  VT100GridWindowedRangeMake(VT100GridCoordRangeMake(1, 1, 3, 2),
+                              VT100GridAbsWindowedRange range =
+                                  VT100GridAbsWindowedRangeMake(VT100GridAbsCoordRangeMake(1, 1, 3, 2),
                                                              0, 0);
                               iTermSubSelection *subSelection =
-                              [iTermSubSelection subSelectionWithRange:range
+                              [iTermSubSelection subSelectionWithAbsRange:range
                                                                   mode:kiTermSelectionModeBox
                                                                  width:textView.dataSource.width];
                               [textView.selection addSubSelection:subSelection];
@@ -856,18 +856,18 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
     [self doGoldenTestForInput:@"abcd\r\nefgh\r\nijkl\r\nmnop"
                           name:NSStringFromSelector(_cmd)
                           hook:^(PTYTextView *textView) {
-                              VT100GridWindowedRange range =
-                                  VT100GridWindowedRangeMake(VT100GridCoordRangeMake(1, 1, 3, 2),
+                              VT100GridAbsWindowedRange range =
+                                  VT100GridAbsWindowedRangeMake(VT100GridAbsCoordRangeMake(1, 1, 3, 2),
                                                              0, 0);
                               iTermSubSelection *subSelection =
-                                  [iTermSubSelection subSelectionWithRange:range
+                                  [iTermSubSelection subSelectionWithAbsRange:range
                                                                       mode:kiTermSelectionModeBox
                                                                      width:textView.dataSource.width];
                               [textView.selection addSubSelection:subSelection];
 
-                              range = VT100GridWindowedRangeMake(VT100GridCoordRangeMake(0, 0, 2, 0),
+                              range = VT100GridAbsWindowedRangeMake(VT100GridAbsCoordRangeMake(0, 0, 2, 0),
                                                                  0, 0);
-                              subSelection = [iTermSubSelection subSelectionWithRange:range
+                              subSelection = [iTermSubSelection subSelectionWithAbsRange:range
                                                                                  mode:kiTermSelectionModeCharacter
                                                                                 width:textView.dataSource.width];
                               [textView.selection addSubSelection:subSelection];
@@ -884,11 +884,11 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
     [self doGoldenTestForInput:@"abcd\r\nefgh\r\nijkl\r\nmnop"
                           name:NSStringFromSelector(_cmd)
                           hook:^(PTYTextView *textView) {
-                              VT100GridWindowedRange range =
-                                  VT100GridWindowedRangeMake(VT100GridCoordRangeMake(1, 0, 3, 3),
+                              VT100GridAbsWindowedRange range =
+                                  VT100GridAbsWindowedRangeMake(VT100GridAbsCoordRangeMake(1, 0, 3, 3),
                                                              1, 2);
                               iTermSubSelection *subSelection =
-                              [iTermSubSelection subSelectionWithRange:range
+                              [iTermSubSelection subSelectionWithAbsRange:range
                                                                   mode:kiTermSelectionModeBox
                                                                  width:textView.dataSource.width];
                               [textView.selection addSubSelection:subSelection];
@@ -904,11 +904,11 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
     [self doGoldenTestForInput:@"a\t\x08q"
                           name:NSStringFromSelector(_cmd)
                           hook:^(PTYTextView *textView) {
-                              VT100GridWindowedRange range =
-                              VT100GridWindowedRangeMake(VT100GridCoordRangeMake(1, 0, 3, 0),
+                              VT100GridAbsWindowedRange range =
+                              VT100GridAbsWindowedRangeMake(VT100GridAbsCoordRangeMake(1, 0, 3, 0),
                                                          0, 0);
                               iTermSubSelection *subSelection =
-                              [iTermSubSelection subSelectionWithRange:range
+                              [iTermSubSelection subSelectionWithAbsRange:range
                                                                   mode:kiTermSelectionModeCharacter
                                                                  width:textView.dataSource.width];
                               [textView.selection addSubSelection:subSelection];
@@ -924,11 +924,11 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
     [self doGoldenTestForInput:@"a\tb"
                               name:NSStringFromSelector(_cmd)
                               hook:^(PTYTextView *textView) {
-                                  VT100GridWindowedRange range =
-                                      VT100GridWindowedRangeMake(VT100GridCoordRangeMake(7, 0, 9, 0),
+                                  VT100GridAbsWindowedRange range =
+                                      VT100GridAbsWindowedRangeMake(VT100GridAbsCoordRangeMake(7, 0, 9, 0),
                                                                  0, 0);
                                   iTermSubSelection *subSelection =
-                                      [iTermSubSelection subSelectionWithRange:range
+                                      [iTermSubSelection subSelectionWithAbsRange:range
                                                                           mode:kiTermSelectionModeCharacter
                                                                          width:textView.dataSource.width];
                                   [textView.selection addSubSelection:subSelection];
@@ -944,11 +944,11 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
     [self doGoldenTestForInput:@"a\tb"
                               name:NSStringFromSelector(_cmd)
                               hook:^(PTYTextView *textView) {
-                                  VT100GridWindowedRange range =
-                                      VT100GridWindowedRangeMake(VT100GridCoordRangeMake(0, 0, 3, 0),
+                                  VT100GridAbsWindowedRange range =
+                                      VT100GridAbsWindowedRangeMake(VT100GridAbsCoordRangeMake(0, 0, 3, 0),
                                                                  0, 0);
                                   iTermSubSelection *subSelection =
-                                      [iTermSubSelection subSelectionWithRange:range
+                                      [iTermSubSelection subSelectionWithAbsRange:range
                                                                           mode:kiTermSelectionModeCharacter
                                                                          width:textView.dataSource.width];
                                   [textView.selection addSubSelection:subSelection];
@@ -963,11 +963,11 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
     [self doGoldenTestForInput:@"abcd"
                           name:NSStringFromSelector(_cmd)
                           hook:^(PTYTextView *textView) {
-                              VT100GridWindowedRange range =
-                                  VT100GridWindowedRangeMake(VT100GridCoordRangeMake(1, 0, 3, 0),
+                              VT100GridAbsWindowedRange range =
+                                  VT100GridAbsWindowedRangeMake(VT100GridAbsCoordRangeMake(1, 0, 3, 0),
                                                              0, 0);
                               iTermSubSelection *subSelection =
-                                  [iTermSubSelection subSelectionWithRange:range
+                                  [iTermSubSelection subSelectionWithAbsRange:range
                                                                       mode:kiTermSelectionModeCharacter
                                                                      width:textView.dataSource.width];
                               [textView.selection addSubSelection:subSelection];
@@ -1039,7 +1039,9 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
              [self sgrSequenceWithSubparams:@[ @38, @5, fg ]],
              [self sgrSequenceWithSubparams:@[ @48, @5, bg ]] ];
         }
-        [input appendFormat:@"\r\n"];
+        if (bg != colors.lastObject) {
+            [input appendFormat:@"\r\n"];
+        }
     }
     [self doGoldenTestForInput:input
                           name:NSStringFromSelector(_cmd)
@@ -2484,6 +2486,11 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
     return @"";
 }
 
+- (NSSet<NSString *> *)sgrCodesForChar:(screen_char_t)c {
+    return [NSSet set];
+}
+
+
 - (int)numberOfLines {
     return 4;
 }
@@ -2625,9 +2632,9 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
     NSString *text = @"regular\e[1mbold";
     [session synchronousReadTask:text];
     [_textView selectAll:nil];
-    NSAttributedString *selectedAttributedText = [_textView selectedTextAttributed:YES
-                                                                      cappedAtSize:11
-                                                                 minimumLineNumber:0];
+    NSAttributedString *selectedAttributedText = [_textView selectedTextWithStyle:iTermCopyTextStyleAttributed
+                                                                     cappedAtSize:11
+                                                                minimumLineNumber:0];
     XCTAssertEqualObjects(@"regularbold", selectedAttributedText.string);
 
     NSRange range;
@@ -2824,6 +2831,46 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
     return YES;
 }
 
+- (void)pasteStringWithoutBracketing:(NSString *)theString {
+}
+
+- (void)sendText:(NSString *)text useCompatibilityEscaping:(BOOL)useCompatibilityEscaping compatibilityEscaping:(iTermSendTextEscaping)compatibilityEscaping preferredEscaping:(iTermSendTextEscaping)preferredEscaping {
+}
+
+
+- (void)textViewAddTrigger:(NSString *)text {
+}
+
+- (void)textViewApplyAction:(iTermAction *)action {
+}
+
+- (void)textViewContextMenuInvocation:(NSString *)invocation failedWithError:(NSError *)error forMenuItem:(NSString *)title {
+}
+
+- (void)textViewDidReceiveFlagsChangedEvent:(NSEvent *)event {
+}
+
+- (BOOL)textViewDrawBackgroundImageInView:(NSView *)view viewRect:(NSRect)rect blendDefaultBackground:(BOOL)blendDefaultBackground virtualOffset:(CGFloat)virtualOffset {
+    return NO;
+}
+
+- (void)textViewEditTriggers {
+}
+
+- (NSString *)textViewShell {
+    return @"bash";
+}
+
+- (void)textViewToggleEnableTriggersInInteractiveApps {
+}
+
+- (BOOL)textViewTriggersAreEnabledInInteractiveApps {
+    return NO;
+}
+
+- (void)textViewhandleSpecialKeyDown:(NSEvent *)event {
+}
+
 - (BOOL)textViewReportMouseEvent:(NSEventType)eventType modifiers:(NSUInteger)modifiers button:(MouseButtonNumber)button coordinate:(VT100GridCoord)coord deltaY:(CGFloat)deltaY allowDragBeforeMouseDown:(BOOL)allowDragBeforeMouseDown {
     return NO;
 }
@@ -2834,6 +2881,14 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
 
 - (NSSize)badgeLabelSizeFraction {
     return NSMakeSize(1, 1);
+}
+
+- (long long)lineNumberOfMarkAfterAbsLine:(long long)line {
+    return line+1;
+}
+
+- (long long)lineNumberOfMarkBeforeAbsLine:(long long)line {
+    return MAX(0, line-1);
 }
 
 @end

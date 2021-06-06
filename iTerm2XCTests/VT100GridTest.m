@@ -356,6 +356,9 @@ do { \
 - (void)gridCursorDidMove {
 }
 
+- (void)gridDidResize { 
+}
+
 - (VT100Grid *)gridFromCompactLines:(NSString *)compact {
     NSArray *lines = [compact componentsSeparatedByString:@"\n"];
     VT100Grid *grid = [[VT100Grid alloc] initWithSize:VT100GridSizeMake([[lines objectAtIndex:0] length],

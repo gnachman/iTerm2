@@ -377,7 +377,7 @@
     static NSString *const kWorkingDirectory = @"/working/directory";
     [_semanticHistoryController.fakeFileManager.files addObject:kFilename];
     NSString *actual = [_semanticHistoryController cleanedUpPathFromPath:kFilename
-                                                                  suffix:@"\", line 123, in <module>"
+                                                                  suffix:@"\", line 123, in"
                                                         workingDirectory:kWorkingDirectory
                                                      extractedLineNumber:&lineNumber
                                                             columnNumber:&columnNumber];

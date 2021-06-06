@@ -65,7 +65,8 @@
                                              scope:scope];
     iTermScriptFunctionCall *functionCall = [[iTermScriptFunctionCall alloc] init];
     functionCall.name = @"func";
-    [functionCall addParameterWithName:@"x" parsedExpression:[[iTermParsedExpression alloc] initWithInterpolatedStringParts:@[ [[iTermParsedExpression alloc] initWithString:@"foo"] ]]];
+    iTermParsedExpression *literalExpression = [[iTermParsedExpression alloc] initWithString:@"foo"];
+    [functionCall addParameterWithName:@"x" parsedExpression:literalExpression];
     iTermParsedExpression *expected = [[iTermParsedExpression alloc] initWithFunctionCall:functionCall];
 
     XCTAssertEqualObjects(actual, expected);

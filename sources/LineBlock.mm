@@ -523,6 +523,7 @@ extern "C" int iTermLineBlockNumberOfFullLinesImpl(screen_char_t *buffer,
     int length;
     int eol;
     BOOL isStartOfWrappedLine = NO;
+
     screen_char_t* p = [self getWrappedLineWithWrapWidth:width
                                                  lineNum:lineNum
                                               lineLength:&length
@@ -533,6 +534,14 @@ extern "C" int iTermLineBlockNumberOfFullLinesImpl(screen_char_t *buffer,
     if (!p) {
         return -1;
     } else {
+        int pos;
+        if (x >= length) {
+            *extendsPtr = YES;
+            pos = p - raw_buffer + length;
+        } else {
+            *extendsPtr = NO;
+            pos = p - raw_buffer + x;
+        }
         if (length > 0 && (!isStartOfWrappedLine || x > 0)) {
             *yOffsetPtr = 0;
         } else if (length > 0 && isStartOfWrappedLine && x == 0) {
@@ -543,15 +552,14 @@ extern "C" int iTermLineBlockNumberOfFullLinesImpl(screen_char_t *buffer,
             // d has a yOffset=1 and the null cell after c has yOffset=0.
             //
             // If you wanted the cell after c then x > 0.
-            *yOffsetPtr += 1;
+            if (pos == 0 && *yOffsetPtr == 0) {
+                // First cell of first line in block.
+            } else {
+                // First sell of second-or-later line in block.
+                *yOffsetPtr += 1;
+            }
         }
-        if (x >= length) {
-            *extendsPtr = YES;
-            return p - raw_buffer + length;
-        } else {
-            *extendsPtr = NO;
-            return p - raw_buffer + x;
-        }
+        return pos;
     }
 }
 
