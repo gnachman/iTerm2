@@ -423,6 +423,9 @@
     switch (codePoint) {
         case ' ':
             return [self stringWithCharacter:0];
+        case 'i':
+        case 'm':
+            return nil;
     }
 
     if (codePoint < 'a') {
