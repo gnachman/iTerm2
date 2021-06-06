@@ -485,6 +485,7 @@ static BOOL hasBecomeActive = NO;
 - (void)openPasswordManagerToAccountName:(NSString *)name inSession:(PTYSession *)session {
     id<iTermWindowController> term = [[iTermController sharedInstance] currentTerminal];
     if (session) {
+        [session reveal];  // Unbury if needed. Otherwise there is no parent window. Issue 9734
         term = session.delegate.realParentWindow;
     }
     if (term) {
