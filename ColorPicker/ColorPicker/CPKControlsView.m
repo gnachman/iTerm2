@@ -162,7 +162,7 @@ NSString *const kCPKUseSystemColorPicker = @"kCPKUseSystemColorPicker";
     if (_startPickingBlock) {
         self.eyedropperMode.image = [self cpk_imageNamed:@"ActiveEyedropper"];
         dispatch_async(dispatch_get_main_queue(), ^{
-            _startPickingBlock();
+            self->_startPickingBlock();
             self.eyedropperMode.image = [self cpk_imageNamed:@"Eyedropper"];
         });
     }

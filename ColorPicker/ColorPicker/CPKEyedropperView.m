@@ -71,7 +71,7 @@
 
     path = [NSBezierPath bezierPathWithRoundedRect:expandedFrame xRadius:3 yRadius:3];
     [[NSColor cpk_colorWithWhite:0 alpha:0.8] set];
-    [[NSGraphicsContext currentContext] setCompositingOperation:NSCompositeSourceOver];
+    [[NSGraphicsContext currentContext] setCompositingOperation:NSCompositingOperationSourceOver];
     [path fill];
 
     [description drawInRect:frame withAttributes:attributes];

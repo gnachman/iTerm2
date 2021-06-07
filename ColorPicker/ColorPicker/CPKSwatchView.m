@@ -34,7 +34,7 @@
         NSRectFill(rect);
 
         [self.color set];
-        NSRectFillUsingOperation(self.bounds, NSCompositeSourceOver);
+        NSRectFillUsingOperation(self.bounds, NSCompositingOperationSourceOver);
     }
 
     [NSGraphicsContext restoreGraphicsState];

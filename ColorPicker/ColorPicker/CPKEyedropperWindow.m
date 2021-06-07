@@ -83,7 +83,7 @@ const NSTimeInterval kUpdateInterval = 1.0 / 60.0;
     NSRect frame = NSMakeRect(origin.x, origin.y, kSize, kSize);
     CPKEyedropperWindow *eyedropperWindow =
             [[CPKEyedropperWindow alloc] initWithContentRect:frame
-                                           styleMask:NSBorderlessWindowMask
+                                           styleMask:NSWindowStyleMaskBorderless
                                                      backing:NSBackingStoreBuffered
                                                        defer:NO];
     eyedropperWindow.opaque = NO;

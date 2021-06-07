@@ -671,7 +671,7 @@ typedef NS_ENUM(NSInteger, CPKRGBViewMode) {
               toContainer:(NSView *)container {
     NSTextField *label = [self labelWithTitle:string origin:NSZeroPoint];
     [self layoutLabel:label belowView:view];
-    label.alignment = NSCenterTextAlignment;
+    label.alignment = NSTextAlignmentCenter;
     [container addSubview:label];
     return label;
 }
@@ -822,7 +822,7 @@ typedef NS_ENUM(NSInteger, CPKRGBViewMode) {
         self.brightnessSliderView.color = selectedColor;
 
         dispatch_async(dispatch_get_main_queue(), ^{
-            [_gradientView setNeedsDisplay:YES];
+            [self->_gradientView setNeedsDisplay:YES];
         });
         [self updateTextFieldsForColor:self.selectedColor];
     }

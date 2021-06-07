@@ -27,7 +27,7 @@
     [[NSGraphicsContext currentContext] setPatternPhase:NSMakePoint(1, 2)];
     [path fill];
 
-    [[NSGraphicsContext currentContext] setCompositingOperation:NSCompositeSourceOver];
+    [[NSGraphicsContext currentContext] setCompositingOperation:NSCompositingOperationSourceOver];
 
     // I don't know why NSGradient is misbehaving here. If I have it go from clearColor to
     // [self.color colorWithAlphaComponent:1] it looks all wrong.

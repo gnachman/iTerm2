@@ -62,11 +62,10 @@ NSString *const kCPKFavoriteUTI = @"com.googlecode.iterm2.ColorPicker.Favorite";
 }
 
 - (id)pasteboardPropertyListForType:(NSString *)type {
-    NSMutableData *data = [NSMutableData data];
-    NSKeyedArchiver *coder = [[NSKeyedArchiver alloc] initForWritingWithMutableData:data];
+    NSKeyedArchiver *coder = [[NSKeyedArchiver alloc] initRequiringSecureCoding:YES];
     [self encodeWithCoder:coder];
     [coder finishEncoding];
-    return data;
+    return coder.encodedData;
 }
 
 #pragma mark - NSPasteboardReading
@@ -76,7 +75,7 @@ NSString *const kCPKFavoriteUTI = @"com.googlecode.iterm2.ColorPicker.Favorite";
 }
 
 - (id)initWithPasteboardPropertyList:(id)propertyList ofType:(NSString *)type {
-    NSKeyedUnarchiver *coder = [[NSKeyedUnarchiver alloc] initForReadingWithData:propertyList];
+    NSKeyedUnarchiver *coder = [[NSKeyedUnarchiver alloc] initForReadingFromData:propertyList error:nil];
     return [self initWithCoder:coder];
 }
 
