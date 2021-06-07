@@ -29,7 +29,56 @@ const NSTimeInterval kUpdateInterval = 1.0 / 60.0;
     return origin;
 }
 
++ (BOOL)canTakeScreenshot {
+    if (@available(macOS 10.15, *)) {
+      return CGPreflightScreenCaptureAccess();
+    }
+    CGDisplayStreamRef streamRef =
+    CGDisplayStreamCreateWithDispatchQueue(CGMainDisplayID(),  // display
+                                           1,  // outputWidth
+                                           1,  // outputHeight
+                                           'BGRA',  // pixelFormat
+                                           nil,  // properties
+                                           dispatch_get_main_queue(),  // queue
+                                           ^(CGDisplayStreamFrameStatus status, uint64_t time, IOSurfaceRef frame, CGDisplayStreamUpdateRef ref) {});
+    const BOOL result = (streamRef != nil);
+    CFRelease(streamRef);
+    return result;
+}
+
++ (void)complainAboutScreenCapturePermission {
+    if (@available(macOS 10.15, *)) {
+        NSAlert *alert = [[NSAlert alloc] init];
+        alert.messageText = @"Permission Needed";
+        alert.informativeText = @"The eyedropper needs Screen Recording permission to work.";
+        [alert addButtonWithTitle:@"OK"];
+        [alert addButtonWithTitle:@"Cancel"];
+        if ([alert runModal] == NSAlertFirstButtonReturn) {
+            CGRequestScreenCaptureAccess();
+            NSURL *URL = [NSURL URLWithString:@"x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture"];
+            [[NSWorkspace sharedWorkspace] openURL:URL];
+        }
+        return;
+    }
+
+    NSAlert *alert = [[NSAlert alloc] init];
+    alert.messageText = @"Permission Needed";
+    alert.informativeText = [NSString stringWithFormat:@"The eyedropper requires screen recording permission.\n\nYou can enable this by adding %@ to System Preferences > Security & Privacy > Privacy > Screen Recording.", [NSRunningApplication currentApplication].localizedName];
+    [alert addButtonWithTitle:@"Open System Preferences"];
+    [alert addButtonWithTitle:@"Cancel"];
+    if ([alert runModal] == NSAlertFirstButtonReturn) {
+        NSURL *URL = [NSURL URLWithString:@"x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture"];
+        [[NSWorkspace sharedWorkspace] openURL:URL];
+    }
+}
+
 + (void)pickColorWithCompletion:(void (^)(NSColor *color))completion {
+    if (![self canTakeScreenshot]) {
+        [self complainAboutScreenCapturePermission];
+        if (![self canTakeScreenshot]) {
+            return;
+        }
+    }
     NSPoint origin = [CPKEyedropperWindow origin];
     NSRect frame = NSMakeRect(origin.x, origin.y, kSize, kSize);
     CPKEyedropperWindow *eyedropperWindow =
