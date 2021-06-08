@@ -7,6 +7,8 @@
 
 #import "iTermWindowHacks.h"
 
+#import <CoreGraphics/CoreGraphics.h>
+
 @implementation iTermWindowHacks
 
 void WindowListApplierFunction(const void *inputDictionary, void *context) {
