@@ -5149,8 +5149,11 @@ ITERM_WEAKLY_REFERENCEABLE
     const BOOL passwordInput = _shell.passwordInput;
     DLog(@"passwordInput=%@", @(passwordInput));
     if (passwordInput != _passwordInput) {
-        _passwordInput = _shell.passwordInput;
+        _passwordInput = passwordInput;
         [[iTermSecureKeyboardEntryController sharedInstance] update];
+        if (passwordInput) {
+            [self didBeginPasswordInput];
+        }
     }
 
     if (![self shouldUseTriggers] && [iTermAdvancedSettingsModel allowIdempotentTriggers]) {
@@ -5167,6 +5170,19 @@ ITERM_WEAKLY_REFERENCEABLE
         }];
     }
     _timerRunning = NO;
+}
+
+- (BOOL)shouldShowPasswordManagerAutomatically {
+    return [iTermProfilePreferences boolForKey:KEY_OPEN_PASSWORD_MANAGER_AUTOMATICALLY
+                                     inProfile:self.profile];
+}
+
+- (void)didBeginPasswordInput {
+    if ([self shouldShowPasswordManagerAutomatically]) {
+        iTermApplicationDelegate *itad = [iTermApplication.sharedApplication delegate];
+        [itad openPasswordManagerToAccountName:nil inSession:self];
+
+    }
 }
 
 - (void)checkIdempotentTriggers {

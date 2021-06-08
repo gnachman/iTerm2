@@ -68,6 +68,9 @@
 
     IBOutlet NSButton *_statusBarEnabled;
     IBOutlet NSButton *_configureStatusBar;
+
+    IBOutlet NSButton *_openPasswordManagerAutomatically;
+
     iTermStatusBarSetupViewController *_statusBarSetupViewController;
     iTermStatusBarSetupPanel *_statusBarSetupWindow;
     BOOL _awoken;
@@ -232,6 +235,11 @@
     };
     [weakSelf updateStatusBarSettingsEnabled];
     info.onChange = ^() { [weakSelf postRefreshNotification]; };
+
+    [self defineControl:_openPasswordManagerAutomatically
+                    key:KEY_OPEN_PASSWORD_MANAGER_AUTOMATICALLY
+            relatedView:nil
+                   type:kPreferenceInfoTypeCheckbox];
 
     [self addViewToSearchIndex:_configureStatusBar
                    displayName:@"Configure status bar"

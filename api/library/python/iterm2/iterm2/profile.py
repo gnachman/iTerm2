@@ -1023,6 +1023,13 @@ class LocalWriteOnlyProfile:
         """
         return self._simple_set("Right Option Key Changeable", value)
 
+    def set_open_password_manager_automatically(self, value: bool):
+        """Should the password manager open automatically?
+
+        :param value: Whether it should open automatically.
+        """
+        return self._simple_set("Open Password Manager Automatically", value)
+
 class WriteOnlyProfile:
     """A profile that can be modified but not read. Useful for changing many
     sessions' profiles at once without knowing what they are."""
@@ -1994,6 +2001,13 @@ class WriteOnlyProfile:
         :param value: Whether it should be allowed.
         """
         return await self._async_simple_set("Right Option Key Changeable", value)
+
+    async def async_set_open_password_manager_automatically(self, value: bool):
+      """Should the password manager open automatically?
+
+        :param value: Whether it should open automatically.
+        """
+      return await self._async_simple_set("Open Password Manager Automatically", value)
 
 class Profile(WriteOnlyProfile):
     """Represents a profile.
@@ -3133,6 +3147,12 @@ class Profile(WriteOnlyProfile):
         send esc+?
         """
         return self._get_optional_bool("Right Option Key Changeable")
+
+    @property
+    def open_password_manager_automatically(self) -> typing.Optional[bool]:
+        """Returns whether the password manager should open automatically.
+        """
+        return self._get_optional_bool("Open Password Manager Automatically")
 
 
     async def async_make_default(self):
