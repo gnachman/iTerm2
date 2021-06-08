@@ -169,18 +169,25 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
             return NO;
         }
         if (![captures[1] isEqualToString:arch]) {
+            DLog(@"Reject: arch is %@, but I want %@", captures[1], arch);
             return NO;
         }
-        if ([captures[2] integerValue] != version.majorVersion) {
+        if ([captures[2] integerValue] < version.majorVersion) {
+            DLog(@"Accept: major version %@ is less than my max of %@", captures[2], @(version.majorVersion));
+            return YES;
+        }
+        if ([captures[2] integerValue] > version.majorVersion) {
+            DLog(@"Reject: major version is %@ but I want no more than %@", captures[2], @(version.majorVersion));
             return NO;
         }
         if ([captures[3] integerValue] > version.minorVersion) {
+            DLog(@"Reject: minor version is %@ but I want no more than %@", captures[3], @(version.minorVersion));
             return NO;
         }
         DLog(@"It's a keeper");
         return YES;
     }];
-    
+    DLog(@"Contenders are %@", contenders);
     NSString *best = [contenders maxWithBlock:^NSComparisonResult(NSString *obj1, NSString *obj2) {
         NSArray<NSString *> *cap1 = [obj1 arrayOfCaptureComponentsMatchedByRegex:regex].firstObject;
         NSArray<NSString *> *cap2 = [obj2 arrayOfCaptureComponentsMatchedByRegex:regex].firstObject;
