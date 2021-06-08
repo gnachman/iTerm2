@@ -209,6 +209,9 @@
 }
 
 - (void)setFrame:(NSRect)frame {
+    if (NSEqualRects(self.frame, frame)) {
+        return;
+    }
     DLog(@"%@: setFrame:%@\n%@", self, NSStringFromRect(frame), [NSThread callStackSymbols]);
     [super setFrame:frame];
 }
