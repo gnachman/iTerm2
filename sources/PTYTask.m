@@ -692,6 +692,7 @@ static void HandleSigChld(int n) {
     for (NSString *k in env) {
         environmentDict[k] = env[k];
     }
+    [environmentDict removeObjectForKey:@"SHLVL"];  // Issue 9756
     NSMutableArray<NSString *> *environment = [NSMutableArray array];
     for (NSString *k in environmentDict) {
         NSString *temp = [NSString stringWithFormat:@"%@=%@", k, environmentDict[k]];
