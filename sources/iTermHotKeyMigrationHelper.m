@@ -74,9 +74,11 @@
 
 - (BOOL)warnAboutChildrenOfHotkeyProfileIfNeeded:(Profile *)profile {
     NSString *name = profile[KEY_NAME];
+    NSString *guid = profile[KEY_GUID];
     NSMutableArray *childrensNames = [NSMutableArray array];
     for (Profile *possibleChild in [[ProfileModel sharedInstance] bookmarks]) {
-        if ([possibleChild[KEY_DYNAMIC_PROFILE_PARENT_NAME] isEqualToString:name]) {
+        if ([possibleChild[KEY_DYNAMIC_PROFILE_PARENT_NAME] isEqualToString:name] ||
+            [possibleChild[KEY_DYNAMIC_PROFILE_PARENT_GUID] isEqualToString:guid]) {
             NSString *name = possibleChild[KEY_NAME];
             if (name) {
                 name = [NSString stringWithFormat:@"“%@”", name];

@@ -138,6 +138,7 @@
                                                  KEY_STATUS_BAR_LAYOUT, KEY_HAS_HOTKEY, KEY_TRIGGERS, KEY_TRIGGERS_USE_INTERPOLATED_STRINGS,
                                                  KEY_SMART_SELECTION_RULES, KEY_SEMANTIC_HISTORY,
                                                  KEY_BOUND_HOSTS, KEY_DYNAMIC_PROFILE_PARENT_NAME,
+                                                 KEY_DYNAMIC_PROFILE_PARENT_GUID,
                                                  KEY_DYNAMIC_PROFILE_FILENAME ]];
 
                 // Make sure the GUID doesn't match an existing one.

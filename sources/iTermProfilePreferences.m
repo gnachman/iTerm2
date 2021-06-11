@@ -152,7 +152,8 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
               KEY_ORIGINAL_GUID, KEY_AWDS_WIN_OPTION, KEY_AWDS_WIN_DIRECTORY, KEY_AWDS_TAB_OPTION,
               KEY_AWDS_TAB_DIRECTORY, KEY_AWDS_PANE_OPTION, KEY_AWDS_PANE_DIRECTORY,
               KEY_NORMAL_FONT, KEY_NON_ASCII_FONT, KEY_BACKGROUND_IMAGE_LOCATION, KEY_KEYBOARD_MAP,
-              KEY_TOUCHBAR_MAP, KEY_DYNAMIC_PROFILE_PARENT_NAME, KEY_DYNAMIC_PROFILE_FILENAME ];
+              KEY_TOUCHBAR_MAP, KEY_DYNAMIC_PROFILE_PARENT_NAME, KEY_DYNAMIC_PROFILE_PARENT_GUID,
+              KEY_DYNAMIC_PROFILE_FILENAME ];
 }
 + (NSArray<NSString *> *)allKeys {
     return [self.defaultValueMap.allKeys arrayByAddingObjectsFromArray:self.keysWithoutDefaultValues];
@@ -183,6 +184,7 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
                              KEY_ORIGINAL_GUID, KEY_AWDS_WIN_DIRECTORY, KEY_AWDS_TAB_OPTION,
                              KEY_AWDS_TAB_DIRECTORY, KEY_AWDS_PANE_OPTION, KEY_AWDS_PANE_DIRECTORY,
                              KEY_BACKGROUND_IMAGE_LOCATION, KEY_DYNAMIC_PROFILE_PARENT_NAME,
+                             KEY_DYNAMIC_PROFILE_PARENT_GUID,
                              KEY_DYNAMIC_PROFILE_FILENAME, KEY_TMUX_PANE_TITLE];
 
         NSArray *color = @[ KEY_FOREGROUND_COLOR, KEY_BACKGROUND_COLOR, KEY_BOLD_COLOR,

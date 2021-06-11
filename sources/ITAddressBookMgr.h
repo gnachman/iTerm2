@@ -251,6 +251,7 @@
 
 // Dynamic Profiles (not in prefs ui)
 #define KEY_DYNAMIC_PROFILE_PARENT_NAME      @"Dynamic Profile Parent Name"
+#define KEY_DYNAMIC_PROFILE_PARENT_GUID      @"Dynamic Profile Parent GUID"
 #define KEY_DYNAMIC_PROFILE_FILENAME         @"Dynamic Profile Filename"
 
 // Session-only key

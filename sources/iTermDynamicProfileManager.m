@@ -480,18 +480,33 @@
 - (Profile *)prototypeForDynamicProfile:(Profile *)profile {
     Profile *prototype = nil;
     NSString *parentName = profile[KEY_DYNAMIC_PROFILE_PARENT_NAME];
-    if (parentName) {
-        prototype = [[ProfileModel sharedInstance] bookmarkWithName:parentName];
-        if (!prototype) {
-            [self reportError:[NSString stringWithFormat:@"Dynamic profile %@ references unknown parent name %@. Using default profile as parent.",
-                               profile[KEY_NAME], parentName]
-                         file:profile[KEY_DYNAMIC_PROFILE_FILENAME]];
-        }
+    NSString *parentGUID = profile[KEY_DYNAMIC_PROFILE_PARENT_GUID];
+    if (!parentName && !parentGUID) {
+        return [[ProfileModel sharedInstance] defaultBookmark];
     }
+    // Find prototype by guid or name.
+    prototype = [[ProfileModel sharedInstance] bookmarkWithGuid:parentGUID];
     if (!prototype) {
-        prototype = [[ProfileModel sharedInstance] defaultBookmark];
+        prototype = [[ProfileModel sharedInstance] bookmarkWithName:parentName];
     }
-    return prototype;
+    if (prototype) {
+        return prototype;
+    }
+
+    // Failed. Show an error.
+    NSString *feature;
+    NSString *value;
+    if (parentGUID) {
+        value = parentGUID;
+        feature = @"GUID";
+    } else {
+        value = parentName;
+        feature = @"name";
+    }
+    [self reportError:[NSString stringWithFormat:@"Dynamic profile %@ references unknown parent %@ %@. Using default profile as parent.",
+                       profile[KEY_NAME], feature, value]
+                 file:profile[KEY_DYNAMIC_PROFILE_FILENAME]];
+    return nil;
 }
 
 // Add a new dynamic profile to the model.
