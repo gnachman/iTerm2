@@ -120,10 +120,6 @@
                         kTipBodyKey: @"If you install Shell Integration on a machine you ssh to, you can right click on a filename (for example, in the output of “ls”) and choose “Download with scp” to download the file.",
                         kTipUrlKey: @"https://iterm2.com/shell_integration.html" },
 
-            @"0028": @{ kTipTitleKey: @"Shell Integration: Uploads",
-                        kTipBodyKey: @"If you install Shell Integration on a machine you ssh to, you can drag-drop from Finder into the remote host by holding ⌥ while dragging. The destination directory is determined by where you drop the file in the terminal window: run cd foo, then drop the file below the cd command, and the file will go into the foo directory.",
-                        kTipUrlKey: @"https://iterm2.com/shell_integration.html" },
-
             @"0029": @{ kTipTitleKey: @"Find Your Cursor",
                         kTipBodyKey: @"Press ⌘/ to locate your cursor. It’s fun!" },
 
@@ -285,6 +281,11 @@
 
             @"0079": @{ kTipTitleKey: @"Composer",
                         kTipBodyKey: @"Press ⇧⌘. to open the Composer. It gives you a scratchpad to edit a command before sending it to the shell." },
+            
+            @"0080": @{ kTipTitleKey: @"Shell Integration: Uploads",
+                        kTipBodyKey: @"If you install Shell Integration on a machine you ssh to, you can drag-drop from Finder into the remote host by holding ⌥ while dragging. The destination directory is determined by where you drop the file in the terminal window: run cd foo, then drop the file below the cd command, and the file will go into the foo directory.",
+                        kTipUrlKey: @"https://iterm2.com/shell_integration.html" },
+
             };
 }
 

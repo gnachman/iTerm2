@@ -249,7 +249,7 @@ static NSString *kCommandTimestamp = @"timestamp";
     NSData *decodedData = [self decodeEscapedOutput:encodedData];
 
     TmuxLog(@"Run tmux command: \"%%extended-output \"%%%d\" %@ %.*s",
-            windowPane, ms, (int)[decodedData length], [decodedData bytes]);
+            windowPane, ms, (int)[decodedData length], (const char *)[decodedData bytes]);
 
     [delegate_ tmuxReadTask:decodedData windowPane:windowPane latency:ms];
 
@@ -295,7 +295,7 @@ error:
     NSData *decodedData = [self decodeEscapedOutput:space + 1];
 
     TmuxLog(@"Run tmux command: \"%%output \"%%%d\" %.*s",
-            windowPane, (int)[decodedData length], [decodedData bytes]);
+            windowPane, (int)[decodedData length], (const char *)[decodedData bytes]);
 
     [delegate_ tmuxReadTask:decodedData windowPane:windowPane latency:nil];
 

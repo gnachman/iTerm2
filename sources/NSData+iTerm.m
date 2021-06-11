@@ -100,7 +100,7 @@
                 *error = [NSError errorWithDomain:@"com.googlecode.iterm2" code:1 userInfo:@{ @"errorMessage": errorString }];
             }
         } else {
-            XLog(@"Error %s", errorMessage.bytes);
+            XLog(@"Error %s", (const char *)errorMessage.bytes);
         }
     }
     [task waitUntilExit];

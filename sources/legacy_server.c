@@ -186,7 +186,7 @@ sudo_closefrom(int lowfd) {
 // daemon or service running on it, for that given user. [* from Apples documentation]
 //
 // That's the exact namespace where Launchd places daemons for a given user.
-void MoveOutOfAquaSession() { // FIX for issue 4147
+void MoveOutOfAquaSession(void) { // FIX for issue 4147
     // This function must be called just before fork();
     //
     // This funcion move the process from the Aqua 'per-sesion' namespace to the

@@ -362,7 +362,7 @@ static iTermController *gSharedInstance;
 }
 
 - (NSArray<PseudoTerminal *> *)terminalsSortedByNumber {
-    return [_terminalWindows sortedArrayUsingComparator:^NSComparisonResult(id obj1, id obj2) {
+    return [_terminalWindows sortedArrayUsingComparator:^NSComparisonResult(PseudoTerminal *obj1, PseudoTerminal *obj2) {
         return [@([obj1 number]) compare:@([obj2 number])];
     }];
 }
