@@ -242,9 +242,6 @@
         [super setAlphaValue:0];
         [self resetMouseLocationToRefuseFirstResponderAt];
         _drawingHelper = [[iTermTextDrawingHelper alloc] init];
-        if ([iTermAdvancedSettingsModel showTimestampsByDefault]) {
-            _drawingHelper.showTimestamps = YES;
-        }
         _drawingHelper.delegate = self;
 
         _colorMap = [colorMap retain];
@@ -432,7 +429,17 @@
         return YES;
     }
     if ([item action] == @selector(toggleShowTimestamps:)) {
-        item.state = _drawingHelper.showTimestamps ? NSControlStateValueOn : NSControlStateValueOff;
+        switch ([self.delegate textviewTimestampsMode]) {
+            case iTermTimestampsModeOn:
+                item.state = NSControlStateValueOn;
+                break;
+            case iTermTimestampsModeOff:
+                item.state = NSControlStateValueOff;
+                break;
+            case iTermTimestampsModeHover:
+                item.state = NSControlStateValueMixed;
+                break;
+        }
         return YES;
     }
 
@@ -898,7 +905,7 @@
     dirtyRect.size.width = allowPartialLineRedraw ? (maxX - x) * _charWidth : _dataSource.width;
     dirtyRect.size.height = _lineHeight;
 
-    if (_drawingHelper.showTimestamps) {
+    if (self.showTimestamps) {
         dirtyRect.size.width = self.visibleRect.size.width - dirtyRect.origin.x;
     }
 
@@ -1349,9 +1356,10 @@
     _drawingHelper.badgeRightMargin = [_delegate textViewBadgeRightMargin];
     _drawingHelper.forceAntialiasingOnRetina = [iTermAdvancedSettingsModel forceAntialiasingOnRetina];
     _drawingHelper.blend = MIN(MAX(0.05, [_delegate textViewBlend]), 1);
+    _drawingHelper.shouldShowTimestamps = self.showTimestamps;
 
     CGFloat rightMargin = 0;
-    if (_drawingHelper.showTimestamps) {
+    if (self.showTimestamps) {
         [_drawingHelper createTimestampDrawingHelper];
         rightMargin = _drawingHelper.timestampDrawHelper.maximumWidth + 8;
     }
@@ -1724,17 +1732,36 @@
 }
 
 - (void)toggleShowTimestamps:(id)sender {
-    _drawingHelper.showTimestamps = !_drawingHelper.showTimestamps;
-    [self setNeedsDisplay:YES];
+    [self.delegate textviewToggleTimestampsMode];
+}
+
+- (BOOL)mouseIsOverScroller {
+    if (!self.window || !self.enclosingScrollView) {
+        return NO;
+    }
+    const NSPoint screenLocation = [NSEvent mouseLocation];
+    const NSPoint windowLocation = [self.window convertPointFromScreen:screenLocation];
+    const NSPoint location = [self convertPoint:windowLocation fromView:nil];
+    const CGFloat hotWidth = 22;  // A strip of this width on the right of the scrollview will be considered over the scroller.
+    const NSRect scrollerRectInScrollview = NSMakeRect(NSWidth(self.enclosingScrollView.bounds) - hotWidth, 0, hotWidth, NSHeight(self.enclosingScrollView.bounds));
+    const NSRect scrollerRect = [self convertRect:scrollerRectInScrollview fromView:self.enclosingScrollView];
+    return NSPointInRect(location, scrollerRect);
 }
 
 - (BOOL)showTimestamps {
-    return _drawingHelper.showTimestamps;
+    switch ([self.delegate textviewTimestampsMode]) {
+        case iTermTimestampsModeOn:
+            return YES;
+        case iTermTimestampsModeOff:
+            return NO;
+        case iTermTimestampsModeHover:
+            return [self mouseIsOverScroller];
+    }
+    return NO;
 }
 
-- (void)setShowTimestamps:(BOOL)value {
-    _drawingHelper.showTimestamps = value;
-    [self setNeedsDisplay:YES];
+- (iTermTimestampsMode)timestampsMode {
+    return [self.delegate textviewTimestampsMode];
 }
 
 - (void)setCursorVisible:(BOOL)cursorVisible {

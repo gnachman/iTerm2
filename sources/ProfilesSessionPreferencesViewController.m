@@ -70,7 +70,9 @@
     IBOutlet NSButton *_configureStatusBar;
 
     IBOutlet NSButton *_openPasswordManagerAutomatically;
-
+    IBOutlet NSPopUpButton *_showTimestampsPopup;
+    IBOutlet NSTextField *_showTimestampsLabel;
+    
     iTermStatusBarSetupViewController *_statusBarSetupViewController;
     iTermStatusBarSetupPanel *_statusBarSetupWindow;
     BOOL _awoken;
@@ -240,6 +242,11 @@
                     key:KEY_OPEN_PASSWORD_MANAGER_AUTOMATICALLY
             relatedView:nil
                    type:kPreferenceInfoTypeCheckbox];
+
+    [self defineControl:_showTimestampsPopup
+                    key:KEY_SHOW_TIMESTAMPS
+            relatedView:_showTimestampsLabel
+                   type:kPreferenceInfoTypePopup];
 
     [self addViewToSearchIndex:_configureStatusBar
                    displayName:@"Configure status bar"

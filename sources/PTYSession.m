@@ -9871,6 +9871,25 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     return [iTermProfilePreferences boolForKey:KEY_ENABLE_TRIGGERS_IN_INTERACTIVE_APPS inProfile:self.profile];
 }
 
+- (iTermTimestampsMode)textviewTimestampsMode {
+    return (iTermTimestampsMode)[iTermProfilePreferences unsignedIntegerForKey:KEY_SHOW_TIMESTAMPS inProfile:self.profile];
+}
+
+- (void)textviewToggleTimestampsMode {
+    iTermTimestampsMode mode = iTermTimestampsModeOff;
+    switch ([self textviewTimestampsMode]) {
+        case iTermTimestampsModeOff:
+            mode = iTermTimestampsModeOn;
+            break;
+        case iTermTimestampsModeOn:
+        case iTermTimestampsModeHover:
+            mode = iTermTimestampsModeOff;
+            break;
+    }
+    [self setSessionSpecificProfileValues:@{ KEY_SHOW_TIMESTAMPS: @(mode) }];
+    [_textview setNeedsDisplay:YES];
+}
+
 - (void)closeTriggerWindowController {
     [_triggerWindowController close];
 }
@@ -12616,10 +12635,12 @@ preferredEscaping:(iTermSendTextEscaping)preferredEscaping {
 
 - (void)sessionViewMouseEntered:(NSEvent *)event {
     [_textview mouseEntered:event];
+    [_textview setNeedsDisplay:YES];
 }
 
 - (void)sessionViewMouseExited:(NSEvent *)event {
     [_textview mouseExited:event];
+    [_textview setNeedsDisplay:YES];
 }
 
 - (void)sessionViewMouseMoved:(NSEvent *)event {

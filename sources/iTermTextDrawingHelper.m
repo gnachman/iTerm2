@@ -911,7 +911,7 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
 }
 
 - (void)drawTimestampsWithVirtualOffset:(CGFloat)virtualOffset {
-    if (!self.showTimestamps) {
+    if (!self.shouldShowTimestamps) {
         return;
     }
 

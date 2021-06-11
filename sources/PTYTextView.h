@@ -239,6 +239,9 @@ preferredEscaping:(iTermSendTextEscaping)preferredEscaping;
 - (void)textViewEditTriggers;
 - (void)textViewToggleEnableTriggersInInteractiveApps;
 - (BOOL)textViewTriggersAreEnabledInInteractiveApps;
+- (iTermTimestampsMode)textviewTimestampsMode;
+- (void)textviewToggleTimestampsMode;
+
 @end
 
 @interface iTermHighlightedRow : NSObject
@@ -371,7 +374,8 @@ preferredEscaping:(iTermSendTextEscaping)preferredEscaping;
 typedef void (^PTYTextViewDrawingHookBlock)(iTermTextDrawingHelper *);
 @property(nonatomic, copy) PTYTextViewDrawingHookBlock drawingHook;
 
-@property(nonatomic, assign) BOOL showTimestamps;
+@property(nonatomic, readonly) BOOL showTimestamps;
+@property(nonatomic, readonly) iTermTimestampsMode timestampsMode;
 
 @property(nonatomic, readonly) BOOL anyAnnotationsAreVisible;
 

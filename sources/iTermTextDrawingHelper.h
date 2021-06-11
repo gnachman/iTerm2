@@ -195,7 +195,7 @@ BOOL CheckFindMatchAtIndex(NSData *findMatches, int index);
 @property(nonatomic, assign) VT100GridAbsWindowedRange underlinedRange;
 
 // If set, the last-modified time of each line on the screen is shown on the right side of the display.
-@property(nonatomic, assign) BOOL showTimestamps;
+@property(nonatomic) BOOL shouldShowTimestamps;
 
 // Amount to shift anti-aliased text by horizontally to simulate bold
 @property(nonatomic, assign) CGFloat antiAliasedShift;

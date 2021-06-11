@@ -51,7 +51,7 @@ static vector_float4 VectorForColor(NSColor *color) {
     _useNativePowerlineGlyphs = drawingHelper.useNativePowerlineGlyphs;
     _showBroadcastStripes = drawingHelper.showStripes;
     _processedDefaultBackgroundColor = [drawingHelper defaultBackgroundColor];
-    _timestampsEnabled = drawingHelper.showTimestamps;
+    _timestampsEnabled = drawingHelper.shouldShowTimestamps;
     _isFrontTextView = (textView == [[iTermController sharedInstance] frontTextView]);
     _unfocusedSelectionColor = VectorForColor([[_colorMap colorForKey:kColorMapSelection] colorDimmedBy:2.0/3.0
                                                                                        towardsGrayLevel:0.5]);
