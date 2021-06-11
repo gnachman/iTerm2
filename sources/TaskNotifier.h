@@ -27,6 +27,7 @@ extern NSString *const kCoprocessStatusChangeNotification;
 // Called on any thread
 - (void)brokenPipe;
 - (void)writeTask:(NSData *)data;
+- (void)didRegister;
 
 @end
 

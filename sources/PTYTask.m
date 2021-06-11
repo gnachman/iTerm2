@@ -405,8 +405,9 @@ static void HandleSigChld(int n) {
     if (scaleFactor < 1) {
         scaleFactor = 2;
     }
-    DLog(@"Set terminal size to %@; %@ * scaleFactor=%f for %@",
-         VT100GridSizeDescription(size), NSStringFromSize(viewSize), scaleFactor, self.delegate);
+    DLog(@"Set terminal size to %@; %@ * scaleFactor=%f for %@\n%@",
+         VT100GridSizeDescription(size), NSStringFromSize(viewSize), scaleFactor, self.delegate,
+         [NSThread callStackSymbols]);
     if (self.fd == -1) {
         DLog(@"I have no file descriptor so not setting size.");
         return NO;
@@ -444,6 +445,12 @@ static void HandleSigChld(int n) {
     }
     [[TaskNotifier sharedInstance] deregisterTask:self];
     [self.delegate threadedTaskBrokenPipe];
+}
+
+// Main queue
+- (void)didRegister {
+    DLog(@"didRegister %@", self);
+    [self.delegate taskDidRegister:self];
 }
 
 - (void)processRead {
@@ -919,7 +926,9 @@ static void HandleSigChld(int n) {
 #pragma mark Terminal Size
 
 - (void)rateLimitedSetSizeToDesiredSize {
+    DLog(@"%@", self.delegate);
     if (_rateLimitedSetSizeToDesiredSizePending) {
+        DLog(@"Already have a pending size change");
         return;
     }
 
@@ -930,6 +939,7 @@ static void HandleSigChld(int n) {
         _rateLimitedSetSizeToDesiredSizePending = YES;
         DLog(@" ** Rate limiting **");
         dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(kDelayBetweenSizeChanges * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+            DLog(@"Have waited %@ sec", @(kDelayBetweenSizeChanges));
             self->_rateLimitedSetSizeToDesiredSizePending = NO;
             [self setTerminalSizeToDesiredSize];
         });

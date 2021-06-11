@@ -3288,6 +3288,11 @@ ITERM_WEAKLY_REFERENCEABLE
     [self.variablesScope setValue:task.tty forVariableNamed:iTermVariableKeySessionTTY];
 }
 
+// Main thread
+- (void)taskDidRegister:(PTYTask *)task {
+    [self updateTTYSize];
+}
+
 - (void)tmuxDidDisconnect {
     DLog(@"tmuxDidDisconnect");
     if (_exited) {
@@ -12765,6 +12770,7 @@ preferredEscaping:(iTermSendTextEscaping)preferredEscaping {
 }
 
 - (BOOL)updateTTYSize {
+    DLog(@"%@\n%@", self, [NSThread callStackSymbols]);
     return [_shell setSize:_screen.size
                   viewSize:_screen.viewSize
                scaleFactor:self.backingScaleFactor];

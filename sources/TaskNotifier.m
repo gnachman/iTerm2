@@ -110,6 +110,11 @@ static int unblockPipeW;
     PtyTaskDebugLog(@"registerTask: unlock\n");
     [tasksLock unlock];
     [self unblock];
+
+    __weak __typeof(task) weakTask = task;
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [weakTask didRegister];
+    });
 }
 
 - (void)deregisterTask:(id<iTermTask>)task {
