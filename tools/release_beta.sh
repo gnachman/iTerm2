@@ -93,11 +93,10 @@ function Build {
   test -f $SVNDIR/downloads/beta/iTerm2-${NAME}.summary || (echo "iTerm2 "$VERSION" ($SUMMARY)" > $SVNDIR/downloads/beta/iTerm2-${NAME}.summary)
   test -f $SVNDIR/downloads/beta/iTerm2-${NAME}.description || (echo "$DESCRIPTION" > $SVNDIR/downloads/beta/iTerm2-${NAME}.description)
   vi $SVNDIR/downloads/beta/iTerm2-${NAME}.description
-  echo 'SHA-256 of the zip file is' > $SVNDIR/downloads/beta/iTerm2-${NAME}.changelog
   rm -f /tmp/sum /tmp/sum.asc
   shasum -a256 iTerm2-${NAME}.zip | awk '{print $1}' > /tmp/sum
   gpg --clearsign /tmp/sum
-  echo "You can use the following to verify the zip file on https://keybase.io/verify:" >> $SVNDIR/downloads/beta/iTerm2-${NAME}.changelog
+  echo "You can use the following to verify the zip file on https://keybase.io/verify:" > $SVNDIR/downloads/beta/iTerm2-${NAME}.changelog
   echo "" >> $SVNDIR/downloads/beta/iTerm2-${NAME}.changelog
   cat /tmp/sum.asc >> $SVNDIR/downloads/beta/iTerm2-${NAME}.changelog
   vi $SVNDIR/downloads/beta/iTerm2-${NAME}.changelog
