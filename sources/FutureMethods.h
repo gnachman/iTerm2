@@ -81,3 +81,9 @@ NS_INLINE BOOL iTermTextIsMonochrome(void) {
 - (NSEdgeInsets)futureEdgeInsetsValue;
 
 @end
+
+#ifndef MAC_OS_VERSION_12_0
+@interface NSProcessInfo(iTermMonterey)
+- (BOOL)isLowPowerModeEnabled;
+@end
+#endif  // MAC_OS_VERSION_12_0

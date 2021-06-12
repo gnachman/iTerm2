@@ -6,6 +6,7 @@
 #import "CVector.h"
 #import "FakeWindow.h"
 #import "FileTransferManager.h"
+#import "FutureMethods.h"
 #import "ITAddressBookMgr.h"
 #import "iTerm.h"
 #import "iTermAPIHelper.h"
@@ -6080,6 +6081,14 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         machineSupportsMetal = devices.count > 0;
         [devices release];
     });
+    if (@available(macOS 12.0, *)) {
+        if ([[NSProcessInfo processInfo] isLowPowerModeEnabled]) {
+            if (reason) {
+                *reason = iTermMetalUnavailableReasonLowerPowerMode;
+            }
+            return NO;
+        }
+    }
     if (!machineSupportsMetal) {
         if (reason) {
             *reason = iTermMetalUnavailableReasonNoGPU;

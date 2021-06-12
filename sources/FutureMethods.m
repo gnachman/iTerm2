@@ -147,3 +147,11 @@ MTActuatorIsOpenFunction *iTermGetMTActuatorIsOpenFunction(void) {
 }
 
 @end
+
+#ifndef MAC_OS_VERSION_12_0
+@implementation NSProcessInfo(iTermMonterey)
+- (BOOL)isLowPowerModeEnabled {
+    return NO;
+}
+@end
+#endif  // MAC_OS_VERSION_12_0

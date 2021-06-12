@@ -36,7 +36,8 @@ typedef NS_ENUM(NSUInteger, iTermMetalUnavailableReason) {
     iTermMetalUnavailableReasonSharedBackgroundImage,
     iTermMetalUnavailableReasonSwipingBetweenTabs,
     iTermMetalUnavailableReasonSplitPaneBeingDragged,
-    iTermMetalUnavailableReasonWindowObscured
+    iTermMetalUnavailableReasonWindowObscured,
+    iTermMetalUnavailableReasonLowerPowerMode
 };
 
 static inline NSString *iTermMetalUnavailableReasonDescription(iTermMetalUnavailableReason reason) {
@@ -105,6 +106,8 @@ static inline NSString *iTermMetalUnavailableReasonDescription(iTermMetalUnavail
             return @"a split pane is being dragged.";
         case iTermMetalUnavailableReasonWindowObscured:
             return @"the window is mostly under another window.";
+        case iTermMetalUnavailableReasonLowerPowerMode:
+            return @"macOS is in low power mode.";
     }
 
     return @"of an internal error. Please file a bug report!";
