@@ -424,6 +424,7 @@
         case ' ':
             return [self stringWithCharacter:0];
         case 'i':
+        case 'j':
         case 'm':
             return nil;
     }
