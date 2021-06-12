@@ -7523,7 +7523,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 - (void)hideAutoCommandHistoryForSession:(PTYSession *)session {
     if ([session.guid isEqualToString:self.autoCommandHistorySessionGuid]) {
         [self hideAutoCommandHistory];
-        DLog(@"Cancel delayed perform of show ACH window");
+        DLog(@"ACH Cancel delayed perform of show ACH window");
         [NSObject cancelPreviousPerformRequestsWithTarget:self
                                                  selector:@selector(reallyShowAutoCommandHistoryForSession:)
                                                    object:session];
@@ -7545,6 +7545,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 - (void)updateAutoCommandHistoryForPrefix:(NSString *)prefix
                                 inSession:(PTYSession *)session
                               popIfNeeded:(BOOL)popIfNeeded {
+    DLog(@"ACH prefix=%@ session=%@ popIfNeeded=%@", prefix, session, @(popIfNeeded));
     if ([session.guid isEqualToString:self.autoCommandHistorySessionGuid]) {
         if (!commandHistoryPopup) {
             commandHistoryPopup = [[CommandHistoryPopupWindowController alloc] initForAutoComplete:YES];
@@ -7552,24 +7553,30 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
         NSArray<iTermCommandHistoryCommandUseMO *> *commands = [commandHistoryPopup commandsForHost:[session currentHost]
                                                                                      partialCommand:prefix
                                                                                              expand:NO];
+        DLog(@"ACH commands=%@", commands);
         if (commands.count) {
             if (popIfNeeded) {
+                DLog(@"ACH Pop");
                 [commandHistoryPopup popWithDelegate:session inWindow:self.window];
             }
         } else {
+            DLog(@"ACH no commands");
             [commandHistoryPopup close];
             return;
         }
         if ([commands count] == 1) {
             iTermCommandHistoryCommandUseMO *commandUse = commands[0];
             if ([commandUse.command isEqualToString:prefix]) {
+                DLog(@"ACH one command that equals prefix");
                 [commandHistoryPopup close];
                 return;
             }
         }
         if (![[commandHistoryPopup window] isVisible]) {
+            DLog(@"ACH show");
             [self showAutoCommandHistoryForSession:session];
         }
+        DLog(@"ACH load commands");
         [commandHistoryPopup loadCommands:commands
                            partialCommand:prefix];
     }
@@ -7578,6 +7585,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
         NSArray<NSString *> *commands = [[history commandHistoryEntriesWithPrefix:prefix onHost:[session currentHost]] mapWithBlock:^id(iTermCommandHistoryEntryMO *anObject) {
             return anObject.command;
         }];
+        DLog(@"ACH Set candidates=%@", commands);
         [_autocompleteCandidateListItem setCandidates:commands ?: @[]
                                      forSelectedRange:NSMakeRange(0, prefix.length)
                                              inString:prefix];
@@ -7588,6 +7596,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 - (void)showAutoCommandHistoryForSession:(PTYSession *)session {
     if ([iTermPreferences boolForKey:kPreferenceAutoCommandHistory]) {
         // Use a delay so we don't get a flurry of windows appearing when restoring arrangements.
+        DLog(@"ACH show after 0.2 second delay for session %@", session);
         [self performSelector:@selector(reallyShowAutoCommandHistoryForSession:)
                    withObject:session
                    afterDelay:0.2];
@@ -7595,6 +7604,12 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 }
 
 - (void)reallyShowAutoCommandHistoryForSession:(PTYSession *)session {
+    DLog(@"ACH session=%@ currentSession=%@ window.isKey=%@ currentCommand=%@ eligible=%@",
+         session,
+         self.currentSession,
+         @(self.window.isKeyWindow),
+         session.currentCommand,
+         @(session.eligibleForAutoCommandHistory));
     if ([self currentSession] == session &&
         [[self window] isKeyWindow] &&
         [[session currentCommand] length] > 0 &&

@@ -11648,16 +11648,16 @@ preferredEscaping:(iTermSendTextEscaping)preferredEscaping {
         }
     }
     if (!haveCommand && hadCommand) {
-        DLog(@"Hide because don't have a command, but just had one");
+        DLog(@"ACH Hide because don't have a command, but just had one");
         [[_delegate realParentWindow] hideAutoCommandHistoryForSession:self];
     } else {
         if (!hadCommand && range.start.x >= 0) {
-            DLog(@"Show because I have a range but didn't have a command");
+            DLog(@"ACH Show because I have a range but didn't have a command");
             [[_delegate realParentWindow] showAutoCommandHistoryForSession:self];
         }
         if ([[_delegate realParentWindow] wantsCommandHistoryUpdatesFromSession:self]) {
             NSString *command = haveCommand ? [self commandInRange:_commandRange] : @"";
-            DLog(@"Update command to %@, have=%d, range.start.x=%d", command, (int)haveCommand, range.start.x);
+            DLog(@"ACH Update command to %@, have=%d, range.start.x=%d", command, (int)haveCommand, range.start.x);
             if (haveCommand && self.eligibleForAutoCommandHistory) {
                 [[_delegate realParentWindow] updateAutoCommandHistoryForPrefix:command
                                                                       inSession:self
