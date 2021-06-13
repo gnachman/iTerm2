@@ -7057,6 +7057,37 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
         return [anObject isKindOfClass:[iTermPasswordManagerPanel class]];
     }];
 }
+
+// You can drag the window by the pane title bar if it's the only pane in the only tab and the
+// window has no titlebar. Note that in this situation the only way the pane title bar would exist
+// is if there's a status bar on top.
+- (BOOL)tabCanDragByPaneTitleBar {
+    if ([[self tabs] count] != 1) {
+        return NO;
+    }
+    switch (self.windowType) {
+        case WINDOW_TYPE_NORMAL:
+        case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
+        case WINDOW_TYPE_LION_FULL_SCREEN:
+        case WINDOW_TYPE_TOP:
+        case WINDOW_TYPE_BOTTOM:
+        case WINDOW_TYPE_LEFT:
+        case WINDOW_TYPE_RIGHT:
+        case WINDOW_TYPE_BOTTOM_PARTIAL:
+        case WINDOW_TYPE_TOP_PARTIAL:
+        case WINDOW_TYPE_LEFT_PARTIAL:
+        case WINDOW_TYPE_RIGHT_PARTIAL:
+        case WINDOW_TYPE_COMPACT:
+        case WINDOW_TYPE_ACCESSORY:
+        case WINDOW_TYPE_MAXIMIZED:
+        case WINDOW_TYPE_COMPACT_MAXIMIZED:
+            return NO;
+
+        case WINDOW_TYPE_NO_TITLE_BAR:
+            return YES;
+    }
+}
+
 - (void)tabDidClearScrollbackBufferInSession:(PTYSession *)session {
     [[_contentView.toolbelt capturedOutputView] removeSelection];
     [[_contentView.toolbelt commandHistoryView] removeSelection];

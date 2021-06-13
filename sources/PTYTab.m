@@ -6515,6 +6515,13 @@ backgroundColor:(NSColor *)backgroundColor {
     return [self.delegate tabPasswordManagerWindowIsOpen];
 }
 
+- (BOOL)sessionShouldDragWindowByPaneTitleBar:(PTYSession *)session {
+    if ([[self windowPanes] count] != 1) {
+        return NO;
+    }
+    return [realParentWindow_ tabCanDragByPaneTitleBar];
+}
+
 #pragma mark - iTermObject
 
 - (iTermBuiltInFunctions *)objectMethodRegistry {

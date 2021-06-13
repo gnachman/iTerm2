@@ -69,5 +69,6 @@ backgroundColor:(NSColor *)backgroundColor;
 - (NSSize)tabExpectedSize;
 - (void)tabActiveSessionDidResize:(PTYTab *)tab;
 - (BOOL)tabPasswordManagerWindowIsOpen;
+- (BOOL)tabCanDragByPaneTitleBar;
 
 @end

@@ -265,6 +265,7 @@ backgroundColor:(NSColor *)backgroundColor;
 - (void)sessionDisableFocusFollowsMouseAtCurrentLocation;
 - (void)sessionDidResize:(PTYSession *)session;
 - (BOOL)sessionPasswordManagerWindowIsOpen;
+- (BOOL)sessionShouldDragWindowByPaneTitleBar:(PTYSession *)session;
 
 @end
 

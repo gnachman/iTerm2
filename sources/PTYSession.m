@@ -13547,7 +13547,11 @@ preferredEscaping:(iTermSendTextEscaping)preferredEscaping {
 }
 
 - (BOOL)statusBarCanDragWindow {
-    return !self.view.statusBarIsInPaneTitleBar;
+    const BOOL inTitleBar = self.view.statusBarIsInPaneTitleBar;
+    if (inTitleBar) {
+        return [self.delegate sessionShouldDragWindowByPaneTitleBar:self];
+    }
+    return YES;
 }
 
 - (iTermActivityInfo)statusBarActivityInfo {
