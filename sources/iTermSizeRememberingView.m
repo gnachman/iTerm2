@@ -30,6 +30,10 @@
     [self setFrameSize:_originalSize];
 }
 
+- (void)viewDidChangeEffectiveAppearance {
+    [self.delegate sizeRememberingView:self effectiveAppearanceDidChange:self.effectiveAppearance];
+}
+
 @end
 
 @implementation iTermPrefsProfilesGeneralView

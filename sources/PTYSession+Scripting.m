@@ -315,7 +315,7 @@
 }
 
 - (void)setBackgroundColor:(NSColor *)color {
-    [self setSessionSpecificProfileValues:@{ KEY_BACKGROUND_COLOR: [color dictionaryValue] }];
+    [self setSessionSpecificProfileValues:@{ [self amendedColorKey:KEY_BACKGROUND_COLOR]: [color dictionaryValue] }];
 }
 
 - (NSColor *)boldColor {
@@ -323,7 +323,7 @@
 }
 
 - (void)setBoldColor:(NSColor *)color {
-    [self setSessionSpecificProfileValues:@{ KEY_BOLD_COLOR: [color dictionaryValue] }];
+    [self setSessionSpecificProfileValues:@{ [self amendedColorKey:KEY_BOLD_COLOR]: [color dictionaryValue] }];
 }
 
 - (NSColor *)cursorColor {
@@ -331,7 +331,7 @@
 }
 
 - (void)setCursorColor:(NSColor *)color {
-    [self setSessionSpecificProfileValues:@{ KEY_CURSOR_COLOR: [color dictionaryValue] }];
+    [self setSessionSpecificProfileValues:@{ [self amendedColorKey:KEY_CURSOR_COLOR]: [color dictionaryValue] }];
 }
 
 - (NSColor *)cursorTextColor {
@@ -339,7 +339,7 @@
 }
 
 - (void)setCursorTextColor:(NSColor *)color {
-    [self setSessionSpecificProfileValues:@{ KEY_CURSOR_TEXT_COLOR: [color dictionaryValue] }];
+    [self setSessionSpecificProfileValues:@{ [self amendedColorKey:KEY_CURSOR_TEXT_COLOR]: [color dictionaryValue] }];
 }
 
 - (NSColor *)foregroundColor {
@@ -347,7 +347,7 @@
 }
 
 - (void)setForegroundColor:(NSColor *)color {
-    [self setSessionSpecificProfileValues:@{ KEY_FOREGROUND_COLOR: [color dictionaryValue] }];
+    [self setSessionSpecificProfileValues:@{ [self amendedColorKey:KEY_FOREGROUND_COLOR]: [color dictionaryValue] }];
 }
 
 - (NSColor *)underlineColor {
@@ -355,7 +355,7 @@
 }
 
 - (void)setUnderlineColor:(NSColor *)color {
-    [self setSessionSpecificProfileValues:@{ KEY_UNDERLINE_COLOR: [color dictionaryValue] }];
+    [self setSessionSpecificProfileValues:@{ [self amendedColorKey:KEY_UNDERLINE_COLOR]: [color dictionaryValue] }];
 }
 
 - (NSColor *)selectedTextColor {
@@ -363,7 +363,7 @@
 }
 
 - (void)setSelectedTextColor:(NSColor *)color {
-    [self setSessionSpecificProfileValues:@{ KEY_SELECTED_TEXT_COLOR: [color dictionaryValue] }];
+    [self setSessionSpecificProfileValues:@{ [self amendedColorKey:KEY_SELECTED_TEXT_COLOR]: [color dictionaryValue] }];
 }
 
 - (NSColor *)selectionColor {
@@ -371,7 +371,7 @@
 }
 
 - (void)setSelectionColor:(NSColor *)color {
-    [self setSessionSpecificProfileValues:@{ KEY_SELECTION_COLOR: [color dictionaryValue] }];
+    [self setSessionSpecificProfileValues:@{ [self amendedColorKey:KEY_SELECTION_COLOR]: [color dictionaryValue] }];
 }
 
 - (NSString *)text {
@@ -397,7 +397,7 @@
 }
 
 - (void)setAnsiBlackColor:(NSColor*)color {
-    [self setSessionSpecificProfileValues:@{ KEY_ANSI_0_COLOR: [color dictionaryValue] }];
+    [self setSessionSpecificProfileValues:@{ [self amendedColorKey:KEY_ANSI_0_COLOR]: [color dictionaryValue] }];
 }
 
 - (NSColor *)ansiRedColor {
@@ -405,7 +405,7 @@
 }
 
 - (void)setAnsiRedColor:(NSColor*)color {
-    [self setSessionSpecificProfileValues:@{ KEY_ANSI_1_COLOR: [color dictionaryValue] }];
+    [self setSessionSpecificProfileValues:@{ [self amendedColorKey:KEY_ANSI_1_COLOR]: [color dictionaryValue] }];
 }
 
 - (NSColor *)ansiGreenColor {
@@ -413,7 +413,7 @@
 }
 
 - (void)setAnsiGreenColor:(NSColor*)color {
-    [self setSessionSpecificProfileValues:@{ KEY_ANSI_2_COLOR: [color dictionaryValue] }];
+    [self setSessionSpecificProfileValues:@{ [self amendedColorKey:KEY_ANSI_2_COLOR]: [color dictionaryValue] }];
 }
 
 - (NSColor *)ansiYellowColor {
@@ -421,7 +421,7 @@
 }
 
 - (void)setAnsiYellowColor:(NSColor*)color {
-    [self setSessionSpecificProfileValues:@{ KEY_ANSI_3_COLOR: [color dictionaryValue] }];
+    [self setSessionSpecificProfileValues:@{ [self amendedColorKey:KEY_ANSI_3_COLOR]: [color dictionaryValue] }];
 }
 
 - (NSColor *)ansiBlueColor {
@@ -429,7 +429,7 @@
 }
 
 - (void)setAnsiBlueColor:(NSColor*)color {
-    [self setSessionSpecificProfileValues:@{ KEY_ANSI_4_COLOR: [color dictionaryValue] }];
+    [self setSessionSpecificProfileValues:@{ [self amendedColorKey:KEY_ANSI_4_COLOR]: [color dictionaryValue] }];
 }
 
 - (NSColor *)ansiMagentaColor {
@@ -437,7 +437,7 @@
 }
 
 - (void)setAnsiMagentaColor:(NSColor*)color {
-    [self setSessionSpecificProfileValues:@{ KEY_ANSI_5_COLOR: [color dictionaryValue] }];
+    [self setSessionSpecificProfileValues:@{ [self amendedColorKey:KEY_ANSI_5_COLOR]: [color dictionaryValue] }];
 }
 
 - (NSColor *)ansiCyanColor {
@@ -445,7 +445,7 @@
 }
 
 - (void)setAnsiCyanColor:(NSColor*)color {
-    [self setSessionSpecificProfileValues:@{ KEY_ANSI_6_COLOR: [color dictionaryValue] }];
+    [self setSessionSpecificProfileValues:@{ [self amendedColorKey:KEY_ANSI_6_COLOR]: [color dictionaryValue] }];
 }
 
 - (NSColor *)ansiWhiteColor {
@@ -453,7 +453,7 @@
 }
 
 - (void)setAnsiWhiteColor:(NSColor*)color {
-    [self setSessionSpecificProfileValues:@{ KEY_ANSI_7_COLOR: [color dictionaryValue] }];
+    [self setSessionSpecificProfileValues:@{ [self amendedColorKey:KEY_ANSI_7_COLOR]: [color dictionaryValue] }];
 }
 
 #pragma mark Ansi Bright Colors
@@ -463,7 +463,7 @@
 }
 
 - (void)setAnsiBrightBlackColor:(NSColor*)color {
-    [self setSessionSpecificProfileValues:@{ KEY_ANSI_8_COLOR: [color dictionaryValue] }];
+    [self setSessionSpecificProfileValues:@{ [self amendedColorKey:KEY_ANSI_8_COLOR]: [color dictionaryValue] }];
 }
 
 - (NSColor *)ansiBrightRedColor {
@@ -471,7 +471,7 @@
 }
 
 - (void)setAnsiBrightRedColor:(NSColor*)color {
-    [self setSessionSpecificProfileValues:@{ KEY_ANSI_9_COLOR: [color dictionaryValue] }];
+    [self setSessionSpecificProfileValues:@{ [self amendedColorKey:KEY_ANSI_9_COLOR]: [color dictionaryValue] }];
 }
 
 - (NSColor *)ansiBrightGreenColor {
@@ -479,7 +479,7 @@
 }
 
 - (void)setAnsiBrightGreenColor:(NSColor*)color {
-    [self setSessionSpecificProfileValues:@{ KEY_ANSI_10_COLOR: [color dictionaryValue] }];
+    [self setSessionSpecificProfileValues:@{ [self amendedColorKey:KEY_ANSI_10_COLOR]: [color dictionaryValue] }];
 }
 
 - (NSColor *)ansiBrightYellowColor {
@@ -487,7 +487,7 @@
 }
 
 - (void)setAnsiBrightYellowColor:(NSColor*)color {
-    [self setSessionSpecificProfileValues:@{ KEY_ANSI_11_COLOR: [color dictionaryValue] }];
+    [self setSessionSpecificProfileValues:@{ [self amendedColorKey:KEY_ANSI_11_COLOR]: [color dictionaryValue] }];
 }
 
 - (NSColor *)ansiBrightBlueColor {
@@ -495,7 +495,7 @@
 }
 
 - (void)setAnsiBrightBlueColor:(NSColor*)color {
-    [self setSessionSpecificProfileValues:@{ KEY_ANSI_12_COLOR: [color dictionaryValue] }];
+    [self setSessionSpecificProfileValues:@{ [self amendedColorKey:KEY_ANSI_12_COLOR]: [color dictionaryValue] }];
 }
 
 - (NSColor *)ansiBrightMagentaColor {
@@ -503,7 +503,7 @@
 }
 
 - (void)setAnsiBrightMagentaColor:(NSColor*)color {
-    [self setSessionSpecificProfileValues:@{ KEY_ANSI_13_COLOR: [color dictionaryValue] }];
+    [self setSessionSpecificProfileValues:@{ [self amendedColorKey:KEY_ANSI_13_COLOR]: [color dictionaryValue] }];
 }
 
 - (NSColor *)ansiBrightCyanColor {
@@ -511,7 +511,7 @@
 }
 
 - (void)setAnsiBrightCyanColor:(NSColor*)color {
-    [self setSessionSpecificProfileValues:@{ KEY_ANSI_14_COLOR: [color dictionaryValue] }];
+    [self setSessionSpecificProfileValues:@{ [self amendedColorKey:KEY_ANSI_14_COLOR]: [color dictionaryValue] }];
 }
 
 - (NSColor *)ansiBrightWhiteColor {
@@ -519,7 +519,7 @@
 }
 
 - (void)setAnsiBrightWhiteColor:(NSColor*)color {
-    [self setSessionSpecificProfileValues:@{ KEY_ANSI_15_COLOR: [color dictionaryValue] }];
+    [self setSessionSpecificProfileValues:@{ [self amendedColorKey:KEY_ANSI_15_COLOR]: [color dictionaryValue] }];
 }
 
 - (void)setColumns:(int)columns {

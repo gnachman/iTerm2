@@ -985,8 +985,9 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
         DLog(@"Root is slightly smaller than flexible view so use terminal background color for flexible view's background");
         // Root is just slightly smaller than flexibleView, by less than the size of a character.
         // Set flexible view's color to the default background color for tmux tabs.
-        NSColor *bgColor;
-        bgColor = [ITAddressBookMgr decodeColor:profile[KEY_BACKGROUND_COLOR]];
+        NSColor *bgColor = [iTermProfilePreferences colorForKey:KEY_BACKGROUND_COLOR
+                                                           dark:root_.effectiveAppearance.it_isDark
+                                                        profile:profile];
         if ([self.delegate tabShouldUseTransparency:self]) {
             CGFloat alpha = 1.0 - [iTermProfilePreferences floatForKey:KEY_TRANSPARENCY inProfile:profile];
             if (alpha < 1) {
@@ -2589,7 +2590,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     return YES;
 }
 
-+ (void)_recursiveDrawArrangementPreview:(NSDictionary*)arrangement frame:(NSRect)frame {
++ (void)_recursiveDrawArrangementPreview:(NSDictionary*)arrangement frame:(NSRect)frame dark:(BOOL)dark {
     if ([[arrangement objectForKey:TAB_ARRANGEMENT_VIEW_TYPE] isEqualToString:VIEW_TYPE_SPLITTER]) {
         BOOL isVerticalSplitter = [[arrangement objectForKey:SPLITTER_IS_VERTICAL] boolValue];
         float xExtent = 0;
@@ -2614,7 +2615,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
         for (int i = 0; i < [subviews count]; i++) {
             NSDictionary* subArrangement = [subviews objectAtIndex:i];
             NSRect subFrame = NSMakeRect(x, y, pw, ph);
-            [PTYTab _recursiveDrawArrangementPreview:subArrangement frame:subFrame];
+            [PTYTab _recursiveDrawArrangementPreview:subArrangement frame:subFrame dark:dark];
             x += dx;
             y += dy;
         }
@@ -2630,7 +2631,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
             y += dy;
         }
     } else {
-        [PTYSession drawArrangementPreview:[arrangement objectForKey:TAB_ARRANGEMENT_SESSION] frame:frame];
+        [PTYSession drawArrangementPreview:[arrangement objectForKey:TAB_ARRANGEMENT_SESSION] frame:frame dark:dark];
     }
 }
 
@@ -2820,9 +2821,10 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     }
 }
 
-+ (void)drawArrangementPreview:(NSDictionary*)arrangement frame:(NSRect)frame {
++ (void)drawArrangementPreview:(NSDictionary*)arrangement frame:(NSRect)frame dark:(BOOL)dark {
     [PTYTab _recursiveDrawArrangementPreview:[arrangement objectForKey:TAB_ARRANGEMENT_ROOT]
-                                       frame:frame];
+                                       frame:frame
+                                        dark:dark];
 }
 
 - (NSArray *)_recursiveSplittersFromNode:(NSSplitView *)node
@@ -3040,8 +3042,8 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     NSColor *tabColor = [[self class] colorForHtmlName:colorName];
     if (tabColor) {
         PTYSession *session = [self activeSession];
-        [session setSessionSpecificProfileValues:@{ KEY_TAB_COLOR: [tabColor dictionaryValue],
-                                                    KEY_USE_TAB_COLOR: @YES }];
+        [session setSessionSpecificProfileValues:@{ [session amendedColorKey:KEY_TAB_COLOR]: [tabColor dictionaryValue],
+                                                     [session amendedColorKey:KEY_USE_TAB_COLOR]: @YES }];
     } else {
         [term updateTabColors];
     }

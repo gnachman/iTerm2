@@ -611,7 +611,7 @@ backgroundColor:(NSColor *)backgroundColor;
 - (NSArray<iTermTuple<NSString *, NSNumber *> *> *)triggerTuples;
 - (void)toggleTriggerEnabledAtIndex:(NSInteger)index;
 
-+ (void)drawArrangementPreview:(NSDictionary *)arrangement frame:(NSRect)frame;
++ (void)drawArrangementPreview:(NSDictionary *)arrangement frame:(NSRect)frame dark:(BOOL)dark;
 - (void)setSizeFromArrangement:(NSDictionary*)arrangement;
 + (PTYSession*)sessionFromArrangement:(NSDictionary *)arrangement
                                 named:(NSString *)arrangementName
@@ -861,6 +861,7 @@ backgroundColor:(NSColor *)backgroundColor;
 
 // Set a value in the session's dictionary without affecting the backing profile.
 - (void)setSessionSpecificProfileValues:(NSDictionary *)newValues;
+- (NSString *)amendedColorKey:(NSString *)baseKey;
 
 - (void)useTransparencyDidChange;
 

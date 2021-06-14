@@ -180,7 +180,9 @@ static const NSEventModifierFlags iTermHotkeyModifierMask = (NSEventModifierFlag
 }
 
 + (CGFloat)defaultAlphaForColorPresetKey:(NSString *)key {
-    if ([key isEqualToString:KEY_CURSOR_GUIDE_COLOR]) {
+    if ([key isEqualToString:KEY_CURSOR_GUIDE_COLOR] ||
+        [key isEqualToString:KEY_CURSOR_GUIDE_COLOR COLORS_LIGHT_MODE_SUFFIX] ||
+        [key isEqualToString:KEY_CURSOR_GUIDE_COLOR COLORS_DARK_MODE_SUFFIX]) {
         return 0.25;
     } else {
         return 1.0;

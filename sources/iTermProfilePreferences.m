@@ -14,6 +14,7 @@
 #import "iTermCursor.h"
 #import "iTermPreferences.h"
 #import "iTermStatusBarLayout.h"
+#import "NSArray+iTerm.h"
 #import "NSColor+iTerm.h"
 #import "NSDictionary+iTerm.h"
 #import "NSJSONSerialization+iTerm.h"
@@ -196,12 +197,47 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
                             KEY_ANSI_13_COLOR, KEY_ANSI_14_COLOR, KEY_ANSI_15_COLOR,
                             KEY_CURSOR_GUIDE_COLOR, KEY_BADGE_COLOR, KEY_TAB_COLOR,
                             KEY_UNDERLINE_COLOR ];
+        color = [color flatMapWithBlock:^NSArray *(NSString *key) {
+            return @[ key,
+                      [key stringByAppendingString:COLORS_LIGHT_MODE_SUFFIX],
+                      [key stringByAppendingString:COLORS_DARK_MODE_SUFFIX]];
+        }];
 
-        NSArray *number = @[ KEY_USE_CURSOR_GUIDE, KEY_USE_TAB_COLOR, KEY_USE_UNDERLINE_COLOR,
-                             KEY_SMART_CURSOR_COLOR, KEY_MINIMUM_CONTRAST, KEY_CURSOR_BOOST,
+        NSArray *number = @[ KEY_USE_CURSOR_GUIDE COLORS_LIGHT_MODE_SUFFIX,
+                             KEY_USE_CURSOR_GUIDE COLORS_DARK_MODE_SUFFIX,
+                             KEY_USE_CURSOR_GUIDE,
+
+                             KEY_USE_TAB_COLOR COLORS_LIGHT_MODE_SUFFIX,
+                             KEY_USE_TAB_COLOR COLORS_DARK_MODE_SUFFIX,
+                             KEY_USE_TAB_COLOR,
+
+                             KEY_USE_UNDERLINE_COLOR COLORS_LIGHT_MODE_SUFFIX,
+                             KEY_USE_UNDERLINE_COLOR COLORS_DARK_MODE_SUFFIX,
+                             KEY_USE_UNDERLINE_COLOR,
+
+                             KEY_SMART_CURSOR_COLOR COLORS_LIGHT_MODE_SUFFIX,
+                             KEY_SMART_CURSOR_COLOR COLORS_DARK_MODE_SUFFIX,
+                             KEY_SMART_CURSOR_COLOR,
+
+                             KEY_MINIMUM_CONTRAST COLORS_LIGHT_MODE_SUFFIX,
+                             KEY_MINIMUM_CONTRAST COLORS_DARK_MODE_SUFFIX,
+                             KEY_MINIMUM_CONTRAST,
+
+                             KEY_CURSOR_BOOST COLORS_LIGHT_MODE_SUFFIX,
+                             KEY_CURSOR_BOOST COLORS_DARK_MODE_SUFFIX,
+                             KEY_CURSOR_BOOST,
+
                              KEY_CURSOR_TYPE, KEY_BLINKING_CURSOR, KEY_USE_BOLD_FONT, KEY_THIN_STROKES,
-                             KEY_ASCII_LIGATURES, KEY_NON_ASCII_LIGATURES, KEY_USE_BOLD_COLOR,
+                             KEY_ASCII_LIGATURES, KEY_NON_ASCII_LIGATURES,
+
+                             KEY_USE_BOLD_COLOR,
+                             KEY_USE_BOLD_COLOR COLORS_LIGHT_MODE_SUFFIX,
+                             KEY_USE_BOLD_COLOR COLORS_DARK_MODE_SUFFIX,
+
                              KEY_BRIGHTEN_BOLD_TEXT,
+                             KEY_BRIGHTEN_BOLD_TEXT COLORS_LIGHT_MODE_SUFFIX,
+                             KEY_BRIGHTEN_BOLD_TEXT COLORS_DARK_MODE_SUFFIX,
+
                              KEY_BLINK_ALLOWED, KEY_USE_ITALIC_FONT, KEY_AMBIGUOUS_DOUBLE_WIDTH,
                              KEY_UNICODE_NORMALIZATION, KEY_HORIZONTAL_SPACING, KEY_VERTICAL_SPACING,
                              KEY_USE_NONASCII_FONT, KEY_TRANSPARENCY, KEY_INITIAL_USE_TRANSPARENCY,
@@ -235,7 +271,8 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
                              KEY_TITLE_COMPONENTS, KEY_USE_CUSTOM_WINDOW_TITLE, KEY_USE_CUSTOM_TAB_TITLE,
                              KEY_USE_LIBTICKIT_PROTOCOL, KEY_WINDOW_TYPE, KEY_ALLOW_PASTE_BRACKETING,
                              KEY_PREVENT_APS, KEY_MOVEMENT_KEYS_SCROLL_OUTSIDE_INTERACTIVE_APPS,
-                             KEY_OPEN_PASSWORD_MANAGER_AUTOMATICALLY, KEY_SHOW_TIMESTAMPS];
+                             KEY_OPEN_PASSWORD_MANAGER_AUTOMATICALLY, KEY_SHOW_TIMESTAMPS,
+                             KEY_USE_SEPARATE_COLORS_FOR_LIGHT_AND_DARK_MODE];
         NSArray *stringArrays = @[ KEY_TAGS, KEY_JOBS, KEY_BOUND_HOSTS ];
         NSArray *dictArrays = @[ KEY_HOTKEY_ALTERNATE_SHORTCUTS, KEY_TRIGGERS, KEY_SMART_SELECTION_RULES,
                                  ];
@@ -340,22 +377,110 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
                   KEY_ANSI_15_COLOR:       [[NSColor colorWithCalibratedRed:1.000 green:1.000 blue:1.000 alpha:1] dictionaryValue],
                   KEY_CURSOR_GUIDE_COLOR:  [[NSColor colorWithCalibratedRed:0.650 green:0.910 blue:1.000 alpha:0.25] dictionaryValue],
                   KEY_BADGE_COLOR:         [[NSColor colorWithCalibratedRed:1.0 green:0.000 blue:0.000 alpha:0.5] dictionaryValue],
+
+                  // The light and dark variants are used.
+                  KEY_FOREGROUND_COLOR COLORS_LIGHT_MODE_SUFFIX:    [[NSColor colorWithCalibratedRed:0.733 green:0.733 blue:0.733 alpha:1] dictionaryValue],
+                  KEY_BACKGROUND_COLOR COLORS_LIGHT_MODE_SUFFIX:    [[NSColor colorWithCalibratedRed:0.000 green:0.000 blue:0.000 alpha:1] dictionaryValue],
+                  KEY_BOLD_COLOR COLORS_LIGHT_MODE_SUFFIX:          [[NSColor colorWithCalibratedRed:1.000 green:1.000 blue:1.000 alpha:1] dictionaryValue],
+                  KEY_LINK_COLOR COLORS_LIGHT_MODE_SUFFIX:          [[NSColor colorWithCalibratedRed:0.023 green:0.270 blue:0.678 alpha:1] dictionaryValue],
+                  KEY_SELECTION_COLOR COLORS_LIGHT_MODE_SUFFIX:     [[NSColor colorWithCalibratedRed:0.709 green:0.835 blue:1.000 alpha:1] dictionaryValue],
+                  KEY_SELECTED_TEXT_COLOR COLORS_LIGHT_MODE_SUFFIX: [[NSColor colorWithCalibratedRed:0.000 green:0.000 blue:0.000 alpha:1] dictionaryValue],
+                  KEY_CURSOR_COLOR COLORS_LIGHT_MODE_SUFFIX:        [[NSColor colorWithCalibratedRed:0.733 green:0.733 blue:0.733 alpha:1] dictionaryValue],
+                  KEY_CURSOR_TEXT_COLOR COLORS_LIGHT_MODE_SUFFIX:   [[NSColor colorWithCalibratedRed:1.000 green:1.000 blue:1.000 alpha:1] dictionaryValue],
+                  KEY_ANSI_0_COLOR COLORS_LIGHT_MODE_SUFFIX:        [[NSColor colorWithCalibratedRed:0.000 green:0.000 blue:0.000 alpha:1] dictionaryValue],
+                  KEY_ANSI_1_COLOR COLORS_LIGHT_MODE_SUFFIX:        [[NSColor colorWithCalibratedRed:0.733 green:0.000 blue:0.000 alpha:1] dictionaryValue],
+                  KEY_ANSI_2_COLOR COLORS_LIGHT_MODE_SUFFIX:        [[NSColor colorWithCalibratedRed:0.000 green:0.733 blue:0.000 alpha:1] dictionaryValue],
+                  KEY_ANSI_3_COLOR COLORS_LIGHT_MODE_SUFFIX:        [[NSColor colorWithCalibratedRed:0.733 green:0.733 blue:0.000 alpha:1] dictionaryValue],
+                  KEY_ANSI_4_COLOR COLORS_LIGHT_MODE_SUFFIX:        [[NSColor colorWithCalibratedRed:0.000 green:0.000 blue:0.733 alpha:1] dictionaryValue],
+                  KEY_ANSI_5_COLOR COLORS_LIGHT_MODE_SUFFIX:        [[NSColor colorWithCalibratedRed:0.733 green:0.000 blue:0.733 alpha:1] dictionaryValue],
+                  KEY_ANSI_6_COLOR COLORS_LIGHT_MODE_SUFFIX:        [[NSColor colorWithCalibratedRed:0.000 green:0.733 blue:0.733 alpha:1] dictionaryValue],
+                  KEY_ANSI_7_COLOR COLORS_LIGHT_MODE_SUFFIX:        [[NSColor colorWithCalibratedRed:0.733 green:0.733 blue:0.733 alpha:1] dictionaryValue],
+                  KEY_ANSI_8_COLOR COLORS_LIGHT_MODE_SUFFIX:        [[NSColor colorWithCalibratedRed:0.333 green:0.333 blue:0.333 alpha:1] dictionaryValue],
+                  KEY_ANSI_9_COLOR COLORS_LIGHT_MODE_SUFFIX:        [[NSColor colorWithCalibratedRed:1.000 green:0.333 blue:0.333 alpha:1] dictionaryValue],
+                  KEY_ANSI_10_COLOR COLORS_LIGHT_MODE_SUFFIX:       [[NSColor colorWithCalibratedRed:0.333 green:1.000 blue:0.333 alpha:1] dictionaryValue],
+                  KEY_ANSI_11_COLOR COLORS_LIGHT_MODE_SUFFIX:       [[NSColor colorWithCalibratedRed:1.000 green:1.000 blue:0.333 alpha:1] dictionaryValue],
+                  KEY_ANSI_12_COLOR COLORS_LIGHT_MODE_SUFFIX:       [[NSColor colorWithCalibratedRed:0.333 green:0.333 blue:1.000 alpha:1] dictionaryValue],
+                  KEY_ANSI_13_COLOR COLORS_LIGHT_MODE_SUFFIX:       [[NSColor colorWithCalibratedRed:0.000 green:0.000 blue:0.733 alpha:1] dictionaryValue],
+                  KEY_ANSI_14_COLOR COLORS_LIGHT_MODE_SUFFIX:       [[NSColor colorWithCalibratedRed:0.333 green:1.000 blue:1.000 alpha:1] dictionaryValue],
+                  KEY_ANSI_15_COLOR COLORS_LIGHT_MODE_SUFFIX:       [[NSColor colorWithCalibratedRed:1.000 green:1.000 blue:1.000 alpha:1] dictionaryValue],
+                  KEY_CURSOR_GUIDE_COLOR COLORS_LIGHT_MODE_SUFFIX:  [[NSColor colorWithCalibratedRed:0.650 green:0.910 blue:1.000 alpha:0.25] dictionaryValue],
+                  KEY_BADGE_COLOR COLORS_LIGHT_MODE_SUFFIX:         [[NSColor colorWithCalibratedRed:1.0 green:0.000 blue:0.000 alpha:0.5] dictionaryValue],
+
+                  KEY_FOREGROUND_COLOR COLORS_DARK_MODE_SUFFIX:    [[NSColor colorWithCalibratedRed:0.733 green:0.733 blue:0.733 alpha:1] dictionaryValue],
+                  KEY_BACKGROUND_COLOR COLORS_DARK_MODE_SUFFIX:    [[NSColor colorWithCalibratedRed:0.000 green:0.000 blue:0.000 alpha:1] dictionaryValue],
+                  KEY_BOLD_COLOR COLORS_DARK_MODE_SUFFIX:          [[NSColor colorWithCalibratedRed:1.000 green:1.000 blue:1.000 alpha:1] dictionaryValue],
+                  KEY_LINK_COLOR COLORS_DARK_MODE_SUFFIX:          [[NSColor colorWithCalibratedRed:0.023 green:0.270 blue:0.678 alpha:1] dictionaryValue],
+                  KEY_SELECTION_COLOR COLORS_DARK_MODE_SUFFIX:     [[NSColor colorWithCalibratedRed:0.709 green:0.835 blue:1.000 alpha:1] dictionaryValue],
+                  KEY_SELECTED_TEXT_COLOR COLORS_DARK_MODE_SUFFIX: [[NSColor colorWithCalibratedRed:0.000 green:0.000 blue:0.000 alpha:1] dictionaryValue],
+                  KEY_CURSOR_COLOR COLORS_DARK_MODE_SUFFIX:        [[NSColor colorWithCalibratedRed:0.733 green:0.733 blue:0.733 alpha:1] dictionaryValue],
+                  KEY_CURSOR_TEXT_COLOR COLORS_DARK_MODE_SUFFIX:   [[NSColor colorWithCalibratedRed:1.000 green:1.000 blue:1.000 alpha:1] dictionaryValue],
+                  KEY_ANSI_0_COLOR COLORS_DARK_MODE_SUFFIX:        [[NSColor colorWithCalibratedRed:0.000 green:0.000 blue:0.000 alpha:1] dictionaryValue],
+                  KEY_ANSI_1_COLOR COLORS_DARK_MODE_SUFFIX:        [[NSColor colorWithCalibratedRed:0.733 green:0.000 blue:0.000 alpha:1] dictionaryValue],
+                  KEY_ANSI_2_COLOR COLORS_DARK_MODE_SUFFIX:        [[NSColor colorWithCalibratedRed:0.000 green:0.733 blue:0.000 alpha:1] dictionaryValue],
+                  KEY_ANSI_3_COLOR COLORS_DARK_MODE_SUFFIX:        [[NSColor colorWithCalibratedRed:0.733 green:0.733 blue:0.000 alpha:1] dictionaryValue],
+                  KEY_ANSI_4_COLOR COLORS_DARK_MODE_SUFFIX:        [[NSColor colorWithCalibratedRed:0.000 green:0.000 blue:0.733 alpha:1] dictionaryValue],
+                  KEY_ANSI_5_COLOR COLORS_DARK_MODE_SUFFIX:        [[NSColor colorWithCalibratedRed:0.733 green:0.000 blue:0.733 alpha:1] dictionaryValue],
+                  KEY_ANSI_6_COLOR COLORS_DARK_MODE_SUFFIX:        [[NSColor colorWithCalibratedRed:0.000 green:0.733 blue:0.733 alpha:1] dictionaryValue],
+                  KEY_ANSI_7_COLOR COLORS_DARK_MODE_SUFFIX:        [[NSColor colorWithCalibratedRed:0.733 green:0.733 blue:0.733 alpha:1] dictionaryValue],
+                  KEY_ANSI_8_COLOR COLORS_DARK_MODE_SUFFIX:        [[NSColor colorWithCalibratedRed:0.333 green:0.333 blue:0.333 alpha:1] dictionaryValue],
+                  KEY_ANSI_9_COLOR COLORS_DARK_MODE_SUFFIX:        [[NSColor colorWithCalibratedRed:1.000 green:0.333 blue:0.333 alpha:1] dictionaryValue],
+                  KEY_ANSI_10_COLOR COLORS_DARK_MODE_SUFFIX:       [[NSColor colorWithCalibratedRed:0.333 green:1.000 blue:0.333 alpha:1] dictionaryValue],
+                  KEY_ANSI_11_COLOR COLORS_DARK_MODE_SUFFIX:       [[NSColor colorWithCalibratedRed:1.000 green:1.000 blue:0.333 alpha:1] dictionaryValue],
+                  KEY_ANSI_12_COLOR COLORS_DARK_MODE_SUFFIX:       [[NSColor colorWithCalibratedRed:0.333 green:0.333 blue:1.000 alpha:1] dictionaryValue],
+                  KEY_ANSI_13_COLOR COLORS_DARK_MODE_SUFFIX:       [[NSColor colorWithCalibratedRed:0.000 green:0.000 blue:0.733 alpha:1] dictionaryValue],
+                  KEY_ANSI_14_COLOR COLORS_DARK_MODE_SUFFIX:       [[NSColor colorWithCalibratedRed:0.333 green:1.000 blue:1.000 alpha:1] dictionaryValue],
+                  KEY_ANSI_15_COLOR COLORS_DARK_MODE_SUFFIX:       [[NSColor colorWithCalibratedRed:1.000 green:1.000 blue:1.000 alpha:1] dictionaryValue],
+                  KEY_CURSOR_GUIDE_COLOR COLORS_DARK_MODE_SUFFIX:  [[NSColor colorWithCalibratedRed:0.650 green:0.910 blue:1.000 alpha:0.25] dictionaryValue],
+                  KEY_BADGE_COLOR COLORS_DARK_MODE_SUFFIX:         [[NSColor colorWithCalibratedRed:1.0 green:0.000 blue:0.000 alpha:0.5] dictionaryValue],
+
+
                   KEY_USE_CURSOR_GUIDE: @NO,
+                  KEY_USE_CURSOR_GUIDE COLORS_LIGHT_MODE_SUFFIX: @NO,
+                  KEY_USE_CURSOR_GUIDE COLORS_DARK_MODE_SUFFIX: @NO,
+
                   KEY_TAB_COLOR: [NSNull null],
+                  KEY_TAB_COLOR COLORS_LIGHT_MODE_SUFFIX: [NSNull null],
+                  KEY_TAB_COLOR COLORS_DARK_MODE_SUFFIX: [NSNull null],
+
                   KEY_USE_TAB_COLOR: @NO,
+                  KEY_USE_TAB_COLOR COLORS_LIGHT_MODE_SUFFIX: @NO,
+                  KEY_USE_TAB_COLOR COLORS_DARK_MODE_SUFFIX: @NO,
+
                   KEY_UNDERLINE_COLOR: [NSNull null],
+                  KEY_UNDERLINE_COLOR COLORS_LIGHT_MODE_SUFFIX: [NSNull null],
+                  KEY_UNDERLINE_COLOR COLORS_DARK_MODE_SUFFIX: [NSNull null],
+
                   KEY_USE_UNDERLINE_COLOR: @NO,
+                  KEY_USE_UNDERLINE_COLOR COLORS_LIGHT_MODE_SUFFIX: @NO,
+                  KEY_USE_UNDERLINE_COLOR COLORS_DARK_MODE_SUFFIX: @NO,
+
                   KEY_SMART_CURSOR_COLOR: @NO,
+                  KEY_SMART_CURSOR_COLOR COLORS_LIGHT_MODE_SUFFIX: @NO,
+                  KEY_SMART_CURSOR_COLOR COLORS_DARK_MODE_SUFFIX: @NO,
+
                   KEY_MINIMUM_CONTRAST: @0.0,
+                  KEY_MINIMUM_CONTRAST COLORS_LIGHT_MODE_SUFFIX: @0.0,
+                  KEY_MINIMUM_CONTRAST COLORS_DARK_MODE_SUFFIX: @0.0,
+
                   KEY_CURSOR_BOOST: @0.0,
+                  KEY_CURSOR_BOOST COLORS_LIGHT_MODE_SUFFIX: @0.0,
+                  KEY_CURSOR_BOOST COLORS_DARK_MODE_SUFFIX: @0.0,
+
                   KEY_CURSOR_TYPE: @(CURSOR_BOX),
                   KEY_BLINKING_CURSOR: @NO,
                   KEY_USE_BOLD_FONT: @YES,
                   KEY_THIN_STROKES: @(iTermThinStrokesSettingRetinaOnly),
                   KEY_ASCII_LIGATURES: @NO,
                   KEY_NON_ASCII_LIGATURES: @NO,
+
                   KEY_USE_BOLD_COLOR: @YES,
+                  KEY_USE_BOLD_COLOR COLORS_LIGHT_MODE_SUFFIX: @YES,
+                  KEY_USE_BOLD_COLOR COLORS_DARK_MODE_SUFFIX: @YES,
+
                   KEY_BRIGHTEN_BOLD_TEXT: @YES,
+                  KEY_BRIGHTEN_BOLD_TEXT COLORS_LIGHT_MODE_SUFFIX: @YES,
+                  KEY_BRIGHTEN_BOLD_TEXT COLORS_DARK_MODE_SUFFIX: @YES,
+                  
                   KEY_BLINK_ALLOWED: @NO,
                   KEY_USE_ITALIC_FONT: @YES,
                   KEY_AMBIGUOUS_DOUBLE_WIDTH: @NO,
@@ -459,7 +584,8 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
                   KEY_ALLOW_PASTE_BRACKETING: @YES,
                   KEY_PREVENT_APS: @NO,
                   KEY_OPEN_PASSWORD_MANAGER_AUTOMATICALLY: @NO,
-                  KEY_SHOW_TIMESTAMPS: @([iTermAdvancedSettingsModel showTimestampsByDefault] ? iTermTimestampsModeOn : iTermTimestampsModeOff)
+                  KEY_SHOW_TIMESTAMPS: @([iTermAdvancedSettingsModel showTimestampsByDefault] ? iTermTimestampsModeOn : iTermTimestampsModeOff),
+                  KEY_USE_SEPARATE_COLORS_FOR_LIGHT_AND_DARK_MODE: @NO
                   // NOTES:
                   //   * Remove deprecated values from this list.
                   //   * Update validation blocks in preceding method.
@@ -489,6 +615,50 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
 
 + (NSArray<NSString *> *)nonDeprecatedKeys {
     return [[iTermProfilePreferences validationBlocks] allKeys];
+}
+
++ (id)objectForColorKey:(NSString *)baseKey
+                   dark:(BOOL)dark
+                profile:(Profile *)profile {
+    NSString *key = [self amendedColorKey:baseKey dark:dark profile:profile];
+    return [self objectForKey:key inProfile:profile];
+}
+
++ (NSColor *)colorForKey:(NSString *)baseKey
+                    dark:(BOOL)dark
+                 profile:(Profile *)profile {
+    NSDictionary *dict = [NSDictionary castFrom:[self objectForColorKey:baseKey dark:dark profile:profile]];
+    return [dict colorValue];
+}
+
++ (BOOL)boolForColorKey:(NSString *)baseKey dark:(BOOL)dark profile:(NSDictionary *)profile {
+    NSString *key = [self amendedColorKey:baseKey dark:dark profile:profile];
+    return [self boolForKey:key inProfile:profile];
+}
+
++ (double)floatForColorKey:(NSString *)baseKey
+                      dark:(BOOL)dark
+                   profile:(Profile *)profile {
+    NSString *key = [self amendedColorKey:baseKey dark:dark profile:profile];
+    return [self floatForKey:key inProfile:profile];
+}
+
++ (NSString *)amendedColorKey:(NSString *)baseKey
+                         dark:(BOOL)dark
+                      profile:(Profile *)profile  {
+    const BOOL modes = [self boolForKey:KEY_USE_SEPARATE_COLORS_FOR_LIGHT_AND_DARK_MODE inProfile:profile];
+    NSString *key = nil;
+    if (!modes) {
+        key = baseKey;
+    } else if (dark) {
+        key = [baseKey stringByAppendingString:COLORS_DARK_MODE_SUFFIX];
+    } else {
+        key = [baseKey stringByAppendingString:COLORS_LIGHT_MODE_SUFFIX];
+    }
+    if (!profile[key]) {
+        key = baseKey;
+    }
+    return key;
 }
 
 + (id)objectForKey:(NSString *)key inProfile:(Profile *)profile {
@@ -559,7 +729,10 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
                   KEY_BADGE_MAX_HEIGHT: PROFILE_BLOCK(badgeMaxHeight),
                   KEY_BADGE_FONT: PROFILE_BLOCK(badgeFont),
                   KEY_WINDOW_TYPE: PROFILE_BLOCK(windowType),
-                  KEY_BRIGHTEN_BOLD_TEXT: PROFILE_BLOCK(brightenBoldText)
+                  KEY_BRIGHTEN_BOLD_TEXT: PROFILE_BLOCK(brightenBoldText),
+                  KEY_BRIGHTEN_BOLD_TEXT COLORS_LIGHT_MODE_SUFFIX: PROFILE_BLOCK(brightenBoldTextLight),
+                  KEY_BRIGHTEN_BOLD_TEXT COLORS_DARK_MODE_SUFFIX: PROFILE_BLOCK(brightenBoldTextDark),
+
                 };
     }
     return dict;
@@ -705,6 +878,27 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
     return @(iTermThemedWindowType(number.intValue));
 }
 
++ (id)brightenBoldTextLight:(Profile *)profile {
+    NSNumber *number = profile[KEY_BRIGHTEN_BOLD_TEXT COLORS_LIGHT_MODE_SUFFIX];
+    if (number) {
+        return number;
+    }
+    // Migration path. This used to be one and the same as "use bold color". If you've never tweaked
+    // this setting directly, fall back to the "use bold color" setting.
+    return [self objectForKey:KEY_USE_BOLD_COLOR
+                    inProfile:profile];
+}
+
++ (id)brightenBoldTextDark:(Profile *)profile {
+    NSNumber *number = profile[KEY_BRIGHTEN_BOLD_TEXT COLORS_DARK_MODE_SUFFIX];
+    if (number) {
+        return number;
+    }
+    // Migration path. This used to be one and the same as "use bold color". If you've never tweaked
+    // this setting directly, fall back to the "use bold color" setting.
+    return [self objectForKey:KEY_USE_BOLD_COLOR inProfile:profile];
+}
+
 + (id)brightenBoldText:(Profile *)profile {
     NSNumber *number = profile[KEY_BRIGHTEN_BOLD_TEXT];
     if (number) {
@@ -789,3 +983,14 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
 }
 
 @end
+
+NSString *iTermAmendedColorKey(NSString *baseKey, Profile *profile, BOOL dark) {
+    if (![iTermProfilePreferences boolForKey:KEY_USE_SEPARATE_COLORS_FOR_LIGHT_AND_DARK_MODE inProfile:profile]) {
+        return baseKey;
+    }
+    if (dark) {
+        return [baseKey stringByAppendingString:COLORS_DARK_MODE_SUFFIX];
+    }
+    return [baseKey stringByAppendingString:COLORS_LIGHT_MODE_SUFFIX];
+}
+

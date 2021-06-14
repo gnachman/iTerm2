@@ -436,6 +436,17 @@ const int kColorMapAnsiBrightModifier = 8;
 }
 
 - (NSString *)profileKeyForColorMapKey:(int)theKey {
+    NSString *baseKey = [self baseProfileKeyForColorMapKey:theKey];
+    if (!self.useSeparateColorsForLightAndDarkMode) {
+        return baseKey;
+    }
+    if (self.darkMode) {
+        return [baseKey stringByAppendingString:COLORS_DARK_MODE_SUFFIX];
+    }
+    return [baseKey stringByAppendingString:COLORS_LIGHT_MODE_SUFFIX];
+}
+
+- (NSString *)baseProfileKeyForColorMapKey:(int)theKey {
     switch (theKey) {
         case kColorMapForeground:
             return KEY_FOREGROUND_COLOR;
@@ -525,7 +536,9 @@ const int kColorMapAnsiBrightModifier = 8;
 
     [other->_fastMap release];
     other->_fastMap = [_fastMap mutableCopy];
-
+    other->_useSeparateColorsForLightAndDarkMode = _useSeparateColorsForLightAndDarkMode;
+    other->_darkMode = _darkMode;
+    
     return other;
 }
 

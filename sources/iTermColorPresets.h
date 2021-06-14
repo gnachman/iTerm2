@@ -51,9 +51,16 @@ typedef NSDictionary<NSString *, iTermColorPreset *> iTermColorPresetDictionary;
 @interface ProfileModel(iTermColorPresets)
 
 // Keys in a preset dictionary
-+ (NSArray<NSString *> *)colorKeys;
++ (NSArray<NSString *> *)colorKeysWithModes:(BOOL)modes;
 
 // Add a loaded preset to a profile
-- (BOOL)addColorPresetNamed:(NSString *)presetName toProfile:(Profile *)profile;
+// dark = nil: Update all modes
+// dark = @YES: Update dark mode
+// dark = @NO: Update light mode
+- (BOOL)addColorPresetNamed:(NSString *)presetName toProfile:(Profile *)profile dark:(NSNumber *)dark;
 
 @end
+
+BOOL iTermColorPresetHasModes(iTermColorPreset *preset);
+NSColor *iTermColorPresetGet(iTermColorPreset *preset, NSString *baseKey, BOOL dark);
+

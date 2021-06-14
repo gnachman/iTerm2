@@ -9,6 +9,7 @@
 #import "ProfilesSessionPreferencesViewController.h"
 #import "ITAddressBookMgr.h"
 #import "iTermColorMap.h"
+#import "iTermProfilePreferences.h"
 #import "iTermStatusBarSetupViewController.h"
 #import "iTermTheme.h"
 #import "iTermWarning.h"
@@ -304,9 +305,13 @@
 
 - (iTermColorMap *)colorMap {
     iTermColorMap *colorMap = [[iTermColorMap alloc] init];
-    colorMap.mutingAmount = [self floatForKey:KEY_CURSOR_BOOST];
+    const BOOL dark = self.view.effectiveAppearance.it_isDark;
+    Profile *profile = [self.delegate profilePreferencesCurrentProfile];
+    colorMap.mutingAmount = [iTermProfilePreferences floatForColorKey:KEY_CURSOR_BOOST dark:dark profile:profile];
     colorMap.dimOnlyText = [iTermPreferences boolForKey:kPreferenceKeyDimOnlyText];
-    colorMap.minimumContrast = [self floatForKey:KEY_MINIMUM_CONTRAST];
+    colorMap.minimumContrast = [iTermProfilePreferences floatForColorKey:KEY_MINIMUM_CONTRAST
+                                                                    dark:dark
+                                                                 profile:profile];
     return colorMap;
 }
 
@@ -316,7 +321,10 @@
 }
 
 - (NSColor *)sessionBackgroundColor {
-    NSDictionary *dict = [NSDictionary castFrom:[self objectForKey:KEY_BACKGROUND_COLOR]];
+    NSString *key = [iTermProfilePreferences amendedColorKey:KEY_BACKGROUND_COLOR
+                                                        dark:self.view.effectiveAppearance.it_isDark
+                                                     profile:[self.delegate profilePreferencesCurrentProfile]];
+    NSDictionary *dict = [NSDictionary castFrom:[self objectForKey:key]];
     if (!dict) {
         return [NSColor colorWithRed:0 green:0 blue:0 alpha:1];
     }
@@ -324,14 +332,14 @@
 }
 
 - (NSColor *)tabColor {
-    if (![self boolForKey:KEY_USE_TAB_COLOR]) {
+    const BOOL dark = self.view.effectiveAppearance.it_isDark;
+    Profile *profile = [self.delegate profilePreferencesCurrentProfile];
+    if (![iTermProfilePreferences boolForColorKey:KEY_USE_TAB_COLOR
+                                            dark:dark
+                                          profile:profile]) {
         return nil;
     }
-    NSDictionary *dict = [NSDictionary castFrom:[self objectForKey:KEY_TAB_COLOR]];
-    if (!dict) {
-        return nil;
-    }
-    return [dict colorValue];
+    return [iTermProfilePreferences colorForKey:KEY_TAB_COLOR dark:dark profile:profile];
 }
 
 - (NSAppearance *)appearanceForCurrentTheme {
@@ -352,8 +360,8 @@
 
 - (IBAction)configureStatusBar:(id)sender {
     NSDictionary *layoutDictionary = [NSDictionary castFrom:[self objectForKey:KEY_STATUS_BAR_LAYOUT]] ?: @{};
-    NSDictionary *colorDict = [NSDictionary castFrom:[self objectForKey:KEY_BACKGROUND_COLOR]];
-    const BOOL dark = [[colorDict colorValue] perceivedBrightness] < 0.5;
+    NSColor *backgroundColor = [self sessionBackgroundColor];
+    const BOOL dark = [backgroundColor perceivedBrightness] < 0.5;
     _statusBarSetupViewController =
         [[iTermStatusBarSetupViewController alloc] initWithLayoutDictionary:layoutDictionary
                                                              darkBackground:[NSAppearance it_decorationsAreDarkWithTerminalBackgroundColorIsDark:dark]

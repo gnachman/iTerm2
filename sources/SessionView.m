@@ -1812,6 +1812,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
 
 - (void)viewDidChangeEffectiveAppearance {
     [self updateMinimapAlpha];
+    [self.delegate sessionViewDidChangeEffectiveAppearance];
 }
 
 - (void)updateMinimapAlpha {

@@ -107,7 +107,8 @@ extern NSString *const iTermDidCreateTerminalWindowNotification;
 // |frames| gives an array of NSValue's having NSRect values for each screen,
 // giving the screens' coordinates in the model.
 + (void)drawArrangementPreview:(NSDictionary*)terminalArrangement
-                  screenFrames:(NSArray *)frames;
+                  screenFrames:(NSArray *)frames
+                          dark:(BOOL)dark;
 
 // Returns a new terminal window restored from an arrangement, but with no
 // tabs/sessions. May return nil.

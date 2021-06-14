@@ -2421,7 +2421,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
 + (void)drawArrangementPreview:(NSDictionary*)terminalArrangement
                   screenFrames:(NSArray *)frames
-{
+                          dark:(BOOL)dark {
     int windowType = [PseudoTerminal _windowTypeForArrangement:terminalArrangement];
     int screenIndex = [PseudoTerminal _screenIndexForArrangement:terminalArrangement];
     if (screenIndex < 0 || screenIndex >= [[NSScreen screens] count]) {
@@ -2584,7 +2584,8 @@ ITERM_WEAKLY_REFERENCEABLE
               break;
     }
     [PTYTab drawArrangementPreview:tabArrangement
-                             frame:contentRect];
+                             frame:contentRect
+                              dark:dark];
     if ([terminalArrangement[TERMINAL_ARRANGEMENT_HAS_TOOLBELT] boolValue]) {
         NSRect toolbeltRect = windowRect;
         int toolbeltWidth = toolbeltRect.size.width * 0.1;
@@ -4264,6 +4265,9 @@ ITERM_WEAKLY_REFERENCEABLE
     NSSize originalProposal = proposedFrameSize;
     // Find the session for the current pane of the current tab.
     PTYTab* tab = [self currentTab];
+    if (!tab) {
+        return proposedFrameSize;
+    }
     PTYSession* session = [tab activeSession];
 
     // Get the width and height of characters in this session.
@@ -4326,6 +4330,7 @@ ITERM_WEAKLY_REFERENCEABLE
                               controlSize:NSControlSizeRegular
                             scrollerStyle:[self scrollerStyle]];
 
+    assert(charWidth > 0);
     int screenWidth = (contentSize.width - [iTermPreferences intForKey:kPreferenceKeySideMargins] * 2) / charWidth;
     int screenHeight = (contentSize.height - [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins] * 2) / charHeight;
 

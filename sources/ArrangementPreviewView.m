@@ -7,6 +7,7 @@
 //
 
 #import "ArrangementPreviewView.h"
+#import "NSAppearance+iTerm.h"
 #import "PseudoTerminal.h"
 
 @implementation ArrangementPreviewView
@@ -60,7 +61,9 @@
     }
 
     for (NSDictionary* terminalArrangement in arrangement_) {
-        [PseudoTerminal drawArrangementPreview:terminalArrangement screenFrames:screenFrames];
+        [PseudoTerminal drawArrangementPreview:terminalArrangement
+                                  screenFrames:screenFrames
+                                          dark:self.effectiveAppearance.it_isDark];
     }
 }
 

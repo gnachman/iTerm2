@@ -89,4 +89,23 @@ extern NSString *const kProfilePreferenceInitialDirectoryAdvancedValue;
 + (NSString *)jsonEncodedValueForKey:(NSString *)key inProfile:(Profile *)profile;
 + (NSArray<NSString *> *)nonDeprecatedKeys;
 
++ (id)objectForColorKey:(NSString *)key
+                   dark:(BOOL)dark
+                profile:(Profile *)profile;
++ (NSColor *)colorForKey:(NSString *)key
+                    dark:(BOOL)dark
+                 profile:(Profile *)profile;
++ (BOOL)boolForColorKey:(NSString *)baseKey
+                   dark:(BOOL)dark
+                profile:(Profile *)profile;
++ (double)floatForColorKey:(NSString *)baseKey
+                      dark:(BOOL)dark
+                   profile:(Profile *)profile;
++ (NSString *)amendedColorKey:(NSString *)baseKey
+                         dark:(BOOL)dark
+                      profile:(Profile *)profile;
+
 @end
+
+NSString *iTermAmendedColorKey(NSString *baseKey, Profile *profile, BOOL dark);
+

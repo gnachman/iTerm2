@@ -15,6 +15,7 @@
 #import "iTermVariableScope.h"
 #import "iTermVariableScope+Session.h"
 #import "iTermVariableScope+Tab.h"
+#import "NSAppearance+iTerm.h"
 #import "NSArray+iTerm.h"
 #import "NSDictionary+iTerm.h"
 #import "NSObject+iTerm.h"
@@ -263,15 +264,16 @@ static const double kProfileNameMultiplierForScriptItem = 0.09;
                         withMatcher:(iTermMinimumSubsequenceMatcher *)matcher {
     iTermColorPresetDictionary *allPresets = [iTermColorPresets allColorPresets];
     NSColor *defaultColor = [NSColor colorWithRed:0.5 green:0.5 blue:0.5 alpha:1];
+    const BOOL dark = [[NSApp effectiveAppearance] it_isDark];
     for (NSString *name in allPresets) {
         iTermColorPreset *preset = allPresets[name];
         
         iTermOpenQuicklyColorPresetItem *item = [[iTermOpenQuicklyColorPresetItem alloc] init];
         item.presetName = name;
-        item.logoGenerator.textColor = [preset[KEY_FOREGROUND_COLOR] colorValue] ?: [NSColor colorWithRed:0.75 green:0.75 blue:0.75 alpha:1];
-        item.logoGenerator.backgroundColor = [preset[KEY_BACKGROUND_COLOR] colorValue] ?: [NSColor colorWithRed:0.25 green:0.25 blue:0.25 alpha:1];
-        item.logoGenerator.tabColor = [preset[KEY_TAB_COLOR] colorValue] ?: defaultColor;
-        item.logoGenerator.cursorColor = [preset[KEY_CURSOR_COLOR] colorValue] ?: defaultColor;
+        item.logoGenerator.textColor = iTermColorPresetGet(preset, KEY_FOREGROUND_COLOR, dark) ?: [NSColor colorWithRed:0.75 green:0.75 blue:0.75 alpha:1];
+        item.logoGenerator.backgroundColor = iTermColorPresetGet(preset, KEY_BACKGROUND_COLOR, dark) ?: [NSColor colorWithRed:0.25 green:0.25 blue:0.25 alpha:1];
+        item.logoGenerator.tabColor = iTermColorPresetGet(preset, KEY_TAB_COLOR, dark) ?: defaultColor;
+        item.logoGenerator.cursorColor = iTermColorPresetGet(preset, KEY_CURSOR_COLOR, dark) ?: defaultColor;
 
         NSMutableAttributedString *attributedName = [[NSMutableAttributedString alloc] init];
         item.score = [self scoreForColorPreset:name matcher:matcher attributedName:attributedName];

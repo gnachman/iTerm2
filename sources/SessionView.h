@@ -144,6 +144,7 @@ extern NSString *const SessionViewWasSelectedForInspectionNotification;
 - (BOOL)sessionViewUseSeparateStatusBarsPerPane;
 - (CGFloat)sessionViewTransparencyAlpha;
 - (NSRect)sessionViewFrameForLegacyView;
+- (void)sessionViewDidChangeEffectiveAppearance;
 
 @end
 

@@ -700,6 +700,8 @@ static const NSUInteger kMaxHosts = 100;
         _pasteHelper = [[iTermPasteHelper alloc] init];
         _pasteHelper.delegate = self;
         _colorMap = [[iTermColorMap alloc] init];
+        _colorMap.darkMode = self.view.effectiveAppearance.it_isDark;
+
         // Allocate screen, shell, and terminal objects
         _shell = [[PTYTask alloc] init];
         _terminal = [[VT100Terminal alloc] init];
@@ -1149,15 +1151,16 @@ ITERM_WEAKLY_REFERENCEABLE
     [_textview setNeedsDisplay:YES];
 }
 
-+ (void)drawArrangementPreview:(NSDictionary *)arrangement frame:(NSRect)frame
-{
-    Profile* theBookmark =
++ (void)drawArrangementPreview:(NSDictionary *)arrangement frame:(NSRect)frame dark:(BOOL)dark {
+    Profile *theBookmark =
         [[ProfileModel sharedInstance] bookmarkWithGuid:arrangement[SESSION_ARRANGEMENT_BOOKMARK][KEY_GUID]];
     if (!theBookmark) {
         theBookmark = [arrangement objectForKey:SESSION_ARRANGEMENT_BOOKMARK];
     }
-    //    [self setForegroundColor:[ITAddressBookMgr decodeColor:[aDict objectForKey:KEY_FOREGROUND_COLOR]]];
-    [[ITAddressBookMgr decodeColor:[theBookmark objectForKey:KEY_BACKGROUND_COLOR]] set];
+    NSColor *color = [iTermProfilePreferences colorForKey:KEY_BACKGROUND_COLOR
+                                                     dark:dark
+                                                  profile:theBookmark];
+    [color set];
     NSRectFill(frame);
 }
 
@@ -1399,21 +1402,25 @@ ITERM_WEAKLY_REFERENCEABLE
         // This is a tmux arrangement.
         NSString *colorString = arrangement[SESSION_ARRANGEMENT_TMUX_TAB_COLOR];
         NSDictionary *tabColorDict = [ITAddressBookMgr encodeColor:[NSColor colorFromHexString:colorString]];
+        const BOOL dark = [NSApp effectiveAppearance].it_isDark;
+        NSString *useTabColorKey = iTermAmendedColorKey(KEY_USE_TAB_COLOR, theBookmark, dark);
         if (tabColorDict) {
             // We're restoring a tmux arrangement that specifies a tab color.
-            if (![iTermProfilePreferences boolForKey:KEY_USE_TAB_COLOR inProfile:theBookmark] ||
-                ![[ITAddressBookMgr decodeColor:[iTermProfilePreferences objectForKey:KEY_TAB_COLOR inProfile:theBookmark]] isEqual:tabColorDict]) {
+            NSColor *profileTabColorDict = [iTermProfilePreferences objectForColorKey:KEY_TAB_COLOR dark:dark profile:theBookmark];
+            if (![iTermProfilePreferences boolForColorKey:KEY_USE_TAB_COLOR dark:dark profile:theBookmark] ||
+                ![NSObject object:profileTabColorDict isApproximatelyEqualToObject:tabColorDict epsilon:1/255.0]) {
                 // The tmux profile does not specify a tab color or it specifies a different one. Override it and divorce.
-                theBookmark = [theBookmark dictionaryBySettingObject:tabColorDict forKey:KEY_TAB_COLOR];
-                theBookmark = [theBookmark dictionaryBySettingObject:@YES forKey:KEY_USE_TAB_COLOR];
+                NSString *tabColorKey = iTermAmendedColorKey(KEY_TAB_COLOR, theBookmark, dark);
+                theBookmark = [theBookmark dictionaryBySettingObject:tabColorDict forKey:tabColorKey];
+                theBookmark = [theBookmark dictionaryBySettingObject:@YES forKey:useTabColorKey];
                 needDivorce = YES;
-                [keysToPreserveInCaseOfDivorce addObjectsFromArray:@[ KEY_TAB_COLOR, KEY_USE_TAB_COLOR ]];
+                [keysToPreserveInCaseOfDivorce addObjectsFromArray:@[ tabColorKey, useTabColorKey ]];
             }
         } else if ([colorString isEqualToString:iTermTmuxTabColorNone] &&
-                   [iTermProfilePreferences boolForKey:KEY_USE_TAB_COLOR inProfile:theBookmark]) {
+                   [iTermProfilePreferences boolForColorKey:KEY_USE_TAB_COLOR dark:dark profile:theBookmark]) {
             // There was no tab color but the tmux profile specifies one. Disable it and divorce.
-            theBookmark = [theBookmark dictionaryBySettingObject:@NO forKey:KEY_USE_TAB_COLOR];
-            [keysToPreserveInCaseOfDivorce addObjectsFromArray:@[ KEY_USE_TAB_COLOR ]];
+            theBookmark = [theBookmark dictionaryBySettingObject:@NO forKey:useTabColorKey];
+            [keysToPreserveInCaseOfDivorce addObjectsFromArray:@[ useTabColorKey ]];
             needDivorce = YES;
         }
     }
@@ -3824,7 +3831,7 @@ ITERM_WEAKLY_REFERENCEABLE
     int bgNum = -1;
     int fgNum = -1;
     for(int i = 0; i < 16; ++i) {
-        NSString* key = [NSString stringWithFormat:KEYTEMPLATE_ANSI_X_COLOR, i];
+        NSString* key = [self amendedColorKey:[NSString stringWithFormat:KEYTEMPLATE_ANSI_X_COLOR, i]];
         if ([fgColor isEqual:[ITAddressBookMgr decodeColor:[aDict objectForKey:key]]]) {
             fgNum = i;
         }
@@ -3849,8 +3856,9 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)loadInitialColorTableAndResetCursorGuide {
     [self loadInitialColorTable];
-    _textview.highlightCursorLine = [iTermProfilePreferences boolForKey:KEY_USE_CURSOR_GUIDE
-                                                              inProfile:_profile];
+    _textview.highlightCursorLine = [iTermProfilePreferences boolForColorKey:KEY_USE_CURSOR_GUIDE
+                                                                        dark:[NSApp effectiveAppearance].it_isDark
+                                                                     profile:_profile];
 }
 
 - (void)loadInitialColorTable {
@@ -3861,13 +3869,12 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
-- (NSColor *)tabColorInProfile:(NSDictionary *)profile
-{
-    NSColor *tabColor = nil;
-    if ([profile[KEY_USE_TAB_COLOR] boolValue]) {
-        tabColor = [ITAddressBookMgr decodeColor:profile[KEY_TAB_COLOR]];
+- (NSColor *)tabColorInProfile:(NSDictionary *)profile {
+    const BOOL dark = _colorMap.darkMode;
+    if ([iTermProfilePreferences boolForColorKey:KEY_USE_TAB_COLOR dark:dark profile:profile]) {
+        return [iTermProfilePreferences colorForKey:KEY_TAB_COLOR dark:dark profile:profile];
     }
-    return tabColor;
+    return nil;
 }
 
 - (void)setColorsFromPresetNamed:(NSString *)presetName {
@@ -3875,12 +3882,14 @@ ITERM_WEAKLY_REFERENCEABLE
     if (!settings) {
         return;
     }
-    for (NSString *colorName in [ProfileModel colorKeys]) {
+    const BOOL presetUsesModes = settings[KEY_FOREGROUND_COLOR COLORS_LIGHT_MODE_SUFFIX] != nil;
+    for (NSString *colorName in [ProfileModel colorKeysWithModes:presetUsesModes]) {
         iTermColorDictionary *colorDict = [settings iterm_presetColorWithName:colorName];
         if (colorDict) {
             [self setSessionSpecificProfileValues:@{ colorName: colorDict }];
         }
     }
+    [self setSessionSpecificProfileValues:@{ KEY_USE_SEPARATE_COLORS_FOR_LIGHT_AND_DARK_MODE: @(presetUsesModes) }];
 }
 
 - (void)sharedProfileDidChange
@@ -3993,8 +4002,59 @@ ITERM_WEAKLY_REFERENCEABLE
     return didChange;
 }
 
+- (void)loadColorsFromProfile:(Profile *)aDict {
+    const BOOL dark = (self.view.effectiveAppearance ?: [NSApp effectiveAppearance]).it_isDark;
+    _colorMap.darkMode = dark;
+    const BOOL modes = [iTermProfilePreferences boolForKey:KEY_USE_SEPARATE_COLORS_FOR_LIGHT_AND_DARK_MODE inProfile:aDict];
+    _colorMap.useSeparateColorsForLightAndDarkMode = modes;
+    NSString *(^k)(NSString *) = ^NSString *(NSString *baseKey) {
+        return iTermAmendedColorKey(baseKey, aDict, dark);
+    };
+    const BOOL useUnderline = [iTermProfilePreferences boolForKey:k(KEY_USE_UNDERLINE_COLOR) inProfile:aDict];
+    NSDictionary *keyMap = @{ @(kColorMapForeground): k(KEY_FOREGROUND_COLOR),
+                              @(kColorMapBackground): k(KEY_BACKGROUND_COLOR),
+                              @(kColorMapSelection): k(KEY_SELECTION_COLOR),
+                              @(kColorMapSelectedText): k(KEY_SELECTED_TEXT_COLOR),
+                              @(kColorMapBold): k(KEY_BOLD_COLOR),
+                              @(kColorMapLink): k(KEY_LINK_COLOR),
+                              @(kColorMapCursor): k(KEY_CURSOR_COLOR),
+                              @(kColorMapCursorText): k(KEY_CURSOR_TEXT_COLOR),
+                              @(kColorMapUnderline): (useUnderline ? k(KEY_UNDERLINE_COLOR) : [NSNull null])
+                              };
+
+    for (NSNumber *colorKey in keyMap) {
+        NSString *profileKey = keyMap[colorKey];
+
+        if ([profileKey isKindOfClass:[NSString class]]) {
+            [_colorMap setColor:[aDict[profileKey] colorValue]
+                         forKey:[colorKey intValue]];
+        } else {
+            [_colorMap setColor:nil forKey:[colorKey intValue]];
+        }
+    }
+    self.cursorGuideColor = [[iTermProfilePreferences objectForKey:k(KEY_CURSOR_GUIDE_COLOR)
+                                                         inProfile:aDict] colorValueForKey:k(KEY_CURSOR_GUIDE_COLOR)];
+    if (!_cursorGuideSettingHasChanged) {
+        _textview.highlightCursorLine = [iTermProfilePreferences boolForKey:k(KEY_USE_CURSOR_GUIDE)
+                                                                  inProfile:aDict];
+    }
+    for (int i = 0; i < 16; i++) {
+        NSString *profileKey = k([NSString stringWithFormat:KEYTEMPLATE_ANSI_X_COLOR, i]);
+        NSColor *theColor = [ITAddressBookMgr decodeColor:aDict[profileKey]];
+        [_colorMap setColor:theColor forKey:kColorMap8bitBase + i];
+    }
+
+    [self setSmartCursorColor:[iTermProfilePreferences boolForKey:k(KEY_SMART_CURSOR_COLOR)
+                                                        inProfile:aDict]];
+
+    [self setMinimumContrast:[iTermProfilePreferences floatForKey:k(KEY_MINIMUM_CONTRAST)
+                                                        inProfile:aDict]];
+
+    _colorMap.mutingAmount = [iTermProfilePreferences floatForKey:k(KEY_CURSOR_BOOST)
+                                                        inProfile:aDict];
+}
+
 - (void)setPreferencesFromAddressBookEntry:(NSDictionary *)aePrefs {
-    int i;
     NSDictionary *aDict = aePrefs;
 
     if (aDict == nil) {
@@ -4011,56 +4071,7 @@ ITERM_WEAKLY_REFERENCEABLE
         _tmuxTitleOutOfSync = YES;
     }
 
-    BOOL useUnderline = [iTermProfilePreferences boolForKey:KEY_USE_UNDERLINE_COLOR inProfile:aDict];
-
-    NSDictionary *keyMap = @{ @(kColorMapForeground): KEY_FOREGROUND_COLOR,
-                              @(kColorMapBackground): KEY_BACKGROUND_COLOR,
-                              @(kColorMapSelection): KEY_SELECTION_COLOR,
-                              @(kColorMapSelectedText): KEY_SELECTED_TEXT_COLOR,
-                              @(kColorMapBold): KEY_BOLD_COLOR,
-                              @(kColorMapLink): KEY_LINK_COLOR,
-                              @(kColorMapCursor): KEY_CURSOR_COLOR,
-                              @(kColorMapCursorText): KEY_CURSOR_TEXT_COLOR,
-                              @(kColorMapUnderline): (useUnderline ? KEY_UNDERLINE_COLOR : [NSNull null])
-                              };
-
-    for (NSNumber *colorKey in keyMap) {
-        NSString *profileKey = keyMap[colorKey];
-
-        NSColor *theColor = nil;
-        if ([profileKey isKindOfClass:[NSString class]]) {
-            NSDictionary *dict = [iTermProfilePreferences objectForKey:profileKey
-                                                             inProfile:aDict];
-            if (![dict isKindOfClass:[NSDictionary class]]) {
-                continue;
-            }
-            theColor = [dict colorValue];
-        }
-
-        [_colorMap setColor:theColor forKey:[colorKey intValue]];
-    }
-
-    self.cursorGuideColor = [[iTermProfilePreferences objectForKey:KEY_CURSOR_GUIDE_COLOR
-                                                         inProfile:aDict] colorValueForKey:KEY_CURSOR_GUIDE_COLOR];
-    if (!_cursorGuideSettingHasChanged) {
-        _textview.highlightCursorLine = [iTermProfilePreferences boolForKey:KEY_USE_CURSOR_GUIDE
-                                                                  inProfile:aDict];
-    }
-
-    for (i = 0; i < 16; i++) {
-        NSString *profileKey = [NSString stringWithFormat:KEYTEMPLATE_ANSI_X_COLOR, i];
-        NSColor *theColor = [ITAddressBookMgr decodeColor:aDict[profileKey]];
-        [_colorMap setColor:theColor forKey:kColorMap8bitBase + i];
-    }
-
-    [self setSmartCursorColor:[iTermProfilePreferences boolForKey:KEY_SMART_CURSOR_COLOR
-                                                        inProfile:aDict]];
-
-    [self setMinimumContrast:[iTermProfilePreferences floatForKey:KEY_MINIMUM_CONTRAST
-                                                        inProfile:aDict]];
-
-    _colorMap.mutingAmount = [iTermProfilePreferences floatForKey:KEY_CURSOR_BOOST
-                                                        inProfile:aDict];
+    [self loadColorsFromProfile:aDict];
 
     // background image
     [self setBackgroundImagePath:aDict[KEY_BACKGROUND_IMAGE_LOCATION]];
@@ -4070,8 +4081,9 @@ ITERM_WEAKLY_REFERENCEABLE
     // Color scheme
     // ansiColorsMatchingForeground:andBackground:inBookmark does an equality comparison, so
     // iTermProfilePreferences is not used here.
-    [self setColorFgBgVariable:[self ansiColorsMatchingForeground:aDict[KEY_FOREGROUND_COLOR]
-                                                    andBackground:aDict[KEY_BACKGROUND_COLOR]
+#warning TODO: Make sure this is right
+    [self setColorFgBgVariable:[self ansiColorsMatchingForeground:aDict[[self amendedColorKey:KEY_FOREGROUND_COLOR]]
+                                                    andBackground:aDict[[self amendedColorKey:KEY_BACKGROUND_COLOR]]
                                                        inBookmark:aDict]];
 
     // transparency
@@ -4086,10 +4098,12 @@ ITERM_WEAKLY_REFERENCEABLE
     self.asciiLigatures = [iTermProfilePreferences boolForKey:KEY_ASCII_LIGATURES inProfile:aDict];
     self.nonAsciiLigatures = [iTermProfilePreferences boolForKey:KEY_NON_ASCII_LIGATURES inProfile:aDict];
 
-    [_textview setUseBoldColor:[iTermProfilePreferences boolForKey:KEY_USE_BOLD_COLOR
-                                                          inProfile:aDict]
-                      brighten:[iTermProfilePreferences boolForKey:KEY_BRIGHTEN_BOLD_TEXT
-                                                         inProfile:aDict]];
+    [_textview setUseBoldColor:[iTermProfilePreferences boolForColorKey:KEY_USE_BOLD_COLOR
+                                                                   dark:_colorMap.darkMode
+                                                                profile:aDict]
+                      brighten:[iTermProfilePreferences boolForColorKey:KEY_BRIGHTEN_BOLD_TEXT
+                                                                   dark:_colorMap.darkMode
+                                                                profile:aDict]];
 
     // Italic - this default has changed from NO to YES as of 1/30/15
     [self setUseItalicFont:[iTermProfilePreferences boolForKey:KEY_USE_ITALIC_FONT inProfile:aDict]];
@@ -4223,8 +4237,8 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 
     if (self.isTmuxClient) {
-        NSDictionary *tabColorDict = [iTermProfilePreferences objectForKey:KEY_TAB_COLOR inProfile:aDict];
-        if (![iTermProfilePreferences boolForKey:KEY_USE_TAB_COLOR inProfile:aDict]) {
+        NSDictionary *tabColorDict = [iTermProfilePreferences objectForColorKey:KEY_TAB_COLOR dark:_colorMap.darkMode profile:aDict];
+        if (![iTermProfilePreferences boolForColorKey:KEY_USE_TAB_COLOR dark:_colorMap.darkMode profile:aDict]) {
             tabColorDict = nil;
         }
         NSColor *tabColor = [ITAddressBookMgr decodeColor:tabColorDict];
@@ -5583,6 +5597,10 @@ ITERM_WEAKLY_REFERENCEABLE
         return NO;
     }
     return YES;
+}
+
+- (NSString *)amendedColorKey:(NSString *)baseKey {
+    return iTermAmendedColorKey(baseKey, self.profile, self.view.effectiveAppearance.it_isDark);
 }
 
 - (void)setSessionSpecificProfileValues:(NSDictionary *)newValues {
@@ -8280,7 +8298,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                 profile = self.profile;
             }
             if (profile) {
-                [model addColorPresetNamed:action.parameter toProfile:profile];
+                const BOOL modes = [iTermProfilePreferences boolForKey:KEY_USE_SEPARATE_COLORS_FOR_LIGHT_AND_DARK_MODE inProfile:self.profile];
+                [model addColorPresetNamed:action.parameter toProfile:profile dark:modes ? @(_colorMap.darkMode) : nil];
             }
             break;
         }
@@ -9517,7 +9536,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (NSColor *)textViewBadgeColor {
-    return [[iTermProfilePreferences objectForKey:KEY_BADGE_COLOR inProfile:_profile] colorValue];
+    return [iTermProfilePreferences colorForKey:KEY_BADGE_COLOR dark:_colorMap.darkMode profile:_profile];
 }
 
 // Returns a dictionary with only string values by converting non-strings.
@@ -10371,8 +10390,9 @@ preferredEscaping:(iTermSendTextEscaping)preferredEscaping {
     }
     [self loadInitialColorTableAndResetCursorGuide];
     _cursorGuideSettingHasChanged = NO;
-    _textview.highlightCursorLine = [iTermProfilePreferences boolForKey:KEY_USE_CURSOR_GUIDE
-                                                              inProfile:_profile];
+    _textview.highlightCursorLine = [iTermProfilePreferences boolForColorKey:KEY_USE_CURSOR_GUIDE
+                                                                        dark:_colorMap.darkMode
+                                                                     profile:_profile];
     self.cursorTypeOverride = nil;
     [_textview setNeedsDisplay:YES];
     _screen.trackCursorLineMovement = NO;
@@ -11276,25 +11296,16 @@ preferredEscaping:(iTermSendTextEscaping)preferredEscaping {
 }
 
 - (NSColor *)tabColor {
-    if ([_profile[KEY_USE_TAB_COLOR] boolValue]) {
-        NSDictionary *colorDict = _profile[KEY_TAB_COLOR];
-        if (colorDict) {
-            return [ITAddressBookMgr decodeColor:colorDict];
-        } else {
-            return nil;
-        }
-    } else {
-        return nil;
-    }
+    return [self tabColorInProfile:_profile];
 }
 
 - (void)setTabColor:(NSColor *)color {
     NSDictionary *dict;
     if (color) {
-        dict = @{ KEY_USE_TAB_COLOR: @YES,
-                  KEY_TAB_COLOR: [ITAddressBookMgr encodeColor:color] };
+        dict = @{ [self amendedColorKey:KEY_USE_TAB_COLOR]: @YES,
+                  [self amendedColorKey:KEY_TAB_COLOR]: [ITAddressBookMgr encodeColor:color] };
     } else {
-        dict = @{ KEY_USE_TAB_COLOR: @NO };
+        dict = @{ [self amendedColorKey:KEY_USE_TAB_COLOR]: @NO };
     }
 
     [self setSessionSpecificProfileValues:dict];
@@ -12987,6 +12998,13 @@ preferredEscaping:(iTermSendTextEscaping)preferredEscaping {
         return NO;
     }
     return YES;
+}
+
+- (void)sessionViewDidChangeEffectiveAppearance {
+    _colorMap.darkMode = self.view.effectiveAppearance.it_isDark;
+    if ([iTermProfilePreferences boolForKey:KEY_USE_SEPARATE_COLORS_FOR_LIGHT_AND_DARK_MODE inProfile:self.profile]) {
+        [self loadColorsFromProfile:self.profile];
+    }
 }
 
 #pragma mark - iTermCoprocessDelegate

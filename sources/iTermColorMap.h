@@ -75,6 +75,8 @@ extern const int kColorMap24bitBase;
 @property(nonatomic, assign) double mutingAmount;
 @property(nonatomic, assign) id<iTermColorMapDelegate> delegate;
 @property(nonatomic, assign) double minimumContrast;
+@property(nonatomic, assign) BOOL useSeparateColorsForLightAndDarkMode;
+@property(nonatomic, assign) BOOL darkMode;
 
 + (iTermColorMapKey)keyFor8bitRed:(int)red
                             green:(int)green

@@ -8,8 +8,15 @@
 
 #import <Cocoa/Cocoa.h>
 
+@class iTermSizeRememberingView;
+
+@protocol iTermSizeRememberingViewDelegate<NSObject>
+- (void)sizeRememberingView:(iTermSizeRememberingView *)sender effectiveAppearanceDidChange:(NSAppearance *)effectiveAppearance;
+@end
+
 @interface iTermSizeRememberingView : NSView
 @property(nonatomic) NSSize originalSize;
+@property(nonatomic, weak) id<iTermSizeRememberingViewDelegate> delegate;
 
 - (void)resetToOriginalSize;
 

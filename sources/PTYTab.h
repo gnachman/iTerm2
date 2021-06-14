@@ -99,7 +99,7 @@ extern NSString *const PTYTabVariableTitleOverride;
 + (void)registerSessionsInArrangement:(NSDictionary *)arrangement;
 + (void)registerBuiltInFunctions;
 
-+ (void)drawArrangementPreview:(NSDictionary*)arrangement frame:(NSRect)frame;
++ (void)drawArrangementPreview:(NSDictionary*)arrangement frame:(NSRect)frame dark:(BOOL)dark;
 
 + (PTYTab *)tabWithArrangement:(NSDictionary*)arrangement
                          named:(NSString *)arrangementName

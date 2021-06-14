@@ -19,11 +19,13 @@
 #import "iTermColorPresets.h"
 #import "iTermKeyBindingAction.h"
 #import "iTermKeystroke.h"
+#import "iTermProfilePreferences.h"
 #import "iTermRootTerminalView.h"
 #import "iTermSystemVersion.h"
 #import "iTermTouchBarButton.h"
 #import "iTermTouchbarMappings.h"
 #import "iTermVariableScope+Tab.h"
+#import "NSAppearance+iTerm.h"
 #import "PTYTab.h"
 
 static NSString *const iTermTabBarTouchBarIdentifier = @"tab bar";
@@ -345,13 +347,16 @@ ITERM_IGNORE_PARTIAL_BEGIN
                                   [iTermColorPresets customColorPresets] ?: @{} ]) {
         for (NSString *name in dict) {
             iTermTouchBarButton *button;
-            NSColor *textColor = nil;
-            NSColor *backgroundColor = nil;
-            textColor = [ITAddressBookMgr decodeColor:[dict objectForKey:name][KEY_FOREGROUND_COLOR]];
+            const BOOL dark = self.window.effectiveAppearance.it_isDark;
+            NSColor *textColor = [iTermProfilePreferences colorForKey:KEY_FOREGROUND_COLOR
+                                                                 dark:dark
+                                                              profile:dict];
             if (!textColor) {
                 continue;
             }
-            backgroundColor = [ITAddressBookMgr decodeColor:[dict objectForKey:name][KEY_BACKGROUND_COLOR]];
+            NSColor *backgroundColor = [iTermProfilePreferences colorForKey:KEY_BACKGROUND_COLOR
+                                                                       dark:dark
+                                                                    profile:dict];
             NSDictionary *attributes = @{ NSForegroundColorAttributeName: textColor };
             NSAttributedString *title = [[[NSAttributedString alloc] initWithString:name
                                                                          attributes:attributes] autorelease];

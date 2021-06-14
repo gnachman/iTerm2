@@ -11,6 +11,7 @@
 #import "ITAddressBookMgr.h"
 #import "iTermBadgeLabel.h"
 #import "iTermProfilePreferences.h"
+#import "NSAppearance+iTerm.h"
 #import "NSColor+iTerm.h"
 #import "NSDictionary+iTerm.h"
 #import "NSObject+iTerm.h"
@@ -75,10 +76,14 @@ typedef struct {
 - (void)setDelegate:(id<iTermBadgeConfigurationBadgeViewDelegate>)delegate {
     _delegate = delegate;
     if (delegate) {
-        _badge.fillColor = [[[iTermProfilePreferences objectForKey:KEY_BADGE_COLOR inProfile:[delegate badgeViewProfile]] colorValue] colorWithAlphaComponent:1];
+        Profile *profile = [delegate badgeViewProfile];
+        const BOOL dark = [NSApp effectiveAppearance].it_isDark;
+        _badge.fillColor = [[iTermProfilePreferences colorForKey:KEY_BADGE_COLOR dark:dark profile:profile] colorWithAlphaComponent:1];
         _badge.backgroundColor = [NSColor clearColor];
         _loremIpsum.image = [_badge image];
-        NSColor *backgroundColor = [[iTermProfilePreferences objectForKey:KEY_BACKGROUND_COLOR inProfile:[delegate badgeViewProfile]] colorValue];
+        NSColor *backgroundColor = [iTermProfilePreferences colorForKey:KEY_BACKGROUND_COLOR
+                                                                   dark:dark
+                                                                profile:profile];
         if (backgroundColor.perceivedBrightness > 0.5) {
             _borderColor = [NSColor blackColor];
         } else {
@@ -424,7 +429,9 @@ typedef struct {
     _ignoreFrameChange = YES;
     [self setBadgeFrameFromTextFields];
     _ignoreFrameChange = NO;
-    _fakeSessionView.fillColor = [[iTermProfilePreferences objectForKey:KEY_BACKGROUND_COLOR inProfile:_profile] colorValue];
+    _fakeSessionView.fillColor = [iTermProfilePreferences colorForKey:KEY_BACKGROUND_COLOR
+                                                                 dark:[NSApp effectiveAppearance].it_isDark
+                                                              profile:_profile];
 }
 
 - (NSFont *)font {
