@@ -1942,11 +1942,11 @@ DQ
             <point key="canvasLocation" x="977.5" y="-818"/>
         </customView>
         <customView id="SCN-fS-hNB" userLabel="Prefs - Profiles - Colors" customClass="iTermSizeRememberingView">
-            <rect key="frame" x="0.0" y="0.0" width="569" height="370"/>
+            <rect key="frame" x="0.0" y="0.0" width="569" height="378"/>
             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
             <subviews>
                 <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="NXm-yR-tAj" userLabel="Regular">
-                    <rect key="frame" x="10" y="21" width="529" height="301"/>
+                    <rect key="frame" x="10" y="20" width="529" height="301"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <subviews>
                         <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="4889">
@@ -2401,7 +2401,7 @@ DQ
                     </subviews>
                 </customView>
                 <popUpButton verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="3213">
-                    <rect key="frame" x="377" y="16" width="166" height="26"/>
+                    <rect key="frame" x="377" y="24" width="166" height="26"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <popUpButtonCell key="cell" type="push" title="Color Presets…" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" pullsDown="YES" id="3214">
                         <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
@@ -2417,7 +2417,7 @@ DQ
                     </connections>
                 </popUpButton>
                 <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2Zz-se-prd">
-                    <rect key="frame" x="10" y="332" width="328" height="18"/>
+                    <rect key="frame" x="10" y="340" width="328" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <buttonCell key="cell" type="check" title="Use different colors for light mode and dark mode" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="ZF1-Nv-83x">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -2428,14 +2428,14 @@ DQ
                     </connections>
                 </button>
                 <popUpButton verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="3x1-gZ-174">
-                    <rect key="frame" x="427" y="326" width="116" height="25"/>
+                    <rect key="frame" x="427" y="334" width="116" height="25"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <popUpButtonCell key="cell" type="push" title="Light Mode" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" selectedItem="xFU-tm-alS" id="jfH-m9-DvC">
+                    <popUpButtonCell key="cell" type="push" title="Light Mode" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" selectedItem="xFU-tm-alS" id="jfH-m9-DvC">
                         <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
                         <font key="font" metaFont="menu"/>
                         <menu key="menu" id="o4r-7t-DXA">
                             <items>
-                                <menuItem title="Light Mode" id="xFU-tm-alS"/>
+                                <menuItem title="Light Mode" state="on" id="xFU-tm-alS"/>
                                 <menuItem title="Dark Mode" tag="1" id="QbW-Ha-d7O"/>
                             </items>
                         </menu>
@@ -2445,7 +2445,7 @@ DQ
                     </connections>
                 </popUpButton>
                 <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="ZNy-wl-Zrf">
-                    <rect key="frame" x="374" y="333" width="50" height="16"/>
+                    <rect key="frame" x="374" y="341" width="50" height="16"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" lineBreakMode="clipping" title="Editing:" id="O5b-oW-Jw9">
                         <font key="font" metaFont="system"/>
@@ -2453,9 +2453,13 @@ DQ
                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
+                <box verticalHuggingPriority="750" fixedFrame="YES" boxType="separator" translatesAutoresizingMaskIntoConstraints="NO" id="Qbc-4g-CqH">
+                    <rect key="frame" x="12" y="327" width="527" height="5"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                </box>
             </subviews>
             <accessibility identifier="prefsProfilesColors"/>
-            <point key="canvasLocation" x="2350.5" y="418"/>
+            <point key="canvasLocation" x="2350.5" y="422"/>
         </customView>
         <customView id="G2G-W6-kWa" userLabel="Prefs - Profiles - Text" customClass="iTermSizeRememberingView">
             <rect key="frame" x="0.0" y="0.0" width="584" height="446"/>

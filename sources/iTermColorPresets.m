@@ -5,6 +5,7 @@
 #import "iTermProfilePreferences.h"
 #import "NSArray+iTerm.h"
 #import "NSDictionary+iTerm.h"
+#import "NSStringITerm.h"
 
 NSString *const kCustomColorPresetsKey = @"Custom Color Presets";
 NSString *const kRebuildColorPresetsMenuNotification = @"kRebuildColorPresetsMenuNotification";
@@ -176,7 +177,15 @@ NSString *const kRebuildColorPresetsMenuNotification = @"kRebuildColorPresetsMen
     }];
 }
 
-- (BOOL)addColorPresetNamed:(NSString *)presetName toProfile:(Profile *)profile dark:(NSNumber *)dark {
+- (BOOL)presetHasMultipleModes:(NSString *)presetName {
+    iTermColorPreset *settings = [iTermColorPresets presetWithName:presetName];
+    if (!settings) {
+        return NO;
+    }
+    return iTermColorPresetHasModes(settings);
+}
+
+- (BOOL)addColorPresetNamed:(NSString *)presetName toProfile:(Profile *)profile from:(iTermColorPresetMode)source to:(iTermColorPresetMode)destination {
     NSString *guid = profile[KEY_GUID];
     assert(guid);
 
@@ -186,45 +195,44 @@ NSString *const kRebuildColorPresetsMenuNotification = @"kRebuildColorPresetsMen
     }
     NSMutableDictionary* newDict = [NSMutableDictionary dictionaryWithDictionary:profile];
 
-    //  my mode ->    | no modes | dark mode | light mode
-    //  --------------+----------+-----------+----------
-    //  preset  unsup | 0->d,l,0 | 0->d      | 0->l
-    //    |           +----------+-----------+----------
-    //    V     supp  | 0->0,    | d->d      | l->l
-    //                | l->l,    |           |
-    //                | d->d     |           |
     const BOOL presetUsesModes = iTermColorPresetHasModes(settings);
     NSArray<NSString *> *suffixesToSet = @[];   // Suffixes we write to.
     NSArray<NSString *> *suffixesToSkip = @[];  // Suffixes on input that we ignore.
-    if (presetUsesModes) {
-        if (dark) {
-            // dark -> dark or light -> light
-            suffixesToSkip = @[ @"",
-                                dark.boolValue ? COLORS_LIGHT_MODE_SUFFIX : COLORS_DARK_MODE_SUFFIX ];
-            suffixesToSet = @[ dark.boolValue ? COLORS_DARK_MODE_SUFFIX : COLORS_LIGHT_MODE_SUFFIX ];
-        } else {
-            // no suffix -> no suffix
-            suffixesToSkip = @[ COLORS_LIGHT_MODE_SUFFIX, COLORS_DARK_MODE_SUFFIX ];
-            suffixesToSet = @[ @"" ];
+    if (!presetUsesModes) {
+        if (source != 0) {
+            return [self addColorPresetNamed:presetName toProfile:profile from:0 to:destination];
         }
+        suffixesToSkip = @[ COLORS_LIGHT_MODE_SUFFIX, COLORS_DARK_MODE_SUFFIX ];
     } else {
-        if (dark) {
-            // no suffix -> one suffix
-            if (dark.boolValue) {
-                suffixesToSet = @[ COLORS_DARK_MODE_SUFFIX ];
-            } else {
-                suffixesToSet = @[ COLORS_LIGHT_MODE_SUFFIX ];
-            }
+        // Preset has light & dark mode
+        if (source == 0) {
+            suffixesToSkip = @[ COLORS_LIGHT_MODE_SUFFIX, COLORS_DARK_MODE_SUFFIX ];
+        } else if (source == iTermColorPresetModeLight) {
+            suffixesToSkip = @[ @"", COLORS_DARK_MODE_SUFFIX ];
+        } else if (source == iTermColorPresetModeDark) {
+            suffixesToSkip = @[ @"", COLORS_LIGHT_MODE_SUFFIX ];
         } else {
-            // no suffix -> all suffixes
-            suffixesToSet = @[ @"", COLORS_LIGHT_MODE_SUFFIX, COLORS_DARK_MODE_SUFFIX ];
+            suffixesToSkip = @[ @"" ];
         }
     }
+
+    if (destination == 0) {
+        suffixesToSet = @[ @"" ];
+    }
+    if (destination & iTermColorPresetModeLight) {
+        suffixesToSet = [suffixesToSet arrayByAddingObject:COLORS_LIGHT_MODE_SUFFIX];
+    }
+    if (destination & iTermColorPresetModeDark) {
+        suffixesToSet = [suffixesToSet arrayByAddingObject:COLORS_DARK_MODE_SUFFIX];
+    }
+
     for (NSString *colorName in [ProfileModel colorKeysWithModes:presetUsesModes]) {
         // Check if this key in the preset should be skipped.
         NSString *colorNameSuffix = @"";
+        NSString *baseColorName = colorName;
         for (NSString *candidate in @[ COLORS_LIGHT_MODE_SUFFIX, COLORS_DARK_MODE_SUFFIX ]) {
             if ([colorName hasSuffix:candidate]) {
+                baseColorName = [colorName stringByDroppingLastCharacters:candidate.length];
                 colorNameSuffix = candidate;
                 break;
             }
@@ -236,7 +244,7 @@ NSString *const kRebuildColorPresetsMenuNotification = @"kRebuildColorPresetsMen
         // Fan out the value to the profile.
         iTermColorDictionary *colorDict = [settings iterm_presetColorWithName:colorName];
         for (NSString *suffix in suffixesToSet) {
-            NSString *key = [colorName stringByAppendingString:suffix];
+            NSString *key = [baseColorName stringByAppendingString:suffix];
             if (colorDict) {
                 newDict[key] = colorDict;
             } else {

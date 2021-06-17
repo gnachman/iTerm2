@@ -364,7 +364,10 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
 
     [self updateSelectedTitleComponents];
 
-    [_profiles selectRowByGuid:[self.delegate profilePreferencesCurrentProfile][KEY_ORIGINAL_GUID]];
+    NSString *originalGUID = [self.delegate profilePreferencesCurrentProfile][KEY_ORIGINAL_GUID];
+    if (originalGUID) {
+        [_profiles selectRowByGuid:originalGUID];
+    }
 
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(updateProfileName)
@@ -520,7 +523,10 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
 - (void)reloadProfile {
     [super reloadProfile];
     [self populateBookmarkUrlSchemesFromProfile:[self.delegate profilePreferencesCurrentProfile]];
-    [_profiles selectRowByGuid:[self.delegate profilePreferencesCurrentProfile][KEY_ORIGINAL_GUID]];
+    NSString *originalGUID = [self.delegate profilePreferencesCurrentProfile][KEY_ORIGINAL_GUID];
+    if (originalGUID) {
+        [_profiles selectRowByGuid:originalGUID];
+    }
     _sessionHotkeyInputView.shortcut = [iTermShortcut shortcutWithDictionary:(NSDictionary *)[self objectForKey:KEY_SESSION_HOTKEY]];
     id<iTermSessionScope> scope = self.scope;
     if (scope) {
