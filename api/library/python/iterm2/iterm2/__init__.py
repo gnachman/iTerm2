@@ -41,7 +41,7 @@ from iterm2.profile import (
     Profile, PartialProfile, BadGUIDException, LocalWriteOnlyProfile,
     BackgroundImageMode, CursorType, ThinStrokes, UnicodeNormalization,
     CharacterEncoding, OptionKeySends, InitialWorkingDirectory, IconMode,
-    TitleComponents)
+    TitleComponents, WriteOnlyProfile)
 
 from iterm2.prompt import (
     Prompt, PromptMonitor, PromptState, async_get_last_prompt,

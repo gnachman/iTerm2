@@ -172,31 +172,89 @@ class LocalWriteOnlyProfile:
 
     def set_foreground_color(self, value: 'iterm2.color.Color'):
         """
-        Sets the foreground color.
+        Sets the foreground color. This is used only when separate light/dark
+        mode colors are not enabled.
 
         :param value: A :class:`Color`
         """
         return self._color_set("Foreground Color", value)
 
+    def set_foreground_color_light(self, value: 'iterm2.color.Color'):
+        """
+        Sets the foreground color. This affects the light-mode variant when
+        separate light/dark mode colors are enabled.
+
+        :param value: A :class:`Color`
+        """
+        return self._color_set("Foreground Color (Light)", value)
+
+    def set_foreground_color_dark(self, value: 'iterm2.color.Color'):
+        """
+        Sets the foreground color. This affects the dark-mode variant when
+        separate light/dark mode colors are enabled.
+
+        :param value: A :class:`Color`
+        """
+        return self._color_set("Foreground Color (Dark)", value)
+
     def set_background_color(self, value: 'iterm2.color.Color'):
         """
-        Sets the background color.
+        Sets the background color. This is used only when separate light/dark
+        mode colors are not enabled.
 
         :param value: A :class:`Color`
         """
         return self._color_set("Background Color", value)
 
+    def set_background_color_light(self, value: 'iterm2.color.Color'):
+        """
+        Sets the background color. This affects the light-mode variant when
+        separate light/dark mode colors are enabled.
+
+        :param value: A :class:`Color`
+        """
+        return self._color_set("Background Color (Light)", value)
+
+    def set_background_color_dark(self, value: 'iterm2.color.Color'):
+        """
+        Sets the background color. This affects the dark-mode variant when
+        separate light/dark mode colors are enabled.
+
+        :param value: A :class:`Color`
+        """
+        return self._color_set("Background Color (Dark)", value)
+
     def set_bold_color(self, value: 'iterm2.color.Color'):
         """
-        Sets the bold text color.
+        Sets the bold text color. This is used only when separate light/dark
+        mode colors are not enabled.
 
         :param value: A :class:`Color`
         """
         return self._color_set("Bold Color", value)
 
+    def set_bold_color_light(self, value: 'iterm2.color.Color'):
+        """
+        Sets the bold text color. This affects the light-mode variant when
+        separate light/dark mode colors are enabled.
+
+        :param value: A :class:`Color`
+        """
+        return self._color_set("Bold Color (Light)", value)
+
+    def set_bold_color_dark(self, value: 'iterm2.color.Color'):
+        """
+        Sets the bold text color. This affects the dark-mode variant when
+        separate light/dark mode colors are enabled.
+
+        :param value: A :class:`Color`
+        """
+        return self._color_set("Bold Color (Dark)", value)
+
     def set_use_bright_bold(self, value: bool):
         """
-        Sets  how bold text is rendered.
+        Sets  how bold text is rendered. This is used only when separate
+        light/dark mode colors are not enabled.
 
         This function is deprecated because its behavior changed in
         iTerm2 version 3.3.7.
@@ -218,10 +276,61 @@ class LocalWriteOnlyProfile:
         """
         return self._simple_set("Use Bright Bold", value)
 
+    def set_use_bright_bold_light(self, value: bool):
+        """
+        Sets  how bold text is rendered. This affects the light-mode variant
+        when separate light/dark mode colors are enabled.
+
+        This function is deprecated because its behavior changed in
+        iTerm2 version 3.3.7.
+
+        Pre-3.3.7, when enabled:
+        * Use the profile-specified bold color for default-colored
+          bold text.
+        * Dark ANSI colors get replaced with their light counterparts
+          for bold text.
+
+        In 3.3.7 and later:
+        * Use the profile-specified bold color for default-colored
+          bold text.
+
+        Use `use_bold_color` and `brighten_bold_text` in 3.3.7 and
+        later instead of this method.
+
+        :param value: A bool
+        """
+        return self._simple_set("Use Bright Bold (Light)", value)
+
+    def set_use_bright_bold_dark(self, value: bool):
+        """
+        Sets  how bold text is rendered. This affects the dark-mode variant
+        when separate light/dark mode colors are enabled.
+
+        This function is deprecated because its behavior changed in
+        iTerm2 version 3.3.7.
+
+        Pre-3.3.7, when enabled:
+        * Use the profile-specified bold color for default-colored
+          bold text.
+        * Dark ANSI colors get replaced with their light counterparts
+          for bold text.
+
+        In 3.3.7 and later:
+        * Use the profile-specified bold color for default-colored
+          bold text.
+
+        Use `use_bold_color` and `brighten_bold_text` in 3.3.7 and
+        later instead of this method.
+
+        :param value: A bool
+        """
+        return self._simple_set("Use Bright Bold (Dark)", value)
+
     def set_use_bold_color(self, value: bool):
         """
         Sets whether the profile-specified bold color is used for
-        default-colored bold text.
+        default-colored bold text. This is used only when separate light/dark
+        mode colors are not enabled.
 
         Note: In versions of iTerm2 prior to 3.3.7, this behaves like
         set_use_bright_bold().
@@ -230,10 +339,37 @@ class LocalWriteOnlyProfile:
         """
         return self._simple_set("Use Bright Bold", value)
 
+    def set_use_bold_color_light(self, value: bool):
+        """
+        Sets whether the profile-specified bold color is used for
+        default-colored bold text. This affects the light-mode variant when
+        separate light/dark mode colors are enabled.
+
+        Note: In versions of iTerm2 prior to 3.3.7, this behaves like
+        set_use_bright_bold().
+
+        :param value: A bool
+        """
+        return self._simple_set("Use Bright Bold (Light)", value)
+
+    def set_use_bold_color_dark(self, value: bool):
+        """
+        Sets whether the profile-specified bold color is used for
+        default-colored bold text. This affects the dark-mode variant when
+        separate light/dark mode colors are enabled.
+
+        Note: In versions of iTerm2 prior to 3.3.7, this behaves like
+        set_use_bright_bold().
+
+        :param value: A bool
+        """
+        return self._simple_set("Use Bright Bold (Dark)", value)
+
     def set_brighten_bold_text(self, value: bool):
         """
         Sets whether Dark ANSI colors get replaced with their light
-        counterparts for bold text.
+        counterparts for bold text. This is used only when separate light/dark
+        mode colors are not enabled.
 
         This is only supported in iTerm2 version 3.3.7 and later.
 
@@ -241,254 +377,870 @@ class LocalWriteOnlyProfile:
         """
         return self._simple_set("Brighten Bold Text", value)
 
+    def set_brighten_bold_text_light(self, value: bool):
+        """
+        Sets whether Dark ANSI colors get replaced with their light
+        counterparts for bold text. This affects the light-mode variant when
+        separate light/dark mode colors are enabled.
+
+        This is only supported in iTerm2 version 3.3.7 and later.
+
+        :param value: A bool
+        """
+        return self._simple_set("Brighten Bold Text (Light)", value)
+
+    def set_brighten_bold_text_dark(self, value: bool):
+        """
+        Sets whether Dark ANSI colors get replaced with their light
+        counterparts for bold text. This affects the dark-mode variant when
+        separate light/dark mode colors are enabled.
+
+        This is only supported in iTerm2 version 3.3.7 and later.
+
+        :param value: A bool
+        """
+        return self._simple_set("Brighten Bold Text (Dark)", value)
+
     def set_link_color(self, value: 'iterm2.color.Color'):
         """
-        Sets the link color.
+        Sets the link color. This is used only when separate light/dark mode
+        colors are not enabled.
 
         :param value: A :class:`Color`
         """
         return self._color_set("Link Color", value)
 
+    def set_link_color_light(self, value: 'iterm2.color.Color'):
+        """
+        Sets the link color. This affects the light-mode variant when separate
+        light/dark mode colors are enabled.
+
+        :param value: A :class:`Color`
+        """
+        return self._color_set("Link Color (Light)", value)
+
+    def set_link_color_dark(self, value: 'iterm2.color.Color'):
+        """
+        Sets the link color. This affects the dark-mode variant when separate
+        light/dark mode colors are enabled.
+
+        :param value: A :class:`Color`
+        """
+        return self._color_set("Link Color (Dark)", value)
+
     def set_selection_color(self, value: 'iterm2.color.Color'):
         """
-        Sets the selection background color.
+        Sets the selection background color. This is used only when separate
+        light/dark mode colors are not enabled.
 
         :param value: A :class:`Color`
         """
         return self._color_set("Selection Color", value)
 
+    def set_selection_color_light(self, value: 'iterm2.color.Color'):
+        """
+        Sets the selection background color. This affects the light-mode
+        variant when separate light/dark mode colors are enabled.
+
+        :param value: A :class:`Color`
+        """
+        return self._color_set("Selection Color (Light)", value)
+
+    def set_selection_color_dark(self, value: 'iterm2.color.Color'):
+        """
+        Sets the selection background color. This affects the dark-mode variant
+        when separate light/dark mode colors are enabled.
+
+        :param value: A :class:`Color`
+        """
+        return self._color_set("Selection Color (Dark)", value)
+
     def set_selected_text_color(self, value: 'iterm2.color.Color'):
         """
-        Sets the selection text color.
+        Sets the selection text color. This is used only when separate
+        light/dark mode colors are not enabled.
 
         :param value: A :class:`Color`
         """
         return self._color_set("Selected Text Color", value)
 
+    def set_selected_text_color_light(self, value: 'iterm2.color.Color'):
+        """
+        Sets the selection text color. This affects the light-mode variant when
+        separate light/dark mode colors are enabled.
+
+        :param value: A :class:`Color`
+        """
+        return self._color_set("Selected Text Color (Light)", value)
+
+    def set_selected_text_color_dark(self, value: 'iterm2.color.Color'):
+        """
+        Sets the selection text color. This affects the dark-mode variant when
+        separate light/dark mode colors are enabled.
+
+        :param value: A :class:`Color`
+        """
+        return self._color_set("Selected Text Color (Dark)", value)
+
     def set_cursor_color(self, value: 'iterm2.color.Color'):
         """
-        Sets the cursor color.
+        Sets the cursor color. This is used only when separate light/dark mode
+        colors are not enabled.
 
         :param value: A :class:`Color`
         """
         return self._color_set("Cursor Color", value)
 
+    def set_cursor_color_light(self, value: 'iterm2.color.Color'):
+        """
+        Sets the cursor color. This affects the light-mode variant when
+        separate light/dark mode colors are enabled.
+
+        :param value: A :class:`Color`
+        """
+        return self._color_set("Cursor Color (Light)", value)
+
+    def set_cursor_color_dark(self, value: 'iterm2.color.Color'):
+        """
+        Sets the cursor color. This affects the dark-mode variant when separate
+        light/dark mode colors are enabled.
+
+        :param value: A :class:`Color`
+        """
+        return self._color_set("Cursor Color (Dark)", value)
+
     def set_cursor_text_color(self, value: 'iterm2.color.Color'):
         """
-        Sets the cursor text color.
+        Sets the cursor text color. This is used only when separate light/dark
+        mode colors are not enabled.
 
         :param value: A :class:`Color`
         """
         return self._color_set("Cursor Text Color", value)
 
+    def set_cursor_text_color_light(self, value: 'iterm2.color.Color'):
+        """
+        Sets the cursor text color. This affects the light-mode variant when
+        separate light/dark mode colors are enabled.
+
+        :param value: A :class:`Color`
+        """
+        return self._color_set("Cursor Text Color (Light)", value)
+
+    def set_cursor_text_color_dark(self, value: 'iterm2.color.Color'):
+        """
+        Sets the cursor text color. This affects the dark-mode variant when
+        separate light/dark mode colors are enabled.
+
+        :param value: A :class:`Color`
+        """
+        return self._color_set("Cursor Text Color (Dark)", value)
+
     def set_ansi_0_color(self, value: 'iterm2.color.Color'):
         """
-        Sets the ANSI 0 color.
+        Sets the ANSI 0 color. This is used only when separate light/dark mode
+        colors are not enabled.
 
         :param value: A :class:`Color`
         """
         return self._color_set("Ansi 0 Color", value)
 
+    def set_ansi_0_color_light(self, value: 'iterm2.color.Color'):
+        """
+        Sets the ANSI 0 color. This affects the light-mode variant when
+        separate light/dark mode colors are enabled.
+
+        :param value: A :class:`Color`
+        """
+        return self._color_set("Ansi 0 Color (Light)", value)
+
+    def set_ansi_0_color_dark(self, value: 'iterm2.color.Color'):
+        """
+        Sets the ANSI 0 color. This affects the dark-mode variant when separate
+        light/dark mode colors are enabled.
+
+        :param value: A :class:`Color`
+        """
+        return self._color_set("Ansi 0 Color (Dark)", value)
+
     def set_ansi_1_color(self, value: 'iterm2.color.Color'):
         """
-        Sets the ANSI 1 color.
+        Sets the ANSI 1 color. This is used only when separate light/dark mode
+        colors are not enabled.
 
         :param value: A :class:`Color`
         """
         return self._color_set("Ansi 1 Color", value)
 
+    def set_ansi_1_color_light(self, value: 'iterm2.color.Color'):
+        """
+        Sets the ANSI 1 color. This affects the light-mode variant when
+        separate light/dark mode colors are enabled.
+
+        :param value: A :class:`Color`
+        """
+        return self._color_set("Ansi 1 Color (Light)", value)
+
+    def set_ansi_1_color_dark(self, value: 'iterm2.color.Color'):
+        """
+        Sets the ANSI 1 color. This affects the dark-mode variant when separate
+        light/dark mode colors are enabled.
+
+        :param value: A :class:`Color`
+        """
+        return self._color_set("Ansi 1 Color (Dark)", value)
+
     def set_ansi_2_color(self, value: 'iterm2.color.Color'):
         """
-        Sets the ANSI 2 color.
+        Sets the ANSI 2 color. This is used only when separate light/dark mode
+        colors are not enabled.
 
         :param value: A :class:`Color`
         """
         return self._color_set("Ansi 2 Color", value)
 
+    def set_ansi_2_color_light(self, value: 'iterm2.color.Color'):
+        """
+        Sets the ANSI 2 color. This affects the light-mode variant when
+        separate light/dark mode colors are enabled.
+
+        :param value: A :class:`Color`
+        """
+        return self._color_set("Ansi 2 Color (Light)", value)
+
+    def set_ansi_2_color_dark(self, value: 'iterm2.color.Color'):
+        """
+        Sets the ANSI 2 color. This affects the dark-mode variant when separate
+        light/dark mode colors are enabled.
+
+        :param value: A :class:`Color`
+        """
+        return self._color_set("Ansi 2 Color (Dark)", value)
+
     def set_ansi_3_color(self, value: 'iterm2.color.Color'):
         """
-        Sets the ANSI 3 color.
+        Sets the ANSI 3 color. This is used only when separate light/dark mode
+        colors are not enabled.
 
         :param value: A :class:`Color`
         """
         return self._color_set("Ansi 3 Color", value)
 
+    def set_ansi_3_color_light(self, value: 'iterm2.color.Color'):
+        """
+        Sets the ANSI 3 color. This affects the light-mode variant when
+        separate light/dark mode colors are enabled.
+
+        :param value: A :class:`Color`
+        """
+        return self._color_set("Ansi 3 Color (Light)", value)
+
+    def set_ansi_3_color_dark(self, value: 'iterm2.color.Color'):
+        """
+        Sets the ANSI 3 color. This affects the dark-mode variant when separate
+        light/dark mode colors are enabled.
+
+        :param value: A :class:`Color`
+        """
+        return self._color_set("Ansi 3 Color (Dark)", value)
+
     def set_ansi_4_color(self, value: 'iterm2.color.Color'):
         """
-        Sets the ANSI 4 color.
+        Sets the ANSI 4 color. This is used only when separate light/dark mode
+        colors are not enabled.
 
         :param value: A :class:`Color`
         """
         return self._color_set("Ansi 4 Color", value)
 
+    def set_ansi_4_color_light(self, value: 'iterm2.color.Color'):
+        """
+        Sets the ANSI 4 color. This affects the light-mode variant when
+        separate light/dark mode colors are enabled.
+
+        :param value: A :class:`Color`
+        """
+        return self._color_set("Ansi 4 Color (Light)", value)
+
+    def set_ansi_4_color_dark(self, value: 'iterm2.color.Color'):
+        """
+        Sets the ANSI 4 color. This affects the dark-mode variant when separate
+        light/dark mode colors are enabled.
+
+        :param value: A :class:`Color`
+        """
+        return self._color_set("Ansi 4 Color (Dark)", value)
+
     def set_ansi_5_color(self, value: 'iterm2.color.Color'):
         """
-        Sets the ANSI 5 color.
+        Sets the ANSI 5 color. This is used only when separate light/dark mode
+        colors are not enabled.
 
         :param value: A :class:`Color`
         """
         return self._color_set("Ansi 5 Color", value)
 
+    def set_ansi_5_color_light(self, value: 'iterm2.color.Color'):
+        """
+        Sets the ANSI 5 color. This affects the light-mode variant when
+        separate light/dark mode colors are enabled.
+
+        :param value: A :class:`Color`
+        """
+        return self._color_set("Ansi 5 Color (Light)", value)
+
+    def set_ansi_5_color_dark(self, value: 'iterm2.color.Color'):
+        """
+        Sets the ANSI 5 color. This affects the dark-mode variant when separate
+        light/dark mode colors are enabled.
+
+        :param value: A :class:`Color`
+        """
+        return self._color_set("Ansi 5 Color (Dark)", value)
+
     def set_ansi_6_color(self, value: 'iterm2.color.Color'):
         """
-        Sets the ANSI 6 color.
+        Sets the ANSI 6 color. This is used only when separate light/dark mode
+        colors are not enabled.
 
         :param value: A :class:`Color`
         """
         return self._color_set("Ansi 6 Color", value)
 
+    def set_ansi_6_color_light(self, value: 'iterm2.color.Color'):
+        """
+        Sets the ANSI 6 color. This affects the light-mode variant when
+        separate light/dark mode colors are enabled.
+
+        :param value: A :class:`Color`
+        """
+        return self._color_set("Ansi 6 Color (Light)", value)
+
+    def set_ansi_6_color_dark(self, value: 'iterm2.color.Color'):
+        """
+        Sets the ANSI 6 color. This affects the dark-mode variant when separate
+        light/dark mode colors are enabled.
+
+        :param value: A :class:`Color`
+        """
+        return self._color_set("Ansi 6 Color (Dark)", value)
+
     def set_ansi_7_color(self, value: 'iterm2.color.Color'):
         """
-        Sets the ANSI 7 color.
+        Sets the ANSI 7 color. This is used only when separate light/dark mode
+        colors are not enabled.
 
         :param value: A :class:`Color`
         """
         return self._color_set("Ansi 7 Color", value)
 
+    def set_ansi_7_color_light(self, value: 'iterm2.color.Color'):
+        """
+        Sets the ANSI 7 color. This affects the light-mode variant when
+        separate light/dark mode colors are enabled.
+
+        :param value: A :class:`Color`
+        """
+        return self._color_set("Ansi 7 Color (Light)", value)
+
+    def set_ansi_7_color_dark(self, value: 'iterm2.color.Color'):
+        """
+        Sets the ANSI 7 color. This affects the dark-mode variant when separate
+        light/dark mode colors are enabled.
+
+        :param value: A :class:`Color`
+        """
+        return self._color_set("Ansi 7 Color (Dark)", value)
+
     def set_ansi_8_color(self, value: 'iterm2.color.Color'):
         """
-        Sets the ANSI 8 color.
+        Sets the ANSI 8 color. This is used only when separate light/dark mode
+        colors are not enabled.
 
         :param value: A :class:`Color`
         """
         return self._color_set("Ansi 8 Color", value)
 
+    def set_ansi_8_color_light(self, value: 'iterm2.color.Color'):
+        """
+        Sets the ANSI 8 color. This affects the light-mode variant when
+        separate light/dark mode colors are enabled.
+
+        :param value: A :class:`Color`
+        """
+        return self._color_set("Ansi 8 Color (Light)", value)
+
+    def set_ansi_8_color_dark(self, value: 'iterm2.color.Color'):
+        """
+        Sets the ANSI 8 color. This affects the dark-mode variant when separate
+        light/dark mode colors are enabled.
+
+        :param value: A :class:`Color`
+        """
+        return self._color_set("Ansi 8 Color (Dark)", value)
+
     def set_ansi_9_color(self, value: 'iterm2.color.Color'):
         """
-        Sets the ANSI 9 color.
+        Sets the ANSI 9 color. This is used only when separate light/dark mode
+        colors are not enabled.
 
         :param value: A :class:`Color`
         """
         return self._color_set("Ansi 9 Color", value)
 
+    def set_ansi_9_color_light(self, value: 'iterm2.color.Color'):
+        """
+        Sets the ANSI 9 color. This affects the light-mode variant when
+        separate light/dark mode colors are enabled.
+
+        :param value: A :class:`Color`
+        """
+        return self._color_set("Ansi 9 Color (Light)", value)
+
+    def set_ansi_9_color_dark(self, value: 'iterm2.color.Color'):
+        """
+        Sets the ANSI 9 color. This affects the dark-mode variant when separate
+        light/dark mode colors are enabled.
+
+        :param value: A :class:`Color`
+        """
+        return self._color_set("Ansi 9 Color (Dark)", value)
+
     def set_ansi_10_color(self, value: 'iterm2.color.Color'):
         """
-        Sets the ANSI 10 color.
+        Sets the ANSI 10 color. This is used only when separate light/dark mode
+        colors are not enabled.
 
         :param value: A :class:`Color`
         """
         return self._color_set("Ansi 10 Color", value)
 
+    def set_ansi_10_color_light(self, value: 'iterm2.color.Color'):
+        """
+        Sets the ANSI 10 color. This affects the light-mode variant when
+        separate light/dark mode colors are enabled.
+
+        :param value: A :class:`Color`
+        """
+        return self._color_set("Ansi 10 Color (Light)", value)
+
+    def set_ansi_10_color_dark(self, value: 'iterm2.color.Color'):
+        """
+        Sets the ANSI 10 color. This affects the dark-mode variant when
+        separate light/dark mode colors are enabled.
+
+        :param value: A :class:`Color`
+        """
+        return self._color_set("Ansi 10 Color (Dark)", value)
+
     def set_ansi_11_color(self, value: 'iterm2.color.Color'):
         """
-        Sets the ANSI 11 color.
+        Sets the ANSI 11 color. This is used only when separate light/dark mode
+        colors are not enabled.
 
         :param value: A :class:`Color`
         """
         return self._color_set("Ansi 11 Color", value)
 
+    def set_ansi_11_color_light(self, value: 'iterm2.color.Color'):
+        """
+        Sets the ANSI 11 color. This affects the light-mode variant when
+        separate light/dark mode colors are enabled.
+
+        :param value: A :class:`Color`
+        """
+        return self._color_set("Ansi 11 Color (Light)", value)
+
+    def set_ansi_11_color_dark(self, value: 'iterm2.color.Color'):
+        """
+        Sets the ANSI 11 color. This affects the dark-mode variant when
+        separate light/dark mode colors are enabled.
+
+        :param value: A :class:`Color`
+        """
+        return self._color_set("Ansi 11 Color (Dark)", value)
+
     def set_ansi_12_color(self, value: 'iterm2.color.Color'):
         """
-        Sets the ANSI 12 color.
+        Sets the ANSI 12 color. This is used only when separate light/dark mode
+        colors are not enabled.
 
         :param value: A :class:`Color`
         """
         return self._color_set("Ansi 12 Color", value)
 
+    def set_ansi_12_color_light(self, value: 'iterm2.color.Color'):
+        """
+        Sets the ANSI 12 color. This affects the light-mode variant when
+        separate light/dark mode colors are enabled.
+
+        :param value: A :class:`Color`
+        """
+        return self._color_set("Ansi 12 Color (Light)", value)
+
+    def set_ansi_12_color_dark(self, value: 'iterm2.color.Color'):
+        """
+        Sets the ANSI 12 color. This affects the dark-mode variant when
+        separate light/dark mode colors are enabled.
+
+        :param value: A :class:`Color`
+        """
+        return self._color_set("Ansi 12 Color (Dark)", value)
+
     def set_ansi_13_color(self, value: 'iterm2.color.Color'):
         """
-        Sets the ANSI 13 color.
+        Sets the ANSI 13 color. This is used only when separate light/dark mode
+        colors are not enabled.
 
         :param value: A :class:`Color`
         """
         return self._color_set("Ansi 13 Color", value)
 
+    def set_ansi_13_color_light(self, value: 'iterm2.color.Color'):
+        """
+        Sets the ANSI 13 color. This affects the light-mode variant when
+        separate light/dark mode colors are enabled.
+
+        :param value: A :class:`Color`
+        """
+        return self._color_set("Ansi 13 Color (Light)", value)
+
+    def set_ansi_13_color_dark(self, value: 'iterm2.color.Color'):
+        """
+        Sets the ANSI 13 color. This affects the dark-mode variant when
+        separate light/dark mode colors are enabled.
+
+        :param value: A :class:`Color`
+        """
+        return self._color_set("Ansi 13 Color (Dark)", value)
+
     def set_ansi_14_color(self, value: 'iterm2.color.Color'):
         """
-        Sets the ANSI 14 color.
+        Sets the ANSI 14 color. This is used only when separate light/dark mode
+        colors are not enabled.
 
         :param value: A :class:`Color`
         """
         return self._color_set("Ansi 14 Color", value)
 
+    def set_ansi_14_color_light(self, value: 'iterm2.color.Color'):
+        """
+        Sets the ANSI 14 color. This affects the light-mode variant when
+        separate light/dark mode colors are enabled.
+
+        :param value: A :class:`Color`
+        """
+        return self._color_set("Ansi 14 Color (Light)", value)
+
+    def set_ansi_14_color_dark(self, value: 'iterm2.color.Color'):
+        """
+        Sets the ANSI 14 color. This affects the dark-mode variant when
+        separate light/dark mode colors are enabled.
+
+        :param value: A :class:`Color`
+        """
+        return self._color_set("Ansi 14 Color (Dark)", value)
+
     def set_ansi_15_color(self, value: 'iterm2.color.Color'):
         """
-        Sets the ANSI 15 color.
+        Sets the ANSI 15 color. This is used only when separate light/dark mode
+        colors are not enabled.
 
         :param value: A :class:`Color`
         """
         return self._color_set("Ansi 15 Color", value)
 
+    def set_ansi_15_color_light(self, value: 'iterm2.color.Color'):
+        """
+        Sets the ANSI 15 color. This affects the light-mode variant when
+        separate light/dark mode colors are enabled.
+
+        :param value: A :class:`Color`
+        """
+        return self._color_set("Ansi 15 Color (Light)", value)
+
+    def set_ansi_15_color_dark(self, value: 'iterm2.color.Color'):
+        """
+        Sets the ANSI 15 color. This affects the dark-mode variant when
+        separate light/dark mode colors are enabled.
+
+        :param value: A :class:`Color`
+        """
+        return self._color_set("Ansi 15 Color (Dark)", value)
+
     def set_smart_cursor_color(self, value: bool):
         """
         Sets whether to use smart cursor color. This only applies to box
-        cursors.
+        cursors. This is used only when separate light/dark mode colors are not
+        enabled.
 
         :param value: A bool
         """
         return self._simple_set("Smart Cursor Color", value)
 
+    def set_smart_cursor_color_light(self, value: bool):
+        """
+        Sets whether to use smart cursor color. This only applies to box
+        cursors. This affects the light-mode variant when separate light/dark
+        mode colors are enabled.
+
+        :param value: A bool
+        """
+        return self._simple_set("Smart Cursor Color (Light)", value)
+
+    def set_smart_cursor_color_dark(self, value: bool):
+        """
+        Sets whether to use smart cursor color. This only applies to box
+        cursors. This affects the dark-mode variant when separate light/dark
+        mode colors are enabled.
+
+        :param value: A bool
+        """
+        return self._simple_set("Smart Cursor Color (Dark)", value)
+
     def set_minimum_contrast(self, value: float):
         """
-        Sets the minimum contrast, in 0 to 1.
+        Sets the minimum contrast, in 0 to 1. This is used only when separate
+        light/dark mode colors are not enabled.
 
         :param value: A float
         """
         return self._simple_set("Minimum Contrast", value)
 
+    def set_minimum_contrast_light(self, value: float):
+        """
+        Sets the minimum contrast, in 0 to 1. This affects the light-mode
+        variant when separate light/dark mode colors are enabled.
+
+        :param value: A float
+        """
+        return self._simple_set("Minimum Contrast (Light)", value)
+
+    def set_minimum_contrast_dark(self, value: float):
+        """
+        Sets the minimum contrast, in 0 to 1. This affects the dark-mode
+        variant when separate light/dark mode colors are enabled.
+
+        :param value: A float
+        """
+        return self._simple_set("Minimum Contrast (Dark)", value)
+
     def set_tab_color(self, value: 'iterm2.color.Color'):
         """
-        Sets the tab color.
+        Sets the tab color. This is used only when separate light/dark mode
+        colors are not enabled.
 
         :param value: A :class:`Color`
         """
         return self._color_set("Tab Color", value)
 
+    def set_tab_color_light(self, value: 'iterm2.color.Color'):
+        """
+        Sets the tab color. This affects the light-mode variant when separate
+        light/dark mode colors are enabled.
+
+        :param value: A :class:`Color`
+        """
+        return self._color_set("Tab Color (Light)", value)
+
+    def set_tab_color_dark(self, value: 'iterm2.color.Color'):
+        """
+        Sets the tab color. This affects the dark-mode variant when separate
+        light/dark mode colors are enabled.
+
+        :param value: A :class:`Color`
+        """
+        return self._color_set("Tab Color (Dark)", value)
+
     def set_use_tab_color(self, value: bool):
         """
-        Sets whether the tab color should be used.
+        Sets whether the tab color should be used. This is used only when
+        separate light/dark mode colors are not enabled.
 
         :param value: A bool
         """
         return self._simple_set("Use Tab Color", value)
 
+    def set_use_tab_color_light(self, value: bool):
+        """
+        Sets whether the tab color should be used. This affects the light-mode
+        variant when separate light/dark mode colors are enabled.
+
+        :param value: A bool
+        """
+        return self._simple_set("Use Tab Color (Light)", value)
+
+    def set_use_tab_color_dark(self, value: bool):
+        """
+        Sets whether the tab color should be used. This affects the dark-mode
+        variant when separate light/dark mode colors are enabled.
+
+        :param value: A bool
+        """
+        return self._simple_set("Use Tab Color (Dark)", value)
+
     def set_underline_color(self, value: typing.Optional['iterm2.color.Color']):
         """
-        Sets the underline color.
+        Sets the underline color. This is used only when separate light/dark
+        mode colors are not enabled.
 
         :param value: A typing.Optional['iterm2.color.Color']
         """
         return self._color_set("Underline Color", value)
 
+    def set_underline_color_light(self, value: typing.Optional['iterm2.color.Color']):
+        """
+        Sets the underline color. This affects the light-mode variant when
+        separate light/dark mode colors are enabled.
+
+        :param value: A typing.Optional['iterm2.color.Color']
+        """
+        return self._color_set("Underline Color (Light)", value)
+
+    def set_underline_color_dark(self, value: typing.Optional['iterm2.color.Color']):
+        """
+        Sets the underline color. This affects the dark-mode variant when
+        separate light/dark mode colors are enabled.
+
+        :param value: A typing.Optional['iterm2.color.Color']
+        """
+        return self._color_set("Underline Color (Dark)", value)
+
     def set_use_underline_color(self, value: bool):
         """
-        Sets whether to use the specified underline color.
+        Sets whether to use the specified underline color. This is used only
+        when separate light/dark mode colors are not enabled.
 
         :param value: A bool
         """
         return self._simple_set("Use Underline Color", value)
 
+    def set_use_underline_color_light(self, value: bool):
+        """
+        Sets whether to use the specified underline color. This affects the
+        light-mode variant when separate light/dark mode colors are enabled.
+
+        :param value: A bool
+        """
+        return self._simple_set("Use Underline Color (Light)", value)
+
+    def set_use_underline_color_dark(self, value: bool):
+        """
+        Sets whether to use the specified underline color. This affects the
+        dark-mode variant when separate light/dark mode colors are enabled.
+
+        :param value: A bool
+        """
+        return self._simple_set("Use Underline Color (Dark)", value)
+
     def set_cursor_boost(self, value: float):
         """
-        Sets the cursor boost level, in 0 to 1.
+        Sets the cursor boost level, in 0 to 1. This is used only when separate
+        light/dark mode colors are not enabled.
 
         :param value: A float
         """
         return self._simple_set("Cursor Boost", value)
 
+    def set_cursor_boost_light(self, value: float):
+        """
+        Sets the cursor boost level, in 0 to 1. This affects the light-mode
+        variant when separate light/dark mode colors are enabled.
+
+        :param value: A float
+        """
+        return self._simple_set("Cursor Boost (Light)", value)
+
+    def set_cursor_boost_dark(self, value: float):
+        """
+        Sets the cursor boost level, in 0 to 1. This affects the dark-mode
+        variant when separate light/dark mode colors are enabled.
+
+        :param value: A float
+        """
+        return self._simple_set("Cursor Boost (Dark)", value)
+
     def set_use_cursor_guide(self, value: bool):
         """
-        Sets whether the cursor guide should be used.
+        Sets whether the cursor guide should be used. This is used only when
+        separate light/dark mode colors are not enabled.
 
         :param value: A bool
         """
         return self._simple_set("Use Cursor Guide", value)
 
+    def set_use_cursor_guide_light(self, value: bool):
+        """
+        Sets whether the cursor guide should be used. This affects the
+        light-mode variant when separate light/dark mode colors are enabled.
+
+        :param value: A bool
+        """
+        return self._simple_set("Use Cursor Guide (Light)", value)
+
+    def set_use_cursor_guide_dark(self, value: bool):
+        """
+        Sets whether the cursor guide should be used. This affects the
+        dark-mode variant when separate light/dark mode colors are enabled.
+
+        :param value: A bool
+        """
+        return self._simple_set("Use Cursor Guide (Dark)", value)
+
     def set_cursor_guide_color(self, value: 'iterm2.color.Color'):
         """
-        Sets the cursor guide color. The alpha value is respected.
+        Sets the cursor guide color. The alpha value is respected. This is used
+        only when separate light/dark mode colors are not enabled.
 
         :param value: A :class:`Color`
         """
         return self._color_set("Cursor Guide Color", value)
 
+    def set_cursor_guide_color_light(self, value: 'iterm2.color.Color'):
+        """
+        Sets the cursor guide color. The alpha value is respected. This affects
+        the light-mode variant when separate light/dark mode colors are
+        enabled.
+
+        :param value: A :class:`Color`
+        """
+        return self._color_set("Cursor Guide Color (Light)", value)
+
+    def set_cursor_guide_color_dark(self, value: 'iterm2.color.Color'):
+        """
+        Sets the cursor guide color. The alpha value is respected. This affects
+        the dark-mode variant when separate light/dark mode colors are enabled.
+
+        :param value: A :class:`Color`
+        """
+        return self._color_set("Cursor Guide Color (Dark)", value)
+
     def set_badge_color(self, value: 'iterm2.color.Color'):
         """
-        Sets the badge color. The alpha value is respected.
+        Sets the badge color. The alpha value is respected. This is used only
+        when separate light/dark mode colors are not enabled.
 
         :param value: A :class:`Color`
         """
         return self._color_set("Badge Color", value)
+
+    def set_badge_color_light(self, value: 'iterm2.color.Color'):
+        """
+        Sets the badge color. The alpha value is respected. This affects the
+        light-mode variant when separate light/dark mode colors are enabled.
+
+        :param value: A :class:`Color`
+        """
+        return self._color_set("Badge Color (Light)", value)
+
+    def set_badge_color_dark(self, value: 'iterm2.color.Color'):
+        """
+        Sets the badge color. The alpha value is respected. This affects the
+        dark-mode variant when separate light/dark mode colors are enabled.
+
+        :param value: A :class:`Color`
+        """
+        return self._color_set("Badge Color (Dark)", value)
 
     def set_name(self, value: str):
         """
@@ -1458,31 +2210,89 @@ class WriteOnlyProfile:
 
     async def async_set_foreground_color(self, value: 'iterm2.color.Color'):
         """
-        Sets the foreground color.
+        Sets the foreground color. This is used only when separate light/dark
+        mode colors are not enabled.
 
         :param value: A :class:`Color`
         """
         return await self._async_color_set("Foreground Color", value)
 
+    async def async_set_foreground_color_light(self, value: 'iterm2.color.Color'):
+        """
+        Sets the foreground color. This affects the light-mode variant when
+        separate light/dark mode colors are enabled.
+
+        :param value: A :class:`Color`
+        """
+        return await self._async_color_set("Foreground Color (Light)", value)
+
+    async def async_set_foreground_color_dark(self, value: 'iterm2.color.Color'):
+        """
+        Sets the foreground color. This affects the dark-mode variant when
+        separate light/dark mode colors are enabled.
+
+        :param value: A :class:`Color`
+        """
+        return await self._async_color_set("Foreground Color (Dark)", value)
+
     async def async_set_background_color(self, value: 'iterm2.color.Color'):
         """
-        Sets the background color.
+        Sets the background color. This is used only when separate light/dark
+        mode colors are not enabled.
 
         :param value: A :class:`Color`
         """
         return await self._async_color_set("Background Color", value)
 
+    async def async_set_background_color_light(self, value: 'iterm2.color.Color'):
+        """
+        Sets the background color. This affects the light-mode variant when
+        separate light/dark mode colors are enabled.
+
+        :param value: A :class:`Color`
+        """
+        return await self._async_color_set("Background Color (Light)", value)
+
+    async def async_set_background_color_dark(self, value: 'iterm2.color.Color'):
+        """
+        Sets the background color. This affects the dark-mode variant when
+        separate light/dark mode colors are enabled.
+
+        :param value: A :class:`Color`
+        """
+        return await self._async_color_set("Background Color (Dark)", value)
+
     async def async_set_bold_color(self, value: 'iterm2.color.Color'):
         """
-        Sets the bold text color.
+        Sets the bold text color. This is used only when separate light/dark
+        mode colors are not enabled.
 
         :param value: A :class:`Color`
         """
         return await self._async_color_set("Bold Color", value)
 
+    async def async_set_bold_color_light(self, value: 'iterm2.color.Color'):
+        """
+        Sets the bold text color. This affects the light-mode variant when
+        separate light/dark mode colors are enabled.
+
+        :param value: A :class:`Color`
+        """
+        return await self._async_color_set("Bold Color (Light)", value)
+
+    async def async_set_bold_color_dark(self, value: 'iterm2.color.Color'):
+        """
+        Sets the bold text color. This affects the dark-mode variant when
+        separate light/dark mode colors are enabled.
+
+        :param value: A :class:`Color`
+        """
+        return await self._async_color_set("Bold Color (Dark)", value)
+
     async def async_set_use_bright_bold(self, value: bool):
         """
-        Sets  how bold text is rendered.
+        Sets  how bold text is rendered. This is used only when separate
+        light/dark mode colors are not enabled.
 
         This function is deprecated because its behavior changed in
         iTerm2 version 3.3.7.
@@ -1502,273 +2312,955 @@ class WriteOnlyProfile:
         """
         return await self._async_simple_set("Use Bright Bold", value)
 
+    async def async_set_use_bright_bold_light(self, value: bool):
+        """
+        Sets  how bold text is rendered. This affects the light-mode variant
+        when separate light/dark mode colors are enabled.
+
+        This function is deprecated because its behavior changed in
+        iTerm2 version 3.3.7.
+
+        Pre-3.3.7, when enabled:
+        * Use the profile-specified bold color for default-colored
+          bold text.
+        * Dark ANSI colors get replaced with their light counterparts
+          for bold text.
+
+        In 3.3.7 and later:
+        * Use the profile-specified bold color for default-colored
+          bold text.
+
+        Use `use_bold_color` and `brighten_bold_text` in 3.3.7 and
+        later instead of this method.
+        """
+        return await self._async_simple_set("Use Bright Bold (Light)", value)
+
+    async def async_set_use_bright_bold_dark(self, value: bool):
+        """
+        Sets  how bold text is rendered. This affects the dark-mode variant
+        when separate light/dark mode colors are enabled.
+
+        This function is deprecated because its behavior changed in
+        iTerm2 version 3.3.7.
+
+        Pre-3.3.7, when enabled:
+        * Use the profile-specified bold color for default-colored
+          bold text.
+        * Dark ANSI colors get replaced with their light counterparts
+          for bold text.
+
+        In 3.3.7 and later:
+        * Use the profile-specified bold color for default-colored
+          bold text.
+
+        Use `use_bold_color` and `brighten_bold_text` in 3.3.7 and
+        later instead of this method.
+        """
+        return await self._async_simple_set("Use Bright Bold (Dark)", value)
+
     async def async_set_use_bold_color(self, value: bool):
         """
         Sets whether the profile-specified bold color is used for
-        default-colored bold text.
+        default-colored bold text. This is used only when separate light/dark
+        mode colors are not enabled.
 
         Note: In versions of iTerm2 prior to 3.3.7, this behaves like
         async_set_use_bright_bold().
         """
         return await self._async_simple_set("Use Bright Bold", value)
 
+    async def async_set_use_bold_color_light(self, value: bool):
+        """
+        Sets whether the profile-specified bold color is used for
+        default-colored bold text. This affects the light-mode variant when
+        separate light/dark mode colors are enabled.
+
+        Note: In versions of iTerm2 prior to 3.3.7, this behaves like
+        async_set_use_bright_bold().
+        """
+        return await self._async_simple_set("Use Bright Bold (Light)", value)
+
+    async def async_set_use_bold_color_dark(self, value: bool):
+        """
+        Sets whether the profile-specified bold color is used for
+        default-colored bold text. This affects the dark-mode variant when
+        separate light/dark mode colors are enabled.
+
+        Note: In versions of iTerm2 prior to 3.3.7, this behaves like
+        async_set_use_bright_bold().
+        """
+        return await self._async_simple_set("Use Bright Bold (Dark)", value)
+
     async def async_set_brighten_bold_text(self, value: bool):
         """
         Sets whether Dark ANSI colors get replaced with their light
-        counterparts for bold text.
+        counterparts for bold text. This is used only when separate light/dark
+        mode colors are not enabled.
 
         This is only supported in iTerm2 version 3.3.7 and later.
         """
         return await self._async_simple_set("Brighten Bold Text", value)
 
+    async def async_set_brighten_bold_text_light(self, value: bool):
+        """
+        Sets whether Dark ANSI colors get replaced with their light
+        counterparts for bold text. This affects the light-mode variant when
+        separate light/dark mode colors are enabled.
+
+        This is only supported in iTerm2 version 3.3.7 and later.
+        """
+        return await self._async_simple_set("Brighten Bold Text (Light)", value)
+
+    async def async_set_brighten_bold_text_dark(self, value: bool):
+        """
+        Sets whether Dark ANSI colors get replaced with their light
+        counterparts for bold text. This affects the dark-mode variant when
+        separate light/dark mode colors are enabled.
+
+        This is only supported in iTerm2 version 3.3.7 and later.
+        """
+        return await self._async_simple_set("Brighten Bold Text (Dark)", value)
+
     async def async_set_link_color(self, value: 'iterm2.color.Color'):
         """
-        Sets the link color.
+        Sets the link color. This is used only when separate light/dark mode
+        colors are not enabled.
 
         :param value: A :class:`Color`
         """
         return await self._async_color_set("Link Color", value)
 
+    async def async_set_link_color_light(self, value: 'iterm2.color.Color'):
+        """
+        Sets the link color. This affects the light-mode variant when separate
+        light/dark mode colors are enabled.
+
+        :param value: A :class:`Color`
+        """
+        return await self._async_color_set("Link Color (Light)", value)
+
+    async def async_set_link_color_dark(self, value: 'iterm2.color.Color'):
+        """
+        Sets the link color. This affects the dark-mode variant when separate
+        light/dark mode colors are enabled.
+
+        :param value: A :class:`Color`
+        """
+        return await self._async_color_set("Link Color (Dark)", value)
+
     async def async_set_selection_color(self, value: 'iterm2.color.Color'):
         """
-        Sets the selection background color.
+        Sets the selection background color. This is used only when separate
+        light/dark mode colors are not enabled.
 
         :param value: A :class:`Color`
         """
         return await self._async_color_set("Selection Color", value)
 
+    async def async_set_selection_color_light(self, value: 'iterm2.color.Color'):
+        """
+        Sets the selection background color. This affects the light-mode
+        variant when separate light/dark mode colors are enabled.
+
+        :param value: A :class:`Color`
+        """
+        return await self._async_color_set("Selection Color (Light)", value)
+
+    async def async_set_selection_color_dark(self, value: 'iterm2.color.Color'):
+        """
+        Sets the selection background color. This affects the dark-mode variant
+        when separate light/dark mode colors are enabled.
+
+        :param value: A :class:`Color`
+        """
+        return await self._async_color_set("Selection Color (Dark)", value)
+
     async def async_set_selected_text_color(self, value: 'iterm2.color.Color'):
         """
-        Sets the selection text color.
+        Sets the selection text color. This is used only when separate
+        light/dark mode colors are not enabled.
 
         :param value: A :class:`Color`
         """
         return await self._async_color_set("Selected Text Color", value)
 
+    async def async_set_selected_text_color_light(self, value: 'iterm2.color.Color'):
+        """
+        Sets the selection text color. This affects the light-mode variant when
+        separate light/dark mode colors are enabled.
+
+        :param value: A :class:`Color`
+        """
+        return await self._async_color_set("Selected Text Color (Light)", value)
+
+    async def async_set_selected_text_color_dark(self, value: 'iterm2.color.Color'):
+        """
+        Sets the selection text color. This affects the dark-mode variant when
+        separate light/dark mode colors are enabled.
+
+        :param value: A :class:`Color`
+        """
+        return await self._async_color_set("Selected Text Color (Dark)", value)
+
     async def async_set_cursor_color(self, value: 'iterm2.color.Color'):
         """
-        Sets the cursor color.
+        Sets the cursor color. This is used only when separate light/dark mode
+        colors are not enabled.
 
         :param value: A :class:`Color`
         """
         return await self._async_color_set("Cursor Color", value)
 
+    async def async_set_cursor_color_light(self, value: 'iterm2.color.Color'):
+        """
+        Sets the cursor color. This affects the light-mode variant when
+        separate light/dark mode colors are enabled.
+
+        :param value: A :class:`Color`
+        """
+        return await self._async_color_set("Cursor Color (Light)", value)
+
+    async def async_set_cursor_color_dark(self, value: 'iterm2.color.Color'):
+        """
+        Sets the cursor color. This affects the dark-mode variant when separate
+        light/dark mode colors are enabled.
+
+        :param value: A :class:`Color`
+        """
+        return await self._async_color_set("Cursor Color (Dark)", value)
+
     async def async_set_cursor_text_color(self, value: 'iterm2.color.Color'):
         """
-        Sets the cursor text color.
+        Sets the cursor text color. This is used only when separate light/dark
+        mode colors are not enabled.
 
         :param value: A :class:`Color`
         """
         return await self._async_color_set("Cursor Text Color", value)
 
+    async def async_set_cursor_text_color_light(self, value: 'iterm2.color.Color'):
+        """
+        Sets the cursor text color. This affects the light-mode variant when
+        separate light/dark mode colors are enabled.
+
+        :param value: A :class:`Color`
+        """
+        return await self._async_color_set("Cursor Text Color (Light)", value)
+
+    async def async_set_cursor_text_color_dark(self, value: 'iterm2.color.Color'):
+        """
+        Sets the cursor text color. This affects the dark-mode variant when
+        separate light/dark mode colors are enabled.
+
+        :param value: A :class:`Color`
+        """
+        return await self._async_color_set("Cursor Text Color (Dark)", value)
+
     async def async_set_ansi_0_color(self, value: 'iterm2.color.Color'):
         """
-        Sets the ANSI 0 color.
+        Sets the ANSI 0 color. This is used only when separate light/dark mode
+        colors are not enabled.
 
         :param value: A :class:`Color`
         """
         return await self._async_color_set("Ansi 0 Color", value)
 
+    async def async_set_ansi_0_color_light(self, value: 'iterm2.color.Color'):
+        """
+        Sets the ANSI 0 color. This affects the light-mode variant when
+        separate light/dark mode colors are enabled.
+
+        :param value: A :class:`Color`
+        """
+        return await self._async_color_set("Ansi 0 Color (Light)", value)
+
+    async def async_set_ansi_0_color_dark(self, value: 'iterm2.color.Color'):
+        """
+        Sets the ANSI 0 color. This affects the dark-mode variant when separate
+        light/dark mode colors are enabled.
+
+        :param value: A :class:`Color`
+        """
+        return await self._async_color_set("Ansi 0 Color (Dark)", value)
+
     async def async_set_ansi_1_color(self, value: 'iterm2.color.Color'):
         """
-        Sets the ANSI 1 color.
+        Sets the ANSI 1 color. This is used only when separate light/dark mode
+        colors are not enabled.
 
         :param value: A :class:`Color`
         """
         return await self._async_color_set("Ansi 1 Color", value)
 
+    async def async_set_ansi_1_color_light(self, value: 'iterm2.color.Color'):
+        """
+        Sets the ANSI 1 color. This affects the light-mode variant when
+        separate light/dark mode colors are enabled.
+
+        :param value: A :class:`Color`
+        """
+        return await self._async_color_set("Ansi 1 Color (Light)", value)
+
+    async def async_set_ansi_1_color_dark(self, value: 'iterm2.color.Color'):
+        """
+        Sets the ANSI 1 color. This affects the dark-mode variant when separate
+        light/dark mode colors are enabled.
+
+        :param value: A :class:`Color`
+        """
+        return await self._async_color_set("Ansi 1 Color (Dark)", value)
+
     async def async_set_ansi_2_color(self, value: 'iterm2.color.Color'):
         """
-        Sets the ANSI 2 color.
+        Sets the ANSI 2 color. This is used only when separate light/dark mode
+        colors are not enabled.
 
         :param value: A :class:`Color`
         """
         return await self._async_color_set("Ansi 2 Color", value)
 
+    async def async_set_ansi_2_color_light(self, value: 'iterm2.color.Color'):
+        """
+        Sets the ANSI 2 color. This affects the light-mode variant when
+        separate light/dark mode colors are enabled.
+
+        :param value: A :class:`Color`
+        """
+        return await self._async_color_set("Ansi 2 Color (Light)", value)
+
+    async def async_set_ansi_2_color_dark(self, value: 'iterm2.color.Color'):
+        """
+        Sets the ANSI 2 color. This affects the dark-mode variant when separate
+        light/dark mode colors are enabled.
+
+        :param value: A :class:`Color`
+        """
+        return await self._async_color_set("Ansi 2 Color (Dark)", value)
+
     async def async_set_ansi_3_color(self, value: 'iterm2.color.Color'):
         """
-        Sets the ANSI 3 color.
+        Sets the ANSI 3 color. This is used only when separate light/dark mode
+        colors are not enabled.
 
         :param value: A :class:`Color`
         """
         return await self._async_color_set("Ansi 3 Color", value)
 
+    async def async_set_ansi_3_color_light(self, value: 'iterm2.color.Color'):
+        """
+        Sets the ANSI 3 color. This affects the light-mode variant when
+        separate light/dark mode colors are enabled.
+
+        :param value: A :class:`Color`
+        """
+        return await self._async_color_set("Ansi 3 Color (Light)", value)
+
+    async def async_set_ansi_3_color_dark(self, value: 'iterm2.color.Color'):
+        """
+        Sets the ANSI 3 color. This affects the dark-mode variant when separate
+        light/dark mode colors are enabled.
+
+        :param value: A :class:`Color`
+        """
+        return await self._async_color_set("Ansi 3 Color (Dark)", value)
+
     async def async_set_ansi_4_color(self, value: 'iterm2.color.Color'):
         """
-        Sets the ANSI 4 color.
+        Sets the ANSI 4 color. This is used only when separate light/dark mode
+        colors are not enabled.
 
         :param value: A :class:`Color`
         """
         return await self._async_color_set("Ansi 4 Color", value)
 
+    async def async_set_ansi_4_color_light(self, value: 'iterm2.color.Color'):
+        """
+        Sets the ANSI 4 color. This affects the light-mode variant when
+        separate light/dark mode colors are enabled.
+
+        :param value: A :class:`Color`
+        """
+        return await self._async_color_set("Ansi 4 Color (Light)", value)
+
+    async def async_set_ansi_4_color_dark(self, value: 'iterm2.color.Color'):
+        """
+        Sets the ANSI 4 color. This affects the dark-mode variant when separate
+        light/dark mode colors are enabled.
+
+        :param value: A :class:`Color`
+        """
+        return await self._async_color_set("Ansi 4 Color (Dark)", value)
+
     async def async_set_ansi_5_color(self, value: 'iterm2.color.Color'):
         """
-        Sets the ANSI 5 color.
+        Sets the ANSI 5 color. This is used only when separate light/dark mode
+        colors are not enabled.
 
         :param value: A :class:`Color`
         """
         return await self._async_color_set("Ansi 5 Color", value)
 
+    async def async_set_ansi_5_color_light(self, value: 'iterm2.color.Color'):
+        """
+        Sets the ANSI 5 color. This affects the light-mode variant when
+        separate light/dark mode colors are enabled.
+
+        :param value: A :class:`Color`
+        """
+        return await self._async_color_set("Ansi 5 Color (Light)", value)
+
+    async def async_set_ansi_5_color_dark(self, value: 'iterm2.color.Color'):
+        """
+        Sets the ANSI 5 color. This affects the dark-mode variant when separate
+        light/dark mode colors are enabled.
+
+        :param value: A :class:`Color`
+        """
+        return await self._async_color_set("Ansi 5 Color (Dark)", value)
+
     async def async_set_ansi_6_color(self, value: 'iterm2.color.Color'):
         """
-        Sets the ANSI 6 color.
+        Sets the ANSI 6 color. This is used only when separate light/dark mode
+        colors are not enabled.
 
         :param value: A :class:`Color`
         """
         return await self._async_color_set("Ansi 6 Color", value)
 
+    async def async_set_ansi_6_color_light(self, value: 'iterm2.color.Color'):
+        """
+        Sets the ANSI 6 color. This affects the light-mode variant when
+        separate light/dark mode colors are enabled.
+
+        :param value: A :class:`Color`
+        """
+        return await self._async_color_set("Ansi 6 Color (Light)", value)
+
+    async def async_set_ansi_6_color_dark(self, value: 'iterm2.color.Color'):
+        """
+        Sets the ANSI 6 color. This affects the dark-mode variant when separate
+        light/dark mode colors are enabled.
+
+        :param value: A :class:`Color`
+        """
+        return await self._async_color_set("Ansi 6 Color (Dark)", value)
+
     async def async_set_ansi_7_color(self, value: 'iterm2.color.Color'):
         """
-        Sets the ANSI 7 color.
+        Sets the ANSI 7 color. This is used only when separate light/dark mode
+        colors are not enabled.
 
         :param value: A :class:`Color`
         """
         return await self._async_color_set("Ansi 7 Color", value)
 
+    async def async_set_ansi_7_color_light(self, value: 'iterm2.color.Color'):
+        """
+        Sets the ANSI 7 color. This affects the light-mode variant when
+        separate light/dark mode colors are enabled.
+
+        :param value: A :class:`Color`
+        """
+        return await self._async_color_set("Ansi 7 Color (Light)", value)
+
+    async def async_set_ansi_7_color_dark(self, value: 'iterm2.color.Color'):
+        """
+        Sets the ANSI 7 color. This affects the dark-mode variant when separate
+        light/dark mode colors are enabled.
+
+        :param value: A :class:`Color`
+        """
+        return await self._async_color_set("Ansi 7 Color (Dark)", value)
+
     async def async_set_ansi_8_color(self, value: 'iterm2.color.Color'):
         """
-        Sets the ANSI 8 color.
+        Sets the ANSI 8 color. This is used only when separate light/dark mode
+        colors are not enabled.
 
         :param value: A :class:`Color`
         """
         return await self._async_color_set("Ansi 8 Color", value)
 
+    async def async_set_ansi_8_color_light(self, value: 'iterm2.color.Color'):
+        """
+        Sets the ANSI 8 color. This affects the light-mode variant when
+        separate light/dark mode colors are enabled.
+
+        :param value: A :class:`Color`
+        """
+        return await self._async_color_set("Ansi 8 Color (Light)", value)
+
+    async def async_set_ansi_8_color_dark(self, value: 'iterm2.color.Color'):
+        """
+        Sets the ANSI 8 color. This affects the dark-mode variant when separate
+        light/dark mode colors are enabled.
+
+        :param value: A :class:`Color`
+        """
+        return await self._async_color_set("Ansi 8 Color (Dark)", value)
+
     async def async_set_ansi_9_color(self, value: 'iterm2.color.Color'):
         """
-        Sets the ANSI 9 color.
+        Sets the ANSI 9 color. This is used only when separate light/dark mode
+        colors are not enabled.
 
         :param value: A :class:`Color`
         """
         return await self._async_color_set("Ansi 9 Color", value)
 
+    async def async_set_ansi_9_color_light(self, value: 'iterm2.color.Color'):
+        """
+        Sets the ANSI 9 color. This affects the light-mode variant when
+        separate light/dark mode colors are enabled.
+
+        :param value: A :class:`Color`
+        """
+        return await self._async_color_set("Ansi 9 Color (Light)", value)
+
+    async def async_set_ansi_9_color_dark(self, value: 'iterm2.color.Color'):
+        """
+        Sets the ANSI 9 color. This affects the dark-mode variant when separate
+        light/dark mode colors are enabled.
+
+        :param value: A :class:`Color`
+        """
+        return await self._async_color_set("Ansi 9 Color (Dark)", value)
+
     async def async_set_ansi_10_color(self, value: 'iterm2.color.Color'):
         """
-        Sets the ANSI 10 color.
+        Sets the ANSI 10 color. This is used only when separate light/dark mode
+        colors are not enabled.
 
         :param value: A :class:`Color`
         """
         return await self._async_color_set("Ansi 10 Color", value)
 
+    async def async_set_ansi_10_color_light(self, value: 'iterm2.color.Color'):
+        """
+        Sets the ANSI 10 color. This affects the light-mode variant when
+        separate light/dark mode colors are enabled.
+
+        :param value: A :class:`Color`
+        """
+        return await self._async_color_set("Ansi 10 Color (Light)", value)
+
+    async def async_set_ansi_10_color_dark(self, value: 'iterm2.color.Color'):
+        """
+        Sets the ANSI 10 color. This affects the dark-mode variant when
+        separate light/dark mode colors are enabled.
+
+        :param value: A :class:`Color`
+        """
+        return await self._async_color_set("Ansi 10 Color (Dark)", value)
+
     async def async_set_ansi_11_color(self, value: 'iterm2.color.Color'):
         """
-        Sets the ANSI 11 color.
+        Sets the ANSI 11 color. This is used only when separate light/dark mode
+        colors are not enabled.
 
         :param value: A :class:`Color`
         """
         return await self._async_color_set("Ansi 11 Color", value)
 
+    async def async_set_ansi_11_color_light(self, value: 'iterm2.color.Color'):
+        """
+        Sets the ANSI 11 color. This affects the light-mode variant when
+        separate light/dark mode colors are enabled.
+
+        :param value: A :class:`Color`
+        """
+        return await self._async_color_set("Ansi 11 Color (Light)", value)
+
+    async def async_set_ansi_11_color_dark(self, value: 'iterm2.color.Color'):
+        """
+        Sets the ANSI 11 color. This affects the dark-mode variant when
+        separate light/dark mode colors are enabled.
+
+        :param value: A :class:`Color`
+        """
+        return await self._async_color_set("Ansi 11 Color (Dark)", value)
+
     async def async_set_ansi_12_color(self, value: 'iterm2.color.Color'):
         """
-        Sets the ANSI 12 color.
+        Sets the ANSI 12 color. This is used only when separate light/dark mode
+        colors are not enabled.
 
         :param value: A :class:`Color`
         """
         return await self._async_color_set("Ansi 12 Color", value)
 
+    async def async_set_ansi_12_color_light(self, value: 'iterm2.color.Color'):
+        """
+        Sets the ANSI 12 color. This affects the light-mode variant when
+        separate light/dark mode colors are enabled.
+
+        :param value: A :class:`Color`
+        """
+        return await self._async_color_set("Ansi 12 Color (Light)", value)
+
+    async def async_set_ansi_12_color_dark(self, value: 'iterm2.color.Color'):
+        """
+        Sets the ANSI 12 color. This affects the dark-mode variant when
+        separate light/dark mode colors are enabled.
+
+        :param value: A :class:`Color`
+        """
+        return await self._async_color_set("Ansi 12 Color (Dark)", value)
+
     async def async_set_ansi_13_color(self, value: 'iterm2.color.Color'):
         """
-        Sets the ANSI 13 color.
+        Sets the ANSI 13 color. This is used only when separate light/dark mode
+        colors are not enabled.
 
         :param value: A :class:`Color`
         """
         return await self._async_color_set("Ansi 13 Color", value)
 
+    async def async_set_ansi_13_color_light(self, value: 'iterm2.color.Color'):
+        """
+        Sets the ANSI 13 color. This affects the light-mode variant when
+        separate light/dark mode colors are enabled.
+
+        :param value: A :class:`Color`
+        """
+        return await self._async_color_set("Ansi 13 Color (Light)", value)
+
+    async def async_set_ansi_13_color_dark(self, value: 'iterm2.color.Color'):
+        """
+        Sets the ANSI 13 color. This affects the dark-mode variant when
+        separate light/dark mode colors are enabled.
+
+        :param value: A :class:`Color`
+        """
+        return await self._async_color_set("Ansi 13 Color (Dark)", value)
+
     async def async_set_ansi_14_color(self, value: 'iterm2.color.Color'):
         """
-        Sets the ANSI 14 color.
+        Sets the ANSI 14 color. This is used only when separate light/dark mode
+        colors are not enabled.
 
         :param value: A :class:`Color`
         """
         return await self._async_color_set("Ansi 14 Color", value)
 
+    async def async_set_ansi_14_color_light(self, value: 'iterm2.color.Color'):
+        """
+        Sets the ANSI 14 color. This affects the light-mode variant when
+        separate light/dark mode colors are enabled.
+
+        :param value: A :class:`Color`
+        """
+        return await self._async_color_set("Ansi 14 Color (Light)", value)
+
+    async def async_set_ansi_14_color_dark(self, value: 'iterm2.color.Color'):
+        """
+        Sets the ANSI 14 color. This affects the dark-mode variant when
+        separate light/dark mode colors are enabled.
+
+        :param value: A :class:`Color`
+        """
+        return await self._async_color_set("Ansi 14 Color (Dark)", value)
+
     async def async_set_ansi_15_color(self, value: 'iterm2.color.Color'):
         """
-        Sets the ANSI 15 color.
+        Sets the ANSI 15 color. This is used only when separate light/dark mode
+        colors are not enabled.
 
         :param value: A :class:`Color`
         """
         return await self._async_color_set("Ansi 15 Color", value)
 
+    async def async_set_ansi_15_color_light(self, value: 'iterm2.color.Color'):
+        """
+        Sets the ANSI 15 color. This affects the light-mode variant when
+        separate light/dark mode colors are enabled.
+
+        :param value: A :class:`Color`
+        """
+        return await self._async_color_set("Ansi 15 Color (Light)", value)
+
+    async def async_set_ansi_15_color_dark(self, value: 'iterm2.color.Color'):
+        """
+        Sets the ANSI 15 color. This affects the dark-mode variant when
+        separate light/dark mode colors are enabled.
+
+        :param value: A :class:`Color`
+        """
+        return await self._async_color_set("Ansi 15 Color (Dark)", value)
+
     async def async_set_smart_cursor_color(self, value: bool):
         """
         Sets whether to use smart cursor color. This only applies to box
-        cursors.
+        cursors. This is used only when separate light/dark mode colors are not
+        enabled.
 
         :param value: A bool
         """
         return await self._async_simple_set("Smart Cursor Color", value)
 
+    async def async_set_smart_cursor_color_light(self, value: bool):
+        """
+        Sets whether to use smart cursor color. This only applies to box
+        cursors. This affects the light-mode variant when separate light/dark
+        mode colors are enabled.
+
+        :param value: A bool
+        """
+        return await self._async_simple_set("Smart Cursor Color (Light)", value)
+
+    async def async_set_smart_cursor_color_dark(self, value: bool):
+        """
+        Sets whether to use smart cursor color. This only applies to box
+        cursors. This affects the dark-mode variant when separate light/dark
+        mode colors are enabled.
+
+        :param value: A bool
+        """
+        return await self._async_simple_set("Smart Cursor Color (Dark)", value)
+
     async def async_set_minimum_contrast(self, value: float):
         """
-        Sets the minimum contrast, in 0 to 1.
+        Sets the minimum contrast, in 0 to 1. This is used only when separate
+        light/dark mode colors are not enabled.
 
         :param value: A float
         """
         return await self._async_simple_set("Minimum Contrast", value)
 
+    async def async_set_minimum_contrast_light(self, value: float):
+        """
+        Sets the minimum contrast, in 0 to 1. This affects the light-mode
+        variant when separate light/dark mode colors are enabled.
+
+        :param value: A float
+        """
+        return await self._async_simple_set("Minimum Contrast (Light)", value)
+
+    async def async_set_minimum_contrast_dark(self, value: float):
+        """
+        Sets the minimum contrast, in 0 to 1. This affects the dark-mode
+        variant when separate light/dark mode colors are enabled.
+
+        :param value: A float
+        """
+        return await self._async_simple_set("Minimum Contrast (Dark)", value)
+
     async def async_set_tab_color(self, value: 'iterm2.color.Color'):
         """
-        Sets the tab color.
+        Sets the tab color. This is used only when separate light/dark mode
+        colors are not enabled.
 
         :param value: A :class:`Color`
         """
         return await self._async_color_set("Tab Color", value)
 
+    async def async_set_tab_color_light(self, value: 'iterm2.color.Color'):
+        """
+        Sets the tab color. This affects the light-mode variant when separate
+        light/dark mode colors are enabled.
+
+        :param value: A :class:`Color`
+        """
+        return await self._async_color_set("Tab Color (Light)", value)
+
+    async def async_set_tab_color_dark(self, value: 'iterm2.color.Color'):
+        """
+        Sets the tab color. This affects the dark-mode variant when separate
+        light/dark mode colors are enabled.
+
+        :param value: A :class:`Color`
+        """
+        return await self._async_color_set("Tab Color (Dark)", value)
+
     async def async_set_use_tab_color(self, value: bool):
         """
-        Sets whether the tab color should be used.
+        Sets whether the tab color should be used. This is used only when
+        separate light/dark mode colors are not enabled.
 
         :param value: A bool
         """
         return await self._async_simple_set("Use Tab Color", value)
 
+    async def async_set_use_tab_color_light(self, value: bool):
+        """
+        Sets whether the tab color should be used. This affects the light-mode
+        variant when separate light/dark mode colors are enabled.
+
+        :param value: A bool
+        """
+        return await self._async_simple_set("Use Tab Color (Light)", value)
+
+    async def async_set_use_tab_color_dark(self, value: bool):
+        """
+        Sets whether the tab color should be used. This affects the dark-mode
+        variant when separate light/dark mode colors are enabled.
+
+        :param value: A bool
+        """
+        return await self._async_simple_set("Use Tab Color (Dark)", value)
+
     async def async_set_underline_color(self, value: typing.Optional['iterm2.color.Color']):
         """
-        Sets the underline color.
+        Sets the underline color. This is used only when separate light/dark
+        mode colors are not enabled.
 
         :param value: A typing.Optional['iterm2.color.Color']
         """
         return await self._async_color_set("Underline Color", value)
 
+    async def async_set_underline_color_light(self, value: typing.Optional['iterm2.color.Color']):
+        """
+        Sets the underline color. This affects the light-mode variant when
+        separate light/dark mode colors are enabled.
+
+        :param value: A typing.Optional['iterm2.color.Color']
+        """
+        return await self._async_color_set("Underline Color (Light)", value)
+
+    async def async_set_underline_color_dark(self, value: typing.Optional['iterm2.color.Color']):
+        """
+        Sets the underline color. This affects the dark-mode variant when
+        separate light/dark mode colors are enabled.
+
+        :param value: A typing.Optional['iterm2.color.Color']
+        """
+        return await self._async_color_set("Underline Color (Dark)", value)
+
     async def async_set_use_underline_color(self, value: bool):
         """
-        Sets whether to use the specified underline color.
+        Sets whether to use the specified underline color. This is used only
+        when separate light/dark mode colors are not enabled.
 
         :param value: A bool
         """
         return await self._async_simple_set("Use Underline Color", value)
 
+    async def async_set_use_underline_color_light(self, value: bool):
+        """
+        Sets whether to use the specified underline color. This affects the
+        light-mode variant when separate light/dark mode colors are enabled.
+
+        :param value: A bool
+        """
+        return await self._async_simple_set("Use Underline Color (Light)", value)
+
+    async def async_set_use_underline_color_dark(self, value: bool):
+        """
+        Sets whether to use the specified underline color. This affects the
+        dark-mode variant when separate light/dark mode colors are enabled.
+
+        :param value: A bool
+        """
+        return await self._async_simple_set("Use Underline Color (Dark)", value)
+
     async def async_set_cursor_boost(self, value: float):
         """
-        Sets the cursor boost level, in 0 to 1.
+        Sets the cursor boost level, in 0 to 1. This is used only when separate
+        light/dark mode colors are not enabled.
 
         :param value: A float
         """
         return await self._async_simple_set("Cursor Boost", value)
 
+    async def async_set_cursor_boost_light(self, value: float):
+        """
+        Sets the cursor boost level, in 0 to 1. This affects the light-mode
+        variant when separate light/dark mode colors are enabled.
+
+        :param value: A float
+        """
+        return await self._async_simple_set("Cursor Boost (Light)", value)
+
+    async def async_set_cursor_boost_dark(self, value: float):
+        """
+        Sets the cursor boost level, in 0 to 1. This affects the dark-mode
+        variant when separate light/dark mode colors are enabled.
+
+        :param value: A float
+        """
+        return await self._async_simple_set("Cursor Boost (Dark)", value)
+
     async def async_set_use_cursor_guide(self, value: bool):
         """
-        Sets whether the cursor guide should be used.
+        Sets whether the cursor guide should be used. This is used only when
+        separate light/dark mode colors are not enabled.
 
         :param value: A bool
         """
         return await self._async_simple_set("Use Cursor Guide", value)
 
+    async def async_set_use_cursor_guide_light(self, value: bool):
+        """
+        Sets whether the cursor guide should be used. This affects the
+        light-mode variant when separate light/dark mode colors are enabled.
+
+        :param value: A bool
+        """
+        return await self._async_simple_set("Use Cursor Guide (Light)", value)
+
+    async def async_set_use_cursor_guide_dark(self, value: bool):
+        """
+        Sets whether the cursor guide should be used. This affects the
+        dark-mode variant when separate light/dark mode colors are enabled.
+
+        :param value: A bool
+        """
+        return await self._async_simple_set("Use Cursor Guide (Dark)", value)
+
     async def async_set_cursor_guide_color(self, value: 'iterm2.color.Color'):
         """
-        Sets the cursor guide color. The alpha value is respected.
+        Sets the cursor guide color. The alpha value is respected. This is used
+        only when separate light/dark mode colors are not enabled.
 
         :param value: A :class:`Color`
         """
         return await self._async_color_set("Cursor Guide Color", value)
 
+    async def async_set_cursor_guide_color_light(self, value: 'iterm2.color.Color'):
+        """
+        Sets the cursor guide color. The alpha value is respected. This affects
+        the light-mode variant when separate light/dark mode colors are
+        enabled.
+
+        :param value: A :class:`Color`
+        """
+        return await self._async_color_set("Cursor Guide Color (Light)", value)
+
+    async def async_set_cursor_guide_color_dark(self, value: 'iterm2.color.Color'):
+        """
+        Sets the cursor guide color. The alpha value is respected. This affects
+        the dark-mode variant when separate light/dark mode colors are enabled.
+
+        :param value: A :class:`Color`
+        """
+        return await self._async_color_set("Cursor Guide Color (Dark)", value)
+
     async def async_set_badge_color(self, value: 'iterm2.color.Color'):
         """
-        Sets the badge color. The alpha value is respected.
+        Sets the badge color. The alpha value is respected. This is used only
+        when separate light/dark mode colors are not enabled.
 
         :param value: A :class:`Color`
         """
         return await self._async_color_set("Badge Color", value)
+
+    async def async_set_badge_color_light(self, value: 'iterm2.color.Color'):
+        """
+        Sets the badge color. The alpha value is respected. This affects the
+        light-mode variant when separate light/dark mode colors are enabled.
+
+        :param value: A :class:`Color`
+        """
+        return await self._async_color_set("Badge Color (Light)", value)
+
+    async def async_set_badge_color_dark(self, value: 'iterm2.color.Color'):
+        """
+        Sets the badge color. The alpha value is respected. This affects the
+        dark-mode variant when separate light/dark mode colors are enabled.
+
+        :param value: A :class:`Color`
+        """
+        return await self._async_color_set("Badge Color (Dark)", value)
 
     async def async_set_name(self, value: str):
         """
@@ -2731,34 +4223,98 @@ class Profile(WriteOnlyProfile):
     @property
     def foreground_color(self) -> 'iterm2.color.Color':
         """
-        Returns the foreground color.
+        Returns the foreground color. This is used only when separate
+        light/dark mode colors are not enabled.
 
         :returns: A :class:`Color`
         """
         return self.get_color_with_key("Foreground Color")
 
     @property
+    def foreground_color_light(self) -> 'iterm2.color.Color':
+        """
+        Returns the foreground color. This affects the light-mode variant when
+        separate light/dark mode colors are enabled.
+
+        :returns: A :class:`Color`
+        """
+        return self.get_color_with_key("Foreground Color (Light)")
+
+    @property
+    def foreground_color_dark(self) -> 'iterm2.color.Color':
+        """
+        Returns the foreground color. This affects the dark-mode variant when
+        separate light/dark mode colors are enabled.
+
+        :returns: A :class:`Color`
+        """
+        return self.get_color_with_key("Foreground Color (Dark)")
+
+    @property
     def background_color(self) -> 'iterm2.color.Color':
         """
-        Returns the background color.
+        Returns the background color. This is used only when separate
+        light/dark mode colors are not enabled.
 
         :returns: A :class:`Color`
         """
         return self.get_color_with_key("Background Color")
 
     @property
+    def background_color_light(self) -> 'iterm2.color.Color':
+        """
+        Returns the background color. This affects the light-mode variant when
+        separate light/dark mode colors are enabled.
+
+        :returns: A :class:`Color`
+        """
+        return self.get_color_with_key("Background Color (Light)")
+
+    @property
+    def background_color_dark(self) -> 'iterm2.color.Color':
+        """
+        Returns the background color. This affects the dark-mode variant when
+        separate light/dark mode colors are enabled.
+
+        :returns: A :class:`Color`
+        """
+        return self.get_color_with_key("Background Color (Dark)")
+
+    @property
     def bold_color(self) -> 'iterm2.color.Color':
         """
-        Returns the bold text color.
+        Returns the bold text color. This is used only when separate light/dark
+        mode colors are not enabled.
 
         :returns: A :class:`Color`
         """
         return self.get_color_with_key("Bold Color")
 
     @property
+    def bold_color_light(self) -> 'iterm2.color.Color':
+        """
+        Returns the bold text color. This affects the light-mode variant when
+        separate light/dark mode colors are enabled.
+
+        :returns: A :class:`Color`
+        """
+        return self.get_color_with_key("Bold Color (Light)")
+
+    @property
+    def bold_color_dark(self) -> 'iterm2.color.Color':
+        """
+        Returns the bold text color. This affects the dark-mode variant when
+        separate light/dark mode colors are enabled.
+
+        :returns: A :class:`Color`
+        """
+        return self.get_color_with_key("Bold Color (Dark)")
+
+    @property
     def use_bright_bold(self) -> bool:
         """
-        Returns  how bold text is rendered.
+        Returns  how bold text is rendered. This is used only when separate
+        light/dark mode colors are not enabled.
 
         This function is deprecated because its behavior changed in
         iTerm2 version 3.3.7.
@@ -2781,10 +4337,63 @@ class Profile(WriteOnlyProfile):
         return self._simple_get("Use Bright Bold")
 
     @property
+    def use_bright_bold_light(self) -> bool:
+        """
+        Returns  how bold text is rendered. This affects the light-mode variant
+        when separate light/dark mode colors are enabled.
+
+        This function is deprecated because its behavior changed in
+        iTerm2 version 3.3.7.
+
+        Pre-3.3.7, when enabled:
+        * Use the profile-specified bold color for default-colored
+          bold text.
+        * Dark ANSI colors get replaced with their light counterparts
+          for bold text.
+
+        In 3.3.7 and later:
+        * Use the profile-specified bold color for default-colored
+          bold text.
+
+        Use `use_bold_color` and `brighten_bold_text` in 3.3.7 and
+        later instead of this method.
+
+        :returns: A bool
+        """
+        return self._simple_get("Use Bright Bold (Light)")
+
+    @property
+    def use_bright_bold_dark(self) -> bool:
+        """
+        Returns  how bold text is rendered. This affects the dark-mode variant
+        when separate light/dark mode colors are enabled.
+
+        This function is deprecated because its behavior changed in
+        iTerm2 version 3.3.7.
+
+        Pre-3.3.7, when enabled:
+        * Use the profile-specified bold color for default-colored
+          bold text.
+        * Dark ANSI colors get replaced with their light counterparts
+          for bold text.
+
+        In 3.3.7 and later:
+        * Use the profile-specified bold color for default-colored
+          bold text.
+
+        Use `use_bold_color` and `brighten_bold_text` in 3.3.7 and
+        later instead of this method.
+
+        :returns: A bool
+        """
+        return self._simple_get("Use Bright Bold (Dark)")
+
+    @property
     def use_bold_color(self) -> bool:
         """
         Returns whether the profile-specified bold color is used for
-        default-colored bold text.
+        default-colored bold text. This is used only when separate light/dark
+        mode colors are not enabled.
 
         Note: In versions of iTerm2 prior to 3.3.7, this behaves like
         use_bright_bold().
@@ -2794,10 +4403,39 @@ class Profile(WriteOnlyProfile):
         return self._simple_get("Use Bright Bold")
 
     @property
+    def use_bold_color_light(self) -> bool:
+        """
+        Returns whether the profile-specified bold color is used for
+        default-colored bold text. This affects the light-mode variant when
+        separate light/dark mode colors are enabled.
+
+        Note: In versions of iTerm2 prior to 3.3.7, this behaves like
+        use_bright_bold().
+
+        :returns: A bool
+        """
+        return self._simple_get("Use Bright Bold (Light)")
+
+    @property
+    def use_bold_color_dark(self) -> bool:
+        """
+        Returns whether the profile-specified bold color is used for
+        default-colored bold text. This affects the dark-mode variant when
+        separate light/dark mode colors are enabled.
+
+        Note: In versions of iTerm2 prior to 3.3.7, this behaves like
+        use_bright_bold().
+
+        :returns: A bool
+        """
+        return self._simple_get("Use Bright Bold (Dark)")
+
+    @property
     def brighten_bold_text(self) -> bool:
         """
         Returns whether Dark ANSI colors get replaced with their light
-        counterparts for bold text.
+        counterparts for bold text. This is used only when separate light/dark
+        mode colors are not enabled.
 
         This is only supported in iTerm2 version 3.3.7 and later.
 
@@ -2806,284 +4444,965 @@ class Profile(WriteOnlyProfile):
         return self._simple_get("Brighten Bold Text")
 
     @property
+    def brighten_bold_text_light(self) -> bool:
+        """
+        Returns whether Dark ANSI colors get replaced with their light
+        counterparts for bold text. This affects the light-mode variant when
+        separate light/dark mode colors are enabled.
+
+        This is only supported in iTerm2 version 3.3.7 and later.
+
+        :returns: A bool
+        """
+        return self._simple_get("Brighten Bold Text (Light)")
+
+    @property
+    def brighten_bold_text_dark(self) -> bool:
+        """
+        Returns whether Dark ANSI colors get replaced with their light
+        counterparts for bold text. This affects the dark-mode variant when
+        separate light/dark mode colors are enabled.
+
+        This is only supported in iTerm2 version 3.3.7 and later.
+
+        :returns: A bool
+        """
+        return self._simple_get("Brighten Bold Text (Dark)")
+
+    @property
     def link_color(self) -> 'iterm2.color.Color':
         """
-        Returns the link color.
+        Returns the link color. This is used only when separate light/dark mode
+        colors are not enabled.
 
         :returns: A :class:`Color`
         """
         return self.get_color_with_key("Link Color")
 
     @property
+    def link_color_light(self) -> 'iterm2.color.Color':
+        """
+        Returns the link color. This affects the light-mode variant when
+        separate light/dark mode colors are enabled.
+
+        :returns: A :class:`Color`
+        """
+        return self.get_color_with_key("Link Color (Light)")
+
+    @property
+    def link_color_dark(self) -> 'iterm2.color.Color':
+        """
+        Returns the link color. This affects the dark-mode variant when
+        separate light/dark mode colors are enabled.
+
+        :returns: A :class:`Color`
+        """
+        return self.get_color_with_key("Link Color (Dark)")
+
+    @property
     def selection_color(self) -> 'iterm2.color.Color':
         """
-        Returns the selection background color.
+        Returns the selection background color. This is used only when separate
+        light/dark mode colors are not enabled.
 
         :returns: A :class:`Color`
         """
         return self.get_color_with_key("Selection Color")
 
     @property
+    def selection_color_light(self) -> 'iterm2.color.Color':
+        """
+        Returns the selection background color. This affects the light-mode
+        variant when separate light/dark mode colors are enabled.
+
+        :returns: A :class:`Color`
+        """
+        return self.get_color_with_key("Selection Color (Light)")
+
+    @property
+    def selection_color_dark(self) -> 'iterm2.color.Color':
+        """
+        Returns the selection background color. This affects the dark-mode
+        variant when separate light/dark mode colors are enabled.
+
+        :returns: A :class:`Color`
+        """
+        return self.get_color_with_key("Selection Color (Dark)")
+
+    @property
     def selected_text_color(self) -> 'iterm2.color.Color':
         """
-        Returns the selection text color.
+        Returns the selection text color. This is used only when separate
+        light/dark mode colors are not enabled.
 
         :returns: A :class:`Color`
         """
         return self.get_color_with_key("Selected Text Color")
 
     @property
+    def selected_text_color_light(self) -> 'iterm2.color.Color':
+        """
+        Returns the selection text color. This affects the light-mode variant
+        when separate light/dark mode colors are enabled.
+
+        :returns: A :class:`Color`
+        """
+        return self.get_color_with_key("Selected Text Color (Light)")
+
+    @property
+    def selected_text_color_dark(self) -> 'iterm2.color.Color':
+        """
+        Returns the selection text color. This affects the dark-mode variant
+        when separate light/dark mode colors are enabled.
+
+        :returns: A :class:`Color`
+        """
+        return self.get_color_with_key("Selected Text Color (Dark)")
+
+    @property
     def cursor_color(self) -> 'iterm2.color.Color':
         """
-        Returns the cursor color.
+        Returns the cursor color. This is used only when separate light/dark
+        mode colors are not enabled.
 
         :returns: A :class:`Color`
         """
         return self.get_color_with_key("Cursor Color")
 
     @property
+    def cursor_color_light(self) -> 'iterm2.color.Color':
+        """
+        Returns the cursor color. This affects the light-mode variant when
+        separate light/dark mode colors are enabled.
+
+        :returns: A :class:`Color`
+        """
+        return self.get_color_with_key("Cursor Color (Light)")
+
+    @property
+    def cursor_color_dark(self) -> 'iterm2.color.Color':
+        """
+        Returns the cursor color. This affects the dark-mode variant when
+        separate light/dark mode colors are enabled.
+
+        :returns: A :class:`Color`
+        """
+        return self.get_color_with_key("Cursor Color (Dark)")
+
+    @property
     def cursor_text_color(self) -> 'iterm2.color.Color':
         """
-        Returns the cursor text color.
+        Returns the cursor text color. This is used only when separate
+        light/dark mode colors are not enabled.
 
         :returns: A :class:`Color`
         """
         return self.get_color_with_key("Cursor Text Color")
 
     @property
+    def cursor_text_color_light(self) -> 'iterm2.color.Color':
+        """
+        Returns the cursor text color. This affects the light-mode variant when
+        separate light/dark mode colors are enabled.
+
+        :returns: A :class:`Color`
+        """
+        return self.get_color_with_key("Cursor Text Color (Light)")
+
+    @property
+    def cursor_text_color_dark(self) -> 'iterm2.color.Color':
+        """
+        Returns the cursor text color. This affects the dark-mode variant when
+        separate light/dark mode colors are enabled.
+
+        :returns: A :class:`Color`
+        """
+        return self.get_color_with_key("Cursor Text Color (Dark)")
+
+    @property
     def ansi_0_color(self) -> 'iterm2.color.Color':
         """
-        Returns the ANSI 0 color.
+        Returns the ANSI 0 color. This is used only when separate light/dark
+        mode colors are not enabled.
 
         :returns: A :class:`Color`
         """
         return self.get_color_with_key("Ansi 0 Color")
 
     @property
+    def ansi_0_color_light(self) -> 'iterm2.color.Color':
+        """
+        Returns the ANSI 0 color. This affects the light-mode variant when
+        separate light/dark mode colors are enabled.
+
+        :returns: A :class:`Color`
+        """
+        return self.get_color_with_key("Ansi 0 Color (Light)")
+
+    @property
+    def ansi_0_color_dark(self) -> 'iterm2.color.Color':
+        """
+        Returns the ANSI 0 color. This affects the dark-mode variant when
+        separate light/dark mode colors are enabled.
+
+        :returns: A :class:`Color`
+        """
+        return self.get_color_with_key("Ansi 0 Color (Dark)")
+
+    @property
     def ansi_1_color(self) -> 'iterm2.color.Color':
         """
-        Returns the ANSI 1 color.
+        Returns the ANSI 1 color. This is used only when separate light/dark
+        mode colors are not enabled.
 
         :returns: A :class:`Color`
         """
         return self.get_color_with_key("Ansi 1 Color")
 
     @property
+    def ansi_1_color_light(self) -> 'iterm2.color.Color':
+        """
+        Returns the ANSI 1 color. This affects the light-mode variant when
+        separate light/dark mode colors are enabled.
+
+        :returns: A :class:`Color`
+        """
+        return self.get_color_with_key("Ansi 1 Color (Light)")
+
+    @property
+    def ansi_1_color_dark(self) -> 'iterm2.color.Color':
+        """
+        Returns the ANSI 1 color. This affects the dark-mode variant when
+        separate light/dark mode colors are enabled.
+
+        :returns: A :class:`Color`
+        """
+        return self.get_color_with_key("Ansi 1 Color (Dark)")
+
+    @property
     def ansi_2_color(self) -> 'iterm2.color.Color':
         """
-        Returns the ANSI 2 color.
+        Returns the ANSI 2 color. This is used only when separate light/dark
+        mode colors are not enabled.
 
         :returns: A :class:`Color`
         """
         return self.get_color_with_key("Ansi 2 Color")
 
     @property
+    def ansi_2_color_light(self) -> 'iterm2.color.Color':
+        """
+        Returns the ANSI 2 color. This affects the light-mode variant when
+        separate light/dark mode colors are enabled.
+
+        :returns: A :class:`Color`
+        """
+        return self.get_color_with_key("Ansi 2 Color (Light)")
+
+    @property
+    def ansi_2_color_dark(self) -> 'iterm2.color.Color':
+        """
+        Returns the ANSI 2 color. This affects the dark-mode variant when
+        separate light/dark mode colors are enabled.
+
+        :returns: A :class:`Color`
+        """
+        return self.get_color_with_key("Ansi 2 Color (Dark)")
+
+    @property
     def ansi_3_color(self) -> 'iterm2.color.Color':
         """
-        Returns the ANSI 3 color.
+        Returns the ANSI 3 color. This is used only when separate light/dark
+        mode colors are not enabled.
 
         :returns: A :class:`Color`
         """
         return self.get_color_with_key("Ansi 3 Color")
 
     @property
+    def ansi_3_color_light(self) -> 'iterm2.color.Color':
+        """
+        Returns the ANSI 3 color. This affects the light-mode variant when
+        separate light/dark mode colors are enabled.
+
+        :returns: A :class:`Color`
+        """
+        return self.get_color_with_key("Ansi 3 Color (Light)")
+
+    @property
+    def ansi_3_color_dark(self) -> 'iterm2.color.Color':
+        """
+        Returns the ANSI 3 color. This affects the dark-mode variant when
+        separate light/dark mode colors are enabled.
+
+        :returns: A :class:`Color`
+        """
+        return self.get_color_with_key("Ansi 3 Color (Dark)")
+
+    @property
     def ansi_4_color(self) -> 'iterm2.color.Color':
         """
-        Returns the ANSI 4 color.
+        Returns the ANSI 4 color. This is used only when separate light/dark
+        mode colors are not enabled.
 
         :returns: A :class:`Color`
         """
         return self.get_color_with_key("Ansi 4 Color")
 
     @property
+    def ansi_4_color_light(self) -> 'iterm2.color.Color':
+        """
+        Returns the ANSI 4 color. This affects the light-mode variant when
+        separate light/dark mode colors are enabled.
+
+        :returns: A :class:`Color`
+        """
+        return self.get_color_with_key("Ansi 4 Color (Light)")
+
+    @property
+    def ansi_4_color_dark(self) -> 'iterm2.color.Color':
+        """
+        Returns the ANSI 4 color. This affects the dark-mode variant when
+        separate light/dark mode colors are enabled.
+
+        :returns: A :class:`Color`
+        """
+        return self.get_color_with_key("Ansi 4 Color (Dark)")
+
+    @property
     def ansi_5_color(self) -> 'iterm2.color.Color':
         """
-        Returns the ANSI 5 color.
+        Returns the ANSI 5 color. This is used only when separate light/dark
+        mode colors are not enabled.
 
         :returns: A :class:`Color`
         """
         return self.get_color_with_key("Ansi 5 Color")
 
     @property
+    def ansi_5_color_light(self) -> 'iterm2.color.Color':
+        """
+        Returns the ANSI 5 color. This affects the light-mode variant when
+        separate light/dark mode colors are enabled.
+
+        :returns: A :class:`Color`
+        """
+        return self.get_color_with_key("Ansi 5 Color (Light)")
+
+    @property
+    def ansi_5_color_dark(self) -> 'iterm2.color.Color':
+        """
+        Returns the ANSI 5 color. This affects the dark-mode variant when
+        separate light/dark mode colors are enabled.
+
+        :returns: A :class:`Color`
+        """
+        return self.get_color_with_key("Ansi 5 Color (Dark)")
+
+    @property
     def ansi_6_color(self) -> 'iterm2.color.Color':
         """
-        Returns the ANSI 6 color.
+        Returns the ANSI 6 color. This is used only when separate light/dark
+        mode colors are not enabled.
 
         :returns: A :class:`Color`
         """
         return self.get_color_with_key("Ansi 6 Color")
 
     @property
+    def ansi_6_color_light(self) -> 'iterm2.color.Color':
+        """
+        Returns the ANSI 6 color. This affects the light-mode variant when
+        separate light/dark mode colors are enabled.
+
+        :returns: A :class:`Color`
+        """
+        return self.get_color_with_key("Ansi 6 Color (Light)")
+
+    @property
+    def ansi_6_color_dark(self) -> 'iterm2.color.Color':
+        """
+        Returns the ANSI 6 color. This affects the dark-mode variant when
+        separate light/dark mode colors are enabled.
+
+        :returns: A :class:`Color`
+        """
+        return self.get_color_with_key("Ansi 6 Color (Dark)")
+
+    @property
     def ansi_7_color(self) -> 'iterm2.color.Color':
         """
-        Returns the ANSI 7 color.
+        Returns the ANSI 7 color. This is used only when separate light/dark
+        mode colors are not enabled.
 
         :returns: A :class:`Color`
         """
         return self.get_color_with_key("Ansi 7 Color")
 
     @property
+    def ansi_7_color_light(self) -> 'iterm2.color.Color':
+        """
+        Returns the ANSI 7 color. This affects the light-mode variant when
+        separate light/dark mode colors are enabled.
+
+        :returns: A :class:`Color`
+        """
+        return self.get_color_with_key("Ansi 7 Color (Light)")
+
+    @property
+    def ansi_7_color_dark(self) -> 'iterm2.color.Color':
+        """
+        Returns the ANSI 7 color. This affects the dark-mode variant when
+        separate light/dark mode colors are enabled.
+
+        :returns: A :class:`Color`
+        """
+        return self.get_color_with_key("Ansi 7 Color (Dark)")
+
+    @property
     def ansi_8_color(self) -> 'iterm2.color.Color':
         """
-        Returns the ANSI 8 color.
+        Returns the ANSI 8 color. This is used only when separate light/dark
+        mode colors are not enabled.
 
         :returns: A :class:`Color`
         """
         return self.get_color_with_key("Ansi 8 Color")
 
     @property
+    def ansi_8_color_light(self) -> 'iterm2.color.Color':
+        """
+        Returns the ANSI 8 color. This affects the light-mode variant when
+        separate light/dark mode colors are enabled.
+
+        :returns: A :class:`Color`
+        """
+        return self.get_color_with_key("Ansi 8 Color (Light)")
+
+    @property
+    def ansi_8_color_dark(self) -> 'iterm2.color.Color':
+        """
+        Returns the ANSI 8 color. This affects the dark-mode variant when
+        separate light/dark mode colors are enabled.
+
+        :returns: A :class:`Color`
+        """
+        return self.get_color_with_key("Ansi 8 Color (Dark)")
+
+    @property
     def ansi_9_color(self) -> 'iterm2.color.Color':
         """
-        Returns the ANSI 9 color.
+        Returns the ANSI 9 color. This is used only when separate light/dark
+        mode colors are not enabled.
 
         :returns: A :class:`Color`
         """
         return self.get_color_with_key("Ansi 9 Color")
 
     @property
+    def ansi_9_color_light(self) -> 'iterm2.color.Color':
+        """
+        Returns the ANSI 9 color. This affects the light-mode variant when
+        separate light/dark mode colors are enabled.
+
+        :returns: A :class:`Color`
+        """
+        return self.get_color_with_key("Ansi 9 Color (Light)")
+
+    @property
+    def ansi_9_color_dark(self) -> 'iterm2.color.Color':
+        """
+        Returns the ANSI 9 color. This affects the dark-mode variant when
+        separate light/dark mode colors are enabled.
+
+        :returns: A :class:`Color`
+        """
+        return self.get_color_with_key("Ansi 9 Color (Dark)")
+
+    @property
     def ansi_10_color(self) -> 'iterm2.color.Color':
         """
-        Returns the ANSI 10 color.
+        Returns the ANSI 10 color. This is used only when separate light/dark
+        mode colors are not enabled.
 
         :returns: A :class:`Color`
         """
         return self.get_color_with_key("Ansi 10 Color")
 
     @property
+    def ansi_10_color_light(self) -> 'iterm2.color.Color':
+        """
+        Returns the ANSI 10 color. This affects the light-mode variant when
+        separate light/dark mode colors are enabled.
+
+        :returns: A :class:`Color`
+        """
+        return self.get_color_with_key("Ansi 10 Color (Light)")
+
+    @property
+    def ansi_10_color_dark(self) -> 'iterm2.color.Color':
+        """
+        Returns the ANSI 10 color. This affects the dark-mode variant when
+        separate light/dark mode colors are enabled.
+
+        :returns: A :class:`Color`
+        """
+        return self.get_color_with_key("Ansi 10 Color (Dark)")
+
+    @property
     def ansi_11_color(self) -> 'iterm2.color.Color':
         """
-        Returns the ANSI 11 color.
+        Returns the ANSI 11 color. This is used only when separate light/dark
+        mode colors are not enabled.
 
         :returns: A :class:`Color`
         """
         return self.get_color_with_key("Ansi 11 Color")
 
     @property
+    def ansi_11_color_light(self) -> 'iterm2.color.Color':
+        """
+        Returns the ANSI 11 color. This affects the light-mode variant when
+        separate light/dark mode colors are enabled.
+
+        :returns: A :class:`Color`
+        """
+        return self.get_color_with_key("Ansi 11 Color (Light)")
+
+    @property
+    def ansi_11_color_dark(self) -> 'iterm2.color.Color':
+        """
+        Returns the ANSI 11 color. This affects the dark-mode variant when
+        separate light/dark mode colors are enabled.
+
+        :returns: A :class:`Color`
+        """
+        return self.get_color_with_key("Ansi 11 Color (Dark)")
+
+    @property
     def ansi_12_color(self) -> 'iterm2.color.Color':
         """
-        Returns the ANSI 12 color.
+        Returns the ANSI 12 color. This is used only when separate light/dark
+        mode colors are not enabled.
 
         :returns: A :class:`Color`
         """
         return self.get_color_with_key("Ansi 12 Color")
 
     @property
+    def ansi_12_color_light(self) -> 'iterm2.color.Color':
+        """
+        Returns the ANSI 12 color. This affects the light-mode variant when
+        separate light/dark mode colors are enabled.
+
+        :returns: A :class:`Color`
+        """
+        return self.get_color_with_key("Ansi 12 Color (Light)")
+
+    @property
+    def ansi_12_color_dark(self) -> 'iterm2.color.Color':
+        """
+        Returns the ANSI 12 color. This affects the dark-mode variant when
+        separate light/dark mode colors are enabled.
+
+        :returns: A :class:`Color`
+        """
+        return self.get_color_with_key("Ansi 12 Color (Dark)")
+
+    @property
     def ansi_13_color(self) -> 'iterm2.color.Color':
         """
-        Returns the ANSI 13 color.
+        Returns the ANSI 13 color. This is used only when separate light/dark
+        mode colors are not enabled.
 
         :returns: A :class:`Color`
         """
         return self.get_color_with_key("Ansi 13 Color")
 
     @property
+    def ansi_13_color_light(self) -> 'iterm2.color.Color':
+        """
+        Returns the ANSI 13 color. This affects the light-mode variant when
+        separate light/dark mode colors are enabled.
+
+        :returns: A :class:`Color`
+        """
+        return self.get_color_with_key("Ansi 13 Color (Light)")
+
+    @property
+    def ansi_13_color_dark(self) -> 'iterm2.color.Color':
+        """
+        Returns the ANSI 13 color. This affects the dark-mode variant when
+        separate light/dark mode colors are enabled.
+
+        :returns: A :class:`Color`
+        """
+        return self.get_color_with_key("Ansi 13 Color (Dark)")
+
+    @property
     def ansi_14_color(self) -> 'iterm2.color.Color':
         """
-        Returns the ANSI 14 color.
+        Returns the ANSI 14 color. This is used only when separate light/dark
+        mode colors are not enabled.
 
         :returns: A :class:`Color`
         """
         return self.get_color_with_key("Ansi 14 Color")
 
     @property
+    def ansi_14_color_light(self) -> 'iterm2.color.Color':
+        """
+        Returns the ANSI 14 color. This affects the light-mode variant when
+        separate light/dark mode colors are enabled.
+
+        :returns: A :class:`Color`
+        """
+        return self.get_color_with_key("Ansi 14 Color (Light)")
+
+    @property
+    def ansi_14_color_dark(self) -> 'iterm2.color.Color':
+        """
+        Returns the ANSI 14 color. This affects the dark-mode variant when
+        separate light/dark mode colors are enabled.
+
+        :returns: A :class:`Color`
+        """
+        return self.get_color_with_key("Ansi 14 Color (Dark)")
+
+    @property
     def ansi_15_color(self) -> 'iterm2.color.Color':
         """
-        Returns the ANSI 15 color.
+        Returns the ANSI 15 color. This is used only when separate light/dark
+        mode colors are not enabled.
 
         :returns: A :class:`Color`
         """
         return self.get_color_with_key("Ansi 15 Color")
 
     @property
+    def ansi_15_color_light(self) -> 'iterm2.color.Color':
+        """
+        Returns the ANSI 15 color. This affects the light-mode variant when
+        separate light/dark mode colors are enabled.
+
+        :returns: A :class:`Color`
+        """
+        return self.get_color_with_key("Ansi 15 Color (Light)")
+
+    @property
+    def ansi_15_color_dark(self) -> 'iterm2.color.Color':
+        """
+        Returns the ANSI 15 color. This affects the dark-mode variant when
+        separate light/dark mode colors are enabled.
+
+        :returns: A :class:`Color`
+        """
+        return self.get_color_with_key("Ansi 15 Color (Dark)")
+
+    @property
     def smart_cursor_color(self) -> bool:
         """
         Returns whether to use smart cursor color. This only applies to box
-        cursors.
+        cursors. This is used only when separate light/dark mode colors are not
+        enabled.
 
         :returns: A bool
         """
         return self._simple_get("Smart Cursor Color")
 
     @property
+    def smart_cursor_color_light(self) -> bool:
+        """
+        Returns whether to use smart cursor color. This only applies to box
+        cursors. This affects the light-mode variant when separate light/dark
+        mode colors are enabled.
+
+        :returns: A bool
+        """
+        return self._simple_get("Smart Cursor Color (Light)")
+
+    @property
+    def smart_cursor_color_dark(self) -> bool:
+        """
+        Returns whether to use smart cursor color. This only applies to box
+        cursors. This affects the dark-mode variant when separate light/dark
+        mode colors are enabled.
+
+        :returns: A bool
+        """
+        return self._simple_get("Smart Cursor Color (Dark)")
+
+    @property
     def minimum_contrast(self) -> float:
         """
-        Returns the minimum contrast, in 0 to 1.
+        Returns the minimum contrast, in 0 to 1. This is used only when
+        separate light/dark mode colors are not enabled.
 
         :returns: A float
         """
         return self._simple_get("Minimum Contrast")
 
     @property
+    def minimum_contrast_light(self) -> float:
+        """
+        Returns the minimum contrast, in 0 to 1. This affects the light-mode
+        variant when separate light/dark mode colors are enabled.
+
+        :returns: A float
+        """
+        return self._simple_get("Minimum Contrast (Light)")
+
+    @property
+    def minimum_contrast_dark(self) -> float:
+        """
+        Returns the minimum contrast, in 0 to 1. This affects the dark-mode
+        variant when separate light/dark mode colors are enabled.
+
+        :returns: A float
+        """
+        return self._simple_get("Minimum Contrast (Dark)")
+
+    @property
     def tab_color(self) -> 'iterm2.color.Color':
         """
-        Returns the tab color.
+        Returns the tab color. This is used only when separate light/dark mode
+        colors are not enabled.
 
         :returns: A :class:`Color`
         """
         return self.get_color_with_key("Tab Color")
 
     @property
+    def tab_color_light(self) -> 'iterm2.color.Color':
+        """
+        Returns the tab color. This affects the light-mode variant when
+        separate light/dark mode colors are enabled.
+
+        :returns: A :class:`Color`
+        """
+        return self.get_color_with_key("Tab Color (Light)")
+
+    @property
+    def tab_color_dark(self) -> 'iterm2.color.Color':
+        """
+        Returns the tab color. This affects the dark-mode variant when separate
+        light/dark mode colors are enabled.
+
+        :returns: A :class:`Color`
+        """
+        return self.get_color_with_key("Tab Color (Dark)")
+
+    @property
     def use_tab_color(self) -> bool:
         """
-        Returns whether the tab color should be used.
+        Returns whether the tab color should be used. This is used only when
+        separate light/dark mode colors are not enabled.
 
         :returns: A bool
         """
         return self._simple_get("Use Tab Color")
 
     @property
+    def use_tab_color_light(self) -> bool:
+        """
+        Returns whether the tab color should be used. This affects the
+        light-mode variant when separate light/dark mode colors are enabled.
+
+        :returns: A bool
+        """
+        return self._simple_get("Use Tab Color (Light)")
+
+    @property
+    def use_tab_color_dark(self) -> bool:
+        """
+        Returns whether the tab color should be used. This affects the
+        dark-mode variant when separate light/dark mode colors are enabled.
+
+        :returns: A bool
+        """
+        return self._simple_get("Use Tab Color (Dark)")
+
+    @property
     def underline_color(self) -> typing.Optional['iterm2.color.Color']:
         """
-        Returns the underline color.
+        Returns the underline color. This is used only when separate light/dark
+        mode colors are not enabled.
 
         :returns: A typing.Optional['iterm2.color.Color']
         """
         return self.get_color_with_key("Underline Color")
 
     @property
+    def underline_color_light(self) -> typing.Optional['iterm2.color.Color']:
+        """
+        Returns the underline color. This affects the light-mode variant when
+        separate light/dark mode colors are enabled.
+
+        :returns: A typing.Optional['iterm2.color.Color']
+        """
+        return self.get_color_with_key("Underline Color (Light)")
+
+    @property
+    def underline_color_dark(self) -> typing.Optional['iterm2.color.Color']:
+        """
+        Returns the underline color. This affects the dark-mode variant when
+        separate light/dark mode colors are enabled.
+
+        :returns: A typing.Optional['iterm2.color.Color']
+        """
+        return self.get_color_with_key("Underline Color (Dark)")
+
+    @property
     def use_underline_color(self) -> bool:
         """
-        Returns whether to use the specified underline color.
+        Returns whether to use the specified underline color. This is used only
+        when separate light/dark mode colors are not enabled.
 
         :returns: A bool
         """
         return self._simple_get("Use Underline Color")
 
     @property
+    def use_underline_color_light(self) -> bool:
+        """
+        Returns whether to use the specified underline color. This affects the
+        light-mode variant when separate light/dark mode colors are enabled.
+
+        :returns: A bool
+        """
+        return self._simple_get("Use Underline Color (Light)")
+
+    @property
+    def use_underline_color_dark(self) -> bool:
+        """
+        Returns whether to use the specified underline color. This affects the
+        dark-mode variant when separate light/dark mode colors are enabled.
+
+        :returns: A bool
+        """
+        return self._simple_get("Use Underline Color (Dark)")
+
+    @property
     def cursor_boost(self) -> float:
         """
-        Returns the cursor boost level, in 0 to 1.
+        Returns the cursor boost level, in 0 to 1. This is used only when
+        separate light/dark mode colors are not enabled.
 
         :returns: A float
         """
         return self._simple_get("Cursor Boost")
 
     @property
+    def cursor_boost_light(self) -> float:
+        """
+        Returns the cursor boost level, in 0 to 1. This affects the light-mode
+        variant when separate light/dark mode colors are enabled.
+
+        :returns: A float
+        """
+        return self._simple_get("Cursor Boost (Light)")
+
+    @property
+    def cursor_boost_dark(self) -> float:
+        """
+        Returns the cursor boost level, in 0 to 1. This affects the dark-mode
+        variant when separate light/dark mode colors are enabled.
+
+        :returns: A float
+        """
+        return self._simple_get("Cursor Boost (Dark)")
+
+    @property
     def use_cursor_guide(self) -> bool:
         """
-        Returns whether the cursor guide should be used.
+        Returns whether the cursor guide should be used. This is used only when
+        separate light/dark mode colors are not enabled.
 
         :returns: A bool
         """
         return self._simple_get("Use Cursor Guide")
 
     @property
+    def use_cursor_guide_light(self) -> bool:
+        """
+        Returns whether the cursor guide should be used. This affects the
+        light-mode variant when separate light/dark mode colors are enabled.
+
+        :returns: A bool
+        """
+        return self._simple_get("Use Cursor Guide (Light)")
+
+    @property
+    def use_cursor_guide_dark(self) -> bool:
+        """
+        Returns whether the cursor guide should be used. This affects the
+        dark-mode variant when separate light/dark mode colors are enabled.
+
+        :returns: A bool
+        """
+        return self._simple_get("Use Cursor Guide (Dark)")
+
+    @property
     def cursor_guide_color(self) -> 'iterm2.color.Color':
         """
-        Returns the cursor guide color. The alpha value is respected.
+        Returns the cursor guide color. The alpha value is respected. This is
+        used only when separate light/dark mode colors are not enabled.
 
         :returns: A :class:`Color`
         """
         return self.get_color_with_key("Cursor Guide Color")
 
     @property
+    def cursor_guide_color_light(self) -> 'iterm2.color.Color':
+        """
+        Returns the cursor guide color. The alpha value is respected. This
+        affects the light-mode variant when separate light/dark mode colors are
+        enabled.
+
+        :returns: A :class:`Color`
+        """
+        return self.get_color_with_key("Cursor Guide Color (Light)")
+
+    @property
+    def cursor_guide_color_dark(self) -> 'iterm2.color.Color':
+        """
+        Returns the cursor guide color. The alpha value is respected. This
+        affects the dark-mode variant when separate light/dark mode colors are
+        enabled.
+
+        :returns: A :class:`Color`
+        """
+        return self.get_color_with_key("Cursor Guide Color (Dark)")
+
+    @property
     def badge_color(self) -> 'iterm2.color.Color':
         """
-        Returns the badge color. The alpha value is respected.
+        Returns the badge color. The alpha value is respected. This is used
+        only when separate light/dark mode colors are not enabled.
 
         :returns: A :class:`Color`
         """
         return self.get_color_with_key("Badge Color")
+
+    @property
+    def badge_color_light(self) -> 'iterm2.color.Color':
+        """
+        Returns the badge color. The alpha value is respected. This affects the
+        light-mode variant when separate light/dark mode colors are enabled.
+
+        :returns: A :class:`Color`
+        """
+        return self.get_color_with_key("Badge Color (Light)")
+
+    @property
+    def badge_color_dark(self) -> 'iterm2.color.Color':
+        """
+        Returns the badge color. The alpha value is respected. This affects the
+        dark-mode variant when separate light/dark mode colors are enabled.
+
+        :returns: A :class:`Color`
+        """
+        return self.get_color_with_key("Badge Color (Dark)")
 
     @property
     def name(self) -> str:

@@ -81,6 +81,7 @@
 #define KEY_AWDS_PANE_DIRECTORY         @"AWDS Pane Directory"
 
 // Colors
+// Keys starting here have light and dark variants
 #define KEY_FOREGROUND_COLOR       @"Foreground Color"
 #define KEY_BACKGROUND_COLOR       @"Background Color"
 #define KEY_BOLD_COLOR             @"Bold Color"
@@ -118,6 +119,7 @@
 #define KEY_USE_CURSOR_GUIDE       @"Use Cursor Guide"
 #define KEY_CURSOR_GUIDE_COLOR     @"Cursor Guide Color"
 #define KEY_BADGE_COLOR            @"Badge Color"
+// End of key swith light and dark variants
 #define KEY_USE_SEPARATE_COLORS_FOR_LIGHT_AND_DARK_MODE @"Use Separate Colors for Light and Dark Mode"
 #define COLORS_LIGHT_MODE_SUFFIX @" (Light)"
 #define COLORS_DARK_MODE_SUFFIX @" (Dark)"

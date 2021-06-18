@@ -1,18 +1,7 @@
 #!/usr/bin/env python3
 
-# (name, type, summary, detailed description, key)
-schema = [
-    ("use_separate_colors_for_light_and_dark_mode",
-     "bool",
-     "whether to use separate colors for light and dark mode.",
-     """
-     When this is enabled, use [set_]xxx_color_light and
-     set_[xxx_]color_dark instead of [set_]xxx_color.
-
-     :param value: Whether to use separate colors for light and dark mode.
-     """,
-    "Use Separate Colors for Light and Dark Mode"),
-
+# These have light/dark variants
+base_colors_schema = [
     ("foreground_color",
      "'iterm2.color.Color'",
      "the foreground color.",
@@ -30,6 +19,42 @@ schema = [
      "the bold text color.",
      None,
      "Bold Color"),
+
+    ("use_bright_bold",
+     "bool",
+     " how bold text is rendered.",
+     """
+     This function is deprecated because its behavior changed in
+     iTerm2 version 3.3.7.
+
+     Pre-3.3.7, when enabled:
+     * Use the profile-specified bold color for default-colored
+       bold text.
+     * Dark ANSI colors get replaced with their light counterparts
+       for bold text.
+
+     In 3.3.7 and later:
+     * Use the profile-specified bold color for default-colored
+       bold text.
+
+     Use `use_bold_color` and `brighten_bold_text` in 3.3.7 and
+     later instead of this method.
+     """,
+     "Use Bright Bold"),
+
+    ("use_bold_color",
+     "bool",
+     "whether the profile-specified bold color is used for default-colored bold text.",
+     """
+     Note: In versions of iTerm2 prior to 3.3.7, this behaves like
+     {{accessor}}use_bright_bold().""",
+     "Use Bright Bold"),
+
+    ("brighten_bold_text",
+     "bool",
+     "whether Dark ANSI colors get replaced with their light counterparts for bold text.",
+     "This is only supported in iTerm2 version 3.3.7 and later.",
+     "Brighten Bold Text"),
 
     ("link_color",
      "'iterm2.color.Color'",
@@ -163,17 +188,47 @@ schema = [
      None,
      "Smart Cursor Color"),
 
+    ("minimum_contrast",
+     "float",
+     "the minimum contrast, in 0 to 1.",
+     None,
+     "Minimum Contrast"),
+
     ("tab_color",
      "'iterm2.color.Color'",
      "the tab color.",
      None,
      "Tab Color"),
 
+    ("use_tab_color",
+     "bool",
+     "whether the tab color should be used.",
+     None,
+     "Use Tab Color"),
+
     ("underline_color",
      "typing.Optional['iterm2.color.Color']",
      "the underline color.",
      None,
      "Underline Color"),
+
+    ("use_underline_color",
+     "bool",
+     "whether to use the specified underline color.",
+     None,
+     "Use Underline Color"),
+
+    ("cursor_boost",
+     "float",
+     "the cursor boost level, in 0 to 1.",
+     None,
+     "Cursor Boost"),
+
+    ("use_cursor_guide",
+     "bool",
+     "whether the cursor guide should be used.",
+     None,
+     "Use Cursor Guide"),
 
     ("cursor_guide_color",
      "'iterm2.color.Color'",
@@ -186,7 +241,39 @@ schema = [
      "the badge color. The alpha value is respected.",
      None,
      "Badge Color"),
+]
 
+def set_mode(tuple, mode):
+    temp = list(tuple)
+    if mode:
+        temp[0] = temp[0] + "_" + mode.lower()
+        temp[2] = temp[2] + f' This affects the {mode.lower()}-mode variant when separate light/dark mode colors are enabled.'
+        temp[4] = temp[4] + f' ({mode})'
+    else:
+        temp[2] = temp[2] + " This is used only when separate light/dark mode colors are not enabled."
+    return temp
+
+def flatmap(f, l):
+    result = []
+    for item in l:
+        result.extend(f(item))
+    return result
+
+colors_schema = flatmap(lambda x: [set_mode(x, None), set_mode(x, "Light"), set_mode(x, "Dark")], base_colors_schema)
+
+# (name, type, summary, detailed description, key)
+schema = [
+    ("use_separate_colors_for_light_and_dark_mode",
+     "bool",
+     "whether to use separate colors for light and dark mode.",
+     """
+     When this is enabled, use [set_]xxx_color_light and
+     set_[xxx_]color_dark instead of [set_]xxx_color.
+
+     :param value: Whether to use separate colors for light and dark mode.
+     """,
+    "Use Separate Colors for Light and Dark Mode"),
+] + colors_schema + [
     ("name",
      "str",
      "the name.",
@@ -204,36 +291,6 @@ schema = [
      "the answerback string.",
      None,
      "Answerback String"),
-
-    ("use_cursor_guide",
-     "bool",
-     "whether the cursor guide should be used.",
-     None,
-     "Use Cursor Guide"),
-
-    ("use_tab_color",
-     "bool",
-     "whether the tab color should be used.",
-     None,
-     "Use Tab Color"),
-
-    ("use_underline_color",
-     "bool",
-     "whether to use the specified underline color.",
-     None,
-     "Use Underline Color"),
-
-    ("minimum_contrast",
-     "float",
-     "the minimum contrast, in 0 to 1.",
-     None,
-     "Minimum Contrast"),
-
-    ("cursor_boost",
-     "float",
-     "the cursor boost level, in 0 to 1.",
-     None,
-     "Cursor Boost"),
 
     ("blinking_cursor",
      "bool",
@@ -258,42 +315,6 @@ schema = [
      "whether ligatures should be used for non-ASCII text.",
      None,
      "Non-ASCII Ligatures"),
-
-    ("use_bright_bold",
-     "bool",
-     " how bold text is rendered.",
-     """
-     This function is deprecated because its behavior changed in
-     iTerm2 version 3.3.7.
-
-     Pre-3.3.7, when enabled:
-     * Use the profile-specified bold color for default-colored
-       bold text.
-     * Dark ANSI colors get replaced with their light counterparts
-       for bold text.
-
-     In 3.3.7 and later:
-     * Use the profile-specified bold color for default-colored
-       bold text.
-
-     Use `use_bold_color` and `brighten_bold_text` in 3.3.7 and
-     later instead of this method.
-     """,
-     "Use Bright Bold"),
-
-    ("use_bold_color",
-     "bool",
-     "whether the profile-specified bold color is used for default-colored bold text.",
-     """
-     Note: In versions of iTerm2 prior to 3.3.7, this behaves like
-     {{accessor}}use_bright_bold().""",
-     "Use Bright Bold"),
-
-    ("brighten_bold_text",
-     "bool",
-     "whether Dark ANSI colors get replaced with their light counterparts for bold text.",
-     "This is only supported in iTerm2 version 3.3.7 and later.",
-     "Brighten Bold Text"),
 
     ("blink_allowed",
      "bool",
