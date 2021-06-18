@@ -59,9 +59,6 @@ typedef NS_OPTIONS(NSUInteger, iTermColorPresetMode) {
 };
 
 // Add a loaded preset to a profile
-// dark = nil: Update all modes
-// dark = @YES: Update dark mode
-// dark = @NO: Update light mode
 - (BOOL)addColorPresetNamed:(NSString *)presetName toProfile:(Profile *)profile from:(iTermColorPresetMode)source to:(iTermColorPresetMode)destination;
 
 - (BOOL)presetHasMultipleModes:(NSString *)presetName;

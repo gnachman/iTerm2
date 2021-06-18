@@ -4330,7 +4330,6 @@ ITERM_WEAKLY_REFERENCEABLE
                               controlSize:NSControlSizeRegular
                             scrollerStyle:[self scrollerStyle]];
 
-    assert(charWidth > 0);
     int screenWidth = (contentSize.width - [iTermPreferences intForKey:kPreferenceKeySideMargins] * 2) / charWidth;
     int screenHeight = (contentSize.height - [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins] * 2) / charHeight;
 
