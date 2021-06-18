@@ -1,0 +1,80 @@
+
+class PartialProfile(Profile):
+    """
+    Represents a profile that has only a subset of fields available for
+    reading.
+    """
+    # pylint: disable=dangerous-default-value
+    @staticmethod
+    async def async_query(
+            connection: iterm2.connection.Connection,
+            guids: typing.Optional[typing.List[str]] = None,
+            properties: typing.List[str] = [
+                "Guid", "Name"]) -> typing.List['PartialProfile']:
+        """
+        Fetches a list of profiles by guid, populating the requested
+        properties.
+
+        :param connection: The connection to send the query to.
+        :param properties: Lists the properties to fetch. Pass None for all. If
+            you wish to fetch the full profile later, you must ensure the
+            'Guid' property is fetched.
+        :param guids: Lists GUIDs to list. Pass None for all profiles.
+
+        :returns: A list of :class:`PartialProfile` objects with only the
+            specified properties set.
+
+        .. seealso::
+            * Example ":ref:`theme_example`"
+            * Example ":ref:`darknight_example`"
+        """
+        response = await iterm2.rpc.async_list_profiles(
+            connection, guids, properties)
+        profiles = []
+        for response_profile in response.list_profiles_response.profiles:
+            profile = PartialProfile(
+                None, connection, response_profile.properties)
+            profiles.append(profile)
+        return profiles
+
+    # Disable this because it's a public API and I'm stuck with it.
+    # pylint: disable=arguments-differ
+    @staticmethod
+    async def async_get_default(
+            connection: iterm2.connection.Connection,
+            properties: typing.List[str] = [
+                "Guid", "Name"]) -> 'PartialProfile':
+        """Returns the default profile."""
+        iterm2.capabilities.check_supports_get_default_profile(connection)
+        result = await iterm2.rpc.async_get_default_profile(connection)
+        guid = (result.preferences_response.results[0].
+                get_default_profile_result.guid)
+        profiles = await PartialProfile.async_query(
+            connection, [guid], properties)
+        return profiles[0]
+    # pylint: enable=dangerous-default-value
+
+    async def async_get_full_profile(self) -> Profile:
+        """Requests a full profile and returns it.
+
+        Raises BadGUIDException if the Guid is not set or does not match a
+        profile.
+
+        :returns: A :class:`Profile`.
+
+        .. seealso:: Example ":ref:`theme_example`"
+        """
+        if not self.guid:
+            raise BadGUIDException()
+        response = await iterm2.rpc.async_list_profiles(
+            self.connection, [self.guid], None)
+        if len(response.list_profiles_response.profiles) != 1:
+            raise BadGUIDException()
+        return Profile(
+            None,
+            self.connection,
+            response.list_profiles_response.profiles[0].properties)
+
+    async def async_make_default(self):
+        """Makes this profile the default profile."""
+        await iterm2.rpc.async_set_default_profile(self.connection, self.guid)

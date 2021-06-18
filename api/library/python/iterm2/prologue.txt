@@ -1,0 +1,160 @@
+
+"""
+Provides classes for representing, querying, and modifying iTerm2 profiles.
+"""
+import asyncio
+import enum
+import json
+import typing
+
+import iterm2.capabilities
+import iterm2.color
+import iterm2.colorpresets
+import iterm2.rpc
+
+
+# pylint: disable=too-many-public-methods
+# pylint: disable=too-many-lines
+# pylint: disable=line-too-long
+class BackgroundImageMode(enum.Enum):
+    """Describes how the background image should be accommodated to fit the window."""
+    STRETCH = 0  #: Stretch to fit
+    TILE = 1  #: Full size, undistorted, and tessellated if needed.
+    ASPECT_FILL = 2  #: Scale to fill the space, cropping if needed. Does not distort.
+    ASPECT_FIT = 3  #: Scale to fit the space, adding letterboxes or pillarboxes if needed. Does not distort.
+
+
+class BadGUIDException(Exception):
+    """Raised when a profile does not have a GUID or the GUID is unknown."""
+
+
+class CursorType(enum.Enum):
+    """Describes the type of the cursor."""
+    CURSOR_TYPE_UNDERLINE = 0  #: Underline cursor
+    CURSOR_TYPE_VERTICAL = 1  #: Vertical bar cursor
+    CURSOR_TYPE_BOX = 2  #: Box cursor
+
+
+class ThinStrokes(enum.Enum):
+    """When thin strokes should be used."""
+    THIN_STROKES_SETTING_NEVER = 0  #: NEver
+    THIN_STROKES_SETTING_RETINA_DARK_BACKGROUNDS_ONLY = 1  #: When the background is dark and the display is a retina display.
+    THIN_STROKES_SETTING_DARK_BACKGROUNDS_ONLY = 2  #: When the background is dark.
+    THIN_STROKES_SETTING_ALWAYS = 3  #: Always.
+    THIN_STROKES_SETTING_RETINA_ONLY = 4  #: When the display is a retina display.
+
+
+class UnicodeNormalization(enum.Enum):
+    """How to perform Unicode normalization."""
+    UNICODE_NORMALIZATION_NONE = 0  #: Do not modify input
+    UNICODE_NORMALIZATION_NFC = 1  #: Normalization form C
+    UNICODE_NORMALIZATION_NFD = 2  #: Normalization form D
+    UNICODE_NORMALIZATION_HFSPLUS = 3  #: Apple's HFS+ normalization form
+
+
+class CharacterEncoding(enum.Enum):
+    """String encodings."""
+    CHARACTER_ENCODING_UTF_8 = 4
+
+
+class OptionKeySends(enum.Enum):
+    """How should the option key behave?"""
+    OPTION_KEY_NORMAL = 0  #: Standard behavior
+    OPTION_KEY_META = 1  #: Acts like Meta. Not recommended.
+    OPTION_KEY_ESC = 2  #: Adds ESC prefix.
+
+
+class InitialWorkingDirectory(enum.Enum):
+    """How should the initial working directory of a session be set?"""
+    INITIAL_WORKING_DIRECTORY_CUSTOM = "Yes"  #: Custom directory, specified elsewhere
+    INITIAL_WORKING_DIRECTORY_HOME = "No"  #: Use default of home directory
+    INITIAL_WORKING_DIRECTORY_RECYCLE = "Recycle"  #: Reuse the "current" directory, or home if there is no current.
+    INITIAL_WORKING_DIRECTORY_ADVANCED = "Advanced"  #: Use advanced settings, which specify more granular behavior depending on whether the new session is a new window, tab, or split pane.
+
+# pylint: enable=line-too-long
+
+class IconMode(enum.Enum):
+    """How should session icons be selected?"""
+    NONE = 0
+    AUTOMATIC = 1
+    CUSTOM = 2
+
+
+class TitleComponents(enum.Enum):
+    """Which title components should be present?"""
+    SESSION_NAME = (1 << 0)
+    JOB = (1 << 1)
+    WORKING_DIRECTORy = (1 << 2)
+    TTY = (1 << 3)
+    CUSTOM = (1 << 4)  #: Mutually exclusive with all other options.
+    PROFILE_NAME = (1 << 5)
+    PROFILE_AND_SESSION_NAME = (1 << 6)
+    USER = (1 << 7)
+    HOST = (1 << 8)
+
+
+class LocalWriteOnlyProfile:
+    """
+    A profile that can be modified but not read and does not send changes on
+    each write.
+
+    You can safely create this with `LocalWriteOnlyProfile()`. Use
+    :meth:`~iterm2.Session.async_set_profile_properties` to update a session
+    without modifying the underlying profile.
+
+    .. seealso::
+      * Example ":ref:`copycolor_example`"
+      * Example ":ref:`settabcolor_example`"
+      * Example ":ref:`increase_font_size_example`"
+    """
+    def __init__(self, values=None):
+        if not values:
+            values = {}
+        self.__values = {}
+        for key, value in values.items():
+            self.__values[key] = json.dumps(value)
+
+    @property
+    def values(self):
+        """Returns the internal values dict."""
+        return self.__values
+
+    def _simple_set(self, key, value):
+        """value is a json type"""
+        if key is None:
+            self.__values[key] = None
+        else:
+            self.__values[key] = json.dumps(value)
+
+    def _color_set(self, key, value):
+        if value is None:
+            self.__values[key] = "null"
+        else:
+            self.__values[key] = json.dumps(value.get_dict())
+
+    def set_title_components(self, value: typing.List[TitleComponents]):
+        """
+        Sets which components are visible in the session's title, or selects a
+        custom component.
+
+        If it is set to `CUSTOM` then the title_function must be set properly.
+        """
+        bitmask = 0
+        for component in value:
+            bitmask += component.value
+        return self._simple_set("Title Components", bitmask)
+
+    def set_title_function(self, display_name: str, identifier: str):
+        """
+        Sets the function call for the session title provider and its display
+        name for the UI.
+
+        :param display_name: This is shown in the Title Components menu in the
+            UI.
+        :identifier: The unique identifier, typically a backwards domain name.
+
+        This takes effect only when the title_components property is set to
+        `CUSTOM`.
+        """
+        return self._simple_set("Title Function", [display_name, identifier])
+

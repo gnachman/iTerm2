@@ -19,3 +19,6 @@ mypy: force
 
 pylint: force
 	pylint --load-plugins=pylint_protobuf iterm2
+
+iterm2/profile.py: gen_profile.py
+	./gen_profile.py > iterm2/profile.py

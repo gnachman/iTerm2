@@ -3592,6 +3592,7 @@
 		A6DBE76C22507D1600144200 /* NSView+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A61B66C918D4D855009AC9D5 /* NSView+iTerm.m */; };
 		A6DCDD202560B410004EA8A1 /* NSAttributedString+PSM.h in Headers */ = {isa = PBXBuildFile; fileRef = A6DCDD1E2560B410004EA8A1 /* NSAttributedString+PSM.h */; };
 		A6DCDD212560B410004EA8A1 /* NSAttributedString+PSM.m in Sources */ = {isa = PBXBuildFile; fileRef = A6DCDD1F2560B410004EA8A1 /* NSAttributedString+PSM.m */; };
+		A6DEB2EB267BBE6C00192994 /* write_only_profile_prologue.txt in Resources */ = {isa = PBXBuildFile; fileRef = A6DEB2EA267BBE6C00192994 /* write_only_profile_prologue.txt */; };
 		A6DF401C1897607E00F05947 /* NSTextField+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A6DF401A1897607E00F05947 /* NSTextField+iTerm.h */; };
 		A6DF91B52477B38700FB9F42 /* iTermMissionControlHacks.h in Headers */ = {isa = PBXBuildFile; fileRef = A6DF91B32477B38700FB9F42 /* iTermMissionControlHacks.h */; };
 		A6DF91B62477B38700FB9F42 /* iTermMissionControlHacks.m in Sources */ = {isa = PBXBuildFile; fileRef = A6DF91B42477B38700FB9F42 /* iTermMissionControlHacks.m */; };
@@ -4758,9 +4759,6 @@
 		530AB88820AE85DF00D2AA08 /* tab.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = tab.py; sourceTree = "<group>"; };
 		530AB88920AE85DF00D2AA08 /* tool.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = tool.py; sourceTree = "<group>"; };
 		530AB88E20AE85DF00D2AA08 /* README.rst */ = {isa = PBXFileReference; lastKnownFileType = text; path = README.rst; sourceTree = "<group>"; };
-		530AB89120AE85DF00D2AA08 /* api_pb2.pyc */ = {isa = PBXFileReference; lastKnownFileType = file; path = api_pb2.pyc; sourceTree = "<group>"; };
-		530AB89220AE85DF00D2AA08 /* it2api */ = {isa = PBXFileReference; lastKnownFileType = text; path = it2api; sourceTree = "<group>"; };
-		530AB89320AE85DF00D2AA08 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		530AB89420AFDF5000D2AA08 /* iTermScriptFunctionCall.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermScriptFunctionCall.h; sourceTree = "<group>"; };
 		530AB89520AFDF5000D2AA08 /* iTermScriptFunctionCall.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermScriptFunctionCall.m; sourceTree = "<group>"; };
 		530AB89820AFF21200D2AA08 /* CoreParse.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreParse.framework; path = ThirdParty/CoreParse.framework; sourceTree = "<group>"; };
@@ -6552,6 +6550,12 @@
 		A6DCDD1E2560B410004EA8A1 /* NSAttributedString+PSM.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "NSAttributedString+PSM.h"; sourceTree = "<group>"; };
 		A6DCDD1F2560B410004EA8A1 /* NSAttributedString+PSM.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "NSAttributedString+PSM.m"; sourceTree = "<group>"; };
 		A6DDA88425B376D200AA55EE /* iTermActivityInfo.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermActivityInfo.h; sourceTree = "<group>"; };
+		A6DEB2C0267BACFE00192994 /* gen_profile.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = gen_profile.py; sourceTree = "<group>"; };
+		A6DEB2D5267BB8A600192994 /* profile_prologue.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = profile_prologue.txt; sourceTree = "<group>"; };
+		A6DEB2DF267BB95100192994 /* partial_profile.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = partial_profile.txt; sourceTree = "<group>"; };
+		A6DEB2E8267BBC7F00192994 /* gen_profile.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = gen_profile.py; sourceTree = "<group>"; };
+		A6DEB2E9267BBC8000192994 /* prologue.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = prologue.txt; sourceTree = "<group>"; };
+		A6DEB2EA267BBE6C00192994 /* write_only_profile_prologue.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = write_only_profile_prologue.txt; sourceTree = "<group>"; };
 		A6DF401A1897607E00F05947 /* NSTextField+iTerm.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = "NSTextField+iTerm.h"; sourceTree = "<group>"; tabWidth = 4; };
 		A6DF401B1897607E00F05947 /* NSTextField+iTerm.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = "NSTextField+iTerm.m"; sourceTree = "<group>"; tabWidth = 4; };
 		A6DF7B711A5BA33900D96409 /* iTermParser.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermParser.h; sourceTree = "<group>"; };
@@ -8280,7 +8284,6 @@
 			isa = PBXGroup;
 			children = (
 				530AB7ED20AE85DE00D2AA08 /* library */,
-				530AB88F20AE85DF00D2AA08 /* examples */,
 			);
 			path = api;
 			sourceTree = "<group>";
@@ -8297,6 +8300,7 @@
 			isa = PBXGroup;
 			children = (
 				530AB7EF20AE85DE00D2AA08 /* iterm2 */,
+				A6DEB2C0267BACFE00192994 /* gen_profile.py */,
 			);
 			path = python;
 			sourceTree = "<group>";
@@ -8304,6 +8308,11 @@
 		530AB7EF20AE85DE00D2AA08 /* iterm2 */ = {
 			isa = PBXGroup;
 			children = (
+				A6DEB2EA267BBE6C00192994 /* write_only_profile_prologue.txt */,
+				A6DEB2E8267BBC7F00192994 /* gen_profile.py */,
+				A6DEB2DF267BB95100192994 /* partial_profile.txt */,
+				A6DEB2D5267BB8A600192994 /* profile_prologue.txt */,
+				A6DEB2E9267BBC8000192994 /* prologue.txt */,
 				530AB7F020AE85DE00D2AA08 /* Makefile */,
 				530AB7F120AE85DE00D2AA08 /* MANIFEST.in */,
 				530AB7F220AE85DE00D2AA08 /* docs */,
@@ -8415,24 +8424,6 @@
 				530AB86C20AE85DF00D2AA08 /* window.py */,
 			);
 			path = iterm2;
-			sourceTree = "<group>";
-		};
-		530AB88F20AE85DF00D2AA08 /* examples */ = {
-			isa = PBXGroup;
-			children = (
-				530AB89020AE85DF00D2AA08 /* python */,
-			);
-			path = examples;
-			sourceTree = "<group>";
-		};
-		530AB89020AE85DF00D2AA08 /* python */ = {
-			isa = PBXGroup;
-			children = (
-				530AB89120AE85DF00D2AA08 /* api_pb2.pyc */,
-				530AB89220AE85DF00D2AA08 /* it2api */,
-				530AB89320AE85DF00D2AA08 /* README.md */,
-			);
-			path = python;
 			sourceTree = "<group>";
 		};
 		5370676121C9D2390088D0F3 /* SignedArchive */ = {
@@ -13300,6 +13291,7 @@
 				A6B70FBB19830C37007A4284 /* dead.png in Resources */,
 				A623D94E1F8984700011F8C3 /* key@2x.png in Resources */,
 				53FF9820209283BE008688D7 /* template_basic_daemon.py in Resources */,
+				A6DEB2EB267BBE6C00192994 /* write_only_profile_prologue.txt in Resources */,
 				A62DBB9920F47CFA008B63D1 /* GoBack.png in Resources */,
 				A67F615E214395990093940A /* graphic_monitor@2x.png in Resources */,
 				A67F617B214395A70093940A /* graphic_nodejs.png in Resources */,

@@ -1,0 +1,99 @@
+class WriteOnlyProfile:
+    """
+    A profile that can be modified but not read. Useful for changing many
+    sessions' profiles at once without knowing what they are.
+    """
+    def __init__(self, session_id, connection, guid=None):
+        assert session_id != "all"
+        self.connection = connection
+        self.session_id = session_id
+        self.__guid = guid
+
+    async def _async_simple_set(self, key: str, value: typing.Any):
+        """
+        :param value: a json type
+        """
+        await iterm2.rpc.async_set_profile_property(
+            self.connection,
+            self.session_id,
+            key,
+            value,
+            self._guids_for_set())
+
+    async def _async_color_set(self, key, value):
+        if value is None:
+            await iterm2.rpc.async_set_profile_property(
+                self.connection,
+                self.session_id,
+                key,
+                "null",
+                self._guids_for_set())
+        else:
+            await iterm2.rpc.async_set_profile_property(
+                self.connection,
+                self.session_id,
+                key,
+                value.get_dict(),
+                self._guids_for_set())
+
+    def _guids_for_set(self):
+        if self.session_id is None:
+            assert self.__guid is not None
+            return [self.__guid]
+        return self.session_id
+
+    async def async_set_color_preset(
+            self, preset: iterm2.colorpresets.ColorPreset):
+        """
+        Sets the color preset.
+
+        :param preset: The new value.
+
+        .. seealso::
+            * Example ":ref:`colorhost_example`"
+            * Example ":ref:`random_color_example`"
+            * Example ":ref:`theme_example`"
+            * Example ":ref:`darknight_example`"
+        """
+        coros = []
+        for value in preset.values:
+            coro = self._async_color_set(
+                value.key,
+                iterm2.color.Color(
+                    value.red,
+                    value.green,
+                    value.blue,
+                    value.alpha,
+                    value.color_space))
+            coros.append(coro)
+        await asyncio.gather(*coros)
+
+    async def async_set_title_components(
+            self, value: typing.List[TitleComponents]):
+        """
+        Sets which components are visible in the session's title, or selects a
+        custom component.
+
+        If it is set to `CUSTOM` then the title_function must be set properly.
+        """
+        bitmask = 0
+        for component in value:
+            bitmask += component.value
+        return await self._async_simple_set("Title Components", bitmask)
+
+    async def async_set_title_function(
+            self, display_name: str, identifier: str):
+        """
+        Sets the function call for the session title provider and its display
+        name for the UI.
+
+        :param display_name: This is shown in the Title Components menu in the
+            UI.
+        :identifier: The unique identifier, typically a backwards domain name.
+
+        This takes effect only when the title_components property is set to
+        `CUSTOM`.
+        """
+        return await self._async_simple_set(
+            "Title Function", [display_name, identifier])
+
