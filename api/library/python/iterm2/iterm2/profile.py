@@ -194,6 +194,53 @@ class LocalWriteOnlyProfile:
         """
         return self._color_set("Bold Color", value)
 
+    def set_use_bright_bold(self, value: bool):
+        """
+        Sets  how bold text is rendered.
+
+        This function is deprecated because its behavior changed in
+        iTerm2 version 3.3.7.
+
+        Pre-3.3.7, when enabled:
+        * Use the profile-specified bold color for default-colored
+          bold text.
+        * Dark ANSI colors get replaced with their light counterparts
+          for bold text.
+
+        In 3.3.7 and later:
+        * Use the profile-specified bold color for default-colored
+          bold text.
+
+        Use `use_bold_color` and `brighten_bold_text` in 3.3.7 and
+        later instead of this method.
+
+        :param value: A bool
+        """
+        return self._simple_set("Use Bright Bold", value)
+
+    def set_use_bold_color(self, value: bool):
+        """
+        Sets whether the profile-specified bold color is used for
+        default-colored bold text.
+
+        Note: In versions of iTerm2 prior to 3.3.7, this behaves like
+        set_use_bright_bold().
+
+        :param value: A bool
+        """
+        return self._simple_set("Use Bright Bold", value)
+
+    def set_brighten_bold_text(self, value: bool):
+        """
+        Sets whether Dark ANSI colors get replaced with their light
+        counterparts for bold text.
+
+        This is only supported in iTerm2 version 3.3.7 and later.
+
+        :param value: A bool
+        """
+        return self._simple_set("Brighten Bold Text", value)
+
     def set_link_color(self, value: 'iterm2.color.Color'):
         """
         Sets the link color.
@@ -371,6 +418,14 @@ class LocalWriteOnlyProfile:
         """
         return self._simple_set("Smart Cursor Color", value)
 
+    def set_minimum_contrast(self, value: float):
+        """
+        Sets the minimum contrast, in 0 to 1.
+
+        :param value: A float
+        """
+        return self._simple_set("Minimum Contrast", value)
+
     def set_tab_color(self, value: 'iterm2.color.Color'):
         """
         Sets the tab color.
@@ -379,6 +434,14 @@ class LocalWriteOnlyProfile:
         """
         return self._color_set("Tab Color", value)
 
+    def set_use_tab_color(self, value: bool):
+        """
+        Sets whether the tab color should be used.
+
+        :param value: A bool
+        """
+        return self._simple_set("Use Tab Color", value)
+
     def set_underline_color(self, value: typing.Optional['iterm2.color.Color']):
         """
         Sets the underline color.
@@ -386,6 +449,30 @@ class LocalWriteOnlyProfile:
         :param value: A typing.Optional['iterm2.color.Color']
         """
         return self._color_set("Underline Color", value)
+
+    def set_use_underline_color(self, value: bool):
+        """
+        Sets whether to use the specified underline color.
+
+        :param value: A bool
+        """
+        return self._simple_set("Use Underline Color", value)
+
+    def set_cursor_boost(self, value: float):
+        """
+        Sets the cursor boost level, in 0 to 1.
+
+        :param value: A float
+        """
+        return self._simple_set("Cursor Boost", value)
+
+    def set_use_cursor_guide(self, value: bool):
+        """
+        Sets whether the cursor guide should be used.
+
+        :param value: A bool
+        """
+        return self._simple_set("Use Cursor Guide", value)
 
     def set_cursor_guide_color(self, value: 'iterm2.color.Color'):
         """
@@ -427,46 +514,6 @@ class LocalWriteOnlyProfile:
         """
         return self._simple_set("Answerback String", value)
 
-    def set_use_cursor_guide(self, value: bool):
-        """
-        Sets whether the cursor guide should be used.
-
-        :param value: A bool
-        """
-        return self._simple_set("Use Cursor Guide", value)
-
-    def set_use_tab_color(self, value: bool):
-        """
-        Sets whether the tab color should be used.
-
-        :param value: A bool
-        """
-        return self._simple_set("Use Tab Color", value)
-
-    def set_use_underline_color(self, value: bool):
-        """
-        Sets whether to use the specified underline color.
-
-        :param value: A bool
-        """
-        return self._simple_set("Use Underline Color", value)
-
-    def set_minimum_contrast(self, value: float):
-        """
-        Sets the minimum contrast, in 0 to 1.
-
-        :param value: A float
-        """
-        return self._simple_set("Minimum Contrast", value)
-
-    def set_cursor_boost(self, value: float):
-        """
-        Sets the cursor boost level, in 0 to 1.
-
-        :param value: A float
-        """
-        return self._simple_set("Cursor Boost", value)
-
     def set_blinking_cursor(self, value: bool):
         """
         Sets whether the cursor blinks.
@@ -498,53 +545,6 @@ class LocalWriteOnlyProfile:
         :param value: A bool
         """
         return self._simple_set("Non-ASCII Ligatures", value)
-
-    def set_use_bright_bold(self, value: bool):
-        """
-        Sets  how bold text is rendered.
-
-        This function is deprecated because its behavior changed in
-        iTerm2 version 3.3.7.
-
-        Pre-3.3.7, when enabled:
-        * Use the profile-specified bold color for default-colored
-          bold text.
-        * Dark ANSI colors get replaced with their light counterparts
-          for bold text.
-
-        In 3.3.7 and later:
-        * Use the profile-specified bold color for default-colored
-          bold text.
-
-        Use `use_bold_color` and `brighten_bold_text` in 3.3.7 and
-        later instead of this method.
-
-        :param value: A bool
-        """
-        return self._simple_set("Use Bright Bold", value)
-
-    def set_use_bold_color(self, value: bool):
-        """
-        Sets whether the profile-specified bold color is used for
-        default-colored bold text.
-
-        Note: In versions of iTerm2 prior to 3.3.7, this behaves like
-        set_use_bright_bold().
-
-        :param value: A bool
-        """
-        return self._simple_set("Use Bright Bold", value)
-
-    def set_brighten_bold_text(self, value: bool):
-        """
-        Sets whether Dark ANSI colors get replaced with their light
-        counterparts for bold text.
-
-        This is only supported in iTerm2 version 3.3.7 and later.
-
-        :param value: A bool
-        """
-        return self._simple_set("Brighten Bold Text", value)
 
     def set_blink_allowed(self, value: bool):
         """
@@ -1480,6 +1480,47 @@ class WriteOnlyProfile:
         """
         return await self._async_color_set("Bold Color", value)
 
+    async def async_set_use_bright_bold(self, value: bool):
+        """
+        Sets  how bold text is rendered.
+
+        This function is deprecated because its behavior changed in
+        iTerm2 version 3.3.7.
+
+        Pre-3.3.7, when enabled:
+        * Use the profile-specified bold color for default-colored
+          bold text.
+        * Dark ANSI colors get replaced with their light counterparts
+          for bold text.
+
+        In 3.3.7 and later:
+        * Use the profile-specified bold color for default-colored
+          bold text.
+
+        Use `use_bold_color` and `brighten_bold_text` in 3.3.7 and
+        later instead of this method.
+        """
+        return await self._async_simple_set("Use Bright Bold", value)
+
+    async def async_set_use_bold_color(self, value: bool):
+        """
+        Sets whether the profile-specified bold color is used for
+        default-colored bold text.
+
+        Note: In versions of iTerm2 prior to 3.3.7, this behaves like
+        async_set_use_bright_bold().
+        """
+        return await self._async_simple_set("Use Bright Bold", value)
+
+    async def async_set_brighten_bold_text(self, value: bool):
+        """
+        Sets whether Dark ANSI colors get replaced with their light
+        counterparts for bold text.
+
+        This is only supported in iTerm2 version 3.3.7 and later.
+        """
+        return await self._async_simple_set("Brighten Bold Text", value)
+
     async def async_set_link_color(self, value: 'iterm2.color.Color'):
         """
         Sets the link color.
@@ -1657,6 +1698,14 @@ class WriteOnlyProfile:
         """
         return await self._async_simple_set("Smart Cursor Color", value)
 
+    async def async_set_minimum_contrast(self, value: float):
+        """
+        Sets the minimum contrast, in 0 to 1.
+
+        :param value: A float
+        """
+        return await self._async_simple_set("Minimum Contrast", value)
+
     async def async_set_tab_color(self, value: 'iterm2.color.Color'):
         """
         Sets the tab color.
@@ -1665,6 +1714,14 @@ class WriteOnlyProfile:
         """
         return await self._async_color_set("Tab Color", value)
 
+    async def async_set_use_tab_color(self, value: bool):
+        """
+        Sets whether the tab color should be used.
+
+        :param value: A bool
+        """
+        return await self._async_simple_set("Use Tab Color", value)
+
     async def async_set_underline_color(self, value: typing.Optional['iterm2.color.Color']):
         """
         Sets the underline color.
@@ -1672,6 +1729,30 @@ class WriteOnlyProfile:
         :param value: A typing.Optional['iterm2.color.Color']
         """
         return await self._async_color_set("Underline Color", value)
+
+    async def async_set_use_underline_color(self, value: bool):
+        """
+        Sets whether to use the specified underline color.
+
+        :param value: A bool
+        """
+        return await self._async_simple_set("Use Underline Color", value)
+
+    async def async_set_cursor_boost(self, value: float):
+        """
+        Sets the cursor boost level, in 0 to 1.
+
+        :param value: A float
+        """
+        return await self._async_simple_set("Cursor Boost", value)
+
+    async def async_set_use_cursor_guide(self, value: bool):
+        """
+        Sets whether the cursor guide should be used.
+
+        :param value: A bool
+        """
+        return await self._async_simple_set("Use Cursor Guide", value)
 
     async def async_set_cursor_guide_color(self, value: 'iterm2.color.Color'):
         """
@@ -1713,46 +1794,6 @@ class WriteOnlyProfile:
         """
         return await self._async_simple_set("Answerback String", value)
 
-    async def async_set_use_cursor_guide(self, value: bool):
-        """
-        Sets whether the cursor guide should be used.
-
-        :param value: A bool
-        """
-        return await self._async_simple_set("Use Cursor Guide", value)
-
-    async def async_set_use_tab_color(self, value: bool):
-        """
-        Sets whether the tab color should be used.
-
-        :param value: A bool
-        """
-        return await self._async_simple_set("Use Tab Color", value)
-
-    async def async_set_use_underline_color(self, value: bool):
-        """
-        Sets whether to use the specified underline color.
-
-        :param value: A bool
-        """
-        return await self._async_simple_set("Use Underline Color", value)
-
-    async def async_set_minimum_contrast(self, value: float):
-        """
-        Sets the minimum contrast, in 0 to 1.
-
-        :param value: A float
-        """
-        return await self._async_simple_set("Minimum Contrast", value)
-
-    async def async_set_cursor_boost(self, value: float):
-        """
-        Sets the cursor boost level, in 0 to 1.
-
-        :param value: A float
-        """
-        return await self._async_simple_set("Cursor Boost", value)
-
     async def async_set_blinking_cursor(self, value: bool):
         """
         Sets whether the cursor blinks.
@@ -1784,47 +1825,6 @@ class WriteOnlyProfile:
         :param value: A bool
         """
         return await self._async_simple_set("Non-ASCII Ligatures", value)
-
-    async def async_set_use_bright_bold(self, value: bool):
-        """
-        Sets  how bold text is rendered.
-
-        This function is deprecated because its behavior changed in
-        iTerm2 version 3.3.7.
-
-        Pre-3.3.7, when enabled:
-        * Use the profile-specified bold color for default-colored
-          bold text.
-        * Dark ANSI colors get replaced with their light counterparts
-          for bold text.
-
-        In 3.3.7 and later:
-        * Use the profile-specified bold color for default-colored
-          bold text.
-
-        Use `use_bold_color` and `brighten_bold_text` in 3.3.7 and
-        later instead of this method.
-        """
-        return await self._async_simple_set("Use Bright Bold", value)
-
-    async def async_set_use_bold_color(self, value: bool):
-        """
-        Sets whether the profile-specified bold color is used for
-        default-colored bold text.
-
-        Note: In versions of iTerm2 prior to 3.3.7, this behaves like
-        async_set_use_bright_bold().
-        """
-        return await self._async_simple_set("Use Bright Bold", value)
-
-    async def async_set_brighten_bold_text(self, value: bool):
-        """
-        Sets whether Dark ANSI colors get replaced with their light
-        counterparts for bold text.
-
-        This is only supported in iTerm2 version 3.3.7 and later.
-        """
-        return await self._async_simple_set("Brighten Bold Text", value)
 
     async def async_set_blink_allowed(self, value: bool):
         """
@@ -2756,6 +2756,56 @@ class Profile(WriteOnlyProfile):
         return self.get_color_with_key("Bold Color")
 
     @property
+    def use_bright_bold(self) -> bool:
+        """
+        Returns  how bold text is rendered.
+
+        This function is deprecated because its behavior changed in
+        iTerm2 version 3.3.7.
+
+        Pre-3.3.7, when enabled:
+        * Use the profile-specified bold color for default-colored
+          bold text.
+        * Dark ANSI colors get replaced with their light counterparts
+          for bold text.
+
+        In 3.3.7 and later:
+        * Use the profile-specified bold color for default-colored
+          bold text.
+
+        Use `use_bold_color` and `brighten_bold_text` in 3.3.7 and
+        later instead of this method.
+
+        :returns: A bool
+        """
+        return self._simple_get("Use Bright Bold")
+
+    @property
+    def use_bold_color(self) -> bool:
+        """
+        Returns whether the profile-specified bold color is used for
+        default-colored bold text.
+
+        Note: In versions of iTerm2 prior to 3.3.7, this behaves like
+        use_bright_bold().
+
+        :returns: A bool
+        """
+        return self._simple_get("Use Bright Bold")
+
+    @property
+    def brighten_bold_text(self) -> bool:
+        """
+        Returns whether Dark ANSI colors get replaced with their light
+        counterparts for bold text.
+
+        This is only supported in iTerm2 version 3.3.7 and later.
+
+        :returns: A bool
+        """
+        return self._simple_get("Brighten Bold Text")
+
+    @property
     def link_color(self) -> 'iterm2.color.Color':
         """
         Returns the link color.
@@ -2955,6 +3005,15 @@ class Profile(WriteOnlyProfile):
         return self._simple_get("Smart Cursor Color")
 
     @property
+    def minimum_contrast(self) -> float:
+        """
+        Returns the minimum contrast, in 0 to 1.
+
+        :returns: A float
+        """
+        return self._simple_get("Minimum Contrast")
+
+    @property
     def tab_color(self) -> 'iterm2.color.Color':
         """
         Returns the tab color.
@@ -2964,6 +3023,15 @@ class Profile(WriteOnlyProfile):
         return self.get_color_with_key("Tab Color")
 
     @property
+    def use_tab_color(self) -> bool:
+        """
+        Returns whether the tab color should be used.
+
+        :returns: A bool
+        """
+        return self._simple_get("Use Tab Color")
+
+    @property
     def underline_color(self) -> typing.Optional['iterm2.color.Color']:
         """
         Returns the underline color.
@@ -2971,6 +3039,33 @@ class Profile(WriteOnlyProfile):
         :returns: A typing.Optional['iterm2.color.Color']
         """
         return self.get_color_with_key("Underline Color")
+
+    @property
+    def use_underline_color(self) -> bool:
+        """
+        Returns whether to use the specified underline color.
+
+        :returns: A bool
+        """
+        return self._simple_get("Use Underline Color")
+
+    @property
+    def cursor_boost(self) -> float:
+        """
+        Returns the cursor boost level, in 0 to 1.
+
+        :returns: A float
+        """
+        return self._simple_get("Cursor Boost")
+
+    @property
+    def use_cursor_guide(self) -> bool:
+        """
+        Returns whether the cursor guide should be used.
+
+        :returns: A bool
+        """
+        return self._simple_get("Use Cursor Guide")
 
     @property
     def cursor_guide_color(self) -> 'iterm2.color.Color':
@@ -3018,51 +3113,6 @@ class Profile(WriteOnlyProfile):
         return self._simple_get("Answerback String")
 
     @property
-    def use_cursor_guide(self) -> bool:
-        """
-        Returns whether the cursor guide should be used.
-
-        :returns: A bool
-        """
-        return self._simple_get("Use Cursor Guide")
-
-    @property
-    def use_tab_color(self) -> bool:
-        """
-        Returns whether the tab color should be used.
-
-        :returns: A bool
-        """
-        return self._simple_get("Use Tab Color")
-
-    @property
-    def use_underline_color(self) -> bool:
-        """
-        Returns whether to use the specified underline color.
-
-        :returns: A bool
-        """
-        return self._simple_get("Use Underline Color")
-
-    @property
-    def minimum_contrast(self) -> float:
-        """
-        Returns the minimum contrast, in 0 to 1.
-
-        :returns: A float
-        """
-        return self._simple_get("Minimum Contrast")
-
-    @property
-    def cursor_boost(self) -> float:
-        """
-        Returns the cursor boost level, in 0 to 1.
-
-        :returns: A float
-        """
-        return self._simple_get("Cursor Boost")
-
-    @property
     def blinking_cursor(self) -> bool:
         """
         Returns whether the cursor blinks.
@@ -3097,56 +3147,6 @@ class Profile(WriteOnlyProfile):
         :returns: A bool
         """
         return self._simple_get("Non-ASCII Ligatures")
-
-    @property
-    def use_bright_bold(self) -> bool:
-        """
-        Returns  how bold text is rendered.
-
-        This function is deprecated because its behavior changed in
-        iTerm2 version 3.3.7.
-
-        Pre-3.3.7, when enabled:
-        * Use the profile-specified bold color for default-colored
-          bold text.
-        * Dark ANSI colors get replaced with their light counterparts
-          for bold text.
-
-        In 3.3.7 and later:
-        * Use the profile-specified bold color for default-colored
-          bold text.
-
-        Use `use_bold_color` and `brighten_bold_text` in 3.3.7 and
-        later instead of this method.
-
-        :returns: A bool
-        """
-        return self._simple_get("Use Bright Bold")
-
-    @property
-    def use_bold_color(self) -> bool:
-        """
-        Returns whether the profile-specified bold color is used for
-        default-colored bold text.
-
-        Note: In versions of iTerm2 prior to 3.3.7, this behaves like
-        use_bright_bold().
-
-        :returns: A bool
-        """
-        return self._simple_get("Use Bright Bold")
-
-    @property
-    def brighten_bold_text(self) -> bool:
-        """
-        Returns whether Dark ANSI colors get replaced with their light
-        counterparts for bold text.
-
-        This is only supported in iTerm2 version 3.3.7 and later.
-
-        :returns: A bool
-        """
-        return self._simple_get("Brighten Bold Text")
 
     @property
     def blink_allowed(self) -> bool:
