@@ -123,7 +123,9 @@ public class FontFamilyMemberPickerView: NSPopUpButton {
         }
         for (i, member) in members.enumerated() {
             if member.postscriptName == name {
-                select(menu.items[i])
+                if i >= 0 && i < menu.items.count {
+                    select(menu.items[i])
+                }
                 return
             }
         }
