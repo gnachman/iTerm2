@@ -8298,8 +8298,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                 profile = self.profile;
             }
             if (profile) {
-                const BOOL modes = [iTermProfilePreferences boolForKey:KEY_USE_SEPARATE_COLORS_FOR_LIGHT_AND_DARK_MODE inProfile:self.profile];
-                [model addColorPresetNamed:action.parameter toProfile:profile dark:modes ? @(_colorMap.darkMode) : nil];
+                [model addColorPresetNamed:action.parameter toProfile:profile];
             }
             break;
         }

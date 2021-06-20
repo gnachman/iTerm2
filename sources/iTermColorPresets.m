@@ -185,7 +185,24 @@ NSString *const kRebuildColorPresetsMenuNotification = @"kRebuildColorPresetsMen
     return iTermColorPresetHasModes(settings);
 }
 
-- (BOOL)addColorPresetNamed:(NSString *)presetName toProfile:(Profile *)profile from:(iTermColorPresetMode)source to:(iTermColorPresetMode)destination {
+- (BOOL)addColorPresetNamed:(NSString *)presetName toProfile:(Profile *)profile {
+    const BOOL presetHasModes = [self presetHasMultipleModes:presetName];
+    const iTermColorPresetMode modes = presetHasModes ? (iTermColorPresetModeLight | iTermColorPresetModeDark) : 0;
+    return [self addColorPresetNamed:presetName toProfile:profile from:modes to:modes updateUseModes:YES];
+}
+
+- (BOOL)addColorPresetNamed:(NSString *)presetName
+                  toProfile:(Profile *)profile
+                       from:(iTermColorPresetMode)source
+                         to:(iTermColorPresetMode)destination {
+    return [self addColorPresetNamed:presetName toProfile:profile from:source to:destination updateUseModes:NO];
+}
+
+- (BOOL)addColorPresetNamed:(NSString *)presetName
+                  toProfile:(Profile *)profile
+                       from:(iTermColorPresetMode)source
+                         to:(iTermColorPresetMode)destination
+             updateUseModes:(BOOL)updateUseModes {
     NSString *guid = profile[KEY_GUID];
     assert(guid);
 
@@ -251,6 +268,10 @@ NSString *const kRebuildColorPresetsMenuNotification = @"kRebuildColorPresetsMen
                 [newDict removeObjectForKey:key];  // Can happen for tab color and underline color, which are optional
             }
         }
+    }
+
+    if (updateUseModes) {
+        newDict[KEY_USE_SEPARATE_COLORS_FOR_LIGHT_AND_DARK_MODE] = (destination == 0) ? @NO : @YES;
     }
 
     [self setBookmark:newDict withGuid:guid];
