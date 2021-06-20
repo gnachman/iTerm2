@@ -9,6 +9,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, strong) NSArray<NSDate *> *timestamps;
 @property (nonatomic) BOOL useThinStrokes;
 @property (nonatomic) BOOL antialiased;
+@property (nonatomic, strong) NSFont *font;
 @end
 
 @interface iTermTimestampsRenderer : NSObject<iTermMetalCellRenderer>

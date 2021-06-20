@@ -898,7 +898,7 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
     }
 }
 
-- (void)createTimestampDrawingHelper {
+- (void)createTimestampDrawingHelperWithFont:(NSFont *)font {
     [_timestampDrawHelper autorelease];
     _timestampDrawHelper =
         [[iTermTimestampDrawHelper alloc] initWithBackgroundColor:[self defaultBackgroundColor]
@@ -906,8 +906,8 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
                                                               now:self.now
                                                useTestingTimezone:self.useTestingTimezone
                                                         rowHeight:_cellSize.height
-                                                           retina:self.isRetina];
-
+                                                           retina:self.isRetina
+                                                             font:font];
 }
 
 - (void)drawTimestampsWithVirtualOffset:(CGFloat)virtualOffset {

@@ -38,7 +38,8 @@ const CGFloat iTermTimestampGradientWidth = 20;
                                     now:(NSTimeInterval)now
                      useTestingTimezone:(BOOL)useTestingTimezone
                               rowHeight:(CGFloat)rowHeight
-                                 retina:(BOOL)isRetina {
+                                 retina:(BOOL)isRetina
+                                   font:(NSFont *)font {
     self = [super init];
     if (self) {
         _bgColor = backgroundColor;
@@ -48,6 +49,7 @@ const CGFloat iTermTimestampGradientWidth = 20;
         _rowHeight = rowHeight;
         _isRetina = isRetina;
         _rows = [NSMutableArray array];
+        _font = font;
     }
     return self;
 }
@@ -156,7 +158,7 @@ const CGFloat iTermTimestampGradientWidth = 20;
 
 - (NSRect)frameForString:(NSString *)s line:(int)line maxX:(CGFloat)maxX virtualOffset:(CGFloat)virtualOffset {
     NSString *widest = [s stringByReplacingOccurrencesOfRegex:@"[\\d\\p{Alphabetic}]" withString:@"M"];
-    NSSize size = [widest sizeWithAttributes:@{ NSFontAttributeName: [NSFont systemFontOfSize:[iTermAdvancedSettingsModel pointSizeOfTimeStamp]] }];
+    NSSize size = [widest sizeWithAttributes:@{ NSFontAttributeName: self.font ?: [NSFont systemFontOfSize:[iTermAdvancedSettingsModel pointSizeOfTimeStamp]] }];
 
     return [self frameForStringGivenWidth:size.width line:line maxX:maxX virtualOffset:virtualOffset];
 }
@@ -219,11 +221,11 @@ const CGFloat iTermTimestampGradientWidth = 20;
 - (NSDictionary *)attributesForTextColor:(NSColor *)fgColor shadow:(NSShadow *)shadow retina:(BOOL)retina {
     NSDictionary *attributes;
     if (retina) {
-        attributes = @{ NSFontAttributeName: [NSFont userFixedPitchFontOfSize:[iTermAdvancedSettingsModel pointSizeOfTimeStamp]],
+        attributes = @{ NSFontAttributeName: self.font ?: [NSFont userFixedPitchFontOfSize:[iTermAdvancedSettingsModel pointSizeOfTimeStamp]],
                         NSForegroundColorAttributeName: fgColor,
                         NSShadowAttributeName: shadow };
     } else {
-        NSFont *font = [NSFont userFixedPitchFontOfSize:[iTermAdvancedSettingsModel pointSizeOfTimeStamp]];
+        NSFont *font = self.font ?: [NSFont userFixedPitchFontOfSize:[iTermAdvancedSettingsModel pointSizeOfTimeStamp]];
         font = [[NSFontManager sharedFontManager] fontWithFamily:font.familyName
                                                           traits:NSBoldFontMask
                                                           weight:0

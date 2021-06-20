@@ -73,6 +73,7 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @property (nonatomic, readonly) NSEdgeInsets extraMargins;
 @property (nonatomic, readonly) BOOL thinStrokesForTimestamps;
 @property (nonatomic, readonly) BOOL asciiAntiAliased;
+@property (nonatomic, readonly) NSFont *timestampFont;
 
 // Initialize sketchPtr to 0. The number of set bits estimates the unique number of color combinations.
 - (void)metalGetGlyphKeys:(iTermMetalGlyphKey *)glyphKeys

@@ -1302,6 +1302,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
         tState.antialiased = frameData.perFrameState.asciiAntiAliased;
         tState.backgroundColor = frameData.perFrameState.timestampsBackgroundColor;
         tState.textColor = frameData.perFrameState.timestampsTextColor;
+        tState.font = frameData.perFrameState.timestampFont;
 
         tState.timestamps = [frameData.rows mapWithBlock:^id(iTermMetalRowData *row) {
             return row.date;

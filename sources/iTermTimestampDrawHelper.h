@@ -19,12 +19,16 @@ extern const CGFloat iTermTimestampGradientWidth;
 // Includes gradient and right margin
 @property (nonatomic, readonly) CGFloat suggestedWidth;
 
+// The font to use
+@property (nonatomic, readonly) NSFont *font;
+
 - (instancetype)initWithBackgroundColor:(NSColor *)backgroundColor
                               textColor:(NSColor *)textColor
                                     now:(NSTimeInterval)now
                      useTestingTimezone:(BOOL)useTestingTimezone
                               rowHeight:(CGFloat)rowHeight
-                                 retina:(BOOL)isRetina;
+                                 retina:(BOOL)isRetina
+                                   font:(NSFont *)font;
 
 - (void)setDate:(NSDate *)timestamp forLine:(int)line;
 

@@ -80,6 +80,7 @@ NS_ASSUME_NONNULL_BEGIN
     BOOL _showBroadcastStripes;
     BOOL _timestampsEnabled;
     BOOL _blinkingItemsVisible;
+    NSFont *_timestampFont;
 };
 
 - (void)loadSettingsWithDrawingHelper:(iTermTextDrawingHelper *)drawingHelper

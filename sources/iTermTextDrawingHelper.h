@@ -326,7 +326,7 @@ BOOL CheckFindMatchAtIndex(NSData *findMatches, int index);
                     virtualOffset:(CGFloat)virtualOffset;
 
 // If timestamps are to be shown, call this just before drawing.
-- (void)createTimestampDrawingHelper;
+- (void)createTimestampDrawingHelperWithFont:(NSFont *)font;
 
 // Draw timestamps.
 - (void)drawTimestampsWithVirtualOffset:(CGFloat)virtualOffset;

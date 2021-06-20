@@ -1360,7 +1360,7 @@
 
     CGFloat rightMargin = 0;
     if (self.showTimestamps) {
-        [_drawingHelper createTimestampDrawingHelper];
+        [_drawingHelper createTimestampDrawingHelperWithFont:self.font];
         rightMargin = _drawingHelper.timestampDrawHelper.maximumWidth + 8;
     }
     _drawingHelper.indicatorFrame = [self configureIndicatorsHelperWithRightMargin:rightMargin];

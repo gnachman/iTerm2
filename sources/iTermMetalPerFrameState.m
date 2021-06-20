@@ -1259,6 +1259,10 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
     return _configuration->_asciiAntialias;
 }
 
+- (NSFont *)timestampFont {
+    return _configuration->_timestampFont;
+}
+
 #pragma mark - Color
 
 - (vector_float4)textColorForCharacter:(const screen_char_t *const)c
