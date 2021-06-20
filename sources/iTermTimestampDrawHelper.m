@@ -158,7 +158,7 @@ const CGFloat iTermTimestampGradientWidth = 20;
 
 - (NSRect)frameForString:(NSString *)s line:(int)line maxX:(CGFloat)maxX virtualOffset:(CGFloat)virtualOffset {
     NSString *widest = [s stringByReplacingOccurrencesOfRegex:@"[\\d\\p{Alphabetic}]" withString:@"M"];
-    NSSize size = [widest sizeWithAttributes:@{ NSFontAttributeName: self.font ?: [NSFont systemFontOfSize:[iTermAdvancedSettingsModel pointSizeOfTimeStamp]] }];
+    NSSize size = [widest sizeWithAttributes:@{ NSFontAttributeName: self.font ?: [NSFont userFixedPitchFontOfSize:[NSFont systemFontSize]] }];
 
     return [self frameForStringGivenWidth:size.width line:line maxX:maxX virtualOffset:virtualOffset];
 }
@@ -221,11 +221,11 @@ const CGFloat iTermTimestampGradientWidth = 20;
 - (NSDictionary *)attributesForTextColor:(NSColor *)fgColor shadow:(NSShadow *)shadow retina:(BOOL)retina {
     NSDictionary *attributes;
     if (retina) {
-        attributes = @{ NSFontAttributeName: self.font ?: [NSFont userFixedPitchFontOfSize:[iTermAdvancedSettingsModel pointSizeOfTimeStamp]],
+        attributes = @{ NSFontAttributeName: self.font ?: [NSFont userFixedPitchFontOfSize:[NSFont systemFontSize]],
                         NSForegroundColorAttributeName: fgColor,
                         NSShadowAttributeName: shadow };
     } else {
-        NSFont *font = self.font ?: [NSFont userFixedPitchFontOfSize:[iTermAdvancedSettingsModel pointSizeOfTimeStamp]];
+        NSFont *font = self.font ?: [NSFont userFixedPitchFontOfSize:[NSFont systemFontSize]];
         font = [[NSFontManager sharedFontManager] fontWithFamily:font.familyName
                                                           traits:NSBoldFontMask
                                                           weight:0
