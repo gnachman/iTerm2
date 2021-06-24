@@ -131,6 +131,9 @@
 #import <QuartzCore/QuartzCore.h>
 #include <unistd.h>
 
+#import "iTerm2SharedARC-Swift.h"
+#import "iTerm2-Swift.h"
+
 @class QLPreviewPanel;
 
 NSString *const kCurrentSessionDidChange = @"kCurrentSessionDidChange";
@@ -534,6 +537,9 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
                                      screen:(int)screenNumber
                            hotkeyWindowType:(iTermHotkeyWindowType)hotkeyWindowType
                                     profile:(Profile *)profile {
+
+    [[[HelloWorld alloc] init] Hello];
+    [[[Phony alloc] init] IExist];
     const iTermWindowType windowType = iTermThemedWindowType(unsafeWindowType);
     iTermWindowType savedWindowType = iTermThemedWindowType(unsafeSavedWindowType);
     DLog(@"-[%p finishInitializationWithSmartLayout:%@ windowType:%d screen:%d hotkeyWindowType:%@ ",
