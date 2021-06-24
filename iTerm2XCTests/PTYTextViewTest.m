@@ -1,10 +1,12 @@
 #import "iTermColorMap.h"
+#import "iTermColorPresets.h"
 #import "iTermSelection.h"
 #import "iTermTextDrawingHelper.h"
 #import "NSColor+iTerm.h"
 #import "NSFont+iTerm.h"
 #import "NSImage+iTerm.h"
 #import "NSView+iTerm.h"
+#import "ProfileModel.h"
 #import "PTYSession.h"
 #import "PTYTextView.h"
 #import "SessionView.h"
@@ -618,6 +620,15 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
                            pathForResource:@"DefaultBookmark"
                            ofType:@"plist"];
     NSMutableDictionary* profile = [NSMutableDictionary dictionaryWithContentsOfFile:plistFile];
+
+    // Load the dark background color preset so the test isn't dependent on light/dark mode.
+    iTermColorPreset *darkBackground = [iTermColorPresets presetWithName:@"Dark Background"];
+    for (NSString *colorName in [ProfileModel colorKeysWithModes:NO]) {
+        if (darkBackground[colorName]) {
+            profile[colorName] = darkBackground[colorName];
+        }
+    }
+    profile[KEY_USE_SEPARATE_COLORS_FOR_LIGHT_AND_DARK_MODE] = @NO;
     profile[KEY_GUID] = [ProfileModel freshGuid];
     for (NSString *key in profileOverrides) {
         profile[key] = profileOverrides[key];
@@ -2194,7 +2205,7 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
                               [[screen.currentGrid lineInfoAtLineNumber:line++] setTimestamp:now - 180 * day];  // MM/DD HH:MM:SS
                               [[screen.currentGrid lineInfoAtLineNumber:line++] setTimestamp:now - 180 * day - 1];  // MM/DD/YYYY HH:MM:SS
                               textView.drawingHook = ^(iTermTextDrawingHelper *helper) {
-                                  helper.showTimestamps = YES;
+                                  helper.shouldShowTimestamps = YES;
                                   helper.now = now;
                                   helper.useTestingTimezone = YES;  // Use GMT so test can pass anywhere.
                                   [helper createTimestampDrawingHelperWithFont:nil];
@@ -2202,7 +2213,7 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
                           }
               profileOverrides:nil
                   createGolden:NO
-                          size:VT100GridSizeMake(20, 6)];
+                          size:VT100GridSizeMake(30, 6)];
 }
 
 // Retina uses a shift because double-striking is imperceptible.
@@ -2859,6 +2870,10 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
 
 - (NSString *)textViewShell {
     return @"bash";
+}
+
+- (iTermTimestampsMode)textviewTimestampsMode {
+    return iTermTimestampsModeOff;
 }
 
 - (void)textViewToggleEnableTriggersInInteractiveApps {
