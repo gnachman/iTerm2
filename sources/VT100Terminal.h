@@ -117,6 +117,7 @@ typedef NS_OPTIONS(int, VT100TerminalKeyReportingFlags) {
 @property(nonatomic) BOOL metaSendsEscape;
 
 @property(nonatomic, readonly) VT100TerminalKeyReportingFlags keyReportingFlags;
+@property(nonatomic, readonly) BOOL synchronizedUpdates;
 
 - (void)setStateFromDictionary:(NSDictionary *)dict;
 

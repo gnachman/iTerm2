@@ -79,6 +79,7 @@ NSString *const kTerminalStateReportKeyUp = @"Report Key Up";
 NSString *const kTerminalStateMetaSendsEscape = @"Meta Sends Escape";
 NSString *const kTerminalStateSendModifiers = @"Send Modifiers";
 NSString *const kTerminalStateKeyReportingModeStack = @"Key Reporting Mode Stack";
+NSString *const kTerminalStateSynchronizedUpdates = @"Synchronized Updates";
 
 @interface VT100Terminal ()
 @property(nonatomic, assign) BOOL reverseVideo;
@@ -343,6 +344,7 @@ static const int kMaxScreenRows = 4096;
     self.keypadMode = NO;
     self.reportKeyUp = NO;
     self.metaSendsEscape = NO;
+    self.synchronizedUpdates = NO;
     self.insertMode = NO;
     self.sendReceiveMode = NO;
     self.bracketedPasteMode = NO;
@@ -717,8 +719,18 @@ static const int kMaxScreenRows = 4096;
                 // Set bracketed paste mode
                 [self setBracketedPasteMode:mode && self.allowPasteBracketing withSideEffects:YES];
                 break;
+
+            case 2026:
+                // https://github.com/microsoft/terminal/issues/8331
+                self.synchronizedUpdates = mode;
+                break;
         }
     }
+}
+
+- (void)setSynchronizedUpdates:(BOOL)synchronizedUpdates {
+    _synchronizedUpdates = synchronizedUpdates;
+    [self.delegate terminalSynchronizedUpdate:synchronizedUpdates];
 }
 
 - (void)resetGraphicRendition {
@@ -1350,6 +1362,7 @@ static const int kMaxScreenRows = 4096;
 
     self.reportKeyUp = NO;
     self.metaSendsEscape = NO;
+    self.synchronizedUpdates = NO;
 
     // Set WRAPROUND to initial value
     self.wraparoundMode = YES;
@@ -2198,11 +2211,11 @@ static const int kMaxScreenRows = 4096;
             break;
 
         case DCS_BEGIN_SYNCHRONIZED_UPDATE:
-            [self.delegate terminalSynchronizedUpdate:YES];
+            self.synchronizedUpdates = YES;
             break;
 
         case DCS_END_SYNCHRONIZED_UPDATE:
-            [self.delegate terminalSynchronizedUpdate:NO];
+            self.synchronizedUpdates = NO;
             break;
 
         case DCS_REQUEST_TERMCAP_TERMINFO: {
@@ -3170,6 +3183,9 @@ static iTermDECRPMSetting VT100TerminalDECRPMSettingFromBoolean(BOOL flag) {
         case 2004:
             // Set bracketed paste mode
             return VT100TerminalDECRPMSettingFromBoolean(self.bracketedPasteMode);
+
+        case 2026:
+            return VT100TerminalDECRPMSettingFromBoolean(self.synchronizedUpdates);
     }
     return iTermDECRPMSettingPermanentlyReset;
 }
@@ -3323,7 +3339,9 @@ static iTermDECRPMSetting VT100TerminalDECRPMSettingFromBoolean(BOOL flag) {
            kTerminalStateInCommandKey: @(inCommand_),
            kTerminalStateUnicodeVersionStack: _unicodeVersionStack,
            kTerminalStateURL: self.url ?: [NSNull null],
-           kTerminalStateURLParams: self.urlParams ?: [NSNull null] };
+           kTerminalStateURLParams: self.urlParams ?: [NSNull null],
+           kTerminalStateSynchronizedUpdates: @(self.synchronizedUpdates),
+        };
     return [dict dictionaryByRemovingNullValues];
 }
 
@@ -3358,6 +3376,7 @@ static iTermDECRPMSetting VT100TerminalDECRPMSettingFromBoolean(BOOL flag) {
     self.keypadMode = [dict[kTerminalStateKeypadModeKey] boolValue];
     self.reportKeyUp = [dict[kTerminalStateReportKeyUp] boolValue];
     self.metaSendsEscape = [dict[kTerminalStateMetaSendsEscape] boolValue];
+    self.synchronizedUpdates = [dict[kTerminalStateSynchronizedUpdates] boolValue];
     if (!_sendModifiers) {
         self.sendModifiers = [[@[ @-1, @-1, @-1, @-1, @-1 ] mutableCopy] autorelease];
     } else {
