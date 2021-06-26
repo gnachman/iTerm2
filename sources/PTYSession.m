@@ -9550,6 +9550,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     return _variablesScope;
 }
 
+- (iTermVariableScope *)genericScope {
+    return self.variablesScope;
+}
+
 - (BOOL)textViewSuppressingAllOutput {
     return _suppressAllOutput;
 }

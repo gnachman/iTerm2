@@ -9,6 +9,8 @@
 
 #import "iTermFocusReportingTextField.h"
 
+NS_ASSUME_NONNULL_BEGIN
+
 @class iTermStringLine;
 @class iTermVariableScope;
 @class PTYSession;
@@ -23,33 +25,34 @@ extern NSString * const kTriggerDisabledKey;
 
 @property (nonatomic, copy) NSString *regex;
 @property (nonatomic, copy) NSString *action;
-@property (nonatomic, copy) id param;
+@property (nullable, nonatomic, copy) id param;
 @property (nonatomic, assign) BOOL partialLine;
 @property (nonatomic, assign) BOOL disabled;
 // A non-cryptographic hash for content addressed triggers (helpful for letting serialized data
 // reference a trigger).
-@property (nonatomic, readonly) NSData *digest;
-@property (nonatomic, retain) NSColor *textColor;
-@property (nonatomic, retain) NSColor *backgroundColor;
+@property (nullable, nonatomic, readonly) NSData *digest;
+@property (nullable, nonatomic, retain) NSColor *textColor;
+@property (nullable, nonatomic, retain) NSColor *backgroundColor;
 @property (nonatomic, readonly) BOOL instantTriggerCanFireMultipleTimesPerLine;
 @property (nonatomic, readonly) BOOL isIdempotent;
+@property (class, nonatomic, readonly) NSString *title;
 
-+ (NSSet<NSString *> *)synonyms;
-+ (Trigger *)triggerFromDict:(NSDictionary *)dict;
-- (NSString *)action;
++ (nullable NSSet<NSString *> *)synonyms;
++ (nullable Trigger *)triggerFromDict:(NSDictionary *)dict;
+
 // Subclasses should implement:
 - (NSString *)title;
-- (NSString *)triggerOptionalParameterPlaceholderWithInterpolation:(BOOL)interpolation;
-- (NSString *)triggerOptionalDefaultParameterValueWithInterpolation:(BOOL)interpolation;
+- (nullable NSString *)triggerOptionalParameterPlaceholderWithInterpolation:(BOOL)interpolation;
+- (nullable NSString *)triggerOptionalDefaultParameterValueWithInterpolation:(BOOL)interpolation;
 // Returns true if this kind of action takes a parameter.
 - (BOOL)takesParameter;
 // Returns true if the parameter this action takes is a popupbutton.
 - (BOOL)paramIsPopupButton;
 - (BOOL)paramIsTwoColorWells;
 // Returns a map from id(tag/represented object) -> NSString(title)
-- (NSDictionary *)menuItemsForPoupupButton;
+- (nullable NSDictionary *)menuItemsForPoupupButton;
 // Returns an array of NSDictionaries mapping NSNumber(tag) -> NSString(title)
-- (NSArray *)groupedMenuItemsForPopupButton;
+- (nullable NSArray *)groupedMenuItemsForPopupButton;
 
 // Index of represented object (usually a NSNumber tag, but could be something else)
 - (NSInteger)indexForObject:(id)object;
@@ -68,7 +71,8 @@ extern NSString * const kTriggerDisabledKey;
                                             scope:(iTermVariableScope *)scope
                                  useInterpolation:(BOOL)useInterpolation
                                        completion:(void (^)(NSString *result))completion;
-- (void)paramWithBackreferencesReplacedWithValues:(NSArray *)strings
+
+- (void)paramWithBackreferencesReplacedWithValues:(NSArray<NSString *> *)strings
                                             scope:(iTermVariableScope *)scope
                                  useInterpolation:(BOOL)useInterpolation
                                        completion:(void (^)(NSString *result))completion;
@@ -105,3 +109,6 @@ extern NSString * const kTriggerDisabledKey;
 - (id<iTermFocusReportingTextFieldDelegate>)newParameterDelegateWithPassthrough:(id<NSTextFieldDelegate>)passthrough;
 
 @end
+
+NS_ASSUME_NONNULL_END
+

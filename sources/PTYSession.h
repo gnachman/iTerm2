@@ -479,6 +479,7 @@ backgroundColor:(NSColor *)backgroundColor;
 
 @property (nonatomic, readonly) iTermVariables *variables;
 @property (nonatomic, readonly) iTermVariableScope<iTermSessionScope> *variablesScope;
+@property (nonatomic, readonly) iTermVariableScope *genericScope;  // Just like `variablesScope` but usable from Swift.
 @property (nonatomic, readonly) BOOL triggerParametersUseInterpolatedStrings;
 
 @property(atomic, readonly) PTYSessionTmuxMode tmuxMode;

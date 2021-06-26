@@ -24,6 +24,7 @@
 #import "iTermNoColorAccessoryButton.h"
 #import "iTermProfilePreferences.h"
 #import "iTermRPCTrigger.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermShellPromptTrigger.h"
 #import "MarkTrigger.h"
 #import "NSColor+iTerm.h"
@@ -37,7 +38,6 @@
 #import "StopTrigger.h"
 #import "iTermHyperlinkTrigger.h"
 #import "Trigger.h"
-
 #import <ColorPicker/ColorPicker.h>
 
 static NSString *const kiTermTriggerControllerPasteboardType =
@@ -119,6 +119,7 @@ NSString *const kBackgroundColorWellIdentifier = @"kBackgroundColorWellIdentifie
                              [BounceTrigger class],
                              [iTermRPCTrigger class],
                              [CaptureTrigger class],
+                             [iTermInjectTrigger class],
                              [iTermHighlightLineTrigger class],
                              [iTermUserNotificationTrigger class],
                              [iTermShellPromptTrigger class],

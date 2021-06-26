@@ -74,6 +74,11 @@ NSString * const kTriggerDisabledKey = @"disabled";
     assert(false);
 }
 
++ (NSString *)title {
+    // Subclasses must override this
+    assert(false);
+}
+
 - (NSString *)title
 {
     assert(false);

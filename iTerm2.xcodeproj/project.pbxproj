@@ -1553,6 +1553,7 @@
 		A60D0239268451C100E19362 /* Phony.swift in Sources */ = {isa = PBXBuildFile; fileRef = A60D02332683D61000E19362 /* Phony.swift */; };
 		A60D023A2684521400E19362 /* Phony.swift in Sources */ = {isa = PBXBuildFile; fileRef = A60D02332683D61000E19362 /* Phony.swift */; };
 		A60D023B2684526000E19362 /* Phony.swift in Sources */ = {isa = PBXBuildFile; fileRef = A60D02332683D61000E19362 /* Phony.swift */; };
+		A60D023D2687EF3B00E19362 /* InjectTrigger.swift in Sources */ = {isa = PBXBuildFile; fileRef = A60D023C2687EF3B00E19362 /* InjectTrigger.swift */; };
 		A60D20C92597F496004AC979 /* iTermImage+ImageWithData.m in Sources */ = {isa = PBXBuildFile; fileRef = A60D20C82597F496004AC979 /* iTermImage+ImageWithData.m */; };
 		A60D20D22597F4DF004AC979 /* iTermImage.m in Sources */ = {isa = PBXBuildFile; fileRef = A6755F421D728FFA00F3726C /* iTermImage.m */; };
 		A60D20DC2597F83E004AC979 /* image_decoder.sb in Resources */ = {isa = PBXBuildFile; fileRef = A60D20DB2597F83D004AC979 /* image_decoder.sb */; };
@@ -5176,6 +5177,7 @@
 		A60D02302683D1E200E19362 /* HelloWorld.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HelloWorld.swift; sourceTree = "<group>"; };
 		A60D02322683D60F00E19362 /* iTerm2-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "iTerm2-Bridging-Header.h"; sourceTree = "<group>"; };
 		A60D02332683D61000E19362 /* Phony.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Phony.swift; sourceTree = "<group>"; };
+		A60D023C2687EF3B00E19362 /* InjectTrigger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InjectTrigger.swift; sourceTree = "<group>"; };
 		A60D20C82597F496004AC979 /* iTermImage+ImageWithData.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "iTermImage+ImageWithData.m"; sourceTree = "<group>"; };
 		A60D20DB2597F83D004AC979 /* image_decoder.sb */ = {isa = PBXFileReference; lastKnownFileType = text; name = image_decoder.sb; path = OtherResources/image_decoder.sb; sourceTree = SOURCE_ROOT; };
 		A60D20E52597FAFB004AC979 /* libsandbox.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libsandbox.tbd; path = usr/lib/libsandbox.tbd; sourceTree = SDKROOT; };
@@ -8072,6 +8074,7 @@
 				A6D8973922154A8800325F6A /* AnnotateTrigger.m */,
 				A6E112D425C615B400875D27 /* iTermHighlightLineTrigger.h */,
 				A6E112D525C615B400875D27 /* iTermHighlightLineTrigger.m */,
+				A60D023C2687EF3B00E19362 /* InjectTrigger.swift */,
 			);
 			name = Triggers;
 			sourceTree = "<group>";
@@ -14391,6 +14394,7 @@
 				A630116A20E60725008114B7 /* iTermStatusBarLayout.m in Sources */,
 				A665C1CB243A4DE300F623F0 /* SIGArchiveCommon.m in Sources */,
 				A6A4867120B67A6D00493302 /* KeysPreferencesViewController.m in Sources */,
+				A60D023D2687EF3B00E19362 /* InjectTrigger.swift in Sources */,
 				A60D223025A11039004AC979 /* VT100RemoteHost.m in Sources */,
 				A629F5AB23AFF5EC00C2F16B /* iTermShellIntegrationDownloadAndRunViewController.m in Sources */,
 				A631FC8E20EDDAEA00EB824F /* iTermSearchFieldCell.m in Sources */,
