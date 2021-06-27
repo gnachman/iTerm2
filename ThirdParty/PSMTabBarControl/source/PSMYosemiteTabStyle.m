@@ -1258,6 +1258,8 @@
         if (bar.showAddTabButton && attachedToTitleBar) {
             NSRect frame = bar.addTabButton.frame;
             [topLineColor set];
+            frame.size.width = INFINITY;
+            frame = NSIntersectionRect(frame, NSIntersectionRect(clipRect, insetRect));
             NSRectFill(NSMakeRect(NSMinX(frame), 0, NSWidth(frame), 1));
         }
     }
