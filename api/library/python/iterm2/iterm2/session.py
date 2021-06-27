@@ -37,8 +37,6 @@ class Splitter:
         self.__vertical = vertical
         # Elements are either Splitter or Session
         self.__children: typing.List[typing.Union['Splitter', 'Session']] = []
-        # Elements are Session
-        self.__sessions: typing.List['Session'] = []
 
     @staticmethod
     def from_node(node, connection):
@@ -71,10 +69,6 @@ class Splitter:
         child: A Session or a Splitter.
         """
         self.__children.append(child)
-        if isinstance(child, Session):
-            self.__sessions.append(child)
-        else:
-            self.__sessions.extend(child.sessions)
 
     @property
     def children(self) -> typing.List[typing.Union['Splitter', 'Session']]:
@@ -90,7 +84,13 @@ class Splitter:
         :returns: All sessions in this splitter and all nested splitters. A
             list of :class:`Session` objects.
         """
-        return self.__sessions
+        result = []
+        for child in self.__children:
+            if isinstance(child, Session):
+                result.append(child)
+            else:
+                result.extend(child.sessions)
+        return result
 
     def pretty_str(self, indent: str = "") -> str:
         """
@@ -114,13 +114,6 @@ class Splitter:
             if isinstance(
                     child, Session) and child.session_id == session.session_id:
                 self.__children[i] = session
-
-                # Update the entry in self.__sessions
-                for j in range(len(self.__sessions)):
-                    if self.__sessions[j].session_id == session.session_id:
-                        self.__sessions[j] = session
-                        break
-
                 return True
             if isinstance(child, Splitter):
                 if child.update_session(session):
