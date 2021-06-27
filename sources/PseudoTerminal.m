@@ -4206,21 +4206,22 @@ ITERM_WEAKLY_REFERENCEABLE
 - (NSEdgeInsets)tabBarInsetsForCompactWindow NS_AVAILABLE_MAC(10_14) {
     const CGFloat stoplightButtonsWidth = 75;
     switch ([iTermPreferences intForKey:kPreferenceKeyTabPosition]) {
-        case PSMTab_TopTab:
+        case PSMTab_TopTab: {
+            const CGFloat extraSpace = MAX(0, [iTermAdvancedSettingsModel extraSpaceBeforeCompactTopTabBar]);
             if ([self rootTerminalViewWindowNumberLabelShouldBeVisible]) {
                 const CGFloat leftInset = (stoplightButtonsWidth +
                                            iTermRootTerminalViewWindowNumberLabelMargin * 2 +
                                            iTermRootTerminalViewWindowNumberLabelWidth +
-                                           MAX(0, [iTermAdvancedSettingsModel extraSpaceBeforeCompactTopTabBar]));
+                                           extraSpace);
                 return NSEdgeInsetsMake(0,
                                         leftInset,
                                         0,
                                         0);
             } else {
                 // Make room for stoplight buttons when there is no tab title.
-                return NSEdgeInsetsMake(0, stoplightButtonsWidth, 0, 0);
+                return NSEdgeInsetsMake(0, stoplightButtonsWidth + extraSpace, 0, 0);
             }
-
+        }
         case PSMTab_LeftTab:
             return NSEdgeInsetsMake(24, 0, 0, 0);
 
