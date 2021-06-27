@@ -22,3 +22,6 @@
 [submodule "submodules/libgit2"]
 	path = submodules/libgit2
 	url = https://github.com/libgit2/libgit2
+[submodule "submodules/iTerm2-shell-integration"]
+	path = submodules/iTerm2-shell-integration
+	url = https://github.com/gnachman/iTerm2-shell-integration
