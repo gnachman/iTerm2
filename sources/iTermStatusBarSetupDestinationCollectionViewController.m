@@ -220,9 +220,16 @@
 - (void)initializeItem:(iTermStatusBarSetupCollectionViewItem *)item
            atIndexPath:(NSIndexPath *)indexPath {
     const NSInteger index = [indexPath indexAtPosition:1];
+    NSFont *font = nil;
+    if ([_elements[index].component respondsToSelector:@selector(font)]) {
+        font = [_elements[index].component font];
+    }
+    if (!font) {
+        font = _advancedConfiguration.font;
+    }
     item.textField.attributedStringValue = [_elements[index] exemplarWithBackgroundColor:_advancedConfiguration.backgroundColor
                                                                                textColor:_advancedConfiguration.defaultTextColor ?: self.defaultTextColor
-                                                                             defaultFont:_advancedConfiguration.font];
+                                                                             defaultFont:font];
 
     item.hideDetail = YES;
     item.textField.toolTip = _elements[index].detailedDescription;

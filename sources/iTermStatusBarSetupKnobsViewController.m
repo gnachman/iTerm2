@@ -7,6 +7,7 @@
 
 #import "iTermStatusBarSetupKnobsViewController.h"
 
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermStatusBarKnobActionViewController.h"
 #import "iTermStatusBarKnobCheckboxViewController.h"
 #import "iTermStatusBarKnobColorViewController.h"
@@ -39,6 +40,9 @@ static NSViewController<iTermStatusBarKnobViewController> *iTermNewViewControlle
 
         case iTermStatusBarComponentKnobTypeInvocation:
             return [[iTermStatusBarKnobTextViewController alloc] initWithInvocationSuggester];
+
+        case iTermStatusBarComponentKnobTypeFont:
+            return [[iTermStatusBarKnobFontViewController alloc] init];
 
         default:
             return nil;

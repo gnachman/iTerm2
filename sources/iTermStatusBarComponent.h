@@ -20,6 +20,7 @@ extern iTermStatusBarComponentConfigurationKey iTermStatusBarComponentConfigurat
 // Knob key
 static NSString *const iTermStatusBarSharedBackgroundColorKey = @"shared background color";
 static NSString *const iTermStatusBarSharedTextColorKey = @"shared text color";
+static NSString *const iTermStatusBarSharedFontKey = @"shared font";
 
 @class iTermAction;
 @protocol iTermStatusBarComponent;
@@ -152,5 +153,8 @@ forInvocation:(NSString *)invocation
 - (void)statusBarComponentDidClickWithView:(NSView *)view;
 - (void)statusBarComponentMouseDownWithView:(NSView *)view;
 - (BOOL)statusBarComponentIsEmpty;
+
+@optional
+- (NSFont *)font;
 
 @end

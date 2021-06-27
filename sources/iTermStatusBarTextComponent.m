@@ -14,6 +14,7 @@
 #import "NSColor+iTerm.h"
 #import "NSDictionary+iTerm.h"
 #import "NSObject+iTerm.h"
+#import "NSStringITerm.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -36,12 +37,27 @@ NS_ASSUME_NONNULL_BEGIN
                                                    placeholder:nil
                                                   defaultValue:nil
                                                            key:iTermStatusBarSharedBackgroundColorKey];
+    iTermStatusBarComponentKnob *fontKnob =
+        [[iTermStatusBarComponentKnob alloc] initWithLabelText:@"Custom Font"
+                                                          type:iTermStatusBarComponentKnobTypeFont
+                                                   placeholder:nil
+                                                  defaultValue:nil
+                                                           key:iTermStatusBarSharedFontKey];
 
-    return [@[ textColorKnob, backgroundColorKnob, [super statusBarComponentKnobs], [self minMaxWidthKnobs]] flattenedArray];
+    return [@[ textColorKnob, backgroundColorKnob, fontKnob, [super statusBarComponentKnobs], [self minMaxWidthKnobs]] flattenedArray];
 }
 
 - (NSFont *)font {
-    return self.advancedConfiguration.font ?: [iTermStatusBarAdvancedConfiguration defaultFont];
+    NSDictionary *knobValues = self.configuration[iTermStatusBarComponentConfigurationKeyKnobValues];
+    NSString *name = knobValues[iTermStatusBarSharedFontKey];
+    NSFont *font = nil;
+    if (name.length > 0) {
+        font = [name fontValue];
+    }
+    if (!font) {
+        return self.advancedConfiguration.font ?: [iTermStatusBarAdvancedConfiguration defaultFont];
+    }
+    return font;
 }
 
 - (NSTextField *)newTextField {
@@ -54,6 +70,7 @@ NS_ASSUME_NONNULL_BEGIN
     textField.lineBreakMode = NSLineBreakByTruncatingTail;
 
     textField.textColor = self.textColor;
+    textField.font = self.font;
     textField.backgroundColor = self.backgroundColor;
     textField.drawsBackground = (self.backgroundColor.alphaComponent > 0);
 

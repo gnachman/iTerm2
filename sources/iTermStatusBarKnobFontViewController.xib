@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="18122" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
+    <dependencies>
+        <deployment identifier="macosx"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="18122"/>
+        <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
+    </dependencies>
+    <objects>
+        <customObject id="-2" userLabel="File's Owner" customClass="iTermStatusBarKnobFontViewController">
+            <connections>
+                <outlet property="affordance" destination="cCC-yP-A03" id="WDv-ON-hDH"/>
+                <outlet property="checkbox" destination="bRw-BD-1dp" id="QtH-dW-DH3"/>
+                <outlet property="view" destination="ovC-TG-hrd" id="yw2-PO-AN6"/>
+            </connections>
+        </customObject>
+        <customObject id="-1" userLabel="First Responder" customClass="FirstResponder"/>
+        <customObject id="-3" userLabel="Application" customClass="NSObject"/>
+        <customView id="ovC-TG-hrd">
+            <rect key="frame" x="0.0" y="0.0" width="702" height="27"/>
+            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+            <subviews>
+                <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="cCC-yP-A03" customClass="BFPCompositeView">
+                    <rect key="frame" x="271" y="0.0" width="431" height="25"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                </customView>
+                <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="bRw-BD-1dp">
+                    <rect key="frame" x="0.0" y="5" width="272" height="16"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <buttonCell key="cell" type="check" title="Label" bezelStyle="regularSquare" imagePosition="left" alignment="right" state="on" inset="2" id="g3L-BT-A3R">
+                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                        <font key="font" metaFont="system"/>
+                    </buttonCell>
+                    <connections>
+                        <action selector="checkboxChanged:" target="-2" id="hgm-1p-fx8"/>
+                    </connections>
+                </button>
+            </subviews>
+            <point key="canvasLocation" x="250" y="51.5"/>
+        </customView>
+    </objects>
+</document>

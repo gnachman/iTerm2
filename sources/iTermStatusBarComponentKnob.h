@@ -14,7 +14,8 @@ typedef NS_ENUM(NSUInteger, iTermStatusBarComponentKnobType) {
     iTermStatusBarComponentKnobTypeDouble,
     iTermStatusBarComponentKnobTypeColor,
     iTermStatusBarComponentKnobTypeAction,
-    iTermStatusBarComponentKnobTypeInvocation  // Text but suggests function calls
+    iTermStatusBarComponentKnobTypeInvocation,  // Text but suggests function calls
+    iTermStatusBarComponentKnobTypeFont
 };
 
 NS_ASSUME_NONNULL_BEGIN

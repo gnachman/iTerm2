@@ -39,9 +39,10 @@
     [_knobsView addSubview:view];
     [_knobsView invalidateIntrinsicContentSize];
 
+    const CGFloat margin = NSMinX(_knobsView.frame);
     [self.window setFrame:NSMakeRect(NSMinX(myFrame),
                                      NSMinY(myFrame),
-                                     NSWidth(myFrame),
+                                     MAX(NSWidth(view.frame) + margin * 2, NSWidth(myFrame)),
                                      viewController.view.frame.size.height + decorationHeight) display:YES];
 }
 
