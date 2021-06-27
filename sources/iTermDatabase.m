@@ -25,6 +25,8 @@
     NSFileHandle *_advisoryLock;
 }
 
+@synthesize timeoutHandler;
+
 + (NSArray<NSURL *> *)allURLsForDatabaseAt:(NSURL *)url {
     return @[
         url,
@@ -129,19 +131,85 @@
     return result;
 }
 
+typedef enum {
+    iTermDatabaseIntegrityCheckStateQuerying,
+    iTermDatabaseIntegrityCheckStateFinished,
+    iTermDatabaseIntegrityCheckStateInterrupted
+} iTermDatabaseIntegrityCheckState;
+
+- (void)integrityCheckDidTimeOut:(NSObject *)lock state:(iTermDatabaseIntegrityCheckState *)statePtr {
+    DLog(@"integrityCheckDidTimeOut");
+    if (!self.timeoutHandler) {
+        DLog(@"There is no timeout handler");
+        return;
+    }
+
+    @synchronized(lock) {
+        if (*statePtr != iTermDatabaseIntegrityCheckStateQuerying) {
+            DLog(@"Timeout check running after completion");
+            return;
+        }
+        DLog(@"Timeout check running while still querying");
+    }
+
+    DLog(@"Invoke timeout handler");
+    if (!self.timeoutHandler()) {
+        DLog(@"User declined to delete the db");
+        return;
+    }
+
+    @synchronized(lock) {
+        if (*statePtr != iTermDatabaseIntegrityCheckStateQuerying) {
+            DLog(@"Succeeded on second chance");
+            return;
+        }
+        DLog(@"Interrupt db check");
+        [_db interrupt];
+        DLog(@"state<-interrupted");
+        *statePtr = iTermDatabaseIntegrityCheckStateInterrupted;
+    }
+}
+
 - (BOOL)passesIntegrityCheck {
     assert(_advisoryLock);
 
     NSString *checkType = arc4random_uniform(100) == 0 ? @"integrity_check" : @"quick_check";
+    NSObject *lock = [[NSObject alloc] init];
+    __block iTermDatabaseIntegrityCheckState state = iTermDatabaseIntegrityCheckStateQuerying;
+    __weak __typeof(self) weakSelf = self;
+    const NSTimeInterval timeout = 10;
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(timeout * NSEC_PER_SEC)), dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+        [weakSelf integrityCheckDidTimeOut:lock state:&state];
+    });
+    DLog(@"Begin pragma");
     FMResultSet *results = [_db executeQuery:[NSString stringWithFormat:@"pragma %@", checkType]];
+    DLog(@"Returned from pragma");
     NSString *value = nil;
+    DLog(@"Begin results.next");
     if ([results next]) {
+        DLog(@"Returned from results.next");
         value = [results stringForColumn:checkType];
     } else {
         DLog(@"%@ check failed - no next result", checkType);
     }
+    BOOL failed = NO;
+    @synchronized(lock) {
+        DLog(@"Check state");
+        switch (state) {
+            case iTermDatabaseIntegrityCheckStateQuerying:
+                DLog(@"state<-finished");
+                state = iTermDatabaseIntegrityCheckStateFinished;
+                break;
+            case iTermDatabaseIntegrityCheckStateFinished:
+                assert(NO);
+            case iTermDatabaseIntegrityCheckStateInterrupted:
+                DLog(@"interrupted. set failed<-YES");
+                failed = YES;
+                break;
+        }
+    }
     [results close];
-    if (![value isEqualToString:@"ok"]) {
+    if (failed || ![value isEqualToString:@"ok"]) {
         DLog(@"%@ check failed: %@", checkType, value);
         return NO;
     }

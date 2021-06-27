@@ -33,6 +33,10 @@ NS_ASSUME_NONNULL_BEGIN
 - (BOOL)transaction:(BOOL (^ NS_NOESCAPE)(void))block;
 - (void)unlink;
 - (NSURL *)url;
+
+// If set the timeout handler will be called and can return YES to erase the db when it takes
+// too long to initialize or NO to keep trying.
+@property (nonatomic, copy) BOOL (^timeoutHandler)(void);
 @end
 
 @interface iTermSqliteDatabaseImpl: NSObject<iTermDatabase>

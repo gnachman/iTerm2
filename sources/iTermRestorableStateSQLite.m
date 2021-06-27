@@ -138,7 +138,20 @@
     if (_db) {
         return;
     }
-    iTermGraphDatabase *db = [[iTermGraphDatabase alloc] initWithDatabase:[[iTermSqliteDatabaseImpl alloc] initWithURL:_url]];
+    iTermSqliteDatabaseImpl *sqliteDb = [[iTermSqliteDatabaseImpl alloc] initWithURL:_url];
+    sqliteDb.timeoutHandler = ^BOOL {
+        __block BOOL result = NO;
+        dispatch_sync(dispatch_get_main_queue(), ^{
+            NSAlert *alert = [[NSAlert alloc] init];
+            alert.messageText = @"Continue restoring state?";
+            alert.informativeText = @"It’s taking a long time to check the validity of the state restoration database. Keep trying to open it?";
+            [alert addButtonWithTitle:@"OK"];
+            [alert addButtonWithTitle:@"Delete"];
+            result = ([alert runModal] == NSAlertSecondButtonReturn);
+        });
+        return result;
+    };
+    iTermGraphDatabase *db = [[iTermGraphDatabase alloc] initWithDatabase:sqliteDb];
     _db = db;
 }
 
