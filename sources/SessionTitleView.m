@@ -7,6 +7,7 @@
 //
 
 #import "SessionTitleView.h"
+#import "iTermHamburgerButton.h"
 #import "iTermPreferences.h"
 #import "iTermStatusBarViewController.h"
 #import "NSAppearance+iTerm.h"
@@ -36,7 +37,7 @@ static const CGFloat kButtonSize = 17;
 @implementation SessionTitleView {
     NSTextField *label_;
     NSButton *closeButton_;
-    NSButton *menuButton_;
+    iTermHamburgerButton *menuButton_;
 }
 
 @synthesize title = title_;
@@ -65,15 +66,11 @@ static const CGFloat kButtonSize = 17;
         [self addSubview:closeButton_];
 
         x += closeButton_.frame.size.width + kMargin;
-        // Popup buttons want to have huge margins on the sides. This one look best right up against
-        // the right margin, though. So I'll make it as small as it can be and then push it right so
-        // some of it is clipped.
-        menuButton_ = [[NSButton alloc] initWithFrame:NSMakeRect(0, 0, 14, 14)];
-        menuButton_.bordered = NO;
-        menuButton_.image = [NSImage it_hamburgerForClass:self.class];
-        menuButton_.imagePosition = NSImageOnly;
-        menuButton_.target = self;
-        menuButton_.action = @selector(openMenu:);
+
+        __weak __typeof(self) weakSelf = self;
+        menuButton_ = [[iTermHamburgerButton alloc] initWithMenuProvider:^NSMenu * _Nonnull {
+            return [weakSelf menu];
+        }];
 
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(modifierShortcutDidChange:)
@@ -115,6 +112,10 @@ static const CGFloat kButtonSize = 17;
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 }
 
+- (NSMenu *)menu {
+    return delegate_.menu;
+}
+
 - (void)setStatusBarViewController:(iTermStatusBarViewController *)statusBarViewController {
     [_statusBarViewController.view removeFromSuperview];
     _statusBarViewController = statusBarViewController;
@@ -142,10 +143,6 @@ static const CGFloat kButtonSize = 17;
         // You can have either a label or a status bar but not both.
         label_.hidden = NO;
     }
-}
-
-- (void)openMenu:(id)sender {
-    [NSMenu popUpContextMenu:delegate_.menu withEvent:[NSApp currentEvent] forView:sender];
 }
 
 - (void)close:(id)sender
