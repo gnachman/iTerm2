@@ -92,9 +92,6 @@ const int kColorMapAnsiBrightModifier = 8;
 }
 
 - (void)setColor:(NSColor *)theColor forKey:(iTermColorMapKey)theKey {
-    if (theKey == kColorMapForeground && theColor == nil) {
-        assert(NO);
-    }
     if (theKey >= kColorMap24bitBase)
         return;
 

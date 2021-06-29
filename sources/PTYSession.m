@@ -4026,7 +4026,9 @@ ITERM_WEAKLY_REFERENCEABLE
         NSString *profileKey = keyMap[colorKey];
 
         if ([profileKey isKindOfClass:[NSString class]]) {
-            [_colorMap setColor:[aDict[profileKey] colorValue]
+            [_colorMap setColor:[iTermProfilePreferences colorForKey:profileKey
+                                                                dark:dark
+                                                             profile:aDict]
                          forKey:[colorKey intValue]];
         } else {
             [_colorMap setColor:nil forKey:[colorKey intValue]];
