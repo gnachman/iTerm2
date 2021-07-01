@@ -10758,7 +10758,7 @@ preferredEscaping:(iTermSendTextEscaping)preferredEscaping {
     }
 
     DLog(@"Make this session active in delegate %@", _delegate);
-    [_delegate setActiveSession:self];
+    [_delegate setActiveSessionPreservingMaximization:self];
 }
 
 - (id)markAddedAtLine:(int)line ofClass:(Class)markClass {

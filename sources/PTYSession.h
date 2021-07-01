@@ -160,6 +160,7 @@ typedef enum {
 
 // Make session active in this tab. Assumes session belongs to thet ab.
 - (void)setActiveSession:(PTYSession*)session;
+- (void)setActiveSessionPreservingMaximization:(PTYSession *)session;
 
 // Index of the tab. 0-based.
 - (int)number;
