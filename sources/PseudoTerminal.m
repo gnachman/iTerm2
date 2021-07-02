@@ -5102,20 +5102,24 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (BOOL)shouldMoveTabBarToTitlebarAccessoryInLionFullScreen {
     if ([iTermAdvancedSettingsModel workAroundBigSurBug]) {
+        DLog(@"work around big sur bug - return NO");
         return NO;
     }
     switch ([iTermPreferences intForKey:kPreferenceKeyTabPosition]) {
         case PSMTab_LeftTab:
         case PSMTab_BottomTab:
+            DLog(@"left or bottom tabbar - return NO");
             return NO;
 
         case PSMTab_TopTab:
             if ([iTermPreferences boolForKey:kPreferenceKeyFlashTabBarInFullscreen] &&
                 ![iTermPreferences boolForKey:kPreferenceKeyShowFullscreenTabBar]) {
+                DLog(@"kPreferenceKeyFlashTabBarInFullscreen && !kPreferenceKeyShowFullscreenTabBar - return NO");
                 return NO;
             }
             if (@available(macOS 10.16, *)) {
                 if ([iTermPreferences boolForKey:kPreferenceKeyShowFullscreenTabBar]) {
+                    DLog(@"macOS 11 + kPreferenceKeyShowFullscreenTabBar - return NO");
                     // This prevents a shadow from being drawn between the tabbar and the rest of the window.
                     // When the tabbar is hidden, it must be a titlebar accessory vc or else you'd never see it.
                     // The only downside I see is that when you reveal the titlebar it overlaps the tabbar
@@ -5125,25 +5129,30 @@ ITERM_WEAKLY_REFERENCEABLE
             }
             break;
     }
-
+    DLog(@"return YES");
     return YES;
 }
 
 // Returns whether a permanent (i.e., not flashing) tabbar ought to be drawn while in full screen.
 // It does not check if you're already in full screen.
 - (BOOL)shouldShowPermanentFullScreenTabBar {
+    DLog(@"%@", self);
     if (togglingLionFullScreen_) {
+        DLog(@"togglingLionFullSCreen so return YES");
         return YES;
     }
 
     if (![iTermPreferences boolForKey:kPreferenceKeyShowFullscreenTabBar]) {
+        DLog(@"Not showing fullscreen tab bar so return NO");
         return NO;
     }
 
     if ([iTermPreferences boolForKey:kPreferenceKeyHideTabBar] && self.tabs.count == 1) {
+        DLog(@"Not hiding it because of there being only one tab so return NO");
         return NO;
     }
 
+    DLog(@"Return YES");
     return YES;
 }
 
@@ -5159,10 +5168,10 @@ ITERM_WEAKLY_REFERENCEABLE
         return NO;
     }
     if (!exitingLionFullscreen_) {
-        DLog(@"exitingLionFullscreen");
+        DLog(@"!exitingLionFullscreen");
         const BOOL assumeFullScreen = (self.lionFullScreen || togglingLionFullScreen_);
         if (assumeFullScreen) {
-            DLog(@"tabBarShouldBeAccessory - assuing full screen, should=%@", @([self shouldMoveTabBarToTitlebarAccessoryInLionFullScreen]));
+            DLog(@"tabBarShouldBeAccessory - assuming full screen, should=%@", @([self shouldMoveTabBarToTitlebarAccessoryInLionFullScreen]));
             return [self shouldMoveTabBarToTitlebarAccessoryInLionFullScreen];
         }
     }
@@ -5229,7 +5238,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)updateTabBarControlIsTitlebarAccessory {
-    DLog(@"updateTabBarControlIsTitlebarAccessory");
+    DLog(@"updateTabBarControlIsTitlebarAccessory %@", self);
     const NSInteger index = [self.window.it_titlebarAccessoryViewControllers indexOfObject:_titleBarAccessoryTabBarViewController];
     if ([self tabBarShouldBeAccessory]) {
         DLog(@"tab bar should be accessory");
@@ -5237,14 +5246,17 @@ ITERM_WEAKLY_REFERENCEABLE
         NSTitlebarAccessoryViewController *viewController = [self titleBarAccessoryTabBarViewController];
         const CGFloat tabBarHeight = self.shouldShowPermanentFullScreenTabBar ? self.desiredTabBarHeight : 0;
         viewController.fullScreenMinHeight = tabBarHeight;
+        NSLog(@"Set tabbar's fullScreenMinHeight to %@", @(tabBarHeight));
 
         frame.size.height = self.desiredTabBarHeight;
         DLog(@"Set frame of tabbar as accessory to %@", NSStringFromRect(frame));
         viewController.view.frame = frame;
 
-        DLog(@"Adding title bar accessory view for %@", self);
         if (index == NSNotFound) {
+            DLog(@"Call addTitlebarAccessoryViewController for title bar accessory view controller %@ for %@", viewController, self);
             [self.window addTitlebarAccessoryViewController:viewController];
+        } else {
+            DLog(@"Already have tabbar as a titlebar accessory view controller so not calling addTitlebarAccessoryViewController");
         }
     } else if (_contentView.tabBarControlOnLoan) {
         DLog(@"tab bar should NOT be accessory, but is on loan.");
@@ -5281,6 +5293,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)hideStandardWindowButtonsAndTitlebarAccessories {
+    DLog(@"hideStandardWindowButtonsAndTitlebarAccessories %@", self);
     [[self.window standardWindowButton:NSWindowCloseButton] setHidden:YES];
     [[self.window standardWindowButton:NSWindowMiniaturizeButton] setHidden:YES];
     [[self.window standardWindowButton:NSWindowZoomButton] setHidden:YES];

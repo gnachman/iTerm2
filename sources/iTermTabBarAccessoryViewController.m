@@ -51,6 +51,17 @@
     return self;
 }
 
+- (NSString *)description {
+    return [NSString stringWithFormat:@"<%@: %p fullScreenMinHeight=%@ frame=%@ window=%p alpha=%@ hidden=%@>",
+            NSStringFromClass([self class]),
+            self,
+            @(self.fullScreenMinHeight),
+            NSStringFromRect(self.view.frame),
+            self.view.window,
+            @(self.view.alphaValue),
+            @(self.view.isHidden)];
+}
+
 - (void)loadView {
     if (_hack) {
         _hack.frame = NSMakeRect(0, 0, _view.frame.size.width, _view.frame.size.height + 4);

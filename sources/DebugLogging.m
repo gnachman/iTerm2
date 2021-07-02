@@ -36,8 +36,9 @@ static NSRecursiveLock *GetDebugLogLock(void) {
 }
 
 static void AppendWindowDescription(NSWindow *window, NSMutableString *windows) {
-    [windows appendFormat:@"\nWindow %@\n%@\n",
+    [windows appendFormat:@"\nWindow %@\n%@\n%@\n",
      window,
+     [window delegate],
      [window.contentView iterm_recursiveDescription]];
 }
 
