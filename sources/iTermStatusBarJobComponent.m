@@ -54,7 +54,7 @@ NS_ASSUME_NONNULL_BEGIN
     return [self clampedWidth:[super statusBarComponentPreferredWidth]];
 }
 
-- (NSImage *)statusBarComponentIcon {
+- (nullable NSImage *)statusBarComponentIcon {
     return [NSImage it_cacheableImageNamed:@"StatusBarIconJobs" forClass:[self class]];
 }
 

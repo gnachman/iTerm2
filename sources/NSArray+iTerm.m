@@ -29,6 +29,16 @@
     return indexes;
 }
 
+- (NSIndexSet *)it_indexSetWithObjectsPassingTest:(BOOL (^ NS_NOESCAPE)(id))block {
+    NSMutableIndexSet *indexes = [NSMutableIndexSet indexSet];
+    [self enumerateObjectsUsingBlock:^(id  _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+        if (block(obj)) {
+            [indexes addIndex:idx];
+        }
+    }];
+    return indexes;
+}
+
 + (NSArray<NSNumber *> *)sequenceWithRange:(NSRange)range {
     NSMutableArray<NSNumber *> *temp = [NSMutableArray array];
     for (NSUInteger i = 0; i < range.length; i++) {

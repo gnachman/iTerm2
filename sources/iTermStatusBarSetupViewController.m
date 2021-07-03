@@ -9,6 +9,7 @@
 
 #import "iTermAPIHelper.h"
 #import "iTermFontPanel.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermStatusBarActionComponent.h"
 #import "iTermStatusBarBatteryComponent.h"
 #import "iTermStatusBarComponent.h"
@@ -110,6 +111,7 @@ NS_ASSUME_NONNULL_BEGIN
                                  [iTermStatusBarActionComponent class],
                                  [iTermStatusBarActionMenuComponent class],
                                  [iTermStatusBarSnippetMenuComponent class],
+                                 [iTermStatusBarTriggersComponent class],
 
                                  [iTermStatusBarGitComponent class],
                                  [iTermStatusBarHostnameComponent class],

@@ -3,8 +3,10 @@
 //
 
 #import "iTermStatusBarComponentKnob.h"
+#import "iTermStatusBarTextComponent.h"
 #import "iTermVariableScope.h"
 #import "NSFont+iTerm.h"
+#import "NSImage+iTerm.h"
 #import "NSStringITerm.h"
 #import "PTYSession.h"
 #import "ScreenChar.h"

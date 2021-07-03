@@ -144,7 +144,7 @@ static NSString *const iTermStatusBarHostnameComponentAbbreviateLocalhost = @"ab
     return [@[ abbreviateLocalhostKnob ] arrayByAddingObjectsFromArray:[super statusBarComponentKnobs]];
 }
 
-- (NSImage *)statusBarComponentIcon {
+- (nullable NSImage *)statusBarComponentIcon {
     return [NSImage it_cacheableImageNamed:@"StatusBarIconHost" forClass:[self class]];
 }
 
@@ -196,7 +196,7 @@ static NSString *const iTermStatusBarHostnameComponentAbbreviateLocalhost = @"ab
     return [super initWithPath:@"username" configuration:configuration scope:scope];
 }
 
-- (NSImage *)statusBarComponentIcon {
+- (nullable NSImage *)statusBarComponentIcon {
     return [NSImage it_cacheableImageNamed:@"StatusBarIconUser" forClass:[self class]];
 }
 
@@ -249,7 +249,7 @@ static NSString *const iTermStatusBarHostnameComponentAbbreviateLocalhost = @"ab
     }
 }
 
-- (NSImage *)statusBarComponentIcon {
+- (nullable NSImage *)statusBarComponentIcon {
     return [NSImage it_cacheableImageNamed:@"StatusBarIconFolder" forClass:[self class]];
 }
 

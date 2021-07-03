@@ -19,7 +19,7 @@ static NSString *const iTermStatusBarClockComponentLocalizeKey = @"localize";
     NSDateFormatter *_dateFormatter;
 }
 
-- (NSImage *)statusBarComponentIcon {
+- (nullable NSImage *)statusBarComponentIcon {
     return [NSImage it_cacheableImageNamed:@"StatusBarIconClock" forClass:[self class]];
 }
 

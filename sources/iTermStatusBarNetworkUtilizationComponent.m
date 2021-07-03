@@ -57,7 +57,7 @@ NS_ASSUME_NONNULL_BEGIN
     return [knobs arrayByAddingObjectsFromArray:@[downloadColorKnob, uploadColorKnob]];
 }
 
-- (NSImage *)statusBarComponentIcon {
+- (nullable NSImage *)statusBarComponentIcon {
     return [NSImage it_cacheableImageNamed:@"StatusBarIconNetwork" forClass:[self class]];
 }
 

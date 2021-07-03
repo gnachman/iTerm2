@@ -15,6 +15,7 @@
 + (NSArray<NSNumber *> *)sequenceWithRange:(NSRange)range;
 + (NSArray<NSString *> *)stringSequenceWithRange:(NSRange)range;
 - (NSIndexSet *)it_indexSetWithIndexesOfObjects:(NSArray *)objects;
+- (NSIndexSet *)it_indexSetWithObjectsPassingTest:(BOOL (^ NS_NOESCAPE)(ObjectType object))block;
 
 - (NSArray<ObjectType> *)it_arrayByRemovingObjectsAtIndexes:(NSIndexSet *)indexes;
 

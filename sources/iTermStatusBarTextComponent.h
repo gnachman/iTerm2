@@ -21,6 +21,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (CGFloat)widthForString:(NSString *)string;
 - (void)updateTextFieldIfNeeded;
 - (NSTextField *)newTextField;
+- (nullable NSString *)stringValueForCurrentWidth;
 
 @end
 

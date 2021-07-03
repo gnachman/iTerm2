@@ -73,7 +73,7 @@
     }
 }
 
-- (NSColor *)statusBarTextColor {
+- (nullable NSColor *)statusBarTextColor {
     return [self textColor];
 }
 

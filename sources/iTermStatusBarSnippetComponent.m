@@ -17,7 +17,7 @@
 
 @implementation iTermStatusBarSnippetMenuComponent
 
-- (NSImage *)statusBarComponentIcon {
+- (nullable NSImage *)statusBarComponentIcon {
     return [NSImage it_cacheableImageNamed:@"StatusBarIconSnippet" forClass:[self class]];
 }
 

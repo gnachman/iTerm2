@@ -65,7 +65,7 @@ static NSString *const iTermBatteryComponentKnobKeyShowTime = @"ShowTime";
     return result;
 }
 
-- (NSImage *)statusBarComponentIcon {
+- (nullable NSImage *)statusBarComponentIcon {
     static dispatch_once_t onceToken;
     static NSImage *image;
     dispatch_once(&onceToken, ^{

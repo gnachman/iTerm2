@@ -106,12 +106,12 @@ static const NSTimeInterval iTermStatusBarGitComponentDefaultCadence = 2;
     return self;
 }
 
-- (void)setDelegate:(id<iTermStatusBarComponentDelegate>)delegate {
+- (void)setDelegate:(id<iTermStatusBarComponentDelegate> _Nullable)delegate {
     [super setDelegate:delegate];
     [self statusBarComponentUpdate];
 }
 
-- (NSImage *)statusBarComponentIcon {
+- (nullable NSImage *)statusBarComponentIcon {
     return [NSImage it_cacheableImageNamed:@"StatusBarIconGitBranch" forClass:[self class]];
 }
 

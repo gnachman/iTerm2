@@ -305,7 +305,7 @@ NS_ASSUME_NONNULL_BEGIN
     view.frame = NSMakeRect(0, 0, width, view.frame.size.height);
 }
 
-- (NSColor *)statusBarTextColor {
+- (nullable NSColor *)statusBarTextColor {
     return [self textColor];
 }
 

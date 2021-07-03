@@ -66,7 +66,7 @@ extern NSString * const kTriggerDisabledKey;
 - (iTermVariableScope *)variableScope:(iTermVariableScope *)scope
                byAddingBackreferences:(NSArray<NSString *> *)backreferences;
 
-- (void)paramWithBackreferencesReplacedWithValues:(NSString *const *)strings
+- (void)paramWithBackreferencesReplacedWithValues:(NSString * _Nonnull const * _Nonnull)strings
                                             count:(NSInteger)count
                                             scope:(iTermVariableScope *)scope
                                  useInterpolation:(BOOL)useInterpolation
@@ -85,7 +85,7 @@ extern NSString * const kTriggerDisabledKey;
  useInterpolation:(BOOL)useInterpolation;
 
 // Subclasses must override this. Return YES if it can fire again on this line.
-- (BOOL)performActionWithCapturedStrings:(NSString *const *)capturedStrings
+- (BOOL)performActionWithCapturedStrings:(NSString * _Nonnull const * _Nonnull)capturedStrings
                           capturedRanges:(const NSRange *)capturedRanges
                             captureCount:(NSInteger)captureCount
                                inSession:(PTYSession *)aSession

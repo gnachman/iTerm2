@@ -104,12 +104,12 @@ static NSString *const iTermStatusBarActionKey = @"action";
     }
 }
 
-- (void)setDelegate:(id<iTermStatusBarComponentDelegate>)delegate {
+- (void)setDelegate:(id<iTermStatusBarComponentDelegate> _Nullable)delegate {
     [super setDelegate:delegate];
     [self updateTitleInButton];
 }
 
-- (NSImage *)statusBarComponentIcon {
+- (nullable NSImage *)statusBarComponentIcon {
     return [NSImage it_cacheableImageNamed:@"StatusBarIconAction" forClass:[self class]];
 }
 
@@ -131,7 +131,7 @@ static NSString *const iTermStatusBarActionKey = @"action";
 
 @implementation iTermStatusBarActionMenuComponent
 
-- (NSImage *)statusBarComponentIcon {
+- (nullable NSImage *)statusBarComponentIcon {
     return [NSImage it_cacheableImageNamed:@"StatusBarIconAction" forClass:[self class]];
 }
 

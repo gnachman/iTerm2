@@ -12,6 +12,9 @@
 #import "iTermStatusBarComponentKnob.h"
 #import "iTermStatusBarLayoutAlgorithm.h"
 
+NS_ASSUME_NONNULL_BEGIN
+
+@protocol iTermTriggersDataSource;
 
 typedef NSString *iTermStatusBarComponentConfigurationKey NS_EXTENSIBLE_STRING_ENUM;
 extern iTermStatusBarComponentConfigurationKey iTermStatusBarComponentConfigurationKeyKnobValues;  // NSDictionary
@@ -47,13 +50,14 @@ forInvocation:(NSString *)invocation
                     origin:(NSString *)origin;
 - (void)statusBarComponentComposerRevealComposer:(id<iTermStatusBarComponent>)component;
 - (iTermActivityInfo)statusBarComponentActivityInfo:(id<iTermStatusBarComponent>)component;
+- (id<iTermTriggersDataSource>)statusBarComponentTriggersDataSource:(id<iTermStatusBarComponent>)component;
 @end
 
 @protocol iTermStatusBarComponentFactory<NSSecureCoding, NSCopying, NSObject>
 
 - (id<iTermStatusBarComponent>)newComponentWithKnobs:(NSDictionary *)knobs
                                      layoutAlgorithm:(iTermStatusBarLayoutAlgorithmSetting)layoutAlgorithm
-                                               scope:(iTermVariableScope *)scope;
+                                               scope:(nullable iTermVariableScope *)scope;
 - (NSString *)componentDescription;
 - (NSDictionary *)defaultKnobs;
 
@@ -63,7 +67,7 @@ forInvocation:(NSString *)invocation
 @protocol iTermStatusBarComponent<NSSecureCoding, NSObject>
 
 @property (nonatomic, readonly) NSDictionary<iTermStatusBarComponentConfigurationKey, id> *configuration;
-@property (nonatomic, weak) id<iTermStatusBarComponentDelegate> delegate;
+@property (nullable, nonatomic, weak) id<iTermStatusBarComponentDelegate> delegate;
 @property (nonatomic, readonly) id<iTermStatusBarComponentFactory> statusBarComponentFactory;
 @property (nonatomic, readonly) NSString *statusBarComponentIdentifier;
 
@@ -72,7 +76,7 @@ forInvocation:(NSString *)invocation
 - (instancetype)initWithConfiguration:(NSDictionary<iTermStatusBarComponentConfigurationKey, id> *)configuration
                                 scope:(iTermVariableScope *)scope;
 
-- (NSImage *)statusBarComponentIcon;
+- (nullable NSImage *)statusBarComponentIcon;
 
 - (NSArray<iTermStatusBarComponentKnob *> *)statusBarComponentKnobs;
 
@@ -126,7 +130,7 @@ forInvocation:(NSString *)invocation
 - (NSDictionary *)statusBarComponentKnobValues;
 
 // If this component serves as a search view, returns the view controller. Otherwise, returns nil.
-- (NSViewController<iTermFindViewController> *)statusBarComponentSearchViewController;
+- (nullable NSViewController<iTermFindViewController> *)statusBarComponentSearchViewController;
 
 // Called when the view size changes.
 - (void)statusBarComponentWidthDidChangeTo:(CGFloat)newWidth;
@@ -141,8 +145,8 @@ forInvocation:(NSString *)invocation
 - (void)statusBarDefaultTextColorDidChange;
 - (void)statusBarTerminalBackgroundColorDidChange;
 
-- (NSColor *)statusBarTextColor;
-- (NSColor *)statusBarBackgroundColor;
+- (nullable NSColor *)statusBarTextColor;
+- (nullable NSColor *)statusBarBackgroundColor;
 
 - (void)statusBarComponentOpenPopoverWithHTML:(NSString *)html ofSize:(NSSize)size;
 
@@ -158,3 +162,4 @@ forInvocation:(NSString *)invocation
 - (NSFont *)font;
 
 @end
+NS_ASSUME_NONNULL_END

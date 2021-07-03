@@ -374,6 +374,10 @@ static const CGFloat iTermStatusBarViewControllerBottomMargin = 0;
     [self.delegate statusBarRevealComposer];
 }
 
+- (id<iTermTriggersDataSource>)statusBarComponentTriggersDataSource:(id<iTermStatusBarComponent>)component {
+    return [self.delegate statusBarTriggersDataSource];
+}
+
 - (iTermActivityInfo)statusBarComponentActivityInfo:(id<iTermStatusBarComponent>)component {
     return [self.delegate statusBarActivityInfo];
 }

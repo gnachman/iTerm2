@@ -100,7 +100,7 @@ static NSString *const iTermStatusBarTimeoutKey = @"timeout";
     return [knobValues[iTermStatusBarSharedTextColorKey] colorValue] ?: ([self defaultTextColor] ?: [self.delegate statusBarComponentDefaultTextColor]);
 }
 
-- (NSColor *)statusBarTextColor {
+- (nullable NSColor *)statusBarTextColor {
     return [self textColor];
 }
 

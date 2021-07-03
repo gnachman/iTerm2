@@ -131,7 +131,7 @@ NS_ASSUME_NONNULL_BEGIN
     return YES;
 }
 
-- (void)setDelegate:(id<iTermStatusBarComponentDelegate>)delegate {
+- (void)setDelegate:(id<iTermStatusBarComponentDelegate> _Nullable)delegate {
     [super setDelegate:delegate];
     _textField.textColor = self.textColor;
 }
@@ -224,7 +224,7 @@ NS_ASSUME_NONNULL_BEGIN
     return number.doubleValue;
 }
 
-- (NSColor *)statusBarTextColor {
+- (NSColor * _Nullable)statusBarTextColor {
     return [self textColor];
 }
 

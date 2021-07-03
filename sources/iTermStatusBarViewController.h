@@ -11,6 +11,7 @@
 #import "iTermFindViewController.h"
 #import "iTermStatusBarComponent.h"
 #import "iTermStatusBarLayoutAlgorithm.h"
+#import "iTerm2SharedARC-Swift.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -37,6 +38,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)statusBarReportScriptingError:(NSError *)error
                         forInvocation:(NSString *)invocation
                                origin:(NSString *)origin;
+- (id<iTermTriggersDataSource>)statusBarTriggersDataSource;
 
 // Takes into account theme, dark/light mode (if relevant), and advanced config background color.
 - (BOOL)statusBarHasDarkBackground;

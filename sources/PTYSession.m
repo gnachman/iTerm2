@@ -95,6 +95,7 @@
 #import "iTermSessionNameController.h"
 #import "iTermSessionTitleBuiltInFunction.h"
 #import "iTermSetFindStringNotification.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermShellHistoryController.h"
 #import "iTermShortcut.h"
 #import "iTermShortcutInputView.h"
@@ -336,6 +337,7 @@ static const NSUInteger kMaxHosts = 100;
     iTermStandardKeyMapperDelegate,
     iTermStatusBarViewControllerDelegate,
     iTermTermkeyKeyMapperDelegate,
+    iTermTriggersDataSource,
     iTermTmuxControllerSession,
     iTermUpdateCadenceControllerDelegate,
     iTermWorkingDirectoryPollerDelegate,
@@ -9884,6 +9886,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)textViewEditTriggers {
+    [self openTriggersViewController];
+}
+
+- (void)openTriggersViewController {
     [_triggerWindowController autorelease];
     _triggerWindowController = [[TriggerController alloc] init];
     _triggerWindowController.guid = self.profile[KEY_GUID];
@@ -9928,6 +9934,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)textViewAddTrigger:(NSString *)text {
+    [self openAddTriggerViewControllerWithText:text];
+}
+
+- (void)openAddTriggerViewControllerWithText:(NSString *)text {
     __weak __typeof(self) weakSelf = self;
     iTermColorSuggester *cs =
         [[[iTermColorSuggester alloc] initWithDefaultTextColor:[_colorMap colorForKey:kColorMapForeground]
@@ -13617,6 +13627,40 @@ preferredEscaping:(iTermSendTextEscaping)preferredEscaping {
                           forInvocation:invocation
                                  origin:origin
                                  window:self.delegate.realParentWindow.window];
+}
+
+- (id<iTermTriggersDataSource>)statusBarTriggersDataSource {
+    return self;
+}
+
+#pragma mark - iTermTriggersDataSource
+
+- (NSInteger)numberOfTriggers {
+    return _triggers.count;
+}
+
+- (NSArray<NSString *> *)triggerNames {
+    return [_triggers mapWithBlock:^id(Trigger *trigger) {
+        return [NSString stringWithFormat:@"%@ — %@", [[[trigger class] title] stringByRemovingSuffix:@"…"], trigger.regex];
+    }];
+}
+
+- (NSIndexSet *)enabledTriggerIndexes {
+    return [_triggers it_indexSetWithObjectsPassingTest:^BOOL(Trigger *trigger) {
+        return !trigger.disabled;
+    }];
+}
+
+- (void)addTrigger {
+    [self openAddTriggerViewControllerWithText:_textview.selectedText ?: @""];
+}
+
+- (void)editTriggers {
+    [self openTriggersViewController];
+}
+
+- (void)toggleTriggerAtIndex:(NSInteger)index {
+    [self toggleTriggerEnabledAtIndex:index];
 }
 
 #pragma mark - iTermMetaFrustrationDetectorDelegate

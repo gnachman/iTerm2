@@ -144,7 +144,7 @@
     }
 }
 
-- (NSColor *)statusBarTextColor {
+- (nullable NSColor *)statusBarTextColor {
     NSDictionary *knobValues = self.configuration[iTermStatusBarComponentConfigurationKeyKnobValues];
     return [knobValues[iTermStatusBarSharedTextColorKey] colorValue] ?: ([self defaultTextColor] ?: [self.delegate statusBarComponentDefaultTextColor]);
 }

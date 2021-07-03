@@ -58,7 +58,7 @@ const double iTermStatusBarBaseComponentDefaultPriority = 5;
 
 - (id<iTermStatusBarComponent>)newComponentWithKnobs:(NSDictionary *)knobs
                                      layoutAlgorithm:(iTermStatusBarLayoutAlgorithmSetting)layoutAlgorithm
-                                               scope:(iTermVariableScope *)scope {
+                                               scope:(nullable iTermVariableScope *)scope {
     iTermStatusBarAdvancedConfiguration *advancedConfiguration = [[iTermStatusBarAdvancedConfiguration alloc] init];
     advancedConfiguration.layoutAlgorithm = layoutAlgorithm;
     return [[_class alloc] initWithConfiguration:@{iTermStatusBarComponentConfigurationKeyKnobValues: knobs,

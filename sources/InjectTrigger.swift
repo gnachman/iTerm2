@@ -21,7 +21,7 @@ class InjectTrigger: Trigger {
         return "Use \\e for esc, \\a for ^G."
     }
 
-    override func performAction(withCapturedStrings capturedStrings: UnsafePointer<NSString?>!,
+    override func performAction(withCapturedStrings capturedStrings: UnsafePointer<NSString>,
                                 capturedRanges: UnsafePointer<NSRange>,
                                 captureCount: Int,
                                 in session: PTYSession,
