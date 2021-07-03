@@ -28,7 +28,8 @@ static NSString *const iTermSessionTitleArgIconName = @"iconName";
 static NSString *const iTermSessionTitleArgWindowName = @"windowName";
 static NSString *const iTermSessionTitleArgTmuxWindowName = @"tmuxWindowName";
 static NSString *const iTermSessionTitleArgTmuxWindowTitle = @"tmuxWindowTitle";
-
+static NSString *const iTermSessionTitleArgRows = @"rows";
+static NSString *const iTermSessionTitleArgColumns = @"columns";
 static NSString *const iTermSessionTitleSession = @"session";
 
 
@@ -53,6 +54,8 @@ static NSString *const iTermSessionTitleSession = @"session";
        iTermSessionTitleArgWindowName: iTermVariableKeySessionWindowName,
        iTermSessionTitleArgTmuxWindowName: [NSString stringWithFormat:@"%@.%@", iTermVariableKeySessionTab, iTermVariableKeyTabTmuxWindowName],
        iTermSessionTitleArgTmuxWindowTitle: [NSString stringWithFormat:@"%@.%@", iTermVariableKeySessionTab, iTermVariableKeyTabTmuxWindowTitle],
+       iTermSessionTitleArgRows: iTermVariableKeySessionRows,
+       iTermSessionTitleArgColumns: iTermVariableKeySessionColumns
        };
     // This would be a cyclic reference since the session.name is the result of this function.
     assert(![defaults.allValues containsObject:iTermVariableKeySessionName]);
@@ -118,6 +121,8 @@ static NSString *const iTermSessionTitleSession = @"session";
     NSString *windowName = trim(parameters[iTermSessionTitleArgWindowName]);
     NSString *tmuxWindowName = trim(parameters[iTermSessionTitleArgTmuxWindowName]);
     NSString *tmuxWindowTitle = trim(parameters[iTermSessionTitleArgTmuxWindowTitle]);
+    NSNumber *rows = parameters[iTermSessionTitleArgRows];
+    NSNumber *columns = parameters[iTermSessionTitleArgColumns];
 
     iTermTitleComponents titleComponents;
     titleComponents = [iTermProfilePreferences unsignedIntegerForKey:KEY_TITLE_COMPONENTS
@@ -136,6 +141,8 @@ static NSString *const iTermSessionTitleSession = @"session";
                                       windowName:windowName
                                   tmuxWindowName:tmuxWindowName
                                  tmuxWindowTitle:tmuxWindowTitle
+                                            rows:rows
+                                         columns:columns
                                       components:titleComponents
                                    isWindowTitle:isWindow];
     DLog(@"Title for session %@ is %@", session, result);
@@ -169,13 +176,15 @@ static NSString *const iTermSessionTitleSession = @"session";
                        windowName:(NSString *)windowName
                    tmuxWindowName:(NSString *)tmuxWindowName
                   tmuxWindowTitle:(NSString *)tmuxWindowTitle
+                             rows:(NSNumber *)rows
+                          columns:(NSNumber *)columns
                        components:(iTermTitleComponents)titleComponents
                     isWindowTitle:(BOOL)isWindowTitle {
     NSString *sessionName = isWindowTitle ? rawSessionName.removingHTMLFromTabTitleIfNeeded : rawSessionName;
-    DLog(@"sessionName=%@ profileName=%@ job=%@ commandLine=%@ pwd=%@ tty=%@ user=%@ host=%@ tmuxPane=%@ iconName=%@ windowName=%@ tmuxWindowName=%@ tmuxWindowTitle=%@ isWindowTitle=%@",
+    DLog(@"sessionName=%@ profileName=%@ job=%@ commandLine=%@ pwd=%@ tty=%@ user=%@ host=%@ tmuxPane=%@ iconName=%@ windowName=%@ tmuxWindowName=%@ tmuxWindowTitle=%@ isWindowTitle=%@ rows=%@ columns=%@",
          sessionName, profileName, jobVariable, commandLineVariable, pwdVariable, ttyVariable,
          userVariable, hostVariable, tmuxPaneVariable, iconName, windowName, tmuxWindowName,
-         tmuxWindowTitle, @(isWindowTitle));
+         tmuxWindowTitle, @(isWindowTitle), rows, columns);
 
     NSString *name = nil;
     NSMutableString *result = [NSMutableString string];
@@ -297,11 +306,22 @@ static NSString *const iTermSessionTitleSession = @"session";
             [result appendString:tty];
         }
     }
+    if (titleComponents & iTermTitleComponentsSize) {
+        if (![result hasSuffix:@" "]) {
+            [result appendString:@" "];
+        }
+        [result appendString:@" — "];
+        [result appendString:iTermColumnsByRowsString(columns.intValue, rows.intValue)];
+    }
 
     if (!result.length) {
         [result appendString:@" "];
     }
     return result;
+}
+
+NSString *iTermColumnsByRowsString(int columns, int rows) {
+    return [NSString stringWithFormat:@"%d✕%d", columns, rows];
 }
 
 @end

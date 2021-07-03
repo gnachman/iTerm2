@@ -1028,6 +1028,8 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
                                                                                    windowName:@""
                                                                                tmuxWindowName:nil
                                                                               tmuxWindowTitle:nil
+                                                                                         rows:@80
+                                                                                      columns:@25
                                                                                    components:value
                                                                                 isWindowTitle:NO];
 

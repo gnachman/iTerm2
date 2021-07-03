@@ -27,10 +27,14 @@ NS_ASSUME_NONNULL_BEGIN
                        windowName:(NSString *)windowName
                    tmuxWindowName:(nullable NSString *)tmuxWindowName
                   tmuxWindowTitle:(nullable NSString *)tmuxWindowTitle
+                             rows:(NSNumber *)rows
+                          columns:(NSNumber *)columns
                        components:(iTermTitleComponents)titleComponents
                     isWindowTitle:(BOOL)isWindowTitle;
 
 
 @end
+
+NSString *iTermColumnsByRowsString(int columns, int rows);
 
 NS_ASSUME_NONNULL_END

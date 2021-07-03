@@ -60,6 +60,7 @@
 #import "iTermSelection.h"
 #import "iTermSessionFactory.h"
 #import "iTermSessionLauncher.h"
+#import "iTermSessionTitleBuiltInFunction.h"
 #import "iTermShellHistoryController.h"
 #import "iTermSquash.h"
 #import "iTermSwiftyString.h"
@@ -2238,11 +2239,19 @@ ITERM_WEAKLY_REFERENCEABLE
             aTitle = [NSString stringWithFormat:@"%d✕%d", session.columns, session.rows];
         } else {
             NSString *detail = [self rootTerminalViewWindowSizeViewDetailString];
-            aTitle = [NSString stringWithFormat:@"%@ \u2014 %d✕%d%@",
-                      [self undecoratedWindowTitle],
-                      [session columns],
-                      [session rows],
-                      detail ? [@" \u2014 " stringByAppendingString:detail] : @""];
+            NSString *sizeString = iTermColumnsByRowsString(session.columns, session.rows);
+            NSString *undecoratedTitle = [self undecoratedWindowTitle];
+            if ([undecoratedTitle containsString:sizeString]) {
+                // If the session title already includes the size don't add it a second time.
+                aTitle = [NSString stringWithFormat:@"%@%@",
+                          undecoratedTitle,
+                          detail ? [@" \u2014 " stringByAppendingString:detail] : @""];
+            } else {
+                aTitle = [NSString stringWithFormat:@"%@ \u2014 %@%@",
+                          undecoratedTitle,
+                          sizeString,
+                          detail ? [@" \u2014 " stringByAppendingString:detail] : @""];
+            }
         }
         [self setWindowTitle:aTitle];
     } else {

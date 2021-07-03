@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="17701" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="18122" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES">
     <dependencies>
         <deployment identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="17701"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="18122"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
@@ -1830,8 +1830,9 @@ DQ
                                 <menuItem title="Job Name" tag="2" indentationLevel="1" id="cne-Bh-bAC"/>
                                 <menuItem title="Job Name with Arguments" tag="512" indentationLevel="1" id="9nS-ja-6km"/>
                                 <menuItem isSeparatorItem="YES" id="Hts-WQ-j82"/>
-                                <menuItem title="User" tag="128" id="ZT3-m8-pr9"/>
+                                <menuItem title="Columns × Rows" tag="1024" id="ogQ-h8-deW"/>
                                 <menuItem title="Host" tag="256" id="w6i-sK-DQu"/>
+                                <menuItem title="User" tag="128" id="ZT3-m8-pr9"/>
                                 <menuItem title="PWD" tag="4" id="xPf-Vv-eGl"/>
                                 <menuItem title="TTY" tag="8" id="xEH-Wz-NWS"/>
                             </items>

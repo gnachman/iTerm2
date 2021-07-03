@@ -84,13 +84,15 @@ class TitleComponents(enum.Enum):
     """Which title components should be present?"""
     SESSION_NAME = (1 << 0)
     JOB = (1 << 1)
-    WORKING_DIRECTORy = (1 << 2)
+    WORKING_DIRECTORY = (1 << 2)
     TTY = (1 << 3)
     CUSTOM = (1 << 4)  #: Mutually exclusive with all other options.
     PROFILE_NAME = (1 << 5)
     PROFILE_AND_SESSION_NAME = (1 << 6)
     USER = (1 << 7)
     HOST = (1 << 8)
+    COMMAND_LINE = (1 << 9)
+    SIZE = (1 << 10)
 
 
 class LocalWriteOnlyProfile:
