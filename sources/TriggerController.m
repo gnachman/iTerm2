@@ -22,6 +22,7 @@
 #import "iTermFunctionCallTextFieldDelegate.h"
 #import "iTermHighlightLineTrigger.h"
 #import "iTermNoColorAccessoryButton.h"
+#import "iTermOptionallyBordered.h"
 #import "iTermProfilePreferences.h"
 #import "iTermRPCTrigger.h"
 #import "iTerm2SharedARC-Swift.h"
@@ -47,6 +48,60 @@ static NSString *const kRegexColumnIdentifier = @"kRegexColumnIdentifier";
 static NSString *const kParameterColumnIdentifier = @"kParameterColumnIdentifier";
 NSString *const kTextColorWellIdentifier = @"kTextColorWellIdentifier";
 NSString *const kBackgroundColorWellIdentifier = @"kBackgroundColorWellIdentifier";
+NSString *const kTwoPraramNameColumnIdentifier = @"kTwoPraramNameColumnIdentifier";
+NSString *const kTwoPraramValueColumnIdentifier = @"kTwoPraramValueColumnIdentifier";
+
+@interface iTermTwoStringView: NSTableCellView<iTermOptionallyBordered>
+- (instancetype)initWithFirst:(NSView *)first second:(NSView *)second;
+@end
+
+@implementation iTermTwoStringView {
+    NSView *_first;
+    NSView *_second;
+}
+
+- (instancetype)initWithFirst:(NSView *)first second:(NSView *)second {
+    self = [super init];
+    if (self) {
+        [self addSubview:first];
+        [self addSubview:second];
+        _first = first;
+        _second = second;
+        self.autoresizesSubviews = NO;
+        [self layoutSubviews];
+    }
+    return self;
+}
+
+- (void)resizeSubviewsWithOldSize:(NSSize)oldSize {
+    [self layoutSubviews];
+}
+
+// For reasons I cannot scrute, resizeSubviewsWithOldSize: doesn't get called but this does.
+- (void)setFrame:(NSRect)frame {
+    [super setFrame:frame];
+    [self layoutSubviews];
+}
+
+- (void)layoutSubviews {
+    const CGFloat margin = 5;
+    const CGFloat width = (NSWidth(self.bounds) - margin) / 2;
+    const CGFloat height = NSHeight(self.bounds);
+    _first.frame = NSMakeRect(0, 0, width, height);
+    _second.frame = NSMakeRect(NSMaxX(_first.frame) + margin, 0, width, height);
+}
+
+- (void)setOptionalBorderEnabled:(BOOL)enabled {
+    if ([_first conformsToProtocol:@protocol(iTermOptionallyBordered)]) {
+        [(id<iTermOptionallyBordered>)_first setOptionalBorderEnabled:enabled];
+    }
+    if ([_second conformsToProtocol:@protocol(iTermOptionallyBordered)]) {
+        [(id<iTermOptionallyBordered>)_second setOptionalBorderEnabled:enabled];
+    }
+}
+
+@end
+
 
 // This is a color well that continues to work after it's removed from the view
 // hierarchy. NSTableView likes to randomly remove its views, so a regular
@@ -122,6 +177,7 @@ NSString *const kBackgroundColorWellIdentifier = @"kBackgroundColorWellIdentifie
                              [iTermInjectTrigger class],
                              [iTermHighlightLineTrigger class],
                              [iTermUserNotificationTrigger class],
+                             [iTermSetUserVariableTrigger class],
                              [iTermShellPromptTrigger class],
                              [iTermSetTitleTrigger class],
                              [SendTextTrigger class],
@@ -418,11 +474,14 @@ NSString *const kBackgroundColorWellIdentifier = @"kBackgroundColorWellIdentifie
                                  value:(id)value
                               receiver:(id<iTermTriggerParameterController>)receiver
                    interpolatedStrings:(BOOL)interpolatedStrings
+                             tableView:(NSTableView *)tableView
                            delegateOut:(out id *)delegateOut
                            wellFactory:(CPKColorWell *(^ NS_NOESCAPE)(NSRect, NSColor *))wellFactory {
     if (![trigger takesParameter]) {
         return [[NSView alloc] initWithFrame:NSZeroRect];
     }
+    id<iTermFocusReportingTextFieldDelegate> delegate = *delegateOut ?: receiver;
+
     if ([trigger paramIsTwoColorWells]) {
         NSView *container = [[NSView alloc] initWithFrame:NSMakeRect(0,
                                                                      0,
@@ -455,6 +514,28 @@ NSString *const kBackgroundColorWellIdentifier = @"kBackgroundColorWellIdentifie
         [container addSubview:well];
         well.identifier = kBackgroundColorWellIdentifier;
         return container;
+    }
+    if ([trigger paramIsTwoStrings]) {
+        const CGFloat margin = 5;
+        const NSSize subsize = NSMakeSize((size.width - margin) / 2, size.height);
+        iTermTuple<NSString *, NSString *> *pair = [iTermTwoParameterTriggerCodec tupleFromString:[NSString castFrom:value]];
+        NSTextField *nameTextField = [self newTextFieldOfSize:subsize
+                                                        value:pair.firstObject
+                                                  placeholder:@"Name"
+                                                   identifier:kTwoPraramNameColumnIdentifier];
+        nameTextField.delegate = delegate;
+
+        NSTextField *valueTextField = [self newTextFieldOfSize:subsize
+                                                         value:pair.secondObject
+                                                   placeholder:@"Value"
+                                                    identifier:kTwoPraramValueColumnIdentifier];
+        valueTextField.delegate = delegate;
+
+        iTermTwoStringView *container = [[iTermTwoStringView alloc] initWithFirst:nameTextField
+                                                                           second:valueTextField];
+        container.frame = NSMakeRect(0, 0, size.width, size.height);
+        return container;
+
     }
     if ([trigger paramIsPopupButton]) {
         NSPopUpButton *popUpButton = [[NSPopUpButton alloc] init];
@@ -492,8 +573,21 @@ NSString *const kBackgroundColorWellIdentifier = @"kBackgroundColorWellIdentifie
         return popUpButton;
     }
 
-
     // If not a popup button, then text by default.
+    iTermFocusReportingTextField *textField = [self newTextFieldOfSize:size
+                                                                 value:value
+                                                           placeholder:[trigger triggerOptionalParameterPlaceholderWithInterpolation:interpolatedStrings]
+                                                            identifier:kParameterColumnIdentifier];
+    *delegateOut = [trigger newParameterDelegateWithPassthrough:receiver];
+    textField.delegate = delegate;
+    textField.identifier = kParameterColumnIdentifier;
+    return textField;
+}
+
++ (iTermFocusReportingTextField *)newTextFieldOfSize:(NSSize)size
+                                               value:(NSString *)value
+                                         placeholder:(NSString *)placeholder
+                                          identifier:(NSString *)identifier {
     iTermFocusReportingTextField *textField =
     [[iTermFocusReportingTextField alloc] initWithFrame:NSMakeRect(0,
                                                                    0,
@@ -505,14 +599,8 @@ NSString *const kBackgroundColorWellIdentifier = @"kBackgroundColorWellIdentifie
     textField.selectable = YES;
     textField.bordered = NO;
     textField.drawsBackground = NO;
-    if ([textField respondsToSelector:@selector(setPlaceholderString:)]) {
-        textField.placeholderString = [trigger triggerOptionalParameterPlaceholderWithInterpolation:interpolatedStrings];
-    }
-    *delegateOut = [trigger newParameterDelegateWithPassthrough:receiver];
-    id<iTermFocusReportingTextFieldDelegate> delegate =
-        *delegateOut  ?: receiver;
-    textField.delegate = delegate;
-    textField.identifier = kParameterColumnIdentifier;
+    textField.placeholderString = placeholder;
+    textField.identifier = identifier;
 
     return textField;
 }
@@ -579,6 +667,7 @@ NSString *const kBackgroundColorWellIdentifier = @"kBackgroundColorWellIdentifie
                                                           value:triggerDictionary[kTriggerParameterKey]
                                                        receiver:self
                                             interpolatedStrings:_interpolatedStringParameters.state == NSControlStateValueOn
+                                                      tableView:tableView
                                                     delegateOut:&delegateToSave
                                                     wellFactory:
                           ^iTermColorWell *(NSRect frame,
@@ -802,6 +891,16 @@ NSString *const kBackgroundColorWellIdentifier = @"kBackgroundColorWellIdentifie
         [self setTriggerDictionary:triggerDictionary forRow:_textEditingRow reloadData:YES];
     } else if ([textField.identifier isEqual:kParameterColumnIdentifier]) {
         triggerDictionary[kTriggerParameterKey] = [textField stringValue];
+        [self setTriggerDictionary:triggerDictionary forRow:_textEditingRow reloadData:YES];
+    } else if ([textField.identifier isEqual:kTwoPraramNameColumnIdentifier]) {
+        iTermTuple<NSString *, NSString *> *pair = [iTermTwoParameterTriggerCodec tupleFromString:[NSString castFrom:triggerDictionary[kTriggerParameterKey]]];
+        pair.firstObject = textField.stringValue;
+        triggerDictionary[kTriggerParameterKey] = [iTermTwoParameterTriggerCodec stringFromTuple:pair];
+        [self setTriggerDictionary:triggerDictionary forRow:_textEditingRow reloadData:YES];
+    } else if ([textField.identifier isEqual:kTwoPraramValueColumnIdentifier]) {
+        iTermTuple<NSString *, NSString *> *pair = [iTermTwoParameterTriggerCodec tupleFromString:[NSString castFrom:triggerDictionary[kTriggerParameterKey]]];
+        pair.secondObject = textField.stringValue;
+        triggerDictionary[kTriggerParameterKey] = [iTermTwoParameterTriggerCodec stringFromTuple:pair];
         [self setTriggerDictionary:triggerDictionary forRow:_textEditingRow reloadData:YES];
     }
     _textEditingRow = -1;

@@ -158,6 +158,7 @@ int decode_utf8_char(const unsigned char * restrict datap,
 
 - (NSString *)stringByRemovingEnclosingBrackets;
 - (NSString *)stringByRemovingSuffix:(NSString *)suffix;
+- (NSString *)stringByRemovingPrefix:(NSString *)prefix;
 
 - (NSString *)stringByCapitalizingFirstLetter;
 

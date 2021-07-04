@@ -8,6 +8,7 @@
 #import <Cocoa/Cocoa.h>
 #import "FutureMethods.h"
 #import "iTermFocusReportingTextField.h"
+#import "iTermOptionallyBordered.h"
 
 @class CPKColorWell;
 @class Trigger;
@@ -15,6 +16,8 @@
 
 extern NSString *const kTextColorWellIdentifier;
 extern NSString *const kBackgroundColorWellIdentifier;
+extern NSString *const kTwoPraramNameColumnIdentifier;
+extern NSString *const kTwoPraramValueColumnIdentifier;
 
 @protocol TriggerDelegate <NSObject>
 - (void)triggerChanged:(TriggerController *)controller newValue:(NSArray *)value;
@@ -42,6 +45,7 @@ extern NSString *const kBackgroundColorWellIdentifier;
                                  value:(id)value
                               receiver:(id<iTermTriggerParameterController>)receiver
                    interpolatedStrings:(BOOL)interpolatedStrings
+                             tableView:(NSTableView *)tableView
                            delegateOut:(out id *)delegateOut
                            wellFactory:(CPKColorWell *(^ NS_NOESCAPE)(NSRect, NSColor *))wellFactory;
 

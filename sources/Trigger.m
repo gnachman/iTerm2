@@ -105,6 +105,10 @@ NSString * const kTriggerDisabledKey = @"disabled";
     return NO;
 }
 
+- (BOOL)paramIsTwoStrings {
+    return NO;
+}
+
 - (NSDictionary *)menuItemsForPoupupButton
 {
     return nil;

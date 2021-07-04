@@ -4,6 +4,7 @@
 
 #import "iTermStatusBarComponentKnob.h"
 #import "iTermStatusBarTextComponent.h"
+#import "iTermTuple.h"
 #import "iTermVariableScope.h"
 #import "NSFont+iTerm.h"
 #import "NSImage+iTerm.h"

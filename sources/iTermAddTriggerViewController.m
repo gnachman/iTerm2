@@ -9,6 +9,9 @@
 
 #import "iTermFocusablePanel.h"
 #import "iTermHighlightLineTrigger.h"
+#import "iTermOptionallyBordered.h"
+#import "iTerm2SharedARC-Swift.h"
+#import "iTermTuple.h"
 #import "iTermUserDefaults.h"
 #import "HighlightTrigger.h"
 #import "NSArray+iTerm.h"
@@ -169,6 +172,7 @@
                                                            value:value
                                                         receiver:self
                                              interpolatedStrings:_interpolatedStrings
+                                                       tableView:nil
                                                      delegateOut:&delegateToSave
                                                      wellFactory:^CPKColorWell *(NSRect frame, NSColor *color) {
         CPKColorWell *well = [[CPKColorWell alloc] initWithFrame:frame];
@@ -195,9 +199,9 @@
         frame.origin.y = _paramY;
         _paramContainerView.frame = frame;
     }
-    NSTextField *textField = [NSTextField castFrom:view];
-    textField.bordered = YES;
-    textField.drawsBackground = YES;
+    if ([view conformsToProtocol:@protocol(iTermOptionallyBordered)]) {
+        [(id<iTermOptionallyBordered>)view setOptionalBorderEnabled:YES];
+    }
 
     [_paramView removeFromSuperview];
     _paramView = view;
@@ -223,8 +227,21 @@
 }
 
 - (void)controlTextDidChange:(NSNotification *)obj {
-    NSTextField *textField = [NSTextField castFrom:_paramView];
-    [[self currentTrigger] setParam:textField.stringValue ?: @""];
+    NSTextField *textField = [NSTextField castFrom:_paramView] ?: [NSTextField castFrom:obj.object];
+    NSString *param = self.currentTrigger.param;
+
+    if ([textField.identifier isEqual:kTwoPraramNameColumnIdentifier]) {
+        iTermTuple<NSString *, NSString *> *pair = [iTermTwoParameterTriggerCodec tupleFromString:[NSString castFrom:param]];
+        pair.firstObject = textField.stringValue;
+        param = [iTermTwoParameterTriggerCodec stringFromTuple:pair];
+    } else if ([textField.identifier isEqual:kTwoPraramValueColumnIdentifier]) {
+        iTermTuple<NSString *, NSString *> *pair = [iTermTwoParameterTriggerCodec tupleFromString:[NSString castFrom:param]];
+        pair.secondObject = textField.stringValue;
+        param = [iTermTwoParameterTriggerCodec stringFromTuple:pair];
+    } else {
+        param = textField.stringValue ?: @"";
+    }
+    [[self currentTrigger] setParam:param];
 }
 
 @end

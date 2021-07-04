@@ -906,6 +906,13 @@ int decode_utf8_char(const unsigned char *datap,
     return [self stringByDroppingLastCharacters:suffix.length];
 }
 
+- (NSString *)stringByRemovingPrefix:(NSString *)prefix {
+    if (![self hasPrefix:prefix]) {
+        return self;
+    }
+    return [self substringFromIndex:prefix.length];
+}
+
 - (NSString *)stringByRemovingTerminatingPunctuation {
     NSCharacterSet *punctuationCharacterSet = [NSCharacterSet characterSetWithCharactersInString:[iTermAdvancedSettingsModel trailingPunctuationMarks]];
     NSRange range = [self rangeOfCharacterFromSet:punctuationCharacterSet options:(NSBackwardsSearch | NSAnchoredSearch)];

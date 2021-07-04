@@ -49,6 +49,7 @@ extern NSString * const kTriggerDisabledKey;
 // Returns true if the parameter this action takes is a popupbutton.
 - (BOOL)paramIsPopupButton;
 - (BOOL)paramIsTwoColorWells;
+- (BOOL)paramIsTwoStrings;
 // Returns a map from id(tag/represented object) -> NSString(title)
 - (nullable NSDictionary *)menuItemsForPoupupButton;
 // Returns an array of NSDictionaries mapping NSNumber(tag) -> NSString(title)

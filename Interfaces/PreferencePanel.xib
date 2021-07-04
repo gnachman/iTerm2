@@ -749,7 +749,7 @@ Gw
                             <rect key="frame" x="509" y="17" width="15" height="99"/>
                             <autoresizingMask key="autoresizingMask"/>
                         </scroller>
-                        <tableHeaderView key="headerView" id="5844">
+                        <tableHeaderView key="headerView" wantsLayer="YES" id="5844">
                             <rect key="frame" x="0.0" y="0.0" width="763" height="17"/>
                             <autoresizingMask key="autoresizingMask"/>
                         </tableHeaderView>
@@ -972,7 +972,7 @@ DQ
                             <rect key="frame" x="224" y="17" width="15" height="102"/>
                             <autoresizingMask key="autoresizingMask"/>
                         </scroller>
-                        <tableHeaderView key="headerView" id="6284">
+                        <tableHeaderView key="headerView" wantsLayer="YES" id="6284">
                             <rect key="frame" x="0.0" y="0.0" width="533" height="17"/>
                             <autoresizingMask key="autoresizingMask"/>
                         </tableHeaderView>
