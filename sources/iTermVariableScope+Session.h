@@ -53,6 +53,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nullable, nonatomic, strong) NSNumber *bellCount;
 @property (nullable, nonatomic, strong) NSNumber *showingAlternateScreen;
 @property (nullable, nonatomic, copy) NSString *logFilename;
+@property (nullable, nonatomic, copy) NSArray *mouseInfo;
 
 @end
 

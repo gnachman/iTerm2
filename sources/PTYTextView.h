@@ -2,6 +2,7 @@
 #import "ITAddressBookMgr.h"
 #import "iTerm.h"
 #import "iTermBadgeLabel.h"
+#import "iTermClickSideEffects.h"
 #import "iTermColorMap.h"
 #import "iTermFindDriver.h"
 #import "iTermFocusFollowsMouseController.h"
@@ -241,6 +242,12 @@ preferredEscaping:(iTermSendTextEscaping)preferredEscaping;
 - (BOOL)textViewTriggersAreEnabledInInteractiveApps;
 - (iTermTimestampsMode)textviewTimestampsMode;
 - (void)textviewToggleTimestampsMode;
+- (void)textViewSetClickCoord:(VT100GridAbsCoord)coord
+                       button:(NSInteger)button
+                        count:(NSInteger)count
+                    modifiers:(NSEventModifierFlags)modifiers
+                  sideEffects:(iTermClickSideEffects)sideEffects
+                        state:(iTermMouseState)state;
 
 @end
 

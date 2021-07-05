@@ -7,6 +7,7 @@
 
 #import <Cocoa/Cocoa.h>
 
+#import "iTermClickSideEffects.h"
 #import "iTermSwipeHandler.h"
 #import "PointerController.h"
 #import "VT100GridTypes.h"
@@ -105,6 +106,12 @@ dragSemanticHistoryWithEvent:(NSEvent *)event
 - (id<iTermSwipeHandler>)mouseHandlerSwipeHandler:(PTYMouseHandler *)sender;
 - (CGFloat)mouseHandlerAccumulatedDeltaY:(PTYMouseHandler *)sender forEvent:(NSEvent *)event;
 - (long long)mouseHandlerTotalScrollbackOverflow:(PTYMouseHandler *)sender;
+- (void)mouseHandlerSetClickCoord:(VT100GridCoord)coord
+                           button:(NSInteger)button
+                            count:(NSInteger)count
+                        modifiers:(NSEventModifierFlags)modifiers
+                      sideEffects:(iTermClickSideEffects)sideEffects
+                            state:(iTermMouseState)state;
 @end
 
 @interface PTYMouseHandler : NSObject

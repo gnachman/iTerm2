@@ -143,7 +143,7 @@ def ContextMenuProviderRPC(func):  # pylint: disable=invalid-name
     provider. Similar to :func:`~iterm2.registration.RPC`.
 
     A context menu provider is a function that gets called when the user selects
-    an item in a context menu. The context menu is the menu that appears when ou
+    an item in a context menu. The context menu is the menu that appears when you
     right-click in a terminal window.
 
     The return value is ignored.

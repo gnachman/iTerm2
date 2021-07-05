@@ -84,6 +84,7 @@ NSString *const iTermVariableKeySessionParent = @"parentSession";
 NSString *const iTermVariableKeySessionBellCount = @"bellCount";
 NSString *const iTermVariableKeySessionLogFilename = @"logFilename";
 NSString *const iTermVariableKeySessionTmuxWindowPaneIndex = @"tmuxWindowPaneIndex";
+NSString *const iTermVariableKeySessionMouseInfo = @"mouseInfo";
 
 #pragma mark - Window Context
 

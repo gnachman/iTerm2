@@ -115,13 +115,31 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         return;
     }
     DLog(@"Mouse Down on %@ with event %@, num touches=%d", self, event, self.numTouches);
-    if ([self mouseDownImpl:event]) {
+    iTermClickSideEffects sideEffects = iTermClickSideEffectsNone;
+    if ([self mouseDownImpl:event sideEffects:&sideEffects]) {
         superCaller();
+    }
+    if (sideEffects != iTermClickSideEffectsIgnore) {
+        [self setMouseInfoForEvent:event
+                       sideEffects:sideEffects];
     }
 }
 
-// Returns yes if [super mouseDown:event] should be run by caller.
+// This is an API. Internal calls should all go through the two-argument method. Because clicks can
+// be directed to SessionView (or at least could many years ago!) this must be a first-class citizen.
 - (BOOL)mouseDownImpl:(NSEvent *)event {
+    iTermClickSideEffects sideEffects = iTermClickSideEffectsNone;
+    const BOOL result = [self mouseDownImpl:event sideEffects:&sideEffects];
+    if (sideEffects != iTermClickSideEffectsIgnore) {
+        [self setMouseInfoForEvent:event
+                       sideEffects:sideEffects];
+    }
+    return result;
+}
+
+// Returns yes if [super mouseDown:event] should be run by caller.
+- (BOOL)mouseDownImpl:(NSEvent *)event
+          sideEffects:(iTermClickSideEffects *)sideEffects {
     DLog(@"mouseDownImpl: called");
     _mouseDownWasFirstMouse = ([event eventNumber] == _firstMouseEventNumber) || ![NSApp keyWindow];
     _lastMouseDownOnSelectedText = NO;  // This may get updated to YES later.
@@ -134,6 +152,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         DLog(@"Beep: dump view hierarchy");
         NSBeep();
         [[iTermController sharedInstance] dumpViewHierarchy];
+        *sideEffects = iTermClickSideEffectsIgnore;
         return NO;
     }
     const BOOL isFocused = [self.mouseDelegate mouseHandlerViewHasFocus:self];
@@ -146,6 +165,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         DLog(@"Click on inactive pane with focus follows mouse");
         _mouseDownWasFirstMouse = YES;
         [self.mouseDelegate mouseHandlerMakeFirstResponder:self];
+        *sideEffects = iTermClickSideEffectsIgnore;
         return NO;
     }
     if (_mouseDownWasFirstMouse &&
@@ -156,10 +176,12 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         // it is treated like a normal click (issue 3236). Returning here prevents mouseDown=YES
         // which keeps -mouseUp from doing anything such as changing first responder.
         DLog(@"returning because this was a first-mouse event.");
+        *sideEffects = iTermClickSideEffectsIgnore;
         return NO;
     }
     if (_numTouches == 3 && _makingThreeFingerSelection) {
         DLog(@"Ignore mouse down because you're making a three finger selection");
+        *sideEffects = iTermClickSideEffectsIgnore;
         return NO;
     }
     [pointer_ notifyLeftMouseDown];
@@ -168,6 +190,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     if (([event it_modifierFlags] & kDragPaneModifiers) == kDragPaneModifiers) {
         [self.mouseDelegate mouseHandlerWillBeginDragPane:self];
         DLog(@"Returning because of drag starting");
+        *sideEffects = iTermClickSideEffectsIgnore;
         return NO;
     }
     if (_numTouches == 3) {
@@ -183,11 +206,15 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         BOOL shouldReturnEarly = YES;
         if ([iTermPreferences boolForKey:kPreferenceKeyThreeFingerEmulatesMiddle]) {
             [self emulateThirdButtonPressDown:YES withEvent:event];
+            *sideEffects = iTermClickSideEffectsIgnore;
         } else {
             // Perform user-defined gesture action, if any
             shouldReturnEarly = [pointer_ mouseDown:event
                                         withTouches:_numTouches
                                        ignoreOption:[self terminalWantsMouseReports]];
+            if (shouldReturnEarly) {
+                *sideEffects |= iTermClickSideEffectsPerformBoundAction;
+            }
             DLog(@"Set mouseDown=YES because of 3 finger mouseDown (not emulating middle)");
             _mouseDown = YES;
         }
@@ -197,9 +224,12 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         }
     }
     if ([pointer_ eventEmulatesRightClick:event]) {
-        [pointer_ mouseDown:event
-                withTouches:_numTouches
-               ignoreOption:[self terminalWantsMouseReports]];
+        const BOOL performed = [pointer_ mouseDown:event
+                                       withTouches:_numTouches
+                                      ignoreOption:[self terminalWantsMouseReports]];
+        if (performed) {
+            *sideEffects |= iTermClickSideEffectsPerformBoundAction;
+        }
         DLog(@"Returning because emulating right click.");
         return NO;
     }
@@ -214,6 +244,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                 _mouseDownWasFirstMouse = YES;
                 [self.mouseDelegate mouseHandlerMakeFirstResponder:self];
                 DLog(@"Returning because of cmd-click in inactive window.");
+                *sideEffects = iTermClickSideEffectsIgnore;
                 return NO;
             }
         } else if (![self.mouseDelegate mouseHandlerIsInKeyWindow:self]) {
@@ -226,6 +257,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
     if (([event it_modifierFlags] & kDragPaneModifiers) == kDragPaneModifiers) {
         DLog(@"Returning because of drag modifiers.");
+        *sideEffects = iTermClickSideEffectsIgnore;
         return YES;
     }
 
@@ -250,6 +282,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     if ([self reportMouseEvent:event]) {
         DLog(@"Returning because mouse event reported.");
         [self.selection clearSelection];
+        *sideEffects = iTermClickSideEffectsModifySelection;
         return NO;
     }
 
@@ -264,6 +297,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
         if (event.clickCount == 1 && !cmdPressed && !shiftPressed && !imageBeingClickedOn && !mouseDownOnSelection) {
             [self.selection clearSelection];
+            *sideEffects |= iTermClickSideEffectsModifySelection;
         }
     }
 
@@ -278,6 +312,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     if (isExtension && [self.selection hasSelection]) {
         if (!self.selection.live) {
             [self.selection beginExtendingSelectionAt:VT100GridAbsCoordMake(x, y + overflow)];
+            *sideEffects |= iTermClickSideEffectsModifySelection;
         }
     } else if (clickCount < 2) {
         // single click
@@ -312,6 +347,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                             mode:kiTermSelectionModeWord
                                           resume:YES
                                           append:self.selection.appending];
+        *sideEffects |= iTermClickSideEffectsModifySelection;
     } else if (clickCount == 3) {
         BOOL wholeLines =
         [iTermPreferences boolForKey:kPreferenceKeyTripleClickSelectsFullWrappedLines];
@@ -322,11 +358,13 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                             mode:mode
                                           resume:YES
                                           append:self.selection.appending];
+        *sideEffects |= iTermClickSideEffectsModifySelection;
     } else if ([self shouldSmartSelectWithClicks:clickCount]) {
         [self.selection beginSelectionAtAbsCoord:VT100GridAbsCoordMake(x, y + overflow)
                                             mode:kiTermSelectionModeSmart
                                           resume:YES
                                           append:self.selection.appending];
+        *sideEffects |= iTermClickSideEffectsModifySelection;
     }
 
     DLog(@"Mouse down. selection set to %@", self.selection);
@@ -337,11 +375,19 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 }
 
 - (void)mouseUp:(NSEvent *)event {
+    const iTermClickSideEffects sideEffects = [self mouseUpImpl:event];
+    if (sideEffects != iTermClickSideEffectsIgnore) {
+        [self setMouseInfoForEvent:event
+                       sideEffects:sideEffects];
+    }
+}
+
+- (iTermClickSideEffects)mouseUpImpl:(NSEvent *)event {
     DLog(@"Mouse Up on %@ with event %@, numTouches=%d, mouseDown=%@", self, event, _numTouches, @(_mouseDown));
     _makingThreeFingerSelection = NO;
     [_altScreenMouseScrollInferrer nonScrollWheelEvent:event];
     if ([_threeFingerTapGestureRecognizer mouseUp:event]) {
-        return;
+        return iTermClickSideEffectsNone;
     }
     int numTouches = _numTouches;
     _numTouches = 0;
@@ -353,10 +399,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             [self copyAfterSelectionEndsIfDesired];
         }
         [self.selection endLiveSelection];
-        return;
+        return iTermClickSideEffectsNone;
     } else if (numTouches == 3 && _mouseDown) {
         // Three finger tap is valid but not emulating middle button
-        [pointer_ mouseUp:event withTouches:numTouches];
+        const BOOL performedAction = [pointer_ mouseUp:event withTouches:numTouches];
         DLog(@"set mouseDown=NO");
         _mouseDown = NO;
         DLog(@"Returning from mouseUp because there were 3 touches. Set mouseDown=NO");
@@ -365,18 +411,18 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             [self copyAfterSelectionEndsIfDesired];
         }
         [self.selection endLiveSelection];
-        return;
+        return performedAction ? iTermClickSideEffectsPerformBoundAction : iTermClickSideEffectsNone;
     }
     dragOk_ = NO;
     _semanticHistoryDragged = NO;
     if ([pointer_ eventEmulatesRightClick:event]) {
-        [pointer_ mouseUp:event withTouches:numTouches];
+        const BOOL performedAction = [pointer_ mouseUp:event withTouches:numTouches];
         DLog(@"Returning from mouseUp because we'e emulating a right click.");
         if (self.selection.live) {
             [self copyAfterSelectionEndsIfDesired];
         }
         [self.selection endLiveSelection];
-        return;
+        return performedAction ? iTermClickSideEffectsPerformBoundAction : iTermClickSideEffectsNone;
     }
     const BOOL cmdActuallyPressed = (([event it_modifierFlags] & NSEventModifierFlagCommand) != 0);
     // Make an exception to the first-mouse rule when cmd-click is set to always invoke
@@ -389,8 +435,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             [self copyAfterSelectionEndsIfDesired];
         }
         [self.selection endLiveSelection];
-        return;
+        return iTermClickSideEffectsIgnore;
     }
+
     DLog(@"Set mouseDown=NO");
     _mouseDown = NO;
     _mouseDownOnSelection = NO;
@@ -415,7 +462,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
     [_mouseReportingFrustrationDetector mouseUp:event reported:[self mouseEventIsReportable:event]];
     // Send mouse up event to host if xterm mouse reporting is on
+    iTermClickSideEffects result = iTermClickSideEffectsNone;
     if ([self reportMouseEvent:event]) {
+        result |= iTermClickSideEffectsReport;
         if (willFollowLink) {
             // This is a special case. Cmd-click is treated like alt-click at the protocol
             // level (because we use alt to disable mouse reporting, unfortunately). Few
@@ -427,10 +476,11 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             // because you won't get here if alt is pressed. Note that openTargetWithEvent:
             // may not do anything if the pointer isn't over a clickable string.
             [self.mouseDelegate mouseHandlerOpenTargetWithEvent:event inBackground:NO];
+            result |= iTermClickSideEffectsOpenTarget;
         }
         DLog(@"Returning from mouseUp because the mouse event was reported.");
         [self.selection endLiveSelection];
-        return;
+        return result;
     }
 
     // Unlock auto scrolling as the user as finished selecting text
@@ -476,6 +526,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                     if (!cmdPressed) {
                         [self.mouseDelegate mouseHandlerMoveCursorToCoord:coord
                                                                  forEvent:event];
+                        result |= iTermClickSideEffectsMoveCursor;
                     }
                     break;
                 }
@@ -484,12 +535,14 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
         if (willFollowLink) {
             [self.mouseDelegate mouseHandlerOpenTargetWithEvent:event inBackground:altPressed];
+            result |= iTermClickSideEffectsOpenTarget;
         } else {
             const VT100GridCoord clickPoint =
             [self.mouseDelegate mouseHandler:self
                                   clickPoint:event
                                allowOverflow:NO];
             [self.mouseDelegate mouseHandlerSetFindOnPageCursorCoord:clickPoint];
+            result |= iTermClickSideEffectsMoveFindOnPageCursor;
         }
         if ([self.mouseDelegate mouseHandlerAtPasswordPrompt:self] &&
             !altPressed &&
@@ -502,6 +555,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             [self.mouseDelegate mouseHandlerCursorCoord:self];
             if (VT100GridCoordEquals(clickCoord, cursorCoord)) {
                 [self.mouseDelegate mouseHandlerOpenPasswordManager:self];
+                result |= iTermClickSideEffectsOpenPasswordManager;
             }
         }
     } else if (isShiftedSingleClick &&
@@ -519,6 +573,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         [self.selection endLiveSelection];
 
         [self.mouseDelegate mouseHandlerResetFindOnPageCursor:self];
+        result |= iTermClickSideEffectsMoveFindOnPageCursor | iTermClickSideEffectsModifySelection;
     }
 
     DLog(@"Has selection=%@, delegate=%@ wasSelecting=%@", @([self.selection hasSelection]), self.mouseDelegate, @(wasSelecting));
@@ -529,6 +584,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         // Click on selection. When the mouse-down was on the selection we delay clearing it until
         // mouse-up so you have the chance to drag it.
         [self.selection clearSelection];
+        result |= iTermClickSideEffectsModifySelection;
     }
     if (wasSelecting) {
         [self copyAfterSelectionEndsIfDesired];
@@ -537,6 +593,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     DLog(@"Mouse up. selection=%@", self.selection);
 
     [self.mouseDelegate mouseHandlerDidMutateState:self];
+    return result;
 }
 
 - (void)copyAfterSelectionEndsIfDesired {
@@ -555,6 +612,13 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 }
 
 - (void)mouseDragged:(NSEvent *)event {
+    const iTermClickSideEffects sideEffects = [self mouseDraggedImpl:event];
+    if (sideEffects != iTermClickSideEffectsIgnore) {
+        [self setMouseInfoForEvent:event sideEffects:sideEffects];
+    }
+}
+
+- (iTermClickSideEffects)mouseDraggedImpl:(NSEvent *)event {
     DLog(@"mouseDragged: %@, numTouches=%d", event, _numTouches);
     [_altScreenMouseScrollInferrer nonScrollWheelEvent:event];
     [_threeFingerTapGestureRecognizer mouseDragged];
@@ -562,7 +626,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     _makingThreeFingerSelection = (_numTouches == 3);
     if (_mouseDownIsThreeFingerClick) {
         DLog(@"is three finger click");
-        return;
+        return iTermClickSideEffectsIgnore;
     }
     // Prevent accidental dragging while dragging semantic history item.
     BOOL dragThresholdMet = NO;
@@ -583,18 +647,18 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     if ([event eventNumber] == _firstMouseEventNumber) {
         // We accept first mouse for the purposes of focusing or dragging a
         // split pane but not for making a selection.
-        return;
+        return iTermClickSideEffectsIgnore;
     }
     if (!dragOk_ && !_makingThreeFingerSelection) {
         DLog(@"drag not ok");
-        return;
+        return iTermClickSideEffectsIgnore;
     }
 
     [_mouseReportingFrustrationDetector mouseDragged:event reported:[self mouseEventIsReportable:event]];
     if ([self reportMouseEvent:event]) {
         DLog(@"Reported drag");
         _committedToDrag = YES;
-        return;
+        return iTermClickSideEffectsReport;
     }
     DLog(@"Did not report drag");
     [self.mouseDelegate mouseHandlerWillDrag:self];
@@ -615,6 +679,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             [self.mouseDelegate mouseHandler:self
                                    dragImage:_imageBeingClickedOn
                                     forEvent:event];
+            return iTermClickSideEffectsDrag;
         } else if (_mouseDownOnSelection == YES && dragThresholdMet) {
             DLog(@"drag and drop a selection");
             // Drag and drop a selection
@@ -623,7 +688,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                 _committedToDrag = YES;
                 [self.mouseDelegate mouseHandler:self dragText:theSelectedText forEvent:event];
                 DLog(@"Mouse drag. selection=%@", self.selection);
-                return;
+                return iTermClickSideEffectsDrag;
             }
         }
     }
@@ -633,7 +698,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         // accidentally dragged a little bit, or you're trying to drag a selection. Do nothing until
         // the threshold is met.
         DLog(@"drag during cmd click");
-        return;
+        return iTermClickSideEffectsIgnore;
     }
     if (_mouseDownOnSelection == YES &&
         ([event it_modifierFlags] & (NSEventModifierFlagOption | NSEventModifierFlagCommand)) == (NSEventModifierFlagOption | NSEventModifierFlagCommand) &&
@@ -641,7 +706,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         // Would be a drag of a rect region but mouse hasn't moved far enough yet. Prevent the
         // selection from changing.
         DLog(@"too-short drag of rect region");
-        return;
+        return iTermClickSideEffectsIgnore;
     }
 
     if (![self.selection hasSelection] &&
@@ -652,7 +717,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         [self.mouseDelegate mouseHandler:self
             dragSemanticHistoryWithEvent:event
                                    coord:VT100GridCoordMake(x, y)];
-        return;
+        return iTermClickSideEffectsDrag;
     }
 
     [_selectionScrollHelper mouseDraggedTo:locationInTextView coord:VT100GridCoordMake(x, y)];
@@ -693,6 +758,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             _committedToDrag = YES;
         }
     }
+
+    return iTermClickSideEffectsModifySelection;
 }
 
 #pragma mark - Right mouse
@@ -710,13 +777,19 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     if ([pointer_ mouseDown:event
                 withTouches:_numTouches
                ignoreOption:[self terminalWantsMouseReports]]) {
+        [self setMouseInfoForEvent:event
+                       sideEffects:iTermClickSideEffectsPerformBoundAction];
         return;
     }
     if ([self reportMouseEvent:event]) {
+        [self setMouseInfoForEvent:event
+                       sideEffects:iTermClickSideEffectsReport];
         return;
     }
 
     superCaller();
+    [self setMouseInfoForEvent:event
+                   sideEffects:iTermClickSideEffectsNone];
 }
 
 - (void)rightMouseUp:(NSEvent *)event superCaller:(void (^)(void))superCaller {
@@ -727,12 +800,18 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
 
     if ([pointer_ mouseUp:event withTouches:_numTouches]) {
+        [self setMouseInfoForEvent:event
+                       sideEffects:iTermClickSideEffectsPerformBoundAction];
         return;
     }
     if ([self reportMouseEvent:event]) {
+        [self setMouseInfoForEvent:event
+                       sideEffects:iTermClickSideEffectsReport];
         return;
     }
     superCaller();
+    [self setMouseInfoForEvent:event
+                   sideEffects:iTermClickSideEffectsNone];
 }
 
 - (void)rightMouseDragged:(NSEvent *)event superCaller:(void (^)(void))superCaller {
@@ -740,9 +819,11 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [_altScreenMouseScrollInferrer nonScrollWheelEvent:event];
     [_threeFingerTapGestureRecognizer mouseDragged];
     if ([self reportMouseEvent:event]) {
+        [self setMouseInfoForEvent:event sideEffects:iTermClickSideEffectsReport];
         return;
     }
     superCaller();
+    [self setMouseInfoForEvent:event sideEffects:iTermClickSideEffectsNone];
 }
 
 
@@ -752,15 +833,22 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [_mouseReportingFrustrationDetector otherMouseEvent];
     [_altScreenMouseScrollInferrer nonScrollWheelEvent:event];
     if ([self reportMouseEvent:event]) {
+        [self setMouseInfoForEvent:event
+                       sideEffects:iTermClickSideEffectsReport];
         return;
     }
 
+    iTermClickSideEffects sideEffects = iTermClickSideEffectsNone;
     if (!_mouseDownIsThreeFingerClick) {
         DLog(@"Sending third button press up to super");
         superCaller();
     }
     DLog(@"Sending third button press up to pointer controller");
-    [pointer_ mouseUp:event withTouches:_numTouches];
+    if ([pointer_ mouseUp:event withTouches:_numTouches]) {
+        sideEffects |= iTermClickSideEffectsPerformBoundAction;
+    }
+    [self setMouseInfoForEvent:event
+                   sideEffects:sideEffects];
 }
 
 // TODO: disable other, right mouse for inactive panes
@@ -770,11 +858,19 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
     [_mouseReportingFrustrationDetector otherMouseEvent];
     [_altScreenMouseScrollInferrer nonScrollWheelEvent:event];
-    [self reportMouseEvent:event];
+    iTermClickSideEffects sideEffects = iTermClickSideEffectsNone;
+    if ([self reportMouseEvent:event]) {
+        sideEffects |= iTermClickSideEffectsReport;
+    }
 
-    [pointer_ mouseDown:event
-            withTouches:_numTouches
-           ignoreOption:[self terminalWantsMouseReports]];
+    const BOOL performed = [pointer_ mouseDown:event
+                                   withTouches:_numTouches
+                                  ignoreOption:[self terminalWantsMouseReports]];
+    if (performed) {
+        sideEffects |= iTermClickSideEffectsPerformBoundAction;
+    }
+    [self setMouseInfoForEvent:event
+                   sideEffects:sideEffects];
 }
 
 - (void)otherMouseDragged:(NSEvent *)event superCaller:(void (^)(void))superCaller {
@@ -782,9 +878,11 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [_altScreenMouseScrollInferrer nonScrollWheelEvent:event];
     [_threeFingerTapGestureRecognizer mouseDragged];
     if ([self reportMouseEvent:event]) {
+        [self setMouseInfoForEvent:event sideEffects:iTermClickSideEffectsReport];
         return;
     }
     superCaller();
+    [self setMouseInfoForEvent:event sideEffects:iTermClickSideEffectsNone];
 }
 
 #pragma mark - Responder
@@ -1174,7 +1272,44 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
 }
 
-#pragma mark Selection
+- (void)setMouseInfoForEvent:(NSEvent *)event
+                 sideEffects:(iTermClickSideEffects)sideEffects {
+    const NSPoint point =
+    [self.mouseDelegate mouseHandler:self viewCoordForEvent:event clipped:NO];
+    const VT100GridCoord coord = [self.mouseDelegate mouseHandlerCoordForPointInView:point];
+    iTermMouseState state;
+    switch (event.type) {
+        case NSEventTypeLeftMouseUp:
+        case NSEventTypeRightMouseUp:
+        case NSEventTypeOtherMouseUp:
+            state = iTermMouseStateUp;
+            break;
+
+        case NSEventTypeLeftMouseDown:
+        case NSEventTypeRightMouseDown:
+        case NSEventTypeOtherMouseDown:
+            state = iTermMouseStateDown;
+            break;
+
+        case NSEventTypeLeftMouseDragged:
+        case NSEventTypeRightMouseDragged:
+        case NSEventTypeOtherMouseDragged:
+            state = iTermMouseStateDrag;
+            break;
+
+        default:
+            return;
+    }
+    [self.mouseDelegate mouseHandlerSetClickCoord:coord
+                                           button:event.buttonNumber
+                                            count:event.clickCount
+                                        modifiers:event.it_modifierFlags
+                                      sideEffects:sideEffects
+                                            state:state];
+}
+
+
+#pragma mark - Selection
 
 - (BOOL)shouldSelectWordWithClicks:(int)clickCount {
     if ([iTermPreferences boolForKey:kPreferenceKeyDoubleClickPerformsSmartSelection]) {

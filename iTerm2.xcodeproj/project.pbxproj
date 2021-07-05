@@ -6753,6 +6753,7 @@
 		A6F1B3B42690DC3600546767 /* SetUserVariableTrigger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetUserVariableTrigger.swift; sourceTree = "<group>"; };
 		A6F1B3B62690EA9700546767 /* iTermOptionallyBordered.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermOptionallyBordered.h; sourceTree = "<group>"; };
 		A6F1B3B72690EA9700546767 /* iTermOptionallyBordered.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermOptionallyBordered.m; sourceTree = "<group>"; };
+		A6F1B3BA269379D000546767 /* iTermClickSideEffects.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermClickSideEffects.h; sourceTree = "<group>"; };
 		A6F22ABD2396326200C5D1A9 /* iTermSyntheticConfParser.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermSyntheticConfParser.h; sourceTree = "<group>"; };
 		A6F22ABE2396326200C5D1A9 /* iTermSyntheticConfParser.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermSyntheticConfParser.m; sourceTree = "<group>"; };
 		A6F22AC12396374500C5D1A9 /* iTermSyntheticConfParserTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermSyntheticConfParserTests.m; sourceTree = "<group>"; };
@@ -9020,6 +9021,7 @@
 				A61A859B24F0F2CC00B03880 /* PseudoTerminal+WindowStyle.m */,
 				A6644BE025CDCCD600419355 /* iTermLegacyView.h */,
 				A6644BE125CDCCD600419355 /* iTermLegacyView.m */,
+				A6F1B3BA269379D000546767 /* iTermClickSideEffects.h */,
 			);
 			name = Core;
 			sourceTree = "<group>";

@@ -1330,10 +1330,10 @@ ITERM_WEAKLY_REFERENCEABLE
         }
         aSession.textview.cursorVisible = NO;
         [delegate session:aSession setLiveSession:[self sessionFromArrangement:liveArrangement
-                                                                     named:nil
-                                                                    inView:liveView
-                                                              withDelegate:delegate
-                                                             forObjectType:objectType
+                                                                         named:nil
+                                                                        inView:liveView
+                                                                  withDelegate:delegate
+                                                                 forObjectType:objectType
                                                             partialAttachments:nil]];
     }
     if (shouldEnterTmuxMode) {
@@ -1681,8 +1681,8 @@ ITERM_WEAKLY_REFERENCEABLE
                 [iTermSessionAttachOrLaunchRequest launchRequestWithSession:aSession
                                                                   canPrompt:NO
                                                                  objectType:objectType
-                                                           hasServerConnection:NO
-                                                              serverConnection:(iTermGeneralServerConnection){}
+                                                        hasServerConnection:NO
+                                                           serverConnection:(iTermGeneralServerConnection){}
                                                                   urlString:nil
                                                                allowURLSubs:NO
                                                                 environment:environmentArg
@@ -1719,7 +1719,7 @@ ITERM_WEAKLY_REFERENCEABLE
             return;
         }
         [self finishInitializingArrangementOriginatedSession:aSession
-                                             arrangement:arrangement
+                                                 arrangement:arrangement
                                              arrangementName:arrangementName
                                             attachedToServer:attachedToServer
                                                     delegate:delegate
@@ -1741,7 +1741,7 @@ ITERM_WEAKLY_REFERENCEABLE
                                           enabled:YES
                                         plainText:[iTermProfilePreferences boolForKey:KEY_PLAIN_TEXT_LOGGING
                                                                             inProfile:aSession.profile]
-                                       append:@YES];
+                                           append:@YES];
             }
             [aSession autorelease];
             runCommandBlock(finish);
@@ -2331,7 +2331,7 @@ ITERM_WEAKLY_REFERENCEABLE
        substitutions:(NSDictionary *)substitutions
          arrangement:(NSString *)arrangementName
           completion:(void (^)(BOOL))completion {
-   DLog(@"startProgram:%@ environment:%@ isUTF8:%@ substitutions:%@",
+    DLog(@"startProgram:%@ environment:%@ isUTF8:%@ substitutions:%@",
          command, environment, @(isUTF8), substitutions);
     self.program = command;
     self.customShell = customShell;
@@ -3497,7 +3497,7 @@ ITERM_WEAKLY_REFERENCEABLE
     // Check if we have a custom key mapping for this event
     iTermKeyBindingAction *action =
     [iTermKeyMappings actionForKeystroke:[iTermKeystroke withEvent:event]
-                               keyMappings:[[self profile] objectForKey:KEY_KEYBOARD_MAP]];
+                             keyMappings:[[self profile] objectForKey:KEY_KEYBOARD_MAP]];
     return action;
 }
 
@@ -3778,10 +3778,10 @@ ITERM_WEAKLY_REFERENCEABLE
                                     prefix:selection
                                     suffix:@""
                                 completion:^(BOOL ok) {
-                                    if (!ok) {
-                                        [weakSelf tryOpenStringAsURL:selection];
-                                    }
-                                }];
+            if (!ok) {
+                [weakSelf tryOpenStringAsURL:selection];
+            }
+        }];
         return;
     }
 
@@ -3810,12 +3810,12 @@ ITERM_WEAKLY_REFERENCEABLE
                 [self shouldPostUserNotification] &&
                 [iTermProfilePreferences boolForKey:KEY_SEND_BELL_ALERT inProfile:self.profile]) {
                 [[iTermNotificationController sharedInstance] notify:@"Bell"
-                                                 withDescription:[NSString stringWithFormat:@"Session %@ #%d just rang a bell!",
-                                                                  [[self name] removingHTMLFromTabTitleIfNeeded],
-                                                                  [_delegate tabNumber]]
-                                                     windowIndex:[self screenWindowIndex]
-                                                        tabIndex:[self screenTabIndex]
-                                                       viewIndex:[self screenViewIndex]];
+                                                     withDescription:[NSString stringWithFormat:@"Session %@ #%d just rang a bell!",
+                                                                      [[self name] removingHTMLFromTabTitleIfNeeded],
+                                                                      [_delegate tabNumber]]
+                                                         windowIndex:[self screenWindowIndex]
+                                                            tabIndex:[self screenTabIndex]
+                                                           viewIndex:[self screenViewIndex]];
             }
         }
     }
@@ -3956,7 +3956,7 @@ ITERM_WEAKLY_REFERENCEABLE
         // Can happen when replaying a recorded session.
         return;
     }
-    
+
     NSMutableSet *keys = [NSMutableSet setWithArray:[updatedProfile allKeys]];
     [keys addObjectsFromArray:[_profile allKeys]];
     for (NSString *aKey in keys) {
@@ -4022,7 +4022,7 @@ ITERM_WEAKLY_REFERENCEABLE
                               @(kColorMapCursor): k(KEY_CURSOR_COLOR),
                               @(kColorMapCursorText): k(KEY_CURSOR_TEXT_COLOR),
                               @(kColorMapUnderline): (useUnderline ? k(KEY_UNDERLINE_COLOR) : [NSNull null])
-                              };
+    };
 
     for (NSNumber *colorKey in keyMap) {
         NSString *profileKey = keyMap[colorKey];
@@ -4285,12 +4285,12 @@ ITERM_WEAKLY_REFERENCEABLE
     _badgeSwiftyString = [[iTermSwiftyString alloc] initWithString:badgeFormat
                                                              scope:self.variablesScope
                                                           observer:^NSString *(NSString * _Nonnull newValue, NSError *error) {
-                                                              if (error) {
-                                                                  return [NSString stringWithFormat:@"🐞 %@", error.localizedDescription];
-                                                              }
-                                                              [weakSelf updateBadgeLabel:newValue];
-                                                              return newValue;
-                                                          }];
+        if (error) {
+            return [NSString stringWithFormat:@"🐞 %@", error.localizedDescription];
+        }
+        [weakSelf updateBadgeLabel:newValue];
+        return newValue;
+    }];
 
 }
 
@@ -4467,7 +4467,7 @@ ITERM_WEAKLY_REFERENCEABLE
     switch (icon) {
         case iTermProfileIconNone:
             return nil;
-            
+
         case iTermProfileIconAutomatic:
             if (self.isTmuxClient) {
                 [_graphicSource updateImageForJobName:self.tmuxForegroundJobMonitor.lastValue
@@ -4930,7 +4930,7 @@ ITERM_WEAKLY_REFERENCEABLE
     if (_substitutions) {
         result[SESSION_ARRANGEMENT_SUBSTITUTIONS] = _substitutions;
     }
-    
+
     NSString *const programType = [self programType];
     if ([programType isEqualToString:kProgramTypeCustomShell]) {
         // The shell launcher command could change from run to run (e.g., if you move iTerm2).
@@ -5271,7 +5271,7 @@ ITERM_WEAKLY_REFERENCEABLE
     DLog(@"%p set job name to %@", self, processInfo.name);
     NSString *name = processInfo.name;
     NSString *processTitle = processInfo.argv0 ?: name;
-    
+
     // This is a gross hack but I haven't found a nicer way to do it yet. When exec fails (or takes
     // enough time that we happen to poll it before exec finishes) then the job name is
     // "iTermServer" as inherited from the parent. This avoids showing it in the UI.
@@ -5949,12 +5949,12 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     if (overage > 0) {
         rect.origin.x -= overage;
     }
-    
+
     overage = NSMaxY(rect) - NSHeight(_textview.bounds);
     if (overage > 0) {
         rect.origin.y -= overage;
     }
-    
+
     return [_textview snapshotOfRect:rect];
 }
 
@@ -6180,7 +6180,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         }
         return NO;
     }
-    
+
     if (![iTermPreferences boolForKey:kPreferenceKeyPerPaneBackgroundImage]) {
         if (reason) {
             *reason = iTermMetalUnavailableReasonSharedBackgroundImage;
@@ -6231,7 +6231,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
             }
             return NO;
         }
-        
+
         if (_view.isDropDownSearchVisible) {
             if (reason) {
                 *reason = iTermMetalUnavailableReasonFindPanel;
@@ -6246,7 +6246,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         }
         if (_view.currentAnnouncement) {
             if (reason) {
-            *reason = iTermMetalUnavailableReasonAnnouncement;
+                *reason = iTermMetalUnavailableReasonAnnouncement;
             }
             return NO;
         }
@@ -6513,8 +6513,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         __weak __typeof(self) weakSelf = self;
         dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1 * NSEC_PER_SEC)),
                        dispatch_get_main_queue(), ^{
-                           [weakSelf retryMetalAfterContextAllocationFailure];
-                       });
+            [weakSelf retryMetalAfterContextAllocationFailure];
+        });
         return;
     }
     [_view.driver setCellSize:cellSize
@@ -6886,12 +6886,12 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     _tmuxTitleMonitor = [[iTermTmuxOptionMonitor alloc] initWithGateway:_tmuxController.gateway
                                                                   scope:self.variablesScope
                                                    fallbackVariableName:nil
-                                                                format:@"#{pane_title}"
-                                                                target:[NSString stringWithFormat:@"%%%@", @(self.tmuxPane)]
-                                                          variableName:iTermVariableKeySessionTmuxPaneTitle
-                                                                 block:^(NSString * _Nonnull title) {
+                                                                 format:@"#{pane_title}"
+                                                                 target:[NSString stringWithFormat:@"%%%@", @(self.tmuxPane)]
+                                                           variableName:iTermVariableKeySessionTmuxPaneTitle
+                                                                  block:^(NSString * _Nonnull title) {
         [weakSelf setTitleFromTmuxTitleMonitor:title];
-                                                                 }];
+    }];
     [_tmuxTitleMonitor updateOnce];
 }
 
@@ -7519,7 +7519,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)setTmuxHistory:(NSArray<NSData *> *)history
-             altHistory:(NSArray<NSData *> *)altHistory
+            altHistory:(NSArray<NSData *> *)altHistory
                  state:(NSDictionary *)state {
     [self.terminal resetForTmuxUnpause];
     [self clearScrollbackBuffer];
@@ -7542,7 +7542,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     NSData *pendingOutput = [state objectForKey:kTmuxWindowOpenerStatePendingOutput];
     if (pendingOutput && [pendingOutput length]) {
         [self.terminal.parser putStreamData:pendingOutput.bytes
-                                         length:pendingOutput.length];
+                                     length:pendingOutput.length];
     }
     [[self terminal] setInsertMode:[[state objectForKey:kStateDictInsertMode] boolValue]];
     [[self terminal] setCursorMode:[[state objectForKey:kStateDictKCursorMode] boolValue]];
@@ -7861,6 +7861,29 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     return accept;
 }
 
+- (NSArray<NSNumber *> *)apiModifiersForModifierFlags:(NSEventModifierFlags)flags {
+    NSMutableArray<NSNumber *> *mods = [NSMutableArray array];
+    if (flags & NSEventModifierFlagControl) {
+        [mods addObject:@(ITMModifiers_Control)];
+    }
+    if (flags & NSEventModifierFlagOption) {
+        [mods addObject:@(ITMModifiers_Option)];
+    }
+    if (flags & NSEventModifierFlagCommand) {
+        [mods addObject:@(ITMModifiers_Command)];
+    }
+    if (flags & NSEventModifierFlagShift) {
+        [mods addObject:@(ITMModifiers_Shift)];
+    }
+    if (flags & NSEventModifierFlagNumericPad) {
+        [mods addObject:@(ITMModifiers_Numpad)];
+    }
+    if (flags & NSEventModifierFlagFunction) {
+        [mods addObject:@(ITMModifiers_Function)];
+    }
+    return mods;
+}
+
 - (void)sendKeystrokeNotificationForEvent:(NSEvent *)event
                                  advanced:(BOOL)advanced {
     ITMKeystrokeNotification *keystrokeNotification = [[[ITMKeystrokeNotification alloc] init] autorelease];
@@ -7868,23 +7891,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         keystrokeNotification.characters = event.characters;
         keystrokeNotification.charactersIgnoringModifiers = event.charactersIgnoringModifiers;
     }
-    if (event.it_modifierFlags & NSEventModifierFlagControl) {
-        [keystrokeNotification.modifiersArray addValue:ITMModifiers_Control];
-    }
-    if (event.it_modifierFlags & NSEventModifierFlagOption) {
-        [keystrokeNotification.modifiersArray addValue:ITMModifiers_Option];
-    }
-    if (event.it_modifierFlags & NSEventModifierFlagCommand) {
-        [keystrokeNotification.modifiersArray addValue:ITMModifiers_Command];
-    }
-    if (event.it_modifierFlags & NSEventModifierFlagShift) {
-        [keystrokeNotification.modifiersArray addValue:ITMModifiers_Shift];
-    }
-    if (event.it_modifierFlags & NSEventModifierFlagNumericPad) {
-        [keystrokeNotification.modifiersArray addValue:ITMModifiers_Numpad];
-    }
-    if (event.it_modifierFlags & NSEventModifierFlagFunction) {
-        [keystrokeNotification.modifiersArray addValue:ITMModifiers_Function];
+    for (NSNumber *number in [self apiModifiersForModifierFlags:event.it_modifierFlags]) {
+        [keystrokeNotification.modifiersArray addValue:number.intValue];
     }
     switch (event.type) {
         case NSEventTypeKeyDown:
@@ -7967,13 +7975,13 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                                     scope:scope
                                retainSelf:YES
                                completion:^(id value, NSError *error, NSSet<NSString *> *missing) {
-                                   if (error) {
-                                       [PTYSession reportFunctionCallError:error
-                                                             forInvocation:invocation
-                                                                    origin:origin
-                                                                    window:self.view.window];
-                                   }
-                               }];
+        if (error) {
+            [PTYSession reportFunctionCallError:error
+                                  forInvocation:invocation
+                                         origin:origin
+                                         window:self.view.window];
+        }
+    }];
 }
 
 - (void)applyAction:(iTermAction *)action {
@@ -8063,13 +8071,13 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                                             scope:[iTermVariableScope globalsScope]
                                        retainSelf:YES
                                        completion:^(id value, NSError *error, NSSet<NSString *> *missing) {
-                                           if (error) {
-                                               [PTYSession reportFunctionCallError:error
-                                                                     forInvocation:action.parameter
-                                                                            origin:@"Key Binding"
-                                                                            window:nil];
-                                           }
-                                       }];
+                if (error) {
+                    [PTYSession reportFunctionCallError:error
+                                          forInvocation:action.parameter
+                                                 origin:@"Key Binding"
+                                                 window:nil];
+                }
+            }];
             return YES;
 
         case KEY_ACTION_SELECT_MENU_ITEM:
@@ -8181,9 +8189,9 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                 return;
             }
             [self sendText:action.parameter
-  useCompatibilityEscaping:action.useCompatibilityEscaping
-                    compatibilityEscaping:iTermSendTextEscapingVimAndCompatibility
-                        preferredEscaping:iTermSendTextEscapingVim];
+                useCompatibilityEscaping:action.useCompatibilityEscaping
+                   compatibilityEscaping:iTermSendTextEscapingVimAndCompatibility
+                       preferredEscaping:iTermSendTextEscapingVim];
             break;
         case KEY_ACTION_SEND_SNIPPET:
             if (_exited || isTmuxGateway) {
@@ -8472,7 +8480,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         return;
     }
     _showingVisualIndicatorForEsc = YES;
-    
+
     NSNumber *savedCursorTypeOverride = _cursorTypeOverride;
 
     ITermCursorType temporaryType;
@@ -8523,7 +8531,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 // pass the keystroke as input.
 - (void)keyDown:(NSEvent *)event {
     [self mitigateTouchBarStupidityForEvent:event];
-    
+
     if (event.charactersIgnoringModifiers.length == 0) {
         return;
     }
@@ -8847,7 +8855,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 // Pastes the current string in the clipboard. Uses the sender's tag to get flags.
 - (void)paste:(id)sender {
     DLog(@"PTYSession paste:");
-    
+
     // If this class is used in a non-iTerm2 app (as a library), we might not
     // be called from a menu item so just use no flags in this case.
     [self pasteString:[PTYSession pasteboardString] flags:[sender isKindOfClass:NSMenuItem.class] ? [sender tag] : 0];
@@ -9747,11 +9755,11 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         case 1:
             [_terminal toggleAlternateScreen];
             break;
-            
+
         case 2:
             _terminal.reportFocus = !_terminal.reportFocus;
             break;
-            
+
         case 3:
             if (_terminal.mouseMode == MOUSE_REPORTING_NONE) {
                 _terminal.mouseMode = _terminal.previousMouseMode;
@@ -9760,29 +9768,29 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
             }
             [_terminal.delegate terminalMouseModeDidChangeTo:_terminal.mouseMode];
             break;
-            
+
         case 4:
             _terminal.bracketedPasteMode = !_terminal.bracketedPasteMode;
             break;
-            
+
         case 5:
             _terminal.cursorMode = !_terminal.cursorMode;
             break;
-            
+
         case 6:
             [_terminal forceSetKeypadMode:!_terminal.keypadMode];
             break;
-            
+
         case 7:
             _terminal.sendModifiers[4] = @-1;
             self.keyMappingMode = iTermKeyMappingModeStandard;
             break;
-            
+
         case 8:
             _terminal.sendModifiers[4] = @1;
             self.keyMappingMode = iTermKeyMappingModeModifyOtherKeys1;
             break;
-            
+
         case 9:
             _terminal.sendModifiers[4] = @2;
             self.keyMappingMode = iTermKeyMappingModeModifyOtherKeys2;
@@ -9792,7 +9800,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
             _terminal.sendModifiers[4] = @-1;
             self.keyMappingMode = iTermKeyMappingModeCSIu;
             break;
-            
+
         case 11:
             _terminal.sendModifiers[4] = @-1;
             self.keyMappingMode = iTermKeyMappingModeRaw;
@@ -9927,6 +9935,15 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     }
     [self setSessionSpecificProfileValues:@{ KEY_SHOW_TIMESTAMPS: @(mode) }];
     [_textview setNeedsDisplay:YES];
+}
+
+- (void)textViewSetClickCoord:(VT100GridAbsCoord)coord
+                       button:(NSInteger)button
+                        count:(NSInteger)count
+                    modifiers:(NSEventModifierFlags)modifiers
+                  sideEffects:(iTermClickSideEffects)sideEffects
+                        state:(iTermMouseState)state {
+    self.variablesScope.mouseInfo = @[ @(coord.x), @(coord.y), @(button), @(count), [self apiModifiersForModifierFlags:modifiers], @(sideEffects), @(state) ];
 }
 
 - (void)closeTriggerWindowController {

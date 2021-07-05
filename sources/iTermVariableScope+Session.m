@@ -326,4 +326,23 @@
     [self setValue:newValue forVariableNamed:iTermVariableKeySessionLogFilename];
 }
 
+- (NSArray *)mouseinfo {
+    return [self valueForVariableName:iTermVariableKeySessionMouseInfo];
+}
+
+- (void)setMouseInfo:(NSArray *)mouseInfo {
+    assert(mouseInfo.count == 7);
+    assert([mouseInfo[0] isKindOfClass:[NSNumber class]]);  // x
+    assert([mouseInfo[1] isKindOfClass:[NSNumber class]]);  // y
+    assert([mouseInfo[2] isKindOfClass:[NSNumber class]]);  // button
+    assert([mouseInfo[3] isKindOfClass:[NSNumber class]]);  // count
+    assert([mouseInfo[4] isKindOfClass:[NSArray class]]);  // modifiers
+    for (id obj in mouseInfo[4]) {
+        assert([obj isKindOfClass:[NSNumber class]]);  // modifier
+    }
+    assert([mouseInfo[5] isKindOfClass:[NSNumber class]]);  // side effects
+    assert([mouseInfo[6] isKindOfClass:[NSNumber class]]);  // state
+    [self setValue:mouseInfo forVariableNamed:iTermVariableKeySessionMouseInfo];
+}
+
 @end

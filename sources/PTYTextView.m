@@ -5370,6 +5370,20 @@ dragSemanticHistoryWithEvent:(NSEvent *)event
     return _dataSource.totalScrollbackOverflow;
 }
 
+- (void)mouseHandlerSetClickCoord:(VT100GridCoord)coord
+                           button:(NSInteger)button
+                            count:(NSInteger)count
+                        modifiers:(NSEventModifierFlags)modifiers
+                      sideEffects:(iTermClickSideEffects)sideEffects
+                            state:(iTermMouseState)state {
+    const long long overflow = _dataSource.totalScrollbackOverflow;
+    [self.delegate textViewSetClickCoord:VT100GridAbsCoordFromCoord(coord, overflow)
+                                  button:button
+                                   count:count
+                               modifiers:modifiers
+                             sideEffects:sideEffects
+                                   state:state];
+}
 
 #pragma mark - iTermSecureInputRequesting
 
