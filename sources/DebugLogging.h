@@ -208,6 +208,7 @@ int DebugLogImpl(const char *file, int line, const char *function, NSString* val
 void LogForNextCrash(const char *file, int line, const char *function, NSString* value, BOOL force);
 void TurnOnDebugLoggingSilently(void);
 BOOL TurnOffDebugLoggingSilently(void);
+void TurnOnDebugLoggingAutomatically(void);
 
 void SetPinnedDebugLogMessage(NSString *key, NSString *value, ...);
 void AppendPinnedDebugLogMessage(NSString *key, NSString *value, ...);

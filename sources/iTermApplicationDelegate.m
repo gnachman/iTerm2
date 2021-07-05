@@ -57,6 +57,7 @@
 #import "iTermMenuBarObserver.h"
 #import "iTermMigrationHelper.h"
 #import "iTermModifierRemapper.h"
+#import "iTermNotificationController.h"
 #import "iTermOnboardingWindowController.h"
 #import "iTermPreferences.h"
 #import "iTermProfileModelJournal.h"
@@ -1027,6 +1028,23 @@ static BOOL hasBecomeActive = NO;
     _exit(0);
 }
 
+void TurnOnDebugLoggingAutomatically(void) {
+  static dispatch_once_t onceToken;
+  dispatch_once(&onceToken, ^{
+      static NSString *const iTermDisableDebugLoggingNotificationName = @"iTermDisableDebugLoggingNotificationName";
+        [[NSNotificationCenter defaultCenter] addObserverForName:iTermDisableDebugLoggingNotificationName object:nil queue:nil usingBlock:^(NSNotification * _Nonnull note) {
+            TurnOffDebugLoggingSilently();
+            [[NSUserDefaults standardUserDefaults] setBool:NO forKey:@"StartDebugLoggingAutomatically"];
+        }];
+      [[iTermNotificationController sharedInstance] postNotificationWithTitle:@"Debug logging turned on"
+                                                                       detail:@"You may notice worse performance while debug logging is on."
+                                                     callbackNotificationName:iTermDisableDebugLoggingNotificationName
+                                                 callbackNotificationUserInfo:@{}
+                                                            actionButtonTitle:@"Disable"];
+      TurnOnDebugLoggingSilently();
+  });
+}
+
 - (void)applicationWillFinishLaunching:(NSNotification *)aNotification {
     if (@available(macOS 10.14, *)) {} else {
         [self sorry1013];
@@ -1038,7 +1056,7 @@ static BOOL hasBecomeActive = NO;
     [iTermLaunchExperienceController applicationWillFinishLaunching];
     // Start automatic debug logging if it's enabled.
     if ([iTermAdvancedSettingsModel startDebugLoggingAutomatically]) {
-        TurnOnDebugLoggingSilently();
+        TurnOnDebugLoggingAutomatically();
     }
     DLog(@"applicationWillFinishLaunching:");
 

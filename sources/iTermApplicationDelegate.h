@@ -44,6 +44,8 @@ extern NSString *const kMarkAlertActionPostNotification;
 extern NSString *const kShowFullscreenTabsSettingDidChange;
 extern NSString *const iTermApplicationWillTerminate;
 
+void TurnOnDebugLoggingAutomatically(void);
+
 @interface iTermApplicationDelegate : NSObject<iTermApplicationDelegate>
 
 @property(nonatomic, readonly) BOOL workspaceSessionActive;

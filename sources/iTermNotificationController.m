@@ -101,7 +101,7 @@
 
     // Send to NSUserDefaults directly
     // The (BOOL)sticky parameter is ignored
-    NSUserNotification *notification = [[[NSUserNotification alloc] init] autorelease];
+    NSUserNotification *notification = [[NSUserNotification alloc] init];
     notification.title = title;
     notification.informativeText = description;
     notification.userInfo = context;
@@ -113,7 +113,7 @@
 }
 
 - (void)postNotificationWithTitle:(NSString *)title detail:(NSString *)detail URL:(NSURL *)url {
-    NSUserNotification *notification = [[[NSUserNotification alloc] init] autorelease];
+    NSUserNotification *notification = [[NSUserNotification alloc] init];
     notification.title = title;
     notification.informativeText = detail;
     NSDictionary *context = @{ @"URL": url.absoluteString };
@@ -127,16 +127,28 @@
                            detail:(NSString *)detail
          callbackNotificationName:(NSString *)name
      callbackNotificationUserInfo:(NSDictionary *)userInfo {
-    NSUserNotification *notification = [[[NSUserNotification alloc] init] autorelease];
+    [self postNotificationWithTitle:title detail:detail callbackNotificationName:name callbackNotificationUserInfo:userInfo actionButtonTitle:nil];
+}
+
+- (void)postNotificationWithTitle:(NSString *)title
+                           detail:(NSString *)detail
+         callbackNotificationName:(NSString *)name
+     callbackNotificationUserInfo:(NSDictionary *)userInfo
+                actionButtonTitle:(NSString *)actionButtonTitle {
+    NSUserNotification *notification = [[NSUserNotification alloc] init];
     notification.title = title;
     notification.informativeText = detail;
     NSDictionary *context = @{ @"CallbackNotificationName": name,
                                @"CallbackUserInfo": userInfo ?: @{} };
     notification.userInfo = context;
     notification.soundName = NSUserNotificationDefaultSoundName;
+    if (actionButtonTitle) {
+        notification.actionButtonTitle = actionButtonTitle;
+    }
     DLog(@"Post notification %@", notification);
     [[NSUserNotificationCenter defaultUserNotificationCenter] deliverNotification:notification];
 }
+
 
 - (void)notificationWasClicked:(id)clickContext {
     DLog(@"notificationWasClicked:%@", clickContext);

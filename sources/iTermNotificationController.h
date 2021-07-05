@@ -90,4 +90,10 @@
          callbackNotificationName:(NSString *)name
      callbackNotificationUserInfo:(NSDictionary *)userInfo;
 
+- (void)postNotificationWithTitle:(NSString *)title
+                           detail:(NSString *)detail
+         callbackNotificationName:(NSString *)name
+     callbackNotificationUserInfo:(NSDictionary *)userInfo
+                actionButtonTitle:(NSString *)actionButtonTitle;
+
 @end

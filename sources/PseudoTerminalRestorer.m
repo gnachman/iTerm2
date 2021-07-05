@@ -160,7 +160,7 @@ NSString *const iTermWindowStateKeyGUID = @"guid";
         return;
     }
     if ([iTermAdvancedSettingsModel startDebugLoggingAutomatically]) {
-        TurnOnDebugLoggingSilently();
+        TurnOnDebugLoggingAutomatically();
     }
 
     DLog(@"Restore window with identifier %@", identifier);

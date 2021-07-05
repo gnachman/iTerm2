@@ -1497,6 +1497,8 @@
                             visible:[_delegate textViewIsZoomedIn]];
     [_indicatorsHelper setIndicator:kiTermIndicatorCopyMode
                             visible:[_delegate textViewCopyMode]];
+    [_indicatorsHelper setIndicator:kiTermIndicatorDebugLogging
+                            visible:gDebugLogging];
     NSRect rect = self.visibleRect;
     rect.size.width -= rightMargin;
     return rect;
