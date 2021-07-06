@@ -186,7 +186,8 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
                              KEY_AWDS_TAB_DIRECTORY, KEY_AWDS_PANE_OPTION, KEY_AWDS_PANE_DIRECTORY,
                              KEY_BACKGROUND_IMAGE_LOCATION, KEY_DYNAMIC_PROFILE_PARENT_NAME,
                              KEY_DYNAMIC_PROFILE_PARENT_GUID,
-                             KEY_DYNAMIC_PROFILE_FILENAME, KEY_TMUX_PANE_TITLE];
+                             KEY_DYNAMIC_PROFILE_FILENAME, KEY_TMUX_PANE_TITLE,
+                             KEY_SUBTITLE];
 
         NSArray *color = @[ KEY_FOREGROUND_COLOR, KEY_BACKGROUND_COLOR, KEY_BOLD_COLOR,
                             KEY_LINK_COLOR, KEY_SELECTION_COLOR, KEY_SELECTED_TEXT_COLOR,
@@ -349,6 +350,7 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
                   KEY_CUSTOM_DIRECTORY: kProfilePreferenceInitialDirectoryHomeValue,
                   KEY_WORKING_DIRECTORY: @"",
                   KEY_BADGE_FORMAT: @"",
+                  KEY_SUBTITLE: @"",
 
                   // Note: these defaults aren't used, except for link color and cursor guide color, because they are always specified.
                   KEY_FOREGROUND_COLOR:    [[NSColor colorWithCalibratedRed:0.733 green:0.733 blue:0.733 alpha:1] dictionaryValue],
@@ -585,7 +587,7 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
                   KEY_PREVENT_APS: @NO,
                   KEY_OPEN_PASSWORD_MANAGER_AUTOMATICALLY: @NO,
                   KEY_SHOW_TIMESTAMPS: @([iTermAdvancedSettingsModel showTimestampsByDefault] ? iTermTimestampsModeOn : iTermTimestampsModeOff),
-                  KEY_USE_SEPARATE_COLORS_FOR_LIGHT_AND_DARK_MODE: @NO
+                  KEY_USE_SEPARATE_COLORS_FOR_LIGHT_AND_DARK_MODE: @NO,
                   // NOTES:
                   //   * Remove deprecated values from this list.
                   //   * Update validation blocks in preceding method.

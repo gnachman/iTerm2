@@ -176,6 +176,7 @@ static NSRect PSMConvertAccessibilityFrameToScreen(NSView *view, NSRect frame) {
     BOOL _highlighted;
     NSAccessibilityElement *_element;
     NSMutableArray<PSMCachedTitle *> *_titleCache;
+    NSMutableArray<PSMCachedTitle *> *_subtitleCache;
 }
 
 #pragma mark - Creation/Destruction
@@ -244,6 +245,7 @@ static NSRect PSMConvertAccessibilityFrameToScreen(NSView *view, NSRect frame) {
     [_tabColor release];
     [_element release];
     [_titleCache release];
+    [_subtitleCache release];
     [super dealloc];
 }
 
@@ -271,22 +273,39 @@ static NSRect PSMConvertAccessibilityFrameToScreen(NSView *view, NSRect frame) {
     if (!_titleCache) {
         _titleCache = [[NSMutableArray alloc] init];
     }
-    PSMCachedTitleInputs *inputs = [self cachedTitleInputs];
-    NSInteger index = [_titleCache indexOfObjectPassingTest:^BOOL(PSMCachedTitle * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+    return [self cachedTitleUsingStorage:_titleCache
+                                  inputs:[self cachedTitleInputs]];
+}
+
+- (PSMCachedTitle *)cachedSubtitle {
+    PSMCachedTitleInputs *inputs = [self cachedSubtitleInputs];
+    if (!inputs) {
+        return nil;
+    }
+    if (!_subtitleCache) {
+        _subtitleCache = [[NSMutableArray alloc] init];
+    }
+    return [self cachedTitleUsingStorage:_subtitleCache
+                                  inputs:inputs];
+}
+
+- (PSMCachedTitle *)cachedTitleUsingStorage:(NSMutableArray<PSMCachedTitle *> *)cache
+                                     inputs:(PSMCachedTitleInputs *)inputs {
+    NSInteger index = [cache indexOfObjectPassingTest:^BOOL(PSMCachedTitle * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
         return [obj.inputs isEqual:inputs];
     }];
     if (index != NSNotFound) {
-        PSMCachedTitle *title = [[_titleCache[index] retain] autorelease];
+        PSMCachedTitle *title = [[cache[index] retain] autorelease];
         if (index > 0) {
-            [_titleCache removeObjectAtIndex:index];
-            [_titleCache insertObject:title atIndex:0];
+            [cache removeObjectAtIndex:index];
+            [cache insertObject:title atIndex:0];
         }
         return title;
     }
     PSMCachedTitle *title = [[[PSMCachedTitle alloc] initWith:inputs] autorelease];
-    [_titleCache insertObject:title atIndex:0];
-    while (_titleCache.count > 2) {
-        [_titleCache removeLastObject];
+    [cache insertObject:title atIndex:0];
+    while (cache.count > 2) {
+        [cache removeLastObject];
     }
     return title;
 }
@@ -304,8 +323,24 @@ static NSRect PSMConvertAccessibilityFrameToScreen(NSView *view, NSRect frame) {
 }
 
 - (void)setStringValue:(NSString *)aString {
+    const NSRange newlineRange = [aString rangeOfString:@"\n"];
+    if (newlineRange.location != NSNotFound) {
+        if (![[self psmTabControlView] supportsMultiLineLabels]) {
+            [self reallySetStringValue:[aString stringByReplacingCharactersInRange:newlineRange withString:@" "]];
+            return;
+        }
+        NSString *firstLine = [aString substringToIndex:newlineRange.location];
+        NSString *subtitle = [aString substringFromIndex:NSMaxRange(newlineRange)];
+        [self reallySetStringValue:firstLine];
+        [self setSubtitleString:subtitle];
+        return;
+    }
+    [self reallySetStringValue:aString];
+}
+
+- (void)reallySetStringValue:(NSString *)aString {
     [super setStringValue:aString];
-    
+
     if (!_delayedStringValueTimer) {
         static const NSTimeInterval kStringValueSettingDelay = 0.1;
         _delayedStringValueTimer =
@@ -332,6 +367,12 @@ static NSRect PSMConvertAccessibilityFrameToScreen(NSView *view, NSRect frame) {
     id<PSMTabBarControlProtocol> control = [self psmTabControlView];
     id <PSMTabStyle> tabStyle = [control style];
     return [tabStyle cachedTitleInputsForTabCell:self];
+}
+
+- (PSMCachedTitleInputs *)cachedSubtitleInputs {
+    id<PSMTabBarControlProtocol> control = [self psmTabControlView];
+    id <PSMTabStyle> tabStyle = [control style];
+    return [tabStyle cachedSubtitleInputsForTabCell:self];
 }
 
 - (PSMProgressIndicator *)indicator {

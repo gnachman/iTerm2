@@ -651,9 +651,23 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     return result;
 }
 
+- (NSString *)labelForActiveSession {
+    NSString *title = [[self activeSession] name];
+    return [self stringByAppendingSubtitleForActiveSession:title];
+}
+
+- (NSString *)stringByAppendingSubtitleForActiveSession:(NSString *)title {
+    NSString *subtitle = self.activeSession.subtitle;
+    if (subtitle.length) {
+        return [NSString stringWithFormat:@"%@\n%@", title, subtitle];
+    } else{
+        return title;
+    }
+}
+
 - (void)_refreshLabels:(id)sender {
     if ([self activeSession]) {
-        [tabViewItem_ setLabel:[[self activeSession] name]];
+        [tabViewItem_ setLabel:[self labelForActiveSession]];
         [parentWindow_ setWindowTitle];
     }
 }
@@ -721,7 +735,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
         }
     }
     [self.variablesScope setValue:value forVariableNamed:iTermVariableKeyTabTitle];
-    [tabViewItem_ setLabel:value];  // PSM uses bindings to bind the label to its title
+    [tabViewItem_ setLabel:[self stringByAppendingSubtitleForActiveSession:value]];  // PSM uses bindings to bind the label to its title
     [self.realParentWindow tabTitleDidChange:self];
 }
 
@@ -774,7 +788,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     }
     if (changed) {
         [parentWindow_ setWindowTitle];
-        [tabViewItem_ setLabel:[[self activeSession] name]];
+        [tabViewItem_ setLabel:[self labelForActiveSession]];
         if ([realParentWindow_ currentTab] == self) {
             // If you set a textview in a non-current tab to the first responder and
             // then close that tab, it crashes with NSTextInput calling
@@ -1032,7 +1046,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     if (theTabViewItem != nil) {
         // While Lion-restoring windows, there may be no active session.
         if ([self activeSession]) {
-            [tabViewItem_ setLabel:[[self activeSession] name]];
+            [tabViewItem_ setLabel:[self labelForActiveSession]];
         } else {
             [tabViewItem_ setLabel:@""];
         }
@@ -6522,6 +6536,13 @@ backgroundColor:(NSColor *)backgroundColor {
         return NO;
     }
     return [realParentWindow_ tabCanDragByPaneTitleBar];
+}
+
+- (void)sessionSubtitleDidChange:(PTYSession *)session {
+    if (session != self.activeSession) {
+        return;
+    }
+    [self _refreshLabels:nil];
 }
 
 #pragma mark - iTermObject

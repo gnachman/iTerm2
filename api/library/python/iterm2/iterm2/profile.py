@@ -1260,6 +1260,14 @@ class LocalWriteOnlyProfile:
         """
         return self._simple_set("Badge Text", value)
 
+    def set_subtitle(self, value: str):
+        """
+        Sets the subtitle, an interpolated string.
+
+        :param value: A str
+        """
+        return self._simple_set("Subtitle", value)
+
     def set_answerback_string(self, value: str):
         """
         Sets the answerback string.
@@ -3279,6 +3287,14 @@ class WriteOnlyProfile:
         :param value: A str
         """
         return await self._async_simple_set("Badge Text", value)
+
+    async def async_set_subtitle(self, value: str):
+        """
+        Sets the subtitle, an interpolated string.
+
+        :param value: A str
+        """
+        return await self._async_simple_set("Subtitle", value)
 
     async def async_set_answerback_string(self, value: str):
         """
@@ -5423,6 +5439,15 @@ class Profile(WriteOnlyProfile):
         :returns: A str
         """
         return self._simple_get("Badge Text")
+
+    @property
+    def subtitle(self) -> str:
+        """
+        Returns the subtitle, an interpolated string.
+
+        :returns: A str
+        """
+        return self._simple_get("Subtitle")
 
     @property
     def answerback_string(self) -> str:

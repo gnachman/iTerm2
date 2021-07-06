@@ -17,6 +17,7 @@
                   orientation:(PSMTabBarOrientation)orientation
                      fontSize:(CGFloat)fontSize
                     parseHTML:(BOOL)parseHTML {
+    assert(title);
     self = [super init];
     if (self) {
         _title = title.length < 256 ? [title copy] : [[title substringToIndex:255] stringByAppendingString:@"…"];
@@ -82,6 +83,7 @@
 
 - (instancetype)initWith:(PSMCachedTitleInputs *)inputs {
     self = [super init];
+    assert(inputs);
     if (self) {
         _inputs = inputs;
         _truncationWidth = NAN;
@@ -129,7 +131,7 @@
 }
 
 - (BOOL)isEmpty {
-    return self.attributedString.length == 0;
+    return _inputs && self.attributedString.length == 0;
 }
 
 - (NSSize)size {

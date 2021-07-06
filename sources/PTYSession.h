@@ -267,7 +267,7 @@ backgroundColor:(NSColor *)backgroundColor;
 - (void)sessionDidResize:(PTYSession *)session;
 - (BOOL)sessionPasswordManagerWindowIsOpen;
 - (BOOL)sessionShouldDragWindowByPaneTitleBar:(PTYSession *)session;
-
+- (void)sessionSubtitleDidChange:(PTYSession *)session;
 @end
 
 @class SessionView;
@@ -471,6 +471,7 @@ backgroundColor:(NSColor *)backgroundColor;
 
 // The computed label
 @property(nonatomic, readonly) NSString *badgeLabel;
+@property(nonatomic, readonly) NSString *subtitle;
 
 // Commands issued, directories entered, and hosts connected to during this session.
 // Requires shell integration.

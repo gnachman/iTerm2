@@ -554,10 +554,12 @@ NS_CLASS_AVAILABLE_MAC(10_14)
 
 - (NSRect)frameForWindowTitleLabel {
     return [self frameForWindowTitleLabel:_windowTitleLabel
+                              hasSubtitle:_windowTitleLabel.subtitle.length > 0
                            getLeftAligned:nil];
 }
 
 - (NSRect)frameForWindowTitleLabel:(NSTextField *)textField
+                       hasSubtitle:(BOOL)hasSubtitle
                     getLeftAligned:(BOOL *)leftAlignedPtr {
     if (_tabBarControlOnLoan) {
         return NSZeroRect;
@@ -574,7 +576,8 @@ NS_CLASS_AVAILABLE_MAC(10_14)
     // This mirrors what NSWindow's title does.
     const CGFloat mostGenerousInset = MAX(MAX(insets.left, insets.right), iTermRootTerminalViewWindowNumberLabelMargin);
     const CGFloat containerWidth = NSWidth(self.frame) - ([self shouldShowToolbelt] ? NSWidth(_toolbelt.frame) : 0);
-    const CGFloat desiredWidth = [textField fittingSize].width;
+    const NSSize fittingSize = textField.fittingSize;
+    const CGFloat desiredWidth = fittingSize.width;
     CGFloat leftInset = mostGenerousInset;
     CGFloat rightInset = mostGenerousInset;
     CGFloat proposedWidth = containerWidth - leftInset - rightInset;
@@ -587,10 +590,16 @@ NS_CLASS_AVAILABLE_MAC(10_14)
             *leftAlignedPtr = YES;
         }
     }
+    CGFloat y;
+    if (hasSubtitle) {
+        y = [self retinaRound:myHeight - (tabBarHeight - fittingSize.height) / 2.0 - ceil(fittingSize.height)];
+    } else {
+        y = [self retinaRound:myHeight - tabBarHeight + (tabBarHeight - capHeight) / 2.0 - baselineOffset];
+    }
     NSRect rect = NSMakeRect([self retinaRound:leftInset],
-                             [self retinaRound:myHeight - tabBarHeight + (tabBarHeight - capHeight) / 2.0 - baselineOffset],
+                             y,
                              ceil(MAX(0, containerWidth - leftInset - rightInset)),
-                             ceil(textField.frame.size.height));
+                             ceil(fittingSize.height));
     return [self retinaRoundRect:rect];
 }
 
@@ -863,17 +872,26 @@ NS_CLASS_AVAILABLE_MAC(10_14)
 - (void)windowTitleDidChangeTo:(NSString *)title {
     _windowTitle = [title copy];
 
-    [self setWindowTitleLabelToString:_windowTitle icon:[self.delegate rootTerminalViewCurrentTabIcon]];
+    [self setWindowTitleLabelToString:_windowTitle
+                             subtitle:[self.delegate rootTerminalViewCurrentTabSubtitle]
+                                 icon:[self.delegate rootTerminalViewCurrentTabIcon]];
     if (!_windowTitleLabel.hidden) {
         [self layoutWindowPaneDecorations];
     }
 }
 
-- (void)setWindowTitleLabelToString:(NSString *)title icon:(NSImage *)icon {
-    [_windowTitleLabel setTitle:title icon:icon alignmentProvider:
+- (void)setSubtitle:(NSString *)subtitle {
+    [self setWindowTitleLabelToString:_windowTitleLabel.windowTitle
+                             subtitle:subtitle
+                                 icon:_windowTitleLabel.windowIcon];
+}
+
+- (void)setWindowTitleLabelToString:(NSString *)title subtitle:(NSString *)subtitle icon:(NSImage *)icon {
+    [_windowTitleLabel setTitle:title subtitle:subtitle icon:icon alignmentProvider:
      ^NSTextAlignment(NSTextField * _Nonnull scratch) {
          BOOL leftAligned = NO;
          [self frameForWindowTitleLabel:scratch
+                            hasSubtitle:subtitle.length > 0
                          getLeftAligned:&leftAligned];
 
          return leftAligned ? NSTextAlignmentLeft : NSTextAlignmentCenter;
@@ -881,7 +899,9 @@ NS_CLASS_AVAILABLE_MAC(10_14)
 }
 
 - (void)setWindowTitleIcon:(NSImage *)icon {
-    [self setWindowTitleLabelToString:_windowTitle icon:icon];
+    [self setWindowTitleLabelToString:_windowTitle
+                             subtitle:[self.delegate rootTerminalViewCurrentTabSubtitle]
+                                 icon:icon];
 }
 
 - (iTermTabBarControlView *)borrowTabBarControl {
@@ -1035,7 +1055,9 @@ NS_CLASS_AVAILABLE_MAC(10_14)
     _windowNumberLabel.textColor = [self.delegate rootTerminalViewTabBarTextColorForWindowNumber];
     _windowTitleLabel.textColor = [self.delegate rootTerminalViewTabBarTextColorForTitle];
     if (_windowTitleLabel.windowIcon) {
-        [self setWindowTitleLabelToString:_windowTitleLabel.windowTitle icon:_windowTitleLabel.windowIcon];
+        [self setWindowTitleLabelToString:_windowTitleLabel.windowTitle
+                                 subtitle:_windowTitleLabel.subtitle
+                                     icon:_windowTitleLabel.windowIcon];
     }
 }
 
@@ -1488,7 +1510,9 @@ NS_CLASS_AVAILABLE_MAC(10_14)
     _windowNumberLabel.textColor = [_delegate rootTerminalViewTabBarTextColorForWindowNumber];
     _windowTitleLabel.textColor = [self.delegate rootTerminalViewTabBarTextColorForTitle];
     if (_windowTitleLabel.windowIcon) {
-        [self setWindowTitleLabelToString:_windowTitleLabel.windowTitle icon:_windowTitleLabel.windowIcon];
+        [self setWindowTitleLabelToString:_windowTitleLabel.windowTitle
+                                 subtitle:_windowTitleLabel.subtitle
+                                     icon:_windowTitleLabel.windowIcon];
     }
 
     [self updateWindowNumberFont];

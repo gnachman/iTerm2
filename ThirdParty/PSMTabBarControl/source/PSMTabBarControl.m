@@ -1788,6 +1788,10 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionHTMLTabTitles = @"PSMTabBarContr
     [self update];  // takes care of highlighting based on state
 }
 
+- (BOOL)supportsMultiLineLabels {
+    return [_style supportsMultiLineLabels];
+}
+
 - (void)frameDidChange:(NSNotification *)notification {
     //figure out if the new frame puts the control in the way of the resize widget
     NSRect resizeWidgetFrame = [[[self window] contentView] frame];

@@ -569,6 +569,7 @@ static const NSUInteger kMaxHosts = 100;
     iTermVariables *_userVariables;
     iTermSwiftyString *_badgeSwiftyString;
     iTermSwiftyString *_autoNameSwiftyString;
+    iTermSwiftyString *_subtitleSwiftyString;
 
     iTermBackgroundDrawingHelper *_backgroundDrawingHelper;
     iTermMetaFrustrationDetector *_metaFrustrationDetector;
@@ -957,6 +958,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_copyModeHandler release];
     [_metalDisabledTokens release];
     [_badgeSwiftyString release];
+    [_subtitleSwiftyString release];
     [_autoNameSwiftyString release];
     [_statusBarViewController release];
     [_echoProbe release];
@@ -4217,6 +4219,8 @@ ITERM_WEAKLY_REFERENCEABLE
     _badgeLabelSizeFraction = NSMakeSize([iTermProfilePreferences floatForKey:KEY_BADGE_MAX_WIDTH inProfile:aDict],
                                          [iTermProfilePreferences floatForKey:KEY_BADGE_MAX_HEIGHT inProfile:aDict]);
 
+    self.subtitleFormat = [iTermProfilePreferences stringForKey:KEY_SUBTITLE inProfile:aDict];
+
     // forces the badge to update
     _textview.badgeLabel = @"";
     [self updateBadgeLabel];
@@ -4275,6 +4279,24 @@ ITERM_WEAKLY_REFERENCEABLE
     [_delegate sessionDidInvalidateStatusBar:self];
 }
 
+- (void)setSubtitleFormat:(NSString *)subtitleFormat {
+    if ([subtitleFormat isEqualToString:_subtitleSwiftyString.swiftyString]) {
+        return;
+    }
+    __weak __typeof(self) weakSelf = self;
+    [_subtitleSwiftyString invalidate];
+    [_subtitleSwiftyString autorelease];
+    _subtitleSwiftyString = [[iTermSwiftyString alloc] initWithString:subtitleFormat
+                                                                scope:self.variablesScope
+                                                             observer:^NSString *(NSString * _Nonnull newValue, NSError *error) {
+        if (error) {
+            return [NSString stringWithFormat:@"🐞 %@", error.localizedDescription];
+        }
+        [self.delegate sessionSubtitleDidChange:self];
+        return newValue;
+    }];
+}
+
 - (void)setBadgeFormat:(NSString *)badgeFormat {
     if ([badgeFormat isEqualToString:_badgeSwiftyString.swiftyString]) {
         return;
@@ -4291,7 +4313,6 @@ ITERM_WEAKLY_REFERENCEABLE
         [weakSelf updateBadgeLabel:newValue];
         return newValue;
     }];
-
 }
 
 - (void)setKeyMappingMode:(iTermKeyMappingMode)mode {
@@ -4337,6 +4358,10 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (NSString *)badgeFormat {
     return _badgeSwiftyString.swiftyString;
+}
+
+- (NSString *)subtitle {
+    return _subtitleSwiftyString.evaluatedString;
 }
 
 - (BOOL)doesSwiftyString:(iTermSwiftyString *)swiftyString

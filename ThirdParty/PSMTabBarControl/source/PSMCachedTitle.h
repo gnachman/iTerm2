@@ -19,7 +19,7 @@ typedef NS_ENUM(int, PSMTabBarOrientation) {
 @property (nonatomic, strong) NSString *title;
 @property (nonatomic) NSLineBreakMode truncationStyle;
 @property (nonatomic, strong) NSColor *color;
-@property (nonatomic, strong) NSImage *graphic;
+@property (nullable, nonatomic, strong) NSImage *graphic;
 @property (nonatomic) PSMTabBarOrientation orientation;
 @property (nonatomic) CGFloat fontSize;
 @property (nonatomic) BOOL parseHTML;
@@ -27,7 +27,7 @@ typedef NS_ENUM(int, PSMTabBarOrientation) {
 - (instancetype)initWithTitle:(NSString *)title
               truncationStyle:(NSLineBreakMode)truncationStyle
                         color:(NSColor *)color
-                      graphic:(NSImage *)graphic
+                      graphic:(nullable NSImage *)graphic
                   orientation:(PSMTabBarOrientation)orientation
                      fontSize:(CGFloat)fontSize
                     parseHTML:(BOOL)parseHTML NS_DESIGNATED_INITIALIZER;

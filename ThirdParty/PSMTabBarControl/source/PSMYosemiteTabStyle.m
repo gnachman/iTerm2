@@ -450,12 +450,32 @@
     return inputs;
 }
 
+- (PSMCachedTitleInputs *)cachedSubtitleInputsForTabCell:(PSMTabBarCell *)cell {
+    if (!cell.subtitleString) {
+        return nil;
+    }
+    const BOOL parseHTML = [[_tabBar.delegate tabView:_tabBar valueOfOption:PSMTabBarControlOptionHTMLTabTitles] boolValue];
+    NSColor *color = [self textColorForCell:cell];
+    PSMCachedTitleInputs *inputs = [[[PSMCachedTitleInputs alloc] initWithTitle:cell.subtitleString ?: @""
+                                                                truncationStyle:cell.truncationStyle
+                                                                          color:[color colorWithAlphaComponent:color.alphaComponent * 0.7]
+                                                                        graphic:nil
+                                                                    orientation:_orientation
+                                                                       fontSize:self.subtitleFontSize
+                                                                      parseHTML:parseHTML] autorelease];
+    return inputs;
+}
+
 - (CGFloat)fontSize {
     NSNumber *override = [_tabBar.delegate tabView:_tabBar valueOfOption:PSMTabBarControlOptionFontSizeOverride];
     if (override) {
         return override.doubleValue;
     }
     return 11.0;
+}
+
+- (CGFloat)subtitleFontSize {
+    return round(self.fontSize * 0.8);
 }
 
 #pragma mark - Drawing
@@ -997,6 +1017,9 @@
     }
 
     // label rect
+    CGFloat mainLabelHeight = 0;
+    PSMCachedTitle *cachedSubtitle = cell.cachedSubtitle;
+    const CGFloat labelOffset = [self willDrawSubtitle:cachedSubtitle] ? -6 : 0;
     if (!cachedTitle.isEmpty) {
         NSRect labelRect;
         labelRect.origin.x = labelPosition;
@@ -1006,11 +1029,11 @@
                                            labelPosition:labelPosition
                                                  hasIcon:drewIcon
                                                 iconRect:iconRect
-                                        cachedTitle:cachedTitle
+                                             cachedTitle:cachedTitle
                                            reservedSpace:reservedSpace
                                             boundingSize:&boundingSize
                                                 truncate:&truncate];
-        labelRect.origin.y = cellFrame.origin.y + floor((cellFrame.size.height - boundingSize.height) / 2.0);
+        labelRect.origin.y = cellFrame.origin.y + floor((cellFrame.size.height - boundingSize.height) / 2.0) + labelOffset;
         labelRect.size.height = boundingSize.height;
 
         NSAttributedString *attributedString = [cachedTitle attributedStringForcingLeftAlignment:truncate
@@ -1020,7 +1043,37 @@
         }
 
         [attributedString drawInRect:labelRect];
+        mainLabelHeight = NSHeight(labelRect);
     }
+
+    [self drawSubtitle:cachedSubtitle
+                     x:labelPosition
+                  cell:cell
+               hasIcon:drewIcon
+              iconRect:iconRect
+         reservedSpace:reservedSpace
+             cellFrame:cellFrame
+           labelOffset:labelOffset
+       mainLabelHeight:mainLabelHeight];
+}
+
+- (BOOL)supportsMultiLineLabels {
+    return NO;
+}
+
+- (BOOL)willDrawSubtitle:(PSMCachedTitle *)subtitle {
+    return NO;
+}
+
+- (void)drawSubtitle:(PSMCachedTitle *)cachedSubtitle
+                   x:(CGFloat)labelPosition
+                cell:(PSMTabBarCell *)cell
+             hasIcon:(BOOL)drewIcon
+            iconRect:(NSRect)iconRect
+       reservedSpace:(CGFloat)reservedSpace
+           cellFrame:(NSRect)cellFrame
+         labelOffset:(CGFloat)labelOffset
+     mainLabelHeight:(CGFloat)mainLabelHeight {
 }
 
 - (CGFloat)drawGraphicWithCellFrame:(NSRect)cellFrame

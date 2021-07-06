@@ -83,6 +83,9 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
     IBOutlet NSTextField *_badgeLabel;
     IBOutlet NSTextField *_badgeTextForEditCurrentSession;
     IBOutlet NSButton *_editBadgeButton;
+    IBOutlet NSTextField *_subtitleLabel;
+    IBOutlet NSTextField *_subtitleText;
+
     iTermFunctionCallTextFieldDelegate *_commandDelegate;
     iTermFunctionCallTextFieldDelegate *_sendTextAtStartDelegate;
     iTermFunctionCallTextFieldDelegate *_profileNameFieldDelegate;
@@ -92,6 +95,8 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
     iTermFunctionCallTextFieldDelegate *_tabTitleTextFieldDelegate;
     iTermFunctionCallTextFieldDelegate *_windowTitleTextFieldDelegate;
     iTermFunctionCallTextFieldDelegate *_customDirectoryTextFieldDelegate;
+    iTermFunctionCallTextFieldDelegate *_subtitleTextDelegate;
+
     IBOutlet NSPopUpButton *_titleSettingsForEditCurrentSession;
     IBOutlet NSView *_iconContainer;
     IBOutlet NSPopUpButton *_icon;
@@ -351,7 +356,19 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
                      return YES;
                  }
              searchable:NO];
-    
+
+    [self defineControl:_subtitleText
+                    key:KEY_SUBTITLE
+            relatedView:_subtitleLabel
+                   type:kPreferenceInfoTypeStringTextField];
+    _subtitleTextDelegate =
+        [[iTermFunctionCallTextFieldDelegate alloc] initWithPathSource:[iTermVariableHistory pathSourceForContext:iTermVariablesSuggestionContextSession]
+                                                           passthrough:_subtitleText.delegate
+                                                         functionsOnly:NO];
+    _subtitleText.delegate = _subtitleTextDelegate;
+
+    [self updateSubtitleEnabled];
+
     [self addViewToSearchIndex:_urlSchemes
                    displayName:@"URL schemes handled by profile"
                        phrases:@[ @"ssh", @"http", @"https" ]
@@ -377,7 +394,17 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
                                              selector:@selector(didRegisterSessionTitleFunc:)
                                                  name:iTermAPIDidRegisterSessionTitleFunctionNotification
                                                object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(updateSubtitleEnabled)
+                                                 name:kRefreshTerminalNotification
+                                               object:nil];
     [self updateEditAdvancedConfigButton];
+}
+
+- (void)updateSubtitleEnabled {
+    const BOOL enabled = (iTermPreferencesTabStyle)[iTermPreferences intForKey:kPreferenceKeyTabStyle] == TAB_STYLE_MINIMAL;
+    _subtitleText.enabled = enabled;
+    [_subtitleLabel setLabelEnabled:enabled];
 }
 
 - (BOOL)onUpdateTitle {

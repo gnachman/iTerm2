@@ -286,6 +286,12 @@ schema = [
      None,
      "Badge Text"),
 
+    ("subtitle",
+     "str",
+     "the subtitle, an interpolated string.",
+     None,
+     "Subtitle"),
+
     ("answerback_string",
      "str",
      "the answerback string.",

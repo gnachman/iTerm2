@@ -23,6 +23,7 @@
 - (PSMTabBarOrientation)orientation;
 - (id<PSMTabBarControlDelegate>)delegate;
 - (NSTabView *)tabView;
+- (BOOL)supportsMultiLineLabels;
 @end
 
 @interface PSMTabBarCell : NSActionCell <NSCoding>
@@ -46,6 +47,7 @@
 @property(nonatomic, retain) NSColor *tabColor;
 @property(nonatomic, readonly) PSMProgressIndicator *indicator;
 @property(nonatomic, readonly) PSMCachedTitle *cachedTitle;
+@property(nonatomic, readonly) PSMCachedTitle *cachedSubtitle;
 @property(nonatomic, readonly) NSSize stringSize;
 @property(nonatomic, readonly) float width;
 @property(nonatomic, readonly) float minimumWidthOfCell;
@@ -53,6 +55,7 @@
 @property(nonatomic, readonly) id<PSMTabStyle> style;
 @property(nonatomic, assign) NSLineBreakMode truncationStyle;  // How to truncate title.
 @property(nonatomic, readonly) NSAccessibilityElement *element;
+@property(nonatomic, copy) NSString *subtitleString;
 
 // creation/destruction
 - (id)initWithControlView:(PSMTabBarControl *)controlView;

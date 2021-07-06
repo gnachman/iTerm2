@@ -326,7 +326,7 @@
     [self setValue:newValue forVariableNamed:iTermVariableKeySessionLogFilename];
 }
 
-- (NSArray *)mouseinfo {
+- (NSArray *)mouseInfo {
     return [self valueForVariableName:iTermVariableKeySessionMouseInfo];
 }
 

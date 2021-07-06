@@ -48,4 +48,25 @@ int DebugLogImpl(const char *file, int line, const char *function, NSString* val
                         horizontal:(BOOL)horizontal;
 - (void)drawShadowForUnselectedTabInRect:(NSRect)backgroundRect;
 
+- (void)drawSubtitle:(PSMCachedTitle *)cachedSubtitle
+                   x:(CGFloat)labelPosition
+                cell:(PSMTabBarCell *)cell
+             hasIcon:(BOOL)drewIcon
+            iconRect:(NSRect)iconRect
+       reservedSpace:(CGFloat)reservedSpace
+           cellFrame:(NSRect)cellFrame
+         labelOffset:(CGFloat)labelOffset
+     mainLabelHeight:(CGFloat)mainLabelHeight;
+
+- (CGFloat)widthForLabelInCell:(PSMTabBarCell *)cell
+                 labelPosition:(CGFloat)labelPosition
+                       hasIcon:(BOOL)drewIcon
+                      iconRect:(NSRect)iconRect
+                   cachedTitle:(PSMCachedTitle *)cachedTitle
+                 reservedSpace:(CGFloat)reservedSpace
+                  boundingSize:(NSSize *)boundingSizeOut
+                      truncate:(BOOL *)truncateOut;
+
+- (BOOL)willDrawSubtitle:(PSMCachedTitle *)subtitle;
+
 @end

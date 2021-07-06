@@ -2214,6 +2214,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)setWindowTitle {
+    NSString *subtitle = (self.canShowSubtitleInTitlebar ? self.currentSession.subtitle : @"") ?: @"";
     if (self.isShowingTransientTitle) {
         DLog(@"showing transient title");
         PTYSession *session = self.currentSession;
@@ -2223,12 +2224,14 @@ ITERM_WEAKLY_REFERENCEABLE
             if (VT100GridSizeEquals(_previousGridSize, VT100GridSizeMake(0, 0))) {
                 _previousGridSize = size;
                 DLog(@"NOT showing transient title because of no previous grid sizes");
-                [self setWindowTitle:[self undecoratedWindowTitle]];
+                [self setWindowTitle:[self undecoratedWindowTitle]
+                            subtitle:subtitle];
                 return;
             }
             if (VT100GridSizeEquals(size, _previousGridSize)) {
                 DLog(@"NOT showing transient title because of equal grid sizes");
-                [self setWindowTitle:[self undecoratedWindowTitle]];
+                [self setWindowTitle:[self undecoratedWindowTitle]
+                            subtitle:subtitle];
                 return;
             }
             _lockTransientTitle = YES;
@@ -2253,10 +2256,27 @@ ITERM_WEAKLY_REFERENCEABLE
                           detail ? [@" \u2014 " stringByAppendingString:detail] : @""];
             }
         }
-        [self setWindowTitle:aTitle];
+        [self setWindowTitle:aTitle
+                    subtitle:subtitle];
     } else {
         _lockTransientTitle = NO;
-        [self setWindowTitle:[self undecoratedWindowTitle]];
+        [self setWindowTitle:[self undecoratedWindowTitle]
+                    subtitle:subtitle];
+    }
+}
+
+- (BOOL)canShowSubtitleInTitlebar {
+    switch ((iTermPreferencesTabStyle)[iTermPreferences intForKey:kPreferenceKeyTabStyle]) {
+        case TAB_STYLE_MINIMAL:
+            return YES;
+
+        case TAB_STYLE_COMPACT:
+        case TAB_STYLE_AUTOMATIC:
+        case TAB_STYLE_LIGHT:
+        case TAB_STYLE_LIGHT_HIGH_CONTRAST:
+        case TAB_STYLE_DARK:
+        case TAB_STYLE_DARK_HIGH_CONTRAST:
+            return NO;
     }
 }
 
@@ -2277,7 +2297,7 @@ ITERM_WEAKLY_REFERENCEABLE
     return [NSString stringWithFormat:@"%@ — %@", _contentView.windowTitle, formattedShortcut];
 }
 
-- (void)setWindowTitle:(NSString *)title {
+- (void)setWindowTitle:(NSString *)title subtitle:(NSString *)subtitle {
     DLog(@"setWindowTitle:%@", title);
     if (_deallocing) {
         // This uses -weakSelf and can be called during dealloc. Doing so is a crash.
@@ -2287,6 +2307,7 @@ ITERM_WEAKLY_REFERENCEABLE
         // title can be nil during loadWindowArrangement
         title = @"";
     }
+    assert(subtitle != nil);
 
     NSString *titleExWindowNumber = title;
 
@@ -2322,7 +2343,9 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     if ((self.desiredTitle && [title isEqualToString:self.desiredTitle]) ||
         [title isEqualToString:self.window.title]) {
-        return; // Title is already up to date
+        // Title is already up to date.
+        [_contentView setSubtitle:subtitle];
+        return;
     }
 
     [self.contentView windowTitleDidChangeTo:titleExWindowNumber];
@@ -8966,6 +8989,10 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 
 - (NSImage *)rootTerminalViewCurrentTabIcon {
     return self.currentSession.shouldShowTabGraphic ? self.currentSession.tabGraphic : nil;
+}
+
+- (NSString *)rootTerminalViewCurrentTabSubtitle {
+    return self.currentSession.subtitle;
 }
 
 - (BOOL)rootTerminalViewShouldRevealStandardWindowButtons {

@@ -12,6 +12,7 @@ NS_ASSUME_NONNULL_BEGIN
 @interface iTermFakeWindowTitleLabel : NSTextField
 @property (nonatomic, copy, readonly) NSString *windowTitle;
 @property (nonatomic, strong, readonly) NSImage *windowIcon;
+@property (nullable, nonatomic, copy, readonly) NSString *subtitle;
 
 - (instancetype)initWithCoder:(NSCoder *)coder NS_UNAVAILABLE;
 - (instancetype)initWithFrame:(NSRect)frameRect NS_UNAVAILABLE;
@@ -25,6 +26,7 @@ NS_ASSUME_NONNULL_BEGIN
 // center-aligned in caller-defined circumstances (e.g., when long) based on
 // the fitting size.
 - (void)setTitle:(NSString *)title
+        subtitle:(NSString *)subtitle
             icon:(NSImage *)icon
 alignmentProvider:(NSTextAlignment (^NS_NOESCAPE)(NSTextField *scratch))alignmentProvider;
 
