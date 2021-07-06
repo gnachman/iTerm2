@@ -756,6 +756,8 @@ BOOL ITMNotificationResponse_Status_IsValidValue(int32_t value);
 typedef GPB_ENUM(ITMKeystrokeNotification_Action) {
   /** These are used for non-modifier keys. */
   ITMKeystrokeNotification_Action_KeyDown = 0,
+
+  /** requires advanced=true in request */
   ITMKeystrokeNotification_Action_KeyUp = 1,
 
   /** This is used when only a modifier changes. */
@@ -3964,6 +3966,7 @@ typedef GPB_ENUM(ITMScreenUpdateNotification_FieldNumber) {
 
 typedef GPB_ENUM(ITMPromptNotificationPrompt_FieldNumber) {
   ITMPromptNotificationPrompt_FieldNumber_Placeholder = 1,
+  ITMPromptNotificationPrompt_FieldNumber_Prompt = 2,
 };
 
 @interface ITMPromptNotificationPrompt : GPBMessage
@@ -3971,6 +3974,10 @@ typedef GPB_ENUM(ITMPromptNotificationPrompt_FieldNumber) {
 @property(nonatomic, readwrite, copy, null_resettable) NSString *placeholder;
 /** Test to see if @c placeholder has been set. */
 @property(nonatomic, readwrite) BOOL hasPlaceholder;
+
+@property(nonatomic, readwrite, strong, null_resettable) ITMGetPromptResponse *prompt;
+/** Test to see if @c prompt has been set. */
+@property(nonatomic, readwrite) BOOL hasPrompt;
 
 @end
 

@@ -1051,6 +1051,7 @@ message ScreenUpdateNotification {
 
 message PromptNotificationPrompt {
   optional string placeholder = 1;
+  optional GetPromptResponse prompt = 2;
 }
 
 message PromptNotificationCommandStart {

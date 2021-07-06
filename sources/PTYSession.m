@@ -10916,6 +10916,7 @@ preferredEscaping:(iTermSendTextEscaping)preferredEscaping {
             notification.promptNotification = [[[ITMPromptNotification alloc] init] autorelease];
             notification.promptNotification.session = self.guid;
             notification.promptNotification.prompt.placeholder = @"";
+            notification.promptNotification.prompt.prompt = [self getPromptResponseForMark:mark];
             if (mark) {
                 notification.promptNotification.uniquePromptId = mark.guid;
             }
@@ -13287,11 +13288,15 @@ preferredEscaping:(iTermSendTextEscaping)preferredEscaping {
     } else {
         mark = [_screen lastPromptMark];
     }
+    ITMGetPromptResponse *response = [self getPromptResponseForMark:mark];
+    completion(response);
+}
+
+- (ITMGetPromptResponse *)getPromptResponseForMark:(VT100ScreenMark *)mark {
     ITMGetPromptResponse *response = [[[ITMGetPromptResponse alloc] init] autorelease];
     if (!mark) {
         response.status = ITMGetPromptResponse_Status_PromptUnavailable;
-        completion(response);
-        return;
+        return response;
     }
 
     if (mark.promptRange.start.x >= 0) {
@@ -13328,7 +13333,7 @@ preferredEscaping:(iTermSendTextEscaping)preferredEscaping {
         response.promptState = ITMGetPromptResponse_State_Editing;
     }
     response.uniquePromptId = mark.guid;
-    completion(response);
+    return response;
 }
 
 - (ITMSetProfilePropertyResponse_Status)handleSetProfilePropertyForAssignments:(NSArray<iTermTuple<NSString *, id> *> *)tuples

@@ -238,9 +238,10 @@ class PromptMonitor:
         :param include_id: If True, return a triple where the last value is the
             prompt's unique ID if available or None otherwise.
 
-        :returns: A tuple of (PROMPT,None), (COMMAND_START,Str), or
+        :returns: A tuple of (PROMPT,Optional[Prompt]), (COMMAND_START,Str), or
             (COMMAND_END,Int) where the Str gives the command being run and the
-            Int gives the exit status of the command."""
+            Int gives the exit status of the command. Older versions of iTerm2 will
+            not provide a Prompt object when the first value is PROMPT."""
         triple = await self._async_get()
         if include_id:
             return triple
@@ -253,7 +254,11 @@ class PromptMonitor:
             return (PromptMonitor.Mode.PROMPT, None, None)
         which = message.WhichOneof('event')
         if which == 'prompt' or which is None:
-            return (PromptMonitor.Mode.PROMPT, None, message.unique_prompt_id)
+            if message.prompt.HasField('prompt'):
+                prompt = Prompt(message.prompt.prompt)
+                return (PromptMonitor.Mode.PROMPT, prompt, message.unique_prompt_id)
+            else:
+                return (PromptMonitor.Mode.PROMPT, None, message.unique_prompt_id)
         if which == 'command_start':
             return (PromptMonitor.Mode.COMMAND_START,
                     message.command_start.command, message.unique_prompt_id)

@@ -9053,10 +9053,12 @@ typedef struct ITMScreenUpdateNotification__storage_ {
 @implementation ITMPromptNotificationPrompt
 
 @dynamic hasPlaceholder, placeholder;
+@dynamic hasPrompt, prompt;
 
 typedef struct ITMPromptNotificationPrompt__storage_ {
   uint32_t _has_storage_[1];
   NSString *placeholder;
+  ITMGetPromptResponse *prompt;
 } ITMPromptNotificationPrompt__storage_;
 
 // This method is threadsafe because it is initially called
@@ -9073,6 +9075,15 @@ typedef struct ITMPromptNotificationPrompt__storage_ {
         .offset = (uint32_t)offsetof(ITMPromptNotificationPrompt__storage_, placeholder),
         .flags = GPBFieldOptional,
         .dataType = GPBDataTypeString,
+      },
+      {
+        .name = "prompt",
+        .dataTypeSpecific.className = GPBStringifySymbol(ITMGetPromptResponse),
+        .number = ITMPromptNotificationPrompt_FieldNumber_Prompt,
+        .hasIndex = 1,
+        .offset = (uint32_t)offsetof(ITMPromptNotificationPrompt__storage_, prompt),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeMessage,
       },
     };
     GPBDescriptor *localDescriptor =
