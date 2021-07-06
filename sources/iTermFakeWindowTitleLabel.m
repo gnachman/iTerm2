@@ -8,6 +8,8 @@
 #import "iTermFakeWindowTitleLabel.h"
 
 #import "DebugLogging.h"
+#import "iTermPreferences.h"
+#import "NSAttributedString+PSM.h"
 #import "NSTextField+iTerm.h"
 
 @implementation iTermFakeWindowTitleLabel {
@@ -31,9 +33,14 @@
 
 + (NSAttributedString *)attributedStringForWindowTitleLabelWithString:(NSString *)title
                                                            attributes:(NSDictionary *)attributes {
-    NSAttributedString *attributedString = [[NSAttributedString alloc] initWithString:title ?: @""
-                                                                           attributes:attributes];
-    return attributedString;
+    if ([iTermPreferences boolForKey:kPreferenceKeyHTMLTabTitles]) {
+        return [NSAttributedString newAttributedStringWithHTML:title ?: @""
+                                                    attributes:attributes];
+
+    } else {
+        return [[NSAttributedString alloc] initWithString:title ?: @""
+                                               attributes:attributes];
+    }
 }
 
 + (NSTextAttachment *)iconTextAttachmentForWindowTitleLabelWithImage:(NSImage *)icon

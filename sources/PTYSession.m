@@ -4361,7 +4361,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (NSString *)subtitle {
-    return _subtitleSwiftyString.evaluatedString;
+    return [_subtitleSwiftyString.evaluatedString stringByReplacingOccurrencesOfString:@"\n" withString:@" "];
 }
 
 - (BOOL)doesSwiftyString:(iTermSwiftyString *)swiftyString
