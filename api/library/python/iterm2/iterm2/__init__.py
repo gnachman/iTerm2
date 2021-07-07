@@ -9,6 +9,8 @@ from iterm2.app import (
 
 from iterm2.arrangement import SavedArrangementException, Arrangement
 
+from iterm2.binding import PasteConfiguration, MoveSelectionUnit, SnippetIdentifier, BindingAction, KeyBinding, async_get_global_key_bindings, async_set_global_key_bindings
+
 from iterm2.broadcast import BroadcastDomain, async_set_broadcast_domains
 
 from iterm2.color import Color, ColorSpace
@@ -29,7 +31,7 @@ from iterm2.lifecycle import (
     EachSessionOnceMonitor, SessionTerminationMonitor, LayoutChangeMonitor,
     NewSessionMonitor)
 
-from iterm2.mainmenu import MenuItemState, MainMenu, MenuItemException
+from iterm2.mainmenu import MenuItemState, MainMenu, MenuItemException, MenuItemIdentifier
 
 from iterm2.keyboard import (
     Modifier, Keycode, Keystroke, KeystrokePattern, KeystrokeMonitor,

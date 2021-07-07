@@ -21,6 +21,45 @@ class Modifier(enum.Enum):
     SHIFT = iterm2.api_pb2.Modifiers.Value("SHIFT")  #: The shift key modifier
     FUNCTION = iterm2.api_pb2.Modifiers.Value("FUNCTION")  #: Indicates the key is a function key.
     NUMPAD = iterm2.api_pb2.Modifiers.Value("NUMPAD")  #: Indicates the key is on the numeric keypad.
+
+    @staticmethod
+    def from_cocoa(value: int) -> ['Modifier']:
+        result = []
+        if value & (1 << 18):
+            result.append(Modifier.CONTROL)
+        if value & (1 << 19):
+            result.append(Modifier.OPTION)
+        if value & (1 << 20):
+            result.append(Modifier.COMMAND)
+        if value & (1 << 17):
+            result.append(Modifier.SHIFT)
+        if value & (1 << 23):
+            result.append(Modifier.FUNCTION)
+        if value & (1 << 21):
+            result.append(Modifier.NUMPAD)
+        return result
+
+    def to_cocoa(self) -> int:
+        if self == Modifier.CONTROL:
+            return 1 << 18
+
+        if self == Modifier.OPTION:
+            return 1 << 19
+
+        if self == Modifier.COMMAND:
+            return 1 << 20
+
+        if self == Modifier.SHIFT:
+            return 1 << 17
+
+        if self == Modifier.FUNCTION:
+            return 1 << 23
+
+        if self == Modifier.NUMPAD:
+            return 1 << 21
+
+        return 0
+
 # pylint: enable=line-too-long
 
 

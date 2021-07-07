@@ -701,12 +701,24 @@ async def async_set_default_profile(connection, guid):
 
 
 async def async_get_preference(connection, key):
-    """Sets the default profile."""
+    """Gets a preference from user defaults."""
     request = _alloc_request()
     request.preferences_request.SetInParent()
     my_request = iterm2.api_pb2.PreferencesRequest.Request()
     my_request.get_preference_request.SetInParent()
     my_request.get_preference_request.key = key
+    request.preferences_request.requests.extend([my_request])
+    return await _async_call(connection, request)
+
+
+async def async_set_preference(connection, key, value):
+    """Sets a preference in user defaults."""
+    request = _alloc_request()
+    request.preferences_request.SetInParent()
+    my_request = iterm2.api_pb2.PreferencesRequest.Request()
+    my_request.set_preference_request.SetInParent()
+    my_request.set_preference_request.key = key
+    my_request.set_preference_request.json_value = value
     request.preferences_request.requests.extend([my_request])
     return await _async_call(connection, request)
 

@@ -1,4 +1,3 @@
-
 """
 Provides classes for representing, querying, and modifying iTerm2 profiles.
 """
