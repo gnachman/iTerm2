@@ -87,10 +87,6 @@ static NSString *const kFactoryDefaultsGlobalPreset = @"Factory Defaults";
 
 + (void)setGlobalKeyMappingsToPreset:(NSString *)presetName byReplacingAll:(BOOL)replaceAll {
     assert([presetName isEqualToString:kFactoryDefaultsGlobalPreset]);
-    if (![iTermKeyMappings haveLoadedKeyMappings]) {
-        [iTermKeyMappings loadGlobalKeyMap];
-        return;
-    }
     if (!replaceAll) {
         NSDictionary *globalKeyMap = [iTermKeyMappings globalKeyMap];
         globalKeyMap = [globalKeyMap it_dictionaryByMergingSerializedKeystrokeKeyedDictionary:self.defaultGlobalKeyMap];

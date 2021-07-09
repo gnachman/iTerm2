@@ -764,21 +764,23 @@ iTermWindowType iTermThemedWindowType(iTermWindowType windowType) {
 }
 
 + (void)removeKeyMappingsReferringToGuid:(NSString *)badRef {
-    for (NSString* guid in [[ProfileModel sharedInstance] guids]) {
-        Profile *profile = [[ProfileModel sharedInstance] bookmarkWithGuid:guid];
-        profile = [iTermKeyMappings removeKeyMappingsReferencingGuid:badRef fromProfile:profile];
-        if (profile) {
-            [[ProfileModel sharedInstance] setBookmark:profile withGuid:guid];
+    [iTermKeyMappings suppressNotifications:^{
+        for (NSString* guid in [[ProfileModel sharedInstance] guids]) {
+            Profile *profile = [[ProfileModel sharedInstance] bookmarkWithGuid:guid];
+            profile = [iTermKeyMappings removeKeyMappingsReferencingGuid:badRef fromProfile:profile];
+            if (profile) {
+                [[ProfileModel sharedInstance] setBookmark:profile withGuid:guid];
+            }
         }
-    }
-    for (NSString* guid in [[ProfileModel sessionsInstance] guids]) {
-        Profile* profile = [[ProfileModel sessionsInstance] bookmarkWithGuid:guid];
-        profile = [iTermKeyMappings removeKeyMappingsReferencingGuid:badRef fromProfile:profile];
-        if (profile) {
-            [[ProfileModel sessionsInstance] setBookmark:profile withGuid:guid];
+        for (NSString* guid in [[ProfileModel sessionsInstance] guids]) {
+            Profile* profile = [[ProfileModel sessionsInstance] bookmarkWithGuid:guid];
+            profile = [iTermKeyMappings removeKeyMappingsReferencingGuid:badRef fromProfile:profile];
+            if (profile) {
+                [[ProfileModel sessionsInstance] setBookmark:profile withGuid:guid];
+            }
         }
-    }
-    [iTermKeyMappings removeKeyMappingsReferencingGuid:badRef fromProfile:nil];
+        [iTermKeyMappings removeKeyMappingsReferencingGuid:badRef fromProfile:nil];
+    }];
     [self postNotificationName:kKeyBindingsChangedNotification object:nil userInfo:nil];
 }
 

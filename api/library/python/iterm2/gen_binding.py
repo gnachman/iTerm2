@@ -33,7 +33,7 @@ def guid_param():
 # Substitution: str
 # WaitForPrompts: bool
 def paste_param():
-    return ("PasteConfiguration")
+    return ("PasteConfigurationConstructor")
 
 # 0: char
 # 1: word
@@ -257,7 +257,7 @@ bindings = [
     ("paste_special_from_selection",
      42,
      "Paste from selection.",
-     no_param),
+     paste_param),
 
     ("toggle_hotkey_window_pinning",
      43,
@@ -439,7 +439,7 @@ def gen_get_constructor():
         return NoParamConstructor
 
     if action == BindingAction.SELECT_MENU_ITEM:
-        return iterm2.mainmenu.MenuItemIdentifierConstructor
+        return MenuItemIdentifierConstructor
 
     if action == BindingAction.NEW_WINDOW_WITH_PROFILE:
         return str
@@ -484,13 +484,13 @@ def gen_get_constructor():
         return NoParamConstructor
 
     if action == BindingAction.LOAD_COLOR_PRESET:
-        return str_param
+        return str
 
     if action == BindingAction.PASTE_SPECIAL:
-        return PasteConfiguration
+        return PasteConfigurationConstructor
 
     if action == BindingAction.PASTE_SPECIAL_FROM_SELECTION:
-        return NoParamConstructor
+        return PasteConfigurationConstructor
 
     if action == BindingAction.TOGGLE_HOTKEY_WINDOW_PINNING:
         return NoParamConstructor
@@ -644,6 +644,57 @@ def MenuItemIdentifierConstructor(param):
         identifier = None
     return iterm2.MenuItemIdentifier(title, identifier)
 
+def PasteConfigurationConstructor(param):
+    if param is None:
+        base64 = False
+        wait_for_prompts = False
+        tab_transform = PasteConfiguration.TabTransform.NONE
+        tab_stop_size = False
+        delay = 0.01
+        chunk_size = 1024
+        convert_newlines = False
+        remove_newlines = False
+        convert_unicode_punctuation = False
+        escape_for_shell = False
+        remove_controls = False
+        bracket_allowed = True
+        use_regex_substitution = False
+        regex = ""
+        substitution = ""
+    else:
+        root = json.loads(param)
+        base64 = root['Base64']
+        wait_for_prompts = root['WaitForPrompts']
+        tab_transform = PasteConfiguration.TabTransform(root['TabTransform'])
+        tab_stop_size = root['TabStopSize']
+        delay = root['Delay']
+        chunk_size = root['ChunkSize']
+        convert_newlines = root['ConvertNewlines']
+        remove_newlines = root['RemoveNewlines']
+        convert_unicode_punctuation = root['ConvertUnicodePunctuation']
+        escape_for_shell = root['EscapeForShell']
+        remove_controls = root['RemoveControls']
+        bracket_allowed = root['BracketAllowed']
+        use_regex_substitution = root['UseRegexSubstitution']
+        regex = root['Regex']
+        substitution = root['Substitution']
+
+    return PasteConfiguration(
+        base64,
+        wait_for_prompts,
+        tab_transform,
+        tab_stop_size,
+        delay,
+        chunk_size,
+        convert_newlines,
+        remove_newlines,
+        convert_unicode_punctuation,
+        escape_for_shell,
+        remove_controls,
+        bracket_allowed,
+        use_regex_substitution,
+        regex,
+        substitution)
 
 class PasteConfiguration:
     \"\"\"Configuration parameters for pasting.\"\"\"
@@ -654,42 +705,41 @@ class PasteConfiguration:
         CONVERT_TO_SPACES = 1
         ESCAPE_WITH_CONTROL_V = 2
 
-    def __init__(self, param: typing.Optional[str]=None):
-        if param is None:
-            self.__base64 = False
-            self.__wait_for_prompts = False
-            self.__tab_transform = TabTransform.NONE
-            self.__tab_stop_size = False
-            self.__delay = 0.01
-            self.__chunk_size = 1024
-            self.__convert_newlines = False
-            self.__remove_newlines = False
-            self.__convert_unicode_punctuation = False
-            self.__escape_for_shell = False
-            self.__remove_controls = False
-            self.__bracket_allowed = True
-            self.__use_regex_substitution = False
-            self.__regex = ""
-            self.__substitution = ""
-        else:
-            root = json.loads(param)
-            self.__base64 = root['Base64']
-            self.__wait_for_prompts = root['WaitForPrompts']
-            self.__tab_transform = TabTransform(root['TabTransform'])
-            self.__tab_stop_size = root['TabStopSize']
-            self.__delay = root['Delay']
-            self.__chunk_size = root['ChunkSize']
-            self.__convert_newlines = root['ConvertNewlines']
-            self.__remove_newlines = root['RemoveNewlines']
-            self.__convert_unicode_punctuation = root['ConvertUnicodePunctuation']
-            self.__escape_for_shell = root['EscapeForShell']
-            self.__remove_controls = root['RemoveControls']
-            self.__bracket_allowed = root['BracketAllowed']
-            self.__use_regex_substitution = root['UseRegexSubstitution']
-            self.__regex = root['Regex']
-            self.__substitution = root['Substitution']
+    def __init__(
+         self,
+         base64: bool,
+         wait_for_prompts: bool,
+         tab_transform: 'TabTransform',
+         tab_stop_size: bool,
+         delay: float,
+         chunk_size: int,
+         convert_newlines: bool,
+         remove_newlines: bool,
+         convert_unicode_punctuation: bool,
+         escape_for_shell: bool,
+         remove_controls: bool,
+         bracket_allowed: bool,
+         use_regex_substitution: bool,
+         regex: str,
+         substitution: str):
+        self.__base64 = base64
+        self.__wait_for_prompts = wait_for_prompts
+        self.__tab_transform = tab_transform
+        self.__tab_stop_size = tab_stop_size
+        self.__delay = delay
+        self.__chunk_size = chunk_size
+        self.__convert_newlines = convert_newlines
+        self.__remove_newlines = remove_newlines
+        self.__convert_unicode_punctuation = convert_unicode_punctuation
+        self.__escape_for_shell = escape_for_shell
+        self.__remove_controls = remove_controls
+        self.__bracket_allowed = bracket_allowed
+        self.__use_regex_substitution = use_regex_substitution
+        self.__regex = regex
+        self.__substitution = substitution
 
-    def __encode(self) -> str:
+
+    def _encode(self) -> str:
         param = {
             'Base64': self.__base64,
             'WaitForPrompts': self.__wait_for_prompts,
@@ -868,7 +918,7 @@ class MoveSelectionUnit(enum.Enum):
     MARK = 3  #: Marks can be set manually or (more often) by shell integration.
     BIG_WORD = 4  #: Like WORD but includes punctuation characters.
 
-    def __encode(self) -> int:
+    def _encode(self) -> int:
         return self.value
 
 
@@ -941,6 +991,19 @@ class KeyBinding:
         self.__version = version
         self.__label = label
 
+    def __eq__(self, other):
+        return (
+             self.__keycode == other.__keycode and
+             self.__character == other.__character and
+             self.__modifiers == other.__modifiers and
+             self.__action == other.__action and
+             self.__encoded_param == other.__encoded_param and
+             self.__version == other.__version and
+             self.__label == other.__label)
+
+    def __repr__(self):
+        return f'[KeyBinding keycode={self.keycode} character={self.character} modifiers={self.modifiers} action={self.action} param={self.__parsed_param}] version={self.__version} label={self.__label}]'
+
     @staticmethod
     def _make(key: str, entry: dict):
         # Key can be one of:
@@ -963,6 +1026,10 @@ class KeyBinding:
     def keycode(self) -> typing.Optional[iterm2.keyboard.Keycode]:
         "None, or the keycode associated with the key."
         return self.__keycode
+
+    @property
+    def character(self) -> int:
+        return self.__character
 
     @property
     def modifiers(self) -> typing.List['iterm2.keyboard.Modifier']:

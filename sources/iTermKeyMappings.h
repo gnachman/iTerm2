@@ -10,12 +10,18 @@
 #import "iTermKeyBindingAction.h"
 #import "ProfileModel.h"
 
+extern NSString *const kKeyBindingsChangedNotification;
+
 NS_ASSUME_NONNULL_BEGIN
 
 @class iTermKeyBindingAction;
 @class iTermKeystroke;
 
 @interface iTermKeyMappings : NSObject
+
+// You can call setGlobalKeyMap in block and a notif won't be posted. Useful when it gets called
+// many times but you only want one notif.
++ (void)suppressNotifications:(void (^ NS_NOESCAPE)(void))block;
 
 #pragma mark - Lookup
 
@@ -101,9 +107,6 @@ NS_ASSUME_NONNULL_BEGIN
             fromProfile:(MutableProfile *)profile;
 
 #pragma mark - Global State
-
-+ (BOOL)haveLoadedKeyMappings;
-+ (void)loadGlobalKeyMap;
 
 // Returns the global keymap ("0xKeycode-0xModifiers"->{Action=int, [Text=str])
 + (NSDictionary *)globalKeyMap;

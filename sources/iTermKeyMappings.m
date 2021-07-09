@@ -12,12 +12,22 @@
 #import "iTermKeyBindingAction.h"
 #import "iTermKeystroke.h"
 #import "iTermPresetKeyMappings.h"
+#import "iTermUserDefaultsObserver.h"
 #import "NSArray+iTerm.h"
 #import "ProfileModel.h"
 
-static NSDictionary *gGlobalKeyMapping;
+NSString *const kKeyBindingsChangedNotification = @"kKeyBindingsChangedNotification";
+static NSInteger iTermKeyMappingsNotificationSupressionCount = 0;
 
 @implementation iTermKeyMappings
+
++ (void)suppressNotifications:(void (^ NS_NOESCAPE)(void))block {
+    assert(iTermKeyMappingsNotificationSupressionCount >= 0);
+    iTermKeyMappingsNotificationSupressionCount += 1;
+    block();
+    iTermKeyMappingsNotificationSupressionCount -= 1;
+    assert(iTermKeyMappingsNotificationSupressionCount >= 0);
+}
 
 #pragma mark - Lookup
 
@@ -158,9 +168,6 @@ static NSDictionary *gGlobalKeyMapping;
 #pragma mark - Mutation
 
 + (void)removeAllGlobalKeyMappings {
-    if (gGlobalKeyMapping) {
-        gGlobalKeyMapping = @{};
-    }
     [[NSUserDefaults standardUserDefaults] setObject:@{} forKey:@"GlobalKeyMap"];
 }
 
@@ -242,17 +249,26 @@ static NSDictionary *gGlobalKeyMapping;
 #pragma mark - Global State
 
 + (NSDictionary *)globalKeyMap {
-    if (!gGlobalKeyMapping) {
-        [self loadGlobalKeyMap];
-    }
+    static NSDictionary *gGlobalKeyMapping;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        NSString *const key = @"GlobalKeyMap";
+        gGlobalKeyMapping = [[NSUserDefaults standardUserDefaults] objectForKey:key];
+        if (!gGlobalKeyMapping) {
+            gGlobalKeyMapping = [iTermPresetKeyMappings defaultGlobalKeyMap];
+        }
+        static iTermUserDefaultsObserver *observer;
+        observer = [[iTermUserDefaultsObserver alloc] init];
+        [observer observeKey:key block:^{
+            gGlobalKeyMapping = [[NSUserDefaults standardUserDefaults] objectForKey:key] ?: [iTermPresetKeyMappings defaultGlobalKeyMap];
+            if (iTermKeyMappingsNotificationSupressionCount == 0) {
+                [[NSNotificationCenter defaultCenter] postNotificationName:kKeyBindingsChangedNotification
+                                                                    object:nil
+                                                                  userInfo:nil];
+            }
+        }];
+    });
     return gGlobalKeyMapping;
-}
-
-+ (void)loadGlobalKeyMap {
-    gGlobalKeyMapping = [[NSUserDefaults standardUserDefaults] objectForKey:@"GlobalKeyMap"];
-    if (!gGlobalKeyMapping) {
-        gGlobalKeyMapping = [iTermPresetKeyMappings defaultGlobalKeyMap];
-    }
 }
 
 + (NSDictionary *)defaultGlobalKeyMap {
@@ -261,16 +277,12 @@ static NSDictionary *gGlobalKeyMapping;
 }
 
 + (void)setGlobalKeyMap:(NSDictionary *)src {
-    gGlobalKeyMapping = [src copy];
-    [[NSUserDefaults standardUserDefaults] setObject:gGlobalKeyMapping forKey:@"GlobalKeyMap"];
+    [[NSUserDefaults standardUserDefaults] setObject:src forKey:@"GlobalKeyMap"];
+    assert([self.globalKeyMap isEqual:src]);
 }
 
 + (BOOL)haveGlobalKeyMappingForKeystroke:(iTermKeystroke *)keystroke {
     return [keystroke valueInBindingDictionary:self.globalKeyMap] != nil;
-}
-
-+ (BOOL)haveLoadedKeyMappings {
-    return gGlobalKeyMapping != nil;
 }
 
 #pragma mark - High-Level APIs

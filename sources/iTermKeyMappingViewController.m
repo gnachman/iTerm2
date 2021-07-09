@@ -8,6 +8,7 @@
 
 #import "iTermKeyMappingViewController.h"
 #import "DebugLogging.h"
+#import "iTermKeyMappings.h"
 #import "iTermKeystroke.h"
 #import "iTermKeystrokeFormatter.h"
 #import "iTermEditKeyActionWindowController.h"

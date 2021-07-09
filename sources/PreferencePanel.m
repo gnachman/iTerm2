@@ -108,7 +108,6 @@
 
 NSString *const kRefreshTerminalNotification = @"kRefreshTerminalNotification";
 NSString *const kUpdateLabelsNotification = @"kUpdateLabelsNotification";
-NSString *const kKeyBindingsChangedNotification = @"kKeyBindingsChangedNotification";
 NSString *const kPreferencePanelDidUpdateProfileFields = @"kPreferencePanelDidUpdateProfileFields";
 NSString *const kSessionProfileDidChange = @"kSessionProfileDidChange";
 NSString *const kPreferencePanelDidLoadNotification = @"kPreferencePanelDidLoadNotification";

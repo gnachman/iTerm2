@@ -480,30 +480,32 @@ static NSString *const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
            atIndex:(NSInteger)index
           toAction:(iTermKeyBindingAction *)action
         isAddition:(BOOL)addition {
-    [item whenFirst:
-     ^(iTermKeystroke * _Nonnull keystroke) {
-        NSMutableDictionary *dict = [[iTermKeyMappings globalKeyMap] mutableCopy];
-        if ([self anyProfileHasMappingForKeystroke:keystroke]) {
-            if (![self warnAboutPossibleOverride]) {
-                return;
+    [iTermKeyMappings suppressNotifications:^{
+        [item whenFirst:
+         ^(iTermKeystroke * _Nonnull keystroke) {
+            NSMutableDictionary *dict = [[iTermKeyMappings globalKeyMap] mutableCopy];
+            if ([self anyProfileHasMappingForKeystroke:keystroke]) {
+                if (![self warnAboutPossibleOverride]) {
+                    return;
+                }
             }
+            [iTermKeyMappings setMappingAtIndex:index
+                                   forKeystroke:keystroke
+                                         action:action
+                                      createNew:addition
+                                   inDictionary:dict];
+            [iTermKeyMappings setGlobalKeyMap:dict];
         }
-        [iTermKeyMappings setMappingAtIndex:index
-                               forKeystroke:keystroke
-                                     action:action
-                                  createNew:addition
-                               inDictionary:dict];
-        [iTermKeyMappings setGlobalKeyMap:dict];
-    }
-             second:
-     ^(iTermTouchbarItem * _Nonnull touchbarItem) {
-        NSMutableDictionary *dict = [[iTermTouchbarMappings globalTouchBarMap] mutableCopy];
-        [iTermTouchbarMappings updateDictionary:dict
-                                forTouchbarItem:touchbarItem
-                                         action:action];
-        [iTermTouchbarMappings setGlobalTouchBarMap:dict];
-        [self maybeExplainHowToEditTouchBarControls];
-    }];
+                 second:
+         ^(iTermTouchbarItem * _Nonnull touchbarItem) {
+            NSMutableDictionary *dict = [[iTermTouchbarMappings globalTouchBarMap] mutableCopy];
+            [iTermTouchbarMappings updateDictionary:dict
+                                    forTouchbarItem:touchbarItem
+                                             action:action];
+            [iTermTouchbarMappings setGlobalTouchBarMap:dict];
+            [self maybeExplainHowToEditTouchBarControls];
+        }];
+    ];
 
     [[NSNotificationCenter defaultCenter] postNotificationName:kKeyBindingsChangedNotification
                                                         object:nil
@@ -525,16 +527,19 @@ static NSString *const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
 - (void)keyMapping:(iTermKeyMappingViewController *)viewController
   removeKeystrokes:(NSSet<iTermKeystroke *> *)keystrokes
      touchbarItems:(NSSet<iTermTouchbarItem *> *)touchbarItems {
-    [keystrokes enumerateObjectsUsingBlock:^(iTermKeystroke * _Nonnull keystroke, BOOL * _Nonnull stop) {
-        NSUInteger index = [[iTermKeyMappings sortedGlobalKeystrokes] indexOfObject:keystroke];
-        assert(index != NSNotFound);
-        [iTermKeyMappings setGlobalKeyMap:[iTermKeyMappings removeMappingAtIndex:index
-                                                                    inDictionary:[iTermKeyMappings globalKeyMap]]];
-    }];
-    [touchbarItems enumerateObjectsUsingBlock:^(iTermTouchbarItem * _Nonnull touchbarItem, BOOL * _Nonnull stop) {
-        [iTermTouchbarMappings removeTouchbarItem:touchbarItem];
+    [iTermKeyMappings suppressNotifications:^{
+        [keystrokes enumerateObjectsUsingBlock:^(iTermKeystroke * _Nonnull keystroke, BOOL * _Nonnull stop) {
+            NSUInteger index = [[iTermKeyMappings sortedGlobalKeystrokes] indexOfObject:keystroke];
+            assert(index != NSNotFound);
+            [iTermKeyMappings setGlobalKeyMap:[iTermKeyMappings removeMappingAtIndex:index
+                                                                        inDictionary:[iTermKeyMappings globalKeyMap]]];
+        }];
+        [touchbarItems enumerateObjectsUsingBlock:^(iTermTouchbarItem * _Nonnull touchbarItem, BOOL * _Nonnull stop) {
+            [iTermTouchbarMappings removeTouchbarItem:touchbarItem];
+        }];
     }];
 
+    // iTermKeyMappings posts this for you but iTermTouchbarMappings does not.
     [[NSNotificationCenter defaultCenter] postNotificationName:kKeyBindingsChangedNotification
                                                         object:nil
                                                       userInfo:nil];
@@ -558,7 +563,9 @@ static NSString *const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
         replaceAll = n.boolValue;
     }
 
-    [iTermPresetKeyMappings setGlobalKeyMappingsToPreset:presetName byReplacingAll:replaceAll];
+    [iTermKeyMappings suppressNotifications:^{
+        [iTermPresetKeyMappings setGlobalKeyMappingsToPreset:presetName byReplacingAll:replaceAll];
+    }];
     [[NSNotificationCenter defaultCenter] postNotificationName:kKeyBindingsChangedNotification
                                                         object:nil
                                                       userInfo:nil];

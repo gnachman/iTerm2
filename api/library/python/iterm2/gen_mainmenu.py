@@ -104,6 +104,9 @@ class MenuItemIdentifier:
         self.__title = title
         self.__identifier = identifier
 
+    def __repr__(self):
+        return f'[MenuItemIdentifier title={self.title} id={self.identifier}]'
+
     @property
     def title(self) -> str:
         return self.__title
