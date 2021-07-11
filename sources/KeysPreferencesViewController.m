@@ -505,7 +505,7 @@ static NSString *const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
             [iTermTouchbarMappings setGlobalTouchBarMap:dict];
             [self maybeExplainHowToEditTouchBarControls];
         }];
-    ];
+    }];
 
     [[NSNotificationCenter defaultCenter] postNotificationName:kKeyBindingsChangedNotification
                                                         object:nil

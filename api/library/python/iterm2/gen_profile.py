@@ -645,7 +645,7 @@ schema = [
     ("triggers",
      "typing.List[typing.Dict[str, typing.Any]]",
      "the triggers.",
-     "Value is a trigger definition (currently undocumented)",
+     "Value is an encoded trigger. Use iterm2.decode_trigger to convert from an encoded trigger to an object. Trigger objects can be encoded using the encode property.",
      "Triggers"),
 
     ("smart_selection_rules",

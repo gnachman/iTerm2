@@ -1,7 +1,10 @@
 """Shared classes for representing color and related concepts."""
 
+import AppKit
+import base64
 import enum
 import json
+import typing
 
 
 class ColorSpace(enum.Enum):
@@ -34,6 +37,100 @@ class Color:
         self.__blue = b
         self.__alpha = a
         self.__color_space = color_space
+
+    @staticmethod
+    def from_trigger(s: str) -> typing.Optional['Color']:
+        """Decodes a color as encoded in a trigger."""
+        color = Color.from_hex(s)
+        if color is not None:
+            return color
+        return Color.from_cocoa(s)
+
+    @staticmethod
+    def from_hex(s: str) -> typing.Optional['Color']:
+        """Decodes a hex-encoded color like #aabbcc"""
+        if s[0] != '#' or len(s) != 7:
+            return None
+        red = int(s[1:3], 16)
+        green = int(s[3:5], 16)
+        blue = int(s[5:7], 16)
+        return Color(red, green, blue, 255)
+
+    @staticmethod
+    def from_cocoa(b: str) -> typing.Optional['Color']:
+        """Decodes a NSKeyedArchiver-encoded color."""
+        data = base64.b64decode(b)
+        nscolor = AppKit.NSColor.alloc().initWithCoder_(AppKit.NSKeyedUnarchiver.alloc().initForReadingWithData_(data))
+        return Color(
+             round(nscolor.redComponent() * 255),
+             round(nscolor.greenComponent() * 255),
+             round(nscolor.blueComponent() * 255),
+             round(nscolor.alphaComponent() * 255))
+
+    @staticmethod
+    def from_legacy_trigger(s: str) -> ('Color', 'Color'):
+        i = int(str)
+
+        black = AppKit.NSColor.blackColor
+        blue = AppKit.NSColor.blueColor
+        brown = AppKit.NSColor.brownColor
+        cyan = AppKit.NSColor.cyanColor
+        darkgray = AppKit.NSColor.darkGrayColor
+        gray = AppKit.NSColor.grayColor
+        green = AppKit.NSColor.greenColor
+        lightgray = AppKit.NSColor.lightGrayColor
+        magenta = AppKit.NSColor.magentaColor
+        none = lambda: None
+        orange = AppKit.NSColor.orangeColor
+        purple = AppKit.NSColor.purpleColor
+        red = AppKit.NSColor.redColor
+        white = AppKit.NSColor.whiteColor
+        yellow = AppKit.NSColor.yellowColor
+
+        table = {
+            0: (yellow, black),
+            1: (black, yellow),
+            2: (white, red),
+            3: (red, white),
+            4: (black, orange),
+            5: (orange, black),
+            6: (black, purple),
+            7: (purple, black),
+
+            1000: (black, none),
+            1001: (darkgray, none),
+            1002: (lightgray, none),
+            1003: (white, none),
+            1004: (gray, none),
+            1005: (red, none),
+            1006: (green, none),
+            1007: (blue, none),
+            1008: (cyan, none),
+            1009: (yellow, none),
+            1010: (magenta, none),
+            1011: (orange, none),
+            1012: (purple, none),
+            1013: (brown, none),
+
+            2000: (none, black),
+            2001: (none, darkgray),
+            2002: (none, lightgray),
+            2003: (none, white),
+            2004: (none, gray),
+            2005: (none, red),
+            2006: (none, green),
+            2007: (none, blue),
+            2008: (none, cyan),
+            2009: (none, yellow),
+            2010: (none, magenta),
+            2011: (none, orange),
+            2012: (none, purple),
+            2013: (none, brown),
+        }
+
+        (text, background) = table[i]
+        return (text(), background())
+
 
     def __repr__(self):
         return "({},{},{},{} {})".format(
@@ -124,3 +221,9 @@ class Color:
     def json(self):
         """Returns a JSON representation of this color."""
         return json.dumps(self.get_dict())
+
+    @property
+    def hex(self):
+        """Returns a #rrggbb representation of this color. Assumes srgb colorspace."""
+        two_digit_hex = '02x'
+        return "#" + format(self.red, two_digit_hex) + format(self.green, two_digit_hex) + format(self.blue, two_digit_hex)
