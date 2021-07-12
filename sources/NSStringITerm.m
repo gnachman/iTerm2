@@ -36,6 +36,7 @@
 #import "NSArray+iTerm.h"
 #import "NSAttributedString+PSM.h"
 #import "NSData+iTerm.h"
+#import "NSImage+iTerm.h"
 #import "NSLocale+iTerm.h"
 #import "NSMutableAttributedString+iTerm.h"
 #import "NSStringITerm.h"
@@ -1827,9 +1828,14 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
     return NSMakeRect(0, 0, ceil(size.width), ceil(size.height));
 }
 
-- (void)it_drawInRect:(CGRect)rect attributes:(NSDictionary *)attributes {
-    CGContextRef ctx = [[NSGraphicsContext currentContext] CGContext];
-    CGContextSaveGState(ctx);
+- (void)it_drawInRect:(CGRect)rect attributes:(NSDictionary *)attributes context:(CGContextRef)ctx {
+    CGContextSetFillColorSpace(ctx, [[NSColorSpace sRGBColorSpace] CGColorSpace]);
+    CGContextSetStrokeColorSpace(ctx, [[NSColorSpace sRGBColorSpace] CGColorSpace]);
+
+    CGFloat red[] = { 1, 0, 0, 0.5 };
+    CGContextSetFillColor(ctx, red);
+    CGContextFillRect(ctx, rect);
+    return;
 
     for (NSString *part in [self componentsSeparatedByString:@"\n"]) {
         NSAttributedString *string = [[NSAttributedString alloc] initWithString:part
@@ -1862,8 +1868,6 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
         CFRelease(framesetter);
 
     }
-
-    CGContextRestoreGState(ctx);
 }
 
 - (BOOL)startsWithEmoji {

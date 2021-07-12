@@ -121,21 +121,42 @@
         return nil;
     }
 
-    NSImage *image = [[[NSImage alloc] initWithSize:sizeWithFont] autorelease];
-    [image lockFocus];
+//    NSImage *image = [[[NSImage alloc] initWithSize:sizeWithFont] autorelease];
+//    [image lockFocus];
+//    [_stringValue it_drawInRect:NSMakeRect(0, 0, sizeWithFont.width, sizeWithFont.height)
+//                     attributes:temp];
+//    [image unlockFocus];
+//
+//    NSImage *reducedAlphaImage = [[[NSImage alloc] initWithSize:sizeWithFont] autorelease];
+//    [reducedAlphaImage lockFocus];
+//    [image drawInRect:NSMakeRect(0, 0, image.size.width, image.size.height)
+//             fromRect:NSZeroRect
+//            operation:NSCompositingOperationSourceOver
+//             fraction:_fillColor.alphaComponent];
+//    [reducedAlphaImage unlockFocus];
+//
+//    return reducedAlphaImage;
+
+    NSBitmapImageRep *bitmapImageRep =
+    [[NSBitmapImageRep alloc] initWithBitmapDataPlanes:nil  // allocate the pixel buffer for us
+                                            pixelsWide:sizeWithFont.width
+                                            pixelsHigh:sizeWithFont.height
+                                         bitsPerSample:8
+                                       samplesPerPixel:4
+                                              hasAlpha:YES
+                                              isPlanar:NO
+                                        colorSpaceName:NSDeviceRGBColorSpace
+                                           bytesPerRow:8 * 4 * sizeWithFont.width / 8
+                                          bitsPerPixel:8 * 4];  // 0 means OS infers it
+    NSGraphicsContext *context = [NSGraphicsContext graphicsContextWithBitmapImageRep:bitmapImageRep];
     [_stringValue it_drawInRect:NSMakeRect(0, 0, sizeWithFont.width, sizeWithFont.height)
-                     attributes:temp];
-    [image unlockFocus];
+                     attributes:temp
+                        context:context.CGContext];
+    [bitmapImageRep setProperty:NSImageColorSyncProfileData withValue:[[NSColorSpace sRGBColorSpace] ICCProfileData]];
+    NSImage *image = [[[NSImage alloc] initWithSize:sizeWithFont] autorelease];
+    [image addRepresentation:bitmapImageRep];
 
-    NSImage *reducedAlphaImage = [[[NSImage alloc] initWithSize:sizeWithFont] autorelease];
-    [reducedAlphaImage lockFocus];
-    [image drawInRect:NSMakeRect(0, 0, image.size.width, image.size.height)
-             fromRect:NSZeroRect
-            operation:NSCompositingOperationSourceOver
-             fraction:_fillColor.alphaComponent];
-    [reducedAlphaImage unlockFocus];
-
-    return reducedAlphaImage;
+    return image;
 }
 
 // Attributed string attributes for a given font point size.

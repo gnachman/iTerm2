@@ -152,6 +152,7 @@ iTermWindowType iTermWindowTypeNormalized(iTermWindowType windowType) {
                                                                    styleMask:styleMask
                                                                      backing:NSBackingStoreBuffered
                                                                        defer:defer];
+    myWindow.colorSpace = [NSColorSpace sRGBColorSpace];
     myWindow.collectionBehavior = [self desiredWindowCollectionBehavior];
     if (windowType != WINDOW_TYPE_LION_FULL_SCREEN) {
         // For some reason, you don't always get the frame you requested. I saw

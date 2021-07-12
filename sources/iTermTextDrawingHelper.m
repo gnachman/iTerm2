@@ -974,13 +974,15 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
     if (NSEqualSizes(NSZeroSize, intersection.size)) {
         return NSZeroSize;
     }
-    [_badgeImage it_drawInRect:intersection
-                      fromRect:source
-                     operation:NSCompositingOperationSourceOver
-                      fraction:1
-                respectFlipped:YES
-                         hints:nil
-                 virtualOffset:virtualOffset];
+//    [_badgeImage it_drawInRect:intersection
+//                      fromRect:source
+//                     operation:NSCompositingOperationSourceOver
+//                      fraction:1
+//                respectFlipped:YES
+//                         hints:nil
+//                 virtualOffset:virtualOffset];
+    [[NSColor colorWithSRGBRed:1 green:0 blue:0 alpha:0.5] set];
+    NSRectFill(intersection);
 
     NSSize imageSize = _badgeImage.size;
     imageSize.width += kBadgeMargin + margins.right;

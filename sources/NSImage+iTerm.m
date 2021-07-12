@@ -203,6 +203,10 @@
     return destination;
 }
 
++ (CGContextRef)newBitmapContextOfSize:(NSSize)size {
+    return [self newBitmapContextOfSize:size storage:[NSMutableData data]];
+}
+
 + (CGContextRef)newBitmapContextOfSize:(NSSize)size storage:(NSMutableData *)data {
   NSInteger bytesPerRow = size.width * 4;
   NSUInteger storageNeeded = bytesPerRow * size.height;

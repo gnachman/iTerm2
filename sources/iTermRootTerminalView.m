@@ -92,7 +92,6 @@ NS_CLASS_AVAILABLE_MAC(10_14)
         vev.blendingMode = NSVisualEffectBlendingModeWithinWindow;
         vev.material = NSVisualEffectMaterialTitlebar;
         [self addSubview:vev];
-
         self.autoresizesSubviews = YES;
     }
     return self;

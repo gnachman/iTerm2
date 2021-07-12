@@ -1168,6 +1168,12 @@
 // Draw in to another view which exactly coincides with the clip view, except it's inset on the top
 // and bottom by the margin heights.
 - (void)drawRect:(NSRect)rect inView:(NSView *)view {
+//    [[NSColor colorWithSRGBRed:0.25 green:0.25 blue:0.25 alpha:1] set];
+//    NSRectFill(rect);
+    [[NSColor colorWithSRGBRed:1 green:0 blue:0 alpha:0.5] set];
+    NSRectFillUsingOperation(NSMakeRect(0, 0, 100, 100), NSCompositingOperationSourceOver);
+    return;
+
     if (![_delegate textViewShouldDrawRect]) {
         // Metal code path in use
         [super drawRect:rect];
