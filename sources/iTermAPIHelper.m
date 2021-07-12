@@ -3501,11 +3501,7 @@ static BOOL iTermCheckSplitTreesIsomorphic(ITMSplitTreeNode *node1, ITMSplitTree
         result.status = ITMPreferencesResponse_Result_SetPreferenceResult_Status_InvalidValue;
         return result;
     }
-    if (!obj) {
-        [[NSUserDefaults standardUserDefaults] removeObjectForKey:key];
-    } else {
-        [[NSUserDefaults standardUserDefaults] setObject:obj forKey:key];
-    }
+    [iTermPreferences setObject:obj forKey:key];
     result.status = ITMPreferencesResponse_Result_SetPreferenceResult_Status_Ok;
 
     return result;
