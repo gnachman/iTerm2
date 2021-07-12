@@ -16,6 +16,7 @@
 #import "iTermController.h"
 #import "iTermDisclosableView.h"
 #import "iTermLSOF.h"
+#import "iTermKeyMappings.h"
 #import "iTermMalloc.h"
 #import "iTermObject.h"
 #import "iTermPreferences.h"
@@ -2055,6 +2056,9 @@ static BOOL iTermAPIHelperLastApplescriptAuthRequiredSetting;
                                                 forKey:assignment.firstObject
                                              inProfile:profile
                                                  model:[ProfileModel sharedInstance]];
+                    if ([assignment.firstObject isEqualToString:KEY_KEYBOARD_MAP]) {
+                        [[NSNotificationCenter defaultCenter] postNotificationName:kKeyBindingsChangedNotification object:nil];
+                    }
                 }
                 return ITMSetProfilePropertyResponse_Status_Ok;
             };

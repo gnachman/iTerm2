@@ -1,3 +1,4 @@
+
 """
 Provides classes for representing, querying, and modifying iTerm2 profiles.
 """
@@ -1921,7 +1922,9 @@ class LocalWriteOnlyProfile:
         """
         Sets the keyboard shortcuts.
 
-        The value is a Dictionary mapping keystroke to action.
+        The value is a Dictionary mapping keystroke to action. You can convert
+        between the values in this dictionary and a :class:`~iterm2.KeyBinding`
+        using `iterm2.decode_key_binding`
 
         :param value: A typing.Dict[str, typing.Any]
         """
@@ -3919,7 +3922,9 @@ class WriteOnlyProfile:
         """
         Sets the keyboard shortcuts.
 
-        The value is a Dictionary mapping keystroke to action.
+        The value is a Dictionary mapping keystroke to action. You can convert
+        between the values in this dictionary and a :class:`~iterm2.KeyBinding`
+        using `iterm2.decode_key_binding`
         """
         return await self._async_simple_set("Keyboard Map", value)
 
@@ -6179,7 +6184,9 @@ class Profile(WriteOnlyProfile):
         """
         Returns the keyboard shortcuts.
 
-        The value is a Dictionary mapping keystroke to action.
+        The value is a Dictionary mapping keystroke to action. You can convert
+        between the values in this dictionary and a :class:`~iterm2.KeyBinding`
+        using `iterm2.decode_key_binding`
 
         :returns: A typing.Dict[str, typing.Any]
         """

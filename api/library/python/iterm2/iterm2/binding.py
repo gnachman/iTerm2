@@ -583,6 +583,16 @@ class BindingAction(enum.Enum):
     MOVE_TO_SPLIT_PANE = 62
     SEND_SNIPPET = 63
 
+def decode_key_binding(key: str, obj) -> 'KeyBinding':
+    """Convert a key and serialized binding to a :class:`~KeyBinding` object.
+
+    :param key: Binding key, such as the keys in the key_mappings dictionary from a :class:`~Profile`.
+    :param obj: A serialized key binding, such as the values in the key_mappings dictionary from a :class:`~Profile`.
+
+    :returns: A :class:`~KeyBinding` object.
+    """
+    return KeyBinding._make(key, obj)
+
 class KeyBinding:
     """A keyboard shortcut along with an action to perform and any extra
     info that configures the action.
@@ -650,6 +660,11 @@ class KeyBinding:
         return KeyBinding(character, modifiers, keycode, action, param, entry.get('Version', None), entry.get('Label', None))
 
     @property
+    def encode(self) -> dict:
+        "Encode the key binding so that it can be saved in a profile."
+        return self._value
+
+    @property
     def keycode(self) -> typing.Optional[iterm2.keyboard.Keycode]:
         "None, or the keycode associated with the key."
         return self.__keycode
@@ -674,7 +689,8 @@ class KeyBinding:
         return self.__parsed_param
 
     @property
-    def _key(self):
+    def key(self):
+        """Dictionary key used when setting bindings in a profile."""
         base = hex(self.__character) + "-" + hex(self.__modifiers)
         if self.__keycode is None:
             return base
@@ -705,7 +721,7 @@ async def async_get_global_key_bindings(connection: iterm2.connection.Connection
     result = []
     for k in raw:
         entry = raw[k]
-        binding = KeyBinding._make(k, entry)
+        binding = decode_key_binding(k, entry)
         result.append(binding)
     return result
 
@@ -717,7 +733,7 @@ async def async_set_global_key_bindings(connection: iterm2.connection.Connection
     """
     replacement = {}
     for binding in bindings:
-        replacement[binding._key] = binding._value
+        replacement[binding.key] = binding._value
     proto = await iterm2.rpc.async_set_preference(connection, GLOBAL_KEY_MAP_USER_DEFAULTS_KEY, json.dumps(replacement))
     status = proto.preferences_response.results[0].set_preference_result.status
     if status == iterm2.api_pb2.PreferencesResponse.Result.SetPreferenceResult.Status.Value("OK"):

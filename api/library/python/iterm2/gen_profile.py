@@ -734,7 +734,7 @@ schema = [
     ("key_mappings",
      "typing.Dict[str, typing.Any]",
      "the keyboard shortcuts.",
-     "The value is a Dictionary mapping keystroke to action.",
+     "The value is a Dictionary mapping keystroke to action. You can convert between the values in this dictionary and a :class:`~iterm2.KeyBinding` using `iterm2.decode_key_binding`",
      "Keyboard Map"),
 
     ("touchbar_mappings",

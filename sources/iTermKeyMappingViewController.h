@@ -55,5 +55,6 @@
 - (void)hideAddTouchBarItem;
 - (void)addViewsToSearchIndex:(iTermPreferencesBaseViewController *)vc;
 - (NSNumber *)removeBeforeLoading:(NSString *)thing;
+- (void)reloadData;
 
 @end

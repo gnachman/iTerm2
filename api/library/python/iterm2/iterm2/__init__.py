@@ -9,7 +9,7 @@ from iterm2.app import (
 
 from iterm2.arrangement import SavedArrangementException, Arrangement
 
-from iterm2.binding import PasteConfiguration, MoveSelectionUnit, SnippetIdentifier, BindingAction, KeyBinding, async_get_global_key_bindings, async_set_global_key_bindings
+from iterm2.binding import PasteConfiguration, MoveSelectionUnit, SnippetIdentifier, BindingAction, KeyBinding, async_get_global_key_bindings, async_set_global_key_bindings, decode_key_binding
 
 from iterm2.broadcast import BroadcastDomain, async_set_broadcast_domains
 
