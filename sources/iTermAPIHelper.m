@@ -16,6 +16,7 @@
 #import "iTermController.h"
 #import "iTermDisclosableView.h"
 #import "iTermLSOF.h"
+#import "iTermKeyMappings.h"
 #import "iTermMalloc.h"
 #import "iTermObject.h"
 #import "iTermPreferences.h"
@@ -2055,6 +2056,9 @@ static BOOL iTermAPIHelperLastApplescriptAuthRequiredSetting;
                                                 forKey:assignment.firstObject
                                              inProfile:profile
                                                  model:[ProfileModel sharedInstance]];
+                    if ([assignment.firstObject isEqualToString:KEY_KEYBOARD_MAP]) {
+                        [[NSNotificationCenter defaultCenter] postNotificationName:kKeyBindingsChangedNotification object:nil];
+                    }
                 }
                 return ITMSetProfilePropertyResponse_Status_Ok;
             };
@@ -3497,11 +3501,7 @@ static BOOL iTermCheckSplitTreesIsomorphic(ITMSplitTreeNode *node1, ITMSplitTree
         result.status = ITMPreferencesResponse_Result_SetPreferenceResult_Status_InvalidValue;
         return result;
     }
-    if (!obj) {
-        [[NSUserDefaults standardUserDefaults] removeObjectForKey:key];
-    } else {
-        [[NSUserDefaults standardUserDefaults] setObject:obj forKey:key];
-    }
+    [iTermPreferences setObject:obj forKey:key];
     result.status = ITMPreferencesResponse_Result_SetPreferenceResult_Status_Ok;
 
     return result;

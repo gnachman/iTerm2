@@ -9,7 +9,7 @@ from iterm2.app import (
 
 from iterm2.arrangement import SavedArrangementException, Arrangement
 
-from iterm2.binding import PasteConfiguration, MoveSelectionUnit, SnippetIdentifier, BindingAction, KeyBinding, async_get_global_key_bindings, async_set_global_key_bindings
+from iterm2.binding import PasteConfiguration, MoveSelectionUnit, SnippetIdentifier, BindingAction, KeyBinding, async_get_global_key_bindings, async_set_global_key_bindings, decode_key_binding
 
 from iterm2.broadcast import BroadcastDomain, async_set_broadcast_domains
 
@@ -71,6 +71,8 @@ from iterm2.tmux import (
     async_get_tmux_connection_by_connection_id)
 
 from iterm2.tool import async_register_web_view_tool
+
+from iterm2.triggers import decode_trigger, Trigger, AlertTrigger, AnnotateTrigger, BellTrigger, BounceTrigger, CaptureTrigger, CoprocessTrigger, HighlightLineTrigger, HighlightTrigger, HyperlinkTrigger, InjectTrigger, MarkTrigger, MuteCoprocessTrigger, PasswordTrigger, RPCTrigger, RunCommandTrigger, SendTextTrigger, SetDirectoryTrigger, SetHostnameTrigger, SetTitleTrigger, SetUserVariableTrigger, ShellPromptTrigger, StopTrigger, UserNotificationTrigger
 
 from iterm2.util import (
     frame_str, size_str, Size, Point, Frame, CoordRange, Range,

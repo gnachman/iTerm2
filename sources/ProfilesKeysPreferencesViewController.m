@@ -48,6 +48,7 @@ static NSString *const kDeleteKeyString = @"0x7f-0x0";
     IBOutlet NSButton *_movementKeysScrollOutsideInteractiveApps;
     IBOutlet NSTabView *_tabView;
     iTermHotkeyPreferencesWindowController *_hotkeyPanel;
+    NSInteger _posting;
 }
 
 - (void)dealloc {
@@ -170,8 +171,14 @@ static NSString *const kDeleteKeyString = @"0x7f-0x0";
 
 - (void)reloadProfile {
     [super reloadProfile];
+    [self postKeyBindingsChangedNotification];
+}
+
+- (void)postKeyBindingsChangedNotification {
+    _posting += 1;
     [[NSNotificationCenter defaultCenter] postNotificationName:kKeyBindingsChangedNotification
                                                         object:nil];
+    _posting -= 1;
 }
 
 #pragma mark - CSI u
@@ -225,8 +232,7 @@ static NSString *const kDeleteKeyString = @"0x7f-0x0";
     [[self.delegate profilePreferencesCurrentModel] setBookmark:profile withGuid:profile[KEY_GUID]];
     [[self.delegate profilePreferencesCurrentModel] flush];
     [[NSNotificationCenter defaultCenter] postNotificationName:kReloadAllProfiles object:nil];
-    [[NSNotificationCenter defaultCenter] postNotificationName:kKeyBindingsChangedNotification
-                                                        object:nil];
+    [self postKeyBindingsChangedNotification];
 }
 
 
@@ -326,6 +332,9 @@ static NSString *const kDeleteKeyString = @"0x7f-0x0";
 
 - (void)keyBindingDidChange {
     [self updateDeleteSendsCtrlH];
+    if (!_posting) {
+        [_keyMappingViewController reloadData];
+    }
 }
 
 #pragma mark - Delete sends Ctrl H
@@ -420,8 +429,7 @@ static NSString *const kDeleteKeyString = @"0x7f-0x0";
             [[self.delegate profilePreferencesCurrentModel] setBookmark:dict withGuid:profile[KEY_GUID]];
             [[self.delegate profilePreferencesCurrentModel] flush];
             [[NSNotificationCenter defaultCenter] postNotificationName:kReloadAllProfiles object:nil];
-            [[NSNotificationCenter defaultCenter] postNotificationName:kKeyBindingsChangedNotification
-                                                                object:nil];
+            [self postKeyBindingsChangedNotification];
         }
     }
     return YES;
@@ -459,8 +467,7 @@ static NSString *const kDeleteKeyString = @"0x7f-0x0";
     [[self.delegate profilePreferencesCurrentModel] setBookmark:dict withGuid:profile[KEY_GUID]];
     [[self.delegate profilePreferencesCurrentModel] flush];
     [[NSNotificationCenter defaultCenter] postNotificationName:kReloadAllProfiles object:nil];
-    [[NSNotificationCenter defaultCenter] postNotificationName:kKeyBindingsChangedNotification
-                                                        object:nil];
+    [self postKeyBindingsChangedNotification];
 }
 
 - (void)keyMapping:(iTermKeyMappingViewController *)viewController
@@ -483,8 +490,7 @@ static NSString *const kDeleteKeyString = @"0x7f-0x0";
     [[self.delegate profilePreferencesCurrentModel] setBookmark:dict withGuid:profile[KEY_GUID]];
     [[self.delegate profilePreferencesCurrentModel] flush];
     [[NSNotificationCenter defaultCenter] postNotificationName:kReloadAllProfiles object:nil];
-    [[NSNotificationCenter defaultCenter] postNotificationName:kKeyBindingsChangedNotification
-                                                        object:nil];
+    [self postKeyBindingsChangedNotification];
 }
 
 - (NSArray *)keyMappingPresetNames:(iTermKeyMappingViewController *)viewController {
@@ -515,8 +521,7 @@ static NSString *const kDeleteKeyString = @"0x7f-0x0";
     [[self.delegate profilePreferencesCurrentModel] flush];
 
     [[NSNotificationCenter defaultCenter] postNotificationName:kReloadAllProfiles object:nil];
-    [[NSNotificationCenter defaultCenter] postNotificationName:kKeyBindingsChangedNotification
-                                                        object:nil];
+    [self postKeyBindingsChangedNotification];
 }
 
 #pragma mark - Warnings

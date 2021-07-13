@@ -117,6 +117,9 @@
 }
 
 - (NSString *)keyInBindingDictionary:(NSDictionary<NSString *, NSDictionary *> *)dict {
+    if (![dict isKindOfClass:[NSDictionary class]]) {
+        return nil;
+    }
     id result;
     result = dict[self.serialized];
     if (result) {

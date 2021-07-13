@@ -92,6 +92,27 @@ async def main(connection):
             iterm2.KeyBinding(c(), mods, None, iterm2.BindingAction.DUPLICATE_TAB, "", None, None),
             iterm2.KeyBinding(c(), mods, None, iterm2.BindingAction.MOVE_TO_SPLIT_PANE, "", None, None),
             iterm2.KeyBinding(c(), mods, None, iterm2.BindingAction.SEND_SNIPPET, iterm2.SnippetIdentifier({"guid": "1F835062-BBDE-4ADC-A27C-9A5449E66D80"}), None, None) ]
+    await test_profile(connection, bindings)
+
+async def test_profile(connection, bindings):
+    app = await iterm2.async_get_app(connection)
+    p = await iterm2.Profile.async_get_default(connection)
+    d = {}
+    for binding in bindings:
+        d[binding.key] = binding.encode
+    await p.async_set_key_mappings(d)
+
+    p = await iterm2.Profile.async_get_default(connection)
+
+    assert(len(bindings) == len(p.key_mappings))
+    for k in p.key_mappings:
+        b2 = iterm2.decode_key_binding(k, p.key_mappings[k])
+        b = iterm2.decode_key_binding(k, d[k])
+        print(b)
+        print(b2)
+        assert(b == b2)
+
+async def test_global(connection, bindings):
     await iterm2.async_set_global_key_bindings(connection, bindings)
 
     actual = await iterm2.async_get_global_key_bindings(connection)

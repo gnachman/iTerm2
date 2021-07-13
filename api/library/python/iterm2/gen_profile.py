@@ -645,7 +645,7 @@ schema = [
     ("triggers",
      "typing.List[typing.Dict[str, typing.Any]]",
      "the triggers.",
-     "Value is a trigger definition (currently undocumented)",
+     "Value is an encoded trigger. Use iterm2.decode_trigger to convert from an encoded trigger to an object. Trigger objects can be encoded using the encode property.",
      "Triggers"),
 
     ("smart_selection_rules",
@@ -734,7 +734,7 @@ schema = [
     ("key_mappings",
      "typing.Dict[str, typing.Any]",
      "the keyboard shortcuts.",
-     "The value is a Dictionary mapping keystroke to action.",
+     "The value is a Dictionary mapping keystroke to action. You can convert between the values in this dictionary and a :class:`~iterm2.KeyBinding` using `iterm2.decode_key_binding`",
      "Keyboard Map"),
 
     ("touchbar_mappings",

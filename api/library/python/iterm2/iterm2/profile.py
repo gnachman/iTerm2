@@ -1,3 +1,4 @@
+
 """
 Provides classes for representing, querying, and modifying iTerm2 profiles.
 """
@@ -22,6 +23,9 @@ class BackgroundImageMode(enum.Enum):
     ASPECT_FILL = 2  #: Scale to fill the space, cropping if needed. Does not distort.
     ASPECT_FIT = 3  #: Scale to fit the space, adding letterboxes or pillarboxes if needed. Does not distort.
 
+    def toJSON(self):
+        return json.dumps(self.value)
+
 
 class BadGUIDException(Exception):
     """Raised when a profile does not have a GUID or the GUID is unknown."""
@@ -33,6 +37,9 @@ class CursorType(enum.Enum):
     CURSOR_TYPE_VERTICAL = 1  #: Vertical bar cursor
     CURSOR_TYPE_BOX = 2  #: Box cursor
 
+    def toJSON(self):
+        return json.dumps(self.value)
+
 
 class ThinStrokes(enum.Enum):
     """When thin strokes should be used."""
@@ -42,6 +49,9 @@ class ThinStrokes(enum.Enum):
     THIN_STROKES_SETTING_ALWAYS = 3  #: Always.
     THIN_STROKES_SETTING_RETINA_ONLY = 4  #: When the display is a retina display.
 
+    def toJSON(self):
+        return json.dumps(self.value)
+
 
 class UnicodeNormalization(enum.Enum):
     """How to perform Unicode normalization."""
@@ -50,10 +60,16 @@ class UnicodeNormalization(enum.Enum):
     UNICODE_NORMALIZATION_NFD = 2  #: Normalization form D
     UNICODE_NORMALIZATION_HFSPLUS = 3  #: Apple's HFS+ normalization form
 
+    def toJSON(self):
+        return json.dumps(self.value)
+
 
 class CharacterEncoding(enum.Enum):
     """String encodings."""
     CHARACTER_ENCODING_UTF_8 = 4
+
+    def toJSON(self):
+        return json.dumps(self.value)
 
 
 class OptionKeySends(enum.Enum):
@@ -61,6 +77,9 @@ class OptionKeySends(enum.Enum):
     OPTION_KEY_NORMAL = 0  #: Standard behavior
     OPTION_KEY_META = 1  #: Acts like Meta. Not recommended.
     OPTION_KEY_ESC = 2  #: Adds ESC prefix.
+
+    def toJSON(self):
+        return json.dumps(self.value)
 
 
 class InitialWorkingDirectory(enum.Enum):
@@ -70,6 +89,10 @@ class InitialWorkingDirectory(enum.Enum):
     INITIAL_WORKING_DIRECTORY_RECYCLE = "Recycle"  #: Reuse the "current" directory, or home if there is no current.
     INITIAL_WORKING_DIRECTORY_ADVANCED = "Advanced"  #: Use advanced settings, which specify more granular behavior depending on whether the new session is a new window, tab, or split pane.
 
+    def toJSON(self):
+        return json.dumps(self.value)
+
+
 # pylint: enable=line-too-long
 
 class IconMode(enum.Enum):
@@ -77,6 +100,9 @@ class IconMode(enum.Enum):
     NONE = 0
     AUTOMATIC = 1
     CUSTOM = 2
+
+    def toJSON(self):
+        return json.dumps(self.value)
 
 
 class TitleComponents(enum.Enum):
@@ -92,6 +118,9 @@ class TitleComponents(enum.Enum):
     HOST = (1 << 8)
     COMMAND_LINE = (1 << 9)
     SIZE = (1 << 10)
+
+    def toJSON(self):
+        return json.dumps(self.value)
 
 
 class LocalWriteOnlyProfile:
@@ -125,7 +154,10 @@ class LocalWriteOnlyProfile:
         if key is None:
             self.__values[key] = None
         else:
-            self.__values[key] = json.dumps(value)
+            if hasattr(value, "toJSON"):
+                self.__values[key] = value.toJSON()
+            else:
+                self.__values[key] = json.dumps(value)
 
     def _color_set(self, key, value):
         if value is None:
@@ -1759,7 +1791,9 @@ class LocalWriteOnlyProfile:
         """
         Sets the triggers.
 
-        Value is a trigger definition (currently undocumented)
+        Value is an encoded trigger. Use iterm2.decode_trigger to convert from
+        an encoded trigger to an object. Trigger objects can be encoded using
+        the encode property.
 
         :param value: A typing.List[typing.Dict[str, typing.Any]]
         """
@@ -1888,7 +1922,9 @@ class LocalWriteOnlyProfile:
         """
         Sets the keyboard shortcuts.
 
-        The value is a Dictionary mapping keystroke to action.
+        The value is a Dictionary mapping keystroke to action. You can convert
+        between the values in this dictionary and a :class:`~iterm2.KeyBinding`
+        using `iterm2.decode_key_binding`
 
         :param value: A typing.Dict[str, typing.Any]
         """
@@ -3773,7 +3809,9 @@ class WriteOnlyProfile:
         """
         Sets the triggers.
 
-        Value is a trigger definition (currently undocumented)
+        Value is an encoded trigger. Use iterm2.decode_trigger to convert from
+        an encoded trigger to an object. Trigger objects can be encoded using
+        the encode property.
         """
         return await self._async_simple_set("Triggers", value)
 
@@ -3884,7 +3922,9 @@ class WriteOnlyProfile:
         """
         Sets the keyboard shortcuts.
 
-        The value is a Dictionary mapping keystroke to action.
+        The value is a Dictionary mapping keystroke to action. You can convert
+        between the values in this dictionary and a :class:`~iterm2.KeyBinding`
+        using `iterm2.decode_key_binding`
         """
         return await self._async_simple_set("Keyboard Map", value)
 
@@ -6000,7 +6040,9 @@ class Profile(WriteOnlyProfile):
         """
         Returns the triggers.
 
-        Value is a trigger definition (currently undocumented)
+        Value is an encoded trigger. Use iterm2.decode_trigger to convert from
+        an encoded trigger to an object. Trigger objects can be encoded using
+        the encode property.
 
         :returns: A typing.List[typing.Dict[str, typing.Any]]
         """
@@ -6142,7 +6184,9 @@ class Profile(WriteOnlyProfile):
         """
         Returns the keyboard shortcuts.
 
-        The value is a Dictionary mapping keystroke to action.
+        The value is a Dictionary mapping keystroke to action. You can convert
+        between the values in this dictionary and a :class:`~iterm2.KeyBinding`
+        using `iterm2.decode_key_binding`
 
         :returns: A typing.Dict[str, typing.Any]
         """

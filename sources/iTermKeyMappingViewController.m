@@ -150,6 +150,10 @@ static NSString *const INTERCHANGE_TOUCH_BAR_ITEMS = @"Touch Bar Items";
                          key:_touchBarMitigationsButton.accessibilityIdentifier];
 }
 
+- (void)reloadData {
+    [_tableView reloadData];
+}
+
 #pragma mark - NSTableViewDataSource
 
 - (NSInteger)numberOfRowsInTableView:(NSTableView *)aTableView {
