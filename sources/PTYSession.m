@@ -4848,7 +4848,14 @@ ITERM_WEAKLY_REFERENCEABLE
     [_logging stop];
 }
 
-- (void)clearBuffer {
+- (void)restoreTemporarilySavedContent {
+    [_screen restoreTemporarilySavedContentWithTriggers:_triggers];
+}
+
+- (void)clearBufferRestorably:(BOOL)restorably {
+    if (restorably) {
+        [_screen saveContentTemporarily];
+    }
     [_screen clearBuffer];
     if (self.isTmuxClient) {
         [_tmuxController clearHistoryForWindowPane:self.tmuxPane];

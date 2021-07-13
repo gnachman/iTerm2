@@ -97,6 +97,9 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 // Preserves the prompt, but erases screen and scrollback buffer.
 - (void)clearBuffer;
 
+// Save all content for a fixed period of time.
+- (void)saveContentTemporarily;
+
 // Clears the scrollback buffer, leaving screen contents alone.
 - (void)clearScrollbackBuffer;
 
@@ -217,8 +220,11 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 - (void)restoreFromDictionary:(NSDictionary *)dictionary
      includeRestorationBanner:(BOOL)includeRestorationBanner
                 knownTriggers:(NSArray *)triggers
-                   reattached:(BOOL)reattached;
+                   reattached:(BOOL)reattached
+                    appending:(BOOL)appending;
 - (void)restoreInitialSize;
+
+- (void)restoreTemporarilySavedContentWithTriggers:(NSArray *)triggers;
 
 // Zero-based (as VT100GridCoord always is), unlike -cursorX and -cursorY.
 - (void)setCursorPosition:(VT100GridCoord)coord;

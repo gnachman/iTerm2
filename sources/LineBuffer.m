@@ -313,6 +313,14 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     NSLog(@"%@", [self compactLineDumpWithWidth:width andContinuationMarks:NO]);
 }
 
+- (void)appendContentsOfLineBuffer:(LineBuffer *)other {
+    [_lineBlocks.lastBlock setPartial:NO];
+    for (NSInteger i = 0; i < other->_lineBlocks.count; i++) {
+        [_lineBlocks addBlock:other->_lineBlocks[i]];
+    }
+    num_wrapped_lines_width = -1;
+}
+
 - (void)appendLine:(screen_char_t*)buffer
             length:(int)length
            partial:(BOOL)partial

@@ -9825,7 +9825,11 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 
 // Clear the buffer of the current session (Edit>Clear Buffer).
 - (void)clearBuffer:(id)sender {
-    [[self currentSession] clearBuffer];
+    [[self currentSession] clearBufferRestorably:YES];
+}
+
+- (IBAction)undoClearBuffer:(id)sender {
+    [[self currentSession] restoreTemporarilySavedContent];
 }
 
 // Erase the scrollback buffer of the current session.

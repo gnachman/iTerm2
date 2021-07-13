@@ -734,7 +734,9 @@ backgroundColor:(NSColor *)backgroundColor;
 - (void)popIconTitle;
 
 
-- (void)clearBuffer;
+- (void)clearBufferRestorably:(BOOL)restorably;
+- (void)restoreTemporarilySavedContent;
+
 - (void)clearScrollbackBuffer;
 - (void)logStart;
 - (void)logStop;

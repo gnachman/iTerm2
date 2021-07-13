@@ -208,4 +208,6 @@
 
 - (void)setPartial:(BOOL)partial;
 
+- (void)appendContentsOfLineBuffer:(LineBuffer *)other;
+
 @end

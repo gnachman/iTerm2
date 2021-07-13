@@ -58,7 +58,7 @@
 }
 
 - (void)handleClearScriptCommand:(NSScriptCommand *)command {
-    [self clearBuffer];
+    [self clearBufferRestorably:NO];
 }
 
 - (void)handleWriteScriptCommand:(NSScriptCommand *)command {

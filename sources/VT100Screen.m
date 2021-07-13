@@ -24,6 +24,7 @@
 #import "NSData+iTerm.h"
 #import "NSDictionary+iTerm.h"
 #import "NSObject+iTerm.h"
+#import "NSTimer+iTerm.h"
 #import "NSImage+iTerm.h"
 #import "PTYNoteViewController.h"
 #import "PTYTextView.h"
@@ -170,6 +171,8 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 
     iTermOrderEnforcer *_setWorkingDirectoryOrderEnforcer;
     iTermOrderEnforcer *_currentDirectoryDidChangeOrderEnforcer;
+
+    NSDictionary *_temporarilySavedContent;
 }
 
 @synthesize terminal = terminal_;
@@ -249,6 +252,7 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     [_copyString release];
     [_setWorkingDirectoryOrderEnforcer release];
     [_currentDirectoryDidChangeOrderEnforcer release];
+    [_temporarilySavedContent release];
 
     [super dealloc];
 }
@@ -1101,6 +1105,43 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 - (void)showCursor:(BOOL)show
 {
     [delegate_ screenSetCursorVisible:show];
+}
+
+- (NSDictionary *)contentsDictionary {
+    NSMutableDictionary *storage = [NSMutableDictionary dictionary];
+    iTermMutableDictionaryEncoderAdapter *adapter = [[[iTermMutableDictionaryEncoderAdapter alloc] initWithMutableDictionary:storage] autorelease];
+    int ignore;
+    [self encodeContents:adapter linesDropped:&ignore];
+    return storage;
+}
+
+- (void)saveContentTemporarily {
+    [_temporarilySavedContent release];
+    _temporarilySavedContent = [[self contentsDictionary] retain];
+    [NSTimer scheduledWeakTimerWithTimeInterval:5 target:self selector:@selector(eraseTemporarilySavedContents) userInfo:nil repeats:NO];
+}
+
+- (void)eraseTemporarilySavedContents {
+    [_temporarilySavedContent release];
+    _temporarilySavedContent = nil;
+}
+
+- (void)restoreTemporarilySavedContentWithTriggers:(NSArray<Trigger *> *)triggers {
+    [self clearBuffer];
+#warning DNS: Must restore dropped lines/chars count in line buffer.
+    NSDictionary *temp = [self contentsDictionary];
+    [self restoreFromDictionary:_temporarilySavedContent
+       includeRestorationBanner:NO
+                  knownTriggers:triggers
+                     reattached:YES
+                      appending:NO];
+    [self appendScreen:self.currentGrid toScrollback:linebuffer_ withUsedHeight:self.height newHeight:self.height];
+    [self eraseTemporarilySavedContents];
+    [self restoreFromDictionary:temp
+       includeRestorationBanner:NO
+                  knownTriggers:triggers
+                     reattached:YES
+                      appending:YES];
 }
 
 - (void)clearBuffer {
@@ -5940,7 +5981,8 @@ static void SwapInt(int *a, int *b) {
 - (void)restoreFromDictionary:(NSDictionary *)dictionary
      includeRestorationBanner:(BOOL)includeRestorationBanner
                 knownTriggers:(NSArray *)triggers
-                   reattached:(BOOL)reattached {
+                   reattached:(BOOL)reattached
+                    appending:(BOOL)appending {
     if (!altGrid_) {
         altGrid_ = [primaryGrid_ copy];
     }
@@ -6034,8 +6076,13 @@ static void SwapInt(int *a, int *b) {
         if (!unlimitedScrollback_) {
             [lineBuffer dropExcessLinesWithWidth:self.width];
         }
-        [linebuffer_ release];
-        linebuffer_ = lineBuffer;
+        if (appending) {
+            [linebuffer_ appendContentsOfLineBuffer:lineBuffer];
+            [lineBuffer release];
+        } else {
+            [linebuffer_ release];
+            linebuffer_ = lineBuffer;
+        }
     }
     BOOL addedBanner = NO;
     if (includeRestorationBanner && [iTermAdvancedSettingsModel showSessionRestoredBanner]) {
@@ -6093,6 +6140,7 @@ static void SwapInt(int *a, int *b) {
             [self setSize:savedSize];
         }
         [intervalTree_ release];
+#warning DNS: I'm pretty sure the intervals will be wrong when appending.
         intervalTree_ = [[IntervalTree alloc] initWithDictionary:screenState[kScreenStateIntervalTreeKey]];
         [self fixUpDeserializedIntervalTree:intervalTree_
                               knownTriggers:triggers
