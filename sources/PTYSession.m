@@ -861,6 +861,11 @@ static const NSUInteger kMaxHosts = 100;
                                                  selector:@selector(tmuxWillKillWindow:)
                                                      name:iTermTmuxControllerWillKillWindow
                                                    object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(applicationDidResignActive:)
+                                                     name:NSApplicationDidResignActiveNotification
+                                                   object:nil];
+
         [[iTermFindPasteboard sharedInstance] addObserver:self block:^(id sender, NSString * _Nonnull newValue) {
             if (!weakSelf.view.window.isKeyWindow) {
                 return;
@@ -5474,6 +5479,20 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void)applicationWillTerminate:(NSNotification *)notification {
     // See comment where we observe this notification for why this is done.
     [self tmuxDetach];
+}
+
+- (void)applicationDidResignActive:(NSNotification *)notification {
+    DLog(@"%@", self);
+    // Avoid posting a notification after switching to another app for output received just
+    // before the switch. This is tricky! self.newOutput can't be reset unconditionally because
+    // doing so breaks idle notifications when new output eventually stops being received.
+    // If you have new output and you haven't already posted a new-output notification then
+    // you can be confident that an idle notification is not forthcoming and then you can
+    // safely reset newOutput.
+    if (self.newOutput && [self.delegate sessionIsInSelectedTab:self] && !self.havePostedNewOutputNotification) {
+        DLog(@"self.newOutput = NO");
+        self.newOutput = NO;
+    }
 }
 
 - (void)savedArrangementWasRepaired:(NSNotification *)notification {
