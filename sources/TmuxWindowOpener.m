@@ -463,7 +463,9 @@ static int OctalValue(const char *bytes) {
             }
         }
         if (!term) {
-            term = [[iTermController sharedInstance] openTmuxIntegrationWindowUsingProfile:self.profile];
+            DLog(@"Creating a new term with guid %@", self.windowGUID);
+            term = [[iTermController sharedInstance] openTmuxIntegrationWindowUsingProfile:self.profile
+                                                                          perWindowSetting:self.perWindowSettings[self.windowGUID]];
             if (self.newWindowBlock) {
                 self.newWindowBlock(term.terminalGuid);
             }

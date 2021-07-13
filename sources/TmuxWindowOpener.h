@@ -55,6 +55,8 @@ extern NSString *const kTmuxWindowOpenerWindowOptionStyleValueFullScreen;
 @property (nonatomic, readonly) NSArray<NSNumber *> *unpausingWindowPanes;
 @property (nonatomic, strong) NSNumber *tabIndex;  // open tab at this index, or nil to put at the end
 @property (nonatomic, copy) void (^newWindowBlock)(NSString *terminalGUID);  // called after creating a new window.
+@property (nonatomic, copy) NSString *windowGUID;  // the expected window GUID, or nil if unknown.
+@property (nonatomic, copy) NSDictionary<NSString *, NSString *> *perWindowSettings;
 
 + (TmuxWindowOpener *)windowOpener;
 - (BOOL)openWindows:(BOOL)initial;

@@ -56,6 +56,7 @@ static NSString *const iTermTmuxControllerEncodingPrefixBuriedIndexes = @"b_";
 static NSString *const iTermTmuxControllerEncodingPrefixOrigins = @"o_";
 static NSString *const iTermTmuxControllerEncodingPrefixHidden = @"i_";
 static NSString *const iTermTmuxControllerEncodingPrefixUserVars = @"u_";
+static NSString *const iTermTmuxControllerEncodingPrefixPerWindowSettings = @"w_";
 
 static NSString *const iTermTmuxControllerSplitStateCompletion = @"completion";
 static NSString *const iTermTmuxControllerSplitStateInitialPanes = @"initial panes";
@@ -143,6 +144,8 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     // terminal guid -> [(tmux window id, tab index), ...]
     NSMutableDictionary<NSString *, NSMutableArray<iTermTuple<NSNumber *, NSNumber *> *> *> *_buriedWindows;
     NSString *_lastSaveBuriedIndexesCommand;
+    NSString *_lastSavePerWindowSettingsCommand;
+    NSDictionary<NSString *, NSString *> *_perWindowSettings;
 }
 
 @synthesize gateway = gateway_;
@@ -233,6 +236,8 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     [_windowSizes release];
     [_buriedWindows release];
     [_lastSaveBuriedIndexesCommand release];
+    [_lastSavePerWindowSettingsCommand release];
+    [_perWindowSettings release];
 
     [super dealloc];
 }
@@ -322,6 +327,9 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     windowOpener.completion = _pendingWindows[@(windowIndex)];
     windowOpener.minimumServerVersion = self.gateway.minimumServerVersion;
     windowOpener.tabIndex = tabIndex;
+    windowOpener.windowGUID = [self windowGUIDInAffinities:affinities];
+    windowOpener.perWindowSettings = _perWindowSettings;
+    DLog(@"windowGUID=%@ perWindowSettings=%@", windowOpener.windowGUID, windowOpener.perWindowSettings);
     if (originalTerminalGUID) {
         __weak __typeof(self) weakSelf = self;
         windowOpener.newWindowBlock = ^(NSString *terminalGUID) {
@@ -333,6 +341,12 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     if (![windowOpener openWindows:YES]) {
         [pendingWindowOpens_ removeObject:n];
     }
+}
+
+- (NSString *)windowGUIDInAffinities:(NSSet<NSString *> *)affinities {
+    return [affinities.allObjects objectPassingTest:^BOOL(NSString *string, NSUInteger index, BOOL *stop) {
+        return [string hasPrefix:@"pty-"];
+    }];
 }
 
 // When we attach we get affinities with terminal GUIDs that may no longer exist. The GUIDs get
@@ -591,6 +605,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     NSString *listWindowsCommand = [NSString stringWithFormat:@"list-windows -F %@", kListWindowsFormat];
     NSString *listSessionsCommand = @"list-sessions -F \"#{session_id} #{session_name}\"";
     NSString *getAffinitiesCommand = [NSString stringWithFormat:@"show -v -q -t $%d @affinities", sessionId_];
+    NSString *getPerWindowSettingsCommand = [NSString stringWithFormat:@"show -v -q -t $%d @per_window_settings", sessionId_];
     NSString *getBuriedIndexesCommand = [NSString stringWithFormat:@"show -v -q -t $%d @buried_indexes", sessionId_];
     NSString *getOriginsCommand = [NSString stringWithFormat:@"show -v -q -t $%d @origins", sessionId_];
     NSString *getHotkeysCommand = [NSString stringWithFormat:@"show -v -q -t $%d @hotkeys", sessionId_];
@@ -619,6 +634,11 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
                            [gateway_ dictionaryForCommand:getAffinitiesCommand
                                            responseTarget:self
                                          responseSelector:@selector(getAffinitiesResponse:)
+                                           responseObject:nil
+                                                    flags:kTmuxGatewayCommandShouldTolerateErrors],
+                           [gateway_ dictionaryForCommand:getPerWindowSettingsCommand
+                                           responseTarget:self
+                                         responseSelector:@selector(getPerWindowSettingsResponse:)
                                            responseObject:nil
                                                     flags:kTmuxGatewayCommandShouldTolerateErrors],
                            [gateway_ dictionaryForCommand:getOriginsCommand
@@ -2141,6 +2161,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     if (pendingWindowOpens_.count) {
         return;
     }
+    [self savePerWindowSettings];
     iTermController *cont = [iTermController sharedInstance];
     NSArray *terminals = [cont terminals];
     NSMutableArray *affinities = [NSMutableArray array];
@@ -2201,6 +2222,33 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     [_lastSaveBuriedIndexesCommand release];
     _lastSaveBuriedIndexesCommand = [command retain];
     [gateway_ sendCommand:command responseTarget:nil responseSelector:nil];
+}
+
+- (void)savePerWindowSettings {
+    NSMutableArray<NSString *> *settings = [NSMutableArray array];
+    iTermController *cont = [iTermController sharedInstance];
+    NSArray *terminals = [cont terminals];
+    for (PseudoTerminal *term in terminals) {
+        NSString *setting = [term tmuxPerWindowSetting];
+        if (setting) {
+            [settings addObject:[NSString stringWithFormat:@"%@:%@", term.terminalGuid, setting]];
+        }
+    }
+    NSString *arg = [settings componentsJoinedByString:@";"];
+    DLog(@"Save per-window settings: %@", arg);
+    NSString *command = [NSString stringWithFormat:@"set -t $%d @per_window_settings \"%@\"",
+                         sessionId_,
+                         [self encodedString:arg prefix:iTermTmuxControllerEncodingPrefixPerWindowSettings]];
+    if ([command isEqualToString:_lastSavePerWindowSettingsCommand]) {
+        return;
+    }
+    [_lastSavePerWindowSettingsCommand release];
+    _lastSavePerWindowSettingsCommand = [command retain];
+    [gateway_ sendCommand:command responseTarget:nil responseSelector:nil];
+}
+
+- (void)getPerWindowSettingsResponse:(NSString *)result {
+    [self setPerWindowSettingsFromString:[self decodedString:result optionalPrefix:iTermTmuxControllerEncodingPrefixPerWindowSettings]];
 }
 
 - (PseudoTerminal *)terminalWithGuid:(NSString *)guid
@@ -2543,6 +2591,28 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
         }
     }
     return flags;
+}
+
+- (void)setPerWindowSettingsFromString:(NSString *)result {
+    DLog(@"Set per-window settings from string: %@", result);
+
+    [_perWindowSettings release];
+    _perWindowSettings = nil;
+    NSMutableDictionary<NSString *, NSString *> *settings = [NSMutableDictionary dictionary];
+    NSArray<NSString *> *parts = [result componentsSeparatedByString:@";"];
+    for (NSString *part in parts) {
+        iTermTuple<NSString *, NSString *> *kvp = [part it_stringBySplittingOnFirstSubstring:@":"];
+        if (!kvp) {
+            DLog(@"Bad part %@", part);
+            continue;
+        }
+        settings[kvp.firstObject] = kvp.secondObject;
+    }
+    _perWindowSettings = [settings copy];
+}
+
+- (NSString *)perWindowSettingsForWindowWithGUID:(NSString *)terminalGUID {
+    return _perWindowSettings[terminalGUID];
 }
 
 - (void)setAffinitiesFromString:(NSString *)result {

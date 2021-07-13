@@ -327,6 +327,9 @@ extern NSString *const iTermDidCreateTerminalWindowNotification;
 
 - (IBAction)newTmuxWindow:(id)sender;
 - (IBAction)newTmuxTab:(id)sender;
+- (NSString *)tmuxPerWindowSetting;
+- (void)setTmuxPerWindowSetting:(NSString *)setting;
+
 // Turn full-screen mode on or off. Creates a new PseudoTerminal and moves this
 // one's state into it.
 - (IBAction)closeCurrentTab:(id)sender;

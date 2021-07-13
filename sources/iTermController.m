@@ -1026,7 +1026,8 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
     return aDict;
 }
 
-- (PseudoTerminal *)openTmuxIntegrationWindowUsingProfile:(Profile *)profile {
+- (PseudoTerminal *)openTmuxIntegrationWindowUsingProfile:(Profile *)profile
+                                         perWindowSetting:(NSString *)perWindowSetting {
     [iTermController switchToSpaceInBookmark:profile];
     iTermWindowType windowType;
     if ([iTermAdvancedSettingsModel serializeOpeningMultipleFullScreenWindows]) {
@@ -1054,6 +1055,7 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
     }
 
     [self addTerminalWindow:term];
+    [term setTmuxPerWindowSetting:perWindowSetting];
     return term;
 }
 

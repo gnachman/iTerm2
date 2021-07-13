@@ -119,7 +119,8 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
 
 // Does not enter fullscreen automatically; that is left to the caller, since tmux has special
 // logic around this. Call -didFinishCreatingTmuxWindow: after it is doing being set up.
-- (PseudoTerminal *)openTmuxIntegrationWindowUsingProfile:(Profile *)profile;
+- (PseudoTerminal *)openTmuxIntegrationWindowUsingProfile:(Profile *)profile
+                                         perWindowSetting:(NSString *)perWindowSetting;
 
 // This is called when the window created by -openTmuxIntegrationWindowUsingProfile is done being initialized.
 - (void)didFinishCreatingTmuxWindow:(PseudoTerminal *)windowController;

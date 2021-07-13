@@ -79,6 +79,7 @@ extern NSString *const kTmuxControllerDidChangeHiddenWindows;
 - (instancetype)init NS_UNAVAILABLE;
 
 - (Profile *)profileForWindow:(int)window;
+- (NSString *)perWindowSettingsForWindowWithGUID:(NSString *)terminalGUID;
 - (NSDictionary *)fontOverridesForWindow:(int)window;
 
 - (void)openWindowsInitial;
@@ -214,6 +215,7 @@ extern NSString *const kTmuxControllerDidChangeHiddenWindows;
 - (void)saveAffinities;
 - (void)saveWindowOrigins;
 - (void)saveHiddenWindows;
+- (void)savePerWindowSettings;
 
 - (void)swapPane:(int)pane1 withPane:(int)pane2;
 - (void)toggleZoomForPane:(int)pane;

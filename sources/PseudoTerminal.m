@@ -1194,6 +1194,10 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (IBAction)toggleToolbeltVisibility:(id)sender {
+    [self toggleToolbeltVisibilityWithSideEffects:YES];
+}
+
+- (void)toggleToolbeltVisibilityWithSideEffects:(BOOL)sideEffects {
     _contentView.shouldShowToolbelt = !_contentView.shouldShowToolbelt;
     BOOL didResizeWindow = NO;
     if (_contentView.shouldShowToolbelt) {
@@ -1214,6 +1218,11 @@ ITERM_WEAKLY_REFERENCEABLE
     if (!didResizeWindow) {
         [self repositionWidgets];
         [self notifyTmuxOfWindowResize];
+    }
+    if (sideEffects) {
+        [[self uniqueTmuxControllers] enumerateObjectsUsingBlock:^(TmuxController *controller, NSUInteger idx, BOOL * _Nonnull stop) {
+            [controller savePerWindowSettings];
+        }];
     }
 }
 
@@ -4511,6 +4520,33 @@ ITERM_WEAKLY_REFERENCEABLE
         [self beginTmuxOriginatedResize];
         [self fitWindowToTabs];
         [self endTmuxOriginatedResize];
+    }
+}
+
+- (NSString *)tmuxPerWindowSetting {
+    if (_contentView.shouldShowToolbelt == [iTermProfilePreferences boolForKey:KEY_OPEN_TOOLBELT inProfile:self.currentSession.profile]) {
+        return nil;
+    }
+    // key=value&key=value&...
+    // Semicolon is reserved. Don't use it.
+    return [NSString stringWithFormat:@"toolbelt=%@", @(_contentView.shouldShowToolbelt)];
+}
+
+- (void)setTmuxPerWindowSetting:(NSString *)setting {
+    DLog(@"SET per-window settings %@ for %@", setting, self.terminalGuid);
+    NSArray<NSString *> *parts = [setting componentsSeparatedByString:@"&"];
+    for (NSString *part in parts) {
+        iTermTuple<NSString *, NSString *> *kvp = [part it_stringBySplittingOnFirstSubstring:@"="];
+        if (!kvp) {
+            continue;
+        }
+        if ([kvp.firstObject isEqualToString:@"toolbelt"]) {
+            const BOOL shouldShow = [kvp.secondObject boolValue];
+            if (shouldShow != [self shouldShowToolbelt]) {
+                DLog(@"TOGGLE toolbelt");
+                [self toggleToolbeltVisibilityWithSideEffects:NO];
+            }
+        }
     }
 }
 
