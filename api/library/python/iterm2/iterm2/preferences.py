@@ -119,3 +119,18 @@ async def async_get_preference(
     proto = await iterm2.rpc.async_get_preference(connection, key.value)
     j = proto.preferences_response.results[0].get_preference_result.json_value
     return json.loads(j)
+
+async def async_set_preference(
+		connection, key: PreferenceKey, value: typing.Union[None, typing.Any]) -> None:
+	"""
+	Set a preference by key.
+
+	:param key: The preference key, from the `PreferenceKey` enum.
+	:param value: An object with the preference value, or `None` to unset.
+	"""
+    proto = await iterm2.rpc.async_set_preference(connection, key, json.dumps(value))
+    status = proto.preferences_response.results[0].set_preference_result.status
+    if status == iterm2.api_pb2.PreferencesResponse.Result.SetPreferenceResult.Status.Value("OK"):
+        return
+    raise iterm2.rpc.RPCException(
+        iterm2.api_pb2.PreferencesResponse.Result.SetPreferenceResult.Status.Name(status))
