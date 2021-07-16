@@ -37,7 +37,7 @@ from iterm2.keyboard import (
     Modifier, Keycode, Keystroke, KeystrokePattern, KeystrokeMonitor,
     KeystrokeFilter)
 
-from iterm2.preferences import PreferenceKey, async_get_preference
+from iterm2.preferences import PreferenceKey, async_get_preference, async_set_preference
 
 from iterm2.profile import (
     Profile, PartialProfile, BadGUIDException, LocalWriteOnlyProfile,
