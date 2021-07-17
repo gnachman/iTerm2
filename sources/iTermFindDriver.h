@@ -75,6 +75,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult;
 // return YES for isVisible.
 @property (nonatomic, readonly) BOOL isVisible;
 @property (nonatomic, copy) NSString *findString;
+- (void)setFindStringUnconditionally:(NSString *)findString;
 @property (nonatomic) BOOL needsUpdateOnFocus;
 
 - (instancetype)initWithViewController:(NSViewController<iTermFindViewController> *)viewController NS_DESIGNATED_INITIALIZER;

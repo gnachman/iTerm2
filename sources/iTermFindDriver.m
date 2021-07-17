@@ -116,8 +116,17 @@ static NSString *gSearchString;
 }
 
 - (void)setFindString:(NSString *)setFindString {
+    [self setFindString:setFindString unconditionally:NO];
+}
+
+- (void)setFindStringUnconditionally:(NSString *)setFindString {
+    [self setFindString:setFindString unconditionally:YES];
+}
+
+- (void)setFindString:(NSString *)setFindString unconditionally:(BOOL)unconditionally {
     _viewController.findString = setFindString;
-    [self loadFindStringIntoSharedPasteboard:setFindString];
+    [self loadFindStringIntoSharedPasteboard:setFindString
+                              userOriginated:unconditionally];
 }
 
 - (NSString *)findString {
@@ -185,7 +194,8 @@ static NSString *gSearchString;
 - (void)userDidEditSearchQuery:(NSString *)updatedQuery
                    fieldEditor:(NSTextView *)fieldEditor {
     if (!_savedState) {
-        [self loadFindStringIntoSharedPasteboard:_viewController.findString];
+        [self loadFindStringIntoSharedPasteboard:_viewController.findString
+                                  userOriginated:YES];
     }
 
     // A query becomes stale when it is 1 or 2 chars long and it hasn't been edited in 3 seconds (or
@@ -355,14 +365,20 @@ static NSString *gSearchString;
     [self.delegate findViewControllerDidCeaseToBeMandatory:self.viewController];
 }
 
-- (void)loadFindStringIntoSharedPasteboard:(NSString *)stringValue {
+- (BOOL)loadFindStringIntoSharedPasteboard:(NSString *)stringValue
+                            userOriginated:(BOOL)userOriginated {
     DLog(@"begin %@", self);
     if (_savedState) {
         DLog(@"Have no saved state, doing nothing");
-        return;
+        return YES;
     }
     // Copy into the NSPasteboardNameFind
-    [[iTermFindPasteboard sharedInstance] setStringValue:stringValue];
+    if (userOriginated) {
+        [[iTermFindPasteboard sharedInstance] setStringValueUnconditionally:stringValue];
+        return YES;
+    } else {
+        return [[iTermFindPasteboard sharedInstance] setStringValueIfAllowed:stringValue];
+    }
 }
 
 - (void)backTab {
@@ -371,7 +387,8 @@ static NSString *gSearchString;
         if (text) {
             [_delegate copySelection];
             _viewController.findString = text;
-            [self loadFindStringIntoSharedPasteboard:_viewController.findString];
+            [self loadFindStringIntoSharedPasteboard:_viewController.findString
+                                      userOriginated:YES];
             [_viewController deselectFindBarTextField];
         }
     }
@@ -383,7 +400,7 @@ static NSString *gSearchString;
     if (text) {
         [_delegate copySelection];
         _viewController.findString = text;
-        [self loadFindStringIntoSharedPasteboard:text];
+        [self loadFindStringIntoSharedPasteboard:text userOriginated:YES];
         [_viewController deselectFindBarTextField];
     }
 }
@@ -547,7 +564,7 @@ static NSString *gSearchString;
     NSString *theString = _savedState ? _state.string : _viewController.findString;
     if (!_savedState) {
         DLog(@"Have no saved state. Load find string into shared pasteboard: %@", _viewController.findString);
-        [self loadFindStringIntoSharedPasteboard:_viewController.findString];
+        [self loadFindStringIntoSharedPasteboard:_viewController.findString userOriginated:YES];
     }
     // Search.
     [self setSearchDefaults];

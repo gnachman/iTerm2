@@ -5851,12 +5851,12 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)useStringForFind:(NSString *)string {
-    _view.findDriver.findString = string;
+    [_view.findDriver setFindString:string];
 }
 
 - (void)findWithSelection {
     if ([_textview selectedText]) {
-        _view.findDriver.findString = _textview.selectedText;
+        [_view.findDriver setFindStringUnconditionally:_textview.selectedText];
     }
 }
 

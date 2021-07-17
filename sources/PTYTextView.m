@@ -3907,7 +3907,7 @@ useCompatibilityEscaping:compatibilityEscaping
         case NSFindPanelActionSetFindString: {
             NSString *selection = [self selectedText];
             if (selection) {
-                [[iTermFindPasteboard sharedInstance] setStringValue:selection];
+                [[iTermFindPasteboard sharedInstance] setStringValueUnconditionally:selection];
                 [[iTermFindPasteboard sharedInstance] updateObservers:_delegate];
             }
             break;

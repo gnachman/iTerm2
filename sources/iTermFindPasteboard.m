@@ -37,17 +37,31 @@
     return self;
 }
 
-- (void)setStringValue:(NSString *)stringValue {
+- (BOOL)setStringValueIfAllowed:(NSString *)stringValue {
     DLog(@"Set string value to %@\n%@", stringValue, [NSThread callStackSymbols]);
+
+    const NSInteger maxLength = 10 * 1024;
+    if (stringValue.length > maxLength) {
+        DLog(@"Refusing to set find pasteboard to a string longer than %@", @(maxLength));
+        return NO;
+    }
     _localValue = [stringValue copy];
     if (![iTermAdvancedSettingsModel synchronizeQueryWithFindPasteboard]) {
-        return;
+        return NO;
     }
+    [self reallySetStringValueUnconditionally:stringValue];
+    return YES;
+}
+
+- (void)setStringValueUnconditionally:(NSString *)stringValue {
+    _localValue = [stringValue copy];
+    [self reallySetStringValueUnconditionally:stringValue];
+}
+
+- (void)reallySetStringValueUnconditionally:(NSString *)stringValue {
     NSPasteboard *pasteboard = [NSPasteboard pasteboardWithName:NSPasteboardNameFind];
-    if (pasteboard) {
-        [pasteboard declareTypes:[NSArray arrayWithObject:NSPasteboardTypeString] owner:nil];
-        [pasteboard setString:stringValue ?: @"" forType:NSPasteboardTypeString];
-    }
+    [pasteboard declareTypes:[NSArray arrayWithObject:NSPasteboardTypeString] owner:nil];
+    [pasteboard setString:stringValue ?: @"" forType:NSPasteboardTypeString];
 }
 
 - (NSString *)stringValue {

@@ -62,7 +62,7 @@
 - (void)eraseHistory {
     iTermUserDefaults.searchHistory = @[];
     [_queries removeAllObjects];
-    [[iTermFindPasteboard sharedInstance] setStringValue:nil];
+    [[iTermFindPasteboard sharedInstance] setStringValueUnconditionally:nil];
     [[iTermFindPasteboard sharedInstance] updateObservers:nil];
 }
 

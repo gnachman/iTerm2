@@ -11,7 +11,9 @@
 
 - (void)setVisible:(BOOL)visible;
 - (void)ceaseToBeMandatory;
-- (void)loadFindStringIntoSharedPasteboard:(NSString *)stringValue;
+// Returns NO if the value was rejected because it was too long.
+- (BOOL)loadFindStringIntoSharedPasteboard:(NSString *)stringValue
+                            userOriginated:(BOOL)userOriginated;
 - (void)userDidEditSearchQuery:(NSString *)updatedQuery
                    fieldEditor:(NSTextView *)fieldEditor;
 - (void)backTab;
