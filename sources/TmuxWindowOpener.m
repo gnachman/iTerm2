@@ -480,11 +480,13 @@ static int OctalValue(const char *bytes) {
     [self decorateParseTree:parseTree];
     DLog(@"Decorated parse tree: %@", parseTree);
     NSValue *windowPos = nil;
+    NSString *widStr = [@(windowIndex_) stringValue];
     if (tabToUpdate_) {
         DLog(@"Updating existing tab");
         [tabToUpdate_ setTmuxLayout:parseTree
                      tmuxController:controller_
                              zoomed:@NO];
+        [tabToUpdate_ setPerTabSettings:_perTabSettings[widStr]];
         if ([tabToUpdate_ updatedTmuxLayoutRequiresAdjustment]) {
             DLog(@"layout requires adjustment! fit the layout to windows");
             [controller_ fitLayoutToWindows];
@@ -528,6 +530,7 @@ static int OctalValue(const char *bytes) {
         } else {
             DLog(@"Not calling loadTmuxLayout");
         }
+        [[self.controller window:windowIndex_] setPerTabSettings:_perTabSettings[widStr]];
     }
     if (self.target) {
         [self.target performSelector:self.selector

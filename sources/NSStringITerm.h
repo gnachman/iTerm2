@@ -127,6 +127,7 @@ int decode_utf8_char(const unsigned char * restrict datap,
 - (NSString *)stringByTrimmingTrailingCharactersFromCharacterSet:(NSCharacterSet *)charset;
 
 - (NSString *)stringByBase64DecodingStringWithEncoding:(NSStringEncoding)encoding;
+- (NSString *)base64EncodedWithEncoding:(NSStringEncoding)encoding;
 
 // Returns a substring of contiguous characters only from a given character set
 // including some character in the middle of the target.

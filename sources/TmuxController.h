@@ -79,6 +79,7 @@ extern NSString *const kTmuxControllerDidChangeHiddenWindows;
 - (instancetype)init NS_UNAVAILABLE;
 
 - (Profile *)profileForWindow:(int)window;
+- (NSString *)perTabSettingsForTabWithWindowID:(int)wid;
 - (NSDictionary *)fontOverridesForWindow:(int)window;
 
 - (void)openWindowsInitial;
@@ -182,6 +183,10 @@ extern NSString *const kTmuxControllerDidChangeHiddenWindows;
 - (void)renameWindowWithId:(int)windowId
            inSessionNumber:(NSNumber *)sessionNumber
                     toName:(NSString *)newName;
+
+// Rename the window and save in tmux server setting.
+- (void)setWindowTitleOverride:(NSString *)title
+                        window:(int)windowId;
 - (BOOL)canRenamePane;
 - (void)renamePane:(int)windowPane toTitle:(NSString *)newTitle;
 - (void)setHotkeyForWindowPane:(int)windowPane to:(NSDictionary *)hotkey;
@@ -214,6 +219,7 @@ extern NSString *const kTmuxControllerDidChangeHiddenWindows;
 - (void)saveAffinities;
 - (void)saveWindowOrigins;
 - (void)saveHiddenWindows;
+- (void)savePerTabSettings;
 
 - (void)swapPane:(int)pane1 withPane:(int)pane2;
 - (void)toggleZoomForPane:(int)pane;
