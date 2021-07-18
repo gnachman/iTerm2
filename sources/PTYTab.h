@@ -258,6 +258,9 @@ extern NSString *const PTYTabVariableTitleOverride;
 - (void)checkInvariants:(NSString *)when;
 - (void)setTmuxWindowName:(NSString *)tmuxWindowName;
 
+- (NSString *)tmuxPerTabSetting;
+- (void)setPerTabSettings:(NSString *)setting;
+
 - (void)updateUseMetal NS_AVAILABLE_MAC(10_11);
 - (ITMSplitTreeNode *)rootSplitTreeNode;
 

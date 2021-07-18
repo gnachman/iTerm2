@@ -751,6 +751,11 @@ int decode_utf8_char(const unsigned char *datap,
     return [self substringFromIndex:i];
 }
 
+- (NSString *)base64EncodedWithEncoding:(NSStringEncoding)encoding {
+    NSData *data = [self dataUsingEncoding:encoding];
+    return [data base64EncodedStringWithOptions:0];
+}
+
 - (NSString *)stringByBase64DecodingStringWithEncoding:(NSStringEncoding)encoding {
     return [[NSString alloc] initWithData:[NSData dataWithBase64EncodedString:self]
                                  encoding:encoding];

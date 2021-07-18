@@ -719,6 +719,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 }
 
 - (void)updateTabTitleForCurrentSessionName:(NSString *)newName {
+    static NSString *const tmuxPrefix = @"↣ ";
     NSString *value = self.variablesScope.tabTitleOverride;
     if (value.length == 0) {
         if (self.tmuxTab) {
@@ -726,13 +727,15 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
             if (newName.length) {
                 value = newName;
             } else if (tmuxWindowName.length) {
-                value = [NSString stringWithFormat:@"↣ %@", tmuxWindowName];
+                value = [tmuxPrefix stringByAppendingString:tmuxWindowName];
             } else {
-                value = [NSString stringWithFormat:@"↣ %@", self.activeSession.name];
+                value = [tmuxPrefix stringByAppendingString:self.activeSession.name];
             }
         } else {
             value = newName ?: @"";
         }
+    } else if (self.tmuxTab && ![value hasPrefix:tmuxPrefix]) {
+        value = [tmuxPrefix stringByAppendingString:value];
     }
     [self.variablesScope setValue:value forVariableNamed:iTermVariableKeyTabTitle];
     [tabViewItem_ setLabel:[self stringByAppendingSubtitleForActiveSession:value]];  // PSM uses bindings to bind the label to its title
@@ -5121,17 +5124,45 @@ typedef struct {
     return [self.variablesScope valueForVariableName:name];
 }
 
-- (void)setTitleOverride:(NSString *)titleOverride {
-    if (self.tmuxTab) {
-        if (titleOverride) {
-            [self.tmuxController renameWindowWithId:self.tmuxWindow
-                                    inSessionNumber:nil
-                                             toName:titleOverride];
-        }
-        return;
+- (NSString *)tmuxPerTabSetting {
+    NSString *format = self.variablesScope.tabTitleOverrideFormat;
+    if (format == nil) {
+        return nil;
     }
+    // key=value&key=value&...
+    // Semicolon is reserved. Don't use it.
+    return [NSString stringWithFormat:@"%@=%@", @"t", [format base64EncodedWithEncoding:NSUTF8StringEncoding]];
+}
+
+- (void)setPerTabSettings:(NSString *)setting {
+    DLog(@"SET per-tab settings %@ for %@", setting, self);
+    NSArray<NSString *> *parts = [setting componentsSeparatedByString:@"&"];
+    for (NSString *part in parts) {
+        iTermTuple<NSString *, NSString *> *kvp = [part it_stringBySplittingOnFirstSubstring:@"="];
+        if (!kvp) {
+            continue;
+        }
+        if ([kvp.firstObject isEqualToString:@"t"]) {
+            // t=[base64-encoded title override format]
+            NSString *titleOverride = [kvp.secondObject stringByBase64DecodingStringWithEncoding:NSUTF8StringEncoding];
+            if (titleOverride.length > 0) {
+                if (![NSObject object:titleOverride isEqualToObject:self.variablesScope.tabTitleOverrideFormat]) {
+                    self.variablesScope.tabTitleOverrideFormat = titleOverride;
+                }
+            }
+        }
+    }
+}
+
+- (void)setTitleOverride:(NSString *)titleOverride {
     NSString *const sanitized = titleOverride.length ? titleOverride : nil;
     self.variablesScope.tabTitleOverrideFormat = sanitized;
+    if (self.tmuxTab) {
+        if (titleOverride) {
+            [self.tmuxController setWindowTitleOverride:titleOverride
+                                                 window:self.tmuxWindow];
+        }
+    }
 }
 
 - (void)updateTitleOverrideFromFormatVariable {
