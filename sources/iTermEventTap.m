@@ -349,3 +349,43 @@ error:
 }
 
 @end
+
+@implementation iTermKeyDownEventTap
+
++ (instancetype)sharedInstanceCreatingIfNeeded:(BOOL)createIfNeeded {
+    ITAssertWithMessage([NSThread isMainThread], @"Don't call this off the main thread because it's not thread-safe");
+    static dispatch_once_t onceToken;
+    static id instance;
+    if (!createIfNeeded) {
+        return instance;
+    }
+    dispatch_once(&onceToken, ^{
+        instance = [[iTermKeyDownEventTap alloc] initPrivate];
+    });
+    return instance;
+}
+
++ (instancetype)sharedInstance {
+    static dispatch_once_t onceToken;
+    static id instance;
+    dispatch_once(&onceToken, ^{
+        instance = [[iTermKeyDownEventTap alloc] initPrivate];
+    });
+    return instance;
+}
+
+- (instancetype)initPrivate {
+    self = [super initWithEventTypes:CGEventMaskBit(kCGEventKeyDown)];
+    if (self) {
+        self.remappingDelegate = self;
+    }
+    return self;
+}
+
+#pragma mark - iTermEventTapRemappingDelegate
+
+- (CGEventRef)remappedEventFromEventTappedWithType:(CGEventType)type event:(CGEventRef)event {
+    return event;
+}
+
+@end

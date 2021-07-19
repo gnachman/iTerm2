@@ -92,6 +92,7 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     if (_hasModifierActivation && !_registered) {
         [[iTermFlagsChangedEventTap sharedInstance] addObserver:self];
+        [[iTermKeyDownEventTap sharedInstance] addObserver:self];
     }
     _registered = YES;
 }
@@ -123,6 +124,7 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     if (_registered) {
         [[iTermFlagsChangedEventTap sharedInstance] removeObserver:self];
+        [[iTermKeyDownEventTap sharedInstance] removeObserver:self];
     }
     _registered = NO;
 }
@@ -287,6 +289,7 @@ ITERM_WEAKLY_REFERENCEABLE
         }
         _modifierWasPressed = modifierIsPressed;
     } else {
+        // The purpose is to cancel double tap if you do modifier - letter - modifier.
         [self cancelDoubleTap];
     }
 }
