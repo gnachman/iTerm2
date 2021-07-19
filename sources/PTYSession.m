@@ -4297,7 +4297,10 @@ ITERM_WEAKLY_REFERENCEABLE
         if (error) {
             return [NSString stringWithFormat:@"🐞 %@", error.localizedDescription];
         }
-        [self.delegate sessionSubtitleDidChange:self];
+        __typeof(self) strongSelf = weakSelf;
+        if (strongSelf) {
+            [strongSelf.delegate sessionSubtitleDidChange:strongSelf];
+        }
         return newValue;
     }];
 }
