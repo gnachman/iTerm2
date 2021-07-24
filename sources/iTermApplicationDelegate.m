@@ -1116,6 +1116,7 @@ void TurnOnDebugLoggingAutomatically(void) {
 
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification {
     [iTermLaunchExperienceController applicationDidFinishLaunching];
+    [[iTermLaunchServices sharedInstance] registerForiTerm2Scheme];
     if (IsTouchBarAvailable()) {
         if (@available(macOS 10.12.2, *)) {
             NSApp.automaticCustomizeTouchBarMenuItemEnabled = YES;
@@ -1311,11 +1312,51 @@ void TurnOnDebugLoggingAutomatically(void) {
     [menuItem setState:newState];
 }
 
+- (void)revealSessionID:(NSString *)sessionID {
+    NSString *guid = [sessionID it_stringBySplittingOnFirstSubstring:@":"].secondObject;
+    for (PseudoTerminal *window in [[iTermController sharedInstance] terminals]) {
+        for (PTYSession *session in window.allSessions) {
+            if ([session.guid isEqualToString:guid]) {
+                [session reveal];
+                return;
+            }
+        }
+    }
+    for (PTYSession *session in [[iTermBuriedSessions sharedInstance] buriedSessions]) {
+        if ([session.guid isEqualToString:guid]) {
+            [session reveal];
+            return;
+        }
+    }
+}
+
+- (void)revealWithURL:(NSURL *)url {
+    NSURLComponents *components = [[NSURLComponents alloc] initWithURL:url resolvingAgainstBaseURL:NO];
+    NSURLQueryItem *item = [components.queryItems objectPassingTest:^BOOL(NSURLQueryItem *item, NSUInteger index, BOOL *stop) {
+        return [item.name isEqualToString:@"sessionid"];
+    }];
+    if (item) {
+        [self revealSessionID:item.value];
+        return;
+    }
+}
+
+- (void)handleiTerm2URL:(NSURL *)url {
+    if ([url.path isEqualToString:@"/reveal"]) {
+        [self revealWithURL:url];
+        return;
+    }
+}
+
 - (void)getUrl:(NSAppleEventDescriptor *)event withReplyEvent:(NSAppleEventDescriptor *)replyEvent {
     NSString *urlStr = [[event paramDescriptorForKeyword:keyDirectObject] stringValue];
     NSURL *url = [NSURL URLWithString:urlStr];
     NSString *scheme = [url scheme];
 
+    if ([scheme isEqualToString:@"iterm2"]) {
+        [self handleiTerm2URL:url];
+        return;
+    }
     Profile *profile = [[iTermLaunchServices sharedInstance] profileForScheme:scheme];
     if (!profile) {
         profile = [[ProfileModel sharedInstance] defaultBookmark];

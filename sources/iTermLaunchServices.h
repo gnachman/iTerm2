@@ -12,6 +12,8 @@
 @interface iTermLaunchServices : NSObject
 
 + (instancetype)sharedInstance;
+- (void)registerForiTerm2Scheme;
+
 - (void)connectBookmarkWithGuid:(NSString*)guid toScheme:(NSString*)scheme;
 - (void)disconnectHandlerForScheme:(NSString*)scheme;
 

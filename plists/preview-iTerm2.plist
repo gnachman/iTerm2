@@ -295,6 +295,14 @@
                                 <string>x-man-page</string>
                         </array>
                 </dict>
+                <dict>
+                        <key>CFBundleURLName</key>
+                        <string>iTerm2</string>
+                        <key>CFBundleURLSchemes</key>
+                        <array>
+                                <string>iterm2</string>
+                        </array>
+                </dict>
         </array>
         <key>CFBundleVersion</key>
         <string>unknown</string>
