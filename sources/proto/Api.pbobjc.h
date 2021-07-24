@@ -5032,6 +5032,7 @@ typedef GPB_ENUM(ITMListSessionsResponse_Tab_FieldNumber) {
   ITMListSessionsResponse_Tab_FieldNumber_Root = 3,
   ITMListSessionsResponse_Tab_FieldNumber_TmuxWindowId = 4,
   ITMListSessionsResponse_Tab_FieldNumber_TmuxConnectionId = 5,
+  ITMListSessionsResponse_Tab_FieldNumber_MinimizedSessionsArray = 6,
 };
 
 @interface ITMListSessionsResponse_Tab : GPBMessage
@@ -5051,6 +5052,10 @@ typedef GPB_ENUM(ITMListSessionsResponse_Tab_FieldNumber) {
 @property(nonatomic, readwrite, copy, null_resettable) NSString *tmuxConnectionId;
 /** Test to see if @c tmuxConnectionId has been set. */
 @property(nonatomic, readwrite) BOOL hasTmuxConnectionId;
+
+@property(nonatomic, readwrite, strong, null_resettable) NSMutableArray<ITMSessionSummary*> *minimizedSessionsArray;
+/** The number of items in @c minimizedSessionsArray without causing the array to be created. */
+@property(nonatomic, readonly) NSUInteger minimizedSessionsArray_Count;
 
 @end
 

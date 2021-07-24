@@ -11994,6 +11994,7 @@ typedef struct ITMListSessionsResponse_Window__storage_ {
 @dynamic hasTabId, tabId;
 @dynamic hasTmuxWindowId, tmuxWindowId;
 @dynamic hasTmuxConnectionId, tmuxConnectionId;
+@dynamic minimizedSessionsArray, minimizedSessionsArray_Count;
 
 typedef struct ITMListSessionsResponse_Tab__storage_ {
   uint32_t _has_storage_[1];
@@ -12001,6 +12002,7 @@ typedef struct ITMListSessionsResponse_Tab__storage_ {
   ITMSplitTreeNode *root;
   NSString *tmuxWindowId;
   NSString *tmuxConnectionId;
+  NSMutableArray *minimizedSessionsArray;
 } ITMListSessionsResponse_Tab__storage_;
 
 // This method is threadsafe because it is initially called
@@ -12044,6 +12046,15 @@ typedef struct ITMListSessionsResponse_Tab__storage_ {
         .offset = (uint32_t)offsetof(ITMListSessionsResponse_Tab__storage_, tmuxConnectionId),
         .flags = GPBFieldOptional,
         .dataType = GPBDataTypeString,
+      },
+      {
+        .name = "minimizedSessionsArray",
+        .dataTypeSpecific.className = GPBStringifySymbol(ITMSessionSummary),
+        .number = ITMListSessionsResponse_Tab_FieldNumber_MinimizedSessionsArray,
+        .hasIndex = GPBNoHasBit,
+        .offset = (uint32_t)offsetof(ITMListSessionsResponse_Tab__storage_, minimizedSessionsArray),
+        .flags = GPBFieldRepeated,
+        .dataType = GPBDataTypeMessage,
       },
     };
     GPBDescriptor *localDescriptor =

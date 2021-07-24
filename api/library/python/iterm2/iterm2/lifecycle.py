@@ -82,7 +82,7 @@ class EachSessionOnceMonitor:
 
         for window in self.__app.terminal_windows:
             for tab in window.tabs:
-                for session in tab.sessions:
+                for session in tab.all_sessions:
                     await self.__queue.put(session)
 
         return self

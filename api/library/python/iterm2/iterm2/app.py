@@ -160,7 +160,7 @@ class App(
 
         for window in self.terminal_windows:
             for tab in window.tabs:
-                sessions = tab.sessions
+                sessions = tab.all_sessions
                 for session in sessions:
                     if session.session_id == session_id:
                         return session
@@ -281,7 +281,7 @@ class App(
         def all_sessions(windows):
             for window in windows:
                 for tab in window.tabs:
-                    for value in tab.sessions:
+                    for value in tab.all_sessions:
                         yield value
 
         old_sessions = list(all_sessions(self.terminal_windows))
@@ -290,7 +290,7 @@ class App(
         new_ids: typing.List[str] = []
         for new_window in new_windows:
             for new_tab in new_window.tabs:
-                for new_session in new_tab.sessions:
+                for new_session in new_tab.all_sessions:
                     # Update existing sessions
                     old = self.get_session_by_id(new_session.session_id)
                     if old is not None:
@@ -494,7 +494,7 @@ class App(
         """
         for window in self.terminal_windows:
             for tab in window.tabs:
-                if session in tab.sessions:
+                if session in tab.all_sessions:
                     return window, tab
         return None, None
 

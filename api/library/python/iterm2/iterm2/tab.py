@@ -48,13 +48,15 @@ class Tab:
             tab_id,
             root,
             tmux_window_id=None,
-            tmux_connection_id=None):
+            tmux_connection_id=None,
+            minimized_sessions=[]):
         self.connection = connection
         self.__tab_id = tab_id
         self.__root = root
         self.__active_session_id = None
         self.__tmux_window_id = tmux_window_id
         self.__tmux_connection_id = tmux_connection_id
+        self.__minimized_sessions = list(minimized_sessions)
     # pylint: enable=too-many-arguments
 
     def __repr__(self):
@@ -71,10 +73,17 @@ class Tab:
     def update_from(self, other):
         """Copies state from another tab into this one."""
         self.__root = other.root
+        self.__minimized_sessions = list(other.minimized_sessions)
 
     def update_session(self, session):
         """Replaces references to a session."""
-        self.__root.update_session(session)
+        if self.__root.update_session(session):
+            return
+        indexes = [idx for idx, candidate in enumerate(self.__minimized_sessions) if candidate.session_id == session.session_id]
+        if len(indexes) == 0:
+            return
+        i = indexes[0]
+        self.__minimized_sessions[i] = session
 
     @property
     def window(self) -> typing.Optional['iterm2.window.Window']:
@@ -101,9 +110,24 @@ class Tab:
         """
         A tab contains a list of sessions, which are its split panes.
 
+        This excludes minimized sessions. Use `all_sessions` to get both visible
+        and minimized sessions in this tab.
+
         :returns: The sessions belonging to this tab, in no particular order.
         """
         return self.__root.sessions
+
+    @property
+    def all_sessions(self) -> typing.List['iterm2.session.Session']:
+        """
+        Returns both visible and minimized sessions in this tab.
+
+        A session would be minimized if another session in the tab is maximized.
+
+        :returns: All sessions in this tab, including minimized sessions, in no
+             particular order.
+        """
+        return self.sessions + self.minimized_sessions
 
     @property
     def root(self) -> iterm2.session.Splitter:
@@ -131,6 +155,13 @@ class Tab:
             if session.session_id == self.active_session_id:
                 return session
         return None
+
+    @property
+    def minimized_sessions(self) -> typing.List[iterm2.session.Session]:
+        """
+        :returns: Minimized sessions in this tab. Empty array if none.
+        """
+        return list(self.__minimized_sessions)
 
     def pretty_str(self, indent: str = "") -> str:
         """

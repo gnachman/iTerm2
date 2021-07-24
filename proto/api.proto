@@ -1491,6 +1491,7 @@ message ListSessionsResponse {
     optional string tab_id = 2;
     optional string tmux_window_id = 4;
     optional string tmux_connection_id = 5;
+    repeated SessionSummary minimized_sessions = 6;
   }
   repeated Window windows = 1;
   repeated SessionSummary buried_sessions = 2;

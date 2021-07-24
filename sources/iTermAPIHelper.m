@@ -2176,6 +2176,14 @@ static BOOL iTermAPIHelperLastApplescriptAuthRequiredSetting;
             ITMListSessionsResponse_Tab *tabMessage = [[ITMListSessionsResponse_Tab alloc] init];
             tabMessage.tabId = [@(tab.uniqueId) stringValue];
             tabMessage.root = [tab rootSplitTreeNode];
+            if (tab.isMaximized) {
+                for (PTYSession *session in [tab minimizedSessions]) {
+                    ITMSessionSummary *sessionSummary = [[ITMSessionSummary alloc] init];
+                    sessionSummary.uniqueIdentifier = session.guid;
+                    sessionSummary.title = session.name;
+                    [tabMessage.minimizedSessionsArray addObject:sessionSummary];
+                }
+            }
             tabMessage.tmuxWindowId = [@(tab.tmuxWindow) stringValue];
             [windowMessage.tabsArray addObject:tabMessage];
         }
@@ -2751,7 +2759,13 @@ static BOOL iTermAPIHelperLastApplescriptAuthRequiredSetting;
             handler(response);
             return;
         }
-        [tab setActiveSession:session];
+        if (tab.isMaximized && tab.activeSession != session) {
+            [tab unmaximize];
+            [tab setActiveSession:session];
+            [tab maximize];
+        } else {
+            [tab setActiveSession:session];
+        }
     }
 
     response.status = ITMActivateResponse_Status_Ok;

@@ -6314,6 +6314,10 @@ typedef struct {
     }
 }
 
+- (NSArray<PTYSession *> *)minimizedSessions {
+    return [[self sessions] arrayByRemovingObject:self.activeSession];
+}
+
 - (NSUInteger)sessionPaneNumber:(PTYSession *)session {
     NSUInteger index = [self.sessions indexOfObject:session];
     if (index == NSNotFound) {

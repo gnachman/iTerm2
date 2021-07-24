@@ -45,6 +45,7 @@ extern NSString *const PTYTabVariableTitleOverride;
 @property(nonatomic, readonly) BOOL isMaximized;
 // Sessions ordered in a similar-to-reading-order fashion.
 @property(nonatomic, readonly) NSArray *orderedSessions;
+@property(nonatomic, readonly) NSArray<PTYSession *> *minimizedSessions;
 @property(nonatomic, weak) id<PTYTabDelegate> delegate;
 
 // While activeSession is not retained, it should only ever refer to a session that belongs to

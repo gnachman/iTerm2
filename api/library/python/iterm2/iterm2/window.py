@@ -143,13 +143,17 @@ class Window:
                 tmux_window_id = tab.tmux_window_id
             else:
                 tmux_window_id = None
+            minimized_sessions = [
+                iterm2.session.Session(connection, None, summary)
+                for summary in (tab.minimized_sessions or [])]
             tabs.append(
                 iterm2.tab.Tab(
                     connection,
                     tab.tab_id,
                     root,
                     tmux_window_id,
-                    tab.tmux_connection_id))
+                    tab.tmux_connection_id,
+                    minimized_sessions))
 
         if not tabs:
             return None
