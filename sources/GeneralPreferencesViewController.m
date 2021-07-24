@@ -17,6 +17,7 @@
 #import "iTermShellHistoryController.h"
 #import "iTermUserDefaultsObserver.h"
 #import "iTermWarning.h"
+#import "NSBundle+iTerm.h"
 #import "NSTextField+iTerm.h"
 #import "PasteboardHistory.h"
 #import "RegexKitLite.h"
@@ -73,6 +74,9 @@ enum {
 
     // Prompt for test-release updates
     IBOutlet NSButton *_checkTestRelease;
+
+    // Warning that nightly builds can't update to beta/release
+    IBOutlet NSTextField *_nightlyBuildNotice;
 
     // Load prefs from custom folder
     IBOutlet NSButton *_loadPrefsFromCustomFolder;  // Should load?
@@ -348,7 +352,11 @@ enum {
                     key:kPreferenceKeyCheckForUpdatesAutomatically
             relatedView:nil
                    type:kPreferenceInfoTypeCheckbox];
-
+    if ([NSBundle it_isNightlyBuild]) {
+        _checkTestRelease.enabled = NO;
+    } else {
+        _nightlyBuildNotice.hidden = YES;
+    }
     [self defineControl:_checkTestRelease
                     key:kPreferenceKeyCheckForTestReleases
             relatedView:nil
