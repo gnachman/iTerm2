@@ -65,7 +65,7 @@
     NSDictionary *attributes = [self attributesWithParagraphStyle:paragraphStyle
                                                              font:font
                                                         textColor:textColor];
-    NSString *amendedTitle = (subtitle == nil) ? title : [title stringByAppendingString:@"\n"];
+    NSString *amendedTitle = (subtitle.length == 0) ? title : [title stringByAppendingString:@"\n"];
     NSAttributedString *attributedString = [self attributedStringForWindowTitleLabelWithString:amendedTitle
                                                                                     attributes:attributes];
     NSMutableAttributedString *result;
