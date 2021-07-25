@@ -9,6 +9,7 @@
 
 #import "DebugLogging.h"
 #import "NSArray+iTerm.h"
+#import "NSDate+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "NSTimer+iTerm.h"
 #import "iTermAdvancedSettingsModel.h"
@@ -69,7 +70,9 @@ NSString *const iTermSwipeHandlerCancelSwipe = @"iTermSwipeHandlerCancelSwipe";
     }
 
     DLog(@"Got event %@", iTermShortEventPhasesString(event));
-    while (1) {
+    const NSTimeInterval deadline = [NSDate it_timeSinceBoot] + 2;
+    DLog(@"deadline is %@", @(deadline));
+    while ([NSDate it_timeSinceBoot] < deadline) {
         @autoreleasepool {
             DLog(@"Continue tracking.");
             if (event) {
@@ -77,6 +80,7 @@ NSString *const iTermSwipeHandlerCancelSwipe = @"iTermSwipeHandlerCancelSwipe";
             }
             [self updateTimer];
             if (![self shouldTrack]) {
+                DLog(@"Break because !shouldTrack");
                 break;
             }
             event = [NSApp nextEventMatchingMask:eventMask
@@ -86,7 +90,7 @@ NSString *const iTermSwipeHandlerCancelSwipe = @"iTermSwipeHandlerCancelSwipe";
             DLog(@"Got event %@", event);
         }
     }
-    DLog(@"Exit tracking loop");
+    DLog(@"Exit tracking loop at %@", @([NSDate it_timeSinceBoot]));
     return YES;
 }
 
