@@ -476,7 +476,11 @@ static const NSUInteger kMaxHosts = 100;
 
     // Mouse reporting state
     VT100GridCoord _lastReportedCoord;
-    BOOL _reportingMouseDown;
+
+    // Remembers if the mouse down was reported to decide if mouse up should also be reported.
+    BOOL _reportingLeftMouseDown;
+    BOOL _reportingMiddleMouseDown;
+    BOOL _reportingRightMouseDown;
 
     // Did we get FinalTerm codes that report info about prompt?
     BOOL _shouldExpectPromptMarks;
@@ -9337,6 +9341,55 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [_view setNeedsDisplay:YES];
 }
 
+- (void)setReportingMouseDownForEventType:(NSEventType)eventType {
+    switch (eventType) {
+        case NSEventTypeLeftMouseDown:
+            _reportingLeftMouseDown = YES;
+            return;
+        case NSEventTypeRightMouseDown:
+            _reportingRightMouseDown = YES;
+            return;
+        case NSEventTypeOtherMouseDown:
+            _reportingMiddleMouseDown = YES;
+            return;
+
+        case NSEventTypeLeftMouseUp:
+            _reportingLeftMouseDown = NO;
+            return;
+        case NSEventTypeRightMouseUp:
+            _reportingRightMouseDown = NO;
+            return;
+        case NSEventTypeOtherMouseUp:
+            _reportingMiddleMouseDown = NO;
+            return;
+
+        default:
+            assert(NO);
+    }
+}
+
+- (BOOL)reportingMouseDownForEventType:(NSEventType)eventType {
+    switch (eventType) {
+        case NSEventTypeLeftMouseDown:
+        case NSEventTypeLeftMouseUp:
+        case NSEventTypeLeftMouseDragged:
+            return _reportingLeftMouseDown;
+
+        case NSEventTypeRightMouseDown:
+        case NSEventTypeRightMouseUp:
+        case NSEventTypeRightMouseDragged:
+            return _reportingRightMouseDown;
+
+        case NSEventTypeOtherMouseDown:
+        case NSEventTypeOtherMouseUp:
+        case NSEventTypeOtherMouseDragged:
+            return _reportingMiddleMouseDown;
+
+        default:
+            assert(NO);
+    }
+}
+
 - (BOOL)textViewReportMouseEvent:(NSEventType)eventType
                        modifiers:(NSUInteger)modifiers
                           button:(MouseButtonNumber)button
@@ -9357,7 +9410,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                 case MOUSE_REPORTING_BUTTON_MOTION:
                 case MOUSE_REPORTING_ALL_MOTION:
                     if (!testOnly) {
-                        _reportingMouseDown = YES;
+                        [self setReportingMouseDownForEventType:eventType];
                         _lastReportedCoord = coord;
                         [self writeLatin1EncodedData:[_terminal.output mousePress:button
                                                                     withModifiers:modifiers
@@ -9388,8 +9441,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                 }
                 return NO;
             }
-            if (_reportingMouseDown) {
-                _reportingMouseDown = NO;
+            if ([self reportingMouseDownForEventType:eventType]) {
+                [self setReportingMouseDownForEventType:eventType];
                 _lastReportedCoord = VT100GridCoordMake(-1, -1);
 
                 switch ([_terminal mouseMode]) {
@@ -9444,7 +9497,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                 }
                 return NO;
             }
-            if ((_reportingMouseDown || allowDragBeforeMouseDown) &&
+            if (([self reportingMouseDownForEventType:eventType] || allowDragBeforeMouseDown) &&
                 !VT100GridCoordEquals(coord, _lastReportedCoord)) {
                 _lastReportedCoord = coord;
 
