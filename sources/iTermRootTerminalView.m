@@ -455,7 +455,7 @@ NS_CLASS_AVAILABLE_MAC(10_14)
                 [self.window performMiniaturize:nil];
                 return;
             }
-            if ([doubleClickAction isEqualToString:@"Maximize"]) {
+            if (doubleClickAction == nil || [doubleClickAction isEqualToString:@"Maximize"]) {
                 [self.window performZoom:nil];
                 return;
             }
