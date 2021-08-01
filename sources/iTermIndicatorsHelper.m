@@ -31,7 +31,7 @@ static const NSTimeInterval kFlashDuration = 0.3;
 CGFloat kiTermIndicatorStandardHeight = 20;
 
 @interface iTermIndicator : NSObject
-@property(nonatomic, retain) NSImage *image;
+@property(nonatomic, strong) NSImage *image;
 @property(nonatomic, readonly) CGFloat alpha;
 
 - (void)startFlash;
@@ -39,11 +39,6 @@ CGFloat kiTermIndicatorStandardHeight = 20;
 
 @implementation iTermIndicator {
     NSTimeInterval _flashStartTime;
-}
-
-- (void)dealloc {
-    [_image release];
-    [super dealloc];
 }
 
 - (void)startFlash {
@@ -63,6 +58,7 @@ CGFloat kiTermIndicatorStandardHeight = 20;
     NSTimeInterval _fullScreenFlashStartTime;
     // Rate limits calls to setNeedsDisplay: to not be faster than drawRect can be called.
     BOOL _haveSetNeedsDisplay;
+    NSRect _lastFrame;
 }
 
 + (NSDictionary *)indicatorImages {
@@ -80,7 +76,6 @@ CGFloat kiTermIndicatorStandardHeight = 20;
                               kiTermIndicatorCopyMode: [NSImage it_imageNamed:@"CopyMode" forClass:self.class],
                               kiTermIndicatorDebugLogging: [NSImage it_imageNamed:@"DebugLogging" forClass:self.class]
         };
-        [gIndicatorImages retain];
     });
 
     return gIndicatorImages;
@@ -94,14 +89,9 @@ CGFloat kiTermIndicatorStandardHeight = 20;
     return self;
 }
 
-- (void)dealloc {
-    [_visibleIndicators release];
-    [super dealloc];
-}
-
 - (void)setIndicator:(NSString *)identifier visible:(BOOL)visible {
     if (visible && !_visibleIndicators[identifier]) {
-        iTermIndicator *indicator = [[[iTermIndicator alloc] init] autorelease];
+        iTermIndicator *indicator = [[iTermIndicator alloc] init];
         indicator.image = [[self class] indicatorImages][identifier];
         _visibleIndicators[identifier] = indicator;;
         [_delegate setNeedsDisplay:YES];
@@ -155,6 +145,30 @@ CGFloat kiTermIndicatorStandardHeight = 20;
     }
 }
 
+- (NSString *)helpTextForIndicatorWithName:(NSString *)name {
+    NSDictionary<NSString *, NSString *> *messages = @{
+        kItermIndicatorBroadcastInput: @"Keyboard input gets broadcast to other sessions.",
+        kiTermIndicatorMaximized: @"This is a maximized split pane.",
+        kiTermIndicatorCoprocess: @"A coprocess is running.",
+        kiTermIndicatorAlert: @"Will alert on next mark.",
+        kiTermIndicatorAllOutputSuppressed: @"All output is currently suppressed.",
+        kiTermIndicatorZoomedIn: @"Zoomed in.",
+        kiTermIndicatorCopyMode: @"In copy mode.",
+        kiTermIndicatorDebugLogging: @"Debug logging is enabled.",
+    };
+    return messages[name];
+}
+
+- (NSString *)helpTextForIndicatorAt:(NSPoint)point {
+    __block NSString *result = nil;
+    [self enumerateTopRightIndicatorsInFrame:_lastFrame andDraw:NO block:^(NSString *name, NSImage *image, NSRect frame) {
+        if (NSPointInRect(point, frame)) {
+            result = [self helpTextForIndicatorWithName:name];
+        }
+    }];
+    return result;
+}
+
 - (void)enumerateCenterIndicatorsInFrame:(NSRect)frame block:(void (^)(NSString *, NSImage *, NSRect, CGFloat))block {
     NSArray *centeredIdentifiers = [iTermIndicatorsHelper flashingIndicatorIdentifiers];
     for (NSString *identifier in centeredIdentifiers) {
@@ -174,6 +188,7 @@ CGFloat kiTermIndicatorStandardHeight = 20;
 
 - (void)drawInFrame:(NSRect)frame {
     DLog(@"drawInFrame %@", NSStringFromRect(frame));
+    _lastFrame = frame;
 
     // Draw top-right indicators.
     [self enumerateTopRightIndicatorsInFrame:frame andDraw:YES block:^(NSString *identifier, NSImage *image, NSRect frame) {
@@ -236,7 +251,7 @@ CGFloat kiTermIndicatorStandardHeight = 20;
     }
 
     // Remove any indicators that became invisible since the last check.
-    NSArray *visibleIdentifiers = [[_visibleIndicators.allKeys copy] autorelease];
+    NSArray *visibleIdentifiers = [_visibleIndicators.allKeys copy];
     for (NSString *identifier in visibleIdentifiers) {
         if ([_visibleIndicators[identifier] alpha] == 0) {
             [_visibleIndicators removeObjectForKey:identifier];

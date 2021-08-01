@@ -541,8 +541,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             [self.mouseDelegate mouseHandler:self
                                   clickPoint:event
                                allowOverflow:NO];
-            [self.mouseDelegate mouseHandlerSetFindOnPageCursorCoord:clickPoint];
-            result |= iTermClickSideEffectsMoveFindOnPageCursor;
+            if (clickPoint.x >= 0 && clickPoint.y >= 0) {
+                [self.mouseDelegate mouseHandlerSetFindOnPageCursorCoord:clickPoint];
+                result |= iTermClickSideEffectsMoveFindOnPageCursor;
+            }
         }
         if ([self.mouseDelegate mouseHandlerAtPasswordPrompt:self] &&
             !altPressed &&

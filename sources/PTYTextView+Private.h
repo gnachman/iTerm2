@@ -19,6 +19,7 @@
 #import "iTermKeyboardHandler.h"
 #import "iTermSelection.h"
 #import "iTermSelectionScrollHelper.h"
+#import "iTermTextPopoverViewController.h"
 
 @class iTermShellIntegrationWindowController;
 @class iTermURLActionHelper;
@@ -39,6 +40,7 @@ NSPopoverDelegate> {
     iTermURLActionHelper *_urlActionHelper;
     iTermShellIntegrationWindowController *_shellIntegrationInstallerWindow;
     iTermTextViewContextMenuHelper *_contextMenuHelper;
+    iTermTextPopoverViewController* _indicatorMessagePopoverViewController;
 }
 
 @property(nonatomic, strong) iTermSelection *selection;

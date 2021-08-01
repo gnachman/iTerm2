@@ -51,4 +51,6 @@ extern CGFloat kiTermIndicatorStandardHeight;
 - (void)enumerateTopRightIndicatorsInFrame:(NSRect)frame andDraw:(BOOL)shouldDraw block:(void (^)(NSString *, NSImage *, NSRect))block;
 - (void)enumerateCenterIndicatorsInFrame:(NSRect)frame block:(void (^)(NSString *, NSImage *, NSRect, CGFloat))block;
 
+- (NSString *)helpTextForIndicatorAt:(NSPoint)point;
+
 @end

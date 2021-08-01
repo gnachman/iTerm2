@@ -83,6 +83,10 @@ iTermURLActionHelperDelegate>
 
 - (void)didCopyToPasteboardWithControlSequence;
 
+#pragma mark - Indicator Messages
+
+- (void)showIndicatorMessage:(NSString *)message at:(NSPoint)point;
+
 @end
 
 NS_ASSUME_NONNULL_END

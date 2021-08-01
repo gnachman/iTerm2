@@ -26,6 +26,8 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)mouseHandlerMakeFirstResponder:(PTYMouseHandler *)handler;
 - (void)mouseHandlerWillBeginDragPane:(PTYMouseHandler *)handler;
 - (BOOL)mouseHandlerIsInKeyWindow:(PTYMouseHandler *)handler;
+
+// Return (-1,-1) to ignore the click.
 - (VT100GridCoord)mouseHandler:(PTYMouseHandler *)handler
                     clickPoint:(NSEvent *)event
                  allowOverflow:(BOOL)allowRightMarginOverflow;

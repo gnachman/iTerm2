@@ -377,6 +377,7 @@
     [_keyboardHandler release];
     _urlActionHelper.delegate = nil;
     [_urlActionHelper release];
+    [_indicatorMessagePopoverViewController release];
 
     [super dealloc];
 }
@@ -5079,6 +5080,15 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 - (VT100GridCoord)mouseHandler:(PTYMouseHandler *)handler
                     clickPoint:(NSEvent *)event
                  allowOverflow:(BOOL)allowRightMarginOverflow {
+    if (event.type == NSEventTypeLeftMouseUp && event.clickCount == 1) {
+        const NSPoint windowPoint = [event locationInWindow];
+        const NSPoint viewPoint = [self.enclosingScrollView convertPoint:windowPoint fromView:nil];
+        NSString *message = [_indicatorsHelper helpTextForIndicatorAt:viewPoint];
+        if (message) {
+            [self showIndicatorMessage:message at:viewPoint];
+            return VT100GridCoordMake(-1, -1);
+        }
+    }
     const NSPoint temp =
     [self clickPoint:event allowRightMarginOverflow:allowRightMarginOverflow];
     return VT100GridCoordMake(temp.x, temp.y);

@@ -26,6 +26,7 @@
 #import "iTermSnippetsMenuController.h"
 #import "iTermSnippetsModel.h"
 #import "iTermTextExtractor.h"
+#import "iTermTextPopoverViewController.h"
 #import "iTermURLActionFactory.h"
 #import "iTermURLStore.h"
 #import "iTermWebViewWrapperViewController.h"
@@ -532,6 +533,26 @@ static const NSUInteger kRectangularSelectionModifierMask = (kRectangularSelecti
     }
 
     return attributes;
+}
+
+#pragma mark - Indicator Messages
+
+- (void)showIndicatorMessage:(NSString *)message at:(NSPoint)point {
+    [_indicatorMessagePopoverViewController.popover close];
+    _indicatorMessagePopoverViewController = [[iTermTextPopoverViewController alloc] initWithNibName:@"iTermTextPopoverViewController"
+                                                                  bundle:[NSBundle bundleForClass:self.class]];
+    _indicatorMessagePopoverViewController.popover.behavior = NSPopoverBehaviorTransient;
+    [_indicatorMessagePopoverViewController view];
+    _indicatorMessagePopoverViewController.textView.font = [NSFont systemFontOfSize:[NSFont systemFontSize]];
+    _indicatorMessagePopoverViewController.textView.drawsBackground = NO;
+    [_indicatorMessagePopoverViewController appendString:message];
+    NSRect frame = _indicatorMessagePopoverViewController.view.frame;
+    frame.size.width = 200;
+    frame.size.height = 50;
+    _indicatorMessagePopoverViewController.view.frame = frame;
+    [_indicatorMessagePopoverViewController.popover showRelativeToRect:NSMakeRect(point.x, point.y, 1, 1)
+                                                                ofView:self.enclosingScrollView
+                                                         preferredEdge:NSRectEdgeMaxY];
 }
 
 #pragma mark - iTermURLActionHelperDelegate
