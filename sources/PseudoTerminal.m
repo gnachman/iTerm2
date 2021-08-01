@@ -10018,6 +10018,10 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 // Turn on/off sending of input to all sessions. This causes a bunch of UI
 // to update in addition to flipping the flag.
 - (IBAction)enableSendInputToAllPanes:(id)sender {
+    if (_broadcastInputHelper.broadcastMode == BROADCAST_TO_ALL_PANES) {
+        [self setBroadcastMode:BROADCAST_OFF];
+        return;
+    }
     [self setBroadcastMode:BROADCAST_TO_ALL_PANES];
 
     // Post a notification to reload menus
@@ -10040,6 +10044,10 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 // Turn on/off sending of input to all sessions. This causes a bunch of UI
 // to update in addition to flipping the flag.
 - (IBAction)enableSendInputToAllTabs:(id)sender {
+    if (_broadcastInputHelper.broadcastMode == BROADCAST_TO_ALL_TABS) {
+        [self setBroadcastMode:BROADCAST_OFF];
+        return;
+    }
     [self setBroadcastMode:BROADCAST_TO_ALL_TABS];
 
     // Post a notification to reload menus
