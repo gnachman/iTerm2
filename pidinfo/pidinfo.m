@@ -8,7 +8,6 @@
 #import "pidinfo.h"
 
 #import "iTermFileDescriptorServerShared.h"
-#import "iTermGitClient.h"
 #include <libproc.h>
 #include <mach-o/dyld.h>
 #include <stdatomic.h>
@@ -25,19 +24,6 @@
 #if ENABLE_RANDOM_WEDGING || ENABLE_VERY_VERBOSE_LOGGING || ENABLE_SLOW_ROOT
 #warning DO NOT SUBMIT - DEBUG SETTING ENABLED
 #endif
-
-@interface iTermGitRecentBranch: NSObject
-@property (nonatomic, strong) NSDate *date;
-@property (nonatomic, copy) NSString *branch;
-@end
-
-@implementation iTermGitRecentBranch
-
-- (NSComparisonResult)compare:(iTermGitRecentBranch *)other {
-    return [self.date compare:other.date];
-}
-
-@end
 
 @implementation pidinfo {
     dispatch_queue_t _queue;
@@ -455,169 +441,6 @@ static double TimespecToSeconds(struct timespec* ts) {
         }
     }
     return result;
-}
-
-- (void)setPriority:(int)newPriority {
-    int rc = setpriority(PRIO_PROCESS, 0, newPriority);
-    if (rc) {
-        syslog(LOG_ERR, "setpriority(%d): %s", newPriority, strerror(errno));
-    }
-}
-
-static const char *GetPathToSelf(void) {
-    // First ask how much memory we need to store the path.
-    uint32_t size = 0;
-    char placeholder[1];
-    _NSGetExecutablePath(placeholder, &size);
-
-    // Allocate memory and get the path and return it. Plus an extra byte because I live in fear.
-    char *pathToExecutable = malloc(size + 1);
-    if (_NSGetExecutablePath(pathToExecutable, &size) != 0) {
-        free(pathToExecutable);
-        return nil;
-    }
-
-    return pathToExecutable;
-}
-
-- (void)requestGitStateForPath:(NSString *)path
-                       timeout:(int)timeout
-                    completion:(void (^)(iTermGitState * _Nullable))reply {
-    [self performRiskyBlock:^(BOOL shouldPerform, BOOL (^ _Nullable completion)(void)) {
-        if (!shouldPerform) {
-            reply(nil);
-            syslog(LOG_WARNING, "pidinfo wedged");
-            return;
-        }
-
-        int pipeFDs[2];
-        const int pipeRC = pipe(pipeFDs);
-        if (pipeRC == -1) {
-            reply(nil);
-            completion();
-            return;
-        }
-
-        const char *exe = GetPathToSelf();
-        const char *pathCString = strdup(path.UTF8String);
-        char *timeoutStr = NULL;
-        asprintf(&timeoutStr, "%d", timeout);
-        const int childPID = fork();
-        switch (childPID) {
-            case 0: {
-                // Child
-                // Make the write end of the pipe be file descriptor 0.
-                if (pipeFDs[1] != 0) {
-                  close(0);
-                  dup2(pipeFDs[1], 0);
-                }
-                // Close all file descriptors except 0.
-                const int dtableSize = getdtablesize();
-                for (int j = 1; j < dtableSize; j++) {
-                    close(j);
-                }
-                // exec because this is a multi-threaded program, and multi-threaded programs have
-                // to exec() after fork() if they want to do anything useful.
-                execl(exe, exe, "--git-state", pathCString, timeoutStr, 0);
-                _exit(0);
-            }
-            case -1:
-                // Failed to fork
-                free((void *)timeoutStr);
-                free((void *)exe);
-                free((void *)pathCString);
-                close(pipeFDs[0]);
-                close(pipeFDs[1]);
-                reply(nil);
-                completion();
-                break;
-            default: {
-                // Parent
-                free((void *)timeoutStr);
-                free((void *)exe);
-                free((void *)pathCString);
-                close(pipeFDs[1]);
-                NSFileHandle *fileHandle = [[NSFileHandle alloc] initWithFileDescriptor:pipeFDs[0] closeOnDealloc:YES];
-                int stat_loc = 0;
-                int waitRC;
-                do {
-                    waitRC = waitpid(childPID, &stat_loc, 0);
-                } while (waitRC == -1 && errno == EINTR);
-                if (WIFSIGNALED(stat_loc)) {
-                    // If it timed out don't even try to read because it could be incomplete.
-                    reply(nil);
-                    completion();
-                    break;
-                }
-                NSData *data = [fileHandle readDataToEndOfFile];
-                NSError *error = nil;
-                NSKeyedUnarchiver *decoder = [[NSKeyedUnarchiver alloc] initForReadingFromData:data error:&error];
-                if (!decoder) {
-                    reply(nil);
-                    completion();
-                    break;
-                }
-                
-                iTermGitState *state = [decoder decodeTopLevelObjectOfClass:[iTermGitState class]
-                                                                     forKey:@"state"
-                                                                      error:nil];
-                reply(state);
-                completion();
-            }
-        }
-    }];
-}
-
-- (void)fetchRecentBranchesAt:(NSString *)path count:(NSInteger)maxCount completion:(void (^)(NSArray<NSString *> *))reply {
-    [self performRiskyBlock:^(BOOL shouldPerform, BOOL (^ _Nullable completion)(void)) {
-        if (!shouldPerform) {
-            reply(nil);
-            syslog(LOG_WARNING, "pidinfo wedged");
-            return;
-        }
-        [self setPriority:20];
-        reply([self recentBranchesAt:path count:maxCount]);
-        completion();
-    }];
-}
-
-- (NSArray<NSString *> *)recentBranchesAt:(NSString *)path count:(NSInteger)maxCount {
-    iTermGitClient *client = [[iTermGitClient alloc] initWithRepoPath:path];
-    if (!client) {
-        return nil;
-    }
-    // git for-each-ref --count=maxCount --sort=-commiterdate refs/heads/ --format=%(refname:short)
-    NSMutableArray<iTermGitRecentBranch *> *recentBranches = [NSMutableArray array];
-    NSMutableSet<NSString *> *shortNames = [NSMutableSet set];
-    [client forEachReference:^(git_reference * _Nonnull ref, BOOL * _Nonnull stop) {
-        NSString *fullName = [client fullNameForReference:ref];
-        if (![iTermGitClient name:fullName matchesPattern:@"refs/heads"]) {
-            NSLog(@"%@ does not match pattern", fullName);
-            return;
-        }
-        NSString *shortName = [client shortNameForReference:ref];
-        if (!shortName) {
-            return;
-        }
-        if ([shortNames containsObject:shortName]) {
-            return;
-        }
-        [shortNames addObject:shortName];
-        iTermGitRecentBranch *rb = [[iTermGitRecentBranch alloc] init];
-        rb.date = [client commiterDateAt:ref];
-        NSLog(@"MATCHED: %@ %@", shortName, rb.date);
-        rb.branch = shortName;
-        [recentBranches addObject:rb];
-    }];
-    [recentBranches sortUsingSelector:@selector(compare:)];
-    NSMutableArray<NSString *> *results = [NSMutableArray array];
-    for (iTermGitRecentBranch *rb in recentBranches.reverseObjectEnumerator) {
-        [results addObject:rb.branch];
-        if (results.count == maxCount) {
-            break;
-        }
-    }
-    return results;
 }
 
 @end

@@ -16,38 +16,13 @@
 #import "pidinfo.h"
 #include <stdatomic.h>
 
-typedef void (^iTermRecentBranchFetchCallback)(NSArray<NSString *> *);
-
-@interface iTermGitRecentBranchesBox: NSObject
-@property (nonatomic, copy) iTermRecentBranchFetchCallback block;
-@end
-
-@implementation iTermGitRecentBranchesBox
-- (BOOL)isEqual:(id)object {
-    return self == object;
-}
-@end
-
-@interface iTermGitStateHandlerBox: NSObject
-@property (nonatomic, copy) void (^block)(iTermGitState *);
-@end
-
-@implementation iTermGitStateHandlerBox
-
-- (BOOL)isEqual:(id)object {
-    return self == object;
-}
-@end
-
 @interface iTermSlowOperationGateway()
 @property (nonatomic, readwrite) BOOL ready;
 @end
 
 @implementation iTermSlowOperationGateway {
-    NSXPCConnection *_connectionToService;
+    NSXPCConnection *_pidinfoConnection;
     NSTimeInterval _timeout;
-    NSMutableArray<iTermGitStateHandlerBox *> *_gitStateHandlers;
-    NSMutableArray<iTermGitRecentBranchesBox *> *_gitRecentBranchFetchCallbacks;
 }
 
 + (instancetype)sharedInstance {
@@ -62,12 +37,10 @@ typedef void (^iTermRecentBranchFetchCallback)(NSArray<NSString *> *);
 - (instancetype)initPrivate {
     self = [super init];
     if (self) {
-        _gitStateHandlers = [NSMutableArray array];
-        _gitRecentBranchFetchCallbacks = [NSMutableArray array];
         _timeout = 0.5;
         [self connect];
         __weak __typeof(self) weakSelf = self;
-        [_connectionToService.remoteObjectProxy handshakeWithReply:^{
+        [_pidinfoConnection.remoteObjectProxy handshakeWithReply:^{
             weakSelf.ready = YES;
         }];
     }
@@ -80,12 +53,12 @@ typedef void (^iTermRecentBranchFetchCallback)(NSArray<NSString *> *);
 }
 
 - (void)connect {
-    _connectionToService = [[NSXPCConnection alloc] initWithServiceName:@"com.iterm2.pidinfo"];
-    _connectionToService.remoteObjectInterface = [NSXPCInterface interfaceWithProtocol:@protocol(pidinfoProtocol)];
-    [_connectionToService resume];
+    _pidinfoConnection = [[NSXPCConnection alloc] initWithServiceName:@"com.iterm2.pidinfo"];
+    _pidinfoConnection.remoteObjectInterface = [NSXPCInterface interfaceWithProtocol:@protocol(pidinfoProtocol)];
+    [_pidinfoConnection resume];
 
     __weak __typeof(self) weakSelf = self;
-    _connectionToService.invalidationHandler = ^{
+    _pidinfoConnection.invalidationHandler = ^{
         // I can't manage to get this called. This project:
         // https://github.com/brenwell/EvenBetterAuthorizationSample
         // originally from:
@@ -97,33 +70,12 @@ typedef void (^iTermRecentBranchFetchCallback)(NSArray<NSString *> *);
             [weakSelf didInvalidateConnection];
         });
     };
-    _connectionToService.interruptionHandler = ^{
+    _pidinfoConnection.interruptionHandler = ^{
         [weakSelf didInterrupt];
     };
 }
 
 - (void)didInterrupt {
-    {
-        NSArray<iTermGitStateHandlerBox *> *handlers;
-        @synchronized (_gitStateHandlers) {
-            handlers = [_gitStateHandlers copy];
-            [_gitStateHandlers removeAllObjects];
-        }
-        DLog(@"didInterrupt. Run all %@ handlers", @(handlers.count));
-        [handlers enumerateObjectsUsingBlock:^(iTermGitStateHandlerBox  *_Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-            obj.block(nil);
-        }];
-    }
-    {
-        NSArray<iTermGitRecentBranchesBox *> *handlers;
-        @synchronized (_gitRecentBranchFetchCallbacks) {
-            handlers = [_gitRecentBranchFetchCallbacks copy];
-            [_gitRecentBranchFetchCallbacks removeAllObjects];
-        }
-        [handlers enumerateObjectsUsingBlock:^(iTermGitRecentBranchesBox *_Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-            obj.block(nil);
-        }];
-    }
 }
 
 - (int)nextReqid {
@@ -138,7 +90,7 @@ typedef void (^iTermRecentBranchFetchCallback)(NSArray<NSString *> *);
     if (!self.ready) {
         return;
     }
-    [[_connectionToService remoteObjectProxy] checkIfDirectoryExists:directory
+    [[_pidinfoConnection remoteObjectProxy] checkIfDirectoryExists:directory
                                                            withReply:^(NSNumber * _Nullable exists) {
         if (!exists) {
             return;
@@ -152,7 +104,7 @@ typedef void (^iTermRecentBranchFetchCallback)(NSArray<NSString *> *);
 - (void)exfiltrateEnvironmentVariableNamed:(NSString *)name
                                      shell:(NSString *)shell
                                 completion:(void (^)(NSString * _Nonnull))completion {
-    [[_connectionToService remoteObjectProxy] runShellScript:[NSString stringWithFormat:@"echo $%@", name]
+    [[_pidinfoConnection remoteObjectProxy] runShellScript:[NSString stringWithFormat:@"echo $%@", name]
                                                        shell:shell
                                                    withReply:^(NSData * _Nullable data,
                                                                NSData * _Nullable error,
@@ -168,7 +120,7 @@ typedef void (^iTermRecentBranchFetchCallback)(NSArray<NSString *> *);
                          reqid:(int)reqid
                     completion:(void (^)(int rc, NSData *buffer))completion {
     __block atomic_flag finished = ATOMIC_FLAG_INIT;
-    [[_connectionToService remoteObjectProxy] getProcessInfoForProcessID:@(pid)
+    [[_pidinfoConnection remoteObjectProxy] getProcessInfoForProcessID:@(pid)
                                                                   flavor:@(flavor)
                                                                      arg:@(arg)
                                                                     size:@(buffersize)
@@ -196,7 +148,7 @@ typedef void (^iTermRecentBranchFetchCallback)(NSArray<NSString *> *);
 }
 
 - (void)runCommandInUserShell:(NSString *)command completion:(void (^)(NSString *))completion {
-    [[_connectionToService remoteObjectProxy] runShellScript:command
+    [[_pidinfoConnection remoteObjectProxy] runShellScript:command
                                                        shell:[iTermOpenDirectory userShell] ?: @"/bin/bash"
                                                    withReply:^(NSData * _Nullable data,
                                                                NSData * _Nullable error,
@@ -213,7 +165,7 @@ typedef void (^iTermRecentBranchFetchCallback)(NSArray<NSString *> *);
                          maxCount:(NSInteger)maxCount
                        executable:(BOOL)executable
                        completion:(void (^)(NSArray<NSString *> *))completions {
-    [[_connectionToService remoteObjectProxy] findCompletionsWithPrefix:prefix
+    [[_pidinfoConnection remoteObjectProxy] findCompletionsWithPrefix:prefix
                                                           inDirectories:directories
                                                                     pwd:pwd
                                                                maxCount:maxCount
@@ -221,52 +173,4 @@ typedef void (^iTermRecentBranchFetchCallback)(NSArray<NSString *> *);
                                                               withReply:completions];
 }
 
-- (void)requestGitStateForPath:(NSString *)path
-                    completion:(void (^)(iTermGitState * _Nullable))completion {
-    iTermGitStateHandlerBox *box = [[iTermGitStateHandlerBox alloc] init];
-    box.block = completion;
-    @synchronized(_gitStateHandlers) {
-        [_gitStateHandlers addObject:box];
-    }
-    [[_connectionToService remoteObjectProxy] requestGitStateForPath:path
-                                                             timeout:[iTermAdvancedSettingsModel gitTimeout]
-                                                          completion:^(iTermGitState * _Nullable state) {
-        [self didGetGitState:state completion:box];
-    }];
-}
-
-- (void)didGetGitState:(iTermGitState *)gitState completion:(iTermGitStateHandlerBox *)completion {
-    @synchronized (_gitStateHandlers) {
-        if (![_gitStateHandlers containsObject:completion]) {
-            return;
-        }
-        [_gitStateHandlers removeObject:completion];
-    }
-    completion.block(gitState);
-}
-
-- (void)fetchRecentBranchesAt:(NSString *)path
-                        count:(NSInteger)maxCount
-                   completion:(void (^)(NSArray<NSString *> *))reply {
-    iTermGitRecentBranchesBox *box = [[iTermGitRecentBranchesBox alloc] init];
-    box.block = reply;
-    @synchronized(_gitStateHandlers) {
-        [_gitRecentBranchFetchCallbacks addObject:box];
-    }
-    [[_connectionToService remoteObjectProxy] fetchRecentBranchesAt:path
-                                                              count:maxCount
-                                                         completion:^(NSArray<NSString *> * _Nonnull branches) {
-        [self didGetRecentBranches:branches box:box];
-    }];
-}
-
-- (void)didGetRecentBranches:(NSArray<NSString *> *)branches box:(iTermGitRecentBranchesBox *)box {
-    @synchronized (_gitRecentBranchFetchCallbacks) {
-        if (![_gitRecentBranchFetchCallbacks containsObject:box]) {
-            return;
-        }
-        [_gitRecentBranchFetchCallbacks removeObject:box];
-    }
-    box.block(branches);
-}
 @end

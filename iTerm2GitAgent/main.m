@@ -1,13 +1,13 @@
 //
 //  main.m
-//  pidinfo
+//  iTerm2GitAgent
 //
-//  Created by George Nachman on 1/11/20.
+//  Created by George Nachman on 7/28/21.
 //
 
 #import <Foundation/Foundation.h>
-#import "pidinfo.h"
-#include <stdlib.h>
+#import "iTerm2GitAgent.h"
+#import "iTerm2GitAgentGitState.h"
 
 @interface ServiceDelegate : NSObject <NSXPCListenerDelegate>
 @end
@@ -19,10 +19,10 @@
     
     // Configure the connection.
     // First, set the interface that the exported object implements.
-    newConnection.exportedInterface = [NSXPCInterface interfaceWithProtocol:@protocol(pidinfoProtocol)];
+    newConnection.exportedInterface = [NSXPCInterface interfaceWithProtocol:@protocol(iTerm2GitAgentProtocol)];
     
     // Next, set the object that the connection exports. All messages sent on the connection to this service will be sent to the exported object to handle. The connection retains the exported object.
-    pidinfo *exportedObject = [pidinfo new];
+    iTerm2GitAgent *exportedObject = [iTerm2GitAgent new];
     newConnection.exportedObject = exportedObject;
     
     // Resuming the connection allows the system to deliver more incoming messages.
@@ -36,6 +36,13 @@
 
 int main(int argc, const char *argv[])
 {
+    // iTerm2GitAgent --git-state /path/to/repo <timeout>
+    if (argc == 4 && !strcmp(argv[1], "--git-state")) {
+        @autoreleasepool {
+            iTerm2GitAgentGetGitState(argv[2], atoi(argv[3]));
+        }
+        return 0;
+    }
     // Create the delegate for the service.
     ServiceDelegate *delegate = [ServiceDelegate new];
     

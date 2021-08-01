@@ -1,6 +1,6 @@
 //
-//  PIDInfoGitState.h
-//  pidinfo
+//  iTerm2GitAgentGitState.h
+//  iTerm2GitAgent
 //
 //  Created by George Nachman on 4/27/21.
 //
@@ -10,6 +10,6 @@
 NS_ASSUME_NONNULL_BEGIN
 
 // Write encoded git state to fd 0.
-void PIDInfoGetGitState(const char *cpath, int timeout);
+void iTerm2GitAgentGetGitState(const char *cpath, int timeout);
 
 NS_ASSUME_NONNULL_END

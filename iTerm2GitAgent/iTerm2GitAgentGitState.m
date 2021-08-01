@@ -1,18 +1,20 @@
 //
-//  PIDInfoGitState.m
-//  pidinfo
+//  iTerm2GitAgentGitState.m
+//  iTerm2GitAgent
 //
 //  Created by George Nachman on 4/27/21.
 //
 
-#import <Foundation/Foundation.h>
-#import "PIDInfoGitState.h"
+#import "iTerm2GitAgentGitState.h"
 #import "iTermGitClient.h"
 #import "iTermGitState.h"
+
+#import <Foundation/Foundation.h>
+
 #include <syslog.h>
 #include <stdarg.h>
 
-void PIDInfoGetGitState(const char *cpath, int timeout) {
+void iTerm2GitAgentGetGitState(const char *cpath, int timeout) {
     const int newPriority = 20;
     int rc = setpriority(PRIO_PROCESS, 0, newPriority);
     if (rc) {

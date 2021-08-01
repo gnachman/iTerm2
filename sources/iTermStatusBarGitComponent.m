@@ -15,6 +15,7 @@
 #import "iTermController.h"
 #import "iTermGitPoller.h"
 #import "iTermGitState+MainApp.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermSlowOperationGateway.h"
 #import "iTermTextPopoverViewController.h"
 #import "iTermVariableReference.h"
@@ -532,9 +533,9 @@ static const NSTimeInterval iTermStatusBarGitComponentDefaultCadence = 2;
         completion(@[]);
         return;
     }
-    [[iTermSlowOperationGateway sharedInstance] fetchRecentBranchesAt:_gitPoller.currentDirectory
-                                                                count:maxCount
-                                                           completion:^(NSArray<NSString *> * _Nonnull branches) {
+    [[iTermGitAgentGateway instance] fetchRecentBranchesAt:_gitPoller.currentDirectory
+                                                     count:maxCount
+                                                completion:^(NSArray<NSString *> * _Nonnull branches) {
         dispatch_async(dispatch_get_main_queue(), ^{
             completion(branches);
         });

@@ -2,6 +2,8 @@
 //  Use this file to import your target's public headers that you would like to expose to Swift.
 //
 
+#import "iTermAdvancedSettingsModel.h"
+#import "iTermGitState.h"
 #import "iTermStatusBarComponentKnob.h"
 #import "iTermStatusBarTextComponent.h"
 #import "iTermTuple.h"
@@ -12,3 +14,4 @@
 #import "PTYSession.h"
 #import "ScreenChar.h"
 #import "Trigger.h"
+#import "iTerm2GitAgentProtocol.h"

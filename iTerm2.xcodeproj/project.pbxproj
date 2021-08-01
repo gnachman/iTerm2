@@ -1747,6 +1747,10 @@
 		A62A1F771E711BC000363EE9 /* iTermHelpMessageViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = A62A1F741E711BC000363EE9 /* iTermHelpMessageViewController.m */; };
 		A62A1F781E711DCF00363EE9 /* iTermHelpMessageViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = A62A1F751E711BC000363EE9 /* iTermHelpMessageViewController.xib */; };
 		A62A1F791E711DD000363EE9 /* iTermHelpMessageViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = A62A1F751E711BC000363EE9 /* iTermHelpMessageViewController.xib */; };
+		A62A2F3726B4C86C004F4910 /* iTerm2GitAgentGitState.m in Sources */ = {isa = PBXBuildFile; fileRef = A6CDC31726391D1200616155 /* iTerm2GitAgentGitState.m */; };
+		A62A2F3826B62467004F4910 /* iTermGitClient.m in Sources */ = {isa = PBXBuildFile; fileRef = A687B66925AD6FF600E0A658 /* iTermGitClient.m */; };
+		A62A2F3926B62502004F4910 /* iTermGitState.m in Sources */ = {isa = PBXBuildFile; fileRef = 5365207021433ED2003C58FD /* iTermGitState.m */; };
+		A62A2F3C26B6267A004F4910 /* CPUUsageGovernor.swift in Sources */ = {isa = PBXBuildFile; fileRef = A62A2F3B26B6267A004F4910 /* CPUUsageGovernor.swift */; };
 		A62C3A891BCAE03300B5629D /* iTermDirectoryTreeNode.h in Headers */ = {isa = PBXBuildFile; fileRef = A62C3A871BCAE03300B5629D /* iTermDirectoryTreeNode.h */; };
 		A62C3A8A1BCAE03300B5629D /* iTermDirectoryTreeNode.m in Sources */ = {isa = PBXBuildFile; fileRef = A62C3A881BCAE03300B5629D /* iTermDirectoryTreeNode.m */; };
 		A62C3A8D1BCAE08300B5629D /* iTermDirectoryTree.h in Headers */ = {isa = PBXBuildFile; fileRef = A62C3A8B1BCAE08300B5629D /* iTermDirectoryTree.h */; };
@@ -2167,6 +2171,10 @@
 		A65FF3C320F1854F008BD0AE /* iTermMiniSearchFieldViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = A65FF3C020F18547008BD0AE /* iTermMiniSearchFieldViewController.xib */; };
 		A65FF3C420F18550008BD0AE /* iTermMiniSearchFieldViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = A65FF3C020F18547008BD0AE /* iTermMiniSearchFieldViewController.xib */; };
 		A65FF3C520F18552008BD0AE /* iTermMiniSearchFieldViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = A65FF3C020F18547008BD0AE /* iTermMiniSearchFieldViewController.xib */; };
+		A66026F826B1CDBC00220DD1 /* iTerm2GitAgent.m in Sources */ = {isa = PBXBuildFile; fileRef = A66026F726B1CDBC00220DD1 /* iTerm2GitAgent.m */; };
+		A66026FA26B1CDBC00220DD1 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = A66026F926B1CDBC00220DD1 /* main.m */; };
+		A66026FE26B1CDBC00220DD1 /* iTerm2GitAgent.xpc in Embed XPC Services */ = {isa = PBXBuildFile; fileRef = A66026F326B1CDBC00220DD1 /* iTerm2GitAgent.xpc */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		A660270526B1DE5400220DD1 /* GitAgentGateway.swift in Sources */ = {isa = PBXBuildFile; fileRef = A660270426B1DE5400220DD1 /* GitAgentGateway.swift */; };
 		A6614A2320958ED400A10D97 /* iTermBuildingScriptWindowController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6614A2020958ED400A10D97 /* iTermBuildingScriptWindowController.h */; };
 		A6614A2420958ED400A10D97 /* iTermBuildingScriptWindowController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6614A2120958ED400A10D97 /* iTermBuildingScriptWindowController.m */; };
 		A6614A2520958EDC00A10D97 /* iTermBuildingScriptWindowController.xib in Resources */ = {isa = PBXBuildFile; fileRef = A6614A2220958ED400A10D97 /* iTermBuildingScriptWindowController.xib */; };
@@ -2805,7 +2813,6 @@
 		A686F3621D32CD8100F08ED7 /* NSWindow+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A686F3601D32CD8100F08ED7 /* NSWindow+iTerm.h */; };
 		A686F3891D36A49100F08ED7 /* iTermPreciseTimer.h in Headers */ = {isa = PBXBuildFile; fileRef = A686F3871D36A49100F08ED7 /* iTermPreciseTimer.h */; };
 		A686F38D1D3951A800F08ED7 /* iTermBoxDrawingBezierCurveFactory.h in Headers */ = {isa = PBXBuildFile; fileRef = A686F38B1D3951A800F08ED7 /* iTermBoxDrawingBezierCurveFactory.h */; };
-		A687B66A25AD6FF600E0A658 /* iTermGitClient.m in Sources */ = {isa = PBXBuildFile; fileRef = A687B66925AD6FF600E0A658 /* iTermGitClient.m */; };
 		A68A30C1186D0DC1007F550F /* iTermFindCursorView.h in Headers */ = {isa = PBXBuildFile; fileRef = A68A30BF186D0DC1007F550F /* iTermFindCursorView.h */; };
 		A68A30C6186D0F37007F550F /* SmartMatch.h in Headers */ = {isa = PBXBuildFile; fileRef = A68A30C4186D0F36007F550F /* SmartMatch.h */; };
 		A68A30F4186D150A007F550F /* FileTransferManager.h in Headers */ = {isa = PBXBuildFile; fileRef = A68A30EA186D150A007F550F /* FileTransferManager.h */; };
@@ -3481,7 +3488,6 @@
 		A6CC16551CF012E300E8C148 /* iTermCarbonHotKeyController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6CC16531CF012E300E8C148 /* iTermCarbonHotKeyController.m */; };
 		A6CD8A432234DB83007C5B39 /* iTermStatusBarPlaceholderComponent.h in Headers */ = {isa = PBXBuildFile; fileRef = A6CD8A412234DB83007C5B39 /* iTermStatusBarPlaceholderComponent.h */; };
 		A6CD8A442234DB83007C5B39 /* iTermStatusBarPlaceholderComponent.m in Sources */ = {isa = PBXBuildFile; fileRef = A6CD8A422234DB83007C5B39 /* iTermStatusBarPlaceholderComponent.m */; };
-		A6CDC31826391D1200616155 /* PIDInfoGitState.m in Sources */ = {isa = PBXBuildFile; fileRef = A6CDC31726391D1200616155 /* PIDInfoGitState.m */; };
 		A6CDC329263D244600616155 /* NSScreen+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A69B4576195F668500F5444D /* NSScreen+iTerm.m */; };
 		A6CEBFBB1DCE7E09009F4FD2 /* Api.pbobjc.h in Headers */ = {isa = PBXBuildFile; fileRef = A6CEBF7D1DCE7DFF009F4FD2 /* Api.pbobjc.h */; };
 		A6CEBFBC1DCE7E09009F4FD2 /* Api.pbobjc.m in Sources */ = {isa = PBXBuildFile; fileRef = A6CEBF7E1DCE7DFF009F4FD2 /* Api.pbobjc.m */; };
@@ -3989,7 +3995,6 @@
 		A6FCB6101C67161F0019184E /* iTermFullScreenWindowManager.m in Sources */ = {isa = PBXBuildFile; fileRef = A6FCB6091C6714230019184E /* iTermFullScreenWindowManager.m */; };
 		A6FD5F9325AC2ADC00006234 /* iTermGitState+MainApp.h in Headers */ = {isa = PBXBuildFile; fileRef = A6FD5F9125AC2ADC00006234 /* iTermGitState+MainApp.h */; };
 		A6FD5F9425AC2ADC00006234 /* iTermGitState+MainApp.m in Sources */ = {isa = PBXBuildFile; fileRef = A6FD5F9225AC2ADC00006234 /* iTermGitState+MainApp.m */; };
-		A6FD5F9D25AC2B9A00006234 /* iTermGitState.m in Sources */ = {isa = PBXBuildFile; fileRef = 5365207021433ED2003C58FD /* iTermGitState.m */; };
 		A6FD85301B767D6300EB9DCE /* Hamburger.png in Resources */ = {isa = PBXBuildFile; fileRef = A6FD852E1B767D6300EB9DCE /* Hamburger.png */; };
 		A6FD85311B767D6300EB9DCE /* Hamburger@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A6FD852F1B767D6300EB9DCE /* Hamburger@2x.png */; };
 		A6FD85341B768B7800EB9DCE /* BigArrow.png in Resources */ = {isa = PBXBuildFile; fileRef = A6FD85321B768B7800EB9DCE /* BigArrow.png */; };
@@ -4107,6 +4112,13 @@
 			proxyType = 1;
 			remoteGlobalIDString = A663197722FF349700C502BD;
 			remoteInfo = iTermServer;
+		};
+		A66026FC26B1CDBC00220DD1 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 0464AB0C006CD2EC7F000001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = A66026F226B1CDBC00220DD1;
+			remoteInfo = iTerm2GitAgent;
 		};
 		A667195D1DCE36EF000CE608 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -4233,6 +4245,7 @@
 			files = (
 				A6866B7223CAA10A00ACD94C /* pidinfo.xpc in Embed XPC Services */,
 				759637A52593AE0700E278CC /* iTerm2SandboxedWorker.xpc in Embed XPC Services */,
+				A66026FE26B1CDBC00220DD1 /* iTerm2GitAgent.xpc in Embed XPC Services */,
 			);
 			name = "Embed XPC Services";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -5342,6 +5355,8 @@
 		A62A1F731E711BC000363EE9 /* iTermHelpMessageViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermHelpMessageViewController.h; sourceTree = "<group>"; };
 		A62A1F741E711BC000363EE9 /* iTermHelpMessageViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermHelpMessageViewController.m; sourceTree = "<group>"; };
 		A62A1F751E711BC000363EE9 /* iTermHelpMessageViewController.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = iTermHelpMessageViewController.xib; sourceTree = "<group>"; };
+		A62A2F3A26B62679004F4910 /* iTerm2GitAgent-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "iTerm2GitAgent-Bridging-Header.h"; sourceTree = "<group>"; };
+		A62A2F3B26B6267A004F4910 /* CPUUsageGovernor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CPUUsageGovernor.swift; sourceTree = "<group>"; };
 		A62C3A871BCAE03300B5629D /* iTermDirectoryTreeNode.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermDirectoryTreeNode.h; sourceTree = "<group>"; };
 		A62C3A881BCAE03300B5629D /* iTermDirectoryTreeNode.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermDirectoryTreeNode.m; sourceTree = "<group>"; };
 		A62C3A8B1BCAE08300B5629D /* iTermDirectoryTree.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermDirectoryTree.h; sourceTree = "<group>"; };
@@ -5719,6 +5734,13 @@
 		A65FF3BE20F18547008BD0AE /* iTermMiniSearchFieldViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermMiniSearchFieldViewController.h; sourceTree = "<group>"; };
 		A65FF3BF20F18547008BD0AE /* iTermMiniSearchFieldViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermMiniSearchFieldViewController.m; sourceTree = "<group>"; };
 		A65FF3C020F18547008BD0AE /* iTermMiniSearchFieldViewController.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = iTermMiniSearchFieldViewController.xib; sourceTree = "<group>"; };
+		A66026F326B1CDBC00220DD1 /* iTerm2GitAgent.xpc */ = {isa = PBXFileReference; explicitFileType = "wrapper.xpc-service"; includeInIndex = 0; path = iTerm2GitAgent.xpc; sourceTree = BUILT_PRODUCTS_DIR; };
+		A66026F526B1CDBC00220DD1 /* iTerm2GitAgentProtocol.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTerm2GitAgentProtocol.h; sourceTree = "<group>"; };
+		A66026F626B1CDBC00220DD1 /* iTerm2GitAgent.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTerm2GitAgent.h; sourceTree = "<group>"; };
+		A66026F726B1CDBC00220DD1 /* iTerm2GitAgent.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTerm2GitAgent.m; sourceTree = "<group>"; };
+		A66026F926B1CDBC00220DD1 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
+		A66026FB26B1CDBC00220DD1 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		A660270426B1DE5400220DD1 /* GitAgentGateway.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GitAgentGateway.swift; sourceTree = "<group>"; };
 		A6614A2020958ED400A10D97 /* iTermBuildingScriptWindowController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermBuildingScriptWindowController.h; sourceTree = "<group>"; };
 		A6614A2120958ED400A10D97 /* iTermBuildingScriptWindowController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermBuildingScriptWindowController.m; sourceTree = "<group>"; };
 		A6614A2220958ED400A10D97 /* iTermBuildingScriptWindowController.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = iTermBuildingScriptWindowController.xib; sourceTree = "<group>"; };
@@ -6481,8 +6503,8 @@
 		A6CD8A4022345427007C5B39 /* iTermNotificationCenter+Protected.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "iTermNotificationCenter+Protected.h"; sourceTree = "<group>"; };
 		A6CD8A412234DB83007C5B39 /* iTermStatusBarPlaceholderComponent.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermStatusBarPlaceholderComponent.h; sourceTree = "<group>"; };
 		A6CD8A422234DB83007C5B39 /* iTermStatusBarPlaceholderComponent.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermStatusBarPlaceholderComponent.m; sourceTree = "<group>"; };
-		A6CDC31626391D1200616155 /* PIDInfoGitState.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = PIDInfoGitState.h; sourceTree = "<group>"; };
-		A6CDC31726391D1200616155 /* PIDInfoGitState.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = PIDInfoGitState.m; sourceTree = "<group>"; };
+		A6CDC31626391D1200616155 /* iTerm2GitAgentGitState.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTerm2GitAgentGitState.h; sourceTree = "<group>"; };
+		A6CDC31726391D1200616155 /* iTerm2GitAgentGitState.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTerm2GitAgentGitState.m; sourceTree = "<group>"; };
 		A6CEBF7D1DCE7DFF009F4FD2 /* Api.pbobjc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Api.pbobjc.h; path = proto/Api.pbobjc.h; sourceTree = "<group>"; };
 		A6CEBF7E1DCE7DFF009F4FD2 /* Api.pbobjc.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = Api.pbobjc.m; path = proto/Api.pbobjc.m; sourceTree = "<group>"; };
 		A6CEC0481DCE80C1009F4FD2 /* Any.pbobjc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Any.pbobjc.h; path = ThirdParty/google/protobuf/Any.pbobjc.h; sourceTree = SOURCE_ROOT; };
@@ -7035,6 +7057,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		A66026F026B1CDBC00220DD1 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		A663197522FF349700C502BD /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -7098,6 +7127,7 @@
 				A6866B6823CAA10A00ACD94C /* pidinfo */,
 				A60593B3257DF9A500CACEE6 /* ShellLauncher */,
 				7596379B2593AE0700E278CC /* iTerm2SandboxedWorker */,
+				A66026F426B1CDBC00220DD1 /* iTerm2GitAgent */,
 				1DD39AD5180B8118004E56D5 /* Frameworks */,
 				0464AB32006CD2EC7F000001 /* Products */,
 			);
@@ -7551,6 +7581,7 @@
 				A663197822FF349700C502BD /* iTermServer */,
 				A60593B2257DF9A500CACEE6 /* ShellLauncher */,
 				7596379A2593AE0700E278CC /* iTerm2SandboxedWorker.xpc */,
+				A66026F326B1CDBC00220DD1 /* iTerm2GitAgent.xpc */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -9110,6 +9141,24 @@
 			name = Support;
 			sourceTree = "<group>";
 		};
+		A66026F426B1CDBC00220DD1 /* iTerm2GitAgent */ = {
+			isa = PBXGroup;
+			children = (
+				A6CDC31626391D1200616155 /* iTerm2GitAgentGitState.h */,
+				A6CDC31726391D1200616155 /* iTerm2GitAgentGitState.m */,
+				A66026F526B1CDBC00220DD1 /* iTerm2GitAgentProtocol.h */,
+				A66026F626B1CDBC00220DD1 /* iTerm2GitAgent.h */,
+				A66026F726B1CDBC00220DD1 /* iTerm2GitAgent.m */,
+				A687B66825AD6FF600E0A658 /* iTermGitClient.h */,
+				A687B66925AD6FF600E0A658 /* iTermGitClient.m */,
+				A66026F926B1CDBC00220DD1 /* main.m */,
+				A66026FB26B1CDBC00220DD1 /* Info.plist */,
+				A62A2F3B26B6267A004F4910 /* CPUUsageGovernor.swift */,
+				A62A2F3A26B62679004F4910 /* iTerm2GitAgent-Bridging-Header.h */,
+			);
+			path = iTerm2GitAgent;
+			sourceTree = "<group>";
+		};
 		A663012119D08638004AF81C /* SCEvents */ = {
 			isa = PBXGroup;
 			children = (
@@ -9320,10 +9369,6 @@
 				A6866B6B23CAA10A00ACD94C /* pidinfo.m */,
 				A6866B6D23CAA10A00ACD94C /* main.m */,
 				A6866B6F23CAA10A00ACD94C /* Info.plist */,
-				A687B66825AD6FF600E0A658 /* iTermGitClient.h */,
-				A687B66925AD6FF600E0A658 /* iTermGitClient.m */,
-				A6CDC31626391D1200616155 /* PIDInfoGitState.h */,
-				A6CDC31726391D1200616155 /* PIDInfoGitState.m */,
 			);
 			path = pidinfo;
 			sourceTree = "<group>";
@@ -9335,6 +9380,7 @@
 				A6866B7C23CAA31900ACD94C /* iTermPidInfoClient.m */,
 				A6EC936424E513DB00EEADEF /* iTermSlowOperationGateway.h */,
 				A6EC936524E513DB00EEADEF /* iTermSlowOperationGateway.m */,
+				A660270426B1DE5400220DD1 /* GitAgentGateway.swift */,
 			);
 			name = pidinfo;
 			sourceTree = "<group>";
@@ -12058,6 +12104,7 @@
 				A6C537BB19315CCB00A08C18 /* PBXTargetDependency */,
 				A6866B7123CAA10A00ACD94C /* PBXTargetDependency */,
 				759637A42593AE0700E278CC /* PBXTargetDependency */,
+				A66026FD26B1CDBC00220DD1 /* PBXTargetDependency */,
 			);
 			name = iTerm2;
 			productName = "JTerminal (Application)";
@@ -12080,6 +12127,23 @@
 			productName = ShellLauncher;
 			productReference = A60593B2257DF9A500CACEE6 /* ShellLauncher */;
 			productType = "com.apple.product-type.tool";
+		};
+		A66026F226B1CDBC00220DD1 /* iTerm2GitAgent */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A660270326B1CDBC00220DD1 /* Build configuration list for PBXNativeTarget "iTerm2GitAgent" */;
+			buildPhases = (
+				A66026EF26B1CDBC00220DD1 /* Sources */,
+				A66026F026B1CDBC00220DD1 /* Frameworks */,
+				A66026F126B1CDBC00220DD1 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = iTerm2GitAgent;
+			productName = iTerm2GitAgent;
+			productReference = A66026F326B1CDBC00220DD1 /* iTerm2GitAgent.xpc */;
+			productType = "com.apple.product-type.xpc-service";
 		};
 		A663197722FF349700C502BD /* iTermServer */ = {
 			isa = PBXNativeTarget;
@@ -12203,6 +12267,11 @@
 						CreatedOnToolsVersion = 12.2;
 						ProvisioningStyle = Automatic;
 					};
+					A66026F226B1CDBC00220DD1 = {
+						CreatedOnToolsVersion = 12.5;
+						LastSwiftMigration = 1250;
+						ProvisioningStyle = Automatic;
+					};
 					A663197722FF349700C502BD = {
 						CreatedOnToolsVersion = 10.2;
 						ProvisioningStyle = Manual;
@@ -12252,6 +12321,7 @@
 				A663197722FF349700C502BD /* iTermServer */,
 				A60593B1257DF9A500CACEE6 /* ShellLauncher */,
 				759637992593AE0700E278CC /* iTerm2SandboxedWorker */,
+				A66026F226B1CDBC00220DD1 /* iTerm2GitAgent */,
 			);
 		};
 /* End PBXProject section */
@@ -13674,6 +13744,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		A66026F126B1CDBC00220DD1 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		A6866B6523CAA10A00ACD94C /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -14167,6 +14244,19 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		A66026EF26B1CDBC00220DD1 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A62A2F3C26B6267A004F4910 /* CPUUsageGovernor.swift in Sources */,
+				A66026FA26B1CDBC00220DD1 /* main.m in Sources */,
+				A62A2F3926B62502004F4910 /* iTermGitState.m in Sources */,
+				A66026F826B1CDBC00220DD1 /* iTerm2GitAgent.m in Sources */,
+				A62A2F3726B4C86C004F4910 /* iTerm2GitAgentGitState.m in Sources */,
+				A62A2F3826B62467004F4910 /* iTermGitClient.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		A663197422FF349700C502BD /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -14190,6 +14280,7 @@
 				A6153D5121F30FF4002976FC /* iTermStatusBarJobComponent.m in Sources */,
 				537BFDDF2102B4060098C91F /* iTermPublisher.m in Sources */,
 				A61A85A224F1A70500B03880 /* iTermGlobalSearchWindowController.m in Sources */,
+				A660270526B1DE5400220DD1 /* GitAgentGateway.swift in Sources */,
 				A691AACF2618DDCA0049B619 /* iTermSlownessDetector.m in Sources */,
 				A6566750219EA46E005FE60E /* NSNumber+iTerm.m in Sources */,
 				A6EC936C24E7868D00EEADEF /* iTermToolSnippets.m in Sources */,
@@ -14751,10 +14842,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				A6FD5F9D25AC2B9A00006234 /* iTermGitState.m in Sources */,
 				A6866B6E23CAA10A00ACD94C /* main.m in Sources */,
-				A6CDC31826391D1200616155 /* PIDInfoGitState.m in Sources */,
-				A687B66A25AD6FF600E0A658 /* iTermGitClient.m in Sources */,
 				A6866B6C23CAA10A00ACD94C /* pidinfo.m in Sources */,
 				A6EC936824E64FAA00EEADEF /* iTermFileDescriptorServerShared.c in Sources */,
 			);
@@ -15150,6 +15238,11 @@
 			isa = PBXTargetDependency;
 			target = A663197722FF349700C502BD /* iTermServer */;
 			targetProxy = A64FCD51238DDF61001D8199 /* PBXContainerItemProxy */;
+		};
+		A66026FD26B1CDBC00220DD1 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = A66026F226B1CDBC00220DD1 /* iTerm2GitAgent */;
+			targetProxy = A66026FC26B1CDBC00220DD1 /* PBXContainerItemProxy */;
 		};
 		A667195E1DCE36EF000CE608 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
@@ -16920,6 +17013,314 @@
 			};
 			name = Beta;
 		};
+		A66026FF26B1CDBC00220DD1 /* Development */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				INFOPLIST_FILE = iTerm2GitAgent/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
+				LIBRARY_SEARCH_PATHS = "$(PROJECT_DIR)/ThirdParty/libgit2/lib";
+				MACOSX_DEPLOYMENT_TARGET = 11.3;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				OTHER_CFLAGS = (
+					"-DITERM_XPC=1",
+					"-Wno-documentation-deprecated-sync",
+				);
+				OTHER_LDFLAGS = (
+					"-liconv",
+					"-lz",
+					$PROJECT_DIR/ThirdParty/libgit2/lib/libgit2.a,
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.iterm2.iTerm2GitAgent;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SKIP_INSTALL = YES;
+				SWIFT_OBJC_BRIDGING_HEADER = "iTerm2GitAgent/iTerm2GitAgent-Bridging-Header.h";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+				USER_HEADER_SEARCH_PATHS = $PROJECT_DIR/ThirdParty/libgit2/include;
+			};
+			name = Development;
+		};
+		A660270026B1CDBC00220DD1 /* Deployment */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "Developer ID Application: GEORGE NACHMAN (H7V7XYVQ7D)";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = "";
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				INFOPLIST_FILE = iTerm2GitAgent/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
+				LIBRARY_SEARCH_PATHS = "$(PROJECT_DIR)/ThirdParty/libgit2/lib";
+				MACOSX_DEPLOYMENT_TARGET = 11.3;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				OTHER_CFLAGS = (
+					"-DITERM_XPC=1",
+					"-Wno-documentation-deprecated-sync",
+				);
+				OTHER_LDFLAGS = (
+					"-liconv",
+					"-lz",
+					$PROJECT_DIR/ThirdParty/libgit2/lib/libgit2.a,
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.iterm2.iTerm2GitAgent;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SKIP_INSTALL = YES;
+				SWIFT_OBJC_BRIDGING_HEADER = "iTerm2GitAgent/iTerm2GitAgent-Bridging-Header.h";
+				SWIFT_VERSION = 5.0;
+				USER_HEADER_SEARCH_PATHS = $PROJECT_DIR/ThirdParty/libgit2/include;
+			};
+			name = Deployment;
+		};
+		A660270126B1CDBC00220DD1 /* Beta */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "Developer ID Application: GEORGE NACHMAN (H7V7XYVQ7D)";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = "";
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				INFOPLIST_FILE = iTerm2GitAgent/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
+				LIBRARY_SEARCH_PATHS = "$(PROJECT_DIR)/ThirdParty/libgit2/lib";
+				MACOSX_DEPLOYMENT_TARGET = 11.3;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				OTHER_CFLAGS = (
+					"-DITERM_XPC=1",
+					"-Wno-documentation-deprecated-sync",
+				);
+				OTHER_LDFLAGS = (
+					"-liconv",
+					"-lz",
+					$PROJECT_DIR/ThirdParty/libgit2/lib/libgit2.a,
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.iterm2.iTerm2GitAgent;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SKIP_INSTALL = YES;
+				SWIFT_OBJC_BRIDGING_HEADER = "iTerm2GitAgent/iTerm2GitAgent-Bridging-Header.h";
+				SWIFT_VERSION = 5.0;
+				USER_HEADER_SEARCH_PATHS = $PROJECT_DIR/ThirdParty/libgit2/include;
+			};
+			name = Beta;
+		};
+		A660270226B1CDBC00220DD1 /* Nightly */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "Developer ID Application: GEORGE NACHMAN (H7V7XYVQ7D)";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = "";
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				INFOPLIST_FILE = iTerm2GitAgent/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
+				LIBRARY_SEARCH_PATHS = "$(PROJECT_DIR)/ThirdParty/libgit2/lib";
+				MACOSX_DEPLOYMENT_TARGET = 11.3;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				OTHER_CFLAGS = (
+					"-DITERM_XPC=1",
+					"-Wno-documentation-deprecated-sync",
+				);
+				OTHER_LDFLAGS = (
+					"-liconv",
+					"-lz",
+					$PROJECT_DIR/ThirdParty/libgit2/lib/libgit2.a,
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.iterm2.iTerm2GitAgent;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SKIP_INSTALL = YES;
+				SWIFT_OBJC_BRIDGING_HEADER = "iTerm2GitAgent/iTerm2GitAgent-Bridging-Header.h";
+				SWIFT_VERSION = 5.0;
+				USER_HEADER_SEARCH_PATHS = $PROJECT_DIR/ThirdParty/libgit2/include;
+			};
+			name = Nightly;
+		};
 		A663197D22FF349800C502BD /* Development */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -17431,10 +17832,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				INFOPLIST_FILE = pidinfo/Info.plist;
-				LIBRARY_SEARCH_PATHS = (
-					"$(inherited)",
-					"$(PROJECT_DIR)/ThirdParty/libgit2/lib",
-				);
+				LIBRARY_SEARCH_PATHS = "$(inherited)";
 				MACOSX_DEPLOYMENT_TARGET = 10.14;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
@@ -17444,17 +17842,11 @@
 					"-Wno-documentation-deprecated-sync",
 				);
 				OTHER_CODE_SIGN_FLAGS = "--timestamp";
-				OTHER_LDFLAGS = (
-					"-liconv",
-					"-lz",
-					$PROJECT_DIR/ThirdParty/libgit2/lib/libgit2.a,
-				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.iterm2.pidinfo;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = macosx;
 				SKIP_INSTALL = YES;
-				USER_HEADER_SEARCH_PATHS = $PROJECT_DIR/ThirdParty/libgit2/include;
 				VALID_ARCHS = "$(ARCHS_STANDARD)";
 			};
 			name = Development;
@@ -17512,10 +17904,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				INFOPLIST_FILE = pidinfo/Info.plist;
-				LIBRARY_SEARCH_PATHS = (
-					"$(inherited)",
-					"$(PROJECT_DIR)/ThirdParty/libgit2/lib",
-				);
+				LIBRARY_SEARCH_PATHS = "$(inherited)";
 				MACOSX_DEPLOYMENT_TARGET = 10.14;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
@@ -17524,17 +17913,11 @@
 					"-Wno-documentation-deprecated-sync",
 				);
 				OTHER_CODE_SIGN_FLAGS = "--timestamp";
-				OTHER_LDFLAGS = (
-					"-liconv",
-					"-lz",
-					$PROJECT_DIR/ThirdParty/libgit2/lib/libgit2.a,
-				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.iterm2.pidinfo;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = macosx;
 				SKIP_INSTALL = YES;
-				USER_HEADER_SEARCH_PATHS = $PROJECT_DIR/ThirdParty/libgit2/include;
 				VALID_ARCHS = "$(ARCHS_STANDARD)";
 			};
 			name = Deployment;
@@ -17592,10 +17975,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				INFOPLIST_FILE = pidinfo/Info.plist;
-				LIBRARY_SEARCH_PATHS = (
-					"$(inherited)",
-					"$(PROJECT_DIR)/ThirdParty/libgit2/lib",
-				);
+				LIBRARY_SEARCH_PATHS = "$(inherited)";
 				MACOSX_DEPLOYMENT_TARGET = 10.14;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
@@ -17604,17 +17984,11 @@
 					"-Wno-documentation-deprecated-sync",
 				);
 				OTHER_CODE_SIGN_FLAGS = "--timestamp";
-				OTHER_LDFLAGS = (
-					"-liconv",
-					"-lz",
-					$PROJECT_DIR/ThirdParty/libgit2/lib/libgit2.a,
-				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.iterm2.pidinfo;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = macosx;
 				SKIP_INSTALL = YES;
-				USER_HEADER_SEARCH_PATHS = $PROJECT_DIR/ThirdParty/libgit2/include;
 				VALID_ARCHS = "$(ARCHS_STANDARD)";
 			};
 			name = Beta;
@@ -17672,10 +18046,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				INFOPLIST_FILE = pidinfo/Info.plist;
-				LIBRARY_SEARCH_PATHS = (
-					"$(inherited)",
-					"$(PROJECT_DIR)/ThirdParty/libgit2/lib",
-				);
+				LIBRARY_SEARCH_PATHS = "$(inherited)";
 				MACOSX_DEPLOYMENT_TARGET = 10.14;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
@@ -17684,17 +18055,11 @@
 					"-Wno-documentation-deprecated-sync",
 				);
 				OTHER_CODE_SIGN_FLAGS = "--timestamp";
-				OTHER_LDFLAGS = (
-					"-liconv",
-					"-lz",
-					$PROJECT_DIR/ThirdParty/libgit2/lib/libgit2.a,
-				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.iterm2.pidinfo;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = macosx;
 				SKIP_INSTALL = YES;
-				USER_HEADER_SEARCH_PATHS = $PROJECT_DIR/ThirdParty/libgit2/include;
 				VALID_ARCHS = "$(ARCHS_STANDARD)";
 			};
 			name = Nightly;
@@ -18388,6 +18753,17 @@
 				A60593B7257DF9A500CACEE6 /* Deployment */,
 				A60593B8257DF9A500CACEE6 /* Beta */,
 				A60593B9257DF9A500CACEE6 /* Nightly */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Development;
+		};
+		A660270326B1CDBC00220DD1 /* Build configuration list for PBXNativeTarget "iTerm2GitAgent" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A66026FF26B1CDBC00220DD1 /* Development */,
+				A660270026B1CDBC00220DD1 /* Deployment */,
+				A660270126B1CDBC00220DD1 /* Beta */,
+				A660270226B1CDBC00220DD1 /* Nightly */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Development;

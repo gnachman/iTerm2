@@ -39,12 +39,6 @@ NS_ASSUME_NONNULL_BEGIN
                        executable:(BOOL)executable
                         withReply:(void (^)(NSArray<NSString *> * _Nullable))reply;
 
-- (void)requestGitStateForPath:(NSString *)path
-                       timeout:(int)timeout
-                    completion:(void (^)(iTermGitState * _Nullable))completion;
-
-- (void)fetchRecentBranchesAt:(NSString *)path count:(NSInteger)maxCount completion:(void (^)(NSArray<NSString *> *))reply;
-
 @end
 
 NS_ASSUME_NONNULL_END

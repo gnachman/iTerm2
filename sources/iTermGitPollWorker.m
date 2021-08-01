@@ -17,6 +17,7 @@
 #import "iTermTuple.h"
 #import "NSArray+iTerm.h"
 #import "NSStringITerm.h"
+#import "iTerm2SharedARC-Swift.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -70,7 +71,7 @@ typedef void (^iTermGitPollWorkerCompletionBlock)(iTermGitState * _Nullable);
     _pending[path] = [@[ [completion copy] ] mutableCopy];
     DLog(@"Create pending request for %@ with a single waiter", path);
     DLog(@"Send through gateway with the following pending requests:\n%@", _pending);
-    [[iTermSlowOperationGateway sharedInstance] requestGitStateForPath:path completion:^(iTermGitState * _Nullable state) {
+    [[iTermGitAgentGateway instance] requestGitStateForPath:path completion:^(iTermGitState * _Nullable state) {
         DLog(@"Got response for %@ with state %@", path, state);
         dispatch_async(dispatch_get_main_queue(), ^{
             [self didFetchState:state path:path];
