@@ -15,6 +15,18 @@ NSString *const iTermWindowAppearanceDidChange = @"iTermWindowAppearanceDidChang
 
 @implementation NSWindow(iTerm)
 
+- (void)it_titleBarDoubleClick {
+    NSString *doubleClickAction = [[NSUserDefaults standardUserDefaults] objectForKey:@"AppleActionOnDoubleClick"];
+    if ([doubleClickAction isEqualToString:@"Minimize"]) {
+        [self performMiniaturize:nil];
+        return;
+    }
+    if (doubleClickAction == nil || [doubleClickAction isEqualToString:@"Maximize"]) {
+        [self performZoom:nil];
+        return;
+    }
+}
+
 - (BOOL)isFullScreen {
     return ((self.styleMask & NSWindowStyleMaskFullScreen) == NSWindowStyleMaskFullScreen);
 }

@@ -12,6 +12,7 @@
 #import "DebugLogging.h"
 #import "NSObject+iTerm.h"
 #import "NSView+iTerm.h"
+#import "NSWindow+iTerm.h"
 
 @interface NSView (Private)
 - (NSRect)_opaqueRectForWindowMoveWhenInTitlebar;
@@ -302,7 +303,7 @@ typedef NS_ENUM(NSInteger, iTermTabBarFlashState) {
     if (event.clickCount == 2 &&
         [self.itermTabBarDelegate iTermTabBarCanDragWindow] &&
         ![self clickedInCell:event]) {
-        [self.window performZoom:nil];
+        [self.window it_titleBarDoubleClick];
         return;
     }
     [super mouseUp:event];

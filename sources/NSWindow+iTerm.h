@@ -25,4 +25,6 @@ extern NSString *const iTermWindowAppearanceDidChange;
 - (void)it_makeKeyAndOrderFront;
 
 - (NSView *)it_titlebarViewOfClassWithName:(NSString *)className;
+- (void)it_titleBarDoubleClick;
+
 @end
