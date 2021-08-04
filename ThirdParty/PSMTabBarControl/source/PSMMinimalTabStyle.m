@@ -68,9 +68,13 @@
 }
 
 - (NSColor *)textColorDefaultSelected:(BOOL)selected backgroundColor:(NSColor *)backgroundColor windowIsMainAndAppIsActive:(BOOL)mainAndActive {
-    CGFloat backgroundBrightness = backgroundColor ? backgroundColor.it_hspBrightness : self.tabBarColor.it_hspBrightness;
+    const CGFloat backgroundBrightness =
+    (backgroundColor ?
+     backgroundColor.it_hspBrightness :
+     [self backgroundColorSelected:selected highlightAmount:0].it_hspBrightness);
+
     if (!backgroundColor) {
-        DLog(@"Choose background brightness form tab bar color of %@", self.tabBarColor);
+        DLog(@"Choose background brightness from tab bar color of %@", self.tabBarColor);
     }
     const CGFloat delta = selected ? 0.85 : 0.5;
     CGFloat value;
