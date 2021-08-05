@@ -8,6 +8,7 @@
 #import "iTermSlowOperationGateway.h"
 
 #import "DebugLogging.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "ITAddressBookMgr.h"
 #import "iTermOpenDirectory.h"
@@ -15,6 +16,8 @@
 #import "ProfileModel.h"
 #import "pidinfo.h"
 #include <stdatomic.h>
+
+static const char iTermSlowOperationGatewayObserverKey;
 
 typedef void (^iTermRecentBranchFetchCallback)(NSArray<NSString *> *);
 
@@ -48,6 +51,7 @@ typedef void (^iTermRecentBranchFetchCallback)(NSArray<NSString *> *);
     NSTimeInterval _timeout;
     NSMutableArray<iTermGitStateHandlerBox *> *_gitStateHandlers;
     NSMutableArray<iTermGitRecentBranchesBox *> *_gitRecentBranchFetchCallbacks;
+    iTermCPUGovernor *_governor;
 }
 
 + (instancetype)sharedInstance {
@@ -68,21 +72,46 @@ typedef void (^iTermRecentBranchFetchCallback)(NSArray<NSString *> *);
         [self connect];
         __weak __typeof(self) weakSelf = self;
         [_connectionToService.remoteObjectProxy handshakeWithReply:^{
-            weakSelf.ready = YES;
+            __strong __typeof(self) strongSelf = weakSelf;
+            if (!strongSelf) {
+                return;
+            }
+            strongSelf.ready = YES;
+            [strongSelf startGovernor];
         }];
     }
     return self;
 }
 
+- (void)startGovernor {
+    if (_governor) {
+        _governor.pid = _connectionToService.processIdentifier;
+        return;
+    }
+    _governor = [[iTermCPUGovernor alloc] initWithPID:_connectionToService.processIdentifier
+                                            dutyCycle:0.5];
+}
+
+- (void)invalidateGovernor {
+    [_governor invalidate];
+    _governor = nil;
+}
+
 - (void)didInvalidateConnection {
+    [self invalidateGovernor];
     self.ready = NO;
     [self connect];
 }
 
 - (void)connect {
+    [_connectionToService removeObserver:self forKeyPath:@"processIdentifier"];
     _connectionToService = [[NSXPCConnection alloc] initWithServiceName:@"com.iterm2.pidinfo"];
     _connectionToService.remoteObjectInterface = [NSXPCInterface interfaceWithProtocol:@protocol(pidinfoProtocol)];
     [_connectionToService resume];
+    [_connectionToService addObserver:self
+                           forKeyPath:@"processIdentifier"
+                              options:0
+                              context:(void *)&iTermSlowOperationGatewayObserverKey];
 
     __weak __typeof(self) weakSelf = self;
     _connectionToService.invalidationHandler = ^{
@@ -100,6 +129,16 @@ typedef void (^iTermRecentBranchFetchCallback)(NSArray<NSString *> *);
     _connectionToService.interruptionHandler = ^{
         [weakSelf didInterrupt];
     };
+}
+
+- (void)observeValueForKeyPath:(NSString *)keyPath
+                      ofObject:(id)object
+                        change:(NSDictionary<NSKeyValueChangeKey,id> *)change
+                       context:(void *)context {
+    if (context != &iTermSlowOperationGatewayObserverKey) {
+        return;
+    }
+    _governor.pid = _connectionToService.processIdentifier;
 }
 
 - (void)didInterrupt {
@@ -223,19 +262,22 @@ typedef void (^iTermRecentBranchFetchCallback)(NSArray<NSString *> *);
 
 - (void)requestGitStateForPath:(NSString *)path
                     completion:(void (^)(iTermGitState * _Nullable))completion {
+    _governor.pid = _connectionToService.processIdentifier;
     iTermGitStateHandlerBox *box = [[iTermGitStateHandlerBox alloc] init];
     box.block = completion;
     @synchronized(_gitStateHandlers) {
         [_gitStateHandlers addObject:box];
     }
+    const NSInteger token = [_governor incr];
     [[_connectionToService remoteObjectProxy] requestGitStateForPath:path
                                                              timeout:[iTermAdvancedSettingsModel gitTimeout]
                                                           completion:^(iTermGitState * _Nullable state) {
-        [self didGetGitState:state completion:box];
+        [self didGetGitState:state completion:box token:token];
     }];
 }
 
-- (void)didGetGitState:(iTermGitState *)gitState completion:(iTermGitStateHandlerBox *)completion {
+- (void)didGetGitState:(iTermGitState *)gitState completion:(iTermGitStateHandlerBox *)completion token:(NSInteger)token {
+    [_governor decr:token];
     @synchronized (_gitStateHandlers) {
         if (![_gitStateHandlers containsObject:completion]) {
             return;
@@ -248,6 +290,8 @@ typedef void (^iTermRecentBranchFetchCallback)(NSArray<NSString *> *);
 - (void)fetchRecentBranchesAt:(NSString *)path
                         count:(NSInteger)maxCount
                    completion:(void (^)(NSArray<NSString *> *))reply {
+    _governor.pid = _connectionToService.processIdentifier;
+    const NSInteger token = [_governor incr];
     iTermGitRecentBranchesBox *box = [[iTermGitRecentBranchesBox alloc] init];
     box.block = reply;
     @synchronized(_gitStateHandlers) {
@@ -256,11 +300,12 @@ typedef void (^iTermRecentBranchFetchCallback)(NSArray<NSString *> *);
     [[_connectionToService remoteObjectProxy] fetchRecentBranchesAt:path
                                                               count:maxCount
                                                          completion:^(NSArray<NSString *> * _Nonnull branches) {
-        [self didGetRecentBranches:branches box:box];
+        [self didGetRecentBranches:branches box:box token:token];
     }];
 }
 
-- (void)didGetRecentBranches:(NSArray<NSString *> *)branches box:(iTermGitRecentBranchesBox *)box {
+- (void)didGetRecentBranches:(NSArray<NSString *> *)branches box:(iTermGitRecentBranchesBox *)box token:(NSInteger)token {
+    [_governor decr:token];
     @synchronized (_gitRecentBranchFetchCallbacks) {
         if (![_gitRecentBranchFetchCallbacks containsObject:box]) {
             return;

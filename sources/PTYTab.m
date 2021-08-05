@@ -1248,13 +1248,13 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     NSArray<PTYSession *> *bCandidates = [self sessionsInProjectionOfSession:aSession verticalDirection:verticalDir after:after];
     return [bCandidates filteredArrayUsingBlock:^BOOL(PTYSession *b) {
         BOOL cExists = [bCandidates anyWithBlock:^BOOL(PTYSession *cCandidate) {
-            return [self session:cCandidate sitsBetween:aSession and:b verticalDir:verticalDir after:after];
+            return [self session:cCandidate sitsBetween:aSession andSession:b verticalDir:verticalDir after:after];
         }];
         return !cExists;
     }];
 }
 
-- (BOOL)session:(PTYSession *)c sitsBetween:(PTYSession *)a and:(PTYSession *)b verticalDir:(BOOL)verticalDir after:(BOOL)after {
+- (BOOL)session:(PTYSession *)c sitsBetween:(PTYSession *)a andSession:(PTYSession *)b verticalDir:(BOOL)verticalDir after:(BOOL)after {
     if (c == a || c == b) {
         return NO;
     }
