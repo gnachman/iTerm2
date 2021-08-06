@@ -249,6 +249,7 @@ preferredEscaping:(iTermSendTextEscaping)preferredEscaping;
                   sideEffects:(iTermClickSideEffects)sideEffects
                         state:(iTermMouseState)state;
 
+- (BOOL)textViewCanWriteToTTY;
 @end
 
 @interface iTermHighlightedRow : NSObject

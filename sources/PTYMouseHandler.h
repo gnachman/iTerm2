@@ -71,6 +71,7 @@ NS_ASSUME_NONNULL_BEGIN
 allowDragBeforeMouseDown:(BOOL)allowDragBeforeMouseDown
             testOnly:(BOOL)testOnly;
 - (BOOL)mouseHandler:(PTYMouseHandler *)handler viewCoordIsReportable:(NSPoint)coord;
+- (BOOL)mouseHandlerCanWriteToTTY:(PTYMouseHandler *)handler;
 - (BOOL)mouseHandlerViewIsFirstResponder:(PTYMouseHandler *)mouseHandler;
 - (BOOL)mouseHandlerShouldReportClicksAndDrags:(PTYMouseHandler *)mouseHandler;
 - (BOOL)mouseHandlerShouldReportScroll:(PTYMouseHandler *)mouseHandler;

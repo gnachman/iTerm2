@@ -5165,6 +5165,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     return coord;
 }
 
+- (BOOL)mouseHandlerCanWriteToTTY:(PTYMouseHandler *)handler {
+    return [self.delegate textViewCanWriteToTTY];
+}
+
 - (BOOL)mouseHandler:(PTYMouseHandler *)handler viewCoordIsReportable:(NSPoint)point {
     const NSRect liveRect = [self liveRect];
     return NSPointInRect(point, liveRect);

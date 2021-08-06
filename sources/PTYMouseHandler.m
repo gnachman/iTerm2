@@ -948,9 +948,11 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     CGFloat deltaY = NAN;
     BOOL reportable = NO;
     if ([self handleMouseEvent:event testOnly:NO deltaYOut:&deltaY reportableOut:&reportable]) {
+        DLog(@"Mouse event was handled so returning");
         return NO;
     }
     if (self.selection.live) {
+        DLog(@"In live selection");
         // Scroll via wheel while selecting. This is even possible with the trackpad by using
         // three fingers as described in issue 8538.
         if ([self.mouseDelegate mouseHandler:self moveSelectionToPointInEvent:event]) {
@@ -959,13 +961,12 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         return YES;
     }
     // Swipe between tabs.
-    if (@available(macOS 10.14, *)) {
-        // Limited to 10.14 because it requires proper view compositing.
-        if ([self tryToHandleSwipeBetweenTabsForScrollWheelEvent:event]) {
-            return YES;
-        }
+    if ([self tryToHandleSwipeBetweenTabsForScrollWheelEvent:event]) {
+        DLog(@"Handled as swipe between tabs");
+        return YES;
     }
     if (reportable && deltaY == 0) {
+        DLog(@"Reportable non-vertical scroll");
         // Don't let horizontal scroll through when reporting mouse events.
         return NO;
     }
@@ -1100,22 +1101,25 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                 testOnly:(BOOL)testOnly
                deltaYOut:(CGFloat *)deltaYOut
            reportableOut:(BOOL *)reportableOut {
+    DLog(@"handleMouseEvent:%@ testOnly:%@", event, @(testOnly));
     const NSPoint point =
     [self.mouseDelegate mouseHandler:self viewCoordForEvent:event clipped:NO];
 
     if (![self shouldReportMouseEvent:event at:point]) {
+        DLog(@"Not reportable");
         if (reportableOut) {
             *reportableOut = NO;
         }
         return NO;
     }
     if (reportableOut) {
+        DLog(@"Is reportable");
         *reportableOut = YES;
     }
 
     VT100GridCoord coord = [self.mouseDelegate mouseHandlerCoordForPointInView:point];
     const CGFloat deltaY = [self.mouseDelegate mouseHandlerAccumulatedDeltaY:self forEvent:event];
-
+    DLog(@"deltaY=%@", @(deltaY));
     if (deltaYOut) {
         *deltaYOut = deltaY;
     }
@@ -1141,11 +1145,17 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 }
 
 - (BOOL)shouldReportMouseEvent:(NSEvent *)event at:(NSPoint)point {
+    if (![self.mouseDelegate mouseHandlerCanWriteToTTY:self]) {
+        DLog(@"TTY is not writable");
+        return NO;
+    }
     if (![self.mouseDelegate mouseHandler:self viewCoordIsReportable:point]) {
+        DLog(@"Coord not reportable");
         return NO;
     }
     if (event.type == NSEventTypeLeftMouseDown || event.type == NSEventTypeLeftMouseUp) {
         if (_mouseDownWasFirstMouse && ![iTermAdvancedSettingsModel alwaysAcceptFirstMouse]) {
+            DLog(@"First mouse is not reportable");
             return NO;
         }
         // Three-finger click mousedown should not be reported normally to avoid accidental
@@ -1167,6 +1177,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
     if ((event.type == NSEventTypeLeftMouseDown || event.type == NSEventTypeLeftMouseUp) &&
         ![self.mouseDelegate mouseHandlerViewIsFirstResponder:self]) {
+        DLog(@"Not first responder");
         return NO;
     }
     if (![self.mouseDelegate mouseHandlerShouldReportClicksAndDrags:self]) {
@@ -1179,10 +1190,12 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             event.type == NSEventTypeOtherMouseDown ||
             event.type == NSEventTypeOtherMouseUp ||
             event.type == NSEventTypeOtherMouseDragged) {
+            DLog(@"Don't report clicks and drags");
             return NO;
         }
     }
     if (![self mouseReportingAllowedForEvent:event]) {
+        DLog(@"Mouse reporting disallowed");
         return NO;
     }
     if (event.type == NSEventTypeScrollWheel) {

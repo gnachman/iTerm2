@@ -10074,6 +10074,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     }];
 }
 
+- (BOOL)textViewCanWriteToTTY {
+    return !_exited;
+}
+
 - (void)addTriggerDictionary:(NSDictionary *)dict updateProfile:(BOOL)updateProfile {
     if (!updateProfile || !self.isDivorced || [_overriddenFields containsObject:KEY_TRIGGERS]) {
         NSMutableArray<NSDictionary *> *triggers = [[self.profile[KEY_TRIGGERS] ?: @[] mutableCopy] autorelease];
