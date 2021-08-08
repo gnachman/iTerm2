@@ -68,12 +68,14 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     NSMutableData *pbData_;
     BOOL pasted_;
     NSMutableData *write_;
+    int _unicodeVersion;
 }
 
 - (void)setUp {
     terminal_ = [[[VT100Terminal alloc] init] autorelease];
     selection_ = [[[iTermSelection alloc] init] autorelease];
     selection_.delegate = self;
+    _unicodeVersion = 8;
     needsRedraw_ = 0;
     sizeDidChange_ = 0;
     cursorVisible_ = YES;
@@ -840,7 +842,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
 }
 
 - (NSInteger)screenUnicodeVersion {
-    return 8;
+    return _unicodeVersion;
 }
 
 - (void)screenSetUnicodeVersion:(NSInteger)unicodeVersion {
@@ -4448,6 +4450,26 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
         unichar c = array.line[0].code;
         XCTAssertEqual(c, '0' + i);
     }
+}
+
+// When the cursor is positioned over a DWC_RIGHT and we append a character, erase the code before
+// the DWC_RIGHT and don't touch the cell after the cursor's position.
+- (void)testIssue9852 {
+    _unicodeVersion = 9;
+    VT100Screen *screen = [self screenWithWidth:4 height:1];
+    screen.delegate = self;
+    [screen appendStringAtCursor:@"😃😃"];
+    // [smile][rhs][smile][rhs][^]
+    [screen terminalMoveCursorToX:2 y:1];
+    // [smile][^rhs][smile][rhs]
+    [screen appendStringAtCursor:@"|"];
+    // [null][|][^smile][rhs]
+
+    screen_char_t *line = [screen getLineAtIndex:0];
+    XCTAssertEqual(line[0].code, 0);
+    XCTAssertEqual(line[1].code, '|');
+    XCTAssertEqualObjects(ScreenCharToStr(&line[2]), @"😃");
+    XCTAssertEqual(line[3].code, DWC_RIGHT);
 }
 
 #pragma mark - CSI Tests

@@ -1330,6 +1330,8 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
         buffer = staticBuffer;
     }
 
+    // `predecessorIsDoubleWidth` will be true if the cursor is over a double-width character
+    // but NOT if it's over a DWC_RIGHT.
     BOOL predecessorIsDoubleWidth = NO;
     VT100GridCoord pred = [currentGrid_ coordinateBefore:currentGrid_.cursor
                                 movedBackOverDoubleWidth:&predecessorIsDoubleWidth];
@@ -1365,7 +1367,14 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
         theLine[pred.x].complexChar = buffer[0].complexChar;
         bufferOffset++;
 
-        if (predecessorIsDoubleWidth && len > 1 && buffer[1].code == DWC_RIGHT) {
+        // Does the augmented result begin with a double-width character? If so skip over the
+        // DWC_RIGHT when appending. I *think* this is redundant with the `predecessorIsDoubleWidth`
+        // test but I'm reluctant to remove it because it could break something.
+        const BOOL augmentedResultBeginsWithDoubleWidthCharacter = (augmented &&
+                                                                    len > 1 &&
+                                                                    buffer[1].code == DWC_RIGHT &&
+                                                                    !buffer[1].complexChar);
+        if ((augmentedResultBeginsWithDoubleWidthCharacter || predecessorIsDoubleWidth) && len > 1 && buffer[1].code == DWC_RIGHT) {
             // Skip over a preexisting DWC_RIGHT in the predecessor.
             bufferOffset++;
         }
