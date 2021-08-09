@@ -3069,7 +3069,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
 - (void)setUserVariableWithKey:(NSString *)key
                          value:(NSString *)value
                           pane:(int)paneID {
-    if (![self versionAtLeastDecimalNumberWithString:@"3.0"]) {
+    if (![self versionAtLeastDecimalNumberWithString:@"3.1"]) {
         return;
     }
     NSMutableDictionary<NSString *, NSString *> *dict = [self mutableUserVarsForPane:paneID];

@@ -7607,7 +7607,15 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     } else {
         [[self terminal] setMouseMode:MOUSE_REPORTING_NONE];
     }
-    [[self terminal] setMouseFormat:[[state objectForKey:kStateDictMouseUTF8Mode] boolValue] ? MOUSE_FORMAT_XTERM_EXT : MOUSE_FORMAT_XTERM];
+    // NOTE: You can get both SGR and UTF8 set. In that case SGR takes priority. See comment in
+    // tmux's input_key_get_mouse()
+    if ([state[kStateDictMouseSGRMode] boolValue]) {
+        [[self terminal] setMouseFormat:MOUSE_FORMAT_SGR];
+    } else if ([state[kStateDictMouseUTF8Mode] boolValue]) {
+        [[self terminal] setMouseFormat:MOUSE_FORMAT_XTERM_EXT];
+    } else {
+        [[self terminal] setMouseFormat:MOUSE_FORMAT_XTERM];
+    }
 }
 
 - (void)unpauseTmux {

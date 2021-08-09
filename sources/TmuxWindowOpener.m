@@ -193,7 +193,7 @@ NSString *const kTmuxWindowOpenerWindowOptionStyleValueFullScreen = @"FullScreen
     if (gateway_.pauseModeEnabled) {
         [cmdList addObject:[self dictToUnpauseWindowPane:wp]];
     }
-    if (self.minimumServerVersion.doubleValue >= 3) {
+    if ([self.minimumServerVersion compare:[NSDecimalNumber decimalNumberWithString:@"3.1"]] != NSOrderedAscending) {
         [cmdList addObject:[self dictForGetUserVars:wp]];
     }
 }

@@ -1693,9 +1693,17 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     if (mouse && [mouse intValue]) {
         [terminal_ setMouseMode:MOUSE_REPORTING_ALL_MOTION];
     }
-    mouse = [state objectForKey:kStateDictMouseUTF8Mode];
+    
+    // NOTE: You can get both SGR and UTF8 set. In that case SGR takes priority. See comment in
+    // tmux's input_key_get_mouse()
+    mouse = [state objectForKey:kStateDictMouseSGRMode];
     if (mouse && [mouse intValue]) {
-        [terminal_ setMouseFormat:MOUSE_FORMAT_XTERM_EXT];
+        [terminal_ setMouseFormat:MOUSE_FORMAT_SGR];
+    } else {
+        mouse = [state objectForKey:kStateDictMouseUTF8Mode];
+        if (mouse && [mouse intValue]) {
+            [terminal_ setMouseFormat:MOUSE_FORMAT_XTERM_EXT];
+        }
     }
 
     NSNumber *wrap = [state objectForKey:kStateDictWrapMode];

@@ -25,6 +25,7 @@ extern NSString *kStateDictMouseStandardMode;
 extern NSString *kStateDictMouseButtonMode;
 extern NSString *kStateDictMouseAnyMode;
 extern NSString *kStateDictMouseUTF8Mode;
+extern NSString *kStateDictMouseSGRMode;  // tmux 3.1+
 
 @interface TmuxStateParser : NSObject
 

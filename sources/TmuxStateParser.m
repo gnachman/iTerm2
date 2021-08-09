@@ -39,6 +39,7 @@ NSString *kStateDictMouseStandardMode = @"mouse_standard_flag";
 NSString *kStateDictMouseButtonMode = @"mouse_button_flag";
 NSString *kStateDictMouseAnyMode = @"mouse_any_flag";
 NSString *kStateDictMouseUTF8Mode = @"mouse_utf8_flag";
+NSString *kStateDictMouseSGRMode = @"mouse_sgr_flag";  // tmux 3.1+
 
 @interface NSString (TmuxStateParser)
 - (NSArray *)intlistValue;
@@ -79,7 +80,7 @@ NSString *kStateDictMouseUTF8Mode = @"mouse_utf8_flag";
 
 + (NSString *)format {
     NSMutableString *format = [NSMutableString string];
-    NSArray *theModes = [NSArray arrayWithObjects:
+    NSArray *theModes = @[
                          kStateDictPaneId, kStateDictSavedGrid, kStateDictAltSavedCX,
                          kStateDictAltSavedCY,
                          kStateDictCursorX, kStateDictCursorY, kStateDictScrollRegionUpper,
@@ -87,7 +88,7 @@ NSString *kStateDictMouseUTF8Mode = @"mouse_utf8_flag";
                          kStateDictInsertMode,
                          kStateDictKCursorMode, kStateDictKKeypadMode, kStateDictWrapMode,
                          kStateDictMouseStandardMode, kStateDictMouseButtonMode,
-                         kStateDictMouseAnyMode, kStateDictMouseUTF8Mode, nil];
+                         kStateDictMouseAnyMode, kStateDictMouseUTF8Mode, kStateDictMouseSGRMode ];
     for (NSString *value in theModes) {
         [format appendFormat:@"%@=#{%@}", value, value];
         if (value != [theModes lastObject]) {
@@ -132,6 +133,7 @@ NSString *kStateDictMouseUTF8Mode = @"mouse_utf8_flag";
                                 uintType, kStateDictMouseButtonMode,
                                 uintType, kStateDictMouseAnyMode,
                                 uintType, kStateDictMouseUTF8Mode,
+                                uintType, kStateDictMouseSGRMode,
                                 uintType, kStateDictWrapMode,
                                 uintType, kStateDictScrollRegionUpper,
                                 uintType, kStateDictScrollRegionLower,
