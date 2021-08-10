@@ -65,6 +65,8 @@ typedef struct {
 - (BOOL)hasMarkedText;
 - (void)flagsChanged:(NSEvent *)event;
 - (BOOL)performKeyEquivalent:(NSEvent *)event inputContext:(NSTextInputContext *)inputContext;
+- (nullable NSString *)stringForEventWithoutSideEffects:(NSEvent *)event
+                                               encoding:(NSStringEncoding)encoding;
 
 @end
 

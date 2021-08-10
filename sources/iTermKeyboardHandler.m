@@ -51,6 +51,10 @@ static iTermKeyboardHandler *sCurrentKeyboardHandler;
     return self;
 }
 
+- (nullable NSString *)stringForEventWithoutSideEffects:(NSEvent *)event encoding:(NSStringEncoding)encoding {
+    return [[NSString alloc] initWithData:[_keyMapper keyMapperDataForPostCocoaEvent:event] encoding:encoding];
+}
+
 // I haven't figured out how to test this code automatically, but a few things to try:
 // * Repeats in US
 // * Repeats in AquaSKK's Hiragana

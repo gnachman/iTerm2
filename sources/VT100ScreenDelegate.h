@@ -287,5 +287,9 @@
 - (BOOL)screenShouldClearScrollbackBuffer;
 - (VT100GridRange)screenRangeOfVisibleLines;
 - (void)screenDidResize;
+- (NSString *)screenStringForKeypressWithCode:(unsigned short)keycode
+                                        flags:(NSEventModifierFlags)flags
+                                   characters:(NSString *)characters
+                  charactersIgnoringModifiers:(NSString *)charactersIgnoringModifiers;
 
 @end

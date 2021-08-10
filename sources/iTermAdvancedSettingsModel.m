@@ -319,7 +319,7 @@ DEFINE_BOOL(translateScreenToXterm, YES, SECTION_TERMINAL @"Support TERM=screen\
 // improvement as it would let vim use ttym=sgr rather than xterm2, which passes through luit.
 // However, it must return three arguments (at the very least) to keep vim happy. For more, see
 // check_termcode() in vim's term.c.
-DEFINE_INT(xtermVersion, 95, SECTION_TERMINAL @"xterm version for secondary device attributes (SDA).\nIncreasing this number enables more features in apps but may break things. Use 216 to get more support for modifier keys in emacs.");
+DEFINE_INT(xtermVersion, 314, SECTION_TERMINAL @"xterm version for secondary device attributes (SDA).\nIncreasing this number enables more features in apps but may break things. Use 95 to recover pre-3.4.10 behavior.");
 
 #pragma mark Hotkey
 

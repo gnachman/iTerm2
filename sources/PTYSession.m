@@ -12627,6 +12627,24 @@ preferredEscaping:(iTermSendTextEscaping)preferredEscaping {
     [self.delegate sessionDidResize:self];
 }
 
+- (NSString *)screenStringForKeypressWithCode:(unsigned short)keycode
+                                        flags:(NSEventModifierFlags)flags
+                                   characters:(NSString *)characters
+                  charactersIgnoringModifiers:(NSString *)charactersIgnoringModifiers  {
+    NSEvent *event = [NSEvent keyEventWithType:NSEventTypeKeyDown
+                                      location:NSZeroPoint
+                                 modifierFlags:flags
+                                     timestamp:0
+                                  windowNumber:self.view.window.windowNumber
+                                       context:nil
+                                    characters:characters
+                   charactersIgnoringModifiers:charactersIgnoringModifiers
+                                     isARepeat:NO
+                                       keyCode:keycode];
+    return [_textview.keyboardHandler stringForEventWithoutSideEffects:event
+                                                              encoding:_terminal.encoding];
+}
+
 - (VT100Screen *)popupVT100Screen {
     return _screen;
 }

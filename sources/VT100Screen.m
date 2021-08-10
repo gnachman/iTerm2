@@ -5104,6 +5104,16 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     return [self showingAlternateScreen];
 }
 
+- (NSString *)terminalStringForKeypressWithCode:(unsigned short)keyCode
+                                          flags:(NSEventModifierFlags)flags
+                                     characters:(NSString *)characters
+                    charactersIgnoringModifiers:(NSString *)charactersIgnoringModifiers {
+    return [self.delegate screenStringForKeypressWithCode:keyCode
+                                                    flags:flags
+                                               characters:characters
+                              charactersIgnoringModifiers:charactersIgnoringModifiers];
+}
+
 #pragma mark - Private
 
 - (VT100GridCoordRange)commandRange {

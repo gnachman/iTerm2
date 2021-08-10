@@ -442,4 +442,9 @@ typedef NS_ENUM(int, VT100TerminalColorIndex) {
 
 - (BOOL)terminalIsInAlternateScreenMode;
 
+- (NSString *)terminalStringForKeypressWithCode:(unsigned short)keycode
+                                          flags:(NSEventModifierFlags)flags
+                                     characters:(NSString *)characters
+                    charactersIgnoringModifiers:(NSString *)charactersIgnoringModifiers;
+
 @end
