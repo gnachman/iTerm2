@@ -17,6 +17,7 @@
 #import "shell_launcher.h"
 
 int main(int argc, const char *argv[]){
+    setenv("NSZombieEnabled", "YES", 1);
     if (argc > 1 && !strcmp(argv[1], "--launch_shell")) {
         // In theory this is not used any more because the ShellLauncher executable should be used instead.
         return launch_shell(argc > 2 ? argv[2] : NULL);
