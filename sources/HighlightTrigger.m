@@ -57,7 +57,9 @@ enum {
 
 };
 
-@implementation HighlightTrigger
+@implementation HighlightTrigger {
+    NSDictionary *_cachedColors;
+}
 
 + (NSString *)title
 {
@@ -255,16 +257,21 @@ enum {
 
 - (void)setTextColor:(NSColor *)textColor {
     [super setTextColor:textColor];
-    NSMutableArray *temp = [[[self stringsForColors] mutableCopy] autorelease];
+    NSMutableArray *temp = [[self stringsForColors] mutableCopy];
     temp[0] = textColor ? textColor.stringValue: @"";
     self.param = [NSString stringWithFormat:@"{%@,%@}", temp[0], temp[1]];
 }
 
 - (void)setBackgroundColor:(NSColor *)backgroundColor {
     [super setBackgroundColor:backgroundColor];
-    NSMutableArray *temp = [[[self stringsForColors] mutableCopy] autorelease];
+    NSMutableArray *temp = [[self stringsForColors] mutableCopy];
     temp[1] = backgroundColor ? backgroundColor.stringValue: @"";
     self.param = [NSString stringWithFormat:@"{%@,%@}", temp[0], temp[1]];
+}
+
+- (void)setParam:(id)param {
+    _cachedColors = nil;
+    [super setParam:param];
 }
 
 // Returns a string of the form {text components,background components} from self.param.
@@ -297,6 +304,9 @@ enum {
 
 // Returns a dictionary with text and background color from the self.param string.
 - (NSDictionary *)colors {
+    if (_cachedColors) {
+        return _cachedColors;
+    }
     NSArray *parts = [self stringsForColors];
     NSMutableDictionary *dict = [NSMutableDictionary dictionary];
     NSColor *textColor = nil;
@@ -311,6 +321,7 @@ enum {
     if (backgroundColor) {
         dict[kHighlightBackgroundColor] = backgroundColor;
     }
+    _cachedColors = [dict copy];
     return dict;
 }
 
