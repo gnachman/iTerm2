@@ -570,7 +570,16 @@ typedef enum {
 
 - (NSData *)reportSecondaryDeviceAttribute {
     const int xtermVersion = [iTermAdvancedSettingsModel xtermVersion];
-    NSString *report = [NSString stringWithFormat:@"\033[>0;%d;0c", xtermVersion];
+    int vt = 0;
+    switch (_vtLevel) {
+        case VT100EmulationLevel100:
+            vt = 0;
+            break;
+        case VT100EmulationLevel200:
+            vt = 1;
+            break;
+    }
+    NSString *report = [NSString stringWithFormat:@"\033[>%d;%d;0c", vt, xtermVersion];
     return [report dataUsingEncoding:NSISOLatin1StringEncoding];
 }
 
