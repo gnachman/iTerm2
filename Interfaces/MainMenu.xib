@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="17701" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="18122" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES">
     <dependencies>
         <deployment identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="17701"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="18122"/>
     </dependencies>
     <objects>
         <customObject id="-2" userLabel="File's Owner" customClass="NSApplication">
@@ -1021,22 +1021,16 @@ DQ
                                                 <action selector="terminalStateToggleApplicationKeypad:" target="-1" id="dEu-4i-avK"/>
                                             </connections>
                                         </menuItem>
-                                        <menuItem title="modifyOtherKeys Mode 1" tag="8" identifier="Terminal State.Report Modifiers like xterm 1" id="xK3-pO-8bT">
+                                        <menuItem title="CSI u Mode" tag="10" identifier="Terminal State.Report Modifiers with CSI u" id="Qlm-EZ-J8K">
                                             <modifierMask key="keyEquivalentModifierMask"/>
                                             <connections>
-                                                <action selector="terminalStateToggleApplicationKeypad:" target="-1" id="V3u-fZ-VC2"/>
+                                                <action selector="terminalStateToggleApplicationKeypad:" target="-1" id="kMi-Ez-WPl"/>
                                             </connections>
                                         </menuItem>
                                         <menuItem title="modifyOtherKeys Mode 2" tag="9" identifier="Terminal State.Report Modifiers like xterm 2" id="kN6-Ru-Vvk">
                                             <modifierMask key="keyEquivalentModifierMask"/>
                                             <connections>
                                                 <action selector="terminalStateToggleApplicationKeypad:" target="-1" id="hFh-Cz-Vqt"/>
-                                            </connections>
-                                        </menuItem>
-                                        <menuItem title="CSI u Mode" tag="10" identifier="Terminal State.Report Modifiers with CSI u" id="Qlm-EZ-J8K">
-                                            <modifierMask key="keyEquivalentModifierMask"/>
-                                            <connections>
-                                                <action selector="terminalStateToggleApplicationKeypad:" target="-1" id="kMi-Ez-WPl"/>
                                             </connections>
                                         </menuItem>
                                         <menuItem title="Raw Key Reporting Mode" tag="11" identifier="Terminal State.Raw Key Reporting" id="HUg-bw-Kax">

@@ -555,7 +555,7 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
                   KEY_RIGHT_OPTION_KEY_CHANGEABLE: @NO,
                   KEY_APPLICATION_KEYPAD_ALLOWED: @NO,
                   KEY_MOVEMENT_KEYS_SCROLL_OUTSIDE_INTERACTIVE_APPS: @NO,
-                  KEY_ALLOW_MODIFY_OTHER_KEYS: @NO,
+                  KEY_ALLOW_MODIFY_OTHER_KEYS: @YES,
                   KEY_USE_LIBTICKIT_PROTOCOL: @NO,
                   KEY_PLACE_PROMPT_AT_FIRST_COLUMN: @YES,
                   KEY_SHOW_MARK_INDICATORS: @YES,

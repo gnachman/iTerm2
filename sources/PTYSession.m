@@ -44,7 +44,6 @@
 #import "iTermIntervalTreeObserver.h"
 #import "iTermKeyMappings.h"
 #import "iTermKeystroke.h"
-#import "iTermModifyOtherKeysMapper1.h"
 #import "iTermModifyOtherKeysMapper.h"
 #import "iTermNaggingController.h"
 #import "iTermNotificationController.h"
@@ -4328,6 +4327,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)setKeyMappingMode:(iTermKeyMappingMode)mode {
+    DLog(@"%@", @(mode));
     _keyMappingMode = mode;
     [self updateKeyMapper];
 }
@@ -4339,19 +4339,18 @@ ITERM_WEAKLY_REFERENCEABLE
         case iTermKeyMappingModeStandard:
             mapperClass = [iTermStandardKeyMapper class];
             break;
-        case iTermKeyMappingModeCSIu:
-            mapperClass = [iTermTermkeyKeyMapper class];
-            break;
         case iTermKeyMappingModeRaw:
             mapperClass = [iTermRawKeyMapper class];
             break;
         case iTermKeyMappingModeModifyOtherKeys1:
-            mapperClass = [iTermModifyOtherKeysMapper1 class];
+        case iTermKeyMappingModeCSIu:
+            mapperClass = [iTermTermkeyKeyMapper class];
             break;
         case iTermKeyMappingModeModifyOtherKeys2:
             mapperClass = [iTermModifyOtherKeysMapper2 class];
             break;
     }
+    DLog(@"mapperClass=%@, _keyMapper=%@", NSStringFromClass(mapperClass), _keyMapper);
 
     if (![_keyMapper isKindOfClass:mapperClass]) {
         [_keyMapper release];
@@ -9842,14 +9841,11 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         case 7:
             return _keyMappingMode == iTermKeyMappingModeStandard;
 
-        case 8:
-            return _keyMappingMode == iTermKeyMappingModeModifyOtherKeys1;
-
         case 9:
             return _keyMappingMode == iTermKeyMappingModeModifyOtherKeys2;
 
         case 10:
-            return _keyMappingMode == iTermKeyMappingModeCSIu;
+            return (_keyMappingMode == iTermKeyMappingModeCSIu || _keyMappingMode == iTermKeyMappingModeModifyOtherKeys1);
 
         case 11:
             return _keyMappingMode == iTermKeyMappingModeRaw;
@@ -9890,26 +9886,25 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
             break;
 
         case 7:
+            [_terminal pushKeyReportingFlags:0];
             _terminal.sendModifiers[4] = @-1;
             self.keyMappingMode = iTermKeyMappingModeStandard;
             break;
 
-        case 8:
-            _terminal.sendModifiers[4] = @1;
-            self.keyMappingMode = iTermKeyMappingModeModifyOtherKeys1;
-            break;
-
         case 9:
+            [_terminal pushKeyReportingFlags:0];
             _terminal.sendModifiers[4] = @2;
             self.keyMappingMode = iTermKeyMappingModeModifyOtherKeys2;
             break;
 
         case 10:
-            _terminal.sendModifiers[4] = @-1;
+            _terminal.sendModifiers[4] = @1;
+            [_terminal pushKeyReportingFlags:VT100TerminalKeyReportingFlagsDisambiguateEscape];
             self.keyMappingMode = iTermKeyMappingModeCSIu;
             break;
 
         case 11:
+            [_terminal pushKeyReportingFlags:0];
             _terminal.sendModifiers[4] = @-1;
             self.keyMappingMode = iTermKeyMappingModeRaw;
             break;
@@ -12402,27 +12397,25 @@ preferredEscaping:(iTermSendTextEscaping)preferredEscaping {
 }
 
 - (void)screenSendModifiersDidChange {
-    if (_keyMappingMode == iTermKeyMappingModeCSIu) {
-        // Since you can only enter CSI u mode via the UI, don't let a control sequence change it.
-        return;
-    }
+    DLog(@"screenSendModifiersDidChange");
     const BOOL allowed = [iTermProfilePreferences boolForKey:KEY_ALLOW_MODIFY_OTHER_KEYS
                                                    inProfile:self.profile];
+    if (!allowed) {
+        DLog(@"disallowed");
+        return;
+    }
     const int modifyOtherKeysMode = _terminal.sendModifiers[4].intValue;
     if (modifyOtherKeysMode == 1) {
-        if (allowed) {
-            self.keyMappingMode = iTermKeyMappingModeModifyOtherKeys1;
-        }
+        self.keyMappingMode = iTermKeyMappingModeCSIu;
     } else if (modifyOtherKeysMode == 2) {
-        if (allowed) {
-            self.keyMappingMode = iTermKeyMappingModeModifyOtherKeys2;
-        }
+        self.keyMappingMode = iTermKeyMappingModeModifyOtherKeys2;
     } else {
         self.keyMappingMode = iTermKeyMappingModeStandard;
     }
 }
 
 - (void)screenKeyReportingFlagsDidChange {
+    DLog(@"screenKeyReportingFlagsDidChange");
     if (_terminal.keyReportingFlags & VT100TerminalKeyReportingFlagsDisambiguateEscape) {
         self.keyMappingMode = iTermKeyMappingModeCSIu;
     } else {

@@ -11,7 +11,7 @@ typedef NS_ENUM(NSUInteger, iTermKeyMappingMode) {
     iTermKeyMappingModeStandard,
     iTermKeyMappingModeCSIu,
     iTermKeyMappingModeRaw,
-    iTermKeyMappingModeModifyOtherKeys1,
+    iTermKeyMappingModeModifyOtherKeys1,  // Deprecated - this is now equivalent to CSI u
     iTermKeyMappingModeModifyOtherKeys2
 };
 

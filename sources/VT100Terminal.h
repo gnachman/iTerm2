@@ -37,7 +37,7 @@ typedef struct {
 
 typedef NS_OPTIONS(int, VT100TerminalKeyReportingFlags) {
     VT100TerminalKeyReportingFlagsNone = 0,
-    VT100TerminalKeyReportingFlagsDisambiguateEscape = (1 << 0),  // Legacy: can't be entered except by restoration.
+    VT100TerminalKeyReportingFlagsDisambiguateEscape = (1 << 0),  // CSI u mode
     VT100TerminalKeyReportingFlagsReportAllEventTypes = (1 << 1),  // TODO
     VT100TerminalKeyReportingFlagsReportAlternateKeys = (1 << 2),  // TODO
     VT100TerminalKeyReportingFlagsReportAllKeysAsEscapeCodes = (1 << 3),  // TODO
@@ -118,6 +118,8 @@ typedef NS_OPTIONS(int, VT100TerminalKeyReportingFlags) {
 
 @property(nonatomic, readonly) VT100TerminalKeyReportingFlags keyReportingFlags;
 @property(nonatomic, readonly) BOOL synchronizedUpdates;
+
+- (void)pushKeyReportingFlags:(VT100TerminalKeyReportingFlags)flags;
 
 - (void)setStateFromDictionary:(NSDictionary *)dict;
 

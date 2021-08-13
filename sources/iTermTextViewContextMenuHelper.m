@@ -579,25 +579,24 @@ static uint64_t iTermInt64FromBytes(const unsigned char *bytes, BOOL bigEndian) 
     NSMenuItem *terminalState = [[NSMenuItem alloc] initWithTitle:@"Terminal State" action:nil keyEquivalent:@""];
     terminalState.submenu = [[NSMenu alloc] initWithTitle:@"Terminal State"];
     struct {
+        int tag;
         NSString *title;
         SEL action;
     } terminalStateDecls[] = {
-        { @"Alternate Screen", @selector(terminalStateToggleAlternateScreen:) },
-        { nil, nil },
-        { @"Focus Reporting", @selector(terminalStateToggleFocusReporting:) },
-        { @"Mouse Reporting", @selector(terminalStateToggleMouseReporting:) },
-        { @"Paste Bracketing", @selector(terminalStateTogglePasteBracketing:) },
-        { nil, nil },
-        { @"Application Cursor", @selector(terminalStateToggleApplicationCursor:) },
-        { @"Application Keypad", @selector(terminalStateToggleApplicationKeypad:) },
-        { nil, nil },
-        { @"Standard Key Reporting Mode", @selector(terminalToggleKeyboardMode:) },
-        { @"modifyOtherKeys Mode 1", @selector(terminalToggleKeyboardMode:) },
-        { @"modifyOtherKeys Mode 2", @selector(terminalToggleKeyboardMode:) },
-        { @"CSI u Mode", @selector(terminalToggleKeyboardMode:) },
-        { @"Raw Key Reporting Mode", @selector(terminalToggleKeyboardMode:) },
+        { 1, @"Alternate Screen", @selector(terminalStateToggleAlternateScreen:) },
+        { -1, nil, nil },
+        { 2, @"Focus Reporting", @selector(terminalStateToggleFocusReporting:) },
+        { 3, @"Mouse Reporting", @selector(terminalStateToggleMouseReporting:) },
+        { 4, @"Paste Bracketing", @selector(terminalStateTogglePasteBracketing:) },
+        { -1, nil, nil },
+        { 5, @"Application Cursor", @selector(terminalStateToggleApplicationCursor:) },
+        { 6, @"Application Keypad", @selector(terminalStateToggleApplicationKeypad:) },
+        { -1, nil, nil },
+        { 7, @"Standard Key Reporting Mode", @selector(terminalToggleKeyboardMode:) },
+        { 10, @"CSI u Mode", @selector(terminalToggleKeyboardMode:) },
+        { 9, @"modifyOtherKeys Mode 2", @selector(terminalToggleKeyboardMode:) },
+        { 11, @"Raw Key Reporting Mode", @selector(terminalToggleKeyboardMode:) },
     };
-    NSInteger j = 1;
     for (size_t i = 0; i < sizeof(terminalStateDecls) / sizeof(*terminalStateDecls); i++) {
         if (!terminalStateDecls[i].title) {
             [terminalState.submenu addItem:[NSMenuItem separatorItem]];
@@ -606,8 +605,7 @@ static uint64_t iTermInt64FromBytes(const unsigned char *bytes, BOOL bigEndian) 
         NSMenuItem *item = [terminalState.submenu addItemWithTitle:terminalStateDecls[i].title
                                                             action:terminalStateDecls[i].action
                                                      keyEquivalent:@""];
-        item.tag = j;
-        j += 1;
+        item.tag = terminalStateDecls[i].tag;
         item.state = [self.delegate contextMenu:self terminalStateForMenuItem:item];
     }
     [theMenu addItem:terminalState];
