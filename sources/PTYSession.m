@@ -6791,10 +6791,19 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         _tmuxClientWritePipe = nil;
         return;
     }
-    for (int i = 0; i < 2; i++) {
-        const int flags = fcntl(fds[i], F_GETFL);
-        fcntl(fds[i], F_SETFL, flags | O_NONBLOCK);
+    {
+        // Make the TaskNotifier file descriptor nonblocking.
+        const int fd = fds[0];
+        const int flags = fcntl(fd, F_GETFL);
+        fcntl(fd, F_SETFL, flags | O_NONBLOCK);
     }
+    {
+        // Make the write pipe blocking so it can provide backpressure.
+        const int fd = fds[1];
+        const int flags = fcntl(fd, F_GETFL);
+        fcntl(fd, F_SETFL, flags & (~O_NONBLOCK));
+    }
+
     _shell.readOnlyFileDescriptor = fds[0];
     [_tmuxClientWritePipe release];
     _tmuxClientWritePipe = [[NSFileHandle alloc] initWithFileDescriptor:fds[1]
