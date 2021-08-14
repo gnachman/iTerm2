@@ -28,6 +28,7 @@ typedef NS_ENUM(NSInteger, VT100EmulationLevel) {
 // VT100Terminal.
 @interface VT100Output : NSObject
 
+@property(nonatomic, copy) NSString *termType;
 @property(nonatomic, assign) BOOL keypadMode;
 @property(nonatomic, assign) MouseFormat mouseFormat;
 @property(nonatomic, assign) BOOL cursorMode;
@@ -41,7 +42,7 @@ typedef NS_ENUM(NSInteger, VT100EmulationLevel) {
 - (NSData *)keyHome:(unsigned int)modflag screenlikeTerminal:(BOOL)screenlike;
 - (NSData *)keyEnd:(unsigned int)modflag screenlikeTerminal:(BOOL)screenlike;
 - (NSData *)keyInsert;
-- (NSData *)keyDelete;
+- (NSData *)keyDelete:(NSEventModifierFlags)flags;
 - (NSData *)keyBackspace;
 - (NSData *)keyPageUp:(unsigned int)modflag;
 - (NSData *)keyPageDown:(unsigned int)modflag;
@@ -68,7 +69,5 @@ typedef NS_ENUM(NSInteger, VT100EmulationLevel) {
 - (NSData *)reportFocusGained:(BOOL)gained;
 - (NSData *)reportiTerm2Version;
 - (NSData *)reportKeyReportingMode:(int)mode;
-
-- (void)setTermTypeIsValid:(BOOL)termTypeIsValid;
 
 @end

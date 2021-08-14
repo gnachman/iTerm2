@@ -292,7 +292,7 @@
             break;
         case NSDeleteFunctionKey:
             // This is forward delete, not backspace.
-            return [_configuration.outputFactory keyDelete];
+            return [_configuration.outputFactory keyDelete:modifiers];
             break;
         case NSHomeFunctionKey:
             return [_configuration.outputFactory keyHome:modifiers screenlikeTerminal:_configuration.screenlike];

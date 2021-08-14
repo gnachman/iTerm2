@@ -258,17 +258,7 @@ static const int kMaxScreenRows = 4096;
     _termType = [termtype copy];
 
     self.allowKeypadMode = [_termType rangeOfString:@"xterm"].location != NSNotFound;
-
-    int r;
-
-    // NOTE: This seems to cause a memory leak. The setter for termTypeIsValid (below) has the
-    // side effect of copying various curses strings, and it depends on this. When I redo output,
-    // fix this disaster.
-    setupterm((char *)[_termType UTF8String], fileno(stdout), &r);
-    if (r != 1) {
-        DLog(@"Terminal type %s is not defined.", [_termType UTF8String]);
-    }
-    _output.termTypeIsValid = (r == 1);
+    _output.termType = _termType;
     if ([termtype isEqualToString:@"VT100"]) {
         _output.vtLevel = VT100EmulationLevel100;
     } else {

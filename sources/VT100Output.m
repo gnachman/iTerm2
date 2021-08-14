@@ -98,13 +98,17 @@ typedef enum {
     // Indexed by values in VT100TerminalTerminfoKeys.
     // Gives strings to send for various special keys.
     char *_keyStrings[TERMINFO_KEYS];
+
+    // If $TERM is something normalish then we can do fancier key reporting
+    // (e.g., modifier + forwards delete). When false, rely on terminfo's definition.
+    BOOL _standard;
 }
 
 - (instancetype)init {
     self = [super init];
     if (self) {
-        self.termTypeIsValid = YES;
         _optionIsMetaForSpecialKeys = YES;
+        self.termType = @"dumb";
     }
     return self;
 }
@@ -115,10 +119,30 @@ typedef enum {
             free(_keyStrings[i]);
         }
     }
-    [super dealloc];
 }
 
-- (void)setTermTypeIsValid:(BOOL)termTypeIsValid {
++ (NSSet<NSString *> *)standardTerminals {
+    static NSSet<NSString *> *terms;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        terms = [NSSet setWithArray:@[ @"xterm",
+                                       @"xterm-new",
+                                       @"xterm-256color",
+                                       @"xterm+256color",
+                                       @"xterm-kitty",
+                                       @"iterm",
+                                       @"iterm2" ]];
+    });
+    return terms;
+}
+
+- (void)setTermType:(NSString *)term {
+    _standard = [[VT100Output standardTerminals] containsObject:term];
+    _termType = [term copy];
+    int r = 0;
+    setupterm((char *)[_termType UTF8String], fileno(stdout), &r);
+    const BOOL termTypeIsValid = (r == 1);
+
     DLog(@"setTermTypeIsValid:%@ cur_term=%p", @(termTypeIsValid), cur_term);
     if (termTypeIsValid && cur_term) {
         char *key_names[] = {
@@ -226,8 +250,22 @@ typedef enum {
     }
 }
 
+- (NSData *)standardDataForKeyWithCode:(int)code flags:(NSEventModifierFlags)flags {
+    if (!_standard) {
+        return nil;
+    }
+    const int mod = [self cursorModifierParamForEventModifierFlags:flags];
+    if (mod) {
+        return [[NSString stringWithFormat:@"\e[%d;%d~", code, mod] dataUsingEncoding:NSUTF8StringEncoding];
+    }
+    return [[NSString stringWithFormat:@"\e[%d~", code] dataUsingEncoding:NSUTF8StringEncoding];
+}
 
-- (NSData *)keyDelete {
+- (NSData *)keyDelete:(NSEventModifierFlags)flags {
+    NSData *standard = [self standardDataForKeyWithCode:3 flags:flags];
+    if (standard) {
+        return standard;
+    }
     if (_keyStrings[TERMINFO_KEY_DEL]) {
         return [NSData dataWithBytes:_keyStrings[TERMINFO_KEY_DEL]
                               length:strlen(_keyStrings[TERMINFO_KEY_DEL])];
@@ -245,8 +283,11 @@ typedef enum {
     }
 }
 
-- (NSData *)keyPageUp:(unsigned int)modflag
-{
+- (NSData *)keyPageUp:(unsigned int)modflag {
+    NSData *standard = [self standardDataForKeyWithCode:5 flags:modflag];
+    if (standard) {
+        return standard;
+    }
     NSData* theSuffix;
     if (_keyStrings[TERMINFO_KEY_PAGEUP]) {
         theSuffix = [NSData dataWithBytes:_keyStrings[TERMINFO_KEY_PAGEUP]
@@ -255,7 +296,7 @@ typedef enum {
         theSuffix = [NSData dataWithBytes:KEY_PAGE_UP
                                    length:STATIC_STRLEN(KEY_PAGE_UP)];
     }
-    NSMutableData* data = [[[NSMutableData alloc] init] autorelease];
+    NSMutableData* data = [NSMutableData data];
     if (modflag & NSEventModifierFlagOption) {
         char esc = ESC;
         [data appendData:[NSData dataWithBytes:&esc length:1]];
@@ -266,6 +307,10 @@ typedef enum {
 
 - (NSData *)keyPageDown:(unsigned int)modflag
 {
+    NSData *standard = [self standardDataForKeyWithCode:6 flags:modflag];
+    if (standard) {
+        return standard;
+    }
     NSData* theSuffix;
     if (_keyStrings[TERMINFO_KEY_PAGEDOWN]) {
         theSuffix = [NSData dataWithBytes:_keyStrings[TERMINFO_KEY_PAGEDOWN]
@@ -274,7 +319,7 @@ typedef enum {
         theSuffix = [NSData dataWithBytes:KEY_PAGE_DOWN
                                    length:STATIC_STRLEN(KEY_PAGE_DOWN)];
     }
-    NSMutableData* data = [[[NSMutableData alloc] init] autorelease];
+    NSMutableData* data = [NSMutableData data];
     if (modflag & NSEventModifierFlagOption) {
         char esc = ESC;
         [data appendData:[NSData dataWithBytes:&esc length:1]];
@@ -294,60 +339,52 @@ typedef enum {
         if (_keyStrings[TERMINFO_KEY_F0+no]) {
             return [NSData dataWithBytes:_keyStrings[TERMINFO_KEY_F0+no]
                                   length:strlen(_keyStrings[TERMINFO_KEY_F0+no])];
-        }
-        else {
+        } else {
             sprintf(str, KEY_FUNCTION_FORMAT, no + 10);
         }
-    }
-    else if (no <= 10) {
+    } else if (no <= 10) {
         if (_keyStrings[TERMINFO_KEY_F0+no]) {
             return [NSData dataWithBytes:_keyStrings[TERMINFO_KEY_F0+no]
                                   length:strlen(_keyStrings[TERMINFO_KEY_F0+no])];
-        }
-        else {
+        } else {
             sprintf(str, KEY_FUNCTION_FORMAT, no + 11);
         }
-    }
-    else if (no <= 14)
+    } else if (no <= 14) {
         if (_keyStrings[TERMINFO_KEY_F0+no]) {
             return [NSData dataWithBytes:_keyStrings[TERMINFO_KEY_F0+no]
                                   length:strlen(_keyStrings[TERMINFO_KEY_F0+no])];
-        }
-        else {
+        } else {
             sprintf(str, KEY_FUNCTION_FORMAT, no + 12);
         }
-        else if (no <= 16)
-            if (_keyStrings[TERMINFO_KEY_F0+no]) {
-                return [NSData dataWithBytes:_keyStrings[TERMINFO_KEY_F0+no]
-                                      length:strlen(_keyStrings[TERMINFO_KEY_F0+no])];
-            }
-            else {
-                sprintf(str, KEY_FUNCTION_FORMAT, no + 13);
-            }
-            else if (no <= 20)
-                if (_keyStrings[TERMINFO_KEY_F0+no]) {
-                    return [NSData dataWithBytes:_keyStrings[TERMINFO_KEY_F0+no]
-                                          length:strlen(_keyStrings[TERMINFO_KEY_F0+no])];
-                }
-                else {
-                    sprintf(str, KEY_FUNCTION_FORMAT, no + 14);
-                }
-                else if (no <=35)
-                    if (_keyStrings[TERMINFO_KEY_F0+no]) {
-                        return [NSData dataWithBytes:_keyStrings[TERMINFO_KEY_F0+no]
-                                              length:strlen(_keyStrings[TERMINFO_KEY_F0+no])];
-                    }
-                    else
-                        str[0] = 0;
-                    else
-                        str[0] = 0;
-
+    } else if (no <= 16) {
+        if (_keyStrings[TERMINFO_KEY_F0+no]) {
+            return [NSData dataWithBytes:_keyStrings[TERMINFO_KEY_F0+no]
+                                  length:strlen(_keyStrings[TERMINFO_KEY_F0+no])];
+        } else {
+            sprintf(str, KEY_FUNCTION_FORMAT, no + 13);
+        }
+    } else if (no <= 20) {
+        if (_keyStrings[TERMINFO_KEY_F0+no]) {
+            return [NSData dataWithBytes:_keyStrings[TERMINFO_KEY_F0+no]
+                                  length:strlen(_keyStrings[TERMINFO_KEY_F0+no])];
+        } else {
+            sprintf(str, KEY_FUNCTION_FORMAT, no + 14);
+        }
+    } else if (no <= 35) {
+        if (_keyStrings[TERMINFO_KEY_F0+no]) {
+            return [NSData dataWithBytes:_keyStrings[TERMINFO_KEY_F0+no]
+                                  length:strlen(_keyStrings[TERMINFO_KEY_F0+no])];
+        } else {
+            str[0] = 0;
+        }
+    } else {
+        str[0] = 0;
+    }
     len = strlen(str);
     return [NSData dataWithBytes:str length:len];
 }
 
-- (NSData*)keypadData:(unichar)unicode keystr:(NSString*)keystr
-{
+- (NSData*)keypadData:(unichar)unicode keystr:(NSString*)keystr {
     NSData *theData = nil;
 
     // numeric keypad mode
@@ -415,8 +452,7 @@ typedef enum {
     return (theData);
 }
 
-- (char *)mouseReport:(int)button atX:(int)x Y:(int)y
-{
+- (char *)mouseReport:(int)button atX:(int)x Y:(int)y {
     static char buf[64]; // This should be enough for all formats.
     switch (self.mouseFormat) {
         case MOUSE_FORMAT_XTERM_EXT:
@@ -693,7 +729,7 @@ typedef enum {
             }
         }
     }
-    NSMutableData* data = [[[NSMutableData alloc] init] autorelease];
+    NSMutableData* data = [NSMutableData data];
     if (prefix) {
         [data appendData:prefix];
     }

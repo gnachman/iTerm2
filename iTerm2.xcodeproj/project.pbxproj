@@ -2488,6 +2488,7 @@
 		A67960FD1F8202C2008A42BC /* iTermMark.metal in Sources */ = {isa = PBXBuildFile; fileRef = A67960BB1F81FCA5008A42BC /* iTermMark.metal */; };
 		A67960FE1F8202C2008A42BC /* iTermText.metal in Sources */ = {isa = PBXBuildFile; fileRef = A67960BF1F81FCA5008A42BC /* iTermText.metal */; };
 		A67A500726C73EDA00281693 /* VT100Terminal.m in Sources */ = {isa = PBXBuildFile; fileRef = E8CF7563026DDA6303A80106 /* VT100Terminal.m */; };
+		A67A500C26C8887A00281693 /* VT100Output.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A13AAB18C3347200B241ED /* VT100Output.m */; };
 		A67C44E7211E24F6004EDB1C /* PSMMinimalTabStyle.h in Headers */ = {isa = PBXBuildFile; fileRef = A67C44E5211E24F6004EDB1C /* PSMMinimalTabStyle.h */; };
 		A67C44E8211E24F6004EDB1C /* PSMMinimalTabStyle.m in Sources */ = {isa = PBXBuildFile; fileRef = A67C44E6211E24F6004EDB1C /* PSMMinimalTabStyle.m */; };
 		A67D0D321A2EE12A003A8B35 /* AboutWindow.xib in Resources */ = {isa = PBXBuildFile; fileRef = A67D0D111A2EE12A003A8B35 /* AboutWindow.xib */; };
@@ -3429,7 +3430,6 @@
 		A6C763C01B45C52B00E3C992 /* VT100ControlParser.m in Sources */ = {isa = PBXBuildFile; fileRef = A647E3AD18C3588800450FA1 /* VT100ControlParser.m */; };
 		A6C763C11B45C52B00E3C992 /* VT100CSIParser.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A13AB018C33ED300B241ED /* VT100CSIParser.m */; };
 		A6C763C31B45C52B00E3C992 /* VT100OtherParser.m in Sources */ = {isa = PBXBuildFile; fileRef = A647E3A318C352B000450FA1 /* VT100OtherParser.m */; };
-		A6C763C41B45C52B00E3C992 /* VT100Output.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A13AAB18C3347200B241ED /* VT100Output.m */; };
 		A6C763C51B45C52B00E3C992 /* VT100Parser.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A13AB518C33FC500B241ED /* VT100Parser.m */; };
 		A6C763C61B45C52B00E3C992 /* VT100State.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E525CF1A9C5725007B898E /* VT100State.m */; };
 		A6C763C71B45C52B00E3C992 /* VT100StateMachine.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E525D01A9C5725007B898E /* VT100StateMachine.m */; };
@@ -14339,6 +14339,7 @@
 				A6C1FD571FC2B210006B9A69 /* iTermMargin.metal in Sources */,
 				A6A4866B20B679AB00493302 /* iTermPreferences.m in Sources */,
 				A6F718BC226596DB0053488E /* PTYTextView+ARC.m in Sources */,
+				A67A500C26C8887A00281693 /* VT100Output.m in Sources */,
 				53FF984C20967806008688D7 /* iTermMetalDeviceProvider.m in Sources */,
 				A653F68624CF4EC70062377E /* FMDatabase.m in Sources */,
 				A6725AD723D63B7A001CA48A /* iTermProfileModelJournal.m in Sources */,
@@ -14896,7 +14897,6 @@
 				A6C762FD1B45C52B00E3C992 /* SCPPath.m in Sources */,
 				A6C763181B45C52B00E3C992 /* iTermNSKeyBindingEmulator.m in Sources */,
 				A6C762D01B45C52B00E3C992 /* iTermSelection.m in Sources */,
-				A6C763C41B45C52B00E3C992 /* VT100Output.m in Sources */,
 				A6C7630B1B45C52B00E3C992 /* FontSizeEstimator.m in Sources */,
 				A6C763361B45C52B00E3C992 /* iTermPasteSpecialWindowController.m in Sources */,
 				A6C763491B45C52B00E3C992 /* iTermTabBarControlView.m in Sources */,
