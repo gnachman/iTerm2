@@ -451,7 +451,7 @@ static const int kMaxScreenRows = 4096;
     if (self.currentKeyReportingModeStack.count) {
         return self.currentKeyReportingModeStack.lastObject.intValue;
     }
-    switch (_sendModifiers[4]) {
+    switch (_sendModifiers[4].intValue) {
         case 0:
             return VT100TerminalKeyReportingFlagsNone;
         case 1:
