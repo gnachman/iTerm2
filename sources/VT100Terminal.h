@@ -48,7 +48,7 @@ typedef NS_OPTIONS(int, VT100TerminalKeyReportingFlags) {
 
 @property(nonatomic, readonly) VT100Parser *parser;
 
-@property(nonatomic, assign) id<VT100TerminalDelegate> delegate;
+@property(nonatomic, weak) id<VT100TerminalDelegate> delegate;
 @property(nonatomic, copy) NSString *termType;
 @property(nonatomic, copy) NSString *answerBackString;
 // The current encoding. May be changed by ISO2022_* code.

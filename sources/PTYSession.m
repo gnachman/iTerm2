@@ -12402,21 +12402,16 @@ preferredEscaping:(iTermSendTextEscaping)preferredEscaping {
 }
 
 - (void)screenSendModifiersDidChange {
-    if (_keyMappingMode == iTermKeyMappingModeCSIu) {
-        // Since you can only enter CSI u mode via the UI, don't let a control sequence change it.
-        return;
-    }
     const BOOL allowed = [iTermProfilePreferences boolForKey:KEY_ALLOW_MODIFY_OTHER_KEYS
                                                    inProfile:self.profile];
+    if (!allowed) {
+        return;
+    }
     const int modifyOtherKeysMode = _terminal.sendModifiers[4].intValue;
     if (modifyOtherKeysMode == 1) {
-        if (allowed) {
-            self.keyMappingMode = iTermKeyMappingModeModifyOtherKeys1;
-        }
+        self.keyMappingMode = iTermKeyMappingModeModifyOtherKeys1;
     } else if (modifyOtherKeysMode == 2) {
-        if (allowed) {
-            self.keyMappingMode = iTermKeyMappingModeModifyOtherKeys2;
-        }
+        self.keyMappingMode = iTermKeyMappingModeModifyOtherKeys2;
     } else {
         self.keyMappingMode = iTermKeyMappingModeStandard;
     }

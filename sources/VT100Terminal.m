@@ -78,7 +78,9 @@ NSString *const kTerminalStateURLParams = @"URL Params";
 NSString *const kTerminalStateReportKeyUp = @"Report Key Up";
 NSString *const kTerminalStateMetaSendsEscape = @"Meta Sends Escape";
 NSString *const kTerminalStateSendModifiers = @"Send Modifiers";
-NSString *const kTerminalStateKeyReportingModeStack = @"Key Reporting Mode Stack";
+NSString *const kTerminalStateKeyReportingModeStack_Deprecated = @"Key Reporting Mode Stack";  // deprecated
+NSString *const kTerminalStateKeyReportingModeStack_Main = @"Main Key Reporting Mode Stack";
+NSString *const kTerminalStateKeyReportingModeStack_Alternate = @"Alternate Key Reporting Mode Stack";
 NSString *const kTerminalStateSynchronizedUpdates = @"Synchronized Updates";
 
 @interface VT100Terminal ()
@@ -91,8 +93,8 @@ NSString *const kTerminalStateSynchronizedUpdates = @"Synchronized Updates";
 @property(nonatomic, assign) BOOL allowColumnMode;
 @property(nonatomic, assign) BOOL columnMode;  // YES=132 Column, NO=80 Column
 @property(nonatomic, assign) BOOL disableSmcupRmcup;
-@property(nonatomic, retain) NSURL *url;
-@property(nonatomic, retain) NSString *urlParams;
+@property(nonatomic, strong) NSURL *url;
+@property(nonatomic, strong) NSString *urlParams;
 
 // A write-only property, at the moment. TODO: What should this do?
 @property(nonatomic, assign) BOOL strictAnsiMode;
@@ -119,8 +121,6 @@ typedef struct {
     // In FinalTerm command mode (user is at the prompt typing a command).
     BOOL inCommand_;
 
-    id<VT100TerminalDelegate> delegate_;
-
     BOOL ansiMode_;         // YES=ANSI, NO=VT52
     BOOL numLock_;           // YES=ON, NO=OFF, default=YES;
 
@@ -133,10 +133,10 @@ typedef struct {
     unsigned short _currentURLCode;
 
     BOOL _softAlternateScreenMode;
-    NSMutableArray<NSNumber *> *_keyReportingModeStack;
+    NSMutableArray<NSNumber *> *_mainKeyReportingModeStack;
+    NSMutableArray<NSNumber *> *_alternateKeyReportingModeStack;
 }
 
-@synthesize delegate = delegate_;
 @synthesize receivingFile = receivingFile_;
 @synthesize graphicRendition = graphicRendition_;
 
@@ -227,26 +227,13 @@ static const int kMaxScreenRows = 4096;
         _allowKeypadMode = YES;
         _allowPasteBracketing = YES;
         _sendModifiers = [@[ @-1, @-1, @-1, @-1, @-1 ] mutableCopy];
-        _keyReportingModeStack = [[NSMutableArray alloc] init];
+        _mainKeyReportingModeStack = [[NSMutableArray alloc] init];
+        _alternateKeyReportingModeStack = [[NSMutableArray alloc] init];
         numLock_ = YES;
         [self saveCursor];  // initialize save area
         _unicodeVersionStack = [[NSMutableArray alloc] init];
     }
     return self;
-}
-
-- (void)dealloc {
-    [_output release];
-    [_parser release];
-    [_termType release];
-    [_answerBackString release];
-    [_unicodeVersionStack release];
-    [_url release];
-    [_urlParams release];
-    [_sendModifiers release];
-    [_keyReportingModeStack release];
-
-    [super dealloc];
 }
 
 - (void)stopReceivingFile {
@@ -268,7 +255,6 @@ static const int kMaxScreenRows = 4096;
 
 - (void)setTermType:(NSString *)termtype {
     DLog(@"setTermType:%@", termtype);
-    [_termType autorelease];
     _termType = [termtype copy];
 
     self.allowKeypadMode = [_termType rangeOfString:@"xterm"].location != NSNotFound;
@@ -290,7 +276,7 @@ static const int kMaxScreenRows = 4096;
     }
     self.isAnsi = [_termType rangeOfString:@"ANSI"
                                    options:NSCaseInsensitiveSearch | NSAnchoredSearch ].location !=  NSNotFound;
-    [delegate_ terminalTypeDidChange];
+    [_delegate terminalTypeDidChange];
 }
 
 - (void)setAnswerBackString:(NSString *)s {
@@ -328,7 +314,7 @@ static const int kMaxScreenRows = 4096;
 - (void)resetCharset {
     _charset = 0;
     for (int i = 0; i < NUM_CHARSETS; i++) {
-        [delegate_ terminalSetCharset:i toLineDrawingMode:NO];
+        [_delegate terminalSetCharset:i toLineDrawingMode:NO];
     }
 }
 
@@ -353,8 +339,8 @@ static const int kMaxScreenRows = 4096;
     self.mouseMode = MOUSE_REPORTING_NONE;
     self.mouseFormat = MOUSE_FORMAT_XTERM;
     [self saveCursor];  // reset saved text attributes
-    [delegate_ terminalMouseModeDidChangeTo:_mouseMode];
-    [delegate_ terminalSetUseColumnScrollRegion:NO];
+    [_delegate terminalMouseModeDidChangeTo:_mouseMode];
+    [_delegate terminalSetUseColumnScrollRegion:NO];
     self.reportFocus = NO;
 
     self.strictAnsiMode = NO;
@@ -367,18 +353,22 @@ static const int kMaxScreenRows = 4096;
         mainSavedCursor_.lineDrawing[i] = NO;
         altSavedCursor_.lineDrawing[i] = NO;
     }
-    [_keyReportingModeStack removeAllObjects];
+    [_mainKeyReportingModeStack removeAllObjects];
+    [_alternateKeyReportingModeStack removeAllObjects];
     [self resetSavedCursorPositions];
-    [delegate_ terminalShowPrimaryBuffer];
+    [_delegate terminalShowPrimaryBuffer];
     self.softAlternateScreenMode = NO;
     [self resetSendModifiersWithSideEffects:NO];
     [self.delegate terminalDidChangeSendModifiers];
 }
 
 - (void)resetSendModifiersWithSideEffects:(BOOL)sideEffects {
+    DLog(@"reset send modifiers with side effects=%@", @(sideEffects));
     for (int i = 0; i < NUM_MODIFIABLE_RESOURCES; i++) {
         _sendModifiers[i] = @-1;
     }
+    [_mainKeyReportingModeStack removeAllObjects];
+    [_alternateKeyReportingModeStack removeAllObjects];
     if (sideEffects) {
         [self.delegate terminalDidChangeSendModifiers];
     }
@@ -386,7 +376,7 @@ static const int kMaxScreenRows = 4096;
 
 - (void)gentleReset {
     [self commonReset];
-    [delegate_ terminalSetCursorVisible:YES];
+    [_delegate terminalSetCursorVisible:YES];
 }
 
 - (void)resetByUserRequest:(BOOL)userInitiated {
@@ -402,14 +392,14 @@ static const int kMaxScreenRows = 4096;
                 resetParser:(BOOL)resetParser
               modifyContent:(BOOL)modifyContent {
     if (canResize && _columnMode) {
-        [delegate_ terminalSetWidth:80];
+        [_delegate terminalSetWidth:80];
     }
     self.columnMode = NO;
     [self commonReset];
     if (resetParser) {
         [_parser reset];
     }
-    [delegate_ terminalResetPreservingPrompt:preservePrompt modifyContent:modifyContent];
+    [_delegate terminalResetPreservingPrompt:preservePrompt modifyContent:modifyContent];
 }
 
 - (void)resetForTmuxUnpause {
@@ -419,7 +409,7 @@ static const int kMaxScreenRows = 4096;
 - (void)setWraparoundMode:(BOOL)mode {
     if (mode != _wraparoundMode) {
         _wraparoundMode = mode;
-        [delegate_ terminalWraparoundModeDidChangeTo:mode];
+        [_delegate terminalWraparoundModeDidChangeTo:mode];
     }
 }
 
@@ -458,7 +448,24 @@ static const int kMaxScreenRows = 4096;
 }
 
 - (VT100TerminalKeyReportingFlags)keyReportingFlags {
-    return _keyReportingModeStack.lastObject.intValue;
+    if (self.currentKeyReportingModeStack.count) {
+        return self.currentKeyReportingModeStack.lastObject.intValue;
+    }
+    switch (_sendModifiers[4]) {
+        case 0:
+            return VT100TerminalKeyReportingFlagsNone;
+        case 1:
+            return VT100TerminalKeyReportingFlagsDisambiguateEscape;
+        default:
+            return VT100TerminalKeyReportingFlagsNone;
+    }
+}
+
+- (NSMutableArray<NSNumber *> *)currentKeyReportingModeStack {
+    if ([self.delegate terminalIsInAlternateScreenMode]) {
+        return _alternateKeyReportingModeStack;
+    }
+    return _mainKeyReportingModeStack;
 }
 
 - (screen_char_t)foregroundColorCode
@@ -546,7 +553,7 @@ static const int kMaxScreenRows = 4096;
 {
     if (_insertMode != mode) {
         _insertMode = mode;
-        [delegate_ terminalInsertModeDidChangeTo:mode];
+        [_delegate terminalInsertModeDidChangeTo:mode];
     }
 }
 
@@ -555,9 +562,9 @@ static const int kMaxScreenRows = 4096;
     // soft alternate screen mode. No point tracking it in two places.
     const BOOL useAlternateScreenMode = ![self.delegate terminalIsInAlternateScreenMode];
     if (useAlternateScreenMode) {
-        [delegate_ terminalShowAltBuffer];
+        [_delegate terminalShowAltBuffer];
     } else {
-        [delegate_ terminalShowPrimaryBuffer];
+        [_delegate terminalShowPrimaryBuffer];
     }
     self.softAlternateScreenMode = useAlternateScreenMode;
 }
@@ -581,7 +588,7 @@ static const int kMaxScreenRows = 4096;
             case 3:
                 if (self.allowColumnMode) {
                     self.columnMode = mode;
-                    [delegate_ terminalSetWidth:(self.columnMode ? 132 : 80)];
+                    [_delegate terminalSetWidth:(self.columnMode ? 132 : 80)];
                 }
                 break;
             case 4:
@@ -589,11 +596,11 @@ static const int kMaxScreenRows = 4096;
                 break;
             case 5:
                 self.reverseVideo = mode;
-                [delegate_ terminalNeedsRedraw];
+                [_delegate terminalNeedsRedraw];
                 break;
             case 6:
                 self.originMode = mode;
-                [delegate_ terminalMoveCursorToX:1 y:1];
+                [_delegate terminalMoveCursorToX:1 y:1];
                 break;
             case 7:
                 self.wraparoundMode = mode;
@@ -609,7 +616,7 @@ static const int kMaxScreenRows = 4096;
                 // supported by xterm. Seemed to have something to do with CR vs LF.
                 break;
             case 25:
-                [delegate_ terminalSetCursorVisible:mode];
+                [_delegate terminalSetCursorVisible:mode];
                 break;
             case 40:
                 self.allowColumnMode = mode;
@@ -624,24 +631,24 @@ static const int kMaxScreenRows = 4096;
                 // alternate screen buffer mode
                 if (!self.disableSmcupRmcup) {
                     if (mode) {
-                        int x = [delegate_ terminalCursorX];
-                        int y = [delegate_ terminalCursorY];
-                        [delegate_ terminalShowAltBuffer];
-                        [delegate_ terminalSetCursorX:x];
-                        [delegate_ terminalSetCursorY:y];
+                        int x = [_delegate terminalCursorX];
+                        int y = [_delegate terminalCursorY];
+                        [_delegate terminalShowAltBuffer];
+                        [_delegate terminalSetCursorX:x];
+                        [_delegate terminalSetCursorY:y];
                     } else {
-                        int x = [delegate_ terminalCursorX];
-                        int y = [delegate_ terminalCursorY];
-                        [delegate_ terminalShowPrimaryBuffer];
-                        [delegate_ terminalSetCursorX:x];
-                        [delegate_ terminalSetCursorY:y];
+                        int x = [_delegate terminalCursorX];
+                        int y = [_delegate terminalCursorY];
+                        [_delegate terminalShowPrimaryBuffer];
+                        [_delegate terminalSetCursorX:x];
+                        [_delegate terminalSetCursorY:y];
                     }
                 }
                 self.softAlternateScreenMode = mode;
                 break;
 
             case 69:
-                [delegate_ terminalSetUseColumnScrollRegion:mode];
+                [_delegate terminalSetUseColumnScrollRegion:mode];
                 break;
 
             case 1000:
@@ -654,10 +661,10 @@ static const int kMaxScreenRows = 4096;
                 } else {
                     self.mouseMode = MOUSE_REPORTING_NONE;
                 }
-                [delegate_ terminalMouseModeDidChangeTo:_mouseMode];
+                [_delegate terminalMouseModeDidChangeTo:_mouseMode];
                 break;
             case 1004:
-                self.reportFocus = mode && [delegate_ terminalFocusReportingAllowed];
+                self.reportFocus = mode && [_delegate terminalFocusReportingAllowed];
                 break;
 
             case 1005:
@@ -704,11 +711,11 @@ static const int kMaxScreenRows = 4096;
                 if (!self.disableSmcupRmcup) {
                     if (mode) {
                         [self saveCursor];
-                        [delegate_ terminalShowAltBuffer];
-                        [delegate_ terminalClearScreen];
-                        [delegate_ terminalMoveCursorToX:1 y:1];
+                        [_delegate terminalShowAltBuffer];
+                        [_delegate terminalClearScreen];
+                        [_delegate terminalMoveCursorToX:1 y:1];
                     } else {
-                        [delegate_ terminalShowPrimaryBuffer];
+                        [_delegate terminalShowPrimaryBuffer];
                         [self restoreCursor];
                     }
                 }
@@ -1036,35 +1043,35 @@ static const int kMaxScreenRows = 4096;
         _previousMouseMode = self.mouseMode;
     }
     _mouseMode = mode;
-    [delegate_ terminalMouseModeDidChangeTo:_mouseMode];
+    [_delegate terminalMouseModeDidChangeTo:_mouseMode];
 }
 
 - (void)handleDeviceStatusReportWithToken:(VT100Token *)token withQuestion:(BOOL)withQuestion {
-    if ([delegate_ terminalShouldSendReport]) {
+    if ([_delegate terminalShouldSendReport]) {
         switch (token.csi->p[0]) {
             case 3: // response from VT100 -- Malfunction -- retry
                 break;
 
             case 5: // Command from host -- Please report status
-                [delegate_ terminalSendReport:[self.output reportStatus]];
+                [_delegate terminalSendReport:[self.output reportStatus]];
                 break;
 
             case 6: // Command from host -- Please report active position
                 if (self.originMode) {
                     // This is compatible with Terminal but not old xterm :(. it always did what
                     // we do in the else clause. This behavior of xterm is fixed by Patch #297.
-                    [delegate_ terminalSendReport:[self.output reportActivePositionWithX:[delegate_ terminalRelativeCursorX]
-                                                                                Y:[delegate_ terminalRelativeCursorY]
+                    [_delegate terminalSendReport:[self.output reportActivePositionWithX:[_delegate terminalRelativeCursorX]
+                                                                                Y:[_delegate terminalRelativeCursorY]
                                                                      withQuestion:withQuestion]];
                 } else {
-                    [delegate_ terminalSendReport:[self.output reportActivePositionWithX:[delegate_ terminalCursorX]
-                                                                                Y:[delegate_ terminalCursorY]
+                    [_delegate terminalSendReport:[self.output reportActivePositionWithX:[_delegate terminalCursorX]
+                                                                                Y:[_delegate terminalCursorY]
                                                                      withQuestion:withQuestion]];
                 }
                 break;
 
             case 1337:  // iTerm2 extension
-                [delegate_ terminalSendReport:[self.output reportiTerm2Version]];
+                [_delegate terminalSendReport:[self.output reportiTerm2Version]];
                 break;
 
             case 0: // Response from VT100 -- Ready, No malfunctions detected
@@ -1103,7 +1110,7 @@ static const int kMaxScreenRows = 4096;
     }
 
     if (self.originMode) {
-        VT100GridRect scrollRegion = [delegate_ terminalScrollRegion];
+        VT100GridRect scrollRegion = [_delegate terminalScrollRegion];
         coordRange.start.x += scrollRegion.origin.x;
         coordRange.start.y += scrollRegion.origin.y;
         coordRange.end.x += scrollRegion.origin.x;
@@ -1119,7 +1126,7 @@ static const int kMaxScreenRows = 4096;
 
 - (BOOL)rectangleIsValid:(VT100GridRect)rect {
     if (self.originMode) {
-        VT100GridRect scrollRegion = [delegate_ terminalScrollRegion];
+        VT100GridRect scrollRegion = [_delegate terminalScrollRegion];
         if (rect.origin.y < scrollRegion.origin.y ||
             rect.origin.x < scrollRegion.origin.x ||
             VT100GridRectMax(rect).y > VT100GridRectMax(scrollRegion).y ||
@@ -1133,33 +1140,33 @@ static const int kMaxScreenRows = 4096;
 
 - (void)sendChecksumReportWithId:(int)identifier
                        rectangle:(VT100GridRect)rect {
-    if (![delegate_ terminalShouldSendReport]) {
+    if (![_delegate terminalShouldSendReport]) {
         return;
     }
     if (identifier < 0) {
         return;
     }
     if (![self rectangleIsValid:rect]) {
-        [delegate_ terminalSendReport:[self.output reportChecksum:0 withIdentifier:identifier]];
+        [_delegate terminalSendReport:[self.output reportChecksum:0 withIdentifier:identifier]];
         return;
     }
     // TODO: Respect origin mode
-    int checksum = [delegate_ terminalChecksumInRectangle:rect];
+    int checksum = [_delegate terminalChecksumInRectangle:rect];
     // DCS Pid ! ~ D..D ST
-    [delegate_ terminalSendReport:[self.output reportChecksum:checksum withIdentifier:identifier]];
+    [_delegate terminalSendReport:[self.output reportChecksum:checksum withIdentifier:identifier]];
 }
 
 - (void)sendSGRReportWithRectangle:(VT100GridRect)rect {
-    if (![delegate_ terminalShouldSendReport]) {
+    if (![_delegate terminalShouldSendReport]) {
         return;
     }
     if (![self rectangleIsValid:rect]) {
-        [delegate_ terminalSendReport:[self.output reportSGRCodes:@[]]];
+        [_delegate terminalSendReport:[self.output reportSGRCodes:@[]]];
         return;
     }
     // TODO: Respect origin mode
-    NSArray<NSString *> *codes = [delegate_ terminalSGRCodesInRectangle:rect];
-    [delegate_ terminalSendReport:[self.output reportSGRCodes:codes]];
+    NSArray<NSString *> *codes = [_delegate terminalSGRCodesInRectangle:rect];
+    [_delegate terminalSendReport:[self.output reportSGRCodes:codes]];
 }
 
 - (NSString *)decodedBase64PasteCommand:(NSString *)commandString {
@@ -1227,8 +1234,8 @@ static const int kMaxScreenRows = 4096;
     }
     [data setLength:outputLength];
 
-    NSString *resultString = [[[NSString alloc] initWithData:data
-                                                    encoding:[self encoding]] autorelease];
+    NSString *resultString = [[NSString alloc] initWithData:data
+                                                   encoding:[self encoding]];
     return resultString;
 }
 
@@ -1239,7 +1246,7 @@ static const int kMaxScreenRows = 4096;
         return &mainSavedCursor_;
     }
     VT100SavedCursor *savedCursor;
-    if ([delegate_ terminalIsShowingAltBuffer]) {
+    if ([_delegate terminalIsShowingAltBuffer]) {
         savedCursor = &altSavedCursor_;
     } else {
         savedCursor = &mainSavedCursor_;
@@ -1250,17 +1257,17 @@ static const int kMaxScreenRows = 4096;
 - (void)saveCursor {
     VT100SavedCursor *savedCursor = [self savedCursor];
 
-    savedCursor->position = VT100GridCoordMake([delegate_ terminalCursorX] - 1,
-                                               [delegate_ terminalCursorY] - 1);
+    savedCursor->position = VT100GridCoordMake([_delegate terminalCursorX] - 1,
+                                               [_delegate terminalCursorY] - 1);
     savedCursor->charset = _charset;
 
     for (int i = 0; i < NUM_CHARSETS; i++) {
-        savedCursor->lineDrawing[i] = [delegate_ terminalLineDrawingFlagForCharset:i];
+        savedCursor->lineDrawing[i] = [_delegate terminalLineDrawingFlagForCharset:i];
     }
     savedCursor->graphicRendition = graphicRendition_;
     savedCursor->origin = self.originMode;
     savedCursor->wraparound = self.wraparoundMode;
-    savedCursor->unicodeVersion = [delegate_ terminalUnicodeVersion];
+    savedCursor->unicodeVersion = [_delegate terminalUnicodeVersion];
 }
 
 - (void)setReportFocus:(BOOL)reportFocus {
@@ -1274,7 +1281,7 @@ static const int kMaxScreenRows = 4096;
 
 - (void)setBracketedPasteMode:(BOOL)bracketedPasteMode withSideEffects:(BOOL)sideEffects {
     if (sideEffects) {
-        [delegate_ terminalPasteBracketingWillChangeTo:bracketedPasteMode];
+        [_delegate terminalPasteBracketingWillChangeTo:bracketedPasteMode];
     }
     _bracketedPasteMode = bracketedPasteMode;
 }
@@ -1298,37 +1305,37 @@ static const int kMaxScreenRows = 4096;
 
 - (void)restoreCursor {
     VT100SavedCursor *savedCursor = [self savedCursor];
-    [delegate_ terminalSetCursorX:savedCursor->position.x + 1];
-    [delegate_ terminalSetCursorY:savedCursor->position.y + 1];
+    [_delegate terminalSetCursorX:savedCursor->position.x + 1];
+    [_delegate terminalSetCursorY:savedCursor->position.y + 1];
     _charset = savedCursor->charset;
     for (int i = 0; i < NUM_CHARSETS; i++) {
-        [delegate_ terminalSetCharset:i toLineDrawingMode:savedCursor->lineDrawing[i]];
+        [_delegate terminalSetCharset:i toLineDrawingMode:savedCursor->lineDrawing[i]];
     }
 
     graphicRendition_ = savedCursor->graphicRendition;
 
     self.originMode = savedCursor->origin;
     self.wraparoundMode = savedCursor->wraparound;
-    [delegate_ terminalSetUnicodeVersion:savedCursor->unicodeVersion];
+    [_delegate terminalSetUnicodeVersion:savedCursor->unicodeVersion];
 }
 
 // These steps are derived from xterm's source.
 - (void)softReset {
     // The steps here are derived from xterm's implementation. The order is different but not in
     // a significant way.
-    int x = [delegate_ terminalCursorX];
-    int y = [delegate_ terminalCursorY];
+    int x = [_delegate terminalCursorX];
+    int y = [_delegate terminalCursorY];
 
     // Show cursor
-    [delegate_ terminalSetCursorVisible:YES];
+    [_delegate terminalSetCursorVisible:YES];
 
     // Reset cursor shape to default
-    [delegate_ terminalSetCursorType:CURSOR_DEFAULT];
+    [_delegate terminalSetCursorType:CURSOR_DEFAULT];
 
     // Remove tb and lr margins
-    [delegate_ terminalSetScrollRegionTop:0
-                                   bottom:[delegate_ terminalHeight] - 1];
-    [delegate_ terminalSetLeftMargin:0 rightMargin:[delegate_ terminalWidth] - 1];
+    [_delegate terminalSetScrollRegionTop:0
+                                   bottom:[_delegate terminalHeight] - 1];
+    [_delegate terminalSetLeftMargin:0 rightMargin:[_delegate terminalWidth] - 1];
 
 
     // Turn off origin mode
@@ -1348,7 +1355,7 @@ static const int kMaxScreenRows = 4096;
     // Reset character-sets to initial state
     _charset = 0;
     for (int i = 0; i < NUM_CHARSETS; i++) {
-        [delegate_ terminalSetCharset:i toLineDrawingMode:NO];
+        [_delegate terminalSetCharset:i toLineDrawingMode:NO];
     }
 
     // (Not supported: Reset DECSCA)
@@ -1406,8 +1413,8 @@ static const int kMaxScreenRows = 4096;
     VT100SavedCursor *savedCursor = [self savedCursor];
     savedCursor->position = VT100GridCoordMake(0, 0);
 
-    [delegate_ terminalSetCursorX:x];
-    [delegate_ terminalSetCursorY:y];
+    [_delegate terminalSetCursorX:x];
+    [_delegate terminalSetCursorY:y];
 }
 
 - (VT100GridCoord)savedCursorPosition {
@@ -1418,10 +1425,10 @@ static const int kMaxScreenRows = 4096;
 - (void)executeToken:(VT100Token *)token {
     // Handle tmux stuff, which completely bypasses all other normal execution steps.
     if (token->type == DCS_TMUX_HOOK) {
-        [delegate_ terminalStartTmuxModeWithDCSIdentifier:token.string];
+        [_delegate terminalStartTmuxModeWithDCSIdentifier:token.string];
         return;
     } else if (token->type == TMUX_EXIT || token->type == TMUX_LINE) {
-        [delegate_ terminalHandleTmuxInput:token];
+        [_delegate terminalHandleTmuxInput:token];
         return;
     }
 
@@ -1432,53 +1439,53 @@ static const int kMaxScreenRows = 4096;
     // Handle file downloads, which come as a series of MULTITOKEN_BODY tokens.
     if (receivingFile_) {
         if (token->type == XTERMCC_MULTITOKEN_BODY) {
-            [delegate_ terminalDidReceiveBase64FileData:token.string ?: @""];
+            [_delegate terminalDidReceiveBase64FileData:token.string ?: @""];
             return;
         } else if (token->type == VT100_ASCIISTRING) {
-            [delegate_ terminalDidReceiveBase64FileData:[token stringForAsciiData]];
+            [_delegate terminalDidReceiveBase64FileData:[token stringForAsciiData]];
             return;
         } else if (token->type == XTERMCC_MULTITOKEN_END) {
-            [delegate_ terminalDidFinishReceivingFile];
+            [_delegate terminalDidFinishReceivingFile];
             receivingFile_ = NO;
             return;
         } else {
             DLog(@"Unexpected field receipt end");
-            [delegate_ terminalFileReceiptEndedUnexpectedly];
+            [_delegate terminalFileReceiptEndedUnexpectedly];
             receivingFile_ = NO;
         }
     } else if (_copyingToPasteboard) {
         if (token->type == XTERMCC_MULTITOKEN_BODY) {
-            [delegate_ terminalDidReceiveBase64PasteboardString:token.string ?: @""];
+            [_delegate terminalDidReceiveBase64PasteboardString:token.string ?: @""];
             return;
         } else if (token->type == VT100_ASCIISTRING) {
-            [delegate_ terminalDidReceiveBase64PasteboardString:[token stringForAsciiData]];
+            [_delegate terminalDidReceiveBase64PasteboardString:[token stringForAsciiData]];
             return;
         } else if (token->type == XTERMCC_MULTITOKEN_END) {
-            [delegate_ terminalDidFinishReceivingPasteboard];
+            [_delegate terminalDidFinishReceivingPasteboard];
             _copyingToPasteboard = NO;
             return;
         } else {
-            [delegate_ terminalPasteboardReceiptEndedUnexpectedly];
+            [_delegate terminalPasteboardReceiptEndedUnexpectedly];
             _copyingToPasteboard = NO;
         }
     }
     if (token->savingData &&
         token->type != VT100_SKIP &&
-        [delegate_ terminalIsAppendingToPasteboard]) {  // This is the old code that echoes to the screen. Its use is discouraged.
+        [_delegate terminalIsAppendingToPasteboard]) {  // This is the old code that echoes to the screen. Its use is discouraged.
         // We are probably copying text to the clipboard until esc]1337;EndCopy^G is received.
         if (token->type != XTERMCC_SET_KVP ||
             ![token.string hasPrefix:@"CopyToClipboard"]) {
             // Append text to clipboard except for initial command that turns on copying to
             // the clipboard.
 
-            [delegate_ terminalAppendDataToPasteboard:token.savedData];
+            [_delegate terminalAppendDataToPasteboard:token.savedData];
         }
     }
 
     // Disambiguate
     switch (token->type) {
         case VT100CSI_DECSLRM_OR_ANSICSI_SCP:
-            if ([delegate_ terminalUseColumnScrollRegion]) {
+            if ([_delegate terminalUseColumnScrollRegion]) {
                 token->type = VT100CSI_DECSLRM;
                 iTermParserSetCSIParameterIfDefault(token.csi, 0, 1);
                 iTermParserSetCSIParameterIfDefault(token.csi, 1, 1);
@@ -1496,10 +1503,10 @@ static const int kMaxScreenRows = 4096;
     switch (token->type) {
         // our special code
         case VT100_STRING:
-            [delegate_ terminalAppendString:token.string];
+            [_delegate terminalAppendString:token.string];
             break;
         case VT100_ASCIISTRING:
-            [delegate_ terminalAppendAsciiData:token.asciiData];
+            [_delegate terminalAppendAsciiData:token.asciiData];
             break;
 
         case VT100_UNKNOWNCHAR:
@@ -1509,24 +1516,24 @@ static const int kMaxScreenRows = 4096;
 
         //  VT100 CC
         case VT100CC_ENQ:
-            [delegate_ terminalSendReport:[_answerBackString dataUsingEncoding:self.encoding]];
+            [_delegate terminalSendReport:[_answerBackString dataUsingEncoding:self.encoding]];
             break;
         case VT100CC_BEL:
-            [delegate_ terminalRingBell];
+            [_delegate terminalRingBell];
             break;
         case VT100CC_BS:
-            [delegate_ terminalBackspace];
+            [_delegate terminalBackspace];
             break;
         case VT100CC_HT:
-            [delegate_ terminalAppendTabAtCursor:!_softAlternateScreenMode];
+            [_delegate terminalAppendTabAtCursor:!_softAlternateScreenMode];
             break;
         case VT100CC_LF:
         case VT100CC_VT:
         case VT100CC_FF:
-            [delegate_ terminalLineFeed];
+            [_delegate terminalLineFeed];
             break;
         case VT100CC_CR:
-            [delegate_ terminalCarriageReturn];
+            [_delegate terminalCarriageReturn];
             break;
         case VT100CC_SI:
             _charset = 0;
@@ -1547,54 +1554,54 @@ static const int kMaxScreenRows = 4096;
         case VT100CSI_CPR:
             break;
         case VT100CSI_CUB:
-            [delegate_ terminalCursorLeft:token.csi->p[0] > 0 ? token.csi->p[0] : 1];
+            [_delegate terminalCursorLeft:token.csi->p[0] > 0 ? token.csi->p[0] : 1];
             break;
         case VT100CSI_CUD:
-            [delegate_ terminalCursorDown:token.csi->p[0] > 0 ? token.csi->p[0] : 1
+            [_delegate terminalCursorDown:token.csi->p[0] > 0 ? token.csi->p[0] : 1
                          andToStartOfLine:NO];
             break;
         case VT100CSI_CUF:
-            [delegate_ terminalCursorRight:token.csi->p[0] > 0 ? token.csi->p[0] : 1];
+            [_delegate terminalCursorRight:token.csi->p[0] > 0 ? token.csi->p[0] : 1];
             break;
         case VT100CSI_CUP:
-            [delegate_ terminalMoveCursorToX:token.csi->p[1] y:token.csi->p[0]];
+            [_delegate terminalMoveCursorToX:token.csi->p[1] y:token.csi->p[0]];
             break;
         case VT100CSI_CHT:
             for (int i = 0; i < token.csi->p[0]; i++) {
-                [delegate_ terminalAppendTabAtCursor:!_softAlternateScreenMode];
+                [_delegate terminalAppendTabAtCursor:!_softAlternateScreenMode];
             }
             break;
         case VT100CSI_CUU:
-            [delegate_ terminalCursorUp:token.csi->p[0] > 0 ? token.csi->p[0] : 1
+            [_delegate terminalCursorUp:token.csi->p[0] > 0 ? token.csi->p[0] : 1
                        andToStartOfLine:NO];
             break;
         case VT100CSI_CNL:
-            [delegate_ terminalCursorDown:token.csi->p[0] > 0 ? token.csi->p[0] : 1
+            [_delegate terminalCursorDown:token.csi->p[0] > 0 ? token.csi->p[0] : 1
                          andToStartOfLine:YES];
             break;
         case VT100CSI_CPL:
-            [delegate_ terminalCursorUp:token.csi->p[0] > 0 ? token.csi->p[0] : 1
+            [_delegate terminalCursorUp:token.csi->p[0] > 0 ? token.csi->p[0] : 1
                        andToStartOfLine:YES];
             break;
         case VT100CSI_DA:
-            if ([delegate_ terminalShouldSendReport]) {
-                [delegate_ terminalSendReport:[self.output reportDeviceAttribute]];
+            if ([_delegate terminalShouldSendReport]) {
+                [_delegate terminalSendReport:[self.output reportDeviceAttribute]];
             }
             break;
         case VT100CSI_DA2:
-            if ([delegate_ terminalShouldSendReport]) {
-                [delegate_ terminalSendReport:[self.output reportSecondaryDeviceAttribute]];
+            if ([_delegate terminalShouldSendReport]) {
+                [_delegate terminalSendReport:[self.output reportSecondaryDeviceAttribute]];
             }
             break;
         case VT100CSI_XDA:
-            if ([delegate_ terminalShouldSendReport]) {
+            if ([_delegate terminalShouldSendReport]) {
                 if (token.csi->p[0] == 0 || token.csi->p[0] == -1) {
-                    [delegate_ terminalSendReport:[self.output reportExtendedDeviceAttribute]];
+                    [_delegate terminalSendReport:[self.output reportExtendedDeviceAttribute]];
                 }
             }
             break;
         case VT100CSI_DECALN:
-            [delegate_ terminalShowTestPattern];
+            [_delegate terminalShowTestPattern];
             break;
         case VT100CSI_DECDHL:
         case VT100CSI_DECDWL:
@@ -1631,12 +1638,12 @@ static const int kMaxScreenRows = 4096;
 
             int bottom;
             if (token.csi->count < 2 || token.csi->p[1] <= 0) {
-                bottom = delegate_.terminalHeight - 1;
+                bottom = _delegate.terminalHeight - 1;
             } else {
-                bottom = MIN(delegate_.terminalHeight, token.csi->p[1]) - 1;
+                bottom = MIN(_delegate.terminalHeight, token.csi->p[1]) - 1;
             }
 
-            [delegate_ terminalSetScrollRegionTop:top
+            [_delegate terminalSetScrollRegionTop:top
                                            bottom:bottom];
             // http://www.vt100.net/docs/vt510-rm/DECSTBM.html says:
             // “DECSTBM moves the cursor to column 1, line 1 of the page.”
@@ -1646,14 +1653,14 @@ static const int kMaxScreenRows = 4096;
             [self handleDeviceStatusReportWithToken:token withQuestion:NO];
             break;
         case VT100CSI_DECRQCRA: {
-            if ([delegate_ terminalIsTrusted]) {
-                if (![delegate_ terminalCanUseDECRQCRA]) {
+            if ([_delegate terminalIsTrusted]) {
+                if (![_delegate terminalCanUseDECRQCRA]) {
                     break;
                 }
                 VT100GridRect defaultRectangle = VT100GridRectMake(0,
                                                                    0,
-                                                                   [delegate_ terminalWidth],
-                                                                   [delegate_ terminalHeight]);
+                                                                   [_delegate terminalWidth],
+                                                                   [_delegate terminalHeight]);
                 // xterm incorrectly uses the second parameter for the Pid. Since I use this mostly to
                 // test xterm compatibility, it's handy to be bugwards-compatible.
                 [self sendChecksumReportWithId:token.csi->p[1]
@@ -1669,53 +1676,53 @@ static const int kMaxScreenRows = 4096;
         case VT100CSI_ED:
             switch (token.csi->p[0]) {
                 case 1:
-                    [delegate_ terminalEraseInDisplayBeforeCursor:YES afterCursor:NO];
+                    [_delegate terminalEraseInDisplayBeforeCursor:YES afterCursor:NO];
                     break;
 
                 case 2:
-                    [delegate_ terminalEraseInDisplayBeforeCursor:YES afterCursor:YES];
+                    [_delegate terminalEraseInDisplayBeforeCursor:YES afterCursor:YES];
                     break;
 
                 case 3:
-                    [delegate_ terminalClearScrollbackBuffer];
+                    [_delegate terminalClearScrollbackBuffer];
                     break;
 
                 case 0:
                 default:
-                    [delegate_ terminalEraseInDisplayBeforeCursor:NO afterCursor:YES];
+                    [_delegate terminalEraseInDisplayBeforeCursor:NO afterCursor:YES];
                     break;
             }
             break;
         case VT100CSI_EL:
             switch (token.csi->p[0]) {
                 case 1:
-                    [delegate_ terminalEraseLineBeforeCursor:YES afterCursor:NO];
+                    [_delegate terminalEraseLineBeforeCursor:YES afterCursor:NO];
                     break;
                 case 2:
-                    [delegate_ terminalEraseLineBeforeCursor:YES afterCursor:YES];
+                    [_delegate terminalEraseLineBeforeCursor:YES afterCursor:YES];
                     break;
                 case 0:
-                    [delegate_ terminalEraseLineBeforeCursor:NO afterCursor:YES];
+                    [_delegate terminalEraseLineBeforeCursor:NO afterCursor:YES];
                     break;
             }
             break;
         case VT100CSI_HTS:
-            [delegate_ terminalSetTabStopAtCursor];
+            [_delegate terminalSetTabStopAtCursor];
             break;
         case VT100CSI_HVP:
-            [delegate_ terminalMoveCursorToX:token.csi->p[1] y:token.csi->p[0]];
+            [_delegate terminalMoveCursorToX:token.csi->p[1] y:token.csi->p[0]];
             break;
         case VT100CSI_NEL:
             // We do the linefeed first because it's a no-op if the cursor is outside the left-
             // right margin. Carriage return will move it to the left margin.
-            [delegate_ terminalLineFeed];
-            [delegate_ terminalCarriageReturn];
+            [_delegate terminalLineFeed];
+            [_delegate terminalCarriageReturn];
             break;
         case VT100CSI_IND:
-            [delegate_ terminalLineFeed];
+            [_delegate terminalLineFeed];
             break;
         case VT100CSI_RI:
-            [delegate_ terminalReverseIndex];
+            [_delegate terminalReverseIndex];
             break;
         case VT100CSI_RIS:
             // As far as I can tell, this is not part of the standard and should not be
@@ -1742,11 +1749,11 @@ static const int kMaxScreenRows = 4096;
             break;
         }
         case VT100CSI_XTREPORTSGR: {
-            if ([delegate_ terminalIsTrusted]) {
+            if ([_delegate terminalIsTrusted]) {
                 VT100GridRect defaultRectangle = VT100GridRectMake(0,
                                                                    0,
-                                                                   [delegate_ terminalWidth],
-                                                                   [delegate_ terminalHeight]);
+                                                                   [_delegate terminalWidth],
+                                                                   [_delegate terminalHeight]);
                 [self sendSGRReportWithRectangle:[self rectangleInToken:token
                                                         startingAtIndex:0
                                                        defaultRectangle:defaultRectangle]];
@@ -1760,31 +1767,31 @@ static const int kMaxScreenRows = 4096;
         case VT100CSI_DECSCUSR:
             switch (token.csi->p[0]) {
                 case 0:
-                    [delegate_ terminalResetCursorTypeAndBlink];
+                    [_delegate terminalResetCursorTypeAndBlink];
                     break;
                 case 1:
-                    [delegate_ terminalSetCursorBlinking:YES];
-                    [delegate_ terminalSetCursorType:CURSOR_BOX];
+                    [_delegate terminalSetCursorBlinking:YES];
+                    [_delegate terminalSetCursorType:CURSOR_BOX];
                     break;
                 case 2:
-                    [delegate_ terminalSetCursorBlinking:NO];
-                    [delegate_ terminalSetCursorType:CURSOR_BOX];
+                    [_delegate terminalSetCursorBlinking:NO];
+                    [_delegate terminalSetCursorType:CURSOR_BOX];
                     break;
                 case 3:
-                    [delegate_ terminalSetCursorBlinking:YES];
-                    [delegate_ terminalSetCursorType:CURSOR_UNDERLINE];
+                    [_delegate terminalSetCursorBlinking:YES];
+                    [_delegate terminalSetCursorType:CURSOR_UNDERLINE];
                     break;
                 case 4:
-                    [delegate_ terminalSetCursorBlinking:NO];
-                    [delegate_ terminalSetCursorType:CURSOR_UNDERLINE];
+                    [_delegate terminalSetCursorBlinking:NO];
+                    [_delegate terminalSetCursorType:CURSOR_UNDERLINE];
                     break;
                 case 5:
-                    [delegate_ terminalSetCursorBlinking:YES];
-                    [delegate_ terminalSetCursorType:CURSOR_VERTICAL];
+                    [_delegate terminalSetCursorBlinking:YES];
+                    [_delegate terminalSetCursorType:CURSOR_VERTICAL];
                     break;
                 case 6:
-                    [delegate_ terminalSetCursorBlinking:NO];
-                    [delegate_ terminalSetCursorType:CURSOR_VERTICAL];
+                    [_delegate terminalSetCursorBlinking:NO];
+                    [_delegate terminalSetCursorType:CURSOR_VERTICAL];
                     break;
             }
             break;
@@ -1792,7 +1799,7 @@ static const int kMaxScreenRows = 4096;
         case VT100CSI_DECSLRM: {
             int scrollLeft = token.csi->p[0] - 1;
             int scrollRight = token.csi->p[1] - 1;
-            int width = [delegate_ terminalWidth];
+            int width = [_delegate terminalWidth];
             if (scrollLeft < 0) {
                 scrollLeft = 0;
             }
@@ -1807,7 +1814,7 @@ static const int kMaxScreenRows = 4096;
             if (scrollRight > width - 1) {
                 scrollRight = width - 1;
             }
-            [delegate_ terminalSetLeftMargin:scrollLeft rightMargin:scrollRight];
+            [_delegate terminalSetLeftMargin:scrollLeft rightMargin:scrollRight];
             break;
         }
 
@@ -1843,16 +1850,16 @@ static const int kMaxScreenRows = 4096;
              * doesn't work well with common behavior (esp line drawing).
              */
         case VT100CSI_SCS0:
-            [delegate_ terminalSetCharset:0 toLineDrawingMode:(token->code=='0')];
+            [_delegate terminalSetCharset:0 toLineDrawingMode:(token->code=='0')];
             break;
         case VT100CSI_SCS1:
-            [delegate_ terminalSetCharset:1 toLineDrawingMode:(token->code=='0')];
+            [_delegate terminalSetCharset:1 toLineDrawingMode:(token->code=='0')];
             break;
         case VT100CSI_SCS2:
-            [delegate_ terminalSetCharset:2 toLineDrawingMode:(token->code=='0')];
+            [_delegate terminalSetCharset:2 toLineDrawingMode:(token->code=='0')];
             break;
         case VT100CSI_SCS3:
-            [delegate_ terminalSetCharset:3 toLineDrawingMode:(token->code=='0')];
+            [_delegate terminalSetCharset:3 toLineDrawingMode:(token->code=='0')];
             break;
 
         // The parser sets its own encoding property when these codes are parsed because it must
@@ -1872,11 +1879,11 @@ static const int kMaxScreenRows = 4096;
         case VT100CSI_TBC:
             switch (token.csi->p[0]) {
                 case 3:
-                    [delegate_ terminalRemoveTabStops];
+                    [_delegate terminalRemoveTabStops];
                     break;
 
                 case 0:
-                    [delegate_ terminalRemoveTabStopAtCursor];
+                    [_delegate terminalRemoveTabStopAtCursor];
             }
             break;
 
@@ -1886,7 +1893,7 @@ static const int kMaxScreenRows = 4096;
             break;
 
         case VT100CSI_REP:
-            [delegate_ terminalRepeatPreviousCharacter:token.csi->p[0]];
+            [_delegate terminalRepeatPreviousCharacter:token.csi->p[0]];
             break;
 
         case VT100CSI_DECRQM_ANSI:
@@ -1894,21 +1901,16 @@ static const int kMaxScreenRows = 4096;
             break;
 
         case VT100CSI_PUSH_KEY_REPORTING_MODE:
-            [_keyReportingModeStack addObject:@(token.csi->p[0])];
-            [self.delegate terminalKeyReportingFlagsDidChange];
+            [self pushKeyReportingFlags:token.csi->p[0]];
             break;
 
         case VT100CSI_POP_KEY_REPORTING_MODE:
-            if (_keyReportingModeStack.count == 0) {
-                break;
-            }
-            [_keyReportingModeStack removeLastObject];
-            [self.delegate terminalKeyReportingFlagsDidChange];
+            [self popKeyReportingModes:token.csi->p[0]];
             break;
 
         case VT100CSI_QUERY_KEY_REPORTING_MODE:
-            if ([delegate_ terminalShouldSendReport]) {
-                [delegate_ terminalSendReport:[_output reportKeyReportingMode:_keyReportingModeStack.lastObject.intValue]];
+            if ([_delegate terminalShouldSendReport]) {
+                [_delegate terminalSendReport:[_output reportKeyReportingMode:self.currentKeyReportingModeStack.lastObject.intValue]];
             }
             break;
 
@@ -1918,20 +1920,20 @@ static const int kMaxScreenRows = 4096;
 
             // ANSI CSI
         case ANSICSI_CBT:
-            [delegate_ terminalBackTab:token.csi->p[0]];
+            [_delegate terminalBackTab:token.csi->p[0]];
             break;
         case ANSICSI_CHA:
-            [delegate_ terminalSetCursorX:token.csi->p[0]];
+            [_delegate terminalSetCursorX:token.csi->p[0]];
             break;
         case ANSICSI_VPA:
-            [delegate_ terminalSetCursorY:token.csi->p[0]];
+            [_delegate terminalSetCursorY:token.csi->p[0]];
             break;
         case ANSICSI_VPR:
-            [delegate_ terminalCursorDown:token.csi->p[0] > 0 ? token.csi->p[0] : 1
+            [_delegate terminalCursorDown:token.csi->p[0] > 0 ? token.csi->p[0] : 1
                          andToStartOfLine:NO];
             break;
         case ANSICSI_ECH:
-            [delegate_ terminalEraseCharactersAfterCursor:token.csi->p[0]];
+            [_delegate terminalEraseCharactersAfterCursor:token.csi->p[0]];
             break;
 
         case STRICT_ANSI_MODE:
@@ -1941,29 +1943,29 @@ static const int kMaxScreenRows = 4096;
         case ANSICSI_PRINT:
             switch (token.csi->p[0]) {
                 case 4:
-                    [delegate_ terminalPrintBuffer];
+                    [_delegate terminalPrintBuffer];
                     break;
                 case 5:
-                    [delegate_ terminalBeginRedirectingToPrintBuffer];
+                    [_delegate terminalBeginRedirectingToPrintBuffer];
                     break;
                 default:
-                    [delegate_ terminalPrintScreen];
+                    [_delegate terminalPrintScreen];
             }
             break;
 
             // XTERM extensions
         case XTERMCC_WIN_TITLE:
-            [delegate_ terminalSetWindowTitle:[self sanitizedTitle:[token.string stringByReplacingControlCharactersWithCaretLetter]]];
+            [_delegate terminalSetWindowTitle:[self sanitizedTitle:[token.string stringByReplacingControlCharactersWithCaretLetter]]];
             break;
         case XTERMCC_WINICON_TITLE:
-            [delegate_ terminalSetWindowTitle:[self sanitizedTitle:[token.string stringByReplacingControlCharactersWithCaretLetter]]];
-            [delegate_ terminalSetIconTitle:[self sanitizedTitle:[token.string stringByReplacingControlCharactersWithCaretLetter]]];
+            [_delegate terminalSetWindowTitle:[self sanitizedTitle:[token.string stringByReplacingControlCharactersWithCaretLetter]]];
+            [_delegate terminalSetIconTitle:[self sanitizedTitle:[token.string stringByReplacingControlCharactersWithCaretLetter]]];
             break;
         case XTERMCC_PASTE64: {
             if (token.string) {
                 NSString *decoded = [self decodedBase64PasteCommand:token.string];
                 if (decoded) {
-                    [delegate_ terminalPasteString:decoded];
+                    [_delegate terminalPasteString:decoded];
                 }
             }
             break;
@@ -1972,91 +1974,91 @@ static const int kMaxScreenRows = 4096;
             [self executeFinalTermToken:token];
             break;
         case XTERMCC_ICON_TITLE:
-            [delegate_ terminalSetIconTitle:[token.string stringByReplacingControlCharactersWithCaretLetter]];
+            [_delegate terminalSetIconTitle:[token.string stringByReplacingControlCharactersWithCaretLetter]];
             break;
         case VT100CSI_ICH:
-            [delegate_ terminalInsertEmptyCharsAtCursor:token.csi->p[0]];
+            [_delegate terminalInsertEmptyCharsAtCursor:token.csi->p[0]];
             break;
         case XTERMCC_INSLN:
-            [delegate_ terminalInsertBlankLinesAfterCursor:token.csi->p[0]];
+            [_delegate terminalInsertBlankLinesAfterCursor:token.csi->p[0]];
             break;
         case XTERMCC_DELCH:
-            [delegate_ terminalDeleteCharactersAtCursor:token.csi->p[0]];
+            [_delegate terminalDeleteCharactersAtCursor:token.csi->p[0]];
             break;
         case XTERMCC_DELLN:
-            [delegate_ terminalDeleteLinesAtCursor:token.csi->p[0]];
+            [_delegate terminalDeleteLinesAtCursor:token.csi->p[0]];
             break;
         case XTERMCC_WINDOWSIZE:
-            [delegate_ terminalSetRows:MIN(token.csi->p[1], kMaxScreenRows)
+            [_delegate terminalSetRows:MIN(token.csi->p[1], kMaxScreenRows)
                             andColumns:MIN(token.csi->p[2], kMaxScreenColumns)];
             break;
         case XTERMCC_WINDOWSIZE_PIXEL:
-            [delegate_ terminalSetPixelWidth:token.csi->p[2]
+            [_delegate terminalSetPixelWidth:token.csi->p[2]
                                       height:token.csi->p[1]];
 
             break;
         case XTERMCC_WINDOWPOS:
-            [delegate_ terminalMoveWindowTopLeftPointTo:NSMakePoint(token.csi->p[1], token.csi->p[2])];
+            [_delegate terminalMoveWindowTopLeftPointTo:NSMakePoint(token.csi->p[1], token.csi->p[2])];
             break;
         case XTERMCC_ICONIFY:
-            [delegate_ terminalMiniaturize:YES];
+            [_delegate terminalMiniaturize:YES];
             break;
         case XTERMCC_DEICONIFY:
-            [delegate_ terminalMiniaturize:NO];
+            [_delegate terminalMiniaturize:NO];
             break;
         case XTERMCC_RAISE:
-            [delegate_ terminalRaise:YES];
+            [_delegate terminalRaise:YES];
             break;
         case XTERMCC_LOWER:
-            [delegate_ terminalRaise:NO];
+            [_delegate terminalRaise:NO];
             break;
         case XTERMCC_SU:
-            [delegate_ terminalScrollUp:token.csi->p[0]];
+            [_delegate terminalScrollUp:token.csi->p[0]];
             break;
         case XTERMCC_SD:
             if (token.csi->count == 1) {
-                [delegate_ terminalScrollDown:token.csi->p[0]];
+                [_delegate terminalScrollDown:token.csi->p[0]];
             }
             break;
         case XTERMCC_REPORT_WIN_STATE: {
             NSString *s = [NSString stringWithFormat:@"\033[%dt",
-                           ([delegate_ terminalWindowIsMiniaturized] ? 2 : 1)];
-            [delegate_ terminalSendReport:[s dataUsingEncoding:NSUTF8StringEncoding]];
+                           ([_delegate terminalWindowIsMiniaturized] ? 2 : 1)];
+            [_delegate terminalSendReport:[s dataUsingEncoding:NSUTF8StringEncoding]];
             break;
         }
         case XTERMCC_REPORT_WIN_POS: {
-            NSPoint topLeft = [delegate_ terminalWindowTopLeftPixelCoordinate];
+            NSPoint topLeft = [_delegate terminalWindowTopLeftPixelCoordinate];
             NSString *s = [NSString stringWithFormat:@"\033[3;%d;%dt",
                            (int)topLeft.x, (int)topLeft.y];
-            [delegate_ terminalSendReport:[s dataUsingEncoding:NSUTF8StringEncoding]];
+            [_delegate terminalSendReport:[s dataUsingEncoding:NSUTF8StringEncoding]];
             break;
         }
         case XTERMCC_REPORT_WIN_PIX_SIZE: {
             // TODO: Some kind of adjustment for panes?
             NSString *s = [NSString stringWithFormat:@"\033[4;%d;%dt",
-                           [delegate_ terminalWindowHeightInPixels],
-                           [delegate_ terminalWindowWidthInPixels]];
-            [delegate_ terminalSendReport:[s dataUsingEncoding:NSUTF8StringEncoding]];
+                           [_delegate terminalWindowHeightInPixels],
+                           [_delegate terminalWindowWidthInPixels]];
+            [_delegate terminalSendReport:[s dataUsingEncoding:NSUTF8StringEncoding]];
             break;
         }
         case XTERMCC_REPORT_WIN_SIZE: {
             NSString *s = [NSString stringWithFormat:@"\033[8;%d;%dt",
-                           [delegate_ terminalHeight],
-                           [delegate_ terminalWidth]];
-            [delegate_ terminalSendReport:[s dataUsingEncoding:NSUTF8StringEncoding]];
+                           [_delegate terminalHeight],
+                           [_delegate terminalWidth]];
+            [_delegate terminalSendReport:[s dataUsingEncoding:NSUTF8StringEncoding]];
             break;
         }
         case XTERMCC_REPORT_SCREEN_SIZE: {
             NSString *s = [NSString stringWithFormat:@"\033[9;%d;%dt",
-                           [delegate_ terminalScreenHeightInCells],
-                           [delegate_ terminalScreenWidthInCells]];
-            [delegate_ terminalSendReport:[s dataUsingEncoding:NSUTF8StringEncoding]];
+                           [_delegate terminalScreenHeightInCells],
+                           [_delegate terminalScreenWidthInCells]];
+            [_delegate terminalSendReport:[s dataUsingEncoding:NSUTF8StringEncoding]];
             break;
         }
         case XTERMCC_REPORT_ICON_TITLE: {
             NSString *s = [NSString stringWithFormat:@"\033]L%@\033\\",
-                           [delegate_ terminalIconTitle]];
-            [delegate_ terminalSendReport:[s dataUsingEncoding:NSUTF8StringEncoding]];
+                           [_delegate terminalIconTitle]];
+            [_delegate terminalSendReport:[s dataUsingEncoding:NSUTF8StringEncoding]];
             break;
         }
         case XTERMCC_REPORT_WIN_TITLE: {
@@ -2064,21 +2066,21 @@ static const int kMaxScreenRows = 4096;
             // That was wrong and may cause bug reports due to breaking bugward compatibility.
             // (see xterm docs)
             NSString *s = [NSString stringWithFormat:@"\033]l%@\033\\",
-                           [delegate_ terminalWindowTitle]];
-            [delegate_ terminalSendReport:[s dataUsingEncoding:NSUTF8StringEncoding]];
+                           [_delegate terminalWindowTitle]];
+            [_delegate terminalSendReport:[s dataUsingEncoding:NSUTF8StringEncoding]];
             break;
         }
         case XTERMCC_PUSH_TITLE: {
             switch (token.csi->p[1]) {
                 case 0:
-                    [delegate_ terminalPushCurrentTitleForWindow:YES];
-                    [delegate_ terminalPushCurrentTitleForWindow:NO];
+                    [_delegate terminalPushCurrentTitleForWindow:YES];
+                    [_delegate terminalPushCurrentTitleForWindow:NO];
                     break;
                 case 1:
-                    [delegate_ terminalPushCurrentTitleForWindow:NO];
+                    [_delegate terminalPushCurrentTitleForWindow:NO];
                     break;
                 case 2:
-                    [delegate_ terminalPushCurrentTitleForWindow:YES];
+                    [_delegate terminalPushCurrentTitleForWindow:YES];
                     break;
                 // TODO: Support 3 (UTF-8)
             }
@@ -2087,21 +2089,21 @@ static const int kMaxScreenRows = 4096;
         case XTERMCC_POP_TITLE: {
             switch (token.csi->p[1]) {
                 case 0:
-                    [delegate_ terminalPopCurrentTitleForWindow:YES];
-                    [delegate_ terminalPopCurrentTitleForWindow:NO];
+                    [_delegate terminalPopCurrentTitleForWindow:YES];
+                    [_delegate terminalPopCurrentTitleForWindow:NO];
                     break;
                 case 1:
-                    [delegate_ terminalPopCurrentTitleForWindow:NO];
+                    [_delegate terminalPopCurrentTitleForWindow:NO];
                     break;
                 case 2:
-                    [delegate_ terminalPopCurrentTitleForWindow:YES];
+                    [_delegate terminalPopCurrentTitleForWindow:YES];
                     break;
             }
             break;
         }
         // Our iTerm specific codes
         case ITERM_USER_NOTIFICATION:
-            [delegate_ terminalPostUserNotification:token.string];
+            [_delegate terminalPostUserNotification:token.string];
             break;
 
         case XTERMCC_MULTITOKEN_HEADER_SET_KVP:
@@ -2111,7 +2113,7 @@ static const int kMaxScreenRows = 4096;
 
         case XTERMCC_MULTITOKEN_BODY:
             // You'd get here if the user stops a file download before it finishes.
-            [delegate_ terminalAppendString:token.string];
+            [_delegate terminalAppendString:token.string];
             break;
 
         case XTERMCC_MULTITOKEN_END:
@@ -2151,6 +2153,7 @@ static const int kMaxScreenRows = 4096;
             int resource = token.csi->p[0];
             if (resource >= 0 && resource <= NUM_MODIFIABLE_RESOURCES) {
                 _sendModifiers[resource] = @-1;
+                [self.currentKeyReportingModeStack removeAllObjects];
                 [self.delegate terminalDidChangeSendModifiers];
             }
             break;
@@ -2174,6 +2177,12 @@ static const int kMaxScreenRows = 4096;
                 }
             }
             _sendModifiers[resource] = @(value);
+            // The protocol described here:
+            // https://sw.kovidgoyal.net/kitty/keyboard-protocol/#progressive-enhancement
+            // is flawed because if CSI > 4 ; 0 m pops the stack it would leave
+            // it in the wrong state if CSI > 4 ; 1 m were sent twice.
+            // CSI m will nuke the stack and CSI u will respect it.
+            [self.currentKeyReportingModeStack removeAllObjects];
             [self.delegate terminalDidChangeSendModifiers];
             break;
         }
@@ -2223,17 +2232,46 @@ static const int kMaxScreenRows = 4096;
             break;
 
         case DCS_SIXEL:
-            [delegate_ terminalAppendSixelData:token.savedData];
+            [_delegate terminalAppendSixelData:token.savedData];
             break;
 
         case DCS_DECRQSS:
-            [delegate_ terminalSendReport:[[self decrqss:token.string] dataUsingEncoding:_encoding]];
+            [_delegate terminalSendReport:[[self decrqss:token.string] dataUsingEncoding:_encoding]];
             break;
 
         default:
             NSLog(@"Unexpected token type %d", (int)token->type);
             break;
     }
+}
+
+- (void)pruneKeyReportingModeStack:(NSMutableArray *)array {
+    const NSInteger maxCount = 1024;
+    if (array.count < maxCount) {
+        return;
+    }
+    [array removeObjectsInRange:NSMakeRange(array.count - maxCount, maxCount)];
+}
+
+- (void)pushKeyReportingFlags:(VT100TerminalKeyReportingFlags)flags {
+    DLog(@"Push key reporting flags %@", @(flags));
+    [self.currentKeyReportingModeStack addObject:@(flags)];
+    [self pruneKeyReportingModeStack:self.currentKeyReportingModeStack];
+    DLog(@"Stack:\n%@", self.currentKeyReportingModeStack);
+    [self.delegate terminalKeyReportingFlagsDidChange];
+}
+
+- (void)popKeyReportingModes:(int)count {
+    DLog(@"pop key reporting modes count=%@", @(count));
+    if (count <= 0) {
+        [self popKeyReportingModes:1];
+        return;
+    }
+    for (int i = 0; i < count && self.currentKeyReportingModeStack.count > 0; i++) {
+        [self.currentKeyReportingModeStack removeLastObject];
+    }
+    DLog(@"Stack:\n%@", self.currentKeyReportingModeStack);
+    [self.delegate terminalKeyReportingFlagsDidChange];
 }
 
 - (void)executeRequestTermcapTerminfo:(VT100Token *)token {
@@ -2283,7 +2321,7 @@ static const int kMaxScreenRows = 4096;
             case kDcsTermcapTerminfoRequestiTerm2ProfileName:
                 [parts addObject:[NSString stringWithFormat:kFormat,
                                   hexEncodedKey,
-                                  [[delegate_ terminalProfileName] hexEncodedString]]];
+                                  [[_delegate terminalProfileName] hexEncodedString]]];
                 ok = YES;
                 break;
             case kDcsTermcapTerminfoRequestUnrecognizedName:
@@ -2455,7 +2493,7 @@ static const int kMaxScreenRows = 4096;
     NSString *s = [NSString stringWithFormat:@"\033P%d+r%@\033\\",
                    ok ? 1 : 0,
                    [parts componentsJoinedByString:@";"]];
-    [delegate_ terminalSendReport:[s dataUsingEncoding:NSUTF8StringEncoding]];
+    [_delegate terminalSendReport:[s dataUsingEncoding:NSUTF8StringEncoding]];
 }
 
 - (NSString *)decrqss:(NSString *)pt {
@@ -2690,11 +2728,11 @@ static const int kMaxScreenRows = 4096;
                                                      blue:components[2].doubleValue
                                                     alpha:1];
                 NSColor *theColor = [srgb colorUsingColorSpace:[NSColorSpace genericRGBColorSpace]];
-                [delegate_ terminalSetColorTableEntryAtIndex:theIndex
+                [_delegate terminalSetColorTableEntryAtIndex:theIndex
                                                        color:theColor];
             } else if ([part isEqualToString:@"?"]) {
-                NSColor *theColor = [delegate_ terminalColorForIndex:theIndex];
-                [delegate_ terminalSendReport:[self.output reportColor:theColor atIndex:theIndex prefix:@"4;"]];
+                NSColor *theColor = [_delegate terminalColorForIndex:theIndex];
+                [_delegate terminalSendReport:[self.output reportColor:theColor atIndex:theIndex prefix:@"4;"]];
             }
         }
     }
@@ -2766,7 +2804,7 @@ static const int kMaxScreenRows = 4096;
             .right = insetRight
         };
         const BOOL ok =
-        [delegate_ terminalWillReceiveInlineFileNamed:name
+        [_delegate terminalWillReceiveInlineFileNamed:name
                                                ofSize:[dict[@"size"] integerValue]
                                                 width:width
                                                 units:widthUnits
@@ -2778,7 +2816,7 @@ static const int kMaxScreenRows = 4096;
             return;
         }
     } else {
-        if (![delegate_ terminalWillReceiveFileNamed:name ofSize:[dict[@"size"] integerValue]]) {
+        if (![_delegate terminalWillReceiveFileNamed:name ofSize:[dict[@"size"] integerValue]]) {
             return;
         }
     }
@@ -2811,8 +2849,8 @@ static const int kMaxScreenRows = 4096;
     const VT100TerminalColorIndex ptyIndex = foreground ? VT100TerminalColorIndexText : VT100TerminalColorIndexBackground;
     const int xtermIndex = foreground ? 10 : 11;
     if ([arg isEqualToString:@"?"]) {
-        NSColor *theColor = [delegate_ terminalColorForIndex:ptyIndex];
-        [delegate_ terminalSendReport:[self.output reportColor:theColor atIndex:xtermIndex prefix:@""]];
+        NSColor *theColor = [_delegate terminalColorForIndex:ptyIndex];
+        [_delegate terminalSendReport:[self.output reportColor:theColor atIndex:xtermIndex prefix:@""]];
     } else {
         NSArray<NSNumber *> *components = [self xtermParseColorArgument:arg];
         if (components) {
@@ -2821,15 +2859,15 @@ static const int kMaxScreenRows = 4096;
                                                  blue:components[2].doubleValue
                                                 alpha:1];
             NSColor *theColor = [srgb colorUsingColorSpace:[NSColorSpace genericRGBColorSpace]];
-            [delegate_ terminalSetColorTableEntryAtIndex:ptyIndex
+            [_delegate terminalSetColorTableEntryAtIndex:ptyIndex
                                                    color:theColor];
         }
     }
 }
 
 - (void)executeWorkingDirectoryURL:(VT100Token *)token {
-    if ([delegate_ terminalIsTrusted]) {
-        [delegate_ terminalSetWorkingDirectoryURL:token.string];
+    if ([_delegate terminalIsTrusted]) {
+        [_delegate terminalSetWorkingDirectoryURL:token.string];
     }
 }
 
@@ -2846,7 +2884,7 @@ static const int kMaxScreenRows = 4096;
     self.url = urlString.length ? [NSURL URLWithUserSuppliedString:urlString] : nil;
     if (self.url == nil) {
         if (_currentURLCode) {
-            [delegate_ terminalWillEndLinkWithCode:_currentURLCode];
+            [_delegate terminalWillEndLinkWithCode:_currentURLCode];
         }
         _currentURLCode = 0;
         self.urlParams = nil;
@@ -2855,9 +2893,9 @@ static const int kMaxScreenRows = 4096;
         unsigned short code = [[iTermURLStore sharedInstance] codeForURL:self.url withParams:params];
         if (code) {
             if (_currentURLCode) {
-                [delegate_ terminalWillEndLinkWithCode:_currentURLCode];
+                [_delegate terminalWillEndLinkWithCode:_currentURLCode];
             } else {
-                [delegate_ terminalWillStartLinkWithCode:code];
+                [_delegate terminalWillStartLinkWithCode:code];
             }
             _currentURLCode = code;
         }
@@ -2876,100 +2914,100 @@ static const int kMaxScreenRows = 4096;
         int shape = [value intValue];
         ITermCursorType shapeMap[] = { CURSOR_BOX, CURSOR_VERTICAL, CURSOR_UNDERLINE };
         if (shape >= 0 && shape < sizeof(shapeMap)/sizeof(*shapeMap)) {
-            [delegate_ terminalSetCursorType:shapeMap[shape]];
+            [_delegate terminalSetCursorType:shapeMap[shape]];
         }
     } else if ([key isEqualToString:@"ShellIntegrationVersion"]) {
-        [delegate_ terminalSetShellIntegrationVersion:value];
+        [_delegate terminalSetShellIntegrationVersion:value];
     } else if ([key isEqualToString:@"RemoteHost"]) {
-        if ([delegate_ terminalIsTrusted]) {
-            [delegate_ terminalSetRemoteHost:value];
+        if ([_delegate terminalIsTrusted]) {
+            [_delegate terminalSetRemoteHost:value];
         }
     } else if ([key isEqualToString:@"SetMark"]) {
-        [delegate_ terminalSaveScrollPositionWithArgument:value];
+        [_delegate terminalSaveScrollPositionWithArgument:value];
     } else if ([key isEqualToString:@"StealFocus"]) {
-        if ([delegate_ terminalIsTrusted]) {
-            [delegate_ terminalStealFocus];
+        if ([_delegate terminalIsTrusted]) {
+            [_delegate terminalStealFocus];
         }
     } else if ([key isEqualToString:@"ClearScrollback"]) {
-        [delegate_ terminalClearBuffer];
+        [_delegate terminalClearBuffer];
     } else if ([key isEqualToString:@"CurrentDir"]) {
-        if ([delegate_ terminalIsTrusted]) {
-            [delegate_ terminalCurrentDirectoryDidChangeTo:value];
+        if ([_delegate terminalIsTrusted]) {
+            [_delegate terminalCurrentDirectoryDidChangeTo:value];
         }
     } else if ([key isEqualToString:@"SetProfile"]) {
-        if ([delegate_ terminalIsTrusted]) {
-            [delegate_ terminalProfileShouldChangeTo:(NSString *)value];
+        if ([_delegate terminalIsTrusted]) {
+            [_delegate terminalProfileShouldChangeTo:(NSString *)value];
         }
     } else if ([key isEqualToString:@"AddNote"] ||  // Deprecated
                [key isEqualToString:@"AddAnnotation"]) {
-        [delegate_ terminalAddNote:(NSString *)value show:YES];
+        [_delegate terminalAddNote:(NSString *)value show:YES];
     } else if ([key isEqualToString:@"AddHiddenNote"] ||  // Deprecated
                [key isEqualToString:@"AddHiddenAnnotation"]) {
-        [delegate_ terminalAddNote:(NSString *)value show:NO];
+        [_delegate terminalAddNote:(NSString *)value show:NO];
     } else if ([key isEqualToString:@"HighlightCursorLine"]) {
-        [delegate_ terminalSetHighlightCursorLine:value.length ? [value boolValue] : YES];
+        [_delegate terminalSetHighlightCursorLine:value.length ? [value boolValue] : YES];
     } else if ([key isEqualToString:@"ClearCapturedOutput"]) {
-        [delegate_ terminalClearCapturedOutput];
+        [_delegate terminalClearCapturedOutput];
     } else if ([key isEqualToString:@"CopyToClipboard"]) {
-        if ([delegate_ terminalIsTrusted]) {
-            [delegate_ terminalSetPasteboard:value];
+        if ([_delegate terminalIsTrusted]) {
+            [_delegate terminalSetPasteboard:value];
         }
     } else if ([key isEqualToString:@"File"]) {
-        if ([delegate_ terminalIsTrusted]) {
+        if ([_delegate terminalIsTrusted]) {
             [self executeFileCommandWithValue:value];
         } else {
             // Enter multitoken mode to avoid showing the base64 gubbins of the image.
             receivingFile_ = YES;
-            [delegate_ terminalAppendString:[NSString stringWithLongCharacter:0x1F6AB]];
+            [_delegate terminalAppendString:[NSString stringWithLongCharacter:0x1F6AB]];
         }
     } else if ([key isEqualToString:@"Copy"]) {
-        if ([delegate_ terminalIsTrusted]) {
-            [delegate_ terminalBeginCopyToPasteboard];
+        if ([_delegate terminalIsTrusted]) {
+            [_delegate terminalBeginCopyToPasteboard];
             _copyingToPasteboard = YES;
         }
     } else if ([key isEqualToString:@"RequestUpload"]) {
-        if ([delegate_ terminalIsTrusted]) {
-            [delegate_ terminalRequestUpload:value];
+        if ([_delegate terminalIsTrusted]) {
+            [_delegate terminalRequestUpload:value];
         }
     } else if ([key isEqualToString:@"BeginFile"]) {
         XLog(@"Deprecated and unsupported code BeginFile received. Use File instead.");
     } else if ([key isEqualToString:@"EndFile"]) {
         XLog(@"Deprecated and unsupported code EndFile received. Use File instead.");
     } else if ([key isEqualToString:@"EndCopy"]) {
-        if ([delegate_ terminalIsTrusted]) {
-            [delegate_ terminalCopyBufferToPasteboard];
+        if ([_delegate terminalIsTrusted]) {
+            [_delegate terminalCopyBufferToPasteboard];
         }
     } else if ([key isEqualToString:@"RequestAttention"]) {
         if ([value isEqualToString:@"fireworks"]) {
-            [delegate_ terminalRequestAttention:VT100AttentionRequestTypeFireworks];
+            [_delegate terminalRequestAttention:VT100AttentionRequestTypeFireworks];
         } else if ([value isEqualToString:@"once"]) {
-            [delegate_ terminalRequestAttention:VT100AttentionRequestTypeBounceOnceDockIcon];
+            [_delegate terminalRequestAttention:VT100AttentionRequestTypeBounceOnceDockIcon];
         } else if ([value isEqualToString:@"flash"]) {
-            [delegate_ terminalRequestAttention:VT100AttentionRequestTypeFlash];
+            [_delegate terminalRequestAttention:VT100AttentionRequestTypeFlash];
         } else if ([value boolValue]) {
-            [delegate_ terminalRequestAttention:VT100AttentionRequestTypeStartBouncingDockIcon];
+            [_delegate terminalRequestAttention:VT100AttentionRequestTypeStartBouncingDockIcon];
         } else {
-            [delegate_ terminalRequestAttention:VT100AttentionRequestTypeStopBouncingDockIcon];
+            [_delegate terminalRequestAttention:VT100AttentionRequestTypeStopBouncingDockIcon];
         }
     } else if ([key isEqualToString:@"SetBackgroundImageFile"]) {
         DLog(@"Handle SetBackgroundImageFile");
-        if ([delegate_ terminalIsTrusted]) {
-            [delegate_ terminalSetBackgroundImageFile:value];
+        if ([_delegate terminalIsTrusted]) {
+            [_delegate terminalSetBackgroundImageFile:value];
         }
     } else if ([key isEqualToString:@"SetBadgeFormat"]) {
-        [delegate_ terminalSetBadgeFormat:value];
+        [_delegate terminalSetBadgeFormat:value];
     } else if ([key isEqualToString:@"SetUserVar"]) {
-        [delegate_ terminalSetUserVar:value];
+        [_delegate terminalSetUserVar:value];
     } else if ([key isEqualToString:@"ReportCellSize"]) {
-        if ([delegate_ terminalShouldSendReport]) {
+        if ([_delegate terminalShouldSendReport]) {
             double floatScale;
-            NSSize size = [delegate_ terminalCellSizeInPoints:&floatScale];
+            NSSize size = [_delegate terminalCellSizeInPoints:&floatScale];
             NSString *width = [[NSString stringWithFormat:@"%0.2f", size.width] stringByCompactingFloatingPointString];
             NSString *height = [[NSString stringWithFormat:@"%0.2f", size.height] stringByCompactingFloatingPointString];
             NSString *scale = [[NSString stringWithFormat:@"%0.2f", floatScale] stringByCompactingFloatingPointString];
             NSString *s = [NSString stringWithFormat:@"\033]1337;ReportCellSize=%@;%@;%@\033\\",
                            height, width, scale];
-            [delegate_ terminalSendReport:[s dataUsingEncoding:NSUTF8StringEncoding]];
+            [_delegate terminalSendReport:[s dataUsingEncoding:NSUTF8StringEncoding]];
         }
     } else if ([key isEqualToString:@"UnicodeVersion"]) {
         if ([value hasPrefix:@"push"]) {
@@ -2977,7 +3015,7 @@ static const int kMaxScreenRows = 4096;
         } else if ([value hasPrefix:@"pop"]) {
             [self popUnicodeVersion:value];
         } else if ([value isNumeric]) {
-            [delegate_ terminalSetUnicodeVersion:[value integerValue]];
+            [_delegate terminalSetUnicodeVersion:[value integerValue]];
         }
     } else if ([key isEqualToString:@"SetColors"]) {
         for (NSString *part in [value componentsSeparatedByString:@","]) {
@@ -2987,41 +3025,41 @@ static const int kMaxScreenRows = 4096;
             }
             NSString *name = [part substringToIndex:equal];
             NSString *colorString = [part substringFromIndex:equal + 1];
-            [delegate_ terminalSetColorNamed:name to:colorString];
+            [_delegate terminalSetColorNamed:name to:colorString];
         }
     } else if ([key isEqualToString:@"SetKeyLabel"]) {
         NSInteger i = [value rangeOfString:@"="].location;
         if (i != NSNotFound && i > 0 && i + 1 <= value.length) {
             NSString *keyName = [value substringToIndex:i];
             NSString *label = [value substringFromIndex:i + 1];
-            [delegate_ terminalSetLabel:label forKey:keyName];
+            [_delegate terminalSetLabel:label forKey:keyName];
         }
     } else if ([key isEqualToString:@"PushKeyLabels"]) {
-        [delegate_ terminalPushKeyLabels:value];
+        [_delegate terminalPushKeyLabels:value];
     } else if ([key isEqualToString:@"PopKeyLabels"]) {
-        [delegate_ terminalPopKeyLabels:value];
+        [_delegate terminalPopKeyLabels:value];
     } else if ([key isEqualToString:@"Disinter"]) {
-        [delegate_ terminalDisinterSession];
+        [_delegate terminalDisinterSession];
     } else if ([key isEqualToString:@"ReportVariable"]) {
-        if ([delegate_ terminalIsTrusted]) {
+        if ([_delegate terminalIsTrusted]) {
             NSData *valueAsData = [value dataUsingEncoding:NSISOLatin1StringEncoding];
             if (!valueAsData) {
                 return;
             }
-            NSData *decodedData = [[[NSData alloc] initWithBase64EncodedData:valueAsData options:0] autorelease];
+            NSData *decodedData = [[NSData alloc] initWithBase64EncodedData:valueAsData options:0];
             NSString *name = [decodedData stringWithEncoding:self.encoding];
-            if (name && [delegate_ terminalShouldSendReportForVariable:name]) {
+            if (name && [_delegate terminalShouldSendReportForVariable:name]) {
                 NSString *encodedValue = @"";
                 if (name) {
-                    NSString *variableValue = [delegate_ terminalValueOfVariableNamed:name];
+                    NSString *variableValue = [_delegate terminalValueOfVariableNamed:name];
                     encodedValue = [[variableValue dataUsingEncoding:self.encoding] base64EncodedStringWithOptions:0];
                 }
                 NSString *report = [NSString stringWithFormat:@"%c]1337;ReportVariable=%@%c", VT100CC_ESC, encodedValue ?: @"", VT100CC_BEL];
-                [delegate_ terminalSendReport:[report dataUsingEncoding:self.encoding]];
+                [_delegate terminalSendReport:[report dataUsingEncoding:self.encoding]];
             }
         }
     } else if ([key isEqualToString:@"Custom"]) {
-        if ([delegate_ terminalIsTrusted]) {
+        if ([_delegate terminalIsTrusted]) {
             // Custom=key1=value1;key2=value2;...;keyN=valueN:payload
             // ex:
             // Custom=id=SenderIdentity:MessageGoesHere
@@ -3038,7 +3076,7 @@ static const int kMaxScreenRows = 4096;
                     }
                 }];
                 NSString *payload = [value substringFromIndex:colon + 1];
-                [delegate_ terminalCustomEscapeSequenceWithParameters:parameters
+                [_delegate terminalCustomEscapeSequenceWithParameters:parameters
                                                               payload:payload];
             }
         }
@@ -3052,28 +3090,28 @@ static const int kMaxScreenRows = 4096;
     if (theColor) {
         switch (n) {
             case 16:
-                [delegate_ terminalSetForegroundColor:theColor];
+                [_delegate terminalSetForegroundColor:theColor];
                 break;
             case 17:
-                [delegate_ terminalSetBackgroundColor:theColor];
+                [_delegate terminalSetBackgroundColor:theColor];
                 break;
             case 18:
-                [delegate_ terminalSetBoldColor:theColor];
+                [_delegate terminalSetBoldColor:theColor];
                 break;
             case 19:
-                [delegate_ terminalSetSelectionColor:theColor];
+                [_delegate terminalSetSelectionColor:theColor];
                 break;
             case 20:
-                [delegate_ terminalSetSelectedTextColor:theColor];
+                [_delegate terminalSetSelectedTextColor:theColor];
                 break;
             case 21:
-                [delegate_ terminalSetCursorColor:theColor];
+                [_delegate terminalSetCursorColor:theColor];
                 break;
             case 22:
-                [delegate_ terminalSetCursorTextColor:theColor];
+                [_delegate terminalSetCursorTextColor:theColor];
                 break;
             default:
-                [delegate_ terminalSetColorTableEntryAtIndex:n color:theColor];
+                [_delegate terminalSetColorTableEntryAtIndex:n color:theColor];
                 break;
         }
     }
@@ -3082,8 +3120,8 @@ static const int kMaxScreenRows = 4096;
 - (void)executeXtermProprietaryEtermExtension:(VT100Token *)token {
     NSString* argument = token.string;
     if (![argument startsWithDigit]) {  // Support for proxy icon, if argument is empty clears current proxy icon
-        if ([delegate_ terminalIsTrusted]) {
-            [delegate_ terminalSetProxyIcon:argument];
+        if ([_delegate terminalIsTrusted]) {
+            [_delegate terminalSetProxyIcon:argument];
         }
         return;
     }
@@ -3125,7 +3163,7 @@ static const int kMaxScreenRows = 4096;
                 if ([class isEqualToString:@"bg"] &&
                     [color isEqualToString:@"*"] &&
                     [attribute isEqualToString:@"default"]) {
-                    [delegate_ terminalSetCurrentTabColor:nil];
+                    [_delegate terminalSetCurrentTabColor:nil];
                 }
             } else if ([parts count] == 5) {
                 NSString* class = parts[1];
@@ -3137,11 +3175,11 @@ static const int kMaxScreenRows = 4096;
                     double numValue = MIN(1, ([value intValue] / 255.0));
                     if (numValue >= 0 && numValue <= 1) {
                         if ([color isEqualToString:@"red"]) {
-                            [delegate_ terminalSetTabColorRedComponentTo:numValue];
+                            [_delegate terminalSetTabColorRedComponentTo:numValue];
                         } else if ([color isEqualToString:@"green"]) {
-                            [delegate_ terminalSetTabColorGreenComponentTo:numValue];
+                            [_delegate terminalSetTabColorGreenComponentTo:numValue];
                         } else if ([color isEqualToString:@"blue"]) {
-                            [delegate_ terminalSetTabColorBlueComponentTo:numValue];
+                            [_delegate terminalSetTabColorBlueComponentTo:numValue];
                         }
                     }
                 }
@@ -3170,20 +3208,20 @@ static const int kMaxScreenRows = 4096;
             // Sequence marking the start of the command prompt (FTCS_PROMPT_START)
             self.softAlternateScreenMode = NO;  // We can reasonably assume alternate screen mode has ended if there's a prompt. Could be ssh dying, etc.
             inCommand_ = NO;  // Issue 7954
-            [delegate_ terminalPromptDidStart];
+            [_delegate terminalPromptDidStart];
             break;
 
         case 'B':
             // Sequence marking the start of the command read from the command prompt
             // (FTCS_COMMAND_START)
-            [delegate_ terminalCommandDidStart];
+            [_delegate terminalCommandDidStart];
             inCommand_ = YES;
             break;
 
         case 'C':
             // Sequence marking the end of the command read from the command prompt (FTCS_COMMAND_END)
             if (inCommand_) {
-                [delegate_ terminalCommandDidEnd];
+                [_delegate terminalCommandDidEnd];
                 inCommand_ = NO;
             }
             break;
@@ -3191,11 +3229,11 @@ static const int kMaxScreenRows = 4096;
         case 'D':
             // Return code of last command
             if (inCommand_) {
-                [delegate_ terminalAbortCommand];
+                [_delegate terminalAbortCommand];
                 inCommand_ = NO;
             } else if (args.count >= 2) {
                 int returnCode = [args[1] intValue];
-                [delegate_ terminalReturnCodeOfLastCommandWas:returnCode];
+                [_delegate terminalReturnCodeOfLastCommandWas:returnCode];
             }
 
         case 'E':
@@ -3207,7 +3245,7 @@ static const int kMaxScreenRows = 4096;
             if (args.count >= 2) {
                 VT100TerminalSemanticTextType type = [args[1] intValue];
                 if (type >= 1 && type < kVT100TerminalSemanticTextTypeMax) {
-                    [delegate_ terminalSemanticTextDidStartOfType:type];
+                    [_delegate terminalSemanticTextDidStartOfType:type];
                 }
             }
             break;
@@ -3218,7 +3256,7 @@ static const int kMaxScreenRows = 4096;
             if (args.count >= 2) {
                 VT100TerminalSemanticTextType type = [args[1] intValue];
                 if (type >= 1 && type < kVT100TerminalSemanticTextTypeMax) {
-                    [delegate_ terminalSemanticTextDidEndOfType:type];
+                    [_delegate terminalSemanticTextDidEndOfType:type];
                 }
             }
             break;
@@ -3228,7 +3266,7 @@ static const int kMaxScreenRows = 4096;
             // First argument: percentage
             // Second argument: title
             if (args.count == 1) {
-                [delegate_ terminalProgressDidFinish];
+                [_delegate terminalProgressDidFinish];
             } else {
                 int percent = [args[1] intValue];
                 double fraction = MAX(MIN(1, 100.0 / (double)percent), 0);
@@ -3238,13 +3276,13 @@ static const int kMaxScreenRows = 4096;
                     label = args[2];
                 }
 
-                [delegate_ terminalProgressAt:fraction label:label];
+                [_delegate terminalProgressAt:fraction label:label];
             }
             break;
 
         case 'H':
             // Terminal command.
-            [delegate_ terminalFinalTermCommand:[args subarrayWithRange:NSMakeRange(1, args.count - 1)]];
+            [_delegate terminalFinalTermCommand:[args subarrayWithRange:NSMakeRange(1, args.count - 1)]];
             break;
     }
 }
@@ -3341,7 +3379,7 @@ static iTermDECRPMSetting VT100TerminalDECRPMSettingFromBoolean(BOOL flag) {
             }
 
         case 69:
-            return VT100TerminalDECRPMSettingFromBoolean([delegate_ terminalUseColumnScrollRegion]);
+            return VT100TerminalDECRPMSettingFromBoolean([_delegate terminalUseColumnScrollRegion]);
 
         case 1000:
         case 1001:
@@ -3350,7 +3388,7 @@ static iTermDECRPMSetting VT100TerminalDECRPMSettingFromBoolean(BOOL flag) {
             return VT100TerminalDECRPMSettingFromBoolean(self.mouseMode + 1000 == mode);
 
         case 1004:
-            return VT100TerminalDECRPMSettingFromBoolean(self.reportFocus && [delegate_ terminalFocusReportingAllowed]);
+            return VT100TerminalDECRPMSettingFromBoolean(self.reportFocus && [_delegate terminalFocusReportingAllowed]);
 
         case 1005:
             return VT100TerminalDECRPMSettingFromBoolean(self.mouseFormat == MOUSE_FORMAT_XTERM_EXT);
@@ -3388,13 +3426,13 @@ static iTermDECRPMSetting VT100TerminalDECRPMSettingFromBoolean(BOOL flag) {
 
 - (void)pushUnicodeVersion:(NSString *)label {
     label = [self substringAfterSpaceInString:label];
-    [_unicodeVersionStack addObject:@[ label ?: @"", @([delegate_ terminalUnicodeVersion]) ]];
+    [_unicodeVersionStack addObject:@[ label ?: @"", @([_delegate terminalUnicodeVersion]) ]];
 }
 
 - (void)popUnicodeVersion:(NSString *)label {
     label = [self substringAfterSpaceInString:label];
     while (_unicodeVersionStack.count > 0) {
-        id entry = [[[_unicodeVersionStack lastObject] retain] autorelease];
+        id entry = [_unicodeVersionStack lastObject];
         [_unicodeVersionStack removeLastObject];
 
         NSNumber *value = nil;
@@ -3407,7 +3445,7 @@ static iTermDECRPMSetting VT100TerminalDECRPMSettingFromBoolean(BOOL flag) {
             value = [entry objectAtIndex:1];
         }
         if (label.length == 0 || [label isEqualToString:entryLabel]) {
-            [delegate_ terminalSetUnicodeVersion:value.integerValue];
+            [_delegate terminalSetUnicodeVersion:value.integerValue];
             return;
         }
     }
@@ -3510,7 +3548,8 @@ static iTermDECRPMSetting VT100TerminalDECRPMSettingFromBoolean(BOOL flag) {
            kTerminalStateReportKeyUp: @(self.reportKeyUp),
            kTerminalStateMetaSendsEscape: @(self.metaSendsEscape),
            kTerminalStateSendModifiers: _sendModifiers ?: @[],
-           kTerminalStateKeyReportingModeStack: _keyReportingModeStack.copy,
+           kTerminalStateKeyReportingModeStack_Main: _mainKeyReportingModeStack.copy,
+           kTerminalStateKeyReportingModeStack_Alternate: _alternateKeyReportingModeStack.copy,
            kTerminalStateAllowKeypadModeKey: @(self.allowKeypadMode),
            kTerminalStateAllowPasteBracketing: @(self.allowPasteBracketing),
            kTerminalStateBracketedPasteModeKey: @(self.bracketedPasteMode),
@@ -3565,15 +3604,24 @@ static iTermDECRPMSetting VT100TerminalDECRPMSettingFromBoolean(BOOL flag) {
     self.metaSendsEscape = [dict[kTerminalStateMetaSendsEscape] boolValue];
     self.synchronizedUpdates = [dict[kTerminalStateSynchronizedUpdates] boolValue];
     if (!_sendModifiers) {
-        self.sendModifiers = [[@[ @-1, @-1, @-1, @-1, @-1 ] mutableCopy] autorelease];
+        self.sendModifiers = [@[ @-1, @-1, @-1, @-1, @-1 ] mutableCopy];
     } else {
         while (_sendModifiers.count < NUM_MODIFIABLE_RESOURCES) {
             [_sendModifiers addObject:@-1];
         }
     }
-    if ([dict[kTerminalStateKeyReportingModeStack] isKindOfClass:[NSArray class]]) {
-        [_keyReportingModeStack release];
-        _keyReportingModeStack = [dict[kTerminalStateKeyReportingModeStack] mutableCopy];
+    if ([dict[kTerminalStateKeyReportingModeStack_Deprecated] isKindOfClass:[NSArray class]]) {
+        // Migration code path for deprecated key.
+        _mainKeyReportingModeStack = [dict[kTerminalStateKeyReportingModeStack_Deprecated] mutableCopy];
+        _alternateKeyReportingModeStack = [dict[kTerminalStateKeyReportingModeStack_Deprecated] mutableCopy];
+    } else {
+        //  Modern code path.
+        if ([dict[kTerminalStateKeyReportingModeStack_Main] isKindOfClass:[NSArray class]]) {
+            _mainKeyReportingModeStack = [dict[kTerminalStateKeyReportingModeStack_Main] mutableCopy];
+        }
+        if ([dict[kTerminalStateKeyReportingModeStack_Alternate] isKindOfClass:[NSArray class]]) {
+            _alternateKeyReportingModeStack = [dict[kTerminalStateKeyReportingModeStack_Alternate] mutableCopy];
+        }
     }
     self.allowKeypadMode = [dict[kTerminalStateAllowKeypadModeKey] boolValue];
     self.allowPasteBracketing = [dict[kTerminalStateAllowPasteBracketing] boolValue];
