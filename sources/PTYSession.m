@@ -637,6 +637,9 @@ static const NSUInteger kMaxHosts = 100;
 
     // If positive focus reports will not be sent.
     NSInteger _disableFocusReporting;
+
+    BOOL _initializationFinished;
+    BOOL _needsJiggle;
 }
 
 @synthesize isDivorced = _divorced;
@@ -1036,6 +1039,7 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void)didFinishInitialization {
     DLog(@"didFinishInitialization");
     [_pwdPoller poll];
+    _initializationFinished = YES;
     if ([self.variablesScope valueForVariableName:iTermVariableKeySessionUsername] == nil) {
         [self.variablesScope setValue:NSUserName() forVariableNamed:iTermVariableKeySessionUsername];
     }
@@ -4866,16 +4870,21 @@ ITERM_WEAKLY_REFERENCEABLE
         [_tmuxController clearHistoryForWindowPane:self.tmuxPane];
     }
     if ([iTermAdvancedSettingsModel jiggleTTYSizeOnClearBuffer]) {
-        VT100GridSize size = _screen.size;
-        size.width++;
-        [_shell setSize:size
-               viewSize:_screen.viewSize
-            scaleFactor:self.backingScaleFactor];
-        [_shell setSize:_screen.size
-               viewSize:_screen.viewSize
-            scaleFactor:self.backingScaleFactor];
+        [self jiggle];
     }
     _view.scrollview.ptyVerticalScroller.userScroll = NO;
+}
+
+- (void)jiggle {
+    DLog(@"%@", [NSThread callStackSymbols]);
+    VT100GridSize size = _screen.size;
+    size.width++;
+    [_shell setSize:size
+           viewSize:_screen.viewSize
+        scaleFactor:self.backingScaleFactor];
+    [_shell setSize:_screen.size
+           viewSize:_screen.viewSize
+        scaleFactor:self.backingScaleFactor];
 }
 
 - (void)clearScrollbackBuffer {
@@ -9736,6 +9745,40 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [_statusBarViewController updateColors];
     [_wrapper setNeedsDisplay:YES];
     [self.view setNeedsDisplay:YES];
+    self.needsJiggle = YES;
+}
+
+- (void)textViewForegroundColorDidChange {
+    self.needsJiggle = YES;
+}
+
+- (void)setNeedsJiggle:(BOOL)needsJiggle {
+    DLog(@"setNeedsJiggle:%@", @(needsJiggle));
+    if (!_initializationFinished) {
+        DLog(@"Uninitialized");
+        return;
+    }
+    if (_needsJiggle == needsJiggle) {
+        DLog(@"Unchanged");
+        return;
+    }
+    DLog(@"%@", [NSThread callStackSymbols]);
+    _needsJiggle = needsJiggle;
+    if (!needsJiggle) {
+        return;
+    }
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [self jiggleIfNeeded];
+    });
+}
+
+- (void)jiggleIfNeeded {
+    DLog(@"jiggleIfNeeded");
+    if (!_needsJiggle) {
+        return;
+    }
+    _needsJiggle = NO;
+    [self jiggle];
 }
 
 - (void)textViewProcessedBackgroundColorDidChange {

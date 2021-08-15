@@ -541,6 +541,9 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
 - (void)textViewBackgroundColorDidChange {
 }
 
+- (void)textViewForegroundColorDidChange {
+}
+
 - (NSInteger)textViewUnicodeVersion {
     return 9;
 }

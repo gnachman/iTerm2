@@ -194,6 +194,7 @@ preferredEscaping:(iTermSendTextEscaping)preferredEscaping;
 
 // The background color in the color map changed.
 - (void)textViewBackgroundColorDidChange;
+- (void)textViewForegroundColorDidChange;
 - (void)textViewProcessedBackgroundColorDidChange;
 
 // Describes the current user, host, and path.
