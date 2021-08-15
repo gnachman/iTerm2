@@ -100,6 +100,7 @@ static NSString *kCommandTimestamp = @"timestamp";
     // set to NO.
     BOOL _initialized;
     NSMutableDictionary<NSString *, iTermTmuxSubscriptionHandle *> *_subscriptions;
+    int _sessionID;  // -1 if uninitialized
 }
 
 @synthesize delegate = delegate_;
@@ -114,6 +115,7 @@ static NSString *kCommandTimestamp = @"timestamp";
         strayMessages_ = [[NSMutableString alloc] init];
         _subscriptions = [[NSMutableDictionary alloc] init];
         _dcsID = [dcsID copy];
+        _sessionID = -1;
     }
     return self;
 }
@@ -304,6 +306,16 @@ error:
     [self abortWithErrorMessage:[NSString stringWithFormat:@"Malformed command (expected %%num data): \"%s\"", command]];
 }
 
+- (NSNumber *)layoutIsZoomed:(NSString *)args {
+    // window-layout window-visible-layout window-flags
+    NSArray<NSString *> *components = [args componentsSeparatedByString:@" "];
+    if (components.count < 3) {
+        return nil;
+    }
+    NSString *windowFlags = components[2];
+    return @([windowFlags containsString:@"Z"]);
+}
+
 - (void)parseLayoutChangeCommand:(NSString *)command
 {
     // %layout-change <window> <layout>
@@ -317,7 +329,7 @@ error:
     NSString *layout = [components objectAtIndex:2];
     [delegate_ tmuxUpdateLayoutForWindow:window
                                   layout:layout
-                                  zoomed:nil
+                                  zoomed:[self layoutIsZoomed:layout]
                                     only:YES];
 }
 
@@ -376,6 +388,7 @@ error:
         [self abortWithErrorMessage:[NSString stringWithFormat:@"Malformed command (expected %%session-changed id name): \"%@\"", command]];
         return;
     }
+    _sessionID = [[components objectAtIndex:1] intValue];
     [delegate_ tmuxSessionChanged:[components objectAtIndex:2] sessionId:[[components objectAtIndex:1] intValue]];
 }
 
@@ -396,6 +409,20 @@ error:
         return;
     }
     [delegate_ tmuxActiveWindowPaneDidChangeInWindow:[components[1] intValue] toWindowPane:[components[2] intValue]];
+}
+
+// %session-window-changed $0 @0
+- (void)parseSessionWindowChangedCommand:(NSString *)command {
+    NSArray<NSString *> *components = [command captureComponentsMatchedByRegex:@"^%session-window-changed \\$([0-9]+) @([0-9]+)$"];
+    if (components.count != 3) {
+        [self abortWithErrorMessage:[NSString stringWithFormat:@"Malformed command (expected %%session-window-changed $session-id @window-id): \"%@\"", command]];
+        return;
+    }
+    const int sid = [components[1] intValue];
+    if (sid != _sessionID) {
+        return;
+    }
+    [delegate_ tmuxSessionWindowDidChangeTo:[components[2] intValue]];
 }
 
 - (void)parsePauseCommand:(NSString *)command {
@@ -727,9 +754,9 @@ error:
         if (acceptNotifications_) [self parseSubscriptionChangedCommand:command];
     } else if ([command hasPrefix:@"%continue"]) {
         // New in tmux 3.2. Don't care.
-    } else if ([command hasPrefix:@"%window-pane-changed"] ||  // active pane changed
-               [command hasPrefix:@"%session-window-changed"] ||  // active window changed
-               [command hasPrefix:@"%client-session-changed"] ||  // client is now attached to a new session
+    } else if ([command hasPrefix:@"%session-window-changed"]) {
+        if (acceptNotifications_) [self parseSessionWindowChangedCommand:command];
+    } else if ([command hasPrefix:@"%client-session-changed"] ||  // client is now attached to a new session
                [command hasPrefix:@"%pane-mode-changed"]) {  // copy mode, etc
         // New in tmux 2.5. Don't care.
         TmuxLog(@"Ignore %@", command);

@@ -7410,6 +7410,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [_tmuxController activeWindowPaneDidChangeInWindow:windowID toWindowPane:paneID];
 }
 
+- (void)tmuxSessionWindowDidChangeTo:(int)windowID {
+    [_tmuxController activeWindowDidChangeTo:windowID];
+}
+
 - (BOOL)tmuxGatewayShouldForceDetach {
     NSAlert *alert = [[[NSAlert alloc] init] autorelease];
     alert.messageText = @"Force Detach?";
@@ -10950,6 +10954,10 @@ preferredEscaping:(iTermSendTextEscaping)preferredEscaping {
 
     DLog(@"Make this session active in delegate %@", _delegate);
     [_delegate setActiveSessionPreservingMaximization:self];
+}
+
+- (void)makeActive {
+    [self.delegate sessionActivate:self];
 }
 
 - (id)markAddedAtLine:(int)line ofClass:(Class)markClass {

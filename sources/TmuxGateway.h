@@ -63,6 +63,7 @@ extern NSString * const kTmuxGatewayErrorDomain;
 - (BOOL)tmuxGatewayShouldForceDetach;
 - (void)tmuxGatewayDidTimeOut;
 - (void)tmuxActiveWindowPaneDidChangeInWindow:(int)windowID toWindowPane:(int)paneID;
+- (void)tmuxSessionWindowDidChangeTo:(int)windowID;
 - (void)tmuxWindowPaneDidPause:(int)wp notification:(BOOL)notification;
 @end
 

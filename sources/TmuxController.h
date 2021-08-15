@@ -250,6 +250,7 @@ extern NSString *const kTmuxControllerDidChangeHiddenWindows;
                           pane:(int)paneID;
 - (NSDictionary<NSString *, NSString *> *)userVarsForPane:(int)paneID;
 - (void)activeWindowPaneDidChangeInWindow:(int)windowID toWindowPane:(int)paneID;
+- (void)activeWindowDidChangeTo:(int)windowID;
 - (void)setCurrentLatency:(NSTimeInterval)latency forPane:(int)wp;
 
 @end

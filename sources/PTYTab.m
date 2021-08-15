@@ -750,8 +750,16 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     [self setTmuxWindowName:newName];
 }
 
-- (void)sessionSelectContainingTab {
+- (void)makeActive {
+    PTYSession *activeSession = [self activeSession];
     [[self.realParentWindow tabView] selectTabViewItemWithIdentifier:self];
+    if ([self activeSession] != activeSession && [self.sessions containsObject:activeSession]) {
+        [self setActiveSession:activeSession];
+    }
+}
+
+- (void)sessionSelectContainingTab {
+    [self makeActive];
 }
 
 - (BOOL)sessionInitiatedResize:(PTYSession *)session width:(int)width height:(int)height {
@@ -838,6 +846,20 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
         [self setState:0 reset:kPTYTabDeadState];
     }
     [self updateTabTitle];
+}
+
+- (void)sessionActivate:(PTYSession *)session {
+    if (self.activeSession == session) {
+        return;
+    }
+    const BOOL wasMaximized = isMaximized_;
+    if (wasMaximized) {
+        [self unmaximize];
+    }
+    [self setActiveSession:session];
+    if (wasMaximized) {
+        [self maximize];
+    }
 }
 
 // Do a depth-first search for a leaf with viewId==requestedId. Returns nil if not found under 'node'.
@@ -5959,8 +5981,12 @@ typedef struct {
     return [self activeSession] == session;
 }
 
+- (BOOL)tabIsSelected {
+    return [[tabViewItem_ tabView] selectedTabViewItem] == [self tabViewItem];
+}
+
 - (BOOL)sessionIsActiveInSelectedTab:(PTYSession *)session {
-    if ([[tabViewItem_ tabView] selectedTabViewItem] != [self tabViewItem]) {
+    if (![self tabIsSelected]) {
         return NO;
     }
     return [self activeSession] == session;

@@ -151,6 +151,22 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
 
     NSString *_lastSavePerTabSettingsCommand;
     NSDictionary<NSString *, NSString *> *_perTabSettings;
+
+    // When positive do not send select-pane or select-window commands when the selected pane
+    // or window changes. This is to prevent getting into a loop like this:
+    // 1. > select-window -t @2            // iTerm2-initiated
+    // 2. > select-window -t @3            // iTerm2-initiated
+    // 3. < %session-window-changed $1 @2  // Notification for (1)
+    // 4. > select-window -t @2            // In response to (3)
+    // 5. < %session-window-changed $1 @3  // Notification for (2)
+    // 6. > select-window -t @3            // In response to (5)
+    // 7. < %session-window-changed $1 @2  // Notification for (4)
+    // 8. > select-window -t @2            // In response to (7)
+    // 9. < %session-window-changed $1 @3  // Notification for (6)
+    // GOTO 6
+    // If we don't tell tmux to change the active window or pane in response to its notification
+    // we'll eventually catch up to its current state and remain stable.
+    NSInteger _suppressActivityChanges;
 }
 
 @synthesize gateway = gateway_;
@@ -1547,6 +1563,10 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
 }
 
 - (void)selectPane:(int)windowPane {
+    if (_suppressActivityChanges) {
+        DLog(@"Not sending select-pane -t %%%d because activity changes are suppressed", windowPane);
+        return;
+    }
     NSDecimalNumber *version2_9 = [NSDecimalNumber decimalNumberWithString:@"2.9"];
 
     if ([gateway_.minimumServerVersion isEqual:version2_9]) {
@@ -2445,10 +2465,43 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
 }
 
 - (void)activeWindowPaneDidChangeInWindow:(int)windowID toWindowPane:(int)paneID {
-    if ([self sessionForWindowPane:paneID] == nil) {
-        // This must be a newly created session.
-        _paneToActivateWhenCreated = paneID;
+    PTYSession *session = [self sessionForWindowPane:paneID];
+    if (session) {
+        [self suppressActivityChanges:^{
+            [session makeActive];
+        }];
+        return;
     }
+    // This must be a newly created session.
+    _paneToActivateWhenCreated = paneID;
+}
+
+- (BOOL)shouldMakeWindowKeyOnActiveWindowChange {
+    PseudoTerminal *term = [[iTermController sharedInstance] currentTerminal];
+    if (!term) {
+        return NO;
+    }
+    if (!term.window.isVisible) {
+        return NO;
+    }
+    return term.currentSession.isTmuxClient && term.currentSession.tmuxController == self;
+}
+
+- (void)activeWindowDidChangeTo:(int)windowID {
+    [self suppressActivityChanges:^{
+        const BOOL shouldMakeKeyAndOrderFront = [self shouldMakeWindowKeyOnActiveWindowChange];
+        PTYTab *tab = [self window:windowID];
+        [tab makeActive];
+        if (shouldMakeKeyAndOrderFront) {
+            [tab.realParentWindow.window makeKeyAndOrderFront:nil];
+        }
+    }];
+}
+
+- (void)suppressActivityChanges:(void (^ NS_NOESCAPE)(void))block {
+    _suppressActivityChanges++;
+    block();
+    _suppressActivityChanges--;
 }
 
 #pragma mark - Private
@@ -3017,6 +3070,10 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
 
 - (void)setCurrentWindow:(int)windowId {
     _currentWindowID = windowId;
+    if (_suppressActivityChanges) {
+        DLog(@"Not sending select-window -t %%%d because activity changes are suppressed", windowId);
+        return;
+    }
     NSString *command = [NSString stringWithFormat:@"select-window -t @%d", windowId];
     [gateway_ sendCommand:command
            responseTarget:nil

@@ -268,6 +268,7 @@ backgroundColor:(NSColor *)backgroundColor;
 - (BOOL)sessionPasswordManagerWindowIsOpen;
 - (BOOL)sessionShouldDragWindowByPaneTitleBar:(PTYSession *)session;
 - (void)sessionSubtitleDidChange:(PTYSession *)session;
+- (void)sessionActivate:(PTYSession *)session;
 @end
 
 @class SessionView;
@@ -818,6 +819,9 @@ backgroundColor:(NSColor *)backgroundColor;
 
 // Select this session and tab and bring window to foreground.
 - (void)reveal;
+
+// Make this session active in its tab but don't reveal the tab or window if not already active.
+- (void)makeActive;
 
 // Refreshes the textview and takes a snapshot of the SessionView.
 - (NSImage *)snapshot;
