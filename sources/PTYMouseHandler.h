@@ -115,6 +115,7 @@ dragSemanticHistoryWithEvent:(NSEvent *)event
                         modifiers:(NSEventModifierFlags)modifiers
                       sideEffects:(iTermClickSideEffects)sideEffects
                             state:(iTermMouseState)state;
+- (BOOL)mouseHandlerAnyReportingModeEnabled:(PTYMouseHandler *)mouseHandler;
 @end
 
 @interface PTYMouseHandler : NSObject

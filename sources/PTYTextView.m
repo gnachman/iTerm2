@@ -1157,9 +1157,12 @@
     const NSRect documentVisibleRect = self.enclosingScrollView.documentVisibleRect;
     const BOOL userScroll = [(PTYScroller*)([[self enclosingScrollView] verticalScroller]) userScroll];
     if (!userScroll) {
+        DLog(@"User scroll is off so return documentVisibleRect of %@", NSStringFromRect(documentVisibleRect));
         return documentVisibleRect;
     }
-    NSRect adjusted = [self rect:documentVisibleRect minusRows:[_dataSource scrollbackOverflow]];
+    const int overflow = [_dataSource scrollbackOverflow];
+    NSRect adjusted = [self rect:documentVisibleRect minusRows:overflow];
+    DLog(@"adjustedDocumentVisibleRect is %@ with overflow %@", NSStringFromRect(adjusted), @(overflow));
     if (adjusted.origin.y < 0) {
         adjusted.origin.y = 0;
     }
@@ -5225,6 +5228,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 - (void)mouseHandlerCopy:(PTYMouseHandler *)handler {
     [self copySelectionAccordingToUserPreferences];
+}
+
+- (BOOL)mouseHandlerAnyReportingModeEnabled:(PTYMouseHandler *)handler {
+    return [_delegate textViewAnyMouseReportingModeIsEnabled];
 }
 
 - (NSPoint)mouseHandler:(PTYMouseHandler *)handler

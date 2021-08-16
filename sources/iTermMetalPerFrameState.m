@@ -179,10 +179,13 @@ typedef struct {
     _documentVisibleRect = textView.textDrawingHelperVisibleRect;
 
     _visibleRange = [drawingHelper coordRangeForRect:_documentVisibleRect];
+    DLog(@"Visible range for document visible rect %@ is %@",
+         NSStringFromRect(_documentVisibleRect), VT100GridCoordRangeDescription(_visibleRange));
     _visibleRange.start.x = MAX(0, _visibleRange.start.x);
     _visibleRange.start.y = MAX(0, _visibleRange.start.y);
     _visibleRange.end.x = _visibleRange.start.x + _configuration->_gridSize.width;
     _visibleRange.end.y = _visibleRange.start.y + _configuration->_gridSize.height;
+    DLog(@"Safe visible range is %@", VT100GridCoordRangeDescription(_visibleRange));
     const long long totalScrollbackOverflow = [screen totalScrollbackOverflow];
     _firstVisibleAbsoluteLineNumber = _visibleRange.start.y + totalScrollbackOverflow;
     _lastVisibleAbsoluteLineNumber = _visibleRange.end.y + totalScrollbackOverflow;

@@ -240,6 +240,11 @@ static const NSUInteger kRectangularSelectionModifierMask = (kRectangularSelecti
 // Update range of underlined chars indicating cmd-clickable url.
 - (void)updateUnderlinedURLs:(NSEvent *)event {
     const BOOL commandPressed = ([event it_modifierFlags] & NSEventModifierFlagCommand) != 0;
+
+    // Optimization
+    if (!commandPressed && ![self hasUnderline]) {
+        return;
+    }
     const BOOL semanticHistoryAllowed = (self.window.isKeyWindow ||
                                          [iTermAdvancedSettingsModel cmdClickWhenInactiveInvokesSemanticHistory]);
     const VT100GridCoord coord = [self coordForEvent:event];

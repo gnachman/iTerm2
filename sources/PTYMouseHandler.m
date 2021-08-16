@@ -1102,6 +1102,14 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                deltaYOut:(CGFloat *)deltaYOut
            reportableOut:(BOOL *)reportableOut {
     DLog(@"handleMouseEvent:%@ testOnly:%@", event, @(testOnly));
+    if (![self.mouseDelegate mouseHandlerAnyReportingModeEnabled:self]) {
+        // Fast path to avoid burning CPU when mouse reporting is off.
+        DLog(@"Fast path: not reportable");
+        if (reportableOut) {
+            *reportableOut = NO;
+        }
+        return NO;
+    }
     const NSPoint point =
     [self.mouseDelegate mouseHandler:self viewCoordForEvent:event clipped:NO];
 

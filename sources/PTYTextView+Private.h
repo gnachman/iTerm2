@@ -49,6 +49,7 @@ NSPopoverDelegate> {
 @property(nonatomic, strong) NSWindow *findCursorWindow;  // For find-cursor animation
 @property(nonatomic, strong) iTermQuickLookController *quickLookController;
 @property(strong, readwrite) NSTouchBar *touchBar NS_AVAILABLE_MAC(10_12_2);
+@property(nonatomic, readonly) BOOL hasUnderline;
 
 - (void)addNote;
 - (NSString *)selectedTextCappedAtSize:(int)maxBytes;

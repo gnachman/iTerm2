@@ -251,6 +251,8 @@ preferredEscaping:(iTermSendTextEscaping)preferredEscaping;
                         state:(iTermMouseState)state;
 
 - (BOOL)textViewCanWriteToTTY;
+- (BOOL)textViewAnyMouseReportingModeIsEnabled;
+
 @end
 
 @interface iTermHighlightedRow : NSObject

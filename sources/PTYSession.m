@@ -9420,6 +9420,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     }
 }
 
+- (BOOL)textViewAnyMouseReportingModeIsEnabled {
+    return _terminal.mouseMode != MOUSE_REPORTING_NONE;
+}
+
 - (BOOL)textViewReportMouseEvent:(NSEventType)eventType
                        modifiers:(NSUInteger)modifiers
                           button:(MouseButtonNumber)button
