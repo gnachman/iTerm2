@@ -156,6 +156,7 @@
         [_accumulator reset];
     }
     if (userScroll != _userScroll) {
+        DLog(@"setUserScroll:%@\n%@", @(userScroll), [NSThread callStackSymbols]);
         _userScroll = userScroll;
         [_ptyScrollerDelegate userScrollDidChange:userScroll];
     }

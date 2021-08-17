@@ -28,6 +28,7 @@
 }
 
 - (void)scrollToPoint:(NSPoint)newOrigin {
+    DLog(@"scrollToPoint:%@\n%@", NSStringFromPoint(newOrigin), [NSThread callStackSymbols]);
     [super scrollToPoint:newOrigin];
     if (_useMetal) {
         [_metalView setNeedsDisplay:YES];

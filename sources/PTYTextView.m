@@ -1185,8 +1185,8 @@
         return;
     }
     const NSRect rectToDraw = [self textDrawingHelperVisibleRect];
-    DLog(@"drawing document visible rect %@", NSStringFromRect(rectToDraw));
-
+    DLog(@"drawing document visible rect %@ for %@", NSStringFromRect(rectToDraw), self);
+    DLog(@"numberOfLines=%@", @(self.dataSource.numberOfLines));
     const BOOL userScroll = [(PTYScroller*)([[self enclosingScrollView] verticalScroller]) userScroll];
 
     CGFloat virtualOffset;
@@ -1231,7 +1231,6 @@
 
         if (gDebugLogging) {
             DLog(@"DRAW vrect=%@ voff=%@ time=%@ session=%@", NSStringFromRect(virtualRect), @(virtualOffset), @([NSDate timeIntervalSinceReferenceDate]), self.delegate);
-            DLog(@"\n%@", [_dataSource debugString]);
         }
 
 
