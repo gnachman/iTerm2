@@ -2320,11 +2320,17 @@ ITERM_WEAKLY_REFERENCEABLE
     env[@"TERM_SESSION_ID"] = itermId;
     env[@"TERM_PROGRAM"] = @"iTerm.app";
     env[@"COLORTERM"] = @"truecolor";
-
+    if ([iTermAdvancedSettingsModel shouldSetTerminfoDirs]) {
+        env[@"TERMINFO_DIRS"] = [@[self.customTerminfoDir, @"/usr/share/terminfo"] componentsJoinedByString:@":"];
+    }
     if (_profile[KEY_NAME]) {
         env[@"ITERM_PROFILE"] = [_profile[KEY_NAME] stringByPerformingSubstitutions:substitutions];
     }
     completion(env);
+}
+
+- (NSString *)customTerminfoDir {
+    return [[[NSBundle mainBundle] resourcePath] stringByAppendingPathComponent:@"terminfo"];
 }
 
 - (void)arrangementWithName:(NSString *)arrangementName hasBadPWD:(NSString *)pwd {

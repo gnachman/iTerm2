@@ -314,6 +314,7 @@ DEFINE_INT(defaultTabStopWidth, 8, SECTION_TERMINAL @"Default tab stop width for
 DEFINE_BOOL(convertItalicsToReverseVideoForTmux, YES, SECTION_TERMINAL @"Convert italics to reverse video in tmux integration?");
 DEFINE_FLOAT(bellRateLimit, 0.1, SECTION_TERMINAL @"Minimum time between beeping or flashing screen on bell, in seconds.\nIf the time interval between bells is less than this amount of time, it will be ignored.");
 DEFINE_BOOL(translateScreenToXterm, YES, SECTION_TERMINAL @"Support TERM=screen\nMost notably, this fixes italics replacing inverse text.");
+DEFINE_BOOL(shouldSetTerminfoDirs, YES, SECTION_TERMINAL @"Set $TERMINFO_DIRS to add modern terminal features to xterm-like $TERMs?\niTerm2 ships with extended terminfo capabilities for common TERMs (xterm, xterm-new, and xterm-256color). For example, it enables undercurl. New sessions get created with a TERMINFO_DIRS that make the customized TERMINFOs take precedence over the system defaults.");
 
 // TODO: When xterm compatibility is reached, change 95 to 314 or later. Even 277 would be an
 // improvement as it would let vim use ttym=sgr rather than xterm2, which passes through luit.

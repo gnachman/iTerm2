@@ -268,6 +268,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (void)setSetCookie:(BOOL)value;
 + (double)shortLivedSessionDuration;
 + (BOOL)shouldSetLCTerminal;
++ (BOOL)shouldSetTerminfoDirs;
 + (BOOL)showAutomaticProfileSwitchingBanner;
 + (BOOL)showBlockBoundaries;
 + (BOOL)showHintsInSplitPaneMenuItems;
