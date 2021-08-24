@@ -6336,9 +6336,12 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 - (BOOL)metalViewSizeIsLegal NS_AVAILABLE_MAC(10_11) {
     NSSize size = _view.frame.size;
-    // When closing a session I once got an insane height that caused an assertion.
+    // See "Maximum 2D texture width and height" in "Implementation Limits". Pick the smallest value
+    // among the "Mac" columns.
+    // https://developer.apple.com/metal/Metal-Feature-Set-Tables.pdf
     const CGFloat maxScale = 2;
-    return size.width > 0 && size.width < (8192 / maxScale) && size.height > 0 && size.height < (8192 / maxScale);
+    const CGFloat maxDimension = 16384;
+    return size.width > 0 && size.width < (maxDimension / maxScale) && size.height > 0 && size.height < (maxDimension / maxScale);
 }
 
 - (BOOL)idleForMetal {
