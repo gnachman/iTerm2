@@ -742,7 +742,6 @@
                         withTabColor:tabColor
                      highlightAmount:highlightAmount
                           horizontal:horizontal];
-
     if (horizontal) {
         BOOL shouldDrawLeftLine;
         if (@available(macOS 10.14, *)) {
@@ -1261,7 +1260,7 @@
         const NSRect insetClipIntersection = NSIntersectionRect(clipRect, insetRect);
         [self drawHorizontalLineInFrame:insetClipIntersection y:0];
     }
-    
+
     // no tab view == not connected
     if (![bar tabView]) {
         NSRect labelRect = rect;
@@ -1310,6 +1309,7 @@
     if (@available(macOS 10.16, *)) {
         if (bar.showAddTabButton && attachedToTitleBar) {
             NSRect frame = bar.addTabButton.frame;
+            frame.size.width = NSWidth(bar.bounds) - NSMinX(frame);
             [topLineColor set];
             frame.size.width = INFINITY;
             frame = NSIntersectionRect(frame, NSIntersectionRect(clipRect, insetRect));
