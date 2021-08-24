@@ -371,9 +371,9 @@ NS_ASSUME_NONNULL_BEGIN
 
     CGFloat height;
     if ([iTermAdvancedSettingsModel fullHeightCursor]) {
-        height = tState.cellConfiguration.cellSize.height;
+        height = MAX(tState.cellConfiguration.cellSize.height, tState.cellConfiguration.cellSizeWithoutSpacing.height);
     } else {
-        height = tState.cellConfiguration.cellSizeWithoutSpacing.height;
+        height = MIN(tState.cellConfiguration.cellSize.height, tState.cellConfiguration.cellSizeWithoutSpacing.height);
     }
     tState.vertexBuffer =
         [_cellRenderer newQuadOfSize:CGSizeMake(tState.configuration.scale * width,
