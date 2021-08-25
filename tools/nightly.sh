@@ -25,6 +25,23 @@ function SparkleSign {
     cp iTerm2-${NAME}.zip ~/iterm2-website/downloads/beta/
 }
 
+function retry {
+  local n=1
+  local max=5
+  local delay=60
+  while true; do
+    "$@" && break || {
+      if [[ $n -lt $max ]]; then
+        ((n++))
+        echo "Command failed. Attempt $n/$max:"
+        sleep $delay;
+        date
+      else
+        die "$@"
+      fi
+    }
+  done
+}
 
 set -x
 # todo: git pull origin master
@@ -53,7 +70,7 @@ mv iTerm2.app iTerm.app
 
 PRENOTARIZED_ZIP=iTerm2-${NAME}-prenotarized.zip
 zip -ry $PRENOTARIZED_ZIP iTerm.app
-xcrun altool --notarize-app --primary-bundle-id "com.googlecode.iterm2" --username "apple@georgester.com" --password "$NOTPASS" --file $PRENOTARIZED_ZIP > /tmp/upload.out 2>&1 || die "Notarization failed"
+retry xcrun altool --notarize-app --primary-bundle-id "com.googlecode.iterm2" --username "apple@georgester.com" --password "$NOTPASS" --file $PRENOTARIZED_ZIP > /tmp/upload.out 2>&1
 UUID=$(grep RequestUUID /tmp/upload.out | sed -e 's/RequestUUID = //')
 echo "uuid is $UUID"
 xcrun altool --notarization-info $UUID -u "apple@georgester.com" -p "$NOTPASS"
@@ -75,11 +92,11 @@ SparkleSign nightly_modern.xml nightly_modern_template.xml "$SIGNING_KEY"
 
 cp iTerm2-${NAME}.zip ~/Dropbox/NightlyBuilds/
 set -x
-scp -vvv -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no iTerm2-${NAME}.zip gnachman@bryan.dreamhost.com:iterm2.com/nightly/iTerm2-${NAME}.zip || die "scp zip"
-ssh -vvv -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no gnachman@bryan.dreamhost.com "./newnightly.sh iTerm2-${NAME}.zip" || die "ssh"
-scp -vvv -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no $SVNDIR/source/appcasts/nightly_changes.txt $SVNDIR/source/appcasts/nightly_modern.xml gnachman@bryan.dreamhost.com:iterm2.com/appcasts/ || die "scp appcasts"
+retry scp -vvv -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no iTerm2-${NAME}.zip gnachman@bryan.dreamhost.com:iterm2.com/nightly/iTerm2-${NAME}.zip || die "scp zip"
+retry ssh -vvv -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no gnachman@bryan.dreamhost.com "./newnightly.sh iTerm2-${NAME}.zip" || die "ssh"
+retry scp -vvv -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no $SVNDIR/source/appcasts/nightly_changes.txt $SVNDIR/source/appcasts/nightly_modern.xml gnachman@bryan.dreamhost.com:iterm2.com/appcasts/ || die "scp appcasts"
 
-curl -v -X POST "https://api.cloudflare.com/client/v4/zones/$CFZONE/purge_cache" \
+retry curl -v -X POST "https://api.cloudflare.com/client/v4/zones/$CFZONE/purge_cache" \
      -H "X-Auth-Email: gnachman@gmail.com" \
      -H "X-Auth-Key: $CFKEY" \
      -H "Content-Type: application/json" \
