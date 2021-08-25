@@ -10,7 +10,6 @@
 #import "DebugLogging.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermFileDescriptorMultiClient.h"
-#import "iTermMultiServerChildDidTerminateNotification.h"
 #import "iTermMultiServerConnection.h"
 #import "iTermNotificationCenter.h"
 #import "iTermProcessCache.h"
@@ -99,18 +98,6 @@ static const int iTermMultiServerMaximumSupportedRestorationIdentifierVersion = 
                                         stateFactory:^iTermSynchronizedState * _Nullable(dispatch_queue_t  _Nonnull queue) {
             return [[iTermMultiServerJobManagerState alloc] initWithQueue:queue];
         }];
-
-        static dispatch_once_t onceToken;
-        static id subscriber;
-        dispatch_once(&onceToken, ^{
-            subscriber = [[NSObject alloc] init];
-            [iTermMultiServerChildDidTerminateNotification subscribe:subscriber
-                                                               block:
-             ^(iTermMultiServerChildDidTerminateNotification * _Nonnull notification) {
-                [[TaskNotifier sharedInstance] pipeDidBreakForExternalProcessID:notification.pid
-                                                                         status:notification.terminationStatus];
-            }];
-        });
     }
     return self;
 }

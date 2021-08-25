@@ -67,7 +67,7 @@ typedef NS_ENUM(NSUInteger, iTermFileDescriptorMultiClientErrorCode) {
 
 - (void)waitForChild:(iTermFileDescriptorMultiClientChild *)child
   removePreemptively:(BOOL)removePreemptively
-            callback:(iTermCallback<id, iTermResult<NSNumber *> *> *)callback;  // number is integer status
+            callback:(iTermCallback<id, iTermResult<NSNumber *> *> * _Nullable)callback;  // number is integer status
 
 @end
 
