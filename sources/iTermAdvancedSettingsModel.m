@@ -384,6 +384,7 @@ DEFINE_BOOL(workAroundBigSurBug, NO, SECTION_GENERAL @"Work around Big Sur bug w
 DEFINE_STRING(preferredBaseDir, @"", SECTION_GENERAL @"Folder for config files. There must not be a space in the path.\nIf empty, then ~/.config/iterm2 will be the default location.");
 DEFINE_INT(maximumNumberOfTriggerCommands, 16, SECTION_GENERAL @"Maximum number of trigger-launched commands that can run at once.\nIf too many “Run Command…” triggers fire their commands will be queued. You must restart iTerm2 for changes to this setting to take effect.");
 DEFINE_INT(smartSelectionRadius, 2, SECTION_GENERAL @"Maximum number of lines before and after the click location to include in smart selection.");
+DEFINE_BOOL(recordTimerDebugInfo, NO, SECTION_GENERAL @"Record debugging info for timers?");
 
 #pragma mark - Drawing
 
