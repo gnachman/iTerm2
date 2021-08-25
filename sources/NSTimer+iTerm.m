@@ -7,7 +7,9 @@
 //
 
 #import "NSTimer+iTerm.h"
+
 #import "DebugLogging.h"
+#import "iTermAdvancedSettingsModel.h"
 
 @interface iTermTimerProxy : NSObject
 @property (nonatomic, weak) id target;
@@ -82,7 +84,9 @@
 
 + (instancetype)weakTimerWithTimeInterval:(NSTimeInterval)interval target:(id)target selector:(SEL)selector userInfo:(id)userInfo repeats:(BOOL)repeats {
     iTermTimerProxy *proxy = [[iTermTimerProxy alloc] init];
-    proxy.debugInfo = [[NSThread callStackSymbols] componentsJoinedByString:@"\n"];
+    if ([iTermAdvancedSettingsModel recordTimerDebugInfo] || gDebugLogging) {
+        proxy.debugInfo = [[NSThread callStackSymbols] componentsJoinedByString:@"\n"];
+    }
     proxy.target = target;
     proxy.selector = selector;
     NSTimer *timer = [NSTimer timerWithTimeInterval:interval
@@ -96,7 +100,9 @@
 
 + (instancetype)scheduledWeakTimerWithTimeInterval:(NSTimeInterval)ti target:(id)aTarget selector:(SEL)aSelector userInfo:(id)userInfo repeats:(BOOL)yesOrNo {
     iTermTimerProxy *proxy = [[iTermTimerProxy alloc] init];
-    proxy.debugInfo = [[NSThread callStackSymbols] componentsJoinedByString:@"\n"];
+    if ([iTermAdvancedSettingsModel recordTimerDebugInfo] || gDebugLogging) {
+        proxy.debugInfo = [[NSThread callStackSymbols] componentsJoinedByString:@"\n"];
+    }
     proxy.target = aTarget;
     proxy.selector = aSelector;
     NSTimer *timer = [NSTimer scheduledTimerWithTimeInterval:ti
@@ -112,7 +118,9 @@
                                           repeats:(BOOL)repeats
                                             block:(void (^_Nonnull)(NSTimer * _Nonnull timer))block {
     iTermTimerProxy *proxy = [[iTermTimerProxy alloc] init];
-    proxy.debugInfo = [[NSThread callStackSymbols] componentsJoinedByString:@"\n"];
+    if ([iTermAdvancedSettingsModel recordTimerDebugInfo] || gDebugLogging) {
+        proxy.debugInfo = [[NSThread callStackSymbols] componentsJoinedByString:@"\n"];
+    }
     NSTimer *timer = [NSTimer scheduledTimerWithTimeInterval:timeInterval
                                                       target:proxy
                                                     selector:@selector(performBlock:)
