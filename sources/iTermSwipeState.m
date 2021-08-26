@@ -88,10 +88,19 @@ static const CGFloat gSwipeFriction = 0.1;
 }
 
 - (iTermSwipeStateMomentumStage)desiredMomentumStage {
-    if (_momentum < -1) {
+    // This method decides whether to go to the next/previous tab based on the current momentum (typically how fast the last drag was).
+    // Set the threshold higher to require more speed to continue a swipe after the drag ends.
+    //   Threshold of 0: always return from whence you came
+    //   Threshold of inf: keep swiping no matter how slowly.
+    // In Issue 9745 we see that the threshold of 1 was too low. When you
+    // switch from a single-finger to a two-finger gesture on a magic mouse
+    // just in the beginning of a drag, the momentum is low and the swipe
+    // should be canceled.
+    const CGFloat threshold = 5;
+    if (_momentum < -threshold) {
         return iTermSwipeStateMomentumStageNegative;
     }
-    if (_momentum > 1) {
+    if (_momentum > threshold) {
         return iTermSwipeStateMomentumStagePositive;
     }
 
@@ -234,6 +243,7 @@ static const CGFloat gSwipeFriction = 0.1;
     DLog(@"dragBy:%@ for %@", @(delta), self);
     _rawOffset += delta;
     _momentum = delta;
+    DLog(@"set momentum to %@ because of drag", @(_momentum));
     DLog(@"After drag: %@", self);
     [self.swipeHandler swipeHandlerSetOffset:self.squashedOffset forSession:self.userInfo];
 }
@@ -263,6 +273,7 @@ static const CGFloat gSwipeFriction = 0.1;
     }
     assert(_userInfo);
     _momentum = 0;
+    DLog(@"set momentum to 0 because drag started");
     DLog(@"After starting drag: %@", self);
 }
 
@@ -279,6 +290,7 @@ static const CGFloat gSwipeFriction = 0.1;
 
     switch (transition.before) {
         case iTermScrollWheelStateMachineStateGround:
+            DLog(@"Transition from ground");
             switch (transition.after) {
                 case iTermScrollWheelStateMachineStateStartDrag:
                 case iTermScrollWheelStateMachineStateDrag:
@@ -296,6 +308,7 @@ static const CGFloat gSwipeFriction = 0.1;
             }
             break;
         case iTermScrollWheelStateMachineStateStartDrag:
+            DLog(@"Transition from start-drag");
             switch (transition.after) {
                 case iTermScrollWheelStateMachineStateDrag:
                     if ([self shouldDrag:event state:transition.after]) {
@@ -316,6 +329,7 @@ static const CGFloat gSwipeFriction = 0.1;
             }
             break;
         case iTermScrollWheelStateMachineStateTouchAndHold:
+            DLog(@"Transition from touch-and-hold");
             switch (transition.after) {
                 case iTermScrollWheelStateMachineStateStartDrag:
                 case iTermScrollWheelStateMachineStateDrag:
@@ -333,6 +347,7 @@ static const CGFloat gSwipeFriction = 0.1;
             }
             break;
         case iTermScrollWheelStateMachineStateDrag:
+            DLog(@"Transition from drag");
             switch (transition.after) {
                 case iTermScrollWheelStateMachineStateDrag:
                     if ([self shouldDrag:event state:transition.after]) {
@@ -343,6 +358,7 @@ static const CGFloat gSwipeFriction = 0.1;
                     break;
                 case iTermScrollWheelStateMachineStateGround:
                     if (!_dragStarted) {
+                        DLog(@"drag->ground but drag not yet started");
                         [self retire];
                         return NO;
                     }
@@ -391,13 +407,19 @@ static const CGFloat gSwipeFriction = 0.1;
 // roundDirection > 0: round up
 - (NSInteger)indexForOffset:(CGFloat)offset round:(int)roundDirection {
     CGFloat unroundedIndex = -round(offset) / _parameters.width;
+    DLog(@"Calculate index for offset %@ given width %@ and round direction %@", @(offset), @(_parameters.width), @(roundDirection));
+    DLog(@"Unrounded index is %@", @(unroundedIndex));
     NSInteger (^clamp)(NSInteger) = ^NSInteger(NSInteger i) {
+        DLog(@"index <- clamp(%@)", @(i));
         if (i < 0) {
+            DLog(@"index = 0 because i<0");
             return 0;
         }
         if (i >= self->_parameters.count) {
+            DLog(@"index = %@ because i >= n", @(self->_parameters.count - 1));
             return self->_parameters.count - 1;
         }
+        DLog(@"index = %@ (no clamping needed)", @(i));
         return i;
     };
     if (roundDirection < 0) {
