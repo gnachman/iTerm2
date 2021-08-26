@@ -20,7 +20,7 @@ typedef NS_ENUM(NSInteger, iTermRestorableSessionGroup) {
 
 @interface iTermRestorableSession : NSObject
 
-@property(nonatomic, strong) NSArray *sessions;
+@property(nonatomic, strong) NSArray<PTYSession *> *sessions;
 @property(nonatomic, copy) NSString *terminalGuid;
 @property(nonatomic, assign) int tabUniqueId;
 @property(nonatomic, strong) NSDictionary *arrangement;

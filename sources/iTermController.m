@@ -197,6 +197,8 @@ static iTermController *gSharedInstance;
         // nicely.
         [_terminalWindows autorelease];
     } else {
+        // Terminate buried sessions
+        [[iTermBuriedSessions sharedInstance] terminateAll];
         // Close all terminal windows, killing jobs.
         while ([_terminalWindows count] > 0) {
             [[_terminalWindows objectAtIndex:0] close];

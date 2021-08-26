@@ -24,5 +24,6 @@ extern NSString *const iTermSessionBuriedStateChangeTabNotification;
 - (NSArray<PTYSession *> *)buriedSessions;
 - (NSArray<NSDictionary *> *)restorableState;
 - (void)updateMenus;
+- (void)terminateAll;
 
 @end

@@ -206,6 +206,16 @@ NSString *const iTermSessionBuriedStateChangeTabNotification = @"iTermSessionBur
 
 }
 
+- (void)terminateAll {
+    [_array enumerateObjectsUsingBlock:^(iTermRestorableSession * _Nonnull restorableSession, NSUInteger idx, BOOL * _Nonnull stop) {
+        [restorableSession.sessions enumerateObjectsUsingBlock:^(PTYSession *session, NSUInteger idx, BOOL * _Nonnull stop) {
+            if (!session.exited && !session.isTmuxClient) {
+                [session terminate];
+            }
+        }];
+    }];
+}
+
 #pragma mark - tmux
 
 - (void)tmuxWindowCacheDidChange:(NSNotification *)notification {
