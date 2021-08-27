@@ -4916,6 +4916,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)setScrollViewDocumentView {
+    const BOOL shouldUpdateLayout = (_view.scrollview.documentView == nil && _wrapper != nil);
     [_view.scrollview setDocumentView:_wrapper];
     NSRect rect = {
         .origin = NSZeroPoint,
@@ -4923,6 +4924,10 @@ ITERM_WEAKLY_REFERENCEABLE
     };
     _wrapper.frame = rect;
     [_textview refresh];
+    if (shouldUpdateLayout) {
+        DLog(@"Document view went from nil to %@ so update layout", _wrapper);
+        [_view updateLayout];
+    }
 }
 
 - (void)setProfile:(Profile *)newProfile {
