@@ -1292,10 +1292,21 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
         [self handleDisplayMessageVersion:@"3.0"];
         return;
     }
-    if ([response hasPrefix:@"openbsd-"]) {
-        // This is a forecast. When a new openbsd comes out, figure out what it acts like and add
-        // a new fallback.
-        [self handleDisplayMessageVersion:@"3.2"];
+    NSString *openbsdPrefix = @"openbsd-";
+    if ([response hasPrefix:openbsdPrefix]) {
+        NSString *suffix = [response substringFromIndex:openbsdPrefix.length];
+        NSDecimalNumber *number = [NSDecimalNumber decimalNumberWithString:suffix];
+        if (number) {
+            if ([number compare:[NSDecimalNumber decimalNumberWithString:@"7.1"]] != NSOrderedAscending) {
+                // version >= 7.1
+                [self handleDisplayMessageVersion:@"3.4"];
+            }
+            // version < 7.1
+            [self handleDisplayMessageVersion:@"3.2"];
+        } else {
+            // This should never happen (decimalNumberWithString returns a nonnil value)
+            [self handleDisplayMessageVersion:@"3.2"];
+        }
         return;
     }
     // openbsd-6.6 and earlier are never reported; you just get an empty string.
