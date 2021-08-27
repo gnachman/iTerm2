@@ -119,6 +119,9 @@ CGFloat kiTermIndicatorStandardHeight = 20;
 }
 
 - (void)enumerateTopRightIndicatorsInFrame:(NSRect)frame andDraw:(BOOL)shouldDraw block:(void (^)(NSString *, NSImage *, NSRect))block {
+    if ([iTermAdvancedSettingsModel disableTopRightIndicators]) {
+        return;
+    }
     NSArray *sequentialIdentifiers = [iTermIndicatorsHelper sequentialIndicatorIdentifiers];
     const CGFloat vmargin = [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins];
     const CGFloat kIndicatorTopMargin = MAX(5, vmargin);
