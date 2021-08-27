@@ -973,7 +973,12 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
             return nil;
         }
         _windowSizes[@(window.intValue)] = sizeValue;
-        NSString *command = [NSString stringWithFormat:@"resize-window -x %@ -y %@ -t @%d", @((int)size.width), @((int)size.height), window.intValue];
+        NSString *command;
+        if ([self refreshClientSupportsWindowArgument]) {
+            command = [NSString stringWithFormat:@"refresh-client -C @%d:%dx%d", window.intValue, (int)size.width, (int)size.height];
+        } else {
+            command = [NSString stringWithFormat:@"resize-window -x %@ -y %@ -t @%d", @((int)size.width), @((int)size.height), window.intValue];
+        }
         NSDictionary *dict = [gateway_ dictionaryForCommand:command
                                              responseTarget:self
                                            responseSelector:@selector(handleResizeWindowResponse:)
@@ -981,6 +986,11 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
                                                       flags:kTmuxGatewayCommandShouldTolerateErrors];
         return dict;
     }];
+}
+
+- (BOOL)refreshClientSupportsWindowArgument {
+    // https://github.com/tmux/tmux/issues/2594
+    return [self versionAtLeastDecimalNumberWithString:@"3.4"];
 }
 
 - (NSArray<NSDictionary *> *)commandListToSetSize:(NSSize)size ofWindows:(NSArray<NSString *> *)windows {
@@ -1270,6 +1280,10 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
 
 - (void)handleDisplayMessageVersion:(NSString *)response {
     DLog(@"handleDisplayMessageVersion: %@", response);
+    if ([response isEqualToString:@"openbsd-7.1"]) {
+        [self handleDisplayMessageVersion:@"3.4"];
+        return;
+    }
     if ([response isEqualToString:@"openbsd-6.8"]) {
         [self handleDisplayMessageVersion:@"3.2"];
         return;
