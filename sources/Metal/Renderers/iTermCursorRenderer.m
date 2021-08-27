@@ -300,7 +300,7 @@ NS_ASSUME_NONNULL_BEGIN
     const CGSize cellSizeWithoutSpacing = tState.cellConfiguration.cellSizeWithoutSpacing;
     CGFloat y = rowNumber * cellSize.height;
     if ([iTermAdvancedSettingsModel fullHeightCursor]) {
-        y += cellSize.height - cellSizeWithoutSpacing.height;
+        y += MIN(0, cellSize.height - cellSizeWithoutSpacing.height);
     } else {
         const CGFloat scale = tState.configuration.scale;
         y += cellSize.height - MAX(0, round(((cellSize.height - cellSizeWithoutSpacing.height) / 2) / scale) * scale) - tState.cursorHeight;
