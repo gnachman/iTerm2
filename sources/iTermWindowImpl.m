@@ -33,6 +33,7 @@ NS_ASSUME_NONNULL_BEGIN
     BOOL _needsInvalidateShadow;
     BOOL _it_restorableStateInvalid;
     BOOL _validatingMenuItems;
+    BOOL _it_preventFrameChange;
 #if BETA
     NSString *_lastAlphaChangeStack;
 #endif
@@ -42,6 +43,7 @@ NS_ASSUME_NONNULL_BEGIN
 @synthesize it_openingSheet;
 @synthesize it_becomingKey;
 @synthesize it_accessibilityResizing;
+@synthesize it_preventFrameChange;
 
 - (instancetype)initWithContentRect:(NSRect)contentRect
                           styleMask:(NSWindowStyleMask)aStyle
@@ -565,6 +567,15 @@ ITERM_WEAKLY_REFERENCEABLE
          NSStringFromRect(frameRect), @(flag), @(NSMaxY(frameRect)),
           self.delegate,
          [NSThread callStackSymbols]);
+    if (self.it_preventFrameChange) {
+        // This is a terrible hack.
+        // When you restart and choose to restore windows after logging back in, appkit sets the
+        // window size from the restoration completion block. This has the effect of reversing the
+        // width adjustment that we make to the window to account for a change in the scrollbar
+        // style change. See _widthAdjustment in PseudoTerminal.m for details. Issue 9877
+        DLog(@"Disregarding frame change");
+        return;
+    }
     [super setFrame:frameRect display:flag];
 }
 

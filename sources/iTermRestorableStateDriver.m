@@ -10,6 +10,7 @@
 #import "DebugLogging.h"
 #import "iTermWarning.h"
 #import "NSArray+iTerm.h"
+#import "PTYWindow.h"
 
 static NSString *const iTermRestorableStateControllerUserDefaultsKeyCount = @"NoSyncRestoreWindowsCount";
 
@@ -155,7 +156,17 @@ static NSString *const iTermRestorableStateControllerUserDefaultsKeyCount = @"No
                 if (callback) {
                     DLog(@"Restorable state driver: Invoke callback callback with window %@", window);
                     [callbacks removeObjectForKey:windowIdentifier];
+                    id<PTYWindow> ptyWindow = nil;
+                    if ([window conformsToProtocol:@protocol(PTYWindow)]) {
+                        ptyWindow = (id<PTYWindow>)window;
+                    }
+                    const BOOL saved = ptyWindow.it_preventFrameChange;
+                    if (!(window.styleMask & NSWindowStyleMaskFullScreen)) {
+                        ptyWindow.it_preventFrameChange = YES;
+                    }
                     callback(window, nil);
+                    ptyWindow.it_preventFrameChange = saved;
+
                     DLog(@"Restorable state driver: Returned from callback callback with window %@", window);
                 } else {
                     DLog(@"No callback");
