@@ -1012,7 +1012,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_cursorTypeOverride release];
     [_lastProcessInfo release];
     _logging.rawLogger = nil;
-    _logging.plainLogger = nil;
+    _logging.cookedLogger = nil;
     [_logging release];
     [_naggingController release];
     [_expect release];
@@ -1752,10 +1752,12 @@ ITERM_WEAKLY_REFERENCEABLE
         [aSession retain];
         void (^startLogging)(NSString *) = ^(NSString *filename) {
             if (filename) {
+                const NSUInteger value = [iTermProfilePreferences boolForKey:KEY_LOGGING_STYLE
+                                                                   inProfile:aSession.profile];
+                iTermLoggingStyle loggingStyle = iTermLoggingStyleFromUserDefaultsValue(value);
                 [[aSession loggingHelper] setPath:filename
                                           enabled:YES
-                                        plainText:[iTermProfilePreferences boolForKey:KEY_PLAIN_TEXT_LOGGING
-                                                                            inProfile:aSession.profile]
+                                            style:loggingStyle
                                            append:@YES];
             }
             [aSession autorelease];
@@ -1778,7 +1780,7 @@ ITERM_WEAKLY_REFERENCEABLE
         return _logging;
     }
     _logging = [[iTermLoggingHelper alloc] initWithRawLogger:_shell
-                                                 plainLogger:self
+                                                cookedLogger:self
                                                  profileGUID:self.profile[KEY_GUID]
                                                        scope:self.variablesScope];
     return _logging;
@@ -2368,8 +2370,8 @@ ITERM_WEAKLY_REFERENCEABLE
                 _logging = nil;
                 [[self loggingHelper] setPath:autoLogFilename
                                       enabled:autoLogFilename != nil
-                                    plainText:[iTermProfilePreferences boolForKey:KEY_PLAIN_TEXT_LOGGING
-                                                                        inProfile:self.profile]
+                                        style:iTermLoggingStyleFromUserDefaultsValue([iTermProfilePreferences unsignedIntegerForKey:KEY_LOGGING_STYLE
+                                                                                                                          inProfile:self.profile])
                                        append:nil];
                 if (env[PWD_ENVNAME] && arrangementName && _arrangementGUID) {
                     __weak __typeof(self) weakSelf = self;
@@ -4861,7 +4863,7 @@ ITERM_WEAKLY_REFERENCEABLE
         BOOL shouldAppend = (savePanel.replaceOrAppend == kSavePanelReplaceOrAppendSelectionAppend);
         [[self loggingHelper] setPath:savePanel.path
                               enabled:YES
-                            plainText:savePanel.shoudLogPlainText
+                                style:savePanel.loggingStyle
                                append:@(shouldAppend)];
     }
 }
@@ -7523,7 +7525,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     if (_exited) {
         return;
     }
-    if (!_logging.plainText) {
+    if (_logging.style == iTermLoggingStyleRaw) {
         [_logging logData:data];
     }
 
@@ -10616,11 +10618,35 @@ preferredEscaping:(iTermSendTextEscaping)preferredEscaping {
     _screen.trackCursorLineMovement = NO;
 }
 
+// If plainText is false then it's a control code.
 - (void)screenDidAppendStringToCurrentLine:(NSString *)string
                                isPlainText:(BOOL)plainText {
     [self appendStringToTriggerLine:string];
-    if (plainText && _logging.enabled && _logging.plainText && !self.isTmuxGateway) {
-        [_logging logData:[string dataUsingEncoding:_terminal.encoding]];
+    if (plainText) {
+        [self logCooked:[string dataUsingEncoding:_terminal.encoding]];
+    }
+}
+
+- (void)logCooked:(NSData *)data {
+    if (!_logging.enabled) {
+        return;
+    }
+    if (self.isTmuxGateway) {
+        return;
+    }
+    switch (_logging.style) {
+        case iTermLoggingStyleRaw:
+            break;
+        case iTermLoggingStylePlainText:
+            [_logging logData:data];
+            break;
+        case iTermLoggingStyleHTML:
+            [_logging logData:[data htmlDataWithForeground:_terminal.foregroundColorCode
+                                                background:_terminal.backgroundColorCode
+                                                  colorMap:_colorMap
+                                        useCustomBoldColor:_textview.useCustomBoldColor
+                                              brightenBold:_textview.brightenBold]];
+            break;
     }
 }
 
@@ -10631,10 +10657,8 @@ preferredEscaping:(iTermSendTextEscaping)preferredEscaping {
                                                    encoding:NSASCIIStringEncoding] autorelease];
         [self screenDidAppendStringToCurrentLine:string isPlainText:YES];
     } else {
-        if (_logging.enabled && _logging.plainText && !self.isTmuxGateway) {
-            [_logging logData:[NSData dataWithBytes:asciiData->buffer
-                                                   length:asciiData->length]];
-        }
+        [self logCooked:[NSData dataWithBytes:asciiData->buffer
+                                       length:asciiData->length]];
     }
 }
 
@@ -12554,8 +12578,17 @@ preferredEscaping:(iTermSendTextEscaping)preferredEscaping {
 
 - (void)screenDidReceiveLineFeed {
     [_pwdPoller didReceiveLineFeed];
-    if (_logging.enabled && _logging.plainText && !self.isTmuxGateway) {
-        [_logging logNewline];
+    if (_logging.enabled && !self.isTmuxGateway) {
+        switch (_logging.style) {
+            case iTermLoggingStyleRaw:
+                break;
+            case iTermLoggingStyleHTML:
+                [_logging logNewline:[@"<br/>\n" dataUsingEncoding:_terminal.encoding]];
+                break;
+            case iTermLoggingStylePlainText:
+                [_logging logNewline:nil];
+                break;
+        }
     }
 }
 
@@ -12698,6 +12731,23 @@ preferredEscaping:(iTermSendTextEscaping)preferredEscaping {
 
 - (void)screenDidResize {
     [self.delegate sessionDidResize:self];
+}
+
+- (void)screenDidAppendImageData:(NSData *)data {
+    if (!_logging.enabled) {
+        return;
+    }
+    if (self.isTmuxGateway) {
+        return;
+    }
+    switch (_logging.style) {
+        case iTermLoggingStyleRaw:
+        case iTermLoggingStylePlainText:
+            break;
+        case iTermLoggingStyleHTML:
+            [_logging logData:[data inlineHTMLData]];
+            break;
+    }
 }
 
 - (NSString *)screenStringForKeypressWithCode:(unsigned short)keycode
@@ -14380,10 +14430,46 @@ preferredEscaping:(iTermSendTextEscaping)preferredEscaping {
 #pragma mark - iTermLogging
 
 - (void)loggingHelperStart:(iTermLoggingHelper *)loggingHelper {
+    if (loggingHelper.style != iTermLoggingStyleHTML) {
+        return;
+    }
+
+    [loggingHelper logWithoutTimestamp:[NSData styleSheetWithFontFamily:self.textview.font.familyName
+                                                               fontSize:self.textview.font.pointSize
+                                                        backgroundColor:[_colorMap colorForKey:kColorMapBackground]
+                                                              textColor:[_colorMap colorForKey:kColorMapForeground]]];
 }
 
 - (void)loggingHelperStop:(iTermLoggingHelper *)loggingHelper {
 }
+
+- (NSString *)loggingHelperTimestamp:(iTermLoggingHelper *)loggingHelper {
+    if (![iTermAdvancedSettingsModel logTimestampsWithPlainText]) {
+        return nil;
+    }
+    switch (loggingHelper.style) {
+        case iTermLoggingStyleRaw:
+            return nil;
+
+        case iTermLoggingStylePlainText: {
+            static NSDateFormatter *dateFormatter;
+            static dispatch_once_t onceToken;
+            dispatch_once(&onceToken, ^{
+                dateFormatter = [[NSDateFormatter alloc] init];
+                dateFormatter.dateFormat = [NSDateFormatter dateFormatFromTemplate:@"yyyy-MM-dd hh.mm.ss.SSS"
+                                                                           options:0
+                                                                            locale:[NSLocale currentLocale]];
+            });
+            return [NSString stringWithFormat:@"[%@] ", [dateFormatter stringFromDate:[NSDate date]]];
+        }
+
+        case iTermLoggingStyleHTML: {
+            // This is done during encoding.
+            return nil;
+        }
+    }
+}
+
 
 #pragma mark - iTermNaggingControllerDelegate
 

@@ -4537,64 +4537,20 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     return self.blinkAllowed && sct.blink;
 }
 
-- (iTermColorMapKey)colorMapKeyForCode:(int)theIndex
+- (iTermColorMapKey)colorMapKeyForCode:(int)code
                                  green:(int)green
                                   blue:(int)blue
-                             colorMode:(ColorMode)theMode
+                             colorMode:(ColorMode)mode
                                   bold:(BOOL)isBold
                           isBackground:(BOOL)isBackground {
-    BOOL isBackgroundForDefault = isBackground;
-    switch (theMode) {
-        case ColorModeAlternate:
-            switch (theIndex) {
-                case ALTSEM_SELECTED:
-                    if (isBackground) {
-                        return kColorMapSelection;
-                    } else {
-                        return kColorMapSelectedText;
-                    }
-                case ALTSEM_CURSOR:
-                    if (isBackground) {
-                        return kColorMapCursor;
-                    } else {
-                        return kColorMapCursorText;
-                    }
-                case ALTSEM_SYSTEM_MESSAGE:
-                    return [_colorMap keyForSystemMessageForBackground:isBackground];
-                case ALTSEM_REVERSED_DEFAULT:
-                    isBackgroundForDefault = !isBackgroundForDefault;
-                    // Fall through.
-                case ALTSEM_DEFAULT:
-                    if (isBackgroundForDefault) {
-                        return kColorMapBackground;
-                    } else {
-                        if (isBold && self.useCustomBoldColor) {
-                            return kColorMapBold;
-                        } else {
-                            return kColorMapForeground;
-                        }
-                    }
-            }
-            break;
-        case ColorMode24bit:
-            return [iTermColorMap keyFor8bitRed:theIndex green:green blue:blue];
-        case ColorModeNormal:
-            // Render bold text as bright. The spec (ECMA-48) describes the intense
-            // display setting (esc[1m) as "bold or bright". We make it a
-            // preference.
-            if (isBold &&
-                self.brightenBold &&
-                (theIndex < 8) &&
-                !isBackground) { // Only colors 0-7 can be made "bright".
-                theIndex |= 8;  // set "bright" bit.
-            }
-            return kColorMap8bitBase + (theIndex & 0xff);
-
-        case ColorModeInvalid:
-            return kColorMapInvalid;
-    }
-    ITAssertWithMessage(ok, @"Bogus color mode %d", (int)theMode);
-    return kColorMapInvalid;
+    return [_colorMap keyForColor:code
+                            green:green
+                             blue:blue
+                        colorMode:mode
+                             bold:isBold
+                     isBackground:isBackground
+               useCustomBoldColor:self.useCustomBoldColor
+                     brightenBold:self.brightenBold];
 }
 
 #pragma mark - iTermTextDrawingHelperDelegate

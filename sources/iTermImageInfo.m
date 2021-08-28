@@ -357,6 +357,14 @@ static NSSize iTermImageInfoGetSizeForRegionPreservingAspectRatio(const NSSize r
     }
 }
 
+- (NSImage *)firstFrame {
+    if (self.animatedImage) {
+        return [self.animatedImage imageForFrame:0];
+    } else {
+        return [self.image.images firstObject];
+    }
+}
+
 + (NSEdgeInsets)fractionalInsetsStretchingToDesiredSize:(NSSize)desiredSize
                                               imageSize:(NSSize)imageSize
                                                cellSize:(NSSize)cellSize

@@ -187,6 +187,9 @@
     SetDecodedImage(c.code, decodedImage.image, decodedImage.data);
     [self.delegate inlineImageSetMarkOnScreenLine:grid.cursor.y + 1
                                              code:c.code];
+    if (decodedImage.data) {
+        [self.delegate inlineImageDidFinishWithImageData:decodedImage.data];
+    }
 }
 
 #pragma mark - Decoding

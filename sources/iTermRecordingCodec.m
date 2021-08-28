@@ -130,7 +130,7 @@
                 [profile removeObjectForKey:KEY_NAME];
                 [profile removeObjectForKey:KEY_COMMAND_LINE];
                 [profile removeObjectsForKeys:@[ KEY_NAME, KEY_COMMAND_LINE, KEY_WORKING_DIRECTORY, KEY_AUTOLOG,
-                                                 KEY_PLAIN_TEXT_LOGGING, KEY_DESCRIPTION,
+                                                 KEY_LOGGING_STYLE, KEY_DESCRIPTION,
                                                  KEY_INITIAL_TEXT, KEY_TAGS, KEY_TITLE_COMPONENTS,
                                                  KEY_ORIGINAL_GUID,
                                                  KEY_AWDS_WIN_DIRECTORY, KEY_AWDS_TAB_DIRECTORY,

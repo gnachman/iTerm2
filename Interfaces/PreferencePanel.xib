@@ -1411,10 +1411,10 @@ DQ
                 <outlet property="_jobsTable" destination="5661" id="yIR-qA-xyG"/>
                 <outlet property="_logDir" destination="5686" id="9gN-0Q-j71"/>
                 <outlet property="_logDirWarning" destination="5688" id="LwF-JR-iDw"/>
+                <outlet property="_loggingStyle" destination="3CY-jo-bCe" id="R9C-BQ-uXI"/>
                 <outlet property="_neverWarn" destination="S85-6e-Wc9" id="6nd-Pt-QYC"/>
                 <outlet property="_onEndAction" destination="P7Z-yJ-1GX" id="I5b-mZ-OFg"/>
                 <outlet property="_openPasswordManagerAutomatically" destination="7G9-14-8aW" id="MSX-1s-nGv"/>
-                <outlet property="_plainTextLogging" destination="Tl8-Wq-C80" id="ZeC-1a-hoU"/>
                 <outlet property="_reduceFlicker" destination="Flt-We-Y3i" id="gLN-is-gOD"/>
                 <outlet property="_removeJob" destination="5669" id="YFO-c0-Vq2"/>
                 <outlet property="_sendCodeWhenIdle" destination="5697" id="dJR-J9-XOR"/>
@@ -4024,17 +4024,6 @@ DQ
                         <action selector="settingChanged:" target="TG6-06-mq9" id="JDH-Oz-X6P"/>
                     </connections>
                 </popUpButton>
-                <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Tl8-Wq-C80">
-                    <rect key="frame" x="437" y="160" width="114" height="18"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <buttonCell key="cell" type="check" title="Log plain text" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="Ajt-gf-YM2">
-                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                        <font key="font" metaFont="system"/>
-                    </buttonCell>
-                    <connections>
-                        <action selector="settingChanged:" target="TG6-06-mq9" id="jrl-4x-XIp"/>
-                    </connections>
-                </button>
                 <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="tCm-x3-wFw">
                     <rect key="frame" x="34" y="45" width="112" height="16"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
@@ -4060,6 +4049,24 @@ DQ
                     </popUpButtonCell>
                     <connections>
                         <action selector="settingChanged:" target="TG6-06-mq9" id="SLz-4O-Pbi"/>
+                    </connections>
+                </popUpButton>
+                <popUpButton verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="3CY-jo-bCe">
+                    <rect key="frame" x="449" y="157" width="95" height="25"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <popUpButtonCell key="cell" type="push" title="Raw data" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" selectedItem="Qag-mH-b4L" id="fzS-g7-P5q">
+                        <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
+                        <font key="font" metaFont="menu"/>
+                        <menu key="menu" id="bAa-7x-dPT">
+                            <items>
+                                <menuItem title="Raw data" state="on" id="Qag-mH-b4L"/>
+                                <menuItem title="Plain text" tag="1" id="OU0-2O-wNV"/>
+                                <menuItem title="HTML" tag="2" id="deu-RR-tr2"/>
+                            </items>
+                        </menu>
+                    </popUpButtonCell>
+                    <connections>
+                        <action selector="settingChanged:" target="TG6-06-mq9" id="xo3-Ok-seu"/>
                     </connections>
                 </popUpButton>
             </subviews>

@@ -8,6 +8,7 @@
 
 #import <Cocoa/Cocoa.h>
 #include <simd/vector_types.h>
+#import "ScreenChar.h"
 
 // This would be an enum except lldb doesn't handle enums very well.
 // (lldb) po [_colorMap colorForKey:kColorMapBackground]
@@ -104,5 +105,14 @@ extern const int kColorMap24bitBase;
 // Returns non-nil profile key name for valid logical colors, ANSI colors, and bright ANSI colors.
 - (NSString *)profileKeyForColorMapKey:(int)theKey;
 - (iTermColorMapKey)keyForSystemMessageForBackground:(BOOL)background;
+
+- (iTermColorMapKey)keyForColor:(int)theIndex
+                          green:(int)green
+                           blue:(int)blue
+                      colorMode:(ColorMode)theMode
+                           bold:(BOOL)isBold
+                   isBackground:(BOOL)isBackground
+             useCustomBoldColor:(BOOL)useCustomBoldColor
+                   brightenBold:(BOOL)brightenBold;
 
 @end

@@ -7,6 +7,8 @@
 //
 
 #import "iTermColorMap.h"
+
+#import "DebugLogging.h"
 #import "ITAddressBookMgr.h"
 #import "NSColor+iTerm.h"
 #import <simd/simd.h>
@@ -550,6 +552,68 @@ const int kColorMapAnsiBrightModifier = 8;
     const double delta = magnitude * sign;
     const int value = floor((brightness + delta) * 255);
     return [iTermColorMap keyFor8bitRed:value green:value blue:value];
+}
+
+- (iTermColorMapKey)keyForColor:(int)color
+                          green:(int)green
+                           blue:(int)blue
+                      colorMode:(ColorMode)mode
+                           bold:(BOOL)isBold
+                   isBackground:(BOOL)isBackground
+             useCustomBoldColor:(BOOL)useCustomBoldColor
+                   brightenBold:(BOOL)brightenBold {
+    BOOL isBackgroundForDefault = isBackground;
+    switch (mode) {
+        case ColorModeAlternate:
+            switch (color) {
+                case ALTSEM_SELECTED:
+                    if (isBackground) {
+                        return kColorMapSelection;
+                    } else {
+                        return kColorMapSelectedText;
+                    }
+                case ALTSEM_CURSOR:
+                    if (isBackground) {
+                        return kColorMapCursor;
+                    } else {
+                        return kColorMapCursorText;
+                    }
+                case ALTSEM_SYSTEM_MESSAGE:
+                    return [self keyForSystemMessageForBackground:isBackground];
+                case ALTSEM_REVERSED_DEFAULT:
+                    isBackgroundForDefault = !isBackgroundForDefault;
+                    // Fall through.
+                case ALTSEM_DEFAULT:
+                    if (isBackgroundForDefault) {
+                        return kColorMapBackground;
+                    } else {
+                        if (isBold && useCustomBoldColor) {
+                            return kColorMapBold;
+                        } else {
+                            return kColorMapForeground;
+                        }
+                    }
+            }
+            break;
+        case ColorMode24bit:
+            return [iTermColorMap keyFor8bitRed:color green:green blue:blue];
+        case ColorModeNormal:
+            // Render bold text as bright. The spec (ECMA-48) describes the intense
+            // display setting (esc[1m) as "bold or bright". We make it a
+            // preference.
+            if (isBold &&
+                brightenBold &&
+                (color < 8) &&
+                !isBackground) { // Only colors 0-7 can be made "bright".
+                color |= 8;  // set "bright" bit.
+            }
+            return kColorMap8bitBase + (color & 0xff);
+
+        case ColorModeInvalid:
+            return kColorMapInvalid;
+    }
+    ITAssertWithMessage(ok, @"Bogus color mode %d", (int)mode);
+    return kColorMapInvalid;
 }
 
 @end

@@ -42,16 +42,16 @@ NSString *const iTermLoggingHelperErrorNotificationGUIDKey = @"guid";
 }
 
 - (instancetype)initWithRawLogger:(id<iTermLogging>)rawLogger
-                      plainLogger:(id<iTermLogging>)plainLogger
+                     cookedLogger:(id<iTermLogging>)cookedLogger
                       profileGUID:(NSString *)profileGUID
                             scope:(nonnull iTermVariableScope *)scope {
     self = [super init];
     if (self) {
         _path = nil;
         _enabled = NO;
-        _plainText = NO;
+        _style = iTermLoggingStyleRaw;
         _rawLogger = rawLogger;
-        _plainLogger = plainLogger;
+        _cookedLogger = cookedLogger;
         _appending = [iTermAdvancedSettingsModel autologAppends];
         _queue = dispatch_queue_create("com.iterm2.logging", DISPATCH_QUEUE_SERIAL);
         _profileGUID = [profileGUID copy];
@@ -60,30 +60,33 @@ NSString *const iTermLoggingHelperErrorNotificationGUIDKey = @"guid";
     return self;
 }
 
-- (void)setPath:(NSString *)path enabled:(BOOL)enabled plainText:(BOOL)plainText append:(NSNumber *)append {
+- (void)setPath:(NSString *)path
+        enabled:(BOOL)enabled
+          style:(iTermLoggingStyle)style
+         append:(nullable NSNumber *)append {
     const BOOL wasLoggingRaw = self.isLoggingRaw;
-    const BOOL wasLoggingPlainText = self.isLoggingPlainText;
+    const BOOL wasLoggingCooked = self.isLoggingCooked;
 
     _path = [path copy];
     _enabled = path != nil && enabled;
-    _plainText = plainText;
+    _style = style;
     _appending = append ? append.boolValue : [iTermAdvancedSettingsModel autologAppends];
 
     if (wasLoggingRaw && !self.isLoggingRaw) {
         [_rawLogger loggingHelperStop:self];
         [self close];
     }
-    if (wasLoggingPlainText && !self.isLoggingPlainText) {
-        [_plainLogger loggingHelperStop:self];
+    if (wasLoggingCooked && !self.isLoggingCooked) {
+        [_cookedLogger loggingHelperStop:self];
         [self close];
     }
     if (!wasLoggingRaw && self.isLoggingRaw) {
         [self start];
         [_rawLogger loggingHelperStart:self];
     }
-    if (!wasLoggingPlainText && self.isLoggingPlainText) {
+    if (!wasLoggingCooked && self.isLoggingCooked) {
         [self start];
-        [_plainLogger loggingHelperStart:self];
+        [_cookedLogger loggingHelperStart:self];
     }
 }
 
@@ -91,8 +94,8 @@ NSString *const iTermLoggingHelperErrorNotificationGUIDKey = @"guid";
     if (self.isLoggingRaw) {
         [_rawLogger loggingHelperStop:self];
     }
-    if (self.isLoggingPlainText) {
-        [_plainLogger loggingHelperStop:self];
+    if (self.isLoggingCooked) {
+        [_cookedLogger loggingHelperStop:self];
     }
     [self close];
     _enabled = NO;
@@ -127,11 +130,11 @@ NSString *const iTermLoggingHelperErrorNotificationGUIDKey = @"guid";
 }
 
 - (BOOL)isLoggingRaw {
-    return _enabled && !_plainText;
+    return _enabled && _style == iTermLoggingStyleRaw;
 }
 
-- (BOOL)isLoggingPlainText {
-    return _enabled && _plainText;
+- (BOOL)isLoggingCooked {
+    return _enabled && _style != iTermLoggingStyleRaw;
 }
 
 - (NSFileHandle *)newFileHandle {
@@ -152,10 +155,16 @@ NSString *const iTermLoggingHelperErrorNotificationGUIDKey = @"guid";
 
 - (void)logData:(NSData *)data {
     dispatch_async(_queue, ^{
-        if (self.plainText && self->_needsTimestamp) {
+        if (self->_style != iTermLoggingStyleRaw && self->_needsTimestamp) {
             self->_needsTimestamp = NO;
             [self queueLogTimestamp];
         }
+        [self queueLogData:data];
+    });
+}
+
+- (void)logWithoutTimestamp:(NSData *)data {
+    dispatch_async(_queue, ^{
         [self queueLogData:data];
     });
 }
@@ -175,28 +184,20 @@ NSString *const iTermLoggingHelperErrorNotificationGUIDKey = @"guid";
     }
 }
 
-- (void)logNewline {
+- (void)logNewline:(NSData *)data {
     dispatch_async(_queue, ^{
-        [self queueLogData:[NSData dataWithBytesNoCopy:"\n" length:1 freeWhenDone:NO]];
+        [self queueLogData:data ?: [NSData dataWithBytesNoCopy:"\n" length:1 freeWhenDone:NO]];
         self->_needsTimestamp = YES;
     });
 }
 
 // Called on _queue
 - (void)queueLogTimestamp {
-    if (![iTermAdvancedSettingsModel logTimestampsWithPlainText]) {
+    NSString *string = [self.cookedLogger loggingHelperTimestamp:self];
+    if (!string) {
         return;
     }
-    static NSDateFormatter *dateFormatter;
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        dateFormatter = [[NSDateFormatter alloc] init];
-        dateFormatter.dateFormat = [NSDateFormatter dateFormatFromTemplate:@"yyyy-MM-dd hh.mm.ss.SSS"
-                                                                   options:0
-                                                                    locale:[NSLocale currentLocale]];
-    });
-    NSString *dateString = [NSString stringWithFormat:@"[%@] ", [dateFormatter stringFromDate:[NSDate date]]];
-    [self queueLogData:[dateString dataUsingEncoding:NSUTF8StringEncoding]];
+    [self queueLogData:[string dataUsingEncoding:NSUTF8StringEncoding]];
     _needsTimestamp = NO;
 }
 

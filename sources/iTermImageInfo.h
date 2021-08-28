@@ -74,6 +74,9 @@ extern NSString *const iTermImageDidLoad;
 // During restoration, do we still need to find a mark?
 @property (atomic) BOOL provisional;
 
+// First frame of animated image, or else raw image.
+@property (nonatomic, readonly) NSImage *firstFrame;
+
 // Used to create a new instance for a new image. This may remain an empty container until
 // -setImageFromImage: is called.
 - (instancetype)initWithCode:(unichar)code;

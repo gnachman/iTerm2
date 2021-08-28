@@ -7,6 +7,7 @@
 //
 
 #import <Cocoa/Cocoa.h>
+#import "ITAddressBookMgr.h"
 
 typedef NS_OPTIONS(NSInteger, iTermSavePanelOptions) {
     // If the file exists, ask the user if he'd like to append to it or replace it.
@@ -29,7 +30,7 @@ typedef NS_ENUM(NSInteger, iTermSavePanelReplaceOrAppend) {
 
 // Path the user selected.
 @property(nonatomic, readonly) NSString *path;
-@property (nonatomic, readonly) BOOL shoudLogPlainText;
+@property (nonatomic, readonly) iTermLoggingStyle loggingStyle;
 
 // Prompts the user and returns a new iTermSavePanel.
 + (iTermSavePanel *)showWithOptions:(NSInteger)options

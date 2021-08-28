@@ -291,5 +291,6 @@
                                         flags:(NSEventModifierFlags)flags
                                    characters:(NSString *)characters
                   charactersIgnoringModifiers:(NSString *)charactersIgnoringModifiers;
+- (void)screenDidAppendImageData:(NSData *)data;
 
 @end

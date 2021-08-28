@@ -6286,6 +6286,10 @@ static void SwapInt(int *a, int *b) {
     [delegate_ screenNeedsRedraw];
 }
 
+- (void)inlineImageDidFinishWithImageData:(NSData *)imageData {
+    [delegate_ screenDidAppendImageData:imageData];
+}
+
 @end
 
 @implementation VT100Screen (Testing)

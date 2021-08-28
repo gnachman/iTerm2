@@ -3,6 +3,7 @@
 //
 
 #import "DebugLogging.h"
+#import "iTermImageInfo.h"
 #import "iTermStatusBarComponentKnob.h"
 #import "iTermStatusBarTextComponent.h"
 #import "iTermTuple.h"

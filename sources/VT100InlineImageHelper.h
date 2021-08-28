@@ -26,6 +26,7 @@ typedef NS_ENUM(NSInteger, VT100TerminalUnits) {
 - (void)inlineImageAppendLinefeed;
 - (void)inlineImageSetMarkOnScreenLine:(NSInteger)line
                                   code:(unichar)code;
+- (void)inlineImageDidFinishWithImageData:(NSData *)imageData;
 
 @end
 

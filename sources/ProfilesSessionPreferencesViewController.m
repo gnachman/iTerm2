@@ -50,7 +50,7 @@
     IBOutlet NSTableView *_jobsTable;
     IBOutlet NSButton *_removeJob;
     IBOutlet NSButton *_autoLog;
-    IBOutlet NSButton *_plainTextLogging;
+    IBOutlet NSPopUpButton *_loggingStyle;
     IBOutlet NSTextField *_logDir;
     IBOutlet NSButton *_sendCodeWhenIdle;
     IBOutlet NSTextField *_idleCode;
@@ -152,14 +152,14 @@
         }
         strongSelf->_logDir.enabled = [strongSelf boolForKey:KEY_AUTOLOG];
         strongSelf->_changeLogDir.enabled = [strongSelf boolForKey:KEY_AUTOLOG];
-        strongSelf->_plainTextLogging.enabled = [strongSelf boolForKey:KEY_AUTOLOG];
+        strongSelf->_loggingStyle.enabled = [strongSelf boolForKey:KEY_AUTOLOG];
         [strongSelf updateLogDirWarning];
     };
 
-    [self defineControl:_plainTextLogging
-                    key:KEY_PLAIN_TEXT_LOGGING
+    [self defineControl:_loggingStyle
+                    key:KEY_LOGGING_STYLE
             displayName:@"Log plain text, igoring control sequences"
-                   type:kPreferenceInfoTypeCheckbox];
+                   type:kPreferenceInfoTypePopup];
 
     info = [self defineUnsearchableControl:_logDir
                                        key:KEY_LOGDIR

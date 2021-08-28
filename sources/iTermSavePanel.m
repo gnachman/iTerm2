@@ -92,14 +92,30 @@ static NSString *const kInitialDirectoryKey = @"Initial Directory";
         savePanel.allowedFileTypes = allowedFileTypes;
     }
     iTermSavePanelFileFormatAccessory *accessoryViewController = nil;
-    NSButton *button = nil;
+    NSPopUpButton *button = nil;
+    static NSString *const loggingStyleKey = @"NoSyncLoggingStyle";
     if (options & kSavePanelOptionFileFormatAccessory) {
         accessoryViewController = [self newFileFormatAccessoryViewControllerFileWithFileTypes:allowedFileTypes];
         savePanel.accessoryView = accessoryViewController.view;
     } else if (options & kSavePanelOptionLogPlainTextAccessory) {
-        button = [[NSButton alloc] init];
-        button.buttonType = NSButtonTypeSwitch;
-        button.title = @"Log plain text only";
+        button = [[NSPopUpButton alloc] init];
+        NSMenuItem *item;
+        {
+            item = [[NSMenuItem alloc] initWithTitle:@"Raw data" action:nil keyEquivalent:@""];
+            item.tag = iTermLoggingStyleRaw;
+            [button.menu addItem:item];
+        }
+        {
+            item = [[NSMenuItem alloc] initWithTitle:@"Plain text" action:nil keyEquivalent:@""];
+            item.tag = iTermLoggingStylePlainText;
+            [button.menu addItem:item];
+        }
+        {
+            item = [[NSMenuItem alloc] initWithTitle:@"HTML" action:nil keyEquivalent:@""];
+            item.tag = iTermLoggingStyleHTML;
+            [button.menu addItem:item];
+        }
+        [button selectItemWithTag:[[NSUserDefaults standardUserDefaults] integerForKey:loggingStyleKey]];
         [button sizeToFit];
 
         NSView *container = [[NSView alloc] init];
@@ -165,9 +181,13 @@ static NSString *const kInitialDirectoryKey = @"Initial Directory";
         [[NSUserDefaults standardUserDefaults] setObject:settings forKey:key];
     }
     if (delegate) {
-        delegate->_shoudLogPlainText = (button.state == NSControlStateValueOn);
+        delegate->_loggingStyle = (iTermLoggingStyle)button.selectedTag;
     }
-    
+    if (delegate.path) {
+        [[NSUserDefaults standardUserDefaults] setInteger:button.selectedTag
+                                                   forKey:loggingStyleKey];
+    }
+
     return delegate.path ? delegate : nil;
 }
 

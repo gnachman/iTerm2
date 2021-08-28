@@ -219,7 +219,7 @@
 #define KEY_REDUCE_FLICKER                    @"Reduce Flicker"
 #define KEY_SHOW_STATUS_BAR                   @"Show Status Bar"
 #define KEY_STATUS_BAR_LAYOUT                 @"Status Bar Layout"
-#define KEY_PLAIN_TEXT_LOGGING                @"Plain Text Logging"
+#define KEY_LOGGING_STYLE                     @"Plain Text Logging"  // Formerly a boolean (false=raw, true=text) now an integer (iTermLoggingStyle)
 #define KEY_OPEN_PASSWORD_MANAGER_AUTOMATICALLY @"Open Password Manager Automatically"
 #define KEY_SHOW_TIMESTAMPS                   @"Show Timestamps"  // NSNumber iTermTimestampsMode
 
@@ -413,6 +413,22 @@ typedef NS_ENUM(NSUInteger, iTermTimestampsMode) {
     iTermTimestampsModeOn,
     iTermTimestampsModeHover
 };
+
+typedef NS_ENUM(NSUInteger, iTermLoggingStyle) {
+    iTermLoggingStyleRaw,
+    iTermLoggingStylePlainText,
+    iTermLoggingStyleHTML
+};
+
+static inline iTermLoggingStyle iTermLoggingStyleFromUserDefaultsValue(NSUInteger value) {
+    switch (value) {
+        case iTermLoggingStyleHTML:
+        case iTermLoggingStyleRaw:
+        case iTermLoggingStylePlainText:
+            return (iTermLoggingStyle)value;
+    }
+    return iTermLoggingStyleRaw;
+}
 
 @interface ITAddressBookMgr : NSObject <NSNetServiceBrowserDelegate, NSNetServiceDelegate>
 
