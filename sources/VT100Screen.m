@@ -5,6 +5,7 @@
 #import "DebugLogging.h"
 #import "DVR.h"
 #import "IntervalTree.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermCapturedOutputMark.h"
 #import "iTermColorMap.h"
@@ -1203,38 +1204,48 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     const int numPushed = [source.currentGrid appendLines:[source.currentGrid numberOfLinesUsed]
                                              toLineBuffer:source->linebuffer_];
 
-    LineBufferPosition *startPos = source->linebuffer_.firstPosition;
-    FindContext *context = [[[FindContext alloc] init] autorelease];
-    [source->linebuffer_ prepareToSearchFor:query
-                                 startingAt:startPos
-                                    options:FindMultipleResults
-                                       mode:mode
-                                withContext:context];
-    LineBufferPosition *stopAt = source->linebuffer_.lastPosition;
-    int lastY = -1;
-    while (context.status == Searching || context.status == Matched) {
-        [source->linebuffer_ findSubstring:context stopAt:stopAt];
-        switch (context.status) {
-            case Matched: {
-                NSArray *positions = [source->linebuffer_ convertPositions:context.results withWidth:self.width];
-                for (XYRange *xyrange in positions) {
-                    for (int y = MAX(lastY + 1, xyrange->yStart); y <= xyrange->yEnd; y++) {
-                        if (y == lastY) {
-                            continue;
+    const int width = self.width;
+    if (query.length == 0) {
+        // Append all lines. Searching for empty string doesn't return any results and I have no
+        // idea what would break if I changed that.
+        for (int y = 0; y < source.numberOfLines; y++) {
+            screen_char_t *line = [source getLineAtIndex:y];
+            [self appendScreenChars:line length:width continuation:line[width]];
+        }
+    } else {
+        LineBufferPosition *startPos = source->linebuffer_.firstPosition;
+        FindContext *context = [[[FindContext alloc] init] autorelease];
+        [source->linebuffer_ prepareToSearchFor:query
+                                     startingAt:startPos
+                                        options:FindMultipleResults
+                                           mode:mode
+                                    withContext:context];
+        LineBufferPosition *stopAt = source->linebuffer_.lastPosition;
+        int lastY = -1;
+        while (context.status == Searching || context.status == Matched) {
+            [source->linebuffer_ findSubstring:context stopAt:stopAt];
+            switch (context.status) {
+                case Matched: {
+                    NSArray *positions = [source->linebuffer_ convertPositions:context.results withWidth:width];
+                    for (XYRange *xyrange in positions) {
+                        for (int y = MAX(lastY + 1, xyrange->yStart); y <= xyrange->yEnd; y++) {
+                            if (y == lastY) {
+                                continue;
+                            }
+                            lastY = y;
+                            screen_char_t *line = [source getLineAtIndex:y];
+                            [self appendScreenChars:line length:width continuation:line[width]];
                         }
-                        lastY = y;
-                        screen_char_t *line = [source getLineAtIndex:y];
-                        [self appendScreenChars:line length:self.width continuation:line[self.width]];
                     }
-                }
-                [context.results removeAllObjects];
-                break;
-                
-            case Searching:
-                break;
+                    [context.results removeAllObjects];
+                    break;
 
-            case NotFound:
-                break;
+                case Searching:
+                    break;
+
+                case NotFound:
+                    break;
+                }
             }
         }
     }
@@ -1399,6 +1410,7 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 - (void)appendScreenCharArrayAtCursor:(screen_char_t *)buffer
                                length:(int)len
                            shouldFree:(BOOL)shouldFree {
+    [delegate_ screenAppendScreenCharArray:buffer length:len];
     if (len >= 1) {
         screen_char_t lastCharacter = buffer[len - 1];
         if (lastCharacter.code == DWC_RIGHT && !lastCharacter.complexChar) {
@@ -1434,6 +1446,15 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     if (commandStartX_ != -1) {
         [delegate_ screenCommandDidChangeWithRange:[self commandRange]];
     }
+}
+
+- (void)setContentsFromLineBuffer:(LineBuffer *)lineBuffer {
+    [self clearBuffer];
+    [linebuffer_ appendContentsOfLineBuffer:lineBuffer width:currentGrid_.size.width];
+    const int numberOfLines = [self numberOfLines];
+    [self.currentGrid restoreScreenFromLineBuffer:linebuffer_
+                                  withDefaultChar:[self.currentGrid defaultChar]
+                                maxLinesToRestore:MIN(numberOfLines, self.height)];
 }
 
 - (void)crlf
@@ -3250,7 +3271,9 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
         screen_char_t filler;
         InitializeScreenChar(&filler, [terminal_ foregroundColorCode], [terminal_ backgroundColorCode]);
         filler.code = TAB_FILLER;
-        for (i = currentGrid_.cursorX; i < nextTabStop - 1; i++) {
+        const int startX = currentGrid_.cursorX;
+        const int limit = nextTabStop - 1;
+        for (i = startX; i < limit; i++) {
             if (setBackgroundColors) {
                 aLine[i] = filler;
             } else {
@@ -3269,6 +3292,8 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
             aLine[i].complexChar = NO;
             aLine[i].code = '\t';
         }
+        [delegate_ screenAppendScreenCharArray:aLine + currentGrid_.cursorX
+                                        length:nextTabStop - startX];
     }
     currentGrid_.cursorX = nextTabStop;
 }
@@ -5713,6 +5738,19 @@ static void SwapInt(int *a, int *b) {
     [self popScrollbackLines:linesPushed];
     return keepSearching;
 }
+
+- (iTermAsyncFilter *)newAsyncFilterWithDestination:(id<iTermFilterDestination>)destination
+                                              query:(NSString *)query
+                                           progress:(void (^)(double))progress {
+    return [[iTermAsyncFilter alloc] initWithQuery:query
+                                        lineBuffer:linebuffer_
+                                              grid:self.currentGrid
+                                              mode:iTermFindModeSmartCaseSensitivity
+                                       destination:destination
+                                           cadence:1.0 / 60.0
+                                          progress:progress];
+}
+
 
 #pragma mark - PTYNoteViewControllerDelegate
 

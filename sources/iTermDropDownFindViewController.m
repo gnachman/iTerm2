@@ -39,24 +39,29 @@
 #import "iTermSearchFieldCell.h"
 #import "iTermSystemVersion.h"
 #import "NSEvent+iTerm.h"
+#import "NSObject+iTerm.h"
 #import "NSTextField+iTerm.h"
 
 // This used to be absurdly fast (.075) for reasons neither I nor revision
 // history can recall. This looks nicer to my eyes.
 static const float kAnimationDuration = 0.2;
+static const CGFloat kFilterHeight = 30;
 
 @interface iTermDropDownFindViewController()<iTermFocusReportingSearchFieldDelegate>
 @end
 
 @implementation iTermDropDownFindViewController {
     IBOutlet iTermFocusReportingSearchField *findBarTextField_;
+    IBOutlet NSSearchField *_filterField;
+    IBOutlet NSView *_filterWrapper;
 
     // Fades out the progress indicator.
     NSTimer *_animationTimer;
+    NSTimer *_filterAnimationTimer;
 
     NSRect fullFrame_;
-    NSSize textFieldSize_;
-    NSSize textFieldSmallSize_;
+    CGFloat _baseHeight;
+    NSSize _offset;
 }
 
 @synthesize driver;
@@ -88,9 +93,33 @@ static const float kAnimationDuration = 0.2;
     self.view.wantsLayer = YES;
     [self.view makeBackingLayer];
     self.view.shadow = shadow;
+    [self setFilterHidden:YES];
 }
 
 #pragma mark - iTermFindViewController
+
+- (BOOL)filterIsVisible {
+    [self view];
+    return !_filterWrapper.isHidden;
+}
+
+- (void)setFilterHidden:(BOOL)filterHidden {
+    if (_filterWrapper.isHidden != filterHidden) {
+        _filterWrapper.hidden = filterHidden;
+        [self.driver invalidateFrame];
+        [self.driver filterVisibilityDidChange];
+    }
+    if (!filterHidden) {
+        [_filterField.window makeFirstResponder:_filterField];
+    }
+}
+
+- (NSSize)desiredSize {
+    return NSMakeSize(NSWidth(self.view.bounds), _baseHeight - (self.filterIsVisible ? 0 : kFilterHeight));
+}
+- (void)toggleFilter {
+    [self setFilterHidden:!_filterWrapper.isHidden];
+}
 
 - (void)countDidChange {
     [findBarTextField_ setNeedsDisplay:YES];
@@ -159,6 +188,42 @@ static const float kAnimationDuration = 0.2;
     [findBarTextField_ setStringValue:string];
 }
 
+- (NSString *)filter {
+    return _filterField.stringValue;
+}
+
+- (BOOL)searchIsVisible {
+    return self.viewLoaded && !self.view.isHidden;
+}
+
+- (void)setFilter:(NSString *)filter {
+    const BOOL shouldBeHidden = filter.length == 0;
+    if (shouldBeHidden != _filterWrapper.isHidden) {
+        [self toggleFilter];
+    }
+    _filterField.stringValue = filter;
+    if (!shouldBeHidden) {
+        [_filterField.window makeFirstResponder:_filterField];
+        _filterField.currentEditor.selectedRange = NSMakeRange(filter.length, 0);
+    }
+}
+
+- (void)setFilterProgress:(double)progress {
+    iTermSearchFieldCell *cell = [iTermSearchFieldCell castFrom:_filterField.cell];
+    if (round(progress * 100) != round(cell.fraction * 100)) {
+        [_filterField setNeedsDisplay:YES];
+    }
+
+    [cell setFraction:progress];
+    if (cell.needsAnimation && !_filterAnimationTimer) {
+        _filterAnimationTimer = [NSTimer scheduledTimerWithTimeInterval:1.0 / 60.0
+                                                                 target:self
+                                                               selector:@selector(redrawFilterField:)
+                                                               userInfo:nil
+                                                                repeats:YES];
+    }
+}
+
 #pragma mark - Actions
 
 - (IBAction)closeFindView:(id)sender {
@@ -191,10 +256,23 @@ static const float kAnimationDuration = 0.2;
     [self.driver eraseSearchHistory];
 }
 
+- (IBAction)toggleFilter:(id)sender {
+    [self.driver toggleFilter];
+}
+
 #pragma mark - NSViewController
 
+- (void)awakeFromNib {
+    _baseHeight = NSHeight(self.view.bounds);
+    [super awakeFromNib];
+}
+
 - (BOOL)validateUserInterfaceItem:(NSMenuItem *)item {
-    item.state = (item.tag == self.driver.mode) ? NSControlStateValueOn : NSControlStateValueOff;
+    if (item.action == @selector(toggleFilter:)) {
+        item.state = self.filterIsVisible ? NSControlStateValueOn : NSControlStateValueOff;
+    } else {
+        item.state = (item.tag == self.driver.mode) ? NSControlStateValueOn : NSControlStateValueOff;
+    }
     return YES;
 }
 
@@ -202,12 +280,17 @@ static const float kAnimationDuration = 0.2;
 
 - (void)controlTextDidChange:(NSNotification *)aNotification {
     NSTextField *field = [aNotification object];
-    if (field != findBarTextField_) {
+    NSTextView *fieldEditor = aNotification.userInfo[@"NSFieldEditor"];
+    if (field == findBarTextField_) {
+        [self.driver userDidEditSearchQuery:findBarTextField_.stringValue
+                                fieldEditor:fieldEditor];
         return;
     }
-    
-    [self.driver userDidEditSearchQuery:findBarTextField_.stringValue
-                            fieldEditor:aNotification.userInfo[@"NSFieldEditor"]];
+    if (field == _filterField) {
+        [self.driver userDidEditFilter:_filterField.stringValue
+                           fieldEditor:fieldEditor];
+        return;
+    }
 }
 
 - (NSArray *)control:(NSControl *)control
@@ -215,12 +298,15 @@ static const float kAnimationDuration = 0.2;
          completions:(NSArray *)words  // Dictionary words
  forPartialWordRange:(NSRange)charRange
  indexOfSelectedItem:(NSInteger *)index {
-    DLog(@"completions:forPartialWordRange: existing string is %@, range is %@\n%@",
-         textView.string, NSStringFromRange(charRange), [NSThread callStackSymbols]);
+    if (control == findBarTextField_) {
+        DLog(@"completions:forPartialWordRange: existing string is %@, range is %@\n%@",
+             textView.string, NSStringFromRange(charRange), [NSThread callStackSymbols]);
 
-    *index = -1;
-    return [self.driver completionsForText:[textView string]
-                                     range:charRange];
+        *index = -1;
+        return [self.driver completionsForText:[textView string]
+                                         range:charRange];
+    }
+    return @[];
 }
 
 - (BOOL)control:(NSControl *)control
@@ -287,30 +373,28 @@ static const float kAnimationDuration = 0.2;
     return [[[self view] superview] frame];
 }
 
-- (void)setFrameOrigin:(NSPoint)p {
-    [[self view] setFrameOrigin:p];
-    if (fullFrame_.size.width == 0) {
-        fullFrame_ = [[self view] frame];
-        fullFrame_.origin.y -= [self superframe].size.height;
-        fullFrame_.origin.x -= [self superframe].size.width;
-
-        textFieldSize_ = [findBarTextField_ frame].size;
-        textFieldSmallSize_ = textFieldSize_;
-    }
+- (void)setOffsetFromTopRightOfSuperview:(NSSize)offset {
+    _offset = offset;
+    self.view.frame = [self fullSizeFrame];
 }
 
 - (NSRect)collapsedFrame {
-    return NSMakeRect([[self view] frame].origin.x,
-                      fullFrame_.origin.y + [self superframe].size.height + fullFrame_.size.height,
-                      [[self view] frame].size.width,
-                      0);
+    const CGFloat height = 0;
+    const NSRect myFrame = self.view.frame;
+    return NSMakeRect(NSMinX(myFrame) - _offset.width,
+                      NSMaxY(self.superframe) - height - _offset.height,
+                      NSWidth(myFrame),
+                      height);
 }
 
 - (NSRect)fullSizeFrame {
-    return NSMakeRect([[self view] frame].origin.x,
-                      fullFrame_.origin.y + [self superframe].size.height,
-                      [[self view] frame].size.width,
-                      fullFrame_.size.height);
+    const CGFloat dy = self.filterIsVisible ? 0 : -kFilterHeight;
+    const CGFloat height = _baseHeight + dy;
+    const NSRect myFrame = self.view.frame;
+    return NSMakeRect(NSMaxX(self.superframe) - NSWidth(myFrame) - _offset.width,
+                      NSMaxY(self.superframe) - height - _offset.height,
+                      NSWidth(myFrame),
+                      height);
 }
 
 - (void)makeVisible {
@@ -335,6 +419,16 @@ static const float kAnimationDuration = 0.2;
         _animationTimer = nil;
     }
     [findBarTextField_ setNeedsDisplay:YES];
+}
+
+- (void)redrawFilterField:(NSTimer *)timer {
+    iTermSearchFieldCell *cell = _filterField.cell;
+    [cell willAnimate];
+    if (!cell.needsAnimation) {
+        [_filterAnimationTimer invalidate];
+        _filterAnimationTimer = nil;
+    }
+    [_filterField setNeedsDisplay:YES];
 }
 
 - (void)deselectFindBarTextField {

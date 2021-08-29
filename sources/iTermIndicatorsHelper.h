@@ -20,6 +20,7 @@ extern NSString *const kiTermIndicatorAllOutputSuppressed;
 extern NSString *const kiTermIndicatorZoomedIn;
 extern NSString *const kiTermIndicatorCopyMode;
 extern NSString *const kiTermIndicatorDebugLogging;
+extern NSString *const kiTermIndicatorFilter;
 
 extern CGFloat kiTermIndicatorStandardHeight;
 

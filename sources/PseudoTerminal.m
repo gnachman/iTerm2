@@ -2905,6 +2905,11 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
+- (IBAction)filter:(id)sender {
+    DLog(@"begin");
+    [self.currentSession showFilter];
+}
+
 - (IBAction)findUrls:(id)sender {
     DLog(@"begin");
     iTermFindDriver *findDriver = self.currentSession.view.findDriver;
@@ -7237,13 +7242,17 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 }
 
 - (void)replaceSyntheticActiveSessionWithLiveSessionIfNeeded {
-    if (self.currentSession.liveSession.screen.dvr.readOnly) {
+    [self replaceSyntheticSessionWithLiveSessionIfNeeded:self.currentSession];
+}
+
+- (void)replaceSyntheticSessionWithLiveSessionIfNeeded:(PTYSession *)syntheticSession {
+    if (syntheticSession.liveSession.screen.dvr.readOnly) {
         dispatch_async(dispatch_get_main_queue(), ^{
             [self close];
         });
     }
-    if ([[self currentSession] liveSession]) {
-        [self showLiveSession:[[self currentSession] liveSession] inPlaceOf:[self currentSession]];
+    if ([syntheticSession liveSession]) {
+        [self showLiveSession:[syntheticSession liveSession] inPlaceOf:syntheticSession];
     }
 }
 
@@ -7355,6 +7364,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     [[newSession view] setViewId:[[oldSession view] viewId]];
     [[newSession view] setShowTitle:[[oldSession view] showTitle] adjustScrollView:YES];
     [[newSession view] setShowBottomStatusBar:oldSession.view.showBottomStatusBar adjustScrollView:YES];
+    [[newSession view] updateFindDriver];
 
     // Add this session to our term and make it current
     PTYTab *theTab = [tabViewItem identifier];
@@ -7388,15 +7398,10 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 }
 
 - (IBAction)zoomOut:(id)sender {
-    [self replaceSyntheticActiveSessionWithLiveSessionIfNeeded];
-}
-
-- (IBAction)filter:(id)sender {
-    PTYSession *session = [self currentSession];
-    NSString *query = [[iTermFindPasteboard sharedInstance] stringValue];
-    if (query) {
-        [self showLinesMatchingQuery:query
-                         fromSession:session];
+    if (self.currentSession.filter.length) {
+        [self.currentSession stopFiltering];
+    } else {
+        [self replaceSyntheticActiveSessionWithLiveSessionIfNeeded];
     }
 }
 
@@ -7426,13 +7431,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 }
 
 - (void)showLinesMatchingQuery:(NSString *)query fromSession:(PTYSession *)oldSession {
-    PTYSession *syntheticSession = [self syntheticSessionForSession:oldSession];
-    [syntheticSession divorceAddressBookEntryFromPreferences];
-    [syntheticSession setSessionSpecificProfileValues:@{ KEY_UNLIMITED_SCROLLBACK: @YES }];
-    syntheticSession.screen.unlimitedScrollback = YES;
-    [syntheticSession.screen terminalSetCursorVisible:NO];
-    [syntheticSession appendLinesMatchingQuery:query fromSession:oldSession];
-    [[self tabForSession:oldSession] replaceActiveSessionWithSyntheticSession:syntheticSession];
+    [oldSession setFilter:query];
 }
 
 - (void)showRangeOfLines:(NSRange)rangeOfLines inSession:(PTYSession *)oldSession {
@@ -10072,7 +10071,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     } else if ([item action] == @selector(openSelection:)) {
         result = [[self currentSession] hasSelection];
     } else if ([item action] == @selector(zoomOut:)) {
-        return self.currentSession.textViewIsZoomedIn;
+        return self.currentSession.textViewIsZoomedIn || self.currentSession.textViewIsFiltered;
     } else if (item.action == @selector(captureNextMetalFrame:)) {
         return self.currentSession.canProduceMetalFramecap;
     } else if (item.action == @selector(exportRecording:)) {
@@ -10918,7 +10917,11 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 #pragma mark - Find
 
 - (IBAction)showFindPanel:(id)sender {
+    const BOOL findPanelWasOpen = self.currentSession.view.findDriver.viewController.searchIsVisible;
     [[self currentSession] showFindPanel];
+    if (!findPanelWasOpen) {
+        [self.currentSession.view.findDriver setFilterHidden:YES];
+    }
     [[iTermFindPasteboard sharedInstance] updateObservers:nil];
 }
 
@@ -11370,6 +11373,10 @@ backgroundColor:(NSColor *)backgroundColor {
     if (tab == self.currentTab) {
         [_contentView windowDidResize];
     }
+}
+
+- (void)tabEndSyntheticSession:(PTYSession *)syntheticSession {
+    [self replaceSyntheticSessionWithLiveSessionIfNeeded:syntheticSession];
 }
 
 #pragma mark - PSMMinimalTabStyleDelegate

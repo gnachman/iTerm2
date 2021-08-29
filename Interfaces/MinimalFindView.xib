@@ -1,13 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="15705" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="18122" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES">
     <dependencies>
         <deployment identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="15705"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="18122"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
         <customObject id="-2" userLabel="File's Owner" customClass="iTermDropDownFindViewController">
             <connections>
+                <outlet property="_filterField" destination="el4-gq-4Pr" id="R4U-qt-nZu"/>
+                <outlet property="_filterWrapper" destination="TcP-cX-kgi" id="9LR-U4-PdO"/>
                 <outlet property="findBarTextField_" destination="2" id="27"/>
                 <outlet property="view" destination="1" id="10"/>
             </connections>
@@ -15,11 +17,11 @@
         <customObject id="-1" userLabel="First Responder" customClass="FirstResponder"/>
         <customObject id="-3" userLabel="Application" customClass="NSObject"/>
         <customView id="1" customClass="MinimalFindView">
-            <rect key="frame" x="0.0" y="0.0" width="380" height="60"/>
+            <rect key="frame" x="0.0" y="0.0" width="380" height="90"/>
             <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMinY="YES"/>
             <subviews>
                 <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="23">
-                    <rect key="frame" x="343" y="18" width="24" height="23"/>
+                    <rect key="frame" x="343" y="48" width="24" height="23"/>
                     <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMinY="YES"/>
                     <buttonCell key="cell" type="square" bezelStyle="shadowlessSquare" image="TabClose_Front" imagePosition="only" alignment="center" alternateImage="TabClose_Front_Pressed" inset="2" id="24">
                         <behavior key="behavior" lightByContents="YES"/>
@@ -32,49 +34,85 @@ Gw
                         <action selector="closeFindView:" target="-2" id="29"/>
                     </connections>
                 </button>
-                <searchField wantsLayer="YES" focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2" customClass="iTermFocusReportingSearchField">
-                    <rect key="frame" x="16" y="19" width="278" height="22"/>
+                <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="HCy-b1-UVb" userLabel="Search Wrapper">
+                    <rect key="frame" x="16" y="49" width="328" height="22"/>
                     <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
-                    <searchFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" borderStyle="bezel" focusRingType="none" usesSingleLineMode="YES" bezelStyle="round" id="3" customClass="iTermMinimalSearchFieldCell">
-                        <font key="font" metaFont="system"/>
-                        <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                        <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
-                    </searchFieldCell>
-                    <connections>
-                        <outlet property="delegate" destination="-2" id="35"/>
-                        <outlet property="searchMenuTemplate" destination="15" id="20"/>
-                    </connections>
-                </searchField>
-                <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="MyD-4t-63g">
-                    <rect key="frame" x="302" y="19" width="21" height="21"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMinY="YES"/>
-                    <buttonCell key="cell" type="square" bezelStyle="shadowlessSquare" image="NSGoLeftTemplate" imagePosition="only" alignment="center" imageScaling="proportionallyDown" inset="2" id="oJx-93-4xK">
-                        <behavior key="behavior" lightByContents="YES"/>
-                        <font key="font" metaFont="system"/>
-                    </buttonCell>
-                    <connections>
-                        <action selector="searchPrevious:" target="-2" id="ZaF-mj-I4r"/>
-                    </connections>
-                </button>
-                <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="qoR-tl-nVb">
-                    <rect key="frame" x="323" y="19" width="21" height="21"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMinY="YES"/>
-                    <buttonCell key="cell" type="square" bezelStyle="shadowlessSquare" image="NSGoRightTemplate" imagePosition="only" alignment="center" imageScaling="proportionallyDown" inset="2" id="0iC-J3-NCQ">
-                        <behavior key="behavior" lightByContents="YES"/>
-                        <font key="font" metaFont="system"/>
-                    </buttonCell>
-                    <connections>
-                        <action selector="searchNext:" target="-2" id="pol-cY-nvG"/>
-                    </connections>
-                </button>
+                    <subviews>
+                        <searchField wantsLayer="YES" focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2" userLabel="Search field" customClass="iTermFocusReportingSearchField">
+                            <rect key="frame" x="0.0" y="0.0" width="278" height="22"/>
+                            <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
+                            <searchFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" borderStyle="bezel" focusRingType="none" usesSingleLineMode="YES" bezelStyle="round" id="3" customClass="iTermMinimalSearchFieldCell">
+                                <font key="font" metaFont="system"/>
+                                <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                                <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                            </searchFieldCell>
+                            <connections>
+                                <outlet property="delegate" destination="-2" id="35"/>
+                                <outlet property="searchMenuTemplate" destination="15" id="20"/>
+                            </connections>
+                        </searchField>
+                        <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="MyD-4t-63g" userLabel="Previous">
+                            <rect key="frame" x="286" y="0.0" width="21" height="21"/>
+                            <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMinY="YES"/>
+                            <buttonCell key="cell" type="square" bezelStyle="shadowlessSquare" image="NSGoLeftTemplate" imagePosition="only" alignment="center" imageScaling="proportionallyDown" inset="2" id="oJx-93-4xK">
+                                <behavior key="behavior" lightByContents="YES"/>
+                                <font key="font" metaFont="system"/>
+                            </buttonCell>
+                            <connections>
+                                <action selector="searchPrevious:" target="-2" id="ZaF-mj-I4r"/>
+                            </connections>
+                        </button>
+                        <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="qoR-tl-nVb" userLabel="Next">
+                            <rect key="frame" x="307" y="0.0" width="21" height="21"/>
+                            <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMinY="YES"/>
+                            <buttonCell key="cell" type="square" bezelStyle="shadowlessSquare" image="NSGoRightTemplate" imagePosition="only" alignment="center" imageScaling="proportionallyDown" inset="2" id="0iC-J3-NCQ">
+                                <behavior key="behavior" lightByContents="YES"/>
+                                <font key="font" metaFont="system"/>
+                            </buttonCell>
+                            <connections>
+                                <action selector="searchNext:" target="-2" id="pol-cY-nvG"/>
+                            </connections>
+                        </button>
+                    </subviews>
+                </customView>
+                <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="TcP-cX-kgi" userLabel="Filter Wrapper">
+                    <rect key="frame" x="16" y="20" width="328" height="22"/>
+                    <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
+                    <subviews>
+                        <searchField wantsLayer="YES" focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" textCompletion="NO" translatesAutoresizingMaskIntoConstraints="NO" id="el4-gq-4Pr" userLabel="Filter Text Field" customClass="iTermFilterTextField">
+                            <rect key="frame" x="0.0" y="0.0" width="278" height="22"/>
+                            <autoresizingMask key="autoresizingMask" widthSizable="YES"/>
+                            <searchFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" borderStyle="bezel" focusRingType="none" placeholderString="Filter" usesSingleLineMode="YES" bezelStyle="round" id="3rb-hW-qnO" userLabel="Filter Cell" customClass="iTermSearchFieldCell">
+                                <font key="font" metaFont="system"/>
+                                <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                                <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                            </searchFieldCell>
+                            <connections>
+                                <outlet property="delegate" destination="Fot-sg-fSk" id="XcJ-vJ-GQL"/>
+                            </connections>
+                        </searchField>
+                    </subviews>
+                </customView>
             </subviews>
             <connections>
                 <outlet property="_closeButton" destination="23" id="srf-Iu-7WA"/>
             </connections>
-            <point key="canvasLocation" x="177" y="158"/>
+            <point key="canvasLocation" x="177" y="143"/>
         </customView>
+        <customObject id="Fot-sg-fSk" userLabel="Typing Aggregator" customClass="iTermTypingAggregator">
+            <connections>
+                <outlet property="delegate" destination="-2" id="nPL-e0-pHh"/>
+            </connections>
+        </customObject>
         <menu id="15">
             <items>
+                <menuItem title="Filter" tag="6" id="GvQ-WH-LQw">
+                    <modifierMask key="keyEquivalentModifierMask"/>
+                    <connections>
+                        <action selector="toggleFilter:" target="-2" id="Fxo-b4-ozs"/>
+                    </connections>
+                </menuItem>
+                <menuItem isSeparatorItem="YES" id="fcA-qo-Bfj"/>
                 <menuItem title="Smart Case Substring" state="on" id="16">
                     <modifierMask key="keyEquivalentModifierMask"/>
                     <connections>
@@ -115,11 +153,12 @@ Gw
                     </connections>
                 </menuItem>
             </items>
+            <point key="canvasLocation" x="765" y="144"/>
         </menu>
     </objects>
     <resources>
-        <image name="NSGoLeftTemplate" width="9" height="12"/>
-        <image name="NSGoRightTemplate" width="9" height="12"/>
+        <image name="NSGoLeftTemplate" width="10" height="14"/>
+        <image name="NSGoRightTemplate" width="10" height="14"/>
         <image name="TabClose_Front" width="16" height="16"/>
         <image name="TabClose_Front_Pressed" width="16" height="16"/>
     </resources>

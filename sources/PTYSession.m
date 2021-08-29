@@ -95,7 +95,6 @@
 #import "iTermSessionNameController.h"
 #import "iTermSessionTitleBuiltInFunction.h"
 #import "iTermSetFindStringNotification.h"
-#import "iTerm2SharedARC-Swift.h"
 #import "iTermShellHistoryController.h"
 #import "iTermShortcut.h"
 #import "iTermShortcutInputView.h"
@@ -276,6 +275,7 @@ static NSString *const SESSION_ARRANGEMENT_CURSOR_TYPE_OVERRIDE = @"Cursor Type 
 static NSString *const SESSION_ARRANGEMENT_AUTOLOG_FILENAME = @"AutoLog File Name";  // NSString. New as of 12/4/19
 static NSString *const SESSION_ARRANGEMENT_REUSABLE_COOKIE = @"Reusable Cookie";  // NSString.
 static NSString *const SESSION_ARRANGEMENT_OVERRIDDEN_FIELDS = @"Overridden Fields";  // NSArray<NSString *>
+static NSString *const SESSION_ARRANGEMENT_FILTER = @"Filter";  // NSString
 
 // Keys for dictionary in SESSION_ARRANGEMENT_PROGRAM
 static NSString *const kProgramType = @"Type";  // Value will be one of the kProgramTypeXxx constants.
@@ -323,6 +323,7 @@ static const NSUInteger kMaxHosts = 100;
     iTermCoprocessDelegate,
     iTermCopyModeHandlerDelegate,
     iTermComposerManagerDelegate,
+    iTermFilterDestination,
     iTermHotKeyNavigableSession,
     iTermIntervalTreeObserver,
     iTermLogging,
@@ -1027,6 +1028,11 @@ ITERM_WEAKLY_REFERENCEABLE
     [_triggerWindowController release];
     [_triggersSlownessDetector release];
     [_idempotentTriggerRateLimit release];
+    [_filter release];
+    [_asyncFilter cancel];
+    [_asyncFilter release];
+    [_contentSubscribers release];
+    [_foundingArrangement release];
 
     [super dealloc];
 }
@@ -1064,11 +1070,28 @@ ITERM_WEAKLY_REFERENCEABLE
     [self.variablesScope setValue:_guid forVariableNamed:iTermVariableKeySessionID];
 }
 
+- (void)takeStatusBarViewControllerFrom:(PTYSession *)donorSession {
+    [_view takeFindDriverFrom:donorSession.view delegate:self];
+
+    _statusBarViewController.delegate = nil;
+    [_statusBarViewController release];
+
+    _statusBarViewController = donorSession->_statusBarViewController;
+    _statusBarViewController.delegate = self;
+
+    donorSession->_statusBarViewController = nil;
+}
+
+- (void)willRetireSyntheticSession:(PTYSession *)syntheticSession {
+    [self takeStatusBarViewControllerFrom:syntheticSession];
+}
+
 - (void)setLiveSession:(PTYSession *)liveSession {
     assert(liveSession != self);
     if (liveSession) {
         assert(!_liveSession);
         _synthetic = YES;
+        [self takeStatusBarViewControllerFrom:liveSession];
     }
     _liveSession = liveSession;
     [_liveSession retain];
@@ -1375,6 +1398,12 @@ ITERM_WEAKLY_REFERENCEABLE
     [aSession.nameController updateIfNeeded];
 }
 
+- (void)didFinishRestoration {
+    if ([_foundingArrangement[SESSION_ARRANGEMENT_FILTER] length] > 0) {
+        [self.delegate session:self setFilter:_foundingArrangement[SESSION_ARRANGEMENT_FILTER]];
+    }
+}
+
 + (PTYSession *)sessionFromArrangement:(NSDictionary *)arrangement
                                  named:(NSString *)arrangementName
                                 inView:(SessionView *)sessionView
@@ -1401,6 +1430,7 @@ ITERM_WEAKLY_REFERENCEABLE
         }
     }
     PTYSession *aSession = [[[PTYSession alloc] initSynthetic:NO] autorelease];
+    aSession.foundingArrangement = [arrangement dictionaryByRemovingObjectForKey:SESSION_ARRANGEMENT_CONTENTS];
     aSession.view = sessionView;
     aSession->_savedGridSize = VT100GridSizeMake(MAX(1, [arrangement[SESSION_ARRANGEMENT_COLUMNS] intValue]),
                                                  MAX(1, [arrangement[SESSION_ARRANGEMENT_ROWS] intValue]));
@@ -3095,6 +3125,7 @@ ITERM_WEAKLY_REFERENCEABLE
     if (_triggerLineNumber == -1) {
         return;
     }
+
     long long startAbsLineNumber;
     iTermStringLine *stringLine = [_screen stringLineAsStringAtAbsoluteLineNumber:_triggerLineNumber
                                                                          startPtr:&startAbsLineNumber];
@@ -4982,6 +5013,14 @@ ITERM_WEAKLY_REFERENCEABLE
 - (BOOL)encodeArrangementWithContents:(BOOL)includeContents
                               encoder:(id<iTermEncoderAdapter>)result {
     DLog(@"Construct arrangement for session %@", self);
+    if (_filter.length && _liveSession != nil) {
+        DLog(@"Encode live session because this one is filtered.");
+        const BOOL ok = [_liveSession encodeArrangementWithContents:includeContents encoder:result];
+        if (ok) {
+            result[SESSION_ARRANGEMENT_FILTER] = _filter;
+        }
+        return ok;
+    }
     result[SESSION_ARRANGEMENT_COLUMNS] = @(_screen.width);
     result[SESSION_ARRANGEMENT_ROWS] = @(_screen.height);
     result[SESSION_ARRANGEMENT_BOOKMARK] = _profile;
@@ -5893,6 +5932,10 @@ ITERM_WEAKLY_REFERENCEABLE
     [_view showFindUI];
 }
 
+- (void)showFilter {
+    [_view showFilter];
+}
+
 - (iTermComposerManager *)composerManager {
     if (!_composerManager) {
         _composerManager = [[iTermComposerManager alloc] init];
@@ -5997,8 +6040,69 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     }
 }
 
+- (void)setFilter:(NSString *)filter {
+    DLog(@"setFilter:%@", filter);
+    if ([filter isEqualToString:_filter]) {
+        return;
+    }
+    VT100Screen *source = nil;
+    if ([_asyncFilter canRefineWithQuery:filter]) {
+        source = self.screen;
+    } else {
+        source = self.liveSession.screen;
+    }
+    [_asyncFilter cancel];
+    [self.liveSession removeContentSubscriber:_asyncFilter];
+    const BOOL replacingFilter = (_filter != nil);
+    assert(self.liveSession);
+
+    [_filter autorelease];
+    _filter = [filter copy];
+
+    [_asyncFilter autorelease];
+    DLog(@"Append lines from %@", self.liveSession);
+    __weak __typeof(self) weakSelf = self;
+    _asyncFilter = [source newAsyncFilterWithDestination:self
+                                                   query:filter
+                                                progress:^(double progress) {
+        [weakSelf setFilterProgress:progress];
+    }];
+    [self.liveSession addContentSubscriber:_asyncFilter];
+    if (replacingFilter) {
+        DLog(@"Clear buffer because there is a pre-existing filter");
+        [self clearBuffer];
+    }
+    [_asyncFilter start];
+}
+
+- (void)setFilterProgress:(double)progress {
+    _view.findDriver.filterProgress = progress;
+}
+
+- (void)findDriverFilterVisibilityDidChange:(BOOL)visible {
+    if (!visible) {
+        [_asyncFilter cancel];
+        [self.liveSession removeContentSubscriber:_asyncFilter];
+        [_asyncFilter autorelease];
+        _asyncFilter = nil;
+        PTYSession *liveSession = [[self.liveSession retain] autorelease];
+        [self.delegate session:self setFilter:nil];
+        [liveSession.view.findDriver close];
+    }
+}
+
+- (void)findDriverSetFilter:(NSString *)filter withSideEffects:(BOOL)withSideEffects{
+    if (withSideEffects) {
+        [self.delegate session:self setFilter:filter];
+    }
+}
+
 - (void)findViewControllerDidCeaseToBeMandatory:(id<iTermFindViewController>)sender {
     [_view findViewDidHide];
+}
+
+- (void)findDriverInvalidateFrame {
+    [_view findDriverInvalidateFrame];
 }
 
 - (NSImage *)snapshot {
@@ -8755,8 +8859,13 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         return NO;
     }
 
-    DLog(@"Unzooming");
-    [[_delegate realParentWindow] replaceSyntheticActiveSessionWithLiveSessionIfNeeded];
+    if (self.filter.length) {
+        DLog(@"stopFiltering");
+        [self stopFiltering];
+    } else {
+        DLog(@"Unzooming");
+        [[_delegate realParentWindow] replaceSyntheticActiveSessionWithLiveSessionIfNeeded];
+    }
     return YES;
 }
 
@@ -9721,7 +9830,11 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (BOOL)textViewIsZoomedIn {
-    return _liveSession && !_dvr;
+    return _liveSession && !_dvr && !_filter;
+}
+
+- (BOOL)textViewIsFiltered {
+    return _liveSession && _filter;
 }
 
 - (BOOL)textViewShouldShowMarkIndicators {
@@ -12577,6 +12690,7 @@ preferredEscaping:(iTermSendTextEscaping)preferredEscaping {
 }
 
 - (void)screenDidReceiveLineFeed {
+    [self publishNewline];
     [_pwdPoller didReceiveLineFeed];
     if (_logging.enabled && !self.isTmuxGateway) {
         switch (_logging.style) {
@@ -12748,6 +12862,10 @@ preferredEscaping:(iTermSendTextEscaping)preferredEscaping {
             [_logging logData:[data inlineHTMLData]];
             break;
     }
+}
+
+- (void)screenAppendScreenCharArray:(const screen_char_t *)line length:(int)length {
+    [self publishScreenCharArray:line length:length];
 }
 
 - (NSString *)screenStringForKeypressWithCode:(unsigned short)keycode
@@ -13361,6 +13479,17 @@ preferredEscaping:(iTermSendTextEscaping)preferredEscaping {
 
 #pragma mark - API
 
+- (void)addContentSubscriber:(id<iTermContentSubscriber>)contentSubscriber {
+    if (!_contentSubscribers) {
+        _contentSubscribers = [[NSMutableArray alloc] init];
+    }
+    [_contentSubscribers addObject:contentSubscriber];
+}
+
+- (void)removeContentSubscriber:(id<iTermContentSubscriber>)contentSubscriber {
+    [_contentSubscribers removeObject:contentSubscriber];
+}
+
 - (NSString *)stringForLine:(screen_char_t *)screenChars
                      length:(int)length
                   cppsArray:(NSMutableArray<ITMCodePointsPerCell *> *)cppsArray {
@@ -13864,6 +13993,31 @@ preferredEscaping:(iTermSendTextEscaping)preferredEscaping {
 
 - (iTermActivityInfo)statusBarActivityInfo {
     return _activityInfo;
+}
+
+- (void)statusBarSetFilter:(NSString *)query {
+    PTYSession *synthetic = [self.delegate sessionSyntheticSessionFor:self];
+    if (synthetic) {
+        [synthetic statusBarSetFilter:query];
+        return;
+    }
+    if (query) {
+        [self.delegate session:self setFilter:query];
+    } else {
+        [self stopFiltering];
+    }
+}
+
+// Called on the synthetic session.
+- (void)stopFiltering {
+    [self.liveSession removeContentSubscriber:_asyncFilter];
+    [_asyncFilter cancel];
+    [_asyncFilter autorelease];
+    _asyncFilter = nil;
+    if ([_statusBarViewController.temporaryRightComponent isKindOfClass:[iTermStatusBarFilterComponent class]]) {
+        _statusBarViewController.temporaryRightComponent = nil;
+    }
+    [self.delegate session:self setFilter:nil];
 }
 
 - (void)statusBarSetLayout:(nonnull iTermStatusBarLayout *)layout {
@@ -14839,6 +14993,18 @@ getOptionKeyBehaviorLeft:(iTermOptionKeyBehavior *)left
     [ProfileModel updateSharedProfileWithGUID:self.profile[KEY_ORIGINAL_GUID]
                                     newValues:@{ KEY_TRIGGERS: self.profile[KEY_TRIGGERS],
                                                  KEY_TRIGGERS_USE_INTERPOLATED_STRINGS: self.profile[KEY_TRIGGERS_USE_INTERPOLATED_STRINGS] }];
+}
+
+#pragma mark - iTermFilterDestination
+
+- (void)filterDestinationAppendCharacters:(const screen_char_t *)line
+                                    count:(int)count
+                             continuation:(screen_char_t)continuation {
+    [_screen appendScreenChars:(screen_char_t *)line length:count continuation:continuation];
+}
+
+- (void)filterDestinationAdoptLineBuffer:(LineBuffer *)lineBuffer {
+    [_screen setContentsFromLineBuffer:lineBuffer];
 }
 
 @end

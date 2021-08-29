@@ -222,6 +222,10 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
     return NO;
 }
 
+- (BOOL)textViewIsFiltered {
+    return NO;
+}
+
 - (VT100GridCoordRange)textViewRangeOfOutputForCommandMark:(VT100ScreenMark *)mark {
     return VT100GridCoordRangeMake(0, 0, 0, 0);
 }

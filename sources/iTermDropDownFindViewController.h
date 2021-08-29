@@ -30,5 +30,6 @@
 #import "iTermController.h"
 #import "iTermFindViewController.h"
 
-@interface iTermDropDownFindViewController : NSViewController <iTermFindViewController, NSTextFieldDelegate>
+@interface iTermDropDownFindViewController : NSViewController <iTermFilterViewController, iTermFindViewController, NSTextFieldDelegate>
+- (NSSize)desiredSize;
 @end

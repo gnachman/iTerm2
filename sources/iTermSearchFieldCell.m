@@ -75,8 +75,11 @@ const CGFloat kEdgeWidth = 3;
 }
 
 - (BOOL)shouldUseFocusedAppearanceWithControlView:(NSView *)controlView {
-    return ([controlView respondsToSelector:@selector(currentEditor)] &&
-            [(NSControl *)controlView currentEditor]);
+    if (![controlView respondsToSelector:@selector(currentEditor)]) {
+        return NO;
+    }
+    id editor = [(NSControl *)controlView currentEditor];
+    return editor != nil;
 }
 
 - (void)drawWithFrame:(NSRect)cellFrame inView:(NSView *)controlView {
@@ -244,3 +247,4 @@ const CGFloat kEdgeWidth = 3;
 }
 
 @end
+

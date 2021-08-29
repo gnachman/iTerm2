@@ -9,6 +9,7 @@
 
 #import "DebugLogging.h"
 #import "ITAddressBookMgr.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermExpect.h"
 #import "iTermExpressionEvaluator.h"
@@ -186,6 +187,45 @@ extern NSString *const SESSION_ARRANGEMENT_SERVER_DICT;
                       origin.y,
                       charWidth,
                       lineHeight);
+}
+
+#pragma mark - Content Subscriptions
+
+- (void)publish:(iTermStringLine *)line {
+    for (id<iTermContentSubscriber> subscriber in self.contentSubscribers) {
+        [subscriber deliver:line];
+    }
+}
+
+- (void)publishNewline {
+    if (self.contentSubscribers.count == 0) {
+        return;
+    }
+    static ScreenCharArray *empty;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        screen_char_t placeholder;
+        screen_char_t continuation = { 0 };
+        continuation.code = EOL_HARD;
+        empty = [[ScreenCharArray alloc] initWithLine:&placeholder length:0 continuation:continuation];
+    });
+    for (id<iTermContentSubscriber> subscriber in self.contentSubscribers) {
+        [subscriber deliver:empty];
+    }
+}
+
+- (void)publishScreenCharArray:(const screen_char_t *)line length:(int)length {
+    if (self.contentSubscribers.count == 0) {
+        return;
+    }
+    screen_char_t continuation = { 0 };
+    continuation.code = EOL_SOFT;
+    ScreenCharArray *array = [[ScreenCharArray alloc] initWithLine:line
+                                                            length:length
+                                                      continuation:continuation];
+    for (id<iTermContentSubscriber> subscriber in self.contentSubscribers) {
+        [subscriber deliver:array];
+    }
 }
 
 @end

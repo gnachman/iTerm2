@@ -149,9 +149,9 @@ extern NSString *const SessionViewWasSelectedForInspectionNotification;
 @end
 
 typedef NS_ENUM(NSUInteger, iTermSessionViewFindDriver) {
-    iTermSessionViewFindDriverDropDown,
-    iTermSessionViewFindDriverTemporaryStatusBar,
-    iTermSessionViewFindDriverPermanentStatusBar
+    iTermSessionViewFindDriverDropDown,  // There is no status bar
+    iTermSessionViewFindDriverTemporaryStatusBar,  // The find component will be added to the status bar while it's in use
+    iTermSessionViewFindDriverPermanentStatusBar  // The find component is always in the status bar
 };
 
 @interface SessionView : NSView <SessionTitleViewDelegate>
@@ -196,7 +196,10 @@ typedef NS_ENUM(NSUInteger, iTermSessionViewFindDriver) {
 - (void)setTerminalBackgroundColor:(NSColor *)color;
 
 - (void)showFindUI;
+- (void)showFilter;
+
 - (void)findViewDidHide;
+- (void)findDriverInvalidateFrame;
 - (void)setUseMetal:(BOOL)useMetal dataSource:(id<iTermMetalDriverDataSource>)dataSource NS_AVAILABLE_MAC(10_11);;
 - (void)didChangeMetalViewAlpha;
 - (void)setTransparencyAlpha:(CGFloat)transparencyAlpha
@@ -269,5 +272,6 @@ typedef NS_ENUM(NSUInteger, iTermSessionViewFindDriver) {
 - (void)didBecomeVisible;
 - (void)showUnobtrusiveMessage:(NSString *)message;
 - (void)setSuppressLegacyDrawing:(BOOL)suppressLegacyDrawing;
+- (void)takeFindDriverFrom:(SessionView *)donorView delegate:(id<iTermFindDriverDelegate>)delegate;
 
 @end

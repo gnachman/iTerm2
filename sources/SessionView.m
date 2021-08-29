@@ -1,6 +1,7 @@
 #import "SessionView.h"
 #import "DebugLogging.h"
 #import "FutureMethods.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermAnnouncementViewController.h"
 #import "iTermBackgroundColorView.h"
@@ -21,6 +22,7 @@
 #import "iTermTheme.h"
 #import "iTermUnobtrusiveMessage.h"
 #import "NSAppearance+iTerm.h"
+#import "NSArray+iTerm.h"
 #import "NSColor+iTerm.h"
 #import "NSDate+iTerm.h"
 #import "NSTimer+iTerm.h"
@@ -225,6 +227,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     iTermScrollerBackgroundColorView *_legacyScrollerBackgroundView;
     iTermUnobtrusiveMessage *_unobtrusiveMessage;
     iTermLegacyView *_legacyView;
+    iTermStatusBarFilterComponent *_temporaryFilterComponent;
 }
 
 + (double)titleHeight {
@@ -461,15 +464,53 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
                                                           bundle:[NSBundle bundleForClass:self.class]];
     [[dropDownViewController view] setHidden:YES];
     [super addSubview:dropDownViewController.view];
-    NSRect aRect = [self frame];
-    NSSize size = [[dropDownViewController view] frame].size;
-    [dropDownViewController setFrameOrigin:NSMakePoint(aRect.size.width - size.width - 30,
-                                                       aRect.size.height - size.height)];
+    [self updateDropDownFrame:dropDownViewController];
     return dropDownViewController;
+}
+
+- (void)findDriverInvalidateFrame {
+    [self updateDropDownFrame:_dropDownFindViewController];
+}
+
+- (void)updateDropDownFrame:(iTermDropDownFindViewController *)dropDownViewController {
+    NSRect aRect = [self frame];
+    NSSize size = [dropDownViewController desiredSize];
+    const NSPoint origin = NSMakePoint(aRect.size.width - size.width - 30,
+                                       aRect.size.height - size.height);
+    [dropDownViewController setOffsetFromTopRightOfSuperview:NSMakeSize(30, 0)];
+    [dropDownViewController.view setFrame:NSMakeRect(origin.x, origin.y, size.width, size.height)];
 }
 
 - (BOOL)isDropDownSearchVisible {
     return _findDriverType == iTermSessionViewFindDriverDropDown && _dropDownFindDriver.isVisible;
+}
+
+- (void)takeFindDriverFrom:(SessionView *)donorView delegate:(id<iTermFindDriverDelegate>)delegate {
+    DLog(@"Take find driver from %@, give it to %@ with delegate %@", donorView, self, delegate);
+    if (_dropDownFindDriver.viewController.isViewLoaded) {
+        [_dropDownFindDriver.viewController.view removeFromSuperview];
+    }
+
+    _findDriverType = donorView->_findDriverType;
+
+    _dropDownFindViewController = donorView->_dropDownFindViewController;
+    donorView->_dropDownFindViewController = nil;
+
+    _dropDownFindDriver = donorView->_dropDownFindDriver;
+    _temporaryStatusBarFindDriver = donorView->_temporaryStatusBarFindDriver;
+    _permanentStatusBarFindDriver = donorView->_permanentStatusBarFindDriver;
+
+    donorView->_dropDownFindDriver = nil;
+    donorView->_temporaryStatusBarFindDriver = nil;
+    donorView->_permanentStatusBarFindDriver = nil;
+
+    [self setFindDriverDelegate:delegate];
+
+    if (_dropDownFindDriver.viewController.isViewLoaded) {
+        [self addSubview:_dropDownFindDriver.viewController.view];
+    }
+    [self updateFindDriver];
+    [self updateFindViewFrame];
 }
 
 - (void)setFindDriverDelegate:(id<iTermFindDriverDelegate>)delegate {
@@ -496,7 +537,6 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
 }
 
 - (BOOL)findViewIsHidden {
-
     switch (_findDriverType) {
         case iTermSessionViewFindDriverDropDown:
             return !_dropDownFindDriver.isVisible;
@@ -550,6 +590,37 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     [_temporaryStatusBarFindDriver open];
 }
 
+- (iTermStatusBarFilterComponent *)temporaryFilterComponent {
+    if (_temporaryFilterComponent) {
+        return _temporaryFilterComponent;
+    }
+    NSDictionary *knobs = @{ iTermStatusBarPriorityKey: @(INFINITY),
+                             iTermStatusBarFilterComponent.isTemporaryKey: @YES };
+    NSDictionary *configuration = @{ iTermStatusBarComponentConfigurationKeyKnobValues: knobs};
+    iTermStatusBarFilterComponent *component =
+    [[iTermStatusBarFilterComponent alloc] initWithConfiguration:configuration
+                                                           scope:self.delegate.sessionViewScope];
+    return component;
+}
+
+- (void)showFilter {
+    DLog(@"showFilter");
+    iTermStatusBarViewController *statusBarViewController = self.delegate.sessionViewStatusBarViewController;
+    if (statusBarViewController) {
+        iTermStatusBarFilterComponent *filterComponent = (iTermStatusBarFilterComponent *)[statusBarViewController.visibleComponents objectPassingTest:^BOOL(id<iTermStatusBarComponent> candidate, NSUInteger index, BOOL *stop) {
+            return [candidate isKindOfClass:[iTermStatusBarFilterComponent class]];
+        }];
+        if (!filterComponent) {
+            filterComponent = self.temporaryFilterComponent;
+            statusBarViewController.temporaryRightComponent = filterComponent;
+        }
+        [filterComponent focus];
+    } else {
+        [self showFindUI];
+        [self.findDriver setFilterHidden:NO];
+    }
+}
+
 - (void)showFindUI {
     iTermStatusBarViewController *statusBarViewController = self.delegate.sessionViewStatusBarViewController;
     if (_findDriverType == iTermSessionViewFindDriverPermanentStatusBar) {
@@ -561,7 +632,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
             }
         } else {
             _findDriverType = iTermSessionViewFindDriverDropDown;
-            [_temporaryStatusBarFindDriver open];
+            [_dropDownFindDriver open];
         }
     } else if (self.findDriver == nil) {
         assert(statusBarViewController);
@@ -1111,14 +1182,11 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     if (frameSize.width < 340) {
         [findView setFrameSize:NSMakeSize(MAX(150, frameSize.width - 50),
                                           [findView frame].size.height)];
-        [_dropDownFindViewController setFrameOrigin:NSMakePoint(frameSize.width - [findView frame].size.width - 30,
-                                                                frameSize.height - [findView frame].size.height)];
     } else {
         [findView setFrameSize:NSMakeSize(290,
                                           [findView frame].size.height)];
-        [_dropDownFindViewController setFrameOrigin:NSMakePoint(frameSize.width - [findView frame].size.width - 30,
-                                                                frameSize.height - [findView frame].size.height)];
     }
+    [self updateFindViewFrame];
 }
 
 + (NSDate *)lastResizeDate {
@@ -1588,10 +1656,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
 
 - (void)updateFindViewFrame {
     DLog(@"update findview frame");
-    NSRect aRect = self.frame;
-    NSView *findView = _dropDownFindViewController.view;
-    [_dropDownFindViewController setFrameOrigin:NSMakePoint(aRect.size.width - [findView frame].size.width - 30,
-                                                            aRect.size.height - [findView frame].size.height)];
+    [_dropDownFindViewController setOffsetFromTopRightOfSuperview:NSMakeSize(30, 0)];
 }
 
 - (void)updateScrollViewFrame {
@@ -1919,6 +1984,14 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                          mode:mode
                    withOffset:offset
           scrollToFirstResult:scrollToFirstResult];
+}
+
+- (void)findDriverFilterVisibilityDidChange:(BOOL)visible {
+    [self.delegate findDriverFilterVisibilityDidChange:visible];
+}
+
+- (void)findDriverSetFilter:(NSString *)filter withSideEffects:(BOOL)withSideEffects {
+    [self.delegate findDriverSetFilter:filter withSideEffects:withSideEffects];
 }
 
 - (void)findViewControllerVisibilityDidChange:(id<iTermFindViewController>)sender {

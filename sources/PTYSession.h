@@ -43,6 +43,7 @@ extern NSString *const iTermSessionWillTerminateNotification;
 @class FakeWindow;
 @class iTermAction;
 @class iTermAnnouncementViewController;
+@protocol iTermContentSubscriber;
 @class iTermEchoProbe;
 @class iTermExpect;
 @class iTermImageWrapper;
@@ -269,6 +270,10 @@ backgroundColor:(NSColor *)backgroundColor;
 - (BOOL)sessionShouldDragWindowByPaneTitleBar:(PTYSession *)session;
 - (void)sessionSubtitleDidChange:(PTYSession *)session;
 - (void)sessionActivate:(PTYSession *)session;
+
+- (void)session:(PTYSession *)session setFilter:(NSString *)filter;
+- (PTYSession *)sessionSyntheticSessionFor:(PTYSession *)live;
+
 @end
 
 @class SessionView;
@@ -559,6 +564,12 @@ backgroundColor:(NSColor *)backgroundColor;
 @property(nonatomic, readonly) iTermExpect *expect;
 @property(nonatomic, readonly) BOOL tmuxPaused;
 @property(nonatomic, readonly) NSString *userShell;  // Something like "/bin/bash".
+@property(nonatomic, copy) NSString *filter;
+@property(nonatomic, readonly, strong) iTermAsyncFilter *asyncFilter;
+@property(nonatomic, readonly) NSMutableArray<id<iTermContentSubscriber>> *contentSubscribers;
+
+// Excludes SESSION_ARRANGEMENT_CONTENTS. Nil if session not created from arrangement.
+@property(nonatomic, copy) NSDictionary *foundingArrangement;
 
 #pragma mark - methods
 
@@ -593,6 +604,8 @@ backgroundColor:(NSColor *)backgroundColor;
 
 // Begin showing DVR frames from some live session.
 - (void)setDvr:(DVR*)dvr liveSession:(PTYSession*)liveSession;
+
+- (void)willRetireSyntheticSession:(PTYSession *)syntheticSession;
 
 // Append a bunch of lines from this (presumably synthetic) session from another (presumably live)
 // session.
@@ -778,6 +791,8 @@ backgroundColor:(NSColor *)backgroundColor;
 
 // Show the find view
 - (void)showFindPanel;
+- (void)showFilter;
+- (void)stopFiltering;
 
 // Find next/previous occurrence of find string.
 - (void)searchNext;
@@ -911,6 +926,8 @@ backgroundColor:(NSColor *)backgroundColor;
 - (void)compose;
 - (BOOL)closeComposer;
 - (void)didChangeScreen:(CGFloat)scaleFactor;
+- (void)addContentSubscriber:(id<iTermContentSubscriber>)contentSubscriber;
+- (void)didFinishRestoration;
 
 #pragma mark - API
 

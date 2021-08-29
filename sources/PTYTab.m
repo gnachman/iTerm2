@@ -1473,6 +1473,35 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     [self.viewToSessionMap setObject:live forKey:live.view];
 }
 
+- (void)setFilter:(NSString *)query inSession:(PTYSession *)oldSession {
+    if (oldSession.filter != nil) {
+        if (query == nil) {
+            PTYSession *live = oldSession.liveSession;
+            [self.delegate tabEndSyntheticSession:oldSession];
+            [live.view.findDriver setFilterWithoutSideEffects:@""];
+        } else {
+            oldSession.filter = query;
+        }
+        return;
+    }
+    if (!query) {
+        return;
+    }
+    PTYSession *syntheticSession = [self.realParentWindow syntheticSessionForSession:oldSession];
+    if (!syntheticSession) {
+        DLog(@"syntheticSessionForSession:%@ returned nl", oldSession);
+        return;
+    }
+    [syntheticSession divorceAddressBookEntryFromPreferences];
+    [syntheticSession setSessionSpecificProfileValues:@{ KEY_UNLIMITED_SCROLLBACK: @YES }];
+    syntheticSession.screen.unlimitedScrollback = YES;
+    [syntheticSession.screen terminalSetCursorVisible:NO];
+    [self replaceActiveSessionWithSyntheticSession:syntheticSession];
+    syntheticSession.filter = query;
+    [syntheticSession showFilter];
+    [syntheticSession.view.findDriver setFilterWithoutSideEffects:query];
+}
+
 - (void)replaceActiveSessionWithSyntheticSession:(PTYSession *)newSession {
     PtyLog(@"PTYTab setDvrInSession:%p", newSession);
     PTYSession* oldSession = [self activeSession];
@@ -1536,7 +1565,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     PtyLog(@"PTYTab showLiveSession:%p", liveSession);
     replaySession.active = NO;
     [liveSession setProfile:[replaySession profile]];
-
+    [liveSession willRetireSyntheticSession:replaySession];
     SessionView* oldView = [replaySession view];
     SessionView* newView = [liveSession view];
     NSSplitView* parentSplit = (NSSplitView*)[oldView superview];
@@ -3085,6 +3114,9 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                                                      [session amendedColorKey:KEY_USE_TAB_COLOR]: @YES }];
     } else {
         [term updateTabColors];
+    }
+    for (PTYSession *session in self.sessions) {
+        [session didFinishRestoration];
     }
 }
 
@@ -6604,6 +6636,19 @@ backgroundColor:(NSColor *)backgroundColor {
         return;
     }
     [self _refreshLabels:nil];
+}
+
+- (void)session:(PTYSession *)session setFilter:(NSString *)filter {
+    [self setFilter:filter inSession:session];
+}
+
+- (PTYSession *)sessionSyntheticSessionFor:(PTYSession *)live {
+    for (PTYSession *session in self.sessions) {
+        if (session.liveSession == live) {
+            return session;
+        }
+    }
+    return nil;
 }
 
 #pragma mark - iTermObject

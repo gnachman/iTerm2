@@ -27,5 +27,11 @@
     int xEnd;
     int yEnd;
 }
+
+@property (nonatomic, readonly) int xStart;
+@property (nonatomic, readonly) int yStart;
+@property (nonatomic, readonly) int xEnd;
+@property (nonatomic, readonly) int yEnd;
+
 @end
 

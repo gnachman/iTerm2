@@ -22,6 +22,11 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (BOOL)tryToFinishAttachingToMultiserverWithPartialAttachment:(id<iTermPartialAttachment>)partialAttachment;
 
+- (void)publish:(iTermStringLine *)line;
+- (void)publishNewline;
+- (void)publishScreenCharArray:(const screen_char_t *)line length:(int)length;
+
+
 @end
 
 NS_ASSUME_NONNULL_END

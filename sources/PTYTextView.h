@@ -175,6 +175,7 @@ preferredEscaping:(iTermSendTextEscaping)preferredEscaping;
 - (BOOL)textViewSuppressingAllOutput;
 - (BOOL)textViewIsZoomedIn;
 - (BOOL)textViewShouldShowMarkIndicators;
+- (BOOL)textViewIsFiltered;
 
 // Is it possible to restart this session?
 - (BOOL)isRestartable;

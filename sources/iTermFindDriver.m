@@ -157,6 +157,10 @@ static NSString *gSearchString;
     [self.viewController open];
 }
 
+- (void)setDelegate:(id<iTermFindDriverDelegate>)delegate {
+    _delegate = delegate;
+}
+
 - (void)close {
     BOOL wasHidden = _viewController.view.isHidden;
     if (!wasHidden) {
@@ -189,6 +193,16 @@ static NSString *gSearchString;
     DLog(@"delegate=%@ state=%@ state.mode=%@ state.string=%@", self.delegate, _state, @(_state.mode), _state.string);
     [self.delegate findViewControllerClearSearch];
     [self doSearch];
+}
+
+- (void)userDidEditFilter:(NSString *)updatedFilter
+              fieldEditor:(NSTextView *)fieldEditor {
+    [_delegate findDriverSetFilter:updatedFilter withSideEffects:YES];
+}
+
+- (void)setFilterWithoutSideEffects:(NSString *)filter {
+    [self.viewController setFilter:filter];
+    [_delegate findDriverSetFilter:filter withSideEffects:NO];
 }
 
 - (void)userDidEditSearchQuery:(NSString *)updatedQuery
@@ -358,11 +372,18 @@ static NSString *gSearchString;
     if (visible != _isVisible) {
         _isVisible = visible;
         [self.delegate findViewControllerVisibilityDidChange:self.viewController];
+        if (!visible && self.viewController.filterIsVisible) {
+            [self.delegate findDriverFilterVisibilityDidChange:NO];
+        }
     }
 }
 
 - (void)ceaseToBeMandatory {
     [self.delegate findViewControllerDidCeaseToBeMandatory:self.viewController];
+}
+
+- (void)setFilter:(NSString *)filter {
+    [self.delegate findDriverSetFilter:filter withSideEffects:YES];
 }
 
 - (BOOL)loadFindStringIntoSharedPasteboard:(NSString *)stringValue
@@ -600,6 +621,26 @@ static NSString *gSearchString;
 
 - (void)eraseSearchHistory {
     [[iTermSearchHistory sharedInstance] eraseHistory];
+}
+
+- (void)toggleFilter {
+    [self.viewController toggleFilter];
+}
+
+- (void)setFilterHidden:(BOOL)hidden {
+    [self.viewController setFilterHidden:hidden];
+}
+
+- (void)invalidateFrame {
+    [self.delegate findDriverInvalidateFrame];
+}
+
+- (void)filterVisibilityDidChange {
+    [self.delegate findDriverFilterVisibilityDidChange:self.viewController.filterIsVisible];
+}
+
+- (void)setFilterProgress:(double)progress {
+    [self.viewController setFilterProgress:progress];
 }
 
 @end

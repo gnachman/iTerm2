@@ -16,6 +16,8 @@
                             userOriginated:(BOOL)userOriginated;
 - (void)userDidEditSearchQuery:(NSString *)updatedQuery
                    fieldEditor:(NSTextView *)fieldEditor;
+- (void)userDidEditFilter:(NSString *)updatedFilter
+              fieldEditor:(NSTextView *)fieldEditor;
 - (void)backTab;
 - (void)forwardTab;
 - (void)copyPasteSelection;
@@ -27,5 +29,6 @@
 - (void)eraseSearchHistory;
 - (NSInteger)numberOfResults;
 - (NSInteger)currentIndex;
+- (void)setFilter:(NSString *)filter;
 
 @end

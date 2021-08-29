@@ -74,6 +74,12 @@ static const CGFloat iTermStatusBarViewControllerBottomMargin = 0;
     [self updateViews];
 }
 
+- (NSArray<id<iTermStatusBarComponent>> *)visibleComponents {
+    return [_visibleContainerViews mapWithBlock:^id(iTermStatusBarContainerView *view) {
+        return view.component;
+    }];
+}
+
 - (nullable iTermStatusBarContainerView *)mandatoryView {
     if (!self.mustShowSearchComponent) {
         return nil;
@@ -376,6 +382,19 @@ static const CGFloat iTermStatusBarViewControllerBottomMargin = 0;
 
 - (id<iTermTriggersDataSource>)statusBarComponentTriggersDataSource:(id<iTermStatusBarComponent>)component {
     return [self.delegate statusBarTriggersDataSource];
+}
+
+- (void)statusBarRemoveTemporaryComponent:(id<iTermStatusBarComponent>)component {
+    if (self.temporaryLeftComponent == component) {
+        self.temporaryLeftComponent = nil;
+    }
+    if (self.temporaryRightComponent == component) {
+        self.temporaryRightComponent = nil;
+    }
+}
+
+- (void)statusBarSetFilter:(NSString * _Nullable)query {
+    [self.delegate statusBarSetFilter:query];
 }
 
 - (iTermActivityInfo)statusBarComponentActivityInfo:(id<iTermStatusBarComponent>)component {

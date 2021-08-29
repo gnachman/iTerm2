@@ -19,7 +19,7 @@
     // Check no more than once an hour. This could be much more efficient, but doing anything with
     // time is fraught with bugs and peril, so we'll just keep it simple.
     NSCalendar *calendar =
-        [[[NSCalendar alloc] initWithCalendarIdentifier:NSCalendarIdentifierGregorian] autorelease];
+        [[NSCalendar alloc] initWithCalendarIdentifier:NSCalendarIdentifierGregorian];
     NSDateComponents *components =
         [calendar components:(NSCalendarUnitMonth | NSCalendarUnitDay) fromDate:[self date]];
     result = (components.month == 4 && components.day == 1);

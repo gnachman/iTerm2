@@ -1502,6 +1502,8 @@
                             visible:[_delegate textViewCopyMode]];
     [_indicatorsHelper setIndicator:kiTermIndicatorDebugLogging
                             visible:gDebugLogging];
+    [_indicatorsHelper setIndicator:kiTermIndicatorFilter
+                            visible:[_delegate textViewIsFiltered]];
     NSRect rect = self.visibleRect;
     rect.size.width -= rightMargin;
     return rect;
