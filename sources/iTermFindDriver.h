@@ -62,6 +62,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult;
 - (NSInteger)findDriverNumberOfSearchResults;
 
 - (NSInteger)findDriverCurrentIndex;
+- (void)findDriverSetFilter:(NSString *)filter withSideEffects:(BOOL)withSideEffects;
 
 @end
 
@@ -102,5 +103,6 @@ scrollToFirstResult:(BOOL)scrollToFirstResult;
                                           mode:(iTermFindMode)mode;
 
 - (void)owningViewDidBecomeFirstResponder;
+- (void)setFilterWithoutSideEffects:(NSString *)filter;
 
 @end

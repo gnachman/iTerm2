@@ -269,6 +269,9 @@ backgroundColor:(NSColor *)backgroundColor;
 - (BOOL)sessionShouldDragWindowByPaneTitleBar:(PTYSession *)session;
 - (void)sessionSubtitleDidChange:(PTYSession *)session;
 - (void)sessionActivate:(PTYSession *)session;
+
+- (void)session:(PTYSession *)session setFilter:(NSString *)filter;
+
 @end
 
 @class SessionView;
@@ -559,6 +562,7 @@ backgroundColor:(NSColor *)backgroundColor;
 @property(nonatomic, readonly) iTermExpect *expect;
 @property(nonatomic, readonly) BOOL tmuxPaused;
 @property(nonatomic, readonly) NSString *userShell;  // Something like "/bin/bash".
+@property(nonatomic, copy) NSString *filter;
 
 #pragma mark - methods
 

@@ -1921,6 +1921,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
           scrollToFirstResult:scrollToFirstResult];
 }
 
+- (void)findDriverSetFilter:(NSString *)filter withSideEffects:(BOOL)withSideEffects {
+    [self.delegate findDriverSetFilter:filter withSideEffects:withSideEffects];
+}
+
 - (void)findViewControllerVisibilityDidChange:(id<iTermFindViewController>)sender {
     [self.delegate findViewControllerVisibilityDidChange:sender];
 }

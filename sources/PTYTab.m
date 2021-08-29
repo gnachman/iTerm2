@@ -1473,6 +1473,29 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     [self.viewToSessionMap setObject:live forKey:live.view];
 }
 
+- (void)setFilter:(NSString *)query inSession:(PTYSession *)oldSession {
+    if (oldSession.filter != nil) {
+        if (query.length == 0) {
+            PTYSession *live = oldSession.liveSession;
+            [self.delegate tabEndSyntheticSession:oldSession];
+            [live.view.findDriver setFilterWithoutSideEffects:@""];
+        } else {
+            oldSession.filter = query;
+        }
+        return;
+    }
+#warning TODO: Test using this during instant replay
+    PTYSession *syntheticSession = [self.realParentWindow syntheticSessionForSession:oldSession];
+    [syntheticSession divorceAddressBookEntryFromPreferences];
+    [syntheticSession setSessionSpecificProfileValues:@{ KEY_UNLIMITED_SCROLLBACK: @YES }];
+    syntheticSession.screen.unlimitedScrollback = YES;
+    [syntheticSession.screen terminalSetCursorVisible:NO];
+    [self replaceActiveSessionWithSyntheticSession:syntheticSession];
+    syntheticSession.filter = query;
+    [syntheticSession showFindPanel];
+    [syntheticSession.view.findDriver setFilterWithoutSideEffects:query];
+}
+
 - (void)replaceActiveSessionWithSyntheticSession:(PTYSession *)newSession {
     PtyLog(@"PTYTab setDvrInSession:%p", newSession);
     PTYSession* oldSession = [self activeSession];
@@ -6604,6 +6627,10 @@ backgroundColor:(NSColor *)backgroundColor {
         return;
     }
     [self _refreshLabels:nil];
+}
+
+- (void)session:(PTYSession *)session setFilter:(NSString *)filter {
+    [self setFilter:filter inSession:session];
 }
 
 #pragma mark - iTermObject

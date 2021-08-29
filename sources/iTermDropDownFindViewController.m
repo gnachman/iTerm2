@@ -50,6 +50,7 @@ static const float kAnimationDuration = 0.2;
 
 @implementation iTermDropDownFindViewController {
     IBOutlet iTermFocusReportingSearchField *findBarTextField_;
+    IBOutlet NSSearchField *_filterField;
 
     // Fades out the progress indicator.
     NSTimer *_animationTimer;
@@ -159,6 +160,16 @@ static const float kAnimationDuration = 0.2;
     [findBarTextField_ setStringValue:string];
 }
 
+- (NSString *)filter {
+    return _filterField.stringValue;
+}
+
+- (void)setFilter:(NSString *)filter {
+    _filterField.stringValue = filter;
+    [_filterField.window makeFirstResponder:_filterField];
+    _filterField.currentEditor.selectedRange = NSMakeRange(filter.length, 0);
+}
+
 #pragma mark - Actions
 
 - (IBAction)closeFindView:(id)sender {
@@ -202,12 +213,17 @@ static const float kAnimationDuration = 0.2;
 
 - (void)controlTextDidChange:(NSNotification *)aNotification {
     NSTextField *field = [aNotification object];
-    if (field != findBarTextField_) {
+    NSTextView *fieldEditor = aNotification.userInfo[@"NSFieldEditor"];
+    if (field == findBarTextField_) {
+        [self.driver userDidEditSearchQuery:findBarTextField_.stringValue
+                                fieldEditor:fieldEditor];
         return;
     }
-    
-    [self.driver userDidEditSearchQuery:findBarTextField_.stringValue
-                            fieldEditor:aNotification.userInfo[@"NSFieldEditor"]];
+    if (field == _filterField) {
+        [self.driver userDidEditFilter:_filterField.stringValue
+                           fieldEditor:fieldEditor];
+        return;
+    }
 }
 
 - (NSArray *)control:(NSControl *)control
@@ -215,12 +231,15 @@ static const float kAnimationDuration = 0.2;
          completions:(NSArray *)words  // Dictionary words
  forPartialWordRange:(NSRange)charRange
  indexOfSelectedItem:(NSInteger *)index {
-    DLog(@"completions:forPartialWordRange: existing string is %@, range is %@\n%@",
-         textView.string, NSStringFromRange(charRange), [NSThread callStackSymbols]);
+    if (control == findBarTextField_) {
+        DLog(@"completions:forPartialWordRange: existing string is %@, range is %@\n%@",
+             textView.string, NSStringFromRange(charRange), [NSThread callStackSymbols]);
 
-    *index = -1;
-    return [self.driver completionsForText:[textView string]
-                                     range:charRange];
+        *index = -1;
+        return [self.driver completionsForText:[textView string]
+                                         range:charRange];
+    }
+    return @[];
 }
 
 - (BOOL)control:(NSControl *)control

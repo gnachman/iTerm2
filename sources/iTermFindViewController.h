@@ -21,6 +21,7 @@ typedef NS_ENUM(NSUInteger, iTermFindMode) {
 @property (nonatomic, readonly) BOOL searchBarIsFirstResponder;
 @property (nonatomic, weak) iTermFindDriver *driver;
 @property (nonatomic, copy) NSString *findString;
+@property (nonatomic, copy) NSString *filter;
 
 - (void)close;
 - (void)open;

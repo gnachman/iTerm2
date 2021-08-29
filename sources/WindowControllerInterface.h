@@ -184,6 +184,8 @@
 
 - (void)storeWindowStateInRestorableSession:(iTermRestorableSession *)restorableSession;
 
+- (PTYSession *)syntheticSessionForSession:(PTYSession *)oldSession;
+
 #pragma mark - Tabs
 
 // Close a tab and resize/close the window if needed.

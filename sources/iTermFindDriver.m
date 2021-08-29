@@ -191,6 +191,16 @@ static NSString *gSearchString;
     [self doSearch];
 }
 
+- (void)userDidEditFilter:(NSString *)updatedFilter
+              fieldEditor:(NSTextView *)fieldEditor {
+    [_delegate findDriverSetFilter:updatedFilter withSideEffects:YES];
+}
+
+- (void)setFilterWithoutSideEffects:(NSString *)filter {
+    [self.viewController setFilter:filter];
+    [_delegate findDriverSetFilter:filter withSideEffects:NO];
+}
+
 - (void)userDidEditSearchQuery:(NSString *)updatedQuery
                    fieldEditor:(NSTextView *)fieldEditor {
     if (!_savedState) {
@@ -363,6 +373,10 @@ static NSString *gSearchString;
 
 - (void)ceaseToBeMandatory {
     [self.delegate findViewControllerDidCeaseToBeMandatory:self.viewController];
+}
+
+- (void)setFilter:(NSString *)filter {
+    [self.delegate findDriverSetFilter:filter withSideEffects:YES];
 }
 
 - (BOOL)loadFindStringIntoSharedPasteboard:(NSString *)stringValue

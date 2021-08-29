@@ -1027,6 +1027,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_triggerWindowController release];
     [_triggersSlownessDetector release];
     [_idempotentTriggerRateLimit release];
+    [_filter release];
 
     [super dealloc];
 }
@@ -5994,6 +5995,30 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     }
     if (_view.findViewHasKeyboardFocus) {
         [_view findViewDidHide];
+    }
+}
+
+- (void)setFilter:(NSString *)filter {
+    DLog(@"setFilter:%@", filter);
+    if ([filter isEqualToString:_filter]) {
+        return;
+    }
+    if (_filter) {
+        DLog(@"Clear buffer because there is a pre-existing filter");
+        [self clearBuffer];
+    }
+    assert(self.liveSession);
+    
+    [_filter autorelease];
+    _filter = [filter copy];
+
+    DLog(@"Append lines from %@", self.liveSession);
+    [self appendLinesMatchingQuery:filter fromSession:self.liveSession];
+}
+
+- (void)findDriverSetFilter:(NSString *)filter withSideEffects:(BOOL)withSideEffects{
+    if (withSideEffects) {
+        [self.delegate session:self setFilter:filter];
     }
 }
 

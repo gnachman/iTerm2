@@ -7237,13 +7237,17 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 }
 
 - (void)replaceSyntheticActiveSessionWithLiveSessionIfNeeded {
-    if (self.currentSession.liveSession.screen.dvr.readOnly) {
+    [self replaceSyntheticSessionWithLiveSessionIfNeeded:self.currentSession];
+}
+
+- (void)replaceSyntheticSessionWithLiveSessionIfNeeded:(PTYSession *)syntheticSession {
+    if (syntheticSession.liveSession.screen.dvr.readOnly) {
         dispatch_async(dispatch_get_main_queue(), ^{
             [self close];
         });
     }
-    if ([[self currentSession] liveSession]) {
-        [self showLiveSession:[[self currentSession] liveSession] inPlaceOf:[self currentSession]];
+    if ([syntheticSession liveSession]) {
+        [self showLiveSession:[syntheticSession liveSession] inPlaceOf:syntheticSession];
     }
 }
 
@@ -7426,13 +7430,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 }
 
 - (void)showLinesMatchingQuery:(NSString *)query fromSession:(PTYSession *)oldSession {
-    PTYSession *syntheticSession = [self syntheticSessionForSession:oldSession];
-    [syntheticSession divorceAddressBookEntryFromPreferences];
-    [syntheticSession setSessionSpecificProfileValues:@{ KEY_UNLIMITED_SCROLLBACK: @YES }];
-    syntheticSession.screen.unlimitedScrollback = YES;
-    [syntheticSession.screen terminalSetCursorVisible:NO];
-    [syntheticSession appendLinesMatchingQuery:query fromSession:oldSession];
-    [[self tabForSession:oldSession] replaceActiveSessionWithSyntheticSession:syntheticSession];
+    [oldSession setFilter:query];
 }
 
 - (void)showRangeOfLines:(NSRange)rangeOfLines inSession:(PTYSession *)oldSession {
@@ -11370,6 +11368,10 @@ backgroundColor:(NSColor *)backgroundColor {
     if (tab == self.currentTab) {
         [_contentView windowDidResize];
     }
+}
+
+- (void)tabEndSyntheticSession:(PTYSession *)syntheticSession {
+    [self replaceSyntheticSessionWithLiveSessionIfNeeded:syntheticSession];
 }
 
 #pragma mark - PSMMinimalTabStyleDelegate
