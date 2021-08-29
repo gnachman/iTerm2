@@ -9795,6 +9795,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 }
 
 - (void)setRestoringWindow:(BOOL)restoringWindow {
+    DLog(@"%@ -> %@\n%@", @(_restoringWindow), @(restoringWindow), [NSThread callStackSymbols]);
     if (_restoringWindow != restoringWindow) {
         _restoringWindow = restoringWindow;
         if (restoringWindow) {
@@ -10741,6 +10742,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 }
 
 - (void)setRestorableStateDecodePending:(BOOL)restorableStateDecodePending {
+    DLog(@"%@ -> %@\n%@", @(restorableStateDecodePending), @(restorableStateDecodePending), [NSThread callStackSymbols]);
     if (_restorableStateDecodePending != restorableStateDecodePending) {
         _restorableStateDecodePending = restorableStateDecodePending;
         if (!restorableStateDecodePending) {

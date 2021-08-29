@@ -1394,9 +1394,11 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
 }
 
 - (NSInteger)numberOfDecodesPending {
-    return [[self.terminals filteredArrayUsingBlock:^BOOL(PseudoTerminal *anObject) {
+    const NSInteger result = [[self.terminals filteredArrayUsingBlock:^BOOL(PseudoTerminal *anObject) {
         return anObject.restorableStateDecodePending;
     }] count];
+    DLog(@"%@", @(result));
+    return result;
 }
 
 - (NSString *)shCommandLineWithCommand:(NSString *)command

@@ -108,6 +108,7 @@ static void iTermOrphanServerAdopterFindMultiServers(void (^completion)(NSArray<
 }
 
 - (void)openWindowWithOrphansWithCompletion:(void (^)(void))completion {
+    DLog(@"openWindowWithOrphansWithCompletion");
     dispatch_group_notify(_group, dispatch_get_main_queue(), ^{
         [self reallyOpenWindowWithOrphansWithCompletion:completion];
     });

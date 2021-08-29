@@ -1281,6 +1281,7 @@ void TurnOnDebugLoggingAutomatically(void) {
 }
 
 - (void)itermDidDecodeWindowRestorableState:(NSNotification *)notification {
+    DLog(@"orphansAdopted=%@", @(_orphansAdopted));
     if (!_orphansAdopted && [[iTermController sharedInstance] numberOfDecodesPending] == 0) {
         _orphansAdopted = YES;
         [[iTermOrphanServerAdopter sharedInstance] openWindowWithOrphansWithCompletion:nil];
