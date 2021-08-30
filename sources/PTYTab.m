@@ -1475,7 +1475,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 
 - (void)setFilter:(NSString *)query inSession:(PTYSession *)oldSession {
     if (oldSession.filter != nil) {
-        if (query.length == 0) {
+        if (query == nil) {
             PTYSession *live = oldSession.liveSession;
             [self.delegate tabEndSyntheticSession:oldSession];
             [live.view.findDriver setFilterWithoutSideEffects:@""];

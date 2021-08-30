@@ -1566,6 +1566,7 @@
 		A60D85A81A3A8105003AEE22 /* NSPasteboard+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A60D85A61A3A8105003AEE22 /* NSPasteboard+iTerm.h */; };
 		A60D85A91A3A8105003AEE22 /* NSPasteboard+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A60D85A61A3A8105003AEE22 /* NSPasteboard+iTerm.h */; };
 		A60E045626DC978000DD162B /* FilterTextField.swift in Sources */ = {isa = PBXBuildFile; fileRef = A60E045526DC978000DD162B /* FilterTextField.swift */; };
+		A60E045826DD4A6000DD162B /* TypingAggregator.swift in Sources */ = {isa = PBXBuildFile; fileRef = A60E045726DD4A6000DD162B /* TypingAggregator.swift */; };
 		A60EAE7D23F9CEB3007536CE /* ApplicationServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A60EAE7C23F9CEB3007536CE /* ApplicationServices.framework */; };
 		A60EBD171FAED952008C7F5B /* iTermCopyBackground.metal in Sources */ = {isa = PBXBuildFile; fileRef = A63819D21FAECE6800A9EF9E /* iTermCopyBackground.metal */; };
 		A60EBD181FAED953008C7F5B /* iTermCopyBackground.metal in Sources */ = {isa = PBXBuildFile; fileRef = A63819D21FAECE6800A9EF9E /* iTermCopyBackground.metal */; };
@@ -5228,6 +5229,7 @@
 		A60D85A61A3A8105003AEE22 /* NSPasteboard+iTerm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSPasteboard+iTerm.h"; sourceTree = "<group>"; };
 		A60D85A71A3A8105003AEE22 /* NSPasteboard+iTerm.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSPasteboard+iTerm.m"; sourceTree = "<group>"; };
 		A60E045526DC978000DD162B /* FilterTextField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilterTextField.swift; sourceTree = "<group>"; };
+		A60E045726DD4A6000DD162B /* TypingAggregator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TypingAggregator.swift; sourceTree = "<group>"; };
 		A60EAE7C23F9CEB3007536CE /* ApplicationServices.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ApplicationServices.framework; path = System/Library/Frameworks/ApplicationServices.framework; sourceTree = SDKROOT; };
 		A6110C382526FFCF00D18F61 /* iTermModifyOtherKeysMapper1.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermModifyOtherKeysMapper1.h; sourceTree = "<group>"; };
 		A6110C392526FFCF00D18F61 /* iTermModifyOtherKeysMapper1.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermModifyOtherKeysMapper1.m; sourceTree = "<group>"; };
@@ -9979,6 +9981,7 @@
 				A6F1B3B62690EA9700546767 /* iTermOptionallyBordered.h */,
 				A6F1B3B72690EA9700546767 /* iTermOptionallyBordered.m */,
 				A671AC5F26D95C0400B23C95 /* HTMLEncoding.swift */,
+				A60E045726DD4A6000DD162B /* TypingAggregator.swift */,
 			);
 			name = Helpers;
 			sourceTree = "<group>";
@@ -14247,6 +14250,7 @@
 				A61A85A224F1A70500B03880 /* iTermGlobalSearchWindowController.m in Sources */,
 				A691AACF2618DDCA0049B619 /* iTermSlownessDetector.m in Sources */,
 				A6566750219EA46E005FE60E /* NSNumber+iTerm.m in Sources */,
+				A60E045826DD4A6000DD162B /* TypingAggregator.swift in Sources */,
 				A6EC936C24E7868D00EEADEF /* iTermToolSnippets.m in Sources */,
 				A6AFD69124496F88007D0660 /* iTermFileDescriptorMultiClientPendingLaunch.m in Sources */,
 				A67960D71F81FCBB008A42BC /* iTermTextRenderer.mm in Sources */,

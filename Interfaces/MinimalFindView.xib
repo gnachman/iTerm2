@@ -79,16 +79,16 @@ Gw
                     <rect key="frame" x="16" y="20" width="328" height="22"/>
                     <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
                     <subviews>
-                        <searchField wantsLayer="YES" focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" textCompletion="NO" translatesAutoresizingMaskIntoConstraints="NO" id="el4-gq-4Pr" customClass="iTermFilterTextField">
+                        <searchField wantsLayer="YES" focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" textCompletion="NO" translatesAutoresizingMaskIntoConstraints="NO" id="el4-gq-4Pr" userLabel="Filter Text Field" customClass="iTermFilterTextField">
                             <rect key="frame" x="0.0" y="0.0" width="278" height="22"/>
                             <autoresizingMask key="autoresizingMask" widthSizable="YES"/>
-                            <searchFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" borderStyle="bezel" focusRingType="none" placeholderString="Filter" usesSingleLineMode="YES" bezelStyle="round" id="3rb-hW-qnO" customClass="iTermFilterCell">
+                            <searchFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" borderStyle="bezel" focusRingType="none" placeholderString="Filter" usesSingleLineMode="YES" bezelStyle="round" id="3rb-hW-qnO" userLabel="Filter Cell" customClass="iTermFilterCell">
                                 <font key="font" metaFont="system"/>
                                 <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
                                 <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                             </searchFieldCell>
                             <connections>
-                                <outlet property="delegate" destination="-2" id="4xc-Z3-eh3"/>
+                                <outlet property="delegate" destination="Fot-sg-fSk" id="XcJ-vJ-GQL"/>
                             </connections>
                         </searchField>
                         <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Hg0-I2-C0s" userLabel="Add">
@@ -115,6 +115,11 @@ Gw
             </connections>
             <point key="canvasLocation" x="177" y="143"/>
         </customView>
+        <customObject id="Fot-sg-fSk" userLabel="Typing Aggregator" customClass="iTermTypingAggregator">
+            <connections>
+                <outlet property="delegate" destination="-2" id="nPL-e0-pHh"/>
+            </connections>
+        </customObject>
         <menu id="15">
             <items>
                 <menuItem title="Filter" tag="6" id="GvQ-WH-LQw">
