@@ -197,6 +197,7 @@ typedef NS_ENUM(NSUInteger, iTermSessionViewFindDriver) {
 
 - (void)showFindUI;
 - (void)findViewDidHide;
+- (void)findDriverInvalidateFrame;
 - (void)setUseMetal:(BOOL)useMetal dataSource:(id<iTermMetalDriverDataSource>)dataSource NS_AVAILABLE_MAC(10_11);;
 - (void)didChangeMetalViewAlpha;
 - (void)setTransparencyAlpha:(CGFloat)transparencyAlpha

@@ -9,6 +9,7 @@
         <customObject id="-2" userLabel="File's Owner" customClass="iTermDropDownFindViewController">
             <connections>
                 <outlet property="_filterField" destination="el4-gq-4Pr" id="R4U-qt-nZu"/>
+                <outlet property="_filterWrapper" destination="TcP-cX-kgi" id="9LR-U4-PdO"/>
                 <outlet property="findBarTextField_" destination="2" id="27"/>
                 <outlet property="view" destination="1" id="10"/>
             </connections>
@@ -78,10 +79,10 @@ Gw
                     <rect key="frame" x="16" y="20" width="328" height="22"/>
                     <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
                     <subviews>
-                        <searchField wantsLayer="YES" focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" textCompletion="NO" translatesAutoresizingMaskIntoConstraints="NO" id="el4-gq-4Pr">
+                        <searchField wantsLayer="YES" focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" textCompletion="NO" translatesAutoresizingMaskIntoConstraints="NO" id="el4-gq-4Pr" customClass="iTermFilterTextField">
                             <rect key="frame" x="0.0" y="0.0" width="278" height="22"/>
                             <autoresizingMask key="autoresizingMask" widthSizable="YES"/>
-                            <searchFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" borderStyle="bezel" focusRingType="none" placeholderString="Filter" usesSingleLineMode="YES" bezelStyle="round" id="3rb-hW-qnO">
+                            <searchFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" borderStyle="bezel" focusRingType="none" placeholderString="Filter" usesSingleLineMode="YES" bezelStyle="round" id="3rb-hW-qnO" customClass="iTermFilterCell">
                                 <font key="font" metaFont="system"/>
                                 <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
                                 <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
@@ -91,7 +92,7 @@ Gw
                             </connections>
                         </searchField>
                         <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Hg0-I2-C0s" userLabel="Add">
-                            <rect key="frame" x="288" y="3" width="16" height="15"/>
+                            <rect key="frame" x="288" y="2.5" width="16.5" height="17"/>
                             <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMinY="YES"/>
                             <buttonCell key="cell" type="square" bezelStyle="shadowlessSquare" image="NSAddTemplate" imagePosition="overlaps" alignment="center" lineBreakMode="truncatingTail" state="on" imageScaling="proportionallyDown" inset="2" id="7Fk-5a-DrC">
                                 <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
@@ -99,7 +100,7 @@ Gw
                             </buttonCell>
                         </button>
                         <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="K8j-AU-lol" userLabel="Remove">
-                            <rect key="frame" x="309" y="3" width="16" height="15"/>
+                            <rect key="frame" x="309" y="7" width="16.5" height="8"/>
                             <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMinY="YES"/>
                             <buttonCell key="cell" type="square" bezelStyle="shadowlessSquare" image="NSRemoveTemplate" imagePosition="overlaps" alignment="center" lineBreakMode="truncatingTail" state="on" imageScaling="proportionallyDown" inset="2" id="m6Y-Ky-ZPy">
                                 <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
@@ -116,6 +117,13 @@ Gw
         </customView>
         <menu id="15">
             <items>
+                <menuItem title="Filter" tag="6" id="GvQ-WH-LQw">
+                    <modifierMask key="keyEquivalentModifierMask"/>
+                    <connections>
+                        <action selector="toggleFilter:" target="-2" id="Fxo-b4-ozs"/>
+                    </connections>
+                </menuItem>
+                <menuItem isSeparatorItem="YES" id="fcA-qo-Bfj"/>
                 <menuItem title="Smart Case Substring" state="on" id="16">
                     <modifierMask key="keyEquivalentModifierMask"/>
                     <connections>
@@ -156,7 +164,7 @@ Gw
                     </connections>
                 </menuItem>
             </items>
-            <point key="canvasLocation" x="139" y="148"/>
+            <point key="canvasLocation" x="765" y="144"/>
         </menu>
     </objects>
     <resources>

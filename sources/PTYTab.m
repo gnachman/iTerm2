@@ -1484,7 +1484,6 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
         }
         return;
     }
-#warning TODO: Test using this during instant replay
     PTYSession *syntheticSession = [self.realParentWindow syntheticSessionForSession:oldSession];
     [syntheticSession divorceAddressBookEntryFromPreferences];
     [syntheticSession setSessionSpecificProfileValues:@{ KEY_UNLIMITED_SCROLLBACK: @YES }];

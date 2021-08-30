@@ -34,3 +34,6 @@ typedef struct {
 @interface iTermMiniSearchFieldCell : iTermSearchFieldCell
 @end
 
+@interface iTermFilterCell: NSSearchFieldCell
+@end
+

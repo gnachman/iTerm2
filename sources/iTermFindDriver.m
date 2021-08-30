@@ -616,4 +616,16 @@ static NSString *gSearchString;
     [[iTermSearchHistory sharedInstance] eraseHistory];
 }
 
+- (void)toggleFilter {
+    [self.viewController toggleFilter];
+}
+
+- (void)setFilterHidden:(BOOL)hidden {
+    [self.viewController setFilterHidden:hidden];
+}
+
+- (void)invalidateFrame {
+    [self.delegate findDriverInvalidateFrame];
+}
+
 @end

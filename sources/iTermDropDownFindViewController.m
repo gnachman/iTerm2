@@ -44,6 +44,7 @@
 // This used to be absurdly fast (.075) for reasons neither I nor revision
 // history can recall. This looks nicer to my eyes.
 static const float kAnimationDuration = 0.2;
+static const CGFloat kFilterHeight = 30;
 
 @interface iTermDropDownFindViewController()<iTermFocusReportingSearchFieldDelegate>
 @end
@@ -51,13 +52,14 @@ static const float kAnimationDuration = 0.2;
 @implementation iTermDropDownFindViewController {
     IBOutlet iTermFocusReportingSearchField *findBarTextField_;
     IBOutlet NSSearchField *_filterField;
+    IBOutlet NSView *_filterWrapper;
 
     // Fades out the progress indicator.
     NSTimer *_animationTimer;
 
     NSRect fullFrame_;
-    NSSize textFieldSize_;
-    NSSize textFieldSmallSize_;
+    CGFloat _baseHeight;
+    NSSize _offset;
 }
 
 @synthesize driver;
@@ -89,9 +91,37 @@ static const float kAnimationDuration = 0.2;
     self.view.wantsLayer = YES;
     [self.view makeBackingLayer];
     self.view.shadow = shadow;
+    [self setFilterHidden:YES];
 }
 
 #pragma mark - iTermFindViewController
+
+- (void)awakeFromNib {
+    _baseHeight = NSHeight(self.view.bounds);
+    [super awakeFromNib];
+}
+
+- (BOOL)filterIsVisible {
+    [self view];
+    return !_filterWrapper.isHidden;
+}
+
+- (void)setFilterHidden:(BOOL)filterHidden {
+    if (_filterWrapper.isHidden != filterHidden) {
+        _filterWrapper.hidden = filterHidden;
+        [self.driver invalidateFrame];
+    }
+    if (!filterHidden) {
+        [_filterField.window makeFirstResponder:_filterField];
+    }
+}
+
+- (NSSize)desiredSize {
+    return NSMakeSize(NSWidth(self.view.bounds), _baseHeight - (self.filterIsVisible ? 0 : kFilterHeight));
+}
+- (void)toggleFilter {
+    [self setFilterHidden:!_filterWrapper.isHidden];
+}
 
 - (void)countDidChange {
     [findBarTextField_ setNeedsDisplay:YES];
@@ -165,9 +195,15 @@ static const float kAnimationDuration = 0.2;
 }
 
 - (void)setFilter:(NSString *)filter {
+    const BOOL shouldBeHidden = filter.length == 0;
+    if (shouldBeHidden != _filterWrapper.isHidden) {
+        [self toggleFilter];
+    }
     _filterField.stringValue = filter;
-    [_filterField.window makeFirstResponder:_filterField];
-    _filterField.currentEditor.selectedRange = NSMakeRange(filter.length, 0);
+    if (!shouldBeHidden) {
+        [_filterField.window makeFirstResponder:_filterField];
+        _filterField.currentEditor.selectedRange = NSMakeRange(filter.length, 0);
+    }
 }
 
 #pragma mark - Actions
@@ -202,10 +238,18 @@ static const float kAnimationDuration = 0.2;
     [self.driver eraseSearchHistory];
 }
 
+- (IBAction)toggleFilter:(id)sender {
+    [self.driver toggleFilter];
+}
+
 #pragma mark - NSViewController
 
 - (BOOL)validateUserInterfaceItem:(NSMenuItem *)item {
-    item.state = (item.tag == self.driver.mode) ? NSControlStateValueOn : NSControlStateValueOff;
+    if (item.action == @selector(toggleFilter:)) {
+        item.state = self.filterIsVisible ? NSControlStateValueOn : NSControlStateValueOff;
+    } else {
+        item.state = (item.tag == self.driver.mode) ? NSControlStateValueOn : NSControlStateValueOff;
+    }
     return YES;
 }
 
@@ -306,30 +350,28 @@ static const float kAnimationDuration = 0.2;
     return [[[self view] superview] frame];
 }
 
-- (void)setFrameOrigin:(NSPoint)p {
-    [[self view] setFrameOrigin:p];
-    if (fullFrame_.size.width == 0) {
-        fullFrame_ = [[self view] frame];
-        fullFrame_.origin.y -= [self superframe].size.height;
-        fullFrame_.origin.x -= [self superframe].size.width;
-
-        textFieldSize_ = [findBarTextField_ frame].size;
-        textFieldSmallSize_ = textFieldSize_;
-    }
+- (void)setOffsetFromTopRightOfSuperview:(NSSize)offset {
+    _offset = offset;
+    self.view.frame = [self fullSizeFrame];
 }
 
 - (NSRect)collapsedFrame {
-    return NSMakeRect([[self view] frame].origin.x,
-                      fullFrame_.origin.y + [self superframe].size.height + fullFrame_.size.height,
-                      [[self view] frame].size.width,
-                      0);
+    const CGFloat height = 0;
+    const NSRect myFrame = self.view.frame;
+    return NSMakeRect(NSMinX(myFrame) - _offset.width,
+                      NSMaxY(self.superframe) - height - _offset.height,
+                      NSWidth(myFrame),
+                      height);
 }
 
 - (NSRect)fullSizeFrame {
-    return NSMakeRect([[self view] frame].origin.x,
-                      fullFrame_.origin.y + [self superframe].size.height,
-                      [[self view] frame].size.width,
-                      fullFrame_.size.height);
+    const CGFloat dy = self.filterIsVisible ? 0 : -kFilterHeight;
+    const CGFloat height = _baseHeight + dy;
+    const NSRect myFrame = self.view.frame;
+    return NSMakeRect(NSMaxX(self.superframe) - NSWidth(myFrame) - _offset.width,
+                      NSMaxY(self.superframe) - height - _offset.height,
+                      NSWidth(myFrame),
+                      height);
 }
 
 - (void)makeVisible {

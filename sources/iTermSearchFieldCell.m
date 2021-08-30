@@ -244,3 +244,48 @@ const CGFloat kEdgeWidth = 3;
 }
 
 @end
+
+@implementation iTermFilterCell
+
+- (BOOL)shouldUseFocusedAppearanceWithControlView:(NSView *)controlView {
+    return ([controlView respondsToSelector:@selector(currentEditor)] &&
+            [(NSControl *)controlView currentEditor]);
+}
+
+- (void)drawWithFrame:(NSRect)cellFrame inView:(NSView *)controlView {
+    NSRect originalFrame = cellFrame;
+    const BOOL focused = [self shouldUseFocusedAppearanceWithControlView:controlView];
+    [self.backgroundColor set];
+
+    CGFloat xInset, yInset;
+    if (focused) {
+        xInset = 2.5;
+        yInset = 1.5;
+    } else {
+        xInset = 0.5;
+        yInset = 0.5;
+    }
+    cellFrame = NSInsetRect(cellFrame, xInset, yInset);
+    NSBezierPath *path = [NSBezierPath bezierPathWithRoundedRect:cellFrame
+                                                         xRadius:4
+                                                         yRadius:4];
+    [path fill];
+
+    if (!focused) {
+        [[NSColor colorWithCalibratedWhite:0.5 alpha:1] set];
+        [path setLineWidth:0.25];
+        [path stroke];
+
+        cellFrame = NSInsetRect(cellFrame, 0.25, 0.25);
+        path = [NSBezierPath bezierPathWithRoundedRect:cellFrame
+                                               xRadius:4
+                                               yRadius:4];
+        [path setLineWidth:0.25];
+        [[NSColor colorWithCalibratedWhite:0.7 alpha:1] set];
+        [path stroke];
+    }
+
+    [self drawInteriorWithFrame:originalFrame inView:controlView];
+}
+
+@end

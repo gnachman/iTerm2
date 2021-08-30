@@ -63,6 +63,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult;
 
 - (NSInteger)findDriverCurrentIndex;
 - (void)findDriverSetFilter:(NSString *)filter withSideEffects:(BOOL)withSideEffects;
+- (void)findDriverInvalidateFrame;
 
 @end
 
@@ -104,5 +105,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult;
 
 - (void)owningViewDidBecomeFirstResponder;
 - (void)setFilterWithoutSideEffects:(NSString *)filter;
+- (void)setFilterHidden:(BOOL)hidden;
+- (void)toggleFilter;
+- (void)invalidateFrame;
 
 @end

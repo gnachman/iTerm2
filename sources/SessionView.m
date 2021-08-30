@@ -461,11 +461,21 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
                                                           bundle:[NSBundle bundleForClass:self.class]];
     [[dropDownViewController view] setHidden:YES];
     [super addSubview:dropDownViewController.view];
-    NSRect aRect = [self frame];
-    NSSize size = [[dropDownViewController view] frame].size;
-    [dropDownViewController setFrameOrigin:NSMakePoint(aRect.size.width - size.width - 30,
-                                                       aRect.size.height - size.height)];
+    [self updateDropDownFrame:dropDownViewController];
     return dropDownViewController;
+}
+
+- (void)findDriverInvalidateFrame {
+    [self updateDropDownFrame:_dropDownFindViewController];
+}
+
+- (void)updateDropDownFrame:(iTermDropDownFindViewController *)dropDownViewController {
+    NSRect aRect = [self frame];
+    NSSize size = [dropDownViewController desiredSize];
+    const NSPoint origin = NSMakePoint(aRect.size.width - size.width - 30,
+                                       aRect.size.height - size.height);
+    [dropDownViewController setOffsetFromTopRightOfSuperview:NSMakeSize(30, 0)];
+    [dropDownViewController.view setFrame:NSMakeRect(origin.x, origin.y, size.width, size.height)];
 }
 
 - (BOOL)isDropDownSearchVisible {
@@ -1111,14 +1121,11 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     if (frameSize.width < 340) {
         [findView setFrameSize:NSMakeSize(MAX(150, frameSize.width - 50),
                                           [findView frame].size.height)];
-        [_dropDownFindViewController setFrameOrigin:NSMakePoint(frameSize.width - [findView frame].size.width - 30,
-                                                                frameSize.height - [findView frame].size.height)];
     } else {
         [findView setFrameSize:NSMakeSize(290,
                                           [findView frame].size.height)];
-        [_dropDownFindViewController setFrameOrigin:NSMakePoint(frameSize.width - [findView frame].size.width - 30,
-                                                                frameSize.height - [findView frame].size.height)];
     }
+    [self updateFindViewFrame];
 }
 
 + (NSDate *)lastResizeDate {
@@ -1590,8 +1597,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     DLog(@"update findview frame");
     NSRect aRect = self.frame;
     NSView *findView = _dropDownFindViewController.view;
-    [_dropDownFindViewController setFrameOrigin:NSMakePoint(aRect.size.width - [findView frame].size.width - 30,
-                                                            aRect.size.height - [findView frame].size.height)];
+    [_dropDownFindViewController setOffsetFromTopRightOfSuperview:NSMakeSize(30, 0)];
 }
 
 - (void)updateScrollViewFrame {

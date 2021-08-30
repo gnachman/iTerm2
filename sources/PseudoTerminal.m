@@ -2905,6 +2905,13 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
+- (IBAction)filter:(id)sender {
+    DLog(@"begin");
+    [[self currentSession] showFindPanel];
+    iTermFindDriver *findDriver = self.currentSession.view.findDriver;
+    [findDriver setFilterHidden:NO];
+}
+
 - (IBAction)findUrls:(id)sender {
     DLog(@"begin");
     iTermFindDriver *findDriver = self.currentSession.view.findDriver;
@@ -7395,15 +7402,6 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     [self replaceSyntheticActiveSessionWithLiveSessionIfNeeded];
 }
 
-- (IBAction)filter:(id)sender {
-    PTYSession *session = [self currentSession];
-    NSString *query = [[iTermFindPasteboard sharedInstance] stringValue];
-    if (query) {
-        [self showLinesMatchingQuery:query
-                         fromSession:session];
-    }
-}
-
 - (IBAction)zoomOnSelection:(id)sender {
     PTYSession *session = [self currentSession];
     iTermSelection *selection = session.textview.selection;
@@ -10917,6 +10915,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 
 - (IBAction)showFindPanel:(id)sender {
     [[self currentSession] showFindPanel];
+    [self.currentSession.view.findDriver setFilterHidden:YES];
     [[iTermFindPasteboard sharedInstance] updateObservers:nil];
 }
 

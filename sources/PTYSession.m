@@ -6008,7 +6008,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         [self clearBuffer];
     }
     assert(self.liveSession);
-    
+
     [_filter autorelease];
     _filter = [filter copy];
 
@@ -6024,6 +6024,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 - (void)findViewControllerDidCeaseToBeMandatory:(id<iTermFindViewController>)sender {
     [_view findViewDidHide];
+}
+
+- (void)findDriverInvalidateFrame {
+    [_view findDriverInvalidateFrame];
 }
 
 - (NSImage *)snapshot {
