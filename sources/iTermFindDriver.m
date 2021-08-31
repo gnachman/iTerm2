@@ -368,6 +368,9 @@ static NSString *gSearchString;
     if (visible != _isVisible) {
         _isVisible = visible;
         [self.delegate findViewControllerVisibilityDidChange:self.viewController];
+        if (!visible && self.viewController.filterIsVisible) {
+            [self.delegate findDriverFilterVisibilityDidChange:NO];
+        }
     }
 }
 
@@ -626,6 +629,14 @@ static NSString *gSearchString;
 
 - (void)invalidateFrame {
     [self.delegate findDriverInvalidateFrame];
+}
+
+- (void)filterVisibilityDidChange {
+    [self.delegate findDriverFilterVisibilityDidChange:self.viewController.filterIsVisible];
+}
+
+- (void)setFilterProgress:(double)progress {
+    [self.viewController setFilterProgress:progress];
 }
 
 @end

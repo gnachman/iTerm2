@@ -39,6 +39,7 @@
 #import "iTermSearchFieldCell.h"
 #import "iTermSystemVersion.h"
 #import "NSEvent+iTerm.h"
+#import "NSObject+iTerm.h"
 #import "NSTextField+iTerm.h"
 
 // This used to be absurdly fast (.075) for reasons neither I nor revision
@@ -56,6 +57,7 @@ static const CGFloat kFilterHeight = 30;
 
     // Fades out the progress indicator.
     NSTimer *_animationTimer;
+    NSTimer *_filterAnimationTimer;
 
     NSRect fullFrame_;
     CGFloat _baseHeight;
@@ -96,11 +98,6 @@ static const CGFloat kFilterHeight = 30;
 
 #pragma mark - iTermFindViewController
 
-- (void)awakeFromNib {
-    _baseHeight = NSHeight(self.view.bounds);
-    [super awakeFromNib];
-}
-
 - (BOOL)filterIsVisible {
     [self view];
     return !_filterWrapper.isHidden;
@@ -110,6 +107,7 @@ static const CGFloat kFilterHeight = 30;
     if (_filterWrapper.isHidden != filterHidden) {
         _filterWrapper.hidden = filterHidden;
         [self.driver invalidateFrame];
+        [self.driver filterVisibilityDidChange];
     }
     if (!filterHidden) {
         [_filterField.window makeFirstResponder:_filterField];
@@ -194,6 +192,10 @@ static const CGFloat kFilterHeight = 30;
     return _filterField.stringValue;
 }
 
+- (BOOL)searchIsVisible {
+    return self.viewLoaded && !self.view.isHidden;
+}
+
 - (void)setFilter:(NSString *)filter {
     const BOOL shouldBeHidden = filter.length == 0;
     if (shouldBeHidden != _filterWrapper.isHidden) {
@@ -203,6 +205,22 @@ static const CGFloat kFilterHeight = 30;
     if (!shouldBeHidden) {
         [_filterField.window makeFirstResponder:_filterField];
         _filterField.currentEditor.selectedRange = NSMakeRange(filter.length, 0);
+    }
+}
+
+- (void)setFilterProgress:(double)progress {
+    iTermSearchFieldCell *cell = [iTermSearchFieldCell castFrom:_filterField.cell];
+    if (round(progress * 100) != round(cell.fraction * 100)) {
+        [_filterField setNeedsDisplay:YES];
+    }
+
+    [cell setFraction:progress];
+    if (cell.needsAnimation && !_filterAnimationTimer) {
+        _filterAnimationTimer = [NSTimer scheduledTimerWithTimeInterval:1.0 / 60.0
+                                                                 target:self
+                                                               selector:@selector(redrawFilterField:)
+                                                               userInfo:nil
+                                                                repeats:YES];
     }
 }
 
@@ -243,6 +261,11 @@ static const CGFloat kFilterHeight = 30;
 }
 
 #pragma mark - NSViewController
+
+- (void)awakeFromNib {
+    _baseHeight = NSHeight(self.view.bounds);
+    [super awakeFromNib];
+}
 
 - (BOOL)validateUserInterfaceItem:(NSMenuItem *)item {
     if (item.action == @selector(toggleFilter:)) {
@@ -396,6 +419,16 @@ static const CGFloat kFilterHeight = 30;
         _animationTimer = nil;
     }
     [findBarTextField_ setNeedsDisplay:YES];
+}
+
+- (void)redrawFilterField:(NSTimer *)timer {
+    iTermSearchFieldCell *cell = _filterField.cell;
+    [cell willAnimate];
+    if (!cell.needsAnimation) {
+        [_filterAnimationTimer invalidate];
+        _filterAnimationTimer = nil;
+    }
+    [_filterField setNeedsDisplay:YES];
 }
 
 - (void)deselectFindBarTextField {

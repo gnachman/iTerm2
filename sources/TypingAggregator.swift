@@ -11,13 +11,18 @@ import Foundation
 /// `text field ---delegate---> TypingAggregator  ---delegate---> your object`
 @objc(iTermTypingAggregator)
 class TypingAggregator: NSObject, NSControlTextEditingDelegate {
-    private let interval = TimeInterval(2)
+    private let interval = TimeInterval(0.5)
     @IBOutlet weak var delegate: NSControlTextEditingDelegate?
     private var lastChange = Date.distantPast
     private var timer: Timer? = nil
     private var lastControlTextDidChangeNotification: Notification? = nil
 
     @objc func controlTextDidChange(_ notification: Notification) {
+        if let field = notification.object as? NSTextField, field.stringValue.isEmpty {
+            lastControlTextDidChangeNotification = notification
+            updateIfNeeded()
+            return
+        }
         scheduleTimer()
         lastControlTextDidChangeNotification = notification
     }

@@ -20,6 +20,8 @@
 @class VT100ScreenMark;
 @protocol iTermMark;
 @class VT100Terminal;
+@class iTermAsyncFilter;
+@protocol iTermFilterDestination;
 
 // Dictionary keys for -highlightTextInRange:basedAtAbsoluteLineNumber:absoluteLineNumber:color:
 extern NSString * const kHighlightForegroundColor;
@@ -104,6 +106,7 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
                    length:(int)length
              continuation:(screen_char_t)continuation;
 - (void)appendLinesMatchingQuery:(NSString *)query from:(VT100Screen *)source mode:(iTermFindMode)mode;
+- (void)setContentsFromLineBuffer:(LineBuffer *)lineBuffer;
 
 // Append a string to the screen at the current cursor position. The terminal's insert and wrap-
 // around modes are respected, the cursor is advanced, the screen may be scrolled, and the line
@@ -147,6 +150,10 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 // Restore the saved position into a passed-in find context (see saveFindContextAbsPos and
 // storeLastPositionInLineBufferAsFindContextSavedPosition).
 - (void)restoreSavedPositionToFindContext:(FindContext *)context;
+
+- (iTermAsyncFilter *)newAsyncFilterWithDestination:(id<iTermFilterDestination>)destination
+                                              query:(NSString *)query
+                                           progress:(void (^)(double))progress;
 
 - (NSString *)compactLineDump;
 - (NSString *)compactLineDumpWithHistory;

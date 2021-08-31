@@ -23,6 +23,7 @@ typedef NS_ENUM(NSUInteger, iTermFindMode) {
 @property (nonatomic, copy) NSString *findString;
 @property (nonatomic, copy) NSString *filter;
 @property (nonatomic) BOOL filterIsVisible;
+@property (nonatomic, readonly) BOOL searchIsVisible;
 
 - (void)close;
 - (void)open;
@@ -33,5 +34,6 @@ typedef NS_ENUM(NSUInteger, iTermFindMode) {
 - (void)countDidChange;
 - (void)toggleFilter;
 - (void)setFilterHidden:(BOOL)filterHidden;
+- (void)setFilterProgress:(double)progress;
 
 @end

@@ -64,6 +64,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult;
 - (NSInteger)findDriverCurrentIndex;
 - (void)findDriverSetFilter:(NSString *)filter withSideEffects:(BOOL)withSideEffects;
 - (void)findDriverInvalidateFrame;
+- (void)findDriverFilterVisibilityDidChange:(BOOL)visible;
 
 @end
 
@@ -108,5 +109,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult;
 - (void)setFilterHidden:(BOOL)hidden;
 - (void)toggleFilter;
 - (void)invalidateFrame;
+- (void)filterVisibilityDidChange;
+- (void)setFilterProgress:(double)progress;
 
 @end

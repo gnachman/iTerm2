@@ -1927,6 +1927,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
           scrollToFirstResult:scrollToFirstResult];
 }
 
+- (void)findDriverFilterVisibilityDidChange:(BOOL)visible {
+    [self.delegate findDriverFilterVisibilityDidChange:visible];
+}
+
 - (void)findDriverSetFilter:(NSString *)filter withSideEffects:(BOOL)withSideEffects {
     [self.delegate findDriverSetFilter:filter withSideEffects:withSideEffects];
 }

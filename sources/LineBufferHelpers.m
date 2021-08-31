@@ -17,5 +17,23 @@
 @end
 
 @implementation XYRange
+
+- (int)xStart {
+    return xStart;
+}
+
+- (int)yStart {
+    return yStart;
+
+}
+- (int)xEnd {
+    return xEnd;
+
+}
+- (int)yEnd {
+    return yEnd;
+
+}
+
 @end
 

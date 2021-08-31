@@ -323,6 +323,7 @@ static const NSUInteger kMaxHosts = 100;
     iTermCoprocessDelegate,
     iTermCopyModeHandlerDelegate,
     iTermComposerManagerDelegate,
+    iTermFilterDestination,
     iTermHotKeyNavigableSession,
     iTermIntervalTreeObserver,
     iTermLogging,
@@ -640,6 +641,8 @@ static const NSUInteger kMaxHosts = 100;
 
     BOOL _initializationFinished;
     BOOL _needsJiggle;
+
+    iTermAsyncFilter *_asyncFilter;
 }
 
 @synthesize isDivorced = _divorced;
@@ -1028,6 +1031,8 @@ ITERM_WEAKLY_REFERENCEABLE
     [_triggersSlownessDetector release];
     [_idempotentTriggerRateLimit release];
     [_filter release];
+    [_asyncFilter cancel];
+    [_asyncFilter release];
 
     [super dealloc];
 }
@@ -6003,17 +6008,47 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     if ([filter isEqualToString:_filter]) {
         return;
     }
-    if (_filter) {
-        DLog(@"Clear buffer because there is a pre-existing filter");
-        [self clearBuffer];
+    VT100Screen *source = nil;
+    if ([_asyncFilter canRefineWithQuery:filter]) {
+        source = self.screen;
+    } else {
+        source = self.liveSession.screen;
     }
+    [_asyncFilter cancel];
+    const BOOL replacingFilter = (_filter != nil);
     assert(self.liveSession);
 
     [_filter autorelease];
     _filter = [filter copy];
 
+    [_asyncFilter autorelease];
     DLog(@"Append lines from %@", self.liveSession);
-    [self appendLinesMatchingQuery:filter fromSession:self.liveSession];
+    __weak __typeof(self) weakSelf = self;
+    _asyncFilter = [source newAsyncFilterWithDestination:self
+                                                   query:filter
+                                                progress:^(double progress) {
+        [weakSelf setFilterProgress:progress];
+    }];
+    if (replacingFilter) {
+        DLog(@"Clear buffer because there is a pre-existing filter");
+        [self clearBuffer];
+    }
+    [_asyncFilter start];
+}
+
+- (void)setFilterProgress:(double)progress {
+    _view.findDriver.filterProgress = progress;
+}
+
+- (void)findDriverFilterVisibilityDidChange:(BOOL)visible {
+    if (!visible) {
+        [_asyncFilter cancel];
+        [_asyncFilter autorelease];
+        _asyncFilter = nil;
+        PTYSession *liveSession = [[self.liveSession retain] autorelease];
+        [self.delegate session:self setFilter:nil];
+        [liveSession.view.findDriver close];
+    }
 }
 
 - (void)findDriverSetFilter:(NSString *)filter withSideEffects:(BOOL)withSideEffects{
@@ -14868,6 +14903,18 @@ getOptionKeyBehaviorLeft:(iTermOptionKeyBehavior *)left
     [ProfileModel updateSharedProfileWithGUID:self.profile[KEY_ORIGINAL_GUID]
                                     newValues:@{ KEY_TRIGGERS: self.profile[KEY_TRIGGERS],
                                                  KEY_TRIGGERS_USE_INTERPOLATED_STRINGS: self.profile[KEY_TRIGGERS_USE_INTERPOLATED_STRINGS] }];
+}
+
+#pragma mark - iTermFilterDestination
+
+- (void)filterDestinationAppendCharacters:(const screen_char_t *)line
+                                    count:(int)count
+                             continuation:(screen_char_t)continuation {
+    [_screen appendScreenChars:(screen_char_t *)line length:count continuation:continuation];
+}
+
+- (void)filterDestinationAdoptLineBuffer:(LineBuffer *)lineBuffer {
+    [_screen setContentsFromLineBuffer:lineBuffer];
 }
 
 @end

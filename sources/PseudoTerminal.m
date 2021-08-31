@@ -10914,8 +10914,11 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 #pragma mark - Find
 
 - (IBAction)showFindPanel:(id)sender {
+    const BOOL findPanelWasOpen = self.currentSession.view.findDriver.viewController.searchIsVisible;
     [[self currentSession] showFindPanel];
-    [self.currentSession.view.findDriver setFilterHidden:YES];
+    if (!findPanelWasOpen) {
+        [self.currentSession.view.findDriver setFilterHidden:YES];
+    }
     [[iTermFindPasteboard sharedInstance] updateObservers:nil];
 }
 

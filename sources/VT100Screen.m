@@ -5,6 +5,7 @@
 #import "DebugLogging.h"
 #import "DVR.h"
 #import "IntervalTree.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermCapturedOutputMark.h"
 #import "iTermColorMap.h"
@@ -1444,6 +1445,15 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     if (commandStartX_ != -1) {
         [delegate_ screenCommandDidChangeWithRange:[self commandRange]];
     }
+}
+
+- (void)setContentsFromLineBuffer:(LineBuffer *)lineBuffer {
+    [self clearBuffer];
+    [linebuffer_ appendContentsOfLineBuffer:lineBuffer width:currentGrid_.size.width];
+    const int numberOfLines = [self numberOfLines];
+    [self.currentGrid restoreScreenFromLineBuffer:linebuffer_
+                                  withDefaultChar:[self.currentGrid defaultChar]
+                                maxLinesToRestore:MIN(numberOfLines, self.height)];
 }
 
 - (void)crlf
@@ -5723,6 +5733,19 @@ static void SwapInt(int *a, int *b) {
     [self popScrollbackLines:linesPushed];
     return keepSearching;
 }
+
+- (iTermAsyncFilter *)newAsyncFilterWithDestination:(id<iTermFilterDestination>)destination
+                                              query:(NSString *)query
+                                           progress:(void (^)(double))progress {
+    return [[iTermAsyncFilter alloc] initWithQuery:query
+                                        lineBuffer:linebuffer_
+                                              grid:self.currentGrid
+                                              mode:iTermFindModeSmartCaseSensitivity
+                                       destination:destination
+                                           cadence:1.0 / 60.0
+                                          progress:progress];
+}
+
 
 #pragma mark - PTYNoteViewControllerDelegate
 

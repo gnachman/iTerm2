@@ -496,6 +496,17 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     }
 }
 
+- (void)appendContentsOfLineBuffer:(LineBuffer *)other width:(int)width {
+    while (_lineBlocks.lastBlock.isEmpty) {
+        [_lineBlocks removeLastBlock];
+    }
+    for (LineBlock *block in other->_lineBlocks.blocks) {
+        [_lineBlocks addBlock:[[block copy] autorelease]];
+    }
+    num_wrapped_lines_width = -1;
+    [self dropExcessLinesWithWidth:width];
+}
+
 - (ScreenCharArray *)wrappedLineAtIndex:(int)lineNum
                                   width:(int)width
                            continuation:(screen_char_t *)continuation {
