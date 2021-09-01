@@ -165,6 +165,33 @@
     [_searchField selectText:nil];
 }
 
+- (void)setFilterHidden:(BOOL)filterHidden {
+}
+
+- (void)setFilterProgress:(double)progress {
+}
+
+- (void)setOffsetFromTopRightOfSuperview:(NSSize)offset {
+}
+
+- (void)toggleFilter {
+}
+
+- (BOOL)filterIsVisible {
+    return NO;
+}
+
+- (BOOL)searchIsVisible {
+    return YES;
+}
+
+- (NSString *)filter {
+    return nil;
+}
+
+- (void)setFilter:(NSString *)filter {
+}
+
 - (void)setFrameOrigin:(NSPoint)p {
 }
 
@@ -243,7 +270,7 @@
     if (field != _searchField) {
         return;
     }
-    
+
     [self.driver userDidEditSearchQuery:_searchField.stringValue
                             fieldEditor:aNotification.userInfo[@"NSFieldEditor"]];
 }
@@ -269,7 +296,7 @@ doCommandBySelector:(SEL)commandSelector {
     if (control != _searchField) {
         return NO;
     }
-    
+
     if (commandSelector == @selector(cancelOperation:)) {
         // Have the esc key close the find bar instead of erasing its contents.
         [self.driver close];
@@ -295,7 +322,7 @@ doCommandBySelector:(SEL)commandSelector {
     if (postingObject != _searchField) {
         return;
     }
-    
+
     int move = [[[aNotification userInfo] objectForKey:@"NSTextMovement"] intValue];
     switch (move) {
         case NSOtherTextMovement:

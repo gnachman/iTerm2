@@ -328,6 +328,10 @@ const double iTermStatusBarBaseComponentDefaultPriority = 5;
     return nil;
 }
 
+- (nullable NSViewController<iTermFilterViewController> *)statusBarComponentFilterViewController {
+    return nil;
+}
+
 - (void)statusBarComponentWidthDidChangeTo:(CGFloat)newWidth {
 }
 

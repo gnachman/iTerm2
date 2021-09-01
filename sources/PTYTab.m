@@ -1494,7 +1494,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     [syntheticSession.screen terminalSetCursorVisible:NO];
     [self replaceActiveSessionWithSyntheticSession:syntheticSession];
     syntheticSession.filter = query;
-    [syntheticSession showFindPanel];
+    [syntheticSession showFilter];
     [syntheticSession.view.findDriver setFilterWithoutSideEffects:query];
 }
 
@@ -1561,7 +1561,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     PtyLog(@"PTYTab showLiveSession:%p", liveSession);
     replaySession.active = NO;
     [liveSession setProfile:[replaySession profile]];
-
+    [liveSession willRetireSyntheticSession:replaySession];
     SessionView* oldView = [replaySession view];
     SessionView* newView = [liveSession view];
     NSSplitView* parentSplit = (NSSplitView*)[oldView superview];
@@ -6633,6 +6633,15 @@ backgroundColor:(NSColor *)backgroundColor {
 
 - (void)session:(PTYSession *)session setFilter:(NSString *)filter {
     [self setFilter:filter inSession:session];
+}
+
+- (PTYSession *)sessionSyntheticSessionFor:(PTYSession *)live {
+    for (PTYSession *session in self.sessions) {
+        if (session.liveSession == live) {
+            return session;
+        }
+    }
+    return nil;
 }
 
 #pragma mark - iTermObject

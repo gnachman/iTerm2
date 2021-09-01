@@ -45,6 +45,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (BOOL)statusBarCanDragWindow;
 - (BOOL)statusBarRevealComposer;
 - (iTermActivityInfo)statusBarActivityInfo;
+- (void)statusBarSetFilter:(NSString * _Nullable)query;
 
 @end
 
@@ -61,6 +62,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nullable, nonatomic, strong) id<iTermStatusBarComponent> temporaryRightComponent;
 @property (nonatomic, weak) id<iTermStatusBarViewControllerDelegate> delegate;
 @property (nonatomic) BOOL mustShowSearchComponent;
+@property (nonatomic, readonly) NSArray<id<iTermStatusBarComponent>> *visibleComponents;
 
 - (instancetype)initWithLayout:(iTermStatusBarLayout *)layout
                          scope:(iTermVariableScope *)scope NS_DESIGNATED_INITIALIZER;

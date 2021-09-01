@@ -271,6 +271,7 @@ backgroundColor:(NSColor *)backgroundColor;
 - (void)sessionActivate:(PTYSession *)session;
 
 - (void)session:(PTYSession *)session setFilter:(NSString *)filter;
+- (PTYSession *)sessionSyntheticSessionFor:(PTYSession *)live;
 
 @end
 
@@ -598,6 +599,8 @@ backgroundColor:(NSColor *)backgroundColor;
 // Begin showing DVR frames from some live session.
 - (void)setDvr:(DVR*)dvr liveSession:(PTYSession*)liveSession;
 
+- (void)willRetireSyntheticSession:(PTYSession *)syntheticSession;
+
 // Append a bunch of lines from this (presumably synthetic) session from another (presumably live)
 // session.
 - (void)appendLinesInRange:(NSRange)rangeOfLines fromSession:(PTYSession *)source;
@@ -782,6 +785,8 @@ backgroundColor:(NSColor *)backgroundColor;
 
 // Show the find view
 - (void)showFindPanel;
+- (void)showFilter;
+- (void)stopFiltering;
 
 // Find next/previous occurrence of find string.
 - (void)searchNext;

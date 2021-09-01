@@ -120,6 +120,7 @@ NS_ASSUME_NONNULL_BEGIN
                                  [iTermStatusBarWorkingDirectoryComponent class],
 
                                  [iTermStatusBarSearchFieldComponent class],
+                                 [iTermStatusBarFilterComponent class],
                                  [iTermStatusBarComposerComponent class],
 
                                  [iTermStatusBarFixedSpacerComponent class],

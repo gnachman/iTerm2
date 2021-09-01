@@ -51,6 +51,8 @@ forInvocation:(NSString *)invocation
 - (void)statusBarComponentComposerRevealComposer:(id<iTermStatusBarComponent>)component;
 - (iTermActivityInfo)statusBarComponentActivityInfo:(id<iTermStatusBarComponent>)component;
 - (id<iTermTriggersDataSource>)statusBarComponentTriggersDataSource:(id<iTermStatusBarComponent>)component;
+- (void)statusBarRemoveTemporaryComponent:(id<iTermStatusBarComponent>)component;
+- (void)statusBarSetFilter:(NSString * _Nullable)query;
 @end
 
 @protocol iTermStatusBarComponentFactory<NSSecureCoding, NSCopying, NSObject>
@@ -131,6 +133,7 @@ forInvocation:(NSString *)invocation
 
 // If this component serves as a search view, returns the view controller. Otherwise, returns nil.
 - (nullable NSViewController<iTermFindViewController> *)statusBarComponentSearchViewController;
+- (nullable NSViewController<iTermFilterViewController> *)statusBarComponentFilterViewController;
 
 // Called when the view size changes.
 - (void)statusBarComponentWidthDidChangeTo:(CGFloat)newWidth;

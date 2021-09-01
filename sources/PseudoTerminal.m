@@ -2907,9 +2907,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (IBAction)filter:(id)sender {
     DLog(@"begin");
-    [[self currentSession] showFindPanel];
-    iTermFindDriver *findDriver = self.currentSession.view.findDriver;
-    [findDriver setFilterHidden:NO];
+    [self.currentSession showFilter];
 }
 
 - (IBAction)findUrls:(id)sender {
@@ -7366,6 +7364,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     [[newSession view] setViewId:[[oldSession view] viewId]];
     [[newSession view] setShowTitle:[[oldSession view] showTitle] adjustScrollView:YES];
     [[newSession view] setShowBottomStatusBar:oldSession.view.showBottomStatusBar adjustScrollView:YES];
+    [[newSession view] updateFindDriver];
 
     // Add this session to our term and make it current
     PTYTab *theTab = [tabViewItem identifier];
@@ -7399,7 +7398,11 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 }
 
 - (IBAction)zoomOut:(id)sender {
-    [self replaceSyntheticActiveSessionWithLiveSessionIfNeeded];
+    if (self.currentSession.filter.length) {
+        [self.currentSession stopFiltering];
+    } else {
+        [self replaceSyntheticActiveSessionWithLiveSessionIfNeeded];
+    }
 }
 
 - (IBAction)zoomOnSelection:(id)sender {

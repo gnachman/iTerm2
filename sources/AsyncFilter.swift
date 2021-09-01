@@ -133,7 +133,7 @@ class AsyncFilter: NSObject {
         self.query = query
         if query.isEmpty {
             updater = VerbatimUpdater() {
-                destination.adopt(lineBuffer)
+                destination.adopt(temp)
             }
         } else {
             updater = FilteringUpdater(query: query,

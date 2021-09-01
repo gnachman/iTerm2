@@ -4,7 +4,11 @@
 
 #import "DebugLogging.h"
 #import "iTermImageInfo.h"
+#import "iTermSearchFieldCell.h"
 #import "iTermStatusBarComponentKnob.h"
+#import "iTermStatusBarComponent.h"
+#import "iTermMiniSearchFieldViewController.h"
+#import "iTermPreferences.h"
 #import "iTermStatusBarTextComponent.h"
 #import "iTermTuple.h"
 #import "iTermVariableScope.h"

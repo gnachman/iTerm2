@@ -1070,11 +1070,28 @@ ITERM_WEAKLY_REFERENCEABLE
     [self.variablesScope setValue:_guid forVariableNamed:iTermVariableKeySessionID];
 }
 
+- (void)takeStatusBarViewControllerFrom:(PTYSession *)donorSession {
+    [_view takeFindDriverFrom:donorSession.view delegate:self];
+
+    _statusBarViewController.delegate = nil;
+    [_statusBarViewController release];
+
+    _statusBarViewController = donorSession->_statusBarViewController;
+    _statusBarViewController.delegate = self;
+
+    donorSession->_statusBarViewController = nil;
+}
+
+- (void)willRetireSyntheticSession:(PTYSession *)syntheticSession {
+    [self takeStatusBarViewControllerFrom:syntheticSession];
+}
+
 - (void)setLiveSession:(PTYSession *)liveSession {
     assert(liveSession != self);
     if (liveSession) {
         assert(!_liveSession);
         _synthetic = YES;
+        [self takeStatusBarViewControllerFrom:liveSession];
     }
     _liveSession = liveSession;
     [_liveSession retain];
@@ -5899,6 +5916,10 @@ ITERM_WEAKLY_REFERENCEABLE
     [_view showFindUI];
 }
 
+- (void)showFilter {
+    [_view showFilter];
+}
+
 - (iTermComposerManager *)composerManager {
     if (!_composerManager) {
         _composerManager = [[iTermComposerManager alloc] init];
@@ -8819,8 +8840,13 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         return NO;
     }
 
-    DLog(@"Unzooming");
-    [[_delegate realParentWindow] replaceSyntheticActiveSessionWithLiveSessionIfNeeded];
+    if (self.filter.length) {
+        DLog(@"stopFiltering");
+        [self stopFiltering];
+    } else {
+        DLog(@"Unzooming");
+        [[_delegate realParentWindow] replaceSyntheticActiveSessionWithLiveSessionIfNeeded];
+    }
     return YES;
 }
 
@@ -13928,6 +13954,30 @@ preferredEscaping:(iTermSendTextEscaping)preferredEscaping {
 
 - (iTermActivityInfo)statusBarActivityInfo {
     return _activityInfo;
+}
+
+- (void)statusBarSetFilter:(NSString *)query {
+    PTYSession *synthetic = [self.delegate sessionSyntheticSessionFor:self];
+    if (synthetic) {
+        [synthetic statusBarSetFilter:query];
+        return;
+    }
+    if (query) {
+        [self.delegate session:self setFilter:query];
+    } else {
+        [self stopFiltering];
+    }
+}
+
+// Called on the synthetic session.
+- (void)stopFiltering {
+    [_asyncFilter cancel];
+    [_asyncFilter autorelease];
+    _asyncFilter = nil;
+    if ([_statusBarViewController.temporaryRightComponent isKindOfClass:[iTermStatusBarFilterComponent class]]) {
+        _statusBarViewController.temporaryRightComponent = nil;
+    }
+    [self.delegate session:self setFilter:nil];
 }
 
 - (void)statusBarSetLayout:(nonnull iTermStatusBarLayout *)layout {

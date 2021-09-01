@@ -157,6 +157,10 @@ static NSString *gSearchString;
     [self.viewController open];
 }
 
+- (void)setDelegate:(id<iTermFindDriverDelegate>)delegate {
+    _delegate = delegate;
+}
+
 - (void)close {
     BOOL wasHidden = _viewController.view.isHidden;
     if (!wasHidden) {
