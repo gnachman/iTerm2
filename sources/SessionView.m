@@ -493,6 +493,9 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
 
     _findDriverType = donorView->_findDriverType;
 
+    _dropDownFindViewController = donorView->_dropDownFindViewController;
+    donorView->_dropDownFindViewController = nil;
+
     _dropDownFindDriver = donorView->_dropDownFindDriver;
     _temporaryStatusBarFindDriver = donorView->_temporaryStatusBarFindDriver;
     _permanentStatusBarFindDriver = donorView->_permanentStatusBarFindDriver;
@@ -629,7 +632,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
             }
         } else {
             _findDriverType = iTermSessionViewFindDriverDropDown;
-            [_temporaryStatusBarFindDriver open];
+            [_dropDownFindDriver open];
         }
     } else if (self.findDriver == nil) {
         assert(statusBarViewController);

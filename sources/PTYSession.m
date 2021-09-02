@@ -275,6 +275,7 @@ static NSString *const SESSION_ARRANGEMENT_CURSOR_TYPE_OVERRIDE = @"Cursor Type 
 static NSString *const SESSION_ARRANGEMENT_AUTOLOG_FILENAME = @"AutoLog File Name";  // NSString. New as of 12/4/19
 static NSString *const SESSION_ARRANGEMENT_REUSABLE_COOKIE = @"Reusable Cookie";  // NSString.
 static NSString *const SESSION_ARRANGEMENT_OVERRIDDEN_FIELDS = @"Overridden Fields";  // NSArray<NSString *>
+static NSString *const SESSION_ARRANGEMENT_FILTER = @"Filter";  // NSString
 
 // Keys for dictionary in SESSION_ARRANGEMENT_PROGRAM
 static NSString *const kProgramType = @"Type";  // Value will be one of the kProgramTypeXxx constants.
@@ -1031,6 +1032,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_asyncFilter cancel];
     [_asyncFilter release];
     [_contentSubscribers release];
+    [_foundingArrangement release];
 
     [super dealloc];
 }
@@ -1396,6 +1398,12 @@ ITERM_WEAKLY_REFERENCEABLE
     [aSession.nameController updateIfNeeded];
 }
 
+- (void)didFinishRestoration {
+    if ([_foundingArrangement[SESSION_ARRANGEMENT_FILTER] length] > 0) {
+        [self.delegate session:self setFilter:_foundingArrangement[SESSION_ARRANGEMENT_FILTER]];
+    }
+}
+
 + (PTYSession *)sessionFromArrangement:(NSDictionary *)arrangement
                                  named:(NSString *)arrangementName
                                 inView:(SessionView *)sessionView
@@ -1422,6 +1430,7 @@ ITERM_WEAKLY_REFERENCEABLE
         }
     }
     PTYSession *aSession = [[[PTYSession alloc] initSynthetic:NO] autorelease];
+    aSession.foundingArrangement = [arrangement dictionaryByRemovingObjectForKey:SESSION_ARRANGEMENT_CONTENTS];
     aSession.view = sessionView;
     aSession->_savedGridSize = VT100GridSizeMake(MAX(1, [arrangement[SESSION_ARRANGEMENT_COLUMNS] intValue]),
                                                  MAX(1, [arrangement[SESSION_ARRANGEMENT_ROWS] intValue]));
@@ -5004,6 +5013,14 @@ ITERM_WEAKLY_REFERENCEABLE
 - (BOOL)encodeArrangementWithContents:(BOOL)includeContents
                               encoder:(id<iTermEncoderAdapter>)result {
     DLog(@"Construct arrangement for session %@", self);
+    if (_filter.length && _liveSession != nil) {
+        DLog(@"Encode live session because this one is filtered.");
+        const BOOL ok = [_liveSession encodeArrangementWithContents:includeContents encoder:result];
+        if (ok) {
+            result[SESSION_ARRANGEMENT_FILTER] = _filter;
+        }
+        return ok;
+    }
     result[SESSION_ARRANGEMENT_COLUMNS] = @(_screen.width);
     result[SESSION_ARRANGEMENT_ROWS] = @(_screen.height);
     result[SESSION_ARRANGEMENT_BOOKMARK] = _profile;

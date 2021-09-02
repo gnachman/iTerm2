@@ -568,6 +568,9 @@ backgroundColor:(NSColor *)backgroundColor;
 @property(nonatomic, readonly, strong) iTermAsyncFilter *asyncFilter;
 @property(nonatomic, readonly) NSMutableArray<id<iTermContentSubscriber>> *contentSubscribers;
 
+// Excludes SESSION_ARRANGEMENT_CONTENTS. Nil if session not created from arrangement.
+@property(nonatomic, copy) NSDictionary *foundingArrangement;
+
 #pragma mark - methods
 
 + (NSDictionary *)repairedArrangement:(NSDictionary *)arrangement
@@ -924,6 +927,7 @@ backgroundColor:(NSColor *)backgroundColor;
 - (BOOL)closeComposer;
 - (void)didChangeScreen:(CGFloat)scaleFactor;
 - (void)addContentSubscriber:(id<iTermContentSubscriber>)contentSubscriber;
+- (void)didFinishRestoration;
 
 #pragma mark - API
 

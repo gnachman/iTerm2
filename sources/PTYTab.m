@@ -1488,6 +1488,10 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
         return;
     }
     PTYSession *syntheticSession = [self.realParentWindow syntheticSessionForSession:oldSession];
+    if (!syntheticSession) {
+        DLog(@"syntheticSessionForSession:%@ returned nl", oldSession);
+        return;
+    }
     [syntheticSession divorceAddressBookEntryFromPreferences];
     [syntheticSession setSessionSpecificProfileValues:@{ KEY_UNLIMITED_SCROLLBACK: @YES }];
     syntheticSession.screen.unlimitedScrollback = YES;
@@ -3110,6 +3114,9 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                                                      [session amendedColorKey:KEY_USE_TAB_COLOR]: @YES }];
     } else {
         [term updateTabColors];
+    }
+    for (PTYSession *session in self.sessions) {
+        [session didFinishRestoration];
     }
 }
 
