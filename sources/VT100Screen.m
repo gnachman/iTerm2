@@ -1410,6 +1410,7 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 - (void)appendScreenCharArrayAtCursor:(screen_char_t *)buffer
                                length:(int)len
                            shouldFree:(BOOL)shouldFree {
+    [delegate_ screenAppendScreenCharArray:buffer length:len];
     if (len >= 1) {
         screen_char_t lastCharacter = buffer[len - 1];
         if (lastCharacter.code == DWC_RIGHT && !lastCharacter.complexChar) {
@@ -3270,7 +3271,9 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
         screen_char_t filler;
         InitializeScreenChar(&filler, [terminal_ foregroundColorCode], [terminal_ backgroundColorCode]);
         filler.code = TAB_FILLER;
-        for (i = currentGrid_.cursorX; i < nextTabStop - 1; i++) {
+        const int startX = currentGrid_.cursorX;
+        const int limit = nextTabStop - 1;
+        for (i = startX; i < limit; i++) {
             if (setBackgroundColors) {
                 aLine[i] = filler;
             } else {
@@ -3289,6 +3292,8 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
             aLine[i].complexChar = NO;
             aLine[i].code = '\t';
         }
+        [delegate_ screenAppendScreenCharArray:aLine + currentGrid_.cursorX
+                                        length:nextTabStop - startX];
     }
     currentGrid_.cursorX = nextTabStop;
 }

@@ -1573,6 +1573,7 @@
 		A60E046126DEEE5E00DD162B /* MiniFilterViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = A60E046026DEEE5E00DD162B /* MiniFilterViewController.xib */; };
 		A60E046226DEEE5E00DD162B /* MiniFilterViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = A60E046026DEEE5E00DD162B /* MiniFilterViewController.xib */; };
 		A60E046326DEEE5E00DD162B /* MiniFilterViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = A60E046026DEEE5E00DD162B /* MiniFilterViewController.xib */; };
+		A60E046526E037BE00DD162B /* ContentSubscriber.swift in Sources */ = {isa = PBXBuildFile; fileRef = A60E046426E037BD00DD162B /* ContentSubscriber.swift */; };
 		A60EAE7D23F9CEB3007536CE /* ApplicationServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A60EAE7C23F9CEB3007536CE /* ApplicationServices.framework */; };
 		A60EBD171FAED952008C7F5B /* iTermCopyBackground.metal in Sources */ = {isa = PBXBuildFile; fileRef = A63819D21FAECE6800A9EF9E /* iTermCopyBackground.metal */; };
 		A60EBD181FAED953008C7F5B /* iTermCopyBackground.metal in Sources */ = {isa = PBXBuildFile; fileRef = A63819D21FAECE6800A9EF9E /* iTermCopyBackground.metal */; };
@@ -5240,6 +5241,7 @@
 		A60E045C26DED32A00DD162B /* StatusBarFilterComponent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusBarFilterComponent.swift; sourceTree = "<group>"; };
 		A60E045E26DEEA5100DD162B /* MiniFilterViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MiniFilterViewController.swift; sourceTree = "<group>"; };
 		A60E046026DEEE5E00DD162B /* MiniFilterViewController.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = MiniFilterViewController.xib; sourceTree = "<group>"; };
+		A60E046426E037BD00DD162B /* ContentSubscriber.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentSubscriber.swift; sourceTree = "<group>"; };
 		A60EAE7C23F9CEB3007536CE /* ApplicationServices.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ApplicationServices.framework; path = System/Library/Frameworks/ApplicationServices.framework; sourceTree = SDKROOT; };
 		A6110C382526FFCF00D18F61 /* iTermModifyOtherKeysMapper1.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermModifyOtherKeysMapper1.h; sourceTree = "<group>"; };
 		A6110C392526FFCF00D18F61 /* iTermModifyOtherKeysMapper1.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermModifyOtherKeysMapper1.m; sourceTree = "<group>"; };
@@ -9076,6 +9078,7 @@
 				A6644BE125CDCCD600419355 /* iTermLegacyView.m */,
 				A6F1B3BA269379D000546767 /* iTermClickSideEffects.h */,
 				A6D24D3C26BC5FA600CCE211 /* SwiftDebugLogging.swift */,
+				A60E046426E037BD00DD162B /* ContentSubscriber.swift */,
 			);
 			name = Core;
 			sourceTree = "<group>";
@@ -14603,6 +14606,7 @@
 				53D0FD4E237DC30F00DAFA8A /* NSIndexSet+iTerm.m in Sources */,
 				A629F59C23AFF4D400C2F16B /* iTermShellIntegrationPanel.m in Sources */,
 				A6A5995B25930F8F0041172E /* TextViewWrapper.m in Sources */,
+				A60E046526E037BE00DD162B /* ContentSubscriber.swift in Sources */,
 				A639359A210401C700A16D1C /* iTermStatusBarMemoryUtilizationComponent.m in Sources */,
 				A69CCB1D211BF4FF008ADA71 /* iTermRecordingCodec.m in Sources */,
 				A65429B020C492F000CE71B1 /* iTermParameterPanelWindowController.m in Sources */,

@@ -43,6 +43,7 @@ extern NSString *const iTermSessionWillTerminateNotification;
 @class FakeWindow;
 @class iTermAction;
 @class iTermAnnouncementViewController;
+@protocol iTermContentSubscriber;
 @class iTermEchoProbe;
 @class iTermExpect;
 @class iTermImageWrapper;
@@ -564,6 +565,8 @@ backgroundColor:(NSColor *)backgroundColor;
 @property(nonatomic, readonly) BOOL tmuxPaused;
 @property(nonatomic, readonly) NSString *userShell;  // Something like "/bin/bash".
 @property(nonatomic, copy) NSString *filter;
+@property(nonatomic, readonly, strong) iTermAsyncFilter *asyncFilter;
+@property(nonatomic, readonly) NSMutableArray<id<iTermContentSubscriber>> *contentSubscribers;
 
 #pragma mark - methods
 
@@ -920,6 +923,7 @@ backgroundColor:(NSColor *)backgroundColor;
 - (void)compose;
 - (BOOL)closeComposer;
 - (void)didChangeScreen:(CGFloat)scaleFactor;
+- (void)addContentSubscriber:(id<iTermContentSubscriber>)contentSubscriber;
 
 #pragma mark - API
 

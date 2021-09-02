@@ -95,7 +95,6 @@
 #import "iTermSessionNameController.h"
 #import "iTermSessionTitleBuiltInFunction.h"
 #import "iTermSetFindStringNotification.h"
-#import "iTerm2SharedARC-Swift.h"
 #import "iTermShellHistoryController.h"
 #import "iTermShortcut.h"
 #import "iTermShortcutInputView.h"
@@ -641,8 +640,6 @@ static const NSUInteger kMaxHosts = 100;
 
     BOOL _initializationFinished;
     BOOL _needsJiggle;
-
-    iTermAsyncFilter *_asyncFilter;
 }
 
 @synthesize isDivorced = _divorced;
@@ -1033,6 +1030,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_filter release];
     [_asyncFilter cancel];
     [_asyncFilter release];
+    [_contentSubscribers release];
 
     [super dealloc];
 }
@@ -3118,6 +3116,7 @@ ITERM_WEAKLY_REFERENCEABLE
     if (_triggerLineNumber == -1) {
         return;
     }
+
     long long startAbsLineNumber;
     iTermStringLine *stringLine = [_screen stringLineAsStringAtAbsoluteLineNumber:_triggerLineNumber
                                                                          startPtr:&startAbsLineNumber];
@@ -6036,6 +6035,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         source = self.liveSession.screen;
     }
     [_asyncFilter cancel];
+    [self.liveSession removeContentSubscriber:_asyncFilter];
     const BOOL replacingFilter = (_filter != nil);
     assert(self.liveSession);
 
@@ -6050,6 +6050,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                                                 progress:^(double progress) {
         [weakSelf setFilterProgress:progress];
     }];
+    [self.liveSession addContentSubscriber:_asyncFilter];
     if (replacingFilter) {
         DLog(@"Clear buffer because there is a pre-existing filter");
         [self clearBuffer];
@@ -6064,6 +6065,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 - (void)findDriverFilterVisibilityDidChange:(BOOL)visible {
     if (!visible) {
         [_asyncFilter cancel];
+        [self.liveSession removeContentSubscriber:_asyncFilter];
         [_asyncFilter autorelease];
         _asyncFilter = nil;
         PTYSession *liveSession = [[self.liveSession retain] autorelease];
@@ -12667,6 +12669,7 @@ preferredEscaping:(iTermSendTextEscaping)preferredEscaping {
 }
 
 - (void)screenDidReceiveLineFeed {
+    [self publishNewline];
     [_pwdPoller didReceiveLineFeed];
     if (_logging.enabled && !self.isTmuxGateway) {
         switch (_logging.style) {
@@ -12838,6 +12841,10 @@ preferredEscaping:(iTermSendTextEscaping)preferredEscaping {
             [_logging logData:[data inlineHTMLData]];
             break;
     }
+}
+
+- (void)screenAppendScreenCharArray:(const screen_char_t *)line length:(int)length {
+    [self publishScreenCharArray:line length:length];
 }
 
 - (NSString *)screenStringForKeypressWithCode:(unsigned short)keycode
@@ -13451,6 +13458,17 @@ preferredEscaping:(iTermSendTextEscaping)preferredEscaping {
 
 #pragma mark - API
 
+- (void)addContentSubscriber:(id<iTermContentSubscriber>)contentSubscriber {
+    if (!_contentSubscribers) {
+        _contentSubscribers = [[NSMutableArray alloc] init];
+    }
+    [_contentSubscribers addObject:contentSubscriber];
+}
+
+- (void)removeContentSubscriber:(id<iTermContentSubscriber>)contentSubscriber {
+    [_contentSubscribers removeObject:contentSubscriber];
+}
+
 - (NSString *)stringForLine:(screen_char_t *)screenChars
                      length:(int)length
                   cppsArray:(NSMutableArray<ITMCodePointsPerCell *> *)cppsArray {
@@ -13971,6 +13989,7 @@ preferredEscaping:(iTermSendTextEscaping)preferredEscaping {
 
 // Called on the synthetic session.
 - (void)stopFiltering {
+    [self.liveSession removeContentSubscriber:_asyncFilter];
     [_asyncFilter cancel];
     [_asyncFilter autorelease];
     _asyncFilter = nil;

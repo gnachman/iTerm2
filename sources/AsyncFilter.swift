@@ -36,11 +36,13 @@ struct FilteringUpdater: Updater {
     private let lineBuffer: LineBuffer
     private let count: Int32
     private let accept: (Int32) -> (Void)
-    private let context = FindContext()
-    private let stopAt: LineBufferPosition
+    private var context: FindContext
+    private var stopAt: LineBufferPosition
     private let width: Int32
-
+    private let mode: iTermFindMode
+    private let query: String
     private var lastY = Int32(-1)
+    private var lastPosition: LineBufferPosition? = nil
 
     init(query: String,
          lineBuffer: LineBuffer,
@@ -52,7 +54,15 @@ struct FilteringUpdater: Updater {
         self.count = count
         self.width = Int32(width)
         self.accept = accept
-        let startPosition = lineBuffer.firstPosition()
+        self.mode = mode
+        self.query = query
+        context = FindContext()
+        stopAt = lineBuffer.lastPosition()
+        begin(at: lineBuffer.firstPosition())
+    }
+
+    private mutating func begin(at startPosition: LineBufferPosition) {
+        context = FindContext()
         stopAt = lineBuffer.lastPosition()
         lineBuffer.prepareToSearch(for: query,
                                    startingAt: startPosition,
@@ -66,6 +76,9 @@ struct FilteringUpdater: Updater {
     }
 
     mutating func update() -> Bool {
+        if context.status == .NotFound, let lastPosition = lastPosition {
+            begin(at: lastPosition)
+        }
         guard context.status == .Searching || context.status == .Matched else {
             DLog("FilteringUpdater: finished, return false")
             return false
@@ -94,6 +107,10 @@ struct FilteringUpdater: Updater {
         @unknown default:
             fatalError()
         }
+        if context.status == .NotFound {
+            lastPosition = lineBuffer.lastPosition()
+            return false
+        }
         return true
     }
 }
@@ -115,6 +132,8 @@ class AsyncFilter: NSObject {
     private let query: String
     private var updater: Updater
     private var started = false
+    private let lineBufferCopy: LineBuffer
+    private let width: Int32
 
     @objc(initWithQuery:lineBuffer:grid:mode:destination:cadence:progress:)
     init(query: String,
@@ -125,9 +144,11 @@ class AsyncFilter: NSObject {
          cadence: TimeInterval,
          progress: ((Double) -> (Void))?) {
         let temp = lineBuffer.newAppendOnlyCopy()
+        lineBufferCopy = temp
         grid.appendLines(grid.numberOfLinesUsed(), to: temp)
         let numberOfLines = temp.numLines(withWidth: grid.size.width)
         let width = grid.size.width
+        self.width = width
         self.cadence = cadence
         self.progress = progress
         self.query = query
@@ -204,4 +225,42 @@ class AsyncFilter: NSObject {
             progress?(updater.progress)
         }
     }
+}
+
+extension AsyncFilter: ContentSubscriber {
+    func deliver(_ array: ScreenCharArray) {
+        lineBufferCopy.appendLine(array.line,
+                                  length: array.length,
+                                  partial: array.eol != EOL_HARD,
+                                  width: width,
+                                  timestamp: Date.timeIntervalSinceReferenceDate,
+                                  continuation: array.continuation)
+        if timer != nil {
+            return
+        }
+        while updater.update() { }
+    }
+}
+
+extension screen_char_t {
+    static var zero = screen_char_t(code: 0,
+                                    foregroundColor: UInt32(ALTSEM_DEFAULT),
+                                    fgGreen: 0,
+                                    fgBlue: 0,
+                                    backgroundColor: UInt32(ALTSEM_DEFAULT),
+                                    bgGreen: 0,
+                                    bgBlue: 0,
+                                    foregroundColorMode: ColorModeAlternate.rawValue,
+                                    backgroundColorMode: ColorModeAlternate.rawValue,
+                                    complexChar: 0,
+                                    bold: 0,
+                                    faint: 0,
+                                    italic: 0,
+                                    blink: 0,
+                                    underline: 0,
+                                    image: 0,
+                                    strikethrough: 0,
+                                    underlineStyle: VT100UnderlineStyle.single,
+                                    unused: 0,
+                                    urlCode: 0)
 }

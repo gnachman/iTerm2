@@ -292,5 +292,6 @@
                                    characters:(NSString *)characters
                   charactersIgnoringModifiers:(NSString *)charactersIgnoringModifiers;
 - (void)screenDidAppendImageData:(NSData *)data;
+- (void)screenAppendScreenCharArray:(const screen_char_t *)line length:(int)length;
 
 @end
