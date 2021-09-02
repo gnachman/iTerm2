@@ -3236,6 +3236,12 @@
 		A6BDB0B11B45FC9E00F511E6 /* PTYTextViewTest-golden-testWindowedCharacterSelection.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C1321ADA38EE00906FAE /* PTYTextViewTest-golden-testWindowedCharacterSelection.png */; };
 		A6BDB0B31B45FD8300F511E6 /* TestBackground.png in Resources */ = {isa = PBXBuildFile; fileRef = A6B3A7481AC8A9A3008E8D4E /* TestBackground.png */; };
 		A6BDB0BB1B470CBE00F511E6 /* iTermRootTerminalView.h in Headers */ = {isa = PBXBuildFile; fileRef = A6BDB0B91B470CBE00F511E6 /* iTermRootTerminalView.h */; };
+		A6BEE47726E0A624009C0C2C /* FilterIndicator@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A6BEE47526E0A623009C0C2C /* FilterIndicator@2x.png */; };
+		A6BEE47826E0A624009C0C2C /* FilterIndicator@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A6BEE47526E0A623009C0C2C /* FilterIndicator@2x.png */; };
+		A6BEE47926E0A624009C0C2C /* FilterIndicator@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A6BEE47526E0A623009C0C2C /* FilterIndicator@2x.png */; };
+		A6BEE47A26E0A624009C0C2C /* FilterIndicator.png in Resources */ = {isa = PBXBuildFile; fileRef = A6BEE47626E0A623009C0C2C /* FilterIndicator.png */; };
+		A6BEE47B26E0A624009C0C2C /* FilterIndicator.png in Resources */ = {isa = PBXBuildFile; fileRef = A6BEE47626E0A623009C0C2C /* FilterIndicator.png */; };
+		A6BEE47C26E0A624009C0C2C /* FilterIndicator.png in Resources */ = {isa = PBXBuildFile; fileRef = A6BEE47626E0A623009C0C2C /* FilterIndicator.png */; };
 		A6BF035021E176C30097DA86 /* iTermVariableScope.h in Headers */ = {isa = PBXBuildFile; fileRef = A6BF034E21E176C30097DA86 /* iTermVariableScope.h */; };
 		A6BF035121E176C30097DA86 /* iTermVariableScope.m in Sources */ = {isa = PBXBuildFile; fileRef = A6BF034F21E176C30097DA86 /* iTermVariableScope.m */; };
 		A6BF035421E179380097DA86 /* iTermVariableHistory.h in Headers */ = {isa = PBXBuildFile; fileRef = A6BF035221E179380097DA86 /* iTermVariableHistory.h */; };
@@ -6473,6 +6479,8 @@
 		A6BDB0B61B45FEF700F511E6 /* iTermPasteHelperTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermPasteHelperTest.m; sourceTree = "<group>"; };
 		A6BDB0B91B470CBE00F511E6 /* iTermRootTerminalView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermRootTerminalView.h; sourceTree = "<group>"; };
 		A6BDB0BA1B470CBE00F511E6 /* iTermRootTerminalView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermRootTerminalView.m; sourceTree = "<group>"; };
+		A6BEE47526E0A623009C0C2C /* FilterIndicator@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "FilterIndicator@2x.png"; path = "images/FilterIndicator@2x.png"; sourceTree = "<group>"; };
+		A6BEE47626E0A623009C0C2C /* FilterIndicator.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = FilterIndicator.png; path = images/FilterIndicator.png; sourceTree = "<group>"; };
 		A6BF034E21E176C30097DA86 /* iTermVariableScope.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermVariableScope.h; sourceTree = "<group>"; };
 		A6BF034F21E176C30097DA86 /* iTermVariableScope.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermVariableScope.m; sourceTree = "<group>"; };
 		A6BF035221E179380097DA86 /* iTermVariableHistory.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermVariableHistory.h; sourceTree = "<group>"; };
@@ -7688,6 +7696,8 @@
 		1D093C131217412B0029F9AD /* Images */ = {
 			isa = PBXGroup;
 			children = (
+				A6BEE47626E0A623009C0C2C /* FilterIndicator.png */,
+				A6BEE47526E0A623009C0C2C /* FilterIndicator@2x.png */,
 				A6F1B3BE2693B82B00546767 /* DebugLogging.png */,
 				A6F1B3BD2693B82B00546767 /* DebugLogging@2x.png */,
 				A6F1B3AD268FD0F300546767 /* StatusBarIconTriggers.png */,
@@ -12479,6 +12489,7 @@
 				53AA764B237E35A50094D75A /* OpenQuicklyActionIcon.png in Resources */,
 				1D6ED9A719AEA20D005A7799 /* EncodingsWithLowerCase.plist in Resources */,
 				A67F61AF214395B70093940A /* graphic_psql.png in Resources */,
+				A6BEE47C26E0A624009C0C2C /* FilterIndicator.png in Resources */,
 				A67A50B326CCD3E300281693 /* xterm in Resources */,
 				A67F61A6214395B70093940A /* graphic_python@2x.png in Resources */,
 				A6B3A73D1AC74E02008E8D4E /* FindCursorCell2.png in Resources */,
@@ -12514,6 +12525,7 @@
 				A67F61F72143976F0093940A /* graphic_colors.json in Resources */,
 				1D6ED9B819AEA20D005A7799 /* wrap_to_bottom.png in Resources */,
 				A6E7AE66214394CA00DE9F3B /* graphic_clojure@2x.png in Resources */,
+				A6BEE47926E0A624009C0C2C /* FilterIndicator@2x.png in Resources */,
 				A67F61C0214395C60093940A /* graphic_ruby@2x.png in Resources */,
 				A67F6183214395A70093940A /* graphic_nginx.png in Resources */,
 				1D6ED9B919AEA20D005A7799 /* wrap_to_top.png in Resources */,
@@ -12981,6 +12993,7 @@
 				A629F5B723B081DD00C2F16B /* MouseReportingCursorOverlay@1x.png in Resources */,
 				A6350299229B5F620042B779 /* YosemiteAddTab.png in Resources */,
 				A65B72B51B33C07D00F947A7 /* NextTip@2x.png in Resources */,
+				A6BEE47B26E0A624009C0C2C /* FilterIndicator.png in Resources */,
 				A6F7A720213CB143004DE961 /* StatusBarIconCPU@2x.png in Resources */,
 				A665C1FB2440461500F623F0 /* WindowCorner@2x.png in Resources */,
 				A62A1F791E711DD000363EE9 /* iTermHelpMessageViewController.xib in Resources */,
@@ -13155,6 +13168,7 @@
 				A65E6F5C2547F1D5008A4866 /* WindowCorner_Square.png in Resources */,
 				1D44CFCC1CC7F5A600BE5630 /* PTYTextViewTest-golden-nonretina-testSelectedTabOrphan.png in Resources */,
 				1D44D0941CC7F5A600BE5630 /* PTYTextViewTest-golden-travis-testSmartCursorColor_frameAllCursorColor.png in Resources */,
+				A6BEE47826E0A624009C0C2C /* FilterIndicator@2x.png in Resources */,
 				A6F7A717213CB143004DE961 /* StatusBarIconRAM@2x.png in Resources */,
 				1D44CF991CC7F5A600BE5630 /* PTYTextViewTest-golden-nonretina-testBlinkingTextVisible.png in Resources */,
 				1D44CFE41CC7F5A600BE5630 /* PTYTextViewTest-golden-nonretina-testUnderlineCursorReverseVideo.png in Resources */,
@@ -13488,6 +13502,7 @@
 				A65D97BF24B19D2600DF45F9 /* iTermMinimalComposerViewController.xib in Resources */,
 				53C5650C21B8CF65002B3167 /* PowerlineLineLeftArrow.pdf in Resources */,
 				A6E7AE92214394DD00DE9F3B /* graphic_coffee.png in Resources */,
+				A6BEE47A26E0A624009C0C2C /* FilterIndicator.png in Resources */,
 				A623D94B1F8984690011F8C3 /* key.png in Resources */,
 				A68E33351DE746F5003F1D8E /* Next Mark Touch Bar Icon.png in Resources */,
 				53FF981C20927F1E008688D7 /* template_pyenv_simple.py in Resources */,
@@ -13586,6 +13601,7 @@
 				A6F2F21B250757FE00FC227F /* PrefsShortcuts.png in Resources */,
 				A67F61C1214395C60093940A /* graphic_read.png in Resources */,
 				A6AC04C921F0FDBD00CD2774 /* StatusBarComposerExpand.png in Resources */,
+				A6BEE47726E0A624009C0C2C /* FilterIndicator@2x.png in Resources */,
 				A67D0D7D1A2EE12A003A8B35 /* PreferencePanel.strings in Resources */,
 				A6BF8D1A21EB188E003CF805 /* iTermDependencyEditorWindowController.xib in Resources */,
 				A68E333C1DE78D08003F1D8E /* Man Page Touch Bar Icon@2x.png in Resources */,

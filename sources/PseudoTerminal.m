@@ -10071,7 +10071,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     } else if ([item action] == @selector(openSelection:)) {
         result = [[self currentSession] hasSelection];
     } else if ([item action] == @selector(zoomOut:)) {
-        return self.currentSession.textViewIsZoomedIn;
+        return self.currentSession.textViewIsZoomedIn || self.currentSession.textViewIsFiltered;
     } else if (item.action == @selector(captureNextMetalFrame:)) {
         return self.currentSession.canProduceMetalFramecap;
     } else if (item.action == @selector(exportRecording:)) {

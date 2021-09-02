@@ -9830,7 +9830,11 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (BOOL)textViewIsZoomedIn {
-    return _liveSession && !_dvr;
+    return _liveSession && !_dvr && !_filter;
+}
+
+- (BOOL)textViewIsFiltered {
+    return _liveSession && _filter;
 }
 
 - (BOOL)textViewShouldShowMarkIndicators {

@@ -23,6 +23,7 @@ NSString *const kiTermIndicatorCoprocess = @"kiTermIndicatorCoprocess";
 NSString *const kiTermIndicatorAlert = @"kiTermIndicatorAlert";
 NSString *const kiTermIndicatorAllOutputSuppressed = @"kiTermIndicatorAllOutputSuppressed";
 NSString *const kiTermIndicatorZoomedIn = @"kiTermIndicatorZoomedIn";
+NSString *const kiTermIndicatorFilter = @"kiTermIndicatorFilter";
 NSString *const kiTermIndicatorCopyMode = @"kiTermIndicatorCopyMode";
 NSString *const kiTermIndicatorDebugLogging = @"kiTermIndicatorDebugLogging";
 
@@ -74,7 +75,8 @@ CGFloat kiTermIndicatorStandardHeight = 20;
                               kiTermIndicatorAllOutputSuppressed: [NSImage it_imageNamed:@"SuppressAllOutput" forClass:self.class],
                               kiTermIndicatorZoomedIn: [NSImage it_imageNamed:@"Zoomed" forClass:self.class],
                               kiTermIndicatorCopyMode: [NSImage it_imageNamed:@"CopyMode" forClass:self.class],
-                              kiTermIndicatorDebugLogging: [NSImage it_imageNamed:@"DebugLogging" forClass:self.class]
+                              kiTermIndicatorDebugLogging: [NSImage it_imageNamed:@"DebugLogging" forClass:self.class],
+                              kiTermIndicatorFilter: [NSImage it_imageNamed:@"FilterIndicator" forClass:self.class],
         };
     });
 
@@ -114,6 +116,7 @@ CGFloat kiTermIndicatorStandardHeight = 20;
               kiTermIndicatorAlert,
               kiTermIndicatorAllOutputSuppressed,
               kiTermIndicatorZoomedIn,
+              kiTermIndicatorFilter,
               kiTermIndicatorCopyMode,
               kiTermIndicatorDebugLogging ];
 }
@@ -156,6 +159,7 @@ CGFloat kiTermIndicatorStandardHeight = 20;
         kiTermIndicatorAlert: @"Will alert on next mark.",
         kiTermIndicatorAllOutputSuppressed: @"All output is currently suppressed.",
         kiTermIndicatorZoomedIn: @"Zoomed in.",
+        kiTermIndicatorFilter: @"Filtering.",
         kiTermIndicatorCopyMode: @"In copy mode.",
         kiTermIndicatorDebugLogging: @"Debug logging is enabled.",
     };

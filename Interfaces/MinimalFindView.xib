@@ -91,22 +91,6 @@ Gw
                                 <outlet property="delegate" destination="Fot-sg-fSk" id="XcJ-vJ-GQL"/>
                             </connections>
                         </searchField>
-                        <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Hg0-I2-C0s" userLabel="Add">
-                            <rect key="frame" x="288" y="2.5" width="16.5" height="17"/>
-                            <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMinY="YES"/>
-                            <buttonCell key="cell" type="square" bezelStyle="shadowlessSquare" image="NSAddTemplate" imagePosition="overlaps" alignment="center" lineBreakMode="truncatingTail" state="on" imageScaling="proportionallyDown" inset="2" id="7Fk-5a-DrC">
-                                <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
-                                <font key="font" metaFont="system"/>
-                            </buttonCell>
-                        </button>
-                        <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="K8j-AU-lol" userLabel="Remove">
-                            <rect key="frame" x="309" y="7" width="16.5" height="8"/>
-                            <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMinY="YES"/>
-                            <buttonCell key="cell" type="square" bezelStyle="shadowlessSquare" image="NSRemoveTemplate" imagePosition="overlaps" alignment="center" lineBreakMode="truncatingTail" state="on" imageScaling="proportionallyDown" inset="2" id="m6Y-Ky-ZPy">
-                                <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
-                                <font key="font" metaFont="system"/>
-                            </buttonCell>
-                        </button>
                     </subviews>
                 </customView>
             </subviews>
@@ -173,10 +157,8 @@ Gw
         </menu>
     </objects>
     <resources>
-        <image name="NSAddTemplate" width="14" height="13"/>
         <image name="NSGoLeftTemplate" width="10" height="14"/>
         <image name="NSGoRightTemplate" width="10" height="14"/>
-        <image name="NSRemoveTemplate" width="14" height="4"/>
         <image name="TabClose_Front" width="16" height="16"/>
         <image name="TabClose_Front_Pressed" width="16" height="16"/>
     </resources>
