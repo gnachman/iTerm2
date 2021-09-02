@@ -19,6 +19,14 @@ NSString *const iTermAnnotationVisibilityDidChange = @"iTermAnnotationVisibility
 
 static const CGFloat kBottomPadding = 3;
 
+static void PTYNoteViewControllerIncrementVisibleCount(NSInteger delta) {
+    gVisibleNotes += delta;
+    if ((delta > 0 && gVisibleNotes == 1) ||
+        (delta < 0 && gVisibleNotes == 0)) {
+        [[NSNotificationCenter defaultCenter] postNotificationName:iTermAnnotationVisibilityDidChange object:nil];
+    }
+}
+
 @interface PTYNoteViewController ()
 @property(nonatomic, retain) NSTextView *textView;
 @property(nonatomic, retain) NSScrollView *scrollView;
@@ -44,7 +52,7 @@ static const CGFloat kBottomPadding = 3;
 - (instancetype)init {
     self = [super init];
     if (self) {
-        gVisibleNotes++;
+        PTYNoteViewControllerIncrementVisibleCount(1);
     }
     return self;
 }
@@ -53,14 +61,14 @@ static const CGFloat kBottomPadding = 3;
     self = [super init];
     if (self) {
         self.string = dict[kNoteViewTextKey];
-        gVisibleNotes++;
+        PTYNoteViewControllerIncrementVisibleCount(1);
     }
     return self;
 }
 
 - (void)dealloc {
     if (!hidden_) {
-        gVisibleNotes--;
+        PTYNoteViewControllerIncrementVisibleCount(-1);
     }
     [noteView_ removeFromSuperview];
     noteView_.delegate = nil;
@@ -189,10 +197,7 @@ static const CGFloat kBottomPadding = 3;
     [noteView_ setHidden:newValue];
     noteView_.alphaValue = newValue ? 0 : 1;
     if (newValue) {
-        gVisibleNotes--;
-        if (gVisibleNotes == 0) {
-            [[NSNotificationCenter defaultCenter] postNotificationName:iTermAnnotationVisibilityDidChange object:nil];
-        }
+        PTYNoteViewControllerIncrementVisibleCount(-1);
     }
 }
 
@@ -210,10 +215,7 @@ static const CGFloat kBottomPadding = 3;
                          [self finalizeToggleOfHide:hidden];
                      }];
     if (!hidden) {
-        gVisibleNotes++;
-        if (gVisibleNotes == 1) {
-            [[NSNotificationCenter defaultCenter] postNotificationName:iTermAnnotationVisibilityDidChange object:nil];
-        }
+        PTYNoteViewControllerIncrementVisibleCount(1);
     }
 }
 

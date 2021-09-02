@@ -34,6 +34,7 @@
 #import "iTermPreferences.h"
 #import "NSObject+iTerm.h"
 #import "NSView+iTerm.h"
+#import "PTYNoteViewController.h"
 #import "PTYTextView.h"
 
 @implementation TextViewWrapper {
@@ -48,9 +49,25 @@
                                                      name:NSViewBoundsDidChangeNotification
                                                    object:nil];
         // See the note in PTYTextView's initializer.
-        [super setAlphaValue:0];
+        [super setAlphaValue:[self desiredAlphaValue]];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(annotationVisibilityDidChange:)
+                                                     name:iTermAnnotationVisibilityDidChange
+                                                   object:nil];
     }
     return self;
+}
+
+- (CGFloat)desiredAlphaValue {
+    if ([PTYNoteViewController anyNoteVisible]) {
+        return 1;
+    } else {
+        return 0;
+    }
+}
+
+- (void)annotationVisibilityDidChange:(NSNotification *)notification {
+    [super setAlphaValue:[self desiredAlphaValue]];
 }
 
 - (void)setAlphaValue:(CGFloat)alphaValue {
