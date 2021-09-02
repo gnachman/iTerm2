@@ -708,13 +708,76 @@ int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width, BOOL may
                         isStartOfWrappedLine:NULL];
 }
 
-- (screen_char_t*)getWrappedLineWithWrapWidth:(int)width
-                                      lineNum:(int*)lineNum
-                                   lineLength:(int*)lineLength
-                            includesEndOfLine:(int*)includesEndOfLine
-                                      yOffset:(int*)yOffsetPtr
-                                 continuation:(screen_char_t *)continuationPtr
-                         isStartOfWrappedLine:(BOOL *)isStartOfWrappedLine {
+typedef struct {
+    BOOL found;
+    int prev;
+    int numEmptyLines;
+    int index;
+    int length;
+} LineBlockLocation;
+
+- (screen_char_t *)_wrappedLineWithWrapWidth:(int)width
+                                    location:(LineBlockLocation)location
+                                     lineNum:(int*)lineNum
+                                  lineLength:(int*)lineLength
+                           includesEndOfLine:(int*)includesEndOfLine
+                                     yOffset:(int*)yOffsetPtr
+                                continuation:(screen_char_t *)continuationPtr
+                        isStartOfWrappedLine:(BOOL *)isStartOfWrappedLine {
+    int offset;
+    if (gEnableDoubleWidthCharacterLineCache) {
+        offset = [self offsetOfWrappedLineInBuffer:buffer_start + location.prev
+                                 wrappedLineNumber:*lineNum
+                                      bufferLength:location.length
+                                             width:width
+                                          metadata:&metadata_[location.index]];
+    } else {
+        offset = OffsetOfWrappedLine(buffer_start + location.prev,
+                                     *lineNum,
+                                     location.length,
+                                     width,
+                                     _mayHaveDoubleWidthCharacter);
+    }
+
+    *lineNum = 0;
+    // offset: the relevant part of the raw line begins at this offset into it
+    *lineLength = location.length - offset;  // the length of the suffix of the raw line, beginning at the wrapped line we want
+    if (*lineLength > width) {
+        // return an infix of the full line
+        if (width > 1 && buffer_start[location.prev + offset + width].code == DWC_RIGHT) {
+            // Result would end with the first half of a double-width character
+            *lineLength = width - 1;
+            *includesEndOfLine = EOL_DWC;
+        } else {
+            *lineLength = width;
+            *includesEndOfLine = EOL_SOFT;
+        }
+    } else {
+        // return a suffix of the full line
+        if (location.index == cll_entries - 1 && is_partial) {
+            // If this is the last line and it's partial then it doesn't have an end-of-line.
+            *includesEndOfLine = EOL_SOFT;
+        } else {
+            *includesEndOfLine = EOL_HARD;
+        }
+    }
+    if (yOffsetPtr) {
+        // Set *yOffsetPtr to the number of consecutive empty lines just before the requested
+        // line.
+        *yOffsetPtr = location.numEmptyLines;
+    }
+    if (continuationPtr) {
+        *continuationPtr = metadata_[location.index].continuation;
+        continuationPtr->code = *includesEndOfLine;
+    }
+    if (isStartOfWrappedLine) {
+        *isStartOfWrappedLine = (offset == 0);
+    }
+    return buffer_start + location.prev + offset;
+}
+
+- (LineBlockLocation)locationOfRawLineForWidth:(int)width
+                                       lineNum:(int *)lineNum {
     ITBetaAssert(*lineNum >= 0, @"Negative lines to getWrappedLineWithWrapWidth");
     int prev = 0;
     int numEmptyLines = 0;
@@ -755,60 +818,61 @@ int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width, BOOL may
         } else {  // *lineNum <= spans
             // We found the raw line that includes the wrapped line we're searching for.
             // eat up *lineNum many width-sized wrapped lines from this start of the current full line
-            int offset;
-            if (gEnableDoubleWidthCharacterLineCache) {
-                offset = [self offsetOfWrappedLineInBuffer:buffer_start + prev
-                                         wrappedLineNumber:*lineNum
-                                              bufferLength:length
-                                                     width:width
-                                                  metadata:&metadata_[i]];
-            } else {
-                offset = OffsetOfWrappedLine(buffer_start + prev,
-                                             *lineNum,
-                                             length,
-                                             width,
-                                             _mayHaveDoubleWidthCharacter);
-            }
-
-            *lineNum = 0;
-            // offset: the relevant part of the raw line begins at this offset into it
-            *lineLength = length - offset;  // the length of the suffix of the raw line, beginning at the wrapped line we want
-            if (*lineLength > width) {
-                // return an infix of the full line
-                if (width > 1 && buffer_start[prev + offset + width].code == DWC_RIGHT) {
-                    // Result would end with the first half of a double-width character
-                    *lineLength = width - 1;
-                    *includesEndOfLine = EOL_DWC;
-                } else {
-                    *lineLength = width;
-                    *includesEndOfLine = EOL_SOFT;
-                }
-            } else {
-                // return a suffix of the full line
-                if (i == cll_entries - 1 && is_partial) {
-                    // If this is the last line and it's partial then it doesn't have an end-of-line.
-                    *includesEndOfLine = EOL_SOFT;
-                } else {
-                    *includesEndOfLine = EOL_HARD;
-                }
-            }
-            if (yOffsetPtr) {
-                // Set *yOffsetPtr to the number of consecutive empty lines just before the requested
-                // line.
-                *yOffsetPtr = numEmptyLines;
-            }
-            if (continuationPtr) {
-                *continuationPtr = metadata_[i].continuation;
-                continuationPtr->code = *includesEndOfLine;
-            }
-            if (isStartOfWrappedLine) {
-                *isStartOfWrappedLine = (offset == 0);
-            }
-            return buffer_start + prev + offset;
+            return (LineBlockLocation){
+                .found = YES,
+                .prev = prev,
+                .numEmptyLines = numEmptyLines,
+                .index = i,
+                .length = length
+            };
         }
         prev = cll;
     }
-    return NULL;
+    return (LineBlockLocation){
+        .found = NO
+    };
+}
+
+- (screen_char_t*)getWrappedLineWithWrapWidth:(int)width
+                                      lineNum:(int*)lineNum
+                                   lineLength:(int*)lineLength
+                            includesEndOfLine:(int*)includesEndOfLine
+                                      yOffset:(int*)yOffsetPtr
+                                 continuation:(screen_char_t *)continuationPtr
+                         isStartOfWrappedLine:(BOOL *)isStartOfWrappedLine {
+    const LineBlockLocation location = [self locationOfRawLineForWidth:width lineNum:lineNum];
+    if (!location.found) {
+        return NULL;
+    }
+    // We found the raw line that includes the wrapped line we're searching for.
+    // eat up *lineNum many width-sized wrapped lines from this start of the current full line
+    return [self _wrappedLineWithWrapWidth:width
+                                  location:location
+                                   lineNum:lineNum
+                                lineLength:lineLength
+                         includesEndOfLine:includesEndOfLine
+                                   yOffset:yOffsetPtr
+                              continuation:continuationPtr
+                      isStartOfWrappedLine:isStartOfWrappedLine];
+}
+
+- (ScreenCharArray *)rawLineAtWrappedLineOffset:(int)lineNum width:(int)width {
+    int temp = lineNum;
+    const LineBlockLocation location = [self locationOfRawLineForWidth:width lineNum:&temp];
+    if (!location.found) {
+        return NULL;
+    }
+    screen_char_t *buffer = buffer_start + location.prev;
+    const int length = location.length;
+    screen_char_t continuation = { 0 };
+    if (is_partial && location.index + 1 == cll_entries) {
+        continuation.code = EOL_SOFT;
+    } else {
+        continuation.code = EOL_HARD;
+    }
+    return [[[ScreenCharArray alloc] initWithLine:buffer
+                                           length:length
+                                     continuation:continuation] autorelease];
 }
 
 - (int)getNumLinesWithWrapWidth:(int)width {

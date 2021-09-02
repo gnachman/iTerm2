@@ -992,6 +992,19 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
 - (void)screenSendModifiersDidChange {
 }
 
+- (void)screenAppendScreenCharArray:(const screen_char_t *)line length:(int)length {
+}
+
+
+- (void)screenDidAppendImageData:(NSData *)data {
+}
+
+
+- (NSString *)screenStringForKeypressWithCode:(unsigned short)keycode flags:(NSEventModifierFlags)flags characters:(NSString *)characters charactersIgnoringModifiers:(NSString *)charactersIgnoringModifiers {
+    return @"";
+}
+
+
 #pragma mark - iTermSelectionDelegate
 
 - (void)selectionDidChange:(iTermSelection *)selection {

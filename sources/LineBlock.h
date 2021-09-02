@@ -75,6 +75,7 @@ typedef struct {
                                  continuation:(screen_char_t *)continuationPtr
                          isStartOfWrappedLine:(BOOL *)isStartOfWrappedLine;
 
+- (ScreenCharArray *)rawLineAtWrappedLineOffset:(int)lineNum width:(int)width;
 
 // Get the number of lines in this block at a given screen width.
 - (int)getNumLinesWithWrapWidth:(int)width;

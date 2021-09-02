@@ -89,7 +89,6 @@
 }
 
 - (void)resizeSubviewsWithOldSize:(NSSize)oldSize {
-    NSLog(@"%@ -> %@", NSStringFromSize(oldSize), NSStringFromSize(self.bounds.size));
     [super resizeSubviewsWithOldSize:oldSize];
     if (@available(macOS 10.14, *)) {
         _vev.frame = NSInsetRect(self.bounds, 9, 9);

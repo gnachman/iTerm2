@@ -17,9 +17,12 @@ protocol Updater {
 
 struct VerbatimUpdater: Updater {
     let accept: () -> (Void)
+    private var successor: Updater
+    private var done = false
 
-    init(accept: @escaping () -> (Void)) {
+    init(_ successor: Updater, accept: @escaping () -> (Void)) {
         self.accept = accept
+        self.successor = successor
     }
 
     var progress: Double {
@@ -27,7 +30,12 @@ struct VerbatimUpdater: Updater {
     }
 
     mutating func update() -> Bool {
+        if done {
+            // Streaming new input after initial adopt() call.
+            return successor.update()
+        }
         accept()
+        done = true
         return false
     }
 }
@@ -134,6 +142,8 @@ class AsyncFilter: NSObject {
     private var started = false
     private let lineBufferCopy: LineBuffer
     private let width: Int32
+    private let filteringUpdater: FilteringUpdater
+    private let destination: FilterDestination
 
     @objc(initWithQuery:lineBuffer:grid:mode:destination:cadence:progress:)
     init(query: String,
@@ -144,6 +154,7 @@ class AsyncFilter: NSObject {
          cadence: TimeInterval,
          progress: ((Double) -> (Void))?) {
         let temp = lineBuffer.newAppendOnlyCopy()
+        temp.setMaxLines(-1)
         lineBufferCopy = temp
         grid.appendLines(grid.numberOfLinesUsed(), to: temp)
         let numberOfLines = temp.numLines(withWidth: grid.size.width)
@@ -152,21 +163,22 @@ class AsyncFilter: NSObject {
         self.cadence = cadence
         self.progress = progress
         self.query = query
+        self.destination = destination
+        filteringUpdater = FilteringUpdater(query: query,
+                                                lineBuffer: temp,
+                                                count: numberOfLines,
+                                                width: width,
+                                                mode: mode) { (lineNumber: Int32) in
+            DLog("AsyncFilter: append line \(lineNumber)")
+            let chars = temp.rawLine(atWrappedLine: lineNumber, width: width)
+            destination.append(chars.line, count: chars.length, continuation: chars.continuation)
+        }
         if query.isEmpty {
-            updater = VerbatimUpdater() {
+            updater = VerbatimUpdater(filteringUpdater) {
                 destination.adopt(temp)
             }
         } else {
-            updater = FilteringUpdater(query: query,
-                                       lineBuffer: temp,
-                                       count: numberOfLines,
-                                       width: width,
-                                       mode: mode) { (lineNumber: Int32) in
-                DLog("AsyncFilter: append line \(lineNumber)")
-                var continuation = screen_char_t()
-                let chars = temp.wrappedLine(at: lineNumber, width: width, continuation: &continuation)
-                destination.append(chars.line, count: chars.length, continuation: chars.continuation)
-            }
+            updater = filteringUpdater
         }
 
         super.init()
@@ -180,8 +192,10 @@ class AsyncFilter: NSObject {
         timer = Timer.scheduledTimer(withTimeInterval: cadence, repeats: true, block: { [weak self] timer in
             self?.update()
         })
+
         update()
     }
+
 
     @objc func cancel() {
         DLog("AsyncFilter\(self): Cancel")
@@ -197,6 +211,9 @@ class AsyncFilter: NSObject {
             return false
         }
         return query.contains(self.query)
+    }
+
+    private func performVerbatimUpdate() {
     }
 
     /// `block` returns whether to keep going. Return true to continue or false to break.
@@ -236,6 +253,9 @@ extension AsyncFilter: ContentSubscriber {
                                   timestamp: Date.timeIntervalSinceReferenceDate,
                                   continuation: array.continuation)
         if timer != nil {
+            return
+        }
+        if array.eol != EOL_HARD {
             return
         }
         while updater.update() { }
