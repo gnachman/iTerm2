@@ -115,6 +115,8 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 - (void)appendStringAtCursor:(NSString *)string;
 - (void)appendAsciiDataAtCursor:(AsciiData *)asciiData;
 
+- (void)removeLastLine;
+
 // This is a hacky thing that moves the cursor to the next line, not respecting scroll regions.
 // It's used for the tmux status screen.
 - (void)crlf;

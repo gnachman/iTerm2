@@ -2893,6 +2893,24 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
 - (void)textViewhandleSpecialKeyDown:(NSEvent *)event {
 }
 
+- (BOOL)textViewAnyMouseReportingModeIsEnabled {
+    return NO;
+}
+
+
+- (BOOL)textViewCanWriteToTTY {
+    return YES;
+}
+
+
+- (void)textViewSetClickCoord:(VT100GridAbsCoord)coord button:(NSInteger)button count:(NSInteger)count modifiers:(NSEventModifierFlags)modifiers sideEffects:(iTermClickSideEffects)sideEffects state:(iTermMouseState)state {
+}
+
+
+- (void)textviewToggleTimestampsMode {
+}
+
+
 - (BOOL)textViewReportMouseEvent:(NSEventType)eventType modifiers:(NSUInteger)modifiers button:(MouseButtonNumber)button coordinate:(VT100GridCoord)coord deltaY:(CGFloat)deltaY allowDragBeforeMouseDown:(BOOL)allowDragBeforeMouseDown {
     return NO;
 }

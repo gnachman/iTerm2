@@ -201,7 +201,7 @@ extern NSString *const iTermDidCreateTerminalWindowNotification;
 - (BOOL)hasSavedScrollPosition;
 
 // Set the window title to 'title'.
-- (void)setWindowTitle:(NSString *)title;
+- (void)setWindowTitle:(NSString *)title subtitle:(NSString *)subtitle;
 
 // Sessions in the broadcast group.
 - (NSArray *)broadcastSessions;
