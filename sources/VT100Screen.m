@@ -1105,10 +1105,14 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 }
 
 - (void)clearBuffer {
+    [self clearBufferSavingPrompt:YES];
+}
+
+- (void)clearBufferSavingPrompt:(BOOL)savePrompt {
     // Cancel out the current command if shell integration is in use and we are
     // at the shell prompt.
 
-    const int linesToSave = [self numberOfLinesToPreserveWhenClearingScreen];
+    const int linesToSave = savePrompt ? [self numberOfLinesToPreserveWhenClearingScreen] : 0;
     // NOTE: This is in screen coords (y=0 is the top)
     VT100GridCoord newCommandStart = VT100GridCoordMake(-1, -1);
     if (commandStartX_ >= 0) {
@@ -1128,14 +1132,13 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 
     // Clear the grid by scrolling it up into history.
     [self clearAndResetScreenSavingLines:linesToSave];
-
     // Erase history.
     [self clearScrollbackBuffer];
 
     // Redraw soon.
     [delegate_ screenUpdateDisplay:NO];
 
-    if (newCommandStart.x >= 0) {
+    if (savePrompt && newCommandStart.x >= 0) {
         // Create a new mark and inform the delegate that there's new command start coord.
         [delegate_ screenPromptDidStartAtLine:[self numberOfScrollbackLines]];
         [self commandDidStartAtScreenCoord:newCommandStart];
@@ -1151,7 +1154,7 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     int x = currentGrid_.cursorX;
     [self incrementOverflowBy:[currentGrid_ resetWithLineBuffer:linebuffer_
                                             unlimitedScrollback:unlimitedScrollback_
-                                             preserveCursorLine:YES
+                                             preserveCursorLine:linesToSave > 0
                                           additionalLinesToSave:MAX(0, linesToSave - 1)]];
     currentGrid_.cursorX = x;
     currentGrid_.cursorY = linesToSave - 1;
@@ -2583,6 +2586,37 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
         }
     }
     return notes;
+}
+
+- (void)removeLastLine {
+    DLog(@"BEGIN removeLastLine with cursor at %@", VT100GridCoordDescription(self.currentGrid.cursor));
+    const int preHocNumberOfLines = [linebuffer_ numberOfWrappedLinesWithWidth:self.width];
+    const int numberOfLinesAppended = [self.currentGrid appendLines:self.currentGrid.numberOfLinesUsed
+                                                       toLineBuffer:linebuffer_];
+    if (numberOfLinesAppended <= 0) {
+        return;
+    }
+    [self.currentGrid setCharsFrom:VT100GridCoordMake(0, 0)
+                                to:VT100GridCoordMake(self.width - 1,
+                                                      self.height - 1)
+                            toChar:self.currentGrid.defaultChar];
+    [linebuffer_ removeLastRawLine];
+    const int postHocNumberOfLines = [linebuffer_ numberOfWrappedLinesWithWidth:self.width];
+    const int numberOfLinesToPop = MAX(0, postHocNumberOfLines - preHocNumberOfLines);
+
+    [self.currentGrid restoreScreenFromLineBuffer:linebuffer_
+                                  withDefaultChar:[self.currentGrid defaultChar]
+                                maxLinesToRestore:numberOfLinesToPop];
+    // One of the lines "removed" will be the one the cursor is on. Don't need to move it up for
+    // that one.
+    const int adjustment = self.currentGrid.cursorX > 0 ? 1 : 0;
+    self.currentGrid.cursorX = 0;
+    const int numberOfLinesRemoved = MAX(0, numberOfLinesAppended - numberOfLinesToPop);
+    const int y = MAX(0, self.currentGrid.cursorY - numberOfLinesRemoved + adjustment);
+    DLog(@"numLinesAppended=%@ numLinesToPop=%@ numLinesRemoved=%@ adjustment=%@ y<-%@",
+          @(numberOfLinesAppended), @(numberOfLinesToPop), @(numberOfLinesRemoved), @(adjustment), @(y));
+    self.currentGrid.cursorY = y;
+    DLog(@"Cursor at %@", VT100GridCoordDescription(self.currentGrid.cursor));
 }
 
 - (void)removePromptMarksBelowLine:(int)line {
@@ -5741,6 +5775,7 @@ static void SwapInt(int *a, int *b) {
 
 - (iTermAsyncFilter *)newAsyncFilterWithDestination:(id<iTermFilterDestination>)destination
                                               query:(NSString *)query
+                                           refining:(iTermAsyncFilter *)refining
                                            progress:(void (^)(double))progress {
     return [[iTermAsyncFilter alloc] initWithQuery:query
                                         lineBuffer:linebuffer_
@@ -5748,6 +5783,7 @@ static void SwapInt(int *a, int *b) {
                                               mode:iTermFindModeSmartCaseSensitivity
                                        destination:destination
                                            cadence:1.0 / 60.0
+                                          refining:refining
                                           progress:progress];
 }
 

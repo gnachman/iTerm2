@@ -570,6 +570,15 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     return RawNumLines(self, width);
 }
 
+- (void)removeLastRawLine {
+    [_lineBlocks.lastBlock removeLastRawLine];
+    if (_lineBlocks.lastBlock.numRawLines == 0 && _lineBlocks.count > 1) {
+        [_lineBlocks removeLastBlock];
+    }
+    // Invalidate the cache
+    num_wrapped_lines_width = -1;
+}
+
 - (void)removeLastWrappedLines:(int)numberOfLinesToRemove
                          width:(int)width {
     // Invalidate the cache
@@ -789,12 +798,15 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
 
     // NSLog(@"search block %d starting at offset %d", context.absBlockNum - num_dropped_blocks, context.offset);
 
+    BOOL includesPartialLastLine = NO;
     [block findSubstring:context.substring
                  options:context.options
                     mode:context.mode
                 atOffset:context.offset
                  results:context.results
-         multipleResults:((context.options & FindMultipleResults) != 0)];
+         multipleResults:((context.options & FindMultipleResults) != 0)
+ includesPartialLastLine:&includesPartialLastLine];
+    context.includesPartialLastLine = includesPartialLastLine;
     NSMutableArray* filtered = [NSMutableArray arrayWithCapacity:[context.results count]];
     BOOL haveOutOfRangeResults = NO;
     int blockPosition = [self _blockPosition:context.absBlockNum - num_dropped_blocks];
@@ -1037,6 +1049,15 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
 
     position.absolutePosition = droppedChars + [_lineBlocks rawSpaceUsed];
 
+    return position;
+}
+
+- (LineBufferPosition *)positionForStartOfLastLine {
+    LineBufferPosition *position = [self lastPosition];
+    const long long length = [_lineBlocks.lastBlock lengthOfLastLine];
+    assert(length >= 0);
+    assert(length <= position.absolutePosition);
+    position.absolutePosition -= length;
     return position;
 }
 

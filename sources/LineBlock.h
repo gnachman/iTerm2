@@ -7,9 +7,10 @@
 //
 
 #import <Foundation/Foundation.h>
+#import "FindContext.h"
+#import "ScreenChar.h"
 #import "iTermEncoderAdapter.h"
 #import "iTermFindViewController.h"
-#import "ScreenChar.h"
 
 typedef struct {
     NSTimeInterval timestamp;
@@ -95,6 +96,8 @@ typedef struct {
 
 - (void)removeLastWrappedLines:(int)numberOfLinesToRemove
                          width:(int)width;
+- (void)removeLastRawLine;
+- (int)lengthOfLastLine;
 
 // Drop lines from the start of the buffer. Returns the number of lines actually dropped
 // (either n or the number of lines in the block).
@@ -142,11 +145,12 @@ typedef struct {
 
 // Searches for a substring, populating results with ResultRange objects.
 - (void)findSubstring:(NSString*)substring
-              options:(int)options
+              options:(FindOptions)options
                  mode:(iTermFindMode)mode
              atOffset:(int)offset
               results:(NSMutableArray*)results
-      multipleResults:(BOOL)multipleResults;
+      multipleResults:(BOOL)multipleResults
+includesPartialLastLine:(BOOL *)includesPartialLastLine;
 
 // Tries to convert a byte offset into the block to an x,y coordinate relative to the first char
 // in the block. Returns YES on success, NO if the position is out of range.

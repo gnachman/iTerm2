@@ -6059,18 +6059,21 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [_filter autorelease];
     _filter = [filter copy];
 
-    [_asyncFilter autorelease];
+    iTermAsyncFilter *refining = [[_asyncFilter retain] autorelease];
+    [_asyncFilter release];
+
     DLog(@"Append lines from %@", self.liveSession);
     __weak __typeof(self) weakSelf = self;
     _asyncFilter = [source newAsyncFilterWithDestination:self
                                                    query:filter
+                                                refining:refining
                                                 progress:^(double progress) {
         [weakSelf setFilterProgress:progress];
     }];
     [self.liveSession addContentSubscriber:_asyncFilter];
     if (replacingFilter) {
         DLog(@"Clear buffer because there is a pre-existing filter");
-        [self clearBuffer];
+        [self.screen clearBufferSavingPrompt:NO];
     }
     [_asyncFilter start];
 }
@@ -15005,6 +15008,10 @@ getOptionKeyBehaviorLeft:(iTermOptionKeyBehavior *)left
 
 - (void)filterDestinationAdoptLineBuffer:(LineBuffer *)lineBuffer {
     [_screen setContentsFromLineBuffer:lineBuffer];
+}
+
+- (void)filterDestinationRemoveLastLine {
+    [_screen removeLastLine];
 }
 
 @end

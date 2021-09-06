@@ -314,7 +314,10 @@ static NSString *const kGridSizeKey = @"Size";
         // an '|| (i == size.height)' conjunction. It caused issue 3788 so I
         // removed it. Unfortunately, I can't recall why it was added in the
         // first place.
-        const BOOL isPartial = (continuation != EOL_HARD);
+        const BOOL isPartial = ((continuation != EOL_HARD) ||
+                                (i + 1 == numLines &&
+                                 self.cursor.y == i &&
+                                 self.cursor.x == [self lengthOfLineNumber:i]));
         [lineBuffer appendLine:line
                         length:currentLineLength
                        partial:isPartial

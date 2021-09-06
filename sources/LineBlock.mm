@@ -924,6 +924,29 @@ typedef struct {
     }
 }
 
+- (void)removeLastRawLine {
+    if (cll_entries == first_entry) {
+        return;
+    }
+    cll_entries -= 1;
+    is_partial = NO;
+    if (cll_entries == first_entry) {
+        // Popped the last line. Reset everything.
+        buffer_start = raw_buffer;
+        start_offset = 0;
+        first_entry = 0;
+        cll_entries = 0;
+    }
+    // refresh cache
+    metadata_[cll_entries].number_of_wrapped_lines = 0;
+    if (gEnableDoubleWidthCharacterLineCache) {
+        [metadata_[cll_entries].double_width_characters release];
+        metadata_[cll_entries].double_width_characters = nil;
+    }
+    cached_numlines_width = -1;
+    iTermLineBlockDidChange(self);
+}
+
 - (BOOL)popLastLineInto:(screen_char_t **)ptr
              withLength:(int *)length
               upToWidth:(int)width
@@ -1015,6 +1038,14 @@ typedef struct {
 - (int)startOffset
 {
     return start_offset;
+}
+
+- (int)lengthOfLastLine {
+    if ([self numRawLines] == 0) {
+        return 0;
+    }
+    const int index = cll_entries - 1;
+    return [self getRawLineLength:index];
 }
 
 - (int)getRawLineLength:(int)linenum
@@ -1352,7 +1383,7 @@ static int Search(NSString* needle,
                   int raw_line_length,
                   int start,
                   int end,
-                  int options,
+                  FindOptions options,
                   iTermFindMode mode,
                   int* resultLength)
 {
@@ -1375,7 +1406,7 @@ static int Search(NSString* needle,
 
 - (void)_findInRawLine:(int)entry
                 needle:(NSString*)needle
-               options:(int)options
+               options:(FindOptions)options
                   mode:(iTermFindMode)mode
                   skip:(int)skip
                 length:(int)raw_line_length
@@ -1475,7 +1506,6 @@ static int Search(NSString* needle,
         free(charHaystack);
     } else {
         // Search forward
-        // TODO: test this
         int tempResultLength;
         int tempPosition;
         while (skip < raw_line_length) {
@@ -1490,6 +1520,9 @@ static int Search(NSString* needle,
                     break;
                 }
                 skip = tempPosition + 1;
+                if (options & FindOneResultPerRawLine) {
+                    break;
+                }
             } else {
                 break;
             }
@@ -1524,11 +1557,13 @@ static int Search(NSString* needle,
 }
 
 - (void)findSubstring:(NSString*)substring
-              options:(int)options
+              options:(FindOptions)options
                  mode:(iTermFindMode)mode
              atOffset:(int)offset
               results:(NSMutableArray *)results
-      multipleResults:(BOOL)multipleResults {
+      multipleResults:(BOOL)multipleResults
+includesPartialLastLine:(BOOL *)includesPartialLastLine {
+    *includesPartialLastLine = NO;
     if (offset == -1) {
         offset = [self rawSpaceUsed] - 1;
     }
@@ -1570,6 +1605,9 @@ static int Search(NSString* needle,
         for (ResultRange* r in newResults) {
             r->position += line_raw_offset;
             [results addObject:r];
+        }
+        if (newResults.count && is_partial && entry + 1 == cll_entries) {
+            *includesPartialLastLine = YES;
         }
         if ([newResults count] && !multipleResults) {
             return;

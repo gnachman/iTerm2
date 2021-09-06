@@ -98,6 +98,7 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 
 // Preserves the prompt, but erases screen and scrollback buffer.
 - (void)clearBuffer;
+- (void)clearBufferSavingPrompt:(BOOL)savePrompt;
 
 // Clears the scrollback buffer, leaving screen contents alone.
 - (void)clearScrollbackBuffer;
@@ -153,6 +154,7 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 
 - (iTermAsyncFilter *)newAsyncFilterWithDestination:(id<iTermFilterDestination>)destination
                                               query:(NSString *)query
+                                           refining:(iTermAsyncFilter *)refining
                                            progress:(void (^)(double))progress;
 
 - (NSString *)compactLineDump;

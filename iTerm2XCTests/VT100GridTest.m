@@ -2923,5 +2923,93 @@ do { \
     XCTAssertEqual(sca.length, 0);
 }
 
+- (void)testRemoveLastLine_Regular {
+    VT100Grid *grid = [[VT100Grid alloc] initWithSize:VT100GridSizeMake(80, 24) delegate:self];
+    LineBuffer *lineBuffer = [[[LineBuffer alloc] initWithBlockSize:1000] autorelease];
+
+    for (NSString *stringToAppend in @[ @"hello", @"world" ]) {
+        screen_char_t *line = [self screenCharLineForString:stringToAppend];
+        [grid appendCharsAtCursor:line
+                           length:stringToAppend.length
+          scrollingIntoLineBuffer:nil
+              unlimitedScrollback:NO
+          useScrollbackWithRegion:NO
+                       wraparound:YES
+                             ansi:NO
+                           insert:NO];
+        [grid moveCursorToLeftMargin];
+        [grid moveCursorDown:1];
+        [grid scrollWholeScreenUpIntoLineBuffer:lineBuffer unlimitedScrollback:YES];
+        grid.cursor = VT100GridCoordMake(0, 0);
+    }
+
+    XCTAssert([[lineBuffer debugString] isEqualToString:@"hello!\nworld!"]);
+    [lineBuffer removeLastRawLine];
+    XCTAssert([[lineBuffer debugString] isEqualToString:@"hello!"]);
+}
+
+- (void)appendStrings:(NSArray<NSString *> *)strings toGrid:(VT100Grid *)grid lineBuffer:(LineBuffer *)lineBuffer {
+    for (NSString *stringToAppend in strings) {
+        screen_char_t *line = [self screenCharLineForString:stringToAppend];
+        [grid appendCharsAtCursor:line
+                           length:stringToAppend.length
+          scrollingIntoLineBuffer:nil
+              unlimitedScrollback:NO
+          useScrollbackWithRegion:NO
+                       wraparound:YES
+                             ansi:NO
+                           insert:NO];
+        [grid moveCursorToLeftMargin];
+        [grid moveCursorDown:1];
+        while ([grid lengthOfLineNumber:0] > 0 || grid.cursor.x > 0 || grid.cursor.y > 0) {
+            [grid scrollWholeScreenUpIntoLineBuffer:lineBuffer unlimitedScrollback:YES];
+            grid.cursor = VT100GridCoordMake(0, 0);
+        }
+    }
+}
+
+- (void)testRemoveLastRawLine_Wrapped {
+    VT100Grid *grid = [[VT100Grid alloc] initWithSize:VT100GridSizeMake(80, 24) delegate:self];
+    LineBuffer *lineBuffer = [[[LineBuffer alloc] initWithBlockSize:1000] autorelease];
+
+    NSString *spam = @"now is the time for all good men, women, and children to come to the aid of his, her, or their party or parties as applicable in his, her, or their local jurisdiction";
+    [self appendStrings:@[ @"hello", spam ] toGrid:grid lineBuffer:lineBuffer];
+    NSString *expected = [NSString stringWithFormat:@"hello!\n%@!", spam];
+    XCTAssert([[lineBuffer debugString] isEqualToString:expected]);
+    [lineBuffer removeLastRawLine];
+    XCTAssert([[lineBuffer debugString] isEqualToString:@"hello!"]);
+}
+
+- (void)testRemoveLastRawLine_Empty {
+    VT100Grid *grid = [[VT100Grid alloc] initWithSize:VT100GridSizeMake(80, 24) delegate:self];
+    LineBuffer *lineBuffer = [[[LineBuffer alloc] initWithBlockSize:1000] autorelease];
+
+    NSString *empty = @"";
+    [self appendStrings:@[ @"hello", empty ] toGrid:grid lineBuffer:lineBuffer];
+    NSString *expected = [NSString stringWithFormat:@"hello!\n%@!", empty];
+    XCTAssert([[lineBuffer debugString] isEqualToString:expected]);
+    [lineBuffer removeLastRawLine];
+    XCTAssert([[lineBuffer debugString] isEqualToString:@"hello!"]);
+}
+
+- (void)testRemoveLastRawLine_LargerThanBlockSize {
+    VT100Grid *grid = [[VT100Grid alloc] initWithSize:VT100GridSizeMake(80, 24) delegate:self];
+    LineBuffer *lineBuffer = [[[LineBuffer alloc] initWithBlockSize:85] autorelease];
+
+    NSString *spam = @"now is the time for all good men, women, and children to come to the aid of his, her, or their party or parties as applicable in his, her, or their local jurisdiction";
+    [self appendStrings:@[ @"hello", spam ] toGrid:grid lineBuffer:lineBuffer];
+    NSString *expected = [NSString stringWithFormat:@"hello!\n%@!", spam];
+    XCTAssert([[lineBuffer debugString] isEqualToString:expected]);
+    [lineBuffer removeLastRawLine];
+    XCTAssert([[lineBuffer debugString] isEqualToString:@"hello!"]);
+}
+
+- (void)testRemoveLastRawLine_EmptyBuffer {
+    LineBuffer *lineBuffer = [[[LineBuffer alloc] initWithBlockSize:85] autorelease];
+    XCTAssert([[lineBuffer debugString] isEqualToString:@""]);
+    [lineBuffer removeLastRawLine];
+    XCTAssert([[lineBuffer debugString] isEqualToString:@""]);
+}
+
 @end
 

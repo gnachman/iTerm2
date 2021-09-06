@@ -12,16 +12,15 @@ protocol Updater {
     var progress: Double { get }
 
     // Returns false when there is nothing left to do
-    mutating func update() -> Bool
+    func update() -> Bool
 }
 
-struct VerbatimUpdater: Updater {
-    let accept: () -> (Void)
+class VerbatimUpdater: Updater {
+    var accept: (() -> (Void))? = nil
     private var successor: Updater
     private var done = false
 
-    init(_ successor: Updater, accept: @escaping () -> (Void)) {
-        self.accept = accept
+    init(_ successor: Updater) {
         self.successor = successor
     }
 
@@ -29,21 +28,21 @@ struct VerbatimUpdater: Updater {
         return 1
     }
 
-    mutating func update() -> Bool {
+    func update() -> Bool {
         if done {
             // Streaming new input after initial adopt() call.
             return successor.update()
         }
-        accept()
+        accept?()
         done = true
         return false
     }
 }
 
-struct FilteringUpdater: Updater {
+class FilteringUpdater: Updater {
+    var accept: ((Int32, Bool) -> (Void))? = nil
     private let lineBuffer: LineBuffer
     private let count: Int32
-    private let accept: (Int32) -> (Void)
     private var context: FindContext
     private var stopAt: LineBufferPosition
     private let width: Int32
@@ -56,12 +55,10 @@ struct FilteringUpdater: Updater {
          lineBuffer: LineBuffer,
          count: Int32,
          width: Int32,
-         mode: iTermFindMode,
-         accept: @escaping (Int32) -> (Void)) {
+         mode: iTermFindMode) {
         self.lineBuffer = lineBuffer
         self.count = count
         self.width = Int32(width)
-        self.accept = accept
         self.mode = mode
         self.query = query
         context = FindContext()
@@ -69,42 +66,41 @@ struct FilteringUpdater: Updater {
         begin(at: lineBuffer.firstPosition())
     }
 
-    private mutating func begin(at startPosition: LineBufferPosition) {
+    private func begin(at startPosition: LineBufferPosition) {
         context = FindContext()
         stopAt = lineBuffer.lastPosition()
         lineBuffer.prepareToSearch(for: query,
                                    startingAt: startPosition,
-                                   options: [.multipleResults],
+                                   options: [.multipleResults, .oneResultPerRawLine],
                                    mode: mode,
                                    with: context)
     }
 
     var progress: Double {
-        return Double(max(0, lastY)) / Double(count)
+        return min(1.0, Double(max(0, lastY)) / Double(count))
     }
 
-    mutating func update() -> Bool {
-        if context.status == .NotFound, let lastPosition = lastPosition {
+    func update() -> Bool {
+        if let lastPosition = lastPosition {
             begin(at: lastPosition)
+            self.lastPosition = nil
         }
         guard context.status == .Searching || context.status == .Matched else {
             DLog("FilteringUpdater: finished, return false")
             return false
         }
         DLog("FilteringUpdater: perform search")
+        var needsToBackUp = false
         lineBuffer.findSubstring(context, stopAt: stopAt)
         switch context.status {
         case .Matched:
-            DLog("FilteringUpdater: Matched")  // TODO: Would be nice to limit search results to one per line
+            DLog("FilteringUpdater: Matched")
             let positions = lineBuffer.convertPositions(context.results as! [ResultRange], withWidth: width)
             for range in positions {
-                if range.yStart == lastY {
-                    continue
-                }
-                let start = range.yStart
-                let end = max(start, range.yEnd)
-                for y in start...end {
-                    accept(y)
+                let temporary = range === positions.last && context.includesPartialLastLine
+                accept?(range.yStart, temporary)
+                if temporary {
+                    needsToBackUp = true
                 }
                 lastY = range.yEnd
             }
@@ -115,11 +111,21 @@ struct FilteringUpdater: Updater {
         @unknown default:
             fatalError()
         }
-        if context.status == .NotFound {
-            lastPosition = lineBuffer.lastPosition()
+        if needsToBackUp {
+            // We know we searched the last line so prepare to search again from the beginning
+            // of the last line next time.
+            lastPosition = lineBuffer.positionForStartOfLastLine()
             return false
         }
-        return true
+        switch context.status {
+        case .NotFound:
+            lastPosition = lineBuffer.lastPosition()
+            return false
+        case .Matched, .Searching:
+            return true
+        @unknown default:
+            fatalError()
+        }
     }
 }
 
@@ -130,6 +136,9 @@ protocol FilterDestination {
 
     @objc(filterDestinationAdoptLineBuffer:)
     func adopt(_ lineBuffer: LineBuffer)
+
+    @objc(filterDestinationRemoveLastLine)
+    func removeLastLine()
 }
 
 @objc(iTermAsyncFilter)
@@ -142,46 +151,63 @@ class AsyncFilter: NSObject {
     private var started = false
     private let lineBufferCopy: LineBuffer
     private let width: Int32
-    private let filteringUpdater: FilteringUpdater
+    private var filteringUpdater: FilteringUpdater
     private let destination: FilterDestination
+    private var lastLineIsTemporary: Bool
 
-    @objc(initWithQuery:lineBuffer:grid:mode:destination:cadence:progress:)
+    @objc(initWithQuery:lineBuffer:grid:mode:destination:cadence:refining:progress:)
     init(query: String,
          lineBuffer: LineBuffer,
          grid: VT100Grid,
          mode: iTermFindMode,
          destination: FilterDestination,
          cadence: TimeInterval,
+         refining: AsyncFilter?,
          progress: ((Double) -> (Void))?) {
-        let temp = lineBuffer.newAppendOnlyCopy()
-        temp.setMaxLines(-1)
-        lineBufferCopy = temp
-        grid.appendLines(grid.numberOfLinesUsed(), to: temp)
-        let numberOfLines = temp.numLines(withWidth: grid.size.width)
+        lineBufferCopy = lineBuffer.newAppendOnlyCopy()
+        lineBufferCopy.setMaxLines(-1)
+        grid.appendLines(grid.numberOfLinesUsed(), to: lineBufferCopy)
+        let numberOfLines = lineBufferCopy.numLines(withWidth: grid.size.width)
         let width = grid.size.width
         self.width = width
         self.cadence = cadence
         self.progress = progress
         self.query = query
         self.destination = destination
-        filteringUpdater = FilteringUpdater(query: query,
-                                                lineBuffer: temp,
-                                                count: numberOfLines,
-                                                width: width,
-                                                mode: mode) { (lineNumber: Int32) in
-            DLog("AsyncFilter: append line \(lineNumber)")
-            let chars = temp.rawLine(atWrappedLine: lineNumber, width: width)
-            destination.append(chars.line, count: chars.length, continuation: chars.continuation)
-        }
+        self.filteringUpdater = FilteringUpdater(query: query,
+                                                 lineBuffer: lineBufferCopy,
+                                                 count: numberOfLines,
+                                                 width: width,
+                                                 mode: mode)
+
         if query.isEmpty {
-            updater = VerbatimUpdater(filteringUpdater) {
-                destination.adopt(temp)
-            }
+            updater = VerbatimUpdater(filteringUpdater)
         } else {
             updater = filteringUpdater
         }
-
+        lastLineIsTemporary = refining?.lastLineIsTemporary ?? false
         super.init()
+
+        self.filteringUpdater.accept = { [weak self] (lineNumber: Int32, temporary: Bool) in
+            self?.addFilterResult(lineNumber, temporary: temporary)
+        }
+        (updater as? VerbatimUpdater)?.accept = { [weak self] in
+            self?.adoptVerbatim()
+        }
+    }
+
+    private func addFilterResult(_ lineNumber: Int32, temporary: Bool) {
+        DLog("AsyncFilter: append line \(lineNumber)")
+        if lastLineIsTemporary {
+            destination.removeLastLine()
+        }
+        lastLineIsTemporary = temporary
+        let chars = lineBufferCopy.rawLine(atWrappedLine: lineNumber, width: width)
+        destination.append(chars.line, count: chars.length, continuation: chars.continuation)
+    }
+
+    private func adoptVerbatim() {
+        destination.adopt(lineBufferCopy)
     }
 
     @objc func start() {
@@ -253,9 +279,6 @@ extension AsyncFilter: ContentSubscriber {
                                   timestamp: Date.timeIntervalSinceReferenceDate,
                                   continuation: array.continuation)
         if timer != nil {
-            return
-        }
-        if array.eol != EOL_HARD {
             return
         }
         while updater.update() { }

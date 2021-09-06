@@ -11,7 +11,8 @@
 
 typedef NS_OPTIONS(NSUInteger, FindOptions) {
     FindOptBackwards        = (1 << 0),
-    FindMultipleResults     = (1 << 1)
+    FindMultipleResults     = (1 << 1),
+    FindOneResultPerRawLine = (1 << 2)
 };
 
 typedef NS_ENUM(NSInteger, FindContextStatus) {
@@ -64,6 +65,9 @@ typedef NS_ENUM(NSInteger, FindContextStatus) {
 
 // Estimate of fraction of work done.
 @property(nonatomic, assign) double progress;
+
+// Do the results include anything from the last line which is also partial?
+@property(nonatomic, assign) BOOL includesPartialLastLine;
 
 - (void)copyFromFindContext:(FindContext *)other;
 

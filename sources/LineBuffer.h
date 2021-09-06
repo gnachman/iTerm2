@@ -135,6 +135,9 @@
 - (void)removeLastWrappedLines:(int)numberOfLinesToRemove
                          width:(int)width;
 
+// Remove the last raw (unwrapped) line.
+- (void)removeLastRawLine;
+
 // Get the number of buffer lines at a given width.
 - (int)numLinesWithWidth:(int)width;
 
@@ -177,6 +180,7 @@
 
 - (LineBufferPosition * _Nonnull)firstPosition;
 - (LineBufferPosition * _Nonnull)lastPosition;
+- (LineBufferPosition * _Nonnull)positionForStartOfLastLine;
 
 // Convert the block,offset in a findcontext into an absolute position.
 - (long long)absPositionOfFindContext:(FindContext * _Nonnull)findContext;
