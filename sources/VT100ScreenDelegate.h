@@ -293,5 +293,6 @@
                   charactersIgnoringModifiers:(NSString *)charactersIgnoringModifiers;
 - (void)screenDidAppendImageData:(NSData *)data;
 - (void)screenAppendScreenCharArray:(const screen_char_t *)line length:(int)length;
+- (void)screenApplicationKeypadModeDidChange:(BOOL)mode;
 
 @end

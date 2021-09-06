@@ -420,6 +420,7 @@ static const int kMaxScreenRows = 4096;
 - (void)forceSetKeypadMode:(BOOL)mode {
     _keypadMode = mode;
     _output.keypadMode = _keypadMode;
+    [self.delegate terminalApplicationKeypadModeDidChange:mode];
 }
 
 - (void)setAllowKeypadMode:(BOOL)allow {

@@ -85,6 +85,7 @@ NSString *const iTermVariableKeySessionBellCount = @"bellCount";
 NSString *const iTermVariableKeySessionLogFilename = @"logFilename";
 NSString *const iTermVariableKeySessionTmuxWindowPaneIndex = @"tmuxWindowPaneIndex";
 NSString *const iTermVariableKeySessionMouseInfo = @"mouseInfo";
+NSString *const iTermVariableKeySessionApplicationKeypad = @"applicationKeypad";
 
 #pragma mark - Window Context
 

@@ -71,6 +71,7 @@ extern NSString *const iTermVariableKeySessionParent;  // Session that was activ
 extern NSString *const iTermVariableKeySessionBellCount;  // NSNumber. Number of times the bell has tried to ring.
 extern NSString *const iTermVariableKeySessionLogFilename;  // NSString. Path to log file. Unset if not logging.
 extern NSString *const iTermVariableKeySessionMouseInfo;  // [x=NSNumber, y=NSNumber, button=NSNumber, count=NSNumber, modifiers=NSNumber, sideEffects=NSNumber, state=NSNumber]. Info about last lcick.
+extern NSString *const iTermVariableKeySessionApplicationKeypad;  // NSNumber. Boolean - in application keypad mode?
 
 extern NSString *const iTermVariableKeyWindowTitleOverrideFormat;
 extern NSString *const iTermVariableKeyWindowCurrentTab;

@@ -12889,6 +12889,10 @@ preferredEscaping:(iTermSendTextEscaping)preferredEscaping {
                                                               encoding:_terminal.encoding];
 }
 
+- (void)screenApplicationKeypadModeDidChange:(BOOL)mode {
+    self.variablesScope.applicationKeypad = mode;
+}
+
 - (VT100Screen *)popupVT100Screen {
     return _screen;
 }

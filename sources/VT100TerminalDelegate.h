@@ -446,5 +446,6 @@ typedef NS_ENUM(int, VT100TerminalColorIndex) {
                                           flags:(NSEventModifierFlags)flags
                                      characters:(NSString *)characters
                     charactersIgnoringModifiers:(NSString *)charactersIgnoringModifiers;
+- (void)terminalApplicationKeypadModeDidChange:(BOOL)mode;
 
 @end

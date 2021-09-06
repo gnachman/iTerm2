@@ -5173,6 +5173,10 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
                               charactersIgnoringModifiers:charactersIgnoringModifiers];
 }
 
+- (void)terminalApplicationKeypadModeDidChange:(BOOL)mode {
+    [self.delegate screenApplicationKeypadModeDidChange:mode];
+}
+
 #pragma mark - Private
 
 - (VT100GridCoordRange)commandRange {

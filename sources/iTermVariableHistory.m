@@ -79,7 +79,8 @@
                                     iTermVariableKeySessionSelectionLength,
                                     iTermVariableKeySessionBellCount,
                                     iTermVariableKeySessionLogFilename,
-                                    iTermVariableKeySessionMouseInfo];
+                                    iTermVariableKeySessionMouseInfo,
+                                    iTermVariableKeySessionApplicationKeypad];
     [names enumerateObjectsUsingBlock:^(NSString * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
         [self recordUseOfVariableNamed:obj inContext:iTermVariablesSuggestionContextSession];
     }];

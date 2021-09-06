@@ -345,4 +345,12 @@
     [self setValue:mouseInfo forVariableNamed:iTermVariableKeySessionMouseInfo];
 }
 
+- (BOOL)applicationKeypad {
+    return [[self valueForVariableName:iTermVariableKeySessionApplicationKeypad] boolValue];
+}
+
+- (void)setApplicationKeypad:(BOOL)value {
+    [self setValue:@(value) forVariableNamed:iTermVariableKeySessionApplicationKeypad];
+}
+
 @end
