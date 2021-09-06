@@ -1004,6 +1004,9 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     return @"";
 }
 
+- (void)screenApplicationKeypadModeDidChange:(BOOL)mode {
+}
+
 
 #pragma mark - iTermSelectionDelegate
 
