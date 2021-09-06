@@ -49,10 +49,10 @@
 }
 
 - (BOOL)becomeFirstResponder {
-    BOOL result = [super becomeFirstResponder];
     if ([self enclosingTerminalWindowIsBecomingKey]) {
         return NO;
     }
+    const BOOL result = [super becomeFirstResponder];
     if (result &&
         [self.delegate respondsToSelector:@selector(focusReportingSearchFieldWillBecomeFirstResponder:)]) {
         [self.delegate focusReportingSearchFieldWillBecomeFirstResponder:self];
