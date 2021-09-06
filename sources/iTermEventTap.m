@@ -350,6 +350,9 @@ error:
 
 @end
 
+@interface iTermKeyDownEventTap()<iTermEventTapRemappingDelegate>
+@end
+
 @implementation iTermKeyDownEventTap
 
 + (instancetype)sharedInstanceCreatingIfNeeded:(BOOL)createIfNeeded {

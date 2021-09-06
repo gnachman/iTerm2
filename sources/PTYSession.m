@@ -4139,7 +4139,6 @@ ITERM_WEAKLY_REFERENCEABLE
     // Color scheme
     // ansiColorsMatchingForeground:andBackground:inBookmark does an equality comparison, so
     // iTermProfilePreferences is not used here.
-#warning TODO: Make sure this is right
     [self setColorFgBgVariable:[self ansiColorsMatchingForeground:aDict[[self amendedColorKey:KEY_FOREGROUND_COLOR]]
                                                     andBackground:aDict[[self amendedColorKey:KEY_BACKGROUND_COLOR]]
                                                        inBookmark:aDict]];
