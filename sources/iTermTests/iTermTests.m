@@ -44,7 +44,7 @@ static void RunTestsInObject(iTermTest *test) {
     NSLog(@"-- Finished tests in %@ --", [test class]);
 }
 
-NSArray *AllTestClasses() {
+static NSArray *AllTestClasses() {
     return @[ [AppleScriptTest class] ];
 }
 

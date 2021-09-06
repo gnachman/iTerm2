@@ -15673,7 +15673,6 @@
 				DEVELOPMENT_TEAM = H7V7XYVQ7D;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
-					/Users/gnachman/iTerm2,
 					"$(PROJECT_DIR)/ThirdParty",
 					"$(PROJECT_DIR)/ColorPicker",
 					"$(PROJECT_DIR)/BetterFontPicker",
@@ -15756,7 +15755,6 @@
 				ENABLE_NS_ASSERTIONS = NO;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
-					/Users/gnachman/iTerm2,
 					"$(PROJECT_DIR)/ThirdParty",
 					"$(PROJECT_DIR)/ColorPicker",
 					"$(PROJECT_DIR)/BetterFontPicker",
@@ -15831,7 +15829,6 @@
 				ENABLE_NS_ASSERTIONS = NO;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
-					/Users/gnachman/iTerm2,
 					"$(PROJECT_DIR)/ThirdParty",
 					"$(PROJECT_DIR)/ColorPicker",
 					"$(PROJECT_DIR)/BetterFontPicker",
@@ -16680,7 +16677,6 @@
 				ENABLE_NS_ASSERTIONS = NO;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
-					/Users/gnachman/iTerm2,
 					"$(PROJECT_DIR)/ThirdParty",
 					"$(PROJECT_DIR)/ColorPicker",
 					"$(PROJECT_DIR)/BetterFontPicker",
