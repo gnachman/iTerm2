@@ -213,6 +213,15 @@ NSString *const iTermStatusBarElementPasteboardType = @"com.iterm2.status-bar-el
     assert(NO);
 }
 
+- (void)statusBarRemoveTemporaryComponent:(nonnull id<iTermStatusBarComponent>)component {
+    assert(NO);
+}
+
+- (void)statusBarSetFilter:(NSString * _Nullable)query {
+    assert(NO);
+}
+
+
 @end
 
 NS_ASSUME_NONNULL_END
