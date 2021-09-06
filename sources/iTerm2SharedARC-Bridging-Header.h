@@ -10,6 +10,7 @@
 #import "iTermMiniSearchFieldViewController.h"
 #import "iTermPreferences.h"
 #import "iTermStatusBarTextComponent.h"
+#import "iTermStoplightHotbox.h"
 #import "iTermTuple.h"
 #import "iTermVariableScope.h"
 #import "FindContext.h"

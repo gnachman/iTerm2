@@ -7,6 +7,11 @@
 
 #import <Cocoa/Cocoa.h>
 #import "iTermFindViewController.h"
+#import "iTermFocusReportingTextField.h"
+#import "iTermStoplightHotbox.h"
+
+@interface iTermMiniSearchField : iTermFocusReportingSearchField<iTermHotboxSuppressing>
+@end
 
 @interface iTermMiniSearchFieldViewController : NSViewController<iTermFindViewController>
 @property (nonatomic) BOOL canClose;

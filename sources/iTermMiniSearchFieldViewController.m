@@ -22,9 +22,6 @@
 
 @end
 
-@interface iTermMiniSearchField : iTermFocusReportingSearchField<iTermHotboxSuppressing>
-@end
-
 @implementation iTermMiniSearchField
 
 - (BOOL)it_preferredFirstResponder {

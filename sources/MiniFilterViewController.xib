@@ -33,7 +33,7 @@ Gw
                         <action selector="closeButton:" target="-2" id="JsG-kF-aXB"/>
                     </connections>
                 </button>
-                <searchField wantsLayer="YES" focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" textCompletion="NO" translatesAutoresizingMaskIntoConstraints="NO" id="8GZ-Hv-aCt" userLabel="Search Field" customClass="iTermMiniSearchField">
+                <searchField wantsLayer="YES" focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" textCompletion="NO" translatesAutoresizingMaskIntoConstraints="NO" id="8GZ-Hv-aCt" userLabel="Search Field" customClass="iTermMiniFilterField">
                     <rect key="frame" x="0.0" y="0.0" width="193" height="19"/>
                     <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMaxX="YES" flexibleMaxY="YES"/>
                     <searchFieldCell key="cell" controlSize="small" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" continuous="YES" borderStyle="bezel" focusRingType="none" placeholderString="Filter" usesSingleLineMode="YES" bezelStyle="round" sendsSearchStringImmediately="YES" sendsWholeSearchString="YES" id="KgY-y0-6XN">

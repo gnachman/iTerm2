@@ -14,7 +14,6 @@ class StatusBarFilterComponent: iTermStatusBarBaseComponent, iTermFilterViewCont
     private lazy var viewController: MiniFilterViewController = {
         viewController = MiniFilterViewController()
         viewController.delegate = self
-        #warning("TODO: Test this")
         let config: [iTermStatusBarComponentConfigurationKey : Any] = configuration
         let knobValues: [AnyHashable: Any] = (config[iTermStatusBarComponentConfigurationKey.knobValues] as? [AnyHashable: Any]) ?? [:]
         let isTemporary = (knobValues[Self.isTemporaryKey] as? NSNumber) ?? NSNumber(false)

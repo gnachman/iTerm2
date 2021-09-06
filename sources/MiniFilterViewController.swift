@@ -12,6 +12,29 @@ protocol MiniFilterViewControllerDelegate: AnyObject {
     func searchQueryDidChange(_ query: String, editor: NSTextView?)
 }
 
+@objc(iTermMiniFilterField)
+class MiniFilterField: iTermMiniSearchField {
+    private var iconSet = false
+
+    @objc override func viewDidMoveToWindow() {
+        if let searchFieldCell = self.cell as? NSSearchFieldCell,
+           let cell = searchFieldCell.searchButtonCell, !iconSet {
+            changeIcon(cell)
+        }
+    }
+
+    private func changeIcon(_ cell: NSButtonCell) {
+        guard #available(macOS 11, *) else {
+            return
+        }
+        cell.setButtonType(.toggle)
+        let filterImage = NSImage(systemSymbolName: "line.horizontal.3.decrease.circle",
+                                  accessibilityDescription: "Filter")
+        cell.image = filterImage
+        cell.alternateImage = filterImage
+    }
+}
+
 @objc(iTermMiniFilterViewController)
 class MiniFilterViewController: NSViewController, NSTextFieldDelegate {
     @objc var canClose = false {
