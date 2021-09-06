@@ -558,7 +558,7 @@ DQ
                                         <menuItem isSeparatorItem="YES" id="sV9-Bl-1d4">
                                             <modifierMask key="keyEquivalentModifierMask" command="YES"/>
                                         </menuItem>
-                                        <menuItem title="Filter" keyEquivalent="F" identifier="Find.Find URLs" id="rPD-q2-ZI6">
+                                        <menuItem title="Filter" keyEquivalent="F" identifier="Find.Filter" id="rPD-q2-ZI6">
                                             <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
                                             <connections>
                                                 <action selector="filter:" target="-1" id="aWL-0M-Ywe"/>
