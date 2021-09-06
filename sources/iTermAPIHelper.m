@@ -2185,6 +2185,9 @@ static BOOL iTermAPIHelperLastApplescriptAuthRequiredSetting;
                 }
             }
             tabMessage.tmuxWindowId = [@(tab.tmuxWindow) stringValue];
+            if (tab.tmuxController) {
+                tabMessage.tmuxConnectionId = tab.tmuxController.clientName;
+            }
             [windowMessage.tabsArray addObject:tabMessage];
         }
 
