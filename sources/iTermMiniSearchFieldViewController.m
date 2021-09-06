@@ -178,10 +178,6 @@
     return NO;
 }
 
-- (void)setFilterIsVisible:(BOOL)filterIsVisible {
-    assert(NO);
-}
-
 - (BOOL)searchIsVisible {
     return YES;
 }
