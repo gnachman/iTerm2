@@ -400,10 +400,18 @@
         NSInteger row = [_table selectedRow];
         if (row < 0) {
             row = 0;
-        } else if (commandSelector == @selector(moveUp:) && row > 0) {
-            row--;
-        } else if (commandSelector == @selector(moveDown:) && row + 1 < _table.numberOfRows) {
-            row++;
+        } else if (commandSelector == @selector(moveUp:)) {
+            if (row > 0) {
+                row--;
+            } else {
+                row = _table.numberOfRows - 1;
+            }
+        } else if (commandSelector == @selector(moveDown:)) {
+            if (row + 1 < _table.numberOfRows) {
+                row++;
+            } else {
+                row = 0;
+            }
         }
         [_table selectRowIndexes:[NSIndexSet indexSetWithIndex:row] byExtendingSelection:NO];
         result = YES;
