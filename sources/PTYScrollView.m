@@ -284,6 +284,9 @@
 
         CGFloat amount = [self accumulateVerticalScrollFromEvent:event];
         scrollRect.origin.y -= amount * self.verticalLineScroll;
+        DLog(@"Scroll by %@ lines, each with height %@, to scroll from %@ to %@",
+             @(amount), @(self.verticalLineScroll), NSStringFromRect(self.documentVisibleRect),
+             NSStringFromRect(scrollRect));
         [[self documentView] scrollRectToVisible:scrollRect];
 
         [self detectUserScroll];
