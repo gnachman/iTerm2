@@ -42,10 +42,10 @@
 
     _visualEffectView = [[iTermVibrantVisualEffectView alloc] initWithFrame:self.bounds];
     _visualEffectView.blendingMode = NSVisualEffectBlendingModeBehindWindow;
-    if (@available(macOS 10.14, *)) {
-        _visualEffectView.material = NSVisualEffectMaterialSheet;
-    } else {
+    if (@available(macOS 10.16, *)) {
         _visualEffectView.material = NSVisualEffectMaterialMenu;
+    } else {
+        _visualEffectView.material = NSVisualEffectMaterialSheet;
     }
     _visualEffectView.state = NSVisualEffectStateActive;
     [_container addSubview:_visualEffectView];

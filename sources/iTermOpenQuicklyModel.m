@@ -437,6 +437,10 @@ static const double kProfileNameMultiplierForScriptItem = 0.09;
 }
 
 - (void)updateWithQuery:(NSString *)queryString {
+    if (queryString.length == 0) {
+        self.items = [NSMutableArray array];
+        return;
+    }
     id<iTermOpenQuicklyCommand> command = [self commandForQuery:[queryString lowercaseString]];
 
     iTermMinimumSubsequenceMatcher *matcher =

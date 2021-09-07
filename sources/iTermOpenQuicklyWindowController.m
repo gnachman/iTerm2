@@ -29,7 +29,7 @@
     NSTableViewDelegate,
     NSWindowDelegate>
 
-@property(nonatomic, retain) iTermOpenQuicklyModel *model;
+@property(nonatomic, strong) iTermOpenQuicklyModel *model;
 
 @end
 
@@ -43,6 +43,8 @@
     IBOutlet NSScrollView *_scrollView;
 
     IBOutlet SolidColorView *_divider;
+    IBOutlet NSButton *_xButton;
+    IBOutlet NSImageView *_loupe;
 }
 
 + (instancetype)sharedInstance {
@@ -63,11 +65,6 @@
     return self;
 }
 
-- (void)dealloc {
-    [_model release];
-    [super dealloc];
-}
-
 - (void)awakeFromNib {
     // Initialize the table
 #ifdef MAC_OS_X_VERSION_10_16
@@ -84,25 +81,53 @@
 
     // Initialize the window
     [self.window setOpaque:NO];
-    if (@available(macOS 10.14, *)) {
-        _table.backgroundColor = [NSColor clearColor];
-        _table.enclosingScrollView.drawsBackground = NO;
-        contentView.color = [NSColor clearColor];
-        self.window.backgroundColor = [NSColor clearColor];
-    } else {
-        _table.backgroundColor = [NSColor controlColor];
-        self.window.backgroundColor = [NSColor clearColor];
-        contentView.color = [NSColor controlColor];
+    _table.backgroundColor = [NSColor clearColor];
+    _table.enclosingScrollView.drawsBackground = NO;
+    contentView.color = [NSColor clearColor];
+    self.window.backgroundColor = [NSColor clearColor];
+
+    if (@available(macOS 10.16, *)) {
+        {
+            NSImage *image = [NSImage imageWithSystemSymbolName:@"magnifyingglass"
+                                       accessibilityDescription:@"Search icon"];
+            NSImageSymbolConfiguration *config =
+            [NSImageSymbolConfiguration configurationWithPointSize:21
+                                                            weight:NSFontWeightRegular];
+            [_loupe setImage:[image imageWithSymbolConfiguration:config]];
+        }
+        {
+            NSImageSymbolConfiguration *config =
+            [NSImageSymbolConfiguration configurationWithPointSize:14
+                                                            weight:NSFontWeightRegular];
+            NSImage *image = [NSImage imageWithSystemSymbolName:@"xmark.circle.fill"
+                                       accessibilityDescription:@"Clear search query"];
+            [_xButton setImage:[image imageWithSymbolConfiguration:config]];
+            NSRect frame = _xButton.frame;
+            const CGFloat delta = 2;
+            frame.size.width += delta;
+            frame.size.height += delta;
+            frame.origin.x -= delta / 2.0;
+            frame.origin.y -= delta / 2.0;
+            _xButton.frame = frame;
+        }
     }
 
     // Rounded corners for contentView
     contentView.wantsLayer = YES;
-    contentView.layer.cornerRadius = 6;
+    if (@available(macOS 10.16, *)) {
+        contentView.layer.cornerRadius = 10;
+    } else {
+        contentView.layer.cornerRadius = 6;
+    }
     contentView.layer.masksToBounds = YES;
     contentView.layer.borderColor = [[NSColor colorWithCalibratedRed:0.66 green:0.66 blue:0.66 alpha:1] CGColor];
     contentView.layer.borderWidth = 0.5;
 
-    _divider.color = [NSColor colorWithCalibratedRed:0.66 green:0.66 blue:0.66 alpha:1];
+    if (@available(macOS 10.16, *)) {
+        _divider.hidden = YES;
+    } else {
+        _divider.color = [NSColor colorWithCalibratedRed:0.66 green:0.66 blue:0.66 alpha:1];
+    }
 
     [self updateTextColorForAllRows];
 }
@@ -122,6 +147,7 @@
 // Recompute the model and update the window frame.
 - (void)update {
     [self.model updateWithQuery:_textField.stringValue];
+    _xButton.hidden = _textField.stringValue.length == 0;
     [_table reloadData];
 
     // We have to set the scrollview's size before animating the window or else
@@ -129,7 +155,11 @@
     // autoresizing to do this automatically.
     NSRect frame = [self frame];
     NSRect contentViewFrame = [self.window frameRectForContentRect:frame];
-    _divider.hidden = (self.model.items.count == 0);
+    if (@available(macOS 10.16, *)) {
+        _divider.hidden = YES;
+    } else {
+        _divider.hidden = (self.model.items.count == 0);
+    }
     _scrollView.frame = NSMakeRect(_scrollView.frame.origin.x,
                                    _scrollView.frame.origin.y,
                                    contentViewFrame.size.width,
@@ -158,8 +188,8 @@
     if (!screen) {
         screen = [NSScreen mainScreen];
     }
-    static const CGFloat kMarginAboveField = 10;
-    static const CGFloat kMarginBelowField = 6;
+    static const CGFloat kMarginAboveField = 12;
+    static const CGFloat kMarginBelowField = 9;
     static const CGFloat kMarginAboveWindow = 170;
     CGFloat maxHeight = screen.frame.size.height - kMarginAboveWindow * 2;
     CGFloat nonTableSpace = kMarginAboveField + _textField.frame.size.height + kMarginBelowField;
@@ -293,7 +323,7 @@
     result.imageView.image = item.icon;
 
     result.textField.attributedStringValue =
-        item.title ?: [[[NSAttributedString alloc] initWithString:@"Untitled" attributes:@{}] autorelease];
+        item.title ?: [[NSAttributedString alloc] initWithString:@"Untitled" attributes:@{}];
     [result.textField.cell setLineBreakMode:NSLineBreakByTruncatingTail];
     if (item.detail) {
         result.detailTextField.attributedStringValue = item.detail;
@@ -314,6 +344,7 @@
         }
         detailColor = color;
     }
+    result.textField.font = [NSFont systemFontOfSize:13];
     result.textField.textColor = color;
     result.detailTextField.textColor = detailColor;
     return result;
@@ -321,9 +352,9 @@
 
 - (NSTableRowView *)tableView:(NSTableView *)tableView rowViewForRow:(NSInteger)row {
     if (@available(macOS 10.16, *)) {
-        return [[[iTermOpenQuicklyTableRowView_BigSur alloc] init] autorelease];
+        return [[iTermOpenQuicklyTableRowView_BigSur alloc] init];
     } else {
-        return [[[iTermOpenQuicklyTableRowView alloc] init] autorelease];
+        return [[iTermOpenQuicklyTableRowView alloc] init];
     }
 }
 
@@ -443,8 +474,8 @@
         prefix = @"";
     }
     NSMutableAttributedString *theString =
-        [[[NSMutableAttributedString alloc] initWithString:prefix
-                                                attributes:[self attributes]] autorelease];
+        [[NSMutableAttributedString alloc] initWithString:prefix
+                                               attributes:[self attributes]];
     [theString appendAttributedString:[self attributedStringFromString:value
                                                  byHighlightingIndices:highlight]];
     return theString;
@@ -463,11 +494,10 @@
 - (NSAttributedString *)attributedStringFromString:(NSString *)source
                              byHighlightingIndices:(NSIndexSet *)indexSet {
     NSMutableAttributedString *attributedString =
-        [[[NSMutableAttributedString alloc] initWithString:source attributes:[self attributes]] autorelease];
-    NSDictionary *highlight = @{ NSBackgroundColorAttributeName: [[NSColor yellowColor] colorWithAlphaComponent:0.4],
-                                 NSUnderlineStyleAttributeName: @(NSUnderlineStyleSingle),
-                                 NSUnderlineColorAttributeName: [NSColor yellowColor],
-                                 NSParagraphStyleAttributeName: [[self attributes] objectForKey:NSParagraphStyleAttributeName] };
+        [[NSMutableAttributedString alloc] initWithString:source attributes:[self attributes]];
+    NSDictionary *highlight = @{ NSFontAttributeName: [NSFont boldSystemFontOfSize:13],
+                                 NSParagraphStyleAttributeName: [[self attributes] objectForKey:NSParagraphStyleAttributeName]
+    };
     [indexSet enumerateIndexesUsingBlock:^(NSUInteger idx, BOOL *stop) {
         [attributedString setAttributes:highlight range:NSMakeRange(idx, 1)];
     }];
@@ -475,7 +505,7 @@
 }
 
 - (NSDictionary *)attributes {
-    NSMutableParagraphStyle *style = [[[NSMutableParagraphStyle alloc] init] autorelease];
+    NSMutableParagraphStyle *style = [[NSMutableParagraphStyle alloc] init];
     style.lineBreakMode = NSLineBreakByTruncatingTail;
     return @{ NSParagraphStyleAttributeName: style };
 }
