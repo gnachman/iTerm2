@@ -13316,8 +13316,8 @@ preferredEscaping:(iTermSendTextEscaping)preferredEscaping {
             DLog(@"drawFrameAndRemoveTemporarilyDisablementOfMetal: Token %@ is gone, not proceeding.", token);
             return;
         }
-        if (_exited) {
-            DLog(@"drawFrameAndRemoveTemporarilyDisablementOfMetal: Returning because the session is dead");
+        if (!_view.window) {
+            DLog(@"drawFrameAndRemoveTemporarilyDisablementOfMetal: Returning because the view has no window");
             return;
         }
         if (!_useMetal) {
