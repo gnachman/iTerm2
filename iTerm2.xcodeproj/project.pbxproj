@@ -6482,6 +6482,7 @@
 		A6BEE47526E0A623009C0C2C /* FilterIndicator@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "FilterIndicator@2x.png"; path = "images/FilterIndicator@2x.png"; sourceTree = "<group>"; };
 		A6BEE47626E0A623009C0C2C /* FilterIndicator.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = FilterIndicator.png; path = images/FilterIndicator.png; sourceTree = "<group>"; };
 		A6BEE47D26E7E4CC009C0C2C /* PTYSessionZoomState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PTYSessionZoomState.swift; sourceTree = "<group>"; };
+		A6BEE47F26E7EE19009C0C2C /* iTermMetalDisabling.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermMetalDisabling.h; sourceTree = "<group>"; };
 		A6BF034E21E176C30097DA86 /* iTermVariableScope.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermVariableScope.h; sourceTree = "<group>"; };
 		A6BF034F21E176C30097DA86 /* iTermVariableScope.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermVariableScope.m; sourceTree = "<group>"; };
 		A6BF035221E179380097DA86 /* iTermVariableHistory.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermVariableHistory.h; sourceTree = "<group>"; };
@@ -7508,6 +7509,7 @@
 				A6AC5D201E9036D70097C0A7 /* iTermURLMark.m */,
 				A696AB3921603A3F000023C3 /* iTermMetalUnavailableReason.h */,
 				A6725AD823D63BC0001CA48A /* iTermProfile.h */,
+				A6BEE47F26E7EE19009C0C2C /* iTermMetalDisabling.h */,
 			);
 			name = Headers;
 			path = sources/;

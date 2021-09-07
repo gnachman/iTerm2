@@ -20,6 +20,7 @@
 #import "iTermKeyboardHandler.h"
 #import "iTermLaunchServices.h"
 #import "iTermMetalClipView.h"
+#import "iTermMetalDisabling.h"
 #import "iTermMouseCursor.h"
 #import "iTermPreferences.h"
 #import "iTermPrintAccessoryViewController.h"
@@ -89,6 +90,15 @@
 #include <sys/time.h>
 
 #import <WebKit/WebKit.h>
+
+@interface iTermHighlightRowView: NSView<iTermMetalDisabling>
+@end
+
+@implementation iTermHighlightRowView
+- (BOOL)viewDisablesMetal {
+    return YES;
+}
+@end
 
 @implementation iTermHighlightedRow
 
@@ -2965,10 +2975,10 @@
 }
 
 - (void)highlightMarkOnLine:(int)line hasErrorCode:(BOOL)hasErrorCode {
-    CGFloat y = line * _lineHeight;
-    NSView *highlightingView = [[[NSView alloc] initWithFrame:NSMakeRect(0, y, self.frame.size.width, _lineHeight)] autorelease];
+    const CGFloat y = line * _lineHeight + NSMinY(self.frame);
+    NSView *highlightingView = [[[iTermHighlightRowView alloc] initWithFrame:NSMakeRect(0, y, self.frame.size.width, _lineHeight)] autorelease];
     [highlightingView setWantsLayer:YES];
-    [self addSubview:highlightingView];
+    [self.enclosingScrollView.documentView addSubview:highlightingView];
 
     // Set up layer's initial state
     highlightingView.layer.backgroundColor = hasErrorCode ? [[NSColor redColor] CGColor] : [[NSColor blueColor] CGColor];

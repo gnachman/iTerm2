@@ -31,6 +31,7 @@
 
 #import "DebugLogging.h"
 #import "iTermAdvancedSettingsModel.h"
+#import "iTermMetalDisabling.h"
 #import "iTermPreferences.h"
 #import "NSObject+iTerm.h"
 #import "NSView+iTerm.h"
@@ -61,9 +62,20 @@
 - (CGFloat)desiredAlphaValue {
     if ([PTYNoteViewController anyNoteVisible]) {
         return 1;
-    } else {
-        return 0;
     }
+    if ([self haveMetalDisablingChildren]) {
+        return 1;
+    }
+    return 0;
+}
+
+- (BOOL)haveMetalDisablingChildren {
+    for (NSView *view in self.subviews) {
+        if ([view conformsToProtocol:@protocol(iTermMetalDisabling)]) {
+            return YES;
+        }
+    }
+    return NO;
 }
 
 - (void)annotationVisibilityDidChange:(NSNotification *)notification {
@@ -98,13 +110,15 @@
       [self setPostsFrameChangedNotifications:YES];
       [self setPostsBoundsChangedNotifications:YES];
     }
+    [super setAlphaValue:[self desiredAlphaValue]];
 }
 
 - (void)willRemoveSubview:(NSView *)subview {
-  if (subview == child_) {
-    child_ = nil;
-  }
-  [super willRemoveSubview:subview];
+    if (subview == child_) {
+        child_ = nil;
+    }
+    [super setAlphaValue:[self desiredAlphaValue]];
+    [super willRemoveSubview:subview];
 }
 
 - (NSRect)adjustScroll:(NSRect)proposedVisibleRect {
