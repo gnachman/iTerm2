@@ -53,6 +53,7 @@ extern NSString *const iTermSessionWillTerminateNotification;
 @class iTermSwiftyStringGraph;
 @class iTermVariables;
 @class iTermVariableScope;
+@class PTYSessionZoomState;
 @class PTYTab;
 @class PTYTask;
 @class PTYTextView;
@@ -567,6 +568,8 @@ backgroundColor:(NSColor *)backgroundColor;
 @property(nonatomic, copy) NSString *filter;
 @property(nonatomic, readonly, strong) iTermAsyncFilter *asyncFilter;
 @property(nonatomic, readonly) NSMutableArray<id<iTermContentSubscriber>> *contentSubscribers;
+@property(nonatomic, readonly) PTYSessionZoomState *stateToSaveForZoom;  // current state to restore after exiting zoom in the future
+@property(nonatomic, strong) PTYSessionZoomState *savedStateForZoom;  // set in synthetic sessions, not in live sessions.
 
 // Excludes SESSION_ARRANGEMENT_CONTENTS. Nil if session not created from arrangement.
 @property(nonatomic, copy) NSDictionary *foundingArrangement;
@@ -858,6 +861,8 @@ backgroundColor:(NSColor *)backgroundColor;
 - (void)forceTmuxDetach;
 - (void)tmuxDidDisconnect;
 - (void)tmuxWindowTitleDidChange;
+
+- (void)restoreStateForZoom:(PTYSessionZoomState *)state;
 
 // This is to work around a macOS bug where setNeedsDisplay: on the root view controller does not
 // cause the TextViewWrapper to be redrawn in its entirety.

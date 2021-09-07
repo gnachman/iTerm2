@@ -7435,24 +7435,27 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 }
 
 - (void)showRangeOfLines:(NSRange)rangeOfLines inSession:(PTYSession *)oldSession {
+    PTYSessionZoomState *state = oldSession.stateToSaveForZoom;
     PTYSession *syntheticSession = [self syntheticSessionForSession:oldSession];
     [syntheticSession.screen terminalSetCursorVisible:NO];
     [syntheticSession appendLinesInRange:rangeOfLines fromSession:oldSession];
     [[self tabForSession:oldSession] replaceActiveSessionWithSyntheticSession:syntheticSession];
+    syntheticSession.savedStateForZoom = state;
 }
 
-- (void)showLiveSession:(PTYSession*)liveSession inPlaceOf:(PTYSession*)replaySession {
-    PTYTab *theTab = [self tabForSession:replaySession];
+- (void)showLiveSession:(PTYSession *)liveSession inPlaceOf:(PTYSession *)syntheticSession {
+    PTYTab *theTab = [self tabForSession:syntheticSession];
     [_instantReplayWindowController updateInstantReplayView];
 
-    [self sessionInitiatedResize:replaySession
+    [self sessionInitiatedResize:syntheticSession
                            width:[[liveSession screen] width]
                           height:[[liveSession screen] height]];
 
-    [replaySession retain];
-    [theTab showLiveSession:liveSession inPlaceOf:replaySession];
-    [replaySession softTerminate];
-    [replaySession release];
+    [syntheticSession retain];
+    [theTab showLiveSession:liveSession inPlaceOf:syntheticSession];
+    [liveSession restoreStateForZoom:syntheticSession.savedStateForZoom];
+    [syntheticSession softTerminate];
+    [syntheticSession release];
     [theTab setParentWindow:self];
     [[self window] makeFirstResponder:[[theTab activeSession] textview]];
 }

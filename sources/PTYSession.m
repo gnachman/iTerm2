@@ -8871,6 +8871,30 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     return YES;
 }
 
+- (PTYSessionZoomState *)stateToSaveForZoom {
+    if (self.filter) {
+        return nil;
+    }
+    const long long lineNumber = [_textview firstVisibleAbsoluteLineNumber];
+    NSString *query = nil;
+    if (_view.findDriver.findString.length) {
+        query = _view.findDriver.findString;
+    }
+    return [[[PTYSessionZoomState alloc] initWithFirstVisibleAbsoluteLineNumber:lineNumber
+                                                                    searchQuery:query] autorelease];
+}
+
+- (void)restoreStateForZoom:(PTYSessionZoomState *)state {
+    if (!state) {
+        return;
+    }
+    [_textview scrollToAbsoluteOffset:state.firstVisibleAbsoluteLineNumber
+                               height:_screen.height];
+    if (state.searchQuery.length) {
+        [_view.findDriver setFindStringUnconditionally:state.searchQuery];
+    }
+}
+
 - (BOOL)maybeHandleInstantReplayKeyEvent:(NSEvent *)event {
     if (![[_delegate realParentWindow] inInstantReplay]) {
         return NO;
