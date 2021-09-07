@@ -6397,6 +6397,7 @@
 		A6BDB0B61B45FEF700F511E6 /* iTermPasteHelperTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermPasteHelperTest.m; sourceTree = "<group>"; };
 		A6BDB0B91B470CBE00F511E6 /* iTermRootTerminalView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermRootTerminalView.h; sourceTree = "<group>"; };
 		A6BDB0BA1B470CBE00F511E6 /* iTermRootTerminalView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermRootTerminalView.m; sourceTree = "<group>"; };
+		A6BEE47F26E7EE19009C0C2C /* iTermMetalDisabling.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermMetalDisabling.h; sourceTree = "<group>"; };
 		A6BF034E21E176C30097DA86 /* iTermVariableScope.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermVariableScope.h; sourceTree = "<group>"; };
 		A6BF034F21E176C30097DA86 /* iTermVariableScope.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermVariableScope.m; sourceTree = "<group>"; };
 		A6BF035221E179380097DA86 /* iTermVariableHistory.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermVariableHistory.h; sourceTree = "<group>"; };
@@ -7403,6 +7404,7 @@
 				A6AC5D201E9036D70097C0A7 /* iTermURLMark.m */,
 				A696AB3921603A3F000023C3 /* iTermMetalUnavailableReason.h */,
 				A6725AD823D63BC0001CA48A /* iTermProfile.h */,
+				A6BEE47F26E7EE19009C0C2C /* iTermMetalDisabling.h */,
 			);
 			name = Headers;
 			path = sources/;
