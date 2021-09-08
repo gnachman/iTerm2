@@ -392,6 +392,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     int numTouches = _numTouches;
     _numTouches = 0;
     _firstMouseEventNumber = -1;  // Synergy seems to interfere with event numbers, so reset it here.
+    DLog(@"Set firstMouseEventNumber to -1 on mouseUp");
     if (_mouseDownIsThreeFingerClick) {
         [self emulateThirdButtonPressDown:NO withEvent:event];
         DLog(@"Returning from mouseUp because mouse-down was a 3-finger click");
@@ -992,6 +993,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (BOOL)acceptsFirstMouse:(NSEvent *)theEvent {
     _firstMouseEventNumber = [theEvent eventNumber];
+    DLog(@"Set firstMouseEventNumber to %@", @(_firstMouseEventNumber));
     return YES;
 }
 
