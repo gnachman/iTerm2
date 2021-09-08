@@ -12,7 +12,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-if begin; status --is-interactive; and not functions -q -- iterm2_status; and [ "$ITERM_ENABLE_SHELL_INTEGRATION_WITH_TMUX""$TERM" != screen ]; and [ "$TERM" != dumb ]; and [ "$TERM" != linux ]; end
+if begin; status --is-interactive; and not functions -q -- iterm2_status; and test "$ITERM_ENABLE_SHELL_INTEGRATION_WITH_TMUX""$TERM" != screen; and test "$TERM" != dumb; and test "$TERM" != linux; end
   function iterm2_status
     printf "\033]133;D;%s\007" $argv
   end
@@ -64,21 +64,17 @@ if begin; status --is-interactive; and not functions -q -- iterm2_status; and [ 
 
         iterm2_status $last_status
         iterm2_write_remotehost_currentdir_uservars
-        if not functions iterm2_fish_prompt | grep iterm2_prompt_mark > /dev/null
+        if not functions iterm2_fish_prompt | string match -q "*iterm2_prompt_mark*"
             iterm2_prompt_mark
         end
-        sh -c "exit $last_status"
+        return $last_status
    end
 
   function iterm2_has_fish_mode_prompt -d "Returns true iff fish_mode_prompt is defined and non-empty"
-     if test (functions fish_mode_prompt | grep -vE '^ *(#|function |end$|$)' | wc -l) = 0
-       echo -n false
-     else
-       echo -n true
-     end
+     test (functions fish_mode_prompt | string match -rv '^ *(#|function |end$|$)' | count) = 0
    end
 
-   if test (iterm2_has_fish_mode_prompt) = true
+   if iterm2_has_fish_mode_prompt
      # Only override fish_mode_prompt if it is non-empty. This works around a problem created by a
      # workaround in starship: https://github.com/starship/starship/issues/1283
      functions -c fish_mode_prompt iterm2_fish_mode_prompt
@@ -113,7 +109,7 @@ if begin; status --is-interactive; and not functions -q -- iterm2_status; and [ 
   if not set -q -g iterm2_hostname
     # hostname -f is fast on macOS so don't cache it. This lets us get an updated version when
     # it changes, such as if you attach to a VPN.
-    if [ (uname) != Darwin ]
+    if test (uname) != Darwin
       set -g iterm2_hostname (hostname -f 2>/dev/null)
       # some flavors of BSD (i.e. NetBSD and OpenBSD) don't have the -f option
       if test $status -ne 0
