@@ -426,7 +426,6 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     if (!_findInProgress && !_haveRevealedSearchResult) {
         // Clear the selection.
         [_delegate findOnPageFailed];
-        [self resetFindCursor];
     }
 
     return found;
