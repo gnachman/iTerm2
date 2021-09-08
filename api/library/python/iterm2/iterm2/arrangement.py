@@ -34,21 +34,26 @@ class Arrangement:
 
     @staticmethod
     async def async_restore(
-            connection: iterm2.connection.Connection, name: str):
+        connection: iterm2.connection.Connection,
+        name: str,
+        window_id: typing.Optional[str] = None):
         """Restore a saved window arrangement.
 
         :param connection: The name of the arrangement.
         :param name: The name of the arrangement to restore.
+        :param window_id: The window to restore in to as tabs, or None to
+             restore as new windows.
 
         :throws: SavedArrangementException
         """
-        result = await iterm2.rpc.async_restore_arrangement(connection, name)
+        result = await iterm2.rpc.async_restore_arrangement(connection, name, window_id)
         status = result.saved_arrangement_response.status
         # pylint: disable=no-member
         if status != iterm2.api_pb2.CreateTabResponse.Status.Value("OK"):
             raise SavedArrangementException(
                 iterm2.api_pb2.SavedArrangementResponse.Status.Name(
                     result.saved_arrangement_response.status))
+
     @staticmethod
     async def async_list(
             connection: iterm2.connection.Connection) -> typing.List[str]:
