@@ -247,13 +247,26 @@ typedef enum {
                @7: @(XTERMCC_PWD_URL),
                @8: @(XTERMCC_LINK),
                @9: @(ITERM_USER_NOTIFICATION),
+
+               // See -[VT100Terminal xtermIndexForTerminalColorIndex:], which has the inverse map.
                @10: @(XTERMCC_TEXT_FOREGROUND_COLOR),
                @11: @(XTERMCC_TEXT_BACKGROUND_COLOR),
+               @12: @(XTERMCC_SET_TEXT_CURSOR_COLOR),
+               @17: @(XTERMCC_SET_HIGHLIGHT_COLOR),
+               @19: @(XTERMCC_SET_HIGHLIGHT_FOREGROUND_COLOR),
+
                // 50 is a nonstandard escape code implemented by Konsole.
                // xterm since started using it for setting the font, so 1337 is the preferred code
                // for this in iTerm2.
                @50: @(XTERMCC_SET_KVP),
                @52: @(XTERMCC_PASTE64),
+               @104: @(XTERMCC_RESET_COLOR),
+               
+               @(110): @(XTERMCC_RESET_VT100_TEXT_FOREGROUND_COLOR),
+               @(111): @(XTERMCC_RESET_VT100_TEXT_BACKGROUND_COLOR),
+               @(112): @(XTERMCC_RESET_TEXT_CURSOR_COLOR),
+               @(117): @(XTERMCC_RESET_HIGHLIGHT_COLOR),
+               @(119): @(XTERMCC_RESET_HIGHLIGHT_FOREGROUND_COLOR),
                @133: @(XTERMCC_FINAL_TERM),
                @1337: @(XTERMCC_SET_KVP),
            };

@@ -2221,6 +2221,15 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
     return attributedString.string;
 }
 
+- (NSNumber *)integerNumber {
+    NSInteger value;
+    NSScanner *scanner = [NSScanner scannerWithString:self];
+    if (![scanner scanInteger:&value]) {
+        return nil;
+    }
+    return @(value);
+}
+
 @end
 
 @implementation NSMutableString (iTerm)

@@ -1961,6 +1961,46 @@ static const int kMaxScreenRows = 4096;
             }
             break;
         }
+        case XTERMCC_RESET_COLOR:
+            [self resetColors:token.string];
+            break;
+        case XTERMCC_RESET_VT100_TEXT_FOREGROUND_COLOR:
+            [_delegate terminalResetColor:VT100TerminalColorIndexText];
+            break;
+        case XTERMCC_RESET_VT100_TEXT_BACKGROUND_COLOR:
+            [_delegate terminalResetColor:VT100TerminalColorIndexBackground];
+            break;
+        case XTERMCC_RESET_TEXT_CURSOR_COLOR:
+            [_delegate terminalResetColor:VT100TerminalColorIndexCursor];
+            break;
+        case XTERMCC_RESET_HIGHLIGHT_COLOR:
+            [_delegate terminalResetColor:VT100TerminalColorIndexSelectionBackground];
+            break;
+        case XTERMCC_RESET_HIGHLIGHT_FOREGROUND_COLOR:
+            [_delegate terminalResetColor:VT100TerminalColorIndexSelectionForeground];
+            break;
+
+        case XTERMCC_TEXT_FOREGROUND_COLOR:
+            [self executeSetDynamicColor:VT100TerminalColorIndexText
+                                     arg:token.string];
+            break;
+        case XTERMCC_TEXT_BACKGROUND_COLOR:
+            [self executeSetDynamicColor:VT100TerminalColorIndexBackground
+                                     arg:token.string];
+            break;
+        case XTERMCC_SET_TEXT_CURSOR_COLOR:
+            [self executeSetDynamicColor:VT100TerminalColorIndexCursor
+                                     arg:token.string];
+            break;
+        case XTERMCC_SET_HIGHLIGHT_COLOR:
+            [self executeSetDynamicColor:VT100TerminalColorIndexSelectionBackground
+                                     arg:token.string];
+            break;
+        case XTERMCC_SET_HIGHLIGHT_FOREGROUND_COLOR:
+            [self executeSetDynamicColor:VT100TerminalColorIndexSelectionForeground
+                                     arg:token.string];
+            break;
+
         case XTERMCC_FINAL_TERM:
             [self executeFinalTermToken:token];
             break;
@@ -2184,14 +2224,6 @@ static const int kMaxScreenRows = 4096;
 
         case XTERMCC_PWD_URL:
             [self executeWorkingDirectoryURL:token];
-            break;
-
-        case XTERMCC_TEXT_FOREGROUND_COLOR:
-            [self executeXtermTextColorForeground:YES arg:token.string];
-            break;
-
-        case XTERMCC_TEXT_BACKGROUND_COLOR:
-            [self executeXtermTextColorForeground:NO arg:token.string];
             break;
 
         case XTERMCC_LINK:
@@ -2833,15 +2865,62 @@ static const int kMaxScreenRows = 4096;
   return @[ key, value ];
 }
 
-- (void)executeXtermTextColorForeground:(BOOL)foreground arg:(NSString *)arg {
+- (void)resetColors:(NSString *)arg {
+    NSMutableArray<NSNumber *> *indexes = [NSMutableArray array];
+    NSArray<NSString *> *parts = arg.length == 0 ? @[] : [arg componentsSeparatedByString:@";"];
+    for (NSString *part in parts) {
+        NSNumber *param = [part integerNumber];
+        if (!param) {
+            continue;
+        }
+        if (param.intValue < 0 || param.intValue > 255) {
+            continue;
+        }
+        [indexes addObject:param];
+    }
+    if (parts.count > 0 && indexes.count == 0) {
+        // All inputs were illegal
+        return;
+    }
+    if (indexes.count == 0) {
+        for (int i = 0; i < 256; i++) {
+            [indexes addObject:@(i)];
+        }
+    }
+    [indexes enumerateObjectsUsingBlock:^(NSNumber * _Nonnull n, NSUInteger idx, BOOL * _Nonnull stop) {
+        [_delegate terminalResetColor:n.intValue];
+    }];
+}
+
+- (int)xtermIndexForTerminalColorIndex:(VT100TerminalColorIndex)ptyIndex {
+    switch (ptyIndex) {
+        case VT100TerminalColorIndexText:
+            return 10;
+        case VT100TerminalColorIndexBackground:
+            return 11;
+        case VT100TerminalColorIndexCursor:
+            return 12;
+        case VT100TerminalColorIndexSelectionBackground:
+            return 17;
+        case VT100TerminalColorIndexSelectionForeground:
+            return 19;
+        case VT100TerminalColorIndexFirst8BitColorIndex:
+        case VT100TerminalColorIndexLast8BitColorIndex:
+            break;
+    }
+    return -1;
+}
+
+- (void)executeSetDynamicColor:(VT100TerminalColorIndex)ptyIndex arg:(NSString *)arg {
     // arg is like one of:
     //   rgb:ffff/ffff/ffff
     //   ?
-    const VT100TerminalColorIndex ptyIndex = foreground ? VT100TerminalColorIndexText : VT100TerminalColorIndexBackground;
-    const int xtermIndex = foreground ? 10 : 11;
+    const int xtermIndex = [self xtermIndexForTerminalColorIndex:ptyIndex];
     if ([arg isEqualToString:@"?"]) {
         NSColor *theColor = [_delegate terminalColorForIndex:ptyIndex];
-        [_delegate terminalSendReport:[self.output reportColor:theColor atIndex:xtermIndex prefix:@""]];
+        if (xtermIndex >= 0) {
+            [_delegate terminalSendReport:[self.output reportColor:theColor atIndex:xtermIndex prefix:@""]];
+        }
     } else {
         NSArray<NSNumber *> *components = [self xtermParseColorArgument:arg];
         if (components) {

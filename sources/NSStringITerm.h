@@ -339,6 +339,9 @@ int decode_utf8_char(const unsigned char * restrict datap,
                                withStringFromBlock:(NSString *(^ NS_NOESCAPE)(void))replacement;
 - (BOOL)caseInsensitiveHasPrefix:(NSString *)prefix;
 - (NSString *)removingHTMLFromTabTitleIfNeeded;
+// nil if this is not scannable as an integer.
+- (NSNumber *)integerNumber;
+
 @end
 
 @interface NSMutableString (iTerm)

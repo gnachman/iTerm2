@@ -4589,6 +4589,15 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     [delegate_ screenSetUserVar:kvp];
 }
 
+- (void)terminalResetColor:(VT100TerminalColorIndex)n {
+    const int key = [self colorMapKeyForTerminalColorIndex:n];
+    DLog(@"Key for %@ is %@", @(n), @(key));
+    if (key < 0) {
+        return;
+    }
+    [delegate_ screenResetColorsWithColorMapKey:key];
+}
+
 - (void)terminalSetForegroundColor:(NSColor *)color {
     [delegate_ screenSetColor:color forKey:kColorMapForeground];
 }
@@ -4617,24 +4626,35 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     [delegate_ screenSetColor:color forKey:kColorMapCursorText];
 }
 
-- (void)terminalSetColorTableEntryAtIndex:(VT100TerminalColorIndex)n color:(NSColor *)color {
+- (int)colorMapKeyForTerminalColorIndex:(VT100TerminalColorIndex)n {
     switch (n) {
         case VT100TerminalColorIndexText:
-            [delegate_ screenSetColor:color forKey:kColorMapForeground];
-            break;
-
+            return kColorMapForeground;
         case VT100TerminalColorIndexBackground:
-            [delegate_ screenSetColor:color forKey:kColorMapBackground];
-            break;
-
-        default:
-            if (n < 0 || n > 255) {
-                return;
-            } else {
-                [delegate_ screenSetColor:color forKey:kColorMap8bitBase + n];
-            }
+            return kColorMapBackground;
+        case VT100TerminalColorIndexCursor:
+            return kColorMapCursor;
+        case VT100TerminalColorIndexSelectionBackground:
+            return kColorMapSelection;
+        case VT100TerminalColorIndexSelectionForeground:
+            return kColorMapSelectedText;
+        case VT100TerminalColorIndexFirst8BitColorIndex:
+        case VT100TerminalColorIndexLast8BitColorIndex:
             break;
     }
+    if (n < 0 || n > 255) {
+        return -1;
+    } else {
+        return kColorMap8bitBase + n;
+    }
+}
+- (void)terminalSetColorTableEntryAtIndex:(VT100TerminalColorIndex)n color:(NSColor *)color {
+    const int key = [self colorMapKeyForTerminalColorIndex:n];
+    DLog(@"Key for %@ is %@", @(n), @(key));
+    if (key < 0) {
+        return;
+    }
+    [delegate_ screenSetColor:color forKey:key];
 }
 
 - (void)terminalSetCurrentTabColor:(NSColor *)color {
@@ -4662,20 +4682,11 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (NSColor *)terminalColorForIndex:(VT100TerminalColorIndex)index {
-    switch (index) {
-        case VT100TerminalColorIndexText:
-            return [[delegate_ screenColorMap] colorForKey:kColorMapForeground];
-
-        case VT100TerminalColorIndexBackground:
-            return [[delegate_ screenColorMap] colorForKey:kColorMapBackground];
-
-        default:
-            if (index < 0 || index > 255) {
-                return nil;
-            } else {
-                return [[delegate_ screenColorMap] colorForKey:kColorMap8bitBase + index];
-            }
+    const int key = [self colorMapKeyForTerminalColorIndex:index];
+    if (key < 0) {
+        return nil;
     }
+    return [[delegate_ screenColorMap] colorForKey:key];
 }
 
 - (int)terminalCursorX {

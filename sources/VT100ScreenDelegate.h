@@ -231,6 +231,7 @@
 - (void)screenSetTabColorGreenComponentTo:(CGFloat)color;
 - (void)screenSetTabColorBlueComponentTo:(CGFloat)color;
 - (void)screenSetColor:(NSColor *)color forKey:(int)key;
+- (void)screenResetColorsWithColorMapKey:(int)key;
 - (void)screenSelectColorPresetNamed:(NSString *)name;
 
 - (void)screenCurrentHostDidChange:(VT100RemoteHost *)host;

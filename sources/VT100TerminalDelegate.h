@@ -37,6 +37,10 @@ typedef NS_ENUM(NSUInteger, VT100AttentionRequestType) {
 typedef NS_ENUM(int, VT100TerminalColorIndex) {
     VT100TerminalColorIndexText = -1,
     VT100TerminalColorIndexBackground = -2,
+    VT100TerminalColorIndexCursor = -3,
+    VT100TerminalColorIndexSelectionBackground = -4,
+    VT100TerminalColorIndexSelectionForeground = -5,
+
     VT100TerminalColorIndexFirst8BitColorIndex = 0,
     VT100TerminalColorIndexLast8BitColorIndex = 255
 };
@@ -351,6 +355,7 @@ typedef NS_ENUM(int, VT100TerminalColorIndex) {
 - (void)terminalSetCursorColor:(NSColor *)color;
 - (void)terminalSetCursorTextColor:(NSColor *)color;
 - (void)terminalSetColorTableEntryAtIndex:(VT100TerminalColorIndex)n color:(NSColor *)color;
+- (void)terminalResetColor:(VT100TerminalColorIndex)color;
 
 // Change the color tint of the current tab.
 - (void)terminalSetCurrentTabColor:(NSColor *)color;
@@ -447,5 +452,6 @@ typedef NS_ENUM(int, VT100TerminalColorIndex) {
                                      characters:(NSString *)characters
                     charactersIgnoringModifiers:(NSString *)charactersIgnoringModifiers;
 - (void)terminalApplicationKeypadModeDidChange:(BOOL)mode;
+
 
 @end

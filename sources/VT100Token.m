@@ -183,6 +183,18 @@
                           @(XTERMCC_MULTITOKEN_BODY):         @"XTERMCC_MULTITOKEN_BODY",
                           @(XTERMCC_MULTITOKEN_END):          @"XTERMCC_MULTITOKEN_END",
                           @(XTERMCC_PASTE64):                 @"XTERMCC_PASTE64",
+                          @(XTERMCC_RESET_COLOR):             @"XTERMCC_RESET_COLOR",
+
+                          @(XTERMCC_RESET_VT100_TEXT_FOREGROUND_COLOR): @"XTERMCC_RESET_VT100_TEXT_FOREGROUND_COLOR",
+                          @(XTERMCC_RESET_VT100_TEXT_BACKGROUND_COLOR): @"XTERMCC_RESET_VT100_TEXT_BACKGROUND_COLOR",
+                          @(XTERMCC_RESET_TEXT_CURSOR_COLOR):           @"XTERMCC_RESET_TEXT_CURSOR_COLOR",
+                          @(XTERMCC_RESET_HIGHLIGHT_COLOR):             @"XTERMCC_RESET_HIGHLIGHT_COLOR",
+                          @(XTERMCC_RESET_HIGHLIGHT_FOREGROUND_COLOR):  @"XTERMCC_RESET_HIGHLIGHT_FOREGROUND_COLOR",
+                          
+                          @(XTERMCC_SET_TEXT_CURSOR_COLOR):             @"XTERMCC_SET_TEXT_CURSOR_COLOR",
+                          @(XTERMCC_SET_HIGHLIGHT_COLOR):               @"XTERMCC_SET_HIGHLIGHT_COLOR",
+                          @(XTERMCC_SET_HIGHLIGHT_FOREGROUND_COLOR):    @"XTERMCC_SET_HIGHLIGHT_FOREGROUND_COLOR",
+
                           @(XTERMCC_FINAL_TERM):              @"XTERMCC_FINAL_TERM",
                           @(XTERMCC_LINK):                    @"XTERMCC_LINK",
                           @(XTERMCC_TEXT_BACKGROUND_COLOR):   @"XTERMCC_TEXT_BACKGROUND_COLOR",
