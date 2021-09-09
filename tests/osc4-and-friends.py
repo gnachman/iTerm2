@@ -12,8 +12,8 @@ def hex2(n):
   return "{:02x}".format(n)
 
 def rgb(r,g,b):
-  #return "#" + hex2(r) + hex2(g) + hex2(b)
-  return "rgb:" + "/".join([hex2(r), hex2(g), hex2(b)])
+  return "#" + hex2(r) + hex2(g) + hex2(b)
+  #return "rgb:" + "/".join([hex2(r), hex2(g), hex2(b)])
 
 class DynamicColor(enum.Enum):
   # Values are (reset OSC, set OSC)

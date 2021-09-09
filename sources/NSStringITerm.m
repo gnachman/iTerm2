@@ -2230,6 +2230,32 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
     return @(value);
 }
 
+- (BOOL)getHashColorRed:(int *)red green:(int *)green blue:(int *)blue {
+    if (![self hasPrefix:@"#"]) {
+        return NO;
+    }
+    if (self.length == 4) {
+        NSString *first = [self substringWithRange:NSMakeRange(1, 1)];
+        NSString *second = [self substringWithRange:NSMakeRange(2, 1)];
+        NSString *third = [self substringWithRange:NSMakeRange(3, 1)];
+        NSString *extended = [NSString stringWithFormat:@"#%@%@%@%@%@%@", first, first, second, second, third, third];
+        return [extended getHashColorRed:red green:green blue:blue];
+    }
+    if (self.length != 7) {
+        return NO;
+    }
+
+    NSScanner *scanner = [NSScanner scannerWithString:[self substringFromIndex:1]];
+    unsigned long long ll;
+    if (![scanner scanHexLongLong:&ll]) {
+        return NO;
+    }
+    *red = (ll >> 16) & 0xff;
+    *green = (ll >> 8) & 0xff;
+    *blue = (ll >> 0) & 0xff;
+    return YES;
+}
+
 @end
 
 @implementation NSMutableString (iTerm)

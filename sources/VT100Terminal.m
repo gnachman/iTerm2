@@ -2733,6 +2733,13 @@ static const int kMaxScreenRows = 4096;
             }
         }
     }
+    if ([part hasPrefix:@"#"]) {
+        int red, green, blue;
+        if (![part getHashColorRed:&red green:&green blue:&blue]) {
+            return nil;
+        }
+        return @[ @(red / 255.0), @(green / 255.0), @(blue / 255.0) ];
+    }
     return nil;
 }
 

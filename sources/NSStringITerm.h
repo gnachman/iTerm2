@@ -341,6 +341,7 @@ int decode_utf8_char(const unsigned char * restrict datap,
 - (NSString *)removingHTMLFromTabTitleIfNeeded;
 // nil if this is not scannable as an integer.
 - (NSNumber *)integerNumber;
+- (BOOL)getHashColorRed:(int *)red green:(int *)green blue:(int *)blue;
 
 @end
 

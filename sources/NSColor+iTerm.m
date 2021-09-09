@@ -458,28 +458,11 @@ CGFloat iTermLABDistance(iTermLABColor lhs, iTermLABColor rhs) {
 }
 
 + (instancetype)colorFromHexString:(NSString *)hexString {
-    if (![hexString hasPrefix:@"#"]) {
+    int red, green, blue;
+    if (![hexString getHashColorRed:&red green:&green blue:&blue]) {
         return nil;
     }
-    if (hexString.length == 4) {
-        NSString *first = [hexString substringWithRange:NSMakeRange(1, 1)];
-        NSString *second = [hexString substringWithRange:NSMakeRange(2, 1)];
-        NSString *third = [hexString substringWithRange:NSMakeRange(3, 1)];
-        hexString = [NSString stringWithFormat:@"#%@%@%@%@%@%@", first, first, second, second, third, third];
-    }
-    if (hexString.length != 7) {
-        return nil;
-    }
-
-    NSScanner *scanner = [NSScanner scannerWithString:[hexString substringFromIndex:1]];
-    unsigned long long ll;
-    if (![scanner scanHexLongLong:&ll]) {
-        return nil;
-    }
-    CGFloat red = (ll >> 16) & 0xff;
-    CGFloat green = (ll >> 8) & 0xff;
-    CGFloat blue = (ll >> 0) & 0xff;
-    return [NSColor colorWithSRGBRed:red/255.0 green:green/255.0 blue:blue/255.0 alpha:1];
+    return [NSColor colorWithSRGBRed:red / 255.0 green:green / 255.0 blue:blue / 255.0 alpha:1];
 }
 
 - (NSColor *)it_colorByDimmingByAmount:(double)dimmingAmount {
