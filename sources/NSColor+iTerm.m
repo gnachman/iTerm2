@@ -12,6 +12,7 @@
 #import "iTermPreferences.h"
 #import "NSAppearance+iTerm.h"
 #import "NSImage+iTerm.h"
+#import "NSStringITerm.h"
 #import "NSView+iTerm.h"
 #import "SolidColorView.h"
 
