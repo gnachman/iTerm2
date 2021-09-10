@@ -5050,7 +5050,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (BOOL)encodeArrangementWithContents:(BOOL)includeContents
                               encoder:(id<iTermEncoderAdapter>)result {
-    DLog(@"Construct arrangement for session %@", self);
+    DLog(@"Construct arrangement for session %@ with includeContents=%@", self, @(includeContents));
     if (_filter.length && _liveSession != nil) {
         DLog(@"Encode live session because this one is filtered.");
         const BOOL ok = [_liveSession encodeArrangementWithContents:includeContents encoder:result];
@@ -5138,11 +5138,16 @@ ITERM_WEAKLY_REFERENCEABLE
                                                        encoder:encoder];
         }];
     }
+    DLog(@"self.isTmuxClient=%@", @(self.isTmuxClient));
     if (includeContents && !self.isTmuxClient) {
+        DLog(@"Can include restoration info. runJobsInServers=%@ isSessionRestorationPossible=%@",
+             @([iTermAdvancedSettingsModel runJobsInServers]),
+             @(_shell.isSessionRestorationPossible));
         // These values are used for restoring sessions after a crash. It's only saved when contents
         // are included since saved window arrangements have no business knowing the process id.
         if ([iTermAdvancedSettingsModel runJobsInServers] && _shell.isSessionRestorationPossible) {
             NSObject *restorationIdentifier = _shell.sessionRestorationIdentifier;
+            DLog(@"Can save restoration id. restorationIdentifier=%@", restorationIdentifier);
             if ([restorationIdentifier isKindOfClass:[NSNumber class]]) {
                 result[SESSION_ARRANGEMENT_SERVER_PID] = restorationIdentifier;
             } else if ([restorationIdentifier isKindOfClass:[NSDictionary class]]) {

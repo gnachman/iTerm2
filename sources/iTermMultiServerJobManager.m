@@ -136,11 +136,12 @@ typedef struct {
     };
     iTermCallback *callback = [self.thread newCallbackWithBlock:^(iTermMultiServerJobManagerState *state,
                                                                   iTermMultiServerConnection *conn) {
-        DLog(@"Callback run with connection %@", conn);
+        DLog(@"Callback for %@ run with connection %@", self, conn);
         if (!conn) {
             completion(iTermJobManagerForkAndExecStatusServerLaunchFailed);
             return;
         }
+        DLog(@"Set conn of %@ to %@", self, conn);
         state.conn = conn;
         [self queueForkAndExecWithForkRequest:forkRequest
                                    connection:conn
@@ -170,6 +171,7 @@ typedef struct {
         DLog(@"called back with result %@", result);
         [result handleObject:
          ^(iTermFileDescriptorMultiClientChild * _Nonnull child) {
+            DLog(@"Forked and execed %@ OK. Set child to %@", self, child);
             state.child = child;
             // Happy path
             dispatch_async(dispatch_get_main_queue(), ^{
@@ -181,6 +183,7 @@ typedef struct {
             });
         } error:
          ^(NSError * _Nonnull error) {
+            DLog(@"Fork and exec %@ failed. Set child to nil", self);
             state.child = nil;
             assert([error.domain isEqualToString:iTermFileDescriptorMultiClientErrorDomain]);
             const iTermFileDescriptorMultiClientErrorCode code = (iTermFileDescriptorMultiClientErrorCode)error.code;
@@ -223,11 +226,13 @@ typedef struct {
 - (BOOL)closeFileDescriptor {
     __block BOOL result = NO;
     [self.thread dispatchRecursiveSync:^(iTermMultiServerJobManagerState * _Nullable state) {
+        DLog(@"closeFileDescriptor for %@, child=%@", self, state.child);
         if (state.child == nil) {
             result = NO;
             return;
         }
         [state.child closeFileDescriptor];
+        DLog(@"Set child of %@ to nil", self);
         state.child = nil;
         result = YES;
     }];
@@ -283,6 +288,7 @@ typedef struct {
     [self.thread dispatchRecursiveSync:^(iTermMultiServerJobManagerState * _Nullable state) {
         if (!state.conn) {
             // This can happen while the connection is being set up.
+            DLog(@"Report nil session restoration identifier because state has no connection");
             result = nil;
             return;
         }
@@ -301,7 +307,9 @@ typedef struct {
 - (BOOL)isSessionRestorationPossible {
     __block BOOL result = NO;
     [self.thread dispatchRecursiveSync:^(iTermMultiServerJobManagerState * _Nullable state) {
-        result = (state.child != nil);
+        iTermFileDescriptorMultiClientChild *child = state.child;
+        DLog(@"child=%@", child);
+        result = (child != nil);
     }];
     return result;
 }
@@ -437,6 +445,7 @@ typedef struct {
             DLog(@"Have a connection to %@. Try to attach to child with pid %@.",
                   @(serverConnection.multi.number),
                   @(serverConnection.multi.pid));
+            DLog(@"Set conn of %@ to %@", self, conn);
             state.conn = conn;
             if (thePid != nil) {
                 assert(thePid.integerValue == serverConnection.multi.pid);
@@ -444,6 +453,7 @@ typedef struct {
             [state.conn attachToProcessID:serverConnection.multi.pid
                                  callback:[self.thread newCallbackWithBlock:^(iTermMultiServerJobManagerState *state,
                                                                               iTermFileDescriptorMultiClientChild *child) {
+                DLog(@"Attached OK. Set child of %@ to %@", self, child);
                 state.child = child;
                 if (!state.child) {
                     [completionCallback invokeWithObject:nil];
@@ -477,6 +487,7 @@ typedef struct {
             DLog(@"FAILED to connect to daemon %@, while aiming to attach to child with pid %@.",
                   @(serverConnection.multi.number),
                   @(serverConnection.multi.pid));
+            DLog(@"Set conn of %@ to nil", self);
             state.conn = nil;
             [completionCallback invokeWithObject:nil];
         }];
