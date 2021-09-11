@@ -8,6 +8,7 @@
 #import "iTermSearchFieldCell.h"
 
 #import "DebugLogging.h"
+#import "iTermAdvancedSettingsModel.h"
 #import "NSArray+iTerm.h"
 #import "NSColor+iTerm.h"
 #import "NSObject+iTerm.h"
@@ -191,7 +192,8 @@ const CGFloat kEdgeWidth = 3;
         }
         return [NSString stringWithFormat:@"%@", @(counts.numberOfResults)];
     }
-    return [NSString stringWithFormat:@"%@/%@", @(counts.currentIndex), @(counts.numberOfResults)];
+    const NSInteger i =  [iTermAdvancedSettingsModel swapFindNextPrevious] ? counts.currentIndex : counts.numberOfResults - counts.currentIndex + 1;
+    return [NSString stringWithFormat:@"%@/%@", @(i), @(counts.numberOfResults)];
 }
 
 - (NSRect)searchTextRectForBounds:(NSRect)rect {
