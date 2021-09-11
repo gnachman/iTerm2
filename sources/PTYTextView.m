@@ -2011,8 +2011,10 @@
     NSMutableIndexSet *cleanLines = [NSMutableIndexSet indexSet];
     if (allDirty) {
         foundDirty = YES;
-        [_findOnPageHelper removeHighlightsInRange:NSMakeRange(lineStart + totalScrollbackOverflow,
-                                                               lineEnd - lineStart)];
+        const NSRange range = NSMakeRange(lineStart + totalScrollbackOverflow,
+                                          lineEnd - lineStart);
+        [_findOnPageHelper removeHighlightsInRange:range];
+        [_findOnPageHelper removeSearchResultsInRange:range];
         [self setNeedsDisplayInRect:[self gridRect]];
     } else {
         const BOOL hasScrolled = [self.dataSource textViewGetAndResetHasScrolled];
