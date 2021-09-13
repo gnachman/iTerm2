@@ -1544,7 +1544,6 @@
 		A60C0372208A56AB00FE2F1F /* iTermAPIConnectionIdentifierController.h in Headers */ = {isa = PBXBuildFile; fileRef = A60C0370208A56AB00FE2F1F /* iTermAPIConnectionIdentifierController.h */; };
 		A60C0373208A56AB00FE2F1F /* iTermAPIConnectionIdentifierController.m in Sources */ = {isa = PBXBuildFile; fileRef = A60C0371208A56AB00FE2F1F /* iTermAPIConnectionIdentifierController.m */; };
 		A60C0393208F8B5000FE2F1F /* iTermScriptsMenuController.h in Headers */ = {isa = PBXBuildFile; fileRef = A60C0391208F8B5000FE2F1F /* iTermScriptsMenuController.h */; };
-		A60D02312683D1E200E19362 /* HelloWorld.swift in Sources */ = {isa = PBXBuildFile; fileRef = A60D02302683D1E200E19362 /* HelloWorld.swift */; };
 		A60D02342683D61000E19362 /* Phony.swift in Sources */ = {isa = PBXBuildFile; fileRef = A60D02332683D61000E19362 /* Phony.swift */; };
 		A60D0239268451C100E19362 /* Phony.swift in Sources */ = {isa = PBXBuildFile; fileRef = A60D02332683D61000E19362 /* Phony.swift */; };
 		A60D023A2684521400E19362 /* Phony.swift in Sources */ = {isa = PBXBuildFile; fileRef = A60D02332683D61000E19362 /* Phony.swift */; };
@@ -5229,7 +5228,6 @@
 		A60C0391208F8B5000FE2F1F /* iTermScriptsMenuController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermScriptsMenuController.h; sourceTree = "<group>"; };
 		A60C0392208F8B5000FE2F1F /* iTermScriptsMenuController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermScriptsMenuController.m; sourceTree = "<group>"; };
 		A60D022F2683D1E200E19362 /* iTerm2SharedARC-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "iTerm2SharedARC-Bridging-Header.h"; sourceTree = "<group>"; };
-		A60D02302683D1E200E19362 /* HelloWorld.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HelloWorld.swift; sourceTree = "<group>"; };
 		A60D02322683D60F00E19362 /* iTerm2-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "iTerm2-Bridging-Header.h"; sourceTree = "<group>"; };
 		A60D02332683D61000E19362 /* Phony.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Phony.swift; sourceTree = "<group>"; };
 		A60D023C2687EF3B00E19362 /* InjectTrigger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InjectTrigger.swift; sourceTree = "<group>"; };
@@ -7195,7 +7193,6 @@
 				1D9DDE2D142E730700275650 /* Triggers */,
 				A647E3B118C35DD900450FA1 /* VT100 */,
 				759637B42593AF6B00E278CC /* XPC */,
-				A60D02302683D1E200E19362 /* HelloWorld.swift */,
 				A60D022F2683D1E200E19362 /* iTerm2SharedARC-Bridging-Header.h */,
 				A60D02332683D61000E19362 /* Phony.swift */,
 				A60D02322683D60F00E19362 /* iTerm2-Bridging-Header.h */,
@@ -14814,7 +14811,6 @@
 				A6B147612133395500D0814F /* iTermStatusBarLayout+tmux.m in Sources */,
 				A68400B91FF97138008D3EE2 /* iTermTimestampDrawHelper.m in Sources */,
 				A62EED9320DF5B2F00943DE3 /* iTermScriptChooser.m in Sources */,
-				A60D02312683D1E200E19362 /* HelloWorld.swift in Sources */,
 				A6A4867B20B67E5D00493302 /* ProfilesTerminalPreferencesViewController.m in Sources */,
 				A66F52AA210458CA00571168 /* iTermNetworkUtilization.m in Sources */,
 				A63011CE20E85B16008114B7 /* SessionTitleView.m in Sources */,
