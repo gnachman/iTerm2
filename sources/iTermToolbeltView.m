@@ -62,6 +62,7 @@ NS_CLASS_AVAILABLE_MAC(10_14)
     NSDictionary *_proportions;
     iTermToolbeltVibrantVisualEffectView *_vev NS_AVAILABLE_MAC(10_14);
     iTermHamburgerButton *_menuButton;
+    BOOL _inSplitViewDidResizeSubviews;
 }
 
 static NSMutableDictionary<NSString *, Class> *gRegisteredTools;
@@ -606,8 +607,13 @@ static NSString *const kDynamicToolURL = @"URL";
 #pragma mark - NSSplitViewDelegate
 
 - (void)splitViewDidResizeSubviews:(NSNotification *)aNotification {
+    if (_inSplitViewDidResizeSubviews) {
+        return;
+    }
+    _inSplitViewDidResizeSubviews = YES;
     [self relayoutAllTools];
-}
+}    _inSplitViewDidResizeSubviews = NO;
+
 
 - (CGFloat)splitView:(NSSplitView *)splitView
     constrainMinCoordinate:(CGFloat)proposedMinimumPosition
