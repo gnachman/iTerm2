@@ -9566,7 +9566,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     if (fabs(desiredHeight - NSHeight(frame)) >= 0.5) {
         // Update the wrapper's size, which in turn updates textview's size.
         frame.size.height = desiredHeight + [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins];  // The wrapper is always larger by VMARGIN.
-        _wrapper.frame = frame;
+        _wrapper.frame = [self safeFrameForWrapperViewFrame:frame];
 
         NSAccessibilityPostNotification(_textview,
                                         NSAccessibilityRowCountChangedNotification);
@@ -12804,8 +12804,23 @@ preferredEscaping:(iTermSendTextEscaping)preferredEscaping {
     return self.delegate.realParentWindow.window.backingScaleFactor ?: self.view.window.backingScaleFactor;
 }
 
+// Ensure the wrapper is at least as tall as its enclosing scroll view. Mostly this goes unnoticed
+// except in Monterey betas (see issue 9799) but it's the right thing to do regardless.
+- (NSRect)safeFrameForWrapperViewFrame:(NSRect)proposed {
+    const CGFloat minimumHeight = _view.scrollview.contentSize.height;
+    if (NSHeight(proposed) >= minimumHeight) {
+        return proposed;
+    }
+    NSRect frame = proposed;
+    frame.size.height = minimumHeight;
+    DLog(@"Convert proposed wrapper frame %@ to %@", NSStringFromRect(proposed), NSStringFromRect(frame));
+    return frame;
+}
+
 - (void)sessionViewScrollViewDidResize {
+    DLog(@"sessionViewScrollViewDidResize to %@", NSStringFromRect(_view.scrollview.frame));
     [self updateTTYSize];
+    _wrapper.frame = [self safeFrameForWrapperViewFrame:_wrapper.frame];
 }
 
 - (BOOL)updateTTYSize {
