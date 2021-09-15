@@ -612,8 +612,8 @@ static NSString *const kDynamicToolURL = @"URL";
     }
     _inSplitViewDidResizeSubviews = YES;
     [self relayoutAllTools];
-}    _inSplitViewDidResizeSubviews = NO;
-
+    _inSplitViewDidResizeSubviews = NO;
+}
 
 - (CGFloat)splitView:(NSSplitView *)splitView
     constrainMinCoordinate:(CGFloat)proposedMinimumPosition
