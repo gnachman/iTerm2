@@ -185,7 +185,10 @@ typedef struct screen_char_t
 
     // These bits aren't used but are defined here so that the entire memory
     // region can be initialized.
-    unsigned int unused : 3;
+    unsigned int unused : 2;
+
+    // More attributes are stored in the line's metadata struct.
+    unsigned int hasMetadata : 1;
 
     // This comes after unused so it can be byte-aligned.
     // If the current text is part of a hypertext link, this gives an index into the URL store.

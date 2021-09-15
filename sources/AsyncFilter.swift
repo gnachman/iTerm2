@@ -305,5 +305,6 @@ extension screen_char_t {
                                     strikethrough: 0,
                                     underlineStyle: VT100UnderlineStyle.single,
                                     unused: 0,
+                                    hasMetadata: 0,
                                     urlCode: 0)
 }
