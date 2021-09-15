@@ -192,17 +192,25 @@ typedef struct screen_char_t
     unsigned short urlCode;
 } screen_char_t;
 
+typedef struct {
+    NSTimeInterval timestamp;
+} iTermMetadata;
+
 // Typically used to store a single screen line.
 @interface ScreenCharArray : NSObject<NSCopying> {
     screen_char_t *_line;  // Array of chars
     int _length;  // Number of chars in _line
     int _eol;  // EOL_SOFT, EOL_HARD, or EOL_DWC
+    BOOL _hasMetadata;
+    iTermMetadata _metadata;
 }
 
 @property (nonatomic, assign) screen_char_t *line;  // Assume const unless instructed otherwise
 @property (nonatomic, assign) int length;
 @property (nonatomic, assign) int eol;
 @property (nonatomic) screen_char_t continuation;
+@property (nonatomic) iTermMetadata metadata;
+@property (nonatomic, readonly) BOOL hasMetadata;
 
 - (instancetype)initWithLine:(screen_char_t *)line
                       length:(int)length

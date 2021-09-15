@@ -551,16 +551,36 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     NSMutableArray<ScreenCharArray *> *arrays = [NSMutableArray array];
     [_lineBlocks enumerateLinesInRange:NSMakeRange(lineNum, count)
                                  width:width
-                                 block:
-     ^(screen_char_t * _Nonnull chars, int length, int eol, screen_char_t continuation, BOOL * _Nonnull stop) {
-         ScreenCharArray *lineResult = [[[ScreenCharArray alloc] init] autorelease];
-         lineResult.line = chars;
-         lineResult.continuation = continuation;
-         lineResult.length = length;
-         lineResult.eol = eol;
-         [arrays addObject:lineResult];
-     }];
+                                 block:^(screen_char_t * _Nonnull chars,
+                                         int length,
+                                         int eol,
+                                         screen_char_t continuation,
+                                         iTermMetadata metadata,
+                                         BOOL * _Nonnull stop) {
+        ScreenCharArray *lineResult = [[[ScreenCharArray alloc] init] autorelease];
+        lineResult.line = chars;
+        lineResult.continuation = continuation;
+        lineResult.length = length;
+        lineResult.eol = eol;
+        [arrays addObject:lineResult];
+    }];
     return arrays;
+}
+
+- (void)enumerateLinesInRange:(NSRange)range
+                        width:(int)width
+                        block:(void (^)(ScreenCharArray *, iTermMetadata, BOOL *))block {
+    [_lineBlocks enumerateLinesInRange:range
+                                 width:width
+                                 block:
+     ^(screen_char_t * _Nonnull chars, int length, int eol, screen_char_t continuation, iTermMetadata metadata, BOOL * _Nonnull stop) {
+        ScreenCharArray *array = [[[ScreenCharArray alloc] init] autorelease];
+        array.line = chars;
+        array.continuation = continuation;
+        array.length = length;
+        array.eol = eol;
+        block(array, metadata, stop);
+     }];
 }
 
 - (int)numLinesWithWidth:(int)width {

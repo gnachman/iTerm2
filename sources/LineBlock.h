@@ -68,13 +68,14 @@ typedef struct {
 
 // Sets *yOffsetPtr (if not null) to the number of consecutive empty lines just before |lineNum| because
 // there's no way for the returned pointer to indicate this.
-- (screen_char_t*)getWrappedLineWithWrapWidth:(int)width
-                                      lineNum:(int*)lineNum
-                                   lineLength:(int*)lineLength
-                            includesEndOfLine:(int*)includesEndOfLine
-                                      yOffset:(int*)yOffsetPtr
-                                 continuation:(screen_char_t *)continuationPtr
-                         isStartOfWrappedLine:(BOOL *)isStartOfWrappedLine;
+- (screen_char_t *)getWrappedLineWithWrapWidth:(int)width
+                                       lineNum:(int*)lineNum
+                                    lineLength:(int*)lineLength
+                             includesEndOfLine:(int*)includesEndOfLine
+                                       yOffset:(int*)yOffsetPtr
+                                  continuation:(screen_char_t *)continuationPtr
+                          isStartOfWrappedLine:(BOOL *)isStartOfWrappedLine
+                                      metadata:(iTermMetadata *)metadataPtr;
 
 - (ScreenCharArray *)rawLineAtWrappedLineOffset:(int)lineNum width:(int)width;
 

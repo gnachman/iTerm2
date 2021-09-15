@@ -1836,6 +1836,42 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     [altGrid_ resetTimestamps];
 }
 
+- (void)enumerateLinesInRange:(NSRange)range block:(void (^)(ScreenCharArray *, iTermMetadata, BOOL *))block {
+    NSInteger i = range.location;
+    const NSInteger lastLine = NSMaxRange(range) - 1;
+    const NSInteger numLinesInLineBuffer = [linebuffer_ numLinesWithWidth:currentGrid_.size.width];
+    const int width = self.width;
+    while (i < lastLine) {
+        if (i < numLinesInLineBuffer) {
+            [linebuffer_ enumerateLinesInRange:NSMakeRange(i, lastLine - i + 1)
+                                         width:width
+                                         block:block];
+            return;
+        }
+        BOOL stop = NO;
+        const int screenIndex = i - numLinesInLineBuffer;
+        block([self screenCharArrayAtScreenIndex:screenIndex],
+              [self metadataAtScreenIndex:screenIndex],
+              &stop);
+        if (stop) {
+            return;
+        }
+    }
+}
+
+- (ScreenCharArray *)screenCharArrayAtScreenIndex:(int)index {
+    screen_char_t *line = [currentGrid_ screenCharsAtLineNumber:index];
+    const int width = self.width;
+    ScreenCharArray *array = [[[ScreenCharArray alloc] initWithLine:line
+                                                             length:width
+                                                       continuation:line[width]] autorelease];
+    return array;
+}
+
+- (iTermMetadata)metadataAtScreenIndex:(int)index {
+    return [currentGrid_ metadataAtLineNumber:index];
+}
+
 // Like getLineAtIndex:withBuffer:, but uses dedicated storage for the result.
 // This function is dangerous! It writes to an internal buffer and returns a
 // pointer to it. Better to use getLineAtIndex:withBuffer:.

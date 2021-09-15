@@ -108,6 +108,12 @@
                 lineNum:(int)lineNum
            continuation:(screen_char_t * _Nullable)continuationPtr;
 
+- (void)enumerateLinesInRange:(NSRange)range
+                        width:(int)width
+                        block:(void (^ _Nonnull)(ScreenCharArray * _Nonnull,
+                                                 iTermMetadata,
+                                                 BOOL * _Nonnull))block;
+
 // Like the above but with a saner way of holding the returned data. Callers are advised not
 // to modify the screen_char_t's returned, but the ScreenCharArray is otherwise safe to
 // mutate. |continuation| is optional and if set will be filled in with the continuation character.

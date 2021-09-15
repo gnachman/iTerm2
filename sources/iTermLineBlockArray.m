@@ -310,7 +310,12 @@
 
 - (void)enumerateLinesInRange:(NSRange)range
                         width:(int)width
-                        block:(void (^)(screen_char_t * _Nonnull, int, int, screen_char_t, BOOL * _Nonnull))callback {
+                        block:(void (^)(screen_char_t * _Nonnull,
+                                        int,
+                                        int,
+                                        screen_char_t,
+                                        iTermMetadata,
+                                        BOOL * _Nullable))callback {
     int remainder;
     NSInteger startIndex = [self indexOfBlockContainingLineNumber:range.location width:width remainder:&remainder];
     ITAssertWithMessage(startIndex != NSNotFound, @"Line %@ not found", @(range.location));
@@ -335,16 +340,20 @@
             int length, eol;
             screen_char_t continuation;
             int temp = line;
+            iTermMetadata metadata = { 0 };
             screen_char_t *chars = [block getWrappedLineWithWrapWidth:width
                                                               lineNum:&temp
                                                            lineLength:&length
                                                     includesEndOfLine:&eol
-                                                         continuation:&continuation];
+                                                              yOffset:NULL
+                                                         continuation:&continuation
+                                                 isStartOfWrappedLine:NULL
+                                                             metadata:&metadata];
             if (chars == NULL) {
                 return;
             }
             ITAssertWithMessage(length <= width, @"Length too long");
-            callback(chars, length, eol, continuation, &stop);
+            callback(chars, length, eol, continuation, metadata, &stop);
             if (stop) {
                 return;
             }

@@ -4468,6 +4468,32 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     }
 }
 
+- (void)testEnumerateWrappedLines {
+    VT100Screen *screen;
+    screen = [self screenWithWidth:5 height:2];
+    NSArray<NSString *> *lines = @[@"abcdefgh", @"ijkl", @"mnopqrstuv", @"wxyz", @"", @"1234", @"9876543210"];
+    NSArray<NSString *> *expected = @[@"abcde",
+                                      @"fgh",
+                                      @"ijkl",
+                                      @"mnopq",
+                                      @"rstuv",
+                                      @"wxyz",
+                                      @"",
+                                      @"1234",
+                                      @"98765",
+                                      @"43210"];
+    NSTimeInterval minExpectedTimestamp = [NSDate timeIntervalSinceReferenceDate];
+    [self appendLines:lines toScreen:screen];
+    __block NSInteger count = 0;
+    [screen enumerateLinesInRange:NSMakeRange(0, lines.count) block:^(ScreenCharArray *array, iTermMetadata metadata, BOOL *stop) {
+        NSString *string = ScreenCharArrayToStringDebug(array.line, array.length);
+        XCTAssertEqualObjects(string, expected[count]);
+        XCTAssertGreaterThanOrEqual(metadata.timestamp, minExpectedTimestamp);
+        count += 1;
+    }];
+    XCTAssertEqual(count, lines.count);
+}
+
 // When the cursor is positioned over a DWC_RIGHT and we append a character, erase the code before
 // the DWC_RIGHT and don't touch the cell after the cursor's position.
 - (void)testIssue9852 {

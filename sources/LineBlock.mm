@@ -514,23 +514,23 @@ extern "C" int iTermLineBlockNumberOfFullLinesImpl(screen_char_t *buffer,
     return YES;
 }
 
-- (int)getPositionOfLine:(int*)lineNum
+- (int)getPositionOfLine:(int *)lineNum
                      atX:(int)x
                withWidth:(int)width
                  yOffset:(int *)yOffsetPtr
-                 extends:(BOOL *)extendsPtr
-{
+                 extends:(BOOL *)extendsPtr {
     int length;
     int eol;
     BOOL isStartOfWrappedLine = NO;
 
-    screen_char_t* p = [self getWrappedLineWithWrapWidth:width
+    screen_char_t *p = [self getWrappedLineWithWrapWidth:width
                                                  lineNum:lineNum
                                               lineLength:&length
                                        includesEndOfLine:&eol
                                                  yOffset:yOffsetPtr
                                             continuation:NULL
-                                    isStartOfWrappedLine:&isStartOfWrappedLine];
+                                    isStartOfWrappedLine:&isStartOfWrappedLine
+                                                metadata:NULL];
     if (!p) {
         return -1;
     } else {
@@ -705,7 +705,8 @@ int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width, BOOL may
                            includesEndOfLine:includesEndOfLine
                                      yOffset:NULL
                                 continuation:continuationPtr
-                        isStartOfWrappedLine:NULL];
+                        isStartOfWrappedLine:NULL
+                                    metadata:NULL];
 }
 
 typedef struct {
@@ -723,7 +724,8 @@ typedef struct {
                            includesEndOfLine:(int*)includesEndOfLine
                                      yOffset:(int*)yOffsetPtr
                                 continuation:(screen_char_t *)continuationPtr
-                        isStartOfWrappedLine:(BOOL *)isStartOfWrappedLine {
+                        isStartOfWrappedLine:(BOOL *)isStartOfWrappedLine
+                                    metadata:(iTermMetadata *)metadataPtr {
     int offset;
     if (gEnableDoubleWidthCharacterLineCache) {
         offset = [self offsetOfWrappedLineInBuffer:buffer_start + location.prev
@@ -772,6 +774,12 @@ typedef struct {
     }
     if (isStartOfWrappedLine) {
         *isStartOfWrappedLine = (offset == 0);
+    }
+    if (metadataPtr) {
+        iTermMetadata metadata = {
+            .timestamp = metadata_[location.index].timestamp
+        };
+        *metadataPtr = metadata;
     }
     return buffer_start + location.prev + offset;
 }
@@ -839,7 +847,8 @@ typedef struct {
                             includesEndOfLine:(int*)includesEndOfLine
                                       yOffset:(int*)yOffsetPtr
                                  continuation:(screen_char_t *)continuationPtr
-                         isStartOfWrappedLine:(BOOL *)isStartOfWrappedLine {
+                         isStartOfWrappedLine:(BOOL *)isStartOfWrappedLine
+                                     metadata:(iTermMetadata *)metadataPtr {
     const LineBlockLocation location = [self locationOfRawLineForWidth:width lineNum:lineNum];
     if (!location.found) {
         return NULL;
@@ -853,7 +862,8 @@ typedef struct {
                          includesEndOfLine:includesEndOfLine
                                    yOffset:yOffsetPtr
                               continuation:continuationPtr
-                      isStartOfWrappedLine:isStartOfWrappedLine];
+                      isStartOfWrappedLine:isStartOfWrappedLine
+                                  metadata:metadataPtr];
 }
 
 - (ScreenCharArray *)rawLineAtWrappedLineOffset:(int)lineNum width:(int)width {

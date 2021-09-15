@@ -189,6 +189,11 @@ iTermTriState iTermTriStateFromBool(BOOL b) {
     [super dealloc];
 }
 
+- (void)setMetadata:(iTermMetadata)metadata {
+    _hasMetadata = YES;
+    _metadata = metadata;
+}
+
 - (BOOL)isEqualToScreenCharArray:(ScreenCharArray *)other {
     if (!other) {
         return NO;

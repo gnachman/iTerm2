@@ -120,6 +120,13 @@ static NSString *const kGridSizeKey = @"Size";
     }
 }
 
+- (iTermMetadata)metadataAtLineNumber:(int)lineNumber {
+    iTermMetadata result = {
+        .timestamp = [self timestampForLine:lineNumber]
+    };
+    return result;
+}
+
 - (screen_char_t *)screenCharsAtLineNumber:(int)lineNumber {
     assert(lineNumber >= 0);
     return [[lines_ objectAtIndex:(screenTop_ + lineNumber) % size_.height] mutableBytes];

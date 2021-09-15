@@ -238,6 +238,8 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 - (void)resetTimestamps;
 - (NSInteger)generationForLine:(int)y;
 
+- (void)enumerateLinesInRange:(NSRange)range block:(void (^)(ScreenCharArray *, iTermMetadata, BOOL *))block;
+
 // Fake shell integration via triggers APIs
 - (void)promptDidStartAt:(VT100GridAbsCoord)coord;
 - (void)commandDidStartAt:(VT100GridAbsCoord)coord;
