@@ -89,7 +89,7 @@ static NSString *const kGridSizeKey = @"Size";
                 *stop = YES;
                 return;
             }
-            lineInfos_[idx].timestamp = timestamp.doubleValue;
+            lineInfos_[idx].metadata = iTermMakeMetadata(timestamp.doubleValue);
         }];
         cursor_ = [NSDictionary castFrom:dictionary[@"cursor"]].gridCoord;
         scrollRegionRows_ = [NSDictionary castFrom:dictionary[@"scrollRegionRows"]].gridRange;
@@ -329,7 +329,7 @@ static NSString *const kGridSizeKey = @"Size";
                         length:currentLineLength
                        partial:isPartial
                          width:size_.width
-                     timestamp:[[self lineInfoAtLineNumber:i] timestamp]
+                      metadata:[[self lineInfoAtLineNumber:i] metadata]
                   continuation:line[size_.width]];
 #ifdef DEBUG_RESIZEDWIDTH
         NSLog(@"Appended a line. now have %d lines for width %d\n",
@@ -341,7 +341,7 @@ static NSString *const kGridSizeKey = @"Size";
 }
 
 - (NSTimeInterval)timestampForLine:(int)y {
-    return [[self lineInfoAtLineNumber:y] timestamp];
+    return [[self lineInfoAtLineNumber:y] metadata].timestamp;
 }
 
 - (NSInteger)generationForLine:(int)y {
@@ -1406,15 +1406,15 @@ static NSString *const kGridSizeKey = @"Size";
             }
         }
         int cont;
-        NSTimeInterval timestamp;
+        iTermMetadata metadata;
         screen_char_t continuation;
         ++numPopped;
         assert([lineBuffer popAndCopyLastLineInto:dest
                                             width:size_.width
                                 includesEndOfLine:&cont
-                                        timestamp:&timestamp
+                                         metadata:&metadata
                                      continuation:&continuation]);
-        [[self lineInfoAtLineNumber:destLineNumber] setTimestamp:timestamp];
+        [[self lineInfoAtLineNumber:destLineNumber] setMetadata:metadata];
         if (cont && dest[size_.width - 1].code == 0 && prevLineStartsWithDoubleWidth) {
             // If you pop a soft-wrapped line that's a character short and the
             // line below it starts with a DWC, it's safe to conclude that a DWC
@@ -1548,7 +1548,7 @@ static NSString *const kGridSizeKey = @"Size";
             if (line[x].complexChar) c = 'U';
             [dump appendFormat:@"%c", c];
         }
-        NSDate* date = [NSDate dateWithTimeIntervalSinceReferenceDate:[[self lineInfoAtLineNumber:y] timestamp]];
+        NSDate* date = [NSDate dateWithTimeIntervalSinceReferenceDate:[[self lineInfoAtLineNumber:y] metadata].timestamp];
         [dump appendFormat:@"  | %@", [fmt stringFromDate:date]];
         if (y != size_.height - 1) {
             [dump appendString:@"\n"];
@@ -1707,7 +1707,7 @@ static NSString *const kGridSizeKey = @"Size";
 
 - (void)resetTimestamps {
     for (VT100LineInfo *info in lineInfos_) {
-        info.timestamp = 0;
+        info.metadata = iTermMakeMetadata(0);
     }
 }
 
@@ -1741,7 +1741,7 @@ static NSString *const kGridSizeKey = @"Size";
 
 - (void)encode:(id<iTermEncoderAdapter>)encoder {
     NSArray<NSNumber *> *timestamps = [lineInfos_ mapWithBlock:^id(VT100LineInfo *anObject) {
-        return @(anObject.timestamp);
+        return @(anObject.metadata.timestamp);
     }];
     NSArray<NSData *> *lines = [[NSArray sequenceWithRange:NSMakeRange(0, size_.height)] mapWithBlock:^id(NSNumber *i) {
         return [self lineDataAtLineNumber:i.intValue];
@@ -1879,7 +1879,7 @@ static NSString *const kGridSizeKey = @"Size";
                     length:len
                    partial:(continuationMark != EOL_HARD)
                      width:size_.width
-                 timestamp:[[self lineInfoAtLineNumber:0] timestamp]
+                  metadata:[[self lineInfoAtLineNumber:0] metadata]
               continuation:line[size_.width]];
     int dropped;
     if (!unlimitedScrollback) {

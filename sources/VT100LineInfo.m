@@ -17,8 +17,6 @@
 
 static NSInteger VT100LineInfoNextGeneration = 1;
 
-@synthesize timestamp = timestamp_;
-
 - (instancetype)initWithWidth:(int)width {
     self = [super init];
     if (self) {
@@ -77,7 +75,7 @@ static NSInteger VT100LineInfoNextGeneration = 1;
 }
 
 - (void)updateTimestamp {
-    self.timestamp = [NSDate timeIntervalSinceReferenceDate];
+    _metadata.timestamp = [NSDate timeIntervalSinceReferenceDate];
 }
 
 - (BOOL)isDirtyAtOffset:(int)x {

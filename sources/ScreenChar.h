@@ -196,6 +196,18 @@ typedef struct {
     NSTimeInterval timestamp;
 } iTermMetadata;
 
+NS_INLINE iTermMetadata iTermMakeMetadata(NSTimeInterval timestamp) {
+    return (iTermMetadata){ .timestamp = timestamp };
+}
+
+NS_INLINE iTermMetadata iTermDefaultMetadata() {
+    return iTermMakeMetadata(0);
+}
+
+NS_INLINE NSArray *iTermMetadataToArray(iTermMetadata metadata) {
+    return @[ @(metadata.timestamp) ];
+}
+
 // Typically used to store a single screen line.
 @interface ScreenCharArray : NSObject<NSCopying> {
     screen_char_t *_line;  // Array of chars

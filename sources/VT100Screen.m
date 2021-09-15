@@ -1551,6 +1551,7 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     temp.mayHaveDoubleWidthCharacter = YES;
     linebuffer_.mayHaveDoubleWidthCharacter = YES;
     NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
+    iTermMetadata metadata = iTermMakeMetadata(now);
     for (NSData *chars in history) {
         screen_char_t *line = (screen_char_t *) [chars bytes];
         const int len = [chars length] / sizeof(screen_char_t);
@@ -1565,7 +1566,7 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
                   length:len
                  partial:NO
                    width:currentGrid_.size.width
-               timestamp:now
+                metadata:metadata
             continuation:continuation];
     }
     NSMutableArray *wrappedLines = [NSMutableArray array];
@@ -1597,7 +1598,7 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
                          length:line.length
                         partial:(line.eol != EOL_HARD)
                           width:currentGrid_.size.width
-                      timestamp:now
+                       metadata:metadata
                    continuation:continuation];
     }
     if (!unlimitedScrollback_) {
@@ -2253,7 +2254,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     if (y >= numLinesInLineBuffer) {
         interval = [currentGrid_ timestampForLine:y - numLinesInLineBuffer];
     } else {
-        interval = [linebuffer_ timestampForLineNumber:y width:currentGrid_.size.width];
+        interval = [linebuffer_ metadataForLineNumber:y width:currentGrid_.size.width].timestamp;
     }
     return [NSDate dateWithTimeIntervalSinceReferenceDate:interval];
 }
@@ -5667,7 +5668,7 @@ static void SwapInt(int *a, int *b) {
             [linebuffer_ popAndCopyLastLineInto:dummy
                                           width:currentGrid_.size.width
                               includesEndOfLine:&cont
-                                      timestamp:NULL
+                                       metadata:NULL
                                    continuation:NULL];
         ITAssertWithMessage(isOk, @"Pop shouldn't fail");
     }

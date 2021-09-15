@@ -13,7 +13,7 @@
 #import "iTermFindViewController.h"
 
 typedef struct {
-    NSTimeInterval timestamp;
+    iTermMetadata metadata;
     screen_char_t continuation;
     int number_of_wrapped_lines;
     int width_for_number_of_wrapped_lines;
@@ -54,7 +54,7 @@ typedef struct {
             length:(int)length
            partial:(BOOL)partial
              width:(int)width
-         timestamp:(NSTimeInterval)timestamp
+          metadata:(iTermMetadata)metadata
       continuation:(screen_char_t)continuation;
 
 // Try to get a line that is lineNum after the first line in this block after wrapping them to a given width.
@@ -92,7 +92,7 @@ typedef struct {
 - (BOOL)popLastLineInto:(screen_char_t**)ptr
              withLength:(int*)length
               upToWidth:(int)width
-              timestamp:(NSTimeInterval *)timestampPtr
+               metadata:(iTermMetadata *)metadataPtr
            continuation:(screen_char_t *)continuationPtr;
 
 - (void)removeLastWrappedLines:(int)numberOfLinesToRemove
@@ -131,8 +131,8 @@ typedef struct {
 // NSLog the contents of the block. For debugging.
 - (void)dump:(int)rawOffset toDebugLog:(BOOL)toDebugLog;
 
-// Returns the timestamp associated with a line when wrapped to the specified width.
-- (NSTimeInterval)timestampForLineNumber:(int)lineNum width:(int)width;
+// Returns the metadata associated with a line when wrapped to the specified width.
+- (iTermMetadata)metadataForLineNumber:(int)lineNum width:(int)width;
 - (NSInteger)generationForLineNumber:(int)lineNum width:(int)width;
 
 // Appends the contents of the block to |s|.

@@ -211,7 +211,7 @@ NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock)
             metadata_[i].continuation.bgGreen = [components[j++] unsignedCharValue];
             metadata_[i].continuation.bgBlue = [components[j++] unsignedCharValue];
             metadata_[i].continuation.backgroundColorMode = [components[j++] unsignedCharValue];
-            metadata_[i].timestamp = [components[j++] doubleValue];
+            metadata_[i].metadata = iTermMakeMetadata([components[j++] doubleValue]);
             metadata_[i].number_of_wrapped_lines = 0;
             metadata_[i].generation = LineBlockNextGeneration--;
             if (gEnableDoubleWidthCharacterLineCache) {
@@ -286,9 +286,8 @@ NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock)
 }
 
 - (void)_appendCumulativeLineLength:(int)cumulativeLength
-                          timestamp:(NSTimeInterval)timestamp
-                       continuation:(screen_char_t)continuation
-{
+                           metadata:(iTermMetadata)metadata
+                       continuation:(screen_char_t)continuation {
     if (cll_entries == cll_capacity) {
         cll_capacity *= 2;
         cll_capacity = MAX(1, cll_capacity);
@@ -301,7 +300,7 @@ NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock)
         }
     }
     cumulative_line_lengths[cll_entries] = cumulativeLength;
-    metadata_[cll_entries].timestamp = timestamp;
+    metadata_[cll_entries].metadata = metadata;
     metadata_[cll_entries].continuation = continuation;
     metadata_[cll_entries].number_of_wrapped_lines = 0;
     metadata_[cll_entries].generation = LineBlockNextGeneration--;
@@ -434,7 +433,7 @@ extern "C" int iTermLineBlockNumberOfFullLinesImpl(screen_char_t *buffer,
             length:(int)length
            partial:(BOOL)partial
              width:(int)width
-         timestamp:(NSTimeInterval)timestamp
+          metadata:(iTermMetadata)metadata
       continuation:(screen_char_t)continuation {
     _numberOfFullLinesCache.clear();
     const int space_used = [self rawSpaceUsed];
@@ -479,7 +478,7 @@ extern "C" int iTermLineBlockNumberOfFullLinesImpl(screen_char_t *buffer,
         }
 
         cumulative_line_lengths[cll_entries - 1] += length;
-        metadata_[cll_entries - 1].timestamp = timestamp;
+        metadata_[cll_entries - 1].metadata = metadata;
         metadata_[cll_entries - 1].continuation = continuation;
         metadata_[cll_entries - 1].number_of_wrapped_lines = 0;
         metadata_[cll_entries - 1].generation = LineBlockNextGeneration--;
@@ -494,7 +493,7 @@ extern "C" int iTermLineBlockNumberOfFullLinesImpl(screen_char_t *buffer,
     } else {
         // add a new line
         [self _appendCumulativeLineLength:(space_used + length)
-                                timestamp:timestamp
+                                 metadata:metadata
                              continuation:continuation];
         if (width != cached_numlines_width) {
             cached_numlines_width = -1;
@@ -648,8 +647,7 @@ int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width, BOOL may
     }
 }
 
-- (NSTimeInterval)timestampForLineNumber:(int)lineNum width:(int)width
-{
+- (iTermMetadata)metadataForLineNumber:(int)lineNum width:(int)width {
     int prev = 0;
     int length;
     int i;
@@ -664,11 +662,11 @@ int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width, BOOL may
             int consume = spans + 1;
             lineNum -= consume;
         } else {  // *lineNum <= spans
-            return metadata_[i].timestamp;
+            return metadata_[i].metadata;
         }
         prev = cll;
     }
-    return 0;
+    return iTermDefaultMetadata();
 }
 
 - (NSInteger)generationForLineNumber:(int)lineNum width:(int)width {
@@ -776,10 +774,7 @@ typedef struct {
         *isStartOfWrappedLine = (offset == 0);
     }
     if (metadataPtr) {
-        iTermMetadata metadata = {
-            .timestamp = metadata_[location.index].timestamp
-        };
-        *metadataPtr = metadata;
+        *metadataPtr = metadata_[location.index].metadata;
     }
     return buffer_start + location.prev + offset;
 }
@@ -926,7 +921,7 @@ typedef struct {
         const BOOL ok = [self popLastLineInto:nil
                                    withLength:&length
                                     upToWidth:width
-                                    timestamp:nil
+                                     metadata:nil
                                  continuation:nil];
         if (!ok) {
             return;
@@ -960,7 +955,7 @@ typedef struct {
 - (BOOL)popLastLineInto:(screen_char_t **)ptr
              withLength:(int *)length
               upToWidth:(int)width
-              timestamp:(NSTimeInterval *)timestampPtr
+               metadata:(iTermMetadata *)metadataPtr
            continuation:(screen_char_t *)continuationPtr {
     if (cll_entries == first_entry) {
         // There is no last line to pop.
@@ -973,8 +968,8 @@ typedef struct {
     } else {
         start = cumulative_line_lengths[cll_entries - 2] - start_offset;
     }
-    if (timestampPtr) {
-        *timestampPtr = metadata_[cll_entries - 1].timestamp;
+    if (metadataPtr) {
+        *metadataPtr = metadata_[cll_entries - 1].metadata;
     }
     if (continuationPtr) {
         *continuationPtr = metadata_[cll_entries - 1].continuation;
@@ -1704,12 +1699,12 @@ includesPartialLastLine:(BOOL *)includesPartialLastLine {
 - (NSArray *)metadataArray {
     NSMutableArray *metadataArray = [NSMutableArray array];
     for (int i = 0; i < cll_entries; i++) {
-        [metadataArray addObject:@[ @(metadata_[i].continuation.code),
-                                    @(metadata_[i].continuation.backgroundColor),
-                                    @(metadata_[i].continuation.bgGreen),
-                                    @(metadata_[i].continuation.bgBlue),
-                                    @(metadata_[i].continuation.backgroundColorMode),
-                                    @(metadata_[i].timestamp) ]];
+        [metadataArray addObject:[@[ @(metadata_[i].continuation.code),
+                                     @(metadata_[i].continuation.backgroundColor),
+                                     @(metadata_[i].continuation.bgGreen),
+                                     @(metadata_[i].continuation.bgBlue),
+                                     @(metadata_[i].continuation.backgroundColorMode) ]
+                                  arrayByAddingObjectsFromArray:iTermMetadataToArray(metadata_[i].metadata)]];
     }
     return metadataArray;
 }

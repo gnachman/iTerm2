@@ -79,7 +79,7 @@
             length:(int)length
            partial:(BOOL)partial
              width:(int)width
-         timestamp:(NSTimeInterval)timestamp
+          metadata:(iTermMetadata)metadata
       continuation:(screen_char_t)continuation;
 
 - (void)appendContentsOfLineBuffer:(LineBuffer * _Nonnull)other width:(int)width;
@@ -93,8 +93,8 @@
 // NOTE: This invalidates the cursor position.
 - (int)dropExcessLinesWithWidth:(int)width;
 
-// Returns the timestamp associated with a line when wrapped to the specified width.
-- (NSTimeInterval)timestampForLineNumber:(int)lineNum width:(int)width;
+// Returns the metadata associated with a line when wrapped to the specified width.
+- (iTermMetadata)metadataForLineNumber:(int)lineNum width:(int)width;
 
 - (NSInteger)generationForLineNumber:(int)lineNum width:(int)width;
 
@@ -134,7 +134,7 @@
 - (BOOL)popAndCopyLastLineInto:(screen_char_t * _Nonnull)ptr
                          width:(int)width
              includesEndOfLine:(int *_Nonnull)includesEndOfLine
-                     timestamp:(NSTimeInterval * _Nullable)timestampPtr
+                      metadata:(iTermMetadata * _Nullable)metadataPtr
                   continuation:(screen_char_t * _Nullable)continuationPtr;
 
 // Removes the last wrapped lines.
@@ -154,7 +154,7 @@
 
 // If the last wrapped line has the cursor, return true and set *x to its horizontal position.
 // 0 <= *x <= width (if *x == width then the cursor is actually on the next line).
-// Call this just before popAndCopyLastLineInto:width:includesEndOfLine:timestamp:continuation.
+// Call this just before popAndCopyLastLineInto:width:includesEndOfLine:metadata:continuation.
 - (BOOL)getCursorInLastLineWithWidth:(int)width atX:(int * _Nonnull)x;
 
 // Print the raw lines to the console for debugging.

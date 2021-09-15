@@ -7,11 +7,12 @@
 //
 
 #import <Foundation/Foundation.h>
+#import "ScreenChar.h"
 #import "VT100GridTypes.h"
 
 @interface VT100LineInfo : NSObject <NSCopying>
 
-@property(nonatomic, assign) NSTimeInterval timestamp;
+@property(nonatomic, assign) iTermMetadata metadata;
 @property(nonatomic, readonly) NSInteger generation;
 
 - (instancetype)initWithWidth:(int)width;

@@ -276,7 +276,7 @@ extension AsyncFilter: ContentSubscriber {
                                   length: array.length,
                                   partial: array.eol != EOL_HARD,
                                   width: width,
-                                  timestamp: Date.timeIntervalSinceReferenceDate,
+                                  metadata:iTermMakeMetadata(Date.timeIntervalSinceReferenceDate),
                                   continuation: array.continuation)
         if timer != nil {
             return
