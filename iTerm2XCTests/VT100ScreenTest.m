@@ -1007,6 +1007,9 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
 - (void)screenApplicationKeypadModeDidChange:(BOOL)mode {
 }
 
+- (void)screenResetColorsWithColorMapKey:(int)key {
+}
+
 
 #pragma mark - iTermSelectionDelegate
 
@@ -4404,8 +4407,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     screen_char_t line[1];
     screen_char_t continuation;
     continuation.backgroundColor = 5;
-    [lineBuffer appendLine:line length:0 partial:NO width:80 timestamp:0 continuation:continuation];
-
+    [lineBuffer appendLine:line length:0 partial:NO width:80 metadata:[iTermMetadata metadataWithTimestamp:0 externalAttributes:nil] timestamp:0 continuation:continuation];
     screen_char_t buffer[3];
     [lineBuffer copyLineToBuffer:buffer width:3 lineNum:0 continuation:&continuation];
 
@@ -4446,7 +4448,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     const int wrapWidth = 200;
     for (int i = 0; i < linesPerBlock * 2; i++) {
         line[0].code = '0' + i;
-        [lineBuffer appendLine:line length:n partial:NO width:wrapWidth timestamp:0 continuation:continuation];
+        [lineBuffer appendLine:line length:n partial:NO width:wrapWidth metadata:[iTermMetadata metadataWithTimestamp:0 externalAttributes:nil] timestamp:0 continuation:continuation];
     }
     // This tests the regression.
     NSArray *lines = [lineBuffer wrappedLinesFromIndex:linesPerBlock
@@ -4485,7 +4487,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     NSTimeInterval minExpectedTimestamp = [NSDate timeIntervalSinceReferenceDate];
     [self appendLines:lines toScreen:screen];
     __block NSInteger count = 0;
-    [screen enumerateLinesInRange:NSMakeRange(0, lines.count) block:^(ScreenCharArray *array, iTermMetadata *metadata, BOOL *stop) {
+    [screen enumerateLinesInRange:NSMakeRange(0, lines.count) block:^(int line, ScreenCharArray *array, iTermMetadata *metadata, BOOL *stop) {
         NSString *string = ScreenCharArrayToStringDebug(array.line, array.length);
         XCTAssertEqualObjects(string, expected[count]);
         XCTAssertGreaterThanOrEqual(metadata.timestamp, minExpectedTimestamp);

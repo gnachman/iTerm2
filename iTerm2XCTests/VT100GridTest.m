@@ -639,7 +639,9 @@ do { \
       useScrollbackWithRegion:NO
                    wraparound:YES
                          ansi:NO
-                       insert:NO];
+                       insert:NO
+       externalAttributeIndex:nil
+       externalAttributeIndex:nil];
     XCTAssert([[grid compactLineDump] isEqualToString:
             @"abcd\n"
             @"ef..\n"
@@ -668,7 +670,8 @@ do { \
       useScrollbackWithRegion:NO
                    wraparound:YES
                          ansi:NO
-                       insert:NO];
+                       insert:NO
+       externalAttributeIndex:nil];
     XCTAssert([[grid compactLineDump] isEqualToString:
             @"ab>\n"
             @"c-.\n"
@@ -695,7 +698,8 @@ do { \
       useScrollbackWithRegion:NO
                    wraparound:YES
                          ansi:NO
-                       insert:NO];
+                       insert:NO
+       externalAttributeIndex:nil];
     [grid moveCursorDownOneLineScrollingIntoLineBuffer:lineBuffer
                                    unlimitedScrollback:YES
                                useScrollbackWithRegion:NO
@@ -711,7 +715,8 @@ do { \
       useScrollbackWithRegion:NO
                    wraparound:YES
                          ansi:NO
-                       insert:NO];
+                       insert:NO
+       externalAttributeIndex:nil];
 
     XCTAssert([[grid compactLineDump] isEqualToString:
             @"abc.\n"
@@ -2064,7 +2069,8 @@ do { \
                             useScrollbackWithRegion:useScrollbackWithRegion
                                          wraparound:wraparoundMode_
                                                ansi:isAnsi_
-                                             insert:insertMode_];
+                                             insert:insertMode_
+                             externalAttributeIndex:nil];
     XCTAssert([[grid compactLineDumpWithContinuationMarks] isEqualToString:expectedLines]);
     XCTAssert([[lineBuffer debugString] isEqualToString:expectedLineBuffer]);
     XCTAssert(numLinesDropped == expectedNumLinesDropped);
@@ -2838,7 +2844,8 @@ do { \
       useScrollbackWithRegion:NO
                    wraparound:YES
                          ansi:NO
-                       insert:NO];
+                       insert:NO
+       externalAttributeIndex:nil];
     XCTAssert([[grid compactLineDumpWithContinuationMarks] isEqualToString:
                @"89abcdef+\n"
                @"ghijklmn+\n"
@@ -2936,7 +2943,8 @@ do { \
           useScrollbackWithRegion:NO
                        wraparound:YES
                              ansi:NO
-                           insert:NO];
+                           insert:NO
+           externalAttributeIndex:nil];
         [grid moveCursorToLeftMargin];
         [grid moveCursorDown:1];
         [grid scrollWholeScreenUpIntoLineBuffer:lineBuffer unlimitedScrollback:YES];
@@ -2958,7 +2966,8 @@ do { \
           useScrollbackWithRegion:NO
                        wraparound:YES
                              ansi:NO
-                           insert:NO];
+                           insert:NO
+           externalAttributeIndex:nil];
         [grid moveCursorToLeftMargin];
         [grid moveCursorDown:1];
         while ([grid lengthOfLineNumber:0] > 0 || grid.cursor.x > 0 || grid.cursor.y > 0) {

@@ -21,5 +21,6 @@
 - (BOOL)anyCharIsDirty;
 - (VT100GridRange)dirtyRange;
 - (NSIndexSet *)dirtyIndexes;
+- (void)setTimestamp:(NSTimeInterval)timestamp;
 
 @end

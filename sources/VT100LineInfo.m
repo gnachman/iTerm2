@@ -101,4 +101,8 @@ static NSInteger VT100LineInfoNextGeneration = 1;
     return theCopy;
 }
 
+- (void)setTimestamp:(NSTimeInterval)timestamp {
+    _metadata.timestamp = timestamp;
+}
+
 @end
