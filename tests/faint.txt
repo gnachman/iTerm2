@@ -5,5 +5,8 @@
 [m[42m[31mRed [2mFaint red
 [m[7mInverse [2mFaint inverse
 [m[31;7mRed inverse [2mFaint red inverse
-[m[42;31;7mRed on green inverse [2mFaint red on green inverse
+[m[42;31;7mRed on green inverse [2mFaint red on green inverse[m
+[4mRegular underlined text[m
+[4;2mFaint underlined text[m
+[4;2m[58;2;00;;255mFaint, Blue underline[59m
 [m

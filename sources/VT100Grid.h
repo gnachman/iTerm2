@@ -10,6 +10,7 @@
 #import "DVRIndexEntry.h"
 #import "ScreenChar.h"
 #import "VT100GridTypes.h"
+#import "iTermMetadata.h"
 
 @class LineBuffer;
 @class VT100LineInfo;
@@ -53,6 +54,7 @@
 // Serialized state, but excludes screen contents.
 // DEPRECATED - use encode: instead.
 @property(nonatomic, readonly) NSDictionary *dictionaryValue;
+@property(nonatomic, readonly) NSArray<VT100LineInfo *> *metadataArray;
 
 + (VT100GridSize)sizeInStateDictionary:(NSDictionary *)dict;
 
@@ -156,10 +158,10 @@
 - (void)moveWrappedCursorLineToTopOfGrid;
 
 // Set chars in a rectangle, inclusive of from and to. It will clean up orphaned DWCs.
-- (void)setCharsFrom:(VT100GridCoord)from to:(VT100GridCoord)to toChar:(screen_char_t)c;
+- (void)setCharsFrom:(VT100GridCoord)from to:(VT100GridCoord)to toChar:(screen_char_t)c externalAttributes:(iTermExternalAttribute *)attribute;
 
 // Same as above, but for runs.
-- (void)setCharsInRun:(VT100GridRun)run toChar:(unichar)c;
+- (void)setCharsInRun:(VT100GridRun)run toChar:(unichar)c externalAttributes:(iTermExternalAttribute *)ea;
 
 // Copy chars and size from another grid.
 - (void)copyCharsFromGrid:(VT100Grid *)otherGrid;
@@ -173,7 +175,8 @@
    useScrollbackWithRegion:(BOOL)useScrollbackWithRegion
                 wraparound:(BOOL)wraparound
                       ansi:(BOOL)ansi
-                    insert:(BOOL)insert;
+                    insert:(BOOL)insert
+    externalAttributeIndex:(iTermExternalAttributeIndex *)attributes;
 
 // Delete some number of chars starting at a given location, moving chars to the right of them back.
 - (void)deleteChars:(int)num
@@ -186,7 +189,9 @@
 - (void)scrollRect:(VT100GridRect)rect downBy:(int)direction softBreak:(BOOL)softBreak;
 
 // Load contents from a DVR frame.
-- (void)setContentsFromDVRFrame:(screen_char_t*)s info:(DVRFrameInfo)info;
+- (void)setContentsFromDVRFrame:(screen_char_t*)s
+                  metadataArray:(iTermMetadata *)sourceMetadataArray
+                           info:(DVRFrameInfo)info;
 
 // Returns a grid-owned empty line.
 - (NSMutableData *)defaultLineOfWidth:(int)width;
@@ -265,7 +270,7 @@
 - (VT100GridCoord)coordinateBefore:(VT100GridCoord)coord movedBackOverDoubleWidth:(BOOL *)dwc;
 
 // TODO: write a test for this
-- (void)insertChar:(screen_char_t)c at:(VT100GridCoord)pos times:(int)num;
+- (void)insertChar:(screen_char_t)c externalAttributes:(iTermExternalAttribute *)attrs at:(VT100GridCoord)pos times:(int)num;
 
 // Returns an array of NSData for lines in order (corresponding with lines on screen).
 - (NSArray *)orderedLines;

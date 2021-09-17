@@ -71,7 +71,7 @@ class FilteringUpdater: Updater {
         stopAt = lineBuffer.lastPosition()
         lineBuffer.prepareToSearch(for: query,
                                    startingAt: startPosition,
-                                   options: [.multipleResults, .oneResultPerRawLine],
+                                   options: [.multipleResults, .oneResultPerRawLine, .optEmptyQueryMatches],
                                    mode: mode,
                                    with: context)
     }
@@ -82,11 +82,13 @@ class FilteringUpdater: Updater {
 
     func update() -> Bool {
         if let lastPosition = lastPosition {
+            DLog("Reset search at last position, set lastPosition to nil")
             begin(at: lastPosition)
             self.lastPosition = nil
         }
         guard context.status == .Searching || context.status == .Matched else {
-            DLog("FilteringUpdater: finished, return false")
+            DLog("FilteringUpdater: finished, return false. Set lastPosition to end of buffer")
+            self.lastPosition = lineBuffer.lastPosition()
             return false
         }
         DLog("FilteringUpdater: perform search")
@@ -115,10 +117,13 @@ class FilteringUpdater: Updater {
             // We know we searched the last line so prepare to search again from the beginning
             // of the last line next time.
             lastPosition = lineBuffer.positionForStartOfLastLine()
+            DLog("Back up to start of last line")
             return false
         }
+        DLog("status is \(context.status.rawValue)")
         switch context.status {
         case .NotFound:
+            DLog("Set last position to end of buffer")
             lastPosition = lineBuffer.lastPosition()
             return false
         case .Matched, .Searching:
@@ -131,8 +136,11 @@ class FilteringUpdater: Updater {
 
 @objc(iTermFilterDestination)
 protocol FilterDestination {
-    @objc(filterDestinationAppendCharacters:count:continuation:)
-    func append(_ characters: UnsafePointer<screen_char_t>, count: Int32, continuation: screen_char_t)
+    @objc(filterDestinationAppendCharacters:count:externalAttributeIndex:continuation:)
+    func append(_ characters: UnsafePointer<screen_char_t>,
+                count: Int32,
+                externalAttributeIndex: iTermExternalAttributeIndex?,
+                continuation: screen_char_t)
 
     @objc(filterDestinationAdoptLineBuffer:)
     func adopt(_ lineBuffer: LineBuffer)
@@ -203,7 +211,12 @@ class AsyncFilter: NSObject {
         }
         lastLineIsTemporary = temporary
         let chars = lineBufferCopy.rawLine(atWrappedLine: lineNumber, width: width)
-        destination.append(chars.line, count: chars.length, continuation: chars.continuation)
+        let metadata = lineBufferCopy.metadataForRawLine(withWrappedLineNumber: lineNumber,
+                                                         width: width)
+        destination.append(chars.line,
+                           count: chars.length,
+                           externalAttributeIndex: iTermMetadataGetExternalAttributesIndex(metadata),
+                           continuation: chars.continuation)
     }
 
     private func adoptVerbatim() {
@@ -263,6 +276,7 @@ class AsyncFilter: NSObject {
         if !needsUpdate {
             progress?(1)
             timer?.invalidate()
+            DLog("don't need an update")
             timer = nil
         } else {
             progress?(updater.progress)
@@ -271,12 +285,12 @@ class AsyncFilter: NSObject {
 }
 
 extension AsyncFilter: ContentSubscriber {
-    func deliver(_ array: ScreenCharArray) {
+    func deliver(_ array: ScreenCharArray, metadata: iTermMetadata) {
         lineBufferCopy.appendLine(array.line,
                                   length: array.length,
                                   partial: array.eol != EOL_HARD,
                                   width: width,
-                                  metadata:iTermMakeMetadata(Date.timeIntervalSinceReferenceDate),
+                                  metadata: metadata,
                                   continuation: array.continuation)
         if timer != nil {
             return
@@ -305,6 +319,5 @@ extension screen_char_t {
                                     strikethrough: 0,
                                     underlineStyle: VT100UnderlineStyle.single,
                                     unused: 0,
-                                    hasMetadata: 0,
                                     urlCode: 0)
 }

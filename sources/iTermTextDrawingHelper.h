@@ -14,6 +14,7 @@
 #import "VT100GridTypes.h"
 
 @class iTermColorMap;
+@class iTermExternalAttributeIndex;
 @class iTermFindOnPageHelper;
 @class iTermSelection;
 @class iTermTextExtractor;
@@ -62,6 +63,7 @@ BOOL CheckFindMatchAtIndex(NSData *findMatches, int index);
 
 - (NSString *)drawingHelperLabelForDropTargetOnLine:(int)line;
 - (NSRect)textDrawingHelperVisibleRect;
+- (iTermExternalAttributeIndex *)drawingHelperExternalAttributesOnLine:(int)lineNumber;
 
 @end
 

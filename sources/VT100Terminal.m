@@ -31,6 +31,12 @@ NSString *const kGraphicRenditionBackgroundGreenKey = @"BG Green";
 NSString *const kGraphicRenditionBackgroundBlueKey = @"BG Blue";
 NSString *const kGraphicRenditionBackgroundModeKey = @"BG Mode";
 
+NSString *const kGraphicRenditionHasUnderlineColorKey = @"Has underline color";
+NSString *const kGraphicRenditionUnderlineColorCodeKey = @"Underline Color/Red";
+NSString *const kGraphicRenditionUnderlineGreenKey = @"Underline Green";
+NSString *const kGraphicRenditionUnderlineBlueKey = @"Underline Blue";
+NSString *const kGraphicRenditionUnderlineModeKey = @"Underline Mode";
+
 NSString *const kSavedCursorPositionKey = @"Position";
 NSString *const kSavedCursorCharsetKey = @"Charset";
 NSString *const kSavedCursorLineDrawingArrayKey = @"Line Drawing Flags";
@@ -187,6 +193,9 @@ typedef enum {
 #define VT100CHARATTR_BG_WHITE     (VT100CHARATTR_BG_BASE + COLORCODE_WHITE)
 #define VT100CHARATTR_BG_256       (VT100CHARATTR_BG_BASE + COLORCODE_256)
 #define VT100CHARATTR_BG_DEFAULT   (VT100CHARATTR_BG_BASE + 9)
+
+#define VT100CHARATTR_UNDERLINE_COLOR 58
+#define VT100CHARATTR_UNDERLINE_COLOR_DEFAULT 59
 
 // Color codes for 16-color mode. Black and white are the limits; other codes can be constructed
 // similarly.
@@ -457,6 +466,14 @@ static const int kMaxScreenRows = 4096;
         return _alternateKeyReportingModeStack;
     }
     return _mainKeyReportingModeStack;
+}
+
+- (void)updateExternalAttributes {
+    if (!graphicRendition_.hasUnderlineColor) {
+        _externalAttributes = nil;
+        return;
+    }
+    _externalAttributes = [[iTermExternalAttribute alloc] initWithUnderlineColor:graphicRendition_.underlineColor];
 }
 
 - (screen_char_t)foregroundColorCode
@@ -735,6 +752,120 @@ static const int kMaxScreenRows = 4096;
     memset(&graphicRendition_, 0, sizeof(graphicRendition_));
 }
 
+// The actual spec for this is called ITU T.416-199303
+// You can download it for free! If you prefer to spend money, ISO/IEC 8613-6
+// is supposedly the same thing.
+//
+// Here's a sad story about CSI 38:2, which is used to do 24-bit color.
+//
+// Lots of terminal emulators, iTerm2 included, misunderstood the spec. That's
+// easy to understand if you read it, which I can't recommend doing unless
+// you're looking for inspiration for your next Bulwer-Lytton Fiction Contest
+// entry.
+//
+// See issue 6377 for more context.
+//
+// Ignoring color types we don't support like CMYK, the spec says to do this:
+// CSI 38:2:[color space]:[red]:[green]:[blue]:[unused]:[tolerance]:[tolerance colorspace]
+//
+// Everything after [blue] is optional. Values are decimal numbers in 0...255.
+//
+// Unfortunately, what was implemented for a long time was this:
+// CSI 38:2:[red]:[green]:[blue]:[unused]:[tolerance]:[tolerance colorspace]
+//
+// And for xterm compatibility, the following was also accepted:
+// CSI 38;2;[red];[green];[blue]
+//
+// The New Order
+// -------------
+// Tolerance never did anything, so we'll accept this non-standards compliant
+// code, which people use:
+// CSI 38:2:[red]:[green]:[blue]
+//
+// As well as the following forms:
+// CSI 38:2:[colorspace]:[red]:[green]:[blue]
+// CSI 38:2:[colorspace]:[red]:[green]:[blue]:<one or more additional colon-delimited arguments, all ignored>
+// CSI 38;2;[red];[green];[blue]   // Notice semicolons in place of colons here
+//
+// NOTE: If you change this you must also update -sgrCodesForGraphicRendition:
+- (VT100TerminalColorValue)colorValueFromSGRToken:(VT100Token *)token fromParameter:(inout int *)index {
+    const int i = *index;
+    int subs[VT100CSISUBPARAM_MAX];
+    const int numberOfSubparameters = iTermParserGetAllCSISubparametersForParameter(token.csi, i, subs);
+    if (numberOfSubparameters > 0) {
+        // Preferred syntax using colons to delimit subparameters
+        if (numberOfSubparameters >= 2 && subs[0] == 5) {
+            // CSI 38:5:P m
+            return (VT100TerminalColorValue){
+                .red = subs[1],
+                .green = 0,
+                .blue = 0,
+                .mode = ColorModeNormal
+            };
+        }
+        if (numberOfSubparameters >= 4 && subs[0] == 2) {
+            // 24-bit color
+            if (numberOfSubparameters >= 5) {
+                // Spec-compliant. Likely rarely used in 2017.
+                // CSI 38:2:colorspace:R:G:B m
+                // TODO: Respect the color space argument. See ITU-T Rec. T.414,
+                // but good luck actually finding the colour space IDs.
+                return (VT100TerminalColorValue){
+                    .red = subs[2],
+                    .green = subs[3],
+                    .blue = subs[4],
+                    .mode = ColorMode24bit
+                };
+            }
+            // Misinterpretation compliant.
+            // CSI 38:2:R:G:B m  <- misinterpretation compliant
+            return (VT100TerminalColorValue) {
+                .red = subs[1],
+                .green = subs[2],
+                .blue = subs[3],
+                .mode = ColorMode24bit
+            };
+        }
+        return (VT100TerminalColorValue) {
+            .red = -1,
+            .green = -1,
+            .blue = -1,
+            .mode = ColorMode24bit
+        };
+    }
+    if (token.csi->count - i >= 3 && token.csi->p[i + 1] == 5) {
+        // For 256-color mode (indexed) use this for the foreground:
+        // CSI 38;5;N m
+        // where N is a value between 0 and 255. See the colors described in screen_char_t
+        // in the comments for fgColorCode.
+        *index += 2;
+        return (VT100TerminalColorValue) {
+            .red = token.csi->p[i + 2],
+            .green = 0,
+            .blue = 0,
+            .mode = ColorModeNormal
+        };
+    }
+    if (token.csi->count - i >= 5 && token.csi->p[i + 1] == 2) {
+        // CSI 38;2;R;G;B m
+        // Hack for xterm compatibility
+        // 24-bit color support
+        *index += 4;
+        return (VT100TerminalColorValue) {
+            .red = token.csi->p[i + 2],
+            .green = token.csi->p[i + 3],
+            .blue = token.csi->p[i + 4],
+            .mode = ColorMode24bit
+        };
+    }
+    return (VT100TerminalColorValue) {
+        .red = -1,
+        .green = -1,
+        .blue = -1,
+        .mode = ColorMode24bit
+    };
+}
+
 - (void)executeSGR:(VT100Token *)token {
     assert(token->type == VT100CSI_SGR);
     if (token.csi->count == 0) {
@@ -814,142 +945,40 @@ static const int kMaxScreenRows = 4096;
                     graphicRendition_.bgBlue = 0;
                     graphicRendition_.bgColorMode = ColorModeAlternate;
                     break;
-                case VT100CHARATTR_FG_256: {
-                    // The actual spec for this is called ITU T.416-199303
-                    // You can download it for free! If you prefer to spend money, ISO/IEC 8613-6
-                    // is supposedly the same thing.
-                    //
-                    // Here's a sad story about CSI 38:2, which is used to do 24-bit color.
-                    //
-                    // Lots of terminal emulators, iTerm2 included, misunderstood the spec. That's
-                    // easy to understand if you read it, which I can't recommend doing unless
-                    // you're looking for inspiration for your next Bulwer-Lytton Fiction Contest
-                    // entry.
-                    //
-                    // See issue 6377 for more context.
-                    //
-                    // Ignoring color types we don't support like CMYK, the spec says to do this:
-                    // CSI 38:2:[color space]:[red]:[green]:[blue]:[unused]:[tolerance]:[tolerance colorspace]
-                    //
-                    // Everything after [blue] is optional. Values are decimal numbers in 0...255.
-                    //
-                    // Unfortunately, what was implemented for a long time was this:
-                    // CSI 38:2:[red]:[green]:[blue]:[unused]:[tolerance]:[tolerance colorspace]
-                    //
-                    // And for xterm compatibility, the following was also accepted:
-                    // CSI 38;2;[red];[green];[blue]
-                    //
-                    // The New Order
-                    // -------------
-                    // Tolerance never did anything, so we'll accept this non-standards compliant
-                    // code, which people use:
-                    // CSI 38:2:[red]:[green]:[blue]
-                    //
-                    // As well as the following forms:
-                    // CSI 38:2:[colorspace]:[red]:[green]:[blue]
-                    // CSI 38:2:[colorspace]:[red]:[green]:[blue]:<one or more additional colon-delimited arguments, all ignored>
-                    // CSI 38;2;[red];[green];[blue]   // Notice semicolons in place of colons here
-
-                    int subs[VT100CSISUBPARAM_MAX];
-                    int numberOfSubparameters = iTermParserGetAllCSISubparametersForParameter(token.csi, i, subs);
-                    if (numberOfSubparameters > 0) {
-                        // Preferred syntax using colons to delimit subparameters
-                        if (numberOfSubparameters >= 2 && subs[0] == 5) {
-                            // CSI 38:5:P m
-                            graphicRendition_.fgColorCode = subs[1];
-                            graphicRendition_.fgGreen = 0;
-                            graphicRendition_.fgBlue = 0;
-                            graphicRendition_.fgColorMode = ColorModeNormal;
-                        } else if (numberOfSubparameters >= 4 && subs[0] == 2) {
-                            // 24-bit color
-                            if (numberOfSubparameters >= 5) {
-                                // Spec-compliant. Likely rarely used in 2017.
-                                // CSI 38:2:colorspace:R:G:B m
-                                // TODO: Respect the color space argument. See ITU-T Rec. T.414,
-                                // but good luck actually finding the colour space IDs.
-                                graphicRendition_.fgColorCode = subs[2];
-                                graphicRendition_.fgGreen = subs[3];
-                                graphicRendition_.fgBlue = subs[4];
-                                graphicRendition_.fgColorMode = ColorMode24bit;
-                            } else {
-                                // Misinterpretation compliant.
-                                // CSI 38:2:R:G:B m  <- misinterpretation compliant
-                                graphicRendition_.fgColorCode = subs[1];
-                                graphicRendition_.fgGreen = subs[2];
-                                graphicRendition_.fgBlue = subs[3];
-                                graphicRendition_.fgColorMode = ColorMode24bit;
-                            }
-                        }
-                    } else if (token.csi->count - i >= 3 && token.csi->p[i + 1] == 5) {
-                        // For 256-color mode (indexed) use this for the foreground:
-                        // CSI 38;5;N m
-                        // where N is a value between 0 and 255. See the colors described in screen_char_t
-                        // in the comments for fgColorCode.
-                        graphicRendition_.fgColorCode = token.csi->p[i + 2];
-                        graphicRendition_.fgGreen = 0;
-                        graphicRendition_.fgBlue = 0;
-                        graphicRendition_.fgColorMode = ColorModeNormal;
-                        i += 2;
-                    } else if (token.csi->count - i >= 5 && token.csi->p[i + 1] == 2) {
-                        // CSI 38;2;R;G;B m
-                        // Hack for xterm compatibility
-                        // 24-bit color support
-                        graphicRendition_.fgColorCode = token.csi->p[i + 2];
-                        graphicRendition_.fgGreen = token.csi->p[i + 3];
-                        graphicRendition_.fgBlue = token.csi->p[i + 4];
-                        graphicRendition_.fgColorMode = ColorMode24bit;
-                        i += 4;
+                case VT100CHARATTR_UNDERLINE_COLOR_DEFAULT:
+                    graphicRendition_.hasUnderlineColor = NO;
+                    [self updateExternalAttributes];
+                    break;
+                case VT100CHARATTR_UNDERLINE_COLOR: {
+                    const VT100TerminalColorValue value = [self colorValueFromSGRToken:token fromParameter:&i];
+                    if (value.red < 0) {
+                        break;
                     }
+                    graphicRendition_.hasUnderlineColor = YES;
+                    graphicRendition_.underlineColor = value;
+                    [self updateExternalAttributes];
+                    break;
+                }
+                case VT100CHARATTR_FG_256: {
+                    const VT100TerminalColorValue value = [self colorValueFromSGRToken:token fromParameter:&i];
+                    if (value.red < 0) {
+                        break;
+                    }
+                    graphicRendition_.fgColorCode = value.red;
+                    graphicRendition_.fgGreen = value.green;
+                    graphicRendition_.fgBlue = value.blue;
+                    graphicRendition_.fgColorMode = value.mode;
                     break;
                 }
                 case VT100CHARATTR_BG_256: {
-                    int subs[VT100CSISUBPARAM_MAX];
-                    int numberOfSubparameters = iTermParserGetAllCSISubparametersForParameter(token.csi, i, subs);
-                    if (numberOfSubparameters > 0) {
-                        // Preferred syntax using colons to delimit subparameters
-                        if (numberOfSubparameters >= 2 && subs[0] == 5) {
-                            // CSI 48:5:P m
-                            graphicRendition_.bgColorCode = subs[1];
-                            graphicRendition_.bgGreen = 0;
-                            graphicRendition_.bgBlue = 0;
-                            graphicRendition_.bgColorMode = ColorModeNormal;
-                        } else if (numberOfSubparameters >= 4 && subs[0] == 2) {
-                            // 24-bit color
-                            if (numberOfSubparameters >= 5) {
-                                // Spec-compliant. Likely rarely used in 2020.
-                                // CSI 48:2:colorspace:R:G:B m
-                                // TODO: Respect the color space argument. See ITU-T Rec. T.414,
-                                // but good luck actually finding the colour space IDs.
-                                graphicRendition_.bgColorCode = subs[2];
-                                graphicRendition_.bgGreen = subs[3];
-                                graphicRendition_.bgBlue = subs[4];
-                                graphicRendition_.bgColorMode = ColorMode24bit;
-                            } else {
-                                // Misinterpretation compliant.
-                                // CSI 48:2:R:G:B m  <- misinterpretation compliant
-                                graphicRendition_.bgColorCode = subs[1];
-                                graphicRendition_.bgGreen = subs[2];
-                                graphicRendition_.bgBlue = subs[3];
-                                graphicRendition_.bgColorMode = ColorMode24bit;
-                            }
-                        }
-                    } else if (token.csi->count - i >= 3 && token.csi->p[i + 1] == 5) {
-                        // CSI 48;5;P m
-                        graphicRendition_.bgColorCode = token.csi->p[i + 2];
-                        graphicRendition_.bgGreen = 0;
-                        graphicRendition_.bgBlue = 0;
-                        graphicRendition_.bgColorMode = ColorModeNormal;
-                        i += 2;
-                    } else if (token.csi->count - i >= 5 && token.csi->p[i + 1] == 2) {
-                        // CSI 48;2;R;G;B m
-                        // Hack for xterm compatibility
-                        // 24-bit color
-                        graphicRendition_.bgColorCode = token.csi->p[i + 2];
-                        graphicRendition_.bgGreen = token.csi->p[i + 3];
-                        graphicRendition_.bgBlue = token.csi->p[i + 4];
-                        graphicRendition_.bgColorMode = ColorMode24bit;
-                        i += 4;
+                    const VT100TerminalColorValue value = [self colorValueFromSGRToken:token fromParameter:&i];
+                    if (value.red < 0) {
+                        break;
                     }
+                    graphicRendition_.bgColorCode = value.red;
+                    graphicRendition_.bgGreen = value.green;
+                    graphicRendition_.bgBlue = value.blue;
+                    graphicRendition_.bgColorMode = value.mode;
                     break;
                 }
                 default:
@@ -2568,7 +2597,8 @@ static const int kMaxScreenRows = 4096;
     return nil;
 }
 
-- (NSSet<NSString *> *)sgrCodesForCharacter:(screen_char_t)c {
+- (NSSet<NSString *> *)sgrCodesForCharacter:(screen_char_t)c
+                         externalAttributes:(iTermExternalAttribute *)ea {
     VT100GraphicRendition g = {
         .bold = c.bold,
         .blink = c.blink,
@@ -2586,7 +2616,10 @@ static const int kMaxScreenRows = 4096;
         .bgColorCode = c.backgroundColor,
         .bgGreen = c.bgGreen,
         .bgBlue = c.bgBlue,
-        .bgColorMode = c.backgroundColorMode
+        .bgColorMode = c.backgroundColorMode,
+
+        .hasUnderlineColor = ea.hasUnderlineColor,
+        .underlineColor = ea.underlineColor,
     };
     return [self sgrCodesForGraphicRendition:g];
 }
@@ -2701,6 +2734,23 @@ static const int kMaxScreenRows = 4096;
     }
     if (graphicRendition.strikethrough) {
         [result addObject:@"9"];
+    }
+    if (graphicRendition.hasUnderlineColor) {
+        switch (graphicRendition.underlineColor.mode) {
+            case ColorModeNormal:
+                [result addObject:[NSString stringWithFormat:@"58:5:%d",
+                                   graphicRendition.underlineColor.red]];
+                break;
+            case ColorMode24bit:
+                [result addObject:[NSString stringWithFormat:@"58:2:%d:%d:%d",
+                                   graphicRendition.underlineColor.red,
+                                   graphicRendition.underlineColor.green,
+                                   graphicRendition.underlineColor.blue]];
+                 break;
+            case ColorModeInvalid:
+            case ColorModeAlternate:
+                break;
+        }
     }
     return result;
 }
@@ -3544,7 +3594,13 @@ static iTermDECRPMSetting VT100TerminalDECRPMSettingFromBoolean(BOOL flag) {
               kGraphicRenditionBackgroundColorCodeKey: @(graphicRendition.bgColorCode),
               kGraphicRenditionBackgroundGreenKey: @(graphicRendition.bgGreen),
               kGraphicRenditionBackgroundBlueKey: @(graphicRendition.bgBlue),
-              kGraphicRenditionBackgroundModeKey: @(graphicRendition.bgColorMode) };
+              kGraphicRenditionBackgroundModeKey: @(graphicRendition.bgColorMode),
+              kGraphicRenditionHasUnderlineColorKey: @(graphicRendition.hasUnderlineColor),
+              kGraphicRenditionUnderlineColorCodeKey: @(graphicRendition.underlineColor.red),
+              kGraphicRenditionUnderlineGreenKey: @(graphicRendition.underlineColor.green),
+              kGraphicRenditionUnderlineBlueKey: @(graphicRendition.underlineColor.blue),
+              kGraphicRenditionUnderlineModeKey: @(graphicRendition.underlineColor.mode),
+    };
 }
 
 - (VT100GraphicRendition)graphicRenditionFromDictionary:(NSDictionary *)dict {
@@ -3567,6 +3623,12 @@ static iTermDECRPMSetting VT100TerminalDECRPMSettingFromBoolean(BOOL flag) {
     graphicRendition.bgGreen = [dict[kGraphicRenditionBackgroundGreenKey] intValue];
     graphicRendition.bgBlue = [dict[kGraphicRenditionBackgroundBlueKey] intValue];
     graphicRendition.bgColorMode = [dict[kGraphicRenditionBackgroundModeKey] intValue];
+
+    graphicRendition.hasUnderlineColor = [dict[kGraphicRenditionHasUnderlineColorKey] boolValue];
+    graphicRendition.underlineColor.red = [dict[kGraphicRenditionUnderlineColorCodeKey] intValue];
+    graphicRendition.underlineColor.green = [dict[kGraphicRenditionUnderlineGreenKey] intValue];
+    graphicRendition.underlineColor.blue = [dict[kGraphicRenditionUnderlineBlueKey] intValue];
+    graphicRendition.underlineColor.mode = [dict[kGraphicRenditionUnderlineModeKey] intValue];
 
     return graphicRendition;
 }

@@ -13,6 +13,7 @@
     NSTimeInterval timestamp_;
     int start_;
     int bound_;
+    NSData *_cachedEncodedMetadata;
 }
 
 static NSInteger VT100LineInfoNextGeneration = 1;
@@ -24,12 +25,13 @@ static NSInteger VT100LineInfoNextGeneration = 1;
         start_ = -1;
         bound_ = -1;
         [self setDirty:NO inRange:VT100GridRangeMake(0, width) updateTimestamp:NO];
+        iTermMetadataInit(&_metadata, 0, nil);
     }
     return self;
 }
 
 - (void)dealloc {
-    [super dealloc];
+    iTermMetadataRelease(_metadata);
 }
 
 - (void)setDirty:(BOOL)dirty inRange:(VT100GridRange)range updateTimestamp:(BOOL)updateTimestamp {
@@ -76,6 +78,7 @@ static NSInteger VT100LineInfoNextGeneration = 1;
 
 - (void)updateTimestamp {
     _metadata.timestamp = [NSDate timeIntervalSinceReferenceDate];
+    _cachedEncodedMetadata = nil;
 }
 
 - (BOOL)isDirtyAtOffset:(int)x {
@@ -102,6 +105,46 @@ static NSInteger VT100LineInfoNextGeneration = 1;
     theCopy->timestamp_ = timestamp_;
 
     return theCopy;
+}
+
+- (void)setTimestamp:(NSTimeInterval)timestamp {
+    _metadata.timestamp = timestamp;
+    _cachedEncodedMetadata = nil;
+}
+
+- (void)decodeMetadataArray:(NSArray *)array {
+    iTermMetadataRelease(_metadata);
+    iTermMetadataInitFromArray(&_metadata, array);
+}
+
+- (void)resetMetadata {
+    iTermMetadataReset(&_metadata);
+    _cachedEncodedMetadata = nil;
+}
+
+- (NSArray *)encodedMetadata {
+    return iTermMetadataEncodeToArray(_metadata);
+}
+
+- (void)setMetadata:(iTermMetadata)metadata {
+    iTermMetadataRetain(metadata);
+    iTermMetadataRelease(_metadata);
+    _metadata = metadata;
+    _cachedEncodedMetadata = nil;
+}
+
+- (iTermExternalAttributeIndex *)externalAttributesCreatingIfNeeded:(BOOL)create {
+    _cachedEncodedMetadata = nil;
+    return create ? iTermMetadataGetExternalAttributesIndexCreatingIfNeeded(&_metadata) : iTermMetadataGetExternalAttributesIndex(_metadata);
+}
+
+#pragma mark - DVREncodable
+
+- (NSData *)dvrEncodableData {
+    if (!_cachedEncodedMetadata) {
+        _cachedEncodedMetadata = iTermMetadataEncodeToData(_metadata);
+    }
+    return _cachedEncodedMetadata;
 }
 
 @end

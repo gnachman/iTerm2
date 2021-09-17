@@ -7,6 +7,7 @@
 #import "iTermSearchFieldCell.h"
 #import "iTermStatusBarComponentKnob.h"
 #import "iTermStatusBarComponent.h"
+#import "iTermMetadata.h"
 #import "iTermMiniSearchFieldViewController.h"
 #import "iTermPreferences.h"
 #import "iTermStatusBarTextComponent.h"
@@ -21,4 +22,5 @@
 #import "NSStringITerm.h"
 #import "PTYSession.h"
 #import "ScreenChar.h"
+#import "ScreenCharArray.h"
 #import "Trigger.h"

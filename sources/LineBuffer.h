@@ -30,11 +30,12 @@
 #import "FindContext.h"
 #import "iTermEncoderAdapter.h"
 #import "iTermFindDriver.h"
-#import "ScreenChar.h"
+#import "ScreenCharArray.h"
 #import "LineBufferPosition.h"
 #import "LineBufferHelpers.h"
 #import "VT100GridTypes.h"
 
+@class LineBlock;
 @class LineBuffer;
 @class ResultRange;
 
@@ -96,6 +97,9 @@
 // Returns the metadata associated with a line when wrapped to the specified width.
 - (iTermMetadata)metadataForLineNumber:(int)lineNum width:(int)width;
 
+// Metadata for the whole raw line.
+- (iTermMetadata)metadataForRawLineWithWrappedLineNumber:(int)lineNum width:(int)width;
+
 - (NSInteger)generationForLineNumber:(int)lineNum width:(int)width;
 
 // Copy a line into the buffer. If the line is shorter than 'width' then only the first 'width'
@@ -110,7 +114,8 @@
 
 - (void)enumerateLinesInRange:(NSRange)range
                         width:(int)width
-                        block:(void (^ _Nonnull)(ScreenCharArray * _Nonnull,
+                        block:(void (^ _Nonnull)(int,
+                                                 ScreenCharArray * _Nonnull,
                                                  iTermMetadata,
                                                  BOOL * _Nonnull))block;
 
@@ -134,7 +139,7 @@
 - (BOOL)popAndCopyLastLineInto:(screen_char_t * _Nonnull)ptr
                          width:(int)width
              includesEndOfLine:(int *_Nonnull)includesEndOfLine
-                      metadata:(iTermMetadata * _Nullable)metadataPtr
+                      metadata:(out iTermMetadata * _Nullable)metadataPtr
                   continuation:(screen_char_t * _Nullable)continuationPtr;
 
 // Removes the last wrapped lines.
@@ -223,5 +228,8 @@
 - (void)endResizing;
 
 - (void)setPartial:(BOOL)partial;
+
+// Tests only!
+- (LineBlock * _Nonnull)internalBlockAtIndex:(int)i;
 
 @end

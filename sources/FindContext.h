@@ -12,7 +12,8 @@
 typedef NS_OPTIONS(NSUInteger, FindOptions) {
     FindOptBackwards        = (1 << 0),
     FindMultipleResults     = (1 << 1),
-    FindOneResultPerRawLine = (1 << 2)
+    FindOneResultPerRawLine = (1 << 2),
+    FindOptEmptyQueryMatches = (1 << 3)
 };
 
 typedef NS_ENUM(NSInteger, FindContextStatus) {

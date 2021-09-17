@@ -8,12 +8,13 @@
 
 #import <Foundation/Foundation.h>
 #import "FindContext.h"
-#import "ScreenChar.h"
+#import "ScreenCharArray.h"
 #import "iTermEncoderAdapter.h"
 #import "iTermFindViewController.h"
+#import "iTermMetadata.h"
 
 typedef struct {
-    iTermMetadata metadata;
+    iTermMetadata lineMetadata;
     screen_char_t continuation;
     int number_of_wrapped_lines;
     int width_for_number_of_wrapped_lines;
@@ -75,7 +76,7 @@ typedef struct {
                                        yOffset:(int*)yOffsetPtr
                                   continuation:(screen_char_t *)continuationPtr
                           isStartOfWrappedLine:(BOOL *)isStartOfWrappedLine
-                                      metadata:(iTermMetadata *)metadataPtr;
+                                      metadata:(out iTermMetadata *)metadataPtr;
 
 - (ScreenCharArray *)rawLineAtWrappedLineOffset:(int)lineNum width:(int)width;
 
@@ -92,7 +93,7 @@ typedef struct {
 - (BOOL)popLastLineInto:(screen_char_t**)ptr
              withLength:(int*)length
               upToWidth:(int)width
-               metadata:(iTermMetadata *)metadataPtr
+               metadata:(out iTermMetadata *)metadataPtr
            continuation:(screen_char_t *)continuationPtr;
 
 - (void)removeLastWrappedLines:(int)numberOfLinesToRemove
@@ -133,6 +134,7 @@ typedef struct {
 
 // Returns the metadata associated with a line when wrapped to the specified width.
 - (iTermMetadata)metadataForLineNumber:(int)lineNum width:(int)width;
+- (iTermMetadata)metadataForRawLineAtWrappedLineOffset:(int)lineNum width:(int)width;
 - (NSInteger)generationForLineNumber:(int)lineNum width:(int)width;
 
 // Appends the contents of the block to |s|.
@@ -227,5 +229,8 @@ void EnableDoubleWidthCharacterLineCache(void);
 - (BOOL)hasObserver:(id<iTermLineBlockObserver>)observer;
 
 - (void)setPartial:(BOOL)partial;
+
+// For tests only
+- (LineBlockMetadata)internalMetadataForLine:(int)line;
 
 @end

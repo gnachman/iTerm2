@@ -42,7 +42,8 @@
 
 // Accessors for the most recent frame.
 - (char*)decodedFrame;
-- (int)length;
+- (int)encodedLength;
+- (int)screenCharArrayLength;
 - (DVRFrameInfo)info;
 
 // Advance to next frame.
@@ -53,6 +54,7 @@
 
 // Called when frame index key i is freed.
 - (void)invalidateIndex:(long long)i;
+- (NSData *)metadataForLine:(int)line;
 
 @end
 

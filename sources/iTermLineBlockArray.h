@@ -6,7 +6,8 @@
 //
 
 #import <Foundation/Foundation.h>
-#import "ScreenChar.h"
+#import "ScreenCharArray.h"
+#import "iTermMetadata.h"
 
 NS_ASSUME_NONNULL_BEGIN
 

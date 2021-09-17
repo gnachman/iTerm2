@@ -142,7 +142,7 @@ extern const NSInteger kLongMaximumWordLength;
 // if |maxBytes| is positive then the result will not exceed that size. |truncateTail| determines
 // whether the tail or head of the string is shortened to fit.
 - (id)contentInRange:(VT100GridWindowedRange)range
-   attributeProvider:(NSDictionary *(^)(screen_char_t))attributeProvider
+   attributeProvider:(NSDictionary *(^)(screen_char_t, iTermExternalAttribute *))attributeProvider
           nullPolicy:(iTermTextExtractorNullPolicy)nullPolicy
                  pad:(BOOL)pad
   includeLastNewline:(BOOL)includeLastNewline
@@ -154,7 +154,7 @@ extern const NSInteger kLongMaximumWordLength;
 
 // Returns an iTermLocated[Attributed]String
 - (id)locatedStringInRange:(VT100GridWindowedRange)range
-         attributeProvider:(NSDictionary *(^)(screen_char_t))attributeProvider
+         attributeProvider:(NSDictionary *(^)(screen_char_t, iTermExternalAttribute *))attributeProvider
                 nullPolicy:(iTermTextExtractorNullPolicy)nullPolicy
                        pad:(BOOL)pad
         includeLastNewline:(BOOL)includeLastNewline
@@ -169,7 +169,7 @@ extern const NSInteger kLongMaximumWordLength;
 - (int)lengthOfAbsLine:(long long)absLine;
 
 - (void)enumerateCharsInRange:(VT100GridWindowedRange)range
-                    charBlock:(BOOL (^)(screen_char_t *currentLine, screen_char_t theChar, VT100GridCoord coord))charBlock
+                    charBlock:(BOOL (^)(screen_char_t *currentLine, screen_char_t theChar, iTermExternalAttribute *, VT100GridCoord coord))charBlock
                      eolBlock:(BOOL (^)(unichar code, int numPreceedingNulls, int line))eolBlock;
 
 - (void)enumerateWrappedLinesIntersectingRange:(VT100GridRange)range

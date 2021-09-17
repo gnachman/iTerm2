@@ -33,6 +33,9 @@ typedef struct {
     int bgGreen;
     int bgBlue;
     ColorMode bgColorMode;
+
+    BOOL hasUnderlineColor;
+    VT100TerminalColorValue underlineColor;
 } VT100GraphicRendition;
 
 typedef NS_OPTIONS(int, VT100TerminalKeyReportingFlags) {
@@ -84,6 +87,8 @@ typedef NS_OPTIONS(int, VT100TerminalKeyReportingFlags) {
 // The "real" foreground/background color, which doesn't change with reverseVideo.
 @property(nonatomic, readonly) screen_char_t foregroundColorCodeReal;
 @property(nonatomic, readonly) screen_char_t backgroundColorCodeReal;
+
+@property(nonatomic, readonly) iTermExternalAttribute *externalAttributes;
 
 @property(nonatomic, assign) BOOL cursorMode;
 @property(nonatomic, assign) BOOL keypadMode;  // YES=application, NO=numeric
@@ -164,7 +169,9 @@ typedef NS_OPTIONS(int, VT100TerminalKeyReportingFlags) {
 
 - (void)gentleReset;
 
-- (NSSet<NSString *> *)sgrCodesForCharacter:(screen_char_t)c;
+- (NSSet<NSString *> *)sgrCodesForCharacter:(screen_char_t)c
+                         externalAttributes:(iTermExternalAttribute *)ea;
+
 - (void)resetSendModifiersWithSideEffects:(BOOL)sideEffects;
 - (void)toggleAlternateScreen;
 

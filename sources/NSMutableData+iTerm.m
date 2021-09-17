@@ -55,4 +55,12 @@
     return count;
 }
 
+- (void)dropFirst:(NSUInteger)size {
+    if (size >= self.length) {
+        [self setLength:0];
+        return;
+    }
+    [self replaceBytesInRange:NSMakeRange(0, size) withBytes:"" length:0];
+}
+
 @end

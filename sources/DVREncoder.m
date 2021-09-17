@@ -100,10 +100,15 @@ static long long now()
     return s;
 }
 
+// NOTE: length is the size needed for frameLines but not for metadata.
 - (void)appendFrame:(NSArray *)frameLines
              length:(int)length
+           metadata:(NSArray<id<DVREncodable>> *)metadata
          cleanLines:(NSIndexSet *)cleanLines
                info:(DVRFrameInfo*)info {
+#ifdef DVRDEBUG
+    NSLog(@"Encoding frame");
+#endif
     BOOL eligibleForDiff;
     if (cleanLines.count > info->height * 0.8 &&
         lastFrame_ &&
@@ -119,9 +124,9 @@ static long long now()
     const int kKeyFrameFrequency = 100;
 
     if (!eligibleForDiff || count_++ % kKeyFrameFrequency == 0) {
-        [self _appendKeyFrame:frameLines length:length info:info];
+        [self _appendKeyFrame:frameLines length:length metadata:metadata info:info];
     } else {
-        [self _appendDiffFrame:frameLines length:length cleanLines:cleanLines info:info];
+        [self _appendDiffFrame:frameLines length:length metadata:metadata cleanLines:cleanLines info:info];
     }
 }
 
@@ -174,20 +179,33 @@ static long long now()
 }
 
 // Save a key frame into DVRBuffer.
-- (void)_appendKeyFrame:(NSArray *)frameLines length:(int)length info:(DVRFrameInfo*)info
-{
+- (void)_appendKeyFrame:(NSArray *)frameLines length:(int)length metadata:(NSArray<id<DVREncodable>> *)metadata info:(DVRFrameInfo*)info {
     [lastFrame_ release];
     lastFrame_ = [[self combinedFrameLines:frameLines] retain];
     assert(lastFrame_.length == length);
     char* scratch = [buffer_ scratch];
     memcpy(scratch, [lastFrame_ mutableBytes], length);
-    [self _appendFrameImpl:scratch length:length type:DVRFrameTypeKeyFrame info:info];
+    __block int offset = length;
+    [metadata enumerateObjectsUsingBlock:^(id<DVREncodable>  _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+        NSData *data = [obj dvrEncodableData];
+#ifdef DVRDEBUG
+        NSLog(@"Append metadata at offset %@, length is %@", @(offset), @(data.length));
+#endif
+        assert(data.length < INT_MAX);
+        int length = data.length;
+        memcpy(scratch + offset, &length, sizeof(length));
+        offset += sizeof(length);
+        memcpy(scratch + offset, data.bytes, data.length);
+        offset += data.length;
+    }];
+    [self _appendFrameImpl:scratch length:offset type:DVRFrameTypeKeyFrame info:info];
     bytesSinceLastKeyFrame_ = 0;
 }
 
 // Save a diff frame into DVRBuffer.
 - (void)_appendDiffFrame:(NSArray *)frameLines
                   length:(int)length
+                metadata:(NSArray<id<DVREncodable>> *)metadata
               cleanLines:(NSIndexSet *)cleanLines
                     info:(DVRFrameInfo *)info {
     char* scratch = [buffer_ scratch];
@@ -196,6 +214,7 @@ static long long now()
 #endif
     int diffBytes = [self _computeDiff:frameLines
                                 length:length
+                              metadata:metadata
                             cleanLines:cleanLines
                                   dest:scratch
                                maxSize:reservation_];
@@ -204,7 +223,7 @@ static long long now()
         NSLog(@"Abandon diff and append a key frame instead");
 #endif
         // Diff ended up being larger than a key frame would be.
-        [self _appendKeyFrame:frameLines length:length info:info];
+        [self _appendKeyFrame:frameLines length:length metadata:metadata info:info];
         return;
     }
 
@@ -248,6 +267,7 @@ static long long now()
 // -1 if the diff was larger than maxSize.
 - (int)_computeDiff:(NSArray<NSData *> *)frameLines
              length:(int)length
+           metadata:(NSArray<id<DVREncodable>> *)metadata
          cleanLines:(NSIndexSet *)cleanLines
                dest:(char *)scratch
             maxSize:(int)maxBytes {
@@ -259,37 +279,80 @@ static long long now()
     NSLog(@"Computing diff");
 #endif
     const int numLines = [frameLines count];
-    const int numChars = numLines > 0 ? frameLines[0].length : 0;
-    for (int y = 0; y < numLines; y++) {
-        if ([cleanLines containsIndex:y]) {
-            if (o + 1 + sizeof(numChars) > maxBytes) {
-                // Diff is too big.
-                return -1;
+    {
+        const int numChars = numLines > 0 ? frameLines[0].length : 0;
+        for (int y = 0; y < numLines; y++) {
+            if ([cleanLines containsIndex:y]) {
+                if (o + 1 + sizeof(numChars) > maxBytes) {
+                    // Diff is too big.
+                    return -1;
+                }
+#ifdef DVRDEBUG
+                NSLog(@"Append samesequence at offset %@, address %p. No data is appended for samesequence.", @(o), scratch+o);
+#endif
+                scratch[o++] = kSameSequence;
+                memcpy(scratch + o, &numChars, sizeof(numChars));
+                o += sizeof(numChars);
+            } else {
+                if (o + 1 + sizeof(numChars) + numChars > maxBytes) {
+                    // Diff is too big.
+                    return -1;
+                }
+#ifdef DVRDEBUG
+                NSLog(@"Append diffsequence at offset %@ of length %@", @(o), @(numChars));
+#endif
+                scratch[o++] = kDiffSequence;
+                memcpy(scratch + o, &numChars, sizeof(numChars));
+                o += sizeof(numChars);
+                NSData *lineData = frameLines[y];
+                const char *frameLine = [lineData bytes];
+                memcpy(scratch + o, frameLine, numChars);
+                o += numChars;
+#ifdef DVRDEBUG
+                [self debug:@"Encoder: diff " buffer:frameLine length:numChars];
+#endif
             }
+        }
+    }
+
+    // Append metadata.
+    {
+        for (int y = 0; y < numLines; y++) {
+            if ([cleanLines containsIndex:y]) {
+                // [byte(kSameSequence), int32(0)]
+                const int payloadLength = 0;
+                if (o + 1 + sizeof(payloadLength) > maxBytes) {
+                    // Diff is too big.
+                    return -1;
+                }
 #ifdef DVRDEBUG
-            NSLog(@"Append samesequence at offset %@, address %p. No data is appended for samesequence.", @(o), scratch+o);
+                NSLog(@"Append metadata samesequence at offset %@, address %p. No data is appended for samesequence.", @(o), scratch+o);
 #endif
-            scratch[o++] = kSameSequence;
-            memcpy(scratch + o, &numChars, sizeof(numChars));
-            o += sizeof(numChars);
-        } else {
-            if (o + 1 + sizeof(numChars) + numChars > maxBytes) {
-                // Diff is too big.
-                return -1;
+                scratch[o++] = kSameSequence;
+                memcpy(scratch + o, &payloadLength, sizeof(payloadLength));
+                o += sizeof(payloadLength);
+            } else {
+                // [byte(kDiffSequence), int32(payloadLength), byte[payloadLength]]
+                NSData *encoded = [metadata[y] dvrEncodableData];
+                const int payloadLength = encoded.length;
+                if (o + 1 + sizeof(payloadLength) + payloadLength > maxBytes) {
+                    // Diff is too big.
+                    return -1;
+                }
+#ifdef DVRDEBUG
+                NSLog(@"Append metadata at offset %@ of length %@", @(o), @(encoded.length));
+#endif
+                scratch[o++] = kDiffSequence;
+                memcpy(scratch + o, &payloadLength, sizeof(payloadLength));
+                o += sizeof(payloadLength);
+                NSData *lineData = encoded;
+                const char *frameLine = lineData.bytes;
+                memcpy(scratch + o, frameLine, payloadLength);
+                o += payloadLength;
+#ifdef DVRDEBUG
+                NSLog(@"Encoder: append metadata diff of length %@", @(encoded.length));
+#endif
             }
-#ifdef DVRDEBUG
-            NSLog(@"Append diffsequence at offset %@ of length %@", @(o), @(numChars));
-#endif
-            scratch[o++] = kDiffSequence;
-            memcpy(scratch + o, &numChars, sizeof(numChars));
-            o += sizeof(numChars);
-            NSData *lineData = frameLines[y];
-            const char *frameLine = [lineData bytes];
-            memcpy(scratch + o, frameLine, numChars);
-            o += numChars;
-#ifdef DVRDEBUG
-            [self debug:@"Encoder: diff " buffer:frameLine length:numChars];
-#endif
         }
     }
 #ifdef DVRDEBUG

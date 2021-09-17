@@ -893,7 +893,6 @@ static const NSUInteger kMaxHosts = 100;
 }
 
 ITERM_WEAKLY_REFERENCEABLE
-
 - (void)iterm_dealloc {
     if (_textview.delegate == self) {
         _textview.delegate = nil;
@@ -1092,6 +1091,8 @@ ITERM_WEAKLY_REFERENCEABLE
         assert(!_liveSession);
         _synthetic = YES;
         [self takeStatusBarViewControllerFrom:liveSession];
+    } else {
+        [_liveSession autorelease];
     }
     _liveSession = liveSession;
     [_liveSession retain];
@@ -1155,23 +1156,22 @@ ITERM_WEAKLY_REFERENCEABLE
     return [_dvrDecoder timestamp];
 }
 
-- (void)appendLinesMatchingQuery:(NSString *)query fromSession:(PTYSession *)source {
-    [_screen appendLinesMatchingQuery:query from:source.screen mode:self.textview.findContext.mode];
-}
-
 - (void)appendLinesInRange:(NSRange)rangeOfLines fromSession:(PTYSession *)source {
-    int width = source.screen.width;
-    for (NSUInteger i = 0; i < rangeOfLines.length; i++) {
-        int row = rangeOfLines.location + i;
-        screen_char_t *theLine = [source.screen getLineAtIndex:row];
-        if (i + 1 == rangeOfLines.length) {
+    [source.screen enumerateLinesInRange:rangeOfLines block:^(int i, ScreenCharArray *sca, iTermMetadata metadata, BOOL *stopPtr) {
+        if (i + 1 == NSMaxRange(rangeOfLines)) {
             screen_char_t continuation = { 0 };
             continuation.code = EOL_SOFT;
-            [_screen appendScreenChars:theLine length:width continuation:continuation];
+            [_screen appendScreenChars:sca.line
+                                length:sca.length
+                externalAttributeIndex:iTermMetadataGetExternalAttributesIndex(metadata)
+                          continuation:continuation];
         } else {
-            [_screen appendScreenChars:theLine length:width continuation:theLine[width]];
+            [_screen appendScreenChars:sca.line
+                                length:sca.length
+                externalAttributeIndex:iTermMetadataGetExternalAttributesIndex(metadata)
+                          continuation:sca.continuation];
         }
-    }
+    }];
 }
 
 - (void)setCopyMode:(BOOL)copyMode {
@@ -10619,7 +10619,7 @@ preferredEscaping:(iTermSendTextEscaping)preferredEscaping {
 
 - (void)setDvrFrame {
     screen_char_t* s = (screen_char_t*)[_dvrDecoder decodedFrame];
-    int len = [_dvrDecoder length];
+    const int len = [_dvrDecoder screenCharArrayLength];
     DVRFrameInfo info = [_dvrDecoder info];
     if (info.width != [_screen width] || info.height != [_screen height]) {
         if (![_liveSession isTmuxClient]) {
@@ -10628,7 +10628,11 @@ preferredEscaping:(iTermSendTextEscaping)preferredEscaping {
                                                           height:info.height];
         }
     }
-    [_screen setFromFrame:s len:len info:info];
+    NSArray<NSArray *> *metadataArrays = [NSArray mapIntegersFrom:0 to:info.height block:^id(NSInteger i) {
+        NSData *data = [_dvrDecoder metadataForLine:i];
+        return iTermMetadataArrayFromData(data) ?: @[];
+    }];
+    [_screen setFromFrame:s len:len metadata:metadataArrays info:info];
     [[_delegate realParentWindow] clearTransientTitle];
     [[_delegate realParentWindow] setWindowTitle];
 }
@@ -12967,8 +12971,10 @@ preferredEscaping:(iTermSendTextEscaping)preferredEscaping {
     }
 }
 
-- (void)screenAppendScreenCharArray:(const screen_char_t *)line length:(int)length {
-    [self publishScreenCharArray:line length:length];
+- (void)screenAppendScreenCharArray:(const screen_char_t *)line
+                           metadata:(iTermMetadata)metadata
+                             length:(int)length {
+    [self publishScreenCharArray:line metadata:metadata length:length];
 }
 
 - (NSString *)screenStringForKeypressWithCode:(unsigned short)keycode
@@ -13720,7 +13726,7 @@ preferredEscaping:(iTermSendTextEscaping)preferredEscaping {
         return NO;
     };
     [extractor enumerateCharsInRange:range
-                           charBlock:^BOOL(screen_char_t *currentLine, screen_char_t theChar, VT100GridCoord coord) {
+                           charBlock:^BOOL(screen_char_t *currentLine, screen_char_t theChar, iTermExternalAttribute *ea, VT100GridCoord coord) {
                                line = currentLine;
                                if (firstIndex < 0) {
                                    firstIndex = coord.x;
@@ -15121,8 +15127,12 @@ getOptionKeyBehaviorLeft:(iTermOptionKeyBehavior *)left
 
 - (void)filterDestinationAppendCharacters:(const screen_char_t *)line
                                     count:(int)count
+                   externalAttributeIndex:(iTermExternalAttributeIndex *)externalAttributeIndex
                              continuation:(screen_char_t)continuation {
-    [_screen appendScreenChars:(screen_char_t *)line length:count continuation:continuation];
+    [_screen appendScreenChars:(screen_char_t *)line
+                        length:count
+        externalAttributeIndex:externalAttributeIndex
+                  continuation:continuation];
 }
 
 - (void)filterDestinationAdoptLineBuffer:(LineBuffer *)lineBuffer {

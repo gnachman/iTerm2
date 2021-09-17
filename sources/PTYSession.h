@@ -613,7 +613,6 @@ backgroundColor:(NSColor *)backgroundColor;
 // Append a bunch of lines from this (presumably synthetic) session from another (presumably live)
 // session.
 - (void)appendLinesInRange:(NSRange)rangeOfLines fromSession:(PTYSession *)source;
-- (void)appendLinesMatchingQuery:(NSString *)query fromSession:(PTYSession *)source;
 
 // Go forward/back in time. Must call setDvr:liveSession: first.
 - (void)irAdvance:(int)dir;

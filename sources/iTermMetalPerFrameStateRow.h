@@ -13,6 +13,7 @@ NS_ASSUME_NONNULL_BEGIN
 @class iTermTextDrawingHelper;
 @class PTYTextView;
 @class VT100Screen;
+@class iTermExternalAttributeIndex;
 @class iTermMetalPerFrameStateConfiguration;
 
 @interface iTermMetalPerFrameStateRow : NSObject {
@@ -24,6 +25,7 @@ NS_ASSUME_NONNULL_BEGIN
     NSDate *_date;
     NSData *_matches;
     NSRange _underlinedRange;  // Underline for semantic history
+    iTermExternalAttributeIndex *_eaIndex;
 }
 
 - (instancetype)init NS_UNAVAILABLE;

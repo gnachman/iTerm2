@@ -1,9 +1,11 @@
 #import <Cocoa/Cocoa.h>
 #import "iTermEncoderAdapter.h"
 #import "iTermIntervalTreeObserver.h"
+#import "iTermMetadata.h"
 #import "PTYNoteViewController.h"
 #import "PTYTextViewDataSource.h"
 #import "SCPPath.h"
+#import "ScreenCharArray.h"
 #import "VT100ScreenDelegate.h"
 #import "VT100Terminal.h"
 #import "VT100Token.h"
@@ -105,8 +107,8 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 
 - (void)appendScreenChars:(screen_char_t *)line
                    length:(int)length
+   externalAttributeIndex:(iTermExternalAttributeIndex *)externalAttributes
              continuation:(screen_char_t)continuation;
-- (void)appendLinesMatchingQuery:(NSString *)query from:(VT100Screen *)source mode:(iTermFindMode)mode;
 - (void)setContentsFromLineBuffer:(LineBuffer *)lineBuffer;
 
 // Append a string to the screen at the current cursor position. The terminal's insert and wrap-
@@ -145,7 +147,7 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
                      URLCode:(unsigned short)code;
 
 // Load a frame from a dvr decoder.
-- (void)setFromFrame:(screen_char_t*)s len:(int)len info:(DVRFrameInfo)info;
+- (void)setFromFrame:(screen_char_t*)s len:(int)len metadata:(NSArray<NSArray *> *)metadataArrays info:(DVRFrameInfo)info;
 
 // Save the position of the end of the scrollback buffer without the screen appended.
 - (void)storeLastPositionInLineBufferAsFindContextSavedPosition;
@@ -238,7 +240,7 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 - (void)resetTimestamps;
 - (NSInteger)generationForLine:(int)y;
 
-- (void)enumerateLinesInRange:(NSRange)range block:(void (^)(ScreenCharArray *, iTermMetadata, BOOL *))block;
+- (void)enumerateLinesInRange:(NSRange)range block:(void (^)(int line, ScreenCharArray *, iTermMetadata, BOOL *))block;
 
 // Fake shell integration via triggers APIs
 - (void)promptDidStartAt:(VT100GridAbsCoord)coord;

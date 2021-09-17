@@ -7430,10 +7430,6 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:@"https://iterm2.com/documentation-copymode.html"]];
 }
 
-- (void)showLinesMatchingQuery:(NSString *)query fromSession:(PTYSession *)oldSession {
-    [oldSession setFilter:query];
-}
-
 - (void)showRangeOfLines:(NSRange)rangeOfLines inSession:(PTYSession *)oldSession {
     PTYSessionZoomState *state = oldSession.stateToSaveForZoom;
     PTYSession *syntheticSession = [self syntheticSessionForSession:oldSession];

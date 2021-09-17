@@ -687,6 +687,7 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
     }
     const iTermData *lineData = _rows[row]->_screenCharLine;
     const screen_char_t *const line = (const screen_char_t *const)lineData.bytes;
+    iTermExternalAttributeIndex *eaIndex = _rows[row]->_eaIndex;
     NSIndexSet *selectedIndexes = _rows[row]->_selectedIndexSet;
     NSData *findMatches = _rows[row]->_matches;
     iTermTextColorKey keys[2];
@@ -837,6 +838,21 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
         if (line[x].strikethrough) {
             // This right here is why strikethrough and underline is mutually exclusive
             attributes[x].underlineStyle |= iTermMetalGlyphAttributesUnderlineStrikethroughFlag;
+        }
+        iTermExternalAttribute *ea = eaIndex[x];
+        if (ea) {
+            attributes[x].hasUnderlineColor = ea.hasUnderlineColor;
+            if (attributes[x].hasUnderlineColor) {
+                attributes[x].underlineColor = [self colorForCode:ea.underlineColor.red
+                                                            green:ea.underlineColor.green
+                                                             blue:ea.underlineColor.blue
+                                                        colorMode:ea.underlineColor.mode
+                                                             bold:NO
+                                                            faint:currentColorKey->faint
+                                                     isBackground:NO];
+            }
+        } else {
+            attributes[x].hasUnderlineColor = NO;
         }
         // Swap current and previous
         iTermTextColorKey *temp = currentColorKey;

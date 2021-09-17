@@ -204,11 +204,11 @@ extern NSString *const SESSION_ARRANGEMENT_SERVER_DICT;
         empty = [[ScreenCharArray alloc] initWithLine:&placeholder length:0 continuation:continuation];
     });
     for (id<iTermContentSubscriber> subscriber in self.contentSubscribers) {
-        [subscriber deliver:empty];
+        [subscriber deliver:empty metadata:iTermMetadataDefault()];
     }
 }
 
-- (void)publishScreenCharArray:(const screen_char_t *)line length:(int)length {
+- (void)publishScreenCharArray:(const screen_char_t *)line metadata:(iTermMetadata)metadata length:(int)length {
     if (self.contentSubscribers.count == 0) {
         return;
     }
@@ -218,7 +218,7 @@ extern NSString *const SESSION_ARRANGEMENT_SERVER_DICT;
                                                             length:length
                                                       continuation:continuation];
     for (id<iTermContentSubscriber> subscriber in self.contentSubscribers) {
-        [subscriber deliver:array];
+        [subscriber deliver:array metadata:metadata];
     }
 }
 

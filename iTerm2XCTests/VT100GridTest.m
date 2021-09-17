@@ -639,7 +639,8 @@ do { \
       useScrollbackWithRegion:NO
                    wraparound:YES
                          ansi:NO
-                       insert:NO];
+                       insert:NO
+       externalAttributeIndex:nil];
     XCTAssert([[grid compactLineDump] isEqualToString:
             @"abcd\n"
             @"ef..\n"
@@ -668,7 +669,8 @@ do { \
       useScrollbackWithRegion:NO
                    wraparound:YES
                          ansi:NO
-                       insert:NO];
+                       insert:NO
+       externalAttributeIndex:nil];
     XCTAssert([[grid compactLineDump] isEqualToString:
             @"ab>\n"
             @"c-.\n"
@@ -695,7 +697,8 @@ do { \
       useScrollbackWithRegion:NO
                    wraparound:YES
                          ansi:NO
-                       insert:NO];
+                       insert:NO
+       externalAttributeIndex:nil];
     [grid moveCursorDownOneLineScrollingIntoLineBuffer:lineBuffer
                                    unlimitedScrollback:YES
                                useScrollbackWithRegion:NO
@@ -711,7 +714,8 @@ do { \
       useScrollbackWithRegion:NO
                    wraparound:YES
                          ansi:NO
-                       insert:NO];
+                       insert:NO
+       externalAttributeIndex:nil];
 
     XCTAssert([[grid compactLineDump] isEqualToString:
             @"abc.\n"
@@ -1428,7 +1432,8 @@ do { \
         .timestamp = 0,
         .frameType = DVRFrameTypeKeyFrame
     };
-    [testGrid setContentsFromDVRFrame:frame info:info];
+    iTermMetadata md[5] = { iTermMetadataDefault(), iTermMetadataDefault(), iTermMetadataDefault(), iTermMetadataDefault(), iTermMetadataDefault() };
+    [testGrid setContentsFromDVRFrame:frame metadataArray:md info:info];
     XCTAssert([[testGrid compactLineDump] isEqualToString:compactLines]);
     XCTAssert(testGrid.cursorX == 1);
     XCTAssert(testGrid.cursorY == 2);
@@ -1436,7 +1441,7 @@ do { \
     // Put it into a smaller grid.
     testGrid = [[[VT100Grid alloc] initWithSize:VT100GridSizeMake(3, 3)
                                        delegate:self] autorelease];
-    [testGrid setContentsFromDVRFrame:frame info:info];
+    [testGrid setContentsFromDVRFrame:frame metadataArray:md info:info];
     NSString *truncatedCompactLines =
         @"efg\n"
         @"ijk\n"
@@ -1448,7 +1453,7 @@ do { \
     // Put it into a bigger grid
     testGrid = [[[VT100Grid alloc] initWithSize:VT100GridSizeMake(5, 5)
                                        delegate:self] autorelease];
-    [testGrid setContentsFromDVRFrame:frame info:info];
+    [testGrid setContentsFromDVRFrame:frame metadataArray:md info:info];
     NSString *paddedCompactLines =
         @"abcd.\n"
         @"efgh.\n"
@@ -1557,7 +1562,7 @@ do { \
     VT100Grid *coverage = [[[VT100Grid alloc] initWithSize:grid.size delegate:self] autorelease];
     for (NSValue *value in runs) {
         VT100GridRun run = [value gridRunValue];
-        [coverage setCharsInRun:run toChar:'x'];
+        [coverage setCharsInRun:run toChar:'x' externalAttributes:nil];
     }
     return coverage;
 }
@@ -1607,7 +1612,7 @@ do { \
                         length:string.length
                        partial:i == strings.count - 1
                          width:80
-                     timestamp:0
+                      metadata:iTermMetadataDefault()
                   continuation:continuation];
         i++;
     }
@@ -1691,7 +1696,7 @@ do { \
     x.code = 'x';
     for (NSValue *value in [grid rectsForRun:run]) {
         VT100GridRect rect = [value gridRectValue];
-        [grid setCharsFrom:rect.origin to:VT100GridRectMax(rect) toChar:x];
+        [grid setCharsFrom:rect.origin to:VT100GridRectMax(rect) toChar:x externalAttributes:nil];
     }
 
     XCTAssert([[grid compactLineDump] isEqualToString:
@@ -2064,7 +2069,8 @@ do { \
                             useScrollbackWithRegion:useScrollbackWithRegion
                                          wraparound:wraparoundMode_
                                                ansi:isAnsi_
-                                             insert:insertMode_];
+                                             insert:insertMode_
+                             externalAttributeIndex:nil];
     XCTAssert([[grid compactLineDumpWithContinuationMarks] isEqualToString:expectedLines]);
     XCTAssert([[lineBuffer debugString] isEqualToString:expectedLineBuffer]);
     XCTAssert(numLinesDropped == expectedNumLinesDropped);
@@ -2680,7 +2686,7 @@ do { \
                        @"abcd+\n"
                        @"efg.!"];
     screen_char_t c = [grid defaultChar];
-    [grid insertChar:c at:VT100GridCoordMake(1, 0) times:1];
+    [grid insertChar:c externalAttributes:nil at:VT100GridCoordMake(1, 0) times:1];
     XCTAssert([[grid compactLineDumpWithContinuationMarks] isEqualToString:
             @"a.bc+\n"
             @"efg.!"]);
@@ -2689,7 +2695,7 @@ do { \
     grid = [self gridFromCompactLinesWithContinuationMarks:
             @"abcd+\n"
             @"efg.!"];
-    [grid insertChar:c at:VT100GridCoordMake(1, 0) times:100];
+    [grid insertChar:c externalAttributes:nil  at:VT100GridCoordMake(1, 0) times:100];
     XCTAssert([[grid compactLineDumpWithContinuationMarks] isEqualToString:
             @"a...!\n"
             @"efg.!"]);
@@ -2699,7 +2705,7 @@ do { \
     grid = [self gridFromCompactLinesWithContinuationMarks:
             @"abcd+\n"
             @"efg.!"];
-    [grid insertChar:c at:VT100GridCoordMake(1, 0) times:100];
+    [grid insertChar:c externalAttributes:nil  at:VT100GridCoordMake(1, 0) times:100];
     XCTAssert([[grid compactLineDumpWithContinuationMarks] isEqualToString:
             @"axxx+\n"
             @"efg.!"]);
@@ -2709,7 +2715,7 @@ do { \
     grid = [self gridFromCompactLinesWithContinuationMarks:
             @"abcd+\n"
             @"efg.!"];
-    [grid insertChar:c at:VT100GridCoordMake(1, 0) times:0];
+    [grid insertChar:c externalAttributes:nil  at:VT100GridCoordMake(1, 0) times:0];
     XCTAssert([[grid compactLineDumpWithContinuationMarks] isEqualToString:
             @"abcd+\n"
             @"efg.!"]);
@@ -2719,7 +2725,7 @@ do { \
             @"aB-de+\n"
             @"fghi.!"];
     c.code = 'x';
-    [grid insertChar:c at:VT100GridCoordMake(2, 0) times:1];
+    [grid insertChar:c externalAttributes:nil  at:VT100GridCoordMake(2, 0) times:1];
     XCTAssert([[grid compactLineDumpWithContinuationMarks] isEqualToString:
             @"a.x.d+\n"
             @"fghi.!"]);
@@ -2729,7 +2735,7 @@ do { \
     grid = [self gridFromCompactLinesWithContinuationMarks:
             @"abcd>>\n"
             @"E-fgh!"];
-    [grid insertChar:c at:VT100GridCoordMake(2, 0) times:1];
+    [grid insertChar:c externalAttributes:nil  at:VT100GridCoordMake(2, 0) times:1];
     XCTAssert([[grid compactLineDumpWithContinuationMarks] isEqualToString:
             @"ab.cd+\n"
             @"E-fgh!"]);
@@ -2738,7 +2744,7 @@ do { \
     grid = [self gridFromCompactLinesWithContinuationMarks:
             @"abcd>>\n"
             @"E-fgh!"];
-    [grid insertChar:c at:VT100GridCoordMake(2, 0) times:2];
+    [grid insertChar:c externalAttributes:nil  at:VT100GridCoordMake(2, 0) times:2];
     XCTAssert([[grid compactLineDumpWithContinuationMarks] isEqualToString:
             @"ab..c+\n"
             @"E-fgh!"]);
@@ -2747,7 +2753,7 @@ do { \
     grid = [self gridFromCompactLinesWithContinuationMarks:
             @"abC->>\n"
             @"E-fgh!"];
-    [grid insertChar:c at:VT100GridCoordMake(2, 0) times:2];
+    [grid insertChar:c externalAttributes:nil  at:VT100GridCoordMake(2, 0) times:2];
     XCTAssert([[grid compactLineDumpWithContinuationMarks] isEqualToString:
             @"ab...!\n"
             @"E-fgh!"]);
@@ -2757,7 +2763,7 @@ do { \
             @"abcdef+"];
     grid.scrollRegionCols = VT100GridRangeMake(1, 4);
     grid.useScrollRegionCols = YES;
-    [grid insertChar:c at:VT100GridCoordMake(2, 0) times:1];
+    [grid insertChar:c externalAttributes:nil  at:VT100GridCoordMake(2, 0) times:1];
     XCTAssert([[grid compactLineDumpWithContinuationMarks] isEqualToString:
             @"ab.cdf+"]);
 
@@ -2766,7 +2772,7 @@ do { \
             @"abcdef+"];
     grid.scrollRegionCols = VT100GridRangeMake(1, 4);
     grid.useScrollRegionCols = YES;
-    [grid insertChar:c at:VT100GridCoordMake(2, 0) times:100];
+    [grid insertChar:c externalAttributes:nil  at:VT100GridCoordMake(2, 0) times:100];
     XCTAssert([[grid compactLineDumpWithContinuationMarks] isEqualToString:
             @"ab...f+"]);
 
@@ -2775,7 +2781,7 @@ do { \
             @"abcD-f+"];
     grid.scrollRegionCols = VT100GridRangeMake(1, 3);
     grid.useScrollRegionCols = YES;
-    [grid insertChar:c at:VT100GridCoordMake(1, 0) times:1];
+    [grid insertChar:c externalAttributes:nil  at:VT100GridCoordMake(1, 0) times:1];
     XCTAssert([[grid compactLineDumpWithContinuationMarks] isEqualToString:
             @"a.bc.f+"]);
 
@@ -2784,7 +2790,7 @@ do { \
             @"A-cdef+"];
     grid.scrollRegionCols = VT100GridRangeMake(1, 3);
     grid.useScrollRegionCols = YES;
-    [grid insertChar:c at:VT100GridCoordMake(1, 0) times:1];
+    [grid insertChar:c externalAttributes:nil  at:VT100GridCoordMake(1, 0) times:1];
     XCTAssert([[grid compactLineDumpWithContinuationMarks] isEqualToString:
             @"...cef+"]);
 
@@ -2794,7 +2800,7 @@ do { \
             @"E-fgh!"];
     grid.scrollRegionCols = VT100GridRangeMake(0, 2);
     grid.useScrollRegionCols = YES;
-    [grid insertChar:c at:VT100GridCoordMake(0, 0) times:1];
+    [grid insertChar:c externalAttributes:nil  at:VT100GridCoordMake(0, 0) times:1];
     XCTAssert([[grid compactLineDumpWithContinuationMarks] isEqualToString:
             @".aC->>\n"
             @"E-fgh!"]);
@@ -2805,7 +2811,7 @@ do { \
             @"E-fgh!"];
     grid.scrollRegionCols = VT100GridRangeMake(0, 2);
     grid.useScrollRegionCols = YES;
-    [grid insertChar:c at:VT100GridCoordMake(3, 0) times:1];
+    [grid insertChar:c externalAttributes:nil  at:VT100GridCoordMake(3, 0) times:1];
     XCTAssert([[grid compactLineDumpWithContinuationMarks] isEqualToString:
             @"abC->>\n"
             @"E-fgh!"]);
@@ -2838,7 +2844,8 @@ do { \
       useScrollbackWithRegion:NO
                    wraparound:YES
                          ansi:NO
-                       insert:NO];
+                       insert:NO
+       externalAttributeIndex:nil];
     XCTAssert([[grid compactLineDumpWithContinuationMarks] isEqualToString:
                @"89abcdef+\n"
                @"ghijklmn+\n"
@@ -2936,7 +2943,8 @@ do { \
           useScrollbackWithRegion:NO
                        wraparound:YES
                              ansi:NO
-                           insert:NO];
+                           insert:NO
+           externalAttributeIndex:nil];
         [grid moveCursorToLeftMargin];
         [grid moveCursorDown:1];
         [grid scrollWholeScreenUpIntoLineBuffer:lineBuffer unlimitedScrollback:YES];
@@ -2958,7 +2966,8 @@ do { \
           useScrollbackWithRegion:NO
                        wraparound:YES
                              ansi:NO
-                           insert:NO];
+                           insert:NO
+           externalAttributeIndex:nil];
         [grid moveCursorToLeftMargin];
         [grid moveCursorDown:1];
         while ([grid lengthOfLineNumber:0] > 0 || grid.cursor.x > 0 || grid.cursor.y > 0) {

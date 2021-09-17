@@ -693,4 +693,8 @@ static const NSInteger kUnicodeVersion = 9;
     return 0;
 }
 
+- (iTermExternalAttributeIndex *)externalAttributeIndexForLine:(int)y {
+    return nil;
+}
+
 @end

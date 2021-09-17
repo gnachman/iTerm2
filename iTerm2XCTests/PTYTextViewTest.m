@@ -2504,7 +2504,7 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
     return @"";
 }
 
-- (NSSet<NSString *> *)sgrCodesForChar:(screen_char_t)c {
+- (NSSet<NSString *> *)sgrCodesForChar:(screen_char_t)c externalAttributes:(iTermExternalAttribute *)ea {
     return [NSSet set];
 }
 
@@ -2522,6 +2522,11 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
     _buffer[width].code = EOL_SOFT;
     return _buffer;
 }
+
+- (iTermExternalAttributeIndex *)externalAttributeIndexForLine:(int)y {
+    return nil;
+}
+
 
 #pragma mark - Test selection
 

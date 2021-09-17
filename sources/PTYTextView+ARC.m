@@ -418,8 +418,9 @@ static const NSUInteger kRectangularSelectionModifierMask = (kRectangularSelecti
     [extractor rangeForWordAt:VT100GridCoordMake(clickPoint.x, clickPoint.y)
                 maximumLength:kReasonableMaximumWordLength];
     NSAttributedString *word = [extractor contentInRange:range
-                                       attributeProvider:^NSDictionary *(screen_char_t theChar) {
-                                           return [self charAttributes:theChar];
+                                       attributeProvider:^NSDictionary *(screen_char_t theChar, iTermExternalAttribute *ea) {
+        return [self charAttributes:theChar
+                 externalAttributes:ea];
                                        }
                                               nullPolicy:kiTermTextExtractorNullPolicyMidlineAsSpaceIgnoreTerminal
                                                      pad:NO
@@ -475,7 +476,7 @@ static const NSUInteger kRectangularSelectionModifierMask = (kRectangularSelecti
 #pragma mark - Copy to Pasteboard
 
 // Returns a dictionary to pass to NSAttributedString.
-- (NSDictionary *)charAttributes:(screen_char_t)c {
+- (NSDictionary *)charAttributes:(screen_char_t)c externalAttributes:(iTermExternalAttribute *)ea {
     BOOL isBold = c.bold;
     BOOL isFaint = c.faint;
     NSColor *fgColor = [self colorForCode:c.foregroundColor
@@ -527,6 +528,17 @@ static const NSUInteger kRectangularSelectionModifierMask = (kRectangularSelecti
                                   NSFontAttributeName: font,
                                   NSParagraphStyleAttributeName: paragraphStyle,
                                   NSUnderlineStyleAttributeName: @(underlineStyle) };
+    if (ea.hasUnderlineColor) {
+        NSColor *color = [self colorForCode:ea.underlineColor.red
+                                      green:ea.underlineColor.green
+                                       blue:ea.underlineColor.blue
+                                  colorMode:ea.underlineColor.mode
+                                       bold:isBold
+                                      faint:isFaint
+                               isBackground:NO];
+        attributes = [attributes dictionaryBySettingObject:color
+                                                    forKey:NSUnderlineColorAttributeName];
+    }
     if ([iTermAdvancedSettingsModel excludeBackgroundColorsFromCopiedStyle]) {
         attributes = [attributes dictionaryByRemovingObjectForKey:NSBackgroundColorAttributeName];
     }

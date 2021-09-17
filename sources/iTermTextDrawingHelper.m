@@ -81,6 +81,7 @@ typedef struct {
     BOOL boxDrawing;
     NSFont *font;
     BOOL bold;
+    BOOL faint;
     BOOL fakeBold;
     BOOL fakeItalic;
     iTermCharacterAttributesUnderline underlineType;
@@ -88,6 +89,8 @@ typedef struct {
     BOOL isURL;
     NSInteger ligatureLevel;
     BOOL drawable;
+    BOOL hasUnderlineColor;
+    VT100TerminalColorValue underlineColor;
 } iTermCharacterAttributes;
 
 enum {
@@ -111,6 +114,7 @@ enum {
 
 static NSString *const iTermAntiAliasAttribute = @"iTermAntiAliasAttribute";
 static NSString *const iTermBoldAttribute = @"iTermBoldAttribute";
+static NSString *const iTermFaintAttribute = @"iTermFaintAttribute";
 static NSString *const iTermFakeBoldAttribute = @"iTermFakeBoldAttribute";
 static NSString *const iTermFakeItalicAttribute = @"iTermFakeItalicAttribute";
 static NSString *const iTermImageCodeAttribute = @"iTermImageCodeAttribute";
@@ -119,6 +123,8 @@ static NSString *const iTermImageLineAttribute = @"iTermImageLineAttribute";
 static NSString *const iTermImageDisplayColumnAttribute = @"iTermImageDisplayColumnAttribute";
 static NSString *const iTermIsBoxDrawingAttribute = @"iTermIsBoxDrawingAttribute";
 static NSString *const iTermUnderlineLengthAttribute = @"iTermUnderlineLengthAttribute";
+static NSString *const iTermHasUnderlineColorAttribute = @"iTermHasUnderlineColorAttribute";
+static NSString *const iTermUnderlineColorAttribute = @"iTermUnderlineColorAttribute";  // @[r,g,b,mode]
 
 typedef struct iTermTextColorContext {
     NSColor *lastUnprocessedColor;
@@ -1156,12 +1162,14 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
                       context:(CGContextRef)ctx
                 virtualOffset:(CGFloat)virtualOffset {
     screen_char_t* theLine = [self.delegate drawingHelperLineAtIndex:line];
+    iTermExternalAttributeIndex *eaIndex = [self.delegate drawingHelperExternalAttributesOnLine:line];
     NSData *matches = [_delegate drawingHelperMatchesOnLine:line];
     for (iTermBoxedBackgroundColorRun *box in backgroundRuns) {
         iTermBackgroundColorRun *run = box.valuePointer;
         NSPoint textOrigin = NSMakePoint([iTermPreferences intForKey:kPreferenceKeySideMargins] + run->range.location * _cellSize.width,
                                          y);
         [self constructAndDrawRunsForLine:theLine
+                       externalAttributes:eaIndex
                                       row:line
                                   inRange:run->range
                           startingAtPoint:textOrigin
@@ -1177,6 +1185,7 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
 }
 
 - (void)constructAndDrawRunsForLine:(screen_char_t *)theLine
+                 externalAttributes:(iTermExternalAttributeIndex *)eaIndex
                                 row:(int)row
                             inRange:(NSRange)indexRange
                     startingAtPoint:(NSPoint)initialPoint
@@ -1205,6 +1214,7 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
 
     iTermPreciseTimerStatsStartTimer(&_stats[TIMER_STAT_CONSTRUCTION]);
     NSArray<id<iTermAttributedString>> *attributedStrings = [self attributedStringsForLine:theLine
+                                                                        externalAttributes:eaIndex
                                                                                      range:indexRange
                                                                            hasSelectedText:bgselected
                                                                            backgroundColor:bgColor
@@ -1517,13 +1527,25 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
                                    origin.y,
                                    size.width,
                                    size.height);
-    NSColor *underline = [self.colorMap colorForKey:kColorMapUnderline];
     NSColor *underlineColor;
-    if (underline) {
-        underlineColor = underline;
+    const BOOL hasUnderlineColor = [attributes[iTermHasUnderlineColorAttribute] boolValue];
+    if (hasUnderlineColor) {
+        NSArray<NSNumber *> *components = attributes[iTermUnderlineColorAttribute];
+        underlineColor = [self.delegate drawingHelperColorForCode:components[0].intValue
+                                                            green:components[1].intValue
+                                                             blue:components[2].intValue
+                                                        colorMode:components[3].intValue
+                                                             bold:[attributes[iTermBoldAttribute] boolValue]
+                                                            faint:[attributes[iTermFaintAttribute] boolValue]
+                                                     isBackground:NO];
     } else {
-        CGColorRef cgColor = (CGColorRef)attributes[(NSString *)kCTForegroundColorAttributeName];
-        underlineColor = [NSColor colorWithCGColor:cgColor];
+        NSColor *underline = [self.colorMap colorForKey:kColorMapUnderline];
+        if (underline) {
+            underlineColor = underline;
+        } else {
+            CGColorRef cgColor = (CGColorRef)attributes[(NSString *)kCTForegroundColorAttributeName];
+            underlineColor = [NSColor colorWithCGColor:cgColor];
+        }
     }
     [self drawUnderlinedOrStruckthroughTextWithContext:underlineContext
                                          wantUnderline:wantUnderline
@@ -2083,6 +2105,19 @@ static BOOL iTermTextDrawingHelperShouldAntiAlias(screen_char_t *c,
     }
 }
 
+static inline BOOL iTermCharacterAttributesUnderlineColorEqual(iTermCharacterAttributes *newAttributes,
+                                                               iTermCharacterAttributes *previousAttributes) {
+    if (newAttributes->hasUnderlineColor != previousAttributes->hasUnderlineColor) {
+        return NO;
+    }
+    if (!newAttributes->hasUnderlineColor) {
+        return YES;
+    }
+    return memcmp(&newAttributes->underlineColor,
+                  &previousAttributes->underlineColor,
+                  sizeof(newAttributes->underlineColor)) == 0;
+}
+
 - (BOOL)shouldSegmentWithAttributes:(iTermCharacterAttributes *)newAttributes
                     imageAttributes:(NSDictionary *)imageAttributes
                  previousAttributes:(iTermCharacterAttributes *)previousAttributes
@@ -2107,11 +2142,13 @@ static BOOL iTermTextDrawingHelperShouldAntiAlias(screen_char_t *c,
                                           ![newAttributes->font isEqual:previousAttributes->font] ||
                                           newAttributes->ligatureLevel != previousAttributes->ligatureLevel ||
                                           newAttributes->bold != previousAttributes->bold ||
+                                          newAttributes->faint != previousAttributes->faint ||
                                           newAttributes->fakeItalic != previousAttributes->fakeItalic ||
                                           newAttributes->underlineType != previousAttributes->underlineType ||
                                           newAttributes->strikethrough != previousAttributes->strikethrough ||
                                           newAttributes->isURL != previousAttributes->isURL ||
-                                          newAttributes->drawable != previousAttributes->drawable);
+                                          newAttributes->drawable != previousAttributes->drawable ||
+                                          !iTermCharacterAttributesUnderlineColorEqual(newAttributes, previousAttributes));
         }
         return *combinedAttributesChanged;
     } else if ((imageAttributes == nil) != (previousImageAttributes == nil)) {
@@ -2141,6 +2178,7 @@ static BOOL iTermTextDrawingHelperShouldAntiAlias(screen_char_t *c,
 }
 
 - (void)getAttributesForCharacter:(screen_char_t *)c
+               externalAttributes:(iTermExternalAttribute *)ea
                           atIndex:(NSInteger)i
                    forceTextColor:(NSColor *)forceTextColor
                    forceUnderline:(BOOL)inUnderlinedRange
@@ -2173,7 +2211,7 @@ static BOOL iTermTextDrawingHelperShouldAntiAlias(screen_char_t *c,
     }
 
     attributes->bold = c->bold;
-
+    attributes->faint = c->faint;
     attributes->fakeBold = c->bold;  // default value
     attributes->fakeItalic = c->italic;  // default value
     PTYFontInfo *fontInfo = [_delegate drawingHelperFontForChar:code
@@ -2211,6 +2249,13 @@ static BOOL iTermTextDrawingHelperShouldAntiAlias(screen_char_t *c,
     attributes->strikethrough = c->strikethrough;
     attributes->isURL = (c->urlCode != 0);
     attributes->drawable = drawable;
+    if (ea) {
+        attributes->hasUnderlineColor = ea.hasUnderlineColor;
+        attributes->underlineColor = ea.underlineColor;
+    } else {
+        attributes->hasUnderlineColor = NO;
+        memset(&attributes->underlineColor, 0, sizeof(attributes->underlineColor));
+    }
 }
 
 - (NSDictionary *)dictionaryForCharacterAttributes:(iTermCharacterAttributes *)attributes {
@@ -2251,7 +2296,13 @@ static BOOL iTermTextDrawingHelperShouldAntiAlias(screen_char_t *c,
               iTermIsBoxDrawingAttribute: @(attributes->boxDrawing),
               iTermFakeBoldAttribute: @(attributes->fakeBold),
               iTermBoldAttribute: @(attributes->bold),
+              iTermFaintAttribute: @(attributes->faint),
               iTermFakeItalicAttribute: @(attributes->fakeItalic),
+              iTermHasUnderlineColorAttribute: @(attributes->hasUnderlineColor),
+              iTermUnderlineColorAttribute: @[ @(attributes->underlineColor.red),
+                                               @(attributes->underlineColor.green),
+                                               @(attributes->underlineColor.blue),
+                                               @(attributes->underlineColor.mode) ],
               NSUnderlineStyleAttributeName: @(underlineStyle),
               NSStrikethroughStyleAttributeName: @(strikethroughStyle),
               NSParagraphStyleAttributeName: paragraphStyle };
@@ -2268,7 +2319,10 @@ static BOOL iTermTextDrawingHelperShouldAntiAlias(screen_char_t *c,
     }
 }
 
-- (BOOL)character:(screen_char_t *)c isEquivalentToCharacter:(screen_char_t *)pc {
+- (BOOL)character:(screen_char_t *)c
+withExtendedAttributes:(iTermExternalAttribute *)ea1
+isEquivalentToCharacter:(screen_char_t *)pc
+withExtendedAttributes:(iTermExternalAttribute *)ea2 {
     if (c->complexChar != pc->complexChar) {
         return NO;
     }
@@ -2299,7 +2353,16 @@ static BOOL iTermTextDrawingHelperShouldAntiAlias(screen_char_t *c,
         return NO;
     }
 
-    return YES;
+    if (ea1 == nil && ea2 == nil) {
+        // fast path
+        return YES;
+    }
+
+    if (ea1 != nil) {
+        return NO;
+    }
+
+    return [ea1 isEqualToExternalAttribute:ea2];
 }
 
 - (BOOL)zippy {
@@ -2309,6 +2372,7 @@ static BOOL iTermTextDrawingHelperShouldAntiAlias(screen_char_t *c,
 }
 
 - (NSArray<id<iTermAttributedString>> *)attributedStringsForLine:(screen_char_t *)line
+                                              externalAttributes:(iTermExternalAttributeIndex *)eaIndex
                                                            range:(NSRange)indexRange
                                                  hasSelectedText:(BOOL)hasSelectedText
                                                  backgroundColor:(NSColor *)backgroundColor
@@ -2343,6 +2407,7 @@ static BOOL iTermTextDrawingHelperShouldAntiAlias(screen_char_t *c,
     BOOL previousDrawable = YES;
     screen_char_t predecessor = { 0 };
     BOOL lastCharacterImpartsEmojiPresentation = NO;
+    iTermExternalAttribute *prevEa = nil;
 
     // Only defined if not preferring speed to full ligature support.
     BOOL lastWasNull = NO;
@@ -2422,10 +2487,12 @@ static BOOL iTermTextDrawingHelperShouldAntiAlias(screen_char_t *c,
             }
         }
 
+        iTermExternalAttribute *ea = eaIndex[i];
+
         if (likely(underlinedRange.length == 0) &&
             likely(drawable == previousDrawable) &&
             likely(i > indexRange.location) &&
-            [self character:&c isEquivalentToCharacter:&line[i-1]]) {
+            [self character:&c withExtendedAttributes:ea isEquivalentToCharacter:&line[i-1] withExtendedAttributes:prevEa]) {
             ++segmentLength;
             iTermPreciseTimerStatsMeasureAndAccumulate(&_stats[TIMER_ATTRS_FOR_CHAR]);
             if (drawable ||
@@ -2443,6 +2510,7 @@ static BOOL iTermTextDrawingHelperShouldAntiAlias(screen_char_t *c,
         previousDrawable = drawable;
 
         [self getAttributesForCharacter:&c
+                     externalAttributes:ea
                                 atIndex:i
                          forceTextColor:forceTextColor
                          forceUnderline:NSLocationInRange(i, underlinedRange)
@@ -2450,6 +2518,7 @@ static BOOL iTermTextDrawingHelperShouldAntiAlias(screen_char_t *c,
                                drawable:drawable
                        textColorContext:&textColorContext
                              attributes:&characterAttributes];
+        prevEa = ea;
 
         iTermPreciseTimerStatsMeasureAndAccumulate(&_stats[TIMER_ATTRS_FOR_CHAR]);
 
@@ -2833,6 +2902,7 @@ static BOOL iTermTextDrawingHelperShouldAntiAlias(screen_char_t *c,
 
             // Draw the characters.
             [self constructAndDrawRunsForLine:buf
+                           externalAttributes:nil
                                           row:y
                                       inRange:NSMakeRange(i, charsInLine)
                               startingAtPoint:NSMakePoint(x, y)
@@ -3390,7 +3460,10 @@ static BOOL iTermTextDrawingHelperShouldAntiAlias(screen_char_t *c,
     iTermRectClip(innerRect, virtualOffset);
 
     screen_char_t *line = [self.delegate drawingHelperLineAtIndex:row];
+    iTermExternalAttributeIndex *eaIndex = [self.delegate drawingHelperExternalAttributesOnLine:row];
+
     [self constructAndDrawRunsForLine:line
+                   externalAttributes:eaIndex
                                   row:row
                               inRange:NSMakeRange(0, _gridSize.width)
                       startingAtPoint:NSMakePoint([iTermPreferences intForKey:kPreferenceKeySideMargins], row * _cellSize.height)

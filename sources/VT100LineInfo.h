@@ -7,12 +7,15 @@
 //
 
 #import <Foundation/Foundation.h>
+#import "DVRBuffer.h"
 #import "ScreenChar.h"
 #import "VT100GridTypes.h"
+#import "iTermMetadata.h"
 
-@interface VT100LineInfo : NSObject <NSCopying>
+@interface VT100LineInfo : NSObject <NSCopying, DVREncodable>
 
-@property(nonatomic, assign) iTermMetadata metadata;
+// Prefer to use this class's APIs to change metadata. Assignment requires reasoning about manual memory management.
+@property(nonatomic) iTermMetadata metadata;
 @property(nonatomic, readonly) NSInteger generation;
 
 - (instancetype)initWithWidth:(int)width;
@@ -21,5 +24,10 @@
 - (BOOL)anyCharIsDirty;
 - (VT100GridRange)dirtyRange;
 - (NSIndexSet *)dirtyIndexes;
+- (void)setTimestamp:(NSTimeInterval)timestamp;
+- (void)decodeMetadataArray:(NSArray *)array;
+- (void)resetMetadata;
+- (NSArray *)encodedMetadata;
+- (iTermExternalAttributeIndex *)externalAttributesCreatingIfNeeded:(BOOL)create;
 
 @end

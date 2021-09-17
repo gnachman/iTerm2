@@ -37,6 +37,8 @@
 #import "iTermMalloc.h"
 #import "NSArray+iTerm.h"
 #import "NSCharacterSet+iTerm.h"
+#import "NSDictionary+iTerm.h"
+#import "ScreenChar.h"
 
 static NSString *const kScreenCharComplexCharMapKey = @"Complex Char Map";
 static NSString *const kScreenCharSpacingCombiningMarksKey = @"Spacing Combining Marks";
@@ -72,7 +74,7 @@ iTermTriState iTermTriStateFromBool(BOOL b) {
 }
 
 @interface iTermStringLine()
-@property(nonatomic, retain) NSString *stringValue;
+@property(nonatomic, strong) NSString *stringValue;
 @end
 
 @implementation iTermStringLine {
@@ -88,7 +90,7 @@ iTermTriState iTermTriStateFromBool(BOOL b) {
         screenChars[i].code = [string characterAtIndex:i];
         screenChars[i].complexChar = NO;
     }
-    return [[[self alloc] initWithScreenChars:screenChars length:string.length] autorelease];
+    return [[self alloc] initWithScreenChars:screenChars length:string.length];
 }
 
 - (instancetype)initWithScreenChars:(screen_char_t *)screenChars
@@ -96,24 +98,22 @@ iTermTriState iTermTriStateFromBool(BOOL b) {
     self = [super init];
     if (self) {
         _length = length;
-        _stringValue = [ScreenCharArrayToString(screenChars,
-                                                0,
-                                                length,
-                                                &_backingStore,
-                                                &_deltas) retain];
+        _stringValue = ScreenCharArrayToString(screenChars,
+                                               0,
+                                               length,
+                                               &_backingStore,
+                                               &_deltas);
     }
     return self;
 }
 
 - (void)dealloc {
-    [_stringValue release];
     if (_backingStore) {
         free(_backingStore);
     }
     if (_deltas) {
         free(_deltas);
     }
-    [super dealloc];
 }
 
 - (NSRange)rangeOfScreenCharsForRangeInString:(NSRange)rangeInString {
@@ -135,113 +135,6 @@ iTermTriState iTermTriStateFromBool(BOOL b) {
     const NSInteger numberOfScreenChars =
         indexInScreenCharsOfLastCharInRange - indexInScreenCharsOfFirstCharInRange + 1;
     return NSMakeRange(indexInScreenCharsOfFirstCharInRange, numberOfScreenChars);
-}
-
-@end
-
-@implementation ScreenCharArray {
-    BOOL _shouldFreeOnRelease;
-    screen_char_t _placeholder;
-}
-@synthesize line = _line;
-@synthesize length = _length;
-@synthesize eol = _eol;
-
-- (instancetype)init {
-    self = [super init];
-    if (self) {
-        _line = &_placeholder;
-        _eol = EOL_HARD;
-    }
-    return self;
-}
-
-- (instancetype)initWithCopyOfLine:(screen_char_t *)line
-                            length:(int)length
-                      continuation:(screen_char_t)continuation {
-    screen_char_t *copy = malloc(sizeof(*line) * length);
-    memmove(copy, line, sizeof(*line) * length);
-    self = [self initWithLine:copy length:length continuation:continuation];
-    if (self) {
-        _shouldFreeOnRelease = YES;
-    }
-    return self;
-}
-
-- (instancetype)initWithLine:(screen_char_t *)line
-                      length:(int)length
-                continuation:(screen_char_t)continuation {
-    self = [super init];
-    if (self) {
-        _line = line;
-        _length = length;
-        _continuation = continuation;
-        _eol = continuation.code;
-    }
-    return self;
-}
-
-- (void)dealloc {
-    if (_shouldFreeOnRelease) {
-        free(_line);
-        _line = NULL;
-    }
-    [super dealloc];
-}
-
-- (void)setMetadata:(iTermMetadata)metadata {
-    _hasMetadata = YES;
-    _metadata = metadata;
-}
-
-- (BOOL)isEqualToScreenCharArray:(ScreenCharArray *)other {
-    if (!other) {
-        return NO;
-    }
-    return (_line == other->_line &&
-            _length == other->_length &&
-            _eol == other->_eol &&
-            !memcmp(&_continuation, &other->_continuation, sizeof(_continuation)));
-}
-
-- (NSString *)debugDescription {
-    return ScreenCharArrayToStringDebug(_line, _length);
-}
-
-- (id)copyWithZone:(NSZone *)zone {
-    return [[ScreenCharArray alloc] initWithCopyOfLine:_line length:_length continuation:_continuation];
-}
-
-- (ScreenCharArray *)screenCharArrayByAppendingScreenCharArray:(ScreenCharArray *)other {
-    const size_t combinedLength = (_length + other.length);
-    screen_char_t *copy = malloc(sizeof(screen_char_t) * combinedLength);
-    memmove(copy, _line, sizeof(*_line) * _length);
-    memmove(copy + _length, other.line, sizeof(*_line) * other.length);
-    self = [self initWithLine:copy length:combinedLength continuation:other.continuation];
-    if (self) {
-        _shouldFreeOnRelease = YES;
-    }
-    return self;
-}
-
-static BOOL ScreenCharIsNull(screen_char_t c) {
-    return c.code == 0 && !c.complexChar && !c.image;
-}
-
-- (ScreenCharArray *)screenCharArrayByRemovingTrailingNullsAndHardNewline {
-    ScreenCharArray *result = [[self copy] autorelease];
-    [result makeEndingSoft];
-    return result;
-}
-
-// Internal-only API for mutation. The public API is immutable.
-- (void)makeEndingSoft {
-    while (_length > 0 && ScreenCharIsNull(_line[_length - 1])) {
-        _length -= 1;
-    }
-    memset(&_continuation, 0, sizeof(_continuation));
-    _continuation.code = EOL_SOFT;
-    _eol = EOL_SOFT;
 }
 
 @end
@@ -342,7 +235,7 @@ screen_char_t ImageCharForNewImage(NSString *name,
     c.image = 1;
     c.code = newKey;
 
-    iTermImageInfo *imageInfo = [[[iTermImageInfo alloc] initWithCode:c.code] autorelease];
+    iTermImageInfo *imageInfo = [[iTermImageInfo alloc] initWithCode:c.code];
     imageInfo.filename = name;
     imageInfo.preserveAspectRatio = preserveAspectRatio;
     imageInfo.size = NSMakeSize(width, height);
@@ -490,7 +383,7 @@ void AppendToChar(screen_char_t *dest, unichar c) {
         dest->code = AppendToComplexChar(dest->code, c);
     } else {
         unichar chars[2] = { dest->code, c };
-        NSString *combined = [[[NSString alloc] initWithCharacters:chars length:sizeof(chars) / sizeof(*chars)] autorelease];
+        NSString *combined = [[NSString alloc] initWithCharacters:chars length:sizeof(chars) / sizeof(*chars)];
         SetComplexCharInScreenChar(dest,
                                    combined,
                                    iTermUnicodeNormalizationNone, NO);
@@ -621,10 +514,10 @@ NSString* CharArrayToString(unichar* charHaystack, int o)
 #else
     encoding = NSUTF16LittleEndianStringEncoding;
 #endif
-    return [[[NSString alloc] initWithBytesNoCopy:charHaystack
-                                           length:o * sizeof(unichar)
-                                         encoding:encoding
-                                     freeWhenDone:NO] autorelease];
+    return [[NSString alloc] initWithBytesNoCopy:charHaystack
+                                          length:o * sizeof(unichar)
+                                        encoding:encoding
+                                    freeWhenDone:NO];
 }
 
 void DumpScreenCharArray(screen_char_t* screenChars, int lineLength) {
@@ -657,12 +550,12 @@ int EffectiveLineLength(screen_char_t* theLine, int totalLength) {
 
 NSString *DebugStringForScreenChar(screen_char_t c) {
     NSArray *modes = @[ @"default", @"selected", @"altsem", @"altsem-reversed" ];
-    return [NSString stringWithFormat:@"<screen_char_t: code=%@ complex=%@ image=%@ url=%@ foregroundColor=%@ fgGreen=%@ fgBlue=%@ backgroundColor=%@ bgGreen=%@ bgBlue=%@ fgMode=%@ bgMode=%@ bold=%@ faint=%@ italic=%@ blink=%@ underline=%@ strikethrough=%@ underlinestyle=%@ unused=%@ hasMetadata=%@>",
+    return [NSString stringWithFormat:@"<screen_char_t: code=%@ complex=%@ image=%@ url=%@ foregroundColor=%@ fgGreen=%@ fgBlue=%@ backgroundColor=%@ bgGreen=%@ bgBlue=%@ fgMode=%@ bgMode=%@ bold=%@ faint=%@ italic=%@ blink=%@ underline=%@ strikethrough=%@ underlinestyle=%@ unused=%@>",
             @(c.code), @(c.complexChar), @(c.image), @(c.urlCode),
             @(c.foregroundColor), @(c.fgGreen), @(c.fgBlue),
             @(c.backgroundColor), @(c.bgGreen), @(c.bgBlue), modes[c.foregroundColorMode],
             modes[c.backgroundColorMode], @(c.bold), @(c.faint), @(c.italic), @(c.blink),
-            @(c.underline), @(c.strikethrough), @(c.underlineStyle), @(c.unused), @(c.hasMetadata)];
+            @(c.underline), @(c.strikethrough), @(c.underlineStyle), @(c.unused)];
 }
 
 // Convert a string into an array of screen characters, dealing with surrogate
@@ -811,7 +704,6 @@ void InitializeScreenChar(screen_char_t *s, screen_char_t fg, screen_char_t bg) 
     s->image = NO;
     s->urlCode = fg.urlCode;
     s->unused = 0;
-    s->hasMetadata = 0;
 }
 
 void ConvertCharsToGraphicsCharset(screen_char_t *s, int len)
@@ -874,7 +766,7 @@ void ScreenCharDecodeRestorableState(NSDictionary *state) {
     AllocateImageMapsIfNeeded();
     for (id key in imageMap) {
         gEncodableImageMap[key] = imageMap[key];
-        iTermImageInfo *info = [[[iTermImageInfo alloc] initWithDictionary:imageMap[key]] autorelease];
+        iTermImageInfo *info = [[iTermImageInfo alloc] initWithDictionary:imageMap[key]];
         if (info) {
             info.provisional = YES;
             gImages[key] = info;
@@ -932,6 +824,10 @@ static NSString *ScreenCharColorDescription(unsigned int red,
     return @"Invalid";
 }
 
+NSString *VT100TerminalColorValueDescription(VT100TerminalColorValue value) {
+    return ScreenCharColorDescription(value.red, value.green, value.blue, value.mode);
+}
+
 NSString *ScreenCharDescription(screen_char_t c) {
     if (c.image) {
         return nil;
@@ -980,3 +876,4 @@ NSString *ScreenCharDescription(screen_char_t c) {
                                        c.backgroundColorMode),
             style];
 }
+

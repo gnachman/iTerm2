@@ -11,7 +11,9 @@ extern "C" {
 
 #import "DebugLogging.h"
 #import "FindContext.h"
+#import "iTermExternalAttributeIndex.h"
 #import "iTermMalloc.h"
+#import "iTermMetadata.h"
 #import "LineBufferHelpers.h"
 #import "NSBundle+iTerm.h"
 #import "RegexKitLite.h"
@@ -35,6 +37,17 @@ NSString *const kLineBlockMayHaveDWCKey = @"May Have Double Width Character";
 NSString *const kLineBlockGuid = @"GUID";
 
 static NSInteger LineBlockNextGeneration = -1;
+
+typedef struct {
+    BOOL found;
+    int prev;
+    int numEmptyLines;
+    int index;
+    int length;
+} LineBlockLocation;
+
+const unichar kPrefixChar = 1;
+const unichar kSuffixChar = 2;
 
 void EnableDoubleWidthCharacterLineCache() {
     gEnableDoubleWidthCharacterLineCache = YES;
@@ -116,7 +129,7 @@ struct iTermNumFullLinesCacheKeyHasher {
 NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock) {
     lineBlock->_generation += 1;
     for (auto &observer : lineBlock->_observers) {
-        __unsafe_unretained id<iTermLineBlockObserver> obj = static_cast<id<iTermLineBlockObserver> >(observer);
+        __unsafe_unretained id<iTermLineBlockObserver> obj = (__bridge id<iTermLineBlockObserver>)observer;
         [obj lineBlockDidChange:lineBlock];
     }
 }
@@ -153,7 +166,7 @@ NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock)
     });
 
     if (!_guid) {
-        _guid = [[[NSUUID UUID] UUIDString] retain];
+        _guid = [[NSUUID UUID] UUIDString];
     }
     cached_numlines_width = -1;
     if (cll_capacity > 0) {
@@ -162,7 +175,7 @@ NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock)
 }
 
 + (instancetype)blockWithDictionary:(NSDictionary *)dictionary {
-    return [[[self alloc] initWithDictionary:dictionary] autorelease];
+    return [[self alloc] initWithDictionary:dictionary];
 }
 
 - (instancetype)initWithDictionary:(NSDictionary *)dictionary {
@@ -179,7 +192,6 @@ NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock)
                                    kLineBlockMayHaveDWCKey ];
         for (NSString *requiredKey in requiredKeys) {
             if (!dictionary[requiredKey]) {
-                [self autorelease];
                 return nil;
             }
         }
@@ -191,7 +203,6 @@ NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock)
         start_offset = [dictionary[kLineBlockStartOffsetKey] intValue];
         first_entry = [dictionary[kLineBlockFirstEntryKey] intValue];
         if (dictionary[kLineBlockGuid]) {
-            [_guid release];
             _guid = [dictionary[kLineBlockGuid] copy];
             DLog(@"Restore block %p with guid %@", self, _guid);
         }
@@ -211,7 +222,15 @@ NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock)
             metadata_[i].continuation.bgGreen = [components[j++] unsignedCharValue];
             metadata_[i].continuation.bgBlue = [components[j++] unsignedCharValue];
             metadata_[i].continuation.backgroundColorMode = [components[j++] unsignedCharValue];
-            metadata_[i].metadata = iTermMakeMetadata([components[j++] doubleValue]);
+            iTermExternalAttributeIndex *eaIndex = nil;
+            NSNumber *timestamp = components[j++];
+            NSDictionary *encodedExternalAttributes = components.count > j ? components[j++] : nil;
+            if ([encodedExternalAttributes isKindOfClass:[NSDictionary class]]) {
+                eaIndex = [[iTermExternalAttributeIndex alloc] initWithDictionary:encodedExternalAttributes];
+            }
+            iTermMetadataInit(&metadata_[i].lineMetadata,
+                              timestamp.doubleValue,
+                              eaIndex);
             metadata_[i].number_of_wrapped_lines = 0;
             metadata_[i].generation = LineBlockNextGeneration--;
             if (gEnableDoubleWidthCharacterLineCache) {
@@ -237,13 +256,14 @@ NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock)
     if (metadata_) {
         if (gEnableDoubleWidthCharacterLineCache) {
             for (int i = 0; i < cll_capacity; i++) {
-                [metadata_[i].double_width_characters release];
+                metadata_[i].double_width_characters = nil;
             }
+        }
+        for (int i = 0; i < cll_capacity; i++) {
+            iTermMetadataRelease(metadata_[i].lineMetadata);
         }
         free(metadata_);
     }
-    [_guid release];
-    [super dealloc];
 }
 
 - (LineBlock *)copyWithZone:(NSZone *)zone {
@@ -257,16 +277,25 @@ NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock)
     theCopy->buffer_size = buffer_size;
     size_t cll_size = sizeof(int) * cll_capacity;
     theCopy->cumulative_line_lengths = (int*)iTermMalloc(cll_size);
+
+    // Copy metadata field by field to please arc (memmove doesn't work right!)
     memmove(theCopy->cumulative_line_lengths, cumulative_line_lengths, cll_size);
-    theCopy->metadata_ = (LineBlockMetadata *)iTermMalloc(sizeof(LineBlockMetadata) * cll_capacity);
-    memmove(theCopy->metadata_, metadata_, sizeof(LineBlockMetadata) * cll_capacity);
+    theCopy->metadata_ = (LineBlockMetadata *)iTermCalloc(cll_capacity, sizeof(LineBlockMetadata));
     for (int i = 0; i < cll_capacity; i++) {
-        theCopy->metadata_[i].width_for_number_of_wrapped_lines = 0;
+        iTermMetadataInit(&theCopy->metadata_[i].lineMetadata,
+                          metadata_[i].lineMetadata.timestamp,
+                          [iTermMetadataGetExternalAttributesIndex(metadata_[i].lineMetadata) copy]);
+
+        theCopy->metadata_[i].continuation = metadata_[i].continuation;
         theCopy->metadata_[i].number_of_wrapped_lines = 0;
+        theCopy->metadata_[i].width_for_number_of_wrapped_lines = 0;
         if (gEnableDoubleWidthCharacterLineCache) {
             theCopy->metadata_[i].double_width_characters = nil;
         }
+        theCopy->metadata_[i].width_for_double_width_characters_cache = 0;
+        theCopy->metadata_[i].generation = metadata_[i].generation;
     }
+
     theCopy->cll_capacity = cll_capacity;
     theCopy->cll_entries = cll_entries;
     theCopy->is_partial = is_partial;
@@ -286,7 +315,7 @@ NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock)
 }
 
 - (void)_appendCumulativeLineLength:(int)cumulativeLength
-                           metadata:(iTermMetadata)metadata
+                           metadata:(iTermMetadata)lineMetadata
                        continuation:(screen_char_t)continuation {
     if (cll_entries == cll_capacity) {
         cll_capacity *= 2;
@@ -300,7 +329,8 @@ NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock)
         }
     }
     cumulative_line_lengths[cll_entries] = cumulativeLength;
-    metadata_[cll_entries].metadata = metadata;
+    iTermMetadataAutorelease(metadata_[cll_entries].lineMetadata);
+    metadata_[cll_entries].lineMetadata = iTermMetadataCopy(lineMetadata);
     metadata_[cll_entries].continuation = continuation;
     metadata_[cll_entries].number_of_wrapped_lines = 0;
     metadata_[cll_entries].generation = LineBlockNextGeneration--;
@@ -359,10 +389,11 @@ static char* formatsct(screen_char_t* src, int len, char* dest) {
         BOOL iscont = (i == cll_entries-1) && is_partial;
         NSString *message = [NSString stringWithFormat:@"Line %d, length %d, offset from raw=%d, abs pos=%d, continued=%s: %s\n", i, cumulative_line_lengths[i] - prev, prev, prev + rawOffset, iscont?"yes":"no",
                              formatsct(buffer_start+prev-start_offset, cumulative_line_lengths[i]-prev, temp)];
+        NSString *md = iTermMetadataShortDescription(metadata_[i].lineMetadata, cumulative_line_lengths[i] - prev);
         if (toDebugLog) {
-            DLog(@"%@", message);
+            DLog(@"%@%@", message, md);
         } else {
-            NSLog(@"%@", message);
+            NSLog(@"%@%@", message, md);
         }
         prev = cumulative_line_lengths[i];
     }
@@ -433,7 +464,7 @@ extern "C" int iTermLineBlockNumberOfFullLinesImpl(screen_char_t *buffer,
             length:(int)length
            partial:(BOOL)partial
              width:(int)width
-          metadata:(iTermMetadata)metadata
+          metadata:(iTermMetadata)lineMetadata
       continuation:(screen_char_t)continuation {
     _numberOfFullLinesCache.clear();
     const int space_used = [self rawSpaceUsed];
@@ -477,14 +508,21 @@ extern "C" int iTermLineBlockNumberOfFullLinesImpl(screen_char_t *buffer,
             cached_numlines += newnum - oldnum;
         }
 
+        int originalLength = cumulative_line_lengths[cll_entries - 1];
+        if (cll_entries != first_entry + 1) {
+            const int start = cumulative_line_lengths[cll_entries - 2] - start_offset;
+            originalLength -= start;
+        }
         cumulative_line_lengths[cll_entries - 1] += length;
-        metadata_[cll_entries - 1].metadata = metadata;
+        iTermMetadataAppend(&metadata_[cll_entries - 1].lineMetadata,
+                            originalLength,
+                            &lineMetadata,
+                            length);
         metadata_[cll_entries - 1].continuation = continuation;
         metadata_[cll_entries - 1].number_of_wrapped_lines = 0;
         metadata_[cll_entries - 1].generation = LineBlockNextGeneration--;
         if (gEnableDoubleWidthCharacterLineCache) {
             // TODO: Would be nice to add on to the index set instead of deleting it.
-            [metadata_[cll_entries - 1].double_width_characters release];
             metadata_[cll_entries - 1].double_width_characters = nil;
         }
 #ifdef TEST_LINEBUFFER_SANITY
@@ -493,7 +531,7 @@ extern "C" int iTermLineBlockNumberOfFullLinesImpl(screen_char_t *buffer,
     } else {
         // add a new line
         [self _appendCumulativeLineLength:(space_used + length)
-                                 metadata:metadata
+                                 metadata:lineMetadata
                              continuation:continuation];
         if (width != cached_numlines_width) {
             cached_numlines_width = -1;
@@ -511,6 +549,10 @@ extern "C" int iTermLineBlockNumberOfFullLinesImpl(screen_char_t *buffer,
 
     iTermLineBlockDidChange(self);
     return YES;
+}
+
+- (LineBlockMetadata)internalMetadataForLine:(int)line {
+    return metadata_[line];
 }
 
 - (int)getPositionOfLine:(int *)lineNum
@@ -567,7 +609,6 @@ extern "C" int iTermLineBlockNumberOfFullLinesImpl(screen_char_t *buffer,
                                              length:(int)length
                                               width:(int)width {
     assert(gEnableDoubleWidthCharacterLineCache);
-    [metadata->double_width_characters release];
     metadata->double_width_characters = [[NSMutableIndexSet alloc] init];
     metadata->width_for_double_width_characters_cache = width;
 
@@ -648,25 +689,26 @@ int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width, BOOL may
 }
 
 - (iTermMetadata)metadataForLineNumber:(int)lineNum width:(int)width {
-    int prev = 0;
-    int length;
-    int i;
-    for (i = first_entry; i < cll_entries; ++i) {
-        int cll = cumulative_line_lengths[i] - start_offset;
-        length = cll - prev;
-        const int spans = [self numberOfFullLinesFromOffset:(buffer_start - raw_buffer) + prev
-                                                     length:length
-                                                      width:width];
-        if (lineNum > spans) {
-            // Consume the entire raw line and keep looking for more.
-            int consume = spans + 1;
-            lineNum -= consume;
-        } else {  // *lineNum <= spans
-            return metadata_[i].metadata;
-        }
-        prev = cll;
-    }
-    return iTermDefaultMetadata();
+    int mutableLineNum = lineNum;
+    const LineBlockLocation location = [self locationOfRawLineForWidth:width lineNum:&mutableLineNum];
+    int length = 0;
+    int eof = 0;
+    iTermMetadata metadata;
+    int lineOffset = 0;
+    [self _wrappedLineWithWrapWidth:width
+                           location:location
+                            lineNum:&mutableLineNum
+                         lineLength:&length
+                  includesEndOfLine:&eof
+                            yOffset:NULL
+                       continuation:NULL
+               isStartOfWrappedLine:NULL
+                           metadata:&metadata
+                         lineOffset:&lineOffset];
+    iTermMetadata result;
+    iTermMetadataInitCopyingSubrange(&result, &metadata, lineOffset, width);
+    iTermMetadataAutorelease(result);
+    return result;
 }
 
 - (NSInteger)generationForLineNumber:(int)lineNum width:(int)width {
@@ -707,14 +749,6 @@ int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width, BOOL may
                                     metadata:NULL];
 }
 
-typedef struct {
-    BOOL found;
-    int prev;
-    int numEmptyLines;
-    int index;
-    int length;
-} LineBlockLocation;
-
 - (screen_char_t *)_wrappedLineWithWrapWidth:(int)width
                                     location:(LineBlockLocation)location
                                      lineNum:(int*)lineNum
@@ -723,7 +757,8 @@ typedef struct {
                                      yOffset:(int*)yOffsetPtr
                                 continuation:(screen_char_t *)continuationPtr
                         isStartOfWrappedLine:(BOOL *)isStartOfWrappedLine
-                                    metadata:(iTermMetadata *)metadataPtr {
+                                    metadata:(out iTermMetadata *)metadataPtr
+                                  lineOffset:(out int *)lineOffset {
     int offset;
     if (gEnableDoubleWidthCharacterLineCache) {
         offset = [self offsetOfWrappedLineInBuffer:buffer_start + location.prev
@@ -774,7 +809,11 @@ typedef struct {
         *isStartOfWrappedLine = (offset == 0);
     }
     if (metadataPtr) {
-        *metadataPtr = metadata_[location.index].metadata;
+        iTermMetadataRetainAutorelease(metadata_[location.index].lineMetadata);
+        *metadataPtr = metadata_[location.index].lineMetadata;
+    }
+    if (lineOffset) {
+        *lineOffset = offset;
     }
     return buffer_start + location.prev + offset;
 }
@@ -843,7 +882,7 @@ typedef struct {
                                       yOffset:(int*)yOffsetPtr
                                  continuation:(screen_char_t *)continuationPtr
                          isStartOfWrappedLine:(BOOL *)isStartOfWrappedLine
-                                     metadata:(iTermMetadata *)metadataPtr {
+                                     metadata:(out iTermMetadata *)metadataPtr {
     const LineBlockLocation location = [self locationOfRawLineForWidth:width lineNum:lineNum];
     if (!location.found) {
         return NULL;
@@ -858,7 +897,8 @@ typedef struct {
                                    yOffset:yOffsetPtr
                               continuation:continuationPtr
                       isStartOfWrappedLine:isStartOfWrappedLine
-                                  metadata:metadataPtr];
+                                  metadata:metadataPtr
+                                lineOffset:NULL];
 }
 
 - (ScreenCharArray *)rawLineAtWrappedLineOffset:(int)lineNum width:(int)width {
@@ -875,9 +915,20 @@ typedef struct {
     } else {
         continuation.code = EOL_HARD;
     }
-    return [[[ScreenCharArray alloc] initWithLine:buffer
-                                           length:length
-                                     continuation:continuation] autorelease];
+    return [[ScreenCharArray alloc] initWithLine:buffer
+                                          length:length
+                                    continuation:continuation];
+}
+
+- (iTermMetadata)metadataForRawLineAtWrappedLineOffset:(int)lineNum width:(int)width {
+    int temp = lineNum;
+    const LineBlockLocation location = [self locationOfRawLineForWidth:width lineNum:&temp];
+    if (!location.found) {
+        return iTermMetadataDefault();
+    }
+
+    iTermMetadataRetainAutorelease(metadata_[location.index].lineMetadata);
+    return metadata_[location.index].lineMetadata;
 }
 
 - (int)getNumLinesWithWrapWidth:(int)width {
@@ -945,8 +996,8 @@ typedef struct {
     // refresh cache
     metadata_[cll_entries].number_of_wrapped_lines = 0;
     if (gEnableDoubleWidthCharacterLineCache) {
-        [metadata_[cll_entries].double_width_characters release];
         metadata_[cll_entries].double_width_characters = nil;
+        iTermMetadataSetExternalAttributes(&metadata_[cll_entries].lineMetadata, nil);
     }
     cached_numlines_width = -1;
     iTermLineBlockDidChange(self);
@@ -955,7 +1006,7 @@ typedef struct {
 - (BOOL)popLastLineInto:(screen_char_t **)ptr
              withLength:(int *)length
               upToWidth:(int)width
-               metadata:(iTermMetadata *)metadataPtr
+               metadata:(out iTermMetadata *)metadataPtr
            continuation:(screen_char_t *)continuationPtr {
     if (cll_entries == first_entry) {
         // There is no last line to pop.
@@ -967,9 +1018,6 @@ typedef struct {
         start = 0;
     } else {
         start = cumulative_line_lengths[cll_entries - 2] - start_offset;
-    }
-    if (metadataPtr) {
-        *metadataPtr = metadata_[cll_entries - 1].metadata;
     }
     if (continuationPtr) {
         *continuationPtr = metadata_[cll_entries - 1].continuation;
@@ -997,9 +1045,20 @@ typedef struct {
         cumulative_line_lengths[cll_entries - 1] -= *length;
         metadata_[cll_entries - 1].number_of_wrapped_lines = 0;
         if (gEnableDoubleWidthCharacterLineCache) {
-            [metadata_[cll_entries - 1].double_width_characters release];
             metadata_[cll_entries - 1].double_width_characters = nil;
         }
+        iTermExternalAttributeIndex *attrs = iTermMetadataGetExternalAttributesIndex(metadata_[cll_entries - 1].lineMetadata);
+        const int split_index = available_len - *length;
+        if (metadataPtr) {
+            iTermMetadata metadata = metadata_[cll_entries - 1].lineMetadata;
+            iTermMetadataRetain(metadata);
+            iTermMetadataSetExternalAttributes(&metadata, [attrs subAttributesFromIndex:split_index]);
+            *metadataPtr = metadata;
+            iTermMetadataAutorelease(metadata);
+        }
+        iTermExternalAttributeIndex *prefix = [attrs subAttributesToIndex:split_index];
+        iTermMetadataSetExternalAttributes(&metadata_[cll_entries - 1].lineMetadata,
+                                           prefix);
 
         is_partial = YES;
     } else {
@@ -1007,6 +1066,11 @@ typedef struct {
         *length = available_len;
         if (ptr) {
             *ptr = buffer_start + start;
+        }
+        if (metadataPtr) {
+            iTermMetadata metadata = metadata_[cll_entries - 1].lineMetadata;
+            iTermMetadataRetainAutorelease(metadata);
+            *metadataPtr = metadata;
         }
         --cll_entries;
         is_partial = NO;
@@ -1149,9 +1213,9 @@ typedef struct {
             first_entry = i;
             metadata->number_of_wrapped_lines = 0;
             if (gEnableDoubleWidthCharacterLineCache) {
-                [metadata_[i].double_width_characters release];
                 metadata_[i].double_width_characters = nil;
             }
+            iTermMetadataSetExternalAttributes(&metadata_[i].lineMetadata, nil);
 
             *charsDropped = start_offset - initialOffset;
 
@@ -1183,9 +1247,6 @@ typedef struct {
         return cumulative_line_lengths[anIndex - 1];
     }
 }
-
-const unichar kPrefixChar = 1;
-const unichar kSuffixChar = 2;
 
 static NSString* RewrittenRegex(NSString* originalRegex) {
     // Convert ^ in a context where it refers to the start of string to kPrefixChar
@@ -1368,7 +1429,11 @@ static int CoreSearch(NSString *needle,
         if (caseInsensitive) {
             apiOptions = static_cast<RKLRegexOptions>(apiOptions | NSCaseInsensitiveSearch | NSDiacriticInsensitiveSearch | NSWidthInsensitiveSearch);
         }
-        range = [haystack rangeOfString:needle options:apiOptions];
+        if ((options & FindOptEmptyQueryMatches) == FindOptEmptyQueryMatches && needle.length == 0) {
+            range = NSMakeRange(0, 0);
+        } else {
+            range = [haystack rangeOfString:needle options:apiOptions];
+        }
     }
     int result = -1;
     if (range.location != NSNotFound) {
@@ -1501,7 +1566,7 @@ static int Search(NSString* needle,
                 tempPosition <= skip &&
                 !NSEqualRanges(NSIntersectionRange(range, previousRange), range)) {
                 previousRange = range;
-                ResultRange* r = [[[ResultRange alloc] init] autorelease];
+                ResultRange *r = [[ResultRange alloc] init];
                 r->position = tempPosition;
                 r->length = tempResultLength;
                 [results addObject:r];
@@ -1517,7 +1582,7 @@ static int Search(NSString* needle,
             tempPosition = Search(needle, rawline, raw_line_length, skip, raw_line_length,
                                   options, mode, &tempResultLength);
             if (tempPosition != -1) {
-                ResultRange* r = [[[ResultRange alloc] init] autorelease];
+                ResultRange *r = [[ResultRange alloc] init];
                 r->position = tempPosition;
                 r->length = tempResultLength;
                 [results addObject:r];
@@ -1704,7 +1769,7 @@ includesPartialLastLine:(BOOL *)includesPartialLastLine {
                                      @(metadata_[i].continuation.bgGreen),
                                      @(metadata_[i].continuation.bgBlue),
                                      @(metadata_[i].continuation.backgroundColorMode) ]
-                                  arrayByAddingObjectsFromArray:iTermMetadataToArray(metadata_[i].metadata)]];
+                                  arrayByAddingObjectsFromArray:iTermMetadataEncodeToArray(metadata_[i].lineMetadata)]];
     }
     return metadataArray;
 }
@@ -1749,11 +1814,11 @@ includesPartialLastLine:(BOOL *)includesPartialLastLine {
 }
 
 - (void)addObserver:(id<iTermLineBlockObserver>)observer {
-    _observers.push_back((void *)observer);
+    _observers.push_back((__bridge void *)observer);
 }
 
 - (void)removeObserver:(id<iTermLineBlockObserver>)observer {
-    void *voidptr = static_cast<void *>(observer);
+    void *voidptr = (__bridge void *)observer;
     auto it = std::find(_observers.begin(), _observers.end(), voidptr);
     if (it != _observers.end()) {
         _observers.erase(it);
@@ -1761,7 +1826,7 @@ includesPartialLastLine:(BOOL *)includesPartialLastLine {
 }
 
 - (BOOL)hasObserver:(id<iTermLineBlockObserver>)observer {
-    void *voidptr = static_cast<void *>(observer);
+    void *voidptr = (__bridge void *)observer;
     auto it = std::find(_observers.begin(), _observers.end(), voidptr);
     return it != _observers.end();
 }

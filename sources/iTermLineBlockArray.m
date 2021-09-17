@@ -340,7 +340,7 @@
             int length, eol;
             screen_char_t continuation;
             int temp = line;
-            iTermMetadata metadata = { 0 };
+            iTermMetadata metadata;
             screen_char_t *chars = [block getWrappedLineWithWrapWidth:width
                                                               lineNum:&temp
                                                            lineLength:&length

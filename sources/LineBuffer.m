@@ -317,7 +317,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
             length:(int)length
            partial:(BOOL)partial
              width:(int)width
-          metadata:(iTermMetadata)metadata
+          metadata:(iTermMetadata)metadataObj
       continuation:(screen_char_t)continuation {
 #ifdef LOG_MUTATIONS
     NSLog(@"Append: %@\n", ScreenCharArrayToStringDebug(buffer, length));
@@ -333,13 +333,13 @@ static int RawNumLines(LineBuffer* buffer, int width) {
                     length:length
                    partial:partial
                      width:width
-                  metadata:metadata
+                  metadata:metadataObj
               continuation:continuation]) {
         // It's going to be complicated. Invalidate the number of wrapped lines
         // cache.
         num_wrapped_lines_width = -1;
         int prefix_len = 0;
-        iTermMetadata prefixMetadata = iTermDefaultMetadata();
+        iTermMetadata prefixMetadata = iTermMetadataDefault();
         screen_char_t* prefix = NULL;
         if ([block hasPartial]) {
             // There is a line that's too long for the current block to hold.
@@ -399,7 +399,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
                        length:length
                       partial:partial
                         width:width
-                     metadata:metadata
+                     metadata:metadataObj
                  continuation:continuation];
         ITAssertWithMessage(ok, @"append can't fail here");
     } else if (num_wrapped_lines_width == width) {
@@ -427,6 +427,12 @@ static int RawNumLines(LineBuffer* buffer, int width) {
                                                         width:width
                                                     remainder:&remainder];
     return [block metadataForLineNumber:remainder width:width];
+}
+
+- (iTermMetadata)metadataForRawLineWithWrappedLineNumber:(int)lineNum width:(int)width {
+    int remainder = 0;
+    LineBlock *block = [_lineBlocks blockContainingLineNumber:lineNum width:width remainder:&remainder];
+    return [block metadataForRawLineAtWrappedLineOffset:remainder width:width];
 }
 
 // Copy a line into the buffer. If the line is shorter than 'width' then only
@@ -568,7 +574,8 @@ static int RawNumLines(LineBuffer* buffer, int width) {
 
 - (void)enumerateLinesInRange:(NSRange)range
                         width:(int)width
-                        block:(void (^)(ScreenCharArray *, iTermMetadata, BOOL *))block {
+                        block:(void (^)(int, ScreenCharArray *, iTermMetadata, BOOL *))block {
+    __block int count = range.location;
     [_lineBlocks enumerateLinesInRange:range
                                  width:width
                                  block:
@@ -578,7 +585,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
         array.continuation = continuation;
         array.length = length;
         array.eol = eol;
-        block(array, metadata, stop);
+        block(count++, array, metadata, stop);
      }];
 }
 
@@ -621,7 +628,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
 - (BOOL)popAndCopyLastLineInto:(screen_char_t*)ptr
                          width:(int)width
              includesEndOfLine:(int*)includesEndOfLine
-                      metadata:(iTermMetadata *)metadataPtr
+                      metadata:(out iTermMetadata *)metadataPtr
                   continuation:(screen_char_t *)continuationPtr
 {
     if ([self numLinesWithWidth: width] == 0) {
@@ -1242,21 +1249,21 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
               length:0
              partial:NO
                width:num_wrapped_lines_width > 0 ?: 80
-            metadata:iTermMakeMetadata([NSDate timeIntervalSinceReferenceDate])
+            metadata:iTermMetadataTemporaryWithTimestamp([NSDate timeIntervalSinceReferenceDate])
         continuation:defaultBg];
 
     [self appendLine:buffer
               length:len
              partial:NO
                width:num_wrapped_lines_width > 0 ?: 80
-            metadata:iTermMakeMetadata([NSDate timeIntervalSinceReferenceDate])
+            metadata:iTermMetadataTemporaryWithTimestamp([NSDate timeIntervalSinceReferenceDate])
         continuation:bg];
 
     [self appendLine:buffer
               length:0
              partial:NO
                width:num_wrapped_lines_width > 0 ?: 80
-            metadata:iTermMakeMetadata([NSDate timeIntervalSinceReferenceDate])
+            metadata:iTermMetadataTemporaryWithTimestamp([NSDate timeIntervalSinceReferenceDate])
         continuation:defaultBg];
 }
 
@@ -1341,6 +1348,10 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
 
 - (void)setPartial:(BOOL)partial {
     [_lineBlocks.lastBlock setPartial:partial];
+}
+
+- (LineBlock *)internalBlockAtIndex:(int)i {
+    return _lineBlocks[i];
 }
 
 @end

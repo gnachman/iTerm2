@@ -10,6 +10,7 @@
 #import "DVR.h"
 #import "DVRDecoder.h"
 #import "iTermAdvancedSettingsModel.h"
+#import "LineBlock.h"
 #import "LineBuffer.h"
 #import "PTYNoteViewController.h"
 #import "SearchResult.h"
@@ -992,19 +993,20 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
 - (void)screenSendModifiersDidChange {
 }
 
-- (void)screenAppendScreenCharArray:(const screen_char_t *)line length:(int)length {
+- (void)screenAppendScreenCharArray:(const screen_char_t *)line metadata:(iTermMetadata)metadata length:(int)length {
 }
-
 
 - (void)screenDidAppendImageData:(NSData *)data {
 }
-
 
 - (NSString *)screenStringForKeypressWithCode:(unsigned short)keycode flags:(NSEventModifierFlags)flags characters:(NSString *)characters charactersIgnoringModifiers:(NSString *)charactersIgnoringModifiers {
     return @"";
 }
 
 - (void)screenApplicationKeypadModeDidChange:(BOOL)mode {
+}
+
+- (void)screenResetColorsWithColorMapKey:(int)key {
 }
 
 
@@ -2253,6 +2255,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     VT100Screen *screen = [self screenWithWidth:5 height:4];
     [screen setFromFrame:(screen_char_t *) data.mutableBytes
                      len:data.length
+                metadata:@[ @[], @[], @[], @[] ]
                     info:info];
     XCTAssert([[screen compactLineDumpWithHistoryAndContinuationMarks] isEqualToString:
                @"abcde+\n"
@@ -2266,6 +2269,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     screen = [self screenWithWidth:2 height:2];
     [screen setFromFrame:(screen_char_t *) data.mutableBytes
                      len:data.length
+                metadata:@[ @[], @[] ]
                     info:info];
     XCTAssert([[screen compactLineDumpWithHistoryAndContinuationMarks] isEqualToString:
                @"ij!\n"
@@ -4404,8 +4408,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     screen_char_t line[1];
     screen_char_t continuation;
     continuation.backgroundColor = 5;
-    [lineBuffer appendLine:line length:0 partial:NO width:80 timestamp:0 continuation:continuation];
-
+    [lineBuffer appendLine:line length:0 partial:NO width:80 metadata:iTermMetadataDefault() continuation:continuation];
     screen_char_t buffer[3];
     [lineBuffer copyLineToBuffer:buffer width:3 lineNum:0 continuation:&continuation];
 
@@ -4446,7 +4449,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     const int wrapWidth = 200;
     for (int i = 0; i < linesPerBlock * 2; i++) {
         line[0].code = '0' + i;
-        [lineBuffer appendLine:line length:n partial:NO width:wrapWidth timestamp:0 continuation:continuation];
+        [lineBuffer appendLine:line length:n partial:NO width:wrapWidth metadata:iTermMetadataDefault() continuation:continuation];
     }
     // This tests the regression.
     NSArray *lines = [lineBuffer wrappedLinesFromIndex:linesPerBlock
@@ -4485,7 +4488,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     NSTimeInterval minExpectedTimestamp = [NSDate timeIntervalSinceReferenceDate];
     [self appendLines:lines toScreen:screen];
     __block NSInteger count = 0;
-    [screen enumerateLinesInRange:NSMakeRange(0, lines.count) block:^(ScreenCharArray *array, iTermMetadata metadata, BOOL *stop) {
+    [screen enumerateLinesInRange:NSMakeRange(0, lines.count) block:^(int line, ScreenCharArray *array, iTermMetadata metadata, BOOL *stop) {
         NSString *string = ScreenCharArrayToStringDebug(array.line, array.length);
         XCTAssertEqualObjects(string, expected[count]);
         XCTAssertGreaterThanOrEqual(metadata.timestamp, minExpectedTimestamp);
@@ -4616,6 +4619,95 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     XCTAssert(screen.currentGrid.cursorY == 1);
 }
 
+- (void)testAppendExternalAttributeToExistingLineNotFirstLine {
+    LineBuffer *lineBuffer = [[[LineBuffer alloc] initWithBlockSize:10000] autorelease];
+
+    int n = 5;
+    screen_char_t line[n];
+    memset(line, 0, sizeof(line));
+    for (int i = 0; i < n; i++) {
+        line[i].code = 'x';
+    }
+    screen_char_t continuation;
+    memset(&continuation, 0, sizeof(continuation));
+
+    // Append an empty line
+    continuation.code = EOL_HARD;
+    [lineBuffer appendLine:line length:n partial:NO width:80 metadata:iTermMetadataDefault() continuation:continuation];
+
+    iTermExternalAttribute *red = [[[iTermExternalAttribute alloc] initWithUnderlineColor:(VT100TerminalColorValue){ .red=1, .green=2, .blue=3, .mode=ColorModeNormal}] autorelease];
+    iTermExternalAttribute *magenta = [[[iTermExternalAttribute alloc] initWithUnderlineColor:(VT100TerminalColorValue){ .red=5, .green=6, .blue=7, .mode=ColorModeNormal}] autorelease];
+
+    // Append a line of 5 'x' with underline color and no newline at the end
+    {
+        iTermMetadata metadata;
+        iTermExternalAttributeIndex *eaIndex = [[iTermExternalAttributeIndex alloc] init];
+        [eaIndex setAttributes:red at:0 count:n];
+        iTermMetadataInit(&metadata, 123, eaIndex);
+
+        continuation.code = EOL_SOFT;
+        [lineBuffer appendLine:line length:n partial:YES width:80 metadata:metadata continuation:continuation];
+    }
+
+    // Append again but with different underline color
+    {
+        iTermMetadata metadata;
+        iTermExternalAttributeIndex *eaIndex = [[iTermExternalAttributeIndex alloc] init];
+        [eaIndex setAttributes:magenta at:0 count:n];
+        iTermMetadataInit(&metadata, 123, eaIndex);
+
+        continuation.code = EOL_SOFT;
+        [lineBuffer appendLine:line length:n partial:YES width:80 metadata:metadata continuation:continuation];
+    }
+
+    iTermMetadata actual = [lineBuffer metadataForRawLineWithWrappedLineNumber:1 width:80];
+    iTermExternalAttributeIndex *eaIndex = iTermMetadataGetExternalAttributesIndex(actual);
+    XCTAssertEqualObjects(eaIndex[0], red);
+    XCTAssertEqualObjects(eaIndex[1], red);
+    XCTAssertEqualObjects(eaIndex[2], red);
+    XCTAssertEqualObjects(eaIndex[3], red);
+    XCTAssertEqualObjects(eaIndex[4], red);
+    XCTAssertEqualObjects(eaIndex[5], magenta);
+    XCTAssertEqualObjects(eaIndex[6], magenta);
+    XCTAssertEqualObjects(eaIndex[7], magenta);
+    XCTAssertEqualObjects(eaIndex[8], magenta);
+    XCTAssertEqualObjects(eaIndex[9], magenta);
+}
+
+// The index set attached to a line block's metadata will be released.
+- (void)testDoubleWidthCharacterCache {
+    LineBuffer *lineBuffer = [[[LineBuffer alloc] initWithBlockSize:10000] autorelease];
+    screen_char_t cells[2] = {
+        { .code = 65, .complexChar = 0 },
+        { .code = DWC_RIGHT, .complexChar = 0 }
+    };
+    screen_char_t soft = { .code = EOL_SOFT, .complexChar = 0 };
+    [lineBuffer appendLine:cells length:2 partial:YES width:80 metadata:iTermMetadataDefault() continuation:soft];
+    lineBuffer.mayHaveDoubleWidthCharacter = YES;
+    //    __weak id dwcCache = nil;
+    // Populate the DWC cache
+    @autoreleasepool {
+        screen_char_t cont;
+        [lineBuffer wrappedLineAtIndex:0 width:80 continuation:&cont];
+        {
+            LineBlock *block = [lineBuffer internalBlockAtIndex:0];
+            LineBlockMetadata blockmeta = [block internalMetadataForLine:0];
+            NSLog(@"%p", blockmeta.double_width_characters);
+//            dwcCache = blockmeta.double_width_characters;
+//            XCTAssertTrue(dwcCache != nil);
+        }
+
+        // Erase the DWC cache
+        [lineBuffer appendLine:cells length:2 partial:YES width:80 metadata:iTermMetadataDefault() continuation:soft];
+
+        {
+            LineBlock *block = [lineBuffer internalBlockAtIndex:0];
+            LineBlockMetadata blockmeta = [block internalMetadataForLine:0];
+            XCTAssertTrue(blockmeta.double_width_characters == nil);
+        }
+    }
+//    XCTAssertTrue(dwcCache == nil);
+}
 /*
 
  { 0, 0, 'C', VT100CSI_CUF, 1, -1 },
