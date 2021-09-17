@@ -1557,7 +1557,7 @@ do { \
     VT100Grid *coverage = [[[VT100Grid alloc] initWithSize:grid.size delegate:self] autorelease];
     for (NSValue *value in runs) {
         VT100GridRun run = [value gridRunValue];
-        [coverage setCharsInRun:run toChar:'x'];
+        [coverage setCharsInRun:run toChar:'x' externalAttributes:nil];
     }
     return coverage;
 }
@@ -1691,7 +1691,7 @@ do { \
     x.code = 'x';
     for (NSValue *value in [grid rectsForRun:run]) {
         VT100GridRect rect = [value gridRectValue];
-        [grid setCharsFrom:rect.origin to:VT100GridRectMax(rect) toChar:x];
+        [grid setCharsFrom:rect.origin to:VT100GridRectMax(rect) toChar:x externalAttributes:nil];
     }
 
     XCTAssert([[grid compactLineDump] isEqualToString:

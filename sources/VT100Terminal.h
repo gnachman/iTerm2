@@ -85,6 +85,8 @@ typedef NS_OPTIONS(int, VT100TerminalKeyReportingFlags) {
 @property(nonatomic, readonly) screen_char_t foregroundColorCodeReal;
 @property(nonatomic, readonly) screen_char_t backgroundColorCodeReal;
 
+@property(nonatomic, readonly) iTermExternalAttribute *externalAttributes;
+
 @property(nonatomic, assign) BOOL cursorMode;
 @property(nonatomic, assign) BOOL keypadMode;  // YES=application, NO=numeric
 - (void)forceSetKeypadMode:(BOOL)mode;  // ignores allowKeypadMode

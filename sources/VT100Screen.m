@@ -164,6 +164,7 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 
     // For REP
     screen_char_t _lastCharacter;
+    iTermExternalAttribute *_lastExternalAttribute;
     BOOL _lastCharacterIsDoubleWidth;
 
     // Initial size before calling -restoreFromDictionary… or -1,-1 if invalid.
@@ -250,6 +251,7 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     [_copyString release];
     [_setWorkingDirectoryOrderEnforcer release];
     [_currentDirectoryDidChangeOrderEnforcer release];
+    [_lastExternalAttribute release];
 
     [super dealloc];
 }
@@ -706,7 +708,8 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     primaryGrid_.size = newSize;
     [primaryGrid_ setCharsFrom:VT100GridCoordMake(0, 0)
                             to:VT100GridCoordMake(newSize.width - 1, newSize.height - 1)
-                        toChar:primaryGrid_.savedDefaultChar];
+                        toChar:primaryGrid_.savedDefaultChar
+            externalAttributes:nil];
     // If the height increased:
     // Growing (avoid pulling in stuff from scrollback. Add blank lines
     // at bottom instead). Note there's a little hack here: we use saved_primary_buffer as the default
@@ -1211,10 +1214,13 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     if (query.length == 0) {
         // Append all lines. Searching for empty string doesn't return any results and I have no
         // idea what would break if I changed that.
-        for (int y = 0; y < source.numberOfLines; y++) {
-            screen_char_t *line = [source getLineAtIndex:y];
-            [self appendScreenChars:line length:width continuation:line[width]];
-        }
+        [source enumerateLinesInRange:NSMakeRange(0, source.numberOfLines) block:^(int line, ScreenCharArray *sca, iTermMetadata *metadata, BOOL *stop) {
+#warning  TODO(externalAttributes): Test this
+            [self appendScreenChars:sca.line
+                             length:sca.length
+             externalAttributeIndex:metadata.externalAttributes
+                       continuation:sca.continuation];
+        }];
     } else {
         LineBufferPosition *startPos = source->linebuffer_.firstPosition;
         FindContext *context = [[[FindContext alloc] init] autorelease];
@@ -1237,7 +1243,10 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
                             }
                             lastY = y;
                             screen_char_t *line = [source getLineAtIndex:y];
-                            [self appendScreenChars:line length:width continuation:line[width]];
+                            [self appendScreenChars:line
+                                             length:width
+                             externalAttributeIndex:[source metadataOnLine:y].externalAttributes
+                                       continuation:line[width]];
                         }
                     }
                     [context.results removeAllObjects];
@@ -1257,9 +1266,11 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 
 - (void)appendScreenChars:(screen_char_t *)line
                    length:(int)length
+   externalAttributeIndex:(iTermExternalAttributeIndex *)externalAttributeIndex
              continuation:(screen_char_t)continuation {
     [self appendScreenCharArrayAtCursor:line
                                  length:length
+                 externalAttributeIndex:externalAttributeIndex
                              shouldFree:NO];
     if (continuation.code == EOL_HARD) {
         [self terminalCarriageReturn];
@@ -1267,8 +1278,7 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     }
 }
 
-- (void)appendAsciiDataAtCursor:(AsciiData *)asciiData
-{
+- (void)appendAsciiDataAtCursor:(AsciiData *)asciiData {
     int len = asciiData->length;
     if (len < 1 || !asciiData) {
         return;
@@ -1288,6 +1298,8 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 
     screen_char_t fg = [terminal_ foregroundColorCode];
     screen_char_t bg = [terminal_ backgroundColorCode];
+    iTermExternalAttribute *ea = [terminal_ externalAttributes];
+
     screen_char_t zero = { 0 };
     if (memcmp(&fg, &zero, sizeof(fg)) || memcmp(&bg, &zero, sizeof(bg))) {
         STOPWATCH_START(setUpScreenCharArray);
@@ -1306,6 +1318,7 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 
     [self appendScreenCharArrayAtCursor:buffer
                                  length:len
+                 externalAttributeIndex:[iTermUniformExternalAttributes withAttribute:ea]
                              shouldFree:NO];
     STOPWATCH_LAP(appendAsciiDataAtCursor);
 }
@@ -1404,6 +1417,7 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     }
     [self appendScreenCharArrayAtCursor:buffer + bufferOffset
                                  length:len - bufferOffset
+                 externalAttributeIndex:[iTermUniformExternalAttributes withAttribute:terminal_.externalAttributes]
                              shouldFree:NO];
     if (buffer == dynamicBuffer) {
         free(buffer);
@@ -1412,6 +1426,7 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 
 - (void)appendScreenCharArrayAtCursor:(screen_char_t *)buffer
                                length:(int)len
+               externalAttributeIndex:(iTermExternalAttributeIndex *)externalAttributes
                            shouldFree:(BOOL)shouldFree {
     [delegate_ screenAppendScreenCharArray:buffer length:len];
     if (len >= 1) {
@@ -1421,11 +1436,15 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
             if (len >= 2) {
                 _lastCharacter = buffer[len - 2];
                 _lastCharacterIsDoubleWidth = YES;
+                [_lastExternalAttribute autorelease];
+                _lastExternalAttribute = [externalAttributes[len - 2] retain];
             }
         } else {
             // Record the last character.
             _lastCharacter = buffer[len - 1];
             _lastCharacterIsDoubleWidth = NO;
+            [_lastExternalAttribute autorelease];
+            _lastExternalAttribute = [externalAttributes[len] retain];
         }
         LineBuffer *lineBuffer = nil;
         if (currentGrid_ != altGrid_ || saveToScrollbackInAlternateScreen_) {
@@ -1439,7 +1458,8 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
                                             useScrollbackWithRegion:_appendToScrollbackWithStatusBar
                                                          wraparound:_wraparoundMode
                                                                ansi:_ansi
-                                                             insert:_insert]];
+                                                             insert:_insert
+                                             externalAttributeIndex:externalAttributes]];
     }
 
     if (shouldFree) {
@@ -1551,7 +1571,8 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     temp.mayHaveDoubleWidthCharacter = YES;
     linebuffer_.mayHaveDoubleWidthCharacter = YES;
     NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
-    iTermMetadata metadata = iTermMakeMetadata(now);
+    // TODO(externalAttributes): Add support for external attributes here. This is only used by tmux at the moment.
+    iTermMetadata *metadata = [iTermMetadata metadataWithTimestamp:now externalAttributes:0];
     for (NSData *chars in history) {
         screen_char_t *line = (screen_char_t *) [chars bytes];
         const int len = [chars length] / sizeof(screen_char_t);
@@ -1624,7 +1645,8 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     // Initialize alternate screen to be empty
     [altGrid_ setCharsFrom:VT100GridCoordMake(0, 0)
                         to:VT100GridCoordMake(altGrid_.size.width - 1, altGrid_.size.height - 1)
-                    toChar:[altGrid_ defaultChar]];
+                    toChar:[altGrid_ defaultChar]
+        externalAttributes:nil];
     // Copy the lines back over it
     int o = 0;
     for (int i = 0; o < altGrid_.size.height && i < MIN(lines.count, altGrid_.size.height); i++) {
@@ -1772,7 +1794,8 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 - (void)setFromFrame:(screen_char_t*)s len:(int)len info:(DVRFrameInfo)info
 {
     assert(len == (info.width + 1) * info.height * sizeof(screen_char_t));
-    [currentGrid_ setContentsFromDVRFrame:s info:info];
+#warning TODO(externalAttributes): save and restore metadata
+    [currentGrid_ setContentsFromDVRFrame:s metadataArray:nil info:info];
     [self resetScrollbackOverflow];
     savedFindContextAbsPos_ = 0;
     [delegate_ screenRemoveSelection];
@@ -1837,7 +1860,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     [altGrid_ resetTimestamps];
 }
 
-- (void)enumerateLinesInRange:(NSRange)range block:(void (^)(ScreenCharArray *, iTermMetadata, BOOL *))block {
+- (void)enumerateLinesInRange:(NSRange)range block:(void (^)(int, ScreenCharArray *, iTermMetadata *, BOOL *))block {
     NSInteger i = range.location;
     const NSInteger lastLine = NSMaxRange(range) - 1;
     const NSInteger numLinesInLineBuffer = [linebuffer_ numLinesWithWidth:currentGrid_.size.width];
@@ -1851,7 +1874,8 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
         }
         BOOL stop = NO;
         const int screenIndex = i - numLinesInLineBuffer;
-        block([self screenCharArrayAtScreenIndex:screenIndex],
+        block(i,
+              [self screenCharArrayAtScreenIndex:screenIndex],
               [self metadataAtScreenIndex:screenIndex],
               &stop);
         if (stop) {
@@ -1869,7 +1893,18 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     return array;
 }
 
-- (iTermMetadata)metadataAtScreenIndex:(int)index {
+- (iTermMetadata *)metadataOnLine:(int)lineNumber {
+    ITBetaAssert(lineNumber >= 0, @"Negative index to getLineAtIndex");
+    const int width = currentGrid_.size.width;
+    int numLinesInLineBuffer = [linebuffer_ numLinesWithWidth:width];
+    if (lineNumber >= numLinesInLineBuffer) {
+        return [currentGrid_ metadataAtLineNumber:lineNumber];
+    } else {
+        return [linebuffer_ metadataForLineNumber:lineNumber width:width];
+    }
+}
+
+- (iTermMetadata *)metadataAtScreenIndex:(int)index {
     return [currentGrid_ metadataAtLineNumber:index];
 }
 
@@ -2636,7 +2671,8 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     [self.currentGrid setCharsFrom:VT100GridCoordMake(0, 0)
                                 to:VT100GridCoordMake(self.width - 1,
                                                       self.height - 1)
-                            toChar:self.currentGrid.defaultChar];
+                            toChar:self.currentGrid.defaultChar
+                externalAttributes:nil];
     [linebuffer_ removeLastRawLine];
     const int postHocNumberOfLines = [linebuffer_ numberOfWrappedLinesWithWidth:self.width];
     const int numberOfLinesToPop = MAX(0, postHocNumberOfLines - preHocNumberOfLines);
@@ -2817,7 +2853,10 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
         // Cursor was among the cleared lines. Restore the line content.
         currentGrid_.cursor = VT100GridCoordMake(0, absLine - totalScrollbackOverflow - self.numberOfScrollbackLines);
-        [self appendScreenChars:savedLine.line length:savedLine.length continuation:savedLine.continuation];
+        [self appendScreenChars:savedLine.line
+                         length:savedLine.length
+         externalAttributeIndex:savedLine.metadata.externalAttributes
+                   continuation:savedLine.continuation];
 
         // Restore marks on that line.
         const long long numberOfLinesRemoved = absCursorCoord.y - absLine;
@@ -2854,7 +2893,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     const VT100GridRun run = VT100GridRunFromCoords(VT100GridCoordMake(0, line),
                                                     VT100GridCoordMake(self.width, self.height),
                                                     self.width);
-    [self.currentGrid setCharsInRun:run toChar:0];
+    [self.currentGrid setCharsInRun:run toChar:0 externalAttributes:nil];
     [delegate_ screenTriggerableChangeDidOccur];
     self.currentGrid.cursor = savedCursor;
 }
@@ -3457,14 +3496,14 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     return [delegate_ screenValueOfVariableNamed:name];
 }
 
-- (void)terminalShowTestPattern
-{
+- (void)terminalShowTestPattern {
     screen_char_t ch = [currentGrid_ defaultChar];
     ch.code = 'E';
     [currentGrid_ setCharsFrom:VT100GridCoordMake(0, 0)
                             to:VT100GridCoordMake(currentGrid_.size.width - 1,
                                                   currentGrid_.size.height - 1)
-                        toChar:ch];
+                        toChar:ch
+            externalAttributes:nil];
     [currentGrid_ resetScrollRegions];
     currentGrid_.cursor = VT100GridCoordMake(0, 0);
 }
@@ -3571,7 +3610,8 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
                                                  VT100GridCoordMake(x2, y2),
                                                  currentGrid_.size.width);
     [currentGrid_ setCharsInRun:theRun
-                         toChar:0];
+                         toChar:0
+             externalAttributes:nil];
     [delegate_ screenTriggerableChangeDidOccur];
 
 }
@@ -3600,7 +3640,8 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
                                                  VT100GridCoordMake(x2, currentGrid_.cursor.y),
                                                  currentGrid_.size.width);
     [currentGrid_ setCharsInRun:theRun
-                         toChar:0];
+                         toChar:0
+             externalAttributes:nil];
     [delegate_ screenTriggerableChangeDidOccur];
 }
 
@@ -3748,7 +3789,8 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
         int limit = MIN(currentGrid_.cursorX + j, currentGrid_.size.width);
         [currentGrid_ setCharsFrom:VT100GridCoordMake(currentGrid_.cursorX, currentGrid_.cursorY)
                                 to:VT100GridCoordMake(limit - 1, currentGrid_.cursorY)
-                            toChar:[currentGrid_ defaultChar]];
+                            toChar:[currentGrid_ defaultChar]
+                externalAttributes:nil];
         // TODO: This used to always set the continuation mark to hard, but I think it should only do that if the last char in the line is erased.
         [delegate_ screenTriggerableChangeDidOccur];
     }
@@ -3828,6 +3870,8 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
 - (void)terminalInsertEmptyCharsAtCursor:(int)n {
     [currentGrid_ insertChar:[currentGrid_ defaultChar]
+#warning TODO(externalAttributes) Handle default external attributes
+          externalAttributes:nil
                           at:currentGrid_.cursor
                        times:n];
 }
@@ -4278,7 +4322,8 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     [currentGrid_ setCharsFrom:VT100GridCoordMake(0, 0)
                             to:VT100GridCoordMake(currentGrid_.size.width - 1,
                                                   currentGrid_.size.height - 1)
-                        toChar:[currentGrid_ defaultChar]];
+                        toChar:[currentGrid_ defaultChar]
+            externalAttributes:nil];
 }
 
 - (void)terminalSaveScrollPositionWithArgument:(NSString *)argument {
@@ -5183,7 +5228,10 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
         NSString *string = ScreenCharToStr(chars);
         for (int i = 0; i < times; i++) {
-            [self appendScreenCharArrayAtCursor:chars length:length shouldFree:NO];
+            [self appendScreenCharArrayAtCursor:chars
+                                         length:length
+                         externalAttributeIndex:[iTermUniformExternalAttributes withAttribute:_lastExternalAttribute]
+                                     shouldFree:NO];
             [delegate_ screenDidAppendStringToCurrentLine:string
                                               isPlainText:(_lastCharacter.complexChar ||
                                                            _lastCharacter.code >= ' ')];

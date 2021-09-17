@@ -4485,7 +4485,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     NSTimeInterval minExpectedTimestamp = [NSDate timeIntervalSinceReferenceDate];
     [self appendLines:lines toScreen:screen];
     __block NSInteger count = 0;
-    [screen enumerateLinesInRange:NSMakeRange(0, lines.count) block:^(ScreenCharArray *array, iTermMetadata metadata, BOOL *stop) {
+    [screen enumerateLinesInRange:NSMakeRange(0, lines.count) block:^(ScreenCharArray *array, iTermMetadata *metadata, BOOL *stop) {
         NSString *string = ScreenCharArrayToStringDebug(array.line, array.length);
         XCTAssertEqualObjects(string, expected[count]);
         XCTAssertGreaterThanOrEqual(metadata.timestamp, minExpectedTimestamp);

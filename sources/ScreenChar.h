@@ -29,9 +29,12 @@
  */
 
 #import <Cocoa/Cocoa.h>
+#import "iTermMetadata.h"
 #import "ITAddressBookMgr.h"
 #import "NSStringITerm.h"
 #import "VT100GridTypes.h"
+
+#include <simd/vector_types.h>
 
 @class iTermImage;
 @class iTermImageInfo;
@@ -185,51 +188,35 @@ typedef struct screen_char_t
 
     // These bits aren't used but are defined here so that the entire memory
     // region can be initialized.
-    unsigned int unused : 2;
-
-    // More attributes are stored in the line's metadata struct.
-    unsigned int hasMetadata : 1;
+    unsigned int unused : 3;
 
     // This comes after unused so it can be byte-aligned.
     // If the current text is part of a hypertext link, this gives an index into the URL store.
     unsigned short urlCode;
 } screen_char_t;
 
-typedef struct {
-    NSTimeInterval timestamp;
-} iTermMetadata;
-
-NS_INLINE iTermMetadata iTermMakeMetadata(NSTimeInterval timestamp) {
-    return (iTermMetadata){ .timestamp = timestamp };
-}
-
-NS_INLINE iTermMetadata iTermDefaultMetadata() {
-    return iTermMakeMetadata(0);
-}
-
-NS_INLINE NSArray *iTermMetadataToArray(iTermMetadata metadata) {
-    return @[ @(metadata.timestamp) ];
-}
-
 // Typically used to store a single screen line.
 @interface ScreenCharArray : NSObject<NSCopying> {
     screen_char_t *_line;  // Array of chars
     int _length;  // Number of chars in _line
     int _eol;  // EOL_SOFT, EOL_HARD, or EOL_DWC
-    BOOL _hasMetadata;
-    iTermMetadata _metadata;
 }
 
 @property (nonatomic, assign) screen_char_t *line;  // Assume const unless instructed otherwise
 @property (nonatomic, assign) int length;
 @property (nonatomic, assign) int eol;
 @property (nonatomic) screen_char_t continuation;
-@property (nonatomic) iTermMetadata metadata;
-@property (nonatomic, readonly) BOOL hasMetadata;
+@property (nonatomic, strong) iTermMetadata *metadata;
 
 - (instancetype)initWithLine:(screen_char_t *)line
                       length:(int)length
                 continuation:(screen_char_t)continuation;
+
+- (instancetype)initWithLine:(screen_char_t *)line
+                      length:(int)length
+                    metadata:(iTermMetadata *)metadata
+                continuation:(screen_char_t)continuation;
+
 - (BOOL)isEqualToScreenCharArray:(ScreenCharArray *)other;
 - (ScreenCharArray *)screenCharArrayByAppendingScreenCharArray:(ScreenCharArray *)other;
 - (ScreenCharArray *)screenCharArrayByRemovingTrailingNullsAndHardNewline;

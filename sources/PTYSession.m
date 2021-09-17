@@ -1160,18 +1160,22 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)appendLinesInRange:(NSRange)rangeOfLines fromSession:(PTYSession *)source {
-    int width = source.screen.width;
-    for (NSUInteger i = 0; i < rangeOfLines.length; i++) {
-        int row = rangeOfLines.location + i;
-        screen_char_t *theLine = [source.screen getLineAtIndex:row];
+    [source.screen enumerateLinesInRange:rangeOfLines block:^(int i, ScreenCharArray *sca, iTermMetadata *metadata, BOOL *stopPtr) {
+#warning TODO(externalAttributes): Test the hell out of this
         if (i + 1 == rangeOfLines.length) {
             screen_char_t continuation = { 0 };
             continuation.code = EOL_SOFT;
-            [_screen appendScreenChars:theLine length:width continuation:continuation];
+            [_screen appendScreenChars:sca.line
+                                length:sca.length
+                externalAttributeIndex:metadata.externalAttributes
+                          continuation:continuation];
         } else {
-            [_screen appendScreenChars:theLine length:width continuation:theLine[width]];
+            [_screen appendScreenChars:sca.line
+                                length:sca.length
+                externalAttributeIndex:metadata.externalAttributes
+                          continuation:sca.continuation];
         }
-    }
+    }];
 }
 
 - (void)setCopyMode:(BOOL)copyMode {
@@ -15121,8 +15125,12 @@ getOptionKeyBehaviorLeft:(iTermOptionKeyBehavior *)left
 
 - (void)filterDestinationAppendCharacters:(const screen_char_t *)line
                                     count:(int)count
+                   externalAttributeIndex:(iTermExternalAttributeIndex *)externalAttributeIndex
                              continuation:(screen_char_t)continuation {
-    [_screen appendScreenChars:(screen_char_t *)line length:count continuation:continuation];
+    [_screen appendScreenChars:(screen_char_t *)line
+                        length:count
+        externalAttributeIndex:externalAttributeIndex
+                  continuation:continuation];
 }
 
 - (void)filterDestinationAdoptLineBuffer:(LineBuffer *)lineBuffer {

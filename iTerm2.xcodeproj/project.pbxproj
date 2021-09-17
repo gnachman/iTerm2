@@ -1675,6 +1675,11 @@
 		A620041F248B7CFC007D349C /* iTermTmuxBufferSizeMonitor.m in Sources */ = {isa = PBXBuildFile; fileRef = A620041D248B7CFC007D349C /* iTermTmuxBufferSizeMonitor.m */; };
 		A621DDA8211D01D50095A399 /* NSAppearance+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A621DDA6211D01D50095A399 /* NSAppearance+iTerm.h */; };
 		A621DDA9211D01D50095A399 /* NSAppearance+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A621DDA7211D01D50095A399 /* NSAppearance+iTerm.m */; };
+		A621F0FD26F27D16001DD3A6 /* ScreenChar.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D36155412CBF33E00803EA9 /* ScreenChar.m */; };
+		A621F0FE26F27EA4001DD3A6 /* LineBlock.mm in Sources */ = {isa = PBXBuildFile; fileRef = A63F40A3183F3B78003A6A6D /* LineBlock.mm */; };
+		A621F10126F2AFAF001DD3A6 /* iTermMetadata.h in Headers */ = {isa = PBXBuildFile; fileRef = A621F0FF26F2AFAF001DD3A6 /* iTermMetadata.h */; };
+		A621F10226F2AFAF001DD3A6 /* iTermMetadata.m in Sources */ = {isa = PBXBuildFile; fileRef = A621F10026F2AFAF001DD3A6 /* iTermMetadata.m */; };
+		A621F10326F2B0FE001DD3A6 /* VT100LineInfo.m in Sources */ = {isa = PBXBuildFile; fileRef = A63F409E183F3AF5003A6A6D /* VT100LineInfo.m */; };
 		A6232E76202832A900EC0F98 /* iTermData.h in Headers */ = {isa = PBXBuildFile; fileRef = A6232E74202832A900EC0F98 /* iTermData.h */; };
 		A6232E77202832A900EC0F98 /* iTermData.m in Sources */ = {isa = PBXBuildFile; fileRef = A6232E75202832A900EC0F98 /* iTermData.m */; };
 		A623D94B1F8984690011F8C3 /* key.png in Resources */ = {isa = PBXBuildFile; fileRef = A623D9491F8983D70011F8C3 /* key.png */; };
@@ -3311,7 +3316,6 @@
 		A6C762CC1B45C52B00E3C992 /* iTermCursor.m in Sources */ = {isa = PBXBuildFile; fileRef = A635C4351AB38205008A2DEE /* iTermCursor.m */; };
 		A6C762D01B45C52B00E3C992 /* iTermSelection.m in Sources */ = {isa = PBXBuildFile; fileRef = A63BA39418A9CB43002BE075 /* iTermSelection.m */; };
 		A6C762D21B45C52B00E3C992 /* iTermTextExtractor.m in Sources */ = {isa = PBXBuildFile; fileRef = A63BA39E18B27B92002BE075 /* iTermTextExtractor.m */; };
-		A6C762D31B45C52B00E3C992 /* LineBlock.mm in Sources */ = {isa = PBXBuildFile; fileRef = A63F40A3183F3B78003A6A6D /* LineBlock.mm */; };
 		A6C762D41B45C52B00E3C992 /* LineBuffer.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D72438C11F416E500BD4924 /* LineBuffer.m */; };
 		A6C762D51B45C52B00E3C992 /* LineBufferHelpers.m in Sources */ = {isa = PBXBuildFile; fileRef = A63F40A8183F3CED003A6A6D /* LineBufferHelpers.m */; };
 		A6C762D61B45C52B00E3C992 /* LineBufferPosition.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D78B55D183EE1C000014D49 /* LineBufferPosition.m */; };
@@ -3321,11 +3325,9 @@
 		A6C762DE1B45C52B00E3C992 /* PTYTabView.m in Sources */ = {isa = PBXBuildFile; fileRef = F5E533B403B2959201A8A066 /* PTYTabView.m */; };
 		A6C762E01B45C52B00E3C992 /* PTYTextView.m in Sources */ = {isa = PBXBuildFile; fileRef = E8CF7561026DDA6303A80106 /* PTYTextView.m */; };
 		A6C762E11B45C52B00E3C992 /* PTYWindow.m in Sources */ = {isa = PBXBuildFile; fileRef = F56B230B03A1B36701A8A066 /* PTYWindow.m */; };
-		A6C762E21B45C52B00E3C992 /* ScreenChar.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D36155412CBF33E00803EA9 /* ScreenChar.m */; };
 		A6C762E41B45C52B00E3C992 /* TaskNotifier.m in Sources */ = {isa = PBXBuildFile; fileRef = A67E0ACF186E4B71009B2B68 /* TaskNotifier.m */; };
 		A6C762E61B45C52B00E3C992 /* VT100Grid.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D8B8A131806038F00C2DC25 /* VT100Grid.m */; };
 		A6C762E71B45C52B00E3C992 /* VT100GridTypes.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DD39ACE180B7884004E56D5 /* VT100GridTypes.m */; };
-		A6C762E81B45C52B00E3C992 /* VT100LineInfo.m in Sources */ = {isa = PBXBuildFile; fileRef = A63F409E183F3AF5003A6A6D /* VT100LineInfo.m */; };
 		A6C762E91B45C52B00E3C992 /* VT100Screen.m in Sources */ = {isa = PBXBuildFile; fileRef = E8CF7562026DDA6303A80106 /* VT100Screen.m */; };
 		A6C762EA1B45C52B00E3C992 /* AATree.m in Sources */ = {isa = PBXBuildFile; fileRef = A6358643184BEA57009ED690 /* AATree.m */; };
 		A6C762EB1B45C52B00E3C992 /* AATreeNode.m in Sources */ = {isa = PBXBuildFile; fileRef = A6358645184BEA57009ED690 /* AATreeNode.m */; };
@@ -5333,6 +5335,8 @@
 		A620041D248B7CFC007D349C /* iTermTmuxBufferSizeMonitor.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermTmuxBufferSizeMonitor.m; sourceTree = "<group>"; };
 		A621DDA6211D01D50095A399 /* NSAppearance+iTerm.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "NSAppearance+iTerm.h"; sourceTree = "<group>"; };
 		A621DDA7211D01D50095A399 /* NSAppearance+iTerm.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "NSAppearance+iTerm.m"; sourceTree = "<group>"; };
+		A621F0FF26F2AFAF001DD3A6 /* iTermMetadata.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermMetadata.h; sourceTree = "<group>"; };
+		A621F10026F2AFAF001DD3A6 /* iTermMetadata.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermMetadata.m; sourceTree = "<group>"; };
 		A6232E74202832A900EC0F98 /* iTermData.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = iTermData.h; path = Metal/Infrastructure/iTermData.h; sourceTree = "<group>"; };
 		A6232E75202832A900EC0F98 /* iTermData.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = iTermData.m; path = Metal/Infrastructure/iTermData.m; sourceTree = "<group>"; };
 		A623D9491F8983D70011F8C3 /* key.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = key.png; path = images/key.png; sourceTree = "<group>"; };
@@ -9089,6 +9093,8 @@
 				A6D24D3C26BC5FA600CCE211 /* SwiftDebugLogging.swift */,
 				A60E046426E037BD00DD162B /* ContentSubscriber.swift */,
 				A6BEE47D26E7E4CC009C0C2C /* PTYSessionZoomState.swift */,
+				A621F0FF26F2AFAF001DD3A6 /* iTermMetadata.h */,
+				A621F10026F2AFAF001DD3A6 /* iTermMetadata.m */,
 			);
 			name = Core;
 			sourceTree = "<group>";
@@ -11894,6 +11900,7 @@
 				A6042CD925D0CBCD0001C8FE /* NSScroller+iTerm.h in Headers */,
 				A6A4B2A1240B67A400184EAC /* PTYMouseHandler.h in Headers */,
 				A6B60CAB245E33C200DBD6A7 /* PSMCachedTitle.h in Headers */,
+				A621F10126F2AFAF001DD3A6 /* iTermMetadata.h in Headers */,
 				A63F34D021E1E0F8000C9D52 /* iTermSessionPicker.h in Headers */,
 				A6F1B3B82690EA9700546767 /* iTermOptionallyBordered.h in Headers */,
 				A631FC9120EDDBC600EB824F /* iTermFindDriver.h in Headers */,
@@ -14336,6 +14343,7 @@
 				A608F22220F08369008E8009 /* VT100DCSParser.m in Sources */,
 				A6C30060247117A9002BC672 /* iTermLocatedString.m in Sources */,
 				A699507821E33827009916BC /* iTermRawKeyMapper.m in Sources */,
+				A621F10326F2B0FE001DD3A6 /* VT100LineInfo.m in Sources */,
 				535D0915224DD13F00A79581 /* iTermPreferencesSearchEngineResultsWindowController.m in Sources */,
 				A626DF0C217D3034005600F9 /* iTermTabBarAccessoryViewController.m in Sources */,
 				A6E5110E24C1729E00D6552D /* iTermAttributedStringProxy.m in Sources */,
@@ -14411,6 +14419,7 @@
 				A663196A22FE5D3D00C502BD /* iTermFileDescriptorMultiClient.m in Sources */,
 				A620041F248B7CFC007D349C /* iTermTmuxBufferSizeMonitor.m in Sources */,
 				A6F3DA9424564598001D50C9 /* iTermScrollWheelStateMachine.m in Sources */,
+				A621F0FD26F27D16001DD3A6 /* ScreenChar.m in Sources */,
 				A6A4868120B681A300493302 /* iTermColorPresets.m in Sources */,
 				A6180D7921A883860073F219 /* iTermBroadcastPasswordHelper.m in Sources */,
 				A67109AC240C677D0018631A /* NSEvent+iTerm.m in Sources */,
@@ -14677,6 +14686,7 @@
 				A6DBC0462005DC2B00F1466D /* iTermTuple.m in Sources */,
 				A61F456F22FA52CD00E2054A /* iTermUnreadCountView.m in Sources */,
 				A618FFCA2245F89900B8FD88 /* iTermStatusBarKnobActionViewController.m in Sources */,
+				A621F0FE26F27EA4001DD3A6 /* LineBlock.mm in Sources */,
 				A6F22ACD2398D3C900C5D1A9 /* iTermLoggingHelper.m in Sources */,
 				A67960D51F81FCBB008A42BC /* iTermCursorRenderer.m in Sources */,
 				A6A4866420B676CA00493302 /* EventMonitorView.m in Sources */,
@@ -14772,6 +14782,7 @@
 				A630117720E6971D008114B7 /* iTermStatusBarTextComponent.m in Sources */,
 				A66319892312312600C502BD /* iTermRule.m in Sources */,
 				A6F718B12263CC3C0053488E /* ITAddressBookMgr.m in Sources */,
+				A621F10226F2AFAF001DD3A6 /* iTermMetadata.m in Sources */,
 				A675271E213DB6E800035F2B /* NSImageView+iTerm.m in Sources */,
 				A6A4867020B67A3B00493302 /* iTermSizeRememberingView.m in Sources */,
 				A66F52B22105ABCA00571168 /* iTermStatusBarAttributedTextComponent.m in Sources */,
@@ -14897,7 +14908,6 @@
 				A6C762BD1B45C52B00E3C992 /* NSPasteboard+iTerm.m in Sources */,
 				539325F31DD66EFA00CABCEF /* iTermPreciseTimer.m in Sources */,
 				A6C762EC1B45C52B00E3C992 /* EquivalenceClassSet.m in Sources */,
-				A6C762E21B45C52B00E3C992 /* ScreenChar.m in Sources */,
 				A6C763EA1B45C71900E3C992 /* UKNibOwner.m in Sources */,
 				A6CEC0751DCE80C9009F4FD2 /* Duration.pbobjc.m in Sources */,
 				A6CEC10A1DCE8146009F4FD2 /* GPBDescriptor.m in Sources */,
@@ -15007,7 +15017,6 @@
 				A6C7639C1B45C52B00E3C992 /* TmuxLayoutParser.m in Sources */,
 				A6FEA2641CF0F33300376F28 /* iTermModifierRemapper.m in Sources */,
 				A6C762B01B45C52B00E3C992 /* NSColor+Scripting.m in Sources */,
-				A6C762D31B45C52B00E3C992 /* LineBlock.mm in Sources */,
 				A6C762F41B45C52B00E3C992 /* FakeWindow.m in Sources */,
 				A6C7632B1B45C52B00E3C992 /* SmartMatch.m in Sources */,
 				A6C763CB1B45C52B00E3C992 /* VT100TmuxParser.m in Sources */,
@@ -15072,7 +15081,6 @@
 				A6C762EB1B45C52B00E3C992 /* AATreeNode.m in Sources */,
 				A6C762CC1B45C52B00E3C992 /* iTermCursor.m in Sources */,
 				A6C763CD1B45C52B00E3C992 /* VT100XtermParser.m in Sources */,
-				A6C762E81B45C52B00E3C992 /* VT100LineInfo.m in Sources */,
 				A6C763AA1B45C52B00E3C992 /* iTermToolWrapper.m in Sources */,
 				A62C3B321BCC24AB00B5629D /* iTermRecentDirectoryMO.m in Sources */,
 				A6C762A61B45C52B00E3C992 /* iTermApplication+Scripting.m in Sources */,

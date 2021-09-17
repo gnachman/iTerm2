@@ -105,6 +105,7 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 
 - (void)appendScreenChars:(screen_char_t *)line
                    length:(int)length
+   externalAttributeIndex:(iTermExternalAttributeIndex *)externalAttributes
              continuation:(screen_char_t)continuation;
 - (void)appendLinesMatchingQuery:(NSString *)query from:(VT100Screen *)source mode:(iTermFindMode)mode;
 - (void)setContentsFromLineBuffer:(LineBuffer *)lineBuffer;
@@ -238,7 +239,7 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 - (void)resetTimestamps;
 - (NSInteger)generationForLine:(int)y;
 
-- (void)enumerateLinesInRange:(NSRange)range block:(void (^)(ScreenCharArray *, iTermMetadata, BOOL *))block;
+- (void)enumerateLinesInRange:(NSRange)range block:(void (^)(int line, ScreenCharArray *, iTermMetadata *, BOOL *))block;
 
 // Fake shell integration via triggers APIs
 - (void)promptDidStartAt:(VT100GridAbsCoord)coord;

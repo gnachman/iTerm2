@@ -79,7 +79,7 @@
             length:(int)length
            partial:(BOOL)partial
              width:(int)width
-          metadata:(iTermMetadata)metadata
+          metadata:(iTermMetadata * _Nonnull)metadata
       continuation:(screen_char_t)continuation;
 
 - (void)appendContentsOfLineBuffer:(LineBuffer * _Nonnull)other width:(int)width;
@@ -94,7 +94,10 @@
 - (int)dropExcessLinesWithWidth:(int)width;
 
 // Returns the metadata associated with a line when wrapped to the specified width.
-- (iTermMetadata)metadataForLineNumber:(int)lineNum width:(int)width;
+- (iTermMetadata * _Nonnull)metadataForLineNumber:(int)lineNum width:(int)width;
+
+// Metadata for the whole raw line.
+- (iTermMetadata * _Nonnull)metadataForRawLineWithWrappedLineNumber:(int)lineNum width:(int)width;
 
 - (NSInteger)generationForLineNumber:(int)lineNum width:(int)width;
 
@@ -110,8 +113,9 @@
 
 - (void)enumerateLinesInRange:(NSRange)range
                         width:(int)width
-                        block:(void (^ _Nonnull)(ScreenCharArray * _Nonnull,
-                                                 iTermMetadata,
+                        block:(void (^ _Nonnull)(int,
+                                                 ScreenCharArray * _Nonnull,
+                                                 iTermMetadata * _Nonnull,
                                                  BOOL * _Nonnull))block;
 
 // Like the above but with a saner way of holding the returned data. Callers are advised not
@@ -134,7 +138,7 @@
 - (BOOL)popAndCopyLastLineInto:(screen_char_t * _Nonnull)ptr
                          width:(int)width
              includesEndOfLine:(int *_Nonnull)includesEndOfLine
-                      metadata:(iTermMetadata * _Nullable)metadataPtr
+                      metadata:(iTermMetadata * _Nullable * _Nullable)metadataPtr
                   continuation:(screen_char_t * _Nullable)continuationPtr;
 
 // Removes the last wrapped lines.

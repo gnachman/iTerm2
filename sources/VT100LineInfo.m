@@ -24,12 +24,9 @@ static NSInteger VT100LineInfoNextGeneration = 1;
         start_ = -1;
         bound_ = -1;
         [self setDirty:NO inRange:VT100GridRangeMake(0, width) updateTimestamp:NO];
+        _metadata = [[iTermMetadata alloc] init];
     }
     return self;
-}
-
-- (void)dealloc {
-    [super dealloc];
 }
 
 - (void)setDirty:(BOOL)dirty inRange:(VT100GridRange)range updateTimestamp:(BOOL)updateTimestamp {

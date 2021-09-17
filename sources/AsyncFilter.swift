@@ -131,8 +131,11 @@ class FilteringUpdater: Updater {
 
 @objc(iTermFilterDestination)
 protocol FilterDestination {
-    @objc(filterDestinationAppendCharacters:count:continuation:)
-    func append(_ characters: UnsafePointer<screen_char_t>, count: Int32, continuation: screen_char_t)
+    @objc(filterDestinationAppendCharacters:count:externalAttributeIndex:continuation:)
+    func append(_ characters: UnsafePointer<screen_char_t>,
+                count: Int32,
+                externalAttributeIndex: iTermExternalAttributeIndex?,
+                continuation: screen_char_t)
 
     @objc(filterDestinationAdoptLineBuffer:)
     func adopt(_ lineBuffer: LineBuffer)
@@ -203,7 +206,11 @@ class AsyncFilter: NSObject {
         }
         lastLineIsTemporary = temporary
         let chars = lineBufferCopy.rawLine(atWrappedLine: lineNumber, width: width)
-        destination.append(chars.line, count: chars.length, continuation: chars.continuation)
+        destination.append(chars.line,
+                           count: chars.length,
+                           externalAttributeIndex: lineBufferCopy.metadataForRawLine(withWrappedLineNumber: lineNumber,
+                                                                                     width: width).externalAttributes,
+                           continuation: chars.continuation)
     }
 
     private func adoptVerbatim() {
@@ -271,12 +278,12 @@ class AsyncFilter: NSObject {
 }
 
 extension AsyncFilter: ContentSubscriber {
-    func deliver(_ array: ScreenCharArray) {
+    func deliver(_ array: ScreenCharArray, metadata: iTermMetadata) {
         lineBufferCopy.appendLine(array.line,
                                   length: array.length,
                                   partial: array.eol != EOL_HARD,
                                   width: width,
-                                  metadata:iTermMakeMetadata(Date.timeIntervalSinceReferenceDate),
+                                  metadata:metadata,
                                   continuation: array.continuation)
         if timer != nil {
             return
@@ -305,6 +312,5 @@ extension screen_char_t {
                                     strikethrough: 0,
                                     underlineStyle: VT100UnderlineStyle.single,
                                     unused: 0,
-                                    hasMetadata: 0,
                                     urlCode: 0)
 }

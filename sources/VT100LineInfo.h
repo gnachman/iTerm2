@@ -12,7 +12,7 @@
 
 @interface VT100LineInfo : NSObject <NSCopying>
 
-@property(nonatomic, assign) iTermMetadata metadata;
+@property(nonatomic, strong) iTermMetadata *metadata;
 @property(nonatomic, readonly) NSInteger generation;
 
 - (instancetype)initWithWidth:(int)width;

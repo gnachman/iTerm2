@@ -204,7 +204,7 @@ extern NSString *const SESSION_ARRANGEMENT_SERVER_DICT;
         empty = [[ScreenCharArray alloc] initWithLine:&placeholder length:0 continuation:continuation];
     });
     for (id<iTermContentSubscriber> subscriber in self.contentSubscribers) {
-        [subscriber deliver:empty];
+        [subscriber deliver:empty metadata:[iTermMetadata defaultMetadata]];
     }
 }
 
@@ -218,7 +218,8 @@ extern NSString *const SESSION_ARRANGEMENT_SERVER_DICT;
                                                             length:length
                                                       continuation:continuation];
     for (id<iTermContentSubscriber> subscriber in self.contentSubscribers) {
-        [subscriber deliver:array];
+#warning TODO(extendedAttributes): Need to pass in a slice of metadata
+        [subscriber deliver:array metadata:[iTermMetadata defaultMetadata]];
     }
 }
 
