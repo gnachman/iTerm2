@@ -10,6 +10,7 @@
 #import "DVRIndexEntry.h"
 #import "ScreenChar.h"
 #import "VT100GridTypes.h"
+#import "iTermMetadata.h"
 
 @class LineBuffer;
 @class VT100LineInfo;
@@ -61,7 +62,7 @@
                           delegate:(id<VT100GridDelegate>)delegate;
 
 - (screen_char_t *)screenCharsAtLineNumber:(int)lineNumber;
-- (iTermMetadata *)metadataAtLineNumber:(int)lineNumber;
+- (iTermMetadata)metadataAtLineNumber:(int)lineNumber;
 
 // Set both x and y coord of cursor at once. Cursor positions are clamped to legal values. The cursor
 // may extend into the right edge (cursorX == size.width is allowed).
@@ -188,7 +189,7 @@
 
 // Load contents from a DVR frame.
 - (void)setContentsFromDVRFrame:(screen_char_t*)s
-                  metadataArray:(NSArray<iTermMetadata *> *)sourceMetadataArray
+                  metadataArray:(iTermMetadata *)sourceMetadataArray
                            info:(DVRFrameInfo)info;
 
 // Returns a grid-owned empty line.

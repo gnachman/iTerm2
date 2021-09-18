@@ -206,7 +206,7 @@ typedef struct screen_char_t
 @property (nonatomic, assign) int length;
 @property (nonatomic, assign) int eol;
 @property (nonatomic) screen_char_t continuation;
-@property (nonatomic, strong) iTermMetadata *metadata;
+@property (nonatomic, readonly) iTermMetadata metadata;
 
 - (instancetype)initWithLine:(screen_char_t *)line
                       length:(int)length
@@ -214,7 +214,7 @@ typedef struct screen_char_t
 
 - (instancetype)initWithLine:(screen_char_t *)line
                       length:(int)length
-                    metadata:(iTermMetadata *)metadata
+                    metadata:(iTermMetadata)metadata
                 continuation:(screen_char_t)continuation;
 
 - (BOOL)isEqualToScreenCharArray:(ScreenCharArray *)other;

@@ -314,7 +314,7 @@
                                         int,
                                         int,
                                         screen_char_t,
-                                        iTermMetadata *,
+                                        iTermMetadata,
                                         BOOL * _Nullable))callback {
     int remainder;
     NSInteger startIndex = [self indexOfBlockContainingLineNumber:range.location width:width remainder:&remainder];
@@ -340,7 +340,7 @@
             int length, eol;
             screen_char_t continuation;
             int temp = line;
-            iTermMetadata *metadata = nil;
+            iTermMetadata metadata;
             screen_char_t *chars = [block getWrappedLineWithWrapWidth:width
                                                               lineNum:&temp
                                                            lineLength:&length

@@ -1,6 +1,7 @@
 #import <Cocoa/Cocoa.h>
 #import "iTermEncoderAdapter.h"
 #import "iTermIntervalTreeObserver.h"
+#import "iTermMetadata.h"
 #import "PTYNoteViewController.h"
 #import "PTYTextViewDataSource.h"
 #import "SCPPath.h"
@@ -239,7 +240,7 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 - (void)resetTimestamps;
 - (NSInteger)generationForLine:(int)y;
 
-- (void)enumerateLinesInRange:(NSRange)range block:(void (^)(int line, ScreenCharArray *, iTermMetadata *, BOOL *))block;
+- (void)enumerateLinesInRange:(NSRange)range block:(void (^)(int line, ScreenCharArray *, iTermMetadata, BOOL *))block;
 
 // Fake shell integration via triggers APIs
 - (void)promptDidStartAt:(VT100GridAbsCoord)coord;

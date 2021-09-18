@@ -13,7 +13,7 @@
 #import "iTermFindViewController.h"
 
 typedef struct {
-    iTermMetadata *metadataObj;
+    iTermMetadata lineMetadata;
     screen_char_t continuation;
     int number_of_wrapped_lines;
     int width_for_number_of_wrapped_lines;
@@ -54,7 +54,7 @@ typedef struct {
             length:(int)length
            partial:(BOOL)partial
              width:(int)width
-          metadata:(iTermMetadata *)metadata
+          metadata:(iTermMetadata)metadata
       continuation:(screen_char_t)continuation;
 
 // Try to get a line that is lineNum after the first line in this block after wrapping them to a given width.
@@ -75,7 +75,7 @@ typedef struct {
                                        yOffset:(int*)yOffsetPtr
                                   continuation:(screen_char_t *)continuationPtr
                           isStartOfWrappedLine:(BOOL *)isStartOfWrappedLine
-                                      metadata:(out iTermMetadata **)metadataPtr;
+                                      metadata:(out iTermMetadata *)metadataPtr;
 
 - (ScreenCharArray *)rawLineAtWrappedLineOffset:(int)lineNum width:(int)width;
 
@@ -92,7 +92,7 @@ typedef struct {
 - (BOOL)popLastLineInto:(screen_char_t**)ptr
              withLength:(int*)length
               upToWidth:(int)width
-               metadata:(out iTermMetadata **)metadataPtr
+               metadata:(out iTermMetadata *)metadataPtr
            continuation:(screen_char_t *)continuationPtr;
 
 - (void)removeLastWrappedLines:(int)numberOfLinesToRemove
@@ -132,8 +132,8 @@ typedef struct {
 - (void)dump:(int)rawOffset toDebugLog:(BOOL)toDebugLog;
 
 // Returns the metadata associated with a line when wrapped to the specified width.
-- (iTermMetadata *)metadataForLineNumber:(int)lineNum width:(int)width;
-- (iTermMetadata *)metadataForRawLineAtWrappedLineOffset:(int)lineNum width:(int)width;
+- (iTermMetadata)metadataForLineNumber:(int)lineNum width:(int)width;
+- (iTermMetadata)metadataForRawLineAtWrappedLineOffset:(int)lineNum width:(int)width;
 - (NSInteger)generationForLineNumber:(int)lineNum width:(int)width;
 
 // Appends the contents of the block to |s|.

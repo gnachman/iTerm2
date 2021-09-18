@@ -6,287 +6,123 @@
 //
 
 #import "iTermMetadata.h"
-#import "NSDictionary+iTerm.h"
+#import "iTermExternalAttributeIndex.h"
 
-@implementation iTermMetadata
-
-+ (instancetype)metadataWithTimestamp:(NSTimeInterval)timestamp
-                   externalAttributes:(iTermExternalAttributeIndex *)externalAttributes {
-    return [[self alloc] initWithTimestamp:timestamp externalAttributes:externalAttributes];
+void iTermMetadataInit(iTermMetadata *obj,
+                       NSTimeInterval timestamp,
+                       iTermExternalAttributeIndex *externalAttributes) {
+    obj->timestamp = timestamp;
+    obj->externalAttributes = [(id)externalAttributes retain];
 }
 
-+ (instancetype)defaultMetadata {
-    return [[self alloc] initWithTimestamp:0 externalAttributes:nil];
-}
-
-+ (instancetype)metadataWithArray:(NSArray *)array {
-    if (array.count < 2) {
-        return [self defaultMetadata];
-    }
-    return [[self alloc] initWithTimestamp:[array[0] doubleValue]
-                        externalAttributes:[iTermExternalAttributeIndex withDictionary:array[1]]];
-}
-
-- (instancetype)initWithTimestamp:(NSTimeInterval)timestamp
-               externalAttributes:(iTermExternalAttributeIndex *)externalAttributes {
-    self = [super init];
-    if (self) {
-        _timestamp = timestamp;
-        _externalAttributes = externalAttributes;
-    }
-    return self;
-}
-
-- (NSArray *)arrayValue {
-    return @[ @(_timestamp),
-              _externalAttributes.dictionaryValue ?: [NSNull null] ];
-}
-
-- (iTermExternalAttributeIndex *)externalAttributesCreatingIfNeeded {
-    if (!_externalAttributes) {
-        _externalAttributes = [[iTermExternalAttributeIndex alloc] init];
-    }
-    return _externalAttributes;
-}
-
-- (iTermExternalAttributeIndex * _Nullable)externalAttributesCreatingIfNeeded:(BOOL)createIfNeeded {
-    if (createIfNeeded) {
-        return [self externalAttributesCreatingIfNeeded];
-    }
-    return _externalAttributes;
-}
-
-- (void)reset {
-    _timestamp = 0;
-    _externalAttributes = nil;
-}
-
-- (iTermMetadata *)subMetadataFromIndex:(NSInteger)start maximumLength:(NSInteger)maximumLength {
-    return [[iTermMetadata alloc] initWithTimestamp:_timestamp
-                                 externalAttributes:[_externalAttributes subAttributesFromIndex:start
-                                                                                  maximumLength:maximumLength]];
-}
-
-- (iTermMetadata *)metadataByAppending:(iTermMetadata *)rhs
-                              myLength:(int)lhsLength
-                        appendeeLength:(int)rhsLength {
-    return [[iTermMetadata alloc] initWithTimestamp:rhs.timestamp
-                                 externalAttributes:[iTermExternalAttributeIndex concatenationOf:_externalAttributes
-                                                                                      length:lhsLength
-                                                                                        with:rhs.externalAttributes
-                                                                                      length:rhsLength]];
-}
-
-@end
-
-@implementation iTermExternalAttributeIndex {
-    NSMutableDictionary<NSNumber *, iTermExternalAttribute *> *_attributes;
-    NSInteger _offset;  // Add this to externally visible indexes to get keys into _attributes.
-}
-
-+ (instancetype)withDictionary:(NSDictionary *)dictionary {
-    return [[self alloc] initWithDictionary:dictionary];
-}
-- (instancetype)initWithDictionary:(NSDictionary *)dictionary {
-    return [self init];
-#warning TODO(externalAttributes): Decode the dictionary
-#warning Remember to handle iTermUniformExternalAttributes
-}
-
-- (instancetype)init {
-    self = [super init];
-    if (self) {
-        _attributes = [NSMutableDictionary dictionary];
-    }
-    return self;
-}
-
-- (NSDictionary *)attributes {
-    return _attributes;
-}
-
-- (NSInteger)offset {
-    return _offset;
-}
-
-- (NSDictionary *)dictionaryValue {
-    return [_attributes mapValuesWithBlock:^id(NSNumber *key, iTermExternalAttribute *attribute) {
-        return attribute.dictionaryValue;
-    }];
-}
-
-- (void)copyFrom:(iTermExternalAttributeIndex *)source
-          source:(int)loadBase
-     destination:(int)storeBase
-           count:(int)count {
-    int start;
-    int end;
-    int stride;
-    if (source == self && storeBase > loadBase) {
-        // Copying to the right within self.
-        start = count - 1;
-        end = -1;
-        stride = -1;
-    } else {
-        // Copying to other object or to the left.
-        start = 0;
-        end = count;
-        stride = 1;
-    }
-    for (int i = start; i != end; i += stride) {
-        _attributes[@(storeBase + i)] = [source.attributes[@(loadBase + i)] copy];
-    }
-}
-
-- (iTermExternalAttribute *)objectAtIndexedSubscript:(NSInteger)idx {
-    return _attributes[@(idx + _offset)];
-}
-
-- (iTermExternalAttributeIndex *)subAttributesFromIndex:(int)index {
-    return [self subAttributesFromIndex:index maximumLength:INT_MAX];
-}
-
-- (iTermExternalAttributeIndex *)subAttributesFromIndex:(int)index maximumLength:(int)maxLength {
-    iTermExternalAttributeIndex *sub = [[iTermExternalAttributeIndex alloc] init];
-    sub->_offset = index;
-    [_attributes enumerateKeysAndObjectsUsingBlock:^(NSNumber *_Nonnull key, iTermExternalAttribute *_Nonnull obj, BOOL * _Nonnull stop) {
-        const int intKey = key.intValue;
-        if (intKey < index) {
-            return;
-        }
-        if (intKey >= index + maxLength) {
-            *stop = YES;
-            return;
-        }
-        sub->_attributes[key] = obj;
-    }];
-    return sub;
-}
-
-- (id)copyWithZone:(NSZone *)zone {
-    iTermExternalAttributeIndex *copy = [[iTermExternalAttributeIndex alloc] init];
-    copy->_attributes = [_attributes mutableCopy];
-    return copy;
-}
-
-- (void)eraseAt:(int)x {
-    [_attributes removeObjectForKey:@(x + _offset)];
-}
-
-- (void)eraseInRange:(VT100GridRange)range {
-    for (int i = 0; i < range.length; i++) {
-        [self eraseAt:i + range.location];
-    }
-}
-
-- (void)setAttributes:(iTermExternalAttribute *)attributes at:(int)start count:(int)count {
-    for (int i = 0; i < count; i++) {
-        _attributes[@(start + _offset)] = attributes;
-    }
-}
-
-+ (iTermExternalAttributeIndex *)concatenationOf:(iTermExternalAttributeIndex *)lhs
-                                      length:(int)lhsLength
-                                        with:(iTermExternalAttributeIndex *)rhs
-                                      length:(int)rhsLength {
-    iTermExternalAttributeIndex *result = [[iTermExternalAttributeIndex alloc] init];
-    [result appendValuesFrom:lhs range:NSMakeRange(0, lhsLength) at:0];
-    [result appendValuesFrom:rhs range:NSMakeRange(0, rhsLength) at:lhsLength];
+iTermMetadata iTermMetadataTemporaryWithTimestamp(NSTimeInterval timestamp) {
+    iTermMetadata result;
+    iTermMetadataInit(&result, timestamp, nil);
+    iTermMetadataAutorelease(result);
     return result;
 }
 
-- (void)appendValuesFrom:(iTermExternalAttributeIndex *)source range:(NSRange)range at:(int)base {
-    [source.attributes enumerateKeysAndObjectsUsingBlock:^(NSNumber * _Nonnull key, iTermExternalAttribute * _Nonnull obj, BOOL * _Nonnull stop) {
-        const int intKey = key.intValue;
-        if (intKey < range.location) {
-            return;
-        }
-        if (intKey >= NSMaxRange(range)) {
-            return;
-        }
-        _attributes[@(intKey + base + _offset)] = obj;
-    }];
+void iTermMetadataRetain(iTermMetadata obj) {
+    [(id)obj.externalAttributes retain];
 }
 
-@end
-
-static NSString *const iTermExternalAttributeKeyUnderlineColor = @"uc";
-
-@implementation iTermExternalAttribute
-
-- (NSDictionary *)dictionaryValue {
-    return @{
-        iTermExternalAttributeKeyUnderlineColor: _hasUnderlineColor ? @[ @(_underlineColor.x),
-                                                                         @(_underlineColor.y),
-                                                                         @(_underlineColor.z),
-                                                                         @(_underlineColor.w) ] : [NSNull null] };
+void iTermMetadataRelease(iTermMetadata obj) {
+    [(id)obj.externalAttributes release];
 }
 
-- (id)copyWithZone:(NSZone *)zone {
-    iTermExternalAttribute *copy = [[iTermExternalAttribute alloc] init];
-    copy.hasUnderlineColor = _hasUnderlineColor;
-    copy.underlineColor = _underlineColor;
-    return copy;
+iTermMetadata iTermMetadataRetainAutorelease(iTermMetadata obj) {
+    [[(id)obj.externalAttributes retain] autorelease];
+    return obj;
 }
 
-@end
-
-@implementation iTermUniformExternalAttributes {
-    iTermExternalAttribute *_attr;
+iTermMetadata iTermMetadataAutorelease(iTermMetadata obj) {
+    [(id)obj.externalAttributes autorelease];
+    return obj;
 }
 
-+ (instancetype)withAttribute:(iTermExternalAttribute *)attr {
-    return [[self alloc] initWithAttribute:attr];
-}
-
-- (instancetype)initWithAttribute:(iTermExternalAttribute *)attr {
-    if (!attr) {
-        return nil;
+void iTermMetadataReplaceWithCopy(iTermMetadata *obj) {
+    if (!obj->externalAttributes) {
+        return;
     }
-    self = [super init];
-    if (self) {
-        _attr = attr;
+    iTermExternalAttributeIndex *eaIndex = iTermMetadataGetExternalAttributesIndex(*obj);
+    iTermMetadataSetExternalAttributes(obj, [[eaIndex copy] autorelease]);
+}
+
+NSArray *iTermMetadataEncodeToArray(iTermMetadata obj) {
+    iTermExternalAttributeIndex *eaIndex = iTermMetadataGetExternalAttributesIndex(obj);
+    return @[ @(obj.timestamp), [eaIndex dictionaryValue] ?: @{} ];
+}
+
+void iTermMetadataSetExternalAttributes(iTermMetadata *obj,
+                                        iTermExternalAttributeIndex *externalAttributes) {
+    [(id)obj->externalAttributes autorelease];
+    obj->externalAttributes = [externalAttributes retain];
+
+}
+
+iTermExternalAttributeIndex *iTermMetadataGetExternalAttributesIndex(iTermMetadata obj) {
+    return [[(iTermExternalAttributeIndex *)obj.externalAttributes retain] autorelease];
+}
+
+iTermExternalAttributeIndex *iTermMetadataGetExternalAttributesIndexCreatingIfNeeded(iTermMetadata *obj) {
+    if (!obj->externalAttributes) {
+        iTermMetadataSetExternalAttributes(obj, [[[iTermExternalAttributeIndex alloc] init] autorelease]);
     }
-    return self;
+    return [[(iTermExternalAttributeIndex *)obj->externalAttributes retain] autorelease];
 }
 
-- (NSDictionary *)dictionaryValue {
-    return @{ @"all": _attr.dictionaryValue };
+void iTermMetadataInitFromArray(iTermMetadata *obj, NSArray *array) {
+    iTermMetadataInit(obj,
+                      [array[0] doubleValue],
+                      [[[iTermExternalAttributeIndex alloc] initWithDictionary:array[1]] autorelease]);
 }
 
-- (void)copyFrom:(iTermExternalAttributeIndex *)source
-          source:(int)loadBase
-     destination:(int)storeBase
-           count:(int)count {
-    [self doesNotRecognizeSelector:_cmd];
+void iTermMetadataAppend(iTermMetadata *lhs,
+                         int lhsLength,
+                         iTermMetadata *rhs,
+                         int rhsLength) {
+    lhs->timestamp = rhs->timestamp;
+    if (!rhs->externalAttributes) {
+        return;
+    }
+    iTermExternalAttributeIndex *lhsAttrs = iTermMetadataGetExternalAttributesIndexCreatingIfNeeded(lhs);
+    iTermExternalAttributeIndex *eaIndex =
+        [iTermExternalAttributeIndex concatenationOf:lhsAttrs
+                                              length:lhsLength
+                                                with:iTermMetadataGetExternalAttributesIndex(*rhs)
+                                              length:rhsLength];
+    iTermMetadataSetExternalAttributes(lhs, eaIndex);
 }
 
-- (iTermExternalAttribute *)objectAtIndexedSubscript:(NSInteger)idx {
-    return _attr;
+void iTermMetadataInitByConcatenation(iTermMetadata *obj,
+                                      iTermMetadata *lhs,
+                                      int lhsLength,
+                                      iTermMetadata *rhs,
+                                      int rhsLength) {
+    iTermExternalAttributeIndex *eaIndex =
+        [iTermExternalAttributeIndex concatenationOf:iTermMetadataGetExternalAttributesIndex(*lhs)
+                                              length:lhsLength
+                                                with:iTermMetadataGetExternalAttributesIndex(*rhs)
+                                          length:rhsLength];
+    iTermMetadataInit(obj, rhs->timestamp, eaIndex);
 }
 
-- (iTermExternalAttributeIndex *)subAttributesFromIndex:(int)index {
-    return self;
+void iTermMetadataInitCopyingSubrange(iTermMetadata *obj,
+                                      iTermMetadata *source,
+                                      int start,
+                                      int length) {
+    iTermExternalAttributeIndex *sourceIndex = iTermMetadataGetExternalAttributesIndex(*source);
+    iTermExternalAttributeIndex *eaIndex = [sourceIndex subAttributesFromIndex:start maximumLength:length];
+    iTermMetadataInit(obj,
+                      source->timestamp,
+                      eaIndex);
 }
 
-- (iTermExternalAttributeIndex *)subAttributesFromIndex:(int)index maximumLength:(int)maxLength {
-    return self;
+iTermMetadata iTermMetadataDefault(void) {
+    return (iTermMetadata){ .timestamp = 0, .externalAttributes = NULL };
 }
 
-- (id)copyWithZone:(NSZone *)zone {
-    return self;
+void iTermMetadataReset(iTermMetadata *obj) {
+    obj->timestamp = 0;
+    iTermMetadataSetExternalAttributes(obj, NULL);
 }
-
-- (void)eraseAt:(int)x {
-    [self doesNotRecognizeSelector:_cmd];
-}
-
-- (void)eraseInRange:(VT100GridRange)range {
-    [self doesNotRecognizeSelector:_cmd];
-}
-
-- (void)setAttributes:(iTermExternalAttribute *)attributes at:(int)start count:(int)count {
-    [self doesNotRecognizeSelector:_cmd];
-}
-
-@end

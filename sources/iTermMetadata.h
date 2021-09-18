@@ -6,70 +6,51 @@
 //
 
 #import <Foundation/Foundation.h>
-#include <simd/vector_types.h>
+#import "iTermExternalAttributeIndex.h"
 #import "VT100GridTypes.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface iTermExternalAttribute: NSObject<NSCopying>
-@property (nonatomic) BOOL hasUnderlineColor;
-@property (nonatomic) vector_float4 underlineColor;
+typedef struct {
+    NSTimeInterval timestamp;
+    void * _Nullable externalAttributes;
+} iTermMetadata;
 
-@property(nonatomic, readonly) NSDictionary *dictionaryValue;
-@end
+void iTermMetadataInit(iTermMetadata *obj,
+                       NSTimeInterval timestamp,
+                       iTermExternalAttributeIndex * _Nullable externalAttributes);
+iTermMetadata iTermMetadataTemporaryWithTimestamp(NSTimeInterval timestamp);
+void iTermMetadataRetain(iTermMetadata obj);
+void iTermMetadataRelease(iTermMetadata obj);
+iTermMetadata iTermMetadataRetainAutorelease(iTermMetadata obj);
+iTermMetadata iTermMetadataAutorelease(iTermMetadata obj);
 
-@interface iTermExternalAttributeIndex: NSObject<NSCopying>
-@property (nonatomic, strong) NSDictionary<NSNumber *, iTermExternalAttribute *> *attributes;
-@property (nonatomic, readonly) NSDictionary *dictionaryValue;
+void iTermMetadataReplaceWithCopy(iTermMetadata *obj);
 
-+ (instancetype)withDictionary:(NSDictionary *)dictionary;  // return nil if input is NSNull
-- (instancetype)initWithDictionary:(NSDictionary *)dictionary;
+void iTermMetadataSetExternalAttributes(iTermMetadata *obj,
+                                        iTermExternalAttributeIndex * _Nullable externalAttributes);
 
-- (void)eraseAt:(int)x;
-- (void)eraseInRange:(VT100GridRange)range;
-- (void)setAttributes:(iTermExternalAttribute *)attributes at:(int)cursorX count:(int)count;
-- (void)copyFrom:(iTermExternalAttributeIndex *)source
-          source:(int)source
-     destination:(int)destination
-           count:(int)count;
-- (iTermExternalAttributeIndex *)subAttributesFromIndex:(int)index;
-- (iTermExternalAttributeIndex *)subAttributesFromIndex:(int)index maximumLength:(int)maxLength;
-- (iTermExternalAttribute * _Nullable)objectAtIndexedSubscript:(NSInteger)idx;
-+ (iTermExternalAttributeIndex *)concatenationOf:(iTermExternalAttributeIndex *)lhs
-                                      length:(int)lhsLength
-                                        with:(iTermExternalAttributeIndex *)rhs
-                                      length:(int)rhsLength;
-@end
+iTermExternalAttributeIndex * _Nullable
+iTermMetadataGetExternalAttributesIndex(iTermMetadata obj);
 
+iTermExternalAttributeIndex * _Nullable
+iTermMetadataGetExternalAttributesIndexCreatingIfNeeded(iTermMetadata *obj);
 
-@interface iTermMetadata : NSObject
-@property (nonatomic) NSTimeInterval timestamp;
-@property (nullable, strong) iTermExternalAttributeIndex *externalAttributes;
-@property (nonatomic, readonly) NSArray *arrayValue;
+void iTermMetadataInitFromArray(iTermMetadata *obj, NSArray *array);
+NSArray *iTermMetadataEncodeToArray(iTermMetadata obj);
 
-+ (instancetype)metadataWithTimestamp:(NSTimeInterval)timestamp
-                   externalAttributes:(iTermExternalAttributeIndex * _Nullable)externalAttributes;
-+ (instancetype)metadataWithArray:(NSArray *)array;
-+ (instancetype)defaultMetadata;
+void iTermMetadataAppend(iTermMetadata *lhs,
+                         int lhsLength,
+                         iTermMetadata *rhs,
+                         int rhsLength);
 
-- (iTermExternalAttributeIndex *)externalAttributesCreatingIfNeeded;
-- (iTermExternalAttributeIndex * _Nullable)externalAttributesCreatingIfNeeded:(BOOL)createIfNeeded;
-- (iTermMetadata *)subMetadataFromIndex:(NSInteger)start maximumLength:(NSInteger)maximumLength;
-- (iTermMetadata *)metadataByAppending:(iTermMetadata *)rhs
-                              myLength:(int)lhsLength
-                        appendeeLength:(int)rhsLength;
+void iTermMetadataInitCopyingSubrange(iTermMetadata *obj,
+                                      iTermMetadata *source,
+                                      int start,
+                                      int length);
 
-- (void)reset;
+iTermMetadata iTermMetadataDefault(void);
 
-@end
-
-@interface iTermUniformExternalAttributes: iTermExternalAttributeIndex
-+ (instancetype)withAttribute:(iTermExternalAttribute *)attr;
-
-- (void)copyFrom:(iTermExternalAttributeIndex *)source
-          source:(int)loadBase
-     destination:(int)storeBase
-           count:(int)count NS_UNAVAILABLE;
-@end
+void iTermMetadataReset(iTermMetadata *obj);
 
 NS_ASSUME_NONNULL_END

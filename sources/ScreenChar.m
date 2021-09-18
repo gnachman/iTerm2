@@ -171,12 +171,15 @@ iTermTriState iTermTriStateFromBool(BOOL b) {
 - (instancetype)initWithLine:(screen_char_t *)line
                       length:(int)length
                 continuation:(screen_char_t)continuation {
-    return [self initWithLine:line length:length metadata:nil continuation:continuation];
+    return [self initWithLine:line
+                       length:length
+                     metadata:iTermMetadataDefault()
+                 continuation:continuation];
 }
 
 - (instancetype)initWithLine:(screen_char_t *)line
                       length:(int)length
-                    metadata:(iTermMetadata *)metadata
+                    metadata:(iTermMetadata)metadata
                 continuation:(screen_char_t)continuation {
     self = [super init];
     if (self) {
@@ -184,6 +187,7 @@ iTermTriState iTermTriStateFromBool(BOOL b) {
         _length = length;
         _continuation = continuation;
         _metadata = metadata;
+        iTermMetadataRetain(_metadata);
         _eol = continuation.code;
     }
     return self;
@@ -194,6 +198,7 @@ iTermTriState iTermTriStateFromBool(BOOL b) {
         free(_line);
         _line = NULL;
     }
+    iTermMetadataRelease(_metadata);
 }
 
 - (BOOL)isEqualToScreenCharArray:(ScreenCharArray *)other {
@@ -219,15 +224,20 @@ iTermTriState iTermTriStateFromBool(BOOL b) {
     screen_char_t *copy = malloc(sizeof(screen_char_t) * combinedLength);
     memmove(copy, _line, sizeof(*_line) * _length);
     memmove(copy + _length, other.line, sizeof(*_line) * other.length);
-    iTermExternalAttributeIndex *eaIndex = [iTermExternalAttributeIndex concatenationOf:self.metadata.externalAttributes
-                                                                                 length:_length
-                                                                                   with:other.metadata.externalAttributes
-                                                                                 length:other->_length];
+    iTermExternalAttributeIndex *originalIndex = iTermMetadataGetExternalAttributesIndex(_metadata);
+    iTermExternalAttributeIndex *appendage = iTermMetadataGetExternalAttributesIndex(other->_metadata);
+    iTermExternalAttributeIndex *eaIndex =
+        [iTermExternalAttributeIndex concatenationOf:originalIndex
+                                              length:_length
+                                                with:appendage
+                                              length:other->_length];
+    iTermMetadata combined;
+    iTermMetadataInit(&combined, _metadata.timestamp, eaIndex);
     ScreenCharArray *result = [[ScreenCharArray alloc] initWithLine:copy
                                                              length:combinedLength
-                                                           metadata:[iTermMetadata metadataWithTimestamp:_metadata.timestamp
-                                                                                      externalAttributes:eaIndex]
+                                                           metadata:combined
                                                        continuation:other.continuation];
+    iTermMetadataRelease(combined);
     if (result) {
         result->_shouldFreeOnRelease = YES;
     }

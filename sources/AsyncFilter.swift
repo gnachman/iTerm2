@@ -206,10 +206,11 @@ class AsyncFilter: NSObject {
         }
         lastLineIsTemporary = temporary
         let chars = lineBufferCopy.rawLine(atWrappedLine: lineNumber, width: width)
+        let metadata = lineBufferCopy.metadataForRawLine(withWrappedLineNumber: lineNumber,
+                                                         width: width)
         destination.append(chars.line,
                            count: chars.length,
-                           externalAttributeIndex: lineBufferCopy.metadataForRawLine(withWrappedLineNumber: lineNumber,
-                                                                                     width: width).externalAttributes,
+                           externalAttributeIndex: iTermMetadataGetExternalAttributesIndex(metadata),
                            continuation: chars.continuation)
     }
 
@@ -283,7 +284,7 @@ extension AsyncFilter: ContentSubscriber {
                                   length: array.length,
                                   partial: array.eol != EOL_HARD,
                                   width: width,
-                                  metadata:metadata,
+                                  metadata: metadata,
                                   continuation: array.continuation)
         if timer != nil {
             return

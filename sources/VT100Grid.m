@@ -92,8 +92,7 @@ static NSString *const kGridSizeKey = @"Size";
                 *stop = YES;
                 return;
             }
-            lineInfos_[idx].metadata = [iTermMetadata metadataWithTimestamp:timestamp.doubleValue
-                                                         externalAttributes:nil];
+            lineInfos_[idx].timestamp = timestamp.doubleValue;
         }];
         [[NSArray castFrom:dictionary[@"metadata"]] enumerateObjectsUsingBlock:^(NSArray *entry,
                                                                                  NSUInteger idx,
@@ -103,7 +102,7 @@ static NSString *const kGridSizeKey = @"Size";
                 *stop = YES;
                 return;
             }
-            lineInfos_[idx].metadata = [iTermMetadata metadataWithArray:entry];
+            [lineInfos_[idx] decodeMetadataArray:entry];
         }];
         cursor_ = [NSDictionary castFrom:dictionary[@"cursor"]].gridCoord;
         scrollRegionRows_ = [NSDictionary castFrom:dictionary[@"scrollRegionRows"]].gridRange;
@@ -134,15 +133,16 @@ static NSString *const kGridSizeKey = @"Size";
     }
 }
 
-- (iTermMetadata *)metadataAtLineNumber:(int)lineNumber {
+- (iTermMetadata)metadataAtLineNumber:(int)lineNumber {
     return [self lineInfoAtLineNumber:lineNumber].metadata;
 }
 
-- (iTermExternalAttributeIndex *)externalAttributesOnLine:(int)line {
-    return [[[self lineInfoAtLineNumber:line] metadata] externalAttributes];
+- (iTermExternalAttributeIndex *)externalAttributesOnLine:(int)line
+                                           createIfNeeded:(BOOL)createIfNeeded {
+    return [[self lineInfoAtLineNumber:line] externalAttributesCreatingIfNeeded:createIfNeeded];
 }
 
-- (void)setMetadata:(iTermMetadata *)metadata forLineNumber:(int)lineNumber {
+- (void)setMetadata:(iTermMetadata)metadata forLineNumber:(int)lineNumber {
     VT100LineInfo *info = [self lineInfoAtLineNumber:lineNumber];
     info.metadata = metadata;
 }
@@ -423,7 +423,7 @@ static NSString *const kGridSizeKey = @"Size";
     NSMutableData *lastLineData = [self lineDataAtLineNumber:(size_.height - 1)];
     if (lastLineData) {  // This if statement is just to quiet the analyzer.
         [self clearLineData:lastLineData];
-        [[self lineInfoAtLineNumber:(size_.height - 1)] setMetadata:[iTermMetadata defaultMetadata]];
+        [[self lineInfoAtLineNumber:(size_.height - 1)] resetMetadata];
     }
 
     if (lineBuffer) {
@@ -653,7 +653,8 @@ static NSString *const kGridSizeKey = @"Size";
             line[size_.width] = c;
             line[size_.width].code = EOL_HARD;
         }
-        [[self externalAttributesOnLine:y] setAttributes:attrs at:minX count:maxX - minX + 1];
+        [[self externalAttributesOnLine:y] setAttributes:attrs at:minX count:maxX - minX + 1
+                                          createIfNeeded:attrs != nil];
     }
     [self markCharsDirty:YES inRectFrom:from to:to];
 }
@@ -675,7 +676,7 @@ static NSString *const kGridSizeKey = @"Size";
     }
 }
 
-- (void)setMetadata:(iTermMetadata *)metadata forLine:(int)lineNumber {
+- (void)setMetadata:(iTermMetadata)metadata forLine:(int)lineNumber {
     [[self lineInfoAtLineNumber:lineNumber] setMetadata:metadata];
 }
 
@@ -962,7 +963,7 @@ static NSString *const kGridSizeKey = @"Size";
 
         const int lineNumber = cursor_.y;
         aLine = [self screenCharsAtLineNumber:lineNumber];
-        iTermExternalAttributeIndex *eaIndex = [[self metadataAtLineNumber:lineNumber] externalAttributesCreatingIfNeeded:attributes != nil];
+        iTermExternalAttributeIndex *eaIndex = [self externalAttributesOnLine:lineNumber createIfNeeded:attributes != nil];
 
         BOOL mayStompSplitDwc = NO;
         if (newx == size_.width) {
@@ -1148,7 +1149,8 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
     const int rightMargin = [self rightMargin];
     screen_char_t defaultChar = [self defaultChar];
 
-    iTermExternalAttributeIndex *eaIndex = [self externalAttributesOnLine:startCoord.y];
+    iTermExternalAttributeIndex *eaIndex = [self externalAttributesOnLine:startCoord.y
+                                                           createIfNeeded:NO];
     if (startCoord.x >= leftMargin &&
         startCoord.x < rightMargin &&
         startCoord.y >= 0 &&
@@ -1357,7 +1359,7 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
 }
 
 - (void)setContentsFromDVRFrame:(screen_char_t *)s
-                  metadataArray:(NSArray<iTermMetadata *> *)sourceMetadataArray
+                  metadataArray:(iTermMetadata *)sourceMetadataArray
                            info:(DVRFrameInfo)info {
     [self setCharsFrom:VT100GridCoordMake(0, 0)
                     to:VT100GridCoordMake(size_.width - 1, size_.height - 1)
@@ -1509,7 +1511,7 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
             }
         }
         int cont;
-        iTermMetadata *metadata = nil;
+        iTermMetadata metadata;
         screen_char_t continuation;
         ++numPopped;
         assert([lineBuffer popAndCopyLastLineInto:dest
@@ -1747,7 +1749,8 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
     memmove(line + pos.x + n,
             line + pos.x,
             charsToMove * sizeof(screen_char_t));
-    iTermExternalAttributeIndex *eaIndex = [self externalAttributesOnLine:pos.y];
+    iTermExternalAttributeIndex *eaIndex = [self externalAttributesOnLine:pos.y
+                                                           createIfNeeded:attrs != nil];
     [eaIndex copyFrom:eaIndex source:pos.x destination:pos.x + n count:charsToMove];
 
     // Try to clean up DWC_SKIP+EOL_DWC pair, if needed.
@@ -1812,7 +1815,7 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
 
 - (void)resetTimestamps {
     for (VT100LineInfo *info in lineInfos_) {
-        [info.metadata reset];
+        [info resetMetadata];
     }
 }
 
@@ -1846,7 +1849,7 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
 
 - (void)encode:(id<iTermEncoderAdapter>)encoder {
     NSArray<NSArray *> *metadata = [lineInfos_ mapWithBlock:^id(VT100LineInfo *anObject) {
-        return anObject.metadata.arrayValue ?: @[];
+        return anObject.encodedMetadata;
     }];
     NSArray<NSData *> *lines = [[NSArray sequenceWithRange:NSMakeRange(0, size_.height)] mapWithBlock:^id(NSNumber *i) {
         return [self lineDataAtLineNumber:i.intValue];
@@ -2182,15 +2185,18 @@ static void DumpBuf(screen_char_t* p, int n) {
 }
 
 - (void)eraseExternalAttributesAt:(VT100GridCoord)coord count:(int)count{
-    iTermExternalAttributeIndex *eaIndex = [self externalAttributesOnLine:coord.y];
+    iTermExternalAttributeIndex *eaIndex = [self externalAttributesOnLine:coord.y
+                                                           createIfNeeded:NO];
     [eaIndex eraseInRange:VT100GridRangeMake(coord.x, count)];
 }
 
 - (void)copyExternalAttributesFrom:(VT100GridCoord)sourceCoord
                                 to:(VT100GridCoord)destinationCoord
                             length:(int)length {
-    iTermExternalAttributeIndex *source = [self externalAttributesOnLine:sourceCoord.y];
-    iTermExternalAttributeIndex *dest = [self externalAttributesOnLine:destinationCoord.y];
+    iTermExternalAttributeIndex *source = [self externalAttributesOnLine:sourceCoord.y
+                                                          createIfNeeded:NO];
+    iTermExternalAttributeIndex *dest = [self externalAttributesOnLine:destinationCoord.y
+                                         createIfNeeded:source != nil];
     if (!source && !dest) {
         return;
     }
@@ -2206,7 +2212,7 @@ static void DumpBuf(screen_char_t* p, int n) {
 
 - (iTermExternalAttributeIndex *)createExternalAttributesForLine:(int)line {
     VT100LineInfo *info = [self lineInfoAtLineNumber:line];
-    return [info.metadata externalAttributesCreatingIfNeeded];
+    return [info externalAttributesCreatingIfNeeded:YES];
 }
 
 - (BOOL)erasePossibleDoubleWidthCharInLineNumber:(int)lineNumber

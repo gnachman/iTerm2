@@ -1214,11 +1214,11 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     if (query.length == 0) {
         // Append all lines. Searching for empty string doesn't return any results and I have no
         // idea what would break if I changed that.
-        [source enumerateLinesInRange:NSMakeRange(0, source.numberOfLines) block:^(int line, ScreenCharArray *sca, iTermMetadata *metadata, BOOL *stop) {
+        [source enumerateLinesInRange:NSMakeRange(0, source.numberOfLines) block:^(int line, ScreenCharArray *sca, iTermMetadata metadata, BOOL *stop) {
 #warning  TODO(externalAttributes): Test this
             [self appendScreenChars:sca.line
                              length:sca.length
-             externalAttributeIndex:metadata.externalAttributes
+             externalAttributeIndex:iTermMetadataGetExternalAttributesIndex(metadata)
                        continuation:sca.continuation];
         }];
     } else {
@@ -1572,7 +1572,8 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     linebuffer_.mayHaveDoubleWidthCharacter = YES;
     NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
     // TODO(externalAttributes): Add support for external attributes here. This is only used by tmux at the moment.
-    iTermMetadata *metadata = [iTermMetadata metadataWithTimestamp:now externalAttributes:0];
+    iTermMetadata metadata;
+    iTermMetadataInit(&metadata, now, nil);
     for (NSData *chars in history) {
         screen_char_t *line = (screen_char_t *) [chars bytes];
         const int len = [chars length] / sizeof(screen_char_t);
@@ -1860,7 +1861,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     [altGrid_ resetTimestamps];
 }
 
-- (void)enumerateLinesInRange:(NSRange)range block:(void (^)(int, ScreenCharArray *, iTermMetadata *, BOOL *))block {
+- (void)enumerateLinesInRange:(NSRange)range block:(void (^)(int, ScreenCharArray *, iTermMetadata, BOOL *))block {
     NSInteger i = range.location;
     const NSInteger lastLine = NSMaxRange(range) - 1;
     const NSInteger numLinesInLineBuffer = [linebuffer_ numLinesWithWidth:currentGrid_.size.width];
@@ -1893,7 +1894,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     return array;
 }
 
-- (iTermMetadata *)metadataOnLine:(int)lineNumber {
+- (iTermMetadata)metadataOnLine:(int)lineNumber {
     ITBetaAssert(lineNumber >= 0, @"Negative index to getLineAtIndex");
     const int width = currentGrid_.size.width;
     int numLinesInLineBuffer = [linebuffer_ numLinesWithWidth:width];
@@ -1904,7 +1905,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     }
 }
 
-- (iTermMetadata *)metadataAtScreenIndex:(int)index {
+- (iTermMetadata)metadataAtScreenIndex:(int)index {
     return [currentGrid_ metadataAtLineNumber:index];
 }
 

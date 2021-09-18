@@ -40,7 +40,7 @@ NS_ASSUME_NONNULL_BEGIN
                                         int length,
                                         int eol,
                                         screen_char_t continuation,
-                                        iTermMetadata *metadata,
+                                        iTermMetadata metadata,
                                         BOOL *stop))block;
 - (NSInteger)numberOfRawLines;
 - (NSInteger)rawSpaceUsed;

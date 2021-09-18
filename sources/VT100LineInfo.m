@@ -24,7 +24,7 @@ static NSInteger VT100LineInfoNextGeneration = 1;
         start_ = -1;
         bound_ = -1;
         [self setDirty:NO inRange:VT100GridRangeMake(0, width) updateTimestamp:NO];
-        _metadata = [[iTermMetadata alloc] init];
+        iTermMetadataInit(&_metadata, 0, nil);
     }
     return self;
 }
@@ -103,6 +103,29 @@ static NSInteger VT100LineInfoNextGeneration = 1;
 
 - (void)setTimestamp:(NSTimeInterval)timestamp {
     _metadata.timestamp = timestamp;
+}
+
+- (void)decodeMetadataArray:(NSArray *)array {
+    iTermMetadataRelease(_metadata);
+    iTermMetadataInitFromArray(&_metadata, array);
+}
+
+- (void)resetMetadata {
+    iTermMetadataReset(&_metadata);
+}
+
+- (NSArray *)encodedMetadata {
+    return iTermMetadataEncodeToArray(_metadata);
+}
+
+- (void)setMetadata:(iTermMetadata)metadata {
+    iTermMetadataRetain(metadata);
+    iTermMetadataRelease(_metadata);
+    _metadata = metadata;
+}
+
+- (iTermExternalAttributeIndex *)externalAttributesCreatingIfNeeded:(BOOL)create {
+    return create ? iTermMetadataGetExternalAttributesIndexCreatingIfNeeded(&_metadata) : iTermMetadataGetExternalAttributesIndex(_metadata);
 }
 
 @end

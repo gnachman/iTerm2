@@ -9,10 +9,11 @@
 #import <Foundation/Foundation.h>
 #import "ScreenChar.h"
 #import "VT100GridTypes.h"
+#import "iTermMetadata.h"
 
 @interface VT100LineInfo : NSObject <NSCopying>
 
-@property(nonatomic, strong) iTermMetadata *metadata;
+@property(nonatomic) iTermMetadata metadata;
 @property(nonatomic, readonly) NSInteger generation;
 
 - (instancetype)initWithWidth:(int)width;
@@ -22,5 +23,9 @@
 - (VT100GridRange)dirtyRange;
 - (NSIndexSet *)dirtyIndexes;
 - (void)setTimestamp:(NSTimeInterval)timestamp;
+- (void)decodeMetadataArray:(NSArray *)array;
+- (void)resetMetadata;
+- (NSArray *)encodedMetadata;
+- (iTermExternalAttributeIndex *)externalAttributesCreatingIfNeeded:(BOOL)create;
 
 @end
