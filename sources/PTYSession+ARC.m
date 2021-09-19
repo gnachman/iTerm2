@@ -208,7 +208,7 @@ extern NSString *const SESSION_ARRANGEMENT_SERVER_DICT;
     }
 }
 
-- (void)publishScreenCharArray:(const screen_char_t *)line length:(int)length {
+- (void)publishScreenCharArray:(const screen_char_t *)line metadata:(iTermMetadata)metadata length:(int)length {
     if (self.contentSubscribers.count == 0) {
         return;
     }
@@ -219,7 +219,7 @@ extern NSString *const SESSION_ARRANGEMENT_SERVER_DICT;
                                                       continuation:continuation];
     for (id<iTermContentSubscriber> subscriber in self.contentSubscribers) {
 #warning TODO(extendedAttributes): Need to pass in a slice of metadata
-        [subscriber deliver:array metadata:iTermMetadataDefault()];
+        [subscriber deliver:array metadata:metadata];
     }
 }
 

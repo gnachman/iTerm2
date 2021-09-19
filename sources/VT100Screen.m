@@ -1429,7 +1429,6 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
                                length:(int)len
                externalAttributeIndex:(iTermExternalAttributeIndex *)externalAttributes
                            shouldFree:(BOOL)shouldFree {
-    [delegate_ screenAppendScreenCharArray:buffer length:len];
     if (len >= 1) {
         screen_char_t lastCharacter = buffer[len - 1];
         if (lastCharacter.code == DWC_RIGHT && !lastCharacter.complexChar) {
@@ -1461,6 +1460,12 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
                                                                ansi:_ansi
                                                              insert:_insert
                                              externalAttributeIndex:externalAttributes]];
+        iTermMetadata temp;
+        iTermMetadataInit(&temp, 0, externalAttributes);
+        [delegate_ screenAppendScreenCharArray:buffer
+                                      metadata:temp
+                                        length:len];
+        iTermMetadataRelease(temp);
     }
 
     if (shouldFree) {
@@ -3410,6 +3415,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
             aLine[i].code = '\t';
         }
         [delegate_ screenAppendScreenCharArray:aLine + currentGrid_.cursorX
+                                      metadata:iTermMetadataDefault()
                                         length:nextTabStop - startX];
     }
     currentGrid_.cursorX = nextTabStop;

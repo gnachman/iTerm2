@@ -71,7 +71,7 @@ class FilteringUpdater: Updater {
         stopAt = lineBuffer.lastPosition()
         lineBuffer.prepareToSearch(for: query,
                                    startingAt: startPosition,
-                                   options: [.multipleResults, .oneResultPerRawLine],
+                                   options: [.multipleResults, .oneResultPerRawLine, .optEmptyQueryMatches],
                                    mode: mode,
                                    with: context)
     }
@@ -82,11 +82,13 @@ class FilteringUpdater: Updater {
 
     func update() -> Bool {
         if let lastPosition = lastPosition {
+            DLog("Reset search at last position, set lastPosition to nil")
             begin(at: lastPosition)
             self.lastPosition = nil
         }
         guard context.status == .Searching || context.status == .Matched else {
-            DLog("FilteringUpdater: finished, return false")
+            DLog("FilteringUpdater: finished, return false. Set lastPosition to end of buffer")
+            self.lastPosition = lineBuffer.lastPosition()
             return false
         }
         DLog("FilteringUpdater: perform search")
@@ -115,10 +117,13 @@ class FilteringUpdater: Updater {
             // We know we searched the last line so prepare to search again from the beginning
             // of the last line next time.
             lastPosition = lineBuffer.positionForStartOfLastLine()
+            DLog("Back up to start of last line")
             return false
         }
+        DLog("status is \(context.status.rawValue)")
         switch context.status {
         case .NotFound:
+            DLog("Set last position to end of buffer")
             lastPosition = lineBuffer.lastPosition()
             return false
         case .Matched, .Searching:
@@ -271,6 +276,7 @@ class AsyncFilter: NSObject {
         if !needsUpdate {
             progress?(1)
             timer?.invalidate()
+            DLog("don't need an update")
             timer = nil
         } else {
             progress?(updater.progress)

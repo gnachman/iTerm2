@@ -12971,8 +12971,10 @@ preferredEscaping:(iTermSendTextEscaping)preferredEscaping {
     }
 }
 
-- (void)screenAppendScreenCharArray:(const screen_char_t *)line length:(int)length {
-    [self publishScreenCharArray:line length:length];
+- (void)screenAppendScreenCharArray:(const screen_char_t *)line
+                           metadata:(iTermMetadata)metadata
+                             length:(int)length {
+    [self publishScreenCharArray:line metadata:metadata length:length];
 }
 
 - (NSString *)screenStringForKeypressWithCode:(unsigned short)keycode

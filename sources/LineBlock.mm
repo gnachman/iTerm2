@@ -285,9 +285,11 @@ NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock)
         if (gEnableDoubleWidthCharacterLineCache) {
             theCopy->metadata_[i].double_width_characters = nil;
         }
-        // We memmove'd the pointer without retaining it so nil it out before assignment.
-        theCopy->metadata_[i].lineMetadata.externalAttributes = nil;
-        iTermMetadataReplaceWithCopy(&theCopy->metadata_[i].lineMetadata);
+        iTermMetadata temp = theCopy->metadata_[i].lineMetadata;
+        memset(&theCopy->metadata_[i].lineMetadata, 0, sizeof(theCopy->metadata_[i].lineMetadata));
+        iTermMetadataInit(&theCopy->metadata_[i].lineMetadata,
+                          temp.timestamp,
+                          [iTermMetadataGetExternalAttributesIndex(temp) copy]);
     }
     theCopy->cll_capacity = cll_capacity;
     theCopy->cll_entries = cll_entries;
@@ -1426,7 +1428,11 @@ static int CoreSearch(NSString *needle,
         if (caseInsensitive) {
             apiOptions = static_cast<RKLRegexOptions>(apiOptions | NSCaseInsensitiveSearch | NSDiacriticInsensitiveSearch | NSWidthInsensitiveSearch);
         }
-        range = [haystack rangeOfString:needle options:apiOptions];
+        if ((options & FindOptEmptyQueryMatches) == FindOptEmptyQueryMatches && needle.length == 0) {
+            range = NSMakeRange(0, 0);
+        } else {
+            range = [haystack rangeOfString:needle options:apiOptions];
+        }
     }
     int result = -1;
     if (range.location != NSNotFound) {
