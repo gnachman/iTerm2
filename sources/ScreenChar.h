@@ -29,7 +29,6 @@
  */
 
 #import <Cocoa/Cocoa.h>
-#import "iTermMetadata.h"
 #import "ITAddressBookMgr.h"
 #import "NSStringITerm.h"
 #import "VT100GridTypes.h"
@@ -121,6 +120,15 @@ typedef NS_ENUM(unsigned int, VT100UnderlineStyle) {
     VT100UnderlineStyleCurly
 };
 
+typedef struct {
+    int red;
+    int green;
+    int blue;
+    ColorMode mode;
+} VT100TerminalColorValue;
+
+NSString *VT100TerminalColorValueDescription(VT100TerminalColorValue value);
+
 typedef struct screen_char_t
 {
     // Normally, 'code' gives a utf-16 code point. If 'complexChar' is set then
@@ -195,33 +203,6 @@ typedef struct screen_char_t
     unsigned short urlCode;
 } screen_char_t;
 
-// Typically used to store a single screen line.
-@interface ScreenCharArray : NSObject<NSCopying> {
-    screen_char_t *_line;  // Array of chars
-    int _length;  // Number of chars in _line
-    int _eol;  // EOL_SOFT, EOL_HARD, or EOL_DWC
-}
-
-@property (nonatomic, assign) screen_char_t *line;  // Assume const unless instructed otherwise
-@property (nonatomic, assign) int length;
-@property (nonatomic, assign) int eol;
-@property (nonatomic) screen_char_t continuation;
-@property (nonatomic, readonly) iTermMetadata metadata;
-
-- (instancetype)initWithLine:(screen_char_t *)line
-                      length:(int)length
-                continuation:(screen_char_t)continuation;
-
-- (instancetype)initWithLine:(screen_char_t *)line
-                      length:(int)length
-                    metadata:(iTermMetadata)metadata
-                continuation:(screen_char_t)continuation;
-
-- (BOOL)isEqualToScreenCharArray:(ScreenCharArray *)other;
-- (ScreenCharArray *)screenCharArrayByAppendingScreenCharArray:(ScreenCharArray *)other;
-- (ScreenCharArray *)screenCharArrayByRemovingTrailingNullsAndHardNewline;
-
-@end
 
 // Standard unicode replacement string. Is a double-width character.
 static inline NSString* ReplacementString()

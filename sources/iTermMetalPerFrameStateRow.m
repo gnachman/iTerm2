@@ -50,6 +50,7 @@ NS_ASSUME_NONNULL_BEGIN
         if (findMatches) {
             _matches = findMatches;
         }
+        _eaIndex = [screen externalAttributeIndexForLine:i];
 
         const long long absoluteLine = totalScrollbackOverflow + i;
         _underlinedRange = [drawingHelper underlinedRangeOnLine:absoluteLine];

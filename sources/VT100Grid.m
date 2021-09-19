@@ -653,8 +653,11 @@ static NSString *const kGridSizeKey = @"Size";
             line[size_.width] = c;
             line[size_.width].code = EOL_HARD;
         }
-        [[self externalAttributesOnLine:y] setAttributes:attrs at:minX count:maxX - minX + 1
-                                          createIfNeeded:attrs != nil];
+        iTermExternalAttributeIndex *eaIndex = [self externalAttributesOnLine:y
+                                                               createIfNeeded:attrs != nil];
+        [eaIndex setAttributes:attrs
+                            at:minX
+                         count:maxX - minX + 1];
     }
     [self markCharsDirty:YES inRectFrom:from to:to];
 }
@@ -1519,6 +1522,7 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
                                 includesEndOfLine:&cont
                                          metadata:&metadata
                                      continuation:&continuation]);
+        NSLog(@"%@", ScreenCharArrayToStringDebug(dest, size_.width));
         [[self lineInfoAtLineNumber:destLineNumber] setMetadata:metadata];
         if (cont && dest[size_.width - 1].code == 0 && prevLineStartsWithDoubleWidth) {
             // If you pop a soft-wrapped line that's a character short and the

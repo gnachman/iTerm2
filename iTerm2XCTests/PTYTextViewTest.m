@@ -2504,7 +2504,7 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
     return @"";
 }
 
-- (NSSet<NSString *> *)sgrCodesForChar:(screen_char_t)c {
+- (NSSet<NSString *> *)sgrCodesForChar:(screen_char_t)c externalAttributes:(iTermExternalAttribute *)ea {
     return [NSSet set];
 }
 

@@ -33,6 +33,9 @@ typedef struct {
     int bgGreen;
     int bgBlue;
     ColorMode bgColorMode;
+
+    BOOL hasUnderlineColor;
+    VT100TerminalColorValue underlineColor;
 } VT100GraphicRendition;
 
 typedef NS_OPTIONS(int, VT100TerminalKeyReportingFlags) {
@@ -166,7 +169,9 @@ typedef NS_OPTIONS(int, VT100TerminalKeyReportingFlags) {
 
 - (void)gentleReset;
 
-- (NSSet<NSString *> *)sgrCodesForCharacter:(screen_char_t)c;
+- (NSSet<NSString *> *)sgrCodesForCharacter:(screen_char_t)c
+                         externalAttributes:(iTermExternalAttribute *)ea;
+
 - (void)resetSendModifiersWithSideEffects:(BOOL)sideEffects;
 - (void)toggleAlternateScreen;
 

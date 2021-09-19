@@ -7,6 +7,7 @@
 #import "VT100GridTypes.h"
 
 @class iTermColorMap;
+@class iTermExternalAttributeIndex;
 @class PTYNoteViewController;
 @class PTYSession;
 @class PTYTask;
@@ -30,6 +31,7 @@
 // pointer to it. Better to use getLineAtIndex:withBuffer:.
 - (screen_char_t *)getLineAtIndex:(int)theIndex;
 - (long long)totalScrollbackOverflow;
+- (iTermExternalAttributeIndex *)externalAttributeIndexForLine:(int)y;
 
 @end
 
@@ -132,6 +134,7 @@
 // is YES, of course).
 - (PTYTextViewSynchronousUpdateState *)setUseSavedGridIfAvailable:(BOOL)useSavedGrid;
 - (NSString *)compactLineDumpWithContinuationMarks;
-- (NSSet<NSString *> *)sgrCodesForChar:(screen_char_t)c;
+- (NSSet<NSString *> *)sgrCodesForChar:(screen_char_t)c
+                    externalAttributes:(iTermExternalAttribute *)ea;
 
 @end

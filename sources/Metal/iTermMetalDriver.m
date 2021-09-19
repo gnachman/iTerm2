@@ -1082,6 +1082,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
                                                                                cursorInfo.cursorColor.greenComponent,
                                                                                cursorInfo.cursorColor.blueComponent,
                                                                                1);
+        glyphAttributes[cursorInfo.coord.x].hasUnderlineColor = NO;
         [rowWithCursor.attributesData checkForOverrun];
     }
 

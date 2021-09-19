@@ -126,3 +126,7 @@ void iTermMetadataReset(iTermMetadata *obj) {
     obj->timestamp = 0;
     iTermMetadataSetExternalAttributes(obj, NULL);
 }
+
+NSString *iTermMetadataShortDescription(iTermMetadata metadata, int length) {
+    return [NSString stringWithFormat:@"<iTermMetadata timestamp=%@ ea=%@>", @(metadata.timestamp), iTermMetadataGetExternalAttributesIndex(metadata)];
+}

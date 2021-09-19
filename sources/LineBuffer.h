@@ -30,7 +30,7 @@
 #import "FindContext.h"
 #import "iTermEncoderAdapter.h"
 #import "iTermFindDriver.h"
-#import "ScreenChar.h"
+#import "ScreenCharArray.h"
 #import "LineBufferPosition.h"
 #import "LineBufferHelpers.h"
 #import "VT100GridTypes.h"

@@ -6,7 +6,9 @@
 //
 
 #import "iTermExternalAttributeIndex.h"
+#import "NSArray+iTerm.h"
 #import "NSDictionary+iTerm.h"
+#import "ScreenChar.h"
 
 @implementation iTermExternalAttributeIndex {
     NSMutableDictionary<NSNumber *, iTermExternalAttribute *> *_attributes;
@@ -47,6 +49,76 @@
     }];
 }
 
+- (NSString *)description {
+    return [NSString stringWithFormat:@"<%@: %p %@>", NSStringFromClass([self class]), self, [self shortDescriptionWithLength:[self largestKey] + 1]];
+}
+
+- (NSUInteger)largestKey {
+    NSNumber *key = [_attributes.allKeys maxWithComparator:^(NSNumber *lhs, NSNumber *rhs) {
+        return [lhs compare:rhs];
+    }];
+    return [key unsignedIntegerValue];
+}
+
+- (NSString *)shortDescriptionWithLength:(int)length {
+    NSMutableArray<NSString *> *array = [NSMutableArray array];
+    [self enumerateValuesInRange:NSMakeRange(0, length) block:^(NSRange range, iTermExternalAttribute *attr) {
+        [array addObject:[NSString stringWithFormat:@"%@=%@", NSStringFromRange(range), [attr description]]];
+    }];
+    return [array componentsJoinedByString:@","];
+}
+
+- (void)enumerateValuesInRange:(NSRange)range block:(void (^NS_NOESCAPE)(NSRange, iTermExternalAttribute * _Nonnull))block {
+    __block NSNumber *startOfRunKey = nil;
+    __block NSNumber *endOfRunKey = nil;
+    void (^emit)(void) = ^{
+        assert(startOfRunKey);
+        assert(endOfRunKey);
+        assert(self[startOfRunKey.unsignedIntegerValue]);
+        assert(endOfRunKey.unsignedIntegerValue >= startOfRunKey.unsignedIntegerValue);
+        block(NSMakeRange(startOfRunKey.unsignedIntegerValue,
+                          endOfRunKey.unsignedIntegerValue - startOfRunKey.unsignedIntegerValue + 1),
+              self[startOfRunKey.unsignedIntegerValue]);
+    };
+    void (^accumulate)(NSNumber *) = ^(NSNumber *key) {
+        assert(key);
+        if (!startOfRunKey) {
+            // Start of first run.
+            startOfRunKey = key;
+            endOfRunKey = key;
+            return;
+        }
+        if (key.unsignedIntegerValue == endOfRunKey.unsignedIntegerValue + 1 &&
+            [self[startOfRunKey.unsignedIntegerValue] isEqualToExternalAttribute:self[key.unsignedIntegerValue]]) {
+            // Continue current run.
+            endOfRunKey = key;
+            return;
+        }
+
+        // Run ended. Begin a new run.
+        emit();
+        startOfRunKey = key;
+        endOfRunKey = key;
+    };
+    [self enumerateSortedKeysInRange:range block:^(NSNumber *key) {
+        accumulate(key);
+    }];
+    if (startOfRunKey) {
+        emit();
+    }
+}
+
+// Subclasses override this.
+- (void)enumerateSortedKeysInRange:(NSRange)range block:(void (^)(NSNumber *key))block {
+    NSArray<NSNumber *> *sortedKeys = [[_attributes allKeys] sortedArrayUsingSelector:@selector(compare:)];
+    [sortedKeys enumerateObjectsUsingBlock:^(NSNumber * _Nonnull key, NSUInteger idx, BOOL * _Nonnull stop) {
+        if (!NSLocationInRange(key.unsignedIntegerValue - _offset, range)) {
+            return;
+        }
+        block(key);
+    }];
+}
+
 - (void)copyFrom:(iTermExternalAttributeIndex *)source
           source:(int)loadBase
      destination:(int)storeBase
@@ -66,8 +138,13 @@
         stride = 1;
     }
     for (int i = start; i != end; i += stride) {
-        _attributes[@(storeBase + i)] = [source.attributes[@(loadBase + i)] copy];
+        _attributes[@(storeBase + i)] = source[loadBase + i];
     }
+}
+
+- (id)objectForKeyedSubscript:(id)key {
+    [self doesNotRecognizeSelector:_cmd];
+    return nil;
 }
 
 - (iTermExternalAttribute *)objectAtIndexedSubscript:(NSInteger)idx {
@@ -78,19 +155,22 @@
     return [self subAttributesFromIndex:index maximumLength:INT_MAX];
 }
 
+- (iTermExternalAttributeIndex *)subAttributesToIndex:(int)index {
+    return [self subAttributesFromIndex:0 maximumLength:index];
+}
+
 - (iTermExternalAttributeIndex *)subAttributesFromIndex:(int)index maximumLength:(int)maxLength {
     iTermExternalAttributeIndex *sub = [[iTermExternalAttributeIndex alloc] init];
-    sub->_offset = index;
+    sub->_offset = 0;
     [_attributes enumerateKeysAndObjectsUsingBlock:^(NSNumber *_Nonnull key, iTermExternalAttribute *_Nonnull obj, BOOL * _Nonnull stop) {
-        const int intKey = key.intValue;
+        const int intKey = key.intValue + _offset;
         if (intKey < index) {
             return;
         }
-        if (intKey >= index + maxLength) {
-            *stop = YES;
+        if (intKey >= (NSInteger)index + (NSInteger)maxLength) {
             return;
         }
-        sub->_attributes[key] = obj;
+        sub->_attributes[@(intKey - index)] = obj;
     }];
     return sub;
 }
@@ -146,24 +226,51 @@ static NSString *const iTermExternalAttributeKeyUnderlineColor = @"uc";
 
 @implementation iTermExternalAttribute
 
+- (instancetype)init {
+    return [super init];
+}
+
+- (instancetype)initWithUnderlineColor:(VT100TerminalColorValue)color {
+    self = [self init];
+    if (self) {
+        _hasUnderlineColor = YES;
+        _underlineColor = color;
+    }
+    return self;
+}
+
+- (NSString *)description {
+    if (!_hasUnderlineColor) {
+        return @"none";
+    }
+    return [NSString stringWithFormat:@"ulc=%@", VT100TerminalColorValueDescription(_underlineColor)];
+}
+
 - (NSDictionary *)dictionaryValue {
     return @{
-        iTermExternalAttributeKeyUnderlineColor: _hasUnderlineColor ? @[ @(_underlineColor.x),
-                                                                         @(_underlineColor.y),
-                                                                         @(_underlineColor.z),
-                                                                         @(_underlineColor.w) ] : [NSNull null] };
+        iTermExternalAttributeKeyUnderlineColor: _hasUnderlineColor ? @[ @(_underlineColor.mode),
+                                                                         @(_underlineColor.red),
+                                                                         @(_underlineColor.green),
+                                                                         @(_underlineColor.blue) ] : [NSNull null] };
 }
 
 - (id)copyWithZone:(NSZone *)zone {
-    iTermExternalAttribute *copy = [[iTermExternalAttribute alloc] init];
-    copy.hasUnderlineColor = _hasUnderlineColor;
-    copy.underlineColor = _underlineColor;
-    return copy;
+    return self;
+}
+
+- (BOOL)isEqualToExternalAttribute:(iTermExternalAttribute *)rhs {
+    if (_hasUnderlineColor != rhs.hasUnderlineColor) {
+        return NO;
+    }
+    if (!_hasUnderlineColor && !rhs.hasUnderlineColor) {
+        return YES;
+    }
+    return !memcmp(&_underlineColor, &rhs->_underlineColor, sizeof(_underlineColor));
 }
 
 @end
 
-@implementation iTermUniformExternalAttributes {
+@implementation iTermUniformExternalAttributes  {
     iTermExternalAttribute *_attr;
 }
 
@@ -182,6 +289,14 @@ static NSString *const iTermExternalAttributeKeyUnderlineColor = @"uc";
     return self;
 }
 
+- (NSString *)description {
+    return [NSString stringWithFormat:@"<%@: %p %@>", NSStringFromClass([self class]), self, _attr];
+}
+
+- (NSString *)shortDescriptionWithLength:(int)length {
+    return [self description];
+}
+
 - (NSDictionary *)dictionaryValue {
     return @{ @"all": _attr.dictionaryValue };
 }
@@ -195,6 +310,10 @@ static NSString *const iTermExternalAttributeKeyUnderlineColor = @"uc";
 
 - (iTermExternalAttribute *)objectAtIndexedSubscript:(NSInteger)idx {
     return _attr;
+}
+
+- (iTermExternalAttributeIndex *)subAttributesToIndex:(int)index {
+    return self;
 }
 
 - (iTermExternalAttributeIndex *)subAttributesFromIndex:(int)index {
@@ -219,6 +338,12 @@ static NSString *const iTermExternalAttributeKeyUnderlineColor = @"uc";
 
 - (void)setAttributes:(iTermExternalAttribute *)attributes at:(int)start count:(int)count {
     [self doesNotRecognizeSelector:_cmd];
+}
+
+- (void)enumerateSortedKeysInRange:(NSRange)range block:(void (^)(NSNumber *key))block {
+    for (NSUInteger i = 0; i < range.length; i++) {
+        block(@(range.location + i));
+    }
 }
 
 @end

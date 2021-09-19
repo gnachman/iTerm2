@@ -22,4 +22,5 @@
 #import "NSStringITerm.h"
 #import "PTYSession.h"
 #import "ScreenChar.h"
+#import "ScreenCharArray.h"
 #import "Trigger.h"

@@ -9,6 +9,7 @@
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermCapturedOutputMark.h"
 #import "iTermColorMap.h"
+#import "iTermExternalAttributeIndex.h"
 #import "iTermNotificationController.h"
 #import "iTermImage.h"
 #import "iTermImageInfo.h"
@@ -1899,7 +1900,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     const int width = currentGrid_.size.width;
     int numLinesInLineBuffer = [linebuffer_ numLinesWithWidth:width];
     if (lineNumber >= numLinesInLineBuffer) {
-        return [currentGrid_ metadataAtLineNumber:lineNumber];
+        return [currentGrid_ metadataAtLineNumber:lineNumber - numLinesInLineBuffer];
     } else {
         return [linebuffer_ metadataForLineNumber:lineNumber width:width];
     }
@@ -1907,6 +1908,11 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
 - (iTermMetadata)metadataAtScreenIndex:(int)index {
     return [currentGrid_ metadataAtLineNumber:index];
+}
+
+- (iTermExternalAttributeIndex *)externalAttributeIndexForLine:(int)y {
+    iTermMetadata metadata = [self metadataOnLine:y];
+    return iTermMetadataGetExternalAttributesIndex(metadata);
 }
 
 // Like getLineAtIndex:withBuffer:, but uses dedicated storage for the result.
@@ -5044,30 +5050,33 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     return result;
 }
 
-- (NSSet<NSString *> *)sgrCodesForChar:(screen_char_t)c {
-    return [terminal_ sgrCodesForCharacter:c];
+- (NSSet<NSString *> *)sgrCodesForChar:(screen_char_t)c externalAttributes:(iTermExternalAttribute *)ea {
+    return [terminal_ sgrCodesForCharacter:c externalAttributes:ea];
 }
 
 - (NSArray<NSString *> *)terminalSGRCodesInRectangle:(VT100GridRect)rect {
-    NSMutableSet<NSString *> *codes = nil;
-    for (int y = rect.origin.y; y < rect.origin.y + rect.size.height; y++) {
-        screen_char_t *theLine = [self getLineAtScreenIndex:y];
+    __block NSMutableSet<NSString *> *codes = nil;
+#warning TODO: Test this
+    [self enumerateLinesInRange:NSMakeRange(rect.origin.y, rect.size.height) block:^(int y, ScreenCharArray *sca, iTermMetadata metadata, BOOL *stop) {
+        screen_char_t *theLine = sca.line;
+        iTermExternalAttributeIndex *eaIndex = iTermMetadataGetExternalAttributesIndex(metadata);
         for (int x = rect.origin.x; x < rect.origin.x + rect.size.width && x < self.width; x++) {
             screen_char_t c = theLine[x];
             if (c.code == 0 && !c.complexChar && !c.image) {
                 continue;
             }
-            NSSet<NSString *> *charCodes = [self sgrCodesForChar:c];
+            NSSet<NSString *> *charCodes = [self sgrCodesForChar:c externalAttributes:eaIndex[x]];
             if (!codes) {
                 codes = [[charCodes mutableCopy] autorelease];
             } else {
                 [codes intersectSet:charCodes];
                 if (!codes.count) {
-                    return @[];
+                    *stop = YES;
+                    return;
                 }
             }
         }
-    }
+    }];
     return codes.allObjects ?: @[];
 }
 

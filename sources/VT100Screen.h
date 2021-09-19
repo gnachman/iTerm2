@@ -5,6 +5,7 @@
 #import "PTYNoteViewController.h"
 #import "PTYTextViewDataSource.h"
 #import "SCPPath.h"
+#import "ScreenCharArray.h"
 #import "VT100ScreenDelegate.h"
 #import "VT100Terminal.h"
 #import "VT100Token.h"

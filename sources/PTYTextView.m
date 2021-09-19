@@ -2443,12 +2443,12 @@
     BOOL trimWhitespace = [iTermAdvancedSettingsModel trimWhitespaceOnCopy];
     id theSelectedText;
     NSAttributedStringKey sgrAttribute = @"iTermSGR";
-    NSDictionary *(^attributeProvider)(screen_char_t);
+    NSDictionary *(^attributeProvider)(screen_char_t, iTermExternalAttribute *ea);
     switch (style) {
         case iTermCopyTextStyleAttributed:
             theSelectedText = [[[NSMutableAttributedString alloc] init] autorelease];
-            attributeProvider = ^NSDictionary *(screen_char_t theChar) {
-                return [self charAttributes:theChar];
+            attributeProvider = ^NSDictionary *(screen_char_t theChar, iTermExternalAttribute *ea) {
+                return [self charAttributes:theChar externalAttributes:ea];
             };
             break;
 
@@ -2459,8 +2459,9 @@
 
         case iTermCopyTextStyleWithControlSequences:
             theSelectedText = [[[NSMutableAttributedString alloc] init] autorelease];
-            attributeProvider = ^NSDictionary *(screen_char_t theChar) {
-                return @{ sgrAttribute: [self.dataSource sgrCodesForChar:theChar] };
+            attributeProvider = ^NSDictionary *(screen_char_t theChar, iTermExternalAttribute *ea) {
+                return @{ sgrAttribute: [self.dataSource sgrCodesForChar:theChar
+                                                      externalAttributes:ea] };
             };
             break;
     }
@@ -2868,10 +2869,10 @@
                                                            0,
                                                            [_dataSource width],
                                                            [_dataSource numberOfLines] - 1);
-    NSDictionary *(^attributeProvider)(screen_char_t) = nil;
+    NSDictionary *(^attributeProvider)(screen_char_t, iTermExternalAttribute *) = nil;
     if (attributes) {
-        attributeProvider =^NSDictionary *(screen_char_t theChar) {
-            return [self charAttributes:theChar];
+        attributeProvider =^NSDictionary *(screen_char_t theChar, iTermExternalAttribute *ea) {
+            return [self charAttributes:theChar externalAttributes:ea];
         };
     }
     return [extractor contentInRange:VT100GridWindowedRangeMake(theRange, 0, 0)
@@ -3685,8 +3686,8 @@ useCompatibilityEscaping:compatibilityEscaping
                                                                      [_dataSource width],
                                                                      lineOffset + numLines - 1);
             [self printContent:[extractor contentInRange:VT100GridWindowedRangeMake(coordRange, 0, 0)
-                                       attributeProvider:^NSDictionary *(screen_char_t theChar) {
-                                           return [self charAttributes:theChar];
+                                       attributeProvider:^NSDictionary *(screen_char_t theChar, iTermExternalAttribute *ea) {
+                                           return [self charAttributes:theChar externalAttributes:ea];
                                        }
                                               nullPolicy:kiTermTextExtractorNullPolicyTreatAsSpace
                                                      pad:NO
@@ -4581,6 +4582,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 - (screen_char_t *)drawingHelperLineAtIndex:(int)line {
     return [_dataSource getLineAtIndex:line];
+}
+
+- (iTermExternalAttributeIndex *)drawingHelperExternalAttributesOnLine:(int)lineNumber {
+    return [_dataSource externalAttributeIndexForLine:lineNumber];
 }
 
 - (screen_char_t *)drawingHelperLineAtScreenIndex:(int)line {

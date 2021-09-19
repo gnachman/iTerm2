@@ -378,7 +378,11 @@ static inline int iTermOuterPIUIndex(const bool &annotation, const bool &underli
     if (hasAnnotation) {
         underlineColor = iTermAnnotationUnderlineColor;
     } else if (hasUnderline) {
-        underlineColor = _asciiUnderlineDescriptor.color.w > 0 ? _asciiUnderlineDescriptor.color : attributes[x].foregroundColor;
+        if (attributes[x].hasUnderlineColor) {
+            underlineColor = attributes[x].underlineColor;
+        } else {
+            underlineColor = _asciiUnderlineDescriptor.color.w > 0 ? _asciiUnderlineDescriptor.color : attributes[x].foregroundColor;
+        }
     }
 
     iTermMetalGlyphAttributesUnderline underlineStyle = attributes[x].underlineStyle;
@@ -586,7 +590,11 @@ static inline BOOL GlyphKeyCanTakeASCIIFastPath(const iTermMetalGlyphKey &glyphK
                     piu->underlineColor = _nonAsciiUnderlineDescriptor.color.w > 1 ? _nonAsciiUnderlineDescriptor.color : piu->textColor;
                 } else {
                     piu->underlineStyle = attributes[x].underlineStyle;
-                    piu->underlineColor = _nonAsciiUnderlineDescriptor.color.w > 1 ? _nonAsciiUnderlineDescriptor.color : piu->textColor;
+                    if (attributes[x].hasUnderlineColor) {
+                        piu->underlineColor = attributes[x].underlineColor;
+                    } else {
+                        piu->underlineColor = _nonAsciiUnderlineDescriptor.color.w > 1 ? _nonAsciiUnderlineDescriptor.color : piu->textColor;
+                    }
                 }
                 if (part != iTermTextureMapMiddleCharacterPart &&
                     part != iTermTextureMapMiddleCharacterPart + 1) {

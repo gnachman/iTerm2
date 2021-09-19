@@ -11,7 +11,9 @@ extern "C" {
 
 #import "DebugLogging.h"
 #import "FindContext.h"
+#import "iTermExternalAttributeIndex.h"
 #import "iTermMalloc.h"
+#import "iTermMetadata.h"
 #import "LineBufferHelpers.h"
 #import "NSBundle+iTerm.h"
 #import "RegexKitLite.h"
@@ -318,7 +320,7 @@ NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock)
         }
     }
     cumulative_line_lengths[cll_entries] = cumulativeLength;
-    iTermMetadataRelease(metadata_[cll_entries].lineMetadata);
+    iTermMetadataAutorelease(metadata_[cll_entries].lineMetadata);
     metadata_[cll_entries].lineMetadata = lineMetadata;
     iTermMetadataRetain(metadata_[cll_entries].lineMetadata);
     metadata_[cll_entries].continuation = continuation;
@@ -379,10 +381,11 @@ static char* formatsct(screen_char_t* src, int len, char* dest) {
         BOOL iscont = (i == cll_entries-1) && is_partial;
         NSString *message = [NSString stringWithFormat:@"Line %d, length %d, offset from raw=%d, abs pos=%d, continued=%s: %s\n", i, cumulative_line_lengths[i] - prev, prev, prev + rawOffset, iscont?"yes":"no",
                              formatsct(buffer_start+prev-start_offset, cumulative_line_lengths[i]-prev, temp)];
+        NSString *md = iTermMetadataShortDescription(metadata_[i].lineMetadata, cumulative_line_lengths[i] - prev);
         if (toDebugLog) {
-            DLog(@"%@", message);
+            DLog(@"%@%@", message, md);
         } else {
-            NSLog(@"%@", message);
+            NSLog(@"%@%@", message, md);
         }
         prev = cumulative_line_lengths[i];
     }
@@ -1009,11 +1012,6 @@ int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width, BOOL may
     } else {
         start = cumulative_line_lengths[cll_entries - 2] - start_offset;
     }
-    if (metadataPtr) {
-        iTermMetadata metadata = metadata_[cll_entries - 1].lineMetadata;
-        iTermMetadataRetainAutorelease(metadata);
-        *metadataPtr = metadata;
-    }
     if (continuationPtr) {
         *continuationPtr = metadata_[cll_entries - 1].continuation;
     }
@@ -1043,7 +1041,23 @@ int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width, BOOL may
 #warning TODO: Make sure this does not leak
             metadata_[cll_entries - 1].double_width_characters = nil;
         }
-        iTermMetadataSetExternalAttributes(&metadata_[cll_entries - 1].lineMetadata, nil);
+        iTermExternalAttributeIndex *attrs = iTermMetadataGetExternalAttributesIndex(metadata_[cll_entries - 1].lineMetadata);
+        const int split_index = available_len - *length;
+        if (metadataPtr) {
+            iTermMetadata metadata = metadata_[cll_entries - 1].lineMetadata;
+#warning TODO: Make sure this doesn't leak
+            iTermMetadataRetain(metadata);
+            iTermMetadataSetExternalAttributes(&metadata, [attrs subAttributesFromIndex:split_index]);
+            NSLog(@"POP SUFFIX OF LINE:\nstring: %@\nmetadata: %@",
+                  ScreenCharArrayToStringDebug(*ptr, *length),
+                  iTermMetadataShortDescription(metadata, width));
+            *metadataPtr = metadata;
+            iTermMetadataAutorelease(metadata);
+        }
+        iTermExternalAttributeIndex *prefix = [attrs subAttributesToIndex:split_index];
+        NSLog(@"Replace raw line's metadata with: %@", prefix);
+        iTermMetadataSetExternalAttributes(&metadata_[cll_entries - 1].lineMetadata,
+                                           prefix);
 
         is_partial = YES;
     } else {
@@ -1051,6 +1065,14 @@ int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width, BOOL may
         *length = available_len;
         if (ptr) {
             *ptr = buffer_start + start;
+        }
+        if (metadataPtr) {
+            iTermMetadata metadata = metadata_[cll_entries - 1].lineMetadata;
+            iTermMetadataRetainAutorelease(metadata);
+            NSLog(@"POP WHOLE LINE:\nstring: %@\nmetadata: %@",
+                  ScreenCharArrayToStringDebug(*ptr, *length),
+                  iTermMetadataShortDescription(metadata, width));
+            *metadataPtr = metadata;
         }
         --cll_entries;
         is_partial = NO;

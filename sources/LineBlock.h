@@ -8,9 +8,10 @@
 
 #import <Foundation/Foundation.h>
 #import "FindContext.h"
-#import "ScreenChar.h"
+#import "ScreenCharArray.h"
 #import "iTermEncoderAdapter.h"
 #import "iTermFindViewController.h"
+#import "iTermMetadata.h"
 
 typedef struct {
     iTermMetadata lineMetadata;

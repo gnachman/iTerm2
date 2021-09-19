@@ -9,14 +9,21 @@
 #include <simd/vector_types.h>
 
 #import "VT100GridTypes.h"
+#import "ScreenChar.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
+// Immutable
 @interface iTermExternalAttribute: NSObject<NSCopying>
-@property (nonatomic) BOOL hasUnderlineColor;
-@property (nonatomic) vector_float4 underlineColor;
+@property (nonatomic, readonly) BOOL hasUnderlineColor;
+@property (nonatomic, readonly) VT100TerminalColorValue underlineColor;
 
 @property(nonatomic, readonly) NSDictionary *dictionaryValue;
+
+- (instancetype)init;
+- (instancetype)initWithUnderlineColor:(VT100TerminalColorValue)color;
+- (BOOL)isEqualToExternalAttribute:(iTermExternalAttribute *)rhs;
+
 @end
 
 @interface iTermExternalAttributeIndex: NSObject<NSCopying>
@@ -25,6 +32,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 + (instancetype)withDictionary:(NSDictionary *)dictionary;  // return nil if input is NSNull
 - (instancetype)initWithDictionary:(NSDictionary *)dictionary;
+- (NSString *)shortDescriptionWithLength:(int)length;
 
 - (void)eraseAt:(int)x;
 - (void)eraseInRange:(VT100GridRange)range;
@@ -33,6 +41,7 @@ NS_ASSUME_NONNULL_BEGIN
           source:(int)source
      destination:(int)destination
            count:(int)count;
+- (iTermExternalAttributeIndex *)subAttributesToIndex:(int)index;
 - (iTermExternalAttributeIndex *)subAttributesFromIndex:(int)index;
 - (iTermExternalAttributeIndex *)subAttributesFromIndex:(int)index maximumLength:(int)maxLength;
 - (iTermExternalAttribute * _Nullable)objectAtIndexedSubscript:(NSInteger)idx;

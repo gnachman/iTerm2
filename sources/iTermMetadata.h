@@ -53,4 +53,6 @@ iTermMetadata iTermMetadataDefault(void);
 
 void iTermMetadataReset(iTermMetadata *obj);
 
+NSString *iTermMetadataShortDescription(iTermMetadata metadata, int length);
+
 NS_ASSUME_NONNULL_END
