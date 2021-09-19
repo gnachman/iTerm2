@@ -22,6 +22,13 @@ iTermMetadata iTermMetadataTemporaryWithTimestamp(NSTimeInterval timestamp) {
     return result;
 }
 
+iTermMetadata iTermMetadataCopy(iTermMetadata obj) {
+    return (iTermMetadata) {
+        .timestamp = obj.timestamp,
+        .externalAttributes = [iTermMetadataGetExternalAttributesIndex(obj) copy]
+    };
+}
+
 void iTermMetadataRetain(iTermMetadata obj) {
     [(id)obj.externalAttributes retain];
 }

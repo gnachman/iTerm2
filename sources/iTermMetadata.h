@@ -20,6 +20,7 @@ void iTermMetadataInit(iTermMetadata *obj,
                        NSTimeInterval timestamp,
                        iTermExternalAttributeIndex * _Nullable externalAttributes);
 iTermMetadata iTermMetadataTemporaryWithTimestamp(NSTimeInterval timestamp);
+iTermMetadata iTermMetadataCopy(iTermMetadata obj);
 void iTermMetadataRetain(iTermMetadata obj);
 void iTermMetadataRelease(iTermMetadata obj);
 iTermMetadata iTermMetadataRetainAutorelease(iTermMetadata obj);

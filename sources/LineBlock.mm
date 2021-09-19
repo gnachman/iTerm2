@@ -285,6 +285,8 @@ NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock)
         if (gEnableDoubleWidthCharacterLineCache) {
             theCopy->metadata_[i].double_width_characters = nil;
         }
+        // We memmove'd the pointer without retaining it so nil it out before assignment.
+        theCopy->metadata_[i].lineMetadata.externalAttributes = nil;
         iTermMetadataReplaceWithCopy(&theCopy->metadata_[i].lineMetadata);
     }
     theCopy->cll_capacity = cll_capacity;
@@ -321,8 +323,7 @@ NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock)
     }
     cumulative_line_lengths[cll_entries] = cumulativeLength;
     iTermMetadataAutorelease(metadata_[cll_entries].lineMetadata);
-    metadata_[cll_entries].lineMetadata = lineMetadata;
-    iTermMetadataRetain(metadata_[cll_entries].lineMetadata);
+    metadata_[cll_entries].lineMetadata = iTermMetadataCopy(lineMetadata);
     metadata_[cll_entries].continuation = continuation;
     metadata_[cll_entries].number_of_wrapped_lines = 0;
     metadata_[cll_entries].generation = LineBlockNextGeneration--;
@@ -1048,14 +1049,10 @@ int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width, BOOL may
 #warning TODO: Make sure this doesn't leak
             iTermMetadataRetain(metadata);
             iTermMetadataSetExternalAttributes(&metadata, [attrs subAttributesFromIndex:split_index]);
-            NSLog(@"POP SUFFIX OF LINE:\nstring: %@\nmetadata: %@",
-                  ScreenCharArrayToStringDebug(*ptr, *length),
-                  iTermMetadataShortDescription(metadata, width));
             *metadataPtr = metadata;
             iTermMetadataAutorelease(metadata);
         }
         iTermExternalAttributeIndex *prefix = [attrs subAttributesToIndex:split_index];
-        NSLog(@"Replace raw line's metadata with: %@", prefix);
         iTermMetadataSetExternalAttributes(&metadata_[cll_entries - 1].lineMetadata,
                                            prefix);
 
@@ -1069,9 +1066,6 @@ int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width, BOOL may
         if (metadataPtr) {
             iTermMetadata metadata = metadata_[cll_entries - 1].lineMetadata;
             iTermMetadataRetainAutorelease(metadata);
-            NSLog(@"POP WHOLE LINE:\nstring: %@\nmetadata: %@",
-                  ScreenCharArrayToStringDebug(*ptr, *length),
-                  iTermMetadataShortDescription(metadata, width));
             *metadataPtr = metadata;
         }
         --cll_entries;
