@@ -1092,6 +1092,8 @@ ITERM_WEAKLY_REFERENCEABLE
         assert(!_liveSession);
         _synthetic = YES;
         [self takeStatusBarViewControllerFrom:liveSession];
+    } else {
+        [_liveSession autorelease];
     }
     _liveSession = liveSession;
     [_liveSession retain];
