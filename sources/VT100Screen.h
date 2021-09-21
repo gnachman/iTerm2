@@ -109,7 +109,6 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
                    length:(int)length
    externalAttributeIndex:(iTermExternalAttributeIndex *)externalAttributes
              continuation:(screen_char_t)continuation;
-- (void)appendLinesMatchingQuery:(NSString *)query from:(VT100Screen *)source mode:(iTermFindMode)mode;
 - (void)setContentsFromLineBuffer:(LineBuffer *)lineBuffer;
 
 // Append a string to the screen at the current cursor position. The terminal's insert and wrap-

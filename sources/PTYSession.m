@@ -1156,14 +1156,9 @@ ITERM_WEAKLY_REFERENCEABLE
     return [_dvrDecoder timestamp];
 }
 
-- (void)appendLinesMatchingQuery:(NSString *)query fromSession:(PTYSession *)source {
-    [_screen appendLinesMatchingQuery:query from:source.screen mode:self.textview.findContext.mode];
-}
-
 - (void)appendLinesInRange:(NSRange)rangeOfLines fromSession:(PTYSession *)source {
     [source.screen enumerateLinesInRange:rangeOfLines block:^(int i, ScreenCharArray *sca, iTermMetadata metadata, BOOL *stopPtr) {
-#warning TODO(externalAttributes): Test the hell out of this
-        if (i + 1 == rangeOfLines.length) {
+        if (i + 1 == NSMaxRange(rangeOfLines)) {
             screen_char_t continuation = { 0 };
             continuation.code = EOL_SOFT;
             [_screen appendScreenChars:sca.line

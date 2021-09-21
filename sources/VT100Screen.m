@@ -1206,66 +1206,6 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     [delegate_ screenRefreshFindOnPageView];
 }
 
-- (void)appendLinesMatchingQuery:(NSString *)query
-                            from:(VT100Screen *)source
-                            mode:(iTermFindMode)mode {
-    const int numPushed = [source.currentGrid appendLines:[source.currentGrid numberOfLinesUsed]
-                                             toLineBuffer:source->linebuffer_];
-
-    const int width = self.width;
-    if (query.length == 0) {
-        // Append all lines. Searching for empty string doesn't return any results and I have no
-        // idea what would break if I changed that.
-        [source enumerateLinesInRange:NSMakeRange(0, source.numberOfLines) block:^(int line, ScreenCharArray *sca, iTermMetadata metadata, BOOL *stop) {
-#warning  TODO(externalAttributes): Test this
-            [self appendScreenChars:sca.line
-                             length:sca.length
-             externalAttributeIndex:iTermMetadataGetExternalAttributesIndex(metadata)
-                       continuation:sca.continuation];
-        }];
-    } else {
-        LineBufferPosition *startPos = source->linebuffer_.firstPosition;
-        FindContext *context = [[[FindContext alloc] init] autorelease];
-        [source->linebuffer_ prepareToSearchFor:query
-                                     startingAt:startPos
-                                        options:FindMultipleResults
-                                           mode:mode
-                                    withContext:context];
-        LineBufferPosition *stopAt = source->linebuffer_.lastPosition;
-        int lastY = -1;
-        while (context.status == Searching || context.status == Matched) {
-            [source->linebuffer_ findSubstring:context stopAt:stopAt];
-            switch (context.status) {
-                case Matched: {
-                    NSArray *positions = [source->linebuffer_ convertPositions:context.results withWidth:width];
-                    for (XYRange *xyrange in positions) {
-                        for (int y = MAX(lastY + 1, xyrange->yStart); y <= xyrange->yEnd; y++) {
-                            if (y == lastY) {
-                                continue;
-                            }
-                            lastY = y;
-                            screen_char_t *line = [source getLineAtIndex:y];
-                            [self appendScreenChars:line
-                                             length:width
-                             externalAttributeIndex:[source metadataOnLine:y].externalAttributes
-                                       continuation:line[width]];
-                        }
-                    }
-                    [context.results removeAllObjects];
-                    break;
-
-                case Searching:
-                    break;
-
-                case NotFound:
-                    break;
-                }
-            }
-        }
-    }
-    [source popScrollbackLines:numPushed];
-}
-
 - (void)appendScreenChars:(screen_char_t *)line
                    length:(int)length
    externalAttributeIndex:(iTermExternalAttributeIndex *)externalAttributeIndex
@@ -1891,7 +1831,8 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
             [linebuffer_ enumerateLinesInRange:NSMakeRange(i, lastLine - i)
                                          width:width
                                          block:block];
-            return;
+            i = numLinesInLineBuffer;
+            continue;
         }
         BOOL stop = NO;
         const int screenIndex = i - numLinesInLineBuffer;
