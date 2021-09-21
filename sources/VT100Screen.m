@@ -1880,7 +1880,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     [primaryGrid_ resetTimestamps];
     [altGrid_ resetTimestamps];
 }
-#warning Test all callers of this
+
 - (void)enumerateLinesInRange:(NSRange)range block:(void (^)(int, ScreenCharArray *, iTermMetadata, BOOL *))block {
     NSInteger i = range.location;
     const NSInteger lastLine = NSMaxRange(range);
