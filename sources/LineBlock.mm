@@ -256,10 +256,11 @@ NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock)
     if (metadata_) {
         if (gEnableDoubleWidthCharacterLineCache) {
             for (int i = 0; i < cll_capacity; i++) {
-#warning TODO: Make sure this doesn't leak
                 metadata_[i].double_width_characters = nil;
-                iTermMetadataRelease(metadata_[i].lineMetadata);
             }
+        }
+        for (int i = 0; i < cll_capacity; i++) {
+            iTermMetadataRelease(metadata_[i].lineMetadata);
         }
         free(metadata_);
     }

@@ -29,6 +29,10 @@ static NSInteger VT100LineInfoNextGeneration = 1;
     return self;
 }
 
+- (void)dealloc {
+    iTermMetadataRelease(_metadata);
+}
+
 - (void)setDirty:(BOOL)dirty inRange:(VT100GridRange)range updateTimestamp:(BOOL)updateTimestamp {
 #ifdef ITERM_DEBUG
     assert(range.location >= 0);
