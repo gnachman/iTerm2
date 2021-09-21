@@ -10623,7 +10623,7 @@ preferredEscaping:(iTermSendTextEscaping)preferredEscaping {
 
 - (void)setDvrFrame {
     screen_char_t* s = (screen_char_t*)[_dvrDecoder decodedFrame];
-    int len = [_dvrDecoder length];
+    const int len = [_dvrDecoder screenCharArrayLength];
     DVRFrameInfo info = [_dvrDecoder info];
     if (info.width != [_screen width] || info.height != [_screen height]) {
         if (![_liveSession isTmuxClient]) {
@@ -10632,7 +10632,11 @@ preferredEscaping:(iTermSendTextEscaping)preferredEscaping {
                                                           height:info.height];
         }
     }
-    [_screen setFromFrame:s len:len info:info];
+    NSArray<NSArray *> *metadataArrays = [NSArray mapIntegersFrom:0 to:info.height block:^id(NSInteger i) {
+        NSData *data = [_dvrDecoder metadataForLine:i];
+        return iTermMetadataArrayFromData(data) ?: @[];
+    }];
+    [_screen setFromFrame:s len:len metadata:metadataArrays info:info];
     [[_delegate realParentWindow] clearTransientTitle];
     [[_delegate realParentWindow] setWindowTitle];
 }

@@ -148,7 +148,7 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
                      URLCode:(unsigned short)code;
 
 // Load a frame from a dvr decoder.
-- (void)setFromFrame:(screen_char_t*)s len:(int)len info:(DVRFrameInfo)info;
+- (void)setFromFrame:(screen_char_t*)s len:(int)len metadata:(NSArray<NSArray *> *)metadataArrays info:(DVRFrameInfo)info;
 
 // Save the position of the end of the scrollback buffer without the screen appended.
 - (void)storeLastPositionInLineBufferAsFindContextSavedPosition;

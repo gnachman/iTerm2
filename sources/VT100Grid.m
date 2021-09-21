@@ -160,6 +160,14 @@ static NSString *const kGridSizeKey = @"Size";
     }
 }
 
+- (NSArray<VT100LineInfo *> *)metadataArray {
+    NSMutableArray<VT100LineInfo *> *result = [NSMutableArray array];
+    for (int i = 0; i < self.size.height; i++) {
+        [result addObject:[self lineInfoAtLineNumber:i]];
+    }
+    return result;
+}
+
 - (void)markCharDirty:(BOOL)dirty at:(VT100GridCoord)coord updateTimestamp:(BOOL)updateTimestamp {
     DLog(@"Mark %@ dirty=%@ delegate=%@", VT100GridCoordDescription(coord), @(dirty), delegate_);
 

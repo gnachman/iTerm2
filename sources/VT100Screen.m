@@ -1798,11 +1798,24 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     }
 }
 
-- (void)setFromFrame:(screen_char_t*)s len:(int)len info:(DVRFrameInfo)info
-{
+- (void)setFromFrame:(screen_char_t*)s
+                 len:(int)len
+            metadata:(NSArray<NSArray *> *)metadataArrays
+                info:(DVRFrameInfo)info {
     assert(len == (info.width + 1) * info.height * sizeof(screen_char_t));
-#warning TODO(externalAttributes): save and restore metadata
-    [currentGrid_ setContentsFromDVRFrame:s metadataArray:nil info:info];
+    NSMutableData *storage = [NSMutableData dataWithLength:sizeof(iTermMetadata) * info.height];
+    iTermMetadata *md = (iTermMetadata *)storage.mutableBytes;
+    [metadataArrays enumerateObjectsUsingBlock:^(NSArray * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+        if (idx >= info.height) {
+            *stop = YES;
+            return;
+        }
+        iTermMetadataInitFromArray(&md[idx], obj);
+    }];
+    [currentGrid_ setContentsFromDVRFrame:s metadataArray:md info:info];
+    for (int i = 0; i < info.height; i++) {
+        iTermMetadataRelease(md[i]);
+    }
     [self resetScrollbackOverflow];
     savedFindContextAbsPos_ = 0;
     [delegate_ screenRemoveSelection];
@@ -2277,6 +2290,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
     [dvr_ appendFrame:[currentGrid_ orderedLines]
                length:sizeof(screen_char_t) * (currentGrid_.size.width + 1) * (currentGrid_.size.height)
+             metadata:[currentGrid_ metadataArray]
            cleanLines:cleanLines
                  info:&info];
 }

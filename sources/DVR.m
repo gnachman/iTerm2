@@ -31,6 +31,7 @@
 #import "DVRIndexEntry.h"
 #import "NSData+iTerm.h"
 #import "ScreenChar.h"
+#import "iTermMetadata.h"
 #include <sys/time.h>
 
 @implementation DVR {
@@ -63,14 +64,24 @@
     [super dealloc];
 }
 
+- (int)lengthForMetadata:(NSArray<id<DVREncodable>> *)metadata {
+    __block int sum = 0;
+    [metadata enumerateObjectsUsingBlock:^(id  _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+        // Payload length, payload
+        sum += sizeof(int) + [obj dvrEncodableData].length;
+    }];
+    return sum;
+}
+
 - (void)appendFrame:(NSArray<NSData *> *)frameLines
-             length:(int)length
+             length:(int)screenCharLength
+           metadata:(NSArray<id<DVREncodable>> *)metadata
          cleanLines:(NSIndexSet *)cleanLines
-               info:(DVRFrameInfo*)info
-{
+               info:(DVRFrameInfo*)info {
     if (readOnly_) {
         return;
     }
+    const int length = screenCharLength + [self lengthForMetadata:metadata];
     if (length > [buffer_ capacity] / 2) {
         // Protect the buffer from overflowing if you have a really big window.
         return;
@@ -87,7 +98,8 @@
         }
     }
     [encoder_ appendFrame:frameLines
-                   length:length
+                   length:screenCharLength
+                 metadata:metadata
                cleanLines:cleanLines
                      info:info];
 }
@@ -189,6 +201,7 @@
         while (decoder.timestamp <= to || to == -1) {
             screen_char_t *frame = (screen_char_t *)[decoder decodedFrame];
             NSMutableArray *lines = [NSMutableArray array];
+            NSMutableArray *metadata = [NSMutableArray array];
             DVRFrameInfo info = [decoder info];
             int offset = 0;
             const int lineLength = info.width + 1;
@@ -196,9 +209,12 @@
                 NSMutableData *data = [NSMutableData dataWithBytes:frame + offset length:lineLength * sizeof(screen_char_t)];
                 [lines addObject:data];
                 offset += lineLength;
+
+                [metadata addObject:iTermMetadataArrayFromData([decoder metadataForLine:i])];
             }
             [theCopy appendFrame:lines
-                          length:[decoder length]
+                          length:[decoder screenCharArrayLength]
+                        metadata:metadata
                       cleanLines:nil
                             info:&info];
             if (![decoder next]) {

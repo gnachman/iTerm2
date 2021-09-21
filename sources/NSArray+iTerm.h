@@ -128,6 +128,7 @@
 - (NSArray *)it_arrayByReplacingOccurrencesOf:(id)pattern with:(id)replacement;
 - (const char **)nullTerminatedCStringArray;
 - (NSArray<ObjectType> *)reversed;
++ (NSArray<ObjectType> *)mapIntegersFrom:(NSInteger)min to:(NSInteger)noninclusiveUpperBound block:(ObjectType (^NS_NOESCAPE)(NSInteger i))block;
 
 @end
 

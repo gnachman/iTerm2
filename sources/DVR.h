@@ -54,6 +54,7 @@
 //   info: Metadata for the frame.
 - (void)appendFrame:(NSArray<NSData *> *)frameLines
              length:(int)length
+           metadata:(NSArray<id<DVREncodable>> *)metadata
          cleanLines:(NSIndexSet *)cleanLines
                info:(DVRFrameInfo*)info;
 

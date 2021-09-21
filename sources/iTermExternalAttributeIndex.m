@@ -6,8 +6,10 @@
 //
 
 #import "iTermExternalAttributeIndex.h"
+#import "iTermTLVCodec.h"
 #import "NSArray+iTerm.h"
 #import "NSDictionary+iTerm.h"
+#import "NSMutableData+iTerm.h"
 #import "ScreenChar.h"
 
 @implementation iTermExternalAttributeIndex {
@@ -22,9 +24,26 @@
     if (!dictionary.count) {
         return nil;
     }
-    return [self init];
-#warning TODO(externalAttributes): Decode the dictionary
-#warning Remember to handle iTermUniformExternalAttributes
+    iTermUniformExternalAttributes *uniform = [[iTermUniformExternalAttributes alloc] initWithDictionary:dictionary];
+    if (uniform) {
+        return uniform;
+    }
+    self = [self init];
+    if (self) {
+        [dictionary enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, id  _Nonnull obj, BOOL * _Nonnull stop) {
+            NSNumber *x = [NSNumber castFrom:key];
+            if (!x) {
+                return;
+            }
+            NSDictionary *dict = [NSDictionary castFrom:obj];
+            if (!dict) {
+                return;
+            }
+            iTermExternalAttribute *attr = [[iTermExternalAttribute alloc] initWithDictionary:dict];
+            [self setAttributes:attr at:x.intValue count:1];
+        }];
+    }
+    return self;
 }
 
 - (instancetype)init {
@@ -33,6 +52,37 @@
         _attributes = [NSMutableDictionary dictionary];
     }
     return self;
+}
+
++ (instancetype)fromData:(NSData *)data {
+    iTermExternalAttributeIndex *eaIndex = [[iTermExternalAttributeIndex alloc] init];
+    iTermTLVDecoder *decoder = [[iTermTLVDecoder alloc] initWithData:data];
+    while (!decoder.finished) {
+        NSRange range;
+        if (![decoder decodeRange:&range]) {
+            return nil;
+        }
+        NSData *data = [decoder decodeData];
+        if (!data) {
+            return nil;
+        }
+        iTermExternalAttribute *attr = [iTermExternalAttribute fromData:data];
+        [eaIndex setAttributes:attr at:range.location count:range.length];
+    }
+    return eaIndex;
+}
+
+- (NSData *)encodedRange:(NSRange)range {
+    return [NSData dataWithBytes:&range length:sizeof(range)];
+}
+
+- (NSData *)data {
+    iTermTLVEncoder *encoder = [[iTermTLVEncoder alloc] init];
+    [self enumerateValuesInRange:NSMakeRange(0, NSUIntegerMax) block:^(NSRange range, iTermExternalAttribute *attr) {
+        [encoder encodeRange:range];
+        [encoder encodeData:[attr data]];
+    }];
+    return encoder.data;
 }
 
 - (NSDictionary *)attributes {
@@ -193,7 +243,7 @@
 
 - (void)setAttributes:(iTermExternalAttribute *)attributes at:(int)start count:(int)count {
     for (int i = 0; i < count; i++) {
-        _attributes[@(start + _offset)] = attributes;
+        _attributes[@(i + start + _offset)] = attributes;
     }
 }
 
@@ -226,6 +276,35 @@ static NSString *const iTermExternalAttributeKeyUnderlineColor = @"uc";
 
 @implementation iTermExternalAttribute
 
++ (instancetype)fromData:(NSData *)data {
+    iTermTLVDecoder *decoder = [[iTermTLVDecoder alloc] initWithData:data];
+    BOOL hasUnderlineColor;
+    if (![decoder decodeBool:&hasUnderlineColor]) {
+        return nil;
+    }
+    if (!hasUnderlineColor) {
+        return nil;
+    }
+
+    VT100TerminalColorValue underlineColor = { 0 };
+
+    if (![decoder decodeInt:&underlineColor.red]) {
+        return nil;
+    }
+    if (![decoder decodeInt:&underlineColor.green]) {
+        return nil;
+    }
+    if (![decoder decodeInt:&underlineColor.blue]) {
+        return nil;
+    }
+    int temp;
+    if (![decoder decodeInt:&temp]) {
+        return nil;
+    }
+    underlineColor.mode = temp;
+    return [[self alloc] initWithUnderlineColor:underlineColor];
+}
+
 - (instancetype)init {
     return [super init];
 }
@@ -244,6 +323,39 @@ static NSString *const iTermExternalAttributeKeyUnderlineColor = @"uc";
         return @"none";
     }
     return [NSString stringWithFormat:@"ulc=%@", VT100TerminalColorValueDescription(_underlineColor)];
+}
+
+- (NSData *)data {
+    iTermTLVEncoder *encoder = [[iTermTLVEncoder alloc] init];
+    [encoder encodeBool:_hasUnderlineColor];
+    if (_hasUnderlineColor) {
+        [encoder encodeInt:_underlineColor.red];
+        [encoder encodeInt:_underlineColor.green];
+        [encoder encodeInt:_underlineColor.blue];
+        [encoder encodeInt:_underlineColor.mode];
+    }
+    return encoder.data;
+}
+
+- (instancetype)initWithDictionary:(NSDictionary *)dict {
+    self = [super init];
+    if (self) {
+        id obj = dict[iTermExternalAttributeKeyUnderlineColor];
+        if ([obj isKindOfClass:[NSNull class]]) {
+            return self;
+        }
+        _hasUnderlineColor = YES;
+
+        NSArray<NSNumber *> *values = [NSArray castFrom:obj];
+        if (!values || values.count < 4) {
+            return nil;
+        }
+        _underlineColor.mode = [values[0] intValue];
+        _underlineColor.red = [values[1] intValue];
+        _underlineColor.green = [values[2] intValue];
+        _underlineColor.blue = [values[3] intValue];
+    }
+    return self;
 }
 
 - (NSDictionary *)dictionaryValue {
@@ -285,6 +397,18 @@ static NSString *const iTermExternalAttributeKeyUnderlineColor = @"uc";
     self = [super init];
     if (self) {
         _attr = attr;
+    }
+    return self;
+}
+
+- (instancetype)initWithDictionary:(NSDictionary *)dictionary {
+    NSDictionary *value = dictionary[@"all"];
+    if (!value) {
+        return nil;
+    }
+    self = [super init];
+    if (self) {
+        _attr = [[iTermExternalAttribute alloc] initWithDictionary:value];
     }
     return self;
 }

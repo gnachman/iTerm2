@@ -20,9 +20,12 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property(nonatomic, readonly) NSDictionary *dictionaryValue;
 
++ (instancetype)fromData:(NSData *)data;
 - (instancetype)init;
 - (instancetype)initWithUnderlineColor:(VT100TerminalColorValue)color;
+- (instancetype)initWithDictionary:(NSDictionary *)dict;
 - (BOOL)isEqualToExternalAttribute:(iTermExternalAttribute *)rhs;
+- (NSData *)data;
 
 @end
 
@@ -31,6 +34,8 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) NSDictionary *dictionaryValue;
 
 + (instancetype)withDictionary:(NSDictionary *)dictionary;  // return nil if input is NSNull
++ (instancetype)fromData:(NSData *)data;
+- (NSData *)data;
 - (instancetype)initWithDictionary:(NSDictionary *)dictionary;
 - (NSString *)shortDescriptionWithLength:(int)length;
 

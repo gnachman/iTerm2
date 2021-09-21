@@ -44,6 +44,10 @@ typedef enum {
     DVRFrameTypeDiffFrame
 } DVRFrameType;
 
+@protocol DVREncodable<NSObject>
+- (NSData *)dvrEncodableData;
+@end
+
 @interface DVRBuffer : NSObject
 
 // Returns first/last used keys.

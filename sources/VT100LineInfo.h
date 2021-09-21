@@ -7,11 +7,12 @@
 //
 
 #import <Foundation/Foundation.h>
+#import "DVRBuffer.h"
 #import "ScreenChar.h"
 #import "VT100GridTypes.h"
 #import "iTermMetadata.h"
 
-@interface VT100LineInfo : NSObject <NSCopying>
+@interface VT100LineInfo : NSObject <NSCopying, DVREncodable>
 
 @property(nonatomic) iTermMetadata metadata;
 @property(nonatomic, readonly) NSInteger generation;

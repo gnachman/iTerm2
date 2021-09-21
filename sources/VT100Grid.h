@@ -54,6 +54,7 @@
 // Serialized state, but excludes screen contents.
 // DEPRECATED - use encode: instead.
 @property(nonatomic, readonly) NSDictionary *dictionaryValue;
+@property(nonatomic, readonly) NSArray<VT100LineInfo *> *metadataArray;
 
 + (VT100GridSize)sizeInStateDictionary:(NSDictionary *)dict;
 

@@ -40,6 +40,7 @@
 //   info: screen state.
 - (void)appendFrame:(NSArray *)frameLines
              length:(int)length
+           metadata:(NSArray<id<DVREncodable>> *)metadata
          cleanLines:(NSIndexSet *)cleanLines
                info:(DVRFrameInfo *)info;
 
