@@ -786,6 +786,8 @@ static const int kMaxScreenRows = 4096;
 // CSI 38:2:[colorspace]:[red]:[green]:[blue]
 // CSI 38:2:[colorspace]:[red]:[green]:[blue]:<one or more additional colon-delimited arguments, all ignored>
 // CSI 38;2;[red];[green];[blue]   // Notice semicolons in place of colons here
+//
+// NOTE: If you change this you must also update -sgrCodesForGraphicRendition:
 - (VT100TerminalColorValue)colorValueFromSGRToken:(VT100Token *)token fromParameter:(inout int *)index {
     const int i = *index;
     int subs[VT100CSISUBPARAM_MAX];
@@ -2732,6 +2734,23 @@ static const int kMaxScreenRows = 4096;
     }
     if (graphicRendition.strikethrough) {
         [result addObject:@"9"];
+    }
+    if (graphicRendition.hasUnderlineColor) {
+        switch (graphicRendition.underlineColor.mode) {
+            case ColorModeNormal:
+                [result addObject:[NSString stringWithFormat:@"58:5:%d",
+                                   graphicRendition.underlineColor.red]];
+                break;
+            case ColorMode24bit:
+                [result addObject:[NSString stringWithFormat:@"58:2:%d:%d:%d",
+                                   graphicRendition.underlineColor.red,
+                                   graphicRendition.underlineColor.green,
+                                   graphicRendition.underlineColor.blue]];
+                 break;
+            case ColorModeInvalid:
+            case ColorModeAlternate:
+                break;
+        }
     }
     return result;
 }

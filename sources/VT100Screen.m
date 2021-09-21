@@ -1880,15 +1880,15 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     [primaryGrid_ resetTimestamps];
     [altGrid_ resetTimestamps];
 }
-
+#warning Test all callers of this
 - (void)enumerateLinesInRange:(NSRange)range block:(void (^)(int, ScreenCharArray *, iTermMetadata, BOOL *))block {
     NSInteger i = range.location;
-    const NSInteger lastLine = NSMaxRange(range) - 1;
+    const NSInteger lastLine = NSMaxRange(range);
     const NSInteger numLinesInLineBuffer = [linebuffer_ numLinesWithWidth:currentGrid_.size.width];
     const int width = self.width;
     while (i < lastLine) {
         if (i < numLinesInLineBuffer) {
-            [linebuffer_ enumerateLinesInRange:NSMakeRange(i, lastLine - i + 1)
+            [linebuffer_ enumerateLinesInRange:NSMakeRange(i, lastLine - i)
                                          width:width
                                          block:block];
             return;
@@ -1902,6 +1902,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
         if (stop) {
             return;
         }
+        i += 1;
     }
 }
 
@@ -5075,9 +5076,10 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     return [terminal_ sgrCodesForCharacter:c externalAttributes:ea];
 }
 
-- (NSArray<NSString *> *)terminalSGRCodesInRectangle:(VT100GridRect)rect {
+- (NSArray<NSString *> *)terminalSGRCodesInRectangle:(VT100GridRect)screenRect {
     __block NSMutableSet<NSString *> *codes = nil;
-#warning TODO: Test this
+    VT100GridRect rect = screenRect;
+    rect.origin.y += [linebuffer_ numLinesWithWidth:currentGrid_.size.width];
     [self enumerateLinesInRange:NSMakeRange(rect.origin.y, rect.size.height) block:^(int y, ScreenCharArray *sca, iTermMetadata metadata, BOOL *stop) {
         screen_char_t *theLine = sca.line;
         iTermExternalAttributeIndex *eaIndex = iTermMetadataGetExternalAttributesIndex(metadata);
