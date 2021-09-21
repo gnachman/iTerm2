@@ -374,6 +374,9 @@ static BOOL NS_WARN_UNUSED_RESULT SafeIncr(int summand, int addend, int *sum) {
 }
 
 - (NSData *)metadataForLine:(int)line {
+    if (line < 0 || line >= metadataOffsets_.count) {
+        return nil;
+    }
     const int offset = [metadataOffsets_[line] intValue];
     const int length = [self lengthForMetadataOnLine:line];
     if (offset < 0 || length < 0 || offset + length >= frameLength_) {

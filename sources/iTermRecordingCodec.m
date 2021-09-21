@@ -144,9 +144,10 @@
                 // Make sure the GUID doesn't match an existing one.
                 profile[KEY_GUID] = [[NSUUID UUID] UUIDString];
 
+                // Version 2 added per-line metadata.
                 NSDictionary *dict = @{ @"dvr": dvrDict,
                                         @"profile": profile,
-                                        @"version": @1 };
+                                        @"version": @2 };
                 NSData *dictData = [[NSData it_dataWithArchivedObject:dict] gzippedData];
                 NSError *error = nil;
                 BOOL ok = [dictData writeToURL:url options:0 error:&error];

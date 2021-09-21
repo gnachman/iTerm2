@@ -276,21 +276,25 @@ NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock)
     theCopy->buffer_size = buffer_size;
     size_t cll_size = sizeof(int) * cll_capacity;
     theCopy->cumulative_line_lengths = (int*)iTermMalloc(cll_size);
+
+    // Copy metadata field by field to please arc (memmove doesn't work right!)
     memmove(theCopy->cumulative_line_lengths, cumulative_line_lengths, cll_size);
-    theCopy->metadata_ = (LineBlockMetadata *)iTermMalloc(sizeof(LineBlockMetadata) * cll_capacity);
-    memmove(theCopy->metadata_, metadata_, sizeof(LineBlockMetadata) * cll_capacity);
+    theCopy->metadata_ = (LineBlockMetadata *)iTermCalloc(cll_capacity, sizeof(LineBlockMetadata));
     for (int i = 0; i < cll_capacity; i++) {
-        theCopy->metadata_[i].width_for_number_of_wrapped_lines = 0;
+        iTermMetadataInit(&theCopy->metadata_[i].lineMetadata,
+                          metadata_[i].lineMetadata.timestamp,
+                          [iTermMetadataGetExternalAttributesIndex(metadata_[i].lineMetadata) copy]);
+
+        theCopy->metadata_[i].continuation = metadata_[i].continuation;
         theCopy->metadata_[i].number_of_wrapped_lines = 0;
+        theCopy->metadata_[i].width_for_number_of_wrapped_lines = 0;
         if (gEnableDoubleWidthCharacterLineCache) {
             theCopy->metadata_[i].double_width_characters = nil;
         }
-        iTermMetadata temp = theCopy->metadata_[i].lineMetadata;
-        memset(&theCopy->metadata_[i].lineMetadata, 0, sizeof(theCopy->metadata_[i].lineMetadata));
-        iTermMetadataInit(&theCopy->metadata_[i].lineMetadata,
-                          temp.timestamp,
-                          [iTermMetadataGetExternalAttributesIndex(temp) copy]);
+        theCopy->metadata_[i].width_for_double_width_characters_cache = 0;
+        theCopy->metadata_[i].generation = metadata_[i].generation;
     }
+
     theCopy->cll_capacity = cll_capacity;
     theCopy->cll_entries = cll_entries;
     theCopy->is_partial = is_partial;
