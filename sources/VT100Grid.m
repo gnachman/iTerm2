@@ -2212,7 +2212,6 @@ static void DumpBuf(screen_char_t* p, int n) {
         return;
     }
     if (!dest) {
-#warning TODO: This breaks with iTermUniformExternalAttributes
         dest = [self createExternalAttributesForLine:destinationCoord.y];
     }
     [dest copyFrom:source

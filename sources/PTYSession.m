@@ -893,7 +893,6 @@ static const NSUInteger kMaxHosts = 100;
 }
 
 ITERM_WEAKLY_REFERENCEABLE
-#warning BUG: When a synthetic session exists and is removed the live session never gets released.
 - (void)iterm_dealloc {
     if (_textview.delegate == self) {
         _textview.delegate = nil;
