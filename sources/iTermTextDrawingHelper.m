@@ -81,6 +81,7 @@ typedef struct {
     BOOL boxDrawing;
     NSFont *font;
     BOOL bold;
+    BOOL faint;
     BOOL fakeBold;
     BOOL fakeItalic;
     iTermCharacterAttributesUnderline underlineType;
@@ -113,6 +114,7 @@ enum {
 
 static NSString *const iTermAntiAliasAttribute = @"iTermAntiAliasAttribute";
 static NSString *const iTermBoldAttribute = @"iTermBoldAttribute";
+static NSString *const iTermFaintAttribute = @"iTermFaintAttribute";
 static NSString *const iTermFakeBoldAttribute = @"iTermFakeBoldAttribute";
 static NSString *const iTermFakeItalicAttribute = @"iTermFakeItalicAttribute";
 static NSString *const iTermImageCodeAttribute = @"iTermImageCodeAttribute";
@@ -1534,8 +1536,7 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
                                                              blue:components[2].intValue
                                                         colorMode:components[3].intValue
                                                              bold:[attributes[iTermBoldAttribute] boolValue]
-#warning TODO: Faint should be supported but for some reason it doesn't make it into the cheap string.
-                                                            faint:NO
+                                                            faint:[attributes[iTermFaintAttribute] boolValue]
                                                      isBackground:NO];
     } else {
         NSColor *underline = [self.colorMap colorForKey:kColorMapUnderline];
@@ -2141,6 +2142,7 @@ static inline BOOL iTermCharacterAttributesUnderlineColorEqual(iTermCharacterAtt
                                           ![newAttributes->font isEqual:previousAttributes->font] ||
                                           newAttributes->ligatureLevel != previousAttributes->ligatureLevel ||
                                           newAttributes->bold != previousAttributes->bold ||
+                                          newAttributes->faint != previousAttributes->faint ||
                                           newAttributes->fakeItalic != previousAttributes->fakeItalic ||
                                           newAttributes->underlineType != previousAttributes->underlineType ||
                                           newAttributes->strikethrough != previousAttributes->strikethrough ||
@@ -2209,7 +2211,7 @@ static inline BOOL iTermCharacterAttributesUnderlineColorEqual(iTermCharacterAtt
     }
 
     attributes->bold = c->bold;
-
+    attributes->faint = c->faint;
     attributes->fakeBold = c->bold;  // default value
     attributes->fakeItalic = c->italic;  // default value
     PTYFontInfo *fontInfo = [_delegate drawingHelperFontForChar:code
@@ -2294,6 +2296,7 @@ static inline BOOL iTermCharacterAttributesUnderlineColorEqual(iTermCharacterAtt
               iTermIsBoxDrawingAttribute: @(attributes->boxDrawing),
               iTermFakeBoldAttribute: @(attributes->fakeBold),
               iTermBoldAttribute: @(attributes->bold),
+              iTermFaintAttribute: @(attributes->faint),
               iTermFakeItalicAttribute: @(attributes->fakeItalic),
               iTermHasUnderlineColorAttribute: @(attributes->hasUnderlineColor),
               iTermUnderlineColorAttribute: @[ @(attributes->underlineColor.red),
