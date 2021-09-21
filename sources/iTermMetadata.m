@@ -25,7 +25,6 @@ iTermMetadata iTermMetadataTemporaryWithTimestamp(NSTimeInterval timestamp) {
 
 iTermMetadata iTermMetadataCopy(iTermMetadata obj) {
     iTermExternalAttributeIndex *index = [iTermMetadataGetExternalAttributesIndex(obj) copy];
-    NSLog(@"Copy %p -> %p", obj.externalAttributes, index);
     return (iTermMetadata) {
         .timestamp = obj.timestamp,
         .externalAttributes = index
@@ -33,14 +32,10 @@ iTermMetadata iTermMetadataCopy(iTermMetadata obj) {
 }
 
 void iTermMetadataRetain(iTermMetadata obj) {
-    NSLog(@"Retain %p", obj.externalAttributes);
     [(id)obj.externalAttributes retain];
-    NSLog(@"count for %p is %@", obj.externalAttributes, @([(id)obj.externalAttributes retainCount]));
 }
 
 void iTermMetadataRelease(iTermMetadata obj) {
-    NSLog(@"Release %p", obj.externalAttributes);
-    NSLog(@"count for %p is %@", obj.externalAttributes, @([(id)obj.externalAttributes retainCount] - 1));
     [(id)obj.externalAttributes release];
 }
 
@@ -50,7 +45,6 @@ iTermMetadata iTermMetadataRetainAutorelease(iTermMetadata obj) {
 }
 
 iTermMetadata iTermMetadataAutorelease(iTermMetadata obj) {
-    NSLog(@"Autorelease %p", obj.externalAttributes);
     [(id)obj.externalAttributes autorelease];
     return obj;
 }
@@ -60,9 +54,7 @@ void iTermMetadataReplaceWithCopy(iTermMetadata *obj) {
         return;
     }
     iTermExternalAttributeIndex *eaIndex = iTermMetadataGetExternalAttributesIndex(*obj);
-    NSLog(@"Replace with copy %p -> %p", obj->externalAttributes, eaIndex);
     iTermMetadataSetExternalAttributes(obj, [[eaIndex copy] autorelease]);
-    NSLog(@"count for %p is %@", obj->externalAttributes, @([(id)obj->externalAttributes retainCount]));
 }
 
 NSArray *iTermMetadataEncodeToArray(iTermMetadata obj) {
@@ -72,7 +64,6 @@ NSArray *iTermMetadataEncodeToArray(iTermMetadata obj) {
 
 void iTermMetadataSetExternalAttributes(iTermMetadata *obj,
                                         iTermExternalAttributeIndex *externalAttributes) {
-    NSLog(@"Set: autorelease %p, retain %p", obj->externalAttributes, externalAttributes);
     [(id)obj->externalAttributes autorelease];
     obj->externalAttributes = [externalAttributes retain];
 
