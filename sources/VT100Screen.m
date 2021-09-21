@@ -3840,7 +3840,6 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
 - (void)terminalInsertEmptyCharsAtCursor:(int)n {
     [currentGrid_ insertChar:[currentGrid_ defaultChar]
-#warning TODO(externalAttributes) Handle default external attributes
           externalAttributes:nil
                           at:currentGrid_.cursor
                        times:n];
