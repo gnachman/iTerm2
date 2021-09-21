@@ -992,13 +992,11 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
 - (void)screenSendModifiersDidChange {
 }
 
-- (void)screenAppendScreenCharArray:(const screen_char_t *)line length:(int)length {
+- (void)screenAppendScreenCharArray:(const screen_char_t *)line metadata:(iTermMetadata)metadata length:(int)length {
 }
-
 
 - (void)screenDidAppendImageData:(NSData *)data {
 }
-
 
 - (NSString *)screenStringForKeypressWithCode:(unsigned short)keycode flags:(NSEventModifierFlags)flags characters:(NSString *)characters charactersIgnoringModifiers:(NSString *)charactersIgnoringModifiers {
     return @"";
@@ -2256,6 +2254,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     VT100Screen *screen = [self screenWithWidth:5 height:4];
     [screen setFromFrame:(screen_char_t *) data.mutableBytes
                      len:data.length
+                metadata:@[ @[], @[], @[], @[] ]
                     info:info];
     XCTAssert([[screen compactLineDumpWithHistoryAndContinuationMarks] isEqualToString:
                @"abcde+\n"
@@ -2269,6 +2268,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     screen = [self screenWithWidth:2 height:2];
     [screen setFromFrame:(screen_char_t *) data.mutableBytes
                      len:data.length
+                metadata:@[ @[], @[] ]
                     info:info];
     XCTAssert([[screen compactLineDumpWithHistoryAndContinuationMarks] isEqualToString:
                @"ij!\n"
@@ -4407,7 +4407,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     screen_char_t line[1];
     screen_char_t continuation;
     continuation.backgroundColor = 5;
-    [lineBuffer appendLine:line length:0 partial:NO width:80 metadata:[iTermMetadata metadataWithTimestamp:0 externalAttributes:nil] timestamp:0 continuation:continuation];
+    [lineBuffer appendLine:line length:0 partial:NO width:80 metadata:iTermMetadataDefault() continuation:continuation];
     screen_char_t buffer[3];
     [lineBuffer copyLineToBuffer:buffer width:3 lineNum:0 continuation:&continuation];
 
@@ -4448,7 +4448,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     const int wrapWidth = 200;
     for (int i = 0; i < linesPerBlock * 2; i++) {
         line[0].code = '0' + i;
-        [lineBuffer appendLine:line length:n partial:NO width:wrapWidth metadata:[iTermMetadata metadataWithTimestamp:0 externalAttributes:nil] timestamp:0 continuation:continuation];
+        [lineBuffer appendLine:line length:n partial:NO width:wrapWidth metadata:iTermMetadataDefault() continuation:continuation];
     }
     // This tests the regression.
     NSArray *lines = [lineBuffer wrappedLinesFromIndex:linesPerBlock

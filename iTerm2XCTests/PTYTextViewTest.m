@@ -2523,6 +2523,11 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
     return _buffer;
 }
 
+- (iTermExternalAttributeIndex *)externalAttributeIndexForLine:(int)y {
+    return nil;
+}
+
+
 #pragma mark - Test selection
 
 - (void)testSelectedTextVeryBasic {
