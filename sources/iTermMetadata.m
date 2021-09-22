@@ -147,7 +147,7 @@ NSString *iTermMetadataShortDescription(iTermMetadata metadata, int length) {
 NSArray *iTermMetadataArrayFromData(NSData *data) {
     iTermMetadata temp;
     memset(&temp, 0, sizeof(temp));
-    iTermTLVDecoder *decoder = [[iTermTLVDecoder alloc] initWithData:data];
+    iTermTLVDecoder *decoder = [[[iTermTLVDecoder alloc] initWithData:data] autorelease];
     if (![decoder decodeDouble:&temp.timestamp]) {
         return nil;
     }
@@ -163,7 +163,7 @@ NSArray *iTermMetadataArrayFromData(NSData *data) {
 }
 
 NSData *iTermMetadataEncodeToData(iTermMetadata metadata) {
-    iTermTLVEncoder *encoder = [[iTermTLVEncoder alloc] init];
+    iTermTLVEncoder *encoder = [[[iTermTLVEncoder alloc] init] autorelease];
     [encoder encodeDouble:metadata.timestamp];
     iTermExternalAttributeIndex *attr = iTermMetadataGetExternalAttributesIndex(metadata);
     [encoder encodeData:[attr data] ?: [NSData data]];
