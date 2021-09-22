@@ -13,6 +13,7 @@
     NSTimeInterval timestamp_;
     int start_;
     int bound_;
+    NSData *_cachedEncodedMetadata;
 }
 
 static NSInteger VT100LineInfoNextGeneration = 1;
@@ -77,6 +78,7 @@ static NSInteger VT100LineInfoNextGeneration = 1;
 
 - (void)updateTimestamp {
     _metadata.timestamp = [NSDate timeIntervalSinceReferenceDate];
+    _cachedEncodedMetadata = nil;
 }
 
 - (BOOL)isDirtyAtOffset:(int)x {
@@ -107,6 +109,7 @@ static NSInteger VT100LineInfoNextGeneration = 1;
 
 - (void)setTimestamp:(NSTimeInterval)timestamp {
     _metadata.timestamp = timestamp;
+    _cachedEncodedMetadata = nil;
 }
 
 - (void)decodeMetadataArray:(NSArray *)array {
@@ -116,6 +119,7 @@ static NSInteger VT100LineInfoNextGeneration = 1;
 
 - (void)resetMetadata {
     iTermMetadataReset(&_metadata);
+    _cachedEncodedMetadata = nil;
 }
 
 - (NSArray *)encodedMetadata {
@@ -126,16 +130,21 @@ static NSInteger VT100LineInfoNextGeneration = 1;
     iTermMetadataRetain(metadata);
     iTermMetadataRelease(_metadata);
     _metadata = metadata;
+    _cachedEncodedMetadata = nil;
 }
 
 - (iTermExternalAttributeIndex *)externalAttributesCreatingIfNeeded:(BOOL)create {
+    _cachedEncodedMetadata = nil;
     return create ? iTermMetadataGetExternalAttributesIndexCreatingIfNeeded(&_metadata) : iTermMetadataGetExternalAttributesIndex(_metadata);
 }
 
 #pragma mark - DVREncodable
 
 - (NSData *)dvrEncodableData {
-    return iTermMetadataEncodeToData(_metadata);
+    if (!_cachedEncodedMetadata) {
+        _cachedEncodedMetadata = iTermMetadataEncodeToData(_metadata);
+    }
+    return _cachedEncodedMetadata;
 }
 
 @end

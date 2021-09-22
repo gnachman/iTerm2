@@ -41,6 +41,9 @@
     // Circular buffer not owned by us.
     DVRBuffer* buffer_;
 
+    // Offset of the currently decoded frame in buffer_.
+    ptrdiff_t currentFrameOffset_;
+
     // Most recent frame's metadata.
     DVRFrameInfo info_;
 
@@ -245,6 +248,7 @@
         decodedBytes_ = iTermMalloc(frameLength_);
     }
     char* data = [buffer_ blockForKey:key];
+    currentFrameOffset_ = [buffer_ offsetOfPointer:data];
     info_ = entry->info;
 
     const NSInteger metadataStart = (info_.width + 1) * info_.height * sizeof(screen_char_t);
@@ -252,7 +256,6 @@
     while (offset + sizeof(int) <= frameLength_) {
         int length;
         memmove(&length, data + offset, sizeof(length));
-        offset += sizeof(length);
         if (length < 0) {
             break;
         }
@@ -260,7 +263,8 @@
             // This is an artificial limit to prevent overflows and weird behavior on bad input.
             break;
         }
-        [metadataOffsets_ addObject:@(offset)];
+        [metadataOffsets_ addObject:@(currentFrameOffset_ + offset)];
+        offset += sizeof(length);
         offset += length;
     }
     DLog(@"Frame with key %lld has size %dx%d", key, info_.width, info_.height);
@@ -336,7 +340,7 @@ static BOOL NS_WARN_UNUSED_RESULT SafeIncr(int summand, int addend, int *sum) {
                 NSLog(@"%d bytes of difference at offset %d", n, o);
 #endif
                 if (line >= info_.height) {
-                    metadataOffsets_[line - info_.height] = @(i);
+                    metadataOffsets_[line - info_.height] = @(currentFrameOffset_ + i);
                 }
                 if (!SafeIncr(n, o, &o) || !SafeIncr(n, i, &i)) {
                     return NO;
@@ -358,31 +362,33 @@ static BOOL NS_WARN_UNUSED_RESULT SafeIncr(int summand, int addend, int *sum) {
     if (line >= metadataOffsets_.count) {
         return 0;
     }
-    if (line + 1 == metadataOffsets_.count) {
-        const int offset = metadataOffsets_.lastObject.intValue;
-        if (offset < frameLength_) {
-            return 0;
-        }
-        return frameLength_ - offset - sizeof(int);
-    }
-    const int thisOffset = metadataOffsets_[line].intValue;
-    const int nextOffset = metadataOffsets_[line + 1].intValue;
-    if (nextOffset < thisOffset) {
+    const int offset = [self offsetOfMetadataOnLine:line];
+    if (offset < 0) {
         return 0;
     }
-    return nextOffset - thisOffset - sizeof(int);
+    int result;
+    NSData *data = [buffer_ dataAtOffset:offset length:sizeof(result)];
+    if (!data || data.length != sizeof(result)) {
+        return 0;
+    }
+    memmove(&result, data.bytes, sizeof(result));
+    return result;
+}
+
+- (int)offsetOfMetadataOnLine:(int)line {
+    if (line < 0 || line >= metadataOffsets_.count) {
+        return -1;
+    }
+    return [metadataOffsets_[line] intValue];
 }
 
 - (NSData *)metadataForLine:(int)line {
-    if (line < 0 || line >= metadataOffsets_.count) {
+    const int offset = [self offsetOfMetadataOnLine:line];
+    if (offset < 0) {
         return nil;
     }
-    const int offset = [metadataOffsets_[line] intValue];
     const int length = [self lengthForMetadataOnLine:line];
-    if (offset < 0 || length < 0 || offset + length >= frameLength_) {
-        return nil;
-    }
-    return [NSData dataWithBytes:decodedBytes_ + offset length:length];
+    return [buffer_ dataAtOffset:offset + sizeof(int) length:length];
 }
 
 @end

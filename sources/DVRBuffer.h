@@ -87,6 +87,7 @@ typedef enum {
 - (DVRIndexEntry*)entryForKey:(long long)key;
 - (BOOL)loadFromDictionary:(NSDictionary *)dict;
 - (DVRIndexEntry *)firstEntryWithTimestampAfter:(long long)timestamp;
+- (NSData *)dataAtOffset:(ptrdiff_t)offset length:(size_t)length;
 
 @end
 

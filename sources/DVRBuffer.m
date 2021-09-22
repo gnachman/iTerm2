@@ -271,5 +271,17 @@
     return [index_ count] == 0;
 }
 
+- (NSData *)dataAtOffset:(ptrdiff_t)offset length:(size_t)length {
+    if (offset < 0 || offset >= capacity_) {
+        return nil;
+    }
+    if (length > capacity_) {
+        return nil;
+    }
+    if (offset + length >= capacity_) {
+        return nil;
+    }
+    return [NSData dataWithBytes:store_ + offset length:length];
+}
 
 @end
