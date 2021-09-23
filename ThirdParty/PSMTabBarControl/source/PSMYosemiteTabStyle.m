@@ -837,10 +837,30 @@
 }
 
 - (CGFloat)tabColorBrightness:(PSMTabBarCell *)cell {
-    return [[self effectiveBackgroundColorForTabWithTabColor:cell.tabColor
-                                                    selected:(cell.state == NSControlStateValueOn)
-                                             highlightAmount:0
-                                                      window:cell.controlView.window] it_hspBrightness];
+    NSColor *color = [self effectiveBackgroundColorForTabWithTabColor:cell.tabColor
+                                                             selected:(cell.state == NSControlStateValueOn)
+                                                      highlightAmount:0
+                                                               window:cell.controlView.window];
+    if (@available(macOS 10.16, *)) {
+        // This gets blended over a NSVisualEffectView, whose color is a mystery. Assume it's
+        // related to light/dark mode.
+        NSAppearanceName bestMatch = [_tabBar.effectiveAppearance bestMatchFromAppearancesWithNames:@[ NSAppearanceNameDarkAqua,
+                                                                                                       NSAppearanceNameVibrantDark,
+                                                                                                       NSAppearanceNameAqua,
+                                                                                                       NSAppearanceNameVibrantLight ]];
+        const CGFloat frontAlpha = color.alphaComponent;
+        CGFloat backBrightness;
+        const CGFloat frontBrightness = [color it_hspBrightness];
+        if ([bestMatch isEqualToString:NSAppearanceNameDarkAqua] ||
+            [bestMatch isEqualToString:NSAppearanceNameVibrantDark]) {
+            backBrightness = 0;
+        } else {
+            backBrightness = 1;
+        }
+        return backBrightness * (1 - frontAlpha) + frontAlpha * frontBrightness;
+    } else {
+        return [color it_hspBrightness];
+    }
 }
 
 - (BOOL)anyTabHasColor {
