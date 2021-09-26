@@ -118,6 +118,8 @@ forInvocation:(NSString *)invocation
 // Comparison
 - (BOOL)isEqualToComponent:(id<iTermStatusBarComponent>)component;
 
+- (BOOL)isEqualToComponentIgnoringConfiguration:(id<iTermStatusBarComponent>)component;
+
 // Decides which components are removed first when space lacks.
 - (double)statusBarComponentPriority;
 

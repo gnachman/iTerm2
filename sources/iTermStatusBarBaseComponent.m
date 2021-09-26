@@ -163,6 +163,10 @@ const double iTermStatusBarBaseComponentDefaultPriority = 5;
     return [self.configuration isEqual:otherBase.configuration];
 }
 
+- (BOOL)isEqualToComponentIgnoringConfiguration:(id<iTermStatusBarComponent>)component {
+    return component.class == self.class;
+}
+
 - (nullable NSColor *)statusBarTextColor {
     return nil;
 }

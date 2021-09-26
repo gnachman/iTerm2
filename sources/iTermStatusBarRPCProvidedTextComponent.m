@@ -31,6 +31,12 @@ NS_ASSUME_NONNULL_BEGIN
 
 static NSString *const iTermStatusBarRPCRegistrationRequestKey = @"registration request";
 
+@class iTermStatusBarRPCProvidedTextComponentCommon;
+
+@protocol iTermStatusBarRPCProvidedTextComponent
+- (iTermStatusBarRPCProvidedTextComponentCommon *)commonImplementation;
+@end
+
 @interface ITMRPCRegistrationRequest(StatusBar)
 @property (nonatomic, readonly) NSDictionary *statusBarConfiguration;
 - (instancetype)latestStatusBarRequest;
@@ -168,6 +174,15 @@ static NSString *const iTermStatusBarRPCRegistrationRequestKey = @"registration 
         _configuration = [configuration copy];
     }
     return self;
+}
+
+- (BOOL)isEqual:(id)other {
+    if (![other isKindOfClass:[iTermStatusBarRPCProvidedTextComponentCommon class]]) {
+        return NO;
+    }
+    iTermStatusBarRPCProvidedTextComponentCommon *rhs = other;
+    return [NSObject object:_savedRegistrationRequest.statusBarComponentAttributes.uniqueIdentifier
+            isEqualToObject:rhs->_savedRegistrationRequest.statusBarComponentAttributes.uniqueIdentifier];
 }
 
 - (void)finishInitialization {
@@ -568,7 +583,7 @@ static NSString *const iTermStatusBarRPCRegistrationRequestKey = @"registration 
 
 @end
 
-@interface iTermStatusBarRPCProvidedTextComponent()<iTermObject, iTermStatusBarRPCProvidedTextComponentCommonDelegate>
+@interface iTermStatusBarRPCProvidedTextComponent()<iTermObject, iTermStatusBarRPCProvidedTextComponentCommonDelegate, iTermStatusBarRPCProvidedTextComponent>
 @end
 
 @implementation iTermStatusBarRPCProvidedTextComponent {
@@ -666,6 +681,14 @@ static NSString *const iTermStatusBarRPCRegistrationRequestKey = @"registration 
     [_common itermWebViewWillExecuteJavascript:javascript];
 }
 
+- (BOOL)isEqualToComponentIgnoringConfiguration:(id<iTermStatusBarComponent>)component {
+    if (![component conformsToProtocol:@protocol(iTermStatusBarRPCProvidedTextComponent)]) {
+        return NO;
+    }
+    id<iTermStatusBarRPCProvidedTextComponent> other = (id)component;
+    return [_common isEqualTo:other.commonImplementation];
+}
+
 #pragma mark - iTermObject
 
 - (nullable iTermBuiltInFunctions *)objectMethodRegistry {
@@ -676,9 +699,15 @@ static NSString *const iTermStatusBarRPCRegistrationRequestKey = @"registration 
     return [_common objectScope];
 }
 
+#pragma mark - iTermStatusBarRPCProvidedTextComponent
+
+- (iTermStatusBarRPCProvidedTextComponentCommon *)commonImplementation {
+    return _common;
+}
+
 @end
 
-@interface iTermStatusBarRPCProvidedAttributedTextComponent()<iTermObject, iTermStatusBarRPCProvidedTextComponentCommonDelegate>
+@interface iTermStatusBarRPCProvidedAttributedTextComponent()<iTermObject, iTermStatusBarRPCProvidedTextComponentCommonDelegate, iTermStatusBarRPCProvidedTextComponent>
 @end
 
 @implementation iTermStatusBarRPCProvidedAttributedTextComponent {
@@ -785,6 +814,14 @@ static NSString *const iTermStatusBarRPCRegistrationRequestKey = @"registration 
     [_common itermWebViewWillExecuteJavascript:javascript];
 }
 
+- (BOOL)isEqualToComponentIgnoringConfiguration:(id<iTermStatusBarComponent>)component {
+    if (![component conformsToProtocol:@protocol(iTermStatusBarRPCProvidedTextComponent)]) {
+        return NO;
+    }
+    id<iTermStatusBarRPCProvidedTextComponent> other = (id)component;
+    return [_common isEqualTo:other.commonImplementation];
+}
+
 #pragma mark - iTermObject
 
 - (nullable iTermBuiltInFunctions *)objectMethodRegistry {
@@ -793,6 +830,12 @@ static NSString *const iTermStatusBarRPCRegistrationRequestKey = @"registration 
 
 - (nullable iTermVariableScope *)objectScope {
     return [_common objectScope];
+}
+
+#pragma mark - iTermStatusBarRPCProvidedTextComponent
+
+- (iTermStatusBarRPCProvidedTextComponentCommon *)commonImplementation {
+    return _common;
 }
 
 @end
