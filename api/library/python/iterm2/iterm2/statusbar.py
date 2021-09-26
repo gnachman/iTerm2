@@ -1,6 +1,7 @@
 """Status bar customization interfaces."""
 
 import base64
+import enum
 import json
 import typing
 
@@ -151,6 +152,11 @@ class StatusBarComponent:
         * Example ":ref:`mousemode_example`"
         * Example ":ref:`statusbar_example`"
     """
+    class Format(enum.Enum):
+        """Describes how a status bar component's output is formatted."""
+        PLAIN_TEXT = iterm2.api_pb2.RPCRegistrationRequest.StatusBarComponentAttributes.Format.PLAIN_TEXT
+        HTML = iterm2.api_pb2.RPCRegistrationRequest.StatusBarComponentAttributes.Format.HTML    #: A very limited subset of HTML
+
     class Icon:
         """Contains a status bar icon.
 
@@ -188,7 +194,8 @@ class StatusBarComponent:
             exemplar: str,
             update_cadence: typing.Union[float, None],
             identifier: str,
-            icons: typing.List[Icon] = []):
+            icons: typing.List[Icon] = [],
+            format: Format = Format.PLAIN_TEXT):
         """Initializes a status bar component."""
         self.__short_description = short_description
         self.__detailed_description = detailed_description
@@ -198,6 +205,7 @@ class StatusBarComponent:
         self.__identifier = identifier
         self.__icons = icons
         self.__connection: typing.Optional[iterm2.connection.Connection] = None
+        self.__format = format
 
     def set_fields_in_proto(self, proto):
         """Populates a protobuf from this object's contents."""
@@ -209,6 +217,7 @@ class StatusBarComponent:
         proto.unique_identifier = self.__identifier
         icons = list(map(lambda x: x.to_status_bar_icon(), self.__icons))
         proto.icons.extend(icons)
+        proto.format = self.__format.value
         if self.__update_cadence is not None:
             proto.update_cadence = self.__update_cadence
 

@@ -281,8 +281,12 @@ NS_ASSUME_NONNULL_BEGIN
     }].firstObject ?: [[NSAttributedString alloc] initWithString:@"" attributes:@{}];
 }
 
+- (NSFont *)font {
+    return self.advancedConfiguration.font ?: [iTermStatusBarAdvancedConfiguration defaultFont];
+}
+
 - (CGFloat)statusBarComponentVerticalOffset {
-    NSFont *font = self.advancedConfiguration.font ?: [iTermStatusBarAdvancedConfiguration defaultFont];
+    NSFont *font = [self font];
     const CGFloat containerHeight = _textField.superview.bounds.size.height;
     const CGFloat capHeight = font.capHeight;
     const CGFloat descender = font.descender - font.leading;  // negative (distance from bottom of bounding box to baseline)

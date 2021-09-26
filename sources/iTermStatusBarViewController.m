@@ -415,6 +415,7 @@ static const CGFloat iTermStatusBarViewControllerBottomMargin = 0;
     iTermStatusBarLayout *layout = [[iTermStatusBarLayout alloc] initWithDictionary:[self.layout dictionaryValue]
                                                                               scope:_scope];
     layout.components = [layout.components it_arrayByRemovingObjectsPassingTest:^BOOL(id<iTermStatusBarComponent> anObject) {
+#warning TODO: This doesn't work with RPCProvidedTextComponent since there can be many of the same class.
         return anObject.class == component.class;
     }];
     [self.delegate statusBarSetLayout:layout];

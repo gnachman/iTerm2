@@ -698,6 +698,21 @@ GPBEnumDescriptor *ITMRPCRegistrationRequest_Role_EnumDescriptor(void);
  **/
 BOOL ITMRPCRegistrationRequest_Role_IsValidValue(int32_t value);
 
+#pragma mark - Enum ITMRPCRegistrationRequest_StatusBarComponentAttributes_Format
+
+typedef GPB_ENUM(ITMRPCRegistrationRequest_StatusBarComponentAttributes_Format) {
+  ITMRPCRegistrationRequest_StatusBarComponentAttributes_Format_PlainText = 0,
+  ITMRPCRegistrationRequest_StatusBarComponentAttributes_Format_Html = 1,
+};
+
+GPBEnumDescriptor *ITMRPCRegistrationRequest_StatusBarComponentAttributes_Format_EnumDescriptor(void);
+
+/**
+ * Checks to see if the given value is defined by the enum or was not known at
+ * the time this source was generated.
+ **/
+BOOL ITMRPCRegistrationRequest_StatusBarComponentAttributes_Format_IsValidValue(int32_t value);
+
 #pragma mark - Enum ITMRPCRegistrationRequest_StatusBarComponentAttributes_Knob_Type
 
 typedef GPB_ENUM(ITMRPCRegistrationRequest_StatusBarComponentAttributes_Knob_Type) {
@@ -3383,6 +3398,7 @@ typedef GPB_ENUM(ITMRPCRegistrationRequest_StatusBarComponentAttributes_FieldNum
   ITMRPCRegistrationRequest_StatusBarComponentAttributes_FieldNumber_UpdateCadence = 5,
   ITMRPCRegistrationRequest_StatusBarComponentAttributes_FieldNumber_UniqueIdentifier = 6,
   ITMRPCRegistrationRequest_StatusBarComponentAttributes_FieldNumber_IconsArray = 7,
+  ITMRPCRegistrationRequest_StatusBarComponentAttributes_FieldNumber_Format = 8,
 };
 
 @interface ITMRPCRegistrationRequest_StatusBarComponentAttributes : GPBMessage
@@ -3419,6 +3435,9 @@ typedef GPB_ENUM(ITMRPCRegistrationRequest_StatusBarComponentAttributes_FieldNum
 /** The number of items in @c iconsArray without causing the array to be created. */
 @property(nonatomic, readonly) NSUInteger iconsArray_Count;
 
+@property(nonatomic, readwrite) ITMRPCRegistrationRequest_StatusBarComponentAttributes_Format format;
+
+@property(nonatomic, readwrite) BOOL hasFormat;
 @end
 
 #pragma mark - ITMRPCRegistrationRequest_StatusBarComponentAttributes_Knob

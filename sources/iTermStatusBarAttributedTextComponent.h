@@ -17,12 +17,14 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property (nonatomic, readonly) NSTextField *textField;
 @property (nonatomic, readonly) NSColor *textColor;
+@property (nonatomic, readonly) NSFont *font;
 
 - (CGFloat)widthForAttributedString:(NSAttributedString *)string;
 - (void)updateTextFieldIfNeeded;
 
 // Subclasses can override this to return YES if the longest variant can always be truncated to fit.
 - (BOOL)truncatesTail;
+- (NSTextField *)newTextField;
 
 @end
 

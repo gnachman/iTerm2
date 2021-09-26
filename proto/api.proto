@@ -834,6 +834,12 @@ message RPCRegistrationRequest {
       optional float scale = 2;
     }
     repeated Icon icons = 7;
+
+    enum Format {
+      PLAIN_TEXT = 0;
+      HTML = 1;
+    }
+    optional Format format = 8 [default = PLAIN_TEXT];
   }
 
   message ContextMenuAttributes {

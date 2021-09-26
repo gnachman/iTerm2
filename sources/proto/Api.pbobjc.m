@@ -7363,10 +7363,12 @@ typedef struct ITMRPCRegistrationRequest_SessionTitleAttributes__storage_ {
 @dynamic hasUpdateCadence, updateCadence;
 @dynamic hasUniqueIdentifier, uniqueIdentifier;
 @dynamic iconsArray, iconsArray_Count;
+@dynamic hasFormat, format;
 
 typedef struct ITMRPCRegistrationRequest_StatusBarComponentAttributes__storage_ {
   uint32_t _has_storage_[1];
   float updateCadence;
+  ITMRPCRegistrationRequest_StatusBarComponentAttributes_Format format;
   NSString *shortDescription;
   NSString *detailedDescription;
   NSMutableArray *knobsArray;
@@ -7444,6 +7446,15 @@ typedef struct ITMRPCRegistrationRequest_StatusBarComponentAttributes__storage_ 
         .flags = GPBFieldRepeated,
         .dataType = GPBDataTypeMessage,
       },
+      {
+        .name = "format",
+        .dataTypeSpecific.enumDescFunc = ITMRPCRegistrationRequest_StatusBarComponentAttributes_Format_EnumDescriptor,
+        .number = ITMRPCRegistrationRequest_StatusBarComponentAttributes_FieldNumber_Format,
+        .hasIndex = 5,
+        .offset = (uint32_t)offsetof(ITMRPCRegistrationRequest_StatusBarComponentAttributes__storage_, format),
+        .flags = (GPBFieldFlags)(GPBFieldOptional | GPBFieldHasDefaultValue | GPBFieldHasEnumDescriptor),
+        .dataType = GPBDataTypeEnum,
+      },
     };
     GPBDescriptor *localDescriptor =
         [GPBDescriptor allocDescriptorForClass:[ITMRPCRegistrationRequest_StatusBarComponentAttributes class]
@@ -7461,6 +7472,40 @@ typedef struct ITMRPCRegistrationRequest_StatusBarComponentAttributes__storage_ 
 }
 
 @end
+
+#pragma mark - Enum ITMRPCRegistrationRequest_StatusBarComponentAttributes_Format
+
+GPBEnumDescriptor *ITMRPCRegistrationRequest_StatusBarComponentAttributes_Format_EnumDescriptor(void) {
+  static GPBEnumDescriptor *descriptor = NULL;
+  if (!descriptor) {
+    static const char *valueNames =
+        "PlainText\000Html\000";
+    static const int32_t values[] = {
+        ITMRPCRegistrationRequest_StatusBarComponentAttributes_Format_PlainText,
+        ITMRPCRegistrationRequest_StatusBarComponentAttributes_Format_Html,
+    };
+    GPBEnumDescriptor *worker =
+        [GPBEnumDescriptor allocDescriptorForName:GPBNSStringifySymbol(ITMRPCRegistrationRequest_StatusBarComponentAttributes_Format)
+                                       valueNames:valueNames
+                                           values:values
+                                            count:(uint32_t)(sizeof(values) / sizeof(int32_t))
+                                     enumVerifier:ITMRPCRegistrationRequest_StatusBarComponentAttributes_Format_IsValidValue];
+    if (!OSAtomicCompareAndSwapPtrBarrier(nil, worker, (void * volatile *)&descriptor)) {
+      [worker release];
+    }
+  }
+  return descriptor;
+}
+
+BOOL ITMRPCRegistrationRequest_StatusBarComponentAttributes_Format_IsValidValue(int32_t value__) {
+  switch (value__) {
+    case ITMRPCRegistrationRequest_StatusBarComponentAttributes_Format_PlainText:
+    case ITMRPCRegistrationRequest_StatusBarComponentAttributes_Format_Html:
+      return YES;
+    default:
+      return NO;
+  }
+}
 
 #pragma mark - ITMRPCRegistrationRequest_StatusBarComponentAttributes_Knob
 
