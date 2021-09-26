@@ -93,6 +93,7 @@ Edit > Find > Find Previous                                                     
 Edit > Find > Use Selection for Find                                                    `Find.Use Selection for Find`                                                 
 Edit > Find > Find Globally...                                                          `Find.Find Globally...`                                                       
 Edit > Find > Find URLs                                                                 `Find.Find URLs`                                                              
+Edit > Find > Filter                                                                    `Find.Filter`                                                                 
 Edit > Marks and Annotations > Set Mark                                                 `Marks and Annotations.Set Mark`                                              
 Edit > Marks and Annotations > Jump to Mark                                             `Marks and Annotations.Jump to Mark`                                          
 Edit > Marks and Annotations > Next Mark                                                `Marks and Annotations.Next Mark`                                             
