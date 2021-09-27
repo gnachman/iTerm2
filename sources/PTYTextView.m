@@ -1800,9 +1800,12 @@
 }
 
 - (void)setTransparency:(double)fVal {
+    if (_transparency == fVal) {
+        return;
+    }
     _transparency = fVal;
     [self setNeedsDisplay:YES];
-    [_delegate textViewBackgroundColorDidChange];
+    [_delegate textViewTransparencyDidChange];
 }
 
 - (void)setTransparencyAffectsOnlyDefaultBackgroundColor:(BOOL)value {

@@ -641,6 +641,9 @@ static const NSUInteger kMaxHosts = 100;
 
     BOOL _initializationFinished;
     BOOL _needsJiggle;
+
+    // Have we finished loading the address book and color map initially?
+    BOOL _profileInitialized;
 }
 
 @synthesize isDivorced = _divorced;
@@ -3915,6 +3918,7 @@ ITERM_WEAKLY_REFERENCEABLE
     _textview.highlightCursorLine = [iTermProfilePreferences boolForColorKey:KEY_USE_CURSOR_GUIDE
                                                                         dark:[NSApp effectiveAppearance].it_isDark
                                                                      profile:_profile];
+    _profileInitialized = YES;
 }
 
 - (void)loadInitialColorTable {
@@ -9947,16 +9951,30 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)textViewBackgroundColorDidChange {
+    DLog(@"%@", [NSThread callStackSymbols]);
+    [self backgroundColorDidChangeJigglingIfNeeded:YES];
+}
+
+- (void)textViewTransparencyDidChange {
+    [self backgroundColorDidChangeJigglingIfNeeded:NO];
+}
+
+- (void)backgroundColorDidChangeJigglingIfNeeded:(BOOL)canJiggle {
     [_delegate sessionBackgroundColorDidChange:self];
     [_delegate sessionUpdateMetalAllowed];
     [_statusBarViewController updateColors];
     [_wrapper setNeedsDisplay:YES];
     [self.view setNeedsDisplay:YES];
-    self.needsJiggle = YES;
+    if (canJiggle && _profileInitialized) {
+        // See issue 9855.
+        self.needsJiggle = YES;
+    }
 }
-
 - (void)textViewForegroundColorDidChange {
-    self.needsJiggle = YES;
+    DLog(@"%@", [NSThread callStackSymbols]);
+    if (_profileInitialized) {
+        self.needsJiggle = YES;
+    }
 }
 
 - (void)setNeedsJiggle:(BOOL)needsJiggle {

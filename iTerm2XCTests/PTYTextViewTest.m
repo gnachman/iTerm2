@@ -545,6 +545,9 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
 - (void)textViewBackgroundColorDidChange {
 }
 
+- (void)textViewTransparencyDidChange {
+}
+
 - (void)textViewForegroundColorDidChange {
 }
 

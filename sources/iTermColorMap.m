@@ -103,8 +103,10 @@ const int kColorMapAnsiBrightModifier = 8;
         return;
     }
 
-    if (theColor == _map[@(theKey)])
+    if (theColor == _map[@(theKey)] ||
+        [theColor isEqual:_map[@(theKey)]]) {
         return;
+    }
 
     CGFloat components[4];
     [theColor getComponents:components];

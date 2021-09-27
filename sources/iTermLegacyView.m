@@ -17,4 +17,8 @@
     return YES;
 }
 
+- (void)setNeedsDisplay:(BOOL)needsDisplay {
+    [super setNeedsDisplay:needsDisplay];
+}
+
 @end
