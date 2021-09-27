@@ -173,6 +173,9 @@ static const CGFloat kButtonSize = 17;
 }
 
 - (void)updateBackgroundColor {
+    if (@available(macOS 10.16, *)) {
+        return;
+    }
     label_.backgroundColor = [self.delegate sessionTitleViewBackgroundColor];
     label_.drawsBackground = YES;
     [self setNeedsDisplay:YES];
