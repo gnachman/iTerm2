@@ -391,8 +391,8 @@ static const CGFloat kFilterHeight = 30;
     const CGFloat dy = self.filterIsVisible ? 0 : -kFilterHeight;
     const CGFloat height = _baseHeight + dy;
     const NSRect myFrame = self.view.frame;
-    return NSMakeRect(NSMaxX(self.superframe) - NSWidth(myFrame) - _offset.width,
-                      NSMaxY(self.superframe) - height - _offset.height,
+    return NSMakeRect(NSWidth(self.superframe) - NSWidth(myFrame) - _offset.width,
+                      NSHeight(self.superframe) - height - _offset.height,
                       NSWidth(myFrame),
                       height);
 }
