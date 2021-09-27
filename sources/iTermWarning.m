@@ -339,7 +339,15 @@ static BOOL gShowingWarning;
         iTermDisclosableView *disclosableView = [iTermDisclosableView castFrom:_accessory];
         if (disclosableView) {
             disclosableView.requestLayout = ^{
-                [alert layout];
+                if (@available(macOS 10.16, *)) {
+                    // Issue 9929 - big sur doesn't respect a synchrnonous call to layout.
+                    // I don't know why and it makes me sad.
+                    dispatch_async(dispatch_get_main_queue(), ^{
+                        [alert layout];
+                    });
+                } else {
+                    [alert layout];
+                }
             };
         }
         [alert setAccessoryView:_accessory];
