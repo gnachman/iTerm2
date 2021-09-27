@@ -356,6 +356,9 @@ NS_INLINE BOOL iTermTextDrawingHelperIsCharacterDrawable(const screen_char_t *co
     if (c->image) {
         return YES;
     }
+    if (c->invisible) {
+        return NO;
+    }
     if (!c->complexChar) {
         if (code == DWC_RIGHT ||
             code == DWC_SKIP ||

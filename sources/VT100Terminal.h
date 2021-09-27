@@ -16,6 +16,7 @@
 typedef struct {
     BOOL bold;
     BOOL blink;
+    BOOL invisible;
     BOOL underline;
     VT100UnderlineStyle underlineStyle;
     BOOL strikethrough;

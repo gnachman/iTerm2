@@ -318,6 +318,7 @@ extension screen_char_t {
                                     image: 0,
                                     strikethrough: 0,
                                     underlineStyle: VT100UnderlineStyle.single,
+                                    invisible: 0,
                                     unused: 0,
                                     urlCode: 0)
 }

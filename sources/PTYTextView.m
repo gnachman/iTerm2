@@ -1918,32 +1918,6 @@
     }
 }
 
-- (BOOL)_isTextBlinking {
-    int width = [_dataSource width];
-    int lineStart = ([self visibleRect].origin.y + [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins]) / _lineHeight;  // add VMARGIN because stuff under top margin isn't visible.
-    int lineEnd = ceil(([self visibleRect].origin.y + [self visibleRect].size.height - [self excess]) / _lineHeight);
-    if (lineStart < 0) {
-        lineStart = 0;
-    }
-    if (lineEnd > [_dataSource numberOfLines]) {
-        lineEnd = [_dataSource numberOfLines];
-    }
-    for (int y = lineStart; y < lineEnd; y++) {
-        screen_char_t* theLine = [_dataSource getLineAtIndex:y];
-        for (int x = 0; x < width; x++) {
-            if (theLine[x].blink) {
-                return YES;
-            }
-        }
-    }
-
-    return NO;
-}
-
-- (BOOL)_isAnythingBlinking {
-    return [self isCursorBlinking] || (_blinkAllowed && [self _isTextBlinking]);
-}
-
 #pragma mark - Refresh
 
 // WARNING: Do not call this function directly. Call
@@ -2237,8 +2211,7 @@
     }
 }
 
-- (BOOL)_markChangedSelectionAndBlinkDirty:(BOOL)redrawBlink width:(int)width
-{
+- (BOOL)_markChangedSelectionAndBlinkDirty:(BOOL)redrawBlink width:(int)width {
     BOOL anyBlinkers = NO;
     // Visible chars that have changed selection status are dirty
     // Also mark blinking text as dirty if needed
@@ -4549,10 +4522,6 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         }
     }
     return color;
-}
-
-- (BOOL)charBlinks:(screen_char_t)sct {
-    return self.blinkAllowed && sct.blink;
 }
 
 - (iTermColorMapKey)colorMapKeyForCode:(int)code

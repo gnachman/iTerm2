@@ -16,6 +16,7 @@
 
 NSString *const kGraphicRenditionBoldKey = @"Bold";
 NSString *const kGraphicRenditionBlinkKey = @"Blink";
+NSString *const kGraphicRenditionInvisibleKey = @"Invisible";
 NSString *const kGraphicRenditionUnderlineKey = @"Underline";
 NSString *const kGraphicRenditionStrikethroughKey = @"Strikethrough";
 NSString *const kGraphicRenditionUnderlineStyle = @"Underline Style";
@@ -156,6 +157,7 @@ typedef struct {
 #define VT100CHARATTR_UNDERLINE        4
 #define VT100CHARATTR_BLINK            5
 #define VT100CHARATTR_REVERSE          7
+#define VT100CHARATTR_INVISIBLE        8
 #define VT100CHARATTR_STRIKETHROUGH    9
 
 // xterm additions
@@ -164,6 +166,7 @@ typedef struct {
 #define VT100CHARATTR_NOT_UNDERLINE     24
 #define VT100CHARATTR_STEADY            25
 #define VT100CHARATTR_POSITIVE          27
+#define VT100CHARATTR_VISIBLE           28
 #define VT100CHARATTR_NOT_STRIKETHROUGH 29
 
 typedef enum {
@@ -502,6 +505,7 @@ static const int kMaxScreenRows = 4096;
     result.strikethrough = graphicRendition_.strikethrough;
     result.underlineStyle = graphicRendition_.underlineStyle;
     result.blink = graphicRendition_.blink;
+    result.invisible = graphicRendition_.invisible;
     result.image = NO;
     result.urlCode = _currentURLCode;
     return result;
@@ -543,6 +547,7 @@ static const int kMaxScreenRows = 4096;
     result.strikethrough = graphicRendition_.strikethrough;
     result.underlineStyle = graphicRendition_.underlineStyle;
     result.blink = graphicRendition_.blink;
+    result.invisible = graphicRendition_.invisible;
     result.urlCode = _currentURLCode;
     return result;
 }
@@ -926,6 +931,12 @@ static const int kMaxScreenRows = 4096;
                     break;
                 case VT100CHARATTR_STEADY:
                     graphicRendition_.blink = NO;
+                    break;
+                case VT100CHARATTR_INVISIBLE:
+                    graphicRendition_.invisible = YES;
+                    break;
+                case VT100CHARATTR_VISIBLE:
+                    graphicRendition_.invisible = NO;
                     break;
                 case VT100CHARATTR_REVERSE:
                     graphicRendition_.reversed = YES;
@@ -1411,6 +1422,9 @@ static const int kMaxScreenRows = 4096;
 
     // Reset BLINK
     graphicRendition_.blink = NO;
+
+    // Reset INVISIBLE
+    graphicRendition_.invisible = NO;
 
     // Reset UNDERLINE & STRIKETHROUGH
     graphicRendition_.underline = NO;
@@ -2602,6 +2616,7 @@ static const int kMaxScreenRows = 4096;
     VT100GraphicRendition g = {
         .bold = c.bold,
         .blink = c.blink,
+        .invisible = c.invisible,
         .underline = c.underline,
         .underlineStyle = c.underlineStyle,
         .strikethrough = c.strikethrough,
@@ -2728,6 +2743,9 @@ static const int kMaxScreenRows = 4096;
     }
     if (graphicRendition.blink) {
         [result addObject:@"5"];
+    }
+    if (graphicRendition.invisible) {
+        [result addObject:@"8"];
     }
     if (graphicRendition.reversed) {
         [result addObject:@"7"];
@@ -3581,6 +3599,7 @@ static iTermDECRPMSetting VT100TerminalDECRPMSettingFromBoolean(BOOL flag) {
 - (NSDictionary *)dictionaryForGraphicRendition:(VT100GraphicRendition)graphicRendition {
     return @{ kGraphicRenditionBoldKey: @(graphicRendition.bold),
               kGraphicRenditionBlinkKey: @(graphicRendition.blink),
+              kGraphicRenditionInvisibleKey: @(graphicRendition.invisible),
               kGraphicRenditionUnderlineKey: @(graphicRendition.underline),
               kGraphicRenditionStrikethroughKey: @(graphicRendition.strikethrough),
               kGraphicRenditionUnderlineStyle: @(graphicRendition.underlineStyle),
@@ -3607,6 +3626,7 @@ static iTermDECRPMSetting VT100TerminalDECRPMSettingFromBoolean(BOOL flag) {
     VT100GraphicRendition graphicRendition = { 0 };
     graphicRendition.bold = [dict[kGraphicRenditionBoldKey] boolValue];
     graphicRendition.blink = [dict[kGraphicRenditionBlinkKey] boolValue];
+    graphicRendition.invisible = [dict[kGraphicRenditionInvisibleKey] boolValue];
     graphicRendition.underline = [dict[kGraphicRenditionUnderlineKey] boolValue];
     graphicRendition.strikethrough = [dict[kGraphicRenditionStrikethroughKey] boolValue];
     graphicRendition.underlineStyle = [dict[kGraphicRenditionUnderlineStyle] unsignedIntegerValue];

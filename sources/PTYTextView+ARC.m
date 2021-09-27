@@ -479,13 +479,7 @@ static const NSUInteger kRectangularSelectionModifierMask = (kRectangularSelecti
 - (NSDictionary *)charAttributes:(screen_char_t)c externalAttributes:(iTermExternalAttribute *)ea {
     BOOL isBold = c.bold;
     BOOL isFaint = c.faint;
-    NSColor *fgColor = [self colorForCode:c.foregroundColor
-                                    green:c.fgGreen
-                                     blue:c.fgBlue
-                                colorMode:c.foregroundColorMode
-                                     bold:isBold
-                                    faint:isFaint
-                             isBackground:NO];
+    NSColor *fgColor;
     NSColor *bgColor = [self colorForCode:c.backgroundColor
                                     green:c.bgGreen
                                      blue:c.bgBlue
@@ -493,7 +487,18 @@ static const NSUInteger kRectangularSelectionModifierMask = (kRectangularSelecti
                                      bold:NO
                                     faint:NO
                              isBackground:YES];
-    fgColor = [fgColor colorByPremultiplyingAlphaWithColor:bgColor];
+    if (c.invisible) {
+        fgColor = bgColor;
+    } else {
+        fgColor = [self colorForCode:c.foregroundColor
+                                        green:c.fgGreen
+                                         blue:c.fgBlue
+                                    colorMode:c.foregroundColorMode
+                                         bold:isBold
+                                        faint:isFaint
+                                 isBackground:NO];
+        fgColor = [fgColor colorByPremultiplyingAlphaWithColor:bgColor];
+    }
 
     int underlineStyle = (c.urlCode || c.underline) ? (NSUnderlineStyleSingle | NSUnderlineByWord) : 0;
 

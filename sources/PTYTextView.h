@@ -615,8 +615,6 @@ scrollToFirstResult:(BOOL)scrollToFirstResult;
                    faint:(BOOL)isFaint
             isBackground:(BOOL)isBackground;
 
-- (BOOL)charBlinks:(screen_char_t)sct;
-
 - (iTermColorMapKey)colorMapKeyForCode:(int)theIndex
                                  green:(int)green
                                   blue:(int)blue

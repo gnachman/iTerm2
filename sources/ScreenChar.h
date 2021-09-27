@@ -192,9 +192,11 @@ typedef struct screen_char_t
     unsigned int strikethrough : 1;
     VT100UnderlineStyle underlineStyle : 1;  // VT100UnderlineStyle
 
+    unsigned int invisible : 1;
+
     // These bits aren't used but are defined here so that the entire memory
     // region can be initialized.
-    unsigned int unused : 3;
+    unsigned int unused : 2;
 
     // This comes after unused so it can be byte-aligned.
     // If the current text is part of a hypertext link, this gives an index into the URL store.
@@ -222,6 +224,7 @@ static inline BOOL ScreenCharacterAttributesEqual(screen_char_t *c1, screen_char
             c1->faint == c2->faint &&
             c1->italic == c2->italic &&
             c1->blink == c2->blink &&
+            c1->invisible == c2->invisible &&
             c1->underline == c2->underline &&
             c1->underlineStyle == c2->underlineStyle &&
             c1->strikethrough == c2->strikethrough &&
@@ -240,6 +243,7 @@ static inline void CopyForegroundColor(screen_char_t* to, const screen_char_t fr
     to->faint = from.faint;
     to->italic = from.italic;
     to->blink = from.blink;
+    to->invisible = from.invisible;
     to->underline = from.underline;
     to->underlineStyle = from.underlineStyle;
     to->strikethrough = from.strikethrough;
@@ -284,6 +288,7 @@ static inline BOOL ForegroundAttributesEqual(const screen_char_t a,
         a.faint != b.faint ||
         a.italic != b.italic ||
         a.blink != b.blink ||
+        a.invisible != b.invisible ||
         a.underline != b.underline ||
         a.underlineStyle != b.underlineStyle ||
         a.strikethrough != b.strikethrough ||
@@ -316,6 +321,7 @@ static inline BOOL ScreenCharHasDefaultAttributesAndColors(const screen_char_t s
             !s.faint &&
             !s.italic &&
             !s.blink &&
+            !s.invisible &&
             !s.underline &&
             s.underlineStyle == VT100UnderlineStyleSingle &&
             !s.strikethrough &&
