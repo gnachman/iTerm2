@@ -465,7 +465,6 @@ andEditComponentWithIdentifier:(NSString *)identifier
     CGFloat spaceAbove = 0;
     CGFloat spaceBelow = 0;
     CGFloat spaceLeft = 0;
-    CGFloat spaceRight = 0;
 
     // Compute the size of the tab view item.
     CGSize tabViewSize;
@@ -483,8 +482,14 @@ andEditComponentWithIdentifier:(NSString *)identifier
       spaceLeft = NSMaxX(_profilesListView.frame) + kSideMarginBetweenWindowAndTabView;
     }
 
+    // Add space for legacy scroller if needed
+    CGFloat spaceRight = kSideMarginBetweenWindowAndTabView;
+    if ([NSScroller preferredScrollerStyle] == NSScrollerStyleLegacy) {
+        spaceRight += [NSScroller scrollerWidthForControlSize:NSControlSizeRegular
+                                                scrollerStyle:NSScrollerStyleLegacy];
+    }
+
     // Other margins are easy.
-    spaceRight = kSideMarginBetweenWindowAndTabView;
     const CGFloat kDistanceFromContentTopToTabViewItemTop = 36;
     const CGFloat kDistanceFromContentBottomToWindowBottom = 16;
     spaceAbove = kDistanceFromContentTopToTabViewItemTop;
