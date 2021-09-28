@@ -546,6 +546,7 @@ DEFINE_SETTABLE_BOOL(noSyncSuppressBadPWDInArrangementWarning,
                      NoSyncSuppressBadPWDInArrangementWarning, NO, SECTION_WARNINGS @"Suppress the notification that a saved arrangement has a bad initial working directory.");
 DEFINE_SETTABLE_BOOL(noSyncNeverAskAboutMouseReportingFrustration, NoSyncNeverAskAboutMouseReportingFrustration, NO, SECTION_WARNINGS @"Suppress the notification asking if you want to disable mouse reporting that is shown after a drag followed by Cmd-C when mouse reporting is on?");
 DEFINE_SETTABLE_BOOL(noSyncDontWarnAboutTmuxPause, NoSyncDontWarnAboutTmuxPause, NO, SECTION_WARNINGS @"Suppress announcement that tmux will pause a session.");
+DEFINE_OPTIONAL_BOOL(noSyncClearAllBroadcast, nil, SECTION_WARNINGS @"Send Clear Session to all broadcasted-to sessions?");
 
 #pragma mark Pasteboard
 

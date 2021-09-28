@@ -9858,9 +9858,35 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     [[[self currentSession] terminal] resetCharset];
 }
 
+- (NSArray<PTYSession *> *)sessionsToSendClearTo {
+    NSArray<PTYSession *> *broadcast = [self broadcastSessions];
+    if (broadcast.count < 2) {
+        return @[ self.currentSession ];
+    }
+    NSString *title = [NSString stringWithFormat:@"Clear all sessions to which input is broadcast? This will affect %@ sessions.",
+                       @(broadcast.count)];
+    const iTermWarningSelection selection =
+    [iTermWarning showWarningWithTitle:title
+                               actions:@[ @"Clear All", @"Clear Current Session Only", @"Cancel" ]
+                             accessory:nil
+                            identifier:@"NoSyncClearAllBroadcast"
+                           silenceable:kiTermWarningTypePermanentlySilenceable
+                               heading:@"Clear in All Broadcasted-to Sessions?"
+                                window:self.window];
+    if (selection == kiTermWarningSelection0) {
+        return broadcast;
+    }
+    if (selection == kiTermWarningSelection1) {
+        return @[ self.currentSession ];
+    }
+    return @[];
+}
+
 // Clear the buffer of the current session (Edit>Clear Buffer).
 - (void)clearBuffer:(id)sender {
-    [[self currentSession] clearBuffer];
+    for (PTYSession *session in [self sessionsToSendClearTo]) {
+        [session clearBuffer];
+    }
 }
 
 // Erase the scrollback buffer of the current session.
