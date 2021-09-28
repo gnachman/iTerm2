@@ -657,6 +657,10 @@ static NSMutableArray<NSString *> *_combinedLog;
     return -1;
 }
 
+- (Profile *)defaultProfile {
+    return [self defaultBookmark];
+}
+
 - (Profile*)defaultBookmark
 {
     return [self bookmarkWithGuid:defaultBookmarkGuid_];

@@ -94,12 +94,12 @@ void LoadPrefsFromCustomFolder(void);
 
 - (IBAction)showGlobalTabView:(id)sender;
 - (IBAction)showAppearanceTabView:(id)sender;
-- (IBAction)showBookmarksTabView:(id)sender;
+- (IBAction)showProfilesTabView:(id)sender;
 - (IBAction)showKeyboardTabView:(id)sender;
 - (IBAction)showArrangementsTabView:(id)sender;
 - (IBAction)showMouseTabView:(id)sender;
 
-- (void)underlyingBookmarkDidChange;
+- (void)underlyingProfileDidChange;
 
 - (WindowArrangements *)arrangements;
 - (void)run;

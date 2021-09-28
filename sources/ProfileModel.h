@@ -85,7 +85,8 @@ extern NSString *const iTermProfileModelNewTabMenuItemIdentifierPrefix;
 - (void)removeAllBookmarks;
 - (NSArray*)rawData;
 - (void)load:(NSArray*)prefs;
-- (Profile*)defaultBookmark;
+- (Profile*)defaultBookmark;  // prefer defaultProfile
+- (Profile *)defaultProfile;
 - (Profile*)bookmarkWithName:(NSString*)name;
 - (Profile*)bookmarkWithGuid:(NSString*)guid;
 - (int)indexOfBookmarkWithName:(NSString*)name;

@@ -16,8 +16,6 @@
                 <outlet property="_appearanceToolbarItem" destination="5889" id="3e8-bj-Pgh"/>
                 <outlet property="_arrangementsTabViewItem" destination="5417" id="Zhy-fF-7su"/>
                 <outlet property="_arrangementsToolbarItem" destination="5890" id="2RT-x5-vvx"/>
-                <outlet property="_bookmarksTabViewItem" destination="1945" id="Byu-Qr-6Jc"/>
-                <outlet property="_bookmarksToolbarItem" destination="5886" id="2yS-fU-fSr"/>
                 <outlet property="_generalPreferencesViewController" destination="9Se-ld-UJa" id="ebT-z7-cAn"/>
                 <outlet property="_globalTabViewItem" destination="1944" id="EaV-nW-mSM"/>
                 <outlet property="_globalToolbarItem" destination="5887" id="1KD-pS-eBt"/>
@@ -27,6 +25,8 @@
                 <outlet property="_mouseTabViewItem" destination="6059" id="yUj-wc-ZtM"/>
                 <outlet property="_mouseToolbarItem" destination="6056" id="Wc9-tZ-Fn8"/>
                 <outlet property="_pointerViewController" destination="pwh-OY-l3e" id="oUo-Ri-MHo"/>
+                <outlet property="_profilesTabViewItem" destination="1945" id="Byu-Qr-6Jc"/>
+                <outlet property="_profilesToolbarItem" destination="5886" id="2yS-fU-fSr"/>
                 <outlet property="_profilesViewController" destination="HVI-63-mNz" id="jfc-z4-6um"/>
                 <outlet property="_shortcutsTabViewItem" destination="B3u-OI-QBk" id="lIq-B3-nkv"/>
                 <outlet property="_shortcutsToolbarItem" destination="97f-06-acT" id="JSR-PF-6wg"/>
@@ -617,7 +617,7 @@ Gw
                     <toolbarItem implicitItemIdentifier="A3650111-7031-4C54-AE69-7C0A67F80581" label="Profiles" paletteLabel="Profiles" tag="-1" image="PrefsProfile" sizingBehavior="auto" selectable="YES" id="5886">
                         <nil key="toolTip"/>
                         <connections>
-                            <action selector="showBookmarksTabView:" target="-2" id="5893"/>
+                            <action selector="showProfilesTabView:" target="-2" id="5893"/>
                         </connections>
                     </toolbarItem>
                     <toolbarItem implicitItemIdentifier="AD5C9306-CF41-4791-A62C-E30615D27619" label="Keys" paletteLabel="Keys" tag="-1" image="PrefsKeyboard" sizingBehavior="auto" selectable="YES" id="5888">

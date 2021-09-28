@@ -341,8 +341,8 @@ static iTermPreferencesSearchEngine *gSearchEngine;
     IBOutlet NSToolbarItem *_arrangementsToolbarItem;
     IBOutlet NSTabViewItem *_keyboardTabViewItem;
     IBOutlet NSTabViewItem *_arrangementsTabViewItem;
-    IBOutlet NSToolbarItem *_bookmarksToolbarItem;
-    IBOutlet NSTabViewItem *_bookmarksTabViewItem;
+    IBOutlet NSToolbarItem *_profilesToolbarItem;
+    IBOutlet NSTabViewItem *_profilesTabViewItem;
     IBOutlet NSToolbarItem *_mouseToolbarItem;
     IBOutlet NSTabViewItem *_mouseTabViewItem;
     IBOutlet NSToolbarItem *_advancedToolbarItem;
@@ -419,7 +419,7 @@ static iTermPreferencesSearchEngine *gSearchEngine;
         _appearanceToolbarItem.image = [NSImage it_imageForSymbolName:@"eye" accessibilityDescription:@"Appearance"];
         _keyboardToolbarItem.image = [NSImage it_imageForSymbolName:@"keyboard" accessibilityDescription:@"Keys"];
         _arrangementsToolbarItem.image = [NSImage it_imageForSymbolName:@"macwindow.on.rectangle" accessibilityDescription:@"Arrangements"];
-        _bookmarksToolbarItem.image = [NSImage it_imageForSymbolName:@"person" accessibilityDescription:@"Profiles"];
+        _profilesToolbarItem.image = [NSImage it_imageForSymbolName:@"person" accessibilityDescription:@"Profiles"];
         _mouseToolbarItem.image = [NSImage it_imageForSymbolName:@"cursorarrow.motionlines" accessibilityDescription:@"Pointer"];
         _advancedToolbarItem.image = [NSImage it_imageForSymbolName:@"gearshape.2" accessibilityDescription:@"Advanced"];
         _shortcutsToolbarItem.image = [NSImage it_imageForSymbolName:@"bolt.circle" accessibilityDescription:@"Shortcuts"];
@@ -484,11 +484,11 @@ static iTermPreferencesSearchEngine *gSearchEngine;
     if (shouldDisableResize) {
        _disableResize++;
     }
-    [_tabView selectTabViewItem:_bookmarksTabViewItem];
+    [_tabView selectTabViewItem:_profilesTabViewItem];
     if (shouldDisableResize) {
         _disableResize--;
     }
-    [_toolbar setSelectedItemIdentifier:[_bookmarksToolbarItem itemIdentifier]];
+    [_toolbar setSelectedItemIdentifier:[_profilesToolbarItem itemIdentifier]];
 }
 
 // NOTE: Callers should invoke makeKeyAndOrderFront if they are so inclined.
@@ -590,8 +590,8 @@ andEditComponentWithIdentifier:(NSString *)identifier
     }
 }
 
-// Update the values in form fields to reflect the bookmark's state
-- (void)underlyingBookmarkDidChange {
+// Update the values in form fields to reflect the profile's state
+- (void)underlyingProfileDidChange {
     [_profilesViewController refresh];
 }
 
@@ -696,9 +696,9 @@ andEditComponentWithIdentifier:(NSString *)identifier
     [_tabView selectTabViewItem:_appearanceTabViewItem];
 }
 
-- (IBAction)showBookmarksTabView:(id)sender {
+- (IBAction)showProfilesTabView:(id)sender {
     [self hideScrimAndSERP];
-    [_tabView selectTabViewItem:_bookmarksTabViewItem];
+    [_tabView selectTabViewItem:_profilesTabViewItem];
 }
 
 - (IBAction)showKeyboardTabView:(id)sender {
@@ -752,7 +752,7 @@ andEditComponentWithIdentifier:(NSString *)identifier
     }
     NSArray *result = @[ [_globalToolbarItem itemIdentifier],
                          [_appearanceToolbarItem itemIdentifier],
-                         [_bookmarksToolbarItem itemIdentifier],
+                         [_profilesToolbarItem itemIdentifier],
                          [_keyboardToolbarItem itemIdentifier],
                          [_arrangementsToolbarItem itemIdentifier],
                          [_mouseToolbarItem itemIdentifier],
@@ -792,7 +792,7 @@ andEditComponentWithIdentifier:(NSString *)identifier
     NSDictionary *dict =
     @{ [_globalToolbarItem itemIdentifier]: _globalToolbarItem,
        [_appearanceToolbarItem itemIdentifier]: _appearanceToolbarItem,
-       [_bookmarksToolbarItem itemIdentifier]: _bookmarksToolbarItem,
+       [_profilesToolbarItem itemIdentifier]: _profilesToolbarItem,
        [_keyboardToolbarItem itemIdentifier]: _keyboardToolbarItem,
        [_arrangementsToolbarItem itemIdentifier]: _arrangementsToolbarItem,
        [_mouseToolbarItem itemIdentifier]: _mouseToolbarItem,
@@ -859,8 +859,8 @@ andEditComponentWithIdentifier:(NSString *)identifier
     if (tabViewItem == _arrangementsTabViewItem) {
         return _arrangementsToolbarItem;
     }
-    if (tabViewItem == _bookmarksTabViewItem) {
-        return _bookmarksToolbarItem;
+    if (tabViewItem == _profilesTabViewItem) {
+        return _profilesToolbarItem;
     }
     if (tabViewItem == _mouseTabViewItem) {
         return _mouseToolbarItem;
@@ -889,7 +889,7 @@ andEditComponentWithIdentifier:(NSString *)identifier
     }
     if (viewController == _profilesViewController ||
         [_profilesViewController hasViewController:viewController]) {
-        return _bookmarksTabViewItem;
+        return _profilesTabViewItem;
     }
     if (viewController == _pointerViewController) {
         return _mouseTabViewItem;
@@ -917,7 +917,7 @@ andEditComponentWithIdentifier:(NSString *)identifier
         // TODO: the arrangements vc doesn't have the right superclass
         return nil;
     }
-    if (tabViewItem == _bookmarksTabViewItem) {
+    if (tabViewItem == _profilesTabViewItem) {
         return _profilesViewController;
     }
     if (tabViewItem == _mouseTabViewItem) {
@@ -934,7 +934,7 @@ andEditComponentWithIdentifier:(NSString *)identifier
 }
 
 - (void)tabView:(NSTabView *)tabView didSelectTabViewItem:(NSTabViewItem *)tabViewItem {
-    if (tabViewItem == _bookmarksTabViewItem) {
+    if (tabViewItem == _profilesTabViewItem) {
         if (_disableResize == 0) {
             [_profilesViewController resizeWindowForCurrentTabAnimated:YES];
         }
@@ -1083,9 +1083,9 @@ andEditComponentWithIdentifier:(NSString *)identifier
         return;
     }
     if ([viewController isKindOfClass:[iTermProfilePreferencesBaseViewController class]]) {
-        [self selectTabViewItem:_bookmarksTabViewItem];
+        [self selectTabViewItem:_profilesTabViewItem];
         if (_profilesViewController.selectedProfile == nil) {
-            [_profilesViewController openToProfileWithGuid:[[ProfileModel sharedInstance] defaultBookmark][KEY_GUID]
+            [_profilesViewController openToProfileWithGuid:[[ProfileModel sharedInstance] defaultProfile][KEY_GUID]
                                           selectGeneralTab:NO
                                                      scope:nil];
         }

@@ -10420,7 +10420,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
             if ([session isDivorced] &&
                 [[[PreferencePanel sessionsInstance] currentProfileGuid] isEqualToString:guid] &&
                 [[PreferencePanel sessionsInstance] isWindowLoaded]) {
-                [[PreferencePanel sessionsInstance] underlyingBookmarkDidChange];
+                [[PreferencePanel sessionsInstance] underlyingProfileDidChange];
             }
         }
         [session updateStatusBarStyle];

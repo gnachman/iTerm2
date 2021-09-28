@@ -5729,7 +5729,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
         // Update an existing one-bookmark prefs dialog, if open.
         if ([[[PreferencePanel sessionsInstance] windowIfLoaded] isVisible]) {
-            [[PreferencePanel sessionsInstance] underlyingBookmarkDidChange];
+            [[PreferencePanel sessionsInstance] underlyingProfileDidChange];
         }
     }
 }
