@@ -20,6 +20,7 @@
 #import "NSFont+iTerm.h"
 #import "NSImage+iTerm.h"
 #import "NSStringITerm.h"
+#import "PSMTabBarControl.h"
 #import "PTYSession.h"
 #import "ScreenChar.h"
 #import "ScreenCharArray.h"

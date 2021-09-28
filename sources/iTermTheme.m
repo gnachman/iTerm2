@@ -86,14 +86,16 @@
                                                 sessionBackgroundColor:(NSColor *)sessionBackgroundColor
                                                       isFirstResponder:(BOOL)isFirstResponder
                                                            dimOnlyText:(BOOL)dimOnlyText
-                                                 adjustedDimmingAmount:(CGFloat)adjustedDimmingAmount {
+                                                 adjustedDimmingAmount:(CGFloat)adjustedDimmingAmount
+                                                     transparencyAlpha:(CGFloat)transparencyAlpha {
     iTermPreferencesTabStyle preferredStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
     if (!tabColor) {
         return [self dimmedBackgroundColorWithAppearance:effectiveAppearance
                                   sessionBackgroundColor:sessionBackgroundColor
                                         isFirstResponder:isFirstResponder
                                              dimOnlyText:dimOnlyText
-                                   adjustedDimmingAmount:adjustedDimmingAmount];
+                                   adjustedDimmingAmount:adjustedDimmingAmount
+                                       transparencyAlpha:transparencyAlpha];
     }
     NSColor *undimmedColor = tabColor;
 
@@ -113,11 +115,18 @@
 #pragma mark Status Bar Background Color
 
 - (NSColor *)tabBarBackgroundColorForTabColor:(NSColor *)tabColor
-                                        style:(id<PSMTabStyle>)tabStyle {
+                                        style:(id<PSMTabStyle>)tabStyle
+                            transparencyAlpha:(CGFloat)transparencyAlpha {
     if (tabColor) {
         return tabColor;
     }
-    return [tabStyle backgroundColorSelected:YES highlightAmount:0];
+    if (PSMShouldExtendTransparencyIntoMinimalTabBar()) {
+        // Note that here the alpha value is used regardless of whether a tab is selected because this is
+        // used for the status bar's background color.
+        return [[tabStyle backgroundColorSelected:YES highlightAmount:0] colorWithAlphaComponent:transparencyAlpha];
+    } else {
+        return [tabStyle backgroundColorSelected:YES highlightAmount:0];
+    }
 }
 
 - (nullable NSColor *)statusBarContainerBackgroundColorForTabColor:(NSColor *)tabColor
@@ -126,17 +135,20 @@
                                             sessionBackgroundColor:(NSColor *)sessionBackgroundColor
                                                   isFirstResponder:(BOOL)isFirstResponder
                                                        dimOnlyText:(BOOL)dimOnlyText
-                                             adjustedDimmingAmount:(CGFloat)adjustedDimmingAmount {
+                                             adjustedDimmingAmount:(CGFloat)adjustedDimmingAmount
+                                                 transparencyAlpha:(CGFloat)transparencyAlpha {
     if ([iTermPreferences boolForKey:kPreferenceKeySeparateStatusBarsPerPane]) {
         return [self backgroundColorForDecorativeSubviewsInSessionWithTabColor:tabColor
                                                            effectiveAppearance:effectiveAppearance
                                                         sessionBackgroundColor:sessionBackgroundColor
                                                               isFirstResponder:isFirstResponder
                                                                    dimOnlyText:dimOnlyText
-                                                         adjustedDimmingAmount:adjustedDimmingAmount];
+                                                         adjustedDimmingAmount:adjustedDimmingAmount
+                                                             transparencyAlpha:transparencyAlpha];
     } else {
         return [self tabBarBackgroundColorForTabColor:tabColor
-                                                style:tabStyle];
+                                                style:tabStyle
+                                    transparencyAlpha:transparencyAlpha];
     }
 }
 
@@ -253,19 +265,33 @@
                           sessionBackgroundColor:(NSColor *)sessionBackgroundColor
                                 isFirstResponder:(BOOL)isFirstResponder
                                      dimOnlyText:(BOOL)dimOnlyText
-                           adjustedDimmingAmount:(CGFloat)adjustedDimmingAmount {
+                           adjustedDimmingAmount:(CGFloat)adjustedDimmingAmount
+                               transparencyAlpha:(CGFloat)transparencyAlpha {
     const BOOL inactive = !isFirstResponder;
     iTermPreferencesTabStyle preferredStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
     if (self.useMinimalStyle) {
         NSColor *color = sessionBackgroundColor;
         if ([iTermPreferences boolForKey:kPreferenceKeyDimOnlyText]) {
-            return color;
+            if (PSMShouldExtendTransparencyIntoMinimalTabBar()) {
+                return [color colorWithAlphaComponent:transparencyAlpha];
+            } else {
+                return color;
+            }
         }
         if (inactive && !dimOnlyText) {
-            return [color colorDimmedBy:adjustedDimmingAmount
-                       towardsGrayLevel:0.5];
+            if (PSMShouldExtendTransparencyIntoMinimalTabBar()) {
+                return [[color colorDimmedBy:adjustedDimmingAmount
+                            towardsGrayLevel:0.5] colorWithAlphaComponent:transparencyAlpha];
+            } else {
+                return [color colorDimmedBy:adjustedDimmingAmount
+                           towardsGrayLevel:0.5];
+            }
         } else {
-            return color;
+            if (PSMShouldExtendTransparencyIntoMinimalTabBar()) {
+                return [color colorWithAlphaComponent:transparencyAlpha];
+            } else {
+                return color;
+            }
         }
     }
     CGFloat whiteLevel = 0;

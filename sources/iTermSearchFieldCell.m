@@ -9,9 +9,11 @@
 
 #import "DebugLogging.h"
 #import "iTermAdvancedSettingsModel.h"
+#import "NSAppearance+iTerm.h"
 #import "NSArray+iTerm.h"
 #import "NSColor+iTerm.h"
 #import "NSObject+iTerm.h"
+#import "PSMTabBarControl.h"
 
 static NSSize kFocusRingInset = { 2, 3 };
 const CGFloat kEdgeWidth = 3;
@@ -83,8 +85,16 @@ const CGFloat kEdgeWidth = 3;
     return editor != nil;
 }
 
-- (void)drawWithFrame:(NSRect)cellFrame inView:(NSView *)controlView {
-    NSRect originalFrame = cellFrame;
+- (void)drawWithFrame:(NSRect)originalFrame inView:(NSView *)controlView {
+    if (PSMShouldExtendTransparencyIntoMinimalTabBar()) {
+        [self drawModernWithFrame:originalFrame inView:controlView];
+    } else {
+        [self drawLegacyWithFrame:originalFrame inView:controlView];
+    }
+}
+
+- (void)drawLegacyWithFrame:(NSRect)originalFrame inView:(NSView *)controlView {
+    NSRect cellFrame = originalFrame;
     const BOOL focused = [self shouldUseFocusedAppearanceWithControlView:controlView];
     [self.backgroundColor set];
 
@@ -117,6 +127,69 @@ const CGFloat kEdgeWidth = 3;
         [[NSColor colorWithCalibratedWhite:0.7 alpha:1] set];
         [path stroke];
     }
+
+    NSString *indexAndCountString = self.indexAndCountString;
+    if (indexAndCountString) {
+        NSSize size = self.sizeOfIndexAndCount;
+        NSRect textRect = [super searchTextRectForBounds:controlView.bounds];
+
+        NSRect rect = NSMakeRect(NSMaxX(textRect) - size.width - self.marginForIndexAndCount,
+                                 textRect.origin.y,
+                                 size.width,
+                                 textRect.size.height);
+        [indexAndCountString drawInRect:rect withAttributes:self.attributesForIndexAndCount];
+    }
+    [self updateKeyboardClipViewIfNeeded];
+
+    [self drawInteriorWithFrame:originalFrame inView:controlView];
+}
+
+- (void)drawModernWithFrame:(NSRect)originalFrame inView:(NSView *)controlView {
+    NSRect cellFrame = originalFrame;
+    cellFrame.origin.y += 0.5;
+    const BOOL focused = [self shouldUseFocusedAppearanceWithControlView:controlView];
+    [self.backgroundColor set];
+
+    CGFloat xInset, yInset;
+    if (focused) {
+        xInset = 2.25;
+        yInset = 1.25;
+    } else {
+        xInset = 0.5;
+        yInset = 0.5;
+    }
+    cellFrame = NSInsetRect(cellFrame, xInset, yInset);
+    NSBezierPath *path = [NSBezierPath bezierPathWithRoundedRect:cellFrame
+                                                         xRadius:4
+                                                         yRadius:4];
+    if ([self drawsBackground]) {
+        [path fill];
+    }
+
+    [self drawProgressBarInFrame:originalFrame path:path];
+
+    [[NSColor colorWithCalibratedWhite:1 alpha:0.05] set];
+    [path fill];
+
+    if ([controlView.effectiveAppearance it_isDark]) {
+        [[NSColor colorWithCalibratedWhite:0.5 alpha:.25] set];
+    } else {
+        [[NSColor colorWithCalibratedWhite:0.2 alpha:.5] set];
+    }
+    [path setLineWidth:0.5];
+    [path stroke];
+
+    cellFrame = NSInsetRect(cellFrame, 0.5, 0.5);
+    path = [NSBezierPath bezierPathWithRoundedRect:cellFrame
+                                           xRadius:4
+                                           yRadius:4];
+    [path setLineWidth:0.5];
+    if ([controlView.effectiveAppearance it_isDark]) {
+        [[NSColor colorWithCalibratedWhite:0.7 alpha:.25] set];
+    } else {
+        [[NSColor colorWithCalibratedWhite:0.8 alpha:.5] set];
+    }
+    [path stroke];
 
     NSString *indexAndCountString = self.indexAndCountString;
     if (indexAndCountString) {
@@ -243,7 +316,11 @@ const CGFloat kEdgeWidth = 3;
                                green:0.6
                                blue:1.0
                                alpha:alpha] set];
-    NSRectFillUsingOperation(blueRect, NSCompositingOperationSourceOver);
+    if (PSMShouldExtendTransparencyIntoMinimalTabBar()) {
+        NSRectFillUsingOperation(blueRect, NSCompositingOperationDarken);
+    } else  {
+        NSRectFillUsingOperation(blueRect, NSCompositingOperationSourceOver);
+    }
 
     [[NSGraphicsContext currentContext] restoreGraphicsState];
 }

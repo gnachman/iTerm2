@@ -40,11 +40,13 @@ NS_ASSUME_NONNULL_BEGIN
                                                 sessionBackgroundColor:(NSColor *)sessionBackgroundColor
                                                       isFirstResponder:(BOOL)isFirstResponder
                                                            dimOnlyText:(BOOL)dimOnlyText
-                                                 adjustedDimmingAmount:(CGFloat)adjustedDimmingAmount;
+                                                 adjustedDimmingAmount:(CGFloat)adjustedDimmingAmount
+                                                     transparencyAlpha:(CGFloat)transparencyAlpha;
 
 // Background color for fake title bar in minimal, shared status bar.
 - (NSColor *)tabBarBackgroundColorForTabColor:(nullable NSColor *)tabColor
-                                        style:(id<PSMTabStyle>)tabStyle;
+                                        style:(id<PSMTabStyle>)tabStyle
+                            transparencyAlpha:(CGFloat)transparencyAlpha;
 
 // Default background color for status bar. Accounts for shared vs non-shared.
 - (nullable NSColor *)statusBarContainerBackgroundColorForTabColor:(NSColor *)tabColor
@@ -53,7 +55,8 @@ NS_ASSUME_NONNULL_BEGIN
                                             sessionBackgroundColor:(NSColor *)sessionBackgroundColor
                                                   isFirstResponder:(BOOL)isFirstResponder
                                                        dimOnlyText:(BOOL)dimOnlyText
-                                             adjustedDimmingAmount:(CGFloat)adjustedDimmingAmount;
+                                             adjustedDimmingAmount:(CGFloat)adjustedDimmingAmount
+                                                 transparencyAlpha:(CGFloat)transparencyAlpha;
 
 
 // Default text color for status bar.

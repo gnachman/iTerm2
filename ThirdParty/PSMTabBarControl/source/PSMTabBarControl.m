@@ -44,6 +44,8 @@ const NSInteger kPSMStartResizeAnimation = 0;
 PSMTabBarControlOptionKey PSMTabBarControlOptionColoredSelectedTabOutlineStrength = @"PSMTabBarControlOptionColoredSelectedTabOutlineStrength";
 PSMTabBarControlOptionKey PSMTabBarControlOptionMinimalStyleBackgroundColorDifference =
     @"PSMTabBarControlOptionMinimalStyleBackgroundColorDifference";
+PSMTabBarControlOptionKey PSMTabBarControlOptionMinimalBackgroundAlphaValue =
+    @"PSMTabBarControlOptionMinimalBackgroundAlphaValue";
 PSMTabBarControlOptionKey PSMTabBarControlOptionColoredMinimalOutlineStrength =
     @"PSMTabBarControlOptionColoredMinimalOutlineStrength";
 PSMTabBarControlOptionKey PSMTabBarControlOptionColoredUnselectedTabTextProminence = @"PSMTabBarControlOptionColoredUnselectedTabTextProminence";
@@ -2419,3 +2421,10 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionHTMLTabTitles = @"PSMTabBarContr
 }
 
 @end
+
+BOOL PSMShouldExtendTransparencyIntoMinimalTabBar(void) {
+    if (@available(macOS 10.16, *)) {
+        return YES;
+    }
+    return NO;
+}

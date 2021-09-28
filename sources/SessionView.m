@@ -1270,7 +1270,8 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
                                                                            sessionBackgroundColor:[_delegate sessionViewBackgroundColor]
                                                                                  isFirstResponder:[_delegate sessionViewTerminalIsFirstResponder]
                                                                                       dimOnlyText:[_delegate sessionViewShouldDimOnlyText]
-                                                                            adjustedDimmingAmount:[self adjustedDimmingAmount]];
+                                                                            adjustedDimmingAmount:[self adjustedDimmingAmount]
+                                                                                transparencyAlpha:[self.delegate sessionViewTransparencyAlpha]];
 }
 
 - (NSEdgeInsets)extraMargins {

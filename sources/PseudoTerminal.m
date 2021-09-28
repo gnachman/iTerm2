@@ -4743,6 +4743,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [self updateTabColors];  // Updates the window's background color as a side-effect
     [self updateForTransparency:self.ptyWindow];
     [_contentView invalidateAutomaticTabBarBackingHiding];
+    [_contentView setCurrentSessionAlpha:self.currentSession.textview.transparencyAlpha];
 }
 
 - (IBAction)toggleUseTransparency:(id)sender
@@ -5776,6 +5777,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [self updateDocumentEdited];
     [[iTermFindPasteboard sharedInstance] updateObservers:nil];
     [self updateBackgroundImage];
+    [_contentView setCurrentSessionAlpha:self.currentSession.textview.transparencyAlpha];
     [[NSNotificationCenter defaultCenter] postNotificationName:iTermSelectedTabDidChange object:tab];
     DLog(@"Finished");
 }
@@ -6950,6 +6952,8 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
         return @([iTermAdvancedSettingsModel coloredSelectedTabOutlineStrength]);
     } else if ([option isEqualToString:PSMTabBarControlOptionMinimalStyleBackgroundColorDifference]) {
         return @([iTermAdvancedSettingsModel minimalTabStyleBackgroundColorDifference]);
+    } else if ([option isEqualToString:PSMTabBarControlOptionMinimalBackgroundAlphaValue]) {
+        return @(self.currentSession.textview.transparencyAlpha);
     } else if ([option isEqualToString:PSMTabBarControlOptionColoredUnselectedTabTextProminence]) {
         return @([iTermAdvancedSettingsModel coloredUnselectedTabTextProminence]);
     } else if ([option isEqualToString:PSMTabBarControlOptionColoredMinimalOutlineStrength]) {
@@ -8225,6 +8229,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     for (PTYSession *session in self.currentTab.sessions) {
         [session updateViewBackgroundImage];
     }
+    [_contentView setCurrentSessionAlpha:self.currentSession.textview.transparencyAlpha];
 }
 
 - (void)fitWindowToTabs {
@@ -8947,7 +8952,8 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 - (NSColor *)rootTerminalViewTabBarBackgroundColorIgnoringTabColor:(BOOL)ignoreTabColor {
     // This is for the fake title bar and for the status bar background color.
     return [[iTermTheme sharedInstance] tabBarBackgroundColorForTabColor:ignoreTabColor ? nil : self.currentSession.tabColor
-                                                                   style:_contentView.tabBarControl.style];
+                                                                   style:_contentView.tabBarControl.style
+                                                       transparencyAlpha:self.currentSession.textview.transparencyAlpha];
 }
 
 - (NSColor *)windowDecorationColor {

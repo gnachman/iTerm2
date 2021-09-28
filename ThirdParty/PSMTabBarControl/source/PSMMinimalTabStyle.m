@@ -59,12 +59,24 @@
 - (NSColor *)tabBarColor {
     NSColor *minimalStyleColor = [self.delegate minimalTabStyleBackgroundColor];
     DLog(@"Computing tab bar color. delegate=%@ minimalStyleColor=%@", self.delegate, minimalStyleColor);
-    return [self colorByDimmingColor:minimalStyleColor ?: [NSColor colorWithRed:0 green:0 blue:0 alpha:1]];
+    if (PSMShouldExtendTransparencyIntoMinimalTabBar()) {
+      const CGFloat alpha = [self alphaValue:[self backgroundAlphaValue:NO]
+                                 opacifiedBy:0.3];
+      NSColor *base = [self colorByDimmingColor:minimalStyleColor ?: [NSColor colorWithRed:0 green:0 blue:0 alpha:1]];
+      return [base colorWithAlphaComponent:alpha];
+  } else {
+      return [self colorByDimmingColor:minimalStyleColor ?: [NSColor colorWithRed:0 green:0 blue:0 alpha:1]];
+  }
 }
 
 - (BOOL)backgroundIsDark {
     CGFloat backgroundBrightness = self.tabBarColor.it_hspBrightness;
     return (backgroundBrightness < 0.5);
+}
+
+// For w in [0,1], move linearly between l (when w=0) and u (when w=1).
+static CGFloat PSMWeightedAverage(CGFloat l, CGFloat u, CGFloat w) {
+    return l * (1 - w) + u * w;
 }
 
 - (NSColor *)textColorDefaultSelected:(BOOL)selected backgroundColor:(NSColor *)backgroundColor windowIsMainAndAppIsActive:(BOOL)mainAndActive {
@@ -78,37 +90,104 @@
     }
     const CGFloat delta = selected ? 0.85 : 0.5;
     CGFloat value;
+    CGFloat extremity;
     if (backgroundBrightness < 0.5) {
         value = MIN(1, backgroundBrightness + delta);
+        extremity = MAX(value, selected ? 1 : 0.9);
     } else {
         value = MAX(0, backgroundBrightness - delta);
+        extremity = MIN(value, selected ? 0 : 0.3);
     }
-    DLog(@"selected=%@ backgroundColor=%@ backgroundBrightness=%@ delta=%@ value=%@", @(selected), backgroundColor, @(backgroundBrightness), @(delta), @(value));
-    CGFloat alpha = 1;
-    if (mainAndActive) {
-        alpha = 0.75;
+
+    if (PSMShouldExtendTransparencyIntoMinimalTabBar()) {
+        // Push value toward an extreme (black or white) as transparency increases.
+        const CGFloat transparencyAlpha = [[self.tabBar.delegate tabView:self.tabBar
+                                                           valueOfOption:PSMTabBarControlOptionMinimalBackgroundAlphaValue] doubleValue];
+        value = PSMWeightedAverage(value, extremity, pow(1 - transparencyAlpha, 0.5));
+
+        CGFloat minAlpha;  // For opaque windows
+        CGFloat maxAlpha;  // For transparent windows
+        if (mainAndActive) {
+            minAlpha = 0.75;
+            maxAlpha = 1.0;
+        } else {
+            minAlpha = 0.5;
+            maxAlpha = 0.75;
+        }
+        const CGFloat alpha = PSMWeightedAverage(minAlpha, maxAlpha, 1 - transparencyAlpha);
+        DLog(@"selected=%@ backgroundColor=%@ backgroundBrightness=%@ delta=%@ value=%@", @(selected), backgroundColor, @(backgroundBrightness), @(delta), @(value));
+        return [NSColor colorWithWhite:value alpha:alpha];
     } else {
-        alpha = 0.5;
+        CGFloat alpha = 1;
+        if (mainAndActive) {
+            alpha = 0.75;
+        } else {
+            alpha = 0.5;
+        }
+        DLog(@"selected=%@ backgroundColor=%@ backgroundBrightness=%@ delta=%@ value=%@", @(selected), backgroundColor, @(backgroundBrightness), @(delta), @(value));
+        return [NSColor colorWithWhite:value alpha:alpha];
     }
-    return [NSColor colorWithWhite:value alpha:alpha];
+}
+
+- (NSColor *)horizontalLineColor {
+    if (PSMShouldExtendTransparencyIntoMinimalTabBar()) {
+        NSColor *color = [self tabBarColor];
+        const CGFloat transparencyAlpha = [[self.tabBar.delegate tabView:self.tabBar
+                                                           valueOfOption:PSMTabBarControlOptionMinimalBackgroundAlphaValue] doubleValue];
+        CGFloat alpha = color.alphaComponent * pow(transparencyAlpha, 0.5);
+        return [color colorWithAlphaComponent:alpha];
+    } else {
+        return self.tabBarColor;
+    }
 }
 
 - (NSColor *)topLineColorSelected:(BOOL)selected {
-    return self.tabBarColor;
+    return [self horizontalLineColor];
 }
 
 - (NSColor *)bottomLineColorSelected:(BOOL)selected {
-    return self.tabBarColor;
+    return [self horizontalLineColor];
 }
 
 - (NSColor *)verticalLineColorSelected:(BOOL)selected {
     return [NSColor clearColor];
 }
 
+- (CGFloat)alphaValue:(CGFloat)base opacifiedBy:(CGFloat)weight {
+    return weight + (1 - weight) * base;
+}
+
+// Only for non-selected tabs.
+- (CGFloat)backgroundAlphaValue:(BOOL)selected {
+    const CGFloat base = [[self.tabBar.delegate tabView:self.tabBar valueOfOption:PSMTabBarControlOptionMinimalBackgroundAlphaValue] doubleValue];
+    if (!selected) {
+        return base;
+    }
+    if (base == 1) {
+        return base;
+    }
+    return [self alphaValue:base opacifiedBy:0.3];
+}
+
 - (NSColor *)nonSelectedTabColor {
-    const double difference = [[self.tabBar.delegate tabView:self.tabBar
-                                               valueOfOption:PSMTabBarControlOptionMinimalStyleBackgroundColorDifference] doubleValue];
-    return [self colorByDimmingColor:[self.tabBarColor psm_nonSelectedColorWithDifference:difference]];
+    if (PSMShouldExtendTransparencyIntoMinimalTabBar()) {
+        const CGFloat transparencyAlpha = [[self.tabBar.delegate tabView:self.tabBar
+                                                           valueOfOption:PSMTabBarControlOptionMinimalBackgroundAlphaValue] doubleValue];
+
+        const double base = [[self.tabBar.delegate tabView:self.tabBar
+                                             valueOfOption:PSMTabBarControlOptionMinimalStyleBackgroundColorDifference] doubleValue];
+        const CGFloat difference = PSMWeightedAverage(0, base, pow(transparencyAlpha, 5));
+        NSColor *color = [self colorByDimmingColor:[self.tabBarColor psm_nonSelectedColorWithDifference:difference]];
+        const CGFloat alpha = [self backgroundAlphaValue:NO];
+        if (alpha != 1) {
+            color = [color colorWithAlphaComponent:alpha];
+        }
+        return color;
+    } else {
+        const double difference = [[self.tabBar.delegate tabView:self.tabBar
+                                                   valueOfOption:PSMTabBarControlOptionMinimalStyleBackgroundColorDifference] doubleValue];
+        return [self colorByDimmingColor:[self.tabBarColor psm_nonSelectedColorWithDifference:difference]];
+    }
 }
 
 - (NSColor *)backgroundColorSelected:(BOOL)selected highlightAmount:(CGFloat)highlightAmount {
@@ -118,10 +197,22 @@
     } else {
         color = self.tabBarColor;
     }
+    const CGFloat alpha = [self backgroundAlphaValue:selected];
+    if (PSMShouldExtendTransparencyIntoMinimalTabBar()) {
+        if (alpha != 1) {
+            color = [color colorWithAlphaComponent:alpha];
+        }
+    }
     if (selected || highlightAmount == 0) {
         return color;
     }
     color = [color psm_highlightedColor:highlightAmount];
+    if (PSMShouldExtendTransparencyIntoMinimalTabBar()) {
+        if (alpha != 1) {
+            color = [color colorWithAlphaComponent:alpha];
+        }
+    }
+
 
     return color;
 }
@@ -210,8 +301,13 @@
 - (NSColor *)outlineColor {
     CGFloat backgroundBrightness = self.tabBarColor.it_hspBrightness;
     
-    const CGFloat alpha = [[self.tabBar.delegate tabView:self.tabBar
-                                           valueOfOption:PSMTabBarControlOptionColoredMinimalOutlineStrength] doubleValue];
+    CGFloat alpha = [[self.tabBar.delegate tabView:self.tabBar
+                                     valueOfOption:PSMTabBarControlOptionColoredMinimalOutlineStrength] doubleValue];
+    if (PSMShouldExtendTransparencyIntoMinimalTabBar()) {
+        const CGFloat transparencyAlpha = [[self.tabBar.delegate tabView:self.tabBar
+                                                           valueOfOption:PSMTabBarControlOptionMinimalBackgroundAlphaValue] doubleValue];
+        alpha *= pow(transparencyAlpha, 0.5);
+    }
     CGFloat value;
     if (backgroundBrightness < 0.5) {
         value = 1;

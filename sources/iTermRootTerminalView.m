@@ -71,6 +71,7 @@ typedef struct {
 NS_CLASS_AVAILABLE_MAC(10_14)
 @interface iTermTabBarBacking : NSView<iTermTabBarControlViewContainer>
 @property (nonatomic) BOOL hidesWhenTabBarHidden;
+@property (nonatomic, readonly) NSVisualEffectView *visualEffectView;
 @end
 
 @implementation iTermTabBarBacking
@@ -80,19 +81,19 @@ NS_CLASS_AVAILABLE_MAC(10_14)
     if (self) {
         [self addWindowColorView];
 
-        NSVisualEffectView *vev = [[NSVisualEffectView alloc] initWithFrame:self.bounds];
-        vev.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
+        _visualEffectView = [[NSVisualEffectView alloc] initWithFrame:self.bounds];
+        _visualEffectView.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
         NSVisualEffectState state = NSVisualEffectStateActive;
         if (![iTermAdvancedSettingsModel allowTabbarInTitlebarAccessoryBigSur]) {
             if (@available(macOS 10.16, *)) {
                 state = NSVisualEffectStateFollowsWindowActiveState;
             }
         }
-        vev.state = state;
+        _visualEffectView.state = state;
 
-        vev.blendingMode = NSVisualEffectBlendingModeWithinWindow;
-        vev.material = NSVisualEffectMaterialTitlebar;
-        [self addSubview:vev];
+        _visualEffectView.blendingMode = NSVisualEffectBlendingModeWithinWindow;
+        _visualEffectView.material = NSVisualEffectMaterialTitlebar;
+        [self addSubview:_visualEffectView];
 
         self.autoresizesSubviews = YES;
     }
@@ -981,6 +982,12 @@ NS_CLASS_AVAILABLE_MAC(10_14)
 
 - (void)windowDidResize {
     [_windowSizeView setWindowSize:[self.delegate rootTerminalViewCurrentSessionSize]];
+}
+
+- (void)setCurrentSessionAlpha:(CGFloat)alpha {
+    if (PSMShouldExtendTransparencyIntoMinimalTabBar()) {
+        _tabBarBacking.visualEffectView.hidden = (alpha < 1);
+    }
 }
 
 #pragma mark - Division View

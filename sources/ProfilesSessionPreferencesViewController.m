@@ -376,7 +376,8 @@
                                                                                                               sessionBackgroundColor:[self sessionBackgroundColor]
                                                                                                                     isFirstResponder:YES
                                                                                                                          dimOnlyText:[self boolForKey:kPreferenceKeyDimOnlyText]
-                                                                                                               adjustedDimmingAmount:0];
+                                                                                                               adjustedDimmingAmount:0
+                                                                                                                   transparencyAlpha:1];
     __weak __typeof(self) weakSelf = self;
     _statusBarSetupViewController.applyBlock = ^(NSDictionary *layoutDictionary) {
         [weakSelf setObject:layoutDictionary forKey:KEY_STATUS_BAR_LAYOUT];

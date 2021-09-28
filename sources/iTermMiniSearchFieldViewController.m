@@ -17,6 +17,7 @@
 #import "NSColor+iTerm.h"
 #import "NSEvent+iTerm.h"
 #import "NSTextField+iTerm.h"
+#import "PSMTabBarControl.h"
 
 @interface iTermMiniSearchFieldViewController ()
 
@@ -88,8 +89,11 @@
     NSSize size = self.view.frame.size;
     NSSize searchFieldSize = _searchField.frame.size;
 
+    // Shift everything down by this amount.
+    const CGFloat globalOffset = PSMShouldExtendTransparencyIntoMinimalTabBar() ? -0.5 : 0;
+
     // This makes the arrows and close buttons line up visually.
-    const CGFloat verticalOffset = 1;
+    const CGFloat verticalOffset = 1 + globalOffset;
 
     CGFloat closeWidth = 0;
     if (self.canClose) {
@@ -109,7 +113,11 @@
     const CGFloat margin = 3;
     const CGFloat leftMargin = 2;
     const CGFloat used = leftMargin + _arrowsControl.frame.size.width + closeWidth + margin;
-    _searchField.frame = NSMakeRect(leftMargin, 0, self.view.frame.size.width - used, searchFieldSize.height);
+    if (PSMShouldExtendTransparencyIntoMinimalTabBar()) {
+        _searchField.frame = NSMakeRect(leftMargin, 1 + globalOffset, self.view.frame.size.width - used, searchFieldSize.height);
+    } else {
+        _searchField.frame = NSMakeRect(leftMargin, globalOffset, self.view.frame.size.width - used, searchFieldSize.height);
+    }
 }
 
 #pragma mark - iTermFindViewController

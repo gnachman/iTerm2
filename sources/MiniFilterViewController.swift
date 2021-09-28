@@ -71,8 +71,9 @@ class MiniFilterViewController: NSViewController, NSTextFieldDelegate {
         let size = view.frame.size
         let searchFieldSize = searchField.frame.size
 
-        // This makes the arrows and close buttons line up vertically
-        let verticalOffset = CGFloat(1)
+        let globalOffset = CGFloat(PSMShouldExtendTransparencyIntoMinimalTabBar() ? 0.5 : 0)
+        // This makes the close button and text field line up vertically
+         let verticalOffset = CGFloat(1) + globalOffset
 
         let closeWidth: CGFloat
         if canClose {
@@ -90,7 +91,7 @@ class MiniFilterViewController: NSViewController, NSTextFieldDelegate {
         let leftMargin = CGFloat(2)
         let used = leftMargin + closeWidth + rightMargin
         searchField.frame = NSRect(x: leftMargin,
-                                   y: 0,
+                                   y: globalOffset,
                                    width: view.frame.width - used,
                                    height: searchFieldSize.height)
     }
