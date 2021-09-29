@@ -32,7 +32,7 @@
     if (points <= 0) {
         points = [NSFont smallSystemFontSize];
     }
-    return [NSFont fontWithName:@"Menlo" size:points];
+    return [NSFont fontWithName:[iTermAdvancedSettingsModel toolbeltFont] size:points];
 }
 
 @end

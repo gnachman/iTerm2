@@ -493,6 +493,7 @@ DEFINE_BOOL(squareWindowCorners, NO, SECTION_WINDOWS @"Windows have square corne
 DEFINE_BOOL(useShortcutAccessoryViewController, YES, SECTION_WINDOWS @"Show window number in titlebar accessory?");
 DEFINE_BOOL(includeShortcutInWindowsMenu, YES, SECTION_WINDOWS @"Include keyboard shortcut for windows in Window menu?");
 DEFINE_FLOAT(toolbeltFontSize, 0, SECTION_WINDOWS @"Toolbelt font size in points.\nSet to 0 to use the system default. Changing this setting does not affect existing windows.");
+DEFINE_STRING(toolbeltFont, @"Menlo", SECTION_WINDOWS @"Toolbelt font family name");
 
 #pragma mark tmux
 
