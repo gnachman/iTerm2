@@ -78,7 +78,7 @@ static NSButton *iTermToolSnippetsNewButton(NSString *imageName, NSString *title
             _applyButton = iTermToolSnippetsNewButton(@"play", @"Send", self, @selector(apply:), frame);
             _addButton = iTermToolSnippetsNewButton(@"plus", @"Add", self, @selector(add:), frame);
             _removeButton = iTermToolSnippetsNewButton(@"minus", @"Remove", self, @selector(remove:), frame);
-            _editButton = iTermToolSnippetsNewButton(@"switch.2", @"Edit", self, @selector(edit:), frame);
+            _editButton = iTermToolSnippetsNewButton(@"pencil", @"Edit", self, @selector(edit:), frame);
         } else {
             _applyButton = iTermToolSnippetsNewButton(nil, @"Send", self, @selector(apply:), frame);
             _addButton = iTermToolSnippetsNewButton(NSImageNameAddTemplate, nil, self, @selector(add:), frame);
