@@ -8,6 +8,8 @@
 
 #import <Cocoa/Cocoa.h>
 
+#import "iTermKeyBindingAction.h"
+
 @protocol PointerControllerDelegate <NSObject>
 
 - (void)pasteFromClipboardWithEvent:(NSEvent *)event;

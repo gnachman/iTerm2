@@ -69,7 +69,7 @@ compatibilityEscaping:(BOOL)compatibilityEscaping {
     } else if ([action isEqualToString:kSendHexCodePointerAction]) {
         [delegate_ sendHexCode:argument withEvent:event];
     } else if ([action isEqualToString:kSendTextPointerAction]) {
-        [delegate_ sendText:argument withEvent:event compatibilityEscaping:compatibilityEscaping];
+        [delegate_ sendText:argument withEvent:event escaping:compatibilityEscaping ? iTermSendTextEscapingCompatibility : iTermSendTextEscapingCommon];
     } else if ([action isEqualToString:kSelectPaneLeftPointerAction]) {
         [delegate_ selectPaneLeftWithEvent:event];
     } else if ([action isEqualToString:kSelectPaneRightPointerAction]) {
