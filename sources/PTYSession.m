@@ -8239,7 +8239,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [self.textview.window makeFirstResponder:self.textview];
     [self performKeyBindingAction:[iTermKeyBindingAction withAction:action.action
                                                           parameter:action.parameter
-                                           useCompatibilityEscaping:action.useCompatibilityEscaping]
+                                                           escaping:action.escaping]
                             event:nil];
 }
 
@@ -8430,19 +8430,13 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
             if (_exited || isTmuxGateway) {
                 return;
             }
-            [self sendText:action.parameter
-  useCompatibilityEscaping:action.useCompatibilityEscaping
-     compatibilityEscaping:iTermSendTextEscapingCompatibility
-         preferredEscaping:iTermSendTextEscapingCommon];
+            [self sendText:action.parameter escaping:action.escaping];
             break;
         case KEY_ACTION_VIM_TEXT:
             if (_exited || isTmuxGateway) {
                 return;
             }
-            [self sendText:action.parameter
-                useCompatibilityEscaping:action.useCompatibilityEscaping
-                   compatibilityEscaping:iTermSendTextEscapingVimAndCompatibility
-                       preferredEscaping:iTermSendTextEscapingVim];
+            [self sendText:action.parameter escaping:action.vimEscaping];
             break;
         case KEY_ACTION_SEND_SNIPPET:
             if (_exited || isTmuxGateway) {
@@ -8451,10 +8445,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                 DLog(@"Look up snippet with param %@", action.parameter);
                 iTermSnippet *snippet = [[iTermSnippetsModel sharedInstance] snippetWithActionKey:action.parameter];
                 if (snippet) {
-                    [self sendText:snippet.value
-          useCompatibilityEscaping:snippet.useCompatibilityEscaping
-             compatibilityEscaping:iTermSendTextEscapingCompatibility
-                 preferredEscaping:iTermSendTextEscapingCommon];
+                    [self sendText:snippet.value escaping:snippet.escaping];
                 }
             }
             break;
@@ -10466,15 +10457,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     }
 }
 
-- (void)sendText:(NSString *)text
-useCompatibilityEscaping:(BOOL)useCompatibilityEscaping
-compatibilityEscaping:(iTermSendTextEscaping)compatibilityEscaping
-preferredEscaping:(iTermSendTextEscaping)preferredEscaping {
-    DLog(@"sendText:%@ useCompatibilityEscaping:%@ compatibilityEscaping:%@ preferredEscaping:%@",
+- (void)sendText:(NSString *)text escaping:(iTermSendTextEscaping)escaping {
+    DLog(@"sendText:%@ escaping:%@",
          text,
-         @(useCompatibilityEscaping),
-         @(compatibilityEscaping),
-         @(preferredEscaping));
+         @(escaping));
     if (_exited) {
         DLog(@"Already exited");
         return;
@@ -10485,7 +10471,7 @@ preferredEscaping:(iTermSendTextEscaping)preferredEscaping {
     if ([text length] == 0) {
         return;
     }
-    [self writeTask:[self escapedText:text mode:useCompatibilityEscaping ? compatibilityEscaping : preferredEscaping]];
+    [self writeTask:[self escapedText:text mode:escaping]];
 }
 
 - (NSString *)escapedText:(NSString *)text mode:(iTermSendTextEscaping)escaping {

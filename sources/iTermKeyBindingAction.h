@@ -9,6 +9,20 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+extern NSString *const iTermKeyBindingDictionaryKeyAction;
+extern NSString *const iTermKeyBindingDictionaryKeyParameter;
+extern NSString *const iTermKeyBindingDictionaryKeyLabel;
+extern NSString *const iTermKeyBindingDictionaryKeyVersion;
+extern NSString *const iTermKeyBindingDictionaryKeyEscaping;
+
+typedef NS_ENUM(NSUInteger, iTermSendTextEscaping) {
+    iTermSendTextEscapingNone = 0,  // Send literal text
+    iTermSendTextEscapingCompatibility = 1,  // Escape only n, e, a, and t. Used in many places prior to 3.4.5beta2.
+    iTermSendTextEscapingCommon = 2,  // Use stringByReplacingCommonlyEscapedCharactersWithControls
+    iTermSendTextEscapingVim = 3,  // Use stringByExpandingVimSpecialCharacters;
+    iTermSendTextEscapingVimAndCompatibility = 4,  // Use stringByExpandingVimSpecialCharacters FOLLOWED BY n, e, a, t. Bugward compatibility.
+};
+
 // Actions for key bindings
 typedef NS_ENUM(int, KEY_ACTION) {
     KEY_ACTION_INVALID = -1,
@@ -87,18 +101,19 @@ typedef NS_ENUM(int, KEY_ACTION) {
 @property (nonatomic, readonly) NSDictionary *dictionaryValue;
 @property (nonatomic, readonly) BOOL sendsText;
 @property (nonatomic, readonly) BOOL isActionable;
-@property (nonatomic, readonly) BOOL useCompatibilityEscaping;
+@property (nonatomic, readonly) iTermSendTextEscaping escaping;
+@property (nonatomic, readonly) iTermSendTextEscaping vimEscaping;
 
 + (instancetype)withDictionary:(NSDictionary *)dictionary;
 
 + (instancetype)withAction:(KEY_ACTION)action
                  parameter:(NSString *)parameter
-  useCompatibilityEscaping:(BOOL)useCompatibilityEscaping;
+                  escaping:(iTermSendTextEscaping)escaping;
 
 + (instancetype)withAction:(KEY_ACTION)action
                  parameter:(NSString *)parameter
                      label:(NSString *)label
-  useCompatibilityEscaping:(BOOL)useCompatibilityEscaping;
+                  escaping:(iTermSendTextEscaping)escaping;
 
 - (instancetype)init NS_UNAVAILABLE;
 

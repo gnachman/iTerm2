@@ -253,9 +253,9 @@ static BOOL gForceSaveState;
     [self.delegate restorableStateRestoreWithRecord:record
                                          identifier:identifier
                                          completion:^(NSWindow * _Nullable window, NSError * _Nullable error) {
-        NSLog(@"iTermRestorableStateController's completion block calling the completion block for window %@", window);
+        DLog(@"iTermRestorableStateController's completion block calling the completion block for window %@", window);
         completion(window, error);
-        NSLog(@"iTermRestorableStateController's completion block calling didRestoreWindow:%@", window);
+        DLog(@"iTermRestorableStateController's completion block calling didRestoreWindow:%@", window);
         __weak __typeof(window) weakWindow = window;
         dispatch_group_notify(self->_completionGroup, dispatch_get_main_queue(), ^{
             __strong __typeof(window) strongWindow = weakWindow;
@@ -263,7 +263,7 @@ static BOOL gForceSaveState;
                 [self didRestoreWindow:strongWindow];
             }
         });
-        NSLog(@"iTermRestorableStateController's completion block returning");
+        DLog(@"iTermRestorableStateController's completion block returning");
     }];
 }
 

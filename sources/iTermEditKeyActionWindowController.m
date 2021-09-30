@@ -291,7 +291,8 @@
     return [[iTermAction alloc] initWithTitle:self.label
                                        action:self.action
                                     parameter:self.parameterValue
-                     useCompatibilityEscaping:self.useCompatibilityEscaping];
+                                     escaping:self.escaping
+                                      version:[iTermAction currentVersion]];
 }
 
 - (iTermKeystrokeOrTouchbarItem *)keystrokeOrTouchbarItem {

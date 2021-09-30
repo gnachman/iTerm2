@@ -64,7 +64,7 @@
     [[iTermEditKeyActionWindowController alloc] initWithContext:iTermVariablesSuggestionContextSession
                                                            mode:iTermEditKeyActionWindowControllerModeUnbound];
     windowController.titleIsInterpolated = YES;
-    windowController.useCompatibilityEscaping = action.useCompatibilityEscaping;
+    windowController.escaping = action.escaping;
     if (action) {
         windowController.label = action.title;
         windowController.isNewMapping = NO;

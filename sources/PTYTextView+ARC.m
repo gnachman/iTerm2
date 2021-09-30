@@ -859,10 +859,7 @@ allowRightMarginOverflow:(BOOL)allowRightMarginOverflow {
 }
 
 - (void)contextMenuSendSelectedText:(iTermTextViewContextMenuHelper *)contextMenu {
-    [self.delegate sendText:self.selectedText
-   useCompatibilityEscaping:NO
- compatibilityEscaping:iTermSendTextEscapingNone
-          preferredEscaping:iTermSendTextEscapingNone];
+    [self.delegate sendText:self.selectedText escaping:iTermSendTextEscapingNone];
 }
 
 - (void)contextMenuClearBuffer:(iTermTextViewContextMenuHelper *)contextMenu {
@@ -1100,9 +1097,10 @@ toggleTerminalStateForMenuItem:(nonnull NSMenuItem *)item {
 - (void)contextMenuSaveSelectionAsSnippet:(iTermTextViewContextMenuHelper *)contextMenu {
     NSString *selectedText = [self selectedText];
     iTermSnippet *snippet = [[iTermSnippet alloc] initWithTitle:selectedText
-                                                          value:[selectedText stringByEscapingControlCharactersAndBackslash]
+                                                          value:selectedText
                                                            guid:[[NSUUID UUID] UUIDString]
-                                       useCompatibilityEscaping:NO];
+                                                       escaping:iTermSendTextEscapingNone
+                                                        version:[iTermSnippet currentVersion]];
     [[iTermSnippetsModel sharedInstance] addSnippet:snippet];
 }
 
@@ -1115,10 +1113,7 @@ toggleTerminalStateForMenuItem:(nonnull NSMenuItem *)item {
 - (void)sendSnippet:(id)sender {
     iTermSnippet *snippet = [iTermSnippet castFrom:[sender representedObject]];
     if (snippet) {
-        [self.delegate sendText:snippet.value
-       useCompatibilityEscaping:snippet.useCompatibilityEscaping
-          compatibilityEscaping:iTermSendTextEscapingCompatibility
-              preferredEscaping:iTermSendTextEscapingCommon];
+        [self.delegate sendText:snippet.value escaping:snippet.escaping];
     }
 }
 

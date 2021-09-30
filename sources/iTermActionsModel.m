@@ -12,36 +12,63 @@
 #import "NSIndexSet+iTerm.h"
 #import "NSObject+iTerm.h"
 
-@implementation iTermAction
+@implementation iTermAction {
+    NSDictionary *_dictionary;
+}
+
++ (int)currentVersion {
+    return 2;
+}
 
 - (instancetype)initWithTitle:(NSString *)title
                        action:(KEY_ACTION)action
                     parameter:(NSString *)parameter
-     useCompatibilityEscaping:(BOOL)useCompatibilityEscaping {
+                     escaping:(iTermSendTextEscaping)escaping
+                      version:(int)version {
     self = [super init];
     if (self) {
         _action = action;
         _title = [title copy];
         _parameter = [parameter copy];
-        _useCompatibilityEscaping = useCompatibilityEscaping;
         static NSInteger nextIdentifier;
         _identifier = nextIdentifier++;
+        _escaping = escaping;
+        _version = version;
     }
     return self;
 }
 
 - (instancetype)initWithDictionary:(NSDictionary *)dictionary {
-    return [self initWithTitle:dictionary[@"title"] ?: @""
+    iTermSendTextEscaping escaping;
+    const int version = [dictionary[@"version"] intValue];
+    if (version == 0) {
+        escaping = iTermSendTextEscapingCompatibility;  // v0 migration path
+    } else if (version == 1) {
+        escaping = iTermSendTextEscapingCommon;  // v1 migration path
+    } else {
+        // v2+
+        escaping = [dictionary[@"escaping"] unsignedIntegerValue];  // newest format
+    }
+    self = [self initWithTitle:dictionary[@"title"] ?: @""
                         action:[dictionary[@"action"] intValue]
                      parameter:dictionary[@"parameter"] ?: @""
-      useCompatibilityEscaping:[dictionary[@"version"] intValue] == 0];
+                      escaping:escaping
+                       version:version];
+    if (self) {
+        _dictionary = [dictionary copy];
+    }
+    return self;
 }
 
 - (NSDictionary *)dictionaryValue {
+    if (_dictionary) {
+        return _dictionary;
+    }
     return @{ @"action": @(_action),
               @"title": _title ?: @"",
               @"parameter": _parameter ?: @"",
-              @"version": _useCompatibilityEscaping ? @0 : @1,
+              @"version": @(_version),
+              @"escaping": @(_escaping)
     };
 }
 
@@ -59,7 +86,7 @@
 - (NSString *)displayString {
     return [[iTermKeyBindingAction withAction:_action
                                     parameter:_parameter ?: @""
-                     useCompatibilityEscaping:_useCompatibilityEscaping] displayName];
+                                     escaping:_escaping] displayName];
 }
 
 @end

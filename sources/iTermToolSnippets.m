@@ -304,7 +304,8 @@ static NSButton *iTermToolSnippetsNewButton(NSString *imageName, NSString *title
         iTermAction *action = [[iTermAction alloc] initWithTitle:@"Send Snippet"
                                                           action:KEY_ACTION_SEND_SNIPPET
                                                        parameter:snippet.actionKey
-                                        useCompatibilityEscaping:snippet.useCompatibilityEscaping];
+                                                        escaping:snippet.escaping
+                                                         version:snippet.version];
         [wrapper.delegate.delegate toolbeltApplyActionToCurrentSession:action];
     }
 }
@@ -496,9 +497,10 @@ writeRowsWithIndexes:(NSIndexSet *)rowIndexes
     }
     NSString *title = [self titleFromString:string];
     iTermSnippet *snippet = [[iTermSnippet alloc] initWithTitle:title
-                                                          value:[string stringByEscapingControlCharactersAndBackslash]
+                                                          value:string
                                                            guid:[[NSUUID UUID] UUIDString]
-                                       useCompatibilityEscaping:NO];
+                                                       escaping:iTermSendTextEscapingNone
+                                                        version:[iTermSnippet currentVersion]];
     [[iTermSnippetsModel sharedInstance] addSnippet:snippet];
     return YES;
 }

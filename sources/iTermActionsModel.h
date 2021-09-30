@@ -14,18 +14,21 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface iTermAction : NSObject
 @property (nonatomic, readonly) NSDictionary *dictionaryValue;
-
 @property (nonatomic, readonly) KEY_ACTION action;
 @property (nonatomic, readonly) NSString *title;
 @property (nonatomic, readonly) NSString *parameter;
 @property (nonatomic, readonly) NSInteger identifier;
 @property (nonatomic, readonly) NSString *displayString;
-@property (nonatomic, readonly) BOOL useCompatibilityEscaping;
+@property (nonatomic, readonly) iTermSendTextEscaping escaping;
+@property (nonatomic, readonly) int version;
+
++ (int)currentVersion;
 
 - (instancetype)initWithTitle:(NSString *)title
                        action:(KEY_ACTION)action
                     parameter:(NSString *)parameter
-     useCompatibilityEscaping:(BOOL)useCompatibilityEscaping NS_DESIGNATED_INITIALIZER;
+                     escaping:(iTermSendTextEscaping)escaping
+                      version:(int)version NS_DESIGNATED_INITIALIZER;
 
 - (instancetype)initWithDictionary:(NSDictionary *)dictionary;
 

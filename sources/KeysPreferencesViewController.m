@@ -286,7 +286,7 @@ static NSString *const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
             NSMutableDictionary *keyboardMap = [dict[KEY_KEYBOARD_MAP] ?: @{} mutableCopy];
             iTermKeyBindingAction *action = [iTermKeyBindingAction withAction:KEY_ACTION_NEW_TAB_WITH_PROFILE
                                                                     parameter:dict[KEY_GUID]
-                                                     useCompatibilityEscaping:NO];
+                                                                     escaping:iTermSendTextEscapingCommon];
             iTermKeystroke *keystroke = [iTermKeystroke withCharacter:'t' modifierFlags:NSEventModifierFlagCommand];
             keyboardMap[keystroke.serialized] = action.dictionaryValue;
             dict[KEY_KEYBOARD_MAP] = keyboardMap;

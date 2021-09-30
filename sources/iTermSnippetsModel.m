@@ -6,6 +6,7 @@
 //
 
 #import "iTermSnippetsModel.h"
+
 #import "iTermNotificationCenter+Protected.h"
 #import "iTermPreferences.h"
 #import "NSArray+iTerm.h"
@@ -14,17 +15,25 @@
 #import "NSObject+iTerm.h"
 #import "NSStringITerm.h"
 
-@implementation iTermSnippet
+@implementation iTermSnippet {
+    NSDictionary *_dictionary;
+}
+
++ (int)currentVersion {
+    return 2;
+}
 
 - (instancetype)initWithTitle:(NSString *)title
                         value:(NSString *)value
                          guid:(NSString *)guid
-     useCompatibilityEscaping:(BOOL)useCompatibilityEscaping {
+                     escaping:(iTermSendTextEscaping)escaping
+                      version:(int)version {
     if (self) {
         _title = [title copy];
         _value = [value copy];
         _guid = guid;
-        _useCompatibilityEscaping = useCompatibilityEscaping;
+        _escaping = escaping;
+        _version = version;
     }
     return self;
 }
@@ -46,17 +55,36 @@
     // snippets then they will all be assigned GUIDs. The only problem is if you downgrade your
     // actions will be broken since they'll continue to have GUIDs but older versions expect them to
     // have titles (and it'll probably crash. Don't downgrade).
-    return [self initWithTitle:title
+    iTermSendTextEscaping escaping;
+    const int version = [dictionary[@"version"] intValue];
+    if (version == 0) {
+        escaping = iTermSendTextEscapingCompatibility;  // v0 migration path
+    } else if (version == 1) {
+        escaping = iTermSendTextEscapingCommon;  // v1 migration path
+    } else {
+        // v2+
+        escaping = [dictionary[@"escaping"] unsignedIntegerValue];  // newest format
+    }
+    self = [self initWithTitle:title
                          value:value
                           guid:dictionary[@"guid"] ?: [[@[ [@(i) stringValue], title, value ] hashWithSHA256] it_hexEncoded]
-      useCompatibilityEscaping:[dictionary[@"version"] intValue] == 0];
+                      escaping:escaping
+                       version:version];
+    if (self) {
+        self->_dictionary = [dictionary copy];
+    }
+    return self;
 }
 
 - (NSDictionary *)dictionaryValue {
+    if (_dictionary) {
+        return _dictionary;
+    }
     return @{ @"title": _title ?: @"",
               @"value": _value ?: @"",
               @"guid": _guid,
-              @"version": _useCompatibilityEscaping ? @0 : @1,
+              @"version": @(_version),
+              @"escaping": @(_escaping)
     };
 }
 
@@ -72,13 +100,14 @@
 }
 
 - (NSString *)description {
-    return [NSString stringWithFormat:@"<%@: %p title=%@ value=%@ guid=%@ compat=%@>",
+    return [NSString stringWithFormat:@"<%@: %p title=%@ value=%@ guid=%@ version=%@ escaping=%@>",
             NSStringFromClass([self class]),
             self,
             _title,
             _value,
             _guid,
-            @(_useCompatibilityEscaping)];
+            @(_version),
+            @(_escaping)];
 }
 
 - (NSString *)trimmedValue:(NSInteger)maxLength {

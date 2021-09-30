@@ -11,20 +11,24 @@
 #import "ITAddressBookMgr.h"
 #import "iTermPasteSpecialViewController.h"
 #import "iTermSnippetsModel.h"
+#import "NSDictionary+iTerm.h"
 #import "PTYTextView.h"  // just for PTYTextViewSelectionExtensionUnit
 #import "ProfileModel.h"
 
-static NSString *const iTermKeyBindingDictionaryKeyAction = @"Action";
-static NSString *const iTermKeyBindingDictionaryKeyParameter = @"Text";
-static NSString *const iTermKeyBindingDictionaryKeyLabel = @"Label";
-static NSString *const iTermKeyBindingDictionaryKeyVersion = @"Version";
+NSString *const iTermKeyBindingDictionaryKeyAction = @"Action";
+NSString *const iTermKeyBindingDictionaryKeyParameter = @"Text";
+NSString *const iTermKeyBindingDictionaryKeyLabel = @"Label";
+NSString *const iTermKeyBindingDictionaryKeyVersion = @"Version";
+NSString *const iTermKeyBindingDictionaryKeyEscaping = @"Escaping";
 
 
 static NSString *GetProfileName(NSString *guid) {
     return [[[ProfileModel sharedInstance] bookmarkWithGuid:guid] objectForKey:KEY_NAME];
 }
 
-@implementation iTermKeyBindingAction
+@implementation iTermKeyBindingAction {
+    NSDictionary *_dictionary;
+}
 
 + (instancetype)withDictionary:(NSDictionary *)dictionary {
     return [[self alloc] initWithDictionary:dictionary];
@@ -32,27 +36,30 @@ static NSString *GetProfileName(NSString *guid) {
 
 + (instancetype)withAction:(KEY_ACTION)action
                  parameter:(NSString *)parameter
-  useCompatibilityEscaping:(BOOL)useCompatibilityEscaping {
+                  escaping:(iTermSendTextEscaping)escaping {
     return [[self alloc] initWithDictionary:@{ iTermKeyBindingDictionaryKeyAction: @(action),
                                                iTermKeyBindingDictionaryKeyParameter: parameter ?: @"",
-                                               iTermKeyBindingDictionaryKeyVersion: useCompatibilityEscaping ? @0: @1
+                                               iTermKeyBindingDictionaryKeyVersion: @2,
+                                               iTermKeyBindingDictionaryKeyEscaping: @(escaping)
     }];
 }
 
 + (instancetype)withAction:(KEY_ACTION)action
                  parameter:(NSString *)parameter
                      label:(NSString *)label
-  useCompatibilityEscaping:(BOOL)useCompatibilityEscaping {
+                  escaping:(iTermSendTextEscaping)escaping {
     if (label) {
         return [[self alloc] initWithDictionary:@{ iTermKeyBindingDictionaryKeyAction: @(action),
                                                    iTermKeyBindingDictionaryKeyParameter: parameter ?: @"",
                                                    iTermKeyBindingDictionaryKeyLabel: label,
-                                                   iTermKeyBindingDictionaryKeyVersion: useCompatibilityEscaping ? @0: @1
+                                                   iTermKeyBindingDictionaryKeyVersion: @2,
+                                                   iTermKeyBindingDictionaryKeyEscaping: @(escaping)
         }];
     } else {
         return [[self alloc] initWithDictionary:@{ iTermKeyBindingDictionaryKeyAction: @(action),
                                                    iTermKeyBindingDictionaryKeyParameter: parameter ?: @"",
-                                                   iTermKeyBindingDictionaryKeyVersion: useCompatibilityEscaping ? @0: @1
+                                                   iTermKeyBindingDictionaryKeyVersion: @2,
+                                                   iTermKeyBindingDictionaryKeyEscaping: @(escaping)
         }];
     }
 }
@@ -83,23 +90,57 @@ static NSString *GetProfileName(NSString *guid) {
         _keyAction = [dictionary[iTermKeyBindingDictionaryKeyAction] intValue];
         _parameter = [dictionary[iTermKeyBindingDictionaryKeyParameter] ?: @"" copy];
         _label = [dictionary[iTermKeyBindingDictionaryKeyLabel] ?: @"" copy];
-        _useCompatibilityEscaping = ([dictionary[iTermKeyBindingDictionaryKeyVersion] intValue] == 0);
+        const int version = [dictionary[iTermKeyBindingDictionaryKeyVersion] intValue];
+        if (version == 0) {
+            _escaping = iTermSendTextEscapingCompatibility;
+        } else if (version == 1) {
+            _escaping = iTermSendTextEscapingCommon;
+        } else {
+            _escaping = [dictionary[iTermKeyBindingDictionaryKeyEscaping] unsignedIntegerValue];
+        }
+        _dictionary = [dictionary copy];
     }
     return self;
 }
 
 - (NSDictionary *)dictionaryValue {
-    if (_label) {
-        return @{ iTermKeyBindingDictionaryKeyAction: @(_keyAction),
-                  iTermKeyBindingDictionaryKeyParameter: _parameter ?: @"",
-                  iTermKeyBindingDictionaryKeyLabel: _label,
-                  iTermKeyBindingDictionaryKeyVersion: _useCompatibilityEscaping ? @0 : @1
-        };
-    } else {
-        return @{ iTermKeyBindingDictionaryKeyAction: @(_keyAction),
-                  iTermKeyBindingDictionaryKeyParameter: _parameter ?: @"",
-                  iTermKeyBindingDictionaryKeyVersion: _useCompatibilityEscaping ? @0 : @1
-        };
+    if (_dictionary) {
+        return _dictionary;
+    }
+    // This is complicated because it wants to avoid changing the dictionary unless it is necessary.
+    int version;
+    id escaping;
+    switch (_escaping) {
+        case iTermSendTextEscapingCompatibility:
+            version = 0;
+            escaping = [NSNull null];
+            break;
+        case iTermSendTextEscapingCommon:
+            version = 1;
+            escaping = [NSNull null];
+            break;
+        default:
+            version = 2;
+            escaping = @(_escaping);
+            break;
+    }
+    NSDictionary *temp = @{ iTermKeyBindingDictionaryKeyAction: @(_keyAction),
+                            iTermKeyBindingDictionaryKeyParameter: _parameter ?: @"",
+                            iTermKeyBindingDictionaryKeyLabel: _label ?: [NSNull null],
+                            iTermKeyBindingDictionaryKeyVersion: @(version),
+                            iTermKeyBindingDictionaryKeyEscaping: escaping };
+    return [temp dictionaryByRemovingNullValues];
+}
+
+- (iTermSendTextEscaping)vimEscaping {
+    switch (_escaping) {
+        case iTermSendTextEscapingNone:
+        case iTermSendTextEscapingCommon:
+        case iTermSendTextEscapingVim:
+            return iTermSendTextEscapingVim;
+        case iTermSendTextEscapingCompatibility:
+        case iTermSendTextEscapingVimAndCompatibility:
+            return iTermSendTextEscapingVimAndCompatibility;
     }
 }
 

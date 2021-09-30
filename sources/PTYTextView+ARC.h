@@ -7,6 +7,7 @@
 
 #import "PTYTextView.h"
 
+#import "iTermSnippetsModel.h"
 #import "iTermTextViewContextMenuHelper.h"
 #import "iTermMouseReportingFrustrationDetector.h"
 #import "iTermURLActionHelper.h"

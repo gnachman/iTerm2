@@ -2860,9 +2860,8 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
 - (void)pasteStringWithoutBracketing:(NSString *)theString {
 }
 
-- (void)sendText:(NSString *)text useCompatibilityEscaping:(BOOL)useCompatibilityEscaping compatibilityEscaping:(iTermSendTextEscaping)compatibilityEscaping preferredEscaping:(iTermSendTextEscaping)preferredEscaping {
+- (void)sendText:(NSString *)text escaping:(iTermSendTextEscaping)escaping {
 }
-
 
 - (void)textViewAddTrigger:(NSString *)text {
 }

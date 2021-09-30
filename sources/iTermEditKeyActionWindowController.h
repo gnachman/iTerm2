@@ -9,6 +9,8 @@
 #import <Cocoa/Cocoa.h>
 
 #import "iTermKeystroke.h"
+
+#import "iTermKeyBindingAction.h"
 #import "iTermVariableHistory.h"
 #import "iTermVariableScope.h"
 
@@ -32,7 +34,7 @@ typedef NS_ENUM(NSUInteger, iTermEditKeyActionWindowControllerMode) {
 @property(nonatomic, readonly) BOOL ok;
 @property(nonatomic, readonly) iTermVariablesSuggestionContext suggestContext;
 @property(nonatomic, readonly) iTermAction *unboundAction;
-@property(nonatomic) BOOL useCompatibilityEscaping;
+@property(nonatomic) iTermSendTextEscaping escaping;
 
 - (instancetype)init NS_UNAVAILABLE;
 - (instancetype)initWithCoder:(NSCoder *)coder NS_UNAVAILABLE;

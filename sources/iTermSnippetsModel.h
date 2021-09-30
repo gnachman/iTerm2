@@ -7,6 +7,7 @@
 
 #import <Foundation/Foundation.h>
 
+#import "iTermKeyBindingAction.h"
 #import "iTermNotificationCenter.h"
 
 NS_ASSUME_NONNULL_BEGIN
@@ -17,15 +18,19 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) NSString *value;
 @property (nonatomic, readonly) NSString *guid;
 @property (nonatomic, readonly) id actionKey;
-@property (nonatomic, readonly) BOOL useCompatibilityEscaping;
+@property (nonatomic, readonly) iTermSendTextEscaping escaping;
+@property (nonatomic, readonly) int version;
 
 // Title suitable for display. Works nicely if the title is empty by using a prefix of the value.
 @property (nonatomic, readonly) NSString *displayTitle;
 
++ (int)currentVersion;
+
 - (instancetype)initWithTitle:(NSString *)title
                         value:(NSString *)value
                          guid:(NSString *)guid
-     useCompatibilityEscaping:(BOOL)useCompatibilityEscaping NS_DESIGNATED_INITIALIZER;
+                     escaping:(iTermSendTextEscaping)escaping
+                      version:(int)version NS_DESIGNATED_INITIALIZER;
 
 - (instancetype)initWithDictionary:(NSDictionary *)dictionary
                              index:(NSInteger)index;

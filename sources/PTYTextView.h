@@ -7,6 +7,7 @@
 #import "iTermFindDriver.h"
 #import "iTermFocusFollowsMouseController.h"
 #import "iTermIndicatorsHelper.h"
+#import "iTermKeyBindingAction.h"
 #import "iTermKeyboardHandler.h"
 #import "iTermLogicalMovementHelper.h"
 #import "iTermSemanticHistoryController.h"
@@ -54,14 +55,6 @@ typedef NS_ENUM(NSInteger, PTYCharType) {
     CHARTYPE_OTHER,       // Symbols, etc. Anything that doesn't fall into the other categories.
 };
 
-typedef NS_ENUM(NSUInteger, iTermSendTextEscaping) {
-    iTermSendTextEscapingNone = 0,  // Send literal text
-    iTermSendTextEscapingCompatibility = 1,  // Escape only n, e, a, and t. Used in many places prior to 3.4.5beta2.
-    iTermSendTextEscapingCommon = 2,  // Use stringByReplacingCommonlyEscapedCharactersWithControls
-    iTermSendTextEscapingVim = 3,  // Use stringByExpandingVimSpecialCharacters;
-    iTermSendTextEscapingVimAndCompatibility = 4,  // Use stringByExpandingVimSpecialCharacters FOLLOWED BY n, e, a, t. Bugward compatibility.
-};
-
 @protocol PTYTextViewDelegate <NSObject, iTermBadgeLabelDelegate>
 
 @property (nonatomic, readonly) NSEdgeInsets textViewEdgeInsets;
@@ -91,10 +84,7 @@ typedef NS_ENUM(NSUInteger, iTermSendTextEscaping) {
 - (BOOL)textViewHasBackgroundImage;
 - (void)sendEscapeSequence:(NSString *)text;
 - (void)sendHexCode:(NSString *)codes;
-- (void)sendText:(NSString *)text
-useCompatibilityEscaping:(BOOL)useCompatibilityEscaping
-compatibilityEscaping:(iTermSendTextEscaping)compatibilityEscaping
-preferredEscaping:(iTermSendTextEscaping)preferredEscaping;
+- (void)sendText:(NSString *)text escaping:(iTermSendTextEscaping)escaping;
 - (void)sendTextSlowly:(NSString *)text;
 - (void)textViewSelectionDidChangeToTruncatedString:(NSString *)maybeSelection;
 - (void)launchCoprocessWithCommand:(NSString *)command;
