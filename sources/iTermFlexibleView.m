@@ -40,18 +40,8 @@
 }
 
 - (void)drawRect:(NSRect)dirtyRect {
-    [_color setFill];
+    [[NSColor redColor] setFill];
     NSRectFill(dirtyRect);
-
-    if (@available(macOS 10.14, *)) {
-        // Draw around the subviews.
-        [[NSColor clearColor] set];
-        for (NSView *view in self.subviews) {
-            NSRectFillUsingOperation(view.frame, NSCompositingOperationCopy);
-        }
-    }
-    
-    [super drawRect:dirtyRect];
 }
 
 - (void)resizeWithOldSuperviewSize:(NSSize)oldSize {
