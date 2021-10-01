@@ -8916,6 +8916,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     }
     // Update whether the backing view is visible
     [_contentView invalidateAutomaticTabBarBackingHiding];
+    [_contentView setCurrentSessionAlpha:self.currentSession.textview.transparencyAlpha];
     // If the theme changed from light to dark make sure split pane dividers redraw.
     [_contentView.tabView setNeedsDisplay:YES];
 }

@@ -2422,9 +2422,3 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionHTMLTabTitles = @"PSMTabBarContr
 
 @end
 
-BOOL PSMShouldExtendTransparencyIntoMinimalTabBar(void) {
-    if (@available(macOS 10.16, *)) {
-        return YES;
-    }
-    return NO;
-}

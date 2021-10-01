@@ -985,9 +985,7 @@ NS_CLASS_AVAILABLE_MAC(10_14)
 }
 
 - (void)setCurrentSessionAlpha:(CGFloat)alpha {
-    if (PSMShouldExtendTransparencyIntoMinimalTabBar()) {
-        _tabBarBacking.visualEffectView.hidden = (alpha < 1);
-    }
+    _tabBarBacking.visualEffectView.hidden = PSMShouldExtendTransparencyIntoMinimalTabBar() && (alpha < 1);
 }
 
 #pragma mark - Division View
@@ -1888,3 +1886,22 @@ NS_CLASS_AVAILABLE_MAC(10_14)
 }
 
 @end
+
+BOOL PSMShouldExtendTransparencyIntoMinimalTabBar(void) {
+    if (@available(macOS 10.16, *)) { } else {
+        return NO;
+    }
+    switch ([iTermPreferences intForKey:kPreferenceKeyTabStyle]) {
+        case TAB_STYLE_MINIMAL:
+            return YES;
+
+        case TAB_STYLE_AUTOMATIC:
+        case TAB_STYLE_COMPACT:
+        case TAB_STYLE_LIGHT:
+        case TAB_STYLE_LIGHT_HIGH_CONTRAST:
+        case TAB_STYLE_DARK:
+        case TAB_STYLE_DARK_HIGH_CONTRAST:
+            return NO;
+    }
+    return NO;
+}
