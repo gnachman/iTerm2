@@ -8,7 +8,7 @@
 
 import Cocoa
 
-protocol FavoritesDataSourceDelegate: class {
+protocol FavoritesDataSourceDelegate: AnyObject {
     func favoritesDataSource(_ dataSource: FavoritesDataSource,
                              didInsertRowAtIndex index: Int)
     func favoritesDataSource(_ dataSource: FavoritesDataSource,
