@@ -35,6 +35,7 @@ static NSString *const iTermToolSnippetsPasteboardType = @"iTermToolSnippetsPast
     NSTableView *_tableView;
 
     NSButton *_applyButton;
+    NSButton *_advancedPasteButton;
     NSButton *_addButton;
     NSButton *_removeButton;
     NSButton *_editButton;
@@ -79,6 +80,8 @@ static NSButton *iTermToolSnippetsNewButton(NSString *imageName, NSString *title
             _addButton = iTermToolSnippetsNewButton(@"plus", @"Add", self, @selector(add:), frame);
             _removeButton = iTermToolSnippetsNewButton(@"minus", @"Remove", self, @selector(remove:), frame);
             _editButton = iTermToolSnippetsNewButton(@"pencil", @"Edit", self, @selector(edit:), frame);
+            _advancedPasteButton = iTermToolSnippetsNewButton(@"rectangle.and.pencil.and.ellipsis", @"Open in Advanced Paste", self, @selector(openInAdvancedPaste:), frame);
+            [self addSubview:_advancedPasteButton];
         } else {
             _applyButton = iTermToolSnippetsNewButton(nil, @"Send", self, @selector(apply:), frame);
             _addButton = iTermToolSnippetsNewButton(NSImageNameAddTemplate, nil, self, @selector(add:), frame);
@@ -166,10 +169,15 @@ static NSButton *iTermToolSnippetsNewButton(NSString *imageName, NSString *title
     [_applyButton sizeToFit];
     [_applyButton setFrame:NSMakeRect(0, frame.size.height - kButtonHeight, _applyButton.frame.size.width, kButtonHeight)];
 
+    [_advancedPasteButton sizeToFit];
     CGFloat margin = -1;
     if (@available(macOS 10.16, *)) {
         margin = 2;
     }
+    _advancedPasteButton.frame = NSMakeRect(NSMaxX(_applyButton.frame) + margin,
+                                            frame.size.height - kButtonHeight,
+                                            _advancedPasteButton.frame.size.width,
+                                            kButtonHeight);
 
     CGFloat x = frame.size.width;
     for (NSButton *button in @[ _addButton, _removeButton, _editButton]) {
@@ -204,12 +212,20 @@ static NSButton *iTermToolSnippetsNewButton(NSString *imageName, NSString *title
 
 #pragma mark - Snippets
 
+- (BOOL)optionPressed {
+    return !!([[NSApp currentEvent] modifierFlags] & NSEventModifierFlagOption);
+}
+
 - (void)doubleClickOnTableView:(id)sender {
-    [self applySelectedSnippets];
+    [self applySelectedSnippets:[self optionPressed]];
 }
 
 - (void)apply:(id)sender {
-    [self applySelectedSnippets];
+    [self applySelectedSnippets:[self optionPressed]];
+}
+
+- (void)openInAdvancedPaste:(id)sender {
+    [self applySelectedSnippets:YES];
 }
 
 - (void)add:(id)sender {
@@ -296,17 +312,22 @@ static NSButton *iTermToolSnippetsNewButton(NSString *imageName, NSString *title
     }
 }
 
-- (void)applySelectedSnippets {
+- (void)applySelectedSnippets:(BOOL)sendToAdvancedPaste {
     DLog(@"%@", [NSThread callStackSymbols]);
     for (iTermSnippet *snippet in [self selectedSnippets]) {
         DLog(@"Create action to send snippet %@", snippet);
         iTermToolWrapper *wrapper = self.toolWrapper;
-        iTermAction *action = [[iTermAction alloc] initWithTitle:@"Send Snippet"
-                                                          action:KEY_ACTION_SEND_SNIPPET
-                                                       parameter:snippet.actionKey
-                                                        escaping:snippet.escaping
-                                                         version:snippet.version];
-        [wrapper.delegate.delegate toolbeltApplyActionToCurrentSession:action];
+        if (sendToAdvancedPaste) {
+            [wrapper.delegate.delegate toolbeltOpenAdvancedPasteWithString:snippet.value
+                                                                  escaping:snippet.escaping];
+        } else {
+            iTermAction *action = [[iTermAction alloc] initWithTitle:@"Send Snippet"
+                                                              action:KEY_ACTION_SEND_SNIPPET
+                                                           parameter:snippet.actionKey
+                                                            escaping:snippet.escaping
+                                                             version:snippet.version];
+            [wrapper.delegate.delegate toolbeltApplyActionToCurrentSession:action];
+        }
     }
 }
 
@@ -357,6 +378,7 @@ static NSButton *iTermToolSnippetsNewButton(NSString *imageName, NSString *title
 - (void)updateEnabled {
     const NSInteger numberOfRows = [[self selectedSnippets] count];
     _applyButton.enabled = numberOfRows > 0;
+    _advancedPasteButton.enabled = numberOfRows == 1;
     _removeButton.enabled = numberOfRows > 0;
     _editButton.enabled = numberOfRows == 1;
 }

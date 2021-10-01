@@ -85,6 +85,7 @@ typedef NS_ENUM(NSInteger, PTYCharType) {
 - (void)sendEscapeSequence:(NSString *)text;
 - (void)sendHexCode:(NSString *)codes;
 - (void)sendText:(NSString *)text escaping:(iTermSendTextEscaping)escaping;
+- (void)openAdvancedPasteWithText:(NSString *)text escaping:(iTermSendTextEscaping)escaping;
 - (void)sendTextSlowly:(NSString *)text;
 - (void)textViewSelectionDidChangeToTruncatedString:(NSString *)maybeSelection;
 - (void)launchCoprocessWithCommand:(NSString *)command;

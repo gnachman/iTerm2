@@ -12,6 +12,13 @@
     NSMenu *_overridingMenu;  // If set, this takes priority over _menuItem
 }
 
+- (BOOL)validateMenuItem:(NSMenuItem *)menuItem {
+    if ([menuItem action] == @selector(bogus)) {
+        return NO;
+    }
+    return YES;
+}
+
 - (void)awakeFromNib {
     [iTermSnippetsDidChangeNotification subscribe:self selector:@selector(snippetsDidChange:)];
     [self reload];
@@ -39,10 +46,15 @@
 
 - (void)reload {
     [self.menu removeAllItems];
+    [self.menu addItemWithTitle:@"Press Option to Edit Before Sending" action:@selector(bogus) keyEquivalent:@""];
+    [self.menu addItem:[NSMenuItem separatorItem]];
     [[[iTermSnippetsModel sharedInstance] snippets] enumerateObjectsUsingBlock:
      ^(iTermSnippet * _Nonnull snippet, NSUInteger idx, BOOL * _Nonnull stop) {
         [self add:snippet];
     }];
+}
+
+- (IBAction)bogus {
 }
 
 - (NSMenu *)menu {

@@ -45,6 +45,7 @@
     IBOutlet SolidColorView *_divider;
     IBOutlet NSButton *_xButton;
     IBOutlet NSImageView *_loupe;
+    iTermOpenQuicklyTextView *_textView;  // custom field editor
 }
 
 + (instancetype)sharedInstance {
@@ -399,6 +400,17 @@
 
 #pragma mark - NSWindowDelegate
 
+- (id)windowWillReturnFieldEditor:(NSWindow *)sender toObject:(id)client {
+    if (![client isKindOfClass:[iTermOpenQuicklyTextField class]]) {
+        return nil;
+    }
+    if (!_textView) {
+        _textView = [[iTermOpenQuicklyTextView alloc] init];
+        [_textView setFieldEditor:YES];
+    }
+    return _textView;
+}
+
 - (void)windowDidResignKey:(NSNotification *)notification {
     [self.window close];
 }
@@ -455,6 +467,14 @@
 // Handle arrow keys while text field is key.
 - (void)keyDown:(NSEvent *)theEvent {
     static BOOL running;
+    const NSEventModifierFlags mask = (NSEventModifierFlagOption |
+                                       NSEventModifierFlagCommand |
+                                       NSEventModifierFlagShift |
+                                       NSEventModifierFlagControl);
+    if (theEvent.keyCode == kVK_Return && (theEvent.modifierFlags & mask) == NSEventModifierFlagOption) {
+        [self openSelectedRow];
+        return;
+    }
     if (!running) {
         running = YES;
         [_table keyDown:theEvent];

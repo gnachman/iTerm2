@@ -8,6 +8,8 @@
 
 #import <Cocoa/Cocoa.h>
 
+#import "iTermKeyBindingAction.h"
+
 @class CapturedOutput;
 @class iTermAction;
 @class iTermMark;
@@ -32,6 +34,7 @@
 - (BOOL)toolbeltCurrentSessionHasGuid:(NSString *)guid;
 - (NSArray<iTermCommandHistoryCommandUseMO *> *)toolbeltCommandUsesForCurrentSession;
 - (void)toolbeltApplyActionToCurrentSession:(iTermAction *)action;
+- (void)toolbeltOpenAdvancedPasteWithString:(NSString *)text escaping:(iTermSendTextEscaping)escaping;
 
 @end
 

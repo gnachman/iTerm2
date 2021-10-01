@@ -10,3 +10,6 @@
 @property(nonatomic, weak) IBOutlet id<iTermOpenQuicklyTextFieldDelegate> arrowHandler;
 
 @end
+
+@interface iTermOpenQuicklyTextView: NSTextView
+@end

@@ -10457,6 +10457,14 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     }
 }
 
+- (void)openAdvancedPasteWithText:(NSString *)text escaping:(iTermSendTextEscaping)escaping {
+    NSString *escaped = [self escapedText:text mode:escaping];
+    NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
+    [pasteboard declareTypes:@[ NSPasteboardTypeString ] owner:self];
+    [pasteboard setString:escaped forType:NSPasteboardTypeString];
+    [_pasteHelper showAdvancedPasteWithFlags:0];
+}
+
 - (void)sendText:(NSString *)text escaping:(iTermSendTextEscaping)escaping {
     DLog(@"sendText:%@ escaping:%@",
          text,

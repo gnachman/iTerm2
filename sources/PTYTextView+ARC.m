@@ -1112,7 +1112,15 @@ toggleTerminalStateForMenuItem:(nonnull NSMenuItem *)item {
 
 - (void)sendSnippet:(id)sender {
     iTermSnippet *snippet = [iTermSnippet castFrom:[sender representedObject]];
-    if (snippet) {
+    if (!snippet) {
+        return;
+    }
+    NSEvent *event = [NSApp currentEvent];
+    const BOOL option = !!(event.modifierFlags & NSEventModifierFlagOption);
+    if (option) {
+        // Multiple call sites depend on this (open quickly, menu item, and possibly other stuff added later).
+        [self.delegate openAdvancedPasteWithText:snippet.value escaping:snippet.escaping];
+    } else {
         [self.delegate sendText:snippet.value escaping:snippet.escaping];
     }
 }
