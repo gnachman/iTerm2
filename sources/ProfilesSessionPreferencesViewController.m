@@ -9,16 +9,21 @@
 #import "ProfilesSessionPreferencesViewController.h"
 #import "ITAddressBookMgr.h"
 #import "iTermColorMap.h"
+#import "iTermFunctionCallTextFieldDelegate.h"
 #import "iTermProfilePreferences.h"
 #import "iTermStatusBarSetupViewController.h"
 #import "iTermTheme.h"
+#import "iTermVariableHistory.h"
+#import "iTermVariables.h"
 #import "iTermWarning.h"
 #import "NSAppearance+iTerm.h"
+#import "NSArray+iTerm.h"
 #import "NSColor+iTerm.h"
 #import "NSDictionary+iTerm.h"
 #import "NSFileManager+iTerm.h"
 #import "NSImage+iTerm.h"
 #import "NSObject+iTerm.h"
+#import "NSStringITerm.h"
 #import "PSMMinimalTabStyle.h"
 #import "PreferencePanel.h"
 
@@ -52,6 +57,9 @@
     IBOutlet NSButton *_autoLog;
     IBOutlet NSPopUpButton *_loggingStyle;
     IBOutlet NSTextField *_logDir;
+    IBOutlet NSTextField *_logFilenameFormat;
+    iTermFunctionCallTextFieldDelegate *_logFilenameFormatDelegate;
+
     IBOutlet NSButton *_sendCodeWhenIdle;
     IBOutlet NSTextField *_idleCode;
     IBOutlet NSTextField *_idlePeriod;
@@ -82,6 +90,29 @@
 - (void)dealloc {
     _jobsTable.dataSource = nil;
     _jobsTable.delegate = nil;
+}
+
+- (NSSet<NSString *> *(^)(NSString *))prenatalPathSource {
+    NSArray<NSString *> *allowList = @[
+        iTermVariableKeySessionAutoLogID,
+        iTermVariableKeySessionBadge,
+        iTermVariableKeySessionColumns,
+        iTermVariableKeySessionCreationTimeString,
+        iTermVariableKeySessionID,
+        iTermVariableKeySessionProfileName,
+        iTermVariableKeySessionRows,
+        iTermVariableKeySessionTermID,
+
+        [@[ iTermVariableKeyGlobalScopeName, iTermVariableKeyApplicationEffectiveTheme] componentsJoinedByString:@"."],
+        [@[ iTermVariableKeyGlobalScopeName, iTermVariableKeyApplicationLocalhostName] componentsJoinedByString:@"."],
+        [@[ iTermVariableKeyGlobalScopeName, iTermVariableKeyApplicationPID] componentsJoinedByString:@"."],
+    ];
+    return ^NSSet<NSString *> *(NSString *prefix) {
+        NSArray<NSString *> *array = [allowList filteredArrayUsingBlock:^BOOL(NSString *anObject) {
+            return [anObject it_hasPrefix:prefix];
+        }];
+        return [NSSet setWithArray:array];
+    };
 }
 
 - (void)awakeFromNib {
@@ -150,9 +181,11 @@
         if (!strongSelf) {
             return;
         }
-        strongSelf->_logDir.enabled = [strongSelf boolForKey:KEY_AUTOLOG];
-        strongSelf->_changeLogDir.enabled = [strongSelf boolForKey:KEY_AUTOLOG];
-        strongSelf->_loggingStyle.enabled = [strongSelf boolForKey:KEY_AUTOLOG];
+        const BOOL loggingEnabled = [strongSelf boolForKey:KEY_AUTOLOG];
+        strongSelf->_logDir.enabled = loggingEnabled;
+        strongSelf->_logFilenameFormat.enabled = loggingEnabled;
+        strongSelf->_changeLogDir.enabled = loggingEnabled;
+        strongSelf->_loggingStyle.enabled = loggingEnabled;
         [strongSelf updateLogDirWarning];
     };
 
@@ -165,6 +198,15 @@
                                        key:KEY_LOGDIR
                                       type:kPreferenceInfoTypeStringTextField];
     info.observer = ^() { [weakSelf updateLogDirWarning]; };
+
+    _logFilenameFormatDelegate = [[iTermFunctionCallTextFieldDelegate alloc] initWithPathSource:[self prenatalPathSource]
+                                                                                    passthrough:_logFilenameFormat.delegate
+                                                                                  functionsOnly:NO];
+    _logFilenameFormat.delegate = _logFilenameFormatDelegate;
+
+    [self defineUnsearchableControl:_logFilenameFormat
+                                key:KEY_LOG_FILENAME_FORMAT
+                               type:kPreferenceInfoTypeStringTextField];
 
     info = [self defineControl:_sendCodeWhenIdle
                            key:KEY_SEND_CODE_WHEN_IDLE
@@ -270,6 +312,7 @@
 - (void)layoutSubviewsForEditCurrentSessionMode {
     NSArray *viewsToDisable = @[ _autoLog,
                                  _logDir,
+                                 _logFilenameFormat,
                                  _changeLogDir ];
     for (id view in viewsToDisable) {
         [view setEnabled:NO];

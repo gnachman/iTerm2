@@ -31,7 +31,6 @@ typedef NS_OPTIONS(NSUInteger, iTermVariablesSuggestionContext) {
                                                  excluding:(NSSet<NSString *> *)exclusions
                                              allowUserVars:(BOOL)allowUserVars;
 
-
 @end
 
 NS_ASSUME_NONNULL_END

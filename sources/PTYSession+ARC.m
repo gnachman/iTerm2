@@ -114,7 +114,7 @@ extern NSString *const SESSION_ARRANGEMENT_SERVER_DICT;
 
     NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
     dateFormatter.dateFormat = @"yyyyMMdd_HHmmss";
-    NSString *format = [iTermAdvancedSettingsModel autoLogFormat];
+    NSString *format = [iTermProfilePreferences stringForKey:KEY_LOG_FILENAME_FORMAT inProfile:self.profile];
     iTermExpressionEvaluator *evaluator = [[iTermExpressionEvaluator alloc] initWithInterpolatedString:format scope:self.variablesScope];
     [evaluator evaluateWithTimeout:5
                         completion:^(iTermExpressionEvaluator * _Nonnull evaluator) {

@@ -97,7 +97,7 @@ NSString *const iTermVariableKeyWindowFrame = @"frame";
 NSString *const iTermVariableKeyWindowStyle = @"style";
 NSString *const iTermVariableKeyWindowNumber = @"number";
 
-// NOTE: If you add here, also update +recordBuiltInVariables
+// NOTE: If you add here, also update +recordBuiltInVariables and (if needed) -[ProfilesSessionPreferencesViewController prenatalPathSource]
 
 #pragma mark -
 

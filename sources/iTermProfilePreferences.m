@@ -8,6 +8,8 @@
 
 #import "iTermProfilePreferences.h"
 
+#define ENABLE_DEPRECATED_ADVANCED_SETTINGS
+
 #import "DebugLogging.h"
 #import "ITAddressBookMgr.h"
 #import "iTermAdvancedSettingsModel.h"
@@ -181,7 +183,7 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
                              KEY_INITIAL_TEXT, KEY_CUSTOM_DIRECTORY, KEY_WORKING_DIRECTORY,
                              KEY_CUSTOM_WINDOW_TITLE, KEY_CUSTOM_TAB_TITLE,
                              KEY_HOTKEY_CHARACTERS, KEY_HOTKEY_CHARACTERS_IGNORING_MODIFIERS,
-                             KEY_LOGDIR, KEY_TERMINAL_TYPE, KEY_TITLE_FUNC, KEY_GUID,
+                             KEY_LOGDIR, KEY_LOG_FILENAME_FORMAT, KEY_TERMINAL_TYPE, KEY_TITLE_FUNC, KEY_GUID,
                              KEY_ORIGINAL_GUID, KEY_AWDS_WIN_DIRECTORY, KEY_AWDS_TAB_OPTION,
                              KEY_AWDS_TAB_DIRECTORY, KEY_AWDS_PANE_OPTION, KEY_AWDS_PANE_DIRECTORY,
                              KEY_BACKGROUND_IMAGE_LOCATION, KEY_DYNAMIC_PROFILE_PARENT_NAME,
@@ -546,6 +548,7 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
                   KEY_AUTOLOG: @NO,
                   KEY_LOGGING_STYLE: @(iTermLoggingStyleRaw),
                   KEY_LOGDIR: @"",
+                  KEY_LOG_FILENAME_FORMAT: [iTermAdvancedSettingsModel autoLogFormat],
                   KEY_SEND_CODE_WHEN_IDLE: @NO,
                   KEY_IDLE_CODE: @0,
                   KEY_IDLE_PERIOD: @60,

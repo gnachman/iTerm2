@@ -56,7 +56,9 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)appendToExistingDebugLog;
 + (BOOL)autoLockSessionNameOnEdit;
 + (int)autocompleteMaxOptions;
-+ (NSString *)autoLogFormat;
+#ifdef ENABLE_DEPRECATED_ADVANCED_SETTINGS
++ (NSString *)autoLogFormat;  // Use the per-profile setting instead. This is only around for migrating the default.
+#endif
 + (BOOL)autologAppends;
 + (NSString *)badgeFont;
 + (BOOL)badgeFontIsBold;

@@ -154,6 +154,9 @@ DEFINE_BOILERPLATE(name, NSString *, kiTermAdvancedSettingTypeString, theDefault
 #define DEFINE_SETTABLE_STRING(name, capitalizedName, theDefault, theDescription) \
 DEFINE_SETTABLE_BOILERPLATE(name, capitalizedName, NSString *, kiTermAdvancedSettingTypeString, theDefault, theDescription, iTermAdvancedSettingsModelTransformString, iTermAdvancedSettingsModelInverseTransformString)
 
+#pragma mark -
+
+#define DEFINE_DEPRECATED_STRING(name, theDefault, theDescription) DEFINE_STRING(name, theDefault, theDescription); + (BOOL)deprecated_##name { return YES; }
 // Convenience default value for boolean settings that are on for beta users.
 #if BETA
 #define YES_IF_BETA_ELSE_NO YES
@@ -188,7 +191,8 @@ BOOL UseSystemCursorWhenPossibleDefault(void) {
 + (void)enumerateDictionaries:(void (^)(NSDictionary *))block {
     [self enumerateMethods:^(Method method, SEL selector) {
         NSString *name = NSStringFromSelector(selector);
-        if ([name hasPrefix:@"advancedSettingsModelDictionary_"]) {
+        NSString *prefix = @"advancedSettingsModelDictionary_";
+        if ([name hasPrefix:prefix] && ![self settingIsDeprecated:[name stringByRemovingPrefix:prefix]]) {
             NSDictionary *(*impl)(id, SEL) = (NSDictionary *(*)(id, SEL))method_getImplementation(method);
             NSDictionary *dict = impl(self, selector);
             block(dict);
@@ -196,6 +200,11 @@ BOOL UseSystemCursorWhenPossibleDefault(void) {
     }];
 }
 
++ (BOOL)settingIsDeprecated:(NSString *)name {
+    NSString *string = [@"deprecated_" stringByAppendingString:name];
+    SEL selector = NSSelectorFromString(string);
+    return [self respondsToSelector:selector];
+}
 #pragma mark Tabs
 
 #define SECTION_TABS @"Tabs: "
@@ -456,9 +465,9 @@ DEFINE_BOOL(bootstrapDaemon, YES, SECTION_SESSION @"Allow sessions to survive lo
 DEFINE_BOOL(killJobsInServersOnQuit, YES, SECTION_SESSION @"User-initiated Quit (⌘Q) of iTerm2 will kill all running jobs.\nApplies only when session restoration is on.");
 DEFINE_SETTABLE_BOOL(suppressRestartAnnouncement, SuppressRestartAnnouncement, NO, SECTION_SESSION @"Suppress the Restart Session offer.\nWhen a session terminates, it will offer to restart itself. Turn this on to suppress the offer permanently.");
 DEFINE_BOOL(showSessionRestoredBanner, YES, SECTION_SESSION @"When restoring a session without restoring a running job, draw a banner saying “Session Contents Restored” below the restored contents.");
-DEFINE_STRING(autoLogFormat,
-              @"\\(creationTimeString).\\(profileName).\\(termid).\\(iterm2.pid).\\(autoLogId).log",
-              SECTION_SESSION @"Format for automatic session log filenames.\nSee the Badges documentation for supported substitutions.");
+DEFINE_DEPRECATED_STRING(autoLogFormat,
+                         @"\\(creationTimeString).\\(profileName).\\(termid).\\(iterm2.pid).\\(autoLogId).log",
+                         SECTION_SESSION @"Format for automatic session log filenames.\nSee the Badges documentation for supported substitutions.");
 DEFINE_BOOL(autologAppends, YES, SECTION_SESSION @"Automatic session logging appends to existing files.\nWhen set to No, the file will be overwritten instead.");
 DEFINE_BOOL(focusNewSplitPaneWithFocusFollowsMouse, YES, SECTION_SESSION @"When focus follows mouse is enabled, should new split panes automatically be focused?");
 DEFINE_BOOL(NoSyncSuppressRestartSessionConfirmationAlert, NO, SECTION_SESSION @"Suppress restart session confirmation alert.\nDon't ask for a confirmation when manually restarting a session.");

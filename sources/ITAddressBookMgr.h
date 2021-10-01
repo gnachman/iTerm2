@@ -210,6 +210,7 @@
 #define KEY_AUTOLOG                           @"Automatically Log"
 #define KEY_UNDO_TIMEOUT                      @"Session Close Undo Timeout"
 #define KEY_LOGDIR                            @"Log Directory"
+#define KEY_LOG_FILENAME_FORMAT               @"Log Filename Format"
 #define KEY_SEND_CODE_WHEN_IDLE               @"Send Code When Idle"
 #define KEY_IDLE_CODE                         @"Idle Code"
 #define KEY_IDLE_PERIOD                       @"Idle Period"
