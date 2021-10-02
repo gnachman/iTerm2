@@ -39,7 +39,7 @@ const int kColorMapAnsiWhite = kColorMap8bitBase + 7;
 const int kColorMapAnsiBrightModifier = 8;
 
 @interface iTermColorMap ()
-@property(nonatomic, retain) NSMutableDictionary *map;
+@property(nonatomic, strong) NSMutableDictionary *map;
 @end
 
 @implementation iTermColorMap {
@@ -73,14 +73,6 @@ const int kColorMapAnsiBrightModifier = 8;
         _fastMap = [[NSMutableDictionary alloc] init];
     }
     return self;
-}
-
-- (void)dealloc {
-    [_map release];
-    [_lastTextColor release];
-    [_lastBackgroundColor release];
-    [_fastMap release];
-    [super dealloc];
 }
 
 - (void)setDimmingAmount:(double)dimmingAmount {
@@ -252,11 +244,10 @@ const int kColorMapAnsiBrightModifier = 8;
     if (_lastTextColor && !memcmp(_lastTextComponents, dimmedRgb, sizeof(CGFloat) * 3)) {
         return _lastTextColor;
     } else {
-        [_lastTextColor autorelease];
         memmove(_lastTextComponents, dimmedRgb, sizeof(CGFloat) * 3);
-        _lastTextColor = [[NSColor colorWithColorSpace:textColor.colorSpace
-                                            components:dimmedRgb
-                                                 count:4] retain];
+        _lastTextColor = [NSColor colorWithColorSpace:textColor.colorSpace
+                                           components:dimmedRgb
+                                                count:4];
         return _lastTextColor;
     }
 }
@@ -430,11 +421,10 @@ const int kColorMapAnsiBrightModifier = 8;
     if (!memcmp(_lastBackgroundComponents, dimmedRgb, sizeof(CGFloat) * 4)) {
         return _lastBackgroundColor;
     } else {
-        [_lastBackgroundColor autorelease];
         memmove(_lastBackgroundComponents, dimmedRgb, sizeof(CGFloat) * 4);
-        _lastBackgroundColor = [[NSColor colorWithColorSpace:backgroundColor.colorSpace
-                                                  components:dimmedRgb
-                                                       count:4] retain];
+        _lastBackgroundColor = [NSColor colorWithColorSpace:backgroundColor.colorSpace
+                                                 components:dimmedRgb
+                                                      count:4];
         return _lastBackgroundColor;
     }
 }
@@ -451,62 +441,42 @@ const int kColorMapAnsiBrightModifier = 8;
 }
 
 - (NSString *)baseProfileKeyForColorMapKey:(int)theKey {
-    switch (theKey) {
-        case kColorMapForeground:
-            return KEY_FOREGROUND_COLOR;
-        case kColorMapBackground:
-            return KEY_BACKGROUND_COLOR;
-        case kColorMapBold:
-            return KEY_BOLD_COLOR;
-        case kColorMapLink:
-            return KEY_LINK_COLOR;
-        case kColorMapSelection:
-            return KEY_SELECTION_COLOR;
-        case kColorMapSelectedText:
-            return KEY_SELECTED_TEXT_COLOR;
-        case kColorMapCursor:
-            return KEY_CURSOR_COLOR;
-        case kColorMapCursorText:
-            return KEY_CURSOR_TEXT_COLOR;
-        case kColorMapUnderline:
-            return KEY_UNDERLINE_COLOR;
+    return self.colormapKeyToProfileKeyDictionary[@(theKey)];
+}
 
-        case kColorMapAnsiBlack:
-            return KEY_ANSI_0_COLOR;
-        case kColorMapAnsiRed:
-            return KEY_ANSI_1_COLOR;
-        case kColorMapAnsiGreen:
-            return KEY_ANSI_2_COLOR;
-        case kColorMapAnsiYellow:
-            return KEY_ANSI_3_COLOR;
-        case kColorMapAnsiBlue:
-            return KEY_ANSI_4_COLOR;
-        case kColorMapAnsiMagenta:
-            return KEY_ANSI_5_COLOR;
-        case kColorMapAnsiCyan:
-            return KEY_ANSI_6_COLOR;
-        case kColorMapAnsiWhite:
-            return KEY_ANSI_7_COLOR;
-
-        case kColorMapAnsiBlack + kColorMapAnsiBrightModifier:
-            return KEY_ANSI_8_COLOR;
-        case kColorMapAnsiRed + kColorMapAnsiBrightModifier:
-            return KEY_ANSI_9_COLOR;
-        case kColorMapAnsiGreen + kColorMapAnsiBrightModifier:
-            return KEY_ANSI_10_COLOR;
-        case kColorMapAnsiYellow + kColorMapAnsiBrightModifier:
-            return KEY_ANSI_11_COLOR;
-        case kColorMapAnsiBlue + kColorMapAnsiBrightModifier:
-            return KEY_ANSI_12_COLOR;
-        case kColorMapAnsiMagenta + kColorMapAnsiBrightModifier:
-            return KEY_ANSI_13_COLOR;
-        case kColorMapAnsiCyan + kColorMapAnsiBrightModifier:
-            return KEY_ANSI_14_COLOR;
-        case kColorMapAnsiWhite + kColorMapAnsiBrightModifier:
-            return KEY_ANSI_15_COLOR;
-    }
-
-    return nil;
+- (NSDictionary<NSNumber *, NSString *> *)colormapKeyToProfileKeyDictionary {
+    static dispatch_once_t onceToken;
+    static NSDictionary<NSNumber *, NSString *> *dict;
+    dispatch_once(&onceToken, ^{
+        dict = @{
+            @(kColorMapForeground): KEY_FOREGROUND_COLOR,
+            @(kColorMapBackground): KEY_BACKGROUND_COLOR,
+            @(kColorMapBold): KEY_BOLD_COLOR,
+            @(kColorMapLink): KEY_LINK_COLOR,
+            @(kColorMapSelection): KEY_SELECTION_COLOR,
+            @(kColorMapSelectedText): KEY_SELECTED_TEXT_COLOR,
+            @(kColorMapCursor): KEY_CURSOR_COLOR,
+            @(kColorMapCursorText): KEY_CURSOR_TEXT_COLOR,
+            @(kColorMapUnderline): KEY_UNDERLINE_COLOR,
+            @(kColorMapAnsiBlack): KEY_ANSI_0_COLOR,
+            @(kColorMapAnsiRed): KEY_ANSI_1_COLOR,
+            @(kColorMapAnsiGreen): KEY_ANSI_2_COLOR,
+            @(kColorMapAnsiYellow): KEY_ANSI_3_COLOR,
+            @(kColorMapAnsiBlue): KEY_ANSI_4_COLOR,
+            @(kColorMapAnsiMagenta): KEY_ANSI_5_COLOR,
+            @(kColorMapAnsiCyan): KEY_ANSI_6_COLOR,
+            @(kColorMapAnsiWhite): KEY_ANSI_7_COLOR,
+            @(kColorMapAnsiBlack + kColorMapAnsiBrightModifier): KEY_ANSI_8_COLOR,
+            @(kColorMapAnsiRed + kColorMapAnsiBrightModifier): KEY_ANSI_9_COLOR,
+            @(kColorMapAnsiGreen + kColorMapAnsiBrightModifier): KEY_ANSI_10_COLOR,
+            @(kColorMapAnsiYellow + kColorMapAnsiBrightModifier): KEY_ANSI_11_COLOR,
+            @(kColorMapAnsiBlue + kColorMapAnsiBrightModifier): KEY_ANSI_12_COLOR,
+            @(kColorMapAnsiMagenta + kColorMapAnsiBrightModifier): KEY_ANSI_13_COLOR,
+            @(kColorMapAnsiCyan + kColorMapAnsiBrightModifier): KEY_ANSI_14_COLOR,
+            @(kColorMapAnsiWhite + kColorMapAnsiBrightModifier): KEY_ANSI_15_COLOR,
+        };
+    });
+    return dict;
 }
 
 - (id)copyWithZone:(NSZone *)zone {
@@ -521,10 +491,10 @@ const int kColorMapAnsiBrightModifier = 8;
     other->_backgroundBlue = _backgroundBlue;
 
     memmove(other->_lastTextComponents, _lastTextComponents, sizeof(_lastTextComponents));
-    other->_lastTextColor = [_lastTextColor retain];
+    other->_lastTextColor = _lastTextColor;
 
     memmove(other->_lastBackgroundComponents, _lastBackgroundComponents, sizeof(_lastBackgroundComponents));
-    other->_lastBackgroundColor = [_lastBackgroundColor retain];
+    other->_lastBackgroundColor = _lastBackgroundColor;
 
     other->_dimOnlyText = _dimOnlyText;
     other->_dimmingAmount = _dimmingAmount;
@@ -535,10 +505,8 @@ const int kColorMapAnsiBrightModifier = 8;
 
     other->_delegate = _delegate;
 
-    [other->_map release];
     other->_map = [_map mutableCopy];
 
-    [other->_fastMap release];
     other->_fastMap = [_fastMap mutableCopy];
     other->_useSeparateColorsForLightAndDarkMode = _useSeparateColorsForLightAndDarkMode;
     other->_darkMode = _darkMode;

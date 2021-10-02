@@ -105,6 +105,7 @@ extern const int kColorMap24bitBase;
 // Returns non-nil profile key name for valid logical colors, ANSI colors, and bright ANSI colors.
 - (NSString *)profileKeyForColorMapKey:(int)theKey;
 - (iTermColorMapKey)keyForSystemMessageForBackground:(BOOL)background;
+- (NSDictionary<NSNumber *, NSString *> *)colormapKeyToProfileKeyDictionary ;
 
 - (iTermColorMapKey)keyForColor:(int)theIndex
                           green:(int)green

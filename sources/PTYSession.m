@@ -10814,7 +10814,23 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                                                                      profile:_profile];
     self.cursorTypeOverride = nil;
     [_textview setNeedsDisplay:YES];
+    [self restoreColorsFromProfile];
     _screen.trackCursorLineMovement = NO;
+}
+
+- (void)restoreColorsFromProfile {
+    NSMutableDictionary<NSString *, id> *change = [NSMutableDictionary dictionary];
+    for (NSString *key in [[_colorMap colormapKeyToProfileKeyDictionary] allValues]) {
+        if (![_overriddenFields containsObject:key]) {
+            continue;
+        }
+        id profileValue = self.originalProfile[key] ?: [NSNull null];
+        change[key] = profileValue;
+    }
+    if (change.count == 0) {
+        return;
+    }
+    [self setSessionSpecificProfileValues:change];
 }
 
 // If plainText is false then it's a control code.
