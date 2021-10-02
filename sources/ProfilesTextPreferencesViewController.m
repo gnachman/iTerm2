@@ -271,8 +271,27 @@
 }
 
 - (void)updateLigatureWarning {
-    const BOOL enabled = ([self boolForKey:KEY_ASCII_LIGATURES] || [self boolForKey:KEY_NON_ASCII_LIGATURES]);
-    _ligatureWarning.hidden = !enabled;
+    _ligatureWarning.hidden = ![self shouldShowLigaturesWarning];
+}
+
+- (BOOL)shouldShowLigaturesWarning {
+    if (self.normalFont.it_defaultLigatures) {
+        return NO;
+    }
+    if (self.normalFont.it_ligatureLevel > 0 && [self boolForKey:KEY_ASCII_LIGATURES]) {
+        return YES;
+    }
+    if (![self boolForKey:KEY_USE_NONASCII_FONT]) {
+        return NO;
+    }
+
+    if (self.nonAsciiFont.it_defaultLigatures) {
+        return NO;
+    }
+    if (self.nonAsciiFont.it_ligatureLevel > 0 && [self boolForKey:KEY_NON_ASCII_LIGATURES]) {
+        return YES;
+    }
+    return NO;
 }
 
 - (void)unicodeVersionDidChange {
@@ -347,6 +366,7 @@
     [self updateWarnings];
 }
 
+
 - (void)updateThinStrokesEnabled {
     if (@available(macOS 10.14, *)) {
         if (iTermTextIsMonochrome()) {
@@ -411,6 +431,7 @@
     [self setString:view.font.stringValue
              forKey:key];
     [self updateFontsDescriptionsIncludingSpacing:YES];
+    [self updateLigatureWarning];
 }
 
 #pragma mark - BFPSizePickerViewDelegate
