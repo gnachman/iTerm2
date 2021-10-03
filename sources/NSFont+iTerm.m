@@ -32,7 +32,14 @@
     if (points <= 0) {
         points = [NSFont smallSystemFontSize];
     }
-    return [NSFont fontWithName:[iTermAdvancedSettingsModel toolbeltFont] size:points];
+    NSFont *font = [NSFont fontWithName:[iTermAdvancedSettingsModel toolbeltFont] size:points];
+    if (font) {
+        return font;
+    }
+    if (@available(macOS 10.15, *)) {
+        return [NSFont monospacedSystemFontOfSize:points weight:NSFontWeightRegular];
+    }
+    return [NSFont fontWithName:@"Menlo" size:points];
 }
 
 @end
