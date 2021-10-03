@@ -277,13 +277,10 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)toggleFullScreen:(nullable id)sender {
-    if (![[self ptyDelegate] lionFullScreen]  &&
-        ![iTermPreferences boolForKey:kPreferenceKeyLionStyleFullscreen]) {
-        // The user must have clicked on the toolbar arrow, but the pref is set
-        // to use traditional fullscreen.
-        [(id<PTYWindowDelegateProtocol>)[self delegate] toggleTraditionalFullScreenMode];
-    } else {
+    if ([self.ptyDelegate toggleFullScreenShouldUseLionFullScreen]) {
         [super toggleFullScreen:sender];
+    } else {
+        [(id<PTYWindowDelegateProtocol>)[self delegate] toggleTraditionalFullScreenMode];
     }
 }
 
