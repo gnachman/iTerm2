@@ -5,6 +5,8 @@
 
 #include <term.h>
 
+#define MEDIAN(min_, mid_, max_) MAX(MIN(mid_, max_), min_)
+
 // Indexes into _keyStrings.
 typedef enum {
     TERMINFO_KEY_LEFT, TERMINFO_KEY_RIGHT, TERMINFO_KEY_UP, TERMINFO_KEY_DOWN,
@@ -328,12 +330,277 @@ typedef enum {
     return data;
 }
 
+- (BOOL)isLikeXterm {
+    return [_termType hasPrefix:@"xterm"];
+}
+
+// https://invisible-island.net/xterm/xterm-function-keys.html hints at this but is incomplete.
+// Much of this was determined by experimentation with xterm, TERM=xterm.
+- (NSString *)xtermKeyFunction:(int)no modifiers:(NSEventModifierFlags)modifiers {
+    // Modifiers remap function keys into higher number function keys, some of which probably
+    // don't exist on any earthly keyboard.
+    // regular f1 = f1          (+0)
+    // meta f1 = f49            (+48)
+    // control f1 = f25         (+24)
+    // meta ctrl f1 = f75       (+74)
+    // shift f1 = f13           (+12)
+    // meta shift f1 = f61      (+60)
+    // shift control f1 = f37   (+36)
+    // meta shift ctrl f1 = f87 (+86)
+
+    const BOOL shift = !!(modifiers & NSEventModifierFlagShift);
+    const BOOL ctrl = !!(modifiers & NSEventModifierFlagControl);
+    const BOOL meta = !!(modifiers & NSEventModifierFlagOption);
+
+    const int offsets[] = {
+             // Shift Control Meta
+        0,   // no    no      no
+        12,  // yes   no      no
+        24,  // no    yes     no
+        36,  // yes   yes     no
+        48,  // no    no      yes
+        60,  // yes   no      yes
+        74,  // no    yes     yes
+        86,  // yes   yes     yes
+    };
+    int i = 0;
+    if (shift) {
+        i += 1;
+    }
+    if (ctrl) {
+        i += 2;
+    }
+    if (meta) {
+        i += 4;
+    }
+    const int offset = offsets[i];
+
+    switch (MEDIAN(1, no + offset, 98)) {
+            // Regular
+        case 1:
+            return @"\eOP";
+        case 2:
+            return @"\eOQ";
+        case 3:
+            return @"\eOR";
+        case 4:
+            return @"\eOS";
+        case 5:
+            return @"\e[15~";
+        case 6:
+            return @"\e[17~";
+        case 7:
+            return @"\e[18~";
+        case 8:
+            return @"\e[19~";
+        case 9:
+            return @"\e[20~";
+        case 10:
+            return @"\e[21~";
+        case 11:
+            return @"\e[23~";
+        case 12:
+            return @"\e[24~";
+
+            // shift
+        case 13:
+            return @"\e[1;2P";
+        case 14:
+            return @"\e[1;2Q";
+        case 15:
+            return @"\e[1;2R";
+        case 16:
+            return @"\e[1;2S";
+        case 17:
+            return @"\e[15;2~";
+        case 18:
+            return @"\e[17;2~";
+        case 19:
+            return @"\e[18;2~";
+        case 20:
+            return @"\e[19;2~";
+        case 21:
+            return @"\e[20;2~";
+        case 22:
+            return @"\e[21;2~";
+        case 23:
+            return @"\e[23;2~";
+        case 24:
+            return @"\e[24;2~";
+
+            // control
+        case 25:
+            return @"\e[1;5P";
+        case 26:
+            return @"\e[1;5Q";
+        case 27:
+            return @"\e[1;5R";
+        case 28:
+            return @"\e[1;5S";
+        case 29:
+            return @"\e[15;5~";
+        case 30:
+            return @"\e[17;5~";
+        case 31:
+            return @"\e[18;5~";
+        case 32:
+            return @"\e[19;5~";
+        case 33:
+            return @"\e[20;5~";
+        case 34:
+            return @"\e[21;5~";
+        case 35:
+            return @"\e[23;5~";
+        case 36:
+            return @"\e[24;5~";
+
+            // shift-control
+        case 37:
+            return @"\e[1;6P";
+        case 38:
+            return @"\e[1;6Q";
+        case 39:
+            return @"\e[1;6R";
+        case 40:
+            return @"\e[1;6S";
+        case 41:
+            return @"\e[15;6~";
+        case 42:
+            return @"\e[17;6~";
+        case 43:
+            return @"\e[18;6~";
+        case 44:
+            return @"\e[19;6~";
+        case 45:
+            return @"\e[20;6~";
+        case 46:
+            return @"\e[21;6~";
+        case 47:
+            return @"\e[23;6~";
+        case 48:
+            return @"\e[24;6~";
+
+            // meta
+        case 49:
+            return _optionIsMetaForSpecialKeys ? @"\e[1;9P" : @"\e[1;3P";
+        case 50:
+            return _optionIsMetaForSpecialKeys ? @"\e[1;9Q" : @"\e[1;3Q";
+        case 51:
+            return _optionIsMetaForSpecialKeys ? @"\e[1;9R" : @"\e[1;3R";
+        case 52:
+            return _optionIsMetaForSpecialKeys ? @"\e[1;9S" : @"\e[1;3S";
+        case 53:
+            return _optionIsMetaForSpecialKeys ? @"\e[15;9~" : @"\e[15;3~";
+        case 54:
+            return _optionIsMetaForSpecialKeys ? @"\e[17;9~" : @"\e[17;3~";
+        case 55:
+            return _optionIsMetaForSpecialKeys ? @"\e[18;9~" : @"\e[18;3~";
+        case 56:
+            return _optionIsMetaForSpecialKeys ? @"\e[19;9~" : @"\e[19;3~";
+        case 57:
+            return _optionIsMetaForSpecialKeys ? @"\e[20;9~" : @"\e[20;3~";
+        case 58:
+            return _optionIsMetaForSpecialKeys ? @"\e[21;9~" : @"\e[21;3~";
+        case 59:
+            return _optionIsMetaForSpecialKeys ? @"\e[23;9~" : @"\e[23;3~";
+        case 60:
+            return _optionIsMetaForSpecialKeys ? @"\e[24;9~" : @"\e[24;3~";
+
+            // shift-meta
+        case 61:
+            return _optionIsMetaForSpecialKeys ? @"\e[1;10P" : @"\e[1;4P";
+        case 62:
+            return _optionIsMetaForSpecialKeys ? @"\e[1;10Q" : @"\e[1;4Q";
+        case 63:
+            return _optionIsMetaForSpecialKeys ? @"\e[1;10R" : @"\e[1;4R";
+        case 64:
+            return _optionIsMetaForSpecialKeys ? @"\e[1;10S" : @"\e[1;4S";
+        case 65:
+            return _optionIsMetaForSpecialKeys ? @"\e[15;10~" : @"\e[15;4~";
+        case 66:
+            return _optionIsMetaForSpecialKeys ? @"\e[15;10~" : @"\e[15;4~";
+        case 67:
+            return _optionIsMetaForSpecialKeys ? @"\e[17;10~" : @"\e[17;4~";
+        case 68:
+            return _optionIsMetaForSpecialKeys ? @"\e[18;10~" : @"\e[18;4~";
+        case 69:
+            return _optionIsMetaForSpecialKeys ? @"\e[19;10~" : @"\e[19;4~";
+        case 70:
+            return _optionIsMetaForSpecialKeys ? @"\e[20;10~" : @"\e[20;4~";
+        case 71:
+            return _optionIsMetaForSpecialKeys ? @"\e[21;10~" : @"\e[21;4~";
+        case 72:
+            return _optionIsMetaForSpecialKeys ? @"\e[22;10~" : @"\e[22;4~";
+        case 73:
+            return _optionIsMetaForSpecialKeys ? @"\e[23;10~" : @"\e[23;4~";
+        case 74:
+            return _optionIsMetaForSpecialKeys ? @"\e[24;10~" : @"\e[24;4~";
+
+            // control-meta
+        case 75:
+            return _optionIsMetaForSpecialKeys ? @"\e[1;13P" : @"\e[1;7P";
+        case 76:
+            return _optionIsMetaForSpecialKeys ? @"\e[1;13Q" : @"\e[1;7Q";
+        case 77:
+            return _optionIsMetaForSpecialKeys ? @"\e[1;13R" : @"\e[1;7R";
+        case 78:
+            return _optionIsMetaForSpecialKeys ? @"\e[1;13S" : @"\e[1;7S";
+        case 79:
+            return _optionIsMetaForSpecialKeys ? @"\e[15;13~" : @"\e[15;7~";
+        case 80:
+            return _optionIsMetaForSpecialKeys ? @"\e[17;13~" : @"\e[17;7~";
+        case 81:
+            return _optionIsMetaForSpecialKeys ? @"\e[18;13~" : @"\e[18;7~";
+        case 82:
+            return _optionIsMetaForSpecialKeys ? @"\e[19;13~" : @"\e[19;7~";
+        case 83:
+            return _optionIsMetaForSpecialKeys ? @"\e[20;13~" : @"\e[20;7~";
+        case 84:
+            return _optionIsMetaForSpecialKeys ? @"\e[21;13~" : @"\e[21;7~";
+        case 85:
+            return _optionIsMetaForSpecialKeys ? @"\e[23;13~" : @"\e[23;7~";
+        case 86:
+            return _optionIsMetaForSpecialKeys ? @"\e[24;13~" : @"\e[24;7~";
+
+            // shift-control-meta
+        case 87:
+            return _optionIsMetaForSpecialKeys ? @"\e[1;14P" : @"\e[1;8P";
+        case 88:
+            return _optionIsMetaForSpecialKeys ? @"\e[1;14Q" : @"\e[1;8Q";
+        case 89:
+            return _optionIsMetaForSpecialKeys ? @"\e[1;14R" : @"\e[1;8R";
+        case 90:
+            return _optionIsMetaForSpecialKeys ? @"\e[1;14S" : @"\e[1;8S";
+        case 91:
+            return _optionIsMetaForSpecialKeys ? @"\e[15;14~" : @"\e[15;8~";
+        case 92:
+            return _optionIsMetaForSpecialKeys ? @"\e[17;14~" : @"\e[17;8~";
+        case 93:
+            return _optionIsMetaForSpecialKeys ? @"\e[18;14~" : @"\e[18;8~";
+        case 94:
+            return _optionIsMetaForSpecialKeys ? @"\e[19;14~" : @"\e[19;8~";
+        case 95:
+            return _optionIsMetaForSpecialKeys ? @"\e[20;14~" : @"\e[20;8~";
+        case 96:
+            return _optionIsMetaForSpecialKeys ? @"\e[21;14~" : @"\e[21;8~";
+        case 97:
+            return _optionIsMetaForSpecialKeys ? @"\e[23;14~" : @"\e[23;8~";
+        case 98:
+            return _optionIsMetaForSpecialKeys ? @"\e[24;14~" : @"\e[24;8~";
+    }
+    return nil;
+}
+
 // Reference: http://www.utexas.edu/cc/faqs/unix/VT200-function-keys.html
 // http://www.cs.utk.edu/~shuford/terminal/misc_old_terminals_news.txt
-- (NSData *)keyFunction:(int)no {
+- (NSData *)keyFunction:(int)no modifiers:(NSEventModifierFlags)modifiers {
     DLog(@"keyFunction:%@", @(no));
     char str[256];
     int len;
+
+    if ([self isLikeXterm]) {
+        return [[self xtermKeyFunction:no modifiers:modifiers] dataUsingEncoding:NSISOLatin1StringEncoding];
+    }
 
     if (no <= 5) {
         if (_keyStrings[TERMINFO_KEY_F0+no]) {

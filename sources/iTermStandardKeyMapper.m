@@ -100,22 +100,29 @@
         // This was in the original iTerm code. It's the normal path for US keyboards for ^-?.
         DLog(@"C-?");
         return 127;
+    } else if (character == 0x7f) {
+        DLog(@"C-h");
+        return 8;  // Control-backspace -> ^H
     }
 
     DLog(@"Checking characterIgnoringModifiers %@", @(characterIgnoringModifiers));
+    // control-number comes from xterm.
     switch (characterIgnoringModifiers) {
         case ' ':
         case '2':
         case '@':
             return 0;
 
+        case '3':
         case '[':
             return 27;
 
+        case '4':
         case '\\':
         case '|':
             return 28;
 
+        case '5':
         case ']':
             return 29;
 
@@ -123,10 +130,14 @@
         case '6':
             return 30;
 
+        case '7':
         case '-':
         case '_':
         case '/':
             return 31;
+
+        case '8':
+            return 127;
     }
 
     return 0xffff;
@@ -137,6 +148,15 @@
 - (NSData *)postCocoaData {
     if (_event.it_modifierFlags & NSEventModifierFlagFunction) {
         return [self dataForFunctionKeyPress];
+    }
+
+    const NSEventModifierFlags mask = NSEventModifierFlagOption | NSEventModifierFlagControl | NSEventModifierFlagShift;
+    if ([_event.characters isEqual:@"\x7f"]) {
+        if ((_event.it_modifierFlags & mask) == (NSEventModifierFlagOption | NSEventModifierFlagControl)) {
+            // This is an odd edge case that I noticed in xterm. Control-option-backspace is the only
+            // collection of modifiers+backspace that gets you a CSI ~ sequence that I could find.
+            return [[NSString stringWithFormat:@"%c[3;7~", 27] dataUsingEncoding:NSUTF8StringEncoding];
+        }
     }
 
     if ([self shouldSendOptionModifiedKeypress]) {
@@ -183,6 +203,11 @@
         return [characters dataUsingEncoding:_configuration.encoding];
     }
 
+    if ([characters isEqualToString:@"\x7f"] && !!(mutableModifiers & NSEventModifierFlagControl)) {
+        // Control+(any mods)+backspace -> ^H
+        const unichar ch = 8;
+        return [NSData dataWithBytes:&ch length:1];
+    }
     DLog(@"PTYSession keyDown ascii");
     // Commit a00a9385b2ed722315ff4d43e2857180baeac2b4 in old-iterm suggests this is
     // necessary for some Japanese input sources, but is vague.
@@ -206,6 +231,16 @@
     const unichar unicode = _event.characters.length > 0 ? [_event.characters characterAtIndex:0] : 0;
     const BOOL controlPressed = !!(_event.it_modifierFlags & NSEventModifierFlagControl);
     if (controlPressed && unicode > 0) {
+        const BOOL shiftPressed = !!(_event.it_modifierFlags & NSEventModifierFlagShift);
+        NSString *charactersIgnoringModifiers = _event.charactersIgnoringModifiers;
+        const unichar characterIgnoringModifiers = [charactersIgnoringModifiers length] > 0 ? [charactersIgnoringModifiers characterAtIndex:0] : 0;
+        const unichar specialCode = [iTermStandardKeyMapper codeForSpecialControlCharacter:unicode
+                                                                characterIgnoringModifiers:characterIgnoringModifiers
+                                                                              shiftPressed:shiftPressed];
+        if (specialCode != 0xffff) {
+            // e.g., control-2. This lets control-meta-2 send ^[^@
+            return [[NSString stringWithCharacters:&specialCode length:1] dataUsingEncoding:_configuration.encoding];
+        }
         return [_event.characters dataUsingEncoding:_configuration.encoding];
     } else {
         return [_event.charactersIgnoringModifiers dataUsingEncoding:_configuration.encoding];
@@ -344,7 +379,8 @@
         case NSF33FunctionKey:
         case NSF34FunctionKey:
         case NSF35FunctionKey:
-            return [_configuration.outputFactory keyFunction:unicode - NSF1FunctionKey + 1];
+            return [_configuration.outputFactory keyFunction:unicode - NSF1FunctionKey + 1
+                                                   modifiers:modifiers];
     }
 
     return [characters dataUsingEncoding:_configuration.encoding];

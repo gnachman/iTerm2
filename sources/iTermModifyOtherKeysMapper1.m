@@ -10,6 +10,16 @@
 #import "NSEvent+iTerm.h"
 #import "iTermKeyboardHandler.h"
 
+typedef enum {
+    iTermModifyOtherKeysMapper1KeyTypeRegular,  // Letters, unrecognized symbols, etc.
+    iTermModifyOtherKeysMapper1KeyTypeNumber,
+    iTermModifyOtherKeysMapper1KeyTypeSymbol,
+    iTermModifyOtherKeysMapper1KeyTypeFunction,
+    iTermModifyOtherKeysMapper1KeyTypeTab,
+    iTermModifyOtherKeysMapper1KeyTypeEsc,
+    iTermModifyOtherKeysMapper1KeyTypeReturn
+} iTermModifyOtherKeysMapper1KeyType;
+
 @implementation iTermModifyOtherKeysMapper1 {
     iTermStandardKeyMapper *_standard;
     iTermModifyOtherKeysMapper *_modifyOther;
@@ -86,24 +96,62 @@
     }
 }
 
-- (BOOL)optionSendsEscPlusForEvent:(NSEvent *)event {
-    const NSEventModifierFlags modflag = event.it_modifierFlags;
-    const BOOL rightAltPressed = (modflag & NSRightAlternateKeyMask) == NSRightAlternateKeyMask;
-    const BOOL leftAltPressed = (modflag & NSEventModifierFlagOption) == NSEventModifierFlagOption && !rightAltPressed;
-    if (!leftAltPressed && !rightAltPressed) {
-        return NO;
+- (iTermModifyOtherKeysMapper1KeyType)keyTypeForEvent:(NSEvent *)event {
+    if (event.modifierFlags & NSEventModifierFlagFunction) {
+        return iTermModifyOtherKeysMapper1KeyTypeFunction;
     }
-    iTermOptionKeyBehavior left;
-    iTermOptionKeyBehavior right;
-    [self.delegate modifyOtherKeys:_modifyOther getOptionKeyBehaviorLeft:&left right:&right];
-    if (leftAltPressed) {
-        return left == OPT_ESC;
+    if (event.charactersIgnoringModifiers.length == 0) {
+        // I'm pretty sure this can't happen.
+        return iTermModifyOtherKeysMapper1KeyTypeFunction;
     }
-    if (rightAltPressed) {
-        return right == OPT_ESC;
+    const unichar c = [event.charactersIgnoringModifiers characterAtIndex:0];
+    if (c >= '0' && c <= '9') {
+        return iTermModifyOtherKeysMapper1KeyTypeNumber;
     }
-    assert(NO);
-    return NO;
+    NSString *symbols = @",.;=-\\?|{}_+~!@#$%^&*()";
+    if ([symbols rangeOfString:[NSString stringWithCharacters:&c length:1]].location != NSNotFound) {
+#warning TODO: Test this, it is almost certainly wrong
+        return iTermModifyOtherKeysMapper1KeyTypeSymbol;
+    }
+    switch (event.keyCode) {
+        case kVK_Tab:
+            return iTermModifyOtherKeysMapper1KeyTypeTab;
+        case kVK_Escape:
+            return iTermModifyOtherKeysMapper1KeyTypeEsc;
+        case kVK_Return:
+            return iTermModifyOtherKeysMapper1KeyTypeReturn;
+    }
+    return iTermModifyOtherKeysMapper1KeyTypeRegular;
+}
+
+- (NSString *)escapeString:(NSString *)string {
+    NSMutableArray<NSString *> *parts = [NSMutableArray array];
+    for (int i = 0; i < string.length; i++) {
+        unichar c = [string characterAtIndex:i];
+        if (c >= ' ' && c <= 0x7e) {
+            [parts addObject:[NSString stringWithCharacters:&c length:1]];
+        } else {
+            [parts addObject:[NSString stringWithFormat:@"\\u%04x", c]];
+        }
+    }
+    return [parts componentsJoinedByString:@""];
+}
+
+- (NSString *)mods:(NSEventModifierFlags)flags {
+    NSMutableArray<NSString *> *parts = [NSMutableArray array];
+    if (flags & NSEventModifierFlagFunction) {
+        [parts addObject:@"F_"];
+    }
+    if (flags & NSEventModifierFlagControl) {
+        [parts addObject:@"C_"];
+    }
+    if (flags & NSEventModifierFlagOption) {
+        [parts addObject:@"M_"];
+    }
+    if (flags & NSEventModifierFlagShift) {
+        [parts addObject:@"S_"];
+    }
+    return [parts componentsJoinedByString:@" | "];
 }
 
 // This is an attempt to port ModifyOtherKeys() from xterm's input.c in the case that
@@ -119,10 +167,12 @@
     if (event.type != NSEventTypeKeyDown) {
         return NO;
     }
-    const BOOL escPlus = [self optionSendsEscPlusForEvent:event];
+    NSLog(@"[self verifyCharacters:@\"%@\" charactersIgnoringModifiers:@\"%@\" modifiers:%@ keycode:%@ expected:[self regular:@\"\"]]",
+          [self escapeString:event.characters],
+          [self escapeString:event.charactersIgnoringModifiers],
+          [self mods:event.modifierFlags],
+          @(event.keyCode));
     if (event.it_modifierFlags & NSEventModifierFlagFunction) {
-        // TOOD: Make sure this covers delete, F keys, arrow keys, page up, page down, home, and end.
-        // If so delete the next if statement.
         return NO;
     }
     if (event.it_modifierFlags & NSEventModifierFlagNumericPad) {
@@ -135,76 +185,158 @@
         return NO;
     }
 
-    NSEventModifierFlags effectiveModifiers = event.it_modifierFlags & mask;
-    unsigned short effectiveKeyCode = event.keyCode;
-    NSString *effectiveCharacters = event.characters;
-    if ((event.it_modifierFlags & NSEventModifierFlagControl) != 0 &&
-        event.keyCode == kVK_Delete) {
-        effectiveModifiers &= ~NSEventModifierFlagControl;
-        effectiveKeyCode = kVK_ForwardDelete;
-        unichar c[1] = { NSDeleteFunctionKey };
-        effectiveCharacters = [NSString stringWithCharacters:c length:1];
-        if (modifiedEvent) {
-            *modifiedEvent = [NSEvent keyEventWithType:NSEventTypeKeyDown
-                                              location:event.locationInWindow
-                                         modifierFlags:effectiveModifiers | (event.it_modifierFlags & (~mask)) | NSEventModifierFlagFunction
-                                             timestamp:event.timestamp
-                                          windowNumber:event.windowNumber
-                                               context:nil
-                                            characters:effectiveCharacters
-                           charactersIgnoringModifiers:effectiveCharacters
-                                             isARepeat:NO
-                                               keyCode:effectiveKeyCode];
-        }
+    switch ([self keyTypeForEvent:event]) {
+        case iTermModifyOtherKeysMapper1KeyTypeRegular:
+            return [self shouldModifyOtherKeysForRegularEvent:event modifiedEvent:modifiedEvent];
+            break;
+        case iTermModifyOtherKeysMapper1KeyTypeNumber:
+            return [self shouldModifyOtherKeysForNumberEvent:event modifiedEvent:modifiedEvent];
+            break;
+        case iTermModifyOtherKeysMapper1KeyTypeSymbol:
+            return [self shouldModifyOtherKeysForSymbolEvent:event modifiedEvent:modifiedEvent];
+            break;
+        case iTermModifyOtherKeysMapper1KeyTypeFunction:
+            return [self shouldModifyOtherKeysForFunctionEvent:event modifiedEvent:modifiedEvent];
+            break;
+        case iTermModifyOtherKeysMapper1KeyTypeTab:
+            return [self shouldModifyOtherKeysForTabEvent:event modifiedEvent:modifiedEvent];
+            break;
+        case iTermModifyOtherKeysMapper1KeyTypeEsc:
+            return [self shouldModifyOtherKeysForEscEvent:event modifiedEvent:modifiedEvent];
+            break;
+        case iTermModifyOtherKeysMapper1KeyTypeReturn:
+            return [self shouldModifyOtherKeysForReturnEvent:event modifiedEvent:modifiedEvent];
+            break;
     }
+}
 
-    const unichar character = event.characters.length > 0 ? [event.characters characterAtIndex:0] : 0;
-    NSString *charactersIgnoringModifiers = event.charactersIgnoringModifiers;
-    const unichar characterIgnoringModifiers = [charactersIgnoringModifiers length] > 0 ? [charactersIgnoringModifiers characterAtIndex:0] : 0;
+- (BOOL)shouldModifyOtherKeysForRegularEvent:(NSEvent *)event
+                               modifiedEvent:(out NSEvent **)modifiedEvent {
+    return NO;
+}
 
-    const BOOL shiftPressed = !!(effectiveModifiers & NSEventModifierFlagShift);
-    unichar specialCode = 0xffff;
-    if ((effectiveModifiers & NSEventModifierFlagControl) != 0) {
-        specialCode = [iTermStandardKeyMapper codeForSpecialControlCharacter:character
-                                                  characterIgnoringModifiers:characterIgnoringModifiers
-                                                                shiftPressed:shiftPressed];
-    }
-    if (specialCode != 0xffff) {
-        return NO;
-    }
-    if (effectiveKeyCode == kVK_Delete) {
-        return NO;
-    }
+- (BOOL)shouldModifyOtherKeysForNumberEvent:(NSEvent *)event
+                              modifiedEvent:(out NSEvent **)modifiedEvent {
+    const NSEventModifierFlags mask = (NSEventModifierFlagOption |
+                                       NSEventModifierFlagShift |
+                                       NSEventModifierFlagControl);
+    const NSEventModifierFlags flags = event.it_modifierFlags & mask;
+    const BOOL control = !!(flags & NSEventModifierFlagControl);
+    const BOOL meta = !!(flags & NSEventModifierFlagOption);
+    const BOOL shift = !!(flags & NSEventModifierFlagShift);
+    const int digit = [event.charactersIgnoringModifiers characterAtIndex:0] - '0';
+    if ((control && meta && shift) ||
+        (control && !meta && shift)) {
+        switch (digit) {
+            case 2:
+            case 6:
+                return NO;
 
-    if (effectiveKeyCode == kVK_Delete ||
-        effectiveKeyCode == kVK_Escape) {
-        if (escPlus) {
-            effectiveModifiers &= ~NSEventModifierFlagOption;
-        } else if ((event.it_modifierFlags & mask) == NSEventModifierFlagOption) {
-            effectiveModifiers &= ~NSEventModifierFlagOption;
-        }
-    }
-
-    if (effectiveModifiers == 0) {
-        return NO;
-    }
-
-    if (effectiveKeyCode == kVK_Return ||
-        effectiveKeyCode == kVK_Tab) {
-        return YES;
-    }
-
-    if (character < 32) {
-        if ((effectiveModifiers & mask) == NSEventModifierFlagControl) {
-            return NO;
+            case 1:
+            case 3:
+            case 4:
+            case 5:
+            case 7:
+            case 8:
+            case 9:
+            case 0:
+                break;
         }
         return YES;
     }
+    if ((control && meta) ||
+        (control && !meta && !shift)) {
+        switch (digit) {
+            case 2:
+            case 3:
+            case 4:
+            case 5:
+            case 6:
+            case 7:
+            case 8:
+                return NO;
 
-    if ((effectiveModifiers & mask) == NSEventModifierFlagShift) {
-        return NO;
+            case 1:
+            case 9:
+            case 0:
+                break;
+        }
+        return YES;
     }
-    if ((effectiveModifiers & NSEventModifierFlagControl) != 0) {
+    return NO;
+}
+
+- (BOOL)shouldModifyOtherKeysForSymbolEvent:(NSEvent *)event
+                              modifiedEvent:(out NSEvent **)modifiedEvent {
+    const NSEventModifierFlags mask = (NSEventModifierFlagOption |
+                                       NSEventModifierFlagShift |
+                                       NSEventModifierFlagControl);
+    const NSEventModifierFlags flags = event.it_modifierFlags & mask;
+    const BOOL control = !!(flags & NSEventModifierFlagControl);
+    const BOOL meta = !!(flags & NSEventModifierFlagOption);
+    const BOOL shift = !!(flags & NSEventModifierFlagShift);
+
+    if (control && !meta && !shift) {
+        return ![@"{}[]\\`'" containsString:event.charactersIgnoringModifiers];
+    }
+    if (control && !meta && shift) {
+        return ![@"@^{}[]\\-`'/" containsString:event.charactersIgnoringModifiers];
+    }
+    if (control && meta && !shift) {
+        return ![@"{}[]\\`'" containsString:event.charactersIgnoringModifiers];
+    }
+    if (control && meta && shift) {
+        return ![@"@^{}[]\\-`'/" containsString:event.charactersIgnoringModifiers];
+    }
+    return NO;
+}
+
+- (BOOL)shouldModifyOtherKeysForFunctionEvent:(NSEvent *)event
+                                modifiedEvent:(out NSEvent **)modifiedEvent {
+    return NO;
+}
+
+- (BOOL)shouldModifyOtherKeysForTabEvent:(NSEvent *)event
+                           modifiedEvent:(out NSEvent **)modifiedEvent {
+    const NSEventModifierFlags mask = (NSEventModifierFlagOption |
+                                       NSEventModifierFlagShift |
+                                       NSEventModifierFlagControl);
+    const NSEventModifierFlags flags = event.it_modifierFlags & mask;
+    const BOOL control = !!(flags & NSEventModifierFlagControl);
+    const BOOL meta = !!(flags & NSEventModifierFlagOption);
+    const BOOL shift = !!(flags & NSEventModifierFlagShift);
+    if (control && !meta && !shift) {
+        return YES;
+    }
+    return NO;
+}
+
+- (BOOL)shouldModifyOtherKeysForEscEvent:(NSEvent *)event
+                        modifiedEvent:(out NSEvent **)modifiedEvent {
+    const NSEventModifierFlags mask = (NSEventModifierFlagOption |
+                                       NSEventModifierFlagShift |
+                                       NSEventModifierFlagControl);
+    const NSEventModifierFlags flags = event.it_modifierFlags & mask;
+    const BOOL control = !!(flags & NSEventModifierFlagControl);
+    const BOOL meta = !!(flags & NSEventModifierFlagOption);
+    const BOOL shift = !!(flags & NSEventModifierFlagShift);
+    if ((control && meta) ||
+        (!control && meta && shift)) {
+        return YES;
+    }
+    return NO;
+}
+
+- (BOOL)shouldModifyOtherKeysForReturnEvent:(NSEvent *)event
+                              modifiedEvent:(out NSEvent **)modifiedEvent {
+    const NSEventModifierFlags mask = (NSEventModifierFlagOption |
+                                       NSEventModifierFlagShift |
+                                       NSEventModifierFlagControl);
+    const NSEventModifierFlags flags = event.it_modifierFlags & mask;
+    const BOOL control = !!(flags & NSEventModifierFlagControl);
+    const BOOL meta = !!(flags & NSEventModifierFlagOption);
+    const BOOL shift = !!(flags & NSEventModifierFlagShift);
+    if (control || shift || meta) {
         return YES;
     }
     return NO;

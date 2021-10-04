@@ -20,6 +20,10 @@ static BOOL CodePointInPrivateUseArea(unichar c) {
 @implementation iTermModifyOtherKeysMapper
 
 - (BOOL)eventIsControlCodeWithOption:(NSEvent *)event {
+    if (event.keyCode == kVK_Escape) {
+        // esc doesn't get treated like other control characters.
+        return NO;
+    }
     const NSEventModifierFlags allEventModifierFlags = (NSEventModifierFlagControl |
                                                         NSEventModifierFlagOption |
                                                         NSEventModifierFlagShift |

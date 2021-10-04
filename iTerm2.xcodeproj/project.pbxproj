@@ -1576,6 +1576,7 @@
 		A60EBD171FAED952008C7F5B /* iTermCopyBackground.metal in Sources */ = {isa = PBXBuildFile; fileRef = A63819D21FAECE6800A9EF9E /* iTermCopyBackground.metal */; };
 		A60EBD181FAED953008C7F5B /* iTermCopyBackground.metal in Sources */ = {isa = PBXBuildFile; fileRef = A63819D21FAECE6800A9EF9E /* iTermCopyBackground.metal */; };
 		A60EBD191FAED954008C7F5B /* iTermCopyBackground.metal in Sources */ = {isa = PBXBuildFile; fileRef = A63819D21FAECE6800A9EF9E /* iTermCopyBackground.metal */; };
+		A60F6FEC270B7F640017A003 /* iTermModifyOtherKeys1Test.m in Sources */ = {isa = PBXBuildFile; fileRef = A60F6FEA270B7F1D0017A003 /* iTermModifyOtherKeys1Test.m */; };
 		A6110C3A2526FFCF00D18F61 /* iTermModifyOtherKeysMapper1.h in Headers */ = {isa = PBXBuildFile; fileRef = A6110C382526FFCF00D18F61 /* iTermModifyOtherKeysMapper1.h */; };
 		A6110C3B2526FFCF00D18F61 /* iTermModifyOtherKeysMapper1.m in Sources */ = {isa = PBXBuildFile; fileRef = A6110C392526FFCF00D18F61 /* iTermModifyOtherKeysMapper1.m */; };
 		A614F2621FE47D8600EEE919 /* iTermCharacterBitmap.h in Headers */ = {isa = PBXBuildFile; fileRef = A614F2601FE47D8600EEE919 /* iTermCharacterBitmap.h */; };
@@ -5255,6 +5256,7 @@
 		A60E046026DEEE5E00DD162B /* MiniFilterViewController.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = MiniFilterViewController.xib; sourceTree = "<group>"; };
 		A60E046426E037BD00DD162B /* ContentSubscriber.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentSubscriber.swift; sourceTree = "<group>"; };
 		A60EAE7C23F9CEB3007536CE /* ApplicationServices.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ApplicationServices.framework; path = System/Library/Frameworks/ApplicationServices.framework; sourceTree = SDKROOT; };
+		A60F6FEA270B7F1D0017A003 /* iTermModifyOtherKeys1Test.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermModifyOtherKeys1Test.m; sourceTree = "<group>"; };
 		A6110C382526FFCF00D18F61 /* iTermModifyOtherKeysMapper1.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermModifyOtherKeysMapper1.h; sourceTree = "<group>"; };
 		A6110C392526FFCF00D18F61 /* iTermModifyOtherKeysMapper1.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermModifyOtherKeysMapper1.m; sourceTree = "<group>"; };
 		A614F2601FE47D8600EEE919 /* iTermCharacterBitmap.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = iTermCharacterBitmap.h; path = Metal/Infrastructure/iTermCharacterBitmap.h; sourceTree = "<group>"; };
@@ -10409,6 +10411,7 @@
 				A63493FA23F2741D0047C31B /* iTermPromiseTests.m */,
 				A653F66D24CE81740062377E /* iTermCodingTests.m */,
 				A6024B8A254DDFEE0036D6CF /* iTermNSColorCategoryTests.m */,
+				A60F6FEA270B7F1D0017A003 /* iTermModifyOtherKeys1Test.m */,
 			);
 			path = iTerm2XCTests;
 			sourceTree = "<group>";
@@ -15233,6 +15236,7 @@
 				A65660DD2372ADEA00DC6744 /* iTermCacheTests.m in Sources */,
 				A608CCF7214DE7C1007A7B87 /* iTermProcessCollectionTest.m in Sources */,
 				A608CD06214DE7C1007A7B87 /* iTermRuleTest.m in Sources */,
+				A60F6FEC270B7F640017A003 /* iTermModifyOtherKeys1Test.m in Sources */,
 				A608CD27214E09E1007A7B87 /* Model.xcdatamodeld in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

@@ -46,7 +46,7 @@ typedef NS_ENUM(NSInteger, VT100EmulationLevel) {
 - (NSData *)keyBackspace;
 - (NSData *)keyPageUp:(unsigned int)modflag;
 - (NSData *)keyPageDown:(unsigned int)modflag;
-- (NSData *)keyFunction:(int)no;
+- (NSData *)keyFunction:(int)no modifiers:(NSEventModifierFlags)modifiers;
 - (NSData *)keypadData: (unichar) unicode keystr: (NSString *) keystr;
 
 - (NSData *)mousePress:(int)button withModifiers:(unsigned int)modflag at:(VT100GridCoord)coord;
