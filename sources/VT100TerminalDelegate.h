@@ -120,6 +120,9 @@ typedef NS_ENUM(int, VT100TerminalColorIndex) {
 // Scroll up one line.
 - (void)terminalReverseIndex;
 
+// Move cursor to the right one column, scrolling content left if at margin.
+- (void)terminalForwardIndex;
+
 // Clear the screen, preserving the cursor's line.
 - (void)terminalResetPreservingPrompt:(BOOL)preservePrompt modifyContent:(BOOL)modifyContent;
 

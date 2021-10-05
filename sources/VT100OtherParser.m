@@ -111,6 +111,11 @@
             }
             break;
 
+        case '9':
+            result->type = VT100_DECFI;
+            *rmlen = 2;
+            break;
+
         case '8':
             result->type = VT100CSI_DECRC;
             *rmlen = 2;

@@ -1218,6 +1218,17 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
     [self scrollRect:[self scrollRegionRect] downBy:1 softBreak:NO];
 }
 
+- (void)moveContentLeft {
+    int x = 0;
+    if (self.useScrollRegionCols && self.cursorX >= self.leftMargin && self.cursorX <= self.rightMargin) {
+        // Cursor is within the scroll region so move the content within the scroll region.
+        x = self.leftMargin;
+    }
+    for (int i = self.topMargin; i <= self.bottomMargin; i++) {
+        [self deleteChars:1 startingAt:VT100GridCoordMake(x, i)];
+    }
+}
+
 - (void)scrollRect:(VT100GridRect)rect downBy:(int)distance softBreak:(BOOL)softBreak {
     DLog(@"scrollRect:%d,%d %dx%d downBy:%d",
              rect.origin.x, rect.origin.y, rect.size.width, rect.size.height, distance);

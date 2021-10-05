@@ -119,6 +119,7 @@ typedef enum {
     VT100CSI_REP,                   // Repeat
     VT100CSI_DECRQM_DEC,            // Request Mode - Host To Terminal (DEC Private)
     VT100CSI_DECRQM_ANSI,           // Request Mode - Host To Terminal (ANSI)
+    VT100_DECFI,                    // Forward Index
 
     // https://sw.kovidgoyal.net/kitty/keyboard-protocol.html
     VT100CSI_PUSH_KEY_REPORTING_MODE,

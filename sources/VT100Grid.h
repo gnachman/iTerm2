@@ -145,6 +145,7 @@
 
 // Scroll the scroll region down by one line.
 - (void)scrollDown;
+- (void)moveContentLeft;
 
 // Clear scroll region, clear screen, move cursor and saved cursor to origin, leaving only the last
 // non-empty line at the top of the screen. Some lines may be left behind by giving a positive value
