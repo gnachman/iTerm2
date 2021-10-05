@@ -1,0 +1,9 @@
+#!/bin/tcsh
+echo -n '[1;1H[2Jhi[?69h[10;20s[11;11HNow is the time for all good men to come to the aid of their party.[?69l[1;72H[?69h'
+
+sleep 2
+while 1
+echo -n 9
+sleep 0.05
+end
+

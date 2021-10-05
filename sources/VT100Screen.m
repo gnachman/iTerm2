@@ -3656,6 +3656,16 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     [delegate_ screenTriggerableChangeDidOccur];
 }
 
+- (void)terminalBackIndex {
+    if ((currentGrid_.cursorX == currentGrid_.leftMargin && ![self cursorOutsideLeftRightMargin] )||
+         currentGrid_.cursorX == 0) {
+        [currentGrid_ moveContentRight];
+    } else {
+        currentGrid_.cursorX -= 1;
+    }
+    [delegate_ screenTriggerableChangeDidOccur];
+}
+
 - (void)terminalResetPreservingPrompt:(BOOL)preservePrompt modifyContent:(BOOL)modifyContent {
     if (modifyContent) {
         const int linesToSave = [self numberOfLinesToPreserveWhenClearingScreen];

@@ -126,6 +126,11 @@
             *rmlen = 2;
             break;
 
+        case '6':
+            result->type = VT100_DECBI;
+            *rmlen = 2;
+            break;
+
         case 'D':
             result->type = VT100CSI_IND;
             *rmlen = 2;

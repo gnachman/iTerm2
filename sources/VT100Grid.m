@@ -1229,6 +1229,18 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
     }
 }
 
+- (void)moveContentRight {
+    int x = 0;
+    if (self.useScrollRegionCols && self.cursorX >= self.leftMargin && self.cursorX <= self.rightMargin) {
+        // Cursor is within the scroll region so move the content within the scroll region.
+        x = self.leftMargin;
+    }
+    const screen_char_t c = [self defaultChar];
+    for (int i = self.topMargin; i <= self.bottomMargin; i++) {
+        [self insertChar:c externalAttributes:nil at:VT100GridCoordMake(x, i) times:1];
+    }
+}
+
 - (void)scrollRect:(VT100GridRect)rect downBy:(int)distance softBreak:(BOOL)softBreak {
     DLog(@"scrollRect:%d,%d %dx%d downBy:%d",
              rect.origin.x, rect.origin.y, rect.size.width, rect.size.height, distance);

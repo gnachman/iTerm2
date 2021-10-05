@@ -147,6 +147,7 @@
                           @(VT100CSI_DECRQM_DEC):             @"VT100CSI_DECRQM_DEC",
                           @(VT100CSI_DECRQM_ANSI):            @"VT100CSI_DECRQM_ANSI",
                           @(VT100_DECFI):                     @"VT100_DECFI",
+                          @(VT100_DECBI):                     @"VT100_DECBI",
                           @(VT100CSI_PUSH_KEY_REPORTING_MODE):@"VT100CSI_PUSH_KEY_REPORTING_MODE",
                           @(VT100CSI_POP_KEY_REPORTING_MODE): @"VT100CSI_POP_KEY_REPORTING_MODE",
                           @(VT100CSI_QUERY_KEY_REPORTING_MODE):@"VT100CSI_QUERY_KEY_REPORTING_MODE",

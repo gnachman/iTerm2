@@ -1938,6 +1938,10 @@ static const int kMaxScreenRows = 4096;
             [self forwardIndex];
             break;
 
+        case VT100_DECBI:
+            [self backIndex];
+            break;
+
         case VT100CSI_PUSH_KEY_REPORTING_MODE:
             [self pushKeyReportingFlags:token.csi->p[0]];
             break;
@@ -3458,6 +3462,10 @@ typedef NS_ENUM(int, iTermDECRPMSetting)  {
 
 - (void)forwardIndex {
     [self.delegate terminalForwardIndex];
+}
+
+- (void)backIndex {
+    [self.delegate terminalBackIndex];
 }
 
 - (void)executeANSIRequestMode:(int)mode {
