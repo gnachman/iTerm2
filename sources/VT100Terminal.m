@@ -1932,6 +1932,10 @@ static const int kMaxScreenRows = 4096;
             [self executeANSIRequestMode:token.csi->p[0]];
             break;
 
+        case VT100CSI_DECRQPSR:
+            [self executeDECRQPSR:token.csi->p[0]];
+            break;
+
         case VT100_DECFI:
             [self forwardIndex];
             break;
@@ -3523,6 +3527,42 @@ typedef NS_ENUM(int, iTermDECRPMSetting)  {
 - (void)executeDECRequestMode:(int)mode {
     const iTermDECRPMSetting setting = [self settingForDECRequestMode:mode];
     [self.delegate terminalSendReport:[self decrpmForMode:mode setting:setting ansi:NO]];
+}
+
+- (void)executeDECRQPSR:(int)ps {
+    switch (ps) {
+        case 1:
+            [self sendDECCIR];
+            break;
+        case 2:
+            [self sendDECTABSR];
+            break;
+    }
+}
+
+- (void)sendDECCIR {
+    if ([_delegate terminalShouldSendReport]) {
+        const int width = [_delegate terminalWidth];
+        const int x = _delegate.terminalCursorX;
+        const BOOL lineDrawingMode = [_delegate terminalLineDrawingFlagForCharset:self.charset];
+        VT100OutputCursorInformation info =
+        VT100OutputCursorInformationCreate([_delegate terminalCursorY],
+                                           MIN(width, x),
+                                           self.graphicRendition.reversed,
+                                           self.graphicRendition.blink,
+                                           self.graphicRendition.underline,
+                                           self.graphicRendition.bold,
+                                           [_delegate terminalWillAutoWrap] && self.wraparoundMode,
+                                           lineDrawingMode,
+                                           self.originMode);
+        [_delegate terminalSendReport:[self.output reportCursorInformation:info]];
+    }
+}
+
+- (void)sendDECTABSR {
+    if ([_delegate terminalShouldSendReport]) {
+        [_delegate terminalSendReport:[self.output reportTabStops:[_delegate terminalTabStops]]];
+    }
 }
 
 static iTermDECRPMSetting VT100TerminalDECRPMSettingFromBoolean(BOOL flag) {

@@ -153,6 +153,9 @@ typedef NS_ENUM(int, VT100TerminalColorIndex) {
 // Remove the tab stop at the cursor's current column.
 - (void)terminalRemoveTabStopAtCursor;
 
+// Sorted tab stops, 1-based.
+- (NSArray<NSNumber *> *)terminalTabStops;
+
 // Tries to resize the screen to |width|.
 - (void)terminalSetWidth:(int)width;
 
@@ -372,6 +375,7 @@ typedef NS_ENUM(int, VT100TerminalColorIndex) {
 // Returns the current cursor position.
 - (int)terminalCursorX;
 - (int)terminalCursorY;
+- (BOOL)terminalWillAutoWrap;  // Is cursor just past the last column?
 
 // Shows/hides the cursor.
 - (void)terminalSetCursorVisible:(BOOL)visible;

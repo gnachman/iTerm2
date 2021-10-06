@@ -4769,6 +4769,10 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     return [self cursorY];
 }
 
+- (BOOL)terminalWillAutoWrap {
+    return self.cursorX > self.width;
+}
+
 - (void)terminalSetCursorVisible:(BOOL)visible {
     if (visible != _cursorVisible) {
         _cursorVisible = visible;
@@ -4792,6 +4796,12 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 - (void)terminalPromptDidStart {
     [self promptDidStartAt:VT100GridAbsCoordMake(currentGrid_.cursor.x,
                                                  currentGrid_.cursor.y + self.numberOfScrollbackLines + self.totalScrollbackOverflow)];
+}
+
+- (NSArray<NSNumber *> *)terminalTabStops {
+    return [[tabStops_.allObjects sortedArrayUsingSelector:@selector(compare:)] mapWithBlock:^NSNumber *(NSNumber *ts) {
+        return @(ts.intValue + 1);
+    }];
 }
 
 - (void)promptDidStartAt:(VT100GridAbsCoord)coord {

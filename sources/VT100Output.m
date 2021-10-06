@@ -1,6 +1,7 @@
 #import "VT100Output.h"
 
 #import "DebugLogging.h"
+#import "NSArray+iTerm.h"
 #import "iTermAdvancedSettingsModel.h"
 
 #include <term.h>
@@ -1010,5 +1011,52 @@ typedef enum {
     return [message dataUsingEncoding:NSUTF8StringEncoding];
 }
 
+
+- (NSData *)reportCursorInformation:(VT100OutputCursorInformation)info {
+    return [[NSString stringWithFormat:@"\eP1$u%d;%d;%d;%c;%c;%c;%d;%d;%c;%s%s%s%s\e\\",
+             info.pr,
+             info.pc,
+             info.pp,
+             info.srend,
+             info.satt,
+             info.sflag,
+             info.pgl,
+             info.pgr,
+             info.scss,
+             info.sdesig[0],
+             info.sdesig[1],
+             info.sdesig[2],
+             info.sdesig[3]] dataUsingEncoding:NSUTF8StringEncoding];
+}
+
+VT100OutputCursorInformation VT100OutputCursorInformationCreate(int row,  // 1-based
+                                                                int column,  // 1-based
+                                                                BOOL reverseVideo,
+                                                                BOOL blink,
+                                                                BOOL underline,
+                                                                BOOL bold,
+                                                                BOOL autowrapPending,
+                                                                BOOL lineDrawingMode,  // ss2: g2 mapped into gl
+                                                                BOOL originMode) {
+    return (VT100OutputCursorInformation){
+        .pr = row,
+        .pc = column,
+        .pp = 1,  // Pages are not supported so it's always page 1.
+        .srend = 0x40 | (reverseVideo ? 8 : 0) | (blink ? 4 : 0) | (underline ? 2 : 0) | (bold ? 1 : 0),
+        .satt = 0x40,  // selective erase not supported yet.
+        .sflag = 0x40 | (autowrapPending ? 8 : 0) | (originMode ? 1 : 0),
+        .pgl = 0,  // g0 in gl
+        .pgr = 2,  // g0 in gr
+        .scss = 0x4f,  // g0, g1, g2, g3 set sizes are all 96 chars. No extension.
+        .sdesig = { (lineDrawingMode ? "0" : "B"), "B", "B", "B" }  // B=G0, 0=G1
+    };
+}
+
+- (NSData *)reportTabStops:(NSArray<NSNumber *> *)tabStops {
+    NSString *stops = [[tabStops mapWithBlock:^id(NSNumber *anObject) {
+        return [anObject stringValue];
+    }] componentsJoinedByString:@"/"];
+    return [[NSString stringWithFormat:@"\eP2$u%@\e\\", stops] dataUsingEncoding:NSUTF8StringEncoding];
+}
 
 @end

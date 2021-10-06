@@ -23,6 +23,29 @@ typedef NS_ENUM(NSInteger, VT100EmulationLevel) {
     VT100EmulationLevel200,
 };
 
+typedef struct {
+    int pr;
+    int pc;
+    int pp;
+    char srend;
+    char satt;
+    char sflag;
+    int pgl;
+    int pgr;
+    char scss;
+    char *sdesig[4];
+} VT100OutputCursorInformation;
+
+VT100OutputCursorInformation VT100OutputCursorInformationCreate(int row,  // 1-based
+                                                                int column,  // 1-based
+                                                                BOOL reverseVideo,
+                                                                BOOL blink,
+                                                                BOOL underline,
+                                                                BOOL bold,
+                                                                BOOL autowrapPending,
+                                                                BOOL lineDrawingMode,  // ss2: g2 mapped into gl
+                                                                BOOL originMode);
+
 // This class produces data to send for special keys (arrow keys, function keys, etc.)
 // It has a small amount of state that is copied from VT100Terminal. This object is 1:1 with
 // VT100Terminal.
@@ -69,5 +92,7 @@ typedef NS_ENUM(NSInteger, VT100EmulationLevel) {
 - (NSData *)reportFocusGained:(BOOL)gained;
 - (NSData *)reportiTerm2Version;
 - (NSData *)reportKeyReportingMode:(int)mode;
+- (NSData *)reportCursorInformation:(VT100OutputCursorInformation)info;
+- (NSData *)reportTabStops:(NSArray<NSNumber *> *)tabStops;
 
 @end
