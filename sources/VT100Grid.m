@@ -2065,12 +2065,15 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
         [lineInfos_ release];
         lines_ = [[self linesWithSize:newSize] retain];
         lineInfos_ = [[self lineInfosWithSize:newSize] retain];
-        scrollRegionRows_.location = MIN(scrollRegionRows_.location, size_.width - 1);
+
+        scrollRegionRows_.location = MIN(scrollRegionRows_.location, size_.height - 1);
         scrollRegionRows_.length = MIN(scrollRegionRows_.length,
-                                       size_.width - scrollRegionRows_.location);
-        scrollRegionCols_.location = MIN(scrollRegionCols_.location, size_.height - 1);
-        scrollRegionCols_.length = MIN(scrollRegionCols_.length,
                                        size_.height - scrollRegionRows_.location);
+
+        scrollRegionCols_.location = MIN(scrollRegionCols_.location, size_.width - 1);
+        scrollRegionCols_.length = MIN(scrollRegionCols_.length,
+                                       size_.width - scrollRegionCols_.location);
+
         cursor_.x = MIN(cursor_.x, size_.width - 1);
         self.cursorY = MIN(cursor_.y, size_.height - 1);
         [self.delegate gridDidResize];
