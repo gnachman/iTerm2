@@ -224,6 +224,7 @@
                           @(DCS_DECRQSS):                     @"DCS_DECRQSS",
                           @(DCS_DECRSPS_DECCIR):              @"DCS_DECRSPS_DECCIR",
                           @(DCS_DECRSPS_DECTABSR):            @"DCS_DECRSPS_DECTABSR",
+                          @(DCS_XTSETTCAP):                   @"DCS_XTSETTCAP",
     };
     NSString *name = map[@(type)];
     if (name) {

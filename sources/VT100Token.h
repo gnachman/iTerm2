@@ -210,6 +210,7 @@ typedef enum {
     DCS_DECRQSS,
     DCS_DECRSPS_DECCIR,
     DCS_DECRSPS_DECTABSR,
+    DCS_XTSETTCAP,
 
     // Toggle between ansi/vt52
     STRICT_ANSI_MODE,

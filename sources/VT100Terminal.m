@@ -13,6 +13,7 @@
 #import "VT100DCSParser.h"
 #import "VT100Parser.h"
 #import <apr-1/apr_base64.h>  // for xterm's base64 decoding (paste64)
+#include <curses.h>
 #include <term.h>
 
 NSString *const kGraphicRenditionBoldKey = @"Bold";
@@ -2328,6 +2329,10 @@ static const int kMaxScreenRows = 4096;
             [self executeDECRSPS_DECTABSR:token.string];
             break;
 
+        case DCS_XTSETTCAP:
+            [self executeXTSETTCAP:token.string];
+            break;
+
         default:
             NSLog(@"Unexpected token type %d", (int)token->type);
             break;
@@ -2404,7 +2409,7 @@ static const int kMaxScreenRows = 4096;
             case kDcsTermcapTerminfoRequestTerminalName:
                 [parts addObject:[NSString stringWithFormat:kFormat,
                                   hexEncodedKey,
-                                  [@"iTerm2" hexEncodedString]]];
+                                  [_termType hexEncodedString]]];
                 ok = YES;
                 break;
             case kDcsTermcapTerminfoRequestiTerm2ProfileName:
@@ -3578,6 +3583,32 @@ typedef NS_ENUM(int, iTermDECRPMSetting)  {
         return @(ts.intValue);
     }];
     [self.delegate terminalSetTabStops:stops];
+}
+
+- (void)executeXTSETTCAP:(NSString *)term {
+    // This rather sketchy algorithm comes from xterm's
+    // isLegalTcapName. I'm not sure it does anything useful
+    // at all, but perhaps it's there to avoid tickling bad
+    // behavior in setupterm() so I'll keep it.
+    for (NSUInteger i = 0; i < term.length; i++) {
+        unichar c = [term characterAtIndex:i];
+        if (c >= 127) {
+            return;
+        }
+        if (!isgraph(c)) {
+            return;
+        }
+        if (c == '\\' || c == '|' || c == '.' || c == ':' || c == '\'' || c == '"') {
+            return;
+        }
+    }
+    int ignored;
+    char *temp = strdup(term.UTF8String);
+    if (setupterm(temp, fileno(stdout), &ignored) == OK) {
+        // We recognize this $TERM, ok to proceed.
+        self.termType = term;
+    }
+    free(temp);
 }
 
 - (void)sendDECCIR {

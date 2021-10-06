@@ -678,6 +678,17 @@ static NSRange MakeCharacterRange(unsigned char first, unsigned char lastInclusi
                 token.string = [_data substringFromIndex:1];
             }
             break;
+
+        case MAKE_COMPACT_SEQUENCE(0, '+', 'p'): {
+            NSString *term = [_data substringFromIndex:1];
+            if (term.length == 0) {
+                token->type = VT100_SKIP;
+                break;
+            }
+            token->type = DCS_XTSETTCAP;
+            token.string = term;
+            break;
+        }
     }
 }
 
