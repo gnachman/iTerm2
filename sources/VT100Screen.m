@@ -3383,6 +3383,11 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
                                                  currentGrid_.cursorX > currentGrid_.rightMargin));
 }
 
+- (BOOL)cursorOutsideTopBottomMargin {
+    return (currentGrid_.cursorY < currentGrid_.topMargin ||
+            currentGrid_.cursorY > currentGrid_.bottomMargin);
+}
+
 - (void)terminalLineFeed {
     if (currentGrid_.cursor.y == VT100GridRangeMax(currentGrid_.scrollRegionRows) &&
         [self cursorOutsideLeftRightMargin]) {
@@ -3661,8 +3666,10 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     if ((currentGrid_.cursorX == currentGrid_.leftMargin && ![self cursorOutsideLeftRightMargin] )||
          currentGrid_.cursorX == 0) {
         [currentGrid_ moveContentRight];
-    } else {
+    } else if (currentGrid_.cursorX > 0) {
         currentGrid_.cursorX -= 1;
+    } else {
+        return;
     }
     [delegate_ screenTriggerableChangeDidOccur];
 }
@@ -3870,6 +3877,18 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
           externalAttributes:nil
                           at:currentGrid_.cursor
                        times:n];
+}
+
+- (void)terminalShiftLeft:(int)n {
+    if (n < 1) {
+        return;
+    }
+    if ([self cursorOutsideLeftRightMargin] || [self cursorOutsideTopBottomMargin]) {
+        return;
+    }
+    for (int y = currentGrid_.topMargin; y <= currentGrid_.bottomMargin; y++) {
+        [currentGrid_ deleteChars:n startingAt:VT100GridCoordMake(currentGrid_.leftMargin, y)];
+    }
 }
 
 - (void)terminalInsertBlankLinesAfterCursor:(int)n {

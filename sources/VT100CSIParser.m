@@ -591,6 +591,12 @@ static void SetCSITypeAndDefaultParameters(CSIParam *param, VT100Token *result) 
             result->type = VT100CSI_ICH;
             iTermParserSetCSIParameterIfDefault(param, 0, 1);
             break;
+
+        case PACKED_CSI_COMMAND(0, ' ', '@'):
+            result->type = VT100CSI_SL;
+            iTermParserSetCSIParameterIfDefault(param, 0, 1);
+            break;
+
         case 'L':
             result->type = XTERMCC_INSLN;
             iTermParserSetCSIParameterIfDefault(param, 0, 1);
