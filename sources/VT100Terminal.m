@@ -1695,9 +1695,7 @@ static const int kMaxScreenRows = 4096;
                                                                    0,
                                                                    [_delegate terminalWidth],
                                                                    [_delegate terminalHeight]);
-                // xterm incorrectly uses the second parameter for the Pid. Since I use this mostly to
-                // test xterm compatibility, it's handy to be bugwards-compatible.
-                [self sendChecksumReportWithId:token.csi->p[1]
+                [self sendChecksumReportWithId:token.csi->p[0]
                                      rectangle:[self rectangleInToken:token
                                                       startingAtIndex:2
                                                      defaultRectangle:defaultRectangle]];
@@ -2069,6 +2067,10 @@ static const int kMaxScreenRows = 4096;
             break;
         case XTERMCC_DELLN:
             [_delegate terminalDeleteLinesAtCursor:token.csi->p[0]];
+            break;
+        case VT100_DECSLPP:
+            [_delegate terminalSetRows:MIN(kMaxScreenRows, token.csi->p[0])
+                            andColumns:-1];
             break;
         case XTERMCC_WINDOWSIZE:
             [_delegate terminalSetRows:MIN(token.csi->p[1], kMaxScreenRows)
@@ -2573,49 +2575,94 @@ static const int kMaxScreenRows = 4096;
 - (NSString *)decrqss:(NSString *)pt {
     NSString *payload = [self decrqssPayload:pt];
     if (payload) {
-        return [NSString stringWithFormat:@"%cP1$r%@%c\\", VT100CC_ESC, payload, VT100CC_ESC];
+        return [NSString stringWithFormat:@"%cP1$r%@%@%c\\", VT100CC_ESC, payload, pt, VT100CC_ESC];
     }
     return [NSString stringWithFormat:@"%cP0$r%@%c\\", VT100CC_ESC, pt, VT100CC_ESC];
 }
 
+- (NSString *)decrqssSGR {
+    NSArray<NSString *> *codes = [[self sgrCodesForGraphicRendition:graphicRendition_].allObjects sortedArrayUsingSelector:@selector(compare:)];
+    return [codes componentsJoinedByString:@";"];
+}
+
+- (NSString *)decrqssDECSCL {
+    switch (_output.vtLevel) {
+        case VT100EmulationLevel100:
+            return @"61";
+        case VT100EmulationLevel200:
+            return @"62";
+    }
+    return @"61";
+}
+
+- (NSString *)decrqssDECSCUSR {
+    ITermCursorType type = CURSOR_BOX;
+    BOOL blinking = YES;
+    [self.delegate terminalGetCursorType:&type blinking:&blinking];
+    int code = 0;
+    switch (type) {
+        case CURSOR_DEFAULT:
+        case CURSOR_BOX:
+            code = 1;
+            break;
+        case CURSOR_UNDERLINE:
+            code = 3;
+            break;
+        case CURSOR_VERTICAL:
+            code = 5;
+            break;
+    }
+    if (!blinking) {
+        code++;
+    }
+    return [@(code) stringValue];
+}
+
+- (NSString *)decrqssDECSTBM {
+    return [self.delegate terminalTopBottomRegionString];
+}
+
+- (NSString *)decrqssDECSLRM {
+    return [self.delegate terminalLeftRightRegionString];
+}
+
+- (NSString *)decrqssDECSLPP {
+    const int height = MAX(24, [self.delegate terminalHeight]);
+    return [@(height) stringValue];
+ }
+
 - (NSString *)decrqssPayload:(NSString *)pt {
-    /* Per xterm's ctlseqs:
-    m       ⇒  SGR
-    " p     ⇒  DECSCL
-    SP q    ⇒  DECSCUSR
-    " q     ⇒  DECSCA
-    r       ⇒  DECSTBM
-    s       ⇒  DECSLRM
-    t       ⇒  DECSLPP
-    $ |     ⇒  DECSCPP
-    * |     ⇒  DECSNLS
-     */
     if ([pt isEqualToString:@"m"]) {
-        NSArray<NSString *> *codes = [[self sgrCodesForGraphicRendition:graphicRendition_].allObjects sortedArrayUsingSelector:@selector(compare:)];
-        return [NSString stringWithFormat:@"%@m", [codes componentsJoinedByString:@";"]];
+        return [self decrqssSGR];
+    }
+    if ([pt isEqualToString:@"\"p"]) {
+        return [self decrqssDECSCL];
     }
     if ([pt isEqualToString:@" q"]) {
-        ITermCursorType type = CURSOR_BOX;
-        BOOL blinking = YES;
-        [self.delegate terminalGetCursorType:&type blinking:&blinking];
-        int code = 0;
-        switch (type) {
-            case CURSOR_DEFAULT:
-            case CURSOR_BOX:
-                code = 1;
-                break;
-            case CURSOR_UNDERLINE:
-                code = 3;
-                break;
-            case CURSOR_VERTICAL:
-                code = 5;
-                break;
-        }
-        if (!blinking) {
-            code++;
-        }
-        return [NSString stringWithFormat:@"%@ q", @(code)];
+        return [self decrqssDECSCUSR];
     }
+    if ([pt isEqualToString:@"\"q"]) {
+        // Not supported because protection is unimplemented.
+        return nil;
+    }
+    if ([pt isEqualToString:@"r"]) {
+        return [self decrqssDECSTBM];
+    }
+    if ([pt isEqualToString:@"s"]) {
+        return [self decrqssDECSLRM];
+    }
+    if ([pt isEqualToString:@"t"]) {
+        return [self decrqssDECSLPP];
+    }
+    if ([pt isEqualToString:@"$|"]) {
+        // Not supported because DECSCPP is unimplemented.
+        return nil;
+    }
+    if ([pt isEqualToString:@"*|"]) {
+        // Not supported because DECSNLS is unimplemented.
+        return nil;
+    }
+
     return nil;
 }
 

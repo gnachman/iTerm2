@@ -2027,9 +2027,12 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
             (self.scrollLeft != 0 || self.scrollRight != size_.width - 1));
 }
 
+- (BOOL)haveRowScrollRegion {
+    return !(self.topMargin == 0 && self.bottomMargin == size_.height - 1);;
+}
+
 - (BOOL)haveScrollRegion {
-    const BOOL haveScrollRows = !(self.topMargin == 0 && self.bottomMargin == size_.height - 1);
-    return haveScrollRows || [self haveColumnScrollRegion];
+    return [self haveRowScrollRegion] || [self haveColumnScrollRegion];
 }
 
 - (int)cursorLineNumberIncludingPrecedingWrappedLines {

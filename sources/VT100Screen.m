@@ -3458,6 +3458,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
 - (void)terminalSendReport:(NSData *)report {
     if ([delegate_ screenShouldSendReport] && report) {
+        DLog(@"report %@", [report stringWithEncoding:NSUTF8StringEncoding]);
         [delegate_ screenWriteDataToTask:report];
     }
 }
@@ -5250,6 +5251,20 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
 - (BOOL)terminalIsInAlternateScreenMode {
     return [self showingAlternateScreen];
+}
+
+- (NSString *)terminalTopBottomRegionString {
+    if (!currentGrid_.haveRowScrollRegion) {
+        return @"";
+    }
+    return [NSString stringWithFormat:@"%d;%d", currentGrid_.topMargin, currentGrid_.bottomMargin];
+}
+
+- (NSString *)terminalLeftRightRegionString {
+    if (!currentGrid_.haveColumnScrollRegion) {
+        return @"";
+    }
+    return [NSString stringWithFormat:@"%d;%d", currentGrid_.leftMargin, currentGrid_.rightMargin];
 }
 
 - (NSString *)terminalStringForKeypressWithCode:(unsigned short)keyCode

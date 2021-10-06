@@ -176,6 +176,7 @@
                           @(XTERMCC_REPORT_WIN_TITLE):        @"XTERMCC_REPORT_WIN_TITLE",
                           @(XTERMCC_PUSH_TITLE):              @"XTERMCC_PUSH_TITLE",
                           @(XTERMCC_POP_TITLE):               @"XTERMCC_POP_TITLE",
+                          @(VT100_DECSLPP):                   @"VT100_DECSLPP",
                           @(XTERMCC_SET_RGB):                 @"XTERMCC_SET_RGB",
                           @(XTERMCC_PROPRIETARY_ETERM_EXT):   @"XTERMCC_PROPRIETARY_ETERM_EXT",
                           @(XTERMCC_PWD_URL):                 @"XTERMCC_PWD_URL",

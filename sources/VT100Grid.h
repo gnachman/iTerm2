@@ -34,6 +34,8 @@
 @property(nonatomic, assign) int cursorY;
 @property(nonatomic, assign) VT100GridCoord cursor;
 @property(nonatomic, readonly) BOOL haveScrollRegion;  // is there a left-right or top-bottom margin?
+@property(nonatomic, readonly) BOOL haveRowScrollRegion;  // is there a top-bottom margin?
+@property(nonatomic, readonly) BOOL haveColumnScrollRegion;  // is there a left-right margin?
 @property(nonatomic, assign) VT100GridRange scrollRegionRows;
 @property(nonatomic, assign) VT100GridRange scrollRegionCols;
 @property(nonatomic, assign) BOOL useScrollRegionCols;

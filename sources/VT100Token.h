@@ -153,6 +153,7 @@ typedef enum {
     XTERMCC_REPORT_WIN_TITLE,
     XTERMCC_PUSH_TITLE,
     XTERMCC_POP_TITLE,
+    VT100_DECSLPP,
     XTERMCC_SET_RGB,
     // This is not a real xterm code. It is from eTerm, which extended the xterm
     // protocol for its own purposes. We don't follow the eTerm protocol,

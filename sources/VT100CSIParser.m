@@ -651,7 +651,11 @@ static void SetCSITypeAndDefaultParameters(CSIParam *param, VT100Token *result) 
                     result->type = XTERMCC_POP_TITLE;
                     break;
                 default:
-                    result->type = VT100_NOTSUPPORT;
+                    if (param->p[0] < 24) {
+                        result->type = VT100_NOTSUPPORT;
+                        break;
+                    }
+                    result->type = VT100_DECSLPP;
                     break;
             }
             break;
