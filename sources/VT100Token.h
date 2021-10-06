@@ -134,6 +134,7 @@ typedef enum {
     XTERMCC_WINICON_TITLE,
     VT100CSI_ICH,                 // Insert blank
     VT100CSI_SL,                  // Shift left
+    VT100CSI_SR,                  // Shift right
     XTERMCC_INSLN,                // Insert lines
     XTERMCC_DELCH,                // delete blank
     XTERMCC_DELLN,                // delete lines

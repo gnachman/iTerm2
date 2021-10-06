@@ -2068,6 +2068,9 @@ static const int kMaxScreenRows = 4096;
         case VT100CSI_SL:
             [_delegate terminalShiftLeft:token.csi->p[0]];
             break;
+        case VT100CSI_SR:
+            [_delegate terminalShiftRight:token.csi->p[0]];
+            break;
         case XTERMCC_INSLN:
             [_delegate terminalInsertBlankLinesAfterCursor:token.csi->p[0]];
             break;

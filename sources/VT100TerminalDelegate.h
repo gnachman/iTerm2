@@ -198,6 +198,7 @@ typedef NS_ENUM(int, VT100TerminalColorIndex) {
 
 // Shift line left by `n` chars.
 - (void)terminalShiftLeft:(int)n;
+- (void)terminalShiftRight:(int)n;
 
 // Inserts |n| blank lines after the cursor, moving lines below them down.
 - (void)terminalInsertBlankLinesAfterCursor:(int)n;

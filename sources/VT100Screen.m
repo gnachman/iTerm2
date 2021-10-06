@@ -3655,7 +3655,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 - (void)terminalForwardIndex {
     if ((currentGrid_.cursorX == currentGrid_.rightMargin && ![self cursorOutsideLeftRightMargin] )||
          currentGrid_.cursorX == currentGrid_.size.width) {
-        [currentGrid_ moveContentLeft];
+        [currentGrid_ moveContentLeft:1];
     } else {
         currentGrid_.cursorX += 1;
     }
@@ -3665,7 +3665,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 - (void)terminalBackIndex {
     if ((currentGrid_.cursorX == currentGrid_.leftMargin && ![self cursorOutsideLeftRightMargin] )||
          currentGrid_.cursorX == 0) {
-        [currentGrid_ moveContentRight];
+        [currentGrid_ moveContentRight:1];
     } else if (currentGrid_.cursorX > 0) {
         currentGrid_.cursorX -= 1;
     } else {
@@ -3886,9 +3886,17 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     if ([self cursorOutsideLeftRightMargin] || [self cursorOutsideTopBottomMargin]) {
         return;
     }
-    for (int y = currentGrid_.topMargin; y <= currentGrid_.bottomMargin; y++) {
-        [currentGrid_ deleteChars:n startingAt:VT100GridCoordMake(currentGrid_.leftMargin, y)];
+    [currentGrid_ moveContentLeft:n];
+}
+
+- (void)terminalShiftRight:(int)n {
+    if (n < 1) {
+        return;
     }
+    if ([self cursorOutsideLeftRightMargin] || [self cursorOutsideTopBottomMargin]) {
+        return;
+    }
+    [currentGrid_ moveContentRight:n];
 }
 
 - (void)terminalInsertBlankLinesAfterCursor:(int)n {

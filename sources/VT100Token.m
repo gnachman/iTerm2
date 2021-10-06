@@ -157,6 +157,7 @@
                           @(XTERMCC_WINICON_TITLE):           @"XTERMCC_WINICON_TITLE",
                           @(VT100CSI_ICH):                    @"VT100CSI_ICH",
                           @(VT100CSI_SL):                     @"VT100CSI_SL",
+                          @(VT100CSI_SR):                     @"VT100CSI_SR",
                           @(XTERMCC_INSLN):                   @"XTERMCC_INSLN",
                           @(XTERMCC_DELCH):                   @"XTERMCC_DELCH",
                           @(XTERMCC_DELLN):                   @"XTERMCC_DELLN",

@@ -1218,18 +1218,18 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
     [self scrollRect:[self scrollRegionRect] downBy:1 softBreak:NO];
 }
 
-- (void)moveContentLeft {
+- (void)moveContentLeft:(int)n {
     int x = 0;
     if (self.useScrollRegionCols && self.cursorX >= self.leftMargin && self.cursorX <= self.rightMargin) {
         // Cursor is within the scroll region so move the content within the scroll region.
         x = self.leftMargin;
     }
     for (int i = self.topMargin; i <= self.bottomMargin; i++) {
-        [self deleteChars:1 startingAt:VT100GridCoordMake(x, i)];
+        [self deleteChars:n startingAt:VT100GridCoordMake(x, i)];
     }
 }
 
-- (void)moveContentRight {
+- (void)moveContentRight:(int)n {
     int x = 0;
     if (self.useScrollRegionCols && self.cursorX >= self.leftMargin && self.cursorX <= self.rightMargin) {
         // Cursor is within the scroll region so move the content within the scroll region.
@@ -1237,7 +1237,7 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
     }
     const screen_char_t c = [self defaultChar];
     for (int i = self.topMargin; i <= self.bottomMargin; i++) {
-        [self insertChar:c externalAttributes:nil at:VT100GridCoordMake(x, i) times:1];
+        [self insertChar:c externalAttributes:nil at:VT100GridCoordMake(x, i) times:n];
     }
 }
 
