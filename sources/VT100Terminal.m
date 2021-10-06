@@ -3,6 +3,7 @@
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermParser.h"
 #import "iTermURLStore.h"
+#import "NSArray+iTerm.h"
 #import "NSColor+iTerm.h"
 #import "NSData+iTerm.h"
 #import "NSDictionary+iTerm.h"
@@ -2319,6 +2320,14 @@ static const int kMaxScreenRows = 4096;
             [_delegate terminalSendReport:[[self decrqss:token.string] dataUsingEncoding:_encoding]];
             break;
 
+        case DCS_DECRSPS_DECCIR:
+            [self executeDECRSPS_DECCIR:token.string];
+            break;
+
+        case DCS_DECRSPS_DECTABSR:
+            [self executeDECRSPS_DECTABSR:token.string];
+            break;
+
         default:
             NSLog(@"Unexpected token type %d", (int)token->type);
             break;
@@ -3538,6 +3547,37 @@ typedef NS_ENUM(int, iTermDECRPMSetting)  {
             [self sendDECTABSR];
             break;
     }
+}
+
+- (void)executeDECRSPS_DECCIR:(NSString *)string {
+    BOOL ok = NO;
+    const VT100OutputCursorInformation info = VT100OutputCursorInformationFromString(string, &ok);
+    if (!ok) {
+        return;
+    }
+    [self.delegate terminalSetCursorX:VT100OutputCursorInformationGetCursorX(info)];
+    [self.delegate terminalSetCursorY:VT100OutputCursorInformationGetCursorY(info)];
+    graphicRendition_.reversed = VT100OutputCursorInformationGetReverseVideo(info);
+    graphicRendition_.blink = VT100OutputCursorInformationGetBlink(info);
+    graphicRendition_.underline = VT100OutputCursorInformationGetUnderline(info);
+    graphicRendition_.bold = VT100OutputCursorInformationGetBold(info);
+    if (self.wraparoundMode && VT100OutputCursorInformationGetAutowrapPending(info)) {
+        [self.delegate terminalAdvanceCursorPastLastColumn];
+    }
+    self.originMode = VT100OutputCursorInformationGetOriginMode(info);
+    if (VT100OutputCursorInformationGetLineDrawingMode(info)) {
+        [self.delegate terminalSetCharset:self.charset toLineDrawingMode:YES];
+    }
+}
+
+- (void)executeDECRSPS_DECTABSR:(NSString *)string {
+    NSArray<NSNumber *> *stops = [[string componentsSeparatedByString:@"/"] mapWithBlock:^NSNumber *(NSString *ts) {
+        if (ts.intValue <= 0) {
+            return nil;
+        }
+        return @(ts.intValue);
+    }];
+    [self.delegate terminalSetTabStops:stops];
 }
 
 - (void)sendDECCIR {

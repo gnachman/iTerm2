@@ -221,7 +221,10 @@
                           @(VT100CSI_DECSLRM_OR_ANSICSI_SCP): @"VT100CSI_DECSLRM_OR_ANSICSI_SCP",
                           @(DCS_REQUEST_TERMCAP_TERMINFO):    @"DCS_REQUEST_TERMCAP_TERMINFO",
                           @(DCS_SIXEL):                       @"DCS_SIXEL",
-                          @(DCS_DECRQSS):                     @"DCS_DECRQSS" };
+                          @(DCS_DECRQSS):                     @"DCS_DECRQSS",
+                          @(DCS_DECRSPS_DECCIR):              @"DCS_DECRSPS_DECCIR",
+                          @(DCS_DECRSPS_DECTABSR):            @"DCS_DECRSPS_DECTABSR",
+    };
     NSString *name = map[@(type)];
     if (name) {
         return name;

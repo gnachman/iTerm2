@@ -3766,6 +3766,12 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     [delegate_ screenTriggerableChangeDidOccur];
 }
 
+- (void)terminalAdvanceCursorPastLastColumn {
+    if (currentGrid_.cursorX == self.width - 1) {
+        currentGrid_.cursorX = self.width;
+    }
+}
+
 - (void)terminalSetCursorY:(int)y {
     [self cursorToY:y];
     [delegate_ screenTriggerableChangeDidOccur];
@@ -4801,6 +4807,13 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 - (NSArray<NSNumber *> *)terminalTabStops {
     return [[tabStops_.allObjects sortedArrayUsingSelector:@selector(compare:)] mapWithBlock:^NSNumber *(NSNumber *ts) {
         return @(ts.intValue + 1);
+    }];
+}
+
+- (void)terminalSetTabStops:(NSArray<NSNumber *> *)tabStops {
+    [tabStops_ removeAllObjects];
+    [tabStops enumerateObjectsUsingBlock:^(NSNumber * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+        [tabStops_ addObject:@(obj.intValue - 1)];
     }];
 }
 

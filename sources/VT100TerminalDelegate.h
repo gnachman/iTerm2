@@ -156,6 +156,9 @@ typedef NS_ENUM(int, VT100TerminalColorIndex) {
 // Sorted tab stops, 1-based.
 - (NSArray<NSNumber *> *)terminalTabStops;
 
+// Tab stops, 1 based. All numbers will be positive.
+- (void)terminalSetTabStops:(NSArray<NSNumber *> *)tabStops;
+
 // Tries to resize the screen to |width|.
 - (void)terminalSetWidth:(int)width;
 
@@ -164,6 +167,7 @@ typedef NS_ENUM(int, VT100TerminalColorIndex) {
 
 // Sets the cursor's x coordinate. 1-based.
 - (void)terminalSetCursorX:(int)x;
+- (void)terminalAdvanceCursorPastLastColumn;
 
 // Sets the cursor's y coordinate. 1-based.
 - (void)terminalSetCursorY:(int)y;

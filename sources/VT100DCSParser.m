@@ -665,6 +665,19 @@ static NSRange MakeCharacterRange(unsigned char first, unsigned char lastInclusi
             token->type = DCS_DECRQSS;
             token.string = [_data substringFromIndex:1];
             break;
+
+        case MAKE_COMPACT_SEQUENCE(0, '$', 't'):
+            if ([_parameterString isEqualToString:@"1"]) {
+                token->type = DCS_DECRSPS_DECCIR;
+            } else if ([_parameterString isEqualToString:@"2"]) {
+                token->type = DCS_DECRSPS_DECTABSR;
+            } else {
+                token->type = VT100_SKIP;
+            }
+            if (token->type != VT100_SKIP) {
+                token.string = [_data substringFromIndex:1];
+            }
+            break;
     }
 }
 

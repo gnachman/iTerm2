@@ -208,6 +208,8 @@ typedef enum {
     DCS_END_SYNCHRONIZED_UPDATE,
     DCS_SIXEL,
     DCS_DECRQSS,
+    DCS_DECRSPS_DECCIR,
+    DCS_DECRSPS_DECTABSR,
 
     // Toggle between ansi/vt52
     STRICT_ANSI_MODE,

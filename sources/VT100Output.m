@@ -1052,6 +1052,92 @@ VT100OutputCursorInformation VT100OutputCursorInformationCreate(int row,  // 1-b
     };
 }
 
+VT100OutputCursorInformation VT100OutputCursorInformationFromString(NSString *string, BOOL *ok) {
+    NSArray<NSString *> *parts = [string componentsSeparatedByString:@";"];
+    if (parts.count < 10 ||
+        [parts[3] length] < 1 ||
+        [parts[4] length] < 1 ||
+        [parts[5] length] < 1 ||
+        [parts[6] length] < 1) {
+        *ok = NO;
+        return (VT100OutputCursorInformation) { 0 };
+    }
+    const char srend = [parts[3] characterAtIndex:0];
+    const char satt = [parts[4] characterAtIndex:0];
+    const char sflag = [parts[5] characterAtIndex:0];
+    const char scss = [parts[6] characterAtIndex:0];
+    char const *sdesig[4];
+    NSString *s = parts[9];
+
+    NSString *(^consume)(int, NSString *, char const **) = ^NSString *(int i, NSString *input, char const **output) {
+        static const char *values[] = { "B", "0", "%5" };
+        for (int j = 0; j < sizeof(values) / sizeof(*values); j++) {
+            NSString *value = [NSString stringWithUTF8String:values[j]];
+            if ([input hasPrefix:value]) {
+                output[i] = values[j];
+                return [input substringFromIndex:value.length];
+            }
+        }
+        return nil;
+    };
+    for (int i = 0; i < 4; i++) {
+        s = consume(i, s, sdesig);
+        if (!s) {
+            *ok = NO;
+            return (VT100OutputCursorInformation) { 0 };
+        }
+    }
+    *ok = YES;
+    return (VT100OutputCursorInformation){
+        .pr = [parts[0] intValue],
+        .pc = [parts[1] intValue],
+        .pp = [parts[2] intValue],
+        .srend = srend,
+        .satt = satt,
+        .sflag = sflag,
+        .pgl = [parts[6] intValue],
+        .pgr = [parts[7] intValue],
+        .scss = scss,
+        .sdesig = { sdesig[0], sdesig[1], sdesig[2], sdesig[3] }
+    };
+}
+
+int VT100OutputCursorInformationGetCursorX(VT100OutputCursorInformation info) {
+    return info.pc;
+}
+
+int VT100OutputCursorInformationGetCursorY(VT100OutputCursorInformation info) {
+    return info.pr;
+}
+
+BOOL VT100OutputCursorInformationGetReverseVideo(VT100OutputCursorInformation info) {
+    return !!(info.srend & 8);
+}
+
+BOOL VT100OutputCursorInformationGetBlink(VT100OutputCursorInformation info) {
+    return !!(info.srend & 4);
+}
+
+BOOL VT100OutputCursorInformationGetUnderline(VT100OutputCursorInformation info) {
+    return !!(info.srend & 2);
+}
+
+BOOL VT100OutputCursorInformationGetBold(VT100OutputCursorInformation info) {
+    return !!(info.srend & 1);
+}
+
+BOOL VT100OutputCursorInformationGetAutowrapPending(VT100OutputCursorInformation info) {
+    return !!(info.sflag & 8);
+}
+
+BOOL VT100OutputCursorInformationGetOriginMode(VT100OutputCursorInformation info) {
+    return !!(info.sflag & 1);
+}
+
+BOOL VT100OutputCursorInformationGetLineDrawingMode(VT100OutputCursorInformation info) {
+    return !strcmp("0", info.sdesig[0]);
+}
+
 - (NSData *)reportTabStops:(NSArray<NSNumber *> *)tabStops {
     NSString *stops = [[tabStops mapWithBlock:^id(NSNumber *anObject) {
         return [anObject stringValue];

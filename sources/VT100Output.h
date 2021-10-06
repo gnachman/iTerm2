@@ -33,7 +33,7 @@ typedef struct {
     int pgl;
     int pgr;
     char scss;
-    char *sdesig[4];
+    char const *sdesig[4];
 } VT100OutputCursorInformation;
 
 VT100OutputCursorInformation VT100OutputCursorInformationCreate(int row,  // 1-based
@@ -45,6 +45,16 @@ VT100OutputCursorInformation VT100OutputCursorInformationCreate(int row,  // 1-b
                                                                 BOOL autowrapPending,
                                                                 BOOL lineDrawingMode,  // ss2: g2 mapped into gl
                                                                 BOOL originMode);
+VT100OutputCursorInformation VT100OutputCursorInformationFromString(NSString *string, BOOL *ok);
+int VT100OutputCursorInformationGetCursorX(VT100OutputCursorInformation info);
+int VT100OutputCursorInformationGetCursorY(VT100OutputCursorInformation info);
+BOOL VT100OutputCursorInformationGetReverseVideo(VT100OutputCursorInformation info);
+BOOL VT100OutputCursorInformationGetBlink(VT100OutputCursorInformation info);
+BOOL VT100OutputCursorInformationGetUnderline(VT100OutputCursorInformation info);
+BOOL VT100OutputCursorInformationGetBold(VT100OutputCursorInformation info);
+BOOL VT100OutputCursorInformationGetAutowrapPending(VT100OutputCursorInformation info);
+BOOL VT100OutputCursorInformationGetOriginMode(VT100OutputCursorInformation info);
+BOOL VT100OutputCursorInformationGetLineDrawingMode(VT100OutputCursorInformation info);
 
 // This class produces data to send for special keys (arrow keys, function keys, etc.)
 // It has a small amount of state that is copied from VT100Terminal. This object is 1:1 with
