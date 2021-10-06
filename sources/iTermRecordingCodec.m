@@ -61,7 +61,8 @@
         return;
     }
 
-    if (![dict[@"version"] isEqual:@1]) {
+    NSArray<NSNumber *> *supportedVersions = @[ @1, @2 ];
+    if (![supportedVersions containsObject:dict[@"version"]]) {
         [iTermWarning showWarningWithTitle:@"This recording is from a newer version of iTerm2 and cannot be replayed in this version."
                                    actions:@[ @"OK" ]
                                 identifier:@"RecordingMalformed"
@@ -108,18 +109,20 @@
                               completion:nil];
 }
 
-+ (void)exportRecording:(PTYSession *)session {
++ (void)exportRecording:(PTYSession *)session window:(NSWindow *)window {
     [self exportRecording:session
                      from:session.screen.dvr.firstTimeStamp
-                       to:session.screen.dvr.lastTimeStamp];
+                       to:session.screen.dvr.lastTimeStamp
+                   window:window];
 }
 
-+ (void)exportRecording:(PTYSession *)session from:(long long)from to:(long long)to {
++ (void)exportRecording:(PTYSession *)session from:(long long)from to:(long long)to window:(NSWindow *)window {
     iTermSavePanel *savePanel = [iTermSavePanel showWithOptions:0
                                                      identifier:@"ExportRecording"
                                                initialDirectory:NSHomeDirectory()
                                                 defaultFilename:@"Recording.itr"
-                                               allowedFileTypes:@[ @"itr" ]];
+                                               allowedFileTypes:@[ @"itr" ]
+                                                         window:window];
     if (savePanel.path) {
         NSURL *url = [NSURL fileURLWithPath:savePanel.path];
         if (url) {

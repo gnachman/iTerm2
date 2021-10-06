@@ -4931,7 +4931,8 @@ ITERM_WEAKLY_REFERENCEABLE
     iTermSavePanel *savePanel = [iTermSavePanel showWithOptions:kSavePanelOptionAppendOrReplace | kSavePanelOptionLogPlainTextAccessory
                                                      identifier:@"StartSessionLog"
                                                initialDirectory:NSHomeDirectory()
-                                                defaultFilename:@""];
+                                                defaultFilename:@""
+                                                         window:self.delegate.realParentWindow.window];
     if (savePanel.path) {
         BOOL shouldAppend = (savePanel.replaceOrAppend == kSavePanelReplaceOrAppendSelectionAppend);
         [[self loggingHelper] setPath:savePanel.path

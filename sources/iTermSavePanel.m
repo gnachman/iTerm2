@@ -34,12 +34,14 @@ static NSString *const kInitialDirectoryKey = @"Initial Directory";
 + (iTermSavePanel *)showWithOptions:(NSInteger)options
                          identifier:(NSString *)identifier
                    initialDirectory:(NSString *)initialDirectory
-                    defaultFilename:(NSString *)defaultFilename {
+                    defaultFilename:(NSString *)defaultFilename
+                             window:(NSWindow *)window {
     return [self showWithOptions:options
                       identifier:identifier
                 initialDirectory:initialDirectory
                  defaultFilename:defaultFilename
-                allowedFileTypes:nil];
+                allowedFileTypes:nil
+                          window:window];
 }
 
 + (NSString *)nameForFileType:(NSString *)extension {
@@ -75,7 +77,8 @@ static NSString *const kInitialDirectoryKey = @"Initial Directory";
                          identifier:(NSString *)identifier
                    initialDirectory:(NSString *)initialDirectory
                     defaultFilename:(NSString *)defaultFilename
-                   allowedFileTypes:(NSArray<NSString *> *)allowedFileTypes {
+                   allowedFileTypes:(NSArray<NSString *> *)allowedFileTypes
+                             window:(NSWindow *)window {
     NSString *key = [self keyForIdentifier:identifier];
     NSDictionary *savedSettings = [[NSUserDefaults standardUserDefaults] objectForKey:key];
     if (savedSettings) {
@@ -138,8 +141,9 @@ static NSString *const kInitialDirectoryKey = @"Initial Directory";
     }
     savePanel.delegate = delegate;
     BOOL retrying;
+
     do {
-        NSInteger response = [savePanel runModal];
+        NSInteger response = [self runModal:savePanel inWindow:window];
 
         if (response != NSModalResponseOK) {
             // User canceled.
@@ -189,6 +193,23 @@ static NSString *const kInitialDirectoryKey = @"Initial Directory";
     }
 
     return delegate.path ? delegate : nil;
+}
+
++ (NSInteger)runModal:(NSSavePanel *)savePanel inWindow:(NSWindow *)window {
+    __block NSInteger response;
+    if (window) {
+        __block BOOL done = NO;
+        [savePanel beginSheetModalForWindow:window completionHandler:^(NSModalResponse result) {
+            response = result;
+            done = YES;
+        }];
+        while (!done) {
+            [[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode beforeDate:[NSDate distantFuture]];
+        }
+    } else {
+        response = [savePanel runModal];
+    }
+    return response;
 }
 
 - (instancetype)initWithOptions:(NSInteger)options {

@@ -897,7 +897,8 @@ andEditComponentWithIdentifier:(NSString *)identifier
                                                      identifier:@"SaveProfile"
                                                initialDirectory:NSHomeDirectory()
                                                 defaultFilename:[self.selectedProfile[KEY_NAME] stringByAppendingPathExtension:@"json"] ?: @"UnknownProfile.json"
-                                               allowedFileTypes:@[ @"json" ]];
+                                               allowedFileTypes:@[ @"json" ]
+                                                         window:self.view.window];
     if (!savePanel.path) {
         return;
     }
@@ -922,7 +923,8 @@ andEditComponentWithIdentifier:(NSString *)identifier
                                                      identifier:@"SaveProfile"
                                                initialDirectory:NSHomeDirectory()
                                                 defaultFilename:@"Profiles.json"
-                                               allowedFileTypes:@[ @"json" ]];
+                                               allowedFileTypes:@[ @"json" ]
+                                                         window:self.view.window];
     if (!savePanel.path) {
         return;
     }

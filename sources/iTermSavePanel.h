@@ -36,12 +36,14 @@ typedef NS_ENUM(NSInteger, iTermSavePanelReplaceOrAppend) {
 + (iTermSavePanel *)showWithOptions:(NSInteger)options
                          identifier:(NSString *)identifier
                    initialDirectory:(NSString *)initialDirectory
-                    defaultFilename:(NSString *)defaultFilename;
+                    defaultFilename:(NSString *)defaultFilename
+                             window:(NSWindow *)window;
 
 + (iTermSavePanel *)showWithOptions:(NSInteger)options
                          identifier:(NSString *)identifier
                    initialDirectory:(NSString *)initialDirectory
                     defaultFilename:(NSString *)defaultFilename
-                   allowedFileTypes:(NSArray<NSString *> *)allowedFileTypes;
+                   allowedFileTypes:(NSArray<NSString *> *)allowedFileTypes
+                             window:(NSWindow *)window;
 
 @end

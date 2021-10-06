@@ -7242,7 +7242,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 }
 
 - (void)instantReplayExportFrom:(long long)start to:(long long)end {
-    [iTermRecordingCodec exportRecording:self.currentSession.liveSession from:start to:end];
+    [iTermRecordingCodec exportRecording:self.currentSession.liveSession from:start to:end window:self.window];
 }
 
 - (void)replaceSyntheticActiveSessionWithLiveSessionIfNeeded {
@@ -9927,7 +9927,8 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
                                                      identifier:@"SaveContents"
                                                initialDirectory:NSHomeDirectory()
                                                 defaultFilename:suggestedFilename
-                                               allowedFileTypes:@[ @"txt", @"rtf" ]];
+                                               allowedFileTypes:@[ @"txt", @"rtf" ]
+                                                         window:self.window];
     if (savePanel.path) {
         NSURL *url = [NSURL fileURLWithPath:savePanel.path];
         if (url) {
@@ -9945,7 +9946,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 }
 
 - (IBAction)exportRecording:(id)sender {
-    [iTermRecordingCodec exportRecording:self.currentSession];
+    [iTermRecordingCodec exportRecording:self.currentSession window:self.window];
 }
 
 - (IBAction)startStopLogging:(id)sender {

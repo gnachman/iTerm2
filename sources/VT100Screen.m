@@ -5257,14 +5257,14 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     if (!currentGrid_.haveRowScrollRegion) {
         return @"";
     }
-    return [NSString stringWithFormat:@"%d;%d", currentGrid_.topMargin, currentGrid_.bottomMargin];
+    return [NSString stringWithFormat:@"%d;%d", currentGrid_.topMargin + 1, currentGrid_.bottomMargin + 1];
 }
 
 - (NSString *)terminalLeftRightRegionString {
     if (!currentGrid_.haveColumnScrollRegion) {
         return @"";
     }
-    return [NSString stringWithFormat:@"%d;%d", currentGrid_.leftMargin, currentGrid_.rightMargin];
+    return [NSString stringWithFormat:@"%d;%d", currentGrid_.leftMargin + 1, currentGrid_.rightMargin + 1];
 }
 
 - (NSString *)terminalStringForKeypressWithCode:(unsigned short)keyCode

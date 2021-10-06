@@ -184,6 +184,12 @@
                             <menuItem isSeparatorItem="YES" id="632">
                                 <modifierMask key="keyEquivalentModifierMask" command="YES"/>
                             </menuItem>
+                            <menuItem title="Save Contents…" identifier="Log.SaveContents" id="eia-2d-pmU">
+                                <modifierMask key="keyEquivalentModifierMask"/>
+                                <connections>
+                                    <action selector="saveContents:" target="-1" id="bgb-Rp-6yV"/>
+                                </connections>
+                            </menuItem>
                             <menuItem title="Save Selected Text…" keyEquivalent="s" identifier="Save Selected Text…" id="692">
                                 <connections>
                                     <action selector="saveDocumentAs:" target="-1" id="695"/>
@@ -971,12 +977,6 @@ DQ
                                             </connections>
                                         </menuItem>
                                         <menuItem isSeparatorItem="YES" id="e9g-9L-fVf"/>
-                                        <menuItem title="Save Contents…" identifier="Log.SaveContents" id="eia-2d-pmU">
-                                            <modifierMask key="keyEquivalentModifierMask"/>
-                                            <connections>
-                                                <action selector="saveContents:" target="-1" id="bgb-Rp-6yV"/>
-                                            </connections>
-                                        </menuItem>
                                     </items>
                                 </menu>
                             </menuItem>

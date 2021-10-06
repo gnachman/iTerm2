@@ -2897,12 +2897,15 @@
     // will remember the last path you used.tmp
     [NSSavePanel setDirectoryURL:[NSURL fileURLWithPath:path] onceForID:@"saveDocumentAs:" savePanel:aSavePanel];
     aSavePanel.nameFieldStringValue = nowStr;
-    if ([aSavePanel runModal] == NSModalResponseOK) {
+    [aSavePanel beginSheetModalForWindow:self.window completionHandler:^(NSModalResponse result) {
+        if (result != NSModalResponseOK) {
+            return;
+        }
         if (![aData writeToFile:aSavePanel.URL.path atomically:YES]) {
             DLog(@"Beep: can't write to %@", aSavePanel.URL);
             NSBeep();
         }
-    }
+    }];
 }
 
 #pragma mark - Miscellaneous Actions

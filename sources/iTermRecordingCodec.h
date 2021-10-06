@@ -13,7 +13,7 @@
 
 + (void)loadRecording;
 + (void)loadRecording:(NSURL *)url;
-+ (void)exportRecording:(PTYSession *)session;
-+ (void)exportRecording:(PTYSession *)session from:(long long)from to:(long long)to;
++ (void)exportRecording:(PTYSession *)session window:(NSWindow *)window;
++ (void)exportRecording:(PTYSession *)session from:(long long)from to:(long long)to window:(NSWindow *)window;
 
 @end
