@@ -167,11 +167,6 @@ typedef enum {
     if (event.type != NSEventTypeKeyDown) {
         return NO;
     }
-    NSLog(@"[self verifyCharacters:@\"%@\" charactersIgnoringModifiers:@\"%@\" modifiers:%@ keycode:%@ expected:[self regular:@\"\"]]",
-          [self escapeString:event.characters],
-          [self escapeString:event.charactersIgnoringModifiers],
-          [self mods:event.modifierFlags],
-          @(event.keyCode));
     if (event.it_modifierFlags & NSEventModifierFlagFunction) {
         return NO;
     }
