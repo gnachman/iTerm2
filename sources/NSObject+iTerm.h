@@ -91,11 +91,11 @@ NS_INLINE NSUInteger iTermCombineHash(NSUInteger hash1, NSUInteger hash2) {
 - (void)it_setWeakAssociatedObject:(id)associatedObject forKey:(const void *)key;
 - (id)it_associatedObjectForKey:(const void *)key;
 
-- (void)it_performNonObjectReturningSelector:(SEL)selector withObject:(id)object;
+- (void)it_performNonObjectReturningSelector:(SEL)selector withObject:(id _Nullable)object;
 - (void)it_performNonObjectReturningSelector:(SEL)selector
-                                  withObject:(id)object1
-                                      object:(id)object2
-                                      object:(id)object3;
+                                  withObject:(id _Nullable)object1
+                                      object:(id _Nullable)object2
+                                      object:(id _Nullable)object3;
 - (id)it_performAutoreleasedObjectReturningSelector:(SEL)selector withObject:(id)object;
 
 - (BOOL)it_isSafeForPlist;

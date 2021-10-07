@@ -4283,14 +4283,31 @@ ITERM_WEAKLY_REFERENCEABLE
     return ![iTermPreferences boolForKey:kPreferenceKeyHideTabBar];
 }
 
-- (BOOL)anyFullScreen
-{
+- (BOOL)anyFullScreen {
     return _fullScreen || lionFullScreen_;
 }
 
-- (BOOL)lionFullScreen
-{
+- (BOOL)lionFullScreen {
     return lionFullScreen_;
+}
+
+- (BOOL)toggleFullScreenShouldUseLionFullScreen {
+    if ([self lionFullScreen]) {
+        return YES;
+    }
+
+    if (self.windowType == WINDOW_TYPE_TRADITIONAL_FULL_SCREEN ||
+        self.windowType == WINDOW_TYPE_ACCESSORY) {
+        return NO;
+    }
+    if (self.isHotKeyWindow) {
+        // NSWindowCollectionBehaviorFullScreenAuxiliary window can't enter Lion fullscreen mode properly
+        return NO;
+    }
+    if (![iTermPreferences boolForKey:kPreferenceKeyLionStyleFullscreen]) {
+        return NO;
+    }
+    return YES;
 }
 
 - (NSSize)windowWillResize:(NSWindow *)sender toSize:(NSSize)proposedFrameSize {

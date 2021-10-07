@@ -721,25 +721,6 @@ iTermWindowType iTermWindowTypeNormalized(iTermWindowType windowType) {
     [self.contentView invalidateAutomaticTabBarBackingHiding];
 }
 
-- (BOOL)toggleFullScreenShouldUseLionFullScreen {
-    if ([self lionFullScreen]) {
-        return YES;
-    }
-
-    if (self.windowType == WINDOW_TYPE_TRADITIONAL_FULL_SCREEN ||
-        self.windowType == WINDOW_TYPE_ACCESSORY) {
-        return NO;
-    }
-    if (self.isHotKeyWindow) {
-        // NSWindowCollectionBehaviorFullScreenAuxiliary window can't enter Lion fullscreen mode properly
-        return NO;
-    }
-    if (![iTermPreferences boolForKey:kPreferenceKeyLionStyleFullscreen]) {
-        return NO;
-    }
-    return YES;
-}
-
 - (void)toggleFullScreenModeImpl:(id)sender
                       completion:(void (^)(BOOL))completion {
     DLog(@"toggleFullScreenMode:. window type is %d", self.windowType);
