@@ -2136,11 +2136,17 @@ static const int kMaxScreenRows = 4096;
         case XTERMCC_SU:
             [_delegate terminalScrollUp:token.csi->p[0]];
             break;
+
         case XTERMCC_SD:
             if (token.csi->count == 1) {
                 [_delegate terminalScrollDown:token.csi->p[0]];
             }
             break;
+
+        case VT100CSI_SD:
+            [_delegate terminalScrollDown:token.csi->p[0]];
+            break;
+
         case XTERMCC_REPORT_WIN_STATE: {
             NSString *s = [NSString stringWithFormat:@"\033[%dt",
                            ([_delegate terminalWindowIsMiniaturized] ? 2 : 1)];

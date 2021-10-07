@@ -741,6 +741,11 @@ static void SetCSITypeAndDefaultParameters(CSIParam *param, VT100Token *result) 
         case PACKED_CSI_COMMAND('?', 0, 'l'):       // DEC private mode reset
             result->type = VT100CSI_DECRST;
             break;
+        case '^':
+            result->type = VT100CSI_SD;
+            iTermParserSetCSIParameterIfDefault(param, 0, 1);
+            break;
+
         default:
             result->type = VT100_NOTSUPPORT;
             break;
