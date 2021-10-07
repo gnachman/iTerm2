@@ -289,6 +289,13 @@ static BOOL CodePointInPrivateUseArea(unichar c) {
     if (event.type != NSEventTypeKeyDown) {
         return nil;
     }
+    if ([event it_isNumericKeypadKey]) {
+        VT100Output *output = [self.delegate modifyOtherKeysOutputFactory:self];
+        const NSStringEncoding encoding = [self.delegate modifiyOtherKeysDelegateEncoding:self];
+        return [[NSString alloc] initWithData:[output keypadDataForString:event.characters modifiers:event.it_modifierFlags]
+                                     encoding:encoding];
+    }
+
     const NSEventModifierFlags allEventModifierFlags = (NSEventModifierFlagControl |
                                                         NSEventModifierFlagOption |
                                                         NSEventModifierFlagShift |
@@ -338,6 +345,11 @@ static BOOL CodePointInPrivateUseArea(unichar c) {
         // Always handle control+anything ourselves. We certainly don't want
         // cocoa to get ahold of it and call insertText: or
         // performKeyEquivalent:, which bypasses all the modifyOtherKeys goodness.
+        return NO;
+    }
+
+    if ([event it_isNumericKeypadKey] && [[self.delegate modifyOtherKeysOutputFactory:self] keypadMode]) {
+        DLog(@"In application keypad mode.");
         return NO;
     }
 

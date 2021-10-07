@@ -8,6 +8,7 @@
 
 #import "NSEvent+iTerm.h"
 
+#import "DebugLogging.h"
 #import "iTermAdvancedSettingsModel.h"
 
 #import <Carbon/Carbon.h>
@@ -135,6 +136,48 @@
     }
 
     return YES;
+}
+
+- (BOOL)it_isNumericKeypadKey {
+    NSEventModifierFlags mutableModifiers = self.it_modifierFlags;
+
+    // Enter key is on numeric keypad, but not marked as such
+    const unichar character = self.characters.length > 0 ? [self.characters characterAtIndex:0] : 0;
+    NSString *const charactersIgnoringModifiers = [self charactersIgnoringModifiers];
+    const unichar characterIgnoringModifier = [charactersIgnoringModifiers length] > 0 ? [charactersIgnoringModifiers characterAtIndex:0] : 0;
+    if (character == NSEnterCharacter && characterIgnoringModifier == NSEnterCharacter) {
+        mutableModifiers |= NSEventModifierFlagNumericPad;
+    }
+    const BOOL isNumericKeypadKey = !!(mutableModifiers & NSEventModifierFlagNumericPad);
+    return (isNumericKeypadKey || [NSEvent it_keycodeShouldHaveNumericKeypadFlag:self.keyCode]);
+}
+
++ (BOOL)it_keycodeShouldHaveNumericKeypadFlag:(unsigned short)keycode {
+    switch (keycode) {
+        case kVK_ANSI_KeypadDecimal:
+        case kVK_ANSI_KeypadMultiply:
+        case kVK_ANSI_KeypadPlus:
+        case kVK_ANSI_KeypadClear:
+        case kVK_ANSI_KeypadDivide:
+        case kVK_ANSI_KeypadEnter:
+        case kVK_ANSI_KeypadMinus:
+        case kVK_ANSI_KeypadEquals:
+        case kVK_ANSI_Keypad0:
+        case kVK_ANSI_Keypad1:
+        case kVK_ANSI_Keypad2:
+        case kVK_ANSI_Keypad3:
+        case kVK_ANSI_Keypad4:
+        case kVK_ANSI_Keypad5:
+        case kVK_ANSI_Keypad6:
+        case kVK_ANSI_Keypad7:
+        case kVK_ANSI_Keypad8:
+        case kVK_ANSI_Keypad9:
+            DLog(@"Key code 0x%x forced to have numeric keypad mask set", (int)keycode);
+            return YES;
+
+        default:
+            return NO;
+    }
 }
 
 @end

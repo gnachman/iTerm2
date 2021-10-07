@@ -80,7 +80,7 @@ BOOL VT100OutputCursorInformationGetLineDrawingMode(VT100OutputCursorInformation
 - (NSData *)keyPageUp:(unsigned int)modflag;
 - (NSData *)keyPageDown:(unsigned int)modflag;
 - (NSData *)keyFunction:(int)no modifiers:(NSEventModifierFlags)modifiers;
-- (NSData *)keypadData: (unichar) unicode keystr: (NSString *) keystr;
+- (NSData *)keypadDataForString:(NSString *)keystr modifiers:(NSEventModifierFlags)modifiers;
 
 - (NSData *)mousePress:(int)button withModifiers:(unsigned int)modflag at:(VT100GridCoord)coord;
 - (NSData *)mouseRelease:(int)button withModifiers:(unsigned int)modflag at:(VT100GridCoord)coord;

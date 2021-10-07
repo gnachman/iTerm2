@@ -11,6 +11,7 @@
 #import "iTermKeyboardHandler.h"
 #import "NSData+iTerm.h"
 #import "NSEvent+iTerm.h"
+#import "NSStringITerm.h"
 #import "VT100Output.h"
 
 @implementation iTermStandardKeyMapper {
@@ -42,6 +43,13 @@
 #pragma mark - Pre-Cocoa
 
 - (NSString *)preCocoaString {
+    if ([_event it_isNumericKeypadKey]) {
+        DLog(@"PTYSession keyDown numeric keypad");
+        NSData *data = [_configuration.outputFactory keypadDataForString:_event.characters
+                                                               modifiers:_event.it_modifierFlags];
+        return [[NSString alloc] initWithData:data encoding:_configuration.encoding];
+    }
+
     const unsigned int modflag = [_event it_modifierFlags];
     NSString *charactersIgnoringModifiers = _event.charactersIgnoringModifiers;
     const unichar characterIgnoringModifiers = [charactersIgnoringModifiers length] > 0 ? [charactersIgnoringModifiers characterAtIndex:0] : 0;
@@ -192,10 +200,10 @@
         return nil;
     }
 
-    const BOOL isNumericKeypadKey = !!(mutableModifiers & NSEventModifierFlagNumericPad);
-    if (isNumericKeypadKey || [self keycodeShouldHaveNumericKeypadFlag:_event.keyCode]) {
+    if ([_event it_isNumericKeypadKey]) {
         DLog(@"PTYSession keyDown numeric keypad");
-        return [_configuration.outputFactory keypadData:character keystr:characters];
+        return [_configuration.outputFactory keypadDataForString:characters
+                                                       modifiers:_event.it_modifierFlags];
     }
 
     if (characters.length != 1 || [characters characterAtIndex:0] > 0x7f) {
@@ -388,31 +396,7 @@
 
 // In issue 4039 we see that in some cases the numeric keypad mask isn't set properly.
 - (BOOL)keycodeShouldHaveNumericKeypadFlag:(unsigned short)keycode {
-    switch (keycode) {
-        case kVK_ANSI_KeypadDecimal:
-        case kVK_ANSI_KeypadMultiply:
-        case kVK_ANSI_KeypadPlus:
-        case kVK_ANSI_KeypadClear:
-        case kVK_ANSI_KeypadDivide:
-        case kVK_ANSI_KeypadEnter:
-        case kVK_ANSI_KeypadMinus:
-        case kVK_ANSI_KeypadEquals:
-        case kVK_ANSI_Keypad0:
-        case kVK_ANSI_Keypad1:
-        case kVK_ANSI_Keypad2:
-        case kVK_ANSI_Keypad3:
-        case kVK_ANSI_Keypad4:
-        case kVK_ANSI_Keypad5:
-        case kVK_ANSI_Keypad6:
-        case kVK_ANSI_Keypad7:
-        case kVK_ANSI_Keypad8:
-        case kVK_ANSI_Keypad9:
-            DLog(@"Key code 0x%x forced to have numeric keypad mask set", (int)keycode);
-            return YES;
-
-        default:
-            return NO;
-    }
+    return [NSEvent it_keycodeShouldHaveNumericKeypadFlag:keycode];
 }
 
 - (BOOL)shouldSquelchKeystrokeWithString:(NSString *)keystr

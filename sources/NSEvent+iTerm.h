@@ -12,6 +12,7 @@
 
 @property(nonatomic, readonly) NSEvent *mouseUpEventFromGesture;
 @property(nonatomic, readonly) NSEvent *mouseDownEventFromGesture;
+@property(nonatomic, readonly) BOOL it_isNumericKeypadKey;
 
 // Returns a new event with the mouse button number set to `buttonNumber`, and
 // other values the same as self.
@@ -23,6 +24,7 @@
 
 - (NSEvent *)eventByRoundingScrollWheelClicksAwayFromZero;
 - (BOOL)it_eventGetsSpecialHandlingForAPINotifications;
++ (BOOL)it_keycodeShouldHaveNumericKeypadFlag:(unsigned short)keycode;
 
 @end
 

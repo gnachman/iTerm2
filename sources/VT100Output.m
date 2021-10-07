@@ -2,6 +2,7 @@
 
 #import "DebugLogging.h"
 #import "NSArray+iTerm.h"
+#import "NSStringITerm.h"
 #import "iTermAdvancedSettingsModel.h"
 
 #include <term.h>
@@ -67,24 +68,6 @@ typedef enum {
 #define KEY_PAGE_DOWN        "\033[6~"
 #define KEY_DEL              "\033[3~"
 #define KEY_BACKSPACE        "\010"
-
-#define ALT_KP_0        "\033Op"
-#define ALT_KP_1        "\033Oq"
-#define ALT_KP_2        "\033Or"
-#define ALT_KP_3        "\033Os"
-#define ALT_KP_4        "\033Ot"
-#define ALT_KP_5        "\033Ou"
-#define ALT_KP_6        "\033Ov"
-#define ALT_KP_7        "\033Ow"
-#define ALT_KP_8        "\033Ox"
-#define ALT_KP_9        "\033Oy"
-#define ALT_KP_MINUS    "\033Om"
-#define ALT_KP_PLUS     "\033Ok"
-#define ALT_KP_PERIOD   "\033On"
-#define ALT_KP_SLASH    "\033Oo"
-#define ALT_KP_STAR     "\033Oj"
-#define ALT_KP_EQUALS   "\033OX"
-#define ALT_KP_ENTER    "\033OM"
 
 // Reporting formats
 #define KEY_FUNCTION_FORMAT  "\033[%d~"
@@ -652,72 +635,43 @@ typedef enum {
     return [NSData dataWithBytes:str length:len];
 }
 
-- (NSData*)keypadData:(unichar)unicode keystr:(NSString*)keystr {
-    NSData *theData = nil;
-
-    // numeric keypad mode
+- (NSData *)keypadDataForString:(NSString *)keystr modifiers:(NSEventModifierFlags)modifiers {
+    // Numeric keypad mode (regular).
     if (!self.keypadMode) {
-        return ([keystr dataUsingEncoding:NSUTF8StringEncoding]);
-    }
-    // alternate keypad mode
-    switch (unicode) {
-        case '0':
-            theData = [NSData dataWithBytes:ALT_KP_0 length:STATIC_STRLEN(ALT_KP_0)];
-            break;
-        case '1':
-            theData = [NSData dataWithBytes:ALT_KP_1 length:STATIC_STRLEN(ALT_KP_1)];
-            break;
-        case '2':
-            theData = [NSData dataWithBytes:ALT_KP_2 length:STATIC_STRLEN(ALT_KP_2)];
-            break;
-        case '3':
-            theData = [NSData dataWithBytes:ALT_KP_3 length:STATIC_STRLEN(ALT_KP_3)];
-            break;
-        case '4':
-            theData = [NSData dataWithBytes:ALT_KP_4 length:STATIC_STRLEN(ALT_KP_4)];
-            break;
-        case '5':
-            theData = [NSData dataWithBytes:ALT_KP_5 length:STATIC_STRLEN(ALT_KP_5)];
-            break;
-        case '6':
-            theData = [NSData dataWithBytes:ALT_KP_6 length:STATIC_STRLEN(ALT_KP_6)];
-            break;
-        case '7':
-            theData = [NSData dataWithBytes:ALT_KP_7 length:STATIC_STRLEN(ALT_KP_7)];
-            break;
-        case '8':
-            theData = [NSData dataWithBytes:ALT_KP_8 length:STATIC_STRLEN(ALT_KP_8)];
-            break;
-        case '9':
-            theData = [NSData dataWithBytes:ALT_KP_9 length:STATIC_STRLEN(ALT_KP_9)];
-            break;
-        case '-':
-            theData = [NSData dataWithBytes:ALT_KP_MINUS length:STATIC_STRLEN(ALT_KP_MINUS)];
-            break;
-        case '+':
-            theData = [NSData dataWithBytes:ALT_KP_PLUS length:STATIC_STRLEN(ALT_KP_PLUS)];
-            break;
-        case '.':
-            theData = [NSData dataWithBytes:ALT_KP_PERIOD length:STATIC_STRLEN(ALT_KP_PERIOD)];
-            break;
-        case '/':
-            theData = [NSData dataWithBytes:ALT_KP_SLASH length:STATIC_STRLEN(ALT_KP_SLASH)];
-            break;
-        case '*':
-            theData = [NSData dataWithBytes:ALT_KP_STAR length:STATIC_STRLEN(ALT_KP_STAR)];
-            break;
-        case '=':
-            theData = [NSData dataWithBytes:ALT_KP_EQUALS length:STATIC_STRLEN(ALT_KP_EQUALS)];
-            break;
-        case 0x03:
-            theData = [NSData dataWithBytes:ALT_KP_ENTER length:STATIC_STRLEN(ALT_KP_ENTER)];
-            break;
-        default:
-            theData = [keystr dataUsingEncoding:NSUTF8StringEncoding];
-            break;
+        if ([keystr isEqualToString:@"\x03"]) {
+            return [@"\r" dataUsingEncoding:NSUTF8StringEncoding];
+        }
+        return [keystr dataUsingEncoding:NSUTF8StringEncoding];
     }
 
-    return (theData);
+    // Application keypad mode.
+    const int mod = [self cursorModifierParamForEventModifierFlags:modifiers];
+    NSString *modString = (mod == 0) ? @"" : [@(mod) stringValue];
+
+    NSDictionary *dict = @{
+        @"0": @"p",
+        @"1": @"q",
+        @"2": @"r",
+        @"3": @"s",
+        @"4": @"t",
+        @"5": @"u",
+        @"6": @"v",
+        @"7": @"w",
+        @"8": @"x",
+        @"9": @"y",
+        @"-": @"m",
+        @"+": @"k",
+        @".": @"n",
+        @"/": @"o",
+        @"*": @"j",
+        @"=": @"X",
+        @"\x03": @"M"
+    };
+    NSString *suffix = dict[keystr];
+    if (!suffix) {
+        return [keystr dataUsingEncoding:NSUTF8StringEncoding];
+    }
+    return [[NSString stringWithFormat:@"\eO%@%@", modString, suffix] dataUsingEncoding:NSUTF8StringEncoding];
 }
 
 - (char *)mouseReport:(int)button atX:(int)x Y:(int)y {
@@ -864,6 +818,31 @@ typedef enum {
     //
     // Update: Per issue 7803, VT200 must accept 8-bit CSI. Allow users to elect VT100 reporting by
     // setting $TERM to VT100.
+    //
+    // xterm alludes to a "17" feature called "terminal state interrogation". I found a file called
+    // vt_function_list.pdf at http://web.mit.edu/dosathena/doc/www/vt_function_list.pdf
+    // that describes the following codes as TSI (with modifications by me for elucidation):
+    //
+    // DECRQM - Request Mode [response: DECRPM - Report Mode]
+    // DECNKM - Numeric Keypad Mode (DEC[RE]SET 66)
+    // DECRQSS - Request Selection or Setting [response: DECRPSS - Report Selection or Setting]
+    // DECRQPSR - Request Presentation State Report
+    //   The response is DECPSR - Presentation State Report, which is one of:
+    //     * DECCIR - Cursor Information Report
+    //     * DECTABSR - Tabulation Stop Report]
+    // DECRSPS - Restore Presentation State
+    // DECRQTSR - Request Terminal State Report [response: DECTSR - Terminal State Report]
+    //     NOTE: xterm does not implement this.
+    //     The VT420 docs say:
+    //         "DECTSR informs the host of the entire state of the terminal, except for user-defined
+    //          key definitions and the current soft character set"
+    //     and:
+    //         "Software should not expect the format of DECTSR to be the same for all members of the
+    //          VT400 family, or for different revisions within each member of the family."
+    //     VT520 seems to have added a second function, a color table report, for DECRQTSR with parameter 2.
+    // DECRSTS - Restore Terminal State
+    //     NOTE: This restores state using the response from DECRQTSR.
+
     switch (_vtLevel) {
         case VT100EmulationLevel100:
             return [@"\033[?1;2c" dataUsingEncoding:NSUTF8StringEncoding];

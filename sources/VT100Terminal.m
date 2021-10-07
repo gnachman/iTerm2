@@ -669,7 +669,9 @@ static const int kMaxScreenRows = 4096;
                 }
                 self.softAlternateScreenMode = mode;
                 break;
-
+            case 66:
+                self.keypadMode = mode;
+                break;
             case 69:
                 [_delegate terminalSetUseColumnScrollRegion:mode];
                 break;
@@ -1652,10 +1654,10 @@ static const int kMaxScreenRows = 4096;
         case VT100CSI_DECID:
             break;
         case VT100CSI_DECKPNM:
-            self.keypadMode = NO;
+            self.keypadMode = NO;  // Keypad sequences
             break;
         case VT100CSI_DECKPAM:
-            self.keypadMode = YES;
+            self.keypadMode = YES;  // Application sequences
             break;
 
         case ANSICSI_RCP:
@@ -1955,10 +1957,6 @@ static const int kMaxScreenRows = 4096;
             [_delegate terminalRepeatPreviousCharacter:token.csi->p[0]];
             break;
 
-        case VT100CSI_DECRQM_ANSI:
-            [self executeANSIRequestMode:token.csi->p[0]];
-            break;
-
         case VT100CSI_DECRQPSR:
             [self executeDECRQPSR:token.csi->p[0]];
             break;
@@ -1985,8 +1983,12 @@ static const int kMaxScreenRows = 4096;
             }
             break;
 
-        case VT100CSI_DECRQM_DEC:
+        case VT100CSI_DECRQM_DEC:  // CSI ? Pd $ p
             [self executeDECRequestMode:token.csi->p[0]];
+            break;
+
+        case VT100CSI_DECRQM_ANSI:  // CSI Pa $ p
+            [self executeANSIRequestMode:token.csi->p[0]];
             break;
 
         case VT100CSI_HPR:
@@ -3919,6 +3921,8 @@ static iTermDECRPMSetting VT100TerminalDECRPMSettingFromBoolean(BOOL flag) {
             } else {
                 return VT100TerminalDECRPMSettingFromBoolean(self.softAlternateScreenMode);
             }
+        case 66:
+            return VT100TerminalDECRPMSettingFromBoolean(self.keypadMode);
 
         case 69:
             return VT100TerminalDECRPMSettingFromBoolean([_delegate terminalUseColumnScrollRegion]);

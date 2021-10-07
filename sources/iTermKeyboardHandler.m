@@ -243,6 +243,11 @@ static iTermKeyboardHandler *sCurrentKeyboardHandler;
         return NO;
     }
 
+    if ([event it_isNumericKeypadKey]) {
+        DLog(@"Looks like a numeric keypad key. Handle pre-cocoa.");
+        return YES;
+    }
+
     return YES;
 }
 
