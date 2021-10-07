@@ -709,6 +709,7 @@ static void SetCSITypeAndDefaultParameters(CSIParam *param, VT100Token *result) 
             result->type = ANSICSI_CBT;
             iTermParserSetCSIParameterIfDefault(param, 0, 1);
             break;
+        case '`':
         case 'G':
             result->type = ANSICSI_CHA;
             iTermParserSetCSIParameterIfDefault(param, 0, 1);
