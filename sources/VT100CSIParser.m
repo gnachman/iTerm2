@@ -714,6 +714,10 @@ static void SetCSITypeAndDefaultParameters(CSIParam *param, VT100Token *result) 
             result->type = ANSICSI_CHA;
             iTermParserSetCSIParameterIfDefault(param, 0, 1);
             break;
+        case 'a':
+            result->type = VT100CSI_HPR;
+            iTermParserSetCSIParameterIfDefault(param, 0, 1);
+            break;
         case 'd':
             result->type = ANSICSI_VPA;
             iTermParserSetCSIParameterIfDefault(param, 0, 1);

@@ -1989,6 +1989,10 @@ static const int kMaxScreenRows = 4096;
             [self executeDECRequestMode:token.csi->p[0]];
             break;
 
+        case VT100CSI_HPR:
+            [self executeCharacterPositionRelative:token.csi->p[0]];
+            break;
+
             // ANSI CSI
         case ANSICSI_CBT:
             [_delegate terminalBackTab:token.csi->p[0]];
@@ -3573,6 +3577,13 @@ typedef NS_ENUM(int, iTermDECRPMSetting)  {
 - (void)executeANSIRequestMode:(int)mode {
     const iTermDECRPMSetting setting = [self settingForANSIRequestMode:mode];
     [self.delegate terminalSendReport:[self decrpmForMode:mode setting:setting ansi:YES]];
+}
+
+- (void)executeCharacterPositionRelative:(int)dx {
+    const int width = [_delegate terminalWidth];
+    const int proposed = [_delegate terminalCursorX] + dx;
+    const int x = MIN(proposed, width);
+    [_delegate terminalSetCursorX:x];
 }
 
 - (void)executeDECRequestMode:(int)mode {

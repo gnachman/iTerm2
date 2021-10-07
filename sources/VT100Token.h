@@ -128,6 +128,7 @@ typedef enum {
     VT100_DECBI,                    // Back Index
     VT100CSI_DECRQPSR,              // Request presentation state report
     VT100CSI_SD,                    // Scroll down
+    VT100CSI_HPR,                   // Character position relative
 
     // https://sw.kovidgoyal.net/kitty/keyboard-protocol.html
     VT100CSI_PUSH_KEY_REPORTING_MODE,

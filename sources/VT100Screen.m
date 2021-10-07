@@ -1458,13 +1458,11 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
                                }]];
 }
 
-- (void)cursorToX:(int)x
-{
-    int xPos;
-    int leftMargin = [currentGrid_ leftMargin];
-    int rightMargin = [currentGrid_ rightMargin];
+- (void)cursorToX:(int)x {
+    const int leftMargin = [currentGrid_ leftMargin];
+    const int rightMargin = [currentGrid_ rightMargin];
 
-    xPos = x - 1;
+    int xPos = x - 1;
 
     if ([terminal_ originMode]) {
         xPos += leftMargin;

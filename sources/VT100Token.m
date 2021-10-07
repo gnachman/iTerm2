@@ -152,6 +152,7 @@
                           @(VT100CSI_DECRQM_ANSI):            @"VT100CSI_DECRQM_ANSI",
                           @(VT100CSI_DECRQPSR):               @"VT100CSI_DECRQPSR",
                           @(VT100CSI_SD):                     @"VT100CSI_SD",
+                          @(VT100CSI_HPR):                    @"VT100CSI_HPR",
 
                           @(VT100_DECFI):                     @"VT100_DECFI",
                           @(VT100_DECBI):                     @"VT100_DECBI",
