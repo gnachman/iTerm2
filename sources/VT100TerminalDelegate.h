@@ -475,5 +475,6 @@ typedef NS_ENUM(int, VT100TerminalColorIndex) {
 
 - (VT100SavedColorsSlot *)terminalSavedColorsSlot;
 - (void)terminalRestoreColorsFromSlot:(VT100SavedColorsSlot *)slot;
+- (int)terminalMaximumTheoreticalImageDimension;
 
 @end

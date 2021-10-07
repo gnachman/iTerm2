@@ -117,6 +117,8 @@ typedef enum {
     XTERMCC_XTPUSHCOLORS,           // Push colors
     XTERMCC_XTPOPCOLORS,            // Pop colors
     XTERMCC_XTREPORTCOLORS,         // Report current entry on plaette stack
+    XTERMCC_XTSMGRAPHICS,           // Set or request graphics attributes
+
     VT100CSI_DECSLRM,               // Set left-right margin
     VT100CSI_DECRQCRA,              // Request Checksum of Rectangular Area
     VT100CSI_REP,                   // Repeat

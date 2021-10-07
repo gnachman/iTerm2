@@ -436,6 +436,10 @@ static void SetCSITypeAndDefaultParameters(CSIParam *param, VT100Token *result) 
             result->type = XTERMCC_XTREPORTCOLORS;
             break;
 
+        case PACKED_CSI_COMMAND('?', 0, 'S'):
+            result->type = XTERMCC_XTSMGRAPHICS;
+            break;
+
         case 'D':       // Cursor Backward
             result->type = VT100CSI_CUB;
             iTermParserSetCSIParameterIfDefault(param, 0, 1);

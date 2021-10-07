@@ -312,6 +312,7 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
 static const NSUInteger kMaxDirectories = 100;
 static const NSUInteger kMaxCommands = 100;
 static const NSUInteger kMaxHosts = 100;
+static const CGFloat PTYSessionMaximumMetalViewSize = 16384;
 
 @interface NSWindow (SessionPrivate)
 - (void)_moveToScreen:(NSScreen *)sender;
@@ -6503,8 +6504,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     // among the "Mac" columns.
     // https://developer.apple.com/metal/Metal-Feature-Set-Tables.pdf
     const CGFloat maxScale = 2;
-    const CGFloat maxDimension = 16384;
-    return size.width > 0 && size.width < (maxDimension / maxScale) && size.height > 0 && size.height < (maxDimension / maxScale);
+    return size.width > 0 && size.width < (PTYSessionMaximumMetalViewSize / maxScale) && size.height > 0 && size.height < (PTYSessionMaximumMetalViewSize / maxScale);
 }
 
 - (BOOL)idleForMetal {
@@ -13055,6 +13055,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         }
     }
     [self setSessionSpecificProfileValues:dict];
+}
+
+- (int)screenMaximumTheoreticalImageDimension {
+    return PTYSessionMaximumMetalViewSize;
 }
 
 - (VT100Screen *)popupVT100Screen {

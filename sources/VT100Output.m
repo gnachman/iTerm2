@@ -1150,4 +1150,8 @@ BOOL VT100OutputCursorInformationGetLineDrawingMode(VT100OutputCursorInformation
     return [[NSString stringWithFormat:@"\e[?%d;%d#Q", used, last] dataUsingEncoding:NSUTF8StringEncoding];
 }
 
+- (NSData *)reportGraphicsAttributeWithItem:(int)item status:(int)status value:(NSString *)value {
+    return [[NSString stringWithFormat:@"\e[?%d;%d;%@S", item, status, value] dataUsingEncoding:NSUTF8StringEncoding];
+}
+
 @end

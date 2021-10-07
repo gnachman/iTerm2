@@ -1,4 +1,7 @@
 #import "VT100Terminal.h"
+
+#include "sixel.h"
+
 #import "DebugLogging.h"
 #import "iTerm2SharedARC-Swift.h"
 #import "iTermAdvancedSettingsModel.h"
@@ -13,6 +16,7 @@
 #import "NSURL+iTerm.h"
 #import "VT100DCSParser.h"
 #import "VT100Parser.h"
+
 #import <apr-1/apr_base64.h>  // for xterm's base64 decoding (paste64)
 #include <curses.h>
 #include <term.h>
@@ -1809,6 +1813,10 @@ static const int kMaxScreenRows = 4096;
 
         case XTERMCC_XTREPORTCOLORS:
             [self executeReportColors:token];
+            break;
+
+        case XTERMCC_XTSMGRAPHICS:
+            [self executeSetRequestGraphics:token];
             break;
 
         case VT100CSI_DECSTR:
@@ -3662,6 +3670,131 @@ typedef NS_ENUM(int, iTermDECRPMSetting)  {
         return;
     }
     [_delegate terminalSendReport:[_output reportSavedColorsUsed:_savedColors.used largestUsed:_savedColors.last]];
+}
+
+- (void)executeSetRequestGraphics:(VT100Token *)token {
+    if (token.csi->count < 2) {
+        return;
+    }
+    if (token.csi->p[1] == 3) {
+        // Need 3 args for "set"
+        if (token.csi->count < 3) {
+            return;
+        }
+    }
+    switch (token.csi->p[0]) {
+        case 1:
+            [self executeSetRequestNumberOfColorRegisters:token];
+            break;
+        case 2:
+            [self executeSetRequestSixelGeometry:token];
+            break;
+        case 3:
+            [self executeSetRequestReGISGeometry:token];
+            break;
+        default:
+            [self sendGraphicsAttributeReportForToken:token status:1 value:@""];
+            break;
+    }
+}
+
+- (void)executeSetRequestNumberOfColorRegisters:(VT100Token *)token {
+    switch (token.csi->p[1]) {
+        case 1:
+            [self executeReadNumberOfColorRegisters:token];
+            break;
+        case 2:
+            [self executeResetNumberOfColorRegisters:token];
+            break;
+        case 3:
+            [self executeSetNumberOfColorRegisters:token];
+            break;
+        case 4:
+            [self executeReadMaximumValueOfNumberOfColorRegisters:token];
+            break;
+        default:
+            [self sendGraphicsAttributeReportForToken:token status:2 value:@""];
+            break;
+    }
+}
+
+- (void)executeSetRequestSixelGeometry:(VT100Token *)token {
+    switch (token.csi->p[1]) {
+        case 1:
+            [self executeReadSixelGeometry:token];
+            break;
+        case 2:
+            [self executeResetSixelGeometry:token];
+            break;
+        case 3:
+            [self executeSetSixelGeometry:token];
+            break;
+        case 4:
+            [self executeReadMaximumValueOfSixelGeometry:token];
+            break;
+        default:
+            [self sendGraphicsAttributeReportForToken:token status:2 value:@""];
+            break;
+    }
+}
+
+- (void)executeSetRequestReGISGeometry:(VT100Token *)token {
+    [self sendGraphicsAttributeReportForToken:token status:1 value:@""];
+}
+
+- (void)executeReadNumberOfColorRegisters:(VT100Token *)token {
+    // First arg after # gives the sixel register number. This is how I determined that
+    // SIXEL_PALETTE_MAX corresponds to the number of registers.
+    [self sendGraphicsAttributeReportForToken:token status:0 value:[@(SIXEL_PALETTE_MAX) stringValue]];
+}
+
+- (void)executeResetNumberOfColorRegisters:(VT100Token *)token {
+    [self sendGraphicsAttributeReportForToken:token status:3 value:@""];
+}
+
+- (void)executeSetNumberOfColorRegisters:(VT100Token *)token {
+    [self sendGraphicsAttributeReportForToken:token status:3 value:@""];
+}
+
+- (void)executeReadMaximumValueOfNumberOfColorRegisters:(VT100Token *)token {
+    [self sendGraphicsAttributeReportForToken:token status:0 value:[@(SIXEL_PALETTE_MAX) stringValue]];
+}
+
+- (void)executeReadSixelGeometry:(VT100Token *)token {
+    double scale = 0;
+    const NSSize cellSize = [_delegate terminalCellSizeInPoints:&scale];
+    const int width = MIN(255, [_delegate terminalWidth]);
+    const int height = MIN(255, [_delegate terminalHeight]);
+
+    [self sendGraphicsAttributeReportForToken:token
+                                       status:0
+                                        value:[NSString stringWithFormat:@"%@;%@",
+                                               @(width * cellSize.width * scale),
+                                               @(height * cellSize.height * scale)]];
+}
+
+- (void)executeResetSixelGeometry:(VT100Token *)token {
+    [self sendGraphicsAttributeReportForToken:token status:3 value:@""];
+}
+
+- (void)executeSetSixelGeometry:(VT100Token *)token {
+    [self sendGraphicsAttributeReportForToken:token status:3 value:@""];
+}
+
+- (void)executeReadMaximumValueOfSixelGeometry:(VT100Token *)token {
+    const int maxDimension = [self.delegate terminalMaximumTheoreticalImageDimension];
+    [self sendGraphicsAttributeReportForToken:token status:0 value:[NSString stringWithFormat:@"%d;%d", maxDimension, maxDimension]];
+}
+
+- (void)sendGraphicsAttributeReportForToken:(VT100Token *)token
+                                     status:(int)status
+                                      value:(NSString *)value {
+    if (![_delegate terminalShouldSendReport]) {
+        return;
+    }
+    [_delegate terminalSendReport:[_output reportGraphicsAttributeWithItem:token.csi->p[0]
+                                                                    status:status
+                                                                     value:value]];
 }
 
 // Valuie is either -1 to push a color on top of the stack or a 1-based index into an existing stack.

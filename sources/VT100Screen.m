@@ -5339,6 +5339,10 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     [delegate_ screenRestoreColorsFromSlot:slot];
 }
 
+- (int)terminalMaximumTheoreticalImageDimension {
+    return [delegate_ screenMaximumTheoreticalImageDimension];
+}
+
 #pragma mark - Private
 
 - (VT100GridCoordRange)commandRange {

@@ -146,6 +146,7 @@
                           @(XTERMCC_XTPUSHCOLORS):            @"XTERMCC_XTPUSHCOLORS",
                           @(XTERMCC_XTPOPCOLORS):             @"XTERMCC_XTPOPCOLORS",
                           @(XTERMCC_XTREPORTCOLORS):          @"XTERMCC_XTREPORTCOLORS",
+                          @(XTERMCC_XTSMGRAPHICS):            @"XTERMCC_XTSMGRAPHICS",
                           @(VT100CSI_DECSLRM):                @"VT100CSI_DECSLRM",
                           @(VT100CSI_DECRQM_DEC):             @"VT100CSI_DECRQM_DEC",
                           @(VT100CSI_DECRQM_ANSI):            @"VT100CSI_DECRQM_ANSI",

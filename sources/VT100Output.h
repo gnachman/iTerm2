@@ -106,5 +106,8 @@ BOOL VT100OutputCursorInformationGetLineDrawingMode(VT100OutputCursorInformation
 - (NSData *)reportTabStops:(NSArray<NSNumber *> *)tabStops;
 - (NSData *)reportSavedColorsUsed:(int)used
                       largestUsed:(int)last;
+- (NSData *)reportGraphicsAttributeWithItem:(int)item
+                                     status:(int)status
+                                      value:(NSString *)value;
 
 @end
