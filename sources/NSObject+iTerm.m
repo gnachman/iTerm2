@@ -317,4 +317,8 @@
     return self;
 }
 
+- (NSString *)it_addressString {
+    return [NSString stringWithFormat:@"%p", self];
+}
+
 @end

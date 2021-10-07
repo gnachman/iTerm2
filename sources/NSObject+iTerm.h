@@ -8,6 +8,8 @@
 
 #import <Foundation/Foundation.h>
 
+NS_ASSUME_NONNULL_BEGIN
+
 // https://www.mikeash.com/pyblog/friday-qa-2010-06-18-implementing-equality-and-hashing.html
 // NOTE: This does not compose well. Use iTermCombineHash if you need to chain hashes.
 NS_INLINE NSUInteger iTermMikeAshHash(NSUInteger hash1, NSUInteger hash2) {
@@ -44,15 +46,18 @@ NS_INLINE NSUInteger iTermCombineHash(NSUInteger hash1, NSUInteger hash2) {
 
 @interface NSObject (iTerm)
 
-+ (BOOL)object:(NSObject *)a isEqualToObject:(NSObject *)b;
+// For Swift convenience.
+@property(nonatomic, readonly) NSString *it_addressString;
+
++ (BOOL)object:(NSObject * _Nullable)a isEqualToObject:(NSObject * _Nullable)b;
 
 // Supports NSArray, NSDictionary, and NSNumber.
-+ (BOOL)object:(__kindof NSObject *)a isApproximatelyEqualToObject:(__kindof NSObject *)b epsilon:(double)epsilon;
++ (BOOL)object:(__kindof NSObject * _Nullable)a isApproximatelyEqualToObject:(__kindof NSObject * _Nullable)b epsilon:(double)epsilon;
 
 + (instancetype)castFrom:(id)object;
 + (instancetype)forceCastFrom:(id)object;
 
-- (void)performSelectorOnMainThread:(SEL)selector withObjects:(NSArray *)objects;
+- (void)performSelectorOnMainThread:(SEL)selector withObjects:(NSArray * _Nullable)objects;
 
 // Retains self for |delay| time, whether canceled or not.
 // Set canceled=YES on the result to keep the block from running. Its completed flag will be set to
@@ -94,9 +99,11 @@ NS_INLINE NSUInteger iTermCombineHash(NSUInteger hash1, NSUInteger hash2) {
 - (id)it_performAutoreleasedObjectReturningSelector:(SEL)selector withObject:(id)object;
 
 - (BOOL)it_isSafeForPlist;
-- (NSString *)it_invalidPathInPlist;
+- (NSString * _Nullable)it_invalidPathInPlist;
 - (instancetype)it_weakProxy;
 - (NSString *)tastefulDescription;
 - (id)it_jsonSafeValue;
 
 @end
+
+NS_ASSUME_NONNULL_END

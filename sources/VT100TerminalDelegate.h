@@ -10,6 +10,8 @@
 #import "VT100InlineImageHelper.h"
 #import "VT100Token.h"
 
+@class VT100SavedColorsSlot;
+
 typedef NS_ENUM(NSInteger, MouseMode) {
     MOUSE_REPORTING_NONE = -1,
     MOUSE_REPORTING_NORMAL = 0,
@@ -470,5 +472,8 @@ typedef NS_ENUM(int, VT100TerminalColorIndex) {
 - (void)terminalApplicationKeypadModeDidChange:(BOOL)mode;
 - (NSString *)terminalTopBottomRegionString;
 - (NSString *)terminalLeftRightRegionString;
+
+- (VT100SavedColorsSlot *)terminalSavedColorsSlot;
+- (void)terminalRestoreColorsFromSlot:(VT100SavedColorsSlot *)slot;
 
 @end

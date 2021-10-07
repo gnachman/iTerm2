@@ -1,5 +1,6 @@
 #import "VT100Terminal.h"
 #import "DebugLogging.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermParser.h"
 #import "iTermURLStore.h"
@@ -91,6 +92,7 @@ NSString *const kTerminalStateKeyReportingModeStack_Deprecated = @"Key Reporting
 NSString *const kTerminalStateKeyReportingModeStack_Main = @"Main Key Reporting Mode Stack";
 NSString *const kTerminalStateKeyReportingModeStack_Alternate = @"Alternate Key Reporting Mode Stack";
 NSString *const kTerminalStateSynchronizedUpdates = @"Synchronized Updates";
+NSString *const kTerminalStateSavedColors = @"Saved Colors";  // For XTPUSHCOLORS/XTPOPCOLORS
 
 @interface VT100Terminal ()
 @property(nonatomic, assign) BOOL reverseVideo;
@@ -144,6 +146,7 @@ typedef struct {
     BOOL _softAlternateScreenMode;
     NSMutableArray<NSNumber *> *_mainKeyReportingModeStack;
     NSMutableArray<NSNumber *> *_alternateKeyReportingModeStack;
+    VT100SavedColors *_savedColors;
 }
 
 @synthesize receivingFile = receivingFile_;
@@ -246,6 +249,7 @@ static const int kMaxScreenRows = 4096;
         numLock_ = YES;
         [self saveCursor];  // initialize save area
         _unicodeVersionStack = [[NSMutableArray alloc] init];
+        _savedColors = [[VT100SavedColors alloc] init];
     }
     return self;
 }
@@ -1795,9 +1799,22 @@ static const int kMaxScreenRows = 4096;
             break;
         }
 
+        case XTERMCC_XTPUSHCOLORS:
+            [self executePushColors:token];
+            break;
+
+        case XTERMCC_XTPOPCOLORS:
+            [self executePopColors:token];
+            break;
+
+        case XTERMCC_XTREPORTCOLORS:
+            [self executeReportColors:token];
+            break;
+
         case VT100CSI_DECSTR:
             [self softReset];
             break;
+
         case VT100CSI_DECSCUSR:
             switch (token.csi->p[0]) {
                 case 0:
@@ -3617,6 +3634,56 @@ typedef NS_ENUM(int, iTermDECRPMSetting)  {
     free(temp);
 }
 
+- (void)executePushColors:(VT100Token *)token {
+    if (token.csi && token.csi->count > 0) {
+        for (int i = 0; i < token.csi->count; i++) {
+            [self xtermPushColors:token.csi->p[i]];
+        }
+    } else {
+        [self xtermPushColors:-1];
+    }
+}
+
+- (void)executePopColors:(VT100Token *)token {
+    VT100SavedColorsSlot *newColors = nil;
+    if (token.csi->count > 0) {
+        // Only the last parameter matters. Previous pops are completely over replaced by subsequent pops.
+        newColors = [self xtermPopColors:token.csi->p[token.csi->count - 1]];
+    } else {
+        newColors = [self xtermPopColors:-1];
+    }
+    if (newColors) {
+        [self.delegate terminalRestoreColorsFromSlot:newColors];
+    }
+}
+
+- (void)executeReportColors:(VT100Token *)token {
+    if (![_delegate terminalShouldSendReport]) {
+        return;
+    }
+    [_delegate terminalSendReport:[_output reportSavedColorsUsed:_savedColors.used largestUsed:_savedColors.last]];
+}
+
+// Valuie is either -1 to push a color on top of the stack or a 1-based index into an existing stack.
+- (void)xtermPushColors:(int)value {
+    VT100SavedColorsSlot *slot = [self.delegate terminalSavedColorsSlot];
+    if (!slot) {
+        return;
+    }
+    if (value == 0) {
+        return;
+    }
+    if (value < 0) {
+        [_savedColors push:slot];
+    } else {
+        [_savedColors setSlot:slot at:value - 1];
+    }
+}
+
+- (VT100SavedColorsSlot *)xtermPopColors:(int)value {
+    return value <= 0 ? [_savedColors pop] : [_savedColors slotAt:value - 1];
+}
+
 - (void)sendDECCIR {
     if ([_delegate terminalShouldSendReport]) {
         const int width = [_delegate terminalWidth];
@@ -3906,6 +3973,7 @@ static iTermDECRPMSetting VT100TerminalDECRPMSettingFromBoolean(BOOL flag) {
            kTerminalStateURL: self.url ?: [NSNull null],
            kTerminalStateURLParams: self.urlParams ?: [NSNull null],
            kTerminalStateSynchronizedUpdates: @(self.synchronizedUpdates),
+           kTerminalStateSavedColors: _savedColors.plist
         };
     return [dict dictionaryByRemovingNullValues];
 }
@@ -3942,6 +4010,8 @@ static iTermDECRPMSetting VT100TerminalDECRPMSettingFromBoolean(BOOL flag) {
     self.reportKeyUp = [dict[kTerminalStateReportKeyUp] boolValue];
     self.metaSendsEscape = [dict[kTerminalStateMetaSendsEscape] boolValue];
     self.synchronizedUpdates = [dict[kTerminalStateSynchronizedUpdates] boolValue];
+    _savedColors = [VT100SavedColors fromData:[NSData castFrom:dict[kTerminalStateSavedColors]]] ?: [[VT100SavedColors alloc] init];
+
     if (!_sendModifiers) {
         self.sendModifiers = [@[ @-1, @-1, @-1, @-1, @-1 ] mutableCopy];
     } else {

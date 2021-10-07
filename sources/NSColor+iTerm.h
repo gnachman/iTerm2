@@ -11,6 +11,8 @@
 
 @class NSAppearance;
 
+NS_ASSUME_NONNULL_BEGIN
+
 // Keys of -dictionaryValue. Use -[NSDictionary colorValue] to convert to color.
 extern NSString *const kEncodedColorDictionaryRedComponent;
 extern NSString *const kEncodedColorDictionaryGreenComponent;
@@ -68,7 +70,7 @@ CGFloat iTermLABDistance(iTermLABColor lhs, iTermLABColor rhs);
 
 CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b);
 
-+ (NSColor *)colorWithString:(NSString *)s;
++ (NSColor * _Nullable)colorWithString:(NSString *)s;
 + (NSColor *)colorWith8BitRed:(int)red
                         green:(int)green
                          blue:(int)blue;
@@ -92,7 +94,7 @@ CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b);
 // Fill in result with four values by modifying mainComponents to have at least
 // minimumContrast against otherComponents. All arrays are
 // red,green,blue,alpha. Alpha is copied over from mainComponents to result.
-+ (void)getComponents:(CGFloat *)result
++ (void)getComponents:(CGFloat * _Nullable)result
         forComponents:(CGFloat *)mainComponents
   withContrastAgainstComponents:(CGFloat *)otherComponents
                 minimumContrast:(CGFloat)minimumContrast;
@@ -104,7 +106,7 @@ CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b);
 
 // Returns colors for the standard 8-bit ansi color codes. Only indices between 16 and 255 are
 // supported.
-+ (NSColor *)colorForAnsi256ColorIndex:(int)index;
++ (NSColor * _Nullable)colorForAnsi256ColorIndex:(int)index;
 
 - (NSColor *)colorDimmedBy:(double)dimmingAmount towardsGrayLevel:(double)grayLevel;
 
@@ -112,10 +114,15 @@ CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b);
 - (NSColor *)colorByPremultiplyingAlphaWithColor:(NSColor *)background;
 
 - (NSString *)hexString;
-+ (instancetype)colorFromHexString:(NSString *)hexString;
++ (instancetype _Nullable)colorFromHexString:(NSString *)hexString;
 
 - (NSColor *)it_colorByDimmingByAmount:(double)dimmingAmount;
 
 - (NSColor *)it_colorWithAppearance:(NSAppearance *)appearance;
 
+// Unlike -colorSpace, this is safe to use from Swift. It does not throw an exception, but returns nil for catalog colors and such.
+@property (nonatomic, readonly) NSColorSpace * _Nullable it_colorSpace;
+
 @end
+
+NS_ASSUME_NONNULL_END

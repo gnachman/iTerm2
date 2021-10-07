@@ -5331,6 +5331,14 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     [self.delegate screenApplicationKeypadModeDidChange:mode];
 }
 
+- (VT100SavedColorsSlot *)terminalSavedColorsSlot {
+    return [delegate_ screenSavedColorsSlot];
+}
+
+- (void)terminalRestoreColorsFromSlot:(VT100SavedColorsSlot *)slot {
+    [delegate_ screenRestoreColorsFromSlot:slot];
+}
+
 #pragma mark - Private
 
 - (VT100GridCoordRange)commandRange {

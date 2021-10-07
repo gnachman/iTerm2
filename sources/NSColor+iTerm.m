@@ -538,4 +538,13 @@ CGFloat iTermLABDistance(iTermLABColor lhs, iTermLABColor rhs) {
     return self;
 }
 
+- (NSColorSpace * _Nullable)it_colorSpace {
+    @try {
+        // JFC apple. colorSpace throws an exception but it's a property so it's a nice little landmine they leave for you.
+        return [self colorSpace];
+    } @catch (NSException *exception) {
+        return nil;
+    }
+}
+
 @end

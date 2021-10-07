@@ -8,6 +8,7 @@
 #import "FileTransferManager.h"
 #import "FutureMethods.h"
 #import "ITAddressBookMgr.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "iTerm.h"
 #import "iTermAPIHelper.h"
 #import "iTermActionsModel.h"
@@ -13026,6 +13027,34 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 - (void)screenApplicationKeypadModeDidChange:(BOOL)mode {
     self.variablesScope.applicationKeypad = mode;
+}
+
+- (VT100SavedColorsSlot *)screenSavedColorsSlot {
+    return [[[VT100SavedColorsSlot alloc] initWithTextColor:[_colorMap colorForKey:kColorMapForeground]
+                                                                  backgroundColor:[_colorMap colorForKey:kColorMapBackground]
+                                                               selectionTextColor:[_colorMap colorForKey:kColorMapSelectedText]
+                                                         selectionBackgroundColor:[_colorMap colorForKey:kColorMapSelection]
+                                                             indexedColorProvider:^NSColor *(NSInteger index) {
+        return [_colorMap colorForKey:kColorMap8bitBase + index] ?: [NSColor clearColor];
+    }] autorelease];
+}
+
+- (void)screenRestoreColorsFromSlot:(VT100SavedColorsSlot *)slot {
+    const BOOL dark = _colorMap.darkMode;
+    NSMutableDictionary *dict = [[@{ iTermAmendedColorKey(KEY_FOREGROUND_COLOR, _profile, dark): slot.text.dictionaryValue,
+                                     iTermAmendedColorKey(KEY_BACKGROUND_COLOR, _profile, dark): slot.background.dictionaryValue,
+                                     iTermAmendedColorKey(KEY_SELECTED_TEXT_COLOR, _profile, dark): slot.selectionText.dictionaryValue,
+                                     iTermAmendedColorKey(KEY_SELECTION_COLOR, _profile, dark): slot.selectionBackground.dictionaryValue } mutableCopy] autorelease];
+    for (int i = 0; i < MIN(kColorMapNumberOf8BitColors, slot.indexedColors.count); i++) {
+        if (i < 16) {
+            NSString *baseKey = [NSString stringWithFormat:KEYTEMPLATE_ANSI_X_COLOR, i];
+            NSString *profileKey = iTermAmendedColorKey(baseKey, _profile, dark);
+            dict[profileKey] = [slot.indexedColors[i] dictionaryValue];
+        } else {
+            [_colorMap setColor:slot.indexedColors[i] forKey:kColorMap8bitBase + i];
+        }
+    }
+    [self setSessionSpecificProfileValues:dict];
 }
 
 - (VT100Screen *)popupVT100Screen {

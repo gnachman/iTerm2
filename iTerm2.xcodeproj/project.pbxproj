@@ -2516,6 +2516,8 @@
 		A67A515126CCD56100281693 /* xterm-256color in CopyFiles */ = {isa = PBXBuildFile; fileRef = A67A503326CCD3E200281693 /* xterm-256color */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		A67A515226CCD56100281693 /* xterm in CopyFiles */ = {isa = PBXBuildFile; fileRef = A67A504026CCD3E200281693 /* xterm */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		A67A515326CCD56100281693 /* xterm-new in CopyFiles */ = {isa = PBXBuildFile; fileRef = A67A505026CCD3E200281693 /* xterm-new */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
+		A67BCFE8270E702C00636983 /* VT100SavedColors.swift in Sources */ = {isa = PBXBuildFile; fileRef = A67BCFE7270E702C00636983 /* VT100SavedColors.swift */; };
+		A67BCFEA270F893300636983 /* CodableColor.swift in Sources */ = {isa = PBXBuildFile; fileRef = A67BCFE9270F893300636983 /* CodableColor.swift */; };
 		A67C44E7211E24F6004EDB1C /* PSMMinimalTabStyle.h in Headers */ = {isa = PBXBuildFile; fileRef = A67C44E5211E24F6004EDB1C /* PSMMinimalTabStyle.h */; };
 		A67C44E8211E24F6004EDB1C /* PSMMinimalTabStyle.m in Sources */ = {isa = PBXBuildFile; fileRef = A67C44E6211E24F6004EDB1C /* PSMMinimalTabStyle.m */; };
 		A67D0D321A2EE12A003A8B35 /* AboutWindow.xib in Resources */ = {isa = PBXBuildFile; fileRef = A67D0D111A2EE12A003A8B35 /* AboutWindow.xib */; };
@@ -5953,6 +5955,8 @@
 		A67A503326CCD3E200281693 /* xterm-256color */ = {isa = PBXFileReference; lastKnownFileType = file; path = "xterm-256color"; sourceTree = "<group>"; };
 		A67A504026CCD3E200281693 /* xterm */ = {isa = PBXFileReference; lastKnownFileType = file; path = xterm; sourceTree = "<group>"; };
 		A67A505026CCD3E200281693 /* xterm-new */ = {isa = PBXFileReference; lastKnownFileType = file; path = "xterm-new"; sourceTree = "<group>"; };
+		A67BCFE7270E702C00636983 /* VT100SavedColors.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VT100SavedColors.swift; sourceTree = "<group>"; };
+		A67BCFE9270F893300636983 /* CodableColor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CodableColor.swift; sourceTree = "<group>"; };
 		A67C44E5211E24F6004EDB1C /* PSMMinimalTabStyle.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = PSMMinimalTabStyle.h; sourceTree = "<group>"; };
 		A67C44E6211E24F6004EDB1C /* PSMMinimalTabStyle.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = PSMMinimalTabStyle.m; sourceTree = "<group>"; };
 		A67D0D111A2EE12A003A8B35 /* AboutWindow.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; name = AboutWindow.xib; path = Interfaces/AboutWindow.xib; sourceTree = "<group>"; };
@@ -9137,6 +9141,7 @@
 				A680AA1218CEA1040034D4F8 /* VT100TmuxParser.m */,
 				A647E3B218C36D0300450FA1 /* VT100Token.m */,
 				A6A13ABA18C34F6400B241ED /* VT100XtermParser.m */,
+				A67BCFE7270E702C00636983 /* VT100SavedColors.swift */,
 			);
 			name = VT100;
 			sourceTree = "<group>";
@@ -10035,6 +10040,7 @@
 				A60E045926DD537B00DD162B /* AsyncFilter.swift */,
 				A621F10D26F8E9E6001DD3A6 /* iTermTLVCodec.h */,
 				A621F10E26F8E9E6001DD3A6 /* iTermTLVCodec.m */,
+				A67BCFE9270F893300636983 /* CodableColor.swift */,
 			);
 			name = Helpers;
 			sourceTree = "<group>";
@@ -14446,6 +14452,7 @@
 				A6F3DA9424564598001D50C9 /* iTermScrollWheelStateMachine.m in Sources */,
 				A621F0FD26F27D16001DD3A6 /* ScreenChar.m in Sources */,
 				A6A4868120B681A300493302 /* iTermColorPresets.m in Sources */,
+				A67BCFEA270F893300636983 /* CodableColor.swift in Sources */,
 				A6180D7921A883860073F219 /* iTermBroadcastPasswordHelper.m in Sources */,
 				A67109AC240C677D0018631A /* NSEvent+iTerm.m in Sources */,
 				A6AC5D241E9036D70097C0A7 /* iTermURLMark.m in Sources */,
@@ -14871,6 +14878,7 @@
 				A62D43922328C63B0038F565 /* NSWindow+iTerm.m in Sources */,
 				A6C1FD521FC2AC9B006B9A69 /* iTermMarginRenderer.m in Sources */,
 				A621F11026F8E9E6001DD3A6 /* iTermTLVCodec.m in Sources */,
+				A67BCFE8270E702C00636983 /* VT100SavedColors.swift in Sources */,
 				A608F22120F07658008E8009 /* iTermImageMark.m in Sources */,
 				A61A859524EFA01800B03880 /* iTermBackgroundCommandRunner.m in Sources */,
 				A6153D5921F4EF1A002976FC /* iTermStatusBarTightlyPackedLayoutAlgorithm.m in Sources */,

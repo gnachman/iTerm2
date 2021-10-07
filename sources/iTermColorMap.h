@@ -33,6 +33,7 @@ extern const int kColorMapUnderline;
 // This value plus 0...255 are accepted. The ANSI colors below followed by their bright
 // variants make the first 16 entries of the 256-color space.
 extern const int kColorMap8bitBase;
+extern const int kColorMapNumberOf8BitColors;
 
 // The 8 basic ANSI colors, which are within the 8-bit color range. These are
 // the dark versions unless you add the bright modifier (add, don't OR).

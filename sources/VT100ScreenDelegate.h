@@ -297,5 +297,7 @@
                            metadata:(iTermMetadata)metadata
                              length:(int)length;
 - (void)screenApplicationKeypadModeDidChange:(BOOL)mode;
+- (VT100SavedColorsSlot *)screenSavedColorsSlot;
+- (void)screenRestoreColorsFromSlot:(VT100SavedColorsSlot *)slot;
 
 @end
