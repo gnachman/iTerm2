@@ -1186,6 +1186,41 @@ static const int kMaxScreenRows = 4096;
                 }
                 break;
 
+            case 15:  // Printer status
+                [_delegate terminalSendReport:[self.output reportDECDSR:13]];  // "No printer" since printing is unsupported.
+                break;
+
+            case 25:
+                [_delegate terminalSendReport:[self.output reportDECDSR:20]];  //  Locking is unsupported so report unlocked.
+                break;
+
+            // 26 might be nice to support some day.
+
+            case 53:
+            case 55:
+                [_delegate terminalSendReport:[self.output reportDECDSR:50]];  // Locator unavailable becuase DEC locator support unimplemented.
+                break;
+
+            case 56:
+                [_delegate terminalSendReport:[self.output reportDECDSR:57 :0]];  // No locator support
+                break;
+
+            case 62:  // Request DECMSR
+                [_delegate terminalSendReport:[self.output reportMacroSpace:0]];  // Macros are unsupported so report 0 space
+                break;
+
+            case 63:  // Request DECCKSR
+                [_delegate terminalSendReport:[self.output reportMemoryChecksum:0 id:token.csi->p[1]]];  // Memory checksum
+                break;
+
+            case 75: // Data integrity check
+                [_delegate terminalSendReport:[self.output reportDECDSR:70]];
+                break;
+
+            case 85:  // Multi-session configuration
+                [_delegate terminalSendReport:[self.output reportDECDSR:83]];
+                break;
+
             case 1337:  // iTerm2 extension
                 [_delegate terminalSendReport:[self.output reportiTerm2Version]];
                 break;

@@ -1225,4 +1225,21 @@ BOOL VT100OutputCursorInformationGetLineDrawingMode(VT100OutputCursorInformation
     return [[NSString stringWithFormat:@"\e[?%d;%d;%@S", item, status, value] dataUsingEncoding:NSUTF8StringEncoding];
 }
 
+- (NSData *)reportDECDSR:(int)code {
+    return [[NSString stringWithFormat:@"\e[?%dn", code] dataUsingEncoding:NSUTF8StringEncoding];
+}
+
+- (NSData *)reportDECDSR:(int)code :(int)subcode {
+    return [[NSString stringWithFormat:@"\e[?%d;%dn", code, subcode] dataUsingEncoding:NSUTF8StringEncoding];
+}
+
+- (NSData *)reportMacroSpace:(int)space {
+    return [[NSString stringWithFormat:@"\e[%04X*{", space] dataUsingEncoding:NSUTF8StringEncoding];
+}
+
+- (NSData *)reportMemoryChecksum:(int)checksum id:(int)reqid {
+    return [[NSString stringWithFormat:@"\eP%d!~%04X\e\\",
+             MAX(1, reqid), checksum] dataUsingEncoding:NSUTF8StringEncoding];
+}
+
 @end
