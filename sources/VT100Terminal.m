@@ -2483,6 +2483,14 @@ static const int kMaxScreenRows = 4096;
             [self executeDECSNLS:token.csi->p[0]];
             break;
 
+        case VT100CSI_DECIC:
+            [_delegate terminalInsertColumns:token.csi->p[0]];
+            break;
+
+        case VT100CSI_DECDC:
+            [_delegate terminalDeleteColumns:token.csi->p[0]];
+            break;
+
         case XTERMCC_PROPRIETARY_ETERM_EXT:
             [self executeXtermProprietaryEtermExtension:token];
             break;

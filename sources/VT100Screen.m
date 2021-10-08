@@ -5347,6 +5347,34 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     return [delegate_ screenMaximumTheoreticalImageDimension];
 }
 
+- (void)terminalInsertColumns:(int)n {
+    if ([self cursorOutsideLeftRightMargin] || [self cursorOutsideTopBottomMargin]) {
+        return;
+    }
+    if (n <= 0) {
+        return;
+    }
+    for (int y = currentGrid_.topMargin; y <= currentGrid_.bottomMargin; y++) {
+        [currentGrid_ insertChar:currentGrid_.defaultChar
+              externalAttributes:nil
+                              at:VT100GridCoordMake(currentGrid_.cursor.x, y)
+                           times:n];
+    }
+}
+
+- (void)terminalDeleteColumns:(int)n {
+    if ([self cursorOutsideLeftRightMargin] || [self cursorOutsideTopBottomMargin]) {
+        return;
+    }
+    if (n <= 0) {
+        return;
+    }
+    for (int y = currentGrid_.topMargin; y <= currentGrid_.bottomMargin; y++) {
+        [currentGrid_ deleteChars:n
+                       startingAt:VT100GridCoordMake(currentGrid_.cursor.x, y)];
+    }
+}
+
 #pragma mark - Private
 
 - (VT100GridCoordRange)commandRange {

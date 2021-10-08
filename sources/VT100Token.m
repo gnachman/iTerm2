@@ -155,6 +155,8 @@
                           @(VT100CSI_HPR):                    @"VT100CSI_HPR",
                           @(VT100CSI_DECSCPP):                @"VT100CSI_DECSCPP",
                           @(VT100CSI_DECSNLS):                @"VT100CSI_DECSNLS",
+                          @(VT100CSI_DECIC):                  @"VT100CSI_DECIC",
+                          @(VT100CSI_DECDC):                  @"VT100CSI_DECDC",
 
                           @(VT100_DECFI):                     @"VT100_DECFI",
                           @(VT100_DECBI):                     @"VT100_DECBI",
