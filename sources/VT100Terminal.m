@@ -98,6 +98,7 @@ NSString *const kTerminalStateKeyReportingModeStack_Alternate = @"Alternate Key 
 NSString *const kTerminalStateSynchronizedUpdates = @"Synchronized Updates";
 NSString *const kTerminalStatePreserveScreenOnDECCOLM = @"Preserve Screen On DECCOLM";
 NSString *const kTerminalStateSavedColors = @"Saved Colors";  // For XTPUSHCOLORS/XTPOPCOLORS
+NSString *const kTerminalStateAlternateScrollMode = @"Alternate Scroll Mode";
 
 @interface VT100Terminal ()
 @property(nonatomic, assign) BOOL reverseVideo;
@@ -345,6 +346,7 @@ static const int kMaxScreenRows = 4096;
     self.keypadMode = NO;
     self.reportKeyUp = NO;
     self.metaSendsEscape = NO;
+    _alternateScrollMode = NO;
     self.synchronizedUpdates = NO;
     _preserveScreenOnDECCOLM = NO;
     self.insertMode = NO;
@@ -719,6 +721,10 @@ static const int kMaxScreenRows = 4096;
                 } else {
                     self.mouseFormat = MOUSE_FORMAT_XTERM;
                 }
+                break;
+
+            case 1007:
+                _alternateScrollMode = mode;
                 break;
 
             case 1015:
@@ -1424,6 +1430,7 @@ static const int kMaxScreenRows = 4096;
 
     self.reportKeyUp = NO;
     self.metaSendsEscape = NO;
+    _alternateScrollMode = NO;
     self.synchronizedUpdates = NO;
     _preserveScreenOnDECCOLM = NO;
 
@@ -3484,6 +3491,7 @@ static const int kMaxScreenRows = 4096;
             // Sequence marking the start of the command prompt (FTCS_PROMPT_START)
             self.softAlternateScreenMode = NO;  // We can reasonably assume alternate screen mode has ended if there's a prompt. Could be ssh dying, etc.
             inCommand_ = NO;  // Issue 7954
+            _alternateScrollMode = NO;  // Avoid leaving it on when ssh dies.
             [_delegate terminalPromptDidStart];
             break;
 
@@ -3961,6 +3969,9 @@ static iTermDECRPMSetting VT100TerminalDECRPMSettingFromBoolean(BOOL flag) {
         case 1006:
             return VT100TerminalDECRPMSettingFromBoolean(self.mouseFormat == MOUSE_FORMAT_SGR);
 
+        case 1007:
+            return VT100TerminalDECRPMSettingFromBoolean(self.alternateScrollMode);
+
         case 1015:
             return VT100TerminalDECRPMSettingFromBoolean(self.mouseFormat == MOUSE_FORMAT_URXVT);
 
@@ -4126,6 +4137,7 @@ static iTermDECRPMSetting VT100TerminalDECRPMSettingFromBoolean(BOOL flag) {
            kTerminalStateKeypadModeKey: @(self.keypadMode),
            kTerminalStateReportKeyUp: @(self.reportKeyUp),
            kTerminalStateMetaSendsEscape: @(self.metaSendsEscape),
+           kTerminalStateAlternateScrollMode: @(self.alternateScrollMode),
            kTerminalStateSendModifiers: _sendModifiers ?: @[],
            kTerminalStateKeyReportingModeStack_Main: _mainKeyReportingModeStack.copy,
            kTerminalStateKeyReportingModeStack_Alternate: _alternateKeyReportingModeStack.copy,
@@ -4183,6 +4195,7 @@ static iTermDECRPMSetting VT100TerminalDECRPMSettingFromBoolean(BOOL flag) {
     self.keypadMode = [dict[kTerminalStateKeypadModeKey] boolValue];
     self.reportKeyUp = [dict[kTerminalStateReportKeyUp] boolValue];
     self.metaSendsEscape = [dict[kTerminalStateMetaSendsEscape] boolValue];
+    _alternateScrollMode = [dict[kTerminalStateAlternateScrollMode] boolValue];
     self.synchronizedUpdates = [dict[kTerminalStateSynchronizedUpdates] boolValue];
     _preserveScreenOnDECCOLM = [dict[kTerminalStatePreserveScreenOnDECCOLM] boolValue];
     _savedColors = [VT100SavedColors fromData:[NSData castFrom:dict[kTerminalStateSavedColors]]] ?: [[VT100SavedColors alloc] init];

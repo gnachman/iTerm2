@@ -42,6 +42,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)mouseHandlerUnlockScrolling:(PTYMouseHandler *)handler;
 - (void)mouseHandlerDidMutateState:(PTYMouseHandler *)handler;
 - (void)mouseHandlerDidInferScrollingIntent:(PTYMouseHandler *)handler trying:(BOOL)trying;
+- (BOOL)mouseHandlerAlternateScrollModeIsEnabled:(PTYMouseHandler *)handler;
 - (void)mouseHandlerOpenTargetWithEvent:(NSEvent *)event
                            inBackground:(BOOL)inBackground;
 - (BOOL)mouseHandlerIsScrolledToBottom:(PTYMouseHandler *)handler;

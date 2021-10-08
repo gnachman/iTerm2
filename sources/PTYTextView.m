@@ -5270,7 +5270,7 @@ allowDragBeforeMouseDown:(BOOL)allowDragBeforeMouseDown
                     latin1:(out BOOL *)forceLatin1 {
     const BOOL down = !up;
 
-    if ([iTermAdvancedSettingsModel alternateMouseScroll]) {
+    if ([self mouseHandlerAlternateScrollModeIsEnabled:mouseHandler]) {
         *forceLatin1 = YES;
         NSData *data = down ? [_dataSource.terminal.output keyArrowDown:flags] :
                               [_dataSource.terminal.output keyArrowUp:flags];
@@ -5281,6 +5281,13 @@ allowDragBeforeMouseDown:(BOOL)allowDragBeforeMouseDown
                                   [iTermAdvancedSettingsModel alternateMouseScrollStringForUp];
         return [string stringByExpandingVimSpecialCharacters];
     }
+}
+
+- (BOOL)mouseHandlerAlternateScrollModeIsEnabled:(PTYMouseHandler *)handler {
+    if ([iTermAdvancedSettingsModel alternateMouseScroll]) {
+        return YES;
+    }
+    return [self.dataSource.terminal alternateScrollMode];
 }
 
 - (BOOL)mouseHandlerShowingAlternateScreen:(PTYMouseHandler *)mouseHandler {

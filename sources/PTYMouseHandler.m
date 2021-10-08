@@ -1283,7 +1283,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         DLog(@"Not vertical");
         return NO;
     }
-    BOOL alternateMouseScroll = [iTermAdvancedSettingsModel alternateMouseScroll];
+    const BOOL alternateMouseScroll = [self.mouseDelegate mouseHandlerAlternateScrollModeIsEnabled:self];
     NSString *upString = [iTermAdvancedSettingsModel alternateMouseScrollStringForUp];
     NSString *downString = [iTermAdvancedSettingsModel alternateMouseScrollStringForDown];
 
