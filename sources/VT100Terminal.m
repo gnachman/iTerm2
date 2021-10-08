@@ -2479,6 +2479,10 @@ static const int kMaxScreenRows = 4096;
             [self executeDECSCPP:token.csi->p[0]];
             break;
 
+        case VT100CSI_DECSNLS:
+            [self executeDECSNLS:token.csi->p[0]];
+            break;
+
         case XTERMCC_PROPRIETARY_ETERM_EXT:
             [self executeXtermProprietaryEtermExtension:token];
             break;
@@ -4109,6 +4113,13 @@ typedef NS_ENUM(int, iTermDECRPMSetting)  {
     self.columnMode = (cols == 132);
     [_delegate terminalSetWidth:cols
                  preserveScreen:YES];
+}
+
+- (void)executeDECSNLS:(int)rows {
+    if (rows <= 0 || rows >= 256) {
+        return;
+    }
+    [_delegate terminalSetRows:rows andColumns:_delegate.terminalWidth];
 }
 
 - (void)sendGraphicsAttributeReportForToken:(VT100Token *)token

@@ -154,7 +154,8 @@
                           @(VT100CSI_SD):                     @"VT100CSI_SD",
                           @(VT100CSI_HPR):                    @"VT100CSI_HPR",
                           @(VT100CSI_DECSCPP):                @"VT100CSI_DECSCPP",
-                          
+                          @(VT100CSI_DECSNLS):                @"VT100CSI_DECSNLS",
+
                           @(VT100_DECFI):                     @"VT100_DECFI",
                           @(VT100_DECBI):                     @"VT100_DECBI",
                           @(VT100CSI_PUSH_KEY_REPORTING_MODE):@"VT100CSI_PUSH_KEY_REPORTING_MODE",

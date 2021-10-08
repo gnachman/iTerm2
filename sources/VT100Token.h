@@ -132,6 +132,7 @@ typedef enum {
     VT100CSI_SD,                    // Scroll down
     VT100CSI_HPR,                   // Character position relative
     VT100CSI_DECSCPP,               // Select 80 or 132 columns per page
+    VT100CSI_DECSNLS,               // Select number of lines per screen
 
     // https://sw.kovidgoyal.net/kitty/keyboard-protocol.html
     VT100CSI_PUSH_KEY_REPORTING_MODE,
