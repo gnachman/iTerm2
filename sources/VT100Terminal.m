@@ -2853,6 +2853,10 @@ static const int kMaxScreenRows = 4096;
     return [@(height) stringValue];
  }
 
+- (NSString *)decrqssDECSCPP {
+    return self.columnMode ? @"132" : @"80";
+}
+
 - (NSString *)decrqssPayload:(NSString *)pt {
     if ([pt isEqualToString:@"m"]) {
         return [self decrqssSGR];
@@ -2877,8 +2881,7 @@ static const int kMaxScreenRows = 4096;
         return [self decrqssDECSLPP];
     }
     if ([pt isEqualToString:@"$|"]) {
-        // Not supported because DECSCPP is unimplemented.
-        return nil;
+        return [self decrqssDECSCPP];
     }
     if ([pt isEqualToString:@"*|"]) {
         // Not supported because DECSNLS is unimplemented.
