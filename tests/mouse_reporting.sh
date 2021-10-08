@@ -43,7 +43,8 @@ read_x10()
 ordinal_for_next_byte_of_input()
 {
   c=$(read_bytes 1)
-  echo -n $c | od -t u1 -A n | sed -e 's/^ *//' | sed -e 's/  / /g' | sed -e 's/ *$//' | head -1
+  set -o noglob
+  echo -n "$c" | od -t u1 -A n | sed -e 's/^ *//' | sed -e 's/  / /g' | sed -e 's/ *$//' | head -1
 }
 
 ## Reads in a utf8 character and outputs its code point in decimal.

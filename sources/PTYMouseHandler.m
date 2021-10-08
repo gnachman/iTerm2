@@ -1139,6 +1139,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                   modifiers:event.it_modifierFlags
                                      button:[self mouseReportingButtonNumberForEvent:event]
                                  coordinate:coord
+                                      point:[self.mouseDelegate mouseHandlerReportablePointForPointInView:point]
                                       event:event
                                      deltaY:deltaY
                    allowDragBeforeMouseDown:_makingThreeFingerSelection

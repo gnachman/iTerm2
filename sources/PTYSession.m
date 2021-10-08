@@ -479,6 +479,7 @@ static const CGFloat PTYSessionMaximumMetalViewSize = 16384;
 
     // Mouse reporting state
     VT100GridCoord _lastReportedCoord;
+    NSPoint _lastReportedPoint;
 
     // Remembers if the mouse down was reported to decide if mouse up should also be reported.
     BOOL _reportingLeftMouseDown;
@@ -9620,6 +9621,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                        modifiers:(NSUInteger)modifiers
                           button:(MouseButtonNumber)button
                       coordinate:(VT100GridCoord)coord
+                           point:(NSPoint)point
                           deltaY:(CGFloat)deltaY
         allowDragBeforeMouseDown:(BOOL)allowDragBeforeMouseDown
                         testOnly:(BOOL)testOnly {
@@ -9638,9 +9640,11 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                     if (!testOnly) {
                         [self setReportingMouseDownForEventType:eventType];
                         _lastReportedCoord = coord;
+                        _lastReportedPoint = point;
                         [self writeLatin1EncodedData:[_terminal.output mousePress:button
                                                                     withModifiers:modifiers
-                                                                               at:coord]
+                                                                               at:coord
+                                                                            point:point]
                                     broadcastAllowed:NO];
                     }
                     return YES;
@@ -9670,15 +9674,18 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
             if ([self reportingMouseDownForEventType:eventType]) {
                 [self setReportingMouseDownForEventType:eventType];
                 _lastReportedCoord = VT100GridCoordMake(-1, -1);
+                _lastReportedPoint = NSMakePoint(-1, -1);
 
                 switch ([_terminal mouseMode]) {
                     case MOUSE_REPORTING_NORMAL:
                     case MOUSE_REPORTING_BUTTON_MOTION:
                     case MOUSE_REPORTING_ALL_MOTION:
                         _lastReportedCoord = coord;
+                        _lastReportedPoint = point;
                         [self writeLatin1EncodedData:[_terminal.output mouseRelease:button
                                                                       withModifiers:modifiers
-                                                                                 at:coord]
+                                                                                 at:coord
+                                                                              point:point]
                                     broadcastAllowed:NO];
                         return YES;
 
@@ -9697,11 +9704,16 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
             if (testOnly) {
                 return YES;
             }
-            if (!VT100GridCoordEquals(coord, _lastReportedCoord)) {
+            if ([_terminal.output shouldReportMouseMotionAtCoord:coord
+                                                       lastCoord:_lastReportedCoord
+                                                           point:point
+                                                       lastPoint:_lastReportedPoint]) {
                 _lastReportedCoord = coord;
+                _lastReportedPoint = point;
                 [self writeLatin1EncodedData:[_terminal.output mouseMotion:MOUSE_BUTTON_NONE
                                                              withModifiers:modifiers
-                                                                        at:coord]
+                                                                        at:coord
+                                                                     point:point]
                             broadcastAllowed:NO];
                 return YES;
             }
@@ -9724,15 +9736,20 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                 return NO;
             }
             if (([self reportingMouseDownForEventType:eventType] || allowDragBeforeMouseDown) &&
-                !VT100GridCoordEquals(coord, _lastReportedCoord)) {
+                [_terminal.output shouldReportMouseMotionAtCoord:coord
+                                                       lastCoord:_lastReportedCoord
+                                                           point:point
+                                                       lastPoint:_lastReportedPoint]) {
                 _lastReportedCoord = coord;
+                _lastReportedPoint = point;
 
                 switch ([_terminal mouseMode]) {
                     case MOUSE_REPORTING_BUTTON_MOTION:
                     case MOUSE_REPORTING_ALL_MOTION:
                         [self writeLatin1EncodedData:[_terminal.output mouseMotion:button
                                                                      withModifiers:modifiers
-                                                                                at:coord]
+                                                                                at:coord
+                                                                             point:point]
                                     broadcastAllowed:NO];
                         // Fall through
                     case MOUSE_REPORTING_NORMAL:
@@ -9774,7 +9791,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                         for (int i = 0; i < steps; i++) {
                             [self writeLatin1EncodedData:[_terminal.output mousePress:button
                                                                         withModifiers:modifiers
-                                                                                   at:coord]
+                                                                                   at:coord
+                                                                                point:point]
                                         broadcastAllowed:NO];
                         }
                         return YES;

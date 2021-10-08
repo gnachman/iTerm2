@@ -674,40 +674,84 @@ typedef enum {
     return [[NSString stringWithFormat:@"\eO%@%@", modString, suffix] dataUsingEncoding:NSUTF8StringEncoding];
 }
 
-- (char *)mouseReport:(int)button atX:(int)x Y:(int)y {
-    static char buf[64]; // This should be enough for all formats.
+- (BOOL)shouldReportMouseMotionAtCoord:(VT100GridCoord)coord
+                             lastCoord:(VT100GridCoord)lastReportedCoord
+                                 point:(NSPoint)point
+                             lastPoint:(NSPoint)lastReportedPoint {
     switch (self.mouseFormat) {
+        case MOUSE_FORMAT_SGR_PIXEL:
+            return !NSEqualPoints(point, lastReportedPoint);
         case MOUSE_FORMAT_XTERM_EXT:
-            // TODO: This doesn' thandle positions greater than 223 correctly. It should use UTF-8.
-            snprintf(buf, sizeof(buf), "\033[M%c%lc%lc",
-                     (wint_t) (32 + button),
-                     (wint_t) (32 + x),
-                     (wint_t) (32 + y));
-            break;
         case MOUSE_FORMAT_URXVT:
-            snprintf(buf, sizeof(buf), "\033[%d;%d;%dM", 32 + button, x, y);
-            break;
         case MOUSE_FORMAT_SGR:
-            if (button & MOUSE_BUTTON_SGR_RELEASE_FLAG) {
-                // for mouse release event
-                snprintf(buf, sizeof(buf), "\033[<%d;%d;%dm",
-                         button ^ MOUSE_BUTTON_SGR_RELEASE_FLAG,
-                         x,
-                         y);
-            } else {
-                // for mouse press/motion event
-                snprintf(buf, sizeof(buf), "\033[<%d;%d;%dM", button, x, y);
-            }
-            break;
         case MOUSE_FORMAT_XTERM:
         default:
-            snprintf(buf, sizeof(buf), "\033[M%c%c%c", 32 + button, MIN(255, 32 + x), MIN(255, 32 + y));
-            break;
+            return !VT100GridCoordEquals(coord, lastReportedCoord);
     }
-    return buf;
 }
 
-- (NSData *)mousePress:(int)button withModifiers:(unsigned int)modflag at:(VT100GridCoord)coord {
+- (NSData *)mouseReport:(int)button coord:(VT100GridCoord)coord point:(NSPoint)point {
+    switch (self.mouseFormat) {
+        case MOUSE_FORMAT_XTERM_EXT: {
+            // TODO: This doesn't handle positions greater than 223 correctly. It should use UTF-8.
+            NSString *string = [NSString stringWithFormat:@"\e[M%@%@%@",
+                                [NSString stringWithLongCharacter:32 + button],
+                                [NSString stringWithLongCharacter:32 + coord.x],
+                                [NSString stringWithLongCharacter:32 + coord.y]];
+            return [string dataUsingEncoding:NSUTF8StringEncoding];
+        }
+        case MOUSE_FORMAT_URXVT:
+            return [[NSString stringWithFormat:@"\033[%d;%d;%dM", 32 + button, coord.x, coord.y]  dataUsingEncoding:NSUTF8StringEncoding];
+
+        case MOUSE_FORMAT_SGR:
+            return [[self reportForSGRButton:button x:coord.x y:coord.y]  dataUsingEncoding:NSUTF8StringEncoding];
+
+        case MOUSE_FORMAT_SGR_PIXEL:
+            return [[self reportForSGRButton:button x:point.x y:point.y]  dataUsingEncoding:NSUTF8StringEncoding];
+
+        case MOUSE_FORMAT_XTERM:
+        default:
+            return [[NSString stringWithFormat:@"\033[M%c%c%c", 32 + button, MIN(255, 32 + coord.x), MIN(255, 32 + coord.y)] dataUsingEncoding:NSISOLatin1StringEncoding];
+    }
+    return [NSData data];
+}
+
+- (NSString *)reportForSGRButton:(int)button x:(int)x y:(int)y {
+    if (button & MOUSE_BUTTON_SGR_RELEASE_FLAG) {
+        // Mouse release event.
+        return [NSString stringWithFormat:@"\033[<%d;%d;%dm",
+                 button ^ MOUSE_BUTTON_SGR_RELEASE_FLAG,
+                 x,
+                 y];
+    }
+    // Mouse press/motion event.
+    return [NSString stringWithFormat:@"\033[<%d;%d;%dM", button, x, y];
+}
+
+static int VT100OutputDoubleToInt(double d) {
+    const double rounded = round(d);
+    if (rounded < INT_MIN) {
+        return INT_MIN;
+    }
+    if (rounded > INT_MAX) {
+        return INT_MAX;
+    }
+    return (int)rounded;
+}
+
+static int VT100OutputSafeAddInt(int l, int r) {
+    long long temp = l;
+    temp += r;
+    if (temp < INT_MIN) {
+        return INT_MIN;
+    }
+    if (temp > INT_MAX) {
+        return INT_MAX;
+    }
+    return (int)temp;
+}
+
+- (NSData *)mousePress:(int)button withModifiers:(unsigned int)modflag at:(VT100GridCoord)coord point:(NSPoint)point {
     int cb;
 
     cb = button;
@@ -726,16 +770,18 @@ typedef enum {
     if (modflag & NSEventModifierFlagCommand) {
         cb |= MOUSE_BUTTON_META_FLAG;
     }
-    char *buf = [self mouseReport:cb atX:(coord.x + 1) Y:(coord.y + 1)];
-
-    return [NSData dataWithBytes: buf length: strlen(buf)];
+    return [self mouseReport:cb
+                       coord:VT100GridCoordMake((coord.x + 1),
+                                                (coord.y + 1))
+                       point:NSMakePoint(VT100OutputDoubleToInt(VT100OutputSafeAddInt(point.x, 1)),
+                                         VT100OutputDoubleToInt(VT100OutputSafeAddInt(point.y, 1)))];
 }
 
-- (NSData *)mouseRelease:(int)button withModifiers:(unsigned int)modflag at:(VT100GridCoord)coord {
+- (NSData *)mouseRelease:(int)button withModifiers:(unsigned int)modflag at:(VT100GridCoord)coord point:(NSPoint)point {
     int cb;
 
-    if (self.mouseFormat == MOUSE_FORMAT_SGR) {
-        // for SGR 1006 mode
+    if (self.mouseFormat == MOUSE_FORMAT_SGR || self.mouseFormat == MOUSE_FORMAT_SGR_PIXEL) {
+        // for SGR 1006 and 1016 modes
         cb = button | MOUSE_BUTTON_SGR_RELEASE_FLAG;
     } else {
         // for 1000/1005/1015 mode
@@ -754,12 +800,14 @@ typedef enum {
     if (modflag & NSEventModifierFlagCommand) {
         cb |= MOUSE_BUTTON_META_FLAG;
     }
-    char *buf = [self mouseReport:cb atX:(coord.x + 1) Y:(coord.y + 1)];
-
-    return [NSData dataWithBytes: buf length: strlen(buf)];
+    return [self mouseReport:cb
+                       coord:VT100GridCoordMake(coord.x + 1,
+                                                coord.y + 1)
+                       point:NSMakePoint(VT100OutputDoubleToInt(VT100OutputSafeAddInt(point.x, 1)),
+                                         VT100OutputDoubleToInt(VT100OutputSafeAddInt(point.y, 1)))];
 }
 
-- (NSData *)mouseMotion:(int)button withModifiers:(unsigned int)modflag at:(VT100GridCoord)coord {
+- (NSData *)mouseMotion:(int)button withModifiers:(unsigned int)modflag at:(VT100GridCoord)coord point:(NSPoint)point {
     int cb;
 
     if (button == MOUSE_BUTTON_NONE) {
@@ -779,9 +827,11 @@ typedef enum {
     if (modflag & NSEventModifierFlagCommand) {
         cb |= MOUSE_BUTTON_META_FLAG;
     }
-    char *buf = [self mouseReport:(32 + cb) atX:(coord.x + 1) Y:(coord.y + 1)];
-
-    return [NSData dataWithBytes: buf length: strlen(buf)];
+    return [self mouseReport:(32 + cb)
+                       coord:VT100GridCoordMake((coord.x + 1),
+                                                (coord.y + 1))
+                       point:NSMakePoint(VT100OutputDoubleToInt(VT100OutputSafeAddInt(point.x, 1)),
+                                         VT100OutputDoubleToInt(VT100OutputSafeAddInt(point.y, 1)))];
 }
 
 - (NSData *)reportiTerm2Version {

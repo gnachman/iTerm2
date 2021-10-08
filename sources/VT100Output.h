@@ -15,7 +15,8 @@ typedef NS_ENUM(NSInteger, MouseFormat) {
     MOUSE_FORMAT_XTERM = 0,       // Regular 1000 mode (limited to 223 rows/cols)
     MOUSE_FORMAT_XTERM_EXT = 1,   // UTF-8 1005 mode (does not pass through luit unchanged)
     MOUSE_FORMAT_URXVT = 2,       // rxvt's 1015 mode (outputs csi codes, that if echoed to the term, mess up the display)
-    MOUSE_FORMAT_SGR = 3          // SGR 1006 mode (preferred)
+    MOUSE_FORMAT_SGR = 3,         // SGR 1006 mode (preferred)
+    MOUSE_FORMAT_SGR_PIXEL = 4,   // xterm's SGR 1016 mode (like 1006 but pixels instead of cells)
 };
 
 typedef NS_ENUM(NSInteger, VT100EmulationLevel) {
@@ -83,9 +84,13 @@ BOOL VT100OutputCursorInformationGetLineDrawingMode(VT100OutputCursorInformation
 - (NSData *)keyFunction:(int)no modifiers:(NSEventModifierFlags)modifiers;
 - (NSData *)keypadDataForString:(NSString *)keystr modifiers:(NSEventModifierFlags)modifiers;
 
-- (NSData *)mousePress:(int)button withModifiers:(unsigned int)modflag at:(VT100GridCoord)coord;
-- (NSData *)mouseRelease:(int)button withModifiers:(unsigned int)modflag at:(VT100GridCoord)coord;
-- (NSData *)mouseMotion:(int)button withModifiers:(unsigned int)modflag at:(VT100GridCoord)coord;
+- (NSData *)mousePress:(int)button withModifiers:(unsigned int)modflag at:(VT100GridCoord)coord point:(NSPoint)point;
+- (NSData *)mouseRelease:(int)button withModifiers:(unsigned int)modflag at:(VT100GridCoord)coord point:(NSPoint)point;
+- (NSData *)mouseMotion:(int)button withModifiers:(unsigned int)modflag at:(VT100GridCoord)coord point:(NSPoint)point;
+- (BOOL)shouldReportMouseMotionAtCoord:(VT100GridCoord)coord
+                             lastCoord:(VT100GridCoord)lastReportedCoord
+                                 point:(NSPoint)point
+                             lastPoint:(NSPoint)lastReportedPoint;
 
 - (NSData *)reportActivePositionWithX:(int)x Y:(int)y withQuestion:(BOOL)q;
 - (NSData *)reportStatus;

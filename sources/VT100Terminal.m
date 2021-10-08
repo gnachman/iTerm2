@@ -735,6 +735,14 @@ static const int kMaxScreenRows = 4096;
                 }
                 break;
 
+            case 1016:
+                if (mode) {
+                    self.mouseFormat = MOUSE_FORMAT_SGR_PIXEL;
+                } else {
+                    self.mouseFormat = MOUSE_FORMAT_XTERM;
+                }
+                break;
+
             case 1036:
                 self.metaSendsEscape = mode;
                 break;
@@ -3974,6 +3982,9 @@ static iTermDECRPMSetting VT100TerminalDECRPMSettingFromBoolean(BOOL flag) {
 
         case 1015:
             return VT100TerminalDECRPMSettingFromBoolean(self.mouseFormat == MOUSE_FORMAT_URXVT);
+
+        case 10016:
+            return VT100TerminalDECRPMSettingFromBoolean(self.mouseFormat == MOUSE_FORMAT_SGR_PIXEL);
 
         case 1036:
             return VT100TerminalDECRPMSettingFromBoolean(self.metaSendsEscape);

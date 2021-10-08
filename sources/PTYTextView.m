@@ -5115,6 +5115,15 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     return coord;
 }
 
+- (NSPoint)mouseHandlerReportablePointForPointInView:(NSPoint)point {
+    NSRect liveRect = [self liveRect];
+    const NSPoint limit = NSMakePoint(_charWidth * self.dataSource.width - 1,
+                                      _lineHeight * self.dataSource.height - 1);
+    return NSMakePoint(MAX(0, MIN(limit.x, point.x - liveRect.origin.x)),
+                       MAX(0, MIN(limit.y, point.y - liveRect.origin.y)));
+
+}
+
 - (BOOL)mouseHandlerCanWriteToTTY:(PTYMouseHandler *)handler {
     return [self.delegate textViewCanWriteToTTY];
 }
@@ -5198,6 +5207,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
            modifiers:(NSUInteger)modifiers
               button:(MouseButtonNumber)button
           coordinate:(VT100GridCoord)coord
+               point:(NSPoint)point
               event:(NSEvent *)event
               deltaY:(CGFloat)deltaY
 allowDragBeforeMouseDown:(BOOL)allowDragBeforeMouseDown
@@ -5206,6 +5216,7 @@ allowDragBeforeMouseDown:(BOOL)allowDragBeforeMouseDown
                                      modifiers:modifiers
                                         button:button
                                     coordinate:coord
+                                         point:point
                                         deltaY:deltaY
                       allowDragBeforeMouseDown:allowDragBeforeMouseDown
                                       testOnly:testOnly];

@@ -48,6 +48,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (BOOL)mouseHandlerIsScrolledToBottom:(PTYMouseHandler *)handler;
 - (VT100GridCoord)mouseHandlerCoordForPointInWindow:(NSPoint)point;
 - (VT100GridCoord)mouseHandlerCoordForPointInView:(NSPoint)point;
+- (NSPoint)mouseHandlerReportablePointForPointInView:(NSPoint)point;
 - (void)mouseHandlerMoveCursorToCoord:(VT100GridCoord)coord
                              forEvent:(NSEvent *)event;
 - (void)mouseHandlerSetFindOnPageCursorCoord:(VT100GridCoord)clickPoint;
@@ -67,7 +68,8 @@ NS_ASSUME_NONNULL_BEGIN
            modifiers:(NSUInteger)modifiers
               button:(MouseButtonNumber)button
           coordinate:(VT100GridCoord)coord
-               event:(NSEvent *)vent
+               point:(NSPoint)point
+               event:(NSEvent *)event
               deltaY:(CGFloat)deltaY
 allowDragBeforeMouseDown:(BOOL)allowDragBeforeMouseDown
             testOnly:(BOOL)testOnly;
