@@ -153,7 +153,8 @@
                           @(VT100CSI_DECRQPSR):               @"VT100CSI_DECRQPSR",
                           @(VT100CSI_SD):                     @"VT100CSI_SD",
                           @(VT100CSI_HPR):                    @"VT100CSI_HPR",
-
+                          @(VT100CSI_DECSCPP):                @"VT100CSI_DECSCPP",
+                          
                           @(VT100_DECFI):                     @"VT100_DECFI",
                           @(VT100_DECBI):                     @"VT100_DECBI",
                           @(VT100CSI_PUSH_KEY_REPORTING_MODE):@"VT100CSI_PUSH_KEY_REPORTING_MODE",
@@ -212,6 +213,9 @@
                           @(XTERMCC_LINK):                    @"XTERMCC_LINK",
                           @(XTERMCC_TEXT_BACKGROUND_COLOR):   @"XTERMCC_TEXT_BACKGROUND_COLOR",
                           @(XTERMCC_TEXT_FOREGROUND_COLOR):   @"XTERMCC_TEXT_FOREGROUND_COLOR",
+                          @(XTERMCC_XTPUSHSGR):               @"XTERMCC_XTPUSHSGR",
+                          @(XTERMCC_XTPOPSGR):                @"XTERMCC_XTPOPSGR",
+
                           @(ANSICSI_CHA):                     @"ANSICSI_CHA",
                           @(ANSICSI_VPA):                     @"ANSICSI_VPA",
                           @(ANSICSI_VPR):                     @"ANSICSI_VPR",

@@ -23,7 +23,7 @@ typedef struct {
     BOOL reversed;
     BOOL faint;
     BOOL italic;
-    // TODO: Add invisible and protected
+    // TODO: Add protected
 
     int fgColorCode;
     int fgGreen;

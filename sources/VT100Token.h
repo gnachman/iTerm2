@@ -118,6 +118,8 @@ typedef enum {
     XTERMCC_XTPOPCOLORS,            // Pop colors
     XTERMCC_XTREPORTCOLORS,         // Report current entry on plaette stack
     XTERMCC_XTSMGRAPHICS,           // Set or request graphics attributes
+    XTERMCC_XTPUSHSGR,              // Push video attributes
+    XTERMCC_XTPOPSGR,               // Pop video attributes
 
     VT100CSI_DECSLRM,               // Set left-right margin
     VT100CSI_DECRQCRA,              // Request Checksum of Rectangular Area
@@ -129,6 +131,7 @@ typedef enum {
     VT100CSI_DECRQPSR,              // Request presentation state report
     VT100CSI_SD,                    // Scroll down
     VT100CSI_HPR,                   // Character position relative
+    VT100CSI_DECSCPP,               // Select 80 or 132 columns per page
 
     // https://sw.kovidgoyal.net/kitty/keyboard-protocol.html
     VT100CSI_PUSH_KEY_REPORTING_MODE,

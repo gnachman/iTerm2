@@ -99,6 +99,9 @@ NSString *const kTerminalStateSynchronizedUpdates = @"Synchronized Updates";
 NSString *const kTerminalStatePreserveScreenOnDECCOLM = @"Preserve Screen On DECCOLM";
 NSString *const kTerminalStateSavedColors = @"Saved Colors";  // For XTPUSHCOLORS/XTPOPCOLORS
 NSString *const kTerminalStateAlternateScrollMode = @"Alternate Scroll Mode";
+NSString *const kTerminalStateSGRStack = @"SGR Stack";
+
+static const size_t VT100TerminalMaxSGRStackEntries = 10;
 
 @interface VT100Terminal ()
 @property(nonatomic, assign) BOOL reverseVideo;
@@ -130,6 +133,26 @@ typedef struct {
     NSInteger unicodeVersion;
 } VT100SavedCursor;
 
+typedef enum {
+    VT100SGRStackAttributeBold = 1,
+    VT100SGRStackAttributeFaint = 2,
+    VT100SGRStackAttributeItalicized = 3,
+    VT100SGRStackAttributeUnderlined = 4,
+    VT100SGRStackAttributeBlink = 5,
+    VT100SGRStackAttributeInverse = 7,
+    VT100SGRStackAttributeInvisible = 8,
+    VT100SGRStackAttributeStrikethrough = 9,
+    VT100SGRStackAttributeDoubleUnderline = 21,
+    VT100SGRStackAttributeForegroundColor = 30,
+    VT100SGRStackAttributeBackgroundColor = 31,
+} VT100SGRStackAttribute;
+
+typedef struct {
+    VT100GraphicRendition graphicRendition;
+    VT100SGRStackAttribute elements[VT100CSIPARAM_MAX];
+    int numElements;
+} VT100TerminalSGRStackEntry;
+
 @interface VT100Terminal()
 @property (nonatomic, strong, readwrite) NSMutableArray<NSNumber *> *sendModifiers;
 @end
@@ -153,6 +176,8 @@ typedef struct {
     NSMutableArray<NSNumber *> *_mainKeyReportingModeStack;
     NSMutableArray<NSNumber *> *_alternateKeyReportingModeStack;
     VT100SavedColors *_savedColors;
+    VT100TerminalSGRStackEntry _sgrStack[VT100TerminalMaxSGRStackEntries];
+    int _sgrStackSize;
 }
 
 @synthesize receivingFile = receivingFile_;
@@ -615,11 +640,22 @@ static const int kMaxScreenRows = 4096;
             case 2:
                 ansiMode_ = mode;
                 break;
-            case 3:
+            case 3:  // DECCOLM
                 if (self.allowColumnMode) {
+                    const BOOL changed = (self.columnMode != mode);
                     self.columnMode = mode;
+                    VT100GridCoord coord = VT100GridCoordMake(self.delegate.terminalCursorX,
+                                                              self.delegate.terminalCursorY);
                     [_delegate terminalSetWidth:(self.columnMode ? 132 : 80)
-                                 preserveScreen:self.preserveScreenOnDECCOLM];
+                                 preserveScreen:!changed || self.preserveScreenOnDECCOLM];
+                    if (changed) {
+                        [_delegate terminalSetUseColumnScrollRegion:NO];
+                        [_delegate terminalSetLeftMargin:0 rightMargin:[_delegate terminalWidth] - 1];
+                        [_delegate terminalSetScrollRegionTop:0
+                                                       bottom:_delegate.terminalHeight - 1];
+                    }
+                    [_delegate terminalSetCursorX:MIN(coord.x, self.delegate.terminalWidth)];
+                    [_delegate terminalSetCursorY:coord.y];
                 }
                 break;
             case 4:
@@ -2180,6 +2216,15 @@ static const int kMaxScreenRows = 4096;
             [self executeSetDynamicColor:VT100TerminalColorIndexText
                                      arg:token.string];
             break;
+
+        case XTERMCC_XTPUSHSGR:
+            [self executePushSGR:token];
+            break;
+
+        case XTERMCC_XTPOPSGR:
+            [self executePopSGR];
+            break;
+
         case XTERMCC_TEXT_BACKGROUND_COLOR:
             [self executeSetDynamicColor:VT100TerminalColorIndexBackground
                                      arg:token.string];
@@ -2429,6 +2474,10 @@ static const int kMaxScreenRows = 4096;
             [self.delegate terminalDidChangeSendModifiers];
             break;
         }
+
+        case VT100CSI_DECSCPP:
+            [self executeDECSCPP:token.csi->p[0]];
+            break;
 
         case XTERMCC_PROPRIETARY_ETERM_EXT:
             [self executeXtermProprietaryEtermExtension:token];
@@ -3921,6 +3970,144 @@ typedef NS_ENUM(int, iTermDECRPMSetting)  {
     [self sendGraphicsAttributeReportForToken:token status:0 value:[NSString stringWithFormat:@"%d;%d", maxDimension, maxDimension]];
 }
 
+- (void)executePushSGR:(VT100Token *)token {
+    if (_sgrStackSize == VT100TerminalMaxSGRStackEntries) {
+        return;
+    }
+    _sgrStack[_sgrStackSize].graphicRendition = self.graphicRendition;
+    int j = 0;
+    if (token.csi->count == 0) {
+        const int values[] = {
+            VT100SGRStackAttributeBold,
+            VT100SGRStackAttributeFaint,
+            VT100SGRStackAttributeItalicized,
+            VT100SGRStackAttributeUnderlined,
+            VT100SGRStackAttributeBlink,
+            VT100SGRStackAttributeInverse,
+            VT100SGRStackAttributeInvisible,
+            VT100SGRStackAttributeStrikethrough,
+            VT100SGRStackAttributeDoubleUnderline,
+            VT100SGRStackAttributeForegroundColor,
+            VT100SGRStackAttributeBackgroundColor,
+        };
+        for (int i = 0; i < sizeof(values) / sizeof(*values); i++) {
+            _sgrStack[_sgrStackSize].elements[j++] = values[i];
+        }
+    } else {
+        for (int i = 0; i < token.csi->count; i++) {
+            const int attr = token.csi->p[i];
+            _sgrStack[_sgrStackSize].elements[j++] = attr;
+        }
+    }
+    _sgrStack[_sgrStackSize].numElements = j;
+    _sgrStackSize += 1;
+}
+
+- (void)executePopSGR {
+    if (_sgrStackSize == 0) {
+        return;
+    }
+    _sgrStackSize -= 1;
+    VT100TerminalSGRStackEntry entry = _sgrStack[_sgrStackSize];
+
+    VT100Token *token = [VT100Token token];
+    token->type = VT100CSI_SGR;
+    token.string = nil;
+
+    VT100UnderlineStyle desiredUnderlineStyle = 0;
+    int wantUnderline = -1;  // -1: no opinion, 0: no, 1: yes
+
+    for (int i = 0; i < entry.numElements; i++) {
+        switch (entry.elements[i]) {
+            case VT100SGRStackAttributeBold:
+                graphicRendition_.bold = entry.graphicRendition.bold;
+                break;
+
+            case VT100SGRStackAttributeFaint:
+                graphicRendition_.faint = entry.graphicRendition.faint;
+                break;
+
+            case VT100SGRStackAttributeItalicized:
+                graphicRendition_.italic = entry.graphicRendition.italic;
+                break;
+
+            case VT100SGRStackAttributeUnderlined:
+                if (entry.graphicRendition.underline && (entry.graphicRendition.underlineStyle == VT100UnderlineStyleSingle ||
+                                                         entry.graphicRendition.underlineStyle == VT100UnderlineStyleCurly)) {
+                    wantUnderline = 1;
+                    desiredUnderlineStyle = entry.graphicRendition.underlineStyle;
+                } else if (!entry.graphicRendition.underline) {
+                    wantUnderline = 0;
+                }
+                break;
+
+            case VT100SGRStackAttributeBlink:
+                graphicRendition_.blink = entry.graphicRendition.blink;
+                break;
+
+            case VT100SGRStackAttributeInverse:
+                graphicRendition_.reversed = entry.graphicRendition.reversed;
+                break;
+
+            case VT100SGRStackAttributeInvisible:
+                graphicRendition_.invisible = entry.graphicRendition.invisible;
+                break;
+
+            case VT100SGRStackAttributeStrikethrough:
+                graphicRendition_.strikethrough = entry.graphicRendition.strikethrough;
+                break;
+
+            case VT100SGRStackAttributeDoubleUnderline:
+                if (entry.graphicRendition.underline && entry.graphicRendition.underlineStyle == VT100UnderlineStyleDouble) {
+                    wantUnderline = 1;
+                    desiredUnderlineStyle = entry.graphicRendition.underlineStyle;
+                } else if (!entry.graphicRendition.underline) {
+                    wantUnderline = 0;
+                }
+                break;
+
+            case VT100SGRStackAttributeForegroundColor:
+                graphicRendition_.fgColorMode = entry.graphicRendition.fgColorMode;
+                graphicRendition_.fgColorCode = entry.graphicRendition.fgColorCode;
+                graphicRendition_.fgGreen = entry.graphicRendition.fgGreen;
+                graphicRendition_.fgBlue = entry.graphicRendition.fgBlue;
+                break;
+
+            case VT100SGRStackAttributeBackgroundColor:
+                graphicRendition_.bgColorMode = entry.graphicRendition.bgColorMode;
+                graphicRendition_.bgColorCode = entry.graphicRendition.bgColorCode;
+                graphicRendition_.bgGreen = entry.graphicRendition.bgGreen;
+                graphicRendition_.bgBlue = entry.graphicRendition.bgBlue;
+                break;
+        }
+        if (wantUnderline != -1) {
+            graphicRendition_.underline = !!wantUnderline;
+            if (wantUnderline) {
+                graphicRendition_.underlineStyle = desiredUnderlineStyle;
+            }
+        }
+    }
+}
+
+- (void)executeDECSCPP:(int)param {
+    int cols = 0;
+    switch (param) {
+        case 0:
+        case 80:
+            cols = 80;
+            break;
+        case 132:
+            cols = 132;
+            break;
+    }
+    if (cols == 0) {
+        return;
+    }
+    self.columnMode = (cols == 132);
+    [_delegate terminalSetWidth:cols
+                 preserveScreen:YES];
+}
+
 - (void)sendGraphicsAttributeReportForToken:(VT100Token *)token
                                      status:(int)status
                                       value:(NSString *)value {
@@ -4240,6 +4427,7 @@ static iTermDECRPMSetting VT100TerminalDECRPMSettingFromBoolean(BOOL flag) {
            kTerminalStateReportKeyUp: @(self.reportKeyUp),
            kTerminalStateMetaSendsEscape: @(self.metaSendsEscape),
            kTerminalStateAlternateScrollMode: @(self.alternateScrollMode),
+           kTerminalStateSGRStack: [self sgrStack],
            kTerminalStateSendModifiers: _sendModifiers ?: @[],
            kTerminalStateKeyReportingModeStack_Main: _mainKeyReportingModeStack.copy,
            kTerminalStateKeyReportingModeStack_Alternate: _alternateKeyReportingModeStack.copy,
@@ -4298,6 +4486,7 @@ static iTermDECRPMSetting VT100TerminalDECRPMSettingFromBoolean(BOOL flag) {
     self.reportKeyUp = [dict[kTerminalStateReportKeyUp] boolValue];
     self.metaSendsEscape = [dict[kTerminalStateMetaSendsEscape] boolValue];
     _alternateScrollMode = [dict[kTerminalStateAlternateScrollMode] boolValue];
+    [self setSGRStack:dict[kTerminalStateSGRStack]];
     self.synchronizedUpdates = [dict[kTerminalStateSynchronizedUpdates] boolValue];
     _preserveScreenOnDECCOLM = [dict[kTerminalStatePreserveScreenOnDECCOLM] boolValue];
     _savedColors = [VT100SavedColors fromData:[NSData castFrom:dict[kTerminalStateSavedColors]]] ?: [[VT100SavedColors alloc] init];
@@ -4357,6 +4546,64 @@ static iTermDECRPMSetting VT100TerminalDECRPMSettingFromBoolean(BOOL flag) {
     } else {
         return unsafeTitle;
     }
+}
+
+- (NSArray<NSDictionary *> *)sgrStack {
+    NSMutableArray *result = [NSMutableArray array];
+    for (int i = 0; i < _sgrStackSize; i++) {
+        NSMutableArray<NSNumber *> *elements = [NSMutableArray array];
+        for (int j = 0; j < _sgrStack[i].numElements; j++) {
+            [elements addObject:@(_sgrStack[i].elements[j])];
+        }
+        [result addObject:@{ @"state": [self dictionaryForGraphicRendition:_sgrStack[i].graphicRendition],
+                             @"elements": elements }];
+    }
+    return result;
+}
+
+- (void)setSGRStack:(id)obj {
+    NSArray *array = [NSArray castFrom:obj];
+    if (!array) {
+        _sgrStackSize = 0;
+        return;
+    }
+    [array enumerateObjectsUsingBlock:^(id  _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+        if (idx >= VT100TerminalMaxSGRStackEntries) {
+            *stop = YES;
+            return;
+        }
+        NSDictionary *dict = [NSDictionary castFrom:obj];
+        if (!dict) {
+            *stop = YES;
+            return;
+        }
+        NSDictionary *state = [NSDictionary castFrom:dict[@"state"]];
+        if (!state) {
+            *stop = YES;
+            return;
+        }
+        self->_sgrStack[idx].graphicRendition = [self graphicRenditionFromDictionary:state];
+        NSArray *elements = [NSArray castFrom:dict[@"elements"]];
+        if (!elements) {
+            *stop = YES;
+            return;
+        }
+        if (elements.count > VT100CSIPARAM_MAX) {
+            *stop = YES;
+            return;
+        }
+        if ([elements anyWithBlock:^BOOL(id anObject) {
+            return ![anObject isKindOfClass:[NSNumber class]];
+        }]) {
+            *stop = YES;
+            return;
+        }
+        [elements enumerateObjectsUsingBlock:^(NSNumber *_Nonnull n, NSUInteger j, BOOL * _Nonnull stop) {
+            _sgrStack[idx].elements[j] = n.intValue;
+        }];
+        _sgrStack[idx].numElements = elements.count;
+        _sgrStackSize = idx;
+    }];
 }
 
 @end
