@@ -44,6 +44,7 @@
 
 // Change the cursor's appearance.
 - (void)screenSetCursorBlinking:(BOOL)blink;
+- (BOOL)screenCursorIsBlinking;
 - (void)screenSetCursorType:(ITermCursorType)type;
 
 - (void)screenGetCursorType:(ITermCursorType *)cursorTypeOut

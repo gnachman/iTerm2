@@ -839,7 +839,7 @@ typedef enum {
     // 15: Technical character set
     // 16: Locator port  (this is like a mouse; see CSI 'z)
     // 17: Terminal state interrogation (see below)
-    // 18: Windowing capability (I think this means you need to support rectangle operations and DECSLRM)
+    // 18: Windowing capability (I think this means you need to support rectangle operations and DECSLRM; xterm also mentions: DECSNLS, DECSCPP, DECSLPP)
     // 21: Horizontal scrolling (based on mintty I think this means the SL and SR codes)
     // 22: ANSI color, VT525 (the vt525 was a color version of the vt520)
     // 28: rectangular editing

@@ -3704,6 +3704,10 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     [delegate_ screenSetCursorBlinking:blinking];
 }
 
+- (BOOL)terminalCursorIsBlinking {
+    return [delegate_ screenCursorIsBlinking];
+}
+
 - (void)terminalGetCursorType:(ITermCursorType *)cursorTypeOut
                      blinking:(BOOL *)blinking {
     [delegate_ screenGetCursorType:cursorTypeOut blinking:blinking];

@@ -10889,7 +10889,13 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)screenSetCursorBlinking:(BOOL)blink {
-    [[self textview] setBlinkingCursor:blink];
+    // This doesn't update the profile because we want reset to be able to restore it to the
+    // profile's value. It does mean the session profile won't reflect that the cursor is blinking.
+    self.textview.blinkingCursor = blink;
+}
+
+- (BOOL)screenCursorIsBlinking {
+    return self.textview.blinkingCursor;
 }
 
 - (void)screenResetCursorTypeAndBlink {

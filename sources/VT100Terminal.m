@@ -636,6 +636,9 @@ static const int kMaxScreenRows = 4096;
             case 9:
                 // TODO: This should send mouse x&y on button press.
                 break;
+            case 12:
+                [_delegate terminalSetCursorBlinking:mode];
+                break;
             case 20:
                 // This used to be the setter for "line mode", but it wasn't used and it's not
                 // supported by xterm. Seemed to have something to do with CR vs LF.
@@ -678,6 +681,7 @@ static const int kMaxScreenRows = 4096;
                 [_delegate terminalSetUseColumnScrollRegion:mode];
                 break;
 
+                // TODO: 80 - DECSDM
             case 1000:
             // case 1001:
             // TODO: MOUSE_REPORTING_HIGHLIGHT not implemented.
@@ -3904,6 +3908,9 @@ static iTermDECRPMSetting VT100TerminalDECRPMSettingFromBoolean(BOOL flag) {
             return VT100TerminalDECRPMSettingFromBoolean(self.autorepeatMode);
         case 9:
             // TODO: This should send mouse x&y on button press.
+            break;
+        case 12:
+            return VT100TerminalDECRPMSettingFromBoolean([self.delegate terminalCursorIsBlinking]);
             break;
         case 20:
             // This used to be the setter for "line mode", but it wasn't used and it's not
