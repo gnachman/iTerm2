@@ -3744,15 +3744,17 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     }
 }
 
-- (void)terminalSetWidth:(int)width {
+- (void)terminalSetWidth:(int)width preserveScreen:(BOOL)preserveScreen {
     if ([delegate_ screenShouldInitiateWindowResize] &&
         ![delegate_ screenWindowIsFullscreen]) {
         // set the column
         [delegate_ screenResizeToWidth:width
                                 height:currentGrid_.size.height];
-        [self terminalEraseInDisplayBeforeCursor:YES afterCursor:YES];  // erase the screen
-        currentGrid_.cursorX = 0;
-        currentGrid_.cursorY = 0;
+        if (!preserveScreen) {
+            [self terminalEraseInDisplayBeforeCursor:YES afterCursor:YES];  // erase the screen
+            currentGrid_.cursorX = 0;
+            currentGrid_.cursorY = 0;
+        }
     }
 }
 

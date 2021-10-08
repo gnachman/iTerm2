@@ -124,6 +124,7 @@ typedef NS_OPTIONS(int, VT100TerminalKeyReportingFlags) {
 
 @property(nonatomic, readonly) VT100TerminalKeyReportingFlags keyReportingFlags;
 @property(nonatomic, readonly) BOOL synchronizedUpdates;
+@property(nonatomic, readonly) BOOL preserveScreenOnDECCOLM;
 
 - (void)setStateFromDictionary:(NSDictionary *)dict;
 

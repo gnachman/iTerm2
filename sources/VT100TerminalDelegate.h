@@ -163,7 +163,7 @@ typedef NS_ENUM(int, VT100TerminalColorIndex) {
 - (void)terminalSetTabStops:(NSArray<NSNumber *> *)tabStops;
 
 // Tries to resize the screen to |width|.
-- (void)terminalSetWidth:(int)width;
+- (void)terminalSetWidth:(int)width preserveScreen:(BOOL)preserveScreen;
 
 // Moves cursor to previous tab stop.
 - (void)terminalBackTab:(int)n;

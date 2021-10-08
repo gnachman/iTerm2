@@ -96,6 +96,7 @@ NSString *const kTerminalStateKeyReportingModeStack_Deprecated = @"Key Reporting
 NSString *const kTerminalStateKeyReportingModeStack_Main = @"Main Key Reporting Mode Stack";
 NSString *const kTerminalStateKeyReportingModeStack_Alternate = @"Alternate Key Reporting Mode Stack";
 NSString *const kTerminalStateSynchronizedUpdates = @"Synchronized Updates";
+NSString *const kTerminalStatePreserveScreenOnDECCOLM = @"Preserve Screen On DECCOLM";
 NSString *const kTerminalStateSavedColors = @"Saved Colors";  // For XTPUSHCOLORS/XTPOPCOLORS
 
 @interface VT100Terminal ()
@@ -345,6 +346,7 @@ static const int kMaxScreenRows = 4096;
     self.reportKeyUp = NO;
     self.metaSendsEscape = NO;
     self.synchronizedUpdates = NO;
+    _preserveScreenOnDECCOLM = NO;
     self.insertMode = NO;
     self.sendReceiveMode = NO;
     self.bracketedPasteMode = NO;
@@ -406,7 +408,7 @@ static const int kMaxScreenRows = 4096;
                 resetParser:(BOOL)resetParser
               modifyContent:(BOOL)modifyContent {
     if (canResize && _columnMode) {
-        [_delegate terminalSetWidth:80];
+        [_delegate terminalSetWidth:80 preserveScreen:NO];
     }
     self.columnMode = NO;
     [self commonReset];
@@ -613,7 +615,8 @@ static const int kMaxScreenRows = 4096;
             case 3:
                 if (self.allowColumnMode) {
                     self.columnMode = mode;
-                    [_delegate terminalSetWidth:(self.columnMode ? 132 : 80)];
+                    [_delegate terminalSetWidth:(self.columnMode ? 132 : 80)
+                                 preserveScreen:self.preserveScreenOnDECCOLM];
                 }
                 break;
             case 4:
@@ -682,6 +685,9 @@ static const int kMaxScreenRows = 4096;
                 break;
 
                 // TODO: 80 - DECSDM
+            case 95:
+                _preserveScreenOnDECCOLM = mode;
+                break;
             case 1000:
             // case 1001:
             // TODO: MOUSE_REPORTING_HIGHLIGHT not implemented.
@@ -1419,6 +1425,7 @@ static const int kMaxScreenRows = 4096;
     self.reportKeyUp = NO;
     self.metaSendsEscape = NO;
     self.synchronizedUpdates = NO;
+    _preserveScreenOnDECCOLM = NO;
 
     // Set WRAPROUND to initial value
     self.wraparoundMode = YES;
@@ -3937,7 +3944,8 @@ static iTermDECRPMSetting VT100TerminalDECRPMSettingFromBoolean(BOOL flag) {
 
         case 69:
             return VT100TerminalDECRPMSettingFromBoolean([_delegate terminalUseColumnScrollRegion]);
-
+        case 95:
+            return VT100TerminalDECRPMSettingFromBoolean(self.preserveScreenOnDECCOLM);
         case 1000:
         case 1001:
         case 1002:
@@ -4138,6 +4146,7 @@ static iTermDECRPMSetting VT100TerminalDECRPMSettingFromBoolean(BOOL flag) {
            kTerminalStateURL: self.url ?: [NSNull null],
            kTerminalStateURLParams: self.urlParams ?: [NSNull null],
            kTerminalStateSynchronizedUpdates: @(self.synchronizedUpdates),
+           kTerminalStatePreserveScreenOnDECCOLM: @(self.preserveScreenOnDECCOLM),
            kTerminalStateSavedColors: _savedColors.plist
         };
     return [dict dictionaryByRemovingNullValues];
@@ -4175,6 +4184,7 @@ static iTermDECRPMSetting VT100TerminalDECRPMSettingFromBoolean(BOOL flag) {
     self.reportKeyUp = [dict[kTerminalStateReportKeyUp] boolValue];
     self.metaSendsEscape = [dict[kTerminalStateMetaSendsEscape] boolValue];
     self.synchronizedUpdates = [dict[kTerminalStateSynchronizedUpdates] boolValue];
+    _preserveScreenOnDECCOLM = [dict[kTerminalStatePreserveScreenOnDECCOLM] boolValue];
     _savedColors = [VT100SavedColors fromData:[NSData castFrom:dict[kTerminalStateSavedColors]]] ?: [[VT100SavedColors alloc] init];
 
     if (!_sendModifiers) {
