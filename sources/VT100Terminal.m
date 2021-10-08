@@ -660,25 +660,6 @@ static const int kMaxScreenRows = 4096;
             case 45:
                 self.reverseWraparoundMode = mode;
                 break;
-            case 47:
-                // alternate screen buffer mode
-                if (!self.disableSmcupRmcup) {
-                    if (mode) {
-                        int x = [_delegate terminalCursorX];
-                        int y = [_delegate terminalCursorY];
-                        [_delegate terminalShowAltBuffer];
-                        [_delegate terminalSetCursorX:x];
-                        [_delegate terminalSetCursorY:y];
-                    } else {
-                        int x = [_delegate terminalCursorX];
-                        int y = [_delegate terminalCursorY];
-                        [_delegate terminalShowPrimaryBuffer];
-                        [_delegate terminalSetCursorX:x];
-                        [_delegate terminalSetCursorY:y];
-                    }
-                }
-                self.softAlternateScreenMode = mode;
-                break;
             case 66:
                 self.keypadMode = mode;
                 break;
@@ -750,7 +731,64 @@ static const int kMaxScreenRows = 4096;
             case 1337:
                 self.reportKeyUp = mode;
                 break;
-                
+
+            // Here's how xterm behaves:
+            //        main -> alt                 alt -> main                     main -> main     alt -> alt
+            //      +----------------------------+-------------------------------+----------------+---------------------------+
+            //   47 |              switch        |        switch                 | noop           | noop                      |
+            // 1047 |              switch        | clear, switch                 | noop           | noop                      |
+            // 1049 | save cursor, switch, clear |        switch, restore cursor | restore cursor | save cursor, clear screen |
+            case 47:
+                // alternate screen buffer mode
+                if (!self.disableSmcupRmcup) {
+                    if (mode) {
+                        const int x = [_delegate terminalCursorX];
+                        const int y = [_delegate terminalCursorY];
+                        [_delegate terminalShowAltBuffer];
+                        [_delegate terminalSetCursorX:x];
+                        [_delegate terminalSetCursorY:y];
+                    } else {
+                        const int x = [_delegate terminalCursorX];
+                        const int y = [_delegate terminalCursorY];
+                        [_delegate terminalShowPrimaryBuffer];
+                        [_delegate terminalSetCursorX:x];
+                        [_delegate terminalSetCursorY:y];
+                    }
+                }
+                self.softAlternateScreenMode = mode;
+                break;
+            case 1047:
+                if (!self.disableSmcupRmcup) {
+                    if (mode) {
+                        const int x = [_delegate terminalCursorX];
+                        const int y = [_delegate terminalCursorY];
+                        [_delegate terminalShowAltBuffer];
+                        [_delegate terminalSetCursorX:x];
+                        [_delegate terminalSetCursorY:y];
+                    } else {
+                        if ([_delegate terminalIsShowingAltBuffer]) {
+                            [_delegate terminalClearScreen];
+                        }
+                        const int x = [_delegate terminalCursorX];
+                        const int y = [_delegate terminalCursorY];
+                        [_delegate terminalShowPrimaryBuffer];
+                        [_delegate terminalSetCursorX:x];
+                        [_delegate terminalSetCursorY:y];
+                    }
+                }
+                self.softAlternateScreenMode = mode;
+                break;
+
+            case 1048:
+                if (!self.disableSmcupRmcup) {  // by analogy to xterm's titeInhibit resource.
+                    if (mode) {
+                        [self saveCursor];
+                    } else {
+                        [self restoreCursor];
+                    }
+                }
+                break;
+
             case 1049:
                 // From the xterm release log:
                 // Implement new escape sequence, private mode 1049, which combines
@@ -3947,6 +3985,7 @@ static iTermDECRPMSetting VT100TerminalDECRPMSettingFromBoolean(BOOL flag) {
             return VT100TerminalDECRPMSettingFromBoolean(self.moreFix);
         case 45:
             return VT100TerminalDECRPMSettingFromBoolean(self.reverseWraparoundMode);
+        case 1047:
         case 1049:
         case 47:
             // alternate screen buffer mode
@@ -3988,6 +4027,10 @@ static iTermDECRPMSetting VT100TerminalDECRPMSettingFromBoolean(BOOL flag) {
 
         case 1036:
             return VT100TerminalDECRPMSettingFromBoolean(self.metaSendsEscape);
+
+        case 1048:
+            // lol xterm always returns that this is set, but not with the "permanently set" code.
+            return VT100TerminalDECRPMSettingFromBoolean(YES);
 
         case 1337:
             return VT100TerminalDECRPMSettingFromBoolean(self.reportKeyUp);
@@ -4106,7 +4149,8 @@ static iTermDECRPMSetting VT100TerminalDECRPMSettingFromBoolean(BOOL flag) {
               kSavedCursorGraphicRenditionKey: [self dictionaryForGraphicRendition:savedCursor.graphicRendition],
               kSavedCursorOriginKey: @(savedCursor.origin),
               kSavedCursorWraparoundKey: @(savedCursor.wraparound),
-              kSavedCursorUnicodeVersion: @(savedCursor.unicodeVersion) };
+              kSavedCursorUnicodeVersion: @(savedCursor.unicodeVersion)
+    };
 }
 
 - (VT100SavedCursor)savedCursorFromDictionary:(NSDictionary *)dict {
