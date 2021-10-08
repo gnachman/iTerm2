@@ -283,6 +283,8 @@ static const int kMaxScreenRows = 4096;
     _output.termType = _termType;
     if ([termtype isEqualToString:@"VT100"]) {
         _output.vtLevel = VT100EmulationLevel100;
+    } else if ([termtype hasPrefix:@"VT4"]) {
+        _output.vtLevel = VT100EmulationLevel400;
     } else {
         _output.vtLevel = VT100EmulationLevel200;
     }
@@ -2652,6 +2654,8 @@ static const int kMaxScreenRows = 4096;
             return @"61";
         case VT100EmulationLevel200:
             return @"62";
+        case VT100EmulationLevel400:
+            return @"64";
     }
     return @"61";
 }

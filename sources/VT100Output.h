@@ -21,6 +21,7 @@ typedef NS_ENUM(NSInteger, MouseFormat) {
 typedef NS_ENUM(NSInteger, VT100EmulationLevel) {
     VT100EmulationLevel100,
     VT100EmulationLevel200,
+    VT100EmulationLevel400
 };
 
 typedef struct {

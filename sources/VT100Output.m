@@ -819,8 +819,45 @@ typedef enum {
     // Update: Per issue 7803, VT200 must accept 8-bit CSI. Allow users to elect VT100 reporting by
     // setting $TERM to VT100.
     //
-    // xterm alludes to a "17" feature called "terminal state interrogation". I found a file called
-    // vt_function_list.pdf at http://web.mit.edu/dosathena/doc/www/vt_function_list.pdf
+    // The first value gives the "operating level":
+    // 61 = vt100 family
+    // 62 = vt200
+    // 63 = vt300
+    // 64 = vt400-vt510 (this is what xcode reports by default)
+    // 65 = vt520+
+    // xcode seems to report 64 and the vt510 docs give 64 as the operating level as well.
+
+    // The following features are supported by xterm:
+    //
+    // 1: 132 columns
+    // 2: Printer port
+    // 3: ReGIS graphics
+    // 4: Sixel graphics
+    // 6: Selective erase
+    // 8: User-defined keys (UDKs)
+    // 9: National replacement character sets (NRCS)
+    // 15: Technical character set
+    // 16: Locator port  (this is like a mouse; see CSI 'z)
+    // 17: Terminal state interrogation (see below)
+    // 18: Windowing capability (I think this means you need to support rectangle operations and DECSLRM)
+    // 21: Horizontal scrolling (based on mintty I think this means the SL and SR codes)
+    // 22: ANSI color, VT525 (the vt525 was a color version of the vt520)
+    // 28: rectangular editing
+    // 29: ANSI text locator
+
+    // These are defined by DEC but not supported by xterm:
+    // 7: Soft character set (DRCS)
+    // 12: Serbo-Croatian (SCS)
+    // 19: Sessions
+    // 23: Greek
+    // 24: Turkish
+    // 42: ISO Latin-2
+    // 44: PCTerm
+    // 45: Soft key mapping
+    // 46: ASCII terminal emulation
+
+    // TERMINAL STATE INTERROGATION
+    // I found a file called vt_function_list.pdf at http://web.mit.edu/dosathena/doc/www/vt_function_list.pdf
     // that describes the following codes as TSI (with modifications by me for elucidation):
     //
     // DECRQM - Request Mode [response: DECRPM - Report Mode]
@@ -841,13 +878,15 @@ typedef enum {
     //          VT400 family, or for different revisions within each member of the family."
     //     VT520 seems to have added a second function, a color table report, for DECRQTSR with parameter 2.
     // DECRSTS - Restore Terminal State
+    //     NOTE: xterm does not implement this.
     //     NOTE: This restores state using the response from DECRQTSR.
-
     switch (_vtLevel) {
         case VT100EmulationLevel100:
             return [@"\033[?1;2c" dataUsingEncoding:NSUTF8StringEncoding];
         case VT100EmulationLevel200:
-            return [@"\033[?62;4c" dataUsingEncoding:NSUTF8StringEncoding];
+            return [@"\033[?62;1;2;4;22c" dataUsingEncoding:NSUTF8StringEncoding];
+        case VT100EmulationLevel400:
+            return [@"\033[?62;1;2;4;17;21;22c" dataUsingEncoding:NSUTF8StringEncoding];
     }
 }
 
@@ -860,6 +899,9 @@ typedef enum {
             break;
         case VT100EmulationLevel200:
             vt = 1;
+            break;
+        case VT100EmulationLevel400:
+            vt = 41;
             break;
     }
     NSString *report = [NSString stringWithFormat:@"\033[>%d;%d;0c", vt, xtermVersion];
