@@ -87,6 +87,9 @@ NS_INLINE NSString *iTermMetalGlyphAttributesDescription(iTermMetalGlyphAttribut
         case iTermMetalGlyphAttributesUnderlineDouble:
             underline = @"DOUBLE";
             break;
+        case iTermMetalGlyphAttributesUnderlineHyperlink:
+            underline = @"HYPERLINK";
+            break;
         case iTermMetalGlyphAttributesUnderlineSingle:
             underline = @"SINGLE";
             break;

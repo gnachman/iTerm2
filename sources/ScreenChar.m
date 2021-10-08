@@ -858,6 +858,9 @@ NSString *ScreenCharDescription(screen_char_t c) {
             case VT100UnderlineStyleCurly:
                 [attrs addObject:@"Curly-Underline"];
                 break;
+            case VT100UnderlineStyleDouble:
+                [attrs addObject:@"Double-Underline"];
+                break;
         }
     }
     if (c.strikethrough) {

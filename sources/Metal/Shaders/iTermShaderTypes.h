@@ -40,9 +40,10 @@ typedef enum {
 typedef enum {
     iTermMetalGlyphAttributesUnderlineNone = 0,
     iTermMetalGlyphAttributesUnderlineSingle = 1,
-    iTermMetalGlyphAttributesUnderlineDouble = 2,  // Rendered as a single with a dashed under it. Used for underlined text with hyperlink.
+    iTermMetalGlyphAttributesUnderlineDouble = 2,
     iTermMetalGlyphAttributesUnderlineDashedSingle = 3,
     iTermMetalGlyphAttributesUnderlineCurly = 4,
+    iTermMetalGlyphAttributesUnderlineHyperlink = 5,  // Rendered as a single with a dashed under it. Used for underlined text with hyperlink.
 
     iTermMetalGlyphAttributesUnderlineStrikethrough = iTermMetalGlyphAttributesUnderlineStrikethroughFlag,
     iTermMetalGlyphAttributesUnderlineStrikethroughAndSingle = iTermMetalGlyphAttributesUnderlineStrikethroughFlag + 1,

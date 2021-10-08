@@ -125,7 +125,8 @@ float FractionOfPixelThatIntersectsUnderlineForStyle(int underlineStyle,  // iTe
                                                      float underlineOffset,
                                                      float underlineThickness,
                                                      float scale) {
-    if (underlineStyle == iTermMetalGlyphAttributesUnderlineDouble) {
+    if (underlineStyle == iTermMetalGlyphAttributesUnderlineHyperlink ||
+        underlineStyle == iTermMetalGlyphAttributesUnderlineDouble) {
         // We can't draw the underline lower than the bottom of the cell, so
         // move the lower underline down by one thickness, if possible, and
         // the second underline will draw above it. The same hack was added
@@ -148,12 +149,25 @@ float FractionOfPixelThatIntersectsUnderlineForStyle(int underlineStyle,  // iTe
         case iTermMetalGlyphAttributesUnderlineSingle:
             return weight;
 
-        case iTermMetalGlyphAttributesUnderlineDouble:
+        case iTermMetalGlyphAttributesUnderlineHyperlink:
             // Single & dashed
             if (weight > 0 && fmod(clipSpacePosition.x, 7 * scale) >= 4 * scale) {
                 // Make a hole in the bottom underline
                 return 0;
             } else if (weight == 0) {
+                // Add a top underline if the y coordinate is right
+                return FractionOfPixelThatIntersectsUnderline(clipSpacePosition,
+                                                              viewportSize,
+                                                              cellOffset,
+                                                              underlineOffset + underlineThickness * 2,
+                                                              underlineThickness);
+            } else {
+                // Visible part of dashed bottom underline
+                return weight;
+            }
+
+        case iTermMetalGlyphAttributesUnderlineDouble:
+            if (weight == 0) {
                 // Add a top underline if the y coordinate is right
                 return FractionOfPixelThatIntersectsUnderline(clipSpacePosition,
                                                               viewportSize,
@@ -229,6 +243,7 @@ float ComputeWeightOfUnderlineInverted(int underlineStyle,  // iTermMetalGlyphAt
             thickness = scale;
             offset = scale;
             break;
+        case iTermMetalGlyphAttributesUnderlineHyperlink:
         case iTermMetalGlyphAttributesUnderlineDouble:
             thickness = underlineThickness;
             offset = scale;
@@ -305,6 +320,7 @@ float ComputeWeightOfUnderlineRegular(int underlineStyle,  // iTermMetalGlyphAtt
             thickness = scale;
             offset = scale;
             break;
+        case iTermMetalGlyphAttributesUnderlineHyperlink:
         case iTermMetalGlyphAttributesUnderlineDouble:
             thickness = regularThickness;
             offset = scale;

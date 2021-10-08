@@ -69,7 +69,8 @@ BOOL CheckFindMatchAtIndex(NSData *findMatches, int index) {
 typedef NS_ENUM(unsigned char, iTermCharacterAttributesUnderline) {
     iTermCharacterAttributesUnderlineNone,
     iTermCharacterAttributesUnderlineRegular,  // Single unless isURL, then double.
-    iTermCharacterAttributesUnderlineCurly
+    iTermCharacterAttributesUnderlineCurly,
+    iTermCharacterAttributesUnderlineDouble
 };
 
 // IMPORTANT: If you add a field here also update the comparison function
@@ -2240,6 +2241,9 @@ static inline BOOL iTermCharacterAttributesUnderlineColorEqual(iTermCharacterAtt
             case VT100UnderlineStyleCurly:
                 attributes->underlineType = iTermCharacterAttributesUnderlineCurly;
                 break;
+            case VT100UnderlineStyleDouble:
+                attributes->underlineType = iTermCharacterAttributesUnderlineDouble;
+                break;
         }
     } else if (inUnderlinedRange) {
         attributes->underlineType = iTermCharacterAttributesUnderlineRegular;
@@ -2266,15 +2270,26 @@ static inline BOOL iTermCharacterAttributesUnderlineColorEqual(iTermCharacterAtt
                 underlineStyle = NSUnderlinePatternDash;
             }
             break;
+        case iTermCharacterAttributesUnderlineDouble:
+            if (attributes->isURL) {
+                underlineStyle = NSUnderlineStylePatternDot;  // Mixed solid/underline isn't an option, so repurpose this.
+            } else {
+                underlineStyle = NSUnderlineStyleDouble;
+            }
+            break;
         case iTermCharacterAttributesUnderlineRegular:
             if (attributes->isURL) {
-                underlineStyle = NSUnderlineStyleDouble;
+                underlineStyle = NSUnderlineStylePatternDot;  // Mixed solid/underline isn't an option, so repurpose this.
             } else {
                 underlineStyle = NSUnderlineStyleSingle;
             }
             break;
         case iTermCharacterAttributesUnderlineCurly:
-            underlineStyle = NSUnderlineStyleThick;  // Curly isn't an option, so repurpose this.
+            if (attributes->isURL) {
+                underlineStyle = NSUnderlineStylePatternDot;  // Mixed solid/underline isn't an option, so repurpose this.
+            } else {
+                underlineStyle = NSUnderlineStyleThick;  // Curly isn't an option, so repurpose this.
+            }
             break;
     }
     NSUnderlineStyle strikethroughStyle = NSUnderlineStyleNone;
@@ -2716,7 +2731,7 @@ withExtendedAttributes:(iTermExternalAttribute *)ea2 {
             [path stroke];
             break;
 
-        case NSUnderlineStyleDouble: {  // Single underline with dash beneath
+        case NSUnderlineStylePatternDot: {  // Single underline with dash beneath
             origin.y = rect.origin.y + _cellSize.height - 1;
             origin.y -= self.isRetina ? 0.25 : 0.5;
             [path moveToPoint:origin];
@@ -2733,6 +2748,23 @@ withExtendedAttributes:(iTermExternalAttribute *)ea2 {
             [path stroke];
             break;
         }
+        case NSUnderlineStyleDouble: {  // Actual double underline
+            origin.y = rect.origin.y + _cellSize.height - 1;
+            origin.y -= self.isRetina ? 0.25 : 0.5;
+            [path moveToPoint:origin];
+            [path lineToPoint:NSMakePoint(origin.x + rect.size.width, origin.y)];
+            [path setLineWidth:lineWidth];
+            [path stroke];
+
+            const CGFloat px = self.isRetina ? 0.5 : 1;
+            path = [NSBezierPath bezierPath];
+            [path moveToPoint:NSMakePoint(origin.x, origin.y + lineWidth + px)];
+            [path lineToPoint:NSMakePoint(origin.x + rect.size.width, origin.y + lineWidth + px)];
+            [path setLineWidth:lineWidth];
+            [path stroke];
+            break;
+        }
+
         case NSUnderlineStyleThick: {  // We use this for curly. Cocoa doesn't have curly underlines, so we reprupose thick.
             const CGFloat offset = 0;
             origin.y = rect.origin.y + _cellSize.height - 1.5;

@@ -172,6 +172,7 @@ typedef struct {
 #define VT100CHARATTR_STRIKETHROUGH    9
 
 // xterm additions
+#define VT100CHARATTR_DOUBLE_UNDERLINE  21
 #define VT100CHARATTR_NORMAL            22
 #define VT100CHARATTR_NOT_ITALIC        23
 #define VT100CHARATTR_NOT_UNDERLINE     24
@@ -831,6 +832,7 @@ static const int kMaxScreenRows = 4096;
 
 - (void)resetGraphicRendition {
     memset(&graphicRendition_, 0, sizeof(graphicRendition_));
+    [self updateExternalAttributes];
 }
 
 // The actual spec for this is called ITU T.416-199303
@@ -965,14 +967,8 @@ static const int kMaxScreenRows = 4096;
                 case VT100CHARATTR_FAINT:
                     graphicRendition_.faint = YES;
                     break;
-                case VT100CHARATTR_NORMAL:
-                    graphicRendition_.faint = graphicRendition_.bold = NO;
-                    break;
                 case VT100CHARATTR_ITALIC:
                     graphicRendition_.italic = YES;
-                    break;
-                case VT100CHARATTR_NOT_ITALIC:
-                    graphicRendition_.italic = NO;
                     break;
                 case VT100CHARATTR_UNDERLINE: {
                     graphicRendition_.underline = YES;
@@ -993,33 +989,46 @@ static const int kMaxScreenRows = 4096;
                     }
                     break;
                 }
-                case VT100CHARATTR_NOT_UNDERLINE:
-                    graphicRendition_.underline = NO;
-                    break;
-                case VT100CHARATTR_STRIKETHROUGH:
-                    graphicRendition_.strikethrough = YES;
-                    break;
-                case VT100CHARATTR_NOT_STRIKETHROUGH:
-                    graphicRendition_.strikethrough = NO;
-                    break;
                 case VT100CHARATTR_BLINK:
                     graphicRendition_.blink = YES;
-                    break;
-                case VT100CHARATTR_STEADY:
-                    graphicRendition_.blink = NO;
-                    break;
-                case VT100CHARATTR_INVISIBLE:
-                    graphicRendition_.invisible = YES;
-                    break;
-                case VT100CHARATTR_VISIBLE:
-                    graphicRendition_.invisible = NO;
                     break;
                 case VT100CHARATTR_REVERSE:
                     graphicRendition_.reversed = YES;
                     break;
+                case VT100CHARATTR_INVISIBLE:
+                    graphicRendition_.invisible = YES;
+                    break;
+                case VT100CHARATTR_STRIKETHROUGH:
+                    graphicRendition_.strikethrough = YES;
+                    break;
+
+                case VT100CHARATTR_DOUBLE_UNDERLINE:
+                    graphicRendition_.underline = YES;
+                    graphicRendition_.underlineStyle = VT100UnderlineStyleDouble;
+                    break;
+
+                case VT100CHARATTR_NORMAL:
+                    graphicRendition_.faint = graphicRendition_.bold = NO;
+                    break;
+                case VT100CHARATTR_NOT_ITALIC:
+                    graphicRendition_.italic = NO;
+                    break;
+                case VT100CHARATTR_NOT_UNDERLINE:
+                    graphicRendition_.underline = NO;
+                    break;
+                case VT100CHARATTR_STEADY:
+                    graphicRendition_.blink = NO;
+                    break;
                 case VT100CHARATTR_POSITIVE:
                     graphicRendition_.reversed = NO;
                     break;
+                case VT100CHARATTR_VISIBLE:
+                    graphicRendition_.invisible = NO;
+                    break;
+                case VT100CHARATTR_NOT_STRIKETHROUGH:
+                    graphicRendition_.strikethrough = NO;
+                    break;
+
                 case VT100CHARATTR_FG_DEFAULT:
                     graphicRendition_.fgColorCode = ALTSEM_DEFAULT;
                     graphicRendition_.fgGreen = 0;
@@ -2922,6 +2931,9 @@ static const int kMaxScreenRows = 4096;
                 break;
             case VT100UnderlineStyleCurly:
                 [result addObject:@"4:3"];
+                break;
+            case VT100UnderlineStyleDouble:
+                [result addObject:@"21"];
                 break;
         }
     }

@@ -113,9 +113,11 @@ typedef enum {
     ColorModeInvalid = 3
 } ColorMode;
 
+// Note that this is a bit field in screen_char_t. If you add to it ensure there is space to grow.
 typedef NS_ENUM(unsigned int, VT100UnderlineStyle) {
     VT100UnderlineStyleSingle,
-    VT100UnderlineStyleCurly
+    VT100UnderlineStyleCurly,
+    VT100UnderlineStyleDouble
 };
 
 typedef struct {
@@ -190,13 +192,13 @@ typedef struct screen_char_t
     unsigned int image : 1;
 
     unsigned int strikethrough : 1;
-    VT100UnderlineStyle underlineStyle : 1;  // VT100UnderlineStyle
+    VT100UnderlineStyle underlineStyle : 2;  // VT100UnderlineStyle
 
     unsigned int invisible : 1;
 
     // These bits aren't used but are defined here so that the entire memory
     // region can be initialized.
-    unsigned int unused : 2;
+    unsigned int unused : 1;
 
     // This comes after unused so it can be byte-aligned.
     // If the current text is part of a hypertext link, this gives an index into the URL store.

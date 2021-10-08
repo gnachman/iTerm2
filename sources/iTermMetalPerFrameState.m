@@ -824,6 +824,8 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
         } else if (line[x].underline || inUnderlinedRange) {
             const BOOL curly = line[x].underline && line[x].underlineStyle == VT100UnderlineStyleCurly;
             if (line[x].urlCode) {
+                attributes[x].underlineStyle = iTermMetalGlyphAttributesUnderlineHyperlink;
+            } else if (line[x].underline && line[x].underlineStyle == VT100UnderlineStyleDouble && !inUnderlinedRange) {
                 attributes[x].underlineStyle = iTermMetalGlyphAttributesUnderlineDouble;
             } else if (curly && !inUnderlinedRange) {
                 attributes[x].underlineStyle = iTermMetalGlyphAttributesUnderlineCurly;
