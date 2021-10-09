@@ -1812,6 +1812,14 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
     return array;
 }
 
+- (NSArray<VT100LineInfo *> *)orderedLineInfos {
+    NSMutableArray *array = [NSMutableArray array];
+    for (int i = 0; i < size_.height; i++) {
+        [array addObject:[self lineInfoAtLineNumber:i]];
+    }
+    return array;
+}
+
 - (NSDictionary *)dictionaryValue {
     return @{ kGridCursorKey: [NSDictionary dictionaryWithGridCoord:cursor_],
               kGridScrollRegionRowsKey: [NSDictionary dictionaryWithGridRange:scrollRegionRows_],
@@ -1877,7 +1885,7 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
 }
 
 - (void)encode:(id<iTermEncoderAdapter>)encoder {
-    NSArray<NSArray *> *metadata = [lineInfos_ mapWithBlock:^id(VT100LineInfo *anObject) {
+    NSArray<NSArray *> *metadata = [[self orderedLineInfos] mapWithBlock:^id(VT100LineInfo *anObject) {
         return anObject.encodedMetadata;
     }];
     NSArray<NSData *> *lines = [[NSArray sequenceWithRange:NSMakeRange(0, size_.height)] mapWithBlock:^id(NSNumber *i) {
