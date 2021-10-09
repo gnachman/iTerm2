@@ -157,6 +157,8 @@ class HTMLEncoder {
                 style["text-decoration-style"] = "wavy"
             case .single:
                 break
+            case .double:
+                style["text-decoration-style"] = "double"
             @unknown default:
                 break
             }
