@@ -5420,6 +5420,25 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     }];
 }
 
+- (void)terminalToggleAttribute:(int)sgrAttribute inRect:(VT100GridRect)rect {
+    [currentGrid_ enumerateCellsInRect:rect block:^(VT100GridCoord coord, screen_char_t *sct, BOOL *stop) {
+        switch (sgrAttribute) {
+            case 1:
+                sct->bold = !sct->bold;
+                break;
+            case 4:
+                sct->underline = !sct->underline;
+                break;
+            case 5:
+                sct->blink = !sct->blink;
+                break;
+            case 7:
+                ScreenCharInvert(sct);
+                break;
+        }
+    }];
+}
+
 #pragma mark - Private
 
 - (VT100GridCoordRange)commandRange {

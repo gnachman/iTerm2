@@ -1000,6 +1000,22 @@ static const int kMaxScreenRows = 4096;
     }
 }
 
+- (void)executeDECRARA:(VT100Token *)token {
+    if (token.csi->count < 5) {
+        return;
+    }
+    const VT100GridRect rect = [self rectangleInToken:token startingAtIndex:0 defaultRectangle:VT100GridRectMake(-1, -1, -1, -1)];
+    if (rect.origin.x < 0 ||
+        rect.origin.y < 0 ||
+        rect.size.width < 0 ||
+        rect.size.height < 0) {
+        return;
+    }
+    for (int i = 4; i < token.csi->count; i++) {
+        [_delegate terminalToggleAttribute:token.csi->p[i] inRect:rect];
+    }
+}
+
 - (void)executeSGR:(VT100Token *)token {
     assert(token->type == VT100CSI_SGR);
     if (token.csi->count == 0) {
@@ -2100,6 +2116,10 @@ static const int kMaxScreenRows = 4096;
 
         case VT100CSI_DECCARA:
             [self executeDECCARA:token];
+            break;
+
+        case VT100CSI_DECRARA:
+            [self executeDECRARA:token];
             break;
 
         case VT100CSI_TBC:
