@@ -5466,6 +5466,26 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     }];
 }
 
+- (void)terminalFillRectangle:(VT100GridRect)rect withCharacter:(unichar)inputChar {
+    screen_char_t c = {
+        .code = inputChar
+    };
+    if (charsetUsesLineDrawingMode_[[terminal_ charset]]) {
+        ConvertCharsToGraphicsCharset(&c, 1);
+    }
+    CopyForegroundColor(&c, [terminal_ foregroundColorCode]);
+    CopyBackgroundColor(&c, [terminal_ backgroundColorCode]);
+
+    // Only preserve SGR attributes. URL and image are OSC, not SGR.
+    c.urlCode = 0;
+    c.image = 0;
+
+    [currentGrid_ setCharsFrom:rect.origin
+                            to:VT100GridRectMax(rect)
+                        toChar:c
+            externalAttributes:[terminal_ externalAttributes]];
+}
+
 #pragma mark - Private
 
 - (VT100GridCoordRange)commandRange {

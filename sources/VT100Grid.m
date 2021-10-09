@@ -643,10 +643,12 @@ static NSString *const kGridSizeKey = @"Size";
     }
 }
 
-- (void)setCharsFrom:(VT100GridCoord)from
-                  to:(VT100GridCoord)to
+- (void)setCharsFrom:(VT100GridCoord)unsafeFrom
+                  to:(VT100GridCoord)unsafeTo
               toChar:(screen_char_t)c
   externalAttributes:(iTermExternalAttribute *)attrs {
+    const VT100GridCoord from = [self clamp:unsafeFrom];
+    const VT100GridCoord to = [self clamp:unsafeTo];
     if (from.x > to.x || from.y > to.y) {
         return;
     }

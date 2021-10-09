@@ -1034,6 +1034,30 @@ static const int kMaxScreenRows = 4096;
     [_delegate terminalCopyFrom:rect to:dest];
 }
 
+- (void)executeDECFRA:(VT100Token *)token {
+    if (token.csi->count < 5) {
+        return;
+    }
+    const unichar ch = token.csi->p[0];
+    if (ch < 32) {
+        return;
+    }
+    if (ch > 126 && ch < 160) {
+        return;
+    }
+    if (ch > 255) {
+        return;
+    }
+    const VT100GridRect rect = [self rectangleInToken:token startingAtIndex:1 defaultRectangle:VT100GridRectMake(-1, -1, -1, -1)];
+    if (rect.origin.x < 0 ||
+        rect.origin.y < 0 ||
+        rect.size.width <= 0 ||
+        rect.size.height <= 0) {
+        return;
+    }
+    [self.delegate terminalFillRectangle:rect withCharacter:ch];
+}
+
 - (void)executeSGR:(VT100Token *)token {
     assert(token->type == VT100CSI_SGR);
     if (token.csi->count == 0) {
@@ -2142,6 +2166,10 @@ static const int kMaxScreenRows = 4096;
 
         case VT100CSI_DECCRA:
             [self executeDECCRA:token];
+            break;
+
+        case VT100CSI_DECFRA:
+            [self executeDECFRA:token];
             break;
 
         case VT100CSI_TBC:
