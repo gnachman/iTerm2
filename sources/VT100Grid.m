@@ -25,6 +25,8 @@ static NSString *const kGridScrollRegionColumnsKey = @"Scroll Region Columns";
 static NSString *const kGridUseScrollRegionColumnsKey = @"Use Scroll Region Columns";
 static NSString *const kGridSizeKey = @"Size";
 
+#define MEDIAN(min_, mid_, max_) MAX(MIN(mid_, max_), min_)
+
 @interface VT100Grid ()
 @property(nonatomic, readonly) NSArray *lines;  // Warning: not in order found on screen!
 @end
@@ -1565,6 +1567,10 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
     return foundCursor;
 }
 
+- (VT100GridCoord)clamp:(VT100GridCoord)coord {
+    return VT100GridCoordMake(MEDIAN(0, coord.x, MAX(0, self.size.width - 1)),
+                              MEDIAN(0, coord.y, MAX(0, self.size.height - 1)));
+}
 
 - (void)clampCursorPositionToValid
 {
@@ -1890,19 +1896,23 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
 }
 
 - (void)enumerateCellsInRect:(VT100GridRect)rect
-                       block:(void (^NS_NOESCAPE)(VT100GridCoord, screen_char_t *, BOOL *))block {
+                       block:(void (^NS_NOESCAPE)(VT100GridCoord, screen_char_t *, iTermExternalAttribute *, BOOL *))block {
     for (int y = MAX(0, rect.origin.y); y < MIN(size_.height, rect.origin.y + rect.size.height); y++) {
         NSMutableData *data = [self lineDataAtLineNumber:y];
         screen_char_t *line = (screen_char_t *)data.mutableBytes;
+        iTermExternalAttributeIndex *eaIndex = [self externalAttributesOnLine:y
+                                                               createIfNeeded:NO];
         for (int x = MAX(0, rect.origin.x); x < MIN(size_.width, rect.origin.x + rect.size.height); x++) {
             BOOL stop = NO;
-            block(VT100GridCoordMake(x, y), &line[x], &stop);
+            block(VT100GridCoordMake(x, y), &line[x], eaIndex[x], &stop);
             if (stop) {
                 return;
             }
         }
     }
-    [self markCharsDirty:YES inRectFrom:rect.origin to:VT100GridRectMax(rect)];
+    [self markCharsDirty:YES
+              inRectFrom:[self clamp:rect.origin]
+                      to:[self clamp:VT100GridRectMax(rect)]];
 }
 
 #pragma mark - Private

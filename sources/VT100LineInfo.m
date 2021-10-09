@@ -10,7 +10,6 @@
 
 @implementation VT100LineInfo {
     int width_;
-    NSTimeInterval timestamp_;
     int start_;
     int bound_;
     NSData *_cachedEncodedMetadata;
@@ -102,7 +101,8 @@ static NSInteger VT100LineInfoNextGeneration = 1;
     VT100LineInfo *theCopy = [[VT100LineInfo alloc] initWithWidth:width_];
     theCopy->start_ = start_;
     theCopy->bound_ = bound_;
-    theCopy->timestamp_ = timestamp_;
+    iTermMetadataRelease(theCopy->_metadata);
+    theCopy->_metadata = iTermMetadataCopy(_metadata);
 
     return theCopy;
 }

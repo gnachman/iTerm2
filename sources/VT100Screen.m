@@ -5376,7 +5376,10 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalSetAttribute:(int)sgrAttribute inRect:(VT100GridRect)rect {
-    [currentGrid_ enumerateCellsInRect:rect block:^(VT100GridCoord coord, screen_char_t *sct, BOOL *stop) {
+    [currentGrid_ enumerateCellsInRect:rect block:^(VT100GridCoord coord,
+                                                    screen_char_t *sct,
+                                                    iTermExternalAttribute *ea,
+                                                    BOOL *stop) {
         switch (sgrAttribute) {
             case 0:
                 sct->bold = NO;
@@ -5421,7 +5424,11 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalToggleAttribute:(int)sgrAttribute inRect:(VT100GridRect)rect {
-    [currentGrid_ enumerateCellsInRect:rect block:^(VT100GridCoord coord, screen_char_t *sct, BOOL *stop) {
+    [currentGrid_ enumerateCellsInRect:rect
+                                 block:^(VT100GridCoord coord,
+                                         screen_char_t *sct,
+                                         iTermExternalAttribute *ea,
+                                         BOOL *stop) {
         switch (sgrAttribute) {
             case 1:
                 sct->bold = !sct->bold;
@@ -5436,6 +5443,26 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
                 ScreenCharInvert(sct);
                 break;
         }
+    }];
+}
+
+- (void)terminalCopyFrom:(VT100GridRect)source to:(VT100GridCoord)dest {
+    VT100Grid *copy = [[currentGrid_ copy] autorelease];
+    const VT100GridSize size = currentGrid_.size;
+    [copy enumerateCellsInRect:source
+                         block:^(VT100GridCoord sourceCoord,
+                                 screen_char_t *sct,
+                                 iTermExternalAttribute *ea,
+                                 BOOL *stop) {
+        const VT100GridCoord destCoord = VT100GridCoordMake(sourceCoord.x - source.origin.x + dest.x,
+                                                            sourceCoord.y - source.origin.y + dest.y);
+        if (destCoord.x < 0 || destCoord.x >= size.width || destCoord.y < 0 || destCoord.y >= size.height) {
+            return;
+        }
+        [currentGrid_ setCharsFrom:destCoord
+                                to:destCoord
+                            toChar:*sct
+                externalAttributes:ea];
     }];
 }
 

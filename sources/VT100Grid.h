@@ -109,7 +109,7 @@
                                          willScroll:(void (^)(void))willScroll;
 
 - (void)enumerateCellsInRect:(VT100GridRect)rect
-                       block:(void (^NS_NOESCAPE)(VT100GridCoord, screen_char_t *, BOOL *))block;
+                       block:(void (^NS_NOESCAPE)(VT100GridCoord, screen_char_t *, iTermExternalAttribute *, BOOL *))block;
 
 // Move cursor to the left by n steps. Does not wrap around when it hits the left margin.
 // If it starts left of the scroll region, clamp it to the left. If it starts right of the scroll
