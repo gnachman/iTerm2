@@ -548,6 +548,10 @@ static void SetCSITypeAndDefaultParameters(CSIParam *param, VT100Token *result) 
             result->type = VT100CSI_RESET_MODIFIERS;
             break;
 
+        case PACKED_CSI_COMMAND(0, '$', 'r'):
+            result->type = VT100CSI_DECCARA;
+            break;
+
         case 'm':
             result->type = VT100CSI_SGR;
             // TODO: Test codes like CSI 1 ; ; m

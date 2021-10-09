@@ -550,13 +550,13 @@ int EffectiveLineLength(screen_char_t* theLine, int totalLength) {
 
 NSString *DebugStringForScreenChar(screen_char_t c) {
     NSArray *modes = @[ @"default", @"selected", @"altsem", @"altsem-reversed" ];
-    return [NSString stringWithFormat:@"<screen_char_t: code=%@ complex=%@ image=%@ url=%@ foregroundColor=%@ fgGreen=%@ fgBlue=%@ backgroundColor=%@ bgGreen=%@ bgBlue=%@ fgMode=%@ bgMode=%@ bold=%@ faint=%@ italic=%@ blink=%@ underline=%@ strikethrough=%@ underlinestyle=%@ invisible=%@ unused=%@>",
+    return [NSString stringWithFormat:@"<screen_char_t: code=%@ complex=%@ image=%@ url=%@ foregroundColor=%@ fgGreen=%@ fgBlue=%@ backgroundColor=%@ bgGreen=%@ bgBlue=%@ fgMode=%@ bgMode=%@ bold=%@ faint=%@ italic=%@ blink=%@ underline=%@ strikethrough=%@ underlinestyle=%@ invisible=%@ inverse=%@>",
             @(c.code), @(c.complexChar), @(c.image), @(c.urlCode),
             @(c.foregroundColor), @(c.fgGreen), @(c.fgBlue),
             @(c.backgroundColor), @(c.bgGreen), @(c.bgBlue), modes[c.foregroundColorMode],
             modes[c.backgroundColorMode], @(c.bold), @(c.faint), @(c.italic), @(c.blink),
             @(c.underline), @(c.strikethrough), @(c.underlineStyle),
-            @(c.invisible), @(c.unused)];
+            @(c.invisible), @(c.inverse)];
 }
 
 // Convert a string into an array of screen characters, dealing with surrogate
@@ -705,7 +705,7 @@ void InitializeScreenChar(screen_char_t *s, screen_char_t fg, screen_char_t bg) 
     s->underlineStyle = fg.underlineStyle;
     s->image = NO;
     s->urlCode = fg.urlCode;
-    s->unused = 0;
+    s->inverse = fg.inverse;
 }
 
 void ConvertCharsToGraphicsCharset(screen_char_t *s, int len)
@@ -782,18 +782,19 @@ void ScreenCharDecodeRestorableState(NSDictionary *state) {
 static NSString *ScreenCharColorDescription(unsigned int red,
                                             unsigned int green,
                                             unsigned int blue,
-                                            ColorMode mode) {
+                                            ColorMode mode,
+                                            BOOL fg) {
     switch (mode) {
         case ColorModeAlternate:
             switch (red) {
                 case ALTSEM_DEFAULT:
-                    return @"Default";
+                    return fg ? @"Default fg" : @"Default bg";
                 case ALTSEM_SELECTED:
                     return @"Selected";
                 case ALTSEM_CURSOR:
                     return @"Cursor";
                 case ALTSEM_REVERSED_DEFAULT:
-                    return @"Reversed";
+                    return fg ? @"Default bg" : @"Default fg";
                 case ALTSEM_SYSTEM_MESSAGE:
                     return @"System";
             }
@@ -826,8 +827,8 @@ static NSString *ScreenCharColorDescription(unsigned int red,
     return @"Invalid";
 }
 
-NSString *VT100TerminalColorValueDescription(VT100TerminalColorValue value) {
-    return ScreenCharColorDescription(value.red, value.green, value.blue, value.mode);
+NSString *VT100TerminalColorValueDescription(VT100TerminalColorValue value, BOOL fg) {
+    return ScreenCharColorDescription(value.red, value.green, value.blue, value.mode, fg);
 }
 
 NSString *ScreenCharDescription(screen_char_t c) {
@@ -869,19 +870,55 @@ NSString *ScreenCharDescription(screen_char_t c) {
     if (c.urlCode) {
         [attrs addObject:@"URL"];
     }
+    if (c.inverse) {
+        [attrs addObject:@"Inverse"];
+    }
     NSString *style = [attrs componentsJoinedByString:@" "];
     if (style.length) {
-        style = [@" " stringByAppendingString:style];
+        style = [@": " stringByAppendingString:style];
     }
     return [NSString stringWithFormat:@"fg=%@ bg=%@%@",
             ScreenCharColorDescription(c.foregroundColor,
                                        c.fgGreen,
                                        c.fgBlue,
-                                       c.foregroundColorMode),
+                                       c.foregroundColorMode,
+                                       YES),
             ScreenCharColorDescription(c.backgroundColor,
                                        c.bgGreen,
                                        c.bgBlue,
-                                       c.backgroundColorMode),
+                                       c.backgroundColorMode,
+                                       NO),
             style];
 }
 
+void ScreenCharInvert(screen_char_t *c) {
+    const screen_char_t saved = *c;
+
+    c->foregroundColorMode = saved.backgroundColorMode;
+    if (saved.backgroundColorMode == ColorModeAlternate &&
+        saved.backgroundColor == ALTSEM_DEFAULT) {
+        c->foregroundColor = ALTSEM_REVERSED_DEFAULT;
+    } else if (saved.backgroundColorMode == ColorModeAlternate &&
+               saved.backgroundColor == ALTSEM_REVERSED_DEFAULT) {
+        c->foregroundColor = ALTSEM_DEFAULT;
+    } else {
+        c->foregroundColor = saved.backgroundColor;
+    }
+    c->fgGreen = saved.bgGreen;
+    c->fgBlue = saved.bgBlue;
+
+    c->backgroundColorMode = saved.foregroundColorMode;
+    if (saved.foregroundColorMode == ColorModeAlternate &&
+        saved.foregroundColor == ALTSEM_REVERSED_DEFAULT) {
+        c->backgroundColor = ALTSEM_DEFAULT;
+    } else if (saved.foregroundColorMode == ColorModeAlternate &&
+               saved.foregroundColor == ALTSEM_DEFAULT) {
+        c->backgroundColor = ALTSEM_REVERSED_DEFAULT;
+    } else {
+        c->backgroundColor = saved.foregroundColor;
+    }
+    c->bgGreen = saved.fgGreen;
+    c->bgBlue = saved.fgBlue;
+    
+    c->inverse = !c->inverse;
+}

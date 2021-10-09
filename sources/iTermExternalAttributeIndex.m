@@ -322,7 +322,7 @@ static NSString *const iTermExternalAttributeKeyUnderlineColor = @"uc";
     if (!_hasUnderlineColor) {
         return @"none";
     }
-    return [NSString stringWithFormat:@"ulc=%@", VT100TerminalColorValueDescription(_underlineColor)];
+    return [NSString stringWithFormat:@"ulc=%@", VT100TerminalColorValueDescription(_underlineColor, YES)];
 }
 
 - (NSData *)data {

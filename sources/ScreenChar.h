@@ -127,7 +127,7 @@ typedef struct {
     ColorMode mode;
 } VT100TerminalColorValue;
 
-NSString *VT100TerminalColorValueDescription(VT100TerminalColorValue value);
+NSString *VT100TerminalColorValueDescription(VT100TerminalColorValue value, BOOL fg);
 
 typedef struct screen_char_t
 {
@@ -196,9 +196,9 @@ typedef struct screen_char_t
 
     unsigned int invisible : 1;
 
-    // These bits aren't used but are defined here so that the entire memory
-    // region can be initialized.
-    unsigned int unused : 1;
+    // fg and bg are swapped. Note that this flag doesn't affect rendering; it simply notes that the
+    // colors in this struct were *already* exchanged because of SGR 7.
+    unsigned int inverse : 1;
 
     // This comes after unused so it can be byte-aligned.
     // If the current text is part of a hypertext link, this gives an index into the URL store.
@@ -251,6 +251,7 @@ static inline void CopyForegroundColor(screen_char_t* to, const screen_char_t fr
     to->strikethrough = from.strikethrough;
     to->urlCode = from.urlCode;
     to->image = from.image;
+    to->inverse = from.inverse;
 }
 
 // Copy background color from one char to another.
@@ -479,4 +480,4 @@ void ScreenCharGarbageCollectImages(void);
 void ScreenCharClearProvisionalFlagForImageWithCode(int code);
 
 NSString *ScreenCharDescription(screen_char_t c);
-
+void ScreenCharInvert(screen_char_t *c);

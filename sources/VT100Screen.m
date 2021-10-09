@@ -5375,6 +5375,51 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     }
 }
 
+- (void)terminalSetAttribute:(int)sgrAttribute inRect:(VT100GridRect)rect {
+    [currentGrid_ enumerateCellsInRect:rect block:^(VT100GridCoord coord, screen_char_t *sct, BOOL *stop) {
+        switch (sgrAttribute) {
+            case 0:
+                sct->bold = NO;
+                sct->blink = NO;
+                sct->underline = NO;
+                if (sct->inverse) {
+                    ScreenCharInvert(sct);
+                }
+                break;
+
+            case 1:
+                sct->bold = YES;
+                break;
+            case 4:
+                sct->underline = YES;
+                break;
+            case 5:
+                sct->blink = YES;
+                break;
+            case 7:
+                if (!sct->inverse) {
+                    ScreenCharInvert(sct);
+                }
+                break;
+
+            case 22:
+                sct->bold = NO;
+                break;
+            case 24:
+                sct->underline = NO;
+                break;
+            case 25:
+                sct->blink = NO;
+                break;
+            case 27:
+                if (sct->inverse) {
+                    ScreenCharInvert(sct);
+                }
+                break;
+        }
+    }];
+}
+
 #pragma mark - Private
 
 - (VT100GridCoordRange)commandRange {

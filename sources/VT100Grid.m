@@ -1889,6 +1889,22 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
     }];
 }
 
+- (void)enumerateCellsInRect:(VT100GridRect)rect
+                       block:(void (^NS_NOESCAPE)(VT100GridCoord, screen_char_t *, BOOL *))block {
+    for (int y = MAX(0, rect.origin.y); y < MIN(size_.height, rect.origin.y + rect.size.height); y++) {
+        NSMutableData *data = [self lineDataAtLineNumber:y];
+        screen_char_t *line = (screen_char_t *)data.mutableBytes;
+        for (int x = MAX(0, rect.origin.x); x < MIN(size_.width, rect.origin.x + rect.size.height); x++) {
+            BOOL stop = NO;
+            block(VT100GridCoordMake(x, y), &line[x], &stop);
+            if (stop) {
+                return;
+            }
+        }
+    }
+    [self markCharsDirty:YES inRectFrom:rect.origin to:VT100GridRectMax(rect)];
+}
+
 #pragma mark - Private
 
 - (NSMutableArray *)linesWithSize:(VT100GridSize)size {

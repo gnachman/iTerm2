@@ -521,8 +521,7 @@ static const int kMaxScreenRows = 4096;
     _externalAttributes = [[iTermExternalAttribute alloc] initWithUnderlineColor:graphicRendition_.underlineColor];
 }
 
-- (screen_char_t)foregroundColorCode
-{
+- (screen_char_t)foregroundColorCode {
     screen_char_t result = { 0 };
     if (graphicRendition_.reversed) {
         if (graphicRendition_.bgColorMode == ColorModeAlternate &&
@@ -550,11 +549,11 @@ static const int kMaxScreenRows = 4096;
     result.invisible = graphicRendition_.invisible;
     result.image = NO;
     result.urlCode = _currentURLCode;
+    result.inverse = graphicRendition_.reversed;
     return result;
 }
 
-- (screen_char_t)backgroundColorCode
-{
+- (screen_char_t)backgroundColorCode {
     screen_char_t result = { 0 };
     if (graphicRendition_.reversed) {
         if (graphicRendition_.fgColorMode == ColorModeAlternate &&
@@ -575,8 +574,7 @@ static const int kMaxScreenRows = 4096;
     return result;
 }
 
-- (screen_char_t)foregroundColorCodeReal
-{
+- (screen_char_t)foregroundColorCodeReal {
     screen_char_t result = { 0 };
     result.foregroundColor = graphicRendition_.fgColorCode;
     result.fgGreen = graphicRendition_.fgGreen;
@@ -591,11 +589,11 @@ static const int kMaxScreenRows = 4096;
     result.blink = graphicRendition_.blink;
     result.invisible = graphicRendition_.invisible;
     result.urlCode = _currentURLCode;
+    result.inverse = graphicRendition_.reversed;
     return result;
 }
 
-- (screen_char_t)backgroundColorCodeReal
-{
+- (screen_char_t)backgroundColorCodeReal {
     screen_char_t result = { 0 };
     result.backgroundColor = graphicRendition_.bgColorCode;
     result.bgGreen = graphicRendition_.bgGreen;
@@ -983,6 +981,23 @@ static const int kMaxScreenRows = 4096;
         .blue = -1,
         .mode = ColorMode24bit
     };
+}
+
+// TODO: Respect DECSACE
+- (void)executeDECCARA:(VT100Token *)token {
+    if (token.csi->count < 5) {
+        return;
+    }
+    const VT100GridRect rect = [self rectangleInToken:token startingAtIndex:0 defaultRectangle:VT100GridRectMake(-1, -1, -1, -1)];
+    if (rect.origin.x < 0 ||
+        rect.origin.y < 0 ||
+        rect.size.width < 0 ||
+        rect.size.height < 0) {
+        return;
+    }
+    for (int i = 4; i < token.csi->count; i++) {
+        [_delegate terminalSetAttribute:token.csi->p[i] inRect:rect];
+    }
 }
 
 - (void)executeSGR:(VT100Token *)token {
@@ -2083,6 +2098,10 @@ static const int kMaxScreenRows = 4096;
             [self executeSGR:token];
             break;
 
+        case VT100CSI_DECCARA:
+            [self executeDECCARA:token];
+            break;
+
         case VT100CSI_TBC:
             switch (token.csi->p[0]) {
                 case 3:
@@ -2912,7 +2931,7 @@ static const int kMaxScreenRows = 4096;
         .underline = c.underline,
         .underlineStyle = c.underlineStyle,
         .strikethrough = c.strikethrough,
-        .reversed = 0,
+        .reversed = c.inverse,
         .faint = c.faint,
         .italic = c.italic,
         .fgColorCode = c.foregroundColor,

@@ -106,6 +106,7 @@ typedef enum {
     VT100CSI_SCS2,                  // Select Character Set 2
     VT100CSI_SCS3,                  // Select Character Set 3
     VT100CSI_SGR,                   // Select Graphic Rendition
+    VT100CSI_DECCARA,               // Change Attributes in Rectangular Area
     VT100CSI_SM,                    // Set Mode
     VT100CSI_TBC,                   // Tabulation Clear
     VT100CSI_DECSCUSR,              // Select the Style of the Cursor
