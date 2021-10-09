@@ -988,7 +988,7 @@ static const int kMaxScreenRows = 4096;
     if (token.csi->count < 5) {
         return;
     }
-    const VT100GridRect rect = [self rectangleInToken:token startingAtIndex:0 defaultRectangle:VT100GridRectMake(-1, -1, -1, -1)];
+    const VT100GridRect rect = [self rectangleInToken:token startingAtIndex:0 defaultRectangle:[self defaultRectangle]];
     if (rect.origin.x < 0 ||
         rect.origin.y < 0 ||
         rect.size.width <= 0 ||
@@ -1004,7 +1004,7 @@ static const int kMaxScreenRows = 4096;
     if (token.csi->count < 5) {
         return;
     }
-    const VT100GridRect rect = [self rectangleInToken:token startingAtIndex:0 defaultRectangle:VT100GridRectMake(-1, -1, -1, -1)];
+    const VT100GridRect rect = [self rectangleInToken:token startingAtIndex:0 defaultRectangle:[self defaultRectangle]];
     if (rect.origin.x < 0 ||
         rect.origin.y < 0 ||
         rect.size.width <= 0 ||
@@ -1017,10 +1017,7 @@ static const int kMaxScreenRows = 4096;
 }
 
 - (void)executeDECCRA:(VT100Token *)token {
-    if (token.csi->count < 8) {
-        return;
-    }
-    const VT100GridRect rect = [self rectangleInToken:token startingAtIndex:0 defaultRectangle:VT100GridRectMake(-1, -1, -1, -1)];
+    const VT100GridRect rect = [self rectangleInToken:token startingAtIndex:0 defaultRectangle:[self defaultRectangle]];
     if (rect.origin.x < 0 ||
         rect.origin.y < 0 ||
         rect.size.width <= 0 ||
@@ -1035,7 +1032,7 @@ static const int kMaxScreenRows = 4096;
 }
 
 - (void)executeDECFRA:(VT100Token *)token {
-    if (token.csi->count < 5) {
+    if (token.csi->count < 1) {
         return;
     }
     const unichar ch = token.csi->p[0];
@@ -1048,7 +1045,7 @@ static const int kMaxScreenRows = 4096;
     if (ch > 255) {
         return;
     }
-    const VT100GridRect rect = [self rectangleInToken:token startingAtIndex:1 defaultRectangle:VT100GridRectMake(-1, -1, -1, -1)];
+    const VT100GridRect rect = [self rectangleInToken:token startingAtIndex:1 defaultRectangle:[self defaultRectangle]];
     if (rect.origin.x < 0 ||
         rect.origin.y < 0 ||
         rect.size.width <= 0 ||
@@ -1056,6 +1053,21 @@ static const int kMaxScreenRows = 4096;
         return;
     }
     [self.delegate terminalFillRectangle:rect withCharacter:ch];
+}
+
+- (void)executeDECERA:(VT100Token *)token {
+    const VT100GridRect rect = [self rectangleInToken:token startingAtIndex:0 defaultRectangle:[self defaultRectangle]];
+    if (rect.origin.x < 0 ||
+        rect.origin.y < 0 ||
+        rect.size.width <= 0 ||
+        rect.size.height <= 0) {
+        return;
+    }
+    [self.delegate terminalEraseRectangle:rect];
+}
+
+- (VT100GridRect)defaultRectangle {
+    return VT100GridRectMake(0, 0, _delegate.terminalWidth, _delegate.terminalHeight);
 }
 
 - (void)executeSGR:(VT100Token *)token {
@@ -1922,14 +1934,10 @@ static const int kMaxScreenRows = 4096;
                 if (![_delegate terminalCanUseDECRQCRA]) {
                     break;
                 }
-                VT100GridRect defaultRectangle = VT100GridRectMake(0,
-                                                                   0,
-                                                                   [_delegate terminalWidth],
-                                                                   [_delegate terminalHeight]);
                 [self sendChecksumReportWithId:token.csi->p[0]
                                      rectangle:[self rectangleInToken:token
                                                       startingAtIndex:2
-                                                     defaultRectangle:defaultRectangle]];
+                                                     defaultRectangle:[self defaultRectangle]]];
             }
             break;
         }
@@ -2013,13 +2021,9 @@ static const int kMaxScreenRows = 4096;
         }
         case VT100CSI_XTREPORTSGR: {
             if ([_delegate terminalIsTrusted]) {
-                VT100GridRect defaultRectangle = VT100GridRectMake(0,
-                                                                   0,
-                                                                   [_delegate terminalWidth],
-                                                                   [_delegate terminalHeight]);
                 [self sendSGRReportWithRectangle:[self rectangleInToken:token
                                                         startingAtIndex:0
-                                                       defaultRectangle:defaultRectangle]];
+                                                       defaultRectangle:[self defaultRectangle]]];
             }
             break;
         }
@@ -2170,6 +2174,10 @@ static const int kMaxScreenRows = 4096;
 
         case VT100CSI_DECFRA:
             [self executeDECFRA:token];
+            break;
+
+        case VT100CSI_DECERA:
+            [self executeDECERA:token];
             break;
 
         case VT100CSI_TBC:

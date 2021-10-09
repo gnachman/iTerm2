@@ -483,5 +483,6 @@ typedef NS_ENUM(int, VT100TerminalColorIndex) {
 - (void)terminalToggleAttribute:(int)sgrAttribute inRect:(VT100GridRect)rect;
 - (void)terminalCopyFrom:(VT100GridRect)source to:(VT100GridCoord)dest;
 - (void)terminalFillRectangle:(VT100GridRect)rect withCharacter:(unichar)ch;
+- (void)terminalEraseRectangle:(VT100GridRect)rect;
 
 @end

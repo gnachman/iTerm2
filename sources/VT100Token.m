@@ -138,6 +138,7 @@
                           @(VT100CSI_DECRARA):                @"VT100CSI_DECRARA",
                           @(VT100CSI_DECCRA):                 @"VT100CSI_DECCRA",
                           @(VT100CSI_DECFRA):                 @"VT100CSI_DECFRA",
+                          @(VT100CSI_DECERA):                 @"VT100CSI_DECERA",
                           @(VT100CSI_SM):                     @"VT100CSI_SM",
                           @(VT100CSI_TBC):                    @"VT100CSI_TBC",
                           @(VT100CSI_DECSCUSR):               @"VT100CSI_DECSCUSR",

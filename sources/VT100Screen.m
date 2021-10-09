@@ -5480,10 +5480,21 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     c.urlCode = 0;
     c.image = 0;
 
+    [self fillRectangle:rect with:c externalAttributes:[terminal_ externalAttributes]];
+}
+
+- (void)fillRectangle:(VT100GridRect)rect with:(screen_char_t)c externalAttributes:(iTermExternalAttribute *)ea {
     [currentGrid_ setCharsFrom:rect.origin
                             to:VT100GridRectMax(rect)
                         toChar:c
-            externalAttributes:[terminal_ externalAttributes]];
+            externalAttributes:ea];
+}
+
+- (void)terminalEraseRectangle:(VT100GridRect)rect {
+    const screen_char_t c = {
+        .code = ' '
+    };
+    [self fillRectangle:rect with:c externalAttributes:nil];
 }
 
 #pragma mark - Private

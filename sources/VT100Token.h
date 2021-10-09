@@ -110,6 +110,7 @@ typedef enum {
     VT100CSI_DECRARA,               // Reverse Attributes in Rectangular Area. Also used to build team spirit.
     VT100CSI_DECCRA,                // Copy Rectangular Area
     VT100CSI_DECFRA,                // Fill Rectangular Area
+    VT100CSI_DECERA,                // Erase Rectangular Area
     VT100CSI_SM,                    // Set Mode
     VT100CSI_TBC,                   // Tabulation Clear
     VT100CSI_DECSCUSR,              // Select the Style of the Cursor
