@@ -13,6 +13,7 @@
 #import "iTermMetadata.h"
 #import "LineBuffer.h"
 #import "NSArray+iTerm.h"
+#import "NSData+iTerm.h"
 #import "NSDictionary+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "VT100GridTypes.h"
@@ -74,7 +75,7 @@ static NSString *const kGridSizeKey = @"Size";
     self = [super init];
     if (self) {
         delegate_ = delegate;
-        NSArray<NSString *> *requiredKeys = @[ @"size", @"lines", @"cursor" ];
+        NSArray<NSString *> *requiredKeys = @[ @"size", @"cursor" ];
         for (NSString *requiredKey in requiredKeys) {
             if (!dictionary[requiredKey]) {
                 [self release];
@@ -83,7 +84,32 @@ static NSString *const kGridSizeKey = @"Size";
         }
         [self setSize:[NSDictionary castFrom:dictionary[@"size"]].gridSize];
         assert(size_.width > 0 && size_.height > 0);
-        lines_ = [[NSArray castFrom:dictionary[@"lines"]] mutableCopy];
+        
+        NSMutableDictionary<NSNumber *, iTermExternalAttributeIndex *> *migrationIndexes = nil;
+        if (dictionary[@"lines v2"]) {
+            // 3.5.0beta3+ path
+            lines_ = [[NSArray castFrom:dictionary[@"lines v2"]] mutableCopy];
+        } else if (dictionary[@"lines"]) {
+            // Migration code path - upgrade legacy_screen_char_t.
+            NSArray<NSData *> *legacyLines = [NSArray castFrom:dictionary[@"lines"]];
+            if (!legacyLines) {
+                [self release];
+                return nil;
+            }
+            lines_ = [[NSMutableArray alloc] init];
+            migrationIndexes = [NSMutableDictionary dictionary];
+            [legacyLines enumerateObjectsUsingBlock:^(NSData * _Nonnull legacyData, NSUInteger idx, BOOL * _Nonnull stop) {
+                iTermExternalAttributeIndex *migrationIndex = nil;
+                [lines_ addObject:[[[legacyData modernizedScreenCharArray:&migrationIndex] mutableCopy] autorelease]];
+                if (migrationIndex) {
+                    migrationIndexes[@(idx)] = migrationIndex;
+                }
+            }];
+        }
+        if (!lines_) {
+            [self release];
+            return nil;
+        }
 
         // Deprecated: migration code path. Modern dicts have `metadata` instead.
         [[NSArray castFrom:dictionary[@"timestamps"]] enumerateObjectsUsingBlock:^(NSNumber *timestamp,
@@ -105,6 +131,9 @@ static NSString *const kGridSizeKey = @"Size";
                 return;
             }
             [lineInfos_[idx] decodeMetadataArray:entry];
+        }];
+        [migrationIndexes enumerateKeysAndObjectsUsingBlock:^(NSNumber * _Nonnull idx, iTermExternalAttributeIndex * _Nonnull ea, BOOL * _Nonnull stop) {
+            [lineInfos_[idx.integerValue] setExternalAttributeIndex:ea];
         }];
         cursor_ = [NSDictionary castFrom:dictionary[@"cursor"]].gridCoord;
         scrollRegionRows_ = [NSDictionary castFrom:dictionary[@"scrollRegionRows"]].gridRange;
@@ -643,6 +672,36 @@ static NSString *const kGridSizeKey = @"Size";
     }
 }
 
+- (void)mutateCharactersInRange:(VT100GridCoordRange)range
+                          block:(void (^)(screen_char_t *sct,
+                                          iTermExternalAttribute **eaOut,
+                                          VT100GridCoord coord,
+                                          BOOL *stop))block {
+    int left = range.start.x;
+    for (int y = MAX(0, range.start.y); y <= MIN(range.end.y, size_.height - 1); y++) {
+        const int right = y == range.end.y ? range.end.x : size_.width;
+        screen_char_t *line = [self lineDataAtLineNumber:y].mutableBytes;
+        iTermExternalAttributeIndex *eaIndex = [self externalAttributesOnLine:y createIfNeeded:NO];
+        [self markCharsDirty:YES inRun:VT100GridRunMake(left, y, right - left)];
+        for (int x = left; x < right; x++) {
+            BOOL stop = NO;
+            iTermExternalAttribute *ea = eaIndex[x];
+            iTermExternalAttribute *originalEa = ea;
+            block(&line[x], &ea, VT100GridCoordMake(x, y), &stop);
+            if (ea != originalEa) {
+                if (!eaIndex) {
+                    eaIndex = [self externalAttributesOnLine:y createIfNeeded:YES];
+                }
+                [eaIndex setAttributes:ea at:x count:1];
+            }
+            if (stop) {
+                return;
+            }
+        }
+        left = 0;
+    }
+}
+
 - (void)setCharsFrom:(VT100GridCoord)unsafeFrom
                   to:(VT100GridCoord)unsafeTo
               toChar:(screen_char_t)c
@@ -744,14 +803,17 @@ static NSString *const kGridSizeKey = @"Size";
     }
 }
 
-- (void)setURLCode:(unsigned short)code
+- (void)setURLCode:(unsigned int)code
         inRectFrom:(VT100GridCoord)from
                 to:(VT100GridCoord)to {
     for (int y = from.y; y <= to.y; y++) {
-        screen_char_t *line = [self screenCharsAtLineNumber:y];
-        for (int x = from.x; x <= to.x; x++) {
-            line[x].urlCode = code;
-        }
+        VT100LineInfo *info = [self lineInfoAtLineNumber:y];
+        iTermExternalAttributeIndex *eaIndex = [info externalAttributesCreatingIfNeeded:code != 0];
+        [eaIndex mutateAttributesFrom:from.x to:to.x block:^iTermExternalAttribute * _Nullable(iTermExternalAttribute * _Nullable old) {
+            return [iTermExternalAttribute attributeHavingUnderlineColor:old.hasUnderlineColor
+                                                          underlineColor:old.underlineColor
+                                                                 urlCode:code];
+        }];
         [self markCharsDirty:YES
                   inRectFrom:VT100GridCoordMake(from.x, y)
                           to:VT100GridCoordMake(to.x, y)];
@@ -1893,9 +1955,13 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
     NSArray<NSData *> *lines = [[NSArray sequenceWithRange:NSMakeRange(0, size_.height)] mapWithBlock:^id(NSNumber *i) {
         return [self lineDataAtLineNumber:i.intValue];
     }];
+    NSArray<NSData *> *legacyLines = [lines mapEnumeratedWithBlock:^id(NSUInteger i, NSData *modernData, BOOL *stop) {
+        return [modernData legacyScreenCharArrayWithExternalAttributes:[self externalAttributesOnLine:i createIfNeeded:NO]];
+    }];
     [encoder mergeDictionary:@{
         @"size": [NSDictionary dictionaryWithGridSize:size_],
-        @"lines": lines,
+        @"lines v2": lines,
+        @"lines": legacyLines,  // works around a crash pre-3.5 when downgrading with saved state
         @"metadata": metadata,
         @"cursor": [NSDictionary dictionaryWithGridCoord:cursor_],
         @"scrollRegionRows": [NSDictionary dictionaryWithGridRange:scrollRegionRows_],
@@ -1913,40 +1979,7 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
         iTermExternalAttributeIndex *eaIndex = [self externalAttributesOnLine:y
                                                                createIfNeeded:NO];
         const int left = MAX(0, rect.origin.x);
-        const int right = MIN(size_.width, rect.origin.x + rect.size.height);
-        [self markCharsDirty:YES inRun:VT100GridRunMake(left, y, right - left)];
-
-        for (int x = left; x < right; x++) {
-            BOOL stop = NO;
-            block(VT100GridCoordMake(x, y), &line[x], eaIndex[x], &stop);
-            if (stop) {
-                return;
-            }
-        }
-    }
-}
-
-- (void)enumerateCellsInCoordRange:(VT100GridCoordRange)coordRange
-                             block:(void (^NS_NOESCAPE)(VT100GridCoord, screen_char_t *, iTermExternalAttribute *, BOOL *))block {
-    for (int y = MAX(0, coordRange.start.y); y <= MIN(size_.height, coordRange.end.y); y++) {
-        NSMutableData *data = [self lineDataAtLineNumber:y];
-        screen_char_t *line = (screen_char_t *)data.mutableBytes;
-        iTermExternalAttributeIndex *eaIndex = [self externalAttributesOnLine:y
-                                                               createIfNeeded:NO];
-        int left;
-        if (y == coordRange.start.y) {
-            left = coordRange.start.x;
-        } else {
-            left = 0;
-        }
-
-        int right;
-        if (y == coordRange.end.y) {
-            right = coordRange.end.x;
-        } else {
-            right = size_.width;
-        }
-
+        const int right = MIN(size_.width, rect.origin.x + rect.size.width);
         [self markCharsDirty:YES inRun:VT100GridRunMake(left, y, right - left)];
 
         for (int x = left; x < right; x++) {
@@ -1991,7 +2024,6 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
     c.underline = NO;
     c.strikethrough = NO;
     c.underlineStyle = VT100UnderlineStyleSingle;
-    c.urlCode = 0;
     c.image = 0;
 
     return c;

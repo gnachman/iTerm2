@@ -110,8 +110,6 @@
 
 - (void)enumerateCellsInRect:(VT100GridRect)rect
                        block:(void (^NS_NOESCAPE)(VT100GridCoord, screen_char_t *, iTermExternalAttribute *, BOOL *))block;
-- (void)enumerateCellsInCoordRange:(VT100GridCoordRange)coordRange
-                             block:(void (^NS_NOESCAPE)(VT100GridCoord, screen_char_t *, iTermExternalAttribute *, BOOL *))block;
 
 // Move cursor to the left by n steps. Does not wrap around when it hits the left margin.
 // If it starts left of the scroll region, clamp it to the left. If it starts right of the scroll
@@ -213,7 +211,7 @@
                         to:(VT100GridCoord)to;
 
 // Set URLCode in a range.
-- (void)setURLCode:(unsigned short)code
+- (void)setURLCode:(unsigned int)code
         inRectFrom:(VT100GridCoord)from
                 to:(VT100GridCoord)to;
 
@@ -297,6 +295,11 @@
 // Saves restorable state. Goes with initWithDictionary:delegate:
 - (void)encode:(id<iTermEncoderAdapter>)encoder;
 
+- (void)mutateCharactersInRange:(VT100GridCoordRange)range
+                          block:(void (^)(screen_char_t *sct,
+                                          iTermExternalAttribute **eaOut,
+                                          VT100GridCoord coord,
+                                          BOOL *stop))block;
 #pragma mark - Testing use only
 
 - (VT100LineInfo *)lineInfoAtLineNumber:(int)lineNumber;

@@ -441,8 +441,8 @@ typedef NS_ENUM(int, VT100TerminalColorIndex) {
 - (NSString *)terminalValueOfVariableNamed:(NSString *)name;
 
 // Links
-- (void)terminalWillEndLinkWithCode:(unsigned short)code;
-- (void)terminalWillStartLinkWithCode:(unsigned short)code;
+- (void)terminalWillEndLinkWithCode:(unsigned int)code;
+- (void)terminalWillStartLinkWithCode:(unsigned int)code;
 
 // Custom escape sequences
 - (void)terminalCustomEscapeSequenceWithParameters:(NSDictionary<NSString *, NSString *> *)parameters

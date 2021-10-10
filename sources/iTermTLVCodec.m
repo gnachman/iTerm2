@@ -29,6 +29,10 @@
     [self encodeBytes:&i length:sizeof(i)];
 }
 
+- (void)encodeUnsignedInt:(unsigned int)i {
+    [self encodeBytes:&i length:sizeof(i)];
+}
+
 - (void)encodeData:(NSData *)data {
     assert (data.length <= INT_MAX);
 
@@ -76,6 +80,10 @@
 }
 
 - (BOOL)decodeInt:(int *)i {
+    return [self decodeBytes:i length:sizeof(*i)];
+}
+
+- (BOOL)decodeUnsignedInt:(unsigned int *)i {
     return [self decodeBytes:i length:sizeof(*i)];
 }
 

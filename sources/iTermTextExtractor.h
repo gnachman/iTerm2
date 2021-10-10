@@ -169,8 +169,8 @@ extern const NSInteger kLongMaximumWordLength;
 - (int)lengthOfAbsLine:(long long)absLine;
 
 - (void)enumerateCharsInRange:(VT100GridWindowedRange)range
-                    charBlock:(BOOL (^)(screen_char_t *currentLine, screen_char_t theChar, iTermExternalAttribute *, VT100GridCoord coord))charBlock
-                     eolBlock:(BOOL (^)(unichar code, int numPreceedingNulls, int line))eolBlock;
+                    charBlock:(BOOL (^NS_NOESCAPE)(screen_char_t *currentLine, screen_char_t theChar, iTermExternalAttribute *, VT100GridCoord coord))charBlock
+                     eolBlock:(BOOL (^NS_NOESCAPE)(unichar code, int numPreceedingNulls, int line))eolBlock;
 
 - (void)enumerateWrappedLinesIntersectingRange:(VT100GridRange)range
                                          block:(void (^)(iTermStringLine *, VT100GridWindowedRange, BOOL *))block;
@@ -195,6 +195,8 @@ extern const NSInteger kLongMaximumWordLength;
 
 - (screen_char_t)characterAt:(VT100GridCoord)coord;
 - (screen_char_t)characterAtAbsCoord:(VT100GridAbsCoord)coord;
+
+- (iTermExternalAttribute *)externalAttributesAt:(VT100GridCoord)coord;
 
 // Returns a subset of `range` by removing leading and trailing whitespace.
 - (VT100GridAbsCoordRange)rangeByTrimmingWhitespaceFromRange:(VT100GridAbsCoordRange)range;
@@ -228,7 +230,9 @@ typedef NS_ENUM(NSUInteger, iTermTextExtractorTrimTrailingWhitespace) {
 // Returns the resulting range.
 - (VT100GridWindowedRange)rangeOfCoordinatesAround:(VT100GridCoord)coord
                                    maximumDistance:(int)maximumDistance
-                                       passingTest:(BOOL(^)(screen_char_t *c, VT100GridCoord coord))block;
+                                       passingTest:(BOOL(^)(screen_char_t *c,
+                                                            iTermExternalAttribute *ea,
+                                                            VT100GridCoord coord))block;
 
 - (int)startOfIndentationOnLine:(int)line;
 - (int)startOfIndentationOnAbsLine:(long long)absLine;

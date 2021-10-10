@@ -29,5 +29,6 @@
 - (void)resetMetadata;
 - (NSArray *)encodedMetadata;
 - (iTermExternalAttributeIndex *)externalAttributesCreatingIfNeeded:(BOOL)create;
+- (void)setExternalAttributeIndex:(iTermExternalAttributeIndex *)eaIndex;
 
 @end

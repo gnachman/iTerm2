@@ -13,6 +13,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) NSData *data;
 
 - (void)encodeInt:(int)i;
+- (void)encodeUnsignedInt:(unsigned int)i;
 - (void)encodeData:(NSData *)data;
 - (void)encodeRange:(NSRange)range;
 - (void)encodeBool:(BOOL)b;
@@ -26,6 +27,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (instancetype)init NS_UNAVAILABLE;
 
 - (BOOL)decodeInt:(int *)i;
+- (BOOL)decodeUnsignedInt:(unsigned int *)i;
 - (NSData *)decodeData;
 - (BOOL)decodeRange:(NSRange *)range;
 - (BOOL)decodeBool:(BOOL *)b;

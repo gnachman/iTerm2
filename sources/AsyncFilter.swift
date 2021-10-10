@@ -320,5 +320,5 @@ extension screen_char_t {
                                     underlineStyle: VT100UnderlineStyle.single,
                                     invisible: 0,
                                     inverse: 0,
-                                    urlCode: 0)
+                                    unused: 0)
 }

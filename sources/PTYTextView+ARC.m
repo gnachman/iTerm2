@@ -500,7 +500,7 @@ static const NSUInteger kRectangularSelectionModifierMask = (kRectangularSelecti
         fgColor = [fgColor colorByPremultiplyingAlphaWithColor:bgColor];
     }
 
-    int underlineStyle = (c.urlCode || c.underline) ? (NSUnderlineStyleSingle | NSUnderlineByWord) : 0;
+    int underlineStyle = (ea.urlCode || c.underline) ? (NSUnderlineStyleSingle | NSUnderlineByWord) : 0;
 
     BOOL isItalic = c.italic;
     PTYFontInfo *fontInfo = [self getFontForChar:c.code
@@ -547,8 +547,8 @@ static const NSUInteger kRectangularSelectionModifierMask = (kRectangularSelecti
     if ([iTermAdvancedSettingsModel excludeBackgroundColorsFromCopiedStyle]) {
         attributes = [attributes dictionaryByRemovingObjectForKey:NSBackgroundColorAttributeName];
     }
-    if (c.urlCode) {
-        NSURL *url = [[iTermURLStore sharedInstance] urlForCode:c.urlCode];
+    if (ea.urlCode) {
+        NSURL *url = [[iTermURLStore sharedInstance] urlForCode:ea.urlCode];
         if (url != nil) {
             attributes = [attributes dictionaryBySettingObject:url forKey:NSLinkAttributeName];
         }

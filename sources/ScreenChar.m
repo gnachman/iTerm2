@@ -550,13 +550,29 @@ int EffectiveLineLength(screen_char_t* theLine, int totalLength) {
 
 NSString *DebugStringForScreenChar(screen_char_t c) {
     NSArray *modes = @[ @"default", @"selected", @"altsem", @"altsem-reversed" ];
-    return [NSString stringWithFormat:@"<screen_char_t: code=%@ complex=%@ image=%@ url=%@ foregroundColor=%@ fgGreen=%@ fgBlue=%@ backgroundColor=%@ bgGreen=%@ bgBlue=%@ fgMode=%@ bgMode=%@ bold=%@ faint=%@ italic=%@ blink=%@ underline=%@ strikethrough=%@ underlinestyle=%@ invisible=%@ inverse=%@>",
-            @(c.code), @(c.complexChar), @(c.image), @(c.urlCode),
-            @(c.foregroundColor), @(c.fgGreen), @(c.fgBlue),
-            @(c.backgroundColor), @(c.bgGreen), @(c.bgBlue), modes[c.foregroundColorMode],
-            modes[c.backgroundColorMode], @(c.bold), @(c.faint), @(c.italic), @(c.blink),
-            @(c.underline), @(c.strikethrough), @(c.underlineStyle),
-            @(c.invisible), @(c.inverse)];
+    return [NSString stringWithFormat:@"code=%x (%@) foregroundColor=%@ fgGreen=%@ fgBlue=%@ backgroundColor=%@ bgGreen=%@ bgBlue=%@ foregroundColorMode=%@ backgroundColorMode=%@ complexChar=%@ bold=%@ faint=%@ italic=%@ blink=%@ underline=%@ underlineStyle=%@ strikethrough=%@ image=%@ invisible=%@ inverse=%@ unused=%@",
+            (int)c.code,
+            ScreenCharToStr(&c),
+            @(c.foregroundColor),
+            @(c.fgGreen),
+            @(c.fgBlue),
+            @(c.backgroundColor),
+            @(c.bgGreen),
+            @(c.bgBlue),
+            modes[c.foregroundColorMode],
+            modes[c.backgroundColorMode],
+            @(c.complexChar),
+            @(c.bold),
+            @(c.faint),
+            @(c.italic),
+            @(c.blink),
+            @(c.underline),
+            @(c.underlineStyle),
+            @(c.strikethrough),
+            @(c.image),
+            @(c.invisible),
+            @(c.inverse),
+            @(c.unused)];
 }
 
 // Convert a string into an array of screen characters, dealing with surrogate
@@ -704,8 +720,8 @@ void InitializeScreenChar(screen_char_t *s, screen_char_t fg, screen_char_t bg) 
     s->strikethrough = fg.strikethrough;
     s->underlineStyle = fg.underlineStyle;
     s->image = NO;
-    s->urlCode = fg.urlCode;
     s->inverse = fg.inverse;
+    s->unused = 0;
 }
 
 void ConvertCharsToGraphicsCharset(screen_char_t *s, int len)
@@ -867,15 +883,12 @@ NSString *ScreenCharDescription(screen_char_t c) {
     if (c.strikethrough) {
         [attrs addObject:@"Strike"];
     }
-    if (c.urlCode) {
-        [attrs addObject:@"URL"];
-    }
     if (c.inverse) {
         [attrs addObject:@"Inverse"];
     }
     NSString *style = [attrs componentsJoinedByString:@" "];
     if (style.length) {
-        style = [@": " stringByAppendingString:style];
+        style = [@"; " stringByAppendingString:style];
     }
     return [NSString stringWithFormat:@"fg=%@ bg=%@%@",
             ScreenCharColorDescription(c.foregroundColor,

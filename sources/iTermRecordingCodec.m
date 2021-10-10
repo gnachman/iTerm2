@@ -61,12 +61,15 @@
         return;
     }
 
-    NSArray<NSNumber *> *supportedVersions = @[ @1, @2 ];
+    NSArray<NSNumber *> *supportedVersions = @[ @1, @2, @3 ];
     if (![supportedVersions containsObject:dict[@"version"]]) {
         [iTermWarning showWarningWithTitle:@"This recording is from a newer version of iTerm2 and cannot be replayed in this version."
                                    actions:@[ @"OK" ]
+                             actionMapping:nil
+                                 accessory:nil
                                 identifier:@"RecordingMalformed"
                                silenceable:kiTermWarningTypePersistent
+                                   heading:@"Can’t Load Recording"
                                     window:nil];
         return;
     }
@@ -76,8 +79,11 @@
     if (!dvrDict || !dictProfile) {
         [iTermWarning showWarningWithTitle:@"This recording could not be loaded because it is missing critical information."
                                    actions:@[ @"OK" ]
+                             actionMapping:nil
+                                 accessory:nil
                                 identifier:@"RecordingMalformed"
                                silenceable:kiTermWarningTypePersistent
+                                   heading:@"Can’t Load Recording"
                                     window:nil];
         return;
     }
@@ -148,9 +154,11 @@
                 profile[KEY_GUID] = [[NSUUID UUID] UUIDString];
 
                 // Version 2 added per-line metadata.
+                // Version 3 moved URL codes into external attributes.
                 NSDictionary *dict = @{ @"dvr": dvrDict,
                                         @"profile": profile,
-                                        @"version": @2 };
+                                        @"version": @3 };
+                
                 NSData *dictData = [[NSData it_dataWithArchivedObject:dict] gzippedData];
                 NSError *error = nil;
                 BOOL ok = [dictData writeToURL:url options:0 error:&error];

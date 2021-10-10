@@ -24,6 +24,8 @@
 
 // Returns nil on error
 // TODO: Test with italics
+// TODO: Add external attributes here when tmux gains OSC 8 or colored underline support.
+// For underline color, see https://github.com/tmux/tmux/issues/2928
 - (NSData *)dataForHistoryLine:(NSString *)hist
                   withTerminal:(VT100Terminal *)terminal
         ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth

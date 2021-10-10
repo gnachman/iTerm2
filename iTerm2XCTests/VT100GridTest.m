@@ -12,6 +12,36 @@
 #import "LineBuffer.h"
 #import "VT100Grid.h"
 
+// Returns true iff two foreground colors are equal.
+static inline BOOL ForegroundAttributesEqual(const screen_char_t a,
+                                             const screen_char_t b)
+{
+    if (a.bold != b.bold ||
+        a.faint != b.faint ||
+        a.italic != b.italic ||
+        a.blink != b.blink ||
+        a.invisible != b.invisible ||
+        a.underline != b.underline ||
+        a.underlineStyle != b.underlineStyle ||
+        a.strikethrough != b.strikethrough) {
+        return NO;
+    }
+    if (a.foregroundColorMode == b.foregroundColorMode) {
+        if (a.foregroundColorMode != ColorMode24bit) {
+            // for normal and alternate ColorMode
+            return a.foregroundColor == b.foregroundColor;
+        } else {
+            // RGB must all be equal for 24bit color
+            return a.foregroundColor == b.foregroundColor &&
+                a.fgGreen == b.fgGreen &&
+                a.fgBlue == b.fgBlue;
+        }
+    } else {
+        // different ColorMode == different colors
+        return NO;
+    }
+}
+
 @interface VT100GridTest : XCTestCase
 @end
 

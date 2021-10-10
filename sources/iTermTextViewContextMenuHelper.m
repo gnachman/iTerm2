@@ -432,8 +432,12 @@ static uint64_t iTermInt64FromBytes(const unsigned char *bytes, BOOL bigEndian) 
             const screen_char_t c = [extractor characterAt:coord];
             NSString *description = ScreenCharDescription(c);
             if (description) {
+                iTermExternalAttribute *ea = [extractor externalAttributesAt:coord];
+                if (ea) {
+                    description = [NSString stringWithFormat:@"%@; %@", description, [ea humanReadableDescription]];
+                }
                 NSMenuItem *theItem = [[NSMenuItem alloc] init];
-                theItem.title = ScreenCharDescription(c);
+                theItem.title = description;
                 [theMenu addItem:theItem];
             }
         }];

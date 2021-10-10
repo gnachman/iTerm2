@@ -87,8 +87,8 @@ NSString *const kTerminalStateDisableSMCUPAndRMCUPKey = @"Disable Alt Screen";
 NSString *const kTerminalStateSoftAlternateScreenModeKey = @"Soft Alternate Screen Mode";
 NSString *const kTerminalStateInCommandKey = @"In Command";
 NSString *const kTerminalStateUnicodeVersionStack = @"Unicode Version Stack";
-NSString *const kTerminalStateURL = @"URL";
-NSString *const kTerminalStateURLParams = @"URL Params";
+NSString *const kTerminalStateURL_DEPRECATED = @"URL";  // This was stored as an NSURL (which didn't work at all) and getting an URL code from an URL is hard (because it depends on the order of state restoration) and ultimately it's not that important to preserve this bit of state so it has been abandoned.
+NSString *const kTerminalStateURLParams_DEPRECATED = @"URL Params";
 NSString *const kTerminalStateReportKeyUp = @"Report Key Up";
 NSString *const kTerminalStateMetaSendsEscape = @"Meta Sends Escape";
 NSString *const kTerminalStateSendModifiers = @"Send Modifiers";
@@ -171,7 +171,7 @@ typedef struct {
     NSMutableArray *_unicodeVersionStack;
 
     // Code for the current hypertext link, or 0 if not in a hypertext link.
-    unsigned short _currentURLCode;
+    unsigned int _currentURLCode;
 
     BOOL _softAlternateScreenMode;
     NSMutableArray<NSNumber *> *_mainKeyReportingModeStack;
@@ -515,11 +515,12 @@ static const int kMaxScreenRows = 4096;
 }
 
 - (void)updateExternalAttributes {
-    if (!graphicRendition_.hasUnderlineColor) {
+    if (!graphicRendition_.hasUnderlineColor && _currentURLCode == 0) {
         _externalAttributes = nil;
         return;
     }
-    _externalAttributes = [[iTermExternalAttribute alloc] initWithUnderlineColor:graphicRendition_.underlineColor];
+    _externalAttributes = [[iTermExternalAttribute alloc] initWithUnderlineColor:graphicRendition_.underlineColor
+                                                                         urlCode:_currentURLCode];
 }
 
 - (screen_char_t)foregroundColorCode {
@@ -549,8 +550,8 @@ static const int kMaxScreenRows = 4096;
     result.blink = graphicRendition_.blink;
     result.invisible = graphicRendition_.invisible;
     result.image = NO;
-    result.urlCode = _currentURLCode;
     result.inverse = graphicRendition_.reversed;
+    result.unused = 0;
     return result;
 }
 
@@ -589,8 +590,8 @@ static const int kMaxScreenRows = 4096;
     result.underlineStyle = graphicRendition_.underlineStyle;
     result.blink = graphicRendition_.blink;
     result.invisible = graphicRendition_.invisible;
-    result.urlCode = _currentURLCode;
     result.inverse = graphicRendition_.reversed;
+    result.unused = 0;
     return result;
 }
 
@@ -3444,7 +3445,7 @@ static const int kMaxScreenRows = 4096;
         self.urlParams = nil;
     } else {
         self.urlParams = params;
-        unsigned short code = [[iTermURLStore sharedInstance] codeForURL:self.url withParams:params];
+        unsigned int code = [[iTermURLStore sharedInstance] codeForURL:self.url withParams:params];
         if (code) {
             if (_currentURLCode) {
                 [_delegate terminalWillEndLinkWithCode:_currentURLCode];
@@ -3454,6 +3455,7 @@ static const int kMaxScreenRows = 4096;
             _currentURLCode = code;
         }
     }
+    [self updateExternalAttributes];
 }
 
 - (void)executeXtermSetKvp:(VT100Token *)token {
@@ -4582,8 +4584,6 @@ static iTermDECRPMSetting VT100TerminalDECRPMSettingFromBoolean(BOOL flag) {
            kTerminalStateSoftAlternateScreenModeKey: @(_softAlternateScreenMode),
            kTerminalStateInCommandKey: @(inCommand_),
            kTerminalStateUnicodeVersionStack: _unicodeVersionStack,
-           kTerminalStateURL: self.url ?: [NSNull null],
-           kTerminalStateURLParams: self.urlParams ?: [NSNull null],
            kTerminalStateSynchronizedUpdates: @(self.synchronizedUpdates),
            kTerminalStatePreserveScreenOnDECCOLM: @(self.preserveScreenOnDECCOLM),
            kTerminalStateSavedColors: _savedColors.plist
@@ -4651,8 +4651,6 @@ static iTermDECRPMSetting VT100TerminalDECRPMSettingFromBoolean(BOOL flag) {
     }
     self.allowKeypadMode = [dict[kTerminalStateAllowKeypadModeKey] boolValue];
     self.allowPasteBracketing = [dict[kTerminalStateAllowPasteBracketing] boolValue];
-    self.url = [dict[kTerminalStateURL] nilIfNull];
-    self.urlParams = [dict[kTerminalStateURLParams] nilIfNull];
 
     self.bracketedPasteMode = [dict[kTerminalStateBracketedPasteModeKey] boolValue];
     ansiMode_ = [dict[kTerminalStateAnsiModeKey] boolValue];

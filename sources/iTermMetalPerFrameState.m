@@ -770,12 +770,15 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
         attributes[x].backgroundColor = backgroundColor;
         attributes[x].annotation = annotated;
 
+        iTermExternalAttribute *ea = eaIndex[x];
+        const unsigned int urlCode = ea.urlCode;
         const BOOL characterIsDrawable = iTermTextDrawingHelperIsCharacterDrawable(&line[x],
                                                                                    x > 0 ? &line[x - 1] : NULL,
                                                                                    line[x].complexChar && (ScreenCharToStr(&line[x]) != nil),
                                                                                    _configuration->_blinkingItemsVisible,
                                                                                    _configuration->_blinkAllowed,
-                                                                                   NO /* preferSpeedToFullLigatureSupport */);
+                                                                                   NO /* preferSpeedToFullLigatureSupport */,
+                                                                                   urlCode);
         const BOOL isBoxDrawingCharacter = (characterIsDrawable &&
                                             !line[x].complexChar &&
                                             line[x].code > 127 &&
@@ -823,7 +826,7 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
             attributes[x].underlineStyle = iTermMetalGlyphAttributesUnderlineSingle;
         } else if (line[x].underline || inUnderlinedRange) {
             const BOOL curly = line[x].underline && line[x].underlineStyle == VT100UnderlineStyleCurly;
-            if (line[x].urlCode) {
+            if (urlCode) {
                 attributes[x].underlineStyle = iTermMetalGlyphAttributesUnderlineHyperlink;
             } else if (line[x].underline && line[x].underlineStyle == VT100UnderlineStyleDouble && !inUnderlinedRange) {
                 attributes[x].underlineStyle = iTermMetalGlyphAttributesUnderlineDouble;
@@ -832,7 +835,7 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
             } else {
                 attributes[x].underlineStyle = iTermMetalGlyphAttributesUnderlineSingle;
             }
-        } else if (line[x].urlCode && underlineHyperlinks) {
+        } else if (urlCode && underlineHyperlinks) {
             attributes[x].underlineStyle = iTermMetalGlyphAttributesUnderlineDashedSingle;
         } else {
             attributes[x].underlineStyle = iTermMetalGlyphAttributesUnderlineNone;
@@ -841,7 +844,6 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
             // This right here is why strikethrough and underline is mutually exclusive
             attributes[x].underlineStyle |= iTermMetalGlyphAttributesUnderlineStrikethroughFlag;
         }
-        iTermExternalAttribute *ea = eaIndex[x];
         if (ea) {
             attributes[x].hasUnderlineColor = ea.hasUnderlineColor;
             if (attributes[x].hasUnderlineColor) {

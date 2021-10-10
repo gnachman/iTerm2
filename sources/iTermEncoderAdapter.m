@@ -6,6 +6,7 @@
 //
 
 #import "iTermEncoderAdapter.h"
+#import "DebugLogging.h"
 #import "NSArray+iTerm.h"
 
 @implementation iTermGraphEncoderAdapter

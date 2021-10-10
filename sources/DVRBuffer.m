@@ -107,13 +107,14 @@
     return [dict dictionaryByRemovingNullValues];
 }
 
-- (BOOL)loadFromDictionary:(NSDictionary *)dict {
+- (BOOL)loadFromDictionary:(NSDictionary *)dict
+                   version:(int)version {
     NSData *store = dict[@"store"];
     if (store.length != capacity_) {
         return NO;
     }
     memmove(store_, store.bytes, store.length);
-
+    _needsMigration = (version == 1);
     scratch_ = 0;
 
     NSDictionary *indexDict = dict[@"index"];

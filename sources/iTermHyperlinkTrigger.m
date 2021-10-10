@@ -74,7 +74,7 @@
     }
 
     // add URL to URL Store and retrieve URL code for later reference
-    unsigned short code = [[iTermURLStore sharedInstance] codeForURL:url withParams:@""];
+    unsigned int code = [[iTermURLStore sharedInstance] codeForURL:url withParams:@""];
     
     // add url link to screen
     [[aSession screen] linkTextInRange:rangeInString

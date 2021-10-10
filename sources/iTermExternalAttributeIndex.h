@@ -17,12 +17,20 @@ NS_ASSUME_NONNULL_BEGIN
 @interface iTermExternalAttribute: NSObject<NSCopying>
 @property (nonatomic, readonly) BOOL hasUnderlineColor;
 @property (nonatomic, readonly) VT100TerminalColorValue underlineColor;
+@property (nonatomic) unsigned int urlCode;
+@property (nonatomic, readonly) NSString *humanReadableDescription;
 
 @property(nonatomic, readonly) NSDictionary *dictionaryValue;
 
++ (iTermExternalAttribute *)attributeHavingUnderlineColor:(BOOL)hasUnderlineColor
+                                           underlineColor:(VT100TerminalColorValue)underlineColor
+                                                  urlCode:(unsigned int)urlCode;
+
 + (instancetype)fromData:(NSData *)data;
 - (instancetype)init;
-- (instancetype)initWithUnderlineColor:(VT100TerminalColorValue)color;
+- (instancetype)initWithUnderlineColor:(VT100TerminalColorValue)color
+                               urlCode:(unsigned int)urlCode;
+- (instancetype)initWithURLCode:(unsigned int)urlCode;
 - (instancetype)initWithDictionary:(NSDictionary *)dict;
 - (BOOL)isEqualToExternalAttribute:(iTermExternalAttribute *)rhs;
 - (NSData *)data;
@@ -46,10 +54,16 @@ NS_ASSUME_NONNULL_BEGIN
           source:(int)source
      destination:(int)destination
            count:(int)count;
+- (void)mutateAttributesFrom:(int)start
+                          to:(int)end
+                       block:(iTermExternalAttribute * _Nullable(^)(iTermExternalAttribute * _Nullable))block;
+
 - (iTermExternalAttributeIndex *)subAttributesToIndex:(int)index;
 - (iTermExternalAttributeIndex *)subAttributesFromIndex:(int)index;
 - (iTermExternalAttributeIndex *)subAttributesFromIndex:(int)index maximumLength:(int)maxLength;
 - (iTermExternalAttribute * _Nullable)objectAtIndexedSubscript:(NSInteger)idx;
+- (void)setObject:(iTermExternalAttribute * _Nullable)ea atIndexedSubscript:(NSUInteger)i;
+
 + (iTermExternalAttributeIndex *)concatenationOf:(iTermExternalAttributeIndex *)lhs
                                       length:(int)lhsLength
                                         with:(iTermExternalAttributeIndex *)rhs
@@ -65,5 +79,10 @@ NS_ASSUME_NONNULL_BEGIN
            count:(int)count NS_UNAVAILABLE;
 @end
 
+
+@interface NSData(iTermExternalAttributes)
+- (NSData *)modernizedScreenCharArray:(iTermExternalAttributeIndex * _Nullable * _Nullable)indexOut;
+- (NSData *)legacyScreenCharArrayWithExternalAttributes:(iTermExternalAttributeIndex * _Nullable)eaIndex;
+@end
 
 NS_ASSUME_NONNULL_END

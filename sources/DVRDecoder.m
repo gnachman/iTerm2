@@ -30,6 +30,7 @@
 
 #import "DebugLogging.h"
 #import "DVRIndexEntry.h"
+#import "iTermExternalAttributeIndex.h"
 #import "iTermMalloc.h"
 #import "LineBuffer.h"
 
@@ -94,8 +95,11 @@
     return NO;
 }
 
-- (char *)decodedFrame
-{
+- (BOOL)needsMigration {
+    return buffer_.needsMigration;
+}
+
+- (char *)decodedFrame {
     return decodedBytes_;
 }
 

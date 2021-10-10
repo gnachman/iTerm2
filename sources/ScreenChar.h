@@ -129,8 +129,7 @@ typedef struct {
 
 NSString *VT100TerminalColorValueDescription(VT100TerminalColorValue value, BOOL fg);
 
-typedef struct screen_char_t
-{
+typedef struct legacy_screen_char_t {
     // Normally, 'code' gives a utf-16 code point. If 'complexChar' is set then
     // it is a key into a string table of multiple utf-16 code points (for
     // example, a surrogate pair or base char+combining mark). These must render
@@ -203,6 +202,79 @@ typedef struct screen_char_t
     // This comes after unused so it can be byte-aligned.
     // If the current text is part of a hypertext link, this gives an index into the URL store.
     unsigned short urlCode;
+} legacy_screen_char_t;
+
+typedef struct screen_char_t {
+    // Normally, 'code' gives a utf-16 code point. If 'complexChar' is set then
+    // it is a key into a string table of multiple utf-16 code points (for
+    // example, a surrogate pair or base char+combining mark). These must render
+    // to a single glyph. 'code' can take some special values which are valid
+    // regardless of the setting of 'complexChar':
+    //   0: Signifies no character was ever set at this location. Not selectable.
+    //   DWC_SKIP, TAB_FILLER, BOGUS_CHAR, or DWC_RIGHT: See comments above.
+    // In the WIDTH+1 position on a line, this takes the value of EOL_HARD,
+    //  EOL_SOFT, or EOL_DWC. See the comments for those constants.
+    unichar code;
+
+    // With normal background semantics:
+    //   The lower 9 bits have the same semantics for foreground and background
+    //   color:
+    //     Low three bits give color. 0-7 are black, red, green, yellow, blue,
+    //       magenta, cyan, and white.
+    //     Values between 8 and 15 are bright versions of 0-7.
+    //     Values between 16 and 255 are used for 256 color mode:
+    //       16-231: rgb value given by 16 + r*36 + g*6 + b, with each color in
+    //         the range [0,5].
+    //       232-255: Grayscale values from dimmest gray 233 (which is not black)
+    //         to brightest 255 (not white).
+    // With alternate background semantics:
+    //   ALTSEM_xxx (see comments above)
+    // With 24-bit semantics:
+    //   foreground/backgroundColor gives red component and fg/bgGreen, fg/bgBlue
+    //     give the rest of the color's components
+    // For images, foregroundColor doubles as the x index.
+    unsigned int foregroundColor : 8;
+    unsigned int fgGreen : 8;
+    unsigned int fgBlue  : 8;
+
+    // For images, backgroundColor doubles as the y index.
+    unsigned int backgroundColor : 8;
+    unsigned int bgGreen : 8;
+    unsigned int bgBlue  : 8;
+
+    // These determine the interpretation of foreground/backgroundColor.
+    unsigned int foregroundColorMode : 2;
+    unsigned int backgroundColorMode : 2;
+
+    // If set, the 'code' field does not give a utf-16 value but is instead a
+    // key into a string table of more complex chars (combined, surrogate pairs,
+    // etc.). Valid 'code' values for a complex char are in [1, 0xefff] and will
+    // be recycled as needed.
+    unsigned int complexChar : 1;
+
+    // Various bits affecting text appearance. The bold flag here is semantic
+    // and may be rendered as some combination of font choice and color
+    // intensity.
+    unsigned int bold : 1;
+    unsigned int faint : 1;
+    unsigned int italic : 1;
+    unsigned int blink : 1;
+    unsigned int underline : 1;
+
+    // Is this actually an image? Changes the semantics of code,
+    // foregroundColor, and backgroundColor (see notes above).
+    unsigned int image : 1;
+
+    unsigned int strikethrough : 1;
+    VT100UnderlineStyle underlineStyle : 2;  // VT100UnderlineStyle
+
+    unsigned int invisible : 1;
+
+    // fg and bg are swapped. Note that this flag doesn't affect rendering; it simply notes that the
+    // colors in this struct were *already* exchanged because of SGR 7.
+    unsigned int inverse : 1;
+
+    unsigned int unused : 16;
 } screen_char_t;
 
 
@@ -230,7 +302,6 @@ static inline BOOL ScreenCharacterAttributesEqual(screen_char_t *c1, screen_char
             c1->underline == c2->underline &&
             c1->underlineStyle == c2->underlineStyle &&
             c1->strikethrough == c2->strikethrough &&
-            !c1->urlCode == !c2->urlCode &&  // Only tests if urlCode is zero/nonzero in both
             c1->image == c2->image);
 }
 
@@ -249,7 +320,7 @@ static inline void CopyForegroundColor(screen_char_t* to, const screen_char_t fr
     to->underline = from.underline;
     to->underlineStyle = from.underlineStyle;
     to->strikethrough = from.strikethrough;
-    to->urlCode = from.urlCode;
+    to->unused = from.unused;
     to->image = from.image;
     to->inverse = from.inverse;
 }
@@ -283,38 +354,8 @@ static inline BOOL BackgroundColorsEqual(const screen_char_t a,
     }
 }
 
-// Returns true iff two foreground colors are equal.
-static inline BOOL ForegroundAttributesEqual(const screen_char_t a,
-                                             const screen_char_t b)
-{
-    if (a.bold != b.bold ||
-        a.faint != b.faint ||
-        a.italic != b.italic ||
-        a.blink != b.blink ||
-        a.invisible != b.invisible ||
-        a.underline != b.underline ||
-        a.underlineStyle != b.underlineStyle ||
-        a.strikethrough != b.strikethrough ||
-        !a.urlCode != !b.urlCode) {
-        return NO;
-    }
-    if (a.foregroundColorMode == b.foregroundColorMode) {
-        if (a.foregroundColorMode != ColorMode24bit) {
-            // for normal and alternate ColorMode
-            return a.foregroundColor == b.foregroundColor;
-        } else {
-            // RGB must all be equal for 24bit color
-            return a.foregroundColor == b.foregroundColor &&
-                a.fgGreen == b.fgGreen &&
-                a.fgBlue == b.fgBlue;
-        }
-    } else {
-        // different ColorMode == different colors
-        return NO;
-    }
-}
-
-static inline BOOL ScreenCharHasDefaultAttributesAndColors(const screen_char_t s) {
+static inline BOOL ScreenCharHasDefaultAttributesAndColors(const screen_char_t s,
+                                                           unsigned int urlCode) {
     return (s.backgroundColor == ALTSEM_DEFAULT &&
             s.foregroundColor == ALTSEM_DEFAULT &&
             s.backgroundColorMode == ColorModeAlternate &&
@@ -328,7 +369,7 @@ static inline BOOL ScreenCharHasDefaultAttributesAndColors(const screen_char_t s
             !s.underline &&
             s.underlineStyle == VT100UnderlineStyleSingle &&
             !s.strikethrough &&
-            !s.urlCode);
+            urlCode == 0);
 }
 
 // Represents an array of screen_char_t's as a string and facilitates mapping a

@@ -14,7 +14,7 @@
 - (instancetype)initWithDictionary:(NSDictionary *)dict {
     self = [super init];
     if (self) {
-        _code = [dict[@"code"] unsignedShortValue];
+        _code = [dict[@"code"] unsignedIntValue];
         // We trust that the iTermURLStore will be restored along with the refcounts.
     }
     return self;
@@ -24,7 +24,7 @@
     return @{ @"code": @(_code) };
 }
 
-- (void)setCode:(unsigned short)code {
+- (void)setCode:(unsigned int)code {
     if (code == _code) {
         return;
     }
