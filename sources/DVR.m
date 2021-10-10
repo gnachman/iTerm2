@@ -163,7 +163,9 @@
     if (!dict) {
         return NO;
     }
-    if ([dict[@"version"] integerValue] != 1) {
+    NSArray<NSNumber *> *knownVersions = @[ @1, @2 ];
+    NSNumber *version = [NSNumber castFrom:dict[@"version"]];
+    if (!version || ![knownVersions containsObject:version]) {
         return NO;
     }
     int capacity = [dict[@"capacity"] intValue];
@@ -187,7 +189,8 @@
     encoder_ = [DVREncoder alloc];
     [encoder_ initWithBuffer:buffer_];
 
-    if (![buffer_ loadFromDictionary:bufferDict]) {
+    if (![buffer_ loadFromDictionary:bufferDict
+                             version:version.intValue]) {
         return NO;
     }
     readOnly_ = YES;

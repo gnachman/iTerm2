@@ -254,7 +254,7 @@ semanticHistoryController:(iTermSemanticHistoryController *)semanticHistoryContr
 
 - (URLAction *)urlActionForHypertextLink {
     iTermTextExtractor *extractor = self.extractor;
-    screen_char_t oc = [extractor characterAt:self.coord];
+    iTermExternalAttribute *oea = [extractor externalAttributesAt:self.coord];
     NSString *urlId = nil;
     NSURL *url = [extractor urlOfHypertextLinkAt:self.coord urlId:&urlId];
     if (url != nil) {
@@ -265,8 +265,10 @@ semanticHistoryController:(iTermSemanticHistoryController *)semanticHistoryContr
         action.workingDirectory = self.workingDirectory;
         action.range = [extractor rangeOfCoordinatesAround:self.coord
                                            maximumDistance:1000
-                                               passingTest:^BOOL(screen_char_t *c, VT100GridCoord coord) {
-                                                   if (c->urlCode == oc.urlCode) {
+                                               passingTest:^BOOL(screen_char_t *c,
+                                                                 iTermExternalAttribute *ea,
+                                                                 VT100GridCoord coord) {
+                                                   if (ea.urlCode == oea.urlCode) {
                                                        return YES;
                                                    }
                                                    NSString *thisId;

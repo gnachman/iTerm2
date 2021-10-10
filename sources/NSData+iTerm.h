@@ -58,5 +58,6 @@
 - (void)writeReadOnlyToURL:(NSURL *)url;
 - (NSData *)subdataFromOffset:(NSInteger)offset;
 - (NSData *)dataByAppending:(NSData *)other;
+- (NSMutableData *)mutableCopyIfImmutable;
 
 @end

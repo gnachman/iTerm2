@@ -17,12 +17,14 @@ NS_ASSUME_NONNULL_BEGIN
 @interface iTermExternalAttribute: NSObject<NSCopying>
 @property (nonatomic, readonly) BOOL hasUnderlineColor;
 @property (nonatomic, readonly) VT100TerminalColorValue underlineColor;
+@property (nonatomic) int urlCode;
 
 @property(nonatomic, readonly) NSDictionary *dictionaryValue;
 
 + (instancetype)fromData:(NSData *)data;
 - (instancetype)init;
-- (instancetype)initWithUnderlineColor:(VT100TerminalColorValue)color;
+- (instancetype)initWithUnderlineColor:(VT100TerminalColorValue)color
+                               urlCode:(int)urlCode;
 - (instancetype)initWithDictionary:(NSDictionary *)dict;
 - (BOOL)isEqualToExternalAttribute:(iTermExternalAttribute *)rhs;
 - (NSData *)data;
@@ -46,6 +48,7 @@ NS_ASSUME_NONNULL_BEGIN
           source:(int)source
      destination:(int)destination
            count:(int)count;
+
 - (iTermExternalAttributeIndex *)subAttributesToIndex:(int)index;
 - (iTermExternalAttributeIndex *)subAttributesFromIndex:(int)index;
 - (iTermExternalAttributeIndex *)subAttributesFromIndex:(int)index maximumLength:(int)maxLength;
@@ -65,5 +68,9 @@ NS_ASSUME_NONNULL_BEGIN
            count:(int)count NS_UNAVAILABLE;
 @end
 
+
+@interface NSData(iTermExternalAttributes)
+- (NSData *)modernizedScreenCharArray:(iTermExternalAttributeIndex * _Nullable * _Nullable)indexOut;
+@end
 
 NS_ASSUME_NONNULL_END

@@ -40,18 +40,20 @@ const NSInteger kLongMaximumWordLength = 100000;
     BOOL _shouldCacheLines;
     int _cachedLineNumber;
     screen_char_t *_cachedLine;
+    int _cachedExternalAttributeLineNumber;
+    iTermExternalAttributeIndex *_cachedExternalAttributeIndex;
 }
 
 + (instancetype)textExtractorWithDataSource:(id<iTermTextDataSource>)dataSource {
-    return [[[self alloc] initWithDataSource:dataSource] autorelease];
+    return [[self alloc] initWithDataSource:dataSource];
 }
 
 + (NSCharacterSet *)wordSeparatorCharacterSet
 {
-    NSMutableCharacterSet *charset = [[[NSMutableCharacterSet alloc] init] autorelease];
+    NSMutableCharacterSet *charset = [[NSMutableCharacterSet alloc] init];
     [charset formUnionWithCharacterSet:[NSCharacterSet whitespaceCharacterSet]];
 
-    NSMutableCharacterSet *complement = [[[NSMutableCharacterSet alloc] init] autorelease];
+    NSMutableCharacterSet *complement = [[NSMutableCharacterSet alloc] init];
     [complement formUnionWithCharacterSet:[NSCharacterSet alphanumericCharacterSet]];
     [complement addCharactersInString:[iTermPreferences stringForKey:kPreferenceKeyCharactersConsideredPartOfAWordForSelection]];
     [complement addCharactersInRange:NSMakeRange(DWC_RIGHT, 1)];
@@ -201,23 +203,27 @@ const NSInteger kLongMaximumWordLength = 100000;
 }
 
 - (NSURL *)urlOfHypertextLinkAt:(VT100GridCoord)coord urlId:(out NSString **)urlId {
-    screen_char_t c = [self characterAt:coord];
-    *urlId = [[iTermURLStore sharedInstance] paramWithKey:@"id" forCode:c.urlCode];
-    return [[iTermURLStore sharedInstance] urlForCode:c.urlCode];
+    iTermExternalAttribute *ea = [self externalAttributesAt:coord];
+    *urlId = [[iTermURLStore sharedInstance] paramWithKey:@"id" forCode:ea.urlCode];
+    return [[iTermURLStore sharedInstance] urlForCode:ea.urlCode];
 }
 
 - (VT100GridWindowedRange)rangeOfCoordinatesAround:(VT100GridCoord)origin
                                    maximumDistance:(int)maximumDistance
-                                       passingTest:(BOOL(^)(screen_char_t *c, VT100GridCoord coord))block {
+                                       passingTest:(BOOL(^)(screen_char_t *c,
+                                                            iTermExternalAttribute *ea,
+                                                            VT100GridCoord coord))block {
     VT100GridCoord coord = origin;
     VT100GridCoord previousCoord = origin;
     coord = [self predecessorOfCoord:coord];
     screen_char_t c = [self characterAt:coord];
+    iTermExternalAttribute *ea = [self externalAttributesAt:coord];
     int distanceLeft = maximumDistance;
-    while (distanceLeft > 0 && !VT100GridCoordEquals(coord, previousCoord) && block(&c, coord)) {
+    while (distanceLeft > 0 && !VT100GridCoordEquals(coord, previousCoord) && block(&c, ea, coord)) {
         previousCoord = coord;
         coord = [self predecessorOfCoord:coord];
         c = [self characterAt:coord];
+        ea = [self externalAttributesAt:coord];
         distanceLeft--;
     }
 
@@ -229,11 +235,13 @@ const NSInteger kLongMaximumWordLength = 100000;
     previousCoord = origin;
     coord = [self successorOfCoord:coord];
     c = [self characterAt:coord];
+    ea = [self externalAttributesAt:coord];
     distanceLeft = maximumDistance;
-    while (distanceLeft > 0 && !VT100GridCoordEquals(coord, previousCoord) && block(&c, coord)) {
+    while (distanceLeft > 0 && !VT100GridCoordEquals(coord, previousCoord) && block(&c, ea, coord)) {
         previousCoord = coord;
         coord = [self successorOfCoord:coord];
         c = [self characterAt:coord];
+        ea = [self externalAttributesAt:coord];
         distanceLeft--;
     }
 
@@ -501,7 +509,7 @@ const NSInteger kLongMaximumWordLength = 100000;
         // (presumably by using ICU's text boundary analysis code) knows how to do the segmentation.
 
         NSString *string = [stringBeforeLocation stringByAppendingString:stringFromLocation];
-        NSAttributedString *attributedString = [[[NSAttributedString alloc] initWithString:string attributes:@{}] autorelease];
+        NSAttributedString *attributedString = [[NSAttributedString alloc] initWithString:string attributes:@{}];
 
         // Will be in 1:1 correspondence with `coords`.
         // The string in the cell at `coords[i]` starts at index `indexes[i]`.
@@ -628,6 +636,7 @@ const NSInteger kLongMaximumWordLength = 100000;
     block();
     _shouldCacheLines = NO;
     _cachedLine = nil;
+    _cachedExternalAttributeIndex = nil;
 }
 
 // Returns 0 if no value can be found less than or equal to `maximumValue`.
@@ -757,7 +766,7 @@ const NSInteger kLongMaximumWordLength = 100000;
                     double score = precision * (double) temp.length;
                     SmartMatch* oldMatch = [matches objectForKey:result];
                     if (!oldMatch || score > oldMatch.score) {
-                        SmartMatch* match = [[[SmartMatch alloc] init] autorelease];
+                        SmartMatch* match = [[SmartMatch alloc] init];
                         match.score = score;
                         VT100GridCoord startCoord = [coords[i + temp.location] gridCoordValue];
                         VT100GridCoord endCoord = [coords[MIN(numCoords - 1,
@@ -1214,7 +1223,7 @@ const NSInteger kLongMaximumWordLength = 100000;
                                 eolBlock:^BOOL(unichar code, int numPrecedingNulls, int line) {
                                     return [self shouldStopEnumeratingWithCode:code
                                                                       numNulls:numPrecedingNulls
-                                                       windowTouchesLeftMargin:(_logicalWindow.location == 0)
+                                                       windowTouchesLeftMargin:(self->_logicalWindow.location == 0)
                                                       windowTouchesRightMargin:xLimit == trueWidth
                                                               ignoringNewlines:ignoringNewlines];
                                 }];
@@ -1359,8 +1368,8 @@ const NSInteger kLongMaximumWordLength = 100000;
                               truncateTail:YES
                          continuationChars:nil
                                     coords:nil];
-    NSAttributedString *matchString = [[[NSAttributedString alloc] initWithString:match
-                                                                       attributes:matchAttributes] autorelease];
+    NSAttributedString *matchString = [[NSAttributedString alloc] initWithString:match
+                                                                      attributes:matchAttributes];
     if (match.length == maxMatchLength) {
         return matchString;
     }
@@ -1379,11 +1388,11 @@ const NSInteger kLongMaximumWordLength = 100000;
     if (suffix.length > maximumSuffixLength) {
         suffix = [[[suffix stringByDroppingLastCharacters:1] stringByTrimmingOrphanedSurrogates] stringByAppendingString:@"…"];
     }
-    NSAttributedString *attributedPrefix = [[[NSAttributedString alloc] initWithString:prefix
-                                                                            attributes:regularAttributes] autorelease];
-    NSAttributedString *attributedSuffix = [[[NSAttributedString alloc] initWithString:suffix
-                                                                            attributes:regularAttributes] autorelease];
-    NSMutableAttributedString *result = [[[NSMutableAttributedString alloc] init] autorelease];
+    NSAttributedString *attributedPrefix = [[NSAttributedString alloc] initWithString:prefix
+                                                                           attributes:regularAttributes];
+    NSAttributedString *attributedSuffix = [[NSAttributedString alloc] initWithString:suffix
+                                                                           attributes:regularAttributes];
+    NSMutableAttributedString *result = [[NSMutableAttributedString alloc] init];
     [result appendAttributedString:attributedPrefix];
     [result appendAttributedString:matchString];
     [result appendAttributedString:attributedSuffix];
@@ -1441,10 +1450,10 @@ trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
     };
 
     if (attributeProvider) {
-        locatedAttributedString = [[[iTermLocatedAttributedString alloc] init] autorelease];
+        locatedAttributedString = [[iTermLocatedAttributedString alloc] init];
         locatedString = locatedAttributedString;
     } else {
-        locatedString = [[[iTermLocatedString alloc] init] autorelease];
+        locatedString = [[iTermLocatedString alloc] init];
     }
 
     if (maxBytes < 0) {
@@ -1468,7 +1477,7 @@ trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
                                   NSImage *image = imageInfo.image.images.firstObject;
                                   if (image) {
                                       copiedImage = YES;
-                                      NSTextAttachment *textAttachment = [[[NSTextAttachment alloc] init] autorelease];
+                                      NSTextAttachment *textAttachment = [[NSTextAttachment alloc] init];
                                       textAttachment.image = imageInfo.image.images.firstObject;
                                       NSAttributedString *attributedStringWithAttachment = [NSAttributedString attributedStringWithAttachment:textAttachment];
                                       [locatedAttributedString appendAttributedString:attributedStringWithAttachment
@@ -1799,9 +1808,9 @@ trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
 - (ScreenCharArray *)screenCharArrayAtLine:(int)line {
     screen_char_t *theLine = [_dataSource getLineAtIndex:line];
     const int width = [_dataSource width];
-    return [[[ScreenCharArray alloc] initWithLine:theLine
-                                           length:width
-                                     continuation:theLine[width]] autorelease];
+    return [[ScreenCharArray alloc] initWithLine:theLine
+                                          length:width
+                                    continuation:theLine[width]];
 }
 
 - (ScreenCharArray *)screenCharArrayAtLine:(int)line window:(VT100GridRange)window {
@@ -1813,18 +1822,18 @@ trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
         offset = window.location;
         maxLength = window.length;
     }
-    return [[[ScreenCharArray alloc] initWithLine:theLine + offset
-                                           length:MIN(maxLength, width)
-                                     continuation:theLine[width]] autorelease];
+    return [[ScreenCharArray alloc] initWithLine:theLine + offset
+                                          length:MIN(maxLength, width)
+                                    continuation:theLine[width]];
 }
 
 - (iTermStringLine *)stringLineInRange:(VT100GridWindowedRange)range {
     ScreenCharArray *array = [self combinedLinesInWindowedRange:range];
-    return [[[iTermStringLine alloc] initWithScreenChars:array.line length:array.length] autorelease];
+    return [[iTermStringLine alloc] initWithScreenChars:array.line length:array.length];
 }
 
 - (ScreenCharArray *)combinedLinesInWindowedRange:(VT100GridWindowedRange)range {
-    ScreenCharArray *result = [[[ScreenCharArray alloc] init] autorelease];
+    ScreenCharArray *result = [[ScreenCharArray alloc] init];
     for (NSInteger i = range.coordRange.start.y; i <= range.coordRange.end.y; i++) {
         result = [result screenCharArrayByAppendingScreenCharArray:[self screenCharArrayAtLine:i window:range.columnWindow]];
     }
@@ -1832,7 +1841,7 @@ trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
 }
 
 - (ScreenCharArray *)combinedLinesInRange:(NSRange)range {
-    ScreenCharArray *result = [[[ScreenCharArray alloc] init] autorelease];
+    ScreenCharArray *result = [[ScreenCharArray alloc] init];
     for (NSInteger i = range.location;
          i < NSMaxRange(range);
          i++) {
@@ -1867,7 +1876,7 @@ trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
         range.coordRange.start = coord;
         if (VT100GridCoordOrder(range.coordRange.start,
                                 range.coordRange.end) != NSOrderedAscending) {
-            return [[[iTermLocatedString alloc] init] autorelease];
+            return [[iTermLocatedString alloc] init];
         }
     } else {
         nullPolicy = kiTermTextExtractorNullPolicyFromLastToEnd;
@@ -1876,7 +1885,7 @@ trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
         range.coordRange.end = coord;
         if (VT100GridCoordOrder(range.coordRange.start,
                                 range.coordRange.end) != NSOrderedAscending) {
-            return [[[iTermLocatedString alloc] init] autorelease];
+            return [[iTermLocatedString alloc] init];
         }
     }
     if (convertNullsToSpace) {
@@ -1900,8 +1909,8 @@ trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
 }
 
 - (void)enumerateCharsInRange:(VT100GridWindowedRange)range
-                    charBlock:(BOOL (^)(screen_char_t *currentLine, screen_char_t theChar, iTermExternalAttribute *, VT100GridCoord coord))charBlock
-                     eolBlock:(BOOL (^)(unichar code, int numPrecedingNulls, int line))eolBlock {
+                    charBlock:(BOOL (^NS_NOESCAPE)(screen_char_t *currentLine, screen_char_t theChar, iTermExternalAttribute *, VT100GridCoord coord))charBlock
+                     eolBlock:(BOOL (^NS_NOESCAPE)(unichar code, int numPrecedingNulls, int line))eolBlock {
     int width = [_dataSource width];
 
     int startx = VT100GridWindowedRangeStart(range).x;
@@ -1976,8 +1985,8 @@ trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
 }
 
 - (void)enumerateInReverseCharsInRange:(VT100GridWindowedRange)range
-                             charBlock:(BOOL (^)(screen_char_t theChar, VT100GridCoord coord))charBlock
-                              eolBlock:(BOOL (^)(unichar code, int numPrecedingNulls, int line))eolBlock {
+                             charBlock:(BOOL (^NS_NOESCAPE)(screen_char_t theChar, VT100GridCoord coord))charBlock
+                              eolBlock:(BOOL (^NS_NOESCAPE)(unichar code, int numPrecedingNulls, int line))eolBlock {
     int xLimit = range.columnWindow.length == 0 ? [_dataSource width] :
         (range.columnWindow.location + range.columnWindow.length);
     int initialX = MIN(xLimit - 1, range.coordRange.end.x - 1);
@@ -2172,6 +2181,22 @@ trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
         _cachedLine = theLine;
     }
     return theLine[coord.x];
+}
+
+- (iTermExternalAttributeIndex *)externalAttributeIndexForLine:(int)line {
+    if (_shouldCacheLines && line == _cachedExternalAttributeLineNumber && _cachedExternalAttributeIndex != nil) {
+        return _cachedExternalAttributeIndex;
+    }
+    iTermExternalAttributeIndex *index = [_dataSource externalAttributeIndexForLine:line];
+    if (_shouldCacheLines) {
+        _cachedExternalAttributeLineNumber = line;
+        _cachedExternalAttributeIndex = index;
+    }
+    return _cachedExternalAttributeIndex;
+}
+
+- (iTermExternalAttribute *)externalAttributesAt:(VT100GridCoord)coord {
+    return [_dataSource externalAttributeIndexForLine:coord.y][coord.x];
 }
 
 @end

@@ -30,6 +30,7 @@
 
 #import "DebugLogging.h"
 #import "DVRIndexEntry.h"
+#import "iTermExternalAttributeIndex.h"
 #import "iTermMalloc.h"
 #import "LineBuffer.h"
 
@@ -94,8 +95,13 @@
     return NO;
 }
 
-- (char *)decodedFrame
-{
+- (char *)decodedFrame {
+    if (buffer_.needsMigration) {
+        NSData *temp = [NSData dataWithBytes:decodedBytes_ length:frameLength_];
+        NSData *modern = [temp modernizedScreenCharArray:nil];
+        // external attributes are lost here but v1 + external attributes was never released except as a beta for a few weeks.
+        return (char *)modern.bytes;
+    }
     return decodedBytes_;
 }
 

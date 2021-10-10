@@ -138,6 +138,10 @@ static NSInteger VT100LineInfoNextGeneration = 1;
     return create ? iTermMetadataGetExternalAttributesIndexCreatingIfNeeded(&_metadata) : iTermMetadataGetExternalAttributesIndex(_metadata);
 }
 
+- (void)setExternalAttributeIndex:(iTermExternalAttributeIndex *)eaIndex {
+    iTermMetadataSetExternalAttributes(&_metadata, eaIndex);
+}
+
 #pragma mark - DVREncodable
 
 - (NSData *)dvrEncodableData {

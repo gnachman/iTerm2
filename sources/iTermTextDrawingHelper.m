@@ -2251,13 +2251,14 @@ static inline BOOL iTermCharacterAttributesUnderlineColorEqual(iTermCharacterAtt
         attributes->underlineType = iTermCharacterAttributesUnderlineNone;
     }
     attributes->strikethrough = c->strikethrough;
-    attributes->isURL = (c->urlCode != 0);
     attributes->drawable = drawable;
     if (ea) {
         attributes->hasUnderlineColor = ea.hasUnderlineColor;
         attributes->underlineColor = ea.underlineColor;
+        attributes->isURL = (ea.urlCode != 0);
     } else {
         attributes->hasUnderlineColor = NO;
+        attributes->isURL = NO;
         memset(&attributes->underlineColor, 0, sizeof(attributes->underlineColor));
     }
 }
@@ -2485,12 +2486,14 @@ withExtendedAttributes:(iTermExternalAttribute *)ea2 {
             }
         }
 
+        iTermExternalAttribute *ea = eaIndex[i];
         const BOOL drawable = iTermTextDrawingHelperIsCharacterDrawable(&c,
                                                                         i > indexRange.location ? &predecessor : NULL,
                                                                         charAsString != nil,
                                                                         _blinkingItemsVisible,
                                                                         _blinkAllowed,
-                                                                        _preferSpeedToFullLigatureSupport);
+                                                                        _preferSpeedToFullLigatureSupport,
+                                                                        ea.urlCode);
         predecessor = c;
         if (!drawable) {
             if ((characterAttributes.drawable && c.code == DWC_RIGHT && !c.complexChar) ||
@@ -2501,8 +2504,6 @@ withExtendedAttributes:(iTermExternalAttribute *)ea2 {
                 continue;
             }
         }
-
-        iTermExternalAttribute *ea = eaIndex[i];
 
         if (likely(underlinedRange.length == 0) &&
             likely(drawable == previousDrawable) &&

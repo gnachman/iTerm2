@@ -25,7 +25,8 @@ extern "C" {
 static BOOL gEnableDoubleWidthCharacterLineCache = NO;
 static BOOL gUseCachingNumberOfLines = NO;
 
-NSString *const kLineBlockRawBufferKey = @"Raw Buffer";
+NSString *const kLineBlockLegacyRawBufferKey = @"Raw Buffer";  // v1 - uses legacy screen_char_t format.
+NSString *const kLineBlockModernRawBufferKey = @"Raw Buffer v2";
 NSString *const kLineBlockBufferStartOffsetKey = @"Buffer Start Offset";
 NSString *const kLineBlockStartOffsetKey = @"Start Offset";
 NSString *const kLineBlockFirstEntryKey = @"First Entry";
@@ -181,8 +182,7 @@ NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock)
 - (instancetype)initWithDictionary:(NSDictionary *)dictionary {
     self = [super init];
     if (self) {
-        NSArray *requiredKeys = @[ kLineBlockRawBufferKey,
-                                   kLineBlockBufferStartOffsetKey,
+        NSArray *requiredKeys = @[ kLineBlockBufferStartOffsetKey,
                                    kLineBlockStartOffsetKey,
                                    kLineBlockFirstEntryKey,
                                    kLineBlockBufferSizeKey,
@@ -195,7 +195,17 @@ NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock)
                 return nil;
             }
         }
-        NSData *data = dictionary[kLineBlockRawBufferKey];
+
+        NSData *data = nil;
+        iTermExternalAttributeIndex *migrationIndex = nil;
+        if (dictionary[kLineBlockModernRawBufferKey]) {
+            data = dictionary[kLineBlockModernRawBufferKey];
+        } else if (dictionary[kLineBlockLegacyRawBufferKey]) {
+            data = [dictionary[kLineBlockLegacyRawBufferKey] modernizedScreenCharArray:&migrationIndex];
+        }
+        if (!data) {
+            return nil;
+        }
         buffer_size = [dictionary[kLineBlockBufferSizeKey] intValue];
         raw_buffer = (screen_char_t *)iTermMalloc(buffer_size * sizeof(screen_char_t));
         memmove(raw_buffer, data.bytes, data.length);
@@ -213,6 +223,7 @@ NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock)
 
         NSArray *metadataArray = dictionary[kLineBlockMetadataKey];
 
+        int startOffset = 0;
         for (int i = 0; i < cll_capacity; i++) {
             cumulative_line_lengths[i] = [cllArray[i] intValue];
             int j = 0;
@@ -222,12 +233,23 @@ NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock)
             metadata_[i].continuation.bgGreen = [components[j++] unsignedCharValue];
             metadata_[i].continuation.bgBlue = [components[j++] unsignedCharValue];
             metadata_[i].continuation.backgroundColorMode = [components[j++] unsignedCharValue];
-            iTermExternalAttributeIndex *eaIndex = nil;
-            NSNumber *timestamp = components[j++];
-            NSDictionary *encodedExternalAttributes = components.count > j ? components[j++] : nil;
-            if ([encodedExternalAttributes isKindOfClass:[NSDictionary class]]) {
-                eaIndex = [[iTermExternalAttributeIndex alloc] initWithDictionary:encodedExternalAttributes];
+
+            // If a migration index is present, use it. Migration loses external attributes, but
+            // at least for the v1->v2 transition it's not important because only underline colors
+            // get lost when they occur on the same line as a URL.
+            iTermExternalAttributeIndex *eaIndex =
+                [migrationIndex subAttributesFromIndex:startOffset
+                                         maximumLength:cumulative_line_lengths[i] - startOffset];
+            if (!eaIndex) {
+                NSDictionary *encodedExternalAttributes = components.count > j ? components[j++] : nil;
+                if ([encodedExternalAttributes isKindOfClass:[NSDictionary class]]) {
+                    eaIndex = [[iTermExternalAttributeIndex alloc] initWithDictionary:encodedExternalAttributes];
+                }
+            } else if (components.count > j) {
+                j += 1;
             }
+            NSNumber *timestamp = components.count > j ? components[j++] : @0;
+
             iTermMetadataInit(&metadata_[i].lineMetadata,
                               timestamp.doubleValue,
                               eaIndex);
@@ -236,6 +258,7 @@ NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock)
             if (gEnableDoubleWidthCharacterLineCache) {
                 metadata_[i].double_width_characters = nil;
             }
+            startOffset = cumulative_line_lengths[i];
         }
 
         cll_entries = cll_capacity;
@@ -1777,7 +1800,7 @@ includesPartialLastLine:(BOOL *)includesPartialLastLine {
 - (NSDictionary *)dictionary {
     NSData *rawBufferData = [NSData dataWithBytes:raw_buffer
                                            length:[self rawSpaceUsed] * sizeof(screen_char_t)];
-    return @{ kLineBlockRawBufferKey: rawBufferData,
+    return @{ kLineBlockModernRawBufferKey: rawBufferData,
               kLineBlockBufferStartOffsetKey: @(buffer_start - raw_buffer),
               kLineBlockStartOffsetKey: @(start_offset),
               kLineBlockFirstEntryKey: @(first_entry),

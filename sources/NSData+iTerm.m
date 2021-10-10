@@ -476,4 +476,11 @@
     return temp;
 }
 
+- (NSMutableData *)mutableCopyIfImmutable {
+    if ([self isKindOfClass:[NSMutableData class]]) {
+        return (NSMutableData *)self;
+    }
+    return [[self mutableCopy] autorelease];
+}
+
 @end

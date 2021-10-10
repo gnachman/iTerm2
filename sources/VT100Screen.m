@@ -5476,8 +5476,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     CopyForegroundColor(&c, [terminal_ foregroundColorCode]);
     CopyBackgroundColor(&c, [terminal_ backgroundColorCode]);
 
-    // Only preserve SGR attributes. URL and image are OSC, not SGR.
-    c.urlCode = 0;
+    // Only preserve SGR attributes. image is OSC, not SGR.
     c.image = 0;
 
     [self fillRectangle:rect with:c externalAttributes:[terminal_ externalAttributes]];
@@ -5952,7 +5951,8 @@ static void SwapInt(int *a, int *b) {
     screen_char_t *p = line.line;
     int len = line.length;
     for (int i = len - 1; i >= 0; i--) {
-        if (p[i].code == ' ' && ScreenCharHasDefaultAttributesAndColors(p[i])) {
+        // TODO: When I add support for URLs to tmux, don't pass 0 here - pass the URL code instead.
+        if (p[i].code == ' ' && ScreenCharHasDefaultAttributesAndColors(p[i], 0)) {
             len--;
         } else {
             break;

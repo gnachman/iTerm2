@@ -13,6 +13,7 @@
 #import "iTermMetadata.h"
 #import "LineBuffer.h"
 #import "NSArray+iTerm.h"
+#import "NSData+iTerm.h"
 #import "NSDictionary+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "VT100GridTypes.h"
@@ -74,7 +75,7 @@ static NSString *const kGridSizeKey = @"Size";
     self = [super init];
     if (self) {
         delegate_ = delegate;
-        NSArray<NSString *> *requiredKeys = @[ @"size", @"lines", @"cursor" ];
+        NSArray<NSString *> *requiredKeys = @[ @"size", @"cursor" ];
         for (NSString *requiredKey in requiredKeys) {
             if (!dictionary[requiredKey]) {
                 [self release];
@@ -83,7 +84,32 @@ static NSString *const kGridSizeKey = @"Size";
         }
         [self setSize:[NSDictionary castFrom:dictionary[@"size"]].gridSize];
         assert(size_.width > 0 && size_.height > 0);
-        lines_ = [[NSArray castFrom:dictionary[@"lines"]] mutableCopy];
+        
+        NSMutableDictionary<NSNumber *, iTermExternalAttributeIndex *> *migrationIndexes = nil;
+        if (dictionary[@"lines"]) {
+            // Migration code path - upgrade legacy_screen_char_t.
+            NSArray<NSData *> *legacyLines = [NSArray castFrom:dictionary[@"lines"]];
+            if (!legacyLines) {
+                [self release];
+                return nil;
+            }
+            lines_ = [[NSMutableArray alloc] init];
+            migrationIndexes = [NSMutableDictionary dictionary];
+            [legacyLines enumerateObjectsUsingBlock:^(NSData * _Nonnull legacyData, NSUInteger idx, BOOL * _Nonnull stop) {
+                iTermExternalAttributeIndex *migrationIndex = nil;
+                [lines_ addObject:[[legacyData modernizedScreenCharArray:&migrationIndex] mutableCopyIfImmutable]];
+                if (migrationIndex) {
+                    migrationIndexes[@(idx)] = migrationIndex;
+                }
+            }];
+        } else {
+            // Regular code path
+            lines_ = [[NSArray castFrom:dictionary[@"lines v2"]] mutableCopy];
+        }
+        if (!lines_) {
+            [self release];
+            return nil;
+        }
 
         // Deprecated: migration code path. Modern dicts have `metadata` instead.
         [[NSArray castFrom:dictionary[@"timestamps"]] enumerateObjectsUsingBlock:^(NSNumber *timestamp,
@@ -105,6 +131,9 @@ static NSString *const kGridSizeKey = @"Size";
                 return;
             }
             [lineInfos_[idx] decodeMetadataArray:entry];
+            if (migrationIndexes[idx]) {
+                [lineInfos_[idx] setExternalAttributeIndex:migrationIndexes[idx]];
+            }
         }];
         cursor_ = [NSDictionary castFrom:dictionary[@"cursor"]].gridCoord;
         scrollRegionRows_ = [NSDictionary castFrom:dictionary[@"scrollRegionRows"]].gridRange;
@@ -1895,7 +1924,7 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
     }];
     [encoder mergeDictionary:@{
         @"size": [NSDictionary dictionaryWithGridSize:size_],
-        @"lines": lines,
+        @"lines v2": lines,
         @"metadata": metadata,
         @"cursor": [NSDictionary dictionaryWithGridCoord:cursor_],
         @"scrollRegionRows": [NSDictionary dictionaryWithGridRange:scrollRegionRows_],
@@ -1957,7 +1986,6 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
     c.underline = NO;
     c.strikethrough = NO;
     c.underlineStyle = VT100UnderlineStyleSingle;
-    c.urlCode = 0;
     c.image = 0;
 
     return c;

@@ -61,6 +61,8 @@ typedef enum {
 @property(nonatomic, readonly, getter=isEmpty) BOOL empty;
 @property(nonatomic, readonly) NSDictionary *dictionaryValue;
 
+@property(nonatomic, readonly) BOOL needsMigration;
+
 - (instancetype)initWithBufferCapacity:(long long)capacity;
 
 // Reserve a chunk of memory. Returns true if blocks had to be freed to make room.
@@ -85,7 +87,7 @@ typedef enum {
 
 // Look up an index entry by key.
 - (DVRIndexEntry*)entryForKey:(long long)key;
-- (BOOL)loadFromDictionary:(NSDictionary *)dict;
+- (BOOL)loadFromDictionary:(NSDictionary *)dict version:(int)version;
 - (DVRIndexEntry *)firstEntryWithTimestampAfter:(long long)timestamp;
 - (NSData *)dataAtOffset:(ptrdiff_t)offset length:(size_t)length;
 
