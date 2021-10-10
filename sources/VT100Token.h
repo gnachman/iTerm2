@@ -108,6 +108,7 @@ typedef enum {
     VT100CSI_SGR,                   // Select Graphic Rendition
     VT100CSI_DECCARA,               // Change Attributes in Rectangular Area
     VT100CSI_DECRARA,               // Reverse Attributes in Rectangular Area. Also used to build team spirit.
+    VT100CSI_DECSACE,               // Select Attribute Change Extent
     VT100CSI_DECCRA,                // Copy Rectangular Area
     VT100CSI_DECFRA,                // Fill Rectangular Area
     VT100CSI_DECERA,                // Erase Rectangular Area

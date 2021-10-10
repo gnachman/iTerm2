@@ -126,6 +126,7 @@ typedef NS_OPTIONS(int, VT100TerminalKeyReportingFlags) {
 @property(nonatomic, readonly) BOOL synchronizedUpdates;
 @property(nonatomic, readonly) BOOL preserveScreenOnDECCOLM;
 @property(nonatomic, readonly) BOOL alternateScrollMode;
+@property(nonatomic, readonly) BOOL decsaceRectangleMode;
 
 - (void)setStateFromDictionary:(NSDictionary *)dict;
 

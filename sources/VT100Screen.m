@@ -5376,10 +5376,11 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalSetAttribute:(int)sgrAttribute inRect:(VT100GridRect)rect {
-    [currentGrid_ enumerateCellsInRect:rect block:^(VT100GridCoord coord,
-                                                    screen_char_t *sct,
-                                                    iTermExternalAttribute *ea,
-                                                    BOOL *stop) {
+    void (^block)(VT100GridCoord, screen_char_t *, iTermExternalAttribute *, BOOL *) =
+    ^(VT100GridCoord coord,
+      screen_char_t *sct,
+      iTermExternalAttribute *ea,
+      BOOL *stop) {
         switch (sgrAttribute) {
             case 0:
                 sct->bold = NO;
@@ -5420,15 +5421,24 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
                 }
                 break;
         }
-    }];
+    };
+    if (terminal_.decsaceRectangleMode) {
+        [currentGrid_ enumerateCellsInRect:rect block:block];
+    } else {
+        [currentGrid_ enumerateCellsInCoordRange:VT100GridCoordRangeMake(rect.origin.x,
+                                                                         rect.origin.y,
+                                                                         rect.origin.x + rect.size.width,
+                                                                         rect.origin.y + rect.size.height - 1)
+                                           block:block];
+    }
 }
 
 - (void)terminalToggleAttribute:(int)sgrAttribute inRect:(VT100GridRect)rect {
-    [currentGrid_ enumerateCellsInRect:rect
-                                 block:^(VT100GridCoord coord,
-                                         screen_char_t *sct,
-                                         iTermExternalAttribute *ea,
-                                         BOOL *stop) {
+    void (^block)(VT100GridCoord, screen_char_t *, iTermExternalAttribute *, BOOL *) =
+    ^(VT100GridCoord coord,
+      screen_char_t *sct,
+      iTermExternalAttribute *ea,
+      BOOL *stop) {
         switch (sgrAttribute) {
             case 1:
                 sct->bold = !sct->bold;
@@ -5443,7 +5453,16 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
                 ScreenCharInvert(sct);
                 break;
         }
-    }];
+    };
+    if (terminal_.decsaceRectangleMode) {
+        [currentGrid_ enumerateCellsInRect:rect block:block];
+    } else {
+        [currentGrid_ enumerateCellsInCoordRange:VT100GridCoordRangeMake(rect.origin.x,
+                                                                         rect.origin.y,
+                                                                         rect.origin.x + rect.size.width,
+                                                                         rect.origin.y + rect.size.height - 1)
+                                           block:block];
+    }
 }
 
 - (void)terminalCopyFrom:(VT100GridRect)source to:(VT100GridCoord)dest {

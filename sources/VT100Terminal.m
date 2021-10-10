@@ -100,6 +100,7 @@ NSString *const kTerminalStatePreserveScreenOnDECCOLM = @"Preserve Screen On DEC
 NSString *const kTerminalStateSavedColors = @"Saved Colors";  // For XTPUSHCOLORS/XTPOPCOLORS
 NSString *const kTerminalStateAlternateScrollMode = @"Alternate Scroll Mode";
 NSString *const kTerminalStateSGRStack = @"SGR Stack";
+NSString *const kTerminalStateDECSACE = @"DECSACE";
 
 static const size_t VT100TerminalMaxSGRStackEntries = 10;
 
@@ -1013,6 +1014,18 @@ static const int kMaxScreenRows = 4096;
     }
     for (int i = 4; i < token.csi->count; i++) {
         [_delegate terminalToggleAttribute:token.csi->p[i] inRect:rect];
+    }
+}
+
+- (void)executeDECSACE:(VT100Token *)token {
+    switch (token.csi->p[0]) {
+        case 0:
+        case 1:
+            _decsaceRectangleMode = NO;
+            break;
+        case 2:
+            _decsaceRectangleMode = YES;
+            break;
     }
 }
 
@@ -2166,6 +2179,10 @@ static const int kMaxScreenRows = 4096;
 
         case VT100CSI_DECRARA:
             [self executeDECRARA:token];
+            break;
+
+        case VT100CSI_DECSACE:
+            [self executeDECSACE:token];
             break;
 
         case VT100CSI_DECCRA:
@@ -4547,6 +4564,7 @@ static iTermDECRPMSetting VT100TerminalDECRPMSettingFromBoolean(BOOL flag) {
            kTerminalStateMetaSendsEscape: @(self.metaSendsEscape),
            kTerminalStateAlternateScrollMode: @(self.alternateScrollMode),
            kTerminalStateSGRStack: [self sgrStack],
+           kTerminalStateDECSACE: @(_decsaceRectangleMode),
            kTerminalStateSendModifiers: _sendModifiers ?: @[],
            kTerminalStateKeyReportingModeStack_Main: _mainKeyReportingModeStack.copy,
            kTerminalStateKeyReportingModeStack_Alternate: _alternateKeyReportingModeStack.copy,
@@ -4606,6 +4624,7 @@ static iTermDECRPMSetting VT100TerminalDECRPMSettingFromBoolean(BOOL flag) {
     self.metaSendsEscape = [dict[kTerminalStateMetaSendsEscape] boolValue];
     _alternateScrollMode = [dict[kTerminalStateAlternateScrollMode] boolValue];
     [self setSGRStack:dict[kTerminalStateSGRStack]];
+    _decsaceRectangleMode = [dict[kTerminalStateDECSACE] boolValue];
     self.synchronizedUpdates = [dict[kTerminalStateSynchronizedUpdates] boolValue];
     _preserveScreenOnDECCOLM = [dict[kTerminalStatePreserveScreenOnDECCOLM] boolValue];
     _savedColors = [VT100SavedColors fromData:[NSData castFrom:dict[kTerminalStateSavedColors]]] ?: [[VT100SavedColors alloc] init];
