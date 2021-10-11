@@ -1696,6 +1696,9 @@ xterm+osc104|reset color palette,
 xterm+undercurl|undercurl support,
         Smulx=\E[4:%p1%dm,
 
+xterm+setulc|underline color support,
+        Setulc=\E[58::2::%p1%{65536}%/%d::%p1%{256}%/%{255}%&%d::%p1%{255}%&%d%;m,
+
 # "indexed color" is mentioned without definition in ISO 8613-6 (ITU T.416).
 #
 # This implementation uses a 256-element color map where the first 16 entries
@@ -1768,6 +1771,7 @@ xterm-256color|xterm with 256 colors,
 	use=xterm+osc104,
 	use=xterm-new,
         use=xterm+undercurl,
+        use=xterm+setulc,
 xterm-88color|xterm with 88 colors,
 	colors#88,
 	pairs#7744,
