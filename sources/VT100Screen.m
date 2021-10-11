@@ -6460,6 +6460,9 @@ static void SwapInt(int *a, int *b) {
 
         primaryGrid_ = [[VT100Grid alloc] initWithDictionary:dictionary[@"PrimaryGrid"]
                                                     delegate:self];
+        if (!primaryGrid_) {
+            primaryGrid_ = [[VT100Grid alloc] initWithSize:VT100GridSizeMake(2, 2) delegate:self];
+        }
         if ([dictionary[@"AltGrid"] count]) {
             altGrid_ = [[VT100Grid alloc] initWithDictionary:dictionary[@"AltGrid"]
                                                     delegate:self];
