@@ -16,7 +16,7 @@
     // { "url": NSURL.absoluteString, "params": NSString } -> @(NSInteger)
     NSMutableDictionary<NSDictionary *, NSNumber *> *_store;
 
-    // @(unsigned short) -> { "url": NSURL, "params": NSString }
+    // @(unsigned int) -> { "url": NSURL, "params": NSString }
     NSMutableDictionary<NSNumber *, NSDictionary *> *_reverseStore;
 
     NSCountedSet<NSNumber *> *_referenceCounts;
@@ -35,7 +35,7 @@
     return instance;
 }
 
-+ (unsigned short)truncatedCodeForCode:(NSInteger)code {
++ (unsigned int)truncatedCodeForCode:(NSInteger)code {
     return (code % USHRT_MAX) + 1;
 }
 
@@ -49,13 +49,13 @@
     return self;
 }
 
-- (void)retainCode:(unsigned short)code {
+- (void)retainCode:(unsigned int)code {
     _generation++;
     [NSApp invalidateRestorableState];
     [_referenceCounts addObject:@(code)];
 }
 
-- (void)releaseCode:(unsigned short)code {
+- (void)releaseCode:(unsigned int)code {
     _generation++;
     [NSApp invalidateRestorableState];
     [_referenceCounts removeObject:@(code)];
@@ -70,14 +70,14 @@
     }
 }
 
-- (unsigned short)codeForURL:(NSURL *)url withParams:(NSString *)params {
+- (unsigned int)codeForURL:(NSURL *)url withParams:(NSString *)params {
     if (!url.absoluteString || !params) {
         DLog(@"codeForURL:%@ withParams:%@ returning 0 because of nil value", url.absoluteString, params);
         return 0;
     }
     NSDictionary *key = @{ @"url": url.absoluteString, @"params": params };
     NSNumber *number = _store[key];
-    unsigned short truncatedCode;
+    unsigned int truncatedCode;
     if (number == nil) {
         if (_reverseStore.count == USHRT_MAX - 1) {
             DLog(@"Ran out of URL storage. Refusing to allocate a code.");
@@ -99,7 +99,7 @@
     }
 }
 
-- (NSURL *)urlForCode:(unsigned short)code {
+- (NSURL *)urlForCode:(unsigned int)code {
     if (code == 0) {
         // Safety valve in case something goes awry. There should never be an entry at 0.
         return nil;
@@ -107,7 +107,7 @@
     return _reverseStore[@(code)][@"url"];
 }
 
-- (NSString *)paramsForCode:(unsigned short)code {
+- (NSString *)paramsForCode:(unsigned int)code {
     if (code == 0) {
         // Safety valve in case something goes awry. There should never be an entry at 0.
         return nil;
@@ -115,7 +115,7 @@
     return _reverseStore[@(code)][@"params"];
 }
 
-- (NSString *)paramWithKey:(NSString *)key forCode:(unsigned short)code {
+- (NSString *)paramWithKey:(NSString *)key forCode:(unsigned int)code {
     NSString *params = [self paramsForCode:code];
     if (!params) {
         return nil;
@@ -167,7 +167,7 @@
         }
         self->_store[key] = obj;
 
-        unsigned short truncated = [iTermURLStore truncatedCodeForCode:obj.integerValue];
+        unsigned int truncated = [iTermURLStore truncatedCodeForCode:obj.integerValue];
         self->_reverseStore[@(truncated)] = @{ @"url": url, @"params": key[@"params"] ?: @"" };
         self->_nextCode = MAX(self->_nextCode, obj.integerValue + 1);
     }];

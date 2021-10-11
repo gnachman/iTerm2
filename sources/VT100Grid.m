@@ -86,7 +86,10 @@ static NSString *const kGridSizeKey = @"Size";
         assert(size_.width > 0 && size_.height > 0);
         
         NSMutableDictionary<NSNumber *, iTermExternalAttributeIndex *> *migrationIndexes = nil;
-        if (dictionary[@"lines"]) {
+        if (dictionary[@"lines v2"]) {
+            // 3.5.0beta3+ path
+            lines_ = [[NSArray castFrom:dictionary[@"lines v2"]] mutableCopy];
+        } else if (dictionary[@"lines"]) {
             // Migration code path - upgrade legacy_screen_char_t.
             NSArray<NSData *> *legacyLines = [NSArray castFrom:dictionary[@"lines"]];
             if (!legacyLines) {
@@ -102,9 +105,6 @@ static NSString *const kGridSizeKey = @"Size";
                     migrationIndexes[@(idx)] = migrationIndex;
                 }
             }];
-        } else {
-            // Regular code path
-            lines_ = [[NSArray castFrom:dictionary[@"lines v2"]] mutableCopy];
         }
         if (!lines_) {
             [self release];
@@ -131,9 +131,9 @@ static NSString *const kGridSizeKey = @"Size";
                 return;
             }
             [lineInfos_[idx] decodeMetadataArray:entry];
-            if (migrationIndexes[idx]) {
-                [lineInfos_[idx] setExternalAttributeIndex:migrationIndexes[idx]];
-            }
+        }];
+        [migrationIndexes enumerateKeysAndObjectsUsingBlock:^(NSNumber * _Nonnull idx, iTermExternalAttributeIndex * _Nonnull ea, BOOL * _Nonnull stop) {
+            [lineInfos_[idx.integerValue] setExternalAttributeIndex:ea];
         }];
         cursor_ = [NSDictionary castFrom:dictionary[@"cursor"]].gridCoord;
         scrollRegionRows_ = [NSDictionary castFrom:dictionary[@"scrollRegionRows"]].gridRange;
@@ -672,6 +672,36 @@ static NSString *const kGridSizeKey = @"Size";
     }
 }
 
+- (void)mutateCharactersInRange:(VT100GridCoordRange)range
+                          block:(void (^)(screen_char_t *sct,
+                                          iTermExternalAttribute **eaOut,
+                                          VT100GridCoord coord,
+                                          BOOL *stop))block {
+    int left = range.start.x;
+    for (int y = MAX(0, range.start.y); y <= MIN(range.end.y, size_.height - 1); y++) {
+        const int right = y == range.end.y ? range.end.x : size_.width;
+        screen_char_t *line = [self lineDataAtLineNumber:y].mutableBytes;
+        iTermExternalAttributeIndex *eaIndex = [self externalAttributesOnLine:y createIfNeeded:NO];
+        [self markCharsDirty:YES inRun:VT100GridRunMake(left, y, right - left)];
+        for (int x = left; x < right; x++) {
+            BOOL stop = NO;
+            iTermExternalAttribute *ea = eaIndex[x];
+            iTermExternalAttribute *originalEa = ea;
+            block(&line[x], &ea, VT100GridCoordMake(x, y), &stop);
+            if (ea != originalEa) {
+                if (!eaIndex) {
+                    eaIndex = [self externalAttributesOnLine:y createIfNeeded:YES];
+                }
+                [eaIndex setAttributes:ea at:x count:1];
+            }
+            if (stop) {
+                return;
+            }
+        }
+        left = 0;
+    }
+}
+
 - (void)setCharsFrom:(VT100GridCoord)unsafeFrom
                   to:(VT100GridCoord)unsafeTo
               toChar:(screen_char_t)c
@@ -773,14 +803,17 @@ static NSString *const kGridSizeKey = @"Size";
     }
 }
 
-- (void)setURLCode:(unsigned short)code
+- (void)setURLCode:(unsigned int)code
         inRectFrom:(VT100GridCoord)from
                 to:(VT100GridCoord)to {
     for (int y = from.y; y <= to.y; y++) {
-        screen_char_t *line = [self screenCharsAtLineNumber:y];
-        for (int x = from.x; x <= to.x; x++) {
-            line[x].urlCode = code;
-        }
+        VT100LineInfo *info = [self lineInfoAtLineNumber:y];
+        iTermExternalAttributeIndex *eaIndex = [info externalAttributesCreatingIfNeeded:code != 0];
+        [eaIndex mutateAttributesFrom:from.x to:to.x block:^iTermExternalAttribute * _Nullable(iTermExternalAttribute * _Nullable old) {
+            return [iTermExternalAttribute attributeHavingUnderlineColor:old.hasUnderlineColor
+                                                          underlineColor:old.underlineColor
+                                                                 urlCode:code];
+        }];
         [self markCharsDirty:YES
                   inRectFrom:VT100GridCoordMake(from.x, y)
                           to:VT100GridCoordMake(to.x, y)];
@@ -1922,9 +1955,13 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
     NSArray<NSData *> *lines = [[NSArray sequenceWithRange:NSMakeRange(0, size_.height)] mapWithBlock:^id(NSNumber *i) {
         return [self lineDataAtLineNumber:i.intValue];
     }];
+    NSArray<NSData *> *legacyLines = [lines mapEnumeratedWithBlock:^id(NSUInteger i, NSData *modernData, BOOL *stop) {
+        return [modernData legacyScreenCharArrayWithExternalAttributes:[self externalAttributesOnLine:i createIfNeeded:NO]];
+    }];
     [encoder mergeDictionary:@{
         @"size": [NSDictionary dictionaryWithGridSize:size_],
         @"lines v2": lines,
+        @"lines": legacyLines,  // works around a crash pre-3.5 when downgrading with saved state
         @"metadata": metadata,
         @"cursor": [NSDictionary dictionaryWithGridCoord:cursor_],
         @"scrollRegionRows": [NSDictionary dictionaryWithGridRange:scrollRegionRows_],

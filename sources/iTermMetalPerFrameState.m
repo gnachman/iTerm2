@@ -771,7 +771,7 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
         attributes[x].annotation = annotated;
 
         iTermExternalAttribute *ea = eaIndex[x];
-        const int urlCode = ea.urlCode;
+        const unsigned int urlCode = ea.urlCode;
         const BOOL characterIsDrawable = iTermTextDrawingHelperIsCharacterDrawable(&line[x],
                                                                                    x > 0 ? &line[x - 1] : NULL,
                                                                                    line[x].complexChar && (ScreenCharToStr(&line[x]) != nil),

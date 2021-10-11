@@ -193,6 +193,14 @@
     }
 }
 
+- (void)mutateAttributesFrom:(int)start
+                          to:(int)end
+                       block:(iTermExternalAttribute * _Nullable(^)(iTermExternalAttribute * _Nullable))block {
+    for (int x = start; x <= end; x++) {
+        _attributes[@(x)] = block(_attributes[@(x)]);
+    }
+}
+
 - (id)objectForKeyedSubscript:(id)key {
     [self doesNotRecognizeSelector:_cmd];
     return nil;
@@ -200,6 +208,10 @@
 
 - (iTermExternalAttribute *)objectAtIndexedSubscript:(NSInteger)idx {
     return _attributes[@(idx + _offset)];
+}
+
+- (void)setObject:(iTermExternalAttribute * _Nullable)ea atIndexedSubscript:(NSUInteger)i {
+    _attributes[@(i + _offset)] = ea;
 }
 
 - (iTermExternalAttributeIndex *)subAttributesFromIndex:(int)index {
@@ -278,6 +290,27 @@ static NSString *const iTermExternalAttributeKeyURLCode = @"url";
 
 @implementation iTermExternalAttribute
 
++ (iTermExternalAttribute *)attributeHavingUnderlineColor:(BOOL)hasUnderlineColor
+                                           underlineColor:(VT100TerminalColorValue)underlineColor
+                                                  urlCode:(unsigned int)urlCode {
+    if (!hasUnderlineColor && urlCode == 0) {
+        return nil;
+    }
+    static iTermExternalAttribute *last;
+    if (last &&
+        last.hasUnderlineColor == hasUnderlineColor &&
+        !memcmp(&last->_underlineColor, &underlineColor, sizeof(underlineColor)) &&
+        last.urlCode == urlCode) {
+        // Since this class is immutable, there's a nice optimization in reusing the last one created.
+        return last;
+    }
+    if (hasUnderlineColor) {
+        return [[self alloc] initWithUnderlineColor:underlineColor urlCode:urlCode];
+    }
+    last = [[self alloc] initWithURLCode:urlCode];
+    return last;
+}
+
 + (instancetype)fromData:(NSData *)data {
     iTermTLVDecoder *decoder = [[iTermTLVDecoder alloc] initWithData:data];
     
@@ -307,8 +340,8 @@ static NSString *const iTermExternalAttributeKeyURLCode = @"url";
     }
     
     // v2
-    int urlCode = 0;
-    if ([decoder decodeInt:&urlCode]) {
+    unsigned int urlCode = 0;
+    if ([decoder decodeUnsignedInt:&urlCode]) {
         version = 2;
     }
     
@@ -324,7 +357,7 @@ static NSString *const iTermExternalAttributeKeyURLCode = @"url";
 }
 
 - (instancetype)initWithUnderlineColor:(VT100TerminalColorValue)color
-                               urlCode:(int)urlCode {
+                               urlCode:(unsigned int)urlCode {
     self = [self init];
     if (self) {
         _hasUnderlineColor = YES;
@@ -334,13 +367,27 @@ static NSString *const iTermExternalAttributeKeyURLCode = @"url";
     return self;
 }
 
+- (instancetype)initWithURLCode:(unsigned int)urlCode {
+    self = [self init];
+    if (self) {
+        _urlCode = urlCode;
+    }
+    return self;
+}
+
 - (NSString *)description {
-    if (!_hasUnderlineColor) {
+    NSMutableArray<NSString *> *parts = [NSMutableArray array];
+    if (_hasUnderlineColor) {
+        [parts addObject:[NSString stringWithFormat:@"ulc=%@",
+                          VT100TerminalColorValueDescription(_underlineColor, YES)]];
+    }
+    if (_urlCode) {
+        [parts addObject:[NSString stringWithFormat:@"url=%@", @(_urlCode)]];
+    }
+    if (parts.count == 0) {
         return @"none";
     }
-    return [NSString stringWithFormat:@"ulc=%@ url=%@",
-            VT100TerminalColorValueDescription(_underlineColor, YES),
-            @(_urlCode)];
+    return [parts componentsJoinedByString:@","];
 }
 
 - (NSData *)data {
@@ -352,7 +399,7 @@ static NSString *const iTermExternalAttributeKeyURLCode = @"url";
         [encoder encodeInt:_underlineColor.blue];
         [encoder encodeInt:_underlineColor.mode];
     }
-    [encoder encodeInt:_urlCode];
+    [encoder encodeUnsignedInt:_urlCode];
     return encoder.data;
 }
 
@@ -360,21 +407,21 @@ static NSString *const iTermExternalAttributeKeyURLCode = @"url";
     self = [super init];
     if (self) {
         id obj = dict[iTermExternalAttributeKeyUnderlineColor];
-        if ([obj isKindOfClass:[NSNull class]]) {
-            return self;
+        if (![obj isKindOfClass:[NSNull class]]) {
+            NSArray<NSNumber *> *values = [NSArray castFrom:obj];
+            if (!values || values.count < 4) {
+                return nil;
+            }
+            _hasUnderlineColor = YES;
+            _underlineColor.mode = [values[0] intValue];
+            _underlineColor.red = [values[1] intValue];
+            _underlineColor.green = [values[2] intValue];
+            _underlineColor.blue = [values[3] intValue];
         }
-        _hasUnderlineColor = YES;
-
-        NSArray<NSNumber *> *values = [NSArray castFrom:obj];
-        if (!values || values.count < 4) {
+        _urlCode = [dict[iTermExternalAttributeKeyURLCode] unsignedIntValue];
+        if (!_hasUnderlineColor && _urlCode == 0) {
             return nil;
         }
-        _underlineColor.mode = [values[0] intValue];
-        _underlineColor.red = [values[1] intValue];
-        _underlineColor.green = [values[2] intValue];
-        _underlineColor.blue = [values[3] intValue];
-        
-        _urlCode = [dict[iTermExternalAttributeKeyURLCode] intValue];
     }
     return self;
 }
@@ -489,6 +536,16 @@ static NSString *const iTermExternalAttributeKeyURLCode = @"url";
     [self doesNotRecognizeSelector:_cmd];
 }
 
+- (void)setObject:(iTermExternalAttribute * _Nullable)ea atIndexedSubscript:(NSUInteger)i {
+    [self doesNotRecognizeSelector:_cmd];
+}
+
+- (void)mutateAttributesFrom:(int)start
+                          to:(int)end
+                       block:(iTermExternalAttribute * _Nullable (^)(iTermExternalAttribute * _Nullable))block {
+    [self doesNotRecognizeSelector:_cmd];
+}
+
 - (void)enumerateSortedKeysInRange:(NSRange)range block:(void (^)(NSNumber *key))block {
     for (NSUInteger i = 0; i < range.length; i++) {
         block(@(range.location + i));
@@ -503,13 +560,16 @@ static NSString *const iTermExternalAttributeKeyURLCode = @"url";
     const legacy_screen_char_t *source = (legacy_screen_char_t *)self.bytes;
     const NSUInteger length = self.length;
     assert(length < NSUIntegerMax);
+    assert(length % sizeof(screen_char_t) == 0);
+    assert(sizeof(legacy_screen_char_t) == sizeof(screen_char_t));
+    const NSUInteger count = length / sizeof(legacy_screen_char_t);
     NSUInteger firstURLIndex = 0;
-    for (firstURLIndex = 0; firstURLIndex < length; firstURLIndex++) {
+    for (firstURLIndex = 0; firstURLIndex < count; firstURLIndex++) {
         if (source[firstURLIndex].urlCode) {
             break;
         }
     }
-    if (firstURLIndex == length) {
+    if (firstURLIndex == count) {
         // Fast path - no URLs present.
         if (indexOut) {
             *indexOut = nil;
@@ -518,16 +578,19 @@ static NSString *const iTermExternalAttributeKeyURLCode = @"url";
     }
     
     // Slow path - convert URLs to external attributes.
-    NSMutableData *modern = [NSMutableData dataWithLength:self.length];
+    NSMutableData *modern = [NSMutableData dataWithLength:length];
     legacy_screen_char_t *dest = (legacy_screen_char_t *)modern.mutableBytes;
     memmove(dest, self.bytes, length);
     iTermExternalAttributeIndex *eaIndex = nil;
-    for (NSUInteger i = firstURLIndex; i < length; i++) {
+    for (NSUInteger i = firstURLIndex; i < count; i++) {
         if (dest[i].urlCode) {
             if (!eaIndex) {
                 eaIndex = [[iTermExternalAttributeIndex alloc] init];
             }
-            eaIndex[i].urlCode = dest[i].urlCode;
+            iTermExternalAttribute *ea = [iTermExternalAttribute attributeHavingUnderlineColor:NO
+                                                                                underlineColor:(VT100TerminalColorValue){}
+                                                                                       urlCode:dest[i].urlCode];
+            eaIndex[i] = ea;
             // This is a little hinky. dest goes from being a pointer to legacy_screen_char_t to screen_char_t at this point.
             // There's a rule that you can safely initialize a screen_char_t with 0s, so regardless of what future changes
             // screen_char_t undergoes, it will always migrate to 0s in the fields formerly occupied by urlCode.
@@ -538,6 +601,21 @@ static NSString *const iTermExternalAttributeKeyURLCode = @"url";
         *indexOut = eaIndex;
     }
     return modern;
+}
+
+- (NSData *)legacyScreenCharArrayWithExternalAttributes:(iTermExternalAttributeIndex * _Nullable)eaIndex {
+    const NSUInteger length = self.length;
+    assert(length < NSUIntegerMax);
+    assert(length % sizeof(screen_char_t) == 0);
+    assert(sizeof(legacy_screen_char_t) == sizeof(screen_char_t));
+    const NSUInteger count = length / sizeof(screen_char_t);
+
+    NSMutableData *legacyData = [self mutableCopy];
+    legacy_screen_char_t *dest = (legacy_screen_char_t *)legacyData.mutableBytes;
+    for (NSUInteger i = 0; i < count; i++) {
+        dest[i].urlCode = eaIndex[i].urlCode;
+    }
+    return legacyData;
 }
 
 @end

@@ -170,7 +170,7 @@ typedef struct {
     NSMutableArray *_unicodeVersionStack;
 
     // Code for the current hypertext link, or 0 if not in a hypertext link.
-    unsigned short _currentURLCode;
+    unsigned int _currentURLCode;
 
     BOOL _softAlternateScreenMode;
     NSMutableArray<NSNumber *> *_mainKeyReportingModeStack;
@@ -514,11 +514,12 @@ static const int kMaxScreenRows = 4096;
 }
 
 - (void)updateExternalAttributes {
-    if (!graphicRendition_.hasUnderlineColor) {
+    if (!graphicRendition_.hasUnderlineColor && _currentURLCode == 0) {
         _externalAttributes = nil;
         return;
     }
-    _externalAttributes = [[iTermExternalAttribute alloc] initWithUnderlineColor:graphicRendition_.underlineColor];
+    _externalAttributes = [[iTermExternalAttribute alloc] initWithUnderlineColor:graphicRendition_.underlineColor
+                                                                         urlCode:_currentURLCode];
 }
 
 - (screen_char_t)foregroundColorCode {
@@ -548,8 +549,8 @@ static const int kMaxScreenRows = 4096;
     result.blink = graphicRendition_.blink;
     result.invisible = graphicRendition_.invisible;
     result.image = NO;
-    result.urlCode = _currentURLCode;
     result.inverse = graphicRendition_.reversed;
+    result.unused = 0;
     return result;
 }
 
@@ -588,8 +589,8 @@ static const int kMaxScreenRows = 4096;
     result.underlineStyle = graphicRendition_.underlineStyle;
     result.blink = graphicRendition_.blink;
     result.invisible = graphicRendition_.invisible;
-    result.urlCode = _currentURLCode;
     result.inverse = graphicRendition_.reversed;
+    result.unused = 0;
     return result;
 }
 
@@ -3427,7 +3428,7 @@ static const int kMaxScreenRows = 4096;
         self.urlParams = nil;
     } else {
         self.urlParams = params;
-        unsigned short code = [[iTermURLStore sharedInstance] codeForURL:self.url withParams:params];
+        unsigned int code = [[iTermURLStore sharedInstance] codeForURL:self.url withParams:params];
         if (code) {
             if (_currentURLCode) {
                 [_delegate terminalWillEndLinkWithCode:_currentURLCode];
@@ -3437,6 +3438,7 @@ static const int kMaxScreenRows = 4096;
             _currentURLCode = code;
         }
     }
+    [self updateExternalAttributes];
 }
 
 - (void)executeXtermSetKvp:(VT100Token *)token {

@@ -211,7 +211,7 @@
                         to:(VT100GridCoord)to;
 
 // Set URLCode in a range.
-- (void)setURLCode:(unsigned short)code
+- (void)setURLCode:(unsigned int)code
         inRectFrom:(VT100GridCoord)from
                 to:(VT100GridCoord)to;
 
@@ -295,6 +295,11 @@
 // Saves restorable state. Goes with initWithDictionary:delegate:
 - (void)encode:(id<iTermEncoderAdapter>)encoder;
 
+- (void)mutateCharactersInRange:(VT100GridCoordRange)range
+                          block:(void (^)(screen_char_t *sct,
+                                          iTermExternalAttribute **eaOut,
+                                          VT100GridCoord coord,
+                                          BOOL *stop))block;
 #pragma mark - Testing use only
 
 - (VT100LineInfo *)lineInfoAtLineNumber:(int)lineNumber;

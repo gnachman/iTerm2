@@ -17,7 +17,7 @@
 
 @implementation NSArray (iTerm)
 
-+ (NSArray *)mapIntegersFrom:(NSInteger)min to:(NSInteger)noninclusiveUpperBound block:(id (^NS_NOESCAPE)(NSInteger i))block {
++ (instancetype)mapIntegersFrom:(NSInteger)min to:(NSInteger)noninclusiveUpperBound block:(id (^NS_NOESCAPE)(NSInteger i))block {
     assert(min <= noninclusiveUpperBound);
     NSMutableArray *result = [NSMutableArray arrayWithCapacity:noninclusiveUpperBound - min];
     for (NSInteger i = min; i < noninclusiveUpperBound; i++) {

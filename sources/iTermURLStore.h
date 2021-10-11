@@ -13,11 +13,11 @@
 @property(nonatomic, readonly) NSInteger generation;
 
 + (instancetype)sharedInstance;
-- (unsigned short)codeForURL:(NSURL *)url withParams:(NSString *)params;
-- (NSURL *)urlForCode:(unsigned short)code;
-- (NSString *)paramWithKey:(NSString *)key forCode:(unsigned short)code;
-- (void)releaseCode:(unsigned short)code;
-- (void)retainCode:(unsigned short)code;
+- (unsigned int)codeForURL:(NSURL *)url withParams:(NSString *)params;
+- (NSURL *)urlForCode:(unsigned int)code;
+- (NSString *)paramWithKey:(NSString *)key forCode:(unsigned int)code;
+- (void)releaseCode:(unsigned int)code;
+- (void)retainCode:(unsigned int)code;
 
 - (NSDictionary *)dictionaryValue;
 - (void)loadFromDictionary:(NSDictionary *)dictionary;

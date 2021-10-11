@@ -1726,7 +1726,7 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 
 - (void)linkTextInRange:(NSRange)range
 basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
-                  URLCode:(unsigned short)code {
+                  URLCode:(unsigned int)code {
     long long lineNumber = absoluteLineNumber - self.totalScrollbackOverflow - self.numberOfScrollbackLines;
     if (lineNumber < 0) {
         return;
@@ -3309,6 +3309,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     currentGrid_.cursorY++;
 }
 
+// See issue 6592 for why `setBackgroundColors` exists. tl;dr ncurses makes weird assumptions.
 - (void)terminalAppendTabAtCursor:(BOOL)setBackgroundColors {
     int rightMargin;
     if (currentGrid_.useScrollRegionCols) {
@@ -3335,7 +3336,8 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
             return;
         }
     }
-    screen_char_t* aLine = [currentGrid_ screenCharsAtLineNumber:currentGrid_.cursorY];
+    const int y = currentGrid_.cursorY;
+    screen_char_t* aLine = [currentGrid_ screenCharsAtLineNumber:y];
     BOOL allNulls = YES;
     for (int i = currentGrid_.cursorX; i < nextTabStop; i++) {
         if (aLine[i].code) {
@@ -3344,31 +3346,40 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
         }
     }
     if (allNulls) {
-        int i;
         screen_char_t filler;
         InitializeScreenChar(&filler, [terminal_ foregroundColorCode], [terminal_ backgroundColorCode]);
         filler.code = TAB_FILLER;
         const int startX = currentGrid_.cursorX;
         const int limit = nextTabStop - 1;
-        for (i = startX; i < limit; i++) {
-            if (setBackgroundColors) {
-                aLine[i] = filler;
+        iTermExternalAttribute *ea = [terminal_ externalAttributes];
+        [currentGrid_ mutateCharactersInRange:VT100GridCoordRangeMake(startX, y, limit + 1, y)
+                                        block:^(screen_char_t *c,
+                                                iTermExternalAttribute **eaOut,
+                                                VT100GridCoord coord,
+                                                BOOL *stop) {
+            if (coord.x < limit) {
+                if (setBackgroundColors) {
+                    *c = filler;
+                    *eaOut = ea;
+                } else {
+                    c->image = NO;
+                    c->complexChar = NO;
+                    c->code = TAB_FILLER;
+                }
             } else {
-                aLine[i].image = NO;
-                aLine[i].complexChar = NO;
-                aLine[i].code = TAB_FILLER;
+                if (setBackgroundColors) {
+                    screen_char_t tab = filler;
+                    tab.code = '\t';
+                    *c = tab;
+                    *eaOut = ea;
+                } else {
+                    c->image = NO;
+                    c->complexChar = NO;
+                    c->code = '\t';
+                }
             }
-        }
+        }];
 
-        if (setBackgroundColors) {
-            screen_char_t tab = filler;
-            tab.code = '\t';
-            aLine[i] = tab;
-        } else {
-            aLine[i].image = NO;
-            aLine[i].complexChar = NO;
-            aLine[i].code = '\t';
-        }
         [delegate_ screenAppendScreenCharArray:aLine + currentGrid_.cursorX
                                       metadata:iTermMetadataDefault()
                                         length:nextTabStop - startX];
@@ -4529,7 +4540,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     [helper writeToGrid:currentGrid_];
 }
 
-- (void)addURLMarkAtLineAfterCursorWithCode:(unsigned short)code {
+- (void)addURLMarkAtLineAfterCursorWithCode:(unsigned int)code {
     long long absLine = (self.totalScrollbackOverflow +
                          [self numberOfScrollbackLines] +
                          currentGrid_.cursor.y + 1);
@@ -4539,11 +4550,11 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     mark.code = code;
 }
 
-- (void)terminalWillStartLinkWithCode:(unsigned short)code {
+- (void)terminalWillStartLinkWithCode:(unsigned int)code {
     [self addURLMarkAtLineAfterCursorWithCode:code];
 }
 
-- (void)terminalWillEndLinkWithCode:(unsigned short)code {
+- (void)terminalWillEndLinkWithCode:(unsigned int)code {
     [self addURLMarkAtLineAfterCursorWithCode:code];
 }
 
@@ -5490,9 +5501,8 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalEraseRectangle:(VT100GridRect)rect {
-    const screen_char_t c = {
-        .code = ' '
-    };
+    screen_char_t c = [currentGrid_ defaultChar];
+    c.code = ' ';
     [self fillRectangle:rect with:c externalAttributes:nil];
 }
 
@@ -5538,7 +5548,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)linkRun:(VT100GridRun)run
-    withURLCode:(unsigned short)code {
+    withURLCode:(unsigned int)code {
     
     for (NSValue *value in [currentGrid_ rectsForRun:run]) {
         VT100GridRect rect = [value gridRectValue];

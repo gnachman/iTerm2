@@ -478,7 +478,6 @@ static int RawNumLines(LineBuffer* buffer, int width) {
             buffer[i].code = 'X';
             buffer[i].complexChar = NO;
             buffer[i].image = NO;
-            buffer[i].urlCode = 0;
         }
     }
     return eol;

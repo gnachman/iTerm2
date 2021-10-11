@@ -144,7 +144,7 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 
 - (void)linkTextInRange:(NSRange)range
    basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
-                     URLCode:(unsigned short)code;
+                     URLCode:(unsigned int)code;
 
 // Load a frame from a dvr decoder.
 - (void)setFromFrame:(screen_char_t*)s len:(int)len metadata:(NSArray<NSArray *> *)metadataArrays info:(DVRFrameInfo)info;

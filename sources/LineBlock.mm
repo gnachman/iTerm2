@@ -233,6 +233,7 @@ NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock)
             metadata_[i].continuation.bgGreen = [components[j++] unsignedCharValue];
             metadata_[i].continuation.bgBlue = [components[j++] unsignedCharValue];
             metadata_[i].continuation.backgroundColorMode = [components[j++] unsignedCharValue];
+            NSNumber *timestamp = components.count > j ? components[j++] : @0;
 
             // If a migration index is present, use it. Migration loses external attributes, but
             // at least for the v1->v2 transition it's not important because only underline colors
@@ -240,7 +241,7 @@ NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock)
             iTermExternalAttributeIndex *eaIndex =
                 [migrationIndex subAttributesFromIndex:startOffset
                                          maximumLength:cumulative_line_lengths[i] - startOffset];
-            if (!eaIndex) {
+            if (!eaIndex.attributes.count) {
                 NSDictionary *encodedExternalAttributes = components.count > j ? components[j++] : nil;
                 if ([encodedExternalAttributes isKindOfClass:[NSDictionary class]]) {
                     eaIndex = [[iTermExternalAttributeIndex alloc] initWithDictionary:encodedExternalAttributes];
@@ -248,7 +249,6 @@ NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock)
             } else if (components.count > j) {
                 j += 1;
             }
-            NSNumber *timestamp = components.count > j ? components[j++] : @0;
 
             iTermMetadataInit(&metadata_[i].lineMetadata,
                               timestamp.doubleValue,

@@ -354,38 +354,8 @@ static inline BOOL BackgroundColorsEqual(const screen_char_t a,
     }
 }
 
-// Returns true iff two foreground colors are equal.
-static inline BOOL ForegroundAttributesEqual(const screen_char_t a,
-                                             const screen_char_t b)
-{
-    if (a.bold != b.bold ||
-        a.faint != b.faint ||
-        a.italic != b.italic ||
-        a.blink != b.blink ||
-        a.invisible != b.invisible ||
-        a.underline != b.underline ||
-        a.underlineStyle != b.underlineStyle ||
-        a.strikethrough != b.strikethrough) {
-        return NO;
-    }
-    if (a.foregroundColorMode == b.foregroundColorMode) {
-        if (a.foregroundColorMode != ColorMode24bit) {
-            // for normal and alternate ColorMode
-            return a.foregroundColor == b.foregroundColor;
-        } else {
-            // RGB must all be equal for 24bit color
-            return a.foregroundColor == b.foregroundColor &&
-                a.fgGreen == b.fgGreen &&
-                a.fgBlue == b.fgBlue;
-        }
-    } else {
-        // different ColorMode == different colors
-        return NO;
-    }
-}
-
 static inline BOOL ScreenCharHasDefaultAttributesAndColors(const screen_char_t s,
-                                                           int urlCode) {
+                                                           unsigned int urlCode) {
     return (s.backgroundColor == ALTSEM_DEFAULT &&
             s.foregroundColor == ALTSEM_DEFAULT &&
             s.backgroundColorMode == ColorModeAlternate &&

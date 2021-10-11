@@ -65,8 +65,11 @@
     if (![supportedVersions containsObject:dict[@"version"]]) {
         [iTermWarning showWarningWithTitle:@"This recording is from a newer version of iTerm2 and cannot be replayed in this version."
                                    actions:@[ @"OK" ]
+                             actionMapping:nil
+                                 accessory:nil
                                 identifier:@"RecordingMalformed"
                                silenceable:kiTermWarningTypePersistent
+                                   heading:@"Can’t Load Recording"
                                     window:nil];
         return;
     }
@@ -76,8 +79,11 @@
     if (!dvrDict || !dictProfile) {
         [iTermWarning showWarningWithTitle:@"This recording could not be loaded because it is missing critical information."
                                    actions:@[ @"OK" ]
+                             actionMapping:nil
+                                 accessory:nil
                                 identifier:@"RecordingMalformed"
                                silenceable:kiTermWarningTypePersistent
+                                   heading:@"Can’t Load Recording"
                                     window:nil];
         return;
     }
