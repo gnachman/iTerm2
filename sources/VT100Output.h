@@ -97,7 +97,7 @@ BOOL VT100OutputCursorInformationGetLineDrawingMode(VT100OutputCursorInformation
 - (NSData *)reportDeviceAttribute;
 - (NSData *)reportSecondaryDeviceAttribute;
 - (NSData *)reportExtendedDeviceAttribute;
-
+- (NSData *)reportTertiaryDeviceAttribute;
 
 // Prefix is either @"4;" (for OSC 4) or @"" (for OSC 10 and OSC 11).
 - (NSData *)reportColor:(NSColor *)color atIndex:(int)index prefix:(NSString *)prefix;

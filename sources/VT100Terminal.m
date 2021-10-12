@@ -315,10 +315,10 @@ static const int kMaxScreenRows = 4096;
     _output.termType = _termType;
     if ([termtype isEqualToString:@"VT100"]) {
         _output.vtLevel = VT100EmulationLevel100;
-    } else if ([termtype hasPrefix:@"VT4"]) {
-        _output.vtLevel = VT100EmulationLevel400;
-    } else {
+    } else if ([termtype hasPrefix:@"VT2"] || [termtype hasPrefix:@"VT3"]) {
         _output.vtLevel = VT100EmulationLevel200;
+    } else {
+        _output.vtLevel = VT100EmulationLevel400;
     }
     self.isAnsi = [_termType rangeOfString:@"ANSI"
                                    options:NSCaseInsensitiveSearch | NSAnchoredSearch ].location !=  NSNotFound;
@@ -1900,6 +1900,11 @@ static const int kMaxScreenRows = 4096;
                 [_delegate terminalSendReport:[self.output reportSecondaryDeviceAttribute]];
             }
             break;
+        case VT100CSI_DA3:
+            if ([_delegate terminalShouldSendReport]) {
+                [_delegate terminalSendReport:[self.output reportTertiaryDeviceAttribute]];
+            }
+            break;
         case VT100CSI_XDA:
             if ([_delegate terminalShouldSendReport]) {
                 if (token.csi->p[0] == 0 || token.csi->p[0] == -1) {
@@ -3045,6 +3050,10 @@ static const int kMaxScreenRows = 4096;
     return self.columnMode ? @"132" : @"80";
 }
 
+- (NSString *)decrqssDECNLS {
+    return [@([self.delegate terminalHeight]) stringValue];
+}
+
 - (NSString *)decrqssPayload:(NSString *)pt {
     if ([pt isEqualToString:@"m"]) {
         return [self decrqssSGR];
@@ -3071,8 +3080,7 @@ static const int kMaxScreenRows = 4096;
         return [self decrqssDECSCPP];
     }
     if ([pt isEqualToString:@"*|"]) {
-        // Not supported because DECSNLS is unimplemented.
-        return nil;
+        return [self decrqssDECNLS];
     }
 
     return nil;

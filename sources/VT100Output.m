@@ -906,6 +906,65 @@ static int VT100OutputSafeAddInt(int l, int r) {
     // 45: Soft key mapping
     // 46: ASCII terminal emulation
 
+
+    typedef NS_ENUM(NSInteger, VT100OutputPrimaryDAFeature) {
+        VT100OutputPrimaryDAFeature132Columns = 1,
+        VT100OutputPrimaryDAFeaturePrinterPort = 2,
+        VT100OutputPrimaryDAFeatureReGISGraphics = 3,
+        VT100OutputPrimaryDAFeatureSixelGraphics = 4,
+        VT100OutputPrimaryDAFeatureSelectiveErase = 6,
+        VT100OutputPrimaryDAFeatureSoftCharacterSet = 7,
+        VT100OutputPrimaryDAFeatureUserDefinedKeys = 8,
+        VT100OutputPrimaryDAFeatureNationalReplacementCharacterSets = 9,
+        VT100OutputPrimaryDAFeatureSerboCroatian = 12,
+        VT100OutputPrimaryDAFeatureTechnicalCharacterSet = 15,
+        VT100OutputPrimaryDAFeatureLocatorPort = 16,
+        VT100OutputPrimaryDAFeatureTerminalStateInterrogation = 17,
+        VT100OutputPrimaryDAFeatureWindowingCapability = 18,
+        VT100OutputPrimaryDAFeatureSessions = 19,
+        VT100OutputPrimaryDAFeatureHorizontalScrolling = 21,
+        VT100OutputPrimaryDAFeatureANSIColor = 22,
+        VT100OutputPrimaryDAFeatureGreek = 23,
+        VT100OutputPrimaryDAFeatureTurkish = 24,
+        VT100OutputPrimaryDAFeatureRectangularEditing = 28,
+        VT100OutputPrimaryDAFeatureANSITextLocator = 29,
+        VT100OutputPrimaryDAFeatureISOLatin2 = 42,
+        VT100OutputPrimaryDAFeaturePCTerm = 44,
+        VT100OutputPrimaryDAFeatureSoftKeyMapping = 45,
+        VT100OutputPrimaryDAFeatureASCIITerminalEmulation = 46,
+
+        VT100OutputPrimaryDAFeatureVT125 = 12,
+        VT100OutputPrimaryDAFeatureVT220 = 62,
+        VT100OutputPrimaryDAFeatureVT320 = 63,
+        VT100OutputPrimaryDAFeatureVT420 = 64
+    };
+
+    VT100OutputPrimaryDAFeature vt100Features[] = {
+        VT100OutputPrimaryDAFeature132Columns,
+        VT100OutputPrimaryDAFeaturePrinterPort
+    };
+    VT100OutputPrimaryDAFeature vt200Features[] = {
+        VT100OutputPrimaryDAFeatureVT220,
+        VT100OutputPrimaryDAFeature132Columns,
+        VT100OutputPrimaryDAFeaturePrinterPort,
+        VT100OutputPrimaryDAFeatureSixelGraphics,
+        VT100OutputPrimaryDAFeatureSelectiveErase,
+        VT100OutputPrimaryDAFeatureANSIColor,
+        VT100OutputPrimaryDAFeatureRectangularEditing
+
+    };
+    VT100OutputPrimaryDAFeature vt400Features[] = {
+        VT100OutputPrimaryDAFeatureVT420,
+        VT100OutputPrimaryDAFeature132Columns,
+        VT100OutputPrimaryDAFeaturePrinterPort,
+        VT100OutputPrimaryDAFeatureSixelGraphics,
+        VT100OutputPrimaryDAFeatureSelectiveErase,
+        VT100OutputPrimaryDAFeatureTerminalStateInterrogation,
+        VT100OutputPrimaryDAFeatureWindowingCapability,
+        VT100OutputPrimaryDAFeatureHorizontalScrolling,
+        VT100OutputPrimaryDAFeatureANSIColor
+    };
+
     // TERMINAL STATE INTERROGATION
     // I found a file called vt_function_list.pdf at http://web.mit.edu/dosathena/doc/www/vt_function_list.pdf
     // that describes the following codes as TSI (with modifications by me for elucidation):
@@ -930,14 +989,26 @@ static int VT100OutputSafeAddInt(int l, int r) {
     // DECRSTS - Restore Terminal State
     //     NOTE: xterm does not implement this.
     //     NOTE: This restores state using the response from DECRQTSR.
+    VT100OutputPrimaryDAFeature *features;
+    size_t count;
     switch (_vtLevel) {
         case VT100EmulationLevel100:
-            return [@"\033[?1;2c" dataUsingEncoding:NSUTF8StringEncoding];
+            features = vt100Features;
+            count = sizeof(vt100Features) / sizeof(*vt100Features);
+            break;
         case VT100EmulationLevel200:
-            return [@"\033[?62;1;2;4;6;22c" dataUsingEncoding:NSUTF8StringEncoding];
+            features = vt200Features;
+            count = sizeof(vt200Features) / sizeof(*vt200Features);
+            break;
         case VT100EmulationLevel400:
-            return [@"\033[?62;1;2;4;6;17;21;22c" dataUsingEncoding:NSUTF8StringEncoding];
+            features = vt400Features;
+            count = sizeof(vt400Features) / sizeof(*vt400Features);
+            break;
     }
+    NSString *params = [[[NSArray sequenceWithRange:NSMakeRange(0, count)] mapWithBlock:^id(NSNumber *anObject) {
+        return [@(features[anObject.intValue]) stringValue];
+    }] componentsJoinedByString:@";"];
+    return [[NSString stringWithFormat:@"\033[?%@c", params] dataUsingEncoding:NSUTF8StringEncoding];
 }
 
 - (NSData *)reportSecondaryDeviceAttribute {
@@ -956,6 +1027,17 @@ static int VT100OutputSafeAddInt(int l, int r) {
     }
     NSString *report = [NSString stringWithFormat:@"\033[>%d;%d;0c", vt, xtermVersion];
     return [report dataUsingEncoding:NSISOLatin1StringEncoding];
+}
+
+- (NSData *)reportTertiaryDeviceAttribute {
+    switch (_vtLevel) {
+        case VT100EmulationLevel100:
+        case VT100EmulationLevel200:
+            return nil;
+        case VT100EmulationLevel400:
+            return [[NSString stringWithFormat:@"\eP!|%02X%02X%02X%02X\e\\", 'i', 'T', 'r', 'm'] dataUsingEncoding:NSUTF8StringEncoding];
+    }
+    return nil;
 }
 
 - (NSData *)reportExtendedDeviceAttribute {
