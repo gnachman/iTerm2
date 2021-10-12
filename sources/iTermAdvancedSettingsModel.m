@@ -325,8 +325,8 @@ DEFINE_FLOAT(bellRateLimit, 0.1, SECTION_TERMINAL @"Minimum time between beeping
 DEFINE_BOOL(translateScreenToXterm, YES, SECTION_TERMINAL @"Support TERM=screen\nMost notably, this fixes italics replacing inverse text.");
 DEFINE_BOOL(shouldSetTerminfoDirs, YES, SECTION_TERMINAL @"Set $TERMINFO_DIRS to add modern terminal features to xterm-like $TERMs?\niTerm2 ships with extended terminfo capabilities for common TERMs (xterm, xterm-new, and xterm-256color). For example, it enables undercurl. New sessions get created with a TERMINFO_DIRS that make the customized TERMINFOs take precedence over the system defaults.");
 
-// See check_termcode() in vim's term.c.
-DEFINE_INT(xtermVersion, 369, SECTION_TERMINAL @"xterm version for secondary device attributes (SDA).\nIncreasing this number enables more features in apps but may break things. Use 95 to recover pre-3.4.10 behavior.");
+// See the discussion in -[VT100Output reportSecondaryDeviceAttribute]
+DEFINE_INT(xtermVersion, 2500, SECTION_TERMINAL @"xterm version for secondary device attributes (SDA).\nIncreasing this number enables more features in apps but may break things. Use 95 to recover pre-3.4.10 behavior.");
 
 #pragma mark Hotkey
 

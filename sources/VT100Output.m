@@ -1025,6 +1025,42 @@ static int VT100OutputSafeAddInt(int l, int r) {
             vt = 41;
             break;
     }
+    // Beware of responding with 65 in the first position! Emacs will downgrade you for a response
+    // with 65 in th4e first place and any value over 2000 in the second place. It's useful to
+    // put 2500+ in the second place to trick vim into giving us undeline RGB.
+    //
+    // vim's rules [See check_termcode() in vim's term.c.]:
+    // 1;95;0        -> underline_rgb, mouse_sgr
+    // 0;95;0        ->                mouse_sgr
+    // 83;>=40700+;* ->                mouse_sgr
+    // 83;<40700;*   ->                mouse_xterm
+    // *;>=277;*     ->                mouse_sgr
+    // *;>=95;*      ->                mouse_xterm2
+    // *;>=2500;*    -> underline_rgb
+    // 0;136;0       -> underline_rgb, mouse_sgr
+    // *;136;0       -> underline_rgb
+    // 0;115;0       -> underline_rgb
+    // 83;>=30600;*  ->                                 cursor_style=no, cursor_blink=no
+    // *;<95;*       -> underline_rgb
+    // *;<270;*      ->                                 cursor_style=no
+    //
+    // emacs's rules [see xterm.el]:
+    // emu = first parameter in response
+    // version = second parameter in response
+    //   if version > 2000 && (emu == 1 || emu == 65):
+    //     if version > 4000:
+    //       send \e]11;?\e\ (queries background color), run xterm--report-background-handler on response
+    //     version=200
+    //   if emu == 83:
+    //     version=200
+    //   if version >= 242:
+    //     Send \e]11;?\e\\ (queries background color), run xterm--report-background-handler on response
+    //   if version >= 216:
+    //     xterm--init-modify-other-keys  (enable mok 1)
+    //   if version >= 203:
+    //     xterm--init-activate-set-selection  (enable OSC 52, I think)
+    //
+    // neovim does not use DA2; it relies on $TERM and environment variables.
     NSString *report = [NSString stringWithFormat:@"\033[>%d;%d;0c", vt, xtermVersion];
     return [report dataUsingEncoding:NSISOLatin1StringEncoding];
 }
