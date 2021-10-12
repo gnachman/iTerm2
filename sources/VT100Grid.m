@@ -1971,8 +1971,8 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
     }];
 }
 
-- (void)enumerateCellsInRect:(VT100GridRect)rect
-                       block:(void (^NS_NOESCAPE)(VT100GridCoord, screen_char_t *, iTermExternalAttribute *, BOOL *))block {
+- (void)mutateCellsInRect:(VT100GridRect)rect
+                    block:(void (^NS_NOESCAPE)(VT100GridCoord, screen_char_t *, iTermExternalAttribute **, BOOL *))block {
     for (int y = MAX(0, rect.origin.y); y < MIN(size_.height, rect.origin.y + rect.size.height); y++) {
         NSMutableData *data = [self lineDataAtLineNumber:y];
         screen_char_t *line = (screen_char_t *)data.mutableBytes;
@@ -1984,7 +1984,35 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
 
         for (int x = left; x < right; x++) {
             BOOL stop = NO;
-            block(VT100GridCoordMake(x, y), &line[x], eaIndex[x], &stop);
+            iTermExternalAttribute *eaOrig = eaIndex[x];
+            iTermExternalAttribute *ea = eaOrig;
+            block(VT100GridCoordMake(x, y), &line[x], &ea, &stop);
+            if (ea != eaOrig) {
+                if (!eaIndex) {
+                    eaIndex = [self externalAttributesOnLine:y createIfNeeded:YES];
+                }
+                eaIndex[x] = ea;
+            }
+            if (stop) {
+                return;
+            }
+        }
+    }
+}
+
+- (void)enumerateCellsInRect:(VT100GridRect)rect block:(void (^)(VT100GridCoord, screen_char_t, iTermExternalAttribute *, BOOL *))block {
+    for (int y = MAX(0, rect.origin.y); y < MIN(size_.height, rect.origin.y + rect.size.height); y++) {
+        NSMutableData *data = [self lineDataAtLineNumber:y];
+        screen_char_t *line = (screen_char_t *)data.mutableBytes;
+        iTermExternalAttributeIndex *eaIndex = [self externalAttributesOnLine:y
+                                                               createIfNeeded:NO];
+        const int left = MAX(0, rect.origin.x);
+        const int right = MIN(size_.width, rect.origin.x + rect.size.width);
+        [self markCharsDirty:YES inRun:VT100GridRunMake(left, y, right - left)];
+
+        for (int x = left; x < right; x++) {
+            BOOL stop = NO;
+            block(VT100GridCoordMake(x, y), line[x], eaIndex[x], &stop);
             if (stop) {
                 return;
             }

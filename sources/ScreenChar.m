@@ -550,7 +550,7 @@ int EffectiveLineLength(screen_char_t* theLine, int totalLength) {
 
 NSString *DebugStringForScreenChar(screen_char_t c) {
     NSArray *modes = @[ @"default", @"selected", @"altsem", @"altsem-reversed" ];
-    return [NSString stringWithFormat:@"code=%x (%@) foregroundColor=%@ fgGreen=%@ fgBlue=%@ backgroundColor=%@ bgGreen=%@ bgBlue=%@ foregroundColorMode=%@ backgroundColorMode=%@ complexChar=%@ bold=%@ faint=%@ italic=%@ blink=%@ underline=%@ underlineStyle=%@ strikethrough=%@ image=%@ invisible=%@ inverse=%@ unused=%@",
+    return [NSString stringWithFormat:@"code=%x (%@) foregroundColor=%@ fgGreen=%@ fgBlue=%@ backgroundColor=%@ bgGreen=%@ bgBlue=%@ foregroundColorMode=%@ backgroundColorMode=%@ complexChar=%@ bold=%@ faint=%@ italic=%@ blink=%@ underline=%@ underlineStyle=%@ strikethrough=%@ image=%@ invisible=%@ inverse=%@ guarded=%@ unused=%@",
             (int)c.code,
             ScreenCharToStr(&c),
             @(c.foregroundColor),
@@ -572,6 +572,7 @@ NSString *DebugStringForScreenChar(screen_char_t c) {
             @(c.image),
             @(c.invisible),
             @(c.inverse),
+            @(c.guarded),
             @(c.unused)];
 }
 
@@ -721,6 +722,7 @@ void InitializeScreenChar(screen_char_t *s, screen_char_t fg, screen_char_t bg) 
     s->underlineStyle = fg.underlineStyle;
     s->image = NO;
     s->inverse = fg.inverse;
+    s->guarded = fg.guarded;
     s->unused = 0;
 }
 
@@ -866,6 +868,9 @@ NSString *ScreenCharDescription(screen_char_t c) {
     }
     if (c.invisible) {
         [attrs addObject:@"Invisible"];
+    }
+    if (c.guarded) {
+        [attrs addObject:@"Guarded"];
     }
     if (c.underline) {
         switch (c.underlineStyle) {

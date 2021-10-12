@@ -47,6 +47,12 @@ typedef NS_ENUM(int, VT100TerminalColorIndex) {
     VT100TerminalColorIndexLast8BitColorIndex = 255
 };
 
+typedef NS_ENUM(NSUInteger, VT100TerminalProtectedMode) {
+    VT100TerminalProtectedModeNone = 0,
+    VT100TerminalProtectedModeISO = 1,
+    VT100TerminalProtectedModeDEC = 2
+};
+
 @protocol VT100TerminalDelegate <NSObject>
 // Append a string at the cursor's position and advance the cursor, scrolling if necessary.
 - (void)terminalAppendString:(NSString *)string;
@@ -484,5 +490,10 @@ typedef NS_ENUM(int, VT100TerminalColorIndex) {
 - (void)terminalCopyFrom:(VT100GridRect)source to:(VT100GridCoord)dest;
 - (void)terminalFillRectangle:(VT100GridRect)rect withCharacter:(unichar)ch;
 - (void)terminalEraseRectangle:(VT100GridRect)rect;
+- (void)terminalSelectiveEraseRectangle:(VT100GridRect)rect;
+- (void)terminalSelectiveEraseInDisplay:(int)mode;
+- (void)terminalSelectiveEraseInLine:(int)mode;
+- (void)terminalProtectedModeDidChangeTo:(VT100TerminalProtectedMode)mode;
+- (VT100TerminalProtectedMode)terminalProtectedMode;
 
 @end

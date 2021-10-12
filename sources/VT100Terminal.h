@@ -23,7 +23,6 @@ typedef struct {
     BOOL reversed;
     BOOL faint;
     BOOL italic;
-    // TODO: Add protected
 
     int fgColorCode;
     int fgGreen;
@@ -127,6 +126,7 @@ typedef NS_OPTIONS(int, VT100TerminalKeyReportingFlags) {
 @property(nonatomic, readonly) BOOL preserveScreenOnDECCOLM;
 @property(nonatomic, readonly) BOOL alternateScrollMode;
 @property(nonatomic, readonly) BOOL decsaceRectangleMode;
+@property(nonatomic, readonly) VT100TerminalProtectedMode protectedMode;
 
 - (void)setStateFromDictionary:(NSDictionary *)dict;
 

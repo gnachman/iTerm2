@@ -94,6 +94,8 @@ typedef enum {
     VT100CSI_ED,                    // Erase In Display
     VT100CSI_EL,                    // Erase In Line
     VT100CSI_HTS,                   // Horizontal Tabulation Set
+    VT100CC_SPA,                    // Start of Guarded/Protected Area
+    VT100CC_EPA,                    // End of Guarded/Protected Area
     VT100CSI_HVP,                   // Horizontal and Vertical Position
     VT100CSI_IND,                   // Index
     VT100CSI_NEL,                   // Next Line
@@ -141,7 +143,11 @@ typedef enum {
     VT100CSI_DECSNLS,               // Select number of lines per screen
     VT100CSI_DECIC,                 // Insert column
     VT100CSI_DECDC,                 // Delete column
-    
+    VT100CSI_DECSERA,               // Selective Erase Rectangular Area
+    VT100CSI_DECSED,                // Selective Erase in Display
+    VT100CSI_DECSEL,                // Selective Erase in Line
+    VT100CSI_DECSCA,                // Select Character Protection Attribute
+
     // https://sw.kovidgoyal.net/kitty/keyboard-protocol.html
     VT100CSI_PUSH_KEY_REPORTING_MODE,
     VT100CSI_POP_KEY_REPORTING_MODE,

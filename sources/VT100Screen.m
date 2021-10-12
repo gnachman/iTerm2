@@ -62,6 +62,7 @@ NSString *const kScreenStateLastCommandMarkKey = @"Last Command Mark";
 NSString *const kScreenStatePrimaryGridStateKey = @"Primary Grid State";
 NSString *const kScreenStateAlternateGridStateKey = @"Alternate Grid State";
 NSString *const kScreenStateCursorCoord = @"Cursor Coord";
+NSString *const kScreenStateProtectedMode = @"Protected Mode";
 
 int kVT100ScreenMinColumns = 2;
 int kVT100ScreenMinRows = 2;
@@ -174,6 +175,8 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 
     iTermOrderEnforcer *_setWorkingDirectoryOrderEnforcer;
     iTermOrderEnforcer *_currentDirectoryDidChangeOrderEnforcer;
+
+    VT100TerminalProtectedMode _protectedMode;
 }
 
 @synthesize terminal = terminal_;
@@ -3555,11 +3558,28 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalEraseInDisplayBeforeCursor:(BOOL)before afterCursor:(BOOL)after {
-    int x1, yStart, x2, y2;
+    [self eraseInDisplayBeforeCursor:before afterCursor:after decProtect:NO];
+}
 
+- (void)eraseInDisplayBeforeCursor:(BOOL)before afterCursor:(BOOL)after decProtect:(BOOL)dec {
+    int x1, yStart, x2, y2;
+    BOOL shouldHonorProtected = NO;
+    switch (_protectedMode) {
+        case VT100TerminalProtectedModeNone:
+            shouldHonorProtected = NO;
+            break;
+        case VT100TerminalProtectedModeISO:
+            shouldHonorProtected = YES;
+            break;
+        case VT100TerminalProtectedModeDEC:
+            shouldHonorProtected = dec;
+            break;
+    }
     if (before && after) {
         [delegate_ screenRemoveSelection];
-        [self scrollScreenIntoHistory];
+        if (!shouldHonorProtected) {
+            [self scrollScreenIntoHistory];
+        }
         x1 = 0;
         yStart = 0;
         x2 = currentGrid_.size.width - 1;
@@ -3578,8 +3598,11 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
             // Save the whole screen. This helps the "screen" terminal, where CSI H CSI J is used to
             // clear the screen.
             // Only do it in alternate screen mode to avoid doing this for zsh (issue 8822)
+            // And don't do it if in a protection mode since that would defeat the purpose.
             [delegate_ screenRemoveSelection];
-            [self scrollScreenIntoHistory];
+            if (!shouldHonorProtected) {
+                [self scrollScreenIntoHistory];
+            }
         } else {
             // This is important for tmux integration with shell integration enabled. The screen
             // terminal uses ED 0 instead of ED 2 to clear the screen (e.g., when you do ^L at the shell).
@@ -3594,14 +3617,39 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     VT100GridRun theRun = VT100GridRunFromCoords(VT100GridCoordMake(x1, yStart),
                                                  VT100GridCoordMake(x2, y2),
                                                  currentGrid_.size.width);
-    [currentGrid_ setCharsInRun:theRun
-                         toChar:0
-             externalAttributes:nil];
+    if (shouldHonorProtected) {
+        const BOOL foundProtected = [self selectiveEraseRange:VT100GridCoordRangeMake(x1, yStart, x2, y2)
+                                              eraseAttributes:YES];
+        const BOOL eraseAll = (x1 == 0 && yStart == 0 && x2 == currentGrid_.size.width - 1 && y2 == currentGrid_.size.height - 1);
+        if (!foundProtected && eraseAll) {  // xterm has this logic, so we do too. My guess is that it's an optimization.
+            _protectedMode = VT100TerminalProtectedModeNone;
+        }
+    } else {
+        [currentGrid_ setCharsInRun:theRun
+                             toChar:0
+                 externalAttributes:nil];
+    }
     [delegate_ screenTriggerableChangeDidOccur];
 
 }
 
 - (void)terminalEraseLineBeforeCursor:(BOOL)before afterCursor:(BOOL)after {
+    [self eraseLineBeforeCursor:before afterCursor:after decProtect:NO];
+}
+
+- (void)eraseLineBeforeCursor:(BOOL)before afterCursor:(BOOL)after decProtect:(BOOL)dec {
+    BOOL shouldHonorProtected = NO;
+    switch (_protectedMode) {
+        case VT100TerminalProtectedModeNone:
+            shouldHonorProtected = NO;
+            break;
+        case VT100TerminalProtectedModeISO:
+            shouldHonorProtected = YES;
+            break;
+        case VT100TerminalProtectedModeDEC:
+            shouldHonorProtected = dec;
+            break;
+    }
     int x1 = 0;
     int x2 = 0;
 
@@ -3621,13 +3669,20 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
         [self removeSoftEOLBeforeCursor];
     }
 
-    VT100GridRun theRun = VT100GridRunFromCoords(VT100GridCoordMake(x1, currentGrid_.cursor.y),
-                                                 VT100GridCoordMake(x2, currentGrid_.cursor.y),
-                                                 currentGrid_.size.width);
-    [currentGrid_ setCharsInRun:theRun
-                         toChar:0
-             externalAttributes:nil];
-    [delegate_ screenTriggerableChangeDidOccur];
+    if (shouldHonorProtected) {
+        [self selectiveEraseRange:VT100GridCoordRangeMake(x1,
+                                                          currentGrid_.cursor.y,
+                                                          x2,
+                                                          currentGrid_.cursor.y)
+                  eraseAttributes:YES];
+    } else {
+        VT100GridRun theRun = VT100GridRunFromCoords(VT100GridCoordMake(x1, currentGrid_.cursor.y),
+                                                     VT100GridCoordMake(x2, currentGrid_.cursor.y),
+                                                     currentGrid_.size.width);
+        [currentGrid_ setCharsInRun:theRun
+                             toChar:0
+                 externalAttributes:nil];
+    }
 }
 
 - (void)terminalSetTabStopAtCursor {
@@ -3805,13 +3860,28 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
             return;
         }
 
-        int limit = MIN(currentGrid_.cursorX + j, currentGrid_.size.width);
-        [currentGrid_ setCharsFrom:VT100GridCoordMake(currentGrid_.cursorX, currentGrid_.cursorY)
-                                to:VT100GridCoordMake(limit - 1, currentGrid_.cursorY)
-                            toChar:[currentGrid_ defaultChar]
-                externalAttributes:nil];
-        // TODO: This used to always set the continuation mark to hard, but I think it should only do that if the last char in the line is erased.
-        [delegate_ screenTriggerableChangeDidOccur];
+        switch (_protectedMode) {
+            case VT100TerminalProtectedModeNone:
+            case VT100TerminalProtectedModeDEC: {
+                // Do not honor protected mode.
+                int limit = MIN(currentGrid_.cursorX + j, currentGrid_.size.width);
+                [currentGrid_ setCharsFrom:VT100GridCoordMake(currentGrid_.cursorX, currentGrid_.cursorY)
+                                        to:VT100GridCoordMake(limit - 1, currentGrid_.cursorY)
+                                    toChar:[currentGrid_ defaultChar]
+                        externalAttributes:nil];
+                // TODO: This used to always set the continuation mark to hard, but I think it should only do that if the last char in the line is erased.
+                [delegate_ screenTriggerableChangeDidOccur];
+                break;
+            }
+            case VT100TerminalProtectedModeISO:
+                // honor protected mode.
+                [self selectiveEraseRange:VT100GridCoordRangeMake(currentGrid_.cursorX,
+                                                                  currentGrid_.cursorY,
+                                                                  MIN(currentGrid_.size.width, currentGrid_.cursorX + j),
+                                                                  currentGrid_.cursorY)
+                          eraseAttributes:YES];
+                break;
+        }
     }
 }
 
@@ -5434,7 +5504,9 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
         }
     };
     if (terminal_.decsaceRectangleMode) {
-        [currentGrid_ enumerateCellsInRect:rect block:block];
+        [currentGrid_ mutateCellsInRect:rect block:^(VT100GridCoord coord, screen_char_t *sct, iTermExternalAttribute **eaOut, BOOL *stop) {
+            block(coord, sct, *eaOut, stop);
+        }];
     } else {
         [currentGrid_ mutateCharactersInRange:VT100GridCoordRangeMake(rect.origin.x,
                                                                       rect.origin.y,
@@ -5471,7 +5543,9 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
         }
     };
     if (terminal_.decsaceRectangleMode) {
-        [currentGrid_ enumerateCellsInRect:rect block:block];
+        [currentGrid_ mutateCellsInRect:rect block:^(VT100GridCoord coord, screen_char_t *sct, iTermExternalAttribute **eaOut, BOOL *stop) {
+            block(coord, sct, *eaOut, stop);
+        }];
     } else {
         [currentGrid_ mutateCharactersInRange:VT100GridCoordRangeMake(rect.origin.x,
                                                                       rect.origin.y,
@@ -5488,7 +5562,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     const VT100GridSize size = currentGrid_.size;
     [copy enumerateCellsInRect:source
                          block:^(VT100GridCoord sourceCoord,
-                                 screen_char_t *sct,
+                                 screen_char_t sct,
                                  iTermExternalAttribute *ea,
                                  BOOL *stop) {
         const VT100GridCoord destCoord = VT100GridCoordMake(sourceCoord.x - source.origin.x + dest.x,
@@ -5498,7 +5572,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
         }
         [currentGrid_ setCharsFrom:destCoord
                                 to:destCoord
-                            toChar:*sct
+                            toChar:sct
                 externalAttributes:ea];
     }];
 }
@@ -5530,6 +5604,101 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     screen_char_t c = [currentGrid_ defaultChar];
     c.code = ' ';
     [self fillRectangle:rect with:c externalAttributes:nil];
+}
+
+static inline void VT100ScreenEraseCell(screen_char_t *sct, iTermExternalAttribute **eaOut, BOOL eraseAttributes, const screen_char_t *defaultChar) {
+    if (eraseAttributes) {
+        *sct = *defaultChar;
+        sct->code = ' ';
+        *eaOut = nil;
+        return;
+    }
+    sct->code = ' ';
+    sct->complexChar = NO;
+    sct->image = NO;
+    if ((*eaOut).urlCode) {
+        *eaOut = [iTermExternalAttribute attributeHavingUnderlineColor:(*eaOut).hasUnderlineColor
+                                                        underlineColor:(*eaOut).underlineColor
+                                                               urlCode:0];
+    }
+}
+
+// Note: this does not erase attributes! It just sets the character to space.
+- (void)terminalSelectiveEraseRectangle:(VT100GridRect)rect {
+    const screen_char_t dc = currentGrid_.defaultChar;
+    [currentGrid_ mutateCellsInRect:rect block:^(VT100GridCoord coord, screen_char_t *sct, iTermExternalAttribute **eaOut, BOOL *stop) {
+        if (_protectedMode == VT100TerminalProtectedModeDEC && sct->guarded) {
+            return;
+        }
+        VT100ScreenEraseCell(sct, eaOut, NO, &dc);
+    }];
+    [delegate_ screenTriggerableChangeDidOccur];
+}
+
+- (BOOL)selectiveEraseRange:(VT100GridCoordRange)range eraseAttributes:(BOOL)eraseAttributes {
+    __block BOOL foundProtected = NO;
+    const screen_char_t dc = currentGrid_.defaultChar;
+    [currentGrid_ mutateCharactersInRange:range block:^(screen_char_t *sct, iTermExternalAttribute **eaOut, VT100GridCoord coord, BOOL *stop) {
+        if (_protectedMode != VT100TerminalProtectedModeNone && sct->guarded) {
+            foundProtected = YES;
+            return;
+        }
+        VT100ScreenEraseCell(sct, eaOut, eraseAttributes, &dc);
+    }];
+    [delegate_ screenTriggerableChangeDidOccur];
+    return foundProtected;
+}
+
+- (void)terminalSelectiveEraseInDisplay:(int)mode {
+    BOOL before = NO;
+    BOOL after = NO;
+    switch (mode) {
+        case 0:
+            after = YES;
+            break;
+        case 1:
+            before = YES;
+            break;
+        case 2:
+            before = YES;
+            after = YES;
+            break;
+    }
+    // Unlike DECSERA, this does erase attributes.
+    [self eraseInDisplayBeforeCursor:before afterCursor:after decProtect:YES];
+}
+
+- (void)terminalSelectiveEraseInLine:(int)mode {
+    switch (mode) {
+        case 0:
+            [self selectiveEraseRange:VT100GridCoordRangeMake(currentGrid_.cursorX,
+                                                              currentGrid_.cursorY,
+                                                              currentGrid_.size.width,
+                                                              currentGrid_.cursorY)
+                      eraseAttributes:YES];
+            return;
+        case 1:
+            [self selectiveEraseRange:VT100GridCoordRangeMake(0,
+                                                              currentGrid_.cursorY,
+                                                              currentGrid_.cursorX + 1,
+                                                              currentGrid_.cursorY)
+                      eraseAttributes:YES];
+            return;
+        case 2:
+            [self selectiveEraseRange:VT100GridCoordRangeMake(0,
+                                                              currentGrid_.cursorY,
+                                                              currentGrid_.size.width,
+                                                              currentGrid_.cursorY)
+                      eraseAttributes:YES];
+    }
+}
+
+- (void)terminalProtectedModeDidChangeTo:(VT100TerminalProtectedMode)mode {
+    _protectedMode = mode;
+}
+
+- (VT100TerminalProtectedMode)terminalProtectedMode {
+    return _protectedMode;
 }
 
 #pragma mark - Private
@@ -6334,6 +6503,7 @@ static void SwapInt(int *a, int *b) {
            kScreenStateLastCommandMarkKey: _lastCommandMark.guid ?: [NSNull null],
            kScreenStatePrimaryGridStateKey: primaryGrid_.dictionaryValue ?: @{},
            kScreenStateAlternateGridStateKey: altGrid_.dictionaryValue ?: [NSNull null],
+           kScreenStateProtectedMode: @(_protectedMode),
         };
         dict = [dict dictionaryByRemovingNullValues];
         [encoder mergeDictionary:dict];
@@ -6509,6 +6679,7 @@ static void SwapInt(int *a, int *b) {
     }
 
     if (screenState) {
+        _protectedMode = [screenState[kScreenStateProtectedMode] unsignedIntegerValue];
         [tabStops_ removeAllObjects];
         [tabStops_ addObjectsFromArray:screenState[kScreenStateTabStopsKey]];
 

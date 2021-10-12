@@ -52,6 +52,7 @@ NSString *const kSavedCursorGraphicRenditionKey = @"Graphic Rendition";
 NSString *const kSavedCursorOriginKey = @"Origin";
 NSString *const kSavedCursorWraparoundKey = @"Wraparound";
 NSString *const kSavedCursorUnicodeVersion = @"Unicode Version";
+NSString *const kSavedCursorProtectedMode = @"Protected Mode";
 
 NSString *const kTerminalStateTermTypeKey = @"Term Type";
 NSString *const kTerminalStateAnswerBackStringKey = @"Answerback String";
@@ -101,6 +102,7 @@ NSString *const kTerminalStateSavedColors = @"Saved Colors";  // For XTPUSHCOLOR
 NSString *const kTerminalStateAlternateScrollMode = @"Alternate Scroll Mode";
 NSString *const kTerminalStateSGRStack = @"SGR Stack";
 NSString *const kTerminalStateDECSACE = @"DECSACE";
+NSString *const kTerminalStateProtectedMode = @"Protected Mode";
 
 static const size_t VT100TerminalMaxSGRStackEntries = 10;
 
@@ -132,6 +134,7 @@ typedef struct {
     BOOL origin;
     BOOL wraparound;
     NSInteger unicodeVersion;
+    VT100TerminalProtectedMode protectedMode;
 } VT100SavedCursor;
 
 typedef enum {
@@ -387,7 +390,7 @@ static const int kMaxScreenRows = 4096;
     [_delegate terminalMouseModeDidChangeTo:_mouseMode];
     [_delegate terminalSetUseColumnScrollRegion:NO];
     self.reportFocus = NO;
-
+    self.protectedMode = VT100TerminalProtectedModeNone;
     self.strictAnsiMode = NO;
     self.allowColumnMode = NO;
     receivingFile_ = NO;
@@ -551,6 +554,7 @@ static const int kMaxScreenRows = 4096;
     result.invisible = graphicRendition_.invisible;
     result.image = NO;
     result.inverse = graphicRendition_.reversed;
+    result.guarded = _protectedMode != VT100TerminalProtectedModeNone;
     result.unused = 0;
     return result;
 }
@@ -591,6 +595,7 @@ static const int kMaxScreenRows = 4096;
     result.blink = graphicRendition_.blink;
     result.invisible = graphicRendition_.invisible;
     result.inverse = graphicRendition_.reversed;
+    result.guarded = _protectedMode != VT100TerminalProtectedModeNone;
     result.unused = 0;
     return result;
 }
@@ -864,6 +869,14 @@ static const int kMaxScreenRows = 4096;
 - (void)setSynchronizedUpdates:(BOOL)synchronizedUpdates {
     _synchronizedUpdates = synchronizedUpdates;
     [self.delegate terminalSynchronizedUpdate:synchronizedUpdates];
+}
+
+- (void)setProtectedMode:(VT100TerminalProtectedMode)protectedMode {
+    if (protectedMode == _protectedMode) {
+        return;
+    }
+    _protectedMode = protectedMode;
+    [self.delegate terminalProtectedModeDidChangeTo:_protectedMode];
 }
 
 - (void)resetGraphicRendition {
@@ -1554,6 +1567,7 @@ static const int kMaxScreenRows = 4096;
     savedCursor->origin = self.originMode;
     savedCursor->wraparound = self.wraparoundMode;
     savedCursor->unicodeVersion = [_delegate terminalUnicodeVersion];
+    savedCursor->protectedMode = _protectedMode;
 }
 
 - (void)setReportFocus:(BOOL)reportFocus {
@@ -1602,6 +1616,7 @@ static const int kMaxScreenRows = 4096;
 
     self.originMode = savedCursor->origin;
     self.wraparoundMode = savedCursor->wraparound;
+    self.protectedMode = savedCursor->protectedMode;
     [_delegate terminalSetUnicodeVersion:savedCursor->unicodeVersion];
 }
 
@@ -1644,7 +1659,8 @@ static const int kMaxScreenRows = 4096;
         [_delegate terminalSetCharset:i toLineDrawingMode:NO];
     }
 
-    // (Not supported: Reset DECSCA)
+    self.protectedMode = VT100TerminalProtectedModeNone;
+
     // Reset DECCKM
     self.cursorMode = NO;
 
@@ -1875,7 +1891,7 @@ static const int kMaxScreenRows = 4096;
                        andToStartOfLine:YES];
             break;
         case VT100CSI_DA:
-            if ([_delegate terminalShouldSendReport]) {
+            if (token.csi->p[0] == 0 && [_delegate terminalShouldSendReport]) {
                 [_delegate terminalSendReport:[self.output reportDeviceAttribute]];
             }
             break;
@@ -1994,6 +2010,46 @@ static const int kMaxScreenRows = 4096;
         case VT100CSI_HTS:
             [_delegate terminalSetTabStopAtCursor];
             break;
+        case VT100CC_SPA:
+            self.protectedMode = VT100TerminalProtectedModeISO;
+            break;
+
+        case VT100CC_EPA:
+            // Note that xterm doesn't update the screen state for EPA even though it does for SPA.
+            // I believe that's because the screen state is about whether there could possibly be
+            // protected characters on-screen.
+            _protectedMode = VT100TerminalProtectedModeNone;
+            break;
+
+        case VT100CSI_DECSERA:
+            [_delegate terminalSelectiveEraseRectangle:[self rectangleInToken:token
+                                                              startingAtIndex:0
+                                                             defaultRectangle:[self defaultRectangle]]];
+            break;
+
+        case VT100CSI_DECSED:
+            [_delegate terminalSelectiveEraseInDisplay:token.csi->p[0]];
+            break;
+
+        case VT100CSI_DECSEL:
+            [_delegate terminalSelectiveEraseInLine:token.csi->p[0]];
+            break;
+
+        case VT100CSI_DECSCA:
+            // The weird logic about lying to the delegate is based on xterm 369. DECSCA puts the
+            // screen in DEC mode regardless of the parameter.
+            switch (token.csi->p[0]) {
+                case 0:
+                case 2:
+                    _protectedMode = VT100TerminalProtectedModeNone;
+                    break;
+                case 1:
+                    _protectedMode = VT100TerminalProtectedModeDEC;
+                    break;
+            }
+            [_delegate terminalProtectedModeDidChangeTo:VT100TerminalProtectedModeDEC];
+            break;
+
         case VT100CSI_HVP:
             [_delegate terminalMoveCursorToX:token.csi->p[1] y:token.csi->p[0]];
             break;
@@ -2967,6 +3023,11 @@ static const int kMaxScreenRows = 4096;
     return [@(code) stringValue];
 }
 
+- (NSString *)decrqssDECSCA {
+    return (_protectedMode != VT100TerminalProtectedModeNone &&
+            [_delegate terminalProtectedMode] == VT100TerminalProtectedModeDEC) ? @"1" : @"0";
+}
+
 - (NSString *)decrqssDECSTBM {
     return [self.delegate terminalTopBottomRegionString];
 }
@@ -2995,8 +3056,7 @@ static const int kMaxScreenRows = 4096;
         return [self decrqssDECSCUSR];
     }
     if ([pt isEqualToString:@"\"q"]) {
-        // Not supported because protection is unimplemented.
-        return nil;
+        return [self decrqssDECSCA];
     }
     if ([pt isEqualToString:@"r"]) {
         return [self decrqssDECSTBM];
@@ -4521,7 +4581,8 @@ static iTermDECRPMSetting VT100TerminalDECRPMSettingFromBoolean(BOOL flag) {
               kSavedCursorGraphicRenditionKey: [self dictionaryForGraphicRendition:savedCursor.graphicRendition],
               kSavedCursorOriginKey: @(savedCursor.origin),
               kSavedCursorWraparoundKey: @(savedCursor.wraparound),
-              kSavedCursorUnicodeVersion: @(savedCursor.unicodeVersion)
+              kSavedCursorUnicodeVersion: @(savedCursor.unicodeVersion),
+              kSavedCursorProtectedMode: @(savedCursor.protectedMode)
     };
 }
 
@@ -4537,6 +4598,8 @@ static iTermDECRPMSetting VT100TerminalDECRPMSettingFromBoolean(BOOL flag) {
     savedCursor.origin = [dict[kSavedCursorOriginKey] boolValue];
     savedCursor.wraparound = [dict[kSavedCursorWraparoundKey] boolValue];
     savedCursor.unicodeVersion = [dict[kSavedCursorUnicodeVersion] integerValue];
+    savedCursor.protectedMode = [dict[kSavedCursorProtectedMode] unsignedIntegerValue];
+
     return savedCursor;
 }
 
@@ -4586,7 +4649,8 @@ static iTermDECRPMSetting VT100TerminalDECRPMSettingFromBoolean(BOOL flag) {
            kTerminalStateUnicodeVersionStack: _unicodeVersionStack,
            kTerminalStateSynchronizedUpdates: @(self.synchronizedUpdates),
            kTerminalStatePreserveScreenOnDECCOLM: @(self.preserveScreenOnDECCOLM),
-           kTerminalStateSavedColors: _savedColors.plist
+           kTerminalStateSavedColors: _savedColors.plist,
+           kTerminalStateProtectedMode: @(_protectedMode),
         };
     return [dict dictionaryByRemovingNullValues];
 }
@@ -4628,6 +4692,7 @@ static iTermDECRPMSetting VT100TerminalDECRPMSettingFromBoolean(BOOL flag) {
     self.synchronizedUpdates = [dict[kTerminalStateSynchronizedUpdates] boolValue];
     _preserveScreenOnDECCOLM = [dict[kTerminalStatePreserveScreenOnDECCOLM] boolValue];
     _savedColors = [VT100SavedColors fromData:[NSData castFrom:dict[kTerminalStateSavedColors]]] ?: [[VT100SavedColors alloc] init];
+    self.protectedMode = [dict[kTerminalStateProtectedMode] unsignedIntegerValue];
 
     if (!_sendModifiers) {
         self.sendModifiers = [@[ @-1, @-1, @-1, @-1, @-1 ] mutableCopy];

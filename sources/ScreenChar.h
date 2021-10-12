@@ -274,7 +274,10 @@ typedef struct screen_char_t {
     // colors in this struct were *already* exchanged because of SGR 7.
     unsigned int inverse : 1;
 
-    unsigned int unused : 16;
+    // Character can't be erased when screen is in protected mode. See DECSCA, SPA, and EPA.
+    unsigned int guarded : 1;
+
+    unsigned int unused : 15;
 } screen_char_t;
 
 
@@ -323,6 +326,7 @@ static inline void CopyForegroundColor(screen_char_t* to, const screen_char_t fr
     to->unused = from.unused;
     to->image = from.image;
     to->inverse = from.inverse;
+    to->guarded = from.guarded;
 }
 
 // Copy background color from one char to another.

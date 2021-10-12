@@ -934,9 +934,9 @@ static int VT100OutputSafeAddInt(int l, int r) {
         case VT100EmulationLevel100:
             return [@"\033[?1;2c" dataUsingEncoding:NSUTF8StringEncoding];
         case VT100EmulationLevel200:
-            return [@"\033[?62;1;2;4;22c" dataUsingEncoding:NSUTF8StringEncoding];
+            return [@"\033[?62;1;2;4;6;22c" dataUsingEncoding:NSUTF8StringEncoding];
         case VT100EmulationLevel400:
-            return [@"\033[?62;1;2;4;17;21;22c" dataUsingEncoding:NSUTF8StringEncoding];
+            return [@"\033[?62;1;2;4;6;17;21;22c" dataUsingEncoding:NSUTF8StringEncoding];
     }
 }
 
