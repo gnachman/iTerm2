@@ -139,6 +139,19 @@
 }
 
 - (BOOL)it_isNumericKeypadKey {
+    // macOS says these are numeric keypad keys but for our purposes they are not.t
+    switch (self.keyCode) {
+        case kVK_UpArrow:
+        case kVK_DownArrow:
+        case kVK_LeftArrow:
+        case kVK_RightArrow:
+        case kVK_Home:
+        case kVK_End:
+        case kVK_PageUp:
+        case kVK_PageDown:
+        case kVK_ForwardDelete:
+            return NO;
+    }
     NSEventModifierFlags mutableModifiers = self.it_modifierFlags;
 
     // Enter key is on numeric keypad, but not marked as such
