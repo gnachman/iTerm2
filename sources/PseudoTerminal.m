@@ -8824,7 +8824,8 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 }
 
 - (void)scrollerStyleDidChange:(NSNotification *)notification {
-    DLog(@"scrollerStyleDidChange");
+    DLog(@"scrollerStyleDidChange %@", @([NSScroller preferredScrollerStyle]));
+
     [self updateSessionScrollbars];
     if ([self anyFullScreen]) {
         [self fitTabsToWindow];

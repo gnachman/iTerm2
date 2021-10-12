@@ -211,6 +211,8 @@
         PTYScroller *aScroller;
 
         aScroller = [[PTYScroller alloc] init];
+        DLog(@"Set new scroller's style  %@ -> %@", @(aScroller.scrollerStyle), @([NSScroller preferredScrollerStyle]));
+        aScroller.scrollerStyle = [NSScroller preferredScrollerStyle];
         [self setVerticalScroller:aScroller];
         [aScroller release];
         self.verticalScrollElasticity = NSScrollElasticityNone;
