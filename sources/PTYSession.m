@@ -15246,10 +15246,6 @@ getOptionKeyBehaviorLeft:(iTermOptionKeyBehavior *)left
                   continuation:continuation];
 }
 
-- (void)filterDestinationAdoptLineBuffer:(LineBuffer *)lineBuffer {
-    [_screen setContentsFromLineBuffer:lineBuffer];
-}
-
 - (void)filterDestinationRemoveLastLine {
     [_screen removeLastLine];
 }

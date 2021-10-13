@@ -7,39 +7,7 @@
 
 import Foundation
 
-protocol Updater {
-    // 0 to 1, how close to done we are.
-    var progress: Double { get }
-
-    // Returns false when there is nothing left to do
-    func update() -> Bool
-}
-
-class VerbatimUpdater: Updater {
-    var accept: (() -> (Void))? = nil
-    private var successor: Updater
-    private var done = false
-
-    init(_ successor: Updater) {
-        self.successor = successor
-    }
-
-    var progress: Double {
-        return 1
-    }
-
-    func update() -> Bool {
-        if done {
-            // Streaming new input after initial adopt() call.
-            return successor.update()
-        }
-        accept?()
-        done = true
-        return false
-    }
-}
-
-class FilteringUpdater: Updater {
+class FilteringUpdater {
     var accept: ((Int32, Bool) -> (Void))? = nil
     private let lineBuffer: LineBuffer
     private let count: Int32
@@ -142,9 +110,6 @@ protocol FilterDestination {
                 externalAttributeIndex: iTermExternalAttributeIndex?,
                 continuation: screen_char_t)
 
-    @objc(filterDestinationAdoptLineBuffer:)
-    func adopt(_ lineBuffer: LineBuffer)
-
     @objc(filterDestinationRemoveLastLine)
     func removeLastLine()
 }
@@ -155,11 +120,10 @@ class AsyncFilter: NSObject {
     private let progress: ((Double) -> (Void))?
     private let cadence: TimeInterval
     private let query: String
-    private var updater: Updater
+    private var updater: FilteringUpdater
     private var started = false
     private let lineBufferCopy: LineBuffer
     private let width: Int32
-    private var filteringUpdater: FilteringUpdater
     private let destination: FilterDestination
     private var lastLineIsTemporary: Bool
 
@@ -182,25 +146,17 @@ class AsyncFilter: NSObject {
         self.progress = progress
         self.query = query
         self.destination = destination
-        self.filteringUpdater = FilteringUpdater(query: query,
-                                                 lineBuffer: lineBufferCopy,
-                                                 count: numberOfLines,
-                                                 width: width,
-                                                 mode: mode)
+        updater = FilteringUpdater(query: query,
+                                   lineBuffer: lineBufferCopy,
+                                   count: numberOfLines,
+                                   width: width,
+                                   mode: mode)
 
-        if query.isEmpty {
-            updater = VerbatimUpdater(filteringUpdater)
-        } else {
-            updater = filteringUpdater
-        }
         lastLineIsTemporary = refining?.lastLineIsTemporary ?? false
         super.init()
 
-        self.filteringUpdater.accept = { [weak self] (lineNumber: Int32, temporary: Bool) in
+        updater.accept = { [weak self] (lineNumber: Int32, temporary: Bool) in
             self?.addFilterResult(lineNumber, temporary: temporary)
-        }
-        (updater as? VerbatimUpdater)?.accept = { [weak self] in
-            self?.adoptVerbatim()
         }
     }
 
@@ -217,10 +173,6 @@ class AsyncFilter: NSObject {
                            count: chars.length,
                            externalAttributeIndex: iTermMetadataGetExternalAttributesIndex(metadata),
                            continuation: chars.continuation)
-    }
-
-    private func adoptVerbatim() {
-        destination.adopt(lineBufferCopy)
     }
 
     @objc func start() {
@@ -250,9 +202,6 @@ class AsyncFilter: NSObject {
             return false
         }
         return query.contains(self.query)
-    }
-
-    private func performVerbatimUpdate() {
     }
 
     /// `block` returns whether to keep going. Return true to continue or false to break.

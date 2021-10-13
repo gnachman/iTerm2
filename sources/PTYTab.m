@@ -1475,7 +1475,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 
 - (void)setFilter:(NSString *)query inSession:(PTYSession *)oldSession {
     if (oldSession.filter != nil) {
-        if (query == nil) {
+        if (query.length == 0) {
             PTYSession *live = oldSession.liveSession;
             [self.delegate tabEndSyntheticSession:oldSession];
             [live.view.findDriver setFilterWithoutSideEffects:@""];
@@ -1484,7 +1484,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
         }
         return;
     }
-    if (!query) {
+    if (!query.length) {
         return;
     }
     PTYSession *syntheticSession = [self.realParentWindow syntheticSessionForSession:oldSession];
