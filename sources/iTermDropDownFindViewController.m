@@ -109,7 +109,9 @@ static const CGFloat kFilterHeight = 30;
         [self.driver invalidateFrame];
         [self.driver filterVisibilityDidChange];
     }
-    if (!filterHidden) {
+    if (filterHidden) {
+        [self setFilterProgress:0];
+    } else {
         [_filterField.window makeFirstResponder:_filterField];
     }
 }
@@ -209,7 +211,7 @@ static const CGFloat kFilterHeight = 30;
 }
 
 - (void)setFilterProgress:(double)progress {
-    iTermSearchFieldCell *cell = [iTermSearchFieldCell castFrom:_filterField.cell];
+    iTermSearchFieldCell *cell = [iTermMinimalFilterFieldCell castFrom:_filterField.cell];
     if (round(progress * 100) != round(cell.fraction * 100)) {
         [_filterField setNeedsDisplay:YES];
     }

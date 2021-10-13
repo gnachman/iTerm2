@@ -214,6 +214,12 @@ static const CGFloat iTermStatusBarViewControllerBottomMargin = 0;
     }].firstObject;
 }
 
+- (NSViewController<iTermFindViewController> *)filterViewController {
+    return [_containerViews mapWithBlock:^id(iTermStatusBarContainerView *containerView) {
+        return containerView.component.statusBarComponentFilterViewController;
+    }].firstObject;
+}
+
 - (void)setMustShowSearchComponent:(BOOL)mustShowSearchComponent {
     _mustShowSearchComponent = mustShowSearchComponent;
     _makeSearchControllerFirstResponder = mustShowSearchComponent;

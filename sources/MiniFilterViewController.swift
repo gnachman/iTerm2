@@ -36,7 +36,7 @@ class MiniFilterField: iTermMiniSearchField {
 }
 
 @objc(iTermMiniFilterViewController)
-class MiniFilterViewController: NSViewController, NSTextFieldDelegate {
+class MiniFilterViewController: NSViewController, NSTextFieldDelegate, iTermFilterViewController {
     @objc var canClose = false {
         didSet { _ = self.view }
     }
@@ -96,7 +96,7 @@ class MiniFilterViewController: NSViewController, NSTextFieldDelegate {
                                    height: searchFieldSize.height)
     }
 
-    @objc func setProgress(_ progress: Double) {
+    func setFilterProgress(_ progress: Double) {
         guard let cell = searchField.cell as? iTermSearchFieldCell else {
             return
         }

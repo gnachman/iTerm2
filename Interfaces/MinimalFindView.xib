@@ -82,7 +82,7 @@ Gw
                         <searchField wantsLayer="YES" focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" textCompletion="NO" translatesAutoresizingMaskIntoConstraints="NO" id="el4-gq-4Pr" userLabel="Filter Text Field" customClass="iTermFilterTextField">
                             <rect key="frame" x="0.0" y="0.0" width="278" height="22"/>
                             <autoresizingMask key="autoresizingMask" widthSizable="YES"/>
-                            <searchFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" borderStyle="bezel" focusRingType="none" placeholderString="Filter" usesSingleLineMode="YES" bezelStyle="round" id="3rb-hW-qnO" userLabel="Filter Cell" customClass="iTermSearchFieldCell">
+                            <searchFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" borderStyle="bezel" focusRingType="none" placeholderString="Filter" usesSingleLineMode="YES" bezelStyle="round" id="3rb-hW-qnO" userLabel="Filter Cell" customClass="iTermMinimalFilterFieldCell">
                                 <font key="font" metaFont="system"/>
                                 <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
                                 <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>

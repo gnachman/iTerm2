@@ -80,10 +80,12 @@ static NSString *gSearchString;
     }
 }
 
-- (instancetype)initWithViewController:(NSViewController<iTermFindViewController> *)viewController {
+- (instancetype)initWithViewController:(NSViewController<iTermFindViewController> *)viewController
+                  filterViewController:(NSViewController<iTermFindViewController> *)filterViewController {
     self = [super init];
     if (self) {
         _viewController = viewController;
+        _filterViewController = _filterViewController;
         viewController.driver = self;
         static dispatch_once_t onceToken;
         dispatch_once(&onceToken, ^{
@@ -640,7 +642,7 @@ static NSString *gSearchString;
 }
 
 - (void)setFilterProgress:(double)progress {
-    [self.viewController setFilterProgress:progress];
+    [self.filterViewController ?: self.viewController setFilterProgress:progress];
 }
 
 @end

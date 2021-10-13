@@ -39,5 +39,6 @@ typedef NS_ENUM(NSUInteger, iTermFindMode) {
 @end
 
 @protocol iTermFilterViewController<NSObject>
+- (void)setFilterProgress:(double)progress;
 @end
 

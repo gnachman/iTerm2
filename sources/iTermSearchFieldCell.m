@@ -24,6 +24,12 @@ const CGFloat kEdgeWidth = 3;
 }
 @end
 
+@implementation iTermMinimalFilterFieldCell
+- (BOOL)shouldUseFocusedAppearanceWithControlView:(NSView *)controlView {
+    return NO;
+}
+@end
+
 @implementation iTermMiniSearchFieldCell
 - (BOOL)shouldUseFocusedAppearanceWithControlView:(NSView *)controlView {
     return YES;
@@ -86,7 +92,7 @@ const CGFloat kEdgeWidth = 3;
 }
 
 - (void)drawWithFrame:(NSRect)originalFrame inView:(NSView *)controlView {
-    if (PSMShouldExtendTransparencyIntoMinimalTabBar()) {
+    if (@available(macOS 10.16, *)) {
         [self drawModernWithFrame:originalFrame inView:controlView];
     } else {
         [self drawLegacyWithFrame:originalFrame inView:controlView];

@@ -58,6 +58,8 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) iTermStatusBarLayout *layout;
 @property (nonatomic, readonly) iTermVariableScope *scope;
 @property (nonatomic, readonly) NSViewController<iTermFindViewController> *searchViewController;
+@property (nonatomic, readonly) NSViewController<iTermFilterViewController> *filterViewController;
+
 @property (nullable, nonatomic, strong) id<iTermStatusBarComponent> temporaryLeftComponent;
 @property (nullable, nonatomic, strong) id<iTermStatusBarComponent> temporaryRightComponent;
 @property (nonatomic, weak) id<iTermStatusBarViewControllerDelegate> delegate;

@@ -6131,6 +6131,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 - (void)setFilterProgress:(double)progress {
     _view.findDriver.filterProgress = progress;
+    _statusBarViewController.filterViewController.filterProgress = progress;
 }
 
 - (void)findDriverFilterVisibilityDidChange:(BOOL)visible {
@@ -14249,6 +14250,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 // Called on the synthetic session.
 - (void)stopFiltering {
+    [self setFilterProgress:0];
     [self.liveSession removeContentSubscriber:_asyncFilter];
     [_asyncFilter cancel];
     [_asyncFilter autorelease];
@@ -14257,6 +14259,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         _statusBarViewController.temporaryRightComponent = nil;
     }
     [self.delegate session:self setFilter:nil];
+    [_textview.window makeFirstResponder:_textview];
 }
 
 - (void)statusBarSetLayout:(nonnull iTermStatusBarLayout *)layout {

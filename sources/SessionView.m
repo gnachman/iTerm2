@@ -274,7 +274,8 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
 
         // Set up find view
         _dropDownFindViewController = [self newDropDownFindView];
-        _dropDownFindDriver = [[iTermFindDriver alloc] initWithViewController:_dropDownFindViewController];
+        _dropDownFindDriver = [[iTermFindDriver alloc] initWithViewController:_dropDownFindViewController
+                                                         filterViewController:_dropDownFindViewController];
 
         // Assign a globally unique view ID.
         _viewId = nextViewId++;
@@ -582,7 +583,8 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     iTermStatusBarSearchFieldComponent *component =
     [[iTermStatusBarSearchFieldComponent alloc] initWithConfiguration:configuration
                                                                 scope:self.delegate.sessionViewScope];
-    _temporaryStatusBarFindDriver = [[iTermFindDriver alloc] initWithViewController:component.statusBarComponentSearchViewController];
+    _temporaryStatusBarFindDriver = [[iTermFindDriver alloc] initWithViewController:component.statusBarComponentSearchViewController
+                                                               filterViewController:statusBarViewController.filterViewController];
     _temporaryStatusBarFindDriver.delegate = _dropDownFindDriver.delegate;
     _temporaryStatusBarFindDriver.findString = query;
     component.statusBarComponentSearchViewController.driver = _temporaryStatusBarFindDriver;
@@ -637,7 +639,8 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     } else if (self.findDriver == nil) {
         assert(statusBarViewController);
         assert(statusBarViewController.temporaryLeftComponent);
-        _temporaryStatusBarFindDriver = [[iTermFindDriver alloc] initWithViewController:statusBarViewController.temporaryLeftComponent.statusBarComponentSearchViewController];
+        _temporaryStatusBarFindDriver = [[iTermFindDriver alloc] initWithViewController:statusBarViewController.temporaryLeftComponent.statusBarComponentSearchViewController
+                                                                   filterViewController:statusBarViewController.filterViewController];
         _temporaryStatusBarFindDriver.delegate = _dropDownFindDriver.delegate;
         [_temporaryStatusBarFindDriver open];
     }
@@ -1558,7 +1561,8 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     iTermStatusBarViewController *statusBarViewController = [self.delegate sessionViewStatusBarViewController];
     if (statusBarViewController.searchViewController && statusBarViewController.temporaryLeftComponent == nil) {
         _findDriverType = iTermSessionViewFindDriverPermanentStatusBar;
-        _permanentStatusBarFindDriver = [[iTermFindDriver alloc] initWithViewController:statusBarViewController.searchViewController];
+        _permanentStatusBarFindDriver = [[iTermFindDriver alloc] initWithViewController:statusBarViewController.searchViewController
+                                                                   filterViewController:statusBarViewController.filterViewController];
         _permanentStatusBarFindDriver.delegate = self.findDriverDelegate;
     } else if (statusBarViewController) {
         _findDriverType = iTermSessionViewFindDriverTemporaryStatusBar;

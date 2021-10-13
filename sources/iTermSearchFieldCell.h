@@ -31,5 +31,8 @@ typedef struct {
 @interface iTermMinimalSearchFieldCell : iTermSearchFieldCell
 @end
 
+@interface iTermMinimalFilterFieldCell : iTermSearchFieldCell
+@end
+
 @interface iTermMiniSearchFieldCell : iTermSearchFieldCell
 @end

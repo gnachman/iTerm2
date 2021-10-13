@@ -11,7 +11,7 @@ import Foundation
 class StatusBarFilterComponent: iTermStatusBarBaseComponent, iTermFilterViewController {
     @objc(isTemporaryKey) static let isTemporaryKey = "filter: temporary"
 
-    private lazy var viewController: MiniFilterViewController = {
+    private lazy var viewController: MiniFilterViewController & iTermFilterViewController = {
         viewController = MiniFilterViewController()
         viewController.delegate = self
         let config: [iTermStatusBarComponentConfigurationKey : Any] = configuration
@@ -59,7 +59,7 @@ class StatusBarFilterComponent: iTermStatusBarBaseComponent, iTermFilterViewCont
 
     override func statusBarComponentView() -> NSView {
         updateForTerminalBackgroundColor()
-        return statusBarComponentFilterViewController().view
+        return viewController.view
     }
 
     override func statusBarTerminalBackgroundColorDidChange() {
@@ -67,7 +67,7 @@ class StatusBarFilterComponent: iTermStatusBarBaseComponent, iTermFilterViewCont
     }
 
     private func updateForTerminalBackgroundColor() {
-        let view = statusBarComponentFilterViewController().view
+        let view = viewController.view
         let tabStyle = iTermPreferencesTabStyle(rawValue: iTermPreferences.int(forKey: kPreferenceKeyTabStyle))
         if tabStyle == .TAB_STYLE_MINIMAL {
             if delegate?.statusBarComponentTerminalBackgroundColorIsDark(self) ?? false {
@@ -80,12 +80,16 @@ class StatusBarFilterComponent: iTermStatusBarBaseComponent, iTermFilterViewCont
         }
     }
 
-    func statusBarComponentFilterViewController() -> NSViewController {
+    override func statusBarComponentFilterViewController() -> (NSViewController & iTermFilterViewController)? {
         return viewController
     }
 
     @objc func focus() {
         viewController.focus()
+    }
+
+    func setFilterProgress(_ progress: Double) {
+        viewController.setFilterProgress(progress)
     }
 }
 
