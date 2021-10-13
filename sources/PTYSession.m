@@ -4302,6 +4302,9 @@ ITERM_WEAKLY_REFERENCEABLE
             }
         }
     } else {
+        if (_statusBarViewController && _asyncFilter) {
+            [self stopFiltering];
+        }
         [_statusBarViewController release];
         _statusBarViewController = nil;
         [self invalidateStatusBar];
