@@ -859,8 +859,14 @@ error:
 
 - (NSDictionary *)dictionaryForSendKeysCommandWithCodePoints:(NSArray<NSNumber *> *)codePoints
                                                   windowPane:(int)windowPane {
+    NSString *value;
+    if ([codePoints isEqual:@[ @0 ]]) {
+        value = @"C-Space";
+    } else {
+        value = [codePoints numbersAsHexStrings];
+    }
     NSString *command = [NSString stringWithFormat:@"send-keys -t \"%%%d\" %@",
-                         windowPane, [codePoints numbersAsHexStrings]];
+                         windowPane, value];
     NSDictionary *dict = [self dictionaryForCommand:command
                                      responseTarget:self
                                    responseSelector:@selector(noopResponseSelector:)
