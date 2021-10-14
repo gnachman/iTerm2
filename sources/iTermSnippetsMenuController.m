@@ -70,7 +70,7 @@
 }
 
 - (void)add:(iTermSnippet *)snippet {
-    NSMenuItem *item = [[NSMenuItem alloc] initWithTitle:snippet.title
+    NSMenuItem *item = [[NSMenuItem alloc] initWithTitle:snippet.displayTitle
                                                   action:@selector(sendSnippet:)
                                            keyEquivalent:@""];
     item.representedObject = snippet;
