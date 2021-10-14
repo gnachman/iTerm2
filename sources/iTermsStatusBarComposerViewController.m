@@ -70,6 +70,10 @@ static NSString *const iTermComposerComboBoxDidBecomeFirstResponder = @"iTermCom
     [_comboBox.window makeFirstResponder:_comboBox];
 }
 
+- (void)deselect {
+    [[_comboBox currentEditor] setSelectedRange:NSMakeRange(_comboBox.stringValue.length, 0)];
+}
+
 - (void)setTintColor:(NSColor *)tintColor {
     NSImage *image = [NSImage it_imageNamed:@"StatusBarComposerExpand" forClass:self.class];
     _button.image = [image it_imageWithTintColor:tintColor];

@@ -165,7 +165,8 @@
             [[iTermSearchableComboViewItem alloc] initWithLabel:@"Send Hex Code" tag:KEY_ACTION_HEX_CODE],
             [[iTermSearchableComboViewItem alloc] initWithLabel:@"Send Text" tag:KEY_ACTION_TEXT],
             [[iTermSearchableComboViewItem alloc] initWithLabel:@"Send Text with “vim” Special Chars" tag:KEY_ACTION_VIM_TEXT],
-            [[iTermSearchableComboViewItem alloc] initWithLabel:@"Send Snippet" tag:KEY_ACTION_SEND_SNIPPET]
+            [[iTermSearchableComboViewItem alloc] initWithLabel:@"Send Snippet" tag:KEY_ACTION_SEND_SNIPPET],
+            [[iTermSearchableComboViewItem alloc] initWithLabel:@"Compose…" tag:KEY_ACTION_COMPOSE],
         ]],
 
         [[iTermSearchableComboViewGroup alloc] initWithLabel:@"Search" items:@[
@@ -368,6 +369,10 @@
     switch (tag) {
         case KEY_ACTION_SEND_SNIPPET:
             snippetsHidden = NO;
+            break;
+        case KEY_ACTION_COMPOSE:
+            parameterHidden = NO;
+            [[_parameter cell] setPlaceholderString:@"Text for composer"];
             break;
 
         case KEY_ACTION_HEX_CODE:
@@ -712,6 +717,7 @@
             self.parameterValue = [@(_selectionMovementUnit.selectedTag) description];
             break;
 
+        case KEY_ACTION_COMPOSE:
         default:
             self.parameterValue = [_parameter stringValue];
             break;

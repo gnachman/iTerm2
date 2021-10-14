@@ -8326,6 +8326,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         case KEY_ACTION_DUPLICATE_TAB:
         case KEY_ACTION_MOVE_TO_SPLIT_PANE:
         case KEY_ACTION_SEND_SNIPPET:
+        case KEY_ACTION_COMPOSE:
             return NO;
 
         case KEY_ACTION_INVOKE_SCRIPT_FUNCTION:
@@ -8459,6 +8460,14 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                 if (snippet) {
                     [self sendText:snippet.value escaping:snippet.escaping];
                 }
+            }
+            break;
+        case KEY_ACTION_COMPOSE:
+            if (_exited || isTmuxGateway) {
+                return;
+            } else {
+                DLog(@"Open composer with%@", action.parameter);
+                [self.composerManager showWithCommand:action.parameter];
             }
             break;
         case KEY_ACTION_RUN_COPROCESS:

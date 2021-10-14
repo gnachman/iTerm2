@@ -42,6 +42,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)revealMinimal;
 - (BOOL)dismiss;
 - (void)layout;
+- (void)showWithCommand:(NSString *)command;
 
 @end
 

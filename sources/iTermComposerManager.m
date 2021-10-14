@@ -31,6 +31,29 @@
     _saved = [command copy];
 }
 
+- (void)showWithCommand:(NSString *)command {
+    _saved = [command copy];
+    if (_dropDownComposerViewIsVisible) {
+        // Put into already-visible drop-down view.
+        _minimalViewController.stringValue = command;
+        [_minimalViewController makeFirstResponder];
+        return;
+    }
+    iTermStatusBarViewController *statusBarViewController = [self.delegate composerManagerStatusBarViewController:self];
+    if (statusBarViewController) {
+        iTermStatusBarComposerComponent *component = [statusBarViewController visibleComponentWithIdentifier:[iTermStatusBarComposerComponent statusBarComponentIdentifier]];
+        if (component) {
+            // Put into already-visible status bar component.
+            component.stringValue = command;
+            [component makeFirstResponder];
+            [component deselect];
+            return;
+        }
+    }
+    // Nothing is currently visible. Reveal as usual.
+    [self reveal];
+}
+
 - (void)reveal {
     iTermStatusBarViewController *statusBarViewController = [self.delegate composerManagerStatusBarViewController:self];
     if (statusBarViewController && [self shouldRevealStatusBarComposerInViewController:statusBarViewController]) {

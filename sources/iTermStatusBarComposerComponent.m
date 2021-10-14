@@ -30,6 +30,10 @@
     [[self viewController] makeFirstResponder];
 }
 
+- (void)deselect {
+    [[self viewController] deselect];
+}
+
 - (NSArray<iTermStatusBarComponentKnob *> *)statusBarComponentKnobs {
     iTermStatusBarComponentKnob *textColorKnob =
     [[iTermStatusBarComponentKnob alloc] initWithLabelText:@"Icon Color:"

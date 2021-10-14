@@ -33,6 +33,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)reloadData;
 - (void)makeFirstResponder;
 - (void)setHost:(VT100RemoteHost *)host;
+- (void)deselect;
 
 @end
 
