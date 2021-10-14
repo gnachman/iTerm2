@@ -16,11 +16,14 @@
 #import "iTermPreferences.h"
 #import "iTermShortcutInputView.h"
 #import "iTermVariableScope.h"
+#import "NSArray+iTerm.h"
 #import "NSPopUpButton+iTerm.h"
 #import "NSScreen+iTerm.h"
 #import "RegexKitLite.h"
 
 #import <SearchableComboListView/SearchableComboListView-Swift.h>
+
+const CGFloat sideMarginWidth = 20;
 
 @interface iTermEditKeyActionWindowController () <
     iTermSearchableComboViewDelegate,
@@ -491,48 +494,7 @@
 
 - (void)updateFrameAnimated:(BOOL)animated {
     NSRect rect = self.window.frame;
-    /*
-     *   Side margin                     Side margin
-     *   |                               |
-     *  |-|                             |-|
-     *  +---------------------------------+
-     *  |                                 |
-     *  |  Keyboard shortcut: [        ]  |
-     *  |             Action: [v Popup ]  |  _
-     *  |         Basic Accessory         |  _|-- Basic accessory height
-     *  |                                 |
-     *  |                  [Cancel] [OK]  |
-     *  +---------------------------------+
-     *     |---------------------------|
-     *     Normal width excluding margins
-     *
-     *  +---------------------------------+  -
-     *  |                                 |  |
-     *  |  Keyboard shortcut: [        ]  |  |
-     *  |             Action: [v Popup ]  |  |-- Height excluding accessory
-     *  |                                 |  |
-     *  |                   [Cancel] [OK] |  |
-     *  +---------------------------------+  -
-     *
-     */
-    const CGFloat heightExcludingAccessory = 126;
-    const CGFloat sideMarginWidth = 20;
-    const CGFloat basicAccessoryHeight = 31;
-    const CGFloat normalWidthExcludingMargins = 402;
-    if ([self anyAccessoryVisible]) {
-        if (!_pasteSpecialViewContainer.hidden) {
-            const CGFloat widthExcludingMargins = MAX(normalWidthExcludingMargins,
-                                                      _pasteSpecialViewController.view.frame.size.width);
-            rect.size = NSMakeSize(widthExcludingMargins + sideMarginWidth * 2,
-                                   _pasteSpecialViewController.view.frame.size.height + heightExcludingAccessory);
-        } else {
-            rect.size = NSMakeSize(normalWidthExcludingMargins + sideMarginWidth * 2,
-                                   heightExcludingAccessory + basicAccessoryHeight);
-        }
-    } else {
-        rect.size = NSMakeSize(normalWidthExcludingMargins + sideMarginWidth * 2,
-                               heightExcludingAccessory);
-    }
+    rect.size = [self desiredSize];
     if (animated) {
         dispatch_async(dispatch_get_main_queue(), ^{
             [self.window setFrame:rect display:YES animate:YES];
@@ -540,6 +502,64 @@
     } else {
         [self.window setFrame:rect display:YES animate:NO];
     }
+}
+
+//    Side margin                     Side margin
+//    |                               |
+//   |-|                             |-|
+//   +---------------------------------+
+//   |                                 |
+//   |  Keyboard shortcut: [        ]  |
+//   |             Action: [v Popup ]  |  _
+//   |         Basic Accessory         |  _|-- Basic accessory height
+//   |                                 |
+//   |                  [Cancel] [OK]  |
+//   +---------------------------------+
+//      |---------------------------|
+//      Normal width excluding margins
+//
+//   +---------------------------------+  -
+//   |                                 |  |
+//   |  Keyboard shortcut: [        ]  |  |
+//   |             Action: [v Popup ]  |  |-- Height excluding accessory
+//   |                                 |  |
+//   |                   [Cancel] [OK] |  |
+//   +---------------------------------+  -
+
+- (NSSize)desiredSize {
+    return NSMakeSize(self.desiredWidthExcludingMargins + sideMarginWidth * 2,
+                      self.desiredHeight);
+}
+
+- (CGFloat)desiredWidthExcludingMargins {
+    const CGFloat normalWidthExcludingMargins = 402;
+    if (!_pasteSpecialViewContainer.hidden) {
+        return MAX(normalWidthExcludingMargins,
+                   _pasteSpecialViewController.view.frame.size.width);
+    }
+    if (!_parameter.isHidden) {
+        return NSMaxX(_parameter.frame) - sideMarginWidth;
+    }
+    return normalWidthExcludingMargins;
+}
+
+- (CGFloat)desiredHeight {
+    const CGFloat heightExcludingAccessory = 126;
+    return heightExcludingAccessory + [self accessoryHeight];
+}
+
+- (CGFloat)accessoryHeight {
+    const CGFloat basicAccessoryHeight = 31;
+    if (![self anyAccessoryVisible]) {
+        return 0;
+    }
+    if (!_parameter.isHidden) {
+        return NSHeight(_parameter.frame);
+    }
+    if (!_pasteSpecialViewContainer.isHidden) {
+        return _pasteSpecialViewController.view.frame.size.height;
+    }
+    return basicAccessoryHeight;
 }
 
 - (void)setPasteSpecialHidden:(BOOL)hidden {
