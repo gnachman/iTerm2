@@ -397,7 +397,11 @@
         if (![number isKindOfClass:[NSNumber class]]) {
             continue;
         }
-        [result appendFormat:@"%@0x%x", separator, number.intValue];
+        if (number.intValue == 0) {
+            [result appendFormat:@"%@C-Space", separator];
+        } else {
+            [result appendFormat:@"%@0x%x", separator, number.intValue];
+        }
         separator = @" ";
     }
     return result;
