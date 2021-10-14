@@ -441,6 +441,9 @@ static const CGFloat PTYSessionMaximumMetalViewSize = 16384;
 
     FindContext *_tailFindContext;
     NSTimer *_tailFindTimer;
+    // A one-shot tail find runs even though the find view is invisible. Once it's done searching,
+    // it doesn't restart itself until the user does cmd-g again. See issue 9964.
+    BOOL _performingOneShotTailFind;
 
     TmuxGateway *_tmuxGateway;
     BOOL _tmuxSecureLogging;
@@ -2009,7 +2012,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [[_delegate realParentWindow] invalidateRestorableState];
     if (!_tailFindTimer &&
         [_delegate sessionBelongsToVisibleTab]) {
-        [self beginTailFind];
+        [self beginContinuousTailFind];
     }
     if (@available(macOS 10.11, *)) {
         [self updateMetalDriver];
@@ -5317,7 +5320,7 @@ ITERM_WEAKLY_REFERENCEABLE
     // cadence since we might have just become idle.
     self.active = (somethingIsBlinking || transientTitle || animationPlaying);
 
-    if (_tailFindTimer && _view.findViewIsHidden) {
+    if (_tailFindTimer && _view.findViewIsHidden && !_performingOneShotTailFind) {
         [self stopTailFind];
     }
 
@@ -6013,11 +6016,13 @@ ITERM_WEAKLY_REFERENCEABLE
 // Note that the caller is responsible for respecting swapFindNextPrevious
 - (void)searchNext {
     [_view.findDriver searchNext];
+    [self beginOneShotTailFind];
 }
 
 // Note that the caller is responsible for respecting swapFindNextPrevious
 - (void)searchPrevious {
     [_view.findDriver searchPrevious];
+    [self beginOneShotTailFind];
 }
 
 - (void)resetFindCursor {
@@ -10703,6 +10708,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     BOOL more;
     more = [_screen continueFindAllResults:results
                                  inContext:_tailFindContext];
+    DLog(@"Continue tail find found %@ results, more=%@", @(results.count), @(more));
     for (SearchResult *r in results) {
         [_textview addSearchResult:r];
     }
@@ -10710,23 +10716,43 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         [_textview setNeedsDisplay:YES];
     }
     if (more) {
+        DLog(@"Schedule continueTailFind in .01 sec");
         _tailFindTimer = [NSTimer scheduledTimerWithTimeInterval:0.01
                                                           target:self
                                                         selector:@selector(continueTailFind)
                                                         userInfo:nil
                                                          repeats:NO];
     } else {
+        DLog(@"tailfind is all done");
         // Update the saved position to just before the screen.
         [_screen storeLastPositionInLineBufferAsFindContextSavedPosition];
         _tailFindTimer = nil;
+        _performingOneShotTailFind = NO;
     }
 }
 
-- (void)beginTailFind {
+- (void)beginContinuousTailFind {
+    DLog(@"beginContinuousTailFind");
+    _performingOneShotTailFind = NO;
+    [self beginTailFindImpl];
+}
+
+- (void)beginOneShotTailFind {
+    DLog(@"beginOneShotTailFind");
+    if (_tailFindTimer || _performingOneShotTailFind) {
+        return;
+    }
+    _performingOneShotTailFind = YES;
+    [self beginTailFindImpl];
+}
+
+- (void)beginTailFindImpl {
+    DLog(@"beginTailFindImpl");
     FindContext *findContext = [_textview findContext];
     if (!findContext.substring) {
         return;
     }
+    DLog(@"Begin tail find");
     [_screen setFindString:findContext.substring
           forwardDirection:YES
                       mode:findContext.mode
@@ -10746,7 +10772,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     if (!_tailFindTimer &&
         [notification object] == self &&
         [_delegate sessionBelongsToVisibleTab]) {
-        [self beginTailFind];
+        DLog(@"Session contents changed. Begin tail find.");
+        [self beginContinuousTailFind];
     }
 }
 
