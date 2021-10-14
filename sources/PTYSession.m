@@ -446,6 +446,7 @@ static const CGFloat PTYSessionMaximumMetalViewSize = 16384;
     BOOL _performingOneShotTailFind;
 
     TmuxGateway *_tmuxGateway;
+    BOOL _haveKickedOffTmux;
     BOOL _tmuxSecureLogging;
     // The tmux rename-window command is only sent when the name field resigns first responder.
     // This tracks if a tmux client's name has changed but the tmux server has not been informed yet.
@@ -1388,6 +1389,7 @@ ITERM_WEAKLY_REFERENCEABLE
         [aSession startTmuxMode:tmuxDCSIdentifier];
         [aSession.tmuxController sessionChangedTo:arrangement[SESSION_ARRANGEMENT_TMUX_GATEWAY_SESSION_NAME]
                                         sessionId:[arrangement[SESSION_ARRANGEMENT_TMUX_GATEWAY_SESSION_ID] intValue]];
+        [aSession kickOffTmux];
     }
     if (missingProfile) {
         NSDictionary *arrangementProfile = arrangement[SESSION_ARRANGEMENT_BOOKMARK];
@@ -7188,6 +7190,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         }
         profile = self.profile;
     }
+    _haveKickedOffTmux = NO;
     _tmuxController = [[TmuxController alloc] initWithGateway:_tmuxGateway
                                                    clientName:preferredTmuxClientName
                                                       profile:profile
@@ -7552,6 +7555,16 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 - (void)tmuxInitialCommandDidCompleteSuccessfully {
     // This kicks off a chain reaction that leads to windows being opened.
+    if (!_haveKickedOffTmux) {
+        // In tmux 1.9+ this happens before `tmuxSessionsChanged`.
+        [self kickOffTmux];
+    }
+}
+
+// When guessVersion finishes, if you have called openWindowsInitial, then windows will actually get
+// opened. Initial window opening is always blocked on establishing the server version.
+- (void)kickOffTmux {
+    _haveKickedOffTmux = YES;
     [_tmuxController ping];
     [_tmuxController validateOptions];
     [_tmuxController checkForUTF8];
@@ -7832,13 +7845,17 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [_tmuxController pausePanes:@[ @(self.tmuxPane) ]];
 }
 
-- (void)tmuxSessionChanged:(NSString *)sessionName sessionId:(int)sessionId
-{
+- (void)tmuxSessionChanged:(NSString *)sessionName sessionId:(int)sessionId {
     [_tmuxController sessionChangedTo:sessionName sessionId:sessionId];
+    if (!_haveKickedOffTmux) {
+        // Tell the tmux controller we want to open initial windows after version guessing finishes.
+        [_tmuxController openWindowsInitial];
+        // In tmux 1.8, this happens before `tmuxInitialCommandDidCompleteSuccessfully`.
+        [self kickOffTmux];
+    }
 }
 
-- (void)tmuxSessionsChanged
-{
+- (void)tmuxSessionsChanged {
     [_tmuxController sessionsChanged];
 }
 

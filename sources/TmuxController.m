@@ -123,6 +123,11 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     NSMutableSet<NSNumber *> *_paneIDs;  // existing pane IDs
     NSMutableDictionary<NSNumber *, NSString *> *_tabColors;
 
+    // Have we guessed the server version? Don't try to open windows until this is true, because
+    // window opening is version-dependent (to avoid triggering bugs in tmux 1.8).
+    BOOL _versionKnown;
+    BOOL _wantsOpenWindowsInitial;
+
     // Maps a window id string to a dictionary of window flags defined by TmuxWindowOpener (see the
     // top of its header file)
     NSMutableDictionary *_windowOpenerOptions;
@@ -582,6 +587,12 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
 }
 
 - (void)openWindowsInitial {
+    DLog(@"openWindowsInitial\n%@", [NSThread callStackSymbols]);
+    if (!_versionKnown) {
+        DLog(@"Don't know version yet");
+        _wantsOpenWindowsInitial = YES;
+        return;
+    }
     NSString *command = [NSString stringWithFormat:@"show -v -q -t $%d @iterm2_size", sessionId_];
     [gateway_ sendCommand:command
            responseTarget:self
@@ -1422,6 +1433,11 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     [self enablePauseModeIfPossible];
     [self loadServerPID];
     [self loadTitleFormat];
+    _versionKnown = YES;
+    if (_wantsOpenWindowsInitial) {
+        _wantsOpenWindowsInitial = NO;
+        [self openWindowsInitial];
+    }
 }
 
 - (BOOL)versionAtLeastDecimalNumberWithString:(NSString *)string {
