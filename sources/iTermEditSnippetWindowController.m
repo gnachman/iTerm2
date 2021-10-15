@@ -64,6 +64,13 @@
     [super windowDidLoad];
     _titleView.stringValue = _title;
     _valueView.string  = _value;
+    _valueView.automaticQuoteSubstitutionEnabled = NO;
+    _valueView.automaticLinkDetectionEnabled = NO;
+    _valueView.automaticDataDetectionEnabled = NO;
+    _valueView.automaticDashSubstitutionEnabled = NO;
+    _valueView.automaticTextReplacementEnabled = NO;
+    _valueView.automaticSpellingCorrectionEnabled = NO;
+
     [_escapingButton selectItemWithTag:_escaping];
 }
 
