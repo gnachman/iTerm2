@@ -238,7 +238,7 @@
 - (NSData *)dataWhenOptionPressed {
     const unichar unicode = _event.characters.length > 0 ? [_event.characters characterAtIndex:0] : 0;
     const BOOL controlPressed = !!(_event.it_modifierFlags & NSEventModifierFlagControl);
-    if (controlPressed && unicode > 0) {
+    if (controlPressed && _event.characters.length > 0) {
         const BOOL shiftPressed = !!(_event.it_modifierFlags & NSEventModifierFlagShift);
         NSString *charactersIgnoringModifiers = _event.charactersIgnoringModifiers;
         const unichar characterIgnoringModifiers = [charactersIgnoringModifiers length] > 0 ? [charactersIgnoringModifiers characterAtIndex:0] : 0;
