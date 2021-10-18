@@ -6626,7 +6626,7 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void)openEditTabTitleWindow {
     NSAlert *alert = [[[NSAlert alloc] init] autorelease];
     alert.messageText = @"Set Tab Title";
-    alert.informativeText = @"If this is empty, the tab takes the active session’s title. Variables and function calls enclosed in \\(…) will replaced with their evaluation.";
+    alert.informativeText = @"If this is empty, the tab takes the active session’s title. Variables and function calls enclosed in \\(…) will be replaced with their evaluation.";
     NSTextField *titleTextField = [[[NSTextField alloc] initWithFrame:NSMakeRect(0, 0, 400, 24 * 3)] autorelease];
     _currentTabTitleTextFieldDelegate = [[iTermFunctionCallTextFieldDelegate alloc] initWithPathSource:[iTermVariableHistory pathSourceForContext:iTermVariablesSuggestionContextTab]
                                                                                            passthrough:nil
