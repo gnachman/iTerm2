@@ -9,6 +9,7 @@
 
 #import "DebugLogging.h"
 #import "iTermAdvancedSettingsModel.h"
+#import "iTermUserDefaults.h"
 #import "VT100Token.h"
 
 typedef NS_ENUM(NSUInteger, iTermEchoProbeState) {
@@ -39,7 +40,7 @@ typedef NS_ENUM(NSUInteger, iTermEchoProbeState) {
     _password = [password copy];
     [NSObject cancelPreviousPerformRequestsWithTarget:self selector:@selector(timeout) object:nil];
 
-    if ([iTermAdvancedSettingsModel echoProbeDuration] == 0) {
+    if (![iTermUserDefaults probeForPassword] || [iTermAdvancedSettingsModel echoProbeDuration] == 0) {
         [self enterPassword];
         return;
     }

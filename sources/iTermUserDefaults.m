@@ -6,6 +6,7 @@
 //
 
 #import "iTermUserDefaults.h"
+#import "iTermAdvancedSettingsModel.h"
 #import "NSArray+iTerm.h"
 #import "NSObject+iTerm.h"
 
@@ -27,6 +28,7 @@ static NSString *const iTermUserDefaultsKeyGlobalSearchMode = @"NoSyncGlobalSear
 static NSString *const iTermUserDefaultsKeyAddTriggerInstant = @"NoSyncAddTriggerInstant";
 static NSString *const iTermUserDefaultsKeyAddTriggerUpdateProfile = @"NoSyncAddTriggerUpdateProfile";
 static NSString *const iTermUserDefaultsKeyLastSystemPythonVersionRequirement = @"NoSyncLastSystemPythonVersionRequirement";
+static NSString *const iTermUserDefaultsKeyProbeForPassword = @"ProbeForPassword";
 
 @implementation iTermUserDefaults
 
@@ -207,4 +209,18 @@ static NSUserDefaults *iTermPrivateUserDefaults(void) {
 + (void)setLastSystemPythonVersionRequirement:(NSString *)lastSystemPythonVersionRequirement {
     [self.userDefaults setObject:lastSystemPythonVersionRequirement forKey:iTermUserDefaultsKeyLastSystemPythonVersionRequirement];
 }
+
++ (BOOL)probeForPassword {
+    NSNumber *n = [self.userDefaults objectForKey:iTermUserDefaultsKeyProbeForPassword] ?: @YES;
+    return n.boolValue;
+}
+
++ (void)setProbeForPassword:(BOOL)probeForPassword {
+    if (probeForPassword && [iTermAdvancedSettingsModel echoProbeDuration] == 0) {
+        // Revert legacy setting when user demonstrates intent to turn probe on.
+        [iTermAdvancedSettingsModel setEchoProbeDuration:0.5];
+    }
+    [self.userDefaults setBool:probeForPassword forKey:iTermUserDefaultsKeyProbeForPassword];
+}
+
 @end

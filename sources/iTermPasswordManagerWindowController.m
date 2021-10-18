@@ -509,17 +509,25 @@ static NSString *const iTermPasswordManagerAccountNameUserNameSeparator = @"\u20
     [pasteboard setString:[self selectedPassword] forType:NSPasteboardTypeString];
 }
 
+- (BOOL)shouldProbe {
+    return ([iTermUserDefaults probeForPassword] && [iTermAdvancedSettingsModel echoProbeDuration] > 0);
+}
 
 - (BOOL)validateMenuItem:(NSMenuItem *)menuItem {
     if (menuItem.action == @selector(toggleRequireAuthenticationAfterScreenLocks:)) {
         menuItem.state = [iTermUserDefaults requireAuthenticationAfterScreenLocks] ? NSControlStateValueOn : NSControlStateValueOff;
+    } else if (menuItem.action == @selector(toggleProbe:)) {
+        menuItem.state = self.shouldProbe ? NSControlStateValueOn : NSControlStateValueOff;
     }
-
     return YES;
 }
 
 - (IBAction)toggleRequireAuthenticationAfterScreenLocks:(id)sender {
     [iTermUserDefaults setRequireAuthenticationAfterScreenLocks:![iTermUserDefaults requireAuthenticationAfterScreenLocks]];
+}
+
+- (IBAction)toggleProbe:(id)sender {
+    [iTermUserDefaults setProbeForPassword:!self.shouldProbe];
 }
 
 // Gotta have this so that validateMenuItem will get called.
