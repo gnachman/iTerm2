@@ -8395,12 +8395,12 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
             [[_delegate realParentWindow] moveTabRight:nil];
             break;
         case KEY_ACTION_NEXT_MRU_TAB:
-            [[[_delegate parentWindow] tabView] cycleKeyDownWithModifiers:[event it_modifierFlags]
-                                                                 forwards:YES];
+            [[[_delegate realParentWindow] tabView] cycleKeyDownWithModifiers:[event it_modifierFlags]
+                                                                     forwards:YES];
             break;
         case KEY_ACTION_PREVIOUS_MRU_TAB:
-            [[[_delegate parentWindow] tabView] cycleKeyDownWithModifiers:[event it_modifierFlags]
-                                                                 forwards:NO];
+            [[[_delegate realParentWindow] tabView] cycleKeyDownWithModifiers:[event it_modifierFlags]
+                                                                     forwards:NO];
             break;
         case KEY_ACTION_NEXT_PANE:
             [_delegate nextSession];
@@ -8409,13 +8409,13 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
             [_delegate previousSession];
             break;
         case KEY_ACTION_NEXT_SESSION:
-            [[_delegate parentWindow] nextTab:nil];
+            [[_delegate realParentWindow] nextTab:nil];
             break;
         case KEY_ACTION_NEXT_WINDOW:
             [[iTermController sharedInstance] nextTerminal];
             break;
         case KEY_ACTION_PREVIOUS_SESSION:
-            [[_delegate parentWindow] previousTab:nil];
+            [[_delegate realParentWindow] previousTab:nil];
             break;
         case KEY_ACTION_PREVIOUS_WINDOW:
             [[iTermController sharedInstance] previousTerminal];
@@ -8898,7 +8898,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     if ([self maybeHandleTmuxGatewayKeyEvent:event]) {
         return YES;
     }
-
+    if ([self textViewIsZoomedIn]) {
+        DLog(@"Swallow keyboard input while zoomed.");
+        return YES;
+    }
     return NO;
 }
 
@@ -8922,14 +8925,24 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     }
 
     const unichar character = event.characters.length > 0 ? [event.characters characterAtIndex:0] : 0;
+    const NSEventModifierFlags mask = (NSEventModifierFlagCommand |
+                                       NSEventModifierFlagControl |
+                                       NSEventModifierFlagOption |
+                                       NSEventModifierFlagShift);
+    if ((event.modifierFlags & mask) != 0) {
+        // Let it go to the key binding handler.
+        return NO;
+    }
+
     if (character != 27) {
-        return YES;
+        // Didn't press esc
+        return NO;
     }
 
     // Escape exits zoom (pops out one level, since you can zoom repeatedly)
     // The zoomOut: IBAction doesn't get performed by shortcut, I guess because Esc is not a
     // valid shortcut. So we do it here.
-    DLog(@"Special handler: ZOOM OUT");
+    DLog(@"Special handler: ZOOM OUT - unmodified esc");
     return [self unzoomIfPossible];
 }
 
