@@ -3693,10 +3693,9 @@ DQ
                         <action selector="settingChanged:" target="gMD-DK-gev" id="iUk-Ja-UUi"/>
                     </connections>
                 </button>
-                <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="fwC-LQ-VKF">
+                <button toolTip="Allow control sequences to enable or disable cursor blink?" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="fwC-LQ-VKF">
                     <rect key="frame" x="19" y="237" width="229" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <string key="toolTip">Paste bracketing tells compatible apps that text was inserted by a paste operation rather than typing. Some programs use this to treat pastes specially, such as by not auto-indenting it.</string>
                     <buttonCell key="cell" type="check" title="Terminal may change cursor blink" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="akw-8K-q2d">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                         <font key="font" metaFont="system"/>
