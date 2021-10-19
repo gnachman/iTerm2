@@ -5001,6 +5001,11 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [self.delegate textViewhandleSpecialKeyDown:event];
 }
 
+- (void)setBlinkingCursor:(BOOL)blinkingCursor {
+    _blinkingCursor = blinkingCursor;
+    DLog(@"%@", [NSThread callStackSymbols]);
+}
+
 @end
 
 @implementation PTYTextView(MouseHandler)
@@ -5379,8 +5384,4 @@ dragSemanticHistoryWithEvent:(NSEvent *)event
     return [self.delegate textViewPasswordInput];
 }
 
-- (void)setBlinkingCursor:(BOOL)blinkingCursor {
-    _blinkingCursor = blinkingCursor;
-    DLog(@"%@", [NSThread callStackSymbols]);
-}
 @end

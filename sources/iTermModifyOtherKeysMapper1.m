@@ -110,7 +110,6 @@ typedef enum {
     }
     NSString *symbols = @",.;=-\\?|{}_+~!@#$%^&*()";
     if ([symbols rangeOfString:[NSString stringWithCharacters:&c length:1]].location != NSNotFound) {
-#warning TODO: Test this, it is almost certainly wrong
         return iTermModifyOtherKeysMapper1KeyTypeSymbol;
     }
     switch (event.keyCode) {
@@ -183,25 +182,18 @@ typedef enum {
     switch ([self keyTypeForEvent:event]) {
         case iTermModifyOtherKeysMapper1KeyTypeRegular:
             return [self shouldModifyOtherKeysForRegularEvent:event modifiedEvent:modifiedEvent];
-            break;
         case iTermModifyOtherKeysMapper1KeyTypeNumber:
             return [self shouldModifyOtherKeysForNumberEvent:event modifiedEvent:modifiedEvent];
-            break;
         case iTermModifyOtherKeysMapper1KeyTypeSymbol:
             return [self shouldModifyOtherKeysForSymbolEvent:event modifiedEvent:modifiedEvent];
-            break;
         case iTermModifyOtherKeysMapper1KeyTypeFunction:
             return [self shouldModifyOtherKeysForFunctionEvent:event modifiedEvent:modifiedEvent];
-            break;
         case iTermModifyOtherKeysMapper1KeyTypeTab:
             return [self shouldModifyOtherKeysForTabEvent:event modifiedEvent:modifiedEvent];
-            break;
         case iTermModifyOtherKeysMapper1KeyTypeEsc:
             return [self shouldModifyOtherKeysForEscEvent:event modifiedEvent:modifiedEvent];
-            break;
         case iTermModifyOtherKeysMapper1KeyTypeReturn:
             return [self shouldModifyOtherKeysForReturnEvent:event modifiedEvent:modifiedEvent];
-            break;
     }
 }
 
