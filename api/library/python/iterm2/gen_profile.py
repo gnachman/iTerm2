@@ -408,6 +408,12 @@ schema = [
      None,
      "Disable Window Resizing"),
 
+    ("allow_change_cursor_blink",
+     "bool",
+     "whether the terminal can change the cursor blink setting with an escape sequence.",
+     None,
+     "Allow Change Cursor Blink"),
+
     ("only_the_default_bg_color_uses_transparency",
      "bool",
      "whether window transparency shows through non-default background colors.",

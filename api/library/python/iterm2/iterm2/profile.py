@@ -1463,6 +1463,15 @@ class LocalWriteOnlyProfile:
         """
         return self._simple_set("Disable Window Resizing", value)
 
+    def set_allow_change_cursor_blink(self, value: bool):
+        """
+        Sets whether the terminal can change the cursor blink setting with an
+        escape sequence.
+
+        :param value: A bool
+        """
+        return self._simple_set("Allow Change Cursor Blink", value)
+
     def set_only_the_default_bg_color_uses_transparency(self, value: bool):
         """
         Sets whether window transparency shows through non-default background
@@ -3488,6 +3497,15 @@ class WriteOnlyProfile:
         :param value: A bool
         """
         return await self._async_simple_set("Disable Window Resizing", value)
+
+    async def async_set_allow_change_cursor_blink(self, value: bool):
+        """
+        Sets whether the terminal can change the cursor blink setting with an
+        escape sequence.
+
+        :param value: A bool
+        """
+        return await self._async_simple_set("Allow Change Cursor Blink", value)
 
     async def async_set_only_the_default_bg_color_uses_transparency(self, value: bool):
         """
@@ -5670,6 +5688,16 @@ class Profile(WriteOnlyProfile):
         :returns: A bool
         """
         return self._simple_get("Disable Window Resizing")
+
+    @property
+    def allow_change_cursor_blink(self) -> bool:
+        """
+        Returns whether the terminal can change the cursor blink setting with
+        an escape sequence.
+
+        :returns: A bool
+        """
+        return self._simple_get("Allow Change Cursor Blink")
 
     @property
     def only_the_default_bg_color_uses_transparency(self) -> bool:

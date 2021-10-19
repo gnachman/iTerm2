@@ -40,6 +40,7 @@
     IBOutlet NSButton *_setLocaleVars;
     IBOutlet NSButton *_forceCommandPromptToFirstColumn;
     IBOutlet NSButton *_showMarkIndicators;
+    IBOutlet NSButton *_allowCursorBlinkControlSequence;
 
     IBOutlet NSPanel *_filterAlertsPanel;
     IBOutlet NSButton *_bellAlert;
@@ -160,6 +161,11 @@
 
     [self defineControl:_disableWindowResizing
                     key:KEY_DISABLE_WINDOW_RESIZING
+            relatedView:nil
+                   type:kPreferenceInfoTypeCheckbox];
+
+    [self defineControl:_allowCursorBlinkControlSequence
+                    key:KEY_ALLOW_CHANGE_CURSOR_BLINK
             relatedView:nil
                    type:kPreferenceInfoTypeCheckbox];
 

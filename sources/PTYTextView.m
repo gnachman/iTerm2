@@ -5379,4 +5379,8 @@ dragSemanticHistoryWithEvent:(NSEvent *)event
     return [self.delegate textViewPasswordInput];
 }
 
+- (void)setBlinkingCursor:(BOOL)blinkingCursor {
+    _blinkingCursor = blinkingCursor;
+    DLog(@"%@", [NSThread callStackSymbols]);
+}
 @end

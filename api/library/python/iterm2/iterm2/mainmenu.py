@@ -117,6 +117,7 @@ class MainMenu:
         SPLIT_VERTICALLY_WITH_CURRENT_PROFILE = MenuItemIdentifier("Split Vertically with Current Profile", "Split Vertically with Current Profile")
         SPLIT_HORIZONTALLY = MenuItemIdentifier("Split Horizontally…", "Split Horizontally…")
         SPLIT_VERTICALLY = MenuItemIdentifier("Split Vertically…", "Split Vertically…")
+        SAVE_CONTENTS = MenuItemIdentifier("Save Contents…", "Log.SaveContents")
         SAVE_SELECTED_TEXT = MenuItemIdentifier("Save Selected Text…", "Save Selected Text…")
         CLOSE = MenuItemIdentifier("Close", "Close")
         CLOSE_TERMINAL_WINDOW = MenuItemIdentifier("Close Terminal Window", "Close Terminal Window")
@@ -185,6 +186,7 @@ class MainMenu:
             USE_SELECTION_FOR_FIND = MenuItemIdentifier("Use Selection for Find", "Find.Use Selection for Find")
             FIND_GLOBALLY = MenuItemIdentifier("Find Globally...", "Find.Find Globally...")
             FIND_URLS = MenuItemIdentifier("Find URLs", "Find.Find URLs")
+            FILTER = MenuItemIdentifier("Filter", "Find.Filter")
 
 
         class MarksandAnnotations(enum.Enum):
@@ -252,7 +254,7 @@ class MainMenu:
             LOG_TO_FILE = MenuItemIdentifier("Log to File", "Log.Toggle")
             IMPORT_RECORDING = MenuItemIdentifier("Import Recording", "Log.ImportRecording")
             EXPORT_RECORDING = MenuItemIdentifier("Export Recording", "Log.ExportRecording")
-            SAVE_CONTENTS = MenuItemIdentifier("Save Contents…", "Log.SaveContents")
+            SAVE_CONTENTS = MenuItemIdentifier("Save Contents…", "Log.SaveContents")  #: Deprecated - this has moved elsewhere.
 
 
         class TerminalState(enum.Enum):

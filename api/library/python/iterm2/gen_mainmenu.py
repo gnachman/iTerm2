@@ -29,6 +29,33 @@ class RemoveNonAlphanumeric:
   def __getitem__(self, k):
     return self.comp.get(k)
 
+class Emitter:
+    def __init__(self):
+        self.needsNewline = False
+
+    def emit(self, node, depth, amendments, comment=""):
+        amendments = dict(amendments)
+        for k in node:
+            for line in self.emit_impl(k, node[k], depth, amendments, comment):
+                yield line
+            if k in amendments:
+                del amendments[k]
+        for k in amendments:
+            for line in self.emit_impl(k, amendments[k], depth, {}, "  #: Deprecated - this has moved elsewhere."):
+                yield line
+
+    def emit_impl(self, k, v, depth, amendments, comment=""):
+        if isinstance(v, dict):
+            if self.needsNewline:
+                yield ""
+            yield f'{"    " * depth}class {k.translate(RemoveNonAlphanumeric())}(enum.Enum):'
+
+            for line in Emitter().emit(v, depth + 1, amendments.get(k, {}), comment):
+                yield line
+            yield ""
+        else:
+            self.needsNewline = True
+            yield f'{"    " * depth}{k.upper().replace(" ", "_").translate(RemoveNonAlphanumeric())} = MenuItemIdentifier("{v[0]}", "{v[1]}"){comment}'
 
 def gen_menu_items_impl(items):
     tree = {}
@@ -41,23 +68,9 @@ def gen_menu_items_impl(items):
         current[titlepath[-1]] = (titlepath[-1], identifier)
     search_container([], items, build_tree)
 
-    def emit(node, depth=1):
-        needsNewline = False
-        for k in node:
-            v = node[k]
-            if isinstance(v, dict):
-                if needsNewline:
-                    yield ""
-                yield f'{"    " * depth}class {k.translate(RemoveNonAlphanumeric())}(enum.Enum):'
-                for line in emit(v, depth+1):
-                    yield line
-                yield ""
-            else:
-                needsNewline = True
-                yield f'{"    " * depth}{k.upper().replace(" ", "_").translate(RemoveNonAlphanumeric())} = MenuItemIdentifier("{v[0]}", "{v[1]}")'
-
     result = []
-    for line in emit(tree):
+    legacy = {"Session": {"Log": {"Save Contents": ("Save Contents…", "Log.SaveContents")}}}
+    for line in Emitter().emit(tree, 1, legacy):
         result.append(line)
     return "\n".join(result)
 

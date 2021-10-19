@@ -195,6 +195,7 @@
 #define KEY_SEND_NEW_OUTPUT_ALERT             @"Send New Output Alert"
 #define KEY_SEND_SESSION_ENDED_ALERT          @"Send Session Ended Alert"
 #define KEY_SEND_TERMINAL_GENERATED_ALERT     @"Send Terminal Generated Alerts"
+#define KEY_ALLOW_CHANGE_CURSOR_BLINK         @"Allow Change Cursor Blink"
 
 #define KEY_SET_LOCALE_VARS                   @"Set Local Environment Vars"
 #define KEY_CHARACTER_ENCODING                @"Character Encoding"
