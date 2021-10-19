@@ -6017,12 +6017,14 @@ ITERM_WEAKLY_REFERENCEABLE
 
 // Note that the caller is responsible for respecting swapFindNextPrevious
 - (void)searchNext {
+    [_view createFindDriverIfNeeded];
     [_view.findDriver searchNext];
     [self beginOneShotTailFind];
 }
 
 // Note that the caller is responsible for respecting swapFindNextPrevious
 - (void)searchPrevious {
+    [_view createFindDriverIfNeeded];
     [_view.findDriver searchPrevious];
     [self beginOneShotTailFind];
 }
@@ -10782,14 +10784,16 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         return;
     }
     _performingOneShotTailFind = YES;
-    [self beginTailFindImpl];
+    if (![self beginTailFindImpl]) {
+        _performingOneShotTailFind = NO;
+    }
 }
 
-- (void)beginTailFindImpl {
+- (BOOL)beginTailFindImpl {
     DLog(@"beginTailFindImpl");
     FindContext *findContext = [_textview findContext];
     if (!findContext.substring) {
-        return;
+        return NO;
     }
     DLog(@"Begin tail find");
     [_screen setFindString:findContext.substring
@@ -10805,6 +10809,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     // began at. Do a forward search from that location.
     [_screen restoreSavedPositionToFindContext:_tailFindContext];
     [self continueTailFind];
+    return YES;
 }
 
 - (void)sessionContentsChanged:(NSNotification *)notification {

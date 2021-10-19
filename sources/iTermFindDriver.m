@@ -85,7 +85,7 @@ static NSString *gSearchString;
     self = [super init];
     if (self) {
         _viewController = viewController;
-        _filterViewController = _filterViewController;
+        _filterViewController = filterViewController;
         viewController.driver = self;
         static dispatch_once_t onceToken;
         dispatch_once(&onceToken, ^{
@@ -482,7 +482,11 @@ static NSString *gSearchString;
 
 - (void)setSearchDefaults {
     DLog(@"begin %@", self);
-    [self setSearchString:_viewController.findString];
+    if (_viewController) {
+        [self setSearchString:_viewController.findString];
+    } else {
+        [self setSearchString:[[iTermFindPasteboard sharedInstance] stringValue]];
+    }
     [self setGlobalMode:_state.mode];
 }
 

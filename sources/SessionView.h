@@ -196,6 +196,7 @@ typedef NS_ENUM(NSUInteger, iTermSessionViewFindDriver) {
 - (void)setTerminalBackgroundColor:(NSColor *)color;
 
 - (void)showFindUI;
+- (void)createFindDriverIfNeeded;
 - (void)showFilter;
 
 - (void)findViewDidHide;

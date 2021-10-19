@@ -623,6 +623,45 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     }
 }
 
+- (void)createFindDriverIfNeeded {
+    switch (self.findDriverType) {
+        case iTermSessionViewFindDriverDropDown:
+            if (_dropDownFindDriver) {
+                return;
+            }
+            _dropDownFindDriver = [[iTermFindDriver alloc] initWithViewController:_dropDownFindViewController
+                                                             filterViewController:_dropDownFindViewController];
+            break;
+        case iTermSessionViewFindDriverPermanentStatusBar: {
+            if (_permanentStatusBarFindDriver) {
+                return;
+            }
+            iTermStatusBarViewController *statusBarViewController = [self.delegate sessionViewStatusBarViewController];
+            if (!statusBarViewController) {
+                DLog(@"No status bar VC from %@", self.delegate);
+                return;
+            }
+            _permanentStatusBarFindDriver = [[iTermFindDriver alloc] initWithViewController:statusBarViewController.searchViewController
+                                                                       filterViewController:statusBarViewController.filterViewController];
+            _permanentStatusBarFindDriver.delegate = self.findDriverDelegate;
+            break;
+        }
+        case iTermSessionViewFindDriverTemporaryStatusBar:
+            if (_temporaryStatusBarFindDriver) {
+                return;
+            }
+            iTermStatusBarViewController *statusBarViewController = [self.delegate sessionViewStatusBarViewController];
+            if (!statusBarViewController) {
+                DLog(@"No status bar VC from %@", self.delegate);
+                return;
+            }
+            _temporaryStatusBarFindDriver = [[iTermFindDriver alloc] initWithViewController:statusBarViewController.temporaryLeftComponent.statusBarComponentSearchViewController
+                                                                       filterViewController:statusBarViewController.filterViewController];
+            _temporaryStatusBarFindDriver.delegate = _dropDownFindDriver.delegate;
+            break;
+    }
+}
+
 - (void)showFindUI {
     iTermStatusBarViewController *statusBarViewController = self.delegate.sessionViewStatusBarViewController;
     if (_findDriverType == iTermSessionViewFindDriverPermanentStatusBar) {
