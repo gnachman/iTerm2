@@ -349,11 +349,11 @@ static NSButton *iTermToolSnippetsNewButton(NSString *imageName, NSString *title
 
 - (NSString *)combinedStringForRow:(NSInteger)rowIndex {
     iTermSnippet *snippet = _snippets[rowIndex];
-    NSString *title = [snippet trimmedTitle:40];
+    NSString *title = [snippet trimmedTitle:256];
     if (!title.length) {
         return [self valueStringForRow:rowIndex];
     }
-    return [NSString stringWithFormat:@"%@ — %@", title, [snippet trimmedValue:40]];
+    return [NSString stringWithFormat:@"%@ — %@", title, [snippet trimmedValue:256]];
 }
 
 - (NSString *)valueStringForRow:(NSInteger)rowIndex {
