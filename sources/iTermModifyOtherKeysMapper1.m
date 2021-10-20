@@ -267,13 +267,13 @@ typedef enum {
         return ![@"{}[]\\`'" containsString:event.charactersIgnoringModifiers];
     }
     if (control && !meta && shift) {
-        return ![@"@^{}[]\\-`'/" containsString:event.charactersIgnoringModifiers];
+        return ![@"@^{}[]\\-_`'/" containsString:event.charactersIgnoringModifiers];
     }
     if (control && meta && !shift) {
         return ![@"{}[]\\`'" containsString:event.charactersIgnoringModifiers];
     }
     if (control && meta && shift) {
-        return ![@"@^{}[]\\-`'/" containsString:event.charactersIgnoringModifiers];
+        return ![@"@^{}[]\\-_`'/" containsString:event.charactersIgnoringModifiers];
     }
     return NO;
 }
