@@ -241,4 +241,79 @@ static io_service_t iTermGetIOService(CGDirectDisplayID displayID) {
     return [string hasPrefix:@"UniqueDisplayKey:"];
 }
 
++ (NSArray<NSDictionary *> *)it_allWindowInfoDictionaries {
+    const CGWindowListOption options = (kCGWindowListExcludeDesktopElements |
+                                        kCGWindowListOptionOnScreenOnly);
+    NSArray<NSDictionary *> *windowInfos = (__bridge_transfer NSArray *)CGWindowListCopyWindowInfo(options,
+                                                                                          kCGNullWindowID);
+    return windowInfos;
+}
+
++ (CGRect)windowBoundsRectFromWindowInfoDictionary:(NSDictionary *)dictionary {
+    CGRect rect = CGRectMake(NAN, NAN, 0, 0);
+    BOOL ok = NO;
+    if (dictionary) {
+        ok = CGRectMakeWithDictionaryRepresentation((CFDictionaryRef)dictionary[(id)kCGWindowBounds],
+                                                    &rect);
+    }
+    if (!ok) {
+        rect = CGRectMake(NAN, NAN, 0, 0);
+    }
+    return [self rectInCGSpace:rect];
+}
+
++ (NSRect)rectInCGSpace:(NSRect)frame {
+    CGRect firstScreenFrame = [[[NSScreen screens] firstObject] frame];
+    // Window frames are flipped versus screen frames, and are relative to the first screen.
+    // A menu bar y coordinate of 0 equals the top of the first screen.
+    // A screen y coordinate of 0 equals the bottom of the first screen.
+    NSRect result = frame;
+    result.origin.y = firstScreenFrame.size.height - frame.size.height - frame.origin.y;
+    return result;
+}
+
+- (BOOL)it_hasAnotherAppsFullScreenWindow {
+    const NSRect screenFrame = self.frame;
+    const BOOL myWindowIsFullScreenOnThisScreen = [[NSApp windows] anyWithBlock:^BOOL(NSWindow *anObject) {
+        if (anObject.alphaValue <= 0) {
+            return NO;
+        }
+        if (!NSEqualRects(anObject.frame, screenFrame)) {
+            return NO;
+        }
+        if (!(anObject.styleMask & NSWindowStyleMaskFullScreen)) {
+            return NO;
+        }
+        if (![anObject isOnActiveSpace]) {
+            return NO;
+        }
+        return YES;
+    }];
+    if (myWindowIsFullScreenOnThisScreen) {
+        return NO;
+    }
+    NSSet<NSNumber *> *windowNumbers = [NSSet setWithArray:[[NSApp windows] mapWithBlock:^id(NSWindow *window) {
+        return @(window.windowNumber);
+    }]];
+    NSArray<NSDictionary *> *allInfos = [NSScreen it_allWindowInfoDictionaries];
+    return [allInfos anyWithBlock:^BOOL(NSDictionary *windowInfo) {
+        const CGRect windowFrame = [NSScreen windowBoundsRectFromWindowInfoDictionary:windowInfo];
+        if (!NSEqualRects(windowFrame, screenFrame)) {
+            return NO;
+        }
+        if ([windowInfo[(__bridge NSString *)kCGWindowAlpha] doubleValue] <= 0) {
+            return NO;
+        }
+        if (![windowInfo[(__bridge NSString *)kCGWindowIsOnscreen] boolValue]) {
+            return NO;
+        }
+        NSNumber *windowNumber = windowInfo[(__bridge NSString *)kCGWindowNumber];
+        if ([windowNumbers containsObject:windowNumber]) {
+            // Is my own window.
+            return NO;
+        }
+        return YES;
+    }];
+}
+
 @end
