@@ -357,7 +357,8 @@ class Connection:
             "ws://localhost/",
             ping_interval=None,
             extra_headers=_headers(),
-            subprotocols=_subprotocols())
+            subprotocols=_subprotocols(),
+            max_size=None)
 
 
     def _get_tcp_connect_coro(self):
