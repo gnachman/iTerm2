@@ -35,4 +35,11 @@
 // For testing
 - (NSData *)nextByte;
 
+- (void)writeAsynchronously:(dispatch_data_t)data
+                    channel:(dispatch_io_t)channel
+                      queue:(dispatch_queue_t)queue
+                 completion:(void (^)(bool done,
+                                      dispatch_data_t _Nullable data,
+                                      int error))completion;
+
 @end

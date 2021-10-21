@@ -302,12 +302,12 @@ typedef NS_ENUM(NSUInteger, iTermWebSocketConnectionState) {
     });
 
     __weak __typeof(self) weakSelf = self;
-    dispatch_io_write(_channel, 0, dispatchData, _queue, ^(bool done, dispatch_data_t  _Nullable data, int error) {
+    [_connection writeAsynchronously:dispatchData channel:_channel queue:_queue completion:^(bool done, dispatch_data_t  _Nullable data, int error) {
         DLog(@"Write progress: done=%d error=%d", (int)done, (int)error);
         if (error) {
             [weakSelf reallyAbort];
         }
-    });
+    }];
 }
 
 // any queue
