@@ -81,8 +81,7 @@ static const NSTimeInterval iTermStatusBarGitComponentDefaultCadence = 2;
         _gitPoller = gitPoller;
         _pwdRef = [[iTermVariableReference alloc] initWithPath:iTermVariableKeySessionPath vendor:scope];
         _pwdRef.onChangeBlock = ^{
-            DLog(@"PWD changed, update git poller directory");
-            gitPoller.currentDirectory = [scope valueForVariableName:iTermVariableKeySessionPath];
+            [weakSelf pwdDidChange];
         };
         _hostRef = [[iTermVariableReference alloc] initWithPath:iTermVariableKeySessionHostname vendor:scope];
         _hostRef.onChangeBlock = ^{
@@ -104,6 +103,11 @@ static const NSTimeInterval iTermStatusBarGitComponentDefaultCadence = 2;
         DLog(@"Initializing git component %@ for scope of session with ID %@. poller is %@", self, scope.ID, gitPoller);
     };
     return self;
+}
+
+- (void)pwdDidChange {
+    DLog(@"PWD changed, update git poller directory");
+    _gitPoller.currentDirectory = [self.scope valueForVariableName:iTermVariableKeySessionPath];
 }
 
 - (void)setDelegate:(id<iTermStatusBarComponentDelegate> _Nullable)delegate {
