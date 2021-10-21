@@ -369,7 +369,13 @@ static const CGFloat iTermStatusBarSparklineBottomMargin = 2;
         return [[iTermStatusBarSparklinesModel alloc] initWithDictionary:@{}];
     }
 
-    iTermStatusBarSparklinesModel *model = [self.sparklinesModel modelKeepingLast:MIN((CGFloat)LONG_MAX, maximumWidth)];
+    NSInteger width;
+    if (maximumWidth > NSIntegerMax) {
+        width = NSIntegerMax;
+    } else {
+        width = maximumWidth;
+    }
+    iTermStatusBarSparklinesModel *model = [self.sparklinesModel modelKeepingLast:width];
     if (preferredWidth) {
         *preferredWidth = [self maximumNumberOfValues];
     }
