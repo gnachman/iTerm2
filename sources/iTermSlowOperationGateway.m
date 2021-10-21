@@ -276,8 +276,11 @@ typedef void (^iTermRecentBranchFetchCallback)(NSArray<NSString *> *);
     }];
 }
 
+// Runs on some random queue
 - (void)didGetGitState:(iTermGitState *)gitState completion:(iTermGitStateHandlerBox *)completion token:(NSInteger)token {
-    [_governor decr:token];
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [self->_governor decr:token];
+    });
     @synchronized (_gitStateHandlers) {
         if (![_gitStateHandlers containsObject:completion]) {
             return;
@@ -304,8 +307,11 @@ typedef void (^iTermRecentBranchFetchCallback)(NSArray<NSString *> *);
     }];
 }
 
+// Runs on some random queue
 - (void)didGetRecentBranches:(NSArray<NSString *> *)branches box:(iTermGitRecentBranchesBox *)box token:(NSInteger)token {
-    [_governor decr:token];
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [self->_governor decr:token];
+    });
     @synchronized (_gitRecentBranchFetchCallbacks) {
         if (![_gitRecentBranchFetchCallbacks containsObject:box]) {
             return;
