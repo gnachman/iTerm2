@@ -129,7 +129,7 @@ static const NSInteger kUnicodeVersion = 9;
         [self commonInit];
         if ([dictionary[kLineBufferVersionKey] intValue] != kLineBufferVersion) {
             [self autorelease];
-            return nil;
+            return [[LineBuffer alloc] init];
         }
         _mayHaveDoubleWidthCharacter = [dictionary[kLineBufferMayHaveDWCKey] boolValue];
         block_size = [dictionary[kLineBufferBlockSizeKey] intValue];
@@ -146,7 +146,7 @@ static const NSInteger kUnicodeVersion = 9;
             LineBlock *block = [LineBlock blockWithDictionary:blockDictionary];
             if (!block) {
                 [self autorelease];
-                return nil;
+                return [[LineBuffer alloc] init];
             }
             [_lineBlocks addBlock:block];
         }
