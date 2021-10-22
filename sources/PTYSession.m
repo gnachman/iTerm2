@@ -11073,6 +11073,13 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [self enableSessionNameTitleComponentIfPossible];
 }
 
+- (void)screenSetSubtitle:(NSString *)subtitle {
+    DLog(@"screenSetSubtitle:%@", subtitle);
+    // Put a zero-width space in between \ and ( to avoid interpolated strings coming from the server.
+    NSString *safeSubtitle = [subtitle stringByReplacingOccurrencesOfString:@"\\(" withString:@"\\\u200B("];
+    [self setSessionSpecificProfileValues:@{ KEY_SUBTITLE: safeSubtitle }];
+}
+
 - (void)enableSessionNameTitleComponentIfPossible {
     // Turn on the session name component so the icon/trigger name will be visible.
     iTermTitleComponents components = [iTermProfilePreferences unsignedIntegerForKey:KEY_TITLE_COMPONENTS

@@ -3944,6 +3944,12 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     }
 }
 
+- (void)terminalSetSubtitle:(NSString *)subtitle {
+    if ([delegate_ screenAllowTitleSetting]) {
+        [delegate_ screenSetSubtitle:subtitle];
+    }
+}
+
 - (void)terminalPasteString:(NSString *)string {
     [delegate_ screenTerminalAttemptedPasteboardAccess];
     // check the configuration

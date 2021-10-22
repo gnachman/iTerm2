@@ -2354,12 +2354,17 @@ static const int kMaxScreenRows = 4096;
 
             // XTERM extensions
         case XTERMCC_WIN_TITLE:
-            [_delegate terminalSetWindowTitle:[self sanitizedTitle:[token.string stringByReplacingControlCharactersWithCaretLetter]]];
+            [_delegate terminalSetWindowTitle:[[self sanitizedTitle:token.string] stringByReplacingControlCharactersWithCaretLetter]];
             break;
-        case XTERMCC_WINICON_TITLE:
-            [_delegate terminalSetWindowTitle:[self sanitizedTitle:[token.string stringByReplacingControlCharactersWithCaretLetter]]];
-            [_delegate terminalSetIconTitle:[self sanitizedTitle:[token.string stringByReplacingControlCharactersWithCaretLetter]]];
+        case XTERMCC_WINICON_TITLE: {
+            [_delegate terminalSetWindowTitle:[[self sanitizedTitle:token.string] stringByReplacingControlCharactersWithCaretLetter]];
+            [_delegate terminalSetIconTitle:[[self sanitizedTitle:token.string] stringByReplacingControlCharactersWithCaretLetter]];
+            NSString *subtitle = [[self subtitleFromIconTitle:token.string] stringByReplacingControlCharactersWithCaretLetter];
+            if (subtitle) {
+                [_delegate terminalSetSubtitle:subtitle];
+            }
             break;
+        }
         case XTERMCC_PASTE64: {
             if (token.string) {
                 NSString *decoded = [self decodedBase64PasteCommand:token.string];
@@ -2421,9 +2426,14 @@ static const int kMaxScreenRows = 4096;
         case XTERMCC_FINAL_TERM:
             [self executeFinalTermToken:token];
             break;
-        case XTERMCC_ICON_TITLE:
+        case XTERMCC_ICON_TITLE: {
             [_delegate terminalSetIconTitle:[token.string stringByReplacingControlCharactersWithCaretLetter]];
+            NSString *subtitle = [[self subtitleFromIconTitle:token.string] stringByReplacingControlCharactersWithCaretLetter];
+            if (subtitle) {
+                [_delegate terminalSetSubtitle:subtitle];
+            }
             break;
+        }
         case VT100CSI_ICH:
             [_delegate terminalInsertEmptyCharsAtCursor:token.csi->p[0]];
             break;
@@ -4740,6 +4750,15 @@ static iTermDECRPMSetting VT100TerminalDECRPMSettingFromBoolean(BOOL flag) {
     if (dict[kTerminalStateUnicodeVersionStack]) {
         [_unicodeVersionStack addObjectsFromArray:dict[kTerminalStateUnicodeVersionStack]];
     }
+}
+
+- (NSString *)subtitleFromIconTitle:(NSString *)title {
+    NSCharacterSet *newlinesCharacterSet = [NSCharacterSet characterSetWithCharactersInString:@"\r\n"];
+    NSRange newlineRange = [title rangeOfCharacterFromSet:newlinesCharacterSet options:NSBackwardsSearch];
+    if (newlineRange.location == NSNotFound) {
+        return nil;
+    }
+    return [title substringFromIndex:NSMaxRange(newlineRange)];
 }
 
 - (NSString *)sanitizedTitle:(NSString *)unsafeTitle {

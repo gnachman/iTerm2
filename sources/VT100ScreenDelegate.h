@@ -74,6 +74,7 @@
 
 // Sets the session's name.
 - (void)screenSetIconName:(NSString *)name;
+- (void)screenSetSubtitle:(NSString *)subtitle;
 
 // Returns the session's current name
 - (NSString *)screenName;

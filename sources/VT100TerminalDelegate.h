@@ -198,6 +198,7 @@ typedef NS_ENUM(NSUInteger, VT100TerminalProtectedMode) {
 
 // Sets the icon's title.
 - (void)terminalSetIconTitle:(NSString *)title;
+- (void)terminalSetSubtitle:(NSString *)subtitle;
 
 // Pastes a string to the shell.
 - (void)terminalPasteString:(NSString *)string;
