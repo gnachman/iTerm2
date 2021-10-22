@@ -109,10 +109,26 @@ static NSDictionary *sGraphicIconMap;
     return [self imageForJobName:command enabled:YES];
 }
 
+- (NSString *)normalizedCommand:(NSString *)nonnormalCommand {
+    // A little hack for emacs. So far I haven't found anything else that needs normalization.
+    if ([nonnormalCommand hasPrefix:@"Emacs-"]) {
+        return @"emacs";
+    }
+    if ([nonnormalCommand hasPrefix:@"Python"] || [nonnormalCommand hasPrefix:@"python"]) {
+        NSString *suffix = [nonnormalCommand substringFromIndex:[@"python" length]];
+        if ([suffix rangeOfCharacterFromSet:[NSCharacterSet letterCharacterSet]].location == NSNotFound) {
+            // python followed by non-letters, e.g. python3.7
+            return @"python";
+        }
+    }
+    return nonnormalCommand;
+}
+
 - (NSImage *)imageForJobName:(NSString *)command enabled:(BOOL)enabled {
     if (!enabled) {
         return nil;
     }
+    command = [self normalizedCommand:command];
     NSString *logicalName = [sGraphicIconMap[command] firstObject];
     if (!logicalName) {
         return nil;

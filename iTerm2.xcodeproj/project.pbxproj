@@ -3810,6 +3810,12 @@
 		A6EA071A24EA043600DD6E17 /* NSURL+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A60251671CCD3E5E009BABF1 /* NSURL+iTerm.m */; };
 		A6EA071E24EA441900DD6E17 /* NSURL+IDN.m in Sources */ = {isa = PBXBuildFile; fileRef = A6EA071C24EA441900DD6E17 /* NSURL+IDN.m */; };
 		A6EA071F24EA441900DD6E17 /* NSURL+IDN.h in Headers */ = {isa = PBXBuildFile; fileRef = A6EA071D24EA441900DD6E17 /* NSURL+IDN.h */; };
+		A6EA848327223B02009D14AB /* graphic_emacs.png in Resources */ = {isa = PBXBuildFile; fileRef = A6EA848127223B02009D14AB /* graphic_emacs.png */; };
+		A6EA848427223B02009D14AB /* graphic_emacs.png in Resources */ = {isa = PBXBuildFile; fileRef = A6EA848127223B02009D14AB /* graphic_emacs.png */; };
+		A6EA848527223B02009D14AB /* graphic_emacs.png in Resources */ = {isa = PBXBuildFile; fileRef = A6EA848127223B02009D14AB /* graphic_emacs.png */; };
+		A6EA848627223B02009D14AB /* graphic_emacs@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A6EA848227223B02009D14AB /* graphic_emacs@2x.png */; };
+		A6EA848727223B02009D14AB /* graphic_emacs@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A6EA848227223B02009D14AB /* graphic_emacs@2x.png */; };
+		A6EA848827223B02009D14AB /* graphic_emacs@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A6EA848227223B02009D14AB /* graphic_emacs@2x.png */; };
 		A6EB2042223EC54E00E928C3 /* ini.c in Sources */ = {isa = PBXBuildFile; fileRef = A6EB2040223EC54D00E928C3 /* ini.c */; };
 		A6EB2043223EC54E00E928C3 /* ini.h in Headers */ = {isa = PBXBuildFile; fileRef = A6EB2041223EC54E00E928C3 /* ini.h */; };
 		A6EC47BE21EC623D000E1321 /* iTermOnboardingWindowController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6EC47BB21EC623D000E1321 /* iTermOnboardingWindowController.h */; };
@@ -6785,6 +6791,8 @@
 		A6E9ACC91A19956D008B0B6F /* NSWindow+PSM.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSWindow+PSM.m"; sourceTree = "<group>"; };
 		A6EA071C24EA441900DD6E17 /* NSURL+IDN.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = "NSURL+IDN.m"; path = "NSURL-IDN/NSURL+IDN.m"; sourceTree = "<group>"; };
 		A6EA071D24EA441900DD6E17 /* NSURL+IDN.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "NSURL+IDN.h"; path = "NSURL-IDN/NSURL+IDN.h"; sourceTree = "<group>"; };
+		A6EA848127223B02009D14AB /* graphic_emacs.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = graphic_emacs.png; path = images/FirstPartyTabIcons/graphic_emacs.png; sourceTree = "<group>"; };
+		A6EA848227223B02009D14AB /* graphic_emacs@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "graphic_emacs@2x.png"; path = "images/FirstPartyTabIcons/graphic_emacs@2x.png"; sourceTree = "<group>"; };
 		A6EB2040223EC54D00E928C3 /* ini.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = ini.c; path = inih/ini.c; sourceTree = "<group>"; };
 		A6EB2041223EC54E00E928C3 /* ini.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ini.h; path = inih/ini.h; sourceTree = "<group>"; };
 		A6EC47BB21EC623D000E1321 /* iTermOnboardingWindowController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermOnboardingWindowController.h; sourceTree = "<group>"; };
@@ -7719,6 +7727,8 @@
 		1D093C131217412B0029F9AD /* Images */ = {
 			isa = PBXGroup;
 			children = (
+				A6EA848127223B02009D14AB /* graphic_emacs.png */,
+				A6EA848227223B02009D14AB /* graphic_emacs@2x.png */,
 				A6BEE47626E0A623009C0C2C /* FilterIndicator.png */,
 				A6BEE47526E0A623009C0C2C /* FilterIndicator@2x.png */,
 				A6F1B3BE2693B82B00546767 /* DebugLogging.png */,
@@ -12494,6 +12504,7 @@
 				A65429A820BE7ECE00CE71B1 /* ScriptIcon@2x.png in Resources */,
 				A630119120E6B723008114B7 /* iTermStatusBarSetupCollectionViewItem.xib in Resources */,
 				A65429A720BE7ECE00CE71B1 /* ScriptIcon.png in Resources */,
+				A6EA848827223B02009D14AB /* graphic_emacs@2x.png in Resources */,
 				A65E6F5D2547F1D5008A4866 /* WindowCorner_Square.png in Resources */,
 				A6B3A73A1AC74E02008E8D4E /* FindCursorCell3.png in Resources */,
 				537A1FBA22168DF800FBEE5A /* MinimalFindView.xib in Resources */,
@@ -12507,6 +12518,7 @@
 				A6C4352321D1C64800346910 /* iterm2Invoke.js in Resources */,
 				1D6ED99D19AEA20D005A7799 /* dead.png in Resources */,
 				A6F7A733213CB143004DE961 /* StatusBarIconGitBranch.png in Resources */,
+				A6EA848527223B02009D14AB /* graphic_emacs.png in Resources */,
 				1D6ED9A119AEA20D005A7799 /* PresetKeyMappings.plist in Resources */,
 				A67D0D431A2EE12A003A8B35 /* ProfilesWindow.xib in Resources */,
 				A65B72B31B33C07D00F947A7 /* NextTip.png in Resources */,
@@ -12870,6 +12882,7 @@
 				1D44CFDA1CC7F5A600BE5630 /* PTYTextViewTest-golden-nonretina-testSmartCursorColor_reverseVideoNondefaultForeground.png in Resources */,
 				A6B3A73F1AC74E02008E8D4E /* FindCursorCell1.png in Resources */,
 				A66F52DA2106F6F100571168 /* gitup@2x.png in Resources */,
+				A6EA848427223B02009D14AB /* graphic_emacs.png in Resources */,
 				1D44CFE21CC7F5A600BE5630 /* PTYTextViewTest-golden-nonretina-testTransparency.png in Resources */,
 				1D44D08A1CC7F5A600BE5630 /* PTYTextViewTest-golden-travis-testRetinaFakeBold.png in Resources */,
 				A6E7AE65214394CA00DE9F3B /* graphic_clojure@2x.png in Resources */,
@@ -13235,6 +13248,7 @@
 				A636C3B922891BD900A83E2F /* StatusBarIconNoBattery@2x.png in Resources */,
 				A618FFD1224602F800B8FD88 /* StatusBarIconAction.png in Resources */,
 				1D44D0571CC7F5A600BE5630 /* PTYTextViewTest-golden-travis-testBasicDraw.png in Resources */,
+				A6EA848727223B02009D14AB /* graphic_emacs@2x.png in Resources */,
 				53FF9821209283BE008688D7 /* template_basic_daemon.py in Resources */,
 				1D44CFAB1CC7F5A600BE5630 /* PTYTextViewTest-golden-nonretina-testDimmingTextAndBgAndCursorBoostAndMinimumContrast.png in Resources */,
 				A67F61CE214395C60093940A /* graphic_read@2x.png in Resources */,
@@ -13443,6 +13457,7 @@
 				A68E33381DE746F5003F1D8E /* Previous Mark Touch Bar Icon@2x.png in Resources */,
 				A67D0D351A2EE12A003A8B35 /* AddressBook.strings in Resources */,
 				A6EFF2311D2049A300806EEF /* Erase.png in Resources */,
+				A6EA848327223B02009D14AB /* graphic_emacs.png in Resources */,
 				A665C1FA2440461500F623F0 /* WindowCorner@2x.png in Resources */,
 				A6339DD81D232CEE000BAD78 /* StatusItem@2x.png in Resources */,
 				A6F7A740213CB143004DE961 /* StatusBarIconHost@2x.png in Resources */,
@@ -13758,6 +13773,7 @@
 				A6E7AEB8214394F600DE9F3B /* graphic_ethereum.png in Resources */,
 				A67D0D681A2EE12A003A8B35 /* iTermPasteSpecialViewController.xib in Resources */,
 				A6FD85351B768B7800EB9DCE /* BigArrow@2x.png in Resources */,
+				A6EA848627223B02009D14AB /* graphic_emacs@2x.png in Resources */,
 				A68E333F1DE79284003F1D8E /* Color Preset Touch Bar Icon.png in Resources */,
 				A630118F20E6B722008114B7 /* iTermStatusBarSetupCollectionViewItem.xib in Resources */,
 				530AB7BC20A641E000D2AA08 /* repl_banner.txt in Resources */,

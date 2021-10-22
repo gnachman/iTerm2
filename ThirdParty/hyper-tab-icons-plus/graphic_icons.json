@@ -131,7 +131,10 @@
   ],
   "code": [
     "pico",
-    "emacs"
+  ],
+  "emacs": [
+    "emacs",
+    "Emacs"
   ],
   "read": [
     "tail",
