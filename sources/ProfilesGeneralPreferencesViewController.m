@@ -106,7 +106,9 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
     IBOutlet NSTextField *_windowTitle;
     IBOutlet NSButton *_allowTitleSetting;
     IBOutlet NSButton *_locked;
-    
+
+    IBOutlet NSView *_tallTabBarRequestView;
+
     // Controls for Edit Info
     IBOutlet ProfileListView *_profiles;
     IBOutlet iTermShortcutInputView *_sessionHotkeyInputView;
@@ -367,7 +369,7 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
                                                          functionsOnly:NO];
     _subtitleText.delegate = _subtitleTextDelegate;
 
-    [self updateSubtitleEnabled];
+    [self updateSubtitlesAllowed];
 
     [self addViewToSearchIndex:_urlSchemes
                    displayName:@"URL schemes handled by profile"
@@ -395,16 +397,17 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
                                                  name:iTermAPIDidRegisterSessionTitleFunctionNotification
                                                object:nil];
     [[NSNotificationCenter defaultCenter] addObserver:self
-                                             selector:@selector(updateSubtitleEnabled)
+                                             selector:@selector(updateSubtitlesAllowed)
                                                  name:kRefreshTerminalNotification
                                                object:nil];
     [self updateEditAdvancedConfigButton];
 }
 
-- (void)updateSubtitleEnabled {
-    const BOOL enabled = (iTermPreferencesTabStyle)[iTermPreferences intForKey:kPreferenceKeyTabStyle] == TAB_STYLE_MINIMAL;
-    _subtitleText.enabled = enabled;
-    [_subtitleLabel setLabelEnabled:enabled];
+- (void)updateSubtitlesAllowed {
+    const BOOL subtitlesAllowed = ((iTermPreferencesTabStyle)[iTermPreferences intForKey:kPreferenceKeyTabStyle] == TAB_STYLE_MINIMAL || [iTermAdvancedSettingsModel defaultTabBarHeight] >= 28);
+    _subtitleText.hidden = !subtitlesAllowed;
+    [_subtitleLabel setLabelEnabled:subtitlesAllowed];
+    _tallTabBarRequestView.hidden = subtitlesAllowed;
 }
 
 - (BOOL)onUpdateTitle {
@@ -643,6 +646,14 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
         _customCommand.enabled = NO;
     }
     _customDirectory.enabled = ([[self stringForKey:KEY_CUSTOM_DIRECTORY] isEqualToString:kProfilePreferenceInitialDirectoryCustomValue]);
+}
+
+#pragma mark - Tall Tab Bar
+
+- (IBAction)enableTallTabBar:(id)sender {
+    [iTermAdvancedSettingsModel setDefaultTabBarHeight:28];
+    [self updateSubtitlesAllowed];
+    [[NSNotificationCenter defaultCenter] postNotificationName:kRefreshTerminalNotification object:nil];
 }
 
 #pragma mark - Badge

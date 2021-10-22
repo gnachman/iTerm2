@@ -575,40 +575,12 @@ static CGFloat PSMWeightedAverage(CGFloat l, CGFloat u, CGFloat w) {
     return subtitle && !subtitle.isEmpty;
 }
 
-- (void)drawSubtitle:(PSMCachedTitle *)cachedSubtitle
-                   x:(CGFloat)labelPosition
-                cell:(PSMTabBarCell *)cell
-             hasIcon:(BOOL)drewIcon
-            iconRect:(NSRect)iconRect
-       reservedSpace:(CGFloat)reservedSpace
-           cellFrame:(NSRect)cellFrame
-         labelOffset:(CGFloat)labelOffset
-     mainLabelHeight:(CGFloat)mainLabelHeight {
-    if (cachedSubtitle.isEmpty) {
-        return;
-    }
-    NSRect labelRect;
-    labelRect.origin.x = labelPosition;
-    NSSize boundingSize;
-    BOOL truncate;
-    labelRect.size.width = [self widthForLabelInCell:cell
-                                       labelPosition:labelPosition
-                                             hasIcon:drewIcon
-                                            iconRect:iconRect
-                                         cachedTitle:cachedSubtitle
-                                       reservedSpace:reservedSpace
-                                        boundingSize:&boundingSize
-                                            truncate:&truncate];
-    labelRect.origin.y = cellFrame.origin.y + floor((cellFrame.size.height - boundingSize.height) / 2.0) + labelOffset + mainLabelHeight;
-    labelRect.size.height = boundingSize.height;
+- (CGFloat)verticalOffsetForTitleWhenSubtitlePresent {
+    return -6;
+}
 
-    NSAttributedString *attributedString = [cachedSubtitle attributedStringForcingLeftAlignment:truncate
-                                                                              truncatedForWidth:labelRect.size.width];
-    if (truncate) {
-        labelRect.origin.x += reservedSpace;
-    }
-
-    [attributedString drawInRect:labelRect];
+- (CGFloat)verticalOffsetForSubtitle {
+    return 0;
 }
 
 #pragma mark Draw outline around bottom tab bar

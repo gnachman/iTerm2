@@ -1038,7 +1038,7 @@
     // label rect
     CGFloat mainLabelHeight = 0;
     PSMCachedTitle *cachedSubtitle = cell.cachedSubtitle;
-    const CGFloat labelOffset = [self willDrawSubtitle:cachedSubtitle] ? -6 : 0;
+    const CGFloat labelOffset = [self willDrawSubtitle:cachedSubtitle] ? [self verticalOffsetForTitleWhenSubtitlePresent] : 0;
     if (!cachedTitle.isEmpty) {
         NSRect labelRect;
         labelRect.origin.x = labelPosition;
@@ -1076,12 +1076,20 @@
        mainLabelHeight:mainLabelHeight];
 }
 
+- (CGFloat)verticalOffsetForTitleWhenSubtitlePresent {
+    return -5;
+}
+
+- (CGFloat)verticalOffsetForSubtitle {
+    return -2;
+}
+
 - (BOOL)supportsMultiLineLabels {
-    return NO;
+    return NSHeight(self.tabBar.bounds) >= 28;
 }
 
 - (BOOL)willDrawSubtitle:(PSMCachedTitle *)subtitle {
-    return NO;
+    return [self supportsMultiLineLabels] && subtitle && !subtitle.isEmpty;
 }
 
 - (void)drawSubtitle:(PSMCachedTitle *)cachedSubtitle
@@ -1093,6 +1101,31 @@
            cellFrame:(NSRect)cellFrame
          labelOffset:(CGFloat)labelOffset
      mainLabelHeight:(CGFloat)mainLabelHeight {
+    if (cachedSubtitle.isEmpty) {
+        return;
+    }
+    NSRect labelRect;
+    labelRect.origin.x = labelPosition;
+    NSSize boundingSize;
+    BOOL truncate;
+    labelRect.size.width = [self widthForLabelInCell:cell
+                                       labelPosition:labelPosition
+                                             hasIcon:drewIcon
+                                            iconRect:iconRect
+                                         cachedTitle:cachedSubtitle
+                                       reservedSpace:reservedSpace
+                                        boundingSize:&boundingSize
+                                            truncate:&truncate];
+    labelRect.origin.y = cellFrame.origin.y + floor((cellFrame.size.height - boundingSize.height) / 2.0) + labelOffset + mainLabelHeight + [self verticalOffsetForSubtitle];
+    labelRect.size.height = boundingSize.height;
+
+    NSAttributedString *attributedString = [cachedSubtitle attributedStringForcingLeftAlignment:truncate
+                                                                              truncatedForWidth:labelRect.size.width];
+    if (truncate) {
+        labelRect.origin.x += reservedSpace;
+    }
+
+    [attributedString drawInRect:labelRect];
 }
 
 - (CGFloat)drawGraphicWithCellFrame:(NSRect)cellFrame

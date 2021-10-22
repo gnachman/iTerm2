@@ -83,6 +83,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (CGFloat)customTabBarFontSize;
 + (BOOL)darkThemeHasBlackTitlebar;
 + (CGFloat)defaultTabBarHeight;
++ (void)setDefaultTabBarHeight:(CGFloat)value;
 + (int)defaultTabStopWidth;
 + (NSString *)defaultURLScheme;
 + (BOOL)detectPasswordInput;

@@ -68,5 +68,7 @@ int DebugLogImpl(const char *file, int line, const char *function, NSString* val
                       truncate:(BOOL *)truncateOut;
 
 - (BOOL)willDrawSubtitle:(PSMCachedTitle *)subtitle;
+- (CGFloat)verticalOffsetForTitleWhenSubtitlePresent;
+- (CGFloat)verticalOffsetForSubtitle;
 
 @end
