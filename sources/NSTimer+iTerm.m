@@ -26,10 +26,12 @@
 - (instancetype)init {
     self = [super init];
     if (self) {
+#if DEBUG
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(debugLoggingDidBegin:)
                                                      name:iTermDebugLoggingDidBeginNotification
                                                    object:nil];
+#endif
     }
     return self;
 }
@@ -53,9 +55,11 @@
             NSStringFromClass([self class]), self, self.target, NSStringFromSelector(self.selector), self.timerInfo];
 }
 
+#if DEBUG
 - (void)debugLoggingDidBegin:(NSNotification *)notification {
     DLog(@"%@:\n%@", self, self.debugInfo);
 }
+#endif
 
 - (void)timerDidFire:(NSTimer *)timer {
     id target = self.target;
