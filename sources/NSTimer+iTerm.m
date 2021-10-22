@@ -26,7 +26,7 @@
 - (instancetype)init {
     self = [super init];
     if (self) {
-#if DEBUG
+#if BETA
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(debugLoggingDidBegin:)
                                                      name:iTermDebugLoggingDidBeginNotification
@@ -55,7 +55,7 @@
             NSStringFromClass([self class]), self, self.target, NSStringFromSelector(self.selector), self.timerInfo];
 }
 
-#if DEBUG
+#if BETA
 - (void)debugLoggingDidBegin:(NSNotification *)notification {
     DLog(@"%@:\n%@", self, self.debugInfo);
 }
