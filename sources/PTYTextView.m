@@ -5006,6 +5006,14 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     DLog(@"%@", [NSThread callStackSymbols]);
 }
 
+- (void)setCursorShadow:(BOOL)cursorShadow {
+    _drawingHelper.cursorShadow = cursorShadow;
+}
+
+- (BOOL)cursorShadow {
+    return _drawingHelper.cursorShadow;
+}
+
 @end
 
 @implementation PTYTextView(MouseHandler)

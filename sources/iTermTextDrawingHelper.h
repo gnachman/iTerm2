@@ -117,6 +117,9 @@ BOOL CheckFindMatchAtIndex(NSData *findMatches, int index);
 // Is the cursor configured to blink?
 @property(nonatomic, assign) BOOL cursorBlinking;
 
+// Should bar/underscore cursors have a shadow?
+@property(nonatomic) BOOL cursorShadow;
+
 // Are we in copy mode?
 @property(nonatomic, assign) BOOL copyMode;
 @property(nonatomic, assign) BOOL copyModeSelecting;

@@ -247,6 +247,7 @@ typedef struct {
     _cursorInfo.copyModeCursorSelecting = drawingHelper.copyModeSelecting;
     _cursorInfo.coord = VT100GridCoordMake(textView.dataSource.cursorX - 1,
                                            textView.dataSource.cursorY - 1 - offset);
+    _cursorInfo.cursorShadow = drawingHelper.cursorShadow;
     NSInteger lineWithCursor = textView.dataSource.cursorY - 1 + _numberOfScrollbackLines;
     if ([self shouldDrawCursor] &&
         _cursorVisible &&

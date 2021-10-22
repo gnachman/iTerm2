@@ -26,7 +26,12 @@
 @property (nonatomic) BOOL selecting;
 @end
 
-@implementation iTermCursor
+@implementation iTermCursor {
+    BOOL _shouldDrawShadow;
+    NSRect _shadowRect;
+    BOOL _dark;
+    CGFloat _virtualOffset;
+}
 
 + (iTermCursor *)cursorOfType:(ITermCursorType)theType {
     switch (theType) {
@@ -73,6 +78,27 @@
     iTermFrameRectWithWidthUsingOperation(rect, 0.5, NSCompositingOperationSourceOver, virtualOffset);
 }
 
+- (void)setShadowOverDarkBackground:(BOOL)dark rect:(NSRect)rect virtualOffset:(CGFloat)virtualOffset {
+    _shouldDrawShadow = YES;
+    _dark = dark;
+    _shadowRect = rect;
+    _virtualOffset = virtualOffset;
+}
+
+- (void)drawShadow {
+    if (!_shouldDrawShadow) {
+        return;
+    }
+    NSColor *shadowColor;
+    if (_dark) {
+        shadowColor = [NSColor colorWithWhite:1 alpha:0.5];
+    } else {
+        shadowColor = [NSColor colorWithWhite:0 alpha:0.5];
+    }
+    [shadowColor set];
+    iTermRectFillUsingOperation(_shadowRect, NSCompositingOperationSourceOver, _virtualOffset);
+}
+
 @end
 
 @implementation iTermUnderlineCursor
@@ -99,6 +125,12 @@
     } else {
         [backgroundColor set];
         iTermRectFill(cursorRect, virtualOffset);
+        NSRect shadowRect = cursorRect;
+        shadowRect.origin.y -= 1;
+        shadowRect.size.height = 1;
+        [self setShadowOverDarkBackground:backgroundColor.isDark
+                                     rect:shadowRect
+                            virtualOffset:virtualOffset];
     }
 }
 
@@ -122,6 +154,10 @@
     } else {
         [backgroundColor set];
         iTermRectFill(cursorRect, virtualOffset);
+        NSRect shadowRect = cursorRect;
+        shadowRect.origin.x += NSWidth(shadowRect);
+        shadowRect.size.width = 1;
+        [self setShadowOverDarkBackground:backgroundColor.isDark rect:shadowRect virtualOffset:virtualOffset];
     }
 }
 

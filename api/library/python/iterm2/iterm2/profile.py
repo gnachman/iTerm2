@@ -1315,6 +1315,14 @@ class LocalWriteOnlyProfile:
         """
         return self._simple_set("Blinking Cursor", value)
 
+    def set_cursor_shadow(self, value: bool):
+        """
+        Sets whether the vertical bar and horizontal line cursor have a shadow.
+
+        :param value: A bool
+        """
+        return self._simple_set("Cursor Shadow", value)
+
     def set_use_bold_font(self, value: bool):
         """
         Sets whether to use the bold variant of the font for bold text.
@@ -3355,6 +3363,14 @@ class WriteOnlyProfile:
         :param value: A bool
         """
         return await self._async_simple_set("Blinking Cursor", value)
+
+    async def async_set_cursor_shadow(self, value: bool):
+        """
+        Sets whether the vertical bar and horizontal line cursor have a shadow.
+
+        :param value: A bool
+        """
+        return await self._async_simple_set("Cursor Shadow", value)
 
     async def async_set_use_bold_font(self, value: bool):
         """
@@ -5523,6 +5539,16 @@ class Profile(WriteOnlyProfile):
         :returns: A bool
         """
         return self._simple_get("Blinking Cursor")
+
+    @property
+    def cursor_shadow(self) -> bool:
+        """
+        Returns whether the vertical bar and horizontal line cursor have a
+        shadow.
+
+        :returns: A bool
+        """
+        return self._simple_get("Cursor Shadow")
 
     @property
     def use_bold_font(self) -> bool:

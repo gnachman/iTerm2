@@ -231,7 +231,7 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
                              KEY_CURSOR_BOOST,
 
                              KEY_CURSOR_TYPE, KEY_BLINKING_CURSOR, KEY_USE_BOLD_FONT, KEY_THIN_STROKES,
-                             KEY_ASCII_LIGATURES, KEY_NON_ASCII_LIGATURES,
+                             KEY_ASCII_LIGATURES, KEY_NON_ASCII_LIGATURES, KEY_CURSOR_SHADOW,
 
                              KEY_USE_BOLD_COLOR,
                              KEY_USE_BOLD_COLOR COLORS_LIGHT_MODE_SUFFIX,
@@ -472,6 +472,7 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
 
                   KEY_CURSOR_TYPE: @(CURSOR_BOX),
                   KEY_BLINKING_CURSOR: @NO,
+                  KEY_CURSOR_SHADOW: @NO,
                   KEY_USE_BOLD_FONT: @YES,
                   KEY_THIN_STROKES: @(iTermThinStrokesSettingRetinaOnly),
                   KEY_ASCII_LIGATURES: @NO,

@@ -6666,7 +6666,6 @@
 		A6DCDD1E2560B410004EA8A1 /* NSAttributedString+PSM.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "NSAttributedString+PSM.h"; sourceTree = "<group>"; };
 		A6DCDD1F2560B410004EA8A1 /* NSAttributedString+PSM.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "NSAttributedString+PSM.m"; sourceTree = "<group>"; };
 		A6DDA88425B376D200AA55EE /* iTermActivityInfo.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermActivityInfo.h; sourceTree = "<group>"; };
-		A6DEB2C0267BACFE00192994 /* gen_profile.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = gen_profile.py; sourceTree = "<group>"; };
 		A6DEB2D5267BB8A600192994 /* profile_prologue.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = profile_prologue.txt; sourceTree = "<group>"; };
 		A6DEB2DF267BB95100192994 /* partial_profile.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = partial_profile.txt; sourceTree = "<group>"; };
 		A6DEB2E8267BBC7F00192994 /* gen_profile.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = gen_profile.py; sourceTree = "<group>"; };
@@ -8443,7 +8442,6 @@
 			isa = PBXGroup;
 			children = (
 				530AB7EF20AE85DE00D2AA08 /* iterm2 */,
-				A6DEB2C0267BACFE00192994 /* gen_profile.py */,
 			);
 			path = python;
 			sourceTree = "<group>";

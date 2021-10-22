@@ -4,6 +4,7 @@
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermMetalBufferPool.h"
 #import "iTermSharedImageStore.h"
+#import "NSColor+iTerm.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -201,6 +202,12 @@ NS_ASSUME_NONNULL_BEGIN
 @interface iTermBarCursorRenderer : iTermCursorRenderer
 @end
 
+@interface iTermHorizontalShadowCursorRenderer : iTermUnderlineCursorRenderer
+@end
+
+@interface iTermVerticalShadowCursorRenderer : iTermBarCursorRenderer
+@end
+
 @interface iTermIMECursorRenderer : iTermBarCursorRenderer
 @end
 
@@ -247,6 +254,18 @@ NS_ASSUME_NONNULL_BEGIN
                                        fragmentFunctionName:@"iTermTextureCursorFragmentShader"];
 }
 
++ (instancetype)newHorizontalShadowCursorRendererWithDevice:(id<MTLDevice>)device {
+    return [[iTermHorizontalShadowCursorRenderer alloc] initWithDevice:device];
+}
+
++ (instancetype)newVerticalShadowCursorRendererWithDevice:(id<MTLDevice>)device {
+    return [[iTermVerticalShadowCursorRenderer alloc] initWithDevice:device];
+}
+
++ (iTermMetalBlending *)blending {
+    return [[iTermMetalBlending alloc] init];
+}
+
 - (instancetype)initWithDevice:(id<MTLDevice>)device
             vertexFunctionName:(NSString *)vertexFunctionName
           fragmentFunctionName:(NSString *)fragmentFunctionName {
@@ -255,7 +274,7 @@ NS_ASSUME_NONNULL_BEGIN
         _cellRenderer = [[iTermMetalCellRenderer alloc] initWithDevice:device
                                                     vertexFunctionName:vertexFunctionName
                                                   fragmentFunctionName:fragmentFunctionName
-                                                              blending:[[iTermMetalBlending alloc] init]
+                                                              blending:[self.class blending]
                                                         piuElementSize:0
                                                    transientStateClass:self.transientStateClass];
         _descriptionPool = [[iTermMetalBufferPool alloc] initWithDevice:device
@@ -358,9 +377,36 @@ NS_ASSUME_NONNULL_BEGIN
     iTermCursorRendererTransientState *tState = transientState;
     int d = tState.doubleWidth ? 2 : 1;
     tState.vertexBuffer = [_cellRenderer newQuadOfSize:CGSizeMake(tState.cellConfiguration.cellSize.width * d,
-                                                                  [iTermAdvancedSettingsModel underlineCursorHeight] * tState.cellConfiguration.scale)
+                                                                  [self underlineCursorHeight] * tState.cellConfiguration.scale)
                                            poolContext:tState.poolContext];
     [super drawWithFrameData:frameData transientState:transientState];
+}
+
+- (CGFloat)underlineCursorHeight {
+    return [iTermAdvancedSettingsModel underlineCursorHeight];
+}
+
+@end
+
+@implementation iTermHorizontalShadowCursorRenderer
+
++ (iTermMetalBlending *)blending {
+    return [iTermMetalBlending compositeSourceOver];
+}
+
+- (CGFloat)underlineCursorHeight {
+    return 1;
+}
+
+- (iTermCursorDescription)cursorDescriptionWithTransientState:(iTermCursorRendererTransientState *)tState {
+    iTermCursorDescription description = [super cursorDescriptionWithTransientState:tState];
+    if (tState.color.isDark) {
+        description.color = simd_make_float4(0.5, 0.5, 0.5, 0.5);
+    } else {
+        description.color = simd_make_float4(0, 0, 0, 0.5);
+    }
+    description.origin.y += [super underlineCursorHeight] * tState.cellConfiguration.scale;
+    return description;
 }
 
 @end
@@ -385,6 +431,29 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (CGFloat)barCursorWidth {
     return [iTermAdvancedSettingsModel verticalBarCursorWidth];
+}
+
+@end
+
+@implementation iTermVerticalShadowCursorRenderer
+
++ (iTermMetalBlending *)blending {
+    return [iTermMetalBlending compositeSourceOver];
+}
+
+- (CGFloat)barCursorWidth {
+    return 1;
+}
+
+- (iTermCursorDescription)cursorDescriptionWithTransientState:(iTermCursorRendererTransientState *)tState {
+    iTermCursorDescription description = [super cursorDescriptionWithTransientState:tState];
+    if (tState.color.isDark) {
+        description.color = simd_make_float4(0.5, 0.5, 0.5, 0.5);
+    } else {
+        description.color = simd_make_float4(0, 0, 0, 0.5);
+    }
+    description.origin.x += [self barCursorWidth] * tState.cellConfiguration.scale;
+    return description;
 }
 
 @end

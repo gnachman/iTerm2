@@ -21,6 +21,7 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @property (nonatomic) ITermCursorType type;
 @property (nonatomic, strong) NSColor *cursorColor;
 @property (nonatomic) BOOL doubleWidth;
+@property (nonatomic) BOOL cursorShadow;
 
 // Block cursors care about drawing the character overtop the cursor in a
 // different color than the character would normally be. If this is set, the

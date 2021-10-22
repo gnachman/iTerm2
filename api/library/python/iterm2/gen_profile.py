@@ -304,6 +304,12 @@ schema = [
      None,
      "Blinking Cursor"),
 
+    ("cursor_shadow",
+     "bool",
+     "whether the vertical bar and horizontal line cursor have a shadow.",
+     None,
+     "Cursor Shadow"),
+
     ("use_bold_font",
      "bool",
      "whether to use the bold variant of the font for bold text.",

@@ -141,6 +141,7 @@
 #define KEY_HORIZONTAL_SPACING     @"Horizontal Spacing"
 #define KEY_VERTICAL_SPACING       @"Vertical Spacing"
 #define KEY_BLINKING_CURSOR        @"Blinking Cursor"
+#define KEY_CURSOR_SHADOW          @"Cursor Shadow"
 #define KEY_BLINK_ALLOWED          @"Blink Allowed"
 #define KEY_CURSOR_TYPE            @"Cursor Type"
 #define KEY_DISABLE_BOLD           @"Disable Bold"  // DEPRECATED

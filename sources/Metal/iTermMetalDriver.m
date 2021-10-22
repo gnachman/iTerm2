@@ -112,6 +112,8 @@ typedef struct {
     iTermBroadcastStripesRenderer *_broadcastStripesRenderer;
     iTermCursorGuideRenderer *_cursorGuideRenderer;
     iTermHighlightRowRenderer *_highlightRowRenderer;
+    iTermCursorRenderer *_horizontalShadowCursorRenderer;
+    iTermCursorRenderer *_verticalShadowCursorRenderer;
     iTermCursorRenderer *_underlineCursorRenderer;
     iTermCursorRenderer *_barCursorRenderer;
     iTermCursorRenderer *_imeCursorRenderer;
@@ -187,6 +189,8 @@ typedef struct {
         _cursorGuideRenderer = [[iTermCursorGuideRenderer alloc] initWithDevice:device];
         _highlightRowRenderer = [[iTermHighlightRowRenderer alloc] initWithDevice:device];
         _imageRenderer = [[iTermImageRenderer alloc] initWithDevice:device];
+        _horizontalShadowCursorRenderer = [iTermCursorRenderer newHorizontalShadowCursorRendererWithDevice:device];
+        _verticalShadowCursorRenderer = [iTermCursorRenderer newVerticalShadowCursorRendererWithDevice:device];
         _underlineCursorRenderer = [iTermCursorRenderer newUnderlineCursorRendererWithDevice:device];
         _barCursorRenderer = [iTermCursorRenderer newBarCursorRendererWithDevice:device];
         _imeCursorRenderer = [iTermCursorRenderer newIMECursorRendererWithDevice:device];
@@ -1101,6 +1105,11 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
                 tState.coord = cursorInfo.coord;
                 tState.color = cursorInfo.cursorColor;
                 tState.doubleWidth = cursorInfo.doubleWidth;
+
+                iTermCursorRendererTransientState *shadowTState = [frameData transientStateForRenderer:_horizontalShadowCursorRenderer];
+                shadowTState.coord = cursorInfo.coord;
+                shadowTState.color = cursorInfo.cursorColor;
+                shadowTState.doubleWidth = cursorInfo.doubleWidth;
                 break;
             }
             case CURSOR_BOX: {
@@ -1119,6 +1128,10 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
                 iTermCursorRendererTransientState *tState = [frameData transientStateForRenderer:_barCursorRenderer];
                 tState.coord = cursorInfo.coord;
                 tState.color = cursorInfo.cursorColor;
+
+                iTermCursorRendererTransientState *shadowTState = [frameData transientStateForRenderer:_verticalShadowCursorRenderer];
+                shadowTState.coord = cursorInfo.coord;
+                shadowTState.color = cursorInfo.cursorColor;
                 break;
             }
             case CURSOR_DEFAULT:
@@ -1518,13 +1531,15 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     if (!cursorInfo.copyMode && !cursorInfo.password && cursorInfo.cursorVisible) {
         switch (cursorInfo.type) {
             case CURSOR_UNDERLINE:
-                if (frameData.intermediateRenderPassDescriptor) {
-                    [self drawCellRenderer:_underlineCursorRenderer
-                                 frameData:frameData
-                                      stat:iTermMetalFrameDataStatPqEnqueueDrawCursor];
-                }
+                [self drawCellRenderer:_underlineCursorRenderer
+                             frameData:frameData
+                                  stat:iTermMetalFrameDataStatPqEnqueueDrawCursor];
                 break;
             case CURSOR_BOX:
+                // This is a necessary departure from how the cursor is drawn in the legacy renderer.
+                // The legacy renderer draws the character over the cursor, but that is way too
+                // expensive to do here so instead we draw the cursor before the character and
+                // modify the character's color for a single draw.
                 if (!cursorInfo.frameOnly) {
                     [self drawCellRenderer:_blockCursorRenderer
                                  frameData:frameData
@@ -1532,11 +1547,9 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
                 }
                 break;
             case CURSOR_VERTICAL:
-                if (frameData.intermediateRenderPassDescriptor) {
-                    [self drawCellRenderer:_barCursorRenderer
-                                 frameData:frameData
-                                      stat:iTermMetalFrameDataStatPqEnqueueDrawCursor];
-                }
+                [self drawCellRenderer:_barCursorRenderer
+                             frameData:frameData
+                                  stat:iTermMetalFrameDataStatPqEnqueueDrawCursor];
                 break;
             case CURSOR_DEFAULT:
                 break;
@@ -1560,22 +1573,18 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
         } else {
             switch (cursorInfo.type) {
                 case CURSOR_UNDERLINE:
-                    if (!frameData.intermediateRenderPassDescriptor) {
-                        [self drawCellRenderer:_underlineCursorRenderer
-                                     frameData:frameData
-                                          stat:iTermMetalFrameDataStatPqEnqueueDrawCursor];
+                    if (cursorInfo.cursorShadow) {
+                        [self drawCellRenderer:_horizontalShadowCursorRenderer frameData:frameData stat:iTermMetalFrameDataStatPqEnqueueDrawCursor];
+                    }
+                    break;
+                case CURSOR_VERTICAL:
+                    if (cursorInfo.cursorShadow) {
+                        [self drawCellRenderer:_verticalShadowCursorRenderer frameData:frameData stat:iTermMetalFrameDataStatPqEnqueueDrawCursor];
                     }
                     break;
                 case CURSOR_BOX:
                     if (cursorInfo.frameOnly) {
                         [self drawCellRenderer:_frameCursorRenderer
-                                     frameData:frameData
-                                          stat:iTermMetalFrameDataStatPqEnqueueDrawCursor];
-                    }
-                    break;
-                case CURSOR_VERTICAL:
-                    if (!frameData.intermediateRenderPassDescriptor) {
-                        [self drawCellRenderer:_barCursorRenderer
                                      frameData:frameData
                                           stat:iTermMetalFrameDataStatPqEnqueueDrawCursor];
                     }
@@ -1874,6 +1883,8 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
               _imageRenderer,
               _underlineCursorRenderer,
               _barCursorRenderer,
+              _horizontalShadowCursorRenderer,
+              _verticalShadowCursorRenderer,
               _imeCursorRenderer,
               _blockCursorRenderer,
               _frameCursorRenderer,

@@ -35,6 +35,7 @@
     IBOutlet NSButton *_blinkingCursor;
     IBOutlet NSButton *_useBoldFont;
     IBOutlet NSButton *_blinkAllowed;
+    IBOutlet NSButton *_shadow;
     IBOutlet NSButton *_useItalicFont;
     IBOutlet NSButton *_ambiguousIsDoubleWidth;
     IBOutlet NSPopUpButton *_normalization;
@@ -79,7 +80,8 @@
                                                  name:kReloadAllProfiles
                                                object:nil];
     __weak __typeof(self) weakSelf = self;
-    [self defineControl:_cursorType
+    PreferenceInfo *info;
+    info = [self defineControl:_cursorType
                     key:KEY_CURSOR_TYPE
             displayName:@"Cursor style"
                    type:kPreferenceInfoTypeMatrix
@@ -92,6 +94,9 @@
                      [strongSelf->_cursorType selectCellWithTag:[self intForKey:KEY_CURSOR_TYPE]];
                      return YES;
                  }];
+    info.observer = ^{
+        [weakSelf updateShadowEnabled];
+    };
 
     [self defineControl:_blinkingCursor
                     key:KEY_BLINKING_CURSOR
@@ -113,16 +118,21 @@
             relatedView:nil
                    type:kPreferenceInfoTypeCheckbox];
 
+    [self defineControl:_shadow
+                    key:KEY_CURSOR_SHADOW
+            relatedView:nil
+                   type:kPreferenceInfoTypeCheckbox];
+    [self updateShadowEnabled];
+
     [self defineControl:_useItalicFont
                     key:KEY_USE_ITALIC_FONT
             relatedView:nil
                    type:kPreferenceInfoTypeCheckbox];
 
-    PreferenceInfo *info =
-    [self defineControl:_asciiLigatures
-                    key:KEY_ASCII_LIGATURES
-            relatedView:nil
-                   type:kPreferenceInfoTypeCheckbox];
+    info = [self defineControl:_asciiLigatures
+                           key:KEY_ASCII_LIGATURES
+                   relatedView:nil
+                          type:kPreferenceInfoTypeCheckbox];
     info.observer = ^{
         [weakSelf updateLigatureWarning];
     };
@@ -366,6 +376,21 @@
     [self updateWarnings];
 }
 
+- (BOOL)cursorTypeSupportsShadow {
+    switch ((ITermCursorType)[self intForKey:KEY_CURSOR_TYPE]) {
+        case CURSOR_UNDERLINE:
+        case CURSOR_VERTICAL:
+            return YES;
+        case CURSOR_BOX:
+        case CURSOR_DEFAULT:
+            return NO;
+    }
+    return NO;
+}
+
+- (void)updateShadowEnabled {
+    _shadow.enabled = [self cursorTypeSupportsShadow];
+}
 
 - (void)updateThinStrokesEnabled {
     if (@available(macOS 10.14, *)) {

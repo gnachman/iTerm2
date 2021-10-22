@@ -325,6 +325,22 @@ maximumExtendedDynamicRangeColorComponentValue:(CGFloat)maximumExtendedDynamicRa
                                     checkIfChanged:YES];
 }
 
+- (id<MTLBuffer>)newQuadOfSize:(CGSize)size origin:(CGPoint)origin poolContext:(iTermMetalBufferPoolContext *)poolContext {
+    const iTermVertex vertices[] = {
+        // Pixel Positions             Texture Coordinates
+        { { size.width,    origin.y }, { 1.f, 0.f } },
+        { {   origin.x,    origin.y }, { 0.f, 0.f } },
+        { {   origin.x, size.height }, { 0.f, 1.f } },
+
+        { { size.width,    origin.y }, { 1.f, 0.f } },
+        { {   origin.x, size.height }, { 0.f, 1.f } },
+        { { size.width, size.height }, { 1.f, 1.f } },
+    };
+    return [_verticesPool requestBufferFromContext:poolContext
+                                         withBytes:vertices
+                                    checkIfChanged:YES];
+}
+
 - (id<MTLBuffer>)newFlippedQuadOfSize:(CGSize)size poolContext:(iTermMetalBufferPoolContext *)poolContext {
     const iTermVertex vertices[] = {
         // Pixel Positions, Texture Coordinates

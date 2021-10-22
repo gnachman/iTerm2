@@ -310,6 +310,9 @@ typedef NS_ENUM(NSInteger, PTYCharType) {
 // Should cursor blink?
 @property(nonatomic, assign) BOOL blinkingCursor;
 
+// Should bar/underscore cursors have a shadow?
+@property(nonatomic) BOOL cursorShadow;
+
 // Is blinking text drawn blinking?
 @property(nonatomic, assign) BOOL blinkAllowed;
 

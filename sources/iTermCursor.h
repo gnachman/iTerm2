@@ -40,6 +40,6 @@ typedef NS_ENUM(NSInteger, ITermCursorType) {
                coord:(VT100GridCoord)coord
              outline:(BOOL)outline
        virtualOffset:(CGFloat)virtualOffset;
-
+- (void)drawShadow;
 
 @end

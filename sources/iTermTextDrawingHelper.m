@@ -456,8 +456,9 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
                   virtualOffset:virtualOffset];
 
     const BOOL drawCursorBeforeText = (_cursorType == CURSOR_UNDERLINE || _cursorType == CURSOR_VERTICAL);
+    iTermCursor *cursor = nil;
     if (drawCursorBeforeText) {
-        [self drawCursor:NO virtualOffset:virtualOffset];
+        cursor = [self drawCursor:NO virtualOffset:virtualOffset];
     }
 
     // Now iterate over the lines and paint the characters.
@@ -489,7 +490,10 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
             [self drawCursor:YES virtualOffset:virtualOffset];
         }
     } else {
-        [self drawCursor:NO virtualOffset:virtualOffset];
+        cursor = [self drawCursor:NO virtualOffset:virtualOffset];
+    }
+    if (self.cursorShadow) {
+        [cursor drawShadow];
     }
 
     if (self.copyMode) {
@@ -3055,7 +3059,7 @@ withExtendedAttributes:(iTermExternalAttribute *)ea2 {
              virtualOffset:virtualOffset];
 }
 
-- (void)drawCursor:(BOOL)outline virtualOffset:(CGFloat)virtualOffset {
+- (iTermCursor *)drawCursor:(BOOL)outline virtualOffset:(CGFloat)virtualOffset {
     DLog(@"drawCursor:%@", @(outline));
 
     // Update the last time the cursor moved.
@@ -3064,8 +3068,9 @@ withExtendedAttributes:(iTermExternalAttribute *)ea2 {
         _lastTimeCursorMoved = now;
     }
 
+    iTermCursor *cursor = nil;
     if ([self shouldDrawCursor]) {
-        iTermCursor *cursor = [iTermCursor cursorOfType:_cursorType];
+        cursor = [iTermCursor cursorOfType:_cursorType];
         cursor.delegate = self;
         NSRect rect = [self reallyDrawCursor:cursor
                                           at:_cursorCoord
@@ -3097,6 +3102,7 @@ withExtendedAttributes:(iTermExternalAttribute *)ea2 {
     }
 
     _oldCursorPosition = _cursorCoord;
+    return cursor;
 }
 
 - (NSColor *)blockCursorFillColorRespectingSmartSelection {

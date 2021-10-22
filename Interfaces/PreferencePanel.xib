@@ -1354,6 +1354,7 @@ DQ
                 <outlet property="_normalization" destination="XDS-1Z-hVv" id="QUB-dq-OEO"/>
                 <outlet property="_normalizationLabel" destination="MOD-dL-6SH" id="W6R-Zb-3Oa"/>
                 <outlet property="_powerline" destination="RlK-7g-Aj5" id="FUG-uj-1bZ"/>
+                <outlet property="_shadow" destination="eid-kp-DfH" id="LPd-zP-7NT"/>
                 <outlet property="_subpixelAA" destination="eyk-me-Lp0" id="D5O-fy-u3f"/>
                 <outlet property="_thinStrokes" destination="bp3-dc-JQV" id="RVt-pO-7Rz"/>
                 <outlet property="_thinStrokesLabel" destination="8oY-ax-IVW" id="ydV-bn-481"/>
@@ -2850,6 +2851,18 @@ DQ
                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
+                <button toolTip="Underline and vertical bar cursors may have a shadow to improve visibliity." fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="eid-kp-DfH">
+                    <rect key="frame" x="338" y="401" width="75" height="18"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <buttonCell key="cell" type="check" title="Shadow" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="3s8-2Y-ENx">
+                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                        <font key="font" metaFont="system"/>
+                    </buttonCell>
+                    <connections>
+                        <action selector="settingChanged:" target="lhd-u6-xr5" id="Zmh-ah-9Xo"/>
+                        <outlet property="nextKeyView" destination="4782" id="bQz-Xw-pk9"/>
+                    </connections>
+                </button>
             </subviews>
             <accessibility identifier="prefsProfilesText"/>
             <point key="canvasLocation" x="509" y="1335"/>

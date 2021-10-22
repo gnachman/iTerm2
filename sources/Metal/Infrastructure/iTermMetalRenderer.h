@@ -123,6 +123,7 @@ NS_CLASS_AVAILABLE(10_11, NA)
 #pragma mark - For subclasses
 
 - (id<MTLBuffer>)newQuadOfSize:(CGSize)size poolContext:(iTermMetalBufferPoolContext *)poolContext;
+- (id<MTLBuffer>)newQuadOfSize:(CGSize)size origin:(CGPoint)origin poolContext:(iTermMetalBufferPoolContext *)poolContext;
 
 - (id<MTLBuffer>)newQuadWithFrame:(CGRect)quad  // pixel coordinates on viewport with 0,0 at bottom left
                      textureFrame:(CGRect)textureFrame  // normalized coordinates
