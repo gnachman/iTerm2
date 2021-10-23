@@ -26,6 +26,8 @@
 
 #import "PTYTabView.h"
 
+#import "iTermAdvancedSettingsModel.h"
+
 const NSUInteger kAllModifiers = (NSEventModifierFlagControl |
                                   NSEventModifierFlagCommand |
                                   NSEventModifierFlagOption |
@@ -105,8 +107,18 @@ const NSUInteger kAllModifiers = (NSEventModifierFlagControl |
         // Select the next tab to the right if possible
         NSArray<NSTabViewItem *> *items = self.tabViewItems;
         NSInteger index = [items indexOfObject:tabViewItemToRemove];
-        if (index != NSNotFound && index + 1 < items.count) {
-            [self selectTabViewItem:items[index + 1]];
+        if (index != NSNotFound) {
+            if ([iTermAdvancedSettingsModel addNewTabAtEndOfTabs]) {
+                if (index + 1 < items.count) {
+                    [self selectTabViewItem:items[index + 1]];
+                }
+            } else {
+                if (index == 0 && items.count > 1) {
+                    [self selectTabViewItem:items[1]];
+                } else if (index > 0) {
+                    [self selectTabViewItem:items[index - 1]];
+                }
+            }
         }
     }
 
