@@ -72,7 +72,7 @@ typedef NS_ENUM(NSUInteger, iTermHotkeyWindowType) {
 - (IBAction)newWindow:(id)sender;
 - (void)newWindow:(id)sender possiblyTmux:(BOOL)possiblyTmux;
 - (void)newSessionWithSameProfile:(id)sender newWindow:(BOOL)newWindow;
-- (void)newSession:(id)sender possiblyTmux:(BOOL)possiblyTmux;
+- (void)newSession:(id)sender possiblyTmux:(BOOL)possiblyTmux index:(NSNumber *)index;
 - (void)previousTerminal;
 - (void)nextTerminal;
 - (void)newSessionsInWindow:(id)sender;

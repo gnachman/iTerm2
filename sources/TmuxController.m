@@ -86,6 +86,45 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
 @property (nonatomic, strong) NSDictionary *fontOverrides;
 @end
 
+@interface iTermTmuxPendingWindow: NSObject
+@property (nonatomic, copy) void (^completion)(int);
+@property (nonatomic, strong) NSNumber *index;  // Tab index. Nullable.
+
++ (instancetype)trivialInstance;
++ (instancetype)withIndex:(NSNumber *)index completion:(void (^)(int))completion;
+@end
+
+@implementation iTermTmuxPendingWindow
+
+- (void)dealloc {
+    [_completion release];
+    [_index release];
+    [super dealloc];
+}
+
++ (instancetype)trivialInstance {
+    return [[[self alloc] initWithIndex:nil completion:^(int i) { }] autorelease];
+}
+
++ (instancetype)withIndex:(NSNumber *)index completion:(void (^)(int))completion {
+    return [[[self alloc] initWithIndex:index completion:completion] autorelease];
+}
+
+- (instancetype)initWithIndex:(NSNumber *)index completion:(void (^)(int))completion {
+    if (!completion) {
+        return [self initWithIndex:index completion:^(int i) { }];
+    }
+    self = [super init];
+    if (self) {
+        assert(index == nil || [NSNumber castFrom:index] != nil);
+        _index = [index retain];
+        _completion = [completion copy];
+    }
+    return self;
+}
+
+@end
+
 @implementation iTermTmuxWindowState
 
 - (void)dealloc {
@@ -135,7 +174,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     BOOL _haveOpenedInitialWindows;
     ProfileModel *_profileModel;
     // Maps the window ID of an about to be opened window to a completion block to invoke when it opens.
-    NSMutableDictionary<NSNumber *, void(^)(int)> *_pendingWindows;
+    NSMutableDictionary<NSNumber *, iTermTmuxPendingWindow *> *_pendingWindows;
     BOOL _hasStatusBar;
     int _currentWindowID;  // -1 if undefined
     // Pane -> (Key -> Value)
@@ -352,9 +391,9 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     windowOpener.profile = profile;
     windowOpener.initial = initial;
     windowOpener.anonymous = (_pendingWindows[@(windowIndex)] == nil);
-    windowOpener.completion = _pendingWindows[@(windowIndex)];
+    windowOpener.completion = _pendingWindows[@(windowIndex)].completion;
     windowOpener.minimumServerVersion = self.gateway.minimumServerVersion;
-    windowOpener.tabIndex = tabIndex;
+    windowOpener.tabIndex = tabIndex ?: _pendingWindows[@(windowIndex)].index;
     windowOpener.windowGUID = [self windowGUIDInAffinities:affinities];
     windowOpener.perWindowSettings = _perWindowSettings;
     windowOpener.perTabSettings = _perTabSettings;
@@ -1660,6 +1699,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
 - (void)newWindowWithAffinity:(NSString *)windowIdString
                          size:(NSSize)size
              initialDirectory:(iTermInitialDirectory *)initialDirectory
+                        index:(NSNumber *)index
                         scope:(iTermVariableScope *)scope
                    completion:(void (^)(int))completion {
     _manualOpenRequested = (windowIdString != nil);
@@ -1685,7 +1725,9 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
          [commands addObject:[gateway_ dictionaryForCommand:command
                                              responseTarget:self
                                            responseSelector:@selector(newWindowWithAffinityCreated:affinityWindowAndCompletion:)
-                                             responseObject:[iTermTuple tupleWithObject:windowIdString andObject:[[completion copy] autorelease]]
+                                             responseObject:[iTermTriple tripleWithObject:windowIdString
+                                                                                andObject:[[completion copy] autorelease]
+                                                                                   object:index]
                                                       flags:0]];
          [gateway_ sendCommandList:commands];
      }];
@@ -1996,13 +2038,13 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
             // This indicates that the window's opening is originated by the app (it is not
             // "anonymous"), as opposed to running `tmux new-window` at the command line.
             DLog(@"Force intentional");
-            _pendingWindows[@(windowId)] = ^(int i){};
+            _pendingWindows[@(windowId)] = [iTermTmuxPendingWindow trivialInstance];
         }
         [hiddenWindows_ removeObject:[NSNumber numberWithInt:windowId]];
         [self saveHiddenWindows];
         [[NSNotificationCenter defaultCenter] postNotificationName:kTmuxControllerDidChangeHiddenWindows object:self];
     }
-    __block NSNumber *tabIndex = nil;
+    __block NSNumber *tabIndex = _pendingWindows[@(windowId)].index;
     [_buriedWindows enumerateKeysAndObjectsUsingBlock:^(NSString * _Nonnull terminalGUID, NSMutableArray<iTermTuple<NSNumber *, NSNumber *> *> * _Nonnull tuples, BOOL * _Nonnull stop) {
         const NSInteger i = [tuples indexOfObjectPassingTest:^BOOL(iTermTuple<NSNumber *,NSNumber *> * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
             return [obj.firstObject isEqual:@(windowId)];
@@ -2983,12 +3025,13 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
 
 // Called only for iTerm2-initiated new windows/tabs.
 - (void)newWindowWithAffinityCreated:(NSString *)responseStr
-         affinityWindowAndCompletion:(iTermTuple *)tuple {  // Value passed in to -newWindowWithAffinity:, may be nil
+         affinityWindowAndCompletion:(iTermTriple *)tuple {  // Value passed in to -newWindowWithAffinity:, may be nil
     if ([responseStr hasPrefix:@"@"]) {
         int intWindowId = [[responseStr substringFromIndex:1] intValue];
         NSString  *windowId = [NSString stringWithInt:intWindowId];
         void (^completion)(int) = tuple.secondObject;
-        _pendingWindows[@(intWindowId)] = completion ?: ^(int i){};
+        _pendingWindows[@(intWindowId)] = [iTermTmuxPendingWindow withIndex:tuple.thirdObject
+                                                                 completion:completion];
         NSString *affinityWindow = tuple.firstObject;
         if (affinityWindow) {
             [affinities_ setValue:windowId

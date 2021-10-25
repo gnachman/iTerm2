@@ -3655,11 +3655,11 @@ typedef struct {
     theTab.tmuxWindow = tmuxWindow;
     theTab->parseTree_ = parseTree;
 
-    if ([parseTree[kLayoutDictTabOpenedManually] boolValue]) {
-        [term addTabAtAutomaticallyDeterminedLocation:theTab];
-    } else if (parseTree[kLayoutDictTabIndex]) {
-        // Disinter a tab, adding it at a specified index.
+    if (parseTree[kLayoutDictTabIndex]) {
+        // Add tab at a specified index.
         [term insertTab:theTab atIndex:[parseTree[kLayoutDictTabIndex] intValue]];
+    } else if ([parseTree[kLayoutDictTabOpenedManually] boolValue]) {
+        [term addTabAtAutomaticallyDeterminedLocation:theTab];
     } else {
         [term appendTab:theTab];
     }

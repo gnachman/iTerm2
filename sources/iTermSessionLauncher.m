@@ -51,6 +51,7 @@
                         makeKey:YES
                     canActivate:YES
              respectTabbingMode:respectTabbingMode
+                          index:nil
                         command:nil
                     makeSession:nil
                  didMakeSession:completion
@@ -64,6 +65,7 @@
                makeKey:(BOOL)makeKey
            canActivate:(BOOL)canActivate
     respectTabbingMode:(BOOL)respectTabbingMode
+                 index:(NSNumber *)index
                command:(NSString *)command
            makeSession:(void (^)(Profile *profile, PseudoTerminal *windowController, void (^completion)(PTYSession *)))makeSession
         didMakeSession:(void (^)(PTYSession *))didMakeSession
@@ -79,6 +81,7 @@
         launcher.makeSession = makeSession;
     }
     launcher.didCreateSession = didMakeSession;
+    launcher.index = index;
     [launcher launchWithCompletion:completion];
 }
 
@@ -272,6 +275,7 @@
     [windowController asyncCreateTabWithProfile:profile
                                     withCommand:_command
                                     environment:nil
+                                       tabIndex:self.index
                                  didMakeSession:^(PTYSession *session) { completion(session, YES); }
                                 completion:^(PTYSession *newSession, BOOL ok) { [weakSelf setFinishedWithSuccess:ok]; }];
 }

@@ -167,6 +167,7 @@ extern NSString *const kTmuxControllerDidChangeHiddenWindows;
 - (void)newWindowWithAffinity:(NSString *)windowIdString
                          size:(NSSize)size
              initialDirectory:(iTermInitialDirectory *)initialDirectory
+                        index:(NSNumber *)index
                         scope:(iTermVariableScope *)scope
                    completion:(void (^)(int))completion;
 

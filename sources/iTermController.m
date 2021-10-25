@@ -348,17 +348,25 @@ static iTermController *gSharedInstance;
 
 // Launch a new session using the default profile. If the current session is
 // tmux and possiblyTmux is true, open a new tmux session.
-- (void)newSession:(id)sender possiblyTmux:(BOOL)possiblyTmux {
+- (void)newSession:(id)sender possiblyTmux:(BOOL)possiblyTmux index:(NSNumber *)index {
     DLog(@"newSession:%@ possiblyTmux:%d from %@",
          sender, (int)possiblyTmux, [NSThread callStackSymbols]);
     if (possiblyTmux &&
         _frontTerminalWindowController &&
         [[_frontTerminalWindowController currentSession] isTmuxClient]) {
-        [_frontTerminalWindowController newTmuxTab:sender];
+        [_frontTerminalWindowController newTmuxTabAtIndex:index];
     } else {
         [iTermSessionLauncher launchBookmark:nil
                                   inTerminal:_frontTerminalWindowController
+                                     withURL:nil
+                            hotkeyWindowType:iTermHotkeyWindowTypeNone
+                                     makeKey:YES
+                                 canActivate:YES
                           respectTabbingMode:NO
+                                       index:index
+                                     command:nil
+                                 makeSession:nil
+                              didMakeSession:nil
                                   completion:nil];
     }
 }
@@ -1497,6 +1505,7 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
         [term asyncCreateTabWithProfile:profile
                             withCommand:command
                             environment:environment
+                               tabIndex:nil
                          didMakeSession:^(PTYSession *session) {
             if (shortLived) {
                 session.shortLivedSingleUse = YES;
@@ -1529,6 +1538,7 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
                                  makeKey:YES
                              canActivate:YES
                       respectTabbingMode:NO
+                                   index:nil
                                  command:command
                              makeSession:makeSession
                           didMakeSession:^(PTYSession *session) {

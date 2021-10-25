@@ -76,6 +76,7 @@ void TurnOnDebugLoggingAutomatically(void);
 - (void)openPasswordManagerToAccountName:(NSString *)name inSession:(PTYSession *)session;
 - (void)didToggleTraditionalFullScreenMode;
 - (void)willRestoreWindow;
+- (void)newTabAtIndex:(NSNumber *)index;
 
 #pragma mark - Actions
 

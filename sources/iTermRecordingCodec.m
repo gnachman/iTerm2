@@ -99,6 +99,7 @@
                                  makeKey:YES
                              canActivate:YES
                       respectTabbingMode:NO
+                                   index:nil
                                  command:nil
                              makeSession:^(NSDictionary *profile, PseudoTerminal *windowController, void (^makeSessionCompletion)(PTYSession *)) {
         PTYSession *newSession = [[PTYSession alloc] initSynthetic:YES];

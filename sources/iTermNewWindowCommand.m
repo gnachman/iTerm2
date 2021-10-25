@@ -46,6 +46,7 @@
                                      makeKey:YES
                                  canActivate:YES
                           respectTabbingMode:NO
+                                       index:nil
                                      command:command
                                  makeSession:nil
                               didMakeSession:nil

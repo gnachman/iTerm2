@@ -564,7 +564,8 @@ static int OctalValue(const char *bytes) {
                                                       withObject:nil];
     if (self.manuallyOpened) {
         parseTree[kLayoutDictTabOpenedManually] = @YES;
-    } else if (self.tabIndex) {
+    }
+    if (self.tabIndex) {
         parseTree[kLayoutDictTabIndex] = self.tabIndex;
     }
 }

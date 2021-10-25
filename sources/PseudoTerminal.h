@@ -322,11 +322,13 @@ extern NSString *const iTermDidCreateTerminalWindowNotification;
 - (void)asyncCreateTabWithProfile:(Profile *)profile
                       withCommand:(NSString *)command
                       environment:(NSDictionary *)environment
+                         tabIndex:(NSNumber *)tabIndex
                    didMakeSession:(void (^)(PTYSession *session))didMakeSession
                        completion:(void (^)(PTYSession *newSession, BOOL ok))completion;
 
 - (IBAction)newTmuxWindow:(id)sender;
 - (IBAction)newTmuxTab:(id)sender;
+- (void)newTmuxTabAtIndex:(NSNumber *)index;
 - (NSString *)tmuxPerWindowSetting;
 - (void)setTmuxPerWindowSetting:(NSString *)setting;
 

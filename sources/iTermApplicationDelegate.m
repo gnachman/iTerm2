@@ -1384,6 +1384,7 @@ void TurnOnDebugLoggingAutomatically(void) {
                                          makeKey:NO
                                      canActivate:NO
                               respectTabbingMode:YES
+                                           index:nil
                                          command:nil
                                      makeSession:nil
                                   didMakeSession:nil
@@ -1818,8 +1819,11 @@ void TurnOnDebugLoggingAutomatically(void) {
                                                       newWindow:NO];
 }
 
-- (IBAction)newSession:(id)sender
-{
+- (IBAction)newSession:(id)sender {
+    [self newTabAtIndex:nil];
+}
+
+- (void)newTabAtIndex:(NSNumber *)index {
     DLog(@"iTermApplicationDelegate newSession:");
     BOOL cancel;
     BOOL tmux = [self possiblyTmuxValueForWindow:NO cancel:&cancel];
@@ -1827,7 +1831,7 @@ void TurnOnDebugLoggingAutomatically(void) {
         DLog(@"Cancel");
         return;
     }
-    [[iTermController sharedInstance] newSession:sender possiblyTmux:tmux];
+    [[iTermController sharedInstance] newSession:nil possiblyTmux:tmux index:index];
 }
 
 - (IBAction)arrangeHorizontally:(id)sender
@@ -2444,6 +2448,7 @@ void TurnOnDebugLoggingAutomatically(void) {
                                  makeKey:NO
                              canActivate:NO
                       respectTabbingMode:NO
+                                   index:nil
                                  command:nil
                              makeSession:makeSession
                           didMakeSession:^(PTYSession * _Nonnull session) {
@@ -2476,6 +2481,7 @@ void TurnOnDebugLoggingAutomatically(void) {
                                  makeKey:NO
                              canActivate:NO
                       respectTabbingMode:NO
+                                   index:nil
                                  command:nil
                              makeSession:makeSession
                           didMakeSession:^(PTYSession * _Nonnull session) {

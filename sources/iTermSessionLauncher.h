@@ -52,6 +52,7 @@ NS_ASSUME_NONNULL_BEGIN
 // Values passed to initializer.
 @property (readonly, nonatomic, readonly) Profile *profile;
 @property (readonly, nonatomic, readonly) PseudoTerminal *windowController;
+@property (nullable, nonatomic, strong) NSNumber *index;
 
 + (BOOL)profileIsWellFormed:(Profile *)profile;
 
@@ -67,6 +68,7 @@ NS_ASSUME_NONNULL_BEGIN
                makeKey:(BOOL)makeKey
            canActivate:(BOOL)canActivate
     respectTabbingMode:(BOOL)respectTabbingMode
+                 index:(NSNumber * _Nullable)index
                command:(nullable NSString *)command
            makeSession:(void (^ _Nullable)(Profile *profile, PseudoTerminal *windowController, void (^completion)(PTYSession *)))makeSession
         didMakeSession:(void (^ _Nullable)(PTYSession *))didMakeSession

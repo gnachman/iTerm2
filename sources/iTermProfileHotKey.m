@@ -154,6 +154,7 @@ static NSString *const kArrangement = @"Arrangement";
                                          makeKey:YES
                                      canActivate:YES
                               respectTabbingMode:NO
+                                           index:nil
                                          command:nil
                                      makeSession:nil
                                   didMakeSession:nil
@@ -877,6 +878,7 @@ static NSString *const kArrangement = @"Arrangement";
                                  makeKey:YES
                              canActivate:YES
                       respectTabbingMode:NO
+                                   index:nil
                                  command:nil
                              makeSession:nil
                           didMakeSession:^(PTYSession * _Nonnull session) {

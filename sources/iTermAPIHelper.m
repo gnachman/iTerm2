@@ -2259,6 +2259,7 @@ static BOOL iTermAPIHelperLastApplescriptAuthRequiredSetting;
         [term asyncCreateTabWithProfile:profile
                             withCommand:nil
                             environment:nil
+                               tabIndex:nil
                          didMakeSession:^(PTYSession *session) { didMakeSession(session); }
                              completion:nil];
     };
@@ -3316,6 +3317,7 @@ static BOOL iTermCheckSplitTreesIsomorphic(ITMSplitTreeNode *node1, ITMSplitTree
                                                                  controller:controller]
                      initialDirectory:[iTermInitialDirectory initialDirectoryFromProfile:controller.sharedProfile
                                                                               objectType:iTermWindowObject]
+                                index:nil
                                 scope:[iTermVariableScope globalsScope]
                            completion:^(int newWindowId) {
         if (newWindowId >= 0) {

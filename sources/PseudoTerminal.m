@@ -2943,11 +2943,16 @@ ITERM_WEAKLY_REFERENCEABLE
                                                                                    controller:self.currentTmuxController]
                                        initialDirectory:[iTermInitialDirectory initialDirectoryFromProfile:self.currentSession.profile
                                                                                                 objectType:iTermWindowObject]
+                                                  index:nil
                                                   scope:[iTermVariableScope globalsScope]
                                              completion:nil];
 }
 
 - (IBAction)newTmuxTab:(id)sender {
+    [self newTmuxTabAtIndex:nil];
+}
+
+- (void)newTmuxTabAtIndex:(NSNumber *)index {
     int tmuxWindow = [[self currentTab] tmuxWindow];
     if (tmuxWindow < 0) {
         tmuxWindow = -(number_ + 1);
@@ -2958,6 +2963,7 @@ ITERM_WEAKLY_REFERENCEABLE
                                                                                    controller:self.currentTmuxController]
                                        initialDirectory:[iTermInitialDirectory initialDirectoryFromProfile:self.currentSession.profile
                                                                                                 objectType:iTermTabObject]
+                                                  index:index
                                                   scope:[iTermVariableScope globalsScope]
                                              completion:nil];
 }
@@ -6334,6 +6340,12 @@ ITERM_WEAKLY_REFERENCEABLE
    }
 
     // add tasks
+    item = [[[NSMenuItem alloc] initWithTitle:@"New Tab to the Right"
+                                       action:@selector(newTabToTheRight:)
+                                keyEquivalent:@""] autorelease];
+    [item setRepresentedObject:tabViewItem];
+    [rootMenu addItem:item];
+
     item = [[[NSMenuItem alloc] initWithTitle:@"Edit Session…"
                                        action:@selector(editSession:)
                                 keyEquivalent:@""] autorelease];
@@ -10263,6 +10275,25 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     }
 }
 
+- (IBAction)newTabToTheRight:(id)sender {
+    PTYTab *tab = [PTYTab castFrom:[[sender representedObject] identifier]];
+    if (!tab) {
+        return;
+    }
+    const NSUInteger index = [self.tabs indexOfObject:tab];
+    if (index == NSNotFound) {
+        return;
+    }
+    [[[iTermApplication sharedApplication] delegate] newTabAtIndex:@(index + 1)];
+}
+
+- (NSUInteger)indexForNewTab {
+    if ([iTermAdvancedSettingsModel addNewTabAtEndOfTabs] || ![self currentTab]) {
+        return [_contentView.tabView numberOfTabViewItems];
+    }
+    return [self indexOfTab:[self currentTab]] + 1;
+}
+
 - (IBAction)duplicateTab:(id)sender {
     [self createDuplicateOfTab:(PTYTab *)[[sender representedObject] identifier]];
 }
@@ -10285,6 +10316,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
                                      makeKey:YES
                                  canActivate:YES
                           respectTabbingMode:NO
+                                       index:nil
                                      command:nil
                                  makeSession:^(Profile *profile, PseudoTerminal *term, void (^makeSessionCompletion)(PTYSession *)) {
             // Keep session size stable.
@@ -10601,6 +10633,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 - (void)asyncCreateTabWithProfile:(Profile *)profile
                       withCommand:(NSString *)command
                       environment:(NSDictionary *)environment
+                         tabIndex:(NSNumber *)tabIndex
                    didMakeSession:(void (^)(PTYSession *session))didMakeSession
                        completion:(void (^)(PTYSession *, BOOL ok))completion {
     PTYSession *currentSession = [self sessionForDirectoryRecycling];
@@ -10608,6 +10641,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
         PTYSession *newSession = [self createTabWithProfile:profile
                                                 withCommand:command
                                                 environment:environment
+                                                   tabIndex:tabIndex
                                           previousDirectory:nil
                                                      parent:nil
                                                  completion:completion];
@@ -10627,6 +10661,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
         PTYSession *newSession = [strongSelf createTabWithProfile:profile
                                                       withCommand:command
                                                       environment:environment
+                                                         tabIndex:tabIndex
                                                 previousDirectory:pwd
                                                            parent:currentSession
                                                        completion:completion];
@@ -10639,6 +10674,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 - (PTYSession *)createTabWithProfile:(Profile *)profile
                          withCommand:(NSString *)command
                          environment:(NSDictionary *)environment
+                            tabIndex:(NSNumber *)tabIndex
                    previousDirectory:(NSString *)previousDirectory
                               parent:(PTYSession *)parent
                           completion:(void (^)(PTYSession *, BOOL ok))completion {
@@ -10660,7 +10696,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
                                                                 parent:parent] autorelease];
 
     // Add this session to our term and make it current
-    [self addSessionInNewTab:aSession];
+    [self addSession:aSession inTabAtIndex:tabIndex];
 
     iTermSessionAttachOrLaunchRequest *launchRequest =
     [iTermSessionAttachOrLaunchRequest launchRequestWithSession:aSession
@@ -10891,6 +10927,10 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 }
 
 - (void)addSessionInNewTab:(PTYSession *)session {
+    [self addSession:session inTabAtIndex:nil];
+}
+
+- (void)addSession:(PTYSession *)session inTabAtIndex:(NSNumber *)tabIndex {
     if (![iTermSessionLauncher profileIsWellFormed:session.profile]) {
         return;
     }
@@ -10902,11 +10942,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     tabViewItemsBeingAdded--;
     if ([session screen]) {  // screen initialized ok
         PTYTab *tab = nil;
-        if ([iTermAdvancedSettingsModel addNewTabAtEndOfTabs] || ![self currentTab]) {
-            tab = [self insertSession:session atIndex:[_contentView.tabView numberOfTabViewItems]];
-        } else {
-            tab = [self insertSession:session atIndex:[self indexOfTab:[self currentTab]] + 1];
-        }
+        tab = [self insertSession:session atIndex:tabIndex ? tabIndex.unsignedIntegerValue : [self indexForNewTab]];
         if (!tab.tmuxTab &&
             [iTermProfilePreferences boolForKey:KEY_USE_CUSTOM_TAB_TITLE inProfile:session.profile]) {
             [tab setTitleOverride:[iTermProfilePreferences stringForKey:KEY_CUSTOM_TAB_TITLE

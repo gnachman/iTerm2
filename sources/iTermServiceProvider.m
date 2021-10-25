@@ -49,6 +49,7 @@
                                  makeKey:YES
                              canActivate:YES
                       respectTabbingMode:NO
+                                   index:nil
                                  command:nil
                              makeSession:^(Profile *profile, PseudoTerminal *term, void (^makeSessionCompletion)(PTYSession *)) {
         profile = [profile dictionaryBySettingObject:@"Yes" forKey:KEY_CUSTOM_DIRECTORY];
@@ -59,6 +60,7 @@
         [term asyncCreateTabWithProfile:profile
                             withCommand:nil
                             environment:nil
+                               tabIndex:nil
                          didMakeSession:^(PTYSession *session) {
             makeSessionCompletion(session);
         }

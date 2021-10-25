@@ -2505,6 +2505,7 @@ ITERM_WEAKLY_REFERENCEABLE
                                  makeKey:NO
                              canActivate:NO
                       respectTabbingMode:NO
+                                   index:nil
                                  command:nil
                              makeSession:nil
                           didMakeSession:nil
