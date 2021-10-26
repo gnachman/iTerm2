@@ -46,6 +46,7 @@ extern const NSInteger kLongMaximumWordLength;
 @property(nonatomic, assign) VT100GridRange logicalWindow;
 @property(nonatomic, readonly) BOOL hasLogicalWindow;
 @property(nonatomic, weak, readonly) id<iTermTextDataSource> dataSource;
+@property(nonatomic, readonly) BOOL shouldPreserveTabs;
 
 // Characters that divide words.
 + (NSCharacterSet *)wordSeparatorCharacterSet;
@@ -147,6 +148,7 @@ extern const NSInteger kLongMaximumWordLength;
                  pad:(BOOL)pad
   includeLastNewline:(BOOL)includeLastNewline
     trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
+        preserveTabs:(BOOL)preserveTabs
               cappedAtSize:(int)maxBytes
         truncateTail:(BOOL)truncateTail
          continuationChars:(NSMutableIndexSet *)continuationChars

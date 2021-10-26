@@ -12229,6 +12229,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                                               pad:NO
                                includeLastNewline:NO
                            trimTrailingWhitespace:NO
+                                     preserveTabs:YES
                                      cappedAtSize:-1
                                      truncateTail:YES
                                 continuationChars:nil

@@ -238,6 +238,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)pollForTmuxForegroundJob;
 + (BOOL)preferSpeedToFullLigatureSupport;
 + (NSString *)preferredBaseDir;
++ (BOOL)preserveTabsInAlternateScreenMode;
 + (const BOOL *)preventEscapeSequenceFromClearingHistory;
 + (BOOL)saveScrollBufferWhenClearing;
 + (void)setPreventEscapeSequenceFromClearingHistory:(const BOOL *)value;

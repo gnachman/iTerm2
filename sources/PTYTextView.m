@@ -2410,7 +2410,8 @@
 // Returns an NSAttributedString* if style is iTermCopyTextStyleAttributed, or an NSString* if not.
 - (id)selectedTextWithStyle:(iTermCopyTextStyle)style
                cappedAtSize:(int)maxBytes
-          minimumLineNumber:(int)minimumLineNumber {
+          minimumLineNumber:(int)minimumLineNumber
+               preserveTabs:(BOOL)preserveTabs {
     if (![_selection hasSelection]) {
         DLog(@"startx < 0 so there is no selected text");
         return nil;
@@ -2465,8 +2466,10 @@
                                                pad:NO
                                 includeLastNewline:copyLastNewline
                             trimTrailingWhitespace:trimWhitespace
+                                      preserveTabs:preserveTabs
                                       cappedAtSize:cap
                                       truncateTail:YES
+                                      preserveTabs:extractor.shouldPreserveTabs
                                  continuationChars:nil
                                             coords:nil];
             if (attributeProvider != nil) {
@@ -2645,6 +2648,7 @@
                                  pad:YES
                   includeLastNewline:NO
               trimTrailingWhitespace:NO
+                        preserveTabs:YES
                         cappedAtSize:-1
                         truncateTail:YES
                    continuationChars:nil
@@ -2859,6 +2863,7 @@
               trimTrailingWhitespace:NO
                         cappedAtSize:-1
                         truncateTail:YES
+                        preserveTabs:extractor.shouldPreserveTabs
                    continuationChars:nil
                               coords:nil];
 }
@@ -3669,6 +3674,7 @@
                                                      pad:NO
                                       includeLastNewline:YES
                                   trimTrailingWhitespace:NO
+                                            preserveTabs:NO
                                             cappedAtSize:-1
                                             truncateTail:YES
                                        continuationChars:nil

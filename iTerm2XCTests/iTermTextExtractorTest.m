@@ -270,6 +270,7 @@ static const NSInteger kUnicodeVersion = 9;
                                              pad:NO
                               includeLastNewline:NO
                           trimTrailingWhitespace:NO
+                                    preserveTabs:YES
                                     cappedAtSize:3
                                     truncateTail:NO
                                continuationChars:nil
@@ -305,6 +306,7 @@ static const NSInteger kUnicodeVersion = 9;
                                              pad:NO
                               includeLastNewline:NO
                           trimTrailingWhitespace:NO
+                                    preserveTabs:YES
                                     cappedAtSize:3
                                     truncateTail:NO
                                continuationChars:nil
@@ -339,6 +341,7 @@ static const NSInteger kUnicodeVersion = 9;
                                              pad:NO
                               includeLastNewline:NO
                           trimTrailingWhitespace:NO
+                                    preserveTabs:YES
                                     cappedAtSize:3
                                     truncateTail:NO
                                continuationChars:nil
@@ -352,6 +355,7 @@ static const NSInteger kUnicodeVersion = 9;
                                    pad:NO
                     includeLastNewline:NO
                 trimTrailingWhitespace:NO
+                          preserveTabs:YES
                           cappedAtSize:3
                           truncateTail:YES
                      continuationChars:nil
@@ -391,6 +395,7 @@ static const NSInteger kUnicodeVersion = 9;
                                              pad:NO
                               includeLastNewline:NO
                           trimTrailingWhitespace:NO
+                                    preserveTabs:YES
                                     cappedAtSize:-1
                                     truncateTail:NO
                                continuationChars:nil
@@ -431,6 +436,7 @@ static const NSInteger kUnicodeVersion = 9;
                                              pad:NO
                               includeLastNewline:NO
                           trimTrailingWhitespace:NO
+                                    preserveTabs:YES
                                     cappedAtSize:-1
                                     truncateTail:NO
                                continuationChars:nil

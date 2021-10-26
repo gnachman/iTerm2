@@ -129,6 +129,7 @@ const int kMaxResultContextWords = 4;
                                                 pad:NO
                                  includeLastNewline:NO
                              trimTrailingWhitespace:NO
+                                       preserveTabs:YES
                                        cappedAtSize:-1
                                        truncateTail:YES
                                   continuationChars:nil
@@ -170,6 +171,7 @@ const int kMaxResultContextWords = 4;
                                             pad:NO
                              includeLastNewline:NO
                          trimTrailingWhitespace:NO
+                                   preserveTabs:YES
                                    cappedAtSize:-1
                                    truncateTail:YES
                               continuationChars:nil
@@ -515,6 +517,7 @@ const int kMaxResultContextWords = 4;
                                                             pad:NO
                                              includeLastNewline:NO
                                          trimTrailingWhitespace:NO
+                                                   preserveTabs:YES
                                                    cappedAtSize:-1
                                                    truncateTail:YES
                                               continuationChars:nil
@@ -529,6 +532,7 @@ const int kMaxResultContextWords = 4;
                                                        pad:NO
                                         includeLastNewline:NO
                                     trimTrailingWhitespace:NO
+                                              preserveTabs:YES
                                               cappedAtSize:-1
                                               truncateTail:YES
                                          continuationChars:nil
@@ -567,6 +571,7 @@ const int kMaxResultContextWords = 4;
                                                  pad:NO
                                   includeLastNewline:NO
                               trimTrailingWhitespace:NO
+                                        preserveTabs:YES
                                         cappedAtSize:-1
                                         truncateTail:YES
                                    continuationChars:nil
@@ -587,6 +592,7 @@ const int kMaxResultContextWords = 4;
                                                          pad:NO
                                           includeLastNewline:NO
                                       trimTrailingWhitespace:NO
+                                                preserveTabs:YES
                                                 cappedAtSize:-1
                                                 truncateTail:YES
                                            continuationChars:nil

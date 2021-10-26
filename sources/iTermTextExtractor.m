@@ -1364,6 +1364,7 @@ const NSInteger kLongMaximumWordLength = 100000;
                                        pad:NO
                         includeLastNewline:NO
                     trimTrailingWhitespace:NO
+                              preserveTabs:[self shouldPreserveTabs]
                               cappedAtSize:maxMatchLength
                               truncateTail:YES
                          continuationChars:nil
@@ -1405,6 +1406,7 @@ const NSInteger kLongMaximumWordLength = 100000;
                  pad:(BOOL)pad
   includeLastNewline:(BOOL)includeLastNewline
 trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
+        preserveTabs:(BOOL)preserveTabs
         cappedAtSize:(int)maxBytes
         truncateTail:(BOOL)truncateTail
    continuationChars:(NSMutableIndexSet *)continuationChars
@@ -1416,6 +1418,7 @@ trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
                            pad:pad
             includeLastNewline:includeLastNewline
         trimTrailingWhitespace:trimSelectionTrailingSpaces
+                  preserveTabs:preserveTabs
                   cappedAtSize:maxBytes
                   truncateTail:truncateTail
              continuationChars:continuationChars];
@@ -1429,6 +1432,7 @@ trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
                        pad:(BOOL)pad
         includeLastNewline:(BOOL)includeLastNewline
     trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
+              preserveTabs:(BOOL)preserveTabs
               cappedAtSize:(int)maxBytes
               truncateTail:(BOOL)truncateTail
          continuationChars:(NSMutableIndexSet *)continuationChars {
@@ -1487,9 +1491,11 @@ trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
                           } else if (theChar.code == TAB_FILLER && !theChar.complexChar) {
                               // Convert orphan tab fillers (those without a subsequent
                               // tab character) into spaces.
-                              if ([self tabFillerAtIndex:coord.x isOrphanInLine:currentLine]) {
+                              if (!preserveTabs || [self tabFillerAtIndex:coord.x isOrphanInLine:currentLine]) {
                                   appendString(@" ", theChar, ea, coord);
                               }
+                          } else if (theChar.code == '\t' && !theChar.complexChar && !preserveTabs) {
+                              appendString(@" ", theChar, ea, coord);
                           } else if (theChar.code == 0 && !theChar.complexChar) {
                               // This is only reached for midline nulls; nulls at the end of the
                               // line end up in eolBlock.
@@ -1899,6 +1905,7 @@ trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
                                pad:NO
                 includeLastNewline:NO
             trimTrailingWhitespace:NO
+                      preserveTabs:[self shouldPreserveTabs]
                       cappedAtSize:maxChars
                       truncateTail:forward
                  continuationChars:continuationChars];
@@ -1906,6 +1913,16 @@ trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
         [locatedString removeOcurrencesOfString:@"\n"];
     }
     return locatedString;
+}
+
+- (BOOL)shouldPreserveTabs {
+    if (!_dataSource) {
+        return YES;
+    }
+    if (![_dataSource softAlternateScreenMode]) {
+        return YES;
+    }
+    return [iTermAdvancedSettingsModel preserveTabsInAlternateScreenMode];
 }
 
 - (void)enumerateCharsInRange:(VT100GridWindowedRange)range

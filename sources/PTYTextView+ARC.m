@@ -426,6 +426,7 @@ static const NSUInteger kRectangularSelectionModifierMask = (kRectangularSelecti
                                                      pad:NO
                                       includeLastNewline:NO
                                   trimTrailingWhitespace:YES
+                                            preserveTabs:NO
                                             cappedAtSize:self.dataSource.width
                                             truncateTail:YES
                                        continuationChars:nil
