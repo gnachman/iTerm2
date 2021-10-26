@@ -1103,18 +1103,29 @@ void TurnOnDebugLoggingAutomatically(void) {
         [_untitledWindowStateMachine disableInitialUntitledWindow];
     }
 
+    DLog(@"willFinishLaunching");
     if (_restorableStateController) {
-        [_restorableStateController restoreWindowsWithCompletion:^{
-            DLog(@"Window restoration is totally complete");
-            [_untitledWindowStateMachine didFinishRestoringWindows];
-        }];
+        // The system doesn't tell us when it's done invoking NSWindowRestoration calls. My guess
+        // is that it's a spin after applicationWillFinishLaunching. We care because we won't make
+        // the database writable until we know we don't need to use old records any more.
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [self restoreWindows];
+        });
     } else {
-        [_restorableStateController didSkipRestoration];
         [_untitledWindowStateMachine didFinishRestoringWindows];
     }
 }
 
+- (void)restoreWindows {
+    DLog(@"restoreWindows");
+    [_restorableStateController restoreWindowsWithCompletion:^{
+        DLog(@"Window restoration is totally complete");
+        [_untitledWindowStateMachine didFinishRestoringWindows];
+    }];
+}
+
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification {
+    DLog(@"didFinishLaunching");
     [iTermLaunchExperienceController applicationDidFinishLaunching];
     [[iTermLaunchServices sharedInstance] registerForiTerm2Scheme];
     if (IsTouchBarAvailable()) {
