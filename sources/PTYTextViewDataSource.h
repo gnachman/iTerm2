@@ -32,7 +32,7 @@
 - (screen_char_t *)getLineAtIndex:(int)theIndex;
 - (long long)totalScrollbackOverflow;
 - (iTermExternalAttributeIndex *)externalAttributeIndexForLine:(int)y;
-- (BOOL)softAlternateScreenMode;
+- (BOOL)textExtractionShouldPreserveTabs;
 
 @end
 

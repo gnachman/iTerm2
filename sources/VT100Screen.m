@@ -1988,6 +1988,13 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     return cumulativeScrollbackOverflow_;
 }
 
+- (BOOL)textExtractionShouldPreserveTabs {
+    if (!self.terminal.softAlternateScreenMode) {
+        return YES;
+    }
+    return [iTermAdvancedSettingsModel preserveTabsInAlternateScreenMode];
+}
+
 - (long long)absoluteLineNumberOfCursor
 {
     return [self totalScrollbackOverflow] + [self numberOfLines] - [self height] + currentGrid_.cursorY;

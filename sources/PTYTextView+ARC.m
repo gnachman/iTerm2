@@ -777,8 +777,16 @@ allowRightMarginOverflow:(BOOL)allowRightMarginOverflow {
 }
 
 - (NSString *)contextMenuSelectedText:(iTermTextViewContextMenuHelper *)contextMenu
-                               capped:(int)maxBytes {
-    return [self selectedTextCappedAtSize:maxBytes];
+                               capped:(int)maxBytes
+                             verbatim:(BOOL)verbatim {
+    if (verbatim) {
+        return [self selectedTextWithStyle:iTermCopyTextStylePlainText
+                              cappedAtSize:maxBytes
+                         minimumLineNumber:0
+                              preserveTabs:YES];
+    } else {
+        return [self selectedTextCappedAtSize:maxBytes];
+    }
 }
 
 - (VT100ScreenMark *)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu

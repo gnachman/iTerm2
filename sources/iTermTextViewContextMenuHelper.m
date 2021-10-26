@@ -70,7 +70,7 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
     // Hamburger icon in session title view.
     _validationClickPoint = VT100GridCoordMake(-1, -1);
     NSMenu *menu = [self titleBarMenu];
-    _savedSelectedText = [self.delegate contextMenuSelectedText:self capped:0].copy;
+    _savedVerbatimSelectedText = [self.delegate contextMenuSelectedText:self capped:0 verbatim:YES].copy;
     menu.delegate = self;
     return menu;
 }
@@ -116,18 +116,16 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
         iTermSelection *savedSelection = [selection copy];
         [_urlActionHelper smartSelectWithEvent:event];
         NSCharacterSet *nonWhiteSpaceSet = [[NSCharacterSet whitespaceAndNewlineCharacterSet] invertedSet];
-        NSString *text = [[self.delegate contextMenuSelectedText:self capped:0] copy];
+        NSString *text = [[self.delegate contextMenuSelectedText:self capped:0 verbatim:NO] copy];
+        _savedCleanedSelectedText = [text copy];
         if (!text ||
             !text.length ||
             [text rangeOfCharacterFromSet:nonWhiteSpaceSet].location == NSNotFound) {
             // If all we selected was white space, undo it.
             [self.delegate contextMenu:self setSelection:savedSelection];
-            _savedSelectedText = [[self.delegate contextMenuSelectedText:self capped:0] copy];
-        } else {
-            _savedSelectedText = text;
         }
     } else if (clickedInExistingSelection && [self.delegate contextMenuSelectionIsShort:self]) {
-        _savedSelectedText = [[self.delegate contextMenuSelectedText:self capped:0] copy];
+        _savedVerbatimSelectedText = [[self.delegate contextMenuSelectedText:self capped:0 verbatim:YES] copy];
     }
     NSMenu *contextMenu = [self menuAtCoord:coord];
     if (markMenu) {
@@ -149,7 +147,7 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
         const BOOL valid =
         [self.delegate contextMenu:self withRelativeCoord:selection.lastAbsRange.coordRange.start block:^(VT100GridCoord coord) {
             const BOOL haveShortSelection = [self.delegate contextMenuSelectionIsShort:self];
-            NSString *selectedText = [self.delegate contextMenuSelectedText:self capped:0];
+            NSString *selectedText = [self.delegate contextMenuSelectedText:self capped:0 verbatim:YES];
             result = (haveShortSelection &&
                       [selection hasSelection] &&
                       [self.delegate contextMenu:self scpPathForFile:selectedText onLine:coord.y] != nil);
@@ -318,7 +316,7 @@ static uint64_t iTermInt64FromBytes(const unsigned char *bytes, BOOL bigEndian) 
     {
         BOOL needSeparator = NO;
         if (haveShortSelection) {
-            shortSelectedText = [self.delegate contextMenuSelectedText:self capped:0];
+            shortSelectedText = [self.delegate contextMenuSelectedText:self capped:0 verbatim:YES];
             NSArray<NSString *> *synonyms = [shortSelectedText helpfulSynonyms];
             needSeparator = synonyms.count > 0;
             for (NSString *conversion in synonyms) {
@@ -358,7 +356,7 @@ static uint64_t iTermInt64FromBytes(const unsigned char *bytes, BOOL bigEndian) 
             }
         }
         if ([self.delegate contextMenuSelectionIsReasonable:self]) {
-            NSString *text = [self.delegate contextMenuSelectedText:self capped:0];
+            NSString *text = [self.delegate contextMenuSelectedText:self capped:0 verbatim:YES];
             NSData *data = [text dataFromWhitespaceDelimitedHexValues];
             if (data.length > 0) {
                 NSMenuItem *theItem = nil;
@@ -473,7 +471,7 @@ static uint64_t iTermInt64FromBytes(const unsigned char *bytes, BOOL bigEndian) 
     if ([selection hasSelection] &&
         [selection length] < kMaxSelectedTextLengthForCustomActions &&
         coord.y >= 0) {
-        NSString *selectedText = [self.delegate contextMenuSelectedText:self capped:1024];
+        NSString *selectedText = [self.delegate contextMenuSelectedText:self capped:1024 verbatim:YES];
         if ([self addCustomActionsToMenu:theMenu matchingText:selectedText line:coord.y]) {
             [theMenu addItem:[NSMenuItem separatorItem]];
         }
@@ -811,7 +809,7 @@ static uint64_t iTermInt64FromBytes(const unsigned char *bytes, BOOL bigEndian) 
     if (![selection hasSelection]) {
         return;
     }
-    NSString *selectedText = [[self.delegate contextMenuSelectedText:self capped:0] stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+    NSString *selectedText = [[self.delegate contextMenuSelectedText:self capped:0 verbatim:YES] stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
     NSArray *parts = [selectedText componentsSeparatedByString:@"\n"];
     if (parts.count != 1) {
         return;
@@ -825,24 +823,24 @@ static uint64_t iTermInt64FromBytes(const unsigned char *bytes, BOOL bigEndian) 
 }
 
 - (void)browse:(id)sender {
-    [_urlActionHelper findUrlInString:[self.delegate contextMenuSelectedText:self capped:0] andOpenInBackground:NO];
+    [_urlActionHelper findUrlInString:[self.delegate contextMenuSelectedText:self capped:0 verbatim:NO] andOpenInBackground:NO];
 }
 
 - (void)searchInBrowser:(id)sender {
     NSURL *url = [NSURL urlByReplacingFormatSpecifier:@"%@"
                                              inString:[iTermAdvancedSettingsModel searchCommand]
-                                            withValue:[self.delegate contextMenuSelectedText:self capped:0]];
+                                            withValue:[self.delegate contextMenuSelectedText:self capped:0 verbatim:NO]];
     [_urlActionHelper findUrlInString:url.absoluteString andOpenInBackground:NO];
 }
 
 - (void)addTrigger:(id)sender {
-    [self.delegate contextMenu:self addTrigger:[self.delegate contextMenuSelectedText:self capped:0]];
+    [self.delegate contextMenu:self addTrigger:[self.delegate contextMenuSelectedText:self capped:0 verbatim:YES]];
 }
 
 - (void)mail:(id)sender {
     NSString *mailto;
 
-    NSString *selectedText = [self.delegate contextMenuSelectedText:self capped:0];
+    NSString *selectedText = [self.delegate contextMenuSelectedText:self capped:0 verbatim:YES];
     if ([selectedText hasPrefix:@"mailto:"]) {
         mailto = [selectedText copy];
     } else {
@@ -1017,7 +1015,8 @@ static uint64_t iTermInt64FromBytes(const unsigned char *bytes, BOOL bigEndian) 
 #pragma mark - NSMenuDelegate
 
 - (void)menuDidClose:(NSMenu *)menu {
-    _savedSelectedText = nil;
+    _savedVerbatimSelectedText = nil;
+    _savedCleanedSelectedText = nil;
 }
 
 @end

@@ -1919,10 +1919,7 @@ trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
     if (!_dataSource) {
         return YES;
     }
-    if (![_dataSource softAlternateScreenMode]) {
-        return YES;
-    }
-    return [iTermAdvancedSettingsModel preserveTabsInAlternateScreenMode];
+    return [_dataSource textExtractionShouldPreserveTabs];
 }
 
 - (void)enumerateCharsInRange:(VT100GridWindowedRange)range

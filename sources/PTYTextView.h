@@ -331,8 +331,11 @@ typedef NS_ENUM(NSInteger, PTYCharType) {
 // Indicates if the last key pressed was a repeat.
 @property(nonatomic, readonly) BOOL keyIsARepeat;
 
-// Returns the currently selected text.
+// Returns the currently selected text. It may have tabs converted to spaces.
 @property(nonatomic, readonly) NSString *selectedText;
+
+// Selected text without any conversions.
+@property(nonatomic, readonly) NSString *verbatimSelectedText;
 
 // Returns the entire content of the view as a string.
 @property(nonatomic, readonly) NSString *content;
@@ -674,7 +677,8 @@ typedef NS_ENUM(NSUInteger, iTermCopyTextStyle) {
 
 - (id)selectedTextWithStyle:(iTermCopyTextStyle)style
                cappedAtSize:(int)maxBytes
-          minimumLineNumber:(int)minimumLineNumber;
+          minimumLineNumber:(int)minimumLineNumber
+               preserveTabs:(BOOL)preserveTabs;
 
 @end
 

@@ -154,17 +154,6 @@ extern const NSInteger kLongMaximumWordLength;
          continuationChars:(NSMutableIndexSet *)continuationChars
               coords:(NSMutableArray *)coords;
 
-// Returns an iTermLocated[Attributed]String
-- (id)locatedStringInRange:(VT100GridWindowedRange)range
-         attributeProvider:(NSDictionary *(^)(screen_char_t, iTermExternalAttribute *))attributeProvider
-                nullPolicy:(iTermTextExtractorNullPolicy)nullPolicy
-                       pad:(BOOL)pad
-        includeLastNewline:(BOOL)includeLastNewline
-    trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
-              cappedAtSize:(int)maxBytes
-              truncateTail:(BOOL)truncateTail
-         continuationChars:(NSMutableIndexSet *)continuationChars;
-
 - (NSIndexSet *)indexesOnLine:(int)line containingCharacter:(unichar)c inRange:(NSRange)range;
 
 - (int)lengthOfLine:(int)line;

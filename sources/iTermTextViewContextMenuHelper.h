@@ -38,7 +38,8 @@ NS_ASSUME_NONNULL_BEGIN
 allowRightMarginOverflow:(BOOL)allowRightMarginOverflow;
 
 - (NSString *)contextMenuSelectedText:(iTermTextViewContextMenuHelper *)contextMenu
-                               capped:(int)maxBytes;
+                               capped:(int)maxBytes
+                             verbatim:(BOOL)verbatim;
 
 - (VT100ScreenMark *)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu
                       markOnLine:(int)line;
@@ -145,7 +146,8 @@ runCommandInBackground:(NSString *)command;
 // ask the context menu to open and when the main thread enters a tracking runloop, the text under
 // the selection can change. We want to respect what we show while the context menu is open.
 // See issue 4048.
-@property(nullable, nonatomic, readonly) NSString *savedSelectedText;
+@property(nullable, nonatomic, readonly) NSString *savedCleanedSelectedText;
+@property(nullable, nonatomic, readonly) NSString *savedVerbatimSelectedText;
 @property (nonatomic, readonly) NSDictionary<NSNumber *, NSString *> *smartSelectionActionSelectorDictionary;
 
 - (instancetype)initWithURLActionHelper:(iTermURLActionHelper *)urlActionHelper NS_DESIGNATED_INITIALIZER;

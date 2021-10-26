@@ -13,7 +13,6 @@
 #if defined(__has_feature)
 #if __has_feature(address_sanitizer)
 #undef DECODE_IMAGES_IN_PROCESS
-#warning Decoding images in process because address sanitizer is enabled.
 #define DECODE_IMAGES_IN_PROCESS 1
 #endif
 #endif

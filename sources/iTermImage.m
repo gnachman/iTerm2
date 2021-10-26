@@ -13,6 +13,7 @@
 #import "NSImage+iTerm.h"
 #import "iTermSandboxedWorkerClient.h"
 #if DECODE_IMAGES_IN_PROCESS
+#warning Decoding images in process because address sanitizer is enabled.
 #import "iTermImage+ImageWithData.h"
 #endif
 

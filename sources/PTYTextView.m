@@ -2395,15 +2395,29 @@
 }
 
 - (NSString *)selectedText {
-    if (_contextMenuHelper.savedSelectedText) {
+    if (_contextMenuHelper.savedCleanedSelectedText) {
         DLog(@"Returning saved selected text");
-        return _contextMenuHelper.savedSelectedText;
+        return _contextMenuHelper.savedCleanedSelectedText;
     }
     return [self selectedTextCappedAtSize:0];
 }
 
+- (NSString *)verbatimSelectedText {
+    if (_contextMenuHelper.savedVerbatimSelectedText) {
+        DLog(@"Returning saved selected text");
+        return _contextMenuHelper.savedVerbatimSelectedText;
+    }
+    return [self selectedTextWithStyle:iTermCopyTextStylePlainText
+                          cappedAtSize:0
+                     minimumLineNumber:0
+                          preserveTabs:YES];
+}
+
 - (NSString *)selectedTextCappedAtSize:(int)maxBytes {
-    return [self selectedTextWithStyle:iTermCopyTextStylePlainText cappedAtSize:maxBytes minimumLineNumber:0];
+    return [self selectedTextWithStyle:iTermCopyTextStylePlainText
+                          cappedAtSize:maxBytes
+                     minimumLineNumber:0
+                          preserveTabs:[_dataSource textExtractionShouldPreserveTabs]];
 }
 
 // Does not include selected text on lines before |minimumLineNumber|.
@@ -2469,7 +2483,6 @@
                                       preserveTabs:preserveTabs
                                       cappedAtSize:cap
                                       truncateTail:YES
-                                      preserveTabs:extractor.shouldPreserveTabs
                                  continuationChars:nil
                                             coords:nil];
             if (attributeProvider != nil) {
@@ -2509,11 +2522,15 @@
                      minimumLineNumber:(int)minimumLineNumber {
     return [self selectedTextWithStyle:iTermCopyTextStylePlainText
                           cappedAtSize:maxBytes
-                     minimumLineNumber:minimumLineNumber];
+                     minimumLineNumber:minimumLineNumber
+                          preserveTabs:[_dataSource textExtractionShouldPreserveTabs]];
 }
 
 - (NSAttributedString *)selectedAttributedTextWithPad:(BOOL)pad {
-    return [self selectedTextWithStyle:iTermCopyTextStyleAttributed cappedAtSize:0 minimumLineNumber:0];
+    return [self selectedTextWithStyle:iTermCopyTextStyleAttributed
+                          cappedAtSize:0
+                     minimumLineNumber:0
+                          preserveTabs:[_dataSource textExtractionShouldPreserveTabs]];
 }
 
 - (BOOL)_haveShortSelection {
@@ -2737,7 +2754,8 @@
 
     NSString *copyString = [self selectedTextWithStyle:iTermCopyTextStyleWithControlSequences
                                           cappedAtSize:-1
-                                     minimumLineNumber:0];
+                                     minimumLineNumber:0
+                                          preserveTabs:YES];
 
     if ([iTermAdvancedSettingsModel disallowCopyEmptyString] && copyString.length == 0) {
         DLog(@"Disallow copying empty string");
@@ -2861,9 +2879,9 @@
                                  pad:NO
                   includeLastNewline:YES
               trimTrailingWhitespace:NO
+                        preserveTabs:YES
                         cappedAtSize:-1
                         truncateTail:YES
-                        preserveTabs:extractor.shouldPreserveTabs
                    continuationChars:nil
                               coords:nil];
 }
@@ -4876,7 +4894,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 - (NSString *)accessibilityHelperSelectedText {
     return [self selectedTextWithStyle:iTermCopyTextStylePlainText
                           cappedAtSize:0
-                     minimumLineNumber:[self accessibilityHelperLineNumberForAccessibilityLineNumber:0]];
+                     minimumLineNumber:[self accessibilityHelperLineNumberForAccessibilityLineNumber:0]
+                          preserveTabs:[_dataSource textExtractionShouldPreserveTabs]];
 }
 
 - (NSURL *)accessibilityHelperCurrentDocumentURL {
