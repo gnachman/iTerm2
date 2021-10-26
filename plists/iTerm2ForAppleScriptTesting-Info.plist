@@ -290,8 +290,6 @@
 	<string>iTermApplication</string>
 	<key>NSSupportsAutomaticGraphicsSwitching</key>
 	<true/>
-        <key>NSPrefersDisplaySafeAreaCompatibilityMode</key>
-        <true/>
 	<key>OSAScriptingDefinition</key>
 	<string>iTerm2.sdef</string>
 	<key>SUFeedURLForTesting</key>
