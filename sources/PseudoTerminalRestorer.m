@@ -139,6 +139,7 @@ NSString *const iTermWindowStateKeyGUID = @"guid";
                 pseudoTerminalState:(PseudoTerminalState *)state
                              system:(BOOL)system
                   completionHandler:(void (^)(NSWindow *, NSError *))completionHandler {
+    DLog(@"restoreWindowWithIdentifier:%@", identifier);
     if (system && [iTermUserDefaults ignoreSystemWindowRestoration]) {
         DLog(@"Ignore system window restoration because we're using our own restorable state controller.");
         NSString *guid = [state.coder decodeObjectForKey:iTermWindowStateKeyGUID];

@@ -178,7 +178,11 @@ static BOOL gForceSaveState;
 
 - (void)setSystemRestorationCallback:(void (^)(NSWindow *, NSError *))callback
                     windowIdentifier:(NSString *)windowIdentifier {
-    assert(!_ready);
+    if (_ready) {
+        DLog(@"Unexpected window restoration call with id %@", windowIdentifier);
+        callback(nil, nil);
+        return;
+    }
     _systemCallbacks[windowIdentifier] = [callback copy];
 }
 
