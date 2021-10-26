@@ -62,7 +62,7 @@
 - (instancetype)initWithFrame:(NSRect)frame color:(NSColor *)color {
     self = [self initWithFrame:frame];
     if (self) {
-        _color = [color retain];
+        self.color = [color retain];
     }
     return self;
 }
