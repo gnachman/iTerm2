@@ -124,6 +124,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)excludeBackgroundColorsFromCopiedStyle;
 + (BOOL)experimentalKeyHandling;
 + (double)extraSpaceBeforeCompactTopTabBar;
++ (double)fakeNotchHeight;
 + (NSString *)fallbackLCCType;
 + (BOOL)fastForegroundJobUpdates;
 + (BOOL)fastTrackpad;

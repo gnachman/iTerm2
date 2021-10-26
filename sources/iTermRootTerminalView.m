@@ -156,6 +156,7 @@ NS_CLASS_AVAILABLE_MAC(10_14)
     
     iTermImageView *_backgroundImage NS_AVAILABLE_MAC(10_14);
     NSView *_workaroundView;  // 10.14 only. See issue 8701.
+    iTermLayerBackedSolidColorView *_notchMask NS_AVAILABLE_MAC(12_0);
 }
 
 - (instancetype)initWithFrame:(NSRect)frameRect
@@ -417,6 +418,11 @@ NS_CLASS_AVAILABLE_MAC(10_14)
             // 10.14 only
             _workaroundView = [[SolidColorView alloc] initWithFrame:NSMakeRect(0, 0, 1, 1) color:[NSColor clearColor]];
             [self addSubview:_workaroundView];
+        }
+        if (@available(macOS 12.0, *)) {
+            _notchMask = [[iTermLayerBackedSolidColorView alloc] initWithFrame:NSMakeRect(0, 0, 0, 0) color:[NSColor blackColor]];
+            _notchMask.hidden = YES;
+            [self addSubview:_notchMask];
         }
     }
     return self;
@@ -1082,7 +1088,7 @@ NS_CLASS_AVAILABLE_MAC(10_14)
 
 - (NSRect)toolbeltFrameInWindow:(NSWindow *)thisWindow {
     CGFloat width = floor(_toolbeltWidth);
-    CGFloat top = [self topBorderInset];
+    CGFloat top = [self topBorderInset] + [self notchInset];
     CGFloat bottom = [self bottomBorderInset];
     CGFloat right = [self rightBorderInset];
     NSRect toolbeltFrame = NSMakeRect(self.bounds.size.width - width - right,
@@ -1215,6 +1221,7 @@ NS_CLASS_AVAILABLE_MAC(10_14)
 
         case PSMTab_LeftTab: {
             [self layoutSubviewsWithVisibleLeftTabBarAndInlineToolbelt:showToolbeltInline forWindow:thisWindow];
+            break;
         }
     }
 }
@@ -1252,6 +1259,23 @@ NS_CLASS_AVAILABLE_MAC(10_14)
     return 0;
 }
 
+- (CGFloat)notchInset {
+    if (![_delegate fullScreen]) {
+        return 0;
+    }
+    const CGFloat fakeHeight = [iTermAdvancedSettingsModel fakeNotchHeight];
+    if (fakeHeight > 0) {
+        return fakeHeight;
+    }
+    if (@available(macOS 12, *)) {
+        const NSEdgeInsets safeAreaInsets = self.safeAreaInsets;
+        DLog(@"Safe area insets are %f, %f, %f, %f",
+             safeAreaInsets.top, safeAreaInsets.left, safeAreaInsets.bottom, safeAreaInsets.right);
+        return safeAreaInsets.top;
+    }
+    return 0;
+}
+
 - (void)layoutSubviewsWithHiddenTabBarForWindow:(NSWindow *)thisWindow {
     if (!_tabBarControlOnLoan) {
         self.tabBarControl.hidden = YES;
@@ -1264,7 +1288,7 @@ NS_CLASS_AVAILABLE_MAC(10_14)
     [self removeLeftTabBarDragHandle];
     iTermDecorationHeights decorationHeights = {
         .bottom = [self bottomBorderInset],
-        .top = _delegate.divisionViewShouldBeVisible ? kDivisionViewHeight : 0
+        .top = (_delegate.divisionViewShouldBeVisible ? kDivisionViewHeight : 0) + [self notchInset]
     };
     decorationHeights.top += [self topBorderInset];
     if ([self shouldLeaveEmptyAreaAtTop]) {
@@ -1305,7 +1329,7 @@ NS_CLASS_AVAILABLE_MAC(10_14)
     [self removeLeftTabBarDragHandle];
     iTermDecorationHeights decorationHeights = {
         .bottom = [self bottomBorderInset],
-        .top = 0
+        .top = [self notchInset]
     };
     if (!_tabBarControlOnLoan) {
         if (!self.tabBarControl.flashing) {
@@ -1374,7 +1398,7 @@ NS_CLASS_AVAILABLE_MAC(10_14)
     [self setTabBarFrame:tabBarFrame];
     [self setTabBarControlAutoresizingMask:(NSViewWidthSizable | NSViewMaxYMargin)];
     iTermDecorationHeights decorationHeights = {
-        .top = 0,
+        .top = [self notchInset],
         .bottom = tabBarFrame.origin.y
     };
     decorationHeights.top += [self topBorderInset];
@@ -1451,7 +1475,7 @@ NS_CLASS_AVAILABLE_MAC(10_14)
     assert(!_tabBarControlOnLoan);
     [self setLeftTabBarWidthFromPreferredWidth];
     iTermDecorationHeights decorationHeights = {
-        .top = 0,
+        .top = [self notchInset],
         .bottom = 0
     };
     decorationHeights.bottom += [self bottomBorderInset];
@@ -1576,6 +1600,11 @@ NS_CLASS_AVAILABLE_MAC(10_14)
         [self layoutSubviewsWithHiddenTabBarForWindow:thisWindow];
     } else {
         [self layoutSubviewsWithVisibleTabBarForWindow:thisWindow inlineToolbelt:showToolbeltInline];
+    }
+    if (@available(macOS 12.0, *)) {
+        const CGFloat notchHeight = [self notchInset];
+        _notchMask.hidden = (notchHeight == 0);
+        _notchMask.frame = NSMakeRect(0, NSHeight(self.bounds) - notchHeight, NSWidth(self.bounds), notchHeight);
     }
 
     if (showToolbeltInline) {

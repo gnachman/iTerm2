@@ -34,6 +34,7 @@
 - (BOOL)exitingLionFullscreen;
 - (BOOL)enteringLionFullscreen;
 - (BOOL)lionFullScreen;
+- (BOOL)fullScreen;  // non-native full screen
 - (BOOL)divisionViewShouldBeVisible;
 - (NSWindow *)window;
 - (BOOL)enableStoplightHotbox;

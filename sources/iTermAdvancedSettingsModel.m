@@ -500,6 +500,7 @@ DEFINE_BOOL(useShortcutAccessoryViewController, YES, SECTION_WINDOWS @"Show wind
 DEFINE_BOOL(includeShortcutInWindowsMenu, YES, SECTION_WINDOWS @"Include keyboard shortcut for windows in Window menu?");
 DEFINE_FLOAT(toolbeltFontSize, 0, SECTION_WINDOWS @"Toolbelt font size in points.\nSet to 0 to use the system default. Changing this setting does not affect existing windows.");
 DEFINE_STRING(toolbeltFont, @"Menlo", SECTION_WINDOWS @"Toolbelt font family name");
+DEFINE_FLOAT(fakeNotchHeight, 0, SECTION_WINDOWS @"Simulated notch height");
 
 #pragma mark tmux
 
