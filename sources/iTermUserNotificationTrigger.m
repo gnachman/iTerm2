@@ -6,7 +6,9 @@
 //
 
 #import "iTermUserNotificationTrigger.h"
+#import "iTermAdvancedSettingsModel.h"
 #import "iTermNotificationController.h"
+#import "iTermRateLimitedUpdate.h"
 #import "PTYSession.h"
 #import "PTYTab.h"
 
@@ -20,7 +22,9 @@
 @implementation GrowlTrigger
 @end
 
-@implementation iTermUserNotificationTrigger
+@implementation iTermUserNotificationTrigger {
+    iTermRateLimitedUpdate *_rateLimit;
+}
 
 + (NSSet<NSString *> *)synonyms {
     return [NSSet setWithObject:@"GrowlTrigger"];
@@ -58,11 +62,28 @@
     return YES;
 }
 
+- (iTermRateLimitedUpdate *)rateLimit {
+    if (!_rateLimit) {
+        _rateLimit = [[iTermRateLimitedUpdate alloc] initWithName:@"UserNotificationTrigger"
+                                                  minimumInterval:[iTermAdvancedSettingsModel userNotificationTriggerRateLimit]];
+        _rateLimit.suppressionMode = YES;
+    }
+    return _rateLimit;
+}
+
 - (void)postNotificationWithText:(NSString *)notificationText
                        inSession:(PTYSession *)aSession {
     if (!notificationText) {
         return;
     }
+    [[self rateLimit] performRateLimitedBlock:^{
+        [self reallyPostNotificationWithText:notificationText
+                                   inSession:aSession];
+    }];
+}
+
+- (void)reallyPostNotificationWithText:(NSString *)notificationText
+                             inSession:(PTYSession *)aSession {
     iTermNotificationController *notificationController = [iTermNotificationController sharedInstance];
     [notificationController notify:notificationText
                    withDescription:[NSString stringWithFormat:@"A trigger fired in session \"%@\" in tab #%d.",

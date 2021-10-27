@@ -9,9 +9,12 @@
 #import "PTYSession.h"
 #import "PTYTab.h"
 #import "PseudoTerminal.h"
+#import "iTermAdvancedSettingsModel.h"
+#import "iTermRateLimitedUpdate.h"
 
 @implementation AlertTrigger {
     BOOL disabled_;
+    iTermRateLimitedUpdate *_rateLimit;
 }
 
 + (NSString *)title
@@ -49,10 +52,25 @@
     return YES;
 }
 
+- (iTermRateLimitedUpdate *)rateLimit {
+    if (!_rateLimit) {
+        _rateLimit = [[iTermRateLimitedUpdate alloc] initWithName:@"AlertTrigger"
+                                                  minimumInterval:[iTermAdvancedSettingsModel alertTriggerRateLimit]];
+        _rateLimit.suppressionMode = YES;
+    }
+    return _rateLimit;
+}
+
 - (void)showAlertWithMessage:(NSString *)message inSession:(PTYSession *)aSession {
     if (!message) {
         return;
     }
+    [[self rateLimit] performRateLimitedBlock:^{
+        [self reallyShowAlertWithMessage:message inSession:aSession];
+    }];
+}
+
+- (void)reallyShowAlertWithMessage:(NSString *)message inSession:(PTYSession *)aSession {
     NSAlert *alert = [[NSAlert alloc] init];
     alert.messageText = message ?: @"";
     [alert addButtonWithTitle:@"OK"];
