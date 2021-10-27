@@ -16,9 +16,11 @@
 #import "iTermMultiServerJobManager.h"
 #import "iTermPreferences.h"
 #import "iTermProfilePreferences.h"
+#import "iTermResult.h"
 #import "iTermThreadSafety.h"
 #import "iTermVariableScope.h"
 #import "iTermWarning.h"
+#import "NSObject+iTerm.h"
 #import "NSStringITerm.h"
 #import "NSWindow+PSM.h"
 #import "PTYSession.h"
@@ -105,6 +107,21 @@ extern NSString *const SESSION_ARRANGEMENT_SERVER_DICT;
 
 #pragma mark - Launching
 
+- (void)failWithError:(NSError *)error {
+    DLog(@"%@", error);
+    NSString *message =
+        [NSString stringWithFormat:@"Cannot start logging to session with profile “%@”: %@",
+         self.profile[KEY_NAME],
+         error.localizedDescription];
+    [iTermWarning showWarningWithTitle:message
+                               actions:@[ @"OK" ]
+                             accessory:nil
+                            identifier:@"NoSyncCannotStartLogging"
+                           silenceable:kiTermWarningTypePersistent
+                               heading:@"Session Logging Problem"
+                                window:nil];
+}
+
 - (void)fetchAutoLogFilenameWithCompletion:(void (^)(NSString *filename))completion {
     [self setTermIDIfPossible];
     if (![self.profile[KEY_AUTOLOG] boolValue]) {
@@ -112,32 +129,28 @@ extern NSString *const SESSION_ARRANGEMENT_SERVER_DICT;
         return;
     }
 
-    NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
-    dateFormatter.dateFormat = @"yyyyMMdd_HHmmss";
-    NSString *format = [iTermProfilePreferences stringForKey:KEY_LOG_FILENAME_FORMAT inProfile:self.profile];
-    iTermExpressionEvaluator *evaluator = [[iTermExpressionEvaluator alloc] initWithInterpolatedString:format scope:self.variablesScope];
-    [evaluator evaluateWithTimeout:5
-                        completion:^(iTermExpressionEvaluator * _Nonnull evaluator) {
-        if (evaluator.error) {
-            NSString *message = [NSString stringWithFormat:@"Cannot start logging to session with profile “%@”: %@",
-                                 self.profile[KEY_NAME],
-                                 evaluator.error.localizedDescription];
-            [iTermWarning showWarningWithTitle:message
-                                       actions:@[ @"OK" ]
-                                     accessory:nil
-                                    identifier:@"NoSyncCannotStartLogging"
-                                   silenceable:kiTermWarningTypePersistent
-                                       heading:@"Session Logging Problem"
-                                        window:nil];
-            completion(nil);
-            return;
-        }
-        NSString *name = [evaluator.value stringByReplacingOccurrencesOfString:@"/" withString:@"__"];
-        NSString *folder = [iTermProfilePreferences stringForKey:KEY_LOGDIR inProfile:self.profile];
-        NSString *filename = [folder stringByAppendingPathComponent:name];
-        DLog(@"Using autolog filename %@ from format %@", filename, format);
-        completion(filename);
+    iTermMux *mux = [[iTermMux alloc] init];
+
+    NSString *logdirInterpolatedString = [iTermProfilePreferences stringForKey:KEY_LOGDIR inProfile:self.profile];
+    NSString *filenameInterpolatedString = [iTermProfilePreferences stringForKey:KEY_LOG_FILENAME_FORMAT inProfile:self.profile];
+    [mux evaluateInterpolatedStrings:@[logdirInterpolatedString, filenameInterpolatedString]
+                               scope:self.variablesScope
+                             timeout:5
+                             success:^(NSArray * _Nonnull values) {
+        NSString *joined = [self joinedNameWithFolder:values[0] filename:values[1]];
+        completion(joined);
+    } error:^(NSError * _Nonnull error) {
+        [self failWithError:error];
+        completion(nil);
     }];
+}
+
+- (NSString *)joinedNameWithFolder:(NSString *)formattedFolder
+                          filename:(NSString *)formattedFilename {
+    NSString *name = [formattedFilename stringByReplacingOccurrencesOfString:@"/" withString:@"__"];
+    NSString *joined = [formattedFolder stringByAppendingPathComponent:name];
+    DLog(@"folder=%@ filename=%@ name=%@ joined=%@", formattedFolder, formattedFilename, name, joined);
+    return joined;
 }
 
 - (void)setTermIDIfPossible {

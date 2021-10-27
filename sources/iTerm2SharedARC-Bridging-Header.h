@@ -3,6 +3,7 @@
 //
 
 #import "DebugLogging.h"
+#import "iTermExpressionEvaluator.h"
 #import "iTermImageInfo.h"
 #import "iTermSearchFieldCell.h"
 #import "iTermStatusBarComponentKnob.h"
