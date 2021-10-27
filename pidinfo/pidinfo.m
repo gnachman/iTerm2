@@ -9,6 +9,7 @@
 
 #import "iTermFileDescriptorServerShared.h"
 #import "iTermGitClient.h"
+#import "pidinfo-Swift.h"
 #include <libproc.h>
 #include <mach-o/dyld.h>
 #include <stdatomic.h>
@@ -537,12 +538,17 @@ static const char *GetPathToSelf(void) {
                 free((void *)exe);
                 free((void *)pathCString);
                 close(pipeFDs[1]);
+                iTermCPUGovernor *governor = [[iTermCPUGovernor alloc] initWithPID:childPID dutyCycle:0.5];
+                // Allow 100% CPU utilization for the first x seconds.
+                [governor setGracePeriodDuration:1.0];
+                const NSInteger token = [governor incr];
                 NSFileHandle *fileHandle = [[NSFileHandle alloc] initWithFileDescriptor:pipeFDs[0] closeOnDealloc:YES];
                 int stat_loc = 0;
                 int waitRC;
                 do {
                     waitRC = waitpid(childPID, &stat_loc, 0);
                 } while (waitRC == -1 && errno == EINTR);
+                [governor decr:token];
                 if (WIFSIGNALED(stat_loc)) {
                     // If it timed out don't even try to read because it could be incomplete.
                     reply(nil);

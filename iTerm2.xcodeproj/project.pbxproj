@@ -3592,7 +3592,6 @@
 		A6D22A431BC8BE6B004084E0 /* Model.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = A6D22A411BC8BE6B004084E0 /* Model.xcdatamodeld */; };
 		A6D22A441BC8BE6B004084E0 /* Model.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = A6D22A411BC8BE6B004084E0 /* Model.xcdatamodeld */; };
 		A6D22A451BC8BE6B004084E0 /* Model.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = A6D22A411BC8BE6B004084E0 /* Model.xcdatamodeld */; };
-		A6D24D3B26BB12F700CCE211 /* CPUGovernor.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6D24D3A26BB12F700CCE211 /* CPUGovernor.swift */; };
 		A6D24D3D26BC5FA600CCE211 /* SwiftDebugLogging.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6D24D3C26BC5FA600CCE211 /* SwiftDebugLogging.swift */; };
 		A6D463E6240447AF005D073D /* iTermBackgroundColorView.h in Headers */ = {isa = PBXBuildFile; fileRef = A6D463E4240447AF005D073D /* iTermBackgroundColorView.h */; };
 		A6D463E7240447AF005D073D /* iTermBackgroundColorView.m in Sources */ = {isa = PBXBuildFile; fileRef = A6D463E5240447AF005D073D /* iTermBackgroundColorView.m */; };
@@ -3921,6 +3920,7 @@
 		A6F3DA98245647E4001D50C9 /* iTermSwipeTracker.m in Sources */ = {isa = PBXBuildFile; fileRef = A6F3DA96245647E4001D50C9 /* iTermSwipeTracker.m */; };
 		A6F3E96E1D60E4F0000E97C4 /* iTermInitialDirectory.h in Headers */ = {isa = PBXBuildFile; fileRef = A6F3E96C1D60E4F0000E97C4 /* iTermInitialDirectory.h */; };
 		A6F6990A2728C45800C4A3A6 /* Mux.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6F699092728C45800C4A3A6 /* Mux.swift */; };
+		A6F699272729C95F00C4A3A6 /* CPUGovernor.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6D24D3A26BB12F700CCE211 /* CPUGovernor.swift */; };
 		A6F718B12263CC3C0053488E /* ITAddressBookMgr.m in Sources */ = {isa = PBXBuildFile; fileRef = 20E74F4904E9089700000106 /* ITAddressBookMgr.m */; };
 		A6F718B22263E8A20053488E /* iTermInitialDirectory.m in Sources */ = {isa = PBXBuildFile; fileRef = A6F3E96D1D60E4F0000E97C4 /* iTermInitialDirectory.m */; };
 		A6F718B5226438FC0053488E /* iTermInitialDirectory+Tmux.h in Headers */ = {isa = PBXBuildFile; fileRef = A6F718B3226438FC0053488E /* iTermInitialDirectory+Tmux.h */; };
@@ -14374,7 +14374,6 @@
 				A6A64E5E2508B83F0040490B /* iTermStatusBarSnippetComponent.m in Sources */,
 				5312269B20CB1D3A004831C6 /* iTermBuiltInFunctions.m in Sources */,
 				A60D023F2687F5D800E19362 /* StatusBarKnobFontViewController.swift in Sources */,
-				A6D24D3B26BB12F700CCE211 /* CPUGovernor.swift in Sources */,
 				A65660D92372A69A00DC6744 /* iTermDoublyLinkedList.m in Sources */,
 				A6352257238CA38A00FED5BC /* iTermMultiServerJobManager.m in Sources */,
 				A6F1B3C52693BC2F00546767 /* iTermNotificationController.m in Sources */,
@@ -14928,6 +14927,7 @@
 				A6CDC31826391D1200616155 /* PIDInfoGitState.m in Sources */,
 				A687B66A25AD6FF600E0A658 /* iTermGitClient.m in Sources */,
 				A6866B6C23CAA10A00ACD94C /* pidinfo.m in Sources */,
+				A6F699272729C95F00C4A3A6 /* CPUGovernor.swift in Sources */,
 				A6EC936824E64FAA00EEADEF /* iTermFileDescriptorServerShared.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -17615,6 +17615,7 @@
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = macosx;
 				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.0;
 				USER_HEADER_SEARCH_PATHS = $PROJECT_DIR/ThirdParty/libgit2/include;
 				VALID_ARCHS = "$(ARCHS_STANDARD)";
 			};
@@ -17695,6 +17696,7 @@
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = macosx;
 				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.0;
 				USER_HEADER_SEARCH_PATHS = $PROJECT_DIR/ThirdParty/libgit2/include;
 				VALID_ARCHS = "$(ARCHS_STANDARD)";
 			};
@@ -17775,6 +17777,7 @@
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = macosx;
 				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.0;
 				USER_HEADER_SEARCH_PATHS = $PROJECT_DIR/ThirdParty/libgit2/include;
 				VALID_ARCHS = "$(ARCHS_STANDARD)";
 			};
@@ -17855,6 +17858,7 @@
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = macosx;
 				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.0;
 				USER_HEADER_SEARCH_PATHS = $PROJECT_DIR/ThirdParty/libgit2/include;
 				VALID_ARCHS = "$(ARCHS_STANDARD)";
 			};

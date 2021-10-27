@@ -6,6 +6,12 @@
 //
 
 import Foundation
+import os.log
+
+func DLog(_ messageBlock: @autoclosure () -> String, file: String = #file, line: Int = #line, function: String = #function) {
+    let message = messageBlock()
+    os_log("%{public}@", log: .default, type: .debug, message)
+}
 
 private class AtomicFlag {
     private var _value: Bool
@@ -50,10 +56,19 @@ private class AtomicFlag {
     // Outstanding tokens.
     private var tokens = Set<Int>()
     private var nextToken = 0
+    private var _gracePeriodEndTime: DispatchTime?
 
     @objc(initWithPID:dutyCycle:) public init(_ pid: pid_t, dutyCycle: Double) {
         self.pid = pid
         self.dutyCycle = dutyCycle
+    }
+
+    @objc(setGracePeriodDuration:) public func setGracePeriodDuration(_ value: TimeInterval) {
+        if value <= 0 {
+            return
+        }
+        // When 10.14 support is dropped we can use DispatchTime.advanced(by:)
+        _gracePeriodEndTime = DispatchTime(uptimeNanoseconds: DispatchTime.now().uptimeNanoseconds + UInt64(value) * NSEC_PER_SEC)
     }
 
     @objc public func incr() -> Int {
@@ -138,9 +153,20 @@ private class AtomicFlag {
         sleepWhileRunning()
     }
 
+    private var inGracePeriod: Bool {
+        guard let gracePeriodEndTime = _gracePeriodEndTime else {
+            return false
+        }
+        return DispatchTime.now().uptimeNanoseconds < gracePeriodEndTime.uptimeNanoseconds
+    }
+
     private func suspend() {
-        DLog("Suspend \(pid)")
-        kill(pid, SIGTSTP)
+        if inGracePeriod {
+            DLog("Grace period - not suspending \(pid)")
+            return
+        }
+        DLog("Suspend \(pid) now=\(DispatchTime.now().uptimeNanoseconds) grace=\(_gracePeriodEndTime?.uptimeNanoseconds ?? 0)")
+        kill(pid, SIGSTOP)
     }
 
     private func resume() {
