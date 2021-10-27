@@ -501,6 +501,7 @@ DEFINE_BOOL(includeShortcutInWindowsMenu, YES, SECTION_WINDOWS @"Include keyboar
 DEFINE_FLOAT(toolbeltFontSize, 0, SECTION_WINDOWS @"Toolbelt font size in points.\nSet to 0 to use the system default. Changing this setting does not affect existing windows.");
 DEFINE_STRING(toolbeltFont, @"Menlo", SECTION_WINDOWS @"Toolbelt font family name");
 DEFINE_FLOAT(fakeNotchHeight, 0, SECTION_WINDOWS @"Simulated notch height");
+DEFINE_STRING(splitPaneColor, @"", SECTION_WINDOWS @"Custom color for split pane dividers. Leave empty to use default color.\nThis should be an HTML-style color, like #aabbcc.");
 
 #pragma mark tmux
 

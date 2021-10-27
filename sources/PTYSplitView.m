@@ -8,6 +8,7 @@
 #import "PTYSplitView.h"
 
 #import "DebugLogging.h"
+#import "iTermAdvancedSettingsModel.h"
 #import "iTermPreferences.h"
 #import "NSAppearance+iTerm.h"
 #import "NSColor+iTerm.h"
@@ -81,6 +82,13 @@
 }
 
 - (NSColor *)dividerColor {
+    NSString *customString = [iTermAdvancedSettingsModel splitPaneColor];
+    if ([customString hasPrefix:@"#"]) {
+        NSColor *custom = [NSColor colorFromHexString:customString];
+        if (custom) {
+            return custom;
+        }
+    }
     NSColor *color = self.window.ptyWindow.it_terminalWindowDecorationControlColor;
     return color;
 }

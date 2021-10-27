@@ -300,6 +300,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (double)smartCursorColorFgThreshold;
 + (int)smartSelectionRadius;
 + (BOOL)solidUnderlines;
++ (NSString *)splitPaneColor;
 + (BOOL)squareWindowCorners;
 + (NSString *)sshSchemePath;
 + (BOOL)sshURLsSupportPath;
