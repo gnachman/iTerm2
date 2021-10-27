@@ -68,7 +68,11 @@ typedef void (^iTermRecentBranchFetchCallback)(NSArray<NSString *> *);
         [self connect];
         __weak __typeof(self) weakSelf = self;
         [_connectionToService.remoteObjectProxy handshakeWithReply:^{
-            weakSelf.ready = YES;
+            __strong __typeof(self) strongSelf = weakSelf;
+            if (!strongSelf) {
+                return;
+            }
+            strongSelf.ready = YES;
         }];
     }
     return self;
@@ -235,6 +239,7 @@ typedef void (^iTermRecentBranchFetchCallback)(NSArray<NSString *> *);
     }];
 }
 
+// Runs on some random queue
 - (void)didGetGitState:(iTermGitState *)gitState completion:(iTermGitStateHandlerBox *)completion {
     @synchronized (_gitStateHandlers) {
         if (![_gitStateHandlers containsObject:completion]) {
@@ -260,6 +265,7 @@ typedef void (^iTermRecentBranchFetchCallback)(NSArray<NSString *> *);
     }];
 }
 
+// Runs on some random queue
 - (void)didGetRecentBranches:(NSArray<NSString *> *)branches box:(iTermGitRecentBranchesBox *)box {
     @synchronized (_gitRecentBranchFetchCallbacks) {
         if (![_gitRecentBranchFetchCallbacks containsObject:box]) {
