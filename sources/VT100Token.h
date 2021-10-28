@@ -314,6 +314,7 @@ typedef struct {
 
 // For ascii strings (type==VT100_ASCIISTRING).
 @property(nonatomic, readonly) AsciiData *asciiData;
+@property(nonatomic, readonly) VT100TerminalTokenType type;
 
 + (instancetype)token;
 + (instancetype)newTokenForControlCharacter:(unsigned char)controlCharacter;

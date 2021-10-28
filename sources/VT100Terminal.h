@@ -127,6 +127,7 @@ typedef NS_OPTIONS(int, VT100TerminalKeyReportingFlags) {
 @property(nonatomic, readonly) BOOL alternateScrollMode;
 @property(nonatomic, readonly) BOOL decsaceRectangleMode;
 @property(nonatomic, readonly) VT100TerminalProtectedMode protectedMode;
+@property(nonatomic, strong, readonly) VT100Token *lastToken;
 
 - (void)setStateFromDictionary:(NSDictionary *)dict;
 

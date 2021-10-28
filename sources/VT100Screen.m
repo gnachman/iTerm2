@@ -3603,7 +3603,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
             if (!shouldHonorProtected) {
                 [self scrollScreenIntoHistory];
             }
-        } else {
+        } else if (self.cursorX == 1 && self.cursorY == 1 && terminal_.lastToken.type == VT100CSI_CUP) {
             // This is important for tmux integration with shell integration enabled. The screen
             // terminal uses ED 0 instead of ED 2 to clear the screen (e.g., when you do ^L at the shell).
             [self removePromptMarksBelowLine:yStart + self.numberOfScrollbackLines];

@@ -388,4 +388,8 @@
     }
 }
 
+- (VT100TerminalTokenType)type {
+    return self->type;
+}
+
 @end
