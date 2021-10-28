@@ -6985,6 +6985,8 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
         return @([iTermAdvancedSettingsModel minimalTabStyleBackgroundColorDifference]);
     } else if ([option isEqualToString:PSMTabBarControlOptionMinimalBackgroundAlphaValue]) {
         return @(self.currentSession.textview.transparencyAlpha);
+    } else if ([option isEqualToString:PSMTabBarControlOptionMinimalTextLegibilityAdjustment]) {
+        return @([iTermAdvancedSettingsModel minimalTextLegibilityAdjustment]);
     } else if ([option isEqualToString:PSMTabBarControlOptionColoredUnselectedTabTextProminence]) {
         return @([iTermAdvancedSettingsModel coloredUnselectedTabTextProminence]);
     } else if ([option isEqualToString:PSMTabBarControlOptionColoredMinimalOutlineStrength]) {

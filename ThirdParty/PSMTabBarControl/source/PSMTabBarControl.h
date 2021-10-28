@@ -47,6 +47,7 @@ typedef NSString *PSMTabBarControlOptionKey NS_EXTENSIBLE_STRING_ENUM;
 extern PSMTabBarControlOptionKey PSMTabBarControlOptionColoredSelectedTabOutlineStrength;  // NSNumber in 0-3
 extern PSMTabBarControlOptionKey PSMTabBarControlOptionMinimalStyleBackgroundColorDifference;  // Number in 0-1
 extern PSMTabBarControlOptionKey PSMTabBarControlOptionMinimalBackgroundAlphaValue;  // Number in 0-1
+extern PSMTabBarControlOptionKey PSMTabBarControlOptionMinimalTextLegibilityAdjustment;  // Number >= 0
 extern PSMTabBarControlOptionKey PSMTabBarControlOptionColoredMinimalOutlineStrength;  // Number in 0-1
 extern PSMTabBarControlOptionKey PSMTabBarControlOptionColoredUnselectedTabTextProminence;  // NSNumber in 0-0.5
 extern PSMTabBarControlOptionKey PSMTabBarControlOptionDimmingAmount;  // Double in 0-1

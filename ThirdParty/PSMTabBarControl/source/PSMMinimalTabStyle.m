@@ -79,6 +79,14 @@ static CGFloat PSMWeightedAverage(CGFloat l, CGFloat u, CGFloat w) {
     return l * (1 - w) + u * w;
 }
 
+- (CGFloat)legibilityCorrectedAlpha:(CGFloat)baseValue {
+    double legibility = [[self.tabBar.delegate tabView:self.tabBar valueOfOption:PSMTabBarControlOptionMinimalTextLegibilityAdjustment] doubleValue];
+    if (legibility <= 0) {
+        return baseValue;
+    }
+    return pow(baseValue, 1 / legibility);
+}
+
 - (NSColor *)textColorDefaultSelected:(BOOL)selected backgroundColor:(NSColor *)backgroundColor windowIsMainAndAppIsActive:(BOOL)mainAndActive {
     const CGFloat backgroundBrightness =
     (backgroundColor ?
@@ -114,7 +122,7 @@ static CGFloat PSMWeightedAverage(CGFloat l, CGFloat u, CGFloat w) {
             minAlpha = 0.5;
             maxAlpha = 0.75;
         }
-        const CGFloat alpha = PSMWeightedAverage(minAlpha, maxAlpha, 1 - transparencyAlpha);
+        const CGFloat alpha = [self legibilityCorrectedAlpha:PSMWeightedAverage(minAlpha, maxAlpha, 1 - transparencyAlpha)];
         DLog(@"selected=%@ backgroundColor=%@ backgroundBrightness=%@ delta=%@ value=%@", @(selected), backgroundColor, @(backgroundBrightness), @(delta), @(value));
         return [NSColor colorWithWhite:value alpha:alpha];
     } else {
@@ -124,6 +132,7 @@ static CGFloat PSMWeightedAverage(CGFloat l, CGFloat u, CGFloat w) {
         } else {
             alpha = 0.5;
         }
+        alpha = [self legibilityCorrectedAlpha:alpha];
         DLog(@"selected=%@ backgroundColor=%@ backgroundBrightness=%@ delta=%@ value=%@", @(selected), backgroundColor, @(backgroundBrightness), @(delta), @(value));
         return [NSColor colorWithWhite:value alpha:alpha];
     }

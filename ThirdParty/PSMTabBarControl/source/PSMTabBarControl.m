@@ -46,6 +46,8 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionMinimalStyleBackgroundColorDiffe
     @"PSMTabBarControlOptionMinimalStyleBackgroundColorDifference";
 PSMTabBarControlOptionKey PSMTabBarControlOptionMinimalBackgroundAlphaValue =
     @"PSMTabBarControlOptionMinimalBackgroundAlphaValue";
+PSMTabBarControlOptionKey PSMTabBarControlOptionMinimalTextLegibilityAdjustment =
+    @"PSMTabBarControlOptionMinimalTextLegibilityAdjustment";
 PSMTabBarControlOptionKey PSMTabBarControlOptionColoredMinimalOutlineStrength =
     @"PSMTabBarControlOptionColoredMinimalOutlineStrength";
 PSMTabBarControlOptionKey PSMTabBarControlOptionColoredUnselectedTabTextProminence = @"PSMTabBarControlOptionColoredUnselectedTabTextProminence";
