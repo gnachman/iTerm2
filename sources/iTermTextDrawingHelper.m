@@ -252,7 +252,6 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
                          rectsPtr:(const NSRect *)rectArray
                         rectCount:(NSInteger)rectCount
                     virtualOffset:(CGFloat)virtualOffset {
-    // return here, snapshot ok
     DLog(@"begin drawRect:%@ in view %@", [NSValue valueWithRect:rect], _delegate);
     iTermPreciseTimerSetEnabled(YES);
     if (_debug) {
@@ -316,7 +315,8 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
         }
     }
 
-    [self drawRanges:ranges count:numRowsInRect
+    [self drawRanges:ranges
+               count:numRowsInRect
               origin:boundingCoordRange.start
         boundingRect:[self rectForCoordRange:boundingCoordRange]
         visibleLines:visibleLines
@@ -536,13 +536,12 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
                                  yOrigin,
                                  ceil(run->range.length * _cellSize.width),
                                  _cellSize.height * rows);
-        BOOL enableBlending = YES;
-        if (@available(macOS 10.14, *)) {
-            // If subpixel AA is enabled, then we want to draw the default background color directly.
-            // Otherwise, we'll disable blending and make it clear. Then the background color view can
-            // do the job.
-            enableBlending = !iTermTextIsMonochrome();
-        }
+        // If subpixel AA is enabled, then we want to draw the default background color directly.
+        // Otherwise, we'll disable blending and make it clear. Then the background color view can
+        // do the job. We have to use blending when taking a snapshot in order to not have a clear
+        // background color. I'm not sure why snapshots don't work right. My theory is that macOS
+        // doesn't composiste multiple views correctly.
+        BOOL enableBlending = !iTermTextIsMonochrome() || [NSView iterm_takingSnapshot];
         NSColor *color = [self unprocessedColorForBackgroundRun:run
                                                  enableBlending:enableBlending];
         // The unprocessed color is needed for minimum contrast computation for text color.

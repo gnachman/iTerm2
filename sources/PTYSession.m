@@ -4778,7 +4778,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (BOOL)shouldDrawBackgroundImageManually {
-    return !iTermTextIsMonochrome();
+    return !iTermTextIsMonochrome() || [NSView iterm_takingSnapshot];
 }
 
 - (void)updateViewBackgroundImage {
