@@ -525,7 +525,9 @@
 }
 
 - (NSColor *)bottomLineColorSelected:(BOOL)selected {
-    if (@available(macOS 10.16, *)) {
+    if (@available(macOS 12.0, *)) {
+        return [NSColor colorWithSRGBRed:230.0/255.0 green:230.0/255.0 blue:230.0/255.0 alpha:1];
+    } else if (@available(macOS 10.16, *)) {
         return [NSColor colorWithSRGBRed:180.0/255.0 green:180.0/255.0 blue:180.0/255.0 alpha:1];
     } else if (@available(macOS 10.14, *)) {
         return [NSColor colorWithWhite:0 alpha:0.15];
@@ -693,6 +695,11 @@
     backgroundRect.origin.y += backgroundInsets.top;
     backgroundRect.size.width -= backgroundInsets.left + backgroundInsets.right;
     backgroundRect.size.height -= backgroundInsets.top + backgroundInsets.bottom;
+    if (!horizontal) {
+        // The bar background color is extended by a half point to get a two-tone effect with the
+        // right-side line but here we want to remove it completely.
+        backgroundRect.size.width += 0.5;
+    }
     NSRectFill(backgroundRect);
 
     if (tabColor) {
@@ -703,7 +710,7 @@
     }
 
     if (@available(macOS 10.16, *)) {
-        if (!selected) {
+        if (!selected && _orientation == PSMTabBarHorizontalOrientation) {
             [self drawShadowForUnselectedTabInRect:backgroundRect];
         }
     }
@@ -1369,6 +1376,7 @@
             NSRectFill(NSMakeRect(NSMinX(frame), 0, NSWidth(frame), 1));
         }
     }
+
     if (@available(macOS 10.14, *)) {
         if (_orientation != PSMTabBarHorizontalOrientation) {
             [[self bottomLineColorSelected:NO] set];
@@ -1377,9 +1385,20 @@
             [self drawVerticalLineInFrame:rightLineRect x:NSMaxX(rect) - 1];
         } else {
             if (@available(macOS 10.16, *)) {
-                // Bottom line
-                [[self bottomLineColorSelected:YES] set];
-                NSRectFill(NSMakeRect(0, NSMaxY(rect) - 1, NSWidth(rect), 1));
+                switch (bar.tabLocation) {
+                    case PSMTab_LeftTab:
+                        break;
+                    case PSMTab_TopTab:
+                        // Bottom line
+                        [[self bottomLineColorSelected:YES] set];
+                        NSRectFill(NSMakeRect(0, NSMaxY(rect) - 1, NSWidth(rect), 1));
+                        break;
+                    case PSMTab_BottomTab:
+                        // Top line
+                        [[self bottomLineColorSelected:YES] set];
+                        NSRectFill(NSMakeRect(0, NSMinY(rect), NSWidth(rect), 1));
+                        break;
+                }
             }
         }
     }

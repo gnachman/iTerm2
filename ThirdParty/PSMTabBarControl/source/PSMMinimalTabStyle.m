@@ -580,7 +580,7 @@ static CGFloat PSMWeightedAverage(CGFloat l, CGFloat u, CGFloat w) {
 }
 
 - (CGFloat)verticalOffsetForSubtitle {
-    return 0;
+    return -1;
 }
 
 #pragma mark Draw outline around bottom tab bar
