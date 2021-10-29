@@ -57,5 +57,5 @@ iTermBackgroundColorVertexShader(uint vertexID [[ vertex_id ]],
 
 fragment float4
 iTermBackgroundColorFragmentShader(iTermBackgroundColorVertexFunctionOutput in [[stage_in]]) {
-    return in.color;
+    return float4(.25, .25, .25, 1.0);
 }

@@ -549,7 +549,7 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
         color = [_colorMap processedBackgroundColorForBackgroundColor:color];
         box.backgroundColor = color;
 
-        [box.backgroundColor set];
+        [[NSColor colorWithSRGBRed:.25 green:.25 blue:.25 alpha:1] set];
         iTermRectFillUsingOperation(rect,
                                     enableBlending ? NSCompositingOperationSourceOver : NSCompositingOperationCopy,
                                     virtualOffset);
@@ -974,6 +974,7 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
 - (NSSize)drawBadgeInRect:(NSRect)rect
                   margins:(NSEdgeInsets)margins
             virtualOffset:(CGFloat)virtualOffset {
+
     NSRect source = NSZeroRect;
     NSRect intersection = [iTermTextDrawingHelper rectForBadgeImageOfSize:_badgeImage.size
                                                           destinationRect:rect
@@ -984,6 +985,13 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
     if (NSEqualSizes(NSZeroSize, intersection.size)) {
         return NSZeroSize;
     }
+    const CGFloat components[] = { 1, 0, 0, 0.25 };
+    NSColor *const color = [NSColor colorWithColorSpace:_delegate.window.colorSpace components:components count:4];
+    NSLog(@"Window color space is %@", _delegate.window.colorSpace);
+    [color set];
+//    iTermRectFill(intersection, virtualOffset);
+    iTermRectFillUsingOperation(intersection, NSCompositingOperationSourceOver, virtualOffset);
+    /*
     [_badgeImage it_drawInRect:intersection
                       fromRect:source
                      operation:NSCompositingOperationSourceOver
@@ -991,7 +999,7 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
                 respectFlipped:YES
                          hints:nil
                  virtualOffset:virtualOffset];
-
+*/
     NSSize imageSize = _badgeImage.size;
     imageSize.width += kBadgeMargin + margins.right;
 
