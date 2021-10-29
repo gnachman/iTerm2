@@ -13,7 +13,6 @@
 #import "iTermMalloc.h"
 
 #include <stdlib.h>
-
 @interface VT100Token ()
 @property(nonatomic, readwrite) CSIParam *csi;
 @end
