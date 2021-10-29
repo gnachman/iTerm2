@@ -285,7 +285,7 @@
             @"0080": @{ kTipTitleKey: @"Shell Integration: Uploads",
                         kTipBodyKey: @"If you install Shell Integration on a machine you ssh to, you can drag-drop from Finder into the remote host by holding ⌥ while dragging. The destination directory is determined by where you drop the file in the terminal window: run cd foo, then drop the file below the cd command, and the file will go into the foo directory.",
                         kTipUrlKey: @"https://iterm2.com/shell_integration.html" },
-
+// IMPORTANT: When updating this, also update it2tip
             };
 }
 
