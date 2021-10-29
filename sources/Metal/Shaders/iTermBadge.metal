@@ -32,7 +32,8 @@ iTermBadgeFragmentShader(iTermBadgeVertexFunctionOutput in [[stage_in]],
                          texture2d<float> texture [[ texture(iTermTextureIndexPrimary) ]]) {
     constexpr sampler textureSampler(mag_filter::linear,
                                      min_filter::linear);
-    return float4(0.25, 0, 0, 0.25);
+    return float4(0.75, 0.25, 0.1, 1) * 0.25;
+//    return float4(0.694, 0.285, 0.159, 1) * 0.25;
 //    return texture.sample(textureSampler, in.textureCoordinate);
 }
 

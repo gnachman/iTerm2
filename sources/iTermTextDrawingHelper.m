@@ -985,8 +985,9 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
     if (NSEqualSizes(NSZeroSize, intersection.size)) {
         return NSZeroSize;
     }
-    const CGFloat components[] = { 1, 0, 0, 0.25 };
-    NSColor *const color = [NSColor colorWithColorSpace:_delegate.window.colorSpace components:components count:4];
+    const CGFloat components[] = { 0.75, 0.25, 0.1, 0.25 };
+    NSColor *srgb = [NSColor colorWithSRGBRed:0.75 green:0.25 blue:0.1 alpha:0.25];
+    NSColor *const color = srgb; // [srgb colorUsingColorSpace:_delegate.window.colorSpace]; // [NSColor colorWithColorSpace:_delegate.window.colorSpace components:components count:4];
     NSLog(@"Window color space is %@", _delegate.window.colorSpace);
     [color set];
 //    iTermRectFill(intersection, virtualOffset);
