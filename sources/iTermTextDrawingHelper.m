@@ -45,6 +45,7 @@
 
 #define likely(x) __builtin_expect(!!(x), 1)
 #define unlikely(x) __builtin_expect(!!(x), 0)
+#define MEDIAN(min_, mid_, max_) MAX(MIN(mid_, max_), min_)
 
 static const int kBadgeMargin = 4;
 
@@ -144,6 +145,12 @@ typedef struct iTermTextColorContext {
     NSColor *previousForegroundColor;
 } iTermTextColorContext;
 
+typedef NS_ENUM(NSUInteger, iTermMarkIndicatorType) {
+    iTermMarkIndicatorTypeSuccess,
+    iTermMarkIndicatorTypeError,
+    iTermMarkIndicatorTypeOther
+};
+
 static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL hasBackgroundImage,
                                                                          BOOL enableBlending,
                                                                          BOOL reverseVideo,
@@ -186,6 +193,7 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
     NSMutableDictionary<iTermAttributedStringProxy *, id> *_replacementLineRefCache;
 
     BOOL _preferSpeedToFullLigatureSupport;
+    NSMutableDictionary<NSNumber *, NSImage *> *_cachedMarks;
 }
 
 - (instancetype)init {
@@ -210,6 +218,7 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
         _missingImages = [[NSMutableSet alloc] init];
         _lineRefCache = [[NSMutableDictionary alloc] init];
         _replacementLineRefCache = [[NSMutableDictionary alloc] init];
+        _cachedMarks = [[NSMutableDictionary alloc] init];
     }
     return self;
 }
@@ -232,6 +241,7 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
     [_lineRefCache release];
     [_replacementLineRefCache release];
     [_timestampDrawHelper release];
+    [_cachedMarks release];
 
     [super dealloc];
 }
@@ -728,7 +738,7 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
     [color set];
 
     [NSGraphicsContext saveGraphicsState];
-    [[NSGraphicsContext currentContext] setPatternPhase:NSMakePoint(0, 0)];
+    [[NSGraphicsContext currentContext] setPatternPhase:NSMakePoint([iTermPreferences intForKey:kPreferenceKeySideMargins], 0)];
     iTermRectFillUsingOperation(rect, NSCompositingOperationSourceOver, virtualOffset);
     [NSGraphicsContext restoreGraphicsState];
 }
@@ -739,8 +749,17 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
     return NSEdgeInsetsMake(self.badgeTopMargin, 0, 0, self.badgeRightMargin);
 }
 
+- (VT100GridCoordRange)safeCoordRange:(VT100GridCoordRange)range {
+    const int width = _gridSize.width;
+    const int height = _numberOfLines;
+    return VT100GridCoordRangeMake(MEDIAN(0, range.start.x, width),
+                                   MEDIAN(0, range.start.y, height),
+                                   MEDIAN(0, range.end.x, width),
+                                   MEDIAN(0, range.end.y, height));
+}
+
 - (void)drawAccessoriesInRect:(NSRect)bgRect virtualOffset:(CGFloat)virtualOffset {
-    VT100GridCoordRange coordRange = [self coordRangeForRect:bgRect];
+    const VT100GridCoordRange coordRange = [self safeCoordRange:[self coordRangeForRect:bgRect]];
     [self drawBadgeInRect:bgRect
                   margins:self.badgeMargins
             virtualOffset:virtualOffset];
@@ -754,7 +773,7 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
     int cursorLine = _cursorCoord.y + _numberOfScrollbackLines;
     const BOOL drawCursorGuide = (self.highlightCursorLine &&
                                   cursorLine >= coordRange.start.y &&
-                                  cursorLine < coordRange.end.y);
+                                  cursorLine <= coordRange.end.y);
     if (drawCursorGuide) {
         CGFloat y = cursorLine * _cellSize.height;
         [self drawCursorGuideForColumns:NSMakeRange(coordRange.start.x,
@@ -810,7 +829,8 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
 
     // Bump the bottom up by as much as 3 points.
     rect.size.height -= MAX(3 * scale, (cellSizeWithoutSpacing.height - 15 * scale) / 2.0);
-
+    rect.size.width = MAX(scale, rect.size.width);
+    rect.size.height = MAX(scale, rect.size.height);
     return rect;
 }
 
@@ -835,6 +855,69 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
                                alpha:1];
 }
 
++ (NSImage *)newImageWithMarkOfColor:(NSColor *)color
+                                size:(CGSize)size {
+    if (size.width < 1 || size.height < 1) {
+        return [self newImageWithMarkOfColor:color
+                                        size:CGSizeMake(MAX(1, size.width),
+                                                        MAX(1, size.height))];
+    }
+    NSImage *img = [NSImage imageOfSize:size drawBlock:^{
+        CGRect rect = CGRectMake(0, 0, MAX(1, size.width), size.height);
+
+        NSPoint bottom = NSMakePoint(NSMinX(rect), NSMinY(rect));
+        NSPoint right = NSMakePoint(NSMaxX(rect), NSMidY(rect));
+        NSPoint top = NSMakePoint(NSMinX(rect), NSMaxY(rect));
+
+        if (size.width < 2) {
+            NSRect rect = NSMakeRect(0, 0, size.width, size.height);
+            rect = NSInsetRect(rect, 0, rect.size.height * 0.25);
+            [[color colorWithAlphaComponent:0.75] set];
+            NSRectFill(rect);
+        } else {
+            NSBezierPath *path = [NSBezierPath bezierPath];
+            [color set];
+            [path moveToPoint:top];
+            [path lineToPoint:right];
+            [path lineToPoint:bottom];
+            [path lineToPoint:top];
+            [path fill];
+
+            [[NSColor blackColor] set];
+            path = [NSBezierPath bezierPath];
+            [path moveToPoint:NSMakePoint(bottom.x, bottom.y)];
+            [path lineToPoint:NSMakePoint(right.x, right.y)];
+            [path setLineWidth:1.0];
+            [path stroke];
+        }
+    }];
+
+    return [img retain];
+}
+
+- (iTermMarkIndicatorType)markIndicatorTypeForMark:(VT100ScreenMark *)mark {
+    if (mark.code == 0) {
+        return iTermMarkIndicatorTypeSuccess;
+    }
+    if ([iTermAdvancedSettingsModel showYellowMarkForJobStoppedBySignal] &&
+        mark.code >= 128 && mark.code <= 128 + 32) {
+        // Stopped by a signal (or an error, but we can't tell which)
+        return iTermMarkIndicatorTypeOther;
+    }
+    return iTermMarkIndicatorTypeError;
+}
+
+- (NSColor *)colorForMark:(VT100ScreenMark *)mark {
+    switch ([self markIndicatorTypeForMark:mark]) {
+        case iTermMarkIndicatorTypeSuccess:
+            return [iTermTextDrawingHelper successMarkColor];
+        case iTermMarkIndicatorTypeOther:
+            return [iTermTextDrawingHelper otherMarkColor];
+        case iTermMarkIndicatorTypeError:
+            return [iTermTextDrawingHelper errorMarkColor];
+    }
+}
+
 - (void)drawMarkIfNeededOnLine:(int)line
                 leftMarginRect:(NSRect)leftMargin
                  virtualOffset:(CGFloat)virtualOffset {
@@ -847,44 +930,14 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
                                                                  cellSize:_cellSize
                                                    cellSizeWithoutSpacing:_cellSizeWithoutSpacing
                                                                     scale:1];
-        const CGFloat minX = round(NSMinX(rect));
-        NSPoint top = NSMakePoint(minX, NSMinY(rect));
-        NSPoint right = NSMakePoint(minX + NSWidth(rect), NSMidY(rect) - 0.25);
-        NSPoint bottom = NSMakePoint(minX, NSMaxY(rect) - 0.5);
-
-
-        [[NSColor blackColor] set];
-        NSBezierPath *path = [NSBezierPath bezierPath];
-        [path it_moveToPoint:NSMakePoint(bottom.x, bottom.y) virtualOffset:virtualOffset];
-        [path it_lineToPoint:NSMakePoint(right.x, right.y) virtualOffset:virtualOffset];
-        [path setLineWidth:1.0];
-        [path stroke];
-
-        NSColor *color = nil;
-        if (mark.code == 0) {
-            // Success
-            color = [iTermTextDrawingHelper successMarkColor];
-        } else if ([iTermAdvancedSettingsModel showYellowMarkForJobStoppedBySignal] &&
-                   mark.code >= 128 && mark.code <= 128 + 32) {
-            // Stopped by a signal (or an error, but we can't tell which)
-            color = [iTermTextDrawingHelper otherMarkColor];
-        } else {
-            // Failure
-            color = [iTermTextDrawingHelper errorMarkColor];
+        const iTermMarkIndicatorType type = [self markIndicatorTypeForMark:mark];
+        NSImage *image = _cachedMarks[@(type)];
+        if (!image || !NSEqualSizes(image.size, rect.size)) {
+            image = [[iTermTextDrawingHelper newImageWithMarkOfColor:[self colorForMark:mark]
+                                                                size:rect.size] autorelease];
+            _cachedMarks[@(type)] = image;
         }
-
-        if (leftMargin.size.width == 1) {
-            NSRect rect = NSInsetRect(leftMargin, 0, leftMargin.size.height * 0.25);
-            [[color colorWithAlphaComponent:0.75] set];
-            iTermRectFillUsingOperation(rect, NSCompositingOperationSourceOver, virtualOffset);
-        } else {
-            [color set];
-            [path it_moveToPoint:top virtualOffset:virtualOffset];
-            [path it_lineToPoint:right virtualOffset:virtualOffset];
-            [path it_lineToPoint:bottom virtualOffset:virtualOffset];
-            [path it_lineToPoint:top virtualOffset:virtualOffset];
-            [path fill];
-        }
+        [image it_drawInRect:rect virtualOffset:virtualOffset];
     }
 }
 
@@ -909,6 +962,7 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
 }
 
 - (void)createTimestampDrawingHelperWithFont:(NSFont *)font {
+    [self updateCachedMetrics];
     [_timestampDrawHelper autorelease];
     _timestampDrawHelper =
         [[iTermTimestampDrawHelper alloc] initWithBackgroundColor:[self defaultBackgroundColor]
@@ -918,6 +972,11 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
                                                         rowHeight:_cellSize.height
                                                            retina:self.isRetina
                                                              font:font];
+    for (int y = _scrollViewDocumentVisibleRect.origin.y / _cellSize.height;
+         y < NSMaxY(_scrollViewDocumentVisibleRect) / _cellSize.height && y < _numberOfLines;
+         y++) {
+        [_timestampDrawHelper setDate:[_delegate drawingHelperTimestampForLine:y] forLine:y];
+    }
 }
 
 - (void)drawTimestampsWithVirtualOffset:(CGFloat)virtualOffset {
@@ -933,11 +992,6 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
     }
     // Note: for the foreground color, we don't use the dimmed version because it looks bad on
     // nonretina displays. That's why I go to the colormap instead of using -defaultForegroundColor.
-    for (int y = _scrollViewDocumentVisibleRect.origin.y / _cellSize.height;
-         y < NSMaxY(_scrollViewDocumentVisibleRect) / _cellSize.height && y < _numberOfLines;
-         y++) {
-        [_timestampDrawHelper setDate:[_delegate drawingHelperTimestampForLine:y] forLine:y];
-    }
     [_timestampDrawHelper drawInContext:[NSGraphicsContext currentContext]
                                   frame:_frame
                           virtualOffset:virtualOffset];
@@ -2933,8 +2987,8 @@ withExtendedAttributes:(iTermExternalAttribute *)ea2 {
                                   charsInLine * _cellSize.width,
                                   _cellSize.height);
             [[self defaultBackgroundColor] set];
-
             iTermRectFill(r, virtualOffset);
+            [self drawAccessoriesInRect:r virtualOffset:virtualOffset];
 
             // Draw the characters.
             [self constructAndDrawRunsForLine:buf
@@ -3020,9 +3074,9 @@ withExtendedAttributes:(iTermExternalAttribute *)ea2 {
                                                                                         alpha:1.0]] set];
         iTermRectFill(cursorFrame, virtualOffset);
 
-        return TRUE;
+        return YES;
     }
-    return FALSE;
+    return NO;
 }
 
 #pragma mark - Drawing: Cursor
@@ -3282,13 +3336,14 @@ withExtendedAttributes:(iTermExternalAttribute *)ea2 {
 }
 
 - (BOOL)shouldDrawCursor {
-    BOOL shouldShowCursor = [self shouldShowCursor];
-    int column = _cursorCoord.x;
-    int row = _cursorCoord.y;
-    int width = _gridSize.width;
-    int height = _gridSize.height;
+    const BOOL shouldShowCursor = [self shouldShowCursor];
+    const int column = _cursorCoord.x;
+    const int row = _cursorCoord.y;
+    const int width = _gridSize.width;
+    const int height = _gridSize.height;
+    const BOOL copyMode = self.copyMode;
 
-    int cursorRow = row + _numberOfScrollbackLines;
+    const int cursorRow = row + _numberOfScrollbackLines;
     if (!NSLocationInRange(cursorRow, [self rangeOfVisibleRows])) {
         // Don't draw a cursor that isn't in one of the rows that's being drawn (e.g., if it's on a
         // row that's just below the last visible row, don't draw it, or else the top of the cursor
@@ -3304,11 +3359,12 @@ withExtendedAttributes:(iTermExternalAttribute *)ea2 {
                    column <= width &&
                    column >= 0 &&
                    row >= 0 &&
-                   row < height);
+                   row < height &&
+                   !copyMode);
     DLog(@"shouldDrawCursor: hasMarkedText=%d, cursorVisible=%d, showCursor=%d, column=%d, row=%d"
-         @"width=%d, height=%d. Result=%@",
+         @"width=%d, height=%d, copyMode=%@. Result=%@",
          (int)[self hasMarkedText], (int)_cursorVisible, (int)shouldShowCursor, column, row,
-         width, height, @(result));
+         width, height, @(copyMode), @(result));
     return result;
 }
 

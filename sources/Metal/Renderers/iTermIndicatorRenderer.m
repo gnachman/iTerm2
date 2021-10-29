@@ -8,6 +8,7 @@
 #import "iTermIndicatorRenderer.h"
 
 #import "NSArray+iTerm.h"
+#import "NSImage+iTerm.h"
 #import "iTermSharedImageStore.h"
 
 NS_ASSUME_NONNULL_BEGIN
@@ -41,7 +42,6 @@ NS_ASSUME_NONNULL_BEGIN
 
 @implementation iTermIndicatorRenderer {
     iTermMetalRenderer *_metalRenderer;
-    NSMutableDictionary<NSString *, id<MTLTexture> > *_textures;
     NSMutableArray<iTermIndicatorDescriptor *> *_indicatorDescriptors;
     NSMutableDictionary<NSString *, id<MTLTexture>> *_identifierToTextureMap;
     iTermMetalBufferPool *_alphaBufferPool;
@@ -55,7 +55,6 @@ NS_ASSUME_NONNULL_BEGIN
                                                fragmentFunctionName:@"iTermIndicatorFragmentShader"
                                                            blending:[iTermMetalBlending premultipliedCompositing]
                                                 transientStateClass:[iTermIndicatorRendererTransientState class]];
-        _textures = [NSMutableDictionary dictionary];
         _indicatorDescriptors = [NSMutableArray array];
         _identifierToTextureMap = [NSMutableDictionary dictionary];
         _alphaBufferPool = [[iTermMetalBufferPool alloc] initWithDevice:device bufferSize:sizeof(float)];
@@ -99,6 +98,7 @@ NS_ASSUME_NONNULL_BEGIN
         transientState:(__kindof iTermMetalRendererTransientState *)tState {
     id<MTLBuffer> vertexBuffer = [self vertexBufferForFrame:descriptor.frame
                                                       scale:tState.configuration.scale
+                                               viewportSize:tState.configuration.viewportSize
                                                     context:tState.poolContext];
 
     float alpha = descriptor.alpha;
@@ -117,12 +117,14 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (id<MTLBuffer>)vertexBufferForFrame:(NSRect)frame
                                 scale:(CGFloat)scale
+                         viewportSize:(vector_uint2)viewportSize
                               context:(iTermMetalBufferPoolContext *)context {
     CGRect textureFrame = CGRectMake(0, 0, 1, 1);
     CGRect quad = CGRectMake(CGRectGetMinX(frame) * scale,
                              CGRectGetMinY(frame) * scale,
                              CGRectGetWidth(frame) * scale,
                              CGRectGetHeight(frame) * scale);
+    quad.origin.y = viewportSize.y - quad.origin.y - quad.size.height;
     const iTermVertex vertices[] = {
         // Pixel Positions             Texture Coordinates
         { { CGRectGetMaxX(quad), CGRectGetMinY(quad) }, { CGRectGetMaxX(textureFrame), CGRectGetMinY(textureFrame) } },
@@ -143,18 +145,27 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 - (void)addIndicator:(iTermIndicatorDescriptor *)indicator
+          colorSpace:(NSColorSpace *)colorSpace
              context:(iTermMetalBufferPoolContext *)context {
-    indicator.texture = [self textureForIdentifier:indicator.identifier image:indicator.image context:context];
+    indicator.texture = [self textureForIdentifier:indicator.identifier
+                                             image:indicator.image
+                                           context:context
+                                        colorSpace:colorSpace];
             [_indicatorDescriptors addObject:indicator];
     indicator.texture.label = indicator.identifier;
 }
 
-- (id<MTLTexture>)textureForIdentifier:(NSString *)identifier image:(NSImage *)image context:(iTermMetalBufferPoolContext *)context {
-    id<MTLTexture> texture = _identifierToTextureMap[identifier];
+- (id<MTLTexture>)textureForIdentifier:(NSString *)identifier
+                                 image:(NSImage *)image
+                               context:(iTermMetalBufferPoolContext *)context
+                            colorSpace:(NSColorSpace *)colorSpace {
+    NSString *key = [NSString stringWithFormat:@"%@:%@", identifier, colorSpace.localizedName];
+    id<MTLTexture> texture = _identifierToTextureMap[key];
     if (!texture) {
-        texture = [_metalRenderer textureFromImage:[iTermImageWrapper withImage:image]
-                                           context:context];
-        _identifierToTextureMap[identifier] = texture;
+        texture = [_metalRenderer textureFromImage:[iTermImageWrapper withImage:image.it_verticallyFlippedImage]
+                                           context:context
+                                        colorSpace:colorSpace];
+        _identifierToTextureMap[key] = texture;
     }
     return texture;
 }

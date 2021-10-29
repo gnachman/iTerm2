@@ -4646,6 +4646,11 @@ ITERM_WEAKLY_REFERENCEABLE
             [tab bounceMetal];
         }
     }
+    [self.contentView enumerateHierarchy:^(NSView *view) {
+        if ([view respondsToSelector:@selector(enclosingWindowDidMoveToScreen:)]) {
+            [(id<iTermViewScreenNotificationHandling>)view enclosingWindowDidMoveToScreen:self.window.screen];
+        }
+    }];
     DLog(@"Returning from windowDidChangeScreen:.");
 }
 

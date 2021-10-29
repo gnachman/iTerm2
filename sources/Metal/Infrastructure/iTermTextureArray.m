@@ -3,6 +3,7 @@
 #import "DebugLogging.h"
 #import "iTermTexture.h"
 #import "iTermTextureArray.h"
+#import "NSImage+iTerm.h"
 #import <CoreImage/CoreImage.h>
 
 @implementation iTermTextureArray {
@@ -24,7 +25,7 @@
 - (instancetype)initWithTextureWidth:(uint32_t)width
                        textureHeight:(uint32_t)height
                          arrayLength:(NSUInteger)length
-                                bgra:(BOOL)bgra
+                         pixelFormat:(MTLPixelFormat)pixelFormat
                               device:(id <MTLDevice>)device {
     self = [super init];
     if (self) {
@@ -38,7 +39,7 @@
         MTLTextureDescriptor *textureDescriptor = [[MTLTextureDescriptor alloc] init];
 
         textureDescriptor.textureType = MTLTextureType2D;
-        textureDescriptor.pixelFormat = bgra ? MTLPixelFormatBGRA8Unorm : MTLPixelFormatRGBA8Unorm;
+        textureDescriptor.pixelFormat = pixelFormat;
         textureDescriptor.width = atlasSize.width;
         textureDescriptor.height = atlasSize.height;
         textureDescriptor.arrayLength = 1;
@@ -47,8 +48,16 @@
 
         _texture = [device newTextureWithDescriptor:textureDescriptor];
         _texture.label = @"iTermTextureArray";
-        [iTermTexture setBytesPerRow:_atlasSize.width * 4
-                         rawDataSize:_atlasSize.width * _atlasSize.height * 4
+        NSInteger bytesPerSample = 1;
+        if (pixelFormat == MTLPixelFormatRGBA16Float) {
+            bytesPerSample = 2;
+        } else if (pixelFormat == MTLPixelFormatBGRA8Unorm) {
+            bytesPerSample = 1;
+        } else {
+            ITAssertWithMessage(NO, @"Unexpected pixel format %@", @(pixelFormat));
+        }
+        [iTermTexture setBytesPerRow:_atlasSize.width * 4 * bytesPerSample
+                         rawDataSize:_atlasSize.width * _atlasSize.height * 4 * bytesPerSample
                      samplesPerPixel:4
                           forTexture:_texture];
     }
@@ -110,58 +119,19 @@
 
 - (BOOL)setSlice:(NSUInteger)slice withImage:(NSImage *)nsimage {
     ITDebugAssert(slice < _arrayLength);
-    NSBitmapImageRep *bitmapRepresentation = [[NSBitmapImageRep alloc] initWithData:[nsimage TIFFRepresentation]];
-    if (!bitmapRepresentation) {
+
+    NSBitmapImageRep *bitmap = [[nsimage it_verticallyFlippedImage] it_bitmapImageRep];
+    if (!bitmap) {
         return NO;
     }
-    CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
-    if (!colorSpace) {
-        return NO;
-    }
-
-    uint32_t width = _width;
-    uint32_t height = _height;
-    uint32_t rowBytes = width * 4;
-
-    CGContextRef context = CGBitmapContextCreate(NULL,
-                                                  width,
-                                                  height,
-                                                  8,
-                                                  rowBytes,
-                                                  colorSpace,
-                                                  kCGImageAlphaPremultipliedLast);
-
-    CGColorSpaceRelease(colorSpace);
-
-    if (!context) {
-        return NO;
-    }
-
-    CGRect bounds = CGRectMake(0, 0, width, height);
-
-    CGContextClearRect(context, bounds);
-
-    CGContextTranslateCTM(context, 0, height);
-    CGContextScaleCTM(context, 1, -1.0);
-
-    CGContextDrawImage(context, bounds, bitmapRepresentation.CGImage);
-
-    const void *bytes = CGBitmapContextGetData(context);
-
-    if (bytes) {
-        MTLOrigin origin = [self offsetForIndex:slice];
-        MTLRegion region = MTLRegionMake2D(origin.x, origin.y, _width, _height);
-
-        [_texture replaceRegion:region
-                    mipmapLevel:0
-                          slice:0
-                      withBytes:bytes
-                    bytesPerRow:rowBytes
-                  bytesPerImage:rowBytes*height];
-    }
-
-    CGContextRelease(context);
-
+    const MTLOrigin origin = [self offsetForIndex:slice];
+    const MTLRegion region = MTLRegionMake2D(origin.x, origin.y, _width, _height);
+    [_texture replaceRegion:region
+                mipmapLevel:0
+                      slice:0
+                  withBytes:bitmap.bitmapData
+                bytesPerRow:bitmap.bytesPerRow
+              bytesPerImage:bitmap.bytesPerRow * _height];
     return YES;
 }
 

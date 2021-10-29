@@ -27,7 +27,20 @@ const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 3;
     blending.alphaBlendOperation = MTLBlendOperationMax;
     blending.sourceAlphaBlendFactor = MTLBlendFactorOne;
     blending.destinationAlphaBlendFactor = MTLBlendFactorOne;
+    return blending;
+}
 
+// atop: The source image is applied using the formula R = S*Da + D*(1 - Sa).
++ (instancetype)atop {
+    iTermMetalBlending *blending = [[iTermMetalBlending alloc] init];
+
+    blending.rgbBlendOperation = MTLBlendOperationAdd;
+    blending.sourceRGBBlendFactor = MTLBlendFactorOne;
+    blending.destinationRGBBlendFactor = MTLBlendFactorOneMinusSourceAlpha;
+
+    blending.alphaBlendOperation = MTLBlendOperationAdd;
+    blending.sourceAlphaBlendFactor = MTLBlendFactorOne;
+    blending.destinationAlphaBlendFactor = MTLBlendFactorOneMinusSourceAlpha;
     return blending;
 }
 
@@ -68,17 +81,22 @@ const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 3;
 @implementation iTermRenderConfiguration
 
 - (instancetype)initWithViewportSize:(vector_uint2)viewportSize
+                legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth
                                scale:(CGFloat)scale
                   hasBackgroundImage:(BOOL)hasBackgroundImage
                         extraMargins:(NSEdgeInsets)extraMargins
-maximumExtendedDynamicRangeColorComponentValue:(CGFloat)maximumExtendedDynamicRangeColorComponentValue {
+maximumExtendedDynamicRangeColorComponentValue:(CGFloat)maximumExtendedDynamicRangeColorComponentValue
+                          colorSpace:(NSColorSpace *)colorSpace {
     self = [super init];
     if (self) {
         _viewportSize = viewportSize;
+        _viewportSizeExcludingLegacyScrollbars = simd_make_uint2(viewportSize.x - legacyScrollbarWidth,
+                                                                 viewportSize.y);
         _scale = scale;
         _hasBackgroundImage = hasBackgroundImage;
         _extraMargins = extraMargins;
         _maximumExtendedDynamicRangeColorComponentValue = maximumExtendedDynamicRangeColorComponentValue;
+        _colorSpace = colorSpace;
     }
     return self;
 }
@@ -309,6 +327,24 @@ maximumExtendedDynamicRangeColorComponentValue:(CGFloat)maximumExtendedDynamicRa
                                     checkIfChanged:YES];
 }
 
+- (id<MTLBuffer>)newFlippedQuadWithFrame:(CGRect)quad
+                            textureFrame:(CGRect)textureFrame
+                             poolContext:(iTermMetalBufferPoolContext *)poolContext {
+    const iTermVertex vertices[] = {
+        // Pixel Positions                              Texture Coordinates
+        { { CGRectGetMaxX(quad), CGRectGetMinY(quad) }, { CGRectGetMaxX(textureFrame), CGRectGetMaxY(textureFrame) } },
+        { { CGRectGetMinX(quad), CGRectGetMinY(quad) }, { CGRectGetMinX(textureFrame), CGRectGetMaxY(textureFrame) } },
+        { { CGRectGetMinX(quad), CGRectGetMaxY(quad) }, { CGRectGetMinX(textureFrame), CGRectGetMinY(textureFrame) } },
+
+        { { CGRectGetMaxX(quad), CGRectGetMinY(quad) }, { CGRectGetMaxX(textureFrame), CGRectGetMaxY(textureFrame) } },
+        { { CGRectGetMinX(quad), CGRectGetMaxY(quad) }, { CGRectGetMinX(textureFrame), CGRectGetMinY(textureFrame) } },
+        { { CGRectGetMaxX(quad), CGRectGetMaxY(quad) }, { CGRectGetMaxX(textureFrame), CGRectGetMinY(textureFrame) } },
+    };
+    return [_verticesPool requestBufferFromContext:poolContext
+                                         withBytes:vertices
+                                    checkIfChanged:YES];
+}
+
 - (id<MTLBuffer>)newQuadOfSize:(CGSize)size poolContext:(iTermMetalBufferPoolContext *)poolContext {
     const iTermVertex vertices[] = {
         // Pixel Positions             Texture Coordinates
@@ -391,8 +427,8 @@ maximumExtendedDynamicRangeColorComponentValue:(CGFloat)maximumExtendedDynamicRa
     return pipeline;
 }
 
-- (nullable id<MTLTexture>)textureFromImage:(iTermImageWrapper *)image context:(nullable iTermMetalBufferPoolContext *)context {
-    return [self textureFromImage:image context:context pool:nil];
+- (nullable id<MTLTexture>)textureFromImage:(iTermImageWrapper *)image context:(nullable iTermMetalBufferPoolContext *)context colorSpace:(NSColorSpace *)colorSpace {
+    return [self textureFromImage:image context:context pool:nil colorSpace:colorSpace];
 }
 
 - (void)convertWidth:(NSUInteger)width
@@ -415,15 +451,48 @@ maximumExtendedDynamicRangeColorComponentValue:(CGFloat)maximumExtendedDynamicRa
     }
 }
 
-- (nullable id<MTLTexture>)textureFromImage:(iTermImageWrapper *)image context:(iTermMetalBufferPoolContext *)context pool:(iTermTexturePool *)pool {
+// Assumes premultiplied alpha and little endian. Floating point must be 16 bit.
+- (MTLPixelFormat)pixelFormatForBitmapRep:(NSBitmapImageRep *)rep {
+    const MTLPixelFormat unsupportedFormatsMask = (NSBitmapFormatAlphaNonpremultiplied |
+                                                   NSBitmapFormatSixteenBitBigEndian |
+                                                   NSBitmapFormatThirtyTwoBitBigEndian |
+                                                   NSBitmapFormatThirtyTwoBitLittleEndian |
+                                                   NSBitmapFormatSixteenBitLittleEndian);  // Doesn't apply to 16-bit ints, not quite sure what this is for.
+    if (rep.bitmapFormat & unsupportedFormatsMask) {
+        return MTLPixelFormatInvalid;
+    }
+    if (rep.bitmapFormat & NSBitmapFormatFloatingPointSamples) {
+        // Note that 16-bit floats don't have NSBitmapFormatSixteenBitLittleEndian set. That's only for ints.
+        return MTLPixelFormatRGBA16Float;
+    }
+    const NSInteger bitsPerSample = rep.bitsPerPixel / rep.samplesPerPixel;
+    if (bitsPerSample == 16) {
+        return MTLPixelFormatRGBA16Unorm;
+    }
+    return MTLPixelFormatRGBA8Unorm;
+}
+
+- (nullable id<MTLTexture>)textureFromImage:(iTermImageWrapper *)wrapper
+                                    context:(iTermMetalBufferPoolContext *)context
+                                       pool:(iTermTexturePool *)pool
+                                 colorSpace:(NSColorSpace *)colorSpace {
+    iTermImageWrapper *image = wrapper;
     if (!image.image) {
         return nil;
     }
 
+    NSBitmapImageRep *bitmap = [image bitmapInColorSpace:colorSpace];
+    if ([self pixelFormatForBitmapRep:bitmap] == MTLPixelFormatInvalid) {
+        return [self legacyTextureFromImage:image
+                                    context:context
+                                       pool:pool
+                                 colorSpace:colorSpace];
+    }
+
     // Calculate a safe size for the image while preserving its aspect ratio.
     NSUInteger width, height;
-    [self convertWidth:image.scaledSize.width
-                height:image.scaledSize.height
+    [self convertWidth:bitmap.size.width  // use pixelWidth/pixelHeight if some weird jpegs get clipped
+                height:bitmap.size.height
                toWidth:&width
                 height:&height
           notExceeding:4096];
@@ -431,14 +500,11 @@ maximumExtendedDynamicRangeColorComponentValue:(CGFloat)maximumExtendedDynamicRa
         return nil;
     }
 
-    NSData *data = [image.image rawDataForMetalOfSize:NSMakeSize(width, height)];
-    if (!data) {
-        return nil;
+    if (width != bitmap.size.width || height != bitmap.size.height) {
+        bitmap = [bitmap it_bitmapScaledTo:NSMakeSize(width, height)];
     }
-    const uint8_t *rawData = data.bytes;
-
     MTLTextureDescriptor *textureDescriptor =
-    [MTLTextureDescriptor texture2DDescriptorWithPixelFormat:MTLPixelFormatRGBA8Unorm
+    [MTLTextureDescriptor texture2DDescriptorWithPixelFormat:[self pixelFormatForBitmapRep:bitmap]
                                                        width:width
                                                       height:height
                                                    mipmapped:NO];
@@ -451,12 +517,11 @@ maximumExtendedDynamicRangeColorComponentValue:(CGFloat)maximumExtendedDynamicRa
     }
 
     MTLRegion region = MTLRegionMake2D(0, 0, width, height);
-    NSUInteger bytesPerPixel = 4;
-    NSUInteger bytesPerRow = bytesPerPixel * width;
-    [texture replaceRegion:region mipmapLevel:0 withBytes:rawData bytesPerRow:bytesPerRow];
+    const NSUInteger bytesPerRow = bitmap.bytesPerRow;
+    [texture replaceRegion:region mipmapLevel:0 withBytes:bitmap.bitmapData bytesPerRow:bytesPerRow];
 
     [iTermTexture setBytesPerRow:bytesPerRow
-                     rawDataSize:height * width * 4
+                     rawDataSize:bytesPerRow * bitmap.size.height
                  samplesPerPixel:4
                       forTexture:texture];
 
@@ -464,6 +529,20 @@ maximumExtendedDynamicRangeColorComponentValue:(CGFloat)maximumExtendedDynamicRa
         [context didAddTextureOfSize:texture.width * texture.height];
     }
     return texture;
+}
+
+// Draw the image into a fresh NSImage and recurse into the caller, this time with an image we
+// assume will have a good pixel format.
+- (nullable id<MTLTexture>)legacyTextureFromImage:(iTermImageWrapper *)image
+                                          context:(iTermMetalBufferPoolContext *)context
+                                             pool:(iTermTexturePool *)pool
+                                       colorSpace:(NSColorSpace *)colorSpace {
+    NSImage *dest = [[NSImage alloc] initWithSize:image.image.size];
+    [dest lockFocus];
+    [image.image drawInRect:NSMakeRect(0, 0, image.image.size.width, image.image.size.height)];
+    [dest unlockFocus];
+    iTermImageWrapper *temp = [[iTermImageWrapper alloc] initWithImage:dest];
+    return [self textureFromImage:temp context:context pool:pool colorSpace:colorSpace];
 }
 
 - (id<MTLBuffer>)vertexBufferForViewportSize:(vector_uint2)viewportSize {

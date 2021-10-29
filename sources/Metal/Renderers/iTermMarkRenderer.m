@@ -5,6 +5,8 @@
 #import "iTermTextDrawingHelper.h"
 #import "iTermTextureArray.h"
 #import "iTermMetalCellRenderer.h"
+#import "NSImage+iTerm.h"
+#import "NSObject+iTerm.h"
 
 @interface iTermMarkRendererTransientState()
 @property (nonatomic, strong) iTermTextureArray *marksArrayTexture;
@@ -59,6 +61,7 @@
 @implementation iTermMarkRenderer {
     iTermMetalCellRenderer *_cellRenderer;
     iTermTextureArray *_marksArrayTexture;
+    NSColorSpace *_colorSpace;
     CGSize _markSize;
     iTermMetalMixedSizeBufferPool *_piuPool;
 }
@@ -107,14 +110,15 @@
                                                                  cellSize:tState.cellConfiguration.cellSize
                                                    cellSizeWithoutSpacing:tState.cellConfiguration.cellSizeWithoutSpacing
                                                                     scale:scale];
-    if (!CGSizeEqualToSize(markRect.size, _markSize)) {
-        // Mark size has changed
+    if (!CGSizeEqualToSize(markRect.size, _markSize) || ![NSObject object:tState.configuration.colorSpace isEqualToObject:_colorSpace]) {
+        // Mark size or colorspace has changed
         _markSize = markRect.size;
+        _colorSpace = tState.configuration.colorSpace;
         if (_markSize.width > 0 && _markSize.height > 0) {
             _marksArrayTexture = [[iTermTextureArray alloc] initWithTextureWidth:_markSize.width
                                                                    textureHeight:_markSize.height
                                                                      arrayLength:3
-                                                                            bgra:NO
+                                                                     pixelFormat:MTLPixelFormatRGBA16Float  // lockFocus gives this
                                                                           device:_cellRenderer.device];
 
             NSColor *successColor = [iTermTextDrawingHelper successMarkColor];
@@ -184,55 +188,13 @@
 
 #pragma mark - Private
 
-- (NSImage *)newImageWithMarkOfColor:(NSColor *)color size:(CGSize)size {
-    // Doing this hacky crap with NSBitmapImageRep is necessary to get it
-    // pixel-perfect. If you lock an NSImage it'll create a rep that's larger by
-    // the scale factor (of, uh, something).
-    NSBitmapImageRep *offscreenRep = [[NSBitmapImageRep alloc] initWithBitmapDataPlanes:NULL
-                                                                              pixelsWide:size.width
-                                                                              pixelsHigh:size.height
-                                                                           bitsPerSample:8
-                                                                         samplesPerPixel:4
-                                                                                hasAlpha:YES
-                                                                                isPlanar:NO
-                                                                          colorSpaceName:NSDeviceRGBColorSpace
-                                                                            bitmapFormat:NSBitmapFormatAlphaFirst
-                                                                             bytesPerRow:0
-                                                                            bitsPerPixel:0];
-    offscreenRep = [offscreenRep bitmapImageRepByRetaggingWithColorSpace:[NSColorSpace sRGBColorSpace]];
+- (NSImage *)newImageWithMarkOfColor:(NSColor *)color size:(CGSize)pixelSize {
+    NSSize pointSize = pixelSize;
+    const CGFloat scale = 2;
+    pointSize.width /= scale;
+    pointSize.height /= scale;
 
-    NSGraphicsContext *g = [NSGraphicsContext graphicsContextWithBitmapImageRep:offscreenRep];
-    [NSGraphicsContext saveGraphicsState];
-    [NSGraphicsContext setCurrentContext:g];
-
-    CGRect rect = CGRectMake(0, 0, size.width, size.height);
-
-    NSPoint bottom = NSMakePoint(NSMinX(rect), NSMinY(rect));
-    NSPoint right = NSMakePoint(NSMaxX(rect), NSMidY(rect));
-    NSPoint top = NSMakePoint(NSMinX(rect), NSMaxY(rect));
-
-    NSBezierPath *path;
-
-    path = [NSBezierPath bezierPath];
-    [color set];
-    [path moveToPoint:top];
-    [path lineToPoint:right];
-    [path lineToPoint:bottom];
-    [path lineToPoint:top];
-    [path fill];
-
-    [[NSColor blackColor] set];
-    path = [NSBezierPath bezierPath];
-    [path moveToPoint:NSMakePoint(bottom.x, bottom.y)];
-    [path lineToPoint:NSMakePoint(right.x, right.y)];
-    [path setLineWidth:1.0];
-    [path stroke];
-
-    [NSGraphicsContext restoreGraphicsState];
-
-    NSImage *img = [[NSImage alloc] initWithSize:size];
-    [img addRepresentation:offscreenRep];
-    return img;
+    return [iTermTextDrawingHelper newImageWithMarkOfColor:color size:pointSize];
 }
 
 @end

@@ -35,6 +35,7 @@ NS_ASSUME_NONNULL_BEGIN
     CGFloat _transparencyAlpha;
     BOOL _transparencyAffectsOnlyDefaultBackgroundColor;
     NSColor *_cursorGuideColor;
+    NSColorSpace *_colorSpace;
 
     // Text
     PTYFontInfo *_asciiFont;

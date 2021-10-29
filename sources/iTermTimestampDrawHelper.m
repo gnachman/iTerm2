@@ -69,9 +69,15 @@ const CGFloat iTermTimestampGradientWidth = 20;
     [_rows addObject:row];
 }
 
-- (void)drawInContext:(NSGraphicsContext *)context frame:(NSRect)frame virtualOffset:(CGFloat)virtualOffset {
+- (void)drawInContext:(NSGraphicsContext *)context
+                frame:(NSRect)frame
+        virtualOffset:(CGFloat)virtualOffset {
     [_rows enumerateObjectsUsingBlock:^(iTermTimestampRow * _Nonnull row, NSUInteger idx, BOOL * _Nonnull stop) {
-        NSRect stringFrame = [self frameForStringGivenWidth:self->_maximumWidth line:row.line maxX:NSMaxX(frame) virtualOffset:virtualOffset];
+        NSRect stringFrame = [self frameForStringGivenWidth:self->_maximumWidth
+                                                     height:[self fontHeight]
+                                                       line:row.line
+                                                       maxX:NSMaxX(frame)
+                                              virtualOffset:virtualOffset];
         [self drawBackgroundInFrame:[self backgroundFrameForTextFrame:stringFrame]
                             bgColor:self->_bgColor
                             context:context];
@@ -79,13 +85,20 @@ const CGFloat iTermTimestampGradientWidth = 20;
     }];
 }
 
-- (void)drawRow:(int)index inContext:(NSGraphicsContext *)context frame:(NSRect)frameWithGradient virtualOffset:(CGFloat)virtualOffset {
+- (void)drawRow:(int)index
+      inContext:(NSGraphicsContext *)context
+          frame:(NSRect)frameWithGradient
+  virtualOffset:(CGFloat)virtualOffset {
     NSRect frame = frameWithGradient;
     frame.origin.x += iTermTimestampGradientWidth;
     frame.size.width -= iTermTimestampGradientWidth;
 
     iTermTimestampRow *row = _rows[index];
-    NSRect stringFrame = [self frameForStringGivenWidth:_maximumWidth line:0 maxX:NSMaxX(frame) virtualOffset:virtualOffset];
+    NSRect stringFrame = [self frameForStringGivenWidth:_maximumWidth
+                                                 height:[self fontHeight]
+                                                   line:0
+                                                   maxX:NSMaxX(frame)
+                                          virtualOffset:virtualOffset];
     stringFrame.origin.y += frame.origin.y;
     [self drawBackgroundInFrame:[self backgroundFrameForTextFrame:stringFrame]
                         bgColor:_bgColor
@@ -101,6 +114,10 @@ const CGFloat iTermTimestampGradientWidth = 20;
         return NO;
     }
     return [_rows[index - 1].string isEqual:_rows[index].string];
+}
+
+- (NSString *)stringForRow:(int)index {
+    return _rows[index].string;
 }
 
 - (CGFloat)suggestedWidth {
@@ -130,20 +147,26 @@ const CGFloat iTermTimestampGradientWidth = 20;
     NSRectFillUsingOperation(solidFrame, NSCompositingOperationSourceOver);
 }
 
-- (void)drawString:(NSString *)s row:(int)index frame:(NSRect)frame {
-    NSDictionary *attributes = [self attributesForTextColor:_fgColor
-                                                     shadow:[self shadowForTextColor:_fgColor]
+- (void)drawString:(NSString *)s
+               row:(int)index
+             frame:(NSRect)frame {
+    NSColor *color = _fgColor;
+    NSDictionary *attributes = [self attributesForTextColor:color
+                                                     shadow:[self shadowForTextColor:color]
                                                      retina:_isRetina];
-    const CGFloat offset = (_rowHeight - NSHeight(frame)) / 2;
     const BOOL repeat = [self rowIsRepeat:index];
     if (s.length && repeat) {
-        [_fgColor set];
+        [color set];
         const CGFloat center = NSMinX(frame) + 10;
-        NSRectFill(NSMakeRect(center - 1, NSMinY(frame), 1, _rowHeight));
-        NSRectFill(NSMakeRect(center + 1, NSMinY(frame), 1, _rowHeight));
+        const NSRect backgroundFrame = [self backgroundFrameForTextFrame:frame];
+        NSRectFill(NSMakeRect(center - 1, NSMinY(backgroundFrame), 1, _rowHeight));
+        NSRectFill(NSMakeRect(center + 1, NSMinY(backgroundFrame), 1, _rowHeight));
     } else {
-        const NSPoint p = NSMakePoint(NSMinX(frame), NSMinY(frame) + offset);
-        [s drawAtPoint:p withAttributes:attributes];
+        [NSGraphicsContext saveGraphicsState];
+        CGContextRef ctx = [[NSGraphicsContext currentContext] CGContext];
+        CGContextSetShouldSmoothFonts(ctx, NO);
+        [s drawAtPoint:frame.origin withAttributes:attributes];
+        [NSGraphicsContext restoreGraphicsState];
     }
 }
 
@@ -151,7 +174,7 @@ const CGFloat iTermTimestampGradientWidth = 20;
 
 - (NSRect)backgroundFrameForTextFrame:(NSRect)frame {
     return NSMakeRect(NSMinX(frame) - iTermTimestampGradientWidth,
-                      NSMinY(frame),
+                      NSMinY(frame) - [self retinaRound:(_rowHeight - [self fontHeight]) / 2.0],
                       NSWidth(frame) + iTermTimestampGradientWidth,
                       NSHeight(frame));
 }
@@ -160,15 +183,34 @@ const CGFloat iTermTimestampGradientWidth = 20;
     NSString *widest = [s stringByReplacingOccurrencesOfRegex:@"[\\d\\p{Alphabetic}]" withString:@"M"];
     NSSize size = [widest sizeWithAttributes:@{ NSFontAttributeName: self.font ?: [NSFont userFixedPitchFontOfSize:[NSFont systemFontSize]] }];
 
-    return [self frameForStringGivenWidth:size.width line:line maxX:maxX virtualOffset:virtualOffset];
+    return [self frameForStringGivenWidth:size.width
+                                   height:[self fontHeight]
+                                     line:line
+                                     maxX:maxX
+                            virtualOffset:virtualOffset];
 }
 
-- (NSRect)frameForStringGivenWidth:(CGFloat)width line:(int)line maxX:(CGFloat)maxX virtualOffset:(CGFloat)virtualOffset {
+- (CGFloat)fontHeight {
+    return self.font.capHeight - self.font.descender;
+}
+
+- (NSRect)frameForStringGivenWidth:(CGFloat)width
+                            height:(CGFloat)height
+                              line:(int)line
+                              maxX:(CGFloat)maxX
+                     virtualOffset:(CGFloat)virtualOffset {
     const int w = width + [iTermPreferences intForKey:kPreferenceKeySideMargins];
     const int x = MAX(0, maxX - w);
-    const CGFloat y = line * _rowHeight - virtualOffset;
+    const CGFloat y = line * _rowHeight - virtualOffset + [self retinaRound:(_rowHeight - height) / 2.0];
 
     return NSMakeRect(x, y, w, _rowHeight);
+}
+
+- (CGFloat)retinaRound:(CGFloat)y {
+    if (_isRetina) {
+        return round(y * 2.0) / 2.0;
+    }
+    return round(y);
 }
 
 #pragma mark - String Diddling

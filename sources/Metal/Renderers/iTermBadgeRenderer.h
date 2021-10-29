@@ -16,6 +16,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (instancetype)init NS_UNAVAILABLE;
 
 - (void)setBadgeImage:(NSImage *)image
+           colorSpace:(NSColorSpace *)colorSpace
               context:(iTermMetalBufferPoolContext *)context;
 
 @end

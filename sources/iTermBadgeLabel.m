@@ -8,6 +8,7 @@
 
 #import "iTermBadgeLabel.h"
 #import "DebugLogging.h"
+#import "NSImage+iTerm.h"
 #import "NSStringITerm.h"
 
 @interface iTermBadgeLabel()
@@ -15,6 +16,7 @@
 @end
 
 @implementation iTermBadgeLabel {
+    NSMutableDictionary<NSString *, NSImage *> *_images;
     BOOL _dirty;
     NSMutableParagraphStyle *_paragraphStyle;
 }
@@ -27,26 +29,16 @@
         _paragraphStyle.alignment = NSTextAlignmentRight;
         _minimumPointSize = 4;
         _maximumPointSize = 100;
+        _images = [NSMutableDictionary dictionary];
     }
     return self;
-}
-
-- (void)dealloc {
-    [_fillColor release];
-    [_backgroundColor release];
-    [_stringValue release];
-    [_image release];
-    [_paragraphStyle release];
-
-    [super dealloc];
 }
 
 - (void)setFillColor:(NSColor *)fillColor {
     if ([fillColor isEqual:_fillColor] || fillColor == _fillColor) {
         return;
     }
-    [_fillColor autorelease];
-    _fillColor = [fillColor retain];
+    _fillColor = fillColor;
     [self setDirty:YES];
 }
 
@@ -54,8 +46,7 @@
     if ([backgroundColor isEqual:_backgroundColor] || backgroundColor == _backgroundColor) {
         return;
     }
-    [_backgroundColor autorelease];
-    _backgroundColor = [backgroundColor retain];
+    _backgroundColor = backgroundColor;
     [self setDirty:YES];
 }
 
@@ -63,7 +54,6 @@
     if ([stringValue isEqual:_stringValue] || stringValue == _stringValue) {
         return;
     }
-    [_stringValue autorelease];
     _stringValue = [stringValue copy];
     [self setDirty:YES];
 }
@@ -77,8 +67,8 @@
 }
 
 - (NSImage *)image {
-    if (_fillColor && _stringValue && !NSEqualSizes(_viewSize, NSZeroSize) && !_image) {
-        _image = [[self freshlyComputedImage] retain];
+    if (!_image) {
+        _image = [self freshlyComputedImage];
     }
     return _image;
 }
@@ -113,7 +103,7 @@
 // have 0 pixels.
 - (NSImage *)imageWithPointSize:(CGFloat)pointSize {
     NSDictionary *attributes = [self attributesWithPointSize:pointSize];
-    NSMutableDictionary *temp = [[attributes mutableCopy] autorelease];
+    NSMutableDictionary *temp = [attributes mutableCopy];
     temp[NSStrokeColorAttributeName] = [_backgroundColor colorWithAlphaComponent:1];
     BOOL truncated;
     NSSize sizeWithFont = [self sizeWithAttributes:temp truncated:&truncated];
@@ -121,21 +111,15 @@
         return nil;
     }
 
-    NSImage *image = [[[NSImage alloc] initWithSize:sizeWithFont] autorelease];
+    NSImage *image = [[NSImage alloc] initWithSize:sizeWithFont];
     [image lockFocus];
+
     [_stringValue it_drawInRect:NSMakeRect(0, 0, sizeWithFont.width, sizeWithFont.height)
-                     attributes:temp];
+                     attributes:temp
+                          alpha:_fillColor.alphaComponent];
+
     [image unlockFocus];
-
-    NSImage *reducedAlphaImage = [[[NSImage alloc] initWithSize:sizeWithFont] autorelease];
-    [reducedAlphaImage lockFocus];
-    [image drawInRect:NSMakeRect(0, 0, image.size.width, image.size.height)
-             fromRect:NSZeroRect
-            operation:NSCompositingOperationSourceOver
-             fraction:_fillColor.alphaComponent];
-    [reducedAlphaImage unlockFocus];
-
-    return reducedAlphaImage;
+    return image;
 }
 
 // Attributed string attributes for a given font point size.

@@ -11,10 +11,12 @@
 @interface NSImage (iTerm)
 - (CGImageRef)CGImage;
 + (NSImage *)imageOfSize:(NSSize)size color:(NSColor *)color;
++ (NSColorSpace *)colorSpaceForProgramaticallyGeneratedImages;
 
 // Creates an image context and runs block. Do drawing into the current
 // graphics context in the block. Returns the resulting image.
 + (instancetype)imageOfSize:(NSSize)size drawBlock:(void (^ NS_NOESCAPE)(void))block;
++ (instancetype)flippedImageOfSize:(NSSize)size drawBlock:(void (^ NS_NOESCAPE)(void))block;
 
 + (instancetype)imageWithRawData:(NSData *)data
                             size:(NSSize)size
@@ -57,7 +59,8 @@
                         destinationRect:(NSRect)destinationRect
                                   scale:(CGFloat)scale;
 
-- (NSBitmapImageRep *)bitmapImageRep;
+- (NSBitmapImageRep *)bitmapImageRep;  // prefer it_bitmapImageRep
+- (NSBitmapImageRep *)it_bitmapImageRep;  // This is a cleaner method than -bitmapImageRep which won't change the pixel format.
 - (NSImageRep *)bestRepresentationForScale:(CGFloat)scale;
 - (void)saveAsPNGTo:(NSString *)filename;
 
@@ -72,3 +75,8 @@
 - (NSImage *)it_imageFillingSize:(NSSize)size;
 
 @end
+
+@interface NSBitmapImageRep(iTerm)
+- (NSBitmapImageRep *)it_bitmapScaledTo:(NSSize)size;
+@end
+

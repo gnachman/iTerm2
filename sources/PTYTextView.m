@@ -1179,6 +1179,25 @@
     return adjusted;
 }
 
+- (CGFloat)virtualOffset {
+    const BOOL userScroll = [(PTYScroller*)([[self enclosingScrollView] verticalScroller]) userScroll];
+    if (userScroll) {
+        const NSRect rectToDraw = [self textDrawingHelperVisibleRect];
+        DLog(@"rectToDraw=%@", NSStringFromRect(rectToDraw));
+        const CGFloat virtualOffset = NSMinY(rectToDraw) - [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins];
+        DLog(@"Draw document visible rect. virtualOffset=%@", @(virtualOffset));
+        return virtualOffset;
+    }
+    // The documentVisibleRect could be wrong if we got more input since -refresh was last
+    // called. Force the last lines to be drawn so the screen doesn't appear to jump as in issue
+    // 9676.
+    const int height = _dataSource.height;
+    const CGFloat virtualOffset = (_dataSource.numberOfLines - height) * _lineHeight - [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins];
+    DLog(@"Force draw last rows. numberOfLines=%@ height=%@ lineHeight=%@ bottomMargins=%@ -> virtualOffset=%@",
+         @(_dataSource.numberOfLines), @(height), @(_lineHeight), @([iTermPreferences intForKey:kPreferenceKeyTopBottomMargins]), @(virtualOffset));
+    return virtualOffset;
+}
+
 // Draw in to another view which exactly coincides with the clip view, except it's inset on the top
 // and bottom by the margin heights.
 - (void)drawRect:(NSRect)rect inView:(NSView *)view {
@@ -1194,24 +1213,10 @@
         ITCriticalError(_dataSource.width < 0, @"Negative datasource width of %@", @(_dataSource.width));
         return;
     }
-    const NSRect rectToDraw = [self textDrawingHelperVisibleRect];
-    DLog(@"drawing document visible rect %@ for %@", NSStringFromRect(rectToDraw), self);
+    DLog(@"drawing document visible rect %@ for %@", NSStringFromRect(self.textDrawingHelperVisibleRect), self);
     DLog(@"numberOfLines=%@", @(self.dataSource.numberOfLines));
-    const BOOL userScroll = [(PTYScroller*)([[self enclosingScrollView] verticalScroller]) userScroll];
 
-    CGFloat virtualOffset;
-    if (userScroll) {
-        virtualOffset = NSMinY(rectToDraw) - [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins];
-        DLog(@"Draw document visible rect. virtualOffset=%@", @(virtualOffset));
-    } else {
-        // The documentVisibleRect could be wrong if we got more input since -refresh was last
-        // called. Force the last lines to be drawn so the screen doesn't appear to jump as in issue
-        // 9676.
-        const int height = _dataSource.height;
-        virtualOffset = (_dataSource.numberOfLines - height) * _lineHeight - [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins];
-        DLog(@"Force draw last rows. numberOfLines=%@ height=%@ lineHeight=%@ bottomMargins=%@ -> virtualOffset=%@",
-             @(_dataSource.numberOfLines), @(height), @(_lineHeight), @([iTermPreferences intForKey:kPreferenceKeyTopBottomMargins]), @(virtualOffset));
-    }
+    const CGFloat virtualOffset = [self virtualOffset];
 
     const NSRect *constRectArray;
     NSInteger rectCount;
@@ -1228,8 +1233,8 @@
         // Initialize drawing helper
         [self drawingHelper];
         DLog(@"draw: minY=%@, absLine=%@",
-             @(rectToDraw.origin.y),
-             @([_drawingHelper coordRangeForRect:rectToDraw].start.y + _dataSource.totalScrollbackOverflow));
+             @(self.textDrawingHelperVisibleRect.origin.y),
+             @([_drawingHelper coordRangeForRect:self.textDrawingHelperVisibleRect].start.y + _dataSource.totalScrollbackOverflow));
 
         if (_drawingHook) {
             // This is used by tests to customize the draw helper.
@@ -1244,9 +1249,11 @@
         }
 
 
+        [NSGraphicsContext saveGraphicsState];
         [_drawingHelper drawTextViewContentInRect:virtualRect rectsPtr:rectArray rectCount:rectCount virtualOffset:virtualOffset];
 
-        [_indicatorsHelper drawInFrame:NSRectSubtractingVirtualOffset(_drawingHelper.indicatorFrame, virtualOffset)];
+        [_indicatorsHelper drawInFrame:NSRectSubtractingVirtualOffset(_drawingHelper.indicatorFrame, MAX(0, virtualOffset))];
+        [NSGraphicsContext restoreGraphicsState];
         [_drawingHelper drawTimestampsWithVirtualOffset:virtualOffset];
 
         // Not sure why this is needed, but for some reason this view draws over its subviews.
@@ -3167,7 +3174,7 @@
     _badgeLabel.viewSize = self.enclosingScrollView.documentVisibleRect.size;
     if (_badgeLabel.isDirty) {
         _badgeLabel.dirty = NO;
-        _drawingHelper.badgeImage = _badgeLabel.image;
+        _drawingHelper.badgeImage = [_badgeLabel image];
         [self setNeedsDisplay:YES];
     }
 }

@@ -86,6 +86,7 @@ typedef struct {
     NSInteger unfamiliarTextureCount;
 #endif
     CGFloat maximumExtendedDynamicRangeColorComponentValue NS_AVAILABLE_MAC(10_15);
+    CGFloat legacyScrollbarWidth;
 } iTermMetalDriverMainThreadState;
 
 @interface iTermMetalDriver()
@@ -279,7 +280,8 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
            gridSize:(VT100GridSize)gridSize
         asciiOffset:(CGSize)asciiOffset
               scale:(CGFloat)scale
-            context:(CGContextRef)context {
+            context:(CGContextRef)context
+legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth {
     scale = MAX(1, scale);
     cellSize.width *= scale;
     cellSize.height *= scale;
@@ -307,6 +309,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     self.mainThreadState->glyphSize = glyphSize;
     self.mainThreadState->asciiOffset = asciiOffset;
     self.mainThreadState->context = context;
+    self.mainThreadState->legacyScrollbarWidth = legacyScrollbarWidth * scale;
 }
 
 #pragma mark - MTKViewDelegate
@@ -542,10 +545,12 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
 
     [frameData measureTimeForStat:iTermMetalFrameDataStatMtExtractFromApp ofBlock:^{
         frameData.viewportSize = self.mainThreadState->viewportSize;
+        frameData.legacyScrollbarWidth = self.mainThreadState->legacyScrollbarWidth;
         frameData.asciiOffset = self.mainThreadState->asciiOffset;
 
         // This is the slow part
         frameData.perFrameState = [self->_dataSource metalDriverWillBeginDrawingFrame];
+        frameData.colorSpace = frameData.perFrameState.colorSpace;
 
         frameData.rows = [NSMutableArray array];
         frameData.gridSize = frameData.perFrameState.gridSize;
@@ -992,6 +997,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
                                  frame:frameData.perFrameState.relativeFrame
                          containerRect:frameData.perFrameState.containerRect
                                  color:frameData.perFrameState.defaultBackgroundColor
+                            colorSpace:frameData.perFrameState.colorSpace
                                context:frameData.framePoolContext];
 }
 
@@ -1009,7 +1015,9 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     if (_badgeRenderer.rendererDisabled) {
         return;
     }
-    [_badgeRenderer setBadgeImage:frameData.perFrameState.badgeImage context:frameData.framePoolContext];
+    [_badgeRenderer setBadgeImage:frameData.perFrameState.badgeImage
+                       colorSpace:frameData.perFrameState.colorSpace
+                          context:frameData.framePoolContext];
 }
 
 - (void)updateIndicatorRendererForFrameData:(iTermMetalFrameData *)frameData {
@@ -1023,7 +1031,9 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
                               frameData.viewportSize.y / scale);
     [_indicatorRenderer reset];
     [frameData.perFrameState enumerateIndicatorsInFrame:frame block:^(iTermIndicatorDescriptor * _Nonnull indicator) {
-        [self->_indicatorRenderer addIndicator:indicator context:frameData.framePoolContext];
+        [self->_indicatorRenderer addIndicator:indicator
+                                    colorSpace:frameData.perFrameState.colorSpace
+                                       context:frameData.framePoolContext];
     }];
 }
 
@@ -1032,6 +1042,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
         return;
     }
     _broadcastStripesRenderer.enabled = frameData.perFrameState.showBroadcastStripes;
+    [_broadcastStripesRenderer setColorSpace:frameData.perFrameState.colorSpace];
 }
 
 - (void)updateCursorGuideRendererForFrameData:(iTermMetalFrameData *)frameData {
@@ -1877,6 +1888,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     return @[ _marginRenderer,
               _textRenderer,
               _backgroundColorRenderer,
+              _broadcastStripesRenderer,
               _markRenderer,
               _cursorGuideRenderer,
               _highlightRowRenderer,
@@ -1896,7 +1908,6 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
 - (NSArray<id<iTermMetalRenderer>> *)nonCellRenderers {
     NSArray *shared = @[ _backgroundImageRenderer,
                          _badgeRenderer,
-                         _broadcastStripesRenderer,
                          _copyBackgroundRenderer,
                          _indicatorRenderer,
                          _flashRenderer ];

@@ -30,16 +30,20 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @property (nonatomic, readonly) BOOL usingIntermediatePass;
 
 - (instancetype)initWithViewportSize:(vector_uint2)viewportSize
-                               scale:(CGFloat)scale
-                  hasBackgroundImage:(BOOL)hasBackgroundImage
-                        extraMargins:(NSEdgeInsets)extraMargins
-maximumExtendedDynamicRangeColorComponentValue:(CGFloat)maximumExtendedDynamicRangeColorComponentValue NS_UNAVAILABLE;
-
-- (instancetype)initWithViewportSize:(vector_uint2)viewportSize
+                legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth
                                scale:(CGFloat)scale
                   hasBackgroundImage:(BOOL)hasBackgroundImage
                         extraMargins:(NSEdgeInsets)extraMargins
 maximumExtendedDynamicRangeColorComponentValue:(CGFloat)maximumExtendedDynamicRangeColorComponentValue
+                          colorSpace:(NSColorSpace *)colorSpace NS_UNAVAILABLE;
+
+- (instancetype)initWithViewportSize:(vector_uint2)viewportSize
+                legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth
+                               scale:(CGFloat)scale
+                  hasBackgroundImage:(BOOL)hasBackgroundImage
+                        extraMargins:(NSEdgeInsets)extraMargins
+maximumExtendedDynamicRangeColorComponentValue:(CGFloat)maximumExtendedDynamicRangeColorComponentValue
+                          colorSpace:(NSColorSpace *)colorSpace
                             cellSize:(CGSize)cellSize
                            glyphSize:(CGSize)glyphSize
               cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing

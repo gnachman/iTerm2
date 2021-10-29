@@ -9,6 +9,7 @@
 #import "NSAppearance+iTerm.h"
 
 #import "DebugLogging.h"
+#import "NSArray+iTerm.h"
 #import "NSColor+iTerm.h"
 #import "NSImage+iTerm.h"
 #import "NSObject+iTerm.h"
@@ -55,15 +56,25 @@
 
 + (instancetype)imageOfSize:(NSSize)size drawBlock:(void (^ NS_NOESCAPE)(void))block {
     NSImage *image = [[NSImage alloc] initWithSize:size];
-    [image it_drawWithBlock:block];
+    [image it_drawFlipped:NO withBlock:block];
+    return image;
+}
+
++ (instancetype)flippedImageOfSize:(NSSize)size drawBlock:(void (^ NS_NOESCAPE)(void))block {
+    NSImage *image = [[NSImage alloc] initWithSize:size];
+    [image it_drawFlipped:YES withBlock:block];
     return image;
 }
 
 - (void)it_drawWithBlock:(void (^)(void))block {
+    [self it_drawFlipped:NO withBlock:block];
+}
+
+- (void)it_drawFlipped:(BOOL)flipped withBlock:(void (^)(void))block {
     if (self.size.width == 0 || self.size.height == 0) {
         return;
     }
-    [self lockFocus];
+    [self lockFocusFlipped:flipped];
 
     [NSAppearance it_performBlockWithCurrentAppearanceSetToAppearanceForCurrentTheme:^{
         block();
@@ -441,23 +452,46 @@
     return [self it_imageScaledByX:-1 y:1];
 }
 
++ (NSColorSpace *)colorSpaceForProgramaticallyGeneratedImages {
+    NSImage *image = [[NSImage alloc] initWithSize:NSMakeSize(1, 1)];
+    [image lockFocus];
+    [[NSColor blackColor] set];
+    NSRectFill(NSMakeRect(0, 0, 1, 1));
+    [image unlockFocus];
+    return [image colorSpaceOfBestRepresentation];
+}
+
+- (CGFloat)scaleFactor {
+    NSImageRep *rep = [self.representations maxWithBlock:^NSComparisonResult(NSImageRep *obj1, NSImageRep *obj2) {
+        return [@(obj1.pixelsWide) compare:@(obj2.pixelsWide)];
+    }];
+    return (CGFloat)rep.pixelsWide / self.size.width;
+}
+
 - (NSImage *)it_imageScaledByX:(CGFloat)xScale y:(CGFloat)yScale {
     const NSSize size = self.size;
     if (size.width == 0 || size.height == 0) {
         return self;
     }
-    NSAffineTransform *transform = [NSAffineTransform transform];
-    [transform scaleXBy:xScale yBy:yScale];
-    NSAffineTransform *center = [NSAffineTransform transform];
-    [center translateXBy:size.width / 2. yBy:size.height / 2.];
-    [transform appendTransform:center];
-    NSImage *image = [[NSImage alloc] initWithSize:size];
-    [image lockFocus];
-    [transform concat];
-    NSRect rect = NSMakeRect(0, 0, size.width, size.height);
-    NSPoint corner = NSMakePoint(-size.width / 2., -size.height / 2.);
-    [self drawAtPoint:corner fromRect:rect operation:NSCompositingOperationCopy fraction:1.0];
-    [image unlockFocus];
+    CGFloat adjustment = 1;
+    if ([self scaleFactor] == 1) {
+        // We have no choice but to produce a 2x image from here. If the source is 1x, make the
+        // returned image half the size in points so it'll be the same as the input image.
+        adjustment = 0.5;
+    }
+    const NSSize destSize = NSMakeSize(self.size.width * fabs(xScale) * adjustment,
+                                       self.size.height * fabs(yScale) * adjustment);
+    NSImage *image = [NSImage imageOfSize:destSize
+                                drawBlock:^{
+        NSAffineTransform *transform = [NSAffineTransform transform];
+
+        [transform translateXBy:destSize.width / 2 yBy:destSize.height / 2];
+        [transform scaleXBy:xScale yBy:yScale];
+        [transform translateXBy:-destSize.width / 2 yBy:-destSize.height / 2];
+        [transform concat];
+
+        [self drawInRect:NSMakeRect(0, 0, destSize.width, destSize.height)];
+    }];
     return image;
 }
 
@@ -546,6 +580,27 @@ static NSBitmapImageRep * iTermCreateBitmapRep(NSSize size,
     CGColorSpaceRelease(colorSpace);
 
     return result;
+}
+
+- (NSBitmapImageRep *)it_bitmapImageRep {
+    CGImageRef cgImage = [[self bestRepresentationForScale:2] CGImageForProposedRect:nil context:nil hints:nil];
+    NSBitmapImageRep *bitmap = [[NSBitmapImageRep alloc] initWithCGImage:cgImage];
+    return bitmap;
+}
+
+- (NSColorSpace *)colorSpaceOfBestRepresentation {
+    CGImageRef cgImage = [[self bestRepresentationForScale:2] CGImageForProposedRect:nil context:nil hints:nil];
+    CGColorSpaceRef cgColorSpace = CGImageGetColorSpace(cgImage);
+    return [[NSColorSpace alloc] initWithCGColorSpace:cgColorSpace];
+}
+
+@end
+
+@implementation NSBitmapImageRep(iTerm)
+- (NSBitmapImageRep *)it_bitmapScaledTo:(NSSize)size {
+    NSImage *image = [[NSImage alloc] initWithSize:self.size];
+    [image addRepresentation:self];
+    return [[image it_imageOfSize:size] it_bitmapImageRep];
 }
 
 @end

@@ -486,10 +486,12 @@ static NSInteger gNextFrameDataNumber;
 - (iTermCellRenderConfiguration *)cellConfiguration {
     if (!_cellConfiguration) {
         _cellConfiguration = [[iTermCellRenderConfiguration alloc] initWithViewportSize:self.viewportSize
+                                                                   legacyScrollbarWidth:self.legacyScrollbarWidth
                                                                                   scale:self.scale
                                                                      hasBackgroundImage:self.hasBackgroundImage
                                                                            extraMargins:self.extraMargins
                                          maximumExtendedDynamicRangeColorComponentValue:self.maximumExtendedDynamicRangeColorComponentValue
+                                                                             colorSpace:self.colorSpace
                                                                                cellSize:self.cellSize
                                                                               glyphSize:self.glyphSize
                                                                  cellSizeWithoutSpacing:self.cellSizeWithoutSpacing

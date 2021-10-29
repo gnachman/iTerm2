@@ -290,6 +290,7 @@ int decode_utf8_char(const unsigned char * restrict datap,
 // The built in NSString API ignores everything from the first newline on for computing bounds.
 - (NSRect)it_boundingRectWithSize:(NSSize)bounds attributes:(NSDictionary *)attributes truncated:(BOOL *)truncated;
 - (void)it_drawInRect:(CGRect)rect attributes:(NSDictionary *)attributes;
+- (void)it_drawInRect:(CGRect)rect attributes:(NSDictionary *)attributes alpha:(CGFloat)alpha;
 
 - (BOOL)startsWithEmoji;
 + (NSString *)it_formatBytes:(double)bytes;

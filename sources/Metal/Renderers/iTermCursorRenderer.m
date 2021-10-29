@@ -5,11 +5,13 @@
 #import "iTermMetalBufferPool.h"
 #import "iTermSharedImageStore.h"
 #import "NSColor+iTerm.h"
+#import "NSImage+iTerm.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
 @interface iTermCursorRenderer()
 @property (nonatomic, readonly) iTermMetalCellRenderer *cellRenderer;
+@property (nonatomic, strong) NSColorSpace *colorSpace;
 @end
 
 @interface iTermFrameCursorRenderer()
@@ -125,7 +127,7 @@ NS_ASSUME_NONNULL_BEGIN
     [path stroke];
     [image unlockFocus];
 
-    return [iTermImageWrapper withImage:image];
+    return [iTermImageWrapper withImage:[image it_verticallyFlippedImage]];
 }
 
 - (void)setSelecting:(BOOL)selecting {
@@ -137,7 +139,8 @@ NS_ASSUME_NONNULL_BEGIN
         ![_color isEqual:_renderer.cachedColor] ||
         !CGSizeEqualToSize(_renderer.cachedTextureSize, self.cellConfiguration.cellSize)) {
         _renderer.cachedTexture = [_renderer.cellRenderer textureFromImage:[self newImage]
-                                                                   context:self.poolContext];
+                                                                   context:self.poolContext
+                                                                colorSpace:self.configuration.colorSpace];
         _renderer.cachedTextureSize = self.cellConfiguration.cellSize;
         _renderer.cachedColor = _color;
     }
@@ -169,16 +172,19 @@ NS_ASSUME_NONNULL_BEGIN
 
     [image unlockFocus];
 
-    return [iTermImageWrapper withImage:image];
+    return [iTermImageWrapper withImage:[image it_verticallyFlippedImage]];
 }
 
 - (void)setColor:(NSColor *)color {
     [super setColor:color];
     if (_renderer.cachedTexture == nil ||
         ![color isEqual:_renderer.cachedColor] ||
-        !CGSizeEqualToSize(_renderer.cachedTextureSize, self.cellConfiguration.cellSize)) {
+        !CGSizeEqualToSize(_renderer.cachedTextureSize, self.cellConfiguration.cellSize) ||
+        ![NSObject object:_renderer.colorSpace isEqualToObject:self.configuration.colorSpace]) {
         _renderer.cachedTexture = [_renderer.cellRenderer textureFromImage:[self newImage]
-                                                                   context:self.poolContext];
+                                                                   context:self.poolContext
+                                                                colorSpace:self.configuration.colorSpace];
+        _renderer.colorSpace = self.configuration.colorSpace;
         _renderer.cachedTextureSize = self.cellConfiguration.cellSize;
         _renderer.cachedColor = color;
     }
@@ -609,9 +615,11 @@ static id<MTLBuffer> iTermNewVertexBufferWithBlockCursorQuad(iTermCursorRenderer
     ITAssertWithMessage(tState.vertexBuffer != nil, @"Nil vertex buffer");
     ITAssertWithMessage(tState.offsetBuffer != nil, @"Nil offset buffer");
 
-    if (!_texture) {
-        _texture = [self.cellRenderer textureFromImage:[iTermImageWrapper withImage:[[NSBundle bundleForClass:self.class] imageForResource:@"key"]]
-                                               context:nil];
+    if (!_texture || ![NSObject object:self.colorSpace isEqualToObject:tState.configuration.colorSpace]) {
+        _texture = [self.cellRenderer textureFromImage:[iTermImageWrapper withImage:[[[NSBundle bundleForClass:self.class] imageForResource:@"key"] it_verticallyFlippedImage]]
+                                               context:nil
+                                            colorSpace:tState.configuration.colorSpace];
+        self.colorSpace = tState.configuration.colorSpace;
         ITAssertWithMessage(_texture != nil, @"Failed to load key image");
     }
     [_cellRenderer drawWithTransientState:tState

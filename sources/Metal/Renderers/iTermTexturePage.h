@@ -56,7 +56,7 @@ namespace iTerm2 {
             _textureArray = [[iTermTextureArray alloc] initWithTextureWidth:cellSize.x
                                                               textureHeight:cellSize.y
                                                                 arrayLength:capacity
-                                                                       bgra:YES
+                                                                pixelFormat:MTLPixelFormatBGRA8Unorm
                                                                      device:device];
             _atlas_size = simd_make_uint2(_textureArray.atlasSize.width,
                                           _textureArray.atlasSize.height);

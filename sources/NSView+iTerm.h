@@ -9,6 +9,10 @@
 #import <Cocoa/Cocoa.h>
 #import "NSObject+iTerm.h"
 
+@protocol iTermViewScreenNotificationHandling<NSObject>
+- (void)enclosingWindowDidMoveToScreen:(NSScreen *)screen;
+@end
+
 @interface NSView (iTerm)
 
 + (BOOL)iterm_takingSnapshot;

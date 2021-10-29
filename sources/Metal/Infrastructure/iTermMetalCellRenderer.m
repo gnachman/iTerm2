@@ -9,20 +9,24 @@ NS_ASSUME_NONNULL_BEGIN
 @implementation iTermCellRenderConfiguration
 
 - (instancetype)initWithViewportSize:(vector_uint2)viewportSize
+                legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth
                                scale:(CGFloat)scale
                   hasBackgroundImage:(BOOL)hasBackgroundImage
                         extraMargins:(NSEdgeInsets)extraMargins
 maximumExtendedDynamicRangeColorComponentValue:(CGFloat)maximumExtendedDynamicRangeColorComponentValue
+                          colorSpace:(NSColorSpace *)colorSpace
                             cellSize:(CGSize)cellSize
                            glyphSize:(CGSize)glyphSize
               cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
                             gridSize:(VT100GridSize)gridSize
                usingIntermediatePass:(BOOL)usingIntermediatePass {
     self = [super initWithViewportSize:viewportSize
+                  legacyScrollbarWidth:legacyScrollbarWidth
                                  scale:scale
                     hasBackgroundImage:hasBackgroundImage
                           extraMargins:extraMargins
-maximumExtendedDynamicRangeColorComponentValue:maximumExtendedDynamicRangeColorComponentValue];
+maximumExtendedDynamicRangeColorComponentValue:maximumExtendedDynamicRangeColorComponentValue
+                            colorSpace:colorSpace];
     if (self) {
         _cellSize = cellSize;
         _cellSizeWithoutSpacing = cellSizeWithoutSpacing;
@@ -70,26 +74,19 @@ maximumExtendedDynamicRangeColorComponentValue:maximumExtendedDynamicRangeColorC
 }
 
 - (NSEdgeInsets)margins {
-    CGFloat MARGIN_WIDTH;
-    CGFloat MARGIN_HEIGHT;
-    if (@available(macOS 10.14, *)) {
-        // MTKView goes to window's edges. It does not overlap the rounded corners.
-        MARGIN_WIDTH = [iTermPreferences intForKey:kPreferenceKeySideMargins] * self.configuration.scale;
-        MARGIN_HEIGHT = [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins] * self.configuration.scale;
-    } else {
-        // MTKView inset on sides and top to avoid overlapping rounded corners too much.
-        MARGIN_WIDTH = MAX(0, [iTermPreferences intForKey:kPreferenceKeySideMargins] - 1) * self.configuration.scale;
-        MARGIN_HEIGHT = 0;
-    }
+    // MTKView goes to window's edges. It does not overlap the rounded corners.
+    const CGSize marginSize =
+        CGSizeMake([iTermPreferences intForKey:kPreferenceKeySideMargins] * self.configuration.scale,
+                   [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins] * self.configuration.scale);
 
     const NSEdgeInsets extraMargins = self.configuration.extraMargins;
     const CGSize usableSize =
-    CGSizeMake(self.cellConfiguration.viewportSize.x - MARGIN_WIDTH * 2 - extraMargins.left - extraMargins.right,
-               self.cellConfiguration.viewportSize.y - MARGIN_HEIGHT * 2 - extraMargins.top - extraMargins.bottom);
-    return NSEdgeInsetsMake(fmod(usableSize.height, self.cellConfiguration.cellSize.height) + MARGIN_HEIGHT + extraMargins.bottom,
-                            MARGIN_WIDTH,
-                            MARGIN_HEIGHT + extraMargins.top,
-                            fmod(usableSize.width, self.cellConfiguration.cellSize.width) + MARGIN_WIDTH);
+    CGSizeMake(self.cellConfiguration.viewportSizeExcludingLegacyScrollbars.x - marginSize.width * 2 - extraMargins.left - extraMargins.right,
+               self.cellConfiguration.viewportSizeExcludingLegacyScrollbars.y - marginSize.height * 2 - extraMargins.top - extraMargins.bottom);
+    return NSEdgeInsetsMake(fmod(usableSize.height, self.cellConfiguration.cellSize.height) + marginSize.height + extraMargins.bottom,
+                            marginSize.width,
+                            marginSize.height + extraMargins.top,
+                            fmod(usableSize.width, self.cellConfiguration.cellSize.width) + marginSize.width);
 }
 
 - (void)writeDebugInfoToFolder:(NSURL *)folder {
