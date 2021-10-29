@@ -513,6 +513,7 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
     NSPopUpButton *popUpButton = [[NSPopUpButton alloc] init];
     for (NSString *key in [[customPresets allKeys] sortedArrayUsingSelector:@selector(compare:)]) {
         [popUpButton addItemWithTitle:key];
+        popUpButton.itemArray.lastObject.identifier = key;
     }
     [popUpButton sizeToFit];
     [alert setAccessoryView:popUpButton];
