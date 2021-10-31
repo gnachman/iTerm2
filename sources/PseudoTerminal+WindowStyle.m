@@ -165,6 +165,9 @@ iTermWindowType iTermWindowTypeNormalized(iTermWindowType windowType) {
     myWindow.movable = [self.class windowTypeIsMovable:windowType];
 
     [self updateForTransparency:(NSWindow<PTYWindow> *)myWindow];
+    if (@available(macOS 11.0, *)) {
+        myWindow.titlebarSeparatorStyle = NSTitlebarSeparatorStyleNone;
+    }
     [self setWindow:myWindow];
 
     if (@available(macOS 10.16, *)) {
@@ -817,6 +820,9 @@ iTermWindowType iTermWindowTypeNormalized(iTermWindowType windowType) {
 - (void)windowDidEnterFullScreenImpl:(NSNotification *)notification {
     DLog(@"Window did enter lion fullscreen %@", self);
 
+    if (@available(macOS 11.0, *)) {
+        self.window.titlebarSeparatorStyle = NSTitlebarSeparatorStyleNone;
+    }
     zooming_ = NO;
     togglingLionFullScreen_ = NO;
     _fullScreenRetryCount = 0;
