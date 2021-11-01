@@ -495,8 +495,18 @@ maximumExtendedDynamicRangeColorComponentValue:(CGFloat)maximumExtendedDynamicRa
     return texture;
 }
 
-#warning TODO: Reduce coded uplcation with textureFromImage:context:
+// This is a terrible hack
 - (nullable id<MTLTexture>)legacyTextureFromImage:(iTermImageWrapper *)image context:(iTermMetalBufferPoolContext *)context pool:(iTermTexturePool *)pool {
+    NSImage *dest = [[NSImage alloc] initWithSize:image.image.size];
+    [dest lockFocus];
+    [image.image drawInRect:NSMakeRect(0, 0, image.image.size.width, image.image.size.height)];
+    [dest unlockFocus];
+    iTermImageWrapper *temp = [[iTermImageWrapper alloc] initWithImage:dest];
+    return [self textureFromImage:temp context:context pool:pool];
+}
+
+#warning TODO: Reduce coded uplcation with textureFromImage:context:
+- (nullable id<MTLTexture>)_legacyTextureFromImage:(iTermImageWrapper *)image context:(iTermMetalBufferPoolContext *)context pool:(iTermTexturePool *)pool {
     if (!image.image) {
         return nil;
     }

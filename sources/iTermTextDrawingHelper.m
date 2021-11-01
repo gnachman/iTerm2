@@ -549,7 +549,7 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
         color = [_colorMap processedBackgroundColorForBackgroundColor:color];
         box.backgroundColor = color;
 
-        [[NSColor colorWithSRGBRed:.25 green:.25 blue:.25 alpha:1] set];
+        [box.backgroundColor set];
         iTermRectFillUsingOperation(rect,
                                     enableBlending ? NSCompositingOperationSourceOver : NSCompositingOperationCopy,
                                     virtualOffset);
@@ -974,7 +974,6 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
 - (NSSize)drawBadgeInRect:(NSRect)rect
                   margins:(NSEdgeInsets)margins
             virtualOffset:(CGFloat)virtualOffset {
-
     NSRect source = NSZeroRect;
     NSRect intersection = [iTermTextDrawingHelper rectForBadgeImageOfSize:_badgeImage.size
                                                           destinationRect:rect
