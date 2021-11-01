@@ -123,19 +123,23 @@
 
     NSImage *image = [[[NSImage alloc] initWithSize:sizeWithFont] autorelease];
     [image lockFocus];
+//    NSColor *srgb = temp[NSForegroundColorAttributeName];
+    NSColorSpace *cs = [[[NSScreen screens] firstObject] colorSpace];
+
+    const CGFloat components[] = { 1, 0.1491, 0, 0.25 };
+    NSColor *color = [NSColor colorWithColorSpace:cs components:components count:4];
+
+    temp[NSForegroundColorAttributeName] = color;
     [_stringValue it_drawInRect:NSMakeRect(0, 0, sizeWithFont.width, sizeWithFont.height)
-                     attributes:temp];
+                     attributes:temp
+                          alpha:_fillColor.alphaComponent];
+//    [color set];
+//    NSRectFill(NSMakeRect(0, 0, sizeWithFont.width, sizeWithFont.height));
+//    NSRectFillUsingOperation(NSMakeRect(0, 0, sizeWithFont.width, sizeWithFont.height), NSCompositingOperationSourceOver);
+
     [image unlockFocus];
-
-    NSImage *reducedAlphaImage = [[[NSImage alloc] initWithSize:sizeWithFont] autorelease];
-    [reducedAlphaImage lockFocus];
-    [image drawInRect:NSMakeRect(0, 0, image.size.width, image.size.height)
-             fromRect:NSZeroRect
-            operation:NSCompositingOperationSourceOver
-             fraction:_fillColor.alphaComponent];
-    [reducedAlphaImage unlockFocus];
-
-    return reducedAlphaImage;
+    return image;
+    
 }
 
 // Attributed string attributes for a given font point size.

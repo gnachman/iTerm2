@@ -70,6 +70,12 @@
     }];
 
     [self unlockFocus];
+
+    NSBitmapImageRep *rep = [self bitmapImageRep];
+    [self removeRepresentation:rep];
+    rep = [rep bitmapImageRepByRetaggingWithColorSpace:[NSColorSpace sRGBColorSpace]];
+
+    [self addRepresentation:rep];
 }
 
 + (NSData *)dataWithFourBytesPerPixelFromDataWithOneBytePerPixel:(NSData *)input {

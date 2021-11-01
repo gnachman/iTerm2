@@ -27,7 +27,20 @@ const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 3;
     blending.alphaBlendOperation = MTLBlendOperationMax;
     blending.sourceAlphaBlendFactor = MTLBlendFactorOne;
     blending.destinationAlphaBlendFactor = MTLBlendFactorOne;
+    return blending;
+}
 
+// atop: The source image is applied using the formula R = S*Da + D*(1 - Sa).
++ (instancetype)atop {
+    iTermMetalBlending *blending = [[iTermMetalBlending alloc] init];
+
+    blending.rgbBlendOperation = MTLBlendOperationAdd;  // ok
+    blending.sourceRGBBlendFactor = MTLBlendFactorOne;  // ok
+    blending.destinationRGBBlendFactor = MTLBlendFactorOneMinusSourceAlpha;  // ok
+
+    blending.alphaBlendOperation = MTLBlendOperationAdd;  // WRONG - I USE MAX
+    blending.sourceAlphaBlendFactor = MTLBlendFactorOne;  // ok
+    blending.destinationAlphaBlendFactor = MTLBlendFactorOneMinusSourceAlpha;  // WRONG - I use one
     return blending;
 }
 
@@ -415,7 +428,75 @@ maximumExtendedDynamicRangeColorComponentValue:(CGFloat)maximumExtendedDynamicRa
     }
 }
 
+// Assumes premultiplied alpha and little endian. Floating point must be 16 bit, non-fp must be 8 bit.
+- (MTLPixelFormat)pixelFormatForBitmapRep:(NSBitmapImageRep *)rep {
+    const MTLPixelFormat unsupportedFormatsMask = (NSBitmapFormatAlphaNonpremultiplied |
+                                                   NSBitmapFormatSixteenBitBigEndian |
+                                                   NSBitmapFormatThirtyTwoBitBigEndian |
+                                                   NSBitmapFormatThirtyTwoBitLittleEndian |
+                                                   NSBitmapFormatSixteenBitLittleEndian);
+    if (rep.bitmapFormat & unsupportedFormatsMask) {
+        return MTLPixelFormatInvalid;
+    }
+    if (rep.bitmapFormat & NSBitmapFormatFloatingPointSamples) {
+        // Note that 16-bit floats don't have NSBitmapFormatSixteenBitLittleEndian set. That's only for ints.
+        return MTLPixelFormatRGBA16Float;
+    }
+    return MTLPixelFormatRGBA8Unorm;
+}
+
 - (nullable id<MTLTexture>)textureFromImage:(iTermImageWrapper *)image context:(iTermMetalBufferPoolContext *)context pool:(iTermTexturePool *)pool {
+    if (!image.image) {
+        return nil;
+    }
+
+    // Calculate a safe size for the image while preserving its aspect ratio.
+    NSUInteger width, height;
+    [self convertWidth:image.scaledSize.width
+                height:image.scaledSize.height
+               toWidth:&width
+                height:&height
+          notExceeding:4096];
+    if (width == 0 || height == 0) {
+        return nil;
+    }
+
+    NSRect rect = NSMakeRect(0, 0, width, height);
+    CGImageRef cgImage = [[image.image.representations firstObject] CGImageForProposedRect:&rect context:nil hints:nil];
+    NSBitmapImageRep *bitmap = [[NSBitmapImageRep alloc] initWithCGImage:cgImage];
+    if ([self pixelFormatForBitmapRep:bitmap] == MTLPixelFormatInvalid) {
+        return [self legacyTextureFromImage:image context:context pool:pool];
+    }
+    MTLTextureDescriptor *textureDescriptor =
+    [MTLTextureDescriptor texture2DDescriptorWithPixelFormat:[self pixelFormatForBitmapRep:bitmap]
+                                                       width:bitmap.size.width
+                                                      height:bitmap.size.height
+                                                   mipmapped:NO];
+    id<MTLTexture> texture = nil;
+    if (pool) {
+        texture = [pool requestTextureOfSize:simd_make_uint2(width, height)];
+    }
+    if (!texture) {
+        texture = [_device newTextureWithDescriptor:textureDescriptor];
+    }
+
+    MTLRegion region = MTLRegionMake2D(0, 0, width, height);
+    const NSUInteger bytesPerRow = bitmap.bytesPerRow;
+    [texture replaceRegion:region mipmapLevel:0 withBytes:bitmap.bitmapData bytesPerRow:bytesPerRow];
+
+    [iTermTexture setBytesPerRow:bytesPerRow
+                     rawDataSize:bytesPerRow * bitmap.size.height
+                 samplesPerPixel:4
+                      forTexture:texture];
+
+    if (texture) {
+        [context didAddTextureOfSize:texture.width * texture.height];
+    }
+    return texture;
+}
+
+#warning TODO: Reduce coded uplcation with textureFromImage:context:
+- (nullable id<MTLTexture>)legacyTextureFromImage:(iTermImageWrapper *)image context:(iTermMetalBufferPoolContext *)context pool:(iTermTexturePool *)pool {
     if (!image.image) {
         return nil;
     }

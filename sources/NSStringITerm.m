@@ -1833,8 +1833,13 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
 }
 
 - (void)it_drawInRect:(CGRect)rect attributes:(NSDictionary *)attributes {
+    [self it_drawInRect:rect attributes:attributes alpha:1];
+}
+
+- (void)it_drawInRect:(CGRect)rect attributes:(NSDictionary *)attributes alpha:(CGFloat)alpha {
     CGContextRef ctx = [[NSGraphicsContext currentContext] CGContext];
     CGContextSaveGState(ctx);
+    CGContextSetAlpha(ctx, alpha);
 
     for (NSString *part in [self componentsSeparatedByString:@"\n"]) {
         NSAttributedString *string = [[NSAttributedString alloc] initWithString:part

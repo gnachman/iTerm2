@@ -985,14 +985,23 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
     if (NSEqualSizes(NSZeroSize, intersection.size)) {
         return NSZeroSize;
     }
-    const CGFloat components[] = { 0.75, 0.25, 0.1, 0.25 };
-    NSColor *srgb = [NSColor colorWithSRGBRed:0.75 green:0.25 blue:0.1 alpha:0.25];
-    NSColor *const color = srgb; // [srgb colorUsingColorSpace:_delegate.window.colorSpace]; // [NSColor colorWithColorSpace:_delegate.window.colorSpace components:components count:4];
-    NSLog(@"Window color space is %@", _delegate.window.colorSpace);
-    [color set];
+//    const CGFloat components[] = { 0.75, 0.25, 0.1, 0.25 };
+//    NSColor *srgb = [NSColor colorWithSRGBRed:0.75 green:0.25 blue:0.1 alpha:0.25];
+//    NSColor *const color = srgb; // [srgb colorUsingColorSpace:_delegate.window.colorSpace]; // [NSColor colorWithColorSpace:_delegate.window.colorSpace components:components count:4];
+//    NSLog(@"Window color space is %@", _delegate.window.colorSpace);
+//    [color set];
 //    iTermRectFill(intersection, virtualOffset);
-    iTermRectFillUsingOperation(intersection, NSCompositingOperationSourceOver, virtualOffset);
-    /*
+//    iTermRectFillUsingOperation(intersection, NSCompositingOperationSourceOver, virtualOffset);
+
+//    const NSSize size = _badgeImage.size;
+//    if (size.width * size.height * 4 > 79764) {
+//        NSLog(@"Data is: %0x %0x %0x %0x",
+//              ((unsigned char)_badgeImage.bitmapImageRep.bitmapData[79760]) & 0xff,
+//              ((unsigned char)_badgeImage.bitmapImageRep.bitmapData[79761]) & 0xff,
+//              ((unsigned char)_badgeImage.bitmapImageRep.bitmapData[79762]) & 0xff,
+//              ((unsigned char)_badgeImage.bitmapImageRep.bitmapData[79763]) & 0xff);
+//    }
+
     [_badgeImage it_drawInRect:intersection
                       fromRect:source
                      operation:NSCompositingOperationSourceOver
@@ -1000,7 +1009,7 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
                 respectFlipped:YES
                          hints:nil
                  virtualOffset:virtualOffset];
-*/
+
     NSSize imageSize = _badgeImage.size;
     imageSize.width += kBadgeMargin + margins.right;
 

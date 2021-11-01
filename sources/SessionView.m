@@ -110,9 +110,14 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
 }
 
 - (void)viewDidMoveToWindow {
-    self.colorspace = [[NSColorSpace sRGBColorSpace] CGColorSpace];
+//    self.colorspace = [[NSColorSpace sRGBColorSpace] CGColorSpace];
+    self.colorspace = [[[[NSScreen screens] objectAtIndex:0] colorSpace] CGColorSpace];
 }
 
+- (void)setColorspace:(CGColorSpaceRef)colorspace {
+    NSLog(@"set colorspace of %@ to %@", self, colorspace);
+    [super setColorspace:colorspace];
+}
 @end
 
 @interface iTermHoverContainerView : NSView

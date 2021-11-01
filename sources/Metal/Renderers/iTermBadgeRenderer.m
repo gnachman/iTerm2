@@ -30,7 +30,7 @@ NS_ASSUME_NONNULL_BEGIN
         _metalRenderer = [[iTermMetalRenderer alloc] initWithDevice:device
                                                  vertexFunctionName:@"iTermBadgeVertexShader"
                                                fragmentFunctionName:@"iTermBadgeFragmentShader"
-                                                           blending:[iTermMetalBlending compositeSourceOver]
+                                                           blending:[iTermMetalBlending atop]
                                                 transientStateClass:[iTermBadgeRendererTransientState class]];
     }
     return self;
