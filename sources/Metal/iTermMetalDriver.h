@@ -158,7 +158,8 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
            gridSize:(VT100GridSize)gridSize
         asciiOffset:(CGSize)asciiOffset
               scale:(CGFloat)scale
-            context:(CGContextRef)context;
+            context:(CGContextRef)context
+legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth;
 
 // Draw and return immediately, calling completion block after GPU's completion
 // block is called.

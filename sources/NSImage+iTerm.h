@@ -16,6 +16,7 @@
 // Creates an image context and runs block. Do drawing into the current
 // graphics context in the block. Returns the resulting image.
 + (instancetype)imageOfSize:(NSSize)size drawBlock:(void (^ NS_NOESCAPE)(void))block;
++ (instancetype)flippedImageOfSize:(NSSize)size drawBlock:(void (^ NS_NOESCAPE)(void))block;
 
 + (instancetype)imageWithRawData:(NSData *)data
                             size:(NSSize)size

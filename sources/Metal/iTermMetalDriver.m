@@ -86,6 +86,7 @@ typedef struct {
     NSInteger unfamiliarTextureCount;
 #endif
     CGFloat maximumExtendedDynamicRangeColorComponentValue NS_AVAILABLE_MAC(10_15);
+    CGFloat legacyScrollbarWidth;
 } iTermMetalDriverMainThreadState;
 
 @interface iTermMetalDriver()
@@ -279,7 +280,8 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
            gridSize:(VT100GridSize)gridSize
         asciiOffset:(CGSize)asciiOffset
               scale:(CGFloat)scale
-            context:(CGContextRef)context {
+            context:(CGContextRef)context
+legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth {
     scale = MAX(1, scale);
     cellSize.width *= scale;
     cellSize.height *= scale;
@@ -307,6 +309,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     self.mainThreadState->glyphSize = glyphSize;
     self.mainThreadState->asciiOffset = asciiOffset;
     self.mainThreadState->context = context;
+    self.mainThreadState->legacyScrollbarWidth = legacyScrollbarWidth * scale;
 }
 
 #pragma mark - MTKViewDelegate
@@ -542,6 +545,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
 
     [frameData measureTimeForStat:iTermMetalFrameDataStatMtExtractFromApp ofBlock:^{
         frameData.viewportSize = self.mainThreadState->viewportSize;
+        frameData.legacyScrollbarWidth = self.mainThreadState->legacyScrollbarWidth;
         frameData.asciiOffset = self.mainThreadState->asciiOffset;
 
         // This is the slow part

@@ -998,7 +998,8 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
     }
     [_timestampDrawHelper drawInContext:[NSGraphicsContext currentContext]
                                   frame:_frame
-                          virtualOffset:virtualOffset];
+                          virtualOffset:virtualOffset
+                             colorSpace:self.delegate.window.colorSpace];
     if (!self.isRetina) {
         CGContextSetShouldSmoothFonts(ctx, YES);
     }
@@ -1049,6 +1050,15 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
                 respectFlipped:YES
                          hints:nil
                  virtualOffset:virtualOffset];
+
+//    NSImage *wtf = [[NSImage alloc] initWithSize:NSMakeSize(100, 100)];
+//    [wtf lockFocus];
+//    [[NSColor colorWithSRGBRed:0.25 green:0.25 blue:0.25 alpha:1] set];
+//    NSRectFill(NSMakeRect(0, 0, 100, 100));
+//    [[NSColor greenColor] set];
+//    NSFrameRect(NSMakeRect(0, 0, 100, 100));
+//    [wtf unlockFocus];
+//    [wtf it_drawInRect:NSMakeRect(0, 0, 100, 100) virtualOffset:virtualOffset];
 
     NSSize imageSize = _badgeImage.size;
     imageSize.width += kBadgeMargin + margins.right;

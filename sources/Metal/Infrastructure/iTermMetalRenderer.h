@@ -21,6 +21,7 @@ extern const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight;
 NS_CLASS_AVAILABLE(10_11, NA)
 @interface iTermRenderConfiguration : NSObject
 @property (nonatomic, readonly) vector_uint2 viewportSize;
+@property (nonatomic, readonly) vector_uint2 viewportSizeExcludingLegacyScrollbars;
 @property (nonatomic, readonly) CGFloat scale;
 @property (nonatomic, readonly) BOOL hasBackgroundImage;
 @property (nonatomic, readonly) NSEdgeInsets extraMargins;
@@ -29,6 +30,7 @@ NS_CLASS_AVAILABLE(10_11, NA)
 
 - (instancetype)init NS_UNAVAILABLE;
 - (instancetype)initWithViewportSize:(vector_uint2)viewportSize
+                legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth
                                scale:(CGFloat)scale
                   hasBackgroundImage:(BOOL)hasBackgroundImage
                         extraMargins:(NSEdgeInsets)extraMargins

@@ -55,27 +55,31 @@
 
 + (instancetype)imageOfSize:(NSSize)size drawBlock:(void (^ NS_NOESCAPE)(void))block {
     NSImage *image = [[NSImage alloc] initWithSize:size];
-    [image it_drawWithBlock:block];
+    [image it_drawFlipped:NO withBlock:block];
+    return image;
+}
+
++ (instancetype)flippedImageOfSize:(NSSize)size drawBlock:(void (^ NS_NOESCAPE)(void))block {
+    NSImage *image = [[NSImage alloc] initWithSize:size];
+    [image it_drawFlipped:YES withBlock:block];
     return image;
 }
 
 - (void)it_drawWithBlock:(void (^)(void))block {
+    [self it_drawFlipped:NO withBlock:block];
+}
+
+- (void)it_drawFlipped:(BOOL)flipped withBlock:(void (^)(void))block {
     if (self.size.width == 0 || self.size.height == 0) {
         return;
     }
-    [self lockFocus];
+    [self lockFocusFlipped:flipped];
 
     [NSAppearance it_performBlockWithCurrentAppearanceSetToAppearanceForCurrentTheme:^{
         block();
     }];
 
     [self unlockFocus];
-
-    NSBitmapImageRep *rep = [self bitmapImageRep];
-    [self removeRepresentation:rep];
-    rep = [rep bitmapImageRepByRetaggingWithColorSpace:[NSColorSpace sRGBColorSpace]];
-
-    [self addRepresentation:rep];
 }
 
 + (NSData *)dataWithFourBytesPerPixelFromDataWithOneBytePerPixel:(NSData *)input {
@@ -453,8 +457,7 @@
     [[NSColor blackColor] set];
     NSRectFill(NSMakeRect(0, 0, 1, 1));
     [image unlockFocus];
-    NSBitmapImageRep *rep = [image it_bitmapImageRep];
-    return rep.colorSpace;
+    return [image colorSpaceOfBestRepresentation];
 }
 
 - (NSImage *)it_imageScaledByX:(CGFloat)xScale y:(CGFloat)yScale {
@@ -481,7 +484,7 @@
                   operation:NSCompositingOperationCopy
                    fraction:1.0];
     }];
-    return [image it_imageInColorSpace:self.it_bitmapImageRep.colorSpace];
+    return [image it_imageInColorSpace:[self colorSpaceOfBestRepresentation]];
 }
 
 - (NSImage *)it_imageOfSize:(NSSize)newSize {
@@ -582,6 +585,12 @@ static NSBitmapImageRep * iTermCreateBitmapRep(NSSize size,
     CGImageRef cgImage = [[self bestRepresentationForScale:2] CGImageForProposedRect:nil context:nil hints:nil];
     NSBitmapImageRep *bitmap = [[NSBitmapImageRep alloc] initWithCGImage:cgImage];
     return bitmap;
+}
+
+- (NSColorSpace *)colorSpaceOfBestRepresentation {
+    CGImageRef cgImage = [[self bestRepresentationForScale:2] CGImageForProposedRect:nil context:nil hints:nil];
+    CGColorSpaceRef cgColorSpace = CGImageGetColorSpace(cgImage);
+    return [[NSColorSpace alloc] initWithCGColorSpace:cgColorSpace];
 }
 
 @end

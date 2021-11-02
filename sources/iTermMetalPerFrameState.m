@@ -566,7 +566,7 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
 
 - (NSColor *)timestampsBackgroundColor {
     assert(_configuration->_timestampsEnabled);
-    return _configuration->_processedDefaultBackgroundColor;
+    return [_configuration->_processedDefaultBackgroundColor colorUsingColorSpace:[NSImage colorSpaceForProgramaticallyGeneratedImages]];
 }
 
 - (void)enumerateIndicatorsInFrame:(NSRect)frame block:(void (^)(iTermIndicatorDescriptor * _Nonnull))block {

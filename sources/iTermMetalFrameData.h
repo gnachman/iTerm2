@@ -116,6 +116,7 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @property (atomic, strong) id<iTermMetalDriverDataSourcePerFrameState> perFrameState;
 @property (atomic, strong) NSMutableArray<iTermMetalRowData *> *rows;
 @property (atomic) vector_uint2 viewportSize;
+@property (atomic) unsigned int legacyScrollbarWidth;
 @property (atomic) VT100GridSize gridSize;
 @property (atomic) CGSize cellSize;
 @property (atomic) CGSize glyphSize;

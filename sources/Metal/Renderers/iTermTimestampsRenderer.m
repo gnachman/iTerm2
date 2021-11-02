@@ -8,6 +8,7 @@
 #import "iTermTimestampsRenderer.h"
 
 #import "FutureMethods.h"
+#import "NSImage+iTerm.h"
 #import "iTermGraphicsUtilities.h"
 #import "iTermSharedImageStore.h"
 #import "iTermTexturePool.h"
@@ -70,6 +71,15 @@
     [_pooledTextures addObject:pooledTexture];
 }
 
+- (void)setBackgroundColor:(NSColor *)backgroundColor {
+    _backgroundColor = [backgroundColor colorUsingColorSpace:self.configuration.colorSpace];
+}
+
+- (void)setTextColor:(NSColor *)textColor {
+    _textColor = [textColor colorUsingColorSpace:self.configuration.colorSpace];
+}
+
+// frame arg to block is in points, not pixels.
 - (void)enumerateRows:(void (^)(int row, iTermTimestampKey *key, NSRect frame))block {
     assert(_timestamps);
     const CGFloat rowHeight = self.cellConfiguration.cellSize.height / self.cellConfiguration.scale;
@@ -96,6 +106,12 @@
                                                            _backgroundColor.alphaComponent);
     const CGFloat scale = self.configuration.scale;
     const CGFloat vmargin = self.margins.bottom / scale;
+
+    const CGFloat gridWidth = self.cellConfiguration.gridSize.width * self.cellConfiguration.cellSize.width;
+    const NSEdgeInsets margins = self.margins;
+    // The right gutter includes the scrollbar if legacy scrollbars are on.
+    const CGFloat rightGutterWidth = self.configuration.viewportSize.x - margins.left - margins.right - gridWidth;
+
     [_timestamps enumerateObjectsUsingBlock:^(NSDate * _Nonnull date, NSUInteger idx, BOOL * _Nonnull stop) {
         iTermTimestampKey *key = [[iTermTimestampKey alloc] init];
         key.width = visibleWidth;
@@ -104,7 +120,7 @@
         key.date = [self->_drawHelper rowIsRepeat:idx] ? -1 : round(date.timeIntervalSinceReferenceDate);
         block(idx,
               key,
-              NSMakeRect(self.configuration.viewportSize.x / scale - visibleWidth,
+              NSMakeRect((self.configuration.viewportSize.x - rightGutterWidth) / scale - visibleWidth,
                          self.configuration.viewportSize.y / scale - ((idx + 1) * rowHeight) - vmargin,
                          visibleWidth,
                          rowHeight));
@@ -116,20 +132,21 @@
     NSSize size = NSMakeSize(_drawHelper.suggestedWidth,
                              self.cellConfiguration.cellSize.height / self.cellConfiguration.scale);
     assert(size.width * size.height > 0);
-    NSImage *image = [[NSImage alloc] initWithSize:size];
-    [image lockFocusFlipped:YES];
-    NSGraphicsContext *context = [NSGraphicsContext currentContext];
-    iTermSetSmoothing(context.CGContext,
-                      NULL,
-                      self.useThinStrokes,
-                      self.antialiased);
-    [_drawHelper drawRow:row
-               inContext:[NSGraphicsContext currentContext]
-                   frame:NSMakeRect(0, 0, size.width, size.height)
-           virtualOffset:0];
-    [image unlockFocus];
+    NSImage *image = [[NSImage flippedImageOfSize:size drawBlock:^{
+        NSGraphicsContext *context = [NSGraphicsContext currentContext];
+        iTermSetSmoothing(context.CGContext,
+                          NULL,
+                          self.useThinStrokes,
+                          self.antialiased);
+        [_drawHelper drawRow:row
+                   inContext:[NSGraphicsContext currentContext]
+                       frame:NSMakeRect(0, 0, size.width, size.height)
+               virtualOffset:0
+                  colorSpace:nil];
+    }] it_verticallyFlippedImage];
 
-    return image;
+#warning WTF why does this not change the colors?
+    return [image it_imageInColorSpace:self.configuration.colorSpace];
 }
 
 @end
@@ -148,7 +165,7 @@
         iTermMetalBlending *blending = [[iTermMetalBlending alloc] init];
 #if ENABLE_TRANSPARENT_METAL_WINDOWS
         if (iTermTextIsMonochrome()) {
-            blending = [iTermMetalBlending premultipliedCompositing];
+            blending = [iTermMetalBlending atop];  // IS THIS RIGHT EVERYWEHRE?
         }
 #endif
         _cellRenderer = [[iTermMetalCellRenderer alloc] initWithDevice:device
@@ -194,6 +211,7 @@
         [_cache removeAllObjects];
         _colorSpace = tState.configuration.colorSpace;
     }
+
     [tState enumerateRows:^(int row, iTermTimestampKey *key, NSRect frame) {
         iTermPooledTexture *pooledTexture = [self->_cache objectForKey:key];
         if (!pooledTexture) {

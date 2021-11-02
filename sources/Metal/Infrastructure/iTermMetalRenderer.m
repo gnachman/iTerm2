@@ -81,6 +81,7 @@ const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 3;
 @implementation iTermRenderConfiguration
 
 - (instancetype)initWithViewportSize:(vector_uint2)viewportSize
+                legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth
                                scale:(CGFloat)scale
                   hasBackgroundImage:(BOOL)hasBackgroundImage
                         extraMargins:(NSEdgeInsets)extraMargins
@@ -89,6 +90,8 @@ maximumExtendedDynamicRangeColorComponentValue:(CGFloat)maximumExtendedDynamicRa
     self = [super init];
     if (self) {
         _viewportSize = viewportSize;
+        _viewportSizeExcludingLegacyScrollbars = simd_make_uint2(viewportSize.x - legacyScrollbarWidth,
+                                                                 viewportSize.y);
         _scale = scale;
         _hasBackgroundImage = hasBackgroundImage;
         _extraMargins = extraMargins;

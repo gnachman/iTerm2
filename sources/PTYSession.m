@@ -6771,7 +6771,15 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                      gridSize:_screen.currentGrid.size
                   asciiOffset:asciiOffset
                         scale:_view.window.screen.backingScaleFactor
-                      context:_metalContext];
+                      context:_metalContext
+         legacyScrollbarWidth:self.legacyScrollbarWidth];
+}
+
+- (CGFloat)legacyScrollbarWidth {
+    if (_view.scrollview.scrollerStyle != NSScrollerStyleLegacy) {
+        return 0;
+    }
+    return NSWidth(_view.scrollview.bounds) - NSWidth(_view.scrollview.contentView.bounds);
 }
 
 - (void)retryMetalAfterContextAllocationFailure {
