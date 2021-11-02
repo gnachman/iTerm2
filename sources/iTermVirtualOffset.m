@@ -42,6 +42,11 @@ void iTermFrameRectWithWidthUsingOperation(NSRect rect, CGFloat frameWidth, NSCo
 @implementation NSImage(VirtualOffset)
 
 - (void)it_drawInRect:(NSRect)dstSpacePortionRect
+        virtualOffset:(CGFloat)virtualOffset {
+    [self drawInRect:NSRectSubtractingVirtualOffset(dstSpacePortionRect, virtualOffset)];
+}
+
+- (void)it_drawInRect:(NSRect)dstSpacePortionRect
              fromRect:(NSRect)srcSpacePortionRect
             operation:(NSCompositingOperation)op
              fraction:(CGFloat)requestedAlpha

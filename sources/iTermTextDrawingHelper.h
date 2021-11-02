@@ -324,6 +324,10 @@ BOOL CheckFindMatchAtIndex(NSData *findMatches, int index);
                cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
                                 scale:(CGFloat)scale;
 
++ (NSImage *)newImageWithMarkOfColor:(NSColor *)color
+                                size:(CGSize)size
+                          colorSpace:(NSColorSpace *)colorSpace;
+
 // Updates self.blinkingFound.
 - (void)drawTextViewContentInRect:(NSRect)rect
                          rectsPtr:(const NSRect *)rectArray

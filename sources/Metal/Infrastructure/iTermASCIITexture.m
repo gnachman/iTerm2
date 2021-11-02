@@ -103,7 +103,7 @@ static const NSInteger iTermASCIITextureCapacity = iTermASCIITextureOffsetCount 
         _textureArray = [[iTermTextureArray alloc] initWithTextureWidth:descriptor.glyphSize.width
                                                           textureHeight:descriptor.glyphSize.height
                                                             arrayLength:iTermASCIITextureCapacity
-                                                                   bgra:YES
+                                                            pixelFormat:MTLPixelFormatBGRA8Unorm
                                                                  device:device];
         _textureArray.texture.label = [NSString stringWithFormat:@"ASCII texture %@%@%@",
                                        (attributes & iTermASCIITextureAttributesBold) ? @"Bold" : @"",

@@ -20,6 +20,9 @@ void iTermRectClip(NSRect rect, CGFloat offset);
 
 @interface NSImage(VirtualOffset)
 - (void)it_drawInRect:(NSRect)dstSpacePortionRect
+        virtualOffset:(CGFloat)virtualOffset;
+
+- (void)it_drawInRect:(NSRect)dstSpacePortionRect
              fromRect:(NSRect)srcSpacePortionRect
             operation:(NSCompositingOperation)op
              fraction:(CGFloat)requestedAlpha
