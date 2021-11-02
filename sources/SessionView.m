@@ -110,8 +110,11 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
 }
 
 - (void)viewDidMoveToWindow {
-//    self.colorspace = [[NSColorSpace sRGBColorSpace] CGColorSpace];
-    self.colorspace = [[[[NSScreen screens] objectAtIndex:0] colorSpace] CGColorSpace];
+    self.colorspace = self.window.screen.colorSpace.CGColorSpace;
+}
+
+- (void)enclosingWindowDidMoveToScreen:(NSScreen *)screen {
+    self.colorspace = self.window.screen.colorSpace.CGColorSpace;
 }
 
 - (void)setColorspace:(CGColorSpaceRef)colorspace {

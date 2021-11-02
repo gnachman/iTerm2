@@ -143,17 +143,22 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 - (void)addIndicator:(iTermIndicatorDescriptor *)indicator
+          colorSpace:(NSColorSpace *)colorSpace
              context:(iTermMetalBufferPoolContext *)context {
-    indicator.texture = [self textureForIdentifier:indicator.identifier image:indicator.image context:context];
+    indicator.texture = [self textureForIdentifier:indicator.identifier
+                                             image:indicator.image
+                                           context:context
+                                        colorSpace:colorSpace];
             [_indicatorDescriptors addObject:indicator];
     indicator.texture.label = indicator.identifier;
 }
 
-- (id<MTLTexture>)textureForIdentifier:(NSString *)identifier image:(NSImage *)image context:(iTermMetalBufferPoolContext *)context {
+- (id<MTLTexture>)textureForIdentifier:(NSString *)identifier image:(NSImage *)image context:(iTermMetalBufferPoolContext *)context colorSpace:(NSColorSpace *)colorSpace {
     id<MTLTexture> texture = _identifierToTextureMap[identifier];
     if (!texture) {
         texture = [_metalRenderer textureFromImage:[iTermImageWrapper withImage:image]
-                                           context:context];
+                                           context:context
+                                        colorSpace:colorSpace];
         _identifierToTextureMap[identifier] = texture;
     }
     return texture;

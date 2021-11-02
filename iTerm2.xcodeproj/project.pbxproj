@@ -2350,7 +2350,6 @@
 		A667F38F1B49FC2E00705186 /* iTermToolbeltSplitView.h in Headers */ = {isa = PBXBuildFile; fileRef = A667F38D1B49FC2E00705186 /* iTermToolbeltSplitView.h */; };
 		A667F3901B49FC2E00705186 /* iTermToolbeltSplitView.m in Sources */ = {isa = PBXBuildFile; fileRef = A667F38E1B49FC2E00705186 /* iTermToolbeltSplitView.m */; };
 		A667F3931B4CC8BA00705186 /* iTermBadgeLabel.h in Headers */ = {isa = PBXBuildFile; fileRef = A667F3911B4CC8BA00705186 /* iTermBadgeLabel.h */; };
-		A667F3941B4CC8BA00705186 /* iTermBadgeLabel.m in Sources */ = {isa = PBXBuildFile; fileRef = A667F3921B4CC8BA00705186 /* iTermBadgeLabel.m */; };
 		A667F3971B4F71AE00705186 /* iTermSavePanel.h in Headers */ = {isa = PBXBuildFile; fileRef = A667F3951B4F71AE00705186 /* iTermSavePanel.h */; };
 		A668E8A21E7EFEA5005F8758 /* iTermURLStore.h in Headers */ = {isa = PBXBuildFile; fileRef = A668E8A01E7EFEA5005F8758 /* iTermURLStore.h */; };
 		A668E8A31E7EFEA5005F8758 /* iTermURLStore.m in Sources */ = {isa = PBXBuildFile; fileRef = A668E8A11E7EFEA5005F8758 /* iTermURLStore.m */; };
@@ -3921,6 +3920,7 @@
 		A6F3E96E1D60E4F0000E97C4 /* iTermInitialDirectory.h in Headers */ = {isa = PBXBuildFile; fileRef = A6F3E96C1D60E4F0000E97C4 /* iTermInitialDirectory.h */; };
 		A6F6990A2728C45800C4A3A6 /* Mux.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6F699092728C45800C4A3A6 /* Mux.swift */; };
 		A6F699272729C95F00C4A3A6 /* CPUGovernor.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6D24D3A26BB12F700CCE211 /* CPUGovernor.swift */; };
+		A6F699292730998B00C4A3A6 /* iTermBadgeLabel.m in Sources */ = {isa = PBXBuildFile; fileRef = A667F3921B4CC8BA00705186 /* iTermBadgeLabel.m */; };
 		A6F718B12263CC3C0053488E /* ITAddressBookMgr.m in Sources */ = {isa = PBXBuildFile; fileRef = 20E74F4904E9089700000106 /* ITAddressBookMgr.m */; };
 		A6F718B22263E8A20053488E /* iTermInitialDirectory.m in Sources */ = {isa = PBXBuildFile; fileRef = A6F3E96D1D60E4F0000E97C4 /* iTermInitialDirectory.m */; };
 		A6F718B5226438FC0053488E /* iTermInitialDirectory+Tmux.h in Headers */ = {isa = PBXBuildFile; fileRef = A6F718B3226438FC0053488E /* iTermInitialDirectory+Tmux.h */; };
@@ -14780,6 +14780,7 @@
 				A6180D7521A36F730073F219 /* iTermMetalPerFrameStateRow.m in Sources */,
 				A6EC937024E787BA00EEADEF /* iTermSnippetsModel.m in Sources */,
 				A629F5A223AFF53F00C2F16B /* iTermShellIntegrationFirstPageViewController.m in Sources */,
+				A6F699292730998B00C4A3A6 /* iTermBadgeLabel.m in Sources */,
 				A6E5D20C1FA3C55700EDD002 /* iTermMetalRowData.m in Sources */,
 				535EA4F220D0CB7A00FC81E0 /* iTermSwiftyString.m in Sources */,
 				A6B1476521334D3900D0814F /* iTermTmuxStatusBarMonitor.m in Sources */,
@@ -15010,7 +15011,6 @@
 				A6C762A91B45C52B00E3C992 /* PTYTab+Scripting.m in Sources */,
 				A62C3A921BCAE0ED00B5629D /* iTermRecentDirectoryMO+Additions.m in Sources */,
 				A6CEC1121DCE8146009F4FD2 /* GPBUtilities.m in Sources */,
-				A667F3941B4CC8BA00705186 /* iTermBadgeLabel.m in Sources */,
 				A6C762AA1B45C52B00E3C992 /* PTYWindow+Scripting.m in Sources */,
 				A6CC16551CF012E300E8C148 /* iTermCarbonHotKeyController.m in Sources */,
 				A6C763571B45C52B00E3C992 /* iTermOpenQuicklyTextField.m in Sources */,

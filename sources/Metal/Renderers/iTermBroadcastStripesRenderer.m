@@ -27,6 +27,9 @@ NS_ASSUME_NONNULL_BEGIN
     id<MTLTexture> _texture;
     CGSize _size;
     iTermMetalBufferPool *_verticesPool;
+    NSColorSpace *_colorSpace;
+    NSImage *image;
+    iTermImageWrapper *_imageWrapper;
 }
 
 - (nullable instancetype)initWithDevice:(id<MTLDevice>)device {
@@ -38,9 +41,8 @@ NS_ASSUME_NONNULL_BEGIN
                                                            blending:[iTermMetalBlending atop]
                                                 transientStateClass:[iTermBroadcastStripesRendererTransientState class]];
         NSImage *image = [[NSBundle bundleForClass:self.class] imageForResource:@"BackgroundStripes"];
+        _imageWrapper = [iTermImageWrapper withImage:image];
         _size = image.size;
-        _texture = [_metalRenderer textureFromImage:[iTermImageWrapper withImage:image]
-                                            context:nil];
         _verticesPool = [[iTermMetalBufferPool alloc] initWithDevice:device bufferSize:sizeof(iTermVertex) * 6];
     }
     return self;
@@ -52,6 +54,16 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (iTermMetalFrameDataStat)createTransientStateStat {
     return iTermMetalFrameDataStatPqCreateBroadcastStripesTS;
+}
+
+- (void)setColorSpace:(NSColorSpace *)colorSpace {
+    if (colorSpace == _colorSpace) {
+        return;
+    }
+    _colorSpace = colorSpace;
+    _texture = [_metalRenderer textureFromImage:_imageWrapper
+                                        context:nil
+                                     colorSpace:colorSpace];
 }
 
 - (void)drawWithFrameData:(iTermMetalFrameData *)frameData

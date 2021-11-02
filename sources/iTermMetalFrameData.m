@@ -490,6 +490,7 @@ static NSInteger gNextFrameDataNumber;
                                                                      hasBackgroundImage:self.hasBackgroundImage
                                                                            extraMargins:self.extraMargins
                                          maximumExtendedDynamicRangeColorComponentValue:self.maximumExtendedDynamicRangeColorComponentValue
+                                                                             colorSpace:self.colorSpace
                                                                                cellSize:self.cellSize
                                                                               glyphSize:self.glyphSize
                                                                  cellSizeWithoutSpacing:self.cellSizeWithoutSpacing

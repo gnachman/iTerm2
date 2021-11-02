@@ -53,6 +53,7 @@
     id<MTLTexture> _texture;
     NSColor *_color;
     CGSize _lastCellSize;
+    NSColorSpace *_colorSpace;
 }
 
 - (instancetype)initWithDevice:(id<MTLDevice>)device {
@@ -90,9 +91,11 @@
 }
 
 - (void)initializeTransientState:(iTermCursorGuideRendererTransientState *)tState {
-    if (!CGSizeEqualToSize(tState.cellConfiguration.cellSize, _lastCellSize)) {
+    if (!CGSizeEqualToSize(tState.cellConfiguration.cellSize, _lastCellSize) ||
+        tState.configuration.colorSpace != _colorSpace) {
         _texture = [self newCursorGuideTextureWithTransientState:tState];
         _lastCellSize = tState.cellConfiguration.cellSize;
+        _colorSpace = tState.configuration.colorSpace;
     }
     tState.texture = _texture;
 }
@@ -145,7 +148,8 @@
     [image unlockFocus];
 
     return [_cellRenderer textureFromImage:[iTermImageWrapper withImage:image]
-                                   context:tState.poolContext];
+                                   context:tState.poolContext
+                                colorSpace:tState.configuration.colorSpace];
 }
 
 @end

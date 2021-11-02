@@ -546,6 +546,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
 
         // This is the slow part
         frameData.perFrameState = [self->_dataSource metalDriverWillBeginDrawingFrame];
+        frameData.colorSpace = frameData.perFrameState.colorSpace;
 
         frameData.rows = [NSMutableArray array];
         frameData.gridSize = frameData.perFrameState.gridSize;
@@ -992,6 +993,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
                                  frame:frameData.perFrameState.relativeFrame
                          containerRect:frameData.perFrameState.containerRect
                                  color:frameData.perFrameState.defaultBackgroundColor
+                            colorSpace:frameData.perFrameState.colorSpace
                                context:frameData.framePoolContext];
 }
 
@@ -1009,7 +1011,9 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     if (_badgeRenderer.rendererDisabled) {
         return;
     }
-    [_badgeRenderer setBadgeImage:frameData.perFrameState.badgeImage context:frameData.framePoolContext];
+    [_badgeRenderer setBadgeImage:frameData.perFrameState.badgeImage
+                       colorSpace:frameData.perFrameState.colorSpace
+                          context:frameData.framePoolContext];
 }
 
 - (void)updateIndicatorRendererForFrameData:(iTermMetalFrameData *)frameData {
@@ -1023,7 +1027,9 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
                               frameData.viewportSize.y / scale);
     [_indicatorRenderer reset];
     [frameData.perFrameState enumerateIndicatorsInFrame:frame block:^(iTermIndicatorDescriptor * _Nonnull indicator) {
-        [self->_indicatorRenderer addIndicator:indicator context:frameData.framePoolContext];
+        [self->_indicatorRenderer addIndicator:indicator
+                                    colorSpace:frameData.perFrameState.colorSpace
+                                       context:frameData.framePoolContext];
     }];
 }
 
@@ -1032,6 +1038,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
         return;
     }
     _broadcastStripesRenderer.enabled = frameData.perFrameState.showBroadcastStripes;
+    [_broadcastStripesRenderer setColorSpace:frameData.perFrameState.colorSpace];
 }
 
 - (void)updateCursorGuideRendererForFrameData:(iTermMetalFrameData *)frameData {

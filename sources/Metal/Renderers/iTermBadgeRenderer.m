@@ -22,6 +22,7 @@ NS_ASSUME_NONNULL_BEGIN
     id<MTLTexture> _texture;
     CGSize _size;
     NSImage *_previousImage;
+    NSColorSpace *_colorSpace;
 }
 
 - (nullable instancetype)initWithDevice:(id<MTLDevice>)device {
@@ -48,14 +49,18 @@ NS_ASSUME_NONNULL_BEGIN
     return _texture != nil;
 }
 
-- (void)setBadgeImage:(NSImage *)image context:(nonnull iTermMetalBufferPoolContext *)context {
-    if (image == _previousImage) {
+- (void)setBadgeImage:(NSImage *)image
+           colorSpace:(NSColorSpace *)colorSpace
+              context:(nonnull iTermMetalBufferPoolContext *)context {
+    if (image == _previousImage && colorSpace == _colorSpace) {
         return;
     }
     _previousImage = image;
+    _colorSpace = colorSpace;
     _size = image.size;
     _texture = [_metalRenderer textureFromImage:[iTermImageWrapper withImage:image]
-                                        context:context];
+                                        context:context
+                                     colorSpace:colorSpace];
     _texture.label = @"Badge";
 }
 

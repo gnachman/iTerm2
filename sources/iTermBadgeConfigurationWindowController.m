@@ -80,7 +80,7 @@ typedef struct {
         const BOOL dark = [NSApp effectiveAppearance].it_isDark;
         _badge.fillColor = [[iTermProfilePreferences colorForKey:KEY_BADGE_COLOR dark:dark profile:profile] colorWithAlphaComponent:1];
         _badge.backgroundColor = [NSColor clearColor];
-        _loremIpsum.image = [_badge image];
+        _loremIpsum.image = [_badge imageForColorSpace:[NSColorSpace sRGBColorSpace]];
         NSColor *backgroundColor = [iTermProfilePreferences colorForKey:KEY_BACKGROUND_COLOR
                                                                    dark:dark
                                                                 profile:profile];
@@ -331,13 +331,13 @@ typedef struct {
     _badge.dirty = YES;
     _badge.viewSize = NSMakeSize(self.superview.bounds.size.width,
                                  self.superview.bounds.size.height);
-    _loremIpsum.image = [_badge image];
+    _loremIpsum.image = [_badge imageForColorSpace:[NSColorSpace sRGBColorSpace]];
     [self updateImageViewFrame];
 }
 
 - (void)reload {
     _badge.dirty = YES;
-    _loremIpsum.image = [_badge image];
+    _loremIpsum.image = [_badge imageForColorSpace:[NSColorSpace sRGBColorSpace]];
     [self updateImageViewFrame];
 }
 

@@ -57,7 +57,8 @@
                         destinationRect:(NSRect)destinationRect
                                   scale:(CGFloat)scale;
 
-- (NSBitmapImageRep *)bitmapImageRep;
+- (NSBitmapImageRep *)bitmapImageRep;  // prefer it_bitmapImageRep
+- (NSBitmapImageRep *)it_bitmapImageRep;  // This is a cleaner method than -bitmapImageRep which won't change the pixel format.
 - (NSImageRep *)bestRepresentationForScale:(CGFloat)scale;
 - (void)saveAsPNGTo:(NSString *)filename;
 
@@ -70,5 +71,11 @@
 // Returns an image of size `size`, with the receiver zoomed and cropped so it at least fills the
 // resulting image.
 - (NSImage *)it_imageFillingSize:(NSSize)size;
+- (NSImage *)it_imageInColorSpace:(NSColorSpace *)colorSpace;
 
 @end
+
+@interface NSBitmapImageRep(iTerm)
+- (NSBitmapImageRep *)it_bitmapScaledTo:(NSSize)size;
+@end
+

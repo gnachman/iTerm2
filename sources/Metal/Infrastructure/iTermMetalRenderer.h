@@ -25,13 +25,15 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @property (nonatomic, readonly) BOOL hasBackgroundImage;
 @property (nonatomic, readonly) NSEdgeInsets extraMargins;
 @property (nonatomic, readonly) CGFloat maximumExtendedDynamicRangeColorComponentValue;
+@property (nonatomic, readonly) NSColorSpace *colorSpace;
 
 - (instancetype)init NS_UNAVAILABLE;
 - (instancetype)initWithViewportSize:(vector_uint2)viewportSize
                                scale:(CGFloat)scale
                   hasBackgroundImage:(BOOL)hasBackgroundImage
                         extraMargins:(NSEdgeInsets)extraMargins
-maximumExtendedDynamicRangeColorComponentValue:(CGFloat)maximumExtendedDynamicRangeColorComponentValue NS_DESIGNATED_INITIALIZER;
+maximumExtendedDynamicRangeColorComponentValue:(CGFloat)maximumExtendedDynamicRangeColorComponentValue
+                          colorSpace:(NSColorSpace *)colorSpace NS_DESIGNATED_INITIALIZER;
 @end
 
 NS_CLASS_AVAILABLE(10_11, NA)
@@ -131,6 +133,10 @@ NS_CLASS_AVAILABLE(10_11, NA)
                      textureFrame:(CGRect)textureFrame  // normalized coordinates
                       poolContext:(iTermMetalBufferPoolContext *)poolContext;
 
+- (id<MTLBuffer>)newFlippedQuadWithFrame:(CGRect)quad
+                            textureFrame:(CGRect)textureFrame
+                             poolContext:(iTermMetalBufferPoolContext *)poolContext;
+
 // Things in Metal are randomly upside down for no good reason. So make it easy to flip them back.
 - (id<MTLBuffer>)newFlippedQuadOfSize:(CGSize)size poolContext:(iTermMetalBufferPoolContext *)poolContext;
 
@@ -142,8 +148,8 @@ NS_CLASS_AVAILABLE(10_11, NA)
                fragmentBuffers:(NSDictionary<NSNumber *, id<MTLBuffer>> *)fragmentBuffers
                       textures:(NSDictionary<NSNumber *, id<MTLTexture>> *)textures;
 
-- (nullable id<MTLTexture>)textureFromImage:(iTermImageWrapper *)image context:(nullable iTermMetalBufferPoolContext *)context;
-- (nullable id<MTLTexture>)textureFromImage:(iTermImageWrapper *)image context:(nullable iTermMetalBufferPoolContext *)context pool:(nullable iTermTexturePool *)pool;
+- (nullable id<MTLTexture>)textureFromImage:(iTermImageWrapper *)image context:(nullable iTermMetalBufferPoolContext *)context colorSpace:(NSColorSpace *)colorSpace;
+- (nullable id<MTLTexture>)textureFromImage:(iTermImageWrapper *)image context:(nullable iTermMetalBufferPoolContext *)context pool:(nullable iTermTexturePool *)pool colorSpace:(NSColorSpace *)colorSpace;
 
 - (id<MTLRenderPipelineState>)newPipelineWithBlending:(nullable iTermMetalBlending *)blending
                                        vertexFunction:(id<MTLFunction>)vertexFunction

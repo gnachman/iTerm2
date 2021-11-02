@@ -112,6 +112,7 @@
 @implementation iTermImageWrapper {
     id _cgimage;
     NSMutableDictionary<NSNumber *, NSImage *> *_tilingImages;
+    NSMutableArray<iTermImageWrapper *> *_children;
 }
 
 + (instancetype)withContentsOfFile:(NSString *)path {
@@ -146,6 +147,20 @@
         _image = image;
     }
     return self;
+}
+
+- (iTermImageWrapper *)imageWrapperWithColorSpace:(NSColorSpace *)colorSpace {
+    if (CGImageGetColorSpace(self.image.CGImage) == colorSpace.CGColorSpace) {
+        return self;
+    }
+    for (iTermImageWrapper *child in _children) {
+        if (CGImageGetColorSpace(child.image.CGImage) == colorSpace.CGColorSpace) {
+            return child;
+        }
+    }
+    iTermImageWrapper *child = [[iTermImageWrapper alloc] initWithImage:[self.image it_imageInColorSpace:colorSpace]];
+    [_children addObject:child];
+    return child;
 }
 
 - (CGImageRef)cgimage {

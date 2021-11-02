@@ -136,6 +136,7 @@
 
 @implementation iTermTimestampsRenderer {
     iTermMetalCellRenderer *_cellRenderer;
+    NSColorSpace *_colorSpace;  // cache is only valid for this color space.
     NSCache<iTermTimestampKey *, iTermPooledTexture *> *_cache;
     iTermTexturePool *_texturePool;
 }
@@ -189,6 +190,10 @@
     iTermTimestampsRendererTransientState *tState = transientState;
     _cache.countLimit = tState.cellConfiguration.gridSize.height * 4;
     const CGFloat scale = tState.configuration.scale;
+    if (tState.configuration.colorSpace != _colorSpace) {
+        [_cache removeAllObjects];
+        _colorSpace = tState.configuration.colorSpace;
+    }
     [tState enumerateRows:^(int row, iTermTimestampKey *key, NSRect frame) {
         iTermPooledTexture *pooledTexture = [self->_cache objectForKey:key];
         if (!pooledTexture) {
@@ -196,7 +201,8 @@
             iTermMetalBufferPoolContext *context = tState.poolContext;
             id<MTLTexture> texture = [self->_cellRenderer textureFromImage:[iTermImageWrapper withImage:image]
                                                                    context:context
-                                                                      pool:self->_texturePool];
+                                                                      pool:self->_texturePool
+                                                                colorSpace:tState.configuration.colorSpace];
             assert(texture);
             pooledTexture = [[iTermPooledTexture alloc] initWithTexture:texture
                                                                    pool:self->_texturePool];

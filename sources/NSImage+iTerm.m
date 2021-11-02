@@ -554,4 +554,26 @@ static NSBitmapImageRep * iTermCreateBitmapRep(NSSize size,
     return result;
 }
 
+- (NSImage *)it_imageInColorSpace:(NSColorSpace *)colorSpace {
+    CGImageRef cgiIn = [self CGImageForProposedRect:nil context:nil hints:nil];
+    CGImageRef cgi = CGImageCreateCopyWithColorSpace(cgiIn, colorSpace.CGColorSpace);
+    NSImage *result = [[NSImage alloc] initWithCGImage:cgi size:self.size];
+    return result;
+}
+
+- (NSBitmapImageRep *)it_bitmapImageRep {
+    CGImageRef cgImage = [[self bestRepresentationForScale:2] CGImageForProposedRect:nil context:nil hints:nil];
+    NSBitmapImageRep *bitmap = [[NSBitmapImageRep alloc] initWithCGImage:cgImage];
+    return bitmap;
+}
+
+@end
+
+@implementation NSBitmapImageRep(iTerm)
+- (NSBitmapImageRep *)it_bitmapScaledTo:(NSSize)size {
+    NSImage *image = [[NSImage alloc] initWithSize:self.size];
+    [image addRepresentation:self];
+    return [[image it_imageOfSize:size] it_bitmapImageRep];
+}
+
 @end

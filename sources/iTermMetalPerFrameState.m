@@ -64,7 +64,9 @@ typedef struct {
     BOOL image;
 } iTermBackgroundColorKey;
 
-static vector_float4 VectorForColor(NSColor *color) {
+static vector_float4 VectorForColor(NSColor *srgb, NSColorSpace *colorSpace) {
+#warning TODO: This needs to be cached.
+    NSColor *color = [srgb colorUsingColorSpace:colorSpace];
     return (vector_float4) { color.redComponent, color.greenComponent, color.blueComponent, color.alphaComponent };
 }
 
@@ -627,6 +629,10 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
     return _configuration->_gridSize;
 }
 
+- (NSColorSpace *)colorSpace {
+    return _configuration->_colorSpace;
+}
+
 - (vector_float4)defaultBackgroundColor {
     NSColor *color = [_configuration->_colorMap colorForKey:kColorMapBackground];
     return simd_make_float4((float)color.redComponent,
@@ -758,7 +764,7 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
         } else {
             BOOL isDefaultBackgroundColor = NO;
             unprocessedBackgroundColor = [self unprocessedColorForBackgroundColorKey:&backgroundKey
-                                                                        isDefault:&isDefaultBackgroundColor];
+                                                                           isDefault:&isDefaultBackgroundColor];
             lastUnprocessedBackgroundColor = unprocessedBackgroundColor;
             // The unprocessed color is needed for minimum contrast computation for text color.
             backgroundColor = [_configuration->_colorMap fastProcessedBackgroundColorForBackgroundColor:unprocessedBackgroundColor];
@@ -926,7 +932,8 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
         if (_cursorInfo.shouldDrawText) {
             cursorTextColor = _cursorInfo.textColor;
         } else if (_configuration->_reverseVideo) {
-            cursorTextColor = VectorForColor([_configuration->_colorMap colorForKey:kColorMapBackground]);
+            cursorTextColor = VectorForColor([_configuration->_colorMap colorForKey:kColorMapBackground],
+                                             _configuration->_colorSpace);
         } else {
             cursorTextColor = [self colorForCode:ALTSEM_CURSOR
                                            green:0
@@ -972,7 +979,8 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
 
 - (vector_float4)selectionColorForCurrentFocus {
     if (_configuration->_isFrontTextView) {
-        return VectorForColor([_configuration->_colorMap processedBackgroundColorForBackgroundColor:[_configuration->_colorMap colorForKey:kColorMapSelection]]);
+        return VectorForColor([_configuration->_colorMap processedBackgroundColorForBackgroundColor:[_configuration->_colorMap colorForKey:kColorMapSelection]],
+                              _configuration->_colorSpace);
     } else {
         return _configuration->_unfocusedSelectionColor;
     }
@@ -1054,9 +1062,11 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
                                                bold:isBold
                                        isBackground:isBackground];
     if (isBackground) {
-        return VectorForColor([_configuration->_colorMap colorForKey:key]);
+        return VectorForColor([_configuration->_colorMap colorForKey:key],
+                              _configuration->_colorSpace);
     } else {
-        vector_float4 color = VectorForColor([_configuration->_colorMap colorForKey:key]);
+        vector_float4 color = VectorForColor([_configuration->_colorMap colorForKey:key],
+                                             _configuration->_colorSpace);
         if (isFaint) {
             color.w = 0.5;
         }
@@ -1312,18 +1322,21 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
         caches->havePreviousCharacterAttributes = NO;
     } else if (inUnderlinedRange) {
         // Blue link text.
-        rawColor = VectorForColor([_configuration->_colorMap colorForKey:kColorMapLink]);
+        rawColor = VectorForColor([_configuration->_colorMap colorForKey:kColorMapLink],
+                                  _configuration->_colorSpace);
         caches->havePreviousCharacterAttributes = NO;
     } else if (selected) {
         // Selected text.
-        rawColor = VectorForColor([colorMap colorForKey:kColorMapSelectedText]);
+        rawColor = VectorForColor([colorMap colorForKey:kColorMapSelectedText],
+                                  _configuration->_colorSpace);
         caches->havePreviousCharacterAttributes = NO;
     } else if (_configuration->_reverseVideo &&
                ((c->foregroundColor == ALTSEM_DEFAULT && c->foregroundColorMode == ColorModeAlternate) ||
                 (c->foregroundColor == ALTSEM_CURSOR && c->foregroundColorMode == ColorModeAlternate))) {
            // Reverse video is on. Either is cursor or has default foreground color. Use
            // background color.
-           rawColor = VectorForColor([colorMap colorForKey:kColorMapBackground]);
+           rawColor = VectorForColor([colorMap colorForKey:kColorMapBackground],
+                                     _configuration->_colorSpace);
            caches->havePreviousCharacterAttributes = NO;
     } else if (!caches->havePreviousCharacterAttributes ||
                c->foregroundColor != caches->previousCharacterAttributes.foregroundColor ||
@@ -1362,7 +1375,8 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
     if (needsProcessing) {
         result = VectorForColor([_configuration->_colorMap processedTextColorForTextColor:ColorForVector(rawColor)
                                                       overBackgroundColor:ColorForVector(unprocessedBackgroundColor)
-                                                   disableMinimumContrast:isBoxDrawingCharacter]);
+                                                   disableMinimumContrast:isBoxDrawingCharacter],
+                                _configuration->_colorSpace);
     } else {
         result = rawColor;
     }

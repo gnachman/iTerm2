@@ -84,7 +84,8 @@ const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 3;
                                scale:(CGFloat)scale
                   hasBackgroundImage:(BOOL)hasBackgroundImage
                         extraMargins:(NSEdgeInsets)extraMargins
-maximumExtendedDynamicRangeColorComponentValue:(CGFloat)maximumExtendedDynamicRangeColorComponentValue {
+maximumExtendedDynamicRangeColorComponentValue:(CGFloat)maximumExtendedDynamicRangeColorComponentValue
+                          colorSpace:(NSColorSpace *)colorSpace {
     self = [super init];
     if (self) {
         _viewportSize = viewportSize;
@@ -92,6 +93,7 @@ maximumExtendedDynamicRangeColorComponentValue:(CGFloat)maximumExtendedDynamicRa
         _hasBackgroundImage = hasBackgroundImage;
         _extraMargins = extraMargins;
         _maximumExtendedDynamicRangeColorComponentValue = maximumExtendedDynamicRangeColorComponentValue;
+        _colorSpace = colorSpace;
     }
     return self;
 }
@@ -322,6 +324,24 @@ maximumExtendedDynamicRangeColorComponentValue:(CGFloat)maximumExtendedDynamicRa
                                     checkIfChanged:YES];
 }
 
+- (id<MTLBuffer>)newFlippedQuadWithFrame:(CGRect)quad
+                            textureFrame:(CGRect)textureFrame
+                             poolContext:(iTermMetalBufferPoolContext *)poolContext {
+    const iTermVertex vertices[] = {
+        // Pixel Positions                              Texture Coordinates
+        { { CGRectGetMaxX(quad), CGRectGetMinY(quad) }, { CGRectGetMaxX(textureFrame), CGRectGetMaxY(textureFrame) } },
+        { { CGRectGetMinX(quad), CGRectGetMinY(quad) }, { CGRectGetMinX(textureFrame), CGRectGetMaxY(textureFrame) } },
+        { { CGRectGetMinX(quad), CGRectGetMaxY(quad) }, { CGRectGetMinX(textureFrame), CGRectGetMinY(textureFrame) } },
+
+        { { CGRectGetMaxX(quad), CGRectGetMinY(quad) }, { CGRectGetMaxX(textureFrame), CGRectGetMaxY(textureFrame) } },
+        { { CGRectGetMinX(quad), CGRectGetMaxY(quad) }, { CGRectGetMinX(textureFrame), CGRectGetMinY(textureFrame) } },
+        { { CGRectGetMaxX(quad), CGRectGetMaxY(quad) }, { CGRectGetMaxX(textureFrame), CGRectGetMinY(textureFrame) } },
+    };
+    return [_verticesPool requestBufferFromContext:poolContext
+                                         withBytes:vertices
+                                    checkIfChanged:YES];
+}
+
 - (id<MTLBuffer>)newQuadOfSize:(CGSize)size poolContext:(iTermMetalBufferPoolContext *)poolContext {
     const iTermVertex vertices[] = {
         // Pixel Positions             Texture Coordinates
@@ -404,8 +424,8 @@ maximumExtendedDynamicRangeColorComponentValue:(CGFloat)maximumExtendedDynamicRa
     return pipeline;
 }
 
-- (nullable id<MTLTexture>)textureFromImage:(iTermImageWrapper *)image context:(nullable iTermMetalBufferPoolContext *)context {
-    return [self textureFromImage:image context:context pool:nil];
+- (nullable id<MTLTexture>)textureFromImage:(iTermImageWrapper *)image context:(nullable iTermMetalBufferPoolContext *)context colorSpace:(NSColorSpace *)colorSpace {
+    return [self textureFromImage:image context:context pool:nil colorSpace:colorSpace];
 }
 
 - (void)convertWidth:(NSUInteger)width
@@ -445,15 +465,28 @@ maximumExtendedDynamicRangeColorComponentValue:(CGFloat)maximumExtendedDynamicRa
     return MTLPixelFormatRGBA8Unorm;
 }
 
-- (nullable id<MTLTexture>)textureFromImage:(iTermImageWrapper *)image context:(iTermMetalBufferPoolContext *)context pool:(iTermTexturePool *)pool {
+- (nullable id<MTLTexture>)textureFromImage:(iTermImageWrapper *)wrapper
+                                    context:(iTermMetalBufferPoolContext *)context
+                                       pool:(iTermTexturePool *)pool
+                                 colorSpace:(NSColorSpace *)colorSpace {
+    iTermImageWrapper *image = [wrapper imageWrapperWithColorSpace:colorSpace];
     if (!image.image) {
         return nil;
     }
 
+    CGImageRef cgImage = [[image.image.representations firstObject] CGImageForProposedRect:nil context:nil hints:nil];
+    NSBitmapImageRep *bitmap = [[NSBitmapImageRep alloc] initWithCGImage:cgImage];
+    if ([self pixelFormatForBitmapRep:bitmap] == MTLPixelFormatInvalid) {
+        return [self legacyTextureFromImage:image
+                                    context:context
+                                       pool:pool
+                                 colorSpace:colorSpace];
+    }
+
     // Calculate a safe size for the image while preserving its aspect ratio.
     NSUInteger width, height;
-    [self convertWidth:image.scaledSize.width
-                height:image.scaledSize.height
+    [self convertWidth:bitmap.size.width  // use pixelWidth/pixelHeight if some weird jpegs get clipped
+                height:bitmap.size.height
                toWidth:&width
                 height:&height
           notExceeding:4096];
@@ -461,16 +494,13 @@ maximumExtendedDynamicRangeColorComponentValue:(CGFloat)maximumExtendedDynamicRa
         return nil;
     }
 
-    NSRect rect = NSMakeRect(0, 0, width, height);
-    CGImageRef cgImage = [[image.image.representations firstObject] CGImageForProposedRect:&rect context:nil hints:nil];
-    NSBitmapImageRep *bitmap = [[NSBitmapImageRep alloc] initWithCGImage:cgImage];
-    if ([self pixelFormatForBitmapRep:bitmap] == MTLPixelFormatInvalid) {
-        return [self legacyTextureFromImage:image context:context pool:pool];
+    if (width != bitmap.size.width || height != bitmap.size.height) {
+        bitmap = [bitmap it_bitmapScaledTo:NSMakeSize(width, height)];
     }
     MTLTextureDescriptor *textureDescriptor =
     [MTLTextureDescriptor texture2DDescriptorWithPixelFormat:[self pixelFormatForBitmapRep:bitmap]
-                                                       width:bitmap.size.width
-                                                      height:bitmap.size.height
+                                                       width:width
+                                                      height:height
                                                    mipmapped:NO];
     id<MTLTexture> texture = nil;
     if (pool) {
@@ -496,16 +526,19 @@ maximumExtendedDynamicRangeColorComponentValue:(CGFloat)maximumExtendedDynamicRa
 }
 
 // This is a terrible hack
-- (nullable id<MTLTexture>)legacyTextureFromImage:(iTermImageWrapper *)image context:(iTermMetalBufferPoolContext *)context pool:(iTermTexturePool *)pool {
+- (nullable id<MTLTexture>)legacyTextureFromImage:(iTermImageWrapper *)image
+                                          context:(iTermMetalBufferPoolContext *)context
+                                             pool:(iTermTexturePool *)pool
+                                       colorSpace:(NSColorSpace *)colorSpace {
     NSImage *dest = [[NSImage alloc] initWithSize:image.image.size];
     [dest lockFocus];
     [image.image drawInRect:NSMakeRect(0, 0, image.image.size.width, image.image.size.height)];
     [dest unlockFocus];
     iTermImageWrapper *temp = [[iTermImageWrapper alloc] initWithImage:dest];
-    return [self textureFromImage:temp context:context pool:pool];
+    return [self textureFromImage:temp context:context pool:pool colorSpace:colorSpace];
 }
 
-#warning TODO: Reduce coded uplcation with textureFromImage:context:
+#warning TODO: Reduce code duplcation with textureFromImage:context:
 - (nullable id<MTLTexture>)_legacyTextureFromImage:(iTermImageWrapper *)image context:(iTermMetalBufferPoolContext *)context pool:(iTermTexturePool *)pool {
     if (!image.image) {
         return nil;

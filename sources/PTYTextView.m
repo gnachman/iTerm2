@@ -950,7 +950,18 @@
         [_shellIntegrationInstallerWindow close];
         _shellIntegrationInstallerWindow = nil;
     }
+    [self colorSpaceDidChange];
     [super viewDidMoveToWindow];
+}
+
+// The badge image must be in the screen's colorspace for blending to work the same in drawRect: and metal.
+- (void)colorSpaceDidChange {
+    _badgeLabel.dirty = YES;
+    [self recomputeBadgeLabel];
+}
+
+- (void)enclosingWindowDidMoveToScreen:(NSScreen *)screen {
+    [self colorSpaceDidChange];
 }
 
 #pragma mark - NSView Mouse-Related Overrides
@@ -3167,7 +3178,7 @@
     _badgeLabel.viewSize = self.enclosingScrollView.documentVisibleRect.size;
     if (_badgeLabel.isDirty) {
         _badgeLabel.dirty = NO;
-        _drawingHelper.badgeImage = _badgeLabel.image;
+        _drawingHelper.badgeImage = [_badgeLabel imageForColorSpace:self.window.colorSpace ?: [NSColorSpace sRGBColorSpace]];
         [self setNeedsDisplay:YES];
     }
 }

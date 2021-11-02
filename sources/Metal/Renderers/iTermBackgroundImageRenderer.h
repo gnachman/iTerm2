@@ -26,6 +26,7 @@ NS_ASSUME_NONNULL_BEGIN
            frame:(CGRect)frame
    containerRect:(CGRect)containerRect
            color:(vector_float4)defaultBackgroundColor
+      colorSpace:(NSColorSpace *)colorSpace
          context:(nullable iTermMetalBufferPoolContext *)context;
 
 @end

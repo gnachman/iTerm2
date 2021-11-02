@@ -15,6 +15,7 @@
 #import <simd/simd.h>
 
 @protocol iTermMetalRenderer;
+@class NSColorSpace;
 
 typedef NS_ENUM(int, iTermMetalFrameDataStat) {
     iTermMetalFrameDataStatEndToEnd,
@@ -126,6 +127,7 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @property (atomic, strong) NSString *status;
 @property (atomic, strong) id<MTLDevice> device;
 @property (atomic, strong, readonly) MTKView *view;
+@property (atomic, strong) NSColorSpace *colorSpace;
 @property (nonatomic, readonly) NSInteger frameNumber;
 #if ENABLE_STATS
 @property (nonatomic, readonly) iTermPreciseTimerStats *stats;

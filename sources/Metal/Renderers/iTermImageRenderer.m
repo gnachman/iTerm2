@@ -77,13 +77,24 @@ static NSString *const iTermImageRendererTextureMetadataKeyImageMissing = @"iTer
             error:NULL];
 }
 
+- (void)removeTexturesExceptForColorSpace:(NSColorSpace *)colorSpaceTokeep {
+    NSMutableArray *keys = [NSMutableArray array];
+    NSString *csName = colorSpaceTokeep.localizedName;
+    for (NSDictionary *key in _textures) {
+        if (![key[@"cs"] isEqual:csName]) {
+            [keys addObject:key];
+        }
+    }
+    [_textures removeObjectsForKeys:keys];
+}
 
 - (void)addRun:(iTermMetalImageRun *)imageRun {
+    [self removeTexturesExceptForColorSpace:self.configuration.colorSpace];
     if (!_runs) {
         _runs = [NSMutableArray array];
     }
     [_runs addObject:imageRun];
-    id key = [self keyForRun:imageRun];
+    id key = [self keyForRun:imageRun colorSpace:self.configuration.colorSpace];
     id<MTLTexture> texture = _textures[key];
 
     // Check if the image got loaded asynchronously. This happens when decoding an image takes a while.
@@ -93,6 +104,7 @@ static NSString *const iTermImageRendererTextureMetadataKeyImageMissing = @"iTer
     }
 
     if (_textures[key] == nil) {
+        // Remove any textures for this run but different color spaces.
         _textures[key] = [self newTextureForImageRun:imageRun];
     } else if (imageRun.imageInfo) {
         [_foundImageUniqueIdentifiers addObject:imageRun.imageInfo.uniqueIdentifier];
@@ -103,10 +115,9 @@ static NSString *const iTermImageRendererTextureMetadataKeyImageMissing = @"iTer
     [_counts addObject:key];
 }
 
-- (id)keyForRun:(iTermMetalImageRun *)run {
-    NSUInteger temp = run.code;
-    int frame = ([run.imageInfo frameForTimestamp:_timestamp] & 0xffff);
-    return @(temp << 16 | frame);
+- (id)keyForRun:(iTermMetalImageRun *)run colorSpace:(NSColorSpace *)colorSpace {
+    const int frame = ([run.imageInfo frameForTimestamp:_timestamp] & 0xffff);
+    return @{ @"code": @(run.code), @"frame": @(frame), @"cs": colorSpace.localizedName };
 }
 
 - (id<MTLTexture>)newTextureForImageRun:(iTermMetalImageRun *)run {
@@ -132,7 +143,8 @@ static NSString *const iTermImageRendererTextureMetadataKeyImageMissing = @"iTer
         }
     }
     id<MTLTexture> texture = [_cellRenderer textureFromImage:[iTermImageWrapper withImage:image]
-                                                     context:self.poolContext];
+                                                     context:self.poolContext
+                                                  colorSpace:self.configuration.colorSpace];
     if (missing) {
         [iTermTexture setMetadataObject:@YES forKey:iTermImageRendererTextureMetadataKeyImageMissing onTexture:texture];
     }
@@ -146,7 +158,7 @@ static NSString *const iTermImageRendererTextureMetadataKeyImageMissing = @"iTer
     const CGFloat scale = self.configuration.scale;
 
     [_runs enumerateObjectsUsingBlock:^(iTermMetalImageRun * _Nonnull run, NSUInteger idx, BOOL * _Nonnull stop) {
-        id key = [self keyForRun:run];
+        id key = [self keyForRun:run colorSpace:self.configuration.colorSpace];
         id<MTLTexture> texture = self->_textures[key];
         const CGSize textureSize = CGSizeMake(texture.width, texture.height);
         NSSize chunkSize = NSMakeSize(textureSize.width / run.imageInfo.size.width,

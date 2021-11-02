@@ -90,9 +90,10 @@ NS_ASSUME_NONNULL_BEGIN
            frame:(CGRect)frame
    containerRect:(CGRect)containerRect
            color:(vector_float4)defaultBackgroundColor
+      colorSpace:(NSColorSpace *)colorSpace
          context:(nullable iTermMetalBufferPoolContext *)context {
     if (image != _image) {
-        _texture = image ? [_metalRenderer textureFromImage:image context:context] : nil;
+        _texture = image ? [_metalRenderer textureFromImage:image context:context colorSpace:colorSpace] : nil;
     }
     _frame = frame;
     _color = defaultBackgroundColor;
