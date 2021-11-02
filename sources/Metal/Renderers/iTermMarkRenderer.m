@@ -193,7 +193,7 @@
     size.width /= scale;
     size.height /= scale;
 
-    return [iTermTextDrawingHelper newImageWithMarkOfColor:color size:size colorSpace:_colorSpace];
+    return [iTermTextDrawingHelper newImageWithMarkOfColor:color size:size colorSpace:nil];
 }
 
 @end

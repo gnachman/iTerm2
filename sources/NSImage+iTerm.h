@@ -11,6 +11,7 @@
 @interface NSImage (iTerm)
 - (CGImageRef)CGImage;
 + (NSImage *)imageOfSize:(NSSize)size color:(NSColor *)color;
++ (NSColorSpace *)colorSpaceForProgramaticallyGeneratedImages;
 
 // Creates an image context and runs block. Do drawing into the current
 // graphics context in the block. Returns the resulting image.

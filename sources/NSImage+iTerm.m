@@ -447,24 +447,41 @@
     return [self it_imageScaledByX:-1 y:1];
 }
 
++ (NSColorSpace *)colorSpaceForProgramaticallyGeneratedImages {
+    NSImage *image = [[NSImage alloc] initWithSize:NSMakeSize(1, 1)];
+    [image lockFocus];
+    [[NSColor blackColor] set];
+    NSRectFill(NSMakeRect(0, 0, 1, 1));
+    [image unlockFocus];
+    NSBitmapImageRep *rep = [image it_bitmapImageRep];
+    return rep.colorSpace;
+}
+
 - (NSImage *)it_imageScaledByX:(CGFloat)xScale y:(CGFloat)yScale {
     const NSSize size = self.size;
     if (size.width == 0 || size.height == 0) {
         return self;
     }
-    NSAffineTransform *transform = [NSAffineTransform transform];
-    [transform scaleXBy:xScale yBy:yScale];
-    NSAffineTransform *center = [NSAffineTransform transform];
-    [center translateXBy:size.width / 2. yBy:size.height / 2.];
-    [transform appendTransform:center];
-    NSImage *image = [[NSImage alloc] initWithSize:size];
-    [image lockFocus];
-    [transform concat];
-    NSRect rect = NSMakeRect(0, 0, size.width, size.height);
-    NSPoint corner = NSMakePoint(-size.width / 2., -size.height / 2.);
-    [self drawAtPoint:corner fromRect:rect operation:NSCompositingOperationCopy fraction:1.0];
-    [image unlockFocus];
-    return image;
+    NSImage *image = [NSImage imageOfSize:self.size drawBlock:^{
+        NSAffineTransform *transform = [NSAffineTransform transform];
+        [transform scaleXBy:xScale yBy:yScale];
+        NSAffineTransform *center = [NSAffineTransform transform];
+        [center translateXBy:size.width / 2. yBy:size.height / 2.];
+        [transform appendTransform:center];
+        [transform concat];
+        NSRect rect = NSMakeRect(0, 0, size.width, size.height);
+        NSPoint corner = NSMakePoint(-size.width / 2., -size.height / 2.);
+        // Since the destination is in the programatically-generated colorspace, we need the source
+        // to be as well to avoid any changes. After we're all done we can convert back to the
+        // colorspace of the source image. This is how we can vertically flip without causing
+        // accidental color changes.
+        NSImage *source = [self it_imageInColorSpace:[NSImage colorSpaceForProgramaticallyGeneratedImages]];
+        [source drawAtPoint:corner
+                   fromRect:rect
+                  operation:NSCompositingOperationCopy
+                   fraction:1.0];
+    }];
+    return [image it_imageInColorSpace:self.it_bitmapImageRep.colorSpace];
 }
 
 - (NSImage *)it_imageOfSize:(NSSize)newSize {

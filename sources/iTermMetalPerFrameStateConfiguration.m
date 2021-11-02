@@ -97,7 +97,7 @@ static vector_float4 VectorForColor(NSColor *color) {
     _strikethroughUnderlineDescriptor.thickness = [drawingHelper strikethroughThicknessForFont:_asciiFont.font];
 
     // Indicators
-    NSColor *color = [[textView indicatorFullScreenFlashColor] colorUsingColorSpace:[NSColorSpace sRGBColorSpace]];
+    NSColor *color = [[textView indicatorFullScreenFlashColor] colorUsingColorSpace:_colorSpace];
     _fullScreenFlashColor = simd_make_float4(color.redComponent,
                                              color.greenComponent,
                                              color.blueComponent,

@@ -193,6 +193,7 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
 
     BOOL _preferSpeedToFullLigatureSupport;
     NSMutableDictionary<NSNumber *, NSImage *> *_cachedMarks;
+    NSColorSpace *_cachedMarksColorSpace;
 }
 
 - (instancetype)init {
@@ -241,6 +242,7 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
     [_replacementLineRefCache release];
     [_timestampDrawHelper release];
     [_cachedMarks release];
+    [_cachedMarksColorSpace release];
 
     [super dealloc];
 }
@@ -854,43 +856,40 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
                                                         MAX(1, size.height))
                                   colorSpace:colorSpace];
     }
-    NSImage *img = [[NSImage alloc] initWithSize:size];
-    [img lockFocus];
+    NSImage *img = [NSImage imageOfSize:size drawBlock:^{
+        CGRect rect = CGRectMake(0, 0, MAX(1, size.width), size.height);
 
-    CGRect rect = CGRectMake(0, 0, MAX(1, size.width), size.height);
+        NSPoint bottom = NSMakePoint(NSMinX(rect), NSMinY(rect));
+        NSPoint right = NSMakePoint(NSMaxX(rect), NSMidY(rect));
+        NSPoint top = NSMakePoint(NSMinX(rect), NSMaxY(rect));
 
-    NSPoint bottom = NSMakePoint(NSMinX(rect), NSMinY(rect));
-    NSPoint right = NSMakePoint(NSMaxX(rect), NSMidY(rect));
-    NSPoint top = NSMakePoint(NSMinX(rect), NSMaxY(rect));
+        if (size.width < 2) {
+            NSRect rect = NSMakeRect(0, 0, size.width, size.height);
+            rect = NSInsetRect(rect, 0, rect.size.height * 0.25);
+            [[color colorWithAlphaComponent:0.75] set];
+            NSRectFill(rect);
+        } else {
+            NSBezierPath *path = [NSBezierPath bezierPath];
+            [color set];
+            [path moveToPoint:top];
+            [path lineToPoint:right];
+            [path lineToPoint:bottom];
+            [path lineToPoint:top];
+            [path fill];
 
-    if (size.width < 2) {
-        NSRect rect = NSMakeRect(0, 0, size.width, size.height);
-        rect = NSInsetRect(rect, 0, rect.size.height * 0.25);
-        [[color colorWithAlphaComponent:0.75] set];
-        NSRectFill(rect);
-    } else {
-        NSBezierPath *path = [NSBezierPath bezierPath];
-        [color set];
-        [path moveToPoint:top];
-        [path lineToPoint:right];
-        [path lineToPoint:bottom];
-        [path lineToPoint:top];
-        [path fill];
-
-        [[NSColor blackColor] set];
-        path = [NSBezierPath bezierPath];
-        [path moveToPoint:NSMakePoint(bottom.x, bottom.y)];
-        [path lineToPoint:NSMakePoint(right.x, right.y)];
-        [path setLineWidth:1.0];
-        [path stroke];
-    }
-
-    [img unlockFocus];
+            [[NSColor blackColor] set];
+            path = [NSBezierPath bezierPath];
+            [path moveToPoint:NSMakePoint(bottom.x, bottom.y)];
+            [path lineToPoint:NSMakePoint(right.x, right.y)];
+            [path setLineWidth:1.0];
+            [path stroke];
+        }
+    }];
 
     if (colorSpace) {
         return [[img it_imageInColorSpace:colorSpace] retain];
     }
-    return img;
+    return [img retain];
 }
 
 - (iTermMarkIndicatorType)markIndicatorTypeForMark:(VT100ScreenMark *)mark {
@@ -929,11 +928,18 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
                                                    cellSizeWithoutSpacing:_cellSizeWithoutSpacing
                                                                     scale:1];
         const iTermMarkIndicatorType type = [self markIndicatorTypeForMark:mark];
+        NSColorSpace *colorSpace = self.delegate.window.colorSpace ?: [NSColorSpace sRGBColorSpace];
+        if (![_cachedMarksColorSpace isEqual:colorSpace]) {
+            DLog(@"Color space changed from %@ to %@", _cachedMarksColorSpace, colorSpace);
+            [_cachedMarksColorSpace autorelease];
+            _cachedMarksColorSpace = [colorSpace retain];
+            [_cachedMarks removeAllObjects];
+        }
         NSImage *image = _cachedMarks[@(type)];
         if (!image || !NSEqualSizes(image.size, rect.size)) {
             image = [[iTermTextDrawingHelper newImageWithMarkOfColor:[self colorForMark:mark]
                                                                 size:rect.size
-                                                          colorSpace:nil] autorelease];
+                                                          colorSpace:colorSpace] autorelease];
             _cachedMarks[@(type)] = image;
         }
         [image it_drawInRect:rect virtualOffset:virtualOffset];

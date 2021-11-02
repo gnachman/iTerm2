@@ -48,8 +48,16 @@
 
         _texture = [device newTextureWithDescriptor:textureDescriptor];
         _texture.label = @"iTermTextureArray";
-        [iTermTexture setBytesPerRow:_atlasSize.width * 4
-                         rawDataSize:_atlasSize.width * _atlasSize.height * 4
+        NSInteger bytesPerSample = 1;
+        if (pixelFormat == MTLPixelFormatRGBA16Float) {
+            bytesPerSample = 2;
+        } else if (pixelFormat == MTLPixelFormatBGRA8Unorm) {
+            bytesPerSample = 1;
+        } else {
+            ITAssertWithMessage(NO, @"Unexpected pixel format %@", @(pixelFormat));
+        }
+        [iTermTexture setBytesPerRow:_atlasSize.width * 4 * bytesPerSample
+                         rawDataSize:_atlasSize.width * _atlasSize.height * 4 * bytesPerSample
                      samplesPerPixel:4
                           forTexture:_texture];
     }
