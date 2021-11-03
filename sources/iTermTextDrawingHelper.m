@@ -3002,8 +3002,8 @@ withExtendedAttributes:(iTermExternalAttribute *)ea2 {
                                   charsInLine * _cellSize.width,
                                   _cellSize.height);
             [[self defaultBackgroundColor] set];
-
             iTermRectFill(r, virtualOffset);
+            [self drawAccessoriesInRect:r virtualOffset:virtualOffset];
 
             // Draw the characters.
             [self constructAndDrawRunsForLine:buf
@@ -3089,9 +3089,9 @@ withExtendedAttributes:(iTermExternalAttribute *)ea2 {
                                                                                         alpha:1.0]] set];
         iTermRectFill(cursorFrame, virtualOffset);
 
-        return TRUE;
+        return YES;
     }
-    return FALSE;
+    return NO;
 }
 
 #pragma mark - Drawing: Cursor
