@@ -1255,9 +1255,11 @@
         }
 
 
+        [NSGraphicsContext saveGraphicsState];
         [_drawingHelper drawTextViewContentInRect:virtualRect rectsPtr:rectArray rectCount:rectCount virtualOffset:virtualOffset];
 
         [_indicatorsHelper drawInFrame:NSRectSubtractingVirtualOffset(_drawingHelper.indicatorFrame, virtualOffset)];
+        [NSGraphicsContext restoreGraphicsState];
         [_drawingHelper drawTimestampsWithVirtualOffset:virtualOffset];
 
         // Not sure why this is needed, but for some reason this view draws over its subviews.

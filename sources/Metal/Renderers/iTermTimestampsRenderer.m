@@ -76,7 +76,7 @@
 }
 
 - (void)setTextColor:(NSColor *)textColor {
-    _textColor = [textColor colorUsingColorSpace:self.configuration.colorSpace];
+    _textColor = textColor; // [textColor colorUsingColorSpace:self.configuration.colorSpace];
 }
 
 // frame arg to block is in points, not pixels.
@@ -145,8 +145,7 @@
                   colorSpace:nil];
     }] it_verticallyFlippedImage];
 
-#warning WTF why does this not change the colors?
-    return [image it_imageInColorSpace:self.configuration.colorSpace];
+    return image;
 }
 
 @end

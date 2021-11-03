@@ -149,7 +149,7 @@ const CGFloat iTermTimestampGradientWidth = 20;
                row:(int)index
              frame:(NSRect)frame
         colorSpace:(NSColorSpace *)colorSpace {
-    NSColor *color = colorSpace ? [_fgColor colorUsingColorSpace:colorSpace] : _fgColor;
+    NSColor *color = _fgColor; //colorSpace ? [_fgColor colorUsingColorSpace:colorSpace] : _fgColor;
     NSDictionary *attributes = [self attributesForTextColor:color
                                                      shadow:[self shadowForTextColor:color]
                                                      retina:_isRetina];
@@ -161,7 +161,11 @@ const CGFloat iTermTimestampGradientWidth = 20;
         NSRectFill(NSMakeRect(center - 1, NSMinY(backgroundFrame), 1, _rowHeight));
         NSRectFill(NSMakeRect(center + 1, NSMinY(backgroundFrame), 1, _rowHeight));
     } else {
+        [NSGraphicsContext saveGraphicsState];
+        CGContextRef ctx = [[NSGraphicsContext currentContext] CGContext];
+        CGContextSetShouldSmoothFonts(ctx, NO);
         [s drawAtPoint:frame.origin withAttributes:attributes];
+        [NSGraphicsContext restoreGraphicsState];
     }
 }
 
