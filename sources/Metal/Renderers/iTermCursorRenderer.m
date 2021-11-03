@@ -5,6 +5,7 @@
 #import "iTermMetalBufferPool.h"
 #import "iTermSharedImageStore.h"
 #import "NSColor+iTerm.h"
+#import "NSImage+iTerm.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -126,7 +127,7 @@ NS_ASSUME_NONNULL_BEGIN
     [path stroke];
     [image unlockFocus];
 
-    return [iTermImageWrapper withImage:image];
+    return [iTermImageWrapper withImage:[image it_verticallyFlippedImage]];
 }
 
 - (void)setSelecting:(BOOL)selecting {

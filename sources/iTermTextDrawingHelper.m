@@ -3351,13 +3351,14 @@ withExtendedAttributes:(iTermExternalAttribute *)ea2 {
 }
 
 - (BOOL)shouldDrawCursor {
-    BOOL shouldShowCursor = [self shouldShowCursor];
-    int column = _cursorCoord.x;
-    int row = _cursorCoord.y;
-    int width = _gridSize.width;
-    int height = _gridSize.height;
+    const BOOL shouldShowCursor = [self shouldShowCursor];
+    const int column = _cursorCoord.x;
+    const int row = _cursorCoord.y;
+    const int width = _gridSize.width;
+    const int height = _gridSize.height;
+    const BOOL copyMode = self.copyMode;
 
-    int cursorRow = row + _numberOfScrollbackLines;
+    const int cursorRow = row + _numberOfScrollbackLines;
     if (!NSLocationInRange(cursorRow, [self rangeOfVisibleRows])) {
         // Don't draw a cursor that isn't in one of the rows that's being drawn (e.g., if it's on a
         // row that's just below the last visible row, don't draw it, or else the top of the cursor
@@ -3373,11 +3374,12 @@ withExtendedAttributes:(iTermExternalAttribute *)ea2 {
                    column <= width &&
                    column >= 0 &&
                    row >= 0 &&
-                   row < height);
+                   row < height &&
+                   !copyMode);
     DLog(@"shouldDrawCursor: hasMarkedText=%d, cursorVisible=%d, showCursor=%d, column=%d, row=%d"
-         @"width=%d, height=%d. Result=%@",
+         @"width=%d, height=%d, copyMode=%@. Result=%@",
          (int)[self hasMarkedText], (int)_cursorVisible, (int)shouldShowCursor, column, row,
-         width, height, @(result));
+         width, height, @(copyMode), @(result));
     return result;
 }
 
