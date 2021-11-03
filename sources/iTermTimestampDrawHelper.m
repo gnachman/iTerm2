@@ -149,7 +149,7 @@ const CGFloat iTermTimestampGradientWidth = 20;
                row:(int)index
              frame:(NSRect)frame
         colorSpace:(NSColorSpace *)colorSpace {
-    NSColor *color = _fgColor; //colorSpace ? [_fgColor colorUsingColorSpace:colorSpace] : _fgColor;
+    NSColor *color = _fgColor;
     NSDictionary *attributes = [self attributesForTextColor:color
                                                      shadow:[self shadowForTextColor:color]
                                                      retina:_isRetina];

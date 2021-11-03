@@ -967,6 +967,7 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
 }
 
 - (void)createTimestampDrawingHelperWithFont:(NSFont *)font {
+    [self updateCachedMetrics];
     [_timestampDrawHelper autorelease];
     _timestampDrawHelper =
         [[iTermTimestampDrawHelper alloc] initWithBackgroundColor:[self defaultBackgroundColor]
@@ -976,6 +977,11 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
                                                         rowHeight:_cellSize.height
                                                            retina:self.isRetina
                                                              font:font];
+    for (int y = _scrollViewDocumentVisibleRect.origin.y / _cellSize.height;
+         y < NSMaxY(_scrollViewDocumentVisibleRect) / _cellSize.height && y < _numberOfLines;
+         y++) {
+        [_timestampDrawHelper setDate:[_delegate drawingHelperTimestampForLine:y] forLine:y];
+    }
 }
 
 - (void)drawTimestampsWithVirtualOffset:(CGFloat)virtualOffset {
@@ -991,11 +997,6 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
     }
     // Note: for the foreground color, we don't use the dimmed version because it looks bad on
     // nonretina displays. That's why I go to the colormap instead of using -defaultForegroundColor.
-    for (int y = _scrollViewDocumentVisibleRect.origin.y / _cellSize.height;
-         y < NSMaxY(_scrollViewDocumentVisibleRect) / _cellSize.height && y < _numberOfLines;
-         y++) {
-        [_timestampDrawHelper setDate:[_delegate drawingHelperTimestampForLine:y] forLine:y];
-    }
     [_timestampDrawHelper drawInContext:[NSGraphicsContext currentContext]
                                   frame:_frame
                           virtualOffset:virtualOffset

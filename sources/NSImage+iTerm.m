@@ -478,13 +478,17 @@
         // to be as well to avoid any changes. After we're all done we can convert back to the
         // colorspace of the source image. This is how we can vertically flip without causing
         // accidental color changes.
-        NSImage *source = [self it_imageInColorSpace:[NSImage colorSpaceForProgramaticallyGeneratedImages]];
+//        NSImage *source = [self it_imageInColorSpace:[NSImage colorSpaceForProgramaticallyGeneratedImages]];
+        // Try not converting the colorspace since this was yielding a black image
+        NSImage *source = self;
         [source drawAtPoint:corner
                    fromRect:rect
                   operation:NSCompositingOperationCopy
                    fraction:1.0];
     }];
-    return [image it_imageInColorSpace:[self colorSpaceOfBestRepresentation]];
+//TODO: Test not changing the colorspace.
+//    return [imacge it_imageInColorSpace:[self colorSpaceOfBestRepresentation]];
+    return image;
 }
 
 - (NSImage *)it_imageOfSize:(NSSize)newSize {

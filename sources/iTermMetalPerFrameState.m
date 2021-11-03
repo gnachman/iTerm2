@@ -421,7 +421,9 @@ typedef struct {
     } else {
         vmargin = [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins];
     }
-    NSRect frame = NSMakeRect(0, vmargin, textView.visibleRect.size.width, textView.visibleRect.size.height);
+    NSRect frame = textView.drawingHelper.indicatorFrame; //NSMakeRect(0, vmargin, textView.visibleRect.size.width - , textView.visibleRect.size.height);
+    frame.origin.y -= textView.virtualOffset;
+    
     [textView.indicatorsHelper enumerateTopRightIndicatorsInFrame:frame andDraw:NO block:^(NSString *identifier, NSImage *image, NSRect rect) {
         rect.origin.y = frame.size.height - NSMaxY(rect);
         iTermIndicatorDescriptor *indicator = [[iTermIndicatorDescriptor alloc] init];

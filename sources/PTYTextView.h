@@ -430,6 +430,7 @@ typedef void (^PTYTextViewDrawingHookBlock)(iTermTextDrawingHelper *);
 
 // This is the height of the bottom margin.
 @property (nonatomic, readonly) double excess;
+@property (nonatomic, readonly) CGFloat virtualOffset;
 
 // Returns the size of a cell for a given font. hspace and vspace are multipliers and the width
 // and height.
