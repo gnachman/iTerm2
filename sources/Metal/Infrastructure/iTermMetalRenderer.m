@@ -465,6 +465,10 @@ maximumExtendedDynamicRangeColorComponentValue:(CGFloat)maximumExtendedDynamicRa
         // Note that 16-bit floats don't have NSBitmapFormatSixteenBitLittleEndian set. That's only for ints.
         return MTLPixelFormatRGBA16Float;
     }
+    const NSInteger bitsPerSample = rep.bitsPerPixel / rep.samplesPerPixel;
+    if (bitsPerSample == 16) {
+        return MTLPixelFormatRGBA16Unorm;
+    }
     return MTLPixelFormatRGBA8Unorm;
 }
 
@@ -472,13 +476,14 @@ maximumExtendedDynamicRangeColorComponentValue:(CGFloat)maximumExtendedDynamicRa
                                     context:(iTermMetalBufferPoolContext *)context
                                        pool:(iTermTexturePool *)pool
                                  colorSpace:(NSColorSpace *)colorSpace {
-    iTermImageWrapper *image = [wrapper imageWrapperWithColorSpace:colorSpace];
+    iTermImageWrapper *image = wrapper;
     if (!image.image) {
         return nil;
     }
 
     CGImageRef cgImage = [[image.image.representations firstObject] CGImageForProposedRect:nil context:nil hints:nil];
     NSBitmapImageRep *bitmap = [[NSBitmapImageRep alloc] initWithCGImage:cgImage];
+    bitmap = [bitmap bitmapImageRepByConvertingToColorSpace:colorSpace renderingIntent:NSColorRenderingIntentDefault];
     if ([self pixelFormatForBitmapRep:bitmap] == MTLPixelFormatInvalid) {
         return [self legacyTextureFromImage:image
                                     context:context
