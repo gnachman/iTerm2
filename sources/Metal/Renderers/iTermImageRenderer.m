@@ -142,7 +142,7 @@ static NSString *const iTermImageRendererTextureMetadataKeyImageMissing = @"iTer
             [_foundImageUniqueIdentifiers addObject:run.imageInfo.uniqueIdentifier];
         }
     }
-    id<MTLTexture> texture = [_cellRenderer textureFromImage:[iTermImageWrapper withImage:image]
+    id<MTLTexture> texture = [_cellRenderer textureFromImage:[iTermImageWrapper withImage:[image it_verticallyFlippedImage]]
                                                      context:self.poolContext
                                                   colorSpace:self.configuration.colorSpace];
     if (missing) {

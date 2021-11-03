@@ -172,7 +172,7 @@ NS_ASSUME_NONNULL_BEGIN
 
     [image unlockFocus];
 
-    return [iTermImageWrapper withImage:image];
+    return [iTermImageWrapper withImage:[image it_verticallyFlippedImage]];
 }
 
 - (void)setColor:(NSColor *)color {
@@ -616,7 +616,7 @@ static id<MTLBuffer> iTermNewVertexBufferWithBlockCursorQuad(iTermCursorRenderer
     ITAssertWithMessage(tState.offsetBuffer != nil, @"Nil offset buffer");
 
     if (!_texture || self.colorSpace != tState.configuration.colorSpace) {
-        _texture = [self.cellRenderer textureFromImage:[iTermImageWrapper withImage:[[NSBundle bundleForClass:self.class] imageForResource:@"key"]]
+        _texture = [self.cellRenderer textureFromImage:[iTermImageWrapper withImage:[[[NSBundle bundleForClass:self.class] imageForResource:@"key"] it_verticallyFlippedImage]]
                                                context:nil
                                             colorSpace:tState.configuration.colorSpace];
         self.colorSpace = tState.configuration.colorSpace;
