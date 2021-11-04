@@ -71,14 +71,6 @@
     [_pooledTextures addObject:pooledTexture];
 }
 
-- (void)setBackgroundColor:(NSColor *)backgroundColor {
-    _backgroundColor = [backgroundColor colorUsingColorSpace:self.configuration.colorSpace];
-}
-
-- (void)setTextColor:(NSColor *)textColor {
-    _textColor = textColor; // [textColor colorUsingColorSpace:self.configuration.colorSpace];
-}
-
 // frame arg to block is in points, not pixels.
 - (void)enumerateRows:(void (^)(int row, iTermTimestampKey *key, NSRect frame))block {
     assert(_timestamps);
@@ -206,7 +198,7 @@
     iTermTimestampsRendererTransientState *tState = transientState;
     _cache.countLimit = tState.cellConfiguration.gridSize.height * 4;
     const CGFloat scale = tState.configuration.scale;
-    if (tState.configuration.colorSpace != _colorSpace) {
+    if (![NSObject object:tState.configuration.colorSpace isEqualToObject:_colorSpace]) {
         [_cache removeAllObjects];
         _colorSpace = tState.configuration.colorSpace;
     }

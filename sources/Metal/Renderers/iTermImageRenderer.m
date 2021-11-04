@@ -89,6 +89,7 @@ static NSString *const iTermImageRendererTextureMetadataKeyImageMissing = @"iTer
 }
 
 - (void)addRun:(iTermMetalImageRun *)imageRun {
+    // Remove any textures for this run but different color spaces.
     [self removeTexturesExceptForColorSpace:self.configuration.colorSpace];
     if (!_runs) {
         _runs = [NSMutableArray array];
@@ -104,7 +105,6 @@ static NSString *const iTermImageRendererTextureMetadataKeyImageMissing = @"iTer
     }
 
     if (_textures[key] == nil) {
-        // Remove any textures for this run but different color spaces.
         _textures[key] = [self newTextureForImageRun:imageRun];
     } else if (imageRun.imageInfo) {
         [_foundImageUniqueIdentifiers addObject:imageRun.imageInfo.uniqueIdentifier];

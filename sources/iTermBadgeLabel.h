@@ -30,7 +30,7 @@
 @property(nonatomic, assign) NSSize viewSize;
 
 // Lazily computed image.
-- (NSImage *)imageForColorSpace:(NSColorSpace *)colorSpace;
+@property(nonatomic, readonly) NSImage *image;
 
 // If true then the inputs to |image| have changed. Set by other setters, and
 // can also be explicitly set to invalidate the image.

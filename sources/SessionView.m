@@ -65,7 +65,9 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
 - (nonnull instancetype)initWithFrame:(CGRect)frameRect device:(nullable id<MTLDevice>)device {
     self = [super initWithFrame:frameRect device:device];
     if (self) {
-        self.colorPixelFormat = MTLPixelFormatBGRA8Unorm;
+        if (![iTermAdvancedSettingsModel hdrCursor]) {
+            self.colorPixelFormat = MTLPixelFormatBGRA8Unorm;
+        }
         [self it_schedule];
     }
     return self;

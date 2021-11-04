@@ -6,6 +6,7 @@
 #import "iTermTextureArray.h"
 #import "iTermMetalCellRenderer.h"
 #import "NSImage+iTerm.h"
+#import "NSObject+iTerm.h"
 
 @interface iTermMarkRendererTransientState()
 @property (nonatomic, strong) iTermTextureArray *marksArrayTexture;
@@ -109,7 +110,7 @@
                                                                  cellSize:tState.cellConfiguration.cellSize
                                                    cellSizeWithoutSpacing:tState.cellConfiguration.cellSizeWithoutSpacing
                                                                     scale:scale];
-    if (!CGSizeEqualToSize(markRect.size, _markSize) || tState.configuration.colorSpace != _colorSpace) {
+    if (!CGSizeEqualToSize(markRect.size, _markSize) || ![NSObject object:tState.configuration.colorSpace isEqualToObject:_colorSpace]) {
         // Mark size or colorspace has changed
         _markSize = markRect.size;
         _colorSpace = tState.configuration.colorSpace;
@@ -187,13 +188,13 @@
 
 #pragma mark - Private
 
-- (NSImage *)newImageWithMarkOfColor:(NSColor *)color size:(CGSize)unscaledSize {
-    NSSize size = unscaledSize;
+- (NSImage *)newImageWithMarkOfColor:(NSColor *)color size:(CGSize)pixelSize {
+    NSSize pointSize = pixelSize;
     const CGFloat scale = 2;
-    size.width /= scale;
-    size.height /= scale;
+    pointSize.width /= scale;
+    pointSize.height /= scale;
 
-    return [iTermTextDrawingHelper newImageWithMarkOfColor:color size:size colorSpace:nil];
+    return [iTermTextDrawingHelper newImageWithMarkOfColor:color size:pointSize colorSpace:nil];
 }
 
 @end

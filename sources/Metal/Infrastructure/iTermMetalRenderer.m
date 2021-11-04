@@ -34,13 +34,13 @@ const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 3;
 + (instancetype)atop {
     iTermMetalBlending *blending = [[iTermMetalBlending alloc] init];
 
-    blending.rgbBlendOperation = MTLBlendOperationAdd;  // ok
-    blending.sourceRGBBlendFactor = MTLBlendFactorOne;  // ok
-    blending.destinationRGBBlendFactor = MTLBlendFactorOneMinusSourceAlpha;  // ok
+    blending.rgbBlendOperation = MTLBlendOperationAdd;
+    blending.sourceRGBBlendFactor = MTLBlendFactorOne;
+    blending.destinationRGBBlendFactor = MTLBlendFactorOneMinusSourceAlpha;
 
-    blending.alphaBlendOperation = MTLBlendOperationAdd;  // WRONG - I USE MAX
-    blending.sourceAlphaBlendFactor = MTLBlendFactorOne;  // ok
-    blending.destinationAlphaBlendFactor = MTLBlendFactorOneMinusSourceAlpha;  // WRONG - I use one
+    blending.alphaBlendOperation = MTLBlendOperationAdd;
+    blending.sourceAlphaBlendFactor = MTLBlendFactorOne;
+    blending.destinationAlphaBlendFactor = MTLBlendFactorOneMinusSourceAlpha;
     return blending;
 }
 
@@ -451,13 +451,13 @@ maximumExtendedDynamicRangeColorComponentValue:(CGFloat)maximumExtendedDynamicRa
     }
 }
 
-// Assumes premultiplied alpha and little endian. Floating point must be 16 bit, non-fp must be 8 bit.
+// Assumes premultiplied alpha and little endian. Floating point must be 16 bit.
 - (MTLPixelFormat)pixelFormatForBitmapRep:(NSBitmapImageRep *)rep {
     const MTLPixelFormat unsupportedFormatsMask = (NSBitmapFormatAlphaNonpremultiplied |
                                                    NSBitmapFormatSixteenBitBigEndian |
                                                    NSBitmapFormatThirtyTwoBitBigEndian |
                                                    NSBitmapFormatThirtyTwoBitLittleEndian |
-                                                   NSBitmapFormatSixteenBitLittleEndian);
+                                                   NSBitmapFormatSixteenBitLittleEndian);  // Doesn't apply to 16-bit ints, not quite sure what this is for.
     if (rep.bitmapFormat & unsupportedFormatsMask) {
         return MTLPixelFormatInvalid;
     }

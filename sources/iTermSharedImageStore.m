@@ -210,7 +210,7 @@
         }
     }
 
-    // Finally, convert the first representation into the desired color space.
+    // Finally, convert the best representation into the desired color space.
     CGImageRef cgImage = [[self.image bestRepresentationForScale:2] CGImageForProposedRect:nil context:nil hints:nil];
     NSBitmapImageRep *bitmap = [[NSBitmapImageRep alloc] initWithCGImage:cgImage];
     bitmap = [bitmap bitmapImageRepByConvertingToColorSpace:colorSpace renderingIntent:NSColorRenderingIntentDefault];

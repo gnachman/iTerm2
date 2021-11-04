@@ -1,5 +1,6 @@
 #import "iTermCursorGuideRenderer.h"
 #import "iTermSharedImageStore.h"
+#import "NSObject+iTerm.h"
 
 @interface iTermCursorGuideRendererTransientState()
 @property (nonatomic, strong) id<MTLTexture> texture;
@@ -92,7 +93,7 @@
 
 - (void)initializeTransientState:(iTermCursorGuideRendererTransientState *)tState {
     if (!CGSizeEqualToSize(tState.cellConfiguration.cellSize, _lastCellSize) ||
-        tState.configuration.colorSpace != _colorSpace) {
+        ![NSObject object:tState.configuration.colorSpace isEqualToObject:_colorSpace]) {
         _texture = [self newCursorGuideTextureWithTransientState:tState];
         _lastCellSize = tState.cellConfiguration.cellSize;
         _colorSpace = tState.configuration.colorSpace;

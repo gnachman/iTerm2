@@ -66,20 +66,11 @@
     [self setDirty:YES];
 }
 
-- (NSImage *)imageForColorSpace:(NSColorSpace *)colorSpace {
-    if (!_fillColor) {
-        return _images[colorSpace.localizedName];
-    }
-    if (!_stringValue) {
-        return _images[colorSpace.localizedName];
-    }
-    if (NSEqualSizes(_viewSize, NSZeroSize)) {
-        return _images[colorSpace.localizedName];
-    }
+- (NSImage *)image {
     if (!_image) {
-        _images[colorSpace.localizedName] = [self freshlyComputedImageForColorSpace:colorSpace];
+        _image = [self freshlyComputedImage];
     }
-    return _images[colorSpace.localizedName];
+    return _image;
 }
 
 #pragma mark - Private
@@ -93,17 +84,16 @@
 
 // Compute the best point size and return a new image of the badge. Returns nil if the badge
 // is empty or zero pixels.r
-- (NSImage *)freshlyComputedImageForColorSpace:(NSColorSpace *)colorSpace {
-    DLog(@"Recompute badge self=%p, label=“%@”, color=%@, view size=%@, colorSpace=%@. Called from:\n%@",
+- (NSImage *)freshlyComputedImage {
+    DLog(@"Recompute badge self=%p, label=“%@”, color=%@, view size=%@. Called from:\n%@",
          self,
          _stringValue,
          _fillColor,
          NSStringFromSize(_viewSize),
-         colorSpace,
          [NSThread callStackSymbols]);
 
     if ([_stringValue length]) {
-        return [self imageWithPointSize:self.idealPointSize colorSpace:colorSpace];
+        return [self imageWithPointSize:self.idealPointSize];
     }
 
     return nil;
@@ -111,7 +101,7 @@
 
 // Returns an image from the current text with the given |attributes|, or nil if the image would
 // have 0 pixels.
-- (NSImage *)imageWithPointSize:(CGFloat)pointSize colorSpace:(NSColorSpace *)colorSpace {
+- (NSImage *)imageWithPointSize:(CGFloat)pointSize {
     NSDictionary *attributes = [self attributesWithPointSize:pointSize];
     NSMutableDictionary *temp = [attributes mutableCopy];
     temp[NSStrokeColorAttributeName] = [_backgroundColor colorWithAlphaComponent:1];

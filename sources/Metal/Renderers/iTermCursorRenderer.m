@@ -180,7 +180,7 @@ NS_ASSUME_NONNULL_BEGIN
     if (_renderer.cachedTexture == nil ||
         ![color isEqual:_renderer.cachedColor] ||
         !CGSizeEqualToSize(_renderer.cachedTextureSize, self.cellConfiguration.cellSize) ||
-        _renderer.colorSpace != self.configuration.colorSpace) {
+        ![NSObject object:_renderer.colorSpace isEqualToObject:self.configuration.colorSpace]) {
         _renderer.cachedTexture = [_renderer.cellRenderer textureFromImage:[self newImage]
                                                                    context:self.poolContext
                                                                 colorSpace:self.configuration.colorSpace];
@@ -615,7 +615,7 @@ static id<MTLBuffer> iTermNewVertexBufferWithBlockCursorQuad(iTermCursorRenderer
     ITAssertWithMessage(tState.vertexBuffer != nil, @"Nil vertex buffer");
     ITAssertWithMessage(tState.offsetBuffer != nil, @"Nil offset buffer");
 
-    if (!_texture || self.colorSpace != tState.configuration.colorSpace) {
+    if (!_texture || ![NSObject object:self.colorSpace isEqualToObject:tState.configuration.colorSpace]) {
         _texture = [self.cellRenderer textureFromImage:[iTermImageWrapper withImage:[[[NSBundle bundleForClass:self.class] imageForResource:@"key"] it_verticallyFlippedImage]]
                                                context:nil
                                             colorSpace:tState.configuration.colorSpace];

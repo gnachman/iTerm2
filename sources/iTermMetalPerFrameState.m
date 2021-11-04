@@ -421,7 +421,7 @@ typedef struct {
     } else {
         vmargin = [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins];
     }
-    NSRect frame = textView.drawingHelper.indicatorFrame; //NSMakeRect(0, vmargin, textView.visibleRect.size.width - , textView.visibleRect.size.height);
+    NSRect frame = textView.drawingHelper.indicatorFrame;
     frame.origin.y -= textView.virtualOffset;
     
     [textView.indicatorsHelper enumerateTopRightIndicatorsInFrame:frame andDraw:NO block:^(NSString *identifier, NSImage *image, NSRect rect) {
@@ -637,10 +637,9 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
 
 - (vector_float4)defaultBackgroundColor {
     NSColor *color = [_configuration->_colorMap colorForKey:kColorMapBackground];
-    return simd_make_float4((float)color.redComponent,
-                            (float)color.greenComponent,
-                            (float)color.blueComponent,
-                            1);
+    vector_float4 result = VectorForColor(color, _configuration->_colorSpace);
+    result.w = 1;
+    return result;
 }
 
 - (vector_float4)processedDefaultBackgroundColor {
@@ -1375,10 +1374,10 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
 
     vector_float4 result;
     if (needsProcessing) {
-        result = VectorForColor([_configuration->_colorMap processedTextColorForTextColor:ColorForVector(rawColor)
-                                                      overBackgroundColor:ColorForVector(unprocessedBackgroundColor)
-                                                   disableMinimumContrast:isBoxDrawingCharacter],
-                                _configuration->_colorSpace);
+      result = VectorForColor([_configuration->_colorMap processedTextColorForTextColor:ColorForVector(rawColor)
+                                                                    overBackgroundColor:ColorForVector(unprocessedBackgroundColor)
+                                                                 disableMinimumContrast:isBoxDrawingCharacter],
+                              _configuration->_colorSpace);
     } else {
         result = rawColor;
     }
