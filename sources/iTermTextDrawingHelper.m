@@ -887,6 +887,7 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
     }];
 
     if (colorSpace) {
+#warning: This is probably wrong
         return [[img it_imageInColorSpace:colorSpace] retain];
     }
     return [img retain];

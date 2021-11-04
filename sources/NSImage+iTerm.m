@@ -9,6 +9,7 @@
 #import "NSAppearance+iTerm.h"
 
 #import "DebugLogging.h"
+#import "NSArray+iTerm.h"
 #import "NSColor+iTerm.h"
 #import "NSImage+iTerm.h"
 #import "NSObject+iTerm.h"
@@ -460,34 +461,37 @@
     return [image colorSpaceOfBestRepresentation];
 }
 
+- (CGFloat)scaleFactor {
+    NSImageRep *rep = [self.representations maxWithBlock:^NSComparisonResult(NSImageRep *obj1, NSImageRep *obj2) {
+        return [@(obj1.pixelsWide) compare:@(obj2.pixelsWide)];
+    }];
+    return (CGFloat)rep.pixelsWide / self.size.width;
+}
+
 - (NSImage *)it_imageScaledByX:(CGFloat)xScale y:(CGFloat)yScale {
     const NSSize size = self.size;
     if (size.width == 0 || size.height == 0) {
         return self;
     }
-    NSImage *image = [NSImage imageOfSize:self.size drawBlock:^{
+    CGFloat adjustment = 1;
+    if ([self scaleFactor] == 1) {
+        // We have no choice but to produce a 2x image from here. If the source is 1x, make the
+        // returned image half the size in points so it'll be the same as the input image.
+        adjustment = 0.5;
+    }
+    const NSSize destSize = NSMakeSize(self.size.width * fabs(xScale) * adjustment,
+                                       self.size.height * fabs(yScale) * adjustment);
+    NSImage *image = [NSImage imageOfSize:destSize
+                                drawBlock:^{
         NSAffineTransform *transform = [NSAffineTransform transform];
+
+        [transform translateXBy:destSize.width / 2 yBy:destSize.height / 2];
         [transform scaleXBy:xScale yBy:yScale];
-        NSAffineTransform *center = [NSAffineTransform transform];
-        [center translateXBy:size.width / 2. yBy:size.height / 2.];
-        [transform appendTransform:center];
+        [transform translateXBy:-destSize.width / 2 yBy:-destSize.height / 2];
         [transform concat];
-        NSRect rect = NSMakeRect(0, 0, size.width, size.height);
-        NSPoint corner = NSMakePoint(-size.width / 2., -size.height / 2.);
-        // Since the destination is in the programatically-generated colorspace, we need the source
-        // to be as well to avoid any changes. After we're all done we can convert back to the
-        // colorspace of the source image. This is how we can vertically flip without causing
-        // accidental color changes.
-//        NSImage *source = [self it_imageInColorSpace:[NSImage colorSpaceForProgramaticallyGeneratedImages]];
-        // Try not converting the colorspace since this was yielding a black image
-        NSImage *source = self;
-        [source drawAtPoint:corner
-                   fromRect:rect
-                  operation:NSCompositingOperationCopy
-                   fraction:1.0];
+
+        [self drawInRect:NSMakeRect(0, 0, destSize.width, destSize.height)];
     }];
-//TODO: Test not changing the colorspace.
-//    return [imacge it_imageInColorSpace:[self colorSpaceOfBestRepresentation]];
     return image;
 }
 
