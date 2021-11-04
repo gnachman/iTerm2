@@ -10,6 +10,7 @@
 #import "DebugLogging.h"
 #import "NSArray+iTerm.h"
 #import "NSImage+iTerm.h"
+#import "NSObject+iTerm.h"
 #import <QuartzCore/QuartzCore.h>
 
 @interface NSFileManager(CachedImage)
@@ -112,6 +113,7 @@
 @implementation iTermImageWrapper {
     id _cgimage;
     NSMutableDictionary<NSNumber *, NSImage *> *_tilingImages;
+    NSMutableDictionary<NSString *, NSBitmapImageRep *> *_reps;
 }
 
 + (instancetype)withContentsOfFile:(NSString *)path {
@@ -129,6 +131,7 @@
 - (instancetype)initWithImage:(NSImage *)unsafeImage {
     self = [super init];
     if (self) {
+        _reps = [NSMutableDictionary dictionary];
         _tilingImages = [NSMutableDictionary dictionary];
         NSImage *image = unsafeImage;
         if (unsafeImage.size.height > 0 && unsafeImage.size.width > 0) {
@@ -188,6 +191,31 @@
     }
     _tilingImages[@(scale)] = cookedImage;
     return cookedImage;
+}
+
+- (NSBitmapImageRep *)bitmapInColorSpace:(NSColorSpace *)colorSpace {
+    // First, try to use a cached bitmap.
+    {
+        NSBitmapImageRep *bitmap = _reps[colorSpace.localizedName];
+        if (bitmap) {
+            return bitmap;
+        }
+    }
+
+    // Then see if the image already has a bitmap representation in this color space.
+    for (NSImageRep *rep in self.image.representations) {
+        NSBitmapImageRep *bitmap = [NSBitmapImageRep castFrom:rep];
+        if (bitmap && [bitmap.colorSpace isEqual:colorSpace]) {
+            return bitmap;
+        }
+    }
+
+    // Finally, convert the first representation into the desired color space.
+    CGImageRef cgImage = [[self.image bestRepresentationForScale:2] CGImageForProposedRect:nil context:nil hints:nil];
+    NSBitmapImageRep *bitmap = [[NSBitmapImageRep alloc] initWithCGImage:cgImage];
+    bitmap = [bitmap bitmapImageRepByConvertingToColorSpace:colorSpace renderingIntent:NSColorRenderingIntentDefault];
+    _reps[colorSpace.localizedName] = bitmap;
+    return bitmap;
 }
 
 @end

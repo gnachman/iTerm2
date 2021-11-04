@@ -481,9 +481,7 @@ maximumExtendedDynamicRangeColorComponentValue:(CGFloat)maximumExtendedDynamicRa
         return nil;
     }
 
-    CGImageRef cgImage = [[image.image.representations firstObject] CGImageForProposedRect:nil context:nil hints:nil];
-    NSBitmapImageRep *bitmap = [[NSBitmapImageRep alloc] initWithCGImage:cgImage];
-    bitmap = [bitmap bitmapImageRepByConvertingToColorSpace:colorSpace renderingIntent:NSColorRenderingIntentDefault];
+    NSBitmapImageRep *bitmap = [image bitmapInColorSpace:colorSpace];
     if ([self pixelFormatForBitmapRep:bitmap] == MTLPixelFormatInvalid) {
         return [self legacyTextureFromImage:image
                                     context:context
@@ -533,7 +531,8 @@ maximumExtendedDynamicRangeColorComponentValue:(CGFloat)maximumExtendedDynamicRa
     return texture;
 }
 
-// This is a terrible hack
+// Draw the image into a fresh NSImage and recurse into the caller, this time with an image we
+// assume will have a good pixel format.
 - (nullable id<MTLTexture>)legacyTextureFromImage:(iTermImageWrapper *)image
                                           context:(iTermMetalBufferPoolContext *)context
                                              pool:(iTermTexturePool *)pool
@@ -544,58 +543,6 @@ maximumExtendedDynamicRangeColorComponentValue:(CGFloat)maximumExtendedDynamicRa
     [dest unlockFocus];
     iTermImageWrapper *temp = [[iTermImageWrapper alloc] initWithImage:dest];
     return [self textureFromImage:temp context:context pool:pool colorSpace:colorSpace];
-}
-
-#warning TODO: Reduce code duplcation with textureFromImage:context:
-- (nullable id<MTLTexture>)_legacyTextureFromImage:(iTermImageWrapper *)image context:(iTermMetalBufferPoolContext *)context pool:(iTermTexturePool *)pool {
-    if (!image.image) {
-        return nil;
-    }
-
-    // Calculate a safe size for the image while preserving its aspect ratio.
-    NSUInteger width, height;
-    [self convertWidth:image.scaledSize.width
-                height:image.scaledSize.height
-               toWidth:&width
-                height:&height
-          notExceeding:4096];
-    if (width == 0 || height == 0) {
-        return nil;
-    }
-
-    NSData *data = [image.image rawDataForMetalOfSize:NSMakeSize(width, height)];
-    if (!data) {
-        return nil;
-    }
-    const uint8_t *rawData = data.bytes;
-
-    MTLTextureDescriptor *textureDescriptor =
-    [MTLTextureDescriptor texture2DDescriptorWithPixelFormat:MTLPixelFormatRGBA8Unorm
-                                                       width:width
-                                                      height:height
-                                                   mipmapped:NO];
-    id<MTLTexture> texture = nil;
-    if (pool) {
-        texture = [pool requestTextureOfSize:simd_make_uint2(width, height)];
-    }
-    if (!texture) {
-        texture = [_device newTextureWithDescriptor:textureDescriptor];
-    }
-
-    MTLRegion region = MTLRegionMake2D(0, 0, width, height);
-    NSUInteger bytesPerPixel = 4;
-    NSUInteger bytesPerRow = bytesPerPixel * width;
-    [texture replaceRegion:region mipmapLevel:0 withBytes:rawData bytesPerRow:bytesPerRow];
-
-    [iTermTexture setBytesPerRow:bytesPerRow
-                     rawDataSize:height * width * 4
-                 samplesPerPixel:4
-                      forTexture:texture];
-
-    if (texture) {
-        [context didAddTextureOfSize:texture.width * texture.height];
-    }
-    return texture;
 }
 
 - (id<MTLBuffer>)vertexBufferForViewportSize:(vector_uint2)viewportSize {
