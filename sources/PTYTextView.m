@@ -1226,7 +1226,6 @@
     }
     DLog(@"drawing document visible rect %@ for %@", NSStringFromRect(self.textDrawingHelperVisibleRect), self);
     DLog(@"numberOfLines=%@", @(self.dataSource.numberOfLines));
-    const BOOL userScroll = [(PTYScroller*)([[self enclosingScrollView] verticalScroller]) userScroll];
 
     const CGFloat virtualOffset = [self virtualOffset];
 

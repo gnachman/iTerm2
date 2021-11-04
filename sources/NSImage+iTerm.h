@@ -73,7 +73,6 @@
 // Returns an image of size `size`, with the receiver zoomed and cropped so it at least fills the
 // resulting image.
 - (NSImage *)it_imageFillingSize:(NSSize)size;
-- (NSImage *)it_imageInColorSpace:(NSColorSpace *)colorSpace;
 
 @end
 

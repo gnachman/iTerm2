@@ -118,7 +118,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
 }
 
 - (void)setColorspace:(CGColorSpaceRef)colorspace {
-    NSLog(@"set colorspace of %@ to %@", self, colorspace);
+    DLog(@"set colorspace of %@ to %@", self, colorspace);
     [super setColorspace:colorspace];
 }
 @end

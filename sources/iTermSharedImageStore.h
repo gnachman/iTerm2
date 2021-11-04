@@ -25,7 +25,6 @@ NS_ASSUME_NONNULL_BEGIN
 - (instancetype)initWithImage:(NSImage *)image NS_DESIGNATED_INITIALIZER;
 - (instancetype)init NS_UNAVAILABLE;
 - (NSImage *)tilingBackgroundImageForBackingScaleFactor:(CGFloat)scale;
-- (iTermImageWrapper *)imageWrapperWithColorSpace:(NSColorSpace *)colorSpace;
 
 @end
 
