@@ -424,6 +424,12 @@ static NSDictionary *gIntrospection;
 }
 
 - (void)advancedSettingsDidChange:(NSNotification *)notification {
+    if (dispatch_queue_get_label(NULL) != dispatch_queue_get_label(dispatch_get_main_queue())) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [self advancedSettingsDidChange:notification];
+        });
+        return;
+    }
     id firstResponder = self.view.window.firstResponder;
     if ([firstResponder isKindOfClass:[NSTextView class]]) {
         if ([[firstResponder delegate] isKindOfClass:[iTermTableViewTextField class]]) {
