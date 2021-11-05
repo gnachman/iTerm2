@@ -29,6 +29,9 @@ typedef enum {
     // Reading the mode at the start. Either a number followed by a semicolon, or the letter P.
     kXtermParserParsingModeState,
 
+    // Accept only ST (ESC+backslash or BEL). Happens when there is a mode but no parameter.
+    kTermParserParsingStateST,
+
     // Reading the 7 digits after mode letter P.
     kXtermParserParsingPState,
 
@@ -73,8 +76,8 @@ typedef enum {
                 iTermParserAdvance(context);
                 return kXtermParserParsingStringState;
             } else {
-                // Malformed
-                return kXtermParserFailingState;
+                // Could be an ST exactly after the mode (e.g., for OSC 110 through 119).
+                return kTermParserParsingStateST;
             }
         } else {
             // Out of data. Backtrack to the start of the int because when this is resumed later
@@ -107,6 +110,25 @@ typedef enum {
             return kXtermParserOutOfDataState;
         }
     }
+}
+
++ (iTermXtermParserState)parseSTFromContext:(iTermParserContext *)context {
+    const unsigned char c = iTermParserConsume(context);
+    if (c == VT100CC_BEL) {
+        return kXtermParserFinishedState;
+    }
+    if (c != VT100CC_ESC) {
+        return kXtermParserFailingState;
+    }
+    unsigned char c2 = 0;
+    if (!iTermParserTryConsume(context, &c2)) {
+        iTermParserBacktrackBy(context, 1);
+        return kXtermParserOutOfDataState;
+    }
+    if (c2 != '\\') {
+        return kXtermParserFailingState;
+    }
+    return kXtermParserFinishedState;
 }
 
 // Read seven characters and append them to 'data'.
@@ -354,6 +376,10 @@ typedef enum {
         switch (state) {
             case kXtermParserParsingModeState:
                 state = [self parseModeFromContext:context mode:&mode];
+                break;
+
+            case kTermParserParsingStateST:
+                state = [self parseSTFromContext:context];
                 break;
 
             case kXtermParserParsingPState:
