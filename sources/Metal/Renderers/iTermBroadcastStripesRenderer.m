@@ -5,7 +5,7 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface iTermBroadcastStripesRendererTransientState : iTermMetalRendererTransientState
+@interface iTermBroadcastStripesRendererTransientState : iTermMetalCellRendererTransientState
 @property (nonatomic, strong) id<MTLTexture> texture;
 @property (nonatomic) CGSize size;
 @end
@@ -23,7 +23,7 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 @implementation iTermBroadcastStripesRenderer {
-    iTermMetalRenderer *_metalRenderer;
+    iTermMetalCellRenderer *_metalRenderer;
     id<MTLTexture> _texture;
     CGSize _size;
     iTermMetalBufferPool *_verticesPool;
@@ -35,11 +35,12 @@ NS_ASSUME_NONNULL_BEGIN
 - (nullable instancetype)initWithDevice:(id<MTLDevice>)device {
     self = [super init];
     if (self) {
-        _metalRenderer = [[iTermMetalRenderer alloc] initWithDevice:device
-                                                 vertexFunctionName:@"iTermBroadcastStripesVertexShader"
-                                               fragmentFunctionName:@"iTermBroadcastStripesFragmentShader"
-                                                           blending:[iTermMetalBlending atop]
-                                                transientStateClass:[iTermBroadcastStripesRendererTransientState class]];
+        _metalRenderer = [[iTermMetalCellRenderer alloc] initWithDevice:device
+                                                     vertexFunctionName:@"iTermBroadcastStripesVertexShader"
+                                                   fragmentFunctionName:@"iTermBroadcastStripesFragmentShader"
+                                                               blending:[iTermMetalBlending atop]
+                                                         piuElementSize:1
+                                                    transientStateClass:[iTermBroadcastStripesRendererTransientState class]];
         NSImage *image = [[NSBundle bundleForClass:self.class] imageForResource:@"BackgroundStripes"];
         _imageWrapper = [iTermImageWrapper withImage:image];
         _size = image.size;
@@ -67,7 +68,7 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 - (void)drawWithFrameData:(iTermMetalFrameData *)frameData
-           transientState:(__kindof iTermMetalRendererTransientState *)transientState {
+           transientState:(__kindof iTermMetalCellRendererTransientState *)transientState {
     iTermBroadcastStripesRendererTransientState *tState = transientState;
     [_metalRenderer drawWithTransientState:tState
                              renderEncoder:frameData.renderEncoder
@@ -78,8 +79,8 @@ NS_ASSUME_NONNULL_BEGIN
                                   textures:@{ @(iTermTextureIndexPrimary): tState.texture }];
 }
 
-- (nullable __kindof iTermMetalRendererTransientState *)createTransientStateForConfiguration:(iTermRenderConfiguration *)configuration
-                                                                               commandBuffer:(id<MTLCommandBuffer>)commandBuffer {
+- (nullable __kindof iTermMetalRendererTransientState *)createTransientStateForCellConfiguration:(iTermCellRenderConfiguration *)configuration
+                                                                                   commandBuffer:(id<MTLCommandBuffer>)commandBuffer {
     if (!_enabled) {
         return nil;
     }
@@ -97,18 +98,24 @@ NS_ASSUME_NONNULL_BEGIN
     size.height *= tState.configuration.scale;
     tState.size = size;
 
-    const vector_uint2 viewportSize = tState.configuration.viewportSize;
-    const float maxX = viewportSize.x / size.width;
-    const float maxY = viewportSize.y / size.height;
+    const vector_uint2 viewportSize = tState.configuration.viewportSizeExcludingLegacyScrollbars;
+    const NSEdgeInsets margins = tState.margins;
+    const float destRight = margins.left + tState.cellConfiguration.gridSize.width * tState.cellConfiguration.cellSize.width;;
+    const float destHeight = viewportSize.y;
+    const float destLeft = margins.left;
+
+    const float textureWidth = (destRight - destLeft) / size.width;
+    const float textureHeight = destHeight / size.height;
+
     const iTermVertex vertices[] = {
         // Pixel Positions, Texture Coordinates
-        { { viewportSize.x, 0 },              { maxX, 0 } },
-        { { 0,              0 },              { 0,    0 } },
-        { { 0, viewportSize.y },              { 0,    maxY } },
+        { { destRight, 0 },              { textureWidth, 0 } },
+        { { destLeft,  0 },              { 0,            0 } },
+        { { destLeft,  destHeight },     { 0,            textureHeight } },
 
-        { { viewportSize.x, 0 },              { maxX, 0 } },
-        { { 0,              viewportSize.y }, { 0,    maxY } },
-        { { viewportSize.x, viewportSize.y }, { maxX, maxY } },
+        { { destRight, 0 },              { textureWidth, 0 } },
+        { { destLeft,  destHeight },     { 0,            textureHeight } },
+        { { destRight, destHeight },     { textureWidth, textureHeight } },
     };
     tState.vertexBuffer = [_verticesPool requestBufferFromContext:tState.poolContext
                                                         withBytes:vertices

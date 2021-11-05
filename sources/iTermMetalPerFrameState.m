@@ -422,10 +422,9 @@ typedef struct {
         vmargin = [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins];
     }
     NSRect frame = textView.drawingHelper.indicatorFrame;
-    frame.origin.y -= textView.virtualOffset;
+    frame.origin.y -= MAX(0, textView.virtualOffset);
     
     [textView.indicatorsHelper enumerateTopRightIndicatorsInFrame:frame andDraw:NO block:^(NSString *identifier, NSImage *image, NSRect rect) {
-        rect.origin.y = frame.size.height - NSMaxY(rect);
         iTermIndicatorDescriptor *indicator = [[iTermIndicatorDescriptor alloc] init];
         indicator.identifier = identifier;
         indicator.image = image;
@@ -434,7 +433,6 @@ typedef struct {
         [self->_indicators addObject:indicator];
     }];
     [textView.indicatorsHelper enumerateCenterIndicatorsInFrame:frame block:^(NSString *identifier, NSImage *image, NSRect rect, CGFloat alpha) {
-        rect.origin.y = frame.size.height - NSMaxY(rect);
         iTermIndicatorDescriptor *indicator = [[iTermIndicatorDescriptor alloc] init];
         indicator.identifier = identifier;
         indicator.image = image;

@@ -45,6 +45,7 @@
 
 #define likely(x) __builtin_expect(!!(x), 1)
 #define unlikely(x) __builtin_expect(!!(x), 0)
+#define MEDIAN(min_, mid_, max_) MAX(MIN(mid_, max_), min_)
 
 static const int kBadgeMargin = 4;
 
@@ -737,7 +738,7 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
     [color set];
 
     [NSGraphicsContext saveGraphicsState];
-    [[NSGraphicsContext currentContext] setPatternPhase:NSMakePoint(0, 0)];
+    [[NSGraphicsContext currentContext] setPatternPhase:NSMakePoint([iTermPreferences intForKey:kPreferenceKeySideMargins], 0)];
     iTermRectFillUsingOperation(rect, NSCompositingOperationSourceOver, virtualOffset);
     [NSGraphicsContext restoreGraphicsState];
 }
@@ -748,8 +749,17 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
     return NSEdgeInsetsMake(self.badgeTopMargin, 0, 0, self.badgeRightMargin);
 }
 
+- (VT100GridCoordRange)safeCoordRange:(VT100GridCoordRange)range {
+    const int width = _gridSize.width;
+    const int height = _numberOfLines;
+    return VT100GridCoordRangeMake(MEDIAN(0, range.start.x, width),
+                                   MEDIAN(0, range.start.y, height),
+                                   MEDIAN(0, range.end.x, width),
+                                   MEDIAN(0, range.end.y, height));
+}
+
 - (void)drawAccessoriesInRect:(NSRect)bgRect virtualOffset:(CGFloat)virtualOffset {
-    VT100GridCoordRange coordRange = [self coordRangeForRect:bgRect];
+    const VT100GridCoordRange coordRange = [self safeCoordRange:[self coordRangeForRect:bgRect]];
     [self drawBadgeInRect:bgRect
                   margins:self.badgeMargins
             virtualOffset:virtualOffset];
@@ -763,7 +773,7 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
     int cursorLine = _cursorCoord.y + _numberOfScrollbackLines;
     const BOOL drawCursorGuide = (self.highlightCursorLine &&
                                   cursorLine >= coordRange.start.y &&
-                                  cursorLine < coordRange.end.y);
+                                  cursorLine <= coordRange.end.y);
     if (drawCursorGuide) {
         CGFloat y = cursorLine * _cellSize.height;
         [self drawCursorGuideForColumns:NSMakeRange(coordRange.start.x,

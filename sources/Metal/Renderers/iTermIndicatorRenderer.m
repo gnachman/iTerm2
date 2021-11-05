@@ -98,6 +98,7 @@ NS_ASSUME_NONNULL_BEGIN
         transientState:(__kindof iTermMetalRendererTransientState *)tState {
     id<MTLBuffer> vertexBuffer = [self vertexBufferForFrame:descriptor.frame
                                                       scale:tState.configuration.scale
+                                               viewportSize:tState.configuration.viewportSize
                                                     context:tState.poolContext];
 
     float alpha = descriptor.alpha;
@@ -116,12 +117,14 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (id<MTLBuffer>)vertexBufferForFrame:(NSRect)frame
                                 scale:(CGFloat)scale
+                         viewportSize:(vector_uint2)viewportSize
                               context:(iTermMetalBufferPoolContext *)context {
     CGRect textureFrame = CGRectMake(0, 0, 1, 1);
     CGRect quad = CGRectMake(CGRectGetMinX(frame) * scale,
                              CGRectGetMinY(frame) * scale,
                              CGRectGetWidth(frame) * scale,
                              CGRectGetHeight(frame) * scale);
+    quad.origin.y = viewportSize.y - quad.origin.y - quad.size.height;
     const iTermVertex vertices[] = {
         // Pixel Positions             Texture Coordinates
         { { CGRectGetMaxX(quad), CGRectGetMinY(quad) }, { CGRectGetMaxX(textureFrame), CGRectGetMinY(textureFrame) } },

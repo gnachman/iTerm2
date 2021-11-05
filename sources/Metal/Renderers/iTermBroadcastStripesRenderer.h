@@ -1,9 +1,9 @@
 #import <Foundation/Foundation.h>
-#import "iTermMetalRenderer.h"
+#import "iTermMetalCellRenderer.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface iTermBroadcastStripesRenderer : NSObject<iTermMetalRenderer>
+@interface iTermBroadcastStripesRenderer : NSObject<iTermMetalCellRenderer>
 
 @property (nonatomic) BOOL enabled;
 

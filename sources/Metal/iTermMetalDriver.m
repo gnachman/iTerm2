@@ -1888,6 +1888,7 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth {
     return @[ _marginRenderer,
               _textRenderer,
               _backgroundColorRenderer,
+              _broadcastStripesRenderer,
               _markRenderer,
               _cursorGuideRenderer,
               _highlightRowRenderer,
@@ -1907,7 +1908,6 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth {
 - (NSArray<id<iTermMetalRenderer>> *)nonCellRenderers {
     NSArray *shared = @[ _backgroundImageRenderer,
                          _badgeRenderer,
-                         _broadcastStripesRenderer,
                          _copyBackgroundRenderer,
                          _indicatorRenderer,
                          _flashRenderer ];
