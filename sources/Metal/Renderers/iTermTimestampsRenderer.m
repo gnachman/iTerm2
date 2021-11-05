@@ -18,10 +18,14 @@
 @property (nonatomic) CGFloat width;
 @property (nonatomic) vector_float4 textColor;
 @property (nonatomic) vector_float4 backgroundColor;
-@property (nonatomic) NSTimeInterval date;
+@property (nonatomic) NSString *string;
 @end
 
 @implementation iTermTimestampKey
+
+- (NSUInteger)hash {
+    return [_string hash];
+}
 
 - (BOOL)isEqual:(id)other {
     if (![other isKindOfClass:[iTermTimestampKey class]]) {
@@ -35,7 +39,7 @@
             _backgroundColor.x == otherKey->_backgroundColor.x &&
             _backgroundColor.y == otherKey->_backgroundColor.y &&
             _backgroundColor.z == otherKey->_backgroundColor.z &&
-            _date == otherKey->_date);
+            (_string == otherKey->_string || [_string isEqual:otherKey->_string]));
 }
 
 @end
@@ -109,7 +113,7 @@
         key.width = visibleWidth;
         key.textColor = textColor;
         key.backgroundColor = backgroundColor;
-        key.date = [self->_drawHelper rowIsRepeat:idx] ? -1 : round(date.timeIntervalSinceReferenceDate);
+        key.string = [self->_drawHelper rowIsRepeat:idx] ? @"(repeat)" : [self->_drawHelper stringForRow:idx];
         block(idx,
               key,
               NSMakeRect((self.configuration.viewportSize.x - rightGutterWidth) / scale - visibleWidth,
@@ -133,8 +137,7 @@
         [_drawHelper drawRow:row
                    inContext:[NSGraphicsContext currentContext]
                        frame:NSMakeRect(0, 0, size.width, size.height)
-               virtualOffset:0
-                  colorSpace:nil];
+               virtualOffset:0];
     }] it_verticallyFlippedImage];
 
     return image;

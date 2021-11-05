@@ -325,8 +325,7 @@ BOOL CheckFindMatchAtIndex(NSData *findMatches, int index);
                                 scale:(CGFloat)scale;
 
 + (NSImage *)newImageWithMarkOfColor:(NSColor *)color
-                                size:(CGSize)size
-                          colorSpace:(NSColorSpace *)colorSpace;
+                                size:(CGSize)size;
 
 // Updates self.blinkingFound.
 - (void)drawTextViewContentInRect:(NSRect)rect

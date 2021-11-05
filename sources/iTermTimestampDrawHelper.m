@@ -71,8 +71,7 @@ const CGFloat iTermTimestampGradientWidth = 20;
 
 - (void)drawInContext:(NSGraphicsContext *)context
                 frame:(NSRect)frame
-        virtualOffset:(CGFloat)virtualOffset
-           colorSpace:(NSColorSpace *)colorSpace {
+        virtualOffset:(CGFloat)virtualOffset {
     [_rows enumerateObjectsUsingBlock:^(iTermTimestampRow * _Nonnull row, NSUInteger idx, BOOL * _Nonnull stop) {
         NSRect stringFrame = [self frameForStringGivenWidth:self->_maximumWidth
                                                      height:[self fontHeight]
@@ -80,17 +79,16 @@ const CGFloat iTermTimestampGradientWidth = 20;
                                                        maxX:NSMaxX(frame)
                                               virtualOffset:virtualOffset];
         [self drawBackgroundInFrame:[self backgroundFrameForTextFrame:stringFrame]
-                            bgColor:colorSpace ? [self->_bgColor colorUsingColorSpace:colorSpace] : self->_bgColor
+                            bgColor:self->_bgColor
                             context:context];
-        [self drawString:row.string row:idx frame:stringFrame colorSpace:colorSpace];
+        [self drawString:row.string row:idx frame:stringFrame];
     }];
 }
 
 - (void)drawRow:(int)index
       inContext:(NSGraphicsContext *)context
           frame:(NSRect)frameWithGradient
-  virtualOffset:(CGFloat)virtualOffset
-     colorSpace:(NSColorSpace *)colorSpace {
+  virtualOffset:(CGFloat)virtualOffset {
     NSRect frame = frameWithGradient;
     frame.origin.x += iTermTimestampGradientWidth;
     frame.size.width -= iTermTimestampGradientWidth;
@@ -103,9 +101,9 @@ const CGFloat iTermTimestampGradientWidth = 20;
                                           virtualOffset:virtualOffset];
     stringFrame.origin.y += frame.origin.y;
     [self drawBackgroundInFrame:[self backgroundFrameForTextFrame:stringFrame]
-                        bgColor:colorSpace ? [_bgColor colorUsingColorSpace:colorSpace] : _bgColor
+                        bgColor:_bgColor
                         context:context];
-    [self drawString:row.string row:index frame:stringFrame colorSpace:colorSpace];
+    [self drawString:row.string row:index frame:stringFrame];
 }
 
 - (BOOL)rowIsRepeat:(int)index {
@@ -116,6 +114,10 @@ const CGFloat iTermTimestampGradientWidth = 20;
         return NO;
     }
     return [_rows[index - 1].string isEqual:_rows[index].string];
+}
+
+- (NSString *)stringForRow:(int)index {
+    return _rows[index].string;
 }
 
 - (CGFloat)suggestedWidth {
@@ -147,8 +149,7 @@ const CGFloat iTermTimestampGradientWidth = 20;
 
 - (void)drawString:(NSString *)s
                row:(int)index
-             frame:(NSRect)frame
-        colorSpace:(NSColorSpace *)colorSpace {
+             frame:(NSRect)frame {
     NSColor *color = _fgColor;
     NSDictionary *attributes = [self attributesForTextColor:color
                                                      shadow:[self shadowForTextColor:color]

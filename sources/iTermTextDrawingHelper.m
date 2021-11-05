@@ -193,7 +193,6 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
 
     BOOL _preferSpeedToFullLigatureSupport;
     NSMutableDictionary<NSNumber *, NSImage *> *_cachedMarks;
-    NSColorSpace *_cachedMarksColorSpace;
 }
 
 - (instancetype)init {
@@ -242,7 +241,6 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
     [_replacementLineRefCache release];
     [_timestampDrawHelper release];
     [_cachedMarks release];
-    [_cachedMarksColorSpace release];
 
     [super dealloc];
 }
@@ -848,13 +846,11 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
 }
 
 + (NSImage *)newImageWithMarkOfColor:(NSColor *)color
-                                size:(CGSize)size
-                          colorSpace:(NSColorSpace *)colorSpace {
+                                size:(CGSize)size {
     if (size.width < 1 || size.height < 1) {
         return [self newImageWithMarkOfColor:color
                                         size:CGSizeMake(MAX(1, size.width),
-                                                        MAX(1, size.height))
-                                  colorSpace:colorSpace];
+                                                        MAX(1, size.height))];
     }
     NSImage *img = [NSImage imageOfSize:size drawBlock:^{
         CGRect rect = CGRectMake(0, 0, MAX(1, size.width), size.height);
@@ -925,18 +921,10 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
                                                    cellSizeWithoutSpacing:_cellSizeWithoutSpacing
                                                                     scale:1];
         const iTermMarkIndicatorType type = [self markIndicatorTypeForMark:mark];
-        NSColorSpace *colorSpace = self.delegate.window.colorSpace ?: [NSColorSpace sRGBColorSpace];
-        if (![_cachedMarksColorSpace isEqual:colorSpace]) {
-            DLog(@"Color space changed from %@ to %@", _cachedMarksColorSpace, colorSpace);
-            [_cachedMarksColorSpace autorelease];
-            _cachedMarksColorSpace = [colorSpace retain];
-            [_cachedMarks removeAllObjects];
-        }
         NSImage *image = _cachedMarks[@(type)];
         if (!image || !NSEqualSizes(image.size, rect.size)) {
             image = [[iTermTextDrawingHelper newImageWithMarkOfColor:[self colorForMark:mark]
-                                                                size:rect.size
-                                                          colorSpace:colorSpace] autorelease];
+                                                                size:rect.size] autorelease];
             _cachedMarks[@(type)] = image;
         }
         [image it_drawInRect:rect virtualOffset:virtualOffset];
@@ -996,8 +984,7 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
     // nonretina displays. That's why I go to the colormap instead of using -defaultForegroundColor.
     [_timestampDrawHelper drawInContext:[NSGraphicsContext currentContext]
                                   frame:_frame
-                          virtualOffset:virtualOffset
-                             colorSpace:self.delegate.window.colorSpace];
+                          virtualOffset:virtualOffset];
     if (!self.isRetina) {
         CGContextSetShouldSmoothFonts(ctx, YES);
     }
@@ -1048,15 +1035,6 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
                 respectFlipped:YES
                          hints:nil
                  virtualOffset:virtualOffset];
-
-//    NSImage *wtf = [[NSImage alloc] initWithSize:NSMakeSize(100, 100)];
-//    [wtf lockFocus];
-//    [[NSColor colorWithSRGBRed:0.25 green:0.25 blue:0.25 alpha:1] set];
-//    NSRectFill(NSMakeRect(0, 0, 100, 100));
-//    [[NSColor greenColor] set];
-//    NSFrameRect(NSMakeRect(0, 0, 100, 100));
-//    [wtf unlockFocus];
-//    [wtf it_drawInRect:NSMakeRect(0, 0, 100, 100) virtualOffset:virtualOffset];
 
     NSSize imageSize = _badgeImage.size;
     imageSize.width += kBadgeMargin + margins.right;

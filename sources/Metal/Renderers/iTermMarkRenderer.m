@@ -194,7 +194,7 @@
     pointSize.width /= scale;
     pointSize.height /= scale;
 
-    return [iTermTextDrawingHelper newImageWithMarkOfColor:color size:pointSize colorSpace:nil];
+    return [iTermTextDrawingHelper newImageWithMarkOfColor:color size:pointSize];
 }
 
 @end

@@ -35,15 +35,14 @@ extern const CGFloat iTermTimestampGradientWidth;
 // Frame is a possibly very wide container that this is right-aligned in.
 - (void)drawInContext:(NSGraphicsContext *)context
                 frame:(NSRect)frame
-        virtualOffset:(CGFloat)virtualOffset
-           colorSpace:(NSColorSpace *)colorSpace;
+        virtualOffset:(CGFloat)virtualOffset;
 
 // Frame includes gradient
 - (void)drawRow:(int)index
       inContext:(NSGraphicsContext *)context
           frame:(NSRect)frame
-  virtualOffset:(CGFloat)virtualOffset
-     colorSpace:(NSColorSpace *)colorSpace;
+  virtualOffset:(CGFloat)virtualOffset;
 - (BOOL)rowIsRepeat:(int)index;
+- (NSString *)stringForRow:(int)index;
 
 @end
