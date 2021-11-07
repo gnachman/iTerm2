@@ -795,7 +795,7 @@ static CGFloat PSMWeightedAverage(CGFloat l, CGFloat u, CGFloat w) {
 
 - (NSColor *)cellBackgroundColorForTabColor:(NSColor *)tabColor
                                    selected:(BOOL)selected {
-    CGFloat alpha = selected ? 1 : 0.5;
+    CGFloat alpha = selected ? 1 : [[self.tabBar.delegate tabView:self.tabBar valueOfOption:PSMTabBarControlOptionMinimalNonSelectedColoredTabAlpha] doubleValue];
     const BOOL keyMainAndActive = self.windowIsMainAndAppIsActive;
     if (!keyMainAndActive) {
         alpha *= 0.5;

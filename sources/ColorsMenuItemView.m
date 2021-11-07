@@ -27,9 +27,11 @@
 #import "ColorsMenuItemView.h"
 
 #import "NSAppearance+iTerm.h"
+#import "NSArray+iTerm.h"
 #import "NSColor+iTerm.h"
 #import "NSImage+iTerm.h"
 #import "NSObject+iTerm.h"
+#import "iTermAdvancedSettingsModel.h"
 
 @implementation iTermTabColorMenuItem
 
@@ -66,17 +68,6 @@ const int kMenuLabelOffsetX_BigSur = 24;
 const int kMenuLabelOffsetY = 32;
 
 const CGFloat iTermColorsMenuItemViewDisabledAlpha = 0.3;
-
-typedef NS_ENUM(NSUInteger, kMenuItem) {
-    kMenuItemDefault = 0,
-    kMenuItemRed = 1,
-    kMenuItemOrange = 2,
-    kMenuItemYellow = 3,
-    kMenuItemGreen = 4,
-    kMenuItemBlue = 5,
-    kMenuItemPurple = 6,
-    kMenuItemGray = 7
-};
 
 - (void)viewDidMoveToWindow {
     _selectedIndex = NSNotFound;
@@ -210,7 +201,7 @@ typedef NS_ENUM(NSUInteger, kMenuItem) {
 
     [NSBezierPath setDefaultLineWidth:kDefaultColorStokeWidth];
     // draw the colors
-    for (NSInteger i = 1; i < kNumberOfColors; i++) {
+    for (NSInteger i = 1; i < self.colors.count; i++) {
         const BOOL highlighted = enabled && i == _selectedIndex;
         const NSRect outlineArea = [self rectForIndex:i enlarged:highlighted];
         // draw the outline
@@ -275,26 +266,31 @@ typedef NS_ENUM(NSUInteger, kMenuItem) {
     [NSBezierPath setDefaultLineWidth:savedWidth];
 }
 
-- (NSColor *)colorAtIndex:(kMenuItem)index enabled:(BOOL)enabled {
+- (NSColor *)colorAtIndex:(NSUInteger)index enabled:(BOOL)enabled {
     const CGFloat alpha = enabled ? 1 : iTermColorsMenuItemViewDisabledAlpha;
-    switch (index) {
-        case kMenuItemDefault:
-            return nil;
-        case kMenuItemRed:
-            return [NSColor colorWithSRGBRed:251.0/255.0 green:107.0/255.0 blue:98.0/255.0 alpha:alpha];
-        case kMenuItemOrange:
-            return [NSColor colorWithSRGBRed:246.0/255.0 green:172.0/255.0 blue:71.0/255.0 alpha:alpha];
-        case kMenuItemYellow:
-            return [NSColor colorWithSRGBRed:240.0/255.0 green:220.0/255.0 blue:79.0/255.0 alpha:alpha];
-        case kMenuItemGreen:
-            return [NSColor colorWithSRGBRed:181.0/255.0 green:215.0/255.0 blue:73.0/255.0 alpha:alpha];
-        case kMenuItemBlue:
-            return [NSColor colorWithSRGBRed:95.0/255.0 green:163.0/255.0 blue:248.0/255.0 alpha:alpha];
-        case kMenuItemPurple:
-            return [NSColor colorWithSRGBRed:193.0/255.0 green:142.0/255.0 blue:217.0/255.0 alpha:alpha];
-        case kMenuItemGray:
-            return [NSColor colorWithSRGBRed:120.0/255.0 green:120.0/255.0 blue:120.0/255.0 alpha:alpha];
+    if (index <= 0 || index > self.colors.count) {
+        return nil;
     }
+    return [self.colors[index - 1] colorWithAlphaComponent:alpha];
+}
+
+- (NSArray<NSColor *> *)colors {
+    NSArray<NSColor *> *result = [[[iTermAdvancedSettingsModel tabColorMenuOptions] componentsSeparatedByString:@" "] mapWithBlock:^id(NSString *anObject) {
+        return [NSColor colorFromHexString:anObject];
+    }];
+    if (result.count == 0) {
+        // Fallback for if the string is totally broken.
+        return @[
+            [NSColor colorWithSRGBRed:251.0/255.0 green:107.0/255.0 blue:98.0/255.0 alpha:1],
+            [NSColor colorWithSRGBRed:246.0/255.0 green:172.0/255.0 blue:71.0/255.0 alpha:1],
+            [NSColor colorWithSRGBRed:240.0/255.0 green:220.0/255.0 blue:79.0/255.0 alpha:1],
+            [NSColor colorWithSRGBRed:181.0/255.0 green:215.0/255.0 blue:73.0/255.0 alpha:1],
+            [NSColor colorWithSRGBRed:95.0/255.0 green:163.0/255.0 blue:248.0/255.0 alpha:1],
+            [NSColor colorWithSRGBRed:193.0/255.0 green:142.0/255.0 blue:217.0/255.0 alpha:1],
+            [NSColor colorWithSRGBRed:120.0/255.0 green:120.0/255.0 blue:120.0/255.0 alpha:1],
+        ];
+    }
+    return result;
 }
 
 - (void)mouseUp:(NSEvent*) event {
