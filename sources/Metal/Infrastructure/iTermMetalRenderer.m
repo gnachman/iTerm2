@@ -271,6 +271,19 @@ maximumExtendedDynamicRangeColorComponentValue:(CGFloat)maximumExtendedDynamicRa
     }
 }
 
+- (int)bitsPerSampleInPixelFormat:(MTLPixelFormat)format {
+    switch (format) {
+        case MTLPixelFormatBGRA8Unorm:
+            return 8;
+        case MTLPixelFormatRGBA16Float:
+            return 16;
+        default:
+            ITAssertWithMessage(NO, @"Unexpected pixel format %@", @(format));
+            break;
+    }
+    return 8;
+}
+
 - (void)writeFragmentTexture:(id<MTLTexture>)texture index:(NSUInteger)index toFolder:(NSURL *)folder {
     NSUInteger length = [iTermTexture rawDataSizeForTexture:texture];
     int samplesPerPixel = [iTermTexture samplesPerPixelForTexture:texture];
@@ -281,7 +294,7 @@ maximumExtendedDynamicRangeColorComponentValue:(CGFloat)maximumExtendedDynamicRa
           mipmapLevel:0];
     NSImage *image = [NSImage imageWithRawData:storage
                                           size:NSMakeSize(texture.width, texture.height)
-                                 bitsPerSample:8
+                                 bitsPerSample:[self bitsPerSampleInPixelFormat:texture.pixelFormat]
                                samplesPerPixel:samplesPerPixel
                                       hasAlpha:samplesPerPixel == 4
                                 colorSpaceName:NSDeviceRGBColorSpace];
