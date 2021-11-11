@@ -1863,24 +1863,38 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void)closeTab:(PTYTab *)aTab soft:(BOOL)soft {
     if (!soft &&
         [self tabIsAttachedTmuxTabWithSessions:aTab]) {
-        iTermWarningSelection selection =
-            [iTermWarning showWarningWithTitle:@"Kill tmux window, terminating its jobs, or hide it? "
-                                               @"Hidden windows may be restored from the tmux dashboard."
-                                       actions:@[ @"Hide", @"Cancel", @"Kill" ]
-                                 actionMapping:@[ @(kiTermWarningSelection0), @(kiTermWarningSelection2), @(kiTermWarningSelection1)]
-                                     accessory:nil
-                                    identifier:@"ClosingTmuxTabKillsTmuxWindows"
-                                   silenceable:kiTermWarningTypePermanentlySilenceable
-                                       heading:nil
-                                        window:self.window];
-        if (selection == kiTermWarningSelection1) {
-            [[aTab tmuxController] killWindow:[aTab tmuxWindow]];
-        } else if (selection == kiTermWarningSelection0) {
-            [[aTab tmuxController] hideWindow:[aTab tmuxWindow]];
+        if ([self numberOfTabsWithTmuxController:aTab.tmuxController] == 1) {
+            [self killOrHideTmuxWindow];
+        } else {
+            [self killOrHideTmuxTab:aTab];
         }
         return;
     }
     [self removeTab:aTab];
+}
+
+- (NSUInteger)numberOfTabsWithTmuxController:(TmuxController *)tmuxController {
+    return [[self.tabs filteredArrayUsingBlock:^BOOL(PTYTab *tab) {
+        return tab.tmuxController == tmuxController;
+    }] count];
+}
+
+- (void)killOrHideTmuxTab:(PTYTab *)aTab {
+    iTermWarningSelection selection =
+        [iTermWarning showWarningWithTitle:@"Kill tmux window, terminating its jobs, or hide it? "
+                                           @"Hidden windows may be restored from the tmux dashboard."
+                                   actions:@[ @"Hide", @"Cancel", @"Kill" ]
+                             actionMapping:@[ @(kiTermWarningSelection0), @(kiTermWarningSelection2), @(kiTermWarningSelection1)]
+                                 accessory:nil
+                                identifier:@"ClosingTmuxTabKillsTmuxWindows"
+                               silenceable:kiTermWarningTypePermanentlySilenceable
+                                   heading:nil
+                                    window:self.window];
+    if (selection == kiTermWarningSelection1) {
+        [[aTab tmuxController] killWindow:[aTab tmuxWindow]];
+    } else if (selection == kiTermWarningSelection0) {
+        [[aTab tmuxController] hideWindow:[aTab tmuxWindow]];
+    }
 }
 
 - (void)closeTab:(PTYTab *)aTab {
@@ -3485,7 +3499,7 @@ ITERM_WEAKLY_REFERENCEABLE
     if (title) {
         iTermWarningSelection selection =
             [iTermWarning showWarningWithTitle:title
-                                       actions:@[ @"Hide", @"Detach tmux Session", @"Kill" ]
+                                       actions:@[ @"Hide", @"Detach tmux Session", @"Kill", @"Cancel" ]
                                     identifier:@"ClosingTmuxWindowKillsTmuxWindows"
                                    silenceable:kiTermWarningTypePermanentlySilenceable
                                         window:self.window];
@@ -3499,12 +3513,21 @@ ITERM_WEAKLY_REFERENCEABLE
 
         for (PTYTab *aTab in [self tabs]) {
             if ([aTab isTmuxTab]) {
-                if (selection == kiTermWarningSelection1) {
-                    doTmuxDetach = YES;
-                } else if (selection == kiTermWarningSelection2) {
-                    [[aTab tmuxController] killWindow:[aTab tmuxWindow]];
-                } else {
-                    [[aTab tmuxController] hideWindow:[aTab tmuxWindow]];
+                switch (selection) {
+                    case kiTermWarningSelection0:
+                        [[aTab tmuxController] hideWindow:[aTab tmuxWindow]];
+                        break;
+                    case kiTermWarningSelection1:
+                        doTmuxDetach = YES;
+                        break;
+                    case kiTermWarningSelection2:
+                        [[aTab tmuxController] killWindow:[aTab tmuxWindow]];
+                        break;
+                    case kiTermWarningSelection3:
+                        // Cancel
+                        return;
+                    case kItermWarningSelectionError:
+                        return;
                 }
             }
         }
