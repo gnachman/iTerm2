@@ -16,7 +16,7 @@ NS_ASSUME_NONNULL_BEGIN
 @interface iTermCommandHistoryEntryMO (CoreDataProperties)
 
 @property (nullable, nonatomic, retain) NSString *command;
-@property (nullable, nonatomic, retain) NSNumber *matchLocation;
+@property (nullable, nonatomic, retain) NSNumber *matchLocation;  // not used
 @property (nullable, nonatomic, retain) NSNumber *numberOfUses;
 @property (nullable, nonatomic, retain) NSNumber *timeOfLastUse;
 @property (nullable, nonatomic, retain) iTermHostRecordMO *remoteHost;

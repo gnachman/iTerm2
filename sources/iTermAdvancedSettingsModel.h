@@ -73,6 +73,8 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)cmdClickWhenInactiveInvokesSemanticHistory;
 + (double)coloredSelectedTabOutlineStrength;
 + (double)coloredUnselectedTabTextProminence;
++ (double)commandHistoryUsePower;
++ (double)commandHistoryAgePower;
 + (double)compactEdgeDragSize;
 + (double)compactMinimalTabBarHeight;
 + (NSString *)composerClearSequence;
