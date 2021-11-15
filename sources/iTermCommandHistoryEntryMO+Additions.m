@@ -92,15 +92,13 @@ static NSString *const kCommandUses = @"use times";  // The name is a historical
     return [(other.timeOfLastUse ?: @0) compare:(self.timeOfLastUse ?: @0)];
 }
 
-// Used to sort from highest to lowest score. So Ascending means self's score is higher
-// than other's.
 - (NSComparisonResult)compare:(iTermCommandHistoryEntryMO *)other {
-    return [@(self.score) compare:@(other.score)];
+    return [@(other.score) compare:@(self.score)];
 }
 
 - (double)score {
     const double uses = MAX(0, self.numberOfUses.doubleValue);
-    const double age = MAX(0, self.timeOfLastUse.doubleValue - [NSDate timeIntervalSinceReferenceDate]);
+    const double age = MAX(0, [NSDate timeIntervalSinceReferenceDate] - self.timeOfLastUse.doubleValue);
     const double usePower = [iTermAdvancedSettingsModel commandHistoryUsePower];
     const double agePower = [iTermAdvancedSettingsModel commandHistoryAgePower];
     return pow(log10(10 + uses), usePower) / pow(log10(10 + age), agePower);
