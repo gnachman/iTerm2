@@ -5008,9 +5008,12 @@ ITERM_WEAKLY_REFERENCEABLE
             shouldEnableShadow = NO;
         }
     }
-    if (![iTermPreferences boolForKey:kPreferenceKeyPerPaneBackgroundImage]) {
+    if ([iTermPreferences boolForKey:kPreferenceKeyPerPaneBackgroundImage]) {
+        self.contentView.backgroundImage.hidden = YES;
+    } else {
         [CATransaction begin];
         [CATransaction setDisableActions:YES];
+        self.contentView.backgroundImage.hidden = NO;
         const CGFloat transparency = 1 - self.currentSession.textview.transparencyAlpha;
         self.contentView.backgroundImage.transparency = transparency;
         self.contentView.backgroundImage.blend = self.currentSession.desiredBlend;

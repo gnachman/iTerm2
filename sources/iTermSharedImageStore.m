@@ -152,6 +152,16 @@
     return self;
 }
 
+- (NSString *)description {
+    return [NSString stringWithFormat:@"<%@: %p reps=%@ image=%@ tilingImages=%@ cgimage=%@>",
+            NSStringFromClass([self class]),
+            self,
+            _reps,
+            _image,
+            _tilingImages,
+            _cgimage];
+}
+
 - (CGImageRef)cgimage {
     if (_cgimage) {
         return (__bridge CGImageRef)_cgimage;

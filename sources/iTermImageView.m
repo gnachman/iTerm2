@@ -78,6 +78,15 @@
     return self;
 }
 
+- (NSString *)description {
+    return [NSString stringWithFormat:@"<%@: %p image=%@ hidden=%@ alpha=%@>",
+            NSStringFromClass([self class]),
+            self,
+            self.image,
+            @(self.isHidden),
+            @(self.alphaValue)];
+}
+
 - (iTermImageWrapper *)image {
     return _lowerView.image;
 }
