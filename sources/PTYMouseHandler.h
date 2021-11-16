@@ -131,6 +131,7 @@ dragSemanticHistoryWithEvent:(NSEvent *)event
 // Flag to make sure a Semantic History drag check is only one once per drag
 @property (nonatomic, readonly) BOOL semanticHistoryDragged;
 @property (nonatomic, readonly) BOOL terminalWantsMouseReports;
+@property (nonatomic, readonly) BOOL wantsMouseMovementEvents;
 
 - (instancetype)initWithSelectionScrollHelper:(iTermSelectionScrollHelper *)selectionScrollHelper
               threeFingerTapGestureRecognizer:(ThreeFingerTapGestureRecognizer *)threeFingerTapGestureRecognizer

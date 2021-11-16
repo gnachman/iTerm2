@@ -432,6 +432,8 @@ typedef void (^PTYTextViewDrawingHookBlock)(iTermTextDrawingHelper *);
 @property (nonatomic, readonly) double excess;
 @property (nonatomic, readonly) CGFloat virtualOffset;
 
+@property (nonatomic, readonly) BOOL wantsMouseMovementEvents;
+
 // Returns the size of a cell for a given font. hspace and vspace are multipliers and the width
 // and height.
 + (NSSize)charSizeForFont:(NSFont*)aFont

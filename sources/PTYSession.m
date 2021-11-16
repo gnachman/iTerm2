@@ -8105,6 +8105,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     if ([self shouldReportOrFilterKeystrokesForAPI]) {
         [self sendKeystrokeNotificationForEvent:event advanced:YES];
     }
+    // Change of cmd modifier means we need mouseMoved events to highlight/unhighlight URLs.
+    [self.view updateTrackingAreas];
 }
 
 - (BOOL)shouldAcceptKeyDownEvent:(NSEvent *)event {
@@ -13749,6 +13751,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     if ([iTermProfilePreferences boolForKey:KEY_USE_SEPARATE_COLORS_FOR_LIGHT_AND_DARK_MODE inProfile:self.profile]) {
         [self loadColorsFromProfile:self.profile];
     }
+}
+
+- (BOOL)sessionViewCaresAboutMouseMovement {
+    return [_textview wantsMouseMovementEvents];
 }
 
 #pragma mark - iTermCoprocessDelegate

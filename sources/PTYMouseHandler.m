@@ -983,6 +983,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [pointer_ swipeWithEvent:event];
 }
 
+// If this changes also update wantsMouseMovementEvents
 - (void)mouseMoved:(NSEvent *)event {
     [self reportMouseEvent:event];
 }
@@ -1095,10 +1096,22 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 }
 
 // Returns YES if the mouse event should not be handled natively.
+// If thiss changes also update wantsMouseMovementEvents
 - (BOOL)reportMouseEvent:(NSEvent *)event {
     return [self handleMouseEvent:event testOnly:NO deltaYOut:NULL reportableOut:NULL];
 }
 
+// When in doubt this can return YES at the cost of a little CPU when moving the mouse around.
+- (BOOL)wantsMouseMovementEvents {
+    if (![self.mouseDelegate mouseHandlerAnyReportingModeEnabled:self]) {
+        DLog(@"Mouse reporting disabled so do NOT track mouse moves");
+        return NO;
+    }
+    DLog(@"Mouse reporting enabled so track mouse moves");
+    return YES;
+}
+
+// If this changes also update wantsMouseMovementEvents
 - (BOOL)handleMouseEvent:(NSEvent *)event
                 testOnly:(BOOL)testOnly
                deltaYOut:(CGFloat *)deltaYOut

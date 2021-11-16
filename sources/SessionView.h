@@ -145,6 +145,7 @@ extern NSString *const SessionViewWasSelectedForInspectionNotification;
 - (CGFloat)sessionViewTransparencyAlpha;
 - (NSRect)sessionViewFrameForLegacyView;
 - (void)sessionViewDidChangeEffectiveAppearance;
+- (BOOL)sessionViewCaresAboutMouseMovement;
 
 @end
 

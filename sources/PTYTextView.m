@@ -983,6 +983,26 @@
     [_mouseHandler mouseUp:event];
 }
 
+- (BOOL)wantsMouseMovementEvents {
+    if (_mouseLocationToRefuseFirstResponderAt.x < DBL_MAX ||
+        _mouseLocationToRefuseFirstResponderAt.y < DBL_MAX) {
+        DLog(@"Have a mouse location to refuse first responder at, so track mouse moved");
+        return YES;
+    }
+    NSEvent *event = [NSApp currentEvent];
+    const BOOL commandPressed = ([event it_modifierFlags] & NSEventModifierFlagCommand) != 0;
+    if (commandPressed) {
+        DLog(@"cmd pressed so track mouse moved");
+        return YES;
+    }
+    if ([self hasUnderline]) {
+        DLog(@"have underline so track mouse moved");
+        return YES;
+    }
+    return [_mouseHandler wantsMouseMovementEvents];
+}
+
+// If this changes also update -wantsMouseMovementEvents.
 - (void)mouseMoved:(NSEvent *)event {
     [self resetMouseLocationToRefuseFirstResponderAt];
     [self updateUnderlinedURLs:event];
