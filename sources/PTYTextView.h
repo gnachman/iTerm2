@@ -232,6 +232,7 @@ typedef NS_ENUM(NSInteger, PTYCharType) {
                           forMenuItem:(NSString *)title;
 - (void)textViewApplyAction:(iTermAction *)action;
 - (void)textViewAddTrigger:(NSString *)text;
+- (void)textViewSaveBackgroundImage;
 - (void)textViewEditTriggers;
 - (void)textViewToggleEnableTriggersInInteractiveApps;
 - (BOOL)textViewTriggersAreEnabledInInteractiveApps;

@@ -50,7 +50,7 @@
 @property (nonatomic) CGFloat transparency;
 
 - (void)setAlphaValue:(CGFloat)alphaValue NS_UNAVAILABLE;
-
+- (void)save;
 @end
 
 @implementation iTermImageView {
@@ -123,6 +123,11 @@
 - (void)setTransparency:(CGFloat)transparency {
     _lowerView.transparency = transparency;
 }
+
+- (void)save {
+    [_lowerView save];
+}
+
 
 @end
 
@@ -302,6 +307,10 @@
     }
     _contentMode = contentMode;
     [self update];
+}
+
+- (void)save {
+    [self.image.image saveAsPNGTo:@"/tmp/image.png"];
 }
 
 @end

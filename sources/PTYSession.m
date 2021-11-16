@@ -10416,6 +10416,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [self openAddTriggerViewControllerWithText:text];
 }
 
+- (void)textViewSaveBackgroundImage {
+    [self.view saveBackgroundImage];
+}
+
 - (void)openAddTriggerViewControllerWithText:(NSString *)text {
     __weak __typeof(self) weakSelf = self;
     iTermColorSuggester *cs =

@@ -139,7 +139,13 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
         [contextMenu insertItem:[NSMenuItem separatorItem] atIndex:1];
     }
 
+    [contextMenu insertItemWithTitle:@"Save Background Image" action:@selector(saveBackgroundImage:) keyEquivalent:@"" atIndex:0];
+    contextMenu.itemArray.firstObject.target = self;
     return contextMenu;
+}
+
+- (void)saveBackgroundImage:(id)sender {
+    [self.delegate contextMenuSaveBackgroundImage:self];
 }
 
 - (BOOL)validateMenuItem:(NSMenuItem *)item {
@@ -213,7 +219,9 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
     if ([self.smartSelectionActionSelectorDictionary.allValues containsObject:NSStringFromSelector(item.action)]) {
         return YES;
     }
-
+    if (item.action == @selector(saveBackgroundImage:)) {
+        return YES;
+    }
     return NO;
 }
 

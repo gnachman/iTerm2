@@ -2115,4 +2115,28 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [self.delegate legacyView:legacyView drawRect:dirtyRect];
 }
 
+- (void)saveBackgroundImage {
+    if (!_imageView) {
+        [[NSAlert alertWithMessageText:@"No image view" defaultButton:nil alternateButton:nil otherButton:nil informativeTextWithFormat:@""] runModal];
+        return;
+    }
+    if (_imageView.isHidden) {
+        [[NSAlert alertWithMessageText:@"Image view is hidden" defaultButton:nil alternateButton:nil otherButton:nil informativeTextWithFormat:@""] runModal];
+        return;
+    }
+    if (_imageView.alphaValue < 0.1) {
+        [[NSAlert alertWithMessageText:@"Image view alphaed out" defaultButton:nil alternateButton:nil otherButton:nil informativeTextWithFormat:@""] runModal];
+        return;
+    }
+    if (!_imageView.image) {
+        [[NSAlert alertWithMessageText:@"imageView.image is nil" defaultButton:nil alternateButton:nil otherButton:nil informativeTextWithFormat:@""] runModal];
+        return;
+    }
+    if (!_imageView.image.image) {
+        [[NSAlert alertWithMessageText:@"imageView.image.image is nil" defaultButton:nil alternateButton:nil otherButton:nil informativeTextWithFormat:@""] runModal];
+        return;
+    }
+    [_imageView save];
+    [[NSAlert alertWithMessageText:@"Saved as /tmp/image.png" defaultButton:nil alternateButton:nil otherButton:nil informativeTextWithFormat:@""] runModal];
+}
 @end

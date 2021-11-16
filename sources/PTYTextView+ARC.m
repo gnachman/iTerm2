@@ -1108,6 +1108,10 @@ toggleTerminalStateForMenuItem:(nonnull NSMenuItem *)item {
     [self.delegate textViewAddTrigger:text];
 }
 
+- (void)contextMenuSaveBackgroundImage:(iTermTextViewContextMenuHelper *)contextMenu {
+    [self.delegate textViewSaveBackgroundImage];
+}
+
 #pragma mark - NSResponder Additions
 
 - (void)sendSnippet:(id)sender {

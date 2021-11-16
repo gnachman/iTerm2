@@ -20,6 +20,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic) CGFloat transparency;
 
 - (void)setAlphaValue:(CGFloat)alphaValue NS_UNAVAILABLE;
+- (void)save;
 
 @end
 
