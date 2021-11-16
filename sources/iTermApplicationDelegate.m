@@ -2791,4 +2791,9 @@ void TurnOnDebugLoggingAutomatically(void) {
     [[self firstResponderForMenuItem:sender] it_performNonObjectReturningSelector:_cmd withObject:sender];
 }
 
+- (BOOL)application:(NSApplication *)application continueUserActivity:(NSUserActivity *)userActivity restorationHandler:(void (^)(NSArray<id<NSUserActivityRestoring>> * _Nonnull))restorationHandler {
+    NSLog(@"continue user activity");
+    return YES;
+}
+
 @end

@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 46;
+	objectVersion = 52;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -1711,9 +1711,6 @@
 		A628C7A818764AA4009B0818 /* NSDictionary+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A628C7A618764AA4009B0818 /* NSDictionary+iTerm.h */; };
 		A629C6FE220FFF5E00E7D4AE /* iTermProfilePreferencesTabViewWrapperView.h in Headers */ = {isa = PBXBuildFile; fileRef = A629C6FC220FFF5E00E7D4AE /* iTermProfilePreferencesTabViewWrapperView.h */; };
 		A629C6FF220FFF5E00E7D4AE /* iTermProfilePreferencesTabViewWrapperView.h in Headers */ = {isa = PBXBuildFile; fileRef = A629C6FC220FFF5E00E7D4AE /* iTermProfilePreferencesTabViewWrapperView.h */; };
-		A629C700220FFF5E00E7D4AE /* iTermProfilePreferencesTabViewWrapperView.m in Sources */ = {isa = PBXBuildFile; fileRef = A629C6FD220FFF5E00E7D4AE /* iTermProfilePreferencesTabViewWrapperView.m */; };
-		A629C701220FFF5E00E7D4AE /* iTermProfilePreferencesTabViewWrapperView.m in Sources */ = {isa = PBXBuildFile; fileRef = A629C6FD220FFF5E00E7D4AE /* iTermProfilePreferencesTabViewWrapperView.m */; };
-		A629C702220FFF5E00E7D4AE /* iTermProfilePreferencesTabViewWrapperView.m in Sources */ = {isa = PBXBuildFile; fileRef = A629C6FD220FFF5E00E7D4AE /* iTermProfilePreferencesTabViewWrapperView.m */; };
 		A629C705221016AA00E7D4AE /* iTermMoveTabToWindowBuiltInFunction.h in Headers */ = {isa = PBXBuildFile; fileRef = A629C703221016AA00E7D4AE /* iTermMoveTabToWindowBuiltInFunction.h */; };
 		A629C706221016AA00E7D4AE /* iTermMoveTabToWindowBuiltInFunction.m in Sources */ = {isa = PBXBuildFile; fileRef = A629C704221016AA00E7D4AE /* iTermMoveTabToWindowBuiltInFunction.m */; };
 		A629F57923AF2DD900C2F16B /* iterm2_shell_integration.bash in Resources */ = {isa = PBXBuildFile; fileRef = A629F57323AF2DD900C2F16B /* iterm2_shell_integration.bash */; };
@@ -1812,6 +1809,12 @@
 		A62DBBA420F47CFA008B63D1 /* GoBack@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A62DBB9820F47CFA008B63D1 /* GoBack@2x.png */; };
 		A62DBBA720F4852A008B63D1 /* iTermStatusBarFunctionCallComponent.h in Headers */ = {isa = PBXBuildFile; fileRef = A62DBBA520F4852A008B63D1 /* iTermStatusBarFunctionCallComponent.h */; };
 		A62DBBA820F4852A008B63D1 /* iTermStatusBarFunctionCallComponent.m in Sources */ = {isa = PBXBuildFile; fileRef = A62DBBA620F4852A008B63D1 /* iTermStatusBarFunctionCallComponent.m */; };
+		A62EE239274457C000D57B54 /* iTermProfilePreferencesTabViewWrapperView.m in Sources */ = {isa = PBXBuildFile; fileRef = A629C6FD220FFF5E00E7D4AE /* iTermProfilePreferencesTabViewWrapperView.m */; };
+		A62EE23A274457DA00D57B54 /* iTermFileDescriptorMultiClient+MRR.m in Sources */ = {isa = PBXBuildFile; fileRef = A663196C22FE651D00C502BD /* iTermFileDescriptorMultiClient+MRR.m */; };
+		A62EE24127446D3F00D57B54 /* Intents.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A62EE24027446D3F00D57B54 /* Intents.framework */; platformFilter = maccatalyst; };
+		A62EE24427446D4000D57B54 /* IntentHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = A62EE24327446D4000D57B54 /* IntentHandler.swift */; };
+		A62EE24927446D4000D57B54 /* iTerm2Intents.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = A62EE23F27446D3F00D57B54 /* iTerm2Intents.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		A62EE24F27446EE100D57B54 /* Intents.intentdefinition in Sources */ = {isa = PBXBuildFile; fileRef = A62EE1E327444E7000D57B54 /* Intents.intentdefinition */; };
 		A62EED9220DF5B2F00943DE3 /* iTermScriptChooser.h in Headers */ = {isa = PBXBuildFile; fileRef = A62EED9020DF5B2F00943DE3 /* iTermScriptChooser.h */; };
 		A62EED9320DF5B2F00943DE3 /* iTermScriptChooser.m in Sources */ = {isa = PBXBuildFile; fileRef = A62EED9120DF5B2F00943DE3 /* iTermScriptChooser.m */; };
 		A62EED9620DF602F00943DE3 /* iTermCommandRunner.h in Headers */ = {isa = PBXBuildFile; fileRef = A62EED9420DF602F00943DE3 /* iTermCommandRunner.h */; };
@@ -2219,9 +2222,6 @@
 		A663196D22FE651D00C502BD /* iTermFileDescriptorMultiClient+MRR.h in Headers */ = {isa = PBXBuildFile; fileRef = A663196B22FE651D00C502BD /* iTermFileDescriptorMultiClient+MRR.h */; };
 		A663196E22FE651D00C502BD /* iTermFileDescriptorMultiClient+MRR.h in Headers */ = {isa = PBXBuildFile; fileRef = A663196B22FE651D00C502BD /* iTermFileDescriptorMultiClient+MRR.h */; };
 		A663196F22FE651D00C502BD /* iTermFileDescriptorMultiClient+MRR.h in Headers */ = {isa = PBXBuildFile; fileRef = A663196B22FE651D00C502BD /* iTermFileDescriptorMultiClient+MRR.h */; };
-		A663197022FE651D00C502BD /* iTermFileDescriptorMultiClient+MRR.m in Sources */ = {isa = PBXBuildFile; fileRef = A663196C22FE651D00C502BD /* iTermFileDescriptorMultiClient+MRR.m */; };
-		A663197122FE651D00C502BD /* iTermFileDescriptorMultiClient+MRR.m in Sources */ = {isa = PBXBuildFile; fileRef = A663196C22FE651D00C502BD /* iTermFileDescriptorMultiClient+MRR.m */; };
-		A663197222FE651D00C502BD /* iTermFileDescriptorMultiClient+MRR.m in Sources */ = {isa = PBXBuildFile; fileRef = A663196C22FE651D00C502BD /* iTermFileDescriptorMultiClient+MRR.m */; };
 		A663198122FF34BB00C502BD /* iTermFileDescriptorMultiServer.c in Sources */ = {isa = PBXBuildFile; fileRef = 538970BB22E6914E008B4770 /* iTermFileDescriptorMultiServer.c */; };
 		A66319872308C60000C502BD /* NSStringITerm.m in Sources */ = {isa = PBXBuildFile; fileRef = E8E901A202743CA303A80106 /* NSStringITerm.m */; };
 		A66319882312139400C502BD /* NSImage+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A69B45B7197C60FB00F5444D /* NSImage+iTerm.m */; };
@@ -4143,6 +4143,13 @@
 			remoteGlobalIDString = A66717851DCE36C3000CE608;
 			remoteInfo = iTerm2SharedARC;
 		};
+		A62EE24627446D4000D57B54 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 0464AB0C006CD2EC7F000001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = A62EE23E27446D3F00D57B54;
+			remoteInfo = iTerm2Intents;
+		};
 		A64FCD51238DDF61001D8199 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 0464AB0C006CD2EC7F000001 /* Project object */;
@@ -4255,6 +4262,17 @@
 			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 1;
+		};
+		A62EE24827446D4000D57B54 /* Embed App Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				A62EE24927446D4000D57B54 /* iTerm2Intents.appex in Embed App Extensions */,
+			);
+			name = "Embed App Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
 		};
 		A6725AD923D64A57001CA48A /* CopyFiles */ = {
 			isa = PBXCopyFilesBuildPhase;
@@ -5449,6 +5467,12 @@
 		A62DBB9820F47CFA008B63D1 /* GoBack@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "GoBack@2x.png"; path = "images/GoBack@2x.png"; sourceTree = "<group>"; };
 		A62DBBA520F4852A008B63D1 /* iTermStatusBarFunctionCallComponent.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermStatusBarFunctionCallComponent.h; sourceTree = "<group>"; };
 		A62DBBA620F4852A008B63D1 /* iTermStatusBarFunctionCallComponent.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermStatusBarFunctionCallComponent.m; sourceTree = "<group>"; };
+		A62EE1E327444E7000D57B54 /* Intents.intentdefinition */ = {isa = PBXFileReference; lastKnownFileType = file.intentdefinition; name = Intents.intentdefinition; path = Interfaces/Intents.intentdefinition; sourceTree = "<group>"; };
+		A62EE1E52744507100D57B54 /* release-1024.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "release-1024.png"; path = "Media.xcassets/AppIcon.appiconset/release-1024.png"; sourceTree = "<group>"; };
+		A62EE23F27446D3F00D57B54 /* iTerm2Intents.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = iTerm2Intents.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		A62EE24027446D3F00D57B54 /* Intents.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Intents.framework; path = System/Library/Frameworks/Intents.framework; sourceTree = SDKROOT; };
+		A62EE24327446D4000D57B54 /* IntentHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IntentHandler.swift; sourceTree = "<group>"; };
+		A62EE24527446D4000D57B54 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		A62EED9020DF5B2F00943DE3 /* iTermScriptChooser.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermScriptChooser.h; sourceTree = "<group>"; };
 		A62EED9120DF5B2F00943DE3 /* iTermScriptChooser.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermScriptChooser.m; sourceTree = "<group>"; };
 		A62EED9420DF602F00943DE3 /* iTermCommandRunner.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermCommandRunner.h; sourceTree = "<group>"; };
@@ -7115,6 +7139,14 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		A62EE23C27446D3F00D57B54 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A62EE24127446D3F00D57B54 /* Intents.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		A663197522FF349700C502BD /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -7164,6 +7196,7 @@
 		0464AB0D006CD2EC7F000001 /* JTerminal */ = {
 			isa = PBXGroup;
 			children = (
+				A62EE1E327444E7000D57B54 /* Intents.intentdefinition */,
 				A63F2A3A23FA5951008DDEA4 /* it2run */,
 				5370676121C9D2390088D0F3 /* SignedArchive */,
 				530AB7EC20AE85DE00D2AA08 /* api */,
@@ -7178,6 +7211,7 @@
 				A6866B6823CAA10A00ACD94C /* pidinfo */,
 				A60593B3257DF9A500CACEE6 /* ShellLauncher */,
 				7596379B2593AE0700E278CC /* iTerm2SandboxedWorker */,
+				A62EE24227446D3F00D57B54 /* iTerm2Intents */,
 				1DD39AD5180B8118004E56D5 /* Frameworks */,
 				0464AB32006CD2EC7F000001 /* Products */,
 			);
@@ -7188,6 +7222,7 @@
 		0464AB0E006CD2EC7F000001 /* Classes */ = {
 			isa = PBXGroup;
 			children = (
+				A62EE2332744533500D57B54 /* Shortcuts */,
 				53EBF29A1DCBFF6D00766613 /* API */,
 				1D5655C619AD2AF1001C460B /* Applescript */,
 				1D9DDE31142E73E300275650 /* Categories */,
@@ -7633,6 +7668,7 @@
 				A663197822FF349700C502BD /* iTermServer */,
 				A60593B2257DF9A500CACEE6 /* ShellLauncher */,
 				7596379A2593AE0700E278CC /* iTerm2SandboxedWorker.xpc */,
+				A62EE23F27446D3F00D57B54 /* iTerm2Intents.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -7728,6 +7764,7 @@
 		1D093C131217412B0029F9AD /* Images */ = {
 			isa = PBXGroup;
 			children = (
+				A62EE1E52744507100D57B54 /* release-1024.png */,
 				A6EA848127223B02009D14AB /* graphic_emacs.png */,
 				A6EA848227223B02009D14AB /* graphic_emacs@2x.png */,
 				A6BEE47626E0A623009C0C2C /* FilterIndicator.png */,
@@ -8372,6 +8409,7 @@
 				A624232519CF70DF00182C08 /* NMSSH.framework */,
 				A60BD9181B3F5D76007D7F11 /* OpenDirectory.framework */,
 				A624231819CF6DE000182C08 /* NMSSH.framework */,
+				A62EE24027446D3F00D57B54 /* Intents.framework */,
 				1DD39AD8180B8118004E56D5 /* Other Frameworks */,
 				1DEB29301288885700B2CB9F /* Quartz.framework */,
 				1DEB29371288887100B2CB9F /* QuartzCore.framework */,
@@ -8818,6 +8856,22 @@
 				A693395B1851A61D00EBEA20 /* VT100ScreenMark.m */,
 			);
 			name = Marks;
+			sourceTree = "<group>";
+		};
+		A62EE2332744533500D57B54 /* Shortcuts */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Shortcuts;
+			sourceTree = "<group>";
+		};
+		A62EE24227446D3F00D57B54 /* iTerm2Intents */ = {
+			isa = PBXGroup;
+			children = (
+				A62EE24327446D4000D57B54 /* IntentHandler.swift */,
+				A62EE24527446D4000D57B54 /* Info.plist */,
+			);
+			path = iTerm2Intents;
 			sourceTree = "<group>";
 		};
 		A630116220E606D0008114B7 /* StatusBar */ = {
@@ -12174,6 +12228,7 @@
 				A6866B7823CAA10A00ACD94C /* Embed XPC Services */,
 				A6725AD923D64A57001CA48A /* CopyFiles */,
 				A67A515026CCD54000281693 /* CopyFiles */,
+				A62EE24827446D4000D57B54 /* Embed App Extensions */,
 			);
 			buildRules = (
 			);
@@ -12185,6 +12240,7 @@
 				A6C537BB19315CCB00A08C18 /* PBXTargetDependency */,
 				A6866B7123CAA10A00ACD94C /* PBXTargetDependency */,
 				759637A42593AE0700E278CC /* PBXTargetDependency */,
+				A62EE24727446D4000D57B54 /* PBXTargetDependency */,
 			);
 			name = iTerm2;
 			productName = "JTerminal (Application)";
@@ -12207,6 +12263,23 @@
 			productName = ShellLauncher;
 			productReference = A60593B2257DF9A500CACEE6 /* ShellLauncher */;
 			productType = "com.apple.product-type.tool";
+		};
+		A62EE23E27446D3F00D57B54 /* iTerm2Intents */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A62EE24A27446D4000D57B54 /* Build configuration list for PBXNativeTarget "iTerm2Intents" */;
+			buildPhases = (
+				A62EE23B27446D3F00D57B54 /* Sources */,
+				A62EE23C27446D3F00D57B54 /* Frameworks */,
+				A62EE23D27446D3F00D57B54 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = iTerm2Intents;
+			productName = iTerm2Intents;
+			productReference = A62EE23F27446D3F00D57B54 /* iTerm2Intents.appex */;
+			productType = "com.apple.product-type.app-extension";
 		};
 		A663197722FF349700C502BD /* iTermServer */ = {
 			isa = PBXNativeTarget;
@@ -12302,6 +12375,7 @@
 		0464AB0C006CD2EC7F000001 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
+				LastSwiftUpdateCheck = 1310;
 				LastUpgradeCheck = 1310;
 				TargetAttributes = {
 					1D6ED85219AEA20D005A7799 = {
@@ -12329,6 +12403,9 @@
 					A60593B1257DF9A500CACEE6 = {
 						CreatedOnToolsVersion = 12.2;
 						ProvisioningStyle = Automatic;
+					};
+					A62EE23E27446D3F00D57B54 = {
+						CreatedOnToolsVersion = 13.1;
 					};
 					A663197722FF349700C502BD = {
 						CreatedOnToolsVersion = 10.2;
@@ -12379,6 +12456,7 @@
 				A663197722FF349700C502BD /* iTermServer */,
 				A60593B1257DF9A500CACEE6 /* ShellLauncher */,
 				759637992593AE0700E278CC /* iTerm2SandboxedWorker */,
+				A62EE23E27446D3F00D57B54 /* iTerm2Intents */,
 			);
 		};
 /* End PBXProject section */
@@ -13822,6 +13900,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		A62EE23D27446D3F00D57B54 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		A6866B6523CAA10A00ACD94C /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -14211,12 +14296,10 @@
 				A6D22A451BC8BE6B004084E0 /* Model.xcdatamodeld in Sources */,
 				A6DBC04120049CB100F1466D /* iTermImage.metal in Sources */,
 				A6C1FD561FC2B210006B9A69 /* iTermMargin.metal in Sources */,
-				A663197222FE651D00C502BD /* iTermFileDescriptorMultiClient+MRR.m in Sources */,
 				A67960F71F8202C2008A42BC /* iTermBackgroundColor.metal in Sources */,
 				A68400AC1FF82E05008D3EE2 /* iTermIndicator.metal in Sources */,
 				A68400B41FF8644F008D3EE2 /* iTermFulScreenFlash.metal in Sources */,
 				A638A05220EB47A900DE347F /* iTermTextShaderCommon.metal in Sources */,
-				A629C702220FFF5E00E7D4AE /* iTermProfilePreferencesTabViewWrapperView.m in Sources */,
 				A67960FE1F8202C2008A42BC /* iTermText.metal in Sources */,
 				A68400C11FF99E1B008D3EE2 /* iTermTimestamps.metal in Sources */,
 				A67960FB1F8202C2008A42BC /* iTermCursorGuide.metal in Sources */,
@@ -14233,7 +14316,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				A67960F51F8202C1008A42BC /* iTermMark.metal in Sources */,
-				A663197122FE651D00C502BD /* iTermFileDescriptorMultiClient+MRR.m in Sources */,
 				A67960F01F8202C1008A42BC /* iTermBackgroundImage.metal in Sources */,
 				A60EBD181FAED953008C7F5B /* iTermCopyBackground.metal in Sources */,
 				A68400AB1FF82E03008D3EE2 /* iTermIndicator.metal in Sources */,
@@ -14243,7 +14325,6 @@
 				A6C1FD551FC2B210006B9A69 /* iTermMargin.metal in Sources */,
 				A6C763FE1B45C72F00E3C992 /* iTermTests.m in Sources */,
 				A67960F61F8202C1008A42BC /* iTermText.metal in Sources */,
-				A629C701220FFF5E00E7D4AE /* iTermProfilePreferencesTabViewWrapperView.m in Sources */,
 				A638A05120EB47A900DE347F /* iTermTextShaderCommon.metal in Sources */,
 				A67960F31F8202C1008A42BC /* iTermCursorGuide.metal in Sources */,
 				A60D023B2684526000E19362 /* Phony.swift in Sources */,
@@ -14288,13 +14369,11 @@
 				A67960ED1F8202C0008A42BC /* iTermMark.metal in Sources */,
 				A6D22A431BC8BE6B004084E0 /* Model.xcdatamodeld in Sources */,
 				A6DBC03F20049CB100F1466D /* iTermImage.metal in Sources */,
-				A663197022FE651D00C502BD /* iTermFileDescriptorMultiClient+MRR.m in Sources */,
 				A6C1FD541FC2B210006B9A69 /* iTermMargin.metal in Sources */,
 				A67960E71F8202C0008A42BC /* iTermBackgroundColor.metal in Sources */,
 				A68400AA1FF82E02008D3EE2 /* iTermIndicator.metal in Sources */,
 				A68400B21FF8644F008D3EE2 /* iTermFulScreenFlash.metal in Sources */,
 				A638A05020EB47A900DE347F /* iTermTextShaderCommon.metal in Sources */,
-				A629C700220FFF5E00E7D4AE /* iTermProfilePreferencesTabViewWrapperView.m in Sources */,
 				A67960EE1F8202C0008A42BC /* iTermText.metal in Sources */,
 				A68400BF1FF99E1B008D3EE2 /* iTermTimestamps.metal in Sources */,
 				A67960EB1F8202C0008A42BC /* iTermCursorGuide.metal in Sources */,
@@ -14312,6 +14391,15 @@
 			files = (
 				A60593C3257DF9C000CACEE6 /* shell_launcher.c in Sources */,
 				A60593B5257DF9A500CACEE6 /* main.c in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A62EE23B27446D3F00D57B54 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A62EE24F27446EE100D57B54 /* Intents.intentdefinition in Sources */,
+				A62EE24427446D4000D57B54 /* IntentHandler.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -14405,6 +14493,7 @@
 				A6EC937E24E859D100EEADEF /* ToolDirectoriesView.m in Sources */,
 				A60C034B20881D6000FE2F1F /* iTermWebSocketCookieJar.m in Sources */,
 				5370679021C9D2780088D0F3 /* SIGArchiveChunk.m in Sources */,
+				A62EE239274457C000D57B54 /* iTermProfilePreferencesTabViewWrapperView.m in Sources */,
 				A665C1D2243D962C00F623F0 /* TerminalFile.m in Sources */,
 				A6D8CC3220CE417000E79512 /* URLAction.m in Sources */,
 				A65429BA20CE3C9400CE71B1 /* iTermFocusReportingTextField.m in Sources */,
@@ -14951,6 +15040,7 @@
 				A6374A291DEE941F000A136F /* iTermPromptOnCloseReason.m in Sources */,
 				A6C7639E1B45C52B00E3C992 /* TmuxStateParser.m in Sources */,
 				A6C763481B45C52B00E3C992 /* iTermShortcutInputView.m in Sources */,
+				A62EE23A274457DA00D57B54 /* iTermFileDescriptorMultiClient+MRR.m in Sources */,
 				A6CEC10C1DCE8146009F4FD2 /* GPBExtensionInternals.m in Sources */,
 				A6C763AC1B45C52B00E3C992 /* BellTrigger.m in Sources */,
 				A6C763E01B45C6DD00E3C992 /* PSMTabBarControl.m in Sources */,
@@ -15310,6 +15400,11 @@
 			target = A66717851DCE36C3000CE608 /* iTerm2SharedARC */;
 			targetProxy = A60D02352683D95A00E19362 /* PBXContainerItemProxy */;
 		};
+		A62EE24727446D4000D57B54 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = A62EE23E27446D3F00D57B54 /* iTerm2Intents */;
+			targetProxy = A62EE24627446D4000D57B54 /* PBXContainerItemProxy */;
+		};
 		A64FCD52238DDF61001D8199 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = A663197722FF349700C502BD /* iTermServer */;
@@ -15458,9 +15553,13 @@
 				HEADER_SEARCH_PATHS = (
 					.,
 					ThirdParty,
+					$DERIVED_FILES_DIR/IntentDefinitionGenerated/Intents,
 				);
 				INFOPLIST_FILE = plists/iTerm2.plist;
-				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks @executable_path/../Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"@loader_path/../Frameworks",
+					"@executable_path/../Frameworks",
+				);
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
 				MACOSX_DEPLOYMENT_TARGET = 10.14;
 				MTL_COMPILER_FLAGS = "";
@@ -15539,7 +15638,10 @@
 					ThirdParty,
 				);
 				INFOPLIST_FILE = "plists/iTerm2ForApplescriptTesting-Info.plist";
-				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks @executable_path/../Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"@loader_path/../Frameworks",
+					"@executable_path/../Frameworks",
+				);
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/ThirdParty/libsixel/lib",
@@ -15611,7 +15713,10 @@
 					ThirdParty,
 				);
 				INFOPLIST_FILE = "plists/iTerm2ForApplescriptTesting-Info.plist";
-				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks @executable_path/../Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"@loader_path/../Frameworks",
+					"@executable_path/../Frameworks",
+				);
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/ThirdParty/libsixel/lib",
@@ -15681,7 +15786,10 @@
 					ThirdParty,
 				);
 				INFOPLIST_FILE = "plists/iTerm2ForApplescriptTesting-Info.plist";
-				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks @executable_path/../Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"@loader_path/../Frameworks",
+					"@executable_path/../Frameworks",
+				);
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/ThirdParty/libsixel/lib",
@@ -15763,7 +15871,10 @@
 					ThirdParty,
 				);
 				INFOPLIST_FILE = "plists/iTermTests-Info.plist";
-				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks @executable_path/../Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"@loader_path/../Frameworks",
+					"@executable_path/../Frameworks",
+				);
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/ThirdParty/libsixel/lib",
@@ -15838,7 +15949,10 @@
 					ThirdParty,
 				);
 				INFOPLIST_FILE = "plists/iTermTests-Info.plist";
-				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks @executable_path/../Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"@loader_path/../Frameworks",
+					"@executable_path/../Frameworks",
+				);
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/ThirdParty/libsixel/lib",
@@ -15912,7 +16026,10 @@
 					ThirdParty,
 				);
 				INFOPLIST_FILE = "plists/iTermTests-Info.plist";
-				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks @executable_path/../Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"@loader_path/../Frameworks",
+					"@executable_path/../Frameworks",
+				);
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/ThirdParty/libsixel/lib",
@@ -16591,6 +16708,321 @@
 			};
 			name = Nightly;
 		};
+		A62EE24B27446D4000D57B54 /* Development */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++17";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				HEADER_SEARCH_PATHS = $DERIVED_FILES_DIR/IntentDefinitionGenerated/Intents;
+				INFOPLIST_FILE = iTerm2Intents/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = iTerm2Intents;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@executable_path/../../../../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 12.0;
+				MARKETING_VERSION = 1.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = com.googlecode.iterm2.iTerm2Intents;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SKIP_INSTALL = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OBJC_BRIDGING_HEADER = "sources/iTerm2Intents-Bridging-Header.h";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+				USER_HEADER_SEARCH_PATHS = "${DERIVED_FILES_DIR}/IntentDefinitionGenerated/Intents";
+			};
+			name = Development;
+		};
+		A62EE24C27446D4000D57B54 /* Deployment */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++17";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "Developer ID Application: GEORGE NACHMAN (H7V7XYVQ7D)";
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = "";
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				HEADER_SEARCH_PATHS = $DERIVED_FILES_DIR/IntentDefinitionGenerated/Intents;
+				INFOPLIST_FILE = iTerm2Intents/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = iTerm2Intents;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@executable_path/../../../../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 12.0;
+				MARKETING_VERSION = 1.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = com.googlecode.iterm2.iTerm2Intents;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SKIP_INSTALL = YES;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OBJC_BRIDGING_HEADER = "sources/iTerm2Intents-Bridging-Header.h";
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+				USER_HEADER_SEARCH_PATHS = "${DERIVED_FILES_DIR}/IntentDefinitionGenerated/Intents";
+			};
+			name = Deployment;
+		};
+		A62EE24D27446D4000D57B54 /* Beta */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++17";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "Developer ID Application: GEORGE NACHMAN (H7V7XYVQ7D)";
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = "";
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				HEADER_SEARCH_PATHS = $DERIVED_FILES_DIR/IntentDefinitionGenerated/Intents;
+				INFOPLIST_FILE = iTerm2Intents/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = iTerm2Intents;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@executable_path/../../../../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 12.0;
+				MARKETING_VERSION = 1.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = com.googlecode.iterm2.iTerm2Intents;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SKIP_INSTALL = YES;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OBJC_BRIDGING_HEADER = "sources/iTerm2Intents-Bridging-Header.h";
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+				USER_HEADER_SEARCH_PATHS = "${DERIVED_FILES_DIR}/IntentDefinitionGenerated/Intents";
+			};
+			name = Beta;
+		};
+		A62EE24E27446D4000D57B54 /* Nightly */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++17";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "Developer ID Application: GEORGE NACHMAN (H7V7XYVQ7D)";
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = "";
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				HEADER_SEARCH_PATHS = $DERIVED_FILES_DIR/IntentDefinitionGenerated/Intents;
+				INFOPLIST_FILE = iTerm2Intents/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = iTerm2Intents;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@executable_path/../../../../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 12.0;
+				MARKETING_VERSION = 1.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = com.googlecode.iterm2.iTerm2Intents;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SKIP_INSTALL = YES;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OBJC_BRIDGING_HEADER = "sources/iTerm2Intents-Bridging-Header.h";
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+				USER_HEADER_SEARCH_PATHS = "${DERIVED_FILES_DIR}/IntentDefinitionGenerated/Intents";
+			};
+			name = Nightly;
+		};
 		A656E9881F970C7200158128 /* Beta */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -16676,9 +17108,13 @@
 				HEADER_SEARCH_PATHS = (
 					.,
 					ThirdParty,
+					$DERIVED_FILES_DIR/IntentDefinitionGenerated/Intents,
 				);
 				INFOPLIST_FILE = plists/iTerm2.plist;
-				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks @executable_path/../Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"@loader_path/../Frameworks",
+					"@executable_path/../Frameworks",
+				);
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
 				MACOSX_DEPLOYMENT_TARGET = 10.14;
 				MTL_COMPILER_FLAGS = "";
@@ -16760,7 +17196,10 @@
 					ThirdParty,
 				);
 				INFOPLIST_FILE = "plists/iTermTests-Info.plist";
-				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks @executable_path/../Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"@loader_path/../Frameworks",
+					"@executable_path/../Frameworks",
+				);
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/ThirdParty/libsixel/lib",
@@ -16866,7 +17305,10 @@
 					ThirdParty,
 				);
 				INFOPLIST_FILE = "plists/iTerm2ForApplescriptTesting-Info.plist";
-				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks @executable_path/../Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"@loader_path/../Frameworks",
+					"@executable_path/../Frameworks",
+				);
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/ThirdParty/libsixel/lib",
@@ -17001,7 +17443,11 @@
 					.,
 				);
 				INFOPLIST_FILE = iTerm2XCTests/Info.plist;
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
 				MACOSX_DEPLOYMENT_TARGET = 10.15;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.iterm2.$(PRODUCT_NAME:rfc1034identifier)";
@@ -17063,7 +17509,11 @@
 					ThirdParty,
 					"$(PROJECT_DIR)/SearchableComboListView",
 				);
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
 				MACOSX_DEPLOYMENT_TARGET = 10.14;
 				OTHER_CFLAGS = "-DBETA=1";
 				OTHER_LDFLAGS = "";
@@ -17072,7 +17522,10 @@
 				SKIP_INSTALL = NO;
 				SWIFT_OBJC_BRIDGING_HEADER = "sources/iTerm2SharedARC-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
-				USER_HEADER_SEARCH_PATHS = "$(PROJECT_DIR)/SearchableComboListView $(PROJECT_DIR)/ThirdParty/libsixel/include";
+				USER_HEADER_SEARCH_PATHS = (
+					"$(PROJECT_DIR)/SearchableComboListView",
+					"$(PROJECT_DIR)/ThirdParty/libsixel/include",
+				);
 				VALID_ARCHS = "$(ARCHS_STANDARD)";
 				WARNING_CFLAGS = (
 					"-Wall",
@@ -17387,7 +17840,11 @@
 					ThirdParty,
 					"$(PROJECT_DIR)/SearchableComboListView",
 				);
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
 				MACOSX_DEPLOYMENT_TARGET = 10.14;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
@@ -17401,7 +17858,10 @@
 				SWIFT_OBJC_BRIDGING_HEADER = "sources/iTerm2SharedARC-Bridging-Header.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
-				USER_HEADER_SEARCH_PATHS = "$(PROJECT_DIR)/SearchableComboListView $(PROJECT_DIR)/ThirdParty/libsixel/include";
+				USER_HEADER_SEARCH_PATHS = (
+					"$(PROJECT_DIR)/SearchableComboListView",
+					"$(PROJECT_DIR)/ThirdParty/libsixel/include",
+				);
 				VALID_ARCHS = "$(ARCHS_STANDARD)";
 				WARNING_CFLAGS = (
 					"-Wall",
@@ -17455,7 +17915,11 @@
 					ThirdParty,
 					"$(PROJECT_DIR)/SearchableComboListView",
 				);
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
 				MACOSX_DEPLOYMENT_TARGET = 10.14;
 				OTHER_LDFLAGS = "";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -17463,7 +17927,10 @@
 				SKIP_INSTALL = NO;
 				SWIFT_OBJC_BRIDGING_HEADER = "sources/iTerm2SharedARC-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
-				USER_HEADER_SEARCH_PATHS = "$(PROJECT_DIR)/SearchableComboListView $(PROJECT_DIR)/ThirdParty/libsixel/include";
+				USER_HEADER_SEARCH_PATHS = (
+					"$(PROJECT_DIR)/SearchableComboListView",
+					"$(PROJECT_DIR)/ThirdParty/libsixel/include",
+				);
 				VALID_ARCHS = "$(ARCHS_STANDARD)";
 				WARNING_CFLAGS = (
 					"-Wall",
@@ -17516,7 +17983,11 @@
 					ThirdParty,
 					"$(PROJECT_DIR)/SearchableComboListView",
 				);
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
 				MACOSX_DEPLOYMENT_TARGET = 10.14;
 				OTHER_CFLAGS = "-DBETA=1";
 				OTHER_LDFLAGS = "";
@@ -17525,7 +17996,10 @@
 				SKIP_INSTALL = NO;
 				SWIFT_OBJC_BRIDGING_HEADER = "sources/iTerm2SharedARC-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
-				USER_HEADER_SEARCH_PATHS = "$(PROJECT_DIR)/SearchableComboListView $(PROJECT_DIR)/ThirdParty/libsixel/include";
+				USER_HEADER_SEARCH_PATHS = (
+					"$(PROJECT_DIR)/SearchableComboListView",
+					"$(PROJECT_DIR)/ThirdParty/libsixel/include",
+				);
 				VALID_ARCHS = "$(ARCHS_STANDARD)";
 				WARNING_CFLAGS = (
 					"-Wall",
@@ -18097,7 +18571,11 @@
 					.,
 				);
 				INFOPLIST_FILE = iTerm2XCTests/Info.plist;
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
 				MACOSX_DEPLOYMENT_TARGET = 10.15;
 				MTL_ENABLE_DEBUG_INFO = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -18161,7 +18639,11 @@
 					.,
 				);
 				INFOPLIST_FILE = iTerm2XCTests/Info.plist;
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
 				MACOSX_DEPLOYMENT_TARGET = 10.15;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.iterm2.$(PRODUCT_NAME:rfc1034identifier)";
@@ -18224,7 +18706,11 @@
 					.,
 				);
 				INFOPLIST_FILE = iTerm2XCTests/Info.plist;
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
 				MACOSX_DEPLOYMENT_TARGET = 10.15;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.iterm2.$(PRODUCT_NAME:rfc1034identifier)";
@@ -18285,9 +18771,13 @@
 				HEADER_SEARCH_PATHS = (
 					.,
 					ThirdParty,
+					$DERIVED_FILES_DIR/IntentDefinitionGenerated/Intents,
 				);
 				INFOPLIST_FILE = plists/iTerm2.plist;
-				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks @executable_path/../Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"@loader_path/../Frameworks",
+					"@executable_path/../Frameworks",
+				);
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
 				LINK_WITH_STANDARD_LIBRARIES = YES;
 				MACOSX_DEPLOYMENT_TARGET = 10.14;
@@ -18372,9 +18862,13 @@
 				HEADER_SEARCH_PATHS = (
 					.,
 					ThirdParty,
+					$DERIVED_FILES_DIR/IntentDefinitionGenerated/Intents,
 				);
 				INFOPLIST_FILE = plists/iTerm2.plist;
-				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks @executable_path/../Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"@loader_path/../Frameworks",
+					"@executable_path/../Frameworks",
+				);
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
 				MACOSX_DEPLOYMENT_TARGET = 10.14;
 				MTL_COMPILER_FLAGS = "";
@@ -18557,6 +19051,17 @@
 				A60593B7257DF9A500CACEE6 /* Deployment */,
 				A60593B8257DF9A500CACEE6 /* Beta */,
 				A60593B9257DF9A500CACEE6 /* Nightly */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Development;
+		};
+		A62EE24A27446D4000D57B54 /* Build configuration list for PBXNativeTarget "iTerm2Intents" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A62EE24B27446D4000D57B54 /* Development */,
+				A62EE24C27446D4000D57B54 /* Deployment */,
+				A62EE24D27446D4000D57B54 /* Beta */,
+				A62EE24E27446D4000D57B54 /* Nightly */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Development;
