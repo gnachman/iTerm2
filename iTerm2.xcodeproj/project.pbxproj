@@ -1811,6 +1811,7 @@
 		A62DBBA820F4852A008B63D1 /* iTermStatusBarFunctionCallComponent.m in Sources */ = {isa = PBXBuildFile; fileRef = A62DBBA620F4852A008B63D1 /* iTermStatusBarFunctionCallComponent.m */; };
 		A62EE250274473BB00D57B54 /* iTermFileDescriptorMultiClient+MRR.m in Sources */ = {isa = PBXBuildFile; fileRef = A663196C22FE651D00C502BD /* iTermFileDescriptorMultiClient+MRR.m */; };
 		A62EE251274473C700D57B54 /* iTermProfilePreferencesTabViewWrapperView.m in Sources */ = {isa = PBXBuildFile; fileRef = A629C6FD220FFF5E00E7D4AE /* iTermProfilePreferencesTabViewWrapperView.m */; };
+		A62EE2532744742400D57B54 /* Intents.intentdefinition in Sources */ = {isa = PBXBuildFile; fileRef = A62EE2522744742400D57B54 /* Intents.intentdefinition */; };
 		A62EED9220DF5B2F00943DE3 /* iTermScriptChooser.h in Headers */ = {isa = PBXBuildFile; fileRef = A62EED9020DF5B2F00943DE3 /* iTermScriptChooser.h */; };
 		A62EED9320DF5B2F00943DE3 /* iTermScriptChooser.m in Sources */ = {isa = PBXBuildFile; fileRef = A62EED9120DF5B2F00943DE3 /* iTermScriptChooser.m */; };
 		A62EED9620DF602F00943DE3 /* iTermCommandRunner.h in Headers */ = {isa = PBXBuildFile; fileRef = A62EED9420DF602F00943DE3 /* iTermCommandRunner.h */; };
@@ -5445,6 +5446,7 @@
 		A62DBB9820F47CFA008B63D1 /* GoBack@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "GoBack@2x.png"; path = "images/GoBack@2x.png"; sourceTree = "<group>"; };
 		A62DBBA520F4852A008B63D1 /* iTermStatusBarFunctionCallComponent.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermStatusBarFunctionCallComponent.h; sourceTree = "<group>"; };
 		A62DBBA620F4852A008B63D1 /* iTermStatusBarFunctionCallComponent.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermStatusBarFunctionCallComponent.m; sourceTree = "<group>"; };
+		A62EE2522744742400D57B54 /* Intents.intentdefinition */ = {isa = PBXFileReference; lastKnownFileType = file.intentdefinition; name = Intents.intentdefinition; path = sources/Intents.intentdefinition; sourceTree = "<group>"; };
 		A62EED9020DF5B2F00943DE3 /* iTermScriptChooser.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermScriptChooser.h; sourceTree = "<group>"; };
 		A62EED9120DF5B2F00943DE3 /* iTermScriptChooser.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermScriptChooser.m; sourceTree = "<group>"; };
 		A62EED9420DF602F00943DE3 /* iTermCommandRunner.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermCommandRunner.h; sourceTree = "<group>"; };
@@ -7160,6 +7162,7 @@
 		0464AB0D006CD2EC7F000001 /* JTerminal */ = {
 			isa = PBXGroup;
 			children = (
+				A62EE2522744742400D57B54 /* Intents.intentdefinition */,
 				A63F2A3A23FA5951008DDEA4 /* it2run */,
 				5370676121C9D2390088D0F3 /* SignedArchive */,
 				530AB7EC20AE85DE00D2AA08 /* api */,
@@ -14292,6 +14295,7 @@
 				A6DBC04C2005F45700F1466D /* iTermHighlightRow.metal in Sources */,
 				A60D02342683D61000E19362 /* Phony.swift in Sources */,
 				A60EBD171FAED952008C7F5B /* iTermCopyBackground.metal in Sources */,
+				A62EE2532744742400D57B54 /* Intents.intentdefinition in Sources */,
 				A67960E81F8202C0008A42BC /* iTermBackgroundImage.metal in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -15475,7 +15479,7 @@
 				SDKROOT = macosx;
 				SWIFT_OBJC_BRIDGING_HEADER = "sources/iTerm2-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
-				USER_HEADER_SEARCH_PATHS = "$(CONFIGURATION_TEMP_DIR)/iTerm2SharedARC.build/DerivedSources";
+				USER_HEADER_SEARCH_PATHS = "$(CONFIGURATION_TEMP_DIR)/iTerm2SharedARC.build/DerivedSources $DERIVED_FILES_DIR/IntentDefinitionGenerated/Intents";
 				USE_HEADERMAP = NO;
 				VALID_ARCHS = "$(ARCHS_STANDARD)";
 				WARNING_CFLAGS = (
@@ -16691,7 +16695,7 @@
 				SDKROOT = macosx;
 				SWIFT_OBJC_BRIDGING_HEADER = "sources/iTerm2-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
-				USER_HEADER_SEARCH_PATHS = "$(CONFIGURATION_TEMP_DIR)/iTerm2SharedARC.build/DerivedSources";
+				USER_HEADER_SEARCH_PATHS = "$(CONFIGURATION_TEMP_DIR)/iTerm2SharedARC.build/DerivedSources $DERIVED_FILES_DIR/IntentDefinitionGenerated/Intents";
 				USE_HEADERMAP = NO;
 				VALID_ARCHS = "$(ARCHS_STANDARD)";
 				WARNING_CFLAGS = (
@@ -18307,7 +18311,7 @@
 				SWIFT_OBJC_BRIDGING_HEADER = "sources/iTerm2-Bridging-Header.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
-				USER_HEADER_SEARCH_PATHS = "$(CONFIGURATION_TEMP_DIR)/iTerm2SharedARC.build/DerivedSources";
+				USER_HEADER_SEARCH_PATHS = "$(CONFIGURATION_TEMP_DIR)/iTerm2SharedARC.build/DerivedSources $DERIVED_FILES_DIR/IntentDefinitionGenerated/Intents";
 				USE_HEADERMAP = NO;
 				VALID_ARCHS = "$(ARCHS_STANDARD)";
 				WARNING_CFLAGS = (
@@ -18389,7 +18393,7 @@
 				SDKROOT = macosx;
 				SWIFT_OBJC_BRIDGING_HEADER = "sources/iTerm2-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
-				USER_HEADER_SEARCH_PATHS = "$(CONFIGURATION_TEMP_DIR)/iTerm2SharedARC.build/DerivedSources";
+				USER_HEADER_SEARCH_PATHS = "$(CONFIGURATION_TEMP_DIR)/iTerm2SharedARC.build/DerivedSources $DERIVED_FILES_DIR/IntentDefinitionGenerated/Intents";
 				USE_HEADERMAP = NO;
 				VALID_ARCHS = "$(ARCHS_STANDARD)";
 				WARNING_CFLAGS = (

@@ -15,6 +15,7 @@
 #import "iTermResourceLimitsHelper.h"
 #import "legacy_server.h"
 #import "shell_launcher.h"
+#import "RunShellScriptIntent.h"
 
 int main(int argc, const char *argv[]){
     if (argc > 1 && !strcmp(argv[1], "--launch_shell")) {
@@ -34,3 +35,15 @@ int main(int argc, const char *argv[]){
 
     return NSApplicationMain(argc, argv);
 }
+
+NS_CLASS_AVAILABLE_MAC(12_0)
+@interface MyIntentHandler: NSObject<RunShellScriptIntentHandling>
+@end
+
+@implementation MyIntentHandler
+- (void)handleRunShellScript:(nonnull RunShellScriptIntent *)intent completion:(nonnull void (^)(RunShellScriptIntentResponse * _Nonnull))completion {
+    completion([[RunShellScriptIntentResponse alloc] initWithCode:RunShellScriptIntentResponseCodeSuccess
+                                                     userActivity:nil]);
+}
+
+@end
