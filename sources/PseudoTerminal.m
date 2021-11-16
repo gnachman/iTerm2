@@ -11449,19 +11449,20 @@ setBackgroundImage:(iTermImageWrapper *)image
        mode:(iTermBackgroundImageMode)imageMode
 backgroundColor:(NSColor *)backgroundColor {
     if (tab != self.currentTab) {
+        DLog(@"Inactive tab tried to set the background image. Ignore it.");
         return;
     }
     if ([iTermPreferences boolForKey:kPreferenceKeyPerPaneBackgroundImage]) {
+        DLog(@"Using per-pane backbround images. Ignore.");
         return;
     }
-    if (@available(macOS 10.14, *)) {
-        [self setSharedBackgroundImage:image mode:imageMode backgroundColor:backgroundColor];
-    }
+    [self setSharedBackgroundImage:image mode:imageMode backgroundColor:backgroundColor];
 }
 
 - (void)setSharedBackgroundImage:(iTermImageWrapper *)image
                             mode:(iTermBackgroundImageMode)imageMode
                  backgroundColor:(NSColor *)backgroundColor NS_AVAILABLE_MAC(10_14) {
+    DLog(@"setSharedBackgroundImage:%@", image);
     _contentView.backgroundImage.image = image;
     _contentView.backgroundImage.contentMode = imageMode;
     _contentView.backgroundImage.backgroundColor = backgroundColor;

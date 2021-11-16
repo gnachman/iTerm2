@@ -4719,18 +4719,22 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)setBackgroundImagePath:(NSString *)imageFilePath {
+    DLog(@"setBackgroundImagePath:%@", imageFilePath);
     if ([imageFilePath length]) {
         if ([imageFilePath isAbsolutePath] == NO) {
             NSBundle *myBundle = [NSBundle bundleForClass:[self class]];
             imageFilePath = [myBundle pathForResource:imageFilePath ofType:@""];
+            DLog(@"Not an absolute path. Use bundle-relative path of %@", imageFilePath);
         }
         if ([imageFilePath isEqualToString:_backgroundImagePath]) {
+            DLog(@"New image path equals existing path, so do nothing.");
             return;
         }
         [_backgroundImagePath autorelease];
         _backgroundImagePath = [imageFilePath copy];
         self.backgroundImage = [[iTermSharedImageStore sharedInstance] imageWithContentsOfFile:_backgroundImagePath];
     } else {
+        DLog(@"Clearing abackground image");
         self.backgroundImage = nil;
         [_backgroundImagePath release];
         _backgroundImagePath = nil;
@@ -4783,6 +4787,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)updateViewBackgroundImage {
     if ([iTermPreferences boolForKey:kPreferenceKeyPerPaneBackgroundImage]) {
+        DLog(@"Update per-pane background image");
         self.view.image = _backgroundImage;
         [self.view setImageMode:_backgroundImageMode];
         [self.view setTerminalBackgroundColor:[self processedBackgroundColor]];
@@ -4798,6 +4803,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)setBackgroundImage:(iTermImageWrapper *)backgroundImage {
+    DLog(@"setBackgroundImage:%@", backgroundImage);
     [_backgroundImage autorelease];
     _backgroundImage = [backgroundImage retain];
     [self updateViewBackgroundImage];

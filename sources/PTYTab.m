@@ -6598,6 +6598,7 @@ setBackgroundImage:(iTermImageWrapper *)image
            mode:(iTermBackgroundImageMode)imageMode
 backgroundColor:(NSColor *)backgroundColor {
     if (session != self.activeSession) {
+        DLog(@"Inactive session tried to set the background image. Ignore it.");
         return;
     }
     [self.delegate tab:self setBackgroundImage:image mode:imageMode backgroundColor:backgroundColor];
