@@ -666,6 +666,12 @@ schema = [
      "The value is a list of dicts of smart selection rules (currently undocumented)",
      "Smart Selection Rules"),
 
+    ("smart_selection_actions_use_interpolated_strings",
+     "bool",
+     "whether smart selection action parameters are interpolated strings.",
+     "Should smart selection actions' parameters be treated as interpolated strings? If false, use the backward-compatibility syntax.",
+     "Smart Selection Actions Use Interpolated Strings"),
+
     ("semantic_history",
      "typing.Dict[str, typing.Any]",
      "the semantic history prefs.",

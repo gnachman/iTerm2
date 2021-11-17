@@ -13,6 +13,7 @@
 NS_ASSUME_NONNULL_BEGIN
 
 @class iTermImageInfo;
+@protocol iTermObject;
 @class iTermSelection;
 @class iTermSemanticHistoryController;
 @class iTermTextExtractor;
@@ -54,9 +55,9 @@ NS_ASSUME_NONNULL_BEGIN
 - (CGFloat)urlActionHelperLineHeight:(iTermURLActionHelper *)helper;
 - (void)urlActionHelper:(iTermURLActionHelper *)helper launchProfileInCurrentTerminal:(Profile *)profile withURL:(NSURL *)url;
 - (iTermVariableScope *)urlActionHelperScope:(iTermURLActionHelper *)helper;
+- (id<iTermObject>)urlActionHelperOwner:(iTermURLActionHelper *)helper;
 - (void)urlActionHelperCopySelectionIfNeeded:(iTermURLActionHelper *)helper;
 - (iTermSelection *)urlActionHelperSelection:(iTermURLActionHelper *)helper;
-
 @end
 
 @interface iTermURLActionHelper : NSObject

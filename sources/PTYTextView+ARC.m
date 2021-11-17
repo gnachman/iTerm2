@@ -687,6 +687,10 @@ static const NSUInteger kRectangularSelectionModifierMask = (kRectangularSelecti
     return [self.delegate textViewVariablesScope];
 }
 
+- (id<iTermObject>)urlActionHelperOwner:(iTermURLActionHelper *)helper {
+    return self.delegate;
+}
+
 - (void)urlActionHelperCopySelectionIfNeeded:(iTermURLActionHelper *)helper {
     if ([self.selection hasSelection] && self.delegate) {
         // if we want to copy our selection, do so
@@ -1106,6 +1110,14 @@ toggleTerminalStateForMenuItem:(nonnull NSMenuItem *)item {
 
 - (void)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu addTrigger:(NSString *)text {
     [self.delegate textViewAddTrigger:text];
+}
+
+- (id<iTermObject>)contextMenuOwner:(iTermTextViewContextMenuHelper *)contextMenu {
+    return self.delegate;
+}
+
+- (BOOL)contextMenuSmartSelectionActionsShouldUseInterpolatedStrings:(iTermTextViewContextMenuHelper *)contextMenu {
+    return [self.delegate textViewSmartSelectionActionsShouldUseInterpolatedStrings];
 }
 
 #pragma mark - NSResponder Additions

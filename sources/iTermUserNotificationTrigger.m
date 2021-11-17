@@ -55,6 +55,7 @@
     [self paramWithBackreferencesReplacedWithValues:capturedStrings
                                               count:captureCount
                                               scope:aSession.variablesScope
+                                              owner:aSession
                                    useInterpolation:useInterpolation
                                          completion:^(NSString *notificationText) {
                                              [self postNotificationWithText:notificationText inSession:aSession];

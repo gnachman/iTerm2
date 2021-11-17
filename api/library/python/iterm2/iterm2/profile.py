@@ -1827,6 +1827,18 @@ class LocalWriteOnlyProfile:
         """
         return self._simple_set("Smart Selection Rules", value)
 
+    def set_smart_selection_actions_use_interpolated_strings(self, value: bool):
+        """
+        Sets whether smart selection action parameters are interpolated
+        strings.
+
+        Should smart selection actions' parameters be treated as interpolated
+        strings? If false, use the backward-compatibility syntax.
+
+        :param value: A bool
+        """
+        return self._simple_set("Smart Selection Actions Use Interpolated Strings", value)
+
     def set_semantic_history(self, value: typing.Dict[str, typing.Any]):
         """
         Sets the semantic history prefs.
@@ -3857,6 +3869,16 @@ class WriteOnlyProfile:
         undocumented)
         """
         return await self._async_simple_set("Smart Selection Rules", value)
+
+    async def async_set_smart_selection_actions_use_interpolated_strings(self, value: bool):
+        """
+        Sets whether smart selection action parameters are interpolated
+        strings.
+
+        Should smart selection actions' parameters be treated as interpolated
+        strings? If false, use the backward-compatibility syntax.
+        """
+        return await self._async_simple_set("Smart Selection Actions Use Interpolated Strings", value)
 
     async def async_set_semantic_history(self, value: typing.Dict[str, typing.Any]):
         """
@@ -6113,6 +6135,19 @@ class Profile(WriteOnlyProfile):
         :returns: A typing.List[typing.Dict[str, typing.Any]]
         """
         return self._simple_get("Smart Selection Rules")
+
+    @property
+    def smart_selection_actions_use_interpolated_strings(self) -> bool:
+        """
+        Returns whether smart selection action parameters are interpolated
+        strings.
+
+        Should smart selection actions' parameters be treated as interpolated
+        strings? If false, use the backward-compatibility syntax.
+
+        :returns: A bool
+        """
+        return self._simple_get("Smart Selection Actions Use Interpolated Strings")
 
     @property
     def semantic_history(self) -> typing.Dict[str, typing.Any]:

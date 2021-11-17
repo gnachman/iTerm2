@@ -12,6 +12,7 @@
 NS_ASSUME_NONNULL_BEGIN
 
 @class SCPPath;
+@protocol iTermObject;
 @class VT100RemoteHost;
 @class VT100ScreenMark;
 @class iTermImageInfo;
@@ -131,6 +132,8 @@ runCommandInBackground:(NSString *)command;
 - (void)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu toggleAnimationOfImage:(iTermImageInfo *)image;
 - (void)contextMenuSaveSelectionAsSnippet:(iTermTextViewContextMenuHelper *)contextMenu;
 - (void)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu addTrigger:(NSString *)text;
+- (id<iTermObject>)contextMenuOwner:(iTermTextViewContextMenuHelper *)contextMenu;
+- (BOOL)contextMenuSmartSelectionActionsShouldUseInterpolatedStrings:(iTermTextViewContextMenuHelper *)contextMenu;
 @end
 
 @interface iTermTextViewContextMenuHelper : NSObject<NSMenuDelegate>

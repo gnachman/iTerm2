@@ -11,7 +11,9 @@
 #import "VT100GridTypes.h"
 
 @class iTermTextExtractor;
+@protocol iTermObject;
 @class iTermSemanticHistoryController;
+@class iTermVariableScope;
 @class SCPPath;
 @class URLAction;
 @class VT100RemoteHost;
@@ -21,6 +23,8 @@
 + (void)urlActionAtCoord:(VT100GridCoord)coord
      respectHardNewlines:(BOOL)respectHardNewlines
         workingDirectory:(NSString *)workingDirectory
+                   scope:(iTermVariableScope *)scope
+                   owner:(id<iTermObject>)owner
               remoteHost:(VT100RemoteHost *)remoteHost
                selectors:(NSDictionary<NSNumber *, NSString *> *)selectors
                    rules:(NSArray *)rules

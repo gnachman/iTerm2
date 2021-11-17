@@ -43,6 +43,8 @@ typedef enum {
 @property (nonatomic) BOOL respectHardNewlines;
 @property (nonatomic, copy) NSString *workingDirectory;
 @property (nonatomic, strong) VT100RemoteHost *remoteHost;
+@property (nonatomic, strong) iTermVariableScope *scope;
+@property (nonatomic, strong) id<iTermObject> owner;
 @property (nonatomic, copy) NSDictionary<NSNumber *, NSString *> *selectors;
 @property (nonatomic, copy) NSArray *rules;
 @property (nonatomic, strong) iTermTextExtractor *extractor;
@@ -66,6 +68,8 @@ static NSMutableArray<iTermURLActionFactory *> *sFactories;
 + (void)urlActionAtCoord:(VT100GridCoord)coord
      respectHardNewlines:(BOOL)respectHardNewlines
         workingDirectory:(NSString *)workingDirectory
+                   scope:(iTermVariableScope *)scope
+                   owner:(id<iTermObject>)owner
               remoteHost:(VT100RemoteHost *)remoteHost
                selectors:(NSDictionary<NSNumber *, NSString *> *)selectors
                    rules:(NSArray *)rules
@@ -78,6 +82,8 @@ semanticHistoryController:(iTermSemanticHistoryController *)semanticHistoryContr
     factory.respectHardNewlines = respectHardNewlines;
     factory.workingDirectory = workingDirectory;
     factory.remoteHost = remoteHost;
+    factory.scope = scope;
+    factory.owner = owner;
     factory.selectors = selectors;
     factory.rules = rules;
     factory.extractor = extractor;
@@ -211,12 +217,13 @@ semanticHistoryController:(iTermSemanticHistoryController *)semanticHistoryContr
 }
 
 - (void)trySmartSelectionAction {
-    URLAction *action = [self urlActionForSmartSelection];
-    if (action) {
-        [self completeWithAction:action];
-    } else {
-        [self fail];
-    }
+    [self computeURLActionForSmartSelection:^(URLAction *action) {
+        if (action) {
+            [self completeWithAction:action];
+        } else {
+            [self fail];
+        }
+    }];
 }
 
 - (void)tryAnyStringSemanticHistory {
@@ -381,7 +388,7 @@ semanticHistoryController:(iTermSemanticHistoryController *)semanticHistoryContr
     return action;
 }
 
-- (URLAction *)urlActionForSmartSelection {
+- (void)computeURLActionForSmartSelection:(void (^)(URLAction *action))completion {
     // Next, see if smart selection matches anything with an action.
     VT100GridWindowedRange smartRange;
     SmartMatch *smartMatch = [self.extractor smartSelectionAt:self.coord
@@ -402,13 +409,15 @@ semanticHistoryController:(iTermSemanticHistoryController *)semanticHistoryContr
         action.range = smartRange;
         ContextMenuActions value = [ContextMenuActionPrefsController actionForActionDict:actions[0]];
         action.selector = NSSelectorFromString(self.selectors[@(value)]);
-        action.representedObject = [ContextMenuActionPrefsController parameterForActionDict:actions[0]
-                                                                      withCaptureComponents:smartMatch.components
-                                                                           workingDirectory:self.workingDirectory
-                                                                                 remoteHost:self.remoteHost];
-        return action;
+
+        action.representedObject = @{ iTermSmartSelectionActionContextKeyAction: actions[0],
+                                      iTermSmartSelectionActionContextKeyComponents: smartMatch.components,
+                                      iTermSmartSelectionActionContextKeyWorkingDirectory: self.workingDirectory,
+                                      iTermSmartSelectionActionContextKeyRemoteHost: self.remoteHost};
+        completion(action);
+    } else {
+        completion(nil);
     }
-    return nil;
 }
 
 - (URLAction *)urlActionForAnyStringSemanticHistory {

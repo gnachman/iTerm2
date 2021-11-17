@@ -65,6 +65,7 @@ class SetUserVariableTrigger: Trigger {
         let strings = Array(buffer).compactMap { $0 as String? }
         paramWithBackreferencesReplaced(withValues: strings,
                                         scope: session.genericScope,
+                                        owner: session,
                                         useInterpolation: useInterpolation) { [weak self] message in
             if let (name, value) = self?.variableNameAndValue(message) {
                 session.genericScope.setValue(value, forVariableNamed: "user." + name)

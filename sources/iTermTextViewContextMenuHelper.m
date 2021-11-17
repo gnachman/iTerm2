@@ -11,6 +11,7 @@
 #import "NSURL+iTerm.h"
 #import "SCPPath.h"
 #import "SmartSelectionController.h"
+#import "VT100RemoteHost.h"
 #import "VT100ScreenMark.h"
 #import "iTermAPIHelper.h"
 #import "iTermAdvancedSettingsModel.h"
@@ -20,6 +21,7 @@
 #import "iTermSelection.h"
 #import "iTermTextExtractor.h"
 #import "iTermURLActionHelper.h"
+#import "iTermVariableScope.h"
 #import "NSColor+iTerm.h"
 #import "RegexKitLite.h"
 #import "WindowControllerInterface.h"
@@ -666,12 +668,10 @@ static uint64_t iTermInt64FromBytes(const unsigned char *bytes, BOOL bigEndian) 
                     NSMenuItem *theItem = [[NSMenuItem alloc] initWithTitle:theTitle
                                                                      action:mySelector
                                                               keyEquivalent:@""];
-                    NSString *parameter =
-                        [ContextMenuActionPrefsController parameterForActionDict:action
-                                                           withCaptureComponents:components
-                                                                workingDirectory:workingDirectory
-                                                                      remoteHost:remoteHost];
-                    [theItem setRepresentedObject:parameter];
+                    [theItem setRepresentedObject:@{ iTermSmartSelectionActionContextKeyAction: action,
+                                                     iTermSmartSelectionActionContextKeyComponents: components,
+                                                     iTermSmartSelectionActionContextKeyWorkingDirectory: workingDirectory,
+                                                     iTermSmartSelectionActionContextKeyRemoteHost: remoteHost} ];
                     [theItem setTarget:self];
                     [theMenu addItem:theItem];
                     didAdd = YES;
@@ -765,23 +765,38 @@ static uint64_t iTermInt64FromBytes(const unsigned char *bytes, BOOL bigEndian) 
 
 - (void)contextMenuActionOpenFile:(id)sender {
     DLog(@"Open file: '%@'", [sender representedObject]);
-    [[NSWorkspace sharedWorkspace] openFile:[[sender representedObject] stringByExpandingTildeInPath]];
+    NSDictionary *dict = [sender representedObject];
+    [self evaluateCustomActionDictionary:dict completion:^(NSString *value) {
+        if (!value) {
+            return;
+        }
+        [[NSWorkspace sharedWorkspace] openFile:[value stringByExpandingTildeInPath]];
+    }];
 }
 
 - (void)contextMenuActionOpenURL:(id)sender {
-    NSURL *url = [NSURL URLWithUserSuppliedString:[sender representedObject]];
-    if (url) {
-        DLog(@"Open URL: %@", [sender representedObject]);
-        [[NSWorkspace sharedWorkspace] openURL:url];
-    } else {
-        DLog(@"%@ is not a URL", [sender representedObject]);
-    }
+    [self evaluateCustomActionDictionary:[sender representedObject] completion:^(NSString *value) {
+        if (!value) {
+            return;
+        }
+        NSURL *url = [NSURL URLWithUserSuppliedString:value];
+        if (url) {
+            DLog(@"Open URL: %@", [sender representedObject]);
+            [[NSWorkspace sharedWorkspace] openURL:url];
+        } else {
+            DLog(@"%@ is not a URL", [sender representedObject]);
+        }
+    }];
 }
 
 - (void)contextMenuActionRunCommand:(id)sender {
-    NSString *command = [sender representedObject];
-    DLog(@"Run command: %@", command);
-    [self runCommand:command];
+    [self evaluateCustomActionDictionary:[sender representedObject] completion:^(NSString *value) {
+        DLog(@"Run command: %@", value);
+        if (!value) {
+            return;
+        }
+        [self runCommand:value];
+    }];
 }
 
 - (void)contextMenuActionRunCommandInWindow:(id)sender {
@@ -795,15 +810,45 @@ static uint64_t iTermInt64FromBytes(const unsigned char *bytes, BOOL bigEndian) 
 }
 
 - (void)contextMenuActionRunCoprocess:(id)sender {
-    NSString *command = [sender representedObject];
-    DLog(@"Run coprocess: %@", command);
-    [self.delegate contextMenu:self runCoprocess:command];
+    [self evaluateCustomActionDictionary:[sender representedObject] completion:^(NSString *value) {
+        DLog(@"Run coprocess: %@", value);
+        if (!value) {
+            return;
+        }
+        [self.delegate contextMenu:self runCoprocess:value];
+    }];
 }
 
 - (void)contextMenuActionSendText:(id)sender {
-    NSString *command = [sender representedObject];
-    DLog(@"Send text: %@", command);
-    [self.delegate contextMenu:self insertText:command];
+    [self evaluateCustomActionDictionary:[sender representedObject] completion:^(NSString *value) {
+        DLog(@"Send text: %@", value);
+        if (!value) {
+            return;
+        }
+        [self.delegate contextMenu:self insertText:value];
+    }];
+}
+
+- (BOOL)smartSelectionActionsShouldUseInterpolatedStrings {
+    return [self.delegate contextMenuSmartSelectionActionsShouldUseInterpolatedStrings:self];
+}
+
+- (void)evaluateCustomActionDictionary:(NSDictionary *)dict completion:(void (^)(NSString * _Nullable))completion {
+    NSDictionary *action = dict[iTermSmartSelectionActionContextKeyAction];
+    NSArray *components = dict[iTermSmartSelectionActionContextKeyComponents];
+    NSString *workingDirectory = dict[iTermSmartSelectionActionContextKeyWorkingDirectory];
+    VT100RemoteHost *remoteHost = dict[iTermSmartSelectionActionContextKeyRemoteHost];
+
+    iTermVariableScope *myScope = [[self.delegate contextMenuSessionScope:self] copy];
+    [myScope setValue:workingDirectory forVariableNamed:iTermVariableKeySessionPath];
+    [myScope setValue:remoteHost.hostname forVariableNamed:iTermVariableKeySessionHostname];
+    [myScope setValue:remoteHost.username forVariableNamed:iTermVariableKeySessionUsername];
+    [ContextMenuActionPrefsController computeParameterForActionDict:action
+                                              withCaptureComponents:components
+                                                   useInterpolation:[self smartSelectionActionsShouldUseInterpolatedStrings]
+                                                              scope:myScope
+                                                              owner:[self.delegate contextMenuOwner:self]
+                                                         completion:completion];
 }
 
 - (void)downloadWithSCP:(id)sender {

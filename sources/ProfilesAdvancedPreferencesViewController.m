@@ -99,6 +99,7 @@
                        KEY_TRIGGERS_USE_INTERPOLATED_STRINGS,
                        KEY_ENABLE_TRIGGERS_IN_INTERACTIVE_APPS,
                        KEY_SMART_SELECTION_RULES,
+                       KEY_SMART_SELECTION_ACTIONS_USE_INTERPOLATED_STRINGS,
                        KEY_SEMANTIC_HISTORY,
                        KEY_BOUND_HOSTS ];
     return [[super keysForBulkCopy] arrayByAddingObjectsFromArray:keys];
@@ -188,6 +189,8 @@
 #pragma mark - SmartSelectionDelegate
 
 - (void)smartSelectionChanged:(SmartSelectionController *)controller {
+    // Note: This is necessary for setUseInterpolatedStrings to work right. If you remove this
+    // ensure it is saved properly.
     [[self.delegate profilePreferencesCurrentModel] flush];
     [[NSNotificationCenter defaultCenter] postNotificationName:kReloadAllProfiles object:nil];
 }

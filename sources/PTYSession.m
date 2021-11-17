@@ -9685,6 +9685,11 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     return _terminal.mouseMode != MOUSE_REPORTING_NONE;
 }
 
+- (BOOL)textViewSmartSelectionActionsShouldUseInterpolatedStrings {
+    return [iTermProfilePreferences boolForKey:KEY_SMART_SELECTION_ACTIONS_USE_INTERPOLATED_STRINGS
+                                     inProfile:self.profile];
+}
+
 - (BOOL)textViewReportMouseEvent:(NSEventType)eventType
                        modifiers:(NSUInteger)modifiers
                           button:(MouseButtonNumber)button

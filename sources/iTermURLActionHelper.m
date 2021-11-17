@@ -79,6 +79,8 @@
         [iTermURLActionFactory urlActionAtCoord:coord
                             respectHardNewlines:respectHardNewlines
                                workingDirectory:workingDirectory ?: @""
+                                          scope:[self.delegate urlActionHelperScope:self]
+                                          owner:[self.delegate urlActionHelperOwner:self]
                                      remoteHost:[self.delegate urlActionHelper:self remoteHostOnLine:coord.y]
                                       selectors:[self.delegate urlActionHelperSmartSelectionActionSelectorDictionary:self]
                                           rules:[self.delegate urlActionHelperSmartSelectionRules:self]

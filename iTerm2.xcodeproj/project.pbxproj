@@ -1811,6 +1811,7 @@
 		A62DBBA820F4852A008B63D1 /* iTermStatusBarFunctionCallComponent.m in Sources */ = {isa = PBXBuildFile; fileRef = A62DBBA620F4852A008B63D1 /* iTermStatusBarFunctionCallComponent.m */; };
 		A62EE250274473BB00D57B54 /* iTermFileDescriptorMultiClient+MRR.m in Sources */ = {isa = PBXBuildFile; fileRef = A663196C22FE651D00C502BD /* iTermFileDescriptorMultiClient+MRR.m */; };
 		A62EE251274473C700D57B54 /* iTermProfilePreferencesTabViewWrapperView.m in Sources */ = {isa = PBXBuildFile; fileRef = A629C6FD220FFF5E00E7D4AE /* iTermProfilePreferencesTabViewWrapperView.m */; };
+		A62EE25527448CDB00D57B54 /* SwiftyStringWithBackreferencesEvaluator.swift in Sources */ = {isa = PBXBuildFile; fileRef = A62EE25427448CDB00D57B54 /* SwiftyStringWithBackreferencesEvaluator.swift */; };
 		A62EED9220DF5B2F00943DE3 /* iTermScriptChooser.h in Headers */ = {isa = PBXBuildFile; fileRef = A62EED9020DF5B2F00943DE3 /* iTermScriptChooser.h */; };
 		A62EED9320DF5B2F00943DE3 /* iTermScriptChooser.m in Sources */ = {isa = PBXBuildFile; fileRef = A62EED9120DF5B2F00943DE3 /* iTermScriptChooser.m */; };
 		A62EED9620DF602F00943DE3 /* iTermCommandRunner.h in Headers */ = {isa = PBXBuildFile; fileRef = A62EED9420DF602F00943DE3 /* iTermCommandRunner.h */; };
@@ -5445,6 +5446,7 @@
 		A62DBB9820F47CFA008B63D1 /* GoBack@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "GoBack@2x.png"; path = "images/GoBack@2x.png"; sourceTree = "<group>"; };
 		A62DBBA520F4852A008B63D1 /* iTermStatusBarFunctionCallComponent.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermStatusBarFunctionCallComponent.h; sourceTree = "<group>"; };
 		A62DBBA620F4852A008B63D1 /* iTermStatusBarFunctionCallComponent.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermStatusBarFunctionCallComponent.m; sourceTree = "<group>"; };
+		A62EE25427448CDB00D57B54 /* SwiftyStringWithBackreferencesEvaluator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwiftyStringWithBackreferencesEvaluator.swift; sourceTree = "<group>"; };
 		A62EED9020DF5B2F00943DE3 /* iTermScriptChooser.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermScriptChooser.h; sourceTree = "<group>"; };
 		A62EED9120DF5B2F00943DE3 /* iTermScriptChooser.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermScriptChooser.m; sourceTree = "<group>"; };
 		A62EED9420DF602F00943DE3 /* iTermCommandRunner.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermCommandRunner.h; sourceTree = "<group>"; };
@@ -10048,6 +10050,7 @@
 				A621F10E26F8E9E6001DD3A6 /* iTermTLVCodec.m */,
 				A67BCFE9270F893300636983 /* CodableColor.swift */,
 				A6F699092728C45800C4A3A6 /* Mux.swift */,
+				A62EE25427448CDB00D57B54 /* SwiftyStringWithBackreferencesEvaluator.swift */,
 			);
 			name = Helpers;
 			sourceTree = "<group>";
@@ -14720,6 +14723,7 @@
 				533BDAC320DB5CE100E26F0A /* NSObject+iTerm.m in Sources */,
 				A653F69124D00B9E0062377E /* iTermGraphTableTransformer.m in Sources */,
 				A6AFD69524497410007D0660 /* iTermFileDescriptorMultiClientState.m in Sources */,
+				A62EE25527448CDB00D57B54 /* SwiftyStringWithBackreferencesEvaluator.swift in Sources */,
 				A673DEBF22624A90004EBF4D /* iTermCopyModeHandler.m in Sources */,
 				A675856124595D6C00827C25 /* iTermSquash.m in Sources */,
 				A6B540FB224838A100D3AD14 /* NSColor+PSM.m in Sources */,

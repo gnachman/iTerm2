@@ -59,7 +59,9 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)invalidate;
 - (void)evaluateSynchronously:(BOOL)synchronously
                     withScope:(iTermVariableScope *)scope
-                   completion:(void (^)(NSString *result, NSError *error, NSSet<NSString *> *missing))completion;
+                   completion:(void (^)(NSString * _Nullable result,
+                                        NSError * _Nullable error,
+                                        NSSet<NSString *> *missing))completion;
 
 @end
 

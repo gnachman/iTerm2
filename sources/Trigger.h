@@ -11,6 +11,7 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+@protocol iTermObject;
 @class iTermStringLine;
 @class iTermVariableScope;
 @class PTYSession;
@@ -70,11 +71,13 @@ extern NSString * const kTriggerDisabledKey;
 - (void)paramWithBackreferencesReplacedWithValues:(NSString * _Nonnull const * _Nonnull)strings
                                             count:(NSInteger)count
                                             scope:(iTermVariableScope *)scope
+                                            owner:(id<iTermObject>)owner
                                  useInterpolation:(BOOL)useInterpolation
                                        completion:(void (^)(NSString *result))completion;
 
 - (void)paramWithBackreferencesReplacedWithValues:(NSArray<NSString *> *)strings
                                             scope:(iTermVariableScope *)scope
+                                            owner:(id<iTermObject>)owner
                                  useInterpolation:(BOOL)useInterpolation
                                        completion:(void (^)(NSString *result))completion;
 

@@ -256,6 +256,7 @@
 #define KEY_ENABLE_TRIGGERS_IN_INTERACTIVE_APPS @"Enable Triggers in Interactive Apps"  // Bool
 #define KEY_TRIGGERS_USE_INTERPOLATED_STRINGS @"Triggers Use Interpolated Strings"
 #define KEY_SMART_SELECTION_RULES            @"Smart Selection Rules"
+#define KEY_SMART_SELECTION_ACTIONS_USE_INTERPOLATED_STRINGS @"Smart Selection Actions Use Interpolated Strings"  // Bool
 #define KEY_SEMANTIC_HISTORY                 @"Semantic History"
 #define KEY_BOUND_HOSTS                      @"Bound Hosts"
 

@@ -10,6 +10,7 @@
 
 #import "DebugLogging.h"
 #import "ProfileModel.h"
+#import "iTermProfilePreferences.h"
 #import "ITAddressBookMgr.h"
 #import "FutureMethods.h"
 #import "NSObject+iTerm.h"
@@ -141,7 +142,8 @@ static char iTermSmartSelectionControllerAssociatedObjectRowIndexKey;
     }
     Profile* bookmark = [self bookmark];
     [[self modelForBookmark:bookmark] setObject:rules forKey:KEY_SMART_SELECTION_RULES inBookmark:bookmark];
-    [tableView_ reloadData];
+    [self reloadData];
+    // This must flush user defaults for setUseInterpolatedStrings to work.
     [delegate_ smartSelectionChanged:nil];
 }
 
@@ -161,7 +163,7 @@ static char iTermSmartSelectionControllerAssociatedObjectRowIndexKey;
     if (row < 0) {
         return;
     }
-    [tableView_ reloadData];
+    [self reloadData];
     [self setRule:nil forRow:row];
 }
 
@@ -170,13 +172,13 @@ static char iTermSmartSelectionControllerAssociatedObjectRowIndexKey;
     [[self modelForBookmark:bookmark] setObject:[SmartSelectionController defaultRules]
                                          forKey:KEY_SMART_SELECTION_RULES
                                      inBookmark:bookmark];
-    [tableView_ reloadData];
+    [self reloadData];
     [delegate_ smartSelectionChanged:nil];
 }
 
 - (void)setGuid:(NSString *)guid {
     guid_ = [guid copy];
-    [tableView_ reloadData];
+    [self reloadData];
 }
 
 - (NSString *)displayNameForPrecision:(NSString *)precision {
@@ -310,6 +312,15 @@ static char iTermSmartSelectionControllerAssociatedObjectRowIndexKey;
 #pragma mark - NSTableViewDelegate
 
 - (void)tableViewSelectionDidChange:(NSNotification *)notification {
+    [self updateHasSelection];
+}
+
+- (void)reloadData {
+    [tableView_ reloadData];
+    [self updateHasSelection];
+}
+
+- (void)updateHasSelection {
     self.hasSelection = [tableView_ numberOfSelectedRows] > 0;
 }
 
@@ -338,6 +349,7 @@ static char iTermSmartSelectionControllerAssociatedObjectRowIndexKey;
     }
     NSArray *actions = [SmartSelectionController actionsInRule:rule];
     [contextMenuPrefsController_ setActions:actions];
+    contextMenuPrefsController_.useInterpolatedStrings = [self useInterpolatedStrings];
     [contextMenuPrefsController_ window];
     [contextMenuPrefsController_ setDelegate:self];
     __weak __typeof(self) weakSelf = self;
@@ -355,12 +367,27 @@ static char iTermSmartSelectionControllerAssociatedObjectRowIndexKey;
 
 #pragma mark - Context Menu Actions Delegate
 
-- (void)contextMenuActionsChanged:(NSArray *)newActions {
+- (void)contextMenuActionsChanged:(NSArray *)newActions useInterpolatedStrings:(BOOL)useInterpolatedStrings {
     int rowIndex = [tableView_ selectedRow];
     NSMutableDictionary *rule = [[self.rules objectAtIndex:rowIndex] mutableCopy];
     [rule setObject:newActions forKey:kActionsKey];
+    [self setUseInterpolatedStrings:useInterpolatedStrings];
+    // This call flushes user defaults, which setUseInterpolatedStrings: needs.
     [self setRule:rule forRow:rowIndex];
     [contextMenuPrefsController_.window.sheetParent endSheet:contextMenuPrefsController_.window];
+}
+
+- (void)setUseInterpolatedStrings:(BOOL)useInterpolatedStrings {
+    // Note: this assumes the caller will flush to user defaults.
+    Profile *profile = [self bookmark];
+    [[self modelForBookmark:profile] setObject:@(useInterpolatedStrings)
+                                        forKey:KEY_SMART_SELECTION_ACTIONS_USE_INTERPOLATED_STRINGS
+                                    inBookmark:profile];
+}
+
+- (BOOL)useInterpolatedStrings {
+    return [iTermProfilePreferences boolForKey:KEY_SMART_SELECTION_ACTIONS_USE_INTERPOLATED_STRINGS
+                                     inProfile:self.bookmark];
 }
 
 #pragma mark - NSTextFieldDelegate

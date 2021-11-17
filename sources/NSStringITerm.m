@@ -251,11 +251,13 @@
     NSNumber *tkey = @'t';
     NSNumber *rkey = @'r';
     NSNumber *bskey = @'\\';
+    NSNumber *ekey = @'e';
     NSDictionary *escapes = @{ nkey: @('\n'),
                                akey: @('\x07'),
                                tkey: @('\t'),
                                rkey: @('\r'),
-                               bskey: @('\\') };
+                               bskey: @('\\'),
+                               ekey: @('\e') };
     NSMutableString *result = [NSMutableString string];
     NSInteger start = 0;
     BOOL escape = NO;

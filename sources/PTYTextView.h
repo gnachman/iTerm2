@@ -10,6 +10,7 @@
 #import "iTermKeyBindingAction.h"
 #import "iTermKeyboardHandler.h"
 #import "iTermLogicalMovementHelper.h"
+#import "iTermObject.h"
 #import "iTermSemanticHistoryController.h"
 #import "iTermTextDrawingHelper.h"
 #import "LineBuffer.h"
@@ -55,7 +56,7 @@ typedef NS_ENUM(NSInteger, PTYCharType) {
     CHARTYPE_OTHER,       // Symbols, etc. Anything that doesn't fall into the other categories.
 };
 
-@protocol PTYTextViewDelegate <NSObject, iTermBadgeLabelDelegate>
+@protocol PTYTextViewDelegate <NSObject, iTermBadgeLabelDelegate, iTermObject>
 
 @property (nonatomic, readonly) NSEdgeInsets textViewEdgeInsets;
 
@@ -246,6 +247,7 @@ typedef NS_ENUM(NSInteger, PTYCharType) {
 
 - (BOOL)textViewCanWriteToTTY;
 - (BOOL)textViewAnyMouseReportingModeIsEnabled;
+- (BOOL)textViewSmartSelectionActionsShouldUseInterpolatedStrings;
 
 @end
 

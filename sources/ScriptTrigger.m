@@ -53,6 +53,7 @@
     [self paramWithBackreferencesReplacedWithValues:capturedStrings
                                               count:captureCount
                                               scope:aSession.variablesScope
+                                              owner:aSession
                                    useInterpolation:useInterpolation
                                          completion:^(NSString *command) {
         if (!command) {

@@ -149,6 +149,7 @@ static NSString *const kSuppressCaptureOutputToolNotVisibleWarning =
     if (!session.hasCoprocess) {
         [self paramWithBackreferencesReplacedWithValues:capturedOutput.values
                                                   scope:session.variablesScope
+                                                  owner:session
                                        useInterpolation:session.triggerParametersUseInterpolatedStrings
                                              completion:^(NSString *command) {
                                                  if (command) {

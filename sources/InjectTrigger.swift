@@ -33,8 +33,9 @@ class InjectTrigger: Trigger {
         let strings = Array(buffer).compactMap { $0 as String? }
         paramWithBackreferencesReplaced(withValues: strings,
                                         scope: session.genericScope,
+                                        owner: session,
                                         useInterpolation: useInterpolation) { message in
-            session.inject(message.data(using: .utf8))
+                        session.inject(message.data(using: .utf8))
         }
         return false
     }

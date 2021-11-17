@@ -56,6 +56,5 @@ extern NSString *const kVeryHighPrecision;
 - (IBAction)logDebugInfoChanged:(id)sender;
 - (IBAction)editActions:(id)sender;
 - (void)windowWillOpen;
-- (void)contextMenuActionsChanged:(NSArray *)newActions;
 
 @end

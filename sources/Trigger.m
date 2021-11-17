@@ -15,6 +15,7 @@
 #import "RegexKitLite.h"
 #import "ScreenChar.h"
 #import <CommonCrypto/CommonDigest.h>
+#import "iTerm2SharedARC-Swift.h"
 
 NSString * const kTriggerRegexKey = @"regex";
 NSString * const kTriggerActionKey = @"action";
@@ -31,7 +32,7 @@ NSString * const kTriggerDisabledKey = @"disabled";
     long long _lastLineNumber;
     NSString *regex_;
     id param_;
-    iTermSwiftyString *_cachedSwiftyString;
+    iTermSwiftyStringWithBackreferencesEvaluator *_evaluator;
 }
 
 @synthesize regex = regex_;
@@ -199,6 +200,7 @@ NSString * const kTriggerDisabledKey = @"disabled";
 
 - (void)paramWithBackreferencesReplacedWithValues:(NSArray *)strings
                                             scope:(iTermVariableScope *)scope
+                                            owner:(id<iTermObject>)owner
                                  useInterpolation:(BOOL)useInterpolation
                                        completion:(void (^)(NSString *))completion {
     NSString *temp[10];
@@ -209,6 +211,7 @@ NSString * const kTriggerDisabledKey = @"disabled";
     [self paramWithBackreferencesReplacedWithValues:temp
                                               count:i
                                               scope:scope
+                                              owner:owner
                                    useInterpolation:useInterpolation
                                          completion:completion];
 }
@@ -216,6 +219,7 @@ NSString * const kTriggerDisabledKey = @"disabled";
 - (void)paramWithBackreferencesReplacedWithValues:(NSString * const*)strings
                                             count:(NSInteger)count
                                             scope:(iTermVariableScope *)scope
+                                            owner:(id<iTermObject>)owner
                                  useInterpolation:(BOOL)useInterpolation
                                        completion:(void (^)(NSString *))completion {
     NSString *p = [NSString castFrom:self.param] ?: @"";
@@ -223,6 +227,7 @@ NSString * const kTriggerDisabledKey = @"disabled";
         [self evaluateSwiftyStringParameter:p
                              backreferences:[[NSArray alloc] initWithObjects:strings count:count]
                                       scope:scope
+                                      owner:owner
                                  completion:completion];
         return;
     }
@@ -256,26 +261,40 @@ NSString * const kTriggerDisabledKey = @"disabled";
 - (void)evaluateSwiftyStringParameter:(NSString *)expression
                        backreferences:(NSArray<NSString *> *)backreferences
                                 scope:(iTermVariableScope *)scope
+                                owner:(id<iTermObject>)owner
                            completion:(void (^)(NSString *))completion {
-    iTermVariableScope *myScope = [self variableScope:scope byAddingBackreferences:backreferences];;
-    if (![_cachedSwiftyString.swiftyString isEqualToString:expression]) {
-        _cachedSwiftyString = [[iTermSwiftyString alloc] initWithString:expression scope:myScope observer:nil];
+    if (!_evaluator) {
+        _evaluator = [[iTermSwiftyStringWithBackreferencesEvaluator alloc] initWithExpression:expression];
+    } else {
+        _evaluator.expression = expression;
     }
-
-    [_cachedSwiftyString evaluateSynchronously:NO withScope:myScope completion:^(NSString * _Nonnull value, NSError * _Nonnull error, NSSet<NSString *> * _Nonnull missing) {
+    __weak __typeof(self) weakSelf = self;
+    [_evaluator evaluateWithBackreferences:backreferences
+                                     scope:scope
+                                     owner:owner
+                                completion:^(NSString * _Nullable value, NSError * _Nullable error) {
         if (error) {
-            [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"The following parameter for a “%@” trigger could not be evaluated:\n\n%@\n\nThe error was:\n\n%@",
-                                                [[self class] title], self->_cachedSwiftyString.swiftyString, error.localizedDescription]
-                                       actions:@[ @"OK" ]
-                                     accessory:nil
-                                    identifier:@"NoSyncErrorInTriggerParameter"
-                                   silenceable:kiTermWarningTypeTemporarilySilenceable
-                                       heading:@"Error in Trigger Parameter"
-                                        window:nil];
+            [weakSelf evaluationDidFailWithError:error];
             completion(nil);
+        } else {
+            completion(value);
         }
-        completion(value);
     }];
+}
+
+- (void)evaluationDidFailWithError:(NSError *)error {
+    NSString *title =
+        [NSString stringWithFormat:@"The following parameter for a “%@” trigger could not be evaluated:\n\n%@\n\nThe error was:\n\n%@",
+                       [[self class] title],
+                       _evaluator.expression,
+                       error.localizedDescription];
+    [iTermWarning showWarningWithTitle:title
+                               actions:@[ @"OK" ]
+                             accessory:nil
+                            identifier:@"NoSyncErrorInTriggerParameter"
+                           silenceable:kiTermWarningTypeTemporarilySilenceable
+                               heading:@"Error in Trigger Parameter"
+                                window:nil];
 }
 
 - (NSComparisonResult)compareTitle:(Trigger *)other
