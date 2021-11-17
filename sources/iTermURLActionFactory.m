@@ -412,8 +412,8 @@ semanticHistoryController:(iTermSemanticHistoryController *)semanticHistoryContr
 
         action.representedObject = @{ iTermSmartSelectionActionContextKeyAction: actions[0],
                                       iTermSmartSelectionActionContextKeyComponents: smartMatch.components,
-                                      iTermSmartSelectionActionContextKeyWorkingDirectory: self.workingDirectory,
-                                      iTermSmartSelectionActionContextKeyRemoteHost: self.remoteHost};
+                                      iTermSmartSelectionActionContextKeyWorkingDirectory: self.workingDirectory ?: [NSNull null],
+                                      iTermSmartSelectionActionContextKeyRemoteHost: self.remoteHost ?: [NSNull null]};
         completion(action);
     } else {
         completion(nil);

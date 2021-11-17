@@ -836,8 +836,8 @@ static uint64_t iTermInt64FromBytes(const unsigned char *bytes, BOOL bigEndian) 
 - (void)evaluateCustomActionDictionary:(NSDictionary *)dict completion:(void (^)(NSString * _Nullable))completion {
     NSDictionary *action = dict[iTermSmartSelectionActionContextKeyAction];
     NSArray *components = dict[iTermSmartSelectionActionContextKeyComponents];
-    NSString *workingDirectory = dict[iTermSmartSelectionActionContextKeyWorkingDirectory];
-    VT100RemoteHost *remoteHost = dict[iTermSmartSelectionActionContextKeyRemoteHost];
+    NSString *workingDirectory = [dict[iTermSmartSelectionActionContextKeyWorkingDirectory] nilIfNull];
+    VT100RemoteHost *remoteHost = [dict[iTermSmartSelectionActionContextKeyRemoteHost] nilIfNull];
 
     iTermVariableScope *myScope = [[self.delegate contextMenuSessionScope:self] copy];
     [myScope setValue:workingDirectory forVariableNamed:iTermVariableKeySessionPath];
