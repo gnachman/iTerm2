@@ -92,4 +92,8 @@ static CGFloat desiredHeight = 135;
 - (void)composerTextViewDidResignFirstResponder {
 }
 
+- (void)composerTextViewSendToAdvancedPaste:(NSString *)content {
+    [self.delegate minimalComposer:self sendToAdvancedPaste:content];
+}
+
 @end

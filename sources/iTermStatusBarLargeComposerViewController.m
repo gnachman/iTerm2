@@ -14,6 +14,7 @@
 #import "NSResponder+iTerm.h"
 #import "NSStringITerm.h"
 #import "NSView+iTerm.h"
+#import "PasteboardHistory.h"
 #import "SolidColorView.h"
 #import "VT100RemoteHost.h"
 #import "WindowControllerInterface.h"
@@ -271,6 +272,14 @@ static NSRange iTermRangeMinus(NSRange lhs, NSRange rhs) {
         cache = [NSMutableDictionary dictionary];
     });
     return cache;
+}
+
+- (IBAction)pasteOptions:(id)sender {
+    NSString *content = self.textView.string;
+    if (!content) {
+        return;
+    }
+    [self.textView.composerDelegate composerTextViewSendToAdvancedPaste:content];
 }
 
 - (void)setShell:(NSString *)shell {

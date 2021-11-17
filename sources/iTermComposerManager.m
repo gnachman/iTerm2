@@ -178,6 +178,14 @@
     [self.delegate composerManager:self sendCommand:[command stringByAppendingString:@"\n"]];
 }
 
+- (void)minimalComposer:(iTermMinimalComposerViewController *)composer
+    sendToAdvancedPaste:(NSString *)content {
+    [self dismissMinimalView];
+    _saved = nil;
+    [self.delegate composerManager:self
+               sendToAdvancedPaste:[content stringByAppendingString:@"\n"]];
+}
+
 - (void)dismissMinimalView {
     NSViewController *vc = _minimalViewController;
     [NSView animateWithDuration:0.125

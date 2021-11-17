@@ -15127,6 +15127,13 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [self writeTask:command];
 }
 
+- (void)composerManager:(iTermComposerManager *)composerManager
+    sendToAdvancedPaste:(NSString *)command {
+    [_textview copyString:command];
+    [_pasteHelper showPasteOptionsInWindow:_delegate.realParentWindow.window
+                         bracketingEnabled:_terminal.bracketedPasteMode];
+}
+
 - (void)composerManagerDidDismissMinimalView:(iTermComposerManager *)composerManager {
     [_textview.window makeFirstResponder:_textview];
 }

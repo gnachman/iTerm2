@@ -14,6 +14,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @protocol iTermComposerTextViewDelegate<NSObject>
 - (void)composerTextViewDidFinishWithCancel:(BOOL)cancel;
+- (void)composerTextViewSendToAdvancedPaste:(NSString *)content;
 
 @optional
 - (void)composerTextViewDidResignFirstResponder;
