@@ -9,7 +9,4 @@
 import AppKit
 
 class SearchableComboVibrantVisualEffectView: NSVisualEffectView {
-    override var allowsVibrancy: Bool {
-        return true
-    }
 }

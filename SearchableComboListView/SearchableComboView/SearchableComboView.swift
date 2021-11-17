@@ -8,7 +8,7 @@
 import AppKit
 
 @objc(iTermSearchableComboViewDelegate)
-public protocol SearchableComboViewDelegate: class {
+public protocol SearchableComboViewDelegate: AnyObject {
     func searchableComboView(_ view: SearchableComboView, didSelectItem: SearchableComboViewItem?)
 }
 
