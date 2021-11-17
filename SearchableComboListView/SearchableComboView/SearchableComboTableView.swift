@@ -7,7 +7,7 @@
 
 import AppKit
 
-protocol SearchableComboTableViewDelegate: class {
+protocol SearchableComboTableViewDelegate: AnyObject {
     func searchableComboTableView(_ tableView: SearchableComboTableView,
                                   didClickRow row: Int)
     func searchableComboTableView(_ tableView: SearchableComboTableView,
