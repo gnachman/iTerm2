@@ -3146,6 +3146,7 @@
 		A6BCAAD821F6F53E0000CD29 /* iTermTextPopoverViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6BCAAD421F6F53E0000CD29 /* iTermTextPopoverViewController.h */; };
 		A6BCAADA21F6F53E0000CD29 /* iTermTextPopoverViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6BCAAD521F6F53E0000CD29 /* iTermTextPopoverViewController.m */; };
 		A6BCAADB21F6F53E0000CD29 /* iTermTextPopoverViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = A6BCAAD621F6F53E0000CD29 /* iTermTextPopoverViewController.xib */; };
+		A6BD5A722745D5710098594E /* NSTextView+iTerm.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6BD5A712745D5710098594E /* NSTextView+iTerm.swift */; };
 		A6BDB0511B45FC4300F511E6 /* DefaultBookmark.plist in Resources */ = {isa = PBXBuildFile; fileRef = 1DCF3EC51224D03D00AD56F1 /* DefaultBookmark.plist */; };
 		A6BDB0521B45FC9E00F511E6 /* PTYTextViewTest-golden-test24BitColor.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C1201ADA38EE00906FAE /* PTYTextViewTest-golden-test24BitColor.png */; };
 		A6BDB0531B45FC9E00F511E6 /* PTYTextViewTest-golden-test256Colors.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C1211ADA38EE00906FAE /* PTYTextViewTest-golden-test256Colors.png */; };
@@ -6491,6 +6492,7 @@
 		A6BCAAD421F6F53E0000CD29 /* iTermTextPopoverViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermTextPopoverViewController.h; sourceTree = "<group>"; };
 		A6BCAAD521F6F53E0000CD29 /* iTermTextPopoverViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermTextPopoverViewController.m; sourceTree = "<group>"; };
 		A6BCAAD621F6F53E0000CD29 /* iTermTextPopoverViewController.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = iTermTextPopoverViewController.xib; sourceTree = "<group>"; };
+		A6BD5A712745D5710098594E /* NSTextView+iTerm.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NSTextView+iTerm.swift"; sourceTree = "<group>"; };
 		A6BDB03F1B45E8BA00F511E6 /* VT100XtermParserTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VT100XtermParserTest.m; sourceTree = "<group>"; };
 		A6BDB0401B45E8BA00F511E6 /* iTermEquivalenceClassSetTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermEquivalenceClassSetTest.m; sourceTree = "<group>"; };
 		A6BDB0431B45E8EE00F511E6 /* VT100ScreenTest.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = VT100ScreenTest.m; sourceTree = "<group>"; };
@@ -8321,6 +8323,7 @@
 				A6024B78254C93DA0036D6CF /* NSSet+iTerm.m */,
 				A6042CD725D0CBCD0001C8FE /* NSScroller+iTerm.h */,
 				A6042CD825D0CBCD0001C8FE /* NSScroller+iTerm.m */,
+				A6BD5A712745D5710098594E /* NSTextView+iTerm.swift */,
 			);
 			name = Categories;
 			sourceTree = "<group>";
@@ -14600,6 +14603,7 @@
 				530AB7BA20A638A600D2AA08 /* iTermDisclosableView.m in Sources */,
 				A65429AC20C4880300CE71B1 /* iTermSessionFactory.m in Sources */,
 				537BFDD62101B2500098C91F /* iTermStatusBarCPUUtilizationComponent.m in Sources */,
+				A6BD5A722745D5710098594E /* NSTextView+iTerm.swift in Sources */,
 				A673A62B23A2096B00869A95 /* iTermNaggingController.m in Sources */,
 				A65429B920CE3C8A00CE71B1 /* SessionView.m in Sources */,
 				A62EEDA320E012DA00943DE3 /* iTermScriptExporter.m in Sources */,

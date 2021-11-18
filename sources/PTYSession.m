@@ -6013,10 +6013,14 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)compose {
     if (self.currentCommand.length > 0) {
-        [self sendHexCode:[iTermAdvancedSettingsModel composerClearSequence]];
-        [self.composerManager setCommand:self.currentCommand];
+        [self setComposerString:self.currentCommand];
     }
     [self.composerManager reveal];
+}
+
+- (void)setComposerString:(NSString *)string {
+    [self sendHexCode:[iTermAdvancedSettingsModel composerClearSequence]];
+    [self.composerManager setCommand:string];
 }
 
 - (BOOL)closeComposer {
@@ -10556,6 +10560,11 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [pasteboard declareTypes:@[ NSPasteboardTypeString ] owner:self];
     [pasteboard setString:escaped forType:NSPasteboardTypeString];
     [_pasteHelper showAdvancedPasteWithFlags:0];
+}
+
+- (void)openComposerWithString:(NSString *)text escaping:(iTermSendTextEscaping)escaping {
+    NSString *escaped = [self escapedText:text mode:escaping];
+    [self.composerManager showOrAppendToDropdownWithString:escaped];
 }
 
 - (void)sendText:(NSString *)text escaping:(iTermSendTextEscaping)escaping {
@@ -15129,9 +15138,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 - (void)composerManager:(iTermComposerManager *)composerManager
     sendToAdvancedPaste:(NSString *)command {
-    [_textview copyString:command];
-    [_pasteHelper showPasteOptionsInWindow:_delegate.realParentWindow.window
-                         bracketingEnabled:_terminal.bracketedPasteMode];
+    [self openAdvancedPasteWithText:command escaping:iTermSendTextEscapingNone];
 }
 
 - (void)composerManagerDidDismissMinimalView:(iTermComposerManager *)composerManager {

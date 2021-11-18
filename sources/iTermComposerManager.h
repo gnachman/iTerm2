@@ -45,6 +45,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (BOOL)dismiss;
 - (void)layout;
 - (void)showWithCommand:(NSString *)command;
+- (void)showOrAppendToDropdownWithString:(NSString *)string;
 
 @end
 

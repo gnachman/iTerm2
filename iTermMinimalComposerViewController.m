@@ -8,6 +8,7 @@
 #import "iTermMinimalComposerViewController.h"
 
 #import "iTermStatusBarLargeComposerViewController.h"
+#import "iTerm2SharedARC-Swift.h"
 
 static float kAnimationDuration = 0.25;
 static CGFloat desiredHeight = 135;
@@ -80,6 +81,7 @@ static CGFloat desiredHeight = 135;
 
 - (void)setStringValue:(NSString *)stringValue {
     _largeComposerViewController.textView.string = stringValue;
+    [_largeComposerViewController.textView it_scrollCursorToVisible];
 }
 
 #pragma mark - iTermComposerTextViewDelegate

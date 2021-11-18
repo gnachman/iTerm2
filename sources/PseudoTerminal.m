@@ -11399,6 +11399,10 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     [self.currentSession openAdvancedPasteWithText:text escaping:escaping];
 }
 
+- (void)toolbeltOpenComposerWithString:(NSString *)text escaping:(iTermSendTextEscaping)escaping {
+    [self.currentSession openComposerWithString:text escaping:escaping];
+}
+
 - (NSArray<iTermCommandHistoryCommandUseMO *> *)toolbeltCommandUsesForCurrentSession {
     return [self.currentSession commandUses];
 }

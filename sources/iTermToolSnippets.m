@@ -26,6 +26,11 @@ static const CGFloat kButtonHeight = 23;
 static const CGFloat kMargin = 4;
 static NSString *const iTermToolSnippetsPasteboardType = @"iTermToolSnippetsPasteboardType";
 
+typedef NS_ENUM(NSUInteger, iTermToolSnippetsAction) {
+    iTermToolSnippetsActionSend,
+    iTermToolSnippetsActionAdvancedPaste,
+    iTermToolSnippetsActionComposer
+};
 
 @interface iTermToolSnippets() <NSDraggingDestination, NSTableViewDataSource, NSTableViewDelegate>
 @end
@@ -216,16 +221,30 @@ static NSButton *iTermToolSnippetsNewButton(NSString *imageName, NSString *title
     return !!([[NSApp currentEvent] modifierFlags] & NSEventModifierFlagOption);
 }
 
+- (BOOL)shiftPressed {
+    return !!([[NSApp currentEvent] modifierFlags] & NSEventModifierFlagShift);
+}
+
+- (iTermToolSnippetsAction)preferredAction {
+    if ([self optionPressed]) {
+        return iTermToolSnippetsActionAdvancedPaste;
+    }
+    if ([self shiftPressed]) {
+        return iTermToolSnippetsActionComposer;
+    }
+    return iTermToolSnippetsActionSend;
+}
+
 - (void)doubleClickOnTableView:(id)sender {
-    [self applySelectedSnippets:[self optionPressed]];
+    [self applySelectedSnippets:[self preferredAction]];
 }
 
 - (void)apply:(id)sender {
-    [self applySelectedSnippets:[self optionPressed]];
+    [self applySelectedSnippets:[self preferredAction]];
 }
 
 - (void)openInAdvancedPaste:(id)sender {
-    [self applySelectedSnippets:YES];
+    [self applySelectedSnippets:[self shiftPressed] ? iTermToolSnippetsActionComposer : iTermToolSnippetsActionAdvancedPaste];
 }
 
 - (void)add:(id)sender {
@@ -312,21 +331,29 @@ static NSButton *iTermToolSnippetsNewButton(NSString *imageName, NSString *title
     }
 }
 
-- (void)applySelectedSnippets:(BOOL)sendToAdvancedPaste {
+- (void)applySelectedSnippets:(iTermToolSnippetsAction)action {
     DLog(@"%@", [NSThread callStackSymbols]);
     for (iTermSnippet *snippet in [self selectedSnippets]) {
         DLog(@"Create action to send snippet %@", snippet);
         iTermToolWrapper *wrapper = self.toolWrapper;
-        if (sendToAdvancedPaste) {
-            [wrapper.delegate.delegate toolbeltOpenAdvancedPasteWithString:snippet.value
-                                                                  escaping:snippet.escaping];
-        } else {
-            iTermAction *action = [[iTermAction alloc] initWithTitle:@"Send Snippet"
-                                                              action:KEY_ACTION_SEND_SNIPPET
-                                                           parameter:snippet.actionKey
-                                                            escaping:snippet.escaping
-                                                             version:snippet.version];
-            [wrapper.delegate.delegate toolbeltApplyActionToCurrentSession:action];
+        switch (action) {
+            case iTermToolSnippetsActionSend: {
+                iTermAction *action = [[iTermAction alloc] initWithTitle:@"Send Snippet"
+                                                                  action:KEY_ACTION_SEND_SNIPPET
+                                                               parameter:snippet.actionKey
+                                                                escaping:snippet.escaping
+                                                                 version:snippet.version];
+                [wrapper.delegate.delegate toolbeltApplyActionToCurrentSession:action];
+                break;
+            }
+            case iTermToolSnippetsActionAdvancedPaste:
+                [wrapper.delegate.delegate toolbeltOpenAdvancedPasteWithString:snippet.value
+                                                                      escaping:snippet.escaping];
+                break;
+            case iTermToolSnippetsActionComposer:
+                [wrapper.delegate.delegate toolbeltOpenComposerWithString:snippet.value
+                                                                 escaping:snippet.escaping];
+                break;
         }
     }
 }

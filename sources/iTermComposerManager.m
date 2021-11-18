@@ -31,6 +31,16 @@
     _saved = [command copy];
 }
 
+- (void)showOrAppendToDropdownWithString:(NSString *)string {
+    if (!_dropDownComposerViewIsVisible) {
+        _saved = [string copy];
+        [self showMinimalComposerInView:[self.delegate composerManagerContainerView:self]];
+    } else {
+        _minimalViewController.stringValue = [NSString stringWithFormat:@"%@\n%@",
+                                              _minimalViewController.stringValue, string];
+    }
+    [_minimalViewController makeFirstResponder];
+}
 - (void)showWithCommand:(NSString *)command {
     _saved = [command copy];
     if (_dropDownComposerViewIsVisible) {
@@ -109,6 +119,10 @@
     _component.stringValue = _saved ?: @"";
     component.composerDelegate = self;
     [component makeFirstResponder];
+}
+
+- (BOOL)minimalComposerRevealed {
+    return _minimalViewController != nil;
 }
 
 - (void)showMinimalComposerInView:(NSView *)superview {
