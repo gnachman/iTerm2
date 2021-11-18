@@ -1629,9 +1629,9 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth {
              frameData:frameData
                   stat:iTermMetalFrameDataStatPqEnqueueBadge];
 
-    [self drawRenderer:_broadcastStripesRenderer
-             frameData:frameData
-                  stat:iTermMetalFrameDataStatPqEnqueueBroadcastStripes];
+    [self drawCellRenderer:_broadcastStripesRenderer
+                 frameData:frameData
+                      stat:iTermMetalFrameDataStatPqEnqueueBroadcastStripes];
 
     [self drawCellRenderer:_cursorGuideRenderer
                  frameData:frameData

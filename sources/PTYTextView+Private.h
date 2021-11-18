@@ -61,5 +61,8 @@ NSPopoverDelegate> {
                          block:(void (^ NS_NOESCAPE)(VT100GridCoordRange))block;
 - (NSRect)adjustedDocumentVisibleRect;
 
+// exposed for tests
+- (void)setDrawingHelperIsRetina:(BOOL)isRetina;
+
 @end
 

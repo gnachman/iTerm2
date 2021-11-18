@@ -72,7 +72,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult;
 
 @property (nonatomic, weak) id<iTermFindDriverDelegate> delegate;
 @property (nonatomic, readonly) NSViewController<iTermFindViewController> *viewController;
-@property (nonatomic, readonly) NSViewController<iTermFindViewController> *filterViewController;
+@property (nonatomic, readonly) NSViewController<iTermFilterViewController> *filterViewController;
 @property (nonatomic) iTermFindMode mode;
 
 // NOTE: Permanently visible find views (those added to status bars via configuration) never
@@ -83,7 +83,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult;
 @property (nonatomic) BOOL needsUpdateOnFocus;
 
 - (instancetype)initWithViewController:(NSViewController<iTermFindViewController> *)viewController
-                  filterViewController:(NSViewController<iTermFindViewController> *)filterViewController NS_DESIGNATED_INITIALIZER;
+                  filterViewController:(NSViewController<iTermFilterViewController> *)filterViewController NS_DESIGNATED_INITIALIZER;
 - (instancetype)init NS_UNAVAILABLE;
 
 // Animates in a hidden find view.

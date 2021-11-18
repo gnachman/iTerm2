@@ -118,7 +118,7 @@ typedef enum {
         return kXtermParserFinishedState;
     }
     if (c != VT100CC_ESC) {
-        return kXtermParserFailingState;
+        return kXtermParserFailedState;
     }
     unsigned char c2 = 0;
     if (!iTermParserTryConsume(context, &c2)) {

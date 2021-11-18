@@ -928,6 +928,7 @@ backgroundColor:(NSColor *)backgroundColor;
 - (BOOL)copyModeConsumesEvent:(NSEvent *)event;
 - (Profile *)profileForSplit;
 - (void)compose;
+- (void)openComposerWithString:(NSString *)text escaping:(iTermSendTextEscaping)escaping;
 - (BOOL)closeComposer;
 - (void)didChangeScreen:(CGFloat)scaleFactor;
 - (void)addContentSubscriber:(id<iTermContentSubscriber>)contentSubscriber;

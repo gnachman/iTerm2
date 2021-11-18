@@ -81,7 +81,7 @@ static NSString *gSearchString;
 }
 
 - (instancetype)initWithViewController:(NSViewController<iTermFindViewController> *)viewController
-                  filterViewController:(NSViewController<iTermFindViewController> *)filterViewController {
+                  filterViewController:(NSViewController<iTermFilterViewController> *)filterViewController {
     self = [super init];
     if (self) {
         _viewController = viewController;

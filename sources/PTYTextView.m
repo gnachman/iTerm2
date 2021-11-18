@@ -870,6 +870,10 @@
 - (void)viewDidChangeBackingProperties {
     CGFloat scale = [[[self window] screen] backingScaleFactor];
     BOOL isRetina = scale > 1;
+    [self setDrawingHelperIsRetina:isRetina];
+}
+
+- (void)setDrawingHelperIsRetina:(BOOL)isRetina {
     _drawingHelper.antiAliasedShift = isRetina ? 0.5 : 0;
     _drawingHelper.isRetina = isRetina;
 }

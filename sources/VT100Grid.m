@@ -706,11 +706,11 @@ static NSString *const kGridSizeKey = @"Size";
                   to:(VT100GridCoord)unsafeTo
               toChar:(screen_char_t)c
   externalAttributes:(iTermExternalAttribute *)attrs {
-    const VT100GridCoord from = [self clamp:unsafeFrom];
-    const VT100GridCoord to = [self clamp:unsafeTo];
-    if (from.x > to.x || from.y > to.y) {
+    if (unsafeFrom.x > unsafeTo.x || unsafeFrom.y > unsafeTo.y) {
         return;
     }
+    const VT100GridCoord from = [self clamp:unsafeFrom];
+    const VT100GridCoord to = [self clamp:unsafeTo];
     for (int y = MAX(0, from.y); y <= MIN(to.y, size_.height - 1); y++) {
         screen_char_t *line = [self screenCharsAtLineNumber:y];
         [self erasePossibleDoubleWidthCharInLineNumber:y startingAtOffset:from.x - 1 withChar:c];
@@ -1207,12 +1207,13 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
     }
 }
 
-- (void)deleteChars:(int)n
+- (void)deleteChars:(int)numberOfCharactersToDelete
          startingAt:(VT100GridCoord)startCoord {
-    DLog(@"deleteChars:%d startingAt:%d,%d", n, startCoord.x, startCoord.y);
+    DLog(@"deleteChars:%d startingAt:%d,%d", numberOfCharactersToDelete, startCoord.x, startCoord.y);
 
     screen_char_t *aLine;
     const int leftMargin = [self leftMargin];
+    // rightMargin is the index of last column within the margins.
     const int rightMargin = [self rightMargin];
     screen_char_t defaultChar = [self defaultChar];
 
@@ -1223,6 +1224,7 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
         startCoord.y >= 0 &&
         startCoord.y < size_.height) {
         int lineNumber = startCoord.y;
+        int n = numberOfCharactersToDelete;
         if (n + startCoord.x > rightMargin) {
             n = rightMargin - startCoord.x + 1;
         }
@@ -1271,8 +1273,8 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
                       inRectFrom:VT100GridCoordMake(startCoord.x, lineNumber)
                               to:VT100GridCoordMake(startCoord.x + numCharsToMove - 1, lineNumber)];
             [eaIndex copyFrom:eaIndex source:startCoord.x + n destination:startCoord.x count:numCharsToMove];
-            // Erase chars on right side of line.
         }
+        // Erase chars on right side of line.
         [self setCharsFrom:VT100GridCoordMake(rightMargin - n + 1, lineNumber)
                         to:VT100GridCoordMake(rightMargin, lineNumber)
                     toChar:defaultChar

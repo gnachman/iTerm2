@@ -9,6 +9,7 @@
 #import "ProfileModel.h"
 #import "PTYSession.h"
 #import "PTYTextView.h"
+#import "PTYTextView+Private.h"
 #import "SessionView.h"
 #import "VT100LineInfo.h"
 #import "iTermApplication.h"
@@ -670,6 +671,7 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
     if (hook) {
         hook(session.textview);
     }
+    [session.textview setDrawingHelperIsRetina:[[NSScreen mainScreen] backingScaleFactor] > 1];
     return [session.view snapshot];
 }
 
@@ -2219,7 +2221,7 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
                                   helper.shouldShowTimestamps = YES;
                                   helper.now = now;
                                   helper.useTestingTimezone = YES;  // Use GMT so test can pass anywhere.
-                                  [helper createTimestampDrawingHelperWithFont:nil];
+                                  [helper createTimestampDrawingHelperWithFont:textView.font];
                               };
                           }
               profileOverrides:nil
@@ -2343,6 +2345,15 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
               profileOverrides:nil
                   createGolden:NO
                           size:VT100GridSizeMake(2, 2)];
+}
+
+- (void)testTwoEnclosingCombiningMarks {
+    [self doGoldenTestForInput:@"#\xE2\x83\xA3#\xE2\x83\xA3"
+                          name:NSStringFromSelector(_cmd)
+                          hook:nil
+              profileOverrides:nil
+                  createGolden:NO
+                          size:VT100GridSizeMake(4, 2)];
 }
 
 // Should render a symbol that looks like a "v" with a squiggly bit on the left.
@@ -2918,6 +2929,14 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
 - (void)textviewToggleTimestampsMode {
 }
 
+- (void)openAdvancedPasteWithText:(NSString *)text escaping:(iTermSendTextEscaping)escaping {
+}
+
+
+- (BOOL)textViewSmartSelectionActionsShouldUseInterpolatedStrings {
+    return NO;
+}
+
 
 - (BOOL)textViewReportMouseEvent:(NSEventType)eventType modifiers:(NSUInteger)modifiers button:(MouseButtonNumber)button coordinate:(VT100GridCoord)coord point:(NSPoint)point deltaY:(CGFloat)deltaY allowDragBeforeMouseDown:(BOOL)allowDragBeforeMouseDown {
     return NO;
@@ -2937,6 +2956,14 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
 
 - (long long)lineNumberOfMarkBeforeAbsLine:(long long)line {
     return MAX(0, line-1);
+}
+
+- (iTermBuiltInFunctions *)objectMethodRegistry {
+    return nil;
+}
+
+- (iTermVariableScope *)objectScope {
+    return nil;
 }
 
 @end

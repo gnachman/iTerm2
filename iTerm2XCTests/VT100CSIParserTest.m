@@ -307,40 +307,25 @@
 // This test is here to remind you to write a test when implementing support for a new CSI code.
 - (void)testUnsupportedCodes {
     char *unsupported[] = {
-        "?J",
-        "?K",
-        "?1;1;1S",
         "1;1;1;1;1T",
-        "`",
-        "a",
         "?1i",
         ">0p",
         "61;0\"p",
         "q",
-        "\"q",
-        "1;2;3;4;0$r",
         "?1s",
-        "1;2;3;4;0$t",
         ">1;60t",
         "0 t",
         "1 u",
-        "1;2;3;4;5;6;7;8$v",
         "1;2;3;4'w",
         "x",
-        "0*x",
-        "0;1;2;3;4$x",
         "0;0'z",
-        "1;2;3;4$z",
         "'{",
-        "1;2;3;4${",
         "'|",
-        "'}",
-        "'~",
     };
     const int n = sizeof(unsupported) / sizeof(*unsupported);
     for (int i = 0; i < n; i++) {
         VT100Token *token = [self tokenForDataWithFormat:@"%c[%s", VT100CC_ESC, unsupported[i]];
-        XCTAssert(token->type == VT100_NOTSUPPORT);
+        XCTAssert(token->type == VT100_NOTSUPPORT, @"Unexpectedly supported %s", unsupported[i]);
     }
 }
 
