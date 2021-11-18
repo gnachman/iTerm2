@@ -1696,7 +1696,7 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
 
 - (void)drawTextOnlyAttributedStringWithoutUnderlineOrStrikethrough:(NSAttributedString *)attributedString
                                                             atPoint:(NSPoint)origin
-                                                          positions:(CGFloat *)stringPositions
+                                                          positions:(CGFloat *)xOriginsForCharacters
                                                     backgroundColor:(NSColor *)backgroundColor
                                                     graphicsContext:(NSGraphicsContext *)ctx
                                                               smear:(BOOL)smear
@@ -1752,11 +1752,18 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
     const CGFloat ty = origin.y + _baselineOffset + _cellSize.height - virtualOffset;
     CGAffineTransform textMatrix = CGAffineTransformMake(1.0, 0.0,
                                                          c, -1.0,
-                                                         origin.x + stringPositions[0], ty);
+                                                         origin.x + xOriginsForCharacters[0], ty);
     CGContextSetTextMatrix(cgContext, textMatrix);
 
-    CGFloat cellOrigin = -1;
+    // The x origin of the column for the current cell. Initialize to -1 to ensure it gets set on
+    // the first pass through the position-adjusting loop.
+    CGFloat xOriginForCurrentColumn = -1;
     CFIndex previousCharacterIndex = -1;
+    CGFloat advanceAccumulator = 0;
+    const BOOL verbose = NO;  // turn this on to debug character position problems.
+    if (verbose) {
+        NSLog(@"Begin drawing string: %@", attributedString.string);
+    }
     for (CFIndex j = 0; j < CFArrayGetCount(runs); j++) {
         CTRunRef run = CFArrayGetValueAtIndex(runs, j);
         size_t length = CTRunGetGlyphCount(run);
@@ -1773,6 +1780,11 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
         CTRunGetPositions(run, CFRangeMake(0, length), (CGPoint *)positionsBuffer.mutableBytes);
         CGPoint *positions = positionsBuffer.mutableBytes;
 
+        NSMutableData *advancesBuffer =
+            [[[NSMutableData alloc] initWithLength:sizeof(CGSize) * length] autorelease];
+        CTRunGetAdvances(run, CFRangeMake(0, length), advancesBuffer.mutableBytes);
+        CGSize *advances = advancesBuffer.mutableBytes;
+
         const CFIndex *glyphIndexToCharacterIndex = CTRunGetStringIndicesPtr(run);
         if (!glyphIndexToCharacterIndex) {
             NSMutableData *tempBuffer =
@@ -1781,15 +1793,40 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
             glyphIndexToCharacterIndex = (CFIndex *)tempBuffer.mutableBytes;
         }
 
-        CGFloat positionOfFirstGlyphInCluster = positions[0].x;
+        // Transform positions to put each grapheme cluster in its proper column.
+        // positions[glyphIndex].x needs to be transformed to subtract whatever horizontal advance
+        // was present earlier in the string.
+
+        // xOffset gives the accumulated advances to subtract from the current character's x position
+        CGFloat xOffset = 0;
+        if (verbose) {
+            NSLog(@"Begin run %@", @(j));
+        }
         for (size_t glyphIndex = 0; glyphIndex < length; glyphIndex++) {
-            CFIndex characterIndex = glyphIndexToCharacterIndex[glyphIndex];
-            CGFloat characterPosition = stringPositions[characterIndex] - stringPositions[0];
-            if (characterIndex != previousCharacterIndex && characterPosition != cellOrigin) {
-                positionOfFirstGlyphInCluster = positions[glyphIndex].x;
-                cellOrigin = characterPosition;
+            // `characterIndex` indexes into the attributed string.
+            const CFIndex characterIndex = glyphIndexToCharacterIndex[glyphIndex];
+            const CGFloat xOriginForThisCharacter = xOriginsForCharacters[characterIndex] - xOriginsForCharacters[0];
+
+            if (verbose) {
+                NSLog(@"  begin glyph %@", @(glyphIndex));
             }
-            positions[glyphIndex].x += cellOrigin - positionOfFirstGlyphInCluster;
+            if (characterIndex != previousCharacterIndex &&
+                xOriginForThisCharacter != xOriginForCurrentColumn) {
+                // Have advanced to the next character or column.
+                xOffset = advanceAccumulator;
+                xOriginForCurrentColumn = xOriginForThisCharacter;
+                if (verbose) {
+                    NSLog(@"  This glyph begins a new character or column. xOffset<-%@, xOriginForCurrentColumn<-%@", @(xOffset), @(xOriginForCurrentColumn));
+                }
+            }
+            advanceAccumulator = advances[glyphIndex].width + positions[glyphIndex].x;
+            if (verbose) {
+                NSLog(@"  advance=%@, position=%@. advanceAccumulator<-%@", @(advances[glyphIndex].width), @(positions[glyphIndex].x), @(advanceAccumulator));
+            }
+            positions[glyphIndex].x += xOriginForCurrentColumn - xOffset;
+            if (verbose) {
+                NSLog(@"  position<-%@", @(positions[glyphIndex].x));
+            }
         }
 
         CTFontRef runFont = CFDictionaryGetValue(CTRunGetAttributes(run), kCTFontAttributeName);
@@ -1822,7 +1859,9 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
             CGContextTranslateCTM(cgContext, -radius - 0.5, 0);
         }
     }
-
+    if (verbose) {
+        NSLog(@"");
+    }
 
     if (style >= 0) {
         CGContextSetFontSmoothingStyle(cgContext, savedFontSmoothingStyle);
