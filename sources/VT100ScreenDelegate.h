@@ -290,7 +290,8 @@
 - (void)screenSelectColorPresetNamed:(NSString * _Nonnull)name;
 
 - (void)screenCurrentHostDidChange:(id<VT100RemoteHostReading> _Nonnull)host
-                               pwd:(NSString * _Nullable)workingDirectory;
+                               pwd:(NSString * _Nullable)workingDirectory
+                               ssh:(BOOL)ssh;  // Due to ssh integration?
 - (void)screenCurrentDirectoryDidChangeTo:(NSString * _Nullable)newPath
                                remoteHost:(id<VT100RemoteHostReading> _Nullable)remoteHost;
 
@@ -391,7 +392,8 @@ typedef NS_ENUM(NSUInteger, VT100ScreenWorkingDirectoryPushType) {
                                   uniqueID:(NSString * _Nonnull)uniqueID
                                   boolArgs:(NSString * _Nonnull)boolArgs
                                    sshargs:(NSString * _Nonnull)sshargs
-                                     dcsID:(NSString * _Nonnull)dcsID;
+                                     dcsID:(NSString * _Nonnull)dcsID
+                                savedState:(NSDictionary *)savedState;
 - (void)screenDidReadSSHConductorLine:(NSString * _Nonnull)string depth:(int)depth;
 - (void)screenDidUnhookSSHConductor;
 - (void)screenDidBeginSSHConductorCommandWithIdentifier:(NSString * _Nonnull)identifier

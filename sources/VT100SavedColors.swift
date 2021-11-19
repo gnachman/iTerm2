@@ -103,6 +103,14 @@ extension SavedColors {
         private let _indexedColors: [CodableColor]
         var indexedColors: [NSColor] { return _indexedColors.map { $0.color } }
 
+        @objc var indexedColorsDictionary: [NSNumber: NSColor] {
+            var result = [NSNumber: NSColor]()
+            for (i, color) in _indexedColors.enumerated() {
+                let n = NSNumber(integerLiteral: i + Int(kColorMap8bitBase))
+                result[n] = color.color
+            }
+            return result
+        }
         override var debugDescription: String {
             return "<Slot text=\(text) background=\(background) selectionText=\(selectionText) selectionBackground=\(selectionBackground) indexedColors=\(indexedColors.map { $0.debugDescription }.joined(separator: ","))>"
         }
@@ -121,6 +129,17 @@ extension SavedColors {
             _selectionText = CodableColor(selectionText)
             _selectionBackground = CodableColor(selectionBackground)
             _indexedColors = indexedColors
+        }
+
+        @objc var plist: Data? {
+            return try? PropertyListEncoder().encode(self)
+        }
+
+        @objc static func from(data: Data?) -> Slot? {
+            guard let data = data else {
+                return nil
+            }
+            return try? PropertyListDecoder().decode(self, from: data)
         }
     }
 }

@@ -45,6 +45,13 @@ NSString *const kScreenStateCursorCoord = @"Cursor Coord";
 NSString *const kScreenStateProtectedMode = @"Protected Mode";
 NSString *const kScreenStateExfiltratedEnvironmentKey = @"Client Environment";
 
+NSString *VT100ScreenTerminalStateKeyVT100Terminal = @"VT100Terminal";
+NSString *VT100ScreenTerminalStateKeySavedColors = @"SavedColors";
+NSString *VT100ScreenTerminalStateKeyTabStops = @"TabStops";
+NSString *VT100ScreenTerminalStateKeyLineDrawingCharacterSets = @"LineDrawingCharacterSets";
+NSString *VT100ScreenTerminalStateKeyRemoteHost = @"RemoteHost";
+NSString *VT100ScreenTerminalStateKeyPath = @"Path";
+
 @implementation VT100ScreenState
 
 @synthesize audibleBell = _audibleBell;
@@ -894,6 +901,25 @@ NSString *const kScreenStateExfiltratedEnvironmentKey = @"Client Environment";
     const BOOL result = ![iTermAdvancedSettingsModel disablePotentiallyInsecureEscapeSequences];
     DLog(@"terminalIsTrusted returning %@", @(result));
     return result;
+}
+
+#pragma mark - SSH State
+
+- (NSDictionary *)savedState {
+    NSSet *tabStops = self.tabStops ?: [NSSet set];
+    NSSet *lineDrawingCharacterSets = self.charsetUsesLineDrawingMode ?: [NSSet set];
+
+    return [@{ VT100ScreenTerminalStateKeyVT100Terminal: self.terminalState ?: @{},
+               VT100ScreenTerminalStateKeySavedColors: self.colorMap.savedColorsSlot.plist ?: @{},
+               VT100ScreenTerminalStateKeyTabStops: [tabStops allObjects],
+               VT100ScreenTerminalStateKeyLineDrawingCharacterSets: [lineDrawingCharacterSets allObjects],
+               VT100ScreenTerminalStateKeyRemoteHost: (self.lastRemoteHost ?: [VT100RemoteHost localhost]).dictionaryValue,
+               VT100ScreenTerminalStateKeyPath: [self currentWorkingDirectory] ?: [NSNull null],
+    } dictionaryByRemovingNullValues];
+}
+
+- (NSString *)currentWorkingDirectory {
+    return [self workingDirectoryOnLine:self.numberOfLines];
 }
 
 #pragma mark - Development

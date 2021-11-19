@@ -2594,10 +2594,13 @@ void VT100ScreenEraseCell(screen_char_t *sct,
         host = remoteHost;
     }
 
-    [self setHost:host user:user completion:^{}];
+    [self setHost:host user:user ssh:NO completion:^{}];
 }
 
-- (void)setHost:(NSString *)host user:(NSString *)user completion:(void (^)(void))completion {
+- (void)setHost:(NSString *)host
+           user:(NSString *)user
+            ssh:(BOOL)ssh  // Due to ssh integration?
+     completion:(void (^)(void))completion {
     DLog(@"setHost:%@ user:%@ %@", host, user, self);
     id<VT100RemoteHostReading> currentHost = [self remoteHostOnLine:self.numberOfLines];
     if (!host || !user) {
@@ -2622,7 +2625,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
         dispatch_queue_t queue = _queue;
         // Unmanaged because this can make APS change profile.
         [self addUnmanagedPausedSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate, iTermTokenExecutorUnpauser * _Nonnull unpauser) {
-            [delegate screenCurrentHostDidChange:remoteHostObj pwd:pwd];
+            [delegate screenCurrentHostDidChange:remoteHostObj pwd:pwd ssh:ssh];
             dispatch_async(queue, ^{
                 completion();
                 [unpauser unpause];
@@ -2880,7 +2883,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 
     if (host || user) {
         __weak __typeof(self) weakSelf = self;
-        [self setHost:host user:user completion:^{
+        [self setHost:host user:user ssh:NO completion:^{
             [weakSelf setPathFromURL:path];
         }];
     } else {
@@ -3975,6 +3978,35 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
         self.currentGrid = self.primaryGrid;
     } else {
         self.currentGrid = self.altGrid;
+    }
+}
+
+- (void)restoreFromSavedState:(NSDictionary *)terminalState {
+    NSDictionary *terminalDict = [NSDictionary castFrom:terminalState[VT100ScreenTerminalStateKeyVT100Terminal]];
+    if (terminalDict) {
+        [_terminal setStateFromDictionary:terminalDict];
+    }
+    NSData *colorData = [NSData castFrom:terminalState[VT100ScreenTerminalStateKeySavedColors]];
+    if (colorData) {
+        VT100SavedColorsSlot *slot = [VT100SavedColorsSlot fromData:colorData];
+        if (slot) {
+            [self setColorsFromDictionary:slot.indexedColorsDictionary];
+        }
+    }
+    NSArray *tabStopsArray = [NSArray castFrom:terminalState[VT100ScreenTerminalStateKeyTabStops]];
+    if (tabStopsArray) {
+        [self setTabStops:[NSMutableSet setWithArray:tabStopsArray]];
+    }
+    NSArray *lineDrawingCharsetsArray = terminalState[VT100ScreenTerminalStateKeyLineDrawingCharacterSets];
+    if (lineDrawingCharsetsArray) {
+        [self setCharsetUsesLineDrawingMode:[NSMutableSet setWithArray:lineDrawingCharsetsArray]];
+    }
+    NSDictionary *remoteHostDictionary = [NSDictionary castFrom:terminalState[VT100ScreenTerminalStateKeyRemoteHost]];
+    VT100RemoteHost *remoteHost = remoteHostDictionary ? [[VT100RemoteHost alloc] initWithDictionary:remoteHostDictionary] : nil;
+    [self setHost:remoteHost.hostname user:remoteHost.username ssh:YES completion:^{}];
+    NSString *path = [NSString castFrom:terminalState[VT100ScreenTerminalStateKeyPath]];
+    if (path) {
+        [self setPathFromURL:path];
     }
 }
 

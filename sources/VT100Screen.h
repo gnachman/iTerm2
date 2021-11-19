@@ -109,6 +109,7 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 @property (nonatomic, readonly) BOOL terminalAlternateScrollMode;
 @property (nonatomic, readonly) BOOL terminalAutorepeatMode;
 @property (nonatomic, readonly) int terminalCharset;
+@property (nonatomic, readonly) NSDictionary *terminalState;
 
 // Where the next tail-find needs to begin.
 @property (nonatomic) long long savedFindContextAbsPos;
@@ -242,6 +243,9 @@ typedef NS_ENUM(NSUInteger, VT100ScreenTriggerCheckType) {
                              height:(int)height
                        mutableState:(VT100ScreenMutableState *)mutableState;
 - (NSDictionary<NSString *, NSString *> *)exfiltratedEnvironmentVariables:(NSArray<NSString *> *)names;
+
+// These record the state that should be restored when ssh ends.
+- (void)restoreSavedState:(NSDictionary *)savedState;
 
 @end
 

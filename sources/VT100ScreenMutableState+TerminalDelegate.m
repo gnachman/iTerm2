@@ -2216,14 +2216,7 @@
 
 - (VT100SavedColorsSlot *)terminalSavedColorsSlot {
     DLog(@"begin");
-    iTermColorMap *colorMap = self.colorMap;
-    return [[VT100SavedColorsSlot alloc] initWithTextColor:[colorMap colorForKey:kColorMapForeground]
-                                            backgroundColor:[colorMap colorForKey:kColorMapBackground]
-                                         selectionTextColor:[colorMap colorForKey:kColorMapSelectedText]
-                                   selectionBackgroundColor:[colorMap colorForKey:kColorMapSelection]
-                                       indexedColorProvider:^NSColor *(NSInteger index) {
-        return [colorMap colorForKey:kColorMap8bitBase + index] ?: [NSColor clearColor];
-    }];
+    return self.colorMap.savedColorsSlot;
 }
 
 - (void)terminalRestoreColorsFromSlot:(VT100SavedColorsSlot *)slot {
@@ -2483,13 +2476,16 @@
     }
     NSString *dcsID = values[4];
     [self appendBannerMessage:[NSString stringWithFormat:@"ssh %@", sshargs]];
+    NSDictionary *savedState = self.savedState;
     [self addSideEffect:^(id<VT100ScreenDelegate> _Nonnull delegate) {
         [delegate screenDidHookSSHConductorWithToken:token
                                             uniqueID:uniqueID
                                             boolArgs:boolArgs
                                              sshargs:sshargs
-                                               dcsID:dcsID];
+                                               dcsID:dcsID
+                                       savedState:savedState];
     }];
+    [self.terminal resetForSSH];
 }
 
 - (void)terminalDidReadSSHConductorLine:(NSString *)string depth:(int)depth {

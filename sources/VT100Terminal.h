@@ -156,6 +156,9 @@ typedef NS_ENUM(NSUInteger, VT100TerminalFramerRecoveryMode) {
 // contents.
 - (void)resetForRelaunch;
 
+// Initialize terminal state for fresh host.
+- (void)resetForSSH;
+
 - (void)setDisableSmcupRmcup:(BOOL)value;
 
 // Calls appropriate delegate methods to handle a token.

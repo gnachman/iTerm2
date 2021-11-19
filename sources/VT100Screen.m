@@ -49,7 +49,6 @@
 int kVT100ScreenMinColumns = 2;
 int kVT100ScreenMinRows = 2;
 
-
 const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 
 
@@ -1467,6 +1466,12 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 
 - (int)terminalCharset {
     return _state.terminalCharset;
+}
+
+- (void)restoreSavedState:(NSDictionary *)savedState {
+    [self mutateAsynchronously:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
+        [mutableState restoreFromSavedState:savedState];
+    }];
 }
 
 - (VT100GridCoordRange)commandRange {

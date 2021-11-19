@@ -365,6 +365,9 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 // Sets the alt grid's contents. `lines` is NSData with screen_char_t's.
 - (void)setAltScreen:(NSArray<NSData *> *)lines;
 
+// This is for ssh-related state only.
+- (void)restoreFromSavedState:(NSDictionary *)savedState;
+
 #pragma mark - Inline Images
 
 - (void)stopTerminalReceivingFile;

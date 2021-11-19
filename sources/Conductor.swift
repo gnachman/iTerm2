@@ -115,6 +115,15 @@ class Conductor: NSObject, Codable {
     @objc private(set) var homeDirectory: String?
     @objc private(set) var uname: String?
     @objc private(set) var shell: String?
+    private var _terminalConfiguration: CodableNSDictionary?
+    @objc var terminalConfiguration: NSDictionary? {
+        get {
+            _terminalConfiguration?.dictionary
+        }
+        set {
+            _terminalConfiguration = newValue.map { CodableNSDictionary($0) }
+        }
+    }
 
     enum FileSubcommand: Codable, Equatable {
         case ls(path: Data, sorting: FileSorting)
@@ -620,7 +629,7 @@ class Conductor: NSObject, Codable {
       case sshargs, varsToSend, payloads, initialDirectory, parsedSSHArguments, depth, parent,
            framedPID, remoteInfo, state, queue, boolArgs, dcsID, clientUniqueID,
            modifiedVars, modifiedCommandArgs, clientVars, shouldInjectShellIntegration,
-           homeDirectory, shell, uname
+           homeDirectory, shell, uname, terminalConfiguration
     }
 
 
@@ -709,6 +718,7 @@ class Conductor: NSObject, Codable {
         homeDirectory = try? container.decode(String?.self, forKey: .homeDirectory)
         shell = try? container.decode(String?.self, forKey: .shell)
         uname = try? container.decode(String?.self, forKey: .uname)
+        _terminalConfiguration = try? container.decode(CodableNSDictionary?.self, forKey: .terminalConfiguration)
         restored = true
     }
 
@@ -762,6 +772,7 @@ class Conductor: NSObject, Codable {
         try container.encode(homeDirectory, forKey: .homeDirectory)
         try container.encode(shell, forKey: .shell)
         try container.encode(uname, forKey: .uname)
+        try container.encode(_terminalConfiguration, forKey: .terminalConfiguration)
     }
 
     private func DLog(_ messageBlock: @autoclosure () -> String,
@@ -1799,5 +1810,35 @@ extension Conductor: SSHEndpoint {
             log("finished")
             return result
         }
+    }
+}
+
+struct CodableNSDictionary: Codable {
+    let dictionary: NSDictionary
+
+    init(_ dictionary: NSDictionary) {
+        self.dictionary = dictionary
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.singleValueContainer()
+        let data = try container.decode(Data.self)
+        var format = PropertyListSerialization.PropertyListFormat.binary
+        let plist = try PropertyListSerialization.propertyList(from: data, format: &format)
+        if let dictionary = plist as? NSDictionary {
+            self.dictionary = dictionary
+        } else {
+            throw DecodingError.typeMismatch(Swift.type(of: plist),
+                                             .init(codingPath: [],
+                                                   debugDescription: "Not a dictionary"))
+        }
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.singleValueContainer()
+        let data = try PropertyListSerialization.data(fromPropertyList: dictionary,
+                                                      format: .binary,
+                                                      options: 0)
+        try container.encode(data)
     }
 }

@@ -461,6 +461,10 @@ static const int kMaxScreenRows = 4096;
     [self resetAllowingResize:YES preservePrompt:userInitiated resetParser:userInitiated modifyContent:YES];
 }
 
+- (void)resetForSSH {
+    [self resetAllowingResize:NO preservePrompt:YES resetParser:NO modifyContent:NO];
+}
+
 - (void)resetForRelaunch {
     [self finishResettingParser:YES
                  preservePrompt:NO

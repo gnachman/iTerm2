@@ -55,6 +55,7 @@ extern const int kColorMap24bitBase;
 
 @class iTermColorMap;
 @protocol iTermColorMapReading;
+@class VT100SavedColorsSlot;
 
 @protocol iTermColorMapDelegate <NSObject>
 
@@ -122,6 +123,7 @@ extern const int kColorMap24bitBase;
              brightenBold:(BOOL)brightenBold;
 
 - (iTermColorMap *)copy;
+- (VT100SavedColorsSlot *)savedColorsSlot;
 @end
 
 // This class holds the collection of colors used by a single session. Some colors are index-mapped
@@ -150,3 +152,4 @@ extern const int kColorMap24bitBase;
 - (iTermColorMap *)copy;
 
 @end
+

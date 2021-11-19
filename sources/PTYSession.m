@@ -1902,7 +1902,8 @@ ITERM_WEAKLY_REFERENCEABLE
     if (lastRemoteHost) {
         NSString *pwd = [_screen workingDirectoryOnLine:_screen.numberOfLines];
         [self screenCurrentHostDidChange:lastRemoteHost
-                                     pwd:pwd];
+                                     pwd:pwd
+                                     ssh:NO];
     }
 
     const BOOL enabled = _screen.terminalSoftAlternateScreenMode;
@@ -11741,6 +11742,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     self.alertOnNextMark = NO;
     NSString *action = [iTermApplication.sharedApplication delegate].markAlertAction;
     if ([action isEqualToString:kMarkAlertActionPostNotification]) {
+        NSString *sound = NSUserNotificationDefaultSoundName;
         [[iTermNotificationController sharedInstance] notify:@"Mark Set"
                                              withDescription:[NSString stringWithFormat:@"Session %@ #%d had a mark set.",
                                                               [[self name] removingHTMLFromTabTitleIfNeeded],
@@ -12280,8 +12282,9 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)screenCurrentHostDidChange:(id<VT100RemoteHostReading>)host
-                               pwd:(NSString *)workingDirectory {
-    DLog(@"Current host did change to %@ %@", host, self);
+                               pwd:(NSString *)workingDirectory
+                               ssh:(BOOL)ssh {
+    DLog(@"Current host did change to %@, pwd=%@, ssh=%@. %@", host, workingDirectory, @(ssh), self);
     NSString *previousHostName = _currentHost.hostname;
 
     NSNull *null = [NSNull null];
@@ -12300,7 +12303,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                                        job:self.variablesScope.jobName];
 
     // Ignore changes to username; only update on hostname changes. See issue 8030.
-    if (previousHostName && ![previousHostName isEqualToString:host.hostname]) {
+    if (previousHostName && ![previousHostName isEqualToString:host.hostname] && !ssh) {
         [self maybeResetTerminalStateOnHostChange:host];
     }
     self.currentHost = host;
@@ -13885,7 +13888,8 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
                                   uniqueID:(NSString *)uniqueID
                                   boolArgs:(NSString *)boolArgs
                                    sshargs:(NSString *)sshargs
-                                     dcsID:(NSString * _Nonnull)dcsID {
+                                     dcsID:(NSString * _Nonnull)dcsID
+                                savedState:(NSDictionary *)savedState {
     BOOL localOrigin = NO;
     if ([[iTermSecretServer instance] check:token]) {
         localOrigin = YES;
@@ -13909,6 +13913,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
                              initialDirectory:directory
                  shouldInjectShellIntegration:shouldInjectShellIntegration
                                        parent:previousConductor];
+    _conductor.terminalConfiguration = savedState;
     if (localOrigin) {
         for (iTermTuple<NSString *, NSString *> *tuple in config.filesToCopy) {
             [_conductor addPath:tuple.firstObject destination:tuple.secondObject];
@@ -13934,6 +13939,10 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 
 - (void)unhookSSHConductor {
     DLog(@"Unhook %@", _conductor);
+    NSDictionary *config = _conductor.terminalConfiguration;
+    if (config) {
+        [_screen restoreSavedState:config];
+    }
     _conductor.delegate = nil;
     [_conductor autorelease];
     _conductor = [_conductor.parent retain];

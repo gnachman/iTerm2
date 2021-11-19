@@ -11,6 +11,7 @@
 #import "DebugLogging.h"
 #import "ITAddressBookMgr.h"
 #import "NSColor+iTerm.h"
+#import "iTerm2SharedARC-Swift.h"
 #import <simd/simd.h>
 
 const int kColorMapForeground = 0;
@@ -643,6 +644,17 @@ const int kColorMapAnsiBrightModifier = 8;
         _sanitizingAdapter = [[iTermColorMapSanitizingAdapter alloc] initWithSource:self];
     }
     return _sanitizingAdapter;
+}
+
+- (VT100SavedColorsSlot *)savedColorsSlot {
+    DLog(@"begin");
+    return [[VT100SavedColorsSlot alloc] initWithTextColor:[self colorForKey:kColorMapForeground]
+                                            backgroundColor:[self colorForKey:kColorMapBackground]
+                                         selectionTextColor:[self colorForKey:kColorMapSelectedText]
+                                   selectionBackgroundColor:[self colorForKey:kColorMapSelection]
+                                       indexedColorProvider:^NSColor *(NSInteger index) {
+        return [self colorForKey:kColorMap8bitBase + index] ?: [NSColor clearColor];
+    }];
 }
 
 @end
