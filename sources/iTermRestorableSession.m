@@ -8,6 +8,7 @@
 
 #import "iTermRestorableSession.h"
 #import "NSArray+iTerm.h"
+#import "NSObject+iTerm.h"
 #import "PTYSession.h"
 #import "SessionView.h"
 
@@ -32,6 +33,7 @@
         self.windowType = restorableState[@"windowType"] ? [restorableState[@"windowType"] intValue] : iTermWindowDefaultType();
         self.savedWindowType = restorableState[@"savedWindowType"] ? [restorableState[@"savedWindowType"] intValue] : iTermWindowDefaultType();
         self.screen = restorableState[@"screen"] ? [restorableState[@"screen"] intValue] : -1;
+        self.windowTitle = [restorableState[@"windowTitle"] nilIfNull];
     }
     return self;
 }
@@ -53,7 +55,9 @@
               @"predecessors": _predecessors ?: @[],
               @"windowType": @(_windowType),
               @"savedWindowType": @(_savedWindowType),
-              @"screen": @(_screen) };
+              @"screen": @(_screen),
+              @"windowTitle": _windowTitle ?: [NSNull null]
+    };
 }
 
 @end

@@ -1916,6 +1916,7 @@ ITERM_WEAKLY_REFERENCEABLE
     restorableSession.terminalGuid = self.terminalGuid;
     restorableSession.arrangement = [self arrangement];
     restorableSession.group = kiTermRestorableSessionGroupWindow;
+    restorableSession.windowTitle = [self.scope windowTitleOverrideFormat];
     [self storeWindowStateInRestorableSession:restorableSession];
     DLog(@"Create restorable session with terminal guid %@", restorableSession.terminalGuid);
     return restorableSession;
@@ -1925,6 +1926,7 @@ ITERM_WEAKLY_REFERENCEABLE
     restorableSession.windowType = self.lionFullScreen ? WINDOW_TYPE_LION_FULL_SCREEN : self.windowType;
     restorableSession.savedWindowType = self.savedWindowType;
     restorableSession.screen = _screenNumberFromFirstProfile;
+    restorableSession.windowTitle = [self.scope windowTitleOverrideFormat];
 }
 
 - (iTermRestorableSession *)restorableSessionForTab:(PTYTab *)aTab {
@@ -1946,6 +1948,7 @@ ITERM_WEAKLY_REFERENCEABLE
     restorableSession.predecessors = predecessors;
     restorableSession.arrangement = [aTab arrangement];
     restorableSession.group = kiTermRestorableSessionGroupTab;
+    restorableSession.windowTitle = [self.scope windowTitleOverrideFormat];
     [self storeWindowStateInRestorableSession:restorableSession];
     return restorableSession;
 }
@@ -1959,6 +1962,7 @@ ITERM_WEAKLY_REFERENCEABLE
         restorableSession.sessions = [aTab sessions];
         restorableSession.terminalGuid = self.terminalGuid;
         restorableSession.tabUniqueId = aTab.uniqueId;
+        restorableSession.windowTitle = [self.scope windowTitleOverrideFormat];
         [self storeWindowStateInRestorableSession:restorableSession];
         NSArray *tabs = [self tabs];
         NSUInteger index = [tabs indexOfObject:aTab];
@@ -3610,6 +3614,7 @@ ITERM_WEAKLY_REFERENCEABLE
         restorableSession.terminalGuid = self.terminalGuid;
         restorableSession.arrangement = [self arrangement];
         restorableSession.group = kiTermRestorableSessionGroupWindow;
+        restorableSession.windowTitle = [self.scope windowTitleOverrideFormat];
         [self storeWindowStateInRestorableSession:restorableSession];
         if (restorableSession.arrangement) {
             [[iTermController sharedInstance] pushCurrentRestorableSession:restorableSession];

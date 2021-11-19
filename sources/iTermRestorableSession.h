@@ -28,6 +28,7 @@ typedef NS_ENUM(NSInteger, iTermRestorableSessionGroup) {
 @property(nonatomic) iTermWindowType windowType;
 @property(nonatomic) iTermWindowType savedWindowType;
 @property(nonatomic) int screen;
+@property(nonatomic, copy) NSString *windowTitle;
 
 // tab unique IDs of tabs that come before this one in the window.
 @property(nonatomic, copy) NSArray *predecessors;

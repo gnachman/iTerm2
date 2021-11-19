@@ -13,6 +13,7 @@
 #import "iTermProfilePreferences.h"
 #import "iTermRestorableSession.h"
 #import "iTermTmuxWindowCache.h"
+#import "iTermVariableScope.h"
 #import "NSArray+iTerm.h"
 #import "PseudoTerminal.h"
 #import "PTYSession.h"
@@ -105,7 +106,10 @@ NSString *const iTermSessionBuriedStateChangeTabNotification = @"iTermSessionBur
             term.terminalGuid = restorableSession.terminalGuid;
             [term addRevivedSession:restorableSession.sessions[0]];
             [term fitWindowToTabs];
-
+            if (restorableSession.windowTitle) {
+                [term.scope setValue:restorableSession.windowTitle
+                    forVariableNamed:iTermVariableKeyWindowTitleOverrideFormat];
+            }
             if (restorableSession.windowType == WINDOW_TYPE_LION_FULL_SCREEN) {
                 [term delayedEnterFullscreen];
             }
