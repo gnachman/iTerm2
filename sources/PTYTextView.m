@@ -4678,6 +4678,15 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     return CGRectZero;
 }
 
+// These two are needed to make "Enable Full Keyboard Access" able to send spaces. Issue 10023.
+- (void)setAccessibilityContents:(NSArray *)accessibilityContents {
+    DLog(@"setAccessibilityContents::%@", accessibilityContents);
+}
+
+- (void)setAccessibilityValue:(id)accessibilityValue {
+    DLog(@"setAccessibilityValue:%@", accessibilityValue);
+}
+
 - (BOOL)isAccessibilityElement {
     return YES;
 }
