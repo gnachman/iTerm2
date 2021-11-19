@@ -289,6 +289,8 @@ static NSString *const kArrangement = @"Arrangement";
     if (self.hotkeyWindowType == iTermHotkeyWindowTypeFloatingPanel) {
         if (![self menuBarAutoHides]) {
             // Floating panel and fixed menu bar — overlap the menu bar.
+            // Unfortunately, this overlaps notification center since it is at the same level as
+            // the menu bar.
             return NSStatusWindowLevel;
         }
     }
@@ -296,7 +298,13 @@ static NSString *const kArrangement = @"Arrangement";
 }
 
 - (BOOL)menuBarAutoHides {
-    return [[NSUserDefaults standardUserDefaults] boolForKey:@"_HIHideMenuBar"];
+    if ([[NSUserDefaults standardUserDefaults] boolForKey:@"_HIHideMenuBar"]) {
+        return YES;
+    }
+    if (![iTermPreferences boolForKey:kPreferenceKeyHideMenuBarInFullscreen]) {
+        return YES;
+    }
+    return NO;
 }
 
 - (NSPoint)destinationPointForInitialPoint:(NSPoint)point
