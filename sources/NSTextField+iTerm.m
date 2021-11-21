@@ -20,7 +20,7 @@
     result.editable = NO;
     result.selectable = NO;
     result.drawsBackground = NO;
-    result.usesSingleLineMode = YES;
+//    result.usesSingleLineMode = YES;
     result.identifier = identifier;
     return result;
 }
@@ -32,7 +32,7 @@
     result.editable = NO;
     result.selectable = NO;
     result.drawsBackground = NO;
-    result.usesSingleLineMode = YES;
+//    result.usesSingleLineMode = YES;
     return result;
 }
 

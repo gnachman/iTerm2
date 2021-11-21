@@ -16,6 +16,7 @@
 #import "NSFont+iTerm.h"
 #import "NSImage+iTerm.h"
 #import "NSTableColumn+iTerm.h"
+#import "NSTableView+iTerm.h"
 #import "NSTextField+iTerm.h"
 #import "PseudoTerminal.h"
 
@@ -80,21 +81,22 @@ static const CGFloat kMargin = 4;
         [scrollView_ setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
         scrollView_.drawsBackground = NO;
 
+#if 1
+        _tableView = [NSTableView toolbeltTableViewInScrollview:scrollView_ owner:self];
+#else
         _tableView = [[NSTableView alloc] initWithFrame:NSMakeRect(0, 0, contentSize.width, contentSize.height)];
 #ifdef MAC_OS_X_VERSION_10_16
         if (@available(macOS 10.16, *)) {
-            _tableView.style = NSTableViewStyleInset;
+            _tableView.style = NSTableViewStyleFullWidth;
         }
 #endif
         NSTableColumn *col = [[NSTableColumn alloc] initWithIdentifier:@"contents"];
         [col setEditable:NO];
         [_tableView addTableColumn:col];
-        [[col headerCell] setStringValue:@"Values"];
         [_tableView setHeaderView:nil];
         [_tableView setDataSource:self];
         [_tableView setDelegate:self];
         _tableView.intercellSpacing = NSMakeSize(_tableView.intercellSpacing.width, 0);
-        _tableView.rowHeight = 15;
 
         [_tableView setDoubleAction:@selector(doubleClickOnTableView:)];
         [_tableView setAutoresizingMask:NSViewWidthSizable];
@@ -103,11 +105,12 @@ static const CGFloat kMargin = 4;
         }
 
         [scrollView_ setDocumentView:_tableView];
+#endif
         [self addSubview:scrollView_];
 
         [_tableView sizeToFit];
         [_tableView setColumnAutoresizingStyle:NSTableViewSequentialColumnAutoresizingStyle];
-
+        [self relayout];
         pasteHistory_ = [PasteboardHistory sharedInstance];
 
         [[NSNotificationCenter defaultCenter] addObserver:self
@@ -188,9 +191,65 @@ static const CGFloat kMargin = 4;
     return pasteHistory_.entries.count;
 }
 
+//- (NSTableCellView *)makecell {
+//    static NSString *const identifier = @"MyCellIdentifier";
+//    NSTableCellView *result = [_tableView makeViewWithIdentifier:identifier owner:self];
+//    if (result != nil) {
+//        return result;
+//    }
+//    return [[NSTableCellView alloc] initWithFrame:NSMakeRect(0, 0, 100, 18)];
+//}
+//
+//- (void)initailizeTableCellViewIfNeeded:(NSTableCellView *)cell {
+//    if (!cell.textField) {
+//        NSTextField *text = [[NSTextField alloc] init];
+//        text.font = [NSFont it_toolbeltFont];
+//        text.bezeled = NO;
+//        text.editable = NO;
+//        text.selectable = NO;
+//        text.drawsBackground = NO;
+//        text.identifier = @"MyTextFieldIdentifier";
+//        text.translatesAutoresizingMaskIntoConstraints = NO;
+//        text.lineBreakMode = NSLineBreakByTruncatingTail;
+//
+//        cell.textField = text;
+//        [cell addSubview:text];
+//        const CGFloat verticalPadding = 2.0;
+//        [cell addConstraint:[NSLayoutConstraint constraintWithItem:text
+//                                                         attribute:NSLayoutAttributeTop
+//                                                         relatedBy:NSLayoutRelationEqual
+//                                                            toItem:cell
+//                                                         attribute:NSLayoutAttributeTop
+//                                                        multiplier:1
+//                                                          constant:verticalPadding]];
+//        [cell addConstraint:[NSLayoutConstraint constraintWithItem:text
+//                                                         attribute:NSLayoutAttributeBottom
+//                                                         relatedBy:NSLayoutRelationEqual
+//                                                            toItem:cell
+//                                                         attribute:NSLayoutAttributeBottom
+//                                                        multiplier:1
+//                                                          constant:-verticalPadding]];
+//        [cell addConstraint:[NSLayoutConstraint constraintWithItem:text
+//                                                         attribute:NSLayoutAttributeLeft
+//                                                         relatedBy:NSLayoutRelationEqual
+//                                                            toItem:cell
+//                                                         attribute:NSLayoutAttributeLeft
+//                                                        multiplier:1
+//                                                          constant:13]];
+//        [cell addConstraint:[NSLayoutConstraint constraintWithItem:text
+//                                                         attribute:NSLayoutAttributeRight
+//                                                         relatedBy:NSLayoutRelationEqual
+//                                                            toItem:cell
+//                                                         attribute:NSLayoutAttributeRight
+//                                                        multiplier:1
+//                                                          constant:-    13]];
+//    }
+//}
+//
 - (NSView *)tableView:(NSTableView *)tableView
    viewForTableColumn:(NSTableColumn *)tableColumn
                   row:(NSInteger)row {
+#if 0
     static NSString *const identifier = @"ToolPasteHistoryEntry";
     NSTextField *result = [tableView makeViewWithIdentifier:identifier owner:self];
     if (result == nil) {
@@ -199,7 +258,23 @@ static const CGFloat kMargin = 4;
 
     NSAttributedString *value = [self attributedStringForTableColumn:tableColumn row:row];
     result.attributedStringValue = value;
-
+#endif
+#if 0
+    NSTableCellView *result = [self makecell];
+    [self initailizeTableCellViewIfNeeded:result];
+    NSAttributedString *value = [self attributedStringForTableColumn:tableColumn row:row];
+//    NSString *stringValue = value.string;
+//    NSMutableParagraphStyle *paragraphStyle;
+//    paragraphStyle = [[NSMutableParagraphStyle alloc] init];
+//    paragraphStyle.lineBreakMode = NSLineBreakByTruncatingTail;
+//    paragraphStyle.allowsDefaultTighteningForTruncation = NO;
+//    NSDictionary *attributes = @{ NSFontAttributeName: [NSFont it_toolbeltFont],
+//                                  NSParagraphStyleAttributeName: paragraphStyle };
+//    NSAttributedString *attributedString = [[NSAttributedString alloc] initWithString:stringValue attributes:attributes];
+    result.textField.attributedStringValue = value;
+#endif
+    NSTableCellView *result = [tableView newTableCellViewWithTextFieldUsingIdentifier:@"iTermToolPasteHistory"
+                                                                     attributedString:[self attributedStringForTableColumn:tableColumn row:row]];
     return result;
 }
 
