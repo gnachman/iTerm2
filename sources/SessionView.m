@@ -1083,6 +1083,10 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     [self updateLayout];
 }
 
+- (void)setMainResponder:(NSResponder *)responder {
+    _dropDownFindViewController.nextResponder = responder;
+}
+
 - (void)_dimShadeToDimmingAmount:(float)newDimmingAmount {
     [_delegate sessionViewDimmingAmountDidChange:newDimmingAmount];
 }

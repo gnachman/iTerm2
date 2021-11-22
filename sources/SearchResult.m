@@ -44,4 +44,11 @@
                                   VT100GridAbsCoordMake(other->_startX, other->_absStartY));
 }
 
+- (VT100GridAbsCoordRange)absCoordRange {
+    return VT100GridAbsCoordRangeMake(self.startX,
+                                      self.absStartY,
+                                      self.endX + 1,
+                                      self.absEndY);
+}
+
 @end

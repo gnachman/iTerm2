@@ -30,6 +30,7 @@
 #import "iTermURLActionFactory.h"
 #import "iTermURLStore.h"
 #import "iTermWebViewWrapperViewController.h"
+#import "NSArray+iTerm.h"
 #import "NSColor+iTerm.h"
 #import "NSData+iTerm.h"
 #import "NSDictionary+iTerm.h"
@@ -44,6 +45,7 @@
 #import "PTYNoteViewController.h"
 #import "PTYTextView+Private.h"
 #import "SCPPath.h"
+#import "SearchResult.h"
 #import "URLAction.h"
 #import "VT100Terminal.h"
 
@@ -77,6 +79,9 @@ static const NSUInteger kRectangularSelectionModifierMask = (kRectangularSelecti
     if (item.action == @selector(toggleEnableTriggersInInteractiveApps:)) {
         item.state = [self.delegate textViewTriggersAreEnabledInInteractiveApps] ? NSControlStateValueOn : NSControlStateValueOff;
         return YES;
+    }
+    if (item.action == @selector(convertMatchesToSelections:)) {
+        return self.findOnPageHelper.searchResults.count > 0;
     }
     return NO;
 }
@@ -1148,6 +1153,27 @@ toggleTerminalStateForMenuItem:(nonnull NSMenuItem *)item {
 
 - (IBAction)toggleEnableTriggersInInteractiveApps:(id)sender {
     [self.delegate textViewToggleEnableTriggersInInteractiveApps];
+}
+
+#pragma mark - Find on Page
+
+- (IBAction)convertMatchesToSelections:(id)sender {
+    [self.selection endLiveSelection];
+    [self.selection clearSelection];
+    const int width = [self.dataSource width];
+
+    NSArray<iTermSubSelection *> *subs = [self.findOnPageHelper.searchResults.array mapWithBlock:^id(SearchResult *result) {
+        const VT100GridAbsWindowedRange range  = VT100GridAbsWindowedRangeMake(result.absCoordRange, 0, 0);
+        iTermSubSelection *sub = [iTermSubSelection subSelectionWithAbsRange:range
+                                                                        mode:kiTermSelectionModeCharacter
+                                                                       width:width];
+        return sub;
+    }];
+    if (!subs.count) {
+        return;
+    }
+    [self.selection addSubSelections:subs];
+    [self.window makeFirstResponder:self];
 }
 
 @end

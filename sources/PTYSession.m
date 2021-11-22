@@ -1869,6 +1869,7 @@ ITERM_WEAKLY_REFERENCEABLE
     _textview = [[PTYTextView alloc] initWithFrame: NSMakeRect(0, [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins], aSize.width, aSize.height)
                                           colorMap:_colorMap];
     _textview.keyboardHandler.keyMapper = _keyMapper;
+    _view.mainResponder = _textview;
     if (@available(macOS 10.14, *)) {
         _view.searchResultsMinimapViewDelegate = _textview.findOnPageHelper;
     }
