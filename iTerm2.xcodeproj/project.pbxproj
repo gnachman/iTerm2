@@ -3472,6 +3472,7 @@
 		A6C978F624A0194500971AA7 /* WindowCornerFull@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A6C978F024A0194400971AA7 /* WindowCornerFull@2x.png */; };
 		A6CC16541CF012E300E8C148 /* iTermCarbonHotKeyController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6CC16521CF012E300E8C148 /* iTermCarbonHotKeyController.h */; };
 		A6CC16551CF012E300E8C148 /* iTermCarbonHotKeyController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6CC16531CF012E300E8C148 /* iTermCarbonHotKeyController.m */; };
+		A6CC7F5E274B7F610060C3C2 /* CPUGovernor.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6CC7F5D274B7F610060C3C2 /* CPUGovernor.swift */; };
 		A6CD8A432234DB83007C5B39 /* iTermStatusBarPlaceholderComponent.h in Headers */ = {isa = PBXBuildFile; fileRef = A6CD8A412234DB83007C5B39 /* iTermStatusBarPlaceholderComponent.h */; };
 		A6CD8A442234DB83007C5B39 /* iTermStatusBarPlaceholderComponent.m in Sources */ = {isa = PBXBuildFile; fileRef = A6CD8A422234DB83007C5B39 /* iTermStatusBarPlaceholderComponent.m */; };
 		A6CDC31826391D1200616155 /* PIDInfoGitState.m in Sources */ = {isa = PBXBuildFile; fileRef = A6CDC31726391D1200616155 /* PIDInfoGitState.m */; };
@@ -3553,7 +3554,6 @@
 		A6D22A431BC8BE6B004084E0 /* Model.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = A6D22A411BC8BE6B004084E0 /* Model.xcdatamodeld */; };
 		A6D22A441BC8BE6B004084E0 /* Model.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = A6D22A411BC8BE6B004084E0 /* Model.xcdatamodeld */; };
 		A6D22A451BC8BE6B004084E0 /* Model.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = A6D22A411BC8BE6B004084E0 /* Model.xcdatamodeld */; };
-		A6D24D3D26BC5FA600CCE211 /* SwiftDebugLogging.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6D24D3C26BC5FA600CCE211 /* SwiftDebugLogging.swift */; };
 		A6D463E6240447AF005D073D /* iTermBackgroundColorView.h in Headers */ = {isa = PBXBuildFile; fileRef = A6D463E4240447AF005D073D /* iTermBackgroundColorView.h */; };
 		A6D463E7240447AF005D073D /* iTermBackgroundColorView.m in Sources */ = {isa = PBXBuildFile; fileRef = A6D463E5240447AF005D073D /* iTermBackgroundColorView.m */; };
 		A6D463EA2404482D005D073D /* iTermAlphaBlendingHelper.h in Headers */ = {isa = PBXBuildFile; fileRef = A6D463E82404482D005D073D /* iTermAlphaBlendingHelper.h */; };
@@ -3855,7 +3855,6 @@
 		A6F3DA97245647E4001D50C9 /* iTermSwipeTracker.h in Headers */ = {isa = PBXBuildFile; fileRef = A6F3DA95245647E4001D50C9 /* iTermSwipeTracker.h */; };
 		A6F3DA98245647E4001D50C9 /* iTermSwipeTracker.m in Sources */ = {isa = PBXBuildFile; fileRef = A6F3DA96245647E4001D50C9 /* iTermSwipeTracker.m */; };
 		A6F3E96E1D60E4F0000E97C4 /* iTermInitialDirectory.h in Headers */ = {isa = PBXBuildFile; fileRef = A6F3E96C1D60E4F0000E97C4 /* iTermInitialDirectory.h */; };
-		A6F699272729C95F00C4A3A6 /* CPUGovernor.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6D24D3A26BB12F700CCE211 /* CPUGovernor.swift */; };
 		A6F718B12263CC3C0053488E /* ITAddressBookMgr.m in Sources */ = {isa = PBXBuildFile; fileRef = 20E74F4904E9089700000106 /* ITAddressBookMgr.m */; };
 		A6F718B22263E8A20053488E /* iTermInitialDirectory.m in Sources */ = {isa = PBXBuildFile; fileRef = A6F3E96D1D60E4F0000E97C4 /* iTermInitialDirectory.m */; };
 		A6F718B5226438FC0053488E /* iTermInitialDirectory+Tmux.h in Headers */ = {isa = PBXBuildFile; fileRef = A6F718B3226438FC0053488E /* iTermInitialDirectory+Tmux.h */; };
@@ -6445,6 +6444,7 @@
 		A6C978F024A0194400971AA7 /* WindowCornerFull@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "WindowCornerFull@2x.png"; path = "images/WindowCornerFull@2x.png"; sourceTree = "<group>"; };
 		A6CC16521CF012E300E8C148 /* iTermCarbonHotKeyController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermCarbonHotKeyController.h; sourceTree = "<group>"; };
 		A6CC16531CF012E300E8C148 /* iTermCarbonHotKeyController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermCarbonHotKeyController.m; sourceTree = "<group>"; };
+		A6CC7F5D274B7F610060C3C2 /* CPUGovernor.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = CPUGovernor.swift; path = sources/CPUGovernor.swift; sourceTree = SOURCE_ROOT; };
 		A6CD8A4022345427007C5B39 /* iTermNotificationCenter+Protected.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "iTermNotificationCenter+Protected.h"; sourceTree = "<group>"; };
 		A6CD8A412234DB83007C5B39 /* iTermStatusBarPlaceholderComponent.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermStatusBarPlaceholderComponent.h; sourceTree = "<group>"; };
 		A6CD8A422234DB83007C5B39 /* iTermStatusBarPlaceholderComponent.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermStatusBarPlaceholderComponent.m; sourceTree = "<group>"; };
@@ -9266,6 +9266,7 @@
 		A6866B6823CAA10A00ACD94C /* pidinfo */ = {
 			isa = PBXGroup;
 			children = (
+				A6CC7F5D274B7F610060C3C2 /* CPUGovernor.swift */,
 				A6E180EC23D5375F003C4EB1 /* pidinfo.entitlements */,
 				A6866B6923CAA10A00ACD94C /* pidinfoProtocol.h */,
 				A6866B6A23CAA10A00ACD94C /* pidinfo.h */,
@@ -12160,6 +12161,7 @@
 					};
 					A6866B6623CAA10A00ACD94C = {
 						CreatedOnToolsVersion = 11.3;
+						LastSwiftMigration = 1310;
 						ProvisioningStyle = Manual;
 					};
 					A6C7603F1B45C4CF00E3C992 = {
@@ -14660,7 +14662,7 @@
 				A6CDC31826391D1200616155 /* PIDInfoGitState.m in Sources */,
 				A687B66A25AD6FF600E0A658 /* iTermGitClient.m in Sources */,
 				A6866B6C23CAA10A00ACD94C /* pidinfo.m in Sources */,
-				A6F699272729C95F00C4A3A6 /* CPUGovernor.swift in Sources */,
+				A6CC7F5E274B7F610060C3C2 /* CPUGovernor.swift in Sources */,
 				A6EC936824E64FAA00EEADEF /* iTermFileDescriptorServerShared.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -17299,6 +17301,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				INFOPLIST_FILE = pidinfo/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/ThirdParty/libgit2/lib",
@@ -17322,6 +17325,7 @@
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = macosx;
 				SKIP_INSTALL = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
 				USER_HEADER_SEARCH_PATHS = $PROJECT_DIR/ThirdParty/libgit2/include;
 				VALID_ARCHS = "$(ARCHS_STANDARD)";
@@ -17381,6 +17385,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				INFOPLIST_FILE = pidinfo/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/ThirdParty/libgit2/lib",
@@ -17462,6 +17467,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				INFOPLIST_FILE = pidinfo/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/ThirdParty/libgit2/lib",
@@ -17543,6 +17549,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				INFOPLIST_FILE = pidinfo/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/ThirdParty/libgit2/lib",
