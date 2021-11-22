@@ -316,15 +316,13 @@ error:
 }
 
 - (void)flagsDidChange:(iTermFlagsChangedNotification *)notification {
-    if (@available(macOS 10.13, *)) {
-        if (_count == 0) {
-            DLog(@"Injecting flagsChanged event %@ because count is 0", notification.event);
-            [self handleEvent:notification.event.CGEvent ofType:kCGEventFlagsChanged];
-        } else {
-            DLog(@"NOT injecting flagsChanged event because count is %@", @(_count));
-        }
-        [self resetCount];
+    if (_count == 0) {
+        DLog(@"Injecting flagsChanged event %@ because count is 0", notification.event);
+        [self handleEvent:notification.event.CGEvent ofType:kCGEventFlagsChanged];
+    } else {
+        DLog(@"NOT injecting flagsChanged event because count is %@", @(_count));
     }
+    [self resetCount];
 }
 
 - (CGEventRef)handleEvent:(CGEventRef)originalEvent ofType:(CGEventType)type {

@@ -2114,18 +2114,14 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     XCTAssert([ScreenCharToStr(line + i++) isEqualToString:@"Ｅ"]);
     XCTAssert(line[i++].code == DWC_RIGHT);
     XCTAssert([ScreenCharToStr(line + i++) isEqualToString:@"�"]);  // note that u+200b is not present
-    if (@available(macOS 10.13, *)) {
-        XCTAssert([ScreenCharToStr(line + i++) isEqualToString:@"\u200c\u200d"]);  // Funny way macoS 10.13 works
-    }
+    XCTAssert([ScreenCharToStr(line + i++) isEqualToString:@"\u200c\u200d"]);  // Funny way macoS 10.13 works
     XCTAssert([ScreenCharToStr(line + i++) isEqualToString:@"g"]);
     XCTAssert([ScreenCharToStr(line + i++) isEqualToString:@"ł"]);
 
     XCTAssert([ScreenCharToStr(line + i++) isEqualToString:@"🖕🏾"]);
     BOOL lettersHaveSkin = NO;
-    if (@available(macOS 10.14, *)) {
-        if (@available(macOS 10.15, *)) { } else {
-            lettersHaveSkin = YES;
-        }
+    if (@available(macOS 10.15, *)) { } else {
+        lettersHaveSkin = YES;
     }
     if (lettersHaveSkin) {
         XCTAssert([ScreenCharToStr(line + i++) isEqualToString:@"g\U0001F3FE"]);  // macOS 10.14 does a silly thing

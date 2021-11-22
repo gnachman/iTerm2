@@ -11,25 +11,15 @@
 @implementation iTermProgressIndicator
 
 - (BOOL)isOpaque {
-    if (@available(macOS 10.14, *)) {
-        return NO;
-    } else {
-        return [super isOpaque];
-    }
+    return NO;
 }
 
 - (BOOL)lightMode {
-    if (@available(macOS 10.14, *)) {
-        return [[self.effectiveAppearance bestMatchFromAppearancesWithNames:@[ NSAppearanceNameAqua, NSAppearanceNameDarkAqua]] isEqualToString:NSAppearanceNameAqua];
-    }
-    return NO;
+    return [[self.effectiveAppearance bestMatchFromAppearancesWithNames:@[ NSAppearanceNameAqua, NSAppearanceNameDarkAqua]] isEqualToString:NSAppearanceNameAqua];
 }
 
 - (BOOL)darkMode {
-    if (@available(macOS 10.14, *)) {
-        return ![self lightMode];
-    }
-    return NO;
+    return ![self lightMode];
 }
 
 - (BOOL)shouldOutline {
@@ -84,11 +74,7 @@
 }
 
 - (void)drawRect:(NSRect)dirtyRect {
-    if (@available(macOS 10.14, *)) {
-        [[NSColor clearColor] set];
-    } else {
-        [[NSColor colorWithCalibratedWhite:0.8 alpha:1] set];
-    }
+    [[NSColor clearColor] set];
     NSRectFill(self.bounds);
 
     [[self fullPath] setClip];

@@ -64,10 +64,6 @@ iTermWindowType iTermThemedWindowType(iTermWindowType windowType) {
     switch (windowType) {
         case WINDOW_TYPE_COMPACT:
         case WINDOW_TYPE_NORMAL:
-            if (@available(macOS 10.14, *)) {} else {
-                // 10.13 and earlier do not support compact
-                return WINDOW_TYPE_NORMAL;
-            }
             switch ((iTermPreferencesTabStyle)[iTermPreferences intForKey:kPreferenceKeyTabStyle]) {
                 case TAB_STYLE_COMPACT:
                 case TAB_STYLE_MINIMAL:
@@ -85,10 +81,6 @@ iTermWindowType iTermThemedWindowType(iTermWindowType windowType) {
 
         case WINDOW_TYPE_COMPACT_MAXIMIZED:
         case WINDOW_TYPE_MAXIMIZED:
-            if (@available(macOS 10.14, *)) {} else {
-                // 10.13 and earlier do not support compact
-                return WINDOW_TYPE_MAXIMIZED;
-            }
             switch ((iTermPreferencesTabStyle)[iTermPreferences intForKey:kPreferenceKeyTabStyle]) {
                 case TAB_STYLE_COMPACT:
                 case TAB_STYLE_MINIMAL:

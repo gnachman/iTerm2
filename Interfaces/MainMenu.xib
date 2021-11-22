@@ -570,7 +570,7 @@ DQ
                                                 <action selector="filter:" target="-1" id="aWL-0M-Ywe"/>
                                             </connections>
                                         </menuItem>
-                                        <menuItem title="Convert Matches to Selections" identifier="Find.Filter" id="ULH-1B-QtL">
+                                        <menuItem title="Convert Matches to Selections" identifier="Find.ConvertMatchesToSelections" id="ULH-1B-QtL">
                                             <modifierMask key="keyEquivalentModifierMask"/>
                                             <connections>
                                                 <action selector="convertMatchesToSelections:" target="-1" id="bkH-aH-gAE"/>

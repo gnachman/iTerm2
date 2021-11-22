@@ -45,9 +45,7 @@ static NSString *const iTermToolProfilesProfileListViewState = @"iTermToolProfil
         if (@available(macOS 10.16, *)) {
             [listView_ forceOverlayScroller];
         }
-        if (@available(macOS 10.14, *)) {
-            listView_.tableView.backgroundColor = [NSColor clearColor];
-        }
+        listView_.tableView.backgroundColor = [NSColor clearColor];
 
         [self addSubview:listView_];
 

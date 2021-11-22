@@ -494,9 +494,7 @@ enum {
     _popoverVC.popover.behavior = NSPopoverBehaviorTransient;
     [_popoverVC view];
     _popoverVC.textView.font = [NSFont systemFontOfSize:[NSFont systemFontSize]];
-    if (@available(macOS 10.14, *)) {
-        _popoverVC.textView.drawsBackground = NO;
-    }
+    _popoverVC.textView.drawsBackground = NO;
     [_popoverVC appendString:[self detailTextForCurrentMode]];
     NSRect frame = _popoverVC.view.frame;
     frame.size.width = 550;

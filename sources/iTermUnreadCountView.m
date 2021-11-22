@@ -18,20 +18,14 @@
 - (instancetype)init {
     self = [super init];
     if (self) {
-        if (@available(macOS 10.14, *)) {
-            self.wantsLayer = YES;
-            self.layer.masksToBounds = NO;
-        }
+        self.wantsLayer = YES;
+        self.layer.masksToBounds = NO;
     }
     return self;
 }
 
 - (BOOL)wantsDefaultClipping {
-    if (@available(macOS 10.14, *)) {
-        return NO;
-    } else {
-        return [super wantsDefaultClipping];
-    }
+    return NO;
 }
 
 - (void)setCount:(NSInteger)count {
@@ -82,16 +76,12 @@
                                                          yRadius:radius];
     shapeLayer.path = [path iterm_CGPath];
     shapeLayer.fillColor = [[NSColor colorWithSRGBRed:0.976 green:0.243 blue:0.223 alpha:0.92] CGColor];
-    if (@available(macOS 10.14, *)) {
-        shapeLayer.shadowRadius = 1;
-        shapeLayer.shadowColor = [[NSColor blackColor] CGColor];
-        shapeLayer.shadowOpacity = 0.25;
-        shapeLayer.shadowOffset = CGSizeZero;
-    }
+    shapeLayer.shadowRadius = 1;
+    shapeLayer.shadowColor = [[NSColor blackColor] CGColor];
+    shapeLayer.shadowOpacity = 0.25;
+    shapeLayer.shadowOffset = CGSizeZero;
     view.layer = shapeLayer;
-    if (@available(macOS 10.14, *)) {
-        shapeLayer.masksToBounds = NO;
-    }
+    shapeLayer.masksToBounds = NO;
 
     [view addSubview:textField];
     textField.frame = NSMakeRect((NSWidth(view.frame) - NSWidth(textField.frame)) / 2.0,

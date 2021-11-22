@@ -17,11 +17,7 @@
 }
 
 + (NSColor *)tabBarColorWhenMainAndActive:(BOOL)keyMainAndActive {
-    if (@available(macOS 10.14, *)) {
-        return [NSColor colorWithSRGBRed:0 green:0 blue:0 alpha:0.25];
-    } else {
-        return [NSColor colorWithCalibratedWhite:0.12 alpha:1.00];
-    }
+    return [NSColor colorWithSRGBRed:0 green:0 blue:0 alpha:0.25];
 }
 
 - (NSColor *)tabBarColor {
@@ -30,14 +26,12 @@
 }
 
 - (NSColor *)textColorDefaultSelected:(BOOL)selected backgroundColor:(NSColor *)backgroundColor windowIsMainAndAppIsActive:(BOOL)windowIsMainAndAppIsActive {
-    CGFloat value = selected ? 0.80 : 0.60;
-    if (@available(macOS 10.14, *)) {
-        const BOOL keyMainAndActive = self.windowIsMainAndAppIsActive;
-        if (keyMainAndActive) {
-            value = selected ? 1.0 : 0.65;
-        } else {
-            value = selected ? 0.45 : 0.37;
-        }
+    const BOOL keyMainAndActive = self.windowIsMainAndAppIsActive;
+    CGFloat value;
+    if (keyMainAndActive) {
+        value = selected ? 1.0 : 0.65;
+    } else {
+        value = selected ? 0.45 : 0.37;
     }
     return [NSColor colorWithCalibratedWhite:value alpha:1.00];
 }
@@ -57,18 +51,14 @@
 }
 
 - (NSColor *)bottomLineColorSelected:(BOOL)selected {
-    if (@available(macOS 10.14, *)) {
-        if (@available(macOS 10.16, *)) {
-            const BOOL attachedToTitleBar = [[self.tabBar.delegate tabView:self.tabBar valueOfOption:PSMTabBarControlOptionAttachedToTitleBar] boolValue];
-            if (!attachedToTitleBar || self.tabBar.tabLocation != PSMTab_TopTab) {
-                NSColor *color = [self topLineColorSelected:NO];
-                return [color colorWithAlphaComponent:color.alphaComponent * 0.3];
-            }
+    if (@available(macOS 10.16, *)) {
+        const BOOL attachedToTitleBar = [[self.tabBar.delegate tabView:self.tabBar valueOfOption:PSMTabBarControlOptionAttachedToTitleBar] boolValue];
+        if (!attachedToTitleBar || self.tabBar.tabLocation != PSMTab_TopTab) {
+            NSColor *color = [self topLineColorSelected:NO];
+            return [color colorWithAlphaComponent:color.alphaComponent * 0.3];
         }
-        return [NSColor colorWithWhite:0 alpha:0.1];
-    } else {
-        return [NSColor colorWithCalibratedWhite:0.00 alpha:1.00];
     }
+    return [NSColor colorWithWhite:0 alpha:0.1];
 }
 
 - (NSColor *)verticalLineColorSelected:(BOOL)selected {
@@ -100,48 +90,40 @@
 }
 
 - (NSColor *)mojaveBackgroundColorSelected:(BOOL)selected highlightAmount:(CGFloat)highlightAmount {
-    if (@available(macOS 10.14, *)) {
-        CGFloat colors[3];
-        const BOOL keyMainAndActive = self.windowIsMainAndAppIsActive;
-        if (keyMainAndActive) {
-            if (selected) {
-                return [NSColor colorWithSRGBRed:0 green:0 blue:0 alpha:0];
-            } else {
-                NSColor *color = [self.class tabBarColorWhenMainAndActive:YES];
-                colors[0] = color.redComponent;
-                colors[1] = color.greenComponent;
-                colors[2] = color.blueComponent;
-            }
+    CGFloat colors[3];
+    const BOOL keyMainAndActive = self.windowIsMainAndAppIsActive;
+    if (keyMainAndActive) {
+        if (selected) {
+            return [NSColor colorWithSRGBRed:0 green:0 blue:0 alpha:0];
         } else {
-            if (selected) {
-                return [NSColor colorWithSRGBRed:0 green:0 blue:0 alpha:0];
-            } else {
-                NSColor *color = [self.class tabBarColorWhenMainAndActive:NO];
-                colors[0] = color.redComponent;
-                colors[1] = color.greenComponent;
-                colors[2] = color.blueComponent;
-            }
+            NSColor *color = [self.class tabBarColorWhenMainAndActive:YES];
+            colors[0] = color.redComponent;
+            colors[1] = color.greenComponent;
+            colors[2] = color.blueComponent;
         }
-        CGFloat highlightedColors[3] = { 1.0, 1.0, 1.0 };
-        CGFloat a = 0;
-        if (!selected) {
-            a = highlightAmount * 0.05;
-        }
-        for (int i = 0; i < 3; i++) {
-            colors[i] = colors[i] * (1.0 - a) + highlightedColors[i] * a;
-        }
-
-        return [NSColor colorWithSRGBRed:colors[0]
-                                   green:colors[1]
-                                    blue:colors[2]
-                                   alpha:0.25];
     } else {
-        CGFloat value = selected ? 0.25 : 0.13;
-        if (!selected) {
-            value += highlightAmount * 0.05;
+        if (selected) {
+            return [NSColor colorWithSRGBRed:0 green:0 blue:0 alpha:0];
+        } else {
+            NSColor *color = [self.class tabBarColorWhenMainAndActive:NO];
+            colors[0] = color.redComponent;
+            colors[1] = color.greenComponent;
+            colors[2] = color.blueComponent;
         }
-        return [NSColor colorWithCalibratedWhite:value alpha:1.00];
     }
+    CGFloat highlightedColors[3] = { 1.0, 1.0, 1.0 };
+    CGFloat a = 0;
+    if (!selected) {
+        a = highlightAmount * 0.05;
+    }
+    for (int i = 0; i < 3; i++) {
+        colors[i] = colors[i] * (1.0 - a) + highlightedColors[i] * a;
+    }
+
+    return [NSColor colorWithSRGBRed:colors[0]
+                               green:colors[1]
+                                blue:colors[2]
+                               alpha:0.25];
 }
 
 - (BOOL)useLightControls {
@@ -172,7 +154,7 @@
         insets.bottom = 0;
         insets.left = 0;
         insets.right = 0;
-    } else if (@available(macOS 10.14, *)) {
+    } else {
         insets.top = 1;
         insets.bottom = 0;
         insets.left = 1;

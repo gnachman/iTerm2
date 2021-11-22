@@ -95,9 +95,7 @@ static const CGFloat kWindowWidth = 400;
 }
 
 - (void)awakeFromNib {
-    if (@available(macOS 10.14, *)) {
-        self.window.backgroundColor = [NSColor clearColor];
-    }
+    self.window.backgroundColor = [NSColor clearColor];
     [super awakeFromNib];
 }
 

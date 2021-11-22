@@ -171,21 +171,15 @@ NS_CLASS_AVAILABLE_MAC(10_14)
         _leftTabBarPreferredWidth = round([iTermPreferences doubleForKey:kPreferenceKeyLeftTabBarWidth]);
         [self setLeftTabBarWidthFromPreferredWidth];
 
-        if (@available(macOS 10.14, *)) {
-            _backgroundImage = [[iTermImageView alloc] init];
-            _backgroundImage.frame = self.bounds;
-            _backgroundImage.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
-            _backgroundImage.hidden = YES;
-            [self addSubview:_backgroundImage];
-        }
-        
+        _backgroundImage = [[iTermImageView alloc] init];
+        _backgroundImage.frame = self.bounds;
+        _backgroundImage.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
+        _backgroundImage.hidden = YES;
+        [self addSubview:_backgroundImage];
+
         // Create the tab view.
         self.tabView = [[PTYTabView alloc] initWithFrame:self.bounds];
-        if (@available(macOS 10.14, *)) {
-            self.tabView.drawsBackground = NO;
-        } else {
-            self.tabView.drawsBackground = !_useMetal;
-        }
+        self.tabView.drawsBackground = NO;
         _tabView.autoresizingMask = (NSViewWidthSizable | NSViewHeightSizable);
         _tabView.autoresizesSubviews = YES;
         _tabView.allowsTruncatedLabels = NO;
@@ -196,11 +190,9 @@ NS_CLASS_AVAILABLE_MAC(10_14)
         // Create the tab bar.
         NSRect tabBarFrame = self.bounds;
         tabBarFrame.size.height = _tabBarControl.height;
-        if (@available(macOS 10.14, *)) {
-            _tabBarBacking = [[iTermTabBarBacking alloc] init];
-            _tabBarBacking.hidesWhenTabBarHidden = [delegate rootTerminalViewShouldHideTabBarBackingWhenTabBarIsHidden];
-            _tabBarBacking.autoresizesSubviews = YES;
-        }
+        _tabBarBacking = [[iTermTabBarBacking alloc] init];
+        _tabBarBacking.hidesWhenTabBarHidden = [delegate rootTerminalViewShouldHideTabBarBackingWhenTabBarIsHidden];
+        _tabBarBacking.autoresizesSubviews = YES;
 
         self.tabBarControl = [[iTermTabBarControlView alloc] initWithFrame:tabBarFrame];
         self.tabBarControl.height = [delegate rootTerminalViewHeightOfTabBar:self];
@@ -239,12 +231,8 @@ NS_CLASS_AVAILABLE_MAC(10_14)
                 [self setTabBarControlAutoresizingMask:(NSViewHeightSizable | NSViewMaxXMargin)];
                 break;
         }
-        if (@available(macOS 10.14, *)) {
-            [self addSubview:_tabBarBacking];
-            [_tabBarBacking addSubview:_tabBarControl];
-        } else {
-            [self addSubview:_tabBarControl];
-        }
+        [self addSubview:_tabBarBacking];
+        [_tabBarBacking addSubview:_tabBarControl];
         _tabBarControl.tabView = _tabView;
         [_tabView setDelegate:_tabBarControl];
         _tabBarControl.delegate = tabBarDelegate;
@@ -282,137 +270,136 @@ NS_CLASS_AVAILABLE_MAC(10_14)
         _windowTitleLabel.autoresizingMask = (NSViewMinYMargin | NSViewWidthSizable);
         [self addSubview:_windowTitleLabel];
         
-        if (@available(macOS 10.14, *)) {
-            NSColor *borderColor = [NSColor colorWithWhite:0.5 alpha:0.75];
-            {
-                static NSImage *gTopLeftCornerHalfImage;
-                static NSImage *gTopRightCornerHalfImage;
-                static NSImage *gBottomLeftCornerHalfImage;
-                static NSImage *gBottomRightCornerHalfImage;
+        NSColor *borderColor = [NSColor colorWithWhite:0.5 alpha:0.75];
+        {
+            static NSImage *gTopLeftCornerHalfImage;
+            static NSImage *gTopRightCornerHalfImage;
+            static NSImage *gBottomLeftCornerHalfImage;
+            static NSImage *gBottomRightCornerHalfImage;
 
-                static NSImage *gTopLeftCornerFullImage;
-                static NSImage *gTopRightCornerFullImage;
-                static NSImage *gBottomLeftCornerFullImage;
-                static NSImage *gBottomRightCornerFullImage;
+            static NSImage *gTopLeftCornerFullImage;
+            static NSImage *gTopRightCornerFullImage;
+            static NSImage *gBottomLeftCornerFullImage;
+            static NSImage *gBottomRightCornerFullImage;
 
-                static dispatch_once_t onceToken;
-                dispatch_once(&onceToken, ^{
-                    NSString *halfName = @"WindowCorner";
-                    if (@available(macOS 10.16, *)) {
-                        halfName = @"WindowCorner_BigSur";
-                    }
-                    if ([iTermAdvancedSettingsModel squareWindowCorners]) {
-                        halfName = @"WindowCorner_Square";
-                    }
-                    gTopLeftCornerHalfImage = [[NSImage it_imageNamed:halfName forClass:self.class] it_verticallyFlippedImage];
-                    gTopRightCornerHalfImage = [gTopLeftCornerHalfImage it_horizontallyFlippedImage];
-                    gBottomLeftCornerHalfImage = [NSImage it_imageNamed:halfName forClass:self.class];
-                    gBottomRightCornerHalfImage = [gBottomLeftCornerHalfImage it_horizontallyFlippedImage];
+            static dispatch_once_t onceToken;
+            dispatch_once(&onceToken, ^{
+                NSString *halfName = @"WindowCorner";
+                if (@available(macOS 10.16, *)) {
+                    halfName = @"WindowCorner_BigSur";
+                }
+                if ([iTermAdvancedSettingsModel squareWindowCorners]) {
+                    halfName = @"WindowCorner_Square";
+                }
+                gTopLeftCornerHalfImage = [[NSImage it_imageNamed:halfName forClass:self.class] it_verticallyFlippedImage];
+                gTopRightCornerHalfImage = [gTopLeftCornerHalfImage it_horizontallyFlippedImage];
+                gBottomLeftCornerHalfImage = [NSImage it_imageNamed:halfName forClass:self.class];
+                gBottomRightCornerHalfImage = [gBottomLeftCornerHalfImage it_horizontallyFlippedImage];
 
-                    NSString *fullName = @"WindowCornerFull";
-                    if (@available(macOS 10.16, *)) {
-                        fullName = @"WindowCornerFull_BigSur";
-                    }
-                    if ([iTermAdvancedSettingsModel squareWindowCorners]) {
-                        fullName = @"WindowCornerFull_Square";
-                    }
-                    gTopLeftCornerFullImage = [[NSImage it_imageNamed:fullName forClass:self.class] it_verticallyFlippedImage];
-                    gTopRightCornerFullImage = [gTopLeftCornerFullImage it_horizontallyFlippedImage];
-                    gBottomLeftCornerFullImage = [NSImage it_imageNamed:fullName forClass:self.class];
-                    gBottomRightCornerFullImage = [gBottomLeftCornerFullImage it_horizontallyFlippedImage];
-                });
-                // Half
-                NSImage *topLeftCornerHalfImage = gTopLeftCornerHalfImage;
-                NSImage *topRightCornerHalfImage = gTopRightCornerHalfImage;
-                NSImage *bottomLeftCornerHalfImage = gBottomLeftCornerHalfImage;
-                NSImage *bottomRightCornerHalfImage = gBottomRightCornerHalfImage;
+                NSString *fullName = @"WindowCornerFull";
+                if (@available(macOS 10.16, *)) {
+                    fullName = @"WindowCornerFull_BigSur";
+                }
+                if ([iTermAdvancedSettingsModel squareWindowCorners]) {
+                    fullName = @"WindowCornerFull_Square";
+                }
+                gTopLeftCornerFullImage = [[NSImage it_imageNamed:fullName forClass:self.class] it_verticallyFlippedImage];
+                gTopRightCornerFullImage = [gTopLeftCornerFullImage it_horizontallyFlippedImage];
+                gBottomLeftCornerFullImage = [NSImage it_imageNamed:fullName forClass:self.class];
+                gBottomRightCornerFullImage = [gBottomLeftCornerFullImage it_horizontallyFlippedImage];
+            });
+            // Half
+            NSImage *topLeftCornerHalfImage = gTopLeftCornerHalfImage;
+            NSImage *topRightCornerHalfImage = gTopRightCornerHalfImage;
+            NSImage *bottomLeftCornerHalfImage = gBottomLeftCornerHalfImage;
+            NSImage *bottomRightCornerHalfImage = gBottomRightCornerHalfImage;
 
-                _topLeftCornerHalfRoundImageView = [NSImageView imageViewWithImage:topLeftCornerHalfImage];
-                _topLeftCornerHalfRoundImageView.autoresizingMask = NSViewMinYMargin | NSViewMaxXMargin;
-                _topLeftCornerHalfRoundImageView.alphaValue = 0.75;
+            _topLeftCornerHalfRoundImageView = [NSImageView imageViewWithImage:topLeftCornerHalfImage];
+            _topLeftCornerHalfRoundImageView.autoresizingMask = NSViewMinYMargin | NSViewMaxXMargin;
+            _topLeftCornerHalfRoundImageView.alphaValue = 0.75;
 
-                _topRightCornerHalfRoundImageView = [NSImageView imageViewWithImage:topRightCornerHalfImage];
-                _topRightCornerHalfRoundImageView.alphaValue = 0.75;
-                _topRightCornerHalfRoundImageView.autoresizingMask = NSViewMinYMargin | NSViewMinXMargin;
+            _topRightCornerHalfRoundImageView = [NSImageView imageViewWithImage:topRightCornerHalfImage];
+            _topRightCornerHalfRoundImageView.alphaValue = 0.75;
+            _topRightCornerHalfRoundImageView.autoresizingMask = NSViewMinYMargin | NSViewMinXMargin;
 
-                _bottomLeftCornerHalfRoundImageView = [NSImageView imageViewWithImage:bottomLeftCornerHalfImage];
-                _bottomLeftCornerHalfRoundImageView.alphaValue = 0.75;
-                _bottomLeftCornerHalfRoundImageView.autoresizingMask = NSViewMaxYMargin | NSViewMaxXMargin;
+            _bottomLeftCornerHalfRoundImageView = [NSImageView imageViewWithImage:bottomLeftCornerHalfImage];
+            _bottomLeftCornerHalfRoundImageView.alphaValue = 0.75;
+            _bottomLeftCornerHalfRoundImageView.autoresizingMask = NSViewMaxYMargin | NSViewMaxXMargin;
 
-                _bottomRightCornerHalfRoundImageView = [NSImageView imageViewWithImage:bottomRightCornerHalfImage];
-                _bottomRightCornerHalfRoundImageView.alphaValue = 0.75;
-                _bottomRightCornerHalfRoundImageView.autoresizingMask = NSViewMaxYMargin | NSViewMinXMargin;
+            _bottomRightCornerHalfRoundImageView = [NSImageView imageViewWithImage:bottomRightCornerHalfImage];
+            _bottomRightCornerHalfRoundImageView.alphaValue = 0.75;
+            _bottomRightCornerHalfRoundImageView.autoresizingMask = NSViewMaxYMargin | NSViewMinXMargin;
 
-                _topLeftCornerHalfRoundImageView.hidden = YES;
-                _topRightCornerHalfRoundImageView.hidden = YES;
-                _bottomLeftCornerHalfRoundImageView.hidden = YES;
-                _bottomRightCornerHalfRoundImageView.hidden = YES;
+            _topLeftCornerHalfRoundImageView.hidden = YES;
+            _topRightCornerHalfRoundImageView.hidden = YES;
+            _bottomLeftCornerHalfRoundImageView.hidden = YES;
+            _bottomRightCornerHalfRoundImageView.hidden = YES;
 
-                [self addSubview:_topLeftCornerHalfRoundImageView];
-                [self addSubview:_topRightCornerHalfRoundImageView];
-                [self addSubview:_bottomLeftCornerHalfRoundImageView];
-                [self addSubview:_bottomRightCornerHalfRoundImageView];
+            [self addSubview:_topLeftCornerHalfRoundImageView];
+            [self addSubview:_topRightCornerHalfRoundImageView];
+            [self addSubview:_bottomLeftCornerHalfRoundImageView];
+            [self addSubview:_bottomRightCornerHalfRoundImageView];
 
-                // Full
+            // Full
 
-                NSImage *topLeftCornerFullImage = gTopLeftCornerFullImage;
-                NSImage *topRightCornerFullImage = gTopRightCornerFullImage;
-                NSImage *bottomLeftCornerFullImage = gBottomLeftCornerFullImage;
-                NSImage *bottomRightCornerFullImage = gBottomRightCornerFullImage;
+            NSImage *topLeftCornerFullImage = gTopLeftCornerFullImage;
+            NSImage *topRightCornerFullImage = gTopRightCornerFullImage;
+            NSImage *bottomLeftCornerFullImage = gBottomLeftCornerFullImage;
+            NSImage *bottomRightCornerFullImage = gBottomRightCornerFullImage;
 
-                _topLeftCornerFullRoundImageView = [NSImageView imageViewWithImage:topLeftCornerFullImage];
-                _topLeftCornerFullRoundImageView.autoresizingMask = NSViewMinYMargin | NSViewMaxXMargin;
-                _topLeftCornerFullRoundImageView.alphaValue = 0.75;
+            _topLeftCornerFullRoundImageView = [NSImageView imageViewWithImage:topLeftCornerFullImage];
+            _topLeftCornerFullRoundImageView.autoresizingMask = NSViewMinYMargin | NSViewMaxXMargin;
+            _topLeftCornerFullRoundImageView.alphaValue = 0.75;
 
-                _topRightCornerFullRoundImageView = [NSImageView imageViewWithImage:topRightCornerFullImage];
-                _topRightCornerFullRoundImageView.alphaValue = 0.75;
-                _topRightCornerFullRoundImageView.autoresizingMask = NSViewMinYMargin | NSViewMinXMargin;
+            _topRightCornerFullRoundImageView = [NSImageView imageViewWithImage:topRightCornerFullImage];
+            _topRightCornerFullRoundImageView.alphaValue = 0.75;
+            _topRightCornerFullRoundImageView.autoresizingMask = NSViewMinYMargin | NSViewMinXMargin;
 
-                _bottomLeftCornerFullRoundImageView = [NSImageView imageViewWithImage:bottomLeftCornerFullImage];
-                _bottomLeftCornerFullRoundImageView.alphaValue = 0.75;
-                _bottomLeftCornerFullRoundImageView.autoresizingMask = NSViewMaxYMargin | NSViewMaxXMargin;
+            _bottomLeftCornerFullRoundImageView = [NSImageView imageViewWithImage:bottomLeftCornerFullImage];
+            _bottomLeftCornerFullRoundImageView.alphaValue = 0.75;
+            _bottomLeftCornerFullRoundImageView.autoresizingMask = NSViewMaxYMargin | NSViewMaxXMargin;
 
-                _bottomRightCornerFullRoundImageView = [NSImageView imageViewWithImage:bottomRightCornerFullImage];
-                _bottomRightCornerFullRoundImageView.alphaValue = 0.75;
-                _bottomRightCornerFullRoundImageView.autoresizingMask = NSViewMaxYMargin | NSViewMinXMargin;
+            _bottomRightCornerFullRoundImageView = [NSImageView imageViewWithImage:bottomRightCornerFullImage];
+            _bottomRightCornerFullRoundImageView.alphaValue = 0.75;
+            _bottomRightCornerFullRoundImageView.autoresizingMask = NSViewMaxYMargin | NSViewMinXMargin;
 
-                _topLeftCornerFullRoundImageView.hidden = YES;
-                _topRightCornerFullRoundImageView.hidden = YES;
-                _bottomLeftCornerFullRoundImageView.hidden = YES;
-                _bottomRightCornerFullRoundImageView.hidden = YES;
+            _topLeftCornerFullRoundImageView.hidden = YES;
+            _topRightCornerFullRoundImageView.hidden = YES;
+            _bottomLeftCornerFullRoundImageView.hidden = YES;
+            _bottomRightCornerFullRoundImageView.hidden = YES;
 
-                [self addSubview:_topLeftCornerFullRoundImageView];
-                [self addSubview:_topRightCornerFullRoundImageView];
-                [self addSubview:_bottomLeftCornerFullRoundImageView];
-                [self addSubview:_bottomRightCornerFullRoundImageView];
-            }
-            {
-                _leftBorderView = [[NSView alloc] init];
-                _leftBorderView.wantsLayer = YES;
-                _leftBorderView.layer.backgroundColor = borderColor.CGColor;
-                _leftBorderView.autoresizingMask = NSViewMaxXMargin | NSViewHeightSizable;
-
-                _rightBorderView = [[NSView alloc] init];
-                _rightBorderView.wantsLayer = YES;
-                _rightBorderView.layer.backgroundColor = borderColor.CGColor;
-                _rightBorderView.autoresizingMask = NSViewMinXMargin | NSViewHeightSizable;
-
-                _topBorderView = [[NSView alloc] init];
-                _topBorderView.wantsLayer = YES;
-                _topBorderView.layer.backgroundColor = borderColor.CGColor;
-                _topBorderView.autoresizingMask = NSViewMinYMargin | NSViewWidthSizable;
-
-                _bottomBorderView = [[NSView alloc] init];
-                _bottomBorderView.wantsLayer = YES;
-                _bottomBorderView.layer.backgroundColor = borderColor.CGColor;
-                _bottomBorderView.autoresizingMask = NSViewMaxYMargin | NSViewWidthSizable;
-                
-                [self addSubview:_leftBorderView];
-                [self addSubview:_rightBorderView];
-                [self addSubview:_topBorderView];
-                [self addSubview:_bottomBorderView];
-            }
+            [self addSubview:_topLeftCornerFullRoundImageView];
+            [self addSubview:_topRightCornerFullRoundImageView];
+            [self addSubview:_bottomLeftCornerFullRoundImageView];
+            [self addSubview:_bottomRightCornerFullRoundImageView];
         }
+        {
+            _leftBorderView = [[NSView alloc] init];
+            _leftBorderView.wantsLayer = YES;
+            _leftBorderView.layer.backgroundColor = borderColor.CGColor;
+            _leftBorderView.autoresizingMask = NSViewMaxXMargin | NSViewHeightSizable;
+
+            _rightBorderView = [[NSView alloc] init];
+            _rightBorderView.wantsLayer = YES;
+            _rightBorderView.layer.backgroundColor = borderColor.CGColor;
+            _rightBorderView.autoresizingMask = NSViewMinXMargin | NSViewHeightSizable;
+
+            _topBorderView = [[NSView alloc] init];
+            _topBorderView.wantsLayer = YES;
+            _topBorderView.layer.backgroundColor = borderColor.CGColor;
+            _topBorderView.autoresizingMask = NSViewMinYMargin | NSViewWidthSizable;
+
+            _bottomBorderView = [[NSView alloc] init];
+            _bottomBorderView.wantsLayer = YES;
+            _bottomBorderView.layer.backgroundColor = borderColor.CGColor;
+            _bottomBorderView.autoresizingMask = NSViewMaxYMargin | NSViewWidthSizable;
+
+            [self addSubview:_leftBorderView];
+            [self addSubview:_rightBorderView];
+            [self addSubview:_topBorderView];
+            [self addSubview:_bottomBorderView];
+        }
+
 
         if (@available(macOS 10.15, *)) {} else {
             // 10.14 only
@@ -721,16 +708,6 @@ NS_CLASS_AVAILABLE_MAC(10_14)
 }
 
 - (void)drawRect:(NSRect)dirtyRect {
-    if (@available(macOS 10.14, *)) {
-        return;
-    }
-
-    // 10.12 and 10.13 code path
-    if (_useMetal) {
-        return;
-    } else {
-        [super drawRect:dirtyRect];
-    }
 }
 
 - (NSRect)frameForLeftBorderView {
@@ -839,21 +816,17 @@ NS_CLASS_AVAILABLE_MAC(10_14)
         return;
     }
     _useMetal = useMetal;
-    if (@available(macOS 10.14, *)) {
-        self.tabView.drawsBackground = NO;
-        if (@available(macOS 10.15, *)) { } else {
-            if (useMetal) {
-                self.wantsLayer = YES;
-                self.layer = [[CALayer alloc] init];
-            } else {
-                self.wantsLayer = NO;
-                self.layer = nil;
-            }
+    self.tabView.drawsBackground = NO;
+    if (@available(macOS 10.15, *)) { } else {
+        if (useMetal) {
+            self.wantsLayer = YES;
+            self.layer = [[CALayer alloc] init];
+        } else {
+            self.wantsLayer = NO;
+            self.layer = nil;
         }
-        [self updateTitleAndBorderViews];
-    } else {
-        self.tabView.drawsBackground = !_useMetal;
     }
+    [self updateTitleAndBorderViews];
 
     [_divisionView removeFromSuperview];
     _divisionView = nil;
@@ -909,16 +882,15 @@ NS_CLASS_AVAILABLE_MAC(10_14)
     assert(!_tabBarControlOnLoan);
     iTermTabBarControlView *view = _tabBarControl;
     _tabBarControlOnLoan = YES;
-    if (@available(macOS 10.14, *)) {
-        _tabBarBacking.hidden = YES;
-        [_tabBarControl removeFromSuperview];
-        // Fix size in case we just went from left-of to top-of since it's now going full-width.
-        [self.tabBarControl setTabLocation:[iTermPreferences intForKey:kPreferenceKeyTabPosition]];
-        const CGFloat desiredHeight = [self.delegate rootTerminalViewHeightOfTabBar:self];
-        _tabBarControl.height = desiredHeight;
-        _tabBarControl.frame = NSMakeRect(0, 0, _tabBarControl.frame.size.width, desiredHeight);
-        _tabBarControl.hidden = NO;
-    }
+    _tabBarBacking.hidden = YES;
+    [_tabBarControl removeFromSuperview];
+    // Fix size in case we just went from left-of to top-of since it's now going full-width.
+    [self.tabBarControl setTabLocation:[iTermPreferences intForKey:kPreferenceKeyTabPosition]];
+    const CGFloat desiredHeight = [self.delegate rootTerminalViewHeightOfTabBar:self];
+    _tabBarControl.height = desiredHeight;
+    _tabBarControl.frame = NSMakeRect(0, 0, _tabBarControl.frame.size.width, desiredHeight);
+    _tabBarControl.hidden = NO;
+
     return view;
 }
 
@@ -926,17 +898,11 @@ NS_CLASS_AVAILABLE_MAC(10_14)
     DLog(@"Return tabbar control");
     assert(_tabBarControlOnLoan);
     _tabBarControlOnLoan = NO;
-    if (@available(macOS 10.14, *)) {
-        [_tabBarBacking addSubview:tabBarControl];
-    } else {
-        [self addSubview:tabBarControl];
-    }
+    [_tabBarBacking addSubview:tabBarControl];
     _tabBarControl.frame = _tabBarBacking.bounds;
     _tabBarControl = tabBarControl;
     [self.tabBarControl updateFlashing];
-    if (@available(macOS 10.14, *)) {
-        _tabBarBacking.hidden = NO;
-    }
+    _tabBarBacking.hidden = NO;
 }
 
 - (void)windowNumberDidChangeTo:(NSNumber *)number {
@@ -1024,28 +990,16 @@ NS_CLASS_AVAILABLE_MAC(10_14)
                 
             case TAB_STYLE_LIGHT:
             case TAB_STYLE_LIGHT_HIGH_CONTRAST:
-                if (@available(macOS 10.14, *)) {
-                    _divisionView.color = (self.window.isKeyWindow
-                                           ? [NSColor colorWithCalibratedHue:1 saturation:0 brightness:0.70 alpha:1]
-                                           : [NSColor colorWithCalibratedHue:1 saturation:0 brightness:0.86 alpha:1]);
-                } else {
-                    _divisionView.color = (self.window.isKeyWindow
-                                           ? [NSColor colorWithCalibratedHue:1 saturation:0 brightness:0.49 alpha:1]
-                                           : [NSColor colorWithCalibratedHue:1 saturation:0 brightness:0.65 alpha:1]);
-                }
+                _divisionView.color = (self.window.isKeyWindow
+                                       ? [NSColor colorWithCalibratedHue:1 saturation:0 brightness:0.70 alpha:1]
+                                       : [NSColor colorWithCalibratedHue:1 saturation:0 brightness:0.86 alpha:1]);
                 break;
 
             case TAB_STYLE_DARK:
             case TAB_STYLE_DARK_HIGH_CONTRAST:
-                if (@available(macOS 10.14, *)) {
-                    _divisionView.color = (self.window.isKeyWindow
-                                           ? [NSColor colorWithCalibratedHue:1 saturation:0 brightness:0.1 alpha:1]
-                                           : [NSColor colorWithCalibratedHue:1 saturation:0 brightness:0.07 alpha:1]);
-                } else {
-                    _divisionView.color = (self.window.isKeyWindow
-                                           ? [NSColor colorWithCalibratedHue:1 saturation:0 brightness:0.2 alpha:1]
-                                           : [NSColor colorWithCalibratedHue:1 saturation:0 brightness:0.15 alpha:1]);
-                }
+                _divisionView.color = (self.window.isKeyWindow
+                                       ? [NSColor colorWithCalibratedHue:1 saturation:0 brightness:0.1 alpha:1]
+                                       : [NSColor colorWithCalibratedHue:1 saturation:0 brightness:0.07 alpha:1]);
                 break;
         }
 
@@ -1376,13 +1330,9 @@ NS_CLASS_AVAILABLE_MAC(10_14)
 }
 
 - (void)setTabBarFrame:(NSRect)frame {
-    if (@available(macOS 10.14, *)) {
-        assert(!_tabBarControlOnLoan);
-        _tabBarBacking.frame = frame;
-        self.tabBarControl.frame = _tabBarBacking.bounds;
-    } else {
-        self.tabBarControl.frame = frame;
-    }
+    assert(!_tabBarControlOnLoan);
+    _tabBarBacking.frame = frame;
+    self.tabBarControl.frame = _tabBarBacking.bounds;
 }
 
 - (void)layoutSubviewsWithVisibleBottomTabBarForWindow:(NSWindow *)thisWindow {
@@ -1460,12 +1410,10 @@ NS_CLASS_AVAILABLE_MAC(10_14)
 }
 
 - (void)setTabBarControlAutoresizingMask:(NSAutoresizingMaskOptions)mask {
-    if (@available(macOS 10.14, *)) {
-        if (_tabBarBacking) {
-            _tabBarBacking.autoresizingMask = mask;
-            _tabBarControl.autoresizingMask = (NSViewWidthSizable | NSViewHeightSizable);
-            return;
-        }
+    if (_tabBarBacking) {
+        _tabBarBacking.autoresizingMask = mask;
+        _tabBarControl.autoresizingMask = (NSViewWidthSizable | NSViewHeightSizable);
+        return;
     }
 
     _tabBarControl.autoresizingMask = mask;
@@ -1567,9 +1515,7 @@ NS_CLASS_AVAILABLE_MAC(10_14)
     self.window.movableByWindowBackground = !hideWindowTitleLabel;
     _windowNumberLabel.hidden = ![self.delegate rootTerminalViewWindowNumberLabelShouldBeVisible];
     _standardWindowButtonsView.frame = [self frameForStandardWindowButtons];
-    if (@available(macOS 10.14, *)) {
-        [self updateTitleAndBorderViews];
-    }
+    [self updateTitleAndBorderViews];
 }
 
 - (void)layoutSubviews {
@@ -1585,9 +1531,7 @@ NS_CLASS_AVAILABLE_MAC(10_14)
         self.tabBarControl.height = [_delegate rootTerminalViewHeightOfTabBar:self];
     }
 
-    if (@available(macOS 10.14, *)) {
-        _backgroundImage.frame = self.bounds;
-    }
+    _backgroundImage.frame = self.bounds;
     [self layoutWindowPaneDecorations];
 
     // The tab view frame (calculated below) is based on the toolbelt's width. If the toolbelt is
@@ -1672,7 +1616,7 @@ NS_CLASS_AVAILABLE_MAC(10_14)
 #pragma mark - Status Bar Layout
 
 - (NSRect)frameForStatusBarInContainingFrame:(NSRect)containingFrame {
-    switch ([iTermPreferences boolForKey:kPreferenceKeyStatusBarPosition]) {
+    switch ([iTermPreferences unsignedIntegerForKey:kPreferenceKeyStatusBarPosition]) {
         case iTermStatusBarPositionTop:
             return NSMakeRect(NSMinX(containingFrame),
                               NSMaxY(containingFrame) - iTermGetStatusBarHeight(),
@@ -1783,9 +1727,6 @@ NS_CLASS_AVAILABLE_MAC(10_14)
 }
 
 - (BOOL)iTermTabBarShouldHideBacking {
-    if (@available(macOS 10.14, *)) {} else {
-        return YES;
-    }
     const iTermPreferencesTabStyle preferredStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
     if (preferredStyle != TAB_STYLE_MINIMAL) {
         return YES;

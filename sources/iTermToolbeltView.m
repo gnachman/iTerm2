@@ -237,20 +237,18 @@ static NSString *const kDynamicToolURL = @"URL";
     self = [super initWithFrame:frame];
     if (self) {
         _delegate = delegate;
-        if (@available(macOS 10.14, *)) {
-            _vev = [[[iTermToolbeltVibrantVisualEffectView alloc] init] autorelease];
-            _vev.blendingMode = NSVisualEffectBlendingModeBehindWindow;
-            _vev.material = NSVisualEffectMaterialSidebar;
-            _vev.state = NSVisualEffectStateActive;
-            _vev.frame = self.bounds;
-            _vev.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
-            [self addSubview:_vev];
+        _vev = [[[iTermToolbeltVibrantVisualEffectView alloc] init] autorelease];
+        _vev.blendingMode = NSVisualEffectBlendingModeBehindWindow;
+        _vev.material = NSVisualEffectMaterialSidebar;
+        _vev.state = NSVisualEffectStateActive;
+        _vev.frame = self.bounds;
+        _vev.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
+        [self addSubview:_vev];
 
-            self.wantsLayer = YES;
-            self.layer = [[[CALayer alloc] init] autorelease];
-            self.layer.delegate = self;
-            self.layer.backgroundColor = [[self backgroundColor] CGColor];
-        }
+        self.wantsLayer = YES;
+        self.layer = [[[CALayer alloc] init] autorelease];
+        self.layer.delegate = self;
+        self.layer.backgroundColor = [[self backgroundColor] CGColor];
         
         NSArray *items = [iTermToolbeltView configuredTools];
         if (!items) {
@@ -318,9 +316,7 @@ static NSString *const kDynamicToolURL = @"URL";
 }
 
 - (void)viewDidChangeEffectiveAppearance {
-    if (@available(macOS 10.14, *)) {
-        [self updateColors];
-    }
+    [self updateColors];
 }
 
 - (void)updateColors NS_AVAILABLE_MAC(10_14) {
@@ -340,55 +336,19 @@ static NSString *const kDynamicToolURL = @"URL";
 
 - (void)viewDidMoveToWindow {
     [super viewDidMoveToWindow];
-    if (@available(macOS 10.14, *)) {
-        [self updateColors];
-    }
+    [self updateColors];
 }
 
 - (NSColor *)backgroundColor {
-    if (@available(macOS 10.14, *)) {
-        if (self.effectiveAppearance.it_isDark) {
-            return [NSColor clearColor];
-        } else {
-            // See comment in updateColors
-            return [NSColor whiteColor];
-        }
+    if (self.effectiveAppearance.it_isDark) {
+        return [NSColor clearColor];
+    } else {
+        // See comment in updateColors
+        return [NSColor whiteColor];
     }
-
-    NSColor *lightColor = [NSColor colorWithCalibratedWhite:237.0/255.0 alpha:1];
-    NSColor *darkColor = [NSColor colorWithCalibratedWhite:0.12 alpha:1.00];
-    switch ([self.effectiveAppearance it_tabStyle:[iTermPreferences intForKey:kPreferenceKeyTabStyle]]) {
-        case TAB_STYLE_AUTOMATIC:
-        case TAB_STYLE_COMPACT:
-        case TAB_STYLE_MINIMAL:
-            assert(NO);
-
-        case TAB_STYLE_LIGHT:
-        case TAB_STYLE_LIGHT_HIGH_CONTRAST:
-            return lightColor;
-            break;
-
-        case TAB_STYLE_DARK:
-        case TAB_STYLE_DARK_HIGH_CONTRAST:
-            if (@available(macOS 10.14, *)) {
-                return darkColor;
-            } else if ([iTermAdvancedSettingsModel darkThemeHasBlackTitlebar]) {
-                return darkColor;
-            } else {
-                return lightColor;
-            }
-            break;
-    }
-    return lightColor;
 }
 
 - (void)drawRect:(NSRect)dirtyRect {
-    if (@available(macOS 10.14, *)) {
-        return;
-    }
-    [[self backgroundColor] set];
-    NSRectFill(dirtyRect);
-    [super drawRect:dirtyRect];
 }
 
 - (BOOL)isFlipped {

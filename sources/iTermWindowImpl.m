@@ -150,13 +150,8 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (BOOL)validateMenuItem:(NSMenuItem *)item {
     if (item.action == @selector(performMiniaturize:)) {
-        if (@available(macOS 10.13, *)) {
-            // Can miniaturize borderless windows
-            return ![self.ptyDelegate lionFullScreen];
-        } else {
-            // This was originally for #4402. Not sure how it worked, but I don't want to mess with 10.12.
-            return ![self.ptyDelegate anyFullScreen];
-        }
+        // Can miniaturize borderless windows
+        return ![self.ptyDelegate lionFullScreen];
     } else {
         _validatingMenuItems = YES;
         const BOOL result = [super validateMenuItem:item];
@@ -173,11 +168,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)performMiniaturize:(nullable id)sender {
     if ([self.ptyDelegate anyFullScreen]) {
-        if (@available(macOS 10.13, *)) {
-            [super miniaturize:sender];
-        } else {
-            [super performMiniaturize:sender];
-        }
+        [super miniaturize:sender];
     } else {
         DLog(@"performMiniaturize calling [self miniaturize:]");
         [self miniaturize:self];

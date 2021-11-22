@@ -365,17 +365,9 @@
         value = 0;
     } else {
         if (selected) {
-            if (@available(macOS 10.14, *)) {
-                value = 189;
-            } else {
-                value = 0;
-            }
+            value = 189;
         } else {
-            if (@available(macOS 10.14, *)) {
-                value = 164;
-            } else {
-                value = 100;
-            }
+            value = 164;
         }
     }
     return [NSColor colorWithSRGBRed:value/255.0 green:value/255.0 blue:value/255.0 alpha:1];
@@ -404,24 +396,12 @@
             DLog(@"Not selected");
             // Non-selected cell when any cell has a tab color
             CGFloat prominence = [[_tabBar.delegate tabView:_tabBar valueOfOption:PSMTabBarControlOptionColoredUnselectedTabTextProminence] doubleValue];
-            if (@available(macOS 10.14, *)) {
-                if (cellBrightness > 0.5) {
-                    // Light tab
-                    return [NSColor colorWithWhite:0 alpha:prominence];
-                } else {
-                    // Dark tab
-                    return [NSColor colorWithWhite:1 alpha:prominence];
-                }
+            if (cellBrightness > 0.5) {
+                // Light tab
+                return [NSColor colorWithWhite:0 alpha:prominence];
             } else {
-                // 10.13 and earlier. Don't count on it blending competently.
-                CGFloat delta = prominence ?: 0.1;
-                if (cellBrightness > 0.5) {
-                    // Light tab
-                    return [NSColor colorWithWhite:cellBrightness - delta alpha:1];
-                } else {
-                    // Dark tab
-                    return [NSColor colorWithWhite:cellBrightness + delta alpha:1];
-                }
+                // Dark tab
+                return [NSColor colorWithWhite:1 alpha:prominence];
             }
         }
     } else {
@@ -485,22 +465,10 @@
     if (@available(macOS 10.16, *)) {
         return [NSColor clearColor];
     }
-    if (@available(macOS 10.14, *)) {
-        if (keyMainAndActive) {
-            return [NSColor colorWithSRGBRed:180.0/255.0 green:180.0/255.0 blue:180.0/255.0 alpha:1];
-        } else {
-            return [NSColor colorWithSRGBRed:209.0/255.0 green:209.0/255.0 blue:209.0/255.0 alpha:1];
-        }
+    if (keyMainAndActive) {
+        return [NSColor colorWithSRGBRed:180.0/255.0 green:180.0/255.0 blue:180.0/255.0 alpha:1];
     } else {
-        if (keyMainAndActive) {
-            if (selected) {
-                return [NSColor colorWithSRGBRed:189/255.0 green:189/255.0 blue:189/255.0 alpha:1];
-            } else {
-                return [NSColor colorWithSRGBRed:160/255.0 green:160/255.0 blue:160/255.0 alpha:1];
-            }
-        } else {
-            return [NSColor colorWithSRGBRed:219/255.0 green:219/255.0 blue:219/255.0 alpha:1];
-        }
+        return [NSColor colorWithSRGBRed:209.0/255.0 green:209.0/255.0 blue:209.0/255.0 alpha:1];
     }
 }
 
@@ -509,18 +477,10 @@
     if (@available(macOS 10.16, *)) {
         return [NSColor colorWithWhite:0 alpha:0.07];
     }
-    if (@available(macOS 10.14, *)) {
-        if (keyMainAndActive) {
-            return [NSColor colorWithSRGBRed:174.0/255.0 green:174.0/255.0 blue:174.0/255.0 alpha:1];
-        } else {
-            return [NSColor colorWithSRGBRed:209.0/255.0 green:209.0/255.0 blue:209.0/255.0 alpha:1];
-        }
+    if (keyMainAndActive) {
+        return [NSColor colorWithSRGBRed:174.0/255.0 green:174.0/255.0 blue:174.0/255.0 alpha:1];
     } else {
-        if (keyMainAndActive) {
-            return [NSColor colorWithSRGBRed:160/255.0 green:160/255.0 blue:160/255.0 alpha:1];
-        } else {
-            return [NSColor colorWithSRGBRed:219/255.0 green:219/255.0 blue:219/255.0 alpha:1];
-        }
+        return [NSColor colorWithSRGBRed:209.0/255.0 green:209.0/255.0 blue:209.0/255.0 alpha:1];
     }
 }
 
@@ -529,15 +489,8 @@
         return [NSColor colorWithSRGBRed:230.0/255.0 green:230.0/255.0 blue:230.0/255.0 alpha:1];
     } else if (@available(macOS 10.16, *)) {
         return [NSColor colorWithSRGBRed:180.0/255.0 green:180.0/255.0 blue:180.0/255.0 alpha:1];
-    } else if (@available(macOS 10.14, *)) {
-        return [NSColor colorWithWhite:0 alpha:0.15];
     } else {
-        const BOOL keyMainAndActive = self.windowIsMainAndAppIsActive;
-        if (keyMainAndActive) {
-            return [NSColor colorWithSRGBRed:160/255.0 green:160/255.0 blue:160/255.0 alpha:1];
-        } else {
-            return [NSColor colorWithSRGBRed:210/255.0 green:210/255.0 blue:210/255.0 alpha:1];
-        }
+        return [NSColor colorWithWhite:0 alpha:0.15];
     }
 }
 
@@ -609,10 +562,7 @@
 
 - (void)drawVerticalLineInFrame:(NSRect)rect x:(CGFloat)x {
     CGFloat topInset = 1;
-    CGFloat bottomInset = 1;
-    if (@available(macOS 10.14, *)) {
-        bottomInset = 0;
-    }
+    CGFloat bottomInset = 0;
     NSRect modifiedRect = NSMakeRect(x, NSMinY(rect) + topInset, 1, rect.size.height - topInset - bottomInset);
     NSRectFillUsingOperation(modifiedRect, NSCompositingOperationSourceOver);
 }
@@ -720,13 +670,10 @@
     NSEdgeInsets insets = NSEdgeInsetsZero;
     if (@available(macOS 10.16, *)) {
         return insets;
-    } else if (@available(macOS 10.14, *)) {
+    } else {
         insets.top = 1;
         insets.bottom = 1;
         insets.left = 1;
-    } else {
-      // 10.13 and earlier
-      return insets;
     }
     if (!horizontal) {
         insets.left = 0.5;
@@ -751,17 +698,13 @@
                           horizontal:horizontal];
     if (horizontal) {
         BOOL shouldDrawLeftLine;
-        if (@available(macOS 10.14, *)) {
-            if (isFirst && NSMinX(cellFrame) > 1) {
-                shouldDrawLeftLine = YES;
-            } else {
-                // Because alpha is less than 1, we don't want to double-draw. I don't think
-                // drawing the left line is necessary in earlier macOS versions either but I
-                // don't feel like adding any risk at the moment.
-                shouldDrawLeftLine = NO;
-            }
+        if (isFirst && NSMinX(cellFrame) > 1) {
+            shouldDrawLeftLine = YES;
         } else {
-            shouldDrawLeftLine = !isFirst;
+            // Because alpha is less than 1, we don't want to double-draw. I don't think
+            // drawing the left line is necessary in earlier macOS versions either but I
+            // don't feel like adding any risk at the moment.
+            shouldDrawLeftLine = NO;
         }
         if (shouldDrawLeftLine) {
             // Left line
@@ -778,16 +721,6 @@
 
         // Top line
         [[self topLineColorSelected:selected] set];
-        if (@available(macOS 10.14, *)) {} else {
-            // 10.13 and earlier
-            if (isLast) {
-                NSRect rect = cellFrame;
-                rect.size.width -= 1;
-                [self drawHorizontalLineInFrame:rect y:NSMinY(cellFrame)];
-            } else {
-                [self drawHorizontalLineInFrame:cellFrame y:NSMinY(cellFrame)];
-            }
-        }
         // Bottom line
         if (@available(macOS 10.16, *)) { } else {
             const BOOL drawBottomLine = [[_tabBar.delegate tabView:_tabBar valueOfOption:PSMTabBarControlOptionColoredDrawBottomLineForHorizontalTabBar] boolValue];
@@ -809,26 +742,11 @@
         cellFrame.size.width -= 1;
         cellFrame.origin.y -= 1;
         cellFrame.size.height += 2;
-
-        // Left line
-        if (@available(macOS 10.14, *)) {} else {
-            // 10.13 and earlier
-            [[self topLineColorSelected:selected] set];
-            [self drawVerticalLineInFrame:cellFrame x:NSMinX(cellFrame)];
-
-            // Right line
-            [[self bottomLineColorSelected:selected] set];
-            [self drawVerticalLineInFrame:cellFrame x:NSMaxX(cellFrame)];
-        }
     }
 }
 
 - (NSEdgeInsets)insetsForTabBarDividers {
-    if (@available(macOS 10.14, *)) {
-        return NSEdgeInsetsMake(0, 0.5, 0, 2);
-    } else {
-        return NSEdgeInsetsMake(0, 1, 0, 2);
-    }
+    return NSEdgeInsetsMake(0, 0.5, 0, 2);
 }
 
 - (void)drawTabCell:(PSMTabBarCell *)cell highlightAmount:(CGFloat)highlightAmount {
@@ -1197,7 +1115,7 @@
                                    green:225.0 / 255.0
                                     blue:225.0 / 255.0
                                    alpha:1];
-    } else if (@available(macOS 10.14, *)) {
+    } else {
         if (keyMainAndActive) {
             return [NSColor colorWithSRGBRed:188.0 / 255.0
                                        green:188.0 / 255.0
@@ -1208,12 +1126,6 @@
                                        green:221.0 / 255.0
                                         blue:221.0 / 255.0
                                        alpha:1];
-        }
-    } else {
-        if (keyMainAndActive) {
-            return [NSColor colorWithCalibratedWhite:0.0 alpha:0.2];
-        } else {
-            return [NSColor colorWithCalibratedWhite:236 / 255.0 alpha:1];
         }
     }
 }
@@ -1229,11 +1141,7 @@
     [[NSGraphicsContext currentContext] setShouldAntialias:NO];
 
     [backgroundColor set];
-    if (@available(macOS 10.14, *)) {
-        NSRectFillUsingOperation(rect, NSCompositingOperationSourceOver);
-    } else {
-        NSRectFillUsingOperation(rect, NSCompositingOperationSourceAtop);
-    }
+    NSRectFillUsingOperation(rect, NSCompositingOperationSourceOver);
 
     [[self bottomLineColorSelected:NO] set];
     if (_orientation == PSMTabBarHorizontalOrientation) {
@@ -1310,11 +1218,9 @@
     NSRect insetRect;
     if (@available(macOS 10.16, *)) {
         insetRect = clipRect;
-    } else if (@available(macOS 10.14, *)) {
+    } else {
         insetRect = NSInsetRect(rect, 1, 0);
         insetRect.size.width -= 1;
-    } else {
-        insetRect = clipRect;
     }
     if (@available(macOS 10.16, *)) { } else {
         const NSRect insetClipIntersection = NSIntersectionRect(clipRect, insetRect);
@@ -1377,28 +1283,26 @@
         }
     }
 
-    if (@available(macOS 10.14, *)) {
-        if (_orientation != PSMTabBarHorizontalOrientation) {
-            [[self bottomLineColorSelected:NO] set];
-            NSRect rightLineRect = rect;
-            rightLineRect.origin.y -= 1;
-            [self drawVerticalLineInFrame:rightLineRect x:NSMaxX(rect) - 1];
-        } else {
-            if (@available(macOS 10.16, *)) {
-                switch (bar.tabLocation) {
-                    case PSMTab_LeftTab:
-                        break;
-                    case PSMTab_TopTab:
-                        // Bottom line
-                        [[self bottomLineColorSelected:YES] set];
-                        NSRectFill(NSMakeRect(0, NSMaxY(rect) - 1, NSWidth(rect), 1));
-                        break;
-                    case PSMTab_BottomTab:
-                        // Top line
-                        [[self bottomLineColorSelected:YES] set];
-                        NSRectFill(NSMakeRect(0, NSMinY(rect), NSWidth(rect), 1));
-                        break;
-                }
+    if (_orientation != PSMTabBarHorizontalOrientation) {
+        [[self bottomLineColorSelected:NO] set];
+        NSRect rightLineRect = rect;
+        rightLineRect.origin.y -= 1;
+        [self drawVerticalLineInFrame:rightLineRect x:NSMaxX(rect) - 1];
+    } else {
+        if (@available(macOS 10.16, *)) {
+            switch (bar.tabLocation) {
+                case PSMTab_LeftTab:
+                    break;
+                case PSMTab_TopTab:
+                    // Bottom line
+                    [[self bottomLineColorSelected:YES] set];
+                    NSRectFill(NSMakeRect(0, NSMaxY(rect) - 1, NSWidth(rect), 1));
+                    break;
+                case PSMTab_BottomTab:
+                    // Top line
+                    [[self bottomLineColorSelected:YES] set];
+                    NSRectFill(NSMakeRect(0, NSMinY(rect), NSWidth(rect), 1));
+                    break;
             }
         }
     }

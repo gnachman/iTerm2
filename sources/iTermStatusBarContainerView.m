@@ -47,9 +47,7 @@ const CGFloat iTermGetStatusBarHeight() {
     self = [super initWithFrame:NSMakeRect(0, 0, preferredWidth, iTermGetStatusBarHeight())];
     if (self) {
         self.wantsLayer = YES;
-        if (@available(macOS 10.14, *)) {
-            self.layer.masksToBounds = NO;
-        }
+        self.layer.masksToBounds = NO;
         _component = component;
         _backgroundColor = [component.configuration[iTermStatusBarComponentConfigurationKeyKnobValues][iTermStatusBarSharedBackgroundColorKey] colorValue];
         _view = component.statusBarComponentView;
@@ -190,9 +188,6 @@ const CGFloat iTermGetStatusBarHeight() {
                              [self retinaRoundUp:self.preferredWidthForComponentView],
                              [self retinaRoundUp:viewHeight]);
     CGFloat margin = -2;
-    if (@available(macOS 10.14, *)) { } else {
-        margin = 0;
-    }
     _unreadCountView.frame = NSMakeRect(NSMaxX(self.bounds) - NSWidth(_unreadCountView.frame) - margin,
                                         [self retinaRound:NSMidY(self.bounds) - NSHeight(_unreadCountView.frame) / 2.0],
                                         NSWidth(_unreadCountView.frame),
@@ -200,11 +195,7 @@ const CGFloat iTermGetStatusBarHeight() {
 }
 
 - (BOOL)wantsDefaultClipping {
-    if (@available(macOS 10.14, *)) {
-        return NO;
-    } else {
-        return [super wantsDefaultClipping];
-    }
+    return NO;
 }
 
 - (void)viewDidMoveToWindow {

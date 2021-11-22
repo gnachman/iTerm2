@@ -837,9 +837,7 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionMinimalNonSelectedColoredTabAlph
 }
 
 - (void)backgroundColorWillChange {
-    if (@available(macOS 10.14, *)) {
-        _overflowPopUpButton.appearance = _style.accessoryAppearance;
-    }
+    _overflowPopUpButton.appearance = _style.accessoryAppearance;
 }
 
 #pragma mark -

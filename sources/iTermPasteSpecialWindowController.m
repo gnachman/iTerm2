@@ -163,10 +163,8 @@
 }
 
 - (void)awakeFromNib {
-    if (@available(macOS 10.14, *)) {
-        _preview.backgroundColor = [NSColor textBackgroundColor];
-        _preview.textColor = [NSColor textColor];
-    }
+    _preview.backgroundColor = [NSColor textBackgroundColor];
+    _preview.textColor = [NSColor textColor];
     _preview.automaticSpellingCorrectionEnabled = NO;
     _preview.automaticDashSubstitutionEnabled = NO;
     _preview.automaticQuoteSubstitutionEnabled = NO;

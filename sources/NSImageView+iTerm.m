@@ -11,12 +11,7 @@
 @implementation NSImageView (iTerm)
 
 - (void)it_setTintColor:(NSColor *)color {
-    if (@available(macOS 10.14, *)) {
-        self.contentTintColor = color;
-        return;
-    }
-
-    self.image = [self.image it_imageWithTintColor:color];
+    self.contentTintColor = color;
 }
 
 @end

@@ -47,11 +47,7 @@ typedef struct {
     }
 
     NSCompositingOperation operation;
-    if (@available(macOS 10.14, *)) {
-        operation = NSCompositingOperationSourceOver;
-    } else {
-        operation = NSCompositingOperationCopy;
-    }
+    operation = NSCompositingOperationSourceOver;
 
     NSRect (^flip)(NSRect) = ^NSRect(NSRect r) {
         return NSMakeRect(r.origin.x,

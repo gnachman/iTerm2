@@ -27,58 +27,26 @@ static char iTermAdvancedSettingsTableKey;
 @implementation iTermTableViewTextField
 
 - (BOOL)becomeFirstResponder {
-    if (@available(macOS 10.14, *)) {
-        self.textColor = [NSColor labelColor];
-    } else {
-        self.textColor = [NSColor blackColor];
-    }
+    self.textColor = [NSColor labelColor];
     return YES;
 }
 
 - (void)setBackgroundStyle:(NSBackgroundStyle)backgroundStyle {
-    if (@available(macOS 10.14, *)) {
-        if (self.editable) {
-            return;
-        }
-        switch (backgroundStyle) {
-            case NSBackgroundStyleNormal:
-                self.textColor = [NSColor labelColor];
-                if (self.regularAttributedString) {
-                    self.attributedStringValue = self.regularAttributedString;
-                }
-                break;
-            case NSBackgroundStyleEmphasized:
-                self.textColor = [NSColor selectedMenuItemTextColor];
-                if (self.selectedAttributedString) {
-                    self.attributedStringValue = self.selectedAttributedString;
-                }
-                break;
-
-            case NSBackgroundStyleRaised:
-            case NSBackgroundStyleLowered:
-                break;
-        }
-        return;
-    }
-    if (self.textFieldIsFirstResponder) {
-        self.textColor = [NSColor blackColor];
-        if (self.regularAttributedString) {
-            self.attributedStringValue = self.regularAttributedString;
-        }
+    if (self.editable) {
         return;
     }
     switch (backgroundStyle) {
-        case NSBackgroundStyleLight:
-            self.textColor = [NSColor blackColor];
+        case NSBackgroundStyleNormal:
+            self.textColor = [NSColor labelColor];
             if (self.regularAttributedString) {
                 self.attributedStringValue = self.regularAttributedString;
             }
             break;
-        case NSBackgroundStyleDark:
+        case NSBackgroundStyleEmphasized:
+            self.textColor = [NSColor selectedMenuItemTextColor];
             if (self.selectedAttributedString) {
                 self.attributedStringValue = self.selectedAttributedString;
             }
-            self.textColor = [NSColor whiteColor];
             break;
 
         case NSBackgroundStyleRaised:
@@ -223,9 +191,6 @@ static NSDictionary *gIntrospection;
     [_tableView setGridColor:[NSColor clearColor]];
     [_tableView setGridStyleMask:NSTableViewGridNone];
     [_tableView setIntercellSpacing:NSMakeSize(0, 0)];
-    if (@available(macOS 10.14, *)) { } else {
-        [_tableView setBackgroundColor:[NSColor whiteColor]];
-    }
 
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(advancedSettingsDidChange:)
@@ -242,14 +207,10 @@ static NSDictionary *gIntrospection;
     NSAttributedString *topSpacer = [[NSAttributedString alloc] initWithString:@"\n"
                                                                     attributes:spacerAttributes];
     NSColor *textColor;
-    if (@available(macOS 10.14, *)) {
-        if (selected) {
-            textColor = [NSColor selectedMenuItemTextColor];
-        } else {
-            textColor = [NSColor labelColor];
-        }
+    if (selected) {
+        textColor = [NSColor selectedMenuItemTextColor];
     } else {
-        textColor = (selected && self.view.window.isKeyWindow) ? [NSColor whiteColor] : [NSColor blackColor];
+        textColor = [NSColor labelColor];
     }
     NSDictionary *attributes =
         @{ NSFontAttributeName: bold ? [NSFont boldSystemFontOfSize:size] : [NSFont systemFontOfSize:size],
@@ -472,14 +433,10 @@ static NSDictionary *gIntrospection;
                                bold:NO];
     if (subtitle) {
         NSColor *color;
-        if (@available(macOS 10.14, *)) {
-            if (selected) {
-                color = [[NSColor selectedMenuItemTextColor] colorWithAlphaComponent:0.5];
-            } else {
-                color = [NSColor secondaryLabelColor];
-            }
+        if (selected) {
+            color = [[NSColor selectedMenuItemTextColor] colorWithAlphaComponent:0.5];
         } else {
-            color = (selected && self.view.window.isKeyWindow) ? [NSColor whiteColor] : [NSColor grayColor];
+            color = [NSColor secondaryLabelColor];
         }
         NSDictionary *attributes = @{ NSForegroundColorAttributeName: color,
                                       NSFontAttributeName: [NSFont systemFontOfSize:11] };

@@ -242,13 +242,8 @@ NS_ASSUME_NONNULL_BEGIN
                                            tState.configuration.viewportSize.y);
     NSEdgeInsets insets;
     CGFloat vmargin;
-    if (@available(macOS 10.14, *)) {
-        vmargin = 0;
-        insets = NSEdgeInsetsZero;
-    } else {
-        vmargin = [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins] * scale;
-        insets = tState.edgeInsets;
-    }
+    vmargin = 0;
+    insets = NSEdgeInsetsZero;
     const CGFloat topMargin = insets.bottom + vmargin;
     const CGFloat bottomMargin = insets.top + vmargin;
     const CGFloat leftMargin = insets.left;

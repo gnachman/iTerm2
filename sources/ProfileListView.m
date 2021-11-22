@@ -59,32 +59,14 @@ static NSString *const iTermProfileListViewRestorableStateTagsFraction = @"iTerm
 @implementation iTermProfileListViewTextField
 
 - (void)setBackgroundStyle:(NSBackgroundStyle)backgroundStyle {
-    if (@available(macOS 10.14, *)) {
-        switch (backgroundStyle) {
-            case NSBackgroundStyleNormal:
-                self.textColor = [NSColor labelColor];
-                [self setAttributedTextColorsForKey:iTermRegularForegroundColor];
-                break;
-            case NSBackgroundStyleEmphasized:
-                [self setAttributedTextColorsForKey:iTermSelectedActiveForegroundColor];
-                self.textColor = [NSColor labelColor];
-                break;
-                
-            case NSBackgroundStyleRaised:
-            case NSBackgroundStyleLowered:
-                DLog(@"Unexpected background style %@", @(backgroundStyle));
-                break;
-        }
-        return;
-    }
     switch (backgroundStyle) {
-        case NSBackgroundStyleLight:
-            self.textColor = [NSColor blackColor];
+        case NSBackgroundStyleNormal:
+            self.textColor = [NSColor labelColor];
             [self setAttributedTextColorsForKey:iTermRegularForegroundColor];
             break;
-        case NSBackgroundStyleDark:
+        case NSBackgroundStyleEmphasized:
             [self setAttributedTextColorsForKey:iTermSelectedActiveForegroundColor];
-            self.textColor = [NSColor whiteColor];
+            self.textColor = [NSColor labelColor];
             break;
 
         case NSBackgroundStyleRaised:
@@ -645,47 +627,19 @@ const CGFloat kDefaultTagsWidth = 80;
 }
 
 - (NSColor *)regularTextColor {
-    if (@available(macOS 10.14, *)) {
-        return [NSColor labelColor];
-    }
-    if ([self lightTheme]) {
-        return [NSColor blackColor];
-    } else {
-        return [NSColor whiteColor];
-    }
+    return [NSColor labelColor];
 }
 
 - (NSColor *)textColorWhenInactiveAndSelected {
-    if (@available(macOS 10.14, *)) {
-        return [NSColor unemphasizedSelectedTextColor];
-    }
-    if ([self lightTheme]) {
-        return [NSColor blackColor];
-    } else {
-        return [NSColor whiteColor];
-    }
+    return [NSColor unemphasizedSelectedTextColor];
 }
 
 - (NSColor *)selectedActiveTagColor {
-    if (@available(macOS 10.14, *)) {
-        return [NSColor selectedMenuItemTextColor];
-    }
-    if ([self lightTheme]) {
-        return [NSColor whiteColor];
-    } else {
-        return [NSColor blackColor];
-    }
+    return [NSColor selectedMenuItemTextColor];
 }
 
 - (NSColor *)selectedActiveTextColor {
-    if (@available(macOS 10.14, *)) {
-        return [NSColor selectedMenuItemTextColor];
-    }
-    if ([self lightTheme]) {
-        return [NSColor whiteColor];
-    } else {
-        return [NSColor blackColor];
-    }
+    return [NSColor selectedMenuItemTextColor];
 }
 
 - (NSColor *)regularTagColor {

@@ -136,20 +136,18 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
 - (instancetype)initWithFrame:(NSRect)frame {
     self = [super initWithFrame:frame];
     if (self) {
-        if (@available(macOS 10.14, *)) {
-            const CGFloat radius = 4;
-            _vev = [[NSVisualEffectView alloc] initWithFrame:self.bounds];
-            _vev.wantsLayer = YES;
-            _vev.blendingMode = NSVisualEffectBlendingModeWithinWindow;
-            _vev.material = NSVisualEffectMaterialSheet;
-            _vev.state = NSVisualEffectStateActive;
-            _vev.layer.cornerRadius = radius;
-            _vev.layer.borderWidth = 1;
-            _vev.layer.borderColor = [[self desiredBorderColor] CGColor];
-            [self addSubview:_vev positioned:NSWindowBelow relativeTo:self.subviews.firstObject];
-            _vev.autoresizingMask = (NSViewWidthSizable | NSViewHeightSizable);
-            self.autoresizesSubviews = YES;
-        }
+        const CGFloat radius = 4;
+        _vev = [[NSVisualEffectView alloc] initWithFrame:self.bounds];
+        _vev.wantsLayer = YES;
+        _vev.blendingMode = NSVisualEffectBlendingModeWithinWindow;
+        _vev.material = NSVisualEffectMaterialSheet;
+        _vev.state = NSVisualEffectStateActive;
+        _vev.layer.cornerRadius = radius;
+        _vev.layer.borderWidth = 1;
+        _vev.layer.borderColor = [[self desiredBorderColor] CGColor];
+        [self addSubview:_vev positioned:NSWindowBelow relativeTo:self.subviews.firstObject];
+        _vev.autoresizingMask = (NSViewWidthSizable | NSViewHeightSizable);
+        self.autoresizesSubviews = YES;
     }
     return self;
 }
@@ -165,29 +163,8 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
         return [NSColor colorWithWhite:0 alpha:0.25];
     }
 }
+
 - (void)drawRect:(NSRect)dirtyRect {
-    if (@available(macOS 10.14, *)) {
-        return;
-    }
-    NSBezierPath *path = [NSBezierPath bezierPath];
-    NSSize size = self.bounds.size;
-    size.width -= 1.5;
-    size.height -= 1.5;
-    const CGFloat radius = 4;
-    [path moveToPoint:NSMakePoint(0, 0)];
-    [path lineToPoint:NSMakePoint(0, size.height)];
-    [path lineToPoint:NSMakePoint(size.width - radius, size.height)];
-    [path curveToPoint:NSMakePoint(size.width, size.height - radius)
-         controlPoint1:NSMakePoint(size.width, size.height)
-         controlPoint2:NSMakePoint(size.width, size.height)];
-    [path lineToPoint:NSMakePoint(size.width, 0)];
-    [path lineToPoint:NSMakePoint(0, 0)];
-
-    [[NSColor darkGrayColor] setStroke];
-    [[NSColor lightGrayColor] setFill];
-
-    [path stroke];
-    [path fill];
 }
 
 @end
@@ -305,12 +282,10 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
         self.verticalScroller.ptyScrollerDelegate = self;
         [_scrollview setAutoresizingMask:(NSViewWidthSizable | NSViewHeightSizable)];
 
-        if (@available(macOS 10.11, *)) {
-            _metalClipView = [[iTermMetalClipView alloc] initWithFrame:_scrollview.contentView.frame];
-            _metalClipView.metalView = _metalView;
-            _scrollview.contentView = _metalClipView;
-            _scrollview.drawsBackground = NO;
-        }
+        _metalClipView = [[iTermMetalClipView alloc] initWithFrame:_scrollview.contentView.frame];
+        _metalClipView.metalView = _metalView;
+        _scrollview.contentView = _metalClipView;
+        _scrollview.drawsBackground = NO;
 
         _scrollview.contentView.copiesOnScroll = NO;
         // assign the main view
@@ -385,63 +360,57 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
 }
 
 - (void)setImageMode:(iTermBackgroundImageMode)imageMode {
-    if (@available(macOS 10.14, *)) {
-        _imageMode = imageMode;
-        _imageView.contentMode = imageMode;
-    }
+    _imageMode = imageMode;
+    _imageView.contentMode = imageMode;
 }
 
 - (void)setTerminalBackgroundColor:(NSColor *)color {
-    if (@available(macOS 10.14, *)) {
-        if ([NSObject object:_terminalBackgroundColor isEqualToObject:color]) {
-            return;
-        }
-        _terminalBackgroundColor = color;
-        [CATransaction begin];
-        [CATransaction setDisableActions:YES];
-
-        _imageView.backgroundColor = color;
-        _legacyScrollerBackgroundView.backgroundColor = color;
-        _backgroundColorView.backgroundColor = color;
-
-        DLog(@"setTerminalBackgroundColor:%@ %@\n%@", color, self.delegate, [NSThread callStackSymbols]);
-        if (color && _metalView.alphaValue < 1) {
-            DLog(@"setTerminalBackgroundColor: Set background color view hidden=%@ because metalview is not opaque", @(!iTermTextIsMonochrome()));
-            _backgroundColorView.hidden = !iTermTextIsMonochrome();
-            _legacyScrollerBackgroundView.hidden = iTermTextIsMonochrome();
-        } else {
-            DLog(@"setTerminalBackgroundColor: Set background color view hidden=YES because bg color (%@) is nil or metalView.alphaValue (%@) == 1",
-                  color, @(_metalView.alphaValue));
-            _backgroundColorView.hidden = YES;
-            _legacyScrollerBackgroundView.hidden = YES;
-        }
-        [self setNeedsDisplay:YES];
-        [CATransaction commit];
-        [self updateMinimapAlpha];
+    if ([NSObject object:_terminalBackgroundColor isEqualToObject:color]) {
+        return;
     }
+    _terminalBackgroundColor = color;
+    [CATransaction begin];
+    [CATransaction setDisableActions:YES];
+
+    _imageView.backgroundColor = color;
+    _legacyScrollerBackgroundView.backgroundColor = color;
+    _backgroundColorView.backgroundColor = color;
+
+    DLog(@"setTerminalBackgroundColor:%@ %@\n%@", color, self.delegate, [NSThread callStackSymbols]);
+    if (color && _metalView.alphaValue < 1) {
+        DLog(@"setTerminalBackgroundColor: Set background color view hidden=%@ because metalview is not opaque", @(!iTermTextIsMonochrome()));
+        _backgroundColorView.hidden = !iTermTextIsMonochrome();
+        _legacyScrollerBackgroundView.hidden = iTermTextIsMonochrome();
+    } else {
+        DLog(@"setTerminalBackgroundColor: Set background color view hidden=YES because bg color (%@) is nil or metalView.alphaValue (%@) == 1",
+             color, @(_metalView.alphaValue));
+        _backgroundColorView.hidden = YES;
+        _legacyScrollerBackgroundView.hidden = YES;
+    }
+    [self setNeedsDisplay:YES];
+    [CATransaction commit];
+    [self updateMinimapAlpha];
 }
 
 - (void)setTransparencyAlpha:(CGFloat)transparencyAlpha
                        blend:(CGFloat)blend {
-    if (@available(macOS 10.14, *)) {
-        [CATransaction begin];
-        [CATransaction setDisableActions:YES];
-        _backgroundColorView.transparency = 1 - transparencyAlpha;
-        _backgroundColorView.blend = blend;
-        if (![iTermPreferences boolForKey:kPreferenceKeyPerPaneBackgroundImage]) {
-            // This is unfortunate but because I can't use an imageview behind everything when
-            // subpixel AA is enabled, I have to draw *something* behind the legacy scrollers.
-            // NSImageView is not equipped to do the job.
-            _legacyScrollerBackgroundView.transparency = 0;
-            _legacyScrollerBackgroundView.blend = 0;
-        } else {
-            _legacyScrollerBackgroundView.transparency = 1 - transparencyAlpha;
-            _legacyScrollerBackgroundView.blend = blend;
-        }
-        _imageView.transparency = 1 - transparencyAlpha;
-        _imageView.blend = blend;
-        [CATransaction commit];
+    [CATransaction begin];
+    [CATransaction setDisableActions:YES];
+    _backgroundColorView.transparency = 1 - transparencyAlpha;
+    _backgroundColorView.blend = blend;
+    if (![iTermPreferences boolForKey:kPreferenceKeyPerPaneBackgroundImage]) {
+        // This is unfortunate but because I can't use an imageview behind everything when
+        // subpixel AA is enabled, I have to draw *something* behind the legacy scrollers.
+        // NSImageView is not equipped to do the job.
+        _legacyScrollerBackgroundView.transparency = 0;
+        _legacyScrollerBackgroundView.blend = 0;
+    } else {
+        _legacyScrollerBackgroundView.transparency = 1 - transparencyAlpha;
+        _legacyScrollerBackgroundView.blend = blend;
     }
+    _imageView.transparency = 1 - transparencyAlpha;
+    _imageView.blend = blend;
+    [CATransaction commit];
 }
 
 - (NSRect)frameForScroller NS_AVAILABLE_MAC(10_14) {
@@ -810,12 +779,8 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     // Tell the clip view about it so it can ask the metalview to draw itself on scroll.
     _metalClipView.metalView = _metalView;
 
-    if (@available(macOS 10.14, *)) {
-        // Image view and background color view go under it.
-        [self insertSubview:_metalView atIndex:2];
-    } else {
-        [self insertSubview:_metalView atIndex:0];
-    }
+    // Image view and background color view go under it.
+    [self insertSubview:_metalView atIndex:2];
 
     // Configure and hide the metal view. It will be shown by PTYSession after it has rendered its
     // first frame. Until then it's just a solid gray rectangle.
@@ -896,12 +861,10 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
 - (void)setNeedsDisplay:(BOOL)needsDisplay {
     [super setNeedsDisplay:needsDisplay];
     [_title updateBackgroundColor];
-    if (@available(macOS 10.11, *)) {
-        if (needsDisplay) {
-            [_metalView setNeedsDisplay:YES];
-            [_title setNeedsDisplay:YES];
-            [_genericStatusBarContainer setNeedsDisplay:YES];
-        }
+    if (needsDisplay) {
+        [_metalView setNeedsDisplay:YES];
+        [_title setNeedsDisplay:YES];
+        [_genericStatusBarContainer setNeedsDisplay:YES];
     }
 }
 
@@ -980,10 +943,8 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
             maxY -= frame.size.height;
             frame.origin.y = maxY;
             _scrollview.frame = frame;
-            if (@available(macOS 10.14, *)) {
-                if (PTYScrollView.shouldDismember) {
-                    _scrollview.verticalScroller.frame = [self frameForScroller];
-                }
+            if (PTYScrollView.shouldDismember) {
+                _scrollview.verticalScroller.frame = [self frameForScroller];
             }
         }
         if (_showBottomStatusBar) {
@@ -992,26 +953,22 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
                                                           self.frame.size.width,
                                                           _genericStatusBarContainer.frame.size.height);
         }
-        if (@available(macOS 10.14, *)) {
-            NSRect frame = _imageView.frame;
-            frame.origin.x = 0;
-            frame.origin.y = self.bounds.size.height - frame.size.height;
-            [CATransaction begin];
-            [CATransaction setDisableActions:YES];
-            _imageView.frame = frame;
-            _backgroundColorView.frame = frame;
-            _legacyScrollerBackgroundView.frame = [self frameForLegacyScroller];
-            [CATransaction commit];
-        }
-    }
-    if (@available(macOS 10.14, *)) {
+        NSRect frame = _imageView.frame;
+        frame.origin.x = 0;
+        frame.origin.y = self.bounds.size.height - frame.size.height;
         [CATransaction begin];
         [CATransaction setDisableActions:YES];
-        _imageView.frame = self.bounds;
-        _backgroundColorView.frame = self.bounds;
+        _imageView.frame = frame;
+        _backgroundColorView.frame = frame;
         _legacyScrollerBackgroundView.frame = [self frameForLegacyScroller];
         [CATransaction commit];
     }
+    [CATransaction begin];
+    [CATransaction setDisableActions:YES];
+    _imageView.frame = self.bounds;
+    _backgroundColorView.frame = self.bounds;
+    _legacyScrollerBackgroundView.frame = [self frameForLegacyScroller];
+    [CATransaction commit];
 
     if (_hoverURLView) {
         [_hoverURLTextField sizeToFit];
@@ -1020,10 +977,8 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
         const CGFloat verticalPadding = 4;
         frame.size.width += horizontalPadding * 2;
         frame.size.height += verticalPadding * 2;
-        if (@available(macOS 10.14, *)) {
-            frame.origin.x = 4;
-            frame.origin.y = 4;
-        }
+        frame.origin.x = 4;
+        frame.origin.y = 4;
         _hoverURLView.frame = frame;
 
         frame = _hoverURLTextField.frame;
@@ -1057,24 +1012,12 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
 }
 
 - (void)reallyUpdateMetalViewFrame {
-    if (@available(macOS 10.14, *)) {
-        _metalView.frame = self.bounds;
-    } else {
-        NSRect frame = _scrollview.contentView.frame;
-        if (self.showBottomStatusBar) {
-            frame.origin.y += iTermGetStatusBarHeight();
-        }
-        _metalView.frame = [self frameByInsettingForMetal:frame];
-    }
+    _metalView.frame = self.bounds;
     [_driver mtkView:_metalView drawableSizeWillChange:_metalView.drawableSize];
 }
 
 - (NSRect)frameByInsettingForMetal:(NSRect)frame {
-    if (@available(macOS 10.14, *)) {
-        return frame;
-    } else {
-        return NSInsetRect(frame, 1, [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins]);
-    }
+    return frame;
 }
 
 - (void)setDelegate:(id<iTermSessionViewDelegate>)delegate {
@@ -1538,10 +1481,8 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     }
     if (adjustScrollView) {
         [scrollView setFrame:frame];
-        if (@available(macOS 10.14, *)) {
-            if (PTYScrollView.shouldDismember) {
-                _scrollview.verticalScroller.frame = [self frameForScroller];
-            }
+        if (PTYScrollView.shouldDismember) {
+            _scrollview.verticalScroller.frame = [self frameForScroller];
         }
     } else {
         [self updateTitleFrame];
@@ -1743,10 +1684,8 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
          @(titleHeight), @(bottomStatusBarHeight), NSStringFromSize(proposedSize), NSStringFromSize(size),
          NSStringFromRect(rect));
     [self scrollview].frame = rect;
-    if (@available(macOS 10.14, *)) {
-        if (PTYScrollView.shouldDismember) {
-            _scrollview.verticalScroller.frame = [self frameForScroller];
-        }
+    if (PTYScrollView.shouldDismember) {
+        _scrollview.verticalScroller.frame = [self frameForScroller];
     }
     rect.origin = NSZeroPoint;
     rect.size.width = _scrollview.contentSize.width;
@@ -1764,35 +1703,33 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     if (![iTermAdvancedSettingsModel showLocationsInScrollbar]) {
         return;
     }
-    if (@available(macOS 10.14, *)) {
-        NSRect frame = [self convertRect:_scrollview.verticalScroller.bounds
-                                fromView:_scrollview.verticalScroller];
-        PTYScroller *scroller = [PTYScroller castFrom:self.scrollview.verticalScroller];
-        if (scroller.ptyScrollerState == PTYScrollerStateOverlayVisibleNarrow) {
-            frame.size.width = 11;
-            frame.origin.x += 5;
+    NSRect frame = [self convertRect:_scrollview.verticalScroller.bounds
+                            fromView:_scrollview.verticalScroller];
+    PTYScroller *scroller = [PTYScroller castFrom:self.scrollview.verticalScroller];
+    if (scroller.ptyScrollerState == PTYScrollerStateOverlayVisibleNarrow) {
+        frame.size.width = 11;
+        frame.origin.x += 5;
+    }
+    frame = NSInsetRect(frame, 0, 2);
+    if (@available(macOS 10.15, *)) {
+        if ([[NSApp effectiveAppearance] it_isDark]) {
+            // Avoid overlapping the border on the right. It looks ugly
+            // when the window's dark because the part that overlaps the
+            // border is extra bright.
+            frame.size.width -= 1;
         }
-        frame = NSInsetRect(frame, 0, 2);
-        if (@available(macOS 10.15, *)) {
-            if ([[NSApp effectiveAppearance] it_isDark]) {
-                // Avoid overlapping the border on the right. It looks ugly
-                // when the window's dark because the part that overlaps the
-                // border is extra bright.
-                frame.size.width -= 1;
-            }
+    }
+    if (animated) {
+        [NSView animateWithDuration:5.0 / 60.0
+                         animations:^{
+            [[NSAnimationContext currentContext] setTimingFunction:[CAMediaTimingFunction functionWithName:@"easeOut"]];
+            _searchResultsMinimap.animator.frame = frame;
+            _marksMinimap.animator.frame = frame;
         }
-        if (animated) {
-            [NSView animateWithDuration:5.0 / 60.0
-                             animations:^{
-                [[NSAnimationContext currentContext] setTimingFunction:[CAMediaTimingFunction functionWithName:@"easeOut"]];
-                _searchResultsMinimap.animator.frame = frame;
-                _marksMinimap.animator.frame = frame;
-            }
-                             completion:nil];
-        } else {
-            _searchResultsMinimap.frame = frame;
-            _marksMinimap.frame = frame;
-        }
+                         completion:nil];
+    } else {
+        _searchResultsMinimap.frame = frame;
+        _marksMinimap.frame = frame;
     }
 }
 
@@ -2083,14 +2020,12 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     if (_unobtrusiveMessage) {
         return;
     }
-    if (@available(macOS 10.14, *)) {
-        _unobtrusiveMessage = [[iTermUnobtrusiveMessage alloc] initWithMessage:message];
-        [self addSubviewBelowFindView:_unobtrusiveMessage];
-        [_unobtrusiveMessage animateFromTopRightWithCompletion:^{
-            [self->_unobtrusiveMessage removeFromSuperview];
-            self->_unobtrusiveMessage = nil;
-        }];
-    }
+    _unobtrusiveMessage = [[iTermUnobtrusiveMessage alloc] initWithMessage:message];
+    [self addSubviewBelowFindView:_unobtrusiveMessage];
+    [_unobtrusiveMessage animateFromTopRightWithCompletion:^{
+        [self->_unobtrusiveMessage removeFromSuperview];
+        self->_unobtrusiveMessage = nil;
+    }];
 }
 
 #pragma mark - iTermGenericStatusBarContainer

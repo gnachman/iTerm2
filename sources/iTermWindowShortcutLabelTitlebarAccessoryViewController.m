@@ -109,17 +109,13 @@
 }
 
 - (void)updateTextColor {
-    if (@available(macOS 10.14, *)) {
-        NSString *closest = [_label.effectiveAppearance bestMatchFromAppearancesWithNames:@[ NSAppearanceNameDarkAqua, NSAppearanceNameAqua]];
-        _label.textColor = [NSColor windowFrameTextColor];
-        if ([closest isEqualToString:NSAppearanceNameDarkAqua]) {
-            self.view.alphaValue = 0.5;
-        } else {
-            self.view.alphaValue = 1.0;
-        }
-        return;
+    NSString *closest = [_label.effectiveAppearance bestMatchFromAppearancesWithNames:@[ NSAppearanceNameDarkAqua, NSAppearanceNameAqua]];
+    _label.textColor = [NSColor windowFrameTextColor];
+    if ([closest isEqualToString:NSAppearanceNameDarkAqua]) {
+        self.view.alphaValue = 0.5;
+    } else {
+        self.view.alphaValue = 1.0;
     }
-    _label.textColor = _isMain ? [NSColor windowFrameTextColor] : [NSColor colorWithWhite:0.67 alpha:1];
 }
 
 - (void)modifiersDidChange:(NSNotification *)notification {

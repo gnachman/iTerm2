@@ -99,9 +99,7 @@ static NSButton *iTermToolActionsNewButton(NSString *imageName, NSString *title,
         [_tableView performSelector:@selector(scrollToEndOfDocument:) withObject:nil afterDelay:0];
         _actions = [[[iTermActionsModel sharedInstance] actions] copy];
         [_tableView reloadData];
-        if (@available(macOS 10.14, *)) {
-            _tableView.backgroundColor = [NSColor clearColor];
-        }
+        _tableView.backgroundColor = [NSColor clearColor];
         
         __weak __typeof(self) weakSelf = self;
         [iTermActionsDidChangeNotification subscribe:self

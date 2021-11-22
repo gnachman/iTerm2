@@ -24,9 +24,7 @@ static const CGFloat PSMRolloverButtonMaxAlpha = 0.25;
 - (instancetype)initWithFrame:(NSRect)frameRect {
     self = [super initWithFrame:frameRect];
     if (self) {
-        if (@available(macOS 10.14, *)) {
-            self.wantsLayer = YES;
-        }
+        self.wantsLayer = YES;
     }
     return self;
 }
@@ -95,18 +93,16 @@ static const CGFloat PSMRolloverButtonMaxAlpha = 0.25;
 }
 
 - (void)setTargetAlpha:(CGFloat)targetAlpha {
-    if (@available(macOS 10.14, *)) {
-        if (fabs(targetAlpha - _targetAlpha) < PSMRolloverButtonDifferenceThreshold) {
-            return;
-        }
-        _targetAlpha = targetAlpha;
-        if (!_timer) {
-            _timer = [NSTimer scheduledTimerWithTimeInterval:1.0 / PSMRolloverButtonFramesPerSecond
-                                                      target:self
-                                                    selector:@selector(updateBackgroundAlphaTimer:)
-                                                    userInfo:nil
-                                                     repeats:YES];
-        }
+    if (fabs(targetAlpha - _targetAlpha) < PSMRolloverButtonDifferenceThreshold) {
+        return;
+    }
+    _targetAlpha = targetAlpha;
+    if (!_timer) {
+        _timer = [NSTimer scheduledTimerWithTimeInterval:1.0 / PSMRolloverButtonFramesPerSecond
+                                                  target:self
+                                                selector:@selector(updateBackgroundAlphaTimer:)
+                                                userInfo:nil
+                                                 repeats:YES];
     }
 }
 

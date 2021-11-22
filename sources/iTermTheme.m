@@ -167,12 +167,8 @@
             return nil;
         }
         return [colorMap colorByDimmingTextColor:[color colorUsingColorSpace:[NSColorSpace sRGBColorSpace]]];
-    } else if (@available(macOS 10.14, *)) {
-        return [NSColor labelColor];
-    } else if ([effectiveAppearance.name isEqualToString:NSAppearanceNameVibrantDark]) {
-        return [NSColor colorWithWhite:0.75 alpha:1];
     } else {
-        return [NSColor blackColor];
+        return [NSColor labelColor];
     }
 }
 

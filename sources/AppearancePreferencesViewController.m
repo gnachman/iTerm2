@@ -119,15 +119,6 @@ NSString *const iTermProcessTypeDidChangeNotification = @"iTermProcessTypeDidCha
                           type:kPreferenceInfoTypePopup];
     info.onChange = ^() { [weakSelf postRefreshNotification]; };
 
-    if (@available(macOS 10.14, *)) { } else {
-        NSMenuItem *lastItem = nil;
-        // Everything through the first separator is 10.14 only
-        while (![lastItem isSeparatorItem]) {
-            lastItem = _tabStyle.menu.itemArray.firstObject;
-            [_tabStyle.menu removeItem:lastItem];
-        }
-    }
-    
     info = [self defineControl:_statusBarPosition
                            key:kPreferenceKeyStatusBarPosition
                    relatedView:_statusBarPositionLabel

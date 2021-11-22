@@ -12,20 +12,15 @@
 @implementation NSAppearance (iTerm)
 
 - (BOOL)it_isDark {
-    if (@available(macOS 10.14, *)) {
-        NSAppearanceName bestMatch = [self bestMatchFromAppearancesWithNames:@[ NSAppearanceNameDarkAqua,
-                                                                                NSAppearanceNameVibrantDark,
-                                                                                NSAppearanceNameAqua,
-                                                                                NSAppearanceNameVibrantLight ]];
-        if ([bestMatch isEqualToString:NSAppearanceNameDarkAqua] ||
-            [bestMatch isEqualToString:NSAppearanceNameVibrantDark]) {
-            return YES;
-        }
-        return NO;
+    NSAppearanceName bestMatch = [self bestMatchFromAppearancesWithNames:@[ NSAppearanceNameDarkAqua,
+                                                                            NSAppearanceNameVibrantDark,
+                                                                            NSAppearanceNameAqua,
+                                                                            NSAppearanceNameVibrantLight ]];
+    if ([bestMatch isEqualToString:NSAppearanceNameDarkAqua] ||
+        [bestMatch isEqualToString:NSAppearanceNameVibrantDark]) {
+        return YES;
     }
-
-    // 10.13 or older
-    return [self.name isEqualToString:NSAppearanceNameVibrantDark];
+    return NO;
 }
 
 + (instancetype)it_appearanceForCurrentTheme {
@@ -42,11 +37,7 @@
 
         case TAB_STYLE_DARK:
         case TAB_STYLE_DARK_HIGH_CONTRAST:
-            if (@available(macOS 10.14, *)) {
-                return [NSAppearance appearanceNamed:NSAppearanceNameDarkAqua];
-            } else {
-                return [NSAppearance appearanceNamed:NSAppearanceNameVibrantDark];
-            }
+            return [NSAppearance appearanceNamed:NSAppearanceNameDarkAqua];
     }
 }
 
@@ -62,19 +53,10 @@
         case TAB_STYLE_AUTOMATIC:
         case TAB_STYLE_MINIMAL:
         case TAB_STYLE_COMPACT:
-            if (@available(macOS 10.14, *)) {
-                return [self it_mojaveTabStyle];
-            }
-            return TAB_STYLE_LIGHT;
+            return [self it_mojaveTabStyle];
 
         case TAB_STYLE_LIGHT:
         case TAB_STYLE_LIGHT_HIGH_CONTRAST:
-            if (@available(macOS 10.14, *)) {
-                return tabStyle;
-            }
-            if (self.it_isDark) {
-                return TAB_STYLE_DARK;
-            }
             return tabStyle;
 
         case TAB_STYLE_DARK:
@@ -149,14 +131,9 @@
 }
 
 + (BOOL)it_systemThemeIsDark {
-    if (@available(macOS 10.14, *)) {
-        NSAppearanceName appearance =
-            [NSApp.effectiveAppearance bestMatchFromAppearancesWithNames:@[NSAppearanceNameAqua, NSAppearanceNameDarkAqua]];
-        return [appearance isEqualToString:NSAppearanceNameDarkAqua];
-    } else {
-        NSString *systemMode = [[NSUserDefaults standardUserDefaults] stringForKey:@"AppleInterfaceStyle"];
-        return [systemMode isEqual:@"Dark"];
-    }
+    NSAppearanceName appearance =
+        [NSApp.effectiveAppearance bestMatchFromAppearancesWithNames:@[NSAppearanceNameAqua, NSAppearanceNameDarkAqua]];
+    return [appearance isEqualToString:NSAppearanceNameDarkAqua];
 }
 
 @end

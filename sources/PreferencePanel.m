@@ -146,9 +146,6 @@ static PreferencePanel *gSessionsPreferencePanel;
 - (instancetype)init {
     self = [super init];
     if (self) {
-        if (@available(macOS 10.14, *)) {} else {
-            self.wantsLayer = YES;
-        }
         _recognizer = [[NSClickGestureRecognizer alloc] initWithTarget:self action:@selector(click:)];
         [self addGestureRecognizer:_recognizer];
     }
@@ -188,22 +185,6 @@ static PreferencePanel *gSessionsPreferencePanel;
 }
 
 - (void)drawRect:(NSRect)dirtyRect {
-    if (@available(macOS 10.14, *)) {
-        [self mojaveDrawRect:dirtyRect];
-        return;
-    }
-    [[NSColor clearColor] set];
-    NSRectFill(dirtyRect);
-
-    NSRect rect = [self convertRect:_cutoutView.bounds fromView:_cutoutView];
-    rect = NSInsetRect(rect, -4, -4);
-    [[NSColor redColor] set];
-    NSBezierPath *path = [NSBezierPath bezierPathWithRoundedRect:rect xRadius:4 yRadius:4];
-    [path setLineWidth:4];
-    [path stroke];
-}
-
-- (void)mojaveDrawRect:(NSRect)dirtyRect {
     const CGFloat baselineAlpha = 0.7;
     [[[NSColor blackColor] colorWithAlphaComponent:baselineAlpha] set];
     NSRectFill(dirtyRect);

@@ -1818,9 +1818,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     } else {
         [self fitSessionToCurrentViewSize:session];
     }
-    if (@available(macOS 10.11, *)) {
-        [self updateUseMetal];
-    }
+    [self updateUseMetal];
 }
 
 - (SessionView *)nearestNeighborOfSession:(PTYSession *)aSession {
@@ -2041,10 +2039,8 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     newSession.view = newView;
     [self.viewToSessionMap setObject:newSession forKey:newView];
     [self checkInvariants:@"After splitting"];
-    if (@available(macOS 10.11, *)) {
-        newSession.useMetal = NO;
-        [self updateUseMetal];
-    }
+    newSession.useMetal = NO;
+    [self updateUseMetal];
 }
 
 + (NSSize)_sessionSizeWithCellSize:(NSSize)cellSize
@@ -5900,9 +5896,7 @@ typedef struct {
 
 - (void)splitViewWillResizeSubviews:(NSNotification *)notification {
     _resizingSplit = YES;
-    if (@available(macOS 10.11, *)) {
-        [self updateUseMetal];
-    }
+    [self updateUseMetal];
 }
 
 // Inform sessions about their new sizes. This is called after views have finished
@@ -5921,9 +5915,7 @@ typedef struct {
     NSSplitView* splitView = [aNotification object];
     [self _splitViewDidResizeSubviews:splitView];
     _resizingSplit = NO;
-    if (@available(macOS 10.11, *)) {
-        [self updateUseMetal];
-    }
+    [self updateUseMetal];
 }
 
 // This is the implementation of splitViewDidResizeSubviews. The delegate method isn't called when
@@ -6450,9 +6442,7 @@ typedef struct {
 }
 
 - (void)sessionUpdateMetalAllowed {
-    if (@available(macOS 10.11, *)) {
-        [self updateUseMetal];
-    }
+    [self updateUseMetal];
 }
 
 - (void)sessionDidChangeMetalViewAlphaValue:(PTYSession *)session to:(CGFloat)newValue {

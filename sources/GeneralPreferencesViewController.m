@@ -250,19 +250,13 @@ enum {
         [[iTermShellHistoryController sharedInstance] backingStoreTypeDidChange];
     };
 
-    if (@available(macOS 10.12, *)) {
-        info = [self defineControl:_gpuRendering
-                               key:kPreferenceKeyUseMetal
-                       relatedView:nil
-                              type:kPreferenceInfoTypeCheckbox];
-        info.observer = ^{
-            [weakSelf updateAdvancedGPUEnabled];
-        };
-    } else {
-        _gpuRendering.enabled = NO;
-        _gpuRendering.state = NSControlStateValueOff;
-        [self updateAdvancedGPUEnabled];
-    }
+    info = [self defineControl:_gpuRendering
+                           key:kPreferenceKeyUseMetal
+                   relatedView:nil
+                          type:kPreferenceInfoTypeCheckbox];
+    info.observer = ^{
+        [weakSelf updateAdvancedGPUEnabled];
+    };
 
     info = [self defineControl:_enableAPI
                            key:kPreferenceKeyEnableAPIServer
@@ -536,11 +530,7 @@ enum {
 }
 
 - (void)updateAdvancedGPUEnabled {
-    if (@available(macOS 10.12, *)) {
-        _advancedGPU.enabled = [self boolForKey:kPreferenceKeyUseMetal];
-    } else {
-        _advancedGPU.enabled = NO;
-    }
+    _advancedGPU.enabled = [self boolForKey:kPreferenceKeyUseMetal];
 }
 
 - (BOOL)enableAPISettingDidChange {

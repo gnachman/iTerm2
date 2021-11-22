@@ -37,11 +37,7 @@
         value = selected ? 0.80 : 0.03;
     } else {
         BOOL shouldBeLight;
-        if (@available(macOS 10.14, *)) {
-            shouldBeLight = selected;
-        } else {
-            shouldBeLight = !selected;
-        }
+        shouldBeLight = selected;
         value = shouldBeLight ? 0.2 : 0.03;
     }
     if (selected) {

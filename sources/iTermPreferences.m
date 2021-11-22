@@ -679,16 +679,8 @@ static NSString *sPreviousVersion;
     if (value) {
         return value;
     }
-    if (@available(macOS 10.14, *)) {
-        // New value is not set yet. This migrates all users to automatic.
-        return @(TAB_STYLE_AUTOMATIC);
-    }
-    value = [[NSUserDefaults standardUserDefaults] objectForKey:kPreferenceKeyTabStyle_Deprecated];
-    if (value) {
-        return value;
-    } else {
-        return @(TAB_STYLE_LIGHT);
-    }
+    // New value is not set yet. This migrates all users to automatic.
+    return @(TAB_STYLE_AUTOMATIC);
 }
 
 + (NSNumber *)computedTabsHaveCloseButton {
@@ -713,12 +705,7 @@ static NSString *sPreviousVersion;
         return value;
     }
 
-    if (@available(macOS 10.13, *)) {
-        return @YES;
-    }
-
-    // Off by default on 10.12 because it's slow.
-    return @NO;
+    return @YES;
 }
 
 + (iTermUserDefaultsObserver *)sharedObserver {

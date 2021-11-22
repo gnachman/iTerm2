@@ -47,9 +47,6 @@
         _tableView.allowsEmptySelection = YES;
         _tableView.allowsMultipleSelection = YES;
         _tableView.allowsTypeSelect = YES;
-        if (@available(macOS 10.14, *)) { } else {
-            _tableView.backgroundColor = [NSColor whiteColor];
-        }
 
         _tagsColumn = [[NSTableColumn alloc] initWithIdentifier:@"tags"];
         [_tagsColumn setEditable:NO];

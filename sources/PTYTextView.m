@@ -199,10 +199,7 @@
 // app settings and make a maximized window on a 2014 iMac. Run tests/spam.cc.
 // You should get just about 60 fps if it's fast, and 30-45 if it's slow.
 + (BOOL)useLayerForBetterPerformance {
-    if (@available(macOS 10.14, *)) {
-        return ![iTermAdvancedSettingsModel dismemberScrollView];
-    }
-    return NO;
+    return ![iTermAdvancedSettingsModel dismemberScrollView];
 }
 
 + (NSSize)charSizeForFont:(NSFont *)aFont
@@ -960,11 +957,7 @@
 #pragma mark - NSView Mouse-Related Overrides
 
 - (BOOL)wantsScrollEventsForSwipeTrackingOnAxis:(NSEventGestureAxis)axis {
-    if (@available(macOS 10.14, *)) {
-        return (axis == NSEventGestureAxisHorizontal) ? YES : NO;
-    } else {
-        return [super wantsScrollEventsForSwipeTrackingOnAxis:axis];
-    }
+    return (axis == NSEventGestureAxisHorizontal) ? YES : NO;
 }
 
 - (void)scrollWheel:(NSEvent *)event {
@@ -1444,7 +1437,7 @@
     if (isDark) {
         // Dark background, any theme, any OS version
         scroller.knobStyle = NSScrollerKnobStyleLight;
-    } else if (@available(macOS 10.14, *)) {
+    } else {
         if (self.effectiveAppearance.it_isDark) {
             // Light background, dark theme — issue 8322
             scroller.knobStyle = NSScrollerKnobStyleDark;
@@ -1452,20 +1445,15 @@
             // Light background, light theme
             scroller.knobStyle = NSScrollerKnobStyleDefault;
         }
-    } else {
-        // Pre-10.4, light background
-        scroller.knobStyle = NSScrollerKnobStyleDefault;
     }
 
     // The knob style is used only for overlay scrollers. In the minimal theme, the window decorations'
     // colors are based on the terminal background color. That means the appearance must be changed to get
     // legacy scrollbars to change color.
-    if (@available(macOS 10.14, *)) {
-        if ([self.delegate textViewTerminalBackgroundColorDeterminesWindowDecorationColor]) {
-            scroller.appearance = isDark ? [NSAppearance appearanceNamed:NSAppearanceNameDarkAqua] : [NSAppearance appearanceNamed:NSAppearanceNameAqua];
-        } else {
-            scroller.appearance = nil;
-        }
+    if ([self.delegate textViewTerminalBackgroundColorDeterminesWindowDecorationColor]) {
+        scroller.appearance = isDark ? [NSAppearance appearanceNamed:NSAppearanceNameDarkAqua] : [NSAppearance appearanceNamed:NSAppearanceNameAqua];
+    } else {
+        scroller.appearance = nil;
     }
 }
 
@@ -1483,21 +1471,19 @@
     if (@available(macOS 10.16, *)) {
         return;
     }
-    if (@available(macOS 10.14, *)) {
-        const double invalidateFPS = [iTermAdvancedSettingsModel invalidateShadowTimesPerSecond];
-        if (invalidateFPS > 0) {
-            if (self.transparencyAlpha < 1) {
-                if ([self.window conformsToProtocol:@protocol(PTYWindow)]) {
-                    if (_shadowRateLimit == nil) {
-                        _shadowRateLimit = [[iTermRateLimitedUpdate alloc] initWithName:@"Shadow"
-                                                                        minimumInterval:1.0 / invalidateFPS];
-                    }
-                    id<PTYWindow> ptyWindow = (id<PTYWindow>)self.window;
-                    [_shadowRateLimit performRateLimitedBlock:^{
-                        DLog(@"Called");
-                        [ptyWindow it_setNeedsInvalidateShadow];
-                    }];
+    const double invalidateFPS = [iTermAdvancedSettingsModel invalidateShadowTimesPerSecond];
+    if (invalidateFPS > 0) {
+        if (self.transparencyAlpha < 1) {
+            if ([self.window conformsToProtocol:@protocol(PTYWindow)]) {
+                if (_shadowRateLimit == nil) {
+                    _shadowRateLimit = [[iTermRateLimitedUpdate alloc] initWithName:@"Shadow"
+                                                                    minimumInterval:1.0 / invalidateFPS];
                 }
+                id<PTYWindow> ptyWindow = (id<PTYWindow>)self.window;
+                [_shadowRateLimit performRateLimitedBlock:^{
+                    DLog(@"Called");
+                    [ptyWindow it_setNeedsInvalidateShadow];
+                }];
             }
         }
     }

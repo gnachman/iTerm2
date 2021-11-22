@@ -18,9 +18,7 @@
 }
 
 - (void)windowDidLoad {
-    if (@available(macOS 10.14, *)) {
-        _visualEffectView.material = NSVisualEffectMaterialContentBackground;
-    }
+    _visualEffectView.material = NSVisualEffectMaterialContentBackground;
     self.window.opaque = NO;
     self.window.backgroundColor = [NSColor clearColor];
     [self updateFrameAndAlpha];

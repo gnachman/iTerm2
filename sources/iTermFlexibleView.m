@@ -43,14 +43,12 @@
     [_color setFill];
     NSRectFill(dirtyRect);
 
-    if (@available(macOS 10.14, *)) {
-        // Draw around the subviews.
-        [[NSColor clearColor] set];
-        for (NSView *view in self.subviews) {
-            NSRectFillUsingOperation(view.frame, NSCompositingOperationCopy);
-        }
+    // Draw around the subviews.
+    [[NSColor clearColor] set];
+    for (NSView *view in self.subviews) {
+        NSRectFillUsingOperation(view.frame, NSCompositingOperationCopy);
     }
-    
+
     [super drawRect:dirtyRect];
 }
 

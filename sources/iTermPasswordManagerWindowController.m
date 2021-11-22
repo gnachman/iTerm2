@@ -234,10 +234,8 @@ static NSString *const iTermPasswordManagerAccountNameUserNameSeparator = @"\u20
     [_tableView setDoubleAction:@selector(doubleClickOnTableView:)];
     [self reloadAccounts];
     [self update];
-    if (@available(macOS 10.14, *)) {
-        self.window.backgroundColor = [NSColor clearColor];
-        self.window.contentView.layer.cornerRadius = 4;
-    }
+    self.window.backgroundColor = [NSColor clearColor];
+    self.window.contentView.layer.cornerRadius = 4;
     [_searchField setArrowHandler:_tableView];
     __weak __typeof(self) weakSelf = self;
 

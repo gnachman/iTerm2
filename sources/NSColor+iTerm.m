@@ -484,58 +484,39 @@ CGFloat iTermLABDistance(iTermLABColor lhs, iTermLABColor rhs) {
 }
 
 - (NSColor *)it_colorWithAppearance:(NSAppearance *)appearance {
-    if (@available(macOS 10.14, *)) {
-        if (self.type != NSColorTypeCatalog) {
-            return self;
-        }
+    if (self.type != NSColorTypeCatalog) {
+        return self;
+    }
 
-        static NSMutableDictionary *darkDict, *lightDict;
-        static dispatch_once_t onceToken;
-        dispatch_once(&onceToken, ^{
-            darkDict = [[NSMutableDictionary alloc] init];
-            lightDict = [[NSMutableDictionary alloc] init];
-        });
+    static NSMutableDictionary *darkDict, *lightDict;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        darkDict = [[NSMutableDictionary alloc] init];
+        lightDict = [[NSMutableDictionary alloc] init];
+    });
 
-        NSMutableDictionary *dict;
-        NSString *closest = [appearance bestMatchFromAppearancesWithNames:@[ NSAppearanceNameDarkAqua, NSAppearanceNameAqua ]];
-        if ([closest isEqualToString:NSAppearanceNameDarkAqua]) {
-            dict = darkDict;
-        } else {
-            dict = lightDict;
-        }
+    NSMutableDictionary *dict;
+    NSString *closest = [appearance bestMatchFromAppearancesWithNames:@[ NSAppearanceNameDarkAqua, NSAppearanceNameAqua ]];
+    if ([closest isEqualToString:NSAppearanceNameDarkAqua]) {
+        dict = darkDict;
+    } else {
+        dict = lightDict;
+    }
 
-        NSColor *result = dict[self];
-        if (result) {
-            return result;
-        }
-
-        NSView *view = [[[SolidColorView alloc] initWithFrame:NSMakeRect(0, 0, 1, 1) color:self] autorelease];
-        view.appearance = appearance;
-        NSImage *image = [view snapshot];
-
-        NSBitmapImageRep *imageRep = [[[NSBitmapImageRep alloc] initWithData:[image TIFFRepresentation]] autorelease];
-        result = [imageRep colorAtX:0 y:0];
-
-        dict[self] = result;
+    NSColor *result = dict[self];
+    if (result) {
         return result;
     }
 
-    if ([self isEqual:[NSColor labelColor]]) {
-        switch ((iTermPreferencesTabStyle)[iTermPreferences intForKey:kPreferenceKeyTabStyle]) {
-            case TAB_STYLE_DARK:
-            case TAB_STYLE_DARK_HIGH_CONTRAST:
-                return [NSColor whiteColor];
+    NSView *view = [[[SolidColorView alloc] initWithFrame:NSMakeRect(0, 0, 1, 1) color:self] autorelease];
+    view.appearance = appearance;
+    NSImage *image = [view snapshot];
 
-            case TAB_STYLE_LIGHT:
-            case TAB_STYLE_LIGHT_HIGH_CONTRAST:
-            case TAB_STYLE_MINIMAL:
-            case TAB_STYLE_AUTOMATIC:
-            case TAB_STYLE_COMPACT:;
-                return self;
-        }
-    }
+    NSBitmapImageRep *imageRep = [[[NSBitmapImageRep alloc] initWithData:[image TIFFRepresentation]] autorelease];
+    result = [imageRep colorAtX:0 y:0];
 
-    return self;
+    dict[self] = result;
+    return result;
 }
 
 - (NSColorSpace * _Nullable)it_colorSpace {

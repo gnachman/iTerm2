@@ -135,11 +135,9 @@
     }
     [self.ptyScrollerDelegate ptyScrollerDidTransitionToState:_ptyScrollerState];
 
-    if (@available(macOS 10.14, *)) {
-        if (PTYScrollView.shouldDismember) {
-            [self dismemberForScrollerStyle:scrollerStyle];
-            return;
-        }
+    if (PTYScrollView.shouldDismember) {
+        [self dismemberForScrollerStyle:scrollerStyle];
+        return;
     }
     [super setScrollerStyle:scrollerStyle];
 }

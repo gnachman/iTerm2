@@ -416,11 +416,7 @@ typedef struct {
 - (void)loadIndicatorsFromTextView:(PTYTextView *)textView {
     _indicators = [NSMutableArray array];
     CGFloat vmargin;
-    if (@available(macOS 10.14, *)) {
-        vmargin = 0;
-    } else {
-        vmargin = [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins];
-    }
+    vmargin = 0;
     NSRect frame = textView.drawingHelper.indicatorFrame;
     frame.origin.y -= MAX(0, textView.virtualOffset);
     
@@ -651,11 +647,7 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
         }
     } else {
         // Can assume transparencyAlpha is 1
-        if (@available(macOS 10.14, *)) {
-            alpha = iTermAlphaValueForTopView(0, _configuration->_backgroundImageBlend);
-        } else {
-            alpha = _backgroundImage ? 1 - _configuration->_backgroundColorAlpha : 1;
-        }
+        alpha = iTermAlphaValueForTopView(0, _configuration->_backgroundImageBlend);
     }
     return simd_make_float4((float)_configuration->_processedDefaultBackgroundColor.redComponent,
                             (float)_configuration->_processedDefaultBackgroundColor.greenComponent,

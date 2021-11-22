@@ -800,11 +800,9 @@ static const CGFloat PTYSessionMaximumMetalViewSize = 16384;
         _statusChangedAbsLine = -1;
         _nameController = [[iTermSessionNameController alloc] init];
         _nameController.delegate = self;
-        if (@available(macOS 10.11, *)) {
-            _metalGlue = [[iTermMetalGlue alloc] init];
-            _metalGlue.delegate = self;
-            _metalGlue.screen = _screen;
-        }
+        _metalGlue = [[iTermMetalGlue alloc] init];
+        _metalGlue.delegate = self;
+        _metalGlue.screen = _screen;
         _echoProbe = [[iTermEchoProbe alloc] init];
         _echoProbe.delegate = self;
         _metaFrustrationDetector = [[iTermMetaFrustrationDetector alloc] init];
@@ -1373,9 +1371,7 @@ ITERM_WEAKLY_REFERENCEABLE
     NSDictionary *liveArrangement = arrangement[SESSION_ARRANGEMENT_LIVE_SESSION];
     if (liveArrangement) {
         SessionView *liveView = [[[SessionView alloc] initWithFrame:sessionView.frame] autorelease];
-        if (@available(macOS 10.11, *)) {
-            liveView.driver.dataSource = aSession->_metalGlue;
-        }
+        liveView.driver.dataSource = aSession->_metalGlue;
         aSession.textview.cursorVisible = NO;
         [delegate session:aSession setLiveSession:[self sessionFromArrangement:liveArrangement
                                                                          named:nil
@@ -1854,9 +1850,7 @@ ITERM_WEAKLY_REFERENCEABLE
     // Allocate the root per-session view.
     if (!_view) {
         self.view = [[[SessionView alloc] initWithFrame:NSMakeRect(0, 0, aRect.size.width, aRect.size.height)] autorelease];
-        if (@available(macOS 10.11, *)) {
-            self.view.driver.dataSource = _metalGlue;
-        }
+        self.view.driver.dataSource = _metalGlue;
         [_view setFindDriverDelegate:self];
     }
 
@@ -1870,12 +1864,8 @@ ITERM_WEAKLY_REFERENCEABLE
                                           colorMap:_colorMap];
     _textview.keyboardHandler.keyMapper = _keyMapper;
     _view.mainResponder = _textview;
-    if (@available(macOS 10.14, *)) {
-        _view.searchResultsMinimapViewDelegate = _textview.findOnPageHelper;
-    }
-    if (@available(macOS 10.11, *)) {
-        _metalGlue.textView = _textview;
-    }
+    _view.searchResultsMinimapViewDelegate = _textview.findOnPageHelper;
+    _metalGlue.textView = _textview;
     _colorMap.dimOnlyText = [iTermPreferences boolForKey:kPreferenceKeyDimOnlyText];
     [_textview setAutoresizingMask: NSViewWidthSizable | NSViewHeightSizable];
     [_textview setFont:[ITAddressBookMgr fontWithDesc:[_profile objectForKey:KEY_NORMAL_FONT]]
@@ -1927,9 +1917,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_view updateScrollViewFrame];
     [self useTransparencyDidChange];
 
-    if (@available(macOS 10.11, *)) {
-        [self updateMetalDriver];
-    }
+    [self updateMetalDriver];
 
     return YES;
 }
@@ -2017,9 +2005,7 @@ ITERM_WEAKLY_REFERENCEABLE
         [_delegate sessionBelongsToVisibleTab]) {
         [self beginContinuousTailFind];
     }
-    if (@available(macOS 10.11, *)) {
-        [self updateMetalDriver];
-    }
+    [self updateMetalDriver];
     [self.variablesScope setValuesFromDictionary:@{ iTermVariableKeySessionColumns: @(_screen.width),
                                                     iTermVariableKeySessionRows: @(_screen.height) }];
 }
@@ -2712,15 +2698,11 @@ ITERM_WEAKLY_REFERENCEABLE
     [_textview setDataSource:nil];
     [_textview setDelegate:nil];
     [_textview removeFromSuperview];
-    if (@available(macOS 10.14, *)) {
-        if (_view.searchResultsMinimapViewDelegate == _textview.findOnPageHelper) {
-            _view.searchResultsMinimapViewDelegate = nil;
-        }
+    if (_view.searchResultsMinimapViewDelegate == _textview.findOnPageHelper) {
+        _view.searchResultsMinimapViewDelegate = nil;
     }
     self.textview = nil;
-    if (@available(macOS 10.11, *)) {
-        _metalGlue.textView = nil;
-    }
+    _metalGlue.textView = nil;
     [[NSNotificationCenter defaultCenter] postNotificationName:PTYSessionTerminatedNotification object:self];
 }
 
@@ -4675,20 +4657,14 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)setView:(SessionView *)newView {
-    if (@available(macOS 10.14, *)) {
-        if (_view.searchResultsMinimapViewDelegate == _textview.findOnPageHelper) {
-            _view.searchResultsMinimapViewDelegate = nil;
-        }
+    if (_view.searchResultsMinimapViewDelegate == _textview.findOnPageHelper) {
+        _view.searchResultsMinimapViewDelegate = nil;
     }
     [_view autorelease];
     _view = [newView retain];
     newView.delegate = self;
-    if (@available(macOS 10.14, *)) {
-        newView.searchResultsMinimapViewDelegate = _textview.findOnPageHelper;
-    }
-    if (@available(macOS 10.11, *)) {
-        newView.driver.dataSource = _metalGlue;
-    }
+    newView.searchResultsMinimapViewDelegate = _textview.findOnPageHelper;
+    newView.driver.dataSource = _metalGlue;
     [newView updateTitleFrame];
     [_view setFindDriverDelegate:self];
     [self updateViewBackgroundImage];
@@ -4712,10 +4688,8 @@ ITERM_WEAKLY_REFERENCEABLE
     _backgroundImageMode = mode;
     [_backgroundDrawingHelper invalidate];
     [self setBackgroundImagePath:_backgroundImagePath];
-    if (@available(macOS 10.14, *)) {
-        if ([iTermPreferences boolForKey:kPreferenceKeyPerPaneBackgroundImage]) {
-            self.view.imageMode = mode;
-        }
+    if ([iTermPreferences boolForKey:kPreferenceKeyPerPaneBackgroundImage]) {
+        self.view.imageMode = mode;
     }
 }
 
@@ -4853,10 +4827,8 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void)invalidateBlend {
     [_textview setNeedsDisplay:YES];
     [self.view setNeedsDisplay:YES];
-    if (@available(macOS 10.14, *)) {
-        [self.view setTransparencyAlpha:_textview.transparencyAlpha
-                                  blend:self.effectiveBlend];
-    }
+    [self.view setTransparencyAlpha:_textview.transparencyAlpha
+                              blend:self.effectiveBlend];
 }
 
 - (void)setTransparencyAffectsOnlyDefaultBackgroundColor:(BOOL)value {
@@ -5302,11 +5274,9 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void)updateDisplayBecause:(NSString *)reason {
     DLog(@"updateDisplayBecause:%@ %@", reason, _cadenceController);
     _updateCount++;
-    if (@available(macOS 10.11, *)) {
-        if (_useMetal && _updateCount % 10 == 0) {
-            iTermPreciseTimerSaveLog([NSString stringWithFormat:@"%@: updateDisplay interval", _view.driver.identifier],
-                                     _cadenceController.histogram.stringValue);
-        }
+    if (_useMetal && _updateCount % 10 == 0) {
+        iTermPreciseTimerSaveLog([NSString stringWithFormat:@"%@: updateDisplay interval", _view.driver.identifier],
+                                 _cadenceController.histogram.stringValue);
     }
     _timerRunning = YES;
 
@@ -6105,9 +6075,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)findViewControllerVisibilityDidChange:(id<iTermFindViewController>)sender {
-    if (@available(macOS 10.11, *)) {
-        [_delegate sessionUpdateMetalAllowed];
-    }
+    [_delegate sessionUpdateMetalAllowed];
     if (sender.driver.isVisible) {
         return;
     }
@@ -6447,10 +6415,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     if (_textview.transparencyAlpha < 1) {
         BOOL transparencyAllowed = NO;
 #if ENABLE_TRANSPARENT_METAL_WINDOWS
-        if (@available(macOS 10.14, *)) {
-            if (iTermTextIsMonochrome()) {
-                transparencyAllowed = YES;
-            }
+        if (iTermTextIsMonochrome()) {
+            transparencyAllowed = YES;
         }
 #endif
         if (!transparencyAllowed && _textview.transparencyAlpha < 1) {
@@ -6460,69 +6426,11 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
             return NO;
         }
     }
-    if (@available(macOS 10.14, *)) { } else {
-        // The following conditions only apply before macOS 10.14.
-        // Mojave fixed compositing of views over MTKView and removed subpixel antialiasing making blending of text easier.
-        if ([_textview verticalSpacing] < 1) {
-            if (reason) {
-                *reason = iTermMetalUnavailableReasonVerticalSpacing;
-            }
-            // Metal cuts off the tops of letters when line height reduced
-            return NO;
-        }
-        // Metal's not allowed when other views are composited over the metal view because that just
-        // doesn't seem to work, even if you use presentsWithTransaction (even if it did work, it
-        // requires presenting the drawable on the main thread which defeats the purpose of the metal
-        // renderer).
-        //
-        // Perhaps some day transparency and ligatures will be supported.
-        const BOOL nativeFullScreen = !!(self.view.window.styleMask & NSWindowStyleMaskFullScreen);
-        const BOOL untitled = self.view.window && !(self.view.window.styleMask & NSWindowStyleMaskTitled);
-        const BOOL hasSquareCorners = untitled || nativeFullScreen;
-        const BOOL marginsOk = ([iTermPreferences intForKey:kPreferenceKeyTopBottomMargins] >= 2 &&
-                                [iTermPreferences intForKey:kPreferenceKeySideMargins] >= 1);  // Smaller margins break rounded window corners
-        const BOOL safeForWindowCorners = (hasSquareCorners || marginsOk);
-        if (!safeForWindowCorners) {
-            if (reason) {
-                *reason = iTermMetalUnavailableReasonMarginSize;
-            }
-            return NO;
-        }
-
-        if (_view.isDropDownSearchVisible) {
-            if (reason) {
-                *reason = iTermMetalUnavailableReasonFindPanel;
-            }
-            return NO;
-        }
-        if (_pasteHelper.dropDownPasteViewIsVisible) {
-            if (reason) {
-                *reason = iTermMetalUnavailableReasonPasteIndicator;
-            }
-            return NO;
-        }
-        if (_view.currentAnnouncement) {
-            if (reason) {
-                *reason = iTermMetalUnavailableReasonAnnouncement;
-            }
-            return NO;
-        }
-        if (_view.hasHoverURL) {
-            if (reason) {
-                *reason = iTermMetalUnavailableReasonURLPreview;
-            }
-            return NO;
-        }
-    }
     return YES;
 }
 
 - (BOOL)canProduceMetalFramecap {
-    if (@available(macOS 10.11, *)) {
-        return _useMetal && _view.metalView.alphaValue == 1 && _wrapper.useMetal && _textview.suppressDrawing;
-    } else {
-        return NO;
-    }
+    return _useMetal && _view.metalView.alphaValue == 1 && _wrapper.useMetal && _textview.suppressDrawing;
 }
 
 - (BOOL)metalViewSizeIsLegal NS_AVAILABLE_MAC(10_11) {
@@ -6535,15 +6443,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (BOOL)idleForMetal {
-    if (@available(macOS 10.11, *)) {
-        return (!_cadenceController.isActive &&
-                !_view.verticalScroller.userScroll &&
-                !self.overrideGlobalDisableMetalWhenIdleSetting &&
-                !_view.driver.captureDebugInfoForNextFrame);
-
-    } else {
-        return NO;
-    }
+    return (!_cadenceController.isActive &&
+            !_view.verticalScroller.userScroll &&
+            !self.overrideGlobalDisableMetalWhenIdleSetting &&
+            !_view.driver.captureDebugInfoForNextFrame);
 }
 
 - (BOOL)ligaturesEnabledInEitherFont {
@@ -6566,36 +6469,34 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)setUseMetal:(BOOL)useMetal {
-    if (@available(macOS 10.11, *)) {
-        if (useMetal == _useMetal) {
-            return;
+    if (useMetal == _useMetal) {
+        return;
+    }
+    DLog(@"setUseMetal:%@ %@", @(useMetal), self);
+    _useMetal = useMetal;
+    // The metalview's alpha will initially be 0. Once it has drawn a frame we'll swap what is visible.
+    [self setUseMetal:useMetal dataSource:_metalGlue];
+    if (useMetal) {
+        [self updateMetalDriver];
+        // wrapper.useMetal becomes YES after the first frame is done drawing
+    } else {
+        _wrapper.useMetal = NO;
+        [_metalDisabledTokens removeAllObjects];
+        if (_metalContext) {
+            // If metal is re-enabled later, it must not use the same context.
+            // It's possible that a metal driver thread has survived this point
+            // and will continue to use the context.
+            CGContextRelease(_metalContext);
+            _metalContext = NULL;
         }
-        DLog(@"setUseMetal:%@ %@", @(useMetal), self);
-        _useMetal = useMetal;
-        // The metalview's alpha will initially be 0. Once it has drawn a frame we'll swap what is visible.
-        [self setUseMetal:useMetal dataSource:_metalGlue];
-        if (useMetal) {
-            [self updateMetalDriver];
-            // wrapper.useMetal becomes YES after the first frame is done drawing
-        } else {
-            _wrapper.useMetal = NO;
-            [_metalDisabledTokens removeAllObjects];
-            if (_metalContext) {
-                // If metal is re-enabled later, it must not use the same context.
-                // It's possible that a metal driver thread has survived this point
-                // and will continue to use the context.
-                CGContextRelease(_metalContext);
-                _metalContext = NULL;
-            }
-        }
-        [_textview setNeedsDisplay:YES];
-        [_cadenceController changeCadenceIfNeeded];
+    }
+    [_textview setNeedsDisplay:YES];
+    [_cadenceController changeCadenceIfNeeded];
 
-        if (useMetal) {
-            [self renderTwoMetalFramesAndShowMetalView];
-        } else {
-            _view.metalView.enableSetNeedsDisplay = NO;
-        }
+    if (useMetal) {
+        [self renderTwoMetalFramesAndShowMetalView];
+    } else {
+        _view.metalView.enableSetNeedsDisplay = NO;
     }
 }
 
@@ -6674,12 +6575,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     _wrapper.useMetal = YES;
     _textview.suppressDrawing = YES;
     [_view setSuppressLegacyDrawing:YES];
-    if (@available(macOS 10.14, *)) {
-        if (PTYScrollView.shouldDismember) {
-            _view.scrollview.alphaValue = 0;
-        } else {
-            _view.scrollview.contentView.alphaValue = 0;
-        }
+    if (PTYScrollView.shouldDismember) {
+        _view.scrollview.alphaValue = 0;
+    } else {
+        _view.scrollview.contentView.alphaValue = 0;
     }
     [self setMetalViewAlphaValue:1];
 }
@@ -6695,12 +6594,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     if (!useMetal) {
         _textview.suppressDrawing = NO;
         [_view setSuppressLegacyDrawing:NO];
-        if (@available(macOS 10.14, *)) {
-            if (PTYScrollView.shouldDismember) {
-                _view.scrollview.alphaValue = 1;
-            } else {
-                _view.scrollview.contentView.alphaValue = 1;
-            }
+        if (PTYScrollView.shouldDismember) {
+            _view.scrollview.alphaValue = 1;
+        } else {
+            _view.scrollview.contentView.alphaValue = 1;
         }
     }
 }
@@ -9220,9 +9117,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         [self notifyTmuxFontChange];
     }
     [_view updateScrollViewFrame];
-    if (@available(macOS 10.11, *)) {
-        [self updateMetalDriver];
-    }
+    [self updateMetalDriver];
 }
 
 - (BOOL)textViewHasBackgroundImage {
@@ -9274,11 +9169,6 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     } else {
         NSView *container = [self.delegate sessionContainerView:self];
         NSRect clippedDirtyRect = NSIntersectionRect(dirtyRect, view.enclosingScrollView.documentVisibleRect);;
-        if (@available(macOS 10.14, *)) {} else {
-            if (view == self.view) {
-                clippedDirtyRect = dirtyRect;
-            }
-        }
         NSRect windowVisibleRect = [self.view insetRect:container.bounds
                                                 flipped:YES
                                  includeBottomStatusBar:![iTermPreferences boolForKey:kPreferenceKeySeparateStatusBarsPerPane]];
@@ -9299,29 +9189,12 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     }
     NSRect viewRect;
     NSRect containerBounds;
-    if (@available(macOS 10.14, *)) {
-        NSView *container = self.view.window.contentView;
-        viewRect = [self.view.metalView.superview convertRect:self.view.metalView.frame
-                                                       toView:container];
-        containerBounds = container.bounds;
-        // Flip it
-        viewRect.origin.y = containerBounds.size.height - viewRect.origin.y - viewRect.size.height;
-    } else {
-        NSView *container = [self.delegate sessionContainerView:self];
-        const NSRect sessionViewFrameInContainer = [container convertRect:self.view.bounds fromView:self.view];
-        viewRect = [self.view insetRect:sessionViewFrameInContainer
-                                flipped:YES
-                 includeBottomStatusBar:YES];
-        BOOL includeBottomStatusBar = YES;
-        if (@available(macOS 10.14, *)) {
-            includeBottomStatusBar = ![iTermPreferences boolForKey:kPreferenceKeySeparateStatusBarsPerPane];
-        }
-        containerBounds = [self.view insetRect:container.bounds
-                                       flipped:YES
-                        includeBottomStatusBar:includeBottomStatusBar];
-        viewRect.origin.x -= containerBounds.origin.x;
-        viewRect.origin.y -= containerBounds.origin.y;
-    }
+    NSView *container = self.view.window.contentView;
+    viewRect = [self.view.metalView.superview convertRect:self.view.metalView.frame
+                                                   toView:container];
+    containerBounds = container.bounds;
+    // Flip it
+    viewRect.origin.y = containerBounds.size.height - viewRect.origin.y - viewRect.size.height;
     return CGRectMake(viewRect.origin.x / containerBounds.size.width,
                       viewRect.origin.y / containerBounds.size.height,
                       viewRect.size.width / containerBounds.size.width,
@@ -9330,11 +9203,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 - (CGRect)textViewContainerRect {
     if ([iTermPreferences boolForKey:kPreferenceKeyPerPaneBackgroundImage]) {
-        if (@available(macOS 10.14, *)) {
-            return self.view.frame;
-        } else {
-            return self.view.scrollview.frame;
-        }
+        return self.view.frame;
     }
     NSView *container = [self.delegate sessionContainerView:self];
     return [self.view insetRect:container.bounds
@@ -9343,16 +9212,13 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (NSEdgeInsets)textViewExtraMargins {
-    if (@available(macOS 10.14, *)) {
-        NSEdgeInsets margins = self.view.extraMargins;
-        // This is here because of tmux panes. They cause some extra bottom
-        // margins, and the regular -extraMargins code only includes stuff like
-        // the status bar on the bottom. The top margin it produces is still
-        // useful, so we keep that.
-        margins.bottom = _view.scrollview.frame.origin.y;
-        return margins;
-    }
-    return NSEdgeInsetsZero;
+    NSEdgeInsets margins = self.view.extraMargins;
+    // This is here because of tmux panes. They cause some extra bottom
+    // margins, and the regular -extraMargins code only includes stuff like
+    // the status bar on the bottom. The top margin it produces is still
+    // useful, so we keep that.
+    margins.bottom = _view.scrollview.frame.origin.y;
+    return margins;
 }
 
 - (iTermImageWrapper *)textViewBackgroundImage {
@@ -10138,21 +10004,15 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)textViewNeedsDisplayInRect:(NSRect)rect {
-    if (@available(macOS 10.11, *)) {
-        NSRect visibleRect = NSIntersectionRect(rect, _textview.enclosingScrollView.documentVisibleRect);
-        [_view setMetalViewNeedsDisplayInTextViewRect:visibleRect];
-    }
+    NSRect visibleRect = NSIntersectionRect(rect, _textview.enclosingScrollView.documentVisibleRect);
+    [_view setMetalViewNeedsDisplayInTextViewRect:visibleRect];
 }
 
 - (BOOL)textViewShouldDrawRect {
-    if (@available(macOS 10.11, *)) {
-        // In issue 8843 we see that sometimes the background color can get out of sync. I can't
-        // figure it out. This patches the problem until I can collect more info.
-        [_view setTerminalBackgroundColor:[self processedBackgroundColor]];
-        return !_textview.suppressDrawing;
-    } else {
-        return YES;
-    }
+    // In issue 8843 we see that sometimes the background color can get out of sync. I can't
+    // figure it out. This patches the problem until I can collect more info.
+    [_view setTerminalBackgroundColor:[self processedBackgroundColor]];
+    return !_textview.suppressDrawing;
 }
 
 - (void)textViewDidHighlightMark {
@@ -10165,11 +10025,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     NSEdgeInsets insets;
     const NSRect innerFrame = _view.scrollview.frame;
     NSSize containerSize;
-    if (@available(macOS 10.14, *)) {
-        containerSize = _view.frame.size;
-    } else {
-        containerSize = _view.contentRect.size;
-    }
+    containerSize = _view.frame.size;
 
     insets.bottom = NSMinY(innerFrame);
     insets.top = containerSize.height - NSMaxY(innerFrame);
@@ -10319,10 +10175,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)textViewFindOnPageLocationsDidChange {
-    if (@available(macOS 10.14, *)) {
-        [_view.searchResultsMinimap invalidate];
-        [_view.marksMinimap invalidate];
-    }
+    [_view.searchResultsMinimap invalidate];
+    [_view.marksMinimap invalidate];
 }
 
 - (void)textViewFindOnPageSelectedResultDidChange {
@@ -13331,9 +13185,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)pasteHelperPasteViewVisibilityDidChange {
-    if (@available(macOS 10.11, *)) {
-        [self.delegate sessionUpdateMetalAllowed];
-    }
+    [self.delegate sessionUpdateMetalAllowed];
 }
 
 - (iTermVariableScope *)pasteHelperScope {
@@ -13628,12 +13480,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     _wrapper.useMetal = NO;
     _textview.suppressDrawing = NO;
     [_view setSuppressLegacyDrawing:NO];
-    if (@available(macOS 10.14, *)) {
-        if (PTYScrollView.shouldDismember) {
-            _view.scrollview.alphaValue = 1;
-        } else {
-            _view.scrollview.contentView.alphaValue = 1;
-        }
+    if (PTYScrollView.shouldDismember) {
+        _view.scrollview.alphaValue = 1;
+    } else {
+        _view.scrollview.contentView.alphaValue = 1;
     }
     [self setMetalViewAlphaValue:0];
     id token = @(_nextMetalDisabledToken++);
@@ -13703,40 +13553,36 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 - (void)sessionViewNeedsMetalFrameUpdate {
     DLog(@"sessionViewNeedsMetalFrameUpdate %@", self);
-    if (@available(macOS 10.11, *)) {
-        if (_metalFrameChangePending) {
-            DLog(@"sessionViewNeedsMetalFrameUpdate frame change pending, return");
-            return;
-        }
-
-        _metalFrameChangePending = YES;
-        id token = [self temporarilyDisableMetal];
-        [self.textview setNeedsDisplay:YES];
-        dispatch_async(dispatch_get_main_queue(), ^{
-            DLog(@"sessionViewNeedsMetalFrameUpdate %@ in dispatch_async", self);
-            _metalFrameChangePending = NO;
-            [_view reallyUpdateMetalViewFrame];
-            DLog(@"sessionViewNeedsMetalFrameUpdate will draw farme and remove disablement");
-            [self drawFrameAndRemoveTemporarilyDisablementOfMetalForToken:token];
-        });
+    if (_metalFrameChangePending) {
+        DLog(@"sessionViewNeedsMetalFrameUpdate frame change pending, return");
+        return;
     }
+
+    _metalFrameChangePending = YES;
+    id token = [self temporarilyDisableMetal];
+    [self.textview setNeedsDisplay:YES];
+    dispatch_async(dispatch_get_main_queue(), ^{
+        DLog(@"sessionViewNeedsMetalFrameUpdate %@ in dispatch_async", self);
+        _metalFrameChangePending = NO;
+        [_view reallyUpdateMetalViewFrame];
+        DLog(@"sessionViewNeedsMetalFrameUpdate will draw farme and remove disablement");
+        [self drawFrameAndRemoveTemporarilyDisablementOfMetalForToken:token];
+    });
 }
 
 - (void)sessionViewRecreateMetalView {
-    if (@available(macOS 10.11, *)) {
-        if (_metalDeviceChanging) {
-            return;
-        }
-        DLog(@"sessionViewRecreateMetalView metalDeviceChanging<-YES");
-        _metalDeviceChanging = YES;
-        [self.textview setNeedsDisplay:YES];
-        [_delegate sessionUpdateMetalAllowed];
-        dispatch_async(dispatch_get_main_queue(), ^{
-            _metalDeviceChanging = NO;
-            DLog(@"sessionViewRecreateMetalView metalDeviceChanging<-NO");
-            [_delegate sessionUpdateMetalAllowed];
-        });
+    if (_metalDeviceChanging) {
+        return;
     }
+    DLog(@"sessionViewRecreateMetalView metalDeviceChanging<-YES");
+    _metalDeviceChanging = YES;
+    [self.textview setNeedsDisplay:YES];
+    [_delegate sessionUpdateMetalAllowed];
+    dispatch_async(dispatch_get_main_queue(), ^{
+        _metalDeviceChanging = NO;
+        DLog(@"sessionViewRecreateMetalView metalDeviceChanging<-NO");
+        [_delegate sessionUpdateMetalAllowed];
+    });
 }
 
 - (void)sessionViewUserScrollDidChange:(BOOL)userScroll {
@@ -13829,9 +13675,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)cadenceControllerActiveStateDidChange:(BOOL)active {
-    if (@available(macOS 10.11, *)) {
-        [self.delegate sessionUpdateMetalAllowed];
-    }
+    [self.delegate sessionUpdateMetalAllowed];
 }
 
 - (BOOL)updateCadenceControllerWindowHasSheet {
@@ -14265,27 +14109,23 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     }
 
     const CGFloat alpha = 0.25;
-    if (@available(macOS 10.14, *)) {
-        NSAppearance *appearance = nil;
-        switch ((iTermPreferencesTabStyle)[iTermPreferences intForKey:kPreferenceKeyTabStyle]) {
-            case TAB_STYLE_DARK:
-            case TAB_STYLE_DARK_HIGH_CONTRAST:
-                appearance = [NSAppearance appearanceNamed:NSAppearanceNameDarkAqua];
-                break;
-            case TAB_STYLE_LIGHT:
-            case TAB_STYLE_LIGHT_HIGH_CONTRAST:
-                appearance = [NSAppearance appearanceNamed:NSAppearanceNameAqua];
-                break;
-            case TAB_STYLE_AUTOMATIC:
-            case TAB_STYLE_COMPACT:
-            case TAB_STYLE_MINIMAL:  // shouldn't happen
-                appearance = [NSApp effectiveAppearance];
-                break;
-        }
-        return [[[self textColorForStatusBar] it_colorWithAppearance:appearance] colorWithAlphaComponent:alpha];
-    } else {
-        return [[self textColorForStatusBar] colorWithAlphaComponent:alpha];
+    NSAppearance *appearance = nil;
+    switch ((iTermPreferencesTabStyle)[iTermPreferences intForKey:kPreferenceKeyTabStyle]) {
+        case TAB_STYLE_DARK:
+        case TAB_STYLE_DARK_HIGH_CONTRAST:
+            appearance = [NSAppearance appearanceNamed:NSAppearanceNameDarkAqua];
+            break;
+        case TAB_STYLE_LIGHT:
+        case TAB_STYLE_LIGHT_HIGH_CONTRAST:
+            appearance = [NSAppearance appearanceNamed:NSAppearanceNameAqua];
+            break;
+        case TAB_STYLE_AUTOMATIC:
+        case TAB_STYLE_COMPACT:
+        case TAB_STYLE_MINIMAL:  // shouldn't happen
+            appearance = [NSApp effectiveAppearance];
+            break;
     }
+    return [[[self textColorForStatusBar] it_colorWithAppearance:appearance] colorWithAlphaComponent:alpha];
 }
 
 - (NSColor *)statusBarBackgroundColor {
@@ -15183,21 +15023,19 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     if (![iTermAdvancedSettingsModel showLocationsInScrollbar]) {
         return;
     }
-    if (@available(macOS 10.14, *)) {
-        [_view.marksMinimap removeAllObjects];
-        const NSInteger count = (NSInteger)iTermIntervalTreeObjectTypeUnknown;
-        NSMutableIndexSet **sets = iTermMalloc(sizeof(NSMutableIndexSet *) * count);
-        for (NSInteger i = 0; i < count; i++) {
-            sets[i] = [[[NSMutableIndexSet alloc] init] autorelease];
-        };
-        [_screen enumerateObservableMarks:^(iTermIntervalTreeObjectType type, NSInteger line) {
-            [sets[type] addIndex:line];
-        }];
-        for (NSInteger i = 0; i < count; i++) {
-            [_view.marksMinimap setLines:sets[i] forType:i];
-        }
-        free(sets);
+    [_view.marksMinimap removeAllObjects];
+    const NSInteger count = (NSInteger)iTermIntervalTreeObjectTypeUnknown;
+    NSMutableIndexSet **sets = iTermMalloc(sizeof(NSMutableIndexSet *) * count);
+    for (NSInteger i = 0; i < count; i++) {
+        sets[i] = [[[NSMutableIndexSet alloc] init] autorelease];
+    };
+    [_screen enumerateObservableMarks:^(iTermIntervalTreeObjectType type, NSInteger line) {
+        [sets[type] addIndex:line];
+    }];
+    for (NSInteger i = 0; i < count; i++) {
+        [_view.marksMinimap setLines:sets[i] forType:i];
     }
+    free(sets);
 }
 
 - (void)intervalTreeDidAddObjectOfType:(iTermIntervalTreeObjectType)type
@@ -15205,9 +15043,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     if (![iTermAdvancedSettingsModel showLocationsInScrollbar]) {
         return;
     }
-    if (@available(macOS 10.14, *)) {
-        [_view.marksMinimap addObjectOfType:type onLine:line];
-    }
+    [_view.marksMinimap addObjectOfType:type onLine:line];
 }
 
 - (void)intervalTreeDidRemoveObjectOfType:(iTermIntervalTreeObjectType)type
@@ -15215,9 +15051,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     if (![iTermAdvancedSettingsModel showLocationsInScrollbar]) {
         return;
     }
-    if (@available(macOS 10.14, *)) {
-        [_view.marksMinimap removeObjectOfType:type fromLine:line];
-    }
+    [_view.marksMinimap removeObjectOfType:type fromLine:line];
 }
 
 - (void)intervalTreeVisibleRangeDidChange {
@@ -15228,10 +15062,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     if (![iTermAdvancedSettingsModel showLocationsInScrollbar]) {
         return;
     }
-    if (@available(macOS 10.14, *)) {
-        [_view.marksMinimap setFirstVisibleLine:_screen.totalScrollbackOverflow
-                           numberOfVisibleLines:_screen.numberOfLines];
-    }
+    [_view.marksMinimap setFirstVisibleLine:_screen.totalScrollbackOverflow
+                       numberOfVisibleLines:_screen.numberOfLines];
 }
 
 #pragma mark - iTermTmuxControllerSession

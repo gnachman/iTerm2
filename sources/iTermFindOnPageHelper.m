@@ -179,10 +179,9 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     _lastStringSearchedFor = nil;
 
     [_searchResults release];
-    if (@available(macOS 10.14, *)) {
-        [_locations removeAllIndexes];
-        [self locationsDidChange];
-    }
+    [_locations removeAllIndexes];
+    [self locationsDidChange];
+
     _searchResults = [[NSMutableOrderedSet alloc] init];
     _cachedCounts.valid = NO;
 
@@ -274,10 +273,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                                                  }
                                              }];
     [_searchResults insertObject:searchResult atIndex:insertionIndex];
-    if (@available(macOS 10.14, *)) {
-        [_locations addIndex:searchResult.absStartY];
-        [self locationsDidChange];
-    }
+    [_locations addIndex:searchResult.absStartY];
+    [self locationsDidChange];
     _cachedCounts.valid = NO;
 
     // Update highlights.
@@ -497,10 +494,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 - (void)removeAllSearchResults {
     [_searchResults removeAllObjects];
-    if (@available(macOS 10.14, *)) {
-        [_locations removeAllIndexes];
-        [self locationsDidChange];
-    }
+    [_locations removeAllIndexes];
+    [self locationsDidChange];
     _cachedCounts.valid = NO;
 }
 
@@ -508,10 +503,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     NSRange objectRange = [self rangeOfSearchResultsInRangeOfLines:range];
     if (objectRange.location != NSNotFound && objectRange.length > 0) {
         [_searchResults removeObjectsInRange:objectRange];
-        if (@available(macOS 10.14, *)) {
-            [_locations removeIndexesInRange:range];
-            [self locationsDidChange];
-        }
+        [_locations removeIndexesInRange:range];
+        [self locationsDidChange];
         _cachedCounts.valid = NO;
     }
 }

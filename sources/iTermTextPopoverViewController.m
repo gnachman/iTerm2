@@ -17,15 +17,6 @@ const CGFloat iTermTextPopoverViewControllerHorizontalMarginWidth = 4;
 
 @implementation iTermTextPopoverViewController
 
-- (void)viewDidLoad {
-    [super viewDidLoad];
-    // Do view setup here.
-    if (@available(macOS 10.14, *)) {
-        return;
-    }
-    _textView.textContainerInset = NSMakeSize(8, 8);
-}
-
 - (void)appendString:(NSString *)string {
     if (!string.length) {
         return;

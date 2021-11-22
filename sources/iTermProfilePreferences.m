@@ -812,14 +812,9 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
         return value;
     }
 
-    if (@available(macOS 10.13, *)) {
-        // macOS 10.13 has switched to unicode 9 widths. If you're sshing somewhere then you're
-        // going to have a bad time. My hope is that this makes people happier on balance.
-        return @9;
-    } else {
-        // Fall back to the default from the dictionary.
-        return [self defaultObjectForKey:key];
-    }
+    // macOS 10.13 has switched to unicode 9 widths. If you're sshing somewhere then you're
+    // going to have a bad time. My hope is that this makes people happier on balance.
+    return @9;
 }
 
 + (id)backgroundImageMode:(Profile *)profile {

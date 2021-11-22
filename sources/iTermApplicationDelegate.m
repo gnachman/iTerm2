@@ -343,11 +343,6 @@ static BOOL hasBecomeActive = NO;
         _splitVertically.title = [@"│⃞ " stringByAppendingString:_splitVertically.title];
         _splitVerticallyWithCurrentProfile.title = [@"│⃞ " stringByAppendingString:_splitVerticallyWithCurrentProfile.title];
     }
-    if (@available(macOS 10.14, *)) { } else {
-        // It's a pain to test and without proper NSView composition it'll be
-        // next to impossible to beat this thing into submission.
-        [_composerMenuItem.menu removeItem:_composerMenuItem];
-    }
     [[iTermBuriedSessions sharedInstance] setMenus:[NSArray arrayWithObjects:_buriedSessions, _statusIconBuriedSessions, nil]];
     _triggers.submenu.delegate = self;
 }
@@ -1017,17 +1012,6 @@ static BOOL hasBecomeActive = NO;
     iTermPreciseTimerClearLogs();
 }
 
-- (void)sorry1013 {
-    [iTermWarning showWarningWithTitle:@"I’ve decided that iTerm2 version 3.4 will only support macOS 10.14 and later.\nApple made significant changes in macOS 10.14 that makes supporting both code paths very difficult. Version 3.3.x will continue to receive bug fixes and security updates until Big Sur is released."
-                               actions:@[ @"😢" ]
-                             accessory:nil
-                            identifier:@"RIP1013"
-                           silenceable:kiTermWarningTypePersistent
-                               heading:@"This is the last nightly build that will run on macOS 10.13."
-                                window:nil];
-    _exit(0);
-}
-
 void TurnOnDebugLoggingAutomatically(void) {
   static dispatch_once_t onceToken;
   dispatch_once(&onceToken, ^{
@@ -1046,9 +1030,6 @@ void TurnOnDebugLoggingAutomatically(void) {
 }
 
 - (void)applicationWillFinishLaunching:(NSNotification *)aNotification {
-    if (@available(macOS 10.14, *)) {} else {
-        [self sorry1013];
-    }
     [iTermMenuBarObserver sharedInstance];
     // Cleanly crash on uncaught exceptions, such as during actions.
     [[NSUserDefaults standardUserDefaults] registerDefaults:@{ @"NSApplicationCrashOnExceptions": @YES }];
@@ -1129,9 +1110,7 @@ void TurnOnDebugLoggingAutomatically(void) {
     [iTermLaunchExperienceController applicationDidFinishLaunching];
     [[iTermLaunchServices sharedInstance] registerForiTerm2Scheme];
     if (IsTouchBarAvailable()) {
-        if (@available(macOS 10.12.2, *)) {
-            NSApp.automaticCustomizeTouchBarMenuItemEnabled = YES;
-        }
+        NSApp.automaticCustomizeTouchBarMenuItemEnabled = YES;
     }
 
     if ([iTermAdvancedSettingsModel disableAppNap]) {

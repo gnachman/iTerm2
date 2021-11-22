@@ -64,10 +64,7 @@ NS_INLINE BOOL iTermTextIsMonochromeOnMojave(void) NS_AVAILABLE_MAC(10_14) {
 }
 
 NS_INLINE BOOL iTermTextIsMonochrome(void) {
-    if (@available(macOS 10.14, *)) {
-        return iTermTextIsMonochromeOnMojave();
-    }
-    return NO;
+    return iTermTextIsMonochromeOnMojave();
 }
 
 @interface NSFont (Future)

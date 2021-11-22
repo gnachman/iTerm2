@@ -205,15 +205,9 @@ static NSRange iTermRangeMinus(NSRange lhs, NSRange rhs) {
 }
 
 - (NSView *)newBackgroundViewWithFrame:(NSRect)frame {
-    if (@available(macOS 10.14, *)) {
-        NSVisualEffectView *myView = [[NSVisualEffectView alloc] initWithFrame:frame];
-        myView.appearance = self.appearance;
-        return myView;
-    }
-
-    SolidColorView *solidColorView = [[SolidColorView alloc] initWithFrame:frame
-                                                                     color:[NSColor controlBackgroundColor]];
-    return solidColorView;
+    NSVisualEffectView *myView = [[NSVisualEffectView alloc] initWithFrame:frame];
+    myView.appearance = self.appearance;
+    return myView;
 }
 
 - (void )viewDidMoveToWindow {

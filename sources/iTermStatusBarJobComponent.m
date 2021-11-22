@@ -124,11 +124,7 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 - (BOOL)statusBarComponentHandlesClicks {
-    if (@available(macOS 10.14, *)) {
-        return YES;
-    }
-    // The outline view looks awful on 10.13 for no good reason.
-    return NO;
+    return YES;
 }
 
 - (void)statusBarComponentMouseDownWithView:(NSView *)view {

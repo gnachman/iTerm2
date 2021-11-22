@@ -219,15 +219,11 @@ NSString*    gCrashLogString = nil;
 }
 
 - (BOOL)europeanLocale {
-    if (@available(macOS 10.12, *)) {
-        NSString *cc = [[NSLocale currentLocale] countryCode];
-        NSArray *europeanCountryCodes = @[ @"BE", @"BG", @"CZ", @"DK", @"DE", @"EE", @"IE", @"EL", @"ES", @"FR",
-                                           @"HR", @"IT", @"CY", @"LV", @"LT", @"LU", @"HU", @"MT", @"NL", @"AT",
-                                           @"PL", @"PT", @"RO", @"SI", @"SK", @"FI", @"SE", @"UK" ];
-        return !cc || [europeanCountryCodes containsObject:cc];
-    } else {
-        return YES;
-    }
+    NSString *cc = [[NSLocale currentLocale] countryCode];
+    NSArray *europeanCountryCodes = @[ @"BE", @"BG", @"CZ", @"DK", @"DE", @"EE", @"IE", @"EL", @"ES", @"FR",
+                                       @"HR", @"IT", @"CY", @"LV", @"LT", @"LU", @"HU", @"MT", @"NL", @"AT",
+                                       @"PL", @"PT", @"RO", @"SI", @"SK", @"FI", @"SE", @"UK" ];
+    return !cc || [europeanCountryCodes containsObject:cc];
 }
 
 -(void)    awakeFromNib

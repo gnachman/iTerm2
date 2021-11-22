@@ -393,16 +393,12 @@
 }
 
 - (void)updateThinStrokesEnabled {
-    if (@available(macOS 10.14, *)) {
-        if (iTermTextIsMonochrome()) {
-            _subpixelAA.state = NSControlStateValueOff;
-        } else {
-            _subpixelAA.state = NSControlStateValueOn;
-        }
-        _subpixelAA.enabled = YES;
+    if (iTermTextIsMonochrome()) {
+        _subpixelAA.state = NSControlStateValueOff;
     } else {
-        _subpixelAA.hidden = YES;
+        _subpixelAA.state = NSControlStateValueOn;
     }
+    _subpixelAA.enabled = YES;
 }
 
 - (void)updateWarnings {

@@ -88,25 +88,17 @@ static CGFloat TransferrableFileMenuItemViewRightMargin(void) {
         self.lastDrawnHighlighted = YES;
         [[NSColor selectedMenuItemColor] set];
         textColor = [NSColor selectedMenuItemTextColor];
-        if (@available(macOS 10.14, *)) {
-            grayColor = [NSColor alternateSelectedControlTextColor];
-        } else {
-            grayColor = [NSColor lightGrayColor];
-        }
+        grayColor = [NSColor alternateSelectedControlTextColor];
     } else {
         self.lastDrawnHighlighted = NO;
         if (@available(macOS 10.15, *)) {
             textColor = [NSColor textColor];
             grayColor = [[NSColor textColor] colorWithAlphaComponent:0.8];
             [[NSColor clearColor] set];
-        } else if (@available(macOS 10.14, *)) {
+        } else {
             textColor = [NSColor textColor];
             grayColor = [[NSColor textColor] colorWithAlphaComponent:0.8];
             drawBackground = NO;
-        } else {
-            textColor = [NSColor blackColor];
-            grayColor = [NSColor grayColor];
-            [[NSColor whiteColor] set];
         }
     }
     if (drawBackground) {

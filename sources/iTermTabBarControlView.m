@@ -42,20 +42,13 @@ typedef NS_ENUM(NSInteger, iTermTabBarFlashState) {
         // have different title formats.
         self.ignoreTrailingParentheticalsForSmartTruncation = YES;
         self.height = [iTermAdvancedSettingsModel defaultTabBarHeight];
-        if (@available(macOS 10.14, *)) {
-            self.showAddTabButton = YES;
-        }
+        self.showAddTabButton = YES;
         self.selectsTabsOnMouseDown = [iTermAdvancedSettingsModel selectsTabsOnMouseDown];
     }
     return self;
 }
 
 - (void)drawRect:(NSRect)dirtyRect {
-    if (@available(macOS 10.14, *)) { } else {
-        [[NSColor windowBackgroundColor] set];
-        NSRectFill(dirtyRect);
-    }
-
     [super drawRect:dirtyRect];
 }
 
@@ -242,9 +235,7 @@ typedef NS_ENUM(NSInteger, iTermTabBarFlashState) {
 
 - (void)setOrientation:(PSMTabBarOrientation)orientation {
     [super setOrientation:orientation];
-    if (@available(macOS 10.14, *)) {
-        self.showAddTabButton = (orientation == PSMTabBarHorizontalOrientation);
-    }
+    self.showAddTabButton = (orientation == PSMTabBarHorizontalOrientation);
 }
 
 #pragma mark - Private

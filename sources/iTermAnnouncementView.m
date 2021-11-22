@@ -82,10 +82,9 @@ static const CGFloat kMargin = 8;
 - (instancetype)initWithFrame:(NSRect)frameRect {
     self = [super initWithFrame:frameRect];
     if (self) {
-        if (@available(macOS 10.14, *)) {
-            // This forces the button text to be dark. This view is always light regardless of theme.
-            self.appearance = [NSAppearance appearanceNamed:NSAppearanceNameVibrantLight];
-        }
+        // This forces the button text to be dark. This view is always light regardless of theme.
+        self.appearance = [NSAppearance appearanceNamed:NSAppearanceNameVibrantLight];
+
         frameRect.size.height -= 10;
         frameRect.origin.y = 10;
         frameRect.origin.x = 0;
@@ -217,14 +216,6 @@ static const CGFloat kMargin = 8;
 }
 
 - (void)updateAppearance {
-    if (@available(macOS 10.14, *)) {
-        return;
-    }
-    if ([self.window.appearance.name isEqual:NSAppearanceNameVibrantDark]) {
-        for (NSButton *button in _actionButtons) {
-            button.appearance = [NSAppearance appearanceNamed:NSAppearanceNameVibrantLight];
-        }
-    }
 }
 
 - (void)windowAppearanceDidChange:(NSNotification *)notification {
