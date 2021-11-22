@@ -34,19 +34,6 @@
 @class PTYSession;
 @protocol PTYWindow;
 
-// This is only here so I can still compile the app with the 10.15 SDK.
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 101600
-typedef NS_ENUM(NSUInteger, NSTitlebarSeparatorStyle) {
-    NSTitlebarSeparatorStyleAutomatic,
-    NSTitlebarSeparatorStyleNone,
-    NSTitlebarSeparatorStyleLine,
-    NSTitlebarSeparatorStyleShadow
-};
-@interface NSWindow(Future)
-- (NSTitlebarSeparatorStyle)titlebarSeparatorStyle;
-@end
-#endif
-
 // The key used for a window's arrangement in encoding restorable state.
 extern NSString *const kTerminalWindowStateRestorationWindowArrangementKey;
 extern NSString *const iTermWindowDocumentedEditedDidChange;

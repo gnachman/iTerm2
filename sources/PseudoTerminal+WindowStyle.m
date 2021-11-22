@@ -113,6 +113,21 @@ iTermWindowType iTermWindowTypeNormalized(iTermWindowType windowType) {
     return NO;
 }
 
+- (void)updateTitlebarSeparatorStyle {
+    if (@available(macOS 11.0, *)) {
+        // .none is harmful outside full screen mode because it causes the titlebar to be the wrong color.
+        // In order to avoid having the separator in non-fullscreen windows, we use a series of disgusting hacks.
+        // See commit 883a3faac0392dbea9464e5255212c96b9f1470c.
+        // .none is absolutely necessary in full screen mode to avoid a flashing white line. 
+        // See commit 0257ba8f8398240c813c35aa72fe2f652cb11b1e.
+        if ([self lionFullScreen] && !exitingLionFullscreen_) {
+            self.window.titlebarSeparatorStyle = NSTitlebarSeparatorStyleNone;
+        } else {
+            self.window.titlebarSeparatorStyle = NSTitlebarSeparatorStyleAutomatic;
+        }
+    }
+}
+
 - (NSWindow *)setWindowWithWindowType:(iTermWindowType)windowType
                       savedWindowType:(iTermWindowType)savedWindowType
                windowTypeForStyleMask:(iTermWindowType)windowTypeForStyleMask
@@ -165,9 +180,7 @@ iTermWindowType iTermWindowTypeNormalized(iTermWindowType windowType) {
     myWindow.movable = [self.class windowTypeIsMovable:windowType];
 
     [self updateForTransparency:(NSWindow<PTYWindow> *)myWindow];
-    if (@available(macOS 11.0, *)) {
-        myWindow.titlebarSeparatorStyle = NSTitlebarSeparatorStyleNone;
-    }
+    [self updateTitlebarSeparatorStyle];
     [self setWindow:myWindow];
 
     if (@available(macOS 10.16, *)) {
@@ -801,13 +814,11 @@ iTermWindowType iTermWindowTypeNormalized(iTermWindowType windowType) {
 - (void)windowDidEnterFullScreenImpl:(NSNotification *)notification {
     DLog(@"Window did enter lion fullscreen %@", self);
 
-    if (@available(macOS 11.0, *)) {
-        self.window.titlebarSeparatorStyle = NSTitlebarSeparatorStyleNone;
-    }
     zooming_ = NO;
     togglingLionFullScreen_ = NO;
     _fullScreenRetryCount = 0;
     lionFullScreen_ = YES;
+    [self updateTitlebarSeparatorStyle];
     [self updateTabBarControlIsTitlebarAccessory];
     [self didChangeAnyFullScreen];
     [self.contentView.tabBarControl setFlashing:YES];
@@ -875,7 +886,7 @@ iTermWindowType iTermWindowTypeNormalized(iTermWindowType windowType) {
                                                             object:self.swipeIdentifier];
     }
     exitingLionFullscreen_ = YES;
-
+    [self updateTitlebarSeparatorStyle];
     [self updateTabBarControlIsTitlebarAccessory];
     [self updateForTransparency:(NSWindow<PTYWindow> *)self.window];
     [self.contentView.tabBarControl updateFlashing];
