@@ -16,6 +16,23 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)it_performUpdateBlock:(void (^NS_NOESCAPE)(void))block;
 
++ (instancetype)toolbeltTableViewInScrollview:(NSScrollView *)scrollView
+                                        owner:(NSView<NSTableViewDelegate, NSTableViewDataSource> *)owner;
+
++ (instancetype)toolbeltTableViewInScrollview:(NSScrollView *)scrollView
+                               fixedRowHeight:(BOOL)fixedRowHeight
+                                        owner:(NSView<NSTableViewDelegate, NSTableViewDataSource> *)owner;
+
+- (NSTableCellView *)newTableCellViewWithTextFieldUsingIdentifier:(NSString *)identifier
+                                                             font:(NSFont *)font
+                                                            string:(NSString *)string;
+- (NSTableCellView *)newTableCellViewWithTextFieldUsingIdentifier:(NSString *)identifier
+                                                 attributedString:(NSAttributedString *)attributedString;
+
+// value is either NSString or NSAttributedString
+- (NSTableCellView *)newTableCellViewWithTextFieldUsingIdentifier:(NSString *)identifier
+                                                             font:(NSFont *)font
+                                                            value:(id)value;
 @end
 
 NS_ASSUME_NONNULL_END

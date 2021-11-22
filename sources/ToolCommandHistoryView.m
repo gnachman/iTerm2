@@ -8,6 +8,7 @@
 
 #import "ToolCommandHistoryView.h"
 
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermShellHistoryController.h"
 #import "iTermCommandHistoryEntryMO+Additions.h"
 #import "iTermCompetentTableRowView.h"
@@ -18,6 +19,7 @@
 #import "NSFont+iTerm.h"
 #import "NSImage+iTerm.h"
 #import "NSTableColumn+iTerm.h"
+#import "NSTableView+iTerm.h"
 #import "NSTextField+iTerm.h"
 #import "PTYSession.h"
 
@@ -29,7 +31,7 @@ static const CGFloat kHelpMargin = 5;
 @end
 
 @implementation ToolCommandHistoryView {
-    NSScrollView *scrollView_;
+    NSScrollView *_scrollView;
     NSTableView *_tableView;
     NSButton *clear_;
     BOOL shutdown_;
@@ -39,8 +41,6 @@ static const CGFloat kHelpMargin = 5;
     NSButton *help_;
     NSMutableParagraphStyle *_paragraphStyle;
 }
-
-@synthesize tableView = _tableView;
 
 - (instancetype)initWithFrame:(NSRect)frame {
     self = [super initWithFrame:frame];
@@ -88,50 +88,14 @@ static const CGFloat kHelpMargin = 5;
         [clear_ setAutoresizingMask:NSViewMinYMargin];
         [self addSubview:clear_];
 
-        scrollView_ = [[NSScrollView alloc] initWithFrame:NSMakeRect(0,
-                                                                     searchField_.frame.size.height + kMargin,
-                                                                     frame.size.width,
-                                                                     frame.size.height - kButtonHeight - 2 * kMargin - searchField_.frame.size.height)];
-        [scrollView_ setHasVerticalScroller:YES];
-        [scrollView_ setHasHorizontalScroller:NO];
-        if (@available(macOS 10.16, *)) {
-            [scrollView_ setBorderType:NSLineBorder];
-            scrollView_.scrollerStyle = NSScrollerStyleOverlay;
-        } else {
-            [scrollView_ setBorderType:NSBezelBorder];
-        }
-        NSSize contentSize = [self contentSize];
-        [scrollView_ setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
-        scrollView_.drawsBackground = NO;
-
-        _tableView = [[NSTableView alloc] initWithFrame:NSMakeRect(0, 0, contentSize.width, contentSize.height)];
-#ifdef MAC_OS_X_VERSION_10_16
-        if (@available(macOS 10.16, *)) {
-            _tableView.style = NSTableViewStyleInset;
-        }
-#endif
-        NSTableColumn *col = [[NSTableColumn alloc] initWithIdentifier:@"commands"];
-        [col setEditable:NO];
-        [_tableView addTableColumn:col];
-        [[col headerCell] setStringValue:@"Commands"];
-        [_tableView setHeaderView:nil];
-        [_tableView setDataSource:self];
-        [_tableView setDelegate:self];
-        _tableView.intercellSpacing = NSMakeSize(_tableView.intercellSpacing.width, 0);
-        _tableView.rowHeight = 15;
+        _scrollView = [NSScrollView scrollViewWithTableViewForToolbeltWithContainer:self
+                                                                             insets:NSEdgeInsetsMake(searchField_.frame.size.height + kMargin,
+                                                                                                     0,
+                                                                                                     kButtonHeight + 2 * kMargin + searchField_.frame.size.height,
+                                                                                                     0)];
+        _tableView = _scrollView.documentView;
         [_tableView setDoubleAction:@selector(doubleClickOnTableView:)];
-        [_tableView setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
-        if (@available(macOS 10.14, *)) {
-            _tableView.backgroundColor = [NSColor clearColor];
-        }
-
         [searchField_ setArrowHandler:_tableView];
-
-        [scrollView_ setDocumentView:_tableView];
-        [self addSubview:scrollView_];
-
-        [_tableView sizeToFit];
-        [_tableView setColumnAutoresizingStyle:NSTableViewSequentialColumnAutoresizingStyle];
 
         // Save the bold version of the table's default font
         boldFont_ = [[NSFontManager sharedFontManager] convertFont:[NSFont it_toolbeltFont] toHaveTrait:NSFontBoldTrait];
@@ -154,7 +118,7 @@ static const CGFloat kHelpMargin = 5;
 }
 
 - (NSSize)contentSize {
-    NSSize size = [scrollView_ contentSize];
+    NSSize size = [_scrollView contentSize];
     size.height = _tableView.intrinsicContentSize.height;
     return size;
 }
@@ -208,13 +172,13 @@ static const CGFloat kHelpMargin = 5;
     
     // Scroll view
     const CGFloat searchFieldY = searchFieldFrame.size.height + kMargin;
-    [scrollView_ setFrame:NSMakeRect(0,
+    [_scrollView setFrame:NSMakeRect(0,
                                      searchFieldY,
                                      frame.size.width,
                                      NSHeight(self.bounds) - searchFieldY - 2 * kMargin)];
 
     // Table view
-    NSSize contentSize = [scrollView_ contentSize];
+    NSSize contentSize = [_scrollView contentSize];
     NSTableColumn *column = _tableView.tableColumns[0];
     CGFloat fudgeFactor = 0;
     if (@available(macOS 10.16, *)) {
@@ -239,7 +203,7 @@ static const CGFloat kHelpMargin = 5;
                              NSMinY(clear_.frame) + (NSHeight(clear_.frame) - NSHeight(help_.frame)) / 2.0 + 2,
                              NSWidth(help_.frame),
                              NSHeight(help_.frame)) ;
-    scrollView_.frame = NSMakeRect(0,
+    _scrollView.frame = NSMakeRect(0,
                                    searchField_.frame.size.height + kMargin,
                                    frame.size.width,
                                    frame.size.height - kButtonHeight - 2 * kMargin - searchField_.frame.size.height);
@@ -256,32 +220,14 @@ static const CGFloat kHelpMargin = 5;
     return filteredEntries_.count;
 }
 
-- (NSTableRowView *)tableView:(NSTableView *)tableView rowViewForRow:(NSInteger)row {
-    if (@available(macOS 10.16, *)) {
-        return [[iTermBigSurTableRowView alloc] initWithFrame:NSZeroRect];
-    }
-    return [[iTermCompetentTableRowView alloc] initWithFrame:NSZeroRect];
-}
-
 - (NSView *)tableView:(NSTableView *)tableView
    viewForTableColumn:(NSTableColumn *)tableColumn
                   row:(NSInteger)row {
     static NSString *const identifier = @"ToolCommandHistoryViewEntry";
-    NSTextField *result = [tableView makeViewWithIdentifier:identifier owner:self];
-    if (result == nil) {
-        result = [NSTextField it_textFieldForTableViewWithIdentifier:identifier];
-    }
-    result.font = [NSFont it_toolbeltFont];
     id value = [self stringOrAttributedStringForColumn:tableColumn row:row];
-    if ([value isKindOfClass:[NSAttributedString class]]) {
-        result.attributedStringValue = value;
-        result.toolTip = [value string];
-    } else {
-        result.stringValue = value;
-        result.toolTip = value;
-    }
-
-    return result;
+    return [tableView newTableCellViewWithTextFieldUsingIdentifier:identifier
+                                                              font:[NSFont it_toolbeltFont]
+                                                             value:value];
 }
 
 - (id)stringOrAttributedStringForColumn:(NSTableColumn *)aTableColumn

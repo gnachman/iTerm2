@@ -7,6 +7,7 @@
 
 #import "ToolPasteHistory.h"
 
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermCompetentTableRowView.h"
 #import "iTermController.h"
@@ -16,6 +17,7 @@
 #import "NSFont+iTerm.h"
 #import "NSImage+iTerm.h"
 #import "NSTableColumn+iTerm.h"
+#import "NSTableView+iTerm.h"
 #import "NSTextField+iTerm.h"
 #import "PseudoTerminal.h"
 
@@ -23,7 +25,7 @@ static const CGFloat kButtonHeight = 23;
 static const CGFloat kMargin = 4;
 
 @implementation ToolPasteHistory {
-    NSScrollView *scrollView_;
+    NSScrollView *_scrollView;
     NSTableView *_tableView;
     NSButton *clear_;
     NSTextField *_secureKeyboardEntryWarning;
@@ -67,47 +69,11 @@ static const CGFloat kMargin = 4;
         [_secureKeyboardEntryWarning sizeToFit];
         _secureKeyboardEntryWarning.frame = NSMakeRect(0, 0, frame.size.width, _secureKeyboardEntryWarning.frame.size.height);
 
-        scrollView_ = [[NSScrollView alloc] initWithFrame:NSMakeRect(0, 0, frame.size.width, frame.size.height - kButtonHeight - kMargin)];
-        [scrollView_ setHasVerticalScroller:YES];
-        [scrollView_ setHasHorizontalScroller:NO];
-        if (@available(macOS 10.16, *)) {
-            [scrollView_ setBorderType:NSLineBorder];
-            scrollView_.scrollerStyle = NSScrollerStyleOverlay;
-        } else {
-            [scrollView_ setBorderType:NSBezelBorder];
-        }
-        NSSize contentSize = [scrollView_ contentSize];
-        [scrollView_ setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
-        scrollView_.drawsBackground = NO;
-
-        _tableView = [[NSTableView alloc] initWithFrame:NSMakeRect(0, 0, contentSize.width, contentSize.height)];
-#ifdef MAC_OS_X_VERSION_10_16
-        if (@available(macOS 10.16, *)) {
-            _tableView.style = NSTableViewStyleInset;
-        }
-#endif
-        NSTableColumn *col = [[NSTableColumn alloc] initWithIdentifier:@"contents"];
-        [col setEditable:NO];
-        [_tableView addTableColumn:col];
-        [[col headerCell] setStringValue:@"Values"];
-        [_tableView setHeaderView:nil];
-        [_tableView setDataSource:self];
-        [_tableView setDelegate:self];
-        _tableView.intercellSpacing = NSMakeSize(_tableView.intercellSpacing.width, 0);
-        _tableView.rowHeight = 15;
-
+        _scrollView = [NSScrollView scrollViewWithTableViewForToolbeltWithContainer:self
+                                                                             insets:NSEdgeInsetsMake(0, 0, 0, kButtonHeight + kMargin)];
+        _tableView = _scrollView.documentView;
         [_tableView setDoubleAction:@selector(doubleClickOnTableView:)];
-        [_tableView setAutoresizingMask:NSViewWidthSizable];
-        if (@available(macOS 10.14, *)) {
-            _tableView.backgroundColor = [NSColor clearColor];
-        }
-
-        [scrollView_ setDocumentView:_tableView];
-        [self addSubview:scrollView_];
-
-        [_tableView sizeToFit];
-        [_tableView setColumnAutoresizingStyle:NSTableViewSequentialColumnAutoresizingStyle];
-
+        [self relayout];
         pasteHistory_ = [PasteboardHistory sharedInstance];
 
         [[NSNotificationCenter defaultCenter] addObserver:self
@@ -141,7 +107,7 @@ static const CGFloat kMargin = 4;
 }
 
 - (NSSize)contentSize {
-    NSSize size = [scrollView_ contentSize];
+    NSSize size = [_scrollView contentSize];
     size.height = _tableView.intrinsicContentSize.height;
     return size;
 }
@@ -167,7 +133,7 @@ static const CGFloat kMargin = 4;
     _secureKeyboardEntryWarning.frame = NSMakeRect(0, 0, frame.size.width, _secureKeyboardEntryWarning.frame.size.height);
 
     const CGFloat offset = _secureKeyboardEntryWarning.isHidden ? 0 : _secureKeyboardEntryWarning.frame.size.height + 4;
-    [scrollView_ setFrame:NSMakeRect(0, offset, frame.size.width, frame.size.height - kButtonHeight - kMargin - offset)];
+    [_scrollView setFrame:NSMakeRect(0, offset, frame.size.width, frame.size.height - kButtonHeight - kMargin - offset)];
 
     NSSize contentSize = [self contentSize];
     [_tableView setFrame:NSMakeRect(0, 0, contentSize.width, contentSize.height)];
@@ -188,19 +154,12 @@ static const CGFloat kMargin = 4;
     return pasteHistory_.entries.count;
 }
 
+
 - (NSView *)tableView:(NSTableView *)tableView
    viewForTableColumn:(NSTableColumn *)tableColumn
                   row:(NSInteger)row {
-    static NSString *const identifier = @"ToolPasteHistoryEntry";
-    NSTextField *result = [tableView makeViewWithIdentifier:identifier owner:self];
-    if (result == nil) {
-        result = [NSTextField it_textFieldForTableViewWithIdentifier:identifier];
-    }
-
-    NSAttributedString *value = [self attributedStringForTableColumn:tableColumn row:row];
-    result.attributedStringValue = value;
-
-    return result;
+    return [tableView newTableCellViewWithTextFieldUsingIdentifier:@"iTermToolPasteHistory"
+                                                  attributedString:[self attributedStringForTableColumn:tableColumn row:row]];
 }
 
 - (id <NSPasteboardWriting>)tableView:(NSTableView *)tableView pasteboardWriterForRow:(NSInteger)row {

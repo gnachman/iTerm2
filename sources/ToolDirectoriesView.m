@@ -8,6 +8,7 @@
 
 #import "ToolDirectoriesView.h"
 
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermCompetentTableRowView.h"
 #import "iTermRecentDirectoryMO.h"
 #import "iTermRecentDirectoryMO+Additions.h"
@@ -20,6 +21,7 @@
 #import "NSImage+iTerm.h"
 #import "NSStringITerm.h"
 #import "NSTableColumn+iTerm.h"
+#import "NSTableView+iTerm.h"
 #import "NSTextField+iTerm.h"
 #import "NSWindow+iTerm.h"
 #import "PseudoTerminal.h"
@@ -33,7 +35,7 @@ static const CGFloat kHelpMargin = 5;
 @end
 
 @implementation ToolDirectoriesView {
-    NSScrollView *scrollView_;
+    NSScrollView *_scrollView;
     NSTableView *_tableView;
     NSButton *clear_;
     BOOL shutdown_;
@@ -44,8 +46,6 @@ static const CGFloat kHelpMargin = 5;
     NSMenu *menu_;
     NSButton *help_;
 }
-
-@synthesize tableView = _tableView;
 
 - (instancetype)initWithFrame:(NSRect)frame {
     self = [super initWithFrame:frame];
@@ -89,48 +89,13 @@ static const CGFloat kHelpMargin = 5;
         [clear_ setAutoresizingMask:NSViewMinYMargin | NSViewMinXMargin];
         [self addSubview:clear_];
 
-        scrollView_ = [[NSScrollView alloc] initWithFrame:NSMakeRect(0, 0, 0, 0)];
-        [scrollView_ setHasVerticalScroller:YES];
-        [scrollView_ setHasHorizontalScroller:NO];
-        [scrollView_ setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
-        if (@available(macOS 10.16, *)) {
-            [scrollView_ setBorderType:NSLineBorder];
-            scrollView_.scrollerStyle = NSScrollerStyleOverlay;
-        } else {
-            [scrollView_ setBorderType:NSBezelBorder];
-        }
-        scrollView_.drawsBackground = NO;
-
-        _tableView = [[NSTableView alloc] initWithFrame:NSMakeRect(0, 0, 0, 0)];
-#ifdef MAC_OS_X_VERSION_10_16
-        if (@available(macOS 10.16, *)) {
-            _tableView.style = NSTableViewStyleInset;
-        }
-#endif
-        NSTableColumn *col;
-        col = [[NSTableColumn alloc] initWithIdentifier:@"directories"];
-        [[col dataCell] setFont:[NSFont it_toolbeltFont]];
-        [col setEditable:NO];
-        [_tableView addTableColumn:col];
-        [_tableView setHeaderView:nil];
-        [_tableView setDataSource:self];
-        [_tableView setDelegate:self];
-        _tableView.intercellSpacing = NSMakeSize(_tableView.intercellSpacing.width, 0);
-        _tableView.rowHeight = 15;
-
+        _scrollView = [NSScrollView scrollViewWithTableViewForToolbeltWithContainer:self
+                                                                             insets:NSEdgeInsetsZero];
+        _tableView = _scrollView.documentView;
+        NSCell *dataCell = _tableView.tableColumns[0].dataCell;
+        dataCell.font = [NSFont it_toolbeltFont];
         [_tableView setDoubleAction:@selector(doubleClickOnTableView:)];
-        [_tableView setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
-        if (@available(macOS 10.14, *)) {
-            _tableView.backgroundColor = [NSColor clearColor];
-        }
-
         [searchField_ setArrowHandler:_tableView];
-
-        [scrollView_ setDocumentView:_tableView];
-        [self addSubview:scrollView_];
-
-        [_tableView sizeToFit];
-        [_tableView setColumnAutoresizingStyle:NSTableViewSequentialColumnAutoresizingStyle];
 
         _tableView.menu = [[NSMenu alloc] init];
         _tableView.menu.delegate = self;
@@ -162,7 +127,7 @@ static const CGFloat kHelpMargin = 5;
 }
 
 - (NSSize)contentSize {
-    NSSize size = [scrollView_ contentSize];
+    NSSize size = [_scrollView contentSize];
     size.height = _tableView.intrinsicContentSize.height;
     return size;
 }
@@ -215,13 +180,13 @@ static const CGFloat kHelpMargin = 5;
     }
     
     // Scroll view
-    [scrollView_ setFrame:NSMakeRect(0,
+    [_scrollView setFrame:NSMakeRect(0,
                                      searchFieldFrame.size.height + kMargin,
                                      frame.size.width,
                                      frame.size.height - searchFieldFrame.size.height - 2 * kMargin)];
 
     // Table view
-    NSSize contentSize = [scrollView_ contentSize];
+    NSSize contentSize = [_scrollView contentSize];
     NSTableColumn *column = _tableView.tableColumns[0];
     CGFloat fudgeFactor = 0;
     if (@available(macOS 10.16, *)) {
@@ -241,7 +206,7 @@ static const CGFloat kHelpMargin = 5;
                              help_.frame.size.width,
                              help_.frame.size.height);
     [clear_ setFrame:NSMakeRect(0, frame.size.height - kButtonHeight, frame.size.width - help_.frame.size.width - kHelpMargin, kButtonHeight)];
-    scrollView_.frame = NSMakeRect(0,
+    _scrollView.frame = NSMakeRect(0,
                                    searchField_.frame.size.height + kMargin,
                                    frame.size.width,
                                    frame.size.height - kButtonHeight - 2 * kMargin - searchField_.frame.size.height);
@@ -261,24 +226,15 @@ static const CGFloat kHelpMargin = 5;
    viewForTableColumn:(NSTableColumn *)tableColumn
                   row:(NSInteger)row {
     static NSString *const identifier = @"ToolDirectoriesViewEntry";
-    NSTextField *result = [tableView makeViewWithIdentifier:identifier owner:self];
-    if (result == nil) {
-        result = [NSTextField it_textFieldForTableViewWithIdentifier:identifier];
-    }
-
-    iTermRecentDirectoryMO *entry = filteredEntries_[row];
-    NSString *tooltip = entry.path;
-
     id value = [self stringOrAttributedStringForColumn:tableColumn row:row];
-    if ([value isKindOfClass:[NSAttributedString class]]) {
-        result.attributedStringValue = value;
-        result.toolTip = tooltip;
-    } else {
-        result.stringValue = value;
-        result.toolTip = tooltip;
-    }
+    iTermRecentDirectoryMO *entry = filteredEntries_[row];
+    NSTableCellView *cell = [tableView newTableCellViewWithTextFieldUsingIdentifier:identifier
+                                                                               font:[NSFont it_toolbeltFont]
+                                                                              value:value];
+    NSString *tooltip = entry.path;
+    cell.toolTip = tooltip;
 
-    return result;
+    return cell;
 }
 
 - (id <NSPasteboardWriting>)tableView:(NSTableView *)tableView pasteboardWriterForRow:(NSInteger)row {
@@ -394,13 +350,6 @@ static const CGFloat kHelpMargin = 5;
 
 - (BOOL)validateMenuItem:(NSMenuItem *)item {
   return [self respondsToSelector:[item action]] && [_tableView clickedRow] >= 0;
-}
-
-- (NSTableRowView *)tableView:(NSTableView *)tableView rowViewForRow:(NSInteger)row {
-    if (@available(macOS 10.16, *)) {
-        return [[iTermBigSurTableRowView alloc] initWithFrame:NSZeroRect];
-    }
-    return [[iTermCompetentTableRowView alloc] initWithFrame:NSZeroRect];
 }
 
 - (void)toggleStar:(id)sender {

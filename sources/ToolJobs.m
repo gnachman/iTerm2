@@ -9,6 +9,7 @@
 #import "ToolJobs.h"
 
 #import "DebugLogging.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermCompetentTableRowView.h"
 #import "iTermProcessCache.h"
 #import "iTermToolWrapper.h"
@@ -16,6 +17,7 @@
 #import "NSFont+iTerm.h"
 #import "NSImage+iTerm.h"
 #import "NSTableColumn+iTerm.h"
+#import "NSTableView+iTerm.h"
 #import "NSTextField+iTerm.h"
 #import "PseudoTerminal.h"
 #import "PTYSession.h"
@@ -180,8 +182,8 @@ static const CGFloat kMargin = 4;
 @end
 
 @implementation ToolJobs {
-    NSScrollView *scrollView_;
-    NSTableView *tableView_;
+    NSScrollView *_scrollView;
+    NSTableView *_tableView;
     NSButton *kill_;
     SignalPicker *signal_;
     NSTimer *timer_;
@@ -204,10 +206,10 @@ static const CGFloat kMargin = 4;
         [signal_ sizeToFit];
         [self addSubview:signal_];
 
-        kill_ = [[[NSButton alloc] initWithFrame:NSMakeRect(0,
-                                                            frame.size.height - kButtonHeight,
-                                                            frame.size.width,
-                                                            kButtonHeight)] autorelease];
+        kill_ = [[NSButton alloc] initWithFrame:NSMakeRect(0,
+                                                           frame.size.height - kButtonHeight,
+                                                           frame.size.width,
+                                                           kButtonHeight)];
         if (@available(macOS 10.16, *)) {
             kill_.bezelStyle = NSBezelStyleRegularSquare;
             kill_.bordered = NO;
@@ -227,57 +229,25 @@ static const CGFloat kMargin = 4;
         [self addSubview:kill_];
         [kill_ bind:@"enabled" toObject:self withKeyPath:@"killable" options:nil];
 
-        scrollView_ = [[NSScrollView alloc] initWithFrame:NSMakeRect(0, 0, frame.size.width, frame.size.height - kButtonHeight - kMargin)];
-        [scrollView_ setHasVerticalScroller:YES];
-        [scrollView_ setHasHorizontalScroller:NO];
-        if (@available(macOS 10.16, *)) {
-            [scrollView_ setBorderType:NSLineBorder];
-            scrollView_.scrollerStyle = NSScrollerStyleOverlay;
-        } else {
-            [scrollView_ setBorderType:NSBezelBorder];
-        }
-        NSSize contentSize = [scrollView_ contentSize];
-        [scrollView_ setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
-        scrollView_.drawsBackground = NO;
+        _scrollView = [NSScrollView scrollViewWithTableViewForToolbeltWithContainer:self
+                                                                             insets:NSEdgeInsetsMake(0,
+                                                                                                     0,
+                                                                                                     kButtonHeight + kMargin,
+                                                                                                     0)];
+        _tableView = _scrollView.documentView;
+        _tableView.tableColumns[0].identifier = @"name";
 
-        tableView_ = [[NSTableView alloc] initWithFrame:NSMakeRect(0, 0, contentSize.width, contentSize.height)];
-#ifdef MAC_OS_X_VERSION_10_16
-        if (@available(macOS 10.16, *)) {
-            tableView_.style = NSTableViewStyleInset;
-        }
-#endif
-        NSTableColumn *col;
-        col = [[NSTableColumn alloc] initWithIdentifier:@"name"];
-        [col setEditable:NO];
-        [tableView_ addTableColumn:col];
-        [[col headerCell] setStringValue:@"Name"];
-        [col release];
-
-        col = [[NSTableColumn alloc] initWithIdentifier:@"pid"];
-        [col setEditable:NO];
-        [col setWidth:75];
-        [col setMinWidth:75];
-        [col setMaxWidth:75];
-        [tableView_ addTableColumn:col];
-        [[col headerCell] setStringValue:@"pid"];
-        [col release];
-
-        [tableView_ setDataSource:self];
-        [tableView_ setDelegate:self];
-        tableView_.intercellSpacing = NSMakeSize(tableView_.intercellSpacing.width, 0);
-        tableView_.rowHeight = 15;
-        tableView_.headerView = nil;
-        
-        [tableView_ setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
-        if (@available(macOS 10.14, *)) {
-            tableView_.backgroundColor = [NSColor clearColor];
+        {
+            NSTableColumn *col = [[NSTableColumn alloc] initWithIdentifier:@"pid"];
+            [col setEditable:NO];
+            [col setWidth:75];
+            [col setMinWidth:75];
+            [col setMaxWidth:75];
+            [_tableView addTableColumn:col];
+            [[col headerCell] setStringValue:@"pid"];
         }
 
-        [scrollView_ setDocumentView:tableView_];
-        [self addSubview:scrollView_];
-
-        [tableView_ sizeToFit];
-        [tableView_ setColumnAutoresizingStyle:NSTableViewSequentialColumnAutoresizingStyle];
+        [_tableView setColumnAutoresizingStyle:NSTableViewSequentialColumnAutoresizingStyle];
 
         timerInterval_ = 1;
 
@@ -317,7 +287,7 @@ static const CGFloat kMargin = 4;
         kill_.frame = NSMakeRect(NSMaxX(signal_.frame) + kMargin, frame.size.height - kButtonHeight, frame.size.width, kButtonHeight);
         [kill_ sizeToFit];
     }
-    scrollView_.frame = NSMakeRect(0, 0, frame.size.width, frame.size.height - kButtonHeight - kMargin);
+    _scrollView.frame = NSMakeRect(0, 0, frame.size.width, frame.size.height - kButtonHeight - kMargin);
 }
 
 // When not key, check much less often to avoid burning the battery.
@@ -334,20 +304,7 @@ static const CGFloat kMargin = 4;
     [self updateTimer:nil];
 }
 
-- (void)dealloc
-{
-    [[NSNotificationCenter defaultCenter] removeObserver:self];
-    [signal_ release];
-    [tableView_ release];
-    [scrollView_ release];
-    [timer_ invalidate];
-    timer_ = nil;
-    [_processInfos release];
-    [super dealloc];
-}
-
-- (void)shutdown
-{
+- (void)shutdown {
     [[NSNotificationCenter defaultCenter] removeObserver:self];
     shutdown_ = YES;
     [timer_ invalidate];
@@ -372,7 +329,7 @@ static const CGFloat kMargin = 4;
         return @(info.processID);
     }]];
     if (![oldPids isEqual:newPids]) {
-        NSInteger selectedIndex = [tableView_ selectedRow];
+        NSInteger selectedIndex = [_tableView selectedRow];
         NSNumber *previouslySelectedPID = nil;
         if (selectedIndex >= 0) {
             previouslySelectedPID = @(_processInfos[selectedIndex].processID);
@@ -388,17 +345,16 @@ static const CGFloat kMargin = 4;
             }
             [info resolveAsynchronously];
         }];
-        [_processInfos autorelease];
-        _processInfos = [sortedInfos retain];
+        _processInfos = sortedInfos;
 
-        [tableView_ reloadData];
+        [_tableView reloadData];
 
         if (previouslySelectedPID) {
             NSInteger indexToSelect = [_processInfos indexOfObjectPassingTest:^BOOL(iTermProcessInfo * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
                 return obj.processID == previouslySelectedPID.integerValue;
             }];
             if (indexToSelect != NSNotFound) {
-                [tableView_ selectRowIndexes:[NSIndexSet indexSetWithIndex:indexToSelect]
+                [_tableView selectRowIndexes:[NSIndexSet indexSetWithIndex:indexToSelect]
                         byExtendingSelection:NO];
             } else {
                 self.killable = NO;
@@ -426,13 +382,6 @@ static const CGFloat kMargin = 4;
     return YES;
 }
 
-- (NSTableRowView *)tableView:(NSTableView *)tableView rowViewForRow:(NSInteger)row {
-    if (@available(macOS 10.16, *)) {
-        return [[[iTermBigSurTableRowView alloc] initWithFrame:NSZeroRect] autorelease];
-    }
-    return [[[iTermCompetentTableRowView alloc] initWithFrame:NSZeroRect] autorelease];
-}
-
 - (NSInteger)numberOfRowsInTableView:(NSTableView *)aTableView {
     return MIN(_processInfos.count, kMaxJobs);
 }
@@ -441,16 +390,10 @@ static const CGFloat kMargin = 4;
    viewForTableColumn:(NSTableColumn *)tableColumn
                   row:(NSInteger)row {
     static NSString *const identifier = @"ToolJobsEntry";
-    NSTextField *result = [tableView makeViewWithIdentifier:identifier owner:self];
-    if (result == nil) {
-        result = [NSTextField it_textFieldForTableViewWithIdentifier:identifier];
-    }
-
     NSString *value = [self stringForTableColumn:tableColumn row:row];
-    result.stringValue = value ?: @"";
-    result.font = [NSFont it_toolbeltFont];
-    
-    return result;
+    return [tableView newTableCellViewWithTextFieldUsingIdentifier:identifier
+                                                              font:[NSFont it_toolbeltFont]
+                                                            string:value ?: @""];
 }
 
 - (NSString *)stringForTableColumn:(NSTableColumn *)aTableColumn
@@ -466,18 +409,18 @@ static const CGFloat kMargin = 4;
 
 - (void)tableViewSelectionDidChange:(NSNotification *)aNotification
 {
-    self.killable = ([tableView_ selectedRow] >= 0 && [signal_ isValid]);
+    self.killable = ([_tableView selectedRow] >= 0 && [signal_ isValid]);
 }
 
 - (id <NSPasteboardWriting>)tableView:(NSTableView *)tableView pasteboardWriterForRow:(NSInteger)row {
-    NSPasteboardItem *pbItem = [[[NSPasteboardItem alloc] init] autorelease];
+    NSPasteboardItem *pbItem = [[NSPasteboardItem alloc] init];
     NSString *aString = [@(_processInfos[row].processID) stringValue];
     [pbItem setString:aString forType:(NSString *)kUTTypeUTF8PlainText];
     return pbItem;
 }
 
 - (void)kill:(id)sender {
-    pid_t p = _processInfos[tableView_.selectedRow].processID;
+    pid_t p = _processInfos[_tableView.selectedRow].processID;
     if (p > 0) {
         DLog(@"Send signal %@ to %@", signal_, @(p));
         kill(p, [signal_ intValue]);
@@ -492,7 +435,7 @@ static const CGFloat kMargin = 4;
 #pragma mark - NSComboBoxDelegate
 
 - (void)comboBoxSelectionIsChanging:(NSNotification *)notification {
-    self.killable = ([tableView_ selectedRow] >= 0 && [signal_ isValid]);
+    self.killable = ([_tableView selectedRow] >= 0 && [signal_ isValid]);
 }
 
 @end

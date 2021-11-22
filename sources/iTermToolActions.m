@@ -8,6 +8,7 @@
 #import "iTermToolActions.h"
 
 #import "DebugLogging.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermActionsModel.h"
 #import "iTermCompetentTableRowView.h"
 #import "iTermEditKeyActionWindowController.h"
@@ -87,45 +88,13 @@ static NSButton *iTermToolActionsNewButton(NSString *imageName, NSString *title,
         [self addSubview:_removeButton];
         [self addSubview:_editButton];
 
-        _scrollView = [[NSScrollView alloc] initWithFrame:NSMakeRect(0, 0, frame.size.width, frame.size.height - kButtonHeight - kMargin)];
-        _scrollView.hasVerticalScroller = YES;
-        _scrollView.hasHorizontalScroller = NO;
-        if (@available(macOS 10.16, *)) {
-            _scrollView.borderType = NSLineBorder;
-            _scrollView.scrollerStyle = NSScrollerStyleOverlay;
-        } else {
-            _scrollView.borderType = NSBezelBorder;
-        }
-        NSSize contentSize = [_scrollView contentSize];
-        [_scrollView setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
-        _scrollView.drawsBackground = NO;
-
-        _tableView = [[NSTableView alloc] initWithFrame:NSMakeRect(0, 0, contentSize.width, contentSize.height)];
-#ifdef MAC_OS_X_VERSION_10_16
-        if (@available(macOS 10.16, *)) {
-            _tableView.style = NSTableViewStyleInset;
-        }
-#endif
-        NSTableColumn *col;
-        col = [[NSTableColumn alloc] initWithIdentifier:@"contents"];
-        [col setEditable:NO];
-        [_tableView addTableColumn:col];
-        _tableView.headerView = nil;
-        _tableView.dataSource = self;
-        _tableView.delegate = self;
-        _tableView.intercellSpacing = NSMakeSize(_tableView.intercellSpacing.width, 0);
-        _tableView.rowHeight = 15;
+        _scrollView = [NSScrollView scrollViewWithTableViewForToolbeltWithContainer: self
+                                                                             insets:NSEdgeInsetsMake(0, 0, 0, kButtonHeight + kMargin)];
+        _tableView = _scrollView.documentView;
+        _tableView.doubleAction = @selector(doubleClickOnTableView:);
         _tableView.allowsMultipleSelection = YES;
         [_tableView registerForDraggedTypes:@[ iTermToolActionsPasteboardType ]];
-
         [_tableView setDoubleAction:@selector(doubleClickOnTableView:)];
-        [_tableView setAutoresizingMask:NSViewWidthSizable];
-
-        [_scrollView setDocumentView:_tableView];
-        [self addSubview:_scrollView];
-
-        [_tableView sizeToFit];
-        [_tableView setColumnAutoresizingStyle:NSTableViewSequentialColumnAutoresizingStyle];
 
         [_tableView performSelector:@selector(scrollToEndOfDocument:) withObject:nil afterDelay:0];
         _actions = [[[iTermActionsModel sharedInstance] actions] copy];
@@ -363,26 +332,14 @@ static NSButton *iTermToolActionsNewButton(NSString *imageName, NSString *title,
 
 #pragma mark - NSTableViewDelegate
 
-- (NSTableRowView *)tableView:(NSTableView *)tableView rowViewForRow:(NSInteger)row {
-    if (@available(macOS 10.16, *)) {
-        return [[iTermBigSurTableRowView alloc] initWithFrame:NSZeroRect];
-    }
-    return [[iTermCompetentTableRowView alloc] initWithFrame:NSZeroRect];
-}
-
 - (NSView *)tableView:(NSTableView *)tableView
    viewForTableColumn:(NSTableColumn *)tableColumn
                   row:(NSInteger)row {
     static NSString *const identifier = @"ToolAction";
-    NSTextField *result = [tableView makeViewWithIdentifier:identifier owner:self];
-    if (result == nil) {
-        result = [NSTextField it_textFieldForTableViewWithIdentifier:identifier];
-    }
-    result.font = [NSFont it_toolbeltFont];
-    NSString *value = [self stringForTableColumn:tableColumn row:row];
-    result.stringValue = value;
-
-    return result;
+    NSTableCellView *cell = [tableView newTableCellViewWithTextFieldUsingIdentifier:identifier
+                                                                               font:[NSFont it_toolbeltFont]
+                                                                             string:[self stringForTableColumn:tableColumn row:row]];
+    return cell;
 }
 
 

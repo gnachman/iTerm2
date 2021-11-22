@@ -26,6 +26,7 @@
 #import "NSImage+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "NSStringITerm.h"
+#import "NSTableView+iTerm.h"
 #import "PSMTabBarControl.h"
 #import "PTYSession.h"
 #import "ScreenChar.h"
