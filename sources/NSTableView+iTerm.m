@@ -92,6 +92,12 @@
     cell.textField = text;
     [cell addSubview:text];
     const CGFloat verticalPadding = 2.0;
+    CGFloat horizontalInset = 0;
+    if (@available(macOS 10.16, *)) {
+        horizontalInset = 0;
+    } else {
+        horizontalInset = 2;
+    }
     [cell addConstraint:[NSLayoutConstraint constraintWithItem:text
                                                      attribute:NSLayoutAttributeTop
                                                      relatedBy:NSLayoutRelationEqual
@@ -112,14 +118,14 @@
                                                         toItem:cell
                                                      attribute:NSLayoutAttributeLeft
                                                     multiplier:1
-                                                      constant:0]];
+                                                      constant:horizontalInset]];
     [cell addConstraint:[NSLayoutConstraint constraintWithItem:text
                                                      attribute:NSLayoutAttributeRight
                                                      relatedBy:NSLayoutRelationEqual
                                                         toItem:cell
                                                      attribute:NSLayoutAttributeRight
                                                     multiplier:1
-                                                      constant:0]];
+                                                      constant:horizontalInset]];
     if ([value isKindOfClass:[NSAttributedString class]]) {
         text.attributedStringValue = value;
         text.toolTip = [value string];

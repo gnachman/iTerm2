@@ -31,7 +31,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 // value is either NSString or NSAttributedString
 - (NSTableCellView *)newTableCellViewWithTextFieldUsingIdentifier:(NSString *)identifier
-                                                             font:(NSFont *)font
+                                                             font:(NSFont * _Nullable)font
                                                             value:(id)value;
 @end
 
