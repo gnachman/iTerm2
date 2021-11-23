@@ -60,7 +60,7 @@ static vector_float4 VectorForColor(NSColor *color) {
     // Cursor guide
     _cursorGuideEnabled = drawingHelper.highlightCursorLine;
     _cursorGuideColor = drawingHelper.cursorGuideColor;
-    _colorSpace = textView.window.screen.colorSpace;
+    _colorSpace = textView.window.screen.colorSpace ?: [NSColorSpace sRGBColorSpace];
 
     // Background image
     _backgroundImageBlend = [glue backgroundImageBlend];
