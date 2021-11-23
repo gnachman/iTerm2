@@ -217,10 +217,12 @@
 }
 
 - (void)setFrame:(NSRect)frame {
+    DLog(@"%@: setFrame:%@\n%@", self, NSStringFromRect(frame), [NSThread callStackSymbols]);
+    DLog(@"superview's frame is %@", NSStringFromRect([[self superview] frame]));
     if (NSEqualRects(self.frame, frame)) {
+        DLog(@"frame isn't changing, return.");
         return;
     }
-    DLog(@"%@: setFrame:%@\n%@", self, NSStringFromRect(frame), [NSThread callStackSymbols]);
     [super setFrame:frame];
 }
 

@@ -1631,6 +1631,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
                                        borderType:[[self scrollview] borderType]
                                       controlSize:NSControlSizeRegular
                                     scrollerStyle:[[[self scrollview] verticalScroller] scrollerStyle]];
+    DLog(@"contentSize=%@", NSStringFromSize(contentSize));
     return contentSize;
 }
 

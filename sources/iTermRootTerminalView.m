@@ -31,6 +31,7 @@
 #import "iTermWindowShortcutLabelTitlebarAccessoryViewController.h"
 #import "NSAppearance+iTerm.h"
 #import "NSTextField+iTerm.h"
+#import "NSView+RecursiveDescription.h"
 #import "NSWindow+iTerm.h"
 #import "PTYTabView.h"
 
@@ -1519,7 +1520,7 @@ NS_CLASS_AVAILABLE_MAC(10_14)
 }
 
 - (void)layoutSubviews {
-    DLog(@"layoutSubviews");
+    DLog(@"Before:\n%@", [self iterm_recursiveDescription]);
     [self.delegate rootTerminalViewWillLayoutSubviews];
 
     if (@available(macOS 10.15, *)) { } else {
@@ -1575,7 +1576,7 @@ NS_CLASS_AVAILABLE_MAC(10_14)
     if (!_tabBarControlOnLoan) {
         [self.tabBarControl updateFlashing];
     }
-    DLog(@"repositionWidgets - return.");
+    DLog(@"After:\n%@", [self iterm_recursiveDescription]);
 }
 
 - (CGFloat)minimumTabBarWidth {
