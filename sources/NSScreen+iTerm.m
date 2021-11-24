@@ -7,7 +7,13 @@
 //
 
 #import "NSScreen+iTerm.h"
+
 #import "NSArray+iTerm.h"
+#import "NSDate+iTerm.h"
+#import "NSObject+iTerm.h"
+#import "iTermTuple.h"
+
+static char iTermNSScreenSupportsHighFrameRatesCacheKey;
 
 @implementation NSScreen (iTerm)
 
@@ -314,6 +320,39 @@ static io_service_t iTermGetIOService(CGDirectDisplayID displayID) {
         }
         return YES;
     }];
+}
+
+- (NSNumber *)it_cachedSupportsHighFrameRates {
+    iTermTuple<NSNumber *, NSNumber *> *tuple = [self it_associatedObjectForKey:&iTermNSScreenSupportsHighFrameRatesCacheKey];
+    if (!tuple) {
+        return nil;
+    }
+    const NSTimeInterval now = [NSDate it_timeSinceBoot];
+    const NSTimeInterval age = now - tuple.secondObject.doubleValue;
+    if (age > 1) {
+        return nil;
+    }
+    return tuple.firstObject;
+}
+
+- (void)it_setSupportsHighFrameRates:(BOOL)value {
+    iTermTuple<NSNumber *, NSNumber *> *tuple = [iTermTuple tupleWithObject:@(value)
+                                                                  andObject:@([NSDate it_timeSinceBoot])];
+    [self it_setAssociatedObject:tuple forKey:&iTermNSScreenSupportsHighFrameRatesCacheKey];
+}
+
+- (BOOL)it_supportsHighFrameRates {
+    NSNumber *cached = [self it_cachedSupportsHighFrameRates];
+    if (cached) {
+        return [cached boolValue];
+    }
+    CGDirectDisplayID displayID = [self it_displayID];
+    CGDisplayModeRef mode = CGDisplayCopyDisplayMode(displayID);
+    const double refreshRate = CGDisplayModeGetRefreshRate(mode);
+    CFRelease(mode);
+    const BOOL result = refreshRate >= 120;
+    [self it_setSupportsHighFrameRates:result];
+    return result;
 }
 
 @end

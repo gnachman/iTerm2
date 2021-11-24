@@ -13671,6 +13671,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     state.adaptiveFrameRateThroughputThreshold = _adaptiveFrameRateThroughputThreshold;
     state.slowFrameRate = self.useMetal ? [iTermAdvancedSettingsModel metalSlowFrameRate] : [iTermAdvancedSettingsModel slowFrameRate];
     state.liveResizing = _inLiveResize;
+    state.proMotion = [NSProcessInfo it_hasARMProcessor] && [_textview.window.screen it_supportsHighFrameRates];
     return state;
 }
 

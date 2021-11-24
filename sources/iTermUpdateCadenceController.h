@@ -20,6 +20,7 @@ typedef struct {
     NSInteger adaptiveFrameRateThroughputThreshold;
     double slowFrameRate;
     BOOL liveResizing;
+    BOOL proMotion;
 } iTermUpdateCadenceState;
 
 @protocol iTermUpdateCadenceControllerDelegate<NSObject>

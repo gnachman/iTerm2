@@ -15,9 +15,6 @@
 #import "iTermThroughputEstimator.h"
 #import "iTermWarning.h"
 
-// Timer period between updates when adaptive frame rate is enabled and throughput is low but not 0.
-static const NSTimeInterval kFastUpdateCadence = 1.0 / 60.0;
-
 // Timer period for background sessions. This changes the tab item's color
 // so it must run often enough for that to be useful.
 // TODO(georgen): There's room for improvement here.
@@ -158,14 +155,18 @@ static const NSTimeInterval kBackgroundUpdateCadence = 1;
     if (!state.visible) {
         // Although self.isActive is true, the session is not visible so there's no point redrawing it.
         DLog(@"select background update cadence");
-        [self setUpdateCadence:kBackgroundUpdateCadence liveResizing:state.liveResizing force:force];
+        [self setUpdateCadence:[self backgroundInterval]
+                  liveResizing:state.liveResizing
+                         force:force];
         return;
     }
 
     if (!state.useAdaptiveFrameRate) {
         // The session is visible and self.active is true (it needs redraws or it's not idle).
         DLog(@"select active update cadence");
-        [self setUpdateCadence:_activeUpdateCadence liveResizing:state.liveResizing force:force];
+        [self setUpdateCadence:[self foregroundNonadaptiveInterval:&state]
+                  liveResizing:state.liveResizing
+                         force:force];
     }
 
     // Adaptive framerate path - the session is active and visible
@@ -173,11 +174,51 @@ static const NSTimeInterval kBackgroundUpdateCadence = 1;
     const NSInteger estimatedThroughput = [_throughputEstimator estimatedThroughput];
     if (estimatedThroughput < kThroughputLimit && estimatedThroughput > 0) {
         DLog(@"select fast cadence");
-        [self setUpdateCadence:kFastUpdateCadence liveResizing:state.liveResizing force:force];
+        [self setUpdateCadence:[self fastAdaptiveInterval]
+                  liveResizing:state.liveResizing
+                         force:force];
     } else {
         DLog(@"select slow frame rate");
-        [self setUpdateCadence:1.0 / state.slowFrameRate liveResizing:state.liveResizing force:force];
+        [self setUpdateCadence:[self slowAdaptiveInterval:&state]
+                  liveResizing:state.liveResizing
+                         force:force];
     }
+}
+
+- (double)proMotionAdjustment:(const iTermUpdateCadenceState *)statePtr {
+    if (statePtr->proMotion) {
+        return 2;
+    }
+    return 1;
+}
+
+// When adaptive framerate is enabled and throughput is low, update with this period.
+- (NSTimeInterval)fastAdaptiveInterval {
+    // Note I do not do a ProMotion adjustment because this is used outside interactive apps when
+    // maximizing throughput. That is where frequent updates limit throughput the most.
+    return 1.0 / MAX(1, [iTermAdvancedSettingsModel maximumFrameRate]);
+}
+
+// When adaptive framerate is enabled and throughput is high, update with this period.
+- (NSTimeInterval)slowAdaptiveInterval:(const iTermUpdateCadenceState *)statePtr {
+    // Maximize throughput and drop frame rate to free up CPU.
+    return 1.0 / statePtr->slowFrameRate;
+}
+
+// When the view is not visible, update with this period.
+- (NSTimeInterval)backgroundInterval {
+    return kBackgroundUpdateCadence;
+}
+
+// When adaptive framerate is disabled and the view is visible, update with this period.
+- (NSTimeInterval)foregroundNonadaptiveInterval:(const iTermUpdateCadenceState *)statePtr {
+    // This is critical for good performance in interactive apps.
+    return _activeUpdateCadence / [self proMotionAdjustment:statePtr];
+}
+
+// During live resize, update with this period.
+- (NSTimeInterval)liveResizeInterval {
+    return _activeUpdateCadence;
 }
 
 - (void)setUpdateCadence:(NSTimeInterval)cadence liveResizing:(BOOL)liveResizing force:(BOOL)force {
@@ -200,7 +241,7 @@ static const NSTimeInterval kBackgroundUpdateCadence = 1;
         // I'm worried about the possible side effects it might have since there's no way to
         // know all the tracking event loops.
         [_updateTimer invalidate];
-        _updateTimer = [NSTimer weakTimerWithTimeInterval:_activeUpdateCadence
+        _updateTimer = [NSTimer weakTimerWithTimeInterval:[self liveResizeInterval]
                                                    target:self
                                                  selector:@selector(updateDisplay)
                                                  userInfo:nil
@@ -221,7 +262,7 @@ static const NSTimeInterval kBackgroundUpdateCadence = 1;
     }
 }
 - (void)setGCDUpdateCadence:(NSTimeInterval)cadence liveResizing:(BOOL)liveResizing force:(BOOL)force {
-    const NSTimeInterval period = liveResizing ? _activeUpdateCadence : cadence;
+    const NSTimeInterval period = liveResizing ? [self liveResizeInterval] : cadence;
     if (_cadence == period) {
         DLog(@"No change to cadence: %@", self);
         return;

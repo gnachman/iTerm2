@@ -169,6 +169,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)logRestorableStateSize;
 + (BOOL)logTimestampsWithPlainText;
 + (BOOL)lowFiCombiningMarks;
++ (double)maximumFrameRate;
 + (int)maxHistoryLinesToRestore;
 + (int)maximumBytesToProvideToServices;
 + (int)maximumBytesToProvideToPythonAPI;

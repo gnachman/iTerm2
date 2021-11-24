@@ -3509,6 +3509,7 @@
 		A6CC16551CF012E300E8C148 /* iTermCarbonHotKeyController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6CC16531CF012E300E8C148 /* iTermCarbonHotKeyController.m */; };
 		A6CC7F59274ABCBF0060C3C2 /* NSScrollView+iTerm.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6CC7F58274ABCBF0060C3C2 /* NSScrollView+iTerm.swift */; };
 		A6CC7F5C274B6C570060C3C2 /* ToolJobs.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D19C71314171F1D00617E08 /* ToolJobs.m */; };
+		A6CC7F60274ECFEB0060C3C2 /* NSProcessInfo+iTerm.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6CC7F5F274ECFEB0060C3C2 /* NSProcessInfo+iTerm.swift */; };
 		A6CD8A432234DB83007C5B39 /* iTermStatusBarPlaceholderComponent.h in Headers */ = {isa = PBXBuildFile; fileRef = A6CD8A412234DB83007C5B39 /* iTermStatusBarPlaceholderComponent.h */; };
 		A6CD8A442234DB83007C5B39 /* iTermStatusBarPlaceholderComponent.m in Sources */ = {isa = PBXBuildFile; fileRef = A6CD8A422234DB83007C5B39 /* iTermStatusBarPlaceholderComponent.m */; };
 		A6CDC31826391D1200616155 /* PIDInfoGitState.m in Sources */ = {isa = PBXBuildFile; fileRef = A6CDC31726391D1200616155 /* PIDInfoGitState.m */; };
@@ -6557,6 +6558,7 @@
 		A6CC16521CF012E300E8C148 /* iTermCarbonHotKeyController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermCarbonHotKeyController.h; sourceTree = "<group>"; };
 		A6CC16531CF012E300E8C148 /* iTermCarbonHotKeyController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermCarbonHotKeyController.m; sourceTree = "<group>"; };
 		A6CC7F58274ABCBF0060C3C2 /* NSScrollView+iTerm.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NSScrollView+iTerm.swift"; sourceTree = "<group>"; };
+		A6CC7F5F274ECFEB0060C3C2 /* NSProcessInfo+iTerm.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NSProcessInfo+iTerm.swift"; sourceTree = "<group>"; };
 		A6CD8A4022345427007C5B39 /* iTermNotificationCenter+Protected.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "iTermNotificationCenter+Protected.h"; sourceTree = "<group>"; };
 		A6CD8A412234DB83007C5B39 /* iTermStatusBarPlaceholderComponent.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermStatusBarPlaceholderComponent.h; sourceTree = "<group>"; };
 		A6CD8A422234DB83007C5B39 /* iTermStatusBarPlaceholderComponent.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermStatusBarPlaceholderComponent.m; sourceTree = "<group>"; };
@@ -8327,6 +8329,7 @@
 				A6042CD825D0CBCD0001C8FE /* NSScroller+iTerm.m */,
 				A6BD5A712745D5710098594E /* NSTextView+iTerm.swift */,
 				A6CC7F58274ABCBF0060C3C2 /* NSScrollView+iTerm.swift */,
+				A6CC7F5F274ECFEB0060C3C2 /* NSProcessInfo+iTerm.swift */,
 			);
 			name = Categories;
 			sourceTree = "<group>";
@@ -14845,6 +14848,7 @@
 				A6866B2723C6623E00ACD94C /* SCPFile.m in Sources */,
 				A6E180EB23D51BFA003C4EB1 /* iTermMouseReportingFrustrationDetector.m in Sources */,
 				A6481650228FD240008E7E0C /* iTermWeakProxy.m in Sources */,
+				A6CC7F60274ECFEB0060C3C2 /* NSProcessInfo+iTerm.swift in Sources */,
 				A6EA071A24EA043600DD6E17 /* NSURL+iTerm.m in Sources */,
 				A60C035D2089698500FE2F1F /* iTermAPIScriptLauncher.m in Sources */,
 				A6E34BD12118097A00F147DD /* iTermBackgroundDrawingHelper.m in Sources */,
