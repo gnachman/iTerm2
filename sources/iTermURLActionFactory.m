@@ -513,9 +513,9 @@ semanticHistoryController:(iTermSemanticHistoryController *)semanticHistoryContr
             NSString *defaultScheme;
             if ([self stringIsSingleDomainWord:[self hostnameInSchemelessPossibleURL:stringWithoutNearbyPunctuation]]) {
                 DLog(@"Use http because it's a single word");
-                defaultScheme = @"http:";
+                defaultScheme = @"http://";
             } else {
-                defaultScheme = [[iTermAdvancedSettingsModel defaultURLScheme] stringByAppendingString:@":"];
+                defaultScheme = [[iTermAdvancedSettingsModel defaultURLScheme] stringByAppendingString:@"://"];
                 DLog(@"Use default scheme of %@", defaultScheme);
             }
             stringWithoutNearbyPunctuation = [defaultScheme stringByAppendingString:stringWithoutNearbyPunctuation];

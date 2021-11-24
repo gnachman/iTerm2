@@ -152,6 +152,14 @@
     url = [NSURL URLWithUserSuppliedStringImpl:urlString];
     XCTAssertEqualObjects(url.absoluteString, urlString);
 }
+
+- (void)testURLWithUserSuppliedString_Fragment {
+    NSString *urlString =
+        @"http://www.wikiwand.com/en/URL#/Internationalized_URL";
+    NSURL *url = [NSURL URLWithUserSuppliedString:urlString];
+    XCTAssertEqualObjects(url.absoluteString, urlString);
+}
+
 - (void)testPercent {
     NSString *urlString = @"Georges-Mac-Pro:/Users/gnachman%";
     NSURL *url = [NSURL URLWithUserSuppliedString:urlString];
