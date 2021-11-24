@@ -102,6 +102,9 @@
 }
 
 - (void)setColor:(NSColor *)color {
+    if (color == _color || [color isEqual:_color]) {
+        return;
+    }
     _color = color;
 
     // Invalidate cell size so the texture gets created again

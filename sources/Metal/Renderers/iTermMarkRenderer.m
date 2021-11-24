@@ -115,19 +115,17 @@
         _markSize = markRect.size;
         _colorSpace = tState.configuration.colorSpace;
         if (_markSize.width > 0 && _markSize.height > 0) {
-            _marksArrayTexture = [[iTermTextureArray alloc] initWithTextureWidth:_markSize.width
-                                                                   textureHeight:_markSize.height
-                                                                     arrayLength:3
-                                                                     pixelFormat:MTLPixelFormatRGBA16Float  // lockFocus gives this
-                                                                          device:_cellRenderer.device];
-
             NSColor *successColor = [iTermTextDrawingHelper successMarkColor];
             NSColor *otherColor = [iTermTextDrawingHelper otherMarkColor];
             NSColor *failureColor = [iTermTextDrawingHelper errorMarkColor];
+            NSImage *successImage = [self newImageWithMarkOfColor:successColor size:_markSize];
+            NSImage *failureImage = [self newImageWithMarkOfColor:failureColor size:_markSize];
+            NSImage *otherImage = [self newImageWithMarkOfColor:otherColor size:_markSize];
 
-            [_marksArrayTexture addSliceWithImage:[self newImageWithMarkOfColor:successColor size:_markSize]];
-            [_marksArrayTexture addSliceWithImage:[self newImageWithMarkOfColor:failureColor size:_markSize]];
-            [_marksArrayTexture addSliceWithImage:[self newImageWithMarkOfColor:otherColor size:_markSize]];
+            _marksArrayTexture = [[iTermTextureArray alloc] initWithImages:@[successImage,
+                                                                             failureImage,
+                                                                             otherImage]
+                                                                    device:_cellRenderer.device];
         }
     }
 

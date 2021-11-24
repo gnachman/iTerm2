@@ -603,4 +603,62 @@ static NSBitmapImageRep * iTermCreateBitmapRep(NSSize size,
     return [[image it_imageOfSize:size] it_bitmapImageRep];
 }
 
+// Assumes premultiplied alpha and little endian. Floating point must be 16 bit.
+- (MTLPixelFormat)metalPixelFormat {
+    const MTLPixelFormat unsupportedFormatsMask = (NSBitmapFormatAlphaNonpremultiplied |
+                                                   NSBitmapFormatSixteenBitBigEndian |
+                                                   NSBitmapFormatThirtyTwoBitBigEndian |
+                                                   NSBitmapFormatThirtyTwoBitLittleEndian |
+                                                   NSBitmapFormatSixteenBitLittleEndian);  // Doesn't apply to 16-bit ints, not quite sure what this is for.
+    if (self.bitmapFormat & unsupportedFormatsMask) {
+        return MTLPixelFormatInvalid;
+    }
+    if (self.bitmapFormat & NSBitmapFormatFloatingPointSamples) {
+        // Note that 16-bit floats don't have NSBitmapFormatSixteenBitLittleEndian set. That's only for ints.
+        return MTLPixelFormatRGBA16Float;
+    }
+    const NSInteger bitsPerSample = self.bitsPerPixel / self.samplesPerPixel;
+    if (bitsPerSample == 16) {
+        return MTLPixelFormatRGBA16Unorm;
+    }
+    return MTLPixelFormatRGBA8Unorm;
+}
+
+- (NSBitmapImageRep *)it_bitmapWithAlphaLast {
+    if (!(self.bitmapFormat & NSBitmapFormatAlphaFirst)) {
+        return self;
+    }
+    const unsigned char *source = self.bitmapData;
+    const NSUInteger samplesPerPixel = self.samplesPerPixel;
+    const NSUInteger bytesPerSample = self.bitsPerSample / 8;
+    const NSUInteger stride = samplesPerPixel * bytesPerSample;
+    NSMutableData *storage = [NSMutableData dataWithLength:bytesPerSample * samplesPerPixel * self.pixelsWide * self.pixelsHigh];
+    unsigned char *storageBase = (unsigned char *)storage.mutableBytes;
+    for (NSUInteger i = 0; i < self.bytesPerRow * self.pixelsHigh; i += stride) {
+        unsigned char *dest = storageBase + i;
+        char temp[stride];
+        memmove(temp, source + i, stride);
+        // First, move the stuff that isn't alpha.
+        const NSUInteger nonAlphaLength = (samplesPerPixel - 1) * bytesPerSample;
+        memmove(dest,
+                source + i + bytesPerSample,
+                nonAlphaLength);
+        // Now move alpha.
+        memmove(dest + nonAlphaLength,
+                source + i,
+                bytesPerSample);
+    }
+    unsigned char *planes[1] = { storageBase };
+    return [[NSBitmapImageRep alloc] initWithBitmapDataPlanes:planes
+                                                   pixelsWide:self.pixelsWide
+                                                   pixelsHigh:self.pixelsHigh
+                                                bitsPerSample:self.bitsPerSample
+                                              samplesPerPixel:self.samplesPerPixel
+                                                     hasAlpha:YES
+                                                     isPlanar:NO
+                                               colorSpaceName:self.colorSpaceName
+                                                 bitmapFormat:self.bitmapFormat & ~NSBitmapFormatAlphaFirst
+                                                  bytesPerRow:self.bytesPerRow
+                                                 bitsPerPixel:self.bitsPerPixel];
+}
 @end

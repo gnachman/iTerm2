@@ -78,5 +78,9 @@
 
 @interface NSBitmapImageRep(iTerm)
 - (NSBitmapImageRep *)it_bitmapScaledTo:(NSSize)size;
+// Assumes premultiplied alpha and little endian. Floating point must be 16 bit.
+- (MTLPixelFormat)metalPixelFormat;
+- (NSBitmapImageRep *)it_bitmapWithAlphaLast;
+
 @end
 

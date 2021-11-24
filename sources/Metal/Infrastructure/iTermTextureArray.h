@@ -26,6 +26,7 @@ NS_CLASS_AVAILABLE(10_11, NA)
                          arrayLength:(NSUInteger)length
                          pixelFormat:(MTLPixelFormat)pixelFormat
                               device:(id <MTLDevice>)device;
+- (instancetype)initWithImages:(NSArray<NSImage *> *)images device:(id <MTLDevice>)device;
 
 - (BOOL)addSliceWithContentsOfFile:(NSString *)path;
 - (void)addSliceWithImage:(NSImage *)image;
