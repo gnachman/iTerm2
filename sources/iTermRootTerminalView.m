@@ -1248,9 +1248,8 @@ NS_CLASS_AVAILABLE_MAC(10_14)
         return fakeHeight;
     }
     if (@available(macOS 12, *)) {
-        const NSEdgeInsets safeAreaInsets = self.safeAreaInsets;
-        DLog(@"Safe area insets are %f, %f, %f, %f",
-             safeAreaInsets.top, safeAreaInsets.left, safeAreaInsets.bottom, safeAreaInsets.right);
+        // self.safeAreaInsets is all 0s on a notch Mac. Why the hell doesn't anything work right?
+        const NSEdgeInsets safeAreaInsets = self.window.screen.safeAreaInsets;
         return safeAreaInsets.top;
     }
     return 0;
