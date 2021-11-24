@@ -101,10 +101,15 @@ static char iTermNSScreenSupportsHighFrameRatesCacheKey;
 - (NSRect)frameExceptMenuBar {
     if ([[NSScreen screens] firstObject] == self || [NSScreen screensHaveSeparateSpaces]) {
         NSRect frame = self.frame;
-        // NSApp.mainMenu.menuBarHeight returns 0 when there's a Lion
-        // fullscreen window in another display. I guess it will probably
-        // always be 22 :)
-        frame.size.height -= 22;
+        // NSApp.mainMenu.menuBarHeight used to return 0 when there's a Lion
+        // fullscreen window in another display, and it still does if the menu bar is hidden.
+        // Use a collection of hacks to make a better guess.
+        const CGFloat hackyGuess = NSHeight(self.frame) - NSHeight(self.visibleFrame) - NSMinY(self.visibleFrame) + NSMinY(self.frame) - 1;
+        CGFloat notchHeight = 0;
+        if (@available(macOS 12.0, *)) {
+            notchHeight = self.safeAreaInsets.top;
+        }
+        frame.size.height -= MAX(MAX(hackyGuess, NSApp.mainMenu.menuBarHeight), notchHeight);
         return frame;
     } else {
         return self.frame;
