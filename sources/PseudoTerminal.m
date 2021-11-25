@@ -8741,6 +8741,22 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     }
 }
 
+static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon) {
+    if (fabs(NSMinX(lhs) - NSMinX(rhs)) > epsilon) {
+        return NO;
+    }
+    if (fabs(NSMaxX(lhs) - NSMaxX(rhs)) > epsilon) {
+        return NO;
+    }
+    if (fabs(NSMinY(lhs) - NSMinY(rhs)) > epsilon) {
+        return NO;
+    }
+    if (fabs(NSMaxY(lhs) - NSMaxY(rhs)) > epsilon) {
+        return NO;
+    }
+    return YES;
+}
+
 - (void)scrollerStyleDidChange:(NSNotification *)notification {
     DLog(@"scrollerStyleDidChange %@", @([NSScroller preferredScrollerStyle]));
 
@@ -8756,7 +8772,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
         DLog(@"screen visibleFrame is %@, window frame is %@",
              NSStringFromRect(self.window.screen.visibleFrame),
              NSStringFromRect(self.window.frame));
-        if (!NSEqualRects(self.window.screen.visibleFrame, self.window.frame)) {
+        if (!iTermApproximatelyEqualRects(self.window.screen.visibleFrame, self.window.frame, 0.5)) {
             DLog(@"Fit window to idealized tabs preserving height");
             [self fitWindowToIdealizedTabsPreservingHeight:YES];
         } else {
