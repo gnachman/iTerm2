@@ -17,5 +17,5 @@ Are there other ways of accomplishing the same end? Why is this solution superio
 * Is this an instance of a more general problem?
 
 ---
-/label ~FeatureRequest
+/label ~Type: Enhancement
 

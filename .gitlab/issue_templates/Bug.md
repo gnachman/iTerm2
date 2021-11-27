@@ -22,4 +22,4 @@ Seriously! I'll probably ask you for it if you don’t.
 ## What should have happened
 
 ---
-/label ~Bug
+/label ~Type: Defect
