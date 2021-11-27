@@ -330,6 +330,7 @@ DEFINE_BOOL(shouldSetTerminfoDirs, YES, SECTION_TERMINAL @"Set $TERMINFO_DIRS to
 
 // See the discussion in -[VT100Output reportSecondaryDeviceAttribute]
 DEFINE_INT(xtermVersion, 2500, SECTION_TERMINAL @"xterm version for secondary device attributes (SDA).\nIncreasing this number enables more features in apps but may break things. Use 95 to recover pre-3.4.10 behavior.");
+DEFINE_BOOL(temporarilyDisableSecureKeyboardEntry, NO, SECTION_TERMINAL @"Temporarily disable secure keyboard entry after pressing return.\nThis works around a feature of macOS Monterey that prevents other apps from activating when secure keyboard entry is enabled, which breaks the `open` command.");
 
 #pragma mark Hotkey
 

@@ -8,11 +8,16 @@
 #import "iTermSecureKeyboardEntryController.h"
 
 #import "DebugLogging.h"
+#import "iTermAdvancedSettingsModel.h"
 #import "iTermUserDefaults.h"
 
 #import <Carbon/Carbon.h>
 
 NSString *const iTermDidToggleSecureInputNotification = @"iTermDidToggleSecureInputNotification";
+
+@interface iTermSecureKeyboardEntryController()
+@property (nonatomic) BOOL temporarilyDisabled;
+@end
 
 @implementation iTermSecureKeyboardEntryController {
     int _count;
@@ -85,6 +90,29 @@ NSString *const iTermDidToggleSecureInputNotification = @"iTermDidToggleSecureIn
     return _enabledByUserDefault || [self currentSessionAtPasswordPrompt];
 }
 
+- (void)disableTemporarily {
+    if (_temporarilyDisabled) {
+        DLog(@"already temporarily disabled");
+        return;
+    }
+    if (!self.isDesired) {
+        DLog(@"not desired");
+        return;
+    }
+    DLog(@"set timer");
+    self.temporarilyDisabled = YES;
+    const NSTimeInterval duration = 0.1;
+    __weak __typeof(self) weakSelf = self;
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(duration * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        [weakSelf reenable];
+    });
+}
+
+- (void)keyDown {
+    DLog(@"keyDown");
+    [self reenable];
+}
+
 #pragma mark - Notifications
 
 - (void)applicationDidResignActive:(NSNotification *)notification {
@@ -102,6 +130,25 @@ NSString *const iTermDidToggleSecureInputNotification = @"iTermDidToggleSecureIn
 }
 
 #pragma mark - Private
+
+- (void)reenable {
+    DLog(@"reenable");
+    self.temporarilyDisabled = NO;
+}
+
+- (void)setTemporarilyDisabled:(BOOL)temporarilyDisabled {
+    DLog(@"%@", @(temporarilyDisabled));
+    if (temporarilyDisabled == _temporarilyDisabled) {
+        DLog(@"Not changing");
+        return;
+    }
+    if (temporarilyDisabled && ![iTermAdvancedSettingsModel temporarilyDisableSecureKeyboardEntry]) {
+        DLog(@"Advanced setting off");
+        return;
+    }
+    _temporarilyDisabled = temporarilyDisabled;
+    [self update];
+}
 
 - (BOOL)currentSessionAtPasswordPrompt {
     NSResponder *firstResponder = [[NSApp keyWindow] firstResponder];
@@ -124,7 +171,11 @@ NSString *const iTermDidToggleSecureInputNotification = @"iTermDidToggleSecureIn
 - (void)update {
     DLog(@"Update secure keyboard entry. desired=%@ active=%@ focusStolen=%@",
          @(self.isDesired), @([NSApp isActive]), @(_focusStolen));
-    const BOOL secure = self.isDesired && [self allowed];
+    if (_temporarilyDisabled && [self currentSessionAtPasswordPrompt]) {
+        DLog(@"At password prompt: remove temporary disablement");
+        _temporarilyDisabled = NO;
+    }
+    const BOOL secure = self.isDesired && [self allowed] && !_temporarilyDisabled;
 
     if (secure && _count > 0) {
         DLog(@"Want to turn on secure input but it's already on");
@@ -139,7 +190,7 @@ NSString *const iTermDidToggleSecureInputNotification = @"iTermDidToggleSecureIn
     DLog(@"Before: IsSecureEventInputEnabled returns %d", (int)self.isEnabled);
     if (secure) {
         OSErr err = EnableSecureEventInput();
-        DLog(@"EnableSecureEventInput err=%d", (int)err);
+        NSLog(@"EnableSecureEventInput err=%d", (int)err);
         if (err) {
             XLog(@"EnableSecureEventInput failed with error %d", (int)err);
         } else {
@@ -147,7 +198,7 @@ NSString *const iTermDidToggleSecureInputNotification = @"iTermDidToggleSecureIn
         }
     } else {
         OSErr err = DisableSecureEventInput();
-        DLog(@"DisableSecureEventInput err=%d", (int)err);
+        NSLog(@"DisableSecureEventInput err=%d", (int)err);
         if (err) {
             XLog(@"DisableSecureEventInput failed with error %d", (int)err);
         } else {

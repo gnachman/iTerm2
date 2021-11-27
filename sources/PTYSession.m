@@ -63,6 +63,7 @@
 #import "iTermRateLimitedUpdate.h"
 #import "iTermScriptConsole.h"
 #import "iTermScriptHistory.h"
+#import "iTermSecureKeyboardEntryController.h"
 #import "iTermSharedImageStore.h"
 #import "iTermSlownessDetector.h"
 #import "iTermSnippetsModel.h"
@@ -8754,31 +8755,38 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
     const NSEventModifierFlags mask = (NSEventModifierFlagCommand | NSEventModifierFlagOption | NSEventModifierFlagShift | NSEventModifierFlagControl);
     if (!_terminal.softAlternateScreenMode &&
-        (event.modifierFlags & mask) == 0 &&
-        [iTermProfilePreferences boolForKey:KEY_MOVEMENT_KEYS_SCROLL_OUTSIDE_INTERACTIVE_APPS inProfile:self.profile]) {
-        switch (event.keyCode) {
-            case kVK_PageUp:
-                [_textview scrollPageUp:nil];
-                [(PTYScrollView *)[_textview enclosingScrollView] detectUserScroll];
-                return;
+        (event.modifierFlags & mask) == 0) {
+        if ([iTermProfilePreferences boolForKey:KEY_MOVEMENT_KEYS_SCROLL_OUTSIDE_INTERACTIVE_APPS inProfile:self.profile]) {
+            switch (event.keyCode) {
+                case kVK_PageUp:
+                    [_textview scrollPageUp:nil];
+                    [(PTYScrollView *)[_textview enclosingScrollView] detectUserScroll];
+                    return;
 
-            case kVK_PageDown:
-                [_textview scrollPageDown:nil];
-                [(PTYScrollView *)[_textview enclosingScrollView] detectUserScroll];
-                return;
+                case kVK_PageDown:
+                    [_textview scrollPageDown:nil];
+                    [(PTYScrollView *)[_textview enclosingScrollView] detectUserScroll];
+                    return;
 
-            case kVK_Home:
-                [_textview scrollHome];
-                [(PTYScrollView *)[_textview enclosingScrollView] detectUserScroll];
-                return;
+                case kVK_Home:
+                    [_textview scrollHome];
+                    [(PTYScrollView *)[_textview enclosingScrollView] detectUserScroll];
+                    return;
 
-            case kVK_End:
-                [_textview scrollEnd];
-                [(PTYScrollView *)[_textview enclosingScrollView] detectUserScroll];
-                return;
+                case kVK_End:
+                    [_textview scrollEnd];
+                    [(PTYScrollView *)[_textview enclosingScrollView] detectUserScroll];
+                    return;
 
-            default:
-                break;
+                default:
+                    break;
+            }
+        }
+        if (event.keyCode == kVK_Return && _screen.atShellPrompt) {
+            // User pressed return while entering a command. Disable secure keyboard entry for
+            // a very short time to work around a macOS Monterey feature that prevents another
+            // app from activating.
+            [[iTermSecureKeyboardEntryController sharedInstance] disableTemporarily];
         }
     }
     NSData *const dataToSend = [_keyMapper keyMapperDataForPostCocoaEvent:event];

@@ -26,6 +26,8 @@ extern NSString *const iTermDidToggleSecureInputNotification;
 - (void)didStealFocus;
 - (void)didReleaseFocus;
 - (void)update;
+- (void)disableTemporarily;
+- (void)keyDown;
 
 @end
 

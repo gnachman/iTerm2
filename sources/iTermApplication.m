@@ -36,6 +36,7 @@
 #import "iTermNotificationCenter.h"
 #import "iTermPreferences.h"
 #import "iTermScriptingWindow.h"
+#import "iTermSecureKeyboardEntryController.h"
 #import "iTermShortcutInputView.h"
 #import "iTermWindowHacks.h"
 #import "NSArray+iTerm.h"
@@ -470,6 +471,7 @@ static const char *iTermApplicationKVOKey = "iTermApplicationKVOKey";
 - (BOOL)handleKeyDownEvent:(NSEvent *)event {
     DLog(@"Received KeyDown event: %@. Key window is %@. First responder is %@", event, [self keyWindow], [[self keyWindow] firstResponder]);
 
+    [[iTermSecureKeyboardEntryController sharedInstance] keyDown];
     if ([self dispatchHotkeyLocally:event]) {
         return YES;
     }

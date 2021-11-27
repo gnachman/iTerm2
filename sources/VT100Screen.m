@@ -2686,6 +2686,10 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     return [self lastMarkMustBePrompt:YES class:[VT100ScreenMark class]];
 }
 
+- (BOOL)atShellPrompt {
+    return !VT100GridAbsCoordEquals( _currentPromptRange.start, _currentPromptRange.end);
+}
+
 - (VT100ScreenMark *)promptMarkWithGUID:(NSString *)guid {
     NSEnumerator *enumerator = [intervalTree_ reverseLimitEnumerator];
     NSArray *objects = [enumerator nextObject];

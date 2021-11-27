@@ -70,6 +70,7 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 @property(nonatomic, readonly) VT100GridAbsCoord startOfRunningCommandOutput;
 @property(nonatomic, readonly) int lineNumberOfCursor;
 @property(nonatomic, readonly) NSSize viewSize;
+@property(nonatomic, readonly) BOOL atShellPrompt;
 
 // Valid while at the command prompt only. Gives the range of the current prompt. Meaningful
 // only if the end is not equal to the start.
