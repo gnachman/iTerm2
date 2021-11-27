@@ -30,7 +30,35 @@
     MTKTextureLoader *loader = [[MTKTextureLoader alloc] initWithDevice:device];
     NSDictionary *options = @{ MTKTextureLoaderOptionTextureStorageMode: @(MTLStorageModeShared) };
     NSArray<id<MTLTexture>> *textures = [images mapWithBlock:^id(NSImage *image) {
-        return [loader newTextureWithCGImage:image.CGImage options:options error:nil];
+        // MTKTextureLoader is a piece of shit, but try it first in an act of good faith that I will
+        // probably regret later.
+        // This bug is 2 years old and going strong:
+        // https://developer.apple.com/forums/thread/113326
+        {
+            NSError *error = nil;
+            id<MTLTexture> texture = [loader newTextureWithCGImage:image.CGImage options:options error:&error];
+            if (texture) {
+                return texture;
+            }
+            DLog(@"%@", error);
+        }
+
+        // It returns nil for no good reason ("failed to decode image") given an image made with
+        // -[NSImage lockFocus] (macOS 12, 2021 mbp, pro display xdr as main display). Work around
+        // apple's bug.
+        {
+            NSBitmapImageRep *bitmap = [[image it_bitmapImageRep] it_bitmapWithAlphaLast];
+            MTLTextureDescriptor *textureDescriptor =
+            [MTLTextureDescriptor texture2DDescriptorWithPixelFormat:[bitmap metalPixelFormat]
+                                                               width:bitmap.pixelsWide
+                                                              height:bitmap.pixelsHigh
+                                                           mipmapped:NO];
+            id<MTLTexture> texture = [device newTextureWithDescriptor:textureDescriptor];
+            MTLRegion region = MTLRegionMake2D(0, 0, bitmap.pixelsWide, bitmap.pixelsHigh);
+            const NSUInteger bytesPerRow = bitmap.bytesPerRow;
+            [texture replaceRegion:region mipmapLevel:0 withBytes:bitmap.bitmapData bytesPerRow:bytesPerRow];
+            return texture;
+        }
     }];
     if (textures.count != images.count) {
         return nil;
