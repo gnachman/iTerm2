@@ -98,6 +98,20 @@ static char iTermNSScreenSupportsHighFrameRatesCacheKey;
     return NO;
 }
 
+- (CGFloat)notchHeight {
+    if (@available(macOS 12.0, *)) {
+        return self.safeAreaInsets.top;
+    }
+    return 0;
+}
+
+- (NSRect)frameExceptNotch {
+    NSRect frame = self.frame;
+    const CGFloat notchHeight = [self notchHeight];
+    frame.size.height -= notchHeight;
+    return frame;
+}
+
 - (NSRect)frameExceptMenuBar {
     if ([[NSScreen screens] firstObject] == self || [NSScreen screensHaveSeparateSpaces]) {
         NSRect frame = self.frame;
@@ -105,14 +119,11 @@ static char iTermNSScreenSupportsHighFrameRatesCacheKey;
         // fullscreen window in another display, and it still does if the menu bar is hidden.
         // Use a collection of hacks to make a better guess.
         const CGFloat hackyGuess = NSHeight(self.frame) - NSHeight(self.visibleFrame) - NSMinY(self.visibleFrame) + NSMinY(self.frame) - 1;
-        CGFloat notchHeight = 0;
-        if (@available(macOS 12.0, *)) {
-            notchHeight = self.safeAreaInsets.top;
-        }
+        const CGFloat notchHeight = [self notchHeight];
         frame.size.height -= MAX(MAX(hackyGuess, NSApp.mainMenu.menuBarHeight), notchHeight);
         return frame;
     } else {
-        return self.frame;
+        return [self frameExceptNotch];
     }
 }
 

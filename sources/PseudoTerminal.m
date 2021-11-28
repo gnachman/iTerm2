@@ -3870,7 +3870,11 @@ ITERM_WEAKLY_REFERENCEABLE
     for (PseudoTerminal *term in [[iTermController sharedInstance] terminals]) {
         if (term.lionFullScreen && term.window.isOnActiveSpace) {
             if (term.window.screen == screen) {
-                return screen.frame;
+                // There's a Lion fullscreen window on this display. The window can go at the very
+                // top of the screen. If there's a notch, it must be below it. Either way, the
+                // usable frame equals that of my window. Note that screen.visibleFrame includes
+                // a 5-point margin that the top which is actually not visible! ❤️
+                return term.window.frame;
             } else {
                 otherScreenHasLionFullscreenTerminalWindow = YES;
             }
