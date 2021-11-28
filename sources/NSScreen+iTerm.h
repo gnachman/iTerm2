@@ -21,6 +21,7 @@
 - (NSRect)visibleFrameIgnoringHiddenDock;
 
 - (NSRect)frameExceptMenuBar;
+- (NSRect)frameExceptNotch;
 - (BOOL)hasDock;
 - (NSString *)it_description;
 
