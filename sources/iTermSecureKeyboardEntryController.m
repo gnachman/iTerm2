@@ -18,7 +18,6 @@ NSString *const iTermDidToggleSecureInputNotification = @"iTermDidToggleSecureIn
 @implementation iTermSecureKeyboardEntryController {
     int _count;
     BOOL _focusStolen;
-    BOOL _enabledByUserDefault;
 }
 
 + (instancetype)sharedInstance {

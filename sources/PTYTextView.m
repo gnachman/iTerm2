@@ -1531,6 +1531,14 @@
                             visible:gDebugLogging];
     [_indicatorsHelper setIndicator:kiTermIndicatorFilter
                             visible:[_delegate textViewIsFiltered]];
+
+    const BOOL secureByUser = [[iTermSecureKeyboardEntryController sharedInstance] enabledByUserDefault];
+    const BOOL secure = [[iTermSecureKeyboardEntryController sharedInstance] isEnabled];
+    [_indicatorsHelper setIndicator:kiTermIndicatorSecureKeyboardEntry_User
+                            visible:secure && secureByUser];
+    [_indicatorsHelper setIndicator:kiTermIndicatorSecureKeyboardEntry_Forced
+                            visible:secure && !secureByUser];
+
     NSRect rect = self.visibleRect;
     rect.size.width -= rightMargin;
     return rect;

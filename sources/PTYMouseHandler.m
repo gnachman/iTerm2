@@ -534,26 +534,30 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             }
         }
 
+        VT100GridCoord clickCoord = VT100GridCoordInvalid;
+
         if (willFollowLink) {
             [self.mouseDelegate mouseHandlerOpenTargetWithEvent:event inBackground:altPressed];
             result |= iTermClickSideEffectsOpenTarget;
         } else {
-            const VT100GridCoord clickPoint =
+            clickCoord =
             [self.mouseDelegate mouseHandler:self
                                   clickPoint:event
                                allowOverflow:NO];
-            if (clickPoint.x >= 0 && clickPoint.y >= 0) {
-                [self.mouseDelegate mouseHandlerSetFindOnPageCursorCoord:clickPoint];
+            if (clickCoord.x >= 0 && clickCoord.y >= 0) {
+                [self.mouseDelegate mouseHandlerSetFindOnPageCursorCoord:clickCoord];
                 result |= iTermClickSideEffectsMoveFindOnPageCursor;
             }
         }
         if ([self.mouseDelegate mouseHandlerAtPasswordPrompt:self] &&
             !altPressed &&
             !cmdPressed) {
-            const VT100GridCoord clickCoord =
-            [self.mouseDelegate mouseHandler:self
-                                  clickPoint:event
-                               allowOverflow:NO];
+            if (VT100GridCoordEquals(clickCoord, VT100GridCoordInvalid)) {
+                clickCoord =
+                [self.mouseDelegate mouseHandler:self
+                                      clickPoint:event
+                                   allowOverflow:NO];
+            }
             const VT100GridCoord cursorCoord =
             [self.mouseDelegate mouseHandlerCursorCoord:self];
             if (VT100GridCoordEquals(clickCoord, cursorCoord)) {

@@ -9,6 +9,7 @@
 
 #import "DebugLogging.h"
 #import "FileTransferManager.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermActionsMenuController.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermBackgroundCommandRunner.h"
@@ -36,6 +37,7 @@
 #import "NSDictionary+iTerm.h"
 #import "NSEvent+iTerm.h"
 #import "NSFileManager+iTerm.h"
+#import "NSMutableAttributedString+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "NSSavePanel+iTerm.h"
 #import "NSStringITerm.h"
@@ -573,9 +575,15 @@ static const NSUInteger kRectangularSelectionModifierMask = (kRectangularSelecti
     _indicatorMessagePopoverViewController.textView.font = [NSFont systemFontOfSize:[NSFont systemFontSize]];
     _indicatorMessagePopoverViewController.textView.drawsBackground = NO;
     [_indicatorMessagePopoverViewController appendString:message];
+    const NSRect textViewFrame = [_indicatorMessagePopoverViewController.view convertRect:_indicatorMessagePopoverViewController.textView.bounds
+                                                                                 fromView:_indicatorMessagePopoverViewController.textView];
+    const CGFloat horizontalInsets = NSWidth(_indicatorMessagePopoverViewController.view.bounds) - NSWidth(textViewFrame);
+    const CGFloat verticalInsets = NSHeight(_indicatorMessagePopoverViewController.view.bounds) - NSHeight(textViewFrame);
+
     NSRect frame = _indicatorMessagePopoverViewController.view.frame;
     frame.size.width = 200;
-    frame.size.height = 50;
+    frame.size.height = [_indicatorMessagePopoverViewController.textView.attributedString heightForWidth:frame.size.width - horizontalInsets] + verticalInsets;
+    
     _indicatorMessagePopoverViewController.view.frame = frame;
     [_indicatorMessagePopoverViewController.popover showRelativeToRect:NSMakeRect(point.x, point.y, 1, 1)
                                                                 ofView:self.enclosingScrollView

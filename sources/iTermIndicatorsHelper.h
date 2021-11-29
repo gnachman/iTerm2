@@ -21,6 +21,8 @@ extern NSString *const kiTermIndicatorZoomedIn;
 extern NSString *const kiTermIndicatorCopyMode;
 extern NSString *const kiTermIndicatorDebugLogging;
 extern NSString *const kiTermIndicatorFilter;
+extern NSString *const kiTermIndicatorSecureKeyboardEntry_Forced;
+extern NSString *const kiTermIndicatorSecureKeyboardEntry_User;
 
 extern CGFloat kiTermIndicatorStandardHeight;
 

@@ -26,6 +26,8 @@ NSString *const kiTermIndicatorZoomedIn = @"kiTermIndicatorZoomedIn";
 NSString *const kiTermIndicatorFilter = @"kiTermIndicatorFilter";
 NSString *const kiTermIndicatorCopyMode = @"kiTermIndicatorCopyMode";
 NSString *const kiTermIndicatorDebugLogging = @"kiTermIndicatorDebugLogging";
+NSString *const kiTermIndicatorSecureKeyboardEntry_Forced = @"kiTermIndicatorSecureKeyboardEntry_Forced";
+NSString *const kiTermIndicatorSecureKeyboardEntry_User = @"kiTermIndicatorSecureKeyboardEntry_User";
 
 static const NSTimeInterval kFullScreenFlashDuration = 0.3;
 static const NSTimeInterval kFlashDuration = 0.3;
@@ -77,6 +79,8 @@ CGFloat kiTermIndicatorStandardHeight = 20;
                               kiTermIndicatorCopyMode: [NSImage it_imageNamed:@"CopyMode" forClass:self.class],
                               kiTermIndicatorDebugLogging: [NSImage it_imageNamed:@"DebugLogging" forClass:self.class],
                               kiTermIndicatorFilter: [NSImage it_imageNamed:@"FilterIndicator" forClass:self.class],
+                              kiTermIndicatorSecureKeyboardEntry_Forced: [NSImage it_imageNamed:@"SecureKeyboardEntry" forClass:self.class],
+                              kiTermIndicatorSecureKeyboardEntry_User: [NSImage it_imageNamed:@"SecureKeyboardEntry" forClass:self.class],
         };
     });
 
@@ -118,7 +122,9 @@ CGFloat kiTermIndicatorStandardHeight = 20;
               kiTermIndicatorZoomedIn,
               kiTermIndicatorFilter,
               kiTermIndicatorCopyMode,
-              kiTermIndicatorDebugLogging ];
+              kiTermIndicatorDebugLogging,
+              kiTermIndicatorSecureKeyboardEntry_Forced,
+              kiTermIndicatorSecureKeyboardEntry_User];
 }
 
 - (void)enumerateTopRightIndicatorsInFrame:(NSRect)frame andDraw:(BOOL)shouldDraw block:(void (^)(NSString *, NSImage *, NSRect))block {
@@ -162,6 +168,8 @@ CGFloat kiTermIndicatorStandardHeight = 20;
         kiTermIndicatorFilter: @"Filtering.",
         kiTermIndicatorCopyMode: @"In copy mode.",
         kiTermIndicatorDebugLogging: @"Debug logging is enabled.",
+        kiTermIndicatorSecureKeyboardEntry_User: @"Secure Keyboard Entry is enabled. Select iTerm2 > Secure Keyboard Entry to disable.",
+        kiTermIndicatorSecureKeyboardEntry_Forced: @"Secure Keyboard Entry is enabled."
     };
     return messages[name];
 }

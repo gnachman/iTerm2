@@ -2391,6 +2391,12 @@
 		A66E5E541E6268F700E8FE35 /* iTermServiceProvider.m in Sources */ = {isa = PBXBuildFile; fileRef = 06E0C88D1DF9695400AA061B /* iTermServiceProvider.m */; };
 		A66E5E591E62691F00E8FE35 /* iTermTouchBarButton.m in Sources */ = {isa = PBXBuildFile; fileRef = A68E332A1DE6AFC6003F1D8E /* iTermTouchBarButton.m */; };
 		A66E5E5D1E63625600E8FE35 /* iTermURLActionFactory.h in Headers */ = {isa = PBXBuildFile; fileRef = A66E5E5B1E63625600E8FE35 /* iTermURLActionFactory.h */; };
+		A66E804B27544E61003ABDF9 /* SecureKeyboardEntry@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A66E804927544E60003ABDF9 /* SecureKeyboardEntry@2x.png */; };
+		A66E804C27544E61003ABDF9 /* SecureKeyboardEntry@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A66E804927544E60003ABDF9 /* SecureKeyboardEntry@2x.png */; };
+		A66E804D27544E61003ABDF9 /* SecureKeyboardEntry@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A66E804927544E60003ABDF9 /* SecureKeyboardEntry@2x.png */; };
+		A66E805227545CBC003ABDF9 /* SecureKeyboardEntry.png in Resources */ = {isa = PBXBuildFile; fileRef = A66E805127545CBC003ABDF9 /* SecureKeyboardEntry.png */; };
+		A66E805327545CBC003ABDF9 /* SecureKeyboardEntry.png in Resources */ = {isa = PBXBuildFile; fileRef = A66E805127545CBC003ABDF9 /* SecureKeyboardEntry.png */; };
+		A66E805427545CBC003ABDF9 /* SecureKeyboardEntry.png in Resources */ = {isa = PBXBuildFile; fileRef = A66E805127545CBC003ABDF9 /* SecureKeyboardEntry.png */; };
 		A66EF82C1EF59CFC0005891A /* iTermRateLimitedUpdate.h in Headers */ = {isa = PBXBuildFile; fileRef = A66EF82A1EF59CFC0005891A /* iTermRateLimitedUpdate.h */; };
 		A66EF82D1EF59CFC0005891A /* iTermRateLimitedUpdate.m in Sources */ = {isa = PBXBuildFile; fileRef = A66EF82B1EF59CFC0005891A /* iTermRateLimitedUpdate.m */; };
 		A66F3CF01FEA3D9E00AA2021 /* iTermHistogram.h in Headers */ = {isa = PBXBuildFile; fileRef = A66F3CEE1FEA3D9E00AA2021 /* iTermHistogram.h */; };
@@ -5869,6 +5875,8 @@
 		A66DB8411CA24E8800233E88 /* iTermAutoMasterParser.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermAutoMasterParser.m; sourceTree = "<group>"; };
 		A66E5E5B1E63625600E8FE35 /* iTermURLActionFactory.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermURLActionFactory.h; sourceTree = "<group>"; };
 		A66E5E5C1E63625600E8FE35 /* iTermURLActionFactory.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermURLActionFactory.m; sourceTree = "<group>"; };
+		A66E804927544E60003ABDF9 /* SecureKeyboardEntry@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "SecureKeyboardEntry@2x.png"; path = "images/SecureKeyboardEntry@2x.png"; sourceTree = "<group>"; };
+		A66E805127545CBC003ABDF9 /* SecureKeyboardEntry.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = SecureKeyboardEntry.png; path = images/SecureKeyboardEntry.png; sourceTree = "<group>"; };
 		A66EF82A1EF59CFC0005891A /* iTermRateLimitedUpdate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermRateLimitedUpdate.h; sourceTree = "<group>"; };
 		A66EF82B1EF59CFC0005891A /* iTermRateLimitedUpdate.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermRateLimitedUpdate.m; sourceTree = "<group>"; };
 		A66F3CED1FEA2A6C00AA2021 /* iTermPIUArray.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = iTermPIUArray.h; path = Metal/Infrastructure/iTermPIUArray.h; sourceTree = "<group>"; };
@@ -7732,6 +7740,8 @@
 		1D093C131217412B0029F9AD /* Images */ = {
 			isa = PBXGroup;
 			children = (
+				A66E805127545CBC003ABDF9 /* SecureKeyboardEntry.png */,
+				A66E804927544E60003ABDF9 /* SecureKeyboardEntry@2x.png */,
 				A6EA848127223B02009D14AB /* graphic_emacs.png */,
 				A6EA848227223B02009D14AB /* graphic_emacs@2x.png */,
 				A6BEE47626E0A623009C0C2C /* FilterIndicator.png */,
@@ -12529,6 +12539,7 @@
 				A6F7A733213CB143004DE961 /* StatusBarIconGitBranch.png in Resources */,
 				A6EA848527223B02009D14AB /* graphic_emacs.png in Resources */,
 				1D6ED9A119AEA20D005A7799 /* PresetKeyMappings.plist in Resources */,
+				A66E804D27544E61003ABDF9 /* SecureKeyboardEntry@2x.png in Resources */,
 				A67D0D431A2EE12A003A8B35 /* ProfilesWindow.xib in Resources */,
 				A65B72B31B33C07D00F947A7 /* NextTip.png in Resources */,
 				A67F6189214395A70093940A /* graphic_perl@2x.png in Resources */,
@@ -12751,6 +12762,7 @@
 				A6E7AE8E214394DD00DE9F3B /* graphic_composer@2x.png in Resources */,
 				A60D02432687F86E00E19362 /* iTermStatusBarKnobFontViewController.xib in Resources */,
 				A6E7AE60214394CA00DE9F3B /* graphic_clojure.png in Resources */,
+				A66E805427545CBC003ABDF9 /* SecureKeyboardEntry.png in Resources */,
 				A66F52D52106F6F100571168 /* gitdown@2x.png in Resources */,
 				A65D97C124B19D2600DF45F9 /* iTermMinimalComposerViewController.xib in Resources */,
 				A6971F3720D8D3CE0075CFD4 /* iTermAdvancedGPUSettingsWindowController.xib in Resources */,
@@ -13110,6 +13122,7 @@
 				A67A50E226CCD3E300281693 /* xterm-new in Resources */,
 				A6E7AEA4214394F600DE9F3B /* graphic_git.png in Resources */,
 				1D44D07E1CC7F5A600BE5630 /* PTYTextViewTest-golden-travis-testIMEWithAmbiguousIsNotDoubleWidth.png in Resources */,
+				A66E804C27544E61003ABDF9 /* SecureKeyboardEntry@2x.png in Resources */,
 				1D44D0221CC7F5A600BE5630 /* PTYTextViewTest-golden-testMultipleDiscontinuousSelection.png in Resources */,
 				1D44D03F1CC7F5A600BE5630 /* PTYTextViewTest-golden-testSmartCursorColorWithCursorBoost.png in Resources */,
 				1D44D0AA1CC7F5A600BE5630 /* PTYTextViewTest-golden-travis-testWindowedCharacterSelection.png in Resources */,
@@ -13380,6 +13393,7 @@
 				A6F7A73E213CB143004DE961 /* StatusBarIconJobs@2x.png in Resources */,
 				A6F7A708213CB143004DE961 /* StatusBarIconUser.png in Resources */,
 				A67F618B214395A70093940A /* graphic_nginx@2x.png in Resources */,
+				A66E805327545CBC003ABDF9 /* SecureKeyboardEntry.png in Resources */,
 				1DEF5E70185F889600300319 /* Alert@2x.png in Resources */,
 				A66F52CB2106F6F100571168 /* gitup.png in Resources */,
 				1D44D0A01CC7F5A600BE5630 /* PTYTextViewTest-golden-travis-testSmartCursorColorWithCursorBoost.png in Resources */,
@@ -13589,6 +13603,7 @@
 				A67F617E214395A70093940A /* graphic_perl.png in Resources */,
 				53C5650921B8CDF5002B3167 /* PowerlineSolidRightArrow.pdf in Resources */,
 				A6C4352121D1C64800346910 /* iterm2Invoke.js in Resources */,
+				A66E805227545CBC003ABDF9 /* SecureKeyboardEntry.png in Resources */,
 				1D94EAB112D64022008225A9 /* UKCrashReporter.strings in Resources */,
 				A67D0D651A2EE12A003A8B35 /* iTermPasswordManager.xib in Resources */,
 				A6E7AE83214394DD00DE9F3B /* graphic_code@2x.png in Resources */,
@@ -13606,6 +13621,7 @@
 				1DA030F91328BD7C00D7E7DB /* wrap_to_bottom.png in Resources */,
 				53AA7646237E35A50094D75A /* OpenQuicklyActionIcon@2x.png in Resources */,
 				A6153D4F21F30A9C002976FC /* iTermJobTreeViewController.xib in Resources */,
+				A66E804B27544E61003ABDF9 /* SecureKeyboardEntry@2x.png in Resources */,
 				A68E33371DE746F5003F1D8E /* Previous Mark Touch Bar Icon.png in Resources */,
 				A6D1784821BC5A1500FE499C /* iTermSavePanelFileFormatAccessory.xib in Resources */,
 				A65B72B11B33C07D00F947A7 /* NextTip.png in Resources */,
