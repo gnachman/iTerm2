@@ -24,6 +24,14 @@
 #error ITERM_SERVER not defined. Build process is broken.
 #endif
 
+#if !DEBUG
+#  if defined(__has_feature)
+#    if __has_feature(undefined_behavior_sanitizer)
+#error This file should not be built with UBSAN - doing so adds an implicit dependency on Xcode.
+#    endif
+#  endif
+#endif
+
 const char *gMultiServerSocketPath;
 
 // On entry there should be three file descriptors:
