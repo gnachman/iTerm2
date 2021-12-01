@@ -6,6 +6,7 @@
 #import "iTermApplication.h"
 #import "iTermCarbonHotKeyController.h"
 #import "iTermController.h"
+#import "iTermMenuBarObserver.h"
 #import "iTermPreferences.h"
 #import "iTermPresentationController.h"
 #import "iTermProfilePreferences.h"
@@ -262,6 +263,17 @@ static NSString *const kArrangement = @"Arrangement";
         return NSNormalWindowLevel;
     }
     DLog(@"Use main menu window level (I am key, no detected panels are open)");
+    const NSWindowLevel windowLevelJustBelowNotificiations = NSMainMenuWindowLevel - 2;
+    // These are the window levels in play:
+    //
+    // NSStatusWindowLevel (25) -                Floating hotkey panels overlapping a fixed, visible menu bar.
+    // NSMainMenuWindowLevel (24) -              Menu bar, dock. (maybe notification center on macOS < 12? I should check)
+    // 23 -                                      Notification center (macOS 12)
+    // windowLevelJustBelowNotificiations (22) - Hotkey windows under a hidden-but-not-auto-hidden menu bar.
+    // NSTornOffMenuWindowLevel (3) -            Just too low, used to use this, but not any more because it's under the dock.
+
+    // A brief history and rationale:
+    //
     // NSStatusWindowLevel overlaps the menu bar and the dock. This is obviously desirable because
     // you don't want these things blocking your view. But if you've configured your menu bar to
     // automatically hide (system prefs > general > automatically hide and show menu bar) then the
@@ -280,7 +292,7 @@ static NSString *const kArrangement = @"Arrangement";
     //
     // However, there is an exception for floating panels. iTerm2 does not get activated when you
     // open a floating panel. That means it does not have the ability to hide the menu bar.
-    // We *want* floating panels to be overlapped by an auto-hiding menu barm, but not by a fixed
+    // We *want* floating panels to be overlapped by an auto-hiding menu bar, but not by a fixed
     // menu bar. So use the status window level for them when the menu bar is set to auto-hide.
     // See issue 7984 for why we want a floating panel hotkey window to overlap the menu bar.
     //
@@ -288,13 +300,21 @@ static NSString *const kArrangement = @"Arrangement";
     // is turned off. Then the window is just shifted down and the menu bar hangs around.
     if (self.hotkeyWindowType == iTermHotkeyWindowTypeFloatingPanel) {
         if (![self menuBarAutoHides]) {
+            if (![[iTermMenuBarObserver sharedInstance] menuBarVisibleOnScreen:_windowController.window.screen]) {
+                // No menu bar currently. Optimistically take that as evidence that it won't suddenly
+                // appear on us overlapping the hotkey window. This is the case when on another app's
+                // full screen window. Do this to avoid overlapping notifications.
+                return windowLevelJustBelowNotificiations;
+            }
             // Floating panel and fixed menu bar — overlap the menu bar.
             // Unfortunately, this overlaps notification center since it is at the same level as
             // the menu bar.
             return NSStatusWindowLevel;
         }
     }
-    return (NSWindowLevel)(NSMainMenuWindowLevel - 1);
+    // Floating hotkey window that does not join all spaces. This doesn't seem to work well in the
+    // presence of other apps' fullscreen windows, regardless of level.
+    return windowLevelJustBelowNotificiations;
 }
 
 - (BOOL)menuBarAutoHides {
