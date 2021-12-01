@@ -263,13 +263,21 @@ static NSString *const kArrangement = @"Arrangement";
         return NSNormalWindowLevel;
     }
     DLog(@"Use main menu window level (I am key, no detected panels are open)");
-    const NSWindowLevel windowLevelJustBelowNotificiations = NSMainMenuWindowLevel - 2;
+    NSWindowLevel windowLevelJustBelowNotificiations;
+    if (@available(macOS 10.16, *)) {
+        windowLevelJustBelowNotificiations = NSMainMenuWindowLevel - 2;
+    } else {
+        windowLevelJustBelowNotificiations = 17;
+    }
     // These are the window levels in play:
     //
     // NSStatusWindowLevel (25) -                Floating hotkey panels overlapping a fixed, visible menu bar.
     // NSMainMenuWindowLevel (24) -              Menu bar, dock. (maybe notification center on macOS < 12? I should check)
-    // 23 -                                      Notification center (macOS 12)
-    // windowLevelJustBelowNotificiations (22) - Hotkey windows under a hidden-but-not-auto-hidden menu bar.
+    // 23 -                                      Notification center (macOS 11+)
+    // 22 -                                      (macOS 11+) Hotkey windows under a hidden-but-not-auto-hidden menu bar.
+    // 18 -                                      Notification center (macOS 10.x)
+    // 17 -                                      (macOS 10.x) Hotkey windows under a hidden-but-not-auto-hidden menu bar.
+    //
     // NSTornOffMenuWindowLevel (3) -            Just too low, used to use this, but not any more because it's under the dock.
 
     // A brief history and rationale:
