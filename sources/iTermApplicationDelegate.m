@@ -180,8 +180,6 @@ static BOOL hasBecomeActive = NO;
     NSMenuItem *downloadsMenu_;
     NSMenuItem *uploadsMenu_;
     IBOutlet NSMenuItem *selectTab;
-    IBOutlet NSMenuItem *closeTab;
-    IBOutlet NSMenuItem *closeWindow;
     IBOutlet NSMenuItem *irPrev;
     IBOutlet NSMenuItem *windowArrangements_;
     IBOutlet NSMenuItem *windowArrangementsAsTabs_;
@@ -272,11 +270,6 @@ static BOOL hasBecomeActive = NO;
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(reloadSessionMenus:)
                                                      name:iTermSessionBecameKey
-                                                   object:nil];
-
-        [[NSNotificationCenter defaultCenter] addObserver:self
-                                                 selector:@selector(nonTerminalWindowBecameKey:)
-                                                     name:kNonTerminalWindowBecameKeyNotification
                                                    object:nil];
 
         [[NSNotificationCenter defaultCenter] addObserver:self
@@ -1390,19 +1383,6 @@ void TurnOnDebugLoggingAutomatically(void) {
     }
 
     [self buildSessionSubmenu: aNotification];
-    // reset the close tab/window shortcuts
-    [closeTab setAction:@selector(closeCurrentTab:)];
-    [closeTab setTarget:frontTerminal];
-    [closeTab setKeyEquivalent:@"w"];
-    [closeWindow setKeyEquivalent:@"W"];
-    [closeWindow setKeyEquivalentModifierMask: NSEventModifierFlagCommand];
-}
-
-- (void)nonTerminalWindowBecameKey:(NSNotification *)aNotification {
-    [closeTab setAction:nil];
-    [closeTab setKeyEquivalent:@""];
-    [closeWindow setKeyEquivalent:@"w"];
-    [closeWindow setKeyEquivalentModifierMask:NSEventModifierFlagCommand];
 }
 
 - (void)updateAddressBookMenu:(NSNotification *)aNotification {
@@ -1640,6 +1620,7 @@ void TurnOnDebugLoggingAutomatically(void) {
     bookmarksMenu = [[[NSMenu alloc] init] autorelease];
 
     [[iTermController sharedInstance] addBookmarksToMenu:bookmarksMenu
+                                               supermenu:superMenu
                                             withSelector:selector
                                          openAllSelector:openAllSelector
                                               startingAt:0];

@@ -5655,6 +5655,7 @@ ITERM_WEAKLY_REFERENCEABLE
     NSMenu *aMenu = [[[NSMenu alloc] init] autorelease];
 
     [[iTermController sharedInstance] addBookmarksToMenu:aMenu
+                                               supermenu:theMenu
                                             withSelector:@selector(newSessionInWindowAtIndex:)
                                          openAllSelector:@selector(newSessionsInNewWindow:)
                                               startingAt:0];
@@ -5663,6 +5664,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
     aMenu = [[[NSMenu alloc] init] autorelease];
     [[iTermController sharedInstance] addBookmarksToMenu:aMenu
+                                               supermenu:theMenu
                                             withSelector:@selector(newSessionInTabAtIndex:)
                                          openAllSelector:@selector(newSessionsInWindow:)
                                               startingAt:0];
@@ -9915,6 +9917,8 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
         [item action] == @selector(newTmuxTab:) ||
         [item action] == @selector(forceDetachTmux:)) {
         return [[iTermController sharedInstance] haveTmuxConnection];
+    } else if (item.action == @selector(closeCurrentTab:)) {
+        return YES;
     } else if (item.action == @selector(toggleTmuxPausePane:)) {
         const BOOL ok = (self.currentSession.isTmuxClient &&
                          self.currentSession.tmuxController.gateway.pauseModeEnabled);

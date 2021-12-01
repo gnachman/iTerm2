@@ -963,7 +963,15 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
     [self openNewSessionsFromMenu:[sender menu] inNewWindow:YES];
 }
 
+- (NSString *)ancestryIdentifierForMenu:(NSMenu *)menu {
+    if (!menu.supermenu) {
+        return menu.title;
+    }
+    return [menu.title stringByAppendingFormat:@".%@", [self ancestryIdentifierForMenu:menu.supermenu]];
+}
+
 - (void)addBookmarksToMenu:(NSMenu *)aMenu
+                 supermenu:(NSMenu *)supermenu
               withSelector:(SEL)selector
            openAllSelector:(SEL)openAllSelector
                 startingAt:(int)startingAt {
@@ -983,7 +991,8 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
                         startingAtItem:startingAt
                               withTags:[b objectForKey:KEY_TAGS]
                                 params:params
-                                 atPos:i];
+                                 atPos:i
+                            identifier:nil];
     }
 }
 

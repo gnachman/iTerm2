@@ -35,7 +35,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                     SearchableComboViewItem("Truck", tag: 10),
                     SearchableComboViewItem("Bicycle", tag: 11),
                     SearchableComboViewItem("Airplane", tag: 12),
-                    SearchableComboViewItem("Rocket ship", tag: 13)]),
+                    SearchableComboViewItem("Rocket ship", tag: 13),
+                    SearchableComboViewItem("Lamborghini Aventador LP 750-4 Superveloce Roadster", tag: 100)]),
             SearchableComboViewGroup(
                 "Colors",
                 items: [
@@ -79,7 +80,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                     SearchableComboViewItem("Activity Monitor", tag: 42),
                     SearchableComboViewItem("Safari", tag: 43)])
         ]
-        let comboView = SearchableComboView(groups)
+        let comboView = SearchableComboView(groups, defaultTitle: "Choose Thing…")
         comboView.frame = container.bounds
         comboView.title = "Choose a Thing…"
         container.addSubview(comboView)

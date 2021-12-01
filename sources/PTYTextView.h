@@ -121,6 +121,8 @@ typedef NS_ENUM(NSInteger, PTYCharType) {
 - (void)textViewCreateTabWithProfileGuid:(NSString *)guid;
 - (void)textViewSelectNextPane;
 - (void)textViewSelectPreviousPane;
+- (void)textViewSelectMenuItemWithIdentifier:(NSString *)identifier
+                                       title:(NSString *)title;
 - (void)textViewPasteSpecialWithStringConfiguration:(NSString *)configuration
                                       fromSelection:(BOOL)fromSelection;
 - (void)textViewEditSession;

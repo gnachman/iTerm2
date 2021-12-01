@@ -34,21 +34,31 @@ public class SearchableComboViewGroup: NSObject {
 
 @objc(iTermSearchableComboViewItem)
 public class SearchableComboViewItem: NSObject {
-    let label: String
-    let tag: Int
-    let labelTokens: [String]
-    weak var group: SearchableComboViewGroup?
+    public let label: String
+    public let tag: Int
+    public let identifier: String?
+    public let labelTokens: [String]
+    internal(set) public weak var group: SearchableComboViewGroup?
 
     @objc(initWithLabel:tag:)
     public init(_ label: String, tag: Int) {
         self.label = label
         self.tag = tag
+        self.identifier = nil
+        labelTokens = label.tokens
+    }
+
+    @objc(initWithLabel:tag:identifier:)
+    public init(_ label: String, tag: Int, identifier: String?) {
+        self.label = label
+        self.tag = tag
+        self.identifier = identifier
         labelTokens = label.tokens
     }
 }
 
 @objc(iTermSearchableComboView)
-public class SearchableComboView: NSPopUpButton {
+open class SearchableComboView: NSPopUpButton {
     public class Panel: NSPanel {
         public override var canBecomeKey: Bool {
             return true
@@ -76,6 +86,7 @@ public class SearchableComboView: NSPopUpButton {
     private let minimumHeight = CGFloat(99)
     // Is the panel above the button?
     private var isAbove = false
+    private let defaultTitle: String
 
     private var panel: Panel {
         get {
@@ -107,13 +118,26 @@ public class SearchableComboView: NSPopUpButton {
         listViewController.delegate = self
     }
 
-    required init?(coder: NSCoder) {
-        preconditionFailure()
+    @objc open class func groups() -> [SearchableComboViewGroup] {
+        return []
     }
 
-    @objc(initWithGroups:)
-    public init(_ groups: [SearchableComboViewGroup]) {
+    open class func defaultTitleValue() -> String {
+        return "Select Action…"
+    }
+
+    required public init?(coder: NSCoder) {
+        listViewController = SearchableComboListViewController(groups: Self.groups())
+        defaultTitle = Self.defaultTitleValue()
+        super.init(coder: coder)
+        addItem(withTitle: "")
+        postInit()
+    }
+
+    @objc(initWithGroups:defaultTitle:)
+    public init(_ groups: [SearchableComboViewGroup], defaultTitle: String) {
         listViewController = SearchableComboListViewController(groups: groups)
+        self.defaultTitle = defaultTitle
         super.init(frame: NSRect.zero, pullsDown: true)
         addItem(withTitle: "")
         postInit()
@@ -125,24 +149,66 @@ public class SearchableComboView: NSPopUpButton {
         }
     }
 
+    private func removeSelection() {
+        setTitle(defaultTitle)
+        listViewController.selectedItem = nil
+    }
+
     override public func selectItem(withTag tag: Int) -> Bool {
         if let item = listViewController.item(withTag: tag) {
             setTitle(item.label)
             listViewController.selectedItem = item
             return true
         }
-        setTitle("Selection Action…")
-        listViewController.selectedItem = nil
+        removeSelection()
         return false
+    }
+
+    public func selectItem(withIdentifier identifier: NSUserInterfaceItemIdentifier) -> Bool {
+        if let item = listViewController.item(withIdentifier: identifier) {
+            setTitle(item.label)
+            listViewController.selectedItem = item
+            return true
+        }
+        removeSelection()
+        return false
+    }
+
+    open override func selectItem(withTitle title: String) {
+        if let item = listViewController.item(withTitle: title) {
+            setTitle(item.label)
+            listViewController.selectedItem = item
+            return
+        }
+        removeSelection()
     }
 
     override public func selectedTag() -> Int {
         return listViewController.tableViewController?.selectedTag ?? -1
     }
 
+
     override public func willOpenMenu(_ menu: NSMenu, with event: NSEvent) {
         menu.cancelTrackingWithoutAnimation()
         showPanel()
+    }
+
+    @objc open override var selectedItem: NSMenuItem? {
+        let item = NSMenuItem()
+        guard let myItem = listViewController.tableViewController?.selectedItem else {
+            return nil
+        }
+        item.title = myItem.label
+        item.identifier = myItem.identifier.map { NSUserInterfaceItemIdentifier($0) }
+        return item
+    }
+
+    @objc var selectedTitle: String? {
+        return selectedItem?.title
+    }
+
+    @objc var selectedIdentifier: NSUserInterfaceItemIdentifier? {
+        return selectedItem?.identifier
     }
 
     private var myFrameInScreenCoords: NSRect {
@@ -181,7 +247,7 @@ public class SearchableComboView: NSPopUpButton {
 
     private func desiredPanelFrameWhenBelow(_ desiredHeight: CGFloat) -> CGRect {
         let insets = listViewController.insets
-        let initialSize = CGSize(width: bounds.width + insets.left + insets.right,
+        let initialSize = CGSize(width: max(listViewController.widestItemWidth, bounds.width) + insets.left + insets.right,
                                  height: min(maxPanelHeightWhenBelow, desiredHeight))
         return NSRect(origin: CGPoint(x: myFrameInScreenCoords.minX - insets.left,
                                       y: myFrameInScreenCoords.maxY - initialSize.height + insets.top),
@@ -193,6 +259,12 @@ public class SearchableComboView: NSPopUpButton {
         window?.addChildWindow(panel, ordered: .above)
         panel.setFrame(desiredPanelFrame(listViewController.desiredHeight), display: true)
         listViewController.view.frame = panel.contentView!.bounds
+
+        // Work around an apparent bug in NSTableView that causes it to want to grow 16 points larger
+        // than the scrollview.
+        listViewController.tableViewController?.updateColumnWidths()
+
+        listViewController.tableView.tile()
         panel.makeKeyAndOrderFront(nil)
         listViewController.tableViewController?.selectOnlyItem()
     }

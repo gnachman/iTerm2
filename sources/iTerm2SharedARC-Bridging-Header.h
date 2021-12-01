@@ -25,6 +25,7 @@
 #import "NSFont+iTerm.h"
 #import "NSImage+iTerm.h"
 #import "NSObject+iTerm.h"
+#import "NSScreen+iTerm.h"
 #import "NSStringITerm.h"
 #import "NSTableView+iTerm.h"
 #import "PSMTabBarControl.h"

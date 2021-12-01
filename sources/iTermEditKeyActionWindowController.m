@@ -9,6 +9,7 @@
 #import "iTermEditKeyActionWindowController.h"
 
 #import "DebugLogging.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermActionsModel.h"
 #import "iTermFunctionCallTextFieldDelegate.h"
 #import "iTermKeystrokeFormatter.h"
@@ -44,7 +45,7 @@ const CGFloat sideMarginWidth = 20;
     IBOutlet NSTextField *_parameterLabel;
     IBOutlet NSPopUpButton *_profilePopup;
     IBOutlet NSPopUpButton *_selectionMovementUnit;
-    IBOutlet NSPopUpButton *_menuToSelectPopup;
+    IBOutlet iTermMenuItemPopupView *_menuToSelectPopup;
     IBOutlet NSTextField *_profileLabel;
     IBOutlet NSTextField *_colorPresetsLabel;
     IBOutlet NSPopUpButton *_colorPresetsPopup;
@@ -212,7 +213,7 @@ const CGFloat sideMarginWidth = 20;
             break;
     }
 
-    _comboView = [[iTermSearchableComboView alloc] initWithGroups:groups];
+    _comboView = [[iTermSearchableComboView alloc] initWithGroups:groups defaultTitle:@"Select Action…"];
     [_comboViewContainer addSubview:_comboView];
     _comboView.frame = _comboViewContainer.bounds;
     _comboView.delegate = self;
@@ -229,20 +230,13 @@ const CGFloat sideMarginWidth = 20;
     (void)[_comboView selectItemWithTag:self.action];
     _parameter.stringValue = self.parameterValue ?: @"";
     if (self.action == KEY_ACTION_SELECT_MENU_ITEM) {
-        [[self class] populatePopUpButtonWithMenuItems:_menuToSelectPopup
-                                         selectedTitle:[[_menuToSelectPopup selectedItem] title]
-                                            identifier:_menuToSelectPopup.selectedItem.identifier];
+        [_menuToSelectPopup reloadData];
         NSArray *parts = [self.parameterValue componentsSeparatedByString:@"\n"];
         if (parts.count < 2) {
             [_menuToSelectPopup selectItemWithTitle:self.parameterValue];
         } else {
-            NSInteger index = [_menuToSelectPopup.itemArray indexOfObjectPassingTest:^BOOL(NSMenuItem * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-                return [obj.identifier isEqualToString:parts[1]];
-            }];
-            if (index == NSNotFound) {
+            if (![_menuToSelectPopup selectItemWithIdentifier:parts[1]]) {
                 [_menuToSelectPopup selectItemWithTitle:parts.firstObject];
-            } else {
-                [_menuToSelectPopup selectItemAtIndex:index];
             }
         }
     }
@@ -566,96 +560,6 @@ const CGFloat sideMarginWidth = 20;
     _pasteSpecialViewContainer.hidden = hidden;
 }
 
-+ (void)populatePopUpButtonWithMenuItems:(NSPopUpButton *)button
-                           selectedTitle:(NSString *)selectedValue
-                              identifier:(NSString *)identifier {
-    [self recursiveAddMenu:[NSApp mainMenu] toButtonMenu:[button menu] depth:0 ancestors:@[]];
-    if (selectedValue) {
-        NSMenuItem *theItem = [[button menu] itemWithTitle:selectedValue];
-        if (theItem) {
-            [button setTitle:selectedValue];
-            [theItem setState:NSControlStateValueOn];
-        }
-    }
-}
-
-+ (BOOL)item:(NSMenuItem *)item isWindowInWindowsMenu:(NSMenu *)menu {
-    if (menu != [NSApp windowsMenu]) {
-        return NO;
-    }
-
-    return ([item.target isKindOfClass:[NSWindow class]]&&
-            item.action == @selector(makeKeyAndOrderFront:));
-}
-
-+ (BOOL)ancestorsContainsProfilesMenuItem:(NSArray<NSMenuItem *> *)ancestors {
-    if (ancestors.count == 0) {
-        return NO;
-    }
-    return [ancestors[0].identifier isEqualToString:@".Profiles"];
-}
-
-+ (void)recursiveAddMenu:(NSMenu *)menu
-            toButtonMenu:(NSMenu *)buttonMenu
-                   depth:(int)depth
-               ancestors:(NSArray<NSMenuItem *> *)ancestors {
-    const BOOL descendsFromProfiles = [self ancestorsContainsProfilesMenuItem:ancestors];
-    NSMenu *servicesMenu = [NSApp servicesMenu];
-    NSMenu *windowsMenu = [NSApp windowsMenu];
-
-    if (menu == windowsMenu) {
-        // Add the "move to [screen]" items.
-        for (NSScreen *screen in [NSScreen screens]) {
-            NSMenuItem *theItem = [[NSMenuItem alloc] init];
-            theItem.title = [NSString stringWithFormat:@"Move to %@", screen.it_uniqueName];
-            theItem.identifier = screen.it_uniqueKey;
-            theItem.indentationLevel = depth;
-            [buttonMenu addItem:theItem];
-        }
-    }
-
-    for (NSMenuItem *item in [menu itemArray]) {
-        if (item.isSeparatorItem) {
-            continue;
-        }
-        if (item.submenu == servicesMenu ||
-            [self item:item isWindowInWindowsMenu:menu]) {  // exclude windows in window menu
-            continue;
-        }
-        if (menu == windowsMenu && [NSStringFromSelector(item.action) isEqualToString:@"_moveToDisplay:"]) {
-            continue;
-        }
-        NSMenuItem *theItem = [[NSMenuItem alloc] init];
-
-        if (([item.identifier hasPrefix:iTermProfileModelNewTabMenuItemIdentifierPrefix] ||
-             [item.identifier hasPrefix:iTermProfileModelNewWindowMenuItemIdentifierPrefix]) &&
-            descendsFromProfiles && !item.hasSubmenu) {
-            if (item.isAlternate) {
-                theItem.title = [NSString stringWithFormat:@"%@ — New Window", item.title];
-            } else {
-                theItem.title = [NSString stringWithFormat:@"%@ — New Tab", item.title];
-            }
-        } else {
-            theItem.title = item.title;
-        }
-        theItem.identifier = item.identifier;
-        theItem.indentationLevel = depth;
-        if (item.hasSubmenu) {
-            if (depth == 0 && buttonMenu.itemArray.count) {
-                [buttonMenu addItem:[NSMenuItem separatorItem]];
-            }
-            theItem.enabled = NO;
-            [buttonMenu addItem:theItem];
-            [self recursiveAddMenu:item.submenu
-                      toButtonMenu:buttonMenu
-                             depth:depth + 1
-                         ancestors:[ancestors arrayByAddingObject:item]];
-        } else {
-            [buttonMenu addItem:theItem];
-        }
-    }
-}
-
 - (BOOL)shouldEnableOK {
     switch (self.mode) {
         case iTermEditKeyActionWindowControllerModeUnbound:
@@ -702,10 +606,10 @@ const CGFloat sideMarginWidth = 20;
 
     switch (self.action) {
         case KEY_ACTION_SELECT_MENU_ITEM:
-            if (_menuToSelectPopup.selectedItem.identifier.length) {
-              self.parameterValue = [NSString stringWithFormat:@"%@\n%@", _menuToSelectPopup.selectedItem.title, _menuToSelectPopup.selectedItem.identifier ?: @""];
+            if (_menuToSelectPopup.selectedIdentifier.length) {
+              self.parameterValue = [NSString stringWithFormat:@"%@\n%@", _menuToSelectPopup.selectedTitle, _menuToSelectPopup.selectedIdentifier ?: @""];
             } else {
-                self.parameterValue = [[_menuToSelectPopup selectedItem] title];
+                self.parameterValue = _menuToSelectPopup.selectedTitle;
             }
             break;
 
@@ -758,9 +662,7 @@ const CGFloat sideMarginWidth = 20;
     [_profilePopup populateWithProfilesSelectingGuid:guid];
     [_colorPresetsPopup loadColorPresetsSelecting:_colorPresetsPopup.selectedItem.representedObject];
     [_snippetsPopup populateWithSnippetsSelectingActionKey:_snippetsPopup.selectedItem.representedObject];
-    [[self class] populatePopUpButtonWithMenuItems:_menuToSelectPopup
-                                     selectedTitle:[[_menuToSelectPopup selectedItem] title]
-                                        identifier:_menuToSelectPopup.selectedItem.identifier];
+    [_menuToSelectPopup reloadData];
     [self updateViewsAnimated:YES];
 }
 

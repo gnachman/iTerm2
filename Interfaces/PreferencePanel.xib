@@ -87,6 +87,7 @@
         </customObject>
         <customObject id="6117" customClass="PointerPrefsController">
             <connections>
+                <outlet property="_menuItemPopupView" destination="Uhb-64-lno" id="ftQ-1N-q7H"/>
                 <outlet property="_pasteSpecialViewContainer" destination="XBQ-x3-51h" id="JaH-7U-Bch"/>
                 <outlet property="actionColumn_" destination="6099" id="6123"/>
                 <outlet property="buttonColumn_" destination="6095" id="6121"/>
@@ -363,8 +364,12 @@ Gw
                             <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                         </textFieldCell>
                     </textField>
-                    <customView hidden="YES" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="XBQ-x3-51h">
+                    <customView hidden="YES" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="XBQ-x3-51h" userLabel="Paste Special Container view">
                         <rect key="frame" x="130" y="60" width="300" height="21"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    </customView>
+                    <customView hidden="YES" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Uhb-64-lno" userLabel="Menu Item Popup" customClass="iTermMenuItemPopupView">
+                        <rect key="frame" x="125" y="60" width="308" height="23"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     </customView>
                 </subviews>
@@ -743,7 +748,7 @@ Gw
                             </subviews>
                         </clipView>
                         <scroller key="horizontalScroller" hidden="YES" wantsLayer="YES" verticalHuggingPriority="750" horizontal="YES" id="5846">
-                            <rect key="frame" x="1" y="249" width="763" height="15"/>
+                            <rect key="frame" x="1" y="248" width="763" height="16"/>
                             <autoresizingMask key="autoresizingMask"/>
                         </scroller>
                         <scroller key="verticalScroller" hidden="YES" wantsLayer="YES" verticalHuggingPriority="750" horizontal="NO" id="5847">

@@ -3344,6 +3344,12 @@
     [_delegate textViewSelectPreviousPane];
 }
 
+- (void)selectMenuItemWithIdentifier:(NSString *)identifier
+                               title:(NSString *)title
+                               event:(NSEvent *)event {
+    [_delegate textViewSelectMenuItemWithIdentifier:identifier title:title];
+}
+
 - (void)advancedPasteWithConfiguration:(NSString *)configuration
                              fromSelection:(BOOL)fromSelection
                              withEvent:(NSEvent *)event {

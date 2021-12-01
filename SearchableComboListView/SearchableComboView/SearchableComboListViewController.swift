@@ -23,6 +23,10 @@ class SearchableComboListViewController: NSViewController {
     @IBOutlet public weak var visualEffectView: NSVisualEffectView!
     private var closeOnSelect = true
     public var tableViewController: SearchableComboTableViewController?
+    var widestItemWidth: CGFloat {
+        return tableViewController?.widestItemWidth ?? 0
+    }
+
     let groups: [SearchableComboViewGroup]
 
     public var selectedItem: SearchableComboViewItem? {
@@ -77,6 +81,31 @@ class SearchableComboListViewController: NSViewController {
         for group in groups {
             for item in group.items {
                 if item.tag == tag {
+                    return item
+                }
+            }
+        }
+        return nil
+    }
+
+    func item(withIdentifier identifier: NSUserInterfaceItemIdentifier) -> SearchableComboViewItem? {
+        for group in groups {
+            for item in group.items {
+                guard let itemIdentifier = item.identifier else {
+                    continue
+                }
+                if itemIdentifier as NSString as NSUserInterfaceItemIdentifier == identifier {
+                    return item
+                }
+            }
+        }
+        return nil
+    }
+
+    func item(withTitle title: String) -> SearchableComboViewItem? {
+        for group in groups {
+            for item in group.items {
+                if item.label == title {
                     return item
                 }
             }

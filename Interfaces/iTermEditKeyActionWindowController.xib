@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="18122" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="19455" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES">
     <dependencies>
         <deployment identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="18122"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="19455"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
@@ -12,7 +12,7 @@
                 <outlet property="_colorPresetsPopup" destination="tld-gp-ZWP" id="pmR-N0-sjS"/>
                 <outlet property="_comboViewContainer" destination="rtR-KB-sUm" id="StD-xL-ZEV"/>
                 <outlet property="_keyboardShortcutLabel" destination="K5J-cS-cKV" id="OHV-3k-HGx"/>
-                <outlet property="_menuToSelectPopup" destination="Lul-IP-GkH" id="LCb-mY-zgC"/>
+                <outlet property="_menuToSelectPopup" destination="Vc6-sA-YtV" id="67h-v0-Auo"/>
                 <outlet property="_okButton" destination="loN-RU-1Py" id="GFk-gT-zqx"/>
                 <outlet property="_parameter" destination="7JT-ar-Qef" id="2uA-Zc-mij"/>
                 <outlet property="_parameterLabel" destination="q03-HA-vno" id="4oO-Om-1Ub"/>
@@ -41,6 +41,13 @@
                         <rect key="frame" x="0.0" y="0.0" width="442" height="157"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMaxX="YES" flexibleMinY="YES" heightSizable="YES"/>
                         <subviews>
+                            <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Vc6-sA-YtV" customClass="iTermMenuItemPopupView">
+                                <rect key="frame" x="146" y="58" width="279" height="28"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                <connections>
+                                    <outlet property="delegate" destination="-2" id="Rfi-zY-Knn"/>
+                                </connections>
+                            </customView>
                             <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="K5J-cS-cKV">
                                 <rect key="frame" x="17" y="119" width="127" height="18"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
@@ -98,7 +105,7 @@ Gw
                                 </textFieldCell>
                             </textField>
                             <textField verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="OcE-sI-T64" userLabel="Shortcut Text Field" customClass="iTermShortcutInputView">
-                                <rect key="frame" x="149" y="119" width="273" height="22"/>
+                                <rect key="frame" x="149" y="119" width="272" height="22"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                 <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" drawsBackground="YES" id="lcf-pM-rft">
                                     <font key="font" metaFont="system"/>
@@ -110,7 +117,7 @@ Gw
                                 </connections>
                             </textField>
                             <textField verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="oHw-49-aB1" userLabel="Touch Bar Label">
-                                <rect key="frame" x="150" y="119" width="273" height="22"/>
+                                <rect key="frame" x="150" y="119" width="271" height="22"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                 <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" continuous="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" alignment="left" placeholderString="Label to show in Touch Bar" drawsBackground="YES" usesSingleLineMode="YES" id="mYT-YJ-w7Z">
                                     <font key="font" metaFont="system"/>
@@ -199,15 +206,6 @@ Gw
                                     <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                                 </textFieldCell>
                             </textField>
-                            <popUpButton hidden="YES" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Lul-IP-GkH" userLabel="Menu items popup">
-                                <rect key="frame" x="146" y="59" width="279" height="26"/>
-                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                <popUpButtonCell key="cell" type="push" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" autoenablesItems="NO" id="1oe-ia-azx">
-                                    <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
-                                    <font key="font" metaFont="menu"/>
-                                    <menu key="menu" title="OtherViews" autoenablesItems="NO" id="3Rv-I7-dMV"/>
-                                </popUpButtonCell>
-                            </popUpButton>
                             <popUpButton hidden="YES" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="tld-gp-ZWP" userLabel="Color presets popup">
                                 <rect key="frame" x="146" y="59" width="279" height="26"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>

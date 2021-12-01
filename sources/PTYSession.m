@@ -9418,6 +9418,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [_delegate previousSession];
 }
 
+- (void)textViewSelectMenuItemWithIdentifier:(NSString *)identifier title:(NSString *)title {
+    [PTYSession _recursiveSelectMenuItemWithTitle:title identifier:identifier inMenu:[NSApp mainMenu]];
+}
+
 - (void)textViewPasteSpecialWithStringConfiguration:(NSString *)configuration
                                       fromSelection:(BOOL)fromSelection {
     NSString *string = fromSelection ? [[iTermController sharedInstance] lastSelection] : [NSString stringFromPasteboard];

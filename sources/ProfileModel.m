@@ -458,7 +458,8 @@ static NSMutableArray<NSString *> *_combinedLog;
     BookmarkJournalEntry *e = [BookmarkJournalEntry journalWithAction:JOURNAL_ADD
                                                              bookmark:bookmark
                                                                 model:self
-                                                                index:theIndex];
+                                                                index:theIndex
+                                                           identifier:nil];
     [journal_ addObject:e];
 
     if (![self defaultBookmark] || (isDeprecatedDefaultBookmark && [isDeprecatedDefaultBookmark isEqualToString:@"Yes"])) {
@@ -503,7 +504,7 @@ static NSMutableArray<NSString *> *_combinedLog;
         int i = [[sorted objectAtIndex:j] intValue];
         assert(i >= 0);
 
-        [journal_ addObject:[BookmarkJournalEntry journalWithAction:JOURNAL_REMOVE bookmark:[bookmarks_ objectAtIndex:i] model:self]];
+        [journal_ addObject:[BookmarkJournalEntry journalWithAction:JOURNAL_REMOVE bookmark:[bookmarks_ objectAtIndex:i] model:self identifier:nil]];
         [[self debugHistoryForGuid:bookmarks_[i][KEY_GUID]] addObject:[NSString stringWithFormat:@"%@: Remove bookmark with guid %@",
                                                                        self,
                                                                        bookmarks_[i][KEY_GUID]]];
@@ -518,7 +519,7 @@ static NSMutableArray<NSString *> *_combinedLog;
 - (void)removeBookmarkAtIndex:(int)i {
     DLog(@"Remove profile at index %d", i);
     assert(i >= 0);
-    [journal_ addObject:[BookmarkJournalEntry journalWithAction:JOURNAL_REMOVE bookmark:[bookmarks_ objectAtIndex:i] model:self]];
+    [journal_ addObject:[BookmarkJournalEntry journalWithAction:JOURNAL_REMOVE bookmark:[bookmarks_ objectAtIndex:i] model:self identifier:nil]];
     [[self debugHistoryForGuid:bookmarks_[i][KEY_GUID]] addObject:[NSString stringWithFormat:@"%@: Remove bookmark with guid %@",
                                                                    self,
                                                                    bookmarks_[i][KEY_GUID]]];
@@ -572,7 +573,7 @@ static NSMutableArray<NSString *> *_combinedLog;
     Profile* before = [bookmarks_ objectAtIndex:i];
     BOOL needJournal = [self bookmark:bookmark differsJournalablyFrom:before];
     if (needJournal) {
-        [journal_ addObject:[BookmarkJournalEntry journalWithAction:JOURNAL_REMOVE bookmark:[bookmarks_ objectAtIndex:i] model:self]];
+        [journal_ addObject:[BookmarkJournalEntry journalWithAction:JOURNAL_REMOVE bookmark:[bookmarks_ objectAtIndex:i] model:self identifier:nil]];
     }
     [[self debugHistoryForGuid:bookmark[KEY_GUID]] addObject:[NSString stringWithFormat:@"%@: Replace bookmark at index %@ (%@) with %@",
                                                               self,
@@ -584,7 +585,8 @@ static NSMutableArray<NSString *> *_combinedLog;
         BookmarkJournalEntry* e = [BookmarkJournalEntry journalWithAction:JOURNAL_ADD
                                                                  bookmark:bookmark
                                                                     model:self
-                                                                    index:i];
+                                                                    index:i
+                                                               identifier:nil];
         [journal_ addObject:e];
     }
     if (isDefault) {
@@ -609,7 +611,7 @@ static NSMutableArray<NSString *> *_combinedLog;
                                                  self]];
     [bookmarks_ removeAllObjects];
     defaultBookmarkGuid_ = @"";
-    [journal_ addObject:[BookmarkJournalEntry journalWithAction:JOURNAL_REMOVE_ALL bookmark:nil model:self]];
+    [journal_ addObject:[BookmarkJournalEntry journalWithAction:JOURNAL_REMOVE_ALL bookmark:nil model:self identifier:nil]];
     [self postChangeNotification];
 }
 
@@ -745,7 +747,8 @@ static NSMutableArray<NSString *> *_combinedLog;
     }
     [journal_ addObject:[BookmarkJournalEntry journalWithAction:JOURNAL_SET_DEFAULT
                                                        bookmark:[self defaultBookmark]
-                                                          model:self]];
+                                                          model:self
+                                                     identifier:nil]];
     [self postChangeNotification];
 }
 
@@ -813,10 +816,10 @@ static NSMutableArray<NSString *> *_combinedLog;
 
 - (void)rebuildMenus
 {
-    [journal_ addObject:[BookmarkJournalEntry journalWithAction:JOURNAL_REMOVE_ALL bookmark:nil model:self]];
+    [journal_ addObject:[BookmarkJournalEntry journalWithAction:JOURNAL_REMOVE_ALL bookmark:nil model:self identifier:nil]];
     int i = 0;
     for (Profile *b in bookmarks_) {
-        BookmarkJournalEntry* e = [BookmarkJournalEntry journalWithAction:JOURNAL_ADD bookmark:b model:self index:i];
+        BookmarkJournalEntry* e = [BookmarkJournalEntry journalWithAction:JOURNAL_ADD bookmark:b model:self index:i identifier:nil];
         i += 1;
         [journal_ addObject:e];
     }

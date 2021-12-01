@@ -83,7 +83,7 @@
                                             </tableCellView>
                                         </prototypeCellViews>
                                     </tableColumn>
-                                    <tableColumn identifier="searchableComboViewLabel" width="465" minWidth="40" maxWidth="1000" id="dHb-Bm-3au" userLabel="Label Column">
+                                    <tableColumn identifier="searchableComboViewLabel" width="464" minWidth="40" maxWidth="1000" id="dHb-Bm-3au" userLabel="Label Column">
                                         <tableHeaderCell key="headerCell" lineBreakMode="truncatingTail" borderStyle="border">
                                             <color key="textColor" name="headerTextColor" catalog="System" colorSpace="catalog"/>
                                             <color key="backgroundColor" name="headerColor" catalog="System" colorSpace="catalog"/>
@@ -93,14 +93,14 @@
                                             <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
                                             <color key="backgroundColor" name="controlBackgroundColor" catalog="System" colorSpace="catalog"/>
                                         </textFieldCell>
-                                        <tableColumnResizingMask key="resizingMask" resizeWithTable="YES" userResizable="YES"/>
+                                        <tableColumnResizingMask key="resizingMask" resizeWithTable="YES"/>
                                         <prototypeCellViews>
                                             <tableCellView id="Fuo-fd-knB">
-                                                <rect key="frame" x="22" y="1" width="471" height="17"/>
+                                                <rect key="frame" x="22" y="1" width="470" height="17"/>
                                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                                 <subviews>
                                                     <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="7ft-xb-inv">
-                                                        <rect key="frame" x="0.0" y="0.0" width="662" height="17"/>
+                                                        <rect key="frame" x="0.0" y="0.0" width="661" height="17"/>
                                                         <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
                                                         <textFieldCell key="cell" lineBreakMode="truncatingTail" sendsActionOnEndEditing="YES" title="Table View Cell" id="31h-C6-Nud">
                                                             <font key="font" metaFont="system"/>
@@ -121,7 +121,7 @@
                         <nil key="backgroundColor"/>
                     </clipView>
                     <scroller key="horizontalScroller" hidden="YES" wantsLayer="YES" verticalHuggingPriority="750" horizontal="YES" id="IZv-Rf-jMG">
-                        <rect key="frame" x="1" y="220" width="495" height="15"/>
+                        <rect key="frame" x="1" y="225" width="378" height="16"/>
                         <autoresizingMask key="autoresizingMask"/>
                     </scroller>
                     <scroller key="verticalScroller" hidden="YES" wantsLayer="YES" verticalHuggingPriority="750" horizontal="NO" id="vfW-IZ-Nh1">
@@ -130,6 +130,9 @@
                     </scroller>
                 </scrollView>
             </subviews>
+            <connections>
+                <outlet property="tableView" destination="9Jz-Xr-ssw" id="cyZ-cx-cHi"/>
+            </connections>
             <point key="canvasLocation" x="147.5" y="154"/>
         </customView>
     </objects>

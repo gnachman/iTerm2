@@ -33,9 +33,10 @@ typedef enum {
 - (void)addBookmark:(Profile *)b
              toMenu:(NSMenu *)menu
      startingAtItem:(int)skip
-           withTags:(NSArray *)tags
+           withTags:(NSArray * _Nullable)tags
              params:(iTermProfileModelJournalParams *)params
-              atPos:(int)theIndex;
+              atPos:(int)theIndex
+         identifier:(NSString * _Nullable)identifier;
 @end
 
 @protocol iTermProfileModelJournalModel<NSObject>
@@ -53,12 +54,14 @@ typedef enum {
 
 + (instancetype)journalWithAction:(JournalAction)action
                          bookmark:(nullable Profile *)bookmark
-                            model:(id<iTermProfileModelJournalModel>)model;
+                            model:(id<iTermProfileModelJournalModel>)model
+                       identifier:(NSString * _Nullable)identifier;
 
 + (instancetype)journalWithAction:(JournalAction)action
                          bookmark:(nullable Profile *)bookmark
                             model:(id<iTermProfileModelJournalModel>)model
-                            index:(int)index;
+                            index:(int)index
+                       identifier:(NSString * _Nullable)identifier;
 
 @end
 

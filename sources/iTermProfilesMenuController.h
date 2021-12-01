@@ -24,7 +24,8 @@ NS_ASSUME_NONNULL_BEGIN
      startingAtItem:(int)skip
            withTags:(nullable NSArray *)tags
              params:(iTermProfileModelJournalParams *)params
-              atPos:(int)pos;
+              atPos:(int)pos
+         identifier:(NSString * _Nullable)identifier;
 
 @end
 

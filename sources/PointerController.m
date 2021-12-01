@@ -94,6 +94,13 @@ compatibilityEscaping:(BOOL)compatibilityEscaping {
         [delegate_ extendSelectionWithEvent:event];
     } else if ([action isEqualToString:kQuickLookAction]) {
         [delegate_ quickLookWithEvent:event];
+    } else if ([action isEqualToString:kSelectMenuItemPointerAction]) {
+        NSArray<NSString *> *parts = [argument componentsSeparatedByString:@"\n"];
+        if (parts.count > 1) {
+            NSString *title = parts[0];
+            NSString *identifier = parts[1];
+            [delegate_ selectMenuItemWithIdentifier:identifier title:title event:event];
+        }
     } else if ([action isEqualToString:kIgnoreAction]) {
         // Do nothing
     }

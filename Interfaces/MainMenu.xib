@@ -1557,8 +1557,6 @@ DQ
                 <outlet property="_splitVerticallyWithCurrentProfile" destination="1200" id="TXu-qW-aIJ"/>
                 <outlet property="_triggers" destination="DB9-tf-hPg" id="gAA-pF-wPx"/>
                 <outlet property="bookmarkMenu" destination="592" id="874"/>
-                <outlet property="closeTab" destination="635" id="795"/>
-                <outlet property="closeWindow" destination="598" id="796"/>
                 <outlet property="irPrev" destination="976" id="980"/>
                 <outlet property="maximizePane" destination="1233" id="1237"/>
                 <outlet property="selectTab" destination="847" id="863"/>

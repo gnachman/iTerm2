@@ -13,6 +13,8 @@ protocol MouseObservingTableView {
 }
 
 fileprivate class RowView: NSTableRowView {
+    private var backgroundView: NSVisualEffectView?
+
     private var enclosingTableView: (NSTableView & MouseObservingTableView)? {
         var view = superview
         while view != nil {
@@ -35,6 +37,31 @@ fileprivate class RowView: NSTableRowView {
 
         return myFrameInWindowCoords.contains(mouseLocationInWindowCoords)
     }
+
+    func updateBackground() {
+        let hasBackgroundView = (backgroundView != nil)
+        if hasBackgroundView == isGroupRowStyle {
+            return
+        }
+        backgroundView?.removeFromSuperview()
+        backgroundView = nil
+        if !isGroupRowStyle {
+            return
+        }
+        backgroundView = NSVisualEffectView()
+        guard let backgroundView = backgroundView else {
+            return
+        }
+        backgroundView.material = .menu
+        backgroundView.blendingMode = .behindWindow
+        backgroundView.frame = bounds
+        backgroundView.autoresizingMask = [.width, .height]
+        if let firstSubview = subviews.first {
+            addSubview(backgroundView, positioned: .below, relativeTo: firstSubview)
+        } else {
+            addSubview(backgroundView)
+        }
+    }
 }
 
 protocol SearchableComboTableViewControllerDelegate: NSObjectProtocol {
@@ -52,6 +79,52 @@ protocol SearchableComboTableViewControllerDelegate: NSObjectProtocol {
 
 class SearchableComboTableViewController: NSViewController {
     weak var delegate: SearchableComboTableViewControllerDelegate?
+    lazy var widestItemWidth: CGFloat = {
+        if unfilteredRows.isEmpty {
+            return 0
+        }
+        guard let sampleRowView = tableView.rowView(atRow: 0, makeIfNecessary: true) else {
+            return 0
+        }
+        let sampleColumnWidths = tableView.tableColumns.map { $0.width }.reduce(0.0) { $0 + $1 }
+        let overhead = sampleRowView.bounds.width - sampleColumnWidths
+        let widths = unfilteredRows.enumerated().map { (index, _) -> CGFloat in
+            return sumOfColumnWidths(row: index) + overhead
+        }
+        // I have no idea where 16 comes from. It's necessary on macOS 12 to prevent TableView.tile()
+        // from making the table view wider than the scrollview. It seems to want this much extra space
+        // for the last column.
+        return (widths.max() ?? 0) + 16
+    }()
+
+    // This shouldn't be necessary but tile() always grows the tableview to be larger than the
+    // scrollview on macOS 12. I suspect a bug in NSTableView but 🤷
+    func updateColumnWidths() {
+        let saved = filter
+        // Remove the filter temporarily so we can measure the max width.
+        filter = ""
+        defer {
+            filter = saved
+        }
+        let widths = unfilteredRows.enumerated().map { (index, _) -> CGFloat in
+            return sumOfColumnWidths(row: index)
+        }
+        if let maxWidth = widths.max() {
+            tableView.tableColumns[1].width = maxWidth
+        }
+    }
+
+    private func sumOfColumnWidths(row: Int) -> CGFloat {
+        let columnWidths = tableView.tableColumns.map { column -> CGFloat in
+            let view = tableView(tableView, viewFor: column, row: row) as? NSTextField
+            view?.sizeToFit()
+            return view?.bounds.width ?? 0
+        }
+        return columnWidths.reduce(0.0) { accumulator, value in
+            return accumulator + value
+        }
+    }
+
     private struct Query {
         let queryTokens: [String]
         init(_ query: String) {
@@ -181,7 +254,7 @@ class SearchableComboTableViewController: NSViewController {
         guard filteredRows.count > 0 else {
             return 0
         }
-        return tableView.frameOfCell(atColumn: 0, row: filteredRows.count - 1).maxY
+        return tableView.fittingSize.height
     }
 
     // MARK:- Initializers
@@ -338,7 +411,7 @@ class SearchableComboTableViewController: NSViewController {
 
     private func newGroupLabelTextField(_ value: String) -> NSTextField {
         let identifier = NSUserInterfaceItemIdentifier("SearchableComboViewGroupLabelCell")
-        let font = NSFont.systemFont(ofSize: groupLabelFontSize)
+        let font = NSFont.boldSystemFont(ofSize: groupLabelFontSize)
         if let textField = tableView.makeView(withIdentifier: identifier, owner: self) as? NSTextField {
             textField.font = font
             textField.stringValue = value
@@ -460,9 +533,7 @@ extension SearchableComboTableViewController: NSTableViewDataSource {
     }
 
     public func tableView(_ tableView: NSTableView, didAdd rowView: NSTableRowView, forRow row: Int) {
-        if self.tableView(tableView, isGroupRow: row) {
-            rowView.backgroundColor = NSColor.underPageBackgroundColor
-        }
+        (rowView as? RowView)?.updateBackground()
     }
 
     public func tableView(_ tableView: NSTableView, isGroupRow row: Int) -> Bool {
@@ -495,6 +566,12 @@ extension SearchableComboTableViewController: NSTableViewDelegate {
         selectedTag = filteredRows[row].tag
         delegate?.searchableComboTableViewController(self, didSelectItem: itemWithTag(selectedTag))
     }
+
+    public func tableView(_ tableView: NSTableView, selectionIndexesForProposedSelection proposedSelectionIndexes: IndexSet) -> IndexSet {
+        return proposedSelectionIndexes.filteredIndexSet { index in
+            return filteredRows[index].isSelectable
+        }
+    }
 }
 
 
@@ -506,6 +583,12 @@ extension SearchableComboTableViewController: SearchableComboTableViewDelegate {
     }
 
     func searchableComboTableView(_ tableView: SearchableComboTableView, didClickRow row: Int) {
+        guard row >= 0 && row < filteredRows.count else {
+            return
+        }
+        guard filteredRows[row].isSelectable else {
+            return
+        }
         select(row)
     }
     func searchableComboTableView(_ tableView: SearchableComboTableView,

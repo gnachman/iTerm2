@@ -40,6 +40,12 @@ class SearchableComboTableView: NSTableView, MouseObservingTableView {
         return selectableRowAt(point) >= 0
     }
 
+    override func awakeFromNib() {
+        if #available(macOS 11.0, *) {
+            style = .sourceList
+        }
+    }
+
     public override func keyDown(with event: NSEvent) {
         if event.modifierFlags.contains(.function) {
             handlingKeyDown = true

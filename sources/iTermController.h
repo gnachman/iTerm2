@@ -113,6 +113,7 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
 
 - (void)terminalWillClose:(PseudoTerminal*)theTerminalWindow;
 - (void)addBookmarksToMenu:(NSMenu *)aMenu
+                 supermenu:(NSMenu *)supermenu
               withSelector:(SEL)selector
            openAllSelector:(SEL)openAllSelector
                 startingAt:(int)startingAt;

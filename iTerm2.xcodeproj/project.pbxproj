@@ -1659,6 +1659,7 @@
 		A61BB46822001E650027F47D /* iTermRecordingIcon.icns in Resources */ = {isa = PBXBuildFile; fileRef = A61BB46722001E650027F47D /* iTermRecordingIcon.icns */; };
 		A61D16FC1AAFD5530013FCCA /* iTermBackgroundColorRun.h in Headers */ = {isa = PBXBuildFile; fileRef = A61D16FA1AAFD5530013FCCA /* iTermBackgroundColorRun.h */; };
 		A61D16FD1AAFD5530013FCCA /* iTermBackgroundColorRun.h in Headers */ = {isa = PBXBuildFile; fileRef = A61D16FA1AAFD5530013FCCA /* iTermBackgroundColorRun.h */; };
+		A61D2A4927555CD000E539F3 /* MenuItemPopupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A61D2A4827555CD000E539F3 /* MenuItemPopupView.swift */; };
 		A61ED2A520E99DCD0035BECD /* iTermStatusBarClockComponent.h in Headers */ = {isa = PBXBuildFile; fileRef = A61ED2A320E99DCD0035BECD /* iTermStatusBarClockComponent.h */; };
 		A61ED2A620E99DCD0035BECD /* iTermStatusBarClockComponent.m in Sources */ = {isa = PBXBuildFile; fileRef = A61ED2A420E99DCD0035BECD /* iTermStatusBarClockComponent.m */; };
 		A61ED2A920E9E92E0035BECD /* iTermStatusBarVariableBaseComponent.h in Headers */ = {isa = PBXBuildFile; fileRef = A61ED2A720E9E92E0035BECD /* iTermStatusBarVariableBaseComponent.h */; };
@@ -5340,6 +5341,7 @@
 		A61CEAA51C72EA4C00939E97 /* iTermWeakReferenceTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermWeakReferenceTest.m; sourceTree = "<group>"; };
 		A61D16FA1AAFD5530013FCCA /* iTermBackgroundColorRun.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermBackgroundColorRun.h; sourceTree = "<group>"; };
 		A61D16FB1AAFD5530013FCCA /* iTermBackgroundColorRun.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermBackgroundColorRun.m; sourceTree = "<group>"; };
+		A61D2A4827555CD000E539F3 /* MenuItemPopupView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuItemPopupView.swift; sourceTree = "<group>"; };
 		A61ED2A320E99DCD0035BECD /* iTermStatusBarClockComponent.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermStatusBarClockComponent.h; sourceTree = "<group>"; };
 		A61ED2A420E99DCD0035BECD /* iTermStatusBarClockComponent.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermStatusBarClockComponent.m; sourceTree = "<group>"; };
 		A61ED2A720E9E92E0035BECD /* iTermStatusBarVariableBaseComponent.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermStatusBarVariableBaseComponent.h; sourceTree = "<group>"; };
@@ -8088,6 +8090,7 @@
 				A6C20CB625F6CA8C0086B09C /* iTermSlider.h */,
 				A6C20CB725F6CA8C0086B09C /* iTermSlider.m */,
 				A60E045526DC978000DD162B /* FilterTextField.swift */,
+				A61D2A4827555CD000E539F3 /* MenuItemPopupView.swift */,
 			);
 			name = "Misc. Views";
 			sourceTree = "<group>";
@@ -14440,6 +14443,7 @@
 				A65429A020BE71E400CE71B1 /* iTermOpenQuicklyModel.m in Sources */,
 				A6AAD5F422F7EB61002DD12C /* iTermWindowSizeView.m in Sources */,
 				5370678D21C9D2780088D0F3 /* SIGArchiveVerifier.m in Sources */,
+				A61D2A4927555CD000E539F3 /* MenuItemPopupView.swift in Sources */,
 				A67960D21F81FCBB008A42BC /* iTermBadgeRenderer.m in Sources */,
 				A653F6A924D00FFE0062377E /* iTermRestorableStateSQLite.m in Sources */,
 				A6E112D725C615B400875D27 /* iTermHighlightLineTrigger.m in Sources */,
@@ -16951,6 +16955,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)/ColorPicker",
 					"$(PROJECT_DIR)/ThirdParty",
+					"$(PROJECT_DIR)/SearchableComboListView",
 				);
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
@@ -17096,6 +17101,7 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
 				SKIP_INSTALL = NO;
+				SWIFT_INCLUDE_PATHS = $PROJECT_DIR/SearchableComboListView;
 				SWIFT_OBJC_BRIDGING_HEADER = "sources/iTerm2SharedARC-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
 				USER_HEADER_SEARCH_PATHS = "$(PROJECT_DIR)/SearchableComboListView $(PROJECT_DIR)/ThirdParty/libsixel/include";
@@ -17424,6 +17430,7 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
 				SKIP_INSTALL = NO;
+				SWIFT_INCLUDE_PATHS = $PROJECT_DIR/SearchableComboListView;
 				SWIFT_OBJC_BRIDGING_HEADER = "sources/iTerm2SharedARC-Bridging-Header.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
@@ -17487,6 +17494,7 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
 				SKIP_INSTALL = NO;
+				SWIFT_INCLUDE_PATHS = $PROJECT_DIR/SearchableComboListView;
 				SWIFT_OBJC_BRIDGING_HEADER = "sources/iTerm2SharedARC-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
 				USER_HEADER_SEARCH_PATHS = "$(PROJECT_DIR)/SearchableComboListView $(PROJECT_DIR)/ThirdParty/libsixel/include";
@@ -17549,6 +17557,7 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
 				SKIP_INSTALL = NO;
+				SWIFT_INCLUDE_PATHS = $PROJECT_DIR/SearchableComboListView;
 				SWIFT_OBJC_BRIDGING_HEADER = "sources/iTerm2SharedARC-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
 				USER_HEADER_SEARCH_PATHS = "$(PROJECT_DIR)/SearchableComboListView $(PROJECT_DIR)/ThirdParty/libsixel/include";
@@ -17916,6 +17925,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)/ColorPicker",
 					"$(PROJECT_DIR)/ThirdParty",
+					"$(PROJECT_DIR)/SearchableComboListView",
 				);
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_DYNAMIC_NO_PIC = NO;
@@ -17984,6 +17994,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)/ColorPicker",
 					"$(PROJECT_DIR)/ThirdParty",
+					"$(PROJECT_DIR)/SearchableComboListView",
 				);
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
@@ -18041,6 +18052,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)/ColorPicker",
 					"$(PROJECT_DIR)/ThirdParty",
+					"$(PROJECT_DIR)/SearchableComboListView",
 				);
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_ENABLE_OBJC_EXCEPTIONS = YES;

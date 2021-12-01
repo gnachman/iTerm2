@@ -36,7 +36,8 @@ static id gAltOpenAllRepresentedObject;
 + (NSMenu *)findOrCreateTagSubmenuInMenu:(NSMenu *)menu
                           startingAtItem:(int)skip
                                 withName:(NSString *)multipartName
-                                  params:(iTermProfileModelJournalParams *)params {
+                                  params:(iTermProfileModelJournalParams *)params
+                              identifier:(NSString *)identifier {
     NSArray *parts = [multipartName componentsSeparatedByString:@"/"];
     if (parts.count == 0) {
         return nil;
@@ -79,20 +80,22 @@ static id gAltOpenAllRepresentedObject;
         submenu = [self findOrCreateTagSubmenuInMenu:submenu
                                       startingAtItem:0
                                             withName:suffix
-                                              params:params];
+                                              params:params
+                                          identifier:[identifier stringByAppendingFormat:@"/%@", suffix]];
         if (menuToAddOpenAll &&
             [self menuHasMultipleItemsExcludingAlternates:menuToAddOpenAll fromIndex:0] &&
             ![self menuHasOpenAll:menuToAddOpenAll]) {
-            [self addOpenAllToMenu:menuToAddOpenAll params:params];
+            [self addOpenAllToMenu:menuToAddOpenAll params:params identifier:identifier];
         }
     }
     return submenu;
 }
 
-+ (void)addOpenAllToMenu:(NSMenu *)menu params:(iTermProfileModelJournalParams *)params {
++ (void)addOpenAllToMenu:(NSMenu *)menu params:(iTermProfileModelJournalParams *)params identifier:(NSString *)identifier {
     // Add separator + open all menu items
     [menu addItem:[NSMenuItem separatorItem]];
     NSMenuItem *openAll = [menu addItemWithTitle:@"Open All" action:params.openAllSelector keyEquivalent:@""];
+    openAll.identifier = identifier ?: @"Open All";
     [openAll setTarget:params.target];
 
     // Add alternate open all menu
@@ -103,6 +106,7 @@ static id gAltOpenAllRepresentedObject;
     [altOpenAll setKeyEquivalentModifierMask:NSEventModifierFlagOption];
     [altOpenAll setAlternate:YES];
     [altOpenAll setRepresentedObject:gAltOpenAllRepresentedObject];
+    altOpenAll.identifier = [identifier stringByAppendingString:@" (Alt)"] ?: @"Open All In New Window";
     [menu addItem:altOpenAll];
 }
 
@@ -176,12 +180,13 @@ static id gAltOpenAllRepresentedObject;
          atPosition:(int)pos
          withParams:(iTermProfileModelJournalParams *)params
         isAlternate:(BOOL)isAlternate
-            withTag:(int)tag {
+            withTag:(int)tag
+         identifier:(NSString *)identifier {
     NSMenuItem *item = [[NSMenuItem alloc] initWithTitle:[b objectForKey:KEY_NAME]
                                                   action:isAlternate ? params.alternateSelector : params.selector
                                            keyEquivalent:@""];
     [item setAlternate:isAlternate];
-    item.identifier = [self.class identifierForMenuItem:item];
+    item.identifier = [self concatenateIdentifier:identifier with:[self.class identifierForMenuItem:item]];
     NSString *shortcut = [NSString castFrom:[b objectForKey:KEY_SHORTCUT]];
     if ([shortcut length]) {
         [item setKeyEquivalent:[shortcut lowercaseString]];
@@ -199,12 +204,20 @@ static id gAltOpenAllRepresentedObject;
     [menu insertItem:item atIndex:pos];
 }
 
+- (NSString *)concatenateIdentifier:(NSString * _Nullable)first with:(NSString *)second {
+    if (!first) {
+        return second;
+    }
+    return [first stringByAppendingFormat:@"\t%@", second];
+}
+
 - (void)addBookmark:(Profile *)b
              toMenu:(NSMenu *)menu
      startingAtItem:(int)skip
            withTags:(NSArray *)tags
              params:(iTermProfileModelJournalParams *)params
-              atPos:(int)theIndex {
+              atPos:(int)theIndex
+         identifier:(NSString *)identifier {
     int pos;
     if (theIndex == -1) {
         // Add in sorted order
@@ -215,8 +228,8 @@ static id gAltOpenAllRepresentedObject;
 
     if (![tags count]) {
         // Add item & alternate if no tags
-        [self addBookmark:b toMenu:menu atPosition:pos withParams:params isAlternate:NO withTag:theIndex];
-        [self addBookmark:b toMenu:menu atPosition:pos+1 withParams:params isAlternate:YES withTag:theIndex];
+        [self addBookmark:b toMenu:menu atPosition:pos withParams:params isAlternate:NO withTag:theIndex identifier:identifier];
+        [self addBookmark:b toMenu:menu atPosition:pos+1 withParams:params isAlternate:YES withTag:theIndex identifier:identifier];
     }
 
     // Add to tag submenus
@@ -224,13 +237,20 @@ static id gAltOpenAllRepresentedObject;
         NSMenu *tagSubMenu = [self.class findOrCreateTagSubmenuInMenu:menu
                                                        startingAtItem:skip
                                                              withName:tag
-                                                               params:params];
-        [self addBookmark:b toMenu:tagSubMenu startingAtItem:0 withTags:nil params:params atPos:theIndex];
+                                                               params:params
+                                                           identifier:[self concatenateIdentifier:identifier with:tag]];
+        [self addBookmark:b
+                   toMenu:tagSubMenu
+           startingAtItem:0
+                 withTags:nil
+                   params:params
+                    atPos:theIndex
+               identifier:[self concatenateIdentifier:identifier with:tag]];
     }
 
     if ([[self class] menuHasMultipleItemsExcludingAlternates:menu fromIndex:skip] &&
         ![self.class menuHasOpenAll:menu]) {
-        [self.class addOpenAllToMenu:menu params:params];
+        [self.class addOpenAllToMenu:menu params:params identifier:identifier];
     }
 }
 
@@ -248,7 +268,8 @@ static id gAltOpenAllRepresentedObject;
                        startingAtItem:skip
                              withTags:b[KEY_TAGS]
                                params:params
-                                atPos:e.index];
+                                atPos:e.index
+                           identifier:nil];
     return [b[KEY_SHORTCUT] uppercaseString];
 }
 

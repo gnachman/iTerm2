@@ -211,20 +211,25 @@ typedef unsigned int swift_uint4  __attribute__((__ext_vector_type__(4)));
 #endif
 
 @protocol iTermSearchableComboViewDelegate;
-@class NSCoder;
 @class iTermSearchableComboViewGroup;
+@class NSCoder;
+@class NSString;
 @class NSNumber;
 @class NSMenu;
 @class NSEvent;
+@class NSMenuItem;
 
 SWIFT_CLASS_NAMED("SearchableComboView")
 @interface iTermSearchableComboView : NSPopUpButton
 @property (nonatomic, weak) id <iTermSearchableComboViewDelegate> _Nullable delegate;
-- (nullable instancetype)initWithCoder:(NSCoder * _Nonnull)coder SWIFT_UNAVAILABLE;
-- (nonnull instancetype)initWithGroups:(NSArray<iTermSearchableComboViewGroup *> * _Nonnull)groups OBJC_DESIGNATED_INITIALIZER;
++ (NSArray<iTermSearchableComboViewGroup *> * _Nonnull)groups SWIFT_WARN_UNUSED_RESULT;
+- (nullable instancetype)initWithCoder:(NSCoder * _Nonnull)coder OBJC_DESIGNATED_INITIALIZER;
+- (nonnull instancetype)initWithGroups:(NSArray<iTermSearchableComboViewGroup *> * _Nonnull)groups defaultTitle:(NSString * _Nonnull)defaultTitle OBJC_DESIGNATED_INITIALIZER;
 - (BOOL)selectItemWithTag:(NSInteger)tag SWIFT_WARN_UNUSED_RESULT;
+- (void)selectItemWithTitle:(NSString * _Nonnull)title;
 - (NSInteger)selectedTag SWIFT_WARN_UNUSED_RESULT;
 - (void)willOpenMenu:(NSMenu * _Nonnull)menu withEvent:(NSEvent * _Nonnull)event;
+@property (nonatomic, readonly, strong) NSMenuItem * _Nullable selectedItem;
 - (nonnull instancetype)initWithFrame:(NSRect)buttonFrame pullsDown:(BOOL)flag SWIFT_UNAVAILABLE;
 - (nonnull instancetype)initWithFrame:(NSRect)frameRect SWIFT_UNAVAILABLE;
 @end
@@ -237,7 +242,6 @@ SWIFT_PROTOCOL_NAMED("SearchableComboViewDelegate")
 - (void)searchableComboView:(iTermSearchableComboView * _Nonnull)view didSelectItem:(iTermSearchableComboViewItem * _Nullable)didSelectItem;
 @end
 
-@class NSString;
 
 SWIFT_CLASS_NAMED("SearchableComboViewGroup")
 @interface iTermSearchableComboViewGroup : NSObject
@@ -250,6 +254,7 @@ SWIFT_CLASS_NAMED("SearchableComboViewGroup")
 SWIFT_CLASS_NAMED("SearchableComboViewItem")
 @interface iTermSearchableComboViewItem : NSObject
 - (nonnull instancetype)initWithLabel:(NSString * _Nonnull)label tag:(NSInteger)tag OBJC_DESIGNATED_INITIALIZER;
+- (nonnull instancetype)initWithLabel:(NSString * _Nonnull)label tag:(NSInteger)tag identifier:(NSString * _Nullable)identifier OBJC_DESIGNATED_INITIALIZER;
 - (nonnull instancetype)init SWIFT_UNAVAILABLE;
 + (nonnull instancetype)new SWIFT_UNAVAILABLE_MSG("-init is unavailable");
 @end
@@ -472,20 +477,25 @@ typedef unsigned int swift_uint4  __attribute__((__ext_vector_type__(4)));
 #endif
 
 @protocol iTermSearchableComboViewDelegate;
-@class NSCoder;
 @class iTermSearchableComboViewGroup;
+@class NSCoder;
+@class NSString;
 @class NSNumber;
 @class NSMenu;
 @class NSEvent;
+@class NSMenuItem;
 
 SWIFT_CLASS_NAMED("SearchableComboView")
 @interface iTermSearchableComboView : NSPopUpButton
 @property (nonatomic, weak) id <iTermSearchableComboViewDelegate> _Nullable delegate;
-- (nullable instancetype)initWithCoder:(NSCoder * _Nonnull)coder SWIFT_UNAVAILABLE;
-- (nonnull instancetype)initWithGroups:(NSArray<iTermSearchableComboViewGroup *> * _Nonnull)groups OBJC_DESIGNATED_INITIALIZER;
++ (NSArray<iTermSearchableComboViewGroup *> * _Nonnull)groups SWIFT_WARN_UNUSED_RESULT;
+- (nullable instancetype)initWithCoder:(NSCoder * _Nonnull)coder OBJC_DESIGNATED_INITIALIZER;
+- (nonnull instancetype)initWithGroups:(NSArray<iTermSearchableComboViewGroup *> * _Nonnull)groups defaultTitle:(NSString * _Nonnull)defaultTitle OBJC_DESIGNATED_INITIALIZER;
 - (BOOL)selectItemWithTag:(NSInteger)tag SWIFT_WARN_UNUSED_RESULT;
+- (void)selectItemWithTitle:(NSString * _Nonnull)title;
 - (NSInteger)selectedTag SWIFT_WARN_UNUSED_RESULT;
 - (void)willOpenMenu:(NSMenu * _Nonnull)menu withEvent:(NSEvent * _Nonnull)event;
+@property (nonatomic, readonly, strong) NSMenuItem * _Nullable selectedItem;
 - (nonnull instancetype)initWithFrame:(NSRect)buttonFrame pullsDown:(BOOL)flag SWIFT_UNAVAILABLE;
 - (nonnull instancetype)initWithFrame:(NSRect)frameRect SWIFT_UNAVAILABLE;
 @end
@@ -498,7 +508,6 @@ SWIFT_PROTOCOL_NAMED("SearchableComboViewDelegate")
 - (void)searchableComboView:(iTermSearchableComboView * _Nonnull)view didSelectItem:(iTermSearchableComboViewItem * _Nullable)didSelectItem;
 @end
 
-@class NSString;
 
 SWIFT_CLASS_NAMED("SearchableComboViewGroup")
 @interface iTermSearchableComboViewGroup : NSObject
@@ -511,6 +520,7 @@ SWIFT_CLASS_NAMED("SearchableComboViewGroup")
 SWIFT_CLASS_NAMED("SearchableComboViewItem")
 @interface iTermSearchableComboViewItem : NSObject
 - (nonnull instancetype)initWithLabel:(NSString * _Nonnull)label tag:(NSInteger)tag OBJC_DESIGNATED_INITIALIZER;
+- (nonnull instancetype)initWithLabel:(NSString * _Nonnull)label tag:(NSInteger)tag identifier:(NSString * _Nullable)identifier OBJC_DESIGNATED_INITIALIZER;
 - (nonnull instancetype)init SWIFT_UNAVAILABLE;
 + (nonnull instancetype)new SWIFT_UNAVAILABLE_MSG("-init is unavailable");
 @end
