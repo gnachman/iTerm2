@@ -604,7 +604,7 @@ const CGFloat kDefaultTagsWidth = 80;
     if (hasTags) {
         return 6;
     } else {
-        return 2;
+        return 4;
     }
 }
 
