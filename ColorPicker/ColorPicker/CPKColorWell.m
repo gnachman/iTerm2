@@ -231,7 +231,10 @@
     NSButton *button = [[NSButton alloc] initWithFrame:frame];
     button.bordered = NO;
     button.image = image;
-    button.imagePosition = NSImageOnly;
+    button.title = @"Default Picker";
+    button.imagePosition = NSImageAbove;
+    [button sizeToFit];
+    frame = button.frame;
     [button setTarget:self];
     [button setAction:@selector(useColorPicker:)];
 
@@ -243,7 +246,9 @@
         image = [self cpk_imageNamed:@"NoColor"];
         button.bordered = NO;
         button.image = image;
-        button.imagePosition = NSImageOnly;
+        button.imagePosition = NSImageAbove;
+        button.title = @"No Color";
+        [button sizeToFit];
         [button setTarget:self];
         [button setAction:@selector(noColorChosenInSystemColorPicker:)];
         [container addSubview:button];
