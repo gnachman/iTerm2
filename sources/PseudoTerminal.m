@@ -178,6 +178,9 @@ static NSString *const TERMINAL_ARRANGEMENT_USE_TRANSPARENCY = @"Use Transparenc
 static NSString *const TERMINAL_ARRANGEMENT_TOOLBELT_PROPORTIONS = @"Toolbelt Proportions";
 static NSString *const TERMINAL_ARRANGEMENT_TITLE_OVERRIDE = @"Title Override";
 static NSString *const TERMINAL_ARRANGEMENT_TOOLBELT = @"Toolbelt";
+
+// This is used to adjust the window's size to preserve rows x cols when the scroller style changes.
+// If the window was maximized to the screen's visible frame, it will be unset to disable this behavior.
 static NSString *const TERMINAL_ARRANGEMENT_SCROLLER_WIDTH = @"Scroller Width";
 
 // Only present in arrangements created by the window restoration system, not (for example) saved arrangements in the UI.
@@ -3169,6 +3172,8 @@ ITERM_WEAKLY_REFERENCEABLE
             case WINDOW_TYPE_COMPACT:
                 DLog(@"Needs width adjustment and sanitization.");
                 frame = [PseudoTerminal sanitizedWindowFrame:[self rectByAdjustingWidth:rect]];
+                DLog(@"Set width adjustment to 0 for %@", self);
+                _widthAdjustment = 0;
                 break;
 
             case WINDOW_TYPE_LEFT:
@@ -3382,10 +3387,23 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 
     const CGFloat scrollerWidth = iTermScrollbarWidth();
-    result[TERMINAL_ARRANGEMENT_SCROLLER_WIDTH] = @(scrollerWidth);
-    DLog(@"Save scroller width of %@", @(scrollerWidth));
+    if (![self isMaximized]) {
+        result[TERMINAL_ARRANGEMENT_SCROLLER_WIDTH] = @(scrollerWidth);
+        DLog(@"Save scroller width of %@", @(scrollerWidth));
+    } else {
+        DLog(@"Window is maximized so don't save scroller width.");
+    }
 
     return YES;
+}
+
+- (BOOL)isMaximized {
+    if (self.window.screen == nil) {
+        return NO;
+    }
+    return iTermApproximatelyEqualRects(self.window.frame,
+                                        self.window.screen.visibleFrame,
+                                        0.5);
 }
 
 - (NSDictionary*)arrangement {
