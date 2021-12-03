@@ -3481,7 +3481,6 @@
 		A6C763DA1B45C6DD00E3C992 /* NSWindow+PSM.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E9ACC91A19956D008B0B6F /* NSWindow+PSM.m */; };
 		A6C763DB1B45C6DD00E3C992 /* PSMDarkTabStyle.m in Sources */ = {isa = PBXBuildFile; fileRef = D3CE2D4D1A00936F0098ED99 /* PSMDarkTabStyle.m */; };
 		A6C763DC1B45C6DD00E3C992 /* PSMOverflowPopUpButton.m in Sources */ = {isa = PBXBuildFile; fileRef = DD02572A09CB9398008F320C /* PSMOverflowPopUpButton.m */; };
-		A6C763DD1B45C6DD00E3C992 /* PSMProgressIndicator.m in Sources */ = {isa = PBXBuildFile; fileRef = DD02572D09CB9398008F320C /* PSMProgressIndicator.m */; };
 		A6C763DF1B45C6DD00E3C992 /* PSMTabBarCell.m in Sources */ = {isa = PBXBuildFile; fileRef = DD02573109CB9398008F320C /* PSMTabBarCell.m */; };
 		A6C763E01B45C6DD00E3C992 /* PSMTabBarControl.m in Sources */ = {isa = PBXBuildFile; fileRef = DD02573309CB9398008F320C /* PSMTabBarControl.m */; };
 		A6C763E11B45C6DD00E3C992 /* PSMTabDragAssistant.m in Sources */ = {isa = PBXBuildFile; fileRef = F6E708B80A9D0EA400D0C4EF /* PSMTabDragAssistant.m */; };
@@ -3644,6 +3643,7 @@
 		A6DF91B62477B38700FB9F42 /* iTermMissionControlHacks.m in Sources */ = {isa = PBXBuildFile; fileRef = A6DF91B42477B38700FB9F42 /* iTermMissionControlHacks.m */; };
 		A6E112D625C615B400875D27 /* iTermHighlightLineTrigger.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E112D425C615B400875D27 /* iTermHighlightLineTrigger.h */; };
 		A6E112D725C615B400875D27 /* iTermHighlightLineTrigger.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E112D525C615B400875D27 /* iTermHighlightLineTrigger.m */; };
+		A6E14D7B275AC0E600D0F41C /* PSMProgressIndicator.m in Sources */ = {isa = PBXBuildFile; fileRef = DD02572D09CB9398008F320C /* PSMProgressIndicator.m */; };
 		A6E16C5F24A85D5F00C6DB06 /* BigSurAddTab@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A6E16C5D24A85D5E00C6DB06 /* BigSurAddTab@2x.png */; };
 		A6E16C6024A85D5F00C6DB06 /* BigSurAddTab@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A6E16C5D24A85D5E00C6DB06 /* BigSurAddTab@2x.png */; };
 		A6E16C6124A85D5F00C6DB06 /* BigSurAddTab@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A6E16C5D24A85D5E00C6DB06 /* BigSurAddTab@2x.png */; };
@@ -14690,6 +14690,7 @@
 				A63011CD20E851E0008114B7 /* iTermStatusBarSpringComponent.m in Sources */,
 				539E4ECE22E172360084FE9A /* iTermAutomaticProfileSwitcher.m in Sources */,
 				A6866B6223C856A700ACD94C /* iTermAnnouncementViewController.m in Sources */,
+				A6E14D7B275AC0E600D0F41C /* PSMProgressIndicator.m in Sources */,
 				5370679F21C9D2780088D0F3 /* SIGCertificate.m in Sources */,
 				A6A4866720B6780C00493302 /* iTermAdvancedSettingsModel.m in Sources */,
 				A60E045A26DD537B00DD162B /* AsyncFilter.swift in Sources */,
@@ -15197,7 +15198,6 @@
 				A6C763BD1B45C52B00E3C992 /* iTermTipRootView.m in Sources */,
 				A6C763BE1B45C52B00E3C992 /* iTermTipWindowController.m in Sources */,
 				A6CEC0731DCE80C9009F4FD2 /* Api.pbobjc.m in Sources */,
-				A6C763DD1B45C6DD00E3C992 /* PSMProgressIndicator.m in Sources */,
 				A6C763B11B45C52B00E3C992 /* HighlightTrigger.m in Sources */,
 				A6C7638E1B45C52B00E3C992 /* iTermShellHistoryController.m in Sources */,
 				A6C762E91B45C52B00E3C992 /* VT100Screen.m in Sources */,

@@ -19,10 +19,62 @@
 
 @end
 
-@implementation PSMProgressIndicator {
+@interface PSMNativeProgressIndicator : PSMProgressIndicator
+@end
+
+@interface PSMCustomProgressIndicator: PSMProgressIndicator
+@end
+
+@implementation PSMProgressIndicator
+
++ (instancetype)allocWithZone:(struct _NSZone *)zone {
+    if (self != [PSMProgressIndicator class]) {
+        return [super allocWithZone:zone];
+    }
+    if (@available(macOS 12, *)) {
+        return [PSMNativeProgressIndicator alloc];
+    }
+    return [PSMCustomProgressIndicator alloc];
+}
+
+@end
+
+@implementation PSMNativeProgressIndicator {
+    NSProgressIndicator *_indicator;
+}
+
+- (instancetype)initWithFrame:(NSRect)frameRect {
+    self = [super initWithFrame:frameRect];
+    if (self) {
+        _indicator = [[NSProgressIndicator alloc] initWithFrame:self.bounds];
+        _indicator.style = NSProgressIndicatorStyleSpinning;
+        [self addSubview:_indicator];
+    }
+    return self;
+}
+
+- (void)setAnimate:(BOOL)animate {
+    if (animate == [self animate]) {
+        return;
+    }
+    [super setAnimate:animate];
+    if (animate) {
+        [_indicator startAnimation:nil];
+    } else {
+        [_indicator stopAnimation:nil];
+    }
+}
+
+- (void)setLight:(BOOL)light {
+    _indicator.appearance = light ? [NSAppearance appearanceNamed:NSAppearanceNameDarkAqua] : [NSAppearance appearanceNamed:NSAppearanceNameAqua];
+}
+
+@end
+
+
+@implementation PSMCustomProgressIndicator {
     AMIndeterminateProgressIndicator *_lightIndicator;
     AMIndeterminateProgressIndicator *_darkIndicator;
-    BOOL _light;
 }
 
 - (id)initWithFrame:(NSRect)frameRect {
@@ -40,16 +92,10 @@
     return self;
 }
 
-- (void)dealloc {
-    [_darkIndicator release];
-    [_lightIndicator release];
-    [super dealloc];
-}
-
 - (void)setHidden:(BOOL)flag {
     [super setHidden:flag];
-    [_delegate progressIndicatorNeedsUpdate];
-    if (_animate && flag) {
+    [self.delegate progressIndicatorNeedsUpdate];
+    if (self.animate && flag) {
         [self stopAnimation:nil];
     }
 }
@@ -73,7 +119,7 @@
 }
 
 - (void)setLight:(BOOL)light {
-    if (light == _light) {
+    if (light == self.light) {
         return;
     }
 
@@ -81,17 +127,17 @@
     [self.currentIndicator setHidden:YES];
     [self.currentIndicator stopAnimation:nil];
 
-    _light = light;
+    [super setLight:light];
 
     [self.currentIndicator setHidden:shouldHide];
-    if (!shouldHide && _animate) {
+    if (!shouldHide && self.animate) {
         [self.currentIndicator startAnimation:nil];
     }
 }
 
 - (void)setAnimate:(BOOL)animate {
-    if (animate != _animate) {
-        _animate = animate;
+    if (animate != self.animate) {
+        [super setAnimate:animate];
         if (animate && !self.isHidden) {
             [self startAnimation:nil];
         } else {
