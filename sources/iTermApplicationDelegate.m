@@ -440,6 +440,10 @@ static BOOL hasBecomeActive = NO;
             return [realResponder validateMenuItem:menuItem];
         }
         return YES;
+    } else if (menuItem.action == @selector(toggleDisableTransparencyForActiveWindow:)) {
+        const BOOL value = [iTermPreferences boolForKey:kPreferenceKeyDisableTransparencyForKeyWindow];
+        menuItem.state = value ? NSControlStateValueOn : NSControlStateValueOff;
+        return YES;
     } else {
         return YES;
     }
@@ -1999,6 +2003,12 @@ void TurnOnDebugLoggingAutomatically(void) {
 - (IBAction)toggleUseTransparency:(id)sender {
     [[[iTermController sharedInstance] currentTerminal] toggleUseTransparency:sender];
     [self updateUseTransparencyMenuItem];
+}
+
+- (IBAction)toggleDisableTransparencyForActiveWindow:(id)sender {
+    const BOOL oldValue = [iTermPreferences boolForKey:kPreferenceKeyDisableTransparencyForKeyWindow];
+    [iTermPreferences setBool:!oldValue forKey:kPreferenceKeyDisableTransparencyForKeyWindow];
+    [[[NSApp keyWindow] contentView] setNeedsDisplay:YES];
 }
 
 - (IBAction)toggleSecureInput:(id)sender {

@@ -112,6 +112,7 @@
 #import "iTermTmuxStatusBarMonitor.h"
 #import "iTermTmuxOptionMonitor.h"
 #import "iTermUpdateCadenceController.h"
+#import "iTermUserDefaultsObserver.h"
 #import "iTermVariableReference.h"
 #import "iTermVariableScope.h"
 #import "iTermVariableScope+Global.h"
@@ -651,6 +652,7 @@ static const CGFloat PTYSessionMaximumMetalViewSize = 16384;
 
     // Have we finished loading the address book and color map initially?
     BOOL _profileInitialized;
+    iTermUserDefaultsObserver *_disableTransparencyInKeyWindowObserver;
 }
 
 @synthesize isDivorced = _divorced;
@@ -817,6 +819,12 @@ static const CGFloat PTYSessionMaximumMetalViewSize = 16384;
         standardKeyMapper.delegate = self;
         _keyMapper = standardKeyMapper;
         _expect = [[iTermExpect alloc] init];
+        _disableTransparencyInKeyWindowObserver = [[iTermUserDefaultsObserver alloc] init];
+        [_disableTransparencyInKeyWindowObserver observeKey:kPreferenceKeyDisableTransparencyForKeyWindow block:^{
+            dispatch_async(dispatch_get_main_queue(), ^{
+                [weakSelf useTransparencyDidChange];
+            });
+        }];
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(coprocessChanged)
                                                      name:kCoprocessStatusChangeNotification
@@ -895,6 +903,7 @@ static const CGFloat PTYSessionMaximumMetalViewSize = 16384;
         if (!synthetic) {
             [[NSNotificationCenter defaultCenter] postNotificationName:PTYSessionCreatedNotification object:self];
         }
+        
         DLog(@"Done initializing new PTYSession %@", self);
     }
     return self;
@@ -1040,6 +1049,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_asyncFilter release];
     [_contentSubscribers release];
     [_foundingArrangement release];
+    [_disableTransparencyInKeyWindowObserver release];
 
     [super dealloc];
 }

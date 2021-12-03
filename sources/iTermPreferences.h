@@ -212,6 +212,8 @@ extern NSString *const kPreferenceKeyActions;
 // it is array-valued.
 extern NSString *const kPreferenceKeySnippets;
 
+extern NSString *const kPreferenceKeyDisableTransparencyForKeyWindow;
+
 @interface iTermPreferences : NSObject
 
 // This should be called early during startup to set user defaults keys that fix problematic Apple

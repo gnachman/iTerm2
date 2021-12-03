@@ -1865,6 +1865,9 @@
 }
 
 - (double)transparencyAlpha {
+    if (self.window.isKeyWindow && [iTermPreferences boolForKey:kPreferenceKeyDisableTransparencyForKeyWindow]) {
+        return 1;
+    }
     return [self useTransparency] ? 1.0 - _transparency : 1.0;
 }
 

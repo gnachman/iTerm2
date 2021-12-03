@@ -103,6 +103,7 @@ class PreferenceKey(enum.Enum):
     TEXT_SIZE_CHANGES_AFFECT_PROFILE = "Size Changes Affect Profile"  #: Does increasing/decreasing text size update the backing profile? Takes a boolean.
     ACTIONS = "Actions"  #: Array of dictionaries defining actions.
     HTML_TAB_TITLES = "HTMLTabTitles"  #: Support basic HTML tags in tab titles
+    DISABLE_TRANSPARENCY_FOR_KEY_WINDOW = "DisableTransparencyForKeyWindow"  #: Force key window to be opaque?
 
 # pylint: enable=line-too-long
 
