@@ -28,7 +28,7 @@
         return nil;
     }
     MTKTextureLoader *loader = [[MTKTextureLoader alloc] initWithDevice:device];
-    NSDictionary *options = @{ MTKTextureLoaderOptionTextureStorageMode: @(MTLStorageModeShared) };
+    NSDictionary *options = @{ MTKTextureLoaderOptionTextureStorageMode: @(MTLStorageModeManaged) };
     NSArray<id<MTLTexture>> *textures = [images mapWithBlock:^id(NSImage *image) {
         // MTKTextureLoader is a piece of shit, but try it first in an act of good faith that I will
         // probably regret later.
