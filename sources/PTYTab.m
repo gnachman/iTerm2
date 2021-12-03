@@ -719,7 +719,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 }
 
 - (void)updateTabTitleForCurrentSessionName:(NSString *)newName {
-    static NSString *const tmuxPrefix = @"↣ ";
+    NSString *const tmuxPrefix = [iTermAdvancedSettingsModel tmuxTitlePrefix];
     NSString *value = self.variablesScope.tabTitleOverride;
     if (value.length == 0) {
         if (self.tmuxTab) {
@@ -4434,7 +4434,9 @@ typedef struct {
     if (self.titleOverride.length == 0) {
         // Show the tmux window title if both the tmux option set-titles is on and the user hasn't
         // already set a title override.
-        self.variablesScope.tabTitleOverrideFormat = [NSString stringWithFormat:@"↣ \\(%@?)", iTermVariableKeyTabTmuxWindowTitle];
+        self.variablesScope.tabTitleOverrideFormat = [NSString stringWithFormat:@"%@\\(%@?)",
+                                                      [iTermAdvancedSettingsModel tmuxTitlePrefix],
+                                                      iTermVariableKeyTabTmuxWindowTitle];
     }
 }
 

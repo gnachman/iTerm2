@@ -525,6 +525,8 @@ DEFINE_BOOL(disableTmuxWindowPositionRestoration, NO, SECTION_TMUX @"Disable win
 DEFINE_BOOL(disableTmuxWindowResizing, YES, SECTION_TMUX @"Don't automatically resize tmux windows");
 DEFINE_BOOL(anonymousTmuxWindowsOpenInCurrentWindow, YES, SECTION_TMUX @"Should new tmux windows not created by iTerm2 open in the current window?\nIf set to No, they will open in new windows.");
 DEFINE_BOOL(pollForTmuxForegroundJob, NO, SECTION_TMUX @"Poll for foreground job name in tmux integration with tmux < 3.2?\nThis enables tab icons but can cause a lot of background traffic. This has no effect in tmux 3.2 and later, where polling is unnecessary.");
+DEFINE_STRING(tmuxTitlePrefix, @"↣ ", SECTION_TMUX @"Insert this string at the start of tab and window titles to indicate tmux integration.");
+DEFINE_BOOL(tmuxIncludeClientNameInWindowTitle, YES, SECTION_TMUX @"When using tmux integration, should the tmux client name (typically the name of the attaching session or the host name) appear in brackets in the window title?");
 
 #pragma mark Warnings
 

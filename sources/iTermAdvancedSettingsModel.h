@@ -336,6 +336,8 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (double)timeoutForStringEvaluation;
 + (double)timeoutForDaemonAttachment;
 + (double)timeToWaitForEmojiPanel;
++ (BOOL)tmuxIncludeClientNameInWindowTitle;
++ (NSString *)tmuxTitlePrefix;
 + (BOOL)tmuxVariableWindowSizesSupported;
 + (const BOOL *)tmuxWindowsShouldCloseAfterDetach;
 + (void)setTmuxWindowsShouldCloseAfterDetach:(const BOOL *)value;

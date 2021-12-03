@@ -2338,7 +2338,8 @@ ITERM_WEAKLY_REFERENCEABLE
 
     if ([iTermPreferences boolForKey:kPreferenceKeyShowWindowNumber]) {
         NSString *tmuxId = @"";
-        if ([[self currentSession] isTmuxClient]) {
+        if ([[self currentSession] isTmuxClient] &&
+            [iTermAdvancedSettingsModel tmuxIncludeClientNameInWindowTitle]) {
             NSString *clientName = [[[self currentSession] tmuxController] clientName];
             if (clientName) {
                 tmuxId = [NSString stringWithFormat:@" [%@]", clientName];

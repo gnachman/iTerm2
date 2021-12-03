@@ -9,6 +9,7 @@
 
 #import "DebugLogging.h"
 #import "ITAddressBookMgr.h"
+#import "iTermAdvancedSettingsModel.h"
 #import "iTermAPIHelper.h"
 #import "iTermBuiltInFunctions.h"
 #import "iTermExpressionParser.h"
@@ -334,7 +335,7 @@ NSString *const iTermSessionNameControllerSystemTitleUniqueIdentifier = @"com.it
 - (NSString *)formattedName:(NSString *)base {
     iTermSessionFormattingDescriptor *descriptor = [self.delegate sessionNameControllerFormattingDescriptor];
     if (descriptor.isTmuxGateway) {
-        return [NSString stringWithFormat:@"[↣ %@ %@]", base, descriptor.tmuxClientName];
+        return [NSString stringWithFormat:@"[%@%@ %@]", [iTermAdvancedSettingsModel tmuxTitlePrefix], base, descriptor.tmuxClientName];
     }
     if (descriptor.haveTmuxController) {
         // There won't be a valid job name, and the profile name is always tmux, so just show the
@@ -343,9 +344,9 @@ NSString *const iTermSessionNameControllerSystemTitleUniqueIdentifier = @"com.it
         // because the real name comes from the server and that's all we care about.
         if (self.delegate.sessionNameControllerUniqueIdentifier) {
             // Using a custom title provider.
-            return [NSString stringWithFormat:@"↣ %@", base];
+            return [NSString stringWithFormat:@"%@%@", [iTermAdvancedSettingsModel tmuxTitlePrefix], base];
         } else {
-            return [NSString stringWithFormat:@"↣ %@", descriptor.tmuxWindowName];
+            return [NSString stringWithFormat:@"%@%@", [iTermAdvancedSettingsModel tmuxTitlePrefix], descriptor.tmuxWindowName];
         }
     }
     return base;

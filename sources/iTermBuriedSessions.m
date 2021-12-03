@@ -9,6 +9,7 @@
 #import "iTermBuriedSessions.h"
 
 #import "DebugLogging.h"
+#import "iTermAdvancedSettingsModel.h"
 #import "iTermApplication.h"
 #import "iTermProfilePreferences.h"
 #import "iTermRestorableSession.h"
@@ -180,7 +181,7 @@ NSString *const iTermSessionBuriedStateChangeTabNotification = @"iTermSessionBur
         if (!clientName.length) {
             clientName = @"tmux";
         }
-        NSString *title = [NSString stringWithFormat:@"↣ %@ — %@", clientName, window.name];
+        NSString *title = [NSString stringWithFormat:@"%@%@ — %@", [iTermAdvancedSettingsModel tmuxTitlePrefix], clientName, window.name];
         NSMenuItem *item = [[NSMenuItem alloc] initWithTitle:title
                                                       action:@selector(disinterTmuxWindow:)
                                                keyEquivalent:@""];
