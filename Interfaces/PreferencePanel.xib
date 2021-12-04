@@ -1063,6 +1063,8 @@ DQ
                 <outlet property="_advancedGPU" destination="2nT-Ny-kwd" id="0Md-l7-fQI"/>
                 <outlet property="_advancedGPUPrefsButton" destination="2nT-Ny-kwd" id="O9q-ng-5kk"/>
                 <outlet property="_allowClipboardAccessFromTerminal" destination="6383" id="u1Z-Xo-qFM"/>
+                <outlet property="_alwaysOpenLegend" destination="iD8-Rh-JRW" id="91q-Tv-AAQ"/>
+                <outlet property="_alwaysOpenWindowAtStartup" destination="OWt-qh-bb4" id="Vgm-z3-6Qq"/>
                 <outlet property="_apiPermission" destination="kIb-n8-d33" id="uni-VJ-Bxf"/>
                 <outlet property="_autoHideTmuxClientSession" destination="6366" id="V9B-um-JRL"/>
                 <outlet property="_browseCustomFolder" destination="5618" id="0Ty-gp-K5Q"/>
@@ -4746,11 +4748,11 @@ DQ
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                 <subviews>
                                     <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="La3-md-S0L" customClass="iTermPreferencesInnerTabContainerView">
-                                        <rect key="frame" x="93" y="384" width="569" height="84"/>
+                                        <rect key="frame" x="93" y="361" width="569" height="107"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMinY="YES"/>
                                         <subviews>
                                             <popUpButton verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="cZL-gb-ECo">
-                                                <rect key="frame" x="188" y="39" width="297" height="26"/>
+                                                <rect key="frame" x="188" y="62" width="297" height="26"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <popUpButtonCell key="cell" type="push" title="Open Default Window Arrangement" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" tag="1" imageScaling="proportionallyDown" inset="2" autoenablesItems="NO" selectedItem="nMp-ky-1KX" id="TIr-9J-Y7W">
                                                     <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
@@ -4768,7 +4770,7 @@ DQ
                                                 </connections>
                                             </popUpButton>
                                             <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="64T-Y0-ROF">
-                                                <rect key="frame" x="18" y="46" width="166" height="16"/>
+                                                <rect key="frame" x="18" y="69" width="166" height="16"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <textFieldCell key="cell" lineBreakMode="clipping" title="Window restoration policy:" id="ggI-iG-lBw">
                                                     <font key="font" metaFont="system"/>
@@ -4777,7 +4779,7 @@ DQ
                                                 </textFieldCell>
                                             </textField>
                                             <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="1959">
-                                                <rect key="frame" x="188" y="18" width="163" height="18"/>
+                                                <rect key="frame" x="188" y="41" width="163" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="check" title="Open profiles window" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="1960">
                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -4787,8 +4789,20 @@ DQ
                                                     <action selector="settingChanged:" target="9Se-ld-UJa" id="1gO-ml-ecT"/>
                                                 </connections>
                                             </button>
+                                            <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="OWt-qh-bb4">
+                                                <rect key="frame" x="189" y="19" width="341" height="18"/>
+                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                <string key="toolTip">When you have selected “Use System Window Restoration Policy”, iTerm2 will not open a new window on launch if there are auto-launch scripts, a hotkey window is defined, or there are any buried sessions. Enable this to force a new window to be opened regardless.</string>
+                                                <buttonCell key="cell" type="check" title="Always open at least one terminal window at startup" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="b5z-Sg-ADk">
+                                                    <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                                                    <font key="font" metaFont="system"/>
+                                                </buttonCell>
+                                                <connections>
+                                                    <action selector="settingChanged:" target="9Se-ld-UJa" id="H9e-b2-p6G"/>
+                                                </connections>
+                                            </button>
                                             <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="d3j-d3-YO1">
-                                                <rect key="frame" x="485" y="44" width="23" height="20"/>
+                                                <rect key="frame" x="485" y="67" width="23" height="20"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="bevel" title="⚠️" bezelStyle="rounded" alignment="center" imageScaling="proportionallyDown" inset="2" id="guj-u2-dA0">
                                                     <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
@@ -4798,6 +4812,15 @@ DQ
                                                     <action selector="warning:" target="9Se-ld-UJa" id="BKs-vE-c7P"/>
                                                 </connections>
                                             </button>
+                                            <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="iD8-Rh-JRW">
+                                                <rect key="frame" x="209" y="7" width="342" height="11"/>
+                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                <textFieldCell key="cell" controlSize="mini" lineBreakMode="clipping" title="Reason this is useful goes here" id="zhD-Mp-msg">
+                                                    <font key="font" metaFont="miniSystem"/>
+                                                    <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                                                    <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                                </textFieldCell>
+                                            </textField>
                                         </subviews>
                                     </customView>
                                 </subviews>

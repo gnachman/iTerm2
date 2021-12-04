@@ -431,11 +431,11 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 - (BOOL)scriptShouldAutoLaunchWithFullPath:(NSString *)fullPath {
-    return [fullPath hasPrefix:[[self autolaunchScriptPath] stringByAppendingString:@"/"]];
+    return [fullPath hasPrefix:[[iTermScriptsMenuController autolaunchScriptPath] stringByAppendingString:@"/"]];
 }
 
 - (NSString *)autoLaunchPathIfFullPathWereMovedToAutoLaunch:(NSString *)fullPath {
-    return [[self autolaunchScriptPath] stringByAppendingPathComponent:fullPath.lastPathComponent];
+    return [[iTermScriptsMenuController autolaunchScriptPath] stringByAppendingPathComponent:fullPath.lastPathComponent];
 }
 
 - (BOOL)couldMoveScriptToAutoLaunch:(NSString *)fullPath {
@@ -445,11 +445,11 @@ NS_ASSUME_NONNULL_BEGIN
     if (![[NSFileManager defaultManager] fileExistsAtPath:fullPath]) {
         return NO;
     }
-    [[NSFileManager defaultManager] createDirectoryAtPath:[self autolaunchScriptPath]
+    [[NSFileManager defaultManager] createDirectoryAtPath:[iTermScriptsMenuController autolaunchScriptPath]
                               withIntermediateDirectories:YES
                                                attributes:nil
                                                     error:nil];
-    if (![[NSFileManager defaultManager] fileExistsAtPath:[self autolaunchScriptPath]]) {
+    if (![[NSFileManager defaultManager] fileExistsAtPath:[iTermScriptsMenuController autolaunchScriptPath]]) {
         return NO;
     }
 
@@ -461,7 +461,7 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 - (void)moveScriptToAutoLaunch:(NSString *)fullPath {
-    [[NSFileManager defaultManager] createDirectoryAtPath:[self autolaunchScriptPath]
+    [[NSFileManager defaultManager] createDirectoryAtPath:[iTermScriptsMenuController autolaunchScriptPath]
                               withIntermediateDirectories:YES
                                                attributes:nil
                                                     error:nil];
@@ -1028,23 +1028,27 @@ NS_ASSUME_NONNULL_BEGIN
     [alert runModal];
 }
 
-- (NSString *)autolaunchScriptPath {
++ (NSString *)autolaunchScriptPath {
     return [[NSFileManager defaultManager] autolaunchScriptPath];
 }
 
-- (NSString *)legacyAutolaunchScriptPath {
++ (NSString *)legacyAutolaunchScriptPath {
     return [[NSFileManager defaultManager] legacyAutolaunchScriptPath];
+}
+
++ (BOOL)autoLaunchFolderExists {
+    if (![[NSFileManager defaultManager] homeDirectoryDotDir]) {
+        return NO;
+    }
+    return ([[NSFileManager defaultManager] fileExistsAtPath:iTermScriptsMenuController.legacyAutolaunchScriptPath] ||
+            [[NSFileManager defaultManager] fileExistsAtPath:iTermScriptsMenuController.autolaunchScriptPath]);
 }
 
 - (BOOL)shouldRunAutoLaunchScripts {
     if (_ranAutoLaunchScript) {
         return NO;
     }
-    if (![[NSFileManager defaultManager] homeDirectoryDotDir]) {
-        return NO;
-    }
-    return ([[NSFileManager defaultManager] fileExistsAtPath:self.legacyAutolaunchScriptPath] ||
-            [[NSFileManager defaultManager] fileExistsAtPath:self.autolaunchScriptPath]);
+    return [iTermScriptsMenuController autoLaunchFolderExists];
 }
 
 - (void)runAutoLaunchScripts {
@@ -1078,7 +1082,7 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 - (void)runLegacyAutoLaunchScripts {
-    NSURL *aURL = [NSURL fileURLWithPath:self.legacyAutolaunchScriptPath];
+    NSURL *aURL = [NSURL fileURLWithPath:iTermScriptsMenuController.legacyAutolaunchScriptPath];
 
     // Make sure our script suite registry is loaded
     [NSScriptSuiteRegistry sharedScriptSuiteRegistry];

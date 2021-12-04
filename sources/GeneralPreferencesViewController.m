@@ -11,9 +11,12 @@
 #import "iTermAPIHelper.h"
 #import "iTermAdvancedGPUSettingsViewController.h"
 #import "iTermApplicationDelegate.h"
+#import "iTermBuriedSessions.h"
+#import "iTermHotKeyController.h"
 #import "iTermNotificationCenter.h"
 #import "iTermPreferenceDidChangeNotification.h"
 #import "iTermRemotePreferences.h"
+#import "iTermScriptsMenuController.h"
 #import "iTermShellHistoryController.h"
 #import "iTermUserDefaultsObserver.h"
 #import "iTermWarning.h"
@@ -38,6 +41,8 @@ enum {
     // Open saved window arrangement at startup
     IBOutlet NSPopUpButton *_openWindowsAtStartup;
     IBOutlet NSTextField *_openWindowsAtStartupLabel;
+    IBOutlet NSButton *_alwaysOpenWindowAtStartup;
+    IBOutlet NSTextField *_alwaysOpenLegend;
 
     IBOutlet NSMenuItem *_openDefaultWindowArrangementItem;
 
@@ -152,6 +157,10 @@ enum {
                                                  selector:@selector(didRevertPythonAuthenticationMethod:)
                                                      name:iTermAPIHelperDidDetectChangeOfPythonAuthMethodNotification
                                                    object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(updateAlwaysOpenLegend)
+                                                     name:iTermSessionBuriedStateChangeTabNotification
+                                                   object:nil];
         _observer = [[iTermUserDefaultsObserver alloc] init];
         __weak __typeof(self) weakSelf = self;
         [_observer observeKey:@"NSQuitAlwaysKeepsWindows" block:^{
@@ -213,6 +222,13 @@ enum {
              return YES;
          }];
     [_openDefaultWindowArrangementItem setEnabled:[WindowArrangements count] > 0];
+
+    [self defineControl:_alwaysOpenWindowAtStartup
+                    key:kPreferenceKeyAlwaysOpenWindowAtStartup
+            relatedView:nil
+                   type:kPreferenceInfoTypeCheckbox];
+    [self updateAlwaysOpenLegend];
+
     [self defineControl:_quitWhenAllWindowsClosed
                     key:kPreferenceKeyQuitWhenAllWindowsClosed
             relatedView:nil
@@ -513,10 +529,43 @@ enum {
     [self commitControls];
 }
 
+- (NSString *)alwaysOpenLegend {
+    if ([iTermScriptsMenuController autoLaunchFolderExists]) {
+        return @"The presence of auto-launch scripts disables opening a window at startup.";
+    }
+    if ([[[iTermHotKeyController sharedInstance] profileHotKeys] count] > 0) {
+        return @"The existence of hotkey windows disables opening a window at startup.";
+    }
+    if ([[[iTermBuriedSessions sharedInstance] buriedSessions] count] > 0) {
+        return @"The existence of buried sessions disables opening a window at startup.";
+    }
+    return nil;
+}
+
+- (void)updateAlwaysOpenLegend {
+    NSString *legend = [self alwaysOpenLegend];
+    if (!legend) {
+        _alwaysOpenLegend.hidden = YES;
+        return;
+    }
+    _alwaysOpenLegend.stringValue = legend;
+    _alwaysOpenLegend.hidden = NO;
+}
+
 - (void)updateAPIEnabledState {
     _enableAPI.state = [self boolForKey:kPreferenceKeyEnableAPIServer];
     [_apiPermission selectItemWithTag:[iTermAPIHelper requireApplescriptAuth] ? 0 : 1];
     [self updateEnabledState];
+}
+
+- (BOOL)shouldEnableAlwaysOpenWindowAtStartup {
+    if ([self boolForKey:kPreferenceKeyOpenArrangementAtStartup]) {
+        return NO;
+    }
+    if ([self boolForKey:kPreferenceKeyOpenNoWindowsAtStartup]) {
+        return NO;
+    }
+    return YES;
 }
 
 - (void)updateEnabledState {
@@ -527,6 +576,7 @@ enum {
                                              ![self boolForKey:kPreferenceKeyOpenNoWindowsAtStartup]);
     const BOOL systemRestorationEnabled = [[NSUserDefaults standardUserDefaults] boolForKey:@"NSQuitAlwaysKeepsWindows"];
     _warningButton.hidden = (!useSystemWindowRestoration || systemRestorationEnabled);
+    _alwaysOpenWindowAtStartup.enabled = [self shouldEnableAlwaysOpenWindowAtStartup];
 }
 
 - (void)updateAdvancedGPUEnabled {
@@ -603,6 +653,12 @@ enum {
 - (void)didRevertPythonAuthenticationMethod:(NSNotification *)notification {
     [self updateAPIEnabledState];
 }
+
+- (void)preferenceDidChangeFromOtherPanel:(NSNotification *)notification {
+    [self updateAlwaysOpenLegend];
+    [super preferenceDidChangeFromOtherPanel:notification];
+}
+
 
 #pragma mark - Remote Prefs
 

@@ -24,6 +24,8 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, strong) NSMenuItem *installRuntimeMenuItem;
 @property (nonatomic, readonly) NSArray<NSString *> *allScripts;
 
++ (BOOL)autoLaunchFolderExists;
+
 - (NSArray<iTermScriptItem *> *)scriptItems;
 
 - (instancetype)init NS_UNAVAILABLE;
