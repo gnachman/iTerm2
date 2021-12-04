@@ -17,6 +17,7 @@
 #import "iTermTabBarControlView.h"
 #import "iTermWindowShortcutLabelTitlebarAccessoryViewController.h"
 #import "NSDate+iTerm.h"
+#import "NSScreen+iTerm.h"
 #import "NSWindow+iTerm.h"
 #import "SessionView.h"
 #import "PTYTab.h"
@@ -660,8 +661,7 @@ iTermWindowType iTermWindowTypeNormalized(iTermWindowType windowType) {
 
 - (NSRect)traditionalFullScreenFrameForScreen:(NSScreen *)screen {
     NSRect screenFrame = [screen frame];
-    NSRect frameMinusMenuBar = screenFrame;
-    frameMinusMenuBar.size.height -= [[[NSApplication sharedApplication] mainMenu] menuBarHeight];
+    NSRect frameMinusMenuBar = [screen frameExceptMenuBar];
     BOOL menuBarIsVisible = NO;
 
     if ([self fullScreenWindowFrameShouldBeShiftedDownBelowMenuBarOnScreen:screen]) {

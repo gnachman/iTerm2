@@ -211,6 +211,15 @@ static CGFloat iTermAreaOfIntersection(NSRect r1, NSRect r2) {
     return frame;
 }
 
+- (CGFloat)it_menuBarHeight {
+    if (@available(macOS 12, *)) {
+        // When the "current" screen has a notch, there doesn't seem to be a way to get the height
+        // of the menu bar on other screens :(
+        return MAX(24, self.safeAreaInsets.top);
+    }
+    return NSApp.mainMenu.menuBarHeight;
+}
+
 - (NSRect)frameExceptMenuBar {
     if ([[NSScreen screens] firstObject] == self || [NSScreen screensHaveSeparateSpaces]) {
         NSRect frame = self.frame;
@@ -219,7 +228,7 @@ static CGFloat iTermAreaOfIntersection(NSRect r1, NSRect r2) {
         // Use a collection of hacks to make a better guess.
         const CGFloat hackyGuess = NSHeight(self.frame) - NSHeight(self.visibleFrame) - NSMinY(self.visibleFrame) + NSMinY(self.frame) - 1;
         const CGFloat notchHeight = [self notchHeight];
-        frame.size.height -= MAX(MAX(hackyGuess, NSApp.mainMenu.menuBarHeight), notchHeight);
+        frame.size.height -= MAX(MAX(hackyGuess, [self it_menuBarHeight]), notchHeight);
         return frame;
     } else {
         return [self frameExceptNotch];

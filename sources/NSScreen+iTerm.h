@@ -38,8 +38,11 @@ typedef struct iTermScreenIdentifier {
 - (iTermScreenIdentifier)it_identifier;
 - (NSString *)it_uniqueName;
 - (NSString *)it_uniqueKey;
+
 - (BOOL)it_hasAnotherAppsFullScreenWindow;
 - (BOOL)it_supportsHighFrameRates;
+
+- (CGFloat)it_menuBarHeight;
 
 @end
 
