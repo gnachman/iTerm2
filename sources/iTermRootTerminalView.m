@@ -1243,6 +1243,11 @@ NS_CLASS_AVAILABLE_MAC(10_14)
     if (![_delegate fullScreen]) {
         return 0;
     }
+    const BOOL wantToHideMenuBar = [iTermPreferences boolForKey:kPreferenceKeyHideMenuBarInFullscreen];
+    if (!wantToHideMenuBar) {
+        // No need to use a notch mask because the menu bar serves that purpose.
+        return 0;
+    }
     const CGFloat fakeHeight = [iTermAdvancedSettingsModel fakeNotchHeight];
     if (fakeHeight > 0) {
         return fakeHeight;

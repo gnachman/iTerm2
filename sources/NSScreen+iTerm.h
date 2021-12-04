@@ -33,5 +33,6 @@ typedef struct iTermScreenIdentifier {
 - (iTermScreenIdentifier)it_identifier;
 - (NSString *)it_uniqueName;
 - (NSString *)it_uniqueKey;
+- (CGFloat)it_menuBarHeight;
 
 @end
