@@ -898,7 +898,7 @@ error:
                                      responseTarget:self
                                    responseSelector:@selector(noopResponseSelector:)
                                      responseObject:nil
-                                              flags:0];
+                                              flags:kTmuxGatewayCommandShouldTolerateErrors];
     return dict;
 }
 
