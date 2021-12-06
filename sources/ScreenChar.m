@@ -93,7 +93,7 @@ iTermTriState iTermTriStateFromBool(BOOL b) {
     return [[self alloc] initWithScreenChars:screenChars length:string.length];
 }
 
-- (instancetype)initWithScreenChars:(screen_char_t *)screenChars
+- (instancetype)initWithScreenChars:(const screen_char_t *)screenChars
                              length:(NSInteger)length {
     self = [super init];
     if (self) {
@@ -177,7 +177,7 @@ NSString *CharToStr(unichar code, BOOL isComplex) {
     }
 }
 
-int ExpandScreenChar(screen_char_t* sct, unichar* dest) {
+int ExpandScreenChar(const screen_char_t *sct, unichar* dest) {
     NSString* value = nil;
     if (sct->code == UNICODE_REPLACEMENT_CHAR) {
         value = ReplacementString();
@@ -437,7 +437,7 @@ BOOL IsHighSurrogate(unichar c)
     return c >= 0xd800 && c <= 0xdbff;
 }
 
-NSString* ScreenCharArrayToString(screen_char_t* screenChars,
+NSString* ScreenCharArrayToString(const screen_char_t *screenChars,
                                   int start,
                                   int end,
                                   unichar** backingStorePtr,
@@ -482,7 +482,7 @@ NSString* ScreenCharArrayToString(screen_char_t* screenChars,
     int delta = 0;
     int o = 0;
     for (int i = start; i < end; ++i) {
-        unichar c = screenChars[i].code;
+        const unichar c = screenChars[i].code;
         if (c >= ITERM2_PRIVATE_BEGIN && c <= ITERM2_PRIVATE_END) {
             // Skip private-use characters which signify things like double-width characters and
             // tab fillers.
@@ -524,14 +524,14 @@ void DumpScreenCharArray(screen_char_t* screenChars, int lineLength) {
     NSLog(@"%@", ScreenCharArrayToStringDebug(screenChars, lineLength));
 }
 
-NSString* ScreenCharArrayToStringDebug(screen_char_t* screenChars,
+NSString* ScreenCharArrayToStringDebug(const screen_char_t *screenChars,
                                        int lineLength) {
     while (lineLength > 0 && screenChars[lineLength - 1].code == 0) {
         --lineLength;
     }
     NSMutableString* result = [NSMutableString stringWithCapacity:lineLength];
     for (int i = 0; i < lineLength; ++i) {
-        unichar c = screenChars[i].code;
+        const unichar c = screenChars[i].code;
         if (c != 0 && c != DWC_RIGHT) {
             [result appendString:ScreenCharToStr(&screenChars[i]) ?: @"😮"];
         }

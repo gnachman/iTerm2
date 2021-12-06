@@ -51,7 +51,7 @@ typedef struct {
 
 // Try to append a line to the end of the buffer. Returns false if it does not fit. If length > buffer_size it will never succeed.
 // Callers should split such lines into multiple pieces.
-- (BOOL)appendLine:(screen_char_t*)buffer
+- (BOOL)appendLine:(const screen_char_t*)buffer
             length:(int)length
            partial:(BOOL)partial
              width:(int)width
@@ -61,7 +61,7 @@ typedef struct {
 // Try to get a line that is lineNum after the first line in this block after wrapping them to a given width.
 // If the line is present, return a pointer to its start and fill in *lineLength with the number of bytes in the line.
 // If the line is not present, decrement *lineNum by the number of lines in this block and return NULL.
-- (screen_char_t*)getWrappedLineWithWrapWidth:(int)width
+- (const screen_char_t *)getWrappedLineWithWrapWidth:(int)width
                                       lineNum:(int*)lineNum
                                    lineLength:(int*)lineLength
                             includesEndOfLine:(int*)includesEndOfLine
@@ -69,14 +69,14 @@ typedef struct {
 
 // Sets *yOffsetPtr (if not null) to the number of consecutive empty lines just before |lineNum| because
 // there's no way for the returned pointer to indicate this.
-- (screen_char_t *)getWrappedLineWithWrapWidth:(int)width
-                                       lineNum:(int*)lineNum
-                                    lineLength:(int*)lineLength
-                             includesEndOfLine:(int*)includesEndOfLine
-                                       yOffset:(int*)yOffsetPtr
-                                  continuation:(screen_char_t *)continuationPtr
-                          isStartOfWrappedLine:(BOOL *)isStartOfWrappedLine
-                                      metadata:(out iTermMetadata *)metadataPtr;
+- (const screen_char_t *)getWrappedLineWithWrapWidth:(int)width
+                                             lineNum:(int*)lineNum
+                                          lineLength:(int*)lineLength
+                                   includesEndOfLine:(int*)includesEndOfLine
+                                             yOffset:(int*)yOffsetPtr
+                                        continuation:(screen_char_t *)continuationPtr
+                                isStartOfWrappedLine:(BOOL *)isStartOfWrappedLine
+                                            metadata:(out iTermMetadata *)metadataPtr;
 
 - (ScreenCharArray *)rawLineAtWrappedLineOffset:(int)lineNum width:(int)width;
 

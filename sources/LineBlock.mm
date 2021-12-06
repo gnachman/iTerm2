@@ -483,7 +483,7 @@ extern "C" int iTermLineBlockNumberOfFullLinesImpl(screen_char_t *buffer,
 }
 #endif
 
-- (BOOL)appendLine:(screen_char_t*)buffer
+- (BOOL)appendLine:(const screen_char_t*)buffer
             length:(int)length
            partial:(BOOL)partial
              width:(int)width
@@ -587,44 +587,43 @@ extern "C" int iTermLineBlockNumberOfFullLinesImpl(screen_char_t *buffer,
     int eol;
     BOOL isStartOfWrappedLine = NO;
 
-    screen_char_t *p = [self getWrappedLineWithWrapWidth:width
-                                                 lineNum:lineNum
-                                              lineLength:&length
-                                       includesEndOfLine:&eol
-                                                 yOffset:yOffsetPtr
-                                            continuation:NULL
-                                    isStartOfWrappedLine:&isStartOfWrappedLine
-                                                metadata:NULL];
+    const screen_char_t *p = [self getWrappedLineWithWrapWidth:width
+                                                       lineNum:lineNum
+                                                    lineLength:&length
+                                             includesEndOfLine:&eol
+                                                       yOffset:yOffsetPtr
+                                                  continuation:NULL
+                                          isStartOfWrappedLine:&isStartOfWrappedLine
+                                                      metadata:NULL];
     if (!p) {
         return -1;
-    } else {
-        int pos;
-        if (x >= length) {
-            *extendsPtr = YES;
-            pos = p - raw_buffer + length;
-        } else {
-            *extendsPtr = NO;
-            pos = p - raw_buffer + x;
-        }
-        if (length > 0 && (!isStartOfWrappedLine || x > 0)) {
-            *yOffsetPtr = 0;
-        } else if (length > 0 && isStartOfWrappedLine && x == 0) {
-            // First character of a line. For example, in this grid:
-            //   abc.
-            //   d...
-            // The cell after c has position 3, as does the cell with d. The difference is that
-            // d has a yOffset=1 and the null cell after c has yOffset=0.
-            //
-            // If you wanted the cell after c then x > 0.
-            if (pos == 0 && *yOffsetPtr == 0) {
-                // First cell of first line in block.
-            } else {
-                // First sell of second-or-later line in block.
-                *yOffsetPtr += 1;
-            }
-        }
-        return pos;
     }
+    int pos;
+    if (x >= length) {
+        *extendsPtr = YES;
+        pos = p - raw_buffer + length;
+    } else {
+        *extendsPtr = NO;
+        pos = p - raw_buffer + x;
+    }
+    if (length > 0 && (!isStartOfWrappedLine || x > 0)) {
+        *yOffsetPtr = 0;
+    } else if (length > 0 && isStartOfWrappedLine && x == 0) {
+        // First character of a line. For example, in this grid:
+        //   abc.
+        //   d...
+        // The cell after c has position 3, as does the cell with d. The difference is that
+        // d has a yOffset=1 and the null cell after c has yOffset=0.
+        //
+        // If you wanted the cell after c then x > 0.
+        if (pos == 0 && *yOffsetPtr == 0) {
+            // First cell of first line in block.
+        } else {
+            // First sell of second-or-later line in block.
+            *yOffsetPtr += 1;
+        }
+    }
+    return pos;
 }
 
 - (void)populateDoubleWidthCharacterCacheInMetadata:(LineBlockMetadata *)metadata
@@ -756,12 +755,11 @@ int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width, BOOL may
     return 0;
 }
 
-- (screen_char_t*)getWrappedLineWithWrapWidth:(int)width
+- (const screen_char_t *)getWrappedLineWithWrapWidth:(int)width
                                       lineNum:(int*)lineNum
                                    lineLength:(int*)lineLength
                             includesEndOfLine:(int*)includesEndOfLine
-                                 continuation:(screen_char_t *)continuationPtr
-{
+                                 continuation:(screen_char_t *)continuationPtr {
     return [self getWrappedLineWithWrapWidth:width
                                      lineNum:lineNum
                                   lineLength:lineLength
@@ -772,16 +770,16 @@ int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width, BOOL may
                                     metadata:NULL];
 }
 
-- (screen_char_t *)_wrappedLineWithWrapWidth:(int)width
-                                    location:(LineBlockLocation)location
-                                     lineNum:(int*)lineNum
-                                  lineLength:(int*)lineLength
-                           includesEndOfLine:(int*)includesEndOfLine
-                                     yOffset:(int*)yOffsetPtr
-                                continuation:(screen_char_t *)continuationPtr
-                        isStartOfWrappedLine:(BOOL *)isStartOfWrappedLine
-                                    metadata:(out iTermMetadata *)metadataPtr
-                                  lineOffset:(out int *)lineOffset {
+- (const screen_char_t *)_wrappedLineWithWrapWidth:(int)width
+                                          location:(LineBlockLocation)location
+                                           lineNum:(int*)lineNum
+                                        lineLength:(int*)lineLength
+                                 includesEndOfLine:(int*)includesEndOfLine
+                                           yOffset:(int*)yOffsetPtr
+                                      continuation:(screen_char_t *)continuationPtr
+                              isStartOfWrappedLine:(BOOL *)isStartOfWrappedLine
+                                          metadata:(out iTermMetadata *)metadataPtr
+                                        lineOffset:(out int *)lineOffset {
     int offset;
     if (gEnableDoubleWidthCharacterLineCache) {
         offset = [self offsetOfWrappedLineInBuffer:buffer_start + location.prev
@@ -898,14 +896,14 @@ int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width, BOOL may
     };
 }
 
-- (screen_char_t*)getWrappedLineWithWrapWidth:(int)width
-                                      lineNum:(int*)lineNum
-                                   lineLength:(int*)lineLength
-                            includesEndOfLine:(int*)includesEndOfLine
-                                      yOffset:(int*)yOffsetPtr
-                                 continuation:(screen_char_t *)continuationPtr
-                         isStartOfWrappedLine:(BOOL *)isStartOfWrappedLine
-                                     metadata:(out iTermMetadata *)metadataPtr {
+- (const screen_char_t *)getWrappedLineWithWrapWidth:(int)width
+                                             lineNum:(int*)lineNum
+                                          lineLength:(int*)lineLength
+                                   includesEndOfLine:(int*)includesEndOfLine
+                                             yOffset:(int*)yOffsetPtr
+                                        continuation:(screen_char_t *)continuationPtr
+                                isStartOfWrappedLine:(BOOL *)isStartOfWrappedLine
+                                            metadata:(out iTermMetadata *)metadataPtr {
     const LineBlockLocation location = [self locationOfRawLineForWidth:width lineNum:lineNum];
     if (!location.found) {
         return NULL;

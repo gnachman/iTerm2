@@ -178,7 +178,7 @@
 
 // Append a string starting from the cursor's current position.
 // Returns number of scrollback lines dropped from lineBuffer.
-- (int)appendCharsAtCursor:(screen_char_t *)buffer
+- (int)appendCharsAtCursor:(const screen_char_t *)buffer
                     length:(int)len
    scrollingIntoLineBuffer:(LineBuffer *)lineBuffer
        unlimitedScrollback:(BOOL)unlimitedScrollback

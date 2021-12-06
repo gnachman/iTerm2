@@ -24,7 +24,7 @@
     return self;
 }
 
-- (instancetype)initWithCopyOfLine:(screen_char_t *)line
+- (instancetype)initWithCopyOfLine:(const screen_char_t *)line
                             length:(int)length
                       continuation:(screen_char_t)continuation {
     screen_char_t *copy = malloc(sizeof(*line) * length);
@@ -36,7 +36,7 @@
     return self;
 }
 
-- (instancetype)initWithLine:(screen_char_t *)line
+- (instancetype)initWithLine:(const screen_char_t *)line
                       length:(int)length
                 continuation:(screen_char_t)continuation {
     return [self initWithLine:line
@@ -45,7 +45,7 @@
                  continuation:continuation];
 }
 
-- (instancetype)initWithLine:(screen_char_t *)line
+- (instancetype)initWithLine:(const screen_char_t *)line
                       length:(int)length
                     metadata:(iTermMetadata)metadata
                 continuation:(screen_char_t)continuation {
@@ -63,7 +63,7 @@
 
 - (void)dealloc {
     if (_shouldFreeOnRelease) {
-        free(_line);
+        free((void *)_line);
         _line = NULL;
     }
     iTermMetadataRelease(_metadata);

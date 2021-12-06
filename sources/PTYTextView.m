@@ -2260,7 +2260,7 @@
     for (int y = lineStart, i = 0; y < lineEnd; y++, i++) {
         if (_blinkAllowed && i < numLines) {
             // First, mark blinking chars as dirty.
-            screen_char_t *theLine = lines[i].line;
+            const screen_char_t *theLine = lines[i].line;
             for (int x = 0; x < lines[i].length; x++) {
                 const BOOL charBlinks = theLine[x].blink;
                 anyBlinkers |= charBlinks;

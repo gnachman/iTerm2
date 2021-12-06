@@ -37,7 +37,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (int)numberOfWrappedLinesForWidth:(int)width;
 - (void)enumerateLinesInRange:(NSRange)range
                         width:(int)width
-                        block:(void (^)(screen_char_t *chars,
+                        block:(void (^)(const screen_char_t *chars,
                                         int length,
                                         int eol,
                                         screen_char_t continuation,

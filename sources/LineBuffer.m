@@ -313,7 +313,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     NSLog(@"%@", [self compactLineDumpWithWidth:width andContinuationMarks:NO]);
 }
 
-- (void)appendLine:(screen_char_t *)buffer
+- (void)appendLine:(const screen_char_t *)buffer
             length:(int)length
            partial:(BOOL)partial
              width:(int)width
@@ -456,11 +456,11 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     int eol;
     screen_char_t continuation;
     const int requestedLine = remainder;
-    screen_char_t* p = [block getWrappedLineWithWrapWidth:width
-                                                  lineNum:&remainder
-                                               lineLength:&length
-                                        includesEndOfLine:&eol
-                                             continuation:&continuation];
+    const screen_char_t *p = [block getWrappedLineWithWrapWidth:width
+                                                        lineNum:&remainder
+                                                     lineLength:&length
+                                              includesEndOfLine:&eol
+                                                   continuation:&continuation];
     if (p == nil) {
         ITAssertWithMessage(NO, @"Nil wrapped line %@ for block with width %@", @(requestedLine), @(width));
         return NO;
@@ -513,7 +513,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
 
 - (ScreenCharArray *)wrappedLineAtIndex:(int)lineNum
                                   width:(int)width
-                           continuation:(screen_char_t *)continuation {
+                           continuation:(screen_char_t *)continuationPtr {
     int remainder = 0;
     LineBlock *block = [_lineBlocks blockContainingLineNumber:lineNum width:width remainder:&remainder];
     if (!block) {
@@ -523,22 +523,25 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     }
 
     int length, eol;
-    ScreenCharArray *result = [[[ScreenCharArray alloc] init] autorelease];
-    result.line = [block getWrappedLineWithWrapWidth:width
-                                             lineNum:&remainder
-                                          lineLength:&length
-                                   includesEndOfLine:&eol
-                                        continuation:continuation];
-    if (result.line) {
-        result.length = length;
-        result.eol = eol;
-        ITAssertWithMessage(result.length <= width, @"Length too long");
-        return result;
+    screen_char_t continuation;
+    const screen_char_t *line = [block getWrappedLineWithWrapWidth:width
+                                                           lineNum:&remainder
+                                                        lineLength:&length
+                                                 includesEndOfLine:&eol
+                                                      continuation:&continuation];
+    if (continuationPtr) {
+        *continuationPtr = continuation;
     }
-
-    NSLog(@"Couldn't find line %d", lineNum);
-    ITAssertWithMessage(NO, @"Tried to get non-existent line");
-    return nil;
+    if (!line) {
+        NSLog(@"Couldn't find line %d", lineNum);
+        ITAssertWithMessage(NO, @"Tried to get non-existent line");
+        return nil;
+    }
+    ScreenCharArray *result = [[[ScreenCharArray alloc] initWithLine:line
+                                                              length:length
+                                                        continuation:continuation] autorelease];
+    ITAssertWithMessage(result.length <= width, @"Length too long");
+    return result;
 }
 
 - (ScreenCharArray * _Nonnull)rawLineAtWrappedLine:(int)lineNum width:(int)width {
@@ -555,17 +558,15 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     NSMutableArray<ScreenCharArray *> *arrays = [NSMutableArray array];
     [_lineBlocks enumerateLinesInRange:NSMakeRange(lineNum, count)
                                  width:width
-                                 block:^(screen_char_t * _Nonnull chars,
+                                 block:^(const screen_char_t * _Nonnull chars,
                                          int length,
                                          int eol,
                                          screen_char_t continuation,
                                          iTermMetadata metadata,
                                          BOOL * _Nonnull stop) {
-        ScreenCharArray *lineResult = [[[ScreenCharArray alloc] init] autorelease];
-        lineResult.line = chars;
-        lineResult.continuation = continuation;
-        lineResult.length = length;
-        lineResult.eol = eol;
+        ScreenCharArray *lineResult = [[[ScreenCharArray alloc] initWithLine:chars
+                                                                      length:length
+                                                                continuation:continuation] autorelease];
         [arrays addObject:lineResult];
     }];
     return arrays;
@@ -578,12 +579,10 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     [_lineBlocks enumerateLinesInRange:range
                                  width:width
                                  block:
-     ^(screen_char_t * _Nonnull chars, int length, int eol, screen_char_t continuation, iTermMetadata metadata, BOOL * _Nonnull stop) {
-        ScreenCharArray *array = [[[ScreenCharArray alloc] init] autorelease];
-        array.line = chars;
-        array.continuation = continuation;
-        array.length = length;
-        array.eol = eol;
+     ^(const screen_char_t * _Nonnull chars, int length, int eol, screen_char_t continuation, iTermMetadata metadata, BOOL * _Nonnull stop) {
+        ScreenCharArray *array = [[[ScreenCharArray alloc] initWithLine:chars
+                                                                 length:length
+                                                           continuation:continuation] autorelease];
         block(count++, array, metadata, stop);
      }];
 }

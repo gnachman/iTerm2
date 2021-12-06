@@ -310,7 +310,7 @@
 
 - (void)enumerateLinesInRange:(NSRange)range
                         width:(int)width
-                        block:(void (^)(screen_char_t * _Nonnull,
+                        block:(void (^)(const screen_char_t * _Nonnull,
                                         int,
                                         int,
                                         screen_char_t,
@@ -341,14 +341,14 @@
             screen_char_t continuation;
             int temp = line;
             iTermMetadata metadata;
-            screen_char_t *chars = [block getWrappedLineWithWrapWidth:width
-                                                              lineNum:&temp
-                                                           lineLength:&length
-                                                    includesEndOfLine:&eol
-                                                              yOffset:NULL
-                                                         continuation:&continuation
-                                                 isStartOfWrappedLine:NULL
-                                                             metadata:&metadata];
+            const screen_char_t *chars = [block getWrappedLineWithWrapWidth:width
+                                                                    lineNum:&temp
+                                                                 lineLength:&length
+                                                          includesEndOfLine:&eol
+                                                                    yOffset:NULL
+                                                               continuation:&continuation
+                                                       isStartOfWrappedLine:NULL
+                                                                   metadata:&metadata];
             if (chars == NULL) {
                 return;
             }

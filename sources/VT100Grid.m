@@ -844,7 +844,7 @@ static NSString *const kGridSizeKey = @"Size";
     return VT100GridRangeMax(scrollRegionCols_);
 }
 
-- (int)appendCharsAtCursor:(screen_char_t *)buffer
+- (int)appendCharsAtCursor:(const screen_char_t *)buffer
                     length:(int)len
    scrollingIntoLineBuffer:(LineBuffer *)lineBuffer
        unlimitedScrollback:(BOOL)unlimitedScrollback
@@ -872,12 +872,6 @@ static NSString *const kGridSizeKey = @"Size";
         NSLog(@"Begin inserting line. cursor_.x=%d, WIDTH=%d", cursor_.x, WIDTH);
 #endif
 
-        if (buffer[idx].code == DWC_SKIP) {
-            // I'm pretty sure this can never happen and that this code is just a historical leftover.
-            // This is an invalid unicode character that iTerm2 has appropriated
-            // for internal use. Change it to something invalid but safe.
-            buffer[idx].code = BOGUS_CHAR;
-        }
         int widthOffset;
         if (idx + 1 < len && buffer[idx + 1].code == DWC_RIGHT) {
             // If we're about to insert a double width character then reduce the

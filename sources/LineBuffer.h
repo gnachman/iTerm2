@@ -76,7 +76,7 @@
 // that is to say, this buffer contains only a prefix or infix of the entire line.
 //
 // NOTE: call dropExcessLinesWithWidth after this if you want to limit the buffer to max_lines.
-- (void)appendLine:(screen_char_t * _Nonnull)buffer
+- (void)appendLine:(const screen_char_t * _Nonnull)buffer
             length:(int)length
            partial:(BOOL)partial
              width:(int)width

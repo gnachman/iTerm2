@@ -1209,14 +1209,13 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     [delegate_ screenRefreshFindOnPageView];
 }
 
-- (void)appendScreenChars:(screen_char_t *)line
+- (void)appendScreenChars:(const screen_char_t *)line
                    length:(int)length
    externalAttributeIndex:(iTermExternalAttributeIndex *)externalAttributeIndex
              continuation:(screen_char_t)continuation {
     [self appendScreenCharArrayAtCursor:line
                                  length:length
-                 externalAttributeIndex:externalAttributeIndex
-                             shouldFree:NO];
+                 externalAttributeIndex:externalAttributeIndex];
     if (continuation.code == EOL_HARD) {
         [self terminalCarriageReturn];
         [self linefeed];
@@ -1263,8 +1262,7 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 
     [self appendScreenCharArrayAtCursor:buffer
                                  length:len
-                 externalAttributeIndex:[iTermUniformExternalAttributes withAttribute:ea]
-                             shouldFree:NO];
+                 externalAttributeIndex:[iTermUniformExternalAttributes withAttribute:ea]];
     STOPWATCH_LAP(appendAsciiDataAtCursor);
 }
 
@@ -1362,17 +1360,15 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     }
     [self appendScreenCharArrayAtCursor:buffer + bufferOffset
                                  length:len - bufferOffset
-                 externalAttributeIndex:[iTermUniformExternalAttributes withAttribute:terminal_.externalAttributes]
-                             shouldFree:NO];
+                 externalAttributeIndex:[iTermUniformExternalAttributes withAttribute:terminal_.externalAttributes]];
     if (buffer == dynamicBuffer) {
         free(buffer);
     }
 }
 
-- (void)appendScreenCharArrayAtCursor:(screen_char_t *)buffer
+- (void)appendScreenCharArrayAtCursor:(const screen_char_t *)buffer
                                length:(int)len
-               externalAttributeIndex:(iTermExternalAttributeIndex *)externalAttributes
-                           shouldFree:(BOOL)shouldFree {
+               externalAttributeIndex:(iTermExternalAttributeIndex *)externalAttributes {
     if (len >= 1) {
         screen_char_t lastCharacter = buffer[len - 1];
         if (lastCharacter.code == DWC_RIGHT && !lastCharacter.complexChar) {
@@ -1410,10 +1406,6 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
                                       metadata:temp
                                         length:len];
         iTermMetadataRelease(temp);
-    }
-
-    if (shouldFree) {
-        free(buffer);
     }
 
     if (commandStartX_ != -1) {
@@ -5183,10 +5175,10 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     VT100GridRect rect = screenRect;
     rect.origin.y += [linebuffer_ numLinesWithWidth:currentGrid_.size.width];
     [self enumerateLinesInRange:NSMakeRange(rect.origin.y, rect.size.height) block:^(int y, ScreenCharArray *sca, iTermMetadata metadata, BOOL *stop) {
-        screen_char_t *theLine = sca.line;
+        const screen_char_t *theLine = sca.line;
         iTermExternalAttributeIndex *eaIndex = iTermMetadataGetExternalAttributesIndex(metadata);
         for (int x = rect.origin.x; x < rect.origin.x + rect.size.width && x < self.width; x++) {
-            screen_char_t c = theLine[x];
+            const screen_char_t c = theLine[x];
             if (c.code == 0 && !c.complexChar && !c.image) {
                 continue;
             }
@@ -5365,8 +5357,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
         for (int i = 0; i < times; i++) {
             [self appendScreenCharArrayAtCursor:chars
                                          length:length
-                         externalAttributeIndex:[iTermUniformExternalAttributes withAttribute:_lastExternalAttribute]
-                                     shouldFree:NO];
+                         externalAttributeIndex:[iTermUniformExternalAttributes withAttribute:_lastExternalAttribute]];
             [delegate_ screenDidAppendStringToCurrentLine:string
                                               isPlainText:(_lastCharacter.complexChar ||
                                                            _lastCharacter.code >= ' ')];
@@ -6157,9 +6148,8 @@ static void SwapInt(int *a, int *b) {
     free(dummy);
 }
 
-- (void)stripTrailingSpaceFromLine:(ScreenCharArray *)line
-{
-    screen_char_t *p = line.line;
+- (void)stripTrailingSpaceFromLine:(ScreenCharArray *)line {
+    const screen_char_t *p = line.line;
     int len = line.length;
     for (int i = len - 1; i >= 0; i--) {
         // TODO: When I add support for URLs to tmux, don't pass 0 here - pass the URL code instead.

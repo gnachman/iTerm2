@@ -388,7 +388,7 @@ static inline BOOL ScreenCharHasDefaultAttributesAndColors(const screen_char_t s
 // the screen, though.
 + (instancetype)stringLineWithString:(NSString *)string;
 
-- (instancetype)initWithScreenChars:(screen_char_t *)screenChars
+- (instancetype)initWithScreenChars:(const screen_char_t *)screenChars
                              length:(NSInteger)length;
 
 - (NSRange)rangeOfScreenCharsForRangeInString:(NSRange)rangeInString;
@@ -409,7 +409,7 @@ NSString *StringByNormalizingString(NSString *theString, iTermUnicodeNormalizati
 
 // This is a faster version of ScreenCharToStr if what you want is an array of
 // unichars. Returns the number of code points appended to dest.
-int ExpandScreenChar(screen_char_t* sct, unichar* dest);
+int ExpandScreenChar(const screen_char_t *sct, unichar* dest);
 
 // Convert a code into a utf-32 char.
 UTF32Char CharToLongChar(unichar code, BOOL isComplex);
@@ -436,7 +436,7 @@ BOOL IsHighSurrogate(unichar c);
 // the result string to indices in the original array.
 // In other words:
 // part or all of [result characterAtIndex:i] refers to all or part of screenChars[i - (*deltasPtr)[i]].
-NSString* ScreenCharArrayToString(screen_char_t* screenChars,
+NSString* ScreenCharArrayToString(const screen_char_t *screenChars,
                                   int start,
                                   int end,
                                   unichar** backingStorePtr,
@@ -445,7 +445,7 @@ NSString* ScreenCharArrayToString(screen_char_t* screenChars,
 // Number of chars before a sequence of nuls at the end of the line.
 int EffectiveLineLength(screen_char_t* theLine, int totalLength);
 
-NSString* ScreenCharArrayToStringDebug(screen_char_t* screenChars,
+NSString* ScreenCharArrayToStringDebug(const screen_char_t* screenChars,
                                        int lineLength);
 
 NSString *DebugStringForScreenChar(screen_char_t c);

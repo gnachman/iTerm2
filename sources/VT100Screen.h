@@ -105,7 +105,7 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 // Clears the scrollback buffer, leaving screen contents alone.
 - (void)clearScrollbackBuffer;
 
-- (void)appendScreenChars:(screen_char_t *)line
+- (void)appendScreenChars:(const screen_char_t *)line
                    length:(int)length
    externalAttributeIndex:(iTermExternalAttributeIndex *)externalAttributes
              continuation:(screen_char_t)continuation;
