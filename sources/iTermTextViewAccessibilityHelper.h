@@ -16,7 +16,8 @@
 @protocol iTermTextViewAccessibilityHelperDelegate <NSObject>
 
 // Return an array of characters for a line number in accessibility-space.
-- (screen_char_t *)accessibilityHelperLineAtIndex:(int)accessibilityIndex;
+- (const screen_char_t *)accessibilityHelperLineAtIndex:(int)accessibilityIndex
+                                           continuation:(screen_char_t *)continuation;
 
 // Return the width of the screen in cells.
 - (int)accessibilityHelperWidth;

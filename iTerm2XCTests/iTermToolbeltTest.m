@@ -231,9 +231,9 @@
 #pragma mark Command History
 
 - (NSAttributedString *)attributedStringInTableView:(NSTableView *)tableView row:(NSInteger)row {
-    NSTableCellView *tableCellView = [tableView.delegate tableView:tableView
-                                                viewForTableColumn:tableView.tableColumns[0]
-                                                               row:row];
+    NSTableCellView *tableCellView = (NSTableCellView *)[tableView.delegate tableView:tableView
+                                                                   viewForTableColumn:tableView.tableColumns[0]
+                                                                                  row:row];
     NSTextField *textField = tableCellView.textField; 
     return [textField attributedStringValue];
 }

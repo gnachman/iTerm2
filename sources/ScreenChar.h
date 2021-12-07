@@ -288,7 +288,7 @@ static inline NSString* ReplacementString()
     return [NSString stringWithCharacters:&kReplacementCharacter length:1];
 }
 
-static inline BOOL ScreenCharacterAttributesEqual(screen_char_t *c1, screen_char_t *c2) {
+static inline BOOL ScreenCharacterAttributesEqual(const screen_char_t *c1, const screen_char_t *c2) {
     return (c1->foregroundColor == c2->foregroundColor &&
             c1->fgGreen == c2->fgGreen &&
             c1->fgBlue == c2->fgBlue &&

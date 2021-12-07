@@ -410,7 +410,7 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
 
 //        NSLog(@"Draw line %d at %f", line, y);
         NSData *matches = [_delegate drawingHelperMatchesOnLine:line];
-        screen_char_t* theLine = [self.delegate drawingHelperLineAtIndex:line];
+        const screen_char_t *theLine = [self.delegate drawingHelperLineAtIndex:line];
         NSIndexSet *selectedIndexes =
             [_selection selectedIndexesIncludingTabFillersInAbsoluteLine:line + _totalScrollbackOverflow];
         iTermBackgroundColorRunsInLine *runsInLine =
@@ -1219,7 +1219,7 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
                backgroundRuns:(NSArray<iTermBoxedBackgroundColorRun *> *)backgroundRuns
                       context:(CGContextRef)ctx
                 virtualOffset:(CGFloat)virtualOffset {
-    screen_char_t* theLine = [self.delegate drawingHelperLineAtIndex:line];
+    const screen_char_t *theLine = [self.delegate drawingHelperLineAtIndex:line];
     iTermExternalAttributeIndex *eaIndex = [self.delegate drawingHelperExternalAttributesOnLine:line];
     NSData *matches = [_delegate drawingHelperMatchesOnLine:line];
     for (iTermBoxedBackgroundColorRun *box in backgroundRuns) {
@@ -1242,7 +1242,7 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
     }
 }
 
-- (void)constructAndDrawRunsForLine:(screen_char_t *)theLine
+- (void)constructAndDrawRunsForLine:(const screen_char_t *)theLine
                  externalAttributes:(iTermExternalAttributeIndex *)eaIndex
                                 row:(int)row
                             inRange:(NSRange)indexRange
@@ -2431,9 +2431,9 @@ static inline BOOL iTermCharacterAttributesUnderlineColorEqual(iTermCharacterAtt
     }
 }
 
-- (BOOL)character:(screen_char_t *)c
+- (BOOL)character:(const screen_char_t *)c
 withExtendedAttributes:(iTermExternalAttribute *)ea1
-isEquivalentToCharacter:(screen_char_t *)pc
+isEquivalentToCharacter:(const screen_char_t *)pc
 withExtendedAttributes:(iTermExternalAttribute *)ea2 {
     if (c->complexChar != pc->complexChar) {
         return NO;
@@ -2483,7 +2483,7 @@ withExtendedAttributes:(iTermExternalAttribute *)ea2 {
             [iTermAdvancedSettingsModel zippyTextDrawing]);
 }
 
-- (NSArray<id<iTermAttributedString>> *)attributedStringsForLine:(screen_char_t *)line
+- (NSArray<id<iTermAttributedString>> *)attributedStringsForLine:(const screen_char_t *)line
                                               externalAttributes:(iTermExternalAttributeIndex *)eaIndex
                                                            range:(NSRange)indexRange
                                                  hasSelectedText:(BOOL)hasSelectedText
@@ -3199,7 +3199,7 @@ withExtendedAttributes:(iTermExternalAttribute *)ea2 {
 
 - (NSColor *)blockCursorFillColorRespectingSmartSelection {
     if (_useSmartCursorColor) {
-        screen_char_t *theLine;
+        const screen_char_t *theLine;
         if (_cursorCoord.y >= 0) {
             theLine = [self.delegate drawingHelperLineAtScreenIndex:_cursorCoord.y];
         } else {
@@ -3222,7 +3222,7 @@ withExtendedAttributes:(iTermExternalAttribute *)ea2 {
                    outline:(BOOL)outline
              virtualOffset:(CGFloat)virtualOffset {
     // Get the character that's under the cursor.
-    screen_char_t *theLine;
+    const screen_char_t *theLine;
     if (cursorCoord.y >= 0) {
         theLine = [self.delegate drawingHelperLineAtScreenIndex:cursorCoord.y];
     } else {
@@ -3353,7 +3353,7 @@ withExtendedAttributes:(iTermExternalAttribute *)ea2 {
 }
 
 - (screen_char_t)charForCursorAtColumn:(int)column
-                                inLine:(screen_char_t *)theLine
+                                inLine:(const screen_char_t *)theLine
                            doubleWidth:(BOOL *)doubleWidth {
     screen_char_t screenChar = theLine[column];
     int width = _gridSize.width;
@@ -3592,7 +3592,7 @@ withExtendedAttributes:(iTermExternalAttribute *)ea2 {
     NSRect innerRect = [self rectForCoordRange:coordRange];
     iTermRectClip(innerRect, virtualOffset);
 
-    screen_char_t *line = [self.delegate drawingHelperLineAtIndex:row];
+    const screen_char_t *line = [self.delegate drawingHelperLineAtIndex:row];
     iTermExternalAttributeIndex *eaIndex = [self.delegate drawingHelperExternalAttributesOnLine:row];
 
     [self constructAndDrawRunsForLine:line

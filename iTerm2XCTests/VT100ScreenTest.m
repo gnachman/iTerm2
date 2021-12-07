@@ -145,7 +145,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
                                      [screen width]);
     XCTAssert([s isEqualToString:@"Line 1"]);
 
-    s = ScreenCharArrayToStringDebug([screen getLineAtIndex:0],
+    s = ScreenCharArrayToStringDebug([screen screenCharArrayForLine:0].line,
                                      [screen width]);
     XCTAssert([s isEqualToString:@"Line 0"]);
 
@@ -394,7 +394,8 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     [selection_ enumerateSelectedAbsoluteRanges:^(VT100GridAbsWindowedRange range, BOOL *stop, BOOL eol) {
         int sx = range.coordRange.start.x;
         for (int y = range.coordRange.start.y; y <= range.coordRange.end.y; y++) {
-            screen_char_t *line = [screen getLineAtIndex:y];
+            ScreenCharArray *sca = [screen screenCharArrayForLine:y];
+            const screen_char_t *line = sca.line;
             int x;
             int ex = y == range.coordRange.end.y ? range.coordRange.end.x : [screen width];
             BOOL newline = NO;
@@ -407,7 +408,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
                     break;
                 }
             }
-            if (line[x].code == EOL_HARD && !newline && y != range.coordRange.end.y) {
+            if (sca.eol == EOL_HARD && !newline && y != range.coordRange.end.y) {
                 [s appendString:@"\n"];
             }
             sx = 0;
@@ -1166,7 +1167,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     XCTAssert(screen.cursorX == 1);
     XCTAssert(screen.cursorY == 3);
     NSString* s;
-    s = ScreenCharArrayToStringDebug([screen getLineAtIndex:0],
+    s = ScreenCharArrayToStringDebug([screen screenCharArrayForLine:0].line,
                                      [screen width]);
     XCTAssert([s isEqualToString:@"abc"]);
 
@@ -1288,16 +1289,16 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
                @"ijk\n"
                @"l..\n"
                @"..."]);
-    s = ScreenCharArrayToStringDebug([screen getLineAtIndex:0],
+    s = ScreenCharArrayToStringDebug([screen screenCharArrayForLine:0].line,
                                      [screen width]);
     XCTAssert([s isEqualToString:@"abc"]);
-    s = ScreenCharArrayToStringDebug([screen getLineAtIndex:1],
+    s = ScreenCharArrayToStringDebug([screen screenCharArrayForLine:1].line,
                                      [screen width]);
     XCTAssert([s isEqualToString:@"def"]);
-    s = ScreenCharArrayToStringDebug([screen getLineAtIndex:2],
+    s = ScreenCharArrayToStringDebug([screen screenCharArrayForLine:2].line,
                                      [screen width]);
     XCTAssert([s isEqualToString:@"gh"]);
-    s = ScreenCharArrayToStringDebug([screen getLineAtIndex:3],
+    s = ScreenCharArrayToStringDebug([screen screenCharArrayForLine:3].line,
                                      [screen width]);
     XCTAssert([s isEqualToString:@"ijk"]);
 
@@ -1537,7 +1538,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
                @"..."]);
     XCTAssert(screen.cursorX == 1);
     XCTAssert(screen.cursorY == 3);
-    s = ScreenCharArrayToStringDebug([screen getLineAtIndex:0],
+    s = ScreenCharArrayToStringDebug([screen screenCharArrayForLine:0].line,
                                      [screen width]);
     XCTAssert([s isEqualToString:@"gh"]);
     [screen terminalShowPrimaryBuffer];
@@ -2463,23 +2464,25 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     XCTAssert([screen cursorY] == 3);
 }
 
-- (void)testGetLineAtIndex {
+- (void)testScreenCharArrayForLine {
     VT100Screen *screen = [self screenFromCompactLines:
                            @"abcde>\n"
                            @"F-ghi.\n"];
     [screen terminalMoveCursorToX:6 y:2];
-    screen_char_t *line = [screen getLineAtIndex:0];
+    ScreenCharArray *sca = [screen screenCharArrayForLine:0];
+    const screen_char_t *line = sca.line;
     XCTAssert(line[0].code == 'a');
     XCTAssert(line[5].code == DWC_SKIP);
-    XCTAssert(line[6].code == EOL_DWC);
+    XCTAssert(sca.eol == EOL_DWC);
 
-    // Scroll the DWC_SPLIT off the screen. getLineAtIndex: will restore it, even though line buffers
+    // Scroll the DWC_SPLIT off the screen. screenCharArrayForLine: will restore it, even though line buffers
     // don't store those.
     [self appendLines:@[@"jkl"] toScreen:screen];
-    line = [screen getLineAtIndex:0];
+    sca = [screen screenCharArrayForLine:0];
+    line = sca.line;
     XCTAssert(line[0].code == 'a');
-    XCTAssert(line[5].code == DWC_SKIP);
-    XCTAssert(line[6].code == EOL_DWC);
+    XCTAssertEqual(line[5].code, DWC_SKIP);
+    XCTAssertEqual(sca.eol, EOL_DWC);
 }
 
 - (void)testNumberOfScrollbackLines {
@@ -4529,7 +4532,8 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     [screen appendStringAtCursor:@"|"];
     // [null][|][^smile][rhs]
 
-    screen_char_t *line = [screen getLineAtIndex:0];
+    ScreenCharArray *sca = [screen screenCharArrayForLine:0];
+    const screen_char_t *line = sca.line;
     XCTAssertEqual(line[0].code, 0);
     XCTAssertEqual(line[1].code, '|');
     XCTAssertEqualObjects(ScreenCharToStr(&line[2]), @"😃");

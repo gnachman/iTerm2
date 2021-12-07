@@ -32,6 +32,12 @@ NS_ASSUME_NONNULL_BEGIN
 - (BOOL)isEqualToScreenCharArray:(ScreenCharArray *)other;
 - (ScreenCharArray *)screenCharArrayByAppendingScreenCharArray:(ScreenCharArray *)other;
 - (ScreenCharArray *)screenCharArrayByRemovingTrailingNullsAndHardNewline;
+- (ScreenCharArray *)inWindow:(VT100GridRange)window;
+
+// It's eligible for DWC if all of these are true:
+// 1. This is the last line in history
+// 2. The top-left cell of the grid is a double-width character
+- (ScreenCharArray *)paddedToLength:(int)length eligibleForDWC:(BOOL)eligibleForDWC;
 
 @end
 

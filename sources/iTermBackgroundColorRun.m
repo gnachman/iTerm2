@@ -9,7 +9,7 @@
 #import "iTermBackgroundColorRun.h"
 
 static void iTermMakeBackgroundColorRun(iTermBackgroundColorRun *run,
-                                        screen_char_t *theLine,
+                                        const screen_char_t *theLine,
                                         VT100GridCoord coord,
                                         iTermTextExtractor *extractor,
                                         NSIndexSet *selectedIndexes,
@@ -57,7 +57,7 @@ static void iTermMakeBackgroundColorRun(iTermBackgroundColorRun *run,
 }
 
 
-+ (instancetype)backgroundRunsInLine:(screen_char_t *)theLine
++ (instancetype)backgroundRunsInLine:(const screen_char_t *)theLine
                           lineLength:(int)width
                                  row:(int)row
                      selectedIndexes:(NSIndexSet *)selectedIndexes

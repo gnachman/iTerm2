@@ -13710,7 +13710,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [_contentSubscribers removeObject:contentSubscriber];
 }
 
-- (NSString *)stringForLine:(screen_char_t *)screenChars
+- (NSString *)stringForLine:(const screen_char_t *)screenChars
                      length:(int)length
                   cppsArray:(NSMutableArray<ITMCodePointsPerCell *> *)cppsArray {
     unichar *characters = iTermMalloc(sizeof(unichar) * length * kMaxParts + 1);
@@ -13796,7 +13796,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:_screen];
     __block int firstIndex = -1;
     __block int lastIndex = -1;
-    __block screen_char_t *line = nil;
+    __block const screen_char_t *line = nil;
     BOOL (^handleEol)(unichar, int, int) = ^BOOL(unichar code, int numPreceedingNulls, int linenumber) {
         ITMLineContents *lineContents = [[[ITMLineContents alloc] init] autorelease];
         lineContents.text = [self stringForLine:line + firstIndex
@@ -13818,7 +13818,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         return NO;
     };
     [extractor enumerateCharsInRange:range
-                           charBlock:^BOOL(screen_char_t *currentLine, screen_char_t theChar, iTermExternalAttribute *ea, VT100GridCoord coord) {
+                           charBlock:^BOOL(const screen_char_t *currentLine, screen_char_t theChar, iTermExternalAttribute *ea, VT100GridCoord coord) {
                                line = currentLine;
                                if (firstIndex < 0) {
                                    firstIndex = coord.x;

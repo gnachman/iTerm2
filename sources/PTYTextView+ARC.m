@@ -182,7 +182,7 @@ static const NSUInteger kRectangularSelectionModifierMask = (kRectangularSelecti
         coord.y >= [self.dataSource numberOfLines]) {
         return nil;
     }
-    screen_char_t* theLine = [self.dataSource getLineAtIndex:coord.y];
+    const screen_char_t *theLine = [self.dataSource screenCharArrayForLine:coord.y].line;
     if (theLine && theLine[coord.x].image) {
         return GetImageInfo(theLine[coord.x].code);
     } else {
@@ -774,7 +774,7 @@ static const NSUInteger kRectangularSelectionModifierMask = (kRectangularSelecti
     int firstVisibleLine = [[self enclosingScrollView] documentVisibleRect].origin.y / self.lineHeight;
     int width = [self.dataSource width];
     for (int y = 0; y < [self.dataSource height]; y++) {
-        screen_char_t *theLine = [self.dataSource getLineAtIndex:y + firstVisibleLine];
+        const screen_char_t *theLine = [self.dataSource screenCharArrayForLine:y + firstVisibleLine].line;
         for (int x = 0; x < width; x++) {
             if (theLine && theLine[x].image && GetImageInfo(theLine[x].code) == image) {
                 return YES;

@@ -79,7 +79,7 @@
 // Onscreen X-position of a location (respecting compositing chars) in _allText.
 - (NSUInteger)columnOfChar:(NSUInteger)location inLine:(NSUInteger)accessibilityLineNumber {
     NSUInteger lineStart = [self offsetOfLine:accessibilityLineNumber];
-    screen_char_t* theLine = [_delegate accessibilityHelperLineAtIndex:accessibilityLineNumber];
+    const screen_char_t* theLine = [_delegate accessibilityHelperLineAtIndex:accessibilityLineNumber continuation:NULL];
     assert(location >= lineStart);
     int remaining = location - lineStart;
     int i = 0;
@@ -103,7 +103,7 @@
 // Range in _allText of an index (ignoring compositing chars).
 - (NSRange)rangeOfIndex:(NSUInteger)theIndex {
     NSUInteger accessibilityLineNumber = [self lineNumberOfIndex:theIndex];
-    screen_char_t* theLine = [_delegate accessibilityHelperLineAtIndex:accessibilityLineNumber];
+    const screen_char_t* theLine = [_delegate accessibilityHelperLineAtIndex:accessibilityLineNumber continuation:NULL];
     NSUInteger startingIndexOfLine = [self startingIndexOfLineNumber:accessibilityLineNumber];
     if (theIndex < startingIndexOfLine) {
         return NSMakeRange(NSNotFound, 0);
@@ -122,7 +122,7 @@
 // Range, respecting compositing chars, of a character at an x,y position where 0,0 is the
 // first char of the first line in the scrollback buffer.
 - (NSRange)rangeOfCharAtX:(int)x y:(int)accessibilityY {
-    screen_char_t *theLine = [_delegate accessibilityHelperLineAtIndex:accessibilityY];
+    const screen_char_t *theLine = [_delegate accessibilityHelperLineAtIndex:accessibilityY continuation:NULL];
     NSRange lineRange = [self rangeOfLine:accessibilityY];
     NSRange result = lineRange;
     for (int i = 0; i < x; i++) {
@@ -244,7 +244,8 @@
     unichar chars[width * kMaxParts];
     int offset = 0;
     for (int i = 0; i < [_delegate accessibilityHelperNumberOfLines]; i++) {
-        screen_char_t* line = [_delegate accessibilityHelperLineAtIndex:i];
+        screen_char_t continuation;
+        const screen_char_t* line = [_delegate accessibilityHelperLineAtIndex:i continuation:&continuation];
         int k;
         // Get line width, store it in k
         for (k = width - 1; k >= 0; k--) {
@@ -274,7 +275,7 @@
         if (k >= 0) {
             [_allText appendString:[NSString stringWithCharacters:chars length:o]];
         }
-        if (line[width].code == EOL_HARD) {
+        if (continuation.code == EOL_HARD) {
             // Add a newline and update offsets arrays that track line break locations.
             [_allText appendString:@"\n"];
             ++offset;

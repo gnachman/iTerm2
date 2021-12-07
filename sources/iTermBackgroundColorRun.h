@@ -47,7 +47,7 @@ NS_INLINE BOOL iTermBackgroundColorRunsEqual(iTermBackgroundColorRun *a,
 
 // Creates a new autoreleased iTermBackgroundColorRunsInLine object that's ready to use.
 // Fills in *anyBlinkPtr with YES if some character in the range is blinking.
-+ (instancetype)backgroundRunsInLine:(screen_char_t *)theLine
++ (instancetype)backgroundRunsInLine:(const screen_char_t *)theLine
                           lineLength:(int)width
                                  row:(int)row  // Row number in datasource
                      selectedIndexes:(NSIndexSet *)selectedIndexes

@@ -2528,7 +2528,7 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
     return 4;
 }
 
-- (screen_char_t *)getLineAtIndex:(int)theIndex {
+- (const screen_char_t *)getLineAtIndex:(int)theIndex {
     int width = self.width;
     for (int i = 0; i < width + 1; i++) {
         memset(&_buffer[i], 0, sizeof(screen_char_t));
@@ -2542,6 +2542,22 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
     return nil;
 }
 
+- (ScreenCharArray *)screenCharArrayAtScreenIndex:(int)index {
+    return [self screenCharArrayForLine:index - [self numberOfScrollbackLines]];
+}
+
+- (ScreenCharArray *)screenCharArrayForLine:(int)line {
+    const screen_char_t *sct = [self getLineAtIndex:line];
+    const int width = self.width;
+    return [[[ScreenCharArray alloc] initWithLine:sct
+                                           length:width
+                                     continuation:sct[width]] autorelease];
+}
+
+- (id)fetchLine:(int)line block:(id (^ NS_NOESCAPE)(ScreenCharArray *))block {
+    ScreenCharArray *sca = [self screenCharArrayForLine:line];
+    return block(sca);
+}
 
 #pragma mark - Test selection
 
@@ -2937,6 +2953,8 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
     return NO;
 }
 
+- (void)textViewSelectMenuItemWithIdentifier:(NSString *)identifier title:(NSString *)title {
+}
 
 - (BOOL)textViewReportMouseEvent:(NSEventType)eventType modifiers:(NSUInteger)modifiers button:(MouseButtonNumber)button coordinate:(VT100GridCoord)coord point:(NSPoint)point deltaY:(CGFloat)deltaY allowDragBeforeMouseDown:(BOOL)allowDragBeforeMouseDown {
     return NO;

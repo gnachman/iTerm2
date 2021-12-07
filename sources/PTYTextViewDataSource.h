@@ -27,11 +27,12 @@
 
 - (int)width;
 - (int)numberOfLines;
-// This function is dangerous! It writes to an internal buffer and returns a
-// pointer to it. Better to use getLineAtIndex:withBuffer:.
-- (screen_char_t *)getLineAtIndex:(int)theIndex;
+// Deprecated - use fetchLine:block: instead because it manages the lifetime of the ScreenCharArray safely.
+- (ScreenCharArray *)screenCharArrayForLine:(int)line;
+- (ScreenCharArray *)screenCharArrayAtScreenIndex:(int)index;
 - (long long)totalScrollbackOverflow;
 - (iTermExternalAttributeIndex *)externalAttributeIndexForLine:(int)y;
+- (id)fetchLine:(int)line block:(id (^ NS_NOESCAPE)(ScreenCharArray *sct))block;
 
 @end
 

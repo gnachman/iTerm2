@@ -169,7 +169,7 @@ extern const NSInteger kLongMaximumWordLength;
 - (int)lengthOfAbsLine:(long long)absLine;
 
 - (void)enumerateCharsInRange:(VT100GridWindowedRange)range
-                    charBlock:(BOOL (^NS_NOESCAPE)(screen_char_t *currentLine, screen_char_t theChar, iTermExternalAttribute *, VT100GridCoord coord))charBlock
+                    charBlock:(BOOL (^NS_NOESCAPE)(const screen_char_t *currentLine, screen_char_t theChar, iTermExternalAttribute *, VT100GridCoord coord))charBlock
                      eolBlock:(BOOL (^NS_NOESCAPE)(unichar code, int numPreceedingNulls, int line))eolBlock;
 
 - (void)enumerateWrappedLinesIntersectingRange:(VT100GridRange)range

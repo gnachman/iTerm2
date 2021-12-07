@@ -1840,6 +1840,17 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     }
 }
 
+- (ScreenCharArray *)screenCharArrayForLine:(int)line {
+    const NSInteger numLinesInLineBuffer = [linebuffer_ numLinesWithWidth:currentGrid_.size.width];
+    if (line < numLinesInLineBuffer) {
+        const BOOL eligibleForDWC = (line == numLinesInLineBuffer - 1 &&
+                                     [currentGrid_ screenCharsAtLineNumber:0][1].code == DWC_RIGHT);
+        return [[linebuffer_ wrappedLineAtIndex:line width:self.width continuation:NULL] paddedToLength:self.width
+                                                                                         eligibleForDWC:eligibleForDWC];
+    }
+    return [self screenCharArrayAtScreenIndex:line - numLinesInLineBuffer];
+}
+
 - (ScreenCharArray *)screenCharArrayAtScreenIndex:(int)index {
     screen_char_t *line = [currentGrid_ screenCharsAtLineNumber:index];
     const int width = self.width;
@@ -1847,6 +1858,11 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
                                                              length:width
                                                        continuation:line[width]] autorelease];
     return array;
+}
+
+- (id)fetchLine:(int)line block:(id (^ NS_NOESCAPE)(ScreenCharArray *))block {
+    ScreenCharArray *sca = [self screenCharArrayForLine:line];
+    return block(sca);
 }
 
 - (iTermMetadata)metadataOnLine:(int)lineNumber {
@@ -1872,15 +1888,13 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 // Like getLineAtIndex:withBuffer:, but uses dedicated storage for the result.
 // This function is dangerous! It writes to an internal buffer and returns a
 // pointer to it. Better to use getLineAtIndex:withBuffer:.
-- (screen_char_t *)getLineAtIndex:(int)theIndex
-{
+- (screen_char_t *)getLineAtIndex:(int)theIndex {
     return [self getLineAtIndex:theIndex withBuffer:[currentGrid_ resultLine]];
 }
 
 // theIndex = 0 for first line in history; for sufficiently large values, it pulls from the current
 // grid.
-- (screen_char_t *)getLineAtIndex:(int)theIndex withBuffer:(screen_char_t*)buffer
-{
+- (screen_char_t *)getLineAtIndex:(int)theIndex withBuffer:(screen_char_t*)buffer {
     ITBetaAssert(theIndex >= 0, @"Negative index to getLineAtIndex");
     int numLinesInLineBuffer = [linebuffer_ numLinesWithWidth:currentGrid_.size.width];
     if (theIndex >= numLinesInLineBuffer) {
@@ -3136,7 +3150,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     const int kMaxRadius = [iTermAdvancedSettingsModel triggerRadius];
     BOOL foundStart = NO;
     for (i = lineNumber - 1; i >= 0 && i >= lineNumber - kMaxRadius; i--) {
-        screen_char_t *line = [self getLineAtIndex:i];
+        const screen_char_t *line = [self getLineAtIndex:i];
         if (line[self.width].code == EOL_HARD) {
             *startAbsLineNumber = i + self.totalScrollbackOverflow + 1;
             foundStart = YES;
@@ -3151,7 +3165,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     }
     BOOL done = NO;
     for (i = lineNumber; !done && i < self.numberOfLines && i < lineNumber + kMaxRadius; i++) {
-        screen_char_t *line = [self getLineAtIndex:i];
+        const screen_char_t *line = [self getLineAtIndex:i];
         int length = self.width;
         done = line[length].code == EOL_HARD;
         if (done) {
@@ -5839,7 +5853,7 @@ static void SwapInt(int *a, int *b) {
     int x = result.origin.x;
     int y = result.origin.y;
     ITBetaAssert(y >= 0, @"Negative y to runByTrimmingNullsFromRun");
-    screen_char_t *line = [self getLineAtIndex:y];
+    const screen_char_t *line = [self getLineAtIndex:y];
     int numberOfLines = [self numberOfLines];
     int width = [self width];
     if (x > 0) {
@@ -5940,7 +5954,7 @@ static void SwapInt(int *a, int *b) {
     BOOL endExtends = NO;
     // Use the predecessor of endx,endy so it will have a legal position in the line buffer.
     if (range.end.x == [self width]) {
-        screen_char_t *line = [self getLineAtIndex:range.end.y];
+        const screen_char_t *line = [self getLineAtIndex:range.end.y];
         if (line[range.end.x - 1].code == 0 && line[range.end.x].code == EOL_HARD) {
             // The selection goes all the way to the end of the line and there is a null at the
             // end of the line, so it extends to the end of the line. The linebuffer can't recover

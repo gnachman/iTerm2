@@ -662,6 +662,14 @@ static const NSInteger kUnicodeVersion = 9;
     return _lines.count;
 }
 
+- (ScreenCharArray *)screenCharArrayForLine:(int)line {
+    const screen_char_t *sct = [self getLineAtIndex:line];
+    const int width = self.width;
+    return [[ScreenCharArray alloc] initWithLine:sct
+                                          length:width
+                                    continuation:sct[width]];
+}
+
 - (screen_char_t *)getLineAtIndex:(int)theIndex {
     if (_buffer) {
         free(_buffer);

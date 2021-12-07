@@ -2324,11 +2324,11 @@
     VT100GridCoordRange result = range;
     int width = [_dataSource width];
     int lineY = result.start.y;
-    screen_char_t *line = [_dataSource getLineAtIndex:lineY];
+    const screen_char_t *line = [_dataSource screenCharArrayForLine:lineY].line;
     while (!VT100GridCoordEquals(result.start, range.end)) {
         if (lineY != result.start.y) {
             lineY = result.start.y;
-            line = [_dataSource getLineAtIndex:lineY];
+            line = [_dataSource screenCharArrayForLine:lineY].line;
         }
         unichar code = line[result.start.x].code;
         BOOL trim = ((code == 0) ||
@@ -2354,7 +2354,7 @@
         }
         if (lineY != y) {
             lineY = y;
-            line = [_dataSource getLineAtIndex:y];
+            line = [_dataSource screenCharArrayForLine:y].line;
         }
         unichar code = line[x].code;
         BOOL trim = ((code == 0) ||
@@ -3495,7 +3495,7 @@
 
     VT100GridCoord coord = VT100GridCoordMake((dragPoint.x - [iTermPreferences intForKey:kPreferenceKeySideMargins]) / _charWidth,
                                               dragPoint.y / _lineHeight);
-    screen_char_t* theLine = [_dataSource getLineAtIndex:coord.y];
+    const screen_char_t* theLine = [_dataSource screenCharArrayForLine:coord.y].line;
     if (theLine &&
         coord.x < [_dataSource width] &&
         theLine[coord.x].image &&
@@ -4428,7 +4428,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     const BOOL ok =
     [self withRelativeCoord:absCoord block:^(VT100GridCoord relativeCoord) {
         VT100GridCoord coord = relativeCoord;
-        screen_char_t *theLine;
+        const screen_char_t *theLine;
         do {
             coord.x--;
             if (coord.x < 0) {
@@ -4440,7 +4440,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                 }
              }
 
-            theLine = [_dataSource getLineAtIndex:coord.y];
+            theLine = [_dataSource screenCharArrayForLine:coord.y].line;
         } while (theLine[coord.x].code == DWC_RIGHT);
         result = VT100GridAbsCoordFromCoord(coord, totalScrollbackOverflow);
     }];
@@ -4586,16 +4586,16 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     return [_dataSource markOnLine:line];
 }
 
-- (screen_char_t *)drawingHelperLineAtIndex:(int)line {
-    return [_dataSource getLineAtIndex:line];
+- (const screen_char_t *)drawingHelperLineAtIndex:(int)line {
+    return [_dataSource screenCharArrayForLine:line].line;
 }
 
 - (iTermExternalAttributeIndex *)drawingHelperExternalAttributesOnLine:(int)lineNumber {
     return [_dataSource externalAttributeIndexForLine:lineNumber];
 }
 
-- (screen_char_t *)drawingHelperLineAtScreenIndex:(int)line {
-    return [_dataSource getLineAtScreenIndex:line];
+- (const screen_char_t *)drawingHelperLineAtScreenIndex:(int)line {
+    return [_dataSource screenCharArrayAtScreenIndex:line].line;
 }
 
 - (screen_char_t *)drawingHelperCopyLineAtIndex:(int)line toBuffer:(screen_char_t *)buffer {
@@ -4920,8 +4920,12 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     return [_delegate textViewCurrentLocation];
 }
 
-- (screen_char_t *)accessibilityHelperLineAtIndex:(int)accessibilityIndex {
-    return [_dataSource getLineAtIndex:[self accessibilityHelperLineNumberForAccessibilityLineNumber:accessibilityIndex]];
+- (const screen_char_t *)accessibilityHelperLineAtIndex:(int)accessibilityIndex continuation:(screen_char_t *)continuation {
+    ScreenCharArray *sca = [_dataSource screenCharArrayForLine:[self accessibilityHelperLineNumberForAccessibilityLineNumber:accessibilityIndex]];
+    if (continuation) {
+        *continuation = sca.continuation;
+    }
+    return sca.line;
 }
 
 - (int)accessibilityHelperWidth {

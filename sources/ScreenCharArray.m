@@ -8,6 +8,8 @@
 #import "ScreenCharArray.h"
 
 @implementation ScreenCharArray {
+    // If initialized with data, hold a reference to it to preserve ownership.
+    NSData *_data;
     BOOL _shouldFreeOnRelease;
     screen_char_t _placeholder;
 }
@@ -20,6 +22,24 @@
     if (self) {
         _line = &_placeholder;
         _eol = EOL_HARD;
+    }
+    return self;
+}
+
+// This keeps a raw pointer to data.bytes so don't modify data's length after this.
+- (instancetype)initWithData:(NSData *)data
+                    metadata:(iTermMetadata)metadata
+                continuation:(screen_char_t)continuation {
+    self = [super init];
+    if (self) {
+        _line = data.bytes;
+        _length = data.length / sizeof(screen_char_t);
+        assert(_length * sizeof(screen_char_t) == data.length);
+        _data = data;
+        _metadata = metadata;
+        iTermMetadataRetain(metadata);
+        _continuation = continuation;
+        _eol = continuation.code;
     }
     return self;
 }
@@ -130,6 +150,52 @@ static BOOL ScreenCharIsNull(screen_char_t c) {
     memset(&_continuation, 0, sizeof(_continuation));
     _continuation.code = EOL_SOFT;
     _eol = EOL_SOFT;
+}
+
+- (ScreenCharArray *)inWindow:(VT100GridRange)window {
+    const screen_char_t *theLine = self.line;
+    int offset = 0;
+    int maxLength = self.length;
+    if (window.length > 0) {
+        offset = window.location;
+        maxLength = window.length;
+    }
+    if (offset == 0 && maxLength >= self.length) {
+        return self;
+    }
+    return [[ScreenCharArray alloc] initWithLine:theLine + offset
+                                          length:MIN(maxLength, self.length)
+                                        metadata:self.metadata
+                                    continuation:self.continuation];
+}
+
+- (ScreenCharArray *)paddedToLength:(int)length eligibleForDWC:(BOOL)eligibleForDWC {
+    if (self.length == length) {
+        return self;
+    }
+    NSMutableData *data = [NSMutableData dataWithLength:sizeof(screen_char_t) * length];
+    screen_char_t *buffer = (screen_char_t *)data.mutableBytes;
+    memmove(buffer, self.line, self.length * sizeof(screen_char_t));
+
+    unichar eol = self.eol;
+    if (eol == EOL_SOFT &&
+        buffer[length - 1].code == 0 &&
+        eligibleForDWC) {
+        // The last line in the scrollback buffer is actually a split DWC
+        // if the first char on the screen is double-width and the buffer is soft-wrapped without
+        // a last char.
+        // Normally LineBuffer does this for you, but it can't if you're asking for the last line
+        // in the line buffer since it won't know about the DWC that got wrapped into VT100Grid.
+        eol = EOL_DWC;
+    }
+    if (eol == EOL_DWC) {
+        buffer[length - 1].code = DWC_SKIP;
+        buffer[length - 1].complexChar = NO;
+    }
+    screen_char_t continuation = self.continuation;
+    continuation.code = eol;
+
+    return [[ScreenCharArray alloc] initWithData:data metadata:self.metadata continuation:continuation];
 }
 
 @end
