@@ -364,8 +364,8 @@ static io_service_t iTermGetIOService(CGDirectDisplayID displayID) {
     }
     CGDirectDisplayID displayID = [self it_displayID];
     CGDisplayModeRef mode = CGDisplayCopyDisplayMode(displayID);
-    const double refreshRate = CGDisplayModeGetRefreshRate(mode);
-    CFRelease(mode);
+    const double refreshRate = mode ? CGDisplayModeGetRefreshRate(mode) : 60;
+    CGDisplayModeRelease(mode);
     const BOOL result = refreshRate >= 120;
     [self it_setSupportsHighFrameRates:result];
     return result;
