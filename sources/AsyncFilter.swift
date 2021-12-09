@@ -136,7 +136,7 @@ class AsyncFilter: NSObject {
          cadence: TimeInterval,
          refining: AsyncFilter?,
          progress: ((Double) -> (Void))?) {
-        lineBufferCopy = lineBuffer.copy() as! LineBuffer
+        lineBufferCopy = lineBuffer.copy()
         lineBufferCopy.setMaxLines(-1)
         grid.appendLines(grid.numberOfLinesUsed(), to: lineBufferCopy)
         let numberOfLines = lineBufferCopy.numLines(withWidth: grid.size.width)
