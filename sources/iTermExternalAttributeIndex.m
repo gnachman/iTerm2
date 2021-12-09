@@ -244,6 +244,10 @@
     return copy;
 }
 
+- (id)mutableCopyWithZone:(NSZone *)zone {
+    return [self copyWithZone:zone];
+}
+
 - (void)eraseAt:(int)x {
     [_attributes removeObjectForKey:@(x + _offset)];
 }
@@ -260,17 +264,19 @@
     }
 }
 
-+ (iTermExternalAttributeIndex *)concatenationOf:(iTermExternalAttributeIndex *)lhs
-                                      length:(int)lhsLength
-                                        with:(iTermExternalAttributeIndex *)rhs
-                                      length:(int)rhsLength {
++ (iTermExternalAttributeIndex *)concatenationOf:(id<iTermExternalAttributeIndexReading>)lhs
+                                          length:(int)lhsLength
+                                            with:(id<iTermExternalAttributeIndexReading>)rhs
+                                          length:(int)rhsLength {
     iTermExternalAttributeIndex *result = [[iTermExternalAttributeIndex alloc] init];
     [result appendValuesFrom:lhs range:NSMakeRange(0, lhsLength) at:0];
     [result appendValuesFrom:rhs range:NSMakeRange(0, rhsLength) at:lhsLength];
     return result;
 }
 
-- (void)appendValuesFrom:(iTermExternalAttributeIndex *)source range:(NSRange)range at:(int)base {
+- (void)appendValuesFrom:(id<iTermExternalAttributeIndexReading>)source
+                   range:(NSRange)range
+                      at:(int)base {
     [source.attributes enumerateKeysAndObjectsUsingBlock:^(NSNumber * _Nonnull key, iTermExternalAttribute * _Nonnull obj, BOOL * _Nonnull stop) {
         const int intKey = key.intValue;
         if (intKey < range.location) {
@@ -538,6 +544,10 @@ static NSString *const iTermExternalAttributeKeyURLCode = @"url";
 
 - (iTermExternalAttributeIndex *)subAttributesFromIndex:(int)index maximumLength:(int)maxLength {
     return self;
+}
+
+- (id)mutableCopyWithZone:(NSZone *)zone {
+    return [self copyWithZone:zone];
 }
 
 - (id)copyWithZone:(NSZone *)zone {

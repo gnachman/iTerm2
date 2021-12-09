@@ -16,9 +16,16 @@ typedef struct {
     void * _Nullable externalAttributes;
 } iTermMetadata;
 
+// I'd like to make these const to keep users well-behaved but C++ makes structs with const fields
+// practically unsuable becase of implicitly deleted operators.
+//
+// Note also that "immutable" here means that the code holding this object cannot change it, but
+// that doesn't prevent the externalAttributes from being mutated elsewhere.
+// This follows the NSArray/NSMutableArray model. When you get this, you should make a copy of it
+// if you really care about it not changing out from under you.
 typedef struct {
-    const NSTimeInterval timestamp;
-    const void * _Nullable externalAttributes;
+    NSTimeInterval timestamp;
+    void * _Nullable externalAttributes;
 } iTermImmutableMetadata;
 
 NS_INLINE iTermImmutableMetadata iTermMetadataMakeImmutable(iTermMetadata obj) {
@@ -29,15 +36,28 @@ NS_INLINE iTermImmutableMetadata iTermMetadataMakeImmutable(iTermMetadata obj) {
     return result;
 }
 
+
 void iTermMetadataInit(iTermMetadata *obj,
                        NSTimeInterval timestamp,
                        iTermExternalAttributeIndex * _Nullable externalAttributes);
+
+void iTermImmutableMetadataInit(iTermImmutableMetadata *obj,
+                                NSTimeInterval timestamp,
+                                id<iTermExternalAttributeIndexReading> _Nullable externalAttributes);
+
 iTermMetadata iTermMetadataTemporaryWithTimestamp(NSTimeInterval timestamp);
 iTermMetadata iTermMetadataCopy(iTermMetadata obj);
+iTermMetadata iTermImmutableMetadataMutableCopy(iTermImmutableMetadata obj);
+
 void iTermMetadataRetain(iTermMetadata obj);
 void iTermMetadataRelease(iTermMetadata obj);
 iTermMetadata iTermMetadataRetainAutorelease(iTermMetadata obj);
 iTermMetadata iTermMetadataAutorelease(iTermMetadata obj);
+
+void iTermImmutableMetadataRetain(iTermImmutableMetadata obj);
+void iTermImmutableMetadataRelease(iTermImmutableMetadata obj);
+iTermImmutableMetadata iTermImmutableMetadataRetainAutorelease(iTermImmutableMetadata obj);
+iTermImmutableMetadata iTermImmutableMetadataAutorelease(iTermImmutableMetadata obj);
 
 void iTermMetadataReplaceWithCopy(iTermMetadata *obj);
 
@@ -58,15 +78,16 @@ NSArray *iTermMetadataEncodeToArray(iTermMetadata obj);
 
 void iTermMetadataAppend(iTermMetadata *lhs,
                          int lhsLength,
-                         iTermMetadata *rhs,
+                         iTermImmutableMetadata *rhs,
                          int rhsLength);
 
 void iTermMetadataInitCopyingSubrange(iTermMetadata *obj,
-                                      iTermMetadata *source,
+                                      iTermImmutableMetadata *source,
                                       int start,
                                       int length);
 
 iTermMetadata iTermMetadataDefault(void);
+iTermImmutableMetadata iTermImmutableMetadataDefault(void);
 
 void iTermMetadataReset(iTermMetadata *obj);
 

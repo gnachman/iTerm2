@@ -26,7 +26,7 @@
 - (void)gridDidResize;
 @end
 
-@protocol VT100GridReading<NSObject>
+@protocol VT100GridReading<NSCopying, NSObject>
 @property(nonatomic, readonly) VT100GridSize size;
 @property(nonatomic, readonly) int cursorX;
 @property(nonatomic, readonly) int cursorY;
@@ -43,20 +43,23 @@
 @property(nonatomic, readonly) int topMargin;
 @property(nonatomic, readonly) int bottomMargin;
 @property(nonatomic, readonly) screen_char_t savedDefaultChar;
-@property(nonatomic, readonly) id<VT100GridDelegate> delegate;
+@property(nonatomic, weak, readonly) id<VT100GridDelegate> delegate;
 @property(nonatomic, readonly) VT100GridCoord preferredCursorPosition;
 @property(nonatomic, readonly) VT100GridSize sizeRespectingRegionConditionally;
 @property(nonatomic, readonly) BOOL haveScrolled;
 @property(nonatomic, readonly) NSDictionary *dictionaryValue;
 @property(nonatomic, readonly) NSArray<VT100LineInfo *> *metadataArray;
 
-- (const screen_char_t *)immutableScreenCharsAtLineNumber:(int)lineNumber;
+- (id<VT100GridReading>)copy;
+
+- (const screen_char_t *)screenCharsAtLineNumber:(int)lineNumber;
 - (iTermImmutableMetadata)immutableMetadataAtLineNumber:(int)lineNumber;
 - (BOOL)isCharDirtyAt:(VT100GridCoord)coord;
 - (BOOL)isAnyCharDirty;
 
 // Returns the set of dirty indexes on |line|.
 - (NSIndexSet *)dirtyIndexesOnLine:(int)line;
+- (VT100GridRange)dirtyRangeForLine:(int)y;
 
 // Returns the count of lines excluding totally empty lines at the bottom, and always including the
 // line the cursor is on.
@@ -76,8 +79,8 @@
 // than-range.length (but valid!) grid run will be returned.
 - (VT100GridRun)gridRunFromRange:(NSRange)range relativeToRow:(int)row;
 
-// Returns temp storage for one line.
-- (const screen_char_t *)resultLine;
+// Returns temp storage for one line. While this is mutable, it's trivial because it's used only temporarily as a convenience to the caller.
+- (screen_char_t *)resultLine;
 
 // Returns a human-readable string with the screen contents and dirty lines interspersed.
 - (NSString *)debugString;
@@ -109,29 +112,35 @@
 // Saves restorable state. Goes with initWithDictionary:delegate:
 - (void)encode:(id<iTermEncoderAdapter>)encoder;
 
+// Returns an array of NSData for lines in order (corresponding with lines on screen).
+- (NSArray *)orderedLines;
+
+- (void)enumerateCellsInRect:(VT100GridRect)rect
+                       block:(void (^)(VT100GridCoord, screen_char_t, iTermExternalAttribute *, BOOL *))block;
+
 @end
 
-@interface VT100Grid : NSObject<NSCopying, VT100GridReading>
+@interface VT100Grid : NSObject<VT100GridReading>
 
 // Changing the size erases grid contents.
-@property(nonatomic, assign) VT100GridSize size;
-@property(nonatomic, assign) int cursorX;
-@property(nonatomic, assign) int cursorY;
-@property(nonatomic, assign) VT100GridCoord cursor;
+@property(nonatomic, readwrite) VT100GridSize size;
+@property(nonatomic, readwrite) int cursorX;
+@property(nonatomic, readwrite) int cursorY;
+@property(nonatomic, readwrite) VT100GridCoord cursor;
 @property(nonatomic, readonly) BOOL haveScrollRegion;  // is there a left-right or top-bottom margin?
 @property(nonatomic, readonly) BOOL haveRowScrollRegion;  // is there a top-bottom margin?
 @property(nonatomic, readonly) BOOL haveColumnScrollRegion;  // is there a left-right margin?
-@property(nonatomic, assign) VT100GridRange scrollRegionRows;
-@property(nonatomic, assign) VT100GridRange scrollRegionCols;
-@property(nonatomic, assign) BOOL useScrollRegionCols;
-@property(nonatomic, assign, getter=isAllDirty) BOOL allDirty;
+@property(nonatomic, readwrite) VT100GridRange scrollRegionRows;
+@property(nonatomic, readwrite) VT100GridRange scrollRegionCols;
+@property(nonatomic, readwrite) BOOL useScrollRegionCols;
+@property(nonatomic, readwrite, getter=isAllDirty) BOOL allDirty;
 @property(nonatomic, readonly) int leftMargin;
 @property(nonatomic, readonly) int rightMargin;
 @property(nonatomic, readonly) int topMargin;
 @property(nonatomic, readonly) int bottomMargin;
-@property(nonatomic, assign) screen_char_t savedDefaultChar;
-@property(nonatomic, assign) id<VT100GridDelegate> delegate;
-@property(nonatomic, assign) VT100GridCoord preferredCursorPosition;
+@property(nonatomic, readwrite) screen_char_t savedDefaultChar;
+@property(nonatomic, weak, readwrite) id<VT100GridDelegate> delegate;
+@property(nonatomic, readwrite) VT100GridCoord preferredCursorPosition;
 // Size of the grid if the cursor is outside the scroll region. Otherwise, size of the scroll region.
 @property(nonatomic, readonly) VT100GridSize sizeRespectingRegionConditionally;
 
@@ -149,6 +158,8 @@
 - (instancetype)initWithDictionary:(NSDictionary *)dictionary
                           delegate:(id<VT100GridDelegate>)delegate;
 
+- (VT100Grid *)copy;
+
 - (screen_char_t *)screenCharsAtLineNumber:(int)lineNumber;
 - (iTermMetadata)metadataAtLineNumber:(int)lineNumber;
 
@@ -163,7 +174,6 @@
 // Mark chars dirty in a rectangle, inclusive of endpoints.
 - (void)markCharsDirty:(BOOL)dirty inRectFrom:(VT100GridCoord)from to:(VT100GridCoord)to;
 - (void)markAllCharsDirty:(BOOL)dirty;
-- (VT100GridRange)dirtyRangeForLine:(int)y;
 
 // Append the first numLines to the given line buffer. Returns the number of lines appended.
 - (int)appendLines:(int)numLines
@@ -180,9 +190,6 @@
 
 - (void)mutateCellsInRect:(VT100GridRect)rect
                     block:(void (^NS_NOESCAPE)(VT100GridCoord, screen_char_t *, iTermExternalAttribute **, BOOL *))block;
-
-- (void)enumerateCellsInRect:(VT100GridRect)rect
-                       block:(void (^)(VT100GridCoord, screen_char_t, iTermExternalAttribute *, BOOL *))block;
 
 // Move cursor to the left by n steps. Does not wrap around when it hits the left margin.
 // If it starts left of the scroll region, clamp it to the left. If it starts right of the scroll
@@ -256,7 +263,7 @@
                 wraparound:(BOOL)wraparound
                       ansi:(BOOL)ansi
                     insert:(BOOL)insert
-    externalAttributeIndex:(iTermExternalAttributeIndex *)attributes;
+    externalAttributeIndex:(id<iTermExternalAttributeIndexReading>)attributes;
 
 // Delete some number of chars starting at a given location, moving chars to the right of them back.
 - (void)deleteChars:(int)num
@@ -318,9 +325,6 @@
 
 // TODO: write a test for this
 - (void)insertChar:(screen_char_t)c externalAttributes:(iTermExternalAttribute *)attrs at:(VT100GridCoord)pos times:(int)num;
-
-// Returns an array of NSData for lines in order (corresponding with lines on screen).
-- (NSArray *)orderedLines;
 
 // Restore saved state excluding screen contents.
 // DEPRECATED - use initWithDictionary:delegate: instead.

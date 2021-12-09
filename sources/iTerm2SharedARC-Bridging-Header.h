@@ -34,3 +34,4 @@
 #import "ScreenChar.h"
 #import "ScreenCharArray.h"
 #import "Trigger.h"
+#import "VT100Screen+Mutation.h"

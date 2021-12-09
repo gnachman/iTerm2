@@ -217,11 +217,13 @@ extern NSString *const SESSION_ARRANGEMENT_SERVER_DICT;
         empty = [[ScreenCharArray alloc] initWithLine:&placeholder length:0 continuation:continuation];
     });
     for (id<iTermContentSubscriber> subscriber in self.contentSubscribers) {
-        [subscriber deliver:empty metadata:iTermMetadataDefault()];
+        [subscriber deliver:empty metadata:iTermMetadataMakeImmutable(iTermMetadataDefault())];
     }
 }
 
-- (void)publishScreenCharArray:(const screen_char_t *)line metadata:(iTermMetadata)metadata length:(int)length {
+- (void)publishScreenCharArray:(const screen_char_t *)line
+                      metadata:(iTermImmutableMetadata)metadata
+                        length:(int)length {
     if (self.contentSubscribers.count == 0) {
         return;
     }

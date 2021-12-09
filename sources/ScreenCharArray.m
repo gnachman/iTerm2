@@ -29,7 +29,7 @@
 
 // This keeps a raw pointer to data.bytes so don't modify data's length after this.
 - (instancetype)initWithData:(NSData *)data
-                    metadata:(iTermMetadata)metadata
+                    metadata:(iTermImmutableMetadata)metadata
                 continuation:(screen_char_t)continuation {
     self = [super init];
     if (self) {
@@ -38,7 +38,7 @@
         assert(_length * sizeof(screen_char_t) == data.length);
         _data = data;
         _metadata = metadata;
-        iTermMetadataRetain(metadata);
+        iTermImmutableMetadataRetain(metadata);
         _continuation = continuation;
         _eol = continuation.code;
     }
@@ -62,13 +62,13 @@
                 continuation:(screen_char_t)continuation {
     return [self initWithLine:line
                        length:length
-                     metadata:iTermMetadataDefault()
+                     metadata:iTermImmutableMetadataDefault()
                  continuation:continuation];
 }
 
 - (instancetype)initWithLine:(const screen_char_t *)line
                       length:(int)length
-                    metadata:(iTermMetadata)metadata
+                    metadata:(iTermImmutableMetadata)metadata
                 continuation:(screen_char_t)continuation {
     self = [super init];
     if (self) {
@@ -76,7 +76,7 @@
         _length = length;
         _continuation = continuation;
         _metadata = metadata;
-        iTermMetadataRetain(_metadata);
+        iTermImmutableMetadataRetain(_metadata);
         _eol = continuation.code;
     }
     return self;
@@ -84,7 +84,7 @@
 
 - (instancetype)initWithLine:(const screen_char_t *)line
                       length:(int)length
-                    metadata:(iTermMetadata)metadata
+                    metadata:(iTermImmutableMetadata)metadata
                 continuation:(screen_char_t)continuation
                freeOnRelease:(BOOL)freeOnRelease {
     self = [self initWithLine:line length:length metadata:metadata continuation:continuation];
@@ -97,7 +97,7 @@
 - (instancetype)initWithLine:(const screen_char_t *)line
                       offset:(size_t)offset
                       length:(int)length
-                    metadata:(iTermMetadata)metadata
+                    metadata:(iTermImmutableMetadata)metadata
                 continuation:(screen_char_t)continuation
                freeOnRelease:(BOOL)freeOnRelease {
     self = [self initWithLine:line + offset
@@ -116,7 +116,7 @@
         free((void *)(_line - _offset));
         _line = NULL;
     }
-    iTermMetadataRelease(_metadata);
+    iTermImmutableMetadataRelease(_metadata);
 }
 
 - (NSString *)description {
@@ -161,8 +161,8 @@
     screen_char_t *copy = malloc(sizeof(screen_char_t) * combinedLength);
     memmove(copy, _line, sizeof(*_line) * _length);
     memmove(copy + _length, other.line, sizeof(*_line) * other.length);
-    iTermExternalAttributeIndex *originalIndex = iTermMetadataGetExternalAttributesIndex(_metadata);
-    iTermExternalAttributeIndex *appendage = iTermMetadataGetExternalAttributesIndex(other->_metadata);
+    id<iTermExternalAttributeIndexReading> originalIndex = iTermImmutableMetadataGetExternalAttributesIndex(_metadata);
+    id<iTermExternalAttributeIndexReading> appendage = iTermImmutableMetadataGetExternalAttributesIndex(other->_metadata);
     iTermExternalAttributeIndex *eaIndex =
         [iTermExternalAttributeIndex concatenationOf:originalIndex
                                               length:_length
@@ -172,7 +172,7 @@
     iTermMetadataInit(&combined, _metadata.timestamp, eaIndex);
     ScreenCharArray *result = [[ScreenCharArray alloc] initWithLine:copy
                                                              length:combinedLength
-                                                           metadata:combined
+                                                           metadata:iTermMetadataMakeImmutable(combined)
                                                        continuation:other.continuation];
     iTermMetadataRelease(combined);
     if (result) {

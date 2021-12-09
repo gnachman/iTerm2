@@ -41,7 +41,7 @@ const NSInteger kLongMaximumWordLength = 100000;
     int _cachedLineNumber;
     const screen_char_t *_cachedLine;
     int _cachedExternalAttributeLineNumber;
-    iTermExternalAttributeIndex *_cachedExternalAttributeIndex;
+    id<iTermExternalAttributeIndexReading> _cachedExternalAttributeIndex;
 }
 
 + (instancetype)textExtractorWithDataSource:(id<iTermTextDataSource>)dataSource {
@@ -1918,7 +1918,7 @@ trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
         }
         ScreenCharArray *sca = [_dataSource screenCharArrayForLine:y];
         const screen_char_t *theLine = sca.line;
-        iTermExternalAttributeIndex *eaIndex = [_dataSource externalAttributeIndexForLine:y];
+        id<iTermExternalAttributeIndexReading> eaIndex = [_dataSource externalAttributeIndexForLine:y];
 
         // Count number of nulls at end of line.
         int numNulls = 0;
@@ -2173,11 +2173,11 @@ trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
     return theLine[coord.x];
 }
 
-- (iTermExternalAttributeIndex *)externalAttributeIndexForLine:(int)line {
+- (id<iTermExternalAttributeIndexReading>)externalAttributeIndexForLine:(int)line {
     if (_shouldCacheLines && line == _cachedExternalAttributeLineNumber && _cachedExternalAttributeIndex != nil) {
         return _cachedExternalAttributeIndex;
     }
-    iTermExternalAttributeIndex *index = [_dataSource externalAttributeIndexForLine:line];
+    id<iTermExternalAttributeIndexReading> index = [_dataSource externalAttributeIndexForLine:line];
     if (_shouldCacheLines) {
         _cachedExternalAttributeLineNumber = line;
         _cachedExternalAttributeIndex = index;

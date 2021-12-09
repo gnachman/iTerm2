@@ -107,7 +107,7 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 
 - (void)appendScreenChars:(const screen_char_t *)line
                    length:(int)length
-   externalAttributeIndex:(iTermExternalAttributeIndex *)externalAttributes
+   externalAttributeIndex:(id<iTermExternalAttributeIndexReading>)externalAttributes
              continuation:(screen_char_t)continuation;
 - (void)setContentsFromLineBuffer:(LineBuffer *)lineBuffer;
 
@@ -166,7 +166,7 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 - (NSString *)compactLineDumpWithHistoryAndContinuationMarks;
 
 // This is provided for testing only.
-- (VT100Grid *)currentGrid;
+- (id<VT100GridReading>)currentGrid;
 
 // Called when a bell is to be run. Applies rate limiting and kicks off the bell indicators
 // (notifications, flashing lights, sounds) per user preference.
@@ -239,7 +239,7 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 // Uninitialize timestamps.
 - (void)resetTimestamps;
 
-- (void)enumerateLinesInRange:(NSRange)range block:(void (^)(int line, ScreenCharArray *, iTermMetadata, BOOL *))block;
+- (void)enumerateLinesInRange:(NSRange)range block:(void (^)(int line, ScreenCharArray *, iTermImmutableMetadata, BOOL *))block;
 
 // Fake shell integration via triggers APIs
 - (void)promptDidStartAt:(VT100GridAbsCoord)coord;

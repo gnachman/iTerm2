@@ -13,6 +13,8 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+@class iTermExternalAttributeIndex;
+
 // Immutable
 @interface iTermExternalAttribute: NSObject<NSCopying>
 @property (nonatomic, readonly) BOOL hasUnderlineColor;
@@ -37,18 +39,18 @@ NS_ASSUME_NONNULL_BEGIN
 
 @end
 
-@protocol iTermExternalAttributeIndexReading<NSObject>
+@protocol iTermExternalAttributeIndexReading<NSMutableCopying, NSObject>
 @property (nonatomic, readonly) NSDictionary<NSNumber *, iTermExternalAttribute *> *attributes;
 @property (nonatomic, readonly) NSDictionary *dictionaryValue;
 - (NSData *)data;
 - (NSString *)shortDescriptionWithLength:(int)length;
-- (id<iTermExternalAttributeIndexReading>)subAttributesToIndex:(int)index;
-- (id<iTermExternalAttributeIndexReading>)subAttributesFromIndex:(int)index;
-- (id<iTermExternalAttributeIndexReading>)subAttributesFromIndex:(int)index maximumLength:(int)maxLength;
-- (id<iTermExternalAttributeIndexReading> _Nullable)objectAtIndexedSubscript:(NSInteger)idx;
+- (iTermExternalAttributeIndex *)subAttributesToIndex:(int)index;
+- (iTermExternalAttributeIndex *)subAttributesFromIndex:(int)index;
+- (iTermExternalAttributeIndex *)subAttributesFromIndex:(int)index maximumLength:(int)maxLength;
+- (iTermExternalAttribute * _Nullable)objectAtIndexedSubscript:(NSInteger)idx;
 @end
 
-@interface iTermExternalAttributeIndex: NSObject<NSCopying, iTermExternalAttributeIndexReading>
+@interface iTermExternalAttributeIndex: NSObject<iTermExternalAttributeIndexReading>
 @property (nonatomic, strong) NSDictionary<NSNumber *, iTermExternalAttribute *> *attributes;
 @property (nonatomic, readonly) NSDictionary *dictionaryValue;
 
@@ -72,12 +74,11 @@ NS_ASSUME_NONNULL_BEGIN
 - (iTermExternalAttributeIndex *)subAttributesToIndex:(int)index;
 - (iTermExternalAttributeIndex *)subAttributesFromIndex:(int)index;
 - (iTermExternalAttributeIndex *)subAttributesFromIndex:(int)index maximumLength:(int)maxLength;
-- (iTermExternalAttribute * _Nullable)objectAtIndexedSubscript:(NSInteger)idx;
 - (void)setObject:(iTermExternalAttribute * _Nullable)ea atIndexedSubscript:(NSUInteger)i;
 
-+ (iTermExternalAttributeIndex *)concatenationOf:(iTermExternalAttributeIndex *)lhs
++ (iTermExternalAttributeIndex *)concatenationOf:(id<iTermExternalAttributeIndexReading>)lhs
                                       length:(int)lhsLength
-                                        with:(iTermExternalAttributeIndex *)rhs
+                                        with:(id<iTermExternalAttributeIndexReading>)rhs
                                       length:(int)rhsLength;
 @end
 
@@ -85,8 +86,8 @@ NS_ASSUME_NONNULL_BEGIN
 + (instancetype)withAttribute:(iTermExternalAttribute *)attr;
 
 - (void)copyFrom:(iTermExternalAttributeIndex *)source
-          source:(int)loadBase
-     destination:(int)storeBase
+          source:(int)source
+     destination:(int)destination
            count:(int)count NS_UNAVAILABLE;
 @end
 

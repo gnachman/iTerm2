@@ -315,7 +315,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
             length:(int)length
            partial:(BOOL)partial
              width:(int)width
-          metadata:(iTermMetadata)metadataObj
+          metadata:(iTermImmutableMetadata)metadataObj
       continuation:(screen_char_t)continuation {
 #ifdef LOG_MUTATIONS
     NSLog(@"Append: %@\n", ScreenCharArrayToStringDebug(buffer, length));
@@ -337,7 +337,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
         // cache.
         num_wrapped_lines_width = -1;
         int prefix_len = 0;
-        iTermMetadata prefixMetadata = iTermMetadataDefault();
+        iTermImmutableMetadata prefixMetadata = iTermMetadataMakeImmutable(iTermMetadataDefault());
         screen_char_t* prefix = NULL;
         if ([block hasPartial]) {
             // There is a line that's too long for the current block to hold.
@@ -411,7 +411,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     }
 }
 
-- (iTermMetadata)metadataForLineNumber:(int)lineNumber width:(int)width {
+- (iTermImmutableMetadata)metadataForLineNumber:(int)lineNumber width:(int)width {
     int remainder = 0;
     LineBlock *block = [_lineBlocks blockContainingLineNumber:lineNumber
                                                         width:width
@@ -419,7 +419,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     return [block metadataForLineNumber:remainder width:width];
 }
 
-- (iTermMetadata)metadataForRawLineWithWrappedLineNumber:(int)lineNum width:(int)width {
+- (iTermImmutableMetadata)metadataForRawLineWithWrappedLineNumber:(int)lineNum width:(int)width {
     int remainder = 0;
     LineBlock *block = [_lineBlocks blockContainingLineNumber:lineNum width:width remainder:&remainder];
     return [block metadataForRawLineAtWrappedLineOffset:remainder width:width];
@@ -557,7 +557,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
                                          int length,
                                          int eol,
                                          screen_char_t continuation,
-                                         iTermMetadata metadata,
+                                         iTermImmutableMetadata metadata,
                                          BOOL * _Nonnull stop) {
         ScreenCharArray *lineResult = [[ScreenCharArray alloc] initWithLine:chars
                                                                      length:length
@@ -569,12 +569,17 @@ static int RawNumLines(LineBuffer* buffer, int width) {
 
 - (void)enumerateLinesInRange:(NSRange)range
                         width:(int)width
-                        block:(void (^)(int, ScreenCharArray *, iTermMetadata, BOOL *))block {
+                        block:(void (^)(int, ScreenCharArray *, iTermImmutableMetadata, BOOL *))block {
     __block int count = range.location;
     [_lineBlocks enumerateLinesInRange:range
                                  width:width
                                  block:
-     ^(const screen_char_t * _Nonnull chars, int length, int eol, screen_char_t continuation, iTermMetadata metadata, BOOL * _Nonnull stop) {
+     ^(const screen_char_t * _Nonnull chars,
+       int length,
+       int eol,
+       screen_char_t continuation,
+       iTermImmutableMetadata metadata,
+       BOOL * _Nonnull stop) {
         ScreenCharArray *array = [[ScreenCharArray alloc] initWithLine:chars
                                                                 length:length
                                                           continuation:continuation];
@@ -621,7 +626,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
 - (ScreenCharArray * _Nullable)popLastLineWithWidth:(int)width {
     screen_char_t *buffer = iTermCalloc(width, sizeof(screen_char_t));
     int eol = 0;
-    iTermMetadata metadata;
+    iTermImmutableMetadata metadata;
     screen_char_t continuation;
     const BOOL ok = [self popAndCopyLastLineInto:buffer
                                            width:width
@@ -642,7 +647,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
 - (BOOL)popAndCopyLastLineInto:(screen_char_t*)ptr
                          width:(int)width
              includesEndOfLine:(int*)includesEndOfLine
-                      metadata:(out iTermMetadata *)metadataPtr
+                      metadata:(out iTermImmutableMetadata *)metadataPtr
                   continuation:(screen_char_t *)continuationPtr
 {
     if ([self numLinesWithWidth: width] == 0) {
@@ -1242,21 +1247,21 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
               length:0
              partial:NO
                width:num_wrapped_lines_width > 0 ?: 80
-            metadata:iTermMetadataTemporaryWithTimestamp([NSDate timeIntervalSinceReferenceDate])
+            metadata:iTermMetadataMakeImmutable(iTermMetadataTemporaryWithTimestamp([NSDate timeIntervalSinceReferenceDate]))
         continuation:defaultBg];
 
     [self appendLine:buffer
               length:len
              partial:NO
                width:num_wrapped_lines_width > 0 ?: 80
-            metadata:iTermMetadataTemporaryWithTimestamp([NSDate timeIntervalSinceReferenceDate])
+            metadata:iTermMetadataMakeImmutable(iTermMetadataTemporaryWithTimestamp([NSDate timeIntervalSinceReferenceDate]))
         continuation:bg];
 
     [self appendLine:buffer
               length:0
              partial:NO
                width:num_wrapped_lines_width > 0 ?: 80
-            metadata:iTermMetadataTemporaryWithTimestamp([NSDate timeIntervalSinceReferenceDate])
+            metadata:iTermMetadataMakeImmutable(iTermMetadataTemporaryWithTimestamp([NSDate timeIntervalSinceReferenceDate]))
         continuation:defaultBg];
 }
 
@@ -1369,7 +1374,7 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
         continuation.code = eol;
         return [[ScreenCharArray alloc] initWithLine:line
                                               length:length
-                                            metadata:metadata.lineMetadata
+                                            metadata:iTermMetadataMakeImmutable(metadata.lineMetadata)
                                         continuation:continuation];
     }
     return nil;

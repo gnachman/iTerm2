@@ -670,7 +670,7 @@ static const NSInteger kUnicodeVersion = 9;
                                     continuation:sct[width]];
 }
 
-- (screen_char_t *)getLineAtIndex:(int)theIndex {
+- (const screen_char_t *)getLineAtIndex:(int)theIndex {
     if (_buffer) {
         free(_buffer);
     }

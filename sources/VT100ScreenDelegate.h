@@ -296,7 +296,7 @@
                   charactersIgnoringModifiers:(NSString *)charactersIgnoringModifiers;
 - (void)screenDidAppendImageData:(NSData *)data;
 - (void)screenAppendScreenCharArray:(const screen_char_t *)line
-                           metadata:(iTermMetadata)metadata
+                           metadata:(iTermImmutableMetadata)metadata
                              length:(int)length;
 - (void)screenApplicationKeypadModeDidChange:(BOOL)mode;
 - (VT100SavedColorsSlot *)screenSavedColorsSlot;

@@ -2750,7 +2750,6 @@
 		A6C762E41B45C52B00E3C992 /* TaskNotifier.m in Sources */ = {isa = PBXBuildFile; fileRef = A67E0ACF186E4B71009B2B68 /* TaskNotifier.m */; };
 		A6C762E61B45C52B00E3C992 /* VT100Grid.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D8B8A131806038F00C2DC25 /* VT100Grid.m */; };
 		A6C762E71B45C52B00E3C992 /* VT100GridTypes.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DD39ACE180B7884004E56D5 /* VT100GridTypes.m */; };
-		A6C762E91B45C52B00E3C992 /* VT100Screen.m in Sources */ = {isa = PBXBuildFile; fileRef = E8CF7562026DDA6303A80106 /* VT100Screen.m */; };
 		A6C762EA1B45C52B00E3C992 /* AATree.m in Sources */ = {isa = PBXBuildFile; fileRef = A6358643184BEA57009ED690 /* AATree.m */; };
 		A6C762EB1B45C52B00E3C992 /* AATreeNode.m in Sources */ = {isa = PBXBuildFile; fileRef = A6358645184BEA57009ED690 /* AATreeNode.m */; };
 		A6C762EC1B45C52B00E3C992 /* EquivalenceClassSet.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DAE714C14AAF24200DA144B /* EquivalenceClassSet.m */; };
@@ -3355,6 +3354,10 @@
 		A6E1524727602FFE00D0F41C /* iTermWeakBox.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E1524527602FFE00D0F41C /* iTermWeakBox.m */; };
 		A6E152492761390200D0F41C /* LineBufferTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6E152482761390200D0F41C /* LineBufferTests.swift */; };
 		A6E1524C27613BF100D0F41C /* LineBuffer.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D72438C11F416E500BD4924 /* LineBuffer.m */; };
+		A6E1525A2761F02600D0F41C /* VT100Screen+Mutation.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E152582761F02600D0F41C /* VT100Screen+Mutation.h */; };
+		A6E152612762CE2300D0F41C /* VT100Screen.m in Sources */ = {isa = PBXBuildFile; fileRef = E8CF7562026DDA6303A80106 /* VT100Screen.m */; };
+		A6E152622762CE3D00D0F41C /* VT100Screen+Mutation.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E152592761F02600D0F41C /* VT100Screen+Mutation.m */; };
+		A6E152632762CE3E00D0F41C /* VT100Screen+Mutation.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E152592761F02600D0F41C /* VT100Screen+Mutation.m */; };
 		A6E16C5F24A85D5F00C6DB06 /* BigSurAddTab@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A6E16C5D24A85D5E00C6DB06 /* BigSurAddTab@2x.png */; };
 		A6E16C6024A85D5F00C6DB06 /* BigSurAddTab@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A6E16C5D24A85D5E00C6DB06 /* BigSurAddTab@2x.png */; };
 		A6E16C6124A85D5F00C6DB06 /* BigSurAddTab@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A6E16C5D24A85D5E00C6DB06 /* BigSurAddTab@2x.png */; };
@@ -6416,6 +6419,9 @@
 		A6E1524527602FFE00D0F41C /* iTermWeakBox.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermWeakBox.m; sourceTree = "<group>"; };
 		A6E152482761390200D0F41C /* LineBufferTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LineBufferTests.swift; sourceTree = "<group>"; };
 		A6E1524D27613EEC00D0F41C /* iTerm2XCTests-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "iTerm2XCTests-Bridging-Header.h"; sourceTree = "<group>"; };
+		A6E152582761F02600D0F41C /* VT100Screen+Mutation.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "VT100Screen+Mutation.h"; sourceTree = "<group>"; };
+		A6E152592761F02600D0F41C /* VT100Screen+Mutation.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "VT100Screen+Mutation.m"; sourceTree = "<group>"; };
+		A6E1525D2762AFBD00D0F41C /* VT100Screen+Private.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "VT100Screen+Private.h"; sourceTree = "<group>"; };
 		A6E16C5D24A85D5E00C6DB06 /* BigSurAddTab@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "BigSurAddTab@2x.png"; path = "images/BigSurAddTab@2x.png"; sourceTree = SOURCE_ROOT; };
 		A6E16C5E24A85D5F00C6DB06 /* BigSurAddTab.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = BigSurAddTab.png; path = images/BigSurAddTab.png; sourceTree = SOURCE_ROOT; };
 		A6E16C6524A866F300C6DB06 /* WindowCornerFull_BigSur@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "WindowCornerFull_BigSur@2x.png"; path = "images/WindowCornerFull_BigSur@2x.png"; sourceTree = SOURCE_ROOT; };
@@ -8871,6 +8877,9 @@
 				A63F409D183F3AF5003A6A6D /* VT100LineInfo.h */,
 				A63F409E183F3AF5003A6A6D /* VT100LineInfo.m */,
 				E8CF7562026DDA6303A80106 /* VT100Screen.m */,
+				A6E152582761F02600D0F41C /* VT100Screen+Mutation.h */,
+				A6E152592761F02600D0F41C /* VT100Screen+Mutation.m */,
+				A6E1525D2762AFBD00D0F41C /* VT100Screen+Private.h */,
 			);
 			name = Core;
 			sourceTree = "<group>";
@@ -11825,6 +11834,7 @@
 				A62C3B311BCC24AB00B5629D /* iTermRecentDirectoryMO.h in Headers */,
 				A6CEC1261DCE8146009F4FD2 /* GPBRootObject_PackagePrivate.h in Headers */,
 				A6CEC1191DCE8146009F4FD2 /* GPBCodedInputStream.h in Headers */,
+				A6E1525A2761F02600D0F41C /* VT100Screen+Mutation.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -14482,6 +14492,7 @@
 				A62C3A921BCAE0ED00B5629D /* iTermRecentDirectoryMO+Additions.m in Sources */,
 				A6CEC1121DCE8146009F4FD2 /* GPBUtilities.m in Sources */,
 				A6C762AA1B45C52B00E3C992 /* PTYWindow+Scripting.m in Sources */,
+				A6E152622762CE3D00D0F41C /* VT100Screen+Mutation.m in Sources */,
 				A6CC16551CF012E300E8C148 /* iTermCarbonHotKeyController.m in Sources */,
 				A6C763571B45C52B00E3C992 /* iTermOpenQuicklyTextField.m in Sources */,
 				A6C7631D1B45C52B00E3C992 /* iTermSelectionScrollHelper.m in Sources */,
@@ -14573,6 +14584,7 @@
 				A6CEC1141DCE8146009F4FD2 /* GPBWireFormat.m in Sources */,
 				A6C762AD1B45C52B00E3C992 /* NSBezierPath+iTerm.m in Sources */,
 				A6C7639A1B45C52B00E3C992 /* TmuxGateway.m in Sources */,
+				A6E152612762CE2300D0F41C /* VT100Screen.m in Sources */,
 				A6C762B21B45C52B00E3C992 /* NSDateFormatterExtras.m in Sources */,
 				A6C763A01B45C52B00E3C992 /* TmuxWindowsTable.m in Sources */,
 				A6EFF2481D21DD0700806EEF /* iTermSessionHotkeyController.m in Sources */,
@@ -14639,7 +14651,6 @@
 				A6CEC0731DCE80C9009F4FD2 /* Api.pbobjc.m in Sources */,
 				A6C763B11B45C52B00E3C992 /* HighlightTrigger.m in Sources */,
 				A6C7638E1B45C52B00E3C992 /* iTermShellHistoryController.m in Sources */,
-				A6C762E91B45C52B00E3C992 /* VT100Screen.m in Sources */,
 				A6CEC07B1DCE80C9009F4FD2 /* SourceContext.pbobjc.m in Sources */,
 				A6C7638A1B45C52B00E3C992 /* ProfileModelWrapper.m in Sources */,
 				A6C763BB1B45C52B00E3C992 /* iTermTipController.m in Sources */,
@@ -14705,6 +14716,7 @@
 				A638D2A522223394001CD688 /* iTermDirectedGraphTest.m in Sources */,
 				533292A6237E75360027EB49 /* iTermPythonArgumentParserTests.m in Sources */,
 				A608CCFD214DE7C1007A7B87 /* iTermSemanticHistoryTest.m in Sources */,
+				A6E152632762CE3E00D0F41C /* VT100Screen+Mutation.m in Sources */,
 				A608CD03214DE7C1007A7B87 /* VT100GridTest.m in Sources */,
 				A608CD08214DE7C1007A7B87 /* iTermTextExtractorTest.m in Sources */,
 				A608CD0D214DE7C1007A7B87 /* iTermFunctionCallSuggesterTest.m in Sources */,

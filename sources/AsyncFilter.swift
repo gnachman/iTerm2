@@ -107,7 +107,7 @@ protocol FilterDestination {
     @objc(filterDestinationAppendCharacters:count:externalAttributeIndex:continuation:)
     func append(_ characters: UnsafePointer<screen_char_t>,
                 count: Int32,
-                externalAttributeIndex: iTermExternalAttributeIndex?,
+                externalAttributeIndex: iTermExternalAttributeIndexReading?,
                 continuation: screen_char_t)
 
     @objc(filterDestinationRemoveLastLine)
@@ -171,7 +171,7 @@ class AsyncFilter: NSObject {
                                                          width: width)
         destination.append(chars.line,
                            count: chars.length,
-                           externalAttributeIndex: iTermMetadataGetExternalAttributesIndex(metadata),
+                           externalAttributeIndex: iTermImmutableMetadataGetExternalAttributesIndex(metadata),
                            continuation: chars.continuation)
     }
 
@@ -234,7 +234,7 @@ class AsyncFilter: NSObject {
 }
 
 extension AsyncFilter: ContentSubscriber {
-    func deliver(_ array: ScreenCharArray, metadata: iTermMetadata) {
+    func deliver(_ array: ScreenCharArray, metadata: iTermImmutableMetadata) {
         lineBufferCopy.appendLine(array.line,
                                   length: array.length,
                                   partial: array.eol != EOL_HARD,

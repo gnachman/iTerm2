@@ -1642,7 +1642,7 @@ do { \
                         length:string.length
                        partial:i == strings.count - 1
                          width:80
-                      metadata:iTermMetadataDefault()
+                      metadata:iTermImmutableMetadataDefault()
                   continuation:continuation];
         i++;
     }

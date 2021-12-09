@@ -319,7 +319,7 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
 - (void)textViewEditSession {
 }
 
-- (screen_char_t *)getLineAtIndex:(int)theIndex withBuffer:(screen_char_t*)buffer {
+- (const screen_char_t *)getLineAtIndex:(int)theIndex withBuffer:(screen_char_t*)buffer {
     return nil;
 }
 
@@ -2211,12 +2211,12 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
                               NSTimeInterval now = 449711536;
                               const NSTimeInterval day = 86400;
                               int line = 0;
-                              [[screen.currentGrid lineInfoAtLineNumber:line++] setTimestamp:now - 1];  // HH:MM:SS
-                              [[screen.currentGrid lineInfoAtLineNumber:line++] setTimestamp:now - day - 1];  // DOW HH:MM:SS
-                              [[screen.currentGrid lineInfoAtLineNumber:line++] setTimestamp:now - 6 * day];  // DOW HH:MM:SS
-                              [[screen.currentGrid lineInfoAtLineNumber:line++] setTimestamp:now - 6 * day - 1];  // MM/DD HH:MM:SS
-                              [[screen.currentGrid lineInfoAtLineNumber:line++] setTimestamp:now - 180 * day];  // MM/DD HH:MM:SS
-                              [[screen.currentGrid lineInfoAtLineNumber:line++] setTimestamp:now - 180 * day - 1];  // MM/DD/YYYY HH:MM:SS
+                              [[screen.mutableCurrentGrid lineInfoAtLineNumber:line++] setTimestamp:now - 1];  // HH:MM:SS
+                              [[screen.mutableCurrentGrid lineInfoAtLineNumber:line++] setTimestamp:now - day - 1];  // DOW HH:MM:SS
+                              [[screen.mutableCurrentGrid lineInfoAtLineNumber:line++] setTimestamp:now - 6 * day];  // DOW HH:MM:SS
+                              [[screen.mutableCurrentGrid lineInfoAtLineNumber:line++] setTimestamp:now - 6 * day - 1];  // MM/DD HH:MM:SS
+                              [[screen.mutableCurrentGrid lineInfoAtLineNumber:line++] setTimestamp:now - 180 * day];  // MM/DD HH:MM:SS
+                              [[screen.mutableCurrentGrid lineInfoAtLineNumber:line++] setTimestamp:now - 180 * day - 1];  // MM/DD/YYYY HH:MM:SS
                               textView.drawingHook = ^(iTermTextDrawingHelper *helper) {
                                   helper.shouldShowTimestamps = YES;
                                   helper.now = now;

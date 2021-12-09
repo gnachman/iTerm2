@@ -18,7 +18,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic) int length;
 @property (nonatomic, readonly) int eol;  // EOL_SOFT, EOL_HARD, or EOL_DWC
 @property (nonatomic, readonly) screen_char_t continuation;
-@property (nonatomic, readonly) iTermMetadata metadata;
+@property (nonatomic, readonly) iTermImmutableMetadata metadata;
 
 - (instancetype)initWithLine:(const screen_char_t *)line
                       length:(int)length
@@ -26,16 +26,16 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (instancetype)initWithLine:(const screen_char_t *)line
                       length:(int)length
-                    metadata:(iTermMetadata)metadata
+                    metadata:(iTermImmutableMetadata)metadata
                 continuation:(screen_char_t)continuation;
 
 - (instancetype)initWithData:(NSData *)data
-                    metadata:(iTermMetadata)metadata
+                    metadata:(iTermImmutableMetadata)metadata
                 continuation:(screen_char_t)continuation;
 
 - (instancetype)initWithLine:(const screen_char_t *)line
                       length:(int)length
-                    metadata:(iTermMetadata)metadata
+                    metadata:(iTermImmutableMetadata)metadata
                 continuation:(screen_char_t)continuation
                freeOnRelease:(BOOL)freeOnRelease;
 
@@ -49,7 +49,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (instancetype)initWithLine:(const screen_char_t *)line  // pointer to 1st byte of malloced memory
                       offset:(size_t)offset  // self.line == line + offset
                       length:(int)length
-                    metadata:(iTermMetadata)metadata
+                    metadata:(iTermImmutableMetadata)metadata
                 continuation:(screen_char_t)continuation
                freeOnRelease:(BOOL)freeOnRelease;
 

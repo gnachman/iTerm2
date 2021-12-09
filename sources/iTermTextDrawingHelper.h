@@ -15,6 +15,7 @@
 
 @class iTermColorMap;
 @class iTermExternalAttributeIndex;
+@protocol iTermExternalAttributeIndexReading;
 @class iTermFindOnPageHelper;
 @class iTermSelection;
 @class iTermTextExtractor;
@@ -33,8 +34,6 @@ BOOL CheckFindMatchAtIndex(NSData *findMatches, int index);
 
 - (const screen_char_t *)drawingHelperLineAtIndex:(int)line;
 - (const screen_char_t *)drawingHelperLineAtScreenIndex:(int)line;
-
-- (screen_char_t *)drawingHelperCopyLineAtIndex:(int)line toBuffer:(screen_char_t *)buffer;
 
 - (iTermTextExtractor *)drawingHelperTextExtractor;
 
@@ -63,7 +62,7 @@ BOOL CheckFindMatchAtIndex(NSData *findMatches, int index);
 
 - (NSString *)drawingHelperLabelForDropTargetOnLine:(int)line;
 - (NSRect)textDrawingHelperVisibleRect;
-- (iTermExternalAttributeIndex *)drawingHelperExternalAttributesOnLine:(int)lineNumber;
+- (id<iTermExternalAttributeIndexReading>)drawingHelperExternalAttributesOnLine:(int)lineNumber;
 
 @end
 

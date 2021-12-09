@@ -16,6 +16,7 @@
 #import "SearchResult.h"
 #import "TmuxStateParser.h"
 #import "VT100Screen.h"
+#import "VT100Screen+Mutation.h"
 #import "iTermSelection.h"
 
 static const NSInteger kUnicodeVersion = 9;
@@ -994,7 +995,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
 - (void)screenSendModifiersDidChange {
 }
 
-- (void)screenAppendScreenCharArray:(const screen_char_t *)line metadata:(iTermMetadata)metadata length:(int)length {
+- (void)screenAppendScreenCharArray:(const screen_char_t *)line metadata:(iTermImmutableMetadata)metadata length:(int)length {
 }
 
 - (void)screenDidAppendImageData:(NSData *)data {
@@ -1080,10 +1081,10 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
 - (void)testSetSizeRespectsContinuations {
     VT100Screen *screen;
     screen = [self screenWithWidth:5 height:5];
-    screen_char_t *line = [screen.currentGrid screenCharsAtLineNumber:0];
+    screen_char_t *line = [screen.mutableCurrentGrid screenCharsAtLineNumber:0];
     line[5].backgroundColor = 5;
     [screen setSize:VT100GridSizeMake(6, 4)];
-    line = [screen.currentGrid screenCharsAtLineNumber:0];
+    line = [screen.mutableCurrentGrid screenCharsAtLineNumber:0];
     XCTAssert(line[0].backgroundColor == 5);
 }
 
@@ -1093,7 +1094,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     [screen.terminal setWraparoundMode:NO];
     [screen.terminal setBackgroundColor:5 alternateSemantics:NO];
     [screen appendStringAtCursor:@"0123456789Z"];  // Should become 0123Z
-    screen_char_t *line = [screen.currentGrid screenCharsAtLineNumber:0];
+    screen_char_t *line = [screen.mutableCurrentGrid screenCharsAtLineNumber:0];
     XCTAssert(line[5].backgroundColor == 0);
 }
 
@@ -4430,7 +4431,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     screen_char_t line[1];
     screen_char_t continuation;
     continuation.backgroundColor = 5;
-    [lineBuffer appendLine:line length:0 partial:NO width:80 metadata:iTermMetadataDefault() continuation:continuation];
+    [lineBuffer appendLine:line length:0 partial:NO width:80 metadata:iTermImmutableMetadataDefault() continuation:continuation];
     screen_char_t buffer[3];
     [lineBuffer copyLineToBuffer:buffer width:3 lineNum:0 continuation:&continuation];
 
@@ -4471,7 +4472,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     const int wrapWidth = 200;
     for (int i = 0; i < linesPerBlock * 2; i++) {
         line[0].code = '0' + i;
-        [lineBuffer appendLine:line length:n partial:NO width:wrapWidth metadata:iTermMetadataDefault() continuation:continuation];
+        [lineBuffer appendLine:line length:n partial:NO width:wrapWidth metadata:iTermImmutableMetadataDefault() continuation:continuation];
     }
     // This tests the regression.
     NSArray *lines = [lineBuffer wrappedLinesFromIndex:linesPerBlock
@@ -4510,7 +4511,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     NSTimeInterval minExpectedTimestamp = [NSDate timeIntervalSinceReferenceDate];
     [self appendLines:lines toScreen:screen];
     __block NSInteger count = 0;
-    [screen enumerateLinesInRange:NSMakeRange(0, lines.count) block:^(int line, ScreenCharArray *array, iTermMetadata metadata, BOOL *stop) {
+    [screen enumerateLinesInRange:NSMakeRange(0, lines.count) block:^(int line, ScreenCharArray *array, iTermImmutableMetadata metadata, BOOL *stop) {
         NSString *string = ScreenCharArrayToStringDebug(array.line, array.length);
         XCTAssertEqualObjects(string, expected[count]);
         XCTAssertGreaterThanOrEqual(metadata.timestamp, minExpectedTimestamp);
@@ -4550,16 +4551,16 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
 
     // Test basic usage, default parameter.
     VT100Screen *screen = [self screenWithWidth:3 height:5];
-    [screen.currentGrid setCursorX:1];
-    [screen.currentGrid setCursorY:1];
+    [screen.mutableCurrentGrid setCursorX:1];
+    [screen.mutableCurrentGrid setCursorY:1];
     [self sendStringToTerminalWithFormat:@"\033[B"];
     XCTAssert(screen.currentGrid.cursorX == 1);
     XCTAssert(screen.currentGrid.cursorY == 2);
 
     // Basic usage, explicit parameter.
     screen = [self screenWithWidth:3 height:5];
-    [screen.currentGrid setCursorX:1];
-    [screen.currentGrid setCursorY:1];
+    [screen.mutableCurrentGrid setCursorX:1];
+    [screen.mutableCurrentGrid setCursorY:1];
     [self sendStringToTerminalWithFormat:@"\033[2B"];
     XCTAssert(screen.currentGrid.cursorX == 1);
     XCTAssert(screen.currentGrid.cursorY == 3);
@@ -4567,8 +4568,8 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     // Start inside scroll region - should stop at bottom margin
     screen = [self screenWithWidth:3 height:5];
     [screen terminalSetScrollRegionTop:2 bottom:4];
-    [screen.currentGrid setCursorX:1];
-    [screen.currentGrid setCursorY:2];
+    [screen.mutableCurrentGrid setCursorX:1];
+    [screen.mutableCurrentGrid setCursorY:2];
     [self sendStringToTerminalWithFormat:@"\033[99B"];
     XCTAssert(screen.currentGrid.cursorX == 1);
     XCTAssert(screen.currentGrid.cursorY == 4);
@@ -4576,8 +4577,8 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     // Start above scroll region - should stop at bottom margin
     screen = [self screenWithWidth:3 height:5];
     [screen terminalSetScrollRegionTop:2 bottom:3];
-    [screen.currentGrid setCursorX:1];
-    [screen.currentGrid setCursorY:0];
+    [screen.mutableCurrentGrid setCursorX:1];
+    [screen.mutableCurrentGrid setCursorY:0];
     [self sendStringToTerminalWithFormat:@"\033[99B"];
     XCTAssert(screen.currentGrid.cursorX == 1);
     XCTAssert(screen.currentGrid.cursorY == 3);
@@ -4585,8 +4586,8 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     // Start below bottom margin - should stop at bottom of screen.
     screen = [self screenWithWidth:3 height:5];
     [screen terminalSetScrollRegionTop:1 bottom:2];
-    [screen.currentGrid setCursorX:1];
-    [screen.currentGrid setCursorY:3];
+    [screen.mutableCurrentGrid setCursorX:1];
+    [screen.mutableCurrentGrid setCursorY:3];
     [self sendStringToTerminalWithFormat:@"\033[99B"];
     XCTAssert(screen.currentGrid.cursorX == 1);
     XCTAssert(screen.currentGrid.cursorY == 4);
@@ -4599,24 +4600,24 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
 
     // Test basic usage, default parameter.
     VT100Screen *screen = [self screenWithWidth:5 height:5];
-    [screen.currentGrid setCursorX:1];
-    [screen.currentGrid setCursorY:1];
+    [screen.mutableCurrentGrid setCursorX:1];
+    [screen.mutableCurrentGrid setCursorY:1];
     [self sendStringToTerminalWithFormat:@"\033[C"];
     XCTAssert(screen.currentGrid.cursorX == 2);
     XCTAssert(screen.currentGrid.cursorY == 1);
 
     // Test basic usage, explicit parameter.
     screen = [self screenWithWidth:5 height:5];
-    [screen.currentGrid setCursorX:1];
-    [screen.currentGrid setCursorY:1];
+    [screen.mutableCurrentGrid setCursorX:1];
+    [screen.mutableCurrentGrid setCursorY:1];
     [self sendStringToTerminalWithFormat:@"\033[2C"];
     XCTAssert(screen.currentGrid.cursorX == 3);
     XCTAssert(screen.currentGrid.cursorY == 1);
 
     // Test stops on right border.
     screen = [self screenWithWidth:5 height:5];
-    [screen.currentGrid setCursorX:1];
-    [screen.currentGrid setCursorY:1];
+    [screen.mutableCurrentGrid setCursorX:1];
+    [screen.mutableCurrentGrid setCursorY:1];
     [self sendStringToTerminalWithFormat:@"\033[99C"];
     XCTAssert(screen.currentGrid.cursorX == 4);
     XCTAssert(screen.currentGrid.cursorY == 1);
@@ -4625,8 +4626,8 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     screen = [self screenWithWidth:5 height:5];
     [screen terminalSetUseColumnScrollRegion:YES];
     [screen terminalSetLeftMargin:1 rightMargin:3];
-    [screen.currentGrid setCursorX:2];
-    [screen.currentGrid setCursorY:1];
+    [screen.mutableCurrentGrid setCursorX:2];
+    [screen.mutableCurrentGrid setCursorY:1];
     [self sendStringToTerminalWithFormat:@"\033[99C"];
     XCTAssert(screen.currentGrid.cursorX == 3);
     XCTAssert(screen.currentGrid.cursorY == 1);
@@ -4635,8 +4636,8 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     screen = [self screenWithWidth:5 height:5];
     [screen terminalSetUseColumnScrollRegion:YES];
     [screen terminalSetLeftMargin:1 rightMargin:2];
-    [screen.currentGrid setCursorX:3];
-    [screen.currentGrid setCursorY:1];
+    [screen.mutableCurrentGrid setCursorX:3];
+    [screen.mutableCurrentGrid setCursorY:1];
     [self sendStringToTerminalWithFormat:@"\033[99C"];
     XCTAssert(screen.currentGrid.cursorX == 4);
     XCTAssert(screen.currentGrid.cursorY == 1);
@@ -4656,7 +4657,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
 
     // Append an empty line
     continuation.code = EOL_HARD;
-    [lineBuffer appendLine:line length:n partial:NO width:80 metadata:iTermMetadataDefault() continuation:continuation];
+    [lineBuffer appendLine:line length:n partial:NO width:80 metadata:iTermImmutableMetadataDefault() continuation:continuation];
 
     iTermExternalAttribute *red = [[[iTermExternalAttribute alloc] initWithUnderlineColor:(VT100TerminalColorValue){ .red=1, .green=2, .blue=3, .mode=ColorModeNormal} urlCode:0] autorelease];
     iTermExternalAttribute *magenta = [[[iTermExternalAttribute alloc] initWithUnderlineColor:(VT100TerminalColorValue){ .red=5, .green=6, .blue=7, .mode=ColorModeNormal} urlCode:0] autorelease];
@@ -4669,7 +4670,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
         iTermMetadataInit(&metadata, 123, eaIndex);
 
         continuation.code = EOL_SOFT;
-        [lineBuffer appendLine:line length:n partial:YES width:80 metadata:metadata continuation:continuation];
+        [lineBuffer appendLine:line length:n partial:YES width:80 metadata:iTermMetadataMakeImmutable(metadata) continuation:continuation];
     }
 
     // Append again but with different underline color
@@ -4680,11 +4681,11 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
         iTermMetadataInit(&metadata, 123, eaIndex);
 
         continuation.code = EOL_SOFT;
-        [lineBuffer appendLine:line length:n partial:YES width:80 metadata:metadata continuation:continuation];
+        [lineBuffer appendLine:line length:n partial:YES width:80 metadata:iTermMetadataMakeImmutable(metadata) continuation:continuation];
     }
 
-    iTermMetadata actual = [lineBuffer metadataForRawLineWithWrappedLineNumber:1 width:80];
-    iTermExternalAttributeIndex *eaIndex = iTermMetadataGetExternalAttributesIndex(actual);
+    iTermImmutableMetadata actual = [lineBuffer metadataForRawLineWithWrappedLineNumber:1 width:80];
+    id<iTermExternalAttributeIndexReading> eaIndex = iTermImmutableMetadataGetExternalAttributesIndex(actual);
     XCTAssertEqualObjects(eaIndex[0], red);
     XCTAssertEqualObjects(eaIndex[1], red);
     XCTAssertEqualObjects(eaIndex[2], red);
@@ -4705,7 +4706,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
         { .code = DWC_RIGHT, .complexChar = 0 }
     };
     screen_char_t soft = { .code = EOL_SOFT, .complexChar = 0 };
-    [lineBuffer appendLine:cells length:2 partial:YES width:80 metadata:iTermMetadataDefault() continuation:soft];
+    [lineBuffer appendLine:cells length:2 partial:YES width:80 metadata:iTermImmutableMetadataDefault() continuation:soft];
     lineBuffer.mayHaveDoubleWidthCharacter = YES;
     //    __weak id dwcCache = nil;
     // Populate the DWC cache
@@ -4721,7 +4722,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
         }
 
         // Erase the DWC cache
-        [lineBuffer appendLine:cells length:2 partial:YES width:80 metadata:iTermMetadataDefault() continuation:soft];
+        [lineBuffer appendLine:cells length:2 partial:YES width:80 metadata:iTermImmutableMetadataDefault() continuation:soft];
 
         {
             LineBlock *block = [lineBuffer testOnlyBlockAtIndex:0];

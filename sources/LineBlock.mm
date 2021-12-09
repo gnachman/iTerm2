@@ -518,7 +518,7 @@ static void iTermLineBlockFreeMetadata(LineBlockMetadata *metadata, int count) {
 }
 
 - (void)_appendCumulativeLineLength:(int)cumulativeLength
-                           metadata:(iTermMetadata)lineMetadata
+                           metadata:(iTermImmutableMetadata)lineMetadata
                        continuation:(screen_char_t)continuation
                                cert:(id<iTermLineBlockMutationCertificate>)cert {
     if (cll_entries == cll_capacity) {
@@ -534,7 +534,7 @@ static void iTermLineBlockFreeMetadata(LineBlockMetadata *metadata, int count) {
     }
     ((int *)cumulative_line_lengths)[cll_entries] = cumulativeLength;
     iTermMetadataAutorelease(metadata_[cll_entries].lineMetadata);
-    metadata_[cll_entries].lineMetadata = iTermMetadataCopy(lineMetadata);
+    metadata_[cll_entries].lineMetadata = iTermImmutableMetadataMutableCopy(lineMetadata);
     metadata_[cll_entries].continuation = continuation;
     metadata_[cll_entries].number_of_wrapped_lines = 0;
 
@@ -667,7 +667,7 @@ extern "C" int iTermLineBlockNumberOfFullLinesImpl(const screen_char_t *buffer,
             length:(int)length
            partial:(BOOL)partial
              width:(int)width
-          metadata:(iTermMetadata)lineMetadata
+          metadata:(iTermImmutableMetadata)lineMetadata
       continuation:(screen_char_t)continuation {
     _numberOfFullLinesCache.clear();
     const int space_used = [self rawSpaceUsed];
@@ -893,7 +893,7 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
     }
 }
 
-- (iTermMetadata)metadataForLineNumber:(int)lineNum width:(int)width {
+- (iTermImmutableMetadata)metadataForLineNumber:(int)lineNum width:(int)width {
     int mutableLineNum = lineNum;
     const LineBlockLocation location = [self locationOfRawLineForWidth:width lineNum:&mutableLineNum];
     int length = 0;
@@ -908,12 +908,12 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
                             yOffset:NULL
                        continuation:NULL
                isStartOfWrappedLine:NULL
-                           metadata:&metadata
+                           metadata:(iTermImmutableMetadata *)&metadata
                          lineOffset:&lineOffset];
     iTermMetadata result;
-    iTermMetadataInitCopyingSubrange(&result, &metadata, lineOffset, width);
+    iTermMetadataInitCopyingSubrange(&result, (iTermImmutableMetadata *)&metadata, lineOffset, width);
     iTermMetadataAutorelease(result);
-    return result;
+    return iTermMetadataMakeImmutable(result);
 }
 
 - (const screen_char_t *)getWrappedLineWithWrapWidth:(int)width
@@ -939,7 +939,7 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
                                            yOffset:(int*)yOffsetPtr
                                       continuation:(screen_char_t *)continuationPtr
                               isStartOfWrappedLine:(BOOL *)isStartOfWrappedLine
-                                          metadata:(out iTermMetadata *)metadataPtr
+                                          metadata:(out iTermImmutableMetadata *)metadataPtr
                                         lineOffset:(out int *)lineOffset {
     int offset;
     if (gEnableDoubleWidthCharacterLineCache) {
@@ -992,7 +992,7 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
     }
     if (metadataPtr) {
         iTermMetadataRetainAutorelease(metadata_[location.index].lineMetadata);
-        *metadataPtr = metadata_[location.index].lineMetadata;
+        *metadataPtr = iTermMetadataMakeImmutable(metadata_[location.index].lineMetadata);
     }
     if (lineOffset) {
         *lineOffset = offset;
@@ -1064,7 +1064,7 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
                                              yOffset:(int*)yOffsetPtr
                                         continuation:(screen_char_t *)continuationPtr
                                 isStartOfWrappedLine:(BOOL *)isStartOfWrappedLine
-                                            metadata:(out iTermMetadata *)metadataPtr {
+                                            metadata:(out iTermImmutableMetadata *)metadataPtr {
     const LineBlockLocation location = [self locationOfRawLineForWidth:width lineNum:lineNum];
     if (!location.found) {
         return NULL;
@@ -1102,15 +1102,15 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
                                     continuation:continuation];
 }
 
-- (iTermMetadata)metadataForRawLineAtWrappedLineOffset:(int)lineNum width:(int)width {
+- (iTermImmutableMetadata)metadataForRawLineAtWrappedLineOffset:(int)lineNum width:(int)width {
     int temp = lineNum;
     const LineBlockLocation location = [self locationOfRawLineForWidth:width lineNum:&temp];
     if (!location.found) {
-        return iTermMetadataDefault();
+        return iTermImmutableMetadataDefault();
     }
 
     iTermMetadataRetainAutorelease(metadata_[location.index].lineMetadata);
-    return metadata_[location.index].lineMetadata;
+    return iTermMetadataMakeImmutable(metadata_[location.index].lineMetadata);
 }
 
 - (int)getNumLinesWithWrapWidth:(int)width {
@@ -1188,7 +1188,7 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
 - (BOOL)popLastLineInto:(screen_char_t const **)ptr
              withLength:(int *)length
               upToWidth:(int)width
-               metadata:(out iTermMetadata *)metadataPtr
+               metadata:(out iTermImmutableMetadata *)metadataPtr
            continuation:(screen_char_t *)continuationPtr {
     if (cll_entries == first_entry) {
         // There is no last line to pop.
@@ -1236,7 +1236,7 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
             iTermMetadata metadata = metadata_[cll_entries - 1].lineMetadata;
             iTermMetadataRetain(metadata);
             iTermMetadataSetExternalAttributes(&metadata, [attrs subAttributesFromIndex:split_index]);
-            *metadataPtr = metadata;
+            *metadataPtr = iTermMetadataMakeImmutable(metadata);
             iTermMetadataAutorelease(metadata);
         }
         iTermExternalAttributeIndex *prefix = [attrs subAttributesToIndex:split_index];
@@ -1253,7 +1253,7 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
         if (metadataPtr) {
             iTermMetadata metadata = metadata_[cll_entries - 1].lineMetadata;
             iTermMetadataRetainAutorelease(metadata);
-            *metadataPtr = metadata;
+            *metadataPtr = iTermMetadataMakeImmutable(metadata);
         }
         --cll_entries;
         is_partial = NO;

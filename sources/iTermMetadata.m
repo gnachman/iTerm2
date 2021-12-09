@@ -16,6 +16,12 @@ void iTermMetadataInit(iTermMetadata *obj,
     obj->externalAttributes = [(id)externalAttributes retain];
 }
 
+void iTermImmutableMetadataInit(iTermImmutableMetadata *obj,
+                                NSTimeInterval timestamp,
+                                id<iTermExternalAttributeIndexReading> _Nullable externalAttributes) {
+    iTermMetadataInit((iTermMetadata *)obj, timestamp, (iTermExternalAttributeIndex *)externalAttributes);
+}
+
 iTermMetadata iTermMetadataTemporaryWithTimestamp(NSTimeInterval timestamp) {
     iTermMetadata result;
     iTermMetadataInit(&result, timestamp, nil);
@@ -24,7 +30,11 @@ iTermMetadata iTermMetadataTemporaryWithTimestamp(NSTimeInterval timestamp) {
 }
 
 iTermMetadata iTermMetadataCopy(iTermMetadata obj) {
-    iTermExternalAttributeIndex *index = [iTermMetadataGetExternalAttributesIndex(obj) copy];
+    return iTermImmutableMetadataMutableCopy(iTermMetadataMakeImmutable(obj));
+}
+
+iTermMetadata iTermImmutableMetadataMutableCopy(iTermImmutableMetadata obj) {
+    iTermExternalAttributeIndex *index = [iTermImmutableMetadataGetExternalAttributesIndex(obj) mutableCopyWithZone:nil];
     return (iTermMetadata) {
         .timestamp = obj.timestamp,
         .externalAttributes = index
@@ -45,6 +55,24 @@ iTermMetadata iTermMetadataRetainAutorelease(iTermMetadata obj) {
 }
 
 iTermMetadata iTermMetadataAutorelease(iTermMetadata obj) {
+    [(id)obj.externalAttributes autorelease];
+    return obj;
+}
+
+void iTermImmutableMetadataRetain(iTermImmutableMetadata obj) {
+    [(id)obj.externalAttributes retain];
+}
+
+void iTermImmutableMetadataRelease(iTermImmutableMetadata obj) {
+    [(id)obj.externalAttributes release];
+}
+
+iTermImmutableMetadata iTermImmutableMetadataRetainAutorelease(iTermImmutableMetadata obj) {
+    [[(id)obj.externalAttributes retain] autorelease];
+    return obj;
+}
+
+iTermImmutableMetadata iTermImmutableMetadataAutorelease(iTermImmutableMetadata obj) {
     [(id)obj.externalAttributes autorelease];
     return obj;
 }
@@ -97,7 +125,7 @@ void iTermMetadataInitFromArray(iTermMetadata *obj, NSArray *array) {
 
 void iTermMetadataAppend(iTermMetadata *lhs,
                          int lhsLength,
-                         iTermMetadata *rhs,
+                         iTermImmutableMetadata *rhs,
                          int rhsLength) {
     lhs->timestamp = rhs->timestamp;
     if (!rhs->externalAttributes) {
@@ -107,7 +135,7 @@ void iTermMetadataAppend(iTermMetadata *lhs,
     iTermExternalAttributeIndex *eaIndex =
         [iTermExternalAttributeIndex concatenationOf:lhsAttrs
                                               length:lhsLength
-                                                with:iTermMetadataGetExternalAttributesIndex(*rhs)
+                                                with:iTermImmutableMetadataGetExternalAttributesIndex(*rhs)
                                               length:rhsLength];
     iTermMetadataSetExternalAttributes(lhs, eaIndex);
 }
@@ -126,10 +154,10 @@ void iTermMetadataInitByConcatenation(iTermMetadata *obj,
 }
 
 void iTermMetadataInitCopyingSubrange(iTermMetadata *obj,
-                                      iTermMetadata *source,
+                                      iTermImmutableMetadata *source,
                                       int start,
                                       int length) {
-    iTermExternalAttributeIndex *sourceIndex = iTermMetadataGetExternalAttributesIndex(*source);
+    id<iTermExternalAttributeIndexReading> sourceIndex = iTermImmutableMetadataGetExternalAttributesIndex(*source);
     iTermExternalAttributeIndex *eaIndex = [sourceIndex subAttributesFromIndex:start maximumLength:length];
     iTermMetadataInit(obj,
                       source->timestamp,
@@ -138,6 +166,10 @@ void iTermMetadataInitCopyingSubrange(iTermMetadata *obj,
 
 iTermMetadata iTermMetadataDefault(void) {
     return (iTermMetadata){ .timestamp = 0, .externalAttributes = NULL };
+}
+
+iTermImmutableMetadata iTermImmutableMetadataDefault(void) {
+    return iTermMetadataMakeImmutable(iTermMetadataDefault());
 }
 
 void iTermMetadataReset(iTermMetadata *obj) {

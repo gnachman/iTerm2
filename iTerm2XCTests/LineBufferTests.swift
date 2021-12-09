@@ -82,7 +82,7 @@ extension ScreenCharArray {
         let sca = ScreenCharArray(line: buffer,
                                   offset: bufferOffset,
                                   length: len - Int32(bufferOffset),
-                                  metadata: metadata,
+                                  metadata: iTermMetadataMakeImmutable(metadata),
                                   continuation: continuation,
                                   freeOnRelease: true)
         return (sca: sca,

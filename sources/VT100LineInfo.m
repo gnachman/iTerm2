@@ -130,6 +130,12 @@
     _cachedEncodedMetadata = nil;
 }
 
+- (void)setMetadataFromImmutable:(iTermImmutableMetadata)metadata {
+    iTermMetadata mutableCopy = iTermImmutableMetadataMutableCopy(metadata);
+    [self setMetadata:mutableCopy];
+    iTermMetadataRelease(mutableCopy);
+}
+
 - (iTermExternalAttributeIndex *)externalAttributesCreatingIfNeeded:(BOOL)create {
     _cachedEncodedMetadata = nil;
     return create ? iTermMetadataGetExternalAttributesIndexCreatingIfNeeded(&_metadata) : iTermMetadataGetExternalAttributesIndex(_metadata);

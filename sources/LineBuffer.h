@@ -77,7 +77,7 @@ NS_ASSUME_NONNULL_BEGIN
             length:(int)length
            partial:(BOOL)partial
              width:(int)width
-          metadata:(iTermMetadata)metadata
+          metadata:(iTermImmutableMetadata)metadata
       continuation:(screen_char_t)continuation;
 
 - (void)appendScreenCharArray:(ScreenCharArray *)sca
@@ -95,10 +95,10 @@ NS_ASSUME_NONNULL_BEGIN
 - (int)dropExcessLinesWithWidth:(int)width;
 
 // Returns the metadata associated with a line when wrapped to the specified width.
-- (iTermMetadata)metadataForLineNumber:(int)lineNum width:(int)width;
+- (iTermImmutableMetadata)metadataForLineNumber:(int)lineNum width:(int)width;
 
 // Metadata for the whole raw line.
-- (iTermMetadata)metadataForRawLineWithWrappedLineNumber:(int)lineNum width:(int)width;
+- (iTermImmutableMetadata)metadataForRawLineWithWrappedLineNumber:(int)lineNum width:(int)width;
 
 // Copy a line into the buffer. If the line is shorter than 'width' then only the first 'width'
 // characters will be modified.
@@ -114,7 +114,7 @@ NS_ASSUME_NONNULL_BEGIN
                         width:(int)width
                         block:(void (^ _Nonnull)(int,
                                                  ScreenCharArray * _Nonnull,
-                                                 iTermMetadata,
+                                                 iTermImmutableMetadata,
                                                  BOOL * _Nonnull))block;
 
 // Like the above but with a saner way of holding the returned data. Callers are advised not
@@ -143,7 +143,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (BOOL)popAndCopyLastLineInto:(screen_char_t * _Nonnull)ptr
                          width:(int)width
              includesEndOfLine:(int *_Nonnull)includesEndOfLine
-                      metadata:(out iTermMetadata * _Nullable)metadataPtr
+                      metadata:(out iTermImmutableMetadata * _Nullable)metadataPtr
                   continuation:(screen_char_t * _Nullable)continuationPtr;
 
 // Note that the resulting line may be *smaller* than width. Use -paddedToLength:eligibleForDWC:

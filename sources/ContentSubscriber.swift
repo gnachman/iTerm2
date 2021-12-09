@@ -9,5 +9,5 @@ import Foundation
 
 @objc(iTermContentSubscriber)
 protocol ContentSubscriber {
-    @objc func deliver(_ array: ScreenCharArray, metadata: iTermMetadata)
+    @objc func deliver(_ array: ScreenCharArray, metadata: iTermImmutableMetadata)
 }

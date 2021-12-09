@@ -1220,7 +1220,7 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
                       context:(CGContextRef)ctx
                 virtualOffset:(CGFloat)virtualOffset {
     const screen_char_t *theLine = [self.delegate drawingHelperLineAtIndex:line];
-    iTermExternalAttributeIndex *eaIndex = [self.delegate drawingHelperExternalAttributesOnLine:line];
+    id<iTermExternalAttributeIndexReading> eaIndex = [self.delegate drawingHelperExternalAttributesOnLine:line];
     NSData *matches = [_delegate drawingHelperMatchesOnLine:line];
     for (iTermBoxedBackgroundColorRun *box in backgroundRuns) {
         iTermBackgroundColorRun *run = box.valuePointer;
@@ -1243,7 +1243,7 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
 }
 
 - (void)constructAndDrawRunsForLine:(const screen_char_t *)theLine
-                 externalAttributes:(iTermExternalAttributeIndex *)eaIndex
+                 externalAttributes:(id<iTermExternalAttributeIndexReading>)eaIndex
                                 row:(int)row
                             inRange:(NSRange)indexRange
                     startingAtPoint:(NSPoint)initialPoint
@@ -2484,7 +2484,7 @@ withExtendedAttributes:(iTermExternalAttribute *)ea2 {
 }
 
 - (NSArray<id<iTermAttributedString>> *)attributedStringsForLine:(const screen_char_t *)line
-                                              externalAttributes:(iTermExternalAttributeIndex *)eaIndex
+                                              externalAttributes:(id<iTermExternalAttributeIndexReading>)eaIndex
                                                            range:(NSRange)indexRange
                                                  hasSelectedText:(BOOL)hasSelectedText
                                                  backgroundColor:(NSColor *)backgroundColor
@@ -3593,7 +3593,7 @@ withExtendedAttributes:(iTermExternalAttribute *)ea2 {
     iTermRectClip(innerRect, virtualOffset);
 
     const screen_char_t *line = [self.delegate drawingHelperLineAtIndex:row];
-    iTermExternalAttributeIndex *eaIndex = [self.delegate drawingHelperExternalAttributesOnLine:row];
+    id<iTermExternalAttributeIndexReading> eaIndex = [self.delegate drawingHelperExternalAttributesOnLine:row];
 
     [self constructAndDrawRunsForLine:line
                    externalAttributes:eaIndex

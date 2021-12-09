@@ -54,7 +54,7 @@ typedef struct {
             length:(int)length
            partial:(BOOL)partial
              width:(int)width
-          metadata:(iTermMetadata)metadata
+          metadata:(iTermImmutableMetadata)metadata
       continuation:(screen_char_t)continuation;
 
 // Try to get a line that is lineNum after the first line in this block after wrapping them to a given width.
@@ -75,7 +75,7 @@ typedef struct {
                                              yOffset:(int*)yOffsetPtr
                                         continuation:(screen_char_t *)continuationPtr
                                 isStartOfWrappedLine:(BOOL *)isStartOfWrappedLine
-                                            metadata:(out iTermMetadata *)metadataPtr;
+                                            metadata:(out iTermImmutableMetadata *)metadataPtr;
 
 - (ScreenCharArray *)rawLineAtWrappedLineOffset:(int)lineNum width:(int)width;
 
@@ -92,7 +92,7 @@ typedef struct {
 - (BOOL)popLastLineInto:(screen_char_t const **)ptr
              withLength:(int*)length
               upToWidth:(int)width
-               metadata:(out iTermMetadata *)metadataPtr
+               metadata:(out iTermImmutableMetadata *)metadataPtr
            continuation:(screen_char_t *)continuationPtr;
 
 - (void)removeLastWrappedLines:(int)numberOfLinesToRemove
@@ -132,8 +132,8 @@ typedef struct {
 - (void)dump:(int)rawOffset toDebugLog:(BOOL)toDebugLog;
 
 // Returns the metadata associated with a line when wrapped to the specified width.
-- (iTermMetadata)metadataForLineNumber:(int)lineNum width:(int)width;
-- (iTermMetadata)metadataForRawLineAtWrappedLineOffset:(int)lineNum width:(int)width;
+- (iTermImmutableMetadata)metadataForLineNumber:(int)lineNum width:(int)width;
+- (iTermImmutableMetadata)metadataForRawLineAtWrappedLineOffset:(int)lineNum width:(int)width;
 
 // Appends the contents of the block to |s|.
 - (void)appendToDebugString:(NSMutableString *)s;

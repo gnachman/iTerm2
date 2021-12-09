@@ -4590,16 +4590,12 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     return [_dataSource screenCharArrayForLine:line].line;
 }
 
-- (iTermExternalAttributeIndex *)drawingHelperExternalAttributesOnLine:(int)lineNumber {
+- (id<iTermExternalAttributeIndexReading>)drawingHelperExternalAttributesOnLine:(int)lineNumber {
     return [_dataSource externalAttributeIndexForLine:lineNumber];
 }
 
 - (const screen_char_t *)drawingHelperLineAtScreenIndex:(int)line {
     return [_dataSource screenCharArrayAtScreenIndex:line].line;
-}
-
-- (screen_char_t *)drawingHelperCopyLineAtIndex:(int)line toBuffer:(screen_char_t *)buffer {
-    return [_dataSource getLineAtIndex:line withBuffer:buffer];
 }
 
 - (iTermTextExtractor *)drawingHelperTextExtractor {

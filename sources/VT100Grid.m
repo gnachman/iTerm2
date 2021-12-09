@@ -37,7 +37,7 @@ static NSString *const kGridSizeKey = @"Size";
     int screenTop_;  // Index into lines_ and dirty_ of first line visible in the grid.
     NSMutableArray<NSMutableData *> *lines_;  // Array of NSMutableData. Each data has size_.width+1 screen_char_t's.
     NSMutableArray<VT100LineInfo *> *lineInfos_;  // Array of VT100LineInfo.
-    id<VT100GridDelegate> delegate_;
+    __weak id<VT100GridDelegate> delegate_;
     VT100GridCoord cursor_;
     VT100GridRange scrollRegionRows_;
     VT100GridRange scrollRegionCols_;
@@ -180,10 +180,6 @@ static NSString *const kGridSizeKey = @"Size";
 - (void)setMetadata:(iTermMetadata)metadata forLineNumber:(int)lineNumber {
     VT100LineInfo *info = [self lineInfoAtLineNumber:lineNumber];
     info.metadata = metadata;
-}
-
-- (const screen_char_t *)immutableScreenCharsAtLineNumber:(int)lineNumber {
-    return [self screenCharsAtLineNumber:lineNumber];
 }
 
 - (screen_char_t *)screenCharsAtLineNumber:(int)lineNumber {
@@ -396,7 +392,7 @@ static NSString *const kGridSizeKey = @"Size";
                         length:currentLineLength
                        partial:isPartial
                          width:size_.width
-                      metadata:[[self lineInfoAtLineNumber:i] metadata]
+                      metadata:[[self lineInfoAtLineNumber:i] immutableMetadata]
                   continuation:line[size_.width]];
 #ifdef DEBUG_RESIZEDWIDTH
         NSLog(@"Appended a line. now have %d lines for width %d\n",
@@ -856,7 +852,7 @@ static NSString *const kGridSizeKey = @"Size";
                 wraparound:(BOOL)wraparound
                       ansi:(BOOL)ansi
                     insert:(BOOL)insert
-    externalAttributeIndex:(iTermExternalAttributeIndex *)attributes {
+    externalAttributeIndex:(id<iTermExternalAttributeIndexReading>)attributes {
     int numDropped = 0;
     assert(buffer);
     int idx;  // Index into buffer
@@ -1600,7 +1596,7 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
             }
         }
         int cont;
-        iTermMetadata metadata;
+        iTermImmutableMetadata metadata;
         screen_char_t continuation;
         ++numPopped;
         assert([lineBuffer popAndCopyLastLineInto:dest
@@ -1608,7 +1604,7 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
                                 includesEndOfLine:&cont
                                          metadata:&metadata
                                      continuation:&continuation]);
-        [[self lineInfoAtLineNumber:destLineNumber] setMetadata:metadata];
+        [[self lineInfoAtLineNumber:destLineNumber] setMetadataFromImmutable:metadata];
         if (cont && dest[size_.width - 1].code == 0 && prevLineStartsWithDoubleWidth) {
             // If you pop a soft-wrapped line that's a character short and the
             // line below it starts with a DWC, it's safe to conclude that a DWC
@@ -2140,7 +2136,7 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
                     length:len
                    partial:(continuationMark != EOL_HARD)
                      width:size_.width
-                  metadata:[[self lineInfoAtLineNumber:0] metadata]
+                  metadata:[[self lineInfoAtLineNumber:0] immutableMetadata]
               continuation:line[size_.width]];
     int dropped;
     if (!unlimitedScrollback) {
@@ -2448,6 +2444,10 @@ static void DumpBuf(screen_char_t* p, int n) {
 }
 
 #pragma mark - NSCopying
+
+- (VT100Grid *)copy {
+    return [self copyWithZone:nil];
+}
 
 - (id)copyWithZone:(NSZone *)zone {
     VT100Grid *theCopy = [[VT100Grid alloc] initWithSize:size_
