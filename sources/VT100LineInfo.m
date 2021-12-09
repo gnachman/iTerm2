@@ -64,6 +64,10 @@
     }
 }
 
+- (iTermImmutableMetadata)immutableMetadata {
+    return iTermMetadataMakeImmutable(self.metadata);
+}
+
 - (VT100GridRange)dirtyRange {
     return VT100GridRangeMake(start_, bound_ - start_);
 }

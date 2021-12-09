@@ -164,6 +164,10 @@ static NSString *const kGridSizeKey = @"Size";
     }
 }
 
+- (iTermImmutableMetadata)immutableMetadataAtLineNumber:(int)lineNumber {
+    return iTermMetadataMakeImmutable([self metadataAtLineNumber:lineNumber]);
+}
+
 - (iTermMetadata)metadataAtLineNumber:(int)lineNumber {
     return [self lineInfoAtLineNumber:lineNumber].metadata;
 }
@@ -176,6 +180,10 @@ static NSString *const kGridSizeKey = @"Size";
 - (void)setMetadata:(iTermMetadata)metadata forLineNumber:(int)lineNumber {
     VT100LineInfo *info = [self lineInfoAtLineNumber:lineNumber];
     info.metadata = metadata;
+}
+
+- (const screen_char_t *)immutableScreenCharsAtLineNumber:(int)lineNumber {
+    return [self screenCharsAtLineNumber:lineNumber];
 }
 
 - (screen_char_t *)screenCharsAtLineNumber:(int)lineNumber {

@@ -12,7 +12,17 @@
 #import "VT100GridTypes.h"
 #import "iTermMetadata.h"
 
-@interface VT100LineInfo : NSObject <NSCopying, DVREncodable>
+@protocol VT100LineInfoReading<NSObject>
+@property(nonatomic, readonly) iTermImmutableMetadata immutableMetadata;
+
+- (BOOL)isDirtyAtOffset:(int)x;
+- (BOOL)anyCharIsDirty;
+- (VT100GridRange)dirtyRange;
+- (NSIndexSet *)dirtyIndexes;
+- (NSArray *)encodedMetadata;
+@end
+
+@interface VT100LineInfo : NSObject <NSCopying, DVREncodable, VT100LineInfoReading>
 
 // Prefer to use this class's APIs to change metadata. Assignment requires reasoning about manual memory management.
 @property(nonatomic) iTermMetadata metadata;

@@ -26,7 +26,92 @@
 - (void)gridDidResize;
 @end
 
-@interface VT100Grid : NSObject<NSCopying>
+@protocol VT100GridReading<NSObject>
+@property(nonatomic, readonly) VT100GridSize size;
+@property(nonatomic, readonly) int cursorX;
+@property(nonatomic, readonly) int cursorY;
+@property(nonatomic, readonly) VT100GridCoord cursor;
+@property(nonatomic, readonly) BOOL haveScrollRegion;  // is there a left-right or top-bottom margin?
+@property(nonatomic, readonly) BOOL haveRowScrollRegion;  // is there a top-bottom margin?
+@property(nonatomic, readonly) BOOL haveColumnScrollRegion;  // is there a left-right margin?
+@property(nonatomic, readonly) VT100GridRange scrollRegionRows;
+@property(nonatomic, readonly) VT100GridRange scrollRegionCols;
+@property(nonatomic, readonly) BOOL useScrollRegionCols;
+@property(nonatomic, readonly, getter=isAllDirty) BOOL allDirty;
+@property(nonatomic, readonly) int leftMargin;
+@property(nonatomic, readonly) int rightMargin;
+@property(nonatomic, readonly) int topMargin;
+@property(nonatomic, readonly) int bottomMargin;
+@property(nonatomic, readonly) screen_char_t savedDefaultChar;
+@property(nonatomic, readonly) id<VT100GridDelegate> delegate;
+@property(nonatomic, readonly) VT100GridCoord preferredCursorPosition;
+@property(nonatomic, readonly) VT100GridSize sizeRespectingRegionConditionally;
+@property(nonatomic, readonly) BOOL haveScrolled;
+@property(nonatomic, readonly) NSDictionary *dictionaryValue;
+@property(nonatomic, readonly) NSArray<VT100LineInfo *> *metadataArray;
+
+- (const screen_char_t *)immutableScreenCharsAtLineNumber:(int)lineNumber;
+- (iTermImmutableMetadata)immutableMetadataAtLineNumber:(int)lineNumber;
+- (BOOL)isCharDirtyAt:(VT100GridCoord)coord;
+- (BOOL)isAnyCharDirty;
+
+// Returns the set of dirty indexes on |line|.
+- (NSIndexSet *)dirtyIndexesOnLine:(int)line;
+
+// Returns the count of lines excluding totally empty lines at the bottom, and always including the
+// line the cursor is on.
+- (int)numberOfLinesUsed;
+
+// Like numberOfLinesUsed, but it doesn't care about where the cursor is. Also, if
+// `includeWhitespace` is YES then spaces and tabs are considered empty.
+- (int)numberOfNonEmptyLinesIncludingWhitespaceAsEmpty:(BOOL)whitespaceIsEmpty;
+
+// Number of used chars in line at lineNumber.
+- (int)lengthOfLineNumber:(int)lineNumber;
+
+- (screen_char_t)defaultChar;
+- (NSData *)defaultLineOfWidth:(int)width;
+
+// Converts a range relative to the start of a row into a grid run. If row is negative, a smaller-
+// than-range.length (but valid!) grid run will be returned.
+- (VT100GridRun)gridRunFromRange:(NSRange)range relativeToRow:(int)row;
+
+// Returns temp storage for one line.
+- (const screen_char_t *)resultLine;
+
+// Returns a human-readable string with the screen contents and dirty lines interspersed.
+- (NSString *)debugString;
+
+// Returns a string for the character at |coord|.
+- (NSString *)stringForCharacterAt:(VT100GridCoord)coord;
+- (VT100GridCoord)successorOf:(VT100GridCoord)coord;
+- (screen_char_t)characterAt:(VT100GridCoord)coord;
+
+// Converts a run into one or more VT100GridRect NSValues.
+- (NSArray *)rectsForRun:(VT100GridRun)run;
+
+// Returns a rect describing the current scroll region. Takes useScrollRegionCols into account.
+- (VT100GridRect)scrollRegionRect;
+
+// Returns the timestamp of a given line.
+- (NSTimeInterval)timestampForLine:(int)y;
+
+- (NSString *)compactLineDump;
+- (NSString *)compactLineDumpWithTimestamps;
+- (NSString *)compactLineDumpWithContinuationMarks;
+- (NSString *)compactDirtyDump;
+
+// Returns the coordinate of the cell before this one. It respects scroll regions and double-width
+// characters.
+// Returns (-1,-1) if there is no previous cell.
+- (VT100GridCoord)coordinateBefore:(VT100GridCoord)coord movedBackOverDoubleWidth:(BOOL *)dwc;
+
+// Saves restorable state. Goes with initWithDictionary:delegate:
+- (void)encode:(id<iTermEncoderAdapter>)encoder;
+
+@end
+
+@interface VT100Grid : NSObject<NSCopying, VT100GridReading>
 
 // Changing the size erases grid contents.
 @property(nonatomic, assign) VT100GridSize size;
@@ -78,26 +163,11 @@
 // Mark chars dirty in a rectangle, inclusive of endpoints.
 - (void)markCharsDirty:(BOOL)dirty inRectFrom:(VT100GridCoord)from to:(VT100GridCoord)to;
 - (void)markAllCharsDirty:(BOOL)dirty;
-- (BOOL)isCharDirtyAt:(VT100GridCoord)coord;
-- (BOOL)isAnyCharDirty;
 - (VT100GridRange)dirtyRangeForLine:(int)y;
-// Returns the set of dirty indexes on |line|.
-- (NSIndexSet *)dirtyIndexesOnLine:(int)line;
-
-// Returns the count of lines excluding totally empty lines at the bottom, and always including the
-// line the cursor is on.
-- (int)numberOfLinesUsed;
-
-// Like numberOfLinesUsed, but it doesn't care about where the cursor is. Also, if
-// `includeWhitespace` is YES then spaces and tabs are considered empty.
-- (int)numberOfNonEmptyLinesIncludingWhitespaceAsEmpty:(BOOL)whitespaceIsEmpty;
 
 // Append the first numLines to the given line buffer. Returns the number of lines appended.
 - (int)appendLines:(int)numLines
       toLineBuffer:(LineBuffer *)lineBuffer;
-
-// Number of used chars in line at lineNumber.
-- (int)lengthOfLineNumber:(int)lineNumber;
 
 // Advances the cursor down one line and scrolls the screen, or part of the screen, if necessary.
 // Returns the number of lines dropped from lineBuffer. lineBuffer may be nil. If a scroll region is
@@ -205,7 +275,6 @@
 
 // Returns a grid-owned empty line.
 - (NSMutableData *)defaultLineOfWidth:(int)width;
-- (screen_char_t)defaultChar;
 
 // Set background/foreground colors in a range.
 - (void)setBackgroundColor:(screen_char_t)bg
@@ -217,10 +286,6 @@
 - (void)setURLCode:(unsigned int)code
         inRectFrom:(VT100GridCoord)from
                 to:(VT100GridCoord)to;
-
-// Converts a range relative to the start of a row into a grid run. If row is negative, a smaller-
-// than-range.length (but valid!) grid run will be returned.
-- (VT100GridRun)gridRunFromRange:(NSRange)range relativeToRow:(int)row;
 
 // Pop lines out of the line buffer and on to the screen. Up to maxLines will be restored. Before
 // popping, lines to be modified will first be filled with defaultChar.
@@ -235,22 +300,8 @@
 // Returns temp storage for one line.
 - (screen_char_t *)resultLine;
 
-// Returns a human-readable string with the screen contents and dirty lines interspersed.
-- (NSString *)debugString;
-
-// Returns a string for the character at |coord|.
-- (NSString *)stringForCharacterAt:(VT100GridCoord)coord;
-- (VT100GridCoord)successorOf:(VT100GridCoord)coord;
-- (screen_char_t)characterAt:(VT100GridCoord)coord;
-
-// Converts a run into one or more VT100GridRect NSValues.
-- (NSArray *)rectsForRun:(VT100GridRun)run;
-
 // Reset scroll regions to whole screen. NOTE: It does not reset useScrollRegionCols.
 - (void)resetScrollRegions;
-
-// Returns a rect describing the current scroll region. Takes useScrollRegionCols into account.
-- (VT100GridRect)scrollRegionRect;
 
 // If a DWC is present at (offset, lineNumber), then both its cells are erased. They're replaced
 // with c (normally -defaultChar). If there's a DWC_SKIP + EOL_DWC on the preceding line
@@ -263,20 +314,7 @@
 // useScrollRegionCols).
 - (void)moveCursorToLeftMargin;
 
-// Returns the timestamp of a given line.
-- (NSTimeInterval)timestampForLine:(int)y;
-
-- (NSString *)compactLineDump;
-- (NSString *)compactLineDumpWithTimestamps;
-- (NSString *)compactLineDumpWithContinuationMarks;
-- (NSString *)compactDirtyDump;
-
 - (void)setContinuationMarkOnLine:(int)line to:(unichar)code ;
-
-// Returns the coordinate of the cell before this one. It respects scroll regions and double-width
-// characters.
-// Returns (-1,-1) if there is no previous cell.
-- (VT100GridCoord)coordinateBefore:(VT100GridCoord)coord movedBackOverDoubleWidth:(BOOL *)dwc;
 
 // TODO: write a test for this
 - (void)insertChar:(screen_char_t)c externalAttributes:(iTermExternalAttribute *)attrs at:(VT100GridCoord)pos times:(int)num;
@@ -293,9 +331,6 @@
 
 // If there is a preferred cursor position that is legal, restore it.
 - (void)restorePreferredCursorPositionIfPossible;
-
-// Saves restorable state. Goes with initWithDictionary:delegate:
-- (void)encode:(id<iTermEncoderAdapter>)encoder;
 
 - (void)mutateCharactersInRange:(VT100GridCoordRange)range
                           block:(void (^)(screen_char_t *sct,

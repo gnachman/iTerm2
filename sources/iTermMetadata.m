@@ -69,6 +69,11 @@ void iTermMetadataSetExternalAttributes(iTermMetadata *obj,
 
 }
 
+id<iTermExternalAttributeIndexReading> _Nullable
+iTermImmutableMetadataGetExternalAttributesIndex(iTermImmutableMetadata obj) {
+    return [[(iTermExternalAttributeIndex *)obj.externalAttributes retain] autorelease];
+}
+
 iTermExternalAttributeIndex *iTermMetadataGetExternalAttributesIndex(iTermMetadata obj) {
     return [[(iTermExternalAttributeIndex *)obj.externalAttributes retain] autorelease];
 }

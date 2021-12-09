@@ -17,7 +17,7 @@ NS_ASSUME_NONNULL_BEGIN
 @interface iTermExternalAttribute: NSObject<NSCopying>
 @property (nonatomic, readonly) BOOL hasUnderlineColor;
 @property (nonatomic, readonly) VT100TerminalColorValue underlineColor;
-@property (nonatomic) unsigned int urlCode;
+@property (nonatomic, readonly) unsigned int urlCode;
 @property (nonatomic, readonly) NSString *humanReadableDescription;
 
 @property(nonatomic, readonly) NSDictionary *dictionaryValue;
@@ -37,7 +37,18 @@ NS_ASSUME_NONNULL_BEGIN
 
 @end
 
-@interface iTermExternalAttributeIndex: NSObject<NSCopying>
+@protocol iTermExternalAttributeIndexReading<NSObject>
+@property (nonatomic, readonly) NSDictionary<NSNumber *, iTermExternalAttribute *> *attributes;
+@property (nonatomic, readonly) NSDictionary *dictionaryValue;
+- (NSData *)data;
+- (NSString *)shortDescriptionWithLength:(int)length;
+- (id<iTermExternalAttributeIndexReading>)subAttributesToIndex:(int)index;
+- (id<iTermExternalAttributeIndexReading>)subAttributesFromIndex:(int)index;
+- (id<iTermExternalAttributeIndexReading>)subAttributesFromIndex:(int)index maximumLength:(int)maxLength;
+- (id<iTermExternalAttributeIndexReading> _Nullable)objectAtIndexedSubscript:(NSInteger)idx;
+@end
+
+@interface iTermExternalAttributeIndex: NSObject<NSCopying, iTermExternalAttributeIndexReading>
 @property (nonatomic, strong) NSDictionary<NSNumber *, iTermExternalAttribute *> *attributes;
 @property (nonatomic, readonly) NSDictionary *dictionaryValue;
 
