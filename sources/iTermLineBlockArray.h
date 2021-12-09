@@ -54,7 +54,6 @@ NS_ASSUME_NONNULL_BEGIN
                                  index:(nullable int *)indexPtr;
 - (void)sanityCheck;
 - (void)oopsWithWidth:(int)width block:(void (^)(void))block;
-- (iTermLineBlockArray *)cowCopy;
 
 @end
 
