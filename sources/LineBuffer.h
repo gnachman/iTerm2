@@ -100,8 +100,6 @@ NS_ASSUME_NONNULL_BEGIN
 // Metadata for the whole raw line.
 - (iTermMetadata)metadataForRawLineWithWrappedLineNumber:(int)lineNum width:(int)width;
 
-- (NSInteger)generationForLineNumber:(int)lineNum width:(int)width;
-
 // Copy a line into the buffer. If the line is shorter than 'width' then only the first 'width'
 // characters will be modified.
 // 0 <= lineNum < numLinesWithWidth:width

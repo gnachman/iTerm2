@@ -238,7 +238,6 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 
 // Uninitialize timestamps.
 - (void)resetTimestamps;
-- (NSInteger)generationForLine:(int)y;
 
 - (void)enumerateLinesInRange:(NSRange)range block:(void (^)(int line, ScreenCharArray *, iTermMetadata, BOOL *))block;
 

@@ -15,8 +15,6 @@
     NSData *_cachedEncodedMetadata;
 }
 
-static NSInteger VT100LineInfoNextGeneration = 1;
-
 - (instancetype)initWithWidth:(int)width {
     self = [super init];
     if (self) {
@@ -39,7 +37,6 @@ static NSInteger VT100LineInfoNextGeneration = 1;
     assert(range.length >= 0);
     assert(range.location + range.length <= width_);
 #endif
-    const VT100GridRange before = [self dirtyRange];
     if (dirty && updateTimestamp) {
         [self updateTimestamp];
     }
@@ -64,10 +61,6 @@ static NSInteger VT100LineInfoNextGeneration = 1;
             // Clear the right-hand part of the dirty region
             bound_ = range.location;
         }
-    }
-    const VT100GridRange after = [self dirtyRange];
-    if (dirty && !VT100GridRangeEqualsRange(before, after)) {
-        _generation = VT100LineInfoNextGeneration++;
     }
 }
 

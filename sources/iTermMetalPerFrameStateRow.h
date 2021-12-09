@@ -18,8 +18,6 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface iTermMetalPerFrameStateRow : NSObject {
 @public
-#warning TODO: Can I remove _generation from here and LineBlock?
-    NSInteger _generation;
     NSNumber *_markStyle;
     iTermData *_screenCharLine;
     NSIndexSet *_selectedIndexSet;

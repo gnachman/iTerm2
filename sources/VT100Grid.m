@@ -403,10 +403,6 @@ static NSString *const kGridSizeKey = @"Size";
     return [[self lineInfoAtLineNumber:y] metadata].timestamp;
 }
 
-- (NSInteger)generationForLine:(int)y {
-    return [[self lineInfoAtLineNumber:y] generation];
-}
-
 - (int)lengthOfLineNumber:(int)lineNumber {
     screen_char_t *line = [self screenCharsAtLineNumber:lineNumber];
     return [self lengthOfLine:line];

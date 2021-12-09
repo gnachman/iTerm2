@@ -16,7 +16,6 @@
 
 // Prefer to use this class's APIs to change metadata. Assignment requires reasoning about manual memory management.
 @property(nonatomic) iTermMetadata metadata;
-@property(nonatomic, readonly) NSInteger generation;
 
 - (instancetype)initWithWidth:(int)width;
 - (void)setDirty:(BOOL)dirty inRange:(VT100GridRange)range updateTimestamp:(BOOL)updateTimestamp;

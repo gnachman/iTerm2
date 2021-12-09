@@ -411,14 +411,6 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     }
 }
 
-- (NSInteger)generationForLineNumber:(int)lineNum width:(int)width {
-    int remainder = 0;
-    LineBlock *block = [_lineBlocks blockContainingLineNumber:lineNum
-                                                        width:width
-                                                    remainder:&remainder];
-    return [block generationForLineNumber:remainder width:width];
-}
-
 - (iTermMetadata)metadataForLineNumber:(int)lineNumber width:(int)width {
     int remainder = 0;
     LineBlock *block = [_lineBlocks blockContainingLineNumber:lineNumber

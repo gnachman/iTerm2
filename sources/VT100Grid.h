@@ -265,7 +265,6 @@
 
 // Returns the timestamp of a given line.
 - (NSTimeInterval)timestampForLine:(int)y;
-- (NSInteger)generationForLine:(int)y;
 
 - (NSString *)compactLineDump;
 - (NSString *)compactLineDumpWithTimestamps;
