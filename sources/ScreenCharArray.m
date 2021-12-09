@@ -12,6 +12,7 @@
     NSData *_data;
     BOOL _shouldFreeOnRelease;
     screen_char_t _placeholder;
+    size_t _offset;
 }
 @synthesize line = _line;
 @synthesize length = _length;
@@ -81,22 +82,70 @@
     return self;
 }
 
+- (instancetype)initWithLine:(const screen_char_t *)line
+                      length:(int)length
+                    metadata:(iTermMetadata)metadata
+                continuation:(screen_char_t)continuation
+               freeOnRelease:(BOOL)freeOnRelease {
+    self = [self initWithLine:line length:length metadata:metadata continuation:continuation];
+    if (self) {
+        _shouldFreeOnRelease = freeOnRelease;
+    }
+    return self;
+}
+
+- (instancetype)initWithLine:(const screen_char_t *)line
+                      offset:(size_t)offset
+                      length:(int)length
+                    metadata:(iTermMetadata)metadata
+                continuation:(screen_char_t)continuation
+               freeOnRelease:(BOOL)freeOnRelease {
+    self = [self initWithLine:line + offset
+                       length:length
+                     metadata:metadata
+                 continuation:continuation
+                freeOnRelease:freeOnRelease];
+    if (self) {
+        _offset = offset;
+    }
+    return self;
+}
+
 - (void)dealloc {
     if (_shouldFreeOnRelease) {
-        free((void *)_line);
+        free((void *)(_line - _offset));
         _line = NULL;
     }
     iTermMetadataRelease(_metadata);
+}
+
+- (NSString *)description {
+    return [NSString stringWithFormat:@"<%@: %p value=\"%@\" eol=%@>",
+            NSStringFromClass([self class]), self, ScreenCharArrayToStringDebug(_line, _length), @(self.eol)];
+}
+
+- (BOOL)isEqual:(id)object {
+    ScreenCharArray *other = [ScreenCharArray castFrom:object];
+    return [self isEqualToScreenCharArray:other];
 }
 
 - (BOOL)isEqualToScreenCharArray:(ScreenCharArray *)other {
     if (!other) {
         return NO;
     }
-    return (_line == other->_line &&
-            _length == other->_length &&
-            _eol == other->_eol &&
-            !memcmp(&_continuation, &other->_continuation, sizeof(_continuation)));
+    if (_length != other->_length) {
+        return NO;
+    }
+    if (_eol != other->_eol) {
+        return NO;
+    }
+    if (memcmp(&_continuation, &other->_continuation, sizeof(_continuation))) {
+        return NO;
+    }
+    if ((_line != other->_line && memcmp(_line, other->_line, _length * sizeof(screen_char_t)))) {
+        return NO;
+    }
+    return YES;
 }
 
 - (NSString *)debugDescription {

@@ -130,6 +130,8 @@
 - (NSArray<ObjectType> *)reversed;
 + (instancetype)mapIntegersFrom:(NSInteger)min to:(NSInteger)noninclusiveUpperBound block:(ObjectType (^NS_NOESCAPE)(NSInteger i))block;
 
+- (NSArray *)arrayByStrongifyingWeakBoxes;
+
 @end
 
 void iTermFreeeNullTerminatedCStringArray(const char **array);
@@ -138,3 +140,4 @@ void iTermFreeeNullTerminatedCStringArray(const char **array);
 - (void)reverse;
 - (void)removeObjectsPassingTest:(BOOL (^)(ObjectType anObject))block;
 @end
+

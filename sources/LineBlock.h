@@ -90,7 +90,7 @@ typedef struct {
 - (BOOL)hasPartial;
 
 // Remove the last line. Returns false if there was none.
-- (BOOL)popLastLineInto:(screen_char_t**)ptr
+- (BOOL)popLastLineInto:(screen_char_t const **)ptr
              withLength:(int*)length
               upToWidth:(int)width
                metadata:(out iTermMetadata *)metadataPtr
@@ -127,7 +127,7 @@ typedef struct {
 - (void)shrinkToFit;
 
 // Return a raw line
-- (screen_char_t *)rawLine:(int)linenum;
+- (const screen_char_t *)rawLine:(int)linenum;
 
 // NSLog the contents of the block. For debugging.
 - (void)dump:(int)rawOffset toDebugLog:(BOOL)toDebugLog;
@@ -187,11 +187,11 @@ includesPartialLastLine:(BOOL *)includesPartialLastLine;
                             length:(int)length
                              width:(int)width;
 
-- (int)numberOfFullLinesFromBuffer:(screen_char_t *)buffer
+- (int)numberOfFullLinesFromBuffer:(const screen_char_t *)buffer
                             length:(int)length
                              width:(int)width;
 #if BETA
-int iTermLineBlockNumberOfFullLinesImpl(screen_char_t *buffer,
+int iTermLineBlockNumberOfFullLinesImpl(const screen_char_t *buffer,
                                         int length,
                                         int width,
                                         BOOL mayHaveDoubleWidthCharacter);
@@ -212,7 +212,7 @@ int iTermLineBlockNumberOfFullLinesImpl(screen_char_t *buffer,
 // |abcde|   <- line is short after wrapping
 // |XXzzzz|
 // The slow code for dealing with DWCs is run only if mayHaveDwc is YES.
-int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width, BOOL mayHaveDwc);
+int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BOOL mayHaveDwc);
 
 // Returns a dictionary with the contents of this block. The data is a weak reference and will be
 // invalid if the block is changed.
@@ -229,8 +229,11 @@ void EnableDoubleWidthCharacterLineCache(void);
 - (BOOL)hasObserver:(id<iTermLineBlockObserver>)observer;
 
 - (void)setPartial:(BOOL)partial;
+- (LineBlock *)cowCopy;
 
 // For tests only
 - (LineBlockMetadata)internalMetadataForLine:(int)line;
+- (NSInteger)numberOfClients;
+- (BOOL)hasOwner;
 
 @end

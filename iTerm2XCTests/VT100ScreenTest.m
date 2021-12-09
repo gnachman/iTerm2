@@ -4713,7 +4713,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
         screen_char_t cont;
         [lineBuffer wrappedLineAtIndex:0 width:80 continuation:&cont];
         {
-            LineBlock *block = [lineBuffer internalBlockAtIndex:0];
+            LineBlock *block = [lineBuffer testOnlyBlockAtIndex:0];
             LineBlockMetadata blockmeta = [block internalMetadataForLine:0];
             NSLog(@"%p", blockmeta.double_width_characters);
 //            dwcCache = blockmeta.double_width_characters;
@@ -4724,7 +4724,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
         [lineBuffer appendLine:cells length:2 partial:YES width:80 metadata:iTermMetadataDefault() continuation:soft];
 
         {
-            LineBlock *block = [lineBuffer internalBlockAtIndex:0];
+            LineBlock *block = [lineBuffer testOnlyBlockAtIndex:0];
             LineBlockMetadata blockmeta = [block internalMetadataForLine:0];
             XCTAssertTrue(blockmeta.double_width_characters == nil);
         }

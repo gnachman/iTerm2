@@ -29,6 +29,31 @@ NS_ASSUME_NONNULL_BEGIN
                     metadata:(iTermMetadata)metadata
                 continuation:(screen_char_t)continuation;
 
+- (instancetype)initWithData:(NSData *)data
+                    metadata:(iTermMetadata)metadata
+                continuation:(screen_char_t)continuation;
+
+- (instancetype)initWithLine:(const screen_char_t *)line
+                      length:(int)length
+                    metadata:(iTermMetadata)metadata
+                continuation:(screen_char_t)continuation
+               freeOnRelease:(BOOL)freeOnRelease;
+
+// It only makes sense to use this when freeOnRelease=YES.
+// start of malloced memory      start of line to expose
+// [index 0] [index 1] [index 2] [index 3]
+//
+// line = &[index 0]
+// offset = 3
+// length = 1
+- (instancetype)initWithLine:(const screen_char_t *)line  // pointer to 1st byte of malloced memory
+                      offset:(size_t)offset  // self.line == line + offset
+                      length:(int)length
+                    metadata:(iTermMetadata)metadata
+                continuation:(screen_char_t)continuation
+               freeOnRelease:(BOOL)freeOnRelease;
+
+
 - (BOOL)isEqualToScreenCharArray:(ScreenCharArray *)other;
 - (ScreenCharArray *)screenCharArrayByAppendingScreenCharArray:(ScreenCharArray *)other;
 - (ScreenCharArray *)screenCharArrayByRemovingTrailingNullsAndHardNewline;

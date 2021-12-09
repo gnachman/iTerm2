@@ -10,9 +10,11 @@
 
 #import "iTermMalloc.h"
 #import "iTermTuple.h"
+#import "iTermWeakBox.h"
 #import "NSData+iTerm.h"
 #import "NSLocale+iTerm.h"
 #import "NSMutableAttributedString+iTerm.h"
+#import "NSObject+iTerm.h"
 #import "NSStringITerm.h"
 
 @implementation NSArray (iTerm)
@@ -695,6 +697,17 @@ void iTermFreeeNullTerminatedCStringArray(const char **array) {
         return self[count - i - 1];
     }];
 }
+
+- (NSArray *)arrayByStrongifyingWeakBoxes {
+    if (self.count == 0) {
+        return @[];
+    }
+    return [self mapWithBlock:^id(id anObject) {
+        iTermWeakBox *box = [iTermWeakBox castFrom:anObject];
+        return box.object;
+    }];
+}
+
 @end
 
 @implementation NSMutableArray (iTerm)
@@ -723,3 +736,4 @@ void iTermFreeeNullTerminatedCStringArray(const char **array) {
 }
 
 @end
+

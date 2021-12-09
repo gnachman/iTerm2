@@ -19,6 +19,7 @@
 #import "iTermVariableScope.h"
 #import "iTermVariables.h"
 #import "FindContext.h"
+#import "LineBlock.h"
 #import "LineBufferHelpers.h"
 #import "NSColor+iTerm.h"
 #import "NSDate+iTerm.h"

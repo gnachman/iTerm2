@@ -84,11 +84,10 @@ static const NSInteger kUnicodeVersion = 9;
 }
 
 // Append a block
-- (LineBlock*)_addBlockOfSize:(int)size {
+- (LineBlock *)_addBlockOfSize:(int)size {
     LineBlock* block = [[LineBlock alloc] initWithRawBufferSize: size];
     block.mayHaveDoubleWidthCharacter = self.mayHaveDoubleWidthCharacter;
     [_lineBlocks addBlock:block];
-    [block release];
     return block;
 }
 
@@ -128,7 +127,6 @@ static const NSInteger kUnicodeVersion = 9;
     if (self) {
         [self commonInit];
         if ([dictionary[kLineBufferVersionKey] intValue] != kLineBufferVersion) {
-            [self autorelease];
             return [[LineBuffer alloc] init];
         }
         _mayHaveDoubleWidthCharacter = [dictionary[kLineBufferMayHaveDWCKey] boolValue];
@@ -145,18 +143,12 @@ static const NSInteger kUnicodeVersion = 9;
             }
             LineBlock *block = [LineBlock blockWithDictionary:blockDictionary];
             if (!block) {
-                [self autorelease];
                 return [[LineBuffer alloc] init];
             }
             [_lineBlocks addBlock:block];
         }
     }
     return self;
-}
-
-- (void)dealloc {
-    [_lineBlocks release];
-    [super dealloc];
 }
 
 - (void)setMayHaveDoubleWidthCharacter:(BOOL)mayHaveDoubleWidthCharacter {
@@ -181,15 +173,13 @@ static int RawNumLines(LineBuffer* buffer, int width) {
 }
 
 
-- (void) setMaxLines: (int) maxLines
-{
+- (void)setMaxLines:(int)maxLines {
     max_lines = maxLines;
     num_wrapped_lines_width = -1;
 }
 
 
-- (int)dropExcessLinesWithWidth: (int) width
-{
+- (int)dropExcessLinesWithWidth:(int)width {
     int nl = RawNumLines(self, width);
     int totalDropped = 0;
     if (max_lines != -1 && nl > max_lines) {
@@ -237,8 +227,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     return [s length] ? [s substringToIndex:s.length - 1] : @"";  // strip trailing newline
 }
 
-- (void) dump
-{
+- (void)dump {
     int i;
     int rawOffset = 0;
     for (i = 0; i < _lineBlocks.count; ++i) {
@@ -308,9 +297,18 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     NSLog(@"%4d: %@", k++, s);
 }
 
-- (void)dumpWrappedToWidth:(int)width
-{
+- (void)dumpWrappedToWidth:(int)width {
     NSLog(@"%@", [self compactLineDumpWithWidth:width andContinuationMarks:NO]);
+}
+
+- (void)appendScreenCharArray:(ScreenCharArray *)sca
+                        width:(int)width {
+    [self appendLine:sca.line
+              length:sca.length
+             partial:sca.eol != EOL_HARD
+               width:width
+            metadata:sca.metadata
+        continuation:sca.continuation];
 }
 
 - (void)appendLine:(const screen_char_t *)buffer
@@ -326,7 +324,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
         [self _addBlockOfSize:block_size];
     }
 
-    LineBlock* block = _lineBlocks.lastBlock;
+    LineBlock *block = _lineBlocks.lastBlock;
 
     int beforeLines = [block getNumLinesWithWrapWidth:width];
     if (![block appendLine:buffer
@@ -345,7 +343,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
             // There is a line that's too long for the current block to hold.
             // Remove its prefix from the current block and later add the
             // concatenation of prefix + buffer to a larger block.
-            screen_char_t* temp;
+            const screen_char_t *temp;
             BOOL ok = [block popLastLineInto:&temp
                                   withLength:&prefix_len
                                    upToWidth:[block rawBufferSize] + 1
@@ -505,10 +503,15 @@ static int RawNumLines(LineBuffer* buffer, int width) {
         [_lineBlocks removeLastBlock];
     }
     for (LineBlock *block in other->_lineBlocks.blocks) {
-        [_lineBlocks addBlock:[[block copy] autorelease]];
+        [_lineBlocks addBlock:[block copy]];
     }
     num_wrapped_lines_width = -1;
     [self dropExcessLinesWithWidth:width];
+}
+
+- (ScreenCharArray *)wrappedLineAtIndex:(int)lineNum
+                                  width:(int)width {
+    return [self wrappedLineAtIndex:lineNum width:width continuation:NULL];
 }
 
 - (ScreenCharArray *)wrappedLineAtIndex:(int)lineNum
@@ -537,9 +540,9 @@ static int RawNumLines(LineBuffer* buffer, int width) {
         ITAssertWithMessage(NO, @"Tried to get non-existent line");
         return nil;
     }
-    ScreenCharArray *result = [[[ScreenCharArray alloc] initWithLine:line
-                                                              length:length
-                                                        continuation:continuation] autorelease];
+    ScreenCharArray *result = [[ScreenCharArray alloc] initWithLine:line
+                                                             length:length
+                                                       continuation:continuation];
     ITAssertWithMessage(result.length <= width, @"Length too long");
     return result;
 }
@@ -564,9 +567,9 @@ static int RawNumLines(LineBuffer* buffer, int width) {
                                          screen_char_t continuation,
                                          iTermMetadata metadata,
                                          BOOL * _Nonnull stop) {
-        ScreenCharArray *lineResult = [[[ScreenCharArray alloc] initWithLine:chars
-                                                                      length:length
-                                                                continuation:continuation] autorelease];
+        ScreenCharArray *lineResult = [[ScreenCharArray alloc] initWithLine:chars
+                                                                     length:length
+                                                               continuation:continuation];
         [arrays addObject:lineResult];
     }];
     return arrays;
@@ -580,9 +583,9 @@ static int RawNumLines(LineBuffer* buffer, int width) {
                                  width:width
                                  block:
      ^(const screen_char_t * _Nonnull chars, int length, int eol, screen_char_t continuation, iTermMetadata metadata, BOOL * _Nonnull stop) {
-        ScreenCharArray *array = [[[ScreenCharArray alloc] initWithLine:chars
-                                                                 length:length
-                                                           continuation:continuation] autorelease];
+        ScreenCharArray *array = [[ScreenCharArray alloc] initWithLine:chars
+                                                                length:length
+                                                          continuation:continuation];
         block(count++, array, metadata, stop);
      }];
 }
@@ -623,6 +626,27 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     }
 }
 
+- (ScreenCharArray * _Nullable)popLastLineWithWidth:(int)width {
+    screen_char_t *buffer = iTermCalloc(width, sizeof(screen_char_t));
+    int eol = 0;
+    iTermMetadata metadata;
+    screen_char_t continuation;
+    const BOOL ok = [self popAndCopyLastLineInto:buffer
+                                           width:width
+                               includesEndOfLine:&eol
+                                        metadata:&metadata
+                                    continuation:&continuation];
+    if (!ok) {
+        free(buffer);
+        return nil;
+    }
+    return [[ScreenCharArray alloc] initWithLine:buffer
+                                          length:width
+                                        metadata:metadata
+                                    continuation:continuation
+                                   freeOnRelease:YES];
+}
+
 - (BOOL)popAndCopyLastLineInto:(screen_char_t*)ptr
                          width:(int)width
              includesEndOfLine:(int*)includesEndOfLine
@@ -642,7 +666,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
 
     // Pop the last up-to-width chars off the last line.
     int length;
-    screen_char_t* temp;
+    const screen_char_t *temp;
     screen_char_t continuation;
     BOOL ok __attribute__((unused)) =
         [block popLastLineInto:&temp
@@ -697,7 +721,7 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
         // The cursor is on the last line in the buffer.
         LineBlock* block = _lineBlocks.lastBlock;
         int last_line_length = [block getRawLineLength: ([block numEntries]-1)];
-        screen_char_t* lastRawLine = [block rawLine: ([block numEntries]-1)];
+        const screen_char_t *lastRawLine = [block rawLine: ([block numEntries]-1)];
         int num_overflow_lines = [block numberOfFullLinesFromBuffer:lastRawLine length:last_line_length width:width];
 #if BETA
         const int legacy_num_overflow_lines = iTermLineBlockNumberOfFullLinesImpl(lastRawLine,
@@ -928,7 +952,7 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
         NSValue *start = [intermediate objectForKey:[NSNumber numberWithInt:rr->position]];
         NSValue *end = [intermediate objectForKey:[NSNumber numberWithInt:rr->position + rr->length - 1]];
         if (start && end) {
-            XYRange *xyrange = [[[XYRange alloc] init] autorelease];
+            XYRange *xyrange = [[XYRange alloc] init];
             NSPoint startPoint = [start pointValue];
             NSPoint endPoint = [end pointValue];
             xyrange->xStart = startPoint.x;
@@ -1143,27 +1167,6 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
     context.offset = MAX(0, absPos - absOffset);
 }
 
-- (LineBuffer *)newAppendOnlyCopy {
-    LineBuffer *theCopy = [[LineBuffer alloc] init];
-    [theCopy->_lineBlocks release];
-    theCopy->_lineBlocks = [_lineBlocks copy];
-    LineBlock *lastBlock = _lineBlocks.lastBlock;
-    if (lastBlock) {
-        [theCopy->_lineBlocks replaceLastBlockWithCopy];
-    }
-    theCopy->block_size = block_size;
-    theCopy->cursor_x = cursor_x;
-    theCopy->cursor_rawline = cursor_rawline;
-    theCopy->max_lines = max_lines;
-    theCopy->num_dropped_blocks = num_dropped_blocks;
-    theCopy->num_wrapped_lines_cache = num_wrapped_lines_cache;
-    theCopy->num_wrapped_lines_width = num_wrapped_lines_width;
-    theCopy->droppedChars = droppedChars;
-    theCopy.mayHaveDoubleWidthCharacter = _mayHaveDoubleWidthCharacter;
-
-    return theCopy;
-}
-
 - (int)numberOfDroppedBlocks {
     return num_dropped_blocks;
 }
@@ -1267,10 +1270,12 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
 
 #pragma mark - NSCopying
 
+- (LineBlock *)copy {
+    return [self copyWithZone:nil];
+}
+
 - (id)copyWithZone:(NSZone *)zone {
     LineBuffer *theCopy = [[LineBuffer alloc] initWithBlockSize:block_size];
-
-    [theCopy->_lineBlocks release];
     theCopy->_lineBlocks = [_lineBlocks copy];
     theCopy->cursor_x = cursor_x;
     theCopy->cursor_rawline = cursor_rawline;
@@ -1305,14 +1310,14 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
     return n;
 }
 
-- (LineBuffer *)appendOnlyCopyWithMinimumLines:(int)minLines atWidth:(int)width {
+- (LineBuffer *)copyWithMinimumLines:(int)minLines atWidth:(int)width {
     // Calculate how many blocks to keep.
     const int numBlocks = [self numBlocksAtEndToGetMinimumLines:minLines width:width];
     const int totalBlocks = _lineBlocks.count;
     const int numDroppedBlocks = totalBlocks - numBlocks;
 
     // Make a copy of the whole thing (cheap)
-    LineBuffer *theCopy = [[self newAppendOnlyCopy] autorelease];
+    LineBuffer *theCopy = [self copy];
 
     // Remove the blocks we don't need.
     [theCopy->_lineBlocks removeFirstBlocks:numDroppedBlocks];
@@ -1335,7 +1340,7 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
 
     // Just a sanity check, not a real limitation.
     dispatch_async(dispatch_get_main_queue(), ^{
-        assert(!_lineBlocks.resizing);
+        assert(!self->_lineBlocks.resizing);
     });
 }
 
@@ -1348,8 +1353,42 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
     [_lineBlocks.lastBlock setPartial:partial];
 }
 
-- (LineBlock *)internalBlockAtIndex:(int)i {
+- (LineBlock *)testOnlyBlockAtIndex:(int)i {
     return _lineBlocks[i];
+}
+
+- (ScreenCharArray *)unwrappedLineAtIndex:(int)desiredIndex {
+    int i = desiredIndex;
+    for (LineBlock *block in _lineBlocks.blocks) {
+        const int count = block.numRawLines;
+        if (count < i) {
+            i -= count;
+            continue;
+        }
+        const int dropped = block.numEntries - block.numRawLines;
+        const screen_char_t *line = [block rawLine:i + dropped];
+        const int length = [block getRawLineLength:i + dropped];
+        int eol = EOL_HARD;
+        if (i + 1 == count && [block hasPartial]) {
+            eol = EOL_SOFT;
+        }
+        LineBlockMetadata metadata = [block internalMetadataForLine:i + dropped];
+        screen_char_t continuation = metadata.continuation;
+        continuation.code = eol;
+        return [[ScreenCharArray alloc] initWithLine:line
+                                              length:length
+                                            metadata:metadata.lineMetadata
+                                        continuation:continuation];
+    }
+    return nil;
+}
+
+- (unsigned int)numberOfUnwrappedLines {
+    unsigned int sum = 0;
+    for (LineBlock *block in _lineBlocks.blocks) {
+        sum += [block numRawLines];
+    }
+    return sum;
 }
 
 @end

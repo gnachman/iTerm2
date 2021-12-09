@@ -28,7 +28,6 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)removeFirstBlock;
 - (void)removeFirstBlocks:(NSInteger)count;
 - (void)removeLastBlock;
-- (void)replaceLastBlockWithCopy;
 - (void)setAllBlocksMayHaveDoubleWidthCharacters;
 - (NSInteger)indexOfBlockContainingLineNumber:(int)lineNumber width:(int)width remainder:(out nonnull int *)remainderPtr;
 - (nullable LineBlock *)blockContainingLineNumber:(int)lineNumber
@@ -55,6 +54,7 @@ NS_ASSUME_NONNULL_BEGIN
                                  index:(nullable int *)indexPtr;
 - (void)sanityCheck;
 - (void)oopsWithWidth:(int)width block:(void (^)(void))block;
+- (iTermLineBlockArray *)cowCopy;
 
 @end
 

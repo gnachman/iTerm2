@@ -500,20 +500,6 @@
     return _blocks[index];
 }
 
-- (void)replaceLastBlockWithCopy {
-    [self updateCacheIfNeeded];
-    NSInteger index = _blocks.count;
-    if (index == 0) {
-        return;
-    }
-    index--;
-    [_blocks[index] removeObserver:self];
-    _blocks[index] = [_blocks[index] copy];
-    [_blocks[index] addObserver:self];
-    _head = _blocks.firstObject;
-    _tail = _blocks.lastObject;
-}
-
 - (void)addBlock:(LineBlock *)block {
     [self updateCacheIfNeeded];
     [block addObserver:self];
@@ -625,19 +611,21 @@
 
 - (id)copyWithZone:(NSZone *)zone {
     iTermLineBlockArray *theCopy = [[self.class alloc] init];
-    theCopy->_blocks = [_blocks mutableCopy];
+    theCopy->_blocks = [NSMutableArray array];
+    for (LineBlock *block in _blocks) {
+        LineBlock *copiedBlock = [block cowCopy];
+        [copiedBlock addObserver:theCopy];
+        [theCopy->_blocks addObject:copiedBlock];
+    }
     theCopy->_numLinesCaches = [_numLinesCaches copy];
     theCopy->_rawSpaceCache = [_rawSpaceCache copy];
     theCopy->_rawLinesCache = [_rawLinesCache copy];
     theCopy->_mayHaveDoubleWidthCharacter = _mayHaveDoubleWidthCharacter;
-    theCopy->_head = _head;
+    theCopy->_head = theCopy->_blocks.firstObject;
     theCopy->_headDirty = _headDirty;
-    theCopy->_tail = _tail;
+    theCopy->_tail = theCopy->_blocks.lastObject;
     theCopy->_tailDirty = _tailDirty;
     theCopy->_resizing = _resizing;
-    for (LineBlock *block in _blocks) {
-        [block addObserver:theCopy];
-    }
 
     return theCopy;
 }

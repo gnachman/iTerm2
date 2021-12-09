@@ -136,7 +136,7 @@ class AsyncFilter: NSObject {
          cadence: TimeInterval,
          refining: AsyncFilter?,
          progress: ((Double) -> (Void))?) {
-        lineBufferCopy = lineBuffer.newAppendOnlyCopy()
+        lineBufferCopy = lineBuffer.copy() as! LineBuffer
         lineBufferCopy.setMaxLines(-1)
         grid.appendLines(grid.numberOfLinesUsed(), to: lineBufferCopy)
         let numberOfLines = lineBufferCopy.numLines(withWidth: grid.size.width)
@@ -248,27 +248,3 @@ extension AsyncFilter: ContentSubscriber {
     }
 }
 
-extension screen_char_t {
-    static var zero = screen_char_t(code: 0,
-                                    foregroundColor: UInt32(ALTSEM_DEFAULT),
-                                    fgGreen: 0,
-                                    fgBlue: 0,
-                                    backgroundColor: UInt32(ALTSEM_DEFAULT),
-                                    bgGreen: 0,
-                                    bgBlue: 0,
-                                    foregroundColorMode: ColorModeAlternate.rawValue,
-                                    backgroundColorMode: ColorModeAlternate.rawValue,
-                                    complexChar: 0,
-                                    bold: 0,
-                                    faint: 0,
-                                    italic: 0,
-                                    blink: 0,
-                                    underline: 0,
-                                    image: 0,
-                                    strikethrough: 0,
-                                    underlineStyle: VT100UnderlineStyle.single,
-                                    invisible: 0,
-                                    inverse: 0,
-                                    guarded: 0,
-                                    unused: 0)
-}

@@ -505,7 +505,7 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     // selection. Later this will be used to set the selection positions
     // relative to the end of the updated linebuffer (which could change as
     // lines from the base screen are pushed onto it).
-    LineBuffer *lineBufferWithAltScreen = [[linebuffer_ newAppendOnlyCopy] autorelease];
+    LineBuffer *lineBufferWithAltScreen = [[linebuffer_ copy] autorelease];
     [self appendScreen:currentGrid_
           toScrollback:lineBufferWithAltScreen
         withUsedHeight:usedHeight
@@ -543,7 +543,7 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     NSArray *notesAtLeastPartiallyOnScreen =
     [intervalTree_ objectsInInterval:[self intervalForGridCoordRange:screenCoordRange]];
 
-    LineBuffer *appendOnlyLineBuffer = [[realLineBuffer newAppendOnlyCopy] autorelease];
+    LineBuffer *appendOnlyLineBuffer = [[realLineBuffer copy] autorelease];
     [self appendScreen:grid
           toScrollback:appendOnlyLineBuffer
         withUsedHeight:usedHeight
@@ -756,7 +756,7 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     // convertRange:toWidth:... happy (the selection's Y values
     // will be able to be looked up) and then after that's done we can swap
     // back to the tempLineBuffer.
-    LineBuffer *appendOnlyLineBuffer = [[realLineBuffer newAppendOnlyCopy] autorelease];
+    LineBuffer *appendOnlyLineBuffer = [[realLineBuffer copy] autorelease];
     LineBufferPosition *newLastPos = [realLineBuffer lastPosition];
     NSArray *newSubSelections = [self subSelectionsForNewSize:newSize
                                                    lineBuffer:realLineBuffer
@@ -6394,8 +6394,8 @@ static void SwapInt(int *a, int *b) {
     const int maxLines = MAX(1000, maxArea / effectiveWidth);
 
     // Make a copy of the last blocks of the line buffer; enough to contain at least |maxLines|.
-    LineBuffer *temp = [linebuffer_ appendOnlyCopyWithMinimumLines:maxLines
-                                                           atWidth:effectiveWidth];
+    LineBuffer *temp = [linebuffer_ copyWithMinimumLines:maxLines
+                                                 atWidth:effectiveWidth];
 
     // Offset for intervals so 0 is the first char in the provided contents.
     int linesDroppedForBrevity = ([linebuffer_ numLinesWithWidth:effectiveWidth] -

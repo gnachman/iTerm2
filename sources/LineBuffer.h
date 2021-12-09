@@ -35,6 +35,8 @@
 #import "LineBufferHelpers.h"
 #import "VT100GridTypes.h"
 
+NS_ASSUME_NONNULL_BEGIN
+
 @class LineBlock;
 @class LineBuffer;
 @class ResultRange;
@@ -63,11 +65,6 @@
 - (LineBuffer * _Nonnull)initWithBlockSize:(int)bs;
 - (LineBuffer * _Nullable)initWithDictionary:(NSDictionary * _Nonnull)dictionary;
 
-// Returns a copy of this buffer that can be appended to but that you must not
-// pop lines from. Only the last block is deep-copied; references are held to
-// all earlier blocks.
-- (LineBuffer * _Nonnull)newAppendOnlyCopy;
-
 // Call this immediately after init. Otherwise the buffer will hold unlimited lines (until you
 // run out of memory).
 - (void)setMaxLines:(int)maxLines;
@@ -82,6 +79,9 @@
              width:(int)width
           metadata:(iTermMetadata)metadata
       continuation:(screen_char_t)continuation;
+
+- (void)appendScreenCharArray:(ScreenCharArray *)sca
+                        width:(int)width;
 
 - (void)appendContentsOfLineBuffer:(LineBuffer * _Nonnull)other width:(int)width;
 
@@ -122,9 +122,15 @@
 // Like the above but with a saner way of holding the returned data. Callers are advised not
 // to modify the screen_char_t's returned, but the ScreenCharArray is otherwise safe to
 // mutate. |continuation| is optional and if set will be filled in with the continuation character.
+//
+// DEPRECATED - Prefer the 2-arg version below since ScreenCharArray carries the continuation char.
 - (ScreenCharArray * _Nonnull)wrappedLineAtIndex:(int)lineNum
                                            width:(int)width
                                     continuation:(screen_char_t * _Nullable)continuation;
+
+- (ScreenCharArray * _Nonnull)wrappedLineAtIndex:(int)lineNum
+                                           width:(int)width;
+
 
 - (ScreenCharArray * _Nonnull)rawLineAtWrappedLine:(int)lineNum width:(int)width;
 
@@ -141,6 +147,10 @@
              includesEndOfLine:(int *_Nonnull)includesEndOfLine
                       metadata:(out iTermMetadata * _Nullable)metadataPtr
                   continuation:(screen_char_t * _Nullable)continuationPtr;
+
+// Note that the resulting line may be *smaller* than width. Use -paddedToLength:eligibleForDWC:
+// if you need to go all Procrustes on it.
+- (ScreenCharArray * _Nullable)popLastLineWithWidth:(int)width;
 
 // Removes the last wrapped lines.
 - (void)removeLastWrappedLines:(int)numberOfLinesToRemove
@@ -220,7 +230,8 @@
 - (void)appendMessage:(NSString * _Nonnull)message;
 
 // Make a copy of the last |minLines| at width |width|. May copy more than |minLines| for speed.
-- (LineBuffer * _Nonnull)appendOnlyCopyWithMinimumLines:(int)minLines atWidth:(int)width;
+// Makes a copy-on-write instance so this is fairly cheap to do.
+- (LineBuffer * _Nonnull)copyWithMinimumLines:(int)minLines atWidth:(int)width;
 
 - (int)numberOfWrappedLinesWithWidth:(int)width;
 
@@ -229,7 +240,15 @@
 
 - (void)setPartial:(BOOL)partial;
 
+- (LineBuffer *)copy;
+
 // Tests only!
-- (LineBlock * _Nonnull)internalBlockAtIndex:(int)i;
+- (LineBlock * _Nonnull)testOnlyBlockAtIndex:(int)i;
+
+- (ScreenCharArray * _Nullable)unwrappedLineAtIndex:(int)i;
+- (unsigned int)numberOfUnwrappedLines;
 
 @end
+
+NS_ASSUME_NONNULL_END
+
