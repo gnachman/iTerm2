@@ -17,6 +17,7 @@
 #import "TmuxStateParser.h"
 #import "VT100Screen.h"
 #import "VT100Screen+Mutation.h"
+#import "VT100Screen+Private.h"
 #import "iTermSelection.h"
 
 static const NSInteger kUnicodeVersion = 9;

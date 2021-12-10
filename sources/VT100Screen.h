@@ -51,7 +51,7 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 @property(nonatomic, assign) BOOL audibleBell;
 @property(nonatomic, assign) BOOL showBellIndicator;
 @property(nonatomic, assign) BOOL flashBell;
-@property(nonatomic, assign) id<VT100ScreenDelegate> delegate;
+@property(nonatomic, weak) id<VT100ScreenDelegate> delegate;
 @property(nonatomic, weak) id<iTermIntervalTreeObserver> intervalTreeObserver;
 @property(nonatomic, assign) BOOL postUserNotifications;
 @property(nonatomic, assign) BOOL cursorBlinks;
@@ -85,12 +85,6 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 
 // Designated initializer.
 - (instancetype)initWithTerminal:(VT100Terminal *)terminal;
-
-// Destructively sets the screen size.
-- (void)destructivelySetScreenWidth:(int)width height:(int)height;
-
-// Convert a run to one without nulls on either end.
-- (VT100GridRun)runByTrimmingNullsFromRun:(VT100GridRun)run;
 
 // Indicates if line drawing mode is enabled for any character set, or if the current character set
 // is not G0.
@@ -233,9 +227,6 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
                    reattached:(BOOL)reattached;
 - (void)restoreInitialSize;
 
-// Zero-based (as VT100GridCoord always is), unlike -cursorX and -cursorY.
-- (void)setCursorPosition:(VT100GridCoord)coord;
-
 // Uninitialize timestamps.
 - (void)resetTimestamps;
 
@@ -258,5 +249,7 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 @interface VT100Screen (Testing)
 
 - (void)setMayHaveDoubleWidthCharacters:(BOOL)value;
+// Destructively sets the screen size.
+- (void)destructivelySetScreenWidth:(int)width height:(int)height;
 
 @end
