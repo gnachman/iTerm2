@@ -3734,6 +3734,7 @@
 		A6F7A74C213CB143004DE961 /* StatusBarIconComposer@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A6F7A706213CB143004DE961 /* StatusBarIconComposer@2x.png */; };
 		A6F7A74D213CB143004DE961 /* StatusBarIconComposer@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A6F7A706213CB143004DE961 /* StatusBarIconComposer@2x.png */; };
 		A6F7A74E213CB143004DE961 /* StatusBarIconComposer@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A6F7A706213CB143004DE961 /* StatusBarIconComposer@2x.png */; };
+		A6F7F8072763F47B005E433E /* VT100ScreenState.m in Sources */ = {isa = PBXBuildFile; fileRef = A6F7F8052763F47B005E433E /* VT100ScreenState.m */; };
 		A6F981CC1C13783C00EE0B80 /* iTermCPS.h in Headers */ = {isa = PBXBuildFile; fileRef = A6F981CB1C13783C00EE0B80 /* iTermCPS.h */; };
 		A6F9EF3720850C41005530F7 /* iTermCompetentTableRowView.h in Headers */ = {isa = PBXBuildFile; fileRef = A6F9EF3520850C41005530F7 /* iTermCompetentTableRowView.h */; };
 		A6F9EF3820850C41005530F7 /* iTermCompetentTableRowView.m in Sources */ = {isa = PBXBuildFile; fileRef = A6F9EF3620850C41005530F7 /* iTermCompetentTableRowView.m */; };
@@ -6649,6 +6650,8 @@
 		A6F7A704213CB143004DE961 /* StatusBarIconPaste@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "StatusBarIconPaste@2x.png"; path = "images/StatusBarIcons/StatusBarIconPaste@2x.png"; sourceTree = "<group>"; };
 		A6F7A705213CB143004DE961 /* StatusBarIconRAM.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = StatusBarIconRAM.png; path = images/StatusBarIcons/StatusBarIconRAM.png; sourceTree = "<group>"; };
 		A6F7A706213CB143004DE961 /* StatusBarIconComposer@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "StatusBarIconComposer@2x.png"; path = "images/StatusBarIcons/StatusBarIconComposer@2x.png"; sourceTree = "<group>"; };
+		A6F7F8042763F47B005E433E /* VT100ScreenState.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = VT100ScreenState.h; sourceTree = "<group>"; };
+		A6F7F8052763F47B005E433E /* VT100ScreenState.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = VT100ScreenState.m; sourceTree = "<group>"; };
 		A6F981CB1C13783C00EE0B80 /* iTermCPS.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermCPS.h; sourceTree = "<group>"; };
 		A6F9EF3520850C41005530F7 /* iTermCompetentTableRowView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermCompetentTableRowView.h; sourceTree = "<group>"; };
 		A6F9EF3620850C41005530F7 /* iTermCompetentTableRowView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermCompetentTableRowView.m; sourceTree = "<group>"; };
@@ -8882,6 +8885,8 @@
 				A6E152582761F02600D0F41C /* VT100Screen+Mutation.h */,
 				A6E152592761F02600D0F41C /* VT100Screen+Mutation.m */,
 				A6E1525D2762AFBD00D0F41C /* VT100Screen+Private.h */,
+				A6F7F8042763F47B005E433E /* VT100ScreenState.h */,
+				A6F7F8052763F47B005E433E /* VT100ScreenState.m */,
 			);
 			name = Core;
 			sourceTree = "<group>";
@@ -14153,6 +14158,7 @@
 				A6FF4AEF246BBFDB00410BA2 /* iTermTmuxWindowCache.m in Sources */,
 				A61F457322FA8BD400E2054A /* iTermSetStatusBarComponentUnreadCountBuiltInFunction.m in Sources */,
 				A6EC47CE21ED96F2000E1321 /* iTermLaunchExperienceController.m in Sources */,
+				A6F7F8072763F47B005E433E /* VT100ScreenState.m in Sources */,
 				A6AFD68924496EF1007D0660 /* iTermMultiServerMessageBuilder.m in Sources */,
 				A69D559C232A0CF3002E0F99 /* iTermSessionLauncher.m in Sources */,
 				A6E7352C20EC04B40034FCFD /* PTYTab.m in Sources */,

@@ -41,6 +41,7 @@
 #import "VT100DCSParser.h"
 #import "VT100Screen+Mutation.h"
 #import "VT100Token.h"
+#import "VT100ScreenState.h"
 
 #import <apr-1/apr_base64.h>
 
@@ -80,16 +81,8 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 
 
 @implementation VT100Screen {
-    BOOL audibleBell_;
-    BOOL showBellIndicator_;
-    BOOL flashBell_;
-    BOOL postUserNotifications_;
-    BOOL cursorBlinks_;
-
-    // When set, strings, newlines, and linefeeds are appended to printBuffer_. When ANSICSI_PRINT
-    // with code 4 is received, it's sent for printing.
-    BOOL collectInputForPrinting_;
-    NSMutableString *printBuffer_;
+    id<VT100ScreenState> _state;
+    VT100ScreenMutableState *_mutableState;
 
     // Used for recording instant replay.
     DVR* dvr_;
@@ -111,11 +104,6 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 }
 
 @synthesize terminal = terminal_;
-@synthesize audibleBell = audibleBell_;
-@synthesize showBellIndicator = showBellIndicator_;
-@synthesize flashBell = flashBell_;
-@synthesize postUserNotifications = postUserNotifications_;
-@synthesize cursorBlinks = cursorBlinks_;
 @synthesize allowTitleReporting = allowTitleReporting_;
 @synthesize maxScrollbackLines = maxScrollbackLines_;
 @synthesize unlimitedScrollback = unlimitedScrollback_;
@@ -126,6 +114,9 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 - (instancetype)initWithTerminal:(VT100Terminal *)terminal {
     self = [super init];
     if (self) {
+        _mutableState = [[VT100ScreenMutableState alloc] init];
+        _state = [_mutableState retain];
+
         assert(terminal);
         [self setTerminal:terminal];
         primaryGrid_ = [[VT100Grid alloc] initWithSize:VT100GridSizeMake(kDefaultScreenColumns,
@@ -170,7 +161,6 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     [primaryGrid_ release];
     [altGrid_ release];
     [tabStops_ release];
-    [printBuffer_ release];
     [linebuffer_ release];
     [dvr_ release];
     [terminal_ release];
@@ -188,6 +178,8 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     [_setWorkingDirectoryOrderEnforcer release];
     [_currentDirectoryDidChangeOrderEnforcer release];
     [_lastExternalAttribute release];
+    [_state release];
+    [_mutableState release];
 
     [super dealloc];
 }
@@ -249,18 +241,18 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 }
 
 - (void)activateBell {
-    if ([delegate_ screenShouldIgnoreBellWhichIsAudible:audibleBell_ visible:flashBell_]) {
+    if ([delegate_ screenShouldIgnoreBellWhichIsAudible:_state.audibleBell visible:_state.flashBell]) {
         return;
     }
     if (![self shouldQuellBell]) {
-        if (audibleBell_) {
+        if (_state.audibleBell) {
             DLog(@"Beep: ring audible bell");
             NSBeep();
         }
-        if (showBellIndicator_) {
+        if (_state.showBellIndicator) {
             [delegate_ screenShowBellIndicator];
         }
-        if (flashBell_) {
+        if (_state.flashBell) {
             [delegate_ screenFlashImage:kiTermIndicatorBell];
         }
     }
@@ -1382,8 +1374,8 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 #pragma mark - VT100TerminalDelegate
 
 - (void)terminalAppendString:(NSString *)string {
-    if (collectInputForPrinting_) {
-        [printBuffer_ appendString:string];
+    if (_state.collectInputForPrinting) {
+        [_mutableState.printBuffer appendString:string];
     } else {
         // else display string on screen
         [self appendStringAtCursor:string];
@@ -1393,7 +1385,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalAppendAsciiData:(AsciiData *)asciiData {
-    if (collectInputForPrinting_) {
+    if (_state.collectInputForPrinting) {
         NSString *string = [[[NSString alloc] initWithBytes:asciiData->buffer
                                                      length:asciiData->length
                                                    encoding:NSASCIIStringEncoding] autorelease];
@@ -1440,8 +1432,8 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
         return;
     }
 
-    if (collectInputForPrinting_) {
-        [printBuffer_ appendString:@"\n"];
+    if (_state.collectInputForPrinting) {
+        [_mutableState.printBuffer appendString:@"\n"];
     } else {
         [self linefeed];
     }
@@ -1613,7 +1605,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalPrintBuffer {
-    if ([delegate_ screenShouldBeginPrinting] && [printBuffer_ length] > 0) {
+    if ([delegate_ screenShouldBeginPrinting] && [_state.printBuffer length] > 0) {
         [self doPrint];
     }
 }
@@ -1621,22 +1613,16 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 - (void)terminalBeginRedirectingToPrintBuffer {
     if ([delegate_ screenShouldBeginPrinting]) {
         // allocate a string for the stuff to be printed
-        if (printBuffer_ != nil) {
-            [printBuffer_ release];
-        }
-        printBuffer_ = [[NSMutableString alloc] init];
-        collectInputForPrinting_ = YES;
+        _mutableState.printBuffer = [[NSMutableString alloc] init];
+        _mutableState.collectInputForPrinting = YES;
     }
 }
 
 - (void)terminalPrintScreen {
     if ([delegate_ screenShouldBeginPrinting]) {
         // Print out the whole screen
-        if (printBuffer_ != nil) {
-            [printBuffer_ release];
-            printBuffer_ = nil;
-        }
-        collectInputForPrinting_ = NO;
+        _mutableState.printBuffer = nil;
+        _mutableState.collectInputForPrinting = NO;
         [self doPrint];
     }
 }
@@ -1848,7 +1834,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (BOOL)terminalPostUserNotification:(NSString *)message {
-    if (postUserNotifications_ && [delegate_ screenShouldPostTerminalGeneratedAlert]) {
+    if (_state.postUserNotifications && [delegate_ screenShouldPostTerminalGeneratedAlert]) {
         DLog(@"Terminal posting user notification %@", message);
         [delegate_ screenIncrementBadge];
         NSString *description = [NSString stringWithFormat:@"Session %@ #%d: %@",
@@ -3180,14 +3166,13 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)doPrint {
-    if ([printBuffer_ length] > 0) {
-        [delegate_ screenPrintString:printBuffer_];
+    if ([_state.printBuffer length] > 0) {
+        [delegate_ screenPrintString:_state.printBuffer];
     } else {
         [delegate_ screenPrintVisibleArea];
     }
-    [printBuffer_ release];
-    printBuffer_ = nil;
-    collectInputForPrinting_ = NO;
+    _mutableState.printBuffer = nil;
+    _mutableState.collectInputForPrinting = NO;
 }
 
 - (void)saveFindContextAbsPos {
@@ -3613,6 +3598,56 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
 - (void)setMaxScrollbackLines:(unsigned int)lines {
     [self mutSetMaxScrollbackLines:lines];
+}
+
+#pragma mark - Accessors
+
+- (BOOL)audibleBell {
+    return _state.audibleBell;
+}
+
+- (void)setAudibleBell:(BOOL)audibleBell {
+    _mutableState.audibleBell = audibleBell;
+}
+
+- (BOOL)showBellIndicator {
+    return _state.showBellIndicator;
+}
+
+- (void)setShowBellIndicator:(BOOL)showBellIndicator {
+    _mutableState.showBellIndicator = showBellIndicator;
+}
+
+- (BOOL)flashBell {
+    return _state.flashBell;
+}
+
+- (void)setFlashBell:(BOOL)flashBell {
+    _mutableState.flashBell = flashBell;
+}
+
+- (BOOL)postUserNotifications {
+    return _state.postUserNotifications;
+}
+
+- (void)setPostUserNotifications:(BOOL)postUserNotifications {
+    _mutableState.postUserNotifications = postUserNotifications;
+}
+
+- (BOOL)cursorBlinks {
+    return _state.cursorBlinks;
+}
+
+- (void)setCursorBlinks:(BOOL)cursorBlinks {
+    _mutableState.cursorBlinks = cursorBlinks;
+}
+
+- (BOOL)collectInputForPrinting {
+    return _state.collectInputForPrinting;
+}
+
+- (void)setCollectInputForPrinting:(BOOL)collectInputForPrinting {
+    _mutableState.collectInputForPrinting = collectInputForPrinting;
 }
 
 @end
