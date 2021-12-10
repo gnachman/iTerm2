@@ -25,5 +25,8 @@
     return (VT100Grid *)primaryGrid_;
 }
 
+- (LineBuffer *)mutableLineBuffer {
+    return (LineBuffer *)linebuffer_;
+}
 
 @end

@@ -845,7 +845,7 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     // The linebuffer may have grown. Ensure it doesn't have too many lines.
     int linesDropped = 0;
     if (!unlimitedScrollback_) {
-        linesDropped = [linebuffer_ dropExcessLinesWithWidth:currentGrid_.size.width];
+        linesDropped = [self.mutableLineBuffer dropExcessLinesWithWidth:currentGrid_.size.width];
         [self incrementOverflowBy:linesDropped];
     }
     int lines __attribute__((unused)) = [linebuffer_ numLinesWithWidth:currentGrid_.size.width];
@@ -931,9 +931,9 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     if (![self shouldSetSizeTo:newSize]) {
         return;
     }
-    [linebuffer_ beginResizing];
+    [self.mutableLineBuffer beginResizing];
     [self reallySetSize:newSize];
-    [linebuffer_ endResizing];
+    [self.mutableLineBuffer endResizing];
 
     if (gDebugLogging) {
         DLog(@"Notes after resizing to width=%@", @(self.width));
@@ -1191,7 +1191,7 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 - (void)clearScrollbackBuffer {
     [linebuffer_ release];
     linebuffer_ = [[LineBuffer alloc] init];
-    [linebuffer_ setMaxLines:maxScrollbackLines_];
+    [self.mutableLineBuffer setMaxLines:maxScrollbackLines_];
     [delegate_ screenClearHighlights];
     [self.mutableCurrentGrid markAllCharsDirty:YES];
 
@@ -1355,7 +1355,7 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     }
 
     if (dwc) {
-        linebuffer_.mayHaveDoubleWidthCharacter = dwc;
+        self.mutableLineBuffer.mayHaveDoubleWidthCharacter = dwc;
     }
     [self appendScreenCharArrayAtCursor:buffer + bufferOffset
                                  length:len - bufferOffset
@@ -1414,7 +1414,7 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 
 - (void)setContentsFromLineBuffer:(LineBuffer *)lineBuffer {
     [self clearBuffer];
-    [linebuffer_ appendContentsOfLineBuffer:lineBuffer width:currentGrid_.size.width];
+    [self.mutableLineBuffer appendContentsOfLineBuffer:lineBuffer width:currentGrid_.size.width];
     const int numberOfLines = [self numberOfLines];
     [self.mutableCurrentGrid restoreScreenFromLineBuffer:linebuffer_
                                          withDefaultChar:[self.currentGrid defaultChar]
@@ -1507,7 +1507,7 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     [self clearBuffer];
     LineBuffer *temp = [[[LineBuffer alloc] init] autorelease];
     temp.mayHaveDoubleWidthCharacter = YES;
-    linebuffer_.mayHaveDoubleWidthCharacter = YES;
+    self.mutableLineBuffer.mayHaveDoubleWidthCharacter = YES;
     NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
     // TODO(externalAttributes): Add support for external attributes here. This is only used by tmux at the moment.
     iTermMetadata metadata;
@@ -1554,20 +1554,20 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
         if (line.length) {
             continuation = line.line[line.length - 1];
         }
-        [linebuffer_ appendLine:line.line
-                         length:line.length
-                        partial:(line.eol != EOL_HARD)
-                          width:currentGrid_.size.width
-                       metadata:iTermMetadataMakeImmutable(metadata)
-                   continuation:continuation];
+        [self.mutableLineBuffer appendLine:line.line
+                                    length:line.length
+                                   partial:(line.eol != EOL_HARD)
+                                     width:currentGrid_.size.width
+                                  metadata:iTermMetadataMakeImmutable(metadata)
+                              continuation:continuation];
     }
     if (!unlimitedScrollback_) {
-        [linebuffer_ dropExcessLinesWithWidth:currentGrid_.size.width];
+        [self.mutableLineBuffer dropExcessLinesWithWidth:currentGrid_.size.width];
     }
 
     // We don't know the cursor position yet but give the linebuffer something
     // so it doesn't get confused in restoreScreenFromScrollback.
-    [linebuffer_ setCursor:0];
+    [self.mutableLineBuffer setCursor:0];
     [self.mutableCurrentGrid restoreScreenFromLineBuffer:linebuffer_
                                          withDefaultChar:[currentGrid_ defaultChar]
                                        maxLinesToRestore:MIN([linebuffer_ numLinesWithWidth:currentGrid_.size.width],
@@ -1575,7 +1575,7 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 }
 
 - (void)setAltScreen:(NSArray *)lines {
-    linebuffer_.mayHaveDoubleWidthCharacter = YES;
+    self.mutableLineBuffer.mayHaveDoubleWidthCharacter = YES;
     if (!altGrid_) {
         altGrid_ = [self.mutablePrimaryGrid copy];
     }
@@ -2633,7 +2633,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
                                                              self.height - 1)
                                    toChar:self.currentGrid.defaultChar
                        externalAttributes:nil];
-    [linebuffer_ removeLastRawLine];
+    [self.mutableLineBuffer removeLastRawLine];
     const int postHocNumberOfLines = [linebuffer_ numberOfWrappedLinesWithWidth:self.width];
     const int numberOfLinesToPop = MAX(0, postHocNumberOfLines - preHocNumberOfLines);
 
@@ -2864,8 +2864,8 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     if (scrollbackLines < line) {
         return;
     }
-    [linebuffer_ removeLastWrappedLines:scrollbackLines - line
-                                  width:width];
+    [self.mutableLineBuffer removeLastWrappedLines:scrollbackLines - line
+                                             width:width];
 }
 
 - (VT100ScreenMark *)lastMark {
@@ -3542,7 +3542,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     if (currentGrid_.cursor.y > 0) {
         [self.mutableCurrentGrid setContinuationMarkOnLine:currentGrid_.cursor.y - 1 to:EOL_HARD];
     } else {
-        [linebuffer_ setPartial:NO];
+        [self.mutableLineBuffer setPartial:NO];
     }
 }
 
@@ -6078,9 +6078,9 @@ static void SwapInt(int *a, int *b) {
 // sets scrollback lines.
 - (void)setMaxScrollbackLines:(unsigned int)lines {
     maxScrollbackLines_ = lines;
-    [linebuffer_ setMaxLines: lines];
+    [self.mutableLineBuffer setMaxLines: lines];
     if (!unlimitedScrollback_) {
-        [self incrementOverflowBy:[linebuffer_ dropExcessLinesWithWidth:currentGrid_.size.width]];
+        [self incrementOverflowBy:[self.mutableLineBuffer dropExcessLinesWithWidth:currentGrid_.size.width]];
     }
     [delegate_ screenDidChangeNumberOfScrollbackLines];
 }
@@ -6150,11 +6150,11 @@ static void SwapInt(int *a, int *b) {
     for (i = 0; i < linesPushed; ++i) {
         int cont;
         BOOL isOk __attribute__((unused)) =
-            [linebuffer_ popAndCopyLastLineInto:dummy
-                                          width:currentGrid_.size.width
-                              includesEndOfLine:&cont
-                                       metadata:NULL
-                                   continuation:NULL];
+        [self.mutableLineBuffer popAndCopyLastLineInto:dummy
+                                                 width:currentGrid_.size.width
+                                     includesEndOfLine:&cont
+                                              metadata:NULL
+                                          continuation:NULL];
         ITAssertWithMessage(isOk, @"Pop shouldn't fail");
     }
     free(dummy);
@@ -6915,7 +6915,7 @@ static void SwapInt(int *a, int *b) {
 @implementation VT100Screen (Testing)
 
 - (void)setMayHaveDoubleWidthCharacters:(BOOL)value {
-    linebuffer_.mayHaveDoubleWidthCharacter = value;
+    self.mutableLineBuffer.mayHaveDoubleWidthCharacter = value;
 }
 
 @end

@@ -45,54 +45,11 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)lineBufferDidDropLines:(LineBuffer * _Nonnull)lineBuffer;
 @end
 
-// A LineBuffer represents an ordered collection of strings of screen_char_t. Each string forms a
-// logical line of text plus color information. Logic is provided for the following major functions:
-//   - If the lines are wrapped onto a screen of some width, find the Nth wrapped line
-//   - Append a line
-//   - If the lines are wrapped onto a screen of some width, remove the last wrapped line
-//   - Store and retrieve a cursor position
-//   - Store an unlimited or a fixed number of wrapped lines
-// The implementation uses an array of small blocks that hold a few kb of unwrapped lines. Each
-// block caches some information to speed up repeated lookups with the same screen width.
-@interface LineBuffer : NSObject <NSCopying>
-
-@property(nonatomic, assign) BOOL mayHaveDoubleWidthCharacter;
-
+@protocol LineBufferReading<NSObject, NSCopying>
+@property(nonatomic, readonly) BOOL mayHaveDoubleWidthCharacter;
 // Absolute block number of last block.
 @property(nonatomic, readonly) int largestAbsoluteBlockNumber;
 @property(nonatomic, weak, nullable) id<iTermLineBufferDelegate> delegate;
-
-- (LineBuffer * _Nonnull)initWithBlockSize:(int)bs;
-- (LineBuffer * _Nullable)initWithDictionary:(NSDictionary * _Nonnull)dictionary;
-
-// Call this immediately after init. Otherwise the buffer will hold unlimited lines (until you
-// run out of memory).
-- (void)setMaxLines:(int)maxLines;
-
-// Add a line to the buffer. Set partial to true if there's more coming for this line:
-// that is to say, this buffer contains only a prefix or infix of the entire line.
-//
-// NOTE: call dropExcessLinesWithWidth after this if you want to limit the buffer to max_lines.
-- (void)appendLine:(const screen_char_t * _Nonnull)buffer
-            length:(int)length
-           partial:(BOOL)partial
-             width:(int)width
-          metadata:(iTermImmutableMetadata)metadata
-      continuation:(screen_char_t)continuation;
-
-- (void)appendScreenCharArray:(ScreenCharArray *)sca
-                        width:(int)width;
-
-- (void)appendContentsOfLineBuffer:(LineBuffer * _Nonnull)other width:(int)width;
-
-// If more lines are in the buffer than max_lines, call this function. It will adjust the count
-// of excess lines and try to free the first block(s) if they are unused. Because this could happen
-// after any call to appendLines, you should always call this after appendLines.
-//
-// Returns the number of lines in the buffer that overflowed max_lines.
-//
-// NOTE: This invalidates the cursor position.
-- (int)dropExcessLinesWithWidth:(int)width;
 
 // Returns the metadata associated with a line when wrapped to the specified width.
 - (iTermImmutableMetadata)metadataForLineNumber:(int)lineNum width:(int)width;
@@ -137,33 +94,8 @@ NS_ASSUME_NONNULL_BEGIN
                                                          width:(int)width
                                                          count:(int)count;
 
-// Copy up to width chars from the last line into *ptr. The last line will be removed or
-// truncated from the buffer. Sets *includesEndOfLine to true if this line should have a
-// continuation marker.
-- (BOOL)popAndCopyLastLineInto:(screen_char_t * _Nonnull)ptr
-                         width:(int)width
-             includesEndOfLine:(int *_Nonnull)includesEndOfLine
-                      metadata:(out iTermImmutableMetadata * _Nullable)metadataPtr
-                  continuation:(screen_char_t * _Nullable)continuationPtr;
-
-// Note that the resulting line may be *smaller* than width. Use -paddedToLength:eligibleForDWC:
-// if you need to go all Procrustes on it.
-- (ScreenCharArray * _Nullable)popLastLineWithWidth:(int)width;
-
-// Removes the last wrapped lines.
-- (void)removeLastWrappedLines:(int)numberOfLinesToRemove
-                         width:(int)width;
-
-// Remove the last raw (unwrapped) line.
-- (void)removeLastRawLine;
-
 // Get the number of buffer lines at a given width.
 - (int)numLinesWithWidth:(int)width;
-
-// Save the cursor position. Call this just before appending the line the cursor is in.
-// x gives the offset from the start of the next line appended. The cursor position is
-// invalidated if dropExcessLinesWithWidth is called.
-- (void)setCursor:(int)x;
 
 // If the last wrapped line has the cursor, return true and set *x to its horizontal position.
 // 0 <= *x <= width (if *x == width then the cursor is actually on the next line).
@@ -224,19 +156,11 @@ NS_ASSUME_NONNULL_BEGIN
 //- (NSDictionary *)dictionary;
 - (void)encode:(id<iTermEncoderAdapter> _Nonnull)encoder maxLines:(NSInteger)maxLines;
 
-// Append text in reverse video to the end of the line buffer.
-- (void)appendMessage:(NSString * _Nonnull)message;
-
 // Make a copy of the last |minLines| at width |width|. May copy more than |minLines| for speed.
 // Makes a copy-on-write instance so this is fairly cheap to do.
 - (LineBuffer * _Nonnull)copyWithMinimumLines:(int)minLines atWidth:(int)width;
 
 - (int)numberOfWrappedLinesWithWidth:(int)width;
-
-- (void)beginResizing;
-- (void)endResizing;
-
-- (void)setPartial:(BOOL)partial;
 
 - (LineBuffer *)copy;
 
@@ -245,6 +169,87 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (ScreenCharArray * _Nullable)unwrappedLineAtIndex:(int)i;
 - (unsigned int)numberOfUnwrappedLines;
+
+
+@end
+
+// A LineBuffer represents an ordered collection of strings of screen_char_t. Each string forms a
+// logical line of text plus color information. Logic is provided for the following major functions:
+//   - If the lines are wrapped onto a screen of some width, find the Nth wrapped line
+//   - Append a line
+//   - If the lines are wrapped onto a screen of some width, remove the last wrapped line
+//   - Store and retrieve a cursor position
+//   - Store an unlimited or a fixed number of wrapped lines
+// The implementation uses an array of small blocks that hold a few kb of unwrapped lines. Each
+// block caches some information to speed up repeated lookups with the same screen width.
+@interface LineBuffer : NSObject <LineBufferReading>
+
+@property(nonatomic, readwrite) BOOL mayHaveDoubleWidthCharacter;
+
+- (LineBuffer * _Nonnull)initWithBlockSize:(int)bs;
+- (LineBuffer * _Nullable)initWithDictionary:(NSDictionary * _Nonnull)dictionary;
+
+// Call this immediately after init. Otherwise the buffer will hold unlimited lines (until you
+// run out of memory).
+- (void)setMaxLines:(int)maxLines;
+
+// Add a line to the buffer. Set partial to true if there's more coming for this line:
+// that is to say, this buffer contains only a prefix or infix of the entire line.
+//
+// NOTE: call dropExcessLinesWithWidth after this if you want to limit the buffer to max_lines.
+- (void)appendLine:(const screen_char_t * _Nonnull)buffer
+            length:(int)length
+           partial:(BOOL)partial
+             width:(int)width
+          metadata:(iTermImmutableMetadata)metadata
+      continuation:(screen_char_t)continuation;
+
+- (void)appendScreenCharArray:(ScreenCharArray *)sca
+                        width:(int)width;
+
+- (void)appendContentsOfLineBuffer:(LineBuffer * _Nonnull)other width:(int)width;
+
+// If more lines are in the buffer than max_lines, call this function. It will adjust the count
+// of excess lines and try to free the first block(s) if they are unused. Because this could happen
+// after any call to appendLines, you should always call this after appendLines.
+//
+// Returns the number of lines in the buffer that overflowed max_lines.
+//
+// NOTE: This invalidates the cursor position.
+- (int)dropExcessLinesWithWidth:(int)width;
+
+// Copy up to width chars from the last line into *ptr. The last line will be removed or
+// truncated from the buffer. Sets *includesEndOfLine to true if this line should have a
+// continuation marker.
+- (BOOL)popAndCopyLastLineInto:(screen_char_t * _Nonnull)ptr
+                         width:(int)width
+             includesEndOfLine:(int *_Nonnull)includesEndOfLine
+                      metadata:(out iTermImmutableMetadata * _Nullable)metadataPtr
+                  continuation:(screen_char_t * _Nullable)continuationPtr;
+
+// Note that the resulting line may be *smaller* than width. Use -paddedToLength:eligibleForDWC:
+// if you need to go all Procrustes on it.
+- (ScreenCharArray * _Nullable)popLastLineWithWidth:(int)width;
+
+// Removes the last wrapped lines.
+- (void)removeLastWrappedLines:(int)numberOfLinesToRemove
+                         width:(int)width;
+
+// Remove the last raw (unwrapped) line.
+- (void)removeLastRawLine;
+
+// Save the cursor position. Call this just before appending the line the cursor is in.
+// x gives the offset from the start of the next line appended. The cursor position is
+// invalidated if dropExcessLinesWithWidth is called.
+- (void)setCursor:(int)x;
+
+// Append text in reverse video to the end of the line buffer.
+- (void)appendMessage:(NSString * _Nonnull)message;
+
+- (void)beginResizing;
+- (void)endResizing;
+
+- (void)setPartial:(BOOL)partial;
 
 @end
 

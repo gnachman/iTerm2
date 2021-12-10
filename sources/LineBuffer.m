@@ -83,6 +83,9 @@ static const NSInteger kUnicodeVersion = 9;
     long long droppedChars;
 }
 
+@synthesize mayHaveDoubleWidthCharacter = _mayHaveDoubleWidthCharacter;
+@synthesize delegate = _delegate;
+
 // Append a block
 - (LineBlock *)_addBlockOfSize:(int)size {
     LineBlock* block = [[LineBlock alloc] initWithRawBufferSize: size];

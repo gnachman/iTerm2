@@ -14,6 +14,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) VT100Grid *mutablePrimaryGrid;
 @property (nonatomic, readonly) VT100Grid *mutableAltGrid;
 @property (nonatomic, readonly) VT100Grid *mutableCurrentGrid;
+@property (nonatomic, readonly) LineBuffer *mutableLineBuffer;
 
 @end
 

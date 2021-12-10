@@ -705,4 +705,15 @@ static const NSInteger kUnicodeVersion = 9;
     return nil;
 }
 
+- (id)fetchLine:(int)line block:(id (^ NS_NOESCAPE)(ScreenCharArray *))block {
+    ScreenCharArray *sca = [self screenCharArrayForLine:line];
+    return block(sca);
+}
+
+
+- (ScreenCharArray *)screenCharArrayAtScreenIndex:(int)index {
+    return [self screenCharArrayForLine:index];
+}
+
+
 @end

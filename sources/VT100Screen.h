@@ -44,7 +44,7 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 @private
     // This is here because the unit test needs to manipulate it.
     // Scrollback buffer
-    LineBuffer* linebuffer_;
+    id<LineBufferReading> linebuffer_;
 }
 
 @property(nonatomic, retain) VT100Terminal *terminal;
