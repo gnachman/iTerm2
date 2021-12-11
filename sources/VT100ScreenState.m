@@ -23,4 +23,32 @@
     return self;
 }
 
+- (instancetype)initWithState:(VT100ScreenMutableState *)source {
+    self = [super init];
+    if (self) {
+        _audibleBell = source.audibleBell;
+        _showBellIndicator = source.showBellIndicator;
+        _flashBell = source.flashBell;
+        _postUserNotifications = source.postUserNotifications;
+        _cursorBlinks = source.cursorBlinks;
+        _collectInputForPrinting = source.collectInputForPrinting;
+        _printBuffer = [source.printBuffer copy];
+        _allowTitleReporting = source.allowTitleReporting;
+        _lastBell = source.lastBell;
+
+        _animatedLines = [_animatedLines copy];
+        _pasteboardString = [_pasteboardString copy];
+        _intervalTree = [_intervalTree copy];
+    }
+    return self;
+}
+
+- (id)copyWithZone:(NSZone *)zone {
+    return [[VT100ScreenMutableState alloc] initWithState:self];
+}
+
+- (id<VT100ScreenState>)copy {
+    return [self copyWithZone:nil];
+}
+
 @end

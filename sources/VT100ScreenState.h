@@ -49,7 +49,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @end
 
-@interface VT100ScreenMutableState: NSObject<VT100ScreenState>
+@interface VT100ScreenMutableState: NSObject<VT100ScreenState, NSCopying>
 
 @property (nonatomic, readwrite) BOOL audibleBell;
 @property (nonatomic, readwrite) BOOL showBellIndicator;
@@ -66,6 +66,8 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, strong, readwrite) iTermOrderEnforcer *setWorkingDirectoryOrderEnforcer;
 @property (nonatomic, strong, readwrite) iTermOrderEnforcer *currentDirectoryDidChangeOrderEnforcer;
 @property (nonatomic, strong, readwrite) IntervalTree *intervalTree;
+
+- (id<VT100ScreenState>)copy;
 
 @end
 
