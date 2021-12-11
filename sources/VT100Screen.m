@@ -85,12 +85,10 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     VT100ScreenMutableState *_mutableState;
 
     // Used for recording instant replay.
+    // This is an inherently shared mutable data structure. I don't think it can be easily moved into
+    // the VT100ScreenState model. Instad it will need lots of mutexes :(
     DVR* dvr_;
 
-    // OK to report window title?
-    BOOL allowTitleReporting_;
-
-    VT100InlineImageHelper *_inlineImageHelper;
     NSTimeInterval lastBell_;
     // Line numbers containing animated GIFs that need to be redrawn for the next frame.
     NSMutableIndexSet *_animatedLines;
@@ -104,7 +102,6 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 }
 
 @synthesize terminal = terminal_;
-@synthesize allowTitleReporting = allowTitleReporting_;
 @synthesize maxScrollbackLines = maxScrollbackLines_;
 @synthesize unlimitedScrollback = unlimitedScrollback_;
 @synthesize saveToScrollbackInAlternateScreen = saveToScrollbackInAlternateScreen_;
@@ -168,7 +165,6 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     [savedIntervalTree_ release];
     [intervalTree_ release];
     [markCache_ release];
-    [_inlineImageHelper release];
     [_lastCommandMark release];
     _temporaryDoubleBuffer.delegate = nil;
     [_temporaryDoubleBuffer reset];
@@ -1613,7 +1609,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 - (void)terminalBeginRedirectingToPrintBuffer {
     if ([delegate_ screenShouldBeginPrinting]) {
         // allocate a string for the stuff to be printed
-        _mutableState.printBuffer = [[NSMutableString alloc] init];
+        _mutableState.printBuffer = [[[NSMutableString alloc] init] autorelease];
         _mutableState.collectInputForPrinting = YES;
     }
 }
@@ -1806,7 +1802,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (NSString *)terminalIconTitle {
-    if (allowTitleReporting_ && [self terminalIsTrusted]) {
+    if (_state.allowTitleReporting && [self terminalIsTrusted]) {
         return [delegate_ screenIconTitle];
     } else {
         return @"";
@@ -1814,7 +1810,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (NSString *)terminalWindowTitle {
-    if (allowTitleReporting_ && [self terminalIsTrusted]) {
+    if (_state.allowTitleReporting && [self terminalIsTrusted]) {
         return [delegate_ screenWindowTitle] ? [delegate_ screenWindowTitle] : @"";
     } else {
         return @"";
@@ -2152,17 +2148,16 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     if (![self preconfirmDownloadOfSize:size name:name displayInline:YES promptIfBig:&promptIfBig]) {
         return NO;
     }
-    [_inlineImageHelper release];
-    _inlineImageHelper = [[VT100InlineImageHelper alloc] initWithName:name
-                                                                width:width
-                                                           widthUnits:widthUnits
-                                                               height:height
-                                                          heightUnits:heightUnits
-                                                          scaleFactor:[delegate_ screenBackingScaleFactor]
-                                                  preserveAspectRatio:preserveAspectRatio
-                                                                inset:inset
-                                                         preconfirmed:!promptIfBig];
-    _inlineImageHelper.delegate = self;
+    _mutableState.inlineImageHelper = [[[VT100InlineImageHelper alloc] initWithName:name
+                                                                              width:width
+                                                                         widthUnits:widthUnits
+                                                                             height:height
+                                                                        heightUnits:heightUnits
+                                                                        scaleFactor:[delegate_ screenBackingScaleFactor]
+                                                                preserveAspectRatio:preserveAspectRatio
+                                                                              inset:inset
+                                                                       preconfirmed:!promptIfBig] autorelease];
+    _mutableState.inlineImageHelper.delegate = self;
     return YES;
 }
 
@@ -2213,10 +2208,9 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalDidFinishReceivingFile {
-    if (_inlineImageHelper) {
-        [_inlineImageHelper writeToGrid:currentGrid_];
-        [_inlineImageHelper release];
-        _inlineImageHelper = nil;
+    if (_mutableState.inlineImageHelper) {
+        [_mutableState.inlineImageHelper writeToGrid:currentGrid_];
+        _mutableState.inlineImageHelper = nil;
         // TODO: Handle objects other than images.
         [delegate_ screenDidFinishReceivingInlineFile];
     } else {
@@ -2240,16 +2234,15 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalDidReceiveBase64FileData:(NSString *)data {
-    if (_inlineImageHelper) {
-        [_inlineImageHelper appendBase64EncodedData:data];
+    if (_mutableState.inlineImageHelper) {
+        [_mutableState.inlineImageHelper appendBase64EncodedData:data];
     } else {
         [delegate_ screenDidReceiveBase64FileData:data];
     }
 }
 
 - (void)terminalFileReceiptEndedUnexpectedly {
-    [_inlineImageHelper release];
-    _inlineImageHelper = nil;
+    _mutableState.inlineImageHelper = nil;
     [delegate_ screenFileReceiptEndedUnexpectedly];
 }
 
@@ -3650,5 +3643,12 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     _mutableState.collectInputForPrinting = collectInputForPrinting;
 }
 
+- (BOOL)allowTitleReporting {
+    return _state.allowTitleReporting;
+}
+
+- (void)setAllowTitleReporting:(BOOL)allowTitleReporting {
+    _mutableState.allowTitleReporting = allowTitleReporting;
+}
 @end
 

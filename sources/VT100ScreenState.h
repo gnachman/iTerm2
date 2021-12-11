@@ -4,13 +4,14 @@
 //
 //  Created by George Nachman on 12/10/21.
 //
+// All state from VT100Screen should eventually migrate here to facilitate a division between
+// mutable and immutable code paths.
 
 #import <Foundation/Foundation.h>
 
 NS_ASSUME_NONNULL_BEGIN
 
-// All state from VT100Screen should eventually migrate here to facilitate a division between
-// mutable and immutable code paths.
+@class VT100InlineImageHelper;
 
 @protocol VT100ScreenState<NSObject>
 
@@ -26,6 +27,9 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property (nullable, nonatomic, strong, readonly) NSString *printBuffer;
 
+// OK to report window title?
+@property (nonatomic, readonly) BOOL allowTitleReporting;
+
 @end
 
 @interface VT100ScreenMutableState: NSObject<VT100ScreenState>
@@ -37,6 +41,8 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readwrite) BOOL cursorBlinks;
 @property (nonatomic, readwrite) BOOL collectInputForPrinting;
 @property (nullable, nonatomic, strong, readwrite) NSMutableString *printBuffer;
+@property (nonatomic, readwrite) BOOL allowTitleReporting;
+@property (nullable, nonatomic, strong) VT100InlineImageHelper *inlineImageHelper;
 
 @end
 
