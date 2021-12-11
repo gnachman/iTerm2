@@ -7,6 +7,7 @@
 
 #import "VT100ScreenState.h"
 
+#import "IntervalTree.h"
 #import "iTermOrderEnforcer.h"
 
 @implementation VT100ScreenMutableState
@@ -17,6 +18,7 @@
         _animatedLines = [NSMutableIndexSet indexSet];
         _setWorkingDirectoryOrderEnforcer = [[iTermOrderEnforcer alloc] init];
         _currentDirectoryDidChangeOrderEnforcer = [[iTermOrderEnforcer alloc] init];
+        _intervalTree = [[IntervalTree alloc] init];
     }
     return self;
 }

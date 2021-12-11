@@ -59,7 +59,7 @@
 
     if (gDebugLogging) {
         DLog(@"Notes after resizing to width=%@", @(self.width));
-        for (PTYNoteViewController *note in intervalTree_.allObjects) {
+        for (PTYNoteViewController *note in _mutableState.intervalTree.allObjects) {
             if (![note isKindOfClass:[PTYNoteViewController class]]) {
                 continue;
             }
@@ -314,13 +314,13 @@
                                                                                historyLines)];
     IntervalTree *temp = [[IntervalTree alloc] init];
     DLog(@"swapNotes: moving onscreen notes into savedNotes");
-    [self moveNotesOnScreenFrom:intervalTree_
+    [self moveNotesOnScreenFrom:_mutableState.intervalTree
                              to:temp
                          offset:-origin.location
                    screenOrigin:[self numberOfScrollbackLines]];
     DLog(@"swapNotes: moving onscreen savedNotes into notes");
     [self moveNotesOnScreenFrom:savedIntervalTree_
-                             to:intervalTree_
+                             to:_mutableState.intervalTree
                          offset:origin.location
                    screenOrigin:0];
     [savedIntervalTree_ release];
@@ -371,7 +371,7 @@
         withUsedHeight:usedHeight
              newHeight:newSize.height];
 
-    if ([intervalTree_ count]) {
+    if ([_mutableState.intervalTree count]) {
         *altScreenNotesPtr = [self intervalTreeObjectsWithUsedHeight:usedHeight
                                                            newHeight:newSize.height
                                                                 grid:altGrid_
@@ -388,15 +388,14 @@
 
 - (void)fixUpPrimaryGridIntervalTreeForNewSize:(VT100GridSize)newSize
                            wasShowingAltScreen:(BOOL)wasShowingAltScreen {
-    if ([intervalTree_ count]) {
+    if ([_mutableState.intervalTree count]) {
         // Fix up the intervals for the primary grid.
         if (wasShowingAltScreen) {
             // Temporarily swap in primary grid so convertRange: will do the right thing.
             currentGrid_ = primaryGrid_;
         }
 
-        [intervalTree_ autorelease];
-        intervalTree_ = [[self replacementIntervalTreeForNewWidth:newSize.width] retain];
+        _mutableState.intervalTree = [self replacementIntervalTreeForNewWidth:newSize.width];
 
         if (wasShowingAltScreen) {
             // Return to alt grid.
@@ -407,7 +406,7 @@
 
 - (void)sanityCheckIntervalsFrom:(VT100GridSize)oldSize note:(NSString *)note {
 #if BETA
-    for (id<IntervalTreeObject> obj in [intervalTree_ allObjects]) {
+    for (id<IntervalTreeObject> obj in [_mutableState.intervalTree allObjects]) {
         IntervalTreeEntry *entry = obj.entry;
         Interval *interval = entry.interval;
         ITBetaAssert(interval.limit >= 0, @"Bogus interval %@ after resizing from %@ to %@. Note: %@",
@@ -551,7 +550,7 @@
                             0,
                             [self numberOfScrollbackLines] + self.height);
     NSArray *notesAtLeastPartiallyOnScreen =
-    [intervalTree_ objectsInInterval:[self intervalForGridCoordRange:screenCoordRange]];
+    [_mutableState.intervalTree objectsInInterval:[self intervalForGridCoordRange:screenCoordRange]];
 
     LineBuffer *appendOnlyLineBuffer = [[realLineBuffer copy] autorelease];
     [self appendScreen:grid
@@ -564,7 +563,7 @@
     for (id<IntervalTreeObject> note in notesAtLeastPartiallyOnScreen) {
         VT100GridCoordRange range = [self coordRangeForInterval:note.entry.interval];
         [[note retain] autorelease];
-        [intervalTree_ removeObject:note];
+        [_mutableState.intervalTree removeObject:note];
         LineBufferPositionRange *positionRange =
         [self positionRangeForCoordRange:range inLineBuffer:appendOnlyLineBuffer tolerateEmpty:[self intervalTreeObjectMayBeEmpty:note]];
         if (positionRange) {
@@ -617,12 +616,12 @@
 - (IntervalTree *)replacementIntervalTreeForNewWidth:(int)newWidth {
     // Convert ranges of notes to their new coordinates and replace the interval tree.
     IntervalTree *replacementTree = [[[IntervalTree alloc] init] autorelease];
-    for (id<IntervalTreeObject> note in [intervalTree_ allObjects]) {
+    for (id<IntervalTreeObject> note in [_mutableState.intervalTree allObjects]) {
         VT100GridCoordRange noteRange = [self coordRangeForInterval:note.entry.interval];
         VT100GridCoordRange newRange;
         if (noteRange.end.x < 0 && noteRange.start.y == 0 && noteRange.end.y < 0) {
             // note has scrolled off top
-            [intervalTree_ removeObject:note];
+            [_mutableState.intervalTree removeObject:note];
         } else {
             if ([self convertRange:noteRange
                            toWidth:newWidth
@@ -635,7 +634,7 @@
                                                                   width:newWidth
                                                             linesOffset:[self totalScrollbackOverflow]];
                 [[note retain] autorelease];
-                [intervalTree_ removeObject:note];
+                [_mutableState.intervalTree removeObject:note];
                 [replacementTree addObject:note withInterval:newInterval];
             }
         }
@@ -710,7 +709,7 @@
             Interval *interval = [self intervalForGridCoordRange:newRange
                                                            width:newSize.width
                                                      linesOffset:[self totalScrollbackOverflow]];
-            [intervalTree_ addObject:note withInterval:interval];
+            [_mutableState.intervalTree addObject:note withInterval:interval];
         } else {
             DLog(@"  *FAILED TO CONVERT*");
         }
@@ -1084,7 +1083,7 @@ static void SwapInt(int *a, int *b) {
 - (void)reloadMarkCache {
     long long totalScrollbackOverflow = [self totalScrollbackOverflow];
     [markCache_ removeAllObjects];
-    for (id<IntervalTreeObject> obj in [intervalTree_ allObjects]) {
+    for (id<IntervalTreeObject> obj in [_mutableState.intervalTree allObjects]) {
         if ([obj isKindOfClass:[VT100ScreenMark class]]) {
             VT100GridCoordRange range = [self coordRangeForInterval:obj.entry.interval];
             VT100ScreenMark *mark = (VT100ScreenMark *)obj;
@@ -1096,7 +1095,7 @@ static void SwapInt(int *a, int *b) {
 
 - (void)mutAddNote:(PTYNoteViewController *)note
            inRange:(VT100GridCoordRange)range {
-    [intervalTree_ addObject:note withInterval:[self intervalForGridCoordRange:range]];
+    [_mutableState.intervalTree addObject:note withInterval:[self intervalForGridCoordRange:range]];
     [self.mutableCurrentGrid markAllCharsDirty:YES];
     note.delegate = self;
     [delegate_ screenDidAddNote:note];
@@ -1110,7 +1109,7 @@ static void SwapInt(int *a, int *b) {
         DLog(@"Removing last command mark %@", screenMark);
         [self.intervalTreeObserver intervalTreeDidRemoveObjectOfType:[self intervalTreeObserverTypeForObject:screenMark]
                                                               onLine:[self coordRangeForInterval:screenMark.entry.interval].start.y + self.totalScrollbackOverflow];
-        [intervalTree_ removeObject:screenMark];
+        [_mutableState.intervalTree removeObject:screenMark];
     }
 
     commandStartX_ = commandStartY_ = -1;
@@ -1125,7 +1124,7 @@ static void SwapInt(int *a, int *b) {
         [markCache_ removeObjectForKey:@(theKey)];
         self.lastCommandMark = nil;
     }
-    [intervalTree_ removeObject:obj];
+    [_mutableState.intervalTree removeObject:obj];
     iTermIntervalTreeObjectType type = [self intervalTreeObserverTypeForObject:obj];
     if (type != iTermIntervalTreeObjectTypeUnknown) {
         VT100GridCoordRange range = [self coordRangeForInterval:obj.entry.interval];
@@ -1245,8 +1244,7 @@ static void SwapInt(int *a, int *b) {
     [self resetScrollbackOverflow];
     [delegate_ screenRemoveSelection];
     [self.mutableCurrentGrid markAllCharsDirty:YES];
-    [intervalTree_ release];
-    intervalTree_ = [[IntervalTree alloc] init];
+    _mutableState.intervalTree = [[IntervalTree alloc] init];
     [self reloadMarkCache];
     self.lastCommandMark = nil;
     [delegate_ screenDidClearScrollbackBuffer:self];
@@ -1325,7 +1323,7 @@ static void SwapInt(int *a, int *b) {
 
     Interval *intervalToClear = [self intervalForGridCoordRange:coordRange];
     NSMutableArray<id<IntervalTreeObject>> *marksToMove = [NSMutableArray array];
-    for (id<IntervalTreeObject> obj in [intervalTree_ objectsInInterval:intervalToClear]) {
+    for (id<IntervalTreeObject> obj in [_mutableState.intervalTree objectsInInterval:intervalToClear]) {
         const VT100GridCoordRange markRange = [self coordRangeForInterval:obj.entry.interval];
         if (VT100GridCoordRangeContainsCoord(cursorLineRange.coordRange, markRange.start)) {
             [marksToMove addObject:obj];
@@ -1336,7 +1334,7 @@ static void SwapInt(int *a, int *b) {
 
     if (absCursorCoord.y >= absLine) {
         Interval *cursorLineInterval = [self intervalForGridCoordRange:cursorLineRange.coordRange];
-        for (id<IntervalTreeObject> obj in [intervalTree_ objectsInInterval:cursorLineInterval]) {
+        for (id<IntervalTreeObject> obj in [_mutableState.intervalTree objectsInInterval:cursorLineInterval]) {
             if ([marksToMove containsObject:obj]) {
                 continue;
             }
@@ -1362,7 +1360,7 @@ static void SwapInt(int *a, int *b) {
 
                 // Remove and re-add the object with the new interval.
                 [self mutRemoveObjectFromIntervalTree:obj];
-                [intervalTree_ addObject:obj withInterval:interval];
+                [_mutableState.intervalTree addObject:obj withInterval:interval];
                 [self.intervalTreeObserver intervalTreeDidAddObjectOfType:[self intervalTreeObserverTypeForObject:obj]
                                                                    onLine:range.start.y + totalScrollbackOverflow];
             }];
@@ -2013,9 +2011,8 @@ static void SwapInt(int *a, int *b) {
             VT100GridSize savedSize = [VT100Grid sizeInStateDictionary:screenState[kScreenStatePrimaryGridStateKey]];
             [self mutSetSize:savedSize];
         }
-        [intervalTree_ release];
-        intervalTree_ = [[IntervalTree alloc] initWithDictionary:screenState[kScreenStateIntervalTreeKey]];
-        [self fixUpDeserializedIntervalTree:intervalTree_
+        _mutableState.intervalTree = [[IntervalTree alloc] initWithDictionary:screenState[kScreenStateIntervalTreeKey]];
+        [self fixUpDeserializedIntervalTree:_mutableState.intervalTree
                               knownTriggers:triggers
                                     visible:YES
                       guidOfLastCommandMark:guidOfLastCommandMark];
@@ -2032,7 +2029,7 @@ static void SwapInt(int *a, int *b) {
 
         if (gDebugLogging) {
             DLog(@"Notes after restoring with width=%@", @(self.width));
-            for (PTYNoteViewController *note in intervalTree_.allObjects) {
+            for (PTYNoteViewController *note in _mutableState.intervalTree.allObjects) {
                 if (![note isKindOfClass:[PTYNoteViewController class]]) {
                     continue;
                 }

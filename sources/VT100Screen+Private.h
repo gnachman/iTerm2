@@ -9,6 +9,7 @@
 #import "iTermTemporaryDoubleBufferedGridController.h"
 #import "LineBuffer.h"
 #import "VT100ScreenMark.h"
+#import "VT100ScreenState.h"
 #import "VT100Terminal.h"
 
 extern NSString *const kScreenStateKey;
@@ -42,10 +43,8 @@ VT100InlineImageHelperDelegate> {
     id<VT100GridReading> currentGrid_;  // Weak reference. Points to either primaryGrid or altGrid.
     id<VT100GridReading> realCurrentGrid_;  // When a saved grid is swapped in, this is the live current grid.
 
-    // All currently visible marks and notes. Maps an interval of
-    //   (startx + absstarty * (width+1)) to (endx + absendy * (width+1))
-    // to an id<IntervalTreeObject>, which is either PTYNoteViewController or VT100ScreenMark.
-    IntervalTree *intervalTree_;
+    id<VT100ScreenState> _state;
+    VT100ScreenMutableState *_mutableState;
 
     // Holds notes on alt/primary grid (the one we're not in). The origin is the top-left of the
     // grid.

@@ -81,8 +81,6 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 
 
 @implementation VT100Screen {
-    id<VT100ScreenState> _state;
-    VT100ScreenMutableState *_mutableState;
 
     // Used for recording instant replay.
     // This is an inherently shared mutable data structure. I don't think it can be easily moved into
@@ -128,7 +126,6 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 
         findContext_ = [[FindContext alloc] init];
         savedIntervalTree_ = [[IntervalTree alloc] init];
-        intervalTree_ = [[IntervalTree alloc] init];
         markCache_ = [[NSMutableDictionary alloc] init];
         commandStartX_ = commandStartY_ = -1;
 
@@ -149,7 +146,6 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     [terminal_ release];
     [findContext_ release];
     [savedIntervalTree_ release];
-    [intervalTree_ release];
     [markCache_ release];
     [_lastCommandMark release];
     _temporaryDoubleBuffer.delegate = nil;
@@ -748,17 +744,17 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
             //
             // Intervals aren't removed while part of them is on screen, so this works fine.
             VT100GridCoordRange range = [self coordRangeForInterval:previousWorkingDirectory.entry.interval];
-            [intervalTree_ removeObject:previousWorkingDirectory];
+            [_mutableState.intervalTree removeObject:previousWorkingDirectory];
             range.end = VT100GridCoordMake(self.width, line);
             DLog(@"Extending the previous directory to %@", VT100GridCoordRangeDescription(range));
             Interval *interval = [self intervalForGridCoordRange:range];
-            [intervalTree_ addObject:previousWorkingDirectory withInterval:interval];
+            [_mutableState.intervalTree addObject:previousWorkingDirectory withInterval:interval];
         } else {
             VT100GridCoordRange range;
             range = VT100GridCoordRangeMake(currentGrid_.cursorX, line, self.width, line);
             DLog(@"Set range of %@ to %@", workingDirectory, VT100GridCoordRangeDescription(range));
-            [intervalTree_ addObject:workingDirectoryObj
-                        withInterval:[self intervalForGridCoordRange:range]];
+            [_mutableState.intervalTree addObject:workingDirectoryObj
+                                     withInterval:[self intervalForGridCoordRange:range]];
         }
     }
     [delegate_ screenLogWorkingDirectoryAtLine:line
@@ -772,8 +768,8 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     remoteHostObj.hostname = host;
     remoteHostObj.username = user;
     VT100GridCoordRange range = VT100GridCoordRangeMake(0, line, self.width, line);
-    [intervalTree_ addObject:remoteHostObj
-                withInterval:[self intervalForGridCoordRange:range]];
+    [_mutableState.intervalTree addObject:remoteHostObj
+                             withInterval:[self intervalForGridCoordRange:range]];
     return remoteHostObj;
 }
 
@@ -785,7 +781,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     if (pos < 0) {
         return nil;
     }
-    NSEnumerator *enumerator = [intervalTree_ reverseEnumeratorAt:pos];
+    NSEnumerator *enumerator = [_state.intervalTree reverseEnumeratorAt:pos];
     NSArray *objects;
     do {
         objects = [enumerator nextObject];
@@ -865,7 +861,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     long long lastDeadLocation = [self totalScrollbackOverflow] * (self.width + 1);
     if (lastDeadLocation > 0) {
         Interval *deadInterval = [Interval intervalWithLocation:0 length:lastDeadLocation + 1];
-        for (id<IntervalTreeObject> obj in [intervalTree_ objectsInInterval:deadInterval]) {
+        for (id<IntervalTreeObject> obj in [_mutableState.intervalTree objectsInInterval:deadInterval]) {
             if ([obj.entry.interval limit] <= lastDeadLocation) {
                 [self mutRemoveObjectFromIntervalTree:obj];
             }
@@ -874,7 +870,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (BOOL)markIsValid:(iTermMark *)mark {
-    return [intervalTree_ containsObject:mark];
+    return [_state.intervalTree containsObject:mark];
 }
 
 - (id<iTermMark>)addMarkStartingAtAbsoluteLine:(long long)line
@@ -908,7 +904,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     if ([mark isKindOfClass:[VT100ScreenMark class]]) {
         markCache_[@([self totalScrollbackOverflow] + range.end.y)] = mark;
     }
-    [intervalTree_ addObject:mark withInterval:[self intervalForGridCoordRange:range]];
+    [_mutableState.intervalTree addObject:mark withInterval:[self intervalForGridCoordRange:range]];
     [_intervalTreeObserver intervalTreeDidAddObjectOfType:[self intervalTreeObserverTypeForObject:mark]
                                                    onLine:range.start.y + self.totalScrollbackOverflow];
     [delegate_ screenNeedsRedraw];
@@ -925,7 +921,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
                                                                                  line,
                                                                                  0,
                                                                                  line + 1)];
-    NSArray *objects = [intervalTree_ objectsInInterval:interval];
+    NSArray *objects = [_state.intervalTree objectsInInterval:interval];
     for (id<IntervalTreeObject> note in objects) {
         if ([note isKindOfClass:[PTYNoteViewController class]]) {
             VT100GridCoordRange range = [self coordRangeForInterval:note.entry.interval];
@@ -948,7 +944,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
 - (NSArray *)notesInRange:(VT100GridCoordRange)range {
     Interval *interval = [self intervalForGridCoordRange:range];
-    NSArray *objects = [intervalTree_ objectsInInterval:interval];
+    NSArray *objects = [_state.intervalTree objectsInInterval:interval];
     NSMutableArray *notes = [NSMutableArray array];
     for (id<IntervalTreeObject> o in objects) {
         if ([o isKindOfClass:[PTYNoteViewController class]]) {
@@ -963,7 +959,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (VT100ScreenMark *)promptMarkWithGUID:(NSString *)guid {
-    NSEnumerator *enumerator = [intervalTree_ reverseLimitEnumerator];
+    NSEnumerator *enumerator = [_state.intervalTree reverseLimitEnumerator];
     NSArray *objects = [enumerator nextObject];
     while (objects) {
         for (id obj in objects) {
@@ -985,7 +981,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
 - (void)enumerateObservableMarks:(void (^ NS_NOESCAPE)(iTermIntervalTreeObjectType, NSInteger))block {
     const NSInteger overflow = [self totalScrollbackOverflow];
-    for (NSArray *objects in intervalTree_.forwardLimitEnumerator) {
+    for (NSArray *objects in _state.intervalTree.forwardLimitEnumerator) {
         for (id<IntervalTreeObject> obj in objects) {
             const iTermIntervalTreeObjectType type = [self intervalTreeObserverTypeForObject:obj];
             if (type == iTermIntervalTreeObjectTypeUnknown) {
@@ -1000,7 +996,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 - (void)enumeratePromptsFrom:(NSString *)maybeFirst
                           to:(NSString *)maybeLast
                        block:(void (^ NS_NOESCAPE)(VT100ScreenMark *mark))block {
-    NSEnumerator *enumerator = [intervalTree_ forwardLimitEnumerator];
+    NSEnumerator *enumerator = [_state.intervalTree forwardLimitEnumerator];
     NSArray *objects = [enumerator nextObject];
     BOOL foundFirst = (maybeFirst == nil);
     while (objects) {
@@ -1063,7 +1059,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (id)lastMarkMustBePrompt:(BOOL)wantPrompt class:(Class)theClass {
-    NSEnumerator *enumerator = [intervalTree_ reverseLimitEnumerator];
+    NSEnumerator *enumerator = [_state.intervalTree reverseLimitEnumerator];
     NSArray *objects = [enumerator nextObject];
     while (objects) {
         for (id obj in objects) {
@@ -1081,7 +1077,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (__kindof id<IntervalTreeObject>)lastMarkPassingTest:(BOOL (^)(__kindof id<IntervalTreeObject>))block {
-    NSEnumerator *enumerator = [intervalTree_ reverseLimitEnumerator];
+    NSEnumerator *enumerator = [_state.intervalTree reverseLimitEnumerator];
     NSArray *objects = [enumerator nextObject];
     while (objects) {
         for (id obj in objects) {
@@ -1099,39 +1095,39 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (NSArray *)lastMarksOrNotes {
-    NSEnumerator *enumerator = [intervalTree_ reverseLimitEnumerator];
+    NSEnumerator *enumerator = [_state.intervalTree reverseLimitEnumerator];
     return [self firstMarkBelongingToAnyClassIn:@[ [PTYNoteViewController class],
                                                    [VT100ScreenMark class] ]
                                 usingEnumerator:enumerator];
 }
 
 - (NSArray *)firstMarksOrNotes {
-    NSEnumerator *enumerator = [intervalTree_ forwardLimitEnumerator];
+    NSEnumerator *enumerator = [_state.intervalTree forwardLimitEnumerator];
     return [self firstMarkBelongingToAnyClassIn:@[ [PTYNoteViewController class],
                                                    [VT100ScreenMark class] ]
                                 usingEnumerator:enumerator];
 }
 
 - (NSArray *)lastMarks {
-    NSEnumerator *enumerator = [intervalTree_ reverseLimitEnumerator];
+    NSEnumerator *enumerator = [_state.intervalTree reverseLimitEnumerator];
     return [self firstMarkBelongingToAnyClassIn:@[ [VT100ScreenMark class] ]
                                 usingEnumerator:enumerator];
 }
 
 - (NSArray *)firstMarks {
-    NSEnumerator *enumerator = [intervalTree_ forwardLimitEnumerator];
+    NSEnumerator *enumerator = [_state.intervalTree forwardLimitEnumerator];
     return [self firstMarkBelongingToAnyClassIn:@[ [VT100ScreenMark class] ]
                                 usingEnumerator:enumerator];
 }
 
 - (NSArray *)lastAnnotations {
-    NSEnumerator *enumerator = [intervalTree_ reverseLimitEnumerator];
+    NSEnumerator *enumerator = [_state.intervalTree reverseLimitEnumerator];
     return [self firstMarkBelongingToAnyClassIn:@[ [PTYNoteViewController class] ]
                                 usingEnumerator:enumerator];
 }
 
 - (NSArray *)firstAnnotations {
-    NSEnumerator *enumerator = [intervalTree_ forwardLimitEnumerator];
+    NSEnumerator *enumerator = [_state.intervalTree forwardLimitEnumerator];
     return [self firstMarkBelongingToAnyClassIn:@[ [PTYNoteViewController class] ]
                                 usingEnumerator:enumerator];
 }
@@ -1153,7 +1149,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
         return -1;
     }
     Interval *interval = [self intervalForGridCoordRange:VT100GridCoordRangeMake(0, line, 0, line)];
-    NSEnumerator *enumerator = [intervalTree_ reverseLimitEnumeratorAt:interval.limit];
+    NSEnumerator *enumerator = [_state.intervalTree reverseLimitEnumeratorAt:interval.limit];
     NSArray *objects = [enumerator nextObject];
     while (objects) {
         for (id object in objects) {
@@ -1174,7 +1170,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
         return -1;
     }
     Interval *interval = [self intervalForGridCoordRange:VT100GridCoordRangeMake(0, line + 1, 0, line + 1)];
-    NSEnumerator *enumerator = [intervalTree_ forwardLimitEnumeratorAt:interval.limit];
+    NSEnumerator *enumerator = [_state.intervalTree forwardLimitEnumeratorAt:interval.limit];
     NSArray *objects = [enumerator nextObject];
     while (objects) {
         for (id object in objects) {
@@ -1190,14 +1186,14 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
 - (NSArray *)marksOfAnyClassIn:(NSArray<Class> *)allowedClasses
                         before:(Interval *)location {
-    NSEnumerator *enumerator = [intervalTree_ reverseLimitEnumeratorAt:location.limit];
+    NSEnumerator *enumerator = [_state.intervalTree reverseLimitEnumeratorAt:location.limit];
     return [self firstObjectsFoundWithEnumerator:enumerator
                                     ofAnyClassIn:allowedClasses];
 }
 
 - (NSArray *)marksOfAnyClassIn:(NSArray<Class> *)allowedClasses
                          after:(Interval *)location {
-    NSEnumerator *enumerator = [intervalTree_ forwardLimitEnumeratorAt:location.limit];
+    NSEnumerator *enumerator = [_state.intervalTree forwardLimitEnumeratorAt:location.limit];
     return [self firstObjectsFoundWithEnumerator:enumerator
                                     ofAnyClassIn:allowedClasses];
 }
@@ -1245,7 +1241,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (BOOL)containsMark:(id<iTermMark>)mark {
-    for (id obj in [intervalTree_ objectsInInterval:mark.entry.interval]) {
+    for (id obj in [_state.intervalTree objectsInInterval:mark.entry.interval]) {
         if (obj == mark) {
             return YES;
         }
@@ -1259,7 +1255,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (VT100GridCoordRange)textViewRangeOfOutputForCommandMark:(VT100ScreenMark *)mark {
-    NSEnumerator *enumerator = [intervalTree_ forwardLimitEnumeratorAt:mark.entry.interval.limit];
+    NSEnumerator *enumerator = [_state.intervalTree forwardLimitEnumeratorAt:mark.entry.interval.limit];
     NSArray *objects;
     do {
         objects = [enumerator nextObject];
@@ -1894,7 +1890,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
                                 [self width],
                                 screenOrigin + self.height);
     Interval *screenInterval = [self intervalForGridCoordRange:screenRange];
-    for (id<IntervalTreeObject> note in [intervalTree_ objectsInInterval:screenInterval]) {
+    for (id<IntervalTreeObject> note in [_state.intervalTree objectsInInterval:screenInterval]) {
         if (note.entry.interval.location < screenInterval.location) {
             // Truncate note so that it ends just before screen.
             note.entry.interval.length = screenInterval.location - note.entry.interval.location;
@@ -2551,7 +2547,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
         DLog(@"Return cached mark %@", _lastCommandMark);
         return _lastCommandMark;
     }
-    NSEnumerator *enumerator = [intervalTree_ reverseLimitEnumerator];
+    NSEnumerator *enumerator = [_state.intervalTree reverseLimitEnumerator];
     NSArray *objects = [enumerator nextObject];
     int numChecked = 0;
     while (objects && numChecked < 500) {
@@ -3176,10 +3172,10 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 #pragma mark - PTYNoteViewControllerDelegate
 
 - (void)noteDidRequestRemoval:(PTYNoteViewController *)note {
-    if ([intervalTree_ containsObject:note]) {
+    if ([_state.intervalTree containsObject:note]) {
         self.lastCommandMark = nil;
         [[note retain] autorelease];
-        [intervalTree_ removeObject:note];
+        [_mutableState.intervalTree removeObject:note];
         [_intervalTreeObserver intervalTreeDidRemoveObjectOfType:[self intervalTreeObserverTypeForObject:note]
                                                           onLine:[self coordRangeForInterval:note.entry.interval].start.y + self.totalScrollbackOverflow];
     } else if ([savedIntervalTree_ containsObject:note]) {
@@ -3234,7 +3230,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
                                                 intervalOffset:(long long *)intervalOffsetPtr {
     if (gDebugLogging) {
         DLog(@"Saving state with width=%@", @(self.width));
-        for (PTYNoteViewController *note in intervalTree_.allObjects) {
+        for (PTYNoteViewController *note in _state.intervalTree.allObjects) {
             if (![note isKindOfClass:[PTYNoteViewController class]]) {
                 continue;
             }
@@ -3284,7 +3280,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
         const int linesDroppedForBrevity = [self numberOfLinesDroppedWhenEncodingModernFormatWithEncoder:encoder
                                                                                           intervalOffset:&intervalOffset];
         extra = @{
-            kScreenStateIntervalTreeKey: [intervalTree_ dictionaryValueWithOffset:intervalOffset] ?: @{},
+            kScreenStateIntervalTreeKey: [_state.intervalTree dictionaryValueWithOffset:intervalOffset] ?: @{},
         };
         if (linesDroppedOut) {
             *linesDroppedOut = linesDroppedForBrevity;
@@ -3294,7 +3290,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
         const int linesDroppedForBrevity = [self numberOfLinesDroppedWhenEncodingLegacyFormatWithEncoder:encoder
                                                                                           intervalOffset:&intervalOffset];
         extra = @{
-            kScreenStateIntervalTreeKey: [intervalTree_ dictionaryValueWithOffset:intervalOffset] ?: @{},
+            kScreenStateIntervalTreeKey: [_state.intervalTree dictionaryValueWithOffset:intervalOffset] ?: @{},
             kScreenStateCursorCoord: VT100GridCoordToDictionary(primaryGrid_.cursor),
         };
         if (linesDroppedOut) {

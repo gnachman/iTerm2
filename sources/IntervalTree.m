@@ -12,6 +12,19 @@ static NSString *const kIntervalTreeClassNameKey = @"Class";
 static NSString *const kIntervalLocationKey = @"Location";
 static NSString *const kIntervalLengthKey = @"Length";
 
+@interface IntervalTreeValue : NSObject
+@property(nonatomic, assign) long long maxLimitAtSubtree;
+@property(nonatomic, retain) NSMutableArray *entries;
+
+// Largest limit of all entries
+@property(nonatomic, readonly) long long maxLimit;
+
+// Interval including intervals of all entries at this entry exactly
+- (Interval *)spanningInterval;
+
+@end
+
+
 @interface IntervalTreeForwardLimitEnumerator : NSEnumerator {
     long long previousLimit_;
     IntervalTree *tree_;

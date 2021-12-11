@@ -9,8 +9,11 @@
 
 #import <Foundation/Foundation.h>
 
+#import "IntervalTree.h"
+
 NS_ASSUME_NONNULL_BEGIN
 
+@class IntervalTree;
 @class VT100InlineImageHelper;
 @class iTermOrderEnforcer;
 
@@ -39,6 +42,11 @@ NS_ASSUME_NONNULL_BEGIN
 // base64 value to copy to pasteboard, being built up bit by bit.
 @property (nullable, nonatomic, strong, readonly) NSString *pasteboardString;
 
+// All currently visible marks and notes. Maps an interval of
+//   (startx + absstarty * (width+1)) to (endx + absendy * (width+1))
+// to an id<IntervalTreeObject>, which is either PTYNoteViewController or VT100ScreenMark.
+@property (nonatomic, strong, readonly) id<IntervalTreeReading> intervalTree;
+
 @end
 
 @interface VT100ScreenMutableState: NSObject<VT100ScreenState>
@@ -57,6 +65,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nullable, nonatomic, strong, readwrite) NSMutableString *pasteboardString;
 @property (nonatomic, strong, readwrite) iTermOrderEnforcer *setWorkingDirectoryOrderEnforcer;
 @property (nonatomic, strong, readwrite) iTermOrderEnforcer *currentDirectoryDidChangeOrderEnforcer;
+@property (nonatomic, strong, readwrite) IntervalTree *intervalTree;
 
 @end
 
