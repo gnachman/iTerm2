@@ -88,9 +88,6 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     // This is an inherently shared mutable data structure. I don't think it can be easily moved into
     // the VT100ScreenState model. Instad it will need lots of mutexes :(
     DVR* dvr_;
-
-    iTermOrderEnforcer *_setWorkingDirectoryOrderEnforcer;
-    iTermOrderEnforcer *_currentDirectoryDidChangeOrderEnforcer;
 }
 
 @synthesize terminal = terminal_;
@@ -134,8 +131,6 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
         intervalTree_ = [[IntervalTree alloc] init];
         markCache_ = [[NSMutableDictionary alloc] init];
         commandStartX_ = commandStartY_ = -1;
-        _setWorkingDirectoryOrderEnforcer = [[iTermOrderEnforcer alloc] init];
-        _currentDirectoryDidChangeOrderEnforcer = [[iTermOrderEnforcer alloc] init];
 
         _startOfRunningCommandOutput = VT100GridAbsCoordMake(-1, -1);
         _lastCommandOutputRange = VT100GridAbsCoordRangeMake(-1, -1, -1, -1);
@@ -160,8 +155,6 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     _temporaryDoubleBuffer.delegate = nil;
     [_temporaryDoubleBuffer reset];
     [_temporaryDoubleBuffer release];
-    [_setWorkingDirectoryOrderEnforcer release];
-    [_currentDirectoryDidChangeOrderEnforcer release];
     [_lastExternalAttribute release];
     [_state release];
     [_mutableState release];
@@ -699,7 +692,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     [self setWorkingDirectory:workingDirectory
                        onLine:line
                        pushed:pushed
-                        token:[[_setWorkingDirectoryOrderEnforcer newToken] autorelease]];
+                        token:[[_mutableState.setWorkingDirectoryOrderEnforcer newToken] autorelease]];
 }
 
 // Adds a working directory mark at the given line.
@@ -2032,7 +2025,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
     // Go fetch the working directory and then update it.
     __weak __typeof(self) weakSelf = self;
-    id<iTermOrderedToken> token = [[_currentDirectoryDidChangeOrderEnforcer newToken] autorelease];
+    id<iTermOrderedToken> token = [[_mutableState.currentDirectoryDidChangeOrderEnforcer newToken] autorelease];
     DLog(@"Fetching directory asynchronously with token %@", token);
     [delegate_ screenGetWorkingDirectoryWithCompletion:^(NSString *dir) {
         DLog(@"For token %@, the working directory is %@", token, dir);

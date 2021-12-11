@@ -12,6 +12,7 @@
 NS_ASSUME_NONNULL_BEGIN
 
 @class VT100InlineImageHelper;
+@class iTermOrderEnforcer;
 
 @protocol VT100ScreenState<NSObject>
 
@@ -33,7 +34,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) NSTimeInterval lastBell;
 
 // Line numbers containing animated GIFs that need to be redrawn for the next frame.
-@property (nullable, nonatomic, strong, readonly) NSIndexSet *animatedLines;
+@property (nonatomic, strong, readonly) NSIndexSet *animatedLines;
 
 // base64 value to copy to pasteboard, being built up bit by bit.
 @property (nullable, nonatomic, strong, readonly) NSString *pasteboardString;
@@ -52,8 +53,10 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readwrite) BOOL allowTitleReporting;
 @property (nullable, nonatomic, strong) VT100InlineImageHelper *inlineImageHelper;
 @property (nonatomic, readwrite) NSTimeInterval lastBell;
-@property (nullable, nonatomic, strong, readwrite) NSMutableIndexSet *animatedLines;
+@property (nonatomic, strong, readwrite) NSMutableIndexSet *animatedLines;
 @property (nullable, nonatomic, strong, readwrite) NSMutableString *pasteboardString;
+@property (nonatomic, strong, readwrite) iTermOrderEnforcer *setWorkingDirectoryOrderEnforcer;
+@property (nonatomic, strong, readwrite) iTermOrderEnforcer *currentDirectoryDidChangeOrderEnforcer;
 
 @end
 

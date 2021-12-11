@@ -7,12 +7,16 @@
 
 #import "VT100ScreenState.h"
 
+#import "iTermOrderEnforcer.h"
+
 @implementation VT100ScreenMutableState
 
 - (instancetype)init {
     self = [super init];
     if (self) {
         _animatedLines = [NSMutableIndexSet indexSet];
+        _setWorkingDirectoryOrderEnforcer = [[iTermOrderEnforcer alloc] init];
+        _currentDirectoryDidChangeOrderEnforcer = [[iTermOrderEnforcer alloc] init];
     }
     return self;
 }
