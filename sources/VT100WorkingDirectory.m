@@ -42,4 +42,8 @@ static NSString *const kWorkingDirectoryStateWorkingDirectoryKey = @"Working Dir
     }
 }
 
+- (instancetype)copyOfIntervalTreeObject {
+    return [[self.class alloc] initWithDictionary:self.dictionaryValue];
+}
+
 @end

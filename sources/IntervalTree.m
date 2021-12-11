@@ -941,4 +941,15 @@ static NSString *const kIntervalLengthKey = @"Length";
     return @{ kIntervalTreeEntriesKey: objectDicts };
 }
 
+- (id)copyWithZone:(NSZone *)zone {
+    IntervalTree *theCopy = [[IntervalTree alloc] init];
+    for (id<IntervalTreeObject> object in self.allObjects) {
+        id<IntervalTreeObject> copiedObject = [[object copyOfIntervalTreeObject] autorelease];
+        copiedObject.entry = nil;
+        [theCopy addObject:copiedObject
+              withInterval:object.entry.interval];
+    }
+    return theCopy;
+}
+
 @end

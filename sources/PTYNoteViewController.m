@@ -337,4 +337,8 @@ static void PTYNoteViewControllerIncrementVisibleCount(NSInteger delta) {
     return @{ kNoteViewTextKey: textView_.string ?: @"" };
 }
 
+- (instancetype)copyOfIntervalTreeObject {
+    return [[self.class alloc] initWithDictionary:self.dictionaryValue];
+}
+
 @end

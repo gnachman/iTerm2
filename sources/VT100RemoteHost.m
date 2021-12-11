@@ -66,4 +66,8 @@ static NSString *const kRemoteHostUserNameKey = @"User name";
     return [dict dictionaryByRemovingNullValues];
 }
 
+- (instancetype)copyOfIntervalTreeObject {
+    return [[self.class alloc] initWithDictionary:self.dictionaryValue];
+}
+
 @end

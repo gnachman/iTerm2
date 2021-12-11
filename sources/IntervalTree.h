@@ -35,6 +35,9 @@
 
 // Serialized value.
 - (NSDictionary *)dictionaryValue;
+
+- (instancetype)copyOfIntervalTreeObject;
+
 @end
 
 @protocol IntervalTreeImmutableEntry<NSObject>
@@ -85,7 +88,7 @@
 @end
 
 
-@interface IntervalTree : NSObject <AATreeDelegate, IntervalTreeReading>
+@interface IntervalTree : NSObject <AATreeDelegate, IntervalTreeReading, NSCopying>
 
 @property(nonatomic, readonly) NSInteger count;
 @property(nonatomic, readonly) NSString *debugString;

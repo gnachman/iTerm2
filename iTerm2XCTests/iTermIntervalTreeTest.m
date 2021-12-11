@@ -11,6 +11,9 @@
 - (NSDictionary *)dictionaryValue {
     return @{};
 }
+- (instancetype)copyOfIntervalTreeObject {
+    return [[ITObject alloc] init];
+}
 
 @synthesize entry;
 @end

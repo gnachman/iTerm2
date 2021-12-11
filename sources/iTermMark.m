@@ -24,6 +24,10 @@
     return @{};
 }
 
+- (instancetype)copyOfIntervalTreeObject {
+    return [[self.class alloc] init];
+}
+
 #pragma mark - NSObject
 
 - (NSString *)description {
