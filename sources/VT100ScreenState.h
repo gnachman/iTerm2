@@ -30,6 +30,7 @@ NS_ASSUME_NONNULL_BEGIN
 // OK to report window title?
 @property (nonatomic, readonly) BOOL allowTitleReporting;
 
+@property (nonatomic, readonly) NSTimeInterval lastBell;
 @end
 
 @interface VT100ScreenMutableState: NSObject<VT100ScreenState>
@@ -43,6 +44,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nullable, nonatomic, strong, readwrite) NSMutableString *printBuffer;
 @property (nonatomic, readwrite) BOOL allowTitleReporting;
 @property (nullable, nonatomic, strong) VT100InlineImageHelper *inlineImageHelper;
+@property (nonatomic, readwrite) NSTimeInterval lastBell;
 
 @end
 

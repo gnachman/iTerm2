@@ -89,7 +89,6 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     // the VT100ScreenState model. Instad it will need lots of mutexes :(
     DVR* dvr_;
 
-    NSTimeInterval lastBell_;
     // Line numbers containing animated GIFs that need to be redrawn for the next frame.
     NSMutableIndexSet *_animatedLines;
 
@@ -228,10 +227,10 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 
 - (BOOL)shouldQuellBell {
     const NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
-    const NSTimeInterval interval = now - lastBell_;
+    const NSTimeInterval interval = now - _state.lastBell;
     const BOOL result = interval < [iTermAdvancedSettingsModel bellRateLimit];
     if (!result) {
-        lastBell_ = now;
+        _mutableState.lastBell = now;
     }
     return result;
 }
@@ -240,7 +239,9 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     if ([delegate_ screenShouldIgnoreBellWhichIsAudible:_state.audibleBell visible:_state.flashBell]) {
         return;
     }
-    if (![self shouldQuellBell]) {
+    if ([self shouldQuellBell]) {
+        DLog(@"Quell bell");
+    } else {
         if (_state.audibleBell) {
             DLog(@"Beep: ring audible bell");
             NSBeep();
