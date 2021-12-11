@@ -89,9 +89,6 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     // the VT100ScreenState model. Instad it will need lots of mutexes :(
     DVR* dvr_;
 
-    // Line numbers containing animated GIFs that need to be redrawn for the next frame.
-    NSMutableIndexSet *_animatedLines;
-
     // base64 value to copy to pasteboard, being built up bit by bit.
     NSMutableString *_copyString;
 
@@ -146,7 +143,6 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 
         _startOfRunningCommandOutput = VT100GridAbsCoordMake(-1, -1);
         _lastCommandOutputRange = VT100GridAbsCoordRangeMake(-1, -1, -1, -1);
-        _animatedLines = [[NSMutableIndexSet alloc] init];
         _cursorVisible = YES;
         _initialSize = VT100GridSizeMake(-1, -1);
     }
@@ -168,7 +164,6 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     _temporaryDoubleBuffer.delegate = nil;
     [_temporaryDoubleBuffer reset];
     [_temporaryDoubleBuffer release];
-    [_animatedLines release];
     [_copyString release];
     [_setWorkingDirectoryOrderEnforcer release];
     [_currentDirectoryDidChangeOrderEnforcer release];
@@ -590,11 +585,11 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
 - (void)setRangeOfCharsAnimated:(NSRange)range onLine:(int)line {
     // TODO: Store range
-    [_animatedLines addIndex:line];
+    [_mutableState.animatedLines addIndex:line];
 }
 
 - (void)resetAnimatedLines {
-    [_animatedLines removeAllIndexes];
+    [_mutableState.animatedLines removeAllIndexes];
 }
 
 - (BOOL)isDirtyAtX:(int)x Y:(int)y {
@@ -3651,5 +3646,10 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 - (void)setAllowTitleReporting:(BOOL)allowTitleReporting {
     _mutableState.allowTitleReporting = allowTitleReporting;
 }
+
+- (NSIndexSet *)animatedLines {
+    return _state.animatedLines;
+}
+
 @end
 

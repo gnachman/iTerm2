@@ -9,4 +9,12 @@
 
 @implementation VT100ScreenMutableState
 
+- (instancetype)init {
+    self = [super init];
+    if (self) {
+        _animatedLines = [NSMutableIndexSet indexSet];
+    }
+    return self;
+}
+
 @end

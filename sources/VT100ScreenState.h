@@ -31,6 +31,10 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) BOOL allowTitleReporting;
 
 @property (nonatomic, readonly) NSTimeInterval lastBell;
+
+// Line numbers containing animated GIFs that need to be redrawn for the next frame.
+@property (nullable, nonatomic, strong, readonly) NSIndexSet *animatedLines;
+
 @end
 
 @interface VT100ScreenMutableState: NSObject<VT100ScreenState>
@@ -45,6 +49,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readwrite) BOOL allowTitleReporting;
 @property (nullable, nonatomic, strong) VT100InlineImageHelper *inlineImageHelper;
 @property (nonatomic, readwrite) NSTimeInterval lastBell;
+@property (nullable, nonatomic, strong, readwrite) NSMutableIndexSet *animatedLines;
 
 @end
 
