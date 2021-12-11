@@ -35,6 +35,9 @@ NS_ASSUME_NONNULL_BEGIN
 // Line numbers containing animated GIFs that need to be redrawn for the next frame.
 @property (nullable, nonatomic, strong, readonly) NSIndexSet *animatedLines;
 
+// base64 value to copy to pasteboard, being built up bit by bit.
+@property (nullable, nonatomic, strong, readonly) NSString *pasteboardString;
+
 @end
 
 @interface VT100ScreenMutableState: NSObject<VT100ScreenState>
@@ -50,6 +53,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nullable, nonatomic, strong) VT100InlineImageHelper *inlineImageHelper;
 @property (nonatomic, readwrite) NSTimeInterval lastBell;
 @property (nullable, nonatomic, strong, readwrite) NSMutableIndexSet *animatedLines;
+@property (nullable, nonatomic, strong, readwrite) NSMutableString *pasteboardString;
 
 @end
 

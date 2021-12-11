@@ -89,10 +89,6 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     // the VT100ScreenState model. Instad it will need lots of mutexes :(
     DVR* dvr_;
 
-    // base64 value to copy to pasteboard, being built up bit by bit.
-    NSMutableString *_copyString;
-
-
     iTermOrderEnforcer *_setWorkingDirectoryOrderEnforcer;
     iTermOrderEnforcer *_currentDirectoryDidChangeOrderEnforcer;
 }
@@ -164,7 +160,6 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     _temporaryDoubleBuffer.delegate = nil;
     [_temporaryDoubleBuffer reset];
     [_temporaryDoubleBuffer release];
-    [_copyString release];
     [_setWorkingDirectoryOrderEnforcer release];
     [_currentDirectoryDidChangeOrderEnforcer release];
     [_lastExternalAttribute release];
@@ -2249,20 +2244,19 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 - (void)terminalBeginCopyToPasteboard {
     [delegate_ screenTerminalAttemptedPasteboardAccess];
     if ([iTermPreferences boolForKey:kPreferenceKeyAllowClipboardAccessFromTerminal]) {
-        [_copyString release];
-        _copyString = [[NSMutableString alloc] init];
+        _mutableState.pasteboardString = [[[NSMutableString alloc] init] autorelease];
     }
 }
 
 - (void)terminalDidReceiveBase64PasteboardString:(NSString *)string {
     if ([iTermPreferences boolForKey:kPreferenceKeyAllowClipboardAccessFromTerminal]) {
-        [_copyString appendString:string];
+        [_mutableState.pasteboardString appendString:string];
     }
 }
 
 - (void)terminalDidFinishReceivingPasteboard {
-    if (_copyString && [iTermPreferences boolForKey:kPreferenceKeyAllowClipboardAccessFromTerminal]) {
-        NSData *data = [NSData dataWithBase64EncodedString:_copyString];
+    if (_state.pasteboardString && [iTermPreferences boolForKey:kPreferenceKeyAllowClipboardAccessFromTerminal]) {
+        NSData *data = [NSData dataWithBase64EncodedString:_state.pasteboardString];
         if (data) {
             NSString *string = [[[NSString alloc] initWithData:data encoding:terminal_.encoding] autorelease];
             if (!string) {
@@ -2277,13 +2271,11 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
             }
         }
     }
-    [_copyString release];
-    _copyString = nil;
+    _mutableState.pasteboardString = nil;
 }
 
 - (void)terminalPasteboardReceiptEndedUnexpectedly {
-    [_copyString release];
-    _copyString = nil;
+    _mutableState.pasteboardString = nil;
 }
 
 - (void)terminalCopyBufferToPasteboard {
