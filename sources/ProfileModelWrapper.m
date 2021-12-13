@@ -7,10 +7,11 @@
 
 #import "ProfileModelWrapper.h"
 #import "DebugLogging.h"
+#import "NSArray+iTerm.h"
 
 @implementation ProfileModelWrapper {
     ProfileModel* underlyingModel;
-    NSMutableArray* bookmarks;
+    NSMutableArray<ProfileTableRow *> *bookmarks;
     NSMutableString* filter;
     NSArray* sortDescriptors;
 }
@@ -67,6 +68,12 @@
 - (Profile*)profileAtIndex:(int)i
 {
     return [[bookmarks objectAtIndex:i] bookmark];
+}
+
+- (NSArray<Profile *> *)profiles {
+    return [bookmarks mapWithBlock:^id(ProfileTableRow *row) {
+        return row.bookmark;
+    }];
 }
 
 - (int)indexOfProfileWithGuid:(NSString*)guid

@@ -27,6 +27,7 @@
 #import "NSView+iTerm.h"
 #import "PreferencePanel.h"
 #import "ProfileListView.h"
+#import "ProfileModelWrapper.h"
 #import "ProfilesAdvancedPreferencesViewController.h"
 #import "ProfilesGeneralPreferencesViewController.h"
 #import "ProfilesColorsPreferencesViewController.h"
@@ -729,11 +730,10 @@ andEditComponentWithIdentifier:(NSString *)identifier
 }
 
 - (NSString *)jsonForAllProfilesWithErrorCount:(int *)errorCount {
-    ProfileModel *model = [_delegate profilePreferencesModel];
     NSMutableString *profiles = [@"{\n\"Profiles\": [\n" mutableCopy];
     BOOL first = YES;
     int errors = 0;
-    for (Profile *profile in [model bookmarks]) {
+    for (Profile *profile in _profilesListView.dataSource.profiles) {
         NSError *error = nil;
         NSString *json = [self jsonForProfile:profile error:&error];
         if (json) {

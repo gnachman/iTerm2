@@ -44,4 +44,6 @@
 // Show only bookmarks matching a search query 'filter'.
 - (void)setFilter:(NSString*)newFilter;
 
+- (NSArray<Profile *> *)profiles;
+
 @end
