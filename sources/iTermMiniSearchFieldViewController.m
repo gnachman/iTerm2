@@ -190,6 +190,10 @@
     return YES;
 }
 
+- (BOOL)shouldSearchAutomatically {
+    return [_searchField textFieldIsFirstResponder];
+}
+
 - (NSString *)filter {
     return nil;
 }

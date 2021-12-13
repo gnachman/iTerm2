@@ -785,9 +785,6 @@ backgroundColor:(NSColor *)backgroundColor;
 // Jump to the saved scroll position
 - (void)jumpToSavedScrollPosition;
 
-// Prepare to use the given string for the next search.
-- (void)useStringForFind:(NSString*)string;
-
 // Search for the selected text.
 - (void)findWithSelection;
 

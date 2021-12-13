@@ -207,6 +207,24 @@ static NSString *gSearchString;
     [_delegate findDriverSetFilter:filter withSideEffects:NO];
 }
 
+- (void)highlightWithoutSelectingSearchResultsForQuery:(NSString *)string {
+    self.findString = string;
+    if (string.length == 0) {
+        return;
+    }
+    [[iTermSearchHistory sharedInstance] addQuery:string];
+    [self setSearchDefaults];
+    [self findSubString:string
+       forwardDirection:![iTermAdvancedSettingsModel swapFindNextPrevious]
+                   mode:_state.mode
+             withOffset:-1
+    scrollToFirstResult:NO];
+}
+
+- (BOOL)shouldSearchAutomatically {
+    return [_viewController shouldSearchAutomatically];
+}
+
 - (void)userDidEditSearchQuery:(NSString *)updatedQuery
                    fieldEditor:(NSTextView *)fieldEditor {
     if (!_savedState) {
@@ -324,7 +342,7 @@ static NSString *gSearchString;
     if (!self.needsUpdateOnFocus) {
         return;
     }
-    if (!self.isVisible) {
+    if (!self.isVisible || ![self shouldSearchAutomatically]) {
         self.needsUpdateOnFocus = NO;
         return;
     }
@@ -364,7 +382,7 @@ static NSString *gSearchString;
     if (![value isEqualToString:_viewController.findString]) {
         DLog(@"%@ setFindString:%@", self, value);
         _viewController.findString = value;
-        self.needsUpdateOnFocus = YES;
+        self.needsUpdateOnFocus = self.needsUpdateOnFocus || _viewController.shouldSearchAutomatically;
     }
 }
 

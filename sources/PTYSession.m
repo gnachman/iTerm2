@@ -897,7 +897,7 @@ static const CGFloat PTYSessionMaximumMetalViewSize = 16384;
             if (![iTermAdvancedSettingsModel synchronizeQueryWithFindPasteboard] && sender != weakSelf) {
                 return;
             }
-            [weakSelf useStringForFind:newValue];
+            [weakSelf findPasteboardStringDidChangeTo:newValue];
         }];
 
         if (!synthetic) {
@@ -5970,8 +5970,14 @@ ITERM_WEAKLY_REFERENCEABLE
     return [_screen lastMark] != nil;
 }
 
-- (void)useStringForFind:(NSString *)string {
-    [_view.findDriver setFindString:string];
+- (void)findPasteboardStringDidChangeTo:(NSString *)string {
+    if ([_view.findDriver.findString isEqualToString:string]) {
+        return;
+    }
+    if (!_view.findDriver.shouldSearchAutomatically) {
+        return;
+    }
+    [_view.findDriver highlightWithoutSelectingSearchResultsForQuery:string];
 }
 
 - (void)findWithSelection {

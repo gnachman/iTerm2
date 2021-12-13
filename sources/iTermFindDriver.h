@@ -74,6 +74,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult;
 @property (nonatomic, readonly) NSViewController<iTermFindViewController> *viewController;
 @property (nonatomic, readonly) NSViewController<iTermFilterViewController> *filterViewController;
 @property (nonatomic) iTermFindMode mode;
+@property (nonatomic, readonly) BOOL shouldSearchAutomatically;
 
 // NOTE: Permanently visible find views (those added to status bars via configuration) never
 // return YES for isVisible.
@@ -113,5 +114,6 @@ scrollToFirstResult:(BOOL)scrollToFirstResult;
 - (void)invalidateFrame;
 - (void)filterVisibilityDidChange;
 - (void)setFilterProgress:(double)progress;
+- (void)highlightWithoutSelectingSearchResultsForQuery:(NSString *)string;
 
 @end

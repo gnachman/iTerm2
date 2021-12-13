@@ -24,6 +24,7 @@ typedef NS_ENUM(NSUInteger, iTermFindMode) {
 @property (nonatomic, copy) NSString *filter;
 @property (nonatomic, readonly) BOOL filterIsVisible;
 @property (nonatomic, readonly) BOOL searchIsVisible;
+@property (nonatomic, readonly) BOOL shouldSearchAutomatically;
 
 - (void)close;
 - (void)open;
