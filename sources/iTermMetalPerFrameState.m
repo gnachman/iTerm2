@@ -214,14 +214,13 @@ typedef struct {
     _badgeImage = drawingHelper.badgeImage;
     if (_badgeImage) {
         _badgeDestinationRect = [iTermTextDrawingHelper rectForBadgeImageOfSize:_badgeImage.size
-                                                                destinationRect:textView.textDrawingHelperVisibleRect
                                                            destinationFrameSize:textView.frame.size
-                                                                    visibleSize:textView.textDrawingHelperVisibleRect.size
                                                                   sourceRectPtr:&_badgeSourceRect
                                                                         margins:NSEdgeInsetsMake(drawingHelper.badgeTopMargin,
                                                                                                  0,
                                                                                                  0,
-                                                                                                 drawingHelper.badgeRightMargin)];
+                                                                                                 drawingHelper.badgeRightMargin)
+                                                                 verticalOffset:0];
     }
 }
 

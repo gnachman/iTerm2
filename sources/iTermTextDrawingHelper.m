@@ -692,8 +692,7 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
 - (void)drawTopMarginWithVirtualOffset:(CGFloat)virtualOffset {
     // Draw a margin at the top of the visible area.
     NSRect topMarginRect = _visibleRect;
-    topMarginRect.origin.y -=
-        MAX(0, [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins] - NSMinY(_delegate.enclosingScrollView.documentVisibleRect));
+    topMarginRect.origin.y -= [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins];
 
     topMarginRect.size.height = [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins];
     [self.delegate drawingHelperDrawBackgroundImageInRect:topMarginRect
@@ -1001,40 +1000,35 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
 }
 
 + (NSRect)rectForBadgeImageOfSize:(NSSize)imageSize
-                  destinationRect:(NSRect)rect
              destinationFrameSize:(NSSize)textViewSize
-                      visibleSize:(NSSize)visibleSize
                     sourceRectPtr:(NSRect *)sourceRectPtr
-                          margins:(NSEdgeInsets)margins {
+                          margins:(NSEdgeInsets)margins
+                   verticalOffset:(CGFloat)verticalOffset{
     if (NSEqualSizes(NSZeroSize, imageSize)) {
         return NSZeroRect;
     }
     NSRect destination = NSMakeRect(textViewSize.width - imageSize.width - margins.right,
-                                    textViewSize.height - visibleSize.height + kiTermIndicatorStandardHeight + margins.top,
+                                    kiTermIndicatorStandardHeight + margins.top + verticalOffset,
                                     imageSize.width,
                                     imageSize.height);
-    NSRect intersection = NSIntersectionRect(rect, destination);
-    if (intersection.size.width == 0 || intersection.size.height == 1) {
-        return NSZeroRect;
-    }
-    NSRect source = intersection;
+    NSRect source = destination;
     source.origin.x -= destination.origin.x;
     source.origin.y -= destination.origin.y;
     source.origin.y = imageSize.height - (source.origin.y + source.size.height);
     *sourceRectPtr = source;
-    return intersection;
+    return destination;
 }
 
 - (NSSize)drawBadgeInRect:(NSRect)rect
                   margins:(NSEdgeInsets)margins
             virtualOffset:(CGFloat)virtualOffset {
     NSRect source = NSZeroRect;
-    NSRect intersection = [iTermTextDrawingHelper rectForBadgeImageOfSize:_badgeImage.size
-                                                          destinationRect:rect
-                                                     destinationFrameSize:_frame.size
-                                                              visibleSize:_scrollViewDocumentVisibleRect.size
-                                                            sourceRectPtr:&source
-                                                                  margins:NSEdgeInsetsMake(self.badgeTopMargin, 0, 0, self.badgeRightMargin)];
+    const NSRect intersection =
+        [iTermTextDrawingHelper rectForBadgeImageOfSize:_badgeImage.size
+                                   destinationFrameSize:_frame.size
+                                          sourceRectPtr:&source
+                                                margins:NSEdgeInsetsMake(self.badgeTopMargin, 0, 0, self.badgeRightMargin)
+                                         verticalOffset:virtualOffset];
     if (NSEqualSizes(NSZeroSize, intersection.size)) {
         return NSZeroSize;
     }
@@ -3532,7 +3526,7 @@ withExtendedAttributes:(iTermExternalAttribute *)ea2 {
 
 - (void)updateCachedMetrics {
     _frame = _delegate.frame;
-    _visibleRect = _delegate.visibleRect;
+    _visibleRect = [_delegate textDrawingHelperVisibleRect];
     _scrollViewContentSize = _delegate.enclosingScrollView.contentSize;
     _scrollViewDocumentVisibleRect = _delegate.textDrawingHelperVisibleRect;
     _preferSpeedToFullLigatureSupport = [iTermAdvancedSettingsModel preferSpeedToFullLigatureSupport];

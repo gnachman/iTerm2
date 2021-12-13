@@ -307,11 +307,10 @@ BOOL CheckFindMatchAtIndex(NSData *findMatches, int index);
 //
 // Returns: destination frame to draw to
 + (NSRect)rectForBadgeImageOfSize:(NSSize)imageSize
-                  destinationRect:(NSRect)destinationRect
              destinationFrameSize:(NSSize)destinationFrameSize
-                      visibleSize:(NSSize)visibleSize
                     sourceRectPtr:(NSRect *)sourceRectPtr
-                          margins:(NSEdgeInsets)margins;
+                          margins:(NSEdgeInsets)margins
+                   verticalOffset:(CGFloat)verticalOffset;
 
 // Indicates whether the cursor should take its color from the background (if YES) or text color (if NO).
 + (BOOL)cursorUsesBackgroundColorForScreenChar:(screen_char_t)screenChar

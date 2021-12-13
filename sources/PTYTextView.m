@@ -815,8 +815,10 @@
 - (void)scrollLineNumberRangeIntoView:(VT100GridRange)range {
     NSRect visibleRect = [[self enclosingScrollView] documentVisibleRect];
     int firstVisibleLine = visibleRect.origin.y / _lineHeight;
-    int lastVisibleLine = firstVisibleLine + [_dataSource height] - 1;
-    if (range.location >= firstVisibleLine && range.location + range.length <= lastVisibleLine) {
+    const int lastVisibleLine = firstVisibleLine + [_dataSource height];
+    const NSRange desiredRange = NSMakeRange(range.location, range.length);
+    const NSRange currentlyVisibleRange = NSMakeRange(firstVisibleLine, lastVisibleLine - firstVisibleLine);
+    if (NSIntersectionRange(desiredRange, currentlyVisibleRange).length == MIN(desiredRange.length, currentlyVisibleRange.length)) {
       // Already visible
       return;
     }
@@ -1180,20 +1182,20 @@
 // We don't draw exactly the document visible rect because there could be scrollback overflow
 // accumulated between the last call to -refresh and when it's time to draw. If `userScroll` is
 // on then we want to draw the rect you have scrolled to in order to keep it from bouncing around.
+// Note also that this excludes the top margin.
 - (NSRect)adjustedDocumentVisibleRect {
-    const NSRect documentVisibleRect = self.enclosingScrollView.documentVisibleRect;
     const BOOL userScroll = [(PTYScroller*)([[self enclosingScrollView] verticalScroller]) userScroll];
     if (!userScroll) {
-        DLog(@"User scroll is off so return documentVisibleRect of %@", NSStringFromRect(documentVisibleRect));
-        return documentVisibleRect;
+        const NSRect result = [self bottommostRectExcludingTopMargin];
+        DLog(@"User scroll is off so return bottommost rect of %@", NSStringFromRect(result));
+        return result;
     }
+    const NSRect documentVisibleRect = self.enclosingScrollView.documentVisibleRect;
     const int overflow = [_dataSource scrollbackOverflow];
-    NSRect adjusted = [self rect:documentVisibleRect minusRows:overflow];
-    DLog(@"adjustedDocumentVisibleRect is %@ with overflow %@", NSStringFromRect(adjusted), @(overflow));
-    if (adjusted.origin.y < 0) {
-        adjusted.origin.y = 0;
-    }
-    return adjusted;
+    const int firstRow = MAX(0, documentVisibleRect.origin.y / _lineHeight - overflow);
+    const NSRect result = [self visibleRectExcludingTopMarginStartingAtRow:firstRow];
+    DLog(@"adjustedDocumentVisibleRect is %@", NSStringFromRect(result));
+    return result;
 }
 
 - (CGFloat)virtualOffset {
@@ -1291,17 +1293,23 @@
 - (void)drawRect:(NSRect)rect {
 }
 
+// Note that this isn't actually the visible rect because it starts below the top margin.
 - (NSRect)textDrawingHelperVisibleRect {
-    const BOOL userScroll = [(PTYScroller*)([[self enclosingScrollView] verticalScroller]) userScroll];
-    if (userScroll) {
-        return [self adjustedDocumentVisibleRect];
-    } else {
-        // This is necessary because of the special case in -drawRect:inView:
-        const int height = _dataSource.height;
-        NSRect rect = self.enclosingScrollView.documentVisibleRect;
-        rect.origin.y = (_dataSource.numberOfLines - height) * _lineHeight;
-        return rect;
-    }
+    return [self adjustedDocumentVisibleRect];
+}
+
+- (NSRect)bottommostRectExcludingTopMargin {
+    const int height = _dataSource.height;
+    return [self visibleRectExcludingTopMarginStartingAtRow:_dataSource.numberOfLines - height];
+}
+
+- (NSRect)visibleRectExcludingTopMarginStartingAtRow:(int)row {
+    // This is necessary because of the special case in -drawRect:inView:
+    NSRect rect = self.enclosingScrollView.documentVisibleRect;
+    // Subtract the top margin's height.
+    rect.size.height -= [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins];
+    rect.origin.y = row * _lineHeight;
+    return rect;
 }
 
 - (void)performBlockWithFlickerFixerGrid:(void (NS_NOESCAPE ^)(void))block {
@@ -1460,11 +1468,14 @@
 // Number of extra lines below the last line of text that are always the background color.
 // This is 2 except for just after the frame has changed and things are resizing.
 - (double)excess {
-    NSRect visible = [self scrollViewContentSize];
-    visible.size.height -= [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins] * 2;  // Height without top and bottom margins.
-    int rows = visible.size.height / _lineHeight;
-    double usablePixels = rows * _lineHeight;
-    return MAX(visible.size.height - usablePixels + [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins], [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins]);  // Never have less than VMARGIN excess, but it can be more (if another tab has a bigger font)
+    NSRect visibleRectExcludingTopAndBottomMargins = [self scrollViewContentSize];
+    visibleRectExcludingTopAndBottomMargins.size.height -= [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins] * 2;  // Height without top and bottom margins.
+    int rows = visibleRectExcludingTopAndBottomMargins.size.height / _lineHeight;
+    double heightOfTextRows = rows * _lineHeight;
+    const CGFloat bottomMarginHeight = [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins];
+    const CGFloat visibleHeightExceptTopMargin = NSHeight(visibleRectExcludingTopAndBottomMargins) + bottomMarginHeight;
+    return MAX(visibleHeightExceptTopMargin - heightOfTextRows,
+               bottomMarginHeight);  // Never have less than VMARGIN excess, but it can be more (if another tab has a bigger font)
 }
 
 - (void)maybeInvalidateWindowShadow {
