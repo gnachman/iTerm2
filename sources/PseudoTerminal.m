@@ -9291,7 +9291,10 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
     if (self.anyPaneIsTransparent) {
         return YES;
     }
-    return !self.isDark;
+    if ([iTermAdvancedSettingsModel bordersOnlyInLightMode]) {
+        return !self.isDark;
+    }
+    return YES;
 }
 
 - (BOOL)haveLeftBorder {
