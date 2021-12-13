@@ -1134,6 +1134,8 @@ static const int kMaxScreenRows = 4096;
                                 graphicRendition_.underlineStyle = VT100UnderlineStyleCurly;
                                 break;
                         }
+                    } else {
+                        graphicRendition_.underlineStyle = VT100UnderlineStyleSingle;
                     }
                     break;
                 }
