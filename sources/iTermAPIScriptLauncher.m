@@ -8,8 +8,10 @@
 #import "iTermAPIScriptLauncher.h"
 
 #import "DebugLogging.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermAPIConnectionIdentifierController.h"
 #import "iTermAPIHelper.h"
+#import "iTermController.h"
 #import "iTermNotificationController.h"
 #import "iTermOpenDirectory.h"
 #import "iTermOptionalComponentDownloadWindowController.h"
@@ -194,50 +196,99 @@ static NSString *const iTermAPIScriptLauncherScriptDidFailUserNotificationCallba
     if (![[NSFileManager defaultManager] homeDirectoryDotDir]) {
         return;
     }
-    if (virtualenv != nil) {
-        // This is a full-environment script. Check if its environment version is supported and
-        // offer to upgrade.
-        iTermSetupCfgParser *parser = [[iTermSetupCfgParser alloc] initWithPath:setupCfgPath];
-        [self upgradeIfNeededFullEnvironmentScriptAt:fullPath
-                                        configParser:parser
-                                          virtualEnv:virtualenv
-                                          completion:^(NSString *updatedVirtualEnv) {
-            NSString *pythonVersion = parser.pythonVersion;
-            [self reallyLaunchScript:filename
-                            fullPath:fullPath
-                           arguments:arguments
-                      withVirtualEnv:updatedVirtualEnv
-                       pythonVersion:pythonVersion
-                  explicitUserAction:explicitUserAction];
+    [self installRosettaIfNeededThen:^{
+        if (virtualenv != nil) {
+            // This is a full-environment script. Check if its environment version is supported and
+            // offer to upgrade.
+            iTermSetupCfgParser *parser = [[iTermSetupCfgParser alloc] initWithPath:setupCfgPath];
+            [self upgradeIfNeededFullEnvironmentScriptAt:fullPath
+                                            configParser:parser
+                                              virtualEnv:virtualenv
+                                              completion:^(NSString *updatedVirtualEnv) {
+                NSString *pythonVersion = parser.pythonVersion;
+                [self reallyLaunchScript:filename
+                                fullPath:fullPath
+                               arguments:arguments
+                          withVirtualEnv:updatedVirtualEnv
+                           pythonVersion:pythonVersion
+                      explicitUserAction:explicitUserAction];
+            }];
+            return;
+        }
+
+        NSString *pythonVersion = [self inferredPythonVersionFromScriptAt:filename];
+        [[iTermPythonRuntimeDownloader sharedInstance] downloadOptionalComponentsIfNeededWithConfirmation:YES
+                                                                                            pythonVersion:pythonVersion
+                                                                                minimumEnvironmentVersion:0
+                                                                                       requiredToContinue:YES
+                                                                                           withCompletion:
+         ^(iTermPythonRuntimeDownloaderStatus status) {
+            switch (status) {
+                case iTermPythonRuntimeDownloaderStatusNotNeeded:
+                case iTermPythonRuntimeDownloaderStatusDownloaded:
+                    [self reallyLaunchScript:filename
+                                    fullPath:fullPath
+                                   arguments:arguments
+                              withVirtualEnv:virtualenv
+                               pythonVersion:pythonVersion
+                          explicitUserAction:explicitUserAction];
+                    break;
+                case iTermPythonRuntimeDownloaderStatusError:
+                case iTermPythonRuntimeDownloaderStatusUnknown:
+                case iTermPythonRuntimeDownloaderStatusWorking:
+                case iTermPythonRuntimeDownloaderStatusCanceledByUser:
+                case iTermPythonRuntimeDownloaderStatusRequestedVersionNotFound:
+                    break;
+            }
         }];
+    }];
+}
+
++ (BOOL)rosettaIsInstalled {
+    return [[NSFileManager defaultManager] fileExistsAtPath:@"/usr/libexec/rosetta"];
+}
+
++ (BOOL)userConsentsToInstallingRosetta {
+    const iTermWarningSelection selection =
+    [iTermWarning showWarningWithTitle:@"You must install Rosetta 2 in order to use the Python API. Install it now?"
+                               actions:@[ @"OK", @"Cancel" ]
+                             accessory:nil
+                            identifier:@"NoSyncInstallRosetta"
+                           silenceable:kiTermWarningTypePersistent
+                               heading:@"Install Rosetta?"
+                                window:nil];
+    return selection == kiTermWarningSelection0;
+}
+
++ (void)installRosettaIfUserConsentsWithCompletion:(void (^)(void))completion {
+    if (![self userConsentsToInstallingRosetta]) {
+        completion();
         return;
     }
+    [self reallyInstallRosettaWithCompletion:completion];
+}
 
-    NSString *pythonVersion = [self inferredPythonVersionFromScriptAt:filename];
-    [[iTermPythonRuntimeDownloader sharedInstance] downloadOptionalComponentsIfNeededWithConfirmation:YES
-                                                                                        pythonVersion:pythonVersion
-                                                                            minimumEnvironmentVersion:0
-                                                                                   requiredToContinue:YES
-                                                                                       withCompletion:
-     ^(iTermPythonRuntimeDownloaderStatus status) {
-         switch (status) {
-             case iTermPythonRuntimeDownloaderStatusNotNeeded:
-             case iTermPythonRuntimeDownloaderStatusDownloaded:
-                 [self reallyLaunchScript:filename
-                                 fullPath:fullPath
-                                arguments:arguments
-                           withVirtualEnv:virtualenv
-                            pythonVersion:pythonVersion
-                       explicitUserAction:explicitUserAction];
-                 break;
-             case iTermPythonRuntimeDownloaderStatusError:
-             case iTermPythonRuntimeDownloaderStatusUnknown:
-             case iTermPythonRuntimeDownloaderStatusWorking:
-             case iTermPythonRuntimeDownloaderStatusCanceledByUser:
-             case iTermPythonRuntimeDownloaderStatusRequestedVersionNotFound:
-                 break;
-        }
-    }];
++ (void)reallyInstallRosettaWithCompletion:(void (^)(void))completion {
+    [[iTermController sharedInstance] openSingleUseWindowWithCommand:@"/usr/sbin/softwareupdate"
+                                                           arguments:@[ @"--install-rosetta" ]
+                                                              inject:nil
+                                                         environment:nil
+                                                                 pwd:nil
+                                                             options:iTermSingleUseWindowOptionsCloseOnTermination
+                                                      didMakeSession:nil
+                                                          completion:completion];
+}
+
++ (BOOL)rosettaIsNeeded {
+    return [NSProcessInfo it_hasARMProcessor];
+}
+
++ (void)installRosettaIfNeededThen:(void (^)(void))completion {
+    if ([self rosettaIsNeeded] && ![self rosettaIsInstalled]) {
+        [self installRosettaIfUserConsentsWithCompletion:completion];
+    } else {
+        completion();
+    }
 }
 
 // Takes a file starting with:
