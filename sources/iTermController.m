@@ -1080,6 +1080,7 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
 
 - (void)didFinishCreatingTmuxWindow:(PseudoTerminal *)windowController {
     [[[iTermHotKeyController sharedInstance] profileHotKeyForWindowController:windowController] showHotKeyWindow];
+    [windowController ensureSaneFrame];
 }
 
 - (void)makeTerminalWindowFullScreen:(NSWindowController<iTermWindowController> *)term {

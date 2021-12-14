@@ -15,6 +15,8 @@
 
 + (instancetype)tupleWithObject:(T1)firstObject andObject:(T2)secondObject;
 + (instancetype)fromPlistValue:(id)plistValue;
++ (NSArray<iTermTuple<T1, T2> *> *)cartesianProductOfArray:(NSArray<T1> *)a1
+                                                      with:(NSArray<T2> *)a2;
 
 @end
 

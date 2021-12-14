@@ -1374,6 +1374,19 @@ ITERM_WEAKLY_REFERENCEABLE
     return number_;
 }
 
+- (void)ensureSaneFrame {
+    NSPoint recommendedOrigin = self.window.frame.origin;
+    const double fractionOnScreen = [NSScreen fractionOfFrameOnAnyScreen:self.window.frame
+                                                       recommendedOrigin:&recommendedOrigin];
+    if (fractionOnScreen < 0.05) {
+        DLog(@"Frame %@ is %@ percent onscreen. Move to %@",
+             NSStringFromRect(self.window.frame),
+             @(fractionOnScreen),
+             NSStringFromPoint(recommendedOrigin));
+        [self.window setFrameOrigin:recommendedOrigin];
+    }
+}
+
 - (void)setFrameValue:(NSValue *)value
 {
     [[self window] setFrame:[value rectValue] display:YES];

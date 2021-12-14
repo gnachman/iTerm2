@@ -29,6 +29,15 @@ static NSString *const iTermTupleValueKey = @"value";
                              andObject:secondDict[iTermTupleValueKey]];
 }
 
++ (NSArray<iTermTuple *> *)cartesianProductOfArray:(NSArray *)a1
+                                              with:(NSArray *)a2 {
+    return [a1 flatMapWithBlock:^NSArray *(id v1) {
+        return [a2 mapWithBlock:^id(id v2) {
+            return [iTermTuple tupleWithObject:v1 andObject:v2];
+        }];
+    }];
+}
+
 - (instancetype)initWithCoder:(NSCoder *)aDecoder {
     self = [super init];
     if (self) {

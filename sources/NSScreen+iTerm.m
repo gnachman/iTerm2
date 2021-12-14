@@ -15,6 +15,19 @@
 
 static char iTermNSScreenSupportsHighFrameRatesCacheKey;
 
+@interface iTermTuple(Array)
+@property (nonatomic, readonly) NSPoint pointValue;
+@end
+
+@implementation iTermTuple(Array)
+
+- (NSPoint)pointValue {
+    return NSMakePoint([NSNumber castFrom:self.firstObject].doubleValue,
+                       [NSNumber castFrom:self.secondObject].doubleValue);
+}
+
+@end
+
 @implementation NSScreen (iTerm)
 
 - (NSString *)it_description {
@@ -45,6 +58,92 @@ static char iTermNSScreenSupportsHighFrameRatesCacheKey;
         }
     }
     return nil;
+}
+
+static CGFloat iTermAreaOfIntersection(NSRect r1, NSRect r2) {
+    const NSRect intersection = NSIntersectionRect(r1, r2);
+    return intersection.size.width * intersection.size.height;
+}
+
++ (double)fractionOfFrameOnAnyScreen:(NSRect)frame
+                   recommendedOrigin:(NSPoint *)recommendedOriginPtr {
+    __block double areaOnScreen = 0;
+    [self.screens enumerateObjectsUsingBlock:^(NSScreen * _Nonnull screen, NSUInteger idx, BOOL * _Nonnull stop) {
+        areaOnScreen += iTermAreaOfIntersection(screen.frame, frame);
+    }];
+    const double frameArea = frame.size.width * frame.size.height;
+    const double fraction = areaOnScreen / frameArea;
+    if (!recommendedOriginPtr) {
+        return fraction;
+    }
+    *recommendedOriginPtr = frame.origin;
+    if (frameArea <= areaOnScreen) {
+        return fraction;
+    }
+    // Try to find a better origin.
+    NSScreen *mainScreen = [self bestScreenForRect:frame];
+    if (!mainScreen) {
+        return fraction;
+    }
+
+    *recommendedOriginPtr = [mainScreen improvedOrigin:frame];
+    return fraction;
+}
+
++ (NSScreen *)bestScreenForRect:(NSRect)frame {
+    return [self.screens maxWithBlock:^NSComparisonResult(NSScreen *obj1, NSScreen *obj2) {
+        const CGFloat lhs = iTermAreaOfIntersection(obj1.frame, frame);
+        const CGFloat rhs = iTermAreaOfIntersection(obj2.frame, frame);
+        if (lhs != rhs) {
+            return [@(lhs) compare:@(rhs)];
+        }
+        // Tiebreak by choosing leftmost screen so the comparison is stable.
+        if (obj1.frame.origin.x != obj2.frame.origin.x) {
+            return [@(obj1.frame.origin.x) compare:@(obj2.frame.origin.x)];
+        }
+        return [@(obj1.frame.origin.y)compare:@(obj2.frame.origin.y)];
+    }];
+}
+
+- (NSPoint)improvedOrigin:(NSRect)frame {
+    const NSRect myFrame = self.visibleFrame;
+    NSArray<NSNumber *> *xOriginCandidates = @[
+        @(NSMinX(myFrame)),
+        @(NSMaxX(myFrame) - NSWidth(frame)),
+        @(NSMinX(frame))
+    ];;
+    NSArray<NSNumber *> *yOriginCandidates = @[
+        @(NSMinY(myFrame)),
+        @(NSMaxY(myFrame) - NSHeight(frame)),
+        @(NSMinY(frame))
+    ];
+    NSArray<iTermTuple<NSNumber *, NSNumber *> *> *tuples = [iTermTuple cartesianProductOfArray:xOriginCandidates
+                                                                                           with:yOriginCandidates];
+    double (^l2)(NSPoint, NSPoint) = ^double(NSPoint p1, NSPoint p2) {
+        const double dx = p1.x - p2.x;
+        const double dy = p1.y - p2.y;
+        return sqrt(dx * dx + dy * dy);
+    };
+    iTermTuple<NSNumber *, NSNumber *> *best = [tuples maxWithBlock:^NSComparisonResult(iTermTuple<NSNumber *, NSNumber *> *v1,
+                                                                                        iTermTuple<NSNumber *, NSNumber *> *v2) {
+        const NSPoint p1 = v1.pointValue;
+        const NSPoint p2 = v2.pointValue;
+
+        const NSRect r1 = NSMakeRect(p1.x, p1.y, NSWidth(frame), NSHeight(frame));
+        const NSRect r2 = NSMakeRect(p2.x, p2.y, NSWidth(frame), NSHeight(frame));
+
+        const double a1 = iTermAreaOfIntersection(r1, myFrame);
+        const double a2 = iTermAreaOfIntersection(r2, myFrame);
+
+        if (a1 != a2) {
+            return [@(a1) compare:@(a2)];
+        }
+
+        const CGFloat d1 = l2(p1, frame.origin);
+        const CGFloat d2 = l2(p2, frame.origin);
+        return [@(-d1) compare:@(-d2)];
+    }];
+    return best.pointValue;
 }
 
 - (NSRect)visibleFrameIgnoringHiddenDock {
