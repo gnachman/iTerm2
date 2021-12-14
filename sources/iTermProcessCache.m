@@ -107,6 +107,26 @@
     });
 }
 
+
+// lockQueue
+- (void)queueRequestUpdateWithCompletionQueue:(dispatch_queue_t)queue block:(void (^)(void))completion {
+    __block BOOL needsUpdate;
+    void (^wrapper)(void) = ^{
+        dispatch_async(queue, completion);
+    };
+    [self->_blocksLQ addObject:[wrapper copy]];
+    needsUpdate = self->_blocksLQ.count == 1;
+    if (!needsUpdate) {
+        DLog(@"request immediate update just added block to queue");
+        return;
+    }
+    DLog(@"request immediate update scheduling update");
+    __weak __typeof(self) weakSelf = self;
+    dispatch_async(_workQueue, ^{
+        [weakSelf collectBlocksAndUpdate];
+    });
+}
+
 // main queue
 - (void)updateSynchronously {
     dispatch_group_t group = dispatch_group_create();
@@ -162,9 +182,34 @@
                                   ^(iTermProcessMonitor * monitor, dispatch_source_proc_flags_t flags) {
             [weakSelf processMonitor:monitor didChangeFlags:flags];
         }];
-        monitor.processInfo = [self->_collectionLQ infoForProcessID:pid];
+        iTermProcessInfo *info = [self->_collectionLQ infoForProcessID:pid];
+        if (!info) {
+            DLog(@"Request update for %@", @(pid));
+            [self queueRequestUpdateWithCompletionQueue:self->_lockQueue block:^{
+                DLog(@"Got update for %@", @(pid));
+                [weakSelf didUpdateForPid:pid];
+            }];
+        } else {
+            monitor.processInfo = info;
+        }
         self->_trackedPidsLQ[@(pid)] = monitor;
     });
+}
+
+// lockQueue
+- (void)didUpdateForPid:(pid_t)pid {
+    iTermProcessInfo *info = [self->_collectionLQ infoForProcessID:pid];
+    if (!info) {
+        DLog(@":( no info for %@", @(pid));
+        return;
+    }
+    iTermProcessMonitor *monitor = self->_trackedPidsLQ[@(pid)];
+    if (!monitor || monitor.processInfo != nil) {
+        DLog(@":( no monitor for %@", @(pid));
+        return;
+    }
+    DLog(@"Set info in monitor to %@", info);
+    monitor.processInfo = info;
 }
 
 // lockQueue

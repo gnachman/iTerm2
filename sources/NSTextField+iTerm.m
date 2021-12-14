@@ -20,7 +20,7 @@
     result.editable = NO;
     result.selectable = NO;
     result.drawsBackground = NO;
-    result.usesSingleLineMode = YES;
+    result.usesSingleLineMode = YES;  // THIS CAUSES -sizeToFit TO MISBEHAVE
     result.identifier = identifier;
     return result;
 }

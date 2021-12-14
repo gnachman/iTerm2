@@ -125,6 +125,7 @@
 #import "ToolCapturedOutputView.h"
 #import "ToolCommandHistoryView.h"
 #import "ToolDirectoriesView.h"
+#import "ToolJobs.h"
 #import "VT100RemoteHost.h"
 #import "VT100Screen.h"
 #import "VT100Screen.h"
@@ -3449,6 +3450,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [[_contentView.toolbelt commandHistoryView] updateCommands];
     [[_contentView.toolbelt capturedOutputView] updateCapturedOutput];
     [[_contentView.toolbelt directoriesView] updateDirectories];
+    [[_contentView.toolbelt jobsView] updateJobs];
 }
 
 - (int)numRunningSessions
@@ -8177,6 +8179,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
         [self hideAutoCommandHistory];
     }
     [[_contentView.toolbelt commandHistoryView] updateCommands];
+    [[_contentView.toolbelt jobsView] updateJobs];
     [[NSNotificationCenter defaultCenter] postNotificationName:kCurrentSessionDidChange object:nil];
     if ([[PreferencePanel sessionsInstance] isWindowLoaded] && ![iTermAdvancedSettingsModel pinEditSession]) {
         [self editSession:self.currentSession makeKey:NO];

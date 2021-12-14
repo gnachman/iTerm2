@@ -111,7 +111,7 @@ static NSDictionary *sGraphicIconMap;
 
 - (NSString *)normalizedCommand:(NSString *)nonnormalCommand {
     // A little hack for emacs. So far I haven't found anything else that needs normalization.
-    if ([nonnormalCommand hasPrefix:@"Emacs-"]) {
+    if ([nonnormalCommand hasPrefix:@"Emacs-"] || [nonnormalCommand hasPrefix:@"emacs-"]) {
         return @"emacs";
     }
     if ([nonnormalCommand hasPrefix:@"Python"] || [nonnormalCommand hasPrefix:@"python"]) {
@@ -128,7 +128,11 @@ static NSDictionary *sGraphicIconMap;
     if (!enabled) {
         return nil;
     }
-    command = [self normalizedCommand:command];
+    return [self imageForJobName:command];
+}
+
+- (NSImage *)imageForJobName:(NSString *)jobName {
+    NSString *command = [self normalizedCommand:jobName];
     NSString *logicalName = [sGraphicIconMap[command] firstObject];
     if (!logicalName) {
         return nil;
@@ -150,6 +154,9 @@ static NSDictionary *sGraphicIconMap;
         NSString *path = [appSupport stringByAppendingPathComponent:[iconName stringByAppendingPathExtension:@"png"]];
         image = [NSImage it_imageWithScaledBitmapFromFile:path pointSize:NSMakeSize(16, 16)];
     }
+    if (self.disableTinting) {
+        return image;
+    }
 
     NSString *colorCode = sGraphicColorMap[command];
     if (!colorCode) {
@@ -158,7 +165,6 @@ static NSDictionary *sGraphicIconMap;
     if (!colorCode) {
         colorCode = @"#888";
     }
-    
     NSColor *color = [NSColor colorFromHexString:colorCode];
     image = [image it_imageWithTintColor:color];
     images[command] = image;

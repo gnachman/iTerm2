@@ -302,8 +302,8 @@ static NSString *const kDynamicToolURL = @"URL";
 
 #pragma mark - NSView
 
-- (void)resizeWithOldSuperviewSize:(NSSize)oldSize {
-    [super resizeWithOldSuperviewSize:oldSize];
+- (void)resizeSubviewsWithOldSize:(NSSize)oldSize {
+    [super resizeSubviewsWithOldSize:oldSize];
     _menuButton.frame = self.menuButtonFrame;
 }
 
@@ -404,6 +404,11 @@ static NSString *const kDynamicToolURL = @"URL";
 - (ToolCapturedOutputView *)capturedOutputView {
     iTermToolWrapper *wrapper = [_tools objectForKey:kCapturedOutputToolName];
     return (ToolCapturedOutputView *)wrapper.tool;
+}
+
+- (ToolJobs *)jobsView {
+    iTermToolWrapper *wrapper = [_tools objectForKey:kJobsToolName];
+    return (ToolJobs *)wrapper.tool;
 }
 
 - (void)windowBackgroundColorDidChange {

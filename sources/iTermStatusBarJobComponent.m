@@ -133,7 +133,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)statusBarComponentDidClickWithView:(NSView *)view {
     NSPopover *popover = [[NSPopover alloc] init];
     pid_t pid = [[self.scope valueForVariableName:iTermVariableKeySessionChildPid] integerValue];
-    NSViewController *viewController = [[iTermJobTreeViewController alloc] initWithProcessID:pid];
+    iTermJobTreeViewController *viewController = [[iTermJobTreeViewController alloc] initWithProcessID:pid];
     popover.contentViewController = viewController;
     popover.contentSize = viewController.view.frame.size;
     popover.behavior = NSPopoverBehaviorSemitransient;
@@ -152,6 +152,7 @@ NS_ASSUME_NONNULL_BEGIN
     [popover showRelativeToRect:rect
                          ofView:relativeView
                   preferredEdge:preferredEdge];
+    [viewController sizeOutlineViewToFit];
 }
 
 @end

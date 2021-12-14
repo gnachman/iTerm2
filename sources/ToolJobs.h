@@ -11,15 +11,12 @@
 #import "FutureMethods.h"
 #import "iTermToolWrapper.h"
 
-@interface SignalPicker : NSComboBox <NSComboBoxDataSource>
-
-- (BOOL)isValid;
-
-@end
-
 @interface ToolJobs : NSView <
   ToolbeltTool,
   NSComboBoxDelegate,
   NSTableViewDelegate,
   NSTableViewDataSource>
+
+- (void)updateJobs;
+
 @end

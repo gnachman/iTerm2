@@ -566,6 +566,7 @@ DEFINE_SETTABLE_BOOL(noSyncSuppressBadPWDInArrangementWarning,
 DEFINE_SETTABLE_BOOL(noSyncNeverAskAboutMouseReportingFrustration, NoSyncNeverAskAboutMouseReportingFrustration, NO, SECTION_WARNINGS @"Suppress the notification asking if you want to disable mouse reporting that is shown after a drag followed by Cmd-C when mouse reporting is on?");
 DEFINE_SETTABLE_BOOL(noSyncDontWarnAboutTmuxPause, NoSyncDontWarnAboutTmuxPause, NO, SECTION_WARNINGS @"Suppress announcement that tmux will pause a session.");
 DEFINE_OPTIONAL_BOOL(noSyncClearAllBroadcast, nil, SECTION_WARNINGS @"Send Clear Session to all broadcasted-to sessions?");
+DEFINE_BOOL(noSyncSuppressSendSignal, NO, SECTION_WARNINGS @"Suppress warning about sending a signal to terminate a job.\nThis is used in the process tree, which you can find the toolbelt or by clicking the Jobs status bar component.");
 
 #pragma mark Pasteboard
 
@@ -613,7 +614,7 @@ DEFINE_INT(badgeTopMargin, 10, SECTION_BADGE @"Default value for the top margin 
 // Experimental features I'm afraid to turn on right now, but want to in the future:
 DEFINE_BOOL(killSessionsOnLogout, NO, SECTION_EXPERIMENTAL @"Kill sessions on logout.\nA possible fix for issue 4147.");
 DEFINE_BOOL(useExperimentalFontMetrics, NO, SECTION_EXPERIMENTAL @"Use a more theoretically correct technique to measure line height.\nYou must restart iTerm2 or adjust a session's font size for this change to take effect.");
-DEFINE_BOOL(fastForegroundJobUpdates, NO, SECTION_EXPERIMENTAL @"Enable low-latency updates of the current foreground job");
+DEFINE_BOOL(fastForegroundJobUpdates, YES, SECTION_EXPERIMENTAL @"Enable low-latency updates of the current foreground job");
 
 // Experiments currently under test
 DEFINE_BOOL(tmuxVariableWindowSizesSupported, YES, SECTION_EXPERIMENTAL @"Allow variable window sizes in tmux integration.\nRequres tmux version 2.9 or later.");

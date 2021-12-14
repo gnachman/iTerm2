@@ -8,10 +8,186 @@
 #import "iTermJobTreeViewController.h"
 
 #import "DebugLogging.h"
+#import "iTermGraphicSource.h"
 #import "iTermLSOF.h"
 #import "iTermProcessCache.h"
+#import "iTermWarning.h"
+#import "NSAppearance+iTerm.h"
 #import "NSArray+iTerm.h"
+#import "NSFont+iTerm.h"
+#import "NSImage+iTerm.h"
+#import "NSTableColumn+iTerm.h"
 #import "NSTextField+iTerm.h"
+
+static const int kDefaultSignal = 9;
+static int gSignalsToList[] = {
+     1, // SIGHUP
+     2, // SIGINTR
+     3, // SIGQUIT
+     6, // SIGABRT
+     9, // SIGKILL
+    15, // SIGTERM
+};
+
+@interface iTermJobTreeTextTableCellView: NSTableCellView
++ (instancetype)viewWithString:(NSString *)string font:(NSFont *)font from:(NSTableView *)tableView owner:(id)owner;
+@end
+
+@interface iTermJobTreeImageTableCellView: iTermJobTreeTextTableCellView
++ (instancetype)viewWithString:(NSString *)string image:(NSImage *)image font:(NSFont *)font from:(NSTableView *)tableView owner:(id)owner;
+@end
+
+@interface SignalPicker : NSComboBox <NSComboBoxDataSource>
+- (BOOL)isValid;
+
+@end
+
+@implementation SignalPicker
+
++ (NSArray *)signalNames {
+    return @[[NSNull null], @"HUP",  @"INT",  @"QUIT",
+             @"ILL",   @"TRAP", @"ABRT",   @"EMT",
+             @"FPE",   @"KILL", @"BUS",    @"SEGV",
+             @"SYS",   @"PIPE", @"ALRM",   @"TERM",
+             @"URG",   @"STOP", @"TSTP",   @"CONT",
+             @"CHLD",  @"TTIN", @"TTOU",   @"IO",
+             @"XCPU",  @"XFSZ", @"VTALRM", @"PROF",
+             @"WINCH", @"INFO", @"USR1",   @"USR2"];
+}
+
++ (int)signalForName:(NSString*)signalName {
+    signalName = [[signalName stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]] uppercaseString];
+    if ([signalName hasPrefix:@"SIG"]) {
+        signalName = [signalName substringFromIndex:3];
+    }
+    int x = [signalName intValue];
+    if (x > 0 && x < [[self signalNames] count]) {
+        return x;
+    }
+
+    NSArray *signalNames = [self signalNames];
+    NSUInteger index = [signalNames indexOfObject:signalName];
+    if (index == NSNotFound) {
+        return -1;
+    } else {
+        return index;
+    }
+}
+
+- (instancetype)initWithFrame:(NSRect)frameRect {
+    self = [super initWithFrame:frameRect];
+    if (self) {
+        [self commonInit];
+    }
+    return self;
+}
+
+- (instancetype)initWithCoder:(NSCoder *)coder {
+    self = [super initWithCoder:coder];
+    if (self) {
+        [self commonInit];
+    }
+    return self;
+}
+
+- (void)commonInit {
+    [self setIntValue:kDefaultSignal];
+    [self setUsesDataSource:YES];
+    [self setCompletes:YES];
+    [self setDataSource:self];
+
+    [[self cell] setControlSize:NSControlSizeSmall];
+    [[self cell] setFont:[NSFont it_toolbeltFont]];
+}
+
+- (int)intValue {
+    int x = [[self class] signalForName:[self stringValue]];
+    return x == -1 ? kDefaultSignal : x;
+}
+
+- (void)setIntValue:(int)i {
+    NSArray *signalNames = [[self class] signalNames];
+    if (i <= 0 || i >= [signalNames count]) {
+        i = kDefaultSignal;
+    }
+    [self setStringValue:signalNames[i]];
+    [self setToolTip:[NSString stringWithFormat:@"SIG%@ (%d)", signalNames[i], i]];
+}
+
+- (BOOL)isValid {
+    return [[self class] signalForName:[self stringValue]] != -1;
+}
+
+- (void)textDidEndEditing:(NSNotification *)aNotification {
+    [self setIntValue:[self intValue]];
+    id<NSComboBoxDelegate> comboBoxDelegate = (id<NSComboBoxDelegate>)[self delegate];
+    [comboBoxDelegate comboBoxSelectionIsChanging:[NSNotification notificationWithName:NSComboBoxSelectionIsChangingNotification
+                                                                                object:nil]];
+}
+
+- (void)textDidChange:(NSNotification *)notification {
+    id<NSComboBoxDelegate> comboBoxDelegate = (id<NSComboBoxDelegate>)[self delegate];
+    [comboBoxDelegate comboBoxSelectionIsChanging:[NSNotification notificationWithName:NSComboBoxSelectionIsChangingNotification
+                                                                                object:nil]];
+}
+
+- (void)sizeToFit {
+    NSRect frame = self.frame;
+    frame.size.width = 70;  // Just wide enough for the widest signal name.
+    self.frame = frame;
+}
+
+- (NSInteger)numberOfItemsInComboBox:(NSComboBox *)aComboBox {
+    return sizeof(gSignalsToList) / sizeof(gSignalsToList[0]);
+}
+
+- (id)comboBox:(NSComboBox *)aComboBox objectValueForItemAtIndex:(NSInteger)index {
+    NSArray *signalNames = [[self class] signalNames];
+    return signalNames[gSignalsToList[index]];
+}
+
+- (NSUInteger)comboBox:(NSComboBox *)aComboBox indexOfItemWithStringValue:(NSString *)aString {
+    if ([aString intValue] > 0) {
+        return NSNotFound;  // Without this, "1", "2", and "3" get replaced immediately!
+    }
+
+    int sig = [[self class] signalForName:aString];
+    for (int i = 0; i < sizeof(gSignalsToList) / sizeof(gSignalsToList[0]); i++) {
+        if (gSignalsToList[i] == sig) {
+            return i;
+        }
+    }
+    return NSNotFound;
+}
+
+- (NSString *)comboBox:(NSComboBox *)aComboBox completedString:(NSString *)uncompletedString {
+    uncompletedString =
+        [[uncompletedString stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]] uppercaseString];
+    if ([uncompletedString hasPrefix:@"SIG"]) {
+        uncompletedString = [uncompletedString substringFromIndex:3];
+    }
+
+    if ([uncompletedString length] == 0) {
+        return @"";
+    }
+
+    NSArray *signalNames = [[self class] signalNames];
+    int x = [uncompletedString intValue];
+    if (x > 0 && x < [signalNames count]) {
+        return uncompletedString;
+    }
+
+    for (int i = 1; i < [signalNames count]; i++) {
+        if ([signalNames[i] hasPrefix:uncompletedString]) {
+            // Found a prefix match
+            return signalNames[i];
+        }
+    }
+
+    return nil;
+}
+
+@end
 
 @interface iTermJobTreeViewController ()<NSOutlineViewDelegate, NSOutlineViewDataSource>
 @end
@@ -67,20 +243,33 @@
     iTermJobProxy *_root;
     pid_t _pid;
     IBOutlet NSOutlineView *_outlineView;
-    IBOutlet NSButton *_forceQuit;
     NSTimer *_timer;
+    IBOutlet SignalPicker *signal_;  // TODO - use this
+    IBOutlet NSButton *kill_;
+    iTermGraphicSource *_graphicSource;
 }
 
 - (instancetype)initWithProcessID:(pid_t)pid {
     self = [super initWithNibName:@"iTermJobTreeViewController" bundle:[NSBundle bundleForClass:[iTermJobTreeViewController class]]];
     if (self) {
         _pid = pid;
+        _animateChanges = YES;
+        _graphicSource = [[iTermGraphicSource alloc] init];
+        _graphicSource.disableTinting = YES;
     }
     return self;
 }
 
+- (void)awakeFromNib {
+    if (@available(macOS 10.16, *)) {
+        kill_.image = [NSImage it_imageForSymbolName:@"play" accessibilityDescription:@"Clear"];
+        _outlineView.style = NSTableViewStyleInset;
+    }
+    [self updateKillButtonEnabled];
+}
+
 - (void)viewDidAppear {
-    _forceQuit.enabled = (_outlineView.selectedRow != -1);
+    kill_.enabled = (_outlineView.selectedRow != -1);
 
     if (!_timer) {
         __weak __typeof(self) weakSelf = self;
@@ -96,15 +285,71 @@
     _timer = nil;
 }
 
+- (BOOL)anySelectedProcessHasChildren {
+    __block BOOL result = NO;
+    [_outlineView.selectedRowIndexes enumerateIndexesUsingBlock:^(NSUInteger idx, BOOL * _Nonnull stop) {
+        iTermJobProxy *job = [self->_outlineView itemAtRow:idx];
+        if (job.children.count > 0) {
+            result = YES;
+            *stop = YES;
+        }
+        return;
+    }];
+    return result;
+}
+
+- (BOOL)shouldQuit {
+    NSString *description;
+    const NSUInteger count = _outlineView.selectedRowIndexes.count;
+    if (count == 0) {
+        return NO;
+    }
+    if ([self anySelectedProcessHasChildren]) {
+        if (count == 1) {
+            description = @"one process and its children";
+        } else {
+            description = [NSString stringWithFormat:@"%@ processes and their children", @(count)];
+        }
+    } else {
+        if (count == 1) {
+            description = @"one process";
+        } else {
+            description = [NSString stringWithFormat:@"%@ processes", @(count)];
+        }
+    }
+
+    const iTermWarningSelection selection =
+    [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"Are you sure? This may terminate %@.", description]
+                               actions:@[ @"OK", @"Cancel"]
+                             accessory:nil
+                            identifier:@"NoSyncSuppressSendSignal"
+                           silenceable:kiTermWarningTypePermanentlySilenceable
+                               heading:@"Confirmation Needed"
+                                window:self.view.window];
+    return selection == kiTermWarningSelection0;
+}
+
 - (IBAction)forceQuit:(id)sender {
+    if (![self shouldQuit]) {
+        return;
+    }
     [_outlineView.selectedRowIndexes enumerateIndexesUsingBlock:^(NSUInteger idx, BOOL * _Nonnull stop) {
         iTermJobProxy *job = [self->_outlineView itemAtRow:idx];
         pid_t pid = job.pid;
         if (pid) {
-            DLog(@"Send SIGKILL to %@", @(pid));
-            kill(pid, SIGKILL);
+            DLog(@"Send %d to %@", [signal_ intValue], @(pid));
+            kill(pid, [signal_ intValue]);
         }
     }];
+    [self update];
+}
+
+- (void)setPid:(pid_t)pid {
+    if (pid == _pid) {
+        return;
+    }
+    _pid = pid;
+    _root = nil;
     [self update];
 }
 
@@ -159,13 +404,13 @@
             n++;
         } else if (oldPid < newPid) {
             DLog(@"Remove index %@ of %@", @(o), old);
-            [_outlineView removeItemsAtIndexes:[NSIndexSet indexSetWithIndex:o + offset] inParent:old withAnimation:YES];
+            [_outlineView removeItemsAtIndexes:[NSIndexSet indexSetWithIndex:o + offset] inParent:old withAnimation:self.animateChanges];
             offset -= 1;
             [old.children removeObject:oldChild];
             o++;
         } else {
             DLog(@"Insert index %@ in %@", @(i), old);
-            [_outlineView insertItemsAtIndexes:[NSIndexSet indexSetWithIndex:o + offset] inParent:old withAnimation:YES];
+            [_outlineView insertItemsAtIndexes:[NSIndexSet indexSetWithIndex:o + offset] inParent:old withAnimation:self.animateChanges];
             [old.children insertObject:newChild atIndex:o + offset];
             dispatch_async(dispatch_get_main_queue(), ^{
                 [self->_outlineView expandItem:newChild expandChildren:YES];
@@ -177,14 +422,14 @@
     }
     while (o < oldCount) {
         DLog(@"Remove index %@ of %@", @(o), old);
-        [_outlineView removeItemsAtIndexes:[NSIndexSet indexSetWithIndex:o + offset] inParent:old withAnimation:YES];
+        [_outlineView removeItemsAtIndexes:[NSIndexSet indexSetWithIndex:o + offset] inParent:old withAnimation:self.animateChanges];
         offset -= 1;
         [old.children removeObject:oldChildren[o]];
         o++;
     }
     while (n < newCount) {
         DLog(@"Insert index %@ in %@", @(i), old);
-        [_outlineView insertItemsAtIndexes:[NSIndexSet indexSetWithIndex:o + offset] inParent:old withAnimation:YES];
+        [_outlineView insertItemsAtIndexes:[NSIndexSet indexSetWithIndex:o + offset] inParent:old withAnimation:self.animateChanges];
         [old.children insertObject:newChildren[n] atIndex:o + offset];
         dispatch_async(dispatch_get_main_queue(), ^{
             [self->_outlineView expandItem:newChildren[n] expandChildren:YES];
@@ -203,6 +448,34 @@
     }
 }
 
+- (void)updateKillButtonEnabled {
+    const BOOL shouldBeEnabled = (_outlineView.selectedRowIndexes.count > 0 && [signal_ isValid]);
+    signal_.enabled = shouldBeEnabled;
+    kill_.enabled = shouldBeEnabled;
+}
+
+- (void)setFont:(NSFont *)font {
+    _font = font;
+    _outlineView.rowHeight = [_outlineView.tableColumns[0] suggestedRowHeight];
+    [_outlineView reloadData];
+}
+
+- (void)sizeOutlineViewToFit {
+    NSRect frame = NSZeroRect;
+    const NSSize fittingSize = [_outlineView fittingSize];
+    const NSSize contentSize = [_outlineView.enclosingScrollView contentSize];
+    frame.size = NSMakeSize(MAX(fittingSize.width, contentSize.width),
+                            fittingSize.height);
+    _outlineView.frame = frame;
+
+    // Figure out what the column widths need to sum to. I can't find a sane way to do this, so do it in a dumb way instead.
+    [_outlineView sizeLastColumnToFit];
+    const CGFloat totalWidth = _outlineView.tableColumns[0].width + _outlineView.tableColumns[1].width;
+
+    const CGFloat pidWidth = [[[[self tableCellViewWithString:@"MMMMMM" image:nil isJob:NO] textField] cell] cellSizeForBounds:_outlineView.bounds].width;
+    _outlineView.tableColumns.lastObject.width = pidWidth;
+    _outlineView.tableColumns.firstObject.width = totalWidth - pidWidth;
+}
 #pragma mark - NSOutlineViewDataSource
 
 - (NSInteger)outlineView:(NSOutlineView *)outlineView numberOfChildrenOfItem:(nullable id)item {
@@ -237,39 +510,139 @@
 
 - (nullable NSView *)outlineView:(NSOutlineView *)outlineView viewForTableColumn:(nullable NSTableColumn *)tableColumn item:(id)item {
     iTermJobProxy *info = item ?: _root;
-    NSString *identifier = @"processinfo";
-    NSTableCellView *view = [outlineView makeViewWithIdentifier:identifier owner:self];
-    if (!view) {
-        view = [[NSTableCellView alloc] init];
-
-        NSTextField *textField = [NSTextField it_textFieldForTableViewWithIdentifier:identifier];
-        textField.translatesAutoresizingMaskIntoConstraints = NO;
-        textField.font = [NSFont systemFontOfSize:[NSFont systemFontSize]];
-        view.textField = textField;
-        [view addSubview:textField];
-        [view addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|-0-[textField]-0-|"
-                                                                     options:0
-                                                                     metrics:nil
-                                                                       views:@{ @"textField": textField }]];
-        [view addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|-0-[textField]-0-|"
-                                                                     options:0
-                                                                     metrics:nil
-                                                                       views:@{ @"textField": textField }]];
-        textField.frame = view.bounds;
-        textField.autoresizingMask = (NSViewWidthSizable | NSViewHeightSizable);
-    }
-    if ([tableColumn.identifier isEqualToString:@"job"]) {
-        view.textField.stringValue = info.fullName ?: @"(terminated)";
+    NSString *string;
+    NSImage *image = nil;
+    const BOOL isJob = [tableColumn.identifier isEqualToString:@"job"];
+    if (isJob) {
+        string = info.fullName ?: @"(terminated)";
+        NSImage *rawImage = [_graphicSource imageForJobName:info.name];
+        if (rawImage) {
+            image = [NSImage imageWithSize:rawImage.size flipped:NO drawingHandler:^BOOL(NSRect dstRect) {
+                NSColor *tint;
+                if (self.view.effectiveAppearance.it_isDark) {
+                    tint = [NSColor colorWithWhite:1 alpha:1];
+                } else {
+                    tint = [NSColor colorWithWhite:0 alpha:1];
+                }
+                NSImage *tinted = [rawImage it_imageWithTintColor:tint];
+                [tinted drawInRect:dstRect
+                          fromRect:NSZeroRect
+                         operation:NSCompositingOperationSourceOver
+                          fraction:0.5];
+                return YES;
+            }];
+        }
     } else {
-        view.textField.stringValue = [@(info.pid) stringValue];
+        string = [@(info.pid) stringValue];
     }
-    return view;
+    return [self tableCellViewWithString:string image:image isJob:isJob];
+}
+
+- (NSTableCellView *)tableCellViewWithString:(NSString *)string image:(NSImage *)image isJob:(BOOL)isJob {
+    NSFont *font = self.font ?: [NSFont systemFontOfSize:[NSFont systemFontSize]];
+    if (isJob && image != nil) {
+        return [iTermJobTreeImageTableCellView viewWithString:string
+                                                        image:image
+                                                         font:font
+                                                         from:_outlineView
+                                                        owner:self];
+    } else {
+        return [iTermJobTreeTextTableCellView viewWithString:string
+                                                        font:font
+                                                        from:_outlineView
+                                                       owner:self];
+    }
 
 }
 
 - (void)outlineViewSelectionDidChange:(NSNotification *)notification {
-    NSOutlineView *outlineView = notification.object;
-    _forceQuit.enabled = (outlineView.selectedRow != -1);
+    [self updateKillButtonEnabled];
+}
+
+- (id<NSPasteboardWriting>)outlineView:(NSOutlineView *)outlineView pasteboardWriterForItem:(id)item {
+    iTermJobProxy *info = item ?: _root;
+    NSPasteboardItem *pbItem = [[NSPasteboardItem alloc] init];
+    NSString *aString = [@(info.pid) stringValue];
+    [pbItem setString:aString forType:(NSString *)kUTTypeUTF8PlainText];
+    return pbItem;
+}
+
+#pragma mark - NSComboBoxDelegate
+
+- (void)comboBoxSelectionIsChanging:(NSNotification *)notification {
+    [self updateKillButtonEnabled];
 }
 
 @end
+
+@implementation iTermJobTreeTextTableCellView
+
++ (instancetype)viewWithString:(NSString *)string font:(NSFont *)font from:(NSTableView *)tableView owner:(id)owner {
+    iTermJobTreeImageTableCellView *view = [tableView makeViewWithIdentifier:NSStringFromClass(self) owner:owner];
+    if (!view) {
+        view = [[self alloc] init];
+        view.autoresizesSubviews = NO;
+
+        NSTextField *textField = [NSTextField newLabelStyledTextField];
+        textField.font = font;
+        view.textField = textField;
+        [view addSubview:textField];
+        textField.frame = view.bounds;
+    }
+    view.textField.stringValue = string;
+    [view layoutSubviews];
+    return view;
+}
+
+- (void)resizeSubviewsWithOldSize:(NSSize)oldSize {
+    [self layoutSubviews];
+}
+
+- (void)layoutSubviews {
+    [self layoutTextFieldWithLeftInset:0];
+}
+
+- (void)layoutTextFieldWithLeftInset:(CGFloat)leftInset {
+    [self.textField sizeToFit];
+    const CGFloat width = MAX(NSWidth(self.textField.bounds), NSWidth(self.bounds));
+    self.textField.frame = NSMakeRect(leftInset, -2, width - leftInset, NSHeight(self.textField.frame) + 4);
+}
+
+@end
+
+@implementation iTermJobTreeImageTableCellView
+
++ (instancetype)viewWithString:(NSString *)string image:(NSImage *)image font:(NSFont *)font from:(NSTableView *)tableView owner:(id)owner {
+    iTermJobTreeImageTableCellView *view = [tableView makeViewWithIdentifier:NSStringFromClass(self) owner:owner];
+    if (!view) {
+        view = [self viewWithString:string font:font from:tableView owner:owner];
+    }
+    NSImageView *imageView = [[NSImageView alloc] initWithFrame:NSMakeRect(0, 0, 2, 2)];
+    if (image) {
+        imageView.image = image;
+    }
+    imageView.alphaValue = 0.75;
+    [view addSubview:imageView];
+    view.imageView = imageView;
+    [view layoutSubviews];
+    return view;
+}
+
+- (void)setFrame:(NSRect)frame {
+    [super setFrame:frame];
+    [self layoutSubviews];
+}
+
+- (void)resizeSubviewsWithOldSize:(NSSize)oldSize {
+    [self layoutSubviews];
+}
+
+- (void)layoutSubviews {
+    const CGFloat height = [self.textField fittingSize].height;
+    const CGFloat margin = 4;
+    [self layoutTextFieldWithLeftInset:height + margin];
+
+    self.imageView.frame = NSMakeRect(0, NSMaxY(self.textField.frame) - height, height, height);
+}
+@end
+
