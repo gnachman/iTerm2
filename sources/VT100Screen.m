@@ -2681,10 +2681,10 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     }
 
     NSDictionary<NSString *, NSNumber *> *lastVersionByShell =
-        @{ @"tcsh": @2,
-           @"bash": @5,
-           @"zsh": @5,
-           @"fish": @5 };
+        @{ @"tcsh": @3,
+           @"bash": @11,
+           @"zsh": @6,
+           @"fish": @6 };
     NSInteger latestKnownVersion = [lastVersionByShell[shell ?: @""] integerValue];
     if (shell) {
         [delegate_ screenDidDetectShell:shell];
