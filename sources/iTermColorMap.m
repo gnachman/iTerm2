@@ -45,9 +45,6 @@ const int kColorMapAnsiBrightModifier = 8;
 
 @implementation iTermColorMap {
     double _backgroundBrightness;
-    CGFloat _backgroundRed;
-    CGFloat _backgroundGreen;
-    CGFloat _backgroundBlue;
 
     // Memoized colors and components
     // Only 3 components are used here, but I'm paranoid screwing up and overflowing.
@@ -105,14 +102,6 @@ const int kColorMapAnsiBrightModifier = 8;
         }
     }
 
-    CGFloat components[4];
-    [colorInArbitrarySpace getComponents:components];
-    if (theKey == kColorMapBackground) {
-        _backgroundRed = [colorInArbitrarySpace redComponent];
-        _backgroundGreen = [colorInArbitrarySpace greenComponent];
-        _backgroundBlue = [colorInArbitrarySpace blueComponent];
-    }
-
     if (theKey == kColorMapBackground) {
         _backgroundBrightness = [theColor perceivedBrightness];
     }
@@ -120,6 +109,7 @@ const int kColorMapAnsiBrightModifier = 8;
     _map[@(theKey)] = theColor;
 
     // Get components again, now in SRGB (possibly it was already SRGB)
+    CGFloat components[4];
     [theColor getComponents:components];
     vector_float4 value = {
         (float)components[0],
@@ -489,9 +479,6 @@ const int kColorMapAnsiBrightModifier = 8;
     }
 
     other->_backgroundBrightness = _backgroundBrightness;
-    other->_backgroundRed = _backgroundRed;
-    other->_backgroundGreen = _backgroundGreen;
-    other->_backgroundBlue = _backgroundBlue;
 
     memmove(other->_lastTextComponents, _lastTextComponents, sizeof(_lastTextComponents));
     other->_lastTextColor = _lastTextColor;
