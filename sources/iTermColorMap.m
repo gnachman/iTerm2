@@ -86,30 +86,32 @@ const int kColorMapAnsiBrightModifier = 8;
     [_delegate colorMap:self mutingAmountDidChangeTo:mutingAmount];
 }
 
-- (void)setColor:(NSColor *)theColor forKey:(iTermColorMapKey)theKey {
+- (void)setColor:(NSColor *)colorInArbitrarySpace forKey:(iTermColorMapKey)theKey {
     if (theKey >= kColorMap24bitBase)
         return;
 
-    if (!theColor) {
+    if (!colorInArbitrarySpace) {
         [_map removeObjectForKey:@(theKey)];
         [_fastMap removeObjectForKey:@(theKey)];
         return;
     }
 
-    if (theColor == _map[@(theKey)] ||
-        [theColor isEqual:_map[@(theKey)]]) {
-        return;
+    NSColor *theColor = [colorInArbitrarySpace colorUsingColorSpace:[NSColorSpace sRGBColorSpace]];
+    {
+        NSColor *oldColor = _map[@(theKey)];
+        if (theColor == oldColor || [theColor isEqual:oldColor]) {
+            DLog(@"Color with key %@ unchanged (%@)", @(theKey), oldColor);
+            return;
+        }
     }
 
     CGFloat components[4];
-    [theColor getComponents:components];
+    [colorInArbitrarySpace getComponents:components];
     if (theKey == kColorMapBackground) {
-        _backgroundRed = [theColor redComponent];
-        _backgroundGreen = [theColor greenComponent];
-        _backgroundBlue = [theColor blueComponent];
+        _backgroundRed = [colorInArbitrarySpace redComponent];
+        _backgroundGreen = [colorInArbitrarySpace greenComponent];
+        _backgroundBlue = [colorInArbitrarySpace blueComponent];
     }
-
-    theColor = [theColor colorUsingColorSpace:[NSColorSpace sRGBColorSpace]];
 
     if (theKey == kColorMapBackground) {
         _backgroundBrightness = [theColor perceivedBrightness];

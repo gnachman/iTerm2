@@ -3924,6 +3924,14 @@ ITERM_WEAKLY_REFERENCEABLE
     _textview.highlightCursorLine = [iTermProfilePreferences boolForColorKey:KEY_USE_CURSOR_GUIDE
                                                                         dark:[NSApp effectiveAppearance].it_isDark
                                                                      profile:_profile];
+    __weak __typeof(self) weakSelf = self;
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [weakSelf markProfileInitialized];
+    });
+}
+
+- (void)markProfileInitialized {
+    DLog(@"Mark profile initialized %@", self);
     _profileInitialized = YES;
 }
 
