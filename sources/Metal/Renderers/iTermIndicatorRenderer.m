@@ -99,6 +99,7 @@ NS_ASSUME_NONNULL_BEGIN
     id<MTLBuffer> vertexBuffer = [self vertexBufferForFrame:descriptor.frame
                                                       scale:tState.configuration.scale
                                                viewportSize:tState.configuration.viewportSize
+                                                   topInset:tState.configuration.extraMargins.top
                                                     context:tState.poolContext];
 
     float alpha = descriptor.alpha;
@@ -118,10 +119,12 @@ NS_ASSUME_NONNULL_BEGIN
 - (id<MTLBuffer>)vertexBufferForFrame:(NSRect)frame
                                 scale:(CGFloat)scale
                          viewportSize:(vector_uint2)viewportSize
+                             topInset:(CGFloat)topInset
                               context:(iTermMetalBufferPoolContext *)context {
     CGRect textureFrame = CGRectMake(0, 0, 1, 1);
+    // Note this is *not* flipped, yet. y=0 is the top (visually).
     CGRect quad = CGRectMake(CGRectGetMinX(frame) * scale,
-                             CGRectGetMinY(frame) * scale,
+                             topInset + scale * CGRectGetMinY(frame),
                              CGRectGetWidth(frame) * scale,
                              CGRectGetHeight(frame) * scale);
     quad.origin.y = viewportSize.y - quad.origin.y - quad.size.height;

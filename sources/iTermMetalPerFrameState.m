@@ -609,10 +609,7 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
 }
 
 - (CGRect)badgeDestinationRect {
-    CGRect rect = _badgeDestinationRect;
-    rect.origin.x -= _documentVisibleRect.origin.x;
-    rect.origin.y -= _documentVisibleRect.origin.y;
-    return rect;
+    return _badgeDestinationRect;
 }
 
 - (NSImage *)badgeImage {

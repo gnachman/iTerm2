@@ -69,11 +69,15 @@ NS_ASSUME_NONNULL_BEGIN
     iTermBadgeRendererTransientState *tState = transientState;
     const CGSize size = tState.destinationRect.size;
     const CGFloat scale = tState.configuration.scale;
-    const CGFloat MARGIN_HEIGHT = [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins] * scale;
-    CGRect quad = CGRectMake(scale * tState.destinationRect.origin.x,
-                             tState.configuration.viewportSize.y - scale * CGRectGetMaxY(tState.destinationRect) - MARGIN_HEIGHT - transientState.configuration.extraMargins.top,
-                             scale * size.width,
-                             scale * size.height);
+
+    const CGFloat viewportHeight = tState.configuration.viewportSize.y;
+    const CGFloat topExtra = transientState.configuration.extraMargins.top;  // e.g. per-pane title bar, status bar
+    // This is the distance from the bottom of the viewport to the bottom of the badge image.
+    const CGFloat minY = viewportHeight - topExtra - scale * CGRectGetMaxY(tState.destinationRect);
+    const CGRect quad = CGRectMake(scale * tState.destinationRect.origin.x,
+                                   minY,
+                                   scale * size.width,
+                                   scale * size.height);
     // The destinationRect is clipped to the visible area.
     const CGFloat textureHeight = tState.textureSizeInPoints.height * tState.configuration.scale;
     const CGFloat fractionVisible = quad.size.height / textureHeight;

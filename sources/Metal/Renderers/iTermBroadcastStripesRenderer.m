@@ -98,10 +98,13 @@ NS_ASSUME_NONNULL_BEGIN
     size.height *= tState.configuration.scale;
     tState.size = size;
 
+    // The quad is exactly the area where text can appear, excluding margins.
     const vector_uint2 viewportSize = tState.configuration.viewportSizeExcludingLegacyScrollbars;
     const NSEdgeInsets margins = tState.margins;
-    const float destRight = margins.left + tState.cellConfiguration.gridSize.width * tState.cellConfiguration.cellSize.width;;
-    const float destHeight = viewportSize.y;
+    const float destRight = margins.left + tState.cellConfiguration.gridSize.width * tState.cellConfiguration.cellSize.width;
+    const float destHeight = viewportSize.y - tState.configuration.extraMargins.top - tState.configuration.extraMargins.bottom;
+    const float destBottom = tState.configuration.extraMargins.bottom;
+    const float destTop = destBottom + destHeight;
     const float destLeft = margins.left;
 
     const float textureWidth = (destRight - destLeft) / size.width;
@@ -109,13 +112,13 @@ NS_ASSUME_NONNULL_BEGIN
 
     const iTermVertex vertices[] = {
         // Pixel Positions, Texture Coordinates
-        { { destRight, 0 },              { textureWidth, 0 } },
-        { { destLeft,  0 },              { 0,            0 } },
-        { { destLeft,  destHeight },     { 0,            textureHeight } },
+        { { destRight, destBottom },     { textureWidth, 0 } },
+        { { destLeft,  destBottom },     { 0,            0 } },
+        { { destLeft,  destTop    },     { 0,            textureHeight } },
 
-        { { destRight, 0 },              { textureWidth, 0 } },
-        { { destLeft,  destHeight },     { 0,            textureHeight } },
-        { { destRight, destHeight },     { textureWidth, textureHeight } },
+        { { destRight, destBottom },     { textureWidth, 0 } },
+        { { destLeft,  destTop    },     { 0,            textureHeight } },
+        { { destRight, destTop    },     { textureWidth, textureHeight } },
     };
     tState.vertexBuffer = [_verticesPool requestBufferFromContext:tState.poolContext
                                                         withBytes:vertices

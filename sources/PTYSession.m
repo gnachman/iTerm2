@@ -9239,6 +9239,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
          includeBottomStatusBar:![iTermPreferences boolForKey:kPreferenceKeySeparateStatusBarsPerPane]];
 }
 
+// This includes the portion of the metal view that is obscured by the status bar or per-pane title bar.
 - (NSEdgeInsets)textViewExtraMargins {
     NSEdgeInsets margins = self.view.extraMargins;
     // This is here because of tmux panes. They cause some extra bottom
