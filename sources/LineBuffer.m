@@ -1391,4 +1391,11 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
     return sum;
 }
 
+- (void)seal {
+    if (_lineBlocks.lastBlock.isEmpty) {
+        return;
+    }
+    [self _addBlockOfSize:block_size];
+}
+
 @end

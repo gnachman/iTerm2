@@ -3172,40 +3172,43 @@ static inline void VT100ScreenEraseCell(screen_char_t *sct, iTermExternalAttribu
             inContext:(FindContext*)context
       multipleResults:(BOOL)multipleResults {
     DLog(@"begin self=%@ aString=%@", self, aString);
+    LineBuffer *tempLineBuffer = [[linebuffer_ copy] autorelease];
+    [tempLineBuffer seal];
+
     // Append the screen contents to the scrollback buffer so they are included in the search.
-    int linesPushed = [self.mutableCurrentGrid appendLines:[_state.currentGrid numberOfLinesUsed]
-                                              toLineBuffer:linebuffer_];
+    [self.mutableCurrentGrid appendLines:[_state.currentGrid numberOfLinesUsed]
+                            toLineBuffer:tempLineBuffer];
 
     // Get the start position of (x,y)
     LineBufferPosition *startPos;
-    startPos = [linebuffer_ positionForCoordinate:VT100GridCoordMake(x, y)
-                                            width:_state.currentGrid.size.width
-                                           offset:offset * (direction ? 1 : -1)];
+    startPos = [tempLineBuffer positionForCoordinate:VT100GridCoordMake(x, y)
+                                               width:_state.currentGrid.size.width
+                                              offset:offset * (direction ? 1 : -1)];
     if (!startPos) {
         // x,y wasn't a real position in the line buffer, probably a null after the end.
         if (direction) {
             DLog(@"Search from first position");
-            startPos = [linebuffer_ firstPosition];
+            startPos = [tempLineBuffer firstPosition];
         } else {
             DLog(@"Search from last position");
-            startPos = [[linebuffer_ lastPosition] predecessor];
+            startPos = [[tempLineBuffer lastPosition] predecessor];
         }
     } else {
         DLog(@"Search from %@", startPos);
         // Make sure startPos is not at or after the last cell in the line buffer.
         BOOL ok;
-        VT100GridCoord startPosCoord = [linebuffer_ coordinateForPosition:startPos
-                                                                    width:_state.currentGrid.size.width
-                                                             extendsRight:YES
-                                                                       ok:&ok];
-        LineBufferPosition *lastValidPosition = [[linebuffer_ lastPosition] predecessor];
+        VT100GridCoord startPosCoord = [tempLineBuffer coordinateForPosition:startPos
+                                                                       width:_state.currentGrid.size.width
+                                                                extendsRight:YES
+                                                                          ok:&ok];
+        LineBufferPosition *lastValidPosition = [[tempLineBuffer lastPosition] predecessor];
         if (!ok) {
             startPos = lastValidPosition;
         } else {
-            VT100GridCoord lastPositionCoord = [linebuffer_ coordinateForPosition:lastValidPosition
-                                                                            width:_state.currentGrid.size.width
-                                                                     extendsRight:YES
-                                                                               ok:&ok];
+            VT100GridCoord lastPositionCoord = [tempLineBuffer coordinateForPosition:lastValidPosition
+                                                                               width:_state.currentGrid.size.width
+                                                                        extendsRight:YES
+                                                                                  ok:&ok];
             assert(ok);
             long long s = startPosCoord.y;
             s *= _state.currentGrid.size.width;
@@ -3229,9 +3232,8 @@ static inline void VT100ScreenEraseCell(screen_char_t *sct, iTermExternalAttribu
     if (multipleResults) {
         opts |= FindMultipleResults;
     }
-    [linebuffer_ prepareToSearchFor:aString startingAt:startPos options:opts mode:mode withContext:context];
+    [tempLineBuffer prepareToSearchFor:aString startingAt:startPos options:opts mode:mode withContext:context];
     context.hasWrapped = NO;
-    [self mutPopScrollbackLines:linesPushed];
 }
 
 - (long long)mutFindContextAbsPosition {
@@ -3241,17 +3243,19 @@ static inline void VT100ScreenEraseCell(screen_char_t *sct, iTermExternalAttribu
 - (BOOL)mutContinueFindResultsInContext:(FindContext *)context
                                 toArray:(NSMutableArray *)results {
     // Append the screen contents to the scrollback buffer so they are included in the search.
-    int linesPushed;
+    LineBuffer *temporaryLineBuffer = [[linebuffer_ copy] autorelease];
+    [temporaryLineBuffer seal];
+
 #warning TODO: This is an unusual use of mutation since it is only temporary. But probably Find should happen off-thread anyway.
-    linesPushed = [self.mutableCurrentGrid appendLines:[_state.currentGrid numberOfLinesUsed]
-                                          toLineBuffer:linebuffer_];
+    [self.mutableCurrentGrid appendLines:[_state.currentGrid numberOfLinesUsed]
+                            toLineBuffer:temporaryLineBuffer];
 
     // Search one block.
     LineBufferPosition *stopAt;
     if (context.dir > 0) {
-        stopAt = [linebuffer_ lastPosition];
+        stopAt = [temporaryLineBuffer lastPosition];
     } else {
-        stopAt = [linebuffer_ firstPosition];
+        stopAt = [temporaryLineBuffer firstPosition];
     }
 
     struct timeval begintime;
@@ -3261,7 +3265,7 @@ static inline void VT100ScreenEraseCell(screen_char_t *sct, iTermExternalAttribu
     int ms_diff = 0;
     do {
         if (context.status == Searching) {
-            [linebuffer_ findSubstring:context stopAt:stopAt];
+            [temporaryLineBuffer findSubstring:context stopAt:stopAt];
         }
 
         // Handle the current state
@@ -3269,7 +3273,7 @@ static inline void VT100ScreenEraseCell(screen_char_t *sct, iTermExternalAttribu
             case Matched: {
                 // NSLog(@"matched");
                 // Found a match in the text.
-                NSArray *allPositions = [linebuffer_ convertPositions:context.results
+                NSArray *allPositions = [temporaryLineBuffer convertPositions:context.results
                                                             withWidth:_state.currentGrid.size.width];
                 for (XYRange *xyrange in allPositions) {
                     SearchResult *result = [[[SearchResult alloc] init] autorelease];
@@ -3309,11 +3313,11 @@ static inline void VT100ScreenEraseCell(screen_char_t *sct, iTermExternalAttribu
                     // NSLog(@"...wrapping");
                     // wrap around and resume search.
                     FindContext *tempFindContext = [[[FindContext alloc] init] autorelease];
-                    [linebuffer_ prepareToSearchFor:findContext_.substring
-                                         startingAt:(findContext_.dir > 0 ? [linebuffer_ firstPosition] : [[linebuffer_ lastPosition] predecessor])
-                                            options:findContext_.options
-                                               mode:findContext_.mode
-                                        withContext:tempFindContext];
+                    [temporaryLineBuffer prepareToSearchFor:findContext_.substring
+                                                 startingAt:(findContext_.dir > 0 ? [temporaryLineBuffer firstPosition] : [[temporaryLineBuffer lastPosition] predecessor])
+                                                    options:findContext_.options
+                                                       mode:findContext_.mode
+                                                withContext:tempFindContext];
                     [findContext_ reset];
                     // TODO test this!
                     [context copyFromFindContext:tempFindContext];
@@ -3338,9 +3342,9 @@ static inline void VT100ScreenEraseCell(screen_char_t *sct, iTermExternalAttribu
 
     switch (context.status) {
         case Searching: {
-            int numDropped = [linebuffer_ numberOfDroppedBlocks];
+            int numDropped = [temporaryLineBuffer numberOfDroppedBlocks];
             double current = context.absBlockNum - numDropped;
-            double max = [linebuffer_ largestAbsoluteBlockNumber] - numDropped;
+            double max = [temporaryLineBuffer largestAbsoluteBlockNumber] - numDropped;
             double p = MAX(0, current / max);
             if (context.dir > 0) {
                 context.progress = p;
@@ -3356,7 +3360,6 @@ static inline void VT100ScreenEraseCell(screen_char_t *sct, iTermExternalAttribu
     }
     // NSLog(@"Did %d iterations in %dms. Average time per block was %dms", iterations, ms_diff, ms_diff/iterations);
 
-    [self mutPopScrollbackLines:linesPushed];
     return keepSearching;
 }
 

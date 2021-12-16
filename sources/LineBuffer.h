@@ -251,6 +251,9 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)setPartial:(BOOL)partial;
 
+// If the last block is non-empty, make a new block to avoid having to copy it on write.
+- (void)seal;
+
 @end
 
 NS_ASSUME_NONNULL_END
