@@ -93,7 +93,7 @@ const int kColorMapAnsiBrightModifier = 8;
         return;
     }
 
-    NSColor *theColor = [colorInArbitrarySpace colorUsingColorSpace:[NSColorSpace sRGBColorSpace]];
+    NSColor *theColor = [colorInArbitrarySpace colorUsingColorSpace:[NSColorSpace it_defaultColorSpace]];
     {
         NSColor *oldColor = _map[@(theKey)];
         if (theColor == oldColor || [theColor isEqual:oldColor]) {
@@ -108,7 +108,7 @@ const int kColorMapAnsiBrightModifier = 8;
 
     _map[@(theKey)] = theColor;
 
-    // Get components again, now in SRGB (possibly it was already SRGB)
+    // Get components again, now in the default color space (which might be the same)
     CGFloat components[4];
     [theColor getComponents:components];
     vector_float4 value = {

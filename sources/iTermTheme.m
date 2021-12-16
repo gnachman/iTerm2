@@ -166,7 +166,7 @@
         if (!color) {
             return nil;
         }
-        return [colorMap colorByDimmingTextColor:[color colorUsingColorSpace:[NSColorSpace sRGBColorSpace]]];
+        return [colorMap colorByDimmingTextColor:[color colorUsingColorSpace:[NSColorSpace it_defaultColorSpace]]];
     } else {
         return [NSColor labelColor];
     }

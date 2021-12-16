@@ -834,24 +834,24 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
 }
 
 + (NSColor *)successMarkColor {
-    return [NSColor colorWithSRGBRed:0.53846
-                               green:0.757301
-                                blue:1
-                               alpha:1];
+    return [[NSColor colorWithSRGBRed:0.53846
+                                green:0.757301
+                                 blue:1
+                                alpha:1] colorUsingColorSpace:[NSColorSpace it_defaultColorSpace]];
 }
 
 + (NSColor *)errorMarkColor {
-    return [NSColor colorWithSRGBRed:0.987265
-                               green:0.447845
-                                blue:0.426244
-                               alpha:1];
+    return [[NSColor colorWithSRGBRed:0.987265
+                                green:0.447845
+                                 blue:0.426244
+                                alpha:1] colorUsingColorSpace:[NSColorSpace it_defaultColorSpace]];
 }
 
 + (NSColor *)otherMarkColor {
-    return [NSColor colorWithSRGBRed:0.856645
-                               green:0.847289
-                                blue:0.425771
-                               alpha:1];
+    return [[NSColor colorWithSRGBRed:0.856645
+                                green:0.847289
+                                 blue:0.425771
+                                alpha:1]  colorUsingColorSpace:[NSColorSpace it_defaultColorSpace]];
 }
 
 + (NSImage *)newImageWithMarkOfColor:(NSColor *)color
@@ -2015,14 +2015,14 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
 - (void)drawAttributedStringForMask:(NSAttributedString *)attributedString
                              origin:(NSPoint)origin
                     stringPositions:(CGFloat *)stringPositions {
-    CGColorRef black = [[NSColor colorWithSRGBRed:0 green:0 blue:0 alpha:1] CGColor];
+    CGColorRef black = [[NSColor it_colorInDefaultColorSpaceWithRed:0 green:0 blue:0 alpha:1] CGColor];
     NSAttributedString *modifiedAttributedString = [self attributedString:attributedString
                                                bySettingForegroundColorTo:black];
 
     [self drawTextOnlyAttributedStringWithoutUnderlineOrStrikethrough:modifiedAttributedString
                                                               atPoint:origin
                                                             positions:stringPositions
-                                                      backgroundColor:[NSColor colorWithSRGBRed:1 green:1 blue:1 alpha:1]
+                                                      backgroundColor:[NSColor it_colorInDefaultColorSpaceWithRed:1 green:1 blue:1 alpha:1]
                                                       graphicsContext:[NSGraphicsContext currentContext]
                                                                 smear:YES
                                                         virtualOffset:0];

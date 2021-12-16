@@ -11862,27 +11862,27 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)screenSetTabColorRedComponentTo:(CGFloat)color {
-    NSColor *curColor = [self tabColor];
-    [self setTabColor:[NSColor colorWithSRGBRed:color
-                                          green:[curColor greenComponent]
-                                           blue:[curColor blueComponent]
+    NSColor *curColor = [self tabColor] ?: [NSColor it_colorInDefaultColorSpaceWithRed:0 green:0 blue:0 alpha:0];
+    [self setTabColor:[curColor it_colorWithRed:curColor.redComponent
+                                          green:curColor.greenComponent
+                                           blue:color
                                           alpha:1]];
     [[_delegate parentWindow] updateTabColors];
 }
 
 - (void)screenSetTabColorGreenComponentTo:(CGFloat)color {
-    NSColor *curColor = [self tabColor];
-    [self setTabColor:[NSColor colorWithSRGBRed:[curColor redComponent]
+    NSColor *curColor = [self tabColor] ?: [NSColor it_colorInDefaultColorSpaceWithRed:0 green:0 blue:0 alpha:0];
+    [self setTabColor:[curColor it_colorWithRed:curColor.redComponent
                                           green:color
-                                           blue:[curColor blueComponent]
+                                           blue:curColor.blueComponent
                                           alpha:1]];
     [[_delegate parentWindow] updateTabColors];
 }
 
 - (void)screenSetTabColorBlueComponentTo:(CGFloat)color {
-    NSColor *curColor = [self tabColor];
-    [self setTabColor:[NSColor colorWithSRGBRed:[curColor redComponent]
-                                          green:[curColor greenComponent]
+    NSColor *curColor = [self tabColor] ?: [NSColor it_colorInDefaultColorSpaceWithRed:0 green:0 blue:0 alpha:0];
+    [self setTabColor:[curColor it_colorWithRed:curColor.redComponent
+                                          green:curColor.greenComponent
                                            blue:color
                                           alpha:1]];
     [[_delegate parentWindow] updateTabColors];

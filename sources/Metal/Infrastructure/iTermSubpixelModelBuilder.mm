@@ -12,6 +12,7 @@ extern "C" {
 }
 #import <Cocoa/Cocoa.h>
 
+#import "NSColor+iTerm.h"
 #import "NSImage+iTerm.h"
 #include <map>
 #include <unordered_map>
@@ -153,13 +154,9 @@ static NSString *const iTermSubpixelModelString = @"O";
                         kCGEncodingMacRoman);
 #pragma clang diagnostic pop
 
-    // TODO: could use extended srgb on macOS 10.12+
-    static CGColorSpaceRef srgb;
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        srgb = CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
-    });
-    CGContextSetFillColorSpace(ctx, srgb);
+#warning TODO: Test
+    CGColorSpaceRef cgColorSpace = [[NSColorSpace it_defaultColorSpace] CGColorSpace];
+    CGContextSetFillColorSpace(ctx, cgColorSpace);
     CGContextSetFillColor(ctx, components);
 
     CGContextSetAllowsFontSubpixelQuantization(ctx, YES);

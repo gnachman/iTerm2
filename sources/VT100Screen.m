@@ -2811,19 +2811,23 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
         cs = [colorString substringToIndex:colon];
         hex = [colorString substringFromIndex:colon + 1];
     } else {
-        cs = @"srgb";
+        if ([iTermAdvancedSettingsModel p3]) {
+            cs = @"p3";
+        } else {
+            cs = @"srgb";
+        }
         hex = colorString;
     }
     NSDictionary *colorSpaces = @{ @"srgb": @"sRGBColorSpace",
                                    @"rgb": @"genericRGBColorSpace",
                                    @"p3": @"displayP3ColorSpace" };
-    NSColorSpace *colorSpace = [NSColorSpace sRGBColorSpace];
+    NSColorSpace *colorSpace = [NSColorSpace it_defaultColorSpace];
     if (colorSpaces[cs]) {
         SEL selector = NSSelectorFromString(colorSpaces[cs]);
         if ([NSColorSpace respondsToSelector:selector]) {
             colorSpace = [[NSColorSpace class] performSelector:selector];
             if (!colorSpace) {
-                colorSpace = [NSColorSpace sRGBColorSpace];
+                colorSpace = [NSColorSpace it_defaultColorSpace];
             }
         }
     }

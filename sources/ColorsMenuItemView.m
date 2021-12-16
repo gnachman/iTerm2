@@ -218,7 +218,8 @@ const CGFloat iTermColorsMenuItemViewDisabledAlpha = 0.3;
         if (_mouseDown && _selectedIndex != NSNotFound) {
             showCheck = highlighted;
         } else {
-            showCheck = [self.currentColor isEqual:[self colorAtIndex:i enabled:YES]];
+            // Use an approximate check so it can round-trip through tmux.
+            showCheck = [self.currentColor isApproximatelyEqualToColor:[self colorAtIndex:i enabled:YES] epsilon:1/65535.0];
             if (_mouseDown) {
                 showCheck = NO;
             }
@@ -281,13 +282,13 @@ const CGFloat iTermColorsMenuItemViewDisabledAlpha = 0.3;
     if (result.count == 0) {
         // Fallback for if the string is totally broken.
         return @[
-            [NSColor colorWithSRGBRed:251.0/255.0 green:107.0/255.0 blue:98.0/255.0 alpha:1],
-            [NSColor colorWithSRGBRed:246.0/255.0 green:172.0/255.0 blue:71.0/255.0 alpha:1],
-            [NSColor colorWithSRGBRed:240.0/255.0 green:220.0/255.0 blue:79.0/255.0 alpha:1],
-            [NSColor colorWithSRGBRed:181.0/255.0 green:215.0/255.0 blue:73.0/255.0 alpha:1],
-            [NSColor colorWithSRGBRed:95.0/255.0 green:163.0/255.0 blue:248.0/255.0 alpha:1],
-            [NSColor colorWithSRGBRed:193.0/255.0 green:142.0/255.0 blue:217.0/255.0 alpha:1],
-            [NSColor colorWithSRGBRed:120.0/255.0 green:120.0/255.0 blue:120.0/255.0 alpha:1],
+            [[NSColor colorWithSRGBRed:251.0/255.0 green:107.0/255.0 blue:98.0/255.0 alpha:1] it_colorInDefaultColorSpace],
+            [[NSColor colorWithSRGBRed:246.0/255.0 green:172.0/255.0 blue:71.0/255.0 alpha:1] it_colorInDefaultColorSpace],
+            [[NSColor colorWithSRGBRed:240.0/255.0 green:220.0/255.0 blue:79.0/255.0 alpha:1] it_colorInDefaultColorSpace],
+            [[NSColor colorWithSRGBRed:181.0/255.0 green:215.0/255.0 blue:73.0/255.0 alpha:1] it_colorInDefaultColorSpace],
+            [[NSColor colorWithSRGBRed:95.0/255.0 green:163.0/255.0 blue:248.0/255.0 alpha:1] it_colorInDefaultColorSpace],
+            [[NSColor colorWithSRGBRed:193.0/255.0 green:142.0/255.0 blue:217.0/255.0 alpha:1] it_colorInDefaultColorSpace],
+            [[NSColor colorWithSRGBRed:120.0/255.0 green:120.0/255.0 blue:120.0/255.0 alpha:1] it_colorInDefaultColorSpace],
         ];
     }
     return result;

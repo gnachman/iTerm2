@@ -50,7 +50,7 @@ static vector_float4 VectorForColor(NSColor *color) {
     _nonasciiAntialias = (_useNonAsciiFont ? drawingHelper.nonAsciiAntiAlias : _asciiAntialias)  || forceAA;
     _useNativePowerlineGlyphs = drawingHelper.useNativePowerlineGlyphs;
     _showBroadcastStripes = drawingHelper.showStripes;
-    _processedDefaultBackgroundColor = [[drawingHelper defaultBackgroundColor] colorUsingColorSpace:textView.window.screen.colorSpace ?: [NSColorSpace sRGBColorSpace]];
+    _processedDefaultBackgroundColor = [[drawingHelper defaultBackgroundColor] colorUsingColorSpace:textView.window.screen.colorSpace ?: [NSColorSpace it_defaultColorSpace]];
     _isFrontTextView = (textView == [[iTermController sharedInstance] frontTextView]);
     _unfocusedSelectionColor = VectorForColor([[_colorMap colorForKey:kColorMapSelection] colorDimmedBy:2.0/3.0
                                                                                        towardsGrayLevel:0.5]);
@@ -60,7 +60,7 @@ static vector_float4 VectorForColor(NSColor *color) {
     // Cursor guide
     _cursorGuideEnabled = drawingHelper.highlightCursorLine;
     _cursorGuideColor = drawingHelper.cursorGuideColor;
-    _colorSpace = textView.window.screen.colorSpace ?: [NSColorSpace sRGBColorSpace];
+    _colorSpace = textView.window.screen.colorSpace ?: [NSColorSpace it_defaultColorSpace];
 
     // Background image
     _backgroundImageBlend = [glue backgroundImageBlend];

@@ -1292,13 +1292,12 @@ static const int kMaxScreenRows = 4096;
             g <= 255 &&
             b >= 0 &&
             b <= 255) {
-            NSColor* srgb = [NSColor colorWithSRGBRed:((double)r)/255.0
-                                                green:((double)g)/255.0
-                                                 blue:((double)b)/255.0
-                                                alpha:1];
-            NSColor *theColor = [srgb colorUsingColorSpace:[NSColorSpace genericRGBColorSpace]];
+            NSColor *color = [NSColor it_colorInDefaultColorSpaceWithRed:((double)r)/255.0
+                                                                   green:((double)g)/255.0
+                                                                    blue:((double)b)/255.0
+                                                                   alpha:1];
             *numberPtr = n;
-            return theColor;
+            return color;
         }
     }
     return nil;
@@ -3297,11 +3296,11 @@ static const int kMaxScreenRows = 4096;
         }
     }
     if ([part hasPrefix:@"#"]) {
-        int red, green, blue;
+        unsigned int red, green, blue;
         if (![part getHashColorRed:&red green:&green blue:&blue]) {
             return nil;
         }
-        return @[ @(red / 255.0), @(green / 255.0), @(blue / 255.0) ];
+        return @[ @(red / 65535.0), @(green / 65535.0), @(blue / 65535.0) ];
     }
     return nil;
 }
@@ -3316,11 +3315,13 @@ static const int kMaxScreenRows = 4096;
         } else {
             NSArray<NSNumber *> *components = [self xtermParseColorArgument:part];
             if (components) {
-                NSColor *srgb = [NSColor colorWithSRGBRed:components[0].doubleValue
-                                                    green:components[1].doubleValue
-                                                     blue:components[2].doubleValue
-                                                    alpha:1];
-                NSColor *theColor = [srgb colorUsingColorSpace:[NSColorSpace genericRGBColorSpace]];
+                // This is supposed to work like XParserColor which doesn't seem to be aware of
+                // color spaces besides "rgb" and various irrelevant others. I will take this as license
+                // to use the preferred color space.
+                NSColor *theColor = [NSColor it_colorInDefaultColorSpaceWithRed:components[0].doubleValue
+                                                                          green:components[1].doubleValue
+                                                                           blue:components[2].doubleValue
+                                                                          alpha:1];
                 [_delegate terminalSetColorTableEntryAtIndex:theIndex
                                                        color:theColor];
             } else if ([part isEqualToString:@"?"]) {
@@ -3494,11 +3495,11 @@ static const int kMaxScreenRows = 4096;
     } else {
         NSArray<NSNumber *> *components = [self xtermParseColorArgument:arg];
         if (components) {
-            NSColor *srgb = [NSColor colorWithSRGBRed:components[0].doubleValue
-                                                green:components[1].doubleValue
-                                                 blue:components[2].doubleValue
-                                                alpha:1];
-            NSColor *theColor = [srgb colorUsingColorSpace:[NSColorSpace genericRGBColorSpace]];
+            // See comment in executeXtermSetRgb about color spaces.
+            NSColor *theColor = [NSColor it_colorInDefaultColorSpaceWithRed:components[0].doubleValue
+                                                                      green:components[1].doubleValue
+                                                                       blue:components[2].doubleValue
+                                                                      alpha:1];
             [_delegate terminalSetColorTableEntryAtIndex:ptyIndex
                                                    color:theColor];
         }

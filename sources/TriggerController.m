@@ -672,7 +672,7 @@ NSString *const kTwoPraramValueColumnIdentifier = @"kTwoPraramValueColumnIdentif
                                                     wellFactory:
                           ^iTermColorWell *(NSRect frame,
                                             NSColor *color) {
-            iTermColorWell *well = [[iTermColorWell alloc] initWithFrame:frame];
+            iTermColorWell *well = [[iTermColorWell alloc] initWithFrame:frame colorSpace:[NSColorSpace it_defaultColorSpace]];
             well.noColorAllowed = YES;
             well.continuous = NO;
             well.tag = row;

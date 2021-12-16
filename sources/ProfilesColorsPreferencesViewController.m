@@ -164,6 +164,7 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
     NSDictionary *relatedViews = [self colorWellRelatedViews];
     for (NSString *key in colorWellDictionary) {
         CPKColorWell *colorWell = colorWellDictionary[key];
+        colorWell.colorSpace = [NSColorSpace it_defaultColorSpace];
         NSTextField *relatedView = relatedViews[key];
         [self defineControl:colorWell
                         key:key

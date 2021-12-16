@@ -1852,6 +1852,7 @@
 		A66719691DCE3965000CE608 /* libiTerm2SharedARC.a in Frameworks */ = {isa = PBXBuildFile; fileRef = A667195C1DCE36C3000CE608 /* libiTerm2SharedARC.a */; };
 		A667196A1DCE396A000CE608 /* libiTerm2SharedARC.a in Frameworks */ = {isa = PBXBuildFile; fileRef = A667195C1DCE36C3000CE608 /* libiTerm2SharedARC.a */; };
 		A667196B1DCE3970000CE608 /* libiTerm2SharedARC.a in Frameworks */ = {isa = PBXBuildFile; fileRef = A667195C1DCE36C3000CE608 /* libiTerm2SharedARC.a */; };
+		A667C235276AB01F006B4DEF /* iTermMetalUnavailableReason.m in Sources */ = {isa = PBXBuildFile; fileRef = A667C234276AB01F006B4DEF /* iTermMetalUnavailableReason.m */; };
 		A667EF9C243935AE0055CF3F /* iTermSwipeHandler.h in Headers */ = {isa = PBXBuildFile; fileRef = A667EF9A243935AE0055CF3F /* iTermSwipeHandler.h */; };
 		A667F3881B48671B00705186 /* libiTerm2Shared.a in Frameworks */ = {isa = PBXBuildFile; fileRef = A6C760501B45C4CF00E3C992 /* libiTerm2Shared.a */; };
 		A667F38B1B48AEF200705186 /* NSApplication+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A667F3891B48AEF200705186 /* NSApplication+iTerm.h */; };
@@ -5562,6 +5563,7 @@
 		A666D5F3221A1F9200D6184A /* iTermVariableScope+Global.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "iTermVariableScope+Global.m"; sourceTree = "<group>"; };
 		A666D5F6221A710B00D6184A /* iTermScriptFunctionCallTest.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermScriptFunctionCallTest.m; sourceTree = "<group>"; };
 		A667195C1DCE36C3000CE608 /* libiTerm2SharedARC.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libiTerm2SharedARC.a; sourceTree = BUILT_PRODUCTS_DIR; };
+		A667C234276AB01F006B4DEF /* iTermMetalUnavailableReason.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermMetalUnavailableReason.m; sourceTree = "<group>"; };
 		A667EF9A243935AE0055CF3F /* iTermSwipeHandler.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermSwipeHandler.h; sourceTree = "<group>"; };
 		A667F3861B48615900705186 /* iTermToolbeltTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermToolbeltTest.m; sourceTree = "<group>"; };
 		A667F3891B48AEF200705186 /* NSApplication+iTerm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSApplication+iTerm.h"; sourceTree = "<group>"; };
@@ -8998,6 +9000,7 @@
 				A67960891F81FC8C008A42BC /* Infrastructure */,
 				A67960881F81FC87008A42BC /* Renderers */,
 				A67960871F81FC81008A42BC /* Shaders */,
+				A667C234276AB01F006B4DEF /* iTermMetalUnavailableReason.m */,
 			);
 			name = Metal;
 			sourceTree = "<group>";
@@ -13898,6 +13901,7 @@
 				A6E112D725C615B400875D27 /* iTermHighlightLineTrigger.m in Sources */,
 				A621DDA9211D01D50095A399 /* NSAppearance+iTerm.m in Sources */,
 				A653F68D24CF4FE60062377E /* iTermGraphDatabase.m in Sources */,
+				A667C235276AB01F006B4DEF /* iTermMetalUnavailableReason.m in Sources */,
 				532755862387821C00C50732 /* iTermProcessMonitor.m in Sources */,
 				A6758565245AA23400827C25 /* iTermSwipeState.m in Sources */,
 				A6024B82254CE2000036D6CF /* iTermAddTriggerViewController.m in Sources */,

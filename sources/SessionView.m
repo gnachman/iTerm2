@@ -320,8 +320,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
                                   andObject:[NSColor colorWithWhite:0.7 alpha:1]],
 
                 // Annotation
-                tuple([NSColor colorWithSRGBRed:1 green:1 blue:0 alpha:1]),
-
+                tuple([NSColor it_colorInDefaultColorSpaceWithRed:1 green:1 blue:0 alpha:1]),
             ];
             _marksMinimap = [[iTermIncrementalMinimapView alloc] initWithColors:colors];
             [self addSubviewBelowFindView:_marksMinimap];
@@ -772,10 +771,8 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
         metalLayer.wantsExtendedDynamicRangeContent = YES;
         metalLayer.pixelFormat = MTLPixelFormatRGBA16Float;
     }
-    CGColorSpaceRef colorSpace = CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
-    _metalView.colorspace = colorSpace;
-    CFRelease(colorSpace);
-    
+    _metalView.colorspace = [[NSColorSpace it_defaultColorSpace] CGColorSpace];
+
     // Tell the clip view about it so it can ask the metalview to draw itself on scroll.
     _metalClipView.metalView = _metalView;
 

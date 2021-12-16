@@ -206,12 +206,17 @@ static const NSEventModifierFlags iTermHotkeyModifierMask = (NSEventModifierFlag
                                              blue:[[self objectForKey:kEncodedColorDictionaryBlueComponent] floatValue]
                                             alpha:alpha];
         return srgb;
-    } else {
-        return [NSColor colorWithCalibratedRed:[[self objectForKey:kEncodedColorDictionaryRedComponent] floatValue]
-                                         green:[[self objectForKey:kEncodedColorDictionaryGreenComponent] floatValue]
-                                          blue:[[self objectForKey:kEncodedColorDictionaryBlueComponent] floatValue]
-                                         alpha:alpha];
     }
+    if ([colorSpace isEqualToString:kEncodedColorDictionaryP3ColorSpace]) {
+        return [NSColor colorWithDisplayP3Red:[[self objectForKey:kEncodedColorDictionaryRedComponent] floatValue]
+                                        green:[[self objectForKey:kEncodedColorDictionaryGreenComponent] floatValue]
+                                         blue:[[self objectForKey:kEncodedColorDictionaryBlueComponent] floatValue]
+                                        alpha:alpha];
+    }
+    return [NSColor colorWithCalibratedRed:[[self objectForKey:kEncodedColorDictionaryRedComponent] floatValue]
+                                     green:[[self objectForKey:kEncodedColorDictionaryGreenComponent] floatValue]
+                                      blue:[[self objectForKey:kEncodedColorDictionaryBlueComponent] floatValue]
+                                     alpha:alpha];
 }
 
 - (NSDictionary *)dictionaryByRemovingNullValues {

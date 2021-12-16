@@ -175,7 +175,7 @@
                                                        tableView:nil
                                                      delegateOut:&delegateToSave
                                                      wellFactory:^CPKColorWell *(NSRect frame, NSColor *color) {
-        CPKColorWell *well = [[CPKColorWell alloc] initWithFrame:frame];
+        CPKColorWell *well = [[CPKColorWell alloc] initWithFrame:frame colorSpace:[NSColorSpace it_defaultColorSpace]];
         well.noColorAllowed = YES;
         well.continuous = YES;
         well.color = color;

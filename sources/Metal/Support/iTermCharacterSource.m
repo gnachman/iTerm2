@@ -16,6 +16,7 @@
 #import "iTermData.h"
 #import "iTermTextureArray.h"
 #import "NSArray+iTerm.h"
+#import "NSColor+iTerm.h"
 #import "NSImage+iTerm.h"
 #import "NSMutableData+iTerm.h"
 #import "NSStringITerm.h"
@@ -814,13 +815,13 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
     if (iTermTextIsMonochrome()) {
         switch (iteration) {
             case 0:
-                return [NSColor colorWithSRGBRed:0 green:0 blue:0 alpha:1];
+                return [NSColor it_colorInDefaultColorSpaceWithRed:0 green:0 blue:0 alpha:1];
             case 1:
-                return [NSColor colorWithSRGBRed:1 green:0 blue:0 alpha:1];
+                return [NSColor it_colorInDefaultColorSpaceWithRed:1 green:0 blue:0 alpha:1];
             case 2:
-                return [NSColor colorWithSRGBRed:0 green:1 blue:0 alpha:1];
+                return [NSColor it_colorInDefaultColorSpaceWithRed:0 green:1 blue:0 alpha:1];
             case 3:
-                return [NSColor colorWithSRGBRed:1 green:1 blue:1 alpha:1];
+                return [NSColor it_colorInDefaultColorSpaceWithRed:1 green:1 blue:1 alpha:1];
         }
         ITAssertWithMessage(NO, @"bogus iteration %@", @(iteration));
     }

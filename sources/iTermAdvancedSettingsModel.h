@@ -235,6 +235,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (int)optimumTabWidth;
 + (BOOL)optionIsMetaForSpecialChars;
 + (BOOL)oscColorReport16Bits;
++ (BOOL)p3;
 + (int)pasteHistoryMaxOptions;
 + (BOOL)pastingClearsSelection;
 + (NSString *)pathsToIgnore;

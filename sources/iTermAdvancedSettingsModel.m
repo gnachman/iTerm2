@@ -246,7 +246,7 @@ DEFINE_FLOAT(minimalSelectedTabUnderlineProminence, 1, SECTION_TABS @"Prominence
 DEFINE_BOOL(allowInteractiveSwipeBetweenTabs, YES, SECTION_TABS @"Allow two-finger interactive swipe between tabs?\nThe system preference Trackpad > More Gestures > Swipe between pages controls this globally. When “swipe with two fingers” is enabled, you can change this setting to “No” to prevent swiping between tabs in iTerm2.");
 DEFINE_BOOL(selectsTabsOnMouseDown, YES, SECTION_TABS @"Select tabs on mouse-down?\nChanging this setting will not affect existing windows.");
 DEFINE_FLOAT(minimalDeslectedColoredTabAlpha, 0.5, SECTION_TABS @"Alpha value for tab color for non-selected colored tabs in the Minimal theme.\nMust be between 0 and 1.");
-DEFINE_STRING(tabColorMenuOptions, @"#fb6b62 #f6ac47 #f0dc4f #b5d749 #5fa3f8 #c18ed9 #787878", SECTION_TABS @"Colors for tab color menu item.\nSpace delimited strings like #rrggbb or #rgb in sRGB color space.");
+DEFINE_STRING(tabColorMenuOptions, @"#fb6b62 #f6ac47 #f0dc4f #b5d749 #5fa3f8 #c18ed9 #787878", SECTION_TABS @"Colors for tab color menu item.\nSpace delimited strings like #rrggbb or #rgb in sRGB color space. If the P3 color space is available, you can use strings like: color(p3 1 0.5 0.25)");
 
 #pragma mark Mouse
 
@@ -330,6 +330,7 @@ DEFINE_BOOL(shouldSetTerminfoDirs, YES, SECTION_TERMINAL @"Set $TERMINFO_DIRS to
 
 // See the discussion in -[VT100Output reportSecondaryDeviceAttribute]
 DEFINE_INT(xtermVersion, 2500, SECTION_TERMINAL @"xterm version for secondary device attributes (SDA).\nIncreasing this number enables more features in apps but may break things. Use 95 to recover pre-3.4.10 behavior.");
+DEFINE_BOOL(p3, YES, SECTION_TERMINAL @"Use P3 as default color space? If No, sRGB will be used.");
 
 #pragma mark Hotkey
 

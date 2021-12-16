@@ -42,7 +42,7 @@ struct CodableColor: Codable {
 
     func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        if color.it_colorSpace == NSColorSpace.sRGB {
+        if Self.hexEncodableColorSpaces.contains(color.it_colorSpace) {
             try container.encode(color.hexString(), forKey: .hexString)
         } else  {
             let keyedArchiver = NSKeyedArchiver(requiringSecureCoding: true)
@@ -50,11 +50,13 @@ struct CodableColor: Codable {
             try container.encode(keyedArchiver.encodedData, forKey: .fallback)
         }
     }
+
+    static var hexEncodableColorSpaces: [NSColorSpace?] = [NSColorSpace.sRGB, NSColorSpace.displayP3]
 }
 
 extension CodableColor: CustomDebugStringConvertible {
     var debugDescription: String {
-        if color.it_colorSpace == NSColorSpace.sRGB {
+        if Self.hexEncodableColorSpaces.contains(color.it_colorSpace) {
             return color.hexString()
         }
         return color.debugDescription

@@ -2237,7 +2237,7 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
     return @(value);
 }
 
-- (BOOL)getHashColorRed:(int *)red green:(int *)green blue:(int *)blue {
+- (BOOL)getHashColorRed:(unsigned int *)red green:(unsigned int *)green blue:(unsigned int *)blue {
     if (![self hasPrefix:@"#"]) {
         return NO;
     }
@@ -2248,18 +2248,36 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
         NSString *extended = [NSString stringWithFormat:@"#%@%@%@%@%@%@", first, first, second, second, third, third];
         return [extended getHashColorRed:red green:green blue:blue];
     }
-    if (self.length != 7) {
+    if (self.length == 7) {
+        NSScanner *scanner = [NSScanner scannerWithString:[self substringFromIndex:1]];
+        unsigned long long ll;
+        if (![scanner scanHexLongLong:&ll]) {
+            return NO;
+        }
+        // Callers divide the result by 65535 and we want them to get the same as when they used to divide it by 255.
+        double (^f)(long long) = ^double(long long ival) {
+            return ((ival & 0xff) * 257);
+        };
+        *red = f(ll >> 16);
+        *green = f(ll >> 8);
+        *blue = f(ll >> 0);
+        return YES;
+    }
+    if (self.length != 13) {
         return NO;
     }
 
-    NSScanner *scanner = [NSScanner scannerWithString:[self substringFromIndex:1]];
-    unsigned long long ll;
-    if (![scanner scanHexLongLong:&ll]) {
-        return NO;
+    NSUInteger offset = 1;
+    const NSUInteger stride = 4;
+    unsigned int *pointers[] = {red, green, blue};
+    for (int i = 0; i < 3; i++, offset += stride) {
+        NSScanner *scanner = [NSScanner scannerWithString:[self substringWithRange:NSMakeRange(offset, 4)]];
+        unsigned long long ll;
+        if (![scanner scanHexLongLong:&ll]) {
+            return NO;
+        }
+        *pointers[i] = (unsigned int)ll;
     }
-    *red = (ll >> 16) & 0xff;
-    *green = (ll >> 8) & 0xff;
-    *blue = (ll >> 0) & 0xff;
     return YES;
 }
 

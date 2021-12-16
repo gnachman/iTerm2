@@ -35,6 +35,7 @@
 #import "iTermTextureArray.h"
 #import "MovingAverage.h"
 #import "NSArray+iTerm.h"
+#import "NSColor+iTerm.h"
 #import "NSMutableData+iTerm.h"
 #import <stdatomic.h>
 
@@ -1154,10 +1155,10 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth {
     if (imeInfo) {
         iTermCursorRendererTransientState *tState = [frameData transientStateForRenderer:_imeCursorRenderer];
         tState.coord = imeInfo.cursorCoord;
-        tState.color = [NSColor colorWithSRGBRed:iTermIMEColor.x
-                                           green:iTermIMEColor.y
-                                            blue:iTermIMEColor.z
-                                           alpha:iTermIMEColor.w];
+        tState.color = [NSColor it_colorInDefaultColorSpaceWithRed:iTermIMEColor.x
+                                                             green:iTermIMEColor.y
+                                                              blue:iTermIMEColor.z
+                                                             alpha:iTermIMEColor.w];
     }
 }
 

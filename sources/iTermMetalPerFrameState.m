@@ -64,9 +64,8 @@ typedef struct {
     BOOL image;
 } iTermBackgroundColorKey;
 
-static vector_float4 VectorForColor(NSColor *srgb, NSColorSpace *colorSpace) {
-#warning TODO: This needs to be cached.
-    NSColor *color = [srgb colorUsingColorSpace:colorSpace];
+static vector_float4 VectorForColor(NSColor *colorInUnknownSpace, NSColorSpace *colorSpace) {
+    NSColor *color = [colorInUnknownSpace colorUsingColorSpace:colorSpace];
     return (vector_float4) { color.redComponent, color.greenComponent, color.blueComponent, color.alphaComponent };
 }
 

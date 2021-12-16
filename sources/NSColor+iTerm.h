@@ -23,6 +23,7 @@ extern NSString *const kEncodedColorDictionaryColorSpace;  // Optional, defaults
 // Values for kEncodedColorDictionaryColorSpace key
 extern NSString *const kEncodedColorDictionarySRGBColorSpace;
 extern NSString *const kEncodedColorDictionaryCalibratedColorSpace;
+extern NSString *const kEncodedColorDictionaryP3ColorSpace;
 
 static inline float SIMDPerceivedBrightness(vector_float4 x) {
     static const vector_float4 y = (vector_float4){ 0.30, 0.59, 0.11, 0 };
@@ -75,14 +76,6 @@ CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b);
                         green:(int)green
                          blue:(int)blue;
 
-+ (NSColor *)colorWith8BitRed:(int)red
-                        green:(int)green
-                         blue:(int)blue
-                       muting:(double)muting
-                backgroundRed:(CGFloat)bgRed
-              backgroundGreen:(CGFloat)bgGreen
-               backgroundBlue:(CGFloat)bgBlue;
-
 // Modify r,g,b to have brightness t, placing the values in result which should hold 4 CGFloats.
 + (void)getComponents:(CGFloat *)result
       forColorWithRed:(CGFloat)r
@@ -98,6 +91,8 @@ CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b);
         forComponents:(CGFloat *)mainComponents
   withContrastAgainstComponents:(CGFloat *)otherComponents
                 minimumContrast:(CGFloat)minimumContrast;
+
++ (NSColor *)it_colorInDefaultColorSpaceWithRed:(CGFloat)red green:(CGFloat)green blue:(CGFloat)blue alpha:(CGFloat)alpha;
 
 - (int)nearestIndexIntoAnsi256ColorTable;
 
@@ -119,10 +114,18 @@ CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b);
 - (NSColor *)it_colorByDimmingByAmount:(double)dimmingAmount;
 
 - (NSColor *)it_colorWithAppearance:(NSAppearance *)appearance;
+- (NSColor *)it_colorWithRed:(CGFloat)red green:(CGFloat)green blue:(CGFloat)blue alpha:(CGFloat)alpha;
+- (NSColor *)it_colorInDefaultColorSpace;
 
 // Unlike -colorSpace, this is safe to use from Swift. It does not throw an exception, but returns nil for catalog colors and such.
 @property (nonatomic, readonly) NSColorSpace * _Nullable it_colorSpace;
 
+- (BOOL)isApproximatelyEqualToColor:(NSColor *)other epsilon:(double)e;
+
+@end
+
+@interface NSColorSpace(iTerm)
++ (instancetype)it_defaultColorSpace;
 @end
 
 NS_ASSUME_NONNULL_END
