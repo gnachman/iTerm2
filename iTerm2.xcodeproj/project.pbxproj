@@ -1854,6 +1854,9 @@
 		A667196B1DCE3970000CE608 /* libiTerm2SharedARC.a in Frameworks */ = {isa = PBXBuildFile; fileRef = A667195C1DCE36C3000CE608 /* libiTerm2SharedARC.a */; };
 		A667C235276AB01F006B4DEF /* iTermMetalUnavailableReason.m in Sources */ = {isa = PBXBuildFile; fileRef = A667C234276AB01F006B4DEF /* iTermMetalUnavailableReason.m */; };
 		A667C238276BD5A0006B4DEF /* VT100Grid.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D8B8A131806038F00C2DC25 /* VT100Grid.m */; };
+		A667C239276BD8CF006B4DEF /* VT100StateMachine.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E525D01A9C5725007B898E /* VT100StateMachine.m */; };
+		A667C23A276BD90B006B4DEF /* VT100State.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E525CF1A9C5725007B898E /* VT100State.m */; };
+		A667C23B276BD931006B4DEF /* VT100StateTransition.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E525CE1A9C5725007B898E /* VT100StateTransition.m */; };
 		A667EF9C243935AE0055CF3F /* iTermSwipeHandler.h in Headers */ = {isa = PBXBuildFile; fileRef = A667EF9A243935AE0055CF3F /* iTermSwipeHandler.h */; };
 		A667F3881B48671B00705186 /* libiTerm2Shared.a in Frameworks */ = {isa = PBXBuildFile; fileRef = A6C760501B45C4CF00E3C992 /* libiTerm2Shared.a */; };
 		A667F38B1B48AEF200705186 /* NSApplication+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A667F3891B48AEF200705186 /* NSApplication+iTerm.h */; };
@@ -2875,9 +2878,6 @@
 		A6C763C11B45C52B00E3C992 /* VT100CSIParser.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A13AB018C33ED300B241ED /* VT100CSIParser.m */; };
 		A6C763C31B45C52B00E3C992 /* VT100OtherParser.m in Sources */ = {isa = PBXBuildFile; fileRef = A647E3A318C352B000450FA1 /* VT100OtherParser.m */; };
 		A6C763C51B45C52B00E3C992 /* VT100Parser.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A13AB518C33FC500B241ED /* VT100Parser.m */; };
-		A6C763C61B45C52B00E3C992 /* VT100State.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E525CF1A9C5725007B898E /* VT100State.m */; };
-		A6C763C71B45C52B00E3C992 /* VT100StateMachine.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E525D01A9C5725007B898E /* VT100StateMachine.m */; };
-		A6C763C81B45C52B00E3C992 /* VT100StateTransition.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E525CE1A9C5725007B898E /* VT100StateTransition.m */; };
 		A6C763C91B45C52B00E3C992 /* VT100StringParser.m in Sources */ = {isa = PBXBuildFile; fileRef = A647E3A818C353C500450FA1 /* VT100StringParser.m */; };
 		A6C763CB1B45C52B00E3C992 /* VT100TmuxParser.m in Sources */ = {isa = PBXBuildFile; fileRef = A680AA1218CEA1040034D4F8 /* VT100TmuxParser.m */; };
 		A6C763CC1B45C52B00E3C992 /* VT100Token.m in Sources */ = {isa = PBXBuildFile; fileRef = A647E3B218C36D0300450FA1 /* VT100Token.m */; };
@@ -14001,6 +14001,7 @@
 				A6AFD68524496EC2007D0660 /* iTermMultiServerMessage.m in Sources */,
 				A655E6962066C78700DC21B9 /* iTermScrollAccumulator.m in Sources */,
 				A648DAC72427E8E900C2FF02 /* iTermSearchQueryDidChangeNotification.m in Sources */,
+				A667C23B276BD931006B4DEF /* VT100StateTransition.m in Sources */,
 				A61A85AA24F23C9B00B03880 /* iTermGlobalSearchOutlineView.m in Sources */,
 				A6A4B2A32418977300184EAC /* iTermDynamicProfileManager.m in Sources */,
 				A63011AA20E7EDFC008114B7 /* iTermStatusBarKnobCheckboxViewController.m in Sources */,
@@ -14151,6 +14152,7 @@
 				A6866B6223C856A700ACD94C /* iTermAnnouncementViewController.m in Sources */,
 				A6E14D7B275AC0E600D0F41C /* PSMProgressIndicator.m in Sources */,
 				5370679F21C9D2780088D0F3 /* SIGCertificate.m in Sources */,
+				A667C23A276BD90B006B4DEF /* VT100State.m in Sources */,
 				A6A4866720B6780C00493302 /* iTermAdvancedSettingsModel.m in Sources */,
 				A60E045A26DD537B00DD162B /* AsyncFilter.swift in Sources */,
 				A6153D5521F3D72A002976FC /* iTermStatusBarLayoutAlgorithm.m in Sources */,
@@ -14308,6 +14310,7 @@
 				A62EED9F20E010C000943DE3 /* iTermScriptImporter.m in Sources */,
 				530AB8C120B4E1DE00D2AA08 /* iTermRPCTrigger.m in Sources */,
 				A6F22AC02396326200C5D1A9 /* iTermSyntheticConfParser.m in Sources */,
+				A667C239276BD8CF006B4DEF /* VT100StateMachine.m in Sources */,
 				A6588826201E41A5006F48DB /* iTermMetalDebugInfo.m in Sources */,
 				A666D5F5221A1F9200D6184A /* iTermVariableScope+Global.m in Sources */,
 				530AB8B520B2098000D2AA08 /* iTermVariables.m in Sources */,
@@ -14516,10 +14519,8 @@
 				A6C7630E1B45C52B00E3C992 /* iTermBackgroundColorRun.m in Sources */,
 				A6C762E41B45C52B00E3C992 /* TaskNotifier.m in Sources */,
 				A6C763581B45C52B00E3C992 /* iTermOpenQuicklyView.m in Sources */,
-				A6C763C71B45C52B00E3C992 /* VT100StateMachine.m in Sources */,
 				A6C763231B45C52B00E3C992 /* MovePaneController.m in Sources */,
 				A67778CD1CFFAE8D00DEED78 /* NSApplication+iTerm.m in Sources */,
-				A6C763C81B45C52B00E3C992 /* VT100StateTransition.m in Sources */,
 				A6FC49871C3A31840061B3BA /* iTermSystemVersion.m in Sources */,
 				A6CEBFBC1DCE7E09009F4FD2 /* Api.pbobjc.m in Sources */,
 				A6FF4AF0246D10D900410BA2 /* iTermThreadSafety.m in Sources */,
@@ -14697,7 +14698,6 @@
 				A6C762BB1B45C52B00E3C992 /* NSMutableDictionary+Profile.m in Sources */,
 				A685D9FB1E5B6E100091C3A7 /* PseudoTerminal+TouchBar.m in Sources */,
 				A66DB8431CA24E8900233E88 /* iTermAutoMasterParser.m in Sources */,
-				A6C763C61B45C52B00E3C992 /* VT100State.m in Sources */,
 				A6EF5BC625BCCC0900807157 /* PseudoTerminalRestorer.m in Sources */,
 				A6C762CA1B45C52B00E3C992 /* iTermApplicationDelegate.m in Sources */,
 				A6C762C11B45C52B00E3C992 /* NSTextField+iTerm.m in Sources */,

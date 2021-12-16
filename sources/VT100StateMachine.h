@@ -4,10 +4,10 @@
 
 @interface VT100StateMachine : NSObject<NSCopying>
 
-@property(nonatomic, retain) VT100State *groundState;
-@property(nonatomic, assign) VT100State *currentState;
+@property(nonatomic, strong) VT100State *groundState;
+@property(nonatomic, weak) VT100State *currentState;
 @property(nonatomic, readonly) NSMutableArray *states;
-@property(nonatomic, retain) NSDictionary *userInfo;
+@property(nonatomic, strong) NSDictionary *userInfo;
 
 - (void)addState:(VT100State *)state;
 - (void)handleCharacter:(unsigned char)character;

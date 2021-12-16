@@ -10,7 +10,7 @@
 }
 
 + (instancetype)stateWithName:(NSString *)name identifier:(NSObject *)identifier {
-    VT100State *state = [[[self alloc] initWithName:name] autorelease];
+    VT100State *state = [[self alloc] initWithName:name];
     state.identifier = identifier;
     return state;
 }
@@ -22,15 +22,6 @@
         _transitions = [[NSMutableDictionary alloc] init];
     }
     return self;
-}
-
-- (void)dealloc {
-    [_name release];
-    [_transitions release];
-    [_identifier release];
-    [_entryAction release];
-    [_exitAction release];
-    [super dealloc];
 }
 
 - (NSString *)description {
