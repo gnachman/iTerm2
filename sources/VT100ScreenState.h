@@ -10,6 +10,7 @@
 #import <Foundation/Foundation.h>
 
 #import "IntervalTree.h"
+#import "VT100Grid.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -47,6 +48,13 @@ NS_ASSUME_NONNULL_BEGIN
 // to an id<IntervalTreeObject>, which is either PTYNoteViewController or VT100ScreenMark.
 @property (nonatomic, strong, readonly) id<IntervalTreeReading> intervalTree;
 
+@property (nonatomic, strong, readonly) id<VT100GridReading> primaryGrid;
+@property (nullable, nonatomic, strong, readonly) id<VT100GridReading> altGrid;
+// Points to either primaryGrid or altGrid.
+@property (nonatomic, strong, readonly) id<VT100GridReading> currentGrid;
+// When a saved grid is swapped in, this is the live current grid.
+@property (nonatomic, strong, readonly) id<VT100GridReading> realCurrentGrid;
+
 @end
 
 @interface VT100ScreenMutableState: NSObject<VT100ScreenState, NSCopying>
@@ -66,6 +74,12 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, strong, readwrite) iTermOrderEnforcer *setWorkingDirectoryOrderEnforcer;
 @property (nonatomic, strong, readwrite) iTermOrderEnforcer *currentDirectoryDidChangeOrderEnforcer;
 @property (nonatomic, strong, readwrite) IntervalTree *intervalTree;
+
+@property (nonatomic, strong, readwrite) VT100Grid *primaryGrid;
+@property (nullable, nonatomic, strong, readwrite) VT100Grid *altGrid;
+@property (nonatomic, strong, readwrite) VT100Grid *currentGrid;
+// When a saved grid is swapped in, this is the live current grid.
+@property (nullable, nonatomic, strong, readwrite) VT100Grid *realCurrentGrid;
 
 - (id<VT100ScreenState>)copy;
 

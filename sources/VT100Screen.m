@@ -103,10 +103,10 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 
         assert(terminal);
         [self setTerminal:terminal];
-        primaryGrid_ = [[VT100Grid alloc] initWithSize:VT100GridSizeMake(kDefaultScreenColumns,
-                                                                         kDefaultScreenRows)
-                                              delegate:self];
-        currentGrid_ = primaryGrid_;
+        _mutableState.primaryGrid = [[[VT100Grid alloc] initWithSize:VT100GridSizeMake(kDefaultScreenColumns,
+                                                                                       kDefaultScreenRows)
+                                                            delegate:self] autorelease];
+        _mutableState.currentGrid = _mutableState.primaryGrid;
         _temporaryDoubleBuffer = [[iTermTemporaryDoubleBufferedGridController alloc] init];
         _temporaryDoubleBuffer.delegate = self;
 
@@ -138,8 +138,6 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 }
 
 - (void)dealloc {
-    [primaryGrid_ release];
-    [altGrid_ release];
     [tabStops_ release];
     [linebuffer_ release];
     [dvr_ release];
@@ -159,7 +157,7 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 }
 
 - (NSString *)description {
-    return [NSString stringWithFormat:@"<%@: %p grid:%@>", [self class], self, currentGrid_];
+    return [NSString stringWithFormat:@"<%@: %p grid:%@>", [self class], self, _state.currentGrid];
 }
 
 #pragma mark - APIs
@@ -178,12 +176,12 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 }
 
 - (VT100GridSize)size {
-    return currentGrid_.size;
+    return _state.currentGrid.size;
 }
 
 - (NSSize)viewSize {
     NSSize cellSize = [delegate_ screenCellSize];
-    VT100GridSize gridSize = currentGrid_.size;
+    VT100GridSize gridSize = _state.currentGrid.size;
     return NSMakeSize(cellSize.width * gridSize.width, cellSize.height * gridSize.height);
 }
 
@@ -240,7 +238,7 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
                       colors:(NSDictionary *)colors {
     long long lineNumber = absoluteLineNumber - self.totalScrollbackOverflow - self.numberOfScrollbackLines;
 
-    VT100GridRun gridRun = [currentGrid_ gridRunFromRange:range relativeToRow:lineNumber];
+    VT100GridRun gridRun = [_state.currentGrid gridRunFromRange:range relativeToRow:lineNumber];
     DLog(@"Highlight range %@ with colors %@ at lineNumber %@ giving grid run %@",
          NSStringFromRange(range),
          colors,
@@ -261,7 +259,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     if (lineNumber < 0) {
         return;
     }
-    VT100GridRun gridRun = [currentGrid_ gridRunFromRange:range relativeToRow:lineNumber];
+    VT100GridRun gridRun = [_state.currentGrid gridRunFromRange:range relativeToRow:lineNumber];
     if (gridRun.length > 0) {
         [self mutLinkRun:gridRun withURLCode:code];
     }
@@ -284,29 +282,29 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
 // Returns the number of lines in scrollback plus screen height.
 - (int)numberOfLines {
-    return [linebuffer_ numLinesWithWidth:currentGrid_.size.width] + currentGrid_.size.height;
+    return [linebuffer_ numLinesWithWidth:_state.currentGrid.size.width] + _state.currentGrid.size.height;
 }
 
 - (int)width {
-    return currentGrid_.size.width;
+    return _state.currentGrid.size.width;
 }
 
 - (int)height {
-    return currentGrid_.size.height;
+    return _state.currentGrid.size.height;
 }
 
 - (int)cursorX {
-    return currentGrid_.cursorX + 1;
+    return _state.currentGrid.cursorX + 1;
 }
 
 - (int)cursorY {
-    return currentGrid_.cursorY + 1;
+    return _state.currentGrid.cursorY + 1;
 }
 
 - (void)enumerateLinesInRange:(NSRange)range block:(void (^)(int, ScreenCharArray *, iTermImmutableMetadata, BOOL *))block {
     NSInteger i = range.location;
     const NSInteger lastLine = NSMaxRange(range);
-    const NSInteger numLinesInLineBuffer = [linebuffer_ numLinesWithWidth:currentGrid_.size.width];
+    const NSInteger numLinesInLineBuffer = [linebuffer_ numLinesWithWidth:_state.currentGrid.size.width];
     const int width = self.width;
     while (i < lastLine) {
         if (i < numLinesInLineBuffer) {
@@ -330,10 +328,10 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (ScreenCharArray *)screenCharArrayForLine:(int)line {
-    const NSInteger numLinesInLineBuffer = [linebuffer_ numLinesWithWidth:currentGrid_.size.width];
+    const NSInteger numLinesInLineBuffer = [linebuffer_ numLinesWithWidth:_state.currentGrid.size.width];
     if (line < numLinesInLineBuffer) {
         const BOOL eligibleForDWC = (line == numLinesInLineBuffer - 1 &&
-                                     [currentGrid_ screenCharsAtLineNumber:0][1].code == DWC_RIGHT);
+                                     [_state.currentGrid screenCharsAtLineNumber:0][1].code == DWC_RIGHT);
         return [[linebuffer_ wrappedLineAtIndex:line width:self.width continuation:NULL] paddedToLength:self.width
                                                                                          eligibleForDWC:eligibleForDWC];
     }
@@ -341,7 +339,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (ScreenCharArray *)screenCharArrayAtScreenIndex:(int)index {
-    const screen_char_t *line = [currentGrid_ screenCharsAtLineNumber:index];
+    const screen_char_t *line = [_state.currentGrid screenCharsAtLineNumber:index];
     const int width = self.width;
     ScreenCharArray *array = [[[ScreenCharArray alloc] initWithLine:line
                                                              length:width
@@ -356,17 +354,17 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
 - (iTermImmutableMetadata)metadataOnLine:(int)lineNumber {
     ITBetaAssert(lineNumber >= 0, @"Negative index to getLineAtIndex");
-    const int width = currentGrid_.size.width;
+    const int width = _state.currentGrid.size.width;
     int numLinesInLineBuffer = [linebuffer_ numLinesWithWidth:width];
     if (lineNumber >= numLinesInLineBuffer) {
-        return [currentGrid_ immutableMetadataAtLineNumber:lineNumber - numLinesInLineBuffer];
+        return [_state.currentGrid immutableMetadataAtLineNumber:lineNumber - numLinesInLineBuffer];
     } else {
         return [linebuffer_ metadataForLineNumber:lineNumber width:width];
     }
 }
 
 - (iTermImmutableMetadata)metadataAtScreenIndex:(int)index {
-    return [currentGrid_ immutableMetadataAtLineNumber:index];
+    return [_state.currentGrid immutableMetadataAtLineNumber:index];
 }
 
 - (id<iTermExternalAttributeIndexReading>)externalAttributeIndexForLine:(int)y {
@@ -378,50 +376,50 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 // This function is dangerous! It writes to an internal buffer and returns a
 // pointer to it. Better to use getLineAtIndex:withBuffer:.
 - (const screen_char_t *)getLineAtIndex:(int)theIndex {
-    return [self getLineAtIndex:theIndex withBuffer:[currentGrid_ resultLine]];
+    return [self getLineAtIndex:theIndex withBuffer:[_state.currentGrid resultLine]];
 }
 
 // theIndex = 0 for first line in history; for sufficiently large values, it pulls from the current
 // grid.
 - (const screen_char_t *)getLineAtIndex:(int)theIndex withBuffer:(screen_char_t*)buffer {
     ITBetaAssert(theIndex >= 0, @"Negative index to getLineAtIndex");
-    int numLinesInLineBuffer = [linebuffer_ numLinesWithWidth:currentGrid_.size.width];
+    int numLinesInLineBuffer = [linebuffer_ numLinesWithWidth:_state.currentGrid.size.width];
     if (theIndex >= numLinesInLineBuffer) {
         // Get a line from the circular screen buffer
-        return [currentGrid_ screenCharsAtLineNumber:(theIndex - numLinesInLineBuffer)];
+        return [_state.currentGrid screenCharsAtLineNumber:(theIndex - numLinesInLineBuffer)];
     } else {
         // Get a line from the scrollback buffer.
         screen_char_t continuation;
         int cont = [linebuffer_ copyLineToBuffer:buffer
-                                           width:currentGrid_.size.width
+                                           width:_state.currentGrid.size.width
                                          lineNum:theIndex
                                     continuation:&continuation];
         if (cont == EOL_SOFT &&
             theIndex == numLinesInLineBuffer - 1 &&
-            [currentGrid_ screenCharsAtLineNumber:0][1].code == DWC_RIGHT &&
-            buffer[currentGrid_.size.width - 1].code == 0) {
+            [_state.currentGrid screenCharsAtLineNumber:0][1].code == DWC_RIGHT &&
+            buffer[_state.currentGrid.size.width - 1].code == 0) {
             // The last line in the scrollback buffer is actually a split DWC
             // if the first char on the screen is double-width and the buffer is soft-wrapped without
             // a last char.
             cont = EOL_DWC;
         }
         if (cont == EOL_DWC) {
-            buffer[currentGrid_.size.width - 1].code = DWC_SKIP;
-            buffer[currentGrid_.size.width - 1].complexChar = NO;
+            buffer[_state.currentGrid.size.width - 1].code = DWC_SKIP;
+            buffer[_state.currentGrid.size.width - 1].complexChar = NO;
         }
-        buffer[currentGrid_.size.width] = continuation;
-        buffer[currentGrid_.size.width].code = cont;
+        buffer[_state.currentGrid.size.width] = continuation;
+        buffer[_state.currentGrid.size.width].code = cont;
 
         return buffer;
     }
 }
 
 - (NSArray<ScreenCharArray *> *)gridLinesInRange:(const NSRange)range {
-    const int width = currentGrid_.size.width;
+    const int width = _state.currentGrid.size.width;
     const int numLinesInLineBuffer = [linebuffer_ numLinesWithWidth:width];
     NSMutableArray<ScreenCharArray *> *result = [NSMutableArray array];
     for (NSInteger i = range.location; i < NSMaxRange(range); i++) {
-        const screen_char_t *line = [currentGrid_ screenCharsAtLineNumber:i - numLinesInLineBuffer];
+        const screen_char_t *line = [_state.currentGrid screenCharsAtLineNumber:i - numLinesInLineBuffer];
         ScreenCharArray *array = [[[ScreenCharArray alloc] initWithLine:line
                                                                  length:width
                                                            continuation:line[width]] autorelease];
@@ -431,12 +429,12 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (NSArray<ScreenCharArray *> *)historyLinesInRange:(const NSRange)range {
-    return [linebuffer_ wrappedLinesFromIndex:range.location width:currentGrid_.size.width count:range.length];
+    return [linebuffer_ wrappedLinesFromIndex:range.location width:_state.currentGrid.size.width count:range.length];
 }
 
 - (NSArray<ScreenCharArray *> *)linesInRange:(NSRange)range {
-    const int numLinesInLineBuffer = [linebuffer_ numLinesWithWidth:currentGrid_.size.width];
-    const NSRange gridRange = NSMakeRange(numLinesInLineBuffer, currentGrid_.size.height);
+    const int numLinesInLineBuffer = [linebuffer_ numLinesWithWidth:_state.currentGrid.size.width];
+    const NSRange gridRange = NSMakeRange(numLinesInLineBuffer, _state.currentGrid.size.height);
     const NSRange historyRange = NSMakeRange(0, numLinesInLineBuffer);
     const NSRange rangeForGrid = NSIntersectionRange(range, gridRange);
 
@@ -459,7 +457,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
 - (int)numberOfScrollbackLines
 {
-    return [linebuffer_ numLinesWithWidth:currentGrid_.size.width];
+    return [linebuffer_ numLinesWithWidth:_state.currentGrid.size.width];
 }
 
 - (int)scrollbackOverflow {
@@ -478,12 +476,12 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
 - (long long)absoluteLineNumberOfCursor
 {
-    return [self totalScrollbackOverflow] + [self numberOfLines] - [self height] + currentGrid_.cursorY;
+    return [self totalScrollbackOverflow] + [self numberOfLines] - [self height] + _state.currentGrid.cursorY;
 }
 
 - (int)lineNumberOfCursor
 {
-    return [self numberOfLines] - [self height] + currentGrid_.cursorY;
+    return [self numberOfLines] - [self height] + _state.currentGrid.cursorY;
 }
 
 - (BOOL)continueFindAllResults:(NSMutableArray<SearchResult *> *)results
@@ -508,7 +506,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (NSString *)debugString {
-    return [currentGrid_ debugString];
+    return [_state.currentGrid debugString];
 }
 
 - (NSString *)compactLineDumpWithHistory {
@@ -517,7 +515,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     if ([string length]) {
         [string appendString:@"\n"];
     }
-    [string appendString:[currentGrid_ compactLineDump]];
+    [string appendString:[_state.currentGrid compactLineDump]];
     return string;
 }
 
@@ -527,12 +525,12 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     if ([string length]) {
         [string appendString:@"\n"];
     }
-    [string appendString:[currentGrid_ compactLineDumpWithContinuationMarks]];
+    [string appendString:[_state.currentGrid compactLineDumpWithContinuationMarks]];
     return string;
 }
 
 - (NSString *)compactLineDumpWithContinuationMarks {
-    return [currentGrid_ compactLineDumpWithContinuationMarks];
+    return [_state.currentGrid compactLineDumpWithContinuationMarks];
 }
 
 - (NSString *)compactLineDumpWithHistoryAndContinuationMarksAndLineNumbers {
@@ -547,7 +545,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     if ([string length]) {
         [lines addObject:@"- end of history -"];
     }
-    NSString *gridDump = [currentGrid_ compactLineDumpWithContinuationMarks];
+    NSString *gridDump = [_state.currentGrid compactLineDumpWithContinuationMarks];
     NSArray *gridLines = [gridDump componentsSeparatedByString:@"\n"];
     for (int i = 0; i < gridLines.count; i++) {
         [lines addObject:[NSString stringWithFormat:@"%8lld (%04d): %@", absoluteLineNumber++, i, gridLines[i]]];
@@ -556,15 +554,15 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (NSString *)compactLineDump {
-    return [currentGrid_ compactLineDump];
+    return [_state.currentGrid compactLineDump];
 }
 
 - (id<VT100GridReading>)currentGrid {
-    return currentGrid_;
+    return _state.currentGrid;
 }
 
 - (BOOL)isAllDirty {
-    return currentGrid_.isAllDirty;
+    return _state.currentGrid.isAllDirty;
 }
 
 - (void)setRangeOfCharsAnimated:(NSRange)range onLine:(int)line {
@@ -577,11 +575,11 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (BOOL)isDirtyAtX:(int)x Y:(int)y {
-    return [currentGrid_ isCharDirtyAt:VT100GridCoordMake(x, y)];
+    return [_state.currentGrid isCharDirtyAt:VT100GridCoordMake(x, y)];
 }
 
 - (NSIndexSet *)dirtyIndexesOnLine:(int)line {
-    return [currentGrid_ dirtyIndexesOnLine:line];
+    return [_state.currentGrid dirtyIndexesOnLine:line];
 }
 
 - (void)saveToDvr:(NSIndexSet *)cleanLines {
@@ -590,14 +588,14 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     }
 
     DVRFrameInfo info;
-    info.cursorX = currentGrid_.cursorX;
-    info.cursorY = currentGrid_.cursorY;
-    info.height = currentGrid_.size.height;
-    info.width = currentGrid_.size.width;
+    info.cursorX = _state.currentGrid.cursorX;
+    info.cursorY = _state.currentGrid.cursorY;
+    info.height = _state.currentGrid.size.height;
+    info.width = _state.currentGrid.size.width;
 
-    [dvr_ appendFrame:[currentGrid_ orderedLines]
-               length:sizeof(screen_char_t) * (currentGrid_.size.width + 1) * (currentGrid_.size.height)
-             metadata:[currentGrid_ metadataArray]
+    [dvr_ appendFrame:[_state.currentGrid orderedLines]
+               length:sizeof(screen_char_t) * (_state.currentGrid.size.width + 1) * (_state.currentGrid.size.height)
+             metadata:[_state.currentGrid metadataArray]
            cleanLines:cleanLines
                  info:&info];
 }
@@ -607,7 +605,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (VT100GridRange)dirtyRangeForLine:(int)y {
-    return [currentGrid_ dirtyRangeForLine:y];
+    return [_state.currentGrid dirtyRangeForLine:y];
 }
 
 - (BOOL)textViewGetAndResetHasScrolled {
@@ -615,12 +613,12 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (NSDate *)timestampForLine:(int)y {
-    int numLinesInLineBuffer = [linebuffer_ numLinesWithWidth:currentGrid_.size.width];
+    int numLinesInLineBuffer = [linebuffer_ numLinesWithWidth:_state.currentGrid.size.width];
     NSTimeInterval interval;
     if (y >= numLinesInLineBuffer) {
-        interval = [currentGrid_ timestampForLine:y - numLinesInLineBuffer];
+        interval = [_state.currentGrid timestampForLine:y - numLinesInLineBuffer];
     } else {
-        interval = [linebuffer_ metadataForLineNumber:y width:currentGrid_.size.width].timestamp;
+        interval = [linebuffer_ metadataForLineNumber:y width:_state.currentGrid.size.width].timestamp;
     }
     return [NSDate dateWithTimeIntervalSinceReferenceDate:interval];
 }
@@ -751,7 +749,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
             [_mutableState.intervalTree addObject:previousWorkingDirectory withInterval:interval];
         } else {
             VT100GridCoordRange range;
-            range = VT100GridCoordRangeMake(currentGrid_.cursorX, line, self.width, line);
+            range = VT100GridCoordRangeMake(_state.currentGrid.cursorX, line, self.width, line);
             DLog(@"Set range of %@ to %@", workingDirectory, VT100GridCoordRangeDescription(range));
             [_mutableState.intervalTree addObject:workingDirectoryObj
                                      withInterval:[self intervalForGridCoordRange:range]];
@@ -893,8 +891,8 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     } else {
         // Interval is whole screen
         int limit = nonAbsoluteLine + self.height - 1;
-        if (limit >= [self numberOfScrollbackLines] + [currentGrid_ numberOfLinesUsed]) {
-            limit = [self numberOfScrollbackLines] + [currentGrid_ numberOfLinesUsed] - 1;
+        if (limit >= [self numberOfScrollbackLines] + [_state.currentGrid numberOfLinesUsed]) {
+            limit = [self numberOfScrollbackLines] + [_state.currentGrid numberOfLinesUsed] - 1;
         }
         range = VT100GridCoordRangeMake(0,
                                         nonAbsoluteLine,
@@ -1278,24 +1276,12 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     range.start.x = 0;
     range.start.y++;
     range.end.x = 0;
-    range.end.y = self.numberOfLines - self.height + [currentGrid_ numberOfLinesUsed];
+    range.end.y = self.numberOfLines - self.height + [_state.currentGrid numberOfLinesUsed];
     return range;
 }
 
 - (PTYTextViewSynchronousUpdateState *)setUseSavedGridIfAvailable:(BOOL)useSavedGrid {
-    if (useSavedGrid && !realCurrentGrid_ && self.temporaryDoubleBuffer.savedState) {
-        realCurrentGrid_ = [currentGrid_ retain];
-        [currentGrid_ release];
-        currentGrid_ = [self.temporaryDoubleBuffer.savedState.grid retain];
-        self.temporaryDoubleBuffer.drewSavedGrid = YES;
-        return self.temporaryDoubleBuffer.savedState;
-    } else if (!useSavedGrid && realCurrentGrid_) {
-        [currentGrid_ release];
-        currentGrid_ = [realCurrentGrid_ retain];
-        [realCurrentGrid_ release];
-        realCurrentGrid_ = nil;
-    }
-    return nil;
+    return [self mutSetUseSavedGridIfAvailable:useSavedGrid];
 }
 
 - (iTermStringLine *)stringLineAsStringAtAbsoluteLineNumber:(long long)absoluteLineNumber
@@ -1381,13 +1367,13 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalBackspace {
-    int cursorX = currentGrid_.cursorX;
-    int cursorY = currentGrid_.cursorY;
+    int cursorX = _state.currentGrid.cursorX;
+    int cursorY = _state.currentGrid.cursorY;
 
     [self mutDoBackspace];
 
-    if (commandStartX_ != -1 && (currentGrid_.cursorX != cursorX ||
-                                 currentGrid_.cursorY != cursorY)) {
+    if (commandStartX_ != -1 && (_state.currentGrid.cursorX != cursorX ||
+                                 _state.currentGrid.cursorY != cursorY)) {
         [delegate_ screenCommandDidChangeWithRange:[self commandRange]];
     }
 }
@@ -1397,12 +1383,12 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (BOOL)cursorOutsideLeftRightMargin {
-    return (currentGrid_.useScrollRegionCols && (currentGrid_.cursorX < currentGrid_.leftMargin ||
-                                                 currentGrid_.cursorX > currentGrid_.rightMargin));
+    return (_state.currentGrid.useScrollRegionCols && (_state.currentGrid.cursorX < _state.currentGrid.leftMargin ||
+                                                 _state.currentGrid.cursorX > _state.currentGrid.rightMargin));
 }
 
 - (void)terminalLineFeed {
-    if (currentGrid_.cursor.y == VT100GridRangeMax(currentGrid_.scrollRegionRows) &&
+    if (_state.currentGrid.cursor.y == VT100GridRangeMax(_state.currentGrid.scrollRegionRows) &&
         [self cursorOutsideLeftRightMargin]) {
         DLog(@"Ignore linefeed/formfeed/index because cursor outside left-right margin.");
         return;
@@ -1466,11 +1452,11 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (int)terminalRelativeCursorX {
-    return currentGrid_.cursorX - currentGrid_.leftMargin + 1;
+    return _state.currentGrid.cursorX - _state.currentGrid.leftMargin + 1;
 }
 
 - (int)terminalRelativeCursorY {
-    return currentGrid_.cursorY - currentGrid_.topMargin + 1;
+    return _state.currentGrid.cursorY - _state.currentGrid.topMargin + 1;
 }
 
 - (void)terminalSetScrollRegionTop:(int)top bottom:(int)bottom {
@@ -1486,8 +1472,8 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalSetTabStopAtCursor {
-    if (currentGrid_.cursorX < currentGrid_.size.width) {
-        [tabStops_ addObject:[NSNumber numberWithInt:currentGrid_.cursorX]];
+    if (_state.currentGrid.cursorX < _state.currentGrid.size.width) {
+        [tabStops_ addObject:[NSNumber numberWithInt:_state.currentGrid.cursorX]];
     }
 }
 
@@ -1549,8 +1535,8 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalRemoveTabStopAtCursor {
-    if (currentGrid_.cursorX < currentGrid_.size.width) {
-        [tabStops_ removeObject:[NSNumber numberWithInt:currentGrid_.cursorX]];
+    if (_state.currentGrid.cursorX < _state.currentGrid.size.width) {
+        [tabStops_ removeObject:[NSNumber numberWithInt:_state.currentGrid.cursorX]];
     }
 }
 
@@ -1879,7 +1865,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (BOOL)showingAlternateScreen {
-    return currentGrid_ == altGrid_;
+    return _state.currentGrid == _state.altGrid;
 }
 
 - (void)hideOnScreenNotesAndTruncateSpanners {
@@ -1940,7 +1926,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
         }
     }
 
-    int cursorLine = [self numberOfLines] - [self height] + currentGrid_.cursorY;
+    int cursorLine = [self numberOfLines] - [self height] + _state.currentGrid.cursorY;
     VT100RemoteHost *remoteHostObj = [self setRemoteHost:host user:user onLine:cursorLine];
 
     if (![remoteHostObj isEqualToRemoteHost:currentHost]) {
@@ -2013,7 +1999,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     DLog(@"%p: terminalCurrentDirectoryDidChangeTo:%@", self, dir);
     [delegate_ screenSetPreferredProxyIcon:nil]; // Clear current proxy icon if exists.
 
-    int cursorLine = [self numberOfLines] - [self height] + currentGrid_.cursorY;
+    int cursorLine = [self numberOfLines] - [self height] + _state.currentGrid.cursorY;
     if (dir.length) {
         [self currentDirectoryReallyDidChangeTo:dir onLine:cursorLine];
         return;
@@ -2047,9 +2033,9 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
 - (void)terminalAddNote:(NSString *)value show:(BOOL)show {
     NSArray *parts = [value componentsSeparatedByString:@"|"];
-    VT100GridCoord location = currentGrid_.cursor;
+    VT100GridCoord location = _state.currentGrid.cursor;
     NSString *message = nil;
-    int length = currentGrid_.size.width - currentGrid_.cursorX - 1;
+    int length = _state.currentGrid.size.width - _state.currentGrid.cursorX - 1;
     if (parts.count == 1) {
         message = parts[0];
     } else if (parts.count == 2) {
@@ -2146,13 +2132,13 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
                                                                                  spanningWidth:width
                                                                                    scaleFactor:[delegate_ screenBackingScaleFactor]] autorelease];
     helper.delegate = self;
-    [helper writeToGrid:currentGrid_];
+    [helper writeToGrid:_state.currentGrid];
 }
 
 - (void)addURLMarkAtLineAfterCursorWithCode:(unsigned int)code {
     long long absLine = (self.totalScrollbackOverflow +
                          [self numberOfScrollbackLines] +
-                         currentGrid_.cursor.y + 1);
+                         _state.currentGrid.cursor.y + 1);
     iTermURLMark *mark = [self addMarkStartingAtAbsoluteLine:absLine
                                                      oneLine:YES
                                                      ofClass:[iTermURLMark class]];
@@ -2171,7 +2157,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     VT100InlineImageHelper *helper = [[[VT100InlineImageHelper alloc] initWithSixelData:data
                                                                             scaleFactor:[delegate_ screenBackingScaleFactor]] autorelease];
     helper.delegate = self;
-    [helper writeToGrid:currentGrid_];
+    [helper writeToGrid:_state.currentGrid];
     [self crlf];
 }
 
@@ -2189,7 +2175,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
 - (void)terminalDidFinishReceivingFile {
     if (_mutableState.inlineImageHelper) {
-        [_mutableState.inlineImageHelper writeToGrid:currentGrid_];
+        [_mutableState.inlineImageHelper writeToGrid:_state.currentGrid];
         _mutableState.inlineImageHelper = nil;
         // TODO: Handle objects other than images.
         [delegate_ screenDidFinishReceivingInlineFile];
@@ -2446,8 +2432,8 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalPromptDidStart {
-    [self promptDidStartAt:VT100GridAbsCoordMake(currentGrid_.cursor.x,
-                                                 currentGrid_.cursor.y + self.numberOfScrollbackLines + self.totalScrollbackOverflow)];
+    [self promptDidStartAt:VT100GridAbsCoordMake(_state.currentGrid.cursor.x,
+                                                 _state.currentGrid.cursor.y + self.numberOfScrollbackLines + self.totalScrollbackOverflow)];
 }
 
 - (NSArray<NSNumber *> *)terminalTabStops {
@@ -2486,9 +2472,9 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
 - (void)terminalCommandDidStart {
     DLog(@"FinalTerm: terminalCommandDidStart");
-    _currentPromptRange.end = VT100GridAbsCoordMake(currentGrid_.cursor.x,
-                                                    currentGrid_.cursor.y + self.numberOfScrollbackLines + self.totalScrollbackOverflow);
-    [self commandDidStartAtScreenCoord:currentGrid_.cursor];
+    _currentPromptRange.end = VT100GridAbsCoordMake(_state.currentGrid.cursor.x,
+                                                    _state.currentGrid.cursor.y + self.numberOfScrollbackLines + self.totalScrollbackOverflow);
+    [self commandDidStartAtScreenCoord:_state.currentGrid.cursor];
     [delegate_ screenPromptDidEndAtLine:[self numberOfScrollbackLines] + self.cursorY - 1];
 }
 
@@ -2506,7 +2492,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     DLog(@"FinalTerm: terminalCommandDidEnd");
     _currentPromptRange.start = _currentPromptRange.end = VT100GridAbsCoordMake(0, 0);
 
-    [self commandDidEndAtAbsCoord:VT100GridAbsCoordMake(currentGrid_.cursor.x, currentGrid_.cursor.y + [self numberOfScrollbackLines] + [self totalScrollbackOverflow])];
+    [self commandDidEndAtAbsCoord:VT100GridAbsCoordMake(_state.currentGrid.cursor.x, _state.currentGrid.cursor.y + [self numberOfScrollbackLines] + [self totalScrollbackOverflow])];
 }
 
 - (BOOL)commandDidEndAtAbsCoord:(VT100GridAbsCoord)coord {
@@ -2667,7 +2653,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (VT100GridRect)terminalScrollRegion {
-    return currentGrid_.scrollRegionRect;
+    return _state.currentGrid.scrollRegionRect;
 }
 
 - (int)terminalChecksumInRectangle:(VT100GridRect)rect {
@@ -2696,7 +2682,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 - (NSArray<NSString *> *)terminalSGRCodesInRectangle:(VT100GridRect)screenRect {
     __block NSMutableSet<NSString *> *codes = nil;
     VT100GridRect rect = screenRect;
-    rect.origin.y += [linebuffer_ numLinesWithWidth:currentGrid_.size.width];
+    rect.origin.y += [linebuffer_ numLinesWithWidth:_state.currentGrid.size.width];
     [self enumerateLinesInRange:NSMakeRange(rect.origin.y, rect.size.height)
                           block:^(int y,
                                   ScreenCharArray *sca,
@@ -2917,17 +2903,17 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (NSString *)terminalTopBottomRegionString {
-    if (!currentGrid_.haveRowScrollRegion) {
+    if (!_state.currentGrid.haveRowScrollRegion) {
         return @"";
     }
-    return [NSString stringWithFormat:@"%d;%d", currentGrid_.topMargin + 1, currentGrid_.bottomMargin + 1];
+    return [NSString stringWithFormat:@"%d;%d", _state.currentGrid.topMargin + 1, _state.currentGrid.bottomMargin + 1];
 }
 
 - (NSString *)terminalLeftRightRegionString {
-    if (!currentGrid_.haveColumnScrollRegion) {
+    if (!_state.currentGrid.haveColumnScrollRegion) {
         return @"";
     }
-    return [NSString stringWithFormat:@"%d;%d", currentGrid_.leftMargin + 1, currentGrid_.rightMargin + 1];
+    return [NSString stringWithFormat:@"%d;%d", _state.currentGrid.leftMargin + 1, _state.currentGrid.rightMargin + 1];
 }
 
 - (NSString *)terminalStringForKeypressWithCode:(unsigned short)keyCode
@@ -2993,7 +2979,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalEraseRectangle:(VT100GridRect)rect {
-    screen_char_t c = [currentGrid_ defaultChar];
+    screen_char_t c = [_state.currentGrid defaultChar];
     c.code = ' ';
     [self mutFillRectangle:rect with:c externalAttributes:nil];
 }
@@ -3024,24 +3010,24 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 - (void)terminalSelectiveEraseInLine:(int)mode {
     switch (mode) {
         case 0:
-            [self mutSelectiveEraseRange:VT100GridCoordRangeMake(currentGrid_.cursorX,
-                                                                 currentGrid_.cursorY,
-                                                                 currentGrid_.size.width,
-                                                                 currentGrid_.cursorY)
+            [self mutSelectiveEraseRange:VT100GridCoordRangeMake(_state.currentGrid.cursorX,
+                                                                 _state.currentGrid.cursorY,
+                                                                 _state.currentGrid.size.width,
+                                                                 _state.currentGrid.cursorY)
                          eraseAttributes:YES];
             return;
         case 1:
             [self mutSelectiveEraseRange:VT100GridCoordRangeMake(0,
-                                                                 currentGrid_.cursorY,
-                                                                 currentGrid_.cursorX + 1,
-                                                                 currentGrid_.cursorY)
+                                                                 _state.currentGrid.cursorY,
+                                                                 _state.currentGrid.cursorX + 1,
+                                                                 _state.currentGrid.cursorY)
                          eraseAttributes:YES];
             return;
         case 2:
             [self mutSelectiveEraseRange:VT100GridCoordRangeMake(0,
-                                                                 currentGrid_.cursorY,
-                                                                 currentGrid_.size.width,
-                                                                 currentGrid_.cursorY)
+                                                                 _state.currentGrid.cursorY,
+                                                                 _state.currentGrid.size.width,
+                                                                 _state.currentGrid.cursorY)
                          eraseAttributes:YES];
     }
 }
@@ -3063,13 +3049,13 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     } else {
         return VT100GridCoordRangeMake(commandStartX_,
                                        MAX(0, commandStartY_ - offset),
-                                       currentGrid_.cursorX,
-                                       currentGrid_.cursorY + [self numberOfScrollbackLines]);
+                                       _state.currentGrid.cursorX,
+                                       _state.currentGrid.cursorY + [self numberOfScrollbackLines]);
     }
 }
 
 - (BOOL)isAnyCharDirty {
-    return [currentGrid_ isAnyCharDirty];
+    return [_state.currentGrid isAnyCharDirty];
 }
 
 // It's kind of wrong to use VT100GridRun here, but I think it's harmless enough.
@@ -3122,7 +3108,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (BOOL)useColumnScrollRegion {
-    return currentGrid_.useScrollRegionCols;
+    return _state.currentGrid.useScrollRegionCols;
 }
 
 - (void)setUseColumnScrollRegion:(BOOL)mode {
@@ -3130,7 +3116,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)blink {
-    if ([currentGrid_ isAnyCharDirty]) {
+    if ([_state.currentGrid isAnyCharDirty]) {
         [delegate_ screenNeedsRedraw];
     }
 }
@@ -3147,7 +3133,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
 - (void)saveFindContextAbsPos {
     int linesPushed;
-    linesPushed = [self.mutableCurrentGrid appendLines:[currentGrid_ numberOfLinesUsed]
+    linesPushed = [self.mutableCurrentGrid appendLines:[_state.currentGrid numberOfLinesUsed]
                                           toLineBuffer:linebuffer_];
 
     savedFindContextAbsPos_ = [self mutFindContextAbsPosition];
@@ -3202,7 +3188,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
 - (void)gridCursorDidChangeLine {
     if (_trackCursorLineMovement) {
-        [delegate_ screenCursorDidMoveToLine:currentGrid_.cursorY + [self numberOfScrollbackLines]];
+        [delegate_ screenCursorDidMoveToLine:_state.currentGrid.cursorY + [self numberOfScrollbackLines]];
     }
 }
 
@@ -3256,14 +3242,14 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     [encoder encodeDictionaryWithKey:@"PrimaryGrid"
                           generation:iTermGenerationAlwaysEncode
                                block:^BOOL(id<iTermEncoderAdapter>  _Nonnull subencoder) {
-        [primaryGrid_ encode:subencoder];
+        [_state.primaryGrid encode:subencoder];
         return YES;
     }];
-    if (altGrid_) {
+    if (_state.altGrid) {
         [encoder encodeDictionaryWithKey:@"AltGrid"
                               generation:iTermGenerationAlwaysEncode
                                    block:^BOOL(id<iTermEncoderAdapter>  _Nonnull subencoder) {
-            [altGrid_ encode:subencoder];
+            [_state.altGrid encode:subencoder];
             return YES;
         }];
     }
@@ -3291,7 +3277,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
                                                                                           intervalOffset:&intervalOffset];
         extra = @{
             kScreenStateIntervalTreeKey: [_state.intervalTree dictionaryValueWithOffset:intervalOffset] ?: @{},
-            kScreenStateCursorCoord: VT100GridCoordToDictionary(primaryGrid_.cursor),
+            kScreenStateCursorCoord: VT100GridCoordToDictionary(_state.primaryGrid.cursor),
         };
         if (linesDroppedOut) {
             *linesDroppedOut = linesDroppedForBrevity;
@@ -3310,7 +3296,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
                                               @(charsetUsesLineDrawingMode_[2]),
                                               @(charsetUsesLineDrawingMode_[3]) ],
            kScreenStateNonCurrentGridKey: [self contentsOfNonCurrentGrid] ?: @{},
-           kScreenStateCurrentGridIsPrimaryKey: @(primaryGrid_ == currentGrid_),
+           kScreenStateCurrentGridIsPrimaryKey: @(_state.primaryGrid == _state.currentGrid),
            kScreenStateSavedIntervalTreeKey: [savedIntervalTree_ dictionaryValueWithOffset:0] ?: [NSNull null],
            kScreenStateCommandStartXKey: @(commandStartX_),
            kScreenStateCommandStartYKey: @(commandStartY_),
@@ -3320,8 +3306,8 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
            kScreenStateLastCommandOutputRangeKey: [NSDictionary dictionaryWithGridAbsCoordRange:_lastCommandOutputRange],
            kScreenStateShellIntegrationInstalledKey: @(_shellIntegrationInstalled),
            kScreenStateLastCommandMarkKey: _lastCommandMark.guid ?: [NSNull null],
-           kScreenStatePrimaryGridStateKey: primaryGrid_.dictionaryValue ?: @{},
-           kScreenStateAlternateGridStateKey: altGrid_.dictionaryValue ?: [NSNull null],
+           kScreenStatePrimaryGridStateKey: _state.primaryGrid.dictionaryValue ?: @{},
+           kScreenStateAlternateGridStateKey: _state.altGrid.dictionaryValue ?: [NSNull null],
            kScreenStateProtectedMode: @(_protectedMode),
         };
         dict = [dict dictionaryByRemovingNullValues];
@@ -3335,10 +3321,10 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 - (NSDictionary *)contentsOfNonCurrentGrid {
     LineBuffer *temp = [[[LineBuffer alloc] initWithBlockSize:4096] autorelease];
     VT100Grid *grid;
-    if (currentGrid_ == primaryGrid_) {
-        grid = altGrid_;
+    if (_state.currentGrid == _state.primaryGrid) {
+        grid = _state.altGrid;
     } else {
-        grid = primaryGrid_;
+        grid = _state.primaryGrid;
     }
     if (!grid) {
         return @{};
@@ -3367,7 +3353,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 #pragma mark - iTermFullScreenUpdateDetectorDelegate
 
 - (VT100Grid *)temporaryDoubleBufferedGridCopy {
-    VT100Grid *copy = [[currentGrid_ copy] autorelease];
+    VT100Grid *copy = [[_state.currentGrid copy] autorelease];
     copy.delegate = nil;
     return copy;
 }
@@ -3375,7 +3361,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 - (PTYTextViewSynchronousUpdateState *)temporaryDoubleBufferedGridSavedState {
     PTYTextViewSynchronousUpdateState *state = [[[PTYTextViewSynchronousUpdateState alloc] init] autorelease];
 
-    state.grid = [currentGrid_.copy autorelease];
+    state.grid = [_state.currentGrid.copy autorelease];
     state.grid.delegate = nil;
 
     state.colorMap = [self.delegate.screenColorMap.copy autorelease];

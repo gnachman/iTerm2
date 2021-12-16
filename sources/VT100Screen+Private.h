@@ -38,11 +38,6 @@ iTermTemporaryDoubleBufferedGridControllerDelegate,
 iTermLineBufferDelegate,
 iTermMarkDelegate,
 VT100InlineImageHelperDelegate> {
-    id<VT100GridReading> primaryGrid_;
-    id<VT100GridReading> altGrid_;  // may be nil
-    id<VT100GridReading> currentGrid_;  // Weak reference. Points to either primaryGrid or altGrid.
-    id<VT100GridReading> realCurrentGrid_;  // When a saved grid is swapped in, this is the live current grid.
-
     id<VT100ScreenState> _state;
     VT100ScreenMutableState *_mutableState;
 
