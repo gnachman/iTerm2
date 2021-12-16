@@ -78,7 +78,6 @@ static NSString *const kGridSizeKey = @"Size";
         NSArray<NSString *> *requiredKeys = @[ @"size", @"cursor" ];
         for (NSString *requiredKey in requiredKeys) {
             if (!dictionary[requiredKey]) {
-                [self release];
                 return nil;
             }
         }
@@ -93,21 +92,19 @@ static NSString *const kGridSizeKey = @"Size";
             // Migration code path - upgrade legacy_screen_char_t.
             NSArray<NSData *> *legacyLines = [NSArray castFrom:dictionary[@"lines"]];
             if (!legacyLines) {
-                [self release];
                 return nil;
             }
             lines_ = [[NSMutableArray alloc] init];
             migrationIndexes = [NSMutableDictionary dictionary];
             [legacyLines enumerateObjectsUsingBlock:^(NSData * _Nonnull legacyData, NSUInteger idx, BOOL * _Nonnull stop) {
                 iTermExternalAttributeIndex *migrationIndex = nil;
-                [lines_ addObject:[[[legacyData modernizedScreenCharArray:&migrationIndex] mutableCopy] autorelease]];
+                [lines_ addObject:[[legacyData modernizedScreenCharArray:&migrationIndex] mutableCopy]];
                 if (migrationIndex) {
                     migrationIndexes[@(idx)] = migrationIndex;
                 }
             }];
         }
         if (!lines_) {
-            [self release];
             return nil;
         }
 
@@ -146,14 +143,6 @@ static NSString *const kGridSizeKey = @"Size";
         _preferredCursorPosition = cursor_;
     }
     return self;
-}
-
-- (void)dealloc {
-    [lines_ release];
-    [lineInfos_ release];
-    [cachedDefaultLine_ release];
-    [resultLine_ release];
-    [super dealloc];
 }
 
 - (NSMutableData *)lineDataAtLineNumber:(int)lineNumber {
@@ -316,7 +305,7 @@ static NSString *const kGridSizeKey = @"Size";
 
 - (int)numberOfNonEmptyLinesIncludingWhitespaceAsEmpty:(BOOL)includeWhitespace {
     int numberOfLinesUsed = size_.height;
-    NSMutableCharacterSet *allowedCharacters = [[[NSMutableCharacterSet alloc] init] autorelease];
+    NSMutableCharacterSet *allowedCharacters = [[NSMutableCharacterSet alloc] init];
     [allowedCharacters addCharactersInRange:NSMakeRange(0, 1)];
     if (includeWhitespace) {
         [allowedCharacters addCharactersInString:@" \t"];
@@ -1646,7 +1635,6 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
 - (screen_char_t *)resultLine {
     const int length = sizeof(screen_char_t) * (size_.width + 1);
     if (resultLine_.length != length) {
-        [resultLine_ release];
         resultLine_ = [[NSMutableData alloc] initWithLength:length];
     }
     return (screen_char_t *)[resultLine_ mutableBytes];
@@ -1725,7 +1713,7 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
 
 - (NSString *)compactLineDumpWithTimestamps {
     NSMutableString *dump = [NSMutableString string];
-    NSDateFormatter *fmt = [[[NSDateFormatter alloc] init] autorelease];
+    NSDateFormatter *fmt = [[NSDateFormatter alloc] init];
     [fmt setTimeStyle:NSDateFormatterLongStyle];
 
     for (int y = 0; y < size_.height; y++) {
@@ -2019,9 +2007,9 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
 #pragma mark - Private
 
 - (NSMutableArray *)linesWithSize:(VT100GridSize)size {
-    NSMutableArray *lines = [[[NSMutableArray alloc] init] autorelease];
+    NSMutableArray *lines = [[NSMutableArray alloc] init];
     for (int i = 0; i < size.height; i++) {
-        [lines addObject:[[[self defaultLineOfWidth:size.width] mutableCopy] autorelease]];
+        [lines addObject:[[self defaultLineOfWidth:size.width] mutableCopy]];
     }
     return lines;
 }
@@ -2029,7 +2017,7 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
 - (NSMutableArray *)lineInfosWithSize:(VT100GridSize)size {
     NSMutableArray *dirty = [NSMutableArray array];
     for (int i = 0; i < size.height; i++) {
-        [dirty addObject:[[[VT100LineInfo alloc] initWithWidth:size_.width] autorelease]];
+        [dirty addObject:[[VT100LineInfo alloc] initWithWidth:size_.width]];
     }
     return dirty;
 }
@@ -2076,11 +2064,9 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
 
     NSMutableData *line = [NSMutableData dataWithLength:length];
 
-    [cachedDefaultLine_ release];
     cachedDefaultLine_ = nil;
     [self clearLineData:line];
-
-    cachedDefaultLine_ = [line retain];
+    cachedDefaultLine_ = line;
 
     return line;
 }
@@ -2187,10 +2173,8 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
     if (newSize.width != size_.width || newSize.height != size_.height) {
         DLog(@"Grid for %@ resized to %@", self.delegate, VT100GridSizeDescription(newSize));
         size_ = newSize;
-        [lines_ release];
-        [lineInfos_ release];
-        lines_ = [[self linesWithSize:newSize] retain];
-        lineInfos_ = [[self lineInfosWithSize:newSize] retain];
+        lines_ = [self linesWithSize:newSize];
+        lineInfos_ = [self lineInfosWithSize:newSize];
 
         scrollRegionRows_.location = MIN(scrollRegionRows_.location, size_.height - 1);
         scrollRegionRows_.length = MIN(scrollRegionRows_.length,
@@ -2452,15 +2436,13 @@ static void DumpBuf(screen_char_t* p, int n) {
 - (id)copyWithZone:(NSZone *)zone {
     VT100Grid *theCopy = [[VT100Grid alloc] initWithSize:size_
                                                 delegate:delegate_];
-    [theCopy->lines_ release];
     theCopy->lines_ = [[NSMutableArray alloc] init];
     for (NSObject *line in lines_) {
-        [theCopy->lines_ addObject:[[line mutableCopy] autorelease]];
+        [theCopy->lines_ addObject:[line mutableCopy]];
     }
-    [theCopy->lineInfos_ release];
     theCopy->lineInfos_ = [[NSMutableArray alloc] init];
     for (VT100LineInfo *line in lineInfos_) {
-        [theCopy->lineInfos_ addObject:[[line copy] autorelease]];
+        [theCopy->lineInfos_ addObject:[line copy]];
     }
     theCopy->screenTop_ = screenTop_;
     theCopy->cursor_ = cursor_;  // Don't use property to avoid delegate call
