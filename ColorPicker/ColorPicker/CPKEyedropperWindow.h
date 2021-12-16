@@ -12,6 +12,6 @@
  * @return The selected color, or nil if the pick is aborted (e.g., by another application becoming
  *   active).
  */
-+ (void)pickColorWithCompletion:(void (^)(NSColor *color))completion;
++ (void)pickColorWithColorSpace:(NSColorSpace *)colorSpace completion:(void (^)(NSColor *color))completion;
 
 @end

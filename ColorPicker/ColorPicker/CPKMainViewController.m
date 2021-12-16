@@ -32,32 +32,24 @@ static const CGFloat kBottomMargin = 8;
 @implementation CPKMainViewController
 
 - (instancetype)initWithBlock:(void (^)(NSColor *))block
-                        color:(NSColor *)color
-                 alphaAllowed:(BOOL)alphaAllowed {
-    CPKMainViewControllerOptions options = 0;
-    if (alphaAllowed) {
-        options |= CPKMainViewControllerOptionsAlpha;
-    }
-    return [self initWithBlock:block useSystemColorPicker:nil color:color options:options];
-}
-
-- (instancetype)initWithBlock:(void (^)(NSColor *))block
          useSystemColorPicker:(void (^)(void))useSystemColorPickerBlock
                         color:(NSColor *)color
-                      options:(CPKMainViewControllerOptions)options {
+                      options:(CPKMainViewControllerOptions)options
+                   colorSpace:(NSColorSpace *)colorSpace {
     self = [super initWithNibName:nil bundle:nil];
     if (self) {
         _block = [block copy];
+        _colorSpace = colorSpace;
         _useSystemColorPickerBlock = [useSystemColorPickerBlock copy];
         if (!color) {
-            color = [NSColor cpk_colorWithRed:0 green:0 blue:0 alpha:0];
+            color = [NSColor cpk_colorWithRed:0 green:0 blue:0 alpha:0 colorSpace:colorSpace];
         }
         BOOL alphaAllowed = !!(options & CPKMainViewControllerOptionsAlpha);
         BOOL noColorAllowed = !!(options & CPKMainViewControllerOptionsNoColor);
         if (!alphaAllowed) {
             color = [color colorWithAlphaComponent:1];
         }
-        color = [color colorUsingColorSpace:[NSColorSpace sRGBColorSpace]];
+        color = [color colorUsingColorSpace:self.colorSpace];
         _selectedColor = color;
         self.alphaAllowed = alphaAllowed;
         self.noColorAllowed = noColorAllowed;
@@ -79,6 +71,7 @@ static const CGFloat kBottomMargin = 8;
                                                                [weakSelf selectColor:color.color];
                                                            }
                                                            color:[[CPKColor alloc] initWithColor:_selectedColor]
+                                                      colorSpace:self.colorSpace
                                                     alphaAllowed:self.alphaAllowed];
     self.selectionView.delegate = self;
     [self.selectionView sizeToFit];
@@ -115,8 +108,9 @@ static const CGFloat kBottomMargin = 8;
     self.controlsView.removeFavoriteBlock = ^() {
         [weakSelf.favoritesView removeSelectedFavorites];
     };
+    NSColorSpace *colorSpace = self.colorSpace;
     self.controlsView.startPickingBlock = ^() {
-        [CPKEyedropperWindow pickColorWithCompletion:^(NSColor *color) {
+        [CPKEyedropperWindow pickColorWithColorSpace:colorSpace completion:^(NSColor *color) {
             if (color) {
                 weakSelf.selectionView.selectedColor = [[CPKColor alloc] initWithColor:color];
             }
@@ -131,10 +125,11 @@ static const CGFloat kBottomMargin = 8;
         [[CPKFavoritesView alloc] initWithFrame:NSMakeRect(kLeftMargin,
                                                            NSMaxY(self.controlsView.frame),
                                                            kDesiredWidth - kLeftMargin - kRightMargin,
-                                                           [self favoritesViewHeight])];
+                                                           [self favoritesViewHeight])
+                                     colorSpace:self.colorSpace];
     self.favoritesView.selectionDidChangeBlock = ^(NSColor *newColor) {
         if (newColor) {
-            weakSelf.selectionView.selectedColor = [[CPKColor alloc] initWithColor:newColor];
+            weakSelf.selectionView.selectedColor = [[CPKColor alloc] initWithColor:[newColor colorUsingColorSpace:colorSpace]];
             weakSelf.controlsView.removeEnabled = YES;
         } else {
             weakSelf.controlsView.removeEnabled = NO;

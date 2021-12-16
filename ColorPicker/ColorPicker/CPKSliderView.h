@@ -7,6 +7,7 @@
 
 /** The current value. Assign to this to move the slider. */
 @property(nonatomic) CGFloat selectedValue;
+@property(nonatomic, readonly) NSColorSpace *colorSpace;
 
 /**
  * Initializes a slider.
@@ -19,6 +20,7 @@
  */
 - (instancetype)initWithFrame:(NSRect)frame
                         value:(CGFloat)value
+                   colorSpace:(NSColorSpace *)colorSpace
                         block:(void (^)(CGFloat))block;
 
 - (NSBezierPath *)boundingPath;

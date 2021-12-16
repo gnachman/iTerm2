@@ -57,7 +57,8 @@ static const CGFloat kHueMultiplier = 5;
                         NSColor *color = [NSColor cpk_colorWithRed:r / 255.0
                                                              green:g / 255.0
                                                               blue:b / 255.0
-                                                             alpha:1];
+                                                             alpha:1
+                                                        colorSpace:[NSColorSpace sRGBColorSpace]];
 
                         [self.tree addObject:name forKey:@[ @(color.hueComponent * kHueMultiplier),
                                                             @(color.saturationComponent),

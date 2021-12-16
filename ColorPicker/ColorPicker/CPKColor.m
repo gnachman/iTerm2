@@ -36,8 +36,8 @@
     return self;
 }
 
-- (instancetype)initWithRed:(CGFloat)red green:(CGFloat)green blue:(CGFloat)blue alpha:(CGFloat)alpha {
-    return [self initWithColor:[NSColor cpk_colorWithRed:red green:green blue:blue alpha:alpha]];
+- (instancetype)initWithRed:(CGFloat)red green:(CGFloat)green blue:(CGFloat)blue alpha:(CGFloat)alpha colorSpace:(NSColorSpace *)colorSpace {
+    return [self initWithColor:[NSColor cpk_colorWithRed:red green:green blue:blue alpha:alpha colorSpace:colorSpace]];
 }
 
 - (CGFloat)brightnessComponent {

@@ -36,8 +36,12 @@ typedef NS_ENUM(NSInteger, CPKColorComponentSliderType) {
  */
 - (instancetype)initWithFrame:(NSRect)frame
                         color:(CPKColor *)color
+                   colorSpace:(NSColorSpace *)colorSpace
                          type:(CPKColorComponentSliderType)type
                         block:(void (^)(CGFloat))block;
+
+- (instancetype)initWithFrame:(NSRect)frameRect NS_UNAVAILABLE;
+- (instancetype)initWithCoder:(NSCoder *)coder NS_UNAVAILABLE;
 
 /** Changes the colors in the slider's gradient but does not update the selection. */
 - (void)setGradientColor:(CPKColor *)color;

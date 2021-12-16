@@ -11,4 +11,6 @@
 /** Defaults to gray */
 @property(nonatomic, retain) NSColor *borderColor;
 
+@property(nonatomic) BOOL showWarningIcon;
+
 @end

@@ -41,6 +41,7 @@ typedef NS_ENUM(NSInteger, CPKGradientViewType) {
 /** Determines the type of gradient. */
 @property(nonatomic) CPKGradientViewType type;
 
+@property(nonatomic, readonly) NSColorSpace *colorSpace;
 /**
  * Initializes a new gradient view with a callback.
  *
@@ -51,6 +52,7 @@ typedef NS_ENUM(NSInteger, CPKGradientViewType) {
  */
 - (instancetype)initWithFrame:(NSRect)frameRect
                          type:(CPKGradientViewType)type
+                   colorSpace:(NSColorSpace *)colorSpace
                         block:(void (^)(CPKColor *))block;
 
 @end

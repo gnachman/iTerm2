@@ -40,7 +40,8 @@ NS_ASSUME_NONNULL_BEGIN
 - (instancetype)initWithRed:(CGFloat)red
                       green:(CGFloat)green
                        blue:(CGFloat)blue
-                      alpha:(CGFloat)alpha;
+                      alpha:(CGFloat)alpha
+                 colorSpace:(NSColorSpace *)colorSpace;
 
 - (instancetype)init NS_UNAVAILABLE;
 

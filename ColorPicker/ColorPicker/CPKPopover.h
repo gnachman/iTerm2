@@ -30,13 +30,7 @@
                                ofView:(NSView *)positioningView
                         preferredEdge:(NSRectEdge)preferredEdge
                          initialColor:(NSColor *)color
-                         alphaAllowed:(BOOL)alphaAllowed
-                selectionDidChange:(void (^)(NSColor *))block DEPRECATED_ATTRIBUTE;
-
-+ (instancetype)presentRelativeToRect:(NSRect)positioningRect
-                               ofView:(NSView *)positioningView
-                        preferredEdge:(NSRectEdge)preferredEdge
-                         initialColor:(NSColor *)color
+                           colorSpace:(NSColorSpace *)colorSpace
                               options:(CPKMainViewControllerOptions)options
                    selectionDidChange:(void (^)(NSColor *))block
                  useSystemColorPicker:(void (^)(void))useSystemColorPicker;

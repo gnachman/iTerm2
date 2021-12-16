@@ -1,6 +1,10 @@
 #import "CPKSwatchView.h"
 #import "NSObject+CPK.h"
 
+@interface NSImage(CPK)
+- (NSImage *)cpk_imageWithTintColor:(NSColor *)tintColor;
+@end
+
 @implementation CPKSwatchView
 
 - (instancetype)initWithFrame:(NSRect)frameRect {
@@ -48,6 +52,43 @@
         [path lineToPoint:NSMakePoint(NSMinX(rect), NSMaxY(rect))];
         [path stroke];
     }
+
+    if (self.showWarningIcon) {
+        if (@available(macOS 11.0, *)) {
+            const CGFloat diameter = 12;
+            const CGFloat inset = 1;
+            const NSRect imageRect = NSMakeRect(NSMaxX(self.bounds) - diameter - inset,
+                                                inset,
+                                                diameter,
+                                                diameter);
+
+            static NSImage *warningImage;
+            static NSImage *filledImage;
+            static dispatch_once_t onceToken;
+            dispatch_once(&onceToken, ^{
+                warningImage = [NSImage imageWithSystemSymbolName:@"exclamationmark.triangle"
+                                         accessibilityDescription:@"Color is out-of-gamut for this color space"];
+
+                filledImage = [[NSImage imageWithSystemSymbolName:@"exclamationmark.triangle.fill"
+                                         accessibilityDescription:@"Color is out-of-gamut for this color space"] cpk_imageWithTintColor:[NSColor whiteColor]];
+            });
+            [filledImage drawInRect:imageRect
+                           fromRect:NSZeroRect
+                          operation:NSCompositingOperationSourceOver
+                           fraction:1];
+
+            [warningImage drawInRect:imageRect
+                            fromRect:NSZeroRect
+                           operation:NSCompositingOperationSourceOver
+                            fraction:1];
+
+        }
+    }
+}
+
+- (void)setShowWarningIcon:(BOOL)showWarningIcon {
+    _showWarningIcon = showWarningIcon;
+    self.toolTip = showWarningIcon ? @"Color is out-of-gamut for this color space" : nil;
 }
 
 - (void)setColor:(NSColor *)color {
@@ -56,3 +97,27 @@
 }
 
 @end
+
+@implementation NSImage(CPK)
+
+- (NSImage *)cpk_imageWithTintColor:(NSColor *)tintColor {
+    if (!tintColor) {
+        return self;
+    }
+    NSSize size = self.size;
+    NSImage *image = [self copy];
+    image.template = NO;
+
+    [image lockFocus];
+
+    [tintColor set];
+    NSRectFillUsingOperation(NSMakeRect(0, 0, size.width, size.height),
+                             NSCompositingOperationSourceAtop);
+    [image unlockFocus];
+
+    return image;
+
+}
+
+@end
+

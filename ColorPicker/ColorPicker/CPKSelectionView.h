@@ -13,6 +13,7 @@
 
 /** Assign to this to programatically change the color. Will invoke the callback block. */
 @property(nonatomic) CPKColor *selectedColor;
+@property(nonatomic, readonly) NSColorSpace *colorSpace;
 
 /**
  * Initializes a new selection view.
@@ -24,6 +25,7 @@
 - (instancetype)initWithFrame:(NSRect)frameRect
                         block:(void (^)(CPKColor *))block
                         color:(CPKColor *)color
+                   colorSpace:(NSColorSpace *)colorSpace
                  alphaAllowed:(BOOL)alphaAllowed;
 
 @property(nonatomic, weak) id<CPKSelectionViewDelegate> delegate;

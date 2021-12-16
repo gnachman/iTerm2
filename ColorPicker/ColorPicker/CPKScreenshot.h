@@ -11,8 +11,9 @@
 @interface CPKScreenshot : NSObject
 @property (nonatomic, strong) NSData *data;
 @property (nonatomic) CGSize size;
+@property (nonatomic, readonly) NSColorSpace *colorSpace;
 
-+ (instancetype)grabFromScreen:(NSScreen *)screen;
++ (instancetype)grabFromScreen:(NSScreen *)screen colorSpace:(NSColorSpace *)colorSpace;
 - (NSColor *)colorAtX:(NSInteger)x y:(NSInteger)y;
 
 @end

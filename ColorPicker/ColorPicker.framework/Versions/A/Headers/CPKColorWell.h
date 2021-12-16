@@ -11,6 +11,8 @@
 @property(nonatomic, retain) NSColor *color;
 @property(nonatomic, assign) BOOL alphaAllowed;
 @property(nonatomic, assign) BOOL noColorAllowed;
+@property(nonatomic, strong) NSColorSpace *colorSpace;  // Defaults to sRGB
+@property(class, nonatomic, strong) NSColorSpace *defaultColorSpace;  // Color space used by initWithCoder
 
 // Called just before popover opens.
 @property(nonatomic, copy) void (^willOpenPopover)(void);
@@ -22,5 +24,8 @@
 // the color well's frame.
 - (NSRect)presentationRect;
 - (NSView *)presentingView;
+
+- (instancetype)initWithFrame:(NSRect)frameRect colorSpace:(NSColorSpace *)colorSpace;
+- (instancetype)initWithFrame:(NSRect)frameRect NS_UNAVAILABLE;
 
 @end

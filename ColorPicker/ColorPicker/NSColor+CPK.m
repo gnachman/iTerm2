@@ -27,23 +27,12 @@
 + (NSColor *)cpk_colorWithRed:(CGFloat)red
                         green:(CGFloat)green
                          blue:(CGFloat)blue
-                        alpha:(CGFloat)alpha {
-    if ([self respondsToSelector:@selector(colorWithRed:green:blue:alpha:)]) {
-        return [self colorWithRed:red green:green blue:blue alpha:alpha];
-    } else {
-        return [self colorWithCalibratedRed:red
-                                      green:green
-                                       blue:blue
-                                      alpha:alpha];
-    }
-}
-
-+ (NSColor *)cpk_colorWithWhite:(CGFloat)white alpha:(CGFloat)alpha {
-    if ([self respondsToSelector:@selector(colorWithWhite:alpha:)]) {
-        return [self colorWithWhite:white alpha:alpha];
-    } else {
-        return [NSColor colorWithCalibratedRed:white green:white blue:white alpha:alpha];
-    }
+                        alpha:(CGFloat)alpha
+                   colorSpace:(NSColorSpace *)colorSpace {
+    CGFloat components[] = {
+        red, green, blue, alpha
+    };
+    return [NSColor colorWithColorSpace:colorSpace components:components count:4];
 }
 
 - (BOOL)isApproximatelyEqualToColor:(NSColor *)color {
@@ -61,6 +50,24 @@
             myGreen == otherGreen &&
             myBlue == otherBlue &&
             myAlpha == otherAlpha);
+}
+
+- (NSColor *)cpk_colorUsingColorSpace:(NSColorSpace *)colorSpace lossy:(out BOOL *)clippedPtr {
+    NSColor *converted = [self colorUsingColorSpace:colorSpace];
+    BOOL clipped = NO;
+    if ([colorSpace isEqual:NSColorSpace.sRGBColorSpace]) {
+        NSColor *extended = [self colorUsingColorSpace:NSColorSpace.extendedSRGBColorSpace];
+        clipped = (extended.redComponent < 0 ||
+                   extended.redComponent > 1 ||
+                   extended.greenComponent < 0 ||
+                   extended.greenComponent > 1 ||
+                   extended.blueComponent < 0 ||
+                   extended.blueComponent > 1);
+    }
+    if (clippedPtr) {
+        *clippedPtr = clipped;
+    }
+    return converted;
 }
 
 @end

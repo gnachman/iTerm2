@@ -23,6 +23,7 @@
 - (instancetype)initWithFrame:(NSRect)frame
                         alpha:(CGFloat)alpha
                         color:(CPKColor *)color
+                   colorSpace:(NSColorSpace *)colorSpace
                         block:(void (^)(CGFloat))block;
 
 @end

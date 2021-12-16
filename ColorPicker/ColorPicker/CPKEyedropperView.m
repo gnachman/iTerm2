@@ -3,6 +3,20 @@
 
 @implementation CPKEyedropperView
 
+- (instancetype)initWithFrame:(NSRect)frame colorSpace:(NSColorSpace *)colorSpace {
+    self = [super initWithFrame:frame];
+    if (self) {
+        _colorSpace = colorSpace;
+    }
+    return self;
+}
+
+- (instancetype)initWithCoder:(NSCoder *)coder {
+    [self doesNotRecognizeSelector:_cmd];
+    self = [self initWithFrame:NSZeroRect colorSpace:nil];
+    return nil;
+}
+
 - (void)drawRect:(NSRect)dirtyRect {
     if (!_colors) {
         return;
@@ -41,7 +55,7 @@
 
     NSArray *centerColumn = _colors[_colors.count / 2];
     NSColor *centerColor = centerColumn[centerColumn.count / 2];
-    centerColor = [centerColor colorUsingColorSpace:[NSColorSpace sRGBColorSpace]];
+    centerColor = [centerColor colorUsingColorSpace:self.colorSpace];
     NSString *description = [NSString stringWithFormat:@"#%02x%02x%02x R:%d G:%d B:%d",
                                 (int)round(centerColor.redComponent * 255),
                                 (int)round(centerColor.greenComponent * 255),
@@ -70,7 +84,7 @@
     expandedFrame.size.height += yMargin * 2;
 
     path = [NSBezierPath bezierPathWithRoundedRect:expandedFrame xRadius:3 yRadius:3];
-    [[NSColor cpk_colorWithWhite:0 alpha:0.8] set];
+    [[NSColor colorWithWhite:0 alpha:0.8] set];
     [[NSGraphicsContext currentContext] setCompositingOperation:NSCompositingOperationSourceOver];
     [path fill];
 

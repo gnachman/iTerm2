@@ -10,9 +10,11 @@
 
 - (instancetype)initWithFrame:(NSRect)frame
                         value:(CGFloat)value
+                   colorSpace:(NSColorSpace *)colorSpace
                         block:(void (^)(CGFloat))block {
     self = [super initWithFrame:frame];
     if (self) {
+        _colorSpace = colorSpace;
         self.selectedValue = value;
         self.block = block;
         NSImage *image = [self cpk_imageNamed:@"SelectionIndicator"];

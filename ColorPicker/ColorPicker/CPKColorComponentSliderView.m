@@ -30,11 +30,13 @@
 
 - (instancetype)initWithFrame:(NSRect)frame
                         color:(CPKColor *)color
+                        colorSpace:(NSColorSpace *)colorSpace
                          type:(CPKColorComponentSliderType)type
                         block:(void (^)(CGFloat))block {
     self = [super initWithFrame:frame
                           value:[CPKColorComponentSliderView valueForColor:color
                                                                       type:type]
+                     colorSpace:colorSpace
                           block:block];
     if (self) {
         self.type = type;
@@ -87,19 +89,22 @@
                 [colors addObject:[NSColor cpk_colorWithRed:(double)i / (double)parts
                                                       green:self.color.greenComponent
                                                        blue:self.color.blueComponent
-                                                      alpha:1]];
+                                                      alpha:1
+                                                 colorSpace:self.colorSpace]];
                 break;
             case kCPKColorComponentSliderTypeGreen:
                 [colors addObject:[NSColor cpk_colorWithRed:self.color.redComponent
                                                       green:(double)i / (double)parts
                                                        blue:self.color.blueComponent
-                                                      alpha:1]];
+                                                      alpha:1
+                                                 colorSpace:self.colorSpace]];
                 break;
             case kCPKColorComponentSliderTypeBlue:
                 [colors addObject:[NSColor cpk_colorWithRed:self.color.redComponent
                                                       green:self.color.greenComponent
                                                        blue:(double)i / (double)parts
-                                                      alpha:1]];
+                                                      alpha:1
+                                                 colorSpace:self.colorSpace]];
                 break;
         }
     }

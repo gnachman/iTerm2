@@ -12,8 +12,9 @@
 - (instancetype)initWithFrame:(NSRect)frame
                         alpha:(CGFloat)alpha
                         color:(CPKColor *)color
+                   colorSpace:(NSColorSpace *)colorSpace
                         block:(void (^)(CGFloat))block {
-    self = [super initWithFrame:frame value:alpha block:block];
+    self = [super initWithFrame:frame value:alpha colorSpace:colorSpace block:block];
     if (self) {
         self.color = color;
     }

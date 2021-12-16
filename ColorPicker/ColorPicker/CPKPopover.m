@@ -11,29 +11,16 @@
                                ofView:(NSView *)positioningView
                         preferredEdge:(NSRectEdge)preferredEdge
                          initialColor:(NSColor *)color
-                         alphaAllowed:(BOOL)alphaAllowed
-                   selectionDidChange:(void (^)(NSColor *))block {
-    return [self presentRelativeToRect:positioningRect
-                                ofView:positioningView
-                         preferredEdge:preferredEdge
-                          initialColor:color
-                               options:(alphaAllowed ? CPKMainViewControllerOptionsAlpha : 0)
-                    selectionDidChange:block
-                  useSystemColorPicker:nil];
-}
-
-+ (instancetype)presentRelativeToRect:(NSRect)positioningRect
-                               ofView:(NSView *)positioningView
-                        preferredEdge:(NSRectEdge)preferredEdge
-                         initialColor:(NSColor *)color
-                         options:(CPKMainViewControllerOptions)options
+                           colorSpace:(NSColorSpace *)colorSpace
+                              options:(CPKMainViewControllerOptions)options
                    selectionDidChange:(void (^)(NSColor *))block
                  useSystemColorPicker:(void (^)(void))useSystemColorPicker {
     CPKPopover *popover = [[CPKPopover alloc] init];
     popover.mainViewController = [[CPKMainViewController alloc] initWithBlock:block
                                                          useSystemColorPicker:useSystemColorPicker
                                                                         color:color
-                                                                      options:options];
+                                                                      options:options
+                                                                   colorSpace:colorSpace];
     popover.contentSize = popover.mainViewController.desiredSize;
     popover.behavior = NSPopoverBehaviorSemitransient;
     popover.contentViewController = popover.mainViewController;

@@ -17,6 +17,9 @@ typedef NS_OPTIONS(NSInteger, CPKMainViewControllerOptions) {
 /** The currently selected color. */
 @property(nonatomic, readonly) NSColor *selectedColor;
 
+/** The color space to return values from. */
+@property(nonatomic, readonly) NSColorSpace *colorSpace;
+
 /**
  * Initializes a main view controller.
  *
@@ -27,13 +30,10 @@ typedef NS_OPTIONS(NSInteger, CPKMainViewControllerOptions) {
  * @return An initialized instance.
  */
 - (instancetype)initWithBlock:(void (^)(NSColor *))block
-                        color:(NSColor *)color
-                 alphaAllowed:(BOOL)alphaAllowed DEPRECATED_ATTRIBUTE;
-
-- (instancetype)initWithBlock:(void (^)(NSColor *))block
          useSystemColorPicker:(void (^)(void))useSystemColorPickerBlock
                         color:(NSColor *)color
-                      options:(CPKMainViewControllerOptions)options;
+                      options:(CPKMainViewControllerOptions)options
+                   colorSpace:(NSColorSpace *)colorSpace;
 
 
 // Changes the selected color.

@@ -15,9 +15,11 @@
 
 - (instancetype)initWithFrame:(NSRect)frameRect
                          type:(CPKGradientViewType)type
+                   colorSpace:(NSColorSpace *)colorSpace
                         block:(void (^)(CPKColor *))block {
     self = [super initWithFrame:frameRect];
     if (self) {
+        _colorSpace = colorSpace;
         _block = [block copy];
         self.indicatorView = [[NSImageView alloc] initWithFrame:NSZeroRect];
         self.indicatorView.image = [self cpk_imageNamed:@"SelectedColorIndicator"];
@@ -101,19 +103,22 @@
             return [NSColor cpk_colorWithRed:0
                                        green:fraction
                                         blue:self.blue
-                                       alpha:1];
+                                       alpha:1
+                                  colorSpace:self.colorSpace];
             break;
         case kCPKGradientViewTypeGreenBlue:
             return [NSColor cpk_colorWithRed:self.red
                                        green:0
                                         blue:fraction
-                                       alpha:1];
+                                       alpha:1
+                                  colorSpace:self.colorSpace];
             break;
         case kCPKGradientViewTypeBlueRed:
             return [NSColor cpk_colorWithRed:fraction
                                        green:self.green
                                         blue:0
-                                       alpha:1];
+                                       alpha:1
+                                  colorSpace:self.colorSpace];
             break;
     }
     return [NSColor blackColor];
@@ -143,19 +148,22 @@
             return [NSColor cpk_colorWithRed:1
                                        green:fraction
                                         blue:self.blue
-                                       alpha:1];
+                                       alpha:1
+                                  colorSpace:self.colorSpace];
             break;
         case kCPKGradientViewTypeGreenBlue:
             return [NSColor cpk_colorWithRed:self.red
                                        green:1
                                         blue:fraction
-                                       alpha:1];
+                                       alpha:1
+                                  colorSpace:self.colorSpace];
             break;
         case kCPKGradientViewTypeBlueRed:
             return [NSColor cpk_colorWithRed:fraction
                                        green:self.green
                                         blue:1
-                                       alpha:1];
+                                       alpha:1
+                                  colorSpace:self.colorSpace];
             break;
     }
     return [NSColor blackColor];
@@ -257,19 +265,22 @@
             return [[CPKColor alloc] initWithColor:[NSColor cpk_colorWithRed:self.selectedX
                                                                        green:self.selectedY
                                                                         blue:self.blue
-                                                                       alpha:1]];
+                                                                       alpha:1
+                                                                  colorSpace:self.colorSpace]];
             break;
         case kCPKGradientViewTypeGreenBlue:
             return [[CPKColor alloc] initWithColor:[NSColor cpk_colorWithRed:self.red
                                                                        green:self.selectedX
                                                                         blue:self.selectedY
-                                                                       alpha:1]];
+                                                                       alpha:1
+                                                                  colorSpace:self.colorSpace]];
             break;
         case kCPKGradientViewTypeBlueRed:
             return [[CPKColor alloc] initWithColor:[NSColor cpk_colorWithRed:self.selectedY
                                                                        green:self.green
                                                                         blue:self.selectedX
-                                                                       alpha:1]];
+                                                                       alpha:1
+                                                                  colorSpace:self.colorSpace]];
             break;
     }
 }

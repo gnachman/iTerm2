@@ -5,6 +5,8 @@
 /** Shows a table of saved "favorite" colors. */
 @interface CPKFavoritesView : NSScrollView
 
+@property (nonatomic, readonly) NSColorSpace *colorSpace;
+
 /**
  * Called when the selected favorite color changes.
  *
@@ -20,5 +22,8 @@
 
 /** If an entry with the specified color exists, select it. */
 - (void)selectColor:(NSColor *)color;
+
+- (instancetype)initWithFrame:(NSRect)frameRect NS_UNAVAILABLE;
+- (instancetype)initWithFrame:(NSRect)frameRect colorSpace:(NSColorSpace *)colorSpace;
 
 @end

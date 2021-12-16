@@ -10,7 +10,7 @@
 
 @implementation CPKScreenshot
 
-+ (instancetype)grabFromScreen:(NSScreen *)screen {
++ (instancetype)grabFromScreen:(NSScreen *)screen colorSpace:(NSColorSpace *)colorSpace {
     NSDictionary *dict = screen.deviceDescription;
     CGDirectDisplayID displayId = [dict[@"NSScreenNumber"] unsignedIntValue];
     CGImageRef cgImage = CGDisplayCreateImage(displayId);
@@ -19,14 +19,16 @@
     size.width *= screen.backingScaleFactor;
     size.height *= screen.backingScaleFactor;
 
-    CPKScreenshot *screenshot = [CPKScreenshot screenshotFromCGImage:cgImage];
+    CPKScreenshot *screenshot = [CPKScreenshot screenshotFromCGImage:cgImage
+                                                          colorSpace:colorSpace];
     CFRelease(cgImage);
 
     return screenshot;
 }
 
-+ (instancetype)screenshotFromCGImage:(CGImageRef)inImage; {
-    CGColorSpaceRef colorSpace = CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
++ (instancetype)screenshotFromCGImage:(CGImageRef)inImage
+                           colorSpace:(NSColorSpace *)nsColorSpace {
+    CGColorSpaceRef colorSpace = nsColorSpace.CGColorSpace;
     if (colorSpace == NULL) {
         return nil;
     }
@@ -37,7 +39,6 @@
                                              colorSpace:colorSpace
                                                 storage:storage];
     if (cgctx == NULL) {
-        CGColorSpaceRelease(colorSpace);
         return nil;
     }
 
@@ -51,9 +52,9 @@
     result.data = [NSData dataWithBytes:CGBitmapContextGetData(cgctx)
                                  length:CGBitmapContextGetBytesPerRow(cgctx) * CGBitmapContextGetHeight(cgctx)];
     result.size = rect.size;
+    result->_colorSpace = nsColorSpace;
 
     CGContextRelease(cgctx);
-    CGColorSpaceRelease(colorSpace);
 
     return result;
 }
@@ -84,10 +85,15 @@
     if (offset < 0 || offset > _data.length) {
         return nil;
     }
-    return [NSColor colorWithSRGBRed:b[offset + 1] / 255.0
-                               green:b[offset + 2] / 255.0
-                                blue:b[offset + 3] / 255.0
-                               alpha:b[offset + 0] / 255.0];
+    CGFloat components[] = {
+        b[offset + 1] / 255.0,
+        b[offset + 2] / 255.0,
+        b[offset + 3] / 255.0,
+        b[offset + 0] / 255.0,
+    };
+    return [NSColor colorWithColorSpace:self.colorSpace
+                             components:components
+                                  count:4];
 }
 
 @end

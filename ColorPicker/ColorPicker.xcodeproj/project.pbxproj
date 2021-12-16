@@ -86,6 +86,8 @@
 		A662E7911BD4932A00B79B8B /* HSB@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A662E78F1BD4932A00B79B8B /* HSB@2x.png */; };
 		A662E7941BD4933A00B79B8B /* RGB.png in Resources */ = {isa = PBXBuildFile; fileRef = A662E7921BD4933A00B79B8B /* RGB.png */; };
 		A662E7951BD4933A00B79B8B /* RGB@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A662E7931BD4933A00B79B8B /* RGB@2x.png */; };
+		A667C232276A8A09006B4DEF /* NSColorSpace+CPK.h in Headers */ = {isa = PBXBuildFile; fileRef = A667C230276A8A09006B4DEF /* NSColorSpace+CPK.h */; };
+		A667C233276A8A09006B4DEF /* NSColorSpace+CPK.m in Sources */ = {isa = PBXBuildFile; fileRef = A667C231276A8A09006B4DEF /* NSColorSpace+CPK.m */; };
 		A6E1748E206DD85F00E70F8D /* CPKScreenshot.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E1748C206DD85F00E70F8D /* CPKScreenshot.h */; };
 		A6E1748F206DD85F00E70F8D /* CPKScreenshot.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E1748D206DD85F00E70F8D /* CPKScreenshot.m */; };
 /* End PBXBuildFile section */
@@ -202,6 +204,8 @@
 		A662E78F1BD4932A00B79B8B /* HSB@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "HSB@2x.png"; path = "Images.xcassets/HSB/HSB@2x.png"; sourceTree = "<group>"; };
 		A662E7921BD4933A00B79B8B /* RGB.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = RGB.png; path = Images.xcassets/RGB/RGB.png; sourceTree = "<group>"; };
 		A662E7931BD4933A00B79B8B /* RGB@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "RGB@2x.png"; path = "Images.xcassets/RGB/RGB@2x.png"; sourceTree = "<group>"; };
+		A667C230276A8A09006B4DEF /* NSColorSpace+CPK.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "NSColorSpace+CPK.h"; sourceTree = "<group>"; };
+		A667C231276A8A09006B4DEF /* NSColorSpace+CPK.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "NSColorSpace+CPK.m"; sourceTree = "<group>"; };
 		A6E1748C206DD85F00E70F8D /* CPKScreenshot.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CPKScreenshot.h; sourceTree = "<group>"; };
 		A6E1748D206DD85F00E70F8D /* CPKScreenshot.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = CPKScreenshot.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -324,6 +328,8 @@
 				A6E1748D206DD85F00E70F8D /* CPKScreenshot.m */,
 				539804D22346F345009165A8 /* CPKColor.h */,
 				539804D32346F345009165A8 /* CPKColor.m */,
+				A667C230276A8A09006B4DEF /* NSColorSpace+CPK.h */,
+				A667C231276A8A09006B4DEF /* NSColorSpace+CPK.m */,
 			);
 			path = ColorPicker;
 			sourceTree = "<group>";
@@ -511,6 +517,7 @@
 				A6184F1E1BA90BB40088EF3C /* CPKColorWell.h in Headers */,
 				A6184F0E1BA8C3560088EF3C /* CPKControlsView.h in Headers */,
 				A6184F161BA8E87B0088EF3C /* CPKFavorite.h in Headers */,
+				A667C232276A8A09006B4DEF /* NSColorSpace+CPK.h in Headers */,
 				A6184EF21BA876E50088EF3C /* CPKSelectionView.h in Headers */,
 				A6184F221BA911980088EF3C /* CPKEyedropperView.h in Headers */,
 				A6184F011BA883A70088EF3C /* CPKColorComponentSliderView.h in Headers */,
@@ -694,6 +701,7 @@
 				A6184F4C1BA9D7740088EF3C /* CPKColorNamer.m in Sources */,
 				A6184F0F1BA8C3560088EF3C /* CPKControlsView.m in Sources */,
 				A6184EFE1BA8814B0088EF3C /* CPKGradientView.m in Sources */,
+				A667C233276A8A09006B4DEF /* NSColorSpace+CPK.m in Sources */,
 				A6E1748F206DD85F00E70F8D /* CPKScreenshot.m in Sources */,
 				A6184F7A1BAA5E1A0088EF3C /* CPKSliderView.m in Sources */,
 				A6184F171BA8E87B0088EF3C /* CPKFavorite.m in Sources */,
