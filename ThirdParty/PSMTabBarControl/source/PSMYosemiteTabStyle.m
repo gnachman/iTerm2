@@ -356,7 +356,7 @@
     NSDictionary *attributes =
         @{ NSFontAttributeName: [NSFont systemFontOfSize:self.fontSize],
            NSForegroundColorAttributeName: [self textColorForCell:cell] };
-    return [[NSAttributedString alloc] initWithString:contents attributes:attributes];
+    return [[[NSAttributedString alloc] initWithString:contents attributes:attributes] autorelease];
 }
 
 - (NSColor *)textColorDefaultSelected:(BOOL)selected backgroundColor:(NSColor *)backgroundColor windowIsMainAndAppIsActive:(BOOL)mainAndActive {
