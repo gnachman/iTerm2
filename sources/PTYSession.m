@@ -15059,17 +15059,18 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     }
     [_view.marksMinimap removeAllObjects];
     const NSInteger count = (NSInteger)iTermIntervalTreeObjectTypeUnknown;
-    NSMutableIndexSet **sets = iTermMalloc(sizeof(NSMutableIndexSet *) * count);
-    for (NSInteger i = 0; i < count; i++) {
-        sets[i] = [[[NSMutableIndexSet alloc] init] autorelease];
-    };
+    NSMutableDictionary<NSNumber *, NSMutableIndexSet *> *sets = [NSMutableDictionary dictionary];
     [_screen enumerateObservableMarks:^(iTermIntervalTreeObjectType type, NSInteger line) {
-        [sets[type] addIndex:line];
+        NSMutableIndexSet *set = sets[@(type)];
+        if (!set) {
+            set = [NSMutableIndexSet indexSet];
+            sets[@(type)] = set;
+        }
+        [set addIndex:line];
     }];
     for (NSInteger i = 0; i < count; i++) {
-        [_view.marksMinimap setLines:sets[i] forType:i];
+        [_view.marksMinimap setLines:sets[@(i)] forType:i];
     }
-    free(sets);
 }
 
 - (void)intervalTreeDidAddObjectOfType:(iTermIntervalTreeObjectType)type
