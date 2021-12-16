@@ -11,7 +11,7 @@ class ColorSpace(enum.Enum):
     """Describes the color space of a :class:`Color`."""
     SRGB = "sRGB"  #: SRGB color space
     CALIBRATED = "Calibrated"  #: Device color space
-
+    P3 = "P3"  #: Display P3 color space
 
 # pylint: disable=too-many-instance-attributes
 class Color:
@@ -49,11 +49,24 @@ class Color:
     @staticmethod
     def from_hex(s: str) -> typing.Optional['Color']:
         """Decodes a hex-encoded color like #aabbcc"""
-        if s[0] != '#' or len(s) != 7:
+        if s.startswith("p3#"):
+            temp = Color.from_hex(s[2:])
+            if temp is None:
+                return None
+            return Color(temp.red, temp.green, temp.blue, temp.alpha, ColorSpace.P3)
+
+        if s[0] != '#':
             return None
-        red = int(s[1:3], 16)
-        green = int(s[3:5], 16)
-        blue = int(s[5:7], 16)
+        if len(s) == 7:
+            red = int(s[1:3], 16)
+            green = int(s[3:5], 16)
+            blue = int(s[5:7], 16)
+        elif len(s) == 13:
+            red = int(s[1:5], 16) / 257
+            green = int(s[5:9], 16) / 257
+            blue = int(s[9:13], 16) / 257
+        else:
+            return None
         return Color(red, green, blue, 255)
 
     @staticmethod
@@ -226,4 +239,8 @@ class Color:
     def hex(self):
         """Returns a #rrggbb representation of this color. Assumes srgb colorspace."""
         two_digit_hex = '02x'
-        return "#" + format(self.red, two_digit_hex) + format(self.green, two_digit_hex) + format(self.blue, two_digit_hex)
+        code = "#" + format(self.red, two_digit_hex) + format(self.green, two_digit_hex) + format(self.blue, two_digit_hex)
+        if self.color_space == ColorSpace.P3:
+            two_digit_hex = '02x'
+            return "p3" + code
+        return code
