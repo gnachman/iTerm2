@@ -76,7 +76,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 ITERM_WEAKLY_REFERENCEABLE
 
-- (void)iterm_dealloc {
+- (void)dealloc {
     DLog(@"Invalidate cached occlusion: %@ %p", NSStringFromSelector(_cmd), self);
     // Not safe to call this from dealloc because can very indirectly try to retain this object.
     dispatch_async(dispatch_get_main_queue(), ^{

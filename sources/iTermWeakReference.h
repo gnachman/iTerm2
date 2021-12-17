@@ -28,10 +28,6 @@
 // MyClass.m:
 // @implementation MyClass
 // ITERM_WEAKLY_REFERENCEABLE
-// - (void)iterm_dealloc {
-//    [_myIvar release];
-//    [super dealloc];
-// }
 //
 // Call site:
 // MyClass *myObject = [[MyClass alloc] init];
@@ -60,9 +56,6 @@
 // assigning an id<iTermWeakReference> to an object of type Foo<iTermWeakReference>*, issuing a bogus
 // warning.
 - (id)weakSelf;
-@optional
-// Move your dealloc code into this optional method.
-- (void)iterm_dealloc;
 @end
 
 // A weak reference to an object that forwards method invocations to it.
@@ -79,12 +72,4 @@
 #define ITERM_WEAKLY_REFERENCEABLE \
 - (_Nullable id)weakSelf { \
     return [[[iTermWeakReference alloc] initWithObject:self] autorelease]; \
-} \
-- (void)dealloc { \
-    if ([self respondsToSelector:@selector(iterm_dealloc)]) { \
-        [self iterm_dealloc]; \
-    } else { \
-        [super dealloc];  \
-    } \
-} \
-
+}

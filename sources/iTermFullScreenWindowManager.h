@@ -15,7 +15,7 @@
 
 + (instancetype)sharedInstance;
 
-- (void)makeWindowEnterFullScreen:(NSWindow<iTermWeaklyReferenceable> *)window;
-- (void)makeWindowExitFullScreen:(NSWindow<iTermWeaklyReferenceable> *)window;
+- (void)makeWindowEnterFullScreen:(NSWindow *)window;
+- (void)makeWindowExitFullScreen:(NSWindow *)window;
 
 @end

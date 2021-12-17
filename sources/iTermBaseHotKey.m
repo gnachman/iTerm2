@@ -43,7 +43,7 @@ static const CGEventFlags kCGEventHotKeyModifierMask = (kCGEventFlagMaskShift |
 
 ITERM_WEAKLY_REFERENCEABLE
 
-- (void)iterm_dealloc {
+- (void)dealloc {
     [_shortcuts release];
     [_carbonHotKeys release];
     [super dealloc];

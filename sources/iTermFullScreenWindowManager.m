@@ -13,17 +13,11 @@
 
 // A queued entry for transitioning a window in or out of full screen.
 @interface iTermFullScreenTransition : NSObject
-@property(nonatomic, retain) NSWindow<iTermWeakReference> *window;
+@property(nonatomic, weak) NSWindow *window;
 @property(nonatomic, assign) BOOL enterFullScreen;
 @end
 
 @implementation iTermFullScreenTransition
-
-- (void)dealloc {
-    [_window release];
-    [super dealloc];
-}
-
 @end
 
 // Only one window can enter full screen mode at a time. This ensures it is done safely when
@@ -66,12 +60,6 @@
     return self;
 }
 
-- (void)dealloc {
-    [[NSNotificationCenter defaultCenter] removeObserver:self];
-    [_queue release];
-    [super dealloc];
-}
-
 - (void)windowWillTransition:(NSNotification *)notification {
     DLog(@"%@", notification);
     ++_numberOfTransitions;
@@ -94,9 +82,9 @@
         return;
     }
     while (_queue.count) {
-        iTermFullScreenTransition *transition = [[_queue.firstObject retain] autorelease];
+        iTermFullScreenTransition *transition = _queue.firstObject;
         [_queue removeObjectAtIndex:0];
-        NSWindow *window = transition.window.weaklyReferencedObject;
+        NSWindow *window = transition.window;
 
         DLog(@"  Reference is %@", window);
         if (window && !!window.isFullScreen != !!transition.enterFullScreen) {
@@ -110,7 +98,7 @@
 // Returns YES if the window is already in the queue. Removes it if its `enterFullScreen` equals `ifEntering`.
 - (BOOL)haveTransitionWithWindow:(NSWindow *)window removeIfEntering:(BOOL)ifEntering {
     NSInteger index = [_queue indexOfObjectPassingTest:^BOOL(iTermFullScreenTransition * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-        return obj.window.weaklyReferencedObject == window;
+        return obj.window == window;
     }];
     if (index != NSNotFound) {
         iTermFullScreenTransition *transition = _queue[index];
@@ -125,15 +113,15 @@
     return NO;
 }
 
-- (void)enqueueWindow:(NSWindow<iTermWeakReference> *)window enter:(BOOL)enter {
-    iTermFullScreenTransition *transition = [[[iTermFullScreenTransition alloc] init] autorelease];
+- (void)enqueueWindow:(NSWindow *)window enter:(BOOL)enter {
+    iTermFullScreenTransition *transition = [[iTermFullScreenTransition alloc] init];
     transition.window = window;
     transition.enterFullScreen = enter;
     [_queue addObject:transition];
     [self transitionNextWindowInQueue];
 }
 
-- (void)makeWindowEnterFullScreen:(NSWindow<iTermWeaklyReferenceable> *)window {
+- (void)makeWindowEnterFullScreen:(NSWindow *)window {
     DLog(@"Make window enter full screen: %@", window);
 
     if ([self haveTransitionWithWindow:window removeIfEntering:YES]) {
@@ -145,10 +133,10 @@
         return;
     }
 
-    [self enqueueWindow:window.weakSelf enter:YES];
+    [self enqueueWindow:window enter:YES];
 }
 
-- (void)makeWindowExitFullScreen:(NSWindow<iTermWeaklyReferenceable> *)window {
+- (void)makeWindowExitFullScreen:(NSWindow *)window {
     DLog(@"Make window exit full screen: %@", window);
 
     if ([self haveTransitionWithWindow:window removeIfEntering:NO]) {
@@ -160,7 +148,7 @@
         return;
     }
 
-    [self enqueueWindow:window.weakSelf enter:NO];
+    [self enqueueWindow:window enter:NO];
 }
 
 - (NSUInteger)numberOfQueuedTransitions {

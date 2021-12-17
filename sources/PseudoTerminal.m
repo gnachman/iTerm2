@@ -1001,7 +1001,7 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
 
 ITERM_WEAKLY_REFERENCEABLE
 
-- (void)iterm_dealloc {
+- (void)dealloc {
     _deallocing = YES;
     [_contentView shutdown];
 
@@ -2411,7 +2411,7 @@ ITERM_WEAKLY_REFERENCEABLE
             self.window.title = self.desiredTitle;
             [self updateWindowMenu];
         }
-        PseudoTerminal<iTermWeakReference> *weakSelf = self.weakSelf;
+        __weak __typeof(self) weakSelf = self;
         DLog(@"schedule timer to set window title");
         dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(iTermWindowTitleChangeMinimumInterval * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
             if (!(weakSelf.window.title == weakSelf.desiredTitle || [weakSelf.window.title isEqualToString:weakSelf.desiredTitle])) {

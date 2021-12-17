@@ -910,7 +910,8 @@ static const CGFloat PTYSessionMaximumMetalViewSize = 16384;
 }
 
 ITERM_WEAKLY_REFERENCEABLE
-- (void)iterm_dealloc {
+
+- (void)dealloc {
     if (_textview.delegate == self) {
         _textview.delegate = nil;
     }

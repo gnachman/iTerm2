@@ -41,7 +41,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
 ITERM_WEAKLY_REFERENCEABLE
 
-- (void)iterm_dealloc {
+- (void)dealloc {
     *_okPointer = (_reference && _reference.weaklyReferencedObject == nil);
     [super dealloc];
 }
