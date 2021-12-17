@@ -1320,7 +1320,7 @@ void TurnOnDebugLoggingAutomatically(void) {
 }
 
 - (void)revealWithURL:(NSURL *)url {
-    NSURLComponents *components = [[NSURLComponents alloc] initWithURL:url resolvingAgainstBaseURL:NO];
+    NSURLComponents *components = [[[NSURLComponents alloc] initWithURL:url resolvingAgainstBaseURL:NO] autorelease];
     NSURLQueryItem *item = [components.queryItems objectPassingTest:^BOOL(NSURLQueryItem *item, NSUInteger index, BOOL *stop) {
         return [item.name isEqualToString:@"sessionid"];
     }];

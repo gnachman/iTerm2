@@ -28,7 +28,7 @@ extern NSString *const kTmuxWindowOpenerWindowOptionStyleValueFullScreen;
 @property (nonatomic, assign) int maxHistory;
 @property (nonatomic, retain) TmuxGateway *gateway;
 @property (nonatomic, retain) NSMutableDictionary *parseTree;
-@property (nonatomic, assign) TmuxController *controller;  // weak
+@property (nonatomic, weak) TmuxController *controller;
 @property (nonatomic, retain) id target;
 // Selector is called even if the window is already open and nothing is done.
 @property (nonatomic, assign) SEL selector;

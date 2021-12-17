@@ -1857,6 +1857,7 @@
 		A667C239276BD8CF006B4DEF /* VT100StateMachine.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E525D01A9C5725007B898E /* VT100StateMachine.m */; };
 		A667C23A276BD90B006B4DEF /* VT100State.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E525CF1A9C5725007B898E /* VT100State.m */; };
 		A667C23B276BD931006B4DEF /* VT100StateTransition.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E525CE1A9C5725007B898E /* VT100StateTransition.m */; };
+		A667C23C276C7498006B4DEF /* TmuxWindowOpener.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DB67CEC14850D53005849A1 /* TmuxWindowOpener.m */; };
 		A667EF9C243935AE0055CF3F /* iTermSwipeHandler.h in Headers */ = {isa = PBXBuildFile; fileRef = A667EF9A243935AE0055CF3F /* iTermSwipeHandler.h */; };
 		A667F3881B48671B00705186 /* libiTerm2Shared.a in Frameworks */ = {isa = PBXBuildFile; fileRef = A6C760501B45C4CF00E3C992 /* libiTerm2Shared.a */; };
 		A667F38B1B48AEF200705186 /* NSApplication+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A667F3891B48AEF200705186 /* NSApplication+iTerm.h */; };
@@ -2855,7 +2856,6 @@
 		A6C7639C1B45C52B00E3C992 /* TmuxLayoutParser.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D3D21AE14839AAB00FAC8E7 /* TmuxLayoutParser.m */; };
 		A6C7639D1B45C52B00E3C992 /* TmuxSessionsTable.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DA9AEE914A51CA000BEB37B /* TmuxSessionsTable.m */; };
 		A6C7639E1B45C52B00E3C992 /* TmuxStateParser.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DB67CF41486BD3D005849A1 /* TmuxStateParser.m */; };
-		A6C7639F1B45C52B00E3C992 /* TmuxWindowOpener.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DB67CEC14850D53005849A1 /* TmuxWindowOpener.m */; };
 		A6C763A01B45C52B00E3C992 /* TmuxWindowsTable.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D0B613B14A7C76500C57C33 /* TmuxWindowsTable.m */; };
 		A6C763A11B45C52B00E3C992 /* TSVParser.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D3D21941483144600FAC8E7 /* TSVParser.m */; };
 		A6C763A21B45C52B00E3C992 /* iTermToolbeltView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DE8DC881415513A00F83147 /* iTermToolbeltView.m */; };
@@ -14406,6 +14406,7 @@
 				53BCAAFB22668A1E00949829 /* iTermCachingFileManager.m in Sources */,
 				A635F1E2250761F9008C3038 /* iTermActionsEditingViewController.m in Sources */,
 				7577E2A22593B88700905402 /* iTermSandboxedWorkerClient.m in Sources */,
+				A667C23C276C7498006B4DEF /* TmuxWindowOpener.m in Sources */,
 				A695CA80213DAA8500486440 /* NSHost+iTerm.m in Sources */,
 				A621F10C26F650DF001DD3A6 /* ScreenCharArray.m in Sources */,
 				A653F6B924D291D00062377E /* iTermOrderedDictionary.m in Sources */,
@@ -14686,7 +14687,6 @@
 				A6C763BA1B45C52B00E3C992 /* iTermTipCardViewController.m in Sources */,
 				A6C763621B45C52B00E3C992 /* PopupWindow.m in Sources */,
 				A6CEC0831DCE80C9009F4FD2 /* Wrappers.pbobjc.m in Sources */,
-				A6C7639F1B45C52B00E3C992 /* TmuxWindowOpener.m in Sources */,
 				A6C763141B45C52B00E3C992 /* iTermIntegerNumberFormatter.m in Sources */,
 				A6C762A71B45C52B00E3C992 /* iTermNewWindowCommand.m in Sources */,
 				A6A802EE226EEAE900BC70DC /* PTYTask+MRR.m in Sources */,

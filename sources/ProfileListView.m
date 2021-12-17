@@ -734,10 +734,10 @@ const CGFloat kDefaultTagsWidth = 80;
     id value = [self stringOrAttributedStringForColumn:tableColumn row:row multiline:&multiline];
     NSTableCellView *result;
     if ([value isKindOfClass:[NSAttributedString class]]) {
-        result = [tableView newTableCellViewWithTextFieldUsingIdentifier:identifier attributedString:value];
+        result = [[tableView newTableCellViewWithTextFieldUsingIdentifier:identifier attributedString:value] autorelease];
         result.textField.toolTip = [value string];
     } else {
-        result = [tableView newTableCellViewWithTextFieldUsingIdentifier:identifier font:_font string:value];
+        result = [[tableView newTableCellViewWithTextFieldUsingIdentifier:identifier font:_font string:value] autorelease];
         result.textField.toolTip = value;
     }
     return result;

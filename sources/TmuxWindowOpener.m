@@ -31,7 +31,7 @@ NSString *const kTmuxWindowOpenerWindowOptionStyleValueFullScreen = @"FullScreen
     TmuxGateway *gateway_;
     NSMutableDictionary *parseTree_;
     int pendingRequests_;
-    TmuxController *controller_;  // weak
+    __weak TmuxController *controller_;
     NSMutableDictionary *histories_;
     NSMutableDictionary *altHistories_;
     NSMutableDictionary *states_;
@@ -54,7 +54,7 @@ NSString *const kTmuxWindowOpenerWindowOptionStyleValueFullScreen = @"FullScreen
 @synthesize ambiguousIsDoubleWidth = ambiguousIsDoubleWidth_;
 
 + (TmuxWindowOpener *)windowOpener {
-    return [[[TmuxWindowOpener alloc] init] autorelease];
+    return [[TmuxWindowOpener alloc] init];
 }
 
 - (instancetype)init {
@@ -65,27 +65,6 @@ NSString *const kTmuxWindowOpenerWindowOptionStyleValueFullScreen = @"FullScreen
         states_ = [[NSMutableDictionary alloc] init];
     }
     return self;
-}
-
-- (void)dealloc {
-    [name_ release];
-    [layout_ release];
-    [gateway_ release];
-    [parseTree_ release];
-    [target_ release];
-    [histories_ release];
-    [altHistories_ release];
-    [states_ release];
-    [tabToUpdate_ release];
-    [_windowOptions release];
-    [_zoomed release];
-    [_tabColors release];
-    [_profile release];
-    [_completion release];
-    [_unpausingWindowPanes release];
-    [_newWindowBlock release];
-    
-    [super dealloc];
 }
 
 - (BOOL)openWindows:(BOOL)initial {
@@ -161,7 +140,7 @@ NSString *const kTmuxWindowOpenerWindowOptionStyleValueFullScreen = @"FullScreen
         }
     }
     if (cmdList.count) {
-        tabToUpdate_ = [tab retain];
+        tabToUpdate_ = tab;
         [gateway_ sendCommandList:cmdList];
         DLog(@"Sending command list before setting layout: %@", cmdList);
         return NO;
@@ -318,7 +297,7 @@ NSString *const kTmuxWindowOpenerWindowOptionStyleValueFullScreen = @"FullScreen
             [histories_ setObject:history forKey:wp];
         }
     } else {
-        NSAlert *alert = [[[NSAlert alloc] init] autorelease];
+        NSAlert *alert = [[NSAlert alloc] init];
         alert.messageText = @"Error: malformed history line from tmux.";
         alert.informativeText = @"See Console.app for details";
         [alert runModal];
@@ -372,7 +351,7 @@ static int OctalValue(const char *bytes) {
         [pending appendBytes:&c length:1];
     }
 
-    NSMutableDictionary *state = [[[states_ objectForKey:wp] mutableCopy] autorelease];
+    NSMutableDictionary *state = [[states_ objectForKey:wp] mutableCopy];
     [state setObject:pending forKey:kTmuxWindowOpenerStatePendingOutput];
     [states_ setObject:state forKey:wp];
     [self requestDidComplete];
@@ -505,7 +484,7 @@ static int OctalValue(const char *bytes) {
 
             // Check if we know the position for the window
             NSArray *panes = [[TmuxLayoutParser sharedInstance] windowPanesInParseTree:parseTree];
-            windowPos = [[[self.controller positionForWindowWithPanes:panes windowID:windowIndex_] retain] autorelease];
+            windowPos = [self.controller positionForWindowWithPanes:panes windowID:windowIndex_];
 
             // This is to handle the case where we couldn't create a window as
             // large as we were asked to (for instance, if the gateway is full-

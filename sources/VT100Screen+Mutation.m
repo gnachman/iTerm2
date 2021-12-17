@@ -2016,7 +2016,7 @@ static void SwapInt(int *a, int *b) {
                       guidOfLastCommandMark:guidOfLastCommandMark];
 
         [savedIntervalTree_ release];
-        savedIntervalTree_ = [[[IntervalTree alloc] initWithDictionary:screenState[kScreenStateSavedIntervalTreeKey]] autorelease];
+        savedIntervalTree_ = [[IntervalTree alloc] initWithDictionary:screenState[kScreenStateSavedIntervalTreeKey]];
         [self fixUpDeserializedIntervalTree:savedIntervalTree_
                               knownTriggers:triggers
                                     visible:NO
