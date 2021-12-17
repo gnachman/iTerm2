@@ -92,7 +92,8 @@ static const CGFloat kHelpMargin = 5;
                                                                              insets:NSEdgeInsetsMake(searchField_.frame.size.height + kMargin,
                                                                                                      0,
                                                                                                      kButtonHeight + 2 * kMargin + searchField_.frame.size.height,
-                                                                                                     0)];
+                                                                                                     0)
+                                                                          rowHeight:[NSTableView heightForTextCellUsingFont:[NSFont it_toolbeltFont]]];
         _tableView = _scrollView.documentView;
         [_tableView setDoubleAction:@selector(doubleClickOnTableView:)];
         [searchField_ setArrowHandler:_tableView];

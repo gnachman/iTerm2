@@ -18,6 +18,12 @@ extension NSRect {
 extension NSScrollView {
     @objc static func scrollViewWithTableViewForToolbelt(container: NSView & NSTableViewDelegate & NSTableViewDataSource,
                                                          insets: NSEdgeInsets) -> NSScrollView {
+        return scrollViewWithTableViewForToolbelt(container: container, insets: insets, rowHeight: 0)
+    }
+
+    @objc static func scrollViewWithTableViewForToolbelt(container: NSView & NSTableViewDelegate & NSTableViewDataSource,
+                                                         insets: NSEdgeInsets,
+                                                         rowHeight: CGFloat) -> NSScrollView {
         let frame = container.bounds.insetByEdgeInsets(insets)
         let scrollView = NSScrollView(frame: frame)
         scrollView.hasVerticalScroller = true
@@ -31,7 +37,9 @@ extension NSScrollView {
         scrollView.autoresizingMask = [.width, .height]
         scrollView.drawsBackground = false
 
-        _ = NSTableView.toolbeltTableView(inScrollview: scrollView, owner: container)
+        _ = NSTableView.toolbeltTableView(inScrollview: scrollView,
+                                          fixedRowHeight: rowHeight,
+                                          owner: container)
         return scrollView
     }
 }

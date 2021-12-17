@@ -13,12 +13,7 @@
 @implementation NSTableView (iTerm)
 
 + (instancetype)toolbeltTableViewInScrollview:(NSScrollView *)scrollView
-                                        owner:(NSView<NSTableViewDelegate, NSTableViewDataSource> *)owner {
-    return [self toolbeltTableViewInScrollview:scrollView fixedRowHeight:YES owner:owner];
-}
-
-+ (instancetype)toolbeltTableViewInScrollview:(NSScrollView *)scrollView
-                               fixedRowHeight:(BOOL)fixedRowHeight
+                               fixedRowHeight:(CGFloat)fixedRowHeight
                                         owner:(NSView<NSTableViewDelegate,NSTableViewDataSource> *)owner {
     NSSize contentSize = [scrollView contentSize];
     NSTableView *tableView = [[NSTableView alloc] initWithFrame:NSMakeRect(0, 0, contentSize.width, contentSize.height)];
@@ -37,7 +32,7 @@
     tableView.intercellSpacing = NSMakeSize(tableView.intercellSpacing.width, 0);
     // I would like to use automatic row heights but it confuses autolayout and I am done with fighting with autolayout.
     if (fixedRowHeight) {
-        tableView.rowHeight = tableView.tableColumns.firstObject.suggestedRowHeight;
+        tableView.rowHeight = fixedRowHeight;
     }
 
     [tableView setAutoresizingMask:NSViewWidthSizable];
@@ -77,6 +72,20 @@
     if (cell.textField) {
         return cell;
     }
+    [NSTableView initializeTextCell:cell withIdentifier:identifier font:font value:value];
+    return cell;
+}
+
++ (CGFloat)heightForTextCellUsingFont:(NSFont *)font {
+    NSTableCellView *cell = [[NSTableCellView alloc] init];
+    [NSTableView initializeTextCell:cell
+                     withIdentifier:[NSString stringWithFormat:@"Measure font %@ %@", font.displayName, @(font.pointSize)]
+                               font:font
+                              value:@"M"];
+    return [cell fittingSize].height;
+}
+
++ (void)initializeTextCell:(NSTableCellView *)cell withIdentifier:(NSString *)identifier font:(NSFont *)font value:(id)value {
     NSTextField *text = [[NSTextField alloc] init];
     if (font) {
         text.font = font;
@@ -135,7 +144,6 @@
     } else {
         assert(NO);
     }
-    return cell;
 }
 
 @end

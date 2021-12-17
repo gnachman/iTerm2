@@ -17,6 +17,7 @@
 #import "NSFont+iTerm.h"
 #import "NSImage+iTerm.h"
 #import "NSTableColumn+iTerm.h"
+#import "NSTableView+iTerm.h"
 #import "NSTextField+iTerm.h"
 
 static const int kDefaultSignal = 9;
@@ -95,9 +96,6 @@ static int gSignalsToList[] = {
     [self setUsesDataSource:YES];
     [self setCompletes:YES];
     [self setDataSource:self];
-
-    [[self cell] setControlSize:NSControlSizeSmall];
-    [[self cell] setFont:[NSFont it_toolbeltFont]];
 }
 
 - (int)intValue {
@@ -455,8 +453,10 @@ static int gSignalsToList[] = {
 }
 
 - (void)setFont:(NSFont *)font {
+    [self view];
     _font = font;
-    _outlineView.rowHeight = [_outlineView.tableColumns[0] suggestedRowHeight];
+    _outlineView.rowSizeStyle =  NSTableViewRowSizeStyleCustom;
+    _outlineView.rowHeight = [NSTableView heightForTextCellUsingFont:font];
     [_outlineView reloadData];
 }
 

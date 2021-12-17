@@ -134,6 +134,7 @@ NS_ASSUME_NONNULL_BEGIN
     NSPopover *popover = [[NSPopover alloc] init];
     pid_t pid = [[self.scope valueForVariableName:iTermVariableKeySessionChildPid] integerValue];
     iTermJobTreeViewController *viewController = [[iTermJobTreeViewController alloc] initWithProcessID:pid];
+    viewController.font = [self font];
     popover.contentViewController = viewController;
     popover.contentSize = viewController.view.frame.size;
     popover.behavior = NSPopoverBehaviorSemitransient;
