@@ -582,14 +582,6 @@ const CGFloat kDefaultTagsWidth = 80;
     return height;
 }
 
-- (CGFloat)extraHeightWithTags:(BOOL)hasTags {
-    if (hasTags) {
-        return 6;
-    } else {
-        return 4;
-    }
-}
-
 - (NSFont *)mainFont {
     return _font ?: [NSFont systemFontOfSize:[NSFont systemFontSize]];
 }
