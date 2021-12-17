@@ -43,8 +43,6 @@ VT100InlineImageHelperDelegate> {
 
     __weak id<VT100ScreenDelegate> delegate_;  // PTYSession implements this
 
-    VT100Terminal *terminal_;
-
     // This flag overrides maxScrollbackLines_:
     BOOL unlimitedScrollback_;
 

@@ -88,7 +88,6 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     DVR* dvr_;
 }
 
-@synthesize terminal = terminal_;
 @synthesize maxScrollbackLines = maxScrollbackLines_;
 @synthesize unlimitedScrollback = unlimitedScrollback_;
 @synthesize saveToScrollbackInAlternateScreen = saveToScrollbackInAlternateScreen_;
@@ -140,7 +139,6 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     [tabStops_ release];
     [linebuffer_ release];
     [dvr_ release];
-    [terminal_ release];
     [findContext_ release];
     [markCache_ release];
     [_lastCommandMark release];
@@ -162,11 +160,14 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 
 - (void)setTerminal:(VT100Terminal *)terminal {
     DLog(@"set terminal=%@", terminal);
-    [terminal_ autorelease];
-    terminal_ = [terminal retain];
-    _ansi = [terminal_ isAnsi];
-    _wraparoundMode = [terminal_ wraparoundMode];
-    _insert = [terminal_ insertMode];
+    [self mutSetTerminal:terminal];
+    _ansi = [terminal isAnsi];
+    _wraparoundMode = [terminal wraparoundMode];
+    _insert = [terminal insertMode];
+}
+
+- (VT100Terminal *)terminal {
+    return _state.terminal;
 }
 
 - (void)setSize:(VT100GridSize)size {
@@ -189,7 +190,7 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
             return NO;
         }
     }
-    if ([terminal_ charset]) {
+    if ([_state.terminal charset]) {
         return NO;
     }
     return YES;
@@ -2189,8 +2190,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     if (sizeBefore < VT100ScreenBigFileDownloadThreshold && afterSize > VT100ScreenBigFileDownloadThreshold) {
         if (![self.delegate screenConfirmDownloadNamed:name canExceedSize:VT100ScreenBigFileDownloadThreshold]) {
             DLog(@"Aborting big download");
-            [terminal_ stopReceivingFile];
-            [self terminalFileReceiptEndedUnexpectedly];
+            [self mutStopTerminalReceivingFile];
             return NO;
         }
     }
@@ -2206,8 +2206,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalFileReceiptEndedUnexpectedly {
-    _mutableState.inlineImageHelper = nil;
-    [delegate_ screenFileReceiptEndedUnexpectedly];
+    [self mutFileReceiptEndedUnexpectedly];
 }
 
 - (void)terminalRequestUpload:(NSString *)args {
@@ -2231,7 +2230,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     if (_state.pasteboardString && [iTermPreferences boolForKey:kPreferenceKeyAllowClipboardAccessFromTerminal]) {
         NSData *data = [NSData dataWithBase64EncodedString:_state.pasteboardString];
         if (data) {
-            NSString *string = [[[NSString alloc] initWithData:data encoding:terminal_.encoding] autorelease];
+            NSString *string = [[[NSString alloc] initWithData:data encoding:_state.terminal.encoding] autorelease];
             if (!string) {
                 string = [[[NSString alloc] initWithData:data encoding:[NSString defaultCStringEncoding]] autorelease];
             }
@@ -2464,7 +2463,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     // to add to iTerm, and our answer to this is marks, which already existed anyway.
     [delegate_ screenPromptDidStartAtLine:[self numberOfScrollbackLines] + self.cursorY - 1];
     if ([iTermAdvancedSettingsModel resetSGROnPrompt]) {
-        [terminal_ resetGraphicRendition];
+        [_mutableState.terminal resetGraphicRendition];
     }
 }
 
@@ -2639,7 +2638,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalTypeDidChange {
-    _ansi = [terminal_ isAnsi];
+    _ansi = [_state.terminal isAnsi];
 }
 
 - (void)terminalInsertModeDidChangeTo:(BOOL)newValue {
@@ -2674,7 +2673,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (NSSet<NSString *> *)sgrCodesForChar:(screen_char_t)c externalAttributes:(iTermExternalAttribute *)ea {
-    return [terminal_ sgrCodesForCharacter:c externalAttributes:ea];
+    return [_state.terminal sgrCodesForCharacter:c externalAttributes:ea];
 }
 
 - (NSArray<NSString *> *)terminalSGRCodesInRectangle:(VT100GridRect)screenRect {
@@ -2964,16 +2963,16 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     screen_char_t c = {
         .code = inputChar
     };
-    if (charsetUsesLineDrawingMode_[[terminal_ charset]]) {
+    if (charsetUsesLineDrawingMode_[[_state.terminal charset]]) {
         ConvertCharsToGraphicsCharset(&c, 1);
     }
-    CopyForegroundColor(&c, [terminal_ foregroundColorCode]);
-    CopyBackgroundColor(&c, [terminal_ backgroundColorCode]);
+    CopyForegroundColor(&c, [_state.terminal foregroundColorCode]);
+    CopyBackgroundColor(&c, [_state.terminal backgroundColorCode]);
 
     // Only preserve SGR attributes. image is OSC, not SGR.
     c.image = 0;
 
-    [self mutFillRectangle:rect with:c externalAttributes:[terminal_ externalAttributes]];
+    [self mutFillRectangle:rect with:c externalAttributes:[_state.terminal externalAttributes]];
 }
 
 - (void)terminalEraseRectangle:(VT100GridRect)rect {
@@ -3166,11 +3165,11 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 #pragma mark - VT100GridDelegate
 
 - (screen_char_t)gridForegroundColorCode {
-    return [terminal_ foregroundColorCodeReal];
+    return [_state.terminal foregroundColorCodeReal];
 }
 
 - (screen_char_t)gridBackgroundColorCode {
-    return [terminal_ backgroundColorCodeReal];
+    return [_state.terminal backgroundColorCodeReal];
 }
 
 - (void)gridCursorDidChangeLine {
@@ -3277,7 +3276,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
         [encoder mergeDictionary:extra];
         NSDictionary *dict =
         @{ kScreenStateTabStopsKey: [tabStops_ allObjects] ?: @[],
-           kScreenStateTerminalKey: [terminal_ stateDictionary] ?: @{},
+           kScreenStateTerminalKey: [_state.terminal stateDictionary] ?: @{},
            kScreenStateLineDrawingModeKey: @[ @(charsetUsesLineDrawingMode_[0]),
                                               @(charsetUsesLineDrawingMode_[1]),
                                               @(charsetUsesLineDrawingMode_[2]),

@@ -433,7 +433,7 @@
      couldHaveSelection:(BOOL)couldHaveSelection
           subSelections:(NSArray *)newSubSelections
                  newTop:(int)newTop {
-    [terminal_ clampSavedCursorToScreenSize:VT100GridSizeMake(newSize.width, newSize.height)];
+    [_mutableState.terminal clampSavedCursorToScreenSize:VT100GridSizeMake(newSize.width, newSize.height)];
 
     [self.mutablePrimaryGrid resetScrollRegions];
     [self.mutableAltGrid resetScrollRegions];
@@ -1207,7 +1207,7 @@ static void SwapInt(int *a, int *b) {
         [delegate_ screenPromptDidStartAtLine:[self numberOfScrollbackLines]];
         [self commandDidStartAtScreenCoord:newCommandStart];
     }
-    [terminal_ resetSavedCursorPositions];
+    [_mutableState.terminal resetSavedCursorPositions];
 }
 
 - (int)numberOfLinesToPreserveWhenClearingScreen {
@@ -1500,15 +1500,15 @@ static void SwapInt(int *a, int *b) {
         augmentedString = [@" " stringByAppendingString:string];
     }
 
-    assert(terminal_);
+    assert(_state.terminal);
     // Add DWC_RIGHT after each double-byte character, build complex characters out of surrogates
     // and combining marks, replace private codes with replacement characters, swallow zero-
     // width spaces, and set fg/bg colors and attributes.
     BOOL dwc = NO;
     StringToScreenChars(augmentedString,
                         buffer,
-                        [terminal_ foregroundColorCode],
-                        [terminal_ backgroundColorCode],
+                        [_state.terminal foregroundColorCode],
+                        [_state.terminal backgroundColorCode],
                         &len,
                         [delegate_ screenShouldTreatAmbiguousCharsAsDoubleWidth],
                         NULL,
@@ -1545,7 +1545,7 @@ static void SwapInt(int *a, int *b) {
     }
     [self mutAppendScreenCharArrayAtCursor:buffer + bufferOffset
                                     length:len - bufferOffset
-                    externalAttributeIndex:[iTermUniformExternalAttributes withAttribute:terminal_.externalAttributes]];
+                    externalAttributeIndex:[iTermUniformExternalAttributes withAttribute:_state.terminal.externalAttributes]];
     if (buffer == dynamicBuffer) {
         free(buffer);
     }
@@ -1600,14 +1600,14 @@ static void SwapInt(int *a, int *b) {
 
 - (void)appendSessionRestoredBanner {
     // Save graphic rendition. Set to system message color.
-    const VT100GraphicRendition saved = terminal_.graphicRendition;
+    const VT100GraphicRendition saved = _state.terminal.graphicRendition;
 
     VT100GraphicRendition temp = saved;
     temp.fgColorMode = ColorModeAlternate;
     temp.fgColorCode = ALTSEM_SYSTEM_MESSAGE;
     temp.bgColorMode = ColorModeAlternate;
     temp.bgColorCode = ALTSEM_SYSTEM_MESSAGE;
-    terminal_.graphicRendition = temp;
+    _state.terminal.graphicRendition = temp;
 
     // Record the cursor position and append the message.
     const int yBefore = _state.currentGrid.cursor.y;
@@ -1624,7 +1624,7 @@ static void SwapInt(int *a, int *b) {
     self.mutableCurrentGrid.preferredCursorPosition = _state.currentGrid.cursor;
 
     // Restore the graphic rendition, add a newline, and calculate how far down the cursor moved.
-    terminal_.graphicRendition = saved;
+    _state.terminal.graphicRendition = saved;
     [self mutCrlf];
     const int delta = _state.currentGrid.cursor.y - yBefore;
 
@@ -1667,9 +1667,9 @@ static void SwapInt(int *a, int *b) {
     screen_char_t *buffer;
     buffer = asciiData->screenChars->buffer;
 
-    screen_char_t fg = [terminal_ foregroundColorCode];
-    screen_char_t bg = [terminal_ backgroundColorCode];
-    iTermExternalAttribute *ea = [terminal_ externalAttributes];
+    screen_char_t fg = [_state.terminal foregroundColorCode];
+    screen_char_t bg = [_state.terminal backgroundColorCode];
+    iTermExternalAttribute *ea = [_state.terminal externalAttributes];
 
     screen_char_t zero = { 0 };
     if (memcmp(&fg, &zero, sizeof(fg)) || memcmp(&bg, &zero, sizeof(bg))) {
@@ -1683,7 +1683,7 @@ static void SwapInt(int *a, int *b) {
 
     // If a graphics character set was selected then translate buffer
     // characters into graphics characters.
-    if (charsetUsesLineDrawingMode_[[terminal_ charset]]) {
+    if (charsetUsesLineDrawingMode_[[_state.terminal charset]]) {
         ConvertCharsToGraphicsCharset(buffer, len);
     }
 
@@ -1976,7 +1976,7 @@ static void SwapInt(int *a, int *b) {
         [tabStops_ removeAllObjects];
         [tabStops_ addObjectsFromArray:screenState[kScreenStateTabStopsKey]];
 
-        [terminal_ setStateFromDictionary:screenState[kScreenStateTerminalKey]];
+        [_state.terminal setStateFromDictionary:screenState[kScreenStateTerminalKey]];
         NSArray *array = screenState[kScreenStateLineDrawingModeKey];
         for (int i = 0; i < sizeof(charsetUsesLineDrawingMode_) / sizeof(charsetUsesLineDrawingMode_[0]) && i < array.count; i++) {
             charsetUsesLineDrawingMode_[i] = [array[i] boolValue];
@@ -2145,7 +2145,7 @@ static void SwapInt(int *a, int *b) {
     NSNumber *altSavedY = [state objectForKey:kStateDictAltSavedCY];
     if (altSavedX && altSavedY && inAltScreen) {
         self.mutablePrimaryGrid.cursor = VT100GridCoordMake([altSavedX intValue], [altSavedY intValue]);
-        [terminal_ setSavedCursorPosition:_state.primaryGrid.cursor];
+        [_state.terminal setSavedCursorPosition:_state.primaryGrid.cursor];
     }
 
     self.mutableCurrentGrid.cursorX = [[state objectForKey:kStateDictCursorX] intValue];
@@ -2175,47 +2175,47 @@ static void SwapInt(int *a, int *b) {
     // Everything below this line needs testing
     NSNumber *insertMode = [state objectForKey:kStateDictInsertMode];
     if (insertMode) {
-        [terminal_ setInsertMode:!![insertMode intValue]];
+        [_mutableState.terminal setInsertMode:!![insertMode intValue]];
     }
 
     NSNumber *applicationCursorKeys = [state objectForKey:kStateDictKCursorMode];
     if (applicationCursorKeys) {
-        [terminal_ setCursorMode:!![applicationCursorKeys intValue]];
+        [_mutableState.terminal setCursorMode:!![applicationCursorKeys intValue]];
     }
 
     NSNumber *keypad = [state objectForKey:kStateDictKKeypadMode];
     if (keypad) {
-        [terminal_ setKeypadMode:!![keypad boolValue]];
+        [_mutableState.terminal setKeypadMode:!![keypad boolValue]];
     }
 
     NSNumber *mouse = [state objectForKey:kStateDictMouseStandardMode];
     if (mouse && [mouse intValue]) {
-        [terminal_ setMouseMode:MOUSE_REPORTING_NORMAL];
+        [_mutableState.terminal setMouseMode:MOUSE_REPORTING_NORMAL];
     }
     mouse = [state objectForKey:kStateDictMouseButtonMode];
     if (mouse && [mouse intValue]) {
-        [terminal_ setMouseMode:MOUSE_REPORTING_BUTTON_MOTION];
+        [_mutableState.terminal setMouseMode:MOUSE_REPORTING_BUTTON_MOTION];
     }
     mouse = [state objectForKey:kStateDictMouseButtonMode];
     if (mouse && [mouse intValue]) {
-        [terminal_ setMouseMode:MOUSE_REPORTING_ALL_MOTION];
+        [_mutableState.terminal setMouseMode:MOUSE_REPORTING_ALL_MOTION];
     }
 
     // NOTE: You can get both SGR and UTF8 set. In that case SGR takes priority. See comment in
     // tmux's input_key_get_mouse()
     mouse = [state objectForKey:kStateDictMouseSGRMode];
     if (mouse && [mouse intValue]) {
-        [terminal_ setMouseFormat:MOUSE_FORMAT_SGR];
+        [_mutableState.terminal setMouseFormat:MOUSE_FORMAT_SGR];
     } else {
         mouse = [state objectForKey:kStateDictMouseUTF8Mode];
         if (mouse && [mouse intValue]) {
-            [terminal_ setMouseFormat:MOUSE_FORMAT_XTERM_EXT];
+            [_mutableState.terminal setMouseFormat:MOUSE_FORMAT_XTERM_EXT];
         }
     }
 
     NSNumber *wrap = [state objectForKey:kStateDictWrapMode];
     if (wrap) {
-        [terminal_ setWraparoundMode:!![wrap intValue]];
+        [_mutableState.terminal setWraparoundMode:!![wrap intValue]];
     }
 }
 
@@ -2286,7 +2286,7 @@ static void SwapInt(int *a, int *b) {
 
     int xPos = x - 1;
 
-    if ([terminal_ originMode]) {
+    if ([_state.terminal originMode]) {
         xPos += leftMargin;
         xPos = MAX(leftMargin, MIN(rightMargin, xPos));
     }
@@ -2303,7 +2303,7 @@ static void SwapInt(int *a, int *b) {
 
     yPos = y - 1;
 
-    if ([terminal_ originMode]) {
+    if ([_state.terminal originMode]) {
         yPos += topMargin;
         yPos = MAX(topMargin, MIN(bottomMargin, yPos));
     }
@@ -2319,7 +2319,7 @@ static void SwapInt(int *a, int *b) {
     int cursorX = _state.currentGrid.cursorX;
     int cursorY = _state.currentGrid.cursorY;
 
-    if (cursorX >= self.width && terminal_.reverseWraparoundMode && terminal_.wraparoundMode) {
+    if (cursorX >= self.width && _state.terminal.reverseWraparoundMode && _state.terminal.wraparoundMode) {
         // Reverse-wrap when past the screen edge is a special case.
         self.mutableCurrentGrid.cursor = VT100GridCoordMake(rightMargin, cursorY);
     } else if ([self shouldReverseWrap]) {
@@ -2343,7 +2343,7 @@ static void SwapInt(int *a, int *b) {
 // 1. reverseWraparoundMode is set (xterm's rule), or
 // 2. there's no left-right margin and the preceding line has EOL_SOFT (Terminal.app's rule)
 - (BOOL)shouldReverseWrap {
-    if (!terminal_.wraparoundMode) {
+    if (!_state.terminal.wraparoundMode) {
         return NO;
     }
 
@@ -2362,7 +2362,7 @@ static void SwapInt(int *a, int *b) {
     }
 
     // If reverseWraparoundMode is reset, then allow only if there's a soft newline on previous line
-    if (!terminal_.reverseWraparoundMode) {
+    if (!_state.terminal.reverseWraparoundMode) {
         if (_state.currentGrid.useScrollRegionCols) {
             return NO;
         }
@@ -2434,7 +2434,7 @@ static void SwapInt(int *a, int *b) {
         rightMargin = self.width - 1;
     }
 
-    if (terminal_.moreFix && self.cursorX > self.width && terminal_.wraparoundMode) {
+    if (_state.terminal.moreFix && self.cursorX > self.width && _state.terminal.wraparoundMode) {
         [self terminalLineFeed];
         [self mutCarriageReturn];
     }
@@ -2460,11 +2460,11 @@ static void SwapInt(int *a, int *b) {
     }
     if (allNulls) {
         screen_char_t filler;
-        InitializeScreenChar(&filler, [terminal_ foregroundColorCode], [terminal_ backgroundColorCode]);
+        InitializeScreenChar(&filler, [_state.terminal foregroundColorCode], [_state.terminal backgroundColorCode]);
         filler.code = TAB_FILLER;
         const int startX = _state.currentGrid.cursorX;
         const int limit = nextTabStop - 1;
-        iTermExternalAttribute *ea = [terminal_ externalAttributes];
+        iTermExternalAttribute *ea = [_state.terminal externalAttributes];
         [self.mutableCurrentGrid mutateCharactersInRange:VT100GridCoordRangeMake(startX, y, limit + 1, y)
                                                    block:^(screen_char_t *c,
                                                            iTermExternalAttribute **eaOut,
@@ -2558,7 +2558,7 @@ static void SwapInt(int *a, int *b) {
         bottom > top) {
         self.mutableCurrentGrid.scrollRegionRows = VT100GridRangeMake(top, bottom - top + 1);
 
-        if ([terminal_ originMode]) {
+        if ([_state.terminal originMode]) {
             self.mutableCurrentGrid.cursor = VT100GridCoordMake(_state.currentGrid.leftMargin,
                                                                 _state.currentGrid.topMargin);
         } else {
@@ -2626,7 +2626,7 @@ static void SwapInt(int *a, int *b) {
             if (!shouldHonorProtected) {
                 [self scrollScreenIntoHistory];
             }
-        } else if (self.cursorX == 1 && self.cursorY == 1 && terminal_.lastToken.type == VT100CSI_CUP) {
+        } else if (self.cursorX == 1 && self.cursorY == 1 && _state.terminal.lastToken.type == VT100CSI_CUP) {
             // This is important for tmux integration with shell integration enabled. The screen
             // terminal uses ED 0 instead of ED 2 to clear the screen (e.g., when you do ^L at the shell).
             [self removePromptMarksBelowLine:yStart + self.numberOfScrollbackLines];
@@ -2977,7 +2977,7 @@ static void SwapInt(int *a, int *b) {
                 break;
         }
     };
-    if (terminal_.decsaceRectangleMode) {
+    if (_state.terminal.decsaceRectangleMode) {
         [self.mutableCurrentGrid mutateCellsInRect:rect
                                              block:^(VT100GridCoord coord,
                                                      screen_char_t *sct,
@@ -3020,7 +3020,7 @@ static void SwapInt(int *a, int *b) {
                 break;
         }
     };
-    if (terminal_.decsaceRectangleMode) {
+    if (_state.terminal.decsaceRectangleMode) {
         [self.mutableCurrentGrid mutateCellsInRect:rect
                                              block:^(VT100GridCoord coord,
                                                      screen_char_t *sct,
@@ -3380,6 +3380,10 @@ static inline void VT100ScreenEraseCell(screen_char_t *sct, iTermExternalAttribu
     return [self.mutableCurrentGrid screenCharsAtLineNumber:theIndex];
 }
 
+- (void)mutSetTerminal:(VT100Terminal *)terminal {
+    _mutableState.terminal = terminal;
+}
+
 #pragma mark - Dirty
 
 - (void)mutResetAllDirty {
@@ -3586,6 +3590,17 @@ static inline void VT100ScreenEraseCell(screen_char_t *sct, iTermExternalAttribu
     return nil;
 }
 
+#pragma mark - File Transfer
+
+- (void)mutStopTerminalReceivingFile {
+    [_mutableState.terminal stopReceivingFile];
+    [self mutFileReceiptEndedUnexpectedly];
+}
+
+- (void)mutFileReceiptEndedUnexpectedly {
+    _mutableState.inlineImageHelper = nil;
+    [delegate_ screenFileReceiptEndedUnexpectedly];
+}
 
 @end
 
@@ -3605,7 +3620,7 @@ static inline void VT100ScreenEraseCell(screen_char_t *sct, iTermExternalAttribu
     self.mutableAltGrid.cursor = VT100GridCoordMake(0, 0);
     [self.mutablePrimaryGrid resetScrollRegions];
     [self.mutableAltGrid resetScrollRegions];
-    [terminal_ resetSavedCursorPositions];
+    [_state.terminal resetSavedCursorPositions];
 
     findContext_.substring = nil;
 

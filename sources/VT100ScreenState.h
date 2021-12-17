@@ -11,6 +11,7 @@
 
 #import "IntervalTree.h"
 #import "VT100Grid.h"
+#import "VT100Terminal.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -58,6 +59,8 @@ NS_ASSUME_NONNULL_BEGIN
 // Holds notes on alt/primary grid (the one we're not in). The origin is the top-left of the
 // grid.
 @property (nullable, nonatomic, strong, readonly) IntervalTree *savedIntervalTree;
+
+@property (nonatomic, strong, readonly) VT100Terminal *terminal;
 @end
 
 @interface VT100ScreenMutableState: NSObject<VT100ScreenState, NSCopying>
@@ -84,6 +87,7 @@ NS_ASSUME_NONNULL_BEGIN
 // When a saved grid is swapped in, this is the live current grid.
 @property (nullable, nonatomic, strong, readwrite) VT100Grid *realCurrentGrid;
 @property (nullable, nonatomic, strong, readwrite) IntervalTree *savedIntervalTree;
+@property (nonatomic, strong, readwrite) VT100Terminal *terminal;
 
 - (id<VT100ScreenState>)copy;
 
