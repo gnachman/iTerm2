@@ -268,8 +268,8 @@ NSString *const kTmuxWindowOpenerWindowOptionStyleValueFullScreen = @"FullScreen
 
 - (void)finishErroneously {
     if (self.target) {
-        [self.target performSelector:self.selector
-                          withObject:self];
+        [self.target it_performNonObjectReturningSelector:self.selector
+                                               withObject:self];
     }
     if (self.completion) {
         self.completion(windowIndex_);
@@ -406,8 +406,8 @@ static int OctalValue(const char *bytes) {
         return;
     }
     if (_unpausingWindowPanes) {
-        [self.target performSelector:self.selector
-                          withObject:self];
+        [self.target it_performNonObjectReturningSelector:self.selector
+                                               withObject:self];
         return;
     }
     NSWindowController<iTermWindowController> *term = nil;
@@ -515,8 +515,8 @@ static int OctalValue(const char *bytes) {
         [[self.controller window:windowIndex_] setPerTabSettings:_perTabSettings[widStr]];
     }
     if (self.target) {
-        [self.target performSelector:self.selector
-                          withObject:self];
+        [self.target it_performNonObjectReturningSelector:self.selector
+                                               withObject:self];
     }
     DLog(@"useOriginalWindow=%@ initialTabs=%@ initial=%@ windowPos=%@",
          @(useOriginalWindow), @(initialTabs), @(self.initial), windowPos);

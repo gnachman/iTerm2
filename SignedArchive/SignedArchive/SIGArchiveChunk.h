@@ -38,7 +38,7 @@ extern NSString *const SIGArchiveHeaderMagicString;
                      offset:(long long)offset NS_DESIGNATED_INITIALIZER;
 - (instancetype)init NS_UNAVAILABLE;
 
-- (NSData *)data:(out NSError **)error;
+- (NSData * _Nullable)data:(out NSError **)error;
 
 @end
 

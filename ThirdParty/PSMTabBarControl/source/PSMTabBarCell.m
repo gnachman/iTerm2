@@ -235,20 +235,6 @@ static NSRect PSMConvertAccessibilityFrameToScreen(NSView *view, NSRect frame) {
     return self;
 }
 
-- (void)dealloc {
-    [_delayedStringValueTimer invalidate];
-    [_delayedStringValueTimer release];
-
-    [_modifierString release];
-    _indicator.delegate = nil;
-    [_indicator release];
-    [_tabColor release];
-    [_element release];
-    [_titleCache release];
-    [_subtitleCache release];
-    [super dealloc];
-}
-
 - (NSString *)description {
     id identifier = nil;
     if ([self.representedObject respondsToSelector:@selector(identifier)]) {
@@ -295,14 +281,14 @@ static NSRect PSMConvertAccessibilityFrameToScreen(NSView *view, NSRect frame) {
         return [obj.inputs isEqual:inputs];
     }];
     if (index != NSNotFound) {
-        PSMCachedTitle *title = [[cache[index] retain] autorelease];
+        PSMCachedTitle *title = cache[index];
         if (index > 0) {
             [cache removeObjectAtIndex:index];
             [cache insertObject:title atIndex:0];
         }
         return title;
     }
-    PSMCachedTitle *title = [[[PSMCachedTitle alloc] initWith:inputs] autorelease];
+    PSMCachedTitle *title = [[PSMCachedTitle alloc] initWith:inputs];
     [cache insertObject:title atIndex:0];
     while (cache.count > 2) {
         [cache removeLastObject];
@@ -352,7 +338,6 @@ static NSRect PSMConvertAccessibilityFrameToScreen(NSView *view, NSRect frame) {
 }
 
 - (void)updateStringValue:(NSTimer *)timer {
-    [_delayedStringValueTimer release];
     _delayedStringValueTimer = nil;
     _stringSize = [[self cachedTitle] size];
     // need to redisplay now - binding observation was too quick.
@@ -523,9 +508,9 @@ static NSRect PSMConvertAccessibilityFrameToScreen(NSView *view, NSRect frame) {
     NSBitmapImageRep *rep;
     rep = [self.psmTabControlView bitmapImageRepForCachingDisplayInRect:cellFrame];
     [self.psmTabControlView cacheDisplayInRect:cellFrame toBitmapImageRep:rep];
-    NSImage *image = [[[NSImage alloc] initWithSize:[rep size]] autorelease];
+    NSImage *image = [[NSImage alloc] initWithSize:[rep size]];
     [image addRepresentation:rep];
-    NSImage *returnImage = [[[NSImage alloc] initWithSize:[rep size]] autorelease];
+    NSImage *returnImage = [[NSImage alloc] initWithSize:[rep size]];
     [returnImage lockFocus];
     [image drawAtPoint:NSZeroPoint
               fromRect:NSZeroRect
@@ -542,7 +527,6 @@ static NSRect PSMConvertAccessibilityFrameToScreen(NSView *view, NSRect frame) {
                    operation:NSCompositingOperationSourceOver
                     fraction:1.0];
         [returnImage unlockFocus];
-        [piImage release];
     }
     return returnImage;
 }
@@ -584,7 +568,7 @@ static NSRect PSMConvertAccessibilityFrameToScreen(NSView *view, NSRect frame) {
             _cellTrackingTag = [aDecoder decodeIntForKey:@"cellTrackingTag"];
             _closeButtonOver = [aDecoder decodeBoolForKey:@"closeButtonOver"];
             _closeButtonPressed = [aDecoder decodeBoolForKey:@"closeButtonPressed"];
-            _indicator = [[aDecoder decodeObjectForKey:@"indicator"] retain];
+            _indicator = [aDecoder decodeObjectForKey:@"indicator"];
             _isInOverflowMenu = [aDecoder decodeBoolForKey:@"isInOverflowMenu"];
             _hasCloseButton = [aDecoder decodeBoolForKey:@"hasCloseButton"];
             _isCloseButtonSuppressed = [aDecoder decodeBoolForKey:@"isCloseButtonSuppressed"];
@@ -604,7 +588,6 @@ static NSRect PSMConvertAccessibilityFrameToScreen(NSView *view, NSRect frame) {
             PSMTabCloseButtonAccessibilityElement *closeButtonElement = [[PSMTabCloseButtonAccessibilityElement alloc] initWithCell:self role:NSAccessibilityButtonRole];
             if (closeButtonElement) {
                 _element.accessibilityChildren = @[ closeButtonElement ];
-                [closeButtonElement release];
             }
         }
     }

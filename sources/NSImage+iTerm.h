@@ -49,7 +49,6 @@
 - (NSData *)dataForFileOfType:(NSBitmapImageFileType)fileType;
 
 - (NSData *)rawPixelsInRGBColorSpace;
-- (NSData *)rawDataForMetalOfSize:(NSSize)size;
 
 // Resizes an image in a way that lets you use rawDataForMetal. If you resize an image with only
 // Cocoa APIs (lockFocus, drawInRect, unlockFocus), it won't work with 8 bits per component (only

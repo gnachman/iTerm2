@@ -294,42 +294,6 @@
     return storage;
 }
 
-- (NSData *)rawDataForMetalOfSize:(NSSize)unsafeSize {
-    const NSSize size = NSMakeSize(round(unsafeSize.width), round(unsafeSize.height));
-
-    CGImageRef cgImage = [self CGImageForProposedRect:nil context:nil hints:nil];
-
-    size_t bitsPerComponent = 8;
-    size_t bytesPerRow = size.width * bitsPerComponent * 4 / 8;
-    CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
-    CGBitmapInfo bitmapInfo = (CGBitmapInfo)kCGImageAlphaPremultipliedLast | kCGBitmapByteOrderDefault;
-    NSMutableData *data = [NSMutableData dataWithLength:bytesPerRow * ceil(size.height)];
-    CGContextRef context = CGBitmapContextCreate(data.mutableBytes,
-                                                 size.width,
-                                                 size.height,
-                                                 bitsPerComponent,
-                                                 bytesPerRow,
-                                                 colorSpace,
-                                                 bitmapInfo);
-    if (!context) {
-        DLog(@"Failed to create bitmap context width=%@ height=%@ bpc=%@ bpr=%@ cs=%@",
-             @(size.width), @(size.height), @(bitsPerComponent), @(bytesPerRow), colorSpace);
-        return nil;
-    }
-    CGContextSetInterpolationQuality(context, kCGInterpolationHigh);
-
-    // Flip the context so the positive Y axis points down
-    CGContextTranslateCTM(context, 0, size.height);
-    CGContextScaleCTM(context, 1, -1);
-
-    CGContextDrawImage(context, CGRectMake(0, 0, size.width, size.height), cgImage);
-
-    CFRelease(context);
-
-    return data;
-
-}
-
 - (NSImage *)safelyResizedImageWithSize:(NSSize)unsafeSize
                         destinationRect:(NSRect)destinationRect
                                   scale:(CGFloat)scale {
