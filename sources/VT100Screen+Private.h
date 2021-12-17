@@ -77,11 +77,6 @@ VT100InlineImageHelperDelegate> {
     iTermExternalAttribute *_lastExternalAttribute;
     BOOL _lastCharacterIsDoubleWidth;
 
-    // Cached copies of terminal attributes
-    BOOL _wraparoundMode;
-    BOOL _ansi;
-    BOOL _insert;
-
     BOOL saveToScrollbackInAlternateScreen_;
     BOOL _cursorVisible;
     BOOL _shellIntegrationInstalled;

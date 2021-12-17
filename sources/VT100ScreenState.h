@@ -60,6 +60,11 @@ NS_ASSUME_NONNULL_BEGIN
 // grid.
 @property (nullable, nonatomic, strong, readonly) IntervalTree *savedIntervalTree;
 
+// Cached copies of terminal attributes
+@property (nonatomic, readonly) BOOL wraparoundMode;
+@property (nonatomic, readonly) BOOL ansi;
+@property (nonatomic, readonly) BOOL insert;
+
 @property (nonatomic, strong, readonly) VT100Terminal *terminal;
 @end
 
@@ -88,6 +93,9 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nullable, nonatomic, strong, readwrite) VT100Grid *realCurrentGrid;
 @property (nullable, nonatomic, strong, readwrite) IntervalTree *savedIntervalTree;
 @property (nonatomic, strong, readwrite) VT100Terminal *terminal;
+@property (nonatomic, readwrite) BOOL wraparoundMode;
+@property (nonatomic, readwrite) BOOL ansi;
+@property (nonatomic, readwrite) BOOL insert;
 
 - (id<VT100ScreenState>)copy;
 

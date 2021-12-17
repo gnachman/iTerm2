@@ -161,9 +161,6 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 - (void)setTerminal:(VT100Terminal *)terminal {
     DLog(@"set terminal=%@", terminal);
     [self mutSetTerminal:terminal];
-    _ansi = [terminal isAnsi];
-    _wraparoundMode = [terminal wraparoundMode];
-    _insert = [terminal insertMode];
 }
 
 - (VT100Terminal *)terminal {
@@ -2634,15 +2631,15 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalWraparoundModeDidChangeTo:(BOOL)newValue {
-    _wraparoundMode = newValue;
+    [self mutSetWraparoundMode:newValue];
 }
 
 - (void)terminalTypeDidChange {
-    _ansi = [_state.terminal isAnsi];
+    [self mutUpdateTerminalType];
 }
 
 - (void)terminalInsertModeDidChangeTo:(BOOL)newValue {
-    _insert = newValue;
+    [self mutSetInsert:newValue];
 }
 
 - (NSString *)terminalProfileName {

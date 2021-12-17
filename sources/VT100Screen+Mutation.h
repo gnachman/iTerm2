@@ -130,7 +130,9 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)mutSetTerminal:(VT100Terminal *)terminal;
 - (void)mutStopTerminalReceivingFile;
 - (void)mutFileReceiptEndedUnexpectedly;
-
+- (void)mutSetWraparoundMode:(BOOL)newValue;
+- (void)mutUpdateTerminalType;
+- (void)mutSetInsert:(BOOL)newValue;
 @end
 
 NS_ASSUME_NONNULL_END

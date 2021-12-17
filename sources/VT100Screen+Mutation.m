@@ -1581,9 +1581,9 @@ static void SwapInt(int *a, int *b) {
                                                        scrollingIntoLineBuffer:lineBuffer
                                                            unlimitedScrollback:unlimitedScrollback_
                                                        useScrollbackWithRegion:self.appendToScrollbackWithStatusBar
-                                                                    wraparound:_wraparoundMode
-                                                                          ansi:_ansi
-                                                                        insert:_insert
+                                                                    wraparound:_state.wraparoundMode
+                                                                          ansi:_state.ansi
+                                                                        insert:_state.insert
                                                         externalAttributeIndex:externalAttributes]];
         iTermImmutableMetadata temp;
         iTermImmutableMetadataInit(&temp, 0, externalAttributes);
@@ -3375,6 +3375,18 @@ static inline void VT100ScreenEraseCell(screen_char_t *sct, iTermExternalAttribu
 
 #pragma mark - Accessors
 
+- (void)mutSetWraparoundMode:(BOOL)newValue {
+    _mutableState.wraparoundMode = newValue;
+}
+
+- (void)mutUpdateTerminalType {
+    _mutableState.ansi = [_state.terminal isAnsi];
+}
+
+- (void)mutSetInsert:(BOOL)newValue {
+    _mutableState.insert = newValue;
+}
+
 // Gets a line on the screen (0 = top of screen)
 - (screen_char_t *)mutGetLineAtScreenIndex:(int)theIndex {
     return [self.mutableCurrentGrid screenCharsAtLineNumber:theIndex];
@@ -3382,6 +3394,9 @@ static inline void VT100ScreenEraseCell(screen_char_t *sct, iTermExternalAttribu
 
 - (void)mutSetTerminal:(VT100Terminal *)terminal {
     _mutableState.terminal = terminal;
+    _mutableState.ansi = [terminal isAnsi];
+    _mutableState.wraparoundMode = [terminal wraparoundMode];
+    _mutableState.insert = [terminal insertMode];
 }
 
 #pragma mark - Dirty
