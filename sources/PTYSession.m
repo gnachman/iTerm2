@@ -1051,6 +1051,8 @@ ITERM_WEAKLY_REFERENCEABLE
     [_contentSubscribers release];
     [_foundingArrangement release];
     [_disableTransparencyInKeyWindowObserver release];
+    [_preferredProxyIcon release];
+    [_savedStateForZoom release];
 
     [super dealloc];
 }

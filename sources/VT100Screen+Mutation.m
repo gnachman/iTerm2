@@ -1922,7 +1922,6 @@ static void SwapInt(int *a, int *b) {
         // New format
         const BOOL onPrimary = (_state.currentGrid == _state.primaryGrid);
         self.mutablePrimaryGrid.delegate = nil;
-        _mutableState.primaryGrid = nil;
         self.mutableAltGrid.delegate = nil;
         _mutableState.altGrid = nil;
 
