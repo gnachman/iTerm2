@@ -119,9 +119,6 @@ static const size_t VT100TerminalMaxSGRStackEntries = 10;
 @property(nonatomic, strong) NSURL *url;
 @property(nonatomic, strong) NSString *urlParams;
 
-// A write-only property, at the moment. TODO: What should this do?
-@property(nonatomic, assign) BOOL strictAnsiMode;
-
 @end
 
 #define NUM_CHARSETS 4
@@ -165,7 +162,6 @@ typedef struct {
     // In FinalTerm command mode (user is at the prompt typing a command).
     BOOL inCommand_;
 
-    BOOL ansiMode_;         // YES=ANSI, NO=VT52
     BOOL numLock_;           // YES=ON, NO=OFF, default=YES;
 
     VT100SavedCursor mainSavedCursor_;
@@ -391,7 +387,6 @@ static const int kMaxScreenRows = 4096;
     [_delegate terminalSetUseColumnScrollRegion:NO];
     self.reportFocus = NO;
     self.protectedMode = VT100TerminalProtectedModeNone;
-    self.strictAnsiMode = NO;
     self.allowColumnMode = NO;
     receivingFile_ = NO;
     _copyingToPasteboard = NO;
@@ -643,7 +638,11 @@ static const int kMaxScreenRows = 4096;
                 self.cursorMode = mode;
                 break;
             case 2:
-                ansiMode_ = mode;
+                // This was never implemented and we don't generally support switching emulation modes.
+                // In practice this doesn't seem to provide any benefit to modern users, and it can
+                // cause harm. For example, `CSI 2 l` puts the terminal in vt52 mode which is not
+                // useful except for maybe legacy systems. Getting this code on a modern system
+                // appears to break everything from the user's POV.
                 break;
             case 3:  // DECCOLM
                 if (self.allowColumnMode) {
@@ -2342,7 +2341,7 @@ static const int kMaxScreenRows = 4096;
             break;
 
         case STRICT_ANSI_MODE:
-            self.strictAnsiMode = !self.strictAnsiMode;
+            // See note on DECANM
             break;
 
         case ANSICSI_PRINT:
@@ -4407,7 +4406,7 @@ static iTermDECRPMSetting VT100TerminalDECRPMSettingFromBoolean(BOOL flag) {
         case 1:
             return VT100TerminalDECRPMSettingFromBoolean(self.cursorMode);
         case 2:
-            return VT100TerminalDECRPMSettingFromBoolean(ansiMode_);
+            return VT100TerminalDECRPMSettingFromBoolean(YES);
         case 3:
             if (self.allowColumnMode) {
                 return VT100TerminalDECRPMSettingFromBoolean(self.columnMode);
@@ -4662,7 +4661,7 @@ static iTermDECRPMSetting VT100TerminalDECRPMSettingFromBoolean(BOOL flag) {
            kTerminalStateAllowKeypadModeKey: @(self.allowKeypadMode),
            kTerminalStateAllowPasteBracketing: @(self.allowPasteBracketing),
            kTerminalStateBracketedPasteModeKey: @(self.bracketedPasteMode),
-           kTerminalStateAnsiModeKey: @(ansiMode_),
+           kTerminalStateAnsiModeKey: @YES,  // For compatibility with downgrades; older versions need this for DECRQM.
            kTerminalStateNumLockKey: @(numLock_),
            kTerminalStateGraphicRenditionKey: [self dictionaryForGraphicRendition:graphicRendition_],
            kTerminalStateMainSavedCursorKey: [self dictionaryForSavedCursor:mainSavedCursor_],
@@ -4744,7 +4743,6 @@ static iTermDECRPMSetting VT100TerminalDECRPMSettingFromBoolean(BOOL flag) {
     self.allowPasteBracketing = [dict[kTerminalStateAllowPasteBracketing] boolValue];
 
     self.bracketedPasteMode = [dict[kTerminalStateBracketedPasteModeKey] boolValue];
-    ansiMode_ = [dict[kTerminalStateAnsiModeKey] boolValue];
     numLock_ = [dict[kTerminalStateNumLockKey] boolValue];
     graphicRendition_ = [self graphicRenditionFromDictionary:dict[kTerminalStateGraphicRenditionKey]];
     mainSavedCursor_ = [self savedCursorFromDictionary:dict[kTerminalStateMainSavedCursorKey]];
