@@ -125,7 +125,6 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
         }
 
         findContext_ = [[FindContext alloc] init];
-        savedIntervalTree_ = [[IntervalTree alloc] init];
         markCache_ = [[NSMutableDictionary alloc] init];
         commandStartX_ = commandStartY_ = -1;
 
@@ -143,7 +142,6 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     [dvr_ release];
     [terminal_ release];
     [findContext_ release];
-    [savedIntervalTree_ release];
     [markCache_ release];
     [_lastCommandMark release];
     _temporaryDoubleBuffer.delegate = nil;
@@ -3158,18 +3156,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 #pragma mark - PTYNoteViewControllerDelegate
 
 - (void)noteDidRequestRemoval:(PTYNoteViewController *)note {
-    if ([_state.intervalTree containsObject:note]) {
-        self.lastCommandMark = nil;
-        [[note retain] autorelease];
-        [_mutableState.intervalTree removeObject:note];
-        [_intervalTreeObserver intervalTreeDidRemoveObjectOfType:[self intervalTreeObserverTypeForObject:note]
-                                                          onLine:[self coordRangeForInterval:note.entry.interval].start.y + self.totalScrollbackOverflow];
-    } else if ([savedIntervalTree_ containsObject:note]) {
-        self.lastCommandMark = nil;
-        [savedIntervalTree_ removeObject:note];
-    }
-    [delegate_ screenNeedsRedraw];
-    [delegate_ screenDidEndEditingNote];
+    [self mutRemoveNote:note];
 }
 
 - (void)noteDidEndEditing:(PTYNoteViewController *)note {
@@ -3297,7 +3284,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
                                               @(charsetUsesLineDrawingMode_[3]) ],
            kScreenStateNonCurrentGridKey: [self contentsOfNonCurrentGrid] ?: @{},
            kScreenStateCurrentGridIsPrimaryKey: @(_state.primaryGrid == _state.currentGrid),
-           kScreenStateSavedIntervalTreeKey: [savedIntervalTree_ dictionaryValueWithOffset:0] ?: [NSNull null],
+           kScreenStateSavedIntervalTreeKey: [_state.savedIntervalTree dictionaryValueWithOffset:0] ?: [NSNull null],
            kScreenStateCommandStartXKey: @(commandStartX_),
            kScreenStateCommandStartYKey: @(commandStartY_),
            kScreenStateNextCommandOutputStartKey: [NSDictionary dictionaryWithGridAbsCoord:_startOfRunningCommandOutput],

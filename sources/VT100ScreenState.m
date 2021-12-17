@@ -19,6 +19,7 @@
         _setWorkingDirectoryOrderEnforcer = [[iTermOrderEnforcer alloc] init];
         _currentDirectoryDidChangeOrderEnforcer = [[iTermOrderEnforcer alloc] init];
         _intervalTree = [[IntervalTree alloc] init];
+        _savedIntervalTree = [[IntervalTree alloc] init];
     }
     return self;
 }
@@ -36,9 +37,10 @@
         _allowTitleReporting = source.allowTitleReporting;
         _lastBell = source.lastBell;
 
-        _animatedLines = [_animatedLines copy];
-        _pasteboardString = [_pasteboardString copy];
-        _intervalTree = [_intervalTree copy];
+        _animatedLines = [source.animatedLines copy];
+        _pasteboardString = [source.pasteboardString copy];
+        _intervalTree = [source.intervalTree copy];
+        _savedIntervalTree = [source.savedIntervalTree copy];
     }
     return self;
 }

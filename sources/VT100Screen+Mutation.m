@@ -206,7 +206,7 @@
     // Convert note ranges to new coords, dropping or truncating as needed
     _mutableState.currentGrid = _mutableState.altGrid;  // Swap to alt grid temporarily for convertRange:toWidth:to:inLineBuffer:
     IntervalTree *replacementTree = [[IntervalTree alloc] init];
-    for (PTYNoteViewController *note in [savedIntervalTree_ allObjects]) {
+    for (PTYNoteViewController *note in [_state.savedIntervalTree allObjects]) {
         VT100GridCoordRange noteRange = [self coordRangeForInterval:note.entry.interval];
         DLog(@"Found note at %@", VT100GridCoordRangeDescription(noteRange));
         VT100GridCoordRange newRange;
@@ -221,7 +221,7 @@
                 newRange.start.x = 0;
             }
             DLog(@"  Its new range is %@ including %d lines dropped from top", VT100GridCoordRangeDescription(noteRange), numLinesDroppedFromTop);
-            [savedIntervalTree_ removeObject:note];
+            [_mutableState.savedIntervalTree removeObject:note];
             if (newRange.end.y > 0 || (newRange.end.y == 0 && newRange.end.x > 0)) {
                 Interval *newInterval = [self intervalForGridCoordRange:newRange
                                                                   width:newSize.width
@@ -232,8 +232,7 @@
             }
         }
     }
-    [savedIntervalTree_ release];
-    savedIntervalTree_ = replacementTree;
+    _mutableState.savedIntervalTree = replacementTree;
     _mutableState.currentGrid = _state.primaryGrid;  // Swap back to primary grid
 
     // Restore alt screen with new width
@@ -312,19 +311,18 @@
                                                                                historyLines,
                                                                                1,
                                                                                historyLines)];
-    IntervalTree *temp = [[IntervalTree alloc] init];
+    IntervalTree *temp = [[[IntervalTree alloc] init] autorelease];
     DLog(@"swapNotes: moving onscreen notes into savedNotes");
     [self moveNotesOnScreenFrom:_mutableState.intervalTree
                              to:temp
                          offset:-origin.location
                    screenOrigin:[self numberOfScrollbackLines]];
     DLog(@"swapNotes: moving onscreen savedNotes into notes");
-    [self moveNotesOnScreenFrom:savedIntervalTree_
+    [self moveNotesOnScreenFrom:_mutableState.savedIntervalTree
                              to:_mutableState.intervalTree
                          offset:origin.location
                    screenOrigin:0];
-    [savedIntervalTree_ release];
-    savedIntervalTree_ = temp;
+    _mutableState.savedIntervalTree = temp;
 }
 
 // offset is added to intervals before inserting into interval tree.
@@ -1151,6 +1149,21 @@ static void SwapInt(int *a, int *b) {
         }
         range = [self coordRangeForInterval:mark.entry.interval];
     }
+}
+
+- (void)mutRemoveNote:(PTYNoteViewController *)note {
+    if ([_state.intervalTree containsObject:note]) {
+        self.lastCommandMark = nil;
+        [[note retain] autorelease];
+        [_mutableState.intervalTree removeObject:note];
+        [self.intervalTreeObserver intervalTreeDidRemoveObjectOfType:[self intervalTreeObserverTypeForObject:note]
+                                                              onLine:[self coordRangeForInterval:note.entry.interval].start.y + self.totalScrollbackOverflow];
+    } else if ([_state.savedIntervalTree containsObject:note]) {
+        self.lastCommandMark = nil;
+        [_mutableState.savedIntervalTree removeObject:note];
+    }
+    [delegate_ screenNeedsRedraw];
+    [delegate_ screenDidEndEditingNote];
 }
 
 #pragma mark - Clearing
@@ -2014,9 +2027,8 @@ static void SwapInt(int *a, int *b) {
                                     visible:YES
                       guidOfLastCommandMark:guidOfLastCommandMark];
 
-        [savedIntervalTree_ release];
-        savedIntervalTree_ = [[IntervalTree alloc] initWithDictionary:screenState[kScreenStateSavedIntervalTreeKey]];
-        [self fixUpDeserializedIntervalTree:savedIntervalTree_
+        _mutableState.savedIntervalTree = [[[IntervalTree alloc] initWithDictionary:screenState[kScreenStateSavedIntervalTreeKey]] autorelease];
+        [self fixUpDeserializedIntervalTree:_mutableState.savedIntervalTree
                               knownTriggers:triggers
                                     visible:NO
                       guidOfLastCommandMark:guidOfLastCommandMark];

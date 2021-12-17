@@ -52,7 +52,6 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 @property(nonatomic, assign) BOOL showBellIndicator;
 @property(nonatomic, assign) BOOL flashBell;
 @property(nonatomic, weak) id<VT100ScreenDelegate> delegate;
-@property(nonatomic, weak) id<iTermIntervalTreeObserver> intervalTreeObserver;
 @property(nonatomic, assign) BOOL postUserNotifications;
 @property(nonatomic, assign) BOOL cursorBlinks;
 @property(nonatomic, assign) BOOL allowTitleReporting;
@@ -82,6 +81,8 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 // Assigning to `size` resizes the session and tty. Its contents are reflowed. The alternate grid's
 // contents are reflowed, and the selection is updated. It is a little slow so be judicious.
 @property(nonatomic, assign) VT100GridSize size;
+
+@property(nonatomic, weak) id<iTermIntervalTreeObserver> intervalTreeObserver;
 
 // Designated initializer.
 - (instancetype)initWithTerminal:(VT100Terminal *)terminal;

@@ -41,10 +41,6 @@ VT100InlineImageHelperDelegate> {
     id<VT100ScreenState> _state;
     VT100ScreenMutableState *_mutableState;
 
-    // Holds notes on alt/primary grid (the one we're not in). The origin is the top-left of the
-    // grid.
-    IntervalTree *savedIntervalTree_;
-
     __weak id<VT100ScreenDelegate> delegate_;  // PTYSession implements this
 
     VT100Terminal *terminal_;

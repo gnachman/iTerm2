@@ -126,6 +126,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)mutSetSize:(VT100GridSize)proposedSize;
 - (void)mutSetMaxScrollbackLines:(unsigned int)lines;
 - (PTYTextViewSynchronousUpdateState * _Nullable)mutSetUseSavedGridIfAvailable:(BOOL)useSavedGrid;
+- (void)mutRemoveNote:(PTYNoteViewController *)note;
 
 @end
 
