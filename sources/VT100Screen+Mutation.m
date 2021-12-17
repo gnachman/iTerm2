@@ -1244,7 +1244,7 @@ static void SwapInt(int *a, int *b) {
     [self resetScrollbackOverflow];
     [delegate_ screenRemoveSelection];
     [self.mutableCurrentGrid markAllCharsDirty:YES];
-    _mutableState.intervalTree = [[IntervalTree alloc] init];
+    _mutableState.intervalTree = [[[IntervalTree alloc] init] autorelease];
     [self reloadMarkCache];
     self.lastCommandMark = nil;
     [delegate_ screenDidClearScrollbackBuffer:self];
@@ -1785,7 +1785,7 @@ static void SwapInt(int *a, int *b) {
 - (void)mutSetAltScreen:(NSArray *)lines {
     self.mutableLineBuffer.mayHaveDoubleWidthCharacter = YES;
     if (!_state.altGrid) {
-        _mutableState.altGrid = [self.mutablePrimaryGrid copy];
+        _mutableState.altGrid = [[self.mutablePrimaryGrid copy] autorelease];
     }
 
     // Initialize alternate screen to be empty
@@ -1825,8 +1825,8 @@ static void SwapInt(int *a, int *b) {
     const int maxLines = MAX(1000, maxArea / effectiveWidth);
 
     // Make a copy of the last blocks of the line buffer; enough to contain at least |maxLines|.
-    LineBuffer *temp = [linebuffer_ copyWithMinimumLines:maxLines
-                                                 atWidth:effectiveWidth];
+    LineBuffer *temp = [[linebuffer_ copyWithMinimumLines:maxLines
+                                                  atWidth:effectiveWidth] autorelease];
 
     // Offset for intervals so 0 is the first char in the provided contents.
     int linesDroppedForBrevity = ([linebuffer_ numLinesWithWidth:effectiveWidth] -
@@ -1856,7 +1856,7 @@ static void SwapInt(int *a, int *b) {
                    knownTriggers:(NSArray *)triggers
                       reattached:(BOOL)reattached {
     if (!_state.altGrid) {
-        _mutableState.altGrid = [_state.primaryGrid copy];
+        _mutableState.altGrid = [[_state.primaryGrid copy] autorelease];
     }
     NSDictionary *screenState = dictionary[kScreenStateKey];
     if (screenState) {
@@ -1922,23 +1922,22 @@ static void SwapInt(int *a, int *b) {
         // New format
         const BOOL onPrimary = (_state.currentGrid == _state.primaryGrid);
         self.mutablePrimaryGrid.delegate = nil;
-        [_state.primaryGrid release];
+        _mutableState.primaryGrid = nil;
         self.mutableAltGrid.delegate = nil;
-        [_state.altGrid release];
         _mutableState.altGrid = nil;
 
-        _mutableState.primaryGrid = [[VT100Grid alloc] initWithDictionary:dictionary[@"PrimaryGrid"]
-                                                                 delegate:self];
+        _mutableState.primaryGrid = [[[VT100Grid alloc] initWithDictionary:dictionary[@"PrimaryGrid"]
+                                                                  delegate:self] autorelease];
         if (!_state.primaryGrid) {
             // This is to prevent a crash if the dictionary is bad (i.e., non-backward compatible change in a future version).
-            _mutableState.primaryGrid = [[VT100Grid alloc] initWithSize:VT100GridSizeMake(2, 2) delegate:self];
+            _mutableState.primaryGrid = [[[VT100Grid alloc] initWithSize:VT100GridSizeMake(2, 2) delegate:self] autorelease];
         }
         if ([dictionary[@"AltGrid"] count]) {
-            _mutableState.altGrid = [[VT100Grid alloc] initWithDictionary:dictionary[@"AltGrid"]
-                                                                 delegate:self];
+            _mutableState.altGrid = [[[VT100Grid alloc] initWithDictionary:dictionary[@"AltGrid"]
+                                                                  delegate:self] autorelease];
         }
         if (!_state.altGrid) {
-            _mutableState.altGrid = [[VT100Grid alloc] initWithSize:_state.primaryGrid.size delegate:self];
+            _mutableState.altGrid = [[[VT100Grid alloc] initWithSize:_state.primaryGrid.size delegate:self] autorelease];
         }
         if (onPrimary || includeRestorationBanner) {
             _mutableState.currentGrid = _state.primaryGrid;
@@ -2010,14 +2009,14 @@ static void SwapInt(int *a, int *b) {
             VT100GridSize savedSize = [VT100Grid sizeInStateDictionary:screenState[kScreenStatePrimaryGridStateKey]];
             [self mutSetSize:savedSize];
         }
-        _mutableState.intervalTree = [[IntervalTree alloc] initWithDictionary:screenState[kScreenStateIntervalTreeKey]];
+        _mutableState.intervalTree = [[[IntervalTree alloc] initWithDictionary:screenState[kScreenStateIntervalTreeKey]] autorelease];
         [self fixUpDeserializedIntervalTree:_mutableState.intervalTree
                               knownTriggers:triggers
                                     visible:YES
                       guidOfLastCommandMark:guidOfLastCommandMark];
 
         [savedIntervalTree_ release];
-        savedIntervalTree_ = [[IntervalTree alloc] initWithDictionary:screenState[kScreenStateSavedIntervalTreeKey]];
+        savedIntervalTree_ = [[[IntervalTree alloc] initWithDictionary:screenState[kScreenStateSavedIntervalTreeKey]] autorelease];
         [self fixUpDeserializedIntervalTree:savedIntervalTree_
                               knownTriggers:triggers
                                     visible:NO
@@ -3432,7 +3431,7 @@ static inline void VT100ScreenEraseCell(screen_char_t *sct, iTermExternalAttribu
     }
     [delegate_ screenRemoveSelection];
     if (!_state.altGrid) {
-        _mutableState.altGrid = [[VT100Grid alloc] initWithSize:_state.primaryGrid.size delegate:self];
+        _mutableState.altGrid = [[[VT100Grid alloc] initWithSize:_state.primaryGrid.size delegate:self] autorelease];
     }
 
     [self.temporaryDoubleBuffer reset];

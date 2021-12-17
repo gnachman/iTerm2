@@ -30,6 +30,7 @@ iTermMetadata iTermMetadataTemporaryWithTimestamp(NSTimeInterval timestamp) {
 }
 
 iTermMetadata iTermMetadataCopy(iTermMetadata obj) {
+    // The analyzer says this is a leak but I really don't think it is.
     return iTermImmutableMetadataMutableCopy(iTermMetadataMakeImmutable(obj));
 }
 

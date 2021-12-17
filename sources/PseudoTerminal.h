@@ -387,6 +387,7 @@ extern NSString *const iTermDidCreateTerminalWindowNotification;
 - (void)asyncRestoreState:(PseudoTerminalState *)state
                   timeout:(void (^)(NSArray *))timeout
                completion:(void (^)(void))completion;
+- (void)ensureSaneFrame;
 
 @end
 
