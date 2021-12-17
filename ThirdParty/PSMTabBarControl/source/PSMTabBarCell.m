@@ -119,7 +119,7 @@ static NSRect PSMConvertAccessibilityFrameToScreen(NSView *view, NSRect frame) {
 // should invoke -invalidate from its -dealloc method and release the timer to
 // avoid getting called posthumously.
 @interface PSMWeakTimer : NSObject
-@property(nonatomic, assign) id target;
+@property(nonatomic, weak) id target;
 @property(nonatomic, assign) SEL selector;
 
 - (instancetype)initWithTimeInterval:(NSTimeInterval)timeInterval
@@ -237,6 +237,10 @@ static NSRect PSMConvertAccessibilityFrameToScreen(NSView *view, NSRect frame) {
         [self setUpAccessibilityElement];
     }
     return self;
+}
+
+- (void)dealloc {
+    [_delayedStringValueTimer invalidate];
 }
 
 - (NSString *)description {
