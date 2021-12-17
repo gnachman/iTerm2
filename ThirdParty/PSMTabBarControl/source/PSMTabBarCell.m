@@ -159,7 +159,11 @@ static NSRect PSMConvertAccessibilityFrameToScreen(NSView *view, NSRect frame) {
 }
 
 - (void)timerDidFire:(NSTimer *)timer {
-    [_target performSelector:_selector withObject:timer];
+    IMP imp = [_target methodForSelector:_selector];
+    if (imp) {
+        void (*func)(id, SEL, id) = (void *)imp;
+        func(_target, _selector, timer);
+    }
     if (!_repeats) {
         _timer = nil;
     }

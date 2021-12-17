@@ -899,7 +899,8 @@ static NSString *const kIntervalLengthKey = @"Length";
 - (void)sanityCheckAtNode:(AATreeNode *)node {
     IntervalTreeValue *value = node.data;
     long long location = [(NSNumber *)node.key longLongValue];
-    assert(value.maxLimitAtSubtree = [self bruteForceMaxLimitAtSubtree:node]);
+    const long long limit = [self bruteForceMaxLimitAtSubtree:node];
+    value.maxLimitAtSubtree = limit;
     IntervalTreeValue *leftValue = node.left.data;
     IntervalTreeValue *rightValue = node.right.data;
     if (leftValue) {
