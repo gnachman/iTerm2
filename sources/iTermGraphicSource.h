@@ -17,7 +17,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (BOOL)updateImageForProcessID:(pid_t)pid enabled:(BOOL)enabled;
 - (BOOL)updateImageForJobName:(NSString *)name enabled:(BOOL)enabled;
-- (NSImage *)imageForJobName:(NSString *)command;
+- (NSImage * _Nullable)imageForJobName:(NSString *)command;
 
 @end
 

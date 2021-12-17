@@ -45,7 +45,7 @@ NS_ASSUME_NONNULL_BEGIN
 // Write record to disk. Blocks.
 - (void)save;
 - (iTermRestorableStateRecord *)withPlaintext:(NSData *)newPlaintext;
-- (NSKeyedUnarchiver *)unarchiver;
+- (NSKeyedUnarchiver * _Nullable)unarchiver;
 
 @end
 

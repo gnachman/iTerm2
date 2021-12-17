@@ -113,7 +113,7 @@
     BOOL isNew = (sessionResults == nil);
     if (!sessionResults) {
         sessionResults = [NSMutableArray array];
-        _results[session.guid] = sessionResults;
+        _results[(NSString * _Nonnull)session.guid] = sessionResults;
     }
     NSIndexSet *indexes = [NSIndexSet indexSetWithIndexesInRange:NSMakeRange(sessionResults.count, results.count)];
     [sessionResults addObjectsFromArray:results];

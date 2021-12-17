@@ -117,7 +117,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)findSubstring:(FindContext * _Nonnull)context stopAt:(LineBufferPosition * _Nonnull)stopAt;
 
 // Returns an array of XYRange values
-- (NSArray<XYRange *> * _Nonnull)convertPositions:(NSArray<ResultRange *> * _Nonnull)resultRanges
+- (NSArray<XYRange *> * _Nullable)convertPositions:(NSArray<ResultRange *> * _Nonnull)resultRanges
                                         withWidth:(int)width;
 
 - (LineBufferPosition * _Nullable)positionForCoordinate:(VT100GridCoord)coord

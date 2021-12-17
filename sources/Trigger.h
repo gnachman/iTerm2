@@ -59,7 +59,7 @@ extern NSString * const kTriggerDisabledKey;
 // Index of represented object (usually a NSNumber tag, but could be something else)
 - (NSInteger)indexForObject:(id)object;
 // Represented object (usually a NSNumber tag, but could be something else) at an index.
-- (id)objectAtIndex:(NSInteger)index;
+- (id _Nullable)objectAtIndex:(NSInteger)index;
 
 // Utility that returns keys sorted by values for a tag/represented object dict
 // (i.e., an element of groupedMenuItemsForPopupButton)
@@ -110,7 +110,7 @@ extern NSString * const kTriggerDisabledKey;
 // Called before a trigger window opens.
 - (void)reloadData;
 
-- (id<iTermFocusReportingTextFieldDelegate>)newParameterDelegateWithPassthrough:(id<NSTextFieldDelegate>)passthrough;
+- (id<iTermFocusReportingTextFieldDelegate> _Nullable)newParameterDelegateWithPassthrough:(id<NSTextFieldDelegate>)passthrough;
 
 @end
 

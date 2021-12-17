@@ -22,17 +22,17 @@ NS_ASSUME_NONNULL_BEGIN
 - (instancetype)initWithRepoPath:(NSString *)path NS_DESIGNATED_INITIALIZER;
 - (instancetype)init NS_UNAVAILABLE;
 
-- (git_reference *)head;
+- (git_reference * _Nullable)head;
 
-- (const git_oid *)oidAtRef:(git_reference *)ref;
+- (const git_oid * _Nullable)oidAtRef:(git_reference *)ref;
 
-- (NSString *)branchAt:(git_reference *)ref;
+- (NSString * _Nullable)branchAt:(git_reference *)ref;
 
 - (NSString *)shortNameForReference:(git_reference *)ref;
 
-- (NSString *)fullNameForReference:(git_reference *)ref;
+- (NSString * _Nullable)fullNameForReference:(git_reference *)ref;
 
-- (NSDate *)commiterDateAt:(git_reference *)ref;
+- (NSDate * _Nullable)commiterDateAt:(git_reference *)ref;
 
 - (BOOL)getCountsFromRef:(git_reference *)ref
                     pull:(NSInteger *)pullCount
@@ -48,7 +48,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface iTermGitState(GitClient)
 
-+ (instancetype)gitStateForRepoAtPath:(NSString *)path;
++ (instancetype _Nullable)gitStateForRepoAtPath:(NSString *)path;
 
 @end
 

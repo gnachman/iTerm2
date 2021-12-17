@@ -24,11 +24,11 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property(nonatomic, readonly) NSDictionary *dictionaryValue;
 
-+ (iTermExternalAttribute *)attributeHavingUnderlineColor:(BOOL)hasUnderlineColor
-                                           underlineColor:(VT100TerminalColorValue)underlineColor
-                                                  urlCode:(unsigned int)urlCode;
++ (iTermExternalAttribute * _Nullable)attributeHavingUnderlineColor:(BOOL)hasUnderlineColor
+                                                     underlineColor:(VT100TerminalColorValue)underlineColor
+                                                            urlCode:(unsigned int)urlCode;
 
-+ (instancetype)fromData:(NSData *)data;
++ (instancetype _Nullable)fromData:(NSData *)data;
 - (instancetype)init;
 - (instancetype)initWithUnderlineColor:(VT100TerminalColorValue)color
                                urlCode:(unsigned int)urlCode;
@@ -54,16 +54,16 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, strong) NSDictionary<NSNumber *, iTermExternalAttribute *> *attributes;
 @property (nonatomic, readonly) NSDictionary *dictionaryValue;
 
-+ (instancetype)withDictionary:(NSDictionary *)dictionary;  // return nil if input is NSNull
-+ (instancetype)fromData:(NSData *)data;
++ (instancetype _Nullable)withDictionary:(NSDictionary *)dictionary;  // return nil if input is NSNull
++ (instancetype _Nullable)fromData:(NSData *)data;
 - (NSData *)data;
-- (instancetype)initWithDictionary:(NSDictionary *)dictionary;
+- (instancetype _Nullable)initWithDictionary:(NSDictionary *)dictionary;
 - (NSString *)shortDescriptionWithLength:(int)length;
 
 - (void)eraseAt:(int)x;
 - (void)eraseInRange:(VT100GridRange)range;
-- (void)setAttributes:(iTermExternalAttribute *)attributes at:(int)cursorX count:(int)count;
-- (void)copyFrom:(iTermExternalAttributeIndex *)source
+- (void)setAttributes:(iTermExternalAttribute * _Nullable)attributes at:(int)cursorX count:(int)count;
+- (void)copyFrom:(iTermExternalAttributeIndex * _Nullable)source
           source:(int)source
      destination:(int)destination
            count:(int)count;
@@ -85,7 +85,7 @@ NS_ASSUME_NONNULL_BEGIN
 @interface iTermUniformExternalAttributes: iTermExternalAttributeIndex
 + (instancetype)withAttribute:(iTermExternalAttribute *)attr;
 
-- (void)copyFrom:(iTermExternalAttributeIndex *)source
+- (void)copyFrom:(iTermExternalAttributeIndex * _Nullable)source
           source:(int)source
      destination:(int)destination
            count:(int)count NS_UNAVAILABLE;

@@ -27,7 +27,7 @@ extern NSString *const SIGArchiveHeaderMagicString;
 @property (nonatomic, readonly) long long payloadLength;
 @property (nonatomic, readonly) long long chunkLength;
 @property (nonatomic, readonly) long long payloadOffset;
-@property (nonatomic, readonly) NSFileHandle *fileHandle;
+@property (nullable, nonatomic, readonly) NSFileHandle *fileHandle;
 
 + (instancetype)chunkFromFileHandle:(NSFileHandle *)fileHandle
                            atOffset:(long long)offset

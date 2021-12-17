@@ -154,7 +154,7 @@ runCommandInBackground:(NSString *)command;
 - (instancetype)initWithURLActionHelper:(iTermURLActionHelper *)urlActionHelper NS_DESIGNATED_INITIALIZER;
 - (instancetype)init NS_UNAVAILABLE;
 
-- (NSMenu *)menuForEvent:(NSEvent *)theEvent;
+- (NSMenu * _Nullable)menuForEvent:(NSEvent *)theEvent;
 - (NSMenu *)titleBarMenu;
 - (void)openContextMenuAt:(VT100GridCoord)clickPoint event:(NSEvent *)event;
 

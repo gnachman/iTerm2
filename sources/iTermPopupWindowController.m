@@ -83,7 +83,7 @@
 
 - (void)awakeFromNib {
     [super awakeFromNib];
-    NSVisualEffectView *vev = [[NSVisualEffectView alloc] init];
+    NSVisualEffectView *vev = [[[NSVisualEffectView alloc] init] autorelease];
     vev.wantsLayer = YES;
     vev.layer.cornerRadius = 4;
     vev.material = NSVisualEffectMaterialSheet;

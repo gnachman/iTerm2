@@ -205,14 +205,6 @@ NSString *const iTermBroadcastDomainsDidChangeNotification = @"iTermBroadcastDom
             const BOOL tabBroadcasting = [self.delegate broadcastInputHelperCurrentTabIsBroadcasting:self];
             DLog(@"tabBroadcasting=%@", @(tabBroadcasting));
             [self.delegate broadcastInputHelper:self setCurrentTabBroadcasting:!tabBroadcasting];
-            if (![self.delegate broadcastInputHelperAnyTabIsBroadcasting:self]) {
-                DLog(@"All tabs have it off");
-                // All tabs have it off.
-                mode = BROADCAST_OFF;
-            }
-        } else {
-            DLog(@"Turn off broadcasting");
-            mode = BROADCAST_OFF;
         }
     } else {
         // Mode is changing or being set to custom.

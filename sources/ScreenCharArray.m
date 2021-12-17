@@ -114,7 +114,7 @@
 - (void)dealloc {
     if (_shouldFreeOnRelease) {
         free((void *)(_line - _offset));
-        _line = NULL;
+        memset(&_line, 0, sizeof(_line));
     }
     iTermImmutableMetadataRelease(_metadata);
 }

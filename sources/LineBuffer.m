@@ -886,7 +886,7 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
 }
 
 // Returns an array of XRange values
-- (NSArray*)convertPositions:(NSArray *)resultRanges withWidth:(int)width {
+- (NSArray *)convertPositions:(NSArray *)resultRanges withWidth:(int)width {
     if (width <= 0) {
         return nil;
     }

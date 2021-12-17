@@ -19,7 +19,7 @@ NS_ASSUME_NONNULL_BEGIN
 // Size of largest rep
 @property (nonatomic, readonly) NSSize scaledSize;
 
-+ (instancetype)withContentsOfFile:(NSString *)path;
++ (instancetype _Nullable)withContentsOfFile:(NSString *)path;
 + (instancetype)withImage:(NSImage *)image;
 
 - (instancetype)initWithImage:(NSImage *)image NS_DESIGNATED_INITIALIZER;

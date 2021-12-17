@@ -60,7 +60,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)moveSnippetsWithGUIDs:(NSArray<NSString *> *)guids
                       toIndex:(NSInteger)row;
 - (void)setSnippets:(NSArray<iTermSnippet *> *)snippets;
-- (iTermSnippet *)snippetWithGUID:(NSString *)guid;
+- (nullable iTermSnippet *)snippetWithGUID:(NSString *)guid;
 - (nullable iTermSnippet *)snippetWithActionKey:(id)actionKey;
 
 @end

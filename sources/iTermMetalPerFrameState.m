@@ -413,8 +413,6 @@ typedef struct {
 
 - (void)loadIndicatorsFromTextView:(PTYTextView *)textView {
     _indicators = [NSMutableArray array];
-    CGFloat vmargin;
-    vmargin = 0;
     NSRect frame = textView.drawingHelper.indicatorFrame;
     frame.origin.y -= MAX(0, textView.virtualOffset);
     

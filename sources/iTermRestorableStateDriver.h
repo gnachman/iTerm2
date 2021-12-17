@@ -13,7 +13,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @protocol iTermRestorableStateRecord<NSObject>
 - (void)didFinishRestoring;
-- (NSKeyedUnarchiver *)unarchiver;
+- (NSKeyedUnarchiver * _Nullable)unarchiver;
 - (NSString *)identifier;
 - (NSInteger)windowNumber;
 // withPlaintext
@@ -26,7 +26,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)restorableStateIndexUnlink;
 
-- (id<iTermRestorableStateRecord>)restorableStateRecordAtIndex:(NSUInteger)i;
+- (id<iTermRestorableStateRecord> _Nullable)restorableStateRecordAtIndex:(NSUInteger)i;
 
 @end
 

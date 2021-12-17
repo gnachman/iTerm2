@@ -85,11 +85,11 @@ NS_ASSUME_NONNULL_BEGIN
                          displayName:(NSString *)name
                       locationInView:(VT100GridCoordRange)range;
 
-- (SmartMatch *)smartSelectAtAbsoluteCoord:(VT100GridAbsCoord)coord
-                                        to:(VT100GridAbsWindowedRange *)rangePtr
-                          ignoringNewlines:(BOOL)ignoringNewlines
-                            actionRequired:(BOOL)actionRequired
-                           respectDividers:(BOOL)respectDividers;
+- (SmartMatch * _Nullable)smartSelectAtAbsoluteCoord:(VT100GridAbsCoord)coord
+                                                  to:(VT100GridAbsWindowedRange *)rangePtr
+                                    ignoringNewlines:(BOOL)ignoringNewlines
+                                      actionRequired:(BOOL)actionRequired
+                                     respectDividers:(BOOL)respectDividers;
 
 - (void)smartSelectWithEvent:(NSEvent *)event;
 

@@ -320,8 +320,6 @@ static NSString *const iTermExternalAttributeKeyURLCode = @"url";
 + (instancetype)fromData:(NSData *)data {
     iTermTLVDecoder *decoder = [[iTermTLVDecoder alloc] initWithData:data];
     
-    int version = 1;
-    
     // v1
     BOOL hasUnderlineColor;
     if (![decoder decodeBool:&hasUnderlineColor]) {
@@ -347,9 +345,7 @@ static NSString *const iTermExternalAttributeKeyURLCode = @"url";
     
     // v2
     unsigned int urlCode = 0;
-    if ([decoder decodeUnsignedInt:&urlCode]) {
-        version = 2;
-    }
+    [decoder decodeUnsignedInt:&urlCode];
     
     if (!hasUnderlineColor && urlCode == 0) {
         return nil;

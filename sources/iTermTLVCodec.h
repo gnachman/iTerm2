@@ -28,7 +28,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (BOOL)decodeInt:(int *)i;
 - (BOOL)decodeUnsignedInt:(unsigned int *)i;
-- (NSData *)decodeData;
+- (NSData * _Nullable)decodeData;
 - (BOOL)decodeRange:(NSRange *)range;
 - (BOOL)decodeBool:(BOOL *)b;
 - (BOOL)decodeDouble:(double *)d;

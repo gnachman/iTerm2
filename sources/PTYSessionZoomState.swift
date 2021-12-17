@@ -13,7 +13,7 @@ import Foundation
 
     @objc(initWithFirstVisibleAbsoluteLineNumber:searchQuery:)
     init(firstVisibleAbsoluteLineNumber: Int64,
-               searchQuery: String) {
+               searchQuery: String?) {
         self.firstVisibleAbsoluteLineNumber = firstVisibleAbsoluteLineNumber
         self.searchQuery = searchQuery
     }

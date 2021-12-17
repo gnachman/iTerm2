@@ -11,7 +11,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface iTermDependencyEditorWindowController : NSWindowController
 
-+ (instancetype)sharedInstance;
++ (instancetype _Nullable)sharedInstance;
 - (void)open;
 
 @end

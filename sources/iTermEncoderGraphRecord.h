@@ -17,7 +17,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) NSString *key;
 @property (nonatomic, readonly, weak) iTermEncoderGraphRecord *parent;
 @property (nullable, nonatomic, readonly) id propertyListValue;
-@property (nonatomic, strong) NSNumber *rowid;
+@property (nullable, nonatomic, strong) NSNumber *rowid;
 @property (nonatomic, readonly) NSData *data;  // encoded pod
 @property (nonatomic, readonly) NSString *compactDescription;
 

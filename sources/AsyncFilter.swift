@@ -65,7 +65,7 @@ class FilteringUpdater {
         switch context.status {
         case .Matched:
             DLog("FilteringUpdater: Matched")
-            let positions = lineBuffer.convertPositions(context.results as! [ResultRange], withWidth: width)
+            let positions = lineBuffer.convertPositions(context.results as! [ResultRange], withWidth: width) ?? []
             for range in positions {
                 let temporary = range === positions.last && context.includesPartialLastLine
                 accept?(range.yStart, temporary)

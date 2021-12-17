@@ -54,7 +54,7 @@ NS_INLINE NSUInteger iTermCombineHash(NSUInteger hash1, NSUInteger hash2) {
 // Supports NSArray, NSDictionary, and NSNumber.
 + (BOOL)object:(__kindof NSObject * _Nullable)a isApproximatelyEqualToObject:(__kindof NSObject * _Nullable)b epsilon:(double)epsilon;
 
-+ (instancetype)castFrom:(id)object;
++ (instancetype _Nullable)castFrom:(id _Nullable)object;
 + (instancetype)forceCastFrom:(id)object;
 
 - (void)performSelectorOnMainThread:(SEL)selector withObjects:(NSArray * _Nullable)objects;
@@ -85,7 +85,7 @@ NS_INLINE NSUInteger iTermCombineHash(NSUInteger hash1, NSUInteger hash2) {
 - (iTermDelayedPerform *)performBlock:(void (^)(void))block afterDelay:(NSTimeInterval)delay;
 
 // Returns nil if this object is an instance of NSNull, otherwise returns self.
-- (instancetype)nilIfNull;
+- (instancetype _Nullable)nilIfNull;
 
 - (void)it_setAssociatedObject:(id _Nullable)associatedObject forKey:(const void *)key;
 - (void)it_setWeakAssociatedObject:(id _Nullable)associatedObject forKey:(const void *)key;
