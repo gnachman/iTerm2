@@ -36,6 +36,10 @@
         _printBuffer = [source.printBuffer copy];
         _allowTitleReporting = source.allowTitleReporting;
         _lastBell = source.lastBell;
+        _wraparoundMode = source.wraparoundMode;
+        _ansi = source.ansi;
+        _insert = source.insert;
+        _unlimitedScrollback = source.unlimitedScrollback;
 
         _animatedLines = [source.animatedLines copy];
         _pasteboardString = [source.pasteboardString copy];

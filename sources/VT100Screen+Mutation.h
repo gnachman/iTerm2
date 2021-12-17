@@ -133,6 +133,8 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)mutSetWraparoundMode:(BOOL)newValue;
 - (void)mutUpdateTerminalType;
 - (void)mutSetInsert:(BOOL)newValue;
+- (void)mutSetUnlimitedScrollback:(BOOL)newValue;
+
 @end
 
 NS_ASSUME_NONNULL_END

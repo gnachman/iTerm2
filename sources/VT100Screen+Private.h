@@ -43,9 +43,6 @@ VT100InlineImageHelperDelegate> {
 
     __weak id<VT100ScreenDelegate> delegate_;  // PTYSession implements this
 
-    // This flag overrides maxScrollbackLines_:
-    BOOL unlimitedScrollback_;
-
     // Current find context.
     FindContext *findContext_;
 

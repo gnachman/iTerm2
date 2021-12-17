@@ -89,7 +89,6 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 }
 
 @synthesize maxScrollbackLines = maxScrollbackLines_;
-@synthesize unlimitedScrollback = unlimitedScrollback_;
 @synthesize saveToScrollbackInAlternateScreen = saveToScrollbackInAlternateScreen_;
 @synthesize dvr = dvr_;
 @synthesize delegate = delegate_;
@@ -3540,6 +3539,14 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 #pragma mark - Accessors
+
+- (BOOL)unlimitedScrollback {
+    return _state.unlimitedScrollback;
+}
+
+- (void)setUnlimitedScrollback:(BOOL)unlimitedScrollback {
+    [self mutSetUnlimitedScrollback:unlimitedScrollback];
+}
 
 - (BOOL)audibleBell {
     return _state.audibleBell;

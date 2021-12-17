@@ -442,7 +442,7 @@
 
     // The linebuffer may have grown. Ensure it doesn't have too many lines.
     int linesDropped = 0;
-    if (!unlimitedScrollback_) {
+    if (!_state.unlimitedScrollback) {
         linesDropped = [self.mutableLineBuffer dropExcessLinesWithWidth:_state.currentGrid.size.width];
         [self incrementOverflowBy:linesDropped];
     }
@@ -1238,7 +1238,7 @@ static void SwapInt(int *a, int *b) {
     // This clears the screen.
     int x = _state.currentGrid.cursorX;
     [self incrementOverflowBy:[self.mutableCurrentGrid resetWithLineBuffer:linebuffer_
-                                                       unlimitedScrollback:unlimitedScrollback_
+                                                       unlimitedScrollback:_state.unlimitedScrollback
                                                         preserveCursorLine:linesToSave > 0
                                                      additionalLinesToSave:MAX(0, linesToSave - 1)]];
     self.mutableCurrentGrid.cursorX = x;
@@ -1409,7 +1409,7 @@ static void SwapInt(int *a, int *b) {
             [self clearAndResetScreenSavingLines:linesToSave];
         } else {
             [self incrementOverflowBy:[self.mutableCurrentGrid resetWithLineBuffer:linebuffer_
-                                                               unlimitedScrollback:unlimitedScrollback_
+                                                               unlimitedScrollback:_state.unlimitedScrollback
                                                                 preserveCursorLine:NO
                                                              additionalLinesToSave:0]];
         }
@@ -1579,7 +1579,7 @@ static void SwapInt(int *a, int *b) {
         [self incrementOverflowBy:[self.mutableCurrentGrid appendCharsAtCursor:buffer
                                                                         length:len
                                                        scrollingIntoLineBuffer:lineBuffer
-                                                           unlimitedScrollback:unlimitedScrollback_
+                                                           unlimitedScrollback:_state.unlimitedScrollback
                                                        useScrollbackWithRegion:self.appendToScrollbackWithStatusBar
                                                                     wraparound:_state.wraparoundMode
                                                                           ansi:_state.ansi
@@ -1768,7 +1768,7 @@ static void SwapInt(int *a, int *b) {
                                   metadata:iTermMetadataMakeImmutable(metadata)
                               continuation:continuation];
     }
-    if (!unlimitedScrollback_) {
+    if (!_state.unlimitedScrollback) {
         [self.mutableLineBuffer dropExcessLinesWithWidth:_state.currentGrid.size.width];
     }
 
@@ -1884,7 +1884,7 @@ static void SwapInt(int *a, int *b) {
     if (!newFormat) {
         LineBuffer *lineBuffer = [[LineBuffer alloc] initWithDictionary:dictionary];
         [lineBuffer setMaxLines:maxScrollbackLines_ + self.height];
-        if (!unlimitedScrollback_) {
+        if (!_state.unlimitedScrollback) {
             [lineBuffer dropExcessLinesWithWidth:self.width];
         }
         [linebuffer_ release];
@@ -1928,7 +1928,7 @@ static void SwapInt(int *a, int *b) {
         }
         // Reduce line buffer's max size to not include the grid height. This is its final state.
         [lineBuffer setMaxLines:maxScrollbackLines_];
-        if (!unlimitedScrollback_) {
+        if (!_state.unlimitedScrollback) {
             [lineBuffer dropExcessLinesWithWidth:self.width];
         }
     } else if (screenState) {
@@ -1959,7 +1959,7 @@ static void SwapInt(int *a, int *b) {
 
         LineBuffer *lineBuffer = [[LineBuffer alloc] initWithDictionary:dictionary[@"LineBuffer"]];
         [lineBuffer setMaxLines:maxScrollbackLines_ + self.height];
-        if (!unlimitedScrollback_) {
+        if (!_state.unlimitedScrollback) {
             [lineBuffer dropExcessLinesWithWidth:self.width];
         }
         [linebuffer_ release];
@@ -2253,7 +2253,7 @@ static void SwapInt(int *a, int *b) {
         lineBufferToUse = nil;
     }
     [self incrementOverflowBy:[self.mutableCurrentGrid moveCursorDownOneLineScrollingIntoLineBuffer:lineBufferToUse
-                                                                                unlimitedScrollback:unlimitedScrollback_
+                                                                                unlimitedScrollback:_state.unlimitedScrollback
                                                                             useScrollbackWithRegion:self.appendToScrollbackWithStatusBar
                                                                                          willScroll:^{
         if (noScrollback) {
@@ -2405,7 +2405,7 @@ static void SwapInt(int *a, int *b) {
     }
     if (_state.currentGrid.cursorY == _state.currentGrid.bottomMargin) {
         [self incrementOverflowBy:[self.mutableCurrentGrid scrollUpIntoLineBuffer:linebuffer_
-                                                              unlimitedScrollback:unlimitedScrollback_
+                                                              unlimitedScrollback:_state.unlimitedScrollback
                                                           useScrollbackWithRegion:self.appendToScrollbackWithStatusBar
                                                                         softBreak:YES]];
     }
@@ -2580,7 +2580,7 @@ static void SwapInt(int *a, int *b) {
     for (int i = 0; i < n; i++) {
         [self incrementOverflowBy:
             [self.mutableCurrentGrid scrollWholeScreenUpIntoLineBuffer:lineBuffer
-                                                   unlimitedScrollback:unlimitedScrollback_]];
+                                                   unlimitedScrollback:_state.unlimitedScrollback]];
     }
 }
 
@@ -2887,7 +2887,7 @@ static void SwapInt(int *a, int *b) {
          i < MIN(_state.currentGrid.size.height, n);
          i++) {
         [self incrementOverflowBy:[self.mutableCurrentGrid scrollUpIntoLineBuffer:linebuffer_
-                                                              unlimitedScrollback:unlimitedScrollback_
+                                                              unlimitedScrollback:_state.unlimitedScrollback
                                                           useScrollbackWithRegion:self.appendToScrollbackWithStatusBar
                                                                         softBreak:NO]];
     }
@@ -3387,6 +3387,10 @@ static inline void VT100ScreenEraseCell(screen_char_t *sct, iTermExternalAttribu
     _mutableState.insert = newValue;
 }
 
+- (void)mutSetUnlimitedScrollback:(BOOL)newValue {
+    _mutableState.unlimitedScrollback = newValue;
+}
+
 // Gets a line on the screen (0 = top of screen)
 - (screen_char_t *)mutGetLineAtScreenIndex:(int)theIndex {
     return [self.mutableCurrentGrid screenCharsAtLineNumber:theIndex];
@@ -3553,7 +3557,7 @@ static inline void VT100ScreenEraseCell(screen_char_t *sct, iTermExternalAttribu
 - (void)mutSetMaxScrollbackLines:(unsigned int)lines {
     maxScrollbackLines_ = lines;
     [self.mutableLineBuffer setMaxLines: lines];
-    if (!unlimitedScrollback_) {
+    if (!_state.unlimitedScrollback) {
         [self incrementOverflowBy:[self.mutableLineBuffer dropExcessLinesWithWidth:_state.currentGrid.size.width]];
     }
     [delegate_ screenDidChangeNumberOfScrollbackLines];

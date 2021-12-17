@@ -65,6 +65,9 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) BOOL ansi;
 @property (nonatomic, readonly) BOOL insert;
 
+// This flag overrides maxScrollbackLines:
+@property (nonatomic, readonly) BOOL unlimitedScrollback;
+
 @property (nonatomic, strong, readonly) VT100Terminal *terminal;
 @end
 
@@ -96,6 +99,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readwrite) BOOL wraparoundMode;
 @property (nonatomic, readwrite) BOOL ansi;
 @property (nonatomic, readwrite) BOOL insert;
+@property (nonatomic, readwrite) BOOL unlimitedScrollback;
 
 - (id<VT100ScreenState>)copy;
 
