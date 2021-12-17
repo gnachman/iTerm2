@@ -575,27 +575,9 @@ const CGFloat kDefaultTagsWidth = 80;
     [self reloadData];
 }
 
-- (CGFloat)heightOfRowWithTags:(BOOL)hasTags {
-    if (!_haveHeights) {
-        _heightWithTags = [[self attributedStringForName:@"Mj"
-                                                    tags:@[ @"Mj" ]
-                                                selected:NO
-                                               isDefault:YES
-                                                  filter:nil] heightForWidth:100] + [self extraHeightWithTags:YES];
-        _heightWithoutTags = [[self attributedStringForName:@"Mj"
-                                                       tags:nil
-                                                   selected:NO
-                                                  isDefault:YES
-                                                     filter:nil] heightForWidth:100] + [self extraHeightWithTags:NO];
-        _haveHeights = YES;
-    }
-    return hasTags ? _heightWithTags : _heightWithoutTags;
-}
-
 - (CGFloat)tableView:(NSTableView *)tableView heightOfRow:(NSInteger)rowIndex {
-    Profile *profile = [dataSource_ profileAtIndex:rowIndex];
-    const BOOL hasTags = ([profile[KEY_TAGS] count] > 0);
-    CGFloat height = [self heightOfRowWithTags:hasTags];
+    NSView *view = [self tableView:tableView viewForTableColumn:tableView.tableColumns[0] row:rowIndex];
+    const CGFloat height = [view fittingSize].height;
     _savedHeights[@(rowIndex)] = @(height);
     return height;
 }
