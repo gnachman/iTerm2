@@ -53,6 +53,7 @@ static const int kDefaultMaxScrollbackLines = 1000;
         _commandStartCoord = source.commandStartCoord;
         _maxScrollbackLines = source.maxScrollbackLines;
         _savedFindContextAbsPos = source.savedFindContextAbsPos;
+        _lastCharacter = source.lastCharacter;
 
         [source.markCache enumerateKeysAndObjectsUsingBlock:^(NSNumber * _Nonnull key, id<iTermMark>  _Nonnull obj, BOOL * _Nonnull stop) {
             NSDictionary *encoded = [obj dictionaryValue];

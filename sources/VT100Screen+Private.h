@@ -43,8 +43,6 @@ VT100InlineImageHelperDelegate> {
 
     __weak id<VT100ScreenDelegate> delegate_;  // PTYSession implements this
 
-    // For REP
-    screen_char_t _lastCharacter;
     iTermExternalAttribute *_lastExternalAttribute;
     BOOL _lastCharacterIsDoubleWidth;
 

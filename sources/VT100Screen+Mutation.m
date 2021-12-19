@@ -1596,14 +1596,14 @@ static void SwapInt(int *a, int *b) {
         if (lastCharacter.code == DWC_RIGHT && !lastCharacter.complexChar) {
             // Last character is the right half of a double-width character. Use the penultimate character instead.
             if (len >= 2) {
-                _lastCharacter = buffer[len - 2];
+                _mutableState.lastCharacter = buffer[len - 2];
                 _lastCharacterIsDoubleWidth = YES;
                 [_lastExternalAttribute autorelease];
                 _lastExternalAttribute = [externalAttributes[len - 2] retain];
             }
         } else {
             // Record the last character.
-            _lastCharacter = buffer[len - 1];
+            _mutableState.lastCharacter = buffer[len - 1];
             _lastCharacterIsDoubleWidth = NO;
             [_lastExternalAttribute autorelease];
             _lastExternalAttribute = [externalAttributes[len] retain];

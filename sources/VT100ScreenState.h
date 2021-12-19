@@ -92,6 +92,9 @@ NS_ASSUME_NONNULL_BEGIN
 // Valid charsets are in 0..<NUM_CHARSETS
 @property (nonatomic, strong, readonly) NSSet<NSNumber *> *charsetUsesLineDrawingMode;
 
+// For REP
+@property (nonatomic, readonly) screen_char_t lastCharacter;
+
 @end
 
 @interface VT100ScreenMutableState: NSObject<VT100ScreenState, NSCopying>
@@ -133,6 +136,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readwrite) long long savedFindContextAbsPos;
 @property (nonatomic, strong, readwrite) NSMutableSet<NSNumber *> *tabStops;
 @property (nonatomic, strong) NSMutableSet<NSNumber *> *charsetUsesLineDrawingMode;
+@property (nonatomic, readwrite) screen_char_t lastCharacter;
 
 - (id<VT100ScreenState>)copy;
 

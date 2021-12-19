@@ -2793,13 +2793,13 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     if (![iTermAdvancedSettingsModel supportREPCode]) {
         return;
     }
-    if (_lastCharacter.code) {
+    if (_state.lastCharacter.code) {
         int length = 1;
         screen_char_t chars[2];
-        chars[0] = _lastCharacter;
+        chars[0] = _state.lastCharacter;
         if (_lastCharacterIsDoubleWidth) {
             length++;
-            chars[1] = _lastCharacter;
+            chars[1] = _state.lastCharacter;
             chars[1].code = DWC_RIGHT;
             chars[1].complexChar = NO;
         }
@@ -2810,8 +2810,8 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
                                             length:length
                             externalAttributeIndex:[iTermUniformExternalAttributes withAttribute:_lastExternalAttribute]];
             [delegate_ screenDidAppendStringToCurrentLine:string
-                                              isPlainText:(_lastCharacter.complexChar ||
-                                                           _lastCharacter.code >= ' ')];
+                                              isPlainText:(_state.lastCharacter.complexChar ||
+                                                           _state.lastCharacter.code >= ' ')];
         }
     }
 }
