@@ -123,7 +123,6 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
         }
 
         markCache_ = [[NSMutableDictionary alloc] init];
-        commandStartX_ = commandStartY_ = -1;
 
         _startOfRunningCommandOutput = VT100GridAbsCoordMake(-1, -1);
         _lastCommandOutputRange = VT100GridAbsCoordRangeMake(-1, -1, -1, -1);
@@ -263,7 +262,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (VT100GridAbsCoord)commandStartCoord {
-    return VT100GridAbsCoordMake(commandStartX_, commandStartY_);
+    return _state.commandStartCoord;
 }
 
 #pragma mark - PTYTextViewDataSource
@@ -1363,8 +1362,8 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
     [self mutDoBackspace];
 
-    if (commandStartX_ != -1 && (_state.currentGrid.cursorX != cursorX ||
-                                 _state.currentGrid.cursorY != cursorY)) {
+    if (_state.commandStartCoord.x != -1 && (_state.currentGrid.cursorX != cursorX ||
+                                             _state.currentGrid.cursorY != cursorY)) {
         [delegate_ screenCommandDidChangeWithRange:[self commandRange]];
     }
 }
@@ -1414,7 +1413,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 - (void)terminalMoveCursorToX:(int)x y:(int)y {
     [self mutCursorToX:x Y:y];
     [delegate_ screenTriggerableChangeDidOccur];
-    if (commandStartX_ != -1) {
+    if (_state.commandStartCoord.x != -1) {
         [delegate_ screenCommandDidChangeWithRange:[self commandRange]];
     }
 }
@@ -2472,9 +2471,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)commandDidStartAt:(VT100GridAbsCoord)coord {
-    commandStartX_ = coord.x;
-    commandStartY_ = coord.y;
-    [delegate_ screenCommandDidChangeWithRange:[self commandRange]];
+    [self mutSetCommandStartCoord:coord];
 }
 
 - (void)terminalCommandDidEnd {
@@ -2485,10 +2482,9 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (BOOL)commandDidEndAtAbsCoord:(VT100GridAbsCoord)coord {
-    if (commandStartX_ != -1) {
+    if (_state.commandStartCoord.x != -1) {
         [delegate_ screenCommandDidEndWithRange:[self commandRange]];
-        commandStartX_ = commandStartY_ = -1;
-        [delegate_ screenCommandDidChangeWithRange:[self commandRange]];
+        [self mutInvalidateCommandStartCoord];
         _startOfRunningCommandOutput = coord;
         return YES;
     }
@@ -3033,11 +3029,11 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
 - (VT100GridCoordRange)commandRange {
     long long offset = [self totalScrollbackOverflow];
-    if (commandStartX_ < 0) {
+    if (_state.commandStartCoord.x < 0) {
         return VT100GridCoordRangeMake(-1, -1, -1, -1);
     } else {
-        return VT100GridCoordRangeMake(commandStartX_,
-                                       MAX(0, commandStartY_ - offset),
+        return VT100GridCoordRangeMake(_state.commandStartCoord.x,
+                                       MAX(0, _state.commandStartCoord.y - offset),
                                        _state.currentGrid.cursorX,
                                        _state.currentGrid.cursorY + [self numberOfScrollbackLines]);
     }
@@ -3276,8 +3272,8 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
            kScreenStateNonCurrentGridKey: [self contentsOfNonCurrentGrid] ?: @{},
            kScreenStateCurrentGridIsPrimaryKey: @(_state.primaryGrid == _state.currentGrid),
            kScreenStateSavedIntervalTreeKey: [_state.savedIntervalTree dictionaryValueWithOffset:0] ?: [NSNull null],
-           kScreenStateCommandStartXKey: @(commandStartX_),
-           kScreenStateCommandStartYKey: @(commandStartY_),
+           kScreenStateCommandStartXKey: @(_state.commandStartCoord.x),
+           kScreenStateCommandStartYKey: @(_state.commandStartCoord.y),
            kScreenStateNextCommandOutputStartKey: [NSDictionary dictionaryWithGridAbsCoord:_startOfRunningCommandOutput],
            kScreenStateCursorVisibleKey: @(_cursorVisible),
            kScreenStateTrackCursorLineMovementKey: @(_trackCursorLineMovement),

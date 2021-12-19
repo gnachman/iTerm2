@@ -21,6 +21,7 @@
         _intervalTree = [[IntervalTree alloc] init];
         _savedIntervalTree = [[IntervalTree alloc] init];
         _findContext = [[FindContext alloc] init];
+        _commandStartCoord = VT100GridAbsCoordMake(-1, -1);
     }
     return self;
 }
@@ -41,7 +42,9 @@
         _ansi = source.ansi;
         _insert = source.insert;
         _unlimitedScrollback = source.unlimitedScrollback;
-
+        _scrollbackOverflow = source.scrollbackOverflow;
+        _commandStartCoord = source.commandStartCoord;
+    
         _animatedLines = [source.animatedLines copy];
         _pasteboardString = [source.pasteboardString copy];
         _intervalTree = [source.intervalTree copy];

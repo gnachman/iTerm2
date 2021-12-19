@@ -43,10 +43,6 @@ VT100InlineImageHelperDelegate> {
 
     __weak id<VT100ScreenDelegate> delegate_;  // PTYSession implements this
 
-    // Location of the start of the current command, or -1 for none. Y is absolute.
-    int commandStartX_;
-    long long commandStartY_;
-
     // Maps an absolute line number to a VT100ScreenMark.
     NSMutableDictionary *markCache_;
     VT100GridCoordRange markCacheRange_;

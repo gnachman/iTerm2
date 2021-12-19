@@ -135,6 +135,10 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)mutSetInsert:(BOOL)newValue;
 - (void)mutSetUnlimitedScrollback:(BOOL)newValue;
 - (void)mutResetScrollbackOverflow;
+- (void)mutSetCommandStartCoord:(VT100GridAbsCoord)coord;
+- (void)mutSetCommandStartCoordWithoutSideEffects:(VT100GridAbsCoord)coord;
+- (void)mutInvalidateCommandStartCoord;
+- (void)mutInvalidateCommandStartCoordWithoutSideEffects;
 
 @end
 

@@ -476,9 +476,9 @@
     DLog(@"Resize session to %@", VT100GridSizeDescription(size));
     DLog(@"Before:\n%@", [_state.currentGrid compactLineDumpWithContinuationMarks]);
     DLog(@"Cursor at %d,%d", _state.currentGrid.cursorX, _state.currentGrid.cursorY);
-    if (commandStartX_ != -1) {
+    if (_state.commandStartCoord.x != -1) {
         [delegate_ screenCommandDidEndWithRange:[self commandRange]];
-        commandStartX_ = commandStartY_ = -1;
+        [self mutInvalidateCommandStartCoordWithoutSideEffects];
     }
     self.lastCommandMark = nil;
 
@@ -1109,8 +1109,7 @@ static void SwapInt(int *a, int *b) {
                                                               onLine:[self coordRangeForInterval:screenMark.entry.interval].start.y + self.totalScrollbackOverflow];
         [_mutableState.intervalTree removeObject:screenMark];
     }
-
-    commandStartX_ = commandStartY_ = -1;
+    [self mutInvalidateCommandStartCoordWithoutSideEffects];
     [delegate_ screenCommandDidEndWithRange:VT100GridCoordRangeMake(-1, -1, -1, -1)];
 }
 
@@ -1179,14 +1178,14 @@ static void SwapInt(int *a, int *b) {
     const int linesToSave = savePrompt ? [self numberOfLinesToPreserveWhenClearingScreen] : 0;
     // NOTE: This is in screen coords (y=0 is the top)
     VT100GridCoord newCommandStart = VT100GridCoordMake(-1, -1);
-    if (commandStartX_ >= 0) {
+    if (_state.commandStartCoord.x >= 0) {
         // Compute the new location of the command's beginning, which is right
         // after the end of the prompt in its new location.
         int numberOfPromptLines = 1;
         if (!VT100GridAbsCoordEquals(self.currentPromptRange.start, self.currentPromptRange.end)) {
             numberOfPromptLines = MAX(1, self.currentPromptRange.end.y - self.currentPromptRange.start.y + 1);
         }
-        newCommandStart = VT100GridCoordMake(commandStartX_, numberOfPromptLines - 1);
+        newCommandStart = VT100GridCoordMake(_state.commandStartCoord.x, numberOfPromptLines - 1);
 
         // Abort the current command.
         [self mutCommandWasAborted];
@@ -1215,7 +1214,7 @@ static void SwapInt(int *a, int *b) {
         // Prompt range not defined.
         return 1;
     }
-    if (commandStartX_ < 0) {
+    if (_state.commandStartCoord.x < 0) {
         // Prompt apparently hasn't ended.
         return 1;
     }
@@ -1421,7 +1420,7 @@ static void SwapInt(int *a, int *b) {
         charsetUsesLineDrawingMode_[i] = NO;
     }
     [delegate_ screenDidResetAllowingContentModification:modifyContent];
-    commandStartX_ = commandStartY_ = -1;
+    [self mutInvalidateCommandStartCoordWithoutSideEffects];
     [self showCursor:YES];
 }
 
@@ -1593,7 +1592,7 @@ static void SwapInt(int *a, int *b) {
         iTermImmutableMetadataRelease(temp);
     }
 
-    if (commandStartX_ != -1) {
+    if (_state.commandStartCoord.x != -1) {
         [delegate_ screenCommandDidChangeWithRange:[self commandRange]];
     }
 }
@@ -1999,8 +1998,8 @@ static void SwapInt(int *a, int *b) {
 
         NSString *guidOfLastCommandMark = screenState[kScreenStateLastCommandMarkKey];
         if (reattached) {
-            commandStartX_ = [screenState[kScreenStateCommandStartXKey] intValue];
-            commandStartY_ = [screenState[kScreenStateCommandStartYKey] intValue];
+            [self mutSetCommandStartCoordWithoutSideEffects:VT100GridAbsCoordMake([screenState[kScreenStateCommandStartXKey] intValue],
+                                                                                  [screenState[kScreenStateCommandStartYKey] longLongValue])];
             self.startOfRunningCommandOutput = [screenState[kScreenStateNextCommandOutputStartKey] gridAbsCoord];
         }
         _cursorVisible = [screenState[kScreenStateCursorVisibleKey] boolValue];
@@ -2503,7 +2502,7 @@ static void SwapInt(int *a, int *b) {
 - (void)mutCursorLeft:(int)n {
     [self.mutableCurrentGrid moveCursorLeft:n];
     [delegate_ screenTriggerableChangeDidOccur];
-    if (commandStartX_ != -1) {
+    if (_state.commandStartCoord.x != -1) {
         [delegate_ screenCommandDidChangeWithRange:[self commandRange]];
     }
 }
@@ -2514,7 +2513,7 @@ static void SwapInt(int *a, int *b) {
         [self.mutableCurrentGrid moveCursorToLeftMargin];
     }
     [delegate_ screenTriggerableChangeDidOccur];
-    if (commandStartX_ != -1) {
+    if (_state.commandStartCoord.x != -1) {
         [delegate_ screenCommandDidChangeWithRange:[self commandRange]];
     }
 }
@@ -2522,7 +2521,7 @@ static void SwapInt(int *a, int *b) {
 - (void)mutCursorRight:(int)n {
     [self.mutableCurrentGrid moveCursorRight:n];
     [delegate_ screenTriggerableChangeDidOccur];
-    if (commandStartX_ != -1) {
+    if (_state.commandStartCoord.x != -1) {
         [delegate_ screenCommandDidChangeWithRange:[self commandRange]];
     }
 }
@@ -2533,7 +2532,7 @@ static void SwapInt(int *a, int *b) {
         [self.mutableCurrentGrid moveCursorToLeftMargin];
     }
     [delegate_ screenTriggerableChangeDidOccur];
-    if (commandStartX_ != -1) {
+    if (_state.commandStartCoord.x != -1) {
         [delegate_ screenCommandDidChangeWithRange:[self commandRange]];
     }
 }
@@ -2711,7 +2710,7 @@ static void SwapInt(int *a, int *b) {
         [self.mutableCurrentGrid moveCursorToLeftMargin];
     }
     [delegate_ screenTriggerableChangeDidOccur];
-    if (commandStartX_ != -1) {
+    if (_state.commandStartCoord.x != -1) {
         [delegate_ screenCommandDidChangeWithRange:[self commandRange]];
     }
 }
@@ -3375,6 +3374,23 @@ static inline void VT100ScreenEraseCell(screen_char_t *sct, iTermExternalAttribu
 
 #pragma mark - Accessors
 
+- (void)mutInvalidateCommandStartCoord {
+    [self mutSetCommandStartCoord:VT100GridAbsCoordMake(-1, -1)];
+}
+
+- (void)mutInvalidateCommandStartCoordWithoutSideEffects {
+    [self mutSetCommandStartCoordWithoutSideEffects:VT100GridAbsCoordMake(-1, -1)];
+}
+
+- (void)mutSetCommandStartCoord:(VT100GridAbsCoord)coord {
+    _mutableState.commandStartCoord = coord;
+    [delegate_ screenCommandDidChangeWithRange:[self commandRange]];
+}
+
+- (void)mutSetCommandStartCoordWithoutSideEffects:(VT100GridAbsCoord)coord {
+    _mutableState.commandStartCoord = coord;
+}
+
 - (void)mutResetScrollbackOverflow {
     _mutableState.scrollbackOverflow = 0;
 }
@@ -3483,7 +3499,7 @@ static inline void VT100ScreenEraseCell(screen_char_t *sct, iTermExternalAttribu
 
     [self.mutableCurrentGrid markAllCharsDirty:YES];
     [delegate_ screenScheduleRedrawSoon];
-    commandStartX_ = commandStartY_ = -1;
+    [self mutInvalidateCommandStartCoordWithoutSideEffects];
 }
 
 - (void)mutShowPrimaryBuffer {
@@ -3492,7 +3508,7 @@ static inline void VT100ScreenEraseCell(screen_char_t *sct, iTermExternalAttribu
         [delegate_ screenRemoveSelection];
         [self hideOnScreenNotesAndTruncateSpanners];
         _mutableState.currentGrid = _state.primaryGrid;
-        commandStartX_ = commandStartY_ = -1;
+        [self mutInvalidateCommandStartCoordWithoutSideEffects];
         [self swapNotes];
         [self reloadMarkCache];
 

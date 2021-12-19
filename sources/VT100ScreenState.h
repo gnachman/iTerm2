@@ -72,6 +72,9 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, strong, readonly) VT100Terminal *terminal;
 @property (nonatomic, strong, readonly) FindContext *findContext;
 @property (nonatomic, readonly) int scrollbackOverflow;
+
+// Location of the start of the current command, or (-1, -1) for none.
+@property (nonatomic, readonly) VT100GridAbsCoord commandStartCoord;
 @end
 
 @interface VT100ScreenMutableState: NSObject<VT100ScreenState, NSCopying>
@@ -107,6 +110,7 @@ NS_ASSUME_NONNULL_BEGIN
 // How many scrollback lines have been lost due to overflow. Periodically reset with
 // -resetScrollbackOverflow.
 @property (nonatomic, readwrite) int scrollbackOverflow;
+@property (nonatomic, readwrite) VT100GridAbsCoord commandStartCoord;
 
 - (id<VT100ScreenState>)copy;
 
