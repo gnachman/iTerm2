@@ -43,8 +43,6 @@ VT100InlineImageHelperDelegate> {
 
     __weak id<VT100ScreenDelegate> delegate_;  // PTYSession implements this
 
-    VT100GridCoordRange markCacheRange_;
-
     // Max size of scrollback buffer
     unsigned int maxScrollbackLines_;
 
