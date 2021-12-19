@@ -44,7 +44,6 @@ VT100InlineImageHelperDelegate> {
     __weak id<VT100ScreenDelegate> delegate_;  // PTYSession implements this
 
     iTermExternalAttribute *_lastExternalAttribute;
-    BOOL _lastCharacterIsDoubleWidth;
 
     BOOL saveToScrollbackInAlternateScreen_;
     BOOL _cursorVisible;

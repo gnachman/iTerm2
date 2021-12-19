@@ -1597,14 +1597,14 @@ static void SwapInt(int *a, int *b) {
             // Last character is the right half of a double-width character. Use the penultimate character instead.
             if (len >= 2) {
                 _mutableState.lastCharacter = buffer[len - 2];
-                _lastCharacterIsDoubleWidth = YES;
+                _mutableState.lastCharacterIsDoubleWidth = YES;
                 [_lastExternalAttribute autorelease];
                 _lastExternalAttribute = [externalAttributes[len - 2] retain];
             }
         } else {
             // Record the last character.
             _mutableState.lastCharacter = buffer[len - 1];
-            _lastCharacterIsDoubleWidth = NO;
+            _mutableState.lastCharacterIsDoubleWidth = NO;
             [_lastExternalAttribute autorelease];
             _lastExternalAttribute = [externalAttributes[len] retain];
         }

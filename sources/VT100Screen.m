@@ -2797,7 +2797,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
         int length = 1;
         screen_char_t chars[2];
         chars[0] = _state.lastCharacter;
-        if (_lastCharacterIsDoubleWidth) {
+        if (_state.lastCharacterIsDoubleWidth) {
             length++;
             chars[1] = _state.lastCharacter;
             chars[1].code = DWC_RIGHT;

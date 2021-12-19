@@ -94,6 +94,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 // For REP
 @property (nonatomic, readonly) screen_char_t lastCharacter;
+@property (nonatomic, readonly) BOOL lastCharacterIsDoubleWidth;
 
 @end
 
@@ -137,6 +138,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, strong, readwrite) NSMutableSet<NSNumber *> *tabStops;
 @property (nonatomic, strong) NSMutableSet<NSNumber *> *charsetUsesLineDrawingMode;
 @property (nonatomic, readwrite) screen_char_t lastCharacter;
+@property (nonatomic, readwrite) BOOL lastCharacterIsDoubleWidth;
 
 - (id<VT100ScreenState>)copy;
 
