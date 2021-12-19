@@ -3247,7 +3247,7 @@ static inline void VT100ScreenEraseCell(screen_char_t *sct, iTermExternalAttribu
 }
 
 - (long long)mutFindContextAbsPosition {
-    return [linebuffer_ absPositionOfFindContext:findContext_];
+    return [linebuffer_ absPositionOfFindContext:_mutableState.findContext];
 }
 
 - (BOOL)mutContinueFindResultsInContext:(FindContext *)context
@@ -3323,12 +3323,12 @@ static inline void VT100ScreenEraseCell(screen_char_t *sct, iTermExternalAttribu
                     // NSLog(@"...wrapping");
                     // wrap around and resume search.
                     FindContext *tempFindContext = [[[FindContext alloc] init] autorelease];
-                    [temporaryLineBuffer prepareToSearchFor:findContext_.substring
-                                                 startingAt:(findContext_.dir > 0 ? [temporaryLineBuffer firstPosition] : [[temporaryLineBuffer lastPosition] predecessor])
-                                                    options:findContext_.options
-                                                       mode:findContext_.mode
+                    [temporaryLineBuffer prepareToSearchFor:_mutableState.findContext.substring
+                                                 startingAt:(_mutableState.findContext.dir > 0 ? [temporaryLineBuffer firstPosition] : [[temporaryLineBuffer lastPosition] predecessor])
+                                                    options:_mutableState.findContext.options
+                                                       mode:_mutableState.findContext.mode
                                                 withContext:tempFindContext];
-                    [findContext_ reset];
+                    [_mutableState.findContext reset];
                     // TODO test this!
                     [context copyFromFindContext:tempFindContext];
                     context.hasWrapped = YES;
@@ -3641,7 +3641,7 @@ static inline void VT100ScreenEraseCell(screen_char_t *sct, iTermExternalAttribu
     [self.mutableAltGrid resetScrollRegions];
     [_state.terminal resetSavedCursorPositions];
 
-    findContext_.substring = nil;
+    _mutableState.findContext.substring = nil;
 
     scrollbackOverflow_ = 0;
     [delegate_ screenRemoveSelection];

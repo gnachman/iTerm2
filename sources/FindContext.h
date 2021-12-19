@@ -24,54 +24,63 @@ typedef NS_ENUM(NSInteger, FindContextStatus) {
 
 @class ResultRange;
 
-@interface FindContext : NSObject
+@protocol iTermFindContextReading<NSObject>
+@property(nonatomic, strong, readonly) NSMutableArray<ResultRange *> *results;
+@property(nonatomic, readonly) BOOL hasWrapped;
+@property(nonatomic, readonly) double progress;
+@property(nonatomic, readonly) BOOL includesPartialLastLine;
+@end
+
+@interface FindContext : NSObject<iTermFindContextReading, NSCopying>
 
 // Current absolute block number being searched.
-@property(nonatomic, assign) int absBlockNum;
+@property(nonatomic) int absBlockNum;
 
 // The substring to search for.
 @property(nonatomic, copy) NSString *substring;
 
 // A bitwise OR of the options defined above.
-@property(nonatomic, assign) FindOptions options;
+@property(nonatomic) FindOptions options;
 
 // How to perform the search.
-@property(nonatomic, assign) iTermFindMode mode;
+@property(nonatomic) iTermFindMode mode;
 
 // 1: search forward. -1: search backward.
-@property(nonatomic, assign) int dir;
+@property(nonatomic) int dir;
 
 // The offset within a block to begin searching. -1 means the end of the
 // block.
-@property(nonatomic, assign) int offset;
+@property(nonatomic) int offset;
 
 // The offset within a block at which to stop searching. No results
 // with an offset at or beyond this position will be returned.
-@property(nonatomic, assign) int stopAt;
+@property(nonatomic) int stopAt;
 
 // Searching: a search is in progress and this context can be used to search.
 // Matched: At least one result has been found. This context can be used to
 //   search again.
 // NotFound: No results were found and the end of the buffer was reached.
-@property(nonatomic, assign) FindContextStatus status;
-@property(nonatomic, assign) int matchLength;
+@property(nonatomic) FindContextStatus status;
+@property(nonatomic) int matchLength;
 
 // used for multiple results
-@property(nonatomic, retain) NSMutableArray<ResultRange *> *results;
+@property(nonatomic, strong, readwrite) NSMutableArray<ResultRange *> *results;
 
 // for client use. Not read or written by LineBuffer.
-@property(nonatomic, assign) BOOL hasWrapped;
+@property(nonatomic, readwrite) BOOL hasWrapped;
 
-@property(nonatomic, assign) NSTimeInterval maxTime;
+@property(nonatomic) NSTimeInterval maxTime;
 
 // Estimate of fraction of work done.
-@property(nonatomic, assign) double progress;
+@property(nonatomic, readwrite) double progress;
 
 // Do the results include anything from the last line which is also partial?
-@property(nonatomic, assign) BOOL includesPartialLastLine;
+@property(nonatomic, readwrite) BOOL includesPartialLastLine;
 
 - (void)copyFromFindContext:(FindContext *)other;
 
 - (void)reset;
+
+- (FindContext *)copy;
 
 @end

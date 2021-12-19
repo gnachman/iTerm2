@@ -20,6 +20,7 @@
         _currentDirectoryDidChangeOrderEnforcer = [[iTermOrderEnforcer alloc] init];
         _intervalTree = [[IntervalTree alloc] init];
         _savedIntervalTree = [[IntervalTree alloc] init];
+        _findContext = [[FindContext alloc] init];
     }
     return self;
 }
@@ -45,6 +46,7 @@
         _pasteboardString = [source.pasteboardString copy];
         _intervalTree = [source.intervalTree copy];
         _savedIntervalTree = [source.savedIntervalTree copy];
+        _findContext = [source.findContext copy];
     }
     return self;
 }

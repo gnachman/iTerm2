@@ -122,7 +122,6 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
             charsetUsesLineDrawingMode_[i] = NO;
         }
 
-        findContext_ = [[FindContext alloc] init];
         markCache_ = [[NSMutableDictionary alloc] init];
         commandStartX_ = commandStartY_ = -1;
 
@@ -138,7 +137,6 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     [tabStops_ release];
     [linebuffer_ release];
     [dvr_ release];
-    [findContext_ release];
     [markCache_ release];
     [_lastCommandMark release];
     _temporaryDoubleBuffer.delegate = nil;
@@ -495,9 +493,8 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     return keepSearching;
 }
 
-- (FindContext*)findContext
-{
-    return findContext_;
+- (FindContext *)findContext {
+    return _state.findContext;
 }
 
 - (NSString *)debugString {

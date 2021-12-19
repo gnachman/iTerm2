@@ -9,6 +9,7 @@
 
 #import <Foundation/Foundation.h>
 
+#import "FindContext.h"
 #import "IntervalTree.h"
 #import "VT100Grid.h"
 #import "VT100Terminal.h"
@@ -69,6 +70,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) BOOL unlimitedScrollback;
 
 @property (nonatomic, strong, readonly) VT100Terminal *terminal;
+@property (nonatomic, strong, readonly) FindContext *findContext;
 @end
 
 @interface VT100ScreenMutableState: NSObject<VT100ScreenState, NSCopying>
@@ -100,6 +102,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readwrite) BOOL ansi;
 @property (nonatomic, readwrite) BOOL insert;
 @property (nonatomic, readwrite) BOOL unlimitedScrollback;
+@property (nonatomic, strong, readwrite) FindContext *findContext;
 
 - (id<VT100ScreenState>)copy;
 

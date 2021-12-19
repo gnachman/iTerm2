@@ -43,9 +43,6 @@ VT100InlineImageHelperDelegate> {
 
     __weak id<VT100ScreenDelegate> delegate_;  // PTYSession implements this
 
-    // Current find context.
-    FindContext *findContext_;
-
     // How many scrollback lines have been lost due to overflow. Periodically reset with
     // -resetScrollbackOverflow.
     int scrollbackOverflow_;
