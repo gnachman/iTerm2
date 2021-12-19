@@ -71,6 +71,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property (nonatomic, strong, readonly) VT100Terminal *terminal;
 @property (nonatomic, strong, readonly) FindContext *findContext;
+@property (nonatomic, readonly) int scrollbackOverflow;
 @end
 
 @interface VT100ScreenMutableState: NSObject<VT100ScreenState, NSCopying>
@@ -103,6 +104,9 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readwrite) BOOL insert;
 @property (nonatomic, readwrite) BOOL unlimitedScrollback;
 @property (nonatomic, strong, readwrite) FindContext *findContext;
+// How many scrollback lines have been lost due to overflow. Periodically reset with
+// -resetScrollbackOverflow.
+@property (nonatomic, readwrite) int scrollbackOverflow;
 
 - (id<VT100ScreenState>)copy;
 

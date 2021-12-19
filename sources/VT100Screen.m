@@ -454,12 +454,11 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (int)scrollbackOverflow {
-    return scrollbackOverflow_;
+    return _state.scrollbackOverflow;
 }
 
-- (void)resetScrollbackOverflow
-{
-    scrollbackOverflow_ = 0;
+- (void)resetScrollbackOverflow {
+    [self mutResetScrollbackOverflow];
 }
 
 - (long long)totalScrollbackOverflow

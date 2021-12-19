@@ -3375,6 +3375,10 @@ static inline void VT100ScreenEraseCell(screen_char_t *sct, iTermExternalAttribu
 
 #pragma mark - Accessors
 
+- (void)mutResetScrollbackOverflow {
+    _mutableState.scrollbackOverflow = 0;
+}
+
 - (void)mutSetWraparoundMode:(BOOL)newValue {
     _mutableState.wraparoundMode = newValue;
 }
@@ -3581,7 +3585,7 @@ static inline void VT100ScreenEraseCell(screen_char_t *sct, iTermExternalAttribu
 }
 
 - (void)incrementOverflowBy:(int)overflowCount {
-    scrollbackOverflow_ += overflowCount;
+    _mutableState.scrollbackOverflow += overflowCount;
     cumulativeScrollbackOverflow_ += overflowCount;
     [self.intervalTreeObserver intervalTreeVisibleRangeDidChange];
 }
@@ -3643,7 +3647,7 @@ static inline void VT100ScreenEraseCell(screen_char_t *sct, iTermExternalAttribu
 
     _mutableState.findContext.substring = nil;
 
-    scrollbackOverflow_ = 0;
+    _mutableState.scrollbackOverflow = 0;
     [delegate_ screenRemoveSelection];
 
     [self.mutablePrimaryGrid markAllCharsDirty:YES];

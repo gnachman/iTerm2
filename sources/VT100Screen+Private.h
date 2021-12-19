@@ -43,10 +43,6 @@ VT100InlineImageHelperDelegate> {
 
     __weak id<VT100ScreenDelegate> delegate_;  // PTYSession implements this
 
-    // How many scrollback lines have been lost due to overflow. Periodically reset with
-    // -resetScrollbackOverflow.
-    int scrollbackOverflow_;
-
     // Location of the start of the current command, or -1 for none. Y is absolute.
     int commandStartX_;
     long long commandStartY_;

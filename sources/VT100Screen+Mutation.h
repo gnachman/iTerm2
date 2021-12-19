@@ -134,6 +134,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)mutUpdateTerminalType;
 - (void)mutSetInsert:(BOOL)newValue;
 - (void)mutSetUnlimitedScrollback:(BOOL)newValue;
+- (void)mutResetScrollbackOverflow;
 
 @end
 
