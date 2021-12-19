@@ -129,7 +129,6 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     _temporaryDoubleBuffer.delegate = nil;
     [_temporaryDoubleBuffer reset];
     [_temporaryDoubleBuffer release];
-    [_lastExternalAttribute release];
     [_state release];
     [_mutableState release];
 
@@ -2808,7 +2807,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
         for (int i = 0; i < times; i++) {
             [self mutAppendScreenCharArrayAtCursor:chars
                                             length:length
-                            externalAttributeIndex:[iTermUniformExternalAttributes withAttribute:_lastExternalAttribute]];
+                            externalAttributeIndex:[iTermUniformExternalAttributes withAttribute:_state.lastExternalAttribute]];
             [delegate_ screenDidAppendStringToCurrentLine:string
                                               isPlainText:(_state.lastCharacter.complexChar ||
                                                            _state.lastCharacter.code >= ' ')];

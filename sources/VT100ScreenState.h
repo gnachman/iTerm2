@@ -95,6 +95,7 @@ NS_ASSUME_NONNULL_BEGIN
 // For REP
 @property (nonatomic, readonly) screen_char_t lastCharacter;
 @property (nonatomic, readonly) BOOL lastCharacterIsDoubleWidth;
+@property (nullable, nonatomic, strong, readonly) iTermExternalAttribute *lastExternalAttribute;
 
 @end
 
@@ -139,6 +140,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, strong) NSMutableSet<NSNumber *> *charsetUsesLineDrawingMode;
 @property (nonatomic, readwrite) screen_char_t lastCharacter;
 @property (nonatomic, readwrite) BOOL lastCharacterIsDoubleWidth;
+@property (nullable, nonatomic, strong, readwrite) iTermExternalAttribute *lastExternalAttribute;
 
 - (id<VT100ScreenState>)copy;
 
