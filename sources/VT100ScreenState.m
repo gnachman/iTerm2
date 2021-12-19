@@ -28,6 +28,7 @@ static const int kDefaultMaxScrollbackLines = 1000;
         _markCache = [[NSMutableDictionary alloc] init];
         _maxScrollbackLines = kDefaultMaxScrollbackLines;
         _tabStops = [[NSMutableSet alloc] init];
+        _charsetUsesLineDrawingMode = [NSMutableSet set];
     }
     return self;
 }
@@ -68,6 +69,7 @@ static const int kDefaultMaxScrollbackLines = 1000;
         _savedIntervalTree = [source.savedIntervalTree copy];
         _findContext = [source.findContext copy];
         _tabStops = [source.tabStops copy];
+        _charsetUsesLineDrawingMode = [source.charsetUsesLineDrawingMode copy];
     }
     return self;
 }

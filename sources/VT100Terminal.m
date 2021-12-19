@@ -2206,7 +2206,7 @@ static const int kMaxScreenRows = 4096;
              * (default), G1, G2, and G3. They are switched between with codes like SI
              * (^O), SO (^N), LS2 (ESC n), and LS3 (ESC o). You can get the current
              * character set from [terminal_ charset], and that gives you a number from
-             * 0 to 3 inclusive. It is an index into Screen's charsetUsesLineDrawingMode_ array.
+             * 0 to 3 inclusive. It is an index into Screen's charsetUsesLineDrawingMode array.
              * In iTerm2, it is an array of booleans where 0 means normal behavior and 1 means
              * line-drawing. There should be a bunch of other values too (like
              * locale-specific char sets). This is pretty far away from the spec,

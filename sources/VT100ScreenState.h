@@ -88,6 +88,10 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property (nonatomic, strong, readonly) NSSet<NSNumber *> *tabStops;
 
+// Indicates which character set (they are represented by numbers) are in line-drawing mode.
+// Valid charsets are in 0..<NUM_CHARSETS
+@property (nonatomic, strong, readonly) NSSet<NSNumber *> *charsetUsesLineDrawingMode;
+
 @end
 
 @interface VT100ScreenMutableState: NSObject<VT100ScreenState, NSCopying>
@@ -128,6 +132,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readwrite) unsigned int maxScrollbackLines;
 @property (nonatomic, readwrite) long long savedFindContextAbsPos;
 @property (nonatomic, strong, readwrite) NSMutableSet<NSNumber *> *tabStops;
+@property (nonatomic, strong) NSMutableSet<NSNumber *> *charsetUsesLineDrawingMode;
 
 - (id<VT100ScreenState>)copy;
 

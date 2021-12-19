@@ -1455,7 +1455,7 @@ static void SwapInt(int *a, int *b) {
     [self mutSetInitialTabStops];
 
     for (int i = 0; i < NUM_CHARSETS; i++) {
-        charsetUsesLineDrawingMode_[i] = NO;
+        [self mutSetCharacterSet:i usesLineDrawingMode:NO];
     }
     [delegate_ screenDidResetAllowingContentModification:modifyContent];
     [self mutInvalidateCommandStartCoordWithoutSideEffects];
@@ -1720,7 +1720,7 @@ static void SwapInt(int *a, int *b) {
 
     // If a graphics character set was selected then translate buffer
     // characters into graphics characters.
-    if (charsetUsesLineDrawingMode_[[_state.terminal charset]]) {
+    if ([_state.charsetUsesLineDrawingMode containsObject:@(_state.terminal.charset)]) {
         ConvertCharsToGraphicsCharset(buffer, len);
     }
 
@@ -2014,9 +2014,9 @@ static void SwapInt(int *a, int *b) {
         [_mutableState.tabStops addObjectsFromArray:screenState[kScreenStateTabStopsKey]];
 
         [_state.terminal setStateFromDictionary:screenState[kScreenStateTerminalKey]];
-        NSArray *array = screenState[kScreenStateLineDrawingModeKey];
-        for (int i = 0; i < sizeof(charsetUsesLineDrawingMode_) / sizeof(charsetUsesLineDrawingMode_[0]) && i < array.count; i++) {
-            charsetUsesLineDrawingMode_[i] = [array[i] boolValue];
+        NSArray<NSNumber *> *array = screenState[kScreenStateLineDrawingModeKey];
+        for (int i = 0; i < NUM_CHARSETS && i < array.count; i++) {
+            [self mutSetCharacterSet:i usesLineDrawingMode:array[i].boolValue];
         }
 
         if (!newFormat) {
@@ -2267,6 +2267,14 @@ static void SwapInt(int *a, int *b) {
 }
 
 #pragma mark - Terminal Fundamentals
+
+- (void)mutSetCharacterSet:(int)charset usesLineDrawingMode:(BOOL)lineDrawingMode {
+    if (lineDrawingMode) {
+        [_mutableState.charsetUsesLineDrawingMode addObject:@(charset)];
+    } else {
+        [_mutableState.charsetUsesLineDrawingMode removeObject:@(charset)];
+    }
+}
 
 - (void)mutSetInitialTabStops {
     [_mutableState.tabStops removeAllObjects];

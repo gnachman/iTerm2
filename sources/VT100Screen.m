@@ -114,10 +114,6 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
         dvr_ = [DVR alloc];
         [dvr_ initWithBufferCapacity:[iTermPreferences intForKey:kPreferenceKeyInstantReplayMemoryMegabytes] * 1024 * 1024];
 
-        for (int i = 0; i < NUM_CHARSETS; i++) {
-            charsetUsesLineDrawingMode_[i] = NO;
-        }
-
         _startOfRunningCommandOutput = VT100GridAbsCoordMake(-1, -1);
         _lastCommandOutputRange = VT100GridAbsCoordRangeMake(-1, -1, -1, -1);
         _cursorVisible = YES;
@@ -171,7 +167,7 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 
 - (BOOL)allCharacterSetPropertiesHaveDefaultValues {
     for (int i = 0; i < NUM_CHARSETS; i++) {
-        if (charsetUsesLineDrawingMode_[i]) {
+        if ([_state.charsetUsesLineDrawingMode containsObject:@(i)]) {
             return NO;
         }
     }
@@ -1471,11 +1467,11 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalSetCharset:(int)charset toLineDrawingMode:(BOOL)lineDrawingMode {
-    charsetUsesLineDrawingMode_[charset] = lineDrawingMode;
+    [self mutSetCharacterSet:charset usesLineDrawingMode:lineDrawingMode];
 }
 
 - (BOOL)terminalLineDrawingFlagForCharset:(int)charset {
-    return charsetUsesLineDrawingMode_[charset];
+    return [_state.charsetUsesLineDrawingMode containsObject:@(charset)];
 }
 
 - (void)terminalRemoveTabStops {
@@ -2904,7 +2900,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     screen_char_t c = {
         .code = inputChar
     };
-    if (charsetUsesLineDrawingMode_[[_state.terminal charset]]) {
+    if ([_state.charsetUsesLineDrawingMode containsObject:@(_state.terminal.charset)]) {
         ConvertCharsToGraphicsCharset(&c, 1);
     }
     CopyForegroundColor(&c, [_state.terminal foregroundColorCode]);
@@ -3218,10 +3214,10 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
         NSDictionary *dict =
         @{ kScreenStateTabStopsKey: [_state.tabStops allObjects] ?: @[],
            kScreenStateTerminalKey: [_state.terminal stateDictionary] ?: @{},
-           kScreenStateLineDrawingModeKey: @[ @(charsetUsesLineDrawingMode_[0]),
-                                              @(charsetUsesLineDrawingMode_[1]),
-                                              @(charsetUsesLineDrawingMode_[2]),
-                                              @(charsetUsesLineDrawingMode_[3]) ],
+           kScreenStateLineDrawingModeKey: @[ @([_state.charsetUsesLineDrawingMode containsObject:@0]),
+                                              @([_state.charsetUsesLineDrawingMode containsObject:@1]),
+                                              @([_state.charsetUsesLineDrawingMode containsObject:@2]),
+                                              @([_state.charsetUsesLineDrawingMode containsObject:@3]) ],
            kScreenStateNonCurrentGridKey: [self contentsOfNonCurrentGrid] ?: @{},
            kScreenStateCurrentGridIsPrimaryKey: @(_state.primaryGrid == _state.currentGrid),
            kScreenStateSavedIntervalTreeKey: [_state.savedIntervalTree dictionaryValueWithOffset:0] ?: [NSNull null],

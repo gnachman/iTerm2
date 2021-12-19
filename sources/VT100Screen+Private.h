@@ -43,9 +43,6 @@ VT100InlineImageHelperDelegate> {
 
     __weak id<VT100ScreenDelegate> delegate_;  // PTYSession implements this
 
-    // BOOLs indicating, for each of the characters sets, which ones are in line-drawing mode.
-    BOOL charsetUsesLineDrawingMode_[4];
-
     // For REP
     screen_char_t _lastCharacter;
     iTermExternalAttribute *_lastExternalAttribute;

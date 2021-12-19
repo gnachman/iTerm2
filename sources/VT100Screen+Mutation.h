@@ -147,6 +147,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)mutRemoveAllTabStops;
 - (void)mutRemoveTabStopAtCursor;
 - (void)mutSetTabStops:(NSArray<NSNumber *> *)tabStops;
+- (void)mutSetCharacterSet:(int)charset usesLineDrawingMode:(BOOL)lineDrawingMode;
 
 @end
 
