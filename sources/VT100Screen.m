@@ -87,7 +87,6 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     DVR* dvr_;
 }
 
-@synthesize saveToScrollbackInAlternateScreen = saveToScrollbackInAlternateScreen_;
 @synthesize dvr = dvr_;
 @synthesize delegate = delegate_;
 
@@ -3479,6 +3478,14 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 #pragma mark - Accessors
+
+- (BOOL)saveToScrollbackInAlternateScreen {
+    return _state.saveToScrollbackInAlternateScreen;
+}
+
+- (void)setSaveToScrollbackInAlternateScreen:(BOOL)saveToScrollbackInAlternateScreen {
+    [self mutSetSaveToScrollbackInAlternateScreen:saveToScrollbackInAlternateScreen];
+}
 
 - (unsigned int)maxScrollbackLines {
     return _state.maxScrollbackLines;

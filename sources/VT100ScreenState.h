@@ -97,6 +97,8 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) BOOL lastCharacterIsDoubleWidth;
 @property (nullable, nonatomic, strong, readonly) iTermExternalAttribute *lastExternalAttribute;
 
+@property (nonatomic, readonly) BOOL saveToScrollbackInAlternateScreen;
+
 @end
 
 @interface VT100ScreenMutableState: NSObject<VT100ScreenState, NSCopying>
@@ -141,6 +143,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readwrite) screen_char_t lastCharacter;
 @property (nonatomic, readwrite) BOOL lastCharacterIsDoubleWidth;
 @property (nullable, nonatomic, strong, readwrite) iTermExternalAttribute *lastExternalAttribute;
+@property (nonatomic, readwrite) BOOL saveToScrollbackInAlternateScreen;
 
 - (id<VT100ScreenState>)copy;
 

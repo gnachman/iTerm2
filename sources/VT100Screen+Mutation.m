@@ -1607,7 +1607,7 @@ static void SwapInt(int *a, int *b) {
             _mutableState.lastExternalAttribute = [externalAttributes[len] retain];
         }
         LineBuffer *lineBuffer = nil;
-        if (_state.currentGrid != _state.altGrid || saveToScrollbackInAlternateScreen_) {
+        if (_state.currentGrid != _state.altGrid || _state.saveToScrollbackInAlternateScreen) {
             // Not in alt screen or it's ok to scroll into line buffer while in alt screen.k
             lineBuffer = linebuffer_;
         }
@@ -2290,7 +2290,7 @@ static void SwapInt(int *a, int *b) {
 
 - (void)mutLinefeed {
     LineBuffer *lineBufferToUse = linebuffer_;
-    const BOOL noScrollback = (_state.currentGrid == _state.altGrid && !saveToScrollbackInAlternateScreen_);
+    const BOOL noScrollback = (_state.currentGrid == _state.altGrid && !_state.saveToScrollbackInAlternateScreen);
     if (noScrollback) {
         // In alt grid but saving to scrollback in alt-screen is off, so pass in a nil linebuffer.
         lineBufferToUse = nil;
@@ -2614,7 +2614,7 @@ static void SwapInt(int *a, int *b) {
     // Scroll the top lines of the screen into history, up to and including the last non-
     // empty line.
     LineBuffer *lineBuffer;
-    if (_state.currentGrid == _state.altGrid && !self.saveToScrollbackInAlternateScreen) {
+    if (_state.currentGrid == _state.altGrid && !_state.saveToScrollbackInAlternateScreen) {
         lineBuffer = nil;
     } else {
         lineBuffer = linebuffer_;
@@ -3444,6 +3444,10 @@ static inline void VT100ScreenEraseCell(screen_char_t *sct, iTermExternalAttribu
 }
 
 #pragma mark - Accessors
+
+- (void)mutSetSaveToScrollbackInAlternateScreen:(BOOL)value {
+    _mutableState.saveToScrollbackInAlternateScreen = value;
+}
 
 - (void)mutInvalidateCommandStartCoord {
     [self mutSetCommandStartCoord:VT100GridAbsCoordMake(-1, -1)];

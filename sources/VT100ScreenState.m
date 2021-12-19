@@ -56,7 +56,8 @@ static const int kDefaultMaxScrollbackLines = 1000;
         _lastCharacter = source.lastCharacter;
         _lastCharacterIsDoubleWidth = source.lastCharacterIsDoubleWidth;
         _lastExternalAttribute = source.lastExternalAttribute;
-        
+        _saveToScrollbackInAlternateScreen = source.saveToScrollbackInAlternateScreen;
+
         [source.markCache enumerateKeysAndObjectsUsingBlock:^(NSNumber * _Nonnull key, id<iTermMark>  _Nonnull obj, BOOL * _Nonnull stop) {
             NSDictionary *encoded = [obj dictionaryValue];
             Class theClass = [obj class];

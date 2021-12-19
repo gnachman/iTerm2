@@ -43,7 +43,6 @@ VT100InlineImageHelperDelegate> {
 
     __weak id<VT100ScreenDelegate> delegate_;  // PTYSession implements this
 
-    BOOL saveToScrollbackInAlternateScreen_;
     BOOL _cursorVisible;
     BOOL _shellIntegrationInstalled;
 
