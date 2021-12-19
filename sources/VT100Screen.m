@@ -252,7 +252,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)storeLastPositionInLineBufferAsFindContextSavedPosition {
-    savedFindContextAbsPos_ = [[linebuffer_ lastPosition] absolutePosition];
+    [self mutStoreLastPositionInLineBufferAsFindContextSavedPosition];
 }
 
 - (VT100GridAbsCoord)commandStartCoord {
@@ -3083,7 +3083,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     linesPushed = [self.mutableCurrentGrid appendLines:[_state.currentGrid numberOfLinesUsed]
                                           toLineBuffer:linebuffer_];
 
-    savedFindContextAbsPos_ = [self mutFindContextAbsPosition];
+    [self mutSaveFindContextPosition];
     [self mutPopScrollbackLines:linesPushed];
 }
 

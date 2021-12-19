@@ -117,7 +117,6 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)mutSelectiveEraseRectangle:(VT100GridRect)rect;
 - (BOOL)mutSelectiveEraseRange:(VT100GridCoordRange)range eraseAttributes:(BOOL)eraseAttributes;
 - (void)mutSetUseColumnScrollRegion:(BOOL)mode;
-- (long long)mutFindContextAbsPosition;
 - (void)mutPopScrollbackLines:(int)linesPushed;
 - (int)mutNumberOfLinesDroppedWhenEncodingContentsIncludingGrid:(BOOL)includeGrid
                                                         encoder:(id<iTermEncoderAdapter>)encoder
@@ -142,6 +141,8 @@ NS_ASSUME_NONNULL_BEGIN
 - (id<iTermMark>)mutAddMarkStartingAtAbsoluteLine:(long long)line
                                           oneLine:(BOOL)oneLine
                                           ofClass:(Class)markClass;
+- (void)mutSaveFindContextPosition;
+- (void)mutStoreLastPositionInLineBufferAsFindContextSavedPosition;
 
 @end
 

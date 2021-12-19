@@ -83,6 +83,9 @@ NS_ASSUME_NONNULL_BEGIN
 // Max size of scrollback buffer
 @property (nonatomic, readonly) unsigned int maxScrollbackLines;
 
+// Where the next tail-find needs to begin.
+@property (nonatomic, readonly) long long savedFindContextAbsPos;
+
 @end
 
 @interface VT100ScreenMutableState: NSObject<VT100ScreenState, NSCopying>
@@ -121,6 +124,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readwrite) VT100GridAbsCoord commandStartCoord;
 @property (nonatomic, strong, readwrite) NSMutableDictionary<NSNumber *, id<iTermMark>> *markCache;
 @property (nonatomic, readwrite) unsigned int maxScrollbackLines;
+@property (nonatomic, readwrite) long long savedFindContextAbsPos;
 
 - (id<VT100ScreenState>)copy;
 

@@ -1289,7 +1289,7 @@ static void SwapInt(int *a, int *b) {
     [delegate_ screenClearHighlights];
     [self.mutableCurrentGrid markAllCharsDirty:YES];
 
-    savedFindContextAbsPos_ = 0;
+    _mutableState.savedFindContextAbsPos = 0;
 
     [self resetScrollbackOverflow];
     [delegate_ screenRemoveSelection];
@@ -3191,7 +3191,7 @@ static inline void VT100ScreenEraseCell(screen_char_t *sct, iTermExternalAttribu
         iTermMetadataRelease(md[i]);
     }
     [self resetScrollbackOverflow];
-    savedFindContextAbsPos_ = 0;
+    _mutableState.savedFindContextAbsPos = 0;
     [delegate_ screenRemoveSelection];
     [delegate_ screenNeedsRedraw];
     [self.mutableCurrentGrid markAllCharsDirty:YES];
@@ -3204,7 +3204,7 @@ static inline void VT100ScreenEraseCell(screen_char_t *sct, iTermExternalAttribu
     linesPushed = [self.mutableCurrentGrid appendLines:[self.mutableCurrentGrid numberOfLinesUsed]
                                           toLineBuffer:linebuffer_];
 
-    [linebuffer_ storeLocationOfAbsPos:savedFindContextAbsPos_
+    [linebuffer_ storeLocationOfAbsPos:_mutableState.savedFindContextAbsPos
                              inContext:context];
 
     [self mutPopScrollbackLines:linesPushed];
@@ -3283,8 +3283,12 @@ static inline void VT100ScreenEraseCell(screen_char_t *sct, iTermExternalAttribu
     context.hasWrapped = NO;
 }
 
-- (long long)mutFindContextAbsPosition {
-    return [linebuffer_ absPositionOfFindContext:_mutableState.findContext];
+- (void)mutSaveFindContextPosition {
+    _mutableState.savedFindContextAbsPos = [linebuffer_ absPositionOfFindContext:_mutableState.findContext];
+}
+
+- (void)mutStoreLastPositionInLineBufferAsFindContextSavedPosition {
+    _mutableState.savedFindContextAbsPos = [[linebuffer_ lastPosition] absolutePosition];
 }
 
 - (BOOL)mutContinueFindResultsInContext:(FindContext *)context

@@ -43,9 +43,6 @@ VT100InlineImageHelperDelegate> {
 
     __weak id<VT100ScreenDelegate> delegate_;  // PTYSession implements this
 
-    // Where we left off searching.
-    long long savedFindContextAbsPos_;
-
     NSMutableSet* tabStops_;
 
     // BOOLs indicating, for each of the characters sets, which ones are in line-drawing mode.
