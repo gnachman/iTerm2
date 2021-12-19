@@ -43,8 +43,6 @@ VT100InlineImageHelperDelegate> {
 
     __weak id<VT100ScreenDelegate> delegate_;  // PTYSession implements this
 
-    BOOL _shellIntegrationInstalled;
-
     VT100TerminalProtectedMode _protectedMode;
 
     // Initial size before calling -restoreFromDictionary… or -1,-1 if invalid.
@@ -58,7 +56,6 @@ VT100InlineImageHelperDelegate> {
 @property(nonatomic, retain) VT100ScreenMark *lastCommandMark;
 @property(nonatomic, retain) iTermTemporaryDoubleBufferedGridController *temporaryDoubleBuffer;
 @property(nonatomic, readwrite) VT100GridAbsCoordRange lastCommandOutputRange;
-@property(nonatomic, readwrite) VT100GridAbsCoord startOfRunningCommandOutput;
 
 - (NSString *)compactLineDumpWithHistoryAndContinuationMarksAndLineNumbers;
 - (Interval *)intervalForGridCoordRange:(VT100GridCoordRange)range;

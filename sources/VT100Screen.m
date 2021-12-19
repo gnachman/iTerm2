@@ -113,8 +113,6 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
         dvr_ = [DVR alloc];
         [dvr_ initWithBufferCapacity:[iTermPreferences intForKey:kPreferenceKeyInstantReplayMemoryMegabytes] * 1024 * 1024];
 
-        _startOfRunningCommandOutput = VT100GridAbsCoordMake(-1, -1);
-        _lastCommandOutputRange = VT100GridAbsCoordRangeMake(-1, -1, -1, -1);
         _initialSize = VT100GridSizeMake(-1, -1);
     }
     return self;
@@ -2376,32 +2374,11 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)promptDidStartAt:(VT100GridAbsCoord)coord {
-    DLog(@"FinalTerm: terminalPromptDidStart");
-    if (coord.x > 0 && [delegate_ screenShouldPlacePromptAtFirstColumn]) {
-        [self crlf];
-    }
-    _shellIntegrationInstalled = YES;
-
-    _lastCommandOutputRange.end = coord;
-    _lastCommandOutputRange.start = _startOfRunningCommandOutput;
-
-    _currentPromptRange.start = coord;
-    _currentPromptRange.end = coord;
-
-    // FinalTerm uses this to define the start of a collapsible region. That would be a nightmare
-    // to add to iTerm, and our answer to this is marks, which already existed anyway.
-    [delegate_ screenPromptDidStartAtLine:[self numberOfScrollbackLines] + self.cursorY - 1];
-    if ([iTermAdvancedSettingsModel resetSGROnPrompt]) {
-        [_mutableState.terminal resetGraphicRendition];
-    }
+    [self mutPromptDidStartAt:coord];
 }
 
 - (void)terminalCommandDidStart {
-    DLog(@"FinalTerm: terminalCommandDidStart");
-    _currentPromptRange.end = VT100GridAbsCoordMake(_state.currentGrid.cursor.x,
-                                                    _state.currentGrid.cursor.y + self.numberOfScrollbackLines + self.totalScrollbackOverflow);
-    [self commandDidStartAtScreenCoord:_state.currentGrid.cursor];
-    [delegate_ screenPromptDidEndAtLine:[self numberOfScrollbackLines] + self.cursorY - 1];
+    [self mutCommandDidStart];
 }
 
 - (void)commandDidStartAtScreenCoord:(VT100GridCoord)coord {
@@ -2413,20 +2390,11 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalCommandDidEnd {
-    DLog(@"FinalTerm: terminalCommandDidEnd");
-    _currentPromptRange.start = _currentPromptRange.end = VT100GridAbsCoordMake(0, 0);
-
-    [self commandDidEndAtAbsCoord:VT100GridAbsCoordMake(_state.currentGrid.cursor.x, _state.currentGrid.cursor.y + [self numberOfScrollbackLines] + [self totalScrollbackOverflow])];
+    [self mutCommandDidEnd];
 }
 
 - (BOOL)commandDidEndAtAbsCoord:(VT100GridAbsCoord)coord {
-    if (_state.commandStartCoord.x != -1) {
-        [delegate_ screenCommandDidEndWithRange:[self commandRange]];
-        [self mutInvalidateCommandStartCoord];
-        _startOfRunningCommandOutput = coord;
-        return YES;
-    }
-    return NO;
+    return [self mutCommandDidEndAtAbsCoord:coord];
 }
 
 - (void)terminalAbortCommand {
@@ -3212,11 +3180,11 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
            kScreenStateSavedIntervalTreeKey: [_state.savedIntervalTree dictionaryValueWithOffset:0] ?: [NSNull null],
            kScreenStateCommandStartXKey: @(_state.commandStartCoord.x),
            kScreenStateCommandStartYKey: @(_state.commandStartCoord.y),
-           kScreenStateNextCommandOutputStartKey: [NSDictionary dictionaryWithGridAbsCoord:_startOfRunningCommandOutput],
+           kScreenStateNextCommandOutputStartKey: [NSDictionary dictionaryWithGridAbsCoord:_state.startOfRunningCommandOutput],
            kScreenStateCursorVisibleKey: @(_state.cursorVisible),
            kScreenStateTrackCursorLineMovementKey: @(_trackCursorLineMovement),
-           kScreenStateLastCommandOutputRangeKey: [NSDictionary dictionaryWithGridAbsCoordRange:_lastCommandOutputRange],
-           kScreenStateShellIntegrationInstalledKey: @(_shellIntegrationInstalled),
+           kScreenStateLastCommandOutputRangeKey: [NSDictionary dictionaryWithGridAbsCoordRange:_state.lastCommandOutputRange],
+           kScreenStateShellIntegrationInstalledKey: @(_state.shellIntegrationInstalled),
            kScreenStateLastCommandMarkKey: _lastCommandMark.guid ?: [NSNull null],
            kScreenStatePrimaryGridStateKey: _state.primaryGrid.dictionaryValue ?: @{},
            kScreenStateAlternateGridStateKey: _state.altGrid.dictionaryValue ?: [NSNull null],
@@ -3469,6 +3437,14 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 #pragma mark - Accessors
+
+- (VT100GridAbsCoordRange)lastCommandOutputRange {
+    return _state.lastCommandOutputRange;
+}
+
+- (void)setLastCommandOutputRange:(VT100GridAbsCoordRange)lastCommandOutputRange {
+    [self mutSetLastCommandOutputRange:lastCommandOutputRange];
+}
 
 - (BOOL)saveToScrollbackInAlternateScreen {
     return _state.saveToScrollbackInAlternateScreen;

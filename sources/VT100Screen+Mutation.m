@@ -1076,6 +1076,63 @@ static void SwapInt(int *a, int *b) {
     return result;
 }
 
+#pragma mark - FinalTerm
+
+- (void)mutPromptDidStartAt:(VT100GridAbsCoord)coord {
+    DLog(@"FinalTerm: mutPromptDidStartAt");
+    if (coord.x > 0 && [delegate_ screenShouldPlacePromptAtFirstColumn]) {
+        [self crlf];
+    }
+    _mutableState.shellIntegrationInstalled = YES;
+
+    _mutableState.lastCommandOutputRange = VT100GridAbsCoordRangeMake(_state.startOfRunningCommandOutput.x,
+                                                                      _state.startOfRunningCommandOutput.y,
+                                                                      coord.x,
+                                                                      coord.y);
+    _mutableState.currentPromptRange = VT100GridAbsCoordRangeMake(coord.x,
+                                                                  coord.y,
+                                                                  coord.x,
+                                                                  coord.y);
+
+    // FinalTerm uses this to define the start of a collapsible region. That would be a nightmare
+    // to add to iTerm, and our answer to this is marks, which already existed anyway.
+    [delegate_ screenPromptDidStartAtLine:[self numberOfScrollbackLines] + self.cursorY - 1];
+    if ([iTermAdvancedSettingsModel resetSGROnPrompt]) {
+        [_mutableState.terminal resetGraphicRendition];
+    }
+}
+
+- (void)mutSetLastCommandOutputRange:(VT100GridAbsCoordRange)lastCommandOutputRange {
+    _mutableState.lastCommandOutputRange = lastCommandOutputRange;
+}
+
+- (void)mutCommandDidStart {
+    DLog(@"FinalTerm: terminalCommandDidStart");
+    _mutableState.currentPromptRange = VT100GridAbsCoordRangeMake(_state.currentPromptRange.start.x,
+                                                                  _state.currentPromptRange.start.y,
+                                                                  _state.currentGrid.cursor.x,
+                                                                  _state.currentGrid.cursor.y + self.numberOfScrollbackLines + self.totalScrollbackOverflow);
+    [self commandDidStartAtScreenCoord:_state.currentGrid.cursor];
+    [delegate_ screenPromptDidEndAtLine:[self numberOfScrollbackLines] + self.cursorY - 1];
+}
+
+- (void)mutCommandDidEnd {
+    DLog(@"FinalTerm: terminalCommandDidEnd");
+    _mutableState.currentPromptRange = VT100GridAbsCoordRangeMake(0, 0, 0, 0);
+
+    [self commandDidEndAtAbsCoord:VT100GridAbsCoordMake(_state.currentGrid.cursor.x, _state.currentGrid.cursor.y + [self numberOfScrollbackLines] + [self totalScrollbackOverflow])];
+}
+
+- (BOOL)mutCommandDidEndAtAbsCoord:(VT100GridAbsCoord)coord {
+    if (_state.commandStartCoord.x != -1) {
+        [delegate_ screenCommandDidEndWithRange:[self commandRange]];
+        [self mutInvalidateCommandStartCoord];
+        _mutableState.startOfRunningCommandOutput = coord;
+        return YES;
+    }
+    return NO;
+}
+
 #pragma mark - Interval Tree
 
 - (id<iTermMark>)mutAddMarkStartingAtAbsoluteLine:(long long)line
@@ -1220,8 +1277,8 @@ static void SwapInt(int *a, int *b) {
         // Compute the new location of the command's beginning, which is right
         // after the end of the prompt in its new location.
         int numberOfPromptLines = 1;
-        if (!VT100GridAbsCoordEquals(self.currentPromptRange.start, self.currentPromptRange.end)) {
-            numberOfPromptLines = MAX(1, self.currentPromptRange.end.y - self.currentPromptRange.start.y + 1);
+        if (!VT100GridAbsCoordEquals(_state.currentPromptRange.start, _state.currentPromptRange.end)) {
+            numberOfPromptLines = MAX(1, _state.currentPromptRange.end.y - _state.currentPromptRange.start.y + 1);
         }
         newCommandStart = VT100GridCoordMake(_state.commandStartCoord.x, numberOfPromptLines - 1);
 
@@ -1229,7 +1286,7 @@ static void SwapInt(int *a, int *b) {
         [self mutCommandWasAborted];
     }
     // There is no last command after clearing the screen, so reset it.
-    self.lastCommandOutputRange = VT100GridAbsCoordRangeMake(-1, -1, -1, -1);
+    _mutableState.lastCommandOutputRange = VT100GridAbsCoordRangeMake(-1, -1, -1, -1);
 
     // Clear the grid by scrolling it up into history.
     [self clearAndResetScreenSavingLines:linesToSave];
@@ -1248,7 +1305,7 @@ static void SwapInt(int *a, int *b) {
 }
 
 - (int)numberOfLinesToPreserveWhenClearingScreen {
-    if (VT100GridAbsCoordEquals(self.currentPromptRange.start, self.currentPromptRange.end)) {
+    if (VT100GridAbsCoordEquals(_state.currentPromptRange.start, _state.currentPromptRange.end)) {
         // Prompt range not defined.
         return 1;
     }
@@ -2036,12 +2093,12 @@ static void SwapInt(int *a, int *b) {
         if (reattached) {
             [self mutSetCommandStartCoordWithoutSideEffects:VT100GridAbsCoordMake([screenState[kScreenStateCommandStartXKey] intValue],
                                                                                   [screenState[kScreenStateCommandStartYKey] longLongValue])];
-            self.startOfRunningCommandOutput = [screenState[kScreenStateNextCommandOutputStartKey] gridAbsCoord];
+            _mutableState.startOfRunningCommandOutput = [screenState[kScreenStateNextCommandOutputStartKey] gridAbsCoord];
         }
         _mutableState.cursorVisible = [screenState[kScreenStateCursorVisibleKey] boolValue];
         self.trackCursorLineMovement = [screenState[kScreenStateTrackCursorLineMovementKey] boolValue];
-        self.lastCommandOutputRange = [screenState[kScreenStateLastCommandOutputRangeKey] gridAbsCoordRange];
-        _shellIntegrationInstalled = [screenState[kScreenStateShellIntegrationInstalledKey] boolValue];
+        _mutableState.lastCommandOutputRange = [screenState[kScreenStateLastCommandOutputRangeKey] gridAbsCoordRange];
+        _mutableState.shellIntegrationInstalled = [screenState[kScreenStateShellIntegrationInstalledKey] boolValue];
 
 
         if (!newFormat) {

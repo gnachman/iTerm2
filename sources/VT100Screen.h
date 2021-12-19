@@ -70,10 +70,6 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 @property(nonatomic, readonly) int lineNumberOfCursor;
 @property(nonatomic, readonly) NSSize viewSize;
 
-// Valid while at the command prompt only. Gives the range of the current prompt. Meaningful
-// only if the end is not equal to the start.
-@property(nonatomic, readonly) VT100GridAbsCoordRange currentPromptRange;
-
 // Valid only if its x component is nonnegative.
 // Gives the coordinate where the current command begins.
 @property(nonatomic, readonly) VT100GridAbsCoord commandStartCoord;

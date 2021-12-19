@@ -99,6 +99,14 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property (nonatomic, readonly) BOOL saveToScrollbackInAlternateScreen;
 @property (nonatomic, readonly) BOOL cursorVisible;
+@property (nonatomic, readonly) BOOL shellIntegrationInstalled;
+@property (nonatomic, readonly) VT100GridAbsCoordRange lastCommandOutputRange;
+
+// Valid while at the command prompt only. Gives the range of the current prompt. Meaningful
+// only if the end is not equal to the start.
+@property(nonatomic, readonly) VT100GridAbsCoordRange currentPromptRange;
+
+@property (nonatomic, readonly) VT100GridAbsCoord startOfRunningCommandOutput;
 
 @end
 
@@ -146,6 +154,10 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nullable, nonatomic, strong, readwrite) iTermExternalAttribute *lastExternalAttribute;
 @property (nonatomic, readwrite) BOOL saveToScrollbackInAlternateScreen;
 @property (nonatomic, readwrite) BOOL cursorVisible;
+@property (nonatomic, readwrite) BOOL shellIntegrationInstalled;
+@property (nonatomic, readwrite) VT100GridAbsCoordRange lastCommandOutputRange;
+@property (nonatomic, readwrite) VT100GridAbsCoordRange currentPromptRange;
+@property (nonatomic, readwrite) VT100GridAbsCoord startOfRunningCommandOutput;
 
 - (id<VT100ScreenState>)copy;
 
