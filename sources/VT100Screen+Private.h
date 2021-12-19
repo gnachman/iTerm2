@@ -43,7 +43,6 @@ VT100InlineImageHelperDelegate> {
 
     __weak id<VT100ScreenDelegate> delegate_;  // PTYSession implements this
 
-    BOOL _cursorVisible;
     BOOL _shellIntegrationInstalled;
 
     VT100TerminalProtectedMode _protectedMode;

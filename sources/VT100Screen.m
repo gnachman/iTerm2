@@ -115,7 +115,6 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 
         _startOfRunningCommandOutput = VT100GridAbsCoordMake(-1, -1);
         _lastCommandOutputRange = VT100GridAbsCoordRangeMake(-1, -1, -1, -1);
-        _cursorVisible = YES;
         _initialSize = VT100GridSizeMake(-1, -1);
     }
     return self;
@@ -2326,7 +2325,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (BOOL)terminalCursorVisible {
-    return _cursorVisible;
+    return _state.cursorVisible;
 }
 
 - (NSColor *)terminalColorForIndex:(VT100TerminalColorIndex)index {
@@ -2350,15 +2349,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalSetCursorVisible:(BOOL)visible {
-    if (visible != _cursorVisible) {
-        _cursorVisible = visible;
-        if (visible) {
-            [self.temporaryDoubleBuffer reset];
-        } else {
-            [self.temporaryDoubleBuffer start];
-        }
-    }
-    [delegate_ screenSetCursorVisible:visible];
+    [self mutSetCursorVisible:visible];
 }
 
 - (void)terminalSetHighlightCursorLine:(BOOL)highlight {
@@ -3222,7 +3213,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
            kScreenStateCommandStartXKey: @(_state.commandStartCoord.x),
            kScreenStateCommandStartYKey: @(_state.commandStartCoord.y),
            kScreenStateNextCommandOutputStartKey: [NSDictionary dictionaryWithGridAbsCoord:_startOfRunningCommandOutput],
-           kScreenStateCursorVisibleKey: @(_cursorVisible),
+           kScreenStateCursorVisibleKey: @(_state.cursorVisible),
            kScreenStateTrackCursorLineMovementKey: @(_trackCursorLineMovement),
            kScreenStateLastCommandOutputRangeKey: [NSDictionary dictionaryWithGridAbsCoordRange:_lastCommandOutputRange],
            kScreenStateShellIntegrationInstalledKey: @(_shellIntegrationInstalled),
@@ -3286,7 +3277,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     state.grid.delegate = nil;
 
     state.colorMap = [self.delegate.screenColorMap.copy autorelease];
-    state.cursorVisible = self.temporaryDoubleBuffer.explicit ? _cursorVisible : YES;
+    state.cursorVisible = self.temporaryDoubleBuffer.explicit ? _state.cursorVisible : YES;
 
     return state;
 

@@ -2038,7 +2038,7 @@ static void SwapInt(int *a, int *b) {
                                                                                   [screenState[kScreenStateCommandStartYKey] longLongValue])];
             self.startOfRunningCommandOutput = [screenState[kScreenStateNextCommandOutputStartKey] gridAbsCoord];
         }
-        _cursorVisible = [screenState[kScreenStateCursorVisibleKey] boolValue];
+        _mutableState.cursorVisible = [screenState[kScreenStateCursorVisibleKey] boolValue];
         self.trackCursorLineMovement = [screenState[kScreenStateTrackCursorLineMovementKey] boolValue];
         self.lastCommandOutputRange = [screenState[kScreenStateLastCommandOutputRangeKey] gridAbsCoordRange];
         _shellIntegrationInstalled = [screenState[kScreenStateShellIntegrationInstalledKey] boolValue];
@@ -2265,6 +2265,18 @@ static void SwapInt(int *a, int *b) {
 }
 
 #pragma mark - Terminal Fundamentals
+
+- (void)mutSetCursorVisible:(BOOL)visible {
+    if (visible != _state.cursorVisible) {
+        _mutableState.cursorVisible = visible;
+        if (visible) {
+            [self.temporaryDoubleBuffer reset];
+        } else {
+            [self.temporaryDoubleBuffer start];
+        }
+    }
+    [delegate_ screenSetCursorVisible:visible];
+}
 
 - (void)mutSetCharacterSet:(int)charset usesLineDrawingMode:(BOOL)lineDrawingMode {
     if (lineDrawingMode) {

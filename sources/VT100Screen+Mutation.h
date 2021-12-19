@@ -149,6 +149,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)mutSetTabStops:(NSArray<NSNumber *> *)tabStops;
 - (void)mutSetCharacterSet:(int)charset usesLineDrawingMode:(BOOL)lineDrawingMode;
 - (void)mutSetSaveToScrollbackInAlternateScreen:(BOOL)value;
+- (void)mutSetCursorVisible:(BOOL)visible;
 
 @end
 

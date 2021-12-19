@@ -98,6 +98,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nullable, nonatomic, strong, readonly) iTermExternalAttribute *lastExternalAttribute;
 
 @property (nonatomic, readonly) BOOL saveToScrollbackInAlternateScreen;
+@property (nonatomic, readonly) BOOL cursorVisible;
 
 @end
 
@@ -144,6 +145,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readwrite) BOOL lastCharacterIsDoubleWidth;
 @property (nullable, nonatomic, strong, readwrite) iTermExternalAttribute *lastExternalAttribute;
 @property (nonatomic, readwrite) BOOL saveToScrollbackInAlternateScreen;
+@property (nonatomic, readwrite) BOOL cursorVisible;
 
 - (id<VT100ScreenState>)copy;
 

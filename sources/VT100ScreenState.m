@@ -29,6 +29,7 @@ static const int kDefaultMaxScrollbackLines = 1000;
         _maxScrollbackLines = kDefaultMaxScrollbackLines;
         _tabStops = [[NSMutableSet alloc] init];
         _charsetUsesLineDrawingMode = [NSMutableSet set];
+        _cursorVisible = YES;
     }
     return self;
 }
@@ -57,6 +58,7 @@ static const int kDefaultMaxScrollbackLines = 1000;
         _lastCharacterIsDoubleWidth = source.lastCharacterIsDoubleWidth;
         _lastExternalAttribute = source.lastExternalAttribute;
         _saveToScrollbackInAlternateScreen = source.saveToScrollbackInAlternateScreen;
+        _cursorVisible = source.cursorVisible;
 
         [source.markCache enumerateKeysAndObjectsUsingBlock:^(NSNumber * _Nonnull key, id<iTermMark>  _Nonnull obj, BOOL * _Nonnull stop) {
             NSDictionary *encoded = [obj dictionaryValue];
