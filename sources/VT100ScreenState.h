@@ -13,6 +13,7 @@
 #import "IntervalTree.h"
 #import "VT100Grid.h"
 #import "VT100Terminal.h"
+#import "iTermMark.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -75,6 +76,9 @@ NS_ASSUME_NONNULL_BEGIN
 
 // Location of the start of the current command, or (-1, -1) for none.
 @property (nonatomic, readonly) VT100GridAbsCoord commandStartCoord;
+
+// Maps an absolute line number to a VT100ScreenMark.
+@property (nonatomic, strong, readonly) NSDictionary<NSNumber *, id<iTermMark>> *markCache;
 @end
 
 @interface VT100ScreenMutableState: NSObject<VT100ScreenState, NSCopying>
@@ -111,6 +115,7 @@ NS_ASSUME_NONNULL_BEGIN
 // -resetScrollbackOverflow.
 @property (nonatomic, readwrite) int scrollbackOverflow;
 @property (nonatomic, readwrite) VT100GridAbsCoord commandStartCoord;
+@property (nonatomic, strong, readwrite) NSMutableDictionary<NSNumber *, id<iTermMark>> *markCache;
 
 - (id<VT100ScreenState>)copy;
 

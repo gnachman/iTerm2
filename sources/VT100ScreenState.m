@@ -9,6 +9,7 @@
 
 #import "IntervalTree.h"
 #import "iTermOrderEnforcer.h"
+#import "NSDictionary+iTerm.h"
 
 @implementation VT100ScreenMutableState
 
@@ -22,6 +23,7 @@
         _savedIntervalTree = [[IntervalTree alloc] init];
         _findContext = [[FindContext alloc] init];
         _commandStartCoord = VT100GridAbsCoordMake(-1, -1);
+        _markCache = [[NSMutableDictionary alloc] init];
     }
     return self;
 }
@@ -44,7 +46,15 @@
         _unlimitedScrollback = source.unlimitedScrollback;
         _scrollbackOverflow = source.scrollbackOverflow;
         _commandStartCoord = source.commandStartCoord;
-    
+        [source.markCache enumerateKeysAndObjectsUsingBlock:^(NSNumber * _Nonnull key, id<iTermMark>  _Nonnull obj, BOOL * _Nonnull stop) {
+            NSDictionary *encoded = [obj dictionaryValue];
+            Class theClass = [obj class];
+            // TODO: This is going to be really slow. Marks being mutable is going to be a problem.
+            // I think that very few kinds of marks are actually mutable, and in those cases a journal
+            // might provide a cheap way to update an existing copy.
+            self.markCache[key] = [[theClass alloc] initWithDictionary:encoded];
+        }];
+
         _animatedLines = [source.animatedLines copy];
         _pasteboardString = [source.pasteboardString copy];
         _intervalTree = [source.intervalTree copy];

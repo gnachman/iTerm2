@@ -1078,14 +1078,52 @@ static void SwapInt(int *a, int *b) {
 
 #pragma mark - Interval Tree
 
+- (id<iTermMark>)mutAddMarkStartingAtAbsoluteLine:(long long)line
+                                          oneLine:(BOOL)oneLine
+                                          ofClass:(Class)markClass {
+    id<iTermMark> mark = [[[markClass alloc] init] autorelease];
+    if ([mark isKindOfClass:[VT100ScreenMark class]]) {
+        VT100ScreenMark *screenMark = mark;
+        screenMark.delegate = self;
+        screenMark.sessionGuid = [delegate_ screenSessionGuid];
+    }
+    long long totalOverflow = [self totalScrollbackOverflow];
+    if (line < totalOverflow || line > totalOverflow + self.numberOfLines) {
+        return nil;
+    }
+    int nonAbsoluteLine = line - totalOverflow;
+    VT100GridCoordRange range;
+    if (oneLine) {
+        range = VT100GridCoordRangeMake(0, nonAbsoluteLine, self.width, nonAbsoluteLine);
+    } else {
+        // Interval is whole screen
+        int limit = nonAbsoluteLine + self.height - 1;
+        if (limit >= [self numberOfScrollbackLines] + [_state.currentGrid numberOfLinesUsed]) {
+            limit = [self numberOfScrollbackLines] + [_state.currentGrid numberOfLinesUsed] - 1;
+        }
+        range = VT100GridCoordRangeMake(0,
+                                        nonAbsoluteLine,
+                                        self.width,
+                                        limit);
+    }
+    if ([mark isKindOfClass:[VT100ScreenMark class]]) {
+        _mutableState.markCache[@([self totalScrollbackOverflow] + range.end.y)] = mark;
+    }
+    [_mutableState.intervalTree addObject:mark withInterval:[self intervalForGridCoordRange:range]];
+    [self.intervalTreeObserver intervalTreeDidAddObjectOfType:[self intervalTreeObserverTypeForObject:mark]
+                                                       onLine:range.start.y + self.totalScrollbackOverflow];
+    [delegate_ screenNeedsRedraw];
+    return mark;
+}
+
 - (void)reloadMarkCache {
     long long totalScrollbackOverflow = [self totalScrollbackOverflow];
-    [markCache_ removeAllObjects];
+    [_mutableState.markCache removeAllObjects];
     for (id<IntervalTreeObject> obj in [_mutableState.intervalTree allObjects]) {
         if ([obj isKindOfClass:[VT100ScreenMark class]]) {
             VT100GridCoordRange range = [self coordRangeForInterval:obj.entry.interval];
             VT100ScreenMark *mark = (VT100ScreenMark *)obj;
-            markCache_[@(totalScrollbackOverflow + range.end.y)] = mark;
+            _mutableState.markCache[@(totalScrollbackOverflow + range.end.y)] = mark;
         }
     }
     [self.intervalTreeObserver intervalTreeDidReset];
@@ -1118,7 +1156,7 @@ static void SwapInt(int *a, int *b) {
     if ([obj isKindOfClass:[VT100ScreenMark class]]) {
         long long theKey = (totalScrollbackOverflow +
                             [self coordRangeForInterval:obj.entry.interval].end.y);
-        [markCache_ removeObjectForKey:@(theKey)];
+        [_mutableState.markCache removeObjectForKey:@(theKey)];
         self.lastCommandMark = nil;
     }
     [_mutableState.intervalTree removeObject:obj];

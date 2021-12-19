@@ -139,6 +139,9 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)mutSetCommandStartCoordWithoutSideEffects:(VT100GridAbsCoord)coord;
 - (void)mutInvalidateCommandStartCoord;
 - (void)mutInvalidateCommandStartCoordWithoutSideEffects;
+- (id<iTermMark>)mutAddMarkStartingAtAbsoluteLine:(long long)line
+                                          oneLine:(BOOL)oneLine
+                                          ofClass:(Class)markClass;
 
 @end
 

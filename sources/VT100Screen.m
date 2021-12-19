@@ -122,8 +122,6 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
             charsetUsesLineDrawingMode_[i] = NO;
         }
 
-        markCache_ = [[NSMutableDictionary alloc] init];
-
         _startOfRunningCommandOutput = VT100GridAbsCoordMake(-1, -1);
         _lastCommandOutputRange = VT100GridAbsCoordRangeMake(-1, -1, -1, -1);
         _cursorVisible = YES;
@@ -136,7 +134,6 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     [tabStops_ release];
     [linebuffer_ release];
     [dvr_ release];
-    [markCache_ release];
     [_lastCommandMark release];
     _temporaryDoubleBuffer.delegate = nil;
     [_temporaryDoubleBuffer reset];
@@ -864,39 +861,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 - (id<iTermMark>)addMarkStartingAtAbsoluteLine:(long long)line
                                        oneLine:(BOOL)oneLine
                                        ofClass:(Class)markClass {
-    id<iTermMark> mark = [[[markClass alloc] init] autorelease];
-    if ([mark isKindOfClass:[VT100ScreenMark class]]) {
-        VT100ScreenMark *screenMark = mark;
-        screenMark.delegate = self;
-        screenMark.sessionGuid = [delegate_ screenSessionGuid];
-    }
-    long long totalOverflow = [self totalScrollbackOverflow];
-    if (line < totalOverflow || line > totalOverflow + self.numberOfLines) {
-        return nil;
-    }
-    int nonAbsoluteLine = line - totalOverflow;
-    VT100GridCoordRange range;
-    if (oneLine) {
-        range = VT100GridCoordRangeMake(0, nonAbsoluteLine, self.width, nonAbsoluteLine);
-    } else {
-        // Interval is whole screen
-        int limit = nonAbsoluteLine + self.height - 1;
-        if (limit >= [self numberOfScrollbackLines] + [_state.currentGrid numberOfLinesUsed]) {
-            limit = [self numberOfScrollbackLines] + [_state.currentGrid numberOfLinesUsed] - 1;
-        }
-        range = VT100GridCoordRangeMake(0,
-                                        nonAbsoluteLine,
-                                        self.width,
-                                        limit);
-    }
-    if ([mark isKindOfClass:[VT100ScreenMark class]]) {
-        markCache_[@([self totalScrollbackOverflow] + range.end.y)] = mark;
-    }
-    [_mutableState.intervalTree addObject:mark withInterval:[self intervalForGridCoordRange:range]];
-    [_intervalTreeObserver intervalTreeDidAddObjectOfType:[self intervalTreeObserverTypeForObject:mark]
-                                                   onLine:range.start.y + self.totalScrollbackOverflow];
-    [delegate_ screenNeedsRedraw];
-    return mark;
+    return [self mutAddMarkStartingAtAbsoluteLine:line oneLine:oneLine ofClass:markClass];
 }
 
 - (VT100GridCoordRange)coordRangeOfNote:(PTYNoteViewController *)note {
@@ -1079,7 +1044,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (VT100ScreenMark *)markOnLine:(int)line {
-  return markCache_[@([self totalScrollbackOverflow] + line)];
+    return _state.markCache[@([self totalScrollbackOverflow] + line)];
 }
 
 - (NSArray *)lastMarksOrNotes {

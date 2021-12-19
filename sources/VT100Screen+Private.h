@@ -43,8 +43,6 @@ VT100InlineImageHelperDelegate> {
 
     __weak id<VT100ScreenDelegate> delegate_;  // PTYSession implements this
 
-    // Maps an absolute line number to a VT100ScreenMark.
-    NSMutableDictionary *markCache_;
     VT100GridCoordRange markCacheRange_;
 
     // Max size of scrollback buffer
