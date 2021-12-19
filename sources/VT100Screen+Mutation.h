@@ -143,6 +143,10 @@ NS_ASSUME_NONNULL_BEGIN
                                           ofClass:(Class)markClass;
 - (void)mutSaveFindContextPosition;
 - (void)mutStoreLastPositionInLineBufferAsFindContextSavedPosition;
+- (void)mutSetTabStopAtCursor;
+- (void)mutRemoveAllTabStops;
+- (void)mutRemoveTabStopAtCursor;
+- (void)mutSetTabStops:(NSArray<NSNumber *> *)tabStops;
 
 @end
 

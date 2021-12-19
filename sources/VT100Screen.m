@@ -106,7 +106,6 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
         _temporaryDoubleBuffer = [[iTermTemporaryDoubleBufferedGridController alloc] init];
         _temporaryDoubleBuffer.delegate = self;
 
-        tabStops_ = [[NSMutableSet alloc] init];
         [self mutSetInitialTabStops];
         linebuffer_ = [[LineBuffer alloc] init];
 
@@ -128,7 +127,6 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 }
 
 - (void)dealloc {
-    [tabStops_ release];
     [linebuffer_ release];
     [dvr_ release];
     [_lastCommandMark release];
@@ -1424,9 +1422,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalSetTabStopAtCursor {
-    if (_state.currentGrid.cursorX < _state.currentGrid.size.width) {
-        [tabStops_ addObject:[NSNumber numberWithInt:_state.currentGrid.cursorX]];
-    }
+    [self mutSetTabStopAtCursor];
 }
 
 - (void)terminalCarriageReturn {
@@ -1483,13 +1479,11 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalRemoveTabStops {
-    [tabStops_ removeAllObjects];
+    [self mutRemoveAllTabStops];
 }
 
 - (void)terminalRemoveTabStopAtCursor {
-    if (_state.currentGrid.cursorX < _state.currentGrid.size.width) {
-        [tabStops_ removeObject:[NSNumber numberWithInt:_state.currentGrid.cursorX]];
-    }
+    [self mutRemoveTabStopAtCursor];
 }
 
 - (void)terminalSetWidth:(int)width preserveScreen:(BOOL)preserveScreen {
@@ -2387,16 +2381,13 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (NSArray<NSNumber *> *)terminalTabStops {
-    return [[tabStops_.allObjects sortedArrayUsingSelector:@selector(compare:)] mapWithBlock:^NSNumber *(NSNumber *ts) {
+    return [[_state.tabStops.allObjects sortedArrayUsingSelector:@selector(compare:)] mapWithBlock:^NSNumber *(NSNumber *ts) {
         return @(ts.intValue + 1);
     }];
 }
 
 - (void)terminalSetTabStops:(NSArray<NSNumber *> *)tabStops {
-    [tabStops_ removeAllObjects];
-    [tabStops enumerateObjectsUsingBlock:^(NSNumber * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-        [tabStops_ addObject:@(obj.intValue - 1)];
-    }];
+    [self mutSetTabStops:tabStops];
 }
 
 - (void)promptDidStartAt:(VT100GridAbsCoord)coord {
@@ -3225,7 +3216,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
                                block:^BOOL(id<iTermEncoderAdapter>  _Nonnull encoder) {
         [encoder mergeDictionary:extra];
         NSDictionary *dict =
-        @{ kScreenStateTabStopsKey: [tabStops_ allObjects] ?: @[],
+        @{ kScreenStateTabStopsKey: [_state.tabStops allObjects] ?: @[],
            kScreenStateTerminalKey: [_state.terminal stateDictionary] ?: @{},
            kScreenStateLineDrawingModeKey: @[ @(charsetUsesLineDrawingMode_[0]),
                                               @(charsetUsesLineDrawingMode_[1]),

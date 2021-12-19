@@ -86,6 +86,8 @@ NS_ASSUME_NONNULL_BEGIN
 // Where the next tail-find needs to begin.
 @property (nonatomic, readonly) long long savedFindContextAbsPos;
 
+@property (nonatomic, strong, readonly) NSSet<NSNumber *> *tabStops;
+
 @end
 
 @interface VT100ScreenMutableState: NSObject<VT100ScreenState, NSCopying>
@@ -125,6 +127,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, strong, readwrite) NSMutableDictionary<NSNumber *, id<iTermMark>> *markCache;
 @property (nonatomic, readwrite) unsigned int maxScrollbackLines;
 @property (nonatomic, readwrite) long long savedFindContextAbsPos;
+@property (nonatomic, strong, readwrite) NSMutableSet<NSNumber *> *tabStops;
 
 - (id<VT100ScreenState>)copy;
 

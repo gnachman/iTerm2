@@ -2010,8 +2010,8 @@ static void SwapInt(int *a, int *b) {
 
     if (screenState) {
         _protectedMode = [screenState[kScreenStateProtectedMode] unsignedIntegerValue];
-        [tabStops_ removeAllObjects];
-        [tabStops_ addObjectsFromArray:screenState[kScreenStateTabStopsKey]];
+        [_mutableState.tabStops removeAllObjects];
+        [_mutableState.tabStops addObjectsFromArray:screenState[kScreenStateTabStopsKey]];
 
         [_state.terminal setStateFromDictionary:screenState[kScreenStateTerminalKey]];
         NSArray *array = screenState[kScreenStateLineDrawingModeKey];
@@ -2192,15 +2192,15 @@ static void SwapInt(int *a, int *b) {
     self.mutableCurrentGrid.scrollRegionRows = VT100GridRangeMake(top, bottom - top + 1);
     [self showCursor:[[state objectForKey:kStateDictCursorMode] boolValue]];
 
-    [tabStops_ removeAllObjects];
+    [_mutableState.tabStops removeAllObjects];
     int maxTab = 0;
     for (NSNumber *n in [state objectForKey:kStateDictTabstops]) {
-        [tabStops_ addObject:n];
+        [_mutableState.tabStops addObject:n];
         maxTab = MAX(maxTab, [n intValue]);
     }
     for (int i = 0; i < 1000; i += 8) {
         if (i > maxTab) {
-            [tabStops_ addObject:[NSNumber numberWithInt:i]];
+            [_mutableState.tabStops addObject:[NSNumber numberWithInt:i]];
         }
     }
 
@@ -2269,11 +2269,11 @@ static void SwapInt(int *a, int *b) {
 #pragma mark - Terminal Fundamentals
 
 - (void)mutSetInitialTabStops {
-    [tabStops_ removeAllObjects];
+    [_mutableState.tabStops removeAllObjects];
     const int kInitialTabWindow = 1000;
     const int width = [iTermAdvancedSettingsModel defaultTabStopWidth];
     for (int i = 0; i < kInitialTabWindow; i += width) {
-        [tabStops_ addObject:[NSNumber numberWithInt:i]];
+        [_mutableState.tabStops addObject:[NSNumber numberWithInt:i]];
     }
 }
 
@@ -2452,7 +2452,7 @@ static void SwapInt(int *a, int *b) {
 
 - (int)tabStopAfterColumn:(int)lowerBound {
     for (int i = lowerBound + 1; i < self.width - 1; i++) {
-        if ([tabStops_ containsObject:@(i)]) {
+        if ([_state.tabStops containsObject:@(i)]) {
             return i;
         }
     }
@@ -2802,7 +2802,7 @@ static void SwapInt(int *a, int *b) {
 }
 
 - (BOOL)haveTabStopAt:(int)x {
-    return [tabStops_ containsObject:[NSNumber numberWithInt:x]];
+    return [_state.tabStops containsObject:[NSNumber numberWithInt:x]];
 }
 
 - (void)mutAdvanceCursorPastLastColumn {
@@ -3167,6 +3167,29 @@ static inline void VT100ScreenEraseCell(screen_char_t *sct, iTermExternalAttribu
                                            to:destCoord
                                        toChar:sct
                            externalAttributes:ea];
+    }];
+}
+
+- (void)mutSetTabStopAtCursor {
+    if (_state.currentGrid.cursorX < _state.currentGrid.size.width) {
+        [_mutableState.tabStops addObject:[NSNumber numberWithInt:_state.currentGrid.cursorX]];
+    }
+}
+
+- (void)mutRemoveAllTabStops {
+    [_mutableState.tabStops removeAllObjects];
+}
+
+- (void)mutRemoveTabStopAtCursor {
+    if (_state.currentGrid.cursorX < _state.currentGrid.size.width) {
+        [_mutableState.tabStops removeObject:[NSNumber numberWithInt:_state.currentGrid.cursorX]];
+    }
+}
+
+- (void)mutSetTabStops:(NSArray<NSNumber *> *)tabStops {
+    [_mutableState.tabStops removeAllObjects];
+    [tabStops enumerateObjectsUsingBlock:^(NSNumber * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+        [_mutableState.tabStops addObject:@(obj.intValue - 1)];
     }];
 }
 

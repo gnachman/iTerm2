@@ -27,6 +27,7 @@ static const int kDefaultMaxScrollbackLines = 1000;
         _commandStartCoord = VT100GridAbsCoordMake(-1, -1);
         _markCache = [[NSMutableDictionary alloc] init];
         _maxScrollbackLines = kDefaultMaxScrollbackLines;
+        _tabStops = [[NSMutableSet alloc] init];
     }
     return self;
 }
@@ -66,6 +67,7 @@ static const int kDefaultMaxScrollbackLines = 1000;
         _intervalTree = [source.intervalTree copy];
         _savedIntervalTree = [source.savedIntervalTree copy];
         _findContext = [source.findContext copy];
+        _tabStops = [source.tabStops copy];
     }
     return self;
 }
