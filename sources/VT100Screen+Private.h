@@ -43,9 +43,6 @@ VT100InlineImageHelperDelegate> {
 
     __weak id<VT100ScreenDelegate> delegate_;  // PTYSession implements this
 
-    // Max size of scrollback buffer
-    unsigned int maxScrollbackLines_;
-
     // Where we left off searching.
     long long savedFindContextAbsPos_;
 

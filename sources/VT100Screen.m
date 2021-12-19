@@ -72,7 +72,6 @@ int kVT100ScreenMinRows = 2;
 
 static const int kDefaultScreenColumns = 80;
 static const int kDefaultScreenRows = 25;
-static const int kDefaultMaxScrollbackLines = 1000;
 
 NSString * const kHighlightForegroundColor = @"kHighlightForegroundColor";
 NSString * const kHighlightBackgroundColor = @"kHighlightBackgroundColor";
@@ -88,7 +87,6 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     DVR* dvr_;
 }
 
-@synthesize maxScrollbackLines = maxScrollbackLines_;
 @synthesize saveToScrollbackInAlternateScreen = saveToScrollbackInAlternateScreen_;
 @synthesize dvr = dvr_;
 @synthesize delegate = delegate_;
@@ -108,7 +106,6 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
         _temporaryDoubleBuffer = [[iTermTemporaryDoubleBufferedGridController alloc] init];
         _temporaryDoubleBuffer.delegate = self;
 
-        maxScrollbackLines_ = kDefaultMaxScrollbackLines;
         tabStops_ = [[NSMutableSet alloc] init];
         [self mutSetInitialTabStops];
         linebuffer_ = [[LineBuffer alloc] init];
@@ -3496,6 +3493,10 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 #pragma mark - Accessors
+
+- (unsigned int)maxScrollbackLines {
+    return _state.maxScrollbackLines;
+}
 
 - (BOOL)unlimitedScrollback {
     return _state.unlimitedScrollback;

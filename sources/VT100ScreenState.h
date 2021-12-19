@@ -79,6 +79,10 @@ NS_ASSUME_NONNULL_BEGIN
 
 // Maps an absolute line number to a VT100ScreenMark.
 @property (nonatomic, strong, readonly) NSDictionary<NSNumber *, id<iTermMark>> *markCache;
+
+// Max size of scrollback buffer
+@property (nonatomic, readonly) unsigned int maxScrollbackLines;
+
 @end
 
 @interface VT100ScreenMutableState: NSObject<VT100ScreenState, NSCopying>
@@ -116,6 +120,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readwrite) int scrollbackOverflow;
 @property (nonatomic, readwrite) VT100GridAbsCoord commandStartCoord;
 @property (nonatomic, strong, readwrite) NSMutableDictionary<NSNumber *, id<iTermMark>> *markCache;
+@property (nonatomic, readwrite) unsigned int maxScrollbackLines;
 
 - (id<VT100ScreenState>)copy;
 

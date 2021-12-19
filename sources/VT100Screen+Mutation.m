@@ -1285,7 +1285,7 @@ static void SwapInt(int *a, int *b) {
 - (void)mutClearScrollbackBuffer {
     [linebuffer_ release];
     linebuffer_ = [[LineBuffer alloc] init];
-    [self.mutableLineBuffer setMaxLines:maxScrollbackLines_];
+    [self.mutableLineBuffer setMaxLines:_state.maxScrollbackLines];
     [delegate_ screenClearHighlights];
     [self.mutableCurrentGrid markAllCharsDirty:YES];
 
@@ -1920,7 +1920,7 @@ static void SwapInt(int *a, int *b) {
     const BOOL newFormat = (dictionary[@"PrimaryGrid"] != nil);
     if (!newFormat) {
         LineBuffer *lineBuffer = [[LineBuffer alloc] initWithDictionary:dictionary];
-        [lineBuffer setMaxLines:maxScrollbackLines_ + self.height];
+        [lineBuffer setMaxLines:_state.maxScrollbackLines + self.height];
         if (!_state.unlimitedScrollback) {
             [lineBuffer dropExcessLinesWithWidth:self.width];
         }
@@ -1964,7 +1964,7 @@ static void SwapInt(int *a, int *b) {
             self.mutableCurrentGrid.cursorX = 0;
         }
         // Reduce line buffer's max size to not include the grid height. This is its final state.
-        [lineBuffer setMaxLines:maxScrollbackLines_];
+        [lineBuffer setMaxLines:_state.maxScrollbackLines];
         if (!_state.unlimitedScrollback) {
             [lineBuffer dropExcessLinesWithWidth:self.width];
         }
@@ -1995,7 +1995,7 @@ static void SwapInt(int *a, int *b) {
         }
 
         LineBuffer *lineBuffer = [[LineBuffer alloc] initWithDictionary:dictionary[@"LineBuffer"]];
-        [lineBuffer setMaxLines:maxScrollbackLines_ + self.height];
+        [lineBuffer setMaxLines:_state.maxScrollbackLines + self.height];
         if (!_state.unlimitedScrollback) {
             [lineBuffer dropExcessLinesWithWidth:self.width];
         }
@@ -3613,7 +3613,7 @@ static inline void VT100ScreenEraseCell(screen_char_t *sct, iTermExternalAttribu
 
 // sets scrollback lines.
 - (void)mutSetMaxScrollbackLines:(unsigned int)lines {
-    maxScrollbackLines_ = lines;
+    _mutableState.maxScrollbackLines = lines;
     [self.mutableLineBuffer setMaxLines: lines];
     if (!_state.unlimitedScrollback) {
         [self incrementOverflowBy:[self.mutableLineBuffer dropExcessLinesWithWidth:_state.currentGrid.size.width]];

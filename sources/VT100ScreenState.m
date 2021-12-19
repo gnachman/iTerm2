@@ -11,6 +11,8 @@
 #import "iTermOrderEnforcer.h"
 #import "NSDictionary+iTerm.h"
 
+static const int kDefaultMaxScrollbackLines = 1000;
+
 @implementation VT100ScreenMutableState
 
 - (instancetype)init {
@@ -24,6 +26,7 @@
         _findContext = [[FindContext alloc] init];
         _commandStartCoord = VT100GridAbsCoordMake(-1, -1);
         _markCache = [[NSMutableDictionary alloc] init];
+        _maxScrollbackLines = kDefaultMaxScrollbackLines;
     }
     return self;
 }
@@ -46,6 +49,8 @@
         _unlimitedScrollback = source.unlimitedScrollback;
         _scrollbackOverflow = source.scrollbackOverflow;
         _commandStartCoord = source.commandStartCoord;
+        _maxScrollbackLines = source.maxScrollbackLines;
+
         [source.markCache enumerateKeysAndObjectsUsingBlock:^(NSNumber * _Nonnull key, id<iTermMark>  _Nonnull obj, BOOL * _Nonnull stop) {
             NSDictionary *encoded = [obj dictionaryValue];
             Class theClass = [obj class];
