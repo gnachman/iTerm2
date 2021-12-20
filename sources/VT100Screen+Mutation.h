@@ -164,6 +164,14 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)mutSetNormalization:(iTermUnicodeNormalization)value;
 - (void)mutSetIntervalTreeObserver:(id<iTermIntervalTreeObserver>)intervalTreeObserver;
 - (void)mutSetLastCommandMark:(VT100ScreenMark *)mark;
+- (void)mutSetColor:(NSColor *)color forKey:(int)key;
+- (void)mutSetDimOnlyText:(BOOL)dimOnlyText;
+- (void)mutSetDarkMode:(BOOL)darkMode;
+- (void)mutSetUseSeparateColorsForLightAndDarkMode:(BOOL)value;
+- (void)mutSetMinimumContrast:(float)value;
+- (void)mutSetMutingAmount:(double)value;
+- (void)mutSetDimmingAmount:(double)value;
+- (void)mutSetDelegate:(id<VT100ScreenDelegate>)delegate;
 
 @end
 

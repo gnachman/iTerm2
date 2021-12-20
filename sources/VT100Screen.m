@@ -85,20 +85,16 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     // This is an inherently shared mutable data structure. I don't think it can be easily moved into
     // the VT100ScreenState model. Instad it will need lots of mutexes :(
     DVR* dvr_;
-
-    iTermColorMap *_colorMap;
 }
 
 @synthesize dvr = dvr_;
-@synthesize delegate = delegate_;
 
 - (instancetype)initWithTerminal:(VT100Terminal *)terminal darkMode:(BOOL)darkMode {
     self = [super init];
     if (self) {
         _mutableState = [[VT100ScreenMutableState alloc] init];
         _state = [_mutableState retain];
-        _colorMap = [[iTermColorMap alloc] init];
-        _colorMap.darkMode = darkMode;
+        _mutableState.colorMap.darkMode = darkMode;
 
         assert(terminal);
         [self setTerminal:terminal];
@@ -126,7 +122,6 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     [_temporaryDoubleBuffer release];
     [_state release];
     [_mutableState release];
-    [_colorMap release];
 
     [super dealloc];
 }
@@ -138,8 +133,11 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 #pragma mark - APIs
 
 - (void)setDelegate:(id<VT100ScreenDelegate>)delegate {
-    _colorMap.delegate = delegate;
-    delegate_ = delegate;
+    [self mutSetDelegate:delegate];
+}
+
+- (id<VT100ScreenDelegate>)delegate {
+    return delegate_;
 }
 
 - (void)setTerminal:(VT100Terminal *)terminal {
@@ -261,7 +259,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)setColor:(NSColor *)color forKey:(int)key {
-    [_colorMap setColor:color forKey:key];
+    [self mutSetColor:color forKey:key];
 }
 
 - (void)resetNonAnsiColorWithKey:(int)colorKey {
@@ -270,27 +268,27 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)setDimOnlyText:(BOOL)dimOnlyText {
-    _colorMap.dimOnlyText = dimOnlyText;
+    [self mutSetDimOnlyText:dimOnlyText];
 }
 
 - (void)setDarkMode:(BOOL)darkMode {
-    _colorMap.darkMode = darkMode;
+    [self mutSetDarkMode:darkMode];
 }
 
 - (void)setUseSeparateColorsForLightAndDarkMode:(BOOL)value {
-    _colorMap.useSeparateColorsForLightAndDarkMode = value;
+    [self mutSetUseSeparateColorsForLightAndDarkMode:value];
 }
 
 - (void)setMinimumContrast:(float)value {
-    _colorMap.minimumContrast = value;
+    [self mutSetMinimumContrast:value];
 }
 
 - (void)setMutingAmount:(double)value {
-    _colorMap.mutingAmount = value;
+    [self mutSetMutingAmount:value];
 }
 
 - (void)setDimmingAmount:(double)value {
-    _colorMap.dimmingAmount = value;
+    [self mutSetDimmingAmount:value];
 }
 
 #pragma mark - PTYTextViewDataSource
@@ -2336,6 +2334,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
         return kColorMap8bitBase + n;
     }
 }
+
 - (void)terminalSetColorTableEntryAtIndex:(VT100TerminalColorIndex)n color:(NSColor *)color {
     const int key = [self colorMapKeyForTerminalColorIndex:n];
     DLog(@"Key for %@ is %@", @(n), @(key));
@@ -2374,7 +2373,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     if (key < 0) {
         return nil;
     }
-    return [self.colorMap colorForKey:key];
+    return [_state.colorMap colorForKey:key];
 }
 
 - (int)terminalCursorX {
@@ -2865,19 +2864,19 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (VT100SavedColorsSlot *)terminalSavedColorsSlot {
-    return [[[VT100SavedColorsSlot alloc] initWithTextColor:[_colorMap colorForKey:kColorMapForeground]
-                                            backgroundColor:[_colorMap colorForKey:kColorMapBackground]
-                                         selectionTextColor:[_colorMap colorForKey:kColorMapSelectedText]
-                                   selectionBackgroundColor:[_colorMap colorForKey:kColorMapSelection]
+    return [[[VT100SavedColorsSlot alloc] initWithTextColor:[_state.colorMap colorForKey:kColorMapForeground]
+                                            backgroundColor:[_state.colorMap colorForKey:kColorMapBackground]
+                                         selectionTextColor:[_state.colorMap colorForKey:kColorMapSelectedText]
+                                   selectionBackgroundColor:[_state.colorMap colorForKey:kColorMapSelection]
                                        indexedColorProvider:^NSColor *(NSInteger index) {
-        return [_colorMap colorForKey:kColorMap8bitBase + index] ?: [NSColor clearColor];
+        return [_state.colorMap colorForKey:kColorMap8bitBase + index] ?: [NSColor clearColor];
     }] autorelease];
 }
 
 - (void)terminalRestoreColorsFromSlot:(VT100SavedColorsSlot *)slot {
     for (int i = 0; i < MIN(kColorMapNumberOf8BitColors, slot.indexedColors.count); i++) {
         if (i >= 16) {
-            [_colorMap setColor:slot.indexedColors[i] forKey:kColorMap8bitBase + i];
+            [self setColor:slot.indexedColors[i] forKey:kColorMap8bitBase + i];
         }
     }
     [delegate_ screenRestoreColorsFromSlot:slot];
@@ -3483,6 +3482,10 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 #pragma mark - Accessors
+
+- (id<iTermColorMapReading>)colorMap {
+    return _state.colorMap;
+}
 
 - (id<iTermIntervalTreeObserver>)intervalTreeObserver {
     return _state.intervalTreeObserver;

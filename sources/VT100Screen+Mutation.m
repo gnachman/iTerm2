@@ -3529,7 +3529,42 @@ static inline void VT100ScreenEraseCell(screen_char_t *sct, iTermExternalAttribu
     return keepSearching;
 }
 
+#pragma mark - Color Map
+
+- (void)mutSetColor:(NSColor *)color forKey:(int)key {
+    [_mutableState.colorMap setColor:color forKey:key];
+}
+
+- (void)mutSetDimOnlyText:(BOOL)dimOnlyText {
+    _mutableState.colorMap.dimOnlyText = dimOnlyText;
+}
+
+- (void)mutSetDarkMode:(BOOL)darkMode {
+    _mutableState.colorMap.darkMode = darkMode;
+}
+
+- (void)mutSetUseSeparateColorsForLightAndDarkMode:(BOOL)value {
+    _mutableState.colorMap.useSeparateColorsForLightAndDarkMode = value;
+}
+
+- (void)mutSetMinimumContrast:(float)value {
+    _mutableState.colorMap.minimumContrast = value;
+}
+
+- (void)mutSetMutingAmount:(double)value {
+    _mutableState.colorMap.mutingAmount = value;
+}
+
+- (void)mutSetDimmingAmount:(double)value {
+    _mutableState.colorMap.dimmingAmount = value;
+}
+
 #pragma mark - Accessors
+
+- (void)mutSetDelegate:(id<VT100ScreenDelegate>)delegate {
+    _mutableState.colorMap.delegate = delegate;
+    delegate_ = delegate;
+}
 
 - (void)mutSetLastCommandMark:(VT100ScreenMark *)mark {
     _mutableState.lastCommandMark = mark;
