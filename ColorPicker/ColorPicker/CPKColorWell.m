@@ -417,31 +417,31 @@ static NSColorSpace *gDefaultColorSpace;
 
 - (void)setColorSpace:(NSColorSpace *)colorSpace {
     _colorSpace = colorSpace;
-    _view.colorSpace = colorSpace;
+    self.view.colorSpace = colorSpace;
 }
 
 - (NSColor *)color {
-  return _view.selectedColor;
+  return self.view.selectedColor;
 }
 
 - (void)setColor:(NSColor *)color {
-    _view.color = color;
-    _view.selectedColor = color;
+    self.view.color = color;
+    self.view.selectedColor = color;
 }
 
 - (void)setAlphaAllowed:(BOOL)alphaAllowed {
     _alphaAllowed = alphaAllowed;
-    _view.alphaAllowed = alphaAllowed;
+    self.view.alphaAllowed = alphaAllowed;
 }
 
 - (void)setNoColorAllowed:(BOOL)noColorAllowed {
     _noColorAllowed = noColorAllowed;
-    _view.noColorAllowed = noColorAllowed;
+    self.view.noColorAllowed = noColorAllowed;
 }
 
 - (void)setEnabled:(BOOL)enabled {
   [super setEnabled:enabled];
-  _view.disabled = !enabled;
+    self.view.disabled = !enabled;
 }
 
 - (void)setContinuous:(BOOL)continuous {
@@ -463,6 +463,11 @@ static NSColorSpace *gDefaultColorSpace;
 - (void)colorChangedByDrag:(NSColor *)color {
     [self setColor:color];
     [self sendAction:self.action to:self.target];
+}
+
+- (CPKColorWellView *)view {
+    [self load];
+    return _view;
 }
 
 @end
