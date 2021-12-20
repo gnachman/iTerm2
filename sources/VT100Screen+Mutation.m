@@ -3531,6 +3531,10 @@ static inline void VT100ScreenEraseCell(screen_char_t *sct, iTermExternalAttribu
 
 #pragma mark - Accessors
 
+- (void)mutSetNormalization:(iTermUnicodeNormalization)value {
+    _mutableState.normalization = value;
+}
+
 - (void)mutSetShellIntegrationInstalled:(BOOL)shellIntegrationInstalled {
     _mutableState.shellIntegrationInstalled = shellIntegrationInstalled;
 }

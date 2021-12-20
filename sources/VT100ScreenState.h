@@ -120,6 +120,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, strong, readonly) id<LineBufferReading> linebuffer;
 @property (nonatomic, readonly) BOOL trackCursorLineMovement;
 @property (nonatomic, readonly) BOOL appendToScrollbackWithStatusBar;
+@property (nonatomic, readonly) iTermUnicodeNormalization normalization;
 
 @end
 
@@ -177,6 +178,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, strong, readwrite) LineBuffer *linebuffer;
 @property (nonatomic, readwrite) BOOL trackCursorLineMovement;
 @property (nonatomic, readwrite) BOOL appendToScrollbackWithStatusBar;
+@property (nonatomic, readwrite) iTermUnicodeNormalization normalization;
 
 - (id<VT100ScreenState>)copy;
 

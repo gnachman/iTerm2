@@ -3062,7 +3062,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (iTermUnicodeNormalization)gridUnicodeNormalizationForm {
-    return _normalization;
+    return self.normalization;
 }
 
 - (void)gridCursorDidMove {
@@ -3423,6 +3423,14 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 #pragma mark - Accessors
+
+- (iTermUnicodeNormalization)normalization {
+    return _state.normalization;
+}
+
+- (void)setNormalization:(iTermUnicodeNormalization)normalization {
+    [self mutSetNormalization:normalization];
+}
 
 - (BOOL)shellIntegrationInstalled {
     return _state.shellIntegrationInstalled;
