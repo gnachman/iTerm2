@@ -797,10 +797,6 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
 - (void)screenRequestAttention:(VT100AttentionRequestType)request {
 }
 
-- (iTermColorMap *)screenColorMap {
-    return nil;
-}
-
 - (void)screenSetCurrentTabColor:(NSColor *)color {
 }
 

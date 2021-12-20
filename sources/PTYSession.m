@@ -889,6 +889,10 @@ static const CGFloat PTYSessionMaximumMetalViewSize = 16384;
                                                  selector:@selector(applicationDidResignActive:)
                                                      name:NSApplicationDidResignActiveNotification
                                                    object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(refreshTerminal:)
+                                                     name:kRefreshTerminalNotification
+                                                   object:nil];
 
         [[iTermFindPasteboard sharedInstance] addObserver:self block:^(id sender, NSString * _Nonnull newValue) {
             if (!weakSelf.view.window.isKeyWindow) {
@@ -1882,7 +1886,7 @@ ITERM_WEAKLY_REFERENCEABLE
     _view.mainResponder = _textview;
     _view.searchResultsMinimapViewDelegate = _textview.findOnPageHelper;
     _metalGlue.textView = _textview;
-    _screen.colorMap.dimOnlyText = [iTermPreferences boolForKey:kPreferenceKeyDimOnlyText];
+    _screen.dimOnlyText = [iTermPreferences boolForKey:kPreferenceKeyDimOnlyText];
     [_textview setAutoresizingMask: NSViewWidthSizable | NSViewHeightSizable];
     [_textview setFont:[ITAddressBookMgr fontWithDesc:[_profile objectForKey:KEY_NORMAL_FONT]]
           nonAsciiFont:[ITAddressBookMgr fontWithDesc:[_profile objectForKey:KEY_NON_ASCII_FONT]]
@@ -3919,7 +3923,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)loadInitialColorTableAndResetCursorGuide {
-    [self loadInitialColorTable];
+    [_screen loadInitialColorTable];
     _textview.highlightCursorLine = [iTermProfilePreferences boolForColorKey:KEY_USE_CURSOR_GUIDE
                                                                         dark:[NSApp effectiveAppearance].it_isDark
                                                                      profile:_profile];
@@ -3932,14 +3936,6 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void)markProfileInitialized {
     DLog(@"Mark profile initialized %@", self);
     _profileInitialized = YES;
-}
-
-- (void)loadInitialColorTable {
-    int i;
-    for (i = 16; i < 256; i++) {
-        NSColor *theColor = [NSColor colorForAnsi256ColorIndex:i];
-        [_screen.colorMap setColor:theColor forKey:kColorMap8bitBase + i];
-    }
 }
 
 - (NSColor *)tabColorInProfile:(NSDictionary *)profile {
@@ -4077,20 +4073,20 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)loadColorsFromProfile:(Profile *)aDict {
     const BOOL dark = (self.view.effectiveAppearance ?: [NSApp effectiveAppearance]).it_isDark;
-    _screen.colorMap.darkMode = dark;
+    _screen.darkMode = dark;
     const BOOL modes = [iTermProfilePreferences boolForKey:KEY_USE_SEPARATE_COLORS_FOR_LIGHT_AND_DARK_MODE inProfile:aDict];
-    _screen.colorMap.useSeparateColorsForLightAndDarkMode = modes;
+    _screen.useSeparateColorsForLightAndDarkMode = modes;
     NSDictionary<NSNumber *, NSString *> *keyMap = [self colorTableForProfile:aDict darkMode:dark];
     for (NSNumber *colorKey in keyMap) {
         NSString *profileKey = keyMap[colorKey];
 
         if ([profileKey isKindOfClass:[NSString class]]) {
-            [_screen.colorMap setColor:[iTermProfilePreferences colorForKey:profileKey
-                                                                       dark:dark
-                                                                    profile:aDict]
-                         forKey:[colorKey intValue]];
+            [_screen setColor:[iTermProfilePreferences colorForKey:profileKey
+                                                              dark:dark
+                                                           profile:aDict]
+                       forKey:[colorKey intValue]];
         } else {
-            [_screen.colorMap setColor:nil forKey:[colorKey intValue]];
+            [_screen setColor:nil forKey:[colorKey intValue]];
         }
     }
     self.cursorGuideColor = [[iTermProfilePreferences objectForKey:iTermAmendedColorKey(KEY_CURSOR_GUIDE_COLOR, aDict, dark)
@@ -4107,8 +4103,8 @@ ITERM_WEAKLY_REFERENCEABLE
     [self setMinimumContrast:[iTermProfilePreferences floatForKey:iTermAmendedColorKey(KEY_MINIMUM_CONTRAST, aDict, dark)
                                                         inProfile:aDict]];
 
-    _screen.colorMap.mutingAmount = [iTermProfilePreferences floatForKey:iTermAmendedColorKey(KEY_CURSOR_BOOST, aDict, dark)
-                                                               inProfile:aDict];
+    _screen.mutingAmount = [iTermProfilePreferences floatForKey:iTermAmendedColorKey(KEY_CURSOR_BOOST, aDict, dark)
+                                                      inProfile:aDict];
 }
 
 - (NSDictionary<NSNumber *, NSString *> *)colorTableForProfile:(Profile *)profile darkMode:(BOOL)dark {
@@ -4140,8 +4136,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
     if (colorKey >= kColorMap8bitBase + 16 && colorKey < kColorMap8bitBase + 256) {
         // ANSI colors above 16 don't come from the profile. They have hard-coded defaults.
-        NSColor *theColor = [NSColor colorForAnsi256ColorIndex:colorKey - kColorMap8bitBase];
-        [_screen.colorMap setColor:theColor forKey:colorKey];
+        [_screen resetNonAnsiColorWithKey:colorKey];
         return;
     }
     // Note that we use _profile here since that tracks stuff like whether we have separate
@@ -4165,7 +4160,7 @@ ITERM_WEAKLY_REFERENCEABLE
     NSString *baseKey = [NSString stringWithFormat:KEYTEMPLATE_ANSI_X_COLOR, i];
     NSString *profileKey = iTermAmendedColorKey(baseKey, aDict, dark);
     NSColor *theColor = [ITAddressBookMgr decodeColor:aDict[profileKey]];
-    [_screen.colorMap setColor:theColor forKey:kColorMap8bitBase + i];
+    [_screen setColor:theColor forKey:kColorMap8bitBase + i];
 }
 
 - (void)setPreferencesFromAddressBookEntry:(NSDictionary *)aePrefs {
@@ -4809,9 +4804,9 @@ ITERM_WEAKLY_REFERENCEABLE
     [[self textview] setUseSmartCursorColor:value];
 }
 
-- (void)setMinimumContrast:(float)value
-{
+- (void)setMinimumContrast:(float)value {
     [[self textview] setMinimumContrast:value];
+    _screen.minimumContrast = value;
 }
 
 - (BOOL)viewShouldWantLayer {
@@ -5620,6 +5615,10 @@ ITERM_WEAKLY_REFERENCEABLE
         DLog(@"self.newOutput = NO");
         self.newOutput = NO;
     }
+}
+
+- (void)refreshTerminal:(NSNotification *)notification {
+    _screen.dimOnlyText = [iTermPreferences boolForKey:kPreferenceKeyDimOnlyText];
 }
 
 - (void)savedArrangementWasRepaired:(NSNotification *)notification {
@@ -10843,7 +10842,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 - (void)screenDidResetAllowingContentModification:(BOOL)modifyContent {
     if (!modifyContent) {
-        [self loadInitialColorTable];
+        [_screen loadInitialColorTable];
         return;
     }
     [self loadInitialColorTableAndResetCursorGuide];
@@ -11785,10 +11784,6 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [self executeTokens:&vector bytesHandled:data.length];
 }
 
-- (iTermColorMap *)screenColorMap {
-    return _screen.colorMap;
-}
-
 // indexes will be in [0,255].
 // 0-7 are ansi colors,
 // 8-15 are ansi bright colors,
@@ -11831,7 +11826,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     if (profileKey) {
         [self setSessionSpecificProfileValues:@{ profileKey: [color dictionaryValue] }];
     } else {
-        [_screen.colorMap setColor:color forKey:key];
+        [_screen setColor:color forKey:key];
     }
 }
 
@@ -13294,7 +13289,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)sessionViewDimmingAmountDidChange:(CGFloat)newDimmingAmount {
-    _screen.colorMap.dimmingAmount = newDimmingAmount;
+    _screen.dimmingAmount = newDimmingAmount;
 }
 
 - (BOOL)sessionViewIsVisible {
@@ -13628,7 +13623,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)sessionViewDidChangeEffectiveAppearance {
-    _screen.colorMap.darkMode = self.view.effectiveAppearance.it_isDark;
+    _screen.darkMode = self.view.effectiveAppearance.it_isDark;
     if ([iTermProfilePreferences boolForKey:KEY_USE_SEPARATE_COLORS_FOR_LIGHT_AND_DARK_MODE inProfile:self.profile]) {
         [self loadColorsFromProfile:self.profile];
     }

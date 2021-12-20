@@ -8,6 +8,7 @@
 
 #import <Foundation/Foundation.h>
 #import "ITAddressBookMgr.h"
+#import "iTermColorMap.h"
 #import "iTermCursor.h"
 #import "iTermTimestampDrawHelper.h"
 #import "ScreenChar.h"
@@ -81,7 +82,7 @@ BOOL CheckFindMatchAtIndex(NSData *findMatches, int index);
 @property(nonatomic, retain) NSColor *unfocusedSelectionColor;
 
 // Holds colors.
-@property(nonatomic, retain) iTermColorMap *colorMap;
+@property(nonatomic, retain) id<iTermColorMapReading> colorMap;
 
 // Required delegate.
 @property(nonatomic, assign) NSView<iTermTextDrawingHelperDelegate> *delegate;

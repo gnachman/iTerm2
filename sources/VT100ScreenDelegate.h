@@ -228,7 +228,6 @@
 
 - (void)screenRequestUpload:(NSString *)args;
 
-- (iTermColorMap *)screenColorMap;
 - (void)screenSetCurrentTabColor:(NSColor *)color;
 - (void)screenSetTabColorRedComponentTo:(CGFloat)color;
 - (void)screenSetTabColorGreenComponentTo:(CGFloat)color;

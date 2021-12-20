@@ -472,6 +472,10 @@ const int kColorMapAnsiBrightModifier = 8;
     return dict;
 }
 
+- (iTermColorMap *)copy {
+    return [self copyWithZone:nil];
+}
+
 - (id)copyWithZone:(NSZone *)zone {
     iTermColorMap *other = [[iTermColorMap alloc] init];
     if (!other) {

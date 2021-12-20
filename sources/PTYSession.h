@@ -673,7 +673,6 @@ backgroundColor:(NSColor *)backgroundColor;
 
 // Preferences
 - (void)setPreferencesFromAddressBookEntry: (NSDictionary *)aePrefs;
-- (void)loadInitialColorTable;
 - (void)loadInitialColorTableAndResetCursorGuide;
 
 // Call this after the profile changed. If not divorced, the profile and

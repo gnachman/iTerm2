@@ -374,7 +374,7 @@ typedef NS_ENUM(NSInteger, PTYCharType) {
 @property(nonatomic, readonly) BOOL isFindingCursor;
 
 // Stores colors. This object is its delegate.
-@property(nonatomic, readonly) iTermColorMap *colorMap;
+@property(nonatomic, readonly) id<iTermColorMapReading> colorMap;
 
 // Semantic history. TODO: Move this into PTYSession.
 @property(nonatomic, readonly) iTermSemanticHistoryController *semanticHistoryController;
@@ -447,7 +447,7 @@ typedef void (^PTYTextViewDrawingHookBlock)(iTermTextDrawingHelper *);
 // This is the designated initializer. The color map should have the
 // basic colors plus the 8-bit ansi colors set shortly after this is
 // called.
-- (instancetype)initWithFrame:(NSRect)frame colorMap:(iTermColorMap *)colorMap;
+- (instancetype)initWithFrame:(NSRect)frame colorMap:(id<iTermColorMapReading>)colorMap;
 
 // Changes the document cursor, if needed. The event is used to get modifier flags.
 - (void)updateCursor:(NSEvent *)event;

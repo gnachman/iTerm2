@@ -11,7 +11,7 @@ extension NSData {
     @objc(htmlDataWithForeground:background:colorMap:useCustomBoldColor:brightenBold:)
     func htmlData(foreground: screen_char_t,
                   background: screen_char_t,
-                  colorMap: iTermColorMap,
+                  colorMap: iTermColorMapReading,
                   useCustomBoldColor: Bool,
                   brightenBold: Bool) -> Data {
         let encoder = HTMLEncoder(colorMap: colorMap)
@@ -52,9 +52,9 @@ class HTMLEncoder {
         let brightenBold: Bool
     }
 
-    private let colorMap: iTermColorMap
+    private let colorMap: iTermColorMapReading
 
-    init(colorMap: iTermColorMap) {
+    init(colorMap: iTermColorMapReading) {
         self.colorMap = colorMap
     }
 

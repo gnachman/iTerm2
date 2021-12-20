@@ -214,7 +214,7 @@
     return size;
 }
 
-- (instancetype)initWithFrame:(NSRect)aRect colorMap:(iTermColorMap *)colorMap {
+- (instancetype)initWithFrame:(NSRect)aRect colorMap:(id<iTermColorMapReading>)colorMap {
     self = [super initWithFrame:aRect];
     if (self) {
         // This class has a complicated role.
@@ -252,8 +252,6 @@
         _drawingHelper.delegate = self;
 
         _colorMap = [colorMap retain];
-        _colorMap.delegate = self;
-
         _drawingHelper.colorMap = colorMap;
 
         [self updateMarkedTextAttributes];
@@ -276,7 +274,7 @@
                                                    object:nil];
         [self useBackgroundIndicatorChanged:nil];
         [[NSNotificationCenter defaultCenter] addObserver:self
-                                                 selector:@selector(_settingsChanged:)
+                                                 selector:@selector(refreshTerminal:)
                                                      name:kRefreshTerminalNotification
                                                    object:nil];
         [[NSNotificationCenter defaultCenter] addObserver:self
@@ -349,7 +347,6 @@
     [_findCursorWindow release];
 
     [[NSNotificationCenter defaultCenter] removeObserver:self];
-    _colorMap.delegate = nil;
     [_colorMap release];
 
     [_primaryFont release];
@@ -1322,7 +1319,8 @@
 
         _drawingHelper.cursorVisible = savedState.cursorVisible;
         _drawingHelper.colorMap = savedState.colorMap;
-        _colorMap = savedState.colorMap;
+        [_colorMap autorelease];
+        _colorMap = [savedState.colorMap retain];
     }
 
     block();
@@ -1330,7 +1328,8 @@
     [_dataSource setUseSavedGridIfAvailable:NO];
     if (originalState) {
         _drawingHelper.colorMap = originalState.colorMap;
-        _colorMap = originalState.colorMap;
+        [_colorMap autorelease];
+        _colorMap = [originalState.colorMap retain];
         _drawingHelper.cursorVisible = originalState.cursorVisible;
     }
 }
@@ -1868,7 +1867,6 @@
 
 - (void)setMinimumContrast:(double)value {
     _drawingHelper.minimumContrast = value;
-    [_colorMap setMinimumContrast:value];
 }
 
 - (BOOL)useTransparency {
@@ -4310,9 +4308,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [self refuseFirstResponderAtCurrentMouseLocation];
 }
 
-- (void)_settingsChanged:(NSNotification *)notification {
+- (void)refreshTerminal:(NSNotification *)notification {
     [self setNeedsDisplay:YES];
-    _colorMap.dimOnlyText = [iTermPreferences boolForKey:kPreferenceKeyDimOnlyText];
 }
 
 #pragma mark - iTermSelectionDelegate

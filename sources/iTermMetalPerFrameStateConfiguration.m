@@ -9,6 +9,7 @@
 #import "NSColor+iTerm.h"
 #import "PTYTextView.h"
 #import "VT100Terminal.h"
+#import "iTermColorMap.h"
 #import "iTermController.h"
 #import "iTermMetalPerFrameState.h"
 #import "iTermTextDrawingHelper.h"

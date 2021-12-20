@@ -8,6 +8,7 @@
 #import "iTermMetalPerFrameStateRow.h"
 
 #import "iTermAdvancedSettingsModel.h"
+#import "iTermColorMap.h"
 #import "iTermData.h"
 #import "iTermMarkRenderer.h"
 #import "iTermMetalPerFrameStateConfiguration.h"

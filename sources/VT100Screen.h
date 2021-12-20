@@ -76,7 +76,7 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 
 @property(nonatomic, weak) id<iTermIntervalTreeObserver> intervalTreeObserver;
 
-@property(nonatomic, retain) iTermColorMap *colorMap;
+@property(nonatomic, retain, readonly) id<iTermColorMapReading> colorMap;
 
 // Designated initializer.
 - (instancetype)initWithTerminal:(VT100Terminal *)terminal darkMode:(BOOL)darkMode;
@@ -238,6 +238,16 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
                                afterSize:(NSInteger)afterSize
                                     name:(NSString *)name;
 - (void)enumerateObservableMarks:(void (^ NS_NOESCAPE)(iTermIntervalTreeObjectType, NSInteger))block;
+// Load 256 colors, but not ANSI (0-15).
+- (void)loadInitialColorTable;
+- (void)setColor:(NSColor *)color forKey:(int)key;
+- (void)resetNonAnsiColorWithKey:(int)key;
+- (void)setDimOnlyText:(BOOL)dimOnlyText;
+- (void)setDarkMode:(BOOL)darkMode;
+- (void)setUseSeparateColorsForLightAndDarkMode:(BOOL)value;
+- (void)setMinimumContrast:(float)value;
+- (void)setMutingAmount:(double)value;
+- (void)setDimmingAmount:(double)value;
 
 @end
 

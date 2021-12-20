@@ -85,6 +85,8 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     // This is an inherently shared mutable data structure. I don't think it can be easily moved into
     // the VT100ScreenState model. Instad it will need lots of mutexes :(
     DVR* dvr_;
+
+    iTermColorMap *_colorMap;
 }
 
 @synthesize dvr = dvr_;
@@ -249,6 +251,46 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
 - (VT100GridAbsCoord)commandStartCoord {
     return _state.commandStartCoord;
+}
+
+- (void)loadInitialColorTable {
+    for (int i = 16; i < 256; i++) {
+        NSColor *theColor = [NSColor colorForAnsi256ColorIndex:i];
+        [self setColor:theColor forKey:kColorMap8bitBase + i];
+    }
+}
+
+- (void)setColor:(NSColor *)color forKey:(int)key {
+    [_colorMap setColor:color forKey:key];
+}
+
+- (void)resetNonAnsiColorWithKey:(int)colorKey {
+    NSColor *theColor = [NSColor colorForAnsi256ColorIndex:colorKey - kColorMap8bitBase];
+    [self setColor:theColor forKey:colorKey];
+}
+
+- (void)setDimOnlyText:(BOOL)dimOnlyText {
+    _colorMap.dimOnlyText = dimOnlyText;
+}
+
+- (void)setDarkMode:(BOOL)darkMode {
+    _colorMap.darkMode = darkMode;
+}
+
+- (void)setUseSeparateColorsForLightAndDarkMode:(BOOL)value {
+    _colorMap.useSeparateColorsForLightAndDarkMode = value;
+}
+
+- (void)setMinimumContrast:(float)value {
+    _colorMap.minimumContrast = value;
+}
+
+- (void)setMutingAmount:(double)value {
+    _colorMap.mutingAmount = value;
+}
+
+- (void)setDimmingAmount:(double)value {
+    _colorMap.dimmingAmount = value;
 }
 
 #pragma mark - PTYTextViewDataSource
@@ -2332,7 +2374,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     if (key < 0) {
         return nil;
     }
-    return [[delegate_ screenColorMap] colorForKey:key];
+    return [self.colorMap colorForKey:key];
 }
 
 - (int)terminalCursorX {
@@ -3248,7 +3290,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     state.grid = [_state.currentGrid.copy autorelease];
     state.grid.delegate = nil;
 
-    state.colorMap = [self.delegate.screenColorMap.copy autorelease];
+    state.colorMap = [self.colorMap.copy autorelease];
     state.cursorVisible = self.temporaryDoubleBuffer.explicit ? _state.cursorVisible : YES;
 
     return state;
