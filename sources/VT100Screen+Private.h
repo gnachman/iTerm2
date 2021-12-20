@@ -44,7 +44,6 @@ VT100InlineImageHelperDelegate> {
     __weak id<VT100ScreenDelegate> delegate_;  // PTYSession implements this
 }
 
-@property(nonatomic, retain) iTermTemporaryDoubleBufferedGridController *temporaryDoubleBuffer;
 @property(nonatomic, readwrite) VT100GridAbsCoordRange lastCommandOutputRange;
 
 - (NSString *)compactLineDumpWithHistoryAndContinuationMarksAndLineNumbers;

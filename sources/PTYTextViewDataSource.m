@@ -9,4 +9,13 @@
 #import "PTYTextViewDataSource.h"
 
 @implementation PTYTextViewSynchronousUpdateState
+
+- (id)copyWithZone:(NSZone *)zone {
+    PTYTextViewSynchronousUpdateState *copy = [[PTYTextViewSynchronousUpdateState alloc] init];
+    copy.grid = [self.grid copy];
+    copy.cursorVisible = self.cursorVisible;
+    copy.colorMap = [self.colorMap copy];
+    return copy;
+
+}
 @end

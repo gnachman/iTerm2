@@ -85,4 +85,14 @@
     [self resetExplicitly];
 }
 
+#pragma mark - NSCopying
+
+- (id)copyWithZone:(NSZone *)zone {
+    iTermTemporaryDoubleBufferedGridController *copy = [[iTermTemporaryDoubleBufferedGridController alloc] init];
+    copy->_explicit = _explicit;
+    copy.drewSavedGrid = _drewSavedGrid;
+    copy.savedState = [self.savedState copy];
+    return copy;
+}
+
 @end

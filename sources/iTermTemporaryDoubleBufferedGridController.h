@@ -24,7 +24,20 @@
 
 @end
 
-@interface iTermTemporaryDoubleBufferedGridController : NSObject
+@protocol iTermTemporaryDoubleBufferedGridControllerReading<NSObject>
+@property(nonatomic, readonly) id<PTYTextViewSynchronousUpdateStateReading> savedState;
+
+// Implicit is when it's based on cursor visibility. Explicit is from a sync update control sequence.
+// Implicit cannot override explicit. Timing out resets explicit. -startExplicitly sets it to true.
+// -resetExplicitly sets it to false. When true, -reset and -start are no-ops.
+@property(nonatomic, readonly) BOOL explicit;
+
+// Set this to use if you're drawing the view from the saved grid in order to get a notification
+// when it expires.
+@property(nonatomic, readonly) BOOL drewSavedGrid;
+@end
+
+@interface iTermTemporaryDoubleBufferedGridController : NSObject<iTermTemporaryDoubleBufferedGridControllerReading, NSCopying>
 
 @property(nonatomic, weak) id<iTermTemporaryDoubleBufferedGridControllerDelegate> delegate;
 @property(nonatomic, readonly) PTYTextViewSynchronousUpdateState *savedState;

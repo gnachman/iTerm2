@@ -172,6 +172,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)mutSetMutingAmount:(double)value;
 - (void)mutSetDimmingAmount:(double)value;
 - (void)mutSetDelegate:(id<VT100ScreenDelegate>)delegate;
+- (void)mutSynchronizedUpdate:(BOOL)begin;
 
 @end
 

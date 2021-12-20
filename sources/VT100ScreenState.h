@@ -18,6 +18,7 @@
 #import "iTermColorMap.h"
 #import "iTermIntervalTreeObserver.h"
 #import "iTermMark.h"
+#import "iTermTemporaryDoubleBufferedGridController.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -127,6 +128,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, weak, readonly) id<iTermIntervalTreeObserver> intervalTreeObserver;
 @property (nullable, nonatomic, strong, readonly) VT100ScreenMark *lastCommandMark;
 @property (nonatomic, strong, readonly) id<iTermColorMapReading> colorMap;
+@property (nonatomic, strong, readonly) id<iTermTemporaryDoubleBufferedGridControllerReading> temporaryDoubleBuffer;
 
 @end
 
@@ -188,6 +190,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, weak, readwrite) id<iTermIntervalTreeObserver> intervalTreeObserver;
 @property (nullable, nonatomic, strong, readwrite) VT100ScreenMark *lastCommandMark;
 @property (nonatomic, strong, readwrite) iTermColorMap *colorMap;
+@property (nonatomic, strong, readwrite) iTermTemporaryDoubleBufferedGridController *temporaryDoubleBuffer;
 
 - (id<VT100ScreenState>)copy;
 

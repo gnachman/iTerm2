@@ -1,10 +1,11 @@
 // DataSource for PTYTextView.
+#import "iTermColorMap.h"
 #import "iTermCursor.h"
 #import "iTermFindDriver.h"
 #import "iTermLogicalMovementHelper.h"
 #import "ScreenChar.h"
 #import "LineBuffer.h"
-#import "VT100GridTypes.h"
+#import "VT100Grid.h"
 
 @class iTermColorMap;
 @class iTermExternalAttributeIndex;
@@ -17,7 +18,13 @@
 @class VT100ScreenMark;
 @class VT100Terminal;
 
-@interface PTYTextViewSynchronousUpdateState : NSObject
+@protocol PTYTextViewSynchronousUpdateStateReading<NSObject>
+@property (nonatomic, strong, readonly) id<VT100GridReading> grid;
+@property (nonatomic, readonly) BOOL cursorVisible;
+@property (nonatomic, strong, readonly) id<iTermColorMapReading> colorMap;
+@end
+
+@interface PTYTextViewSynchronousUpdateState : NSObject<PTYTextViewSynchronousUpdateStateReading, NSCopying>
 @property (nonatomic, strong) VT100Grid *grid;
 @property (nonatomic) BOOL cursorVisible;
 @property (nonatomic, strong) iTermColorMap *colorMap;

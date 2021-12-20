@@ -102,8 +102,7 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
                                                                                        kDefaultScreenRows)
                                                             delegate:self] autorelease];
         _mutableState.currentGrid = _mutableState.primaryGrid;
-        _temporaryDoubleBuffer = [[iTermTemporaryDoubleBufferedGridController alloc] init];
-        _temporaryDoubleBuffer.delegate = self;
+        _mutableState.temporaryDoubleBuffer.delegate = self;
 
         [self mutSetInitialTabStops];
 
@@ -117,9 +116,6 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 
 - (void)dealloc {
     [dvr_ release];
-    _temporaryDoubleBuffer.delegate = nil;
-    [_temporaryDoubleBuffer reset];
-    [_temporaryDoubleBuffer release];
     [_state release];
     [_mutableState release];
 
@@ -1803,11 +1799,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalSynchronizedUpdate:(BOOL)begin {
-    if (begin) {
-        [_temporaryDoubleBuffer startExplicitly];
-    } else {
-        [_temporaryDoubleBuffer resetExplicitly];
-    }
+    [self mutSynchronizedUpdate:begin];
 }
 
 - (int)terminalWidth {
@@ -3267,9 +3259,9 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     [self mutRestoreInitialSize];
 }
 
-- (iTermTemporaryDoubleBufferedGridController *)temporaryDoubleBuffer {
-    if ([delegate_ screenShouldReduceFlicker] || _temporaryDoubleBuffer.explicit) {
-        return _temporaryDoubleBuffer;
+- (id<iTermTemporaryDoubleBufferedGridControllerReading>)temporaryDoubleBuffer {
+    if ([delegate_ screenShouldReduceFlicker] || _state.temporaryDoubleBuffer.explicit) {
+        return _state.temporaryDoubleBuffer;
     } else {
         return nil;
     }

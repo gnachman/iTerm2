@@ -81,7 +81,7 @@
                                 previouslyVisibleLineRange.location + 1);
 
     [self sanityCheckIntervalsFrom:_state.currentGrid.size note:@"pre-hoc"];
-    [self.temporaryDoubleBuffer resetExplicitly];
+    [self.mutableTemporaryDoubleBuffer resetExplicitly];
     const VT100GridSize oldSize = _state.currentGrid.size;
     iTermSelection *selection = [delegate_ screenSelection];
     [self willSetSizeWithSelection:selection];
@@ -470,8 +470,16 @@
     [delegate_ screenSizeDidChangeWithNewTopLineAt:newTop];
 }
 
+- (iTermTemporaryDoubleBufferedGridController *)mutableTemporaryDoubleBuffer {
+    if ([delegate_ screenShouldReduceFlicker] || _mutableState.temporaryDoubleBuffer.explicit) {
+        return _mutableState.temporaryDoubleBuffer;
+    } else {
+        return nil;
+    }
+}
+
 - (BOOL)shouldSetSizeTo:(VT100GridSize)size {
-    [self.temporaryDoubleBuffer reset];
+    [self.mutableTemporaryDoubleBuffer reset];
 
     DLog(@"Resize session to %@", VT100GridSizeDescription(size));
     DLog(@"Before:\n%@", [_state.currentGrid compactLineDumpWithContinuationMarks]);
@@ -2327,6 +2335,14 @@ static void SwapInt(int *a, int *b) {
 
 #pragma mark - Terminal Fundamentals
 
+- (void)mutSynchronizedUpdate:(BOOL)begin {
+    if (begin) {
+        [_mutableState.temporaryDoubleBuffer startExplicitly];
+    } else {
+        [_mutableState.temporaryDoubleBuffer resetExplicitly];
+    }
+}
+
 - (void)mutSetProtectedMode:(VT100TerminalProtectedMode)mode {
     _mutableState.protectedMode = mode;
 }
@@ -2335,9 +2351,9 @@ static void SwapInt(int *a, int *b) {
     if (visible != _state.cursorVisible) {
         _mutableState.cursorVisible = visible;
         if (visible) {
-            [self.temporaryDoubleBuffer reset];
+            [self.mutableTemporaryDoubleBuffer reset];
         } else {
-            [self.temporaryDoubleBuffer start];
+            [self.mutableTemporaryDoubleBuffer start];
         }
     }
     [delegate_ screenSetCursorVisible:visible];
@@ -3708,7 +3724,7 @@ static inline void VT100ScreenEraseCell(screen_char_t *sct, iTermExternalAttribu
         _mutableState.altGrid = [[[VT100Grid alloc] initWithSize:_state.primaryGrid.size delegate:self] autorelease];
     }
 
-    [self.temporaryDoubleBuffer reset];
+    [self.mutableTemporaryDoubleBuffer reset];
     self.mutablePrimaryGrid.savedDefaultChar = [_state.primaryGrid defaultChar];
     [self hideOnScreenNotesAndTruncateSpanners];
     _mutableState.currentGrid = _state.altGrid;
@@ -3724,7 +3740,7 @@ static inline void VT100ScreenEraseCell(screen_char_t *sct, iTermExternalAttribu
 
 - (void)mutShowPrimaryBuffer {
     if (_state.currentGrid == _state.altGrid) {
-        [self.temporaryDoubleBuffer reset];
+        [self.mutableTemporaryDoubleBuffer reset];
         [delegate_ screenRemoveSelection];
         [self hideOnScreenNotesAndTruncateSpanners];
         _mutableState.currentGrid = _state.primaryGrid;
@@ -3837,11 +3853,11 @@ static inline void VT100ScreenEraseCell(screen_char_t *sct, iTermExternalAttribu
 #pragma mark - Synchronized Drawing
 
 - (PTYTextViewSynchronousUpdateState *)mutSetUseSavedGridIfAvailable:(BOOL)useSavedGrid {
-    if (useSavedGrid && !_state.realCurrentGrid && self.temporaryDoubleBuffer.savedState) {
+    if (useSavedGrid && !_state.realCurrentGrid && self.mutableTemporaryDoubleBuffer.savedState) {
         _mutableState.realCurrentGrid = _state.currentGrid;
-        _mutableState.currentGrid = self.temporaryDoubleBuffer.savedState.grid;
-        self.temporaryDoubleBuffer.drewSavedGrid = YES;
-        return self.temporaryDoubleBuffer.savedState;
+        _mutableState.currentGrid = self.mutableTemporaryDoubleBuffer.savedState.grid;
+        self.mutableTemporaryDoubleBuffer.drewSavedGrid = YES;
+        return self.mutableTemporaryDoubleBuffer.savedState;
     } else if (!useSavedGrid && _state.realCurrentGrid) {
         _mutableState.currentGrid = _state.realCurrentGrid;
         _mutableState.realCurrentGrid = nil;

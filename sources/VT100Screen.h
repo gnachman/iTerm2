@@ -15,6 +15,7 @@
 @class iTermNotificationController;
 @class iTermMark;
 @class iTermStringLine;
+@protocol iTermTemporaryDoubleBufferedGridControllerReading;
 @class LineBuffer;
 @class IntervalTree;
 @class PTYTask;
@@ -77,6 +78,7 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 @property(nonatomic, weak) id<iTermIntervalTreeObserver> intervalTreeObserver;
 
 @property(nonatomic, retain, readonly) id<iTermColorMapReading> colorMap;
+@property(nonatomic, readonly) id<iTermTemporaryDoubleBufferedGridControllerReading> temporaryDoubleBuffer;
 
 // Designated initializer.
 - (instancetype)initWithTerminal:(VT100Terminal *)terminal darkMode:(BOOL)darkMode;

@@ -36,6 +36,7 @@ static const int kDefaultMaxScrollbackLines = 1000;
         _initialSize = VT100GridSizeMake(-1, -1);
         _linebuffer = [[LineBuffer alloc] init];
         _colorMap = [[iTermColorMap alloc] init];
+        _temporaryDoubleBuffer = [[iTermTemporaryDoubleBufferedGridController alloc] init];
     }
     return self;
 }
@@ -97,8 +98,13 @@ static const int kDefaultMaxScrollbackLines = 1000;
         _tabStops = [source.tabStops copy];
         _charsetUsesLineDrawingMode = [source.charsetUsesLineDrawingMode copy];
         _colorMap = [source.colorMap copy];
+        _temporaryDoubleBuffer = [source.temporaryDoubleBuffer copy];
     }
     return self;
+}
+
+- (void)dealloc {
+    [_temporaryDoubleBuffer reset];
 }
 
 - (id)copyWithZone:(NSZone *)zone {
