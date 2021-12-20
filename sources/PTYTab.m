@@ -993,7 +993,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
         return [NSColor blackColor];
     }
 
-    NSColor *backgroundColor = [self.activeSession.colorMap colorForKey:kColorMapBackground];
+    NSColor *backgroundColor = [self.activeSession.screen.colorMap colorForKey:kColorMapBackground];
     CGFloat components[4];
     [backgroundColor getComponents:components];
     CGFloat mix;

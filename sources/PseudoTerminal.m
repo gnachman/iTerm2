@@ -1559,7 +1559,7 @@ ITERM_WEAKLY_REFERENCEABLE
 - (NSColor *)terminalWindowDecorationBackgroundColor {
     iTermPreferencesTabStyle preferredStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
     if (self.shouldUseMinimalStyle) {
-        return [self.currentSession.colorMap colorForKey:kColorMapBackground];
+        return [self.currentSession.screen.colorMap colorForKey:kColorMapBackground];
     } else {
         CGFloat whiteLevel = 0;
         switch ([self.window.effectiveAppearance it_tabStyle:preferredStyle]) {
@@ -5819,7 +5819,7 @@ ITERM_WEAKLY_REFERENCEABLE
     NSInteger darkCount = 0;
     NSInteger lightCount = 0;
     for (PTYSession *session in tab.sessions) {
-        if ([[session.colorMap colorForKey:kColorMapBackground] perceivedBrightness] < 0.5) {
+        if ([[session.screen.colorMap colorForKey:kColorMapBackground] perceivedBrightness] < 0.5) {
             darkCount++;
         } else {
             lightCount++;
@@ -11427,8 +11427,8 @@ backgroundColor:(NSColor *)backgroundColor {
 #pragma mark - PSMMinimalTabStyleDelegate
 
 - (NSColor *)minimalTabStyleBackgroundColor {
-    DLog(@"Getting bg color for session %@, colormap %@", self.currentSession, self.currentSession.colorMap);
-    return [self.currentSession.colorMap colorForKey:kColorMapBackground];
+    DLog(@"Getting bg color for session %@, colormap %@", self.currentSession, self.currentSession.screen.colorMap);
+    return [self.currentSession.screen.colorMap colorForKey:kColorMapBackground];
 }
 
 #pragma mark - iTermBroadcastInputHelperDelegate

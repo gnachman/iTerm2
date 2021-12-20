@@ -323,6 +323,7 @@ static const CGFloat PTYSessionMaximumMetalViewSize = 16384;
     iTermAutomaticProfileSwitcherDelegate,
     iTermBackgroundDrawingHelperDelegate,
     iTermBadgeLabelDelegate,
+    iTermColorMapDelegate,
     iTermCoprocessDelegate,
     iTermCopyModeHandlerDelegate,
     iTermComposerManagerDelegate,
@@ -722,15 +723,14 @@ static const CGFloat PTYSessionMaximumMetalViewSize = 16384;
         _lastUpdate = _lastInput;
         _pasteHelper = [[iTermPasteHelper alloc] init];
         _pasteHelper.delegate = self;
-        _colorMap = [[iTermColorMap alloc] init];
-        _colorMap.darkMode = self.view.effectiveAppearance.it_isDark;
 
         // Allocate screen, shell, and terminal objects
         _shell = [[PTYTask alloc] init];
         _terminal = [[VT100Terminal alloc] init];
         _terminal.output.optionIsMetaForSpecialKeys =
             [iTermAdvancedSettingsModel optionIsMetaForSpecialChars];
-        _screen = [[VT100Screen alloc] initWithTerminal:_terminal];
+        _screen = [[VT100Screen alloc] initWithTerminal:_terminal
+                                               darkMode:self.view.effectiveAppearance.it_isDark];
         NSParameterAssert(_shell != nil && _terminal != nil && _screen != nil);
 
         _overriddenFields = [[NSMutableSet alloc] init];
@@ -924,7 +924,6 @@ ITERM_WEAKLY_REFERENCEABLE
     [self stopTailFind];  // This frees the substring in the tail find context, if needed.
     _shell.delegate = nil;
     dispatch_release(_executionSemaphore);
-    [_colorMap release];
     [_triggers release];
     [_pasteboard release];
     [_pbtext release];
@@ -1878,12 +1877,12 @@ ITERM_WEAKLY_REFERENCEABLE
     _wrapper = [[TextViewWrapper alloc] initWithFrame:NSMakeRect(0, 0, aSize.width, aSize.height)];
 
     _textview = [[PTYTextView alloc] initWithFrame: NSMakeRect(0, [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins], aSize.width, aSize.height)
-                                          colorMap:_colorMap];
+                                          colorMap:_screen.colorMap];
     _textview.keyboardHandler.keyMapper = _keyMapper;
     _view.mainResponder = _textview;
     _view.searchResultsMinimapViewDelegate = _textview.findOnPageHelper;
     _metalGlue.textView = _textview;
-    _colorMap.dimOnlyText = [iTermPreferences boolForKey:kPreferenceKeyDimOnlyText];
+    _screen.colorMap.dimOnlyText = [iTermPreferences boolForKey:kPreferenceKeyDimOnlyText];
     [_textview setAutoresizingMask: NSViewWidthSizable | NSViewHeightSizable];
     [_textview setFont:[ITAddressBookMgr fontWithDesc:[_profile objectForKey:KEY_NORMAL_FONT]]
           nonAsciiFont:[ITAddressBookMgr fontWithDesc:[_profile objectForKey:KEY_NON_ASCII_FONT]]
@@ -2674,8 +2673,6 @@ ITERM_WEAKLY_REFERENCEABLE
                                                         object:self];
     [_delegate removeSession:self];
 
-    _colorMap.delegate = nil;
-
     _screen.delegate = nil;
     _screen.intervalTreeObserver = nil;
 
@@ -2751,7 +2748,6 @@ ITERM_WEAKLY_REFERENCEABLE
         }
         _textview.dataSource = _screen;
         _textview.delegate = self;
-        _colorMap.delegate = _textview;
         _screen.delegate = self;
         if ([iTermAdvancedSettingsModel showLocationsInScrollbar]) {
             _screen.intervalTreeObserver = self;
@@ -3942,12 +3938,12 @@ ITERM_WEAKLY_REFERENCEABLE
     int i;
     for (i = 16; i < 256; i++) {
         NSColor *theColor = [NSColor colorForAnsi256ColorIndex:i];
-        [_colorMap setColor:theColor forKey:kColorMap8bitBase + i];
+        [_screen.colorMap setColor:theColor forKey:kColorMap8bitBase + i];
     }
 }
 
 - (NSColor *)tabColorInProfile:(NSDictionary *)profile {
-    const BOOL dark = _colorMap.darkMode;
+    const BOOL dark = _screen.colorMap.darkMode;
     if ([iTermProfilePreferences boolForColorKey:KEY_USE_TAB_COLOR dark:dark profile:profile]) {
         return [iTermProfilePreferences colorForKey:KEY_TAB_COLOR dark:dark profile:profile];
     }
@@ -4081,20 +4077,20 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)loadColorsFromProfile:(Profile *)aDict {
     const BOOL dark = (self.view.effectiveAppearance ?: [NSApp effectiveAppearance]).it_isDark;
-    _colorMap.darkMode = dark;
+    _screen.colorMap.darkMode = dark;
     const BOOL modes = [iTermProfilePreferences boolForKey:KEY_USE_SEPARATE_COLORS_FOR_LIGHT_AND_DARK_MODE inProfile:aDict];
-    _colorMap.useSeparateColorsForLightAndDarkMode = modes;
+    _screen.colorMap.useSeparateColorsForLightAndDarkMode = modes;
     NSDictionary<NSNumber *, NSString *> *keyMap = [self colorTableForProfile:aDict darkMode:dark];
     for (NSNumber *colorKey in keyMap) {
         NSString *profileKey = keyMap[colorKey];
 
         if ([profileKey isKindOfClass:[NSString class]]) {
-            [_colorMap setColor:[iTermProfilePreferences colorForKey:profileKey
-                                                                dark:dark
-                                                             profile:aDict]
+            [_screen.colorMap setColor:[iTermProfilePreferences colorForKey:profileKey
+                                                                       dark:dark
+                                                                    profile:aDict]
                          forKey:[colorKey intValue]];
         } else {
-            [_colorMap setColor:nil forKey:[colorKey intValue]];
+            [_screen.colorMap setColor:nil forKey:[colorKey intValue]];
         }
     }
     self.cursorGuideColor = [[iTermProfilePreferences objectForKey:iTermAmendedColorKey(KEY_CURSOR_GUIDE_COLOR, aDict, dark)
@@ -4111,8 +4107,8 @@ ITERM_WEAKLY_REFERENCEABLE
     [self setMinimumContrast:[iTermProfilePreferences floatForKey:iTermAmendedColorKey(KEY_MINIMUM_CONTRAST, aDict, dark)
                                                         inProfile:aDict]];
 
-    _colorMap.mutingAmount = [iTermProfilePreferences floatForKey:iTermAmendedColorKey(KEY_CURSOR_BOOST, aDict, dark)
-                                                        inProfile:aDict];
+    _screen.colorMap.mutingAmount = [iTermProfilePreferences floatForKey:iTermAmendedColorKey(KEY_CURSOR_BOOST, aDict, dark)
+                                                               inProfile:aDict];
 }
 
 - (NSDictionary<NSNumber *, NSString *> *)colorTableForProfile:(Profile *)profile darkMode:(BOOL)dark {
@@ -4145,16 +4141,16 @@ ITERM_WEAKLY_REFERENCEABLE
     if (colorKey >= kColorMap8bitBase + 16 && colorKey < kColorMap8bitBase + 256) {
         // ANSI colors above 16 don't come from the profile. They have hard-coded defaults.
         NSColor *theColor = [NSColor colorForAnsi256ColorIndex:colorKey - kColorMap8bitBase];
-        [_colorMap setColor:theColor forKey:colorKey];
+        [_screen.colorMap setColor:theColor forKey:colorKey];
         return;
     }
     // Note that we use _profile here since that tracks stuff like whether we have separate
     // light/dark colors and whether there is a custom underline color. Later we use
     // `originalProfile` to get the color to reset.
-    NSString *profileKey = [_colorMap profileKeyForColorMapKey:colorKey];
+    NSString *profileKey = [_screen.colorMap profileKeyForColorMapKey:colorKey];
     DLog(@"profileKey=%@", profileKey);
     NSColor *color = [iTermProfilePreferences colorForKey:profileKey
-                                                     dark:_colorMap.darkMode
+                                                     dark:_screen.colorMap.darkMode
                                                   profile:profile];
     [self reallySetColor:color forKey:colorKey];
 }
@@ -4169,7 +4165,7 @@ ITERM_WEAKLY_REFERENCEABLE
     NSString *baseKey = [NSString stringWithFormat:KEYTEMPLATE_ANSI_X_COLOR, i];
     NSString *profileKey = iTermAmendedColorKey(baseKey, aDict, dark);
     NSColor *theColor = [ITAddressBookMgr decodeColor:aDict[profileKey]];
-    [_colorMap setColor:theColor forKey:kColorMap8bitBase + i];
+    [_screen.colorMap setColor:theColor forKey:kColorMap8bitBase + i];
 }
 
 - (void)setPreferencesFromAddressBookEntry:(NSDictionary *)aePrefs {
@@ -4216,10 +4212,10 @@ ITERM_WEAKLY_REFERENCEABLE
     self.nonAsciiLigatures = [iTermProfilePreferences boolForKey:KEY_NON_ASCII_LIGATURES inProfile:aDict];
 
     [_textview setUseBoldColor:[iTermProfilePreferences boolForColorKey:KEY_USE_BOLD_COLOR
-                                                                   dark:_colorMap.darkMode
+                                                                   dark:_screen.colorMap.darkMode
                                                                 profile:aDict]
                       brighten:[iTermProfilePreferences boolForColorKey:KEY_BRIGHTEN_BOLD_TEXT
-                                                                   dark:_colorMap.darkMode
+                                                                   dark:_screen.colorMap.darkMode
                                                                 profile:aDict]];
 
     // Italic - this default has changed from NO to YES as of 1/30/15
@@ -4360,8 +4356,8 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 
     if (self.isTmuxClient) {
-        NSDictionary *tabColorDict = [iTermProfilePreferences objectForColorKey:KEY_TAB_COLOR dark:_colorMap.darkMode profile:aDict];
-        if (![iTermProfilePreferences boolForColorKey:KEY_USE_TAB_COLOR dark:_colorMap.darkMode profile:aDict]) {
+        NSDictionary *tabColorDict = [iTermProfilePreferences objectForColorKey:KEY_TAB_COLOR dark:_screen.colorMap.darkMode profile:aDict];
+        if (![iTermProfilePreferences boolForColorKey:KEY_USE_TAB_COLOR dark:_screen.colorMap.darkMode profile:aDict]) {
             tabColorDict = nil;
         }
         NSColor *tabColor = [ITAddressBookMgr decodeColor:tabColorDict];
@@ -9258,8 +9254,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (NSColor *)processedBackgroundColor {
-    NSColor *unprocessedColor = [_colorMap colorForKey:kColorMapBackground];
-    return [_colorMap processedBackgroundColorForBackgroundColor:unprocessedColor];
+    NSColor *unprocessedColor = [_screen.colorMap colorForKey:kColorMapBackground];
+    return [_screen.colorMap processedBackgroundColorForBackgroundColor:unprocessedColor];
 }
 
 - (void)textViewPostTabContentsChangedNotification
@@ -9871,7 +9867,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (NSColor *)textViewBadgeColor {
-    return [iTermProfilePreferences colorForKey:KEY_BADGE_COLOR dark:_colorMap.darkMode profile:_profile];
+    return [iTermProfilePreferences colorForKey:KEY_BADGE_COLOR dark:_screen.colorMap.darkMode profile:_profile];
 }
 
 // Returns a dictionary with only string values by converting non-strings.
@@ -10321,8 +10317,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 - (void)openAddTriggerViewControllerWithText:(NSString *)text {
     __weak __typeof(self) weakSelf = self;
     iTermColorSuggester *cs =
-        [[[iTermColorSuggester alloc] initWithDefaultTextColor:[_colorMap colorForKey:kColorMapForeground]
-                                        defaultBackgroundColor:[_colorMap colorForKey:kColorMapBackground]
+        [[[iTermColorSuggester alloc] initWithDefaultTextColor:[_screen.colorMap colorForKey:kColorMapForeground]
+                                        defaultBackgroundColor:[_screen.colorMap colorForKey:kColorMapBackground]
                                              minimumDifference:0.25
                                                           seed:[text hash]] autorelease];
     [iTermAddTriggerViewController addTriggerForText:text
@@ -10853,7 +10849,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [self loadInitialColorTableAndResetCursorGuide];
     _cursorGuideSettingHasChanged = NO;
     _textview.highlightCursorLine = [iTermProfilePreferences boolForColorKey:KEY_USE_CURSOR_GUIDE
-                                                                        dark:_colorMap.darkMode
+                                                                        dark:_screen.colorMap.darkMode
                                                                      profile:_profile];
     self.cursorTypeOverride = nil;
     [_textview setNeedsDisplay:YES];
@@ -10863,7 +10859,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 - (void)restoreColorsFromProfile {
     NSMutableDictionary<NSString *, id> *change = [NSMutableDictionary dictionary];
-    for (NSString *key in [[_colorMap colormapKeyToProfileKeyDictionary] allValues]) {
+    for (NSString *key in [[_screen.colorMap colormapKeyToProfileKeyDictionary] allValues]) {
         if (![_overriddenFields containsObject:key]) {
             continue;
         }
@@ -10901,7 +10897,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         case iTermLoggingStyleHTML:
             [_logging logData:[data htmlDataWithForeground:_terminal.foregroundColorCode
                                                 background:_terminal.backgroundColorCode
-                                                  colorMap:_colorMap
+                                                  colorMap:_screen.colorMap
                                         useCustomBoldColor:_textview.useCustomBoldColor
                                               brightenBold:_textview.brightenBold]];
             break;
@@ -11790,7 +11786,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (iTermColorMap *)screenColorMap {
-    return _colorMap;
+    return _screen.colorMap;
 }
 
 // indexes will be in [0,255].
@@ -11831,11 +11827,11 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         return;
     }
 
-    NSString *profileKey = [_colorMap profileKeyForColorMapKey:key];
+    NSString *profileKey = [_screen.colorMap profileKeyForColorMapKey:key];
     if (profileKey) {
         [self setSessionSpecificProfileValues:@{ profileKey: [color dictionaryValue] }];
     } else {
-        [_colorMap setColor:color forKey:key];
+        [_screen.colorMap setColor:color forKey:key];
     }
 }
 
@@ -13086,18 +13082,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     self.variablesScope.applicationKeypad = mode;
 }
 
-- (VT100SavedColorsSlot *)screenSavedColorsSlot {
-    return [[[VT100SavedColorsSlot alloc] initWithTextColor:[_colorMap colorForKey:kColorMapForeground]
-                                                                  backgroundColor:[_colorMap colorForKey:kColorMapBackground]
-                                                               selectionTextColor:[_colorMap colorForKey:kColorMapSelectedText]
-                                                         selectionBackgroundColor:[_colorMap colorForKey:kColorMapSelection]
-                                                             indexedColorProvider:^NSColor *(NSInteger index) {
-        return [_colorMap colorForKey:kColorMap8bitBase + index] ?: [NSColor clearColor];
-    }] autorelease];
-}
-
 - (void)screenRestoreColorsFromSlot:(VT100SavedColorsSlot *)slot {
-    const BOOL dark = _colorMap.darkMode;
+    const BOOL dark = _screen.colorMap.darkMode;
     NSMutableDictionary *dict = [[@{ iTermAmendedColorKey(KEY_FOREGROUND_COLOR, _profile, dark): slot.text.dictionaryValue,
                                      iTermAmendedColorKey(KEY_BACKGROUND_COLOR, _profile, dark): slot.background.dictionaryValue,
                                      iTermAmendedColorKey(KEY_SELECTED_TEXT_COLOR, _profile, dark): slot.selectionText.dictionaryValue,
@@ -13107,8 +13093,6 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
             NSString *baseKey = [NSString stringWithFormat:KEYTEMPLATE_ANSI_X_COLOR, i];
             NSString *profileKey = iTermAmendedColorKey(baseKey, _profile, dark);
             dict[profileKey] = [slot.indexedColors[i] dictionaryValue];
-        } else {
-            [_colorMap setColor:slot.indexedColors[i] forKey:kColorMap8bitBase + i];
         }
     }
     [self setSessionSpecificProfileValues:dict];
@@ -13310,7 +13294,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)sessionViewDimmingAmountDidChange:(CGFloat)newDimmingAmount {
-    self.colorMap.dimmingAmount = newDimmingAmount;
+    _screen.colorMap.dimmingAmount = newDimmingAmount;
 }
 
 - (BOOL)sessionViewIsVisible {
@@ -13369,7 +13353,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (NSColor *)sessionViewBackgroundColor {
-    return [_colorMap colorForKey:kColorMapBackground];
+    return [_screen.colorMap colorForKey:kColorMapBackground];
 }
 
 - (BOOL)textViewIsFirstResponder {
@@ -13644,7 +13628,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)sessionViewDidChangeEffectiveAppearance {
-    _colorMap.darkMode = self.view.effectiveAppearance.it_isDark;
+    _screen.colorMap.darkMode = self.view.effectiveAppearance.it_isDark;
     if ([iTermProfilePreferences boolForKey:KEY_USE_SEPARATE_COLORS_FOR_LIGHT_AND_DARK_MODE inProfile:self.profile]) {
         [self loadColorsFromProfile:self.profile];
     }
@@ -14112,7 +14096,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 - (NSColor *)textColorForStatusBar {
     return [[iTermTheme sharedInstance] statusBarTextColorForEffectiveAppearance:_view.effectiveAppearance
-                                                                        colorMap:_colorMap
+                                                                        colorMap:_screen.colorMap
                                                                         tabStyle:[self.view.window.ptyWindow it_tabStyle]
                                                                    mainAndActive:(self.view.window.isMainWindow && NSApp.isActive)];
 }
@@ -14830,8 +14814,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
     [loggingHelper logWithoutTimestamp:[NSData styleSheetWithFontFamily:self.textview.font.familyName
                                                                fontSize:self.textview.font.pointSize
-                                                        backgroundColor:[_colorMap colorForKey:kColorMapBackground]
-                                                              textColor:[_colorMap colorForKey:kColorMapForeground]]];
+                                                        backgroundColor:[_screen.colorMap colorForKey:kColorMapBackground]
+                                                              textColor:[_screen.colorMap colorForKey:kColorMapForeground]]];
 }
 
 - (void)loggingHelperStop:(iTermLoggingHelper *)loggingHelper {
@@ -15024,7 +15008,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (NSAppearance *)composerManagerAppearance:(iTermComposerManager *)composerManager {
-    NSColor *color = [_colorMap colorForKey:kColorMapBackground];
+    NSColor *color = [_screen.colorMap colorForKey:kColorMapBackground];
     if ([color isDark]) {
         return [NSAppearance appearanceNamed:NSAppearanceNameDarkAqua];
     }
@@ -15247,6 +15231,20 @@ getOptionKeyBehaviorLeft:(iTermOptionKeyBehavior *)left
 
 - (void)filterDestinationRemoveLastLine {
     [_screen removeLastLine];
+}
+
+#pragma mark - iTermColorMapDelegate
+
+- (void)colorMap:(iTermColorMap *)colorMap didChangeColorForKey:(iTermColorMapKey)theKey {
+    [_textview colorMap:colorMap didChangeColorForKey:theKey];
+}
+
+- (void)colorMap:(iTermColorMap *)colorMap dimmingAmountDidChangeTo:(double)dimmingAmount {
+    [_textview colorMap:colorMap dimmingAmountDidChangeTo:dimmingAmount];
+
+}
+- (void)colorMap:(iTermColorMap *)colorMap mutingAmountDidChangeTo:(double)mutingAmount {
+    [_textview colorMap:colorMap mutingAmountDidChangeTo:mutingAmount];
 }
 
 @end

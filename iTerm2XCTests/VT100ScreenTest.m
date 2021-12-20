@@ -1026,11 +1026,6 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
 }
 
 
-- (VT100SavedColorsSlot *)screenSavedColorsSlot {
-    return nil;
-}
-
-
 - (void)screenSetSubtitle:(NSString *)subtitle {
 }
 

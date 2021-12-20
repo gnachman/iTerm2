@@ -1,4 +1,5 @@
 #import <Cocoa/Cocoa.h>
+#import "iTermColorMap.h"
 #import "PTYTextViewDataSource.h"
 #import "VT100TerminalDelegate.h"
 #import "VT100Token.h"
@@ -8,7 +9,7 @@
 @class iTermColorMap;
 @class iTermSelection;
 
-@protocol VT100ScreenDelegate <NSObject>
+@protocol VT100ScreenDelegate <NSObject, iTermColorMapDelegate>
 
 // Returns the session's unique ID.
 - (NSString *)screenSessionGuid;
@@ -299,7 +300,6 @@
                            metadata:(iTermImmutableMetadata)metadata
                              length:(int)length;
 - (void)screenApplicationKeypadModeDidChange:(BOOL)mode;
-- (VT100SavedColorsSlot *)screenSavedColorsSlot;
 - (void)screenRestoreColorsFromSlot:(VT100SavedColorsSlot *)slot;
 - (int)screenMaximumTheoreticalImageDimension;
 

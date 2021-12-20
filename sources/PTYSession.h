@@ -408,7 +408,6 @@ backgroundColor:(NSColor *)backgroundColor;
 @property(nonatomic, copy) NSString *backgroundImagePath;  // Used by scripting
 @property(nonatomic, retain) iTermImageWrapper *backgroundImage;
 
-@property(nonatomic, retain) iTermColorMap *colorMap;
 @property(nonatomic, assign) float transparency;
 @property(nonatomic, assign) BOOL useBoldFont;
 @property(nonatomic, assign) iTermThinStrokesSetting thinStrokes;

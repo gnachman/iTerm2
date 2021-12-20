@@ -311,7 +311,7 @@
 }
 
 - (NSColor *)backgroundColor {
-    return [self.colorMap colorForKey:kColorMapBackground];
+    return [self.screen.colorMap colorForKey:kColorMapBackground];
 }
 
 - (void)setBackgroundColor:(NSColor *)color {
@@ -319,7 +319,7 @@
 }
 
 - (NSColor *)boldColor {
-    return [self.colorMap colorForKey:kColorMapBold];
+    return [self.screen.colorMap colorForKey:kColorMapBold];
 }
 
 - (void)setBoldColor:(NSColor *)color {
@@ -327,7 +327,7 @@
 }
 
 - (NSColor *)cursorColor {
-    return [self.colorMap colorForKey:kColorMapCursor];
+    return [self.screen.colorMap colorForKey:kColorMapCursor];
 }
 
 - (void)setCursorColor:(NSColor *)color {
@@ -335,7 +335,7 @@
 }
 
 - (NSColor *)cursorTextColor {
-    return [self.colorMap colorForKey:kColorMapCursorText];
+    return [self.screen.colorMap colorForKey:kColorMapCursorText];
 }
 
 - (void)setCursorTextColor:(NSColor *)color {
@@ -343,7 +343,7 @@
 }
 
 - (NSColor *)foregroundColor {
-    return [self.colorMap colorForKey:kColorMapForeground];
+    return [self.screen.colorMap colorForKey:kColorMapForeground];
 }
 
 - (void)setForegroundColor:(NSColor *)color {
@@ -351,7 +351,7 @@
 }
 
 - (NSColor *)underlineColor {
-    return [self.colorMap colorForKey:kColorMapUnderline];
+    return [self.screen.colorMap colorForKey:kColorMapUnderline];
 }
 
 - (void)setUnderlineColor:(NSColor *)color {
@@ -359,7 +359,7 @@
 }
 
 - (NSColor *)selectedTextColor {
-    return [self.colorMap colorForKey:kColorMapSelectedText];
+    return [self.screen.colorMap colorForKey:kColorMapSelectedText];
 }
 
 - (void)setSelectedTextColor:(NSColor *)color {
@@ -367,7 +367,7 @@
 }
 
 - (NSColor *)selectionColor {
-    return [self.colorMap colorForKey:kColorMapSelection];
+    return [self.screen.colorMap colorForKey:kColorMapSelection];
 }
 
 - (void)setSelectionColor:(NSColor *)color {
@@ -393,7 +393,7 @@
 #pragma mark ANSI Colors
 
 - (NSColor *)ansiBlackColor {
-    return [self.colorMap colorForKey:kColorMapAnsiBlack];
+    return [self.screen.colorMap colorForKey:kColorMapAnsiBlack];
 }
 
 - (void)setAnsiBlackColor:(NSColor*)color {
@@ -401,7 +401,7 @@
 }
 
 - (NSColor *)ansiRedColor {
-    return [self.colorMap colorForKey:kColorMapAnsiRed];
+    return [self.screen.colorMap colorForKey:kColorMapAnsiRed];
 }
 
 - (void)setAnsiRedColor:(NSColor*)color {
@@ -409,7 +409,7 @@
 }
 
 - (NSColor *)ansiGreenColor {
-    return [self.colorMap colorForKey:kColorMapAnsiGreen];
+    return [self.screen.colorMap colorForKey:kColorMapAnsiGreen];
 }
 
 - (void)setAnsiGreenColor:(NSColor*)color {
@@ -417,7 +417,7 @@
 }
 
 - (NSColor *)ansiYellowColor {
-    return [self.colorMap colorForKey:kColorMapAnsiYellow];
+    return [self.screen.colorMap colorForKey:kColorMapAnsiYellow];
 }
 
 - (void)setAnsiYellowColor:(NSColor*)color {
@@ -425,7 +425,7 @@
 }
 
 - (NSColor *)ansiBlueColor {
-    return [self.colorMap colorForKey:kColorMapAnsiBlue];
+    return [self.screen.colorMap colorForKey:kColorMapAnsiBlue];
 }
 
 - (void)setAnsiBlueColor:(NSColor*)color {
@@ -433,7 +433,7 @@
 }
 
 - (NSColor *)ansiMagentaColor {
-    return [self.colorMap colorForKey:kColorMapAnsiMagenta];
+    return [self.screen.colorMap colorForKey:kColorMapAnsiMagenta];
 }
 
 - (void)setAnsiMagentaColor:(NSColor*)color {
@@ -441,7 +441,7 @@
 }
 
 - (NSColor *)ansiCyanColor {
-    return [self.colorMap colorForKey:kColorMapAnsiCyan];
+    return [self.screen.colorMap colorForKey:kColorMapAnsiCyan];
 }
 
 - (void)setAnsiCyanColor:(NSColor*)color {
@@ -449,7 +449,7 @@
 }
 
 - (NSColor *)ansiWhiteColor {
-    return [self.colorMap colorForKey:kColorMapAnsiWhite];
+    return [self.screen.colorMap colorForKey:kColorMapAnsiWhite];
 }
 
 - (void)setAnsiWhiteColor:(NSColor*)color {
@@ -459,7 +459,7 @@
 #pragma mark Ansi Bright Colors
 
 - (NSColor *)ansiBrightBlackColor {
-    return [self.colorMap colorForKey:kColorMapAnsiBrightModifier + kColorMapAnsiBlack];
+    return [self.screen.colorMap colorForKey:kColorMapAnsiBrightModifier + kColorMapAnsiBlack];
 }
 
 - (void)setAnsiBrightBlackColor:(NSColor*)color {
@@ -467,7 +467,7 @@
 }
 
 - (NSColor *)ansiBrightRedColor {
-    return [self.colorMap colorForKey:kColorMapAnsiBrightModifier + kColorMapAnsiRed];
+    return [self.screen.colorMap colorForKey:kColorMapAnsiBrightModifier + kColorMapAnsiRed];
 }
 
 - (void)setAnsiBrightRedColor:(NSColor*)color {
@@ -475,7 +475,7 @@
 }
 
 - (NSColor *)ansiBrightGreenColor {
-    return [self.colorMap colorForKey:kColorMapAnsiBrightModifier + kColorMapAnsiGreen];
+    return [self.screen.colorMap colorForKey:kColorMapAnsiBrightModifier + kColorMapAnsiGreen];
 }
 
 - (void)setAnsiBrightGreenColor:(NSColor*)color {
@@ -483,7 +483,7 @@
 }
 
 - (NSColor *)ansiBrightYellowColor {
-    return [self.colorMap colorForKey:kColorMapAnsiBrightModifier + kColorMapAnsiYellow];
+    return [self.screen.colorMap colorForKey:kColorMapAnsiBrightModifier + kColorMapAnsiYellow];
 }
 
 - (void)setAnsiBrightYellowColor:(NSColor*)color {
@@ -491,7 +491,7 @@
 }
 
 - (NSColor *)ansiBrightBlueColor {
-    return [self.colorMap colorForKey:kColorMapAnsiBrightModifier + kColorMapAnsiBlue];
+    return [self.screen.colorMap colorForKey:kColorMapAnsiBrightModifier + kColorMapAnsiBlue];
 }
 
 - (void)setAnsiBrightBlueColor:(NSColor*)color {
@@ -499,7 +499,7 @@
 }
 
 - (NSColor *)ansiBrightMagentaColor {
-    return [self.colorMap colorForKey:kColorMapAnsiBrightModifier + kColorMapAnsiMagenta];
+    return [self.screen.colorMap colorForKey:kColorMapAnsiBrightModifier + kColorMapAnsiMagenta];
 }
 
 - (void)setAnsiBrightMagentaColor:(NSColor*)color {
@@ -507,7 +507,7 @@
 }
 
 - (NSColor *)ansiBrightCyanColor {
-    return [self.colorMap colorForKey:kColorMapAnsiBrightModifier + kColorMapAnsiCyan];
+    return [self.screen.colorMap colorForKey:kColorMapAnsiBrightModifier + kColorMapAnsiCyan];
 }
 
 - (void)setAnsiBrightCyanColor:(NSColor*)color {
@@ -515,7 +515,7 @@
 }
 
 - (NSColor *)ansiBrightWhiteColor {
-    return [self.colorMap colorForKey:kColorMapAnsiBrightModifier + kColorMapAnsiWhite];
+    return [self.screen.colorMap colorForKey:kColorMapAnsiBrightModifier + kColorMapAnsiWhite];
 }
 
 - (void)setAnsiBrightWhiteColor:(NSColor*)color {

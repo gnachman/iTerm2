@@ -90,11 +90,13 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 @synthesize dvr = dvr_;
 @synthesize delegate = delegate_;
 
-- (instancetype)initWithTerminal:(VT100Terminal *)terminal {
+- (instancetype)initWithTerminal:(VT100Terminal *)terminal darkMode:(BOOL)darkMode {
     self = [super init];
     if (self) {
         _mutableState = [[VT100ScreenMutableState alloc] init];
         _state = [_mutableState retain];
+        _colorMap = [[iTermColorMap alloc] init];
+        _colorMap.darkMode = darkMode;
 
         assert(terminal);
         [self setTerminal:terminal];
@@ -122,6 +124,7 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     [_temporaryDoubleBuffer release];
     [_state release];
     [_mutableState release];
+    [_colorMap release];
 
     [super dealloc];
 }
@@ -131,6 +134,11 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 }
 
 #pragma mark - APIs
+
+- (void)setDelegate:(id<VT100ScreenDelegate>)delegate {
+    _colorMap.delegate = delegate;
+    delegate_ = delegate;
+}
 
 - (void)setTerminal:(VT100Terminal *)terminal {
     DLog(@"set terminal=%@", terminal);
@@ -2815,10 +2823,21 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (VT100SavedColorsSlot *)terminalSavedColorsSlot {
-    return [delegate_ screenSavedColorsSlot];
+    return [[[VT100SavedColorsSlot alloc] initWithTextColor:[_colorMap colorForKey:kColorMapForeground]
+                                            backgroundColor:[_colorMap colorForKey:kColorMapBackground]
+                                         selectionTextColor:[_colorMap colorForKey:kColorMapSelectedText]
+                                   selectionBackgroundColor:[_colorMap colorForKey:kColorMapSelection]
+                                       indexedColorProvider:^NSColor *(NSInteger index) {
+        return [_colorMap colorForKey:kColorMap8bitBase + index] ?: [NSColor clearColor];
+    }] autorelease];
 }
 
 - (void)terminalRestoreColorsFromSlot:(VT100SavedColorsSlot *)slot {
+    for (int i = 0; i < MIN(kColorMapNumberOf8BitColors, slot.indexedColors.count); i++) {
+        if (i >= 16) {
+            [_colorMap setColor:slot.indexedColors[i] forKey:kColorMap8bitBase + i];
+        }
+    }
     [delegate_ screenRestoreColorsFromSlot:slot];
 }
 

@@ -1,4 +1,5 @@
 #import <Cocoa/Cocoa.h>
+#import "iTermColorMap.h"
 #import "iTermEncoderAdapter.h"
 #import "iTermIntervalTreeObserver.h"
 #import "iTermMetadata.h"
@@ -75,8 +76,10 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 
 @property(nonatomic, weak) id<iTermIntervalTreeObserver> intervalTreeObserver;
 
+@property(nonatomic, retain) iTermColorMap *colorMap;
+
 // Designated initializer.
-- (instancetype)initWithTerminal:(VT100Terminal *)terminal;
+- (instancetype)initWithTerminal:(VT100Terminal *)terminal darkMode:(BOOL)darkMode;
 
 // Indicates if line drawing mode is enabled for any character set, or if the current character set
 // is not G0.
