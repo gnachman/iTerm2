@@ -112,6 +112,10 @@ NS_ASSUME_NONNULL_BEGIN
 // Initial size before calling -restoreFromDictionary… or -1,-1 if invalid.
 @property (nonatomic, readonly) VT100GridSize initialSize;
 
+// A rarely reset count of the number of lines lost to scrollback overflow. Adding this to a
+// line number gives a unique line number that won't be reused when the linebuffer overflows.
+@property (nonatomic, readonly) long long cumulativeScrollbackOverflow;
+
 @end
 
 @interface VT100ScreenMutableState: NSObject<VT100ScreenState, NSCopying>
@@ -164,6 +168,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readwrite) VT100GridAbsCoord startOfRunningCommandOutput;
 @property (nonatomic, readwrite) VT100TerminalProtectedMode protectedMode;
 @property (nonatomic, readwrite) VT100GridSize initialSize;
+@property (nonatomic, readwrite) long long cumulativeScrollbackOverflow;
 
 - (id<VT100ScreenState>)copy;
 

@@ -42,10 +42,6 @@ VT100InlineImageHelperDelegate> {
     VT100ScreenMutableState *_mutableState;
 
     __weak id<VT100ScreenDelegate> delegate_;  // PTYSession implements this
-
-    // A rarely reset count of the number of lines lost to scrollback overflow. Adding this to a
-    // line number gives a unique line number that won't be reused when the linebuffer overflows.
-    long long cumulativeScrollbackOverflow_;
 }
 
 @property(nonatomic, retain) VT100ScreenMark *lastCommandMark;

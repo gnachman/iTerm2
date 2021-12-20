@@ -441,9 +441,8 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     [self mutResetScrollbackOverflow];
 }
 
-- (long long)totalScrollbackOverflow
-{
-    return cumulativeScrollbackOverflow_;
+- (long long)totalScrollbackOverflow {
+    return _state.cumulativeScrollbackOverflow;
 }
 
 - (long long)absoluteLineNumberOfCursor

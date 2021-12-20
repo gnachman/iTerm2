@@ -3757,7 +3757,7 @@ static inline void VT100ScreenEraseCell(screen_char_t *sct, iTermExternalAttribu
 
 - (void)incrementOverflowBy:(int)overflowCount {
     _mutableState.scrollbackOverflow += overflowCount;
-    cumulativeScrollbackOverflow_ += overflowCount;
+    _mutableState.cumulativeScrollbackOverflow += overflowCount;
     [self.intervalTreeObserver intervalTreeVisibleRangeDidChange];
 }
 
