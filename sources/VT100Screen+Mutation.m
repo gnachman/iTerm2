@@ -43,7 +43,7 @@
 }
 
 - (LineBuffer *)mutableLineBuffer {
-    return (LineBuffer *)linebuffer_;
+    return (LineBuffer *)_mutableState.linebuffer;
 }
 
 #pragma mark - Resizing
@@ -90,12 +90,12 @@
     const int usedHeight = [_state.currentGrid numberOfLinesUsed];
 
     VT100Grid *copyOfAltGrid = [[self.mutableAltGrid copy] autorelease];
-    LineBuffer *realLineBuffer = linebuffer_;
+    LineBuffer *realLineBuffer = _mutableState.linebuffer;
 
     // This is an array of tuples:
     // [LineBufferPositionRange, iTermSubSelection]
     NSArray *altScreenSubSelectionTuples = nil;
-    LineBufferPosition *originalLastPos = [linebuffer_ lastPosition];
+    LineBufferPosition *originalLastPos = [_mutableState.linebuffer lastPosition];
     BOOL wasShowingAltScreen = (_state.currentGrid == _state.altGrid);
 
 
@@ -121,16 +121,16 @@
 
     // Append primary grid to line buffer.
     [self appendScreen:_state.primaryGrid
-          toScrollback:linebuffer_
+          toScrollback:_mutableState.linebuffer
         withUsedHeight:[_state.primaryGrid numberOfLinesUsed]
              newHeight:newSize.height];
-    DLog(@"History after appending screen to scrollback:\n%@", [linebuffer_ debugString]);
+    DLog(@"History after appending screen to scrollback:\n%@", [_mutableState.linebuffer debugString]);
 
     VT100GridCoordRange convertedRangeOfVisibleLines;
     const BOOL rangeOfVisibleLinesConvertedCorrectly = [self convertRange:previouslyVisibleLines
                                                                   toWidth:newSize.width
                                                                        to:&convertedRangeOfVisibleLines
-                                                             inLineBuffer:linebuffer_
+                                                             inLineBuffer:_mutableState.linebuffer
                                                             tolerateEmpty:YES];
 
     // Contains iTermSubSelection*s updated for the new screen size. Used
@@ -147,9 +147,9 @@
     self.mutableCurrentGrid.size = newSize;
 
     // Restore the screen contents that were pushed onto the linebuffer.
-    [self.mutableCurrentGrid restoreScreenFromLineBuffer:wasShowingAltScreen ? altScreenLineBuffer : linebuffer_
+    [self.mutableCurrentGrid restoreScreenFromLineBuffer:wasShowingAltScreen ? altScreenLineBuffer : _mutableState.linebuffer
                                          withDefaultChar:[_state.currentGrid defaultChar]
-                                       maxLinesToRestore:[wasShowingAltScreen ? altScreenLineBuffer : linebuffer_ numLinesWithWidth:_state.currentGrid.size.width]];
+                                       maxLinesToRestore:[wasShowingAltScreen ? altScreenLineBuffer : _mutableState.linebuffer numLinesWithWidth:_state.currentGrid.size.width]];
     DLog(@"After restoring screen from line buffer:\n%@", [self compactLineDumpWithHistoryAndContinuationMarksAndLineNumbers]);
 
     if (wasShowingAltScreen) {
@@ -446,7 +446,7 @@
         linesDropped = [self.mutableLineBuffer dropExcessLinesWithWidth:_state.currentGrid.size.width];
         [self incrementOverflowBy:linesDropped];
     }
-    int lines __attribute__((unused)) = [linebuffer_ numLinesWithWidth:_state.currentGrid.size.width];
+    int lines __attribute__((unused)) = [_mutableState.linebuffer numLinesWithWidth:_state.currentGrid.size.width];
     ITAssertWithMessage(lines >= 0, @"Negative lines");
 
     [selection clearSelection];
@@ -512,7 +512,7 @@
     // selection. Later this will be used to set the selection positions
     // relative to the end of the updated linebuffer (which could change as
     // lines from the base screen are pushed onto it).
-    LineBuffer *lineBufferWithAltScreen = [[linebuffer_ copy] autorelease];
+    LineBuffer *lineBufferWithAltScreen = [[_mutableState.linebuffer copy] autorelease];
     [self appendScreen:_state.currentGrid
           toScrollback:lineBufferWithAltScreen
         withUsedHeight:usedHeight
@@ -591,7 +591,7 @@
             const BOOL ok = [self convertRange:range
                                        toWidth:newWidth
                                             to:&newSelection
-                                  inLineBuffer:linebuffer_
+                                  inLineBuffer:_mutableState.linebuffer
                                  tolerateEmpty:NO];
             if (ok) {
                 assert(range.start.y >= 0);
@@ -624,7 +624,7 @@
             if ([self convertRange:noteRange
                            toWidth:newWidth
                                 to:&newRange
-                      inLineBuffer:linebuffer_
+                      inLineBuffer:_mutableState.linebuffer
                      tolerateEmpty:[self intervalTreeObjectMayBeEmpty:note]]) {
                 assert(noteRange.start.y >= 0);
                 assert(noteRange.end.y >= 0);
@@ -891,11 +891,11 @@ static void SwapInt(int *a, int *b) {
     LineBufferPositionRange *selectionRange;
 
     // Temporarily swap in the passed-in linebuffer so the call below can access lines in the right line buffer.
-    LineBuffer *savedLineBuffer = linebuffer_;
-    linebuffer_ = lineBuffer;
+    LineBuffer *savedLineBuffer = _mutableState.linebuffer;
+    _mutableState.linebuffer = lineBuffer;
     selectionRange = [self positionRangeForCoordRange:range inLineBuffer:lineBuffer tolerateEmpty:tolerateEmpty];
     DLog(@"%@ -> %@", VT100GridCoordRangeDescription(range), selectionRange);
-    linebuffer_ = savedLineBuffer;
+    _mutableState.linebuffer = savedLineBuffer;
     if (!selectionRange) {
         // One case where this happens is when the start and end of the range are past the last
         // character in the line buffer (e.g., all nulls). It could occur when a note exists on a
@@ -937,13 +937,13 @@ static void SwapInt(int *a, int *b) {
 // buffer. Given a pair of positions, it converts them to a range. If a position is between
 // originalLastPos and newLastPos, it's invalid. Likewise, if a position is in the first
 // |linesMovedUp| lines of the screen, it's invalid.
-// NOTE: This assumes that linebuffer_ contains the history plus lines from the primary grid.
+// NOTE: This assumes that _mutableState.linebuffer contains the history plus lines from the primary grid.
 // Returns YES if the range is valid, NO if it could not be converted (e.g., because it was entirely
 // in the area of dropped lines).
 /*
  * 0 History      }                                                                     }
  * 1 History      } These lines were in history before resizing began                   }
- * 2 History      }                    <- originalLimit                                 } equal to linebuffer_
+ * 2 History      }                    <- originalLimit                                 } equal to _mutableState.linebuffer
  * 3 Line from primary grid            <- limit (pushed into history due to resize)     }
  * 4 Line to be lost from alt grid     <- linesMovedUp = 1 because this one line will be lost
  * 5 Line from alt grid                }
@@ -1031,7 +1031,7 @@ static void SwapInt(int *a, int *b) {
                                                         width:newWidth
                                                  extendsRight:NO
                                                            ok:NULL];
-    int numScrollbackLines = [linebuffer_ numLinesWithWidth:newWidth];
+    int numScrollbackLines = [_mutableState.linebuffer numLinesWithWidth:newWidth];
 
     // |linesMovedUp| wrapped lines will not be restored into the alt grid later on starting at |limit|
     if (resultRangePtr->start.y >= numScrollbackLines) {
@@ -1331,7 +1331,7 @@ static void SwapInt(int *a, int *b) {
     [delegate_ screenTriggerableChangeDidOccur];
     // This clears the screen.
     int x = _state.currentGrid.cursorX;
-    [self incrementOverflowBy:[self.mutableCurrentGrid resetWithLineBuffer:linebuffer_
+    [self incrementOverflowBy:[self.mutableCurrentGrid resetWithLineBuffer:_mutableState.linebuffer
                                                        unlimitedScrollback:_state.unlimitedScrollback
                                                         preserveCursorLine:linesToSave > 0
                                                      additionalLinesToSave:MAX(0, linesToSave - 1)]];
@@ -1340,8 +1340,7 @@ static void SwapInt(int *a, int *b) {
 }
 
 - (void)mutClearScrollbackBuffer {
-    [linebuffer_ release];
-    linebuffer_ = [[LineBuffer alloc] init];
+    _mutableState.linebuffer = [[[LineBuffer alloc] init] autorelease];
     [self.mutableLineBuffer setMaxLines:_state.maxScrollbackLines];
     [delegate_ screenClearHighlights];
     [self.mutableCurrentGrid markAllCharsDirty:YES];
@@ -1360,7 +1359,7 @@ static void SwapInt(int *a, int *b) {
 
 - (void)clearScrollbackBufferFromLine:(int)line {
     const int width = self.width;
-    const int scrollbackLines = [linebuffer_ numberOfWrappedLinesWithWidth:width];
+    const int scrollbackLines = [_mutableState.linebuffer numberOfWrappedLinesWithWidth:width];
     if (scrollbackLines < line) {
         return;
     }
@@ -1375,9 +1374,9 @@ static void SwapInt(int *a, int *b) {
 
 - (void)mutRemoveLastLine {
     DLog(@"BEGIN removeLastLine with cursor at %@", VT100GridCoordDescription(self.currentGrid.cursor));
-    const int preHocNumberOfLines = [linebuffer_ numberOfWrappedLinesWithWidth:self.width];
+    const int preHocNumberOfLines = [_mutableState.linebuffer numberOfWrappedLinesWithWidth:self.width];
     const int numberOfLinesAppended = [self.mutableCurrentGrid appendLines:self.currentGrid.numberOfLinesUsed
-                                                              toLineBuffer:linebuffer_];
+                                                              toLineBuffer:_mutableState.linebuffer];
     if (numberOfLinesAppended <= 0) {
         return;
     }
@@ -1387,10 +1386,10 @@ static void SwapInt(int *a, int *b) {
                                    toChar:self.currentGrid.defaultChar
                        externalAttributes:nil];
     [self.mutableLineBuffer removeLastRawLine];
-    const int postHocNumberOfLines = [linebuffer_ numberOfWrappedLinesWithWidth:self.width];
+    const int postHocNumberOfLines = [_mutableState.linebuffer numberOfWrappedLinesWithWidth:self.width];
     const int numberOfLinesToPop = MAX(0, postHocNumberOfLines - preHocNumberOfLines);
 
-    [self.mutableCurrentGrid restoreScreenFromLineBuffer:linebuffer_
+    [self.mutableCurrentGrid restoreScreenFromLineBuffer:_mutableState.linebuffer
                                          withDefaultChar:[self.currentGrid defaultChar]
                                        maxLinesToRestore:numberOfLinesToPop];
     // One of the lines "removed" will be the one the cursor is on. Don't need to move it up for
@@ -1502,7 +1501,7 @@ static void SwapInt(int *a, int *b) {
         if (preservePrompt) {
             [self clearAndResetScreenSavingLines:linesToSave];
         } else {
-            [self incrementOverflowBy:[self.mutableCurrentGrid resetWithLineBuffer:linebuffer_
+            [self incrementOverflowBy:[self.mutableCurrentGrid resetWithLineBuffer:_mutableState.linebuffer
                                                                unlimitedScrollback:_state.unlimitedScrollback
                                                                 preserveCursorLine:NO
                                                              additionalLinesToSave:0]];
@@ -1558,7 +1557,7 @@ static void SwapInt(int *a, int *b) {
          firstChar,
          _state.currentGrid.cursorX,
          _state.currentGrid.cursorY,
-         _state.currentGrid.cursorY + [linebuffer_ numLinesWithWidth:_state.currentGrid.size.width]);
+         _state.currentGrid.cursorY + [_mutableState.linebuffer numLinesWithWidth:_state.currentGrid.size.width]);
 
     // Allocate a buffer of screen_char_t and place the new string in it.
     const int kStaticBufferElements = 1024;
@@ -1666,7 +1665,7 @@ static void SwapInt(int *a, int *b) {
         LineBuffer *lineBuffer = nil;
         if (_state.currentGrid != _state.altGrid || _state.saveToScrollbackInAlternateScreen) {
             // Not in alt screen or it's ok to scroll into line buffer while in alt screen.k
-            lineBuffer = linebuffer_;
+            lineBuffer = _mutableState.linebuffer;
         }
         [self incrementOverflowBy:[self.mutableCurrentGrid appendCharsAtCursor:buffer
                                                                         length:len
@@ -1754,7 +1753,7 @@ static void SwapInt(int *a, int *b) {
          firstChar,
          _state.currentGrid.cursorX,
          _state.currentGrid.cursorY,
-         _state.currentGrid.cursorY + [linebuffer_ numLinesWithWidth:_state.currentGrid.size.width]);
+         _state.currentGrid.cursorY + [_mutableState.linebuffer numLinesWithWidth:_state.currentGrid.size.width]);
 
     screen_char_t *buffer;
     buffer = asciiData->screenChars->buffer;
@@ -1798,7 +1797,7 @@ static void SwapInt(int *a, int *b) {
     [self mutClearBuffer];
     [self.mutableLineBuffer appendContentsOfLineBuffer:lineBuffer width:_state.currentGrid.size.width];
     const int numberOfLines = [self numberOfLines];
-    [self.mutableCurrentGrid restoreScreenFromLineBuffer:linebuffer_
+    [self.mutableCurrentGrid restoreScreenFromLineBuffer:_mutableState.linebuffer
                                          withDefaultChar:[self.currentGrid defaultChar]
                                        maxLinesToRestore:MIN(numberOfLines, self.height)];
 }
@@ -1874,9 +1873,9 @@ static void SwapInt(int *a, int *b) {
     // We don't know the cursor position yet but give the linebuffer something
     // so it doesn't get confused in restoreScreenFromScrollback.
     [self.mutableLineBuffer setCursor:0];
-    [self.mutableCurrentGrid restoreScreenFromLineBuffer:linebuffer_
+    [self.mutableCurrentGrid restoreScreenFromLineBuffer:_mutableState.linebuffer
                                          withDefaultChar:[_state.currentGrid defaultChar]
-                                       maxLinesToRestore:MIN([linebuffer_ numLinesWithWidth:_state.currentGrid.size.width],
+                                       maxLinesToRestore:MIN([_mutableState.linebuffer numLinesWithWidth:_state.currentGrid.size.width],
                                                              _state.currentGrid.size.height - numberOfConsecutiveEmptyLines)];
 }
 
@@ -1937,11 +1936,11 @@ static void SwapInt(int *a, int *b) {
     const int maxLines = MAX(1000, maxArea / effectiveWidth);
 
     // Make a copy of the last blocks of the line buffer; enough to contain at least |maxLines|.
-    LineBuffer *temp = [[linebuffer_ copyWithMinimumLines:maxLines
-                                                  atWidth:effectiveWidth] autorelease];
+    LineBuffer *temp = [[_mutableState.linebuffer copyWithMinimumLines:maxLines
+                                                               atWidth:effectiveWidth] autorelease];
 
     // Offset for intervals so 0 is the first char in the provided contents.
-    int linesDroppedForBrevity = ([linebuffer_ numLinesWithWidth:effectiveWidth] -
+    int linesDroppedForBrevity = ([_mutableState.linebuffer numLinesWithWidth:effectiveWidth] -
                                   [temp numLinesWithWidth:effectiveWidth]);
     long long intervalOffset =
         -(linesDroppedForBrevity + [self totalScrollbackOverflow]) * (self.width + 1);
@@ -1986,8 +1985,7 @@ static void SwapInt(int *a, int *b) {
         if (!_state.unlimitedScrollback) {
             [lineBuffer dropExcessLinesWithWidth:self.width];
         }
-        [linebuffer_ release];
-        linebuffer_ = lineBuffer;
+        _mutableState.linebuffer = [lineBuffer autorelease];
         int maxLinesToRestore;
         if ([iTermAdvancedSettingsModel runJobsInServers] && reattached) {
             maxLinesToRestore = _state.currentGrid.size.height;
@@ -1996,7 +1994,7 @@ static void SwapInt(int *a, int *b) {
         }
         const int linesRestored = MIN(MAX(0, maxLinesToRestore),
                                 [lineBuffer numLinesWithWidth:self.width]);
-        BOOL setCursorPosition = [self.mutableCurrentGrid restoreScreenFromLineBuffer:linebuffer_
+        BOOL setCursorPosition = [self.mutableCurrentGrid restoreScreenFromLineBuffer:_mutableState.linebuffer
                                                                       withDefaultChar:[_state.currentGrid defaultChar]
                                                                     maxLinesToRestore:linesRestored];
         DLog(@"appendFromDictionary: Grid size is %dx%d", _state.currentGrid.size.width, _state.currentGrid.size.height);
@@ -2061,8 +2059,7 @@ static void SwapInt(int *a, int *b) {
         if (!_state.unlimitedScrollback) {
             [lineBuffer dropExcessLinesWithWidth:self.width];
         }
-        [linebuffer_ release];
-        linebuffer_ = lineBuffer;
+        _mutableState.linebuffer = [lineBuffer autorelease];
     }
     BOOL addedBanner = NO;
     if (includeRestorationBanner && [iTermAdvancedSettingsModel showSessionRestoredBanner]) {
@@ -2369,7 +2366,7 @@ static void SwapInt(int *a, int *b) {
 }
 
 - (void)mutLinefeed {
-    LineBuffer *lineBufferToUse = linebuffer_;
+    LineBuffer *lineBufferToUse = _mutableState.linebuffer;
     const BOOL noScrollback = (_state.currentGrid == _state.altGrid && !_state.saveToScrollbackInAlternateScreen);
     if (noScrollback) {
         // In alt grid but saving to scrollback in alt-screen is off, so pass in a nil linebuffer.
@@ -2527,7 +2524,7 @@ static void SwapInt(int *a, int *b) {
         [self convertHardNewlineToSoftOnGridLine:_state.currentGrid.cursorY];
     }
     if (_state.currentGrid.cursorY == _state.currentGrid.bottomMargin) {
-        [self incrementOverflowBy:[self.mutableCurrentGrid scrollUpIntoLineBuffer:linebuffer_
+        [self incrementOverflowBy:[self.mutableCurrentGrid scrollUpIntoLineBuffer:_mutableState.linebuffer
                                                               unlimitedScrollback:_state.unlimitedScrollback
                                                           useScrollbackWithRegion:self.appendToScrollbackWithStatusBar
                                                                         softBreak:YES]];
@@ -2697,7 +2694,7 @@ static void SwapInt(int *a, int *b) {
     if (_state.currentGrid == _state.altGrid && !_state.saveToScrollbackInAlternateScreen) {
         lineBuffer = nil;
     } else {
-        lineBuffer = linebuffer_;
+        lineBuffer = _mutableState.linebuffer;
     }
     const int n = [_state.currentGrid numberOfNonEmptyLinesIncludingWhitespaceAsEmpty:YES];
     for (int i = 0; i < n; i++) {
@@ -3009,7 +3006,7 @@ static void SwapInt(int *a, int *b) {
     for (int i = 0;
          i < MIN(_state.currentGrid.size.height, n);
          i++) {
-        [self incrementOverflowBy:[self.mutableCurrentGrid scrollUpIntoLineBuffer:linebuffer_
+        [self incrementOverflowBy:[self.mutableCurrentGrid scrollUpIntoLineBuffer:_mutableState.linebuffer
                                                               unlimitedScrollback:_state.unlimitedScrollback
                                                           useScrollbackWithRegion:self.appendToScrollbackWithStatusBar
                                                                         softBreak:NO]];
@@ -3308,13 +3305,22 @@ static inline void VT100ScreenEraseCell(screen_char_t *sct, iTermExternalAttribu
 
 #pragma mark - Find on Page
 
+- (void)mutSaveFindContextAbsPos {
+    int linesPushed;
+    linesPushed = [self.mutableCurrentGrid appendLines:[_state.currentGrid numberOfLinesUsed]
+                                          toLineBuffer:_mutableState.linebuffer];
+
+    [self mutSaveFindContextPosition];
+    [self mutPopScrollbackLines:linesPushed];
+}
+
 - (void)mutRestoreSavedPositionToFindContext:(FindContext *)context {
     int linesPushed;
     linesPushed = [self.mutableCurrentGrid appendLines:[self.mutableCurrentGrid numberOfLinesUsed]
-                                          toLineBuffer:linebuffer_];
+                                          toLineBuffer:_mutableState.linebuffer];
 
-    [linebuffer_ storeLocationOfAbsPos:_mutableState.savedFindContextAbsPos
-                             inContext:context];
+    [_mutableState.linebuffer storeLocationOfAbsPos:_mutableState.savedFindContextAbsPos
+                                          inContext:context];
 
     [self mutPopScrollbackLines:linesPushed];
 }
@@ -3328,7 +3334,7 @@ static inline void VT100ScreenEraseCell(screen_char_t *sct, iTermExternalAttribu
             inContext:(FindContext*)context
       multipleResults:(BOOL)multipleResults {
     DLog(@"begin self=%@ aString=%@", self, aString);
-    LineBuffer *tempLineBuffer = [[linebuffer_ copy] autorelease];
+    LineBuffer *tempLineBuffer = [[_mutableState.linebuffer copy] autorelease];
     [tempLineBuffer seal];
 
     // Append the screen contents to the scrollback buffer so they are included in the search.
@@ -3393,17 +3399,17 @@ static inline void VT100ScreenEraseCell(screen_char_t *sct, iTermExternalAttribu
 }
 
 - (void)mutSaveFindContextPosition {
-    _mutableState.savedFindContextAbsPos = [linebuffer_ absPositionOfFindContext:_mutableState.findContext];
+    _mutableState.savedFindContextAbsPos = [_mutableState.linebuffer absPositionOfFindContext:_mutableState.findContext];
 }
 
 - (void)mutStoreLastPositionInLineBufferAsFindContextSavedPosition {
-    _mutableState.savedFindContextAbsPos = [[linebuffer_ lastPosition] absolutePosition];
+    _mutableState.savedFindContextAbsPos = [[_mutableState.linebuffer lastPosition] absolutePosition];
 }
 
 - (BOOL)mutContinueFindResultsInContext:(FindContext *)context
                                 toArray:(NSMutableArray *)results {
     // Append the screen contents to the scrollback buffer so they are included in the search.
-    LineBuffer *temporaryLineBuffer = [[linebuffer_ copy] autorelease];
+    LineBuffer *temporaryLineBuffer = [[_mutableState.linebuffer copy] autorelease];
     [temporaryLineBuffer seal];
 
 #warning TODO: This is an unusual use of mutation since it is only temporary. But probably Find should happen off-thread anyway.

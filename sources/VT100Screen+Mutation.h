@@ -157,6 +157,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (BOOL)mutCommandDidEndAtAbsCoord:(VT100GridAbsCoord)coord;
 - (void)mutRestoreInitialSize;
 - (void)mutSetProtectedMode:(VT100TerminalProtectedMode)mode;
+- (void)mutSaveFindContextAbsPos;
 
 @end
 

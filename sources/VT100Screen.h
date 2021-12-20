@@ -40,12 +40,7 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
     PTYNoteViewControllerDelegate,
     PTYTextViewDataSource,
     VT100GridDelegate,
-    VT100TerminalDelegate> {
-@private
-    // This is here because the unit test needs to manipulate it.
-    // Scrollback buffer
-    id<LineBufferReading> linebuffer_;
-}
+    VT100TerminalDelegate>
 
 @property(nonatomic, retain) VT100Terminal *terminal;
 @property(nonatomic, assign) BOOL audibleBell;

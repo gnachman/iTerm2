@@ -106,7 +106,6 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
         _temporaryDoubleBuffer.delegate = self;
 
         [self mutSetInitialTabStops];
-        linebuffer_ = [[LineBuffer alloc] init];
 
         [iTermNotificationController sharedInstance];
 
@@ -117,7 +116,6 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 }
 
 - (void)dealloc {
-    [linebuffer_ release];
     [dvr_ release];
     [_lastCommandMark release];
     _temporaryDoubleBuffer.delegate = nil;
@@ -255,7 +253,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
 // Returns the number of lines in scrollback plus screen height.
 - (int)numberOfLines {
-    return [linebuffer_ numLinesWithWidth:_state.currentGrid.size.width] + _state.currentGrid.size.height;
+    return [_state.linebuffer numLinesWithWidth:_state.currentGrid.size.width] + _state.currentGrid.size.height;
 }
 
 - (int)width {
@@ -277,13 +275,13 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 - (void)enumerateLinesInRange:(NSRange)range block:(void (^)(int, ScreenCharArray *, iTermImmutableMetadata, BOOL *))block {
     NSInteger i = range.location;
     const NSInteger lastLine = NSMaxRange(range);
-    const NSInteger numLinesInLineBuffer = [linebuffer_ numLinesWithWidth:_state.currentGrid.size.width];
+    const NSInteger numLinesInLineBuffer = [_state.linebuffer numLinesWithWidth:_state.currentGrid.size.width];
     const int width = self.width;
     while (i < lastLine) {
         if (i < numLinesInLineBuffer) {
-            [linebuffer_ enumerateLinesInRange:NSMakeRange(i, lastLine - i)
-                                         width:width
-                                         block:block];
+            [_state.linebuffer enumerateLinesInRange:NSMakeRange(i, lastLine - i)
+                                               width:width
+                                               block:block];
             i = numLinesInLineBuffer;
             continue;
         }
@@ -301,12 +299,12 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (ScreenCharArray *)screenCharArrayForLine:(int)line {
-    const NSInteger numLinesInLineBuffer = [linebuffer_ numLinesWithWidth:_state.currentGrid.size.width];
+    const NSInteger numLinesInLineBuffer = [_state.linebuffer numLinesWithWidth:_state.currentGrid.size.width];
     if (line < numLinesInLineBuffer) {
         const BOOL eligibleForDWC = (line == numLinesInLineBuffer - 1 &&
                                      [_state.currentGrid screenCharsAtLineNumber:0][1].code == DWC_RIGHT);
-        return [[linebuffer_ wrappedLineAtIndex:line width:self.width continuation:NULL] paddedToLength:self.width
-                                                                                         eligibleForDWC:eligibleForDWC];
+        return [[_state.linebuffer wrappedLineAtIndex:line width:self.width continuation:NULL] paddedToLength:self.width
+                                                                                               eligibleForDWC:eligibleForDWC];
     }
     return [self screenCharArrayAtScreenIndex:line - numLinesInLineBuffer];
 }
@@ -328,11 +326,11 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 - (iTermImmutableMetadata)metadataOnLine:(int)lineNumber {
     ITBetaAssert(lineNumber >= 0, @"Negative index to getLineAtIndex");
     const int width = _state.currentGrid.size.width;
-    int numLinesInLineBuffer = [linebuffer_ numLinesWithWidth:width];
+    int numLinesInLineBuffer = [_state.linebuffer numLinesWithWidth:width];
     if (lineNumber >= numLinesInLineBuffer) {
         return [_state.currentGrid immutableMetadataAtLineNumber:lineNumber - numLinesInLineBuffer];
     } else {
-        return [linebuffer_ metadataForLineNumber:lineNumber width:width];
+        return [_state.linebuffer metadataForLineNumber:lineNumber width:width];
     }
 }
 
@@ -356,17 +354,17 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 // grid.
 - (const screen_char_t *)getLineAtIndex:(int)theIndex withBuffer:(screen_char_t*)buffer {
     ITBetaAssert(theIndex >= 0, @"Negative index to getLineAtIndex");
-    int numLinesInLineBuffer = [linebuffer_ numLinesWithWidth:_state.currentGrid.size.width];
+    int numLinesInLineBuffer = [_state.linebuffer numLinesWithWidth:_state.currentGrid.size.width];
     if (theIndex >= numLinesInLineBuffer) {
         // Get a line from the circular screen buffer
         return [_state.currentGrid screenCharsAtLineNumber:(theIndex - numLinesInLineBuffer)];
     } else {
         // Get a line from the scrollback buffer.
         screen_char_t continuation;
-        int cont = [linebuffer_ copyLineToBuffer:buffer
-                                           width:_state.currentGrid.size.width
-                                         lineNum:theIndex
-                                    continuation:&continuation];
+        int cont = [_state.linebuffer copyLineToBuffer:buffer
+                                                 width:_state.currentGrid.size.width
+                                               lineNum:theIndex
+                                          continuation:&continuation];
         if (cont == EOL_SOFT &&
             theIndex == numLinesInLineBuffer - 1 &&
             [_state.currentGrid screenCharsAtLineNumber:0][1].code == DWC_RIGHT &&
@@ -389,7 +387,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
 - (NSArray<ScreenCharArray *> *)gridLinesInRange:(const NSRange)range {
     const int width = _state.currentGrid.size.width;
-    const int numLinesInLineBuffer = [linebuffer_ numLinesWithWidth:width];
+    const int numLinesInLineBuffer = [_state.linebuffer numLinesWithWidth:width];
     NSMutableArray<ScreenCharArray *> *result = [NSMutableArray array];
     for (NSInteger i = range.location; i < NSMaxRange(range); i++) {
         const screen_char_t *line = [_state.currentGrid screenCharsAtLineNumber:i - numLinesInLineBuffer];
@@ -402,11 +400,11 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (NSArray<ScreenCharArray *> *)historyLinesInRange:(const NSRange)range {
-    return [linebuffer_ wrappedLinesFromIndex:range.location width:_state.currentGrid.size.width count:range.length];
+    return [_state.linebuffer wrappedLinesFromIndex:range.location width:_state.currentGrid.size.width count:range.length];
 }
 
 - (NSArray<ScreenCharArray *> *)linesInRange:(NSRange)range {
-    const int numLinesInLineBuffer = [linebuffer_ numLinesWithWidth:_state.currentGrid.size.width];
+    const int numLinesInLineBuffer = [_state.linebuffer numLinesWithWidth:_state.currentGrid.size.width];
     const NSRange gridRange = NSMakeRange(numLinesInLineBuffer, _state.currentGrid.size.height);
     const NSRange historyRange = NSMakeRange(0, numLinesInLineBuffer);
     const NSRange rangeForGrid = NSIntersectionRange(range, gridRange);
@@ -428,9 +426,8 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     return [historyLines arrayByAddingObjectsFromArray:gridLines];
 }
 
-- (int)numberOfScrollbackLines
-{
-    return [linebuffer_ numLinesWithWidth:_state.currentGrid.size.width];
+- (int)numberOfScrollbackLines {
+    return [_state.linebuffer numLinesWithWidth:_state.currentGrid.size.width];
 }
 
 - (int)scrollbackOverflow {
@@ -480,8 +477,8 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (NSString *)compactLineDumpWithHistory {
-    NSMutableString *string = [NSMutableString stringWithString:[linebuffer_ compactLineDumpWithWidth:[self width]
-                                                                                 andContinuationMarks:NO]];
+    NSMutableString *string = [NSMutableString stringWithString:[_state.linebuffer compactLineDumpWithWidth:[self width]
+                                                                                       andContinuationMarks:NO]];
     if ([string length]) {
         [string appendString:@"\n"];
     }
@@ -490,8 +487,8 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (NSString *)compactLineDumpWithHistoryAndContinuationMarks {
-    NSMutableString *string = [NSMutableString stringWithString:[linebuffer_ compactLineDumpWithWidth:[self width]
-                                                                                 andContinuationMarks:YES]];
+    NSMutableString *string = [NSMutableString stringWithString:[_state.linebuffer compactLineDumpWithWidth:[self width]
+                                                                                       andContinuationMarks:YES]];
     if ([string length]) {
         [string appendString:@"\n"];
     }
@@ -505,7 +502,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
 - (NSString *)compactLineDumpWithHistoryAndContinuationMarksAndLineNumbers {
     NSMutableString *string =
-        [NSMutableString stringWithString:[linebuffer_ compactLineDumpWithWidth:self.width andContinuationMarks:YES]];
+        [NSMutableString stringWithString:[_state.linebuffer compactLineDumpWithWidth:self.width andContinuationMarks:YES]];
     NSMutableArray *lines = [[[string componentsSeparatedByString:@"\n"] mutableCopy] autorelease];
     long long absoluteLineNumber = self.totalScrollbackOverflow;
     for (int i = 0; i < lines.count; i++) {
@@ -583,12 +580,12 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (NSDate *)timestampForLine:(int)y {
-    int numLinesInLineBuffer = [linebuffer_ numLinesWithWidth:_state.currentGrid.size.width];
+    int numLinesInLineBuffer = [_state.linebuffer numLinesWithWidth:_state.currentGrid.size.width];
     NSTimeInterval interval;
     if (y >= numLinesInLineBuffer) {
         interval = [_state.currentGrid timestampForLine:y - numLinesInLineBuffer];
     } else {
-        interval = [linebuffer_ metadataForLineNumber:y width:_state.currentGrid.size.width].timestamp;
+        interval = [_state.linebuffer metadataForLineNumber:y width:_state.currentGrid.size.width].timestamp;
     }
     return [NSDate dateWithTimeIntervalSinceReferenceDate:interval];
 }
@@ -2570,7 +2567,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 - (NSArray<NSString *> *)terminalSGRCodesInRectangle:(VT100GridRect)screenRect {
     __block NSMutableSet<NSString *> *codes = nil;
     VT100GridRect rect = screenRect;
-    rect.origin.y += [linebuffer_ numLinesWithWidth:_state.currentGrid.size.width];
+    rect.origin.y += [_state.linebuffer numLinesWithWidth:_state.currentGrid.size.width];
     [self enumerateLinesInRange:NSMakeRange(rect.origin.y, rect.size.height)
                           block:^(int y,
                                   ScreenCharArray *sca,
@@ -3020,12 +3017,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)saveFindContextAbsPos {
-    int linesPushed;
-    linesPushed = [self.mutableCurrentGrid appendLines:[_state.currentGrid numberOfLinesUsed]
-                                          toLineBuffer:linebuffer_];
-
-    [self mutSaveFindContextPosition];
-    [self mutPopScrollbackLines:linesPushed];
+    [self mutSaveFindContextAbsPos];
 }
 
 - (iTermAsyncFilter *)newAsyncFilterWithDestination:(id<iTermFilterDestination>)destination
@@ -3033,7 +3025,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
                                            refining:(iTermAsyncFilter *)refining
                                            progress:(void (^)(double))progress {
     return [[iTermAsyncFilter alloc] initWithQuery:query
-                                        lineBuffer:linebuffer_
+                                        lineBuffer:_state.linebuffer
                                               grid:self.currentGrid
                                               mode:iTermFindModeSmartCaseSensitivity
                                        destination:destination
@@ -3252,7 +3244,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 #pragma mark - iTermLineBufferDelegate
 
 - (void)lineBufferDidDropLines:(LineBuffer *)lineBuffer {
-    if (lineBuffer == linebuffer_) {
+    if (lineBuffer == _state.linebuffer) {
         [delegate_ screenRefreshFindOnPageView];
     }
 }

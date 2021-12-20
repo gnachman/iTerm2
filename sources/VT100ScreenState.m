@@ -9,6 +9,7 @@
 
 #import "IntervalTree.h"
 #import "iTermOrderEnforcer.h"
+#import "LineBuffer.h"
 #import "NSDictionary+iTerm.h"
 
 static const int kDefaultMaxScrollbackLines = 1000;
@@ -33,6 +34,7 @@ static const int kDefaultMaxScrollbackLines = 1000;
         _lastCommandOutputRange = VT100GridAbsCoordRangeMake(-1, -1, -1, -1);
         _startOfRunningCommandOutput = VT100GridAbsCoordMake(-1, -1);
         _initialSize = VT100GridSizeMake(-1, -1);
+        _linebuffer = [[LineBuffer alloc] init];
     }
     return self;
 }
@@ -69,6 +71,7 @@ static const int kDefaultMaxScrollbackLines = 1000;
         _protectedMode = source.protectedMode;
         _initialSize = source.initialSize;
         _cumulativeScrollbackOverflow = source.cumulativeScrollbackOverflow;
+        _linebuffer = [source.linebuffer copy];
 
         [source.markCache enumerateKeysAndObjectsUsingBlock:^(NSNumber * _Nonnull key, id<iTermMark>  _Nonnull obj, BOOL * _Nonnull stop) {
             NSDictionary *encoded = [obj dictionaryValue];

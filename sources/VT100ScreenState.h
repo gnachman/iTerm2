@@ -11,6 +11,7 @@
 
 #import "FindContext.h"
 #import "IntervalTree.h"
+#import "LineBuffer.h"
 #import "VT100Grid.h"
 #import "VT100Terminal.h"
 #import "iTermMark.h"
@@ -116,6 +117,8 @@ NS_ASSUME_NONNULL_BEGIN
 // line number gives a unique line number that won't be reused when the linebuffer overflows.
 @property (nonatomic, readonly) long long cumulativeScrollbackOverflow;
 
+@property (nonatomic, strong, readonly) id<LineBufferReading> linebuffer;
+
 @end
 
 @interface VT100ScreenMutableState: NSObject<VT100ScreenState, NSCopying>
@@ -169,6 +172,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readwrite) VT100TerminalProtectedMode protectedMode;
 @property (nonatomic, readwrite) VT100GridSize initialSize;
 @property (nonatomic, readwrite) long long cumulativeScrollbackOverflow;
+@property (nonatomic, strong, readwrite) LineBuffer *linebuffer;
 
 - (id<VT100ScreenState>)copy;
 
