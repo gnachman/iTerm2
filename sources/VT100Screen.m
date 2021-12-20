@@ -117,7 +117,6 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 
 - (void)dealloc {
     [dvr_ release];
-    [_lastCommandMark release];
     _temporaryDoubleBuffer.delegate = nil;
     [_temporaryDoubleBuffer reset];
     [_temporaryDoubleBuffer release];
@@ -2414,9 +2413,9 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
 - (VT100ScreenMark *)lastCommandMark {
     DLog(@"Searching for last command mark...");
-    if (_lastCommandMark) {
-        DLog(@"Return cached mark %@", _lastCommandMark);
-        return _lastCommandMark;
+    if (_state.lastCommandMark) {
+        DLog(@"Return cached mark %@", _state.lastCommandMark);
+        return _state.lastCommandMark;
     }
     NSEnumerator *enumerator = [_state.intervalTree reverseLimitEnumerator];
     NSArray *objects = [enumerator nextObject];
@@ -2428,7 +2427,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
                 if (mark.command) {
                     DLog(@"Found mark %@ in line number range %@", mark,
                          VT100GridRangeDescription([self lineNumberRangeOfInterval:obj.entry.interval]));
-                    self.lastCommandMark = mark;
+                    [self mutSetLastCommandMark:mark];
                     return mark;
                 }
             }
@@ -3076,7 +3075,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
 - (void)markDidBecomeCommandMark:(id<iTermMark>)mark {
     if (mark.entry.interval.location > self.lastCommandMark.entry.interval.location) {
-        self.lastCommandMark = mark;
+        [self mutSetLastCommandMark:mark];
     }
 }
 
@@ -3174,7 +3173,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
            kScreenStateTrackCursorLineMovementKey: @(_state.trackCursorLineMovement),
            kScreenStateLastCommandOutputRangeKey: [NSDictionary dictionaryWithGridAbsCoordRange:_state.lastCommandOutputRange],
            kScreenStateShellIntegrationInstalledKey: @(_state.shellIntegrationInstalled),
-           kScreenStateLastCommandMarkKey: _lastCommandMark.guid ?: [NSNull null],
+           kScreenStateLastCommandMarkKey: _state.lastCommandMark.guid ?: [NSNull null],
            kScreenStatePrimaryGridStateKey: _state.primaryGrid.dictionaryValue ?: @{},
            kScreenStateAlternateGridStateKey: _state.altGrid.dictionaryValue ?: [NSNull null],
            kScreenStateProtectedMode: @(_state.protectedMode),

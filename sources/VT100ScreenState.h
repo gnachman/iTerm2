@@ -13,6 +13,7 @@
 #import "IntervalTree.h"
 #import "LineBuffer.h"
 #import "VT100Grid.h"
+#import "VT100ScreenMark.h"
 #import "VT100Terminal.h"
 #import "iTermIntervalTreeObserver.h"
 #import "iTermMark.h"
@@ -123,6 +124,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) BOOL appendToScrollbackWithStatusBar;
 @property (nonatomic, readonly) iTermUnicodeNormalization normalization;
 @property (nonatomic, weak, readonly) id<iTermIntervalTreeObserver> intervalTreeObserver;
+@property (nullable, nonatomic, strong, readonly) VT100ScreenMark *lastCommandMark;
 
 @end
 
@@ -182,6 +184,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readwrite) BOOL appendToScrollbackWithStatusBar;
 @property (nonatomic, readwrite) iTermUnicodeNormalization normalization;
 @property (nonatomic, weak, readwrite) id<iTermIntervalTreeObserver> intervalTreeObserver;
+@property (nullable, nonatomic, strong, readwrite) VT100ScreenMark *lastCommandMark;
 
 - (id<VT100ScreenState>)copy;
 

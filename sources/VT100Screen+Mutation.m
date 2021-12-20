@@ -337,7 +337,7 @@
                                 screenOrigin + self.height);
     DLog(@"  moveNotes: looking in range %@", VT100GridCoordRangeDescription(screenRange));
     Interval *sourceInterval = [self intervalForGridCoordRange:screenRange];
-    self.lastCommandMark = nil;
+    _mutableState.lastCommandMark = nil;
     for (id<IntervalTreeObject> obj in [source objectsInInterval:sourceInterval]) {
         Interval *interval = [[obj.entry.interval retain] autorelease];
         [[obj retain] autorelease];
@@ -480,7 +480,7 @@
         [delegate_ screenCommandDidEndWithRange:[self commandRange]];
         [self mutInvalidateCommandStartCoordWithoutSideEffects];
     }
-    self.lastCommandMark = nil;
+    _mutableState.lastCommandMark = nil;
 
     if (_state.currentGrid.size.width == 0 ||
         _state.currentGrid.size.height == 0 ||
@@ -1214,7 +1214,7 @@ static void SwapInt(int *a, int *b) {
         long long theKey = (totalScrollbackOverflow +
                             [self coordRangeForInterval:obj.entry.interval].end.y);
         [_mutableState.markCache removeObjectForKey:@(theKey)];
-        self.lastCommandMark = nil;
+        _mutableState.lastCommandMark = nil;
     }
     [_mutableState.intervalTree removeObject:obj];
     iTermIntervalTreeObjectType type = [self intervalTreeObserverTypeForObject:obj];
@@ -1234,7 +1234,7 @@ static void SwapInt(int *a, int *b) {
     VT100GridCoordRange range = [self coordRangeForInterval:mark.entry.interval];
     while (range.start.y >= line) {
         if (mark == self.lastCommandMark) {
-            self.lastCommandMark = nil;
+            _mutableState.lastCommandMark = nil;
         }
         [self mutRemoveObjectFromIntervalTree:mark];
         mark = [self lastPromptMark];
@@ -1247,13 +1247,13 @@ static void SwapInt(int *a, int *b) {
 
 - (void)mutRemoveNote:(PTYNoteViewController *)note {
     if ([_state.intervalTree containsObject:note]) {
-        self.lastCommandMark = nil;
+        _mutableState.lastCommandMark = nil;
         [[note retain] autorelease];
         [_mutableState.intervalTree removeObject:note];
         [self.intervalTreeObserver intervalTreeDidRemoveObjectOfType:[self intervalTreeObserverTypeForObject:note]
                                                               onLine:[self coordRangeForInterval:note.entry.interval].start.y + self.totalScrollbackOverflow];
     } else if ([_state.savedIntervalTree containsObject:note]) {
-        self.lastCommandMark = nil;
+        _mutableState.lastCommandMark = nil;
         [_mutableState.savedIntervalTree removeObject:note];
     }
     [delegate_ screenNeedsRedraw];
@@ -1352,7 +1352,7 @@ static void SwapInt(int *a, int *b) {
     [self.mutableCurrentGrid markAllCharsDirty:YES];
     _mutableState.intervalTree = [[[IntervalTree alloc] init] autorelease];
     [self reloadMarkCache];
-    self.lastCommandMark = nil;
+    _mutableState.lastCommandMark = nil;
     [delegate_ screenDidClearScrollbackBuffer:self];
     [delegate_ screenRefreshFindOnPageView];
 }
@@ -2201,7 +2201,7 @@ static void SwapInt(int *a, int *b) {
                     commandUse.mark = screenMark;
                 }
                 if ([screenMark.guid isEqualToString:guidOfLastCommandMark]) {
-                    self.lastCommandMark = screenMark;
+                    _mutableState.lastCommandMark = screenMark;
                 }
             } else if ([object isKindOfClass:[iTermCapturedOutputMark class]]) {
                 // This mark represents a line whose output was captured. Find the preceding command
@@ -3530,6 +3530,10 @@ static inline void VT100ScreenEraseCell(screen_char_t *sct, iTermExternalAttribu
 }
 
 #pragma mark - Accessors
+
+- (void)mutSetLastCommandMark:(VT100ScreenMark *)mark {
+    _mutableState.lastCommandMark = mark;
+}
 
 - (void)mutSetIntervalTreeObserver:(id<iTermIntervalTreeObserver>)intervalTreeObserver {
     _mutableState.intervalTreeObserver = intervalTreeObserver;

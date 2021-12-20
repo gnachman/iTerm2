@@ -163,6 +163,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)mutSetShellIntegrationInstalled:(BOOL)shellIntegrationInstalled;
 - (void)mutSetNormalization:(iTermUnicodeNormalization)value;
 - (void)mutSetIntervalTreeObserver:(id<iTermIntervalTreeObserver>)intervalTreeObserver;
+- (void)mutSetLastCommandMark:(VT100ScreenMark *)mark;
 
 @end
 

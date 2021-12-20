@@ -75,6 +75,8 @@ static const int kDefaultMaxScrollbackLines = 1000;
         _appendToScrollbackWithStatusBar = source.appendToScrollbackWithStatusBar;
         _normalization = source.normalization;
         _intervalTreeObserver = source.intervalTreeObserver;
+#warning TODO: I need a read-only protocol for VT100ScreenMark
+        _lastCommandMark = [source.lastCommandMark copy];
 
         _linebuffer = [source.linebuffer copy];
         [source.markCache enumerateKeysAndObjectsUsingBlock:^(NSNumber * _Nonnull key, id<iTermMark>  _Nonnull obj, BOOL * _Nonnull stop) {
