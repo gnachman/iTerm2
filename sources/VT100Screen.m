@@ -2447,11 +2447,11 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     if (mark) {
         DLog(@"FinalTerm: setting code on mark %@", mark);
         const NSInteger line = [self coordRangeForInterval:mark.entry.interval].start.y + self.totalScrollbackOverflow;
-        [_intervalTreeObserver intervalTreeDidRemoveObjectOfType:[self intervalTreeObserverTypeForObject:mark]
-                                                          onLine:line];
+        [_state.intervalTreeObserver intervalTreeDidRemoveObjectOfType:[self intervalTreeObserverTypeForObject:mark]
+                                                                onLine:line];
         mark.code = returnCode;
-        [_intervalTreeObserver intervalTreeDidAddObjectOfType:[self intervalTreeObserverTypeForObject:mark]
-                                                       onLine:line];
+        [_state.intervalTreeObserver intervalTreeDidAddObjectOfType:[self intervalTreeObserverTypeForObject:mark]
+                                                             onLine:line];
         VT100RemoteHost *remoteHost = [self remoteHostOnLine:[self numberOfLines]];
         [[iTermShellHistoryController sharedInstance] setStatusOfCommandAtMark:mark
                                                                         onHost:remoteHost
@@ -3423,6 +3423,14 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 #pragma mark - Accessors
+
+- (id<iTermIntervalTreeObserver>)intervalTreeObserver {
+    return _state.intervalTreeObserver;
+}
+
+- (void)setIntervalTreeObserver:(id<iTermIntervalTreeObserver>)intervalTreeObserver {
+    [self mutSetIntervalTreeObserver:intervalTreeObserver];
+}
 
 - (iTermUnicodeNormalization)normalization {
     return _state.normalization;

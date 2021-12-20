@@ -162,6 +162,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)mutSetAppendToScrollbackWithStatusBar:(BOOL)value;
 - (void)mutSetShellIntegrationInstalled:(BOOL)shellIntegrationInstalled;
 - (void)mutSetNormalization:(iTermUnicodeNormalization)value;
+- (void)mutSetIntervalTreeObserver:(id<iTermIntervalTreeObserver>)intervalTreeObserver;
 
 @end
 

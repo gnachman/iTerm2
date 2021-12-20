@@ -3531,6 +3531,10 @@ static inline void VT100ScreenEraseCell(screen_char_t *sct, iTermExternalAttribu
 
 #pragma mark - Accessors
 
+- (void)mutSetIntervalTreeObserver:(id<iTermIntervalTreeObserver>)intervalTreeObserver {
+    _mutableState.intervalTreeObserver = intervalTreeObserver;
+}
+
 - (void)mutSetNormalization:(iTermUnicodeNormalization)value {
     _mutableState.normalization = value;
 }
