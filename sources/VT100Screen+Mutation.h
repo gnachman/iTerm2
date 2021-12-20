@@ -159,6 +159,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)mutSetProtectedMode:(VT100TerminalProtectedMode)mode;
 - (void)mutSaveFindContextAbsPos;
 - (void)mutSetTrackCursorLineMovement:(BOOL)trackCursorLineMovement;
+- (void)mutSetAppendToScrollbackWithStatusBar:(BOOL)value;
 
 @end
 

@@ -72,6 +72,7 @@ static const int kDefaultMaxScrollbackLines = 1000;
         _initialSize = source.initialSize;
         _cumulativeScrollbackOverflow = source.cumulativeScrollbackOverflow;
         _trackCursorLineMovement = source.trackCursorLineMovement;
+        _appendToScrollbackWithStatusBar = source.appendToScrollbackWithStatusBar;
 
         _linebuffer = [source.linebuffer copy];
         [source.markCache enumerateKeysAndObjectsUsingBlock:^(NSNumber * _Nonnull key, id<iTermMark>  _Nonnull obj, BOOL * _Nonnull stop) {

@@ -3424,6 +3424,14 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
 #pragma mark - Accessors
 
+- (BOOL)appendToScrollbackWithStatusBar {
+    return _state.appendToScrollbackWithStatusBar;
+}
+
+- (void)setAppendToScrollbackWithStatusBar:(BOOL)appendToScrollbackWithStatusBar {
+    [self mutSetAppendToScrollbackWithStatusBar:appendToScrollbackWithStatusBar];
+}
+
 - (BOOL)trackCursorLineMovement {
     return _state.trackCursorLineMovement;
 }
