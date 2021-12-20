@@ -71,8 +71,9 @@ static const int kDefaultMaxScrollbackLines = 1000;
         _protectedMode = source.protectedMode;
         _initialSize = source.initialSize;
         _cumulativeScrollbackOverflow = source.cumulativeScrollbackOverflow;
-        _linebuffer = [source.linebuffer copy];
+        _trackCursorLineMovement = source.trackCursorLineMovement;
 
+        _linebuffer = [source.linebuffer copy];
         [source.markCache enumerateKeysAndObjectsUsingBlock:^(NSNumber * _Nonnull key, id<iTermMark>  _Nonnull obj, BOOL * _Nonnull stop) {
             NSDictionary *encoded = [obj dictionaryValue];
             Class theClass = [obj class];

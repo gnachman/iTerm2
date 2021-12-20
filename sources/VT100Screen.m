@@ -3056,7 +3056,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)gridCursorDidChangeLine {
-    if (_trackCursorLineMovement) {
+    if (_state.trackCursorLineMovement) {
         [delegate_ screenCursorDidMoveToLine:_state.currentGrid.cursorY + [self numberOfScrollbackLines]];
     }
 }
@@ -3171,7 +3171,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
            kScreenStateCommandStartYKey: @(_state.commandStartCoord.y),
            kScreenStateNextCommandOutputStartKey: [NSDictionary dictionaryWithGridAbsCoord:_state.startOfRunningCommandOutput],
            kScreenStateCursorVisibleKey: @(_state.cursorVisible),
-           kScreenStateTrackCursorLineMovementKey: @(_trackCursorLineMovement),
+           kScreenStateTrackCursorLineMovementKey: @(_state.trackCursorLineMovement),
            kScreenStateLastCommandOutputRangeKey: [NSDictionary dictionaryWithGridAbsCoordRange:_state.lastCommandOutputRange],
            kScreenStateShellIntegrationInstalledKey: @(_state.shellIntegrationInstalled),
            kScreenStateLastCommandMarkKey: _lastCommandMark.guid ?: [NSNull null],
@@ -3423,6 +3423,14 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 #pragma mark - Accessors
+
+- (BOOL)trackCursorLineMovement {
+    return _state.trackCursorLineMovement;
+}
+
+- (void)setTrackCursorLineMovement:(BOOL)trackCursorLineMovement {
+    [self mutSetTrackCursorLineMovement:trackCursorLineMovement];
+}
 
 - (VT100GridAbsCoordRange)lastCommandOutputRange {
     return _state.lastCommandOutputRange;

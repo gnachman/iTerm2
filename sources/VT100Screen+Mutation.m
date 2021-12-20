@@ -3531,6 +3531,10 @@ static inline void VT100ScreenEraseCell(screen_char_t *sct, iTermExternalAttribu
 
 #pragma mark - Accessors
 
+- (void)mutSetTrackCursorLineMovement:(BOOL)trackCursorLineMovement {
+    _mutableState.trackCursorLineMovement = trackCursorLineMovement;
+}
+
 - (void)mutSetSaveToScrollbackInAlternateScreen:(BOOL)value {
     _mutableState.saveToScrollbackInAlternateScreen = value;
 }

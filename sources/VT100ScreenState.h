@@ -118,6 +118,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) long long cumulativeScrollbackOverflow;
 
 @property (nonatomic, strong, readonly) id<LineBufferReading> linebuffer;
+@property (nonatomic, readonly) BOOL trackCursorLineMovement;
 
 @end
 
@@ -173,6 +174,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readwrite) VT100GridSize initialSize;
 @property (nonatomic, readwrite) long long cumulativeScrollbackOverflow;
 @property (nonatomic, strong, readwrite) LineBuffer *linebuffer;
+@property (nonatomic, readwrite) BOOL trackCursorLineMovement;
 
 - (id<VT100ScreenState>)copy;
 
