@@ -3475,6 +3475,10 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
 #pragma mark - Accessors
 
+- (VT100GridAbsCoord)startOfRunningCommandOutput {
+    return _state.startOfRunningCommandOutput;
+}
+
 - (id<iTermColorMapReading>)colorMap {
     return _state.colorMap;
 }
