@@ -155,6 +155,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)mutCommandDidStart;
 - (void)mutCommandDidEnd;
 - (BOOL)mutCommandDidEndAtAbsCoord:(VT100GridAbsCoord)coord;
+- (void)mutRestoreInitialSize;
 
 @end
 

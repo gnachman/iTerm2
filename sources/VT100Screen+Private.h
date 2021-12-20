@@ -43,9 +43,6 @@ VT100InlineImageHelperDelegate> {
 
     __weak id<VT100ScreenDelegate> delegate_;  // PTYSession implements this
 
-    // Initial size before calling -restoreFromDictionary… or -1,-1 if invalid.
-    VT100GridSize _initialSize;
-
     // A rarely reset count of the number of lines lost to scrollback overflow. Adding this to a
     // line number gives a unique line number that won't be reused when the linebuffer overflows.
     long long cumulativeScrollbackOverflow_;

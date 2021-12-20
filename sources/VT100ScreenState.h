@@ -109,6 +109,9 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) VT100GridAbsCoord startOfRunningCommandOutput;
 @property (nonatomic, readonly) VT100TerminalProtectedMode protectedMode;
 
+// Initial size before calling -restoreFromDictionary… or -1,-1 if invalid.
+@property (nonatomic, readonly) VT100GridSize initialSize;
+
 @end
 
 @interface VT100ScreenMutableState: NSObject<VT100ScreenState, NSCopying>
@@ -160,6 +163,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readwrite) VT100GridAbsCoordRange currentPromptRange;
 @property (nonatomic, readwrite) VT100GridAbsCoord startOfRunningCommandOutput;
 @property (nonatomic, readwrite) VT100TerminalProtectedMode protectedMode;
+@property (nonatomic, readwrite) VT100GridSize initialSize;
 
 - (id<VT100ScreenState>)copy;
 

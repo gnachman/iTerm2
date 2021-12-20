@@ -1787,6 +1787,13 @@ static void SwapInt(int *a, int *b) {
 
 #pragma mark - Arrangements
 
+- (void)mutRestoreInitialSize {
+    if (_state.initialSize.width > 0 && _state.initialSize.height > 0) {
+        [self setSize:_state.initialSize];
+        _mutableState.initialSize = VT100GridSizeMake(-1, -1);
+    }
+}
+
 - (void)mutSetContentsFromLineBuffer:(LineBuffer *)lineBuffer {
     [self mutClearBuffer];
     [self.mutableLineBuffer appendContentsOfLineBuffer:lineBuffer width:_state.currentGrid.size.width];
@@ -2102,7 +2109,7 @@ static void SwapInt(int *a, int *b) {
 
 
         if (!newFormat) {
-            _initialSize = self.size;
+            _mutableState.initialSize = self.size;
             // Change the size to how big it was when state was saved so that
             // interval trees can be fixed up properly when it is set back later by
             // restoreInitialSize. Interval tree ranges cannot be interpreted

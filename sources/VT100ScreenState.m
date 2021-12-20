@@ -32,6 +32,7 @@ static const int kDefaultMaxScrollbackLines = 1000;
         _cursorVisible = YES;
         _lastCommandOutputRange = VT100GridAbsCoordRangeMake(-1, -1, -1, -1);
         _startOfRunningCommandOutput = VT100GridAbsCoordMake(-1, -1);
+        _initialSize = VT100GridSizeMake(-1, -1);
     }
     return self;
 }
@@ -66,7 +67,8 @@ static const int kDefaultMaxScrollbackLines = 1000;
         _currentPromptRange = source.currentPromptRange;
         _startOfRunningCommandOutput = source.startOfRunningCommandOutput;
         _protectedMode = source.protectedMode;
-
+        _initialSize = source.initialSize;
+    
         [source.markCache enumerateKeysAndObjectsUsingBlock:^(NSNumber * _Nonnull key, id<iTermMark>  _Nonnull obj, BOOL * _Nonnull stop) {
             NSDictionary *encoded = [obj dictionaryValue];
             Class theClass = [obj class];

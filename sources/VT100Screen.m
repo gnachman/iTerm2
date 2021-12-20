@@ -112,8 +112,6 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 
         dvr_ = [DVR alloc];
         [dvr_ initWithBufferCapacity:[iTermPreferences intForKey:kPreferenceKeyInstantReplayMemoryMegabytes] * 1024 * 1024];
-
-        _initialSize = VT100GridSizeMake(-1, -1);
     }
     return self;
 }
@@ -3216,10 +3214,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)restoreInitialSize {
-    if (_initialSize.width > 0 && _initialSize.height > 0) {
-        [self setSize:_initialSize];
-        _initialSize = VT100GridSizeMake(-1, -1);
-    }
+    [self mutRestoreInitialSize];
 }
 
 - (iTermTemporaryDoubleBufferedGridController *)temporaryDoubleBuffer {
