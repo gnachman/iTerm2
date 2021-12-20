@@ -160,6 +160,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)mutSaveFindContextAbsPos;
 - (void)mutSetTrackCursorLineMovement:(BOOL)trackCursorLineMovement;
 - (void)mutSetAppendToScrollbackWithStatusBar:(BOOL)value;
+- (void)mutSetShellIntegrationInstalled:(BOOL)shellIntegrationInstalled;
 
 @end
 

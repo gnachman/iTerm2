@@ -3424,6 +3424,10 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
 #pragma mark - Accessors
 
+- (BOOL)shellIntegrationInstalled {
+    return _state.shellIntegrationInstalled;
+}
+
 - (BOOL)appendToScrollbackWithStatusBar {
     return _state.appendToScrollbackWithStatusBar;
 }
