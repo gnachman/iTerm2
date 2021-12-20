@@ -107,6 +107,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property(nonatomic, readonly) VT100GridAbsCoordRange currentPromptRange;
 
 @property (nonatomic, readonly) VT100GridAbsCoord startOfRunningCommandOutput;
+@property (nonatomic, readonly) VT100TerminalProtectedMode protectedMode;
 
 @end
 
@@ -158,6 +159,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readwrite) VT100GridAbsCoordRange lastCommandOutputRange;
 @property (nonatomic, readwrite) VT100GridAbsCoordRange currentPromptRange;
 @property (nonatomic, readwrite) VT100GridAbsCoord startOfRunningCommandOutput;
+@property (nonatomic, readwrite) VT100TerminalProtectedMode protectedMode;
 
 - (id<VT100ScreenState>)copy;
 

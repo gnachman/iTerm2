@@ -43,8 +43,6 @@ VT100InlineImageHelperDelegate> {
 
     __weak id<VT100ScreenDelegate> delegate_;  // PTYSession implements this
 
-    VT100TerminalProtectedMode _protectedMode;
-
     // Initial size before calling -restoreFromDictionary… or -1,-1 if invalid.
     VT100GridSize _initialSize;
 

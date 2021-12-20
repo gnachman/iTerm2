@@ -65,6 +65,7 @@ static const int kDefaultMaxScrollbackLines = 1000;
         _lastCommandOutputRange = source.lastCommandOutputRange;
         _currentPromptRange = source.currentPromptRange;
         _startOfRunningCommandOutput = source.startOfRunningCommandOutput;
+        _protectedMode = source.protectedMode;
 
         [source.markCache enumerateKeysAndObjectsUsingBlock:^(NSNumber * _Nonnull key, id<iTermMark>  _Nonnull obj, BOOL * _Nonnull stop) {
             NSDictionary *encoded = [obj dictionaryValue];

@@ -2924,11 +2924,11 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalProtectedModeDidChangeTo:(VT100TerminalProtectedMode)mode {
-    _protectedMode = mode;
+    [self mutSetProtectedMode:mode];
 }
 
 - (VT100TerminalProtectedMode)terminalProtectedMode {
-    return _protectedMode;
+    return _state.protectedMode;
 }
 
 #pragma mark - Private
@@ -3188,7 +3188,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
            kScreenStateLastCommandMarkKey: _lastCommandMark.guid ?: [NSNull null],
            kScreenStatePrimaryGridStateKey: _state.primaryGrid.dictionaryValue ?: @{},
            kScreenStateAlternateGridStateKey: _state.altGrid.dictionaryValue ?: [NSNull null],
-           kScreenStateProtectedMode: @(_protectedMode),
+           kScreenStateProtectedMode: @(_state.protectedMode),
         };
         dict = [dict dictionaryByRemovingNullValues];
         [encoder mergeDictionary:dict];

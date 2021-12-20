@@ -2064,7 +2064,7 @@ static void SwapInt(int *a, int *b) {
     }
 
     if (screenState) {
-        _protectedMode = [screenState[kScreenStateProtectedMode] unsignedIntegerValue];
+        _mutableState.protectedMode = [screenState[kScreenStateProtectedMode] unsignedIntegerValue];
         [_mutableState.tabStops removeAllObjects];
         [_mutableState.tabStops addObjectsFromArray:screenState[kScreenStateTabStopsKey]];
 
@@ -2322,6 +2322,10 @@ static void SwapInt(int *a, int *b) {
 }
 
 #pragma mark - Terminal Fundamentals
+
+- (void)mutSetProtectedMode:(VT100TerminalProtectedMode)mode {
+    _mutableState.protectedMode = mode;
+}
 
 - (void)mutSetCursorVisible:(BOOL)visible {
     if (visible != _state.cursorVisible) {
@@ -2699,7 +2703,7 @@ static void SwapInt(int *a, int *b) {
 - (void)mutEraseInDisplayBeforeCursor:(BOOL)before afterCursor:(BOOL)after decProtect:(BOOL)dec {
     int x1, yStart, x2, y2;
     BOOL shouldHonorProtected = NO;
-    switch (_protectedMode) {
+    switch (_state.protectedMode) {
         case VT100TerminalProtectedModeNone:
             shouldHonorProtected = NO;
             break;
@@ -2757,7 +2761,7 @@ static void SwapInt(int *a, int *b) {
                                                  eraseAttributes:YES];
         const BOOL eraseAll = (x1 == 0 && yStart == 0 && x2 == _state.currentGrid.size.width - 1 && y2 == _state.currentGrid.size.height - 1);
         if (!foundProtected && eraseAll) {  // xterm has this logic, so we do too. My guess is that it's an optimization.
-            _protectedMode = VT100TerminalProtectedModeNone;
+            _mutableState.protectedMode = VT100TerminalProtectedModeNone;
         }
     } else {
         [self.mutableCurrentGrid setCharsInRun:theRun
@@ -2770,7 +2774,7 @@ static void SwapInt(int *a, int *b) {
 
 - (void)mutEraseLineBeforeCursor:(BOOL)before afterCursor:(BOOL)after decProtect:(BOOL)dec {
     BOOL shouldHonorProtected = NO;
-    switch (_protectedMode) {
+    switch (_state.protectedMode) {
         case VT100TerminalProtectedModeNone:
             shouldHonorProtected = NO;
             break;
@@ -2892,7 +2896,7 @@ static void SwapInt(int *a, int *b) {
             return;
         }
 
-        switch (_protectedMode) {
+        switch (_state.protectedMode) {
             case VT100TerminalProtectedModeNone:
             case VT100TerminalProtectedModeDEC: {
                 // Do not honor protected mode.
@@ -3186,7 +3190,7 @@ static inline void VT100ScreenEraseCell(screen_char_t *sct, iTermExternalAttribu
                                                  screen_char_t *sct,
                                                  iTermExternalAttribute **eaOut,
                                                  BOOL *stop) {
-        if (_protectedMode == VT100TerminalProtectedModeDEC && sct->guarded) {
+        if (_state.protectedMode == VT100TerminalProtectedModeDEC && sct->guarded) {
             return;
         }
         VT100ScreenEraseCell(sct, eaOut, NO, &dc);
@@ -3202,7 +3206,7 @@ static inline void VT100ScreenEraseCell(screen_char_t *sct, iTermExternalAttribu
                                                        iTermExternalAttribute **eaOut,
                                                        VT100GridCoord coord,
                                                        BOOL *stop) {
-        if (_protectedMode != VT100TerminalProtectedModeNone && sct->guarded) {
+        if (_state.protectedMode != VT100TerminalProtectedModeNone && sct->guarded) {
             foundProtected = YES;
             return;
         }
