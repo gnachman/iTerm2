@@ -8,6 +8,8 @@
 #import "VT100Screen.h"
 #import "VT100Terminal.h"
 
+@class iTermTemporaryDoubleBufferedGridController;
+
 @protocol iTermOrderedToken;
 
 NS_ASSUME_NONNULL_BEGIN
@@ -89,7 +91,6 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)mutBackIndex;
 - (void)mutResetPreservingPrompt:(BOOL)preservePrompt modifyContent:(BOOL)modifyContent;
 - (void)mutSetLeftMargin:(int)scrollLeft rightMargin:(int)scrollRight;
-- (void)mutSetWidth:(int)width preserveScreen:(BOOL)preserveScreen;
 - (void)mutBackTab:(int)n;
 - (void)mutCursorToX:(int)x;
 - (void)mutCursorToY:(int)y;
@@ -125,7 +126,6 @@ NS_ASSUME_NONNULL_BEGIN
                                                         encoder:(id<iTermEncoderAdapter>)encoder
                                                  intervalOffset:(long long *)intervalOffsetPtr;
 - (void)mutRedrawGrid;
-- (void)mutSetSize:(VT100GridSize)proposedSize;
 - (void)mutSetMaxScrollbackLines:(unsigned int)lines;
 - (PTYTextViewSynchronousUpdateState * _Nullable)mutSetUseSavedGridIfAvailable:(BOOL)useSavedGrid;
 - (void)mutRemoveNote:(PTYNoteViewController *)note;
@@ -183,6 +183,10 @@ NS_ASSUME_NONNULL_BEGIN
                          token:(id<iTermOrderedToken> _Nullable)token;
 - (void)mutSetRemoteHost:(NSString *)remoteHost;
 - (void)mutCurrentDirectoryDidChangeTo:(NSString *)dir;
+- (void)mutIncrementOverflowBy:(int)overflowCount;
+- (void)mutReloadMarkCache;
+- (iTermTemporaryDoubleBufferedGridController *)mutableTemporaryDoubleBuffer;
+- (void)mutSwapNotes;
 
 @end
 

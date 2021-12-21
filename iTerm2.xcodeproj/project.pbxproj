@@ -1862,6 +1862,9 @@
 		A667C23E276C7A44006B4DEF /* HighlightTrigger.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D3BBD6A14759D6C00FAB389 /* HighlightTrigger.m */; };
 		A667C23F276C7A69006B4DEF /* PSMDarkTabStyle.m in Sources */ = {isa = PBXBuildFile; fileRef = D3CE2D4D1A00936F0098ED99 /* PSMDarkTabStyle.m */; };
 		A667C240276C7CC2006B4DEF /* iTermFullScreenWindowManager.m in Sources */ = {isa = PBXBuildFile; fileRef = A6FCB6091C6714230019184E /* iTermFullScreenWindowManager.m */; };
+		A667C24727724EEA006B4DEF /* VT100Screen+Resizing.h in Headers */ = {isa = PBXBuildFile; fileRef = A667C24527724EEA006B4DEF /* VT100Screen+Resizing.h */; };
+		A667C24827724EEA006B4DEF /* VT100Screen+Resizing.m in Sources */ = {isa = PBXBuildFile; fileRef = A667C24627724EEA006B4DEF /* VT100Screen+Resizing.m */; };
+		A667C249277251B5006B4DEF /* VT100Screen+Resizing.m in Sources */ = {isa = PBXBuildFile; fileRef = A667C24627724EEA006B4DEF /* VT100Screen+Resizing.m */; };
 		A667EF9C243935AE0055CF3F /* iTermSwipeHandler.h in Headers */ = {isa = PBXBuildFile; fileRef = A667EF9A243935AE0055CF3F /* iTermSwipeHandler.h */; };
 		A667F3881B48671B00705186 /* libiTerm2Shared.a in Frameworks */ = {isa = PBXBuildFile; fileRef = A6C760501B45C4CF00E3C992 /* libiTerm2Shared.a */; };
 		A667F38B1B48AEF200705186 /* NSApplication+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A667F3891B48AEF200705186 /* NSApplication+iTerm.h */; };
@@ -5565,6 +5568,8 @@
 		A666D5F6221A710B00D6184A /* iTermScriptFunctionCallTest.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermScriptFunctionCallTest.m; sourceTree = "<group>"; };
 		A667195C1DCE36C3000CE608 /* libiTerm2SharedARC.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libiTerm2SharedARC.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		A667C234276AB01F006B4DEF /* iTermMetalUnavailableReason.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermMetalUnavailableReason.m; sourceTree = "<group>"; };
+		A667C24527724EEA006B4DEF /* VT100Screen+Resizing.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "VT100Screen+Resizing.h"; sourceTree = "<group>"; };
+		A667C24627724EEA006B4DEF /* VT100Screen+Resizing.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "VT100Screen+Resizing.m"; sourceTree = "<group>"; };
 		A667EF9A243935AE0055CF3F /* iTermSwipeHandler.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermSwipeHandler.h; sourceTree = "<group>"; };
 		A667F3861B48615900705186 /* iTermToolbeltTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermToolbeltTest.m; sourceTree = "<group>"; };
 		A667F3891B48AEF200705186 /* NSApplication+iTerm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSApplication+iTerm.h"; sourceTree = "<group>"; };
@@ -8887,6 +8892,8 @@
 				A6E1525D2762AFBD00D0F41C /* VT100Screen+Private.h */,
 				A6F7F8042763F47B005E433E /* VT100ScreenState.h */,
 				A6F7F8052763F47B005E433E /* VT100ScreenState.m */,
+				A667C24527724EEA006B4DEF /* VT100Screen+Resizing.h */,
+				A667C24627724EEA006B4DEF /* VT100Screen+Resizing.m */,
 			);
 			name = Core;
 			sourceTree = "<group>";
@@ -11805,6 +11812,7 @@
 				A66BFADC1CD072DB00DA2346 /* iTermThroughputEstimator.h in Headers */,
 				A6936B591D2F5D1A00521B04 /* iTermHotkeyPreferencesModel.h in Headers */,
 				A6EFF21C1D1CA9F800806EEF /* NSLocale+iTerm.h in Headers */,
+				A667C24727724EEA006B4DEF /* VT100Screen+Resizing.h in Headers */,
 				A62C3A8D1BCAE08300B5629D /* iTermDirectoryTree.h in Headers */,
 				A6CEC11C1DCE8146009F4FD2 /* GPBDescriptor_PackagePrivate.h in Headers */,
 				A6CEC1231DCE8146009F4FD2 /* GPBMessage.h in Headers */,
@@ -14460,6 +14468,7 @@
 				A6C7639B1B45C52B00E3C992 /* TmuxHistoryParser.m in Sources */,
 				A6C762BD1B45C52B00E3C992 /* NSPasteboard+iTerm.m in Sources */,
 				539325F31DD66EFA00CABCEF /* iTermPreciseTimer.m in Sources */,
+				A667C24827724EEA006B4DEF /* VT100Screen+Resizing.m in Sources */,
 				A6C762EC1B45C52B00E3C992 /* EquivalenceClassSet.m in Sources */,
 				A6C763EA1B45C71900E3C992 /* UKNibOwner.m in Sources */,
 				A6CEC0751DCE80C9009F4FD2 /* Duration.pbobjc.m in Sources */,
@@ -14751,6 +14760,7 @@
 				A62F8FD321DA8457008EA71C /* iTermTermkeyKeyMapperTest.m in Sources */,
 				A65660DD2372ADEA00DC6744 /* iTermCacheTests.m in Sources */,
 				A608CCF7214DE7C1007A7B87 /* iTermProcessCollectionTest.m in Sources */,
+				A667C249277251B5006B4DEF /* VT100Screen+Resizing.m in Sources */,
 				A608CD06214DE7C1007A7B87 /* iTermRuleTest.m in Sources */,
 				A60F6FEC270B7F640017A003 /* iTermModifyOtherKeys1Test.m in Sources */,
 				A608CD27214E09E1007A7B87 /* Model.xcdatamodeld in Sources */,

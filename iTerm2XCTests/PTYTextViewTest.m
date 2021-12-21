@@ -2528,6 +2528,10 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
     return _colorMap;
 }
 
+- (void)setColor:(NSColor *)color forKey:(int)key {
+    [_colorMap setColor:color forKey:key];
+}
+
 - (int)numberOfLines {
     return 4;
 }
