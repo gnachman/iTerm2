@@ -170,6 +170,7 @@
 #import "Trigger.h"
 #import "VT100RemoteHost.h"
 #import "VT100Screen.h"
+#import "VT100ScreenConfiguration.h"
 #import "VT100ScreenMark.h"
 #import "VT100Terminal.h"
 #import "VT100Token.h"
@@ -654,6 +655,7 @@ static const CGFloat PTYSessionMaximumMetalViewSize = 16384;
     // Have we finished loading the address book and color map initially?
     BOOL _profileInitialized;
     iTermUserDefaultsObserver *_disableTransparencyInKeyWindowObserver;
+    VT100MutableScreenConfiguration *_config;
 }
 
 @synthesize isDivorced = _divorced;
@@ -729,8 +731,10 @@ static const CGFloat PTYSessionMaximumMetalViewSize = 16384;
         _terminal = [[VT100Terminal alloc] init];
         _terminal.output.optionIsMetaForSpecialKeys =
             [iTermAdvancedSettingsModel optionIsMetaForSpecialChars];
+        [self updateConfigurationFields];
         _screen = [[VT100Screen alloc] initWithTerminal:_terminal
-                                               darkMode:self.view.effectiveAppearance.it_isDark];
+                                               darkMode:self.view.effectiveAppearance.it_isDark
+                                          configuration:_config];
         NSParameterAssert(_shell != nil && _terminal != nil && _screen != nil);
 
         _overriddenFields = [[NSMutableSet alloc] init];
@@ -907,7 +911,8 @@ static const CGFloat PTYSessionMaximumMetalViewSize = 16384;
         if (!synthetic) {
             [[NSNotificationCenter defaultCenter] postNotificationName:PTYSessionCreatedNotification object:self];
         }
-        
+        _config = [[VT100MutableScreenConfiguration alloc] init];
+        [self updateConfiguration];
         DLog(@"Done initializing new PTYSession %@", self);
     }
     return self;
@@ -1056,6 +1061,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_disableTransparencyInKeyWindowObserver release];
     [_preferredProxyIcon release];
     [_savedStateForZoom release];
+    [_config release];
 
     [super dealloc];
 }
@@ -5289,6 +5295,8 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)updateDisplayBecause:(NSString *)reason {
     DLog(@"updateDisplayBecause:%@ %@", reason, _cadenceController);
+    // Periodically copy config to screen. In the future this will need to cross from the main thread to the mutation thread.
+    [self updateConfiguration];
     _updateCount++;
     if (_useMetal && _updateCount % 10 == 0) {
         iTermPreciseTimerSaveLog([NSString stringWithFormat:@"%@: updateDisplay interval", _view.driver.identifier],
@@ -12289,9 +12297,15 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     }];
 }
 
-- (BOOL)screenShouldPlacePromptAtFirstColumn {
-    return [iTermProfilePreferences boolForKey:KEY_PLACE_PROMPT_AT_FIRST_COLUMN
-                                     inProfile:_profile];
+// NOTE: This is called during -initSynthetic and self is half-initialized.
+- (void)updateConfigurationFields {
+    _config.shouldPlacePromptAtFirstColumn = [iTermProfilePreferences boolForKey:KEY_PLACE_PROMPT_AT_FIRST_COLUMN
+                                                                       inProfile:_profile];
+}
+
+- (void)updateConfiguration {
+    [self updateConfigurationFields];
+    _screen.config = _config;
 }
 
 - (BOOL)screenShouldPostTerminalGeneratedAlert {

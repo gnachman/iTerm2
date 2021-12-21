@@ -41,6 +41,7 @@
 #import "VT100WorkingDirectory.h"
 #import "VT100DCSParser.h"
 #import "VT100Screen+Mutation.h"
+#import "VT100ScreenConfiguration.h"
 #import "VT100Token.h"
 #import "VT100ScreenState.h"
 
@@ -90,7 +91,9 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 
 @synthesize dvr = dvr_;
 
-- (instancetype)initWithTerminal:(VT100Terminal *)terminal darkMode:(BOOL)darkMode {
+- (instancetype)initWithTerminal:(VT100Terminal *)terminal
+                        darkMode:(BOOL)darkMode
+                   configuration:(id<VT100ScreenConfiguration>)config {
     self = [super init];
     if (self) {
         _mutableState = [[VT100ScreenMutableState alloc] init];
@@ -111,6 +114,7 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 
         dvr_ = [DVR alloc];
         [dvr_ initWithBufferCapacity:[iTermPreferences intForKey:kPreferenceKeyInstantReplayMemoryMegabytes] * 1024 * 1024];
+        [self setConfig:config];
     }
     return self;
 }
@@ -1807,6 +1811,18 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 #pragma mark - Accessors
+
+- (void)setConfig:(id<VT100ScreenConfiguration>)config {
+    [_nextConfig autorelease];
+    _nextConfig = [config copyWithZone:nil];
+    // In the future, VT100Screen+Mutation will run on a different thread and updating the config
+    // will need to be synchronized properly.
+    [self mutUpdateConfig];
+}
+
+- (id<VT100ScreenConfiguration>)config {
+    return _nextConfig;
+}
 
 - (VT100GridAbsCoord)startOfRunningCommandOutput {
     return _state.startOfRunningCommandOutput;

@@ -22,10 +22,11 @@
 @class VT100Grid;
 @class VT100RemoteHost;
 @class VT100ScreenMark;
-@protocol iTermMark;
+@protocol VT100ScreenConfiguration;
 @class VT100Terminal;
 @class iTermAsyncFilter;
 @protocol iTermFilterDestination;
+@protocol iTermMark;
 
 // Dictionary keys for -highlightTextInRange:basedAtAbsoluteLineNumber:absoluteLineNumber:color:
 extern NSString * const kHighlightForegroundColor;
@@ -79,9 +80,12 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 
 @property(nonatomic, retain, readonly) id<iTermColorMapReading> colorMap;
 @property(nonatomic, readonly) id<iTermTemporaryDoubleBufferedGridControllerReading> temporaryDoubleBuffer;
+@property(nonatomic, retain) id<VT100ScreenConfiguration> config;
 
 // Designated initializer.
-- (instancetype)initWithTerminal:(VT100Terminal *)terminal darkMode:(BOOL)darkMode;
+- (instancetype)initWithTerminal:(VT100Terminal *)terminal
+                        darkMode:(BOOL)darkMode
+                   configuration:(id<VT100ScreenConfiguration>)config;
 
 // Indicates if line drawing mode is enabled for any character set, or if the current character set
 // is not G0.

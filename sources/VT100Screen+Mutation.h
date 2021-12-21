@@ -185,8 +185,9 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)mutCurrentDirectoryDidChangeTo:(NSString *)dir;
 - (void)mutIncrementOverflowBy:(int)overflowCount;
 - (void)mutReloadMarkCache;
-- (iTermTemporaryDoubleBufferedGridController *)mutableTemporaryDoubleBuffer;
+- (iTermTemporaryDoubleBufferedGridController * _Nullable)mutableTemporaryDoubleBuffer;
 - (void)mutSwapNotes;
+- (void)mutUpdateConfig;
 
 @end
 

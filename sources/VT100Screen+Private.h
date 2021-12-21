@@ -8,6 +8,7 @@
 #import "IntervalTree.h"
 #import "iTermTemporaryDoubleBufferedGridController.h"
 #import "LineBuffer.h"
+#import "VT100ScreenConfiguration.h"
 #import "VT100ScreenMark.h"
 #import "VT100ScreenState.h"
 #import "VT100Terminal.h"
@@ -42,6 +43,11 @@ VT100InlineImageHelperDelegate> {
     VT100ScreenMutableState *_mutableState;
 
     __weak id<VT100ScreenDelegate> delegate_;  // PTYSession implements this
+    // Perhaps slightly out-of-date configuration, used by mutation code.
+    id<VT100ScreenConfiguration> _config;
+
+    // Most recent configuration. Will be copied to _config eventually.
+    id<VT100ScreenConfiguration> _nextConfig;
 }
 
 @property(nonatomic, readwrite) VT100GridAbsCoordRange lastCommandOutputRange;

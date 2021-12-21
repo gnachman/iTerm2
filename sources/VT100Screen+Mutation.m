@@ -56,12 +56,16 @@
     return (LineBuffer *)_mutableState.linebuffer;
 }
 
+- (void)mutUpdateConfig {
+    [_config autorelease];
+    _config = [_nextConfig retain];
+}
 
 #pragma mark - FinalTerm
 
 - (void)mutPromptDidStartAt:(VT100GridAbsCoord)coord {
     DLog(@"FinalTerm: mutPromptDidStartAt");
-    if (coord.x > 0 && [delegate_ screenShouldPlacePromptAtFirstColumn]) {
+    if (coord.x > 0 && _config.shouldPlacePromptAtFirstColumn) {
         [self crlf];
     }
     _mutableState.shellIntegrationInstalled = YES;

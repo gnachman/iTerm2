@@ -18,6 +18,7 @@
 #import "VT100Screen.h"
 #import "VT100Screen+Mutation.h"
 #import "VT100Screen+Private.h"
+#import "VT100ScreenConfiguration.h"
 #import "iTermSelection.h"
 
 static const NSInteger kUnicodeVersion = 9;
@@ -105,9 +106,16 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
 
 - (VT100Screen *)screen {
     VT100Screen *screen = [[[VT100Screen alloc] initWithTerminal:terminal_
-                                                        darkMode:NO] autorelease];
+                                                        darkMode:NO
+                                                   configuration:self.screenConfig] autorelease];
     terminal_.delegate = screen;
     return screen;
+}
+
+- (VT100ScreenConfiguration *)screenConfig {
+    VT100MutableScreenConfiguration *config = [[[VT100MutableScreenConfiguration alloc] init] autorelease];
+    config.shouldPlacePromptAtFirstColumn = YES;
+    return config;
 }
 
 - (void)testInit {
@@ -516,10 +524,6 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
 }
 
 - (void)screenCurrentDirectoryDidChangeTo:(NSString *)newPath {
-}
-
-- (BOOL)screenShouldPlacePromptAtFirstColumn {
-    return YES;
 }
 
 - (void)screenSetBackgroundImageFile:(NSString *)filename {

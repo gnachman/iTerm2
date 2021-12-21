@@ -1865,6 +1865,8 @@
 		A667C24727724EEA006B4DEF /* VT100Screen+Resizing.h in Headers */ = {isa = PBXBuildFile; fileRef = A667C24527724EEA006B4DEF /* VT100Screen+Resizing.h */; };
 		A667C24827724EEA006B4DEF /* VT100Screen+Resizing.m in Sources */ = {isa = PBXBuildFile; fileRef = A667C24627724EEA006B4DEF /* VT100Screen+Resizing.m */; };
 		A667C249277251B5006B4DEF /* VT100Screen+Resizing.m in Sources */ = {isa = PBXBuildFile; fileRef = A667C24627724EEA006B4DEF /* VT100Screen+Resizing.m */; };
+		A667C24C27725341006B4DEF /* VT100ScreenConfiguration.h in Headers */ = {isa = PBXBuildFile; fileRef = A667C24A27725341006B4DEF /* VT100ScreenConfiguration.h */; };
+		A667C24D27725341006B4DEF /* VT100ScreenConfiguration.m in Sources */ = {isa = PBXBuildFile; fileRef = A667C24B27725341006B4DEF /* VT100ScreenConfiguration.m */; };
 		A667EF9C243935AE0055CF3F /* iTermSwipeHandler.h in Headers */ = {isa = PBXBuildFile; fileRef = A667EF9A243935AE0055CF3F /* iTermSwipeHandler.h */; };
 		A667F3881B48671B00705186 /* libiTerm2Shared.a in Frameworks */ = {isa = PBXBuildFile; fileRef = A6C760501B45C4CF00E3C992 /* libiTerm2Shared.a */; };
 		A667F38B1B48AEF200705186 /* NSApplication+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A667F3891B48AEF200705186 /* NSApplication+iTerm.h */; };
@@ -5570,6 +5572,8 @@
 		A667C234276AB01F006B4DEF /* iTermMetalUnavailableReason.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermMetalUnavailableReason.m; sourceTree = "<group>"; };
 		A667C24527724EEA006B4DEF /* VT100Screen+Resizing.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "VT100Screen+Resizing.h"; sourceTree = "<group>"; };
 		A667C24627724EEA006B4DEF /* VT100Screen+Resizing.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "VT100Screen+Resizing.m"; sourceTree = "<group>"; };
+		A667C24A27725341006B4DEF /* VT100ScreenConfiguration.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = VT100ScreenConfiguration.h; sourceTree = "<group>"; };
+		A667C24B27725341006B4DEF /* VT100ScreenConfiguration.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = VT100ScreenConfiguration.m; sourceTree = "<group>"; };
 		A667EF9A243935AE0055CF3F /* iTermSwipeHandler.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermSwipeHandler.h; sourceTree = "<group>"; };
 		A667F3861B48615900705186 /* iTermToolbeltTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermToolbeltTest.m; sourceTree = "<group>"; };
 		A667F3891B48AEF200705186 /* NSApplication+iTerm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSApplication+iTerm.h"; sourceTree = "<group>"; };
@@ -8894,6 +8898,8 @@
 				A6F7F8052763F47B005E433E /* VT100ScreenState.m */,
 				A667C24527724EEA006B4DEF /* VT100Screen+Resizing.h */,
 				A667C24627724EEA006B4DEF /* VT100Screen+Resizing.m */,
+				A667C24A27725341006B4DEF /* VT100ScreenConfiguration.h */,
+				A667C24B27725341006B4DEF /* VT100ScreenConfiguration.m */,
 			);
 			name = Core;
 			sourceTree = "<group>";
@@ -11419,6 +11425,7 @@
 				A667192A1DCE36C3000CE608 /* iTermRecentDirectoryMO+Additions.h in Headers */,
 				A667192B1DCE36C3000CE608 /* iTermRoundedCornerScrollView.h in Headers */,
 				A666D5EC221A1D9D00D6184A /* iTermVariableScope+Tab.h in Headers */,
+				A667C24C27725341006B4DEF /* VT100ScreenConfiguration.h in Headers */,
 				5370679A21C9D2780088D0F3 /* SIGArchiveVerifier.h in Headers */,
 				A69A260B21640F3F0091C16D /* iTermFlexibleView.h in Headers */,
 				A6180D6C21A35D5E0073F219 /* iTermMetalPerFrameState.h in Headers */,
@@ -14294,6 +14301,7 @@
 				A6EC937C24E8568D00EEADEF /* iTermBuriedSessions.m in Sources */,
 				A6AFE9392401E88D00D489C7 /* iTermImageView.m in Sources */,
 				A6352253238CA23100FED5BC /* iTermOpenQuicklyItem.m in Sources */,
+				A667C24D27725341006B4DEF /* VT100ScreenConfiguration.m in Sources */,
 				A6EA071E24EA441900DD6E17 /* NSURL+IDN.m in Sources */,
 				A6EB2042223EC54E00E928C3 /* ini.c in Sources */,
 				A61A859D24F0F2CC00B03880 /* PseudoTerminal+WindowStyle.m in Sources */,
