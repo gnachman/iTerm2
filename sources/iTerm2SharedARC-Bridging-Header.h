@@ -11,6 +11,7 @@
 #import "iTermMetadata.h"
 #import "iTermMiniSearchFieldViewController.h"
 #import "iTermObject.h"
+#import "iTermOrderEnforcer.h"
 #import "iTermPreferences.h"
 #import "iTermStatusBarTextComponent.h"
 #import "iTermStoplightHotbox.h"

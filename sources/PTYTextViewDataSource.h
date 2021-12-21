@@ -145,4 +145,7 @@
 - (NSSet<NSString *> *)sgrCodesForChar:(screen_char_t)c
                     externalAttributes:(iTermExternalAttribute *)ea;
 
+- (void)setColor:(NSColor *)color forKey:(int)key;
+- (id<iTermColorMapReading>)colorMap;
+
 @end

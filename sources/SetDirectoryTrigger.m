@@ -10,7 +10,7 @@
 
 #import "DebugLogging.h"
 #import "PTYSession.h"
-#import "VT100Screen.h"
+#import "VT100Screen+Mutation.h"
 
 @implementation SetDirectoryTrigger
 

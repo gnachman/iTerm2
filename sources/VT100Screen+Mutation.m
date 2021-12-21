@@ -9,22 +9,30 @@
 // its methods in tests. If I ever have an appetite for risk try https://stackoverflow.com/a/17581430/321984
 #import "VT100Screen+Mutation.h"
 
-#import "DebugLogging.h"
-#import "VT100Screen+Private.h"
-#import "iTermSelection.h"
-#import "iTermTextExtractor.h"
-#import "VT100RemoteHost.h"
-#import "VT100WorkingDirectory.h"
-#import "iTermImageMark.h"
-#import "iTermURLMark.h"
-#import "iTermAdvancedSettingsModel.h"
-#import "NSDictionary+iTerm.h"
 #import "CapturedOutput.h"
-#import "iTermCapturedOutputMark.h"
-#import "iTermCommandHistoryCommandUseMO.h"
-#import "iTermShellHistoryController.h"
+#import "DebugLogging.h"
+#import "NSArray+iTerm.h"
+#import "NSColor+iTerm.h"
+#import "NSData+iTerm.h"
+#import "NSDictionary+iTerm.h"
 #import "SearchResult.h"
 #import "TmuxStateParser.h"
+#import "VT100RemoteHost.h"
+#import "VT100Screen+Private.h"
+#import "VT100Token.h"
+#import "VT100WorkingDirectory.h"
+#import "iTerm2SharedARC-Swift.h"
+#import "iTermAdvancedSettingsModel.h"
+#import "iTermCapturedOutputMark.h"
+#import "iTermCommandHistoryCommandUseMO.h"
+#import "iTermImageMark.h"
+#import "iTermNotificationController.h"
+#import "iTermOrderEnforcer.h"
+#import "iTermPreferences.h"
+#import "iTermSelection.h"
+#import "iTermShellHistoryController.h"
+#import "iTermTextExtractor.h"
+#import "iTermURLMark.h"
 
 #include <sys/time.h>
 
@@ -205,7 +213,7 @@
 
     // Convert note ranges to new coords, dropping or truncating as needed
     _mutableState.currentGrid = _mutableState.altGrid;  // Swap to alt grid temporarily for convertRange:toWidth:to:inLineBuffer:
-    IntervalTree *replacementTree = [[IntervalTree alloc] init];
+    IntervalTree *replacementTree = [[[IntervalTree alloc] init] autorelease];
     for (PTYNoteViewController *note in [_state.savedIntervalTree allObjects]) {
         VT100GridCoordRange noteRange = [self coordRangeForInterval:note.entry.interval];
         DLog(@"Found note at %@", VT100GridCoordRangeDescription(noteRange));
@@ -1143,6 +1151,88 @@ static void SwapInt(int *a, int *b) {
 
 #pragma mark - Interval Tree
 
+// Adds a working directory mark at the given line.
+//
+// nil token means not to fetch working directory asynchronously.
+//
+// pushed means it's a higher confidence update. The directory must be pushed to be remote, but
+// that alone is not sufficient evidence that it is remote. Pushed directories will update the
+// recently used directories and will change the current remote host to the remote host on `line`.
+- (void)mutSetWorkingDirectory:(NSString *)workingDirectory
+                        onLine:(int)line
+                        pushed:(BOOL)pushed
+                         token:(id<iTermOrderedToken>)token {
+    // If not timely, record the update but don't consider it the latest update.
+    // Peek now so we can log but don't commit because we might recurse asynchronously.
+    const BOOL timely = !token || [token peek];
+    DLog(@"%p: setWorkingDirectory:%@ onLine:%d token:%@ (timely=%@)", self, workingDirectory, line, token, @(timely));
+    VT100WorkingDirectory *workingDirectoryObj = [[[VT100WorkingDirectory alloc] init] autorelease];
+    if (token && !workingDirectory) {
+        __weak __typeof(self) weakSelf = self;
+        DLog(@"%p: Performing async working directory fetch for token %@", self, token);
+        [delegate_ screenGetWorkingDirectoryWithCompletion:^(NSString *path) {
+            DLog(@"%p: Async update got %@ for token %@", self, path, token);
+            if (path) {
+                [weakSelf mutSetWorkingDirectory:path onLine:line pushed:pushed token:token];
+            }
+        }];
+        return;
+    }
+    // OK, now commit. It can't have changed since we peeked.
+    const BOOL stillTimely = !token || [token commit];
+    assert(timely == stillTimely);
+
+    DLog(@"%p: Set finished working directory token to %@", self, token);
+    if (workingDirectory.length) {
+        DLog(@"Changing working directory to %@", workingDirectory);
+        workingDirectoryObj.workingDirectory = workingDirectory;
+
+        VT100WorkingDirectory *previousWorkingDirectory = [[[self objectOnOrBeforeLine:line
+                                                                               ofClass:[VT100WorkingDirectory class]] retain] autorelease];
+        DLog(@"The previous directory was %@", previousWorkingDirectory);
+        if ([previousWorkingDirectory.workingDirectory isEqualTo:workingDirectory]) {
+            // Extend the previous working directory. We used to add a new VT100WorkingDirectory
+            // every time but if the window title gets changed a lot then they can pile up really
+            // quickly and you spend all your time searching through VT001WorkingDirectory marks
+            // just to find VT100RemoteHost or VT100ScreenMark objects.
+            //
+            // It's a little weird that a VT100WorkingDirectory can now represent the same path on
+            // two different hosts (e.g., you ssh from /Users/georgen to another host and you're in
+            // /Users/georgen over there, but you can share the same VT100WorkingDirectory between
+            // the two hosts because the path is the same). I can't see the harm in it besides being
+            // odd.
+            //
+            // Intervals aren't removed while part of them is on screen, so this works fine.
+            VT100GridCoordRange range = [self coordRangeForInterval:previousWorkingDirectory.entry.interval];
+            [_mutableState.intervalTree removeObject:previousWorkingDirectory];
+            range.end = VT100GridCoordMake(self.width, line);
+            DLog(@"Extending the previous directory to %@", VT100GridCoordRangeDescription(range));
+            Interval *interval = [self intervalForGridCoordRange:range];
+            [_mutableState.intervalTree addObject:previousWorkingDirectory withInterval:interval];
+        } else {
+            VT100GridCoordRange range;
+            range = VT100GridCoordRangeMake(_state.currentGrid.cursorX, line, self.width, line);
+            DLog(@"Set range of %@ to %@", workingDirectory, VT100GridCoordRangeDescription(range));
+            [_mutableState.intervalTree addObject:workingDirectoryObj
+                                     withInterval:[self intervalForGridCoordRange:range]];
+        }
+    }
+    [delegate_ screenLogWorkingDirectoryAtLine:line
+                                 withDirectory:workingDirectory
+                                        pushed:pushed
+                                        timely:timely];
+}
+
+- (VT100RemoteHost *)setRemoteHost:(NSString *)host user:(NSString *)user onLine:(int)line {
+    VT100RemoteHost *remoteHostObj = [[[VT100RemoteHost alloc] init] autorelease];
+    remoteHostObj.hostname = host;
+    remoteHostObj.username = user;
+    VT100GridCoordRange range = VT100GridCoordRangeMake(0, line, self.width, line);
+    [_mutableState.intervalTree addObject:remoteHostObj
+                             withInterval:[self intervalForGridCoordRange:range]];
+    return remoteHostObj;
+}
+
 - (id<iTermMark>)mutAddMarkStartingAtAbsoluteLine:(long long)line
                                           oneLine:(BOOL)oneLine
                                           ofClass:(Class)markClass {
@@ -1662,13 +1752,13 @@ static void SwapInt(int *a, int *b) {
             if (len >= 2) {
                 _mutableState.lastCharacter = buffer[len - 2];
                 _mutableState.lastCharacterIsDoubleWidth = YES;
-                _mutableState.lastExternalAttribute = [externalAttributes[len - 2] retain];
+                _mutableState.lastExternalAttribute = externalAttributes[len - 2];
             }
         } else {
             // Record the last character.
             _mutableState.lastCharacter = buffer[len - 1];
             _mutableState.lastCharacterIsDoubleWidth = NO;
-            _mutableState.lastExternalAttribute = [externalAttributes[len] retain];
+            _mutableState.lastExternalAttribute = externalAttributes[len];
         }
         LineBuffer *lineBuffer = nil;
         if (_state.currentGrid != _state.altGrid || _state.saveToScrollbackInAlternateScreen) {
@@ -2334,6 +2424,14 @@ static void SwapInt(int *a, int *b) {
 }
 
 #pragma mark - Terminal Fundamentals
+
+- (void)mutAppendNativeImageAtCursorWithName:(NSString *)name width:(int)width {
+    VT100InlineImageHelper *helper = [[[VT100InlineImageHelper alloc] initWithNativeImageNamed:name
+                                                                                 spanningWidth:width
+                                                                                   scaleFactor:[delegate_ screenBackingScaleFactor]] autorelease];
+    helper.delegate = self;
+    [helper writeToGrid:_state.currentGrid];
+}
 
 - (void)mutSynchronizedUpdate:(BOOL)begin {
     if (begin) {
@@ -3456,7 +3554,7 @@ static inline void VT100ScreenEraseCell(screen_char_t *sct, iTermExternalAttribu
                 // NSLog(@"matched");
                 // Found a match in the text.
                 NSArray *allPositions = [temporaryLineBuffer convertPositions:context.results
-                                                            withWidth:_state.currentGrid.size.width];
+                                                                    withWidth:_state.currentGrid.size.width];
                 for (XYRange *xyrange in allPositions) {
                     SearchResult *result = [[[SearchResult alloc] init] autorelease];
 
@@ -3875,6 +3973,1598 @@ static inline void VT100ScreenEraseCell(screen_char_t *sct, iTermExternalAttribu
 - (void)mutFileReceiptEndedUnexpectedly {
     _mutableState.inlineImageHelper = nil;
     [delegate_ screenFileReceiptEndedUnexpectedly];
+}
+
+#pragma mark - VT100TerminalDelegate
+
+- (void)terminalAppendString:(NSString *)string {
+    if (_state.collectInputForPrinting) {
+        [_mutableState.printBuffer appendString:string];
+    } else {
+        // else display string on screen
+        [self appendStringAtCursor:string];
+    }
+    [delegate_ screenDidAppendStringToCurrentLine:string
+                                      isPlainText:YES];
+}
+
+- (void)terminalAppendAsciiData:(AsciiData *)asciiData {
+    if (_state.collectInputForPrinting) {
+        NSString *string = [[[NSString alloc] initWithBytes:asciiData->buffer
+                                                     length:asciiData->length
+                                                   encoding:NSASCIIStringEncoding] autorelease];
+        [self terminalAppendString:string];
+        return;
+    } else {
+        // else display string on screen
+        [self appendAsciiDataAtCursor:asciiData];
+    }
+    [delegate_ screenDidAppendAsciiDataToCurrentLine:asciiData];
+}
+
+- (void)terminalRingBell {
+    DLog(@"Terminal rang the bell");
+    [delegate_ screenDidAppendStringToCurrentLine:@"\a" isPlainText:NO];
+    [self activateBell];
+}
+
+- (void)terminalBackspace {
+    int cursorX = _state.currentGrid.cursorX;
+    int cursorY = _state.currentGrid.cursorY;
+
+    [self mutDoBackspace];
+
+    if (_state.commandStartCoord.x != -1 && (_state.currentGrid.cursorX != cursorX ||
+                                             _state.currentGrid.cursorY != cursorY)) {
+        [delegate_ screenCommandDidChangeWithRange:[self commandRange]];
+    }
+}
+
+- (void)terminalAppendTabAtCursor:(BOOL)setBackgroundColors {
+    [self mutAppendTabAtCursor:setBackgroundColors];
+}
+
+- (BOOL)cursorOutsideLeftRightMargin {
+    return (_state.currentGrid.useScrollRegionCols && (_state.currentGrid.cursorX < _state.currentGrid.leftMargin ||
+                                                 _state.currentGrid.cursorX > _state.currentGrid.rightMargin));
+}
+
+- (void)terminalLineFeed {
+    if (_state.currentGrid.cursor.y == VT100GridRangeMax(_state.currentGrid.scrollRegionRows) &&
+        [self cursorOutsideLeftRightMargin]) {
+        DLog(@"Ignore linefeed/formfeed/index because cursor outside left-right margin.");
+        return;
+    }
+
+    if (_state.collectInputForPrinting) {
+        [_mutableState.printBuffer appendString:@"\n"];
+    } else {
+        [self linefeed];
+    }
+    [delegate_ screenTriggerableChangeDidOccur];
+    [delegate_ screenDidReceiveLineFeed];
+}
+
+- (void)terminalCursorLeft:(int)n {
+    [self mutCursorLeft:n];
+}
+
+- (void)terminalCursorDown:(int)n andToStartOfLine:(BOOL)toStart {
+    [self mutCursorDown:n andToStartOfLine:toStart];
+}
+
+- (void)terminalCursorRight:(int)n {
+    [self mutCursorRight:n];
+}
+
+- (void)terminalCursorUp:(int)n andToStartOfLine:(BOOL)toStart {
+    [self mutCursorUp:n andToStartOfLine:toStart];
+}
+
+
+- (void)terminalMoveCursorToX:(int)x y:(int)y {
+    [self mutCursorToX:x Y:y];
+    [delegate_ screenTriggerableChangeDidOccur];
+    if (_state.commandStartCoord.x != -1) {
+        [delegate_ screenCommandDidChangeWithRange:[self commandRange]];
+    }
+}
+
+- (BOOL)terminalShouldSendReport {
+    return [delegate_ screenShouldSendReport];
+}
+
+- (BOOL)terminalShouldSendReportForVariable:(NSString *)variable {
+    return [delegate_ screenShouldSendReportForVariable:variable];
+}
+
+- (void)terminalSendReport:(NSData *)report {
+    if ([delegate_ screenShouldSendReport] && report) {
+        DLog(@"report %@", [report stringWithEncoding:NSUTF8StringEncoding]);
+        [delegate_ screenWriteDataToTask:report];
+    }
+}
+
+- (NSString *)terminalValueOfVariableNamed:(NSString *)name {
+    return [delegate_ screenValueOfVariableNamed:name];
+}
+
+- (void)terminalShowTestPattern {
+    [self mutShowTestPattern];
+}
+
+- (int)terminalRelativeCursorX {
+    return _state.currentGrid.cursorX - _state.currentGrid.leftMargin + 1;
+}
+
+- (int)terminalRelativeCursorY {
+    return _state.currentGrid.cursorY - _state.currentGrid.topMargin + 1;
+}
+
+- (void)terminalSetScrollRegionTop:(int)top bottom:(int)bottom {
+    [self mutSetScrollRegionTop:top bottom:bottom];
+}
+
+- (void)terminalEraseInDisplayBeforeCursor:(BOOL)before afterCursor:(BOOL)after {
+    [self mutEraseInDisplayBeforeCursor:before afterCursor:after decProtect:NO];
+}
+
+- (void)terminalEraseLineBeforeCursor:(BOOL)before afterCursor:(BOOL)after {
+    [self mutEraseLineBeforeCursor:before afterCursor:after decProtect:NO];
+}
+
+- (void)terminalSetTabStopAtCursor {
+    [self mutSetTabStopAtCursor];
+}
+
+- (void)terminalCarriageReturn {
+    [self mutCarriageReturn];
+}
+
+- (void)terminalReverseIndex {
+    [self mutReverseIndex];
+}
+
+- (void)terminalForwardIndex {
+    [self mutForwardIndex];
+}
+
+- (void)terminalBackIndex {
+    [self mutBackIndex];
+}
+
+- (void)terminalResetPreservingPrompt:(BOOL)preservePrompt modifyContent:(BOOL)modifyContent {
+    [self mutResetPreservingPrompt:preservePrompt modifyContent:modifyContent];
+}
+
+- (void)terminalSetCursorType:(ITermCursorType)cursorType {
+    [delegate_ screenSetCursorType:cursorType];
+}
+
+- (void)terminalSetCursorBlinking:(BOOL)blinking {
+    [delegate_ screenSetCursorBlinking:blinking];
+}
+
+- (BOOL)terminalCursorIsBlinking {
+    return [delegate_ screenCursorIsBlinking];
+}
+
+- (void)terminalGetCursorType:(ITermCursorType *)cursorTypeOut
+                     blinking:(BOOL *)blinking {
+    [delegate_ screenGetCursorType:cursorTypeOut blinking:blinking];
+}
+
+- (void)terminalResetCursorTypeAndBlink {
+    [delegate_ screenResetCursorTypeAndBlink];
+}
+
+- (void)terminalSetLeftMargin:(int)scrollLeft rightMargin:(int)scrollRight {
+    [self mutSetLeftMargin:scrollLeft rightMargin:scrollRight];
+}
+
+- (void)terminalSetCharset:(int)charset toLineDrawingMode:(BOOL)lineDrawingMode {
+    [self mutSetCharacterSet:charset usesLineDrawingMode:lineDrawingMode];
+}
+
+- (BOOL)terminalLineDrawingFlagForCharset:(int)charset {
+    return [_state.charsetUsesLineDrawingMode containsObject:@(charset)];
+}
+
+- (void)terminalRemoveTabStops {
+    [self mutRemoveAllTabStops];
+}
+
+- (void)terminalRemoveTabStopAtCursor {
+    [self mutRemoveTabStopAtCursor];
+}
+
+- (void)terminalSetWidth:(int)width preserveScreen:(BOOL)preserveScreen {
+    [self mutSetWidth:width preserveScreen:preserveScreen];
+}
+
+- (void)terminalBackTab:(int)n {
+    [self mutBackTab:n];
+}
+
+- (void)terminalSetCursorX:(int)x {
+    [self mutCursorToX:x];
+    [delegate_ screenTriggerableChangeDidOccur];
+}
+
+- (void)terminalAdvanceCursorPastLastColumn {
+    [self mutAdvanceCursorPastLastColumn];
+}
+
+- (void)terminalSetCursorY:(int)y {
+    [self mutCursorToY:y];
+    [delegate_ screenTriggerableChangeDidOccur];
+}
+
+- (void)terminalEraseCharactersAfterCursor:(int)j {
+    [self mutEraseCharactersAfterCursor:j];
+}
+
+- (void)terminalPrintBuffer {
+    if ([delegate_ screenShouldBeginPrinting] && [_state.printBuffer length] > 0) {
+        [self doPrint];
+    }
+}
+
+- (void)terminalBeginRedirectingToPrintBuffer {
+    if ([delegate_ screenShouldBeginPrinting]) {
+        // allocate a string for the stuff to be printed
+        _mutableState.printBuffer = [[[NSMutableString alloc] init] autorelease];
+        _mutableState.collectInputForPrinting = YES;
+    }
+}
+
+- (void)terminalPrintScreen {
+    if ([delegate_ screenShouldBeginPrinting]) {
+        // Print out the whole screen
+        _mutableState.printBuffer = nil;
+        _mutableState.collectInputForPrinting = NO;
+        [self doPrint];
+    }
+}
+
+- (void)terminalSetWindowTitle:(NSString *)title {
+    DLog(@"terminalSetWindowTitle:%@", title);
+
+    if ([delegate_ screenAllowTitleSetting]) {
+        [delegate_ screenSetWindowTitle:title];
+    }
+
+    // If you know to use RemoteHost then assume you also use CurrentDirectory. Innocent window title
+    // changes shouldn't override CurrentDirectory.
+    if (![self remoteHostOnLine:[self numberOfScrollbackLines] + self.height]) {
+        DLog(@"Don't have a remote host, so changing working directory");
+        // TODO: There's a bug here where remote host can scroll off the end of history, causing the
+        // working directory to come from PTYTask (which is what happens when nil is passed here).
+        //
+        // NOTE: Even though this is kind of a pull, it happens at a good
+        // enough rate (not too common, not too rare when part of a prompt)
+        // that I'm comfortable calling it a push. I want it to do things like
+        // update the list of recently used directories.
+        [self setWorkingDirectory:nil onLine:[self lineNumberOfCursor] pushed:YES];
+    } else {
+        DLog(@"Already have a remote host so not updating working directory because of title change");
+    }
+}
+
+- (void)terminalSetIconTitle:(NSString *)title {
+    if ([delegate_ screenAllowTitleSetting]) {
+        [delegate_ screenSetIconName:title];
+    }
+}
+
+- (void)terminalSetSubtitle:(NSString *)subtitle {
+    if ([delegate_ screenAllowTitleSetting]) {
+        [delegate_ screenSetSubtitle:subtitle];
+    }
+}
+
+- (void)terminalPasteString:(NSString *)string {
+    [delegate_ screenTerminalAttemptedPasteboardAccess];
+    // check the configuration
+    if (![iTermPreferences boolForKey:kPreferenceKeyAllowClipboardAccessFromTerminal]) {
+        return;
+    }
+
+    // set the result to paste board.
+    NSPasteboard* thePasteboard = [NSPasteboard generalPasteboard];
+    [thePasteboard declareTypes:[NSArray arrayWithObject:NSPasteboardTypeString] owner:nil];
+    [thePasteboard setString:string forType:NSPasteboardTypeString];
+}
+
+- (void)terminalInsertEmptyCharsAtCursor:(int)n {
+    [self mutInsertEmptyCharsAtCursor:n];
+}
+
+- (void)terminalShiftLeft:(int)n {
+    [self mutShiftLeft:n];
+}
+
+- (void)terminalShiftRight:(int)n {
+    [self mutShiftRight:n];
+}
+
+- (void)terminalInsertBlankLinesAfterCursor:(int)n {
+    [self mutInsertBlankLinesAfterCursor:n];
+}
+
+- (void)terminalDeleteCharactersAtCursor:(int)n {
+    [self mutDeleteCharactersAtCursor:n];
+}
+
+- (void)terminalDeleteLinesAtCursor:(int)n {
+    [self mutDeleteLinesAtCursor:n];
+}
+
+- (void)terminalSetRows:(int)rows andColumns:(int)columns {
+    if (rows == -1) {
+        rows = self.height;
+    } else if (rows == 0) {
+        rows = [self terminalScreenHeightInCells];
+    }
+    if (columns == -1) {
+        columns = self.width;
+    } else if (columns == 0) {
+        columns = [self terminalScreenWidthInCells];
+    }
+    if ([delegate_ screenShouldInitiateWindowResize] &&
+        ![delegate_ screenWindowIsFullscreen]) {
+        [delegate_ screenResizeToWidth:columns
+                                height:rows];
+
+    }
+}
+
+- (void)terminalSetPixelWidth:(int)width height:(int)height {
+    if ([delegate_ screenShouldInitiateWindowResize] &&
+        ![delegate_ screenWindowIsFullscreen]) {
+        // TODO: Only allow this if there is a single session in the tab.
+        NSRect frame = [delegate_ screenWindowFrame];
+        NSRect screenFrame = [delegate_ screenWindowScreenFrame];
+        if (width < 0) {
+            width = frame.size.width;
+        } else if (width == 0) {
+            width = screenFrame.size.width;
+        }
+        if (height < 0) {
+            height = frame.size.height;
+        } else if (height == 0) {
+            height = screenFrame.size.height;
+        }
+        [delegate_ screenResizeToPixelWidth:width height:height];
+    }
+}
+
+- (void)terminalMoveWindowTopLeftPointTo:(NSPoint)point {
+    if ([delegate_ screenShouldInitiateWindowResize] &&
+        ![delegate_ screenWindowIsFullscreen]) {
+        // TODO: Only allow this if there is a single session in the tab.
+        [delegate_ screenMoveWindowTopLeftPointTo:point];
+    }
+}
+
+- (void)terminalMiniaturize:(BOOL)mini {
+    // TODO: Only allow this if there is a single session in the tab.
+    if ([delegate_ screenShouldInitiateWindowResize] &&
+        ![delegate_ screenWindowIsFullscreen]) {
+        [delegate_ screenMiniaturizeWindow:mini];
+    }
+}
+
+- (void)terminalRaise:(BOOL)raise {
+    if ([delegate_ screenShouldInitiateWindowResize]) {
+        [delegate_ screenRaise:raise];
+    }
+}
+
+- (void)terminalScrollDown:(int)n {
+    [self mutScrollDown:n];
+}
+
+- (void)terminalScrollUp:(int)n {
+    [self mutScrollUp:n];
+}
+
+- (BOOL)terminalWindowIsMiniaturized {
+    return [delegate_ screenWindowIsMiniaturized];
+}
+
+- (NSPoint)terminalWindowTopLeftPixelCoordinate {
+    return [delegate_ screenWindowTopLeftPixelCoordinate];
+}
+
+- (int)terminalWindowWidthInPixels {
+    NSRect frame = [delegate_ screenWindowFrame];
+    return frame.size.width;
+}
+
+- (int)terminalWindowHeightInPixels {
+    NSRect frame = [delegate_ screenWindowFrame];
+    return frame.size.height;
+}
+
+- (int)terminalScreenHeightInCells {
+    //  TODO: WTF do we do with panes here?
+    NSRect screenFrame = [delegate_ screenWindowScreenFrame];
+    NSRect windowFrame = [delegate_ screenWindowFrame];
+    float roomToGrow = screenFrame.size.height - windowFrame.size.height;
+    NSSize cellSize = [delegate_ screenCellSize];
+    return [self height] + roomToGrow / cellSize.height;
+}
+
+- (int)terminalScreenWidthInCells {
+    //  TODO: WTF do we do with panes here?
+    NSRect screenFrame = [delegate_ screenWindowScreenFrame];
+    NSRect windowFrame = [delegate_ screenWindowFrame];
+    float roomToGrow = screenFrame.size.width - windowFrame.size.width;
+    NSSize cellSize = [delegate_ screenCellSize];
+    return [self width] + roomToGrow / cellSize.width;
+}
+
+- (NSString *)terminalIconTitle {
+    if (_state.allowTitleReporting && [self terminalIsTrusted]) {
+        return [delegate_ screenIconTitle];
+    } else {
+        return @"";
+    }
+}
+
+- (NSString *)terminalWindowTitle {
+    if (_state.allowTitleReporting && [self terminalIsTrusted]) {
+        return [delegate_ screenWindowTitle] ? [delegate_ screenWindowTitle] : @"";
+    } else {
+        return @"";
+    }
+}
+
+- (void)terminalPushCurrentTitleForWindow:(BOOL)isWindow {
+    if ([delegate_ screenAllowTitleSetting]) {
+        [delegate_ screenPushCurrentTitleForWindow:isWindow];
+    }
+}
+
+- (void)terminalPopCurrentTitleForWindow:(BOOL)isWindow {
+    if ([delegate_ screenAllowTitleSetting]) {
+        [delegate_ screenPopCurrentTitleForWindow:isWindow];
+    }
+}
+
+- (BOOL)terminalPostUserNotification:(NSString *)message {
+    if (_state.postUserNotifications && [delegate_ screenShouldPostTerminalGeneratedAlert]) {
+        DLog(@"Terminal posting user notification %@", message);
+        [delegate_ screenIncrementBadge];
+        NSString *description = [NSString stringWithFormat:@"Session %@ #%d: %@",
+                                 [[delegate_ screenName] removingHTMLFromTabTitleIfNeeded],
+                                 [delegate_ screenNumber],
+                                 message];
+        BOOL sent = [[iTermNotificationController sharedInstance]
+                                 notify:@"Alert"
+                        withDescription:description
+                            windowIndex:[delegate_ screenWindowIndex]
+                               tabIndex:[delegate_ screenTabIndex]
+                              viewIndex:[delegate_ screenViewIndex]];
+        return sent;
+    } else {
+        DLog(@"Declining to allow terminal to post user notification %@", message);
+        return NO;
+    }
+}
+
+- (void)terminalStartTmuxModeWithDCSIdentifier:(NSString *)dcsID {
+    [delegate_ screenStartTmuxModeWithDCSIdentifier:dcsID];
+}
+
+- (void)terminalHandleTmuxInput:(VT100Token *)token {
+    [delegate_ screenHandleTmuxInput:token];
+}
+
+- (void)terminalSynchronizedUpdate:(BOOL)begin {
+    [self mutSynchronizedUpdate:begin];
+}
+
+- (int)terminalWidth {
+    return [self width];
+}
+
+- (int)terminalHeight {
+    return [self height];
+}
+
+- (void)terminalMouseModeDidChangeTo:(MouseMode)mouseMode {
+    [delegate_ screenMouseModeDidChange];
+}
+
+- (void)terminalNeedsRedraw {
+    [self mutMarkWholeScreenDirty];
+}
+
+- (void)terminalSetUseColumnScrollRegion:(BOOL)use {
+    self.useColumnScrollRegion = use;
+}
+
+- (BOOL)terminalUseColumnScrollRegion {
+    return self.useColumnScrollRegion;
+}
+
+- (void)terminalShowAltBuffer {
+    [self mutShowAltBuffer];
+}
+
+- (BOOL)terminalIsShowingAltBuffer {
+    return [self showingAlternateScreen];
+}
+
+- (void)terminalShowPrimaryBuffer {
+    [self mutShowPrimaryBuffer];
+}
+
+- (void)terminalSetRemoteHost:(NSString *)remoteHost {
+    [self mutSetRemoteHost:remoteHost];
+}
+
+- (void)mutSetRemoteHost:(NSString *)remoteHost {
+    DLog(@"Set remote host to %@ %@", remoteHost, self);
+    // Search backwards because Windows UPN format includes an @ in the user name. I don't think hostnames would ever have an @ sign.
+    NSRange atRange = [remoteHost rangeOfString:@"@" options:NSBackwardsSearch];
+    NSString *user = nil;
+    NSString *host = nil;
+    if (atRange.length == 1) {
+        user = [remoteHost substringToIndex:atRange.location];
+        host = [remoteHost substringFromIndex:atRange.location + 1];
+        if (host.length == 0) {
+            host = nil;
+        }
+    } else {
+        host = remoteHost;
+    }
+
+    [self setHost:host user:user];
+}
+
+- (void)setHost:(NSString *)host user:(NSString *)user {
+    DLog(@"setHost:%@ user:%@ %@", host, user, self);
+    VT100RemoteHost *currentHost = [self remoteHostOnLine:[self numberOfLines]];
+    if (!host || !user) {
+        // A trigger can set the host and user alone. If remoteHost looks like example.com or
+        // user@, then preserve the previous host/user. Also ensure neither value is nil; the
+        // empty string will stand in for a real value if necessary.
+        VT100RemoteHost *lastRemoteHost = [self lastRemoteHost];
+        if (!host) {
+            host = [[lastRemoteHost.hostname copy] autorelease] ?: @"";
+        }
+        if (!user) {
+            user = [[lastRemoteHost.username copy] autorelease] ?: @"";
+        }
+    }
+
+    int cursorLine = [self numberOfLines] - [self height] + _state.currentGrid.cursorY;
+    VT100RemoteHost *remoteHostObj = [self setRemoteHost:host user:user onLine:cursorLine];
+
+    if (![remoteHostObj isEqualToRemoteHost:currentHost]) {
+        [delegate_ screenCurrentHostDidChange:remoteHostObj];
+    }
+}
+
+- (void)terminalSetWorkingDirectoryURL:(NSString *)URLString {
+    DLog(@"terminalSetWorkingDirectoryURL:%@", URLString);
+
+    if (![iTermAdvancedSettingsModel acceptOSC7]) {
+        return;
+    }
+    NSURL *URL = [NSURL URLWithString:URLString];
+    if (!URL || URLString.length == 0) {
+        return;
+    }
+    NSURLComponents *components = [[[NSURLComponents alloc] initWithURL:URL resolvingAgainstBaseURL:NO] autorelease];
+    NSString *host = components.host;
+    NSString *user = components.user;
+    NSString *path = components.path;
+
+    if (host || user) {
+        [self setHost:host user:user];
+    }
+    [self terminalCurrentDirectoryDidChangeTo:path];
+    [delegate_ screenPromptDidStartAtLine:[self numberOfScrollbackLines] + self.cursorY - 1];
+}
+
+- (void)terminalClearScreen {
+    [self mutEraseScreenAndRemoveSelection];
+}
+
+- (void)terminalSaveScrollPositionWithArgument:(NSString *)argument {
+    // The difference between an argument of saveScrollPosition and saveCursorLine (the default) is
+    // subtle. When saving the scroll position, the entire region of visible lines is recorded and
+    // will be restored exactly. When saving only the line the cursor is on, when restored, that
+    // line will be made visible but no other aspect of the scroll position must be restored. This
+    // is often preferable because when setting a mark as part of the prompt, we wouldn't want the
+    // prompt to be the last line on the screen (such lines are scrolled to the center of
+    // the screen).
+    if ([argument isEqualToString:@"saveScrollPosition"]) {
+        [delegate_ screenSaveScrollPosition];
+    } else {  // implicitly "saveCursorLine"
+        [delegate_ screenAddMarkOnLine:[self numberOfScrollbackLines] + self.cursorY - 1];
+    }
+}
+
+- (void)terminalStealFocus {
+    [delegate_ screenStealFocus];
+}
+
+- (void)terminalSetProxyIcon:(NSString *)value {
+    NSString *path = [value length] ? value : nil;
+    [delegate_ screenSetPreferredProxyIcon:path];
+}
+
+- (void)terminalClearScrollbackBuffer {
+    if ([self.delegate screenShouldClearScrollbackBuffer]) {
+        [self clearScrollbackBuffer];
+    }
+}
+
+- (void)terminalClearBuffer {
+    [self clearBuffer];
+}
+
+// Shell integration or equivalent.
+- (void)terminalCurrentDirectoryDidChangeTo:(NSString *)dir {
+    [self mutCurrentDirectoryDidChangeTo:dir];
+}
+
+- (void)mutCurrentDirectoryDidChangeTo:(NSString *)dir {
+    DLog(@"%p: terminalCurrentDirectoryDidChangeTo:%@", self, dir);
+    [delegate_ screenSetPreferredProxyIcon:nil]; // Clear current proxy icon if exists.
+
+    int cursorLine = [self numberOfLines] - [self height] + _state.currentGrid.cursorY;
+    if (dir.length) {
+        [self currentDirectoryReallyDidChangeTo:dir onLine:cursorLine];
+        return;
+    }
+
+    // Go fetch the working directory and then update it.
+    __weak __typeof(self) weakSelf = self;
+    id<iTermOrderedToken> token = [[_mutableState.currentDirectoryDidChangeOrderEnforcer newToken] autorelease];
+    DLog(@"Fetching directory asynchronously with token %@", token);
+    [delegate_ screenGetWorkingDirectoryWithCompletion:^(NSString *dir) {
+        DLog(@"For token %@, the working directory is %@", token, dir);
+        if ([token commit]) {
+            [weakSelf currentDirectoryReallyDidChangeTo:dir onLine:cursorLine];
+        }
+    }];
+}
+
+- (void)currentDirectoryReallyDidChangeTo:(NSString *)dir
+                                   onLine:(int)cursorLine {
+    DLog(@"currentDirectoryReallyDidChangeTo:%@ onLine:%@", dir, @(cursorLine));
+    BOOL willChange = ![dir isEqualToString:[self workingDirectoryOnLine:cursorLine]];
+    [self mutSetWorkingDirectory:dir onLine:cursorLine pushed:YES token:nil];
+    if (willChange) {
+        [delegate_ screenCurrentDirectoryDidChangeTo:dir];
+    }
+}
+
+- (void)terminalProfileShouldChangeTo:(NSString *)value {
+    [delegate_ screenSetProfileToProfileNamed:value];
+}
+
+- (void)terminalAddNote:(NSString *)value show:(BOOL)show {
+    NSArray *parts = [value componentsSeparatedByString:@"|"];
+    VT100GridCoord location = _state.currentGrid.cursor;
+    NSString *message = nil;
+    int length = _state.currentGrid.size.width - _state.currentGrid.cursorX - 1;
+    if (parts.count == 1) {
+        message = parts[0];
+    } else if (parts.count == 2) {
+        message = parts[1];
+        length = [parts[0] intValue];
+    } else if (parts.count >= 4) {
+        message = parts[0];
+        length = [parts[1] intValue];
+        VT100GridCoord limit = {
+            .x = self.width - 1,
+            .y = self.height - 1
+        };
+        location.x = MIN(MAX(0, [parts[2] intValue]), limit.x);
+        location.y = MIN(MAX(0, [parts[3] intValue]), limit.y);
+    }
+    VT100GridCoord end = location;
+    end.x += length;
+    end.y += end.x / self.width;
+    end.x %= self.width;
+
+    int endVal = end.x + end.y * self.width;
+    int maxVal = self.width - 1 + (self.height - 1) * self.width;
+    if (length > 0 &&
+        message.length > 0 &&
+        endVal <= maxVal) {
+        PTYNoteViewController *note = [[[PTYNoteViewController alloc] init] autorelease];
+        [note setString:message];
+        [note sizeToFit];
+        [self addNote:note
+              inRange:VT100GridCoordRangeMake(location.x,
+                                              location.y + [self numberOfScrollbackLines],
+                                              end.x,
+                                              end.y + [self numberOfScrollbackLines])];
+        if (!show) {
+            [note setNoteHidden:YES];
+        }
+    }
+}
+
+- (void)terminalSetPasteboard:(NSString *)value {
+    [delegate_ screenSetPasteboard:value];
+}
+
+- (BOOL)preconfirmDownloadOfSize:(NSInteger)size
+                            name:(NSString *)name
+                   displayInline:(BOOL)displayInline
+                     promptIfBig:(BOOL *)promptIfBig {
+    return [self.delegate screenConfirmDownloadAllowed:name
+                                                  size:size
+                                         displayInline:displayInline
+                                           promptIfBig:promptIfBig];
+}
+
+- (BOOL)terminalWillReceiveFileNamed:(NSString *)name
+                              ofSize:(NSInteger)size {
+    BOOL promptIfBig = YES;
+    if (![self preconfirmDownloadOfSize:size
+                                   name:name
+                          displayInline:NO
+                            promptIfBig:&promptIfBig]) {
+        return NO;
+    }
+    [delegate_ screenWillReceiveFileNamed:name ofSize:size preconfirmed:!promptIfBig];
+    return YES;
+}
+
+- (BOOL)terminalWillReceiveInlineFileNamed:(NSString *)name
+                                    ofSize:(NSInteger)size
+                                     width:(int)width
+                                     units:(VT100TerminalUnits)widthUnits
+                                    height:(int)height
+                                     units:(VT100TerminalUnits)heightUnits
+                       preserveAspectRatio:(BOOL)preserveAspectRatio
+                                     inset:(NSEdgeInsets)inset {
+    BOOL promptIfBig = YES;
+    if (![self preconfirmDownloadOfSize:size name:name displayInline:YES promptIfBig:&promptIfBig]) {
+        return NO;
+    }
+    _mutableState.inlineImageHelper = [[[VT100InlineImageHelper alloc] initWithName:name
+                                                                              width:width
+                                                                         widthUnits:widthUnits
+                                                                             height:height
+                                                                        heightUnits:heightUnits
+                                                                        scaleFactor:[delegate_ screenBackingScaleFactor]
+                                                                preserveAspectRatio:preserveAspectRatio
+                                                                              inset:inset
+                                                                       preconfirmed:!promptIfBig] autorelease];
+    _mutableState.inlineImageHelper.delegate = self;
+    return YES;
+}
+
+- (void)addURLMarkAtLineAfterCursorWithCode:(unsigned int)code {
+    long long absLine = (self.totalScrollbackOverflow +
+                         [self numberOfScrollbackLines] +
+                         _state.currentGrid.cursor.y + 1);
+    iTermURLMark *mark = [self addMarkStartingAtAbsoluteLine:absLine
+                                                     oneLine:YES
+                                                     ofClass:[iTermURLMark class]];
+    mark.code = code;
+}
+
+- (void)terminalWillStartLinkWithCode:(unsigned int)code {
+    [self addURLMarkAtLineAfterCursorWithCode:code];
+}
+
+- (void)terminalWillEndLinkWithCode:(unsigned int)code {
+    [self addURLMarkAtLineAfterCursorWithCode:code];
+}
+
+- (void)terminalAppendSixelData:(NSData *)data {
+    VT100InlineImageHelper *helper = [[[VT100InlineImageHelper alloc] initWithSixelData:data
+                                                                            scaleFactor:[delegate_ screenBackingScaleFactor]] autorelease];
+    helper.delegate = self;
+    [helper writeToGrid:_state.currentGrid];
+    [self crlf];
+}
+
+- (void)terminalDidChangeSendModifiers {
+    // CSI u is too different from xterm's modifyOtherKeys to allow the terminal to change it with
+    // xterm's control sequences. Lots of strange problems appear with vim. For example, mailing
+    // list thread with subject "Control Keys Failing After System Bell".
+    // TODO: terminal_.sendModifiers[i] holds the settings. See xterm's modifyOtherKeys and friends.
+    [self.delegate screenSendModifiersDidChange];
+}
+
+- (void)terminalKeyReportingFlagsDidChange {
+    [self.delegate screenKeyReportingFlagsDidChange];
+}
+
+- (void)terminalDidFinishReceivingFile {
+    if (_mutableState.inlineImageHelper) {
+        [_mutableState.inlineImageHelper writeToGrid:_state.currentGrid];
+        _mutableState.inlineImageHelper = nil;
+        // TODO: Handle objects other than images.
+        [delegate_ screenDidFinishReceivingInlineFile];
+    } else {
+        DLog(@"Download finished");
+        [delegate_ screenDidFinishReceivingFile];
+    }
+}
+
+- (void)terminalDidReceiveBase64FileData:(NSString *)data {
+    if (_mutableState.inlineImageHelper) {
+        [_mutableState.inlineImageHelper appendBase64EncodedData:data];
+    } else {
+        [delegate_ screenDidReceiveBase64FileData:data];
+    }
+}
+
+- (void)terminalFileReceiptEndedUnexpectedly {
+    [self mutFileReceiptEndedUnexpectedly];
+}
+
+- (void)terminalRequestUpload:(NSString *)args {
+    [delegate_ screenRequestUpload:args];
+}
+
+- (void)terminalBeginCopyToPasteboard {
+    [delegate_ screenTerminalAttemptedPasteboardAccess];
+    if ([iTermPreferences boolForKey:kPreferenceKeyAllowClipboardAccessFromTerminal]) {
+        _mutableState.pasteboardString = [[[NSMutableString alloc] init] autorelease];
+    }
+}
+
+- (void)terminalDidReceiveBase64PasteboardString:(NSString *)string {
+    if ([iTermPreferences boolForKey:kPreferenceKeyAllowClipboardAccessFromTerminal]) {
+        [_mutableState.pasteboardString appendString:string];
+    }
+}
+
+- (void)terminalDidFinishReceivingPasteboard {
+    if (_state.pasteboardString && [iTermPreferences boolForKey:kPreferenceKeyAllowClipboardAccessFromTerminal]) {
+        NSData *data = [NSData dataWithBase64EncodedString:_state.pasteboardString];
+        if (data) {
+            NSString *string = [[[NSString alloc] initWithData:data encoding:_state.terminal.encoding] autorelease];
+            if (!string) {
+                string = [[[NSString alloc] initWithData:data encoding:[NSString defaultCStringEncoding]] autorelease];
+            }
+
+            if (string) {
+                NSPasteboard *pboard = [NSPasteboard generalPasteboard];
+                [pboard clearContents];
+                [pboard declareTypes:@[ NSPasteboardTypeString ] owner:self];
+                [pboard setString:string forType:NSPasteboardTypeString];
+            }
+        }
+    }
+    _mutableState.pasteboardString = nil;
+}
+
+- (void)terminalPasteboardReceiptEndedUnexpectedly {
+    _mutableState.pasteboardString = nil;
+}
+
+- (void)terminalCopyBufferToPasteboard {
+    [delegate_ screenCopyBufferToPasteboard];
+}
+
+- (BOOL)terminalIsAppendingToPasteboard {
+    return [delegate_ screenIsAppendingToPasteboard];
+}
+
+- (void)terminalAppendDataToPasteboard:(NSData *)data {
+    return [delegate_ screenAppendDataToPasteboard:data];
+}
+
+- (BOOL)terminalIsTrusted {
+    const BOOL result = ![iTermAdvancedSettingsModel disablePotentiallyInsecureEscapeSequences];
+    DLog(@"terminalIsTrusted returning %@", @(result));
+    return result;
+}
+
+- (BOOL)terminalCanUseDECRQCRA {
+    if (![iTermAdvancedSettingsModel disableDECRQCRA]) {
+        return YES;
+    }
+    [delegate_ screenDidTryToUseDECRQCRA];
+    return NO;
+}
+
+- (void)terminalRequestAttention:(VT100AttentionRequestType)request {
+    [delegate_ screenRequestAttention:request];
+}
+
+- (void)terminalDisinterSession {
+    [delegate_ screenDisinterSession];
+}
+
+- (void)terminalSetBackgroundImageFile:(NSString *)filename {
+    [delegate_ screenSetBackgroundImageFile:filename];
+}
+
+- (void)terminalSetBadgeFormat:(NSString *)badge {
+    [delegate_ screenSetBadgeFormat:badge];
+}
+
+- (void)terminalSetUserVar:(NSString *)kvp {
+    [delegate_ screenSetUserVar:kvp];
+}
+
+- (void)terminalResetColor:(VT100TerminalColorIndex)n {
+    const int key = [self colorMapKeyForTerminalColorIndex:n];
+    DLog(@"Key for %@ is %@", @(n), @(key));
+    if (key < 0) {
+        return;
+    }
+    [delegate_ screenResetColorsWithColorMapKey:key];
+}
+
+- (void)terminalSetForegroundColor:(NSColor *)color {
+    [delegate_ screenSetColor:color forKey:kColorMapForeground];
+}
+
+- (void)terminalSetBackgroundColor:(NSColor *)color {
+    [delegate_ screenSetColor:color forKey:kColorMapBackground];
+}
+
+- (void)terminalSetBoldColor:(NSColor *)color {
+    [delegate_ screenSetColor:color forKey:kColorMapBold];
+}
+
+- (void)terminalSetSelectionColor:(NSColor *)color {
+    [delegate_ screenSetColor:color forKey:kColorMapSelection];
+}
+
+- (void)terminalSetSelectedTextColor:(NSColor *)color {
+    [delegate_ screenSetColor:color forKey:kColorMapSelectedText];
+}
+
+- (void)terminalSetCursorColor:(NSColor *)color {
+    [delegate_ screenSetColor:color forKey:kColorMapCursor];
+}
+
+- (void)terminalSetCursorTextColor:(NSColor *)color {
+    [delegate_ screenSetColor:color forKey:kColorMapCursorText];
+}
+
+- (int)colorMapKeyForTerminalColorIndex:(VT100TerminalColorIndex)n {
+    switch (n) {
+        case VT100TerminalColorIndexText:
+            return kColorMapForeground;
+        case VT100TerminalColorIndexBackground:
+            return kColorMapBackground;
+        case VT100TerminalColorIndexCursor:
+            return kColorMapCursor;
+        case VT100TerminalColorIndexSelectionBackground:
+            return kColorMapSelection;
+        case VT100TerminalColorIndexSelectionForeground:
+            return kColorMapSelectedText;
+        case VT100TerminalColorIndexFirst8BitColorIndex:
+        case VT100TerminalColorIndexLast8BitColorIndex:
+            break;
+    }
+    if (n < 0 || n > 255) {
+        return -1;
+    } else {
+        return kColorMap8bitBase + n;
+    }
+}
+
+- (void)terminalSetColorTableEntryAtIndex:(VT100TerminalColorIndex)n color:(NSColor *)color {
+    const int key = [self colorMapKeyForTerminalColorIndex:n];
+    DLog(@"Key for %@ is %@", @(n), @(key));
+    if (key < 0) {
+        return;
+    }
+    [delegate_ screenSetColor:color forKey:key];
+}
+
+- (void)terminalSetCurrentTabColor:(NSColor *)color {
+    [delegate_ screenSetCurrentTabColor:color];
+}
+
+- (void)terminalSetTabColorRedComponentTo:(CGFloat)color {
+    [delegate_ screenSetTabColorRedComponentTo:color];
+}
+
+- (void)terminalSetTabColorGreenComponentTo:(CGFloat)color {
+    [delegate_ screenSetTabColorGreenComponentTo:color];
+}
+
+- (void)terminalSetTabColorBlueComponentTo:(CGFloat)color {
+    [delegate_ screenSetTabColorBlueComponentTo:color];
+}
+
+- (BOOL)terminalFocusReportingAllowed {
+    return [iTermAdvancedSettingsModel focusReportingEnabled];
+}
+
+- (BOOL)terminalCursorVisible {
+    return _state.cursorVisible;
+}
+
+- (NSColor *)terminalColorForIndex:(VT100TerminalColorIndex)index {
+    const int key = [self colorMapKeyForTerminalColorIndex:index];
+    if (key < 0) {
+        return nil;
+    }
+    return [_state.colorMap colorForKey:key];
+}
+
+- (int)terminalCursorX {
+    return MIN([self cursorX], [self width]);
+}
+
+- (int)terminalCursorY {
+    return [self cursorY];
+}
+
+- (BOOL)terminalWillAutoWrap {
+    return self.cursorX > self.width;
+}
+
+- (void)terminalSetCursorVisible:(BOOL)visible {
+    [self mutSetCursorVisible:visible];
+}
+
+- (void)terminalSetHighlightCursorLine:(BOOL)highlight {
+    [delegate_ screenSetHighlightCursorLine:highlight];
+}
+
+- (void)terminalClearCapturedOutput {
+    [delegate_ screenClearCapturedOutput];
+}
+
+- (void)terminalPromptDidStart {
+    [self promptDidStartAt:VT100GridAbsCoordMake(_state.currentGrid.cursor.x,
+                                                 _state.currentGrid.cursor.y + self.numberOfScrollbackLines + self.totalScrollbackOverflow)];
+}
+
+- (NSArray<NSNumber *> *)terminalTabStops {
+    return [[_state.tabStops.allObjects sortedArrayUsingSelector:@selector(compare:)] mapWithBlock:^NSNumber *(NSNumber *ts) {
+        return @(ts.intValue + 1);
+    }];
+}
+
+- (void)terminalSetTabStops:(NSArray<NSNumber *> *)tabStops {
+    [self mutSetTabStops:tabStops];
+}
+
+- (void)terminalCommandDidStart {
+    [self mutCommandDidStart];
+}
+
+- (void)terminalCommandDidEnd {
+    [self mutCommandDidEnd];
+}
+
+- (void)terminalAbortCommand {
+    DLog(@"FinalTerm: terminalAbortCommand");
+    [self mutCommandWasAborted];
+}
+
+- (void)terminalSemanticTextDidStartOfType:(VT100TerminalSemanticTextType)type {
+    // TODO
+}
+
+- (void)terminalSemanticTextDidEndOfType:(VT100TerminalSemanticTextType)type {
+    // TODO
+}
+
+- (void)terminalProgressAt:(double)fraction label:(NSString *)label {
+     // TODO
+}
+
+- (void)terminalProgressDidFinish {
+    // TODO
+}
+
+- (void)terminalReturnCodeOfLastCommandWas:(int)returnCode {
+    DLog(@"FinalTerm: terminalReturnCodeOfLastCommandWas:%d", returnCode);
+    VT100ScreenMark *mark = [[self.lastCommandMark retain] autorelease];
+    if (mark) {
+        DLog(@"FinalTerm: setting code on mark %@", mark);
+        const NSInteger line = [self coordRangeForInterval:mark.entry.interval].start.y + self.totalScrollbackOverflow;
+        [_state.intervalTreeObserver intervalTreeDidRemoveObjectOfType:[self intervalTreeObserverTypeForObject:mark]
+                                                                onLine:line];
+        mark.code = returnCode;
+        [_state.intervalTreeObserver intervalTreeDidAddObjectOfType:[self intervalTreeObserverTypeForObject:mark]
+                                                             onLine:line];
+        VT100RemoteHost *remoteHost = [self remoteHostOnLine:[self numberOfLines]];
+        [[iTermShellHistoryController sharedInstance] setStatusOfCommandAtMark:mark
+                                                                        onHost:remoteHost
+                                                                            to:returnCode];
+        [delegate_ screenNeedsRedraw];
+    } else {
+        DLog(@"No last command mark found.");
+    }
+    [delegate_ screenCommandDidExitWithCode:returnCode mark:mark];
+}
+
+- (void)terminalFinalTermCommand:(NSArray *)argv {
+    // TODO
+    // Currently, FinalTerm supports these commands:
+  /*
+   QUIT_PROGRAM,
+   SEND_TO_SHELL,
+   CLEAR_SHELL_COMMAND,
+   SET_SHELL_COMMAND,
+   RUN_SHELL_COMMAND,
+   TOGGLE_VISIBLE,
+   TOGGLE_FULLSCREEN,
+   TOGGLE_DROPDOWN,
+   ADD_TAB,
+   SPLIT,
+   CLOSE,
+   LOG,
+   PRINT_METRICS,
+   COPY_TO_CLIPBOARD,
+   OPEN_URL
+   */
+}
+
+// version is formatted as
+// <version number>;<key>=<value>;<key>=<value>...
+// Older scripts may have only a version number and no key-value pairs.
+// The only defined key is "shell", and the value will be tcsh, bash, zsh, or fish.
+- (void)terminalSetShellIntegrationVersion:(NSString *)version {
+    NSArray *parts = [version componentsSeparatedByString:@";"];
+    NSString *shell = nil;
+    NSInteger versionNumber = [parts[0] integerValue];
+    if (parts.count >= 2) {
+        NSMutableDictionary *params = [NSMutableDictionary dictionary];
+        for (NSString *kvp in [parts subarrayWithRange:NSMakeRange(1, parts.count - 1)]) {
+            NSRange equalsRange = [kvp rangeOfString:@"="];
+            if (equalsRange.location == NSNotFound) {
+                continue;
+            }
+            NSString *key = [kvp substringToIndex:equalsRange.location];
+            NSString *value = [kvp substringFromIndex:NSMaxRange(equalsRange)];
+            params[key] = value;
+        }
+        shell = params[@"shell"];
+    }
+
+    NSDictionary<NSString *, NSNumber *> *lastVersionByShell =
+        @{ @"tcsh": @2,
+           @"bash": @5,
+           @"zsh": @5,
+           @"fish": @5 };
+    NSInteger latestKnownVersion = [lastVersionByShell[shell ?: @""] integerValue];
+    if (shell) {
+        [delegate_ screenDidDetectShell:shell];
+    }
+    if (!shell || versionNumber < latestKnownVersion) {
+        [delegate_ screenSuggestShellIntegrationUpgrade];
+    }
+}
+
+- (void)terminalWraparoundModeDidChangeTo:(BOOL)newValue {
+    [self mutSetWraparoundMode:newValue];
+}
+
+- (void)terminalTypeDidChange {
+    [self mutUpdateTerminalType];
+}
+
+- (void)terminalInsertModeDidChangeTo:(BOOL)newValue {
+    [self mutSetInsert:newValue];
+}
+
+- (NSString *)terminalProfileName {
+    return [delegate_ screenProfileName];
+}
+
+- (VT100GridRect)terminalScrollRegion {
+    return _state.currentGrid.scrollRegionRect;
+}
+
+- (int)terminalChecksumInRectangle:(VT100GridRect)rect {
+    int result = 0;
+    for (int y = rect.origin.y; y < rect.origin.y + rect.size.height; y++) {
+        screen_char_t *theLine = [self getLineAtScreenIndex:y];
+        for (int x = rect.origin.x; x < rect.origin.x + rect.size.width && x < self.width; x++) {
+            unichar code = theLine[x].code;
+            BOOL isPrivate = (code < ITERM2_PRIVATE_BEGIN &&
+                              code > ITERM2_PRIVATE_END);
+            if (code && !isPrivate) {
+                NSString *s = ScreenCharToStr(&theLine[x]);
+                for (int i = 0; i < s.length; i++) {
+                    result += (int)[s characterAtIndex:i];
+                }
+            }
+        }
+    }
+    return result;
+}
+
+- (NSArray<NSString *> *)terminalSGRCodesInRectangle:(VT100GridRect)screenRect {
+    __block NSMutableSet<NSString *> *codes = nil;
+    VT100GridRect rect = screenRect;
+    rect.origin.y += [_state.linebuffer numLinesWithWidth:_state.currentGrid.size.width];
+    [self enumerateLinesInRange:NSMakeRange(rect.origin.y, rect.size.height)
+                          block:^(int y,
+                                  ScreenCharArray *sca,
+                                  iTermImmutableMetadata metadata,
+                                  BOOL *stop) {
+        const screen_char_t *theLine = sca.line;
+        id<iTermExternalAttributeIndexReading> eaIndex = iTermImmutableMetadataGetExternalAttributesIndex(metadata);
+        for (int x = rect.origin.x; x < rect.origin.x + rect.size.width && x < self.width; x++) {
+            const screen_char_t c = theLine[x];
+            if (c.code == 0 && !c.complexChar && !c.image) {
+                continue;
+            }
+            NSSet<NSString *> *charCodes = [self sgrCodesForChar:c externalAttributes:eaIndex[x]];
+            if (!codes) {
+                codes = [[charCodes mutableCopy] autorelease];
+            } else {
+                [codes intersectSet:charCodes];
+                if (!codes.count) {
+                    *stop = YES;
+                    return;
+                }
+            }
+        }
+    }];
+    return codes.allObjects ?: @[];
+}
+
+- (NSSize)terminalCellSizeInPoints:(double *)scaleOut {
+    *scaleOut = [delegate_ screenBackingScaleFactor];
+    return [delegate_ screenCellSize];
+}
+
+- (void)terminalSetUnicodeVersion:(NSInteger)unicodeVersion {
+    [delegate_ screenSetUnicodeVersion:unicodeVersion];
+}
+
+- (NSInteger)terminalUnicodeVersion {
+    return [delegate_ screenUnicodeVersion];
+}
+
+- (void)terminalSetLabel:(NSString *)label forKey:(NSString *)keyName {
+    [delegate_ screenSetLabel:label forKey:keyName];
+}
+
+- (void)terminalPushKeyLabels:(NSString *)value {
+    [delegate_ screenPushKeyLabels:value];
+}
+
+- (void)terminalPopKeyLabels:(NSString *)value {
+    [delegate_ screenPopKeyLabels:value];
+}
+
+// fg=ff0080,bg=srgb:808080
+- (void)terminalSetColorNamed:(NSString *)name to:(NSString *)colorString {
+    if ([name isEqualToString:@"preset"]) {
+        [delegate_ screenSelectColorPresetNamed:colorString];
+        return;
+    }
+    if ([colorString isEqualToString:@"default"] && [name isEqualToString:@"tab"]) {
+        [delegate_ screenSetCurrentTabColor:nil];
+        return;
+    }
+
+    NSInteger colon = [colorString rangeOfString:@":"].location;
+    NSString *cs;
+    NSString *hex;
+    if (colon != NSNotFound && colon + 1 != colorString.length && colon != 0) {
+        cs = [colorString substringToIndex:colon];
+        hex = [colorString substringFromIndex:colon + 1];
+    } else {
+        if ([iTermAdvancedSettingsModel p3]) {
+            cs = @"p3";
+        } else {
+            cs = @"srgb";
+        }
+        hex = colorString;
+    }
+    NSDictionary *colorSpaces = @{ @"srgb": @"sRGBColorSpace",
+                                   @"rgb": @"genericRGBColorSpace",
+                                   @"p3": @"displayP3ColorSpace" };
+    NSColorSpace *colorSpace = [NSColorSpace it_defaultColorSpace];
+    if (colorSpaces[cs]) {
+        SEL selector = NSSelectorFromString(colorSpaces[cs]);
+        if ([NSColorSpace respondsToSelector:selector]) {
+            colorSpace = [[NSColorSpace class] performSelector:selector];
+            if (!colorSpace) {
+                colorSpace = [NSColorSpace it_defaultColorSpace];
+            }
+        }
+    }
+    if (!colorSpace) {
+        return;
+    }
+
+    CGFloat r, g, b;
+    if (hex.length == 6) {
+        NSScanner *scanner = [NSScanner scannerWithString:hex];
+        unsigned int rgb = 0;
+        if (![scanner scanHexInt:&rgb]) {
+            return;
+        }
+        r = ((rgb >> 16) & 0xff);
+        g = ((rgb >> 8) & 0xff);
+        b = ((rgb >> 0) & 0xff);
+    } else if (hex.length == 3) {
+        NSScanner *scanner = [NSScanner scannerWithString:hex];
+        unsigned int rgb = 0;
+        if (![scanner scanHexInt:&rgb]) {
+            return;
+        }
+        r = ((rgb >> 8) & 0xf) | ((rgb >> 4) & 0xf0);
+        g = ((rgb >> 4) & 0xf) | ((rgb >> 0) & 0xf0);
+        b = ((rgb >> 0) & 0xf) | ((rgb << 4) & 0xf0);
+    } else {
+        return;
+    }
+    CGFloat components[4] = { r / 255.0, g / 255.0, b / 255.0, 1.0 };
+    NSColor *color = [NSColor colorWithColorSpace:colorSpace
+                                       components:components
+                                            count:sizeof(components) / sizeof(*components)];
+    if (!color) {
+        return;
+    }
+
+    if ([name isEqualToString:@"tab"]) {
+        [delegate_ screenSetCurrentTabColor:color];
+        return;
+    }
+
+    NSDictionary *names = @{ @"fg": @(kColorMapForeground),
+                             @"bg": @(kColorMapBackground),
+                             @"bold": @(kColorMapBold),
+                             @"link": @(kColorMapLink),
+                             @"selbg": @(kColorMapSelection),
+                             @"selfg": @(kColorMapSelectedText),
+                             @"curbg": @(kColorMapCursor),
+                             @"curfg": @(kColorMapCursorText),
+                             @"underline": @(kColorMapUnderline),
+
+                             @"black": @(kColorMapAnsiBlack),
+                             @"red": @(kColorMapAnsiRed),
+                             @"green": @(kColorMapAnsiGreen),
+                             @"yellow": @(kColorMapAnsiYellow),
+                             @"blue": @(kColorMapAnsiBlue),
+                             @"magenta": @(kColorMapAnsiMagenta),
+                             @"cyan": @(kColorMapAnsiCyan),
+                             @"white": @(kColorMapAnsiWhite),
+
+                             @"br_black": @(kColorMapAnsiBlack + kColorMapAnsiBrightModifier),
+                             @"br_red": @(kColorMapAnsiRed + kColorMapAnsiBrightModifier),
+                             @"br_green": @(kColorMapAnsiGreen + kColorMapAnsiBrightModifier),
+                             @"br_yellow": @(kColorMapAnsiYellow + kColorMapAnsiBrightModifier),
+                             @"br_blue": @(kColorMapAnsiBlue + kColorMapAnsiBrightModifier),
+                             @"br_magenta": @(kColorMapAnsiMagenta + kColorMapAnsiBrightModifier),
+                             @"br_cyan": @(kColorMapAnsiCyan + kColorMapAnsiBrightModifier),
+                             @"br_white": @(kColorMapAnsiWhite + kColorMapAnsiBrightModifier) };
+
+    NSNumber *keyNumber = names[name];
+    if (!keyNumber) {
+        return;
+    }
+    NSInteger key = [keyNumber integerValue];
+
+    [delegate_ screenSetColor:color forKey:key];
+}
+
+- (void)terminalCustomEscapeSequenceWithParameters:(NSDictionary<NSString *, NSString *> *)parameters
+                                           payload:(NSString *)payload {
+    [delegate_ screenDidReceiveCustomEscapeSequenceWithParameters:parameters
+                                                          payload:payload];
+}
+
+- (void)terminalRepeatPreviousCharacter:(int)times {
+    if (![iTermAdvancedSettingsModel supportREPCode]) {
+        return;
+    }
+    if (_state.lastCharacter.code) {
+        int length = 1;
+        screen_char_t chars[2];
+        chars[0] = _state.lastCharacter;
+        if (_state.lastCharacterIsDoubleWidth) {
+            length++;
+            chars[1] = _state.lastCharacter;
+            chars[1].code = DWC_RIGHT;
+            chars[1].complexChar = NO;
+        }
+
+        NSString *string = ScreenCharToStr(chars);
+        for (int i = 0; i < times; i++) {
+            [self mutAppendScreenCharArrayAtCursor:chars
+                                            length:length
+                            externalAttributeIndex:[iTermUniformExternalAttributes withAttribute:_state.lastExternalAttribute]];
+            [delegate_ screenDidAppendStringToCurrentLine:string
+                                              isPlainText:(_state.lastCharacter.complexChar ||
+                                                           _state.lastCharacter.code >= ' ')];
+        }
+    }
+}
+
+- (void)terminalReportFocusWillChangeTo:(BOOL)reportFocus {
+    [self.delegate screenReportFocusWillChangeTo:reportFocus];
+}
+
+- (void)terminalPasteBracketingWillChangeTo:(BOOL)bracket {
+    [self.delegate screenReportPasteBracketingWillChangeTo:bracket];
+}
+
+- (void)terminalSoftAlternateScreenModeDidChange {
+    [self.delegate screenSoftAlternateScreenModeDidChange];
+}
+
+- (void)terminalReportKeyUpDidChange:(BOOL)reportKeyUp {
+    [self.delegate screenReportKeyUpDidChange:reportKeyUp];
+}
+
+- (BOOL)terminalIsInAlternateScreenMode {
+    return [self showingAlternateScreen];
+}
+
+- (NSString *)terminalTopBottomRegionString {
+    if (!_state.currentGrid.haveRowScrollRegion) {
+        return @"";
+    }
+    return [NSString stringWithFormat:@"%d;%d", _state.currentGrid.topMargin + 1, _state.currentGrid.bottomMargin + 1];
+}
+
+- (NSString *)terminalLeftRightRegionString {
+    if (!_state.currentGrid.haveColumnScrollRegion) {
+        return @"";
+    }
+    return [NSString stringWithFormat:@"%d;%d", _state.currentGrid.leftMargin + 1, _state.currentGrid.rightMargin + 1];
+}
+
+- (NSString *)terminalStringForKeypressWithCode:(unsigned short)keyCode
+                                          flags:(NSEventModifierFlags)flags
+                                     characters:(NSString *)characters
+                    charactersIgnoringModifiers:(NSString *)charactersIgnoringModifiers {
+    return [self.delegate screenStringForKeypressWithCode:keyCode
+                                                    flags:flags
+                                               characters:characters
+                              charactersIgnoringModifiers:charactersIgnoringModifiers];
+}
+
+- (void)terminalApplicationKeypadModeDidChange:(BOOL)mode {
+    [self.delegate screenApplicationKeypadModeDidChange:mode];
+}
+
+- (VT100SavedColorsSlot *)terminalSavedColorsSlot {
+    return [[[VT100SavedColorsSlot alloc] initWithTextColor:[_state.colorMap colorForKey:kColorMapForeground]
+                                            backgroundColor:[_state.colorMap colorForKey:kColorMapBackground]
+                                         selectionTextColor:[_state.colorMap colorForKey:kColorMapSelectedText]
+                                   selectionBackgroundColor:[_state.colorMap colorForKey:kColorMapSelection]
+                                       indexedColorProvider:^NSColor *(NSInteger index) {
+        return [_state.colorMap colorForKey:kColorMap8bitBase + index] ?: [NSColor clearColor];
+    }] autorelease];
+}
+
+- (void)terminalRestoreColorsFromSlot:(VT100SavedColorsSlot *)slot {
+    for (int i = 0; i < MIN(kColorMapNumberOf8BitColors, slot.indexedColors.count); i++) {
+        if (i >= 16) {
+            [self setColor:slot.indexedColors[i] forKey:kColorMap8bitBase + i];
+        }
+    }
+    [delegate_ screenRestoreColorsFromSlot:slot];
+}
+
+- (int)terminalMaximumTheoreticalImageDimension {
+    return [delegate_ screenMaximumTheoreticalImageDimension];
+}
+
+- (void)terminalInsertColumns:(int)n {
+    [self mutInsertColumns:n];
+}
+
+- (void)terminalDeleteColumns:(int)n {
+    [self mutDeleteColumns:n];
+}
+
+- (void)terminalSetAttribute:(int)sgrAttribute inRect:(VT100GridRect)rect {
+    [self mutSetAttribute:sgrAttribute inRect:rect];
+}
+
+- (void)terminalToggleAttribute:(int)sgrAttribute inRect:(VT100GridRect)rect {
+    [self mutToggleAttribute:sgrAttribute inRect:rect];
+}
+
+- (void)terminalCopyFrom:(VT100GridRect)source to:(VT100GridCoord)dest {
+    [self mutCopyFrom:source to:dest];
+}
+
+- (void)terminalFillRectangle:(VT100GridRect)rect withCharacter:(unichar)inputChar {
+    screen_char_t c = {
+        .code = inputChar
+    };
+    if ([_state.charsetUsesLineDrawingMode containsObject:@(_state.terminal.charset)]) {
+        ConvertCharsToGraphicsCharset(&c, 1);
+    }
+    CopyForegroundColor(&c, [_state.terminal foregroundColorCode]);
+    CopyBackgroundColor(&c, [_state.terminal backgroundColorCode]);
+
+    // Only preserve SGR attributes. image is OSC, not SGR.
+    c.image = 0;
+
+    [self mutFillRectangle:rect with:c externalAttributes:[_state.terminal externalAttributes]];
+}
+
+- (void)terminalEraseRectangle:(VT100GridRect)rect {
+    screen_char_t c = [_state.currentGrid defaultChar];
+    c.code = ' ';
+    [self mutFillRectangle:rect with:c externalAttributes:nil];
+}
+
+- (void)terminalSelectiveEraseRectangle:(VT100GridRect)rect {
+    [self mutSelectiveEraseRectangle:rect];
+}
+
+- (void)terminalSelectiveEraseInDisplay:(int)mode {
+    BOOL before = NO;
+    BOOL after = NO;
+    switch (mode) {
+        case 0:
+            after = YES;
+            break;
+        case 1:
+            before = YES;
+            break;
+        case 2:
+            before = YES;
+            after = YES;
+            break;
+    }
+    // Unlike DECSERA, this does erase attributes.
+    [self mutEraseInDisplayBeforeCursor:before afterCursor:after decProtect:YES];
+}
+
+- (void)terminalSelectiveEraseInLine:(int)mode {
+    switch (mode) {
+        case 0:
+            [self mutSelectiveEraseRange:VT100GridCoordRangeMake(_state.currentGrid.cursorX,
+                                                                 _state.currentGrid.cursorY,
+                                                                 _state.currentGrid.size.width,
+                                                                 _state.currentGrid.cursorY)
+                         eraseAttributes:YES];
+            return;
+        case 1:
+            [self mutSelectiveEraseRange:VT100GridCoordRangeMake(0,
+                                                                 _state.currentGrid.cursorY,
+                                                                 _state.currentGrid.cursorX + 1,
+                                                                 _state.currentGrid.cursorY)
+                         eraseAttributes:YES];
+            return;
+        case 2:
+            [self mutSelectiveEraseRange:VT100GridCoordRangeMake(0,
+                                                                 _state.currentGrid.cursorY,
+                                                                 _state.currentGrid.size.width,
+                                                                 _state.currentGrid.cursorY)
+                         eraseAttributes:YES];
+    }
+}
+
+- (void)terminalProtectedModeDidChangeTo:(VT100TerminalProtectedMode)mode {
+    [self mutSetProtectedMode:mode];
+}
+
+- (VT100TerminalProtectedMode)terminalProtectedMode {
+    return _state.protectedMode;
+}
+
+#pragma mark - Printing
+
+- (void)doPrint {
+    if ([_state.printBuffer length] > 0) {
+        [delegate_ screenPrintString:_state.printBuffer];
+    } else {
+        [delegate_ screenPrintVisibleArea];
+    }
+    _mutableState.printBuffer = nil;
+    _mutableState.collectInputForPrinting = NO;
 }
 
 @end

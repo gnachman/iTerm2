@@ -498,12 +498,12 @@ static const NSUInteger kRectangularSelectionModifierMask = (kRectangularSelecti
         fgColor = bgColor;
     } else {
         fgColor = [self colorForCode:c.foregroundColor
-                                        green:c.fgGreen
-                                         blue:c.fgBlue
-                                    colorMode:c.foregroundColorMode
-                                         bold:isBold
-                                        faint:isFaint
-                                 isBackground:NO];
+                               green:c.fgGreen
+                                blue:c.fgBlue
+                           colorMode:c.foregroundColorMode
+                                bold:isBold
+                               faint:isFaint
+                        isBackground:NO];
         fgColor = [fgColor colorByPremultiplyingAlphaWithColor:bgColor];
     }
 

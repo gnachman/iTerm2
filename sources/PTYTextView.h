@@ -280,7 +280,7 @@ typedef NS_ENUM(NSInteger, PTYCharType) {
 @property(nonatomic, assign) BOOL useNonAsciiFont;
 
 // Provider for screen contents, plus misc. other stuff.
-@property(nonatomic, assign) id<PTYTextViewDataSource> dataSource;
+@property(nonatomic, weak) id<PTYTextViewDataSource> dataSource;
 
 // The delegate. Interfaces to the rest of the app for this view.
 @property(nonatomic, assign) id<PTYTextViewDelegate> delegate;
@@ -373,8 +373,8 @@ typedef NS_ENUM(NSInteger, PTYCharType) {
 // Indicates if the "find cursor" mode is active.
 @property(nonatomic, readonly) BOOL isFindingCursor;
 
-// Stores colors. This object is its delegate.
-@property(nonatomic, readonly) id<iTermColorMapReading> colorMap;
+// Stores colors.
+@property(nonatomic, strong, readonly) id<iTermColorMapReading> colorMap;
 
 // Semantic history. TODO: Move this into PTYSession.
 @property(nonatomic, readonly) iTermSemanticHistoryController *semanticHistoryController;

@@ -386,6 +386,15 @@
     [super dealloc];
 }
 
+- (void)setDataSource:(id<PTYTextViewDataSource>)dataSource {
+    _dataSource = dataSource;
+    if (dataSource) {
+        [_colorMap autorelease];
+        _colorMap = [_dataSource.colorMap retain];
+        _drawingHelper.colorMap = _colorMap;
+    }
+}
+
 #pragma mark - NSObject
 
 - (NSString *)description {

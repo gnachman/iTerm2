@@ -8,7 +8,7 @@
 
 #import "SetHostnameTrigger.h"
 #import "PTYSession.h"
-#import "VT100Screen.h"
+#import "VT100Screen+Mutation.h"
 
 @implementation SetHostnameTrigger
 
@@ -43,7 +43,7 @@
                                    useInterpolation:useInterpolation
                                          completion:^(NSString *remoteHost) {
                                              if (remoteHost.length) {
-                                                 [aSession.screen terminalSetRemoteHost:remoteHost];
+                                                 [aSession.screen mutSetRemoteHost:remoteHost];
                                              }
                                          }];
     return YES;

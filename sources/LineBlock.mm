@@ -482,6 +482,7 @@ static void iTermLineBlockFreeMetadata(LineBlockMetadata *metadata, int count) {
         theCopy->cached_numlines = cached_numlines;
         theCopy->cached_numlines_width = cached_numlines_width;
         theCopy->_numberOfFullLinesCache = _numberOfFullLinesCache;
+        theCopy->_mayHaveDoubleWidthCharacter = _mayHaveDoubleWidthCharacter;
         return theCopy;
     }
     iTermAssignToConstPointer((void **)&theCopy->raw_buffer, iTermMalloc(sizeof(screen_char_t) * buffer_size));
@@ -504,7 +505,8 @@ static void iTermLineBlockFreeMetadata(LineBlockMetadata *metadata, int count) {
     theCopy->cached_numlines = cached_numlines;
     theCopy->cached_numlines_width = cached_numlines_width;
     theCopy->_generation = _generation;
-    
+    theCopy->_mayHaveDoubleWidthCharacter = _mayHaveDoubleWidthCharacter;
+
     return theCopy;
 }
 

@@ -50,6 +50,7 @@ NSPopoverDelegate> {
 @property(nonatomic, strong) iTermQuickLookController *quickLookController;
 @property(strong, readwrite) NSTouchBar *touchBar NS_AVAILABLE_MAC(10_12_2);
 @property(nonatomic, readonly) BOOL hasUnderline;
+@property(nonatomic, strong, readwrite) id<iTermColorMapReading> colorMap;  // for tests
 
 - (void)addNote;
 - (NSString *)selectedTextCappedAtSize:(int)maxBytes;

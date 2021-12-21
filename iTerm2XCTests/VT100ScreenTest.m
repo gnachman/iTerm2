@@ -41,8 +41,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
 
 @implementation VT100Screen (UnitTest)
 - (void)setLineBuffer:(LineBuffer *)lineBuffer {
-    [linebuffer_ release];
-    linebuffer_ = [lineBuffer retain];
+    _mutableState.linebuffer = lineBuffer;
 }
 @end
 
@@ -105,7 +104,8 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
 #pragma mark - Convenience methods
 
 - (VT100Screen *)screen {
-    VT100Screen *screen = [[[VT100Screen alloc] initWithTerminal:terminal_] autorelease];
+    VT100Screen *screen = [[[VT100Screen alloc] initWithTerminal:terminal_
+                                                        darkMode:NO] autorelease];
     terminal_.delegate = screen;
     return screen;
 }
@@ -503,6 +503,12 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     NSData *data = [string dataUsingEncoding:NSUTF8StringEncoding];
     [self sendDataToTerminal:data];
 }
+
+#pragma mark - iTermColorMapDelegate
+
+- (void)colorMap:(iTermColorMap *)colorMap didChangeColorForKey:(iTermColorMapKey)theKey {}
+- (void)colorMap:(iTermColorMap *)colorMap mutingAmountDidChangeTo:(double)mutingAmount {}
+- (void)colorMap:(iTermColorMap *)colorMap dimmingAmountDidChangeTo:(double)dimmingAmount {}
 
 #pragma mark - VT100ScreenDelegate
 
@@ -2318,8 +2324,10 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
                 inContext:ctx
           multipleResults:YES];
     NSMutableArray *results = [NSMutableArray array];
-    XCTAssert([screen continueFindAllResults:results
-                                   inContext:ctx]);
+    XCTAssertTrue([screen continueFindAllResults:results
+                                        inContext:ctx]);
+    XCTAssertTrue([screen continueFindAllResults:results
+                                        inContext:ctx]);
     XCTAssert(results.count == 1);
     SearchResult *range = results[0];
     XCTAssert(range.startX == 0);
@@ -2329,8 +2337,8 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
 
     // Make sure there's nothing else to find
     [results removeAllObjects];
-    XCTAssert(![screen continueFindAllResults:results
-                                    inContext:ctx]);
+    XCTAssertFalse([screen continueFindAllResults:results
+                                        inContext:ctx]);
     XCTAssert(results.count == 0);
 
     [screen storeLastPositionInLineBufferAsFindContextSavedPosition];
@@ -2347,8 +2355,10 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
           multipleResults:YES];
     [screen restoreSavedPositionToFindContext:ctx];
     results = [NSMutableArray array];
-    XCTAssert([screen continueFindAllResults:results
-                                   inContext:ctx]);
+    XCTAssertTrue([screen continueFindAllResults:results
+                                       inContext:ctx]);
+    XCTAssertTrue([screen continueFindAllResults:results
+                                       inContext:ctx]);
     XCTAssert(results.count == 1);
     range = results[0];
     XCTAssert(range.startX == 0);
@@ -2358,8 +2368,8 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
 
     // Make sure there's nothing else to find
     [results removeAllObjects];
-    XCTAssert(![screen continueFindAllResults:results
-                                    inContext:ctx]);
+    XCTAssertFalse([screen continueFindAllResults:results
+                                        inContext:ctx]);
     XCTAssert(results.count == 0);
 
     // Search backwards from the end. This is slower than searching
@@ -2378,6 +2388,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     myFindContext.results = nil;
     [screen saveFindContextAbsPos];
     [results removeAllObjects];
+    [screen continueFindAllResults:results inContext:[screen findContext]];
     [screen continueFindAllResults:results inContext:[screen findContext]];
     XCTAssert(results.count == 1);
     SearchResult *actualResult = results[0];
@@ -2401,6 +2412,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     [screen restoreSavedPositionToFindContext:tailFindContext];
     [results removeAllObjects];
     [screen continueFindAllResults:results inContext:tailFindContext];
+    [screen continueFindAllResults:results inContext:tailFindContext];
     XCTAssert(results.count == 0);
 
     // Append a line and then do it again, this time finding the line.
@@ -2421,6 +2433,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     // began at. Do a forward search from that location.
     [screen restoreSavedPositionToFindContext:tailFindContext];
     [results removeAllObjects];
+    [screen continueFindAllResults:results inContext:tailFindContext];
     [screen continueFindAllResults:results inContext:tailFindContext];
     XCTAssert(results.count == 1);
     actualResult = results[0];
@@ -2573,64 +2586,79 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     callBlockBetweenIterations:NULL];
 }
 
-- (void)testFind {
-    NSString *lines =
+static NSString *VT100ScreenTestFindLines =
     @"abcd+\n"
     @"efgc!\n"
     @"de..!\n"
     @"fgx>>\n"
     @"Y-z.!";
-    NSArray *cdeResults = @[ [SearchResult searchResultFromX:2 y:0 toX:0 y:1] ];
+
+- (NSArray *)cdeResults {
+    return @[ [SearchResult searchResultFromX:2 y:0 toX:0 y:1] ];
+}
+
+- (void)testFind_ForwardWithWrapFromFirstChar {
     // Search forward, wraps around a line, beginning from first char onscreen
-    [self assertSearchInScreenLines:lines
+    [self assertSearchInScreenLines:VT100ScreenTestFindLines
                          forPattern:@"cde"
                    forwardDirection:YES
                                mode:iTermFindModeCaseSensitiveSubstring
                         startingAtX:0
                         startingAtY:0
                          withOffset:0
-                     matchesResults:cdeResults];
+                     matchesResults:self.cdeResults];
+}
 
+- (void)testFind_Backward {
     // Search backward
-    [self assertSearchInScreenLines:lines
+    [self assertSearchInScreenLines:VT100ScreenTestFindLines
                          forPattern:@"cde"
                    forwardDirection:NO
                                mode:iTermFindModeCaseSensitiveSubstring
                         startingAtX:2
                         startingAtY:4
                          withOffset:0
-                     matchesResults:cdeResults];
+                     matchesResults:self.cdeResults];
+}
 
+- (void)testFind_FromLastChar {
     // Search from last char on screen
-    [self assertSearchInScreenLines:lines
+    [self assertSearchInScreenLines:VT100ScreenTestFindLines
                          forPattern:@"cde"
                    forwardDirection:NO
                                mode:iTermFindModeCaseSensitiveSubstring
                         startingAtX:2
                         startingAtY:4
                          withOffset:0
-                     matchesResults:cdeResults];
+                     matchesResults:self.cdeResults];
+}
 
+- (void)testFind_FromNullAfterLastChar {
     // Search from null after last char on screen
-    [self assertSearchInScreenLines:lines
+    [self assertSearchInScreenLines:VT100ScreenTestFindLines
                          forPattern:@"cde"
                    forwardDirection:NO
                                mode:iTermFindModeCaseSensitiveSubstring
                         startingAtX:3
                         startingAtY:4
                          withOffset:0
-                     matchesResults:cdeResults];
+                     matchesResults:self.cdeResults];
+}
+
+- (void)testFind_FromMiddleOfScreen {
     // Search from middle of screen
-    [self assertSearchInScreenLines:lines
+    [self assertSearchInScreenLines:VT100ScreenTestFindLines
                          forPattern:@"cde"
                    forwardDirection:NO
                                mode:iTermFindModeCaseSensitiveSubstring
                         startingAtX:3
                         startingAtY:2
                          withOffset:0
-                     matchesResults:cdeResults];
+                     matchesResults:self.cdeResults];
+}
 
-    [self assertSearchInScreenLines:lines
+- (void)testFind_FromSecondCharBackward {
+    [self assertSearchInScreenLines:VT100ScreenTestFindLines
                          forPattern:@"cde"
                    forwardDirection:NO
                                mode:iTermFindModeCaseSensitiveSubstring
@@ -2638,9 +2666,11 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
                         startingAtY:0
                          withOffset:0
                      matchesResults:@[]];
+}
 
+- (void)testFind_WrongCase {
     // Search ignoring case
-    [self assertSearchInScreenLines:lines
+    [self assertSearchInScreenLines:VT100ScreenTestFindLines
                          forPattern:@"CDE"
                    forwardDirection:YES
                                mode:iTermFindModeCaseSensitiveSubstring
@@ -2648,37 +2678,45 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
                         startingAtY:0
                          withOffset:0
                      matchesResults:@[]];
+}
 
-    [self assertSearchInScreenLines:lines
+- (void)testFind_IgnoringCase {
+    [self assertSearchInScreenLines:VT100ScreenTestFindLines
                          forPattern:@"CDE"
                    forwardDirection:YES
                        mode:iTermFindModeCaseInsensitiveSubstring
                         startingAtX:0
                         startingAtY:0
                          withOffset:0
-                     matchesResults:cdeResults];
+                     matchesResults:self.cdeResults];
+}
 
+- (void)testFind_Regex {
     // Search with regex
-    [self assertSearchInScreenLines:lines
+    [self assertSearchInScreenLines:VT100ScreenTestFindLines
                          forPattern:@"c.e"
                    forwardDirection:YES
                        mode:iTermFindModeCaseSensitiveRegex
                         startingAtX:0
                         startingAtY:0
                          withOffset:0
-                     matchesResults:cdeResults];
+                     matchesResults:self.cdeResults];
+}
 
-    [self assertSearchInScreenLines:lines
+- (void)testFind_RegexIgnoringCase {
+    [self assertSearchInScreenLines:VT100ScreenTestFindLines
                          forPattern:@"C.E"
                    forwardDirection:YES
                        mode:iTermFindModeCaseInsensitiveRegex
                         startingAtX:0
                         startingAtY:0
                          withOffset:0
-                     matchesResults:cdeResults];
+                     matchesResults:self.cdeResults];
+}
 
+- (void)testFind_Offset0 {
     // Search with offset=1
-    [self assertSearchInScreenLines:lines
+    [self assertSearchInScreenLines:VT100ScreenTestFindLines
                          forPattern:@"de"
                    forwardDirection:YES
                                mode:iTermFindModeCaseSensitiveSubstring
@@ -2687,8 +2725,10 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
                          withOffset:0
                      matchesResults:@[ [SearchResult searchResultFromX:3 y:0 toX:0 y:1],
                                        [SearchResult searchResultFromX:0 y:2 toX:1 y:2] ]];
+}
 
-    [self assertSearchInScreenLines:lines
+- (void)testFind_Offset1 {
+    [self assertSearchInScreenLines:VT100ScreenTestFindLines
                          forPattern:@"de"
                    forwardDirection:YES
                                mode:iTermFindModeCaseSensitiveSubstring
@@ -2696,9 +2736,11 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
                         startingAtY:0
                          withOffset:1
                      matchesResults:@[ [SearchResult searchResultFromX:0 y:2 toX:1 y:2] ]];
+}
 
+- (void)testFind_BackwardOffset0 {
     // Search with offset=-1
-    [self assertSearchInScreenLines:lines
+    [self assertSearchInScreenLines:VT100ScreenTestFindLines
                          forPattern:@"de"
                    forwardDirection:NO
                                mode:iTermFindModeCaseSensitiveSubstring
@@ -2707,8 +2749,10 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
                          withOffset:0
                      matchesResults:@[ [SearchResult searchResultFromX:0 y:2 toX:1 y:2],
                                        [SearchResult searchResultFromX:3 y:0 toX:0 y:1] ]];
+}
 
-    [self assertSearchInScreenLines:lines
+- (void)testFind_BackwardOffset1 {
+    [self assertSearchInScreenLines:VT100ScreenTestFindLines
                          forPattern:@"de"
                    forwardDirection:NO
                                mode:iTermFindModeCaseSensitiveSubstring
@@ -2716,9 +2760,11 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
                         startingAtY:2
                          withOffset:1
                      matchesResults:@[ [SearchResult searchResultFromX:3 y:0 toX:0 y:1] ]];
+}
 
+- (void)testFind_MatchingDWC {
     // Search matching DWC
-    [self assertSearchInScreenLines:lines
+    [self assertSearchInScreenLines:VT100ScreenTestFindLines
                          forPattern:@"Yz"
                    forwardDirection:YES
                                mode:iTermFindModeCaseSensitiveSubstring
@@ -2726,9 +2772,11 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
                         startingAtY:0
                          withOffset:0
                      matchesResults:@[ [SearchResult searchResultFromX:0 y:4 toX:2 y:4] ]];
+}
 
+- (void)testFind_MatchOverDwcSkip {
     // Search matching text before DWC_SKIP and after it
-    [self assertSearchInScreenLines:lines
+    [self assertSearchInScreenLines:VT100ScreenTestFindLines
                          forPattern:@"xYz"
                    forwardDirection:YES
                                mode:iTermFindModeCaseSensitiveSubstring
@@ -2736,7 +2784,9 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
                         startingAtY:0
                          withOffset:0
                      matchesResults:@[ [SearchResult searchResultFromX:2 y:3 toX:2 y:4] ]];
+}
 
+- (void)testFind_MultipleBlocks {
     // Search that searches multiple blocks
     VT100Screen *screen = [self screenWithWidth:5 height:2];
     LineBuffer *smallBlockLineBuffer = [[[LineBuffer alloc] initWithBlockSize:10] autorelease];

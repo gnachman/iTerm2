@@ -1284,6 +1284,7 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
     theCopy->num_wrapped_lines_cache = num_wrapped_lines_cache;
     theCopy->num_wrapped_lines_width = num_wrapped_lines_width;
     theCopy->droppedChars = droppedChars;
+    theCopy->_mayHaveDoubleWidthCharacter = _mayHaveDoubleWidthCharacter;
 
     return theCopy;
 }

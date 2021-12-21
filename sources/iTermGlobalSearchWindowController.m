@@ -96,7 +96,7 @@
 - (void)addResults:(NSArray<iTermGlobalSearchResult *> *)results
         forSession:(PTYSession *)session
           progress:(double)progress {
-    if (!session && !results) {
+    if (!session) {
         // Finished searching.
         [self setFraction:1];
         return;
