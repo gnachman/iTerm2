@@ -188,6 +188,9 @@ NS_ASSUME_NONNULL_BEGIN
 - (iTermTemporaryDoubleBufferedGridController * _Nullable)mutableTemporaryDoubleBuffer;
 - (void)mutSwapNotes;
 - (void)mutUpdateConfig;
+- (void)mutSetFakePromptDetectedAbsLine:(long long)value;
+- (void)mutUserDidPressReturn;
+- (void)mutSetReturnCodeOfLastCommand:(int)returnCode;
 
 @end
 

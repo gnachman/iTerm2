@@ -133,6 +133,10 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 
 #pragma mark - APIs
 
+- (void)userDidPressReturn {
+    [self mutUserDidPressReturn];
+}
+
 - (void)setDelegate:(id<VT100ScreenDelegate>)delegate {
     [self mutSetDelegate:delegate];
 }
@@ -1672,6 +1676,18 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 #pragma mark - Mutation Wrappers
+
+- (void)setReturnCodeOfLastCommand:(int)code {
+    [self mutSetReturnCodeOfLastCommand:code];
+}
+
+- (void)setFakePromptDetectedAbsLine:(long long)value {
+    [self mutSetFakePromptDetectedAbsLine:value];
+}
+
+- (long long)fakePromptDetectedAbsLine {
+    return _state.fakePromptDetectedAbsLine;
+}
 
 - (void)clearBuffer {
     [self mutClearBuffer];

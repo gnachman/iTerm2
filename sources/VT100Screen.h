@@ -81,6 +81,7 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 @property(nonatomic, retain, readonly) id<iTermColorMapReading> colorMap;
 @property(nonatomic, readonly) id<iTermTemporaryDoubleBufferedGridControllerReading> temporaryDoubleBuffer;
 @property(nonatomic, retain) id<VT100ScreenConfiguration> config;
+@property(nonatomic) long long fakePromptDetectedAbsLine;
 
 // Designated initializer.
 - (instancetype)initWithTerminal:(VT100Terminal *)terminal
@@ -254,6 +255,8 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 - (void)setMinimumContrast:(float)value;
 - (void)setMutingAmount:(double)value;
 - (void)setDimmingAmount:(double)value;
+- (void)userDidPressReturn;
+- (void)setReturnCodeOfLastCommand:(int)code;
 
 @end
 

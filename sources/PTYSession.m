@@ -465,11 +465,6 @@ static const CGFloat PTYSessionMaximumMetalViewSize = 16384;
     VT100GridAbsCoordRange _lastOrCurrentlyRunningCommandAbsRange;
     long long _lastPromptLine;  // Line where last prompt began
 
-    // -2: Within command output (inferred)
-    // -1: Uninitialized
-    // >= 0: The line the prompt is at
-    long long _fakePromptDetectedAbsLine;
-
     NSTimeInterval _timeOfLastScheduling;
 
     dispatch_semaphore_t _executionSemaphore;
@@ -708,7 +703,6 @@ static const CGFloat PTYSessionMaximumMetalViewSize = 16384;
         _adaptiveFrameRateThroughputThreshold = [iTermAdvancedSettingsModel adaptiveFrameRateThroughputThreshold];
         _idleTime = [iTermAdvancedSettingsModel idleTimeSeconds];
         _triggerLineNumber = -1;
-        _fakePromptDetectedAbsLine = -1;
         // The new session won't have the move-pane overlay, so just exit move pane
         // mode.
         [[MovePaneController sharedInstance] exitMovePaneMode];
@@ -8060,8 +8054,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
             [_copyModeHandler handleEvent:event];
             return NO;
         }
-        if (event.keyCode == kVK_Return && _fakePromptDetectedAbsLine >= 0) {
-            [self didInferEndOfCommand];
+        if (event.keyCode == kVK_Return) {
+            [_screen userDidPressReturn];
         }
 
         if ((event.it_modifierFlags & NSEventModifierFlagControl) && [event.charactersIgnoringModifiers isEqualToString:@"c"]) {
@@ -11322,7 +11316,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 - (void)screenPromptDidStartAtLine:(int)line {
     DLog(@"FinalTerm: prompt started on line %d. Add a mark there. Save it as lastPromptLine.", line);
     // Reset this in case it's taking the "real" shell integration path.
-    _fakePromptDetectedAbsLine = -1;
+    _screen.fakePromptDetectedAbsLine = -1;
     _lastPromptLine = (long long)line + [_screen totalScrollbackOverflow];
     VT100ScreenMark *mark = [self screenAddMarkOnLine:line];
     [mark setIsPrompt:YES];
@@ -11334,36 +11328,19 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 - (void)triggerDidDetectStartOfPromptAt:(VT100GridAbsCoord)coord {
     DLog(@"Trigger detected start of prompt");
-    if (_fakePromptDetectedAbsLine == -2) {
+    if (_screen.fakePromptDetectedAbsLine == -2) {
         // Infer the end of the preceding command. Set a return status of 0 since we don't know what it was.
-        [_screen terminalReturnCodeOfLastCommandWas:0];
+        [_screen setReturnCodeOfLastCommand:0];
     }
     // Use 0 here to avoid the screen inserting a newline.
     coord.x = 0;
     [_screen promptDidStartAt:coord];
-    _fakePromptDetectedAbsLine = coord.y;
+    _screen.fakePromptDetectedAbsLine = coord.y;
 }
 
 - (void)triggerDidDetectEndOfPromptAt:(VT100GridAbsCoord)coord {
     DLog(@"Trigger detected end of prompt");
     [_screen commandDidStartAt:coord];
-}
-
-- (void)didInferEndOfCommand {
-    DLog(@"Inferring end of command");
-    VT100GridAbsCoord coord;
-    coord.x = 0;
-    coord.y = _screen.currentGrid.cursor.y + _screen.numberOfScrollbackLines + _screen.totalScrollbackOverflow;
-    if (_screen.cursorX > 1) {
-        // End of command was detected before the newline came in. This is the normal case.
-        coord.y += 1;
-    }
-    if ([_screen commandDidEndAtAbsCoord:coord]) {
-        _fakePromptDetectedAbsLine = -2;
-    } else {
-        // Screen didn't think we were in a command.
-        _fakePromptDetectedAbsLine = -1;
-    }
 }
 
 - (void)screenPromptDidEndAtLine:(int)line {

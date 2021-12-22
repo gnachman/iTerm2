@@ -120,6 +120,35 @@
 
 #pragma mark - Interval Tree
 
+- (void)mutUserDidPressReturn {
+    if (_mutableState.fakePromptDetectedAbsLine >= 0) {
+        [self didInferEndOfCommand];
+    }
+}
+
+- (void)mutSetFakePromptDetectedAbsLine:(long long)value {
+    _mutableState.fakePromptDetectedAbsLine = value;
+}
+
+- (void)didInferEndOfCommand {
+    DLog(@"Inferring end of command");
+    VT100GridAbsCoord coord;
+    coord.x = 0;
+    coord.y = (_mutableState.currentGrid.cursor.y +
+               [_mutableState.linebuffer numLinesWithWidth:_mutableState.currentGrid.size.width]
+               + _mutableState.cumulativeScrollbackOverflow);
+    if (_mutableState.currentGrid.cursorX > 0) {
+        // End of command was detected before the newline came in. This is the normal case.
+        coord.y += 1;
+    }
+    if ([self mutCommandDidEndAtAbsCoord:coord]) {
+        _mutableState.fakePromptDetectedAbsLine = -2;
+    } else {
+        // Screen didn't think we were in a command.
+        _mutableState.fakePromptDetectedAbsLine = -1;
+    }
+}
+
 // offset is added to intervals before inserting into interval tree.
 - (void)moveNotesOnScreenFrom:(IntervalTree *)source
                            to:(IntervalTree *)dest
@@ -4065,6 +4094,10 @@ static inline void VT100ScreenEraseCell(screen_char_t *sct, iTermExternalAttribu
 }
 
 - (void)terminalReturnCodeOfLastCommandWas:(int)returnCode {
+    [self mutSetReturnCodeOfLastCommand:returnCode];
+}
+
+- (void)mutSetReturnCodeOfLastCommand:(int)returnCode {
     DLog(@"FinalTerm: terminalReturnCodeOfLastCommandWas:%d", returnCode);
     VT100ScreenMark *mark = [[self.lastCommandMark retain] autorelease];
     if (mark) {

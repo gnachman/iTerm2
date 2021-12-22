@@ -37,6 +37,7 @@ static const int kDefaultMaxScrollbackLines = 1000;
         _linebuffer = [[LineBuffer alloc] init];
         _colorMap = [[iTermColorMap alloc] init];
         _temporaryDoubleBuffer = [[iTermTemporaryDoubleBufferedGridController alloc] init];
+        _fakePromptDetectedAbsLine = -1;
     }
     return self;
 }
@@ -76,6 +77,8 @@ static const int kDefaultMaxScrollbackLines = 1000;
         _trackCursorLineMovement = source.trackCursorLineMovement;
         _appendToScrollbackWithStatusBar = source.appendToScrollbackWithStatusBar;
         _normalization = source.normalization;
+        _fakePromptDetectedAbsLine = source.fakePromptDetectedAbsLine;
+
         _intervalTreeObserver = source.intervalTreeObserver;
 #warning TODO: I need a read-only protocol for VT100ScreenMark
         _lastCommandMark = [source.lastCommandMark copy];
