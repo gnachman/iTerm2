@@ -459,7 +459,6 @@ static const CGFloat PTYSessionMaximumMetalViewSize = 16384;
     // This is the write end of a pipe for tmux clients. The read end is in TaskNotifier.
     NSFileHandle *_tmuxClientWritePipe;
     NSInteger _requestAttentionId;  // Last request-attention identifier
-    iTermMark *_lastMark;
 
     VT100GridCoordRange _commandRange;
     VT100GridAbsCoordRange _lastOrCurrentlyRunningCommandAbsRange;
@@ -955,7 +954,6 @@ ITERM_WEAKLY_REFERENCEABLE
     [_screen release];
     [_terminal release];
     [_tailFindContext release];
-    [_lastMark release];
     [_patternedImage release];
     [_announcements release];
     [self recycleQueuedTokens];
@@ -1362,7 +1360,6 @@ ITERM_WEAKLY_REFERENCEABLE
         if (arrangement[SESSION_ARRANGEMENT_CURSOR_GUIDE]) {
             aSession.textview.highlightCursorLine = [arrangement[SESSION_ARRANGEMENT_CURSOR_GUIDE] boolValue];
         }
-        aSession->_lastMark = [aSession.screen.lastMark retain];
         aSession.lastRemoteHost = aSession.screen.lastRemoteHost;
         if (arrangement[SESSION_ARRANGEMENT_LAST_DIRECTORY]) {
             [aSession->_lastDirectory autorelease];
@@ -5933,14 +5930,8 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 // Jump to the saved scroll position
-- (void)jumpToSavedScrollPosition
-{
-    iTermMark *mark = nil;
-    if (_lastMark && [_screen markIsValid:_lastMark]) {
-        mark = _lastMark;
-    } else {
-        mark = [_screen lastMark];
-    }
+- (void)jumpToSavedScrollPosition {
+    iTermMark *mark = [_screen lastMark];
     Interval *interval = mark.entry.interval;
     if (!interval) {
         DLog(@"Beep: Can't jump to bad interval");
@@ -7371,6 +7362,11 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
             [self highlightMarkOrNote:obj];
         }
     }
+}
+
+- (BOOL)markIsNavigable:(id<iTermMark>)mark {
+    return ([mark isKindOfClass:[VT100ScreenMark class]] ||
+            [mark isKindOfClass:[PTYNoteViewController class]]);
 }
 
 - (void)nextMarkOrNote:(BOOL)annotationsOnly {
@@ -11266,20 +11262,23 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [self.delegate sessionActivate:self];
 }
 
+- (void)assignCurrentCommandEndDate {
+    VT100ScreenMark *screenMark = _screen.lastCommandMark;
+    if (!screenMark.endDate) {
+        screenMark.endDate = [NSDate date];
+    }
+}
+
 - (id)markAddedAtLine:(int)line ofClass:(Class)markClass {
     DLog(@"Session %@ calling refresh", self);
     [_textview refresh];  // In case text was appended
-    if ([_lastMark isKindOfClass:[VT100ScreenMark class]]) {
-        VT100ScreenMark *screenMark = (VT100ScreenMark *)_lastMark;
-        if (screenMark.command && !screenMark.endDate) {
-            screenMark.endDate = [NSDate date];
-        }
+    id<iTermMark> newMark = [_screen addMarkStartingAtAbsoluteLine:[_screen totalScrollbackOverflow] + line
+                                                           oneLine:YES
+                                                           ofClass:markClass];
+    if ([self markIsNavigable:newMark]) {
+        // currentMarkOrNotePosition is used for navigating next/previous
+        self.currentMarkOrNotePosition = newMark.entry.interval;
     }
-    [_lastMark release];
-    _lastMark = [[_screen addMarkStartingAtAbsoluteLine:[_screen totalScrollbackOverflow] + line
-                                                oneLine:YES
-                                                ofClass:markClass] retain];
-    self.currentMarkOrNotePosition = _lastMark.entry.interval;
     if (self.alertOnNextMark) {
         NSString *action = [iTermApplication.sharedApplication delegate].markAlertAction;
         if ([action isEqualToString:kMarkAlertActionPostNotification]) {
@@ -11303,7 +11302,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         }
         self.alertOnNextMark = NO;
     }
-    return _lastMark;
+    return newMark;
 }
 
 - (void)screenPromptDidStartAtLine:(int)line {
@@ -11312,13 +11311,13 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     _screen.fakePromptDetectedAbsLine = -1;
     const long long lastPromptLine = (long long)line + [_screen totalScrollbackOverflow];
     _screen.lastPromptLine = lastPromptLine;
+    [self assignCurrentCommandEndDate];
     VT100ScreenMark *mark = [self screenAddMarkOnLine:line];
     [mark setIsPrompt:YES];
     mark.promptRange = VT100GridAbsCoordRangeMake(0, lastPromptLine, 0, lastPromptLine);
     [_pasteHelper unblock];
     [self didUpdatePromptLocation];
 }
-
 
 - (void)triggerDidDetectStartOfPromptAt:(VT100GridAbsCoord)coord {
     DLog(@"Trigger detected start of prompt");
@@ -11368,15 +11367,13 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 // Save the current scroll position
-- (void)screenSaveScrollPosition
-{
+- (void)screenSaveScrollPosition {
     DLog(@"Session %@ calling refresh", self);
     [_textview refresh];  // In case text was appended
-    [_lastMark release];
-    _lastMark = [[_screen addMarkStartingAtAbsoluteLine:[_textview absoluteScrollPosition]
-                                                oneLine:NO
-                                                ofClass:[VT100ScreenMark class]] retain];
-    self.currentMarkOrNotePosition = _lastMark.entry.interval;
+    id<iTermMark> mark = [_screen addMarkStartingAtAbsoluteLine:[_textview absoluteScrollPosition]
+                                                        oneLine:NO
+                                                        ofClass:[VT100ScreenMark class]];
+    self.currentMarkOrNotePosition = mark.entry.interval;
 }
 
 - (VT100ScreenMark *)markAddedAtCursorOfClass:(Class)theClass {
