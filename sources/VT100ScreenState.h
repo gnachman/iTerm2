@@ -135,6 +135,9 @@ NS_ASSUME_NONNULL_BEGIN
 // >= 0: The line the prompt is at
 @property (nonatomic, readonly) long long fakePromptDetectedAbsLine;
 
+// Line where last prompt begain
+@property (nonatomic, readonly) long long lastPromptLine;
+
 @end
 
 @interface VT100ScreenMutableState: NSObject<VT100ScreenState, NSCopying>
@@ -197,6 +200,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, strong, readwrite) iTermColorMap *colorMap;
 @property (nonatomic, strong, readwrite) iTermTemporaryDoubleBufferedGridController *temporaryDoubleBuffer;
 @property (nonatomic, readwrite) long long fakePromptDetectedAbsLine;
+@property (nonatomic, readwrite) long long lastPromptLine;
 
 - (id<VT100ScreenState>)copy;
 

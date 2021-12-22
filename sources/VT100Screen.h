@@ -82,6 +82,7 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 @property(nonatomic, readonly) id<iTermTemporaryDoubleBufferedGridControllerReading> temporaryDoubleBuffer;
 @property(nonatomic, retain) id<VT100ScreenConfiguration> config;
 @property(nonatomic) long long fakePromptDetectedAbsLine;
+@property(nonatomic) long long lastPromptLine;
 
 // Designated initializer.
 - (instancetype)initWithTerminal:(VT100Terminal *)terminal

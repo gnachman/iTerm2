@@ -463,7 +463,6 @@ static const CGFloat PTYSessionMaximumMetalViewSize = 16384;
 
     VT100GridCoordRange _commandRange;
     VT100GridAbsCoordRange _lastOrCurrentlyRunningCommandAbsRange;
-    long long _lastPromptLine;  // Line where last prompt began
 
     NSTimeInterval _timeOfLastScheduling;
 
@@ -1354,12 +1353,6 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     aSession.cursorTypeOverride = arrangement[SESSION_ARRANGEMENT_CURSOR_TYPE_OVERRIDE];
     if (didRestoreContents && attachedToServer) {
-        Interval *interval = aSession.screen.lastPromptMark.entry.interval;
-        if (interval) {
-            VT100GridRange gridRange = [aSession.screen lineNumberRangeOfInterval:interval];
-            aSession->_lastPromptLine = gridRange.location + aSession.screen.totalScrollbackOverflow;
-        }
-
         if (arrangement[SESSION_ARRANGEMENT_COMMAND_RANGE]) {
             aSession->_commandRange = [arrangement[SESSION_ARRANGEMENT_COMMAND_RANGE] gridCoordRange];
         }
@@ -11317,10 +11310,11 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     DLog(@"FinalTerm: prompt started on line %d. Add a mark there. Save it as lastPromptLine.", line);
     // Reset this in case it's taking the "real" shell integration path.
     _screen.fakePromptDetectedAbsLine = -1;
-    _lastPromptLine = (long long)line + [_screen totalScrollbackOverflow];
+    const long long lastPromptLine = (long long)line + [_screen totalScrollbackOverflow];
+    _screen.lastPromptLine = lastPromptLine;
     VT100ScreenMark *mark = [self screenAddMarkOnLine:line];
     [mark setIsPrompt:YES];
-    mark.promptRange = VT100GridAbsCoordRangeMake(0, _lastPromptLine, 0, _lastPromptLine);
+    mark.promptRange = VT100GridAbsCoordRangeMake(0, lastPromptLine, 0, lastPromptLine);
     [_pasteHelper unblock];
     [self didUpdatePromptLocation];
 }
@@ -12182,10 +12176,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     BOOL haveCommand = _commandRange.start.x >= 0 && [self haveCommandInRange:_commandRange];
 
     if (haveCommand) {
-        VT100ScreenMark *mark = [_screen markOnLine:_lastPromptLine - [_screen totalScrollbackOverflow]];
+        VT100ScreenMark *mark = [_screen markOnLine:_screen.lastPromptLine - [_screen totalScrollbackOverflow]];
         mark.commandRange = VT100GridAbsCoordRangeFromCoordRange(range, _screen.totalScrollbackOverflow);
         if (!hadCommand) {
-            mark.promptRange = VT100GridAbsCoordRangeMake(0, _lastPromptLine, range.start.x, mark.commandRange.end.y);
+            mark.promptRange = VT100GridAbsCoordRangeMake(0, _screen.lastPromptLine, range.start.x, mark.commandRange.end.y);
         }
     }
     if (!haveCommand && hadCommand) {
@@ -12218,9 +12212,9 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         NSString *trimmedCommand =
         [command stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
         if (trimmedCommand.length) {
-            mark = [_screen markOnLine:_lastPromptLine - [_screen totalScrollbackOverflow]];
+            mark = [_screen markOnLine:_screen.lastPromptLine - [_screen totalScrollbackOverflow]];
             DLog(@"FinalTerm:  Make the mark on lastPromptLine %lld (%@) a command mark for command %@",
-                 _lastPromptLine - [_screen totalScrollbackOverflow], mark, command);
+                 _screen.lastPromptLine - [_screen totalScrollbackOverflow], mark, command);
             mark.command = command;
             mark.commandRange = VT100GridAbsCoordRangeFromCoordRange(range, _screen.totalScrollbackOverflow);
             mark.outputStart = VT100GridAbsCoordMake(_screen.currentGrid.cursor.x,

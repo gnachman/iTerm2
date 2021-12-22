@@ -1677,6 +1677,14 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
 #pragma mark - Mutation Wrappers
 
+- (long long)lastPromptLine {
+    return _state.lastPromptLine;
+}
+
+- (void)setLastPromptLine:(long long)lastPromptLine {
+    [self mutSetLastPromptLine:lastPromptLine];
+}
+
 - (void)setReturnCodeOfLastCommand:(int)code {
     [self mutSetReturnCodeOfLastCommand:code];
 }

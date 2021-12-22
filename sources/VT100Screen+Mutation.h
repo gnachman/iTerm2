@@ -191,6 +191,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)mutSetFakePromptDetectedAbsLine:(long long)value;
 - (void)mutUserDidPressReturn;
 - (void)mutSetReturnCodeOfLastCommand:(int)returnCode;
+- (void)mutSetLastPromptLine:(long long)value;
 
 @end
 

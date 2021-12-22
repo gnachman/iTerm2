@@ -38,6 +38,8 @@
 
 #include <sys/time.h>
 
+#warning TODO: I can't call regular VT100Screen methods from here because they'll use _state instead of _mutableState! I think this should eventually be its own class, not a category, to enfore the shared-nothing regime.
+
 @implementation VT100Screen (Mutation)
 
 - (VT100Grid *)mutableCurrentGrid {
@@ -1248,6 +1250,12 @@
                               knownTriggers:triggers
                                     visible:NO
                       guidOfLastCommandMark:guidOfLastCommandMark];
+
+        Interval *interval = [self lastPromptMark].entry.interval;
+        if (interval) {
+            const VT100GridRange gridRange = [self lineNumberRangeOfInterval:interval];
+            _mutableState.lastPromptLine = gridRange.location + _mutableState.cumulativeScrollbackOverflow;
+        }
 
         [self mutReloadMarkCache];
         [self.delegate screenSendModifiersDidChange];
@@ -2673,6 +2681,10 @@ static inline void VT100ScreenEraseCell(screen_char_t *sct, iTermExternalAttribu
 }
 
 #pragma mark - Accessors
+
+- (void)mutSetLastPromptLine:(long long)value {
+    _mutableState.lastPromptLine = value;
+}
 
 - (void)mutSetDelegate:(id<VT100ScreenDelegate>)delegate {
     _mutableState.colorMap.delegate = delegate;
