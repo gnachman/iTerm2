@@ -14518,9 +14518,9 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         if (_textview.selection.live) {
             [_textview.selection endLiveSelection];
         }
-        if (!_queuedTokens.count) {
+        if (_queuedTokens.count > 0) {
             CVector vector;
-            CVectorCreate(&vector, 100);
+            CVectorCreate(&vector, 1);
             [self executeTokens:&vector bytesHandled:0];
         }
     }
