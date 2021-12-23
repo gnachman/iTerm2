@@ -63,6 +63,21 @@
     _config = [_nextConfig retain];
 }
 
+- (void)addSideEffect:(void (^)(id<VT100ScreenDelegate> delegate))sideEffect {
+    [_mutableState.sideEffects addSideEffect:sideEffect];
+    __weak __typeof(self) weakSelf = self;
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [weakSelf performSideEffects];
+    });
+}
+
+- (void)performSideEffects {
+    if (!self.delegate) {
+        return;
+    }
+    [_mutableState.sideEffects executeWithDelegate:self.delegate];
+}
+
 #pragma mark - FinalTerm
 
 - (void)mutPromptDidStartAt:(VT100GridAbsCoord)coord {
@@ -139,7 +154,9 @@
     VT100ScreenMark *mark = [delegate_ screenAddMarkOnLine:line];
     [mark setIsPrompt:YES];
     mark.promptRange = VT100GridAbsCoordRangeMake(0, lastPromptLine, 0, lastPromptLine);
-    [delegate_ screenPromptDidStartAtLine:line];
+    [self addSideEffect:^(id<VT100ScreenDelegate> delegate) {
+        [delegate screenPromptDidStartAtLine:line];
+    }];
 }
 
 - (void)mutUserDidPressReturn {

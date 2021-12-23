@@ -486,7 +486,8 @@ static const CGFloat PTYSessionMaximumMetalViewSize = 16384;
     BOOL _reportingMiddleMouseDown;
     BOOL _reportingRightMouseDown;
 
-    // Did we get FinalTerm codes that report info about prompt?
+    // Did we get FinalTerm codes that report info about prompt? Used to decide if advanced paste
+    // can wait for prompts.
     BOOL _shouldExpectPromptMarks;
 
     // Did we get CurrentDir code?
