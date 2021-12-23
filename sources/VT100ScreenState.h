@@ -14,6 +14,7 @@
 #import "LineBuffer.h"
 #import "VT100Grid.h"
 #import "VT100ScreenMark.h"
+#import "VT100ScreenSideEffects.h"
 #import "VT100Terminal.h"
 #import "iTermColorMap.h"
 #import "iTermIntervalTreeObserver.h"
@@ -137,6 +138,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 // Line where last prompt begain
 @property (nonatomic, readonly) long long lastPromptLine;
+@property (nonatomic, strong, readonly) id<VT100ScreenSideEffectQueueReading> sideEffects;
 
 @end
 
@@ -201,6 +203,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, strong, readwrite) iTermTemporaryDoubleBufferedGridController *temporaryDoubleBuffer;
 @property (nonatomic, readwrite) long long fakePromptDetectedAbsLine;
 @property (nonatomic, readwrite) long long lastPromptLine;
+@property (nonatomic, strong, readonly) VT100ScreenSideEffectQueue *sideEffects;
 
 - (id<VT100ScreenState>)copy;
 

@@ -1867,6 +1867,8 @@
 		A667C249277251B5006B4DEF /* VT100Screen+Resizing.m in Sources */ = {isa = PBXBuildFile; fileRef = A667C24627724EEA006B4DEF /* VT100Screen+Resizing.m */; };
 		A667C24C27725341006B4DEF /* VT100ScreenConfiguration.h in Headers */ = {isa = PBXBuildFile; fileRef = A667C24A27725341006B4DEF /* VT100ScreenConfiguration.h */; };
 		A667C24D27725341006B4DEF /* VT100ScreenConfiguration.m in Sources */ = {isa = PBXBuildFile; fileRef = A667C24B27725341006B4DEF /* VT100ScreenConfiguration.m */; };
+		A667C2552773C1D1006B4DEF /* VT100ScreenSideEffects.m in Sources */ = {isa = PBXBuildFile; fileRef = A667C2532773C1D0006B4DEF /* VT100ScreenSideEffects.m */; };
+		A667C2562773C1D1006B4DEF /* VT100ScreenSideEffects.h in Headers */ = {isa = PBXBuildFile; fileRef = A667C2542773C1D1006B4DEF /* VT100ScreenSideEffects.h */; };
 		A667EF9C243935AE0055CF3F /* iTermSwipeHandler.h in Headers */ = {isa = PBXBuildFile; fileRef = A667EF9A243935AE0055CF3F /* iTermSwipeHandler.h */; };
 		A667F3881B48671B00705186 /* libiTerm2Shared.a in Frameworks */ = {isa = PBXBuildFile; fileRef = A6C760501B45C4CF00E3C992 /* libiTerm2Shared.a */; };
 		A667F38B1B48AEF200705186 /* NSApplication+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A667F3891B48AEF200705186 /* NSApplication+iTerm.h */; };
@@ -5574,6 +5576,8 @@
 		A667C24627724EEA006B4DEF /* VT100Screen+Resizing.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "VT100Screen+Resizing.m"; sourceTree = "<group>"; };
 		A667C24A27725341006B4DEF /* VT100ScreenConfiguration.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = VT100ScreenConfiguration.h; sourceTree = "<group>"; };
 		A667C24B27725341006B4DEF /* VT100ScreenConfiguration.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = VT100ScreenConfiguration.m; sourceTree = "<group>"; };
+		A667C2532773C1D0006B4DEF /* VT100ScreenSideEffects.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VT100ScreenSideEffects.m; sourceTree = "<group>"; };
+		A667C2542773C1D1006B4DEF /* VT100ScreenSideEffects.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VT100ScreenSideEffects.h; sourceTree = "<group>"; };
 		A667EF9A243935AE0055CF3F /* iTermSwipeHandler.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermSwipeHandler.h; sourceTree = "<group>"; };
 		A667F3861B48615900705186 /* iTermToolbeltTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermToolbeltTest.m; sourceTree = "<group>"; };
 		A667F3891B48AEF200705186 /* NSApplication+iTerm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSApplication+iTerm.h"; sourceTree = "<group>"; };
@@ -8768,6 +8772,8 @@
 		A63F40AC1842988A003A6A6D /* Core */ = {
 			isa = PBXGroup;
 			children = (
+				A667C2542773C1D1006B4DEF /* VT100ScreenSideEffects.h */,
+				A667C2532773C1D0006B4DEF /* VT100ScreenSideEffects.m */,
 				A60E046426E037BD00DD162B /* ContentSubscriber.swift */,
 				1D9DDD9B142E5FBB00275650 /* Coprocess.m */,
 				1DD39B19180B82F5004E56D5 /* DebugLogging.m */,
@@ -11530,6 +11536,7 @@
 				A63819D01FAECD3F00A9EF9E /* iTermCopyBackgroundRenderer.h in Headers */,
 				A648DABE2427E7E000C2FF02 /* iTermPreferenceDidChangeNotification.h in Headers */,
 				A6F718CE2266E71E0053488E /* iTermUserDefaults.h in Headers */,
+				A667C2562773C1D1006B4DEF /* VT100ScreenSideEffects.h in Headers */,
 				A6B41409211A5AEA00D28207 /* iTermStandardWindowButtonsView.h in Headers */,
 				A673A62A23A2096B00869A95 /* iTermNaggingController.h in Headers */,
 				A66719401DCE36C3000CE608 /* iTermOpenQuicklyCommands.h in Headers */,
@@ -14196,6 +14203,7 @@
 				A630117B20E69C23008114B7 /* iTermStatusBarSwiftyStringComponent.m in Sources */,
 				A629F59323AF49AD00C2F16B /* iTermExpect.m in Sources */,
 				A656E9961F99C60300158128 /* iTermSubpixelModelBuilder.mm in Sources */,
+				A667C2552773C1D1006B4DEF /* VT100ScreenSideEffects.m in Sources */,
 				A65943CC1F83382B00598B1E /* iTermMetalClipView.m in Sources */,
 				A6EC936724E513DB00EEADEF /* iTermSlowOperationGateway.m in Sources */,
 				53E9DFE5220D530E0070C9C0 /* SetDirectoryTrigger.m in Sources */,
