@@ -339,7 +339,9 @@
     [_mutableState.intervalTree addObject:mark withInterval:[self intervalForGridCoordRange:range]];
     [self.intervalTreeObserver intervalTreeDidAddObjectOfType:[self intervalTreeObserverTypeForObject:mark]
                                                        onLine:range.start.y + self.totalScrollbackOverflow];
-    [delegate_ screenNeedsRedraw];
+    [self addSideEffect:^(id<VT100ScreenDelegate> delegate) {
+        [delegate screenNeedsRedraw];
+    }];
     return mark;
 }
 
