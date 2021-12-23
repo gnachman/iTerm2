@@ -773,10 +773,6 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
 - (void)screenSaveScrollPosition {
 }
 
-- (VT100ScreenMark *)screenAddMarkOnLine:(int)line {
-    return nil;
-}
-
 - (void)screenStealFocus {
 }
 

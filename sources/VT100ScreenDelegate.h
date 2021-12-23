@@ -7,6 +7,7 @@
 @class VT100RemoteHost;
 @class VT100Screen;
 @class iTermColorMap;
+@protocol iTermMark;
 @class iTermSelection;
 
 @protocol VT100ScreenDelegate <NSObject, iTermColorMapDelegate>
@@ -203,7 +204,7 @@
 
 // Save the current scroll position
 - (void)screenSaveScrollPosition;
-- (VT100ScreenMark *)screenAddMarkOnLine:(int)line;
+- (void)screenDidAddMark:(id<iTermMark>)mark;
 - (void)screenPromptDidStartAtLine:(int)line;
 - (void)screenPromptDidEndAtLine:(int)line;
 

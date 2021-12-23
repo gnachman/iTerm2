@@ -217,6 +217,7 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 - (NSString *)workingDirectoryOnLine:(int)line;
 - (VT100RemoteHost *)remoteHostOnLine:(int)line;
 - (VT100ScreenMark *)lastCommandMark;  // last mark representing a command
+- (id<iTermMark>)markAddedAtCursorOfClass:(Class)theClass;
 
 - (BOOL)encodeContents:(id<iTermEncoderAdapter>)encoder
           linesDropped:(int *)linesDroppedOut;

@@ -1408,6 +1408,11 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     return nil;
 }
 
+- (id<iTermMark>)markAddedAtCursorOfClass:(Class)theClass {
+    return [self mutAddMarkOnLine:self.numberOfScrollbackLines + self.cursorY - 1
+                          ofClass:theClass];
+}
+
 - (void)saveFindContextAbsPos {
     [self mutSaveFindContextAbsPos];
 }

@@ -11261,12 +11261,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [self.delegate sessionActivate:self];
 }
 
-- (id)markAddedAtLine:(int)line ofClass:(Class)markClass {
-    DLog(@"Session %@ calling refresh", self);
-    [_textview refresh];  // In case text was appended
-    id<iTermMark> newMark = [_screen addMarkStartingAtAbsoluteLine:[_screen totalScrollbackOverflow] + line
-                                                           oneLine:YES
-                                                           ofClass:markClass];
+- (void)screenDidAddMark:(id<iTermMark>)newMark {
     if ([self markIsNavigable:newMark]) {
         // currentMarkOrNotePosition is used for navigating next/previous
         self.currentMarkOrNotePosition = newMark.entry.interval;
@@ -11294,7 +11289,6 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         }
         self.alertOnNextMark = NO;
     }
-    return newMark;
 }
 
 - (void)screenPromptDidStartAtLine:(int)line {
@@ -11345,10 +11339,6 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     }];
 }
 
-- (VT100ScreenMark *)screenAddMarkOnLine:(int)line {
-    return (VT100ScreenMark *)[self markAddedAtLine:line ofClass:[VT100ScreenMark class]];
-}
-
 // Save the current scroll position
 - (void)screenSaveScrollPosition {
     DLog(@"Session %@ calling refresh", self);
@@ -11359,9 +11349,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     self.currentMarkOrNotePosition = mark.entry.interval;
 }
 
-- (VT100ScreenMark *)markAddedAtCursorOfClass:(Class)theClass {
-    return [self markAddedAtLine:[_screen numberOfScrollbackLines] + _screen.cursorY - 1
-                         ofClass:theClass];
+- (id<iTermMark>)markAddedAtCursorOfClass:(Class)theClass {
+    return [self.screen markAddedAtCursorOfClass:theClass];
 }
 
 - (void)screenStealFocus {

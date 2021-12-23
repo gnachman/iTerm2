@@ -2264,8 +2264,8 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
                           name:NSStringFromSelector(_cmd)
                           hook:^(PTYTextView *textView) {
         PTYSession *session = (PTYSession *)textView.delegate;
-        [session screenAddMarkOnLine:1];
-        VT100ScreenMark *mark = [session markAddedAtCursorOfClass:[VT100ScreenMark class]];
+        [session.screen mutAddMarkOnLine:1 ofClass:[VT100ScreenMark class]];
+        VT100ScreenMark *mark = [session.screen markAddedAtCursorOfClass:[VT100ScreenMark class]];
         mark.code = 1;
     }
               profileOverrides:nil
