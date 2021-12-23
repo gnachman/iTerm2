@@ -11260,13 +11260,6 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [self.delegate sessionActivate:self];
 }
 
-- (void)assignCurrentCommandEndDate {
-    VT100ScreenMark *screenMark = _screen.lastCommandMark;
-    if (!screenMark.endDate) {
-        screenMark.endDate = [NSDate date];
-    }
-}
-
 - (id)markAddedAtLine:(int)line ofClass:(Class)markClass {
     DLog(@"Session %@ calling refresh", self);
     [_textview refresh];  // In case text was appended
@@ -11304,15 +11297,6 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)screenPromptDidStartAtLine:(int)line {
-    DLog(@"FinalTerm: prompt started on line %d. Add a mark there. Save it as lastPromptLine.", line);
-    // Reset this in case it's taking the "real" shell integration path.
-    _screen.fakePromptDetectedAbsLine = -1;
-    const long long lastPromptLine = (long long)line + [_screen totalScrollbackOverflow];
-    _screen.lastPromptLine = lastPromptLine;
-    [self assignCurrentCommandEndDate];
-    VT100ScreenMark *mark = [self screenAddMarkOnLine:line];
-    [mark setIsPrompt:YES];
-    mark.promptRange = VT100GridAbsCoordRangeMake(0, lastPromptLine, 0, lastPromptLine);
     [_pasteHelper unblock];
     [self didUpdatePromptLocation];
 }

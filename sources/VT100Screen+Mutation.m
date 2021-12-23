@@ -83,7 +83,7 @@
 
     // FinalTerm uses this to define the start of a collapsible region. That would be a nightmare
     // to add to iTerm, and our answer to this is marks, which already existed anyway.
-    [delegate_ screenPromptDidStartAtLine:[self numberOfScrollbackLines] + self.cursorY - 1];
+    [self mutSetPromptStartLine:[self numberOfScrollbackLines] + self.cursorY - 1];
     if ([iTermAdvancedSettingsModel resetSGROnPrompt]) {
         [_mutableState.terminal resetGraphicRendition];
     }
@@ -121,6 +121,26 @@
 }
 
 #pragma mark - Interval Tree
+
+- (void)assignCurrentCommandEndDate {
+    VT100ScreenMark *screenMark = self.lastCommandMark;
+    if (!screenMark.endDate) {
+        screenMark.endDate = [NSDate date];
+    }
+}
+
+- (void)mutSetPromptStartLine:(int)line {
+    DLog(@"FinalTerm: prompt started on line %d. Add a mark there. Save it as lastPromptLine.", line);
+    // Reset this in case it's taking the "real" shell integration path.
+    _mutableState.fakePromptDetectedAbsLine = -1;
+    const long long lastPromptLine = (long long)line + _mutableState.cumulativeScrollbackOverflow;
+    _mutableState.lastPromptLine = lastPromptLine;
+    [self assignCurrentCommandEndDate];
+    VT100ScreenMark *mark = [delegate_ screenAddMarkOnLine:line];
+    [mark setIsPrompt:YES];
+    mark.promptRange = VT100GridAbsCoordRangeMake(0, lastPromptLine, 0, lastPromptLine);
+    [delegate_ screenPromptDidStartAtLine:line];
+}
 
 - (void)mutUserDidPressReturn {
     if (_mutableState.fakePromptDetectedAbsLine >= 0) {
@@ -420,7 +440,7 @@
 
     if (savePrompt && newCommandStart.x >= 0) {
         // Create a new mark and inform the delegate that there's new command start coord.
-        [delegate_ screenPromptDidStartAtLine:[self numberOfScrollbackLines]];
+        [self mutSetPromptStartLine:[self numberOfScrollbackLines]];
         [self commandDidStartAtScreenCoord:newCommandStart];
     }
     [_mutableState.terminal resetSavedCursorPositions];
@@ -3609,7 +3629,7 @@ static inline void VT100ScreenEraseCell(screen_char_t *sct, iTermExternalAttribu
         [self setHost:host user:user];
     }
     [self terminalCurrentDirectoryDidChangeTo:path];
-    [delegate_ screenPromptDidStartAtLine:[self numberOfScrollbackLines] + self.cursorY - 1];
+    [self mutSetPromptStartLine:[self numberOfScrollbackLines] + self.cursorY - 1];
 }
 
 - (void)terminalClearScreen {
