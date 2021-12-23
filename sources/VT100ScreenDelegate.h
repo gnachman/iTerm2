@@ -206,7 +206,7 @@
 - (void)screenSaveScrollPosition;
 - (void)screenDidAddMark:(id<iTermMark>)mark;
 - (void)screenPromptDidStartAtLine:(int)line;
-- (void)screenPromptDidEndAtLine:(int)line;
+- (void)screenPromptDidEndWithMark:(VT100ScreenMark *)mark;
 
 - (void)screenStealFocus;
 

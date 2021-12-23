@@ -11313,15 +11313,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [_screen commandDidStartAt:coord];
 }
 
-- (void)screenPromptDidEndAtLine:(int)line {
-    VT100ScreenMark *mark = [_screen lastPromptMark];
-    const int x = _screen.cursorX - 1;
-    const long long y = (long long)line + [_screen totalScrollbackOverflow];
-    mark.promptRange = VT100GridAbsCoordRangeMake(mark.promptRange.start.x,
-                                                  mark.promptRange.end.y,
-                                                  x,
-                                                  y);
-    mark.commandRange = VT100GridAbsCoordRangeMake(x, y, x, y);
+- (void)screenPromptDidEndWithMark:(VT100ScreenMark *)mark {
     [_promptSubscriptions enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, ITMNotificationRequest * _Nonnull obj, BOOL * _Nonnull stop) {
         if (obj.argumentsOneOfCase == ITMNotificationRequest_Arguments_OneOfCase_GPBUnsetOneOfCase ||
             [obj.promptMonitorRequest.modesArray it_contains:ITMPromptMonitorMode_Prompt]) {

@@ -869,7 +869,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
 - (void)screenTerminalAttemptedPasteboardAccess {
 }
 
-- (void)screenPromptDidEndAtLine:(int)line {
+- (void)screenPromptDidEndWithMark:(VT100ScreenMark *)mark {
 }
 
 - (void)screenRequestUpload:(NSString *)args {
