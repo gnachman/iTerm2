@@ -25,6 +25,7 @@ static NSString *const kMarkPromptRange = @"Prompt Range";
 static NSString *const kMarkCommandRange = @"Command Range";
 static NSString *const kMarkOutputStart = @"Output Start";
 
+#warning TODO: I need an immutable protocol for this. In particular, setCommand: calls delegate.markDidBecomeCommandMark(_:) which mutates VT100Screen. So that must only happen on the mutation thread!
 @implementation VT100ScreenMark {
     NSMutableArray *_capturedOutput;
 }
@@ -171,6 +172,7 @@ static NSString *const kMarkOutputStart = @"Output Start";
 
 - (void)setCommand:(NSString *)command {
     if (!_command) {
+#warning TODO: This will need to be called on the mutation thread
         [self.delegate markDidBecomeCommandMark:self];
     }
     [_command autorelease];

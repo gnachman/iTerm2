@@ -80,6 +80,7 @@ static NSString *const kSuppressCaptureOutputToolNotVisibleWarning =
     output.line = stringLine.stringValue;
     output.trigger = self;
     output.values = [NSArray arrayWithObjects:capturedStrings count:captureCount];
+#warning fix this - eventually triggers will need to run on the mutation thread which will simplify this.
     output.mark = [aSession markAddedAtCursorOfClass:[iTermCapturedOutputMark class]];
     [aSession addCapturedOutput:output];
     return NO;

@@ -151,6 +151,7 @@
 - (void)assignCurrentCommandEndDate {
     VT100ScreenMark *screenMark = self.lastCommandMark;
     if (!screenMark.endDate) {
+#warning This mutates a shared object.
         screenMark.endDate = [NSDate date];
     }
 }
