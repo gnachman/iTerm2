@@ -1464,14 +1464,6 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     [self.delegate screenDidResize];
 }
 
-#pragma mark - iTermMarkDelegate
-
-- (void)markDidBecomeCommandMark:(id<iTermMark>)mark {
-    if (mark.entry.interval.location > self.lastCommandMark.entry.interval.location) {
-        [self mutSetLastCommandMark:mark];
-    }
-}
-
 // Deprecated
 - (int)numberOfLinesDroppedWhenEncodingLegacyFormatWithEncoder:(id<iTermEncoderAdapter>)encoder
                                                 intervalOffset:(long long *)intervalOffsetPtr {

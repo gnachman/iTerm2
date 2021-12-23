@@ -37,7 +37,6 @@ extern NSString *const kScreenStateProtectedMode;
 @interface VT100Screen () <
 iTermTemporaryDoubleBufferedGridControllerDelegate,
 iTermLineBufferDelegate,
-iTermMarkDelegate,
 VT100InlineImageHelperDelegate> {
     id<VT100ScreenState> _state;
     VT100ScreenMutableState *_mutableState;

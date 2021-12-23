@@ -8,13 +8,15 @@
 #import "VT100Screen.h"
 #import "VT100Terminal.h"
 
+#import "VT100ScreenMark.h"
+
 @class iTermTemporaryDoubleBufferedGridController;
 
 @protocol iTermOrderedToken;
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface VT100Screen (Mutation)<VT100TerminalDelegate>
+@interface VT100Screen (Mutation)<iTermMarkDelegate, VT100TerminalDelegate>
 
 @property (nonatomic, readonly) VT100Grid *mutablePrimaryGrid;
 @property (nonatomic, readonly) VT100Grid *mutableAltGrid;

@@ -4612,6 +4612,14 @@ static inline void VT100ScreenEraseCell(screen_char_t *sct, iTermExternalAttribu
     _mutableState.collectInputForPrinting = NO;
 }
 
+#pragma mark - iTermMarkDelegate
+
+- (void)markDidBecomeCommandMark:(id<iTermMark>)mark {
+    if (mark.entry.interval.location > self.lastCommandMark.entry.interval.location) {
+        [self mutSetLastCommandMark:mark];
+    }
+}
+
 @end
 
 @implementation VT100Screen (Testing)
