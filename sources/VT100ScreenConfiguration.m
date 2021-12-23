@@ -10,16 +10,19 @@
 
 @interface VT100ScreenConfiguration()
 @property (nonatomic, readwrite) BOOL shouldPlacePromptAtFirstColumn;
+@property (nonatomic, copy, readwrite) NSString *sessionGuid;
 @end
 
 @implementation VT100ScreenConfiguration
 
 @synthesize shouldPlacePromptAtFirstColumn = _shouldPlacePromptAtFirstColumn;
+@synthesize sessionGuid = _sessionGuid;
 
 - (instancetype)initFrom:(VT100ScreenConfiguration *)other {
     self = [super init];
     if (self) {
         _shouldPlacePromptAtFirstColumn = other.shouldPlacePromptAtFirstColumn;
+        _sessionGuid = other.sessionGuid;
     }
     return self;
 }
@@ -29,7 +32,8 @@
 }
 
 - (NSString *)description {
-    NSDictionary *dict = @{ @"shouldPlacePromptAtFirstColumn": @(_shouldPlacePromptAtFirstColumn) };
+    NSDictionary *dict = @{ @"shouldPlacePromptAtFirstColumn": @(_shouldPlacePromptAtFirstColumn),
+                            @"sessionGuid": _sessionGuid ?: @"(nil)" };
     NSArray<NSString *> *keys = [dict.allKeys sortedArrayUsingSelector:@selector(compare:)];
     NSArray<NSString *> *kvps = [keys mapWithBlock:^id(NSString *key) {
         return [NSString stringWithFormat:@"    %@=%@", key, dict[key]];
@@ -42,6 +46,7 @@
 @implementation VT100MutableScreenConfiguration
 
 @dynamic shouldPlacePromptAtFirstColumn;
+@dynamic sessionGuid;
 
 - (id)copyWithZone:(NSZone *)zone {
     return [[VT100ScreenConfiguration alloc] initFrom:self];

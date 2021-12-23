@@ -115,6 +115,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
 - (VT100ScreenConfiguration *)screenConfig {
     VT100MutableScreenConfiguration *config = [[[VT100MutableScreenConfiguration alloc] init] autorelease];
     config.shouldPlacePromptAtFirstColumn = YES;
+    config.sessionGuid = @"fjdkslafjdsklfa";
     return config;
 }
 
@@ -675,10 +676,6 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
 }
 
 - (void)screenDidChangeNumberOfScrollbackLines {
-}
-
-- (NSString *)screenSessionGuid {
-    return @"fjdkslafjdsklfa";
 }
 
 - (void)screenSetCursorBlinking:(BOOL)blink {

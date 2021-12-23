@@ -723,6 +723,10 @@ static const CGFloat PTYSessionMaximumMetalViewSize = 16384;
         _terminal = [[VT100Terminal alloc] init];
         _terminal.output.optionIsMetaForSpecialKeys =
             [iTermAdvancedSettingsModel optionIsMetaForSpecialChars];
+        // Allocate a guid. If we end up restoring from a session during startup this will be replaced.
+        _guid = [[NSString uuid] retain];
+        [[PTYSession sessionMap] setObject:self forKey:_guid];
+
         [self updateConfigurationFields];
         _screen = [[VT100Screen alloc] initWithTerminal:_terminal
                                                darkMode:self.view.effectiveAppearance.it_isDark
@@ -730,9 +734,6 @@ static const CGFloat PTYSessionMaximumMetalViewSize = 16384;
         NSParameterAssert(_shell != nil && _terminal != nil && _screen != nil);
 
         _overriddenFields = [[NSMutableSet alloc] init];
-        // Allocate a guid. If we end up restoring from a session during startup this will be replaced.
-        _guid = [[NSString uuid] retain];
-        [[PTYSession sessionMap] setObject:self forKey:_guid];
 
         _variables = [[iTermVariables alloc] initWithContext:iTermVariablesSuggestionContextSession
                                                        owner:self];
@@ -1086,6 +1087,7 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     [_guid autorelease];
     _guid = [guid copy];
+    [self updateConfiguration];
     [[PTYSession sessionMap] setObject:self forKey:_guid];
     [self.variablesScope setValue:_guid forVariableNamed:iTermVariableKeySessionID];
 }
@@ -10787,10 +10789,6 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 #pragma mark - VT100ScreenDelegate
 
-- (NSString *)screenSessionGuid {
-    return self.guid;
-}
-
 - (void)screenScheduleRedrawSoon {
     self.active = YES;
 }
@@ -12269,6 +12267,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 - (void)updateConfigurationFields {
     _config.shouldPlacePromptAtFirstColumn = [iTermProfilePreferences boolForKey:KEY_PLACE_PROMPT_AT_FIRST_COLUMN
                                                                        inProfile:_profile];
+    _config.sessionGuid = _guid;
 }
 
 - (void)updateConfiguration {

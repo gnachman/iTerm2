@@ -11,9 +11,6 @@
 
 @protocol VT100ScreenDelegate <NSObject, iTermColorMapDelegate>
 
-// Returns the session's unique ID.
-- (NSString *)screenSessionGuid;
-
 // Screen contents have become dirty and should be redrawn right away.
 - (void)screenNeedsRedraw;
 

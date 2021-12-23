@@ -264,7 +264,7 @@
     if ([mark isKindOfClass:[VT100ScreenMark class]]) {
         VT100ScreenMark *screenMark = mark;
         screenMark.delegate = self;
-        screenMark.sessionGuid = [delegate_ screenSessionGuid];
+        screenMark.sessionGuid = _config.sessionGuid;
     }
     long long totalOverflow = [self totalScrollbackOverflow];
     if (line < totalOverflow || line > totalOverflow + self.numberOfLines) {
