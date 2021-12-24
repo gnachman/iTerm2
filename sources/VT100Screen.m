@@ -355,6 +355,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 // NOTE: If you change this you probably want to change -haveCommandInRange:, too.
+#warning TODO: Don't call this in the mutable codepath. The use of the extractor makes it interesting - mutable state needs to be an extractor data source maybe?
 - (NSString *)commandInRange:(VT100GridCoordRange)range {
     if (range.start.x == -1) {
         return nil;
@@ -1105,6 +1106,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (VT100ScreenMark *)markOnLine:(int)line {
+#warning Figure out what to do with the mark cache. Also don't use totalScrollbackOverflow from mutable code path
     return _state.markCache[@([self totalScrollbackOverflow] + line)];
 }
 

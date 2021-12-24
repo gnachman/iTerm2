@@ -246,7 +246,11 @@
 
 // FinalTerm stuff
 - (void)screenCommandDidChangeWithRange:(VT100GridCoordRange)range;
-- (void)screenCommandDidEndWithRange:(VT100GridCoordRange)range;
+- (void)screenDidExecuteCommand:(NSString *)command
+                          range:(VT100GridCoordRange)range
+                         onHost:(VT100RemoteHost *)host
+                    inDirectory:(NSString *)directory
+                           mark:(VT100ScreenMark *)mark;
 - (void)screenCommandDidExitWithCode:(int)code mark:(VT100ScreenMark *)maybeMark;
 
 - (NSString *)screenProfileName;

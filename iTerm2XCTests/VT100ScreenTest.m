@@ -818,7 +818,10 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
 - (void)screenCommandDidChangeWithRange:(VT100GridCoordRange)range {
 }
 
-- (void)screenCommandDidEndWithRange:(VT100GridCoordRange)range {
+- (void)screenDidExecuteCommand:(NSString *)command
+                         onHost:(VT100RemoteHost *)host
+                    inDirectory:(NSString *)directory
+                           mark:(VT100ScreenMark *)mark {
 }
 
 - (int)selectionViewportWidth {

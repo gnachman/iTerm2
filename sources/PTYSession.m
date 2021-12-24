@@ -12111,30 +12111,20 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     }
 }
 
-- (void)screenCommandDidEndWithRange:(VT100GridCoordRange)range {
-    NSString *command = [_screen commandInRange:range];
-    DLog(@"FinalTerm: Command <<%@>> ended with range %@",
-         command, VT100GridCoordRangeDescription(range));
-    VT100ScreenMark *mark = nil;
-    if (command) {
-        NSString *trimmedCommand =
+- (void)screenDidExecuteCommand:(NSString *)command
+                          range:(VT100GridCoordRange)range
+                         onHost:(VT100RemoteHost *)host
+                    inDirectory:(NSString *)directory
+                           mark:(VT100ScreenMark *)mark {
+    NSString *trimmedCommand =
         [command stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
-        if (trimmedCommand.length) {
-            mark = [_screen markOnLine:_screen.lastPromptLine - [_screen totalScrollbackOverflow]];
-            DLog(@"FinalTerm:  Make the mark on lastPromptLine %lld (%@) a command mark for command %@",
-                 _screen.lastPromptLine - [_screen totalScrollbackOverflow], mark, command);
-            mark.command = command;
-            mark.commandRange = VT100GridAbsCoordRangeFromCoordRange(range, _screen.totalScrollbackOverflow);
-            mark.outputStart = VT100GridAbsCoordMake(_screen.currentGrid.cursor.x,
-                                                     _screen.currentGrid.cursor.y + _screen.numberOfScrollbackLines + _screen.totalScrollbackOverflow);
-            [[mark retain] autorelease];
-            [[iTermShellHistoryController sharedInstance] addCommand:trimmedCommand
-                                                              onHost:[_screen remoteHostOnLine:range.end.y]
-                                                         inDirectory:[_screen workingDirectoryOnLine:range.end.y]
-                                                            withMark:mark];
-            [_commands addObject:trimmedCommand];
-            [self trimCommandsIfNeeded];
-        }
+    if (trimmedCommand.length) {
+        [[iTermShellHistoryController sharedInstance] addCommand:trimmedCommand
+                                                          onHost:host
+                                                     inDirectory:directory
+                                                        withMark:mark];
+        [_commands addObject:trimmedCommand];
+        [self trimCommandsIfNeeded];
     }
     self.lastCommand = command;
     [self.variablesScope setValue:command forVariableNamed:iTermVariableKeySessionLastCommand];

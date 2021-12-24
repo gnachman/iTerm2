@@ -147,7 +147,7 @@
 - (BOOL)mutCommandDidEndAtAbsCoord:(VT100GridAbsCoord)coord {
     if (_state.commandStartCoord.x != -1) {
         [self mutDidUpdatePromptLocation];
-        [delegate_ screenCommandDidEndWithRange:[self commandRange]];
+        [self mutCommandDidEndWithRange:[self commandRange]];
         [self mutInvalidateCommandStartCoord];
         _mutableState.startOfRunningCommandOutput = coord;
         return YES;
@@ -156,6 +156,35 @@
 }
 
 #pragma mark - Interval Tree
+
+- (void)mutCommandDidEndWithRange:(VT100GridCoordRange)range {
+    NSString *command = [self commandInRange:range];
+    DLog(@"FinalTerm: Command <<%@>> ended with range %@",
+         command, VT100GridCoordRangeDescription(range));
+    VT100ScreenMark *mark = nil;
+    if (command) {
+        NSString *trimmedCommand =
+            [command stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
+        if (trimmedCommand.length) {
+            mark = [self markOnLine:self.lastPromptLine - [self totalScrollbackOverflow]];
+#warning This modifies shared state
+            DLog(@"FinalTerm:  Make the mark on lastPromptLine %lld (%@) a command mark for command %@",
+                 _mutableState.lastPromptLine - _mutableState.cumulativeScrollbackOverflow, mark, command);
+            mark.command = command;
+            mark.commandRange = VT100GridAbsCoordRangeFromCoordRange(range, _mutableState.cumulativeScrollbackOverflow);
+            mark.outputStart = VT100GridAbsCoordMake(_mutableState.currentGrid.cursor.x,
+                                                     _mutableState.currentGrid.cursor.y + [_mutableState.linebuffer numLinesWithWidth:_mutableState.currentGrid.size.width] + _mutableState.cumulativeScrollbackOverflow);
+            [[mark retain] autorelease];
+        }
+    }
+    [self addSideEffect:^(id<VT100ScreenDelegate> delegate) {
+        [delegate screenDidExecuteCommand:command
+                                    range:range
+                                   onHost:command ? [self remoteHostOnLine:range.end.y] : nil
+                              inDirectory:command ? [self workingDirectoryOnLine:range.end.y] : nil
+                                     mark:command ? mark : nil];
+    }];
+}
 
 - (id<iTermMark>)mutAddMarkOnLine:(int)line ofClass:(Class)markClass {
     DLog(@"addMarkOnLine:%@ ofClass:%@", @(line), markClass);
@@ -405,7 +434,7 @@
     }
     [self mutInvalidateCommandStartCoordWithoutSideEffects];
     [self mutDidUpdatePromptLocation];
-    [delegate_ screenCommandDidEndWithRange:VT100GridCoordRangeMake(-1, -1, -1, -1)];
+    [self mutCommandDidEndWithRange:VT100GridCoordRangeMake(-1, -1, -1, -1)];
 }
 
 - (void)mutRemoveObjectFromIntervalTree:(id<IntervalTreeObject>)obj {
