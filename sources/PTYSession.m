@@ -12033,68 +12033,21 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     return [self.naggingController permissionToReportVariableNamed:name];
 }
 
-- (BOOL)haveCommandInRange:(VT100GridCoordRange)range {
-    if (range.start.x == -1) {
-        return NO;
-    }
-
-    // If semantic history goes nuts and the end-of-command code isn't received (which seems to be a
-    // common problem, probably because of buggy old versions of SH scripts) , the command can grow
-    // without bound. We'll limit the length of a command to avoid performance problems.
-    const int kMaxLines = 50;
-    if (range.end.y - range.start.y > kMaxLines) {
-        range.end.y = range.start.y + kMaxLines;
-    }
-    const int width = _screen.width;
-    range.end.x = MIN(range.end.x, width - 1);
-    range.start.x = MIN(range.start.x, width - 1);
-
-    iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:_screen];
-    return [extractor haveNonWhitespaceInFirstLineOfRange:VT100GridWindowedRangeMake(range, 0, 0)];
-}
-
 - (VT100GridRange)screenRangeOfVisibleLines {
     return [_textview rangeOfVisibleLines];
 }
 
 #pragma mark - FinalTerm
 
-// NOTE: If you change this you probably want to change -haveCommandInRange:, too.
 - (NSString *)commandInRange:(VT100GridCoordRange)range {
-    if (range.start.x == -1) {
-        return nil;
-    }
-    // If semantic history goes nuts and the end-of-command code isn't received (which seems to be a
-    // common problem, probably because of buggy old versions of SH scripts) , the command can grow
-    // without bound. We'll limit the length of a command to avoid performance problems.
-    const int kMaxLines = 50;
-    if (range.end.y - range.start.y > kMaxLines) {
-        range.end.y = range.start.y + kMaxLines;
-    }
-    iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:_screen];
-    NSString *command = [extractor contentInRange:VT100GridWindowedRangeMake(range, 0, 0)
-                                attributeProvider:nil
-                                       nullPolicy:kiTermTextExtractorNullPolicyFromStartToFirst
-                                              pad:NO
-                               includeLastNewline:NO
-                           trimTrailingWhitespace:NO
-                                     cappedAtSize:-1
-                                     truncateTail:YES
-                                continuationChars:nil
-                                           coords:nil];
-    NSRange newline = [command rangeOfString:@"\n"];
-    if (newline.location != NSNotFound) {
-        command = [command substringToIndex:newline.location];
-    }
-
-    return [command stringByTrimmingLeadingWhitespace];
+    return [_screen commandInRange:range];
 }
 
 - (NSString *)currentCommand {
     if (_commandRange.start.x < 0) {
         return nil;
     } else {
-        return [self commandInRange:_commandRange];
+        return [_screen commandInRange:_commandRange];
     }
 }
 
@@ -12117,7 +12070,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     if (_commandRange.start.x < 0) {
         return nil;
     }
-    command = [self commandInRange:_commandRange];
+    command = [_screen commandInRange:_commandRange];
     VT100RemoteHost *host = [_screen remoteHostOnLine:[_screen numberOfLines]];
     NSString *trimmedCommand =
         [command stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
@@ -12127,9 +12080,9 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 - (void)screenCommandDidChangeWithRange:(VT100GridCoordRange)range {
     DLog(@"FinalTerm: command changed. New range is %@", VT100GridCoordRangeDescription(range));
-    BOOL hadCommand = _commandRange.start.x >= 0 && [self haveCommandInRange:_commandRange];
+    BOOL hadCommand = _commandRange.start.x >= 0 && [_screen haveCommandInRange:_commandRange];
     _commandRange = range;
-    BOOL haveCommand = _commandRange.start.x >= 0 && [self haveCommandInRange:_commandRange];
+    BOOL haveCommand = _commandRange.start.x >= 0 && [_screen haveCommandInRange:_commandRange];
 
     if (haveCommand) {
         VT100ScreenMark *mark = [_screen markOnLine:_screen.lastPromptLine - [_screen totalScrollbackOverflow]];
@@ -12147,7 +12100,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
             [[_delegate realParentWindow] showAutoCommandHistoryForSession:self];
         }
         if ([[_delegate realParentWindow] wantsCommandHistoryUpdatesFromSession:self]) {
-            NSString *command = haveCommand ? [self commandInRange:_commandRange] : @"";
+            NSString *command = haveCommand ? [_screen commandInRange:_commandRange] : @"";
             DLog(@"ACH Update command to %@, have=%d, range.start.x=%d", command, (int)haveCommand, range.start.x);
             if (haveCommand && self.eligibleForAutoCommandHistory) {
                 [[_delegate realParentWindow] updateAutoCommandHistoryForPrefix:command
@@ -12159,7 +12112,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)screenCommandDidEndWithRange:(VT100GridCoordRange)range {
-    NSString *command = [self commandInRange:range];
+    NSString *command = [_screen commandInRange:range];
     DLog(@"FinalTerm: Command <<%@>> ended with range %@",
          command, VT100GridCoordRangeDescription(range));
     VT100ScreenMark *mark = nil;

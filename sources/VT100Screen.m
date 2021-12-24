@@ -354,6 +354,57 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     }
 }
 
+// NOTE: If you change this you probably want to change -haveCommandInRange:, too.
+- (NSString *)commandInRange:(VT100GridCoordRange)range {
+    if (range.start.x == -1) {
+        return nil;
+    }
+    // If semantic history goes nuts and the end-of-command code isn't received (which seems to be a
+    // common problem, probably because of buggy old versions of SH scripts) , the command can grow
+    // without bound. We'll limit the length of a command to avoid performance problems.
+    const int kMaxLines = 50;
+    if (range.end.y - range.start.y > kMaxLines) {
+        range.end.y = range.start.y + kMaxLines;
+    }
+    iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:self];
+    NSString *command = [extractor contentInRange:VT100GridWindowedRangeMake(range, 0, 0)
+                                attributeProvider:nil
+                                       nullPolicy:kiTermTextExtractorNullPolicyFromStartToFirst
+                                              pad:NO
+                               includeLastNewline:NO
+                           trimTrailingWhitespace:NO
+                                     cappedAtSize:-1
+                                     truncateTail:YES
+                                continuationChars:nil
+                                           coords:nil];
+    NSRange newline = [command rangeOfString:@"\n"];
+    if (newline.location != NSNotFound) {
+        command = [command substringToIndex:newline.location];
+    }
+
+    return [command stringByTrimmingLeadingWhitespace];
+}
+
+- (BOOL)haveCommandInRange:(VT100GridCoordRange)range {
+    if (range.start.x == -1) {
+        return NO;
+    }
+
+    // If semantic history goes nuts and the end-of-command code isn't received (which seems to be a
+    // common problem, probably because of buggy old versions of SH scripts) , the command can grow
+    // without bound. We'll limit the length of a command to avoid performance problems.
+    const int kMaxLines = 50;
+    if (range.end.y - range.start.y > kMaxLines) {
+        range.end.y = range.start.y + kMaxLines;
+    }
+    const int width = self.width;
+    range.end.x = MIN(range.end.x, width - 1);
+    range.start.x = MIN(range.start.x, width - 1);
+
+    iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:self];
+    return [extractor haveNonWhitespaceInFirstLineOfRange:VT100GridWindowedRangeMake(range, 0, 0)];
+}
+
 - (void)promptDidStartAt:(VT100GridAbsCoord)coord {
     [self mutPromptDidStartAt:coord];
 }
