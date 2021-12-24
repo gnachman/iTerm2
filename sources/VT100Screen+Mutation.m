@@ -298,11 +298,13 @@
     if (token && !workingDirectory) {
         __weak __typeof(self) weakSelf = self;
         DLog(@"%p: Performing async working directory fetch for token %@", self, token);
-        [delegate_ screenGetWorkingDirectoryWithCompletion:^(NSString *path) {
-            DLog(@"%p: Async update got %@ for token %@", self, path, token);
-            if (path) {
-                [weakSelf mutSetWorkingDirectory:path onLine:line pushed:pushed token:token];
-            }
+        [self addSideEffect:^(id<VT100ScreenDelegate> delegate) {
+            [delegate screenGetWorkingDirectoryWithCompletion:^(NSString *path) {
+                DLog(@"%p: Async update got %@ for token %@", self, path, token);
+                if (path) {
+                    [weakSelf mutSetWorkingDirectory:path onLine:line pushed:pushed token:token];
+                }
+            }];
         }];
         return;
     }
