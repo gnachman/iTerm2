@@ -249,6 +249,8 @@ static NSString *const SESSION_ARRANGEMENT_VARIABLES = @"Variables";  // _variab
 static NSString *const SESSION_ARRANGEMENT_COMMAND_RANGE = @"Command Range";  // VT100GridCoordRange
 // Deprecated in favor of SESSION_ARRANGEMENT_SHOULD_EXPECT_PROMPT_MARKS and SESSION_ARRANGEMENT_SHOULD_EXPECT_CURRENT_DIR_UPDATES
 static NSString *const SESSION_ARRANGEMENT_SHELL_INTEGRATION_EVER_USED_DEPRECATED = @"Shell Integration Ever Used";  // BOOL
+
+// This really belongs in VT100Screen but it's here for historical reasons.
 static NSString *const SESSION_ARRANGEMENT_SHOULD_EXPECT_PROMPT_MARKS = @"Should Expect Prompt Marks";  // BOOL
 static NSString *const SESSION_ARRANGEMENT_SHOULD_EXPECT_CURRENT_DIR_UPDATES = @"Should Expect Current Dir Updates";  // BOOL
 
@@ -485,10 +487,6 @@ static const CGFloat PTYSessionMaximumMetalViewSize = 16384;
     BOOL _reportingLeftMouseDown;
     BOOL _reportingMiddleMouseDown;
     BOOL _reportingRightMouseDown;
-
-    // Did we get FinalTerm codes that report info about prompt? Used to decide if advanced paste
-    // can wait for prompts.
-    BOOL _shouldExpectPromptMarks;
 
     // Did we get CurrentDir code?
     BOOL _shouldExpectCurrentDirUpdates;
@@ -1316,14 +1314,13 @@ ITERM_WEAKLY_REFERENCEABLE
         aSession.textview.badgeLabel = aSession.badgeLabel;
     }
 
-    if (!didRestoreContents) {
+    if (didRestoreContents && attachedToServer) {
         if (arrangement[SESSION_ARRANGEMENT_SHELL_INTEGRATION_EVER_USED_DEPRECATED]) {
             // Legacy migration path
             const BOOL shellIntegrationEverUsed = [arrangement[SESSION_ARRANGEMENT_SHELL_INTEGRATION_EVER_USED_DEPRECATED] boolValue];
-            aSession->_shouldExpectPromptMarks = shellIntegrationEverUsed;
-            aSession->_shouldExpectCurrentDirUpdates = shellIntegrationEverUsed;
+            aSession.screen.shouldExpectPromptMarks = shellIntegrationEverUsed;
         } else {
-            aSession->_shouldExpectPromptMarks = [arrangement[SESSION_ARRANGEMENT_SHOULD_EXPECT_PROMPT_MARKS] boolValue];
+            aSession.screen.shouldExpectPromptMarks = [arrangement[SESSION_ARRANGEMENT_SHOULD_EXPECT_PROMPT_MARKS] boolValue];
             aSession->_shouldExpectCurrentDirUpdates = [arrangement[SESSION_ARRANGEMENT_SHOULD_EXPECT_CURRENT_DIR_UPDATES] boolValue];
         }
     }
@@ -5183,7 +5180,7 @@ ITERM_WEAKLY_REFERENCEABLE
         }
     }
 
-    result[SESSION_ARRANGEMENT_SHOULD_EXPECT_PROMPT_MARKS] = @(_shouldExpectPromptMarks);
+    result[SESSION_ARRANGEMENT_SHOULD_EXPECT_PROMPT_MARKS] = @(_screen.shouldExpectPromptMarks);
     result[SESSION_ARRANGEMENT_SHOULD_EXPECT_CURRENT_DIR_UPDATES] = @(_shouldExpectCurrentDirUpdates);
     result[SESSION_ARRANGEMENT_WORKING_DIRECTORY_POLLER_DISABLED] = @(_workingDirectoryPollerDisabled);
     result[SESSION_ARRANGEMENT_COMMANDS] = _commands;
@@ -11293,7 +11290,6 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 - (void)screenPromptDidStartAtLine:(int)line {
     [_pasteHelper unblock];
-    [self didUpdatePromptLocation];
 }
 
 - (void)triggerDidDetectStartOfPromptAt:(VT100GridAbsCoord)coord {
@@ -12131,7 +12127,6 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 - (void)screenCommandDidChangeWithRange:(VT100GridCoordRange)range {
     DLog(@"FinalTerm: command changed. New range is %@", VT100GridCoordRangeDescription(range));
-    [self didUpdatePromptLocation];
     BOOL hadCommand = _commandRange.start.x >= 0 && [self haveCommandInRange:_commandRange];
     _commandRange = range;
     BOOL haveCommand = _commandRange.start.x >= 0 && [self haveCommandInRange:_commandRange];
@@ -12164,7 +12159,6 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)screenCommandDidEndWithRange:(VT100GridCoordRange)range {
-    [self didUpdatePromptLocation];
     NSString *command = [self commandInRange:range];
     DLog(@"FinalTerm: Command <<%@>> ended with range %@",
          command, VT100GridCoordRangeDescription(range));
@@ -12576,10 +12570,6 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     } else {
         return [n boolValue];
     }
-}
-
-- (void)didUpdatePromptLocation {
-    _shouldExpectPromptMarks = YES;
 }
 
 - (void)didUpdateCurrentDirectory {
@@ -13131,7 +13121,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (BOOL)pasteHelperShouldWaitForPrompt {
-    if (!_shouldExpectPromptMarks) {
+    if (!_screen.shouldExpectPromptMarks) {
         return NO;
     }
 
@@ -13143,7 +13133,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (BOOL)pasteHelperCanWaitForPrompt {
-    return _shouldExpectPromptMarks;
+    return _screen.shouldExpectPromptMarks;
 }
 
 - (void)pasteHelperPasteViewVisibilityDidChange {

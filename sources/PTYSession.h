@@ -919,7 +919,6 @@ backgroundColor:(NSColor *)backgroundColor;
 - (BOOL)checkForCyclesInSwiftyStrings;
 - (void)applyAction:(iTermAction *)action;
 - (void)didUpdateCurrentDirectory;
-- (void)didUpdatePromptLocation;
 - (BOOL)copyModeConsumesEvent:(NSEvent *)event;
 - (Profile *)profileForSplit;
 - (void)compose;

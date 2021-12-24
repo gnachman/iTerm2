@@ -401,6 +401,7 @@
     DLog(@"Before:\n%@", [_state.currentGrid compactLineDumpWithContinuationMarks]);
     DLog(@"Cursor at %d,%d", _state.currentGrid.cursorX, _state.currentGrid.cursorY);
     if (_state.commandStartCoord.x != -1) {
+        [self mutDidUpdatePromptLocation];
         [delegate_ screenCommandDidEndWithRange:[self commandRange]];
         [self mutInvalidateCommandStartCoordWithoutSideEffects];
     }

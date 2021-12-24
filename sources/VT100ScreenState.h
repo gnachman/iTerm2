@@ -140,6 +140,10 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) long long lastPromptLine;
 @property (nonatomic, strong, readonly) id<VT100ScreenSideEffectQueueReading> sideEffects;
 
+// Did we get FinalTerm codes that report info about prompt? Used to decide if advanced paste
+// can wait for prompts.
+@property (nonatomic, readonly) BOOL shouldExpectPromptMarks;
+
 @end
 
 @interface VT100ScreenMutableState: NSObject<VT100ScreenState, NSCopying>
@@ -204,6 +208,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readwrite) long long fakePromptDetectedAbsLine;
 @property (nonatomic, readwrite) long long lastPromptLine;
 @property (nonatomic, strong, readonly) VT100ScreenSideEffectQueue *sideEffects;
+@property (nonatomic, readwrite) BOOL shouldExpectPromptMarks;
 
 - (id<VT100ScreenState>)copy;
 

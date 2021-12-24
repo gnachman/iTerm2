@@ -260,6 +260,10 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 - (void)userDidPressReturn;
 - (void)setReturnCodeOfLastCommand:(int)code;
 
+// This changes shared state and is called during initialization.
+- (void)setShouldExpectPromptMarks:(BOOL)value;
+- (BOOL)shouldExpectPromptMarks;
+
 @end
 
 @interface VT100Screen (Testing)

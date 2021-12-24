@@ -133,6 +133,14 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 
 #pragma mark - APIs
 
+- (BOOL)shouldExpectPromptMarks {
+    return _state.shouldExpectPromptMarks;
+}
+
+- (void)setShouldExpectPromptMarks:(BOOL)value {
+    [self mutSetShouldExpectPromptMarks:value];
+}
+
 - (void)userDidPressReturn {
     [self mutUserDidPressReturn];
 }
