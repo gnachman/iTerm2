@@ -9,6 +9,7 @@
 @class iTermColorMap;
 @protocol iTermMark;
 @class iTermSelection;
+@protocol iTermOrderedToken;
 
 @protocol VT100ScreenDelegate <NSObject, iTermColorMapDelegate>
 
@@ -255,10 +256,20 @@
 
 - (NSString *)screenProfileName;
 
-- (void)screenLogWorkingDirectoryAtLine:(int)line
-                          withDirectory:(NSString *)directory
-                                 pushed:(BOOL)pushed
-                                 timely:(BOOL)timely;
+typedef NS_ENUM(NSUInteger, VT100ScreenWorkingDirectoryPushType) {
+    // We polled for the working directory for a really sketchy reason, such as the user pressing enter.
+    VT100ScreenWorkingDirectoryPushTypePull,
+    // We received an unreliable signal that we should poll, such as an OSC title change.
+    VT100ScreenWorkingDirectoryPushTypeWeakPush,
+    // Got a control sequence giving the current directory. Completely trustworthy.
+    VT100ScreenWorkingDirectoryPushTypeStrongPush
+};
+
+- (void)screenLogWorkingDirectoryOnAbsoluteLine:(long long)absLine
+                                     remoteHost:(VT100RemoteHost *)remoteHost
+                                  withDirectory:(NSString *)directory
+                                       pushType:(VT100ScreenWorkingDirectoryPushType)pushType
+                                       accepted:(BOOL)accepted;
 
 - (void)screenSuggestShellIntegrationUpgrade;
 - (void)screenDidDetectShell:(NSString *)shell;

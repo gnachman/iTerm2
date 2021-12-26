@@ -12461,16 +12461,18 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     _lastRemoteHost = [lastRemoteHost retain];
 }
 
-// We trust push more than pull because pulls don't include hostname and are done unnecessarily
-// all the time.
-- (void)screenLogWorkingDirectoryAtLine:(int)line
-                          withDirectory:(NSString *)directory
-                                 pushed:(BOOL)pushed
-                                 timely:(BOOL)timely {
-    DLog(@"screenLogWorkingDirectoryAtLine:%@ withDirectory:%@ pushed:%@ timely:%@",
-         @(line), directory, @(pushed), @(timely));
+- (void)screenLogWorkingDirectoryOnAbsoluteLine:(long long)absLine
+                                     remoteHost:(VT100RemoteHost *)remoteHost
+                                  withDirectory:(NSString *)directory
+                                       pushType:(VT100ScreenWorkingDirectoryPushType)pushType
+                                       accepted:(BOOL)accepted {
+    DLog(@"screenLogWorkingDirectoryOnscreenLogWorkingDirectoryOnAbsoluteLine:%@ remoteHost:%@ withDirectory:%@ pushType:%@ accepted:%@",
+         @(absLine), remoteHost, directory, @(pushType), @(accepted));
 
-    if (pushed && timely) {
+    DLog(@"Accepted=%@", @(accepted));
+
+    const BOOL pushed = (pushType != VT100ScreenWorkingDirectoryPushTypePull);
+    if (pushed && accepted) {
         // If we're currently polling for a working directory, do not create a
         // mark for the result when the poll completes because this mark is
         // from a higher-quality data source.
@@ -12479,16 +12481,15 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     }
 
     // Update shell integration DB.
-    VT100RemoteHost *remoteHost = [_screen remoteHostOnLine:line];
     DLog(@"remoteHost is %@, is local is %@", remoteHost, @(!remoteHost.isLocalhost));
     if (pushed) {
         BOOL isSame = ([directory isEqualToString:_lastDirectory] &&
                        [remoteHost isEqualToRemoteHost:_lastRemoteHost]);
         [[iTermShellHistoryController sharedInstance] recordUseOfPath:directory
-                                                               onHost:[_screen remoteHostOnLine:line]
+                                                               onHost:remoteHost
                                                              isChange:!isSame];
     }
-    if (timely) {
+    if (accepted) {
         // This has been a big ugly hairball for a long time. Because of the
         // working directory poller I think it's safe to simplify it now. Before,
         // we'd track whether the update was trustworthy and likely to happen
@@ -12496,7 +12497,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         // interesting. Instead, we just want to make sure we know if the directory
         // is local or remote because we want to ignore local directories when we
         // know the user is ssh'ed somewhere.
-        const BOOL directoryIsRemote = pushed && remoteHost && !remoteHost.isLocalhost;
+        const BOOL directoryIsRemote = (pushType == VT100ScreenWorkingDirectoryPushTypeStrongPush) && remoteHost && !remoteHost.isLocalhost;
 
         // Update lastDirectory, lastLocalDirectory (maybe), proxy icon, "path" variable.
         [self setLastDirectory:directory remote:directoryIsRemote pushed:pushed];

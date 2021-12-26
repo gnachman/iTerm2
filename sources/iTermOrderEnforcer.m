@@ -15,7 +15,7 @@
 @end
 
 @interface iTermOrderedToken: NSObject<iTermOrderedToken>
-@property(nonatomic, weak) iTermOrderEnforcer *enforcer;
+@property (nonatomic, readonly, weak) iTermOrderEnforcer *enforcer;
 @end
 
 @implementation iTermOrderedToken {
@@ -40,13 +40,17 @@
 #pragma mark - iTermOrderedToken
 
 - (BOOL)commit {
-    assert(!_committed);
-    _committed = YES;
-    return [_enforcer commit:_generation];
+    @synchronized(self) {
+        assert(!_committed);
+        _committed = YES;
+        return [_enforcer commit:_generation];
+    }
 }
 
 - (BOOL)peek {
-    return [_enforcer peek:_generation];
+    @synchronized(self) {
+        return [_enforcer peek:_generation];
+    }
 }
 
 @end
@@ -74,16 +78,20 @@
 }
 
 - (BOOL)commit:(NSInteger)generation {
-    const BOOL accepted = [self peek:generation];
-    if (accepted) {
-        _lastCommitted = generation;
-    } else {
-        DLog(@"Reject out of order token with generation %@", @(generation));
+    @synchronized(self) {
+        const BOOL accepted = [self peek:generation];
+        if (accepted) {
+            _lastCommitted = generation;
+        } else {
+            DLog(@"Reject out of order token with generation %@", @(generation));
+        }
+        return accepted;
     }
-    return accepted;
 }
 
 - (BOOL)peek:(NSInteger)generation {
-    return (generation > _lastCommitted);
+    @synchronized(self) {
+        return (generation > _lastCommitted);
+    }
 }
 @end

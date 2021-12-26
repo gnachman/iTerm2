@@ -281,19 +281,22 @@
 
 // Adds a working directory mark at the given line.
 //
-// nil token means not to fetch working directory asynchronously.
+// nil token means it was "strongly" pushed (e.g., CurrentDir=) and you oughtn't poll.
+// You can also get a "weak" push - window title OSC is pushed = YES, token != nil.
+//
+// non-pushed means we polled for the working directory sua sponte. This is considered poor quality
+// because it's quite spammy - every time you press enter, for example - and it shoul dhave
+// minimal side effects.
 //
 // pushed means it's a higher confidence update. The directory must be pushed to be remote, but
 // that alone is not sufficient evidence that it is remote. Pushed directories will update the
 // recently used directories and will change the current remote host to the remote host on `line`.
 - (void)mutSetWorkingDirectory:(NSString *)workingDirectory
+#warning I need to use an absolute line number here to avoid race conditions between main thread and mutation thread.
                         onLine:(int)line
                         pushed:(BOOL)pushed
                          token:(id<iTermOrderedToken>)token {
-    // If not timely, record the update but don't consider it the latest update.
-    // Peek now so we can log but don't commit because we might recurse asynchronously.
-    const BOOL timely = !token || [token peek];
-    DLog(@"%p: setWorkingDirectory:%@ onLine:%d token:%@ (timely=%@)", self, workingDirectory, line, token, @(timely));
+    DLog(@"%p: setWorkingDirectory:%@ onLine:%d token:%@", self, workingDirectory, line, token);
     VT100WorkingDirectory *workingDirectoryObj = [[[VT100WorkingDirectory alloc] init] autorelease];
     if (token && !workingDirectory) {
         __weak __typeof(self) weakSelf = self;
@@ -308,9 +311,6 @@
         }];
         return;
     }
-    // OK, now commit. It can't have changed since we peeked.
-    const BOOL stillTimely = !token || [token commit];
-    assert(timely == stillTimely);
 
     DLog(@"%p: Set finished working directory token to %@", self, token);
     if (workingDirectory.length) {
@@ -347,10 +347,24 @@
                                      withInterval:[self intervalForGridCoordRange:range]];
         }
     }
-    [delegate_ screenLogWorkingDirectoryAtLine:line
-                                 withDirectory:workingDirectory
-                                        pushed:pushed
-                                        timely:timely];
+    VT100RemoteHost *remoteHost = [self remoteHostOnLine:line];
+    const long long absLine = _mutableState.cumulativeScrollbackOverflow + line;
+    VT100ScreenWorkingDirectoryPushType pushType;
+    if (!pushed) {
+        pushType = VT100ScreenWorkingDirectoryPushTypePull;
+    } else if (token == nil) {
+        pushType = VT100ScreenWorkingDirectoryPushTypeStrongPush;
+    } else {
+        pushType = VT100ScreenWorkingDirectoryPushTypeWeakPush;
+    }
+    [self addSideEffect:^(id<VT100ScreenDelegate> delegate) {
+        const BOOL accepted = !token || [token commit];
+        [delegate screenLogWorkingDirectoryOnAbsoluteLine:absLine
+                                               remoteHost:remoteHost
+                                            withDirectory:workingDirectory
+                                                 pushType:pushType
+                                                 accepted:accepted];
+    }];
 }
 
 - (VT100RemoteHost *)setRemoteHost:(NSString *)host user:(NSString *)user onLine:(int)line {

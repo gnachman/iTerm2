@@ -949,8 +949,8 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
 }
 
 
-- (void)screenLogWorkingDirectoryAtLine:(int)line withDirectory:(NSString *)directory pushed:(BOOL)pushed timely:(BOOL)timely {
-    [dirlog_ addObject:@[ @(line), directory ? directory : [NSNull null] ]];
+- (void)screenLogWorkingDirectoryOnAbsoluteLine:(long long)absLine remoteHost:(VT100RemoteHost *)remoteHost withDirectory:(NSString *)directory pushed:(BOOL)pushed accepted:(BOOL)accepted {
+    [dirlog_ addObject:@[ @(absLine), directory ? directory : [NSNull null] ]];
 }
 
 
