@@ -554,7 +554,9 @@
     [self mutClearScrollbackBuffer];
 
     // Redraw soon.
-    [delegate_ screenUpdateDisplay:NO];
+    [self addSideEffect:^(id<VT100ScreenDelegate> delegate) {
+        [delegate screenUpdateDisplay:NO];
+    }];
 
     if (savePrompt && newCommandStart.x >= 0) {
         // Create a new mark and inform the delegate that there's new command start coord.
