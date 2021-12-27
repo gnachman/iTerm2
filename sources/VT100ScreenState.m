@@ -80,6 +80,7 @@ static const int kDefaultMaxScrollbackLines = 1000;
         _normalization = source.normalization;
         _fakePromptDetectedAbsLine = source.fakePromptDetectedAbsLine;
         _lastPromptLine = source.lastPromptLine;
+        _needsRedraw = source.needsRedraw;
 
         _intervalTreeObserver = source.intervalTreeObserver;
 #warning TODO: I need a read-only protocol for VT100ScreenMark

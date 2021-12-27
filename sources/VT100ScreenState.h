@@ -143,6 +143,7 @@ NS_ASSUME_NONNULL_BEGIN
 // Did we get FinalTerm codes that report info about prompt? Used to decide if advanced paste
 // can wait for prompts.
 @property (nonatomic, readonly) BOOL shouldExpectPromptMarks;
+@property (nonatomic, readonly) BOOL needsRedraw;
 
 @end
 
@@ -210,6 +211,9 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readwrite) long long lastPromptLine;
 @property (nonatomic, strong, readonly) VT100ScreenSideEffectQueue *sideEffects;
 @property (nonatomic, readwrite) BOOL shouldExpectPromptMarks;
+
+#warning TODO: Once this synced properly (see comment in VT100Screen+Mutation) then it can be made nonatomic.
+@property (atomic) BOOL needsRedraw;
 
 - (id<VT100ScreenState>)copy;
 

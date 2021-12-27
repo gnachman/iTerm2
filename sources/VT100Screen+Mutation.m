@@ -78,6 +78,18 @@
     [_mutableState.sideEffects executeWithDelegate:self.delegate];
 }
 
+- (void)setNeedsRedraw {
+    if (_mutableState.needsRedraw) {
+        return;
+    }
+    _mutableState.needsRedraw = YES;
+    [self addSideEffect:^(id<VT100ScreenDelegate> delegate) {
+        _mutableState.needsRedraw = NO;
+        [delegate screenNeedsRedraw];
+#warning TODO: When a general syncing mechanism is developed, the assignment should occur there. This is kinda racey.
+    }];
+}
+
 #pragma mark - FinalTerm
 
 - (void)mutPromptDidStartAt:(VT100GridAbsCoord)coord {
@@ -411,9 +423,7 @@
     [_mutableState.intervalTree addObject:mark withInterval:[self intervalForGridCoordRange:range]];
     [self.intervalTreeObserver intervalTreeDidAddObjectOfType:[self intervalTreeObserverTypeForObject:mark]
                                                        onLine:range.start.y + self.totalScrollbackOverflow];
-    [self addSideEffect:^(id<VT100ScreenDelegate> delegate) {
-        [delegate screenNeedsRedraw];
-    }];
+    [self setNeedsRedraw];
     return mark;
 }
 
@@ -507,7 +517,7 @@
         _mutableState.lastCommandMark = nil;
         [_mutableState.savedIntervalTree removeObject:annotation];
     }
-    [delegate_ screenNeedsRedraw];
+    [self setNeedsRedraw];
 }
 
 #pragma mark - Clearing
