@@ -43,6 +43,7 @@ typedef NS_ENUM(NSInteger, PTYNoteViewTipEdge) {
 @property(nonatomic, retain) NSView *contentView;
 @property(nonatomic, assign) PTYNoteViewTipEdge tipEdge;
 @property(nonatomic, retain) NSColor *backgroundColor;
+@property(nonatomic, readonly) BOOL heightChangedManually;
 
 - (NSColor *)defaultBackgroundColor;
 - (void)layoutSubviews;

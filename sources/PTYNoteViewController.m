@@ -238,7 +238,7 @@ static void PTYNoteViewControllerIncrementVisibleCount(NSInteger delta) {
     anchor_ = point;
 }
 
-- (void)sizeToFit {
+- (NSSize)textViewFittingSize {
     [self view];
     NSLayoutManager *layoutManager = textView_.layoutManager;
     NSTextContainer *textContainer = textView_.textContainer;
@@ -247,24 +247,37 @@ static void PTYNoteViewControllerIncrementVisibleCount(NSInteger delta) {
 
     const CGFloat kMinTextViewWidth = 250;
     usedRect.size.width = MAX(usedRect.size.width, kMinTextViewWidth);
+    return usedRect.size;
+}
 
-    NSSize scrollViewSize = [NSScrollView frameSizeForContentSize:usedRect.size
-                                          horizontalScrollerClass:[[scrollView_ horizontalScroller] class]
-                                            verticalScrollerClass:[[scrollView_ verticalScroller] class]
-                                                       borderType:NSNoBorder
-                                                      controlSize:NSControlSizeRegular
-                                                    scrollerStyle:[scrollView_ scrollerStyle]];
+- (NSSize)fittingSize {
+    return [self sizeForTextViewSize:[self textViewFittingSize]];
+}
+
+- (NSSize)sizeForTextViewSize:(NSSize)textViewSize {
+    NSSize size = [NSScrollView frameSizeForContentSize:textViewSize
+                                horizontalScrollerClass:[[scrollView_ horizontalScroller] class]
+                                  verticalScrollerClass:[[scrollView_ verticalScroller] class]
+                                             borderType:NSNoBorder
+                                            controlSize:NSControlSizeRegular
+                                          scrollerStyle:[scrollView_ scrollerStyle]];
+    size.height += kBottomPadding;
+    return size;
+}
+
+- (void)sizeToFit {
+    const NSSize textViewFittingSize = [self textViewFittingSize];
+    const NSSize scrollViewSize = [self sizeForTextViewSize:textViewFittingSize];
     NSRect theFrame = NSMakeRect(NSMinX(scrollView_.frame),
                                  NSMinY(scrollView_.frame),
                                  scrollViewSize.width,
                                  scrollViewSize.height);
 
     NSView *wrapper = scrollView_.superview;
-    theFrame.size.height += kBottomPadding;
     wrapper.frame = theFrame;
 
-    textView_.minSize = usedRect.size;
-    textView_.frame = NSMakeRect(0, 0, usedRect.size.width, usedRect.size.height);
+    textView_.minSize = textViewFittingSize;
+    textView_.frame = NSMakeRect(0, 0, textViewFittingSize.width, textViewFittingSize.height);
 
     [self setAnchor:anchor_];
 }
@@ -287,6 +300,12 @@ static void PTYNoteViewControllerIncrementVisibleCount(NSInteger delta) {
 
 - (void)textDidChange:(NSNotification *)notification {
     [_annotation setStringValueWithoutSideEffects:textView_.string];
+    if (!noteView_.heightChangedManually) {
+        const NSSize fittingSize = [self fittingSize];
+        if (fittingSize.height > scrollView_.superview.frame.size.height) {
+            [self sizeToFit];
+        }
+    }
 }
 
 - (BOOL)textView:(NSTextView *)aTextView doCommandBySelector:(SEL)aSelector {

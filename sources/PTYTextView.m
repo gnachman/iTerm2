@@ -5077,6 +5077,16 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 #pragma mark - PTYNoteViewControllerDelegate
 
 - (void)noteDidRequestRemoval:(PTYNoteViewController *)note {
+    const iTermWarningSelection selection = [iTermWarning showWarningWithTitle:@"Really remove annotation?"
+                                                                       actions:@[ @"OK", @"Cancel" ]
+                                                                     accessory:nil
+                                                                    identifier:@"NoSyncConfirmRemoveAnnotation"
+                                                                   silenceable:kiTermWarningTypePermanentlySilenceable
+                                                                       heading:@"Confirm"
+                                                                        window:self.window];
+    if (selection == kiTermWarningSelection1) {
+        return;
+    }
     [self.dataSource removeAnnotation:note.annotation];
     [note.view removeFromSuperview];
     [_notes removeObject:note];
