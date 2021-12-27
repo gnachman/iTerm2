@@ -844,10 +844,6 @@
 
 #pragma mark - NSView
 
-- (void)setAlphaValue:(CGFloat)alphaValue {
-    assert(NO);
-}
-
 // Overrides an NSView method.
 - (NSRect)adjustScroll:(NSRect)proposedVisibleRect {
     proposedVisibleRect.origin.y = (int)(proposedVisibleRect.origin.y / _lineHeight + 0.5) * _lineHeight;
@@ -902,7 +898,7 @@
 }
 
 - (BOOL)isOpaque {
-    return YES;
+    return NO;
 }
 
 - (void)setFrameSize:(NSSize)newSize {
@@ -1298,7 +1294,12 @@
     [self maybeInvalidateWindowShadow];
 }
 
+// This view is visible only when annotations are revealed. They are subviews, and while macOS does
+// sometimes decide to draw subviews of alpha=0 views, it doesn't always! So we make ourselves
+// alpha=1 but clear when an annotation is visible.
 - (void)drawRect:(NSRect)rect {
+    [[NSColor clearColor] set];
+    NSRectFillUsingOperation(rect, NSCompositingOperationCopy);
 }
 
 // Note that this isn't actually the visible rect because it starts below the top margin.
@@ -3072,6 +3073,7 @@
     if (focus) {
         [note makeFirstResponder];
     }
+    [self updateAlphaValue];
 }
 
 - (void)addNote {
@@ -5088,13 +5090,45 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         return;
     }
     [self.dataSource removeAnnotation:note.annotation];
+    [self removeNote:note];
+    [self.window makeFirstResponder:self];
+}
+
+// This removes the view controller and view. It assumes the PTYAnnotation was already removed from the datasource.
+- (void)removeNote:(PTYNoteViewController *)note {
     [note.view removeFromSuperview];
     [_notes removeObject:note];
-    [self.window makeFirstResponder:self];
+    [self updateAlphaValue];
 }
 
 - (void)noteDidEndEditing:(PTYNoteViewController *)note {
     [self.window makeFirstResponder:self];
+}
+
+- (void)noteVisibilityDidChange:(PTYNoteViewController *)note {
+    if (!note.isNoteHidden) {
+        [self setAlphaValue:1];
+        return;
+    }
+    [self updateAlphaValue];
+}
+
+- (void)noteWillBeRemoved:(PTYNoteViewController *)note {
+    [self removeNote:note];
+}
+
+- (void)updateAlphaValue {
+    if ([self allAnnotationsAreHidden]) {
+        [self setAlphaValue:0.0];
+    } else {
+        [self setAlphaValue:1.0];
+    }
+}
+
+- (BOOL)allAnnotationsAreHidden {
+    return [_notes allWithBlock:^BOOL(PTYNoteViewController *note) {
+        return note.isNoteHidden;
+    }];
 }
 
 @end

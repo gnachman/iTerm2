@@ -15,6 +15,7 @@ NS_ASSUME_NONNULL_BEGIN
 @protocol PTYAnnotationDelegate<NSObject>
 - (void)annotationDidRequestHide:(PTYAnnotation *)annotation;
 - (void)annotationStringDidChange:(PTYAnnotation *)annotation;
+- (void)annotationWillBeRemoved:(PTYAnnotation *)annotation;
 @end
 
 @interface PTYAnnotation : NSObject<IntervalTreeObject>
@@ -23,6 +24,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)hide;
 - (void)setStringValueWithoutSideEffects:(NSString *)value;
+- (void)willRemove;
 
 @end
 

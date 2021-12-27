@@ -209,6 +209,7 @@ static void PTYNoteViewControllerIncrementVisibleCount(NSInteger delta) {
     if (!hidden) {
         PTYNoteViewControllerIncrementVisibleCount(1);
     }
+    [self.delegate noteVisibilityDidChange:self];
 }
 
 - (BOOL)isEmpty {
@@ -358,6 +359,10 @@ static void PTYNoteViewControllerIncrementVisibleCount(NSInteger delta) {
 
 - (void)annotationStringDidChange:(PTYAnnotation *)annotation {
     [self updateTextViewString];
+}
+
+- (void)annotationWillBeRemoved:(PTYAnnotation *)annotation {
+    [self.delegate noteWillBeRemoved:self];
 }
 
 @end

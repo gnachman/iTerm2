@@ -435,9 +435,11 @@
              focus:(BOOL)focus {
     [_mutableState.intervalTree addObject:annotation withInterval:[self intervalForGridCoordRange:range]];
     [self.mutableCurrentGrid markAllCharsDirty:YES];
-    [delegate_ screenDidAddNote:annotation focus:focus];
-    [self.intervalTreeObserver intervalTreeDidAddObjectOfType:iTermIntervalTreeObjectTypeAnnotation
-                                                       onLine:range.start.y + self.totalScrollbackOverflow];
+    [self addSideEffect:^(id<VT100ScreenDelegate> delegate) {
+        [delegate screenDidAddNote:annotation focus:focus];
+        [self.intervalTreeObserver intervalTreeDidAddObjectOfType:iTermIntervalTreeObjectTypeAnnotation
+                                                           onLine:range.start.y + self.totalScrollbackOverflow];
+    }];
 }
 
 - (void)mutCommandWasAborted {
@@ -460,6 +462,10 @@
                             [self coordRangeForInterval:obj.entry.interval].end.y);
         [_mutableState.markCache removeObjectForKey:@(theKey)];
         _mutableState.lastCommandMark = nil;
+    }
+    PTYAnnotation *annotation = [PTYAnnotation castFrom:obj];
+    if (annotation) {
+        [annotation willRemove];
     }
     [_mutableState.intervalTree removeObject:obj];
     iTermIntervalTreeObjectType type = [self intervalTreeObserverTypeForObject:obj];
@@ -581,6 +587,10 @@
                                                      additionalLinesToSave:MAX(0, linesToSave - 1)]];
     self.mutableCurrentGrid.cursorX = x;
     self.mutableCurrentGrid.cursorY = linesToSave - 1;
+    [self removeIntervalTreeObjectsInRange:VT100GridCoordRangeMake(0,
+                                                                   self.numberOfScrollbackLines,
+                                                                   self.width,
+                                                                   self.numberOfScrollbackLines + self.height)];
 }
 
 - (void)mutClearScrollbackBuffer {
@@ -594,11 +604,33 @@
     [self resetScrollbackOverflow];
     [delegate_ screenRemoveSelection];
     [self.mutableCurrentGrid markAllCharsDirty:YES];
+    [self removeIntervalTreeObjectsInRange:VT100GridCoordRangeMake(0,
+                                                                   0,
+                                                                   self.width, self.numberOfScrollbackLines + self.height)];
     _mutableState.intervalTree = [[[IntervalTree alloc] init] autorelease];
     [self mutReloadMarkCache];
     _mutableState.lastCommandMark = nil;
     [delegate_ screenDidClearScrollbackBuffer:self];
     [delegate_ screenRefreshFindOnPageView];
+}
+
+- (void)removeIntervalTreeObjectsInRange:(VT100GridCoordRange)coordRange {
+    [self removeIntervalTreeObjectsInRange:coordRange
+                          exceptCoordRange:VT100GridCoordRangeMake(-1, -1, -1, -1)];
+}
+
+- (NSMutableArray<id<IntervalTreeObject>> *)removeIntervalTreeObjectsInRange:(VT100GridCoordRange)coordRange exceptCoordRange:(VT100GridCoordRange)coordRangeToSave {
+    Interval *intervalToClear = [self intervalForGridCoordRange:coordRange];
+    NSMutableArray<id<IntervalTreeObject>> *marksToMove = [NSMutableArray array];
+    for (id<IntervalTreeObject> obj in [_mutableState.intervalTree objectsInInterval:intervalToClear]) {
+        const VT100GridCoordRange markRange = [self coordRangeForInterval:obj.entry.interval];
+        if (VT100GridCoordRangeContainsCoord(coordRangeToSave, markRange.start)) {
+            [marksToMove addObject:obj];
+        } else {
+            [self mutRemoveObjectFromIntervalTree:obj];
+        }
+    }
+    return marksToMove;
 }
 
 - (void)clearScrollbackBufferFromLine:(int)line {
@@ -670,18 +702,8 @@
                                                                    self.width,
                                                                    self.numberOfScrollbackLines + self.height);
 
-
-    Interval *intervalToClear = [self intervalForGridCoordRange:coordRange];
-    NSMutableArray<id<IntervalTreeObject>> *marksToMove = [NSMutableArray array];
-    for (id<IntervalTreeObject> obj in [_mutableState.intervalTree objectsInInterval:intervalToClear]) {
-        const VT100GridCoordRange markRange = [self coordRangeForInterval:obj.entry.interval];
-        if (VT100GridCoordRangeContainsCoord(cursorLineRange.coordRange, markRange.start)) {
-            [marksToMove addObject:obj];
-        } else {
-            [self mutRemoveObjectFromIntervalTree:obj];
-        }
-    }
-
+    NSMutableArray<id<IntervalTreeObject>> *marksToMove = [self removeIntervalTreeObjectsInRange:coordRange
+                                                                                exceptCoordRange:cursorLineRange.coordRange];
     if (absCursorCoord.y >= absLine) {
         Interval *cursorLineInterval = [self intervalForGridCoordRange:cursorLineRange.coordRange];
         for (id<IntervalTreeObject> obj in [_mutableState.intervalTree objectsInInterval:cursorLineInterval]) {
@@ -711,6 +733,15 @@
                 // Remove and re-add the object with the new interval.
                 [self mutRemoveObjectFromIntervalTree:obj];
                 [_mutableState.intervalTree addObject:obj withInterval:interval];
+
+                // Re-adding an annotation requires telling the delegate so it can create a vc
+                PTYAnnotation *annotation = [PTYAnnotation castFrom:obj];
+                if (annotation) {
+                    [self addSideEffect:^(id<VT100ScreenDelegate> delegate) {
+                        [delegate screenDidAddNote:annotation focus:NO];
+                    }];
+                }
+                // TODO: This needs to be a side effect.
                 [self.intervalTreeObserver intervalTreeDidAddObjectOfType:[self intervalTreeObserverTypeForObject:obj]
                                                                    onLine:range.start.y + totalScrollbackOverflow];
             }];

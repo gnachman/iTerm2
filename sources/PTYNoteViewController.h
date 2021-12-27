@@ -20,7 +20,9 @@ extern NSString *const iTermAnnotationVisibilityDidChange;
 
 @protocol PTYNoteViewControllerDelegate <NSObject>
 - (void)noteDidRequestRemoval:(PTYNoteViewController *)note;
+- (void)noteWillBeRemoved:(PTYNoteViewController *)note;
 - (void)noteDidEndEditing:(PTYNoteViewController *)note;
+- (void)noteVisibilityDidChange:(PTYNoteViewController *)note;
 @end
 
 @interface PTYNoteViewController : NSViewController<PTYAnnotationDelegate>

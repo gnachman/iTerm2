@@ -66,4 +66,8 @@ static NSString *const PTYAnnotationDictionaryKeyText = @"Text";
     _stringValue = [value copy];
 }
 
+- (void)willRemove {
+    [_delegate annotationWillBeRemoved:self];
+}
+
 @end
