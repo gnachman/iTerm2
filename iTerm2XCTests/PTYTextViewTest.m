@@ -280,7 +280,7 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
     return NO;
 }
 
-- (VT100GridCoordRange)coordRangeOfNote:(PTYNoteViewController *)note {
+- (VT100GridCoordRange)coordRangeOfAnnotation:(PTYAnnotation *)note {
     return VT100GridCoordRangeMake(0, 0, 0, 0);
 }
 
@@ -359,8 +359,8 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
     return OPT_META;
 }
 
-- (NSArray *)notesInRange:(VT100GridCoordRange)range {
-    return nil;
+- (NSArray *)annotationsInRange:(VT100GridCoordRange)range {
+    return @[];
 }
 
 - (void)saveFindContextAbsPos {
@@ -391,7 +391,7 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
     return nil;
 }
 
-- (void)addNote:(PTYNoteViewController *)note inRange:(VT100GridCoordRange)range {
+- (void)addNote:(PTYAnnotation *)note inRange:(VT100GridCoordRange)range {
 }
 
 - (void)startDownloadOverSCP:(SCPPath *)path {

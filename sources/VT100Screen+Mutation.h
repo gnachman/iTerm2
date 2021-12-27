@@ -23,8 +23,10 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) VT100Grid *mutableCurrentGrid;
 @property (nonatomic, readonly) LineBuffer *mutableLineBuffer;
 
-- (void)mutAddNote:(PTYNoteViewController *)note
-           inRange:(VT100GridCoordRange)range;
+- (void)mutAddNote:(PTYAnnotation *)note
+           inRange:(VT100GridCoordRange)range
+             focus:(BOOL)focus;
+- (void)mutRemoveAnnotation:(PTYAnnotation *)annotation;
 
 - (void)mutClearBuffer;
 - (void)mutClearBufferSavingPrompt:(BOOL)savePrompt;
@@ -130,7 +132,6 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)mutRedrawGrid;
 - (void)mutSetMaxScrollbackLines:(unsigned int)lines;
 - (PTYTextViewSynchronousUpdateState * _Nullable)mutSetUseSavedGridIfAvailable:(BOOL)useSavedGrid;
-- (void)mutRemoveNote:(PTYNoteViewController *)note;
 - (void)mutSetTerminal:(VT100Terminal *)terminal;
 - (void)mutStopTerminalReceivingFile;
 - (void)mutFileReceiptEndedUnexpectedly;

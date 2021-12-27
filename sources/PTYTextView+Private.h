@@ -7,6 +7,7 @@
 
 #import "PTYTextView.h"
 
+#import "PTYNoteViewController.h"
 #import "iTermTextViewContextMenuHelper.h"
 #import "iTermSelection.h"
 #import "iTermSemanticHistoryController.h"
@@ -26,6 +27,7 @@
 @class PTYMouseHandler;
 
 @interface PTYTextView () <
+PTYNoteViewControllerDelegate,
 iTermBadgeLabelDelegate,
 iTermTextViewAccessibilityHelperDelegate,
 iTermFindCursorViewDelegate,

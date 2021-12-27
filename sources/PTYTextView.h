@@ -585,7 +585,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult;
 - (void)addSearchResult:(SearchResult *)searchResult;
 
 // When a new note is created, call this to add a view for it.
-- (void)addViewForNote:(PTYNoteViewController *)note;
+- (void)addViewForNote:(PTYAnnotation *)annotation focus:(BOOL)focus;
 
 // Makes sure not view frames are in the right places (e.g., after a resize).
 - (void)updateNoteViewFrames;

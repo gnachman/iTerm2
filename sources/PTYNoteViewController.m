@@ -11,7 +11,6 @@
 #import "NSView+iTerm.h"
 #import "PTYNoteView.h"
 
-static NSString *const kNoteViewTextKey = @"Text";
 static NSInteger gVisibleNotes;
 
 NSString * const PTYNoteViewControllerShouldUpdatePosition = @"PTYNoteViewControllerShouldUpdatePosition";
@@ -27,14 +26,23 @@ static void PTYNoteViewControllerIncrementVisibleCount(NSInteger delta) {
     }
 }
 
-@interface PTYNoteViewController ()
-@property(nonatomic, retain) NSTextView *textView;
-@property(nonatomic, retain) NSScrollView *scrollView;
+@interface PTYNoteViewController () <
+    NSTextViewDelegate,
+    PTYNoteViewDelegate>
+
+@property(nonatomic, strong) NSTextView *textView;
+@property(nonatomic, strong) NSScrollView *scrollView;
 @property(nonatomic, assign) BOOL watchForUpdate;
 @end
 
 @implementation PTYNoteViewController {
     NSTimeInterval highlightStartTime_;
+    PTYNoteView *noteView_;
+    NSTextView *textView_;
+    NSScrollView *scrollView_;
+    NSPoint anchor_;
+    BOOL watchForUpdate_;
+    BOOL hidden_;
 }
 
 @synthesize noteView = noteView_;
@@ -42,26 +50,18 @@ static void PTYNoteViewControllerIncrementVisibleCount(NSInteger delta) {
 @synthesize scrollView = scrollView_;
 @synthesize anchor = anchor_;
 @synthesize watchForUpdate = watchForUpdate_;
-@synthesize entry;
-@synthesize delegate;
 
 + (BOOL)anyNoteVisible {
     return gVisibleNotes > 0;
 }
 
-- (instancetype)init {
+- (instancetype)initWithAnnotation:(PTYAnnotation *)annotation {
     self = [super init];
     if (self) {
+        _annotation = annotation;
         PTYNoteViewControllerIncrementVisibleCount(1);
-    }
-    return self;
-}
-
-- (instancetype)initWithDictionary:(NSDictionary *)dict {
-    self = [super init];
-    if (self) {
-        self.string = dict[kNoteViewTextKey];
-        PTYNoteViewControllerIncrementVisibleCount(1);
+        // NOTE: This must be the last thing done since it could cause a delegate method to be called.
+        _annotation.delegate = self;
     }
     return self;
 }
@@ -71,27 +71,21 @@ static void PTYNoteViewControllerIncrementVisibleCount(NSInteger delta) {
         PTYNoteViewControllerIncrementVisibleCount(-1);
     }
     [noteView_ removeFromSuperview];
-    noteView_.delegate = nil;
-    [noteView_ release];
-    [textView_ release];
-    [scrollView_ release];
-    [[NSNotificationCenter defaultCenter] removeObserver:self];
-    [super dealloc];
 }
 
 - (void)setNoteView:(PTYNoteView *)noteView {
-    [noteView_ autorelease];
-    noteView_ = [noteView retain];
+    noteView_ = noteView;
     [self setView:noteView];
+    [self updateTextViewString];
 }
 
 - (void)loadView {
     const CGFloat kWidth = 300;
     const CGFloat kHeight = 10;
-    self.noteView = [[[PTYNoteView alloc] initWithFrame:NSMakeRect(0, 0, kWidth, kHeight)] autorelease];
+    self.noteView = [[PTYNoteView alloc] initWithFrame:NSMakeRect(0, 0, kWidth, kHeight)];
     self.noteView.autoresizesSubviews = YES;
     self.noteView.delegate = self;
-    NSShadow *shadow = [[[NSShadow alloc] init] autorelease];
+    NSShadow *shadow = [[NSShadow alloc] init];
     shadow.shadowColor = [[NSColor blackColor] colorWithAlphaComponent:0.5];
     shadow.shadowOffset = NSMakeSize(1, -1);
     shadow.shadowBlurRadius = 1.0;
@@ -102,17 +96,16 @@ static void PTYNoteViewControllerIncrementVisibleCount(NSInteger delta) {
                               3,
                               kWidth,
                               kHeight);
-    self.scrollView = [[[NSScrollView alloc] initWithFrame:frame] autorelease];
+    self.scrollView = [[NSScrollView alloc] initWithFrame:frame];
     scrollView_.drawsBackground = NO;
     scrollView_.hasVerticalScroller = YES;
     scrollView_.hasHorizontalScroller = NO;
     scrollView_.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
 
-    self.textView = [[[NSTextView alloc] initWithFrame:NSMakeRect(0,
+    self.textView = [[NSTextView alloc] initWithFrame:NSMakeRect(0,
                                                                   0,
                                                                   scrollView_.contentSize.width,
-                                                                  scrollView_.contentSize.height)]
-                     autorelease];
+                                                                  scrollView_.contentSize.height)];
     textView_.allowsUndo = YES;
     textView_.minSize = scrollView_.frame.size;
     textView_.maxSize = NSMakeSize(FLT_MAX, FLT_MAX);
@@ -130,13 +123,14 @@ static void PTYNoteViewControllerIncrementVisibleCount(NSInteger delta) {
     // at the bottom.
     NSRect wrapperFrame = scrollView_.frame;
     wrapperFrame.size.height += kBottomPadding;
-    NSView *wrapper = [[[NSView alloc] initWithFrame:wrapperFrame] autorelease];
+    NSView *wrapper = [[NSView alloc] initWithFrame:wrapperFrame];
     wrapper.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
     wrapper.autoresizesSubviews = YES;
     [wrapper addSubview:scrollView_];
 
     noteView_.contentView = wrapper;
     [self sizeToFit];
+    [self updateTextViewString];
 }
 
 - (void)beginEditing {
@@ -221,9 +215,9 @@ static void PTYNoteViewControllerIncrementVisibleCount(NSInteger delta) {
     return [[textView_.string stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]] length] == 0;
 }
 
-- (void)setString:(NSString *)string {
+- (void)updateTextViewString {
     [self view];  // Ensure textView exists.
-    textView_.string = string;
+    textView_.string = _annotation.stringValue;
 }
 
 - (BOOL)isNoteHidden {
@@ -245,6 +239,7 @@ static void PTYNoteViewControllerIncrementVisibleCount(NSInteger delta) {
 }
 
 - (void)sizeToFit {
+    [self view];
     NSLayoutManager *layoutManager = textView_.layoutManager;
     NSTextContainer *textContainer = textView_.textContainer;
     [layoutManager ensureLayoutForTextContainer:textContainer];
@@ -290,8 +285,13 @@ static void PTYNoteViewControllerIncrementVisibleCount(NSInteger delta) {
 
 #pragma mark - NSControlTextEditingDelegate
 
+- (void)textDidChange:(NSNotification *)notification {
+    [_annotation setStringValueWithoutSideEffects:textView_.string];
+}
+
 - (BOOL)textView:(NSTextView *)aTextView doCommandBySelector:(SEL)aSelector {
     if (aSelector == @selector(cancelOperation:)) {
+        [_annotation setStringValueWithoutSideEffects:textView_.string];
         [self.delegate noteDidEndEditing:self];
         return YES;
     }
@@ -331,14 +331,14 @@ static void PTYNoteViewControllerIncrementVisibleCount(NSInteger delta) {
     [self.noteView setNeedsDisplay:YES];
 }
 
-#pragma mark - IntervalTreeObject
+#pragma mark - PTYAnnotationDelegate
 
-- (NSDictionary *)dictionaryValue {
-    return @{ kNoteViewTextKey: textView_.string ?: @"" };
+- (void)annotationDidRequestHide:(PTYAnnotation *)annotation {
+    [self setNoteHidden:YES];
 }
 
-- (instancetype)copyOfIntervalTreeObject {
-    return [[self.class alloc] initWithDictionary:self.dictionaryValue];
+- (void)annotationStringDidChange:(PTYAnnotation *)annotation {
+    [self updateTextViewString];
 }
 
 @end

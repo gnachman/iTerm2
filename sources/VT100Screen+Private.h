@@ -61,7 +61,6 @@ VT100InlineImageHelperDelegate> {
 - (void)commandDidStartAt:(VT100GridAbsCoord)coord;
 - (void)commandDidStartAtScreenCoord:(VT100GridCoord)coord;
 - (iTermIntervalTreeObjectType)intervalTreeObserverTypeForObject:(id<IntervalTreeObject>)object;
-- (void)hideOnScreenNotesAndTruncateSpanners;
 - (VT100GridRun)runByTrimmingNullsFromRun:(VT100GridRun)run;
 - (id)objectOnOrBeforeLine:(int)line ofClass:(Class)cls;
 

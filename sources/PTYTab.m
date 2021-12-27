@@ -40,6 +40,7 @@
 #import "PSMTabBarControl.h"
 #import "PSMTabDragAssistant.h"
 #import "PSMTabStyle.h"
+#import "PTYNoteViewController.h"
 #import "PTYScrollView.h"
 #import "PTYSession.h"
 #import "PTYSession+ARC.h"
@@ -453,6 +454,10 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(tmuxDidFetchSetTitlesStringOption:)
                                                  name:kTmuxControllerDidFetchSetTitlesStringOption
+                                               object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(annotationVisibilityDidChange:)
+                                                 name:iTermAnnotationVisibilityDidChange
                                                object:nil];
     [iTermPreferenceDidChangeNotification subscribe:self selector:@selector(preferenceDidChange:)];
     _tabTitleOverrideSwiftyString = [[iTermSwiftyString alloc] initWithScope:self.variablesScope
@@ -6259,6 +6264,15 @@ typedef struct {
     }
 
     [self updateTmuxTitleMonitor];
+}
+
+// Metal is disabled when any note anywhere is visible because compositing NSViews over Metal
+// is a horror and besides these are subviews of PTYTextView and I really don't
+// want to invest any more in this little-used feature.
+- (void)annotationVisibilityDidChange:(NSNotification *)notification {
+    if ([iTermPreferences boolForKey:kPreferenceKeyUseMetal]) {
+        [self updateUseMetal];
+    }
 }
 
 - (void)preferenceDidChange:(iTermPreferenceDidChangeNotification *)notification {

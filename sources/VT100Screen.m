@@ -29,7 +29,6 @@
 #import "NSDictionary+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "NSImage+iTerm.h"
-#import "PTYNoteViewController.h"
 #import "PTYTextView.h"
 #import "RegexKitLite.h"
 #import "SearchResult.h"
@@ -333,25 +332,6 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
         }
     }
     return YES;
-}
-
-- (void)hideOnScreenNotesAndTruncateSpanners {
-    int screenOrigin = [self numberOfScrollbackLines];
-    VT100GridCoordRange screenRange =
-        VT100GridCoordRangeMake(0,
-                                screenOrigin,
-                                [self width],
-                                screenOrigin + self.height);
-    Interval *screenInterval = [self intervalForGridCoordRange:screenRange];
-    for (id<IntervalTreeObject> note in [_state.intervalTree objectsInInterval:screenInterval]) {
-        if (note.entry.interval.location < screenInterval.location) {
-            // Truncate note so that it ends just before screen.
-            note.entry.interval.length = screenInterval.location - note.entry.interval.location;
-        }
-        if ([note isKindOfClass:[PTYNoteViewController class]]) {
-            [(PTYNoteViewController *)note setNoteHidden:YES];
-        }
-    }
 }
 
 // NOTE: If you change this you probably want to change -haveCommandInRange:, too.
@@ -898,10 +878,14 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
         return iTermIntervalTreeObjectTypeErrorMark;
     }
 
-    if ([object isKindOfClass:[PTYNoteViewController class]]) {
+    if ([object isKindOfClass:[PTYAnnotation class]]) {
         return iTermIntervalTreeObjectTypeAnnotation;
     }
     return iTermIntervalTreeObjectTypeUnknown;
+}
+
+- (void)removeAnnotation:(PTYAnnotation *)annotation {
+    [self mutRemoveAnnotation:annotation];
 }
 
 - (void)removeInaccessibleNotes {
@@ -926,7 +910,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     return [self mutAddMarkStartingAtAbsoluteLine:line oneLine:oneLine ofClass:markClass];
 }
 
-- (VT100GridCoordRange)coordRangeOfNote:(PTYNoteViewController *)note {
+- (VT100GridCoordRange)coordRangeOfAnnotation:(PTYAnnotation *)note {
     return [self coordRangeForInterval:note.entry.interval];
 }
 
@@ -937,9 +921,9 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
                                                                                  0,
                                                                                  line + 1)];
     NSArray *objects = [_state.intervalTree objectsInInterval:interval];
-    for (id<IntervalTreeObject> note in objects) {
-        if ([note isKindOfClass:[PTYNoteViewController class]]) {
-            VT100GridCoordRange range = [self coordRangeForInterval:note.entry.interval];
+    for (id<IntervalTreeObject> object in objects) {
+        if ([object isKindOfClass:[PTYAnnotation class]]) {
+            VT100GridCoordRange range = [self coordRangeForInterval:object.entry.interval];
             VT100GridRange gridRange;
             if (range.start.y < line) {
                 gridRange.location = 0;
@@ -957,12 +941,12 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     return result;
 }
 
-- (NSArray *)notesInRange:(VT100GridCoordRange)range {
+- (NSArray<PTYAnnotation *> *)annotationsInRange:(VT100GridCoordRange)range {
     Interval *interval = [self intervalForGridCoordRange:range];
     NSArray *objects = [_state.intervalTree objectsInInterval:interval];
     NSMutableArray *notes = [NSMutableArray array];
     for (id<IntervalTreeObject> o in objects) {
-        if ([o isKindOfClass:[PTYNoteViewController class]]) {
+        if ([o isKindOfClass:[PTYAnnotation class]]) {
             [notes addObject:o];
         }
     }
@@ -1110,41 +1094,27 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     return _state.markCache[@([self totalScrollbackOverflow] + line)];
 }
 
-- (NSArray *)lastMarksOrNotes {
-    NSEnumerator *enumerator = [_state.intervalTree reverseLimitEnumerator];
-    return [self firstMarkBelongingToAnyClassIn:@[ [PTYNoteViewController class],
-                                                   [VT100ScreenMark class] ]
-                                usingEnumerator:enumerator];
-}
-
-- (NSArray *)firstMarksOrNotes {
-    NSEnumerator *enumerator = [_state.intervalTree forwardLimitEnumerator];
-    return [self firstMarkBelongingToAnyClassIn:@[ [PTYNoteViewController class],
-                                                   [VT100ScreenMark class] ]
-                                usingEnumerator:enumerator];
-}
-
-- (NSArray *)lastMarks {
+- (NSArray<VT100ScreenMark *> *)lastMarks {
     NSEnumerator *enumerator = [_state.intervalTree reverseLimitEnumerator];
     return [self firstMarkBelongingToAnyClassIn:@[ [VT100ScreenMark class] ]
                                 usingEnumerator:enumerator];
 }
 
-- (NSArray *)firstMarks {
+- (NSArray<VT100ScreenMark *> *)firstMarks {
     NSEnumerator *enumerator = [_state.intervalTree forwardLimitEnumerator];
     return [self firstMarkBelongingToAnyClassIn:@[ [VT100ScreenMark class] ]
                                 usingEnumerator:enumerator];
 }
 
-- (NSArray *)lastAnnotations {
+- (NSArray<PTYAnnotation *> *)lastAnnotations {
     NSEnumerator *enumerator = [_state.intervalTree reverseLimitEnumerator];
-    return [self firstMarkBelongingToAnyClassIn:@[ [PTYNoteViewController class] ]
+    return [self firstMarkBelongingToAnyClassIn:@[ [PTYAnnotation class] ]
                                 usingEnumerator:enumerator];
 }
 
-- (NSArray *)firstAnnotations {
+- (NSArray<PTYAnnotation *> *)firstAnnotations {
     NSEnumerator *enumerator = [_state.intervalTree forwardLimitEnumerator];
-    return [self firstMarkBelongingToAnyClassIn:@[ [PTYNoteViewController class] ]
+    return [self firstMarkBelongingToAnyClassIn:@[ [PTYAnnotation class] ]
                                 usingEnumerator:enumerator];
 }
 
@@ -1225,13 +1195,13 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (NSArray *)marksOrNotesBefore:(Interval *)location {
-    NSArray<Class> *classes = @[ [PTYNoteViewController class],
+    NSArray<Class> *classes = @[ [PTYAnnotation class],
                                  [VT100ScreenMark class] ];
     return [self marksOfAnyClassIn:classes before:location];
 }
 
 - (NSArray *)marksOrNotesAfter:(Interval *)location {
-    NSArray<Class> *classes = @[ [PTYNoteViewController class],
+    NSArray<Class> *classes = @[ [PTYAnnotation class],
                                  [VT100ScreenMark class] ];
     return [self marksOfAnyClassIn:classes after:location];
 }
@@ -1247,12 +1217,12 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (NSArray *)annotationsBefore:(Interval *)location {
-    NSArray<Class> *classes = @[ [PTYNoteViewController class] ];
+    NSArray<Class> *classes = @[ [PTYAnnotation class] ];
     return [self marksOfAnyClassIn:classes before:location];
 }
 
 - (NSArray *)annotationsAfter:(Interval *)location {
-    NSArray<Class> *classes = @[ [PTYNoteViewController class] ];
+    NSArray<Class> *classes = @[ [PTYAnnotation class] ];
     return [self marksOfAnyClassIn:classes after:location];
 }
 
@@ -1492,17 +1462,6 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
                                           progress:progress];
 }
 
-
-#pragma mark - PTYNoteViewControllerDelegate
-
-- (void)noteDidRequestRemoval:(PTYNoteViewController *)note {
-    [self mutRemoveNote:note];
-}
-
-- (void)noteDidEndEditing:(PTYNoteViewController *)note {
-    [delegate_ screenDidEndEditingNote];
-}
-
 #pragma mark - VT100GridDelegate
 
 - (screen_char_t)gridForegroundColorCode {
@@ -1535,11 +1494,11 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
                                                 intervalOffset:(long long *)intervalOffsetPtr {
     if (gDebugLogging) {
         DLog(@"Saving state with width=%@", @(self.width));
-        for (PTYNoteViewController *note in _state.intervalTree.allObjects) {
-            if (![note isKindOfClass:[PTYNoteViewController class]]) {
+        for (id<IntervalTreeObject> object in _state.intervalTree.allObjects) {
+            if (![object isKindOfClass:[PTYAnnotation class]]) {
                 continue;
             }
-            DLog(@"Save note with coord range %@", VT100GridCoordRangeDescription([self coordRangeForInterval:note.entry.interval]));
+            DLog(@"Save note with coord range %@", VT100GridCoordRangeDescription([self coordRangeForInterval:object.entry.interval]));
         }
     }
     return [self mutNumberOfLinesDroppedWhenEncodingContentsIncludingGrid:YES
@@ -1867,9 +1826,10 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     [self mutResetDirty];
 }
 
-- (void)addNote:(PTYNoteViewController *)note
-        inRange:(VT100GridCoordRange)range {
-    [self mutAddNote:note inRange:range];
+- (void)addNote:(PTYAnnotation *)note
+        inRange:(VT100GridCoordRange)range
+          focus:(BOOL)focus {
+    [self mutAddNote:note inRange:range focus:focus];
 }
 
 - (void)clearScrollbackBuffer {

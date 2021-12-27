@@ -1869,6 +1869,9 @@
 		A667C24D27725341006B4DEF /* VT100ScreenConfiguration.m in Sources */ = {isa = PBXBuildFile; fileRef = A667C24B27725341006B4DEF /* VT100ScreenConfiguration.m */; };
 		A667C2552773C1D1006B4DEF /* VT100ScreenSideEffects.m in Sources */ = {isa = PBXBuildFile; fileRef = A667C2532773C1D0006B4DEF /* VT100ScreenSideEffects.m */; };
 		A667C2562773C1D1006B4DEF /* VT100ScreenSideEffects.h in Headers */ = {isa = PBXBuildFile; fileRef = A667C2542773C1D1006B4DEF /* VT100ScreenSideEffects.h */; };
+		A667C25F27791223006B4DEF /* PTYAnnotation.h in Headers */ = {isa = PBXBuildFile; fileRef = A667C25D27791223006B4DEF /* PTYAnnotation.h */; };
+		A667C26027791223006B4DEF /* PTYAnnotation.m in Sources */ = {isa = PBXBuildFile; fileRef = A667C25E27791223006B4DEF /* PTYAnnotation.m */; };
+		A667C26227799447006B4DEF /* PTYNoteViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = A63F4094183B398C003A6A6D /* PTYNoteViewController.m */; };
 		A667EF9C243935AE0055CF3F /* iTermSwipeHandler.h in Headers */ = {isa = PBXBuildFile; fileRef = A667EF9A243935AE0055CF3F /* iTermSwipeHandler.h */; };
 		A667F3881B48671B00705186 /* libiTerm2Shared.a in Frameworks */ = {isa = PBXBuildFile; fileRef = A6C760501B45C4CF00E3C992 /* libiTerm2Shared.a */; };
 		A667F38B1B48AEF200705186 /* NSApplication+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A667F3891B48AEF200705186 /* NSApplication+iTerm.h */; };
@@ -2816,7 +2819,6 @@
 		A6C763361B45C52B00E3C992 /* iTermPasteSpecialWindowController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E77F991A2A6B9E009B1CB6 /* iTermPasteSpecialWindowController.m */; };
 		A6C763371B45C52B00E3C992 /* iTermWindowShortcutLabelTitlebarAccessoryViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = A66A1FA71A3A207900F4A3A7 /* iTermWindowShortcutLabelTitlebarAccessoryViewController.m */; };
 		A6C763381B45C52B00E3C992 /* PasteViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D085F8B16F0328B00B7FCE9 /* PasteViewController.m */; };
-		A6C763391B45C52B00E3C992 /* PTYNoteViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = A63F4094183B398C003A6A6D /* PTYNoteViewController.m */; };
 		A6C7633A1B45C52B00E3C992 /* SplitPanel.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DF8AF5713FD781700C8A435 /* SplitPanel.m */; };
 		A6C7633B1B45C52B00E3C992 /* ToastWindowController.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D085FA116F138A000B7FCE9 /* ToastWindowController.m */; };
 		A6C7633E1B45C52B00E3C992 /* iTermAboutWindow.m in Sources */ = {isa = PBXBuildFile; fileRef = A663010F19CFE41A004AF81C /* iTermAboutWindow.m */; };
@@ -5578,6 +5580,8 @@
 		A667C24B27725341006B4DEF /* VT100ScreenConfiguration.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = VT100ScreenConfiguration.m; sourceTree = "<group>"; };
 		A667C2532773C1D0006B4DEF /* VT100ScreenSideEffects.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VT100ScreenSideEffects.m; sourceTree = "<group>"; };
 		A667C2542773C1D1006B4DEF /* VT100ScreenSideEffects.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VT100ScreenSideEffects.h; sourceTree = "<group>"; };
+		A667C25D27791223006B4DEF /* PTYAnnotation.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = PTYAnnotation.h; sourceTree = "<group>"; };
+		A667C25E27791223006B4DEF /* PTYAnnotation.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = PTYAnnotation.m; sourceTree = "<group>"; };
 		A667EF9A243935AE0055CF3F /* iTermSwipeHandler.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermSwipeHandler.h; sourceTree = "<group>"; };
 		A667F3861B48615900705186 /* iTermToolbeltTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermToolbeltTest.m; sourceTree = "<group>"; };
 		A667F3891B48AEF200705186 /* NSApplication+iTerm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSApplication+iTerm.h"; sourceTree = "<group>"; };
@@ -6949,6 +6953,7 @@
 		0464AB0E006CD2EC7F000001 /* Classes */ = {
 			isa = PBXGroup;
 			children = (
+				A667C25A277911ED006B4DEF /* Annotations */,
 				53EBF29A1DCBFF6D00766613 /* API */,
 				1D5655C619AD2AF1001C460B /* Applescript */,
 				1D9DDE31142E73E300275650 /* Categories */,
@@ -8997,6 +9002,17 @@
 			name = SCEvents;
 			sourceTree = "<group>";
 		};
+		A667C25A277911ED006B4DEF /* Annotations */ = {
+			isa = PBXGroup;
+			children = (
+				A63F4093183B398C003A6A6D /* PTYNoteViewController.h */,
+				A63F4094183B398C003A6A6D /* PTYNoteViewController.m */,
+				A667C25D27791223006B4DEF /* PTYAnnotation.h */,
+				A667C25E27791223006B4DEF /* PTYAnnotation.m */,
+			);
+			name = Annotations;
+			sourceTree = "<group>";
+		};
 		A675856A245AA38800827C25 /* Swipe */ = {
 			isa = PBXGroup;
 			children = (
@@ -9907,8 +9923,6 @@
 				A6E77F991A2A6B9E009B1CB6 /* iTermPasteSpecialWindowController.m */,
 				A66A1FA71A3A207900F4A3A7 /* iTermWindowShortcutLabelTitlebarAccessoryViewController.m */,
 				1D085F8B16F0328B00B7FCE9 /* PasteViewController.m */,
-				A63F4093183B398C003A6A6D /* PTYNoteViewController.h */,
-				A63F4094183B398C003A6A6D /* PTYNoteViewController.m */,
 				1DF8AF5713FD781700C8A435 /* SplitPanel.m */,
 				1D085FA116F138A000B7FCE9 /* ToastWindowController.m */,
 				1D4BAFE91BFE77E4004FF52B /* iTermPrintAccessoryViewController.h */,
@@ -11515,6 +11529,7 @@
 				A6725AD223D639C2001CA48A /* iTermProfilesMenuController.h in Headers */,
 				A667193C1DCE36C3000CE608 /* iTermThroughputEstimator.h in Headers */,
 				A6A4B2B72426BCD900184EAC /* iTermKeyMappings.h in Headers */,
+				A667C25F27791223006B4DEF /* PTYAnnotation.h in Headers */,
 				A61F456E22FA52CD00E2054A /* iTermUnreadCountView.h in Headers */,
 				53850903212FA8910039AFC7 /* iTermMetaFrustrationDetector.h in Headers */,
 				A62F8FD021D9A603008EA71C /* iTermTermkeyKeyMapper.h in Headers */,
@@ -13832,6 +13847,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A667C26027791223006B4DEF /* PTYAnnotation.m in Sources */,
 				A653F6BB24D4C9B50062377E /* iTermKeyLabels.m in Sources */,
 				53D0FD52237DCB5A00DAFA8A /* NSTableView+iTerm.m in Sources */,
 				A6153D5121F30FF4002976FC /* iTermStatusBarJobComponent.m in Sources */,
@@ -14027,6 +14043,7 @@
 				A667C23B276BD931006B4DEF /* VT100StateTransition.m in Sources */,
 				A61A85AA24F23C9B00B03880 /* iTermGlobalSearchOutlineView.m in Sources */,
 				A6A4B2A32418977300184EAC /* iTermDynamicProfileManager.m in Sources */,
+				A667C26227799447006B4DEF /* PTYNoteViewController.m in Sources */,
 				A63011AA20E7EDFC008114B7 /* iTermStatusBarKnobCheckboxViewController.m in Sources */,
 				53E9DFE9220D558E0070C9C0 /* iTermSetTitleTrigger.m in Sources */,
 				A6A4866320B6768A00493302 /* ContextMenuActionPrefsController.m in Sources */,
@@ -14558,7 +14575,6 @@
 				A6C7638F1B45C52B00E3C992 /* iTermCommandHistoryEntryMO+Additions.m in Sources */,
 				A66E5E531E6268E700E8FE35 /* iTermMutableAttributedStringBuilder.m in Sources */,
 				A6C762C51B45C52B00E3C992 /* Coprocess.m in Sources */,
-				A6C763391B45C52B00E3C992 /* PTYNoteViewController.m in Sources */,
 				A6C763111B45C52B00E3C992 /* iTermFlippedView.m in Sources */,
 				A66DB83B1C9142C900233E88 /* iTermAltScreenMouseScrollInferrer.m in Sources */,
 				A6C762EA1B45C52B00E3C992 /* AATree.m in Sources */,

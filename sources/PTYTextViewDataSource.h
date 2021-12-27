@@ -9,6 +9,7 @@
 
 @class iTermColorMap;
 @class iTermExternalAttributeIndex;
+@class PTYAnnotation;
 @class PTYNoteViewController;
 @class PTYSession;
 @class PTYTask;
@@ -115,13 +116,13 @@
 // Returns the last modified date for a given line.
 - (NSDate *)timestampForLine:(int)y;
 
-- (void)addNote:(PTYNoteViewController *)note inRange:(VT100GridCoordRange)range;
+- (void)addNote:(PTYAnnotation *)note inRange:(VT100GridCoordRange)range focus:(BOOL)focus;
 - (void)removeInaccessibleNotes;
 
 // Returns all notes in a range of cells.
-- (NSArray *)notesInRange:(VT100GridCoordRange)range;
+- (NSArray<PTYAnnotation *> *)annotationsInRange:(VT100GridCoordRange)range;
 
-- (VT100GridCoordRange)coordRangeOfNote:(PTYNoteViewController *)note;
+- (VT100GridCoordRange)coordRangeOfAnnotation:(PTYAnnotation *)note;
 - (NSArray *)charactersWithNotesOnLine:(int)line;
 - (VT100ScreenMark *)markOnLine:(int)line;
 
@@ -147,5 +148,6 @@
 
 - (void)setColor:(NSColor *)color forKey:(int)key;
 - (id<iTermColorMapReading>)colorMap;
+- (void)removeAnnotation:(PTYAnnotation *)annotation;
 
 @end

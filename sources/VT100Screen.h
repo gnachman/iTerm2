@@ -3,7 +3,7 @@
 #import "iTermEncoderAdapter.h"
 #import "iTermIntervalTreeObserver.h"
 #import "iTermMetadata.h"
-#import "PTYNoteViewController.h"
+#import "PTYAnnotation.h"
 #import "PTYTextViewDataSource.h"
 #import "SCPPath.h"
 #import "ScreenCharArray.h"
@@ -40,7 +40,6 @@ extern int kVT100ScreenMinRows;
 extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 
 @interface VT100Screen : NSObject <
-    PTYNoteViewControllerDelegate,
     PTYTextViewDataSource,
     VT100GridDelegate>
 
@@ -192,13 +191,11 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
                           to:(NSString *)maybeLast
                        block:(void (^ NS_NOESCAPE)(VT100ScreenMark *mark))block;
 // These methods normally only return one object, but if there is a tie, all of the equally-positioned marks/notes are returned.
-- (NSArray *)lastMarksOrNotes;
-- (NSArray *)firstMarksOrNotes;
 
-- (NSArray *)lastMarks;
-- (NSArray *)firstMarks;
-- (NSArray *)lastAnnotations;
-- (NSArray *)firstAnnotations;
+- (NSArray<VT100ScreenMark *> *)lastMarks;
+- (NSArray<VT100ScreenMark *> *)firstMarks;
+- (NSArray<PTYAnnotation *> *)lastAnnotations;
+- (NSArray<PTYAnnotation *> *)firstAnnotations;
 
 - (NSArray *)marksOrNotesBefore:(Interval *)location;
 - (NSArray *)marksOrNotesAfter:(Interval *)location;

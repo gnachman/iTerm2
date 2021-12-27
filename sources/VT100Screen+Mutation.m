@@ -430,12 +430,12 @@
     [self.intervalTreeObserver intervalTreeDidReset];
 }
 
-- (void)mutAddNote:(PTYNoteViewController *)note
-           inRange:(VT100GridCoordRange)range {
-    [_mutableState.intervalTree addObject:note withInterval:[self intervalForGridCoordRange:range]];
+- (void)mutAddNote:(PTYAnnotation *)annotation
+           inRange:(VT100GridCoordRange)range
+             focus:(BOOL)focus {
+    [_mutableState.intervalTree addObject:annotation withInterval:[self intervalForGridCoordRange:range]];
     [self.mutableCurrentGrid markAllCharsDirty:YES];
-    note.delegate = self;
-    [delegate_ screenDidAddNote:note];
+    [delegate_ screenDidAddNote:annotation focus:focus];
     [self.intervalTreeObserver intervalTreeDidAddObjectOfType:iTermIntervalTreeObjectTypeAnnotation
                                                        onLine:range.start.y + self.totalScrollbackOverflow];
 }
@@ -490,19 +490,18 @@
     }
 }
 
-- (void)mutRemoveNote:(PTYNoteViewController *)note {
-    if ([_state.intervalTree containsObject:note]) {
+- (void)mutRemoveAnnotation:(PTYAnnotation *)annotation {
+    if ([_state.intervalTree containsObject:annotation]) {
         _mutableState.lastCommandMark = nil;
-        [[note retain] autorelease];
-        [_mutableState.intervalTree removeObject:note];
-        [self.intervalTreeObserver intervalTreeDidRemoveObjectOfType:[self intervalTreeObserverTypeForObject:note]
-                                                              onLine:[self coordRangeForInterval:note.entry.interval].start.y + self.totalScrollbackOverflow];
-    } else if ([_state.savedIntervalTree containsObject:note]) {
+        [[annotation retain] autorelease];
+        [_mutableState.intervalTree removeObject:annotation];
+        [self.intervalTreeObserver intervalTreeDidRemoveObjectOfType:[self intervalTreeObserverTypeForObject:annotation]
+                                                              onLine:[self coordRangeForInterval:annotation.entry.interval].start.y + self.totalScrollbackOverflow];
+    } else if ([_state.savedIntervalTree containsObject:annotation]) {
         _mutableState.lastCommandMark = nil;
-        [_mutableState.savedIntervalTree removeObject:note];
+        [_mutableState.savedIntervalTree removeObject:annotation];
     }
     [delegate_ screenNeedsRedraw];
-    [delegate_ screenDidEndEditingNote];
 }
 
 #pragma mark - Clearing
@@ -1386,11 +1385,11 @@
 
         if (gDebugLogging) {
             DLog(@"Notes after restoring with width=%@", @(self.width));
-            for (PTYNoteViewController *note in _mutableState.intervalTree.allObjects) {
-                if (![note isKindOfClass:[PTYNoteViewController class]]) {
+            for (id<IntervalTreeObject> object in _mutableState.intervalTree.allObjects) {
+                if (![object isKindOfClass:[PTYAnnotation class]]) {
                     continue;
                 }
-                DLog(@"Note has coord range %@", VT100GridCoordRangeDescription([self coordRangeForInterval:note.entry.interval]));
+                DLog(@"Note has coord range %@", VT100GridCoordRangeDescription([self coordRangeForInterval:object.entry.interval]));
             }
             DLog(@"------------ end -----------");
         }
@@ -1399,7 +1398,7 @@
 
 // Link references to marks in CapturedOutput (for the lines where output was captured) to the deserialized mark.
 // Link marks for commands to CommandUse objects in command history.
-// Notify delegate of PTYNoteViewControllers so they get added as subviews, and set the delegate of not view controllers to self.
+// Notify delegate of annotations so they get added as subviews, and set the delegate of not view controllers to self.
 - (void)fixUpDeserializedIntervalTree:(IntervalTree *)intervalTree
                         knownTriggers:(NSArray *)triggers
                               visible:(BOOL)visible
@@ -1438,11 +1437,10 @@
                 iTermCapturedOutputMark *capturedOutputMark = (iTermCapturedOutputMark *)object;
                 CapturedOutput *capturedOutput = markGuidToCapturedOutput[capturedOutputMark.guid];
                 capturedOutput.mark = capturedOutputMark;
-            } else if ([object isKindOfClass:[PTYNoteViewController class]]) {
-                PTYNoteViewController *note = (PTYNoteViewController *)object;
-                note.delegate = self;
+            } else if ([object isKindOfClass:[PTYAnnotation class]]) {
+                PTYAnnotation *note = (PTYAnnotation *)object;
                 if (visible) {
-                    [delegate_ screenDidAddNote:note];
+                    [delegate_ screenDidAddNote:note focus:NO];
                 }
             } else if ([object isKindOfClass:[iTermImageMark class]]) {
                 iTermImageMark *imageMark = (iTermImageMark *)object;
@@ -3018,6 +3016,27 @@ static inline void VT100ScreenEraseCell(screen_char_t *sct, iTermExternalAttribu
     }
 }
 
+- (void)hideOnScreenNotesAndTruncateSpanners {
+    int screenOrigin = [self numberOfScrollbackLines];
+    VT100GridCoordRange screenRange =
+        VT100GridCoordRangeMake(0,
+                                screenOrigin,
+                                [self width],
+                                screenOrigin + self.height);
+    Interval *screenInterval = [self intervalForGridCoordRange:screenRange];
+    for (id<IntervalTreeObject> note in [_state.intervalTree objectsInInterval:screenInterval]) {
+        if (note.entry.interval.location < screenInterval.location) {
+            // Truncate note so that it ends just before screen.
+            note.entry.interval.length = screenInterval.location - note.entry.interval.location;
+        }
+#warning TODO: This should be a side-effect. Moreover, I risk unchecked interations with mutable state through interval tree downcasts like this. I need a good solution to make the interval tree safe.
+        PTYAnnotation *annotation = [PTYAnnotation castFrom:note];
+        [annotation hide];
+    }
+    // Force annotations frames to be updated.
+    [delegate_ screenNeedsRedraw];
+}
+
 #pragma mark - URLs
 
 - (void)mutLinkRun:(VT100GridRun)run
@@ -3859,16 +3878,16 @@ static inline void VT100ScreenEraseCell(screen_char_t *sct, iTermExternalAttribu
     if (length > 0 &&
         message.length > 0 &&
         endVal <= maxVal) {
-        PTYNoteViewController *note = [[[PTYNoteViewController alloc] init] autorelease];
-        [note setString:message];
-        [note sizeToFit];
+        PTYAnnotation *note = [[[PTYAnnotation alloc] init] autorelease];
+        note.stringValue = message;
         [self addNote:note
               inRange:VT100GridCoordRangeMake(location.x,
                                               location.y + [self numberOfScrollbackLines],
                                               end.x,
-                                              end.y + [self numberOfScrollbackLines])];
+                                              end.y + [self numberOfScrollbackLines])
+                focus:NO];
         if (!show) {
-            [note setNoteHidden:YES];
+            [note hide];
         }
     }
 }

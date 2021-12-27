@@ -889,7 +889,8 @@ allowRightMarginOverflow:(BOOL)allowRightMarginOverflow {
 
 - (BOOL)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu
 hasOpenAnnotationInRange:(VT100GridCoordRange)coordRange {
-    for (PTYNoteViewController *note in [self.dataSource notesInRange:coordRange]) {
+    for (PTYAnnotation *annotation in [self.dataSource annotationsInRange:coordRange]) {
+        PTYNoteViewController *note = (PTYNoteViewController *)annotation.delegate;
         if (note.isNoteHidden) {
             return YES;
         }
@@ -897,11 +898,15 @@ hasOpenAnnotationInRange:(VT100GridCoordRange)coordRange {
     return NO;
 }
 
-- (void)contextMenuRevealAnnotations:(iTermTextViewContextMenuHelper *)contextMenu at:(VT100GridCoord)coord {
-    for (PTYNoteViewController *note in [self.dataSource notesInRange:VT100GridCoordRangeMake(coord.x,
-                                                                                              coord.y,
-                                                                                              coord.x + 1,
-                                                                                              coord.y)]) {
+- (void)contextMenuRevealAnnotations:(iTermTextViewContextMenuHelper *)contextMenu
+                                  at:(VT100GridCoord)coord {
+    const VT100GridCoordRange coordRange =
+        VT100GridCoordRangeMake(coord.x,
+                                coord.y,
+                                coord.x + 1,
+                                coord.y);
+    for (PTYAnnotation *annotation in [self.dataSource annotationsInRange:coordRange]) {
+        PTYNoteViewController *note = (PTYNoteViewController *)annotation.delegate;
         [note setNoteHidden:NO];
     }
 }

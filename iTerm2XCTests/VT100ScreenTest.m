@@ -779,7 +779,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
 - (void)screenSetProfileToProfileNamed:(NSString *)value {
 }
 
-- (void)screenDidAddNote:(PTYNoteViewController *)note {
+- (void)screenDidAddNote:(PTYAnnotation *)note focus:(BOOL)focus {
 }
 
 - (void)screenDidEndEditingNote {
@@ -4081,8 +4081,8 @@ static NSString *VT100ScreenTestFindLines =
                @"fgh..\n"
                @"ijkl.\n"
                @"....."]);
-    PTYNoteViewController *note = [[[PTYNoteViewController alloc] init] autorelease];
-    [screen addNote:note inRange:VT100GridCoordRangeMake(0, 1, 2, 1)];  // fg
+    PTYAnnotation *note = [[[PTYAnnotation alloc] init] autorelease];
+    [screen addNote:note inRange:VT100GridCoordRangeMake(0, 1, 2, 1) focus:YES];  // fg
     [screen terminalShowAltBuffer];
     [screen setSize:VT100GridSizeMake(4, 4)];
     [screen terminalShowPrimaryBuffer];
@@ -4091,10 +4091,10 @@ static NSString *VT100ScreenTestFindLines =
                @"efgh\n"
                @"ijkl\n"
                @"...."]);
-    NSArray *notes = [screen notesInRange:VT100GridCoordRangeMake(0, 0, 5, 3)];
+    NSArray *notes = [screen annotationsInRange:VT100GridCoordRangeMake(0, 0, 5, 3)];
     XCTAssert(notes.count == 1);
     XCTAssert(notes[0] == note);
-    VT100GridCoordRange range = [screen coordRangeOfNote:note];
+    VT100GridCoordRange range = [screen coordRangeOfAnnotation:note];
     XCTAssert(range.start.x == 1);
     XCTAssert(range.start.y == 1);
     XCTAssert(range.end.x == 3);
@@ -4108,8 +4108,8 @@ static NSString *VT100ScreenTestFindLines =
                @"fgh..\n"
                @"ijkl.\n"
                @"....."]);
-    PTYNoteViewController *note = [[[PTYNoteViewController alloc] init] autorelease];
-    [screen addNote:note inRange:VT100GridCoordRangeMake(0, 3, 2, 3)];  // First two chars on last line
+    PTYAnnotation *note = [[[PTYAnnotation alloc] init] autorelease];
+    [screen addNote:note inRange:VT100GridCoordRangeMake(0, 3, 2, 3) focus:YES];  // First two chars on last line
 
 }
 
@@ -4144,8 +4144,8 @@ static NSString *VT100ScreenTestFindLines =
                @"hello\n"
                @" worl\n"
                @"d...."]);
-    PTYNoteViewController *note = [[[PTYNoteViewController alloc] init] autorelease];
-    [screen addNote:note inRange:VT100GridCoordRangeMake(0, 2, 2, 2)];  // ij
+    PTYAnnotation *note = [[[PTYAnnotation alloc] init] autorelease];
+    [screen addNote:note inRange:VT100GridCoordRangeMake(0, 2, 2, 2) focus:YES];  // ij
     [screen terminalShowAltBuffer];
     [screen setSize:VT100GridSizeMake(4, 4)];
     [screen terminalShowPrimaryBuffer];
@@ -4156,10 +4156,10 @@ static NSString *VT100ScreenTestFindLines =
                @"hell\n"
                @"o wo\n"
                @"rld."]);
-    NSArray *notes = [screen notesInRange:VT100GridCoordRangeMake(0, 0, 5, 3)];
+    NSArray *notes = [screen annotationsInRange:VT100GridCoordRangeMake(0, 0, 5, 3)];
     XCTAssert(notes.count == 1);
     XCTAssert(notes[0] == note);
-    VT100GridCoordRange range = [screen coordRangeOfNote:note];
+    VT100GridCoordRange range = [screen coordRangeOfAnnotation:note];
     XCTAssertEqual(range.start.x, 0);
     XCTAssertEqual(range.start.y, 2);
     XCTAssertEqual(range.end.x, 2);
@@ -4176,8 +4176,8 @@ static NSString *VT100ScreenTestFindLines =
                @"hello\n"
                @" worl\n"
                @"d...."]);
-    PTYNoteViewController *note = [[[PTYNoteViewController alloc] init] autorelease];
-    [screen addNote:note inRange:VT100GridCoordRangeMake(0, 2, 2, 2)];  // ij
+    PTYAnnotation *note = [[[PTYAnnotation alloc] init] autorelease];
+    [screen addNote:note inRange:VT100GridCoordRangeMake(0, 2, 2, 2) focus:YES];  // ij
     [screen terminalShowAltBuffer];
     [screen setSize:VT100GridSizeMake(3, 4)];
     [screen terminalShowPrimaryBuffer];
@@ -4191,10 +4191,10 @@ static NSString *VT100ScreenTestFindLines =
                @"lo \n"
                @"wor\n"
                @"ld."]);
-    NSArray *notes = [screen notesInRange:VT100GridCoordRangeMake(0, 0, 8, 3)];
+    NSArray *notes = [screen annotationsInRange:VT100GridCoordRangeMake(0, 0, 8, 3)];
     XCTAssert(notes.count == 1);
     XCTAssert(notes[0] == note);
-    VT100GridCoordRange range = [screen coordRangeOfNote:note];
+    VT100GridCoordRange range = [screen coordRangeOfAnnotation:note];
     XCTAssertEqual(range.start.x, 0);
     XCTAssertEqual(range.start.y, 3);
     XCTAssertEqual(range.end.x, 2);
@@ -4211,8 +4211,8 @@ static NSString *VT100ScreenTestFindLines =
                @"hello\n"
                @" worl\n"
                @"d...."]);
-    PTYNoteViewController *note = [[[PTYNoteViewController alloc] init] autorelease];
-    [screen addNote:note inRange:VT100GridCoordRangeMake(0, 2, 5, 3)];  // ijkl\nhello
+    PTYAnnotation *note = [[[PTYAnnotation alloc] init] autorelease];
+    [screen addNote:note inRange:VT100GridCoordRangeMake(0, 2, 5, 3) focus:YES];  // ijkl\nhello
     [screen terminalShowAltBuffer];
     [screen setSize:VT100GridSizeMake(3, 4)];
     [screen terminalShowPrimaryBuffer];
@@ -4226,10 +4226,10 @@ static NSString *VT100ScreenTestFindLines =
                @"lo \n"
                @"wor\n"
                @"ld."]);
-    NSArray *notes = [screen notesInRange:VT100GridCoordRangeMake(0, 0, 8, 3)];
+    NSArray *notes = [screen annotationsInRange:VT100GridCoordRangeMake(0, 0, 8, 3)];
     XCTAssert(notes.count == 1);
     XCTAssert(notes[0] == note);
-    VT100GridCoordRange range = [screen coordRangeOfNote:note];
+    VT100GridCoordRange range = [screen coordRangeOfAnnotation:note];
     XCTAssert(range.start.x == 0);
     XCTAssert(range.start.y == 3);
     XCTAssert(range.end.x == 2);
@@ -4246,15 +4246,15 @@ static NSString *VT100ScreenTestFindLines =
                @"hello\n"
                @" worl\n"
                @"d...."]);
-    PTYNoteViewController *note = [[[PTYNoteViewController alloc] init] autorelease];
-    [screen addNote:note inRange:VT100GridCoordRangeMake(0, 1, 5, 3)];  // fgh\nijkl\nhello
+    PTYAnnotation *note = [[[PTYAnnotation alloc] init] autorelease];
+    [screen addNote:note inRange:VT100GridCoordRangeMake(0, 1, 5, 3) focus:YES];  // fgh\nijkl\nhello
     [screen terminalShowAltBuffer];
     [screen terminalShowPrimaryBuffer];
 
-    NSArray *notes = [screen notesInRange:VT100GridCoordRangeMake(0, 0, 8, 3)];
+    NSArray *notes = [screen annotationsInRange:VT100GridCoordRangeMake(0, 0, 8, 3)];
     XCTAssert(notes.count == 1);
     XCTAssert(notes[0] == note);
-    VT100GridCoordRange range = [screen coordRangeOfNote:note];
+    VT100GridCoordRange range = [screen coordRangeOfAnnotation:note];
     XCTAssert(range.start.x == 0);
     XCTAssert(range.start.y == 1);
     XCTAssert(range.end.x == 0);
@@ -4272,8 +4272,8 @@ static NSString *VT100ScreenTestFindLines =
                @" worl\n"
                @"d...."]);
     [self showAltAndUppercase:screen];
-    PTYNoteViewController *note = [[[PTYNoteViewController alloc] init] autorelease];
-    [screen addNote:note inRange:VT100GridCoordRangeMake(0, 1, 5, 3)];  // fgh\nIJKL\nHELLO
+    PTYAnnotation *note = [[[PTYAnnotation alloc] init] autorelease];
+    [screen addNote:note inRange:VT100GridCoordRangeMake(0, 1, 5, 3) focus:YES];  // fgh\nIJKL\nHELLO
     [screen setSize:VT100GridSizeMake(3, 4)];
     XCTAssert([[screen compactLineDumpWithHistory] isEqualToString:
                @"abc\n"
@@ -4285,10 +4285,10 @@ static NSString *VT100ScreenTestFindLines =
                @"LO \n"
                @"WOR\n"
                @"LD."]);
-    NSArray *notes = [screen notesInRange:VT100GridCoordRangeMake(0, 0, 3, 6)];
+    NSArray *notes = [screen annotationsInRange:VT100GridCoordRangeMake(0, 0, 3, 6)];
     XCTAssert(notes.count == 1);
     XCTAssert(notes[0] == note);
-    VT100GridCoordRange range = [screen coordRangeOfNote:note];
+    VT100GridCoordRange range = [screen coordRangeOfAnnotation:note];
     XCTAssert(range.start.x == 2);  // fgh\nijkl\nHELLO
     XCTAssert(range.start.y == 1);
     XCTAssert(range.end.x == 2);
@@ -4307,8 +4307,8 @@ static NSString *VT100ScreenTestFindLines =
                @".....\n"
                @".....\n"
                @"....."]);
-    PTYNoteViewController *note = [[[PTYNoteViewController alloc] init] autorelease];
-    [screen addNote:note inRange:range];
+    PTYAnnotation *note = [[[PTYAnnotation alloc] init] autorelease];
+    [screen addNote:note inRange:range focus:YES];
     iTermMutableDictionaryEncoderAdapter *encoder = [iTermMutableDictionaryEncoderAdapter encoder];
     int linesDropped = 0;
     [screen encodeContents:encoder linesDropped:&linesDropped];
@@ -4327,7 +4327,7 @@ static NSString *VT100ScreenTestFindLines =
                @".....\n"
                @"....."]);
 
-    NSArray *notes = [screen notesInRange:VT100GridCoordRangeMake(0, 0, 5, 8)];
+    NSArray *notes = [screen annotationsInRange:VT100GridCoordRangeMake(0, 0, 5, 8)];
     XCTAssertEqual(notes.count, 1);
     note = notes[0];
     VT100GridCoordRange rangeAfterResize = [screen coordRangeForInterval:note.entry.interval];
@@ -4402,10 +4402,10 @@ static NSString *VT100ScreenTestFindLines =
         @"xxxxxxxxxx",
         @"Georges-iMac:/Users/gnachman%"
     ] toScreen:screen];
-    PTYNoteViewController *note = [[[PTYNoteViewController alloc] init] autorelease];
+    PTYAnnotation *note = [[[PTYAnnotation alloc] init] autorelease];
     [screen addNote:note inRange:range1];
     [screen setSize:VT100GridSizeMake(141, 8)];
-    NSArray *notes = [screen notesInRange:VT100GridCoordRangeMake(0, 0, 80, 8)];
+    NSArray *notes = [screen annotationsInRange:VT100GridCoordRangeMake(0, 0, 80, 8)];
     note = notes[0];
     VT100GridCoordRange rangeAfterResize = [screen coordRangeForInterval:note.entry.interval];
     XCTAssertTrue(VT100GridCoordRangeEqualsCoordRange(rangeAfterResize, expected));
@@ -4416,8 +4416,8 @@ static NSString *VT100ScreenTestFindLines =
     VT100Screen *screen = [self screenWithWidth:80 height:25];
     screen.maxScrollbackLines = 1000;
     [self appendLines:@[@"", @"", @"", @"Georges-iMac:/Users/gnachman% xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"] toScreen:screen];
-    PTYNoteViewController *note = [[[PTYNoteViewController alloc] init] autorelease];
-    [screen addNote:note inRange:range1];
+    PTYAnnotation *note = [[[PTYAnnotation alloc] init] autorelease];
+    [screen addNote:note inRange:range1 focus:YES];
     iTermMutableDictionaryEncoderAdapter *encoder = [iTermMutableDictionaryEncoderAdapter encoder];
     int linesDropped = 0;
     [screen encodeContents:encoder linesDropped:&linesDropped];
@@ -4427,7 +4427,7 @@ static NSString *VT100ScreenTestFindLines =
     [screen restoreFromDictionary:state includeRestorationBanner:NO knownTriggers:@[] reattached:YES];
     [screen setSize:VT100GridSizeMake(77, 25)];
     {
-        NSArray *notes = [screen notesInRange:VT100GridCoordRangeMake(0, 0, 80, 25)];
+        NSArray *notes = [screen annotationsInRange:VT100GridCoordRangeMake(0, 0, 80, 25)];
         VT100GridCoordRange expected = range2;
         PTYNoteViewController *note = notes[0];
         VT100GridCoordRange rangeAfterResize = [screen coordRangeForInterval:note.entry.interval];
@@ -4436,7 +4436,7 @@ static NSString *VT100ScreenTestFindLines =
 
     [screen setSize:VT100GridSizeMake(80, 25)];
     {
-        NSArray *notes = [screen notesInRange:VT100GridCoordRangeMake(0, 0, 80, 25)];
+        NSArray *notes = [screen annotationsInRange:VT100GridCoordRangeMake(0, 0, 80, 25)];
         PTYNoteViewController *note = notes[0];
         VT100GridCoordRange rangeAfterResize = [screen coordRangeForInterval:note.entry.interval];
         XCTAssertTrue(VT100GridCoordRangeEqualsCoordRange(rangeAfterResize, range1));

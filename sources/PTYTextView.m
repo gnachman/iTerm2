@@ -169,6 +169,7 @@
     iTermScrollAccumulator *_scrollAccumulator;
 
     iTermRateLimitedUpdate *_shadowRateLimit;
+    NSMutableArray<PTYNoteViewController *> *_notes;
 }
 
 
@@ -328,7 +329,7 @@
                                      pointerControllerDelegate:self
                      mouseReportingFrustrationDetectorDelegate:self];
         _mouseHandler.mouseDelegate = self;
-
+        _notes = [[NSMutableArray alloc] init];
         [self initARC];
     }
     return self;
@@ -382,6 +383,7 @@
     _urlActionHelper.delegate = nil;
     [_urlActionHelper release];
     [_indicatorMessagePopoverViewController release];
+    [_notes release];
 
     [super dealloc];
 }
@@ -3053,13 +3055,23 @@
 
 #pragma mark - Annotations
 
-- (void)addViewForNote:(PTYNoteViewController *)note {
+- (void)addViewForNote:(PTYAnnotation *)annotation focus:(BOOL)focus {
+    PTYNoteViewController *note = [[[PTYNoteViewController alloc] initWithAnnotation:annotation] autorelease];
+    note.delegate = self;
+    [_notes addObject:note];
     // Make sure scrollback overflow is reset.
+    if (note.annotation.stringValue.length) {
+        [note sizeToFit];
+    }
     [self refresh];
     [note.view removeFromSuperview];
     [self addSubview:note.view];
     [self updateNoteViewFrames];
     [note setNoteHidden:NO];
+    [self setNeedsDisplay:YES];
+    if (focus) {
+        [note makeFirstResponder];
+    }
 }
 
 - (void)addNote {
@@ -3067,16 +3079,8 @@
         return;
     }
     [self withRelativeCoordRange:_selection.lastAbsRange.coordRange block:^(VT100GridCoordRange range) {
-        PTYNoteViewController *note = [[[PTYNoteViewController alloc] init] autorelease];
-        [_dataSource addNote:note inRange:range];
-
-        // Make sure scrollback overflow is reset.
-        [self refresh];
-        [note.view removeFromSuperview];
-        [self addSubview:note.view];
-        [self updateNoteViewFrames];
-        [note setNoteHidden:NO];
-        [note beginEditing];
+        PTYAnnotation *annotation = [[[PTYAnnotation alloc] init] autorelease];
+        [_dataSource addNote:annotation inRange:range focus:YES];
     }];
 }
 
@@ -3084,18 +3088,14 @@
 }
 
 - (void)updateNoteViewFrames {
-    for (NSView *view in [self subviews]) {
-        if ([view isKindOfClass:[PTYNoteView class]]) {
-            PTYNoteView *noteView = (PTYNoteView *)view;
-            PTYNoteViewController *note =
-                (PTYNoteViewController *)noteView.delegate.noteViewController;
-            VT100GridCoordRange coordRange = [_dataSource coordRangeOfNote:note];
-            if (coordRange.end.y >= 0) {
-                [note setAnchor:NSMakePoint(coordRange.end.x * _charWidth + [iTermPreferences intForKey:kPreferenceKeySideMargins],
-                                            (1 + coordRange.end.y) * _lineHeight)];
-            }
+    for (PTYNoteViewController *note in _notes) {
+        VT100GridCoordRange coordRange = [_dataSource coordRangeOfAnnotation:note.annotation];
+        if (coordRange.end.y >= 0) {
+            [note setAnchor:NSMakePoint(coordRange.end.x * _charWidth + [iTermPreferences intForKey:kPreferenceKeySideMargins],
+                                        (1 + coordRange.end.y) * _lineHeight)];
         }
     }
+
     [_dataSource removeInaccessibleNotes];
 }
 
@@ -5072,6 +5072,19 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 - (BOOL)cursorShadow {
     return _drawingHelper.cursorShadow;
+}
+
+#pragma mark - PTYNoteViewControllerDelegate
+
+- (void)noteDidRequestRemoval:(PTYNoteViewController *)note {
+    [self.dataSource removeAnnotation:note.annotation];
+    [note.view removeFromSuperview];
+    [_notes removeObject:note];
+    [self.window makeFirstResponder:self];
+}
+
+- (void)noteDidEndEditing:(PTYNoteViewController *)note {
+    [self.window makeFirstResponder:self];
 }
 
 @end

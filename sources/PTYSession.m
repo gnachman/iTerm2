@@ -149,6 +149,7 @@
 #import "ProfilesColorsPreferencesViewController.h"
 #import "ProfilesGeneralPreferencesViewController.h"
 #import "PSMMinimalTabStyle.h"
+#import "PTYNoteViewController.h"
 #import "PTYTask.h"
 #import "PTYTextView.h"
 #import "PTYTextView+ARC.h"
@@ -868,10 +869,6 @@ static const CGFloat PTYSessionMaximumMetalViewSize = 16384;
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(windowDidEndLiveResize:)
                                                      name:NSWindowDidEndLiveResizeNotification
-                                                   object:nil];
-        [[NSNotificationCenter defaultCenter] addObserver:self
-                                                 selector:@selector(annotationVisibilityDidChange:)
-                                                     name:iTermAnnotationVisibilityDidChange
                                                    object:nil];
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(apiDidStop:)
@@ -5645,15 +5642,6 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
-// Metal is disabled when any note anywhere is visible because compositing NSViews over Metal
-// is a horror and besides these are subviews of PTYTextView and I really don't
-// want to invest any more in this little-used feature.
-- (void)annotationVisibilityDidChange:(NSNotification *)notification {
-    if ([iTermPreferences boolForKey:kPreferenceKeyUseMetal]) {
-        [_delegate sessionUpdateMetalAllowed];
-    }
-}
-
 - (void)synchronizeTmuxFonts:(NSNotification *)notification {
     if (!_exited && [self isTmuxClient]) {
         NSArray *args = [notification object];
@@ -7249,7 +7237,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)addNoteAtCursor {
-    PTYNoteViewController *note = [[[PTYNoteViewController alloc] init] autorelease];
+    PTYAnnotation *note = [[[PTYAnnotation alloc] init] autorelease];
     VT100GridCoordRange rangeAtCursor =
         [self smartSelectionRangeAt:VT100GridCoordMake(_screen.cursorX - 1,
                                                        _screen.cursorY - 1)];
@@ -7260,16 +7248,17 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         [self smartSelectionRangeAt:VT100GridCoordMake(_screen.cursorX,
                                                        _screen.cursorY - 1)];
     if (VT100GridCoordRangeLength(rangeAtCursor, _screen.width) > 0) {
-        [_screen addNote:note inRange:rangeAtCursor];
+        [_screen addNote:note inRange:rangeAtCursor focus:YES];
     } else if (VT100GridCoordRangeLength(rangeAfterCursor, _screen.width) > 0) {
-        [_screen addNote:note inRange:rangeAfterCursor];
+        [_screen addNote:note inRange:rangeAfterCursor focus:YES];
     } else if (VT100GridCoordRangeLength(rangeBeforeCursor, _screen.width) > 0) {
-        [_screen addNote:note inRange:rangeBeforeCursor];
+        [_screen addNote:note inRange:rangeBeforeCursor focus:YES];
     } else {
         int y = _screen.cursorY - 1 + [_screen numberOfScrollbackLines];
-        [_screen addNote:note inRange:VT100GridCoordRangeMake(0, y, _screen.width, y)];
+        [_screen addNote:note
+                 inRange:VT100GridCoordRangeMake(0, y, _screen.width, y)
+                   focus:YES];
     }
-    [note makeFirstResponder];
 }
 
 - (void)addNoteWithText:(NSString *)text inAbsoluteRange:(VT100GridAbsCoordRange)absRange {
@@ -7278,10 +7267,9 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     if (range.start.x < 0) {
         return;
     }
-    PTYNoteViewController *note = [[[PTYNoteViewController alloc] init] autorelease];
-    [note setString:text];
-    [note sizeToFit];
-    [_screen addNote:note inRange:range];
+    PTYAnnotation *annotation = [[[PTYAnnotation alloc] init] autorelease];
+    annotation.stringValue = text;
+    [_screen addNote:annotation inRange:range focus:NO];
 }
 
 - (void)textViewToggleAnnotations {
@@ -7290,15 +7278,17 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                                 0,
                                 _screen.width,
                                 _screen.height + [_screen numberOfScrollbackLines]);
-    NSArray *notes = [_screen notesInRange:range];
+    NSArray<PTYAnnotation *> *annotations = [_screen annotationsInRange:range];
     BOOL anyNoteIsVisible = NO;
-    for (PTYNoteViewController *note in notes) {
+    for (PTYAnnotation *annotation in annotations) {
+        PTYNoteViewController *note = (PTYNoteViewController *)annotation.delegate;
         if (!note.view.isHidden) {
             anyNoteIsVisible = YES;
             break;
         }
     }
-    for (PTYNoteViewController *note in notes) {
+    for (PTYAnnotation *annotation in annotations) {
+        PTYNoteViewController *note = (PTYNoteViewController *)annotation.delegate;
         [note setNoteHidden:anyNoteIsVisible];
     }
     [self.delegate sessionUpdateMetalAllowed];
@@ -7314,9 +7304,12 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         [_textview highlightMarkOnLine:VT100GridRangeMax([_screen lineNumberRangeOfInterval:obj.entry.interval])
                           hasErrorCode:hasErrorCode];
     } else {
-        PTYNoteViewController *note = (PTYNoteViewController *)obj;
-        [note setNoteHidden:NO];
-        [note highlight];
+        PTYAnnotation *annotation = [PTYAnnotation castFrom:obj];
+        if (annotation) {
+            PTYNoteViewController *note = (PTYNoteViewController *)annotation.delegate;
+            [note setNoteHidden:NO];
+            [note highlight];
+        }
     }
 }
 
@@ -7339,7 +7332,11 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 - (void)previousMarkOrNote:(BOOL)annotationsOnly {
     NSArray *objects = nil;
     if (self.currentMarkOrNotePosition == nil) {
-        objects = annotationsOnly ? [_screen lastAnnotations] : [_screen lastMarks];
+        if (annotationsOnly) {
+            objects = [_screen lastAnnotations];
+        } else {
+            objects = [_screen lastMarks];
+        }
     } else {
         if (annotationsOnly) {
             objects = [_screen annotationsBefore:self.currentMarkOrNotePosition];
@@ -7347,7 +7344,11 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
             objects = [_screen marksBefore:self.currentMarkOrNotePosition];
         }
         if (!objects.count) {
-            objects = annotationsOnly ? [_screen lastAnnotations] : [_screen lastMarks];
+            if (annotationsOnly) {
+                objects = [_screen lastAnnotations];
+            } else {
+                objects = [_screen lastMarks];
+            }
             if (objects.count) {
                 [_textview beginFlash:kiTermIndicatorWrapToBottom];
             }
@@ -7366,13 +7367,17 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 - (BOOL)markIsNavigable:(id<iTermMark>)mark {
     return ([mark isKindOfClass:[VT100ScreenMark class]] ||
-            [mark isKindOfClass:[PTYNoteViewController class]]);
+            [mark isKindOfClass:[PTYAnnotation class]]);
 }
 
 - (void)nextMarkOrNote:(BOOL)annotationsOnly {
-    NSArray *objects = nil;
+    NSArray<id<IntervalTreeObject>> *objects = nil;
     if (self.currentMarkOrNotePosition == nil) {
-        objects = annotationsOnly ? [_screen firstAnnotations] : [_screen firstMarks];
+        if (annotationsOnly) {
+            objects = [_screen firstAnnotations];
+        } else {
+            objects = [_screen firstMarks];
+        }
     } else {
         if (annotationsOnly) {
             objects = [_screen annotationsAfter:self.currentMarkOrNotePosition];
@@ -7380,7 +7385,11 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
             objects = [_screen marksAfter:self.currentMarkOrNotePosition];
         }
         if (!objects.count) {
-            objects = annotationsOnly ? [_screen firstAnnotations] : [_screen firstMarks];
+            if (annotationsOnly) {
+                objects = [_screen firstAnnotations];
+            } else {
+                objects = [_screen firstMarks];
+            }
             if (objects.count) {
                 [_textview beginFlash:kiTermIndicatorWrapToTop];
             }
@@ -11422,14 +11431,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     }
 }
 
-- (void)screenDidAddNote:(PTYNoteViewController *)note {
-    [_textview addViewForNote:note];
-    [_textview setNeedsDisplay:YES];
+- (void)screenDidAddNote:(PTYAnnotation *)note
+                   focus:(BOOL)focus {
+    [_textview addViewForNote:note focus:focus];
     [self.delegate sessionUpdateMetalAllowed];
-}
-
-- (void)screenDidEndEditingNote {
-    [_textview.window makeFirstResponder:_textview];
 }
 
 // Stop pasting (despite the name)

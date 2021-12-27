@@ -29,11 +29,11 @@
 
     if (gDebugLogging) {
         DLog(@"Notes after resizing to width=%@", @(self.width));
-        for (PTYNoteViewController *note in _mutableState.intervalTree.allObjects) {
-            if (![note isKindOfClass:[PTYNoteViewController class]]) {
+        for (id<IntervalTreeObject> object in _mutableState.intervalTree.allObjects) {
+            if (![object isKindOfClass:[PTYAnnotation class]]) {
                 continue;
             }
-            DLog(@"Note has coord range %@", VT100GridCoordRangeDescription([self coordRangeForInterval:note.entry.interval]));
+            DLog(@"Note has coord range %@", VT100GridCoordRangeDescription([self coordRangeForInterval:object.entry.interval]));
         }
         DLog(@"------------ end -----------");
     }
@@ -70,7 +70,7 @@
 
 
     // If non-nil, contains 3-tuples NSArray*s of
-    // [ PTYNoteViewController*,
+    // [ PTYAnnotation*,
     //   LineBufferPosition* for start of range,
     //   LineBufferPosition* for end of range ]
     // These will be re-added to intervalTree_ later on.
@@ -176,13 +176,13 @@
     // Convert note ranges to new coords, dropping or truncating as needed
     _mutableState.currentGrid = _mutableState.altGrid;  // Swap to alt grid temporarily for convertRange:toWidth:to:inLineBuffer:
     IntervalTree *replacementTree = [[[IntervalTree alloc] init] autorelease];
-    for (PTYNoteViewController *note in [_state.savedIntervalTree allObjects]) {
-        VT100GridCoordRange noteRange = [self coordRangeForInterval:note.entry.interval];
-        DLog(@"Found note at %@", VT100GridCoordRangeDescription(noteRange));
+    for (id<IntervalTreeObject> object in [_state.savedIntervalTree allObjects]) {
+        VT100GridCoordRange objectRange = [self coordRangeForInterval:object.entry.interval];
+        DLog(@"Found object at %@", VT100GridCoordRangeDescription(objectRange));
         VT100GridCoordRange newRange;
-        if ([self convertRange:noteRange toWidth:newSize.width to:&newRange inLineBuffer:altScreenLineBuffer tolerateEmpty:[self intervalTreeObjectMayBeEmpty:note]]) {
-            assert(noteRange.start.y >= 0);
-            assert(noteRange.end.y >= 0);
+        if ([self convertRange:objectRange toWidth:newSize.width to:&newRange inLineBuffer:altScreenLineBuffer tolerateEmpty:[self intervalTreeObjectMayBeEmpty:object]]) {
+            assert(objectRange.start.y >= 0);
+            assert(objectRange.end.y >= 0);
             // Anticipate the lines that will be dropped when the alt grid is restored.
             newRange.start.y += [self totalScrollbackOverflow] - numLinesDroppedFromTop;
             newRange.end.y += [self totalScrollbackOverflow] - numLinesDroppedFromTop;
@@ -190,13 +190,13 @@
                 newRange.start.y = 0;
                 newRange.start.x = 0;
             }
-            DLog(@"  Its new range is %@ including %d lines dropped from top", VT100GridCoordRangeDescription(noteRange), numLinesDroppedFromTop);
-            [_mutableState.savedIntervalTree removeObject:note];
+            DLog(@"  Its new range is %@ including %d lines dropped from top", VT100GridCoordRangeDescription(objectRange), numLinesDroppedFromTop);
+            [_mutableState.savedIntervalTree removeObject:object];
             if (newRange.end.y > 0 || (newRange.end.y == 0 && newRange.end.x > 0)) {
                 Interval *newInterval = [self intervalForGridCoordRange:newRange
                                                                   width:newSize.width
                                                             linesOffset:0];
-                [replacementTree addObject:note withInterval:newInterval];
+                [replacementTree addObject:object withInterval:newInterval];
             } else {
                 DLog(@"Failed to convert");
             }
@@ -222,7 +222,7 @@
             [note isKindOfClass:[VT100WorkingDirectory class]] ||
             [note isKindOfClass:[iTermImageMark class]] ||
             [note isKindOfClass:[iTermURLMark class]] ||
-            [note isKindOfClass:[PTYNoteViewController class]]);
+            [note isKindOfClass:[PTYAnnotation class]]);
 }
 
 - (NSArray *)subSelectionsAfterRestoringPrimaryGridWithCopyOfAltGrid:(VT100Grid *)copyOfAltGrid
