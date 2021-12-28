@@ -288,5 +288,17 @@ static const int kDefaultMaxScrollbackLines = 1000;
     return nil;
 }
 
+- (VT100GridCoordRange)commandRange {
+    const long long offset = self.cumulativeScrollbackOverflow;
+    if (self.commandStartCoord.x < 0) {
+        return VT100GridCoordRangeMake(-1, -1, -1, -1);
+    } else {
+        return VT100GridCoordRangeMake(self.commandStartCoord.x,
+                                       MAX(0, self.commandStartCoord.y - offset),
+                                       self.currentGrid.cursorX,
+                                       self.currentGrid.cursorY + self.numberOfScrollbackLines);
+    }
+}
+
 @end
 

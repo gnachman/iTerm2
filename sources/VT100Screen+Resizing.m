@@ -402,7 +402,7 @@
     DLog(@"Cursor at %d,%d", _state.currentGrid.cursorX, _state.currentGrid.cursorY);
     if (_state.commandStartCoord.x != -1) {
         [_mutableState didUpdatePromptLocation];
-        [self mutCommandDidEndWithRange:[self commandRange]];
+        [self mutCommandDidEndWithRange:_mutableState.commandRange];
         [self mutInvalidateCommandStartCoordWithoutSideEffects];
     }
     _mutableState.lastCommandMark = nil;

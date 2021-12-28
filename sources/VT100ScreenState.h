@@ -240,6 +240,11 @@ NS_ASSUME_NONNULL_BEGIN
 - (Interval *)intervalForGridCoordRange:(VT100GridCoordRange)range
                                   width:(int)width
                             linesOffset:(long long)linesOffset;
+
+#pragma mark - Shell Integration
+
+@property (nonatomic, readonly) VT100GridCoordRange commandRange;
+
 @end
 
 
