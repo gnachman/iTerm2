@@ -251,7 +251,7 @@
                                 _mutableState.width,
                                 screenOrigin + _mutableState.height);
     DLog(@"  moveNotes: looking in range %@", VT100GridCoordRangeDescription(screenRange));
-    Interval *sourceInterval = [self intervalForGridCoordRange:screenRange];
+    Interval *sourceInterval = [_mutableState intervalForGridCoordRange:screenRange];
     _mutableState.lastCommandMark = nil;
     for (id<IntervalTreeObject> obj in [source objectsInInterval:sourceInterval]) {
         Interval *interval = [[obj.entry.interval retain] autorelease];
@@ -322,14 +322,14 @@
             [_mutableState.intervalTree removeObject:previousWorkingDirectory];
             range.end = VT100GridCoordMake(_mutableState.width, line);
             DLog(@"Extending the previous directory to %@", VT100GridCoordRangeDescription(range));
-            Interval *interval = [self intervalForGridCoordRange:range];
+            Interval *interval = [_mutableState intervalForGridCoordRange:range];
             [_mutableState.intervalTree addObject:previousWorkingDirectory withInterval:interval];
         } else {
             VT100GridCoordRange range;
             range = VT100GridCoordRangeMake(_state.currentGrid.cursorX, line, _mutableState.width, line);
             DLog(@"Set range of %@ to %@", workingDirectory, VT100GridCoordRangeDescription(range));
             [_mutableState.intervalTree addObject:workingDirectoryObj
-                                     withInterval:[self intervalForGridCoordRange:range]];
+                                     withInterval:[_mutableState intervalForGridCoordRange:range]];
         }
     }
     VT100RemoteHost *remoteHost = [self remoteHostOnLine:line];
@@ -358,7 +358,7 @@
     remoteHostObj.username = user;
     VT100GridCoordRange range = VT100GridCoordRangeMake(0, line, _mutableState.width, line);
     [_mutableState.intervalTree addObject:remoteHostObj
-                             withInterval:[self intervalForGridCoordRange:range]];
+                             withInterval:[_mutableState intervalForGridCoordRange:range]];
     return remoteHostObj;
 }
 
@@ -393,7 +393,7 @@
     if ([mark isKindOfClass:[VT100ScreenMark class]]) {
         _mutableState.markCache[@(_mutableState.cumulativeScrollbackOverflow + range.end.y)] = mark;
     }
-    [_mutableState.intervalTree addObject:mark withInterval:[self intervalForGridCoordRange:range]];
+    [_mutableState.intervalTree addObject:mark withInterval:[_mutableState intervalForGridCoordRange:range]];
     [self.intervalTreeObserver intervalTreeDidAddObjectOfType:[self intervalTreeObserverTypeForObject:mark]
                                                        onLine:range.start.y + self.totalScrollbackOverflow];
     [self setNeedsRedraw];
@@ -416,7 +416,7 @@
 - (void)mutAddNote:(PTYAnnotation *)annotation
            inRange:(VT100GridCoordRange)range
              focus:(BOOL)focus {
-    [_mutableState.intervalTree addObject:annotation withInterval:[self intervalForGridCoordRange:range]];
+    [_mutableState.intervalTree addObject:annotation withInterval:[_mutableState intervalForGridCoordRange:range]];
     [_mutableState.currentGrid markAllCharsDirty:YES];
     [_mutableState addSideEffect:^(id<VT100ScreenDelegate> delegate) {
         [delegate screenDidAddNote:annotation focus:focus];
@@ -605,7 +605,7 @@
 }
 
 - (NSMutableArray<id<IntervalTreeObject>> *)removeIntervalTreeObjectsInRange:(VT100GridCoordRange)coordRange exceptCoordRange:(VT100GridCoordRange)coordRangeToSave {
-    Interval *intervalToClear = [self intervalForGridCoordRange:coordRange];
+    Interval *intervalToClear = [_mutableState intervalForGridCoordRange:coordRange];
     NSMutableArray<id<IntervalTreeObject>> *marksToMove = [NSMutableArray array];
     for (id<IntervalTreeObject> obj in [_mutableState.intervalTree objectsInInterval:intervalToClear]) {
         const VT100GridCoordRange markRange = [_mutableState coordRangeForInterval:obj.entry.interval];
@@ -690,7 +690,7 @@
     NSMutableArray<id<IntervalTreeObject>> *marksToMove = [self removeIntervalTreeObjectsInRange:coordRange
                                                                                 exceptCoordRange:cursorLineRange.coordRange];
     if (absCursorCoord.y >= absLine) {
-        Interval *cursorLineInterval = [self intervalForGridCoordRange:cursorLineRange.coordRange];
+        Interval *cursorLineInterval = [_mutableState intervalForGridCoordRange:cursorLineRange.coordRange];
         for (id<IntervalTreeObject> obj in [_mutableState.intervalTree objectsInInterval:cursorLineInterval]) {
             if ([marksToMove containsObject:obj]) {
                 continue;
@@ -713,7 +713,7 @@
                 VT100GridCoordRange range = [_mutableState coordRangeForInterval:obj.entry.interval];
                 range.start.y -= numberOfLinesRemoved;
                 range.end.y -= numberOfLinesRemoved;
-                Interval *interval = [self intervalForGridCoordRange:range];
+                Interval *interval = [_mutableState intervalForGridCoordRange:range];
 
                 // Remove and re-add the object with the new interval.
                 [self mutRemoveObjectFromIntervalTree:obj];
@@ -2955,10 +2955,10 @@ static inline void VT100ScreenEraseCell(screen_char_t *sct, iTermExternalAttribu
 // IMPORTANT: Call -mutReloadMarkCache after this.
 - (void)mutSwapNotes {
     int historyLines = _mutableState.numberOfScrollbackLines;
-    Interval *origin = [self intervalForGridCoordRange:VT100GridCoordRangeMake(0,
-                                                                               historyLines,
-                                                                               1,
-                                                                               historyLines)];
+    Interval *origin = [_mutableState intervalForGridCoordRange:VT100GridCoordRangeMake(0,
+                                                                                        historyLines,
+                                                                                        1,
+                                                                                        historyLines)];
     IntervalTree *temp = [[[IntervalTree alloc] init] autorelease];
     DLog(@"mutSwapNotes: moving onscreen notes into savedNotes");
     [self moveNotesOnScreenFrom:_mutableState.intervalTree
@@ -3018,7 +3018,7 @@ static inline void VT100ScreenEraseCell(screen_char_t *sct, iTermExternalAttribu
                                 screenOrigin,
                                 _mutableState.width,
                                 screenOrigin + _mutableState.height);
-    Interval *screenInterval = [self intervalForGridCoordRange:screenRange];
+    Interval *screenInterval = [_mutableState intervalForGridCoordRange:screenRange];
     for (id<IntervalTreeObject> note in [_state.intervalTree objectsInInterval:screenInterval]) {
         if (note.entry.interval.location < screenInterval.location) {
             // Truncate note so that it ends just before screen.

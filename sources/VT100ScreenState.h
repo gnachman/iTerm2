@@ -236,6 +236,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (VT100GridCoordRange)coordRangeForInterval:(Interval *)interval;
 - (VT100GridRange)lineNumberRangeOfInterval:(Interval *)interval;
+- (Interval *)intervalForGridCoordRange:(VT100GridCoordRange)range;
 - (Interval *)intervalForGridCoordRange:(VT100GridCoordRange)range
                                   width:(int)width
                             linesOffset:(long long)linesOffset;

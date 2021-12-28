@@ -473,7 +473,7 @@
                             0,
                             _mutableState.numberOfScrollbackLines + self.height);
     NSArray *notesAtLeastPartiallyOnScreen =
-    [_mutableState.intervalTree objectsInInterval:[self intervalForGridCoordRange:screenCoordRange]];
+    [_mutableState.intervalTree objectsInInterval:[_mutableState intervalForGridCoordRange:screenCoordRange]];
 
     LineBuffer *appendOnlyLineBuffer = [[realLineBuffer copy] autorelease];
     [self appendScreen:grid
