@@ -1087,7 +1087,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (VT100ScreenMark *)markOnLine:(int)line {
-#warning Figure out what to do with the mark cache. Also don't use totalScrollbackOverflow from mutable code path
+#warning TODO: Figure out what to do with the mark cache. Also don't use totalScrollbackOverflow from mutable code path
     return _state.markCache[@([self totalScrollbackOverflow] + line)];
 }
 

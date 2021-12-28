@@ -619,10 +619,8 @@ backgroundColor:(NSColor *)backgroundColor;
 
 // triggers
 - (void)setAllTriggersEnabled:(BOOL)enabled;
-- (void)clearTriggerLine;
 - (BOOL)anyTriggerCanBeEnabled;
 - (BOOL)anyTriggerCanBeDisabled;
-- (void)appendStringToTriggerLine:(NSString *)s;
 // (regex, enabled)
 - (NSArray<iTermTuple<NSString *, NSNumber *> *> *)triggerTuples;
 - (void)toggleTriggerEnabledAtIndex:(NSInteger)index;
@@ -921,6 +919,7 @@ backgroundColor:(NSColor *)backgroundColor;
 - (void)didChangeScreen:(CGFloat)scaleFactor;
 - (void)addContentSubscriber:(id<iTermContentSubscriber>)contentSubscriber;
 - (void)didFinishRestoration;
+- (void)performActionForCapturedOutput:(CapturedOutput *)capturedOutput;
 
 #pragma mark - API
 

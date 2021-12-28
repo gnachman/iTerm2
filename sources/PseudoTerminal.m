@@ -11285,10 +11285,7 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
 }
 
 - (void)toolbeltActivateTriggerForCapturedOutputInCurrentSession:(CapturedOutput *)capturedOutput {
-    if (self.currentSession) {
-        CaptureTrigger *trigger = (CaptureTrigger *)capturedOutput.trigger;
-        [trigger activateOnOutput:capturedOutput inSession:self.currentSession];
-    }
+    [self.currentSession performActionForCapturedOutput:capturedOutput];
 }
 
 - (BOOL)toolbeltCurrentSessionHasGuid:(NSString *)guid {

@@ -179,7 +179,7 @@
             [command stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
         if (trimmedCommand.length) {
             mark = [self markOnLine:self.lastPromptLine - [self totalScrollbackOverflow]];
-#warning This modifies shared state
+#warning TODO: This modifies shared state
             DLog(@"FinalTerm:  Make the mark on lastPromptLine %lld (%@) a command mark for command %@",
                  _mutableState.lastPromptLine - _mutableState.cumulativeScrollbackOverflow, mark, command);
             mark.command = command;
@@ -212,7 +212,7 @@
 - (void)assignCurrentCommandEndDate {
     VT100ScreenMark *screenMark = self.lastCommandMark;
     if (!screenMark.endDate) {
-#warning This mutates a shared object.
+#warning TODO: This mutates a shared object.
         screenMark.endDate = [NSDate date];
     }
 }
@@ -304,7 +304,7 @@
 // that alone is not sufficient evidence that it is remote. Pushed directories will update the
 // recently used directories and will change the current remote host to the remote host on `line`.
 - (void)mutSetWorkingDirectory:(NSString *)workingDirectory
-#warning I need to use an absolute line number here to avoid race conditions between main thread and mutation thread.
+#warning TODO: I need to use an absolute line number here to avoid race conditions between main thread and mutation thread.
                         onLine:(int)line
                         pushed:(BOOL)pushed
                          token:(id<iTermOrderedToken>)token {
@@ -1248,7 +1248,7 @@
     return linesDroppedForBrevity;
 }
 
-#warning This method is an unusual mutator because it has to be on the main thread and it's probably always during initialization.
+#warning TODO: This method is an unusual mutator because it has to be on the main thread and it's probably always during initialization.
 
 - (void)mutRestoreFromDictionary:(NSDictionary *)dictionary
         includeRestorationBanner:(BOOL)includeRestorationBanner

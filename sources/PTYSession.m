@@ -3,6 +3,7 @@
 #import "PTYSession+Private.h"
 
 #import "CapturedOutput.h"
+#import "CaptureTrigger.h"
 #import "Coprocess.h"
 #import "CVector.h"
 #import "FakeWindow.h"
@@ -15212,6 +15213,10 @@ launchCoprocessWithCommand:(NSString *)command
 // STOP THE WORLD - sync
 - (void)triggerSession:(Trigger *)trigger setVariableNamed:(NSString *)name toValue:(id)value {
     [self.genericScope setValue:value forVariableNamed:name];
+}
+
+- (void)performActionForCapturedOutput:(CapturedOutput *)capturedOutput {
+    [capturedOutput.trigger activateOnOutput:capturedOutput inSession:self];
 }
 
 @end
