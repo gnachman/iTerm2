@@ -383,7 +383,7 @@
     }
     [_mutableState.intervalTree addObject:mark withInterval:[_mutableState intervalForGridCoordRange:range]];
 
-    const iTermIntervalTreeObjectType objectType = [self intervalTreeObserverTypeForObject:mark];
+    const iTermIntervalTreeObjectType objectType = iTermIntervalTreeObjectTypeForObject(mark);
     const long long absLine = range.start.y + self.totalScrollbackOverflow;
     [_mutableState addIntervalTreeSideEffect:^(id<iTermIntervalTreeObserver>  _Nonnull observer) {
         [observer intervalTreeDidAddObjectOfType:objectType
@@ -422,7 +422,7 @@
     VT100ScreenMark *screenMark = [_mutableState lastCommandMark];
     if (screenMark) {
         DLog(@"Removing last command mark %@", screenMark);
-        [self.intervalTreeObserver intervalTreeDidRemoveObjectOfType:[self intervalTreeObserverTypeForObject:screenMark]
+        [self.intervalTreeObserver intervalTreeDidRemoveObjectOfType:iTermIntervalTreeObjectTypeForObject(screenMark)
                                                               onLine:[_mutableState coordRangeForInterval:screenMark.entry.interval].start.y + self.totalScrollbackOverflow];
         [_mutableState.intervalTree removeObject:screenMark];
     }
@@ -444,7 +444,7 @@
         [annotation willRemove];
     }
     [_mutableState.intervalTree removeObject:obj];
-    iTermIntervalTreeObjectType type = [self intervalTreeObserverTypeForObject:obj];
+    iTermIntervalTreeObjectType type = iTermIntervalTreeObjectTypeForObject(obj);
     if (type != iTermIntervalTreeObjectTypeUnknown) {
         VT100GridCoordRange range = [_mutableState coordRangeForInterval:obj.entry.interval];
         [self.intervalTreeObserver intervalTreeDidRemoveObjectOfType:type
@@ -473,21 +473,7 @@
 }
 
 - (void)mutRemoveAnnotation:(PTYAnnotation *)annotation {
-    if ([_state.intervalTree containsObject:annotation]) {
-        _mutableState.lastCommandMark = nil;
-        [[annotation retain] autorelease];
-        const iTermIntervalTreeObjectType type = [self intervalTreeObserverTypeForObject:annotation];
-        const long long absLine = [_mutableState coordRangeForInterval:annotation.entry.interval].start.y + self.totalScrollbackOverflow;
-        [_mutableState.intervalTree removeObject:annotation];
-        [_mutableState addIntervalTreeSideEffect:^(id<iTermIntervalTreeObserver>  _Nonnull observer) {
-            [observer intervalTreeDidRemoveObjectOfType:type
-                                                 onLine:absLine];
-        }];
-    } else if ([_state.savedIntervalTree containsObject:annotation]) {
-        _mutableState.lastCommandMark = nil;
-        [_mutableState.savedIntervalTree removeObject:annotation];
-    }
-    [_mutableState setNeedsRedraw];
+    [_mutableState removeAnnotation:annotation];
 }
 
 #pragma mark - Clearing
@@ -724,7 +710,7 @@
                     }];
                 }
                 // TODO: This needs to be a side effect.
-                [self.intervalTreeObserver intervalTreeDidAddObjectOfType:[self intervalTreeObserverTypeForObject:obj]
+                [self.intervalTreeObserver intervalTreeDidAddObjectOfType:iTermIntervalTreeObjectTypeForObject(obj)
                                                                    onLine:range.start.y + totalScrollbackOverflow];
             }];
         }
@@ -4262,10 +4248,10 @@ static inline void VT100ScreenEraseCell(screen_char_t *sct, iTermExternalAttribu
     if (mark) {
         DLog(@"FinalTerm: setting code on mark %@", mark);
         const NSInteger line = [_mutableState coordRangeForInterval:mark.entry.interval].start.y + self.totalScrollbackOverflow;
-        [_state.intervalTreeObserver intervalTreeDidRemoveObjectOfType:[self intervalTreeObserverTypeForObject:mark]
+        [_state.intervalTreeObserver intervalTreeDidRemoveObjectOfType:iTermIntervalTreeObjectTypeForObject(mark)
                                                                 onLine:line];
         mark.code = returnCode;
-        [_state.intervalTreeObserver intervalTreeDidAddObjectOfType:[self intervalTreeObserverTypeForObject:mark]
+        [_state.intervalTreeObserver intervalTreeDidAddObjectOfType:iTermIntervalTreeObjectTypeForObject(mark)
                                                              onLine:line];
         VT100RemoteHost *remoteHost = [self remoteHostOnLine:_mutableState.numberOfLines];
         [[iTermShellHistoryController sharedInstance] setStatusOfCommandAtMark:mark

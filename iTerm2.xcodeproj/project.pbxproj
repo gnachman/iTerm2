@@ -1756,6 +1756,7 @@
 		A6661310225CFF7200840E89 /* BetterFontPicker.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = A6661309225CFF5A00840E89 /* BetterFontPicker.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		A6661311225CFF7A00840E89 /* BetterFontPicker.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A6661309225CFF5A00840E89 /* BetterFontPicker.framework */; };
 		A6661312225CFF7A00840E89 /* BetterFontPicker.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = A6661309225CFF5A00840E89 /* BetterFontPicker.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		A6667E91277BC5A900152678 /* iTermIntervalTreeObserver.m in Sources */ = {isa = PBXBuildFile; fileRef = A6667E90277BC5A900152678 /* iTermIntervalTreeObserver.m */; };
 		A666D5E52219323D00D6184A /* iTermEventTap.m in Sources */ = {isa = PBXBuildFile; fileRef = A6FEA25E1CF0F20B00376F28 /* iTermEventTap.m */; };
 		A666D5E8221A191600D6184A /* iTermVariableScope+Session.h in Headers */ = {isa = PBXBuildFile; fileRef = A666D5E6221A191600D6184A /* iTermVariableScope+Session.h */; };
 		A666D5E9221A191600D6184A /* iTermVariableScope+Session.m in Sources */ = {isa = PBXBuildFile; fileRef = A666D5E7221A191600D6184A /* iTermVariableScope+Session.m */; };
@@ -5568,6 +5569,7 @@
 		A665C1F82440461400F623F0 /* WindowCorner@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "WindowCorner@2x.png"; path = "images/WindowCorner@2x.png"; sourceTree = "<group>"; };
 		A665C1F92440461500F623F0 /* WindowCorner.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = WindowCorner.png; path = images/WindowCorner.png; sourceTree = "<group>"; };
 		A6661309225CFF5A00840E89 /* BetterFontPicker.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = BetterFontPicker.framework; path = BetterFontPicker/BetterFontPicker.framework; sourceTree = "<group>"; };
+		A6667E90277BC5A900152678 /* iTermIntervalTreeObserver.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermIntervalTreeObserver.m; sourceTree = "<group>"; };
 		A666D5E6221A191600D6184A /* iTermVariableScope+Session.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "iTermVariableScope+Session.h"; sourceTree = "<group>"; };
 		A666D5E7221A191600D6184A /* iTermVariableScope+Session.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "iTermVariableScope+Session.m"; sourceTree = "<group>"; };
 		A666D5EA221A1D9D00D6184A /* iTermVariableScope+Tab.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "iTermVariableScope+Tab.h"; sourceTree = "<group>"; };
@@ -9868,6 +9870,7 @@
 				A62EE25427448CDB00D57B54 /* SwiftyStringWithBackreferencesEvaluator.swift */,
 				A6E1524427602FFD00D0F41C /* iTermWeakBox.h */,
 				A6E1524527602FFE00D0F41C /* iTermWeakBox.m */,
+				A6667E90277BC5A900152678 /* iTermIntervalTreeObserver.m */,
 			);
 			name = Helpers;
 			sourceTree = "<group>";
@@ -14148,6 +14151,7 @@
 				A6A802E1226AD0D200BC70DC /* iTermSearchHistory.m in Sources */,
 				A6BCAADA21F6F53E0000CD29 /* iTermTextPopoverViewController.m in Sources */,
 				A60C036F2089B29700FE2F1F /* iTermScriptHistory.m in Sources */,
+				A6667E91277BC5A900152678 /* iTermIntervalTreeObserver.m in Sources */,
 				A6E5D2101FA3C57900EDD002 /* iTermMetalFrameData.m in Sources */,
 				530AB7BA20A638A600D2AA08 /* iTermDisclosableView.m in Sources */,
 				A65429AC20C4880300CE71B1 /* iTermSessionFactory.m in Sources */,
