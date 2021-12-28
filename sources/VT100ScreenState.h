@@ -216,6 +216,10 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (instancetype)init NS_UNAVAILABLE;
 
+#pragma mark - Grid
+
+@property (nonatomic, readonly) int cursorY;
+
 #pragma mark - Scollback
 
 @property (nonatomic, readonly) int numberOfScrollbackLines;

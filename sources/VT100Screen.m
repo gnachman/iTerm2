@@ -410,7 +410,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (int)cursorY {
-    return _state.currentGrid.cursorY + 1;
+    return _state.cursorY;
 }
 
 - (void)enumerateLinesInRange:(NSRange)range block:(void (^)(int, ScreenCharArray *, iTermImmutableMetadata, BOOL *))block {
@@ -1437,7 +1437,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (id<iTermMark>)markAddedAtCursorOfClass:(Class)theClass {
-    return [self mutAddMarkOnLine:_state.numberOfScrollbackLines + self.cursorY - 1
+    return [self mutAddMarkOnLine:_state.numberOfScrollbackLines + _state.cursorY - 1
                           ofClass:theClass];
 }
 
