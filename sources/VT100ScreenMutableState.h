@@ -46,6 +46,12 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)appendLineFeed;
 - (void)appendCarriageReturnLineFeed;
 
+#pragma mark - Interval Tree
+
+- (id<iTermMark>)addMarkStartingAtAbsoluteLine:(long long)line
+                                       oneLine:(BOOL)oneLine
+                                       ofClass:(Class)markClass;
+
 #pragma mark - Shell Integration
 
 - (void)assignCurrentCommandEndDate;

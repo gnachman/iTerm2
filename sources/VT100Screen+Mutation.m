@@ -352,44 +352,9 @@
 - (id<iTermMark>)mutAddMarkStartingAtAbsoluteLine:(long long)line
                                           oneLine:(BOOL)oneLine
                                           ofClass:(Class)markClass {
-    id<iTermMark> mark = [[[markClass alloc] init] autorelease];
-    if ([mark isKindOfClass:[VT100ScreenMark class]]) {
-        VT100ScreenMark *screenMark = mark;
-        screenMark.delegate = self;
-        screenMark.sessionGuid = _mutableState.config.sessionGuid;
-    }
-    long long totalOverflow = _mutableState.cumulativeScrollbackOverflow;
-    if (line < totalOverflow || line > totalOverflow + _mutableState.numberOfLines) {
-        return nil;
-    }
-    int nonAbsoluteLine = line - totalOverflow;
-    VT100GridCoordRange range;
-    if (oneLine) {
-        range = VT100GridCoordRangeMake(0, nonAbsoluteLine, _mutableState.width, nonAbsoluteLine);
-    } else {
-        // Interval is whole screen
-        int limit = nonAbsoluteLine + _mutableState.height - 1;
-        if (limit >= _mutableState.numberOfScrollbackLines + [_state.currentGrid numberOfLinesUsed]) {
-            limit = _mutableState.numberOfScrollbackLines + [_state.currentGrid numberOfLinesUsed] - 1;
-        }
-        range = VT100GridCoordRangeMake(0,
-                                        nonAbsoluteLine,
-                                        _mutableState.width,
-                                        limit);
-    }
-    if ([mark isKindOfClass:[VT100ScreenMark class]]) {
-        _mutableState.markCache[@(_mutableState.cumulativeScrollbackOverflow + range.end.y)] = mark;
-    }
-    [_mutableState.intervalTree addObject:mark withInterval:[_mutableState intervalForGridCoordRange:range]];
-
-    const iTermIntervalTreeObjectType objectType = iTermIntervalTreeObjectTypeForObject(mark);
-    const long long absLine = range.start.y + _mutableState.cumulativeScrollbackOverflow;
-    [_mutableState addIntervalTreeSideEffect:^(id<iTermIntervalTreeObserver>  _Nonnull observer) {
-        [observer intervalTreeDidAddObjectOfType:objectType
-                                          onLine:absLine];
-    }];
-    [_mutableState setNeedsRedraw];
-    return mark;
+    return [_mutableState addMarkStartingAtAbsoluteLine:line
+                                                oneLine:oneLine
+                                                ofClass:markClass];
 }
 
 - (void)mutReloadMarkCache {
