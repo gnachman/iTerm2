@@ -12,6 +12,7 @@
 #import "PTYAnnotation.h"
 #import "VT100ScreenConfiguration.h"
 #import "VT100ScreenDelegate.h"
+#import "iTermAdvancedSettingsModel.h"
 #import "iTermIntervalTreeObserver.h"
 #import "iTermOrderEnforcer.h"
 
@@ -211,6 +212,31 @@
         [delegate screenPromptDidStartAtLine:line];
     }];
 }
+
+- (void)promptDidStartAt:(VT100GridAbsCoord)coord {
+    DLog(@"FinalTerm: mutPromptDidStartAt");
+    if (coord.x > 0 && self.config.shouldPlacePromptAtFirstColumn) {
+        [self appendCarriageReturnLineFeed];
+    }
+    self.shellIntegrationInstalled = YES;
+
+    self.lastCommandOutputRange = VT100GridAbsCoordRangeMake(self.startOfRunningCommandOutput.x,
+                                                             self.startOfRunningCommandOutput.y,
+                                                             coord.x,
+                                                             coord.y);
+    self.currentPromptRange = VT100GridAbsCoordRangeMake(coord.x,
+                                                         coord.y,
+                                                         coord.x,
+                                                         coord.y);
+
+    // FinalTerm uses this to define the start of a collapsible region. That would be a nightmare
+    // to add to iTerm, and our answer to this is marks, which already existed anyway.
+    [self setPromptStartLine:self.numberOfScrollbackLines + self.cursorY - 1];
+    if ([iTermAdvancedSettingsModel resetSGROnPrompt]) {
+        [self.terminal resetGraphicRendition];
+    }
+}
+
 
 #pragma mark - Annotations
 

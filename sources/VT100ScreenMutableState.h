@@ -63,6 +63,10 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)setPromptStartLine:(int)line;
 
+// This is like setPromptStartLine: but with lots of side effects that are desirable for the
+// regular shell integration flow.
+- (void)promptDidStartAt:(VT100GridAbsCoord)coord;
+
 #pragma mark - Annotations
 
 - (void)removeAnnotation:(PTYAnnotation *)annotation;
