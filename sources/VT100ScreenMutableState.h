@@ -17,6 +17,9 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (instancetype)init NS_DESIGNATED_INITIALIZER;
 - (id<VT100ScreenState>)copy;
+
+- (void)incrementOverflowBy:(int)overflowCount;
+
 @end
 
 NS_ASSUME_NONNULL_END

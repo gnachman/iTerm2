@@ -593,10 +593,10 @@
     [delegate_ screenTriggerableChangeDidOccur];
     // This clears the screen.
     int x = _state.currentGrid.cursorX;
-    [self mutIncrementOverflowBy:[self.mutableCurrentGrid resetWithLineBuffer:_mutableState.linebuffer
-                                                       unlimitedScrollback:_state.unlimitedScrollback
-                                                        preserveCursorLine:linesToSave > 0
-                                                     additionalLinesToSave:MAX(0, linesToSave - 1)]];
+    [_mutableState incrementOverflowBy:[self.mutableCurrentGrid resetWithLineBuffer:_mutableState.linebuffer
+                                                                unlimitedScrollback:_state.unlimitedScrollback
+                                                                 preserveCursorLine:linesToSave > 0
+                                                              additionalLinesToSave:MAX(0, linesToSave - 1)]];
     self.mutableCurrentGrid.cursorX = x;
     self.mutableCurrentGrid.cursorY = linesToSave - 1;
     [self removeIntervalTreeObjectsInRange:VT100GridCoordRangeMake(0,
@@ -788,10 +788,10 @@
         if (preservePrompt) {
             [self clearAndResetScreenSavingLines:linesToSave];
         } else {
-            [self mutIncrementOverflowBy:[self.mutableCurrentGrid resetWithLineBuffer:_mutableState.linebuffer
-                                                               unlimitedScrollback:_state.unlimitedScrollback
-                                                                preserveCursorLine:NO
-                                                             additionalLinesToSave:0]];
+            [_mutableState incrementOverflowBy:[self.mutableCurrentGrid resetWithLineBuffer:_mutableState.linebuffer
+                                                                        unlimitedScrollback:_state.unlimitedScrollback
+                                                                         preserveCursorLine:NO
+                                                                      additionalLinesToSave:0]];
         }
     }
 
@@ -954,15 +954,15 @@
             // Not in alt screen or it's ok to scroll into line buffer while in alt screen.k
             lineBuffer = _mutableState.linebuffer;
         }
-        [self mutIncrementOverflowBy:[self.mutableCurrentGrid appendCharsAtCursor:buffer
-                                                                        length:len
-                                                       scrollingIntoLineBuffer:lineBuffer
-                                                           unlimitedScrollback:_state.unlimitedScrollback
-                                                       useScrollbackWithRegion:self.appendToScrollbackWithStatusBar
-                                                                    wraparound:_state.wraparoundMode
-                                                                          ansi:_state.ansi
-                                                                        insert:_state.insert
-                                                        externalAttributeIndex:externalAttributes]];
+        [_mutableState incrementOverflowBy:[self.mutableCurrentGrid appendCharsAtCursor:buffer
+                                                                                 length:len
+                                                                scrollingIntoLineBuffer:lineBuffer
+                                                                    unlimitedScrollback:_state.unlimitedScrollback
+                                                                useScrollbackWithRegion:self.appendToScrollbackWithStatusBar
+                                                                             wraparound:_state.wraparoundMode
+                                                                                   ansi:_state.ansi
+                                                                                 insert:_state.insert
+                                                                 externalAttributeIndex:externalAttributes]];
         iTermImmutableMetadata temp;
         iTermImmutableMetadataInit(&temp, 0, externalAttributes);
         [delegate_ screenAppendScreenCharArray:buffer
@@ -1658,10 +1658,10 @@
         // In alt grid but saving to scrollback in alt-screen is off, so pass in a nil linebuffer.
         lineBufferToUse = nil;
     }
-    [self mutIncrementOverflowBy:[self.mutableCurrentGrid moveCursorDownOneLineScrollingIntoLineBuffer:lineBufferToUse
-                                                                                unlimitedScrollback:_state.unlimitedScrollback
-                                                                            useScrollbackWithRegion:self.appendToScrollbackWithStatusBar
-                                                                                         willScroll:^{
+    [_mutableState incrementOverflowBy:[self.mutableCurrentGrid moveCursorDownOneLineScrollingIntoLineBuffer:lineBufferToUse
+                                                                                         unlimitedScrollback:_state.unlimitedScrollback
+                                                                                     useScrollbackWithRegion:self.appendToScrollbackWithStatusBar
+                                                                                                  willScroll:^{
         if (noScrollback) {
             // This is a temporary hack. In this case, keeping the selection in the right place requires
             // more cooperation between VT100Screen and PTYTextView than is currently in place because
@@ -1810,10 +1810,10 @@
         [self convertHardNewlineToSoftOnGridLine:_state.currentGrid.cursorY];
     }
     if (_state.currentGrid.cursorY == _state.currentGrid.bottomMargin) {
-        [self mutIncrementOverflowBy:[self.mutableCurrentGrid scrollUpIntoLineBuffer:_mutableState.linebuffer
-                                                              unlimitedScrollback:_state.unlimitedScrollback
-                                                          useScrollbackWithRegion:self.appendToScrollbackWithStatusBar
-                                                                        softBreak:YES]];
+        [_mutableState incrementOverflowBy:[self.mutableCurrentGrid scrollUpIntoLineBuffer:_mutableState.linebuffer
+                                                                       unlimitedScrollback:_state.unlimitedScrollback
+                                                                   useScrollbackWithRegion:self.appendToScrollbackWithStatusBar
+                                                                                 softBreak:YES]];
     }
     self.mutableCurrentGrid.cursorX = _state.currentGrid.leftMargin;
     self.mutableCurrentGrid.cursorY++;
@@ -1988,9 +1988,9 @@
     }
     const int n = [_state.currentGrid numberOfNonEmptyLinesIncludingWhitespaceAsEmpty:YES];
     for (int i = 0; i < n; i++) {
-        [self mutIncrementOverflowBy:
-            [self.mutableCurrentGrid scrollWholeScreenUpIntoLineBuffer:lineBuffer
-                                                   unlimitedScrollback:_state.unlimitedScrollback]];
+        [_mutableState incrementOverflowBy:
+         [self.mutableCurrentGrid scrollWholeScreenUpIntoLineBuffer:lineBuffer
+                                                unlimitedScrollback:_state.unlimitedScrollback]];
     }
 }
 
@@ -2297,10 +2297,10 @@
     for (int i = 0;
          i < MIN(_state.currentGrid.size.height, n);
          i++) {
-        [self mutIncrementOverflowBy:[self.mutableCurrentGrid scrollUpIntoLineBuffer:_mutableState.linebuffer
-                                                              unlimitedScrollback:_state.unlimitedScrollback
-                                                          useScrollbackWithRegion:self.appendToScrollbackWithStatusBar
-                                                                        softBreak:NO]];
+        [_mutableState incrementOverflowBy:[self.mutableCurrentGrid scrollUpIntoLineBuffer:_mutableState.linebuffer
+                                                                       unlimitedScrollback:_state.unlimitedScrollback
+                                                                   useScrollbackWithRegion:self.appendToScrollbackWithStatusBar
+                                                                                 softBreak:NO]];
     }
     [delegate_ screenTriggerableChangeDidOccur];
 }
@@ -3141,7 +3141,7 @@ static inline void VT100ScreenEraseCell(screen_char_t *sct, iTermExternalAttribu
     _mutableState.maxScrollbackLines = lines;
     [self.mutableLineBuffer setMaxLines: lines];
     if (!_state.unlimitedScrollback) {
-        [self mutIncrementOverflowBy:[self.mutableLineBuffer dropExcessLinesWithWidth:_state.currentGrid.size.width]];
+        [_mutableState incrementOverflowBy:[self.mutableLineBuffer dropExcessLinesWithWidth:_state.currentGrid.size.width]];
     }
     [delegate_ screenDidChangeNumberOfScrollbackLines];
 }
@@ -3161,12 +3161,6 @@ static inline void VT100ScreenEraseCell(screen_char_t *sct, iTermExternalAttribu
         ITAssertWithMessage(isOk, @"Pop shouldn't fail");
     }
     free(dummy);
-}
-
-- (void)mutIncrementOverflowBy:(int)overflowCount {
-    _mutableState.scrollbackOverflow += overflowCount;
-    _mutableState.cumulativeScrollbackOverflow += overflowCount;
-    [self.intervalTreeObserver intervalTreeVisibleRangeDidChange];
 }
 
 #pragma mark - Miscellaneous State

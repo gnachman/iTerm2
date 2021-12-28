@@ -29,4 +29,12 @@
     return [self copyWithZone:nil];
 }
 
+- (void)incrementOverflowBy:(int)overflowCount {
+    if (overflowCount > 0) {
+        self.scrollbackOverflow += overflowCount;
+        self.cumulativeScrollbackOverflow += overflowCount;
+    }
+    [self.intervalTreeObserver intervalTreeVisibleRangeDidChange];
+}
+
 @end

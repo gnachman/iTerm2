@@ -368,7 +368,7 @@
     int linesDropped = 0;
     if (!_state.unlimitedScrollback) {
         linesDropped = [self.mutableLineBuffer dropExcessLinesWithWidth:_state.currentGrid.size.width];
-        [self mutIncrementOverflowBy:linesDropped];
+        [_mutableState incrementOverflowBy:linesDropped];
     }
     int lines __attribute__((unused)) = [_mutableState.linebuffer numLinesWithWidth:_state.currentGrid.size.width];
     ITAssertWithMessage(lines >= 0, @"Negative lines");
