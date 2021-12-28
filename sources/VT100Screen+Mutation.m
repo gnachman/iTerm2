@@ -476,9 +476,13 @@
     if ([_state.intervalTree containsObject:annotation]) {
         _mutableState.lastCommandMark = nil;
         [[annotation retain] autorelease];
+        const iTermIntervalTreeObjectType type = [self intervalTreeObserverTypeForObject:annotation];
+        const long long absLine = [_mutableState coordRangeForInterval:annotation.entry.interval].start.y + self.totalScrollbackOverflow;
         [_mutableState.intervalTree removeObject:annotation];
-        [self.intervalTreeObserver intervalTreeDidRemoveObjectOfType:[self intervalTreeObserverTypeForObject:annotation]
-                                                              onLine:[_mutableState coordRangeForInterval:annotation.entry.interval].start.y + self.totalScrollbackOverflow];
+        [_mutableState addIntervalTreeSideEffect:^(id<iTermIntervalTreeObserver>  _Nonnull observer) {
+            [observer intervalTreeDidRemoveObjectOfType:type
+                                                 onLine:absLine];
+        }];
     } else if ([_state.savedIntervalTree containsObject:annotation]) {
         _mutableState.lastCommandMark = nil;
         [_mutableState.savedIntervalTree removeObject:annotation];
