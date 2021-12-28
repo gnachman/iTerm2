@@ -14,6 +14,9 @@
 #import "iTermIntervalTreeObserver.h"
 #import "iTermOrderEnforcer.h"
 
+@interface VT100ScreenMutableState()<iTermMarkDelegate>
+@end
+
 @implementation VT100ScreenMutableState
 
 - (instancetype)initWithSideEffectPerformer:(id<VT100ScreenSideEffectPerforming>)performer {
@@ -32,6 +35,13 @@
 
 - (id<VT100ScreenState>)copy {
     return [self copyWithZone:nil];
+}
+
+#pragma mark - Private
+
+- (void)assertOnMutationThread {
+#warning TODO: Change this when creating the mutation thread.
+    assert([NSThread isMainThread]);
 }
 
 #pragma mark - Internal
@@ -114,6 +124,51 @@
     self.currentGrid.cursorX = 0;
 }
 
+#pragma mark - Interval Tree
+
+- (id<iTermMark>)addMarkStartingAtAbsoluteLine:(long long)line
+                                       oneLine:(BOOL)oneLine
+                                       ofClass:(Class)markClass {
+    id<iTermMark> mark = [[markClass alloc] init];
+    if ([mark isKindOfClass:[VT100ScreenMark class]]) {
+        VT100ScreenMark *screenMark = mark;
+        screenMark.delegate = self;
+        screenMark.sessionGuid = self.config.sessionGuid;
+    }
+    long long totalOverflow = self.cumulativeScrollbackOverflow;
+    if (line < totalOverflow || line > totalOverflow + self.numberOfLines) {
+        return nil;
+    }
+    int nonAbsoluteLine = line - totalOverflow;
+    VT100GridCoordRange range;
+    if (oneLine) {
+        range = VT100GridCoordRangeMake(0, nonAbsoluteLine, self.width, nonAbsoluteLine);
+    } else {
+        // Interval is whole screen
+        int limit = nonAbsoluteLine + self.height - 1;
+        if (limit >= self.numberOfScrollbackLines + [self.currentGrid numberOfLinesUsed]) {
+            limit = self.numberOfScrollbackLines + [self.currentGrid numberOfLinesUsed] - 1;
+        }
+        range = VT100GridCoordRangeMake(0,
+                                        nonAbsoluteLine,
+                                        self.width,
+                                        limit);
+    }
+    if ([mark isKindOfClass:[VT100ScreenMark class]]) {
+        self.markCache[@(self.cumulativeScrollbackOverflow + range.end.y)] = mark;
+    }
+    [self.intervalTree addObject:mark withInterval:[self intervalForGridCoordRange:range]];
+
+    const iTermIntervalTreeObjectType objectType = iTermIntervalTreeObjectTypeForObject(mark);
+    const long long absLine = range.start.y + self.cumulativeScrollbackOverflow;
+    [self addIntervalTreeSideEffect:^(id<iTermIntervalTreeObserver>  _Nonnull observer) {
+        [observer intervalTreeDidAddObjectOfType:objectType
+                                          onLine:absLine];
+    }];
+    [self setNeedsRedraw];
+    return mark;
+}
+
 #pragma mark - Shell Integration
 
 - (void)assignCurrentCommandEndDate {
@@ -141,6 +196,16 @@
         [self.savedIntervalTree removeObject:annotation];
     }
     [self setNeedsRedraw];
+}
+
+#pragma mark - iTermMarkDelegate
+
+- (void)markDidBecomeCommandMark:(id<iTermMark>)mark {
+#warning TODO: Ensure this is called on the right thread once we move off main.
+    [self assertOnMutationThread];
+    if (mark.entry.interval.location > self.lastCommandMark.entry.interval.location) {
+        self.lastCommandMark = mark;
+    }
 }
 
 @end
