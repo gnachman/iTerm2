@@ -1788,6 +1788,7 @@ ITERM_WEAKLY_REFERENCEABLE
     if (!_view) {
         self.view = [[[SessionView alloc] initWithFrame:NSMakeRect(0, 0, aRect.size.width, aRect.size.height)] autorelease];
         self.view.driver.dataSource = _metalGlue;
+        [self initializeMarksMinimap];
         [_view setFindDriverDelegate:self];
     }
 
@@ -14675,6 +14676,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     if (![iTermAdvancedSettingsModel showLocationsInScrollbar]) {
         return;
     }
+    [self initializeMarksMinimap];
+}
+
+- (void)initializeMarksMinimap {
     [_view.marksMinimap removeAllObjects];
     const NSInteger count = (NSInteger)iTermIntervalTreeObjectTypeUnknown;
     NSMutableDictionary<NSNumber *, NSMutableIndexSet *> *sets = [NSMutableDictionary dictionary];
@@ -14687,7 +14692,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         [set addIndex:line];
     }];
     for (NSInteger i = 0; i < count; i++) {
-        [_view.marksMinimap setLines:sets[@(i)] forType:i];
+        [_view.marksMinimap setLines:sets[@(i)] ?: [NSMutableIndexSet indexSet]
+                             forType:i];
     }
 }
 
