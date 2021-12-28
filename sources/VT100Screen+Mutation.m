@@ -76,7 +76,7 @@
 - (void)mutPromptDidStartAt:(VT100GridAbsCoord)coord {
     DLog(@"FinalTerm: mutPromptDidStartAt");
     if (coord.x > 0 && _config.shouldPlacePromptAtFirstColumn) {
-        [self crlf];
+        [_mutableState appendCarriageReturnLineFeed];
     }
     _mutableState.shellIntegrationInstalled = YES;
 
@@ -972,7 +972,7 @@
     // Record the cursor position and append the message.
     const int yBefore = _state.currentGrid.cursor.y;
     if (_state.currentGrid.cursor.x > 0) {
-        [self mutCrlf];
+        [_mutableState appendCarriageReturnLineFeed];
     }
     [self mutEraseLineBeforeCursor:YES afterCursor:YES decProtect:NO];
     NSDateFormatter *dateFormatter = [[[NSDateFormatter alloc] init] autorelease];
@@ -985,7 +985,7 @@
 
     // Restore the graphic rendition, add a newline, and calculate how far down the cursor moved.
     _state.terminal.graphicRendition = saved;
-    [self mutCrlf];
+    [_mutableState appendCarriageReturnLineFeed];
     const int delta = _state.currentGrid.cursor.y - yBefore;
 
     // Update the preferred cursor position if needed.
@@ -1628,8 +1628,7 @@
 }
 
 - (void)mutCrlf {
-    [_mutableState appendLineFeed];
-    _mutableState.currentGrid.cursorX = 0;
+    [_mutableState appendCarriageReturnLineFeed];
 }
 
 - (void)mutLinefeed {
@@ -3973,7 +3972,7 @@ static inline void VT100ScreenEraseCell(screen_char_t *sct, iTermExternalAttribu
                                                                             scaleFactor:[delegate_ screenBackingScaleFactor]] autorelease];
     helper.delegate = self;
     [helper writeToGrid:_state.currentGrid];
-    [self crlf];
+    [_mutableState appendCarriageReturnLineFeed];
 }
 
 - (void)terminalDidChangeSendModifiers {
