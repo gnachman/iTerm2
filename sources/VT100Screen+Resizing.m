@@ -469,9 +469,9 @@
     // Add notes that were on the alt grid to altScreenNotes, leaving notes in history alone.
     VT100GridCoordRange screenCoordRange =
     VT100GridCoordRangeMake(0,
-                            [self numberOfScrollbackLines],
+                            _mutableState.numberOfScrollbackLines,
                             0,
-                            [self numberOfScrollbackLines] + self.height);
+                            _mutableState.numberOfScrollbackLines + self.height);
     NSArray *notesAtLeastPartiallyOnScreen =
     [_mutableState.intervalTree objectsInInterval:[self intervalForGridCoordRange:screenCoordRange]];
 

@@ -213,6 +213,8 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 @interface VT100ScreenState: NSObject<VT100ScreenState>
+@property (nonatomic, readonly) int numberOfScrollbackLines;
+
 - (instancetype)init NS_UNAVAILABLE;
 @end
 

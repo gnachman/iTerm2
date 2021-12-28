@@ -110,7 +110,7 @@
 
     // FinalTerm uses this to define the start of a collapsible region. That would be a nightmare
     // to add to iTerm, and our answer to this is marks, which already existed anyway.
-    [self mutSetPromptStartLine:[self numberOfScrollbackLines] + self.cursorY - 1];
+    [self mutSetPromptStartLine:_mutableState.numberOfScrollbackLines + self.cursorY - 1];
     if ([iTermAdvancedSettingsModel resetSGROnPrompt]) {
         [_mutableState.terminal resetGraphicRendition];
     }
@@ -126,9 +126,9 @@
     _mutableState.currentPromptRange = VT100GridAbsCoordRangeMake(_state.currentPromptRange.start.x,
                                                                   _state.currentPromptRange.start.y,
                                                                   _state.currentGrid.cursor.x,
-                                                                  _state.currentGrid.cursor.y + self.numberOfScrollbackLines + self.totalScrollbackOverflow);
+                                                                  _state.currentGrid.cursor.y + _mutableState.numberOfScrollbackLines + self.totalScrollbackOverflow);
     [self commandDidStartAtScreenCoord:_state.currentGrid.cursor];
-    const int line = [self numberOfScrollbackLines] + self.cursorY - 1;
+    const int line = _mutableState.numberOfScrollbackLines + self.cursorY - 1;
     VT100ScreenMark *mark = [self updatePromptMarkRangesForPromptEndingOnLine:line];
     [self addSideEffect:^(id<VT100ScreenDelegate> delegate) {
         [delegate screenPromptDidEndWithMark:mark];
@@ -153,7 +153,7 @@
     DLog(@"FinalTerm: terminalCommandDidEnd");
     _mutableState.currentPromptRange = VT100GridAbsCoordRangeMake(0, 0, 0, 0);
 
-    [self commandDidEndAtAbsCoord:VT100GridAbsCoordMake(_state.currentGrid.cursor.x, _state.currentGrid.cursor.y + [self numberOfScrollbackLines] + [self totalScrollbackOverflow])];
+    [self commandDidEndAtAbsCoord:VT100GridAbsCoordMake(_state.currentGrid.cursor.x, _state.currentGrid.cursor.y + _mutableState.numberOfScrollbackLines + [self totalScrollbackOverflow])];
 }
 
 - (BOOL)mutCommandDidEndAtAbsCoord:(VT100GridAbsCoord)coord {
@@ -409,8 +409,8 @@
     } else {
         // Interval is whole screen
         int limit = nonAbsoluteLine + self.height - 1;
-        if (limit >= [self numberOfScrollbackLines] + [_state.currentGrid numberOfLinesUsed]) {
-            limit = [self numberOfScrollbackLines] + [_state.currentGrid numberOfLinesUsed] - 1;
+        if (limit >= _mutableState.numberOfScrollbackLines + [_state.currentGrid numberOfLinesUsed]) {
+            limit = _mutableState.numberOfScrollbackLines + [_state.currentGrid numberOfLinesUsed] - 1;
         }
         range = VT100GridCoordRangeMake(0,
                                         nonAbsoluteLine,
@@ -560,7 +560,7 @@
 
     if (savePrompt && newCommandStart.x >= 0) {
         // Create a new mark and inform the delegate that there's new command start coord.
-        [self mutSetPromptStartLine:[self numberOfScrollbackLines]];
+        [self mutSetPromptStartLine:_mutableState.numberOfScrollbackLines];
         [self commandDidStartAtScreenCoord:newCommandStart];
     }
     [_mutableState.terminal resetSavedCursorPositions];
@@ -582,7 +582,7 @@
     }
 
     VT100GridCoordRange lastCommandMarkRange = [self coordRangeForInterval:lastCommandMark.entry.interval];
-    int cursorLine = self.cursorY - 1 + self.numberOfScrollbackLines;
+    int cursorLine = self.cursorY - 1 + _mutableState.numberOfScrollbackLines;
     int cursorMarkOffset = cursorLine - lastCommandMarkRange.start.y;
     return 1 + cursorMarkOffset;
 }
@@ -600,9 +600,9 @@
     self.mutableCurrentGrid.cursorX = x;
     self.mutableCurrentGrid.cursorY = linesToSave - 1;
     [self removeIntervalTreeObjectsInRange:VT100GridCoordRangeMake(0,
-                                                                   self.numberOfScrollbackLines,
+                                                                   _mutableState.numberOfScrollbackLines,
                                                                    self.width,
-                                                                   self.numberOfScrollbackLines + self.height)];
+                                                                   _mutableState.numberOfScrollbackLines + self.height)];
 }
 
 - (void)mutClearScrollbackBuffer {
@@ -618,7 +618,7 @@
     [self.mutableCurrentGrid markAllCharsDirty:YES];
     [self removeIntervalTreeObjectsInRange:VT100GridCoordRangeMake(0,
                                                                    0,
-                                                                   self.width, self.numberOfScrollbackLines + self.height)];
+                                                                   self.width, _mutableState.numberOfScrollbackLines + self.height)];
     _mutableState.intervalTree = [[[IntervalTree alloc] init] autorelease];
     [self mutReloadMarkCache];
     _mutableState.lastCommandMark = nil;
@@ -694,7 +694,7 @@
 
 - (void)mutClearFromAbsoluteLineToEnd:(long long)absLine {
     const VT100GridCoord cursorCoord = VT100GridCoordMake(_state.currentGrid.cursor.x,
-                                                          _state.currentGrid.cursor.y + self.numberOfScrollbackLines);
+                                                          _state.currentGrid.cursor.y + _mutableState.numberOfScrollbackLines);
     const long long totalScrollbackOverflow = self.totalScrollbackOverflow;
     const VT100GridAbsCoord absCursorCoord = VT100GridAbsCoordFromCoord(cursorCoord, totalScrollbackOverflow);
     iTermTextExtractor *extractor = [[[iTermTextExtractor alloc] initWithDataSource:self] autorelease];
@@ -705,14 +705,14 @@
                                                                              cursorLineRange.coordRange.end.y - cursorLineRange.coordRange.start.y + 1)];
     savedLine = [savedLine screenCharArrayByRemovingTrailingNullsAndHardNewline];
 
-    const long long firstScreenAbsLine = self.numberOfScrollbackLines + totalScrollbackOverflow;
+    const long long firstScreenAbsLine = _mutableState.numberOfScrollbackLines + totalScrollbackOverflow;
     [self clearGridFromLineToEnd:MAX(0, absLine - firstScreenAbsLine)];
 
     [self clearScrollbackBufferFromLine:absLine - self.totalScrollbackOverflow];
     const VT100GridCoordRange coordRange = VT100GridCoordRangeMake(0,
                                                                    absLine - totalScrollbackOverflow,
                                                                    self.width,
-                                                                   self.numberOfScrollbackLines + self.height);
+                                                                   _mutableState.numberOfScrollbackLines + self.height);
 
     NSMutableArray<id<IntervalTreeObject>> *marksToMove = [self removeIntervalTreeObjectsInRange:coordRange
                                                                                 exceptCoordRange:cursorLineRange.coordRange];
@@ -726,7 +726,7 @@
         }
 
         // Cursor was among the cleared lines. Restore the line content.
-        self.mutableCurrentGrid.cursor = VT100GridCoordMake(0, absLine - totalScrollbackOverflow - self.numberOfScrollbackLines);
+        self.mutableCurrentGrid.cursor = VT100GridCoordMake(0, absLine - totalScrollbackOverflow - _mutableState.numberOfScrollbackLines);
         [self mutAppendScreenChars:savedLine.line
                             length:savedLine.length
             externalAttributeIndex:savedLine.metadata.externalAttributes
@@ -1286,7 +1286,7 @@
                                                                       withDefaultChar:[_state.currentGrid defaultChar]
                                                                     maxLinesToRestore:linesRestored];
         DLog(@"appendFromDictionary: Grid size is %dx%d", _state.currentGrid.size.width, _state.currentGrid.size.height);
-        DLog(@"Restored %d wrapped lines from dictionary", [self numberOfScrollbackLines] + linesRestored);
+        DLog(@"Restored %d wrapped lines from dictionary", _mutableState.numberOfScrollbackLines + linesRestored);
         DLog(@"setCursorPosition=%@", @(setCursorPosition));
         if (!setCursorPosition) {
             VT100GridCoord coord;
@@ -2039,7 +2039,7 @@
         } else if (self.cursorX == 1 && self.cursorY == 1 && _state.terminal.lastToken.type == VT100CSI_CUP) {
             // This is important for tmux integration with shell integration enabled. The screen
             // terminal uses ED 0 instead of ED 2 to clear the screen (e.g., when you do ^L at the shell).
-            [self removePromptMarksBelowLine:yStart + self.numberOfScrollbackLines];
+            [self removePromptMarksBelowLine:yStart + _mutableState.numberOfScrollbackLines];
         }
     } else {
         return;
@@ -3002,7 +3002,7 @@ static inline void VT100ScreenEraseCell(screen_char_t *sct, iTermExternalAttribu
 // Swap onscreen notes between intervalTree_ and savedIntervalTree_.
 // IMPORTANT: Call -mutReloadMarkCache after this.
 - (void)mutSwapNotes {
-    int historyLines = [self numberOfScrollbackLines];
+    int historyLines = _mutableState.numberOfScrollbackLines;
     Interval *origin = [self intervalForGridCoordRange:VT100GridCoordRangeMake(0,
                                                                                historyLines,
                                                                                1,
@@ -3012,7 +3012,7 @@ static inline void VT100ScreenEraseCell(screen_char_t *sct, iTermExternalAttribu
     [self moveNotesOnScreenFrom:_mutableState.intervalTree
                              to:temp
                          offset:-origin.location
-                   screenOrigin:[self numberOfScrollbackLines]];
+                   screenOrigin:_mutableState.numberOfScrollbackLines];
     DLog(@"mutSwapNotes: moving onscreen savedNotes into notes");
     [self moveNotesOnScreenFrom:_mutableState.savedIntervalTree
                              to:_mutableState.intervalTree
@@ -3060,7 +3060,7 @@ static inline void VT100ScreenEraseCell(screen_char_t *sct, iTermExternalAttribu
 }
 
 - (void)hideOnScreenNotesAndTruncateSpanners {
-    int screenOrigin = [self numberOfScrollbackLines];
+    int screenOrigin = _mutableState.numberOfScrollbackLines;
     VT100GridCoordRange screenRange =
         VT100GridCoordRangeMake(0,
                                 screenOrigin,
@@ -3469,7 +3469,7 @@ static inline void VT100ScreenEraseCell(screen_char_t *sct, iTermExternalAttribu
 
     // If you know to use RemoteHost then assume you also use CurrentDirectory. Innocent window title
     // changes shouldn't override CurrentDirectory.
-    if (![self remoteHostOnLine:[self numberOfScrollbackLines] + self.height]) {
+    if (![self remoteHostOnLine:_mutableState.numberOfScrollbackLines + self.height]) {
         DLog(@"Don't have a remote host, so changing working directory");
         // TODO: There's a bug here where remote host can scroll off the end of history, causing the
         // working directory to come from PTYTask (which is what happens when nil is passed here).
@@ -3801,7 +3801,7 @@ static inline void VT100ScreenEraseCell(screen_char_t *sct, iTermExternalAttribu
         [self setHost:host user:user];
     }
     [self terminalCurrentDirectoryDidChangeTo:path];
-    [self mutSetPromptStartLine:[self numberOfScrollbackLines] + self.cursorY - 1];
+    [self mutSetPromptStartLine:_mutableState.numberOfScrollbackLines + self.cursorY - 1];
 }
 
 - (void)terminalClearScreen {
@@ -3923,9 +3923,9 @@ static inline void VT100ScreenEraseCell(screen_char_t *sct, iTermExternalAttribu
         note.stringValue = message;
         [self addNote:note
               inRange:VT100GridCoordRangeMake(location.x,
-                                              location.y + [self numberOfScrollbackLines],
+                                              location.y + _mutableState.numberOfScrollbackLines,
                                               end.x,
-                                              end.y + [self numberOfScrollbackLines])
+                                              end.y + _mutableState.numberOfScrollbackLines)
                 focus:NO];
         if (!show) {
             [note hide];
@@ -3987,7 +3987,7 @@ static inline void VT100ScreenEraseCell(screen_char_t *sct, iTermExternalAttribu
 
 - (void)addURLMarkAtLineAfterCursorWithCode:(unsigned int)code {
     long long absLine = (self.totalScrollbackOverflow +
-                         [self numberOfScrollbackLines] +
+                         _mutableState.numberOfScrollbackLines +
                          _state.currentGrid.cursor.y + 1);
     iTermURLMark *mark = [self addMarkStartingAtAbsoluteLine:absLine
                                                      oneLine:YES
@@ -4261,7 +4261,7 @@ static inline void VT100ScreenEraseCell(screen_char_t *sct, iTermExternalAttribu
 
 - (void)terminalPromptDidStart {
     [self promptDidStartAt:VT100GridAbsCoordMake(_state.currentGrid.cursor.x,
-                                                 _state.currentGrid.cursor.y + self.numberOfScrollbackLines + self.totalScrollbackOverflow)];
+                                                 _state.currentGrid.cursor.y + _mutableState.numberOfScrollbackLines + self.totalScrollbackOverflow)];
 }
 
 - (NSArray<NSNumber *> *)terminalTabStops {
