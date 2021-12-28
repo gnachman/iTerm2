@@ -8,6 +8,8 @@
 #import <Foundation/Foundation.h>
 #import "VT100ScreenState.h"
 
+@protocol VT100ScreenConfiguration;
+
 NS_ASSUME_NONNULL_BEGIN
 
 @protocol VT100ScreenSideEffectPerforming<NSObject>
@@ -20,6 +22,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nullable, nonatomic, strong) VT100InlineImageHelper *inlineImageHelper;
 @property (nonatomic, strong, readwrite) iTermOrderEnforcer *setWorkingDirectoryOrderEnforcer;
 @property (atomic, weak) id<VT100ScreenSideEffectPerforming> sideEffectPerformer;
+@property (nonatomic, copy) id<VT100ScreenConfiguration> config;
 
 - (instancetype)initWithSideEffectPerformer:(id<VT100ScreenSideEffectPerforming>)performer NS_DESIGNATED_INITIALIZER;
 - (id<VT100ScreenState>)copy;

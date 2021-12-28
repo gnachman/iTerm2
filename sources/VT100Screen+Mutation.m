@@ -55,15 +55,14 @@
 }
 
 - (void)mutUpdateConfig {
-    [_config autorelease];
-    _config = [_nextConfig retain];
+    _mutableState.config = _nextConfig;
 }
 
 #pragma mark - FinalTerm
 
 - (void)mutPromptDidStartAt:(VT100GridAbsCoord)coord {
     DLog(@"FinalTerm: mutPromptDidStartAt");
-    if (coord.x > 0 && _config.shouldPlacePromptAtFirstColumn) {
+    if (coord.x > 0 && _mutableState.config.shouldPlacePromptAtFirstColumn) {
         [_mutableState appendCarriageReturnLineFeed];
     }
     _mutableState.shellIntegrationInstalled = YES;
@@ -357,7 +356,7 @@
     if ([mark isKindOfClass:[VT100ScreenMark class]]) {
         VT100ScreenMark *screenMark = mark;
         screenMark.delegate = self;
-        screenMark.sessionGuid = _config.sessionGuid;
+        screenMark.sessionGuid = _mutableState.config.sessionGuid;
     }
     long long totalOverflow = _mutableState.cumulativeScrollbackOverflow;
     if (line < totalOverflow || line > totalOverflow + _mutableState.numberOfLines) {

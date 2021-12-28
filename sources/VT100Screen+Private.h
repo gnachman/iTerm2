@@ -43,8 +43,6 @@ VT100ScreenSideEffectPerforming> {
     VT100ScreenMutableState *_mutableState;
 
     __weak id<VT100ScreenDelegate> delegate_;  // PTYSession implements this
-    // Perhaps slightly out-of-date configuration, used by mutation code.
-    id<VT100ScreenConfiguration> _config;
 
     // Most recent configuration. Will be copied to _config eventually.
     id<VT100ScreenConfiguration> _nextConfig;
