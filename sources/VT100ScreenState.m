@@ -197,5 +197,26 @@ static const int kDefaultMaxScrollbackLines = 1000;
     return [self.linebuffer numLinesWithWidth:self.currentGrid.size.width];
 }
 
+#pragma mark - Interval Tree
+
+- (VT100GridCoordRange)coordRangeForInterval:(Interval *)interval {
+    VT100GridCoordRange result;
+    const int w = self.width + 1;
+    result.start.y = interval.location / w - self.cumulativeScrollbackOverflow;
+    result.start.x = interval.location % w;
+    result.end.y = interval.limit / w - self.cumulativeScrollbackOverflow;
+    result.end.x = interval.limit % w;
+
+    if (result.start.y < 0) {
+        result.start.y = 0;
+        result.start.x = 0;
+    }
+    if (result.start.x == self.width) {
+        result.start.y += 1;
+        result.start.x = 0;
+    }
+    return result;
+}
+
 @end
 

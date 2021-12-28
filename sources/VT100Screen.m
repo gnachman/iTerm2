@@ -758,25 +758,6 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
                                linesOffset:_state.cumulativeScrollbackOverflow];
 }
 
-- (VT100GridCoordRange)coordRangeForInterval:(Interval *)interval {
-    VT100GridCoordRange result;
-    const int w = _state.width + 1;
-    result.start.y = interval.location / w - _state.cumulativeScrollbackOverflow;
-    result.start.x = interval.location % w;
-    result.end.y = interval.limit / w - _state.cumulativeScrollbackOverflow;
-    result.end.x = interval.limit % w;
-
-    if (result.start.y < 0) {
-        result.start.y = 0;
-        result.start.x = 0;
-    }
-    if (result.start.x == _state.width) {
-        result.start.y += 1;
-        result.start.x = 0;
-    }
-    return result;
-}
-
 - (VT100GridCoord)predecessorOfCoord:(VT100GridCoord)coord {
     coord.x--;
     while (coord.x < 0) {
@@ -908,7 +889,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (VT100GridCoordRange)coordRangeOfAnnotation:(PTYAnnotation *)note {
-    return [self coordRangeForInterval:note.entry.interval];
+    return [_state coordRangeForInterval:note.entry.interval];
 }
 
 - (NSArray *)charactersWithNotesOnLine:(int)line {
@@ -920,7 +901,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     NSArray *objects = [_state.intervalTree objectsInInterval:interval];
     for (id<IntervalTreeObject> object in objects) {
         if ([object isKindOfClass:[PTYAnnotation class]]) {
-            VT100GridCoordRange range = [self coordRangeForInterval:object.entry.interval];
+            VT100GridCoordRange range = [_state coordRangeForInterval:object.entry.interval];
             VT100GridRange gridRange;
             if (range.start.y < line) {
                 gridRange.location = 0;
@@ -983,7 +964,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
             if (type == iTermIntervalTreeObjectTypeUnknown) {
                 continue;
             }
-            NSInteger line = [self coordRangeForInterval:obj.entry.interval].start.y + overflow;
+            NSInteger line = [_state coordRangeForInterval:obj.entry.interval].start.y + overflow;
             block(type, line);
         }
     }
@@ -1027,7 +1008,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
             return NO;
         }
         VT100ScreenMark *mark = obj;
-        const VT100GridCoord intervalStart = [self coordRangeForInterval:mark.entry.interval].start;
+        const VT100GridCoord intervalStart = [_state coordRangeForInterval:mark.entry.interval].start;
         if (intervalStart.y >= _state.numberOfScrollbackLines + self.currentGrid.cursor.y) {
             return NO;
         }
@@ -1036,7 +1017,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     }];
     long long line = overflow;
     if (lastMark) {
-        const VT100GridCoordRange range = [self coordRangeForInterval:lastMark.entry.interval];
+        const VT100GridCoordRange range = [_state coordRangeForInterval:lastMark.entry.interval];
         line = overflow + range.end.y;
         if (range.end.y != cursorLine - 1) {
             // Unless we're erasing exactly the line above the cursor, preserve the line with the mark.
@@ -1138,7 +1119,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
         for (id object in objects) {
             if ([object isKindOfClass:[VT100ScreenMark class]]) {
                 VT100ScreenMark *mark = object;
-                return overflow + [self coordRangeForInterval:mark.entry.interval].start.y;
+                return overflow + [_state coordRangeForInterval:mark.entry.interval].start.y;
             }
         }
         objects = [enumerator nextObject];
@@ -1159,7 +1140,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
         for (id object in objects) {
             if ([object isKindOfClass:[VT100ScreenMark class]]) {
                 VT100ScreenMark *mark = object;
-                return overflow + [self coordRangeForInterval:mark.entry.interval].end.y;
+                return overflow + [_state coordRangeForInterval:mark.entry.interval].end.y;
             }
         }
         objects = [enumerator nextObject];
@@ -1233,7 +1214,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (VT100GridRange)lineNumberRangeOfInterval:(Interval *)interval {
-    VT100GridCoordRange range = [self coordRangeForInterval:interval];
+    VT100GridCoordRange range = [_state coordRangeForInterval:interval];
     return VT100GridRangeMake(range.start.y, range.end.y - range.start.y + 1);
 }
 
@@ -1246,10 +1227,10 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
         for (VT100ScreenMark *nextMark in objects) {
             if (nextMark.isPrompt) {
                 VT100GridCoordRange range;
-                range.start = [self coordRangeForInterval:mark.entry.interval].end;
+                range.start = [_state coordRangeForInterval:mark.entry.interval].end;
                 range.start.x = 0;
                 range.start.y++;
-                range.end = [self coordRangeForInterval:nextMark.entry.interval].start;
+                range.end = [_state coordRangeForInterval:nextMark.entry.interval].start;
                 return range;
             }
         }
@@ -1257,7 +1238,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
     // Command must still be running with no subsequent prompt.
     VT100GridCoordRange range;
-    range.start = [self coordRangeForInterval:mark.entry.interval].end;
+    range.start = [_state coordRangeForInterval:mark.entry.interval].end;
     range.start.x = 0;
     range.start.y++;
     range.end.x = 0;
@@ -1495,7 +1476,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
             if (![object isKindOfClass:[PTYAnnotation class]]) {
                 continue;
             }
-            DLog(@"Save note with coord range %@", VT100GridCoordRangeDescription([self coordRangeForInterval:object.entry.interval]));
+            DLog(@"Save note with coord range %@", VT100GridCoordRangeDescription([_state coordRangeForInterval:object.entry.interval]));
         }
     }
     return [self mutNumberOfLinesDroppedWhenEncodingContentsIncludingGrid:YES
