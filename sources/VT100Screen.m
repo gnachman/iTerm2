@@ -1262,15 +1262,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 #pragma mark - Private
 
 - (VT100GridCoordRange)commandRange {
-    long long offset = _state.cumulativeScrollbackOverflow;
-    if (_state.commandStartCoord.x < 0) {
-        return VT100GridCoordRangeMake(-1, -1, -1, -1);
-    } else {
-        return VT100GridCoordRangeMake(_state.commandStartCoord.x,
-                                       MAX(0, _state.commandStartCoord.y - offset),
-                                       _state.currentGrid.cursorX,
-                                       _state.currentGrid.cursorY + _state.numberOfScrollbackLines);
-    }
+    return _state.commandRange;
 }
 
 - (BOOL)isAnyCharDirty {

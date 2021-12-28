@@ -107,7 +107,7 @@
 - (BOOL)mutCommandDidEndAtAbsCoord:(VT100GridAbsCoord)coord {
     if (_state.commandStartCoord.x != -1) {
         [_mutableState didUpdatePromptLocation];
-        [self mutCommandDidEndWithRange:[self commandRange]];
+        [self mutCommandDidEndWithRange:_mutableState.commandRange];
         [self mutInvalidateCommandStartCoord];
         _mutableState.startOfRunningCommandOutput = coord;
         return YES;
@@ -853,7 +853,7 @@
 
     if (_state.commandStartCoord.x != -1) {
         [_mutableState didUpdatePromptLocation];
-        [delegate_ screenCommandDidChangeWithRange:[self commandRange]];
+        [delegate_ screenCommandDidChangeWithRange:_mutableState.commandRange];
     }
 }
 
@@ -1770,7 +1770,7 @@
     [delegate_ screenTriggerableChangeDidOccur];
     if (_state.commandStartCoord.x != -1) {
         [_mutableState didUpdatePromptLocation];
-        [delegate_ screenCommandDidChangeWithRange:[self commandRange]];
+        [delegate_ screenCommandDidChangeWithRange:_mutableState.commandRange];
     }
 }
 
@@ -1782,7 +1782,7 @@
     [delegate_ screenTriggerableChangeDidOccur];
     if (_state.commandStartCoord.x != -1) {
         [_mutableState didUpdatePromptLocation];
-        [delegate_ screenCommandDidChangeWithRange:[self commandRange]];
+        [delegate_ screenCommandDidChangeWithRange:_mutableState.commandRange];
     }
 }
 
@@ -1791,7 +1791,7 @@
     [delegate_ screenTriggerableChangeDidOccur];
     if (_state.commandStartCoord.x != -1) {
         [_mutableState didUpdatePromptLocation];
-        [delegate_ screenCommandDidChangeWithRange:[self commandRange]];
+        [delegate_ screenCommandDidChangeWithRange:_mutableState.commandRange];
     }
 }
 
@@ -1803,7 +1803,7 @@
     [delegate_ screenTriggerableChangeDidOccur];
     if (_state.commandStartCoord.x != -1) {
         [_mutableState didUpdatePromptLocation];
-        [delegate_ screenCommandDidChangeWithRange:[self commandRange]];
+        [delegate_ screenCommandDidChangeWithRange:_mutableState.commandRange];
     }
 }
 
@@ -1982,7 +1982,7 @@
     [delegate_ screenTriggerableChangeDidOccur];
     if (_state.commandStartCoord.x != -1) {
         [_mutableState didUpdatePromptLocation];
-        [delegate_ screenCommandDidChangeWithRange:[self commandRange]];
+        [delegate_ screenCommandDidChangeWithRange:_mutableState.commandRange];
     }
 }
 
@@ -2763,7 +2763,7 @@ static inline void VT100ScreenEraseCell(screen_char_t *sct, iTermExternalAttribu
 - (void)mutSetCommandStartCoord:(VT100GridAbsCoord)coord {
     _mutableState.commandStartCoord = coord;
     [_mutableState didUpdatePromptLocation];
-    [delegate_ screenCommandDidChangeWithRange:[self commandRange]];
+    [delegate_ screenCommandDidChangeWithRange:_mutableState.commandRange];
 }
 
 - (void)mutSetCommandStartCoordWithoutSideEffects:(VT100GridAbsCoord)coord {
@@ -3107,7 +3107,7 @@ static inline void VT100ScreenEraseCell(screen_char_t *sct, iTermExternalAttribu
     if (_state.commandStartCoord.x != -1 && (_state.currentGrid.cursorX != cursorX ||
                                              _state.currentGrid.cursorY != cursorY)) {
         [_mutableState didUpdatePromptLocation];
-        [delegate_ screenCommandDidChangeWithRange:[self commandRange]];
+        [delegate_ screenCommandDidChangeWithRange:_mutableState.commandRange];
     }
 }
 
@@ -3158,7 +3158,7 @@ static inline void VT100ScreenEraseCell(screen_char_t *sct, iTermExternalAttribu
     [delegate_ screenTriggerableChangeDidOccur];
     if (_state.commandStartCoord.x != -1) {
         [_mutableState didUpdatePromptLocation];
-        [delegate_ screenCommandDidChangeWithRange:[self commandRange]];
+        [delegate_ screenCommandDidChangeWithRange:_mutableState.commandRange];
     }
 }
 
