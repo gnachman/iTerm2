@@ -731,31 +731,10 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     return [NSDate dateWithTimeIntervalSinceReferenceDate:interval];
 }
 
-- (Interval *)intervalForGridCoordRange:(VT100GridCoordRange)range
-                                  width:(int)width
-                            linesOffset:(long long)linesOffset {
-    VT100GridCoord start = range.start;
-    VT100GridCoord end = range.end;
-    long long si = start.y;
-    si += linesOffset;
-    si *= (width + 1);
-    si += start.x;
-    long long ei = end.y;
-    ei += linesOffset;
-    ei *= (width + 1);
-    ei += end.x;
-    if (ei < si) {
-        long long temp = ei;
-        ei = si;
-        si = temp;
-    }
-    return [Interval intervalWithLocation:si length:ei - si];
-}
-
 - (Interval *)intervalForGridCoordRange:(VT100GridCoordRange)range {
-    return [self intervalForGridCoordRange:range
-                                     width:_state.width
-                               linesOffset:_state.cumulativeScrollbackOverflow];
+    return [_state intervalForGridCoordRange:range
+                                       width:_state.width
+                                 linesOffset:_state.cumulativeScrollbackOverflow];
 }
 
 - (VT100GridCoord)predecessorOfCoord:(VT100GridCoord)coord {
