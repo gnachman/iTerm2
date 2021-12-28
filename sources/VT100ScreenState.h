@@ -230,6 +230,7 @@ NS_ASSUME_NONNULL_BEGIN
 #pragma mark - Interval Tree
 
 - (VT100GridCoordRange)coordRangeForInterval:(Interval *)interval;
+- (VT100GridRange)lineNumberRangeOfInterval:(Interval *)interval;
 
 @end
 

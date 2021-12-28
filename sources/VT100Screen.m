@@ -1214,8 +1214,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (VT100GridRange)lineNumberRangeOfInterval:(Interval *)interval {
-    VT100GridCoordRange range = [_state coordRangeForInterval:interval];
-    return VT100GridRangeMake(range.start.y, range.end.y - range.start.y + 1);
+    return [_state lineNumberRangeOfInterval:interval];
 }
 
 - (VT100GridCoordRange)textViewRangeOfOutputForCommandMark:(VT100ScreenMark *)mark {
@@ -1403,7 +1402,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
                 VT100ScreenMark *mark = (VT100ScreenMark *)obj;
                 if (mark.command) {
                     DLog(@"Found mark %@ in line number range %@", mark,
-                         VT100GridRangeDescription([self lineNumberRangeOfInterval:obj.entry.interval]));
+                         VT100GridRangeDescription([_state lineNumberRangeOfInterval:obj.entry.interval]));
                     [self mutSetLastCommandMark:mark];
                     return mark;
                 }

@@ -1400,7 +1400,7 @@
 
         Interval *interval = [self lastPromptMark].entry.interval;
         if (interval) {
-            const VT100GridRange gridRange = [self lineNumberRangeOfInterval:interval];
+            const VT100GridRange gridRange = [_mutableState lineNumberRangeOfInterval:interval];
             _mutableState.lastPromptLine = gridRange.location + _mutableState.cumulativeScrollbackOverflow;
         }
 
