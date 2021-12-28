@@ -8,6 +8,7 @@
 #import "VT100ScreenMutableState.h"
 #import "VT100ScreenState+Private.h"
 
+#import "DebugLogging.h"
 #import "PTYAnnotation.h"
 #import "VT100ScreenConfiguration.h"
 #import "VT100ScreenDelegate.h"
@@ -178,6 +179,18 @@
         screenMark.endDate = [NSDate date];
     }
 }
+
+- (id<iTermMark>)addMarkOnLine:(int)line ofClass:(Class)markClass {
+    DLog(@"addMarkOnLine:%@ ofClass:%@", @(line), markClass);
+    id<iTermMark> newMark = [self addMarkStartingAtAbsoluteLine:self.cumulativeScrollbackOverflow + line
+                                                        oneLine:YES
+                                                        ofClass:markClass];
+    [self addSideEffect:^(id<VT100ScreenDelegate> delegate) {
+        [delegate screenDidAddMark:newMark];
+    }];
+    return newMark;
+}
+
 
 #pragma mark - Annotations
 

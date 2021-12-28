@@ -167,14 +167,7 @@
 }
 
 - (id<iTermMark>)mutAddMarkOnLine:(int)line ofClass:(Class)markClass {
-    DLog(@"addMarkOnLine:%@ ofClass:%@", @(line), markClass);
-    id<iTermMark> newMark = [self mutAddMarkStartingAtAbsoluteLine:_mutableState.cumulativeScrollbackOverflow + line
-                                                           oneLine:YES
-                                                           ofClass:markClass];
-    [_mutableState addSideEffect:^(id<VT100ScreenDelegate> delegate) {
-        [delegate screenDidAddMark:newMark];
-    }];
-    return newMark;
+    return [_mutableState addMarkOnLine:line ofClass:markClass];
 }
 
 - (void)mutSetPromptStartLine:(int)line {
@@ -184,7 +177,7 @@
     const long long lastPromptLine = (long long)line + _mutableState.cumulativeScrollbackOverflow;
     _mutableState.lastPromptLine = lastPromptLine;
     [_mutableState assignCurrentCommandEndDate];
-    VT100ScreenMark *mark = [self mutAddMarkOnLine:line ofClass:[VT100ScreenMark class]];
+    VT100ScreenMark *mark = [_mutableState addMarkOnLine:line ofClass:[VT100ScreenMark class]];
     [mark setIsPrompt:YES];
     mark.promptRange = VT100GridAbsCoordRangeMake(0, lastPromptLine, 0, lastPromptLine);
     [self mutDidUpdatePromptLocation];
@@ -3724,8 +3717,8 @@ static inline void VT100ScreenEraseCell(screen_char_t *sct, iTermExternalAttribu
 
 - (void)mutSaveCursorLine {
     const int scrollbackLines = [_mutableState.linebuffer numLinesWithWidth:_mutableState.currentGrid.size.width];
-    [self mutAddMarkOnLine:scrollbackLines + _mutableState.currentGrid.cursor.y
-                   ofClass:[VT100ScreenMark class]];
+    [_mutableState addMarkOnLine:scrollbackLines + _mutableState.currentGrid.cursor.y
+                         ofClass:[VT100ScreenMark class]];
 }
 
 - (void)terminalStealFocus {
