@@ -143,7 +143,7 @@ NS_ASSUME_NONNULL_BEGIN
 // Did we get FinalTerm codes that report info about prompt? Used to decide if advanced paste
 // can wait for prompts.
 @property (nonatomic, readonly) BOOL shouldExpectPromptMarks;
-@property (nonatomic, readonly) BOOL needsRedraw;
+@property (atomic, readonly) BOOL needsRedraw;
 
 @end
 

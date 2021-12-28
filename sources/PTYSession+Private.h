@@ -13,7 +13,7 @@
 #import "TerminalFile.h"
 #import "TmuxController.h"
 #import "Trigger.h"
-#import "iTerm2SharedARc-Swift.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermAutomaticProfileSwitcher.h"
 #import "iTermBackgroundDrawingHelper.h"
 #import "iTermBadgeLabel.h"

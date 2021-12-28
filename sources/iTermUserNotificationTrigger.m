@@ -53,7 +53,7 @@
     // Need to stop the world to get scope, provided it is needed. Notifs are so slow & rare that this is ok.
     [self paramWithBackreferencesReplacedWithValues:capturedStrings
                                               count:captureCount
-#warning Variable scope will need an immutable copy :(
+#warning TODO: Variable scope will need an immutable copy :(
                                               scope:[aSession triggerSessionVariableScope:self]
                                               owner:aSession
                                    useInterpolation:useInterpolation

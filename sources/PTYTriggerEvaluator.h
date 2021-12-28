@@ -71,6 +71,7 @@ extern NSString *const PTYSessionSlownessEventExecute;
 - (void)appendAsciiDataToCurrentLine:(AsciiData *)asciiData;
 - (void)forceCheck;
 - (NSIndexSet *)enabledTriggerIndexes;
+- (void)clearTriggerLine;
 
 @end
 
