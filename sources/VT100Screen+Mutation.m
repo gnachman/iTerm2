@@ -1840,7 +1840,7 @@
         rightMargin = self.width - 1;
     }
 
-    if (_state.terminal.moreFix && self.cursorX > self.width && _state.terminal.wraparoundMode) {
+    if (_state.terminal.moreFix && _mutableState.cursorX > self.width && _state.terminal.wraparoundMode) {
         [self terminalLineFeed];
         [self mutCarriageReturn];
     }
@@ -2036,7 +2036,7 @@
             if (!shouldHonorProtected) {
                 [self scrollScreenIntoHistory];
             }
-        } else if (self.cursorX == 1 && _mutableState.cursorY == 1 && _state.terminal.lastToken.type == VT100CSI_CUP) {
+        } else if (_mutableState.cursorX == 1 && _mutableState.cursorY == 1 && _state.terminal.lastToken.type == VT100CSI_CUP) {
             // This is important for tmux integration with shell integration enabled. The screen
             // terminal uses ED 0 instead of ED 2 to clear the screen (e.g., when you do ^L at the shell).
             [self removePromptMarksBelowLine:yStart + _mutableState.numberOfScrollbackLines];
@@ -4236,7 +4236,7 @@ static inline void VT100ScreenEraseCell(screen_char_t *sct, iTermExternalAttribu
 }
 
 - (int)terminalCursorX {
-    return MIN([self cursorX], [self width]);
+    return MIN(_mutableState.cursorX, [self width]);
 }
 
 - (int)terminalCursorY {
@@ -4244,7 +4244,7 @@ static inline void VT100ScreenEraseCell(screen_char_t *sct, iTermExternalAttribu
 }
 
 - (BOOL)terminalWillAutoWrap {
-    return self.cursorX > self.width;
+    return _mutableState.cursorX > self.width;
 }
 
 - (void)terminalSetCursorVisible:(BOOL)visible {

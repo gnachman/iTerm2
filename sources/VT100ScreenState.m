@@ -179,6 +179,10 @@ static const int kDefaultMaxScrollbackLines = 1000;
     return self.currentGrid.cursorY + 1;
 }
 
+- (int)cursorX {
+    return self.currentGrid.cursorX + 1;
+}
+
 #pragma mark - Scollback
 
 - (int)numberOfScrollbackLines {

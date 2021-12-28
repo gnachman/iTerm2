@@ -219,6 +219,7 @@ NS_ASSUME_NONNULL_BEGIN
 #pragma mark - Grid
 
 @property (nonatomic, readonly) int cursorY;
+@property (nonatomic, readonly) int cursorX;
 
 #pragma mark - Scollback
 
