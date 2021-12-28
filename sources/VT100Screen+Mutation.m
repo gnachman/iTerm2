@@ -61,27 +61,7 @@
 #pragma mark - FinalTerm
 
 - (void)mutPromptDidStartAt:(VT100GridAbsCoord)coord {
-    DLog(@"FinalTerm: mutPromptDidStartAt");
-    if (coord.x > 0 && _mutableState.config.shouldPlacePromptAtFirstColumn) {
-        [_mutableState appendCarriageReturnLineFeed];
-    }
-    _mutableState.shellIntegrationInstalled = YES;
-
-    _mutableState.lastCommandOutputRange = VT100GridAbsCoordRangeMake(_mutableState.startOfRunningCommandOutput.x,
-                                                                      _mutableState.startOfRunningCommandOutput.y,
-                                                                      coord.x,
-                                                                      coord.y);
-    _mutableState.currentPromptRange = VT100GridAbsCoordRangeMake(coord.x,
-                                                                  coord.y,
-                                                                  coord.x,
-                                                                  coord.y);
-
-    // FinalTerm uses this to define the start of a collapsible region. That would be a nightmare
-    // to add to iTerm, and our answer to this is marks, which already existed anyway.
-    [_mutableState setPromptStartLine:_mutableState.numberOfScrollbackLines + _mutableState.cursorY - 1];
-    if ([iTermAdvancedSettingsModel resetSGROnPrompt]) {
-        [_mutableState.terminal resetGraphicRendition];
-    }
+    [_mutableState promptDidStartAt:coord];
 }
 
 - (void)mutSetLastCommandOutputRange:(VT100GridAbsCoordRange)lastCommandOutputRange {
@@ -4139,8 +4119,8 @@ static inline void VT100ScreenEraseCell(screen_char_t *sct, iTermExternalAttribu
 }
 
 - (void)terminalPromptDidStart {
-    [self promptDidStartAt:VT100GridAbsCoordMake(_state.currentGrid.cursor.x,
-                                                 _state.currentGrid.cursor.y + _mutableState.numberOfScrollbackLines + _mutableState.cumulativeScrollbackOverflow)];
+    [_mutableState promptDidStartAt:VT100GridAbsCoordMake(_state.currentGrid.cursor.x,
+                                                          _state.currentGrid.cursor.y + _mutableState.numberOfScrollbackLines + _mutableState.cumulativeScrollbackOverflow)];
 }
 
 - (NSArray<NSNumber *> *)terminalTabStops {
