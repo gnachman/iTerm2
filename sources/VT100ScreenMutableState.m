@@ -8,7 +8,9 @@
 #import "VT100ScreenMutableState.h"
 #import "VT100ScreenState+Private.h"
 
+#import "PTYAnnotation.h"
 #import "VT100ScreenDelegate.h"
+#import "iTermIntervalTreeObserver.h"
 #import "iTermOrderEnforcer.h"
 
 @implementation VT100ScreenMutableState
@@ -119,6 +121,25 @@
 #warning TODO: This mutates a shared object.
         screenMark.endDate = [NSDate date];
     }
+}
+
+#pragma mark - Annotations
+
+- (void)removeAnnotation:(PTYAnnotation *)annotation {
+    if ([self.intervalTree containsObject:annotation]) {
+        self.lastCommandMark = nil;
+        const iTermIntervalTreeObjectType type = iTermIntervalTreeObjectTypeForObject(annotation);
+        const long long absLine = [self coordRangeForInterval:annotation.entry.interval].start.y + self.cumulativeScrollbackOverflow;
+        [self.intervalTree removeObject:annotation];
+        [self addIntervalTreeSideEffect:^(id<iTermIntervalTreeObserver>  _Nonnull observer) {
+            [observer intervalTreeDidRemoveObjectOfType:type
+                                                 onLine:absLine];
+        }];
+    } else if ([self.savedIntervalTree containsObject:annotation]) {
+        self.lastCommandMark = nil;
+        [self.savedIntervalTree removeObject:annotation];
+    }
+    [self setNeedsRedraw];
 }
 
 @end

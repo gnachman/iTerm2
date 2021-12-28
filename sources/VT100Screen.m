@@ -16,6 +16,7 @@
 #import "iTermImage.h"
 #import "iTermImageInfo.h"
 #import "iTermImageMark.h"
+#import "iTermIntervalTreeObserver.h"
 #import "iTermURLMark.h"
 #import "iTermOrderEnforcer.h"
 #import "iTermPreferences.h"
@@ -814,27 +815,6 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     return workingDirectory.workingDirectory;
 }
 
-- (iTermIntervalTreeObjectType)intervalTreeObserverTypeForObject:(id<IntervalTreeObject>)object {
-    if ([object isKindOfClass:[VT100ScreenMark class]]) {
-        VT100ScreenMark *mark = (VT100ScreenMark *)object;
-        if (!mark.hasCode) {
-            return iTermIntervalTreeObjectTypeManualMark;
-        }
-        if (mark.code == 0) {
-            return iTermIntervalTreeObjectTypeSuccessMark;
-        }
-        if (mark.code >= 128 && mark.code <= 128 + 32) {
-            return iTermIntervalTreeObjectTypeOtherMark;
-        }
-        return iTermIntervalTreeObjectTypeErrorMark;
-    }
-
-    if ([object isKindOfClass:[PTYAnnotation class]]) {
-        return iTermIntervalTreeObjectTypeAnnotation;
-    }
-    return iTermIntervalTreeObjectTypeUnknown;
-}
-
 - (void)removeAnnotation:(PTYAnnotation *)annotation {
     [self mutRemoveAnnotation:annotation];
 }
@@ -933,7 +913,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     const NSInteger overflow = _state.cumulativeScrollbackOverflow;
     for (NSArray *objects in _state.intervalTree.forwardLimitEnumerator) {
         for (id<IntervalTreeObject> obj in objects) {
-            const iTermIntervalTreeObjectType type = [self intervalTreeObserverTypeForObject:obj];
+            const iTermIntervalTreeObjectType type = iTermIntervalTreeObjectTypeForObject(obj);
             if (type == iTermIntervalTreeObjectTypeUnknown) {
                 continue;
             }

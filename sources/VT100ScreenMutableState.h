@@ -47,6 +47,10 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)assignCurrentCommandEndDate;
 
+#pragma mark - Annotations
+
+- (void)removeAnnotation:(PTYAnnotation *)annotation;
+
 @end
 
 NS_ASSUME_NONNULL_END

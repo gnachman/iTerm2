@@ -6,6 +6,7 @@
 //
 
 #import <Foundation/Foundation.h>
+#import "IntervalTree.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -26,5 +27,7 @@ typedef NS_ENUM(NSUInteger, iTermIntervalTreeObjectType) {
                                    onLine:(NSInteger)line;
 - (void)intervalTreeVisibleRangeDidChange;
 @end
+
+iTermIntervalTreeObjectType iTermIntervalTreeObjectTypeForObject(id<IntervalTreeObject> object);
 
 NS_ASSUME_NONNULL_END
