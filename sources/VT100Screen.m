@@ -223,7 +223,7 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 - (void)highlightTextInRange:(NSRange)range
    basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
                       colors:(NSDictionary *)colors {
-    long long lineNumber = absoluteLineNumber - self.totalScrollbackOverflow - self.numberOfScrollbackLines;
+    long long lineNumber = absoluteLineNumber - self.totalScrollbackOverflow - _state.numberOfScrollbackLines;
 
     VT100GridRun gridRun = [_state.currentGrid gridRunFromRange:range relativeToRow:lineNumber];
     DLog(@"Highlight range %@ with colors %@ at lineNumber %@ giving grid run %@",
@@ -242,7 +242,7 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 - (void)linkTextInRange:(NSRange)range
 basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
                   URLCode:(unsigned int)code {
-    long long lineNumber = absoluteLineNumber - self.totalScrollbackOverflow - self.numberOfScrollbackLines;
+    long long lineNumber = absoluteLineNumber - self.totalScrollbackOverflow - _state.numberOfScrollbackLines;
     if (lineNumber < 0) {
         return;
     }
@@ -311,7 +311,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)commandDidStartAtScreenCoord:(VT100GridCoord)coord {
-    [self commandDidStartAt:VT100GridAbsCoordMake(coord.x, coord.y + [self numberOfScrollbackLines] + [self totalScrollbackOverflow])];
+    [self commandDidStartAt:VT100GridAbsCoordMake(coord.x, coord.y + _state.numberOfScrollbackLines + [self totalScrollbackOverflow])];
 }
 
 - (void)commandDidStartAt:(VT100GridAbsCoord)coord {
@@ -568,7 +568,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (int)numberOfScrollbackLines {
-    return [_state.linebuffer numLinesWithWidth:_state.currentGrid.size.width];
+    return _state.numberOfScrollbackLines;
 }
 
 - (int)scrollbackOverflow {
@@ -1021,14 +1021,14 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
 - (void)clearToLastMark {
     const long long overflow = self.totalScrollbackOverflow;
-    const int cursorLine = self.currentGrid.cursor.y + self.numberOfScrollbackLines;
+    const int cursorLine = self.currentGrid.cursor.y + _state.numberOfScrollbackLines;
     VT100ScreenMark *lastMark = [self lastMarkPassingTest:^BOOL(__kindof id<IntervalTreeObject> obj) {
         if (![obj isKindOfClass:[VT100ScreenMark class]]) {
             return NO;
         }
         VT100ScreenMark *mark = obj;
         const VT100GridCoord intervalStart = [self coordRangeForInterval:mark.entry.interval].start;
-        if (intervalStart.y >= self.numberOfScrollbackLines + self.currentGrid.cursor.y) {
+        if (intervalStart.y >= _state.numberOfScrollbackLines + self.currentGrid.cursor.y) {
             return NO;
         }
         // Found a screen mark above the cursor.
@@ -1336,7 +1336,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
         return VT100GridCoordRangeMake(_state.commandStartCoord.x,
                                        MAX(0, _state.commandStartCoord.y - offset),
                                        _state.currentGrid.cursorX,
-                                       _state.currentGrid.cursorY + [self numberOfScrollbackLines]);
+                                       _state.currentGrid.cursorY + _state.numberOfScrollbackLines);
     }
 }
 
@@ -1437,7 +1437,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (id<iTermMark>)markAddedAtCursorOfClass:(Class)theClass {
-    return [self mutAddMarkOnLine:self.numberOfScrollbackLines + self.cursorY - 1
+    return [self mutAddMarkOnLine:_state.numberOfScrollbackLines + self.cursorY - 1
                           ofClass:theClass];
 }
 
@@ -1471,7 +1471,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
 - (void)gridCursorDidChangeLine {
     if (_state.trackCursorLineMovement) {
-        [delegate_ screenCursorDidMoveToLine:_state.currentGrid.cursorY + [self numberOfScrollbackLines]];
+        [delegate_ screenCursorDidMoveToLine:_state.currentGrid.cursorY + _state.numberOfScrollbackLines];
     }
 }
 
@@ -1676,7 +1676,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 - (void)inlineImageSetMarkOnScreenLine:(NSInteger)line
                                   code:(unichar)code {
     long long absLine = (self.totalScrollbackOverflow +
-                         [self numberOfScrollbackLines] +
+                         _state.numberOfScrollbackLines +
                          line);
     iTermImageMark *mark = [self addMarkStartingAtAbsoluteLine:absLine
                                                        oneLine:YES

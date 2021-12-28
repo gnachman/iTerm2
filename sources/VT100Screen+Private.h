@@ -38,7 +38,7 @@ extern NSString *const kScreenStateProtectedMode;
 iTermTemporaryDoubleBufferedGridControllerDelegate,
 iTermLineBufferDelegate,
 VT100InlineImageHelperDelegate> {
-    id<VT100ScreenState> _state;
+    VT100ScreenState *_state;
     VT100ScreenMutableState *_mutableState;
 
     __weak id<VT100ScreenDelegate> delegate_;  // PTYSession implements this

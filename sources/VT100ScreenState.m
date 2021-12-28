@@ -173,5 +173,9 @@ static const int kDefaultMaxScrollbackLines = 1000;
     [_temporaryDoubleBuffer reset];
 }
 
+- (int)numberOfScrollbackLines {
+    return [self.linebuffer numLinesWithWidth:self.currentGrid.size.width];
+}
+
 @end
 
