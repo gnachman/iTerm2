@@ -95,7 +95,7 @@
     _mutableState.currentPromptRange = VT100GridAbsCoordRangeMake(_state.currentPromptRange.start.x,
                                                                   _state.currentPromptRange.start.y,
                                                                   _state.currentGrid.cursor.x,
-                                                                  _state.currentGrid.cursor.y + _mutableState.numberOfScrollbackLines + self.totalScrollbackOverflow);
+                                                                  _state.currentGrid.cursor.y + _mutableState.numberOfScrollbackLines + _mutableState.cumulativeScrollbackOverflow);
     [self commandDidStartAtScreenCoord:_state.currentGrid.cursor];
     const int line = _mutableState.numberOfScrollbackLines + _mutableState.cursorY - 1;
     VT100ScreenMark *mark = [self updatePromptMarkRangesForPromptEndingOnLine:line];
@@ -384,7 +384,7 @@
     [_mutableState.intervalTree addObject:mark withInterval:[_mutableState intervalForGridCoordRange:range]];
 
     const iTermIntervalTreeObjectType objectType = iTermIntervalTreeObjectTypeForObject(mark);
-    const long long absLine = range.start.y + self.totalScrollbackOverflow;
+    const long long absLine = range.start.y + _mutableState.cumulativeScrollbackOverflow;
     [_mutableState addIntervalTreeSideEffect:^(id<iTermIntervalTreeObserver>  _Nonnull observer) {
         [observer intervalTreeDidAddObjectOfType:objectType
                                           onLine:absLine];
@@ -414,7 +414,7 @@
     [_mutableState addSideEffect:^(id<VT100ScreenDelegate> delegate) {
         [delegate screenDidAddNote:annotation focus:focus];
         [self.intervalTreeObserver intervalTreeDidAddObjectOfType:iTermIntervalTreeObjectTypeAnnotation
-                                                           onLine:range.start.y + self.totalScrollbackOverflow];
+                                                           onLine:range.start.y + _mutableState.cumulativeScrollbackOverflow];
     }];
 }
 
@@ -423,7 +423,7 @@
     if (screenMark) {
         DLog(@"Removing last command mark %@", screenMark);
         [self.intervalTreeObserver intervalTreeDidRemoveObjectOfType:iTermIntervalTreeObjectTypeForObject(screenMark)
-                                                              onLine:[_mutableState coordRangeForInterval:screenMark.entry.interval].start.y + self.totalScrollbackOverflow];
+                                                              onLine:[_mutableState coordRangeForInterval:screenMark.entry.interval].start.y + _mutableState.cumulativeScrollbackOverflow];
         [_mutableState.intervalTree removeObject:screenMark];
     }
     [self mutInvalidateCommandStartCoordWithoutSideEffects];
@@ -448,7 +448,7 @@
     if (type != iTermIntervalTreeObjectTypeUnknown) {
         VT100GridCoordRange range = [_mutableState coordRangeForInterval:obj.entry.interval];
         [self.intervalTreeObserver intervalTreeDidRemoveObjectOfType:type
-                                                              onLine:range.start.y + self.totalScrollbackOverflow];
+                                                              onLine:range.start.y + _mutableState.cumulativeScrollbackOverflow];
     }
 }
 
@@ -651,7 +651,7 @@
 - (void)mutClearFromAbsoluteLineToEnd:(long long)absLine {
     const VT100GridCoord cursorCoord = VT100GridCoordMake(_state.currentGrid.cursor.x,
                                                           _state.currentGrid.cursor.y + _mutableState.numberOfScrollbackLines);
-    const long long totalScrollbackOverflow = self.totalScrollbackOverflow;
+    const long long totalScrollbackOverflow = _mutableState.cumulativeScrollbackOverflow;
     const VT100GridAbsCoord absCursorCoord = VT100GridAbsCoordFromCoord(cursorCoord, totalScrollbackOverflow);
     iTermTextExtractor *extractor = [[[iTermTextExtractor alloc] initWithDataSource:self] autorelease];
     const VT100GridWindowedRange cursorLineRange = [extractor rangeForWrappedLineEncompassing:cursorCoord
@@ -664,7 +664,7 @@
     const long long firstScreenAbsLine = _mutableState.numberOfScrollbackLines + totalScrollbackOverflow;
     [self clearGridFromLineToEnd:MAX(0, absLine - firstScreenAbsLine)];
 
-    [self clearScrollbackBufferFromLine:absLine - self.totalScrollbackOverflow];
+    [self clearScrollbackBufferFromLine:absLine - _mutableState.cumulativeScrollbackOverflow];
     const VT100GridCoordRange coordRange = VT100GridCoordRangeMake(0,
                                                                    absLine - totalScrollbackOverflow,
                                                                    _mutableState.width,
@@ -3921,7 +3921,7 @@ static inline void VT100ScreenEraseCell(screen_char_t *sct, iTermExternalAttribu
 }
 
 - (void)addURLMarkAtLineAfterCursorWithCode:(unsigned int)code {
-    long long absLine = (self.totalScrollbackOverflow +
+    long long absLine = (_mutableState.cumulativeScrollbackOverflow +
                          _mutableState.numberOfScrollbackLines +
                          _state.currentGrid.cursor.y + 1);
     iTermURLMark *mark = [self addMarkStartingAtAbsoluteLine:absLine
@@ -4196,7 +4196,7 @@ static inline void VT100ScreenEraseCell(screen_char_t *sct, iTermExternalAttribu
 
 - (void)terminalPromptDidStart {
     [self promptDidStartAt:VT100GridAbsCoordMake(_state.currentGrid.cursor.x,
-                                                 _state.currentGrid.cursor.y + _mutableState.numberOfScrollbackLines + self.totalScrollbackOverflow)];
+                                                 _state.currentGrid.cursor.y + _mutableState.numberOfScrollbackLines + _mutableState.cumulativeScrollbackOverflow)];
 }
 
 - (NSArray<NSNumber *> *)terminalTabStops {
@@ -4247,7 +4247,7 @@ static inline void VT100ScreenEraseCell(screen_char_t *sct, iTermExternalAttribu
     VT100ScreenMark *mark = [[_mutableState.lastCommandMark retain] autorelease];
     if (mark) {
         DLog(@"FinalTerm: setting code on mark %@", mark);
-        const NSInteger line = [_mutableState coordRangeForInterval:mark.entry.interval].start.y + self.totalScrollbackOverflow;
+        const NSInteger line = [_mutableState coordRangeForInterval:mark.entry.interval].start.y + _mutableState.cumulativeScrollbackOverflow;
         [_state.intervalTreeObserver intervalTreeDidRemoveObjectOfType:iTermIntervalTreeObjectTypeForObject(mark)
                                                                 onLine:line];
         mark.code = returnCode;

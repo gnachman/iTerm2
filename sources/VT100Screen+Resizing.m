@@ -382,7 +382,7 @@
         NSMutableArray *subSelectionsToAdd = [NSMutableArray array];
         for (iTermSubSelection *sub in newSubSelections) {
             VT100GridAbsCoordRangeTryMakeRelative(sub.absRange.coordRange,
-                                                  self.totalScrollbackOverflow,
+                                                  _mutableState.cumulativeScrollbackOverflow,
                                                   ^(VT100GridCoordRange range) {
                 [subSelectionsToAdd addObject:sub];
             });
@@ -445,7 +445,7 @@
     NSMutableArray *altScreenSubSelectionTuples = [NSMutableArray array];
     for (iTermSubSelection *sub in selection.allSubSelections) {
         VT100GridAbsCoordRangeTryMakeRelative(sub.absRange.coordRange,
-                                              self.totalScrollbackOverflow,
+                                              _mutableState.cumulativeScrollbackOverflow,
                                               ^(VT100GridCoordRange range) {
             LineBufferPositionRange *positionRange =
             [self positionRangeForCoordRange:range
@@ -506,7 +506,7 @@
 - (NSArray *)subSelectionsWithConvertedRangesFromSelection:(iTermSelection *)selection
                                                   newWidth:(int)newWidth {
     NSMutableArray *newSubSelections = [NSMutableArray array];
-    const long long overflow = self.totalScrollbackOverflow;
+    const long long overflow = _mutableState.cumulativeScrollbackOverflow;
     for (iTermSubSelection *sub in selection.allSubSelections) {
         DLog(@"convert sub %@", sub);
         VT100GridAbsCoordRangeTryMakeRelative(sub.absRange.coordRange,
@@ -594,7 +594,7 @@
                                          linesMovedUp:linesMovedUp];
         if (ok) {
             const VT100GridAbsWindowedRange theRange =
-            VT100GridAbsWindowedRangeMake(VT100GridAbsCoordRangeFromCoordRange(newSelection, self.totalScrollbackOverflow),
+            VT100GridAbsWindowedRangeMake(VT100GridAbsCoordRangeFromCoordRange(newSelection, _mutableState.cumulativeScrollbackOverflow),
                                           0, 0);
             iTermSubSelection *theSub = [iTermSubSelection subSelectionWithAbsRange:theRange
                                                                                mode:originalSub.selectionMode
