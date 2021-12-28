@@ -14,14 +14,71 @@
 
 static const int kDefaultMaxScrollbackLines = 1000;
 
-@implementation VT100ScreenMutableState
+@interface VT100ScreenState() <VT100ScreenMutableState>
+@end
 
-- (instancetype)init {
+@implementation VT100ScreenState
+
+@synthesize audibleBell = _audibleBell;
+@synthesize showBellIndicator = _showBellIndicator;
+@synthesize flashBell = _flashBell;
+@synthesize postUserNotifications = _postUserNotifications;
+@synthesize cursorBlinks = _cursorBlinks;
+@synthesize collectInputForPrinting = _collectInputForPrinting;
+@synthesize printBuffer = _printBuffer;
+@synthesize allowTitleReporting = _allowTitleReporting;
+@synthesize lastBell = _lastBell;
+@synthesize animatedLines = _animatedLines;
+@synthesize pasteboardString = _pasteboardString;
+@synthesize intervalTree = _intervalTree;
+@synthesize primaryGrid = _primaryGrid;
+@synthesize altGrid = _altGrid;
+@synthesize currentGrid = _currentGrid;
+@synthesize realCurrentGrid = _realCurrentGrid;
+@synthesize savedIntervalTree = _savedIntervalTree;
+@synthesize wraparoundMode = _wraparoundMode;
+@synthesize ansi = _ansi;
+@synthesize insert = _insert;
+@synthesize unlimitedScrollback = _unlimitedScrollback;
+@synthesize terminal = _terminal;
+@synthesize findContext = _findContext;
+@synthesize scrollbackOverflow = _scrollbackOverflow;
+@synthesize commandStartCoord = _commandStartCoord;
+@synthesize markCache = _markCache;
+@synthesize maxScrollbackLines = _maxScrollbackLines;
+@synthesize savedFindContextAbsPos = _savedFindContextAbsPos;
+@synthesize tabStops = _tabStops;
+@synthesize charsetUsesLineDrawingMode = _charsetUsesLineDrawingMode;
+@synthesize lastCharacter = _lastCharacter;
+@synthesize lastCharacterIsDoubleWidth = _lastCharacterIsDoubleWidth;
+@synthesize lastExternalAttribute = _lastExternalAttribute;
+@synthesize saveToScrollbackInAlternateScreen = _saveToScrollbackInAlternateScreen;
+@synthesize cursorVisible = _cursorVisible;
+@synthesize shellIntegrationInstalled = _shellIntegrationInstalled;
+@synthesize lastCommandOutputRange = _lastCommandOutputRange;
+@synthesize currentPromptRange = _currentPromptRange;
+@synthesize startOfRunningCommandOutput = _startOfRunningCommandOutput;
+@synthesize protectedMode = _protectedMode;
+@synthesize initialSize = _initialSize;
+@synthesize cumulativeScrollbackOverflow = _cumulativeScrollbackOverflow;
+@synthesize linebuffer = _linebuffer;
+@synthesize trackCursorLineMovement = _trackCursorLineMovement;
+@synthesize appendToScrollbackWithStatusBar = _appendToScrollbackWithStatusBar;
+@synthesize normalization = _normalization;
+@synthesize intervalTreeObserver = _intervalTreeObserver;
+@synthesize lastCommandMark = _lastCommandMark;
+@synthesize colorMap = _colorMap;
+@synthesize temporaryDoubleBuffer = _temporaryDoubleBuffer;
+@synthesize fakePromptDetectedAbsLine = _fakePromptDetectedAbsLine;
+@synthesize lastPromptLine = _lastPromptLine;
+@synthesize sideEffects = _sideEffects;
+@synthesize shouldExpectPromptMarks = _shouldExpectPromptMarks;
+@synthesize needsRedraw = _needsRedraw;
+
+- (instancetype)initForMutation {
     self = [super init];
     if (self) {
         _animatedLines = [NSMutableIndexSet indexSet];
-        _setWorkingDirectoryOrderEnforcer = [[iTermOrderEnforcer alloc] init];
-        _currentDirectoryDidChangeOrderEnforcer = [[iTermOrderEnforcer alloc] init];
         _intervalTree = [[IntervalTree alloc] init];
         _savedIntervalTree = [[IntervalTree alloc] init];
         _findContext = [[FindContext alloc] init];
@@ -88,14 +145,16 @@ static const int kDefaultMaxScrollbackLines = 1000;
         _shouldExpectPromptMarks = source.shouldExpectPromptMarks;
 
         _linebuffer = [source.linebuffer copy];
+        NSMutableDictionary<NSNumber *, id<iTermMark>> *temp = [NSMutableDictionary dictionary];
         [source.markCache enumerateKeysAndObjectsUsingBlock:^(NSNumber * _Nonnull key, id<iTermMark>  _Nonnull obj, BOOL * _Nonnull stop) {
             NSDictionary *encoded = [obj dictionaryValue];
             Class theClass = [obj class];
             // TODO: This is going to be really slow. Marks being mutable is going to be a problem.
             // I think that very few kinds of marks are actually mutable, and in those cases a journal
             // might provide a cheap way to update an existing copy.
-            self.markCache[key] = [[theClass alloc] initWithDictionary:encoded];
+            temp[key] = [[theClass alloc] initWithDictionary:encoded];
         }];
+        _markCache = temp;
 
         _animatedLines = [source.animatedLines copy];
         _pasteboardString = [source.pasteboardString copy];
@@ -115,8 +174,21 @@ static const int kDefaultMaxScrollbackLines = 1000;
     [_temporaryDoubleBuffer reset];
 }
 
+@end
+
+@implementation VT100ScreenMutableState
+
+- (instancetype)init {
+    self = [super initForMutation];
+    if (self) {
+        _setWorkingDirectoryOrderEnforcer = [[iTermOrderEnforcer alloc] init];
+        _currentDirectoryDidChangeOrderEnforcer = [[iTermOrderEnforcer alloc] init];
+    }
+    return self;
+}
+
 - (id)copyWithZone:(NSZone *)zone {
-    return [[VT100ScreenMutableState alloc] initWithState:self];
+    return [[VT100ScreenState alloc] initWithState:self];
 }
 
 - (id<VT100ScreenState>)copy {

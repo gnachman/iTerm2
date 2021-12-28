@@ -147,8 +147,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @end
 
-@interface VT100ScreenMutableState: NSObject<VT100ScreenState, NSCopying>
-
+@protocol VT100ScreenMutableState<VT100ScreenState>
 @property (nonatomic, readwrite) BOOL audibleBell;
 @property (nonatomic, readwrite) BOOL showBellIndicator;
 @property (nonatomic, readwrite) BOOL flashBell;
@@ -157,12 +156,9 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readwrite) BOOL collectInputForPrinting;
 @property (nullable, nonatomic, strong, readwrite) NSMutableString *printBuffer;
 @property (nonatomic, readwrite) BOOL allowTitleReporting;
-@property (nullable, nonatomic, strong) VT100InlineImageHelper *inlineImageHelper;
 @property (nonatomic, readwrite) NSTimeInterval lastBell;
 @property (nonatomic, strong, readwrite) NSMutableIndexSet *animatedLines;
 @property (nullable, nonatomic, strong, readwrite) NSMutableString *pasteboardString;
-@property (nonatomic, strong, readwrite) iTermOrderEnforcer *setWorkingDirectoryOrderEnforcer;
-@property (nonatomic, strong, readwrite) iTermOrderEnforcer *currentDirectoryDidChangeOrderEnforcer;
 @property (nonatomic, strong, readwrite) IntervalTree *intervalTree;
 
 @property (nonatomic, strong, readwrite) VT100Grid *primaryGrid;
@@ -214,8 +210,19 @@ NS_ASSUME_NONNULL_BEGIN
 
 #warning TODO: Once this synced properly (see comment in VT100Screen+Mutation) then it can be made nonatomic.
 @property (atomic) BOOL needsRedraw;
+@end
+
+@interface VT100ScreenState: NSObject<VT100ScreenState>
+- (instancetype)init NS_UNAVAILABLE;
+@end
+
+@interface VT100ScreenMutableState: VT100ScreenState<VT100ScreenMutableState, NSCopying>
+@property (nonatomic, strong, readwrite) iTermOrderEnforcer *currentDirectoryDidChangeOrderEnforcer;
+@property (nullable, nonatomic, strong) VT100InlineImageHelper *inlineImageHelper;
+@property (nonatomic, strong, readwrite) iTermOrderEnforcer *setWorkingDirectoryOrderEnforcer;
 
 - (id<VT100ScreenState>)copy;
+- (instancetype)init NS_DESIGNATED_INITIALIZER;
 
 @end
 
