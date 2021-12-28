@@ -311,7 +311,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)commandDidStartAtScreenCoord:(VT100GridCoord)coord {
-    [self commandDidStartAt:VT100GridAbsCoordMake(coord.x, coord.y + _state.numberOfScrollbackLines + [self totalScrollbackOverflow])];
+    [self commandDidStartAt:VT100GridAbsCoordMake(coord.x, coord.y + _state.numberOfScrollbackLines + _state.cumulativeScrollbackOverflow)];
 }
 
 - (void)commandDidStartAt:(VT100GridAbsCoord)coord {
@@ -585,7 +585,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
 - (long long)absoluteLineNumberOfCursor
 {
-    return [self totalScrollbackOverflow] + [self numberOfLines] - [self height] + _state.currentGrid.cursorY;
+    return _state.cumulativeScrollbackOverflow + [self numberOfLines] - [self height] + _state.currentGrid.cursorY;
 }
 
 - (int)lineNumberOfCursor
@@ -755,15 +755,15 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 - (Interval *)intervalForGridCoordRange:(VT100GridCoordRange)range {
     return [self intervalForGridCoordRange:range
                                      width:self.width
-                               linesOffset:[self totalScrollbackOverflow]];
+                               linesOffset:_state.cumulativeScrollbackOverflow];
 }
 
 - (VT100GridCoordRange)coordRangeForInterval:(Interval *)interval {
     VT100GridCoordRange result;
     const int w = self.width + 1;
-    result.start.y = interval.location / w - [self totalScrollbackOverflow];
+    result.start.y = interval.location / w - _state.cumulativeScrollbackOverflow;
     result.start.x = interval.location % w;
-    result.end.y = interval.limit / w - [self totalScrollbackOverflow];
+    result.end.y = interval.limit / w - _state.cumulativeScrollbackOverflow;
     result.end.x = interval.limit % w;
 
     if (result.start.y < 0) {
@@ -886,7 +886,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)removeInaccessibleNotes {
-    long long lastDeadLocation = [self totalScrollbackOverflow] * (self.width + 1);
+    long long lastDeadLocation = _state.cumulativeScrollbackOverflow * (self.width + 1);
     if (lastDeadLocation > 0) {
         Interval *deadInterval = [Interval intervalWithLocation:0 length:lastDeadLocation + 1];
         for (id<IntervalTreeObject> obj in [_mutableState.intervalTree objectsInInterval:deadInterval]) {
@@ -976,7 +976,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)enumerateObservableMarks:(void (^ NS_NOESCAPE)(iTermIntervalTreeObjectType, NSInteger))block {
-    const NSInteger overflow = [self totalScrollbackOverflow];
+    const NSInteger overflow = _state.cumulativeScrollbackOverflow;
     for (NSArray *objects in _state.intervalTree.forwardLimitEnumerator) {
         for (id<IntervalTreeObject> obj in objects) {
             const iTermIntervalTreeObjectType type = [self intervalTreeObserverTypeForObject:obj];
@@ -1088,7 +1088,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
 - (VT100ScreenMark *)markOnLine:(int)line {
 #warning TODO: Figure out what to do with the mark cache. Also don't use totalScrollbackOverflow from mutable code path
-    return _state.markCache[@([self totalScrollbackOverflow] + line)];
+    return _state.markCache[@(_state.cumulativeScrollbackOverflow + line)];
 }
 
 - (NSArray<VT100ScreenMark *> *)lastMarks {
@@ -1329,7 +1329,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 #pragma mark - Private
 
 - (VT100GridCoordRange)commandRange {
-    long long offset = [self totalScrollbackOverflow];
+    long long offset = _state.cumulativeScrollbackOverflow;
     if (_state.commandStartCoord.x < 0) {
         return VT100GridCoordRangeMake(-1, -1, -1, -1);
     } else {
