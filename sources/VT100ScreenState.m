@@ -224,6 +224,13 @@ static const int kDefaultMaxScrollbackLines = 1000;
     return VT100GridRangeMake(range.start.y, range.end.y - range.start.y + 1);
 }
 
+
+#pragma mark - Combined Grid And Scrollback
+
+- (int)numberOfLines {
+    return [self.linebuffer numLinesWithWidth:self.currentGrid.size.width] + self.currentGrid.size.height;
+}
+
 #pragma mark - Shell Integration
 
 - (VT100ScreenMark *)lastCommandMark {

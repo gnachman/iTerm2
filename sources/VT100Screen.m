@@ -394,7 +394,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
 // Returns the number of lines in scrollback plus screen height.
 - (int)numberOfLines {
-    return [_state.linebuffer numLinesWithWidth:_state.currentGrid.size.width] + _state.currentGrid.size.height;
+    return _state.numberOfLines;
 }
 
 - (int)width {
@@ -585,12 +585,12 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
 - (long long)absoluteLineNumberOfCursor
 {
-    return _state.cumulativeScrollbackOverflow + [self numberOfLines] - _state.height + _state.currentGrid.cursorY;
+    return _state.cumulativeScrollbackOverflow + _state.numberOfLines - _state.height + _state.currentGrid.cursorY;
 }
 
 - (int)lineNumberOfCursor
 {
-    return [self numberOfLines] - _state.height + _state.currentGrid.cursorY;
+    return _state.numberOfLines - _state.height + _state.currentGrid.cursorY;
 }
 
 - (BOOL)continueFindAllResults:(NSMutableArray<SearchResult *> *)results
@@ -1241,7 +1241,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     range.start.x = 0;
     range.start.y++;
     range.end.x = 0;
-    range.end.y = self.numberOfLines - _state.height + [_state.currentGrid numberOfLinesUsed];
+    range.end.y = _state.numberOfLines - _state.height + [_state.currentGrid numberOfLinesUsed];
     return range;
 }
 
@@ -1255,7 +1255,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     if (lineNumber < 0) {
         return nil;
     }
-    if (lineNumber >= self.numberOfLines) {
+    if (lineNumber >= _state.numberOfLines) {
         return nil;
     }
     // Search backward for start of line
@@ -1281,7 +1281,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
         *startAbsLineNumber = i + self.totalScrollbackOverflow + 1;
     }
     BOOL done = NO;
-    for (i = lineNumber; !done && i < self.numberOfLines && i < lineNumber + kMaxRadius; i++) {
+    for (i = lineNumber; !done && i < _state.numberOfLines && i < lineNumber + kMaxRadius; i++) {
         const screen_char_t *line = [self getLineAtIndex:i];
         int length = _state.width;
         done = line[length].code == EOL_HARD;
@@ -1331,7 +1331,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     int y = result.origin.y;
     ITBetaAssert(y >= 0, @"Negative y to runByTrimmingNullsFromRun");
     const screen_char_t *line = [self getLineAtIndex:y];
-    int numberOfLines = [self numberOfLines];
+    int numberOfLines = _state.numberOfLines;
     int width = _state.width;
     if (x > 0) {
         while (result.length > 0 && line[x].code == 0 && y < numberOfLines) {
