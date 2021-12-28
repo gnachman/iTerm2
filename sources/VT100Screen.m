@@ -92,7 +92,7 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
                    configuration:(id<VT100ScreenConfiguration>)config {
     self = [super init];
     if (self) {
-        _mutableState = [[VT100ScreenMutableState alloc] init];
+        _mutableState = [[VT100ScreenMutableState alloc] initWithSideEffectPerformer:self];
         _state = [_mutableState retain];
         _mutableState.colorMap.darkMode = darkMode;
 
@@ -2009,6 +2009,12 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
 - (NSIndexSet *)animatedLines {
     return _state.animatedLines;
+}
+
+#pragma mark - VT100ScreenSideEffectPerforming
+
+- (id<VT100ScreenDelegate>)sideEffectPerformingScreenDelegate {
+    return self.delegate;
 }
 
 @end

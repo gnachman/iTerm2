@@ -198,6 +198,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)mutDidUpdatePromptLocation;
 - (void)mutCommandDidEndWithRange:(VT100GridCoordRange)range;
 - (void)mutSaveCursorLine;
+- (void)mutRestorePreferredCursorPositionIfPossible;
 
 @end
 

@@ -59,27 +59,12 @@
     _config = [_nextConfig retain];
 }
 
-- (void)addSideEffect:(void (^)(id<VT100ScreenDelegate> delegate))sideEffect {
-    [_mutableState.sideEffects addSideEffect:sideEffect];
-    __weak __typeof(self) weakSelf = self;
-    dispatch_async(dispatch_get_main_queue(), ^{
-        [weakSelf performSideEffects];
-    });
-}
-
-- (void)performSideEffects {
-    if (!self.delegate) {
-        return;
-    }
-    [_mutableState.sideEffects executeWithDelegate:self.delegate];
-}
-
 - (void)setNeedsRedraw {
     if (_mutableState.needsRedraw) {
         return;
     }
     _mutableState.needsRedraw = YES;
-    [self addSideEffect:^(id<VT100ScreenDelegate> delegate) {
+    [_mutableState addSideEffect:^(id<VT100ScreenDelegate> delegate) {
         _mutableState.needsRedraw = NO;
         [delegate screenNeedsRedraw];
 #warning TODO: When a general syncing mechanism is developed, the assignment should occur there. This is kinda racey.
@@ -126,7 +111,7 @@
     [self commandDidStartAtScreenCoord:_state.currentGrid.cursor];
     const int line = _mutableState.numberOfScrollbackLines + _mutableState.cursorY - 1;
     VT100ScreenMark *mark = [self updatePromptMarkRangesForPromptEndingOnLine:line];
-    [self addSideEffect:^(id<VT100ScreenDelegate> delegate) {
+    [_mutableState addSideEffect:^(id<VT100ScreenDelegate> delegate) {
         [delegate screenPromptDidEndWithMark:mark];
     }];
 }
@@ -185,7 +170,7 @@
             [[mark retain] autorelease];
         }
     }
-    [self addSideEffect:^(id<VT100ScreenDelegate> delegate) {
+    [_mutableState addSideEffect:^(id<VT100ScreenDelegate> delegate) {
         [delegate screenDidExecuteCommand:command
                                     range:range
                                    onHost:command ? [self remoteHostOnLine:range.end.y] : nil
@@ -199,7 +184,7 @@
     id<iTermMark> newMark = [self mutAddMarkStartingAtAbsoluteLine:_mutableState.cumulativeScrollbackOverflow + line
                                                            oneLine:YES
                                                            ofClass:markClass];
-    [self addSideEffect:^(id<VT100ScreenDelegate> delegate) {
+    [_mutableState addSideEffect:^(id<VT100ScreenDelegate> delegate) {
         [delegate screenDidAddMark:newMark];
     }];
     return newMark;
@@ -224,7 +209,7 @@
     [mark setIsPrompt:YES];
     mark.promptRange = VT100GridAbsCoordRangeMake(0, lastPromptLine, 0, lastPromptLine);
     [self mutDidUpdatePromptLocation];
-    [self addSideEffect:^(id<VT100ScreenDelegate> delegate) {
+    [_mutableState addSideEffect:^(id<VT100ScreenDelegate> delegate) {
         [delegate screenPromptDidStartAtLine:line];
     }];
 }
@@ -309,7 +294,7 @@
     if (token && !workingDirectory) {
         __weak __typeof(self) weakSelf = self;
         DLog(@"%p: Performing async working directory fetch for token %@", self, token);
-        [self addSideEffect:^(id<VT100ScreenDelegate> delegate) {
+        [_mutableState addSideEffect:^(id<VT100ScreenDelegate> delegate) {
             [delegate screenGetWorkingDirectoryWithCompletion:^(NSString *path) {
                 DLog(@"%p: Async update got %@ for token %@", self, path, token);
                 if (path) {
@@ -365,7 +350,7 @@
     } else {
         pushType = VT100ScreenWorkingDirectoryPushTypeWeakPush;
     }
-    [self addSideEffect:^(id<VT100ScreenDelegate> delegate) {
+    [_mutableState addSideEffect:^(id<VT100ScreenDelegate> delegate) {
         const BOOL accepted = !token || [token commit];
         [delegate screenLogWorkingDirectoryOnAbsoluteLine:absLine
                                                remoteHost:remoteHost
@@ -441,7 +426,7 @@
              focus:(BOOL)focus {
     [_mutableState.intervalTree addObject:annotation withInterval:[self intervalForGridCoordRange:range]];
     [_mutableState.currentGrid markAllCharsDirty:YES];
-    [self addSideEffect:^(id<VT100ScreenDelegate> delegate) {
+    [_mutableState addSideEffect:^(id<VT100ScreenDelegate> delegate) {
         [delegate screenDidAddNote:annotation focus:focus];
         [self.intervalTreeObserver intervalTreeDidAddObjectOfType:iTermIntervalTreeObjectTypeAnnotation
                                                            onLine:range.start.y + self.totalScrollbackOverflow];
@@ -550,7 +535,7 @@
     [self mutClearScrollbackBuffer];
 
     // Redraw soon.
-    [self addSideEffect:^(id<VT100ScreenDelegate> delegate) {
+    [_mutableState addSideEffect:^(id<VT100ScreenDelegate> delegate) {
         [delegate screenUpdateDisplay:NO];
     }];
 
@@ -745,7 +730,7 @@
                 // Re-adding an annotation requires telling the delegate so it can create a vc
                 PTYAnnotation *annotation = [PTYAnnotation castFrom:obj];
                 if (annotation) {
-                    [self addSideEffect:^(id<VT100ScreenDelegate> delegate) {
+                    [_mutableState addSideEffect:^(id<VT100ScreenDelegate> delegate) {
                         [delegate screenDidAddNote:annotation focus:NO];
                     }];
                 }
@@ -1649,14 +1634,14 @@
 
 - (void)mutLinefeed {
     LineBuffer *lineBufferToUse = _mutableState.linebuffer;
-    const BOOL noScrollback = (_state.currentGrid == _state.altGrid && !_state.saveToScrollbackInAlternateScreen);
+    const BOOL noScrollback = (_mutableState.currentGrid == _mutableState.altGrid && !_mutableState.saveToScrollbackInAlternateScreen);
     if (noScrollback) {
         // In alt grid but saving to scrollback in alt-screen is off, so pass in a nil linebuffer.
         lineBufferToUse = nil;
     }
     [_mutableState incrementOverflowBy:[_mutableState.currentGrid moveCursorDownOneLineScrollingIntoLineBuffer:lineBufferToUse
-                                                                                           unlimitedScrollback:_state.unlimitedScrollback
-                                                                                       useScrollbackWithRegion:self.appendToScrollbackWithStatusBar
+                                                                                           unlimitedScrollback:_mutableState.unlimitedScrollback
+                                                                                       useScrollbackWithRegion:_mutableState.appendToScrollbackWithStatusBar
                                                                                                     willScroll:^{
         if (noScrollback) {
             // This is a temporary hack. In this case, keeping the selection in the right place requires
